@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.58 2016/01/05 18:41:16 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.59 2016/03/07 16:17:36 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -54,6 +54,7 @@
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
+#include <dev/ic/r92creg.h>
 #include <dev/usb/if_urtwnreg.h>
 
 #ifdef URTWN_DEBUG
@@ -1138,7 +1139,7 @@ int urtwn_r92c_ra_init(struct urtwn_softc *sc, u_int8_t mode, u_int32_t rates,
 	int error;
 
 	/* Set rates mask for group addressed frames. */
-	cmd.macid = URTWN_MACID_BC | URTWN_MACID_VALID;
+	cmd.macid = R92C_MACID_BC | R92C_MACID_VALID;
 	cmd.mask = htole32(mode << 28 | basicrates);
 	error = urtwn_fw_cmd(sc, R92C_CMD_MACID_CONFIG, &cmd, sizeof(cmd));
 	if (error != 0) {
@@ -1148,11 +1149,11 @@ int urtwn_r92c_ra_init(struct urtwn_softc *sc, u_int8_t mode, u_int32_t rates,
 	}
 	/* Set initial MRR rate. */
 	DPRINTF(("maxbasicrate=%d\n", maxbasicrate));
-	urtwn_write_1(sc, R92C_INIDATA_RATE_SEL(URTWN_MACID_BC),
+	urtwn_write_1(sc, R92C_INIDATA_RATE_SEL(R92C_MACID_BC),
 	    maxbasicrate);
 
 	/* Set rates mask for unicast frames. */
-	cmd.macid = URTWN_MACID_BSS | URTWN_MACID_VALID;
+	cmd.macid = R92C_MACID_BSS | R92C_MACID_VALID;
 	cmd.mask = htole32(mode << 28 | rates);
 	error = urtwn_fw_cmd(sc, R92C_CMD_MACID_CONFIG, &cmd, sizeof(cmd));
 	if (error != 0) {
@@ -1162,7 +1163,7 @@ int urtwn_r92c_ra_init(struct urtwn_softc *sc, u_int8_t mode, u_int32_t rates,
 	}
 	/* Set initial MRR rate. */
 	DPRINTF(("maxrate=%d\n", maxrate));
-	urtwn_write_1(sc, R92C_INIDATA_RATE_SEL(URTWN_MACID_BSS),
+	urtwn_write_1(sc, R92C_INIDATA_RATE_SEL(R92C_MACID_BSS),
 	    maxrate);
 
 	return (0);
@@ -2032,13 +2033,13 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 			raid = R92C_RAID_11BG;
 		if (sc->chip & URTWN_CHIP_88E) {
 			txd->txdw1 |= htole32(
-			    SM(R88E_TXDW1_MACID, URTWN_MACID_BSS) |
+			    SM(R88E_TXDW1_MACID, R92C_MACID_BSS) |
 			    SM(R92C_TXDW1_QSEL, R92C_TXDW1_QSEL_BE) |
 			    SM(R92C_TXDW1_RAID, raid));
 			txd->txdw2 |= htole32(R88E_TXDW2_AGGBK);
 		} else {
 			txd->txdw1 |= htole32(
-			    SM(R92C_TXDW1_MACID, URTWN_MACID_BSS) |
+			    SM(R92C_TXDW1_MACID, R92C_MACID_BSS) |
 			    SM(R92C_TXDW1_QSEL, R92C_TXDW1_QSEL_BE) |
 			    SM(R92C_TXDW1_RAID, raid) | R92C_TXDW1_AGGBK);
 		}
@@ -2771,7 +2772,7 @@ urtwn_mac_init(struct urtwn_softc *sc)
 void
 urtwn_bb_init(struct urtwn_softc *sc)
 {
-	const struct urtwn_bb_prog *prog;
+	const struct r92c_bb_prog *prog;
 	uint32_t reg;
 	uint8_t crystalcap;
 	int i;
@@ -2889,7 +2890,7 @@ urtwn_bb_init(struct urtwn_softc *sc)
 void
 urtwn_rf_init(struct urtwn_softc *sc)
 {
-	const struct urtwn_rf_prog *prog;
+	const struct r92c_rf_prog *prog;
 	uint32_t reg, type;
 	int i, j, idx, off;
 
@@ -3095,7 +3096,7 @@ urtwn_get_txpower(struct urtwn_softc *sc, int chain,
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct r92c_rom *rom = &sc->rom;
 	uint16_t cckpow, ofdmpow, htpow, diff, max;
-	const struct urtwn_txpwr *base;
+	const struct r92c_txpwr *base;
 	int ridx, chan, group;
 
 	/* Determine channel group. */
@@ -3193,7 +3194,7 @@ urtwn_r88e_get_txpower(struct urtwn_softc *sc, int chain,
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint16_t cckpow, ofdmpow, bw20pow, htpow;
-	const struct urtwn_r88e_txpwr *base;
+	const struct r88e_txpwr *base;
 	int ridx, chan, group;
 
 	/* Determine channel group. */

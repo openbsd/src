@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.12 2016/01/05 18:41:15 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.13 2016/03/07 16:17:36 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -55,6 +55,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/ic/r92creg.h>
 #include <dev/pci/if_rtwnreg.h>
 
 #ifdef RTWN_DEBUG
@@ -1025,7 +1026,7 @@ rtwn_ra_init(struct rtwn_softc *sc)
 	    mode, rates, basicrates));
 
 	/* Set rates mask for group addressed frames. */
-	cmd.macid = RTWN_MACID_BC | RTWN_MACID_VALID;
+	cmd.macid = R92C_MACID_BC | R92C_MACID_VALID;
 	cmd.mask = htole32(mode << 28 | basicrates);
 	error = rtwn_fw_cmd(sc, R92C_CMD_MACID_CONFIG, &cmd, sizeof(cmd));
 	if (error != 0) {
@@ -1035,11 +1036,11 @@ rtwn_ra_init(struct rtwn_softc *sc)
 	}
 	/* Set initial MRR rate. */
 	DPRINTF(("maxbasicrate=%d\n", maxbasicrate));
-	rtwn_write_1(sc, R92C_INIDATA_RATE_SEL(RTWN_MACID_BC),
+	rtwn_write_1(sc, R92C_INIDATA_RATE_SEL(R92C_MACID_BC),
 	    maxbasicrate);
 
 	/* Set rates mask for unicast frames. */
-	cmd.macid = RTWN_MACID_BSS | RTWN_MACID_VALID;
+	cmd.macid = R92C_MACID_BSS | R92C_MACID_VALID;
 	cmd.mask = htole32(mode << 28 | rates);
 	error = rtwn_fw_cmd(sc, R92C_CMD_MACID_CONFIG, &cmd, sizeof(cmd));
 	if (error != 0) {
@@ -1049,7 +1050,7 @@ rtwn_ra_init(struct rtwn_softc *sc)
 	}
 	/* Set initial MRR rate. */
 	DPRINTF(("maxrate=%d\n", maxrate));
-	rtwn_write_1(sc, R92C_INIDATA_RATE_SEL(RTWN_MACID_BSS),
+	rtwn_write_1(sc, R92C_INIDATA_RATE_SEL(R92C_MACID_BSS),
 	    maxrate);
 
 	/* Configure Automatic Rate Fallback Register. */
@@ -1697,7 +1698,7 @@ rtwn_tx(struct rtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		else
 			raid = R92C_RAID_11BG;
 		txd->txdw1 |= htole32(
-		    SM(R92C_TXDW1_MACID, RTWN_MACID_BSS) |
+		    SM(R92C_TXDW1_MACID, R92C_MACID_BSS) |
 		    SM(R92C_TXDW1_QSEL, R92C_TXDW1_QSEL_BE) |
 		    SM(R92C_TXDW1_RAID, raid) |
 		    R92C_TXDW1_AGGBK);
@@ -2385,7 +2386,7 @@ rtwn_mac_init(struct rtwn_softc *sc)
 void
 rtwn_bb_init(struct rtwn_softc *sc)
 {
-	const struct rtwn_bb_prog *prog;
+	const struct r92c_bb_prog *prog;
 	uint32_t reg;
 	int i;
 
@@ -2474,7 +2475,7 @@ rtwn_bb_init(struct rtwn_softc *sc)
 void
 rtwn_rf_init(struct rtwn_softc *sc)
 {
-	const struct rtwn_rf_prog *prog;
+	const struct r92c_rf_prog *prog;
 	uint32_t reg, type;
 	int i, j, idx, off;
 
@@ -2678,7 +2679,7 @@ rtwn_get_txpower(struct rtwn_softc *sc, int chain,
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct r92c_rom *rom = &sc->rom;
 	uint16_t cckpow, ofdmpow, htpow, diff, max;
-	const struct rtwn_txpwr *base;
+	const struct r92c_txpwr *base;
 	int ridx, chan, group;
 
 	/* Determine channel group. */
