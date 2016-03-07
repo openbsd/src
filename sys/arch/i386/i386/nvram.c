@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.5 2016/01/08 08:00:12 stefan Exp $ */
+/*	$OpenBSD: nvram.c,v 1.6 2016/03/07 05:32:47 naddy Exp $ */
 
 /*
  * Copyright (c) 2004 Joshua Stein <jcs@openbsd.org>
@@ -135,7 +135,7 @@ nvram_get_byte(int byteno)
 }
 
 int
-nvram_csum_valid()
+nvram_csum_valid(void)
 {
 	u_short csum = 0;
 	u_short csumexpect;

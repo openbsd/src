@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.80 2016/03/03 12:41:30 naddy Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.81 2016/03/07 05:32:47 naddy Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -329,8 +329,8 @@ void pmap_tlb_shootwait(void);
 #define pmap_tlb_shootwait()
 #endif
 
-void pmap_prealloc_lowmem_ptp();
-void pmap_prealloc_lowmem_ptp_pae();
+void pmap_prealloc_lowmem_ptp(void);
+void pmap_prealloc_lowmem_ptp_pae(void);
 vaddr_t pmap_tmpmap_pa(paddr_t);
 void pmap_tmpunmap_pa(void);
 vaddr_t pmap_tmpmap_pa_pae(paddr_t);

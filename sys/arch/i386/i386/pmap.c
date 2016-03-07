@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.187 2016/03/03 12:41:30 naddy Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.188 2016/03/07 05:32:47 naddy Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -710,7 +710,7 @@ pmap_tmpmap_pa(paddr_t pa)
  */
 
 void
-pmap_tmpunmap_pa()
+pmap_tmpunmap_pa(void)
 {
 #ifdef MULTIPROCESSOR
 	int id = cpu_number();

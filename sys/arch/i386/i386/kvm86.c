@@ -1,4 +1,4 @@
-/* $OpenBSD: kvm86.c,v 1.10 2015/04/12 18:37:53 mlarkin Exp $ */
+/* $OpenBSD: kvm86.c,v 1.11 2016/03/07 05:32:46 naddy Exp $ */
 /* $NetBSD: kvm86.c,v 1.10 2005/12/26 19:23:59 perry Exp $ */
 /*
  * Copyright (c) 2002
@@ -77,7 +77,7 @@ struct mutex kvm86_mp_mutex;
 #define KVM86_IOPL3 /* not strictly necessary, saves a lot of traps */
 
 void
-kvm86_init()
+kvm86_init(void)
 {
 	size_t vmdsize;
 	char *buf;

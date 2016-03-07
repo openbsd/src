@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.36 2016/03/03 12:41:30 naddy Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.37 2016/03/07 05:32:46 naddy Exp $	*/
 /*	$NetBSD: gdt.c,v 1.28 2002/12/14 09:38:50 junyoung Exp $	*/
 
 /*-
@@ -94,7 +94,7 @@ setgdt(int sel, void *base, size_t limit, int type, int dpl, int def32,
  * Initialize the GDT subsystem.  Called from autoconf().
  */
 void
-gdt_init()
+gdt_init(void)
 {
 	struct vm_page *pg;
 	vaddr_t va;
@@ -169,7 +169,7 @@ gdt_init_cpu(struct cpu_info *ci)
  *    near the end that we can sweep through.
  */
 int
-gdt_get_slot()
+gdt_get_slot(void)
 {
 	int slot;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.48 2016/02/20 19:59:01 mlarkin Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.49 2016/03/07 05:32:47 naddy Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1868,7 +1868,7 @@ pmap_tmpmap_pa_pae(paddr_t pa)
  */
 
 void
-pmap_tmpunmap_pa_pae()
+pmap_tmpunmap_pa_pae(void)
 {
 #ifdef MULTIPROCESSOR
 	int id = cpu_number();

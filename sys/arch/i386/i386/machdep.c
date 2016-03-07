@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.580 2016/03/03 12:41:30 naddy Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.581 2016/03/07 05:32:46 naddy Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -380,7 +380,7 @@ cpuid(u_int32_t ax, u_int32_t *regs)
  * Machine-dependent startup code
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	unsigned i;
 	vaddr_t minaddr, maxaddr, va;
@@ -457,7 +457,7 @@ cpu_startup()
  * Set up proc0's TSS and LDT.
  */
 void
-i386_proc0_tss_ldt_init()
+i386_proc0_tss_ldt_init(void)
 {
 	int x;
 	struct pcb *pcb;
@@ -2760,7 +2760,7 @@ dumpconf(void)
  * cpu_dump: dump machine-dependent kernel core dump headers.
  */
 int
-cpu_dump()
+cpu_dump(void)
 {
 	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	long buf[dbtob(1) / sizeof (long)];
@@ -2795,7 +2795,7 @@ reserve_dumppages(vaddr_t p)
 }
 
 void
-dumpsys()
+dumpsys(void)
 {
 	u_int i, j, npg;
 	int maddr;
@@ -3056,7 +3056,7 @@ fix_f00f(void)
 
 #ifdef MULTIPROCESSOR
 void
-cpu_init_idt()
+cpu_init_idt(void)
 {
 	struct region_descriptor region;
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
@@ -3407,14 +3407,14 @@ init386(paddr_t first_avail)
  * initialize the system console.
  */
 void
-consinit()
+consinit(void)
 {
 	/* Already done in init386(). */
 }
 
 #ifdef KGDB
 void
-kgdb_port_init()
+kgdb_port_init(void)
 {
 
 #if NCOM > 0
@@ -3428,7 +3428,7 @@ kgdb_port_init()
 #endif /* KGDB */
 
 void
-cpu_reset()
+cpu_reset(void)
 {
 	struct region_descriptor region;
 

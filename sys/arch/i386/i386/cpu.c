@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.71 2016/02/03 03:25:07 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.72 2016/03/07 05:32:46 naddy Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -152,7 +152,7 @@ void	cpu_copy_trampoline(void);
  * Called from mpbios_scan();
  */
 void
-cpu_init_first()
+cpu_init_first(void)
 {
 	cpu_copy_trampoline();
 }
@@ -488,7 +488,7 @@ cpu_activate(struct device *self, int act)
 
 #ifdef MULTIPROCESSOR
 void
-cpu_boot_secondary_processors()
+cpu_boot_secondary_processors(void)
 {
 	struct cpu_info *ci;
 	u_long i;
@@ -509,7 +509,7 @@ cpu_boot_secondary_processors()
 }
 
 void
-cpu_init_idle_pcbs()
+cpu_init_idle_pcbs(void)
 {
 	struct cpu_info *ci;
 	u_long i;
@@ -605,7 +605,7 @@ cpu_hatch(void *v)
 }
 
 void
-cpu_copy_trampoline()
+cpu_copy_trampoline(void)
 {
 	/*
 	 * Copy boot code.

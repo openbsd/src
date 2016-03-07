@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_mp.c,v 1.7 2015/02/11 05:54:48 dlg Exp $	*/
+/*	$OpenBSD: db_mp.c,v 1.8 2016/03/07 05:32:46 naddy Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Andreas Gunnarsson <andreas@openbsd.org>
@@ -41,7 +41,7 @@ extern volatile long		db_switch_to_cpu;
  * other CPUs by sending IPIs.
  */
 int
-db_enter_ddb()
+db_enter_ddb(void)
 {
 	int i;
 
