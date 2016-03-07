@@ -105,7 +105,6 @@ AC_CHECK_FUNCS(\
 	getpassphrase \
 	gettimeofday \
 	initgroups \
-	mknod \
 	mkstemp \
 	mktemp \
 	putenv \
