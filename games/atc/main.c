@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2016/03/07 12:07:55 mestre Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 2016/03/07 13:48:25 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -110,7 +110,7 @@ main(int argc, char *argv[])
 
 	if (f_usage)
 		fprintf(stderr, 
-		    "usage: %s [-lpqstu?] [-f game] [-g game] [-r seed]\n",
+		    "usage: %s [-lpqst] [-f game] [-g game] [-r seed]\n",
 		    getprogname());
 	if (f_showscore)
 		log_score(1);
