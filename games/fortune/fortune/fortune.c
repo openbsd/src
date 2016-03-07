@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.53 2016/03/07 12:07:56 mestre Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.54 2016/03/07 19:49:38 tb Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -74,9 +74,8 @@ typedef struct fd {
 	FILE		*inf;
 	char		*name;
 	char		*path;
-	char		*datfile, *posfile;
+	char		*datfile;
 	bool		read_tbl;
-	bool		was_pos_file;
 	STRFILE		tbl;
 	int		num_children;
 	struct fd	*child, *parent;
@@ -124,7 +123,7 @@ void	 get_tbl(FILEDESC *);
 void	 getargs(int, char *[]);
 void	 init_prob(void);
 int	 is_dir(char *);
-int	 is_fortfile(char *, char **, char **, int);
+int	 is_fortfile(char *, char **, int);
 int	 is_off_name(char *);
 int	 max(int, int);
 FILEDESC *
@@ -452,7 +451,7 @@ over:
 
 	if ((isdir && !add_dir(fp)) ||
 	    (!isdir &&
-	     !is_fortfile(path, &fp->datfile, &fp->posfile, (parent != NULL))))
+	     !is_fortfile(path, &fp->datfile, (parent != NULL))))
 	{
 		if (parent == NULL)
 			fprintf(stderr,
@@ -461,7 +460,6 @@ over:
 		if (was_malloc)
 			free(path);
 		do_free(fp->datfile);
-		do_free(fp->posfile);
 		free((char *) fp);
 		do_free(offensive);
 		return 0;
@@ -511,7 +509,6 @@ new_fp(void)
 	fp->child = NULL;
 	fp->parent = NULL;
 	fp->datfile = NULL;
-	fp->posfile = NULL;
 	return fp;
 }
 
@@ -549,11 +546,11 @@ all_forts(FILEDESC *fp, char *offensive)
 	char		*sp;
 	FILEDESC	*scene, *obscene;
 	int		fd;
-	char		*datfile, *posfile;
+	char		*datfile;
 
 	if (fp->child != NULL)	/* this is a directory, not a file */
 		return;
-	if (!is_fortfile(offensive, &datfile, &posfile, 0))
+	if (!is_fortfile(offensive, &datfile, 0))
 		return;
 	if ((fd = open(offensive, O_RDONLY)) < 0)
 		return;
@@ -580,7 +577,6 @@ all_forts(FILEDESC *fp, char *offensive)
 	else
 		obscene->name = ++sp;
 	obscene->datfile = datfile;
-	obscene->posfile = posfile;
 	obscene->read_tbl = 0;
 }
 
@@ -646,7 +642,7 @@ is_dir(char *file)
  *	suffixes, as contained in suflist[], are ruled out.
  */
 int
-is_fortfile(char *file, char **datp, char **posp, int check_for_offend)
+is_fortfile(char *file, char **datp, int check_for_offend)
 {
 	int	i;
 	char	*sp;
@@ -1111,8 +1107,8 @@ print_list(FILEDESC *list, int lev)
 		else
 			fprintf(stderr, "%3d%%", list->percent);
 		fprintf(stderr, " %s", STR(list->name));
-		DPRINTF(1, (stderr, " (%s, %s, %s)\n", STR(list->path),
-			    STR(list->datfile), STR(list->posfile)));
+		DPRINTF(1, (stderr, " (%s, %s)\n", STR(list->path),
+			    STR(list->datfile)));
 		putc('\n', stderr);
 		if (list->child != NULL)
 			print_list(list->child, lev + 1);
