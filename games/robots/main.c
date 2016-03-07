@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2016/01/07 16:00:33 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2016/03/07 12:07:57 mestre Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 void
 usage(void)
 {
-	fprintf(stderr, "usage: robots [-ajrst] [scorefile]\n");
+	fprintf(stderr, "usage: %s [-ajrst] [scorefile]\n", getprogname());
 	exit(1);
 }
 

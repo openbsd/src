@@ -1,4 +1,4 @@
-/*	$OpenBSD: unstr.c,v 1.14 2016/01/10 13:35:09 mestre Exp $	*/
+/*	$OpenBSD: unstr.c,v 1.15 2016/03/07 12:07:56 mestre Exp $	*/
 /*	$NetBSD: unstr.c,v 1.3 1995/03/23 08:29:00 cgd Exp $	*/
 
 /*-
@@ -101,7 +101,7 @@ void
 getargs(char *av[])
 {
 	if (!*++av) {
-		(void) fprintf(stderr, "usage: unstr datafile\n");
+		(void) fprintf(stderr, "usage: %s datafile\n", getprogname());
 		exit(1);
 	}
 	Infile = *av;

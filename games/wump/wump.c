@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.32 2016/01/10 13:35:10 mestre Exp $	*/
+/*	$OpenBSD: wump.c,v 1.33 2016/03/07 12:07:57 mestre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -179,7 +179,6 @@ main(int argc, char *argv[])
 				errx(1,
 	"wumpii like extra doors in their caves!");
 			break;
-		case '?':
 		default:
 			usage();
 	}
@@ -909,8 +908,8 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: wump [-ho] [-a arrows] [-b bats] [-p pits] "
-	    "[-r rooms] [-t tunnels]\n");
+	    "usage: %s [-ho] [-a arrows] [-b bats] [-p pits] "
+	    "[-r rooms] [-t tunnels]\n", getprogname());
 	exit(1);
 }
 

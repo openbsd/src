@@ -1,4 +1,4 @@
-/*	$OpenBSD: pig.c,v 1.16 2016/01/07 16:00:33 tb Exp $	*/
+/*	$OpenBSD: pig.c,v 1.17 2016/03/07 12:07:56 mestre Exp $	*/
 /*	$NetBSD: pig.c,v 1.2 1995/03/23 08:41:40 cgd Exp $	*/
 
 /*-
@@ -50,9 +50,9 @@ main(int argc, char *argv[])
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	while ((ch = getopt(argc, argv, "")) != -1)
+	while ((ch = getopt(argc, argv, "h")) != -1)
 		switch(ch) {
-		case '?':
+		case 'h':
 		default:
 			usage();
 		}
@@ -117,6 +117,6 @@ pigout(char *buf, int len)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: pig\n");
+	(void)fprintf(stderr, "usage: %s\n", getprogname());
 	exit(1);
 }

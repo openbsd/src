@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 2016/01/07 16:00:31 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2016/03/07 12:07:55 mestre Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 	makenoise = 1;
 	seed = NULL;
 
-	while ((ch = getopt(argc, argv, "f:g:lpqr:stu?")) != -1) {
+	while ((ch = getopt(argc, argv, "f:g:hlpqr:st")) != -1) {
 		switch (ch) {
 		case 'f':
 		case 'g':
@@ -93,8 +93,7 @@ main(int argc, char *argv[])
 		case 't':
 			f_showscore = 1;
 			break;
-		case 'u':
-		case '?':
+		case 'h':
 		default:
 			f_usage = 1;
 			break;

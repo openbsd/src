@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcd.c,v 1.24 2016/01/08 20:15:15 mestre Exp $	*/
+/*	$OpenBSD: bcd.c,v 1.25 2016/03/07 12:07:55 mestre Exp $	*/
 /*	$NetBSD: bcd.c,v 1.6 1995/04/24 12:22:23 cgd Exp $	*/
 
 /*
@@ -115,11 +115,11 @@ int	decode(char *buf);
 
 int	columns	= 48;
 
-
 int
 main(int argc, char *argv[])
 {
 	char cardline[1024];
+	extern char *__progname;
 	int dflag = 0;
 	int ch;
 
@@ -135,8 +135,9 @@ main(int argc, char *argv[])
 			columns = 80;
 			break;
 		default:
-			fprintf(stderr, "usage: bcd [-l] [string ...]\n");
-			fprintf(stderr, "usage: bcd -d [-l]\n");
+			fprintf(stderr, "usage: %s [-l] [string ...]\n",
+			    __progname);
+			fprintf(stderr, "usage: %s -d [-l]\n", __progname);
 			return 1;
 		}
 	}

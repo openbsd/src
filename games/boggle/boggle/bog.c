@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.29 2016/01/10 13:18:07 mestre Exp $	*/
+/*	$OpenBSD: bog.c,v 1.30 2016/03/07 12:07:55 mestre Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@ main(int argc, char *argv[])
 	minlength = -1;
 	tlimit = 180;		/* 3 minutes is standard */
 
-	while ((ch = getopt(argc, argv, "Bbcdt:w:")) != -1)
+	while ((ch = getopt(argc, argv, "Bbcdht:w:")) != -1)
 		switch(ch) {
 		case 'B':
 			grid = 5;
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 			if ((minlength = atoi(optarg)) < 3)
 				errx(1, "min word length must be > 2");
 			break;
-		case '?':
+		case 'h':
 		default:
 			usage();
 		}

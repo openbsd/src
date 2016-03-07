@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.52 2016/03/05 11:06:43 tb Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.53 2016/03/07 12:07:56 mestre Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -247,9 +247,9 @@ getargs(int argc, char *argv[])
 	ignore_case = 0;
 
 #ifdef DEBUG
-	while ((ch = getopt(argc, argv, "aDefilm:osw")) != -1)
+	while ((ch = getopt(argc, argv, "aDefhilm:osw")) != -1)
 #else
-	while ((ch = getopt(argc, argv, "aefilm:osw")) != -1)
+	while ((ch = getopt(argc, argv, "aefhilm:osw")) != -1)
 #endif /* DEBUG */
 		switch(ch) {
 		case 'a':		/* any fortune */
@@ -287,7 +287,7 @@ getargs(int argc, char *argv[])
 		case 'i':			/* case-insensitive match */
 			ignore_case = 1;
 			break;
-		case '?':
+		case 'h':
 		default:
 			usage();
 		}

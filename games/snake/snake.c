@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.25 2016/02/09 13:41:59 mestre Exp $	*/
+/*	$OpenBSD: snake.c,v 1.26 2016/03/07 12:07:57 mestre Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -171,7 +171,6 @@ main(int argc, char *argv[])
 		case 't': /* slow terminal */
 			fast = 0;
 			break;
-		case '?':
 		case 'h':
 		default:
 			fprintf(stderr, "usage: %s [-st] [-l length] "

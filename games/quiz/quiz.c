@@ -1,4 +1,4 @@
-/*	$OpenBSD: quiz.c,v 1.28 2016/01/10 13:35:10 mestre Exp $	*/
+/*	$OpenBSD: quiz.c,v 1.29 2016/03/07 12:07:56 mestre Exp $	*/
 /*	$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	indexfile = _PATH_QUIZIDX;
-	while ((ch = getopt(argc, argv, "i:t")) != -1)
+	while ((ch = getopt(argc, argv, "hi:t")) != -1)
 		switch(ch) {
 		case 'i':
 			indexfile = optarg;
@@ -76,7 +76,7 @@ main(int argc, char *argv[])
 		case 't':
 			tflag = 1;
 			break;
-		case '?':
+		case 'h':
 		default:
 			usage();
 		}
@@ -363,6 +363,6 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: quiz [-t] [-i file] category1 category2\n");
+	    "usage: %s [-t] [-i file] category1 category2\n", getprogname());
 	exit(1);
 }

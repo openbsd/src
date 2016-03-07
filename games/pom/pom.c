@@ -1,4 +1,4 @@
-/*	$OpenBSD: pom.c,v 1.21 2016/01/07 16:00:33 tb Exp $	*/
+/*	$OpenBSD: pom.c,v 1.22 2016/03/07 12:07:56 mestre Exp $	*/
 /*    $NetBSD: pom.c,v 1.6 1996/02/06 22:47:29 jtc Exp $      */
 
 /*
@@ -261,6 +261,7 @@ void
 badformat(void)
 {
 	warnx("illegal time format");
-	(void)fprintf(stderr, "usage: pom [[[[[cc]yy]mm]dd]HH]\n");
+	(void)fprintf(stderr, "usage: %s [[[[[cc]yy]mm]dd]HH]\n",
+	    getprogname());
 	exit(1);
 }

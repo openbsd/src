@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppt.c,v 1.16 2016/01/07 16:00:33 tb Exp $	*/
+/*	$OpenBSD: ppt.c,v 1.17 2016/03/07 12:07:56 mestre Exp $	*/
 /*	$NetBSD: ppt.c,v 1.4 1995/03/23 08:35:40 cgd Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ main(int argc, char **argv)
 		case 'b':
 			bflag = 1;
 			break;
-		case '?': case 'h':
+		case 'h':
 		default:
 			usage();
 		}

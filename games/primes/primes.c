@@ -1,4 +1,4 @@
-/*	$OpenBSD: primes.c,v 1.21 2016/01/07 16:00:33 tb Exp $	*/
+/*	$OpenBSD: primes.c,v 1.22 2016/03/07 12:07:56 mestre Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -104,9 +104,9 @@ main(int argc, char *argv[])
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	while ((ch = getopt(argc, argv, "")) != -1) {
+	while ((ch = getopt(argc, argv, "h")) != -1) {
 		switch (ch) {
-		case '?':
+		case 'h':
 		default:
 			usage();
 		}
@@ -322,6 +322,6 @@ primes(ubig start, ubig stop)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: primes [start [stop]]\n");
+	(void)fprintf(stderr, "usage: %s [start [stop]]\n", getprogname());
 	exit(1);
 }

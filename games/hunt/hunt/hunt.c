@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.20 2016/01/10 14:10:39 mestre Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.21 2016/03/07 12:07:56 mestre Exp $	*/
 /*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -141,9 +141,9 @@ main(int ac, char **av)
 			break;
 		default:
 		usage:
-			fputs("usage: hunt [-bcfmqSs] [-n name] [-p port] "
-			    "[-t team] [-w message] [[-h] host]\n",
-			    stderr);
+			fprintf(stderr, "usage: %s [-bcfmqSs] [-n name] "
+			    "[-p port] [-t team] [-w message] [[-h] host]\n",
+			    getprogname());
 			return 1;
 		}
 	}
