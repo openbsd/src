@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.50 2015/12/10 17:23:34 mmcc Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.51 2016/03/07 19:33:26 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1235,7 +1235,7 @@ pfkey_block(int fd, int af, unsigned int action)
 
 	/*
 	 * Prevent VPN traffic leakages in dual-stack hosts/networks.
-	 * http://tools.ietf.org/html/draft-gont-opsec-vpn-leakages.
+	 * https://tools.ietf.org/html/draft-gont-opsec-vpn-leakages.
 	 * We forcibly block IPv6 traffic unless it is used in any of
 	 * the flows by tracking a sadb_ipv6refcnt reference counter.
 	 */

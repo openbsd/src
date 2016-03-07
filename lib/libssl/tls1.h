@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.26 2015/06/17 14:30:39 jsing Exp $ */
+/* $OpenBSD: tls1.h,v 1.27 2016/03/07 19:33:26 mmcc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -180,7 +180,7 @@ extern "C" {
 /*
  * TLS Alert codes.
  *
- * http://www.iana.org/assignments/tls-parameters/#tls-parameters-6
+ * https://www.iana.org/assignments/tls-parameters/#tls-parameters-6
  */
 
 #define TLS1_AD_DECRYPTION_FAILED		21
@@ -209,7 +209,7 @@ extern "C" {
 /*
  * TLS ExtensionType values.
  *
- * http://www.iana.org/assignments/tls-extensiontype-values/
+ * https://www.iana.org/assignments/tls-extensiontype-values/
  */
 
 /* ExtensionType values from RFC 3546, RFC 4366 and RFC 6066. */
@@ -251,7 +251,7 @@ extern "C" {
 
 /* ExtensionType value for TLS padding extension.
  * (TEMPORARY - registered 2014-03-12, expires 2015-03-12)
- * http://tools.ietf.org/html/draft-agl-tls-padding-03
+ * https://tools.ietf.org/html/draft-agl-tls-padding-03
  */
 #define TLSEXT_TYPE_padding	21
 

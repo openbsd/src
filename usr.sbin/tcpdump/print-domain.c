@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-domain.c,v 1.22 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-domain.c,v 1.23 2016/03/07 19:33:26 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -251,7 +251,7 @@ ns_cprint(const u_char *cp)
 	return (cp + i);
 }
 
-/* http://www.iana.org/assignments/dns-parameters */
+/* https://www.iana.org/assignments/dns-parameters */
 struct tok ns_type2str[] = {
 	{ T_A,		"A" },			/* RFC 1035 */
 	{ T_NS,		"NS" },			/* RFC 1035 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.h,v 1.26 2014/07/13 13:57:56 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.h,v 1.27 2016/03/07 19:33:26 mmcc Exp $	*/
 /*	$NetBSD: ip_icmp.h,v 1.10 1996/02/13 23:42:28 christos Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ struct icmp_ext_obj_hdr {
 
 /*
  * Definition of type and code field values.
- *	http://www.iana.org/assignments/icmp-parameters
+ *	https://www.iana.org/assignments/icmp-parameters
  */
 #define	ICMP_ECHOREPLY		0		/* echo reply */
 #define	ICMP_UNREACH		3		/* dest unreachable, codes: */

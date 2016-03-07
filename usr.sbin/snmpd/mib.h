@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.37 2015/06/11 18:49:09 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.38 2016/03/07 19:33:26 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -380,7 +380,7 @@
 
 /*
  * PRIVATE ENTERPRISE NUMBERS from
- * http://www.iana.org/assignments/enterprise-numbers
+ * https://www.iana.org/assignments/enterprise-numbers
  *
  * This is not the complete list of private enterprise numbers, it only
  * includes some well-known companies and especially network companies

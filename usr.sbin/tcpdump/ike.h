@@ -1,4 +1,4 @@
-/* $OpenBSD: ike.h,v 1.25 2012/07/13 15:07:05 mikeb Exp $ */
+/* $OpenBSD: ike.h,v 1.26 2016/03/07 19:33:26 mmcc Exp $ */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -149,7 +149,7 @@
 #define PAYLOAD_IKEV2_PRIV_MIN	128
 #define PAYLOAD_IKEv2_PRIV_MAX	255
 
-/* see http://www.iana.org/assignments/isakmp-registry */
+/* see https://www.iana.org/assignments/isakmp-registry */
 #define IKE_PAYLOAD_TYPES_INITIALIZER			\
 	{ "NONE",		/*  0 */		\
 	  "SA",			/*  1 */		\
@@ -182,7 +182,7 @@
 	  "NAT-OA-DRAFT",	/*  131 (draft-ietf-ipsec-nat-t-ike-03) */  \
 	}
 
-/* see http://www.iana.org/assignments/ikev2-parameters */
+/* see https://www.iana.org/assignments/ikev2-parameters */
 #define IKEV2_PAYLOAD_TYPES_INITIALIZER			\
 	{ "SA",			/* 33 */		\
 	  "KE",			/* 34 */		\

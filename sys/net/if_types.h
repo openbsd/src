@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_types.h,v 1.19 2008/09/09 13:56:39 henning Exp $	*/
+/*	$OpenBSD: if_types.h,v 1.20 2016/03/07 19:33:26 mmcc Exp $	*/
 /*	$NetBSD: if_types.h,v 1.17 2000/10/26 06:51:31 onoe Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * This list is derived from the SNMP list of ifTypes, originally
  * documented in RFC1573, now maintained as:
  *
- * <URL:http://www.iana.org/assignments/ianaiftype-mib>
+ * https://www.iana.org/assignments/ianaiftype-mib
  */
 
 #define	IFT_OTHER		   0x01 /* none of the following */
