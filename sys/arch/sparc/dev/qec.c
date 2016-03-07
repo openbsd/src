@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.27 2015/11/25 11:20:38 mpi Exp $	*/
+/*	$OpenBSD: qec.c,v 1.28 2016/03/07 00:11:11 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -200,8 +200,7 @@ qec_fix_range(sc, sbp)
 	int rlen, i, j;
 
 	rlen = getproplen(sc->sc_node, "ranges");
-	sc->sc_range =
-		(struct rom_range *)malloc(rlen, M_DEVBUF, M_NOWAIT);
+	sc->sc_range = malloc(rlen, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_range == NULL) {
 		printf(": PROM ranges too large: %d\n", rlen);
 		return EINVAL;
