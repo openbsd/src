@@ -1,4 +1,4 @@
-/*	$OpenBSD: clri.c,v 1.18 2015/11/03 04:47:55 mmcc Exp $	*/
+/*	$OpenBSD: clri.c,v 1.19 2016/03/07 21:47:04 natano Exp $	*/
 /*	$NetBSD: clri.c,v 1.19 2005/01/20 15:50:47 xtraeme Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <util.h>
 
 /*
  * Possible superblock locations ordered from most to least likely.
@@ -76,7 +77,7 @@ main(int argc, char *argv[])
 	sbp = NULL;
 
 	/* get the superblock. */
-	if ((fd = open(fs, O_RDWR, 0)) < 0)
+	if ((fd = opendev(fs, O_RDWR, 0, NULL)) < 0)
 		err(1, "%s", fs);
 
 	if (pledge("stdio", NULL) == -1)
