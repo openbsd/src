@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.26 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.27 2016/03/07 13:21:51 naddy Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -718,7 +718,7 @@ void asi_set(int asi)
 
 extern __inline u_int8_t asi_get(void);
 extern __inline
-u_int8_t asi_get()
+u_int8_t asi_get(void)
 {
 	return sparc_rd(asi);
 }

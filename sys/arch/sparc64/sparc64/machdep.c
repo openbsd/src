@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.174 2015/10/21 07:59:18 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.175 2016/03/07 13:21:51 naddy Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -203,7 +203,7 @@ void	stackdump(void);
  * Machine-dependent startup code
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 #ifdef DEBUG
 	extern int pmapdebug;
@@ -752,7 +752,7 @@ reserve_dumppages(p)
  * Write a crash dump.
  */
 void
-dumpsys()
+dumpsys(void)
 {
 	int psize;
 	daddr_t blkno;
@@ -895,7 +895,7 @@ trapdump(tf)
  * current stack page
  */
 void
-stackdump()
+stackdump(void)
 {
 	struct frame32 *fp = (struct frame32 *)getfp(), *sfp;
 	struct frame64 *fp64;

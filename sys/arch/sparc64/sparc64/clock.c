@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.57 2015/06/13 07:16:37 jsg Exp $	*/
+/*	$OpenBSD: clock.c,v 1.58 2016/03/07 13:21:51 naddy Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -433,7 +433,7 @@ clockattach(node, bt, bh)
 }
 
 struct idprom *
-getidprom()
+getidprom(void)
 {
 	struct idprom *idp = NULL;
 	int node, n;
@@ -964,7 +964,7 @@ inittodr(time_t base)
  * when crashing during autoconfig.
  */
 void
-resettodr()
+resettodr(void)
 {
 	struct timeval tv;
 

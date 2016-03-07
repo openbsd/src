@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.28 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: psl.h,v 1.29 2016/03/07 13:21:51 naddy Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -259,7 +259,7 @@ void splassert_check(int, const char *);
  */
 extern __inline u_int64_t getpstate(void);
 extern __inline
-u_int64_t getpstate()
+u_int64_t getpstate(void)
 {
 	return (sparc_rdpr(pstate));
 }
@@ -272,7 +272,7 @@ extern __inline void setpstate(u_int64_t newpstate)
 
 extern __inline int getcwp(void);
 extern __inline
-int getcwp()
+int getcwp(void)
 {
 	return (sparc_rdpr(cwp));
 }
@@ -286,14 +286,14 @@ setcwp(u_int64_t newcwp)
 
 extern __inline u_int64_t getver(void);
 extern __inline
-u_int64_t getver()
+u_int64_t getver(void)
 {
 	return (sparc_rdpr(ver));
 }
 
 extern __inline u_int64_t intr_disable(void);
 extern __inline u_int64_t
-intr_disable()
+intr_disable(void)
 {
 	u_int64_t s;
 

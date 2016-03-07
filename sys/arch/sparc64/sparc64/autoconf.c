@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.124 2015/09/19 21:07:04 semarie Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.125 2016/03/07 13:21:51 naddy Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -484,7 +484,7 @@ bootpath_nodes(struct bootpath *bp, int nbp)
  */
 
 static void
-bootpath_build()
+bootpath_build(void)
 {
 	register char *cp, *pp;
 	register struct bootpath *bp;
@@ -645,7 +645,7 @@ bootpath_store(int storep, struct bootpath *bp)
  * command.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 #ifdef SUN4V
 	int pause = 0;
@@ -797,7 +797,7 @@ diskconf(void)
  * no one really wants anything fancy...
  */
 void
-sync_crash()
+sync_crash(void)
 {
 
 	panic("PROM sync command");
@@ -837,7 +837,7 @@ mbprint(void *aux, const char *name)
 }
 
 int
-findroot()
+findroot(void)
 {
 	int node;
 
@@ -1288,7 +1288,7 @@ romgetcursoraddr(int **rowp, int **colp)
 }
 
 void
-callrom()
+callrom(void)
 {
 
 	__asm volatile("wrpr	%%g0, 0, %%tl" : );

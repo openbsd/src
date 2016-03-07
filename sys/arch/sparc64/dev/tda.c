@@ -1,4 +1,4 @@
-/*	$OpenBSD: tda.c,v 1.7 2010/08/27 18:58:57 robert Exp $ */
+/*	$OpenBSD: tda.c,v 1.8 2016/03/07 13:21:51 naddy Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -234,7 +234,7 @@ out:
  * timeouts are not working.
  */
 void
-tda_full_blast()
+tda_full_blast(void)
 {
 	struct tda_softc *sc = tda_cookie;
 	u_int8_t cmd[2];

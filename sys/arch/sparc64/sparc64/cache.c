@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.3 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: cache.c,v 1.4 2016/03/07 13:21:51 naddy Exp $	*/
 /*	$NetBSD: cache.c,v 1.5 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -78,7 +78,7 @@ int cachedebug = 0;
  * The prom does this for us.
  */
 void
-cache_enable()
+cache_enable(void)
 {
 	/* 
 	 * No point in implementing this unless we have a cache_disable().

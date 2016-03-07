@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.16 2016/03/01 11:56:00 mpi Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.17 2016/03/07 13:21:51 naddy Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
@@ -611,7 +611,7 @@ OF_boot(bootspec)
 }
 
 void
-OF_enter()
+OF_enter(void)
 {
 	struct {
 		cell_t name;
@@ -626,7 +626,7 @@ OF_enter()
 }
 
 void
-OF_exit()
+OF_exit(void)
 {
 	struct {
 		cell_t name;
@@ -642,7 +642,7 @@ OF_exit()
 }
 
 void
-OF_poweroff()
+OF_poweroff(void)
 {
 	struct {
 		cell_t name;
@@ -731,7 +731,7 @@ OF_interpret(char *cmd, int nreturns, ...)
 }
 
 int
-OF_milliseconds()
+OF_milliseconds(void)
 {
 	struct {
 		cell_t name;

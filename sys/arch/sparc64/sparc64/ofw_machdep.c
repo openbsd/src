@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.32 2014/10/17 03:04:30 daniel Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.33 2016/03/07 13:21:51 naddy Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ static u_int get_mmu_handle(void);
 static u_int get_memory_handle(void);
 
 static u_int 
-get_mmu_handle()
+get_mmu_handle(void)
 {
 	u_int chosen;
 
@@ -85,7 +85,7 @@ get_mmu_handle()
 }
 
 static u_int 
-get_memory_handle()
+get_memory_handle(void)
 {
 	u_int chosen;
 
@@ -678,7 +678,7 @@ static u_int stdin = 0;
 static u_int stdout = 0;
 
 int 
-OF_stdin() 
+OF_stdin(void) 
 {
 	u_int chosen;
 
@@ -691,7 +691,7 @@ OF_stdin()
 }
 
 int
-OF_stdout()
+OF_stdout(void)
 {
 	u_int chosen;
 

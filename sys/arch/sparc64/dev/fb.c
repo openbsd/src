@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.25 2013/10/21 10:36:19 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.26 2016/03/07 13:21:51 naddy Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -104,7 +104,7 @@ void (*fb_burner)(void *, u_int, u_int);
 void *fb_cookie;
 
 void
-fb_unblank()
+fb_unblank(void)
 {
 	if (fb_burner != NULL)
 		(*fb_burner)(fb_cookie, 1, 0);
