@@ -2036,3 +2036,4 @@
 ./usr/mdec/boot
 ./usr/mdec/xxboot
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/r92creg.ph

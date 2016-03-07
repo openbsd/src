@@ -2180,3 +2180,4 @@
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/r92creg.ph

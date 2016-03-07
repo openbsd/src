@@ -2081,3 +2081,4 @@
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
+./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/r92creg.ph

@@ -2201,3 +2201,4 @@
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/r92creg.ph

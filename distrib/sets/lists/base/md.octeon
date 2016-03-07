@@ -2125,3 +2125,4 @@
 ./usr/libexec/ld.so
 ./usr/local/libdata/perl5/site_perl/mips64-openbsd
 ./usr/sbin/pcidump
+./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/r92creg.ph

@@ -2054,3 +2054,4 @@
 ./usr/local/libdata/perl5/site_perl/m88k-openbsd
 ./usr/mdec/boot
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/r92creg.ph

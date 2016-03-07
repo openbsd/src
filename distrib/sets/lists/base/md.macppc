@@ -2199,3 +2199,4 @@
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/r92creg.ph

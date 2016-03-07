@@ -2156,3 +2156,4 @@
 ./usr/sbin/hotplugd
 ./usr/sbin/mkuboot
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/r92creg.ph
