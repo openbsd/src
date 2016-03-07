@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.50 2016/03/06 19:05:30 mpi Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.51 2016/03/07 11:26:43 mpi Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /*
@@ -74,21 +74,21 @@ ddb_init(void)
 
 	if (xesym != NULL && xesym != xssym) {
 		if (db_elf_sym_init((vaddr_t)xesym - (vaddr_t)xssym, xssym,
-		    xesym, name) == TRUE)
+		    xesym, name) == 1)
 			return;
 	}
 
 	printf("[ no symbol table formats found ]\n");
 }
 
-boolean_t
+int
 db_eqname(char *src, char *dst, int c)
 {
 	if (!strcmp(src, dst))
-	    return (TRUE);
+	    return (1);
 	if (src[0] == c)
 	    return (!strcmp(src+1,dst));
-	return (FALSE);
+	return (0);
 }
 
 /*

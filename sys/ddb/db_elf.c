@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.20 2016/03/06 19:05:30 mpi Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.21 2016/03/07 11:26:43 mpi Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@ static char	*db_elf_find_linetab(db_symtab_t *, size_t *);
  * esymtab:	pointer to end of string table, for checking - rounded up to
  *		    integer boundry
  */
-boolean_t
+int
 db_elf_sym_init(int symsize, void *symtab, void *esymtab, const char *name)
 {
 	Elf_Ehdr *elf;
@@ -85,7 +85,7 @@ db_elf_sym_init(int symsize, void *symtab, void *esymtab, const char *name)
 	if (ALIGNED_POINTER(symtab, long) == 0) {
 		db_printf("[ %s symbol table has bad start address %p ]\n",
 		    name, symtab);
-		return (FALSE);
+		return (0);
 	}
 
 	symtab_start = symtab_end = NULL;
@@ -191,11 +191,11 @@ db_elf_sym_init(int symsize, void *symtab, void *esymtab, const char *name)
 	    (u_long)roundup(((char *)esymtab - (char *)symtab), sizeof(u_long)),
 	    name);
 
-	return (TRUE);
+	return (1);
 
  badheader:
 	db_printf("[ %s ELF symbol table not valid: %s ]\n", name, errstr);
-	return (FALSE);
+	return (0);
 }
 
 /*
@@ -376,7 +376,7 @@ db_symbol_values(db_sym_t sym, char **namep, db_expr_t *valuep)
  * Return the file and line number of the current program counter
  * if we can find the appropriate debugging symbol.
  */
-boolean_t
+int
 db_elf_line_at_pc(db_sym_t cursym, char **filename,
     int *linenum, db_expr_t off)
 {
@@ -386,22 +386,22 @@ db_elf_line_at_pc(db_sym_t cursym, char **filename,
 	size_t linetab_size;
 
 	if (stab->private == NULL)
-		return (FALSE);
+		return (0);
 
 	linetab = db_elf_find_linetab(stab, &linetab_size);
 	if (linetab == NULL)
-		return (FALSE);
+		return (0);
 
 	if (!db_dwarf_line_at_pc(linetab, linetab_size, off,
 	    &dirname, &basename, linenum))
-		return (FALSE);
+		return (0);
 
 	if (dirname == NULL)
 		strlcpy(path, basename, sizeof(path));
 	else
 		snprintf(path, sizeof(path), "%s/%s", dirname, basename);
 	*filename = path;
-	return (TRUE);
+	return (1);
 }
 
 void
