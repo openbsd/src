@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknod.c,v 1.28 2016/03/06 19:31:31 tb Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.29 2016/03/07 19:16:06 tb Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
@@ -21,12 +21,15 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <err.h>
+#include <errno.h>
+#include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <locale.h>
-#include <err.h>
 
 extern char *__progname;
 
@@ -69,7 +72,7 @@ main(int argc, char *argv[])
 			switch (ch) {
 			case 'm':
 				if (!(set = setmode(optarg)))
-					errx(1, "invalid file mode '%s'", 
+					errx(1, "invalid file mode '%s'",
 					    optarg);
 				/*
 				 * In symbolic mode strings, the + and -
@@ -147,20 +150,30 @@ compute_device(int argc, char **argv)
 {
 	dev_t dev;
 	char *endp;
-	u_int major, minor;
+	unsigned long major, minor;
 
 	if (argc < 4)
 		usage(0);
-	major = (long)strtoul(argv[2], &endp, 0);
+
+	errno = 0;
+	major = strtoul(argv[2], &endp, 0);
 	if (endp == argv[2] || *endp != '\0')
 		errx(1, "invalid major number '%s'", argv[2]);
-	minor = (long)strtoul(argv[3], &endp, 0);
+	if (errno == ERANGE && major == ULONG_MAX)
+		errx(1, "major number too large: '%s'", argv[2]);
+
+	errno = 0;
+	minor = strtoul(argv[3], &endp, 0);
 	if (endp == argv[3] || *endp != '\0')
 		errx(1, "invalid minor number '%s'", argv[3]);
+	if (errno == ERANGE && minor == ULONG_MAX)
+		errx(1, "minor number too large: '%s'", argv[3]);
+
 	dev = makedev(major, minor);
 	if (major(dev) != major || minor(dev) != minor)
-		errx(1, "major or minor number too large (%u %u)", major, 
+		errx(1, "major or minor number too large (%lu %lu)", major,
 		    minor);
+
 	return dev;
 }
 
