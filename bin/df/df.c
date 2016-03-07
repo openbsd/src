@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.56 2016/03/01 18:00:42 mmcc Exp $	*/
+/*	$OpenBSD: df.c,v 1.57 2016/03/07 01:19:46 mmcc Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -161,15 +161,12 @@ main(int argc, char *argv[])
 	}
 
 	if (mntsize) {
-		maxwidth = 0;
+		maxwidth = 11;
 		for (i = 0; i < mntsize; i++) {
 			width = strlen(mntbuf[i].f_mntfromname);
 			if (width > maxwidth)
 				maxwidth = width;
 		}
-
-		if (maxwidth < 11)
-			maxwidth = 11;
 
 		if (Pflag)
 			posixprint(mntbuf, mntsize, maxwidth);
@@ -177,7 +174,7 @@ main(int argc, char *argv[])
 			bsdprint(mntbuf, mntsize, maxwidth);
 	}
 
-	exit(mntsize ? 0 : 1);
+	return (mntsize ? 0 : 1);
 }
 
 char *
