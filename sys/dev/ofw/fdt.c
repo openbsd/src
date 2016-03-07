@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.1 2016/03/03 02:42:16 bmercer Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.2 2016/03/07 10:49:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -59,7 +59,8 @@ fdt_check_head(void *fdt)
 
 	/* check for end signature on version 17 blob */
 	if ((betoh32(fh->fh_version) >= 17) &&
-	    (betoh32(*(ptr + betoh32(fh->fh_struct_size))) != FDT_END))
+	    (betoh32(*(ptr + (betoh32(fh->fh_struct_off) / 4) +
+	    (betoh32(fh->fh_struct_size) / 4) - 1)) != FDT_END))
 		return 0;
 
 	return betoh32(fh->fh_version);
