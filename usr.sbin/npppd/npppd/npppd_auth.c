@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth.c,v 1.17 2015/12/05 18:43:36 mmcc Exp $ */
+/*	$OpenBSD: npppd_auth.c,v 1.18 2016/03/08 02:05:00 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file authentication realm */
-/* $Id: npppd_auth.c,v 1.17 2015/12/05 18:43:36 mmcc Exp $ */
+/* $Id: npppd_auth.c,v 1.18 2016/03/08 02:05:00 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -197,7 +197,7 @@ npppd_auth_reload(npppd_auth_base *base)
 	base->has_users_file = 0;
 	base->radius_ready = 0;
 
-	if (auth->users_file_path != NULL) {
+	if (strlen(auth->users_file_path) > 0) {
 		strlcpy(base->users_file_path, auth->users_file_path,
 		    sizeof(base->users_file_path));
 		base->has_users_file = 1;
