@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.275 2015/12/05 10:07:55 tedu Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.276 2016/03/08 09:09:43 sashan Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1282,6 +1282,10 @@ bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
 		sc->sc_if.if_oerrors++;
 		return;
 	}
+
+#if NPF > 0
+	pf_pkt_addr_changed(m1);
+#endif	/* NPF */
 
 	bridge_ifinput(ifp, m1);
 }
