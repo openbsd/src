@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.42 2016/03/08 08:36:40 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.43 2016/03/08 08:43:50 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2713,6 +2713,8 @@ vcpu_run_vmx(struct vcpu *vcpu, uint8_t from_exit, int16_t *injint)
 			ci = curcpu();
 			setregion(&gdt, ci->ci_gdt, GDT_SIZE - 1);
 
+			vcpu->vc_last_pcpu = ci;
+
 			if (vmptrld(&vcpu->vc_control_pa)) {
 				ret = EINVAL;
 				break;
@@ -2837,7 +2839,6 @@ vcpu_run_vmx(struct vcpu *vcpu, uint8_t from_exit, int16_t *injint)
 		/* If we exited successfully ... */
 		if (ret == 0) {
 			resume = 1;
-			vcpu->vc_last_pcpu = ci;
 			if (!(exitinfo & VMX_EXIT_INFO_HAVE_RIP)) {
 				printf("vcpu_run_vmx: cannot read guest rip\n");
 				ret = EINVAL;
