@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.116 2015/12/05 09:12:15 tedu Exp $
+#	$OpenBSD: special,v 1.117 2016/03/08 00:16:47 tb Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -208,7 +208,7 @@ hidden		type=dir mode=0111 uname=root gname=wheel optional ignore
 pub		type=dir mode=0555 uname=root gname=wheel optional ignore
 ..	#var/spool/ftp/pub
 ..	#var/spool/ftp
-output		type=dir mode=0775 uname=root gname=daemon ignore
+output		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#var/spool/output
 uucp		type=dir mode=0755 uname=uucp gname=daemon ignore
 ..	#var/spool/uucp
