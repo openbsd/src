@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.105 2016/02/11 19:30:04 tim Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.106 2016/03/08 09:33:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -816,6 +816,8 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 	    "<!DOCTYPE html>\n"
 	    "<html>\n"
 	    "<head>\n"
+	    "<meta http-equiv=\"Content-Type\" content=\"text/html; "
+	    "charset=utf-8\"/>\n"
 	    "<title>%03d %s</title>\n"
 	    "<style type=\"text/css\"><!--\n%s\n--></style>\n"
 	    "</head>\n"
