@@ -554,7 +554,6 @@
 ./usr/include/dev/pci/if_nfevar.h
 ./usr/include/dev/pci/if_ngereg.h
 ./usr/include/dev/pci/if_ocereg.h
-./usr/include/dev/pci/if_rtwnreg.h
 ./usr/include/dev/pci/if_sereg.h
 ./usr/include/dev/pci/if_sisreg.h
 ./usr/include/dev/pci/if_skreg.h
@@ -738,7 +737,6 @@
 ./usr/include/dev/usb/if_upgtvar.h
 ./usr/include/dev/usb/if_urlreg.h
 ./usr/include/dev/usb/if_urndisreg.h
-./usr/include/dev/usb/if_urtwnreg.h
 ./usr/include/dev/usb/if_urtwreg.h
 ./usr/include/dev/usb/if_wi_usb.h
 ./usr/include/dev/usb/if_zydreg.h
