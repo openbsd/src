@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.40 2016/03/03 18:45:42 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.41 2016/03/08 07:10:01 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -148,6 +148,7 @@ int svm_get_guest_faulttype(void);
 int vmx_get_exit_qualification(uint64_t *);
 int vmx_fault_page(struct vcpu *, paddr_t);
 int vmx_handle_np_fault(struct vcpu *);
+const char *vcpu_state_decode(u_int);
 const char *vmx_exit_reason_decode(uint32_t);
 const char *vmx_instruction_error_decode(uint32_t);
 void dump_vcpu(struct vcpu *);
@@ -353,6 +354,7 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		ret = vm_intr_pending((struct vm_intr_params *)data);
 		break;
 	default:
+		DPRINTF("vmmioctl: unknown ioctl code 0x%lx\n", cmd);
 		ret = ENOTTY;
 	}
 
@@ -510,8 +512,11 @@ vm_resetcpu(struct vm_resetcpu_params *vrp)
 	rw_exit_read(&vmm_softc->vm_lock);
 
 	/* Not found? exit. */
-	if (vm == NULL)
+	if (vm == NULL) {
+		DPRINTF("vm_resetcpu: vm id %u not found\n",
+		    vrp->vrp_vm_id);
 		return (ENOENT);
+	}
 
 	rw_enter_read(&vm->vm_vcpu_lock);
 	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
@@ -520,11 +525,20 @@ vm_resetcpu(struct vm_resetcpu_params *vrp)
 	}
 	rw_exit_read(&vm->vm_vcpu_lock);
 
-	if (vcpu == NULL)
+	if (vcpu == NULL) {
+		DPRINTF("vm_resetcpu: vcpu id %u of vm %u not found\n",
+		    vrp->vrp_vcpu_id, vrp->vrp_vm_id);
 		return (ENOENT);
+	}
 
-	if (vcpu->vc_state != VCPU_STATE_STOPPED)
+	if (vcpu->vc_state != VCPU_STATE_STOPPED) {
+		DPRINTF("vm_resetcpu: reset of vcpu %u on vm %u attempted "
+		    "while vcpu was in state %u (%s)\n", vrp->vrp_vcpu_id,
+		    vrp->vrp_vm_id, vcpu->vc_state,
+		    vcpu_state_decode(vcpu->vc_state));
+		
 		return (EBUSY);
+	}
 
 	DPRINTF("vm_resetcpu: resetting vm %d vcpu %d to power on defaults\n",
 	    vm->vm_id, vcpu->vc_id);
@@ -3627,6 +3641,24 @@ vmx_instruction_error_decode(uint32_t code)
 	case 26: return "VM entry: blocked by MOV SS";
 	case 28: return "Invalid operand to INVEPT/INVVPID";
 	default: return "unknown";
+	}
+}
+
+/*
+ * vcpu_state_decode
+ *
+ * Returns a human readable string describing the vcpu state in 'state'.
+ */
+const char *
+vcpu_state_decode(u_int state)
+{
+	switch (state) {
+	case VCPU_STATE_STOPPED: return "stopped";
+	case VCPU_STATE_RUNNING: return "running";
+	case VCPU_STATE_REQTERM: return "requesting termination";
+	case VCPU_STATE_TERMINATED: return "terminated";
+	case VCPU_STATE_UNKNOWN: return "unknown";
+	default: return "invalid";
 	}
 }
 
