@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdr.h,v 1.14 2014/12/08 21:56:27 deraadt Exp $	*/
+/*	$OpenBSD: hdr.h,v 1.15 2016/03/08 10:48:39 mestre Exp $	*/
 /*	$NetBSD: hdr.h,v 1.2 1995/03/21 12:05:02 cgd Exp $	*/
 
 /*-
@@ -53,6 +53,7 @@
 /* hdr.h: included by c advent files */
 
 #include <sys/types.h>
+
 #include <signal.h>
 
 int     datfd;			/* message file descriptor	*/

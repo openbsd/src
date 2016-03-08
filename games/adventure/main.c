@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2016/01/07 16:00:31 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2016/03/08 10:48:39 mestre Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/05/21 21:53:09 mrg Exp $	*/
 
 /*-
@@ -38,12 +38,12 @@
 /*	Re-coding of advent in C: main program				*/
 
 #include <err.h>
-#include <signal.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
-#include "hdr.h"
+
 #include "extern.h"
+#include "hdr.h"
 
 int
 main(int argc, char *argv[])

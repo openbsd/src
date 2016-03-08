@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.20 2015/08/22 14:47:40 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.21 2016/03/08 10:48:39 mestre Exp $	*/
 /*	$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $	*/
 
 /*-
@@ -39,10 +39,10 @@
 
 #include <err.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include "hdr.h"
+
 #include "extern.h"
+#include "hdr.h"
 
 /* Get command from user. No prompt, usually.	*/
 void

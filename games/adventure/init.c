@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.14 2016/01/03 14:38:16 mestre Exp $	*/
+/*	$OpenBSD: init.c,v 1.15 2016/03/08 10:48:39 mestre Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1996/05/21 21:53:05 mrg Exp $	*/
 
 /*-
@@ -37,11 +37,7 @@
 
 /*	Re-coding of advent in C: data initialization	*/
 
-#include <sys/types.h>
-#include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #include "extern.h"
 #include "hdr.h"

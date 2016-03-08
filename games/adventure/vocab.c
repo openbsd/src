@@ -1,4 +1,4 @@
-/*	$OpenBSD: vocab.c,v 1.14 2014/07/13 19:40:57 tedu Exp $	*/
+/*	$OpenBSD: vocab.c,v 1.15 2016/03/08 10:48:39 mestre Exp $	*/
 /*	$NetBSD: vocab.c,v 1.2 1995/03/21 12:05:13 cgd Exp $	*/
 
 /*-
@@ -40,8 +40,9 @@
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "hdr.h"
+
 #include "extern.h"
+#include "hdr.h"
 
 void
 dstroy(int object)

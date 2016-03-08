@@ -1,4 +1,4 @@
-/*	$OpenBSD: done.c,v 1.8 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: done.c,v 1.9 2016/03/08 10:48:39 mestre Exp $	*/
 /*	$NetBSD: done.c,v 1.2 1995/03/21 12:05:01 cgd Exp $	*/
 
 /*-
@@ -39,8 +39,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "hdr.h"
+
 #include "extern.h"
+#include "hdr.h"
 
 int
 score(void)			/* sort of like 20000 */
