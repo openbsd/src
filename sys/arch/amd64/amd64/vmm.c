@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.41 2016/03/08 07:10:01 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.42 2016/03/08 08:36:40 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1474,10 +1474,6 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 	 * here) but that would require us to have proper resume
 	 * handling (resume=1) in the exit handler, so for now we
 	 * will just end up doing an extra vmwrite here.
-	 *
-	 * This can now change from the hardcoded value of 0x1000160
-	 * to the marks[start] from vmd's bootloader. That needs to
-	 * be hoisted up into vcpu create parameters via vm create params.
 	 */
 	vcpu->vc_gueststate.vg_rip = vis->vis_rip;
 	if (vmwrite(VMCS_GUEST_IA32_RIP, vis->vis_rip)) {
@@ -2764,7 +2760,7 @@ vcpu_run_vmx(struct vcpu *vcpu, uint8_t from_exit, int16_t *injint)
 			case VMX_EXIT_TRIPLE_FAULT:
 				break;
 			default:
-				printf("vmx_enter_guest: returning from exit "
+				printf("vcpu_run_vmx: returning from exit "
 				    "with unknown reason %d\n",
 				    vcpu->vc_gueststate.vg_exit_reason);
 				break;
@@ -2894,17 +2890,17 @@ vcpu_run_vmx(struct vcpu *vcpu, uint8_t from_exit, int16_t *injint)
 				yield();
 			}
 		} else if (ret == VMX_FAIL_LAUNCH_INVALID_VMCS) {
-			printf("vmx_enter_guest: failed launch with invalid "
+			printf("vcpu_run_vmx: failed launch with invalid "
 			    "vmcs\n");
 			ret = EINVAL;
 		} else if (ret == VMX_FAIL_LAUNCH_VALID_VMCS) {
 			exit_reason = vcpu->vc_gueststate.vg_exit_reason;
-			printf("vmx_enter_guest: failed launch with valid "
+			printf("vcpu_run_vmx: failed launch with valid "
 			    "vmcs, code=%lld (%s)\n", exit_reason,
 			    vmx_instruction_error_decode(exit_reason));
 			ret = EINVAL;
 		} else {
-			printf("vmx_enter_guest: failed launch for unknown "
+			printf("vcpu_run_vmx: failed launch for unknown "
 			    "reason\n");
 			ret = EINVAL;
 		}
