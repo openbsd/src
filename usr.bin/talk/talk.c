@@ -1,4 +1,4 @@
-/*	$OpenBSD: talk.c,v 1.11 2016/02/05 10:18:01 mestre Exp $	*/
+/*	$OpenBSD: talk.c,v 1.12 2016/03/08 20:07:46 mestre Exp $	*/
 /*	$NetBSD: talk.c,v 1.3 1994/12/09 02:14:25 jtc Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 		if (pledge("stdio tty", NULL) == -1)
 			err(1, "pledge");
 	} else {
-		if (pledge("stdio tty", NULL) == -1)
+		if (pledge("stdio inet tty", NULL) == -1)
 			err(1, "pledge");
 	}
 
