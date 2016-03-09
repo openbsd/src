@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.43 2016/03/08 08:43:50 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.44 2016/03/09 07:41:25 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -593,6 +593,25 @@ vm_intr_pending(struct vm_intr_params *vip)
 		return (ENOENT);
 
 	vcpu->vc_intr = vip->vip_intr;
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * If the vcpu is running on another PCPU, attempt to force it
+	 * to exit to process the pending interrupt. This could race as
+	 * it could be running when we do the check but be stopped by the
+	 * time we send the IPI. In this case, there is a small extra
+	 * overhead to process the IPI but no other side effects.
+	 *
+	 * There is also a chance that the vcpu may have interrupts blocked.
+	 * That's ok as that condition will be checked on exit, and we will
+	 * simply re-enter the guest. This "fast notification" is done only
+	 * as an optimization.
+	 */
+        if (vcpu->vc_state == VCPU_STATE_RUNNING) {
+                x86_send_ipi(vcpu->vc_last_pcpu, X86_IPI_NOP);
+        }
+#endif /* MULTIPROCESSOR */
+
 
 	return (0);
 }
