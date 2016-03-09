@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.279 2016/03/05 16:24:56 ajacoutot Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.280 2016/03/09 16:28:46 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -483,8 +483,6 @@ usr
                 ..
                 sgi
                 ..
-                vax
-                ..
             ..
 
             # ./usr/share/man/man3p
@@ -522,8 +520,6 @@ usr
                 sparc
                 ..
                 sparc64
-                ..
-                vax
                 ..
                 zaurus
                 ..
@@ -590,8 +586,6 @@ usr
                 sparc
                 ..
                 sparc64
-                ..
-                vax
                 ..
                 zaurus
                 ..

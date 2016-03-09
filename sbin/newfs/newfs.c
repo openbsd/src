@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.104 2015/12/06 11:56:47 tobias Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.105 2016/03/09 16:28:47 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -620,44 +620,6 @@ rewritelabel(char *s, int fd, struct disklabel *lp)
 		warn("ioctl (WDINFO)");
 		fatal("%s: can't rewrite disk label", s);
 	}
-#ifdef __vax__
-	if (lp->d_type == DTYPE_SMD && lp->d_flags & D_BADSECT) {
-		int i;
-		int cfd;
-		u_int64_t alt;
-		char specname[64];
-		char blk[1024];
-		char *cp;
-
-		/*
-		 * Make name for 'c' partition.
-		 */
-		if (*s == '\0' ||
-		    strlcpy(specname, s, sizeof(specname)) >= sizeof(specname))
-			fatal("%s: invalid partition name supplied", s);
-		cp = specname + strlen(specname) - 1;
-		if (!isdigit((unsigned char)*cp))
-			*cp = 'c';
-		cfd = open(specname, O_WRONLY);
-		if (cfd < 0)
-			fatal("%s: %s", specname, strerror(errno));
-		memset(blk, 0, sizeof(blk));
-		*(struct disklabel *)(blk + LABELOFFSET) = *lp;
-		alt = lp->d_ncylinders * lp->d_secpercyl - lp->d_nsectors;
-		for (i = 1; i < 11 && i < lp->d_nsectors; i += 2) {
-			off_t offset;
-
-			offset = alt + i;
-			offset *= lp->d_secsize;
-			if (lseek(cfd, offset, SEEK_SET) == -1)
-				fatal("lseek to badsector area: %s",
-				    strerror(errno));
-			if (write(cfd, blk, lp->d_secsize) != lp->d_secsize)
-				warn("alternate label %d write", i/2);
-		}
-		close(cfd);
-	}
-#endif	/*__vax__*/
 }
 
 void

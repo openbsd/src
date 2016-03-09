@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.420 2016/02/15 17:19:56 millert Exp $
+#	$OpenBSD: Makefile,v 1.421 2016/03/09 16:28:46 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -274,7 +274,7 @@ distrib:
 SUBDIR+= etc.alpha etc.amd64 etc.armish etc.armv7
 SUBDIR+= etc.hppa etc.hppa64 etc.i386 etc.landisk etc.loongson etc.luna88k
 SUBDIR+= etc.macppc etc.octeon
-SUBDIR+= etc.sgi etc.socppc etc.sparc etc.sparc64 etc.vax etc.zaurus
+SUBDIR+= etc.sgi etc.socppc etc.sparc etc.sparc64 etc.zaurus
 
 .include <bsd.subdir.mk>
 .include <bsd.prog.mk>

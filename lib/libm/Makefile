@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.108 2015/09/18 07:48:36 miod Exp $
+#  $OpenBSD: Makefile,v 1.109 2016/03/09 16:28:47 deraadt Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -12,7 +12,6 @@
 #  is preserved.
 #  ====================================================
 
-# SUBDIR is only used to install the infnan(3/VAX) manual page.
 SUBDIR = man
 
 .if (${MACHINE_ARCH} == "alpha")
@@ -68,10 +67,6 @@ ARCH_SRCS = e_sqrt.c e_sqrtf.c s_fabsf.c
 .elif (${MACHINE_ARCH} == "sparc64")
 .PATH:	${.CURDIR}/arch/sparc64
 ARCH_SRCS = e_sqrtl.c
-.elif (${MACHINE_ARCH} == "vax")
-.PATH:	${.CURDIR}/arch/vax
-NOIEEE_ARCH = n_argred.S n_infnan.S n_sqrt.S
-ARCH_SRCS = n_atan2.S n_cbrt.S n_hypot.S n_sincos.S n_support.S n_tan.S
 .endif
 
 .PATH:	${.CURDIR}/man
@@ -131,18 +126,6 @@ LONG_SRCS = e_acoshl.c e_acosl.c e_asinl.c e_atan2l.c e_atanhl.c \
 	s_remquol.c s_rintl.c s_roundl.c s_scalbnl.c s_sinl.c \
 	s_tanhl.c s_tanl.c s_truncl.c
 
-# math routines for non-IEEE architectures.
-NOIEEE_SRCS = n_acosh.c n_asincos.c n_asinh.c n_atan.c \
-	n_atanh.c n_cosh.c \
-	n_erf.c n_exp.c n_exp__E.c n_expm1.c n_floor.c \
-	n_fmod.c \
-	n_j0.c n_j1.c n_jn.c n_lgamma.c n_log.c n_log10.c \
-	n_log1p.c n_log__L.c n_nan.c n_pow.c \
-	n_sinh.c n_tanh.c n_tgamma.c n_lrint.c
-# there for reference, they're replaced by an asm version on vax
-NOIEEE_SRCS += n_argred.c n_atan2.c n_cbrt.c n_hypot.c n_infnan.c \
-	n_sincos.c n_sqrt.c n_support.c n_tan.c
-
 # math routines that are completely MI
 PURE_SRCS = s_cabs.c s_cacos.c s_cacosh.c s_carg.c s_casin.c \
 	s_casinh.c s_catan.c s_catanh.c s_ccos.c s_ccosh.c s_cexp.c \
@@ -151,9 +134,6 @@ PURE_SRCS = s_cabs.c s_cacos.c s_cacosh.c s_carg.c s_casin.c \
 	s_ctanh.c s_fdim.c s_fmax.c s_fmaxf.c s_fmin.c s_fminf.c \
 	s_cproj.c s_cprojf.c s_round.c s_roundf.c s_scalbln.c s_signgam.c 
 
-.if (${MACHINE_ARCH} == "vax")
-SRCS=	${NOIEEE_SRCS} ${NOIEEE_ARCH} ${PURE_SRCS}
-.else
 SRCS=	${COMMON_SRCS} ${PURE_SRCS}
 .if (${MACHINE_ARCH} == "amd64") || (${MACHINE_ARCH} == "i386")
 .PATH:		${.CURDIR}/src/ld80
@@ -165,18 +145,11 @@ SRCS+=		${LONG_SRCS}
 CPPFLAGS+=	-I${.CURDIR}/src -I${.CURDIR}/src/ld128
 SRCS+=		${LONG_SRCS}
 .endif
-.endif
 
 # Substitute common sources with any arch specific sources 
 .for i in ${ARCH_SRCS}
     SRCS:=${SRCS:S/${i:S/.S/.c/}/$i/}
 .endfor
-
-.if (${MACHINE_ARCH} == "vax")
-.for i in ${NOIEEE_ARCH}
-    SRCS:=${SRCS:S/${i:S/.S/.c/}/$i/}
-.endfor
-.endif
 
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	copysign.3 cos.3 cosh.3 erf.3 exp.3 \

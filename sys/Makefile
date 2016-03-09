@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.43 2015/12/01 08:13:29 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.44 2016/03/09 16:28:45 deraadt Exp $
 #	$NetBSD: Makefile,v 1.5 1995/09/15 21:05:21 pk Exp $
 
 SUBDIR=	dev/microcode \
@@ -7,7 +7,7 @@ SUBDIR=	dev/microcode \
 	arch/landisk arch/loongson arch/luna88k \
 	arch/macppc arch/octeon \
 	arch/sgi arch/socppc arch/sparc arch/sparc64 \
-	arch/vax arch/zaurus
+	arch/zaurus
 
 tags:
 	cd ${.CURDIR}/kern; make tags

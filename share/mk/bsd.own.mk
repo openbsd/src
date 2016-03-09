@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.172 2015/10/26 10:43:42 bluhm Exp $
+#	$OpenBSD: bsd.own.mk,v 1.173 2016/03/09 16:28:47 deraadt Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -17,10 +17,9 @@ YP?=		yes
 # Set `DEBUGLIBS' to `yes' to build libraries with debugging symbols
 DEBUGLIBS?=	no
 
-GCC3_ARCH=m88k vax
+GCC3_ARCH=m88k
 
 # arm: needs to switch away from SJLJ exceptions
-# vax: no shared libraries
 # m88k: ?
 PIE_ARCH=alpha amd64 hppa i386 mips64 mips64el powerpc sh sparc sparc64
 STATICPIE_ARCH=alpha amd64 hppa i386 mips64 mips64el powerpc sh sparc sparc64
@@ -114,12 +113,6 @@ STATIC?=	-static ${STATICPIE}
 # source (``symlinks''), or a separate copy (``copies''); (latter useful
 # in environments where it's not possible to keep /sys publicly readable)
 #SYS_INCLUDE= 	symlinks
-
-# don't try to generate PIC versions of libraries on machines
-# which don't support PIC.
-.if ${MACHINE_ARCH} == "vax"
-NOPIC=
-.endif
 
 # pic relocation flags.
 .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "sparc64")

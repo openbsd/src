@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.63 2016/01/13 13:06:51 gsoares Exp $
+#	$OpenBSD: bsd.README,v 1.64 2016/03/09 16:28:47 deraadt Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -116,8 +116,8 @@ MANOWN		Manual owner.
 
 MANMODE		Manual mode.
 
-MANSUBDIR	Subdirectory under the manual page section, i.e. "vax"
-		or "tahoe" for machine specific manual pages.
+MANSUBDIR	Subdirectory under the manual page section, i.e. "amd64"
+		or "sparc64" for machine specific manual pages.
 
 MAN		The manual pages to be installed (use a .1 - .9 suffix).
 
