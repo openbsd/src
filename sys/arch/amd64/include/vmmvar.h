@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.9 2016/02/20 20:49:08 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.10 2016/03/09 08:06:59 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -100,6 +100,11 @@
 #define VM_EXIT_TERMINATED			0xFFFE
 #define VM_EXIT_NONE				0xFFFF
 
+/*
+ * VCPU state values. Note that there is a conversion function in vmm.c
+ * (vcpu_state_decode) that converts these to human readable strings,
+ * so this enum and vcpu_state_decode should be kept in sync.
+ */
 enum {
 	VCPU_STATE_STOPPED,
 	VCPU_STATE_RUNNING,
@@ -251,7 +256,7 @@ struct vm_intr_params {
 	/* Input parameters to VMM_IOC_INTR */
 	uint32_t		vip_vm_id;
 	uint32_t		vip_vcpu_id;
-	uint8_t			vip_intr;
+	uint16_t		vip_intr;
 };
 
 /* IOCTL definitions */
@@ -376,7 +381,7 @@ struct vcpu {
 	struct cpu_info *vc_last_pcpu;
 	union vm_exit vc_exit;
 
-	uint8_t vc_intr;
+	uint16_t vc_intr;
 
 	/* VMX only */
 	uint64_t vc_vmx_basic;
