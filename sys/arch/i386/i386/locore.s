@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.165 2016/03/03 12:32:23 mpi Exp $	*/
+/*	$OpenBSD: locore.s,v 1.166 2016/03/09 13:46:14 mpi Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1282,15 +1282,11 @@ ENTRY(savectx)
  * (possibly the next clock tick).  Thus, we disable interrupt before checking,
  * and only enable them again on the final `iret' or before calling the AST
  * handler.
- *
- * XXX - debugger traps are now interrupt gates so at least bdb doesn't lose
- * control. STI gives the standard losing behaviour for ddb and kgdb.
  */
 #define	IDTVEC(name)	ALIGN_TEXT; .globl X##name; X##name:
 
 #define	TRAP(a)		pushl $(a) ; jmp _C_LABEL(alltraps)
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)
-#define STI		testb $(PSL_I>>8),13(%esp) ; jz 1f ; sti ; 1: ;
 
 
 	.text
@@ -1304,12 +1300,10 @@ IDTVEC(dbg)
 	andb	$~0xf,%al
 	movl	%eax,%dr6
 	popl	%eax
-	STI
 	TRAP(T_TRCTRAP)
 IDTVEC(nmi)
 	ZTRAP(T_NMI)
 IDTVEC(bpt)
-	STI
 	ZTRAP(T_BPTFLT)
 IDTVEC(ofl)
 	ZTRAP(T_OFLOW)
@@ -1405,7 +1399,6 @@ IDTVEC(align)
  * This will cause the process to get a SIGBUS.
  */
 NENTRY(resume_iret)
-	sti
 	ZTRAP(T_PROTFLT)
 NENTRY(resume_pop_ds)
 	pushl	%es
@@ -1430,6 +1423,7 @@ NENTRY(resume_pop_fs)
  */
 NENTRY(alltraps)
 	INTRENTRY
+	sti
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPL,%ebx
