@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.61 2016/03/07 19:41:50 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.62 2016/03/09 22:07:46 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -175,11 +175,6 @@ struct urtwn_softc {
 #define	URTWN_CHIP_UMC_A_CUT	0x08
 #define	URTWN_CHIP_88E		0x10
 
-	void				(*sc_rf_write)(struct urtwn_softc *,
-					    int, uint8_t, uint32_t);
-	int				(*sc_power_on)(struct urtwn_softc *);
-	int				(*sc_dma_init)(struct urtwn_softc *);
-
 	uint8_t				board_type;
 	uint8_t				regulatory;
 	uint8_t				pa_setting;
@@ -346,8 +341,7 @@ uint8_t		urtwn_read_1(struct urtwn_softc *, uint16_t);
 uint16_t	urtwn_read_2(struct urtwn_softc *, uint16_t);
 uint32_t	urtwn_read_4(struct urtwn_softc *, uint16_t);
 int		urtwn_fw_cmd(struct urtwn_softc *, uint8_t, const void *, int);
-void		urtwn_r92c_rf_write(struct urtwn_softc *, int, uint8_t, uint32_t);
-void		urtwn_r88e_rf_write(struct urtwn_softc *, int, uint8_t, uint32_t);
+void		urtwn_rf_write(struct urtwn_softc *, int, uint8_t, uint32_t);
 uint32_t	urtwn_rf_read(struct urtwn_softc *, int, uint8_t);
 void		urtwn_cam_write(struct urtwn_softc *, uint32_t, uint32_t);
 int		urtwn_llt_write(struct urtwn_softc *, uint32_t, uint32_t);
@@ -942,29 +936,18 @@ urtwn_fw_cmd(struct urtwn_softc *sc, uint8_t id, const void *buf, int len)
 	return (0);
 }
 
-__inline void
+void
 urtwn_rf_write(struct urtwn_softc *sc, int chain, uint8_t addr, uint32_t val)
 {
+	uint32_t param_addr;
 
-	sc->sc_rf_write(sc, chain, addr, val);
-}
+	if (sc->chip & URTWN_CHIP_88E)
+		param_addr = SM(R88E_LSSI_PARAM_ADDR, addr);
+	else
+		param_addr = SM(R92C_LSSI_PARAM_ADDR, addr);
 
-void
-urtwn_r92c_rf_write(struct urtwn_softc *sc, int chain, uint8_t addr,
-    uint32_t val)
-{
 	urtwn_bb_write(sc, R92C_LSSI_PARAM(chain),
-	    SM(R92C_LSSI_PARAM_ADDR, addr) |
-	    SM(R92C_LSSI_PARAM_DATA, val));
-}
-
-void
-urtwn_r88e_rf_write(struct urtwn_softc *sc, int chain, uint8_t addr,
-uint32_t val)
-{
-	urtwn_bb_write(sc, R92C_LSSI_PARAM(chain),
-	    SM(R88E_LSSI_PARAM_ADDR, addr) |
-	    SM(R92C_LSSI_PARAM_DATA, val));
+	    param_addr | SM(R92C_LSSI_PARAM_DATA, val));
 }
 
 uint32_t
@@ -1160,10 +1143,6 @@ urtwn_read_rom(struct urtwn_softc *sc)
 	sc->regulatory = MS(rom->rf_opt1, R92C_ROM_RF1_REGULATORY);
 	DPRINTF(("regulatory type=%d\n", sc->regulatory));
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, rom->macaddr);
-
-	sc->sc_rf_write = urtwn_r92c_rf_write;
-	sc->sc_power_on = urtwn_r92c_power_on;
-	sc->sc_dma_init = urtwn_r92c_dma_init;
 }
 
 void
@@ -1222,10 +1201,6 @@ urtwn_r88e_read_rom(struct urtwn_softc *sc)
 		sc->ofdm_tx_pwr_diff |= 0xf0;
 	sc->regulatory = MS(sc->r88e_rom[0xc1], R92C_ROM_RF1_REGULATORY);
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, &sc->r88e_rom[0xd7]);
-
-	sc->sc_rf_write = urtwn_r88e_rf_write;
-	sc->sc_power_on = urtwn_r88e_power_on;
-	sc->sc_dma_init = urtwn_r88e_dma_init;
 }
 
 int
@@ -2424,13 +2399,6 @@ urtwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return (error);
 }
 
-__inline int
-urtwn_power_on(struct urtwn_softc *sc)
-{
-
-	return sc->sc_power_on(sc);
-}
-
 int
 urtwn_r92c_power_on(struct urtwn_softc *sc)
 {
@@ -2778,13 +2746,6 @@ urtwn_load_firmware(struct urtwn_softc *sc)
  fail:
 	free(fw, M_DEVBUF, 0);
 	return (error);
-}
-
-__inline int
-urtwn_dma_init(struct urtwn_softc *sc)
-{
-
-	return sc->sc_dma_init(sc);
 }
 
 int
@@ -3691,12 +3652,18 @@ urtwn_init(struct ifnet *ifp)
 	}
 
 	/* Power on adapter. */
-	error = urtwn_power_on(sc);
+	if (sc->chip & URTWN_CHIP_88E)
+		error = urtwn_r88e_power_on(sc);
+	else
+		error = urtwn_r92c_power_on(sc);
 	if (error != 0)
 		goto fail;
 
 	/* Initialize DMA. */
-	error = urtwn_dma_init(sc);
+	if (sc->chip & URTWN_CHIP_88E)
+		error = urtwn_r88e_dma_init(sc);
+	else
+		error = urtwn_r92c_dma_init(sc);
 	if (error != 0)
 		goto fail;
 
