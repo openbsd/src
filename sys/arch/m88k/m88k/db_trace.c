@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.14 2016/03/01 11:56:00 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.15 2016/03/09 08:58:50 mpi Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -80,23 +80,7 @@ extern label_t *db_recover;
  * m88k trace/register state interface for ddb.
  */
 
-/* lifted from mips */
-static int
-db_setf_regs(struct db_variable      *vp,
-	db_expr_t		*valuep,
-	int			op)		/* read/write */
-{
-	int   *regp = (int *) ((char *) DDB_REGS + (int) (vp->valuep));
-
-	if (op == DB_VAR_GET)
-		*valuep = *regp;
-	else if (op == DB_VAR_SET)
-		*regp = *valuep;
-
-	return (0); /* silence warning */
-}
-
-#define N(s, x)  {s, (long *)&(((db_regs_t *) 0)->x), db_setf_regs}
+#define N(s, x)  {s, (long *)&ddb_regs.x, FCN_NULL}
 
 struct db_variable db_regs[] = {
 	N("r1", r[1]),     N("r2", r[2]),    N("r3", r[3]),    N("r4", r[4]),
@@ -864,7 +848,7 @@ db_stack_trace_print(db_expr_t addr,
 
 	switch (style) {
 	case Default:
-		regs = DDB_REGS;
+		regs = &ddb_regs;
 		break;
 	case Frame:
 		regs = arg.frame;

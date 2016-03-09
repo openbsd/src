@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.20 2014/05/31 11:19:06 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.21 2016/03/09 08:58:50 mpi Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -363,7 +363,7 @@ m88k_db_registers(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	m88k_db_print_frame((db_expr_t)DDB_REGS, TRUE, 0, modif);
+	m88k_db_print_frame((db_expr_t)&ddb_regs, TRUE, 0, modif);
 }
 
 /*
@@ -557,7 +557,7 @@ m88k_db_where(addr, have_addr, count, modif)
 	db_expr_t offset;
 	db_addr_t l;
 
-	l = PC_REGS(DDB_REGS); /* clear low bits */
+	l = PC_REGS(&ddb_regs); /* clear low bits */
 
 	db_find_xtrn_sym_and_offset(l, &name, &offset);
 	if (name && (u_int)offset <= db_maxoff)
@@ -585,7 +585,7 @@ m88k_db_frame_search(addr, have_addr, count, modif)
 	if (have_addr)
 		addr &= ~3; /* round to word */
 	else
-		addr = (DDB_REGS->r[31]);
+		addr = (ddb_regs.r[31]);
 
 	/* walk back up stack until 8k boundry, looking for 0 */
 	while (addr & ((8 * 1024) - 1)) {
