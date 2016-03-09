@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.42 2016/03/01 16:43:08 naddy Exp $
+#	$OpenBSD: Makefile,v 1.43 2016/03/09 16:48:19 deraadt Exp $
 
 # Makefile for kernel tags files, init_sysent, etc.
 
 ARCH=	alpha amd64 armish armv7 \
 	hppa hppa64 i386 landisk loongson \
 	luna88k macppc octeon sgi socppc \
-	sparc sparc64 vax zaurus
+	sparc sparc64 zaurus
 
 all:
 	@echo "Doing nothing.  Did you want make syscalls?"
