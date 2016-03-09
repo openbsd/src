@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.42 2015/11/08 20:45:57 naddy Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.43 2016/03/09 13:38:50 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -60,7 +60,8 @@ int	rrticks_init;		/* # of hardclock ticks per roundrobin() */
 struct __mp_lock sched_lock;
 #endif
 
-void schedcpu(void *);
+void	 schedcpu(void *);
+void	 updatepri(struct proc *);
 
 void
 scheduler_start(void)
@@ -70,10 +71,9 @@ scheduler_start(void)
 	/*
 	 * We avoid polluting the global namespace by keeping the scheduler
 	 * timeouts static in this function.
-	 * We setup the timeouts here and kick schedcpu and roundrobin once to
-	 * make them do their job.
+	 * We setup the timeout here and kick schedcpu once to make it do
+	 * its job.
 	 */
-
 	timeout_set(&schedcpu_to, schedcpu, &schedcpu_to);
 
 	rrticks_init = hz / 10;
@@ -218,9 +218,7 @@ schedcpu(void *arg)
 
 	LIST_FOREACH(p, &allproc, p_list) {
 		/*
-		 * Increment time in/out of memory and sleep time
-		 * (if sleeping).  We ignore overflow; with 16-bit int's
-		 * (remember them?) overflow takes 45 days.
+		 * Increment sleep time (if sleeping). We ignore overflow.
 		 */
 		if (p->p_stat == SSLEEP || p->p_stat == SSTOP)
 			p->p_slptime++;
@@ -233,7 +231,7 @@ schedcpu(void *arg)
 			continue;
 		SCHED_LOCK(s);
 		/*
-		 * p_pctcpu is only for ps.
+		 * p_pctcpu is only for diagnostic tools such as ps.
 		 */
 #if	(FSHIFT >= CCPU_SHIFT)
 		p->p_pctcpu += (phz == 100)?
@@ -550,7 +548,6 @@ resetpriority(struct proc *p)
  * processes which haven't run much recently, and to round-robin among other
  * processes.
  */
-
 void
 schedclock(struct proc *p)
 {
@@ -715,4 +712,3 @@ sysctl_hwperfpolicy(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	return 0;
 }
 #endif
-

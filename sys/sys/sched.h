@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.39 2015/09/13 11:15:11 kettenis Exp $	*/
+/*	$OpenBSD: sched.h,v 1.40 2016/03/09 13:38:50 mpi Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -139,7 +139,6 @@ void schedclock(struct proc *);
 struct cpu_info;
 void roundrobin(struct cpu_info *);
 void scheduler_start(void);
-void updatepri(struct proc *);
 void userret(struct proc *p);
 
 void sched_init_cpu(struct cpu_info *);

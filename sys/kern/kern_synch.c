@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.128 2016/02/01 23:34:31 dlg Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.129 2016/03/09 13:38:50 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 #endif
 
 int	thrsleep(struct proc *, struct sys___thrsleep_args *);
-
+int	thrsleep_unlock(void *, int);
 
 /*
  * We're only looking at 7 bits of the address; everything is
@@ -436,7 +436,6 @@ sys_sched_yield(struct proc *p, void *v, register_t *retval)
 	return (0);
 }
 
-int thrsleep_unlock(void *, int);
 int
 thrsleep_unlock(void *lock, int lockflags)
 {

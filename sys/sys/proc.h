@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.216 2016/03/06 05:20:26 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.217 2016/03/09 13:38:50 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -323,7 +323,7 @@ struct proc {
 	sigset_t p_sigmask;	/* Current signal mask. */
 
 	u_char	p_priority;	/* Process priority. */
-	u_char	p_usrpri;	/* User-priority based on p_cpu and ps_nice. */
+	u_char	p_usrpri;	/* User-priority based on p_estcpu and ps_nice. */
 	char	p_comm[MAXCOMLEN+1];
 
 	int	p_pledge_syscall;	/* Cache of current syscall */
