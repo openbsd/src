@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.2 2016/03/09 20:35:08 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.3 2016/03/09 20:36:16 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -152,7 +152,7 @@ void		rtwn_stop(struct ifnet *);
 #define	rtwn_bb_write	rtwn_write_4
 #define rtwn_bb_read	rtwn_read_4
 
-void
+int
 rtwn_attach(struct device *pdev, struct rtwn_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -169,7 +169,7 @@ rtwn_attach(struct device *pdev, struct rtwn_softc *sc)
 	error = rtwn_read_chipid(sc);
 	if (error != 0) {
 		printf("%s: unsupported test chip\n", sc->sc_pdev->dv_xname);
-		return;
+		return (ENXIO);
 	}
 
 	/* Determine number of Tx/Rx chains. */
@@ -250,6 +250,8 @@ rtwn_attach(struct device *pdev, struct rtwn_softc *sc)
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = rtwn_newstate;
 	ieee80211_media_init(ifp, rtwn_media_change, ieee80211_media_status);
+
+	return (0);
 }
 
 int

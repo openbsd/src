@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.16 2016/03/09 18:18:28 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.17 2016/03/09 20:36:16 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -305,6 +305,7 @@ rtwn_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (error != 0) {
 			printf("%s: could not allocate Tx buffers\n",
 			    sc->sc_dev.dv_xname);
+			rtwn_free_rx_list(sc);
 			return;
 		}
 	}
@@ -324,7 +325,13 @@ rtwn_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sc.sc_ops.disable_intr = rtwn_disable_intr;
 	sc->sc_sc.sc_ops.stop = rtwn_pci_stop;
 	sc->sc_sc.sc_ops.is_oactive = rtwn_is_oactive;
-	rtwn_attach(&sc->sc_dev, &sc->sc_sc);
+	error = rtwn_attach(&sc->sc_dev, &sc->sc_sc);
+	if (error != 0) {
+		rtwn_free_rx_list(sc);
+		for (i = 0; i < RTWN_NTXQUEUES; i++)
+			rtwn_free_tx_list(sc, i);
+		return;
+	}
 
 	/* ifp is now valid */
 	ifp = &sc->sc_sc.sc_ic.ic_if;

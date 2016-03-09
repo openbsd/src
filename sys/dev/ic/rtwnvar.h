@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwnvar.h,v 1.1 2016/03/09 18:18:28 stsp Exp $	*/
+/*	$OpenBSD: rtwnvar.h,v 1.2 2016/03/09 20:36:16 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -76,7 +76,7 @@ struct rtwn_softc {
 	uint32_t			rf_chnlbw[R92C_MAX_CHAINS];
 };
 
-void		rtwn_attach(struct device *, struct rtwn_softc *);
+int		rtwn_attach(struct device *, struct rtwn_softc *);
 int		rtwn_detach(struct rtwn_softc *, int);
 int		rtwn_activate(struct rtwn_softc *, int);
 int8_t		rtwn_get_rssi(struct rtwn_softc *, int, void *);
