@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.12 2015/12/05 10:07:55 tedu Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.13 2016/03/09 04:19:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -351,164 +351,52 @@ extern void vlan_start(struct ifnet *ifp);
 struct mbuf *
 mpw_vlan_handle(struct mbuf *m, struct mpw_softc *sc)
 {
-	int needsdummy = 0;
-	int fakeifv = 0;
-	struct ifvlan *ifv = NULL;
-	struct ether_vlan_header *evh;
-	struct ifnet *ifp, *ifp0;
-	int nvlan, moff;
-	struct ether_header eh;
-	struct ifvlan fifv;
-	struct vlan_shim {
-		uint16_t	vs_tpid;
-		uint16_t	vs_tci;
-	} vs;
+	struct ifnet *ifp;
+	struct ifvlan *ifv;
+ 
+	uint16_t type = ETHERTYPE_QINQ;
+	uint16_t tag = 0;
+ 
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp != NULL && ifp->if_start == vlan_start &&
+	    ISSET(ifp->if_flags, IFF_RUNNING)) {
+ 		ifv = ifp->if_softc;
+		type = ifv->ifv_type;
+		tag = ifv->ifv_tag;
+ 	}
+	if_put(ifp);
 
-	ifp = ifp0 = if_get(m->m_pkthdr.ph_ifidx);
-	KASSERT(ifp != NULL);
-	if (ifp->if_start == vlan_start)
-		ifv = ifp->if_softc;
-
-	/* If we were relying on VLAN HW support, fake an ifv */
-	if (ifv == NULL && (m->m_flags & M_VLANTAG) == M_VLANTAG) {
-		memset(&fifv, 0, sizeof(fifv));
-		fifv.ifv_tag = EVL_VLANOFTAG(m->m_pkthdr.ether_vtag);
-		fifv.ifv_prio = EVL_PRIOFTAG(m->m_pkthdr.ether_vtag);
-		ifv = &fifv;
-		fakeifv = 1;
-	}
-
-	/*
-	 * Always remove VLAN flag as we are inserting them here. Also we
-	 * might get a tagged packet with no VLAN interface, in this case
-	 * we can't do anything.
-	 */
-	m->m_flags &= ~M_VLANTAG;
-
-	/*
-	 * Do VLAN managing.
-	 *
-	 * Case ethernet (raw):
-	 *  No VLAN: just pass it.
-	 *  One or more VLANs: insert VLAN tag back.
-	 *
-	 * NOTE: In case of raw access mode, the if_vlan will do the job
-	 * of dropping non tagged packets for us.
-	 */
-	if (sc->sc_type == IMR_TYPE_ETHERNET && ifv == NULL) {
-		if_put(ifp0);
-		return (m);
-	}
-
-	/*
-	 * Case ethernet-tagged:
-	 *  0 VLAN: Drop packet
-	 *  1 VLAN: Tag packet with dummy VLAN
-	 *  >1 VLAN: Nothing
-	 */
-	if (sc->sc_type == IMR_TYPE_ETHERNET_TAGGED && ifv == NULL) {
-		m_freem(m);
-		if_put(ifp0);
-		return (NULL);
-	}
-
-	/* Copy and remove ethernet header */
-	m_copydata(m, 0, sizeof(eh), (caddr_t) &eh);
-	if (ntohs(eh.ether_type) == ETHERTYPE_VLAN ||
-	    ntohs(eh.ether_type) == ETHERTYPE_QINQ)
-		m_adj(m, sizeof(*evh));
-	else
-		m_adj(m, sizeof(eh));
-
-	/* Count VLAN stack size */
-	nvlan = 0;
-	while ((ifp = ifv->ifv_p) != NULL && ifp->if_start == vlan_start) {
-		ifv = ifp->if_softc;
-		nvlan++;
-	}
-	moff = sizeof(*evh) + (nvlan * EVL_ENCAPLEN);
-
-	/* The mode ethernet tagged always need at least 2 VLANs */
-	if (sc->sc_type == IMR_TYPE_ETHERNET_TAGGED && nvlan == 0) {
-		needsdummy = 1;
-		moff += EVL_ENCAPLEN;
-	}
-
-	/* Add VLAN to the beginning of the packet */
-	M_PREPEND(m, moff, M_NOWAIT);
-	if (m == NULL) {
-		if_put(ifp0);
-		return (NULL);
-	}
-
-	/* Copy original ethernet type */
-	moff -= sizeof(eh.ether_type);
-	m_copyback(m, moff, sizeof(eh.ether_type), &eh.ether_type, M_NOWAIT);
-
-	/* Fill inner VLAN values */
-	ifv = ifp0->if_softc;
-	while (nvlan-- > 0) {
-		vs.vs_tci = htons((ifv->ifv_prio << EVL_PRIO_BITS) +
-		    ifv->ifv_tag);
-		vs.vs_tpid = htons(ifv->ifv_type);
-
-		moff -= sizeof(vs);
-		m_copyback(m, moff, sizeof(vs), &vs, M_NOWAIT);
-
-		ifp = ifv->ifv_p;
-		ifv = ifp->if_softc;
-	}
-
-	/* Copy ethernet header back */
-	evh = mtod(m, struct ether_vlan_header *);
-	memcpy(evh->evl_dhost, eh.ether_dhost, sizeof(evh->evl_dhost));
-	memcpy(evh->evl_shost, eh.ether_shost, sizeof(evh->evl_shost));
-
-	if (fakeifv)
-		ifv = &fifv;
-
-	/* Insert the last VLAN and optionally a dummy VLAN */
-	if (needsdummy) {
-		evh->evl_encap_proto = ntohs(ETHERTYPE_QINQ);
-		evh->evl_tag = 0;
-
-		vs.vs_tci = ntohs((m->m_pkthdr.pf.prio << EVL_PRIO_BITS) +
-		    ifv->ifv_tag);
-		vs.vs_tpid = ntohs(ETHERTYPE_VLAN);
-		m_copyback(m, moff, sizeof(vs), &vs, M_NOWAIT);
-	} else {
-		evh->evl_encap_proto = (nvlan > 0) ?
-		    ntohs(ETHERTYPE_QINQ) : ntohs(ETHERTYPE_VLAN);
-		evh->evl_tag = ntohs((m->m_pkthdr.pf.prio << EVL_PRIO_BITS) +
-		    ifv->ifv_tag);
-	}
-
-	if_put(ifp0);
-
-	return (m);
+	return (vlan_inject(m, type, tag));
 }
 #endif /* NVLAN */
 
 void
-mpw_start(struct ifnet *ifp0)
+mpw_start(struct ifnet *ifp)
 {
-	struct mpw_softc *sc = ifp0->if_softc;
-	struct mbuf *m;
+	struct mpw_softc *sc = ifp->if_softc;
 	struct rtentry *rt;
-	struct ifnet *ifp;
+	struct ifnet *p;
+	struct mbuf *m;
 	struct shim_hdr *shim;
 	struct sockaddr_storage ss;
 
-	rt = rtalloc((struct sockaddr *) &sc->sc_nexthop, RT_RESOLVE, 0);
-	if (!rtisvalid(rt)) {
-		rtfree(rt);
+	if (!ISSET(ifp->if_flags, IFF_RUNNING) ||
+	    sc->sc_rshim.shim_label == 0 ||
+	    sc->sc_type == IMR_TYPE_NONE) {
+		IFQ_PURGE(&ifp->if_snd);
 		return;
 	}
 
-	ifp = if_get(rt->rt_ifidx);
-	if (ifp == NULL) {
-		rtfree(rt);
-		return;
+	rt = rtalloc((struct sockaddr *)&sc->sc_nexthop, RT_RESOLVE, 0);
+	if (!rtisvalid(rt)) {
+		IFQ_PURGE(&ifp->if_snd);
+		goto rtfree;
+	}
+
+	p = if_get(rt->rt_ifidx);
+	if (p == NULL) {
+		IFQ_PURGE(&ifp->if_snd);
+		goto rtfree;
 	}
 
 	/*
@@ -516,38 +404,29 @@ mpw_start(struct ifnet *ifp0)
 	 * the right place.
 	 */
 	memcpy(&ss, &sc->sc_nexthop, sizeof(sc->sc_nexthop));
-	((struct sockaddr *) &ss)->sa_family = AF_MPLS;
+	((struct sockaddr *)&ss)->sa_family = AF_MPLS;
 
-	for (;;) {
-		IFQ_DEQUEUE(&ifp0->if_snd, m);
-		if (m == NULL)
-			break;
-
-		if ((ifp0->if_flags & IFF_RUNNING) == 0 ||
-		    sc->sc_rshim.shim_label == 0 ||
-		    sc->sc_type == IMR_TYPE_NONE) {
-			m_freem(m);
-			continue;
-		}
-
-#if NVLAN > 0
-		m = mpw_vlan_handle(m, sc);
-		if (m == NULL)
-			continue;
-#else
-		/* Ethernet tagged doesn't work without VLANs'*/
-		if (sc->sc_type == IMR_TYPE_ETHERNET_TAGGED) {
-			m_freem(m);
-			continue;
-		}
-#endif /* NVLAN */
-
+	while ((m = ifq_dequeue(&ifp->if_snd)) != NULL) {
 #if NBPFILTER > 0
 		if (sc->sc_if.if_bpf)
 			bpf_mtap(sc->sc_if.if_bpf, m, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER */
 
-		if (sc->sc_flags & IMR_FLAG_CONTROLWORD) {
+		if (sc->sc_type == IMR_TYPE_ETHERNET_TAGGED) {
+ #if NVLAN > 0
+			m = mpw_vlan_handle(m, sc);
+			if (m == NULL) {
+				ifp->if_oerrors++;
+				continue;
+			}
+ #else
+			/* Ethernet tagged doesn't work without VLANs'*/
+ 			m_freem(m);
+ 			continue;
+ #endif /* NVLAN */
+		}
+ 
+ 		if (sc->sc_flags & IMR_FLAG_CONTROLWORD) {
 			M_PREPEND(m, sizeof(*shim), M_NOWAIT);
 			if (m == NULL)
 				continue;
@@ -567,9 +446,10 @@ mpw_start(struct ifnet *ifp0)
 		/* XXX: MPLS only uses domain 0 */
 		m->m_pkthdr.ph_rtableid = 0;
 
-		mpls_output(ifp, m, (struct sockaddr *) &ss, rt);
+		mpls_output(p, m, (struct sockaddr *)&ss, rt);
 	}
 
-	if_put(ifp);
+	if_put(p);
+rtfree:
 	rtfree(rt);
 }
