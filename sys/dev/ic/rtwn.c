@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.1 2016/03/09 18:18:28 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.2 2016/03/09 20:35:08 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -283,7 +283,7 @@ rtwn_activate(struct rtwn_softc *sc, int act)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	switch (act) {
-	case DVACT_SUSPEND:
+	case DVACT_QUIESCE: /* rtwn_stop() may sleep */
 		if (ifp->if_flags & IFF_RUNNING)
 			rtwn_stop(ifp);
 		break;
