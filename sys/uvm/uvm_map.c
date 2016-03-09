@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.207 2016/03/06 08:56:16 stefan Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.208 2016/03/09 16:45:43 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3769,13 +3769,11 @@ uvm_map_hint(struct vmspace *vm, vm_prot_t prot, vaddr_t minaddr,
 	 */
 	if (vm->vm_dused < spacing >> PAGE_SHIFT)
 		addr += BRKSIZ;
-#if !defined(__vax__)
 	if (addr < maxaddr) {
 		while (spacing > maxaddr - addr)
 			spacing >>= 1;
 	}
 	addr += arc4random() & spacing;
-#endif
 	return (round_page(addr));
 }
 

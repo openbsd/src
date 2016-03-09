@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.60 2015/10/08 15:58:38 kettenis Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.61 2016/03/09 16:45:43 deraadt Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -243,7 +243,7 @@ psize_t		uvm_pagecount(struct uvm_constraint_range*);
 
 #if  VM_PHYSSEG_MAX == 1
 /*
- * Inline functions for archs like the vax where function calls are expensive.
+ * Inline functions for archs where function calls are expensive.
  */
 /*
  * vm_physseg_find: find vm_physseg structure that belongs to a PA
