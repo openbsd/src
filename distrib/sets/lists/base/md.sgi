@@ -803,6 +803,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/qlavar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/qlwreg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/qlwvar.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/r92creg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/revar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/rf3000reg.ph
@@ -818,6 +819,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/rtl8225reg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/rtsxreg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/rtsxvar.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/rtwnvar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/rtwreg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/rtwvar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/s3_617.ph
@@ -2199,4 +2201,3 @@
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/r92creg.ph
