@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.84 2016/02/02 15:23:07 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.85 2016/03/09 12:55:18 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -113,9 +113,8 @@ main(int argc, char **argv)
 
 	if (fstat(fd, &st) == -1)
 		err(1, "can't fstat %s", *argv);
-	if (!S_ISCHR(st.st_mode) && !S_ISREG(st.st_mode))
-		errx(1, "%s is not a character device or a regular file",
-		    *argv);
+	if (!S_ISCHR(st.st_mode))
+		errx(1, "%s is not a character device", *argv);
 
 	if (ioctl(fd, DIOCGPDINFO, &dl) == -1)
 		err(1, "can't get disklabel for %s", *argv);

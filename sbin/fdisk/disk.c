@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.54 2015/12/12 02:49:50 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.55 2016/03/09 12:55:18 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -49,9 +49,8 @@ DISK_open(int rw)
 		err(1, "%s", disk.name);
 	if (fstat(disk.fd, &st) == -1)
 		err(1, "%s", disk.name);
-	if (!S_ISCHR(st.st_mode) && !S_ISREG(st.st_mode))
-		errx(1, "%s is not a character device or a regular file",
-		    disk.name);
+	if (!S_ISCHR(st.st_mode))
+		errx(1, "%s is not a character device", disk.name);
 
 	/* Get label geometry. */
 	if (ioctl(disk.fd, DIOCGPDINFO, &dl) == -1) {
