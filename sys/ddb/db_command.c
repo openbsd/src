@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.68 2016/01/25 14:30:30 mpi Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.69 2016/03/09 09:04:15 mpi Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <ddb/db_break.h>
 #include <ddb/db_watch.h>
 #include <ddb/db_run.h>
+#include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_extern.h>
@@ -74,6 +75,8 @@ db_addr_t	db_prev;	/* last address examined
 				   or written */
 db_addr_t	db_next;	/* next address to be examined
 				   or written */
+
+void db_show_regs(db_expr_t, boolean_t, db_expr_t, char *);
 
 /*
  * Utility routine - discard tokens through end-of-line.
@@ -788,4 +791,28 @@ db_stack_trace_cmd(db_expr_t addr, boolean_t have_addr, db_expr_t count,
     char *modif)
 {
 	db_stack_trace_print(addr, have_addr, count, modif, db_printf);
+}
+
+void
+db_show_regs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	struct db_variable *regp;
+	db_expr_t	value, offset;
+	char *		name;
+	char		tmpfmt[28];
+
+	for (regp = db_regs; regp < db_eregs; regp++) {
+	    db_read_variable(regp, &value);
+	    db_printf("%-12s%s", regp->name, db_format(tmpfmt, sizeof tmpfmt,
+	      (long)value, DB_FORMAT_N, 1, sizeof(long) * 3));
+	    db_find_xtrn_sym_and_offset((db_addr_t)value, &name, &offset);
+	    if (name != 0 && offset <= db_maxoff && offset != value) {
+		db_printf("\t%s", name);
+		if (offset != 0)
+		    db_printf("+%s", db_format(tmpfmt, sizeof tmpfmt,
+		      (long)offset, DB_FORMAT_R, 1, 0));
+	    }
+	    db_printf("\n");
+	}
+	db_print_loc_and_inst(PC_REGS(&ddb_regs));
 }
