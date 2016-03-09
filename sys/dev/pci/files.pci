@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.322 2015/12/31 13:06:49 kettenis Exp $
+#	$OpenBSD: files.pci,v 1.323 2016/03/09 18:18:28 stsp Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -677,9 +677,8 @@ attach	rtw at pci with rtw_pci
 file	dev/pci/if_rtw_pci.c		rtw_pci
 
 # Realtek RTL8188CE Mini-PCI
-device	rtwn: ifnet, wlan, firmload
-attach	rtwn at pci
-file	dev/pci/if_rtwn.c		rtwn
+attach	rtwn at pci with rtwn_pci
+file	dev/pci/if_rtwn.c		rtwn_pci
 
 # Ralink RT2500 PCI/Mini-PCI
 attach	ral at pci with ral_pci
