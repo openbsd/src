@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ptrace.2,v 1.36 2016/03/06 05:29:30 guenther Exp $
+.\"	$OpenBSD: ptrace.2,v 1.37 2016/03/10 08:44:32 jmc Exp $
 .\"	$NetBSD: ptrace.2,v 1.3 1996/02/23 01:39:41 jtc Exp $
 .\"
 .\" This file is in the public domain.
-.Dd $Mdocdate: March 6 2016 $
+.Dd $Mdocdate: March 10 2016 $
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -444,17 +444,16 @@ pointed to by
 .\" syscall and will be passed back to the traced process by the normal
 .\" syscall return mechanism.
 .It Xo Dv PT_STEP
-.No (not available on sparc and sparc64)
+.No (not available on sparc or sparc64)
 .Xc
 The traced process continues execution, as in request
 .Dv PT_CONTINUE ;
 however, execution stops as soon as possible after execution of at least
 one instruction
 .Pq single-step .
-.\" m88k - vax (no general fp registers)
 .\" mips64 (fp registers in the main reg structure)
 .It Xo Dv PT_GETFPREGS
-.No (not available on luna88k, sgi and vax)
+.No (not available on luna88k or sgi)
 .Xc
 This request reads the traced process' floating-point registers into
 the
@@ -464,7 +463,7 @@ the
 pointed to by
 .Fa addr .
 .It Xo Dv PT_SETFPREGS
-.No (not available on luna88k, sgi and vax)
+.No (not available on luna88k or sgi)
 .Xc
 This request is the converse of
 .Dv PT_GETFPREGS ;
