@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.22 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: ti.c,v 1.23 2016/03/10 23:18:56 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -484,9 +484,6 @@ ti_handle_events(struct ti_softc *sc)
 	struct ti_event_desc	*e;
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 
-	if (sc->ti_rdata->ti_event_ring == NULL)
-		return;
-
 	while (sc->ti_ev_saved_considx != sc->ti_ev_prodidx.ti_idx) {
 		e = &sc->ti_rdata->ti_event_ring[sc->ti_ev_saved_considx];
 		switch (TI_EVENT_EVENT(e)) {
@@ -846,9 +843,6 @@ ti_free_tx_ring(struct ti_softc *sc)
 {
 	int		i;
 	struct ti_txmap_entry *entry;
-
-	if (sc->ti_rdata->ti_tx_ring == NULL)
-		return;
 
 	for (i = 0; i < TI_TX_RING_CNT; i++) {
 		if (sc->ti_cdata.ti_tx_chain[i] != NULL) {
