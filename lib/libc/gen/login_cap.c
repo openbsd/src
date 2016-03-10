@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.33 2015/12/28 22:08:18 mmcc Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.34 2016/03/10 18:30:53 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -70,26 +70,22 @@
 static	char *_authtypes[] = { LOGIN_DEFSTYLE, 0 };
 static	char *expandstr(const char *, const struct passwd *, int);
 static	int login_setenv(char *, char *, const struct passwd *, int);
-static	int setuserenv(login_cap_t *lc, const struct passwd *pwd);
-static	int setuserpath(login_cap_t *, const struct passwd *pwd);
+static	int setuserenv(login_cap_t *, const struct passwd *);
+static	int setuserpath(login_cap_t *, const struct passwd *);
 static	u_quad_t multiply(u_quad_t, u_quad_t);
 static	u_quad_t strtolimit(char *, char **, int);
 static	u_quad_t strtosize(char *, char **, int);
-static	int gsetrl(login_cap_t *lc, int what, char *name, int type);
+static	int gsetrl(login_cap_t *, int, char *, int);
 
 login_cap_t *
 login_getclass(char *class)
 {
-	char *classfiles[2];
+	char *classfiles[2] = {NULL, NULL};
 	login_cap_t *lc;
 	int res;
 
-	if (secure_path(_PATH_LOGIN_CONF) == 0) {
+	if (secure_path(_PATH_LOGIN_CONF) == 0)
 		classfiles[0] = _PATH_LOGIN_CONF;
-		classfiles[1] = NULL;
-	} else {
-		classfiles[0] = NULL;
-	}
 
 	if ((lc = malloc(sizeof(login_cap_t))) == NULL) {
 		syslog(LOG_ERR, "%s:%d malloc: %m", __FILE__, __LINE__);
@@ -216,12 +212,10 @@ DEF_WEAK(login_getstyle);
 char *
 login_getcapstr(login_cap_t *lc, char *cap, char *def, char *e)
 {
-	char *res, *str;
+	char *res = NULL, *str = e;
 	int stat;
 
 	errno = 0;
-	str = e;			/* return error string by default */
-	res = NULL;
 
     	if (!lc->lc_cap)
 		return (def);
@@ -254,12 +248,11 @@ quad_t
 login_getcaptime(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 {
 	char *ep;
-	char *res, *sres;
+	char *res = NULL, *sres;
 	int stat;
 	quad_t q, r;
 
 	errno = 0;
-	res = NULL;
 
     	if (!lc->lc_cap)
 		return (def);
@@ -340,12 +333,11 @@ quad_t
 login_getcapnum(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 {
 	char *ep;
-	char *res;
+	char *res = NULL;
 	int stat;
 	quad_t q;
 
 	errno = 0;
-	res = NULL;
 
     	if (!lc->lc_cap)
 		return (def);
@@ -395,12 +387,11 @@ quad_t
 login_getcapsize(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 {
 	char *ep;
-	char *res;
+	char *res = NULL;
 	int stat;
 	quad_t q;
 
 	errno = 0;
-	res = NULL;
 
     	if (!lc->lc_cap)
 		return (def);
