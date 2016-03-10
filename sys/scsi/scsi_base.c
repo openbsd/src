@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.222 2016/03/07 18:44:00 naddy Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.223 2016/03/10 13:56:14 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ struct pool		scsi_plug_pool;
 
 struct scsi_plug {
 	struct task		task;
-	struct scsibus_softc	*sc;
+	struct scsibus_softc	*sb;
 	int			target;
 	int			lun;
 	int			how;
@@ -136,7 +136,7 @@ scsi_init(void)
 }
 
 int
-scsi_req_probe(struct scsibus_softc *sc, int target, int lun)
+scsi_req_probe(struct scsibus_softc *sb, int target, int lun)
 {
 	struct scsi_plug *p;
 
@@ -145,7 +145,7 @@ scsi_req_probe(struct scsibus_softc *sc, int target, int lun)
 		return (ENOMEM);
 
 	task_set(&p->task, scsi_plug_probe, p);
-	p->sc = sc;
+	p->sb = sb;
 	p->target = target;
 	p->lun = lun;
 
@@ -155,7 +155,7 @@ scsi_req_probe(struct scsibus_softc *sc, int target, int lun)
 }
 
 int
-scsi_req_detach(struct scsibus_softc *sc, int target, int lun, int how)
+scsi_req_detach(struct scsibus_softc *sb, int target, int lun, int how)
 {
 	struct scsi_plug *p;
 
@@ -164,7 +164,7 @@ scsi_req_detach(struct scsibus_softc *sc, int target, int lun, int how)
 		return (ENOMEM);
 
 	task_set(&p->task, scsi_plug_detach, p);
-	p->sc = sc;
+	p->sb = sb;
 	p->target = target;
 	p->lun = lun;
 	p->how = how;
@@ -178,25 +178,25 @@ void
 scsi_plug_probe(void *xp)
 {
 	struct scsi_plug *p = xp;
-	struct scsibus_softc *sc = p->sc;
+	struct scsibus_softc *sb = p->sb;
 	int target = p->target, lun = p->lun;
 
 	pool_put(&scsi_plug_pool, p);
 
-	scsi_probe(sc, target, lun);
+	scsi_probe(sb, target, lun);
 }
 
 void
 scsi_plug_detach(void *xp)
 {
 	struct scsi_plug *p = xp;
-	struct scsibus_softc *sc = p->sc;
+	struct scsibus_softc *sb = p->sb;
 	int target = p->target, lun = p->lun;
 	int how = p->how;
 
 	pool_put(&scsi_plug_pool, p);
 
-	scsi_detach(sc, target, lun, how);
+	scsi_detach(sb, target, lun, how);
 }
 
 int
