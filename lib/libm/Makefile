@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.109 2016/03/09 16:28:47 deraadt Exp $
+#  $OpenBSD: Makefile,v 1.110 2016/03/10 22:11:50 jmc Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -11,8 +11,6 @@
 #  software is freely granted, provided that this notice 
 #  is preserved.
 #  ====================================================
-
-SUBDIR = man
 
 .if (${MACHINE_ARCH} == "alpha")
 .PATH:	${.CURDIR}/arch/alpha
