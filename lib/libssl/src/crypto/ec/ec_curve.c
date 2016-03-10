@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.12 2015/06/20 13:26:08 jsing Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.13 2016/03/10 23:21:46 mmcc Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -2209,7 +2209,7 @@ static const struct {
 
 /* These curves were added by Annie Yousar <a.yousar@informatik.hu-berlin.de>
  * For the definition of RFC 5639 curves see
- * http://www.ietf.org/rfc/rfc5639.txt
+ * https://www.ietf.org/rfc/rfc5639.txt
  * These curves are generated verifiable at random, nevertheless the seed is
  * omitted as parameter because the generation mechanism is different from
  * those defined in ANSI X9.62.
