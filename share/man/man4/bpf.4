@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.36 2015/01/16 03:07:03 lteo Exp $
+.\"	$OpenBSD: bpf.4,v 1.37 2016/03/10 04:48:27 deraadt Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: January 16 2015 $
+.Dd $Mdocdate: March 10 2016 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -222,6 +222,7 @@ The allowable ioctls are
 .Dv BIOCGBLEN ,
 .Dv BIOCGDIRFILT ,
 .Dv BIOCGDLT ,
+.Dv BIOCGDIRFILT ,
 .Dv BIOCGDLTLIST ,
 .Dv BIOCGETIF ,
 .Dv BIOCGHDRCMPLT ,
