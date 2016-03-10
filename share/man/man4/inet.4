@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet.4,v 1.17 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: inet.4,v 1.18 2016/03/10 08:56:46 jmc Exp $
 .\"	$NetBSD: inet.4,v 1.3 1994/11/30 16:22:18 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)inet.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: March 10 2016 $
 .Dt INET 4
 .Os
 .Sh NAME
@@ -57,10 +57,7 @@ interface provides access to the
 protocol.
 .Sh ADDRESSING
 Internet addresses are four byte quantities, stored in
-network standard format (on the
-.Tn VAX
-these are word and byte
-reversed).
+network standard format.
 The include file
 .In netinet/in.h
 defines this address as a discriminated union.

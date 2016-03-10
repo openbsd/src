@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.80 2016/01/15 11:39:28 dlg Exp $
+.\"	$OpenBSD: ddb.4,v 1.81 2016/03/10 08:56:46 jmc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: January 15 2016 $
+.Dd $Mdocdate: March 10 2016 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -266,8 +266,6 @@ Do not skip padding to the next long word boundary for unconditional jumps.
 .It m88k
 Decode instructions for the opposite CPU model (e.g. m88110 when running on an
 m88100 processor).
-.It vax
-Don't assume that each external label is a procedure entry mask.
 .El
 .El
 .Pp
