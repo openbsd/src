@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exp.3,v 1.30 2016/03/10 11:45:37 jmc Exp $
+.\"	$OpenBSD: exp.3,v 1.31 2016/03/10 22:29:38 tb Exp $
 .\"
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -227,12 +227,11 @@ The functions
 .Fn expm1
 and
 .Fn pow
-detect if the computed value will overflow,
-set the global variable
+detect if the computed value will overflow
+and set the global variable
 .Va errno
 to
-.Er ERANGE
-and cause a reserved operand fault on a VAX or Tahoe.
+.Er ERANGE .
 The function
 .Fn pow x y
 checks to see if
@@ -243,20 +242,7 @@ is not an integer, in the event this is true,
 the global variable
 .Va errno
 is set to
-.Er EDOM
-and on the VAX and Tahoe generate a reserved operand fault.
-On a VAX and Tahoe,
-.Va errno
-is set to
-.Er EDOM
-and the reserved operand is returned
-by log unless
-.Fa x
-> 0, by
-.Fn log1p
-unless
-.Fa x
-> \-1.
+.Er EDOM .
 .Sh ERRORS (due to Roundoff etc.)
 exp(x), log(x), expm1(x) and log1p(x) are accurate to within
 an
@@ -280,23 +266,16 @@ magnitude is moderate, but increases as
 approaches
 the over/underflow thresholds until almost as many bits could be
 lost as are occupied by the floating\-point format's exponent
-field; that is 8 bits for
-.Dq VAX D
-and 11 bits for IEEE 754 Double.
+field; that is 11 bits for IEEE 754 Double.
 No such drastic loss has been exposed by testing; the worst
-errors observed have been below 20
-.Em ulps
-for
-.Dq VAX D ,
-300
+errors observed have been below 300
 .Em ulps
 for IEEE 754 Double.
 Moderate values of
 .Fn pow
 are accurate enough that
 .Fn pow integer integer
-is exact until it is bigger than 2**56 on a VAX,
-2**53 for IEEE 754.
+is exact until it is bigger than 2**53 for IEEE 754.
 .Sh NOTES
 The functions exp(x)\-1 and log(1+x) are called
 expm1 and logp1 in BASIC on the Hewlett\-Packard HP-71B
@@ -313,10 +292,7 @@ returns x**0 = 1 for all x including x = 0,
 \*(If
 .if t \
 \(if
-(not found on a VAX),
-and
-.Em \*(Na
-(the reserved operand on a VAX).
+.Ns .
 Previous implementations of
 .Fn pow
 may have defined x**0 to be undefined in some or all of these cases.
