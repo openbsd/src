@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.137 2015/12/12 20:09:28 mmcc Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.138 2016/03/10 00:07:03 gsoares Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -92,6 +92,8 @@ struct con {
 #define	SPAMD_TLS_ACT_READ_POLLOUT	2
 #define	SPAMD_TLS_ACT_WRITE_POLLIN	3
 #define	SPAMD_TLS_ACT_WRITE_POLLOUT	4
+
+#define	SPAMD_USER			"_spamd"
 
 void     usage(void);
 char    *grow_obuf(struct con *, int);
@@ -1362,8 +1364,11 @@ main(int argc, char *argv[])
 			err(1, "sync init");
 	}
 
-	if ((pw = getpwnam("_spamd")) == NULL)
-		errx(1, "no such user _spamd");
+	if (geteuid())
+		errx(1, "need root privileges");
+
+	if ((pw = getpwnam(SPAMD_USER)) == NULL)
+		errx(1, "no such user %s", SPAMD_USER);
 
 	if (!greylist) {
 		maxblack = maxcon;
@@ -1493,8 +1498,12 @@ main(int argc, char *argv[])
 			}
 			close(trappipe[1]);
 
-			if (chroot("/var/empty") == -1 || chdir("/") == -1) {
-				syslog(LOG_ERR, "cannot chdir to /var/empty.");
+			if (chroot("/var/empty") == -1) {
+				syslog(LOG_ERR, "cannot chroot to /var/empty.");
+				exit(1);
+			}			
+ 			if (chdir("/") == -1) {
+				syslog(LOG_ERR, "cannot chdir to /");
 				exit(1);
 			}
 
