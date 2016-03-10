@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.101 2015/12/06 23:42:30 guenther Exp $	*/
+/*	$OpenBSD: buf.h,v 1.102 2016/03/10 06:52:37 dlg Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -306,7 +306,7 @@ void bufcache_release(struct buf *);
 
 void buf_flip_high(struct buf *);
 void buf_flip_dma(struct buf *);
-struct buf *bufcache_getcleanbuf(int);
+struct buf *bufcache_getcleanbuf(int, int);
 struct buf *bufcache_getanycleanbuf(void);
 struct buf *bufcache_getdirtybuf(void);
 
