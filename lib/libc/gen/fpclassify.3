@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fpclassify.3,v 1.4 2015/11/10 23:48:18 jmc Exp $
+.\"	$OpenBSD: fpclassify.3,v 1.5 2016/03/10 08:38:34 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Mike Barcroft <mike@FreeBSD.org>
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/gen/fpclassify.3,v 1.6 2005/01/27 05:46:16 das Exp $
 .\"
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: March 10 2016 $
 .Dt FPCLASSIFY 3
 .Os
 .Sh NAME
@@ -154,18 +154,3 @@ functions, which accepted
 .Vt double
 arguments; these have been superseded by the macros
 described above.
-.Sh BUGS
-.Tn VAX
-floating point does not have distinguished values
-for either infinity or not-a-number.
-.Fn isinf ,
-.Fn isinff ,
-.Fn isnan ,
-and
-.Fn isnanf
-routines always return 0 on that architecture.
-Similarly,
-.Fn finite ,
-and
-.Fn isfinite
-always return 1.
