@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.35 2015/11/10 23:48:18 jmc Exp $
+.\"	$OpenBSD: rmd160.3,v 1.36 2016/03/10 08:41:12 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -17,7 +17,7 @@
 .\" See http://www.esat.kuleuven.ac.be/~bosselae/ripemd160.html
 .\"	for detailed information about RIPEMD-160.
 .\"
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: March 10 2016 $
 .Dt RMD160INIT 3
 .Os
 .Sh NAME
@@ -237,5 +237,4 @@ helper functions are derived from code written by
 .Sh CAVEATS
 If a message digest is to be copied to a multi-byte type (ie:
 an array of five 32-bit integers) it will be necessary to
-perform byte swapping on little endian machines such as the i386, alpha,
-and vax.
+perform byte swapping on little endian machines such as the i386 and alpha.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha2.3,v 1.23 2015/11/10 23:48:18 jmc Exp $
+.\"	$OpenBSD: sha2.3,v 1.24 2016/03/10 08:41:12 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -20,7 +20,7 @@
 .\"
 .\" See http://www.nist.gov/sha/ for the detailed standard
 .\"
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: March 10 2016 $
 .Dt SHA256INIT 3
 .Os
 .Sh NAME
@@ -325,5 +325,4 @@ NIST and as such is not in official compliance with the standard.
 .Pp
 If a message digest is to be copied to a multi-byte type (i.e.\&
 an array of 32-bit integers) it will be necessary to
-perform byte swapping on little endian machines such as the i386, alpha,
-and vax.
+perform byte swapping on little endian machines such as the i386 and alpha.
