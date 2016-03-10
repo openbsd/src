@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.28 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.29 2016/03/10 10:22:43 tobiasu Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -163,15 +163,6 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 #ifdef DEBUG_DMA
 	printf("dmamap_destroy: t=%p map=%p\n", t, map);
 #endif	/* DEBUG_DMA */
-
-	/*
-	 * Explicit unload.
-	 */
-	map->dm_mapsize = 0;
-	map->dm_nsegs = 0;
-	map->_dm_origbuf = NULL;
-	map->_dm_buftype = ARM32_BUFTYPE_INVALID;
-	map->_dm_proc = NULL;
 
 	free(map, M_DEVBUF, 0);
 }
