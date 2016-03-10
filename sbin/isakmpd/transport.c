@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.c,v 1.36 2013/03/21 04:30:14 deraadt Exp $	 */
+/* $OpenBSD: transport.c,v 1.37 2016/03/10 07:32:16 yasuoka Exp $	 */
 /* $EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -309,7 +309,9 @@ transport_send_messages(fd_set * fds)
 			 * seeing a duplicate of our peer's previous message.
 			 */
 			if ((msg->flags & MSG_LAST) == 0) {
-				if (msg->xmits > conf_get_num("General",
+				if (msg->flags & MSG_DONTRETRANSMIT)
+					exchange->last_sent = 0;
+				else if (msg->xmits > conf_get_num("General",
 				    "retransmits", RETRANSMIT_DEFAULT)) {
 					t->virtual->vtbl->get_dst(t->virtual, &dst);
 					if (getnameinfo(dst, SA_LEN(dst), peer,

@@ -1,4 +1,4 @@
-/* $OpenBSD: message.h,v 1.26 2015/01/16 06:39:59 deraadt Exp $	 */
+/* $OpenBSD: message.h,v 1.27 2016/03/10 07:32:16 yasuoka Exp $	 */
 /* $EOM: message.h,v 1.51 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -167,6 +167,9 @@ struct message {
 
 /* The message was received on the NAT-T port. */
 #define MSG_NATT	0x20
+
+/* The message must not be retransmitted. */
+#define	MSG_DONTRETRANSMIT	0x40
 
 TAILQ_HEAD(msg_head, message);
 
