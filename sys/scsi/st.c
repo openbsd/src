@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.129 2015/06/07 19:13:27 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.130 2016/03/11 17:12:17 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1021,7 +1021,7 @@ ststart(struct scsi_xfer *xs)
 		/* Update block count now, errors will set it to -1. */
 		if (st->flags & ST_FIXEDBLOCKS)
 			st->media_blkno += _3btol(cmd->len);
-		else if (cmd->len != 0)
+		else if (_3btol(cmd->len) != 0)
 			st->media_blkno++;
 	}
 
