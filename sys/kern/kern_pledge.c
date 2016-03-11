@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.149 2016/02/17 21:52:06 millert Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.150 2016/03/11 05:57:16 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -418,20 +418,20 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 			flags |= f;
 		}
 		free(rbuf, M_TEMP, MAXPATHLEN);
-	}
 
-	if (flags & ~PLEDGE_USERSET)
-		return (EINVAL);
+		if (flags & ~PLEDGE_USERSET)
+			return (EINVAL);
 
-	if ((p->p_p->ps_flags & PS_PLEDGE)) {
-		/* Already pledged, only allow reductions */
-		if (((flags | p->p_p->ps_pledge) & PLEDGE_USERSET) !=
-		    (p->p_p->ps_pledge & PLEDGE_USERSET)) {
-			return (EPERM);
+		if ((p->p_p->ps_flags & PS_PLEDGE)) {
+			/* Already pledged, only allow reductions */
+			if (((flags | p->p_p->ps_pledge) & PLEDGE_USERSET) !=
+			    (p->p_p->ps_pledge & PLEDGE_USERSET)) {
+				return (EPERM);
+			}
+
+			flags &= p->p_p->ps_pledge;
+			flags &= PLEDGE_USERSET;	/* Relearn _ACTIVE */
 		}
-
-		flags &= p->p_p->ps_pledge;
-		flags &= PLEDGE_USERSET;		/* Relearn _ACTIVE */
 	}
 
 	if (SCARG(uap, paths)) {
@@ -556,8 +556,11 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 #endif
 	}
 
-	p->p_p->ps_pledge = flags;
-	p->p_p->ps_flags |= PS_PLEDGE;
+	if (SCARG(uap, request)) {
+		p->p_p->ps_pledge = flags;
+		p->p_p->ps_flags |= PS_PLEDGE;
+	}
+
 	return (0);
 }
 

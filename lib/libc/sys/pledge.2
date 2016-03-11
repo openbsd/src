@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.25 2016/02/11 16:30:35 tim Exp $
+.\" $OpenBSD: pledge.2,v 1.26 2016/03/11 05:57:16 semarie Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 11 2016 $
+.Dd $Mdocdate: March 11 2016 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -54,6 +54,14 @@ value of "" restricts the process to the
 system call.
 This can be used for pure computation operating on memory shared
 with another process.
+.Pp
+Passing
+.Dv NULL
+to
+.Fa promises
+or
+.Fa paths
+specifies to not change the current value.
 .Pp
 Some system calls, when allowed, have restrictions applied to them:
 .Pp
@@ -527,6 +535,7 @@ A whitelist of permitted paths may be provided in
 .Ar paths .
 All other paths will return
 .Er ENOENT .
+At least one promise is required to be pledged in order to activate whitelist.
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
