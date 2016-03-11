@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.184 2015/10/09 01:10:27 deraadt Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.185 2016/03/11 19:10:14 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -563,7 +563,7 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 /*
  * Checks for current use of a pid, either as a pid or pgid.
  */
-pid_t oldpids[100];
+pid_t oldpids[128];
 int
 ispidtaken(pid_t pid)
 {
