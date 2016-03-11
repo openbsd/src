@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwnvar.h,v 1.2 2016/03/09 20:36:16 stsp Exp $	*/
+/*	$OpenBSD: rtwnvar.h,v 1.3 2016/03/11 14:06:37 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -29,7 +29,7 @@ struct rtwn_ops {
 	void		(*write_4)(void *, uint16_t, uint32_t);
 	void		(*next_scan)(void *);
 	int		(*tx)(void *, struct mbuf *, struct ieee80211_node *);
-	int		(*configure_dma)(void *);
+	int		(*dma_init)(void *);
 	void		(*enable_intr)(void *);
 	void		(*disable_intr)(void *);
 	void		(*stop)(void *);

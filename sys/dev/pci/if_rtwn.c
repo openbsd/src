@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.17 2016/03/09 20:36:16 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.18 2016/03/11 14:06:37 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -61,6 +61,15 @@
 /*
  * Driver definitions.
  */
+
+#define R92C_PUBQ_NPAGES	176
+#define R92C_HPQ_NPAGES		41
+#define R92C_LPQ_NPAGES		28
+#define R92C_TXPKTBUF_COUNT	256
+#define R92C_TX_PAGE_COUNT	\
+	(R92C_PUBQ_NPAGES + R92C_HPQ_NPAGES + R92C_LPQ_NPAGES)
+#define R92C_TX_PAGE_BOUNDARY	(R92C_TX_PAGE_COUNT + 1)
+
 #define RTWN_NTXQUEUES			9
 #define RTWN_RX_LIST_COUNT		256
 #define RTWN_TX_LIST_COUNT		256
@@ -218,7 +227,9 @@ void		rtwn_tx_done(struct rtwn_pci_softc *, int);
 void		rtwn_pci_stop(void *);
 int		rtwn_intr(void *);
 int		rtwn_is_oactive(void *);
-int		rtwn_configure_dma(void *);
+int		rtwn_llt_write(struct rtwn_pci_softc *, uint32_t, uint32_t);
+int		rtwn_llt_init(struct rtwn_pci_softc *);
+int		rtwn_dma_init(void *);
 void		rtwn_enable_intr(void *);
 void		rtwn_disable_intr(void *);
 
@@ -320,7 +331,7 @@ rtwn_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sc.sc_ops.read_4 = rtwn_pci_read_4;
 	sc->sc_sc.sc_ops.next_scan = rtwn_pci_next_scan;
 	sc->sc_sc.sc_ops.tx = rtwn_tx;
-	sc->sc_sc.sc_ops.configure_dma = rtwn_configure_dma;
+	sc->sc_sc.sc_ops.dma_init = rtwn_dma_init;
 	sc->sc_sc.sc_ops.enable_intr = rtwn_enable_intr;
 	sc->sc_sc.sc_ops.disable_intr = rtwn_disable_intr;
 	sc->sc_sc.sc_ops.stop = rtwn_pci_stop;
@@ -1177,9 +1188,88 @@ rtwn_is_oactive(void *cookie)
 }
 
 int
-rtwn_configure_dma(void *cookie)
+rtwn_llt_write(struct rtwn_pci_softc *sc, uint32_t addr, uint32_t data)
+{
+	int ntries;
+
+	rtwn_pci_write_4(sc, R92C_LLT_INIT,
+	    SM(R92C_LLT_INIT_OP, R92C_LLT_INIT_OP_WRITE) |
+	    SM(R92C_LLT_INIT_ADDR, addr) |
+	    SM(R92C_LLT_INIT_DATA, data));
+	/* Wait for write operation to complete. */
+	for (ntries = 0; ntries < 20; ntries++) {
+		if (MS(rtwn_pci_read_4(sc, R92C_LLT_INIT), R92C_LLT_INIT_OP) ==
+		    R92C_LLT_INIT_OP_NO_ACTIVE)
+			return (0);
+		DELAY(5);
+	}
+	return (ETIMEDOUT);
+}
+
+int
+rtwn_llt_init(struct rtwn_pci_softc *sc)
+{
+	int i, error;
+
+	/* Reserve pages [0; R92C_TX_PAGE_COUNT]. */
+	for (i = 0; i < R92C_TX_PAGE_COUNT; i++) {
+		if ((error = rtwn_llt_write(sc, i, i + 1)) != 0)
+			return (error);
+	}
+	/* NB: 0xff indicates end-of-list. */
+	if ((error = rtwn_llt_write(sc, i, 0xff)) != 0)
+		return (error);
+	/*
+	 * Use pages [R92C_TX_PAGE_COUNT + 1; R92C_TXPKTBUF_COUNT - 1]
+	 * as ring buffer.
+	 */
+	for (++i; i < R92C_TXPKTBUF_COUNT - 1; i++) {
+		if ((error = rtwn_llt_write(sc, i, i + 1)) != 0)
+			return (error);
+	}
+	/* Make the last page point to the beginning of the ring buffer. */
+	error = rtwn_llt_write(sc, i, R92C_TX_PAGE_COUNT + 1);
+	return (error);
+}
+
+int
+rtwn_dma_init(void *cookie)
 {
 	struct rtwn_pci_softc *sc = cookie;
+	uint32_t reg;
+	int error;
+
+	/* Initialize LLT table. */
+	error = rtwn_llt_init(sc);
+	if (error != 0)
+		return error;
+
+	/* Set number of pages for normal priority queue. */
+	rtwn_pci_write_2(sc, R92C_RQPN_NPQ, 0);
+	rtwn_pci_write_4(sc, R92C_RQPN,
+	    /* Set number of pages for public queue. */
+	    SM(R92C_RQPN_PUBQ, R92C_PUBQ_NPAGES) |
+	    /* Set number of pages for high priority queue. */
+	    SM(R92C_RQPN_HPQ, R92C_HPQ_NPAGES) |
+	    /* Set number of pages for low priority queue. */
+	    SM(R92C_RQPN_LPQ, R92C_LPQ_NPAGES) |
+	    /* Load values. */
+	    R92C_RQPN_LD);
+
+	rtwn_pci_write_1(sc, R92C_TXPKTBUF_BCNQ_BDNY, R92C_TX_PAGE_BOUNDARY);
+	rtwn_pci_write_1(sc, R92C_TXPKTBUF_MGQ_BDNY, R92C_TX_PAGE_BOUNDARY);
+	rtwn_pci_write_1(sc, R92C_TXPKTBUF_WMAC_LBK_BF_HD,
+	    R92C_TX_PAGE_BOUNDARY);
+	rtwn_pci_write_1(sc, R92C_TRXFF_BNDY, R92C_TX_PAGE_BOUNDARY);
+	rtwn_pci_write_1(sc, R92C_TDECTRL + 1, R92C_TX_PAGE_BOUNDARY);
+
+	reg = rtwn_pci_read_2(sc, R92C_TRXDMA_CTRL);
+	reg &= ~R92C_TRXDMA_CTRL_QMAP_M;
+	reg |= 0xF771; 
+	rtwn_pci_write_2(sc, R92C_TRXDMA_CTRL, reg);
+
+	rtwn_pci_write_4(sc, R92C_TCR,
+	    R92C_TCR_CFENDFORM | (1 << 12) | (1 << 13));
 
 	/* Configure Tx DMA. */
 	rtwn_pci_write_4(sc, R92C_BKQ_DESA,
@@ -1199,6 +1289,14 @@ rtwn_configure_dma(void *cookie)
 
 	/* Configure Rx DMA. */
 	rtwn_pci_write_4(sc, R92C_RX_DESA, sc->rx_ring.map->dm_segs[0].ds_addr);
+
+	/* Set Tx/Rx transfer page boundary. */
+	rtwn_pci_write_2(sc, R92C_TRXFF_BNDY + 2, 0x27ff);
+
+	/* Set Tx/Rx transfer page size. */
+	rtwn_pci_write_1(sc, R92C_PBP,
+	    SM(R92C_PBP_PSRX, R92C_PBP_128) |
+	    SM(R92C_PBP_PSTX, R92C_PBP_128));
 
 	return (0);
 }

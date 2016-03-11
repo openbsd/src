@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.3 2016/03/09 20:36:16 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.4 2016/03/11 14:06:37 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -58,14 +58,6 @@
 #include <dev/ic/r92creg.h>
 #include <dev/ic/rtwnvar.h>
 
-#define R92C_PUBQ_NPAGES	176
-#define R92C_HPQ_NPAGES		41
-#define R92C_LPQ_NPAGES		28
-#define R92C_TXPKTBUF_COUNT	256
-#define R92C_TX_PAGE_COUNT	\
-	(R92C_PUBQ_NPAGES + R92C_HPQ_NPAGES + R92C_LPQ_NPAGES)
-#define R92C_TX_PAGE_BOUNDARY	(R92C_TX_PAGE_COUNT + 1)
-
 #define RTWN_RIDX_COUNT	28
 
 #define RTWN_LED_LINK	0
@@ -90,7 +82,6 @@ int		rtwn_fw_cmd(struct rtwn_softc *, uint8_t, const void *, int);
 void		rtwn_rf_write(struct rtwn_softc *, int, uint8_t, uint32_t);
 uint32_t	rtwn_rf_read(struct rtwn_softc *, int, uint8_t);
 void		rtwn_cam_write(struct rtwn_softc *, uint32_t, uint32_t);
-int		rtwn_llt_write(struct rtwn_softc *, uint32_t, uint32_t);
 uint8_t		rtwn_efuse_read_1(struct rtwn_softc *, uint16_t);
 void		rtwn_efuse_read(struct rtwn_softc *);
 int		rtwn_read_chipid(struct rtwn_softc *);
@@ -113,11 +104,9 @@ void		rtwn_start(struct ifnet *);
 void		rtwn_watchdog(struct ifnet *);
 int		rtwn_ioctl(struct ifnet *, u_long, caddr_t);
 int		rtwn_power_on(struct rtwn_softc *);
-int		rtwn_llt_init(struct rtwn_softc *);
 void		rtwn_fw_reset(struct rtwn_softc *);
 int		rtwn_fw_loadpage(struct rtwn_softc *, int, uint8_t *, int);
 int		rtwn_load_firmware(struct rtwn_softc *);
-int		rtwn_dma_init(struct rtwn_softc *);
 void		rtwn_mac_init(struct rtwn_softc *);
 void		rtwn_bb_init(struct rtwn_softc *);
 void		rtwn_rf_init(struct rtwn_softc *);
@@ -414,25 +403,6 @@ rtwn_cam_write(struct rtwn_softc *sc, uint32_t addr, uint32_t data)
 	rtwn_write_4(sc, R92C_CAMCMD,
 	    R92C_CAMCMD_POLLING | R92C_CAMCMD_WRITE |
 	    SM(R92C_CAMCMD_ADDR, addr));
-}
-
-int
-rtwn_llt_write(struct rtwn_softc *sc, uint32_t addr, uint32_t data)
-{
-	int ntries;
-
-	rtwn_write_4(sc, R92C_LLT_INIT,
-	    SM(R92C_LLT_INIT_OP, R92C_LLT_INIT_OP_WRITE) |
-	    SM(R92C_LLT_INIT_ADDR, addr) |
-	    SM(R92C_LLT_INIT_DATA, data));
-	/* Wait for write operation to complete. */
-	for (ntries = 0; ntries < 20; ntries++) {
-		if (MS(rtwn_read_4(sc, R92C_LLT_INIT), R92C_LLT_INIT_OP) ==
-		    R92C_LLT_INIT_OP_NO_ACTIVE)
-			return (0);
-		DELAY(5);
-	}
-	return (ETIMEDOUT);
 }
 
 uint8_t
@@ -1340,32 +1310,6 @@ rtwn_power_on(struct rtwn_softc *sc)
 	return (0);
 }
 
-int
-rtwn_llt_init(struct rtwn_softc *sc)
-{
-	int i, error;
-
-	/* Reserve pages [0; R92C_TX_PAGE_COUNT]. */
-	for (i = 0; i < R92C_TX_PAGE_COUNT; i++) {
-		if ((error = rtwn_llt_write(sc, i, i + 1)) != 0)
-			return (error);
-	}
-	/* NB: 0xff indicates end-of-list. */
-	if ((error = rtwn_llt_write(sc, i, 0xff)) != 0)
-		return (error);
-	/*
-	 * Use pages [R92C_TX_PAGE_COUNT + 1; R92C_TXPKTBUF_COUNT - 1]
-	 * as ring buffer.
-	 */
-	for (++i; i < R92C_TXPKTBUF_COUNT - 1; i++) {
-		if ((error = rtwn_llt_write(sc, i, i + 1)) != 0)
-			return (error);
-	}
-	/* Make the last page point to the beginning of the ring buffer. */
-	error = rtwn_llt_write(sc, i, R92C_TX_PAGE_COUNT + 1);
-	return (error);
-}
-
 void
 rtwn_fw_reset(struct rtwn_softc *sc)
 {
@@ -1523,54 +1467,6 @@ rtwn_load_firmware(struct rtwn_softc *sc)
  fail:
 	free(fw, M_DEVBUF, len);
 	return (error);
-}
-
-int
-rtwn_dma_init(struct rtwn_softc *sc)
-{
-	uint32_t reg;
-	int error;
-
-	/* Initialize LLT table. */
-	error = rtwn_llt_init(sc);
-	if (error != 0)
-		return error;
-
-	/* Set number of pages for normal priority queue. */
-	rtwn_write_2(sc, R92C_RQPN_NPQ, 0);
-	rtwn_write_4(sc, R92C_RQPN,
-	    /* Set number of pages for public queue. */
-	    SM(R92C_RQPN_PUBQ, R92C_PUBQ_NPAGES) |
-	    /* Set number of pages for high priority queue. */
-	    SM(R92C_RQPN_HPQ, R92C_HPQ_NPAGES) |
-	    /* Set number of pages for low priority queue. */
-	    SM(R92C_RQPN_LPQ, R92C_LPQ_NPAGES) |
-	    /* Load values. */
-	    R92C_RQPN_LD);
-
-	rtwn_write_1(sc, R92C_TXPKTBUF_BCNQ_BDNY, R92C_TX_PAGE_BOUNDARY);
-	rtwn_write_1(sc, R92C_TXPKTBUF_MGQ_BDNY, R92C_TX_PAGE_BOUNDARY);
-	rtwn_write_1(sc, R92C_TXPKTBUF_WMAC_LBK_BF_HD, R92C_TX_PAGE_BOUNDARY);
-	rtwn_write_1(sc, R92C_TRXFF_BNDY, R92C_TX_PAGE_BOUNDARY);
-	rtwn_write_1(sc, R92C_TDECTRL + 1, R92C_TX_PAGE_BOUNDARY);
-
-	reg = rtwn_read_2(sc, R92C_TRXDMA_CTRL);
-	reg &= ~R92C_TRXDMA_CTRL_QMAP_M;
-	reg |= 0xF771; 
-	rtwn_write_2(sc, R92C_TRXDMA_CTRL, reg);
-
-	rtwn_write_4(sc, R92C_TCR, R92C_TCR_CFENDFORM | (1 << 12) | (1 << 13));
-
-	sc->sc_ops.configure_dma(sc->sc_ops.cookie);
-
-	/* Set Tx/Rx transfer page boundary. */
-	rtwn_write_2(sc, R92C_TRXFF_BNDY + 2, 0x27ff);
-
-	/* Set Tx/Rx transfer page size. */
-	rtwn_write_1(sc, R92C_PBP,
-	    SM(R92C_PBP_PSRX, R92C_PBP_128) |
-	    SM(R92C_PBP_PSTX, R92C_PBP_128));
-	return (0);
 }
 
 void
@@ -2492,7 +2388,7 @@ rtwn_init(struct ifnet *ifp)
 	}
 
 	/* Initialize DMA. */
-	error = rtwn_dma_init(sc);
+	error = sc->sc_ops.dma_init(sc->sc_ops.cookie);
 	if (error != 0) {
 		printf("%s: could not initialize DMA\n",
 		    sc->sc_pdev->dv_xname);
