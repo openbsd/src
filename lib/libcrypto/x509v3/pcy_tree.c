@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_tree.c,v 1.15 2015/07/18 00:01:05 beck Exp $ */
+/* $OpenBSD: pcy_tree.c,v 1.16 2016/03/11 07:08:45 mmcc Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -639,8 +639,7 @@ X509_policy_tree_free(X509_POLICY_TREE *tree)
 	sk_X509_POLICY_NODE_pop_free(tree->user_policies, exnode_free);
 
 	for (i = 0, curr = tree->levels; i < tree->nlevel; i++, curr++) {
-		if (curr->cert)
-			X509_free(curr->cert);
+		X509_free(curr->cert);
 		if (curr->nodes)
 			sk_X509_POLICY_NODE_pop_free(curr->nodes,
 		    policy_node_free);

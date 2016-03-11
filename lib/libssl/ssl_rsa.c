@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.20 2015/02/06 01:37:11 reyk Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.21 2016/03/11 07:08:45 mmcc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -122,8 +122,7 @@ SSL_use_certificate_file(SSL *ssl, const char *file, int type)
 
 	ret = SSL_use_certificate(ssl, x);
 end:
-	if (x != NULL)
-		X509_free(x);
+	X509_free(x);
 	BIO_free(in);
 	return (ret);
 }
@@ -409,8 +408,7 @@ ssl_set_cert(CERT *c, X509 *x)
 
 	EVP_PKEY_free(pkey);
 
-	if (c->pkeys[i].x509 != NULL)
-		X509_free(c->pkeys[i].x509);
+	X509_free(c->pkeys[i].x509);
 	CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
 	c->pkeys[i].x509 = x;
 	c->key = &(c->pkeys[i]);
@@ -456,8 +454,7 @@ SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
 
 	ret = SSL_CTX_use_certificate(ctx, x);
 end:
-	if (x != NULL)
-		X509_free(x);
+	X509_free(x);
 	BIO_free(in);
 	return (ret);
 }
@@ -706,8 +703,7 @@ ssl_ctx_use_certificate_chain_bio(SSL_CTX *ctx, BIO *in)
 	}
 
 end:
-	if (x != NULL)
-		X509_free(x);
+	X509_free(x);
 	return (ret);
 }
 

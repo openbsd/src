@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.51 2015/09/11 17:37:47 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.52 2016/03/11 07:08:45 mmcc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -308,8 +308,7 @@ err:
 	EC_KEY_free(ret->ecdh_tmp);
 
 	for (i = 0; i < SSL_PKEY_NUM; i++) {
-		if (ret->pkeys[i].x509 != NULL)
-			X509_free(ret->pkeys[i].x509);
+		X509_free(ret->pkeys[i].x509);
 		EVP_PKEY_free(ret->pkeys[i].privatekey);
 	}
 	free (ret);
@@ -333,8 +332,7 @@ ssl_cert_free(CERT *c)
 	EC_KEY_free(c->ecdh_tmp);
 
 	for (i = 0; i < SSL_PKEY_NUM; i++) {
-		if (c->pkeys[i].x509 != NULL)
-			X509_free(c->pkeys[i].x509);
+		X509_free(c->pkeys[i].x509);
 		EVP_PKEY_free(c->pkeys[i].privatekey);
 	}
 
@@ -400,10 +398,8 @@ ssl_sess_cert_free(SESS_CERT *sc)
 	/* i == 0 */
 	if (sc->cert_chain != NULL)
 		sk_X509_pop_free(sc->cert_chain, X509_free);
-	for (i = 0; i < SSL_PKEY_NUM; i++) {
-		if (sc->peer_pkeys[i].x509 != NULL)
-			X509_free(sc->peer_pkeys[i].x509);
-	}
+	for (i = 0; i < SSL_PKEY_NUM; i++)
+		X509_free(sc->peer_pkeys[i].x509);
 
 	DH_free(sc->peer_dh_tmp);
 	EC_KEY_free(sc->peer_ecdh_tmp);
@@ -620,8 +616,7 @@ err:
 	if (sk != NULL)
 		sk_X509_NAME_free(sk);
 	BIO_free(in);
-	if (x != NULL)
-		X509_free(x);
+	X509_free(x);
 	if (ret != NULL)
 		ERR_clear_error();
 	return (ret);
@@ -679,8 +674,7 @@ err:
 		ret = 0;
 	}
 	BIO_free(in);
-	if (x != NULL)
-		X509_free(x);
+	X509_free(x);
 
 	(void)sk_X509_NAME_set_cmp_func(stack, oldcmp);
 

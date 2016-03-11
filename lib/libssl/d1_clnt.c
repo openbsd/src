@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.55 2015/09/12 16:10:07 doug Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.56 2016/03/11 07:08:45 mmcc Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -697,8 +697,7 @@ dtls1_send_client_certificate(SSL *s)
 			    SSL_R_BAD_DATA_RETURNED_BY_CALLBACK);
 		}
 
-		if (x509 != NULL)
-			X509_free(x509);
+		X509_free(x509);
 		EVP_PKEY_free(pkey);
 		if (i == 0)
 			s->s3->tmp.cert_req = 2;

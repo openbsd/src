@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_kiss.c,v 1.16 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: p12_kiss.c,v 1.17 2016/03/11 07:08:44 mmcc Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -149,8 +149,7 @@ PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 				goto err;
 			x = NULL;
 		}
-		if (x)
-			X509_free(x);
+		X509_free(x);
 	}
 
 	if (ocerts)
@@ -161,10 +160,9 @@ PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 err:
 	if (pkey && *pkey)
 		EVP_PKEY_free(*pkey);
-	if (cert && *cert)
+	if (cert)
 		X509_free(*cert);
-	if (x)
-		X509_free(x);
+	X509_free(x);
 	if (ocerts)
 		sk_X509_pop_free(ocerts, X509_free);
 	return 0;

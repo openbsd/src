@@ -1,4 +1,4 @@
-/* $OpenBSD: by_file.c,v 1.19 2015/04/11 16:03:21 deraadt Exp $ */
+/* $OpenBSD: by_file.c,v 1.20 2016/03/11 07:08:45 mmcc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -172,8 +172,7 @@ X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type)
 		goto err;
 	}
 err:
-	if (x != NULL)
-		X509_free(x);
+	X509_free(x);
 	BIO_free(in);
 	return (ret);
 }

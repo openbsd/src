@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_asn1.c,v 1.7 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: cms_asn1.c,v 1.8 2016/03/11 07:08:44 mmcc Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -220,8 +220,7 @@ cms_si_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	if (operation == ASN1_OP_FREE_POST) {
 		CMS_SignerInfo *si = (CMS_SignerInfo *)*pval;
 		EVP_PKEY_free(si->pkey);
-		if (si->signer)
-			X509_free(si->signer);
+		X509_free(si->signer);
 	}
 	return 1;
 }
@@ -883,8 +882,7 @@ cms_ri_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 		if (ri->type == CMS_RECIPINFO_TRANS) {
 			CMS_KeyTransRecipientInfo *ktri = ri->d.ktri;
 			EVP_PKEY_free(ktri->pkey);
-			if (ktri->recip)
-				X509_free(ktri->recip);
+			X509_free(ktri->recip);
 		} else if (ri->type == CMS_RECIPINFO_KEK) {
 			CMS_KEKRecipientInfo *kekri = ri->d.kekri;
 			if (kekri->key) {

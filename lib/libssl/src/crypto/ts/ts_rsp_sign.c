@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_sign.c,v 1.19 2015/09/30 18:04:02 jsing Exp $ */
+/* $OpenBSD: ts_rsp_sign.c,v 1.20 2016/03/11 07:08:45 mmcc Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -185,8 +185,7 @@ TS_RESP_CTX_set_signer_cert(TS_RESP_CTX *ctx, X509 *signer)
 		    TS_R_INVALID_SIGNER_CERTIFICATE_PURPOSE);
 		return 0;
 	}
-	if (ctx->signer_cert)
-		X509_free(ctx->signer_cert);
+	X509_free(ctx->signer_cert);
 	ctx->signer_cert = signer;
 	CRYPTO_add(&ctx->signer_cert->references, +1, CRYPTO_LOCK_X509);
 	return 1;

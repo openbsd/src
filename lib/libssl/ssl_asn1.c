@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.40 2014/12/14 15:30:50 jsing Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.41 2016/03/11 07:08:45 mmcc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -449,10 +449,9 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 		ret->timeout = 3;
 
 	/* 3 - Peer (X509). */
-	if (ret->peer != NULL) {
-		X509_free(ret->peer);
-		ret->peer = NULL;
-	}
+	X509_free(ret->peer);
+	ret->peer = NULL;
+
 	if (c.slen != 0L &&
 	    *c.p == (V_ASN1_CONSTRUCTED | V_ASN1_CONTEXT_SPECIFIC | 3)) {
 		c.q = c.p;

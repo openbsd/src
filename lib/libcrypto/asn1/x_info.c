@@ -1,4 +1,4 @@
-/* $OpenBSD: x_info.c,v 1.15 2015/02/10 11:22:21 jsing Exp $ */
+/* $OpenBSD: x_info.c,v 1.16 2016/03/11 07:08:44 mmcc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,8 +97,7 @@ X509_INFO_free(X509_INFO *x)
 	if (i > 0)
 		return;
 
-	if (x->x509 != NULL)
-		X509_free(x->x509);
+	X509_free(x->x509);
 	if (x->crl != NULL)
 		X509_CRL_free(x->crl);
 	if (x->x_pkey != NULL)
