@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.26 2016/03/11 05:57:16 semarie Exp $
+.\" $OpenBSD: pledge.2,v 1.27 2016/03/11 06:36:51 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -535,7 +535,7 @@ A whitelist of permitted paths may be provided in
 .Ar paths .
 All other paths will return
 .Er ENOENT .
-At least one promise is required to be pledged in order to activate whitelist.
+At least one promise is required to be pledged in order to activate a whitelist.
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
