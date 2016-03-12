@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exp.3,v 1.31 2016/03/10 22:29:38 tb Exp $
+.\"	$OpenBSD: exp.3,v 1.32 2016/03/12 18:15:20 tb Exp $
 .\"
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
 .\"
-.Dd $Mdocdate: March 10 2016 $
+.Dd $Mdocdate: March 12 2016 $
 .Dt EXP 3
 .Os
 .Sh NAME
@@ -287,12 +287,11 @@ They also provide accurate inverse hyperbolic functions.
 .Pp
 The function
 .Fn pow x 0
-returns x**0 = 1 for all x including x = 0,
+returns x**0 = 1 for all x including x = 0 and
 .if n \
-\*(If
+\*(If.
 .if t \
-\(if
-.Ns .
+\(if.
 Previous implementations of
 .Fn pow
 may have defined x**0 to be undefined in some or all of these cases.
