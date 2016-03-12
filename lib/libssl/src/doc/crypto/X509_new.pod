@@ -19,14 +19,13 @@ X509 structure, which represents an X509 certificate.
 X509_new() allocates and initializes a X509 structure.
 
 X509_free() frees up the B<X509> structure B<a>.
+If B<a> is a B<NULL> pointer, no action occurs.
 
 =head1 RETURN VALUES
 
 If the allocation fails, X509_new() returns B<NULL> and sets an error
 code that can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
 Otherwise it returns a pointer to the newly allocated structure.
-
-X509_free() returns no value.
 
 =head1 SEE ALSO
 

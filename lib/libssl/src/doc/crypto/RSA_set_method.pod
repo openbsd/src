@@ -142,8 +142,6 @@ the default method is used.
 RSA_PKCS1_SSLeay(), RSA_PKCS1_null_method(), RSA_get_default_method()
 and RSA_get_method() return pointers to the respective RSA_METHODs.
 
-RSA_set_default_method() returns no value.
-
 RSA_set_method() returns a pointer to the old RSA_METHOD implementation
 that was replaced. However, this return value should probably be ignored
 because if it was supplied by an ENGINE, the pointer could be invalidated

@@ -30,8 +30,6 @@ the blinding factor.
 
 RSA_blinding_on() returns 1 on success, and 0 if an error occurred.
 
-RSA_blinding_off() returns no value.
-
 =head1 SEE ALSO
 
 L<rsa(3)|rsa(3)>, L<rand(3)|rand(3)>

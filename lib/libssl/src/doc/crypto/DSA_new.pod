@@ -27,8 +27,6 @@ code that can be obtained by
 L<ERR_get_error(3)|ERR_get_error(3)>. Otherwise it returns a pointer
 to the newly allocated structure.
 
-DSA_free() returns no value.
-
 =head1 SEE ALSO
 
 L<dsa(3)|dsa(3)>, L<ERR_get_error(3)|ERR_get_error(3)>,
