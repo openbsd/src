@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.41 2015/03/14 03:38:51 jsg Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.42 2016/03/12 00:27:15 bluhm Exp $  */
 
 /*
  * Portions of this code are:
@@ -66,7 +66,8 @@ vop_generic_revoke(void *v)
 
 	vp = ap->a_vp;
  
-	if (vp->v_type == VBLK && vp->v_specinfo != 0) {
+	while (vp->v_type == VBLK && vp->v_specinfo != NULL &&
+	    vp->v_specmountpoint != NULL) {
 		struct mount *mp = vp->v_specmountpoint;
 
 		/*
@@ -74,8 +75,10 @@ vop_generic_revoke(void *v)
 		 * flush it out now, as to not leave a dangling zombie mount
 		 * point laying around in VFS.
 		 */
-		if (mp != NULL && !vfs_busy(mp, VB_WRITE|VB_WAIT))
+		if (!vfs_busy(mp, VB_WRITE|VB_WAIT)) {
 			dounmount(mp, MNT_FORCE | MNT_DOOMED, p, NULL);
+			break;
+		}
 	}
 
 	if (vp->v_flag & VALIASED) {
