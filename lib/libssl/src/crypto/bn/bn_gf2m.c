@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gf2m.c,v 1.20 2015/06/11 15:55:28 jsing Exp $ */
+/* $OpenBSD: bn_gf2m.c,v 1.21 2016/03/12 21:44:11 bcook Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -702,18 +702,21 @@ BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		top = p->top;
 		BN_ULONG *udp, *bdp, *vdp, *cdp;
 
-		bn_wexpand(u, top);
+		if (!bn_wexpand(u, top))
+                        goto err;
 		udp = u->d;
 		for (i = u->top; i < top; i++)
 			udp[i] = 0;
 		u->top = top;
-		bn_wexpand(b, top);
+		if (!bn_wexpand(b, top))
+                        goto err;
 		bdp = b->d;
 		bdp[0] = 1;
 		for (i = 1; i < top; i++)
 			bdp[i] = 0;
 		b->top = top;
-		bn_wexpand(c, top);
+		if (!bn_wexpand(c, top))
+                        goto err;
 		cdp = c->d;
 		for (i = 0; i < top; i++)
 			cdp[i] = 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_mult.c,v 1.7 2015/02/09 15:49:22 jsing Exp $ */
+/* $OpenBSD: ec2_mult.c,v 1.8 2016/03/12 21:44:11 bcook Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -83,7 +83,7 @@
  *     GF(2^m) without precomputation" (CHES '99, LNCS 1717).
  * modified to not require precomputation of c=b^{2^{m-1}}.
  */
-static int 
+static int
 gf2m_Mdouble(const EC_GROUP *group, BIGNUM *x, BIGNUM *z, BN_CTX *ctx)
 {
 	BIGNUM *t1;
@@ -122,7 +122,7 @@ err:
  *     Lopez, J. and Dahab, R.  "Fast multiplication on elliptic curves over
  *     GF(2^m) without precomputation" (CHES '99, LNCS 1717).
  */
-static int 
+static int
 gf2m_Madd(const EC_GROUP *group, const BIGNUM *x, BIGNUM *x1, BIGNUM *z1,
     const BIGNUM *x2, const BIGNUM *z2, BN_CTX *ctx)
 {
@@ -169,7 +169,7 @@ err:
  *     1 if return value should be the point at infinity
  *     2 otherwise
  */
-static int 
+static int
 gf2m_Mxy(const EC_GROUP *group, const BIGNUM *x, const BIGNUM *y, BIGNUM *x1,
     BIGNUM *z1, BIGNUM *x2, BIGNUM *z2, BN_CTX *ctx)
 {
@@ -258,7 +258,7 @@ err:
  * To protect against side-channel attack the function uses constant time swap,
  * avoiding conditional branches.
  */
-static int 
+static int
 ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r,
     const BIGNUM *scalar, const EC_POINT *point, BN_CTX *ctx)
 {
@@ -289,10 +289,14 @@ ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r,
 	x2 = &r->X;
 	z2 = &r->Y;
 
-	bn_wexpand(x1, group->field.top);
-	bn_wexpand(z1, group->field.top);
-	bn_wexpand(x2, group->field.top);
-	bn_wexpand(z2, group->field.top);
+	if (!bn_wexpand(x1, group->field.top))
+                goto err;
+	if (!bn_wexpand(z1, group->field.top))
+                goto err;
+	if (!bn_wexpand(x2, group->field.top))
+                goto err;
+	if (!bn_wexpand(z2, group->field.top))
+                goto err;
 
 	if (!BN_GF2m_mod_arr(x1, &point->X, group->poly))
 		goto err;	/* x1 = x */
@@ -362,7 +366,7 @@ err:
  *     scalar*group->generator + scalars[0]*points[0] + ... + scalars[num-1]*points[num-1]
  * gracefully ignoring NULL scalar values.
  */
-int 
+int
 ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
     size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx)
 {
@@ -431,13 +435,13 @@ err:
 /* Precomputation for point multiplication: fall back to wNAF methods
  * because ec_GF2m_simple_mul() uses ec_wNAF_mul() if appropriate */
 
-int 
+int
 ec_GF2m_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 {
 	return ec_wNAF_precompute_mult(group, ctx);
 }
 
-int 
+int
 ec_GF2m_have_precompute_mult(const EC_GROUP * group)
 {
 	return ec_wNAF_have_precompute_mult(group);
