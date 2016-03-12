@@ -1,7 +1,7 @@
 define(COMM,`#')dnl
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -171,9 +171,10 @@ RMlist[0]="rm -f"
 
 mkl() {
 dnl
-dnl non multi mknod
+dnl multi mknod
 dnl
-	mklist[{-$-}{#mklist[*]}]=";mknod -m {-$-}1 {-$-}2 {-$-}3 {-$-}4 {-$-}5"
+	: {-$-}{mklist[0]:=";mknod"}
+	mklist[{-$-}{#mklist[*]}]=" -m {-$-}1 {-$-}2 {-$-}3 {-$-}4 {-$-}5"
 }
 
 M() {
