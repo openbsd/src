@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.i386/MAKEDEV.md,v 1.77 2016/01/27 09:09:29 reyk Exp 
-#	OpenBSD: MAKEDEV.common,v 1.84 2016/01/27 09:09:28 reyk Exp 
+#	OpenBSD: etc.i386/MAKEDEV.md,v 1.78 2016/02/05 06:29:45 uebayasi Exp 
+#	OpenBSD: MAKEDEV.common,v 1.85 2016/02/05 06:29:45 uebayasi Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -188,7 +188,8 @@ dodisk2()
 RMlist[0]="rm -f"
 
 mkl() {
-	mklist[${#mklist[*]}]=";mknod -m $1 $2 $3 $4 $5"
+	: ${mklist[0]:=";mknod"}
+	mklist[${#mklist[*]}]=" -m $1 $2 $3 $4 $5"
 }
 
 M() {

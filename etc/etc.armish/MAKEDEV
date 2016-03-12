@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.armish/MAKEDEV.md,v 1.35 2015/10/23 15:14:11 claudio Exp 
-#	OpenBSD: MAKEDEV.common,v 1.81 2015/11/10 21:49:18 sthen Exp 
+#	OpenBSD: MAKEDEV.common,v 1.85 2016/02/05 06:29:45 uebayasi Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -171,7 +171,8 @@ dodisk2()
 RMlist[0]="rm -f"
 
 mkl() {
-	mklist[${#mklist[*]}]=";mknod -m $1 $2 $3 $4 $5"
+	: ${mklist[0]:=";mknod"}
+	mklist[${#mklist[*]}]=" -m $1 $2 $3 $4 $5"
 }
 
 M() {
