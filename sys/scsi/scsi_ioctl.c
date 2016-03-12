@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.51 2015/06/07 19:13:27 krw Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.52 2016/03/12 15:16:04 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -295,27 +295,27 @@ err:
 
 /*
  * Something (e.g. another driver) has called us
- * with an sc_link for a target/lun/adapter, and a scsi
+ * with a scsi_link for a target/lun/adapter, and a scsi
  * specific ioctl to perform, better try.
  */
 int
-scsi_do_ioctl(struct scsi_link *sc_link, u_long cmd, caddr_t addr, int flag)
+scsi_do_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
-	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_ioctl(0x%lx)\n", cmd));
+	SC_DEBUG(link, SDEV_DB2, ("scsi_do_ioctl(0x%lx)\n", cmd));
 
 	switch(cmd) {
 	case SCIOCIDENTIFY: {
 		struct scsi_addr *sca = (struct scsi_addr *)addr;
 
-		if ((sc_link->flags & (SDEV_ATAPI | SDEV_UMASS)) == 0)
+		if ((link->flags & (SDEV_ATAPI | SDEV_UMASS)) == 0)
 			/* A 'real' SCSI target. */
 			sca->type = TYPE_SCSI;
 		else
 			/* An 'emulated' SCSI target. */
 			sca->type = TYPE_ATAPI;
-		sca->scbus = sc_link->bus->sc_dev.dv_unit;
-		sca->target = sc_link->target;
-		sca->lun = sc_link->lun;
+		sca->scbus = link->bus->sc_dev.dv_unit;
+		sca->target = link->target;
+		sca->lun = link->lun;
 		return (0);
 	}
 	case SCIOCCOMMAND:
@@ -328,8 +328,8 @@ scsi_do_ioctl(struct scsi_link *sc_link, u_long cmd, caddr_t addr, int flag)
 			return (EPERM);
 		break;
 	default:
-		if (sc_link->adapter->ioctl)
-			return ((sc_link->adapter->ioctl)(sc_link, cmd, addr,
+		if (link->adapter->ioctl)
+			return ((link->adapter->ioctl)(link, cmd, addr,
 			    flag));
 		else
 			return (ENOTTY);
@@ -337,22 +337,22 @@ scsi_do_ioctl(struct scsi_link *sc_link, u_long cmd, caddr_t addr, int flag)
 
 	switch(cmd) {
 	case SCIOCCOMMAND:
-		return (scsi_ioc_cmd(sc_link, (scsireq_t *)addr));
+		return (scsi_ioc_cmd(link, (scsireq_t *)addr));
 	case ATAIOCCOMMAND:
-		return (scsi_ioc_ata_cmd(sc_link, (atareq_t *)addr));
+		return (scsi_ioc_ata_cmd(link, (atareq_t *)addr));
 	case SCIOCDEBUG: {
 		int level = *((int *)addr);
 
-		SC_DEBUG(sc_link, SDEV_DB3, ("debug set to %d\n", level));
-		sc_link->flags &= ~SDEV_DBX; /* clear debug bits */
+		SC_DEBUG(link, SDEV_DB3, ("debug set to %d\n", level));
+		link->flags &= ~SDEV_DBX; /* clear debug bits */
 		if (level & 1)
-			sc_link->flags |= SDEV_DB1;
+			link->flags |= SDEV_DB1;
 		if (level & 2)
-			sc_link->flags |= SDEV_DB2;
+			link->flags |= SDEV_DB2;
 		if (level & 4)
-			sc_link->flags |= SDEV_DB3;
+			link->flags |= SDEV_DB3;
 		if (level & 8)
-			sc_link->flags |= SDEV_DB4;
+			link->flags |= SDEV_DB4;
 		return (0);
 	}
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uk.c,v 1.17 2011/06/01 17:47:31 matthew Exp $	*/
+/*	$OpenBSD: uk.c,v 1.18 2016/03/12 15:16:04 krw Exp $	*/
 /*	$NetBSD: uk.c,v 1.15 1996/03/17 00:59:57 thorpej Exp $	*/
 
 /*
@@ -83,14 +83,14 @@ ukattach(struct device *parent, struct device *self, void *aux)
 {
 	struct uk_softc			*sc = (void *)self;
 	struct scsi_attach_args		*sa = aux;
-	struct scsi_link		*sc_link = sa->sa_sc_link;
+	struct scsi_link		*link = sa->sa_sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("ukattach: "));
+	SC_DEBUG(link, SDEV_DB2, ("ukattach: "));
 
 	/* Store information needed to contact our base driver */
-	sc->sc_link = sc_link;
-	sc_link->device_softc = sc;
-	sc_link->openings = 1;
+	sc->sc_link = link;
+	link->device_softc = sc;
+	link->openings = 1;
 
 	printf("\n");
 }
@@ -120,27 +120,27 @@ ukopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int				unit;
 	struct uk_softc			*sc;
-	struct scsi_link		*sc_link;
+	struct scsi_link		*link;
 
 	unit = UKUNIT(dev);
 	sc = uklookup(unit);
 	if (sc == NULL)
 		return (ENXIO);
 
-	sc_link = sc->sc_link;
+	link = sc->sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("ukopen: dev=0x%x (unit %d (of %d))\n",
+	SC_DEBUG(link, SDEV_DB1, ("ukopen: dev=0x%x (unit %d (of %d))\n",
 	    dev, unit, uk_cd.cd_ndevs));
 
 	/* Only allow one at a time */
-	if (sc_link->flags & SDEV_OPEN) {
+	if (link->flags & SDEV_OPEN) {
 		device_unref(&sc->sc_dev);
 		return (EBUSY);
 	}
 
-	sc_link->flags |= SDEV_OPEN;
+	link->flags |= SDEV_OPEN;
 
-	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
+	SC_DEBUG(link, SDEV_DB3, ("open complete\n"));
 
 	device_unref(&sc->sc_dev);
 	return (0);

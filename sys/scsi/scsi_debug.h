@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_debug.h,v 1.11 2015/06/07 19:13:27 krw Exp $	*/
+/*	$OpenBSD: scsi_debug.h,v 1.12 2016/03/12 15:16:04 krw Exp $	*/
 /*	$NetBSD: scsi_debug.h,v 1.7 1996/10/12 23:23:16 christos Exp $	*/
 
 /*
@@ -40,13 +40,13 @@ extern int scsidebug_level;
  * This is the usual debug macro for use with the above bits
  */
 #ifdef	SCSIDEBUG
-#define	SC_DEBUG(sc_link,Level,Printstuff) \
-	if ((sc_link)->flags & (Level)) {	\
-		sc_print_addr(sc_link);		\
+#define	SC_DEBUG(link,Level,Printstuff) \
+	if ((link)->flags & (Level)) {	\
+		sc_print_addr(link);		\
 		printf Printstuff;		\
 	}
-#define	SC_DEBUGN(sc_link,Level,Printstuff) \
-	if ((sc_link)->flags & (Level)) {	\
+#define	SC_DEBUGN(link,Level,Printstuff) \
+	if ((link)->flags & (Level)) {	\
 		printf Printstuff;		\
 	}
 #else

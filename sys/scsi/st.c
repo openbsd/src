@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.130 2016/03/11 17:12:17 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.131 2016/03/12 15:16:04 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -311,16 +311,16 @@ stattach(struct device *parent, struct device *self, void *aux)
 {
 	struct st_softc *st = (void *)self;
 	struct scsi_attach_args *sa = aux;
-	struct scsi_link *sc_link = sa->sa_sc_link;
+	struct scsi_link *link = sa->sa_sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("stattach:\n"));
+	SC_DEBUG(link, SDEV_DB2, ("stattach:\n"));
 
 	/*
 	 * Store information needed to contact our base driver
 	 */
-	st->sc_link = sc_link;
-	sc_link->interpret_sense = st_interpret_sense;
-	sc_link->device_softc = st;
+	st->sc_link = link;
+	link->interpret_sense = st_interpret_sense;
+	link->device_softc = st;
 
 	/*
 	 * Check if the drive is a known criminal and take
@@ -329,7 +329,7 @@ stattach(struct device *parent, struct device *self, void *aux)
 	st_identify_drive(st, sa->sa_inqbuf);
 	printf("\n");
 
-	scsi_xsh_set(&st->sc_xsh, sc_link, ststart);
+	scsi_xsh_set(&st->sc_xsh, link, ststart);
 	timeout_set(&st->sc_timeout, (void (*)(void *))scsi_xsh_set,
 	    &st->sc_xsh);
 
@@ -346,7 +346,7 @@ stattach(struct device *parent, struct device *self, void *aux)
 	 * acquired at boot time is not quite accurate.  This
 	 * will be checked again at the first open.
 	 */
-	sc_link->flags &= ~SDEV_MEDIA_LOADED;
+	link->flags &= ~SDEV_MEDIA_LOADED;
 }
 
 int
@@ -443,62 +443,62 @@ st_loadquirks(struct st_softc *st)
 int
 stopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
-	struct scsi_link *sc_link;
+	struct scsi_link *link;
 	struct st_softc *st;
 	int error = 0;
 
 	st = stlookup(STUNIT(dev));
 	if (st == NULL)
 		return (ENXIO);
-	sc_link = st->sc_link;
+	link = st->sc_link;
 
 	if (st->flags & ST_DYING) {
 		error = ENXIO;
 		goto done;
 	}
-	if (ISSET(flags, FWRITE) && ISSET(sc_link->flags, SDEV_READONLY)) {
+	if (ISSET(flags, FWRITE) && ISSET(link->flags, SDEV_READONLY)) {
 		error = EACCES;
 		goto done;
 	}
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
+	SC_DEBUG(link, SDEV_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
 	    STUNIT(dev), st_cd.cd_ndevs));
 
 	/*
 	 * Tape is an exclusive media. Only one open at a time.
 	 */
-	if (sc_link->flags & SDEV_OPEN) {
-		SC_DEBUG(sc_link, SDEV_DB4, ("already open\n"));
+	if (link->flags & SDEV_OPEN) {
+		SC_DEBUG(link, SDEV_DB4, ("already open\n"));
 		error = EBUSY;
 		goto done;
 	}
 
 	/* Use st_interpret_sense() now. */
-	sc_link->flags |= SDEV_OPEN;
+	link->flags |= SDEV_OPEN;
 
 	/*
 	 * Check the unit status. This clears any outstanding errors and
 	 * will ensure that media is present.
 	 */
-	error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES,
+	error = scsi_test_unit_ready(link, TEST_READY_RETRIES,
 	    SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE |
 	    SCSI_IGNORE_ILLEGAL_REQUEST);
 
 	/*
 	 * Terminate any exising mount session if there is no media.
 	 */
-	if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0)
+	if ((link->flags & SDEV_MEDIA_LOADED) == 0)
 		st_unmount(st, NOEJECT, DOREWIND);
 
 	if (error) {
-		sc_link->flags &= ~SDEV_OPEN;
+		link->flags &= ~SDEV_OPEN;
 		goto done;
 	}
 
 	if ((st->flags & ST_MOUNTED) == 0) {
 		error = st_mount_tape(dev, flags);
 		if (error) {
-			sc_link->flags &= ~SDEV_OPEN;
+			link->flags &= ~SDEV_OPEN;
 			goto done;
 		}
 	}
@@ -512,7 +512,7 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 		st->flags |= ST_WRITTEN;
 
 done:
-	SC_DEBUG(sc_link, SDEV_DB2, ("open complete\n"));
+	SC_DEBUG(link, SDEV_DB2, ("open complete\n"));
 	device_unref(&st->sc_dev);
 	return (error);
 }
@@ -524,7 +524,7 @@ done:
 int
 stclose(dev_t dev, int flags, int mode, struct proc *p)
 {
-	struct scsi_link *sc_link;
+	struct scsi_link *link;
 	struct st_softc *st;
 	int error = 0;
 
@@ -535,9 +535,9 @@ stclose(dev_t dev, int flags, int mode, struct proc *p)
 		error = ENXIO;
 		goto done;
 	}
-	sc_link = st->sc_link;
+	link = st->sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("closing\n"));
+	SC_DEBUG(link, SDEV_DB1, ("closing\n"));
 
 	if ((st->flags & (ST_WRITTEN | ST_FM_WRITTEN)) == ST_WRITTEN)
 		st_write_filemarks(st, 1, 0);
@@ -551,14 +551,14 @@ stclose(dev_t dev, int flags, int mode, struct proc *p)
 		break;
 	case 1:		/* no rewind */
 		/* leave mounted unless media seems to have been removed */
-		if (!(sc_link->flags & SDEV_MEDIA_LOADED))
+		if (!(link->flags & SDEV_MEDIA_LOADED))
 			st_unmount(st, NOEJECT, NOREWIND);
 		break;
 	case 2:		/* rewind, eject */
 		st_unmount(st, EJECT, DOREWIND);
 		break;
 	}
-	sc_link->flags &= ~SDEV_OPEN;
+	link->flags &= ~SDEV_OPEN;
 	timeout_del(&st->sc_timeout);
 	scsi_xsh_del(&st->sc_xsh);
 
@@ -576,7 +576,7 @@ int
 st_mount_tape(dev_t dev, int flags)
 {
 	struct st_softc *st;
-	struct scsi_link *sc_link;
+	struct scsi_link *link;
 	int error = 0;
 
 	st = stlookup(STUNIT(dev));
@@ -586,9 +586,9 @@ st_mount_tape(dev_t dev, int flags)
 		error = ENXIO;
 		goto done;
 	}
-	sc_link = st->sc_link;
+	link = st->sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("mounting\n"));
+	SC_DEBUG(link, SDEV_DB1, ("mounting\n"));
 
 	if (st->flags & ST_MOUNTED)
 		goto done;
@@ -608,7 +608,7 @@ st_mount_tape(dev_t dev, int flags)
 	 * (noteably some DAT drives)
 	 */
 	/* XXX */
-	scsi_test_unit_ready(sc_link, TEST_READY_RETRIES, SCSI_SILENT);
+	scsi_test_unit_ready(link, TEST_READY_RETRIES, SCSI_SILENT);
 
 	/*
 	 * Some devices can't tell you much until they have been
@@ -621,7 +621,7 @@ st_mount_tape(dev_t dev, int flags)
 	 * Load the physical device parameters
 	 * loads: blkmin, blkmax
 	 */
-	if (!(sc_link->flags & SDEV_ATAPI) &&
+	if (!(link->flags & SDEV_ATAPI) &&
 	    (error = st_read_block_limits(st, 0)) != 0)
 		goto done;
 
@@ -661,10 +661,10 @@ st_mount_tape(dev_t dev, int flags)
 		printf("%s: cannot set selected mode\n", st->sc_dev.dv_xname);
 		goto done;
 	}
-	scsi_prevent(sc_link, PR_PREVENT,
+	scsi_prevent(link, PR_PREVENT,
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 	st->flags |= ST_MOUNTED;
-	sc_link->flags |= SDEV_MEDIA_LOADED;	/* move earlier? */
+	link->flags |= SDEV_MEDIA_LOADED;	/* move earlier? */
 	st->media_fileno = 0;
 	st->media_blkno = 0;
 	st->media_eom = -1;
@@ -683,7 +683,7 @@ done:
 void
 st_unmount(struct st_softc *st, int eject, int rewind)
 {
-	struct scsi_link *sc_link = st->sc_link;
+	struct scsi_link *link = st->sc_link;
 	int nmarks;
 
 	st->media_fileno = -1;
@@ -691,16 +691,16 @@ st_unmount(struct st_softc *st, int eject, int rewind)
 
 	if (!(st->flags & ST_MOUNTED))
 		return;
-	SC_DEBUG(sc_link, SDEV_DB1, ("unmounting\n"));
+	SC_DEBUG(link, SDEV_DB1, ("unmounting\n"));
 	st_check_eod(st, 0, &nmarks, SCSI_IGNORE_NOT_READY);
 	if (rewind)
 		st_rewind(st, 0, SCSI_IGNORE_NOT_READY);
-	scsi_prevent(sc_link, PR_ALLOW,
+	scsi_prevent(link, PR_ALLOW,
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 	if (eject)
 		st_load(st, LD_UNLOAD, SCSI_IGNORE_NOT_READY);
 	st->flags &= ~ST_MOUNTED;
-	sc_link->flags &= ~SDEV_MEDIA_LOADED;
+	link->flags &= ~SDEV_MEDIA_LOADED;
 }
 
 /*
@@ -711,12 +711,12 @@ st_unmount(struct st_softc *st, int eject, int rewind)
 int
 st_decide_mode(struct st_softc *st, int first_read)
 {
-	struct scsi_link *sc_link = st->sc_link;
+	struct scsi_link *link = st->sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("starting block mode decision\n"));
+	SC_DEBUG(link, SDEV_DB2, ("starting block mode decision\n"));
 
 	/* ATAPI tapes are always fixed blocksize. */
-	if (sc_link->flags & SDEV_ATAPI) {
+	if (link->flags & SDEV_ATAPI) {
 		st->flags |= ST_FIXEDBLOCKS;
 		if (st->media_blksize > 0)
 			st->blksize = st->media_blksize;
@@ -732,7 +732,7 @@ st_decide_mode(struct st_softc *st, int first_read)
 	if (st->blkmin && (st->blkmin == st->blkmax)) {
 		st->flags |= ST_FIXEDBLOCKS;
 		st->blksize = st->blkmin;
-		SC_DEBUG(sc_link, SDEV_DB3,
+		SC_DEBUG(link, SDEV_DB3,
 		    ("blkmin == blkmax of %d\n", st->blkmin));
 		goto done;
 	}
@@ -747,7 +747,7 @@ st_decide_mode(struct st_softc *st, int first_read)
 	case DDS:
 		st->flags &= ~ST_FIXEDBLOCKS;
 		st->blksize = 0;
-		SC_DEBUG(sc_link, SDEV_DB3, ("density specified variable\n"));
+		SC_DEBUG(link, SDEV_DB3, ("density specified variable\n"));
 		goto done;
 	case QIC_11:
 	case QIC_24:
@@ -760,7 +760,7 @@ st_decide_mode(struct st_softc *st, int first_read)
 			st->blksize = st->media_blksize;
 		else
 			st->blksize = DEF_FIXED_BSIZE;
-		SC_DEBUG(sc_link, SDEV_DB3, ("density specified fixed\n"));
+		SC_DEBUG(link, SDEV_DB3, ("density specified fixed\n"));
 		goto done;
 	}
 	/*
@@ -777,7 +777,7 @@ st_decide_mode(struct st_softc *st, int first_read)
 		else
 			st->flags &= ~ST_FIXEDBLOCKS;
 		st->blksize = st->media_blksize;
-		SC_DEBUG(sc_link, SDEV_DB3,
+		SC_DEBUG(link, SDEV_DB3,
 		    ("Used media_blksize of %d\n", st->media_blksize));
 		goto done;
 	}
@@ -787,7 +787,7 @@ st_decide_mode(struct st_softc *st, int first_read)
 	 */
 	st->flags &= ~ST_FIXEDBLOCKS;
 	st->blksize = 0;
-	SC_DEBUG(sc_link, SDEV_DB3,
+	SC_DEBUG(link, SDEV_DB3,
 	    ("Give up and default to variable mode\n"));
 
 done:
@@ -824,7 +824,7 @@ done:
 void
 ststrategy(struct buf *bp)
 {
-	struct scsi_link *sc_link;
+	struct scsi_link *link;
 	struct st_softc *st;
 	int s;
 
@@ -838,9 +838,9 @@ ststrategy(struct buf *bp)
 		goto bad;
 	}
 
-	sc_link = st->sc_link;
+	link = st->sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("ststrategy: %ld bytes @ blk %lld\n",
+	SC_DEBUG(link, SDEV_DB2, ("ststrategy: %ld bytes @ blk %lld\n",
 	    bp->b_bcount, (long long)bp->b_blkno));
 
 	/*
@@ -901,13 +901,13 @@ done:
 void
 ststart(struct scsi_xfer *xs)
 {
-	struct scsi_link *sc_link = xs->sc_link;
-	struct st_softc *st = sc_link->device_softc;
+	struct scsi_link *link = xs->sc_link;
+	struct st_softc *st = link->device_softc;
 	struct buf *bp;
 	struct scsi_rw_tape *cmd;
 	int s;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("ststart\n"));
+	SC_DEBUG(link, SDEV_DB2, ("ststart\n"));
 
 	if (st->flags & ST_DYING) {
 		scsi_xs_put(xs);
@@ -919,9 +919,9 @@ ststart(struct scsi_xfer *xs)
 	 * then throw away all requests until done
 	 */
 	if (!(st->flags & ST_MOUNTED) ||
-	    !(sc_link->flags & SDEV_MEDIA_LOADED)) {
+	    !(link->flags & SDEV_MEDIA_LOADED)) {
 		/* make sure that one implies the other.. */
-		sc_link->flags &= ~SDEV_MEDIA_LOADED;
+		link->flags &= ~SDEV_MEDIA_LOADED;
 		bufq_drain(&st->sc_bufq);
 		scsi_xs_put(xs);
 		return;
@@ -1391,18 +1391,18 @@ st_read_block_limits(struct st_softc *st, int flags)
 {
 	struct scsi_block_limits_data *block_limits = NULL;
 	struct scsi_block_limits *cmd;
-	struct scsi_link *sc_link = st->sc_link;
+	struct scsi_link *link = st->sc_link;
 	struct scsi_xfer *xs;
 	int error = 0;
 
-	if ((sc_link->flags & SDEV_MEDIA_LOADED))
+	if ((link->flags & SDEV_MEDIA_LOADED))
 		return (0);
 
 	block_limits = dma_alloc(sizeof(*block_limits), PR_NOWAIT);
 	if (block_limits == NULL)
 		return (ENOMEM);
 
-	xs = scsi_xs_get(sc_link, flags | SCSI_DATA_IN);
+	xs = scsi_xs_get(link, flags | SCSI_DATA_IN);
 	if (xs == NULL) {
 		error = ENOMEM;
 		goto done;
@@ -1422,7 +1422,7 @@ st_read_block_limits(struct st_softc *st, int flags)
 	if (error == 0) {
 		st->blkmin = _2btol(block_limits->min_length);
 		st->blkmax = _3btol(block_limits->max_length);
-		SC_DEBUG(sc_link, SDEV_DB3,
+		SC_DEBUG(link, SDEV_DB3,
 		    ("(%d <= blksize <= %d)\n", st->blkmin, st->blkmax));
 	}
 
@@ -1446,7 +1446,7 @@ int
 st_mode_sense(struct st_softc *st, int flags)
 {
 	union scsi_mode_sense_buf *data = NULL;
-	struct scsi_link *sc_link = st->sc_link;
+	struct scsi_link *link = st->sc_link;
 	u_int64_t block_count;
 	u_int32_t density, block_size;
 	u_char *page0 = NULL;
@@ -1460,7 +1460,7 @@ st_mode_sense(struct st_softc *st, int flags)
 	/*
 	 * Ask for page 0 (vendor specific) mode sense data.
 	 */
-	error = scsi_do_mode_sense(sc_link, 0, data, (void **)&page0,
+	error = scsi_do_mode_sense(link, 0, data, (void **)&page0,
 	    &density, &block_count, &block_size, 1, flags | SCSI_SILENT, &big);
 	if (error != 0)
 		goto done;
@@ -1473,22 +1473,22 @@ st_mode_sense(struct st_softc *st, int flags)
 		dev_spec = data->hdr.dev_spec;
 
 	if (dev_spec & SMH_DSP_WRITE_PROT)
-		SET(sc_link->flags, SDEV_READONLY);
+		SET(link->flags, SDEV_READONLY);
 	else
-		CLR(sc_link->flags, SDEV_READONLY);
+		CLR(link->flags, SDEV_READONLY);
 
 	st->numblks = block_count;
 	st->media_blksize = block_size;
 	st->media_density = density;
 
-	SC_DEBUG(sc_link, SDEV_DB3,
+	SC_DEBUG(link, SDEV_DB3,
 	    ("density code 0x%x, %d-byte blocks, write-%s, ",
 	    st->media_density, st->media_blksize,
-	    sc_link->flags & SDEV_READONLY ? "protected" : "enabled"));
-	SC_DEBUGN(sc_link, SDEV_DB3,
+	    link->flags & SDEV_READONLY ? "protected" : "enabled"));
+	SC_DEBUGN(link, SDEV_DB3,
 	    ("%sbuffered\n", dev_spec & SMH_DSP_BUFF_MODE ? "" : "un"));
 
-	sc_link->flags |= SDEV_MEDIA_LOADED;
+	link->flags |= SDEV_MEDIA_LOADED;
 
 done:
 	if (data)
@@ -1505,7 +1505,7 @@ st_mode_select(struct st_softc *st, int flags)
 {
 	union scsi_mode_sense_buf *inbuf = NULL, *outbuf = NULL;
 	struct scsi_blk_desc general;
-	struct scsi_link *sc_link = st->sc_link;
+	struct scsi_link *link = st->sc_link;
 	u_int8_t *page0 = NULL;
 	int error = 0, big, page0_size;
 
@@ -1526,14 +1526,14 @@ st_mode_select(struct st_softc *st, int flags)
 	 * selected mode is the one that is supported.
 	 */
 	if (st->quirks & ST_Q_UNIMODAL) {
-		SC_DEBUG(sc_link, SDEV_DB3,
+		SC_DEBUG(link, SDEV_DB3,
 		    ("not setting density 0x%x blksize 0x%x\n",
 		    st->density, st->blksize));
 		error = 0;
 		goto done;
 	}
 
-	if (sc_link->flags & SDEV_ATAPI) {
+	if (link->flags & SDEV_ATAPI) {
 		error = 0;
 		goto done;
 	}
@@ -1547,7 +1547,7 @@ st_mode_select(struct st_softc *st, int flags)
 	/*
 	 * Ask for page 0 (vendor specific) mode sense data.
 	 */
-	error = scsi_do_mode_sense(sc_link, 0, inbuf, (void **)&page0, NULL,
+	error = scsi_do_mode_sense(link, 0, inbuf, (void **)&page0, NULL,
 	    NULL, NULL, 1, flags | SCSI_SILENT, &big);
 	if (error != 0)
 		goto done;
@@ -1953,15 +1953,15 @@ int
 st_interpret_sense(struct scsi_xfer *xs)
 {
 	struct scsi_sense_data *sense = &xs->sense;
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsi_link *link = xs->sc_link;
 	struct scsi_space *space;
-	struct st_softc *st = sc_link->device_softc;
+	struct st_softc *st = link->device_softc;
 	u_int8_t serr = sense->error_code & SSD_ERRCODE;
 	u_int8_t skey = sense->flags & SSD_KEY;
 	int32_t resid, info, number;
 	int datalen;
 
-	if (((sc_link->flags & SDEV_OPEN) == 0) ||
+	if (((link->flags & SDEV_OPEN) == 0) ||
 	    (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED))
 		return (scsi_interpret_sense(xs));
 
@@ -1986,7 +1986,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 			return (0);
 		switch (ASC_ASCQ(sense)) {
 		case SENSE_NOT_READY_BECOMING_READY:
-			SC_DEBUG(sc_link, SDEV_DB1, ("not ready: busy (%#x)\n",
+			SC_DEBUG(link, SDEV_DB1, ("not ready: busy (%#x)\n",
 			    sense->add_sense_code_qual));
 			/* don't count this as a retry */
 			xs->retries++;
@@ -2092,7 +2092,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 		 * return proper MODE SENSE information.
 		 */
 		if ((st->quirks & ST_Q_SENSE_HELP) &&
-		    !(sc_link->flags & SDEV_MEDIA_LOADED))
+		    !(link->flags & SDEV_MEDIA_LOADED))
 			st->blksize -= 512;
 	}
 
@@ -2110,7 +2110,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 		 * return proper MODE SENSE information.
 		 */
 		if ((st->quirks & ST_Q_SENSE_HELP) &&
-		    !(sc_link->flags & SDEV_MEDIA_LOADED)) {
+		    !(link->flags & SDEV_MEDIA_LOADED)) {
 			/* still starting */
 			st->blksize -= 512;
 		} else if (!(st->flags & (ST_2FM_AT_EOD | ST_BLANK_READ))) {

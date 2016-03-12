@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.264 2016/03/12 00:48:44 bluhm Exp $	*/
+/*	$OpenBSD: sd.c,v 1.265 2016/03/12 15:16:04 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -159,31 +159,31 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	struct sd_softc *sc = (struct sd_softc *)self;
 	struct scsi_attach_args *sa = aux;
 	struct disk_parms *dp = &sc->params;
-	struct scsi_link *sc_link = sa->sa_sc_link;
+	struct scsi_link *link = sa->sa_sc_link;
 	int sd_autoconf = scsi_autoconf | SCSI_SILENT |
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE;
 	struct dk_cache dkc;
 	int error, result, sortby = BUFQ_DEFAULT;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("sdattach:\n"));
+	SC_DEBUG(link, SDEV_DB2, ("sdattach:\n"));
 
 	/*
 	 * Store information needed to contact our base driver
 	 */
-	sc->sc_link = sc_link;
-	sc_link->interpret_sense = sd_interpret_sense;
-	sc_link->device_softc = sc;
+	sc->sc_link = link;
+	link->interpret_sense = sd_interpret_sense;
+	link->device_softc = sc;
 
-	if ((sc_link->flags & SDEV_ATAPI) && (sc_link->flags & SDEV_REMOVABLE))
-		sc_link->quirks |= SDEV_NOSYNCCACHE;
+	if ((link->flags & SDEV_ATAPI) && (link->flags & SDEV_REMOVABLE))
+		link->quirks |= SDEV_NOSYNCCACHE;
 
-	if (!(sc_link->inqdata.flags & SID_RelAdr))
-		sc_link->quirks |= SDEV_ONLYBIG;
+	if (!(link->inqdata.flags & SID_RelAdr))
+		link->quirks |= SDEV_ONLYBIG;
 
 	/*
 	 * Note if this device is ancient.  This is used in sdminphys().
 	 */
-	if (!(sc_link->flags & SDEV_ATAPI) &&
+	if (!(link->flags & SDEV_ATAPI) &&
 	    SCSISPC(sa->sa_inqbuf->version) == 0)
 		sc->flags |= SDF_ANCIENT;
 
@@ -194,20 +194,20 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	 */
 	printf("\n");
 
-	scsi_xsh_set(&sc->sc_xsh, sc_link, sdstart);
+	scsi_xsh_set(&sc->sc_xsh, link, sdstart);
 	timeout_set(&sc->sc_timeout, (void (*)(void *))scsi_xsh_add,
 	    &sc->sc_xsh);
 
 	/* Spin up non-UMASS devices ready or not. */
-	if ((sc_link->flags & SDEV_UMASS) == 0)
-		scsi_start(sc_link, SSS_START, sd_autoconf);
+	if ((link->flags & SDEV_UMASS) == 0)
+		scsi_start(link, SSS_START, sd_autoconf);
 
 	/*
 	 * Some devices (e.g. BlackBerry Pearl) won't admit they have
 	 * media loaded unless its been locked in.
 	 */
-	if ((sc_link->flags & SDEV_REMOVABLE) != 0)
-		scsi_prevent(sc_link, PR_PREVENT, sd_autoconf);
+	if ((link->flags & SDEV_REMOVABLE) != 0)
+		scsi_prevent(link, PR_PREVENT, sd_autoconf);
 
 	/* Check that it is still responding and ok. */
 	error = scsi_test_unit_ready(sc->sc_link, TEST_READY_RETRIES * 3,
@@ -218,8 +218,8 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	else
 		result = sd_get_parms(sc, &sc->params, sd_autoconf);
 
-	if ((sc_link->flags & SDEV_REMOVABLE) != 0)
-		scsi_prevent(sc_link, PR_ALLOW, sd_autoconf);
+	if ((link->flags & SDEV_REMOVABLE) != 0)
+		scsi_prevent(link, PR_ALLOW, sd_autoconf);
 
 	switch (result) {
 	case SDGP_RESULT_OK:
@@ -231,7 +231,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 			sortby = BUFQ_FIFO;
 			printf(", thin");
 		}
-		if (ISSET(sc_link->flags, SDEV_READONLY)) {
+		if (ISSET(link->flags, SDEV_READONLY)) {
 			printf(", readonly");
 		}
 		printf("\n");
@@ -329,7 +329,7 @@ sddetach(struct device *self, int flags)
 int
 sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
-	struct scsi_link *sc_link;
+	struct scsi_link *link;
 	struct sd_softc *sc;
 	int error = 0, part, rawopen, unit;
 
@@ -345,14 +345,14 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		device_unref(&sc->sc_dev);
 		return (ENXIO);
 	}
-	sc_link = sc->sc_link;
+	link = sc->sc_link;
 
-	if (ISSET(flag, FWRITE) && ISSET(sc_link->flags, SDEV_READONLY)) {
+	if (ISSET(flag, FWRITE) && ISSET(link->flags, SDEV_READONLY)) {
 		device_unref(&sc->sc_dev);
 		return (EACCES);
 	}
 
-	SC_DEBUG(sc_link, SDEV_DB1,
+	SC_DEBUG(link, SDEV_DB1,
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
 	    sd_cd.cd_ndevs, part));
 
@@ -370,7 +370,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			error = ENXIO;
 			goto die;
 		}
-		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+		if ((link->flags & SDEV_MEDIA_LOADED) == 0) {
 			if (rawopen)
 				goto out;
 			error = EIO;
@@ -382,8 +382,8 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			error = ENXIO;
 			goto die;
 		}
-		if ((sc_link->flags & SDEV_UMASS) == 0)
-			scsi_start(sc_link, SSS_START, (rawopen ? SCSI_SILENT :
+		if ((link->flags & SDEV_UMASS) == 0)
+			scsi_start(link, SSS_START, (rawopen ? SCSI_SILENT :
 			    0) | SCSI_IGNORE_ILLEGAL_REQUEST |
 			    SCSI_IGNORE_MEDIA_CHANGE);
 
@@ -397,15 +397,15 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			error = ENXIO;
 			goto die;
 		}
-		sc_link->flags |= SDEV_OPEN;
+		link->flags |= SDEV_OPEN;
 
 		/*
 		 * Try to prevent the unloading of a removable device while
 		 * it's open. But allow the open to proceed if the device can't
 		 * be locked in.
 		 */
-		if ((sc_link->flags & SDEV_REMOVABLE) != 0) {
-			scsi_prevent(sc_link, PR_PREVENT, SCSI_SILENT |
+		if ((link->flags & SDEV_REMOVABLE) != 0) {
+			scsi_prevent(link, PR_PREVENT, SCSI_SILENT |
 			    SCSI_IGNORE_ILLEGAL_REQUEST |
 			    SCSI_IGNORE_MEDIA_CHANGE);
 		}
@@ -415,7 +415,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			error = ENXIO;
 			goto die;
 		}
-		error = scsi_test_unit_ready(sc_link,
+		error = scsi_test_unit_ready(link,
 		    TEST_READY_RETRIES, SCSI_SILENT |
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 		if (error) {
@@ -431,32 +431,32 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			error = ENXIO;
 			goto die;
 		}
-		sc_link->flags |= SDEV_MEDIA_LOADED;
+		link->flags |= SDEV_MEDIA_LOADED;
 		if (sd_get_parms(sc, &sc->params, (rawopen ? SCSI_SILENT : 0))
 		    == SDGP_RESULT_OFFLINE) {
 			if (sc->flags & SDF_DYING) {
 				error = ENXIO;
 				goto die;
 			}
-			sc_link->flags &= ~SDEV_MEDIA_LOADED;
+			link->flags &= ~SDEV_MEDIA_LOADED;
 			error = ENXIO;
 			goto bad;
 		}
-		SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded\n"));
+		SC_DEBUG(link, SDEV_DB3, ("Params loaded\n"));
 
 		/* Load the partition info if not already loaded. */
 		if (sdgetdisklabel(dev, sc, sc->sc_dk.dk_label, 0) == EIO) {
 			error = EIO;
 			goto bad;
 		}
-		SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel loaded\n"));
+		SC_DEBUG(link, SDEV_DB3, ("Disklabel loaded\n"));
 	}
 
 out:
 	if ((error = disk_openpart(&sc->sc_dk, part, fmt, 1)) != 0)
 		goto bad;
 
-	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
+	SC_DEBUG(link, SDEV_DB3, ("open complete\n"));
 
 	/* It's OK to fall through because dk_openmask is now non-zero. */
 bad:
@@ -465,15 +465,15 @@ bad:
 			error = ENXIO;
 			goto die;
 		}
-		if ((sc_link->flags & SDEV_REMOVABLE) != 0)
-			scsi_prevent(sc_link, PR_ALLOW, SCSI_SILENT |
+		if ((link->flags & SDEV_REMOVABLE) != 0)
+			scsi_prevent(link, PR_ALLOW, SCSI_SILENT |
 			    SCSI_IGNORE_ILLEGAL_REQUEST |
 			    SCSI_IGNORE_MEDIA_CHANGE);
 		if (sc->flags & SDF_DYING) {
 			error = ENXIO;
 			goto die;
 		}
-		sc_link->flags &= ~(SDEV_OPEN | SDEV_MEDIA_LOADED);
+		link->flags &= ~(SDEV_OPEN | SDEV_MEDIA_LOADED);
 	}
 
 die:
@@ -489,7 +489,7 @@ die:
 int
 sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
-	struct scsi_link *sc_link;
+	struct scsi_link *link;
 	struct sd_softc *sc;
 	int part = DISKPART(dev);
 
@@ -500,7 +500,7 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		device_unref(&sc->sc_dev);
 		return (ENXIO);
 	}
-	sc_link = sc->sc_link;
+	link = sc->sc_link;
 
 	disk_lock_nointr(&sc->sc_dk);
 
@@ -510,15 +510,15 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		if ((sc->flags & SDF_DIRTY) != 0)
 			sd_flush(sc, 0);
 
-		if ((sc_link->flags & SDEV_REMOVABLE) != 0)
-			scsi_prevent(sc_link, PR_ALLOW,
+		if ((link->flags & SDEV_REMOVABLE) != 0)
+			scsi_prevent(link, PR_ALLOW,
 			    SCSI_IGNORE_ILLEGAL_REQUEST |
 			    SCSI_IGNORE_NOT_READY | SCSI_SILENT);
-		sc_link->flags &= ~(SDEV_OPEN | SDEV_MEDIA_LOADED);
+		link->flags &= ~(SDEV_OPEN | SDEV_MEDIA_LOADED);
 
-		if (sc_link->flags & SDEV_EJECTING) {
-			scsi_start(sc_link, SSS_STOP|SSS_LOEJ, 0);
-			sc_link->flags &= ~SDEV_EJECTING;
+		if (link->flags & SDEV_EJECTING) {
+			scsi_start(link, SSS_STOP|SSS_LOEJ, 0);
+			link->flags &= ~SDEV_EJECTING;
 		}
 
 		timeout_del(&sc->sc_timeout);
@@ -538,7 +538,7 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 void
 sdstrategy(struct buf *bp)
 {
-	struct scsi_link *sc_link;
+	struct scsi_link *link;
 	struct sd_softc *sc;
 	int s;
 
@@ -551,15 +551,15 @@ sdstrategy(struct buf *bp)
 		bp->b_error = ENXIO;
 		goto bad;
 	}
-	sc_link = sc->sc_link;
+	link = sc->sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("sdstrategy: %ld bytes @ blk %lld\n",
+	SC_DEBUG(link, SDEV_DB2, ("sdstrategy: %ld bytes @ blk %lld\n",
 	    bp->b_bcount, (long long)bp->b_blkno));
 	/*
 	 * If the device has been made invalid, error out
 	 */
-	if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
-		if (sc_link->flags & SDEV_OPEN)
+	if ((link->flags & SDEV_MEDIA_LOADED) == 0) {
+		if (link->flags & SDEV_OPEN)
 			bp->b_error = EIO;
 		else
 			bp->b_error = ENODEV;
@@ -806,7 +806,7 @@ retry:
 void
 sdminphys(struct buf *bp)
 {
-	struct scsi_link *sc_link;
+	struct scsi_link *link;
 	struct sd_softc *sc;
 	long max;
 
@@ -817,7 +817,7 @@ sdminphys(struct buf *bp)
 		device_unref(&sc->sc_dev);
 		return;
 	}
-	sc_link = sc->sc_link;
+	link = sc->sc_link;
 
 	/*
 	 * If the device is ancient, we want to make sure that
@@ -837,7 +837,7 @@ sdminphys(struct buf *bp)
 			bp->b_bcount = max;
 	}
 
-	(*sc_link->adapter->scsi_minphys)(bp, sc_link);
+	(*link->adapter->scsi_minphys)(bp, link);
 
 	device_unref(&sc->sc_dev);
 }
@@ -861,7 +861,7 @@ sdwrite(dev_t dev, struct uio *uio, int ioflag)
 int
 sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
-	struct scsi_link *sc_link;
+	struct scsi_link *link;
 	struct sd_softc *sc;
 	struct disklabel *lp;
 	int error = 0;
@@ -874,14 +874,14 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		device_unref(&sc->sc_dev);
 		return (ENXIO);
 	}
-	sc_link = sc->sc_link;
+	link = sc->sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("sdioctl 0x%lx\n", cmd));
+	SC_DEBUG(link, SDEV_DB2, ("sdioctl 0x%lx\n", cmd));
 
 	/*
 	 * If the device is not valid.. abandon ship
 	 */
-	if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+	if ((link->flags & SDEV_MEDIA_LOADED) == 0) {
 		switch (cmd) {
 		case DIOCLOCK:
 		case DIOCEJECT:
@@ -892,7 +892,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 				break;
 		/* FALLTHROUGH */
 		default:
-			if ((sc_link->flags & SDEV_OPEN) == 0) {
+			if ((link->flags & SDEV_OPEN) == 0) {
 				error = ENODEV;
 				goto exit;
 			} else {
@@ -946,7 +946,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		goto exit;
 
 	case DIOCLOCK:
-		error = scsi_prevent(sc_link,
+		error = scsi_prevent(link,
 		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW, 0);
 		goto exit;
 
@@ -957,15 +957,15 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		}
 		/* FALLTHROUGH */
 	case DIOCEJECT:
-		if ((sc_link->flags & SDEV_REMOVABLE) == 0) {
+		if ((link->flags & SDEV_REMOVABLE) == 0) {
 			error = ENOTTY;
 			goto exit;
 		}
-		sc_link->flags |= SDEV_EJECTING;
+		link->flags |= SDEV_EJECTING;
 		goto exit;
 
 	case DIOCINQ:
-		error = scsi_do_ioctl(sc_link, cmd, addr, flag);
+		error = scsi_do_ioctl(link, cmd, addr, flag);
 		if (error == ENOTTY)
 			error = sd_ioctl_inquiry(sc,
 			    (struct dk_inquiry *)addr);
@@ -986,7 +986,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			error = ENOTTY;
 			goto exit;
 		}
-		error = scsi_do_ioctl(sc_link, cmd, addr, flag);
+		error = scsi_do_ioctl(link, cmd, addr, flag);
 	}
 
  exit:
@@ -997,23 +997,23 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 int
 sd_ioctl_inquiry(struct sd_softc *sc, struct dk_inquiry *di)
 {
-	struct scsi_link *sc_link;
+	struct scsi_link *link;
 	struct scsi_vpd_serial *vpd;
 
 	vpd = dma_alloc(sizeof(*vpd), PR_WAITOK | PR_ZERO);
 
-	sc_link = sc->sc_link;
+	link = sc->sc_link;
 
 	bzero(di, sizeof(struct dk_inquiry));
-	scsi_strvis(di->vendor, sc_link->inqdata.vendor,
-	    sizeof(sc_link->inqdata.vendor));
-	scsi_strvis(di->product, sc_link->inqdata.product,
-	    sizeof(sc_link->inqdata.product));
-	scsi_strvis(di->revision, sc_link->inqdata.revision,
-	    sizeof(sc_link->inqdata.revision));
+	scsi_strvis(di->vendor, link->inqdata.vendor,
+	    sizeof(link->inqdata.vendor));
+	scsi_strvis(di->product, link->inqdata.product,
+	    sizeof(link->inqdata.product));
+	scsi_strvis(di->revision, link->inqdata.revision,
+	    sizeof(link->inqdata.revision));
 
 	/* the serial vpd page is optional */
-	if (scsi_inquire_vpd(sc_link, vpd, sizeof(*vpd), SI_PG_SERIAL, 0) == 0)
+	if (scsi_inquire_vpd(link, vpd, sizeof(*vpd), SI_PG_SERIAL, 0) == 0)
 		scsi_strvis(di->serial, vpd->serial, sizeof(vpd->serial));
 	else
 		strlcpy(di->serial, "(unknown)", sizeof(vpd->serial));
@@ -1025,20 +1025,20 @@ sd_ioctl_inquiry(struct sd_softc *sc, struct dk_inquiry *di)
 int
 sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 {
-	struct scsi_link *sc_link;
+	struct scsi_link *link;
 	union scsi_mode_sense_buf *buf;
 	struct page_caching_mode *mode = NULL;
 	u_int wrcache, rdcache;
 	int big;
 	int rv;
 
-	sc_link = sc->sc_link;
+	link = sc->sc_link;
 
-	if (ISSET(sc_link->flags, SDEV_UMASS))
+	if (ISSET(link->flags, SDEV_UMASS))
 		return (EOPNOTSUPP);
 
 	/* see if the adapter has special handling */
-	rv = scsi_do_ioctl(sc_link, cmd, (caddr_t)dkc, 0);
+	rv = scsi_do_ioctl(link, cmd, (caddr_t)dkc, 0);
 	if (rv != ENOTTY)
 		return (rv);
 
@@ -1046,7 +1046,7 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 	if (buf == NULL)
 		return (ENOMEM);
 
-	rv = scsi_do_mode_sense(sc_link, PAGE_CACHING_MODE,
+	rv = scsi_do_mode_sense(link, PAGE_CACHING_MODE,
 	    buf, (void **)&mode, NULL, NULL, NULL,
 	    sizeof(*mode) - 4, scsi_autoconf | SCSI_SILENT, &big);
 	if (rv != 0)
@@ -1081,10 +1081,10 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 			SET(mode->flags, PG_CACHE_FL_RCD);
 
 		if (big) {
-			rv = scsi_mode_select_big(sc_link, SMS_PF,
+			rv = scsi_mode_select_big(link, SMS_PF,
 			    &buf->hdr_big, scsi_autoconf | SCSI_SILENT, 20000);
 		} else {
-			rv = scsi_mode_select(sc_link, SMS_PF,
+			rv = scsi_mode_select(link, SMS_PF,
 			    &buf->hdr, scsi_autoconf | SCSI_SILENT, 20000);
 		}
 		break;
@@ -1102,12 +1102,12 @@ int
 sdgetdisklabel(dev_t dev, struct sd_softc *sc, struct disklabel *lp,
     int spoofonly)
 {
-	struct scsi_link *sc_link;
+	struct scsi_link *link;
 	size_t len;
 	char packname[sizeof(lp->d_packname) + 1];
 	char product[17], vendor[9];
 
-	sc_link = sc->sc_link;
+	link = sc->sc_link;
 
 	bzero(lp, sizeof(struct disklabel));
 
@@ -1122,7 +1122,7 @@ sdgetdisklabel(dev_t dev, struct sd_softc *sc, struct disklabel *lp,
 	}
 
 	lp->d_type = DTYPE_SCSI;
-	if ((sc_link->inqdata.device & SID_TYPE) == T_OPTICAL)
+	if ((link->inqdata.device & SID_TYPE) == T_OPTICAL)
 		strncpy(lp->d_typename, "SCSI optical",
 		    sizeof(lp->d_typename));
 	else
@@ -1134,8 +1134,8 @@ sdgetdisklabel(dev_t dev, struct sd_softc *sc, struct disklabel *lp,
 	 * then leave out '<vendor> ' and use only as much of '<product>' as
 	 * does fit.
 	 */
-	viscpy(vendor, sc_link->inqdata.vendor, 8);
-	viscpy(product, sc_link->inqdata.product, 16);
+	viscpy(vendor, link->inqdata.vendor, 8);
+	viscpy(product, link->inqdata.product, 16);
 	len = snprintf(packname, sizeof(packname), "%s %s", vendor, product);
 	if (len > sizeof(lp->d_packname)) {
 		strlcpy(packname, product, sizeof(packname));
@@ -1640,7 +1640,7 @@ sd_thin_params(struct sd_softc *sc, int flags)
 int
 sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 {
-	struct scsi_link *sc_link;
+	struct scsi_link *link;
 	union scsi_mode_sense_buf *buf = NULL;
 	struct page_rigid_geometry *rigid = NULL;
 	struct page_flex_geometry *flex = NULL;
@@ -1661,21 +1661,21 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 	if (buf == NULL)
 		goto validate;
 
-	sc_link = sc->sc_link;
+	link = sc->sc_link;
 
 	/*
 	 * Ask for page 0 (vendor specific) mode sense data to find
 	 * READONLY info. The only thing USB devices will ask for.
 	 */
-	err = scsi_do_mode_sense(sc_link, 0, buf, (void **)&page0,
+	err = scsi_do_mode_sense(link, 0, buf, (void **)&page0,
 	    NULL, NULL, NULL, 1, flags | SCSI_SILENT, &big);
 	if (err == 0) {
 		if (big && buf->hdr_big.dev_spec & SMH_DSP_WRITE_PROT)
-			SET(sc_link->flags, SDEV_READONLY);
+			SET(link->flags, SDEV_READONLY);
 		else if (!big && buf->hdr.dev_spec & SMH_DSP_WRITE_PROT)
-			SET(sc_link->flags, SDEV_READONLY);
+			SET(link->flags, SDEV_READONLY);
 		else
-			CLR(sc_link->flags, SDEV_READONLY);
+			CLR(link->flags, SDEV_READONLY);
 	}
 
 	/*
@@ -1683,17 +1683,17 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 	 * don't have a meaningful geometry anyway, so just fake it if
 	 * scsi_size() worked.
 	 */
-	if ((sc_link->flags & SDEV_UMASS) && (dp->disksize > 0))
+	if ((link->flags & SDEV_UMASS) && (dp->disksize > 0))
 		goto validate;
 
-	switch (sc_link->inqdata.device & SID_TYPE) {
+	switch (link->inqdata.device & SID_TYPE) {
 	case T_OPTICAL:
 		/* No more information needed or available. */
 		break;
 
 	case T_RDIRECT:
 		/* T_RDIRECT supports only PAGE_REDUCED_GEOMETRY (6). */
-		err = scsi_do_mode_sense(sc_link, PAGE_REDUCED_GEOMETRY,
+		err = scsi_do_mode_sense(link, PAGE_REDUCED_GEOMETRY,
 		    buf, (void **)&reduced, NULL, NULL, &secsize,
 		    sizeof(*reduced), flags | SCSI_SILENT, NULL);
 		if (!err && reduced &&
@@ -1713,9 +1713,9 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 		 * so accept the page. The extra bytes will be zero and RPM will
 		 * end up with the default value of 3600.
 		 */
-		if (((sc_link->flags & SDEV_ATAPI) == 0) ||
-		    ((sc_link->flags & SDEV_REMOVABLE) == 0))
-			err = scsi_do_mode_sense(sc_link,
+		if (((link->flags & SDEV_ATAPI) == 0) ||
+		    ((link->flags & SDEV_REMOVABLE) == 0))
+			err = scsi_do_mode_sense(link,
 			    PAGE_RIGID_GEOMETRY, buf, (void **)&rigid, NULL,
 			    NULL, &secsize, sizeof(*rigid) - 4,
 			    flags | SCSI_SILENT, NULL);
@@ -1725,7 +1725,7 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 			if (heads * cyls > 0)
 				sectors = dp->disksize / (heads * cyls);
 		} else {
-			err = scsi_do_mode_sense(sc_link,
+			err = scsi_do_mode_sense(link,
 			    PAGE_FLEX_GEOMETRY, buf, (void **)&flex, NULL, NULL,
 			    &secsize, sizeof(*flex) - 4,
 			    flags | SCSI_SILENT, NULL);
@@ -1805,13 +1805,13 @@ validate:
 void
 sd_flush(struct sd_softc *sc, int flags)
 {
-	struct scsi_link *sc_link;
+	struct scsi_link *link;
 	struct scsi_xfer *xs;
 	struct scsi_synchronize_cache *cmd;
 
-	sc_link = sc->sc_link;
+	link = sc->sc_link;
 
-	if (sc_link->quirks & SDEV_NOSYNCCACHE)
+	if (link->quirks & SDEV_NOSYNCCACHE)
 		return;
 
 	/*
@@ -1820,9 +1820,9 @@ sd_flush(struct sd_softc *sc, int flags)
 	 * that the command is not supported by the device.
 	 */
 
-	xs = scsi_xs_get(sc_link, flags);
+	xs = scsi_xs_get(link, flags);
 	if (xs == NULL) {
-		SC_DEBUG(sc_link, SDEV_DB1, ("cache sync failed to get xs\n"));
+		SC_DEBUG(link, SDEV_DB1, ("cache sync failed to get xs\n"));
 		return;
 	}
 
@@ -1836,7 +1836,7 @@ sd_flush(struct sd_softc *sc, int flags)
 	if (scsi_xs_sync(xs) == 0)
 		sc->flags &= ~SDF_DIRTY;
 	else
-		SC_DEBUG(sc_link, SDEV_DB1, ("cache sync failed\n"));
+		SC_DEBUG(link, SDEV_DB1, ("cache sync failed\n"));
 
 	scsi_xs_put(xs);
 }

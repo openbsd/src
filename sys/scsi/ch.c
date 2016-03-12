@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.51 2015/08/23 01:55:39 tedu Exp $	*/
+/*	$OpenBSD: ch.c,v 1.52 2016/03/12 15:16:04 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -752,11 +752,11 @@ int
 ch_interpret_sense(struct scsi_xfer *xs)
 {
 	struct scsi_sense_data *sense = &xs->sense;
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsi_link *link = xs->sc_link;
 	u_int8_t serr = sense->error_code & SSD_ERRCODE;
 	u_int8_t skey = sense->flags & SSD_KEY;
 
-	if (((sc_link->flags & SDEV_OPEN) == 0) ||
+	if (((link->flags & SDEV_OPEN) == 0) ||
 	    (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED))
 		return (scsi_interpret_sense(xs));
 
@@ -779,7 +779,7 @@ ch_interpret_sense(struct scsi_xfer *xs)
 			return (0);
 		switch (ASC_ASCQ(sense)) {
 		case SENSE_NOT_READY_BECOMING_READY:
-			SC_DEBUG(sc_link, SDEV_DB1, ("not ready: busy (%#x)\n",
+			SC_DEBUG(link, SDEV_DB1, ("not ready: busy (%#x)\n",
 			    sense->add_sense_code_qual));
 			/* don't count this as a retry */
 			xs->retries++;
