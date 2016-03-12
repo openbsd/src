@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.41 2015/12/02 22:13:44 vgross Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.42 2016/03/12 09:25:38 vgross Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -166,6 +166,23 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 			splx(s);
 			if (error)
 				goto release;
+		}
+
+		if (!IN6_ARE_ADDR_EQUAL(&in6p->inp_laddr6, laddr) &&
+		    (in6p->inp_socket->so_euid != 0)) {
+			struct inpcb *t;
+
+			t = in_pcblookup(in6p->inp_table,
+			    (struct in_addr *)&zeroin6_addr, 0,
+			    (struct in_addr *)laddr, in6p->inp_lport,
+			    (INPLOOKUP_WILDCARD | INPLOOKUP_IPV6),
+			    in6p->inp_rtableid);
+			if (t &&
+			    (t->inp_socket->so_euid !=
+			    in6p->inp_socket->so_euid)) {
+				error = EADDRINUSE;
+				goto release;
+			}
 		}
 	} else {
 		if (IN6_IS_ADDR_UNSPECIFIED(&in6p->inp_faddr6)) {
