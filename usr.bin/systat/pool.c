@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.10 2015/01/16 00:03:37 deraadt Exp $	*/
+/*	$OpenBSD: pool.c,v 1.11 2016/03/12 12:45:27 sthen Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -51,7 +51,7 @@ struct pool_info *pools = NULL;
 
 
 field_def fields_pool[] = {
-	{"NAME", 11, 32, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
+	{"NAME", 12, 32, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
 	{"SIZE", 8, 24, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"REQUESTS", 8, 24, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"FAIL", 8, 24, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
