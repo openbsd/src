@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.153 2016/03/13 04:37:37 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.154 2016/03/13 11:44:22 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -407,32 +407,32 @@ drop:
 }
 
 int
-vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
+vlan_config(struct ifvlan *ifv, struct ifnet *ifp0, u_int16_t tag)
 {
 	struct sockaddr_dl	*sdl1, *sdl2;
 	SRPL_HEAD(, ifvlan)	*tagh, *list;
 	u_int			 flags;
 
-	if (p->if_type != IFT_ETHER)
+	if (ifp0->if_type != IFT_ETHER)
 		return EPROTONOSUPPORT;
-	if (ifv->ifv_p == p && ifv->ifv_tag == tag) /* noop */
+	if (ifv->ifv_p == ifp0 && ifv->ifv_tag == tag) /* noop */
 		return (0);
 
 	/* Remember existing interface flags and reset the interface */
 	flags = ifv->ifv_flags;
-	vlan_unconfig(&ifv->ifv_if, p);
-	ifv->ifv_p = p;
-	ifv->ifv_if.if_baudrate = p->if_baudrate;
+	vlan_unconfig(&ifv->ifv_if, ifp0);
+	ifv->ifv_p = ifp0;
+	ifv->ifv_if.if_baudrate = ifp0->if_baudrate;
 
-	if (p->if_capabilities & IFCAP_VLAN_MTU) {
-		ifv->ifv_if.if_mtu = p->if_mtu;
-		ifv->ifv_if.if_hardmtu = p->if_hardmtu;
+	if (ifp0->if_capabilities & IFCAP_VLAN_MTU) {
+		ifv->ifv_if.if_mtu = ifp0->if_mtu;
+		ifv->ifv_if.if_hardmtu = ifp0->if_hardmtu;
 	} else {
-		ifv->ifv_if.if_mtu = p->if_mtu - EVL_ENCAPLEN;
-		ifv->ifv_if.if_hardmtu = p->if_hardmtu - EVL_ENCAPLEN;
+		ifv->ifv_if.if_mtu = ifp0->if_mtu - EVL_ENCAPLEN;
+		ifv->ifv_if.if_hardmtu = ifp0->if_hardmtu - EVL_ENCAPLEN;
 	}
 
-	ifv->ifv_if.if_flags = p->if_flags &
+	ifv->ifv_if.if_flags = ifp0->if_flags &
 	    (IFF_UP | IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST);
 
 	/* Reset promisc mode on the interface and its parent */
@@ -447,7 +447,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 		 * ethernet type (0x8100).
 		 */
 		ifv->ifv_if.if_capabilities = 0;
-	} else if (p->if_capabilities & IFCAP_VLAN_HWTAGGING) {
+	} else if (ifp0->if_capabilities & IFCAP_VLAN_HWTAGGING) {
 		/*
 		 * If the parent interface can do hardware-assisted
 		 * VLAN encapsulation, then propagate its hardware-
@@ -456,7 +456,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 		 * If the card cannot handle hardware tagging, it cannot
 		 * possibly compute the correct checksums for tagged packets.
 		 */
-		ifv->ifv_if.if_capabilities = p->if_capabilities &
+		ifv->ifv_if.if_capabilities = ifp0->if_capabilities &
 		    IFCAP_CSUM_MASK;
 	}
 
@@ -465,7 +465,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	 * physical interface's.
 	 */
 	sdl1 = ifv->ifv_if.if_sadl;
-	sdl2 = p->if_sadl;
+	sdl2 = ifp0->if_sadl;
 	sdl1->sdl_type = IFT_ETHER;
 	sdl1->sdl_alen = ETHER_ADDR_LEN;
 	bcopy(LLADDR(sdl2), LLADDR(sdl1), ETHER_ADDR_LEN);
@@ -474,17 +474,17 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	ifv->ifv_tag = tag;
 
 	/* Register callback for physical link state changes */
-	ifv->lh_cookie = hook_establish(p->if_linkstatehooks, 1,
+	ifv->lh_cookie = hook_establish(ifp0->if_linkstatehooks, 1,
 	    vlan_vlandev_state, ifv);
 
 	/* Register callback if parent wants to unregister */
-	ifv->dh_cookie = hook_establish(p->if_detachhooks, 0,
+	ifv->dh_cookie = hook_establish(ifp0->if_detachhooks, 0,
 	    vlan_ifdetach, ifv);
 
 	vlan_vlandev_state(ifv);
 
 	/* Change input handler of the physical interface. */
-	if_ih_insert(p, vlan_input, NULL);
+	if_ih_insert(ifp0, vlan_input, NULL);
 
 	tagh = ifv->ifv_type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
 	list = &tagh[TAG_HASH(tag)];
