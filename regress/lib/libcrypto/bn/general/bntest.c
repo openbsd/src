@@ -721,8 +721,11 @@ test_sqr(BIO *bp, BN_CTX *ctx)
 	}
 
 	/* Regression test for a BN_sqr overflow bug. */
-	BN_hex2bn(&a, "80000000000000008000000000000001"
-	    "FFFFFFFFFFFFFFFE0000000000000000");
+	if (!BN_hex2bn(&a, "80000000000000008000000000000001"
+	    "FFFFFFFFFFFFFFFE0000000000000000")) {
+		fprintf(stderr, "BN_hex2bn failed\n");
+		goto err;
+	}
 	BN_sqr(c, a, ctx);
 	if (bp != NULL) {
 		if (!results) {
@@ -743,8 +746,11 @@ test_sqr(BIO *bp, BN_CTX *ctx)
 	}
 
 	/* Regression test for a BN_sqr overflow bug. */
-	BN_hex2bn(&a, "80000000000000000000000080000001"
-	    "FFFFFFFE000000000000000000000000");
+	if (!BN_hex2bn(&a, "80000000000000000000000080000001"
+	    "FFFFFFFE000000000000000000000000")) {
+		fprintf(stderr, "BN_hex2bn failed\n");
+		goto err;
+	}
 	BN_sqr(c, a, ctx);
 	if (bp != NULL) {
 		if (!results) {
