@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.153 2016/03/13 15:05:15 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.154 2016/03/13 15:27:21 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -448,8 +448,6 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 	}
 
 	if (SCARG(uap, paths)) {
-		return (EINVAL);
-#if 0
 		const char **u = SCARG(uap, paths), *sp;
 		struct whitepaths *wl;
 		char *path, *rdir = NULL, *cwd = NULL;
@@ -531,7 +529,6 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 				DNPRINTF(1, "pledge: %d=\"%s\" [%lld]\n", i,
 				    wl->wl_paths[i].name,
 				    (long long)wl->wl_paths[i].len);
-#endif
 #endif
 	}
 
