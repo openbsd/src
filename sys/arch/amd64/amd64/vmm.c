@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.44 2016/03/09 07:41:25 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.45 2016/03/13 13:11:47 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -63,8 +63,10 @@ struct vm {
 	vm_map_t		 vm_map;
 	uint32_t		 vm_id;
 	pid_t			 vm_creator_pid;
-	uint32_t		 vm_memory_size;
+	size_t			 vm_nmemranges;
+	size_t			 vm_memory_size;
 	char			 vm_name[VMM_MAX_NAME_LEN];
+	struct vm_mem_range	 vm_memranges[VMM_MAX_MEM_RANGES];
 
 	struct vcpu_head	 vm_vcpu_list;
 	uint32_t		 vm_vcpu_ct;
@@ -103,6 +105,7 @@ int vmmioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int vmmclose(dev_t, int, int, struct proc *);
 int vmm_start(void);
 int vmm_stop(void);
+size_t vm_create_check_mem_ranges(struct vm_create_params *);
 int vm_create(struct vm_create_params *, struct proc *);
 int vm_run(struct vm_run_params *);
 int vm_terminate(struct vm_terminate_params *);
@@ -920,6 +923,67 @@ stop_vmm_on_cpu(struct cpu_info *ci)
 }
 
 /*
+ * vm_create_check_mem_ranges:
+ *
+ * Make sure that the guest physical memory ranges given by the user process
+ * do not overlap and are in ascending order.
+ *
+ * The last physical address may not exceed VMM_MAX_VM_MEM_SIZE.
+ *
+ * Return Values:
+ *   The total memory size in MB if the checks were successful
+ *   0: One of the memory ranges was invalid, or VMM_MAX_VM_MEM_SIZE was
+ *   exceeded
+ */
+size_t
+vm_create_check_mem_ranges(struct vm_create_params *vcp)
+{
+	int disjunct_range;
+	size_t i, memsize = 0;
+	struct vm_mem_range *vmr, *pvmr;
+	const paddr_t maxgpa = (uint64_t)VMM_MAX_VM_MEM_SIZE * 1024 * 1024;
+
+	if (vcp->vcp_nmemranges == 0 ||
+	    vcp->vcp_nmemranges > VMM_MAX_MEM_RANGES)
+		return (0);
+
+	for (i = 0; i < vcp->vcp_nmemranges; i++) {
+		vmr = &vcp->vcp_memranges[i];
+
+		/* Only page-aligned addresses and sizes are permitted */
+		if ((vmr->vmr_gpa & PAGE_MASK) ||
+		    (vmr->vmr_size & PAGE_MASK) || vmr->vmr_size == 0)
+			return (0);
+
+		/* Make sure that VMM_MAX_VM_MEM_SIZE is not exceeded */
+		if (vmr->vmr_gpa >= maxgpa ||
+		    vmr->vmr_size > maxgpa - vmr->vmr_gpa)
+			return (0);
+
+		/* Specifying ranges within the PCI MMIO space is forbidden */
+		disjunct_range = (vmr->vmr_gpa > VMM_PCI_MMIO_BAR_END) ||
+		    (vmr->vmr_gpa + vmr->vmr_size <= VMM_PCI_MMIO_BAR_BASE);
+		if (!disjunct_range)
+			return (0);
+
+		/*
+		 * Make sure that guest physcal memory ranges do not overlap
+		 * and that they are ascending.
+		 */
+		if (i > 0 && pvmr->vmr_gpa + pvmr->vmr_size > vmr->vmr_gpa)
+			return (0);
+
+		memsize += vmr->vmr_size;
+		pvmr = vmr;
+	}
+
+	if (memsize % (1024 * 1024) != 0)
+		return (0);
+	memsize /= 1024 * 1024;
+	return (memsize);
+}
+
+/*
  * vm_create
  *
  * Creates the in-memory VMM structures for the VM defined by 'vcp'. The
@@ -935,10 +999,15 @@ int
 vm_create(struct vm_create_params *vcp, struct proc *p)
 {
 	int i, ret;
+	size_t memsize;
 	struct vm *vm;
 	struct vcpu *vcpu;
 
 	if (!(curcpu()->ci_flags & CPUF_VMM))
+		return (EINVAL);
+
+	memsize = vm_create_check_mem_ranges(vcp);
+	if (memsize == 0)
 		return (EINVAL);
 
 	/* XXX - support UP only (for now) */
@@ -950,7 +1019,10 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 	rw_init(&vm->vm_vcpu_lock, "vcpulock");
 
 	vm->vm_creator_pid = p->p_p->ps_pid;
-	vm->vm_memory_size = vcp->vcp_memory_size;
+	vm->vm_nmemranges = vcp->vcp_nmemranges;
+	memcpy(vm->vm_memranges, vcp->vcp_memranges,
+	    vm->vm_nmemranges * sizeof(vm->vm_memranges[0]));
+	vm->vm_memory_size = memsize;
 	strncpy(vm->vm_name, vcp->vcp_name, VMM_MAX_NAME_LEN);
 
 	if (vm_impl_init(vm)) {
@@ -1009,10 +1081,11 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 int
 vm_impl_init_vmx(struct vm *vm)
 {
-	struct pmap *pmap;
-	size_t memsize;
+	int i, ret;
+	vaddr_t mingpa, maxgpa;
 	vaddr_t startp;
-	int ret;
+	struct pmap *pmap;
+	struct vm_mem_range *vmr;
 
 	/* If not EPT, nothing to do here */
 	if (vmm_softc->mode != VMM_MODE_EPT)
@@ -1025,14 +1098,15 @@ vm_impl_init_vmx(struct vm *vm)
 		return (ENOMEM);
 	}
 
-	startp = 0;
-	memsize = vm->vm_memory_size * 1024 * 1024;
-
 	/*
 	 * Create a new UVM map for this VM, and assign it the pmap just
 	 * created.
 	 */
-	vm->vm_map = uvm_map_create(pmap, 0, memsize,
+	vmr = &vm->vm_memranges[0];
+	mingpa = vmr->vmr_gpa;
+	vmr = &vm->vm_memranges[vm->vm_nmemranges - 1];
+	maxgpa = vmr->vmr_gpa + vmr->vmr_size;
+	vm->vm_map = uvm_map_create(pmap, mingpa, maxgpa,
 	    VM_MAP_ISVMSPACE | VM_MAP_PAGEABLE);
 
 	if (!vm->vm_map) {
@@ -1043,18 +1117,23 @@ vm_impl_init_vmx(struct vm *vm)
 
 	/* Map the new map with an anon */
 	DPRINTF("vm_impl_init_vmx: created vm_map @ %p\n", vm->vm_map);
-	ret = uvm_mapanon(vm->vm_map, &startp, memsize, 0,
-	    UVM_MAPFLAG(PROT_READ | PROT_WRITE | PROT_EXEC,
-	    PROT_READ | PROT_WRITE | PROT_EXEC,
-	    MAP_INHERIT_NONE,
-	    MADV_NORMAL,
-	    UVM_FLAG_FIXED | UVM_FLAG_COPYONW));
-	if (ret) {
-		printf("vm_impl_init_vmx: uvm_mapanon failed (%d)\n", ret);
-		/* uvm_map_deallocate calls pmap_destroy for us */
-		uvm_map_deallocate(vm->vm_map);
-		vm->vm_map = NULL;
-		return (ENOMEM);
+	for (i = 0; i < vm->vm_nmemranges; i++) {
+		vmr = &vm->vm_memranges[i];
+		startp = vmr->vmr_gpa;
+		ret = uvm_mapanon(vm->vm_map, &startp, vmr->vmr_size, 0,
+		    UVM_MAPFLAG(PROT_READ | PROT_WRITE | PROT_EXEC,
+		    PROT_READ | PROT_WRITE | PROT_EXEC,
+		    MAP_INHERIT_NONE,
+		    MADV_NORMAL,
+		    UVM_FLAG_FIXED | UVM_FLAG_COPYONW));
+		if (ret) {
+			printf("vm_impl_init_vmx: uvm_mapanon failed (%d)\n",
+			    ret);
+			/* uvm_map_deallocate calls pmap_destroy for us */
+			uvm_map_deallocate(vm->vm_map);
+			vm->vm_map = NULL;
+			return (ENOMEM);
+		}
 	}
 
 	/* Convert the low 512GB of the pmap to EPT */
@@ -3079,18 +3158,31 @@ vmx_handle_exit(struct vcpu *vcpu)
 int
 vmm_get_guest_memtype(struct vm *vm, paddr_t gpa)
 {
+	int i;
+	struct vm_mem_range *vmr;
 
 	if (gpa >= VMM_PCI_MMIO_BAR_BASE && gpa <= VMM_PCI_MMIO_BAR_END) {
 		DPRINTF("guest mmio access @ 0x%llx\n", (uint64_t)gpa);
 		return (VMM_MEM_TYPE_REGULAR);
 	}
 
-	if (gpa < vm->vm_memory_size * (1024 * 1024))
-		return (VMM_MEM_TYPE_REGULAR);
-	else {
-		DPRINTF("guest memtype @ 0x%llx unknown\n", (uint64_t)gpa);
-		return (VMM_MEM_TYPE_UNKNOWN);
+	/* XXX Use binary search? */
+	for (i = 0; i < vm->vm_nmemranges; i++) {
+		vmr = &vm->vm_memranges[i];
+
+		/*
+		 * vm_memranges are ascending. gpa can no longer be in one of
+		 * the memranges
+		 */
+		if (gpa < vmr->vmr_gpa)
+			break;
+
+		if (gpa < vmr->vmr_gpa + vmr->vmr_size)
+			return (VMM_MEM_TYPE_REGULAR);
 	}
+
+	DPRINTF("guest memtype @ 0x%llx unknown\n", (uint64_t)gpa);
+	return (VMM_MEM_TYPE_UNKNOWN);
 }
 
 /*

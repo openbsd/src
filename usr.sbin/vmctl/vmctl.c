@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.12 2016/01/26 07:58:35 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.13 2016/03/13 13:11:47 stefan Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -73,7 +73,13 @@ start_vm(const char *name, int memsize, int nnics, int ndisks, char **disks,
 
 	bzero(vcp, sizeof(struct vm_create_params));
 
-	vcp->vcp_memory_size = memsize;
+	/*
+	 * XXX: vmd(8) fills in the actual memory ranges. vmctl(8)
+	 * just passes in the actual memory size in MB here.
+	 */
+	vcp->vcp_nmemranges = 1;
+	vcp->vcp_memranges[0].vmr_size = memsize;
+
 	vcp->vcp_ncpus = 1;
 	vcp->vcp_ndisks = ndisks;
 

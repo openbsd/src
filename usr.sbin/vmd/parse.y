@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2015/12/07 13:30:06 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.6 2016/03/13 13:11:47 stefan Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -218,7 +218,7 @@ vm_opts		: disable			{
 		}
 		| MEMORY NUMBER			{
 			ssize_t	 res;
-			if (vcp.vcp_memory_size != 0) {
+			if (vcp.vcp_memranges[0].vmr_size != 0) {
 				yyerror("memory specified more than once");
 				YYERROR;
 			}
@@ -226,11 +226,11 @@ vm_opts		: disable			{
 				yyerror("failed to parse size: %lld", $2);
 				YYERROR;
 			}
-			vcp.vcp_memory_size = (size_t)res;
+			vcp.vcp_memranges[0].vmr_size = (size_t)res;
 		}
 		| MEMORY STRING			{
 			ssize_t	 res;
-			if (vcp.vcp_memory_size != 0) {
+			if (vcp.vcp_memranges[0].vmr_size != 0) {
 				yyerror("argument specified more than once");
 				free($2);
 				YYERROR;
@@ -240,7 +240,7 @@ vm_opts		: disable			{
 				free($2);
 				YYERROR;
 			}
-			vcp.vcp_memory_size = (size_t)res;
+			vcp.vcp_memranges[0].vmr_size = (size_t)res;
 		}
 		;
 

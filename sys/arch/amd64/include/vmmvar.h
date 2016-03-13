@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.10 2016/03/09 08:06:59 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.11 2016/03/13 13:11:47 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -23,6 +23,7 @@
 
 #define VMM_HV_SIGNATURE 	"OpenBSDVMM58"
 
+#define VMM_MAX_MEM_RANGES	16
 #define VMM_MAX_DISKS_PER_VM	2
 #define VMM_MAX_PATH_DISK	128
 #define VMM_MAX_NAME_LEN	32
@@ -173,16 +174,22 @@ struct vcpu_init_state {
 	struct vcpu_segment_info	vis_tr;
 };
 
+struct vm_mem_range {
+	paddr_t	vmr_gpa;
+	size_t	vmr_size;
+};
+
 struct vm_create_params {
 	/* Input parameters to VMM_IOC_CREATE */
-	size_t		vcp_memory_size;
-	size_t		vcp_ncpus;
-	size_t		vcp_ndisks;
-	size_t		vcp_nnics;
-	char		vcp_disks[VMM_MAX_DISKS_PER_VM][VMM_MAX_PATH_DISK];
-	char		vcp_name[VMM_MAX_NAME_LEN];
-	char		vcp_kernel[VMM_MAX_KERNEL_PATH];
-	uint8_t		vcp_macs[VMM_MAX_NICS_PER_VM][6];
+	size_t			vcp_nmemranges;
+	size_t			vcp_ncpus;
+	size_t			vcp_ndisks;
+	size_t			vcp_nnics;
+	struct vm_mem_range	vcp_memranges[VMM_MAX_MEM_RANGES];
+	char			vcp_disks[VMM_MAX_DISKS_PER_VM][VMM_MAX_PATH_DISK];
+	char			vcp_name[VMM_MAX_NAME_LEN];
+	char			vcp_kernel[VMM_MAX_KERNEL_PATH];
+	uint8_t			vcp_macs[VMM_MAX_NICS_PER_VM][6];
 
 	/* Output parameter from VMM_IOC_CREATE */
 	uint32_t	vcp_id;

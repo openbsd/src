@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.10 2016/03/04 15:34:14 stefan Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.11 2016/03/13 13:11:47 stefan Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -108,8 +108,6 @@
 #define GDT_PAGE 0x10000
 #define STACK_PAGE 0xF000
 
-#define LOWMEM_KB 636
-
 union {
 	Elf32_Ehdr elf32;
 	Elf64_Ehdr elf64;
@@ -119,12 +117,13 @@ static void setsegment(struct mem_segment_descriptor *, uint32_t,
     size_t, int, int, int, int);
 static int elf32_exec(int, Elf32_Ehdr *, u_long *, int);
 static int elf64_exec(int, Elf64_Ehdr *, u_long *, int);
-static void push_bootargs(int);
-static size_t push_stack(int, uint32_t);
+static size_t create_bios_memmap(struct vm_create_params *, bios_memmap_t *);
+static uint32_t push_bootargs(bios_memmap_t *, size_t);
+static size_t push_stack(uint32_t, uint32_t);
 static void push_gdt(void);
-static size_t mread(int, uint32_t, size_t);
-static void marc4random_buf(uint32_t, int);
-static void mbzero(uint32_t, int);
+static size_t mread(int, paddr_t, size_t);
+static void marc4random_buf(paddr_t, int);
+static void mbzero(paddr_t, int);
 static void mbcopy(char *, char *, int);
 
 extern char *__progname;
@@ -198,15 +197,12 @@ push_gdt(void)
 /*
  * loadelf_main
  *
- * Loads an ELF kernel to it's defined load address in the guest VM whose
- * ID is provided in 'vm_id_in'. The kernel is loaded to its defined start
- * point as set in the ELF header.
+ * Loads an ELF kernel to it's defined load address in the guest VM.
+ * The kernel is loaded to its defined start point as set in the ELF header.
  *
  * Parameters:
  *  fd: file descriptor of a kernel file to load
- *  vm_id_in: ID of the VM to load the kernel into
- *  mem_sz: memory size in MB assigned to the guest (passed through to
- *      push_bootargs)
+ *  vcp: the VM create parameters, holding the exact memory map
  *  (out) vis: register state to set on init for this kernel
  *
  * Return values:
@@ -214,13 +210,13 @@ push_gdt(void)
  *  various error codes returned from read(2) or loadelf functions
  */
 int
-loadelf_main(int fd, int vm_id_in, int mem_sz, struct vcpu_init_state *vis)
+loadelf_main(int fd, struct vm_create_params *vcp, struct vcpu_init_state *vis)
 {
 	int r;
-	size_t stacksize;
+	uint32_t bootargsz;
+	size_t n, stacksize;
 	u_long marks[MARK_MAX];
-
-	vm_id = vm_id_in;
+	bios_memmap_t memmap[VMM_MAX_MEM_RANGES + 1];
 
 	if ((r = read(fd, &hdr, sizeof(hdr))) != sizeof(hdr))
 		return 1;
@@ -237,15 +233,68 @@ loadelf_main(int fd, int vm_id_in, int mem_sz, struct vcpu_init_state *vis)
 	if (r)
 		return (r);
 
-	push_bootargs(mem_sz);
 	push_gdt();
-	stacksize = push_stack(mem_sz, marks[MARK_END]);
+	n = create_bios_memmap(vcp, memmap);
+	bootargsz = push_bootargs(memmap, n);
+	stacksize = push_stack(bootargsz, marks[MARK_END]);
 
 	vis->vis_rip = (uint64_t)marks[MARK_ENTRY];
 	vis->vis_rsp = (uint64_t)(STACK_PAGE + PAGE_SIZE) - stacksize;
 	vis->vis_gdtr.vsi_base = GDT_PAGE;
 
 	return (0);
+}
+
+/*
+ * create_bios_memmap
+ *
+ * Construct a memory map as returned by the BIOS INT 0x15, e820 routine.
+ *
+ * Parameters:
+ *  vcp: the VM create parameters, containing the memory map passed to vmm(4)
+ *   memmap (out): the BIOS memory map
+ *
+ * Return values:
+ * Number of bios_memmap_t entries, including the terminating nul-entry.
+ */
+static size_t
+create_bios_memmap(struct vm_create_params *vcp, bios_memmap_t *memmap)
+{
+	size_t i, n = 0, sz;
+	paddr_t gpa;
+	struct vm_mem_range *vmr;
+
+	for (i = 0; i < vcp->vcp_nmemranges; i++) {
+		vmr = &vcp->vcp_memranges[i];
+		gpa = vmr->vmr_gpa;
+		sz = vmr->vmr_size;
+
+		/*
+		 * Make sure that we do not mark the ROM/video RAM area in the
+		 * low memory as physcal memory available to the kernel.
+		 */
+		if (gpa < 0x100000 && gpa + sz > LOWMEM_KB * 1024) {
+			if (gpa >= LOWMEM_KB * 1024)
+				sz = 0;
+			else
+				sz = LOWMEM_KB * 1024 - gpa;
+		}
+
+		if (sz != 0) {
+			memmap[n].addr = gpa;
+			memmap[n].size = sz;
+			memmap[n].type = 0x1;	/* Type 1 : Normal memory */
+			n++;
+		}
+	}
+
+	/* Null mem map entry to denote the end of the ranges */
+	memmap[n].addr = 0x0;
+	memmap[n].size = 0x0;
+	memmap[n].type = 0x0;
+	n++;
+
+	return (n);
 }
 
 /*
@@ -257,40 +306,25 @@ loadelf_main(int fd, int vm_id_in, int mem_sz, struct vcpu_init_state *vis)
  * into the guest phys RAM space at address BOOTARGS_PAGE.
  *
  * Parameters:
- *  mem_sz: guest memory size in MB
+ *  memmap: the BIOS memory map
+ *  n: number of entries in memmap
  *
  * Return values:
- *  nothing
+ *  The size of the bootargs
  */
-static void
-push_bootargs(int mem_sz)
+static uint32_t
+push_bootargs(bios_memmap_t *memmap, size_t n)
 {
-	size_t sz;
-	bios_memmap_t memmap[3];
+	uint32_t memmap_sz, consdev_sz, i;
 	bios_consdev_t consdev;
 	uint32_t ba[1024];
 
-	/* First memory region: 0 - LOWMEM_KB (DOS low mem) */
-	memmap[0].addr = 0x0;
-	memmap[0].size = LOWMEM_KB * 1024;
-	memmap[0].type = 0x1;	/* Type 1 : Normal memory */
-
-	/* Second memory region: 1MB - n, reserve top 1MB */
-	memmap[1].addr = 0x100000;
-	memmap[1].size = (mem_sz - 1) * 1024 * 1024;
-	memmap[1].type = 0x1;	/* Type 1 : Normal memory */
-
-	/* Null mem map entry to denote the end of the ranges */
-	memmap[2].addr = 0x0;
-	memmap[2].size = 0x0;
-	memmap[2].type = 0x0;
-
-	sz = 3 * sizeof(int) + 3 * sizeof(bios_memmap_t);
+	memmap_sz = 3 * sizeof(int) + n * sizeof(bios_memmap_t);
 	ba[0] = 0x0;    /* memory map */
-	ba[1] = sz;
-	ba[2] = sz;     /* next */
-	memcpy(&ba[3], &memmap, 3 * sizeof(bios_memmap_t));
-	sz = sz / sizeof(int);
+	ba[1] = memmap_sz;
+	ba[2] = memmap_sz;     /* next */
+	memcpy(&ba[3], memmap, n * sizeof(bios_memmap_t));
+	i = memmap_sz / sizeof(int);
 
 	/* Serial console device, COM1 @ 0x3f8 */
 	consdev.consdev = makedev(8, 0);        /* com1 @ 0x3f8 */
@@ -298,12 +332,15 @@ push_bootargs(int mem_sz)
 	consdev.consaddr = 0x3f8;
 	consdev.consfreq = 0;
 
-	ba[sz] = 0x5;   /* consdev */
-	ba[sz + 1] = (int)sizeof(bios_consdev_t) + 3 * sizeof(int);
-	ba[sz + 2] = (int)sizeof(bios_consdev_t) + 3 * sizeof(int);
-	memcpy(&ba[sz + 3], &consdev, sizeof(bios_consdev_t));
+	consdev_sz = 3 * sizeof(int) + sizeof(bios_consdev_t);
+	ba[i] = 0x5;   /* consdev */
+	ba[i + 1] = consdev_sz;
+	ba[i + 2] = consdev_sz;
+	memcpy(&ba[i + 3], &consdev, sizeof(bios_consdev_t));
 
 	write_mem(BOOTARGS_PAGE, ba, PAGE_SIZE, 1);
+
+	return (memmap_sz + consdev_sz);
 }
 
 /*
@@ -319,20 +356,20 @@ push_bootargs(int mem_sz)
  * Stack Layout: (TOS == Top Of Stack)
  *  TOS		location of boot arguments page
  *  TOS - 0x4	size of the content in the boot arguments page
- *  TOS - 0x8	size of low memory in KB
- *  TOS - 0xc	size of high memory in KB
+ *  TOS - 0x8	size of low memory (biosbasemem: kernel uses BIOS map only if 0)
+ *  TOS - 0xc	size of high memory (biosextmem, not used by kernel at all)
  *  TOS - 0x10	kernel 'end' symbol value
  *  TOS - 0x14	version of bootarg API
  *
  * Parameters:
- *  mem_sz: size of guest VM memory, in MB
+ *  bootargsz: size of boot arguments
  *  end: kernel 'end' symbol value
  *
  * Return values:
  *  size of the stack
  */
 static size_t
-push_stack(int mem_sz, uint32_t end)
+push_stack(uint32_t bootargsz, uint32_t end)
 {
 	uint32_t stack[1024];
 	uint16_t loc;
@@ -341,11 +378,9 @@ push_stack(int mem_sz, uint32_t end)
 	loc = 1024;
 
 	stack[--loc] = BOOTARGS_PAGE;
-	stack[--loc] = 3 * sizeof(bios_memmap_t) +
-	    sizeof(bios_consdev_t) +
-	    6 * sizeof(int);
-	stack[--loc] = LOWMEM_KB;
-	stack[--loc] = mem_sz * 1024 - LOWMEM_KB;
+	stack[--loc] = bootargsz;
+	stack[--loc] = 0; /* biosbasemem */
+	stack[--loc] = 0; /* biosextmem */
 	stack[--loc] = end;
 	stack[--loc] = 0x0e;
 	stack[--loc] = MAKEBOOTDEV(0x4, 0, 0, 0, 0); /* bootdev: sd0a */
@@ -360,8 +395,7 @@ push_stack(int mem_sz, uint32_t end)
  * mread
  *
  * Reads 'sz' bytes from the file whose descriptor is provided in 'fd'
- * into the guest address space at paddr 'addr'. Note that the guest
- * paddr is limited to 32 bit (4GB).
+ * into the guest address space at paddr 'addr'.
  *
  * Parameters:
  *  fd: file descriptor of the kernel image file to read from.
@@ -372,7 +406,7 @@ push_stack(int mem_sz, uint32_t end)
  *  returns 'sz' if successful, or 0 otherwise.
  */
 static size_t
-mread(int fd, uint32_t addr, size_t sz)
+mread(int fd, paddr_t addr, size_t sz)
 {
 	int ct;
 	size_t i, rd, osz;
@@ -433,7 +467,7 @@ mread(int fd, uint32_t addr, size_t sz)
  * marc4random_buf
  *
  * load 'sz' bytes of random data into the guest address space at paddr
- * 'addr'. Note that the guest paddr is limited to 32 bit (4GB).
+ * 'addr'.
  *
  * Parameters:
  *  addr: guest paddr_t to load random bytes into
@@ -443,7 +477,7 @@ mread(int fd, uint32_t addr, size_t sz)
  *  nothing
  */
 static void
-marc4random_buf(uint32_t addr, int sz)
+marc4random_buf(paddr_t addr, int sz)
 {
 	int i, ct;
 	char buf[PAGE_SIZE];
@@ -483,7 +517,7 @@ marc4random_buf(uint32_t addr, int sz)
  * mbzero
  *
  * load 'sz' bytes of zeros into the guest address space at paddr
- * 'addr'. Note that the guest paddr is limited to 32 bit (4GB)
+ * 'addr'.
  *
  * Parameters:
  *  addr: guest paddr_t to zero
@@ -493,7 +527,7 @@ marc4random_buf(uint32_t addr, int sz)
  *  nothing
  */
 static void
-mbzero(uint32_t addr, int sz)
+mbzero(paddr_t addr, int sz)
 {
 	int i, ct;
 	char buf[PAGE_SIZE];
@@ -528,7 +562,6 @@ mbzero(uint32_t addr, int sz)
  * mbcopy
  *
  * copies 'sz' bytes from guest paddr 'src' to guest paddr 'dst'.
- * Both 'src' and 'dst' are limited to 32 bit (4GB)
  *
  * Parameters:
  *  src: source guest paddr_t to copy from
@@ -632,7 +665,7 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
 				free(phdr);
 				return 1;
 			}
-			if (mread(fd, (uint32_t)(phdr[i].p_paddr -
+			if (mread(fd, (phdr[i].p_paddr -
 			    0xffffffff80000000ULL), phdr[i].p_filesz) !=
 			    phdr[i].p_filesz) {
 				free(phdr);
@@ -654,7 +687,7 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
 
 		/* Zero out BSS. */
 		if (IS_BSS(phdr[i]) && (flags & LOAD_BSS)) {
-			mbzero((uint32_t)(phdr[i].p_paddr -
+			mbzero((phdr[i].p_paddr -
 			    0xffffffff80000000 + phdr[i].p_filesz),
 			    phdr[i].p_memsz - phdr[i].p_filesz);
 		}
@@ -725,7 +758,7 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
 						free(shp);
 						return 1;
 					}
-					if (mread(fd, (uint32_t)maxp,
+					if (mread(fd, maxp,
 					    shp[i].sh_size) != shp[i].sh_size) {
 						free(shstr);
 						free(shp);
@@ -946,7 +979,7 @@ elf32_exec(int fd, Elf32_Ehdr *elf, u_long *marks, int flags)
 						free(shp);
 						return 1;
 					}
-					if (mread(fd, (uint32_t)maxp,
+					if (mread(fd, maxp,
 					    shp[i].sh_size) != shp[i].sh_size) {
 						free(shstr);
 						free(shp);

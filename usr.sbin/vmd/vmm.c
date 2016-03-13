@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.22 2016/03/13 02:37:29 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.23 2016/03/13 13:11:47 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -63,7 +63,6 @@
 
 /*
  * Emulated 8250 UART
- *
  */
 #define COM1_DATA	0x3f8
 #define COM1_IER	0x3f9
@@ -121,6 +120,7 @@ int run_vm(int *, int *, struct vm_create_params *, struct vcpu_init_state *);
 void *vcpu_run_loop(void *);
 int vcpu_exit(struct vm_run_params *);
 int vcpu_reset(uint32_t, uint32_t, struct vcpu_init_state *);
+void create_memory_map(struct vm_create_params *);
 int vmm_create_vm(struct vm_create_params *);
 void init_emulated_hw(struct vm_create_params *, int *, int *);
 void vcpu_exit_inout(struct vm_run_params *);
@@ -139,7 +139,8 @@ void vcpu_process_com_scr(union vm_exit *);
 int vmm_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 void vmm_run(struct privsep *, struct privsep_proc *, void *);
 
-int con_fd, vm_id;
+int con_fd;
+struct vmd_vm *current_vm;
 
 extern struct vmd *env;
 
@@ -470,7 +471,9 @@ start_vm(struct imsg *imsg, uint32_t *id)
 		setproctitle(vcp->vcp_name);
 		log_procinit(vcp->vcp_name);
 
+		create_memory_map(vcp);
 		ret = vmm_create_vm(vcp);
+		current_vm = vm;
 
 		/* send back the kernel-generated vm id (0 on error) */
 		close(fds[0]);
@@ -501,8 +504,7 @@ start_vm(struct imsg *imsg, uint32_t *id)
 		memcpy(&vis, &vcpu_init_flat32, sizeof(struct vcpu_init_state));
 
 		/* Load kernel image */
-		ret = loadelf_main(vm->vm_kernel, vcp->vcp_id,
-		    vcp->vcp_memory_size, &vis);
+		ret = loadelf_main(vm->vm_kernel, vcp, &vis);
 		if (ret) {
 			errno = ret;
 			fatal("failed to load kernel - exiting");
@@ -642,6 +644,65 @@ start_client_vmd(void)
 }
 
 /*
+ * create_memory_map
+ *
+ * Sets up the guest physical memory ranges that the VM can access.
+ *
+ * Return values:
+ *  nothing
+ */
+void
+create_memory_map(struct vm_create_params *vcp)
+{
+	size_t mem_mb;
+	uint64_t mem_bytes, len;
+
+	mem_mb = vcp->vcp_memranges[0].vmr_size;
+	vcp->vcp_nmemranges = 0;
+	if (mem_mb < 1 || mem_mb > VMM_MAX_VM_MEM_SIZE)
+		return;
+
+	mem_bytes = (uint64_t)mem_mb * 1024 * 1024;
+
+	/* First memory region: 0 - LOWMEM_KB (DOS low mem) */
+	vcp->vcp_memranges[0].vmr_gpa = 0x0;
+	vcp->vcp_memranges[0].vmr_size = LOWMEM_KB * 1024;
+	mem_bytes -= LOWMEM_KB * 1024;
+
+	/*
+	 * Second memory region: LOWMEM_KB - 1MB.
+	 * XXX Normally ROMs or parts of video RAM are mapped here.
+	 * We have to add this region, because some systems
+	 * unconditionally write to 0xb8000 (video RAM), and
+	 * we need to make sure that vmm(4) permits accesses
+	 * to it. So allocate guest memory for it.
+	 */
+	len = 0x100000 - LOWMEM_KB * 1024;
+	vcp->vcp_memranges[1].vmr_gpa = LOWMEM_KB * 1024;
+	vcp->vcp_memranges[1].vmr_size = len;
+	mem_bytes -= len;
+
+	/* Make sure that we do not place physical memory into MMIO ranges. */
+	if (mem_bytes > VMM_PCI_MMIO_BAR_BASE - 0x100000)
+		len = VMM_PCI_MMIO_BAR_BASE - 0x100000;
+	else
+		len = mem_bytes;
+
+	/* Third memory region: 1MB - (1MB + len) */
+	vcp->vcp_memranges[2].vmr_gpa = 0x100000;
+	vcp->vcp_memranges[2].vmr_size = len;
+	mem_bytes -= len;
+
+	if (mem_bytes > 0) {
+		/* Fourth memory region for the remaining memory (if any) */
+		vcp->vcp_memranges[3].vmr_gpa = VMM_PCI_MMIO_BAR_END + 1;
+		vcp->vcp_memranges[3].vmr_size = mem_bytes;
+		vcp->vcp_nmemranges = 4;
+	} else
+		vcp->vcp_nmemranges = 3;
+}
+
+/*
  * vmm_create_vm
  *
  * Requests vmm(4) to create a new VM using the supplied creation
@@ -663,7 +724,8 @@ vmm_create_vm(struct vm_create_params *vcp)
 	if (vcp->vcp_ncpus > VMM_MAX_VCPUS_PER_VM)
 		return (EINVAL);
 
-	if (vcp->vcp_memory_size > VMM_MAX_VM_MEM_SIZE)
+	if (vcp->vcp_nmemranges == 0 ||
+	    vcp->vcp_nmemranges > VMM_MAX_MEM_RANGES)
 		return (EINVAL);
 
 	if (vcp->vcp_ndisks > VMM_MAX_DISKS_PER_VM)
@@ -1492,10 +1554,11 @@ vcpu_exit(struct vm_run_params *vrp)
  * Note - this function only handles GPAs < 4GB. 
  */
 int
-write_mem(uint32_t dst, void *buf, uint32_t len, int do_mask)
+write_mem(paddr_t dst, void *buf, size_t len, int do_mask)
 {
 	char *p = buf;
-	uint32_t gpa, n, left;
+	size_t n, left;
+	paddr_t gpa;
 	struct vm_writepage_params vwp;
 
 	/*
@@ -1516,11 +1579,11 @@ write_mem(uint32_t dst, void *buf, uint32_t len, int do_mask)
 
 		vwp.vwp_paddr = (paddr_t)gpa;
 		vwp.vwp_data = p;
-		vwp.vwp_vm_id = vm_id;
+		vwp.vwp_vm_id = current_vm->vm_params.vcp_id;
 		vwp.vwp_len = n;
 		if (ioctl(env->vmd_fd, VMM_IOC_WRITEPAGE, &vwp) < 0) {
-			log_warn("writepage ioctl failed @ 0x%x: "
-			    "dst = 0x%x, len = 0x%x", gpa, dst, len);
+			log_warn("writepage ioctl failed @ 0x%lx: "
+			    "dst = 0x%lx, len = 0x%zx", gpa, dst, len);
 			return (errno);
 		}
 
@@ -1550,12 +1613,12 @@ write_mem(uint32_t dst, void *buf, uint32_t len, int do_mask)
  * Note - this function only handles GPAs < 4GB.
  */
 int
-read_mem(uint32_t src, void *buf, uint32_t len, int do_mask)
+read_mem(paddr_t src, void *buf, size_t len, int do_mask)
 {
 	char *p = buf;
-	uint32_t gpa, n, left;
+	size_t n, left;
+	paddr_t gpa;
 	struct vm_readpage_params vrp;
-
 
 	/*
 	 * Mask kernel load addresses to avoid uint32_t -> uint64_t cast
@@ -1575,11 +1638,11 @@ read_mem(uint32_t src, void *buf, uint32_t len, int do_mask)
 
 		vrp.vrp_paddr = (paddr_t)gpa;
 		vrp.vrp_data = p;
-		vrp.vrp_vm_id = vm_id;
+		vrp.vrp_vm_id = current_vm->vm_params.vcp_id;
 		vrp.vrp_len = n;
 		if (ioctl(env->vmd_fd, VMM_IOC_READPAGE, &vrp) < 0) {
-			log_warn("readpage ioctl failed @ 0x%x: "
-			    "src = 0x%x, len = 0x%x", gpa, src, len);
+			log_warn("readpage ioctl failed @ 0x%lx: "
+			    "src = 0x%lx, len = 0x%zx", gpa, src, len);
 			return (errno);
 		}
 

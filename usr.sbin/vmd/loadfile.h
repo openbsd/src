@@ -1,5 +1,5 @@
 /*	$NetBSD: loadfile.h,v 1.1 1999/04/28 09:08:50 christos Exp $	 */
-/*	$OpenBSD: loadfile.h,v 1.2 2015/12/17 09:29:28 mlarkin Exp $	 */
+/*	$OpenBSD: loadfile.h,v 1.3 2016/03/13 13:11:47 stefan Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,6 +63,9 @@
 #define	COUNT_RANDOM	0x4000
 #define COUNT_ALL	0x7f00
 
-int loadelf_main(int, int, int, struct vcpu_init_state *);
+#define LOWMEM_KB 636
+
+int loadelf_main(int, struct vm_create_params *,
+    struct vcpu_init_state *);
 
 #include <machine/loadfile_machdep.h>
