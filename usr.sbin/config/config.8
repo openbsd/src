@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.60 2014/01/20 01:11:49 schwarze Exp $
+.\"	$OpenBSD: config.8,v 1.61 2016/03/13 08:39:29 jmc Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     from: @(#)config.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: March 13 2016 $
 .Dt CONFIG 8
 .Os
 .Sh NAME
@@ -281,8 +281,7 @@ The commands are as follows:
 .It Ic add Ar dev
 Add a device through copying another.
 .It Ic base Cm 8 | 10 | 16
-Change the base of numbers displayed and entered,
-e.g. I/O addresses in a VAXen are octal.
+Change the base of numbers displayed and entered.
 .It Ic bufcachepercent Op Ar number
 Change the BUFCACHEPERCENT value.
 Without arguments, displays its current value.
@@ -494,8 +493,8 @@ was given, else ignore changes).
 .Ed
 .Sh SEE ALSO
 .Xr options 4 ,
-.Xr boot.conf 5 ,
 .Xr files.conf 5 ,
+.Xr boot.conf 8 ,
 .Xr boot_config 8
 .Pp
 The SYNOPSIS portion of each device in section 4 of the manual.
