@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.6 2015/09/01 05:40:06 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.7 2016/03/13 18:35:02 guenther Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -95,6 +95,6 @@
 						\
 	argv = arginfo->ps_argvstr;		\
 	argc = arginfo->ps_nargvstr;		\
-	environ = envp = arginfo->ps_envstr;
+	envp = arginfo->ps_envstr;
 
 #define	MD_EPROL_LABEL	__asm (".export _eprol, entry\n\t.label _eprol")
