@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.152 2016/03/13 14:27:18 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.153 2016/03/13 15:05:15 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -85,6 +85,16 @@ int substrcmp(const char *p1, size_t s1, const char *p2, size_t s2);
 int resolvpath(struct proc *p, char **rdir, size_t *rdirlen, char **cwd,
     size_t *cwdlen, char *path, size_t pathlen, char **resolved,
     size_t *resolvedlen);
+
+/* #define DEBUG_PLEDGE */
+#ifdef DEBUG_PLEDGE
+int debug_pledge = 1;
+#define DPRINTF(x...)    do { if (debug_pledge) printf(x); } while (0)
+#define DNPRINTF(n,x...) do { if (debug_pledge >= (n)) printf(x); } while (0)
+#else
+#define DPRINTF(x...)
+#define DNPRINTF(n,x...)
+#endif
 
 /*
  * Ordered in blocks starting with least risky and most required.
@@ -511,12 +521,15 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 			return (error);
 		}
 		p->p_p->ps_pledgepaths = wl;
-#if 0
+
+#ifdef DEBUG_PLEDGE
 		/* print paths registered as whilelisted (viewed as without chroot) */
-		printf("pledge: %s(%d): paths loaded:\n", p->p_comm, p->p_pid);
+		DNPRINTF(1, "pledge: %s(%d): paths loaded:\n", p->p_comm,
+		    p->p_pid);
 		for (i = 0; i < wl->wl_count; i++)
 			if (wl->wl_paths[i].name)
-				printf("pledge: %d=%s [%lld]\n", i, wl->wl_paths[i].name,
+				DNPRINTF(1, "pledge: %d=\"%s\" [%lld]\n", i,
+				    wl->wl_paths[i].name,
 				    (long long)wl->wl_paths[i].len);
 #endif
 #endif
@@ -746,24 +759,24 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 			/* resolved is allocated only if !error */
 			return (error);
 
-#if 0
 		/* print resolved path (viewed as without chroot) */
-		printf("pledge_namei: resolved=%s [%lld] strlen=%lld\n",
-		    resolved, (long long)resolvedlen, (long long)strlen(resolved));
-#endif
+		DNPRINTF(2, "pledge_namei: resolved=\"%s\" [%lld] strlen=%lld\n",
+		    resolved, (long long)resolvedlen,
+		    (long long)strlen(resolved));
 
 		error = ENOENT;
 		pardir_found = 0;
 		for (i = 0; i < wl->wl_count && wl->wl_paths[i].name && error; i++) {
 			int substr = substrcmp(wl->wl_paths[i].name,
 			    wl->wl_paths[i].len - 1, resolved, resolvedlen - 1);
-#if 0
+
 			/* print check between registered wl_path and resolved */
-			printf("pledge: check: %s (%ld) %s (%ld) = %d\n",
+			DNPRINTF(3,
+			    "pledge: check: \"%s\" (%ld) \"%s\" (%ld) = %d\n",
 			    wl->wl_paths[i].name, wl->wl_paths[i].len - 1,
 			    resolved, resolvedlen - 1,
 			    substr);
-#endif
+
 			/* wl_paths[i].name is a substring of resolved */
 			if (substr == 1) {
 				u_char term = resolved[wl->wl_paths[i].len - 1];
@@ -789,12 +802,14 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 				ni->ni_pledge |= PLEDGE_STATLIE;
 				error = 0;
 			}
-#if 0
+
+#ifdef DEBUG_PLEDGE
 		if (error == ENOENT)
 			/* print the path that is reported as ENOENT */
-			printf("pledge: %s(%d): wl_path: %s\n", p->p_comm,
-			    p->p_pid, resolved);
+			DNPRINTF(1, "pledge: %s(%d): wl_path ENOENT: \"%s\"\n",
+			    p->p_comm, p->p_pid, resolved);
 #endif
+
 		free(resolved, M_TEMP, resolvedlen);
 		return (error);			/* Don't hint why it failed */
 	}
