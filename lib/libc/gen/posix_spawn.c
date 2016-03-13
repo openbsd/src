@@ -1,4 +1,4 @@
-/*	$OpenBSD: posix_spawn.c,v 1.8 2015/10/23 04:39:24 guenther Exp $	*/
+/*	$OpenBSD: posix_spawn.c,v 1.9 2016/03/13 18:34:20 guenther Exp $	*/
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
  * All rights reserved.
@@ -35,8 +35,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-extern char **environ;
 
 struct __posix_spawnattr {
 	short			sa_flags;

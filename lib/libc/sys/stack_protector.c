@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack_protector.c,v 1.21 2015/12/01 17:05:25 canacar Exp $	*/
+/*	$OpenBSD: stack_protector.c,v 1.22 2016/03/13 18:34:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002 Hiroaki Etoh, Federico G. Schwindt, and Miodrag Vallat.
@@ -28,6 +28,7 @@
  */
 
 #include <signal.h>
+#include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -49,7 +50,6 @@ long __guard_local __dso_hidden __attribute__((section(".openbsd.randomdata")));
 void
 __stack_smash_handler(const char func[], int damaged)
 {
-	extern char *__progname;
 	struct sigaction sa;
 	sigset_t mask;
 	char buf[1024];

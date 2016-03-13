@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.c,v 1.26 2016/01/19 20:32:29 mmcc Exp $ */
+/*	$OpenBSD: gmon.c,v 1.27 2016/03/13 18:34:20 guenther Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -178,7 +178,6 @@ _mcleanup(void)
 	moncontrol(0);
 
 	if (issetugid() == 0 && (profdir = getenv("PROFDIR")) != NULL) {
-		extern char *__progname;
 		char *s, *t, *limit;
 		pid_t pid;
 		long divisor;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog_r.c,v 1.12 2016/02/19 23:49:38 millert Exp $ */
+/*	$OpenBSD: syslog_r.c,v 1.13 2016/03/13 18:34:20 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,15 +36,13 @@
 #include <fcntl.h>
 #include <paths.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 #include <limits.h>
 #include <stdarg.h>
-
-extern char	*__progname;		/* Program name, from crt0. */
-
 
 /* Reentrant version of syslog, i.e. syslog_r() */
 void

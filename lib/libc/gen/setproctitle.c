@@ -1,4 +1,4 @@
-/*	$OpenBSD: setproctitle.c,v 1.14 2015/10/01 02:32:07 guenther Exp $ */
+/*	$OpenBSD: setproctitle.c,v 1.15 2016/03/13 18:34:20 guenther Exp $ */
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
  * All rights reserved.
@@ -40,8 +40,6 @@
 #include <stdarg.h>
 
 #define	MAX_PROCTITLE	2048
-
-extern char *__progname;		/* Program name, from crt0. */
 
 void
 setproctitle(const char *fmt, ...)

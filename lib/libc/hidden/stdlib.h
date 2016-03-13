@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.6 2015/11/10 04:14:03 guenther Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.7 2016/03/13 18:34:21 guenther Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -41,6 +41,9 @@ __BEGIN_HIDDEN_DECLS
 char	*__findenv(const char *, int, int *);
 void	__atexit_register_cleanup(void (*)(void));
 __END_HIDDEN_DECLS
+
+extern char **environ;
+extern char *__progname;
 
 #if 0
 extern PROTO_NORMAL(__mb_cur_max);

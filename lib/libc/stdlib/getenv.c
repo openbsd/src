@@ -1,4 +1,4 @@
-/*	$OpenBSD: getenv.c,v 1.11 2015/09/13 08:31:47 guenther Exp $ */
+/*	$OpenBSD: getenv.c,v 1.12 2016/03/13 18:34:21 guenther Exp $ */
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,6 @@
 char *
 __findenv(const char *name, int len, int *offset)
 {
-	extern char **environ;
 	int i;
 	const char *np;
 	char **p, *cp;

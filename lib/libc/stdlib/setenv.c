@@ -1,4 +1,4 @@
-/*	$OpenBSD: setenv.c,v 1.16 2015/09/13 08:31:47 guenther Exp $ */
+/*	$OpenBSD: setenv.c,v 1.17 2016/03/13 18:34:21 guenther Exp $ */
 /*
  * Copyright (c) 1987 Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern char **environ;
 static char **lastenv;				/* last value of environ */
 
 /*

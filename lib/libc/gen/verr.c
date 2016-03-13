@@ -1,4 +1,4 @@
-/*	$OpenBSD: verr.c,v 1.10 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: verr.c,v 1.11 2016/03/13 18:34:20 guenther Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +34,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-
-extern char *__progname;		/* Program name, from crt0. */
 
 __dead void
 verr(int eval, const char *fmt, va_list ap)
