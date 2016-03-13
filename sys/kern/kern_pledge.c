@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.150 2016/03/11 05:57:16 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.151 2016/03/13 04:51:59 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -635,7 +635,7 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 
 	error = canonpath(origpath, path, sizeof(path));
 	if (error)
-		return (pledge_fail(p, error, 0));
+		return (error);
 
 	/* Detect what looks like a mkstemp(3) family operation */
 	if ((p->p_p->ps_pledge & PLEDGE_TMPPATH) &&
@@ -1602,64 +1602,42 @@ pledge_dropwpaths(struct process *pr)
 int
 canonpath(const char *input, char *buf, size_t bufsize)
 {
-	char *p, *q, *s, *end;
+	const char *p;
+	char *q;
 
 	/* can't canon relative paths, don't bother */
 	if (input[0] != '/') {
 		if (strlcpy(buf, input, bufsize) >= bufsize)
-			return (ENAMETOOLONG);
-		return (0);
+			return ENAMETOOLONG;
+		return 0;
 	}
 
-	/* easiest to work with strings always ending in '/' */
-	if (snprintf(buf, bufsize, "%s/", input) >= bufsize)
-		return (ENAMETOOLONG);
-
-	/* after this we will only be shortening the string. */
-	p = buf;
-	q = p;
-	while (*p) {
-		if (p[0] == '/' && p[1] == '/') {
+	p = input;
+	q = buf;
+	while (*p && (q - buf < bufsize)) {
+		if (p[0] == '/' && (p[1] == '/' || p[1] == '\0')) {
 			p += 1;
+
 		} else if (p[0] == '/' && p[1] == '.' &&
-		    p[2] == '/') {
+		    (p[2] == '/' || p[2] == '\0')) {
 			p += 2;
+
+		} else if (p[0] == '/' && p[1] == '.' && p[2] == '.' &&
+		    (p[3] == '/' || p[3] == '\0')) {
+			p += 3;
+			if (q != buf)	/* "/../" at start of buf */
+				while (*--q != '/')
+					;
+
 		} else {
 			*q++ = *p++;
 		}
 	}
-	*q = 0;
-
-	end = buf + strlen(buf);
-	s = buf;
-	p = s;
-	while (1) {
-		/* find "/../" (where's strstr when you need it?) */
-		while (p < end) {
-			if (p[0] == '/' && strncmp(p + 1, "../", 3) == 0)
-				break;
-			p++;
-		}
-		if (p == end)
-			break;
-		if (p == s) {
-			memmove(s, p + 3, end - p - 3 + 1);
-			end -= 3;
-		} else {
-			/* s starts with '/', so we know there's one
-			 * somewhere before p. */
-			q = p - 1;
-			while (*q != '/')
-				q--;
-			memmove(q, p + 3, end - p - 3 + 1);
-			end -= p + 3 - q;
-			p = q;
-		}
-	}
-	if (end > s + 1)
-		*(end - 1) = 0; /* remove trailing '/' */
-
-	return 0;
+        if ((*p == '\0') && (q - buf < bufsize)) {
+                *q = 0;
+                return 0;
+        } else
+                return ENAMETOOLONG;
 }
 
 int
