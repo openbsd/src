@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.151 2016/03/13 04:51:59 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.152 2016/03/13 14:27:18 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -82,6 +82,9 @@
 int pledgereq_flags(const char *req);
 int canonpath(const char *input, char *buf, size_t bufsize);
 int substrcmp(const char *p1, size_t s1, const char *p2, size_t s2);
+int resolvpath(struct proc *p, char **rdir, size_t *rdirlen, char **cwd,
+    size_t *cwdlen, char *path, size_t pathlen, char **resolved,
+    size_t *resolvedlen);
 
 /*
  * Ordered in blocks starting with least risky and most required.
@@ -439,8 +442,10 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 #if 0
 		const char **u = SCARG(uap, paths), *sp;
 		struct whitepaths *wl;
-		char *cwdpath = NULL, *path;
-		size_t cwdpathlen = MAXPATHLEN * 4, cwdlen, len, maxargs = 0;
+		char *path, *rdir = NULL, *cwd = NULL;
+		size_t pathlen, rdirlen, cwdlen;
+
+		size_t maxargs = 0;
 		int i, error;
 
 		if (p->p_p->ps_pledgepaths)
@@ -466,77 +471,37 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 
 		/* Copy in */
 		for (i = 0; i < wl->wl_count; i++) {
-			char *fullpath = NULL, *builtpath = NULL, *canopath = NULL, *cwd;
-			size_t builtlen = 0;
+			char *resolved = NULL;
+			size_t resolvedlen;
 
 			if ((error = copyin(u + i, &sp, sizeof(sp))) != 0)
 				break;
 			if (sp == NULL)
 				break;
-			if ((error = copyinstr(sp, path, MAXPATHLEN, &len)) != 0)
+			if ((error = copyinstr(sp, path, MAXPATHLEN, &pathlen)) != 0)
 				break;
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_STRUCT))
-				ktrstruct(p, "pledgepath", path, len-1);
+				ktrstruct(p, "pledgepath", path, pathlen-1);
 #endif
 
-			/* If path is relative, prepend cwd */
-			if (path[0] != '/') {
-				if (cwdpath == NULL) {
-					char *bp, *bpend;
+			error = resolvpath(p, &rdir, &rdirlen, &cwd, &cwdlen,
+			    path, pathlen, &resolved, &resolvedlen);
 
-					cwdpath = malloc(cwdpathlen, M_TEMP, M_WAITOK);
-					bp = &cwdpath[cwdpathlen];
-					bpend = bp;
-					*(--bp) = '\0';
-
-					error = vfs_getcwd_common(p->p_fd->fd_cdir,
-					    NULL, &bp, cwdpath, cwdpathlen/2,
-					    GETCWD_CHECK_ACCESS, p);
-					if (error)
-						break;
-					cwd = bp;
-					cwdlen = (bpend - bp);
-				}
-
-				/* NUL included in cwd component */
-				builtlen = cwdlen + 1 + strlen(path);
-				if (builtlen > PATH_MAX) {
-					error = ENAMETOOLONG;
-					break;
-				}
-				builtpath = malloc(builtlen, M_TEMP, M_WAITOK);
-				snprintf(builtpath, builtlen, "%s/%s", cwd, path);
-				// printf("pledge: builtpath = %s\n", builtpath);
-				fullpath = builtpath;
-			} else
-				fullpath = path;
-
-			canopath = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
-			error = canonpath(fullpath, canopath, MAXPATHLEN);
-
-			free(builtpath, M_TEMP, builtlen);
-			if (error != 0) {
-				free(canopath, M_TEMP, MAXPATHLEN);
+			if (error != 0)
+				/* resolved is allocated only if !error */
 				break;
-			}
 
-			len = strlen(canopath) + 1;
-
-			//printf("pledge: canopath = %s %lld strlen %lld\n", canopath,
-			//    (long long)len, (long long)strlen(canopath));
-
-			if (maxargs += len > ARG_MAX) {
+			if (maxargs += resolvedlen > ARG_MAX) {
 				error = E2BIG;
 				break;
 			}
-			wl->wl_paths[i].name = malloc(len, M_TEMP, M_WAITOK);
-			memcpy(wl->wl_paths[i].name, canopath, len);
-			wl->wl_paths[i].len = len;
-			free(canopath, M_TEMP, MAXPATHLEN);
+			wl->wl_paths[i].name = resolved;
+			wl->wl_paths[i].len = resolvedlen;
 		}
+		free(rdir, M_TEMP, rdirlen);
+		free(cwd, M_TEMP, cwdlen);
 		free(path, M_TEMP, MAXPATHLEN);
-		free(cwdpath, M_TEMP, cwdpathlen);
 
 		if (error) {
 			for (i = 0; i < wl->wl_count; i++)
@@ -547,10 +512,11 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 		}
 		p->p_p->ps_pledgepaths = wl;
 #if 0
+		/* print paths registered as whilelisted (viewed as without chroot) */
 		printf("pledge: %s(%d): paths loaded:\n", p->p_comm, p->p_pid);
 		for (i = 0; i < wl->wl_count; i++)
 			if (wl->wl_paths[i].name)
-				printf("pledge: %d=%s %lld\n", i, wl->wl_paths[i].name,
+				printf("pledge: %d=%s [%lld]\n", i, wl->wl_paths[i].name,
 				    (long long)wl->wl_paths[i].len);
 #endif
 #endif
@@ -766,78 +732,51 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 	 */
 	if (p->p_p->ps_pledgepaths) {
 		struct whitepaths *wl = p->p_p->ps_pledgepaths;
-		char *fullpath, *builtpath = NULL, *canopath = NULL;
-		size_t builtlen = 0, canopathlen;
+		char *rdir = NULL, *cwd = NULL, *resolved = NULL;
+		size_t rdirlen, cwdlen, resolvedlen;
 		int i, error, pardir_found;
 
-		if (origpath[0] != '/') {
-			char *cwdpath, *cwd, *bp, *bpend;
-			size_t cwdpathlen = MAXPATHLEN * 4, cwdlen;
+		error = resolvpath(p, &rdir, &rdirlen, &cwd, &cwdlen,
+		    origpath, strlen(origpath)+1, &resolved, &resolvedlen);
 
-			cwdpath = malloc(cwdpathlen, M_TEMP, M_WAITOK);
-			bp = &cwdpath[cwdpathlen];
-			bpend = bp;
-			*(--bp) = '\0';
+		free(rdir, M_TEMP, rdirlen);
+		free(cwd, M_TEMP, cwdlen);
 
-			error = vfs_getcwd_common(p->p_fd->fd_cdir,
-			    NULL, &bp, cwdpath, cwdpathlen/2,
-			    GETCWD_CHECK_ACCESS, p);
-			if (error) {
-				free(cwdpath, M_TEMP, cwdpathlen);
-				return (error);
-			}
-			cwd = bp;
-			cwdlen = (bpend - bp);
+		if (error != 0)
+			/* resolved is allocated only if !error */
+			return (error);
 
-			/* NUL included in cwd component */
-			builtlen = cwdlen + 1 + strlen(origpath);
-			builtpath = malloc(builtlen, M_TEMP, M_WAITOK);
-			snprintf(builtpath, builtlen, "%s/%s", cwd, origpath);
-			fullpath = builtpath;
-			free(cwdpath, M_TEMP, cwdpathlen);
-
-			//printf("namei: builtpath = %s %lld strlen %lld\n", builtpath,
-			//    (long long)builtlen, (long long)strlen(builtpath));
-		} else
-			fullpath = path;
-
-		canopath = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
-		error = canonpath(fullpath, canopath, MAXPATHLEN);
-
-		free(builtpath, M_TEMP, builtlen);
-		if (error != 0) {
-			free(canopath, M_TEMP, MAXPATHLEN);
-			return (pledge_fail(p, error, 0));
-		}
-
-		//printf("namei: canopath = %s strlen %lld\n", canopath,
-		//    (long long)strlen(canopath));
+#if 0
+		/* print resolved path (viewed as without chroot) */
+		printf("pledge_namei: resolved=%s [%lld] strlen=%lld\n",
+		    resolved, (long long)resolvedlen, (long long)strlen(resolved));
+#endif
 
 		error = ENOENT;
-		canopathlen = strlen(canopath);
 		pardir_found = 0;
 		for (i = 0; i < wl->wl_count && wl->wl_paths[i].name && error; i++) {
 			int substr = substrcmp(wl->wl_paths[i].name,
-			    wl->wl_paths[i].len - 1, canopath, canopathlen);
-
-			//printf("pledge: check: %s [%ld] %s [%ld] = %d\n",
-			//    wl->wl_paths[i].name, wl->wl_paths[i].len - 1,
-			//    canopath, canopathlen,
-			//    substr);
-
-			/* wl_paths[i].name is a substring of canopath */
+			    wl->wl_paths[i].len - 1, resolved, resolvedlen - 1);
+#if 0
+			/* print check between registered wl_path and resolved */
+			printf("pledge: check: %s (%ld) %s (%ld) = %d\n",
+			    wl->wl_paths[i].name, wl->wl_paths[i].len - 1,
+			    resolved, resolvedlen - 1,
+			    substr);
+#endif
+			/* wl_paths[i].name is a substring of resolved */
 			if (substr == 1) {
-				u_char term = canopath[wl->wl_paths[i].len - 1];
+				u_char term = resolved[wl->wl_paths[i].len - 1];
 
 				if (term == '\0' || term == '/' ||
 				    wl->wl_paths[i].name[1] == '\0')
 					error = 0;
 
-			/* canopath is a substring of wl_paths[i].name */
+			/* resolved is a substring of wl_paths[i].name */
 			} else if (substr == 2) {
-				u_char term = wl->wl_paths[i].name[canopathlen];
+				u_char term = wl->wl_paths[i].name[resolvedlen - 1];
 
-				if (canopath[1] == '\0' || term == '/')
+				if (resolved[1] == '\0' || term == '/')
 					pardir_found = 1;
 			}
 		}
@@ -850,7 +789,13 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 				ni->ni_pledge |= PLEDGE_STATLIE;
 				error = 0;
 			}
-		free(canopath, M_TEMP, MAXPATHLEN);
+#if 0
+		if (error == ENOENT)
+			/* print the path that is reported as ENOENT */
+			printf("pledge: %s(%d): wl_path: %s\n", p->p_comm,
+			    p->p_pid, resolved);
+#endif
+		free(resolved, M_TEMP, resolvedlen);
 		return (error);			/* Don't hint why it failed */
 	}
 
@@ -1654,4 +1599,119 @@ substrcmp(const char *p1, size_t s1, const char *p2, size_t s2)
 		return (2);	/* string2 is a subpath of string1 */
 	else
 		return (0);	/* no subpath */
+}
+
+int
+resolvpath(struct proc *p,
+    char **rdir, size_t *rdirlen,
+    char **cwd, size_t *cwdlen,
+    char *path, size_t pathlen,
+    char **resolved, size_t *resolvedlen)
+{
+	int error;
+	char *fullpath = NULL, *rawcanopath = NULL, *canopath = NULL;
+	size_t fullpathlen, rawcanopathlen, canopathlen;
+
+	/* 1. get rdir if chrooted */
+	if (p->p_fd->fd_rdir != NULL) {
+		if (*rdir == NULL) {
+			char *rawrdir, *bp, *bpend;
+			size_t rawrdirlen = MAXPATHLEN * 4;
+
+			rawrdir = malloc(rawrdirlen, M_TEMP, M_WAITOK);
+			bp = &rawrdir[rawrdirlen];
+			bpend = bp;
+			*(--bp) = '\0';
+
+			error = vfs_getcwd_common(p->p_fd->fd_rdir,
+			    rootvnode, &bp, rawrdir, rawrdirlen/2,
+			    GETCWD_CHECK_ACCESS, p);
+			if (error) {
+				free(rawrdir, M_TEMP, rawrdirlen);
+				goto out;
+			}
+
+			/* NUL is included */
+			*rdirlen = (bpend - bp);
+			*rdir = malloc(*rdirlen, M_TEMP, M_WAITOK);
+			memcpy(*rdir, bp, *rdirlen);
+
+			free(rawrdir, M_TEMP, rawrdirlen);
+		}
+	} else {
+		if (*rdir == NULL)
+			*rdirlen = 0;	/* ensure rdirlen value is initialized */
+	}
+
+	/* 2. resolv: path -> fullpath */
+	if (path[0] != '/') {
+		/* path is relative: prepend cwd (rootvnode based) */
+
+		/* get cwd first (if needed) */
+		if (*cwd == NULL) {
+			char *rawcwd, *bp, *bpend;
+			size_t rawcwdlen = MAXPATHLEN * 4;
+
+			rawcwd = malloc(rawcwdlen, M_TEMP, M_WAITOK);
+			bp = &rawcwd[rawcwdlen];
+			bpend = bp;
+			*(--bp) = '\0';
+
+			error = vfs_getcwd_common(p->p_fd->fd_cdir,
+			    rootvnode, &bp, rawcwd, rawcwdlen/2,
+			    GETCWD_CHECK_ACCESS, p);
+			if (error) {
+				free(rawcwd, M_TEMP, rawcwdlen);
+				goto out;
+			}
+
+			/* NUL is included */
+			*cwdlen = (bpend - bp);
+			*cwd = malloc(*cwdlen, M_TEMP, M_WAITOK);
+			memcpy(*cwd, bp, *cwdlen);
+
+			free(rawcwd, M_TEMP, rawcwdlen);
+		}
+
+		/* NUL included in *cwdlen and pathlen */
+		fullpathlen = *cwdlen + pathlen;
+		fullpath = malloc(fullpathlen, M_TEMP, M_WAITOK);
+		snprintf(fullpath, fullpathlen, "%s/%s", *cwd, path);
+
+	} else if (p->p_fd->fd_rdir) {
+		/* path is absolute and we are chrooted : prepend *rdir */
+
+		/* NUL included in *rdirlen and pathlen (and no '/' between them) */
+		fullpathlen = *rdirlen + pathlen - 1;
+		fullpath = malloc(fullpathlen, M_TEMP, M_WAITOK);
+		snprintf(fullpath, fullpathlen, "%s%s", *rdir, path);
+
+	} else {
+		/* path is absolute */
+		fullpathlen = pathlen;
+		fullpath = malloc(fullpathlen, M_TEMP, M_WAITOK);
+		memcpy(fullpath, path, pathlen);
+	}
+
+	/* 3. canonization: fullpath -> rawcanopath */
+	rawcanopathlen = fullpathlen;
+	rawcanopath = malloc(rawcanopathlen, M_TEMP, M_WAITOK);
+	error = canonpath(fullpath, rawcanopath, rawcanopathlen);
+	if (error != 0)
+		goto out;
+
+	/* 4. output a fresh allocated path: rawcanopath -> canopath */
+	canopathlen = strlen(rawcanopath) + 1; /* NUL */
+	canopath = malloc(canopathlen, M_TEMP, M_WAITOK);
+	memcpy(canopath, rawcanopath, canopathlen);
+
+	*resolvedlen = canopathlen;
+	*resolved = canopath;
+
+out:
+	free(rawcanopath, M_TEMP, rawcanopathlen);
+	free(fullpath, M_TEMP, fullpathlen);
+	if (error != 0)
+		free(canopath, M_TEMP, canopathlen);
+	return error;
 }
