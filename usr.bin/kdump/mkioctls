@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.35 2016/01/05 19:41:15 robert Exp $
+#	$OpenBSD: mkioctls,v 1.36 2016/03/13 11:37:42 natano Exp $
 
 #
 # Copyright (c) 1994
@@ -36,6 +36,7 @@ BEGIN {
 	print "#include <sys/param.h>"
 	print "#include <sys/socket.h>"
 	print "#include <sys/socketvar.h>"
+	print "#include <miscfs/fuse/fusefs.h>"
 	print "#include <net/route.h>"
 	print "#include <net/if.h>"
 	print "#include <net/bpf.h>"
@@ -54,8 +55,10 @@ BEGIN {
 	print "#include <net/ppp_defs.h>"
 	print "#include <net/if_ppp.h>"
 	print "#include <net/if_pppoe.h>"
+	print "#include <net/if_trunk.h>"
 	print "#include <net/if_tun.h>"
 	print "#include <net/pfvar.h>"
+	print "#include <net/pipex.h>"
 	print "#include <sys/disklabel.h>"
 	print "#include <sys/ataio.h>"
 	print "#include <sys/audioio.h>"
@@ -66,6 +69,7 @@ BEGIN {
 	print "#include <sys/dkio.h>"
 	print "#include <sys/filio.h>"
 	print "#include <sys/gpio.h>"
+	print "#include <sys/memrange.h>"
 	print "#include <sys/mtio.h>"
 	print "#include <sys/pciio.h>"
 	print "#include <sys/radioio.h>"
@@ -75,10 +79,15 @@ BEGIN {
 	print "#include <sys/syslog.h>"
 	print "#include <sys/videoio.h>"
 	print "#include <dev/biovar.h>"
+	print "#include <dev/ipmi.h>"
 	print "#include <dev/systrace.h>"
 	print "#include <dev/wscons/wsconsio.h>"
 	print "#include <dev/vndioctl.h>"
+	print "#include <scsi/scsi_all.h>"
+	print "#include <dev/vscsivar.h>"
 	print "#include <dev/pci/drm/i915_drm.h>"
+	print "#include <dev/pv/pvvar.h>"
+	print "#include <dev/usb/udlio.h>"
 	print "#include <dev/usb/usb.h>"
 	print "#include <sys/ioctl.h>"
 	print "#include \"kdump.h\""
@@ -92,7 +101,7 @@ BEGIN {
 	print ""
 }
 
-/^[ 	]*#[ 	]*define[ 	]+(ATAIO|AUDIO_|BIOC|CDIO|CHIO|DIOC|DRM|GPIO|TIO|FIO|MTIOC|LIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PPPIOC|PPPOE|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|USB|VIDIOC|VNDIOC|WSKBD|WSMOUSE|WSDISPLAY|WSMUX|PTM)[A-Z_0-9]*[ 	]+(DRM)?_IO/ {
+/^[ 	]*#[ 	]*define[ 	]+(ATAIO|AUDIO_|BIOC|CDIO|CHIO|DIOC|DRM|GPIO|IPMICTL|TIO|FIO|MEMRANGE|MTIOC|LIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PIPEX|PPPIOC|PPPOE|PVBUSIOC|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|UDLIO|USB|VIDIOC|VNDIOC|VSCSI|WSKBD|WSMOUSE|WSDISPLAY|WSMUX|PTM)[A-Z_0-9]*[ 	]+(DRM)?_IO/ {
 
 	# find where the name starts
 	for (i = 1; i <= NF; i++)
