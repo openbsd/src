@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichiic.c,v 1.37 2015/12/07 02:56:36 jsg Exp $	*/
+/*	$OpenBSD: ichiic.c,v 1.38 2016/03/13 11:57:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -340,17 +340,19 @@ ichiic_intr(void *arg)
 
 	/* Read status */
 	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HS);
+
+	/* Clear status bits */
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HS, st);
+
+	/* XXX Ignore SMBALERT# for now */
 	if ((st & ICH_SMB_HS_BUSY) != 0 || (st & (ICH_SMB_HS_INTR |
 	    ICH_SMB_HS_DEVERR | ICH_SMB_HS_BUSERR | ICH_SMB_HS_FAILED |
-	    ICH_SMB_HS_SMBAL | ICH_SMB_HS_BDONE)) == 0)
+	    ICH_SMB_HS_BDONE)) == 0)
 		/* Interrupt was not for us */
 		return (0);
 
 	DPRINTF(("%s: intr st 0x%b\n", sc->sc_dev.dv_xname, st,
 	    ICH_SMB_HS_BITS));
-
-	/* Clear status bits */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HS, st);
 
 	/* Check for errors */
 	if (st & (ICH_SMB_HS_DEVERR | ICH_SMB_HS_BUSERR | ICH_SMB_HS_FAILED)) {
