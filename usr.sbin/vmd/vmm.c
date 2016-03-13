@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.21 2016/02/16 19:00:16 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.22 2016/03/13 02:37:29 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -79,7 +79,7 @@
  */
 #define TIMER_BASE	0x40
 #define TIMER_CTRL	0x43	/* 8253 Timer #1 */
-#define NS_PER_TICK (1000000000 / TIMER_FREQ)
+#define NS_PER_TICK	(1000000000 / TIMER_FREQ)
 
 /* i8253 registers */
 struct i8253_counter {
@@ -909,19 +909,13 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 				goto ret;
 			}
 
-			rw = vei->vei.vei_data &
-			    (TIMER_LATCH | TIMER_LSB |
-			    TIMER_MSB | TIMER_16BIT);
+			rw = vei->vei.vei_data & (TIMER_LATCH | TIMER_16BIT);
 
-			if (rw == TIMER_16BIT) {
-				/*
-				 * XXX this seems to be used on occasion, needs
-				 * to be implemented
-				 */
-				log_warnx("%s: i8253 PIT: 16 bit "
-				    "counter I/O not supported",
-				    __progname);
-				    goto ret;
+			if ((rw & TIMER_16BIT) == TIMER_LSB ||
+			    (rw & TIMER_16BIT) == TIMER_MSB) {
+				log_warnx("%s: i8253 PIT: invalid timer mode "
+				    "0x%x selected", __func__,
+				    (rw & TIMER_16BIT));
 			}
 
 			/*
@@ -956,8 +950,6 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 				goto ret;
 			}
 
-			log_warnx("%s: i8253 PIT: unsupported rw mode "
-			    "%d", __progname, rw);
 			goto ret;
 		} else {
 			/* XXX should this return 0xff as the data read? */
