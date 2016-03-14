@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.93 2016/03/04 00:04:48 deraadt Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.94 2016/03/14 01:16:39 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -352,6 +352,8 @@ struct oce_softc {
 
 	struct timeout		sc_tick;
 	struct timeout		sc_rxrefill;
+
+	void *			sc_statcmd;
 };
 
 #define IS_BE(sc)		ISSET((sc)->sc_flags, OCE_F_BE2 | OCE_F_BE3)
@@ -485,8 +487,8 @@ int	oce_new_mq(struct oce_softc *, struct oce_mq *);
 int	oce_new_eq(struct oce_softc *, struct oce_eq *);
 int	oce_new_cq(struct oce_softc *, struct oce_cq *);
 
-static inline int
-	oce_update_stats(struct oce_softc *);
+int	oce_init_stats(struct oce_softc *);
+int	oce_update_stats(struct oce_softc *);
 int	oce_stats_be2(struct oce_softc *, uint64_t *, uint64_t *);
 int	oce_stats_be3(struct oce_softc *, uint64_t *, uint64_t *);
 int	oce_stats_xe(struct oce_softc *, uint64_t *, uint64_t *);
@@ -607,6 +609,9 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_2;
 	}
 	printf(": %s", intrstr);
+
+	if (oce_init_stats(sc))
+		goto fail_3;
 
 	if (oce_init_queues(sc))
 		goto fail_3;
@@ -3443,7 +3448,25 @@ oce_new_cq(struct oce_softc *sc, struct oce_cq *cq)
 	return (0);
 }
 
-static inline int
+int
+oce_init_stats(struct oce_softc *sc)
+{
+	union {
+		struct mbx_get_nic_stats_v0	_be2;
+		struct mbx_get_nic_stats	_be3;
+		struct mbx_get_pport_stats	_xe201;
+	} cmd;
+
+	sc->sc_statcmd = malloc(sizeof(cmd), M_DEVBUF, M_ZERO | M_NOWAIT);
+	if (sc->sc_statcmd == NULL) {
+		printf("%s: failed to allocate statistics command block\n",
+		    sc->sc_dev.dv_xname);
+		return (-1);
+	}
+	return (0);
+}
+
+int
 oce_update_stats(struct oce_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
@@ -3472,21 +3495,21 @@ oce_update_stats(struct oce_softc *sc)
 int
 oce_stats_be2(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 {
-	struct mbx_get_nic_stats_v0 cmd;
+	struct mbx_get_nic_stats_v0 *cmd = sc->sc_statcmd;
 	struct oce_pmem_stats *ms;
 	struct oce_rxf_stats_v0 *rs;
 	struct oce_port_rxf_stats_v0 *ps;
 	int err;
 
-	memset(&cmd, 0, sizeof(cmd));
+	memset(cmd, 0, sizeof(*cmd));
 
 	err = oce_cmd(sc, SUBSYS_NIC, OPCODE_NIC_GET_STATS, OCE_MBX_VER_V0,
-	    &cmd, sizeof(cmd));
+	    cmd, sizeof(*cmd));
 	if (err)
 		return (err);
 
-	ms = &cmd.params.rsp.stats.pmem;
-	rs = &cmd.params.rsp.stats.rxf;
+	ms = &cmd->params.rsp.stats.pmem;
+	rs = &cmd->params.rsp.stats.rxf;
 	ps = &rs->port[sc->sc_port];
 
 	*rxe = ps->rx_crc_errors + ps->rx_in_range_errors +
@@ -3511,21 +3534,21 @@ oce_stats_be2(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 int
 oce_stats_be3(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 {
-	struct mbx_get_nic_stats cmd;
+	struct mbx_get_nic_stats *cmd = sc->sc_statcmd;
 	struct oce_pmem_stats *ms;
 	struct oce_rxf_stats_v1 *rs;
 	struct oce_port_rxf_stats_v1 *ps;
 	int err;
 
-	memset(&cmd, 0, sizeof(cmd));
+	memset(cmd, 0, sizeof(*cmd));
 
 	err = oce_cmd(sc, SUBSYS_NIC, OPCODE_NIC_GET_STATS, OCE_MBX_VER_V1,
-	    &cmd, sizeof(cmd));
+	    cmd, sizeof(*cmd));
 	if (err)
 		return (err);
 
-	ms = &cmd.params.rsp.stats.pmem;
-	rs = &cmd.params.rsp.stats.rxf;
+	ms = &cmd->params.rsp.stats.pmem;
+	rs = &cmd->params.rsp.stats.rxf;
 	ps = &rs->port[sc->sc_port];
 
 	*rxe = ps->rx_crc_errors + ps->rx_in_range_errors +
@@ -3546,21 +3569,21 @@ oce_stats_be3(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 int
 oce_stats_xe(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 {
-	struct mbx_get_pport_stats cmd;
+	struct mbx_get_pport_stats *cmd = sc->sc_statcmd;
 	struct oce_pport_stats *pps;
 	int err;
 
-	memset(&cmd, 0, sizeof(cmd));
+	memset(cmd, 0, sizeof(*cmd));
 
-	cmd.params.req.reset_stats = 0;
-	cmd.params.req.port_number = sc->sc_if_id;
+	cmd->params.req.reset_stats = 0;
+	cmd->params.req.port_number = sc->sc_if_id;
 
 	err = oce_cmd(sc, SUBSYS_NIC, OPCODE_NIC_GET_PPORT_STATS,
-	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
+	    OCE_MBX_VER_V0, cmd, sizeof(*cmd));
 	if (err)
 		return (err);
 
-	pps = &cmd.params.rsp.pps;
+	pps = &cmd->params.rsp.pps;
 
 	*rxe = pps->rx_discards + pps->rx_errors + pps->rx_crc_errors +
 	    pps->rx_alignment_errors + pps->rx_symbol_errors +
