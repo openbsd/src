@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.220 2016/03/02 05:14:34 jsg Exp $ */
+/* $OpenBSD: dsdt.c,v 1.221 2016/03/14 06:37:31 guenther Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1632,7 +1632,7 @@ aml_parse_resource(struct aml_value *res,
 		crs = (union acpi_resource *)(res->v_buffer+off);
 
 		rlen = AML_CRSLEN(crs);
-		if (crs->hdr.typecode == 0x79 || !rlen)
+		if (crs->hdr.typecode == SRT_ENDTAG || !rlen)
 			break;
 
 		crs = aml_mapresource(crs);
@@ -2154,7 +2154,7 @@ aml_concatres(struct aml_value *a1, struct aml_value *a2)
 {
 	struct aml_value *c;
 	int l1 = 0, l2 = 0, l3 = 2;
-	uint8_t a3[] = { 0x79, 0x00 };
+	uint8_t a3[] = { SRT_ENDTAG, 0x00 };
 
 	if (a1->type != AML_OBJTYPE_BUFFER || a2->type != AML_OBJTYPE_BUFFER)
 		aml_die("concatres: not buffers\n");

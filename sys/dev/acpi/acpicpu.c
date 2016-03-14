@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.72 2015/12/29 04:46:28 mmcc Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.73 2016/03/14 06:37:31 guenther Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -386,7 +386,7 @@ acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 	if (val->v_package[0]->length != sizeof(*grd) + 2 ||
 	    grd->grd_descriptor != LR_GENREGISTER ||
 	    grd->grd_length != sizeof(grd->grd_gas) ||
-	    val->v_package[0]->v_buffer[sizeof(*grd)] != SR_TAG(SR_ENDTAG,1)) {
+	    val->v_package[0]->v_buffer[sizeof(*grd)] != SRT_ENDTAG) {
 		printf("\nC%d: bogo buffer", state);
 		return;
 	}

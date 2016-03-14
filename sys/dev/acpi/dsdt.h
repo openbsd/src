@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.67 2016/01/13 23:11:22 kettenis Exp $ */
+/* $OpenBSD: dsdt.h,v 1.68 2016/03/14 06:37:31 guenther Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -83,7 +83,7 @@ const char		*aml_nodename(struct aml_node *);
 #define SRT_ENDDEP		0x38
 #define SRT_IOPORT		0x47
 #define SRT_FIXEDPORT		0x4B
-#define SRT_ENDTAG		0x78
+#define SRT_ENDTAG		0x79
 
 #define SR_IRQ			0x04
 #define SR_DMA			0x05
