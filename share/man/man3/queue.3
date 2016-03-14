@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.63 2015/11/19 13:38:07 millert Exp $
+.\"	$OpenBSD: queue.3,v 1.64 2016/03/14 22:39:23 jmc Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: November 19 2015 $
+.Dd $Mdocdate: March 14 2016 $
 .Dt SLIST_INIT 3
 .Os
 .Sh NAME
@@ -918,6 +918,8 @@ while ((np = TAILQ_FIRST(&head))) {
 }
 
 .Ed
+.Sh SEE ALSO
+.Xr tree 3
 .Sh NOTES
 It is an error to assume the next and previous fields are preserved
 after an element has been removed from a list or queue.
