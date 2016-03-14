@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.50 2015/01/20 22:09:50 tedu Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.51 2016/03/14 20:43:03 millert Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -278,21 +278,24 @@ int	 vsprintf(char *, const char *, __va_list);
 int	 vdprintf(int, const char * __restrict, __va_list);
 #endif
 
-#if __ISO_C_VISIBLE >= 1999 || __BSD_VISIBLE
+#if __ISO_C_VISIBLE >= 1999 || __XPG_VISIBLE >= 500 || __BSD_VISIBLE
 int	 snprintf(char *, size_t, const char *, ...)
 		__attribute__((__format__ (printf, 3, 4)))
 		__attribute__((__nonnull__ (3)))
 		__attribute__((__bounded__ (__string__,1,2)));
+int	 vsnprintf(char *, size_t, const char *, __va_list)
+		__attribute__((__format__ (printf, 3, 0)))
+		__attribute__((__nonnull__ (3)))
+		__attribute__((__bounded__(__string__,1,2)));
+#endif /* __ISO_C_VISIBLE >= 1999 || __XPG_VISIBLE >= 500 || __BSD_VISIBLE */
+
+#if __ISO_C_VISIBLE >= 1999 || __BSD_VISIBLE
 int	 vfscanf(FILE *, const char *, __va_list)
 		__attribute__((__format__ (scanf, 2, 0)))
 		__attribute__((__nonnull__ (2)));
 int	 vscanf(const char *, __va_list)
 		__attribute__((__format__ (scanf, 1, 0)))
 		__attribute__((__nonnull__ (1)));
-int	 vsnprintf(char *, size_t, const char *, __va_list)
-		__attribute__((__format__ (printf, 3, 0)))
-		__attribute__((__nonnull__ (3)))
-		__attribute__((__bounded__(__string__,1,2)));
 int	 vsscanf(const char *, const char *, __va_list)
 		__attribute__((__format__ (scanf, 2, 0)))
 		__attribute__((__nonnull__ (2)));
