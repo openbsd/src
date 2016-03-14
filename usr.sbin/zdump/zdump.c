@@ -1,4 +1,4 @@
-/*	$OpenBSD: zdump.c,v 1.12 2015/11/11 02:52:46 deraadt Exp $ */
+/*	$OpenBSD: zdump.c,v 1.13 2016/03/14 15:29:29 mestre Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 	struct tm	tm, newtm, *tmp, *newtmp;
 	char		**fakeenv;
 
-	if (pledge("stdio", NULL) == -1) {
+	if (pledge("stdio rpath", NULL) == -1) {
 		perror("pledge");
 		exit(1);
 	}
