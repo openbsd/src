@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.c,v 1.27 2016/03/13 18:34:20 guenther Exp $ */
+/*	$OpenBSD: gmon.c,v 1.28 2016/03/14 14:48:02 mmcc Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -302,7 +302,7 @@ moncontrol(int mode)
 		p->state = GMON_PROF_ON;
 	} else {
 		/* stop */
-		profil((char *)0, 0, 0, 0);
+		profil(NULL, 0, 0, 0);
 		p->state = GMON_PROF_OFF;
 	}
 }
