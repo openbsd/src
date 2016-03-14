@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.29 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: magma.c,v 1.30 2016/03/14 18:01:18 stefan Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -1649,14 +1649,14 @@ mbpp_rw(dev, uio)
 	struct mbpp_softc *ms = mbpp_cd.cd_devs[card];
 	register struct mbpp_port *mp = &ms->ms_port[port];
 	caddr_t buffer, ptr;
-	int buflen, cnt, len;
+	size_t buflen, cnt, len;
 	int s, error = 0;
 	int gotdata = 0;
 
 	if (uio->uio_resid == 0)
 		return (0);
 
-	buflen = min(uio->uio_resid, mp->mp_burst);
+	buflen = ulmin(uio->uio_resid, mp->mp_burst);
 	buffer = malloc(buflen, M_DEVBUF, M_WAITOK);
 
 	SET(mp->mp_flags, MBPPF_UIO);
@@ -1671,11 +1671,11 @@ mbpp_rw(dev, uio)
 
 	len = cnt = 0;
 	while (uio->uio_resid > 0) {
-		len = min(buflen, uio->uio_resid);
+		len = ulmin(buflen, uio->uio_resid);
 		ptr = buffer;
 
 		if (uio->uio_rw == UIO_WRITE) {
-			error = uiomovei(ptr, len, uio);
+			error = uiomove(ptr, len, uio);
 			if (error)
 				break;
 		}
@@ -1695,7 +1695,7 @@ again:		/* goto bad */
 
 		if (uio->uio_rw == UIO_READ) {
 			if (cnt) {
-				error = uiomovei(ptr, cnt, uio);
+				error = uiomove(ptr, cnt, uio);
 				if (error)
 					break;
 				gotdata++;
