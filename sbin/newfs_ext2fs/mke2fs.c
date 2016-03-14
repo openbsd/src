@@ -1,4 +1,4 @@
-/* $OpenBSD: mke2fs.c,v 1.15 2016/01/26 19:09:57 mmcc Exp $ */
+/* $OpenBSD: mke2fs.c,v 1.16 2016/03/14 20:30:34 natano Exp $ */
 /*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
 
 /*-
@@ -174,12 +174,12 @@ static int iobufsize;
 
 static uint8_t buf[MAXBSIZE];	/* for initcg() and makedir() ops */
 
-static int fsi, fso;
+static int fd;
 
 extern int max_cols;
 
 void
-mke2fs(const char *fsys, int fi, int fo)
+mke2fs(const char *fsys, int f)
 {
 	struct timeval tv;
 	int64_t minfssize;
@@ -190,8 +190,7 @@ mke2fs(const char *fsys, int fi, int fo)
 	int i, len, col, delta, fld_width;
 
 	gettimeofday(&tv, NULL);
-	fsi = fi;
-	fso = fo;
+	fd = f;
 
 	/*
 	 * collect and verify the block and fragment sizes
@@ -1366,7 +1365,7 @@ rdfs(daddr32_t bno, int size, void *bf)
 	off_t offset;
 
 	offset = bno;
-	n = pread(fsi, bf, size, offset * sectorsize);
+	n = pread(fd, bf, size, offset * sectorsize);
 	if (n != size)
 		err(EXIT_FAILURE, "%s: read error for sector %" PRId64,
 		    __func__, (int64_t)bno);
@@ -1384,7 +1383,7 @@ wtfs(daddr32_t bno, int size, void *bf)
 	if (Nflag)
 		return;
 	offset = bno;
-	n = pwrite(fso, bf, size, offset * sectorsize);
+	n = pwrite(fd, bf, size, offset * sectorsize);
 	if (n != size)
 		err(EXIT_FAILURE, "%s: write error for sector %" PRId64,
 		    __func__, (int64_t)bno);

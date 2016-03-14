@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.23 2016/03/14 20:14:30 natano Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.24 2016/03/14 20:30:34 natano Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -105,7 +105,6 @@ int	max_cols;
 char	*volname = NULL;	/* volume name */
 
 static char *disktype = NULL;
-static char device[PATH_MAX];
 
 struct disklabel *getdisklabel(const char *, int);
 struct partition *getpartition(int, const char *, char *[], struct disklabel **);
@@ -115,10 +114,10 @@ main(int argc, char *argv[])
 {
 	struct statfs *mp;
 	struct stat sb;
-	int ch, fsi, fso, len, n, Fflag, Iflag, Zflag;
-	char *cp, *s1, *s2, *special;
+	int ch, fd, len, n, Fflag, Iflag, Zflag;
+	char *s1, *s2, *special;
 	const char *opstring;
-	int byte_sized;
+	int byte_sized, fl;
 	uint blocks;			/* number of blocks */
 	struct partition *pp = NULL;
 	struct disklabel *lp;
@@ -133,8 +132,6 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath cpath disklabel", NULL) == -1)
 		err(1, "pledge");
 
-	cp = NULL;
-	fsi = fso = -1;
 	Fflag = Iflag = Zflag = 0;
 	verbosity = -1;
 	opstring = "D:FINO:S:V:Zb:f:i:l:m:n:qs:t:v:";
@@ -231,8 +228,9 @@ main(int argc, char *argv[])
 
 	memset(&sb, 0, sizeof(sb));
 	special = argv[0];
+	fl = Nflag ? O_RDONLY : O_RDWR;
+
 	if (Fflag) {
-		int fl;
 		/*
 		 * It's a file system image
 		 * no label, use fixed default for sectorsize.
@@ -241,46 +239,19 @@ main(int argc, char *argv[])
 			sectorsize = DFL_SECSIZE;
 
 		/* creating image in a regular file */
-		if (Nflag)
-			fl = O_RDONLY;
-		else {
-			if (fssize > 0)
-				fl = O_RDWR | O_CREAT;
-			else
-				fl = O_RDWR;
-		}
-		fsi = open(special, fl, 0777);
-		if (fsi == -1)
+		if (!Nflag && fssize > 0)
+			fl |= O_CREAT;
+		fd = open(special, fl, 0777);
+		if (fd == -1)
 			err(EXIT_FAILURE, "can't open file %s", special);
-		if (fstat(fsi, &sb) == -1)
+		if (fstat(fd, &sb) == -1)
 			err(EXIT_FAILURE, "can't fstat opened %s", special);
-		if (!Nflag)
-			fso = fsi;
 	} else {	/* !Fflag */
-		cp = strrchr(special, '/');
-		if (cp == NULL) {
-			struct stat st;
-			/*
-			 * No path prefix; try /dev/r%s then /dev/%s.
-			 */
-			(void)snprintf(device, sizeof(device), "%sr%s",
-			    _PATH_DEV, special);
-			if (stat(device, &st) == -1)
-				(void)snprintf(device, sizeof(device), "%s%s",
-				    _PATH_DEV, special);
-			special = device;
-		}
-
-		fsi = open(special, O_RDONLY);
-		if (fsi < 0 || fstat(fsi, &sb) == -1)
-			err(EXIT_FAILURE, "%s: open for read", special);
+		fd = opendev(special, fl, 0, &special);
+		if (fd < 0 || fstat(fd, &sb) == -1)
+			err(EXIT_FAILURE, "%s: open", special);
 
 		if (!Nflag) {
-			fso = open(special, O_WRONLY, 0);
-			if (fso < 0)
-				err(EXIT_FAILURE,
-				    "%s: open for write", special);
-
 			/* Bail if target special is mounted */
 			n = getmntinfo(&mp, MNT_NOWAIT);
 			if (n == 0)
@@ -306,7 +277,7 @@ main(int argc, char *argv[])
 			}
 		}
 
-		pp = getpartition(fsi, special, argv, &lp);
+		pp = getpartition(fd, special, argv, &lp);
 		if (!Iflag) {
 			static const char m[] =
 			    "%s partition type is not `%s' (or use -I)";
@@ -333,17 +304,17 @@ main(int argc, char *argv[])
 	}
 
 	/* XXXLUKEM: only ftruncate() regular files ? (dsl: or at all?) */
-	if (Fflag && fso != -1
-	    && ftruncate(fso, (off_t)fssize * sectorsize) == -1)
+	if (Fflag && !Nflag
+	    && ftruncate(fd, (off_t)fssize * sectorsize) == -1)
 		err(1, "can't ftruncate %s to %" PRId64, special, fssize);
 
-	if (Zflag && fso != -1) {	/* pre-zero (and de-sparce) the file */
+	if (Zflag && !Nflag) {	/* pre-zero (and de-sparce) the file */
 		char *buf;
 		int bufsize, i;
 		off_t bufrem;
 		struct statfs sfs;
 
-		if (fstatfs(fso, &sfs) == -1) {
+		if (fstatfs(fd, &sfs) == -1) {
 			warn("can't fstatvfs `%s'", special);
 			bufsize = 8192;
 		} else
@@ -358,7 +329,7 @@ main(int argc, char *argv[])
 			    "size %" PRId64 " bytes, in %d byte chunks.\n",
 			    special, bufrem, bufsize);
 		while (bufrem > 0) {
-			i = write(fso, buf, MINIMUM(bufsize, bufrem));
+			i = write(fd, buf, MINIMUM(bufsize, bufrem));
 			if (i == -1)
 				err(1, "writing image");
 			bufrem -= i;
@@ -395,12 +366,9 @@ main(int argc, char *argv[])
 				num_inodes = L_DFL_NINODE(blocks);
 		}
 	}
-	mke2fs(special, fsi, fso);
+	mke2fs(special, fd);
 
-	if (fsi != -1)
-		close(fsi);
-	if (fso != -1 && fso != fsi)
-		close(fso);
+	close(fd);
 	exit(EXIT_SUCCESS);
 }
 
