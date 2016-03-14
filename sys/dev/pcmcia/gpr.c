@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpr.c,v 1.16 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: gpr.c,v 1.17 2016/03/14 23:08:06 krw Exp $	*/
 
 /*
  * Copyright (c) 2002, Federico G. Schwindt
@@ -275,7 +275,7 @@ gprclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	DPRINTF(("%s: flags %d, mode %d\n", __func__, flags, mode));
 
-	(void)tlvput(sc, GPR400_CLOSE, (u_int8_t *)0, 0);
+	(void)tlvput(sc, GPR400_CLOSE, NULL, 0);
 
 	return (0);
 }
@@ -331,7 +331,7 @@ gprioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 
 	case GPR_CLOSE:
-		error = tlvput(sc, GPR400_CLOSE, (u_int8_t *)0, 0);
+		error = tlvput(sc, GPR400_CLOSE, NULL, 0);
 		break;
 
 	case GPR_RAM:

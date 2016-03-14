@@ -1,4 +1,4 @@
-/*	$OpenBSD: open.c,v 1.1 2004/03/21 21:37:41 tom Exp $	*/
+/*	$OpenBSD: open.c,v 1.2 2016/03/14 23:08:05 krw Exp $	*/
 /*	$NetBSD: open.c,v 1.12 1996/09/30 16:01:21 ws Exp $	*/
 
 /*-
@@ -92,16 +92,16 @@ fnd:
 	 * Convert open mode (0,1,2) to F_READ, F_WRITE.
 	 */
 	f->f_flags = mode + 1;
-	f->f_dev = (struct devsw *)0;
-	f->f_ops = (struct fs_ops *)0;
-	file = (char *)0;
+	f->f_dev = NULL;
+	f->f_ops = NULL;
+	file = NULL;
 	error = devopen(f, fname, &file);
 	if (error ||
-	    (((f->f_flags & F_NODEV) == 0) && f->f_dev == (struct devsw *)0))
+	    (((f->f_flags & F_NODEV) == 0) && f->f_dev == NULL))
 		goto err;
 
 	/* see if we opened a raw device; otherwise, 'file' is the file name. */
-	if (file == (char *)0 || *file == '\0') {
+	if (file == NULL || *file == '\0') {
 		f->f_flags |= F_RAW;
 		return fd;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netif.c,v 1.10 2014/07/13 15:31:20 mpi Exp $	*/
+/*	$OpenBSD: netif.c,v 1.11 2016/03/14 23:08:06 krw Exp $	*/
 /*	$NetBSD: netif.c,v 1.7 1996/10/13 02:29:03 christos Exp $	*/
 
 /*
@@ -281,7 +281,7 @@ netif_open(void *machdep_hint)
 
 	/* find a free socket */
 	for (fd = 0, s = sockets; fd < SOPEN_MAX; fd++, s++)
-		if (s->io_netif == (struct netif *)0)
+		if (s->io_netif == NULL)
 			goto fnd;
 	errno = EMFILE;
 	return (-1);
@@ -311,7 +311,7 @@ netif_close(int sock)
 		return(-1);
 	}
 	netif_detach(sockets[sock].io_netif);
-	sockets[sock].io_netif = (struct netif *)0;
+	sockets[sock].io_netif = NULL;
 
 	return(0);
 }

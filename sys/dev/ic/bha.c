@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha.c,v 1.30 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: bha.c,v 1.31 2016/03/14 23:08:05 krw Exp $	*/
 /*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef BHADEBUG
@@ -438,7 +438,7 @@ bha_intr(arg)
 		toggle.cmd.enable = 0;
 		bha_cmd(iot, ioh, sc,
 		    sizeof(toggle.cmd), (u_char *)&toggle.cmd,
-		    0, (u_char *)0);
+		    0, NULL);
 		bha_start_ccbs(sc);
 	}
 
@@ -648,7 +648,7 @@ bha_start_ccbs(sc)
 				toggle.cmd.enable = 1;
 				bha_cmd(iot, ioh, sc,
 				    sizeof(toggle.cmd), (u_char *)&toggle.cmd,
-				    0, (u_char *)0);
+				    0, NULL);
 				break;
 			}
 		}
@@ -952,7 +952,7 @@ bha_disable_isacompat(sc)
 	isa_disable.cmd.modifier = BHA_IOMODIFY_DISABLE1;
 	bha_cmd(sc->sc_iot, sc->sc_ioh, sc,
 	    sizeof(isa_disable.cmd), (u_char *)&isa_disable.cmd,
-	    0, (u_char *)0);
+	    0, NULL);
 	return (0);
 }
 
@@ -981,7 +981,7 @@ bha_init(sc)
 		toggle.cmd.enable = 1;
 		bha_cmd(iot, ioh, sc,
 		    sizeof(toggle.cmd), (u_char *)&toggle.cmd,
-		    0, (u_char *)0);
+		    0, NULL);
 	}
 
 	/*
@@ -1154,7 +1154,7 @@ bha_init(sc)
 	    offsetof(struct bha_control, bc_mbx), mailbox.cmd.addr);
 	bha_cmd(iot, ioh, sc,
 	    sizeof(mailbox.cmd), (u_char *)&mailbox.cmd,
-	    0, (u_char *)0);
+	    0, NULL);
 	return (0);
 }
 

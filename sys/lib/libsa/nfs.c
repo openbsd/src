@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.c,v 1.13 2015/08/15 19:40:59 miod Exp $	*/
+/*	$OpenBSD: nfs.c,v 1.14 2016/03/14 23:08:06 krw Exp $	*/
 /*	$NetBSD: nfs.c,v 1.19 1996/10/13 02:29:04 christos Exp $	*/
 
 /*-
@@ -504,7 +504,7 @@ nfs_close(struct open_file *f)
 
 	if (fp)
 		free(fp, sizeof(struct nfs_iodesc));
-	f->f_fsdata = (void *)0;
+	f->f_fsdata = NULL;
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: int.c,v 1.12 2016/03/06 19:42:27 mpi Exp $	*/
+/*	$OpenBSD: int.c,v 1.13 2016/03/14 23:08:05 krw Exp $	*/
 /*	$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -363,7 +363,7 @@ int2_attach(struct device *parent, struct device *self, void *aux)
 	if (sys_config.system_type != SGI_IP20) {
 		/* Wire mappable interrupt handlers */
 		int2_intr_establish(INT2_L0_INTR(INT2_L0_IP22_MAP0), IPL_TTY,
-		    int2_mappable_intr, (void *)0, NULL);
+		    int2_mappable_intr, NULL, NULL);
 		int2_intr_establish(INT2_L1_INTR(INT2_L1_IP22_MAP1), IPL_TTY,
 		    int2_mappable_intr, (void *)1, NULL);
 	}

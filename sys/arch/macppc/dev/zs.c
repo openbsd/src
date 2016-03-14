@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.25 2015/11/23 10:30:02 mpi Exp $	*/
+/*	$OpenBSD: zs.c,v 1.26 2016/03/14 23:08:05 krw Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -346,7 +346,7 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 	    zshard, NULL, "zs1");
 #ifdef ZS_TXDMA
 	mac_intr_establish(parent, intr[0][1], IST_LEVEL, IPL_TTY,
-	    zs_txdma_int, (void *)0, "zsdma0");
+	    zs_txdma_int, NULL, "zsdma0");
 	mac_intr_establish(parent, intr[1][1], IST_LEVEL, IPL_TTY,
 	    zs_txdma_int, (void *)1, "zsdma1");
 #endif

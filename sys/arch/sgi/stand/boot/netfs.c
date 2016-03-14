@@ -1,4 +1,4 @@
-/*	$OpenBSD: netfs.c,v 1.1 2012/03/19 17:38:31 miod Exp $	*/
+/*	$OpenBSD: netfs.c,v 1.2 2016/03/14 23:08:05 krw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -187,8 +187,8 @@ netfs_close(f)
 {
 	struct tftp_file *fp = (struct tftp_file *)f->f_fsdata;
 
-	fp->f_buf = (void *)0;
-	f->f_fsdata = (void *)0;
+	fp->f_buf = NULL;
+	f->f_fsdata = NULL;
         (f->f_dev->dv_close)(f);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.91 2015/12/20 10:03:23 mpi Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.92 2016/03/14 23:08:06 krw Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -380,7 +380,7 @@ config_attach(struct device *parent, void *match, void *aux, cfprint_t print)
 	else {
 		printf("%s at %s", dev->dv_xname, parent->dv_xname);
 		if (print)
-			(void) (*print)(aux, (char *)0);
+			(void) (*print)(aux, NULL);
 	}
 
 	/*

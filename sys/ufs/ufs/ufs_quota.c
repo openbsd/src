@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.37 2015/01/09 05:01:57 tedu Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.38 2016/03/14 23:08:06 krw Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -916,7 +916,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	auio.uio_offset = (off_t)(id * sizeof (struct dqblk));
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_procp = (struct proc *)0;
+	auio.uio_procp = NULL;
 	error = VOP_READ(dqvp, &auio, 0, dq->dq_cred);
 	if (auio.uio_resid == sizeof(struct dqblk) && error == 0)
 		memset(&dq->dq_dqb, 0, sizeof(struct dqblk));
@@ -1011,7 +1011,7 @@ dqsync(struct vnode *vp, struct dquot *dq)
 	auio.uio_offset = (off_t)(dq->dq_id * sizeof (struct dqblk));
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_procp = (struct proc *)0;
+	auio.uio_procp = NULL;
 	error = VOP_WRITE(dqvp, &auio, 0, dq->dq_cred);
 	if (auio.uio_resid && error == 0)
 		error = EIO;

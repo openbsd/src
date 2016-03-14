@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.73 2016/03/07 18:43:59 naddy Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.74 2016/03/14 23:08:06 krw Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -229,7 +229,7 @@ iso_mountfs(devvp, mp, p, argp)
 	struct proc *p;
 	struct iso_args *argp;
 {
-	register struct iso_mnt *isomp = (struct iso_mnt *)0;
+	register struct iso_mnt *isomp = NULL;
 	struct buf *bp = NULL;
 	struct buf *pribp = NULL, *supbp = NULL;
 	dev_t dev = devvp->v_rdev;

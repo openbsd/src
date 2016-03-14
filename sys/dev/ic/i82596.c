@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.50 2015/12/08 13:34:22 tedu Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.51 2016/03/14 23:08:05 krw Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -1924,7 +1924,7 @@ ie_mc_reset(sc)
 
 	if (ac->ac_multicnt >= IE_MAXMCAST || ac->ac_multirangecnt > 0) {
 		ac->ac_if.if_flags |= IFF_ALLMULTI;
-		i82596_ioctl(&ac->ac_if, SIOCSIFFLAGS, (void *)0);
+		i82596_ioctl(&ac->ac_if, SIOCSIFFLAGS, NULL);
 		return;
 	}
 

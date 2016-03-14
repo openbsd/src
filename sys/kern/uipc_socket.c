@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.149 2016/01/15 11:58:34 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.150 2016/03/14 23:08:06 krw Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1253,7 +1253,7 @@ somove(struct socket *so, int wait)
 		sbdroprecord(&so->so_rcv);
 		if (so->so_proto->pr_flags & PR_WANTRCVD && so->so_pcb)
 			(so->so_proto->pr_usrreq)(so, PRU_RCVD, NULL,
-			    (struct mbuf *)0L, NULL, NULL);
+			    NULL, NULL, NULL);
 		goto nextpkt;
 	}
 

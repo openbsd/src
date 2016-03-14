@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.40 2015/06/24 11:58:06 mpi Exp $	*/
+/*	$OpenBSD: adb.c,v 1.41 2016/03/14 23:08:05 krw Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -865,7 +865,7 @@ adb_op(Ptr buffer, Ptr compRout, Ptr data, short command)
 		break;
 
 	case ADB_HW_CUDA:
-		result = send_adb_cuda((u_char *)0, (u_char *)buffer,
+		result = send_adb_cuda(NULL, (u_char *)buffer,
 		    (void *)compRout, (void *)data, (int)command);
 		if (result == 0)
 			return 0;
@@ -1419,7 +1419,7 @@ adb_set_date_time(time_t time)
 		output[4] = (u_char)(t >> 16);
 		output[5] = (u_char)(t >> 8);
 		output[6] = (u_char)(t);
-		result = send_adb_cuda((u_char *)output, (u_char *)0,
+		result = send_adb_cuda((u_char *)output, NULL,
 		    (void *)adb_op_comprout, (void *)&flag, (int)0);
 		if (result != 0)	/* exit if not sent */
 			return -1;
@@ -1461,8 +1461,8 @@ adb_poweroff(void)
 		output[0] = 0x02;	/* 2 byte message */
 		output[1] = 0x01;	/* to pram/rtc/soft-power device */
 		output[2] = 0x0a;	/* set poweroff */
-		result = send_adb_cuda((u_char *)output, (u_char *)0,
-		    (void *)0, (void *)0, (int)0);
+		result = send_adb_cuda((u_char *)output, NULL,
+		    NULL, NULL, (int)0);
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
@@ -1535,8 +1535,8 @@ adb_restart()
 		output[0] = 0x02;	/* 2 byte message */
 		output[1] = 0x01;	/* to pram/rtc/soft-power device */
 		output[2] = 0x11;	/* restart */
-		result = send_adb_cuda((u_char *)output, (u_char *)0,
-				       (void *)0, (void *)0, (int)0);
+		result = send_adb_cuda((u_char *)output, NULL,
+				       NULL, NULL, (int)0);
 		if (result != 0)	/* exit if not sent */
 			return;
 		while (1);		/* not return */

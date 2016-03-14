@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.25 2013/04/23 07:38:05 mpi Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.26 2016/03/14 23:08:05 krw Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -511,7 +511,7 @@ pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 	 * add number of ADB data to number of PM data
 	 */
 	if ((command & 0xc) == 0x8) {
-		if (buffer != (u_char *)0)
+		if (buffer != NULL)
 			pmdata.num_data = buffer[0] + 3;
 	} else
 		pmdata.num_data = 3;
@@ -537,7 +537,7 @@ pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 	pmdata.data[1] = 0;
 	/* if the command is LISTEN, copy ADB data to PM buffer */
 	if ((command & 0xc) == 0x8) {
-		if ((buffer != (u_char *)0) && (buffer[0] <= 24)) {
+		if ((buffer != NULL && (buffer[0] <= 24)) {
 			pmdata.data[2] = buffer[0];	/* number of data */
 			for (i = 0; i < buffer[0]; i++)
 				pmdata.data[3 + i] = buffer[1 + i];

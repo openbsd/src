@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.238 2015/12/05 10:11:53 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.239 2016/03/14 23:08:06 krw Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -890,7 +890,7 @@ vflush_vnode(struct vnode *vp, void *arg) {
 		} else {
 			vclean(vp, 0, p);
 			vp->v_op = &spec_vops;
-			insmntque(vp, (struct mount *)0);
+			insmntque(vp, NULL);
 		}
 		return (0);
 	}
@@ -1059,7 +1059,7 @@ vgonel(struct vnode *vp, struct proc *p)
 	 * Delete from old mount point vnode list, if on one.
 	 */
 	if (vp->v_mount != NULL)
-		insmntque(vp, (struct mount *)0);
+		insmntque(vp, NULL);
 	/*
 	 * If special device, remove it from special device alias list
 	 * if it is on one.
@@ -1250,7 +1250,7 @@ printlockedvnodes(void)
 			continue;
 		LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			if (VOP_ISLOCKED(vp))
-				vprint((char *)0, vp);
+				vprint(NULL, vp);
 		}
 		vfs_unbusy(mp);
  	}
@@ -1599,7 +1599,7 @@ vfs_shutdown(void)
 
 	if (panicstr == 0) {
 		/* Sync before unmount, in case we hang on something. */
-		sys_sync(&proc0, (void *)0, (register_t *)0);
+		sys_sync(&proc0, NULL, NULL);
 
 		/* Unmount file systems. */
 		vfs_unmountall();
@@ -1631,7 +1631,7 @@ vfs_syncwait(int verbose)
 #endif
 
 	p = curproc? curproc : &proc0;
-	sys_sync(p, (void *)0, (register_t *)0);
+	sys_sync(p, NULL, NULL);
 
 	/* Wait for sync to finish. */
 	dcount = 10000;

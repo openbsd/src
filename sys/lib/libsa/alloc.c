@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.11 2015/09/14 17:34:04 semarie Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.12 2016/03/14 23:08:06 krw Exp $	*/
 /*	$NetBSD: alloc.c,v 1.6 1997/02/04 18:36:33 thorpej Exp $	*/
 
 /*
@@ -115,7 +115,7 @@
 struct fl {
 	unsigned	size;
 	struct fl	*next;
-} *freelist = (struct fl *)0;
+} *freelist = NULL;
 
 #ifdef NEEDS_HEAP_H
 #include "heap.h"
@@ -148,10 +148,10 @@ alloc(unsigned int size)
 #endif
 
 #ifdef ALLOC_FIRST_FIT
-	while (*f != (struct fl *)0 && (*f)->size < size)
+	while (*f != NULL && (*f)->size < size)
 		f = &((*f)->next);
 	bestf = f;
-	failed = (*bestf == (struct fl *)0);
+	failed = (*bestf == NULL);
 #else
 	/* scan freelist */
 	while (*f) {

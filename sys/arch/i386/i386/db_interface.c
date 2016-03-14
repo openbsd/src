@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.32 2016/02/27 13:08:07 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.33 2016/03/14 23:08:05 krw Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /*
@@ -334,7 +334,7 @@ struct db_command db_machine_command_table[] = {
 #if NACPI > 0
 	{ "acpi",	NULL,			0,	db_acpi_cmds },
 #endif /* NACPI > 0 */
-	{ (char *)0, }
+	{ NULL, }
 };
 
 void

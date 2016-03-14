@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.49 2015/12/08 13:34:22 tedu Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.50 2016/03/14 23:08:06 krw Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -2082,7 +2082,7 @@ mc_reset(sc)
 
 	if (ac->ac_multirangecnt > 0) {
 		ac->ac_if.if_flags |= IFF_ALLMULTI;
-		ieioctl(&ac->ac_if, SIOCSIFFLAGS, (void *)0);
+		ieioctl(&ac->ac_if, SIOCSIFFLAGS, NULL);
 		goto setflag;
 	}
 	/*
@@ -2093,7 +2093,7 @@ mc_reset(sc)
 	while (enm) {
 		if (sc->mcast_count >= MAXMCAST) {
 			ac->ac_if.if_flags |= IFF_ALLMULTI;
-			ieioctl(&ac->ac_if, SIOCSIFFLAGS, (void *)0);
+			ieioctl(&ac->ac_if, SIOCSIFFLAGS, NULL);
 			goto setflag;
 		}
 

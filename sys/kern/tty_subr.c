@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subr.c,v 1.32 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.33 2016/03/14 23:08:06 krw Exp $	*/
 /*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ getc(struct clist *clp)
 	if (++clp->c_cf == clp->c_ce)
 		clp->c_cf = clp->c_cs;
 	if (--clp->c_cc == 0)
-		clp->c_cf = clp->c_cl = (u_char *)0;
+		clp->c_cf = clp->c_cl = NULL;
 out:
 	splx(s);
 	return c;
@@ -142,7 +142,7 @@ q_to_b(struct clist *clp, u_char *cp, int count)
 			clp->c_cf = clp->c_cs;
 	}
 	if (clp->c_cc == 0)
-		clp->c_cf = clp->c_cl = (u_char *)0;
+		clp->c_cf = clp->c_cl = NULL;
 	splx(s);
 	return p - cp;
 }
@@ -202,7 +202,7 @@ ndflush(struct clist *clp, int count)
 	s = spltty();
 	if (count == clp->c_cc) {
 		clp->c_cc = 0;
-		clp->c_cf = clp->c_cl = (u_char *)0;
+		clp->c_cf = clp->c_cl = NULL;
 		goto out;
 	}
 	/* optimize this while loop */
@@ -219,7 +219,7 @@ ndflush(struct clist *clp, int count)
 			clp->c_cf = clp->c_cs;
 	}
 	if (clp->c_cc == 0)
-		clp->c_cf = clp->c_cl = (u_char *)0;
+		clp->c_cf = clp->c_cl = NULL;
 out:
 	splx(s);
 }
@@ -442,7 +442,7 @@ unputc(struct clist *clp)
 		clrbit(clp->c_cq, clp->c_cl - clp->c_cs);
 	}
 	if (clp->c_cc == 0)
-		clp->c_cf = clp->c_cl = (u_char *)0;
+		clp->c_cf = clp->c_cl = NULL;
 out:
 	splx(s);
 	return c;

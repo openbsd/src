@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.80 2014/12/17 06:58:10 guenther Exp $	*/
+/*	$OpenBSD: aha.c,v 1.81 2016/03/14 23:08:06 krw Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -536,7 +536,7 @@ ahaintr(arg)
 		toggle.cmd.opcode = AHA_MBO_INTR_EN;
 		toggle.cmd.enable = 0;
 		aha_cmd(iobase, sc, sizeof(toggle.cmd), (u_char *)&toggle.cmd,
-		    0, (u_char *)0);
+		    0, NULL);
 		aha_start_ccbs(sc);
 	}
 
@@ -756,7 +756,7 @@ aha_start_ccbs(sc)
 				toggle.cmd.opcode = AHA_MBO_INTR_EN;
 				toggle.cmd.enable = 1;
 				aha_cmd(iobase, sc, sizeof(toggle.cmd),
-				    (u_char *)&toggle.cmd, 0, (u_char *)0);
+				    (u_char *)&toggle.cmd, 0, NULL);
 				break;
 			}
 		}
@@ -1031,7 +1031,7 @@ aha_init(sc)
 		unlock.cmd.junk = 0;
 		unlock.cmd.magic = extbios.reply.mailboxlock;
 		aha_cmd(iobase, sc, sizeof(unlock.cmd), (u_char *)&unlock.cmd,
-		    0, (u_char *)0);
+		    0, NULL);
 	}
 
 #if 0
@@ -1108,7 +1108,7 @@ aha_init(sc)
 	mailbox.cmd.nmbx = AHA_MBX_SIZE;
 	ltophys(vtophys((vaddr_t)wmbx), mailbox.cmd.addr);
 	aha_cmd(iobase, sc, sizeof(mailbox.cmd), (u_char *)&mailbox.cmd,
-	    0, (u_char *)0);
+	    0, NULL);
 }
 
 void

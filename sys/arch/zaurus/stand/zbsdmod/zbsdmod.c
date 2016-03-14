@@ -1,4 +1,4 @@
-/*	$OpenBSD: zbsdmod.c,v 1.11 2015/01/18 14:55:02 jsg Exp $	*/
+/*	$OpenBSD: zbsdmod.c,v 1.12 2016/03/14 23:08:05 krw Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -272,7 +272,7 @@ init_module()
 
 	entry = proc_mknod(ZBOOTDEV_NAME, ZBOOTDEV_MODE | S_IFCHR,
 	    &proc_root, MKDEV(ZBOOTDEV_MAJOR, 0));
-	if (entry == (struct proc_dir_entry *)0) {
+	if (entry == NULL) {
 		(void)unregister_chrdev(ZBOOTDEV_MAJOR, ZBOOTDEV_NAME);
 		return 1;
 	}
