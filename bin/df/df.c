@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.57 2016/03/07 01:19:46 mmcc Exp $	*/
+/*	$OpenBSD: df.c,v 1.58 2016/03/14 14:44:03 mmcc Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -46,8 +46,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
-
-extern	char *__progname;
 
 int		 bread(int, off_t, void *, int);
 static void	 bsdprint(struct statfs *, long, int);
@@ -458,6 +456,6 @@ usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: %s [-hiklnP] [-t type] [[file | file_system] ...]\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
