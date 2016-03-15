@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.19 2016/02/09 02:13:12 mmcc Exp $	*/
+/*	$OpenBSD: parse.c,v 1.20 2016/03/15 04:19:13 mmcc Exp $	*/
 /*	$NetBSD: parse.c,v 1.12 2001/12/07 13:37:39 bjh21 Exp $	*/
 
 /*
@@ -44,6 +44,12 @@
 #include "hexdump.h"
 
 FU *endfu;					/* format at end-of-data */
+
+static __dead void	 badcnt(char *);
+static __dead void	 badconv(char *);
+static __dead void	 badfmt(const char *);
+static __dead void	 badsfmt(void);
+static void		 escape(char *);
 
 void
 addfile(char *name)
@@ -456,7 +462,7 @@ rewrite(FS *fs)
 #endif
 }
 
-void
+static void
 escape(char *p1)
 {
 	char *p2;
@@ -504,25 +510,25 @@ escape(char *p1)
 	}
 }
 
-void
+static __dead void
 badcnt(char *s)
 {
 	errx(1, "%s: bad byte count", s);
 }
 
-void
+static __dead void
 badsfmt(void)
 {
 	errx(1, "%%s: requires a precision or a byte count");
 }
 
-void
+static __dead void
 badfmt(const char *fmt)
 {
 	errx(1, "\"%s\": bad format", fmt);
 }
 
-void
+static __dead void
 badconv(char *ch)
 {
 	errx(1, "%%%s: bad conversion character", ch);

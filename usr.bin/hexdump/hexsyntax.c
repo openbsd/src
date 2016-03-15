@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexsyntax.c,v 1.12 2011/05/06 15:46:29 otto Exp $	*/
+/*	$OpenBSD: hexsyntax.c,v 1.13 2016/03/15 04:19:13 mmcc Exp $	*/
 /*	$NetBSD: hexsyntax.c,v 1.8 1998/04/08 23:48:57 jeremy Exp $	*/
 
 /*-
@@ -42,6 +42,8 @@
 #include "hexdump.h"
 
 off_t skip;				/* bytes to skip */
+
+static __dead void	 usage(void);
 
 void
 newsyntax(int argc, char ***argvp)
@@ -121,7 +123,7 @@ newsyntax(int argc, char ***argvp)
 	*argvp += optind;
 }
 
-void
+static __dead void
 usage(void)
 {
 	extern char *__progname;

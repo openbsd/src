@@ -1,4 +1,4 @@
-/*	$OpenBSD: odsyntax.c,v 1.26 2015/09/16 08:47:26 schwarze Exp $	*/
+/*	$OpenBSD: odsyntax.c,v 1.27 2016/03/15 04:19:13 mmcc Exp $	*/
 /*	$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*-
@@ -44,10 +44,10 @@
 
 int odmode;
 
-static void odoffset(int, char ***);
-static void posixtypes(char *);
-static void odadd(const char *);
-
+static void		 odadd(const char *);
+static void		 odoffset(int, char ***);
+static __dead void	 oldusage(void);
+static void		 posixtypes(char *);
 
 /*
  * formats used for -t
@@ -293,7 +293,7 @@ posixtypes(char *type_string)
 	}
 }
 
-void
+static __dead void
 oldusage(void)
 {
 	extern char *__progname;
