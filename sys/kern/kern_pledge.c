@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.155 2016/03/13 18:40:52 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.156 2016/03/15 15:05:23 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -503,8 +503,10 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 				/* resolved is allocated only if !error */
 				break;
 
-			if (maxargs += resolvedlen > ARG_MAX) {
+			maxargs += resolvedlen;
+			if (maxargs > ARG_MAX) {
 				error = E2BIG;
+				free(resolved, M_TEMP, resolvedlen);
 				break;
 			}
 			wl->wl_paths[i].name = resolved;
