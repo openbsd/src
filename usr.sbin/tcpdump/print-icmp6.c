@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.17 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.18 2016/03/15 05:03:11 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -43,6 +43,7 @@
 #include <arpa/inet.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <netinet/ip6.h>
@@ -435,9 +436,6 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 					mode = FQDN;
 			}
 		}
-#ifndef abs
-#define abs(a)	((0 < (a)) ? (a) : -(a))
-#endif
 		if (mode == UNKNOWN && 2 < abs(buf[12] - (ep - buf - 13)))
 			mode = WRU;
 		if (mode == UNKNOWN)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-snmp.c,v 1.20 2015/11/18 15:36:20 mmcc Exp $	*/
+/*	$OpenBSD: print-snmp.c,v 1.21 2016/03/15 05:03:11 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -346,7 +346,6 @@ struct be {
  * it to decode.
  */
 static int truncated;
-#define ifNotTruncated if (truncated) fputs("[|snmp]", stdout); else
 
 /*
  * This decodes the next ASN.1 object in the stream pointed to by "p"
@@ -365,7 +364,10 @@ asn1_parse(const u_char *p, u_int len, struct be *elem)
 	elem->asnlen = 0;
 	elem->type = BE_ANY;
 	if (len < 1) {
-		ifNotTruncated puts("[nothing to parse], stdout");
+		if (truncated)
+			fputs("[|snmp]", stdout);
+		else
+			fputs("[nothing to parse]", stdout);
 		return -1;
 	}
 
@@ -399,7 +401,10 @@ asn1_parse(const u_char *p, u_int len, struct be *elem)
 			id = (id << 7) | (*p & ~ASN_BIT8);
 		}
 		if (len == 0 && *p & ASN_BIT8) {
-			ifNotTruncated fputs("[Xtagfield?]", stdout);
+			if (truncated)
+				fputs("[|snmp]", stdout);
+			else 
+				fputs("[Xtagfield?]", stdout);
 			return -1;
 		}
 		elem->id = id = (id << 7) | *p;
@@ -408,7 +413,10 @@ asn1_parse(const u_char *p, u_int len, struct be *elem)
 		++p;
 	}
 	if (len < 1) {
-		ifNotTruncated fputs("[no asnlen]", stdout);
+		if (truncated)
+			fputs("[|snmp]", stdout);
+		else
+			fputs("[no asnlen]", stdout);
 		return -1;
 	}
 	elem->asnlen = *p;
@@ -419,7 +427,10 @@ asn1_parse(const u_char *p, u_int len, struct be *elem)
 		int noct = elem->asnlen % ASN_BIT8;
 		elem->asnlen = 0;
 		if (len < noct) {
-			ifNotTruncated printf("[asnlen? %d<%d]", len, noct);
+			if (truncated)
+				fputs("[|snmp]", stdout);
+			else
+				printf("[asnlen? %d<%d]", len, noct);
 			return -1;
 		}
 		for (; noct-- > 0; len--, hdr++) {
@@ -437,16 +448,25 @@ asn1_parse(const u_char *p, u_int len, struct be *elem)
 		elem->asnlen = len;
 	}
 	if (form >= sizeof(Form)/sizeof(Form[0])) {
-		ifNotTruncated printf("[form?%d]", form);
+		if (truncated)
+			fputs("[|snmp]", stdout);
+		else
+			printf("[form?%d]", form);
 		return -1;
 	}
 	if (class >= sizeof(Class)/sizeof(Class[0])) {
-		ifNotTruncated printf("[class?%c/%d]", *Form[form], class);
+		if (truncated)
+			fputs("[|snmp]", stdout);
+		else
+			printf("[class?%c/%d]", *Form[form], class);
 		return -1;
 	}
 	if ((int)id >= Class[class].numIDs) {
-		ifNotTruncated printf("[id?%c/%s/%d]", *Form[form],
-			Class[class].name, id);
+		if (truncated)
+			fputs("[|snmp]", stdout);
+		else
+			printf("[id?%c/%s/%d]", *Form[form],
+			    Class[class].name, id);
 		return -1;
 	}
 
