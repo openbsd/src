@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.271 2015/12/20 08:10:36 sf Exp $
+#	$OpenBSD: Makefile,v 1.272 2016/03/15 04:19:26 stefan Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -418,7 +418,7 @@ MLINKS+=timeout.9 timeout_add.9 timeout.9 timeout_set.9 \
 MLINKS+=tsleep.9 wakeup.9 tsleep.9 wakeup_n.9 tsleep.9 wakeup_one.9 \
 	tsleep.9 msleep.9 
 MLINKS+=tvtohz.9 tstohz.9
-MLINKS+=uiomove.9 uio.9 uiomove.9 uiomovei.9
+MLINKS+=uiomove.9 uio.9
 MLINKS+=usbd_close_pipe.9 usbd_abort_pipe.9
 MLINKS+=usbd_open_pipe.9 usbd_open_pipe_intr.9
 MLINKS+=usbd_transfer.9 usbd_setup_xfer.9

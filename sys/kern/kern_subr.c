@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.46 2016/02/11 18:59:15 stefan Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.47 2016/03/15 04:19:26 stefan Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -103,15 +103,6 @@ uiomove(void *cp, size_t n, struct uio *uio)
 		n -= cnt;
 	}
 	return (error);
-}
-
-int
-uiomovei(void *cp, int n, struct uio *uio)
-{
-	if (n < 0)
-		return 0;
-
-	return uiomove(cp, (size_t)n, uio);
 }
 
 /*
