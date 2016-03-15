@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.101 2016/01/15 18:57:27 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.102 2016/03/15 07:39:27 mlarkin Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -2029,6 +2029,17 @@ const struct puc_device_description puc_devs[] = {
 		{ PUC_COM_POW2(3), 0x10, 0x0a00 },
 		{ PUC_COM_POW2(3), 0x10, 0x0c00 },
 		{ PUC_COM_POW2(3), 0x10, 0x0e00 },
+	    },
+	},
+
+	{   /* Exar XR17V354 Quad UART */
+	    {   PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17V354,	0, 0 },
+	    {   0xffff, 0xffff,					0, 0 },
+	    {
+		{ PUC_COM_POW2(3), 0x10, 0x0000 },
+		{ PUC_COM_POW2(3), 0x10, 0x0400 },
+		{ PUC_COM_POW2(3), 0x10, 0x0800 },
+		{ PUC_COM_POW2(3), 0x10, 0x0C00 },
 	    },
 	},
 
