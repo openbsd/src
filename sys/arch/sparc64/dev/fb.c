@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.26 2016/03/07 13:21:51 naddy Exp $	*/
+/*	$OpenBSD: fb.c,v 1.27 2016/03/15 20:50:22 krw Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -210,7 +210,7 @@ fbwscons_init(struct sunfb *sf, int flags, int isconsole)
 	 *   metrics, since it will not match the PROM reality anymore.
 	 * - the screen needs to be cleared.
 	 *
-	 * However, to accomodate laptops with specific small fonts,
+	 * However, to accommodate laptops with specific small fonts,
 	 * it is necessary to compare the resolution with the actual
 	 * font metrics.
 	 */

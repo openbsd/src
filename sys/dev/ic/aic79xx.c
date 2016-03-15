@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.59 2015/12/17 19:35:24 tedu Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.60 2016/03/15 20:50:22 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -10413,7 +10413,7 @@ void
 ahd_outw(struct ahd_softc *ahd, u_int port, u_int value)
 {
 	/*
-	 * Write low byte first to accomodate registers
+	 * Write low byte first to accommodate registers
 	 * such as PRGMCNT where the order maters.
 	 */
 	ahd_outb(ahd, port, value & 0xFF);

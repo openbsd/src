@@ -1,4 +1,4 @@
-/* $OpenBSD: sha_locl.h,v 1.20 2015/09/13 21:09:56 doug Exp $ */
+/* $OpenBSD: sha_locl.h,v 1.21 2016/03/15 20:50:22 krw Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -163,7 +163,7 @@ int SHA1_Init(SHA_CTX *c)
 #ifndef MD32_XARRAY
   /*
    * Originally X was an array. As it's automatic it's natural
-   * to expect RISC compiler to accomodate at least part of it in
+   * to expect RISC compiler to accommodate at least part of it in
    * the register bank, isn't it? Unfortunately not all compilers
    * "find" this expectation reasonable:-( On order to make such
    * compilers generate better code I replace X[] with a bunch of

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.2 2015/11/16 10:08:41 mpi Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.3 2016/03/15 20:50:22 krw Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -349,7 +349,7 @@ restore_host:
 
 	/*
 	 * popw %gs will reset gsbase to 0, so preserve it
-	 * first. This is to accomodate possibly lazy-switched
+	 * first. This is to accommodate possibly lazy-switched
 	 * selectors from above
 	 */
 	cli

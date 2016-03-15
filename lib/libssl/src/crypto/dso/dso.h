@@ -1,4 +1,4 @@
-/* $OpenBSD: dso.h,v 1.11 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: dso.h,v 1.12 2016/03/15 20:50:22 krw Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -286,7 +286,7 @@ DSO_METHOD *DSO_METHOD_dlfcn(void);
  * returns the number of characters [including trailing zero]
  * written to it. If 'sz' is 0 or negative, 'path' is ignored and
  * required amount of charachers [including trailing zero] to
- * accomodate pathname is returned. If 'addr' is NULL, then
+ * accommodate pathname is returned. If 'addr' is NULL, then
  * pathname of cryptolib itself is returned. Negative or zero
  * return value denotes error.
  */

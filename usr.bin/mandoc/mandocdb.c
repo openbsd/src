@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.168 2016/01/08 17:48:04 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.169 2016/03/15 20:50:23 krw Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -560,7 +560,7 @@ usage:
  *   or
  *   [./]cat<section>[/<arch>]/<name>.0
  *
- * TODO: accomodate for multi-language directories.
+ * TODO: accommodate for multi-language directories.
  */
 static int
 treescan(void)

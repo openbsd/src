@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78var.h,v 1.17 2011/12/06 16:06:07 mpf Exp $	*/
+/*	$OpenBSD: lm78var.h,v 1.18 2016/03/15 20:50:22 krw Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -50,8 +50,8 @@
  *
  * Several models exists.  The W83781D is mostly compatible with the
  * LM78, but has two extra temperatures.  Later models add extra
- * voltage sensors, fans and bigger fan divisors to accomodate slow
- * running fans.  To accomodate the extra sensors some models have
+ * voltage sensors, fans and bigger fan divisors to accommodate slow
+ * running fans.  To accommodate the extra sensors some models have
  * different memory banks.
  */
 
