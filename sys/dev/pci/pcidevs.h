@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1789 2016/03/15 06:54:49 mlarkin Exp 
+ *	OpenBSD: pcidevs,v 1.1790 2016/03/15 07:37:15 mlarkin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2573,7 +2573,7 @@
 #define	PCI_PRODUCT_EXAR_XR17C152	0x0152		/* XR17C152 */
 #define	PCI_PRODUCT_EXAR_XR17C154	0x0154		/* XR17C154 */
 #define	PCI_PRODUCT_EXAR_XR17C158	0x0158		/* XR17C158 */
-#define	PCI_PRODUCT_EXAR_XR17C354	0x0354		/* XR17C354 */
+#define	PCI_PRODUCT_EXAR_XR17V354	0x0354		/* XR17V354 */
 
 /* FORE products */
 #define	PCI_PRODUCT_FORE_PCA200	0x0210		/* ATM PCA-200 */
