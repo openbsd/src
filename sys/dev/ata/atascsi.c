@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.127 2016/01/03 21:07:46 kettenis Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.128 2016/03/15 18:04:57 jca Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -491,7 +491,7 @@ atascsi_free(struct scsi_link *link)
 		 * free ahp itself.  this relies on the order luns are
 		 * detached in scsi_detach_target().
 		 */
-		free(ahp, M_DEVBUF, sizeof(*ap));
+		free(ahp, M_DEVBUF, sizeof(*ahp));
 		as->as_host_ports[port] = NULL;
 	}
 }
