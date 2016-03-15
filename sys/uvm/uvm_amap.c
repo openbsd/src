@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.60 2016/03/06 14:47:07 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.61 2016/03/15 18:16:21 stefan Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -52,7 +52,12 @@
 
 struct pool uvm_amap_pool;
 
+/* Pools for amap slots for the most common amap slot sizes */
+struct pool uvm_amap_slot_pools[UVM_AMAP_CHUNK];
+
 LIST_HEAD(, vm_amap) amap_list;
+
+static char amap_slot_pool_names[UVM_AMAP_CHUNK][13];
 
 #define MALLOC_SLOT_UNIT (2 * sizeof(int) + sizeof(struct vm_anon *))
 
@@ -151,10 +156,20 @@ pp_setreflen(int *ppref, int offset, int ref, int len)
 void
 amap_init(void)
 {
+	int i;
+
 	/* Initialize the vm_amap pool. */
 	pool_init(&uvm_amap_pool, sizeof(struct vm_amap), 0, 0, PR_WAITOK,
 	    "amappl", NULL);
 	pool_sethiwat(&uvm_amap_pool, 4096);
+
+	for (i = 0; i < nitems(uvm_amap_slot_pools); i++) {
+		snprintf(amap_slot_pool_names[i],
+		    sizeof(amap_slot_pool_names[0]), "amapslotpl%d", i + 1);
+		pool_init(&uvm_amap_slot_pools[i], (i + 1) * MALLOC_SLOT_UNIT,
+		    0, 0, PR_WAITOK, amap_slot_pool_names[i], NULL);
+		pool_sethiwat(&uvm_amap_slot_pools[i], 4096);
+	}
 }
 
 /*
@@ -172,8 +187,13 @@ amap_alloc1(int slots, int padslots, int waitf)
 	if (amap == NULL)
 		return(NULL);
 
-	totalslots = malloc_roundup((slots + padslots) * MALLOC_SLOT_UNIT) /
-	    MALLOC_SLOT_UNIT;
+	totalslots = slots + padslots;
+	KASSERT(totalslots > 0);
+
+	if (totalslots > UVM_AMAP_CHUNK)
+		totalslots = malloc_roundup(totalslots * MALLOC_SLOT_UNIT) /
+		    MALLOC_SLOT_UNIT;
+
 	amap->am_ref = 1;
 	amap->am_flags = 0;
 #ifdef UVM_AMAP_PPREF
@@ -183,8 +203,14 @@ amap_alloc1(int slots, int padslots, int waitf)
 	amap->am_nslot = slots;
 	amap->am_nused = 0;
 
-	amap->am_slots = malloc(totalslots * MALLOC_SLOT_UNIT, M_UVMAMAP,
-	    waitf);
+	if (totalslots > UVM_AMAP_CHUNK)
+		amap->am_slots = malloc(totalslots * MALLOC_SLOT_UNIT,
+		    M_UVMAMAP, waitf);
+	else
+		amap->am_slots = pool_get(
+		    &uvm_amap_slot_pools[totalslots - 1],
+		    (waitf == M_WAITOK) ? PR_WAITOK : PR_NOWAIT);
+
 	if (amap->am_slots == NULL)
 		goto fail1;
 
@@ -238,7 +264,12 @@ amap_free(struct vm_amap *amap)
 	KASSERT(amap->am_ref == 0 && amap->am_nused == 0);
 	KASSERT((amap->am_flags & AMAP_SWAPOFF) == 0);
 
-	free(amap->am_slots, M_UVMAMAP, 0);
+	if (amap->am_maxslot > UVM_AMAP_CHUNK)
+		free(amap->am_slots, M_UVMAMAP, 0);
+	else
+		pool_put(&uvm_amap_slot_pools[amap->am_maxslot - 1],
+		    amap->am_slots);
+
 #ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
 		free(amap->am_ppref, M_UVMAMAP, 0);
@@ -324,8 +355,12 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize)
 	if (slotneed >= UVM_AMAP_LARGE)
 		return E2BIG;
 
-	slotalloc = malloc_roundup(slotneed * MALLOC_SLOT_UNIT) /
-	    MALLOC_SLOT_UNIT;
+	if (slotneed > UVM_AMAP_CHUNK)
+		slotalloc = malloc_roundup(slotneed * MALLOC_SLOT_UNIT) /
+		    MALLOC_SLOT_UNIT;
+	else
+		slotalloc = slotneed;
+
 #ifdef UVM_AMAP_PPREF
 	newppref = NULL;
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
@@ -338,8 +373,12 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize)
 		}
 	}
 #endif
-	newsl = malloc(slotalloc * MALLOC_SLOT_UNIT, M_UVMAMAP,
-	    M_WAITOK | M_CANFAIL);
+	if (slotneed > UVM_AMAP_CHUNK)
+		newsl = malloc(slotalloc * MALLOC_SLOT_UNIT, M_UVMAMAP,
+		    M_WAITOK | M_CANFAIL);
+	else
+		newsl = pool_get(&uvm_amap_slot_pools[slotalloc - 1],
+		    PR_WAITOK | PR_LIMITFAIL);
 	if (newsl == NULL) {
 #ifdef UVM_AMAP_PPREF
 		if (newppref != NULL) {
@@ -389,12 +428,17 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize)
 	}
 #endif
 
-	/* update master values */
+	/* free */
+	if (amap->am_maxslot > UVM_AMAP_CHUNK)
+		free(oldsl, M_UVMAMAP, 0);
+	else
+		pool_put(&uvm_amap_slot_pools[amap->am_maxslot - 1],
+		    oldsl);
+
+	/* and update master values */
 	amap->am_nslot = slotneed;
 	amap->am_maxslot = slotalloc;
 
-	/* and free */
-	free(oldsl, M_UVMAMAP, 0);
 #ifdef UVM_AMAP_PPREF
 	if (oldppref && oldppref != PPREF_NONE)
 		free(oldppref, M_UVMAMAP, 0);
