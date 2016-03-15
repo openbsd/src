@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.pager.c,v 1.23 2016/01/09 21:54:11 mestre Exp $	*/
+/*	$OpenBSD: hack.pager.c,v 1.24 2016/03/15 19:56:20 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -383,7 +383,7 @@ page_file(char *fnam, boolean silent)
 		if(dup(fd)) {
 			if(!silent) printf("Cannot open %s as stdin.\n", fnam);
 		} else {
-			execlp(catmore, basename(catmore), NULL);
+			execlp(catmore, basename(catmore), (char *)NULL);
 			if(!silent) printf("Cannot exec %s.\n", catmore);
 		}
 		exit(1);
@@ -417,9 +417,9 @@ dosh(void)
 
 	if(child(0)) {
 		if ((str = getenv("SHELL")))
-			execlp(str, str, NULL);
+			execlp(str, str, (char *)NULL);
 		else
-			execl("/bin/sh", "sh", NULL);
+			execl("/bin/sh", "sh", (char *)NULL);
 		pline("sh: cannot execute.");
 		exit(1);
 	}
