@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.150 2016/01/26 01:52:10 dlg Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.151 2016/03/15 16:45:52 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -77,10 +77,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <net/if_media.h>
-
-#if NVLAN > 0
-#include <net/if_vlan_var.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

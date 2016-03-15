@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.37 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.38 2016/03/15 16:45:52 naddy Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -51,8 +51,6 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-
-#include <net/if_vlan_var.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
