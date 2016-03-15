@@ -1537,7 +1537,7 @@ astrcat(const char *s1, const char *s2)
 	if (len < 0)
 		err(2, "snprintf");
 	size = (size_t)len + 1;
-	s = malloc(size);
+	s = (char *)malloc(size);
 	if (s == NULL)
 		err(2, "malloc");
 	snprintf(s, size, "%s%s", s1, s2);
@@ -1555,7 +1555,7 @@ xstrdup(const char *start, const char *end)
 
 	if (end < start) abort(); /* bug */
 	n = (size_t)(end - start) + 1;
-	s = malloc(n);
+	s = (char *)malloc(n);
 	if (s == NULL)
 		err(2, "malloc");
 	snprintf(s, n, "%s", start);
