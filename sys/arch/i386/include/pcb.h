@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.18 2015/05/05 02:13:46 guenther Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.19 2016/03/15 03:17:51 guenther Exp $	*/
 /*	$NetBSD: pcb.h,v 1.21 1996/01/08 13:51:42 mycroft Exp $	*/
 
 /*-
@@ -58,11 +58,9 @@ struct pcb {
 #define	pcb_esp	pcb_tss.tss_esp
 #define	pcb_ebp	pcb_tss.tss_ebp
 #define	pcb_cs	pcb_tss.tss_cs
-#define	pcb_ldt_sel	pcb_tss.tss_ldt
-	union	descriptor *pcb_ldt;	/* per process (user) LDT */
-	int	pcb_ldt_len;		/*      number of LDT entries */
-	union	savefpu pcb_savefpu;	/* floating point state for FPU */
 	int	pcb_cr0;		/* saved image of CR0 */
+	int	__pcb_padding;		/* for 16-byte align of pcb_savefpu */
+	union	savefpu pcb_savefpu;	/* floating point state for FPU */
 	struct	segment_descriptor pcb_threadsegs[2];
 					/* per-thread descriptors */
 /*

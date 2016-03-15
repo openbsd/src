@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.95 2015/12/27 04:31:34 jsg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.96 2016/03/15 03:17:50 guenther Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -122,8 +122,8 @@ cpu_configure(void)
 
 	gdt_init();		/* XXX - pcibios uses gdt stuff */
 
-	/* Set up proc0's TSS and LDT */
-	i386_proc0_tss_ldt_init();
+	/* Set up proc0's TSS */
+	i386_proc0_tss_init();
 
 #ifdef KVM86
 	kvm86_init();
@@ -158,7 +158,7 @@ cpu_configure(void)
 	proc0.p_addr->u_pcb.pcb_cr0 = rcr0();
 
 #ifdef MULTIPROCESSOR
-	/* propagate TSS and LDT configuration to the idle pcb's. */
+	/* propagate TSS configuration to the idle pcb's. */
 	cpu_init_idle_pcbs();
 #endif
 	spl0();

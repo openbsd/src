@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.72 2016/03/07 05:32:46 naddy Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.73 2016/03/15 03:17:50 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -272,8 +272,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof (struct trapframe);
 	pcb->pcb_pmap = pmap_kernel();
 	pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdirpa;
-
-	cpu_default_ldt(ci);	/* Use the `global' ldt until one alloc'd */
 #endif
 	ci->ci_curpmap = pmap_kernel();
 
@@ -323,7 +321,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef MULTIPROCESSOR
 		gdt_alloc_cpu(ci);
-		cpu_alloc_ldt(ci);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_AP;
 		identifycpu(ci);
 		sched_init_cpu(ci);
@@ -522,7 +519,7 @@ cpu_init_idle_pcbs(void)
 			continue;
 		if ((ci->ci_flags & CPUF_PRESENT) == 0)
 			continue;
-		i386_init_pcb_tss_ldt(ci);
+		i386_init_pcb_tss(ci);
 	}
 }
 
@@ -579,9 +576,8 @@ cpu_hatch(void *v)
 	lapic_startclock();
 	lapic_set_lvt();
 	gdt_init_cpu(ci);
-	cpu_init_ldt(ci);
 
-	lldt(GSEL(GLDT_SEL, SEL_KPL));
+	lldt(0);
 
 	npxinit(ci);
 
@@ -632,7 +628,7 @@ cpu_init_tss(struct i386tss *tss, void *stack, void *func)
 	    tss->__tss_ss = GSEL(GDATA_SEL, SEL_KPL);
 	tss->tss_cr3 = pmap_kernel()->pm_pdirpa;
 	tss->tss_esp = (int)((char *)stack + USPACE - 16);
-	tss->tss_ldt = GSEL(GLDT_SEL, SEL_KPL);
+	tss->tss_ldt = 0;
 	tss->__tss_eflags = PSL_MBO | PSL_NT;	/* XXX not needed? */
 	tss->__tss_eip = (int)func;
 }

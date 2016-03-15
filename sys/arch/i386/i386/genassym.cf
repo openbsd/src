@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.38 2016/02/28 15:46:18 naddy Exp $
+#	$OpenBSD: genassym.cf,v 1.39 2016/03/15 03:17:51 guenther Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -93,8 +93,6 @@ member	pcb_cr3
 member	pcb_ebp
 member	pcb_esp
 member	pcb_cr0
-member	pcb_ldt
-member	pcb_ldt_sel
 member	pcb_onfault
 member	pcb_fpcpu
 member	pcb_flags

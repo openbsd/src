@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.20 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: segments.h,v 1.21 2016/03/15 03:17:51 guenther Exp $	*/
 /*	$NetBSD: segments.h,v 1.23 1996/02/01 22:31:03 mycroft Exp $	*/
 
 /*-
@@ -116,7 +116,7 @@ struct region_descriptor {
 } __packed;
 
 #ifdef _KERNEL
-extern union descriptor *gdt, ldt[];
+extern union descriptor *gdt;
 extern struct gate_descriptor idt_region[];
 extern struct gate_descriptor *idt;
 
@@ -126,9 +126,6 @@ void setsegment(struct segment_descriptor *, void *, size_t, int, int,
     int, int);
 void unsetgate(struct gate_descriptor *);
 void cpu_init_idt(void);
-void cpu_default_ldt(struct cpu_info *);
-void cpu_alloc_ldt(struct cpu_info *);
-void cpu_init_ldt(struct cpu_info *);
 
 int idt_vec_alloc(int, int);
 void idt_vec_set(int, void (*)(void));
@@ -214,7 +211,7 @@ void idt_vec_free(int);
 #define	GNULL_SEL	0	/* Null descriptor */
 #define	GCODE_SEL	1	/* Kernel code descriptor */
 #define	GDATA_SEL	2	/* Kernel data descriptor */
-#define	GLDT_SEL	3	/* Default LDT descriptor */
+#define	GLDT_SEL	3	/* Default LDT descriptor (UNUSED) */
 #define	GCPU_SEL	4	/* per-CPU segment */
 #define	GUCODE_SEL	5	/* User code descriptor (a stack short) */
 #define	GUDATA_SEL	6	/* User data descriptor */

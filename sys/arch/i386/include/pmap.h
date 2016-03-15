@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.81 2016/03/07 05:32:47 naddy Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.82 2016/03/15 03:17:51 guenther Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -106,9 +106,6 @@ struct pmap {
 	int pm_flags;			/* see below */
 
 	struct segment_descriptor pm_codeseg;	/* cs descriptor for process */
-	union descriptor *pm_ldt;	/* user-set LDT */
-	int pm_ldt_len;			/* number of LDT entries */
-	int pm_ldt_sel;			/* LDT selector */
 };
 
 /*

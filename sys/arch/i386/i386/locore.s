@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.166 2016/03/09 13:46:14 mpi Exp $	*/
+/*	$OpenBSD: locore.s,v 1.167 2016/03/15 03:17:51 guenther Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1187,8 +1187,8 @@ switch_exited:
 	movl	%ebx, CPUVAR(CURPCB)
 
 	/*
-	 * Activate the address space.  The pcb copy of %cr3 and the
-	 * LDT will be refreshed from the pmap, and because we're
+	 * Activate the address space.  The pcb copy of %cr3 will
+	 * be refreshed from the pmap, and because we're
 	 * curproc they'll both be reloaded into the CPU.
 	 */
 	pushl	%edi

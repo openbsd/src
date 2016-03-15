@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.146 2016/03/03 12:41:30 naddy Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.147 2016/03/15 03:17:51 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -142,8 +142,6 @@ struct cpu_info {
 	int		ci_want_resched;
 
 	union descriptor *ci_gdt;
-	union descriptor *ci_ldt;	/* per-cpu default LDT */
-	int		ci_ldt_len;	/* in bytes */
 
 	volatile int ci_ddb_paused;	/* paused due to other proc in ddb */
 #define CI_DDB_RUNNING		0
@@ -387,8 +385,8 @@ extern void (*update_cpuspeed)(void);
 /* machdep.c */
 void	dumpconf(void);
 void	cpu_reset(void);
-void	i386_proc0_tss_ldt_init(void);
-void	i386_init_pcb_tss_ldt(struct cpu_info *);
+void	i386_proc0_tss_init(void);
+void	i386_init_pcb_tss(struct cpu_info *);
 void	cpuid(u_int32_t, u_int32_t *);
 
 /* locore.s */

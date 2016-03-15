@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.188 2016/03/07 05:32:47 naddy Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.189 2016/03/15 03:17:51 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1287,11 +1287,6 @@ pmap_create(void)
 	pmap->pm_hiexec = 0;
 	pmap->pm_flags = 0;
 
-	/* init the LDT */
-	pmap->pm_ldt = NULL;
-	pmap->pm_ldt_len = 0;
-	pmap->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
-
 	setsegment(&pmap->pm_codeseg, 0, atop(I386_MAX_EXE_ADDR) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 
@@ -1398,13 +1393,6 @@ pmap_switch(struct proc *o, struct proc *p)
 	opmap = self->ci_curpmap;
 
 	pcb->pcb_pmap = pmap;
-	/* Get the LDT that this process will actually use */
-#ifdef MULTIPROCESSOR
-	pcb->pcb_ldt = pmap->pm_ldt == NULL ? self->ci_ldt : pmap->pm_ldt;
-#else
-	pcb->pcb_ldt = pmap->pm_ldt == NULL ? ldt : pmap->pm_ldt;
-#endif
-	pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
 	pcb->pcb_cr3 = pmap->pm_pdirpa;
 
 	if (opmap == pmap) {
@@ -1424,8 +1412,6 @@ pmap_switch(struct proc *o, struct proc *p)
 	self->ci_gdt[GUCODE_SEL].sd = pmap->pm_codeseg;
 	self->ci_gdt[GUFS_SEL].sd = pcb->pcb_threadsegs[TSEG_FS];
 	self->ci_gdt[GUGS_SEL].sd = pcb->pcb_threadsegs[TSEG_GS];
-
-	lldt(pcb->pcb_ldt_sel);
 }
 
 void

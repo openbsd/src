@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.581 2016/03/07 05:32:46 naddy Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.582 2016/03/15 03:17:51 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -454,10 +454,10 @@ cpu_startup(void)
 }
 
 /*
- * Set up proc0's TSS and LDT.
+ * Set up proc0's TSS
  */
 void
-i386_proc0_tss_ldt_init(void)
+i386_proc0_tss_init(void)
 {
 	int x;
 	struct pcb *pcb;
@@ -470,8 +470,6 @@ i386_proc0_tss_ldt_init(void)
 		pcb->pcb_iomap[x] = 0xffffffff;
 	pcb->pcb_iomap_pad = 0xff;
 
-	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
-	pcb->pcb_ldt = ldt;
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
@@ -479,12 +477,12 @@ i386_proc0_tss_ldt_init(void)
 	proc0.p_md.md_tss_sel = tss_alloc(pcb);
 
 	ltr(proc0.p_md.md_tss_sel);
-	lldt(pcb->pcb_ldt_sel);
+	lldt(0);
 }
 
 #ifdef MULTIPROCESSOR
 void
-i386_init_pcb_tss_ldt(struct cpu_info *ci)
+i386_init_pcb_tss(struct cpu_info *ci)
 {
 	int x;
 	struct pcb *pcb = ci->ci_idle_pcb;
@@ -495,8 +493,6 @@ i386_init_pcb_tss_ldt(struct cpu_info *ci)
 		pcb->pcb_iomap[x] = 0xffffffff;
 	pcb->pcb_iomap_pad = 0xff;
 
-	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
-	pcb->pcb_ldt = ci->ci_ldt;
 	pcb->pcb_cr0 = rcr0();
 	ci->ci_idle_tss_sel = tss_alloc(pcb);
 }
@@ -2954,7 +2950,6 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
  * Initialize segments and descriptor tables
  */
 
-union descriptor ldt[NLDT];
 struct gate_descriptor idt_region[NIDT];
 struct gate_descriptor *idt = idt_region;
 
@@ -3062,33 +3057,7 @@ cpu_init_idt(void)
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region);
 }
-
-void
-cpu_default_ldt(struct cpu_info *ci)
-{
-	ci->ci_ldt = ldt;
-	ci->ci_ldt_len = sizeof(ldt);
-}
-
-void
-cpu_alloc_ldt(struct cpu_info *ci)
-{
-	union descriptor *cpu_ldt;
-	size_t len = sizeof(ldt);
-
-	cpu_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len);
-	bcopy(ldt, cpu_ldt, len);
-	ci->ci_ldt = cpu_ldt;
-	ci->ci_ldt_len = len;
-}
-
-void
-cpu_init_ldt(struct cpu_info *ci)
-{
-	setsegment(&ci->ci_gdt[GLDT_SEL].sd, ci->ci_ldt, ci->ci_ldt_len - 1,
-	    SDT_SYSLDT, SEL_KPL, 0, 0);
-}
-#endif	/* MULTIPROCESSOR */
+#endif /* MULTIPROCESSOR */
 
 void
 init386(paddr_t first_avail)
@@ -3105,8 +3074,6 @@ init386(paddr_t first_avail)
 	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GICODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
-	setsegment(&gdt[GLDT_SEL].sd, ldt, sizeof(ldt) - 1, SDT_SYSLDT,
-	    SEL_KPL, 0, 0);
 	setsegment(&gdt[GUCODE_SEL].sd, 0, atop(I386_MAX_EXE_ADDR) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GUDATA_SEL].sd, 0, atop(VM_MAXUSER_ADDRESS) - 1,
