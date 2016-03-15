@@ -1,4 +1,4 @@
-# $OpenBSD: iso3166.tab,v 1.25 2015/06/15 15:38:04 millert Exp $
+# $OpenBSD: iso3166.tab,v 1.26 2016/03/15 19:51:30 millert Exp $
 # ISO 3166 alpha-2 country codes
 #
 # This file is in the public domain, so clarified as of
@@ -53,7 +53,7 @@ BL	St Barthelemy
 BM	Bermuda
 BN	Brunei
 BO	Bolivia
-BQ	Caribbean Netherlands
+BQ	Caribbean NL
 BR	Brazil
 BS	Bahamas
 BT	Bhutan
@@ -164,7 +164,7 @@ MA	Morocco
 MC	Monaco
 MD	Moldova
 ME	Montenegro
-MF	St Martin (French part)
+MF	St Martin (French)
 MG	Madagascar
 MH	Marshall Islands
 MK	Macedonia
@@ -234,7 +234,7 @@ SR	Suriname
 SS	South Sudan
 ST	Sao Tome & Principe
 SV	El Salvador
-SX	St Maarten (Dutch part)
+SX	St Maarten (Dutch)
 SY	Syria
 SZ	Swaziland
 TC	Turks & Caicos Is
