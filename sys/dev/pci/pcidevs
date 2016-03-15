@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1788 2016/02/20 14:34:27 deraadt Exp $
+$OpenBSD: pcidevs,v 1.1789 2016/03/15 06:54:49 mlarkin Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2568,6 +2568,7 @@ product EQUINOX SST8		0x9090	SST-8p
 product EXAR XR17C152		0x0152	XR17C152
 product EXAR XR17C154		0x0154	XR17C154
 product EXAR XR17C158		0x0158	XR17C158
+product EXAR XR17C354		0x0354	XR17C354
 
 /* FORE products */
 product FORE PCA200		0x0210	ATM PCA-200
