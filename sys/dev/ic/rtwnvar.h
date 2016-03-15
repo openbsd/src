@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwnvar.h,v 1.3 2016/03/11 14:06:37 stsp Exp $	*/
+/*	$OpenBSD: rtwnvar.h,v 1.4 2016/03/15 10:28:31 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -27,13 +27,16 @@ struct rtwn_ops {
 	void		(*write_1)(void *, uint16_t, uint8_t);
 	void		(*write_2)(void *, uint16_t, uint16_t);
 	void		(*write_4)(void *, uint16_t, uint32_t);
-	void		(*next_scan)(void *);
 	int		(*tx)(void *, struct mbuf *, struct ieee80211_node *);
 	int		(*dma_init)(void *);
 	void		(*enable_intr)(void *);
 	void		(*disable_intr)(void *);
 	void		(*stop)(void *);
 	int		(*is_oactive)(void *);
+	void		(*next_calib)(void *);
+	void		(*cancel_calib)(void *);
+	void		(*next_scan)(void *);
+	void		(*cancel_scan)(void *);
 };
 
 struct rtwn_softc {
@@ -44,8 +47,6 @@ struct rtwn_softc {
 	struct ieee80211com		sc_ic;
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
-	struct timeout			scan_to;
-	struct timeout			calib_to;
 	struct task			init_task;
 	int				ac2idx[EDCA_NUM_AC];
 	u_int				sc_flags;
@@ -81,3 +82,5 @@ int		rtwn_detach(struct rtwn_softc *, int);
 int		rtwn_activate(struct rtwn_softc *, int);
 int8_t		rtwn_get_rssi(struct rtwn_softc *, int, void *);
 void		rtwn_update_avgrssi(struct rtwn_softc *, int, int8_t);
+void		rtwn_calib(struct rtwn_softc *);
+void		rtwn_next_scan(struct rtwn_softc *);

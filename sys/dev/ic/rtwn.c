@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.4 2016/03/11 14:06:37 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.5 2016/03/15 10:28:31 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -90,8 +90,6 @@ int		rtwn_media_change(struct ifnet *);
 int		rtwn_ra_init(struct rtwn_softc *);
 void		rtwn_tsf_sync_enable(struct rtwn_softc *);
 void		rtwn_set_led(struct rtwn_softc *, int, int);
-void		rtwn_calib_to(void *);
-void		rtwn_next_scan(void *);
 int		rtwn_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void		rtwn_updateedca(struct ieee80211com *);
 int		rtwn_set_key(struct ieee80211com *, struct ieee80211_node *,
@@ -149,9 +147,6 @@ rtwn_attach(struct device *pdev, struct rtwn_softc *sc)
 	int i, error;
 
 	sc->sc_pdev = pdev;
-
-	timeout_set(&sc->calib_to, rtwn_calib_to, sc);
-	timeout_set(&sc->scan_to, rtwn_next_scan, sc);
 
 	task_set(&sc->init_task, rtwn_init_task, sc);
 
@@ -251,10 +246,8 @@ rtwn_detach(struct rtwn_softc *sc, int flags)
 
 	s = splnet();
 
-	if (timeout_initialized(&sc->scan_to))
-		timeout_del(&sc->scan_to);
-	if (timeout_initialized(&sc->calib_to))
-		timeout_del(&sc->calib_to);
+	sc->sc_ops.cancel_scan(sc->sc_ops.cookie);
+	sc->sc_ops.cancel_calib(sc->sc_ops.cookie);
 
 	task_del(systq, &sc->init_task);
 
@@ -678,9 +671,8 @@ rtwn_set_led(struct rtwn_softc *sc, int led, int on)
 }
 
 void
-rtwn_calib_to(void *arg)
+rtwn_calib(struct rtwn_softc *sc)
 {
-	struct rtwn_softc *sc = arg;
 	struct r92c_fw_cmd_rssi cmd;
 
 	if (sc->avg_pwdb != -1) {
@@ -695,15 +687,19 @@ rtwn_calib_to(void *arg)
 	/* Do temperature compensation. */
 	rtwn_temp_calib(sc);
 
-	timeout_add_sec(&sc->calib_to, 2);
+	sc->sc_ops.next_calib(sc->sc_ops.cookie);
 }
 
 void
-rtwn_next_scan(void *arg)
+rtwn_next_scan(struct rtwn_softc *sc)
 {
-	struct rtwn_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	int s;
 
-	sc->sc_ops.next_scan(sc->sc_ops.cookie);
+	s = splnet();
+	if (ic->ic_state == IEEE80211_S_SCAN)
+		ieee80211_next_scan(&ic->ic_if);
+	splx(s);
 }
 
 int
@@ -725,7 +721,7 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	if (ostate == IEEE80211_S_RUN) {
 		/* Stop calibration. */
-		timeout_del(&sc->calib_to);
+		sc->sc_ops.cancel_calib(sc->sc_ops.cookie);
 
 		/* Turn link LED off. */
 		rtwn_set_led(sc, RTWN_LED_LINK, 0);
@@ -781,7 +777,7 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		rtwn_write_1(sc, R92C_TXPAUSE,
 		    rtwn_read_1(sc, R92C_TXPAUSE) | 0x0f);
 		rtwn_set_chan(sc, ic->ic_bss->ni_chan, NULL);
-		timeout_add_msec(&sc->scan_to, 200);
+		sc->sc_ops.next_scan(sc->sc_ops.cookie);
 		break;
 
 	case IEEE80211_S_AUTH:
@@ -859,7 +855,7 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		sc->thcal_state = 0;
 		sc->thcal_lctemp = 0;
 		/* Start periodic calibration. */
-		timeout_add_sec(&sc->calib_to, 2);
+		sc->sc_ops.next_calib(sc->sc_ops.cookie);
 		break;
 	}
 	(void)sc->sc_newstate(ic, nstate, arg);
@@ -2556,8 +2552,8 @@ rtwn_stop(struct ifnet *ifp)
 	s = splnet();
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
-	timeout_del(&sc->scan_to);
-	timeout_del(&sc->calib_to);
+	sc->sc_ops.cancel_scan(sc->sc_ops.cookie);
+	sc->sc_ops.cancel_calib(sc->sc_ops.cookie);
 
 	task_del(systq, &sc->init_task);
 

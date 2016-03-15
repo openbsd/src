@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.18 2016/03/11 14:06:37 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.19 2016/03/15 10:28:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -148,6 +148,9 @@ struct rtwn_pci_softc {
 	struct rtwn_tx_ring	tx_ring[RTWN_NTXQUEUES];
 	uint32_t		qfullmsk;
 
+	struct timeout		calib_to;
+	struct timeout		scan_to;
+
 	/* PCI specific goo. */
 	bus_dma_tag_t 		sc_dmat;
 	pci_chipset_tag_t	sc_pc;
@@ -219,7 +222,6 @@ void		rtwn_pci_write_4(void *, uint16_t, uint32_t);
 uint8_t		rtwn_pci_read_1(void *, uint16_t);
 uint16_t	rtwn_pci_read_2(void *, uint16_t);
 uint32_t	rtwn_pci_read_4(void *, uint16_t);
-void		rtwn_pci_next_scan(void *);
 void		rtwn_rx_frame(struct rtwn_pci_softc *,
 		    struct r92c_rx_desc_pci *, struct rtwn_rx_data *, int);
 int		rtwn_tx(void *, struct mbuf *, struct ieee80211_node *);
@@ -232,6 +234,12 @@ int		rtwn_llt_init(struct rtwn_pci_softc *);
 int		rtwn_dma_init(void *);
 void		rtwn_enable_intr(void *);
 void		rtwn_disable_intr(void *);
+void		rtwn_calib_to(void *);
+void		rtwn_next_calib(void *);
+void		rtwn_cancel_calib(void *);
+void		rtwn_scan_to(void *);
+void		rtwn_pci_next_scan(void *);
+void		rtwn_cancel_scan(void *);
 
 struct cfdriver rtwn_cd = {
 	NULL, "rtwn", DV_IFNET
@@ -266,6 +274,9 @@ rtwn_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
+
+	timeout_set(&sc->calib_to, rtwn_calib_to, sc);
+	timeout_set(&sc->scan_to, rtwn_scan_to, sc);
 
 	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
@@ -329,13 +340,17 @@ rtwn_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sc.sc_ops.read_1 = rtwn_pci_read_1;
 	sc->sc_sc.sc_ops.read_2 = rtwn_pci_read_2;
 	sc->sc_sc.sc_ops.read_4 = rtwn_pci_read_4;
-	sc->sc_sc.sc_ops.next_scan = rtwn_pci_next_scan;
 	sc->sc_sc.sc_ops.tx = rtwn_tx;
 	sc->sc_sc.sc_ops.dma_init = rtwn_dma_init;
 	sc->sc_sc.sc_ops.enable_intr = rtwn_enable_intr;
 	sc->sc_sc.sc_ops.disable_intr = rtwn_disable_intr;
 	sc->sc_sc.sc_ops.stop = rtwn_pci_stop;
 	sc->sc_sc.sc_ops.is_oactive = rtwn_is_oactive;
+	sc->sc_sc.sc_ops.next_calib = rtwn_next_calib;
+	sc->sc_sc.sc_ops.cancel_calib = rtwn_cancel_calib;
+	sc->sc_sc.sc_ops.next_scan = rtwn_pci_next_scan;
+	sc->sc_sc.sc_ops.cancel_scan = rtwn_cancel_scan;
+
 	error = rtwn_attach(&sc->sc_dev, &sc->sc_sc);
 	if (error != 0) {
 		rtwn_free_rx_list(sc);
@@ -366,9 +381,15 @@ rtwn_pci_detach(struct device *self, int flags)
 	struct rtwn_pci_softc *sc = (struct rtwn_pci_softc *)self;
 	int s, i;
 
+	s = splnet();
+
+	if (timeout_initialized(&sc->calib_to))
+		timeout_del(&sc->calib_to);
+	if (timeout_initialized(&sc->scan_to))
+		timeout_del(&sc->scan_to);
+
 	rtwn_detach(&sc->sc_sc, flags);
 
-	s = splnet();
 	/* Free Tx/Rx buffers. */
 	for (i = 0; i < RTWN_NTXQUEUES; i++)
 		rtwn_free_tx_list(sc, i);
@@ -720,19 +741,6 @@ rtwn_pci_read_4(void *cookie, uint16_t addr)
 	struct rtwn_pci_softc *sc = cookie;
 
 	return bus_space_read_4(sc->sc_st, sc->sc_sh, addr);
-}
-
-void
-rtwn_pci_next_scan(void *arg)
-{
-	struct rtwn_pci_softc *sc = arg;
-	struct ieee80211com *ic = &sc->sc_sc.sc_ic;
-	int s;
-
-	s = splnet();
-	if (ic->ic_state == IEEE80211_S_SCAN)
-		ieee80211_next_scan(&ic->ic_if);
-	splx(s);
 }
 
 void
@@ -1321,4 +1329,54 @@ rtwn_disable_intr(void *cookie)
 	/* Disable interrupts. */
 	rtwn_pci_write_4(sc, R92C_HISR, 0x00000000);
 	rtwn_pci_write_4(sc, R92C_HIMR, 0x00000000);
+}
+
+void
+rtwn_calib_to(void *arg)
+{
+	struct rtwn_pci_softc *sc = arg;
+
+	rtwn_calib(&sc->sc_sc);
+}
+
+void
+rtwn_next_calib(void *cookie)
+{
+	struct rtwn_pci_softc *sc = cookie;
+
+	timeout_add_sec(&sc->calib_to, 2);
+}
+
+void
+rtwn_cancel_calib(void *cookie)
+{
+	struct rtwn_pci_softc *sc = cookie;
+
+	if (timeout_initialized(&sc->calib_to))
+		timeout_del(&sc->calib_to);
+}
+
+void
+rtwn_scan_to(void *arg)
+{
+	struct rtwn_pci_softc *sc = arg;
+
+	rtwn_next_scan(&sc->sc_sc);
+}
+
+void
+rtwn_pci_next_scan(void *cookie)
+{
+	struct rtwn_pci_softc *sc = cookie;
+
+	timeout_add_msec(&sc->scan_to, 200);
+}
+
+void
+rtwn_cancel_scan(void *cookie)
+{
+	struct rtwn_pci_softc *sc = cookie;
+
+	if (timeout_initialized(&sc->scan_to))
+		timeout_del(&sc->scan_to);
 }
