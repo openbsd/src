@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.156 2016/03/15 15:05:23 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.157 2016/03/15 15:10:09 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1627,10 +1627,71 @@ resolvpath(struct proc *p,
     char **resolved, size_t *resolvedlen)
 {
 	int error;
-	char *fullpath = NULL, *rawcanopath = NULL, *canopath = NULL;
-	size_t fullpathlen, rawcanopathlen, canopathlen;
+	char *abspath = NULL, *canopath = NULL, *fullpath = NULL;
+	size_t abspathlen, canopathlen, fullpathlen, canopathlen_exact;
 
-	/* 1. get rdir if chrooted */
+	/* 1. get an absolute path (inside any chroot) : path -> abspath */
+	if (path[0] != '/') {
+		/* path is relative: prepend cwd */
+
+		/* get cwd first (if needed) */
+		if (*cwd == NULL) {
+			char *rawcwd, *bp, *bpend;
+			size_t rawcwdlen = MAXPATHLEN * 4;
+
+			rawcwd = malloc(rawcwdlen, M_TEMP, M_WAITOK);
+			bp = &rawcwd[rawcwdlen];
+			bpend = bp;
+			*(--bp) = '\0';
+
+			error = vfs_getcwd_common(p->p_fd->fd_cdir,
+			    NULL, &bp, rawcwd, rawcwdlen/2,
+			    GETCWD_CHECK_ACCESS, p);
+			if (error) {
+				free(rawcwd, M_TEMP, rawcwdlen);
+				goto out;
+			}
+
+			/* NUL is included */
+			*cwdlen = (bpend - bp);
+			*cwd = malloc(*cwdlen, M_TEMP, M_WAITOK);
+			memcpy(*cwd, bp, *cwdlen);
+
+			free(rawcwd, M_TEMP, rawcwdlen);
+		}
+
+		/* NUL included in *cwdlen and pathlen */
+		abspathlen = *cwdlen + pathlen;
+		abspath = malloc(abspathlen, M_TEMP, M_WAITOK);
+		snprintf(abspath, abspathlen, "%s/%s", *cwd, path);
+
+	} else {
+		/* path is absolute */
+		abspathlen = pathlen;
+		abspath = malloc(abspathlen, M_TEMP, M_WAITOK);
+		memcpy(abspath, path, pathlen);
+	}
+
+	/* 2. canonization: abspath -> canopath */
+	canopathlen = abspathlen;
+	canopath = malloc(canopathlen, M_TEMP, M_WAITOK);
+	error = canonpath(abspath, canopath, canopathlen);
+
+	/* free abspath now as we don't need it after */
+	free(abspath, M_TEMP, abspathlen);
+
+	/* error in canonpath() call (should not happen, but keep safe) */
+	if (error != 0)
+		goto out;
+
+	/* check the canopath size */
+	canopathlen_exact = strlen(canopath) + 1;
+	if (canopathlen_exact > MAXPATHLEN) {
+		error = ENAMETOOLONG;
+		goto out;
+	}
+
+	/* 3. preprend *rdir if chrooted : canonpath -> fullpath */
 	if (p->p_fd->fd_rdir != NULL) {
 		if (*rdir == NULL) {
 			char *rawrdir, *bp, *bpend;
@@ -1656,80 +1717,28 @@ resolvpath(struct proc *p,
 
 			free(rawrdir, M_TEMP, rawrdirlen);
 		}
-	} else {
-		if (*rdir == NULL)
-			*rdirlen = 0;	/* ensure rdirlen value is initialized */
-	}
 
-	/* 2. resolv: path -> fullpath */
-	if (path[0] != '/') {
-		/* path is relative: prepend cwd (rootvnode based) */
-
-		/* get cwd first (if needed) */
-		if (*cwd == NULL) {
-			char *rawcwd, *bp, *bpend;
-			size_t rawcwdlen = MAXPATHLEN * 4;
-
-			rawcwd = malloc(rawcwdlen, M_TEMP, M_WAITOK);
-			bp = &rawcwd[rawcwdlen];
-			bpend = bp;
-			*(--bp) = '\0';
-
-			error = vfs_getcwd_common(p->p_fd->fd_cdir,
-			    rootvnode, &bp, rawcwd, rawcwdlen/2,
-			    GETCWD_CHECK_ACCESS, p);
-			if (error) {
-				free(rawcwd, M_TEMP, rawcwdlen);
-				goto out;
-			}
-
-			/* NUL is included */
-			*cwdlen = (bpend - bp);
-			*cwd = malloc(*cwdlen, M_TEMP, M_WAITOK);
-			memcpy(*cwd, bp, *cwdlen);
-
-			free(rawcwd, M_TEMP, rawcwdlen);
-		}
-
-		/* NUL included in *cwdlen and pathlen */
-		fullpathlen = *cwdlen + pathlen;
+		/*
+		 * NUL is included in *rdirlen and canopathlen_exact.
+		 * doesn't add "/" between them, as canopath is absolute.
+		 */
+		fullpathlen = *rdirlen + canopathlen_exact - 1;
 		fullpath = malloc(fullpathlen, M_TEMP, M_WAITOK);
-		snprintf(fullpath, fullpathlen, "%s/%s", *cwd, path);
-
-	} else if (p->p_fd->fd_rdir) {
-		/* path is absolute and we are chrooted : prepend *rdir */
-
-		/* NUL included in *rdirlen and pathlen (and no '/' between them) */
-		fullpathlen = *rdirlen + pathlen - 1;
-		fullpath = malloc(fullpathlen, M_TEMP, M_WAITOK);
-		snprintf(fullpath, fullpathlen, "%s%s", *rdir, path);
+		snprintf(fullpath, fullpathlen, "%s%s", *rdir, canopath);
 
 	} else {
-		/* path is absolute */
-		fullpathlen = pathlen;
+		/* not chrooted: only reduce canopath to exact length */
+		fullpathlen = canopathlen_exact;
 		fullpath = malloc(fullpathlen, M_TEMP, M_WAITOK);
-		memcpy(fullpath, path, pathlen);
+		memcpy(fullpath, canopath, fullpathlen);
 	}
 
-	/* 3. canonization: fullpath -> rawcanopath */
-	rawcanopathlen = fullpathlen;
-	rawcanopath = malloc(rawcanopathlen, M_TEMP, M_WAITOK);
-	error = canonpath(fullpath, rawcanopath, rawcanopathlen);
-	if (error != 0)
-		goto out;
-
-	/* 4. output a fresh allocated path: rawcanopath -> canopath */
-	canopathlen = strlen(rawcanopath) + 1; /* NUL */
-	canopath = malloc(canopathlen, M_TEMP, M_WAITOK);
-	memcpy(canopath, rawcanopath, canopathlen);
-
-	*resolvedlen = canopathlen;
-	*resolved = canopath;
+	*resolvedlen = fullpathlen;
+	*resolved = fullpath;
 
 out:
-	free(rawcanopath, M_TEMP, rawcanopathlen);
-	free(fullpath, M_TEMP, fullpathlen);
+	free(canopath, M_TEMP, canopathlen);
 	if (error != 0)
-		free(canopath, M_TEMP, canopathlen);
+		free(fullpath, M_TEMP, fullpathlen);
 	return error;
 }
