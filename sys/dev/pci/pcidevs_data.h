@@ -8020,6 +8020,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "XR17C158",
 	},
 	{
+	    PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17C354,
+	    "XR17C354",
+	},
+	{
 	    PCI_VENDOR_FORE, PCI_PRODUCT_FORE_PCA200,
 	    "ATM PCA-200",
 	},
