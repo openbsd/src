@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.428 2016/03/07 18:44:00 naddy Exp $	*/
+/*	$OpenBSD: if.c,v 1.429 2016/03/16 12:08:09 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1130,8 +1130,15 @@ int
 if_congested(void)
 {
 	extern int ticks;
+	int diff;
 
-	return (ticks - ifq_congestion <= (hz / 100));
+	diff = ticks - ifq_congestion;
+	if (diff < 0) {
+		ifq_congestion = ticks - hz;
+		return (0);
+	}
+
+	return (diff <= (hz / 100));
 }
 
 #define	equal(a1, a2)	\
