@@ -5590,6 +5590,7 @@
 ./usr/share/zoneinfo/Asia/Bahrain
 ./usr/share/zoneinfo/Asia/Baku
 ./usr/share/zoneinfo/Asia/Bangkok
+./usr/share/zoneinfo/Asia/Barnaul
 ./usr/share/zoneinfo/Asia/Beirut
 ./usr/share/zoneinfo/Asia/Bishkek
 ./usr/share/zoneinfo/Asia/Brunei
@@ -5776,6 +5777,7 @@
 ./usr/share/zoneinfo/Europe
 ./usr/share/zoneinfo/Europe/Amsterdam
 ./usr/share/zoneinfo/Europe/Andorra
+./usr/share/zoneinfo/Europe/Astrakhan
 ./usr/share/zoneinfo/Europe/Athens
 ./usr/share/zoneinfo/Europe/Belfast
 ./usr/share/zoneinfo/Europe/Belgrade
@@ -5823,6 +5825,7 @@
 ./usr/share/zoneinfo/Europe/Tallinn
 ./usr/share/zoneinfo/Europe/Tirane
 ./usr/share/zoneinfo/Europe/Tiraspol
+./usr/share/zoneinfo/Europe/Ulyanovsk
 ./usr/share/zoneinfo/Europe/Uzhgorod
 ./usr/share/zoneinfo/Europe/Vaduz
 ./usr/share/zoneinfo/Europe/Vatican
@@ -6202,6 +6205,7 @@
 ./usr/share/zoneinfo/posix/Asia/Bahrain
 ./usr/share/zoneinfo/posix/Asia/Baku
 ./usr/share/zoneinfo/posix/Asia/Bangkok
+./usr/share/zoneinfo/posix/Asia/Barnaul
 ./usr/share/zoneinfo/posix/Asia/Beirut
 ./usr/share/zoneinfo/posix/Asia/Bishkek
 ./usr/share/zoneinfo/posix/Asia/Brunei
@@ -6388,6 +6392,7 @@
 ./usr/share/zoneinfo/posix/Europe
 ./usr/share/zoneinfo/posix/Europe/Amsterdam
 ./usr/share/zoneinfo/posix/Europe/Andorra
+./usr/share/zoneinfo/posix/Europe/Astrakhan
 ./usr/share/zoneinfo/posix/Europe/Athens
 ./usr/share/zoneinfo/posix/Europe/Belfast
 ./usr/share/zoneinfo/posix/Europe/Belgrade
@@ -6435,6 +6440,7 @@
 ./usr/share/zoneinfo/posix/Europe/Tallinn
 ./usr/share/zoneinfo/posix/Europe/Tirane
 ./usr/share/zoneinfo/posix/Europe/Tiraspol
+./usr/share/zoneinfo/posix/Europe/Ulyanovsk
 ./usr/share/zoneinfo/posix/Europe/Uzhgorod
 ./usr/share/zoneinfo/posix/Europe/Vaduz
 ./usr/share/zoneinfo/posix/Europe/Vatican
@@ -6815,6 +6821,7 @@
 ./usr/share/zoneinfo/right/Asia/Bahrain
 ./usr/share/zoneinfo/right/Asia/Baku
 ./usr/share/zoneinfo/right/Asia/Bangkok
+./usr/share/zoneinfo/right/Asia/Barnaul
 ./usr/share/zoneinfo/right/Asia/Beirut
 ./usr/share/zoneinfo/right/Asia/Bishkek
 ./usr/share/zoneinfo/right/Asia/Brunei
@@ -7001,6 +7008,7 @@
 ./usr/share/zoneinfo/right/Europe
 ./usr/share/zoneinfo/right/Europe/Amsterdam
 ./usr/share/zoneinfo/right/Europe/Andorra
+./usr/share/zoneinfo/right/Europe/Astrakhan
 ./usr/share/zoneinfo/right/Europe/Athens
 ./usr/share/zoneinfo/right/Europe/Belfast
 ./usr/share/zoneinfo/right/Europe/Belgrade
@@ -7048,6 +7056,7 @@
 ./usr/share/zoneinfo/right/Europe/Tallinn
 ./usr/share/zoneinfo/right/Europe/Tirane
 ./usr/share/zoneinfo/right/Europe/Tiraspol
+./usr/share/zoneinfo/right/Europe/Ulyanovsk
 ./usr/share/zoneinfo/right/Europe/Uzhgorod
 ./usr/share/zoneinfo/right/Europe/Vaduz
 ./usr/share/zoneinfo/right/Europe/Vatican
