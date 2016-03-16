@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.61 2016/03/15 18:16:21 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.62 2016/03/16 16:53:43 stefan Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -917,10 +917,6 @@ amap_swap_off(int startslot, int endslot)
 		LIST_INSERT_BEFORE(am, &marker_prev, am_list);
 		LIST_INSERT_AFTER(am, &marker_next, am_list);
 
-		if (am->am_nused <= 0) {
-			goto next;
-		}
-
 		for (i = 0; i < am->am_nused; i++) {
 			int slot;
 			int swslot;
@@ -950,7 +946,6 @@ amap_swap_off(int startslot, int endslot)
 			i = 0;
 		}
 
-next:
 		KASSERT(LIST_NEXT(&marker_prev, am_list) == &marker_next ||
 		    LIST_NEXT(LIST_NEXT(&marker_prev, am_list), am_list) ==
 		    &marker_next);
