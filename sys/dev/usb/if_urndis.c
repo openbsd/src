@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.59 2015/11/25 03:10:00 dlg Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.60 2016/03/16 21:04:40 stsp Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -854,11 +854,11 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 
 		if (letoh32(msg->rm_datalen) < sizeof(struct ether_header)) {
 			ifp->if_ierrors++;
-			printf("%s: urndis_decap invalid ethernet size "
+			DPRINTF(("%s: urndis_decap invalid ethernet size "
 			    "%u < %zu\n",
 			    DEVNAME(sc),
 			    letoh32(msg->rm_datalen),
-			    sizeof(struct ether_header));
+			    sizeof(struct ether_header)));
 			return;
 		}
 
@@ -1200,12 +1200,13 @@ urndis_rxeof(struct usbd_xfer *xfer,
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
 		if (usbd_ratecheck(&sc->sc_rx_notice)) {
-			printf("%s: usb errors on rx: %s\n",
-			    DEVNAME(sc), usbd_errstr(status));
+			DPRINTF(("%s: usb errors on rx: %s\n",
+			    DEVNAME(sc), usbd_errstr(status)));
 		}
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_bulkin_pipe);
 
+		ifp->if_ierrors++;
 		goto done;
 	}
 
@@ -1251,8 +1252,8 @@ urndis_txeof(struct usbd_xfer *xfer,
 			return;
 		}
 		ifp->if_oerrors++;
-		printf("%s: usb error on tx: %s\n", DEVNAME(sc),
-		    usbd_errstr(status));
+		DPRINTF(("%s: usb error on tx: %s\n", DEVNAME(sc),
+		    usbd_errstr(status)));
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_bulkout_pipe);
 		splx(s);
