@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.95 2015/12/05 22:28:40 krw Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.96 2016/03/16 15:41:11 krw Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -304,7 +304,7 @@ hookup(char *host, char *port)
 	return (hostname);
 bad:
 	(void)close(s);
-	return ((char *)0);
+	return (NULL);
 }
 
 /* ARGSUSED */

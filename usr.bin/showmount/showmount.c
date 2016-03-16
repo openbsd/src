@@ -1,4 +1,4 @@
-/*	$OpenBSD: showmount.c,v 1.19 2015/11/17 15:01:28 deraadt Exp $	*/
+/*	$OpenBSD: showmount.c,v 1.20 2016/03/16 15:41:11 krw Exp $	*/
 /*	$NetBSD: showmount.c,v 1.7 1996/05/01 18:14:10 cgd Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	if (rpcs & DODUMP) {
-		estat = clnt_call(client, RPCMNT_DUMP, xdr_void, (char *)0,
+		estat = clnt_call(client, RPCMNT_DUMP, xdr_void, NULL,
 		    xdr_mntdump, (char *)&mntdump, timeout);
 		if (estat != RPC_SUCCESS) {
 			fprintf(stderr, "showmount: Can't do Mountdump rpc: ");
@@ -176,7 +176,7 @@ main(int argc, char *argv[])
 		}
 	}
 	if (rpcs & DOEXPORTS) {
-		estat = clnt_call(client, RPCMNT_EXPORT, xdr_void, (char *)0,
+		estat = clnt_call(client, RPCMNT_EXPORT, xdr_void, NULL,
 		    xdr_exports, (char *)&exports, timeout);
 		if (estat != RPC_SUCCESS) {
 			fprintf(stderr, "showmount: Can't do Exports rpc: ");
@@ -238,14 +238,14 @@ xdr_mntdump(XDR *xdrsp, struct mountlist **mlp)
 	int bool, val, val2;
 	char *strp;
 
-	*mlp = (struct mountlist *)0;
+	*mlp = NULL;
 	if (!xdr_bool(xdrsp, &bool))
 		return (0);
 	while (bool) {
 		mp = malloc(sizeof(struct mountlist));
 		if (mp == NULL)
 			return (0);
-		mp->ml_left = mp->ml_right = (struct mountlist *)0;
+		mp->ml_left = mp->ml_right = NULL;
 		strp = mp->ml_host;
 		if (!xdr_string(xdrsp, &strp, RPCMNT_NAMELEN))
 			return (0);
@@ -316,14 +316,14 @@ xdr_exports(XDR *xdrsp, struct exportslist **exp)
 	int bool, grpbool;
 	char *strp;
 
-	*exp = (struct exportslist *)0;
+	*exp = NULL;
 	if (!xdr_bool(xdrsp, &bool))
 		return (0);
 	while (bool) {
 		ep = malloc(sizeof(struct exportslist));
 		if (ep == NULL)
 			return (0);
-		ep->ex_groups = (struct grouplist *)0;
+		ep->ex_groups = NULL;
 		strp = ep->ex_dirp;
 		if (!xdr_string(xdrsp, &strp, RPCMNT_PATHLEN))
 			return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.76 2015/12/09 17:55:42 mmcc Exp $	*/
+/*	$OpenBSD: util.c,v 1.77 2016/03/16 15:41:11 krw Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -764,11 +764,11 @@ progressmeter(int flag, const char *filename)
 	char buf[512];
 
 	if (flag == -1) {
-		(void)gettimeofday(&start, (struct timezone *)0);
+		(void)gettimeofday(&start, NULL);
 		lastupdate = start;
 		lastsize = restart_point;
 	}
-	(void)gettimeofday(&now, (struct timezone *)0);
+	(void)gettimeofday(&now, NULL);
 	if (!progress || filesize < 0)
 		return;
 	cursize = bytes + restart_point;
@@ -925,7 +925,7 @@ ptransfer(int siginfo)
 	if (!verbose && !siginfo)
 		return;
 
-	(void)gettimeofday(&now, (struct timezone *)0);
+	(void)gettimeofday(&now, NULL);
 	timersub(&now, &start, &td);
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
 	bs = bytes / (elapsed == 0.0 ? 1 : elapsed);

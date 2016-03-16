@@ -1,4 +1,4 @@
-/*	$OpenBSD: invite.c,v 1.16 2016/02/01 07:29:25 mestre Exp $	*/
+/*	$OpenBSD: invite.c,v 1.17 2016/03/16 15:41:11 krw Exp $	*/
 /*	$NetBSD: invite.c,v 1.3 1994/12/09 02:14:18 jtc Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ invite_remote(void)
 	 * gets called again in main().
 	 */
 	end_msgs();
-	setitimer(ITIMER_REAL, &itimer, (struct itimerval *)0);
+	setitimer(ITIMER_REAL, &itimer, NULL);
 	message("Waiting for your party to respond");
 	signal(SIGALRM, re_invite);
 	(void) setjmp(invitebuf);

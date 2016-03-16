@@ -1,4 +1,4 @@
-/*	$OpenBSD: slist_test.c,v 1.5 2015/12/17 08:01:55 tb Exp $ */
+/*	$OpenBSD: slist_test.c,v 1.6 2016/03/16 15:41:11 krw Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -323,7 +323,7 @@ test_05()
 	for (i = 0; i < 254; i++) {
 		slist_remove_first(&sl);
 	}
-	slist_set(l, 0, (void *)0);
+	slist_set(l, 0, NULL);
 	/* Add 7 items */
 	for (i = 0; i < 8; i++) {
 		slist_add(&sl, (void *)i + 1);

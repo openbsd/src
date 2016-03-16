@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.26 2015/09/05 20:07:11 guenther Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.27 2016/03/16 15:41:10 krw Exp $	*/
 /*	$NetBSD: utilities.c,v 1.6 2001/02/04 21:19:34 christos Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ bufinit(void)
 	char *bufp;
 
 	diskreads = totalreads = 0;
-	pbp = pdirbp = (struct bufarea *)0;
+	pbp = pdirbp = NULL;
 	bufhead.b_next = bufhead.b_prev = &bufhead;
 	bufcnt = MAXBUFSPACE / sblock.e2fs_bsize;
 	if (bufcnt < MINBUFS)
@@ -256,7 +256,7 @@ ckfini(int markclean)
 	}
 	if (bufhead.b_size != cnt)
 		errexit("Panic: lost %d buffers\n", bufhead.b_size - cnt);
-	pbp = pdirbp = (struct bufarea *)0;
+	pbp = pdirbp = NULL;
 	if (markclean && (sblock.e2fs.e2fs_state & E2FS_ISCLEAN) == 0) {
 		/*
 		 * Mark the file system as clean, and sync the superblock.

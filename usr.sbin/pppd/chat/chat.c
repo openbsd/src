@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.33 2016/01/25 21:24:17 gsoares Exp $	*/
+/*	$OpenBSD: chat.c,v 1.34 2016/03/16 15:41:11 krw Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -160,7 +160,7 @@ struct termio saved_tty_parameters;
 struct termios saved_tty_parameters;
 #endif
 
-char *abort_string[MAX_ABORTS], *fail_reason = (char *)0,
+char *abort_string[MAX_ABORTS], *fail_reason = NULL,
 	fail_buffer[50];
 int n_aborts = 0, abort_next = 0, timeout_next = 0, echo_next = 0;
 int clear_abort_next = 0;
@@ -1286,7 +1286,7 @@ register char *string;
     register char *s = temp, *end = s + STR_LEN;
     char *logged = temp;
 
-    fail_reason = (char *)0;
+    fail_reason = NULL;
     string = clean(string, 0);
     len = strlen(string);
     minlen = (len > sizeof(fail_buffer)? len: sizeof(fail_buffer)) - 1;

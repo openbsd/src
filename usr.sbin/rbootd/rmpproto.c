@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmpproto.c,v 1.11 2015/01/16 06:40:19 deraadt Exp $	*/
+/*	$OpenBSD: rmpproto.c,v 1.12 2016/03/16 15:41:11 krw Exp $	*/
 /*	$NetBSD: rmpproto.c,v 1.5.2.1 1995/11/14 08:45:44 thorpej Exp $	*/
 
 /*
@@ -570,7 +570,7 @@ SendPacket(RMPCONN *rconn)
 	/*
 	 *  Last time this connection was active.
 	 */
-	(void) gettimeofday(&rconn->tstamp, (struct timezone *)0);
+	(void) gettimeofday(&rconn->tstamp, NULL);
 
 	if (DbgFp != NULL)			/* display packet */
 		DispPkt(rconn,DIR_SENT);

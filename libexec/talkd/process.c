@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.22 2016/02/01 07:25:51 mestre Exp $	*/
+/*	$OpenBSD: process.c,v 1.23 2016/03/16 15:41:10 krw Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -112,7 +112,7 @@ process_request(CTL_MSG *mp, CTL_RESPONSE *rp)
 
 	case LEAVE_INVITE:
 		ptr = find_request(mp);
-		if (ptr != (CTL_MSG *)0) {
+		if (ptr != NULL) {
 			rp->id_num = htonl(ptr->id_num);
 			rp->answer = SUCCESS;
 		} else
@@ -121,7 +121,7 @@ process_request(CTL_MSG *mp, CTL_RESPONSE *rp)
 
 	case LOOK_UP:
 		ptr = find_match(mp);
-		if (ptr != (CTL_MSG *)0) {
+		if (ptr != NULL) {
 			rp->id_num = htonl(ptr->id_num);
 			rp->addr = ptr->addr;
 			rp->addr.sa_family = ptr->addr.sa_family;
@@ -157,7 +157,7 @@ do_announce(CTL_MSG *mp, CTL_RESPONSE *rp)
 	}
 	hp = gethostbyaddr((char *)&satosin(&mp->ctl_addr)->sin_addr,
 		sizeof(struct in_addr), AF_INET);
-	if (hp == (struct hostent *)0) {
+	if (hp == NULL) {
 		rp->answer = MACHINE_UNKNOWN;
 		return;
 	}

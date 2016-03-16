@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.41 2015/11/16 18:37:30 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.42 2016/03/16 15:41:10 krw Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -306,14 +306,14 @@ main(int argc, char *argv[])
 				exit(1);
 			}
 			signal(SIGINT, SIG_DFL);
-			for (i = 0; environ[i] != (char *)0; i++)
+			for (i = 0; environ[i] != NULL; i++)
 				env[i] = environ[i];
 			makeenv(&env[i]);
 
 			limit.rlim_max = RLIM_INFINITY;
 			limit.rlim_cur = RLIM_INFINITY;
 			(void)setrlimit(RLIMIT_CPU, &limit);
-			execle(LO, "login", "-p", "--", name, (char *)0, env);
+			execle(LO, "login", "-p", "--", name, NULL, env);
 			syslog(LOG_ERR, "%s: %m", LO);
 			exit(1);
 		}

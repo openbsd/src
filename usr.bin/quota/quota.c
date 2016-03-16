@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.37 2015/12/09 19:39:10 mmcc Exp $	*/
+/*	$OpenBSD: quota.c,v 1.38 2016/03/16 15:41:11 krw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -305,7 +305,7 @@ showquotas(int type, u_long id, const char *name)
 		    qup->dqblk.dqb_bsoftlimit == 0 &&
 		    qup->dqblk.dqb_bhardlimit == 0)
 			continue;
-		msgi = (char *)0;
+		msgi = NULL;
 		if (qup->dqblk.dqb_ihardlimit &&
 		    qup->dqblk.dqb_curinodes >= qup->dqblk.dqb_ihardlimit)
 			msgi = "File limit reached on";
@@ -316,7 +316,7 @@ showquotas(int type, u_long id, const char *name)
 			else
 				msgi = "Over file quota on";
 		}
-		msgb = (char *)0;
+		msgb = NULL;
 		if (qup->dqblk.dqb_bhardlimit &&
 		    qup->dqblk.dqb_curblocks >= qup->dqblk.dqb_bhardlimit)
 			msgb = "Block limit reached on";
@@ -328,12 +328,12 @@ showquotas(int type, u_long id, const char *name)
 				msgb = "Over block quota on";
 		}
 		if (qflag) {
-			if ((msgi != (char *)0 || msgb != (char *)0) &&
+			if ((msgi != NULL || msgb != NULL) &&
 			    lines++ == 0)
 				heading(type, id, name, "");
-			if (msgi != (char *)0)
+			if (msgi != NULL)
 				printf("\t%s %s\n", msgi, qup->fsname);
-			if (msgb != (char *)0)
+			if (msgb != NULL)
 				printf("\t%s %s\n", msgb, qup->fsname);
 			continue;
 		}
@@ -351,19 +351,19 @@ showquotas(int type, u_long id, const char *name)
 			    nam,
 			    (int)(dbtob((u_quad_t)qup->dqblk.dqb_curblocks)
 				/ 1024),
-			    (msgb == (char *)0) ? ' ' : '*',
+			    (msgb == NULL) ? ' ' : '*',
 			    (int)(dbtob((u_quad_t)qup->dqblk.dqb_bsoftlimit)
 				/ 1024),
 			    (int)(dbtob((u_quad_t)qup->dqblk.dqb_bhardlimit)
 				/ 1024),
-			    (msgb == (char *)0) ? ""
+			    (msgb == NULL) ? ""
 			        : timeprt(qup->dqblk.dqb_btime));
 			printf(" %7d%c %7d %7d %7s\n",
 			    qup->dqblk.dqb_curinodes,
-			    (msgi == (char *)0) ? ' ' : '*',
+			    (msgi == NULL) ? ' ' : '*',
 			    qup->dqblk.dqb_isoftlimit,
 			    qup->dqblk.dqb_ihardlimit,
-			    (msgi == (char *)0) ? ""
+			    (msgi == NULL) ? ""
 			        : timeprt(qup->dqblk.dqb_itime)
 			);
 			continue;

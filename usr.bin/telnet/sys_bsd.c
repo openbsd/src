@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.31 2015/11/29 14:18:40 semarie Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.32 2016/03/16 15:41:11 krw Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ tcval(int func)
     case SLC_BRK:
     case SLC_EOR:
     default:
-	return((cc_t *)0);
+	return(NULL);
     }
 }
 

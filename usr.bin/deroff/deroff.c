@@ -1,4 +1,4 @@
-/*	$OpenBSD: deroff.c,v 1.13 2015/10/09 01:37:07 deraadt Exp $	*/
+/*	$OpenBSD: deroff.c,v 1.14 2016/03/16 15:41:10 krw Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1425,7 +1425,7 @@ comline(void)
 	int	lb, ub;
 	int	hit;
 	static	int	tabsize = 0;
-	static	struct	mactab	*mactab = (struct mactab *)0;
+	static	struct	mactab	*mactab = NULL;
 	struct	mactab	*mp;
 
 	if (mactab == 0)

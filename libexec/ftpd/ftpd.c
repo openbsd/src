@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.212 2015/12/12 20:09:28 mmcc Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.213 2016/03/16 15:41:10 krw Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -2140,7 +2140,7 @@ renamefrom(char *name)
 
 	if (stat(name, &st) < 0) {
 		perror_reply(550, name);
-		return ((char *)0);
+		return (NULL);
 	}
 	reply(350, "File exists, ready for destination name");
 	return (name);

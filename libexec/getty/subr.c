@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.25 2015/12/22 08:54:16 mmcc Exp $	*/
+/*	$OpenBSD: subr.c,v 1.26 2016/03/16 15:41:10 krw Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -413,7 +413,7 @@ makeenv(char *env[])
 		if (*p)
 			*ep++ = p;
 	}
-	*ep = (char *)0;
+	*ep = NULL;
 }
 
 /*
