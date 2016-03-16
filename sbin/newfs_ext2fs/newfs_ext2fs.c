@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.24 2016/03/14 20:30:34 natano Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.25 2016/03/16 08:34:11 natano Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -241,7 +241,7 @@ main(int argc, char *argv[])
 		/* creating image in a regular file */
 		if (!Nflag && fssize > 0)
 			fl |= O_CREAT;
-		fd = open(special, fl, 0777);
+		fd = open(special, fl, 0666);
 		if (fd == -1)
 			err(EXIT_FAILURE, "can't open file %s", special);
 		if (fstat(fd, &sb) == -1)
