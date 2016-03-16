@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.152 2016/03/16 20:15:15 mestre Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.153 2016/03/16 20:16:39 mestre Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -1252,7 +1252,6 @@ more:
 			hints.ai_socktype = sep->se_socktype;
 			hints.ai_flags = AI_PASSIVE;
 			port = "0";
-			/* XXX shortened IPv4 syntax is now forbidden */
 			error = getaddrinfo(strcmp(host, "*") ? host : NULL,
 			    port, &hints, &res0);
 			if (error) {
