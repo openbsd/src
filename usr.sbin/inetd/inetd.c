@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.151 2016/03/16 20:09:58 mestre Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.152 2016/03/16 20:15:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -646,9 +646,8 @@ config(int sig, short event, void *arg)
 				    1, USHRT_MAX, NULL));
 
 				if (!port) {
-					/* XXX */
-					strncpy(protoname, sep->se_proto,
-						sizeof(protoname));
+					(void)strlcpy(protoname, sep->se_proto,
+					    sizeof(protoname));
 					if (isdigit((unsigned char)
 					    protoname[strlen(protoname) - 1]))
 						protoname[strlen(protoname) - 1] = '\0';
@@ -703,9 +702,8 @@ config(int sig, short event, void *arg)
 				    1, USHRT_MAX, NULL));
 
 				if (!port) {
-					/* XXX */
-					strncpy(protoname, sep->se_proto,
-						sizeof(protoname));
+					(void)strlcpy(protoname, sep->se_proto,
+					    sizeof(protoname));
 					if (isdigit((unsigned char)
 					    protoname[strlen(protoname) - 1]))
 						protoname[strlen(protoname) - 1] = '\0';
