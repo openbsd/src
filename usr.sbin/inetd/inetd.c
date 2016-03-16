@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.150 2015/12/22 19:44:01 mmcc Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.151 2016/03/16 20:09:58 mestre Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -421,7 +421,7 @@ gettcp(int fd, short events, void *xsep)
 		}
 		if (getnameinfo((struct sockaddr *)&peer, plen, NULL, 0,
 		    sbuf, sizeof(sbuf), NI_NUMERICSERV) == 0 &&
-		    atoi(sbuf) == 20) {
+		    strtonum(sbuf, 1, USHRT_MAX, NULL) == 20) {
 			/*
 			 * ignore things that look like ftp bounce
 			 */
@@ -550,7 +550,7 @@ config(int sig, short event, void *arg)
 {
 	struct servtab *sep, *cp, **sepp;
 	int add;
-	char protoname[10];
+	char protoname[11];
 
 	if (!setconfig()) {
 		syslog(LOG_ERR, "%s: %m", CONFIG);
@@ -625,7 +625,8 @@ config(int sig, short event, void *arg)
 			if (isrpcservice(sep)) {
 				struct rpcent *rp;
 
-				sep->se_rpcprog = atoi(sep->se_service);
+				sep->se_rpcprog = strtonum(sep->se_service,
+				    1, USHRT_MAX, NULL);
 				if (sep->se_rpcprog == 0) {
 					rp = getrpcbyname(sep->se_service);
 					if (rp == 0) {
@@ -641,7 +642,8 @@ config(int sig, short event, void *arg)
 				if (sep->se_fd != -1)
 					register_rpc(sep);
 			} else {
-				u_short port = htons(atoi(sep->se_service));
+				u_short port = htons(strtonum(sep->se_service,
+				    1, USHRT_MAX, NULL));
 
 				if (!port) {
 					/* XXX */
@@ -680,7 +682,8 @@ config(int sig, short event, void *arg)
 			if (isrpcservice(sep)) {
 				struct rpcent *rp;
 
-				sep->se_rpcprog = atoi(sep->se_service);
+				sep->se_rpcprog = strtonum(sep->se_service,
+				    1, USHRT_MAX, NULL);
 				if (sep->se_rpcprog == 0) {
 					rp = getrpcbyname(sep->se_service);
 					if (rp == 0) {
@@ -696,7 +699,8 @@ config(int sig, short event, void *arg)
 				if (sep->se_fd != -1)
 					register_rpc(sep);
 			} else {
-				u_short port = htons(atoi(sep->se_service));
+				u_short port = htons(strtonum(sep->se_service,
+				    1, USHRT_MAX, NULL));
 
 				if (!port) {
 					/* XXX */
