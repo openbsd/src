@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.68 2015/07/28 20:45:02 ratchov Exp $
+.\"	$OpenBSD: audio.4,v 1.69 2016/03/16 06:46:39 ratchov Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 28 2015 $
+.Dd $Mdocdate: March 16 2016 $
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -334,6 +334,108 @@ if the pause value is specified it will either pause
 or unpause the particular direction.
 In full-duplex the pause values for both directions must
 be equal.
+.Pp
+.It Dv AUDIO_SETPAR Fa "struct audio_swpar *"
+.It Dv AUDIO_GETPAR Fa "struct audio_swpar *"
+Set or get audio parameters as encoded in the
+.Vt audio_swpar
+structure.
+.Bd -literal
+struct audio_swpar {
+	unsigned int sig;	/* if 1, encoding is signed */
+	unsigned int le;	/* if 1, encoding is little-endian */
+	unsigned int bits;	/* bits per sample */
+	unsigned int bps;	/* bytes per sample */
+	unsigned int msb;	/* if 1, bits are msb-aligned */
+	unsigned int rate;	/* common play & rec sample rate */
+	unsigned int pchan;	/* play channels */
+	unsigned int rchan;	/* rec channels */
+	unsigned int nblks;	/* number of blocks in play buffer */
+	unsigned int round;	/* common frames per block */
+};
+.Ed
+.Pp
+When setting the device parameters with
+.Dv AUDIO_SETPAR ,
+the
+.Vt audio_swpar
+structure should first be initialized with
+.Pp
+.Bd -literal
+struct audio_swpar ap;
+
+AUDIO_INITPAR(&ap);
+.Ed
+.Pp
+and then only the values to be changed should be set.
+This ensures that the software will work with future versions
+of the driver.
+The driver will attempt to set the given parameters; if the
+device doesn't support them, it will choose other parameters.
+Then the software must call
+.Dv AUDIO_GETINFO
+to obtain the parameters in use.
+.Pp
+The parameters are as follows:
+.Bl -tag -width "round"
+.It Va bits
+Number of bits per sample: must be between 1 and 32.
+.It Va bps
+Bytes per sample; if specified, it must be large enough to hold all bits.
+By default it's set to the smallest power of two large enough to hold
+.Va bits .
+.It Va sig
+If set (i.e. non-zero) then the samples are signed,
+otherwise they are unsigned.
+.It Va le
+If set, then the byte order is little endian;
+if not it is big endian;
+it's meaningful only if
+.Va bps
+> 1.
+.It Va msb
+If set, then the
+.Va bits
+are aligned in the packet to the most significant bit
+(i.e. lower bits are padded),
+otherwise to the least significant bit
+(i.e. higher bits are padded).
+It's meaningful only if
+.Va bits
+<
+.Va bps
+* 8.
+.It Va rchan
+The number of recorded channels; meaningful only if the
+device is opened for reading.
+.It Va pchan
+The number of channels playing; meaningful only if
+the device is opened for writing.
+.It Va rate
+The sampling frequency in Hz.
+.It Va nblks
+The number of blocks in the play buffer.
+.It Va round
+The audio block size.
+.El
+.Pp
+.It Dv AUDIO_START
+Start playback and/or recording immediately.
+If the device is open for writing (playback), then
+the play buffer must be filled with the
+.Xr write 2
+syscall.
+The buffer size is obtained by multiplying
+the
+.Va nblks ,
+.Va round ,
+and
+.Va bps
+parameters obtained with
+.Dv AUDIO_GETPAR .
+.Pp
+.It Dv AUDIO_STOP
+Stop playback and recording immediately.
 .Pp
 .It Dv AUDIO_GETPOS Fa "struct audio_pos *"
 Fetch an atomic snapshot of device timing information in the

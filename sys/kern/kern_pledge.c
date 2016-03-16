@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.157 2016/03/15 15:10:09 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.158 2016/03/16 06:46:39 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1170,6 +1170,10 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 #if NAUDIO > 0
 		switch (com) {
 		case AUDIO_GETPOS:
+		case AUDIO_GETPAR:
+		case AUDIO_SETPAR:
+		case AUDIO_START:
+		case AUDIO_STOP:
 		case AUDIO_SETINFO:
 		case AUDIO_GETINFO:
 		case AUDIO_GETENC:

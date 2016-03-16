@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.144 2016/01/29 15:14:23 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.145 2016/03/16 06:46:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1023,6 +1023,135 @@ audio_getinfo(struct audio_softc *sc, struct audio_info *ai)
 }
 
 int
+audio_ioc_start(struct audio_softc *sc)
+{
+	if (!sc->pause) {
+		DPRINTF("%s: can't start: already started\n", DEVNAME(sc));
+		return EBUSY;
+	}
+	if ((sc->mode & AUMODE_PLAY) && sc->play.used != sc->play.len) {
+		DPRINTF("%s: play buffer not ready\n", DEVNAME(sc));
+		return EBUSY;
+	}
+	if ((sc->mode & AUMODE_RECORD) && sc->rec.used != 0) {
+		DPRINTF("%s: record buffer not ready\n", DEVNAME(sc));
+		return EBUSY;
+	}
+	sc->pause = 0;
+	return audio_start(sc);
+}
+
+int
+audio_ioc_stop(struct audio_softc *sc)
+{
+	if (sc->pause) {
+		DPRINTF("%s: can't stop: not started\n", DEVNAME(sc));
+		return EBUSY;
+	}
+	sc->pause = 1;
+	if (sc->active)
+		return audio_stop(sc);
+	return 0;
+}
+
+int
+audio_ioc_getpar(struct audio_softc *sc, struct audio_swpar *p)
+{
+	p->rate = sc->rate;
+	p->sig = sc->sw_enc == AUDIO_ENCODING_SLINEAR_LE ||
+	    sc->sw_enc == AUDIO_ENCODING_SLINEAR_BE;
+	p->le = sc->sw_enc == AUDIO_ENCODING_SLINEAR_LE ||
+	    sc->sw_enc == AUDIO_ENCODING_ULINEAR_LE;
+	p->bits = sc->bits;
+	p->bps = sc->bps;
+	p->msb = sc->msb;
+	p->pchan = sc->pchan;
+	p->rchan = sc->rchan;
+	p->nblks = sc->nblks;
+	p->round = sc->round;
+	return 0;
+}
+
+int
+audio_ioc_setpar(struct audio_softc *sc, struct audio_swpar *p)
+{
+	int error, le, sig;
+
+	if (sc->active) {
+		DPRINTF("%s: can't change params during dma\n",
+		    DEVNAME(sc));
+		return EBUSY;
+	}
+
+	/*
+	 * copy desired parameters into the softc structure
+	 */
+	if (p->sig != ~0U || p->le != ~0U || p->bits != ~0U) {
+		sig = 1;
+		le = (BYTE_ORDER == LITTLE_ENDIAN);
+		sc->bits = 16;
+		sc->bps = 2;
+		sc->msb = 1;
+		if (p->sig != ~0U)
+			sig = p->sig;
+		if (p->le != ~0U)
+			le = p->le;
+		if (p->bits != ~0U) {
+			sc->bits = p->bits;
+			sc->bps = sc->bits <= 8 ?
+			    1 : (sc->bits <= 16 ? 2 : 4);
+			if (p->bps != ~0U)
+				sc->bps = p->bps;
+			if (p->msb != ~0U)
+				sc->msb = p->msb ? 1 : 0;
+		}
+		sc->sw_enc = (sig) ?
+		    (le ? AUDIO_ENCODING_SLINEAR_LE :
+			AUDIO_ENCODING_SLINEAR_BE) :
+		    (le ? AUDIO_ENCODING_ULINEAR_LE :
+			AUDIO_ENCODING_ULINEAR_BE);
+	}
+	if (p->rate != ~0)
+		sc->rate = p->rate;
+	if (p->pchan != ~0)
+		sc->pchan = p->pchan;
+	if (p->rchan != ~0)
+		sc->rchan = p->rchan;
+	if (p->round != ~0)
+		sc->round = p->round;
+	if (p->nblks != ~0)
+		sc->nblks = p->nblks;
+
+	/*
+	 * if the device is not opened for playback or recording don't
+	 * touch the hardware yet (ex. if this is /dev/audioctlN)
+	 */
+	if (sc->mode == 0)
+		return 0;
+
+	/*
+	 * negociate parameters with the hardware
+	 */
+	error = audio_setpar(sc);
+	if (error)
+		return error;
+	audio_clear(sc);
+	if ((sc->mode & AUMODE_PLAY) && sc->ops->init_output) {
+		error = sc->ops->init_output(sc->arg,
+		    sc->play.data, sc->play.len);
+		if (error)
+			return error;
+	}
+	if ((sc->mode & AUMODE_RECORD) && sc->ops->init_input) {
+		error = sc->ops->init_input(sc->arg,
+		    sc->rec.data, sc->rec.len);
+		if (error)
+			return error;
+	}
+	return 0;
+}
+
+int
 audio_match(struct device *parent, void *match, void *aux)
 {
 	struct audio_attach_args *sa = aux;
@@ -1587,6 +1716,16 @@ audio_ioctl(struct audio_softc *sc, unsigned long cmd, void *addr)
 		ap->rec_xrun = sc->rec.xrun;
 		mtx_leave(&audio_lock);
 		break;
+	case AUDIO_START:
+		return audio_ioc_start(sc);
+	case AUDIO_STOP:
+		return audio_ioc_stop(sc);
+	case AUDIO_SETPAR:
+		error = audio_ioc_setpar(sc, (struct audio_swpar *)addr);
+		break;
+	case AUDIO_GETPAR:
+		error = audio_ioc_getpar(sc, (struct audio_swpar *)addr);
+		break;
 	case AUDIO_SETINFO:
 		error = audio_setinfo(sc, (struct audio_info *)addr);
 		break;
@@ -1793,6 +1932,14 @@ audioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case AUDIO_DEV_AUDIOCTL:
 		if (cmd == AUDIO_SETINFO && sc->mode != 0) {
 			error = EBUSY;
+			break;
+		}
+		if (cmd == AUDIO_SETPAR && sc->mode != 0) {
+			error = EBUSY;
+			break;
+		}
+		if (cmd == AUDIO_START || cmd == AUDIO_STOP) {
+			error = ENXIO;
 			break;
 		}
 		error = audio_ioctl(sc, cmd, addr);
