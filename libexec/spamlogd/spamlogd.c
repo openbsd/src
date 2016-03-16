@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.26 2015/12/11 17:16:52 beck Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.27 2016/03/16 14:47:04 mestre Exp $	*/
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -60,6 +60,8 @@
 #define PCAPOPTZ		1	/* optimize filter */
 #define PCAPFSIZ		512	/* pcap filter string size */
 
+#define SPAMD_USER		"_spamd"
+
 int debug = 1;
 int greylist = 1;
 FILE *grey = NULL;
@@ -81,7 +83,7 @@ void	sighandler_close(int);
 int	init_pcap(void);
 void	logpkt_handler(u_char *, const struct pcap_pkthdr *, const u_char *);
 int	dbupdate(char *, char *);
-void	usage(void);
+__dead void	usage(void);
 
 void
 logmsg(int pri, const char *msg, ...)
@@ -98,7 +100,6 @@ logmsg(int pri, const char *msg, ...)
 	va_end(ap);
 }
 
-/* ARGSUSED */
 void
 sighandler_close(int signal)
 {
@@ -147,7 +148,6 @@ init_pcap(void)
 	return (0);
 }
 
-/* ARGSUSED */
 void
 logpkt_handler(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 {
@@ -303,6 +303,9 @@ main(int argc, char **argv)
 	char *sync_baddr = NULL;
 	const char *errstr;
 
+	if (geteuid())
+		errx(1, "need root privileges");
+
 	if ((ent = getservbyname("spamd-sync", "udp")) == NULL)
 		errx(1, "Can't find service \"spamd-sync\" in /etc/services");
 	sync_port = ntohs(ent->s_port);
@@ -336,7 +339,6 @@ main(int argc, char **argv)
 			break;
 		default:
 			usage();
-			/* NOTREACHED */
 		}
 	}
 
@@ -358,9 +360,8 @@ main(int argc, char **argv)
 	}
 
 	/* privdrop */
-	pw = getpwnam("_spamd");
-	if (pw == NULL)
-		errx(1, "User '_spamd' not found! ");
+	if ((pw = getpwnam(SPAMD_USER)) == NULL)
+		errx(1, "no such user %s", SPAMD_USER);
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
