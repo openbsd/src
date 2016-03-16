@@ -13,9 +13,11 @@
  * Entry point, initialization, miscellaneous routines.
  */
 
+#include <sys/types.h>
+
 #include <libgen.h>
 #include <stdarg.h>
-#include <sys/types.h>
+
 #include "less.h"
 
 char	*every_first_cmd = NULL;

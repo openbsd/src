@@ -17,11 +17,12 @@
  * popen to a shell to perform the expansion.
  */
 
-#include "less.h"
-
 #include <sys/stat.h>
+
 #include <glob.h>
 #include <stdarg.h>
+
+#include "less.h"
 
 extern int force_open;
 extern int secure;

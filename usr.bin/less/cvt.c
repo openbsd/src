@@ -13,8 +13,8 @@
  * Routines to convert text in various ways.  Used by search.
  */
 
-#include "less.h"
 #include "charset.h"
+#include "less.h"
 
 extern int utf_mode;
 

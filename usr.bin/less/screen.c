@@ -14,12 +14,13 @@
  * Uses termcap to be as terminal-independent as possible.
  */
 
-#include "less.h"
-#include "cmd.h"
-
 #include <sys/ioctl.h>
-#include <termios.h>
+
 #include <term.h>
+#include <termios.h>
+
+#include "cmd.h"
+#include "less.h"
 
 #define	DEFAULT_TERM		"unknown"
 

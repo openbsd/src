@@ -13,10 +13,10 @@
  * User-level command processor.
  */
 
-#include "less.h"
-#include "position.h"
-#include "option.h"
 #include "cmd.h"
+#include "less.h"
+#include "option.h"
+#include "position.h"
 
 extern int erase_char, erase2_char, kill_char;
 extern volatile sig_atomic_t sigs;

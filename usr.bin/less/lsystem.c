@@ -14,8 +14,9 @@
  * Necessarily very OS dependent.
  */
 
-#include "less.h"
 #include <signal.h>
+
+#include "less.h"
 #include "position.h"
 
 extern int screen_trashed;

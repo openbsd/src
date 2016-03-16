@@ -21,10 +21,11 @@
  * Unix features are present.
  */
 
-#include "less.h"
+#include <errno.h>
 #include <signal.h>
 #include <time.h>
-#include <errno.h>
+
+#include "less.h"
 
 extern volatile sig_atomic_t sigs;
 

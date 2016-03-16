@@ -30,8 +30,8 @@
  * All the tables are linked together and are searched in order.
  */
 
-#include "less.h"
 #include "cmd.h"
+#include "less.h"
 #include "lesskey.h"
 
 extern int erase_char, erase2_char, kill_char;

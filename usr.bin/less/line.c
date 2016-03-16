@@ -15,8 +15,8 @@
  * in preparation for output to the screen.
  */
 
-#include "less.h"
 #include "charset.h"
+#include "less.h"
 
 static char *linebuf = NULL;	/* Buffer which holds the current output line */
 static char *attr = NULL;	/* Extension of linebuf to hold attributes */

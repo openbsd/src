@@ -17,8 +17,9 @@
  * signals need processing by calling psignal().
  */
 
-#include "less.h"
 #include <signal.h>
+
+#include "less.h"
 
 /*
  * "sigs" contains bits indicating signals which need to be processed.

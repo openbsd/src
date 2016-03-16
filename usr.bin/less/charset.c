@@ -14,12 +14,12 @@
  * and do things specific to the character set.
  */
 
-#include "less.h"
-#include <locale.h>
 #include <ctype.h>
 #include <langinfo.h>
+#include <locale.h>
 
 #include "charset.h"
+#include "less.h"
 
 int utf_mode = 0;
 

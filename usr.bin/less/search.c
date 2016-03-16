@@ -13,10 +13,10 @@
  * Routines to search a file for a pattern.
  */
 
+#include "charset.h"
 #include "less.h"
 #include "pattern.h"
 #include "position.h"
-#include "charset.h"
 
 #define	MINPOS(a, b)	(((a) < (b)) ? (a) : (b))
 #define	MAXPOS(a, b)	(((a) > (b)) ? (a) : (b))

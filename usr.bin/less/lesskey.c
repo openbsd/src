@@ -81,11 +81,11 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  */
 
+#include <err.h>
+
+#include "cmd.h"
 #include "less.h"
 #include "lesskey.h"
-#include "cmd.h"
-
-#include <err.h>
 
 struct cmdname {
 	char *cn_name;

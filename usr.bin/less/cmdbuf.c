@@ -14,10 +14,11 @@
  * Used only by command() and related functions.
  */
 
-#include "less.h"
-#include "cmd.h"
-#include "charset.h"
 #include <sys/stat.h>
+
+#include "charset.h"
+#include "cmd.h"
+#include "less.h"
 
 extern int sc_width;
 extern int utf_mode;

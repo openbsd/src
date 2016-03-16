@@ -15,9 +15,10 @@
  * both forward and backward from the current read pointer.
  */
 
+#include <sys/stat.h>
+
 #include "less.h"
 
-#include <sys/stat.h>
 extern dev_t curr_dev;
 extern ino_t curr_ino;
 extern int less_is_more;
