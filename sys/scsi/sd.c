@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.265 2016/03/12 15:16:04 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.266 2016/03/16 15:01:55 bluhm Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -269,8 +269,12 @@ sdattach(struct device *parent, struct device *self, void *aux)
 int
 sdactivate(struct device *self, int act)
 {
+	struct scsi_link *link;
 	struct sd_softc *sc = (struct sd_softc *)self;
-	int rv = 0;
+
+	if (sc->flags & SDF_DYING)
+		return (ENXIO);
+	link = sc->sc_link;
 
 	switch (act) {
 	case DVACT_SUSPEND:
@@ -291,12 +295,12 @@ sdactivate(struct device *self, int act)
 		if ((sc->flags & SDF_DIRTY) != 0)
 			sd_flush(sc, SCSI_AUTOCONF);
 		if (boothowto & RB_POWERDOWN)
-			scsi_start(sc->sc_link, SSS_STOP,
+			scsi_start(link, SSS_STOP,
 			    SCSI_IGNORE_ILLEGAL_REQUEST |
 			    SCSI_IGNORE_NOT_READY | SCSI_AUTOCONF);
 		break;
 	case DVACT_RESUME:
-		scsi_start(sc->sc_link, SSS_START,
+		scsi_start(link, SSS_START,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_AUTOCONF);
 		break;
 	case DVACT_DEACTIVATE:
@@ -304,7 +308,7 @@ sdactivate(struct device *self, int act)
 		scsi_xsh_del(&sc->sc_xsh);
 		break;
 	}
-	return (rv);
+	return (0);
 }
 
 int
@@ -1032,6 +1036,8 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 	int big;
 	int rv;
 
+	if (sc->flags & SDF_DYING)
+		return (ENXIO);
 	link = sc->sc_link;
 
 	if (ISSET(link->flags, SDEV_UMASS))
@@ -1485,6 +1491,8 @@ sd_size(struct sd_softc *sc, int flags)
 {
 	int rv;
 
+	if (sc->flags & SDF_DYING)
+		return (ENXIO);
 	if (SCSISPC(sc->sc_link->inqdata.version) >= 3) {
 		rv = sd_read_cap_16(sc, flags);
 		if (rv != 0)
@@ -1809,6 +1817,8 @@ sd_flush(struct sd_softc *sc, int flags)
 	struct scsi_xfer *xs;
 	struct scsi_synchronize_cache *cmd;
 
+	if (sc->flags & SDF_DYING)
+		return;
 	link = sc->sc_link;
 
 	if (link->quirks & SDEV_NOSYNCCACHE)
