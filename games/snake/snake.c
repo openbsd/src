@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.26 2016/03/07 12:07:57 mestre Exp $	*/
+/*	$OpenBSD: snake.c,v 1.27 2016/03/16 15:00:35 mestre Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -543,7 +543,8 @@ post(int iscore, int flag)
 		printf("\nYour score of $%d is ranked %d of all times!\n",
 		    iscore, rank + 1);
 
-	rewind(sf);
+	if (fseek(sf, 0L, SEEK_SET) == -1)
+		err(1, "fseek");
 	if (fwrite(scores, sizeof(scores[0]), nscores, sf) < (u_int)nscores)
 		err(1, "fwrite");
 	if (fclose(sf))

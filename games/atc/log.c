@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.21 2015/12/31 16:50:29 mestre Exp $	*/
+/*	$OpenBSD: log.c,v 1.22 2016/03/16 15:00:35 mestre Exp $	*/
 /*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
 
 /*-
@@ -223,7 +223,8 @@ log_score(int list_em)
 			else
 				puts("You made the top players list!");
 			qsort(score, num_scores, sizeof (*score), compar);
-			rewind(score_fp);
+			if (fseek(score_fp, 0L, SEEK_SET) == -1)
+				err(1, "fseek");
 			for (i = 0; i < num_scores; i++)
 				fprintf(score_fp, "%s %s %d %d %d\n",
 					score[i].name,
@@ -240,7 +241,8 @@ log_score(int list_em)
 	flock(fileno(score_fp), LOCK_UN);
 	fflush(score_fp);
 	fsync(fileno(score_fp));
-	rewind(score_fp);
+	if (fseek(score_fp, 0L, SEEK_SET) == -1)
+		err(1, "fseek");
 	printf("%2s:  %-31s  %-18s  %4s  %9s  %4s\n", "#", "name",
 		"game", "time", "real time", "safe");
 	puts("-------------------------------------------------------------------------------");

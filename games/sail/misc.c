@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.9 2016/01/08 20:26:33 mestre Exp $	*/
+/*	$OpenBSD: misc.c,v 1.10 2016/03/16 15:00:35 mestre Exp $	*/
 /*	$NetBSD: misc.c,v 1.3 1995/04/22 10:37:03 cgd Exp $	*/
 
 /*
@@ -31,6 +31,7 @@
  */
 
 #include <ctype.h>
+#include <err.h>
 #ifdef LOCK_EX
 #include <fcntl.h>
 #endif
@@ -211,7 +212,8 @@ logger(struct ship *s)
 	for (lp = &log[n]; lp < &log[NLOG]; lp++)
 		lp->l_name[0] = lp->l_uid = lp->l_shipnum
 			= lp->l_gamenum = lp->l_netpoints = 0;
-	rewind(fp);
+	if (fseek(fp, 0L, SEEK_SET) == -1)
+		err(1, "fseek");
 	if (persons < 0)
 		(void) putw(1, fp);
 	else

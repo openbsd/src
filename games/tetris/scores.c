@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.19 2016/01/04 17:33:24 mestre Exp $	*/
+/*	$OpenBSD: scores.c,v 1.20 2016/03/16 15:00:35 mestre Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -191,7 +191,8 @@ savescore(int level)
 		 * Sort & clean the scores, then rewrite.
 		 */
 		nscores = checkscores(scores, nscores);
-		rewind(sf);
+		if (fseek(sf, 0L, SEEK_SET) == -1)
+			err(1, "fseek");
 		if (fwrite(scores, sizeof(*sp), nscores, sf) != nscores ||
 		    fflush(sf) == EOF)
 			warnx("error writing scorefile: %s\n\t-- %s",
