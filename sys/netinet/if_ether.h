@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.68 2016/03/14 03:48:47 dlg Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.69 2016/03/16 11:48:27 dlg Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -87,7 +87,11 @@ struct  ether_vlan_header {
         u_int16_t evl_proto;
 };
 
-#define EVL_VLID_MASK   0x0FFF
+#define EVL_VLID_MASK	0xFFF
+#define EVL_VLID_NULL	0x000
+/* 0x000 and 0xfff are reserved */
+#define EVL_VLID_MIN	0x001
+#define EVL_VLID_MAX	0xFFE
 #define EVL_VLANOFTAG(tag) ((tag) & EVL_VLID_MASK)
 
 #define EVL_PRIO_MAX    7
