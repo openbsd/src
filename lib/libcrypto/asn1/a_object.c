@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.25 2016/03/06 18:05:00 beck Exp $ */
+/* $OpenBSD: a_object.c,v 1.26 2016/03/17 03:51:49 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -225,23 +225,29 @@ i2t_ASN1_OBJECT(char *buf, int buf_len, ASN1_OBJECT *a)
 int
 i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a)
 {
-	char buf[80], *p = buf;
-	int i;
+	char *tmp = NULL;
+	size_t tlen = 256;
+	int i = -1;
 
 	if ((a == NULL) || (a->data == NULL))
-		return(BIO_write(bp, "NULL",4));
-	i = i2t_ASN1_OBJECT(buf, sizeof buf, a);
-	if (i > (int)(sizeof(buf) - 1)) {
-		p = malloc(i + 1);
-		if (!p)
+		return(BIO_write(bp, "NULL", 4));
+	if ((tmp = malloc(tlen)) == NULL)
+		return -1;
+	i = i2t_ASN1_OBJECT(tmp, tlen, a);
+	if (i > (int)(tlen - 1)) {
+		explicit_bzero(tmp, tlen);
+		free(tmp);
+		if ((tmp = malloc(i + 1)) == NULL)
 			return -1;
-		i2t_ASN1_OBJECT(p, i + 1, a);
+		tlen = i + 1;
+		i = i2t_ASN1_OBJECT(tmp, tlen, a);
 	}
 	if (i <= 0)
-		return BIO_write(bp, "<INVALID>", 9);
-	BIO_write(bp, p, i);
-	if (p != buf)
-		free(p);
+		i = BIO_write(bp, "<INVALID>", 9);
+	else
+		i = BIO_write(bp, tmp, i);
+	explicit_bzero(tmp, tlen);
+	free(tmp);
 	return (i);
 }
 
@@ -317,18 +323,15 @@ c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp, long len)
 	p = *pp;
 	/* detach data from object */
 	data = (unsigned char *)ret->data;
-	ret->data = NULL;
-	/* once detached we can change it */
-	if ((data == NULL) || (ret->length < length)) {
-		ret->length = 0;
-		free(data);
-		data = malloc(length);
-		if (data == NULL) {
-			i = ERR_R_MALLOC_FAILURE;
-			goto err;
-		}
-		ret->flags |= ASN1_OBJECT_FLAG_DYNAMIC_DATA;
+	if (data != NULL)
+		explicit_bzero(data, ret->length);
+	free(data);
+	data = malloc(length);
+	if (data == NULL) {
+		i = ERR_R_MALLOC_FAILURE;
+		goto err;
 	}
+	ret->flags |= ASN1_OBJECT_FLAG_DYNAMIC_DATA;
 	memcpy(data, p, length);
 	/* reattach data to object, after which it remains const */
 	ret->data = data;
