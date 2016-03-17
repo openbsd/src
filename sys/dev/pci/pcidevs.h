@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1790 2016/03/15 07:37:15 mlarkin Exp 
+ *	OpenBSD: pcidevs,v 1.1791 2016/03/17 20:25:00 uaa Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -345,6 +345,7 @@
 #define	PCI_VENDOR_ADDTRON	0x4033		/* Addtron */
 #define	PCI_VENDOR_NETXEN	0x4040		/* NetXen */
 #define	PCI_VENDOR_WCH	0x4348		/* Nanjing QinHeng Electronics */
+#define	PCI_VENDOR_TXIC	0x4651		/* TXIC */
 #define	PCI_VENDOR_INDCOMPSRC	0x494f		/* Industrial Computer Source */
 #define	PCI_VENDOR_NETVIN	0x4a14		/* NetVin */
 #define	PCI_VENDOR_GEMTEK	0x5046		/* Gemtek */
@@ -5144,6 +5145,9 @@
 #define	PCI_PRODUCT_WCH2_CH351	0x2273		/* CH351 */
 #define	PCI_PRODUCT_WCH2_CH382_1	0x3253		/* CH382 */
 #define	PCI_PRODUCT_WCH2_CH382_2	0x3250		/* CH382 */
+
+/* TXIC */
+#define	PCI_PRODUCT_TXIC_TX382B	0x3273		/* TX382B */
 
 /* National Datacomm Corp products */
 #define	PCI_PRODUCT_NDC_NCP130	0x0130		/* NCP130 */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1790 2016/03/15 07:37:15 mlarkin Exp 
+ *	OpenBSD: pcidevs,v 1.1791 2016/03/17 20:25:00 uaa Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -17760,6 +17760,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CH382",
 	},
 	{
+	    PCI_VENDOR_TXIC, PCI_PRODUCT_TXIC_TX382B,
+	    "TX382B",
+	},
+	{
 	    PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130,
 	    "NCP130",
 	},
@@ -26754,6 +26758,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_WCH,
 	    "Nanjing QinHeng Electronics",
+	},
+	{
+	    PCI_VENDOR_TXIC,
+	    "TXIC",
 	},
 	{
 	    PCI_VENDOR_INDCOMPSRC,
