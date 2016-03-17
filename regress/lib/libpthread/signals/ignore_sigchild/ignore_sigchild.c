@@ -1,4 +1,4 @@
-/*	$OpenBSD: ignore_sigchild.c,v 1.2 2011/10/10 08:21:06 fgsch Exp $	*/
+/*	$OpenBSD: ignore_sigchild.c,v 1.3 2016/03/17 19:40:43 krw Exp $	*/
 /*
  * Federico G. Schwindt <fgsch@openbsd.org>, 2011. Public Domain.
  */
@@ -20,7 +20,7 @@ main(int argc, char **argv)
 	case -1:
 		PANIC("fork");
 	case 0:
-		execl("/usr/bin/false", "false", NULL);
+		execl("/usr/bin/false", "false", (char *)NULL);
 		PANIC("execlp");
 	default:
 		break;

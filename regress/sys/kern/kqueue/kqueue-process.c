@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-process.c,v 1.8 2015/08/13 10:26:54 uebayasi Exp $	*/
+/*	$OpenBSD: kqueue-process.c,v 1.9 2016/03/17 19:40:43 krw Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
@@ -151,7 +151,7 @@ process_child(void)
 	case 0:
 		/* sync 2.1 */
 		pause();
-		execl("/usr/bin/true", "true", (void *)NULL);
+		execl("/usr/bin/true", "true", (char *)NULL);
 		err(1, "execl(true)");
 	}
 

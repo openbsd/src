@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.73 2015/10/26 13:12:10 deraadt Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.74 2016/03/17 19:40:43 krw Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -337,7 +337,7 @@ sendmail(const char *pathname)
 		}
 		close(filedes[0]);
 		execl(_PATH_SENDMAIL, "sendmail",
-		    "-oi", "-t", (void *)NULL);
+		    "-oi", "-t", (char *)NULL);
 		warn("sendmail error: unsent report in %s",
 		    pathname);
 		return (-1);

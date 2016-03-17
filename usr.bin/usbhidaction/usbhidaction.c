@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhidaction.c,v 1.21 2015/10/26 10:08:14 jung Exp $ */
+/*	$OpenBSD: usbhidaction.c,v 1.22 2016/03/17 19:40:43 krw Exp $ */
 /*      $NetBSD: usbhidaction.c,v 1.7 2002/01/18 14:38:59 augustss Exp $ */
 
 /*
@@ -441,7 +441,7 @@ docmd(struct command *cmd, int value, const char *hid, int argc, char **argv)
 		setpgid(0, 0);
 		if (verbose)
 			printf("executing '%s'\n", cmdbuf);
-		r = execl(_PATH_BSHELL, "sh", "-c", cmdbuf, NULL);
+		r = execl(_PATH_BSHELL, "sh", "-c", cmdbuf, (char *)NULL);
 		err(1, "execl");
 	}
 }

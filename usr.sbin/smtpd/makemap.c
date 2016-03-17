@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.64 2016/02/13 08:53:18 gilles Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.65 2016/03/17 19:40:43 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -170,7 +170,7 @@ makemap(int argc, char *argv[])
 		}
 
 		execlp("makemap", "makemap", "-d", argv[0], "-o", dbname, "-",
-		    NULL);
+		    (char *)NULL);
 		err(1, "execlp");
 	}
 

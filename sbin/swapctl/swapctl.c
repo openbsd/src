@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.22 2015/09/15 17:46:23 schwarze Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.23 2016/03/17 19:40:43 krw Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -399,7 +399,7 @@ do_fstab(void)
 				err(1, "vfork");
 			case 0:
 				execl(PATH_MOUNT, PATH_MOUNT, fp->fs_spec, spec,
-				    NULL);
+				    (char *)NULL);
 				err(1, "execl");
 			}
 			while (waitpid(pid, &status, 0) < 0)

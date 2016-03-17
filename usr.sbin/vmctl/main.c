@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2016/01/26 07:55:47 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2016/03/17 19:40:43 krw Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -541,6 +541,6 @@ __dead void
 ctl_openconsole(const char *name)
 {
 	closefrom(STDERR_FILENO + 1);
-	execl(VMCTL_CU, VMCTL_CU, "-l", name, "-s", "9600", NULL);
+	execl(VMCTL_CU, VMCTL_CU, "-l", name, "-s", "9600", (char *)NULL);
 	err(1, "failed to open the console");
 }

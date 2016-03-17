@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_self.c,v 1.1 2002/08/17 22:58:59 art Exp $	*/
+/*	$OpenBSD: exec_self.c,v 1.2 2016/03/17 19:40:43 krw Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain.
  */
@@ -36,7 +36,7 @@ main(int argc, char **argv)
 	    MADV_FREE))
 		err(1, "madvise");
 
-	if (execl(argv[0], argv[0], &blob.string, NULL))
+	if (execl(argv[0], argv[0], &blob.string, (char *)NULL))
 		err(1, "execl");
 
 	/* NOTREACHED */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.147 2016/02/12 03:11:16 sunil Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.148 2016/03/17 19:40:43 krw Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -868,7 +868,7 @@ do_encrypt(int argc, struct parameter *argv)
 
 	if (argv)
 		p = argv[0].u.u_str;
-	execl(PATH_ENCRYPT, "encrypt", p, NULL);
+	execl(PATH_ENCRYPT, "encrypt", p, (char *)NULL);
 	errx(1, "execl");
 }
 
@@ -1259,9 +1259,9 @@ display(const char *s)
 	lseek(fileno(fp), 0, SEEK_SET);
 	(void)dup2(fileno(fp), STDIN_FILENO);
 	if (gzipped)
-		execl(PATH_GZCAT, gzcat_argv0, NULL);
+		execl(PATH_GZCAT, gzcat_argv0, (char *)NULL);
 	else
-		execl(PATH_CAT, "cat", NULL);
+		execl(PATH_CAT, "cat", (char *)NULL);
 	err(1, "execl");
 }
 

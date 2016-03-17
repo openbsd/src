@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.75 2015/10/18 03:04:11 mmcc Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.76 2016/03/17 19:40:43 krw Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -1007,10 +1007,10 @@ shell(int argc, char *argv[])
 			(void)fflush(ttyout);
 		}
 		if (argc > 1) {
-			execl(shellp, shellnam, "-c", altarg, (char *)0);
+			execl(shellp, shellnam, "-c", altarg, (char *)NULL);
 		}
 		else {
-			execl(shellp, shellnam, (char *)0);
+			execl(shellp, shellnam, (char *)NULL);
 		}
 		warn("%s", shellp);
 		code = -1;

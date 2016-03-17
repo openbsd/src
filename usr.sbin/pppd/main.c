@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.53 2015/12/06 12:00:16 tobias Exp $	*/
+/*	$OpenBSD: main.c,v 1.54 2016/03/17 19:40:43 krw Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -1101,7 +1101,7 @@ device_script(program, in, out)
 		_exit(1);
 	}
 
-	execl("/bin/sh", "sh", "-c", program, (char *)0);
+	execl("/bin/sh", "sh", "-c", program, (char *)NULL);
 	syslog(LOG_ERR, "could not exec /bin/sh: %m");
 	_exit(99);
 	/* NOTREACHED */
