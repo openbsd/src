@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1790 2016/03/15 07:37:15 mlarkin Exp $
+$OpenBSD: pcidevs,v 1.1791 2016/03/17 20:25:00 uaa Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -340,6 +340,7 @@ vendor	AVANCE2		0x4005	Avance Logic
 vendor	ADDTRON		0x4033	Addtron
 vendor	NETXEN		0x4040	NetXen
 vendor	WCH		0x4348	Nanjing QinHeng Electronics
+vendor	TXIC		0x4651	TXIC
 vendor	INDCOMPSRC	0x494f	Industrial Computer Source
 vendor	NETVIN		0x4a14	NetVin
 vendor	GEMTEK		0x5046	Gemtek
@@ -5139,6 +5140,9 @@ product WCH CH352		0x3253	CH352
 product WCH2 CH351		0x2273	CH351
 product WCH2 CH382_1		0x3253	CH382
 product WCH2 CH382_2		0x3250	CH382
+
+/* TXIC */
+product	TXIC TX382B		0x3273	TX382B
 
 /* National Datacomm Corp products */
 product NDC NCP130		0x0130	NCP130
