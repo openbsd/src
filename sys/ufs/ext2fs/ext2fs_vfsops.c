@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.86 2016/02/27 18:50:38 natano Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.87 2016/03/17 18:52:31 bluhm Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -602,7 +602,7 @@ out:
 	if (ump) {
 		free(ump->um_e2fs, M_UFSMNT, sizeof *ump->um_e2fs);
 		free(ump, M_UFSMNT, sizeof *ump);
-		mp->mnt_data = (qaddr_t)0;
+		mp->mnt_data = NULL;
 	}
 	return (error);
 }
@@ -642,7 +642,7 @@ ext2fs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	free(fs->e2fs_gd, M_UFSMNT, gdescs_space);
 	free(fs, M_UFSMNT, sizeof *fs);
 	free(ump, M_UFSMNT, sizeof *ump);
-	mp->mnt_data = (qaddr_t)0;
+	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.152 2016/02/27 18:50:38 natano Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.153 2016/03/17 18:52:32 bluhm Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1033,7 +1033,7 @@ ffs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	free(fs->fs_csp, M_UFSMNT, 0);
 	free(fs, M_UFSMNT, fs->fs_sbsize);
 	free(ump, M_UFSMNT, sizeof(*ump));
-	mp->mnt_data = (qaddr_t)0;
+	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
 }

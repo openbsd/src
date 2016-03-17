@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.107 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.108 2016/03/17 18:52:31 bluhm Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -702,6 +702,7 @@ nfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	m_freem(nmp->nm_nam);
 	timeout_del(&nmp->nm_rtimeout);
 	free(nmp, M_NFSMNT, sizeof(*nmp));
+	mp->mnt_data = NULL;
 	return (0);
 }
 
