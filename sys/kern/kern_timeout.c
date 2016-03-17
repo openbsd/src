@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.43 2015/07/20 23:47:20 uebayasi Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.44 2016/03/17 10:53:57 uebayasi Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -329,7 +329,6 @@ softclock(void *arg)
 
 	mtx_enter(&timeout_mutex);
 	while (!CIRCQ_EMPTY(&timeout_todo)) {
-
 		to = timeout_from_circq(CIRCQ_FIRST(&timeout_todo));
 		CIRCQ_REMOVE(&to->to_list);
 
