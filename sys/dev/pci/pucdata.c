@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.102 2016/03/15 07:39:27 mlarkin Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.103 2016/03/17 20:28:18 uaa Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -2165,6 +2165,14 @@ const struct puc_device_description puc_devs[] = {
 		{ PUC_COM_POW2(0), 0x10, 0x00c0 },
 		{ PUC_COM_POW2(0), 0x10, 0x00c8 },
 	    },
+	},
+	{   /* "TXIC TX382B (2S)", */
+	    {	PCI_VENDOR_TXIC, PCI_PRODUCT_TXIC_TX382B,	0, 0	},
+	    {	0xffff, 0xffff,					0, 0	},
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_COM_POW2(0), 0x14, 0x0000 },
+	    }
 	},
 	{   /* "NetMos NM9820 UART" */
 	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9820,	0, 0	},
