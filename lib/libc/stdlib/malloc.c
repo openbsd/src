@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.184 2016/03/14 17:20:26 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.185 2016/03/17 17:55:33 mmcc Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -93,13 +93,13 @@
 #define MQUERY(a, sz)	mquery((a), (size_t)(sz), PROT_READ | PROT_WRITE, \
     MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t)0)
 
-#define _MALLOC_LEAVE(d) if (__isthreaded) do { \
+#define _MALLOC_LEAVE(d) do { if (__isthreaded) { \
 	(d)->active--; \
-	_MALLOC_UNLOCK(); \
+	_MALLOC_UNLOCK(); } \
 } while (0)
-#define _MALLOC_ENTER(d) if (__isthreaded) do { \
+#define _MALLOC_ENTER(d) do { if (__isthreaded) { \
 	_MALLOC_LOCK(); \
-	(d)->active++; \
+	(d)->active++; } \
 } while (0)
 
 struct region_info {
