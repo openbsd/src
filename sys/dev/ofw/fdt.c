@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.2 2016/03/07 10:49:03 mpi Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.3 2016/03/17 14:10:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -291,7 +291,7 @@ fdt_parent_node_recurse(void *pnode, void *child)
 {
 	void *node = fdt_child_node(pnode);
 	void *tmp;
-	
+
 	while (node && (node != child)) {
 		if ((tmp = fdt_parent_node_recurse(node, child)))
 			return tmp;
@@ -306,6 +306,9 @@ fdt_parent_node(void *node)
 	void *pnode = fdt_next_node(0);
 
 	if (!tree_inited)
+		return NULL;
+
+	if (node == pnode)
 		return NULL;
 
 	return fdt_parent_node_recurse(pnode, node);
@@ -428,7 +431,7 @@ int
 OF_parent(int handle)
 {
 	void *node = (char *)tree.header + handle;
-	
+
 	node = fdt_parent_node(node);
 	return node ? ((char *)node - (char *)tree.header) : 0;
 }
