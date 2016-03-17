@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.323 2016/03/09 18:18:28 stsp Exp $
+#	$OpenBSD: files.pci,v 1.324 2016/03/17 04:02:00 jsg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -765,7 +765,7 @@ file	dev/pci/nviic.c			nviic
 
 # SD Host Controller
 attach	sdhc at pci with sdhc_pci
-file	dev/pci/sdhc_pci.c		sdhc
+file	dev/pci/sdhc_pci.c		sdhc_pci
 
 # AMD NPT Family 0Fh Processors, Function 3 -- Miscellaneous Control
 device	kate
