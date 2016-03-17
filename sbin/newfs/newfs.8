@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.72 2016/02/18 21:57:26 jmc Exp $
+.\"	$OpenBSD: newfs.8,v 1.73 2016/03/17 05:27:10 bentley Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)newfs.8	8.3 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: February 18 2016 $
+.Dd $Mdocdate: March 17 2016 $
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -301,6 +301,16 @@ If the
 .Fl P Ar file
 option is not used, the owner and mode of the created mfs file
 system will be the same as the owner and mode of the mount point.
+.Sh ENVIRONMENT
+.Bl -tag -width COLUMNS
+.It Ev COLUMNS
+If set to a positive integer,
+.Nm Ns 's
+output is formatted to the given width in columns.
+Otherwise,
+.Nm
+defaults to the terminal width, or 80 columns if the output is not a terminal.
+.El
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr fs 5 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.44 2015/12/01 18:36:13 schwarze Exp $	*/
+/*	$OpenBSD: ls.c,v 1.45 2016/03/17 05:27:10 bentley Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ static int (*sortfcn)(const FTSENT *, const FTSENT *);
 #define	BY_TIME	2
 
 long blocksize;			/* block size units */
-int termwidth = 80;		/* default terminal width */
+int termwidth;			/* default terminal width */
 int sortkey = BY_NAME;
 
 /* flags */
@@ -110,23 +110,19 @@ ls_main(int argc, char *argv[])
 
 	/* Terminal defaults to -Cq, non-terminal defaults to -1. */
 	if (isatty(STDOUT_FILENO)) {
-		if ((p = getenv("COLUMNS")) != NULL)
-			width = strtonum(p, 1, INT_MAX, NULL);
-		if (width == 0 &&
-		    ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
-		    win.ws_col > 0)
-			width = win.ws_col;
-		if (width)
-			termwidth = width;
 		f_column = f_nonprint = 1;
 	} else {
 		f_singlecol = 1;
-		/* retrieve environment variable, in case of explicit -C */
-		if ((p = getenv("COLUMNS")) != NULL)
-			width = strtonum(p, 0, INT_MAX, NULL);
-		if (width)
-			termwidth = width;
 	}
+
+	termwidth = 0;
+	if ((p = getenv("COLUMNS")) != NULL)
+		termwidth = strtonum(p, 1, INT_MAX, NULL);
+	if (termwidth == 0 && ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
+	    win.ws_col > 0)
+		termwidth = win.ws_col;
+	if (termwidth == 0)
+		termwidth = 80;
 
 	if (pledge("stdio rpath getpw", NULL) == -1)
 		err(1, "pledge");

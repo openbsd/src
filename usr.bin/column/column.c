@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.22 2015/11/03 04:55:44 mmcc Exp $	*/
+/*	$OpenBSD: column.c,v 1.23 2016/03/17 05:27:10 bentley Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ void  print(void);
 void  r_columnate(void);
 void  usage(void);
 
-int termwidth = 80;		/* default terminal width */
+int termwidth;			/* default terminal width */
 
 int entries;			/* number of records */
 int eval;			/* exit value */
@@ -67,14 +67,14 @@ main(int argc, char *argv[])
 	char *p;
 	const char *errstr;
 
-	if (ioctl(1, TIOCGWINSZ, &win) == -1 || !win.ws_col) {
-		if ((p = getenv("COLUMNS")) && *p != '\0') {
-			termwidth = strtonum(p, 1, INT_MAX, &errstr);
-			if (errstr != NULL)
-				errx(1, "%s: %s", errstr, p);
-		}
-	} else
+	termwidth = 0;
+	if ((p = getenv("COLUMNS")) != NULL)
+		termwidth = strtonum(p, 1, INT_MAX, NULL);
+	if (termwidth == 0 && ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
+	    win.ws_col > 0)
 		termwidth = win.ws_col;
+	if (termwidth == 0)
+		termwidth = 80;
 
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");

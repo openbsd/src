@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.95 2016/01/28 17:26:10 gsoares Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.96 2016/03/17 05:27:10 bentley Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -1144,12 +1144,14 @@ charsperline(void)
 	struct winsize ws;
 
 	columns = 0;
-	if (ioctl(0, TIOCGWINSZ, &ws) != -1)
-		columns = ws.ws_col;
-	if (columns == 0 && (cp = getenv("COLUMNS")))
+	if ((cp = getenv("COLUMNS")) != NULL)
 		columns = strtonum(cp, 1, INT_MAX, NULL);
+	if (columns == 0 && ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0 &&
+	    ws.ws_col > 0)
+		columns = ws.ws_col;
 	if (columns == 0)
-		columns = 80;   /* last resort */
+		columns = 80;
+
 	return columns;
 }
 

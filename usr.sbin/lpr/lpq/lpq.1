@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpq.1,v 1.10 2007/05/31 19:20:25 jmc Exp $
+.\"	$OpenBSD: lpq.1,v 1.11 2016/03/17 05:27:10 bentley Exp $
 .\"	$NetBSD: lpq.1,v 1.11 2002/01/19 03:23:11 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)lpq.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 17 2016 $
 .Dt LPQ 1
 .Os
 .Sh NAME
@@ -96,9 +96,16 @@ warns that there is no daemon present (i.e., due to some malfunction), the
 .Xr lpc 8
 command can be used to restart the printer daemon.
 .Sh ENVIRONMENT
-If the following environment variable exists, it is used by
+If the following environment variables exist, they are used by
 .Nm lpq :
 .Bl -tag -width PRINTER
+.It Ev COLUMNS
+If set to a positive integer,
+.Nm Ns 's
+output is formatted to the given width in columns.
+Otherwise,
+.Nm
+defaults to the terminal width, or 80 columns if the output is not a terminal.
 .It Ev PRINTER
 Specifies an alternate default printer.
 .El

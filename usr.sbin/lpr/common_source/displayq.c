@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.38 2016/01/12 23:35:13 tb Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.39 2016/03/17 05:27:10 bentley Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -101,14 +101,15 @@ displayq(int format)
 	struct stat statb;
 	FILE *fp;
 
-	termwidth = 80;
-	if (isatty(STDOUT_FILENO)) {
-		if ((p = getenv("COLUMNS")) != NULL)
-			termwidth = atoi(p);
-		else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
-		    win.ws_col > 0)
-			termwidth = win.ws_col;
-	}
+	termwidth = 0;
+	if ((p = getenv("COLUMNS")) != NULL)
+		termwidth = strtonum(p, 1, INT_MAX, NULL);
+	if (termwidth == 0 && ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
+	    win.ws_col > 0)
+		termwidth = win.ws_col;
+	if (termwidth == 0)
+		termwidth = 80;
+
 	if (termwidth < 60)
 		termwidth = 60;
 

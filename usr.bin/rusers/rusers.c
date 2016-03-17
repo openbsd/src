@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.36 2015/12/09 19:39:10 mmcc Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.37 2016/03/17 05:27:10 bentley Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -141,21 +141,15 @@ main(int argc, char **argv)
 	if (hflag + iflag + uflag > 1)
 		usage();
 
-	if (isatty(STDOUT_FILENO)) {
-		if ((cp = getenv("COLUMNS")) != NULL && *cp != '\0') {
-			termwidth = strtol(cp, &ep, 10);
-			if (*ep != '\0' || termwidth >= INT_MAX ||
-			    termwidth < 0)
-				termwidth = 0;
-		}
-		if (termwidth == 0 &&
-		    ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
-		    win.ws_col > 0)
-			termwidth = win.ws_col;
-		else
-			termwidth = 80;
-	} else
+	termwidth = 0;
+	if ((cp = getenv("COLUMNS")) != NULL)
+		termwidth = strtonum(cp, 1, LONG_MAX, NULL);
+	if (termwidth == 0 && ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
+	    win.ws_col > 0)
+		termwidth = win.ws_col;
+	if (termwidth == 0)
 		termwidth = 80;
+
 	setvbuf(stdout, NULL, _IOLBF, 0);
 
 	if (argc == optind) {

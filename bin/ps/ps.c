@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.69 2016/01/10 14:04:16 schwarze Exp $	*/
+/*	$OpenBSD: ps.c,v 1.70 2016/03/17 05:27:10 bentley Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -102,22 +102,14 @@ main(int argc, char *argv[])
 
 	setlocale(LC_CTYPE, "");
 
-	if ((cols = getenv("COLUMNS")) != NULL && *cols != '\0') {
-		const char *errstr;
-
-		termwidth = strtonum(cols, 1, INT_MAX, &errstr);
-		if (errstr != NULL)
-			warnx("COLUMNS: %s: %s", cols, errstr);
-	}
-	if (termwidth == 0) {
-		if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 &&
-		    ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1 &&
-		    ioctl(STDIN_FILENO,  TIOCGWINSZ, &ws) == -1) ||
-		    ws.ws_col == 0)
-			termwidth = 79;
-		else
-			termwidth = ws.ws_col - 1;
-	}
+	termwidth = 0;
+	if ((cols = getenv("COLUMNS")) != NULL)
+		termwidth = strtonum(cols, 1, INT_MAX, NULL);
+	if (termwidth == 0 && ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0 &&
+	    ws.ws_col > 0)
+		termwidth = ws.ws_col - 1;
+	if (termwidth == 0)
+		termwidth = 79;
 
 	if (argc > 1)
 		argv[1] = kludge_oldps_options(argv[1]);
