@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.102 2016/03/16 18:27:00 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.103 2016/03/17 21:56:12 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: March 16 2016 $
+.Dd $Mdocdate: March 17 2016 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -375,11 +375,14 @@ Register an auto-execute hook; that is, specify a filename pattern
 function to execute when a file matching the specified pattern
 is read into a buffer.
 .It auto-fill-mode
-Toggle auto-fill mode (sometimes called mail-mode),
+Toggle auto-fill mode (sometimes called mail-mode) in the current buffer,
 where text inserted past the fill column is automatically wrapped
 to a new line.
+Can be set globally with set-default-mode.
 .It auto-indent-mode
-Toggle indent mode, where indentation is preserved after a newline.
+Toggle indent mode in the current buffer,
+where indentation is preserved after a newline.
+Can be set globally with set-default-mode.
 .It back-to-indentation
 Move the dot to the first non-whitespace character on the current line.
 .It backup-to-home-directory
@@ -717,8 +720,9 @@ window.
 There are no real errors, although the command does nothing if
 there is only 1 window on the screen.
 .It overwrite-mode
-Toggle overwrite mode, where typing in a buffer overwrites
-existing characters rather than inserting them.
+Toggle overwrite mode in the current buffer,
+where typing overwrites existing characters rather than inserting them.
+Can be set globally with set-default-mode.
 .It prefix-region
 Inserts a prefix string before each line of a region.
 The prefix string is settable by using 'set-prefix-string'.
