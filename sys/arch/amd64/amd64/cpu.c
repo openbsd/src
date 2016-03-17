@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.95 2016/02/03 03:25:07 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.96 2016/03/17 13:18:47 mpi Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -253,7 +253,7 @@ cpu_idle_mwait_cycle(void)
 		panic("idle with interrupts blocked!");
 
 	/* something already queued? */
-	if (ci->ci_schedstate.spc_whichqs != 0)
+	if (!cpu_is_idle(ci))
 		return;
 
 	/*
@@ -267,7 +267,7 @@ cpu_idle_mwait_cycle(void)
 	 * the check in sched_idle() and here.
 	 */
 	atomic_setbits_int(&ci->ci_mwait, MWAIT_IDLING | MWAIT_ONLY);
-	if (ci->ci_schedstate.spc_whichqs == 0) {
+	if (cpu_is_idle(ci)) {
 		monitor(&ci->ci_mwait, 0, 0);
 		if ((ci->ci_mwait & MWAIT_IDLING) == MWAIT_IDLING)
 			mwait(0, 0);
