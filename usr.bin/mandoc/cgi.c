@@ -1,7 +1,7 @@
-/*	$OpenBSD: cgi.c,v 1.56 2016/03/17 21:22:43 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.57 2016/03/17 22:06:30 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@usta.de>
+ * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@usta.de>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1030,6 +1030,7 @@ main(void)
 	}
 
 	memset(&req, 0, sizeof(struct req));
+	req.q.equal = 1;
 	pathgen(&req);
 
 	/* Parse the path info and the query string. */
