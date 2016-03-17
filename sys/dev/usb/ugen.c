@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.92 2016/03/03 18:13:24 stefan Exp $ */
+/*	$OpenBSD: ugen.c,v 1.93 2016/03/17 21:36:48 krw Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -65,7 +65,7 @@ int	ugendebug = 0;
 
 #define	UGEN_NISOFRAMES	500	/* 0.5 seconds worth */
 #define UGEN_NISOREQS	6	/* number of outstanding xfer requests */
-#define UGEN_NISORFRMS	4	/* number of frames (miliseconds) per req */
+#define UGEN_NISORFRMS	4	/* number of frames (milliseconds) per req */
 
 struct ugen_endpoint {
 	struct ugen_softc *sc;

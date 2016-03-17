@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.117 2015/12/11 16:07:02 mpi Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.118 2016/03/17 21:36:48 krw Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -968,7 +968,7 @@ atu_internal_firmware(struct device *self)
 	}
 
 	/* after a lot of trying and measuring I found out the device needs
-	 * about 56 miliseconds after sending the remap command before
+	 * about 56 milliseconds after sending the remap command before
 	 * it's ready to communicate again. So we'll wait just a little bit
 	 * longer than that to be sure...
 	 */
