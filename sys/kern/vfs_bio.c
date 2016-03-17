@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.173 2016/03/10 03:09:45 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.174 2016/03/17 03:57:51 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -1027,7 +1027,7 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 
 	if (size) {
 		buf_alloc_pages(bp, round_page(size));
-		SET(bp->b_flags, B_DMA);
+		KASSERT(ISSET(bp->b_flags, B_DMA));
 		buf_map(bp);
 	}
 

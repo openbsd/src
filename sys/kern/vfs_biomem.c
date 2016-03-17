@@ -1,7 +1,8 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.34 2015/07/19 21:21:14 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.35 2016/03/17 03:57:51 beck Exp $ */
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
+ * Copyright (c) 2012-2016 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -222,7 +223,7 @@ buf_dealloc_mem(struct buf *bp)
 }
 
 /*
- * Only used by bread_cluster. 
+ * Only used by bread_cluster.
  */
 void
 buf_fix_mapping(struct buf *bp, vsize_t newsize)
@@ -267,6 +268,7 @@ void
 buf_alloc_pages(struct buf *bp, vsize_t size)
 {
 	voff_t offs;
+	int i;
 
 	KASSERT(size == round_page(size));
 	KASSERT(bp->b_pobj == NULL);
@@ -278,8 +280,27 @@ buf_alloc_pages(struct buf *bp, vsize_t size)
 
 	KASSERT(buf_page_offset > 0);
 
-	(void) uvm_pagealloc_multi(buf_object, offs, size, UVM_PLA_WAITOK);
+	/*
+	 * Attempt to allocate with NOWAIT. if we can't, then throw
+	 * away some clean pages and try again. Finally, if that
+	 * fails, do a WAITOK allocation so the page daemon can find
+	 * memory for us.
+	 */
+	do {
+		i = uvm_pagealloc_multi(buf_object, offs, size,
+		    UVM_PLA_NOWAIT);
+		if (i == 0)
+			break;
+	} while	(bufbackoff(&dma_constraint, 100) == 0);
+	if (i != 0)
+		i = uvm_pagealloc_multi(buf_object, offs, size,
+		    UVM_PLA_WAITOK);
+	/* should not happen */
+	if (i != 0)
+		panic("uvm_pagealloc_multi unable to allocate an buf_object of size %lu", size);
 	bcstats.numbufpages += atop(size);
+	bcstats.dmapages += atop(size);
+	SET(bp->b_flags, B_DMA);
 	bp->b_pobj = buf_object;
 	bp->b_poffs = offs;
 	bp->b_bufsize = size;
@@ -307,10 +328,72 @@ buf_free_pages(struct buf *bp)
 		pg->wire_count = 0;
 		uvm_pagefree(pg);
 		bcstats.numbufpages--;
+		if (ISSET(bp->b_flags, B_DMA))
+			bcstats.dmapages--;
 	}
+	CLR(bp->b_flags, B_DMA);
 }
 
-/*
- * XXX - it might make sense to make a buf_realloc_pages to avoid
- *       bouncing through the free list all the time.
- */
+/* Reallocate a buf into a particular pmem range specified by "where". */
+int
+buf_realloc_pages(struct buf *bp, struct uvm_constraint_range *where,
+    int flags)
+{
+	vaddr_t va;
+	int dma;
+  	int i, r;
+	KASSERT(!(flags & UVM_PLA_WAITOK) ^ !(flags & UVM_PLA_NOWAIT));
+
+	splassert(IPL_BIO);
+	KASSERT(ISSET(bp->b_flags, B_BUSY));
+	dma = ISSET(bp->b_flags, B_DMA);
+
+	/* if the original buf is mapped, unmap it */
+	if (bp->b_data != NULL) {
+		va = (vaddr_t)bp->b_data;
+		pmap_kremove(va, bp->b_bufsize);
+		pmap_update(pmap_kernel());
+	}
+
+	do {
+		r = uvm_pagerealloc_multi(bp->b_pobj, bp->b_poffs,
+		    bp->b_bufsize, UVM_PLA_NOWAIT, where);
+		if (r == 0)
+			break;
+	} while	((bufbackoff(where, 100) == 0) && (flags & UVM_PLA_WAITOK));
+	if (r != 0 && (! flags & UVM_PLA_NOWAIT))
+		r = uvm_pagerealloc_multi(bp->b_pobj, bp->b_poffs,
+		    bp->b_bufsize, flags, where);
+
+	/*
+	 * If the allocation has succeeded, we may be somewhere different.
+	 * If the allocation has failed, we are in the same place.
+	 *
+	 * We still have to re-map the buffer before returning.
+	 */
+
+	/* take it out of dma stats until we know where we are */
+	if (dma)
+		bcstats.dmapages -= atop(bp->b_bufsize);
+
+	dma = 1;
+	/* if the original buf was mapped, re-map it */
+	for (i = 0; i < atop(bp->b_bufsize); i++) {
+		struct vm_page *pg = uvm_pagelookup(bp->b_pobj,
+		    bp->b_poffs + ptoa(i));
+		KASSERT(pg != NULL);
+		if  (!PADDR_IS_DMA_REACHABLE(VM_PAGE_TO_PHYS(pg)))
+			dma = 0;
+		if (bp->b_data != NULL) {
+			pmap_kenter_pa(va + ptoa(i), VM_PAGE_TO_PHYS(pg),
+			    PROT_READ|PROT_WRITE);
+			pmap_update(pmap_kernel());
+		}
+	}
+	if (dma) {
+		SET(bp->b_flags, B_DMA);
+		bcstats.dmapages += atop(bp->b_bufsize);
+	} else
+		CLR(bp->b_flags, B_DMA);
+	return(r);
+}
