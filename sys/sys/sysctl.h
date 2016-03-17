@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.158 2016/02/29 19:44:07 naddy Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.159 2016/03/17 12:30:04 mpi Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -377,7 +377,7 @@ struct kinfo_proc {
 
 	int8_t	p_stat;			/* CHAR: S* process status (from LWP). */
 	u_int8_t p_priority;		/* U_CHAR: Process priority. */
-	u_int8_t p_usrpri;		/* U_CHAR: User-priority based on p_cpu and ps_nice. */
+	u_int8_t p_usrpri;		/* U_CHAR: User-priority based on p_estcpu and ps_nice. */
 	u_int8_t p_nice;		/* U_CHAR: Process "nice" value. */
 
 	u_int16_t p_xstat;		/* U_SHORT: Exit status for wait; also stop signal. */
