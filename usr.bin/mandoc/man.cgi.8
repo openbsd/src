@@ -1,6 +1,6 @@
-.\"     $OpenBSD: man.cgi.8,v 1.12 2015/11/05 20:55:46 schwarze Exp $
+.\"     $OpenBSD: man.cgi.8,v 1.13 2016/03/18 01:22:41 schwarze Exp $
 .\"
-.\" Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 5 2015 $
+.Dd $Mdocdate: March 18 2016 $
 .Dt MAN.CGI 8
 .Os
 .Sh NAME
@@ -230,10 +230,19 @@ The host name and a following slash.
 .It
 The path to the program, normally
 .Pa cgi-bin/man.cgi/ .
+On
+.Lk http://man.openbsd.org/ ,
+.Xr httpd 8
+is configured such that the path to the program can be omitted.
 .It
 To show a single page, a slash, the manpath, another slash,
 and the name of the requested file, for example
 .Pa /OpenBSD-current/man1/mandoc.1 .
+This can be abbreviated according to the following syntax:
+.Sm off
+.Op / Ar manpath Oo / Cm man Ar sec Oc Op / Ar arch
+.Pf / Ar name Op \&. Ar sec
+.Sm on
 .It
 For searches, a query string starting with a question mark
 and consisting of
