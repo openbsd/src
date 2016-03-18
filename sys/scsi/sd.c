@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.267 2016/03/17 18:05:39 bluhm Exp $	*/
+/*	$OpenBSD: sd.c,v 1.268 2016/03/18 18:12:37 bluhm Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1021,6 +1021,10 @@ sd_ioctl_inquiry(struct sd_softc *sc, struct dk_inquiry *di)
 
 	vpd = dma_alloc(sizeof(*vpd), PR_WAITOK | PR_ZERO);
 
+	if (sc->flags & SDF_DYING) {
+		dma_free(vpd, sizeof(*vpd));
+		return (ENXIO);
+	}
 	link = sc->sc_link;
 
 	bzero(di, sizeof(struct dk_inquiry));
@@ -1067,6 +1071,10 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 	if (buf == NULL)
 		return (ENOMEM);
 
+	if (sc->flags & SDF_DYING) {
+		rv = ENXIO;
+		goto done;
+	}
 	rv = scsi_do_mode_sense(link, PAGE_CACHING_MODE,
 	    buf, (void **)&mode, NULL, NULL, NULL,
 	    sizeof(*mode) - 4, scsi_autoconf | SCSI_SILENT, &big);
@@ -1101,6 +1109,10 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 		else
 			SET(mode->flags, PG_CACHE_FL_RCD);
 
+		if (sc->flags & SDF_DYING) {
+			rv = ENXIO;
+			goto done;
+		}
 		if (big) {
 			rv = scsi_mode_select_big(link, SMS_PF,
 			    &buf->hdr_big, scsi_autoconf | SCSI_SILENT, 20000);
@@ -1266,6 +1278,10 @@ sdsize(dev_t dev)
 	}
 
 	lp = sc->sc_dk.dk_label;
+	if (sc->flags & SDF_DYING) {
+		size = -1;
+		goto exit;
+	}
 	if ((sc->sc_link->flags & SDEV_MEDIA_LOADED) == 0)
 		size = -1;
 	else if (lp->d_partitions[part].p_fstype != FS_SWAP)
@@ -1422,6 +1438,10 @@ sd_read_cap_10(struct sd_softc *sc, int flags)
 	if (rdcap == NULL)
 		return (ENOMEM);
 
+	if (sc->flags & SDF_DYING) {
+		rv = ENXIO;
+		goto done;
+	}
 	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (xs == NULL)
 		goto done;
@@ -1464,6 +1484,10 @@ sd_read_cap_16(struct sd_softc *sc, int flags)
 	if (rdcap == NULL)
 		return (ENOMEM);
 
+	if (sc->flags & SDF_DYING) {
+		rv = ENXIO;
+		goto done;
+	}
 	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (xs == NULL)
 		goto done;
@@ -1535,6 +1559,10 @@ sd_thin_pages(struct sd_softc *sc, int flags)
 	if (pg == NULL)
 		return (ENOMEM);
 
+	if (sc->flags & SDF_DYING) {
+		rv = ENXIO;
+		goto done;
+	}
 	rv = scsi_inquire_vpd(sc->sc_link, pg, sizeof(*pg),
 	    SI_PG_SUPPORTED, flags);
 	if (rv != 0)
@@ -1548,6 +1576,10 @@ sd_thin_pages(struct sd_softc *sc, int flags)
 	if (pg == NULL)
 		return (ENOMEM);
 
+	if (sc->flags & SDF_DYING) {
+		rv = ENXIO;
+		goto done;
+	}
 	rv = scsi_inquire_vpd(sc->sc_link, pg, sizeof(*pg) + len,
 	    SI_PG_SUPPORTED, flags);
 	if (rv != 0)
@@ -1587,6 +1619,10 @@ sd_vpd_block_limits(struct sd_softc *sc, int flags)
 	if (pg == NULL)
 		return (ENOMEM);
 
+	if (sc->flags & SDF_DYING) {
+		rv = ENXIO;
+		goto done;
+	}
 	rv = scsi_inquire_vpd(sc->sc_link, pg, sizeof(*pg),
 	    SI_PG_DISK_LIMITS, flags);
 	if (rv != 0)
@@ -1614,6 +1650,10 @@ sd_vpd_thin(struct sd_softc *sc, int flags)
 	if (pg == NULL)
 		return (ENOMEM);
 
+	if (sc->flags & SDF_DYING) {
+		rv = ENXIO;
+		goto done;
+	}
 	rv = scsi_inquire_vpd(sc->sc_link, pg, sizeof(*pg),
 	    SI_PG_DISK_THIN, flags);
 	if (rv != 0)
@@ -1684,6 +1724,8 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 	if (buf == NULL)
 		goto validate;
 
+	if (sc->flags & SDF_DYING)
+		goto die;
 	link = sc->sc_link;
 
 	/*
@@ -1692,6 +1734,8 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 	 */
 	err = scsi_do_mode_sense(link, 0, buf, (void **)&page0,
 	    NULL, NULL, NULL, 1, flags | SCSI_SILENT, &big);
+	if (sc->flags & SDF_DYING)
+		goto die;
 	if (err == 0) {
 		if (big && buf->hdr_big.dev_spec & SMH_DSP_WRITE_PROT)
 			SET(link->flags, SDEV_READONLY);
@@ -1748,6 +1792,8 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 			if (heads * cyls > 0)
 				sectors = dp->disksize / (heads * cyls);
 		} else {
+			if (sc->flags & SDF_DYING)
+				goto die;
 			err = scsi_do_mode_sense(link,
 			    PAGE_FLEX_GEOMETRY, buf, (void **)&flex, NULL, NULL,
 			    &secsize, sizeof(*flex) - 4,
@@ -1823,6 +1869,10 @@ validate:
 	}
 
 	return (SDGP_RESULT_OK);
+
+die:
+	dma_free(buf, sizeof(*buf));
+	return (SDGP_RESULT_OFFLINE);
 }
 
 void
