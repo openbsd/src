@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.17 2016/03/18 06:54:21 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.18 2016/03/18 13:16:02 jsg Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -250,32 +250,6 @@ void	sa1_cache_syncI_rng	(vaddr_t start, vsize_t end);
 
 #endif
 
-#ifdef CPU_ARM9
-void	arm9_setttb			(u_int);
-
-void	arm9_tlb_flushID_SE		(u_int);
-
-void	arm9_icache_sync_all		(void);
-void	arm9_icache_sync_range		(vaddr_t, vsize_t);
-
-void	arm9_dcache_wbinv_all		(void);
-void	arm9_dcache_wbinv_range		(vaddr_t, vsize_t);
-void	arm9_dcache_inv_range		(vaddr_t, vsize_t);
-void	arm9_dcache_wb_range		(vaddr_t, vsize_t);
-
-void	arm9_idcache_wbinv_all		(void);
-void	arm9_idcache_wbinv_range	(vaddr_t, vsize_t);
-
-void	arm9_context_switch		(u_int);
-
-void	arm9_setup			(void);
-
-extern unsigned arm9_dcache_sets_max;
-extern unsigned arm9_dcache_sets_inc;
-extern unsigned arm9_dcache_index_max;
-extern unsigned arm9_dcache_index_inc;
-#endif
-
 #if defined(CPU_ARM9E) || defined(CPU_ARM10)
 void	arm10_tlb_flushID_SE	(u_int);
 void	arm10_tlb_flushI_SE	(u_int);
@@ -377,7 +351,7 @@ extern unsigned armv7_dcache_index_inc;
 #endif
 
 
-#if defined(CPU_ARM9) || defined(CPU_ARM9E) || defined(CPU_ARM10) || \
+#if defined(CPU_ARM9E) || defined(CPU_ARM10) || \
     defined(CPU_SA1100) || defined(CPU_SA1110) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.59 2016/03/18 06:54:21 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.60 2016/03/18 13:16:02 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -4438,27 +4438,6 @@ pmap_pte_init_generic(void)
 	pmap_copy_page_func = pmap_copy_page_generic;
 	pmap_zero_page_func = pmap_zero_page_generic;
 }
-
-#if defined(CPU_ARM9)
-void
-pmap_pte_init_arm9(void)
-{
-
-	/*
-	 * ARM9 is compatible with generic, but we want to use
-	 * write-through caching for now.
-	 */
-	pmap_pte_init_generic();
-
-	pte_l1_s_cache_mode = L1_S_C;
-	pte_l2_l_cache_mode = L2_C;
-	pte_l2_s_cache_mode = L2_C;
-
-	pte_l1_s_cache_mode_pt = L1_S_C;
-	pte_l2_l_cache_mode_pt = L2_C;
-	pte_l2_s_cache_mode_pt = L2_C;
-}
-#endif /* CPU_ARM9 */
 #endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
 
 #if defined(CPU_ARM10)
