@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.57 2016/03/17 22:06:30 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.58 2016/03/18 13:21:07 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@usta.de>
@@ -82,7 +82,7 @@ static	int		 validate_filename(const char *);
 static	int		 validate_manpath(const struct req *, const char *);
 static	int		 validate_urifrag(const char *);
 
-static	const char	 *scriptname; /* CGI script name */
+static	const char	 *scriptname = SCRIPT_NAME;
 
 static	const int sec_prios[] = {1, 4, 5, 8, 6, 3, 7, 2, 9};
 static	const char *const sec_numbers[] = {
@@ -368,7 +368,7 @@ resp_searchform(const struct req *req)
 
 	puts("<!-- Begin search form. //-->");
 	printf("<DIV ID=\"mancgi\">\n"
-	       "<FORM ACTION=\"%s\" METHOD=\"get\">\n"
+	       "<FORM ACTION=\"/%s\" METHOD=\"get\">\n"
 	       "<FIELDSET>\n"
 	       "<LEGEND>Manual Page Search Parameters</LEGEND>\n",
 	       scriptname);
@@ -505,12 +505,13 @@ pg_index(const struct req *req)
 	resp_searchform(req);
 	printf("<P>\n"
 	       "This web interface is documented in the\n"
-	       "<A HREF=\"%s/mandoc/man8/man.cgi.8\">man.cgi</A>\n"
+	       "<A HREF=\"/%s%smandoc/man8/man.cgi.8\">man.cgi</A>\n"
 	       "manual, and the\n"
-	       "<A HREF=\"%s/mandoc/man1/apropos.1\">apropos</A>\n"
+	       "<A HREF=\"/%s%smandoc/man1/apropos.1\">apropos</A>\n"
 	       "manual explains the query syntax.\n"
 	       "</P>\n",
-	       scriptname, scriptname);
+	       scriptname, *scriptname == '\0' ? "" : "/",
+	       scriptname, *scriptname == '\0' ? "" : "/");
 	resp_end_html();
 }
 
@@ -534,7 +535,7 @@ pg_error_badrequest(const char *msg)
 	     "<P>\n");
 	puts(msg);
 	printf("Try again from the\n"
-	       "<A HREF=\"%s\">main page</A>.\n"
+	       "<A HREF=\"/%s\">main page</A>.\n"
 	       "</P>", scriptname);
 	resp_end_html();
 }
@@ -571,8 +572,10 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 		 * without any delay.
 		 */
 		printf("Status: 303 See Other\r\n");
-		printf("Location: http://%s%s/%s/%s",
-		    HTTP_HOST, scriptname, req->q.manpath, r[0].file);
+		printf("Location: http://%s/%s%s%s/%s",
+		    HTTP_HOST, scriptname,
+		    *scriptname == '\0' ? "" : "/",
+		    req->q.manpath, r[0].file);
 		printf("\r\n"
 		     "Content-Type: text/html; charset=utf-8\r\n"
 		     "\r\n");
@@ -587,8 +590,9 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 	for (i = 0; i < sz; i++) {
 		printf("<TR>\n"
 		       "<TD CLASS=\"title\">\n"
-		       "<A HREF=\"%s/%s/%s",
-		    scriptname, req->q.manpath, r[i].file);
+		       "<A HREF=\"/%s%s%s/%s",
+		    scriptname, *scriptname == '\0' ? "" : "/",
+		    req->q.manpath, r[i].file);
 		printf("\">");
 		html_print(r[i].names);
 		printf("</A>\n"
@@ -806,7 +810,7 @@ format(const struct req *req, const char *file)
 	memset(&conf, 0, sizeof(conf));
 	conf.fragment = 1;
 	usepath = strcmp(req->q.manpath, req->p[0]);
-	mandoc_asprintf(&conf.man, "%s?query=%%N&sec=%%S%s%s%s%s",
+	mandoc_asprintf(&conf.man, "/%s?query=%%N&sec=%%S%s%s%s%s",
 	    scriptname,
 	    req->q.arch	? "&arch="       : "",
 	    req->q.arch	? req->q.arch    : "",
@@ -1000,18 +1004,6 @@ main(void)
 	itimer.it_interval.tv_usec = 0;
 	if (setitimer(ITIMER_VIRTUAL, &itimer, NULL) == -1) {
 		fprintf(stderr, "setitimer: %s\n", strerror(errno));
-		pg_error_internal();
-		return EXIT_FAILURE;
-	}
-
-	/* Scan our run-time environment. */
-
-	if (NULL == (scriptname = getenv("SCRIPT_NAME")))
-		scriptname = "";
-
-	if ( ! validate_urifrag(scriptname)) {
-		fprintf(stderr, "unsafe SCRIPT_NAME \"%s\"\n",
-		    scriptname);
 		pg_error_internal();
 		return EXIT_FAILURE;
 	}

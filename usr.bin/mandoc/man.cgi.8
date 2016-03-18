@@ -1,4 +1,4 @@
-.\"     $OpenBSD: man.cgi.8,v 1.13 2016/03/18 01:22:41 schwarze Exp $
+.\"     $OpenBSD: man.cgi.8,v 1.14 2016/03/18 13:21:07 schwarze Exp $
 .\"
 .\" Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -175,31 +175,42 @@ Only useful for running on www.openbsd.org to deal with old URIs containing
 .Qq "manpath=OpenBSD "
 where the blank character has to be translated to a hyphen.
 When compiling for other sites, this definition can be deleted.
-.It Ev CSS_DIR
-An optional path to the directory containing the CSS files,
+.It Dv CSS_DIR
+An optional file system path to the directory containing the file
+.Pa mandoc.css ,
 to be specified relative to the server's document root,
 and to be specified without a trailing slash.
-When not specified, the CSS files
-are assumed to be in the document root.
+When empty, the CSS file is assumed to be in the document root.
+Otherwise, a leading slash is needed.
 This is used in generated HTML code.
-.It Ev CUSTOMIZE_TITLE
+.It Dv CUSTOMIZE_TITLE
 An ASCII string to be used for the HTML <TITLE> element.
-.It Ev HTTP_HOST
+.It Dv HTTP_HOST
 The FQDN of the (possibly virtual) host the HTTP server is running on.
 This is used for
 .Ic Location:
 headers in HTTP 303 responses.
-.It Ev MAN_DIR
-A path to the
+.It Dv MAN_DIR
+A file system path to the
 .Nm
-data directory to be used instead of
-.Pa /var/www/man ,
-relative to the web server
+data directory relative to the web server
 .Xr chroot 2
-directory, to be specified without a trailing slash.
-This is prepended to the manpath when opening
+directory, to be specified with a leading slash and without a trailing slash.
+It needs to have at least one component; the root directory cannot be used
+for this purpose.
+The files
+.Pa manpath.conf ,
+.Pa header.html ,
+and
+.Pa footer.html
+are looked up in this directory.
+It is also prepended to the manpath when opening
 .Xr mandoc.db 5
 and manual page files.
+.It Dv SCRIPT_NAME
+The initial component of URIs, to be specified without leading
+and trailing slashes.
+It can be empty.
 .El
 .Pp
 After editing
@@ -226,14 +237,11 @@ The
 .Cm http://
 protocol specifier.
 .It
-The host name and a following slash.
+The host name.
 .It
-The path to the program, normally
-.Pa cgi-bin/man.cgi/ .
-On
-.Lk http://man.openbsd.org/ ,
-.Xr httpd 8
-is configured such that the path to the program can be omitted.
+The
+.Dv SCRIPT_NAME ,
+preceded by a slash unless empty.
 .It
 To show a single page, a slash, the manpath, another slash,
 and the name of the requested file, for example
@@ -296,13 +304,20 @@ the underscore
 .Pq Sq _
 .El
 .Pp
-In particular, this applies to the
-.Ev SCRIPT_NAME ,
-to all manpaths, and to all architecture names.
+In particular, this applies to all manpaths and architecture names.
 .Sh ENVIRONMENT
 The web server may pass the following CGI variables to
 .Nm :
 .Bl -tag -width Ds
+.It Ev SCRIPT_NAME
+The initial part of the the URI passed from the client to the server,
+starting after the server's host name and ending before
+.Ev PATH_INFO .
+This is ignored by
+.Nm .
+When constructing URIs for links and redirections, the
+.Dv SCRIPT_NAME
+preprocessor constant is used instead.
 .It Ev PATH_INFO
 The final part of the URI path passed from the client to the server,
 starting after the
@@ -318,17 +333,6 @@ It is the final part of the URI, after the question mark.
 It is used by the
 .Cm search
 page to acquire the named parameters it needs.
-.It Ev SCRIPT_NAME
-The path to the
-.Nm
-binary relative to the server root, usually
-.Pa /cgi-bin/man.cgi .
-This is used for generating URIs to be embedded
-in generated HTML code and HTTP headers.
-If this contains any character not contained in the
-.Sx Restricted character set ,
-.Nm
-reports an internal server error and exits without doing anything.
 .El
 .Sh FILES
 .Bl -tag -width Ds
@@ -338,13 +342,18 @@ Default web server
 directory.
 All the following paths are specified relative to this directory.
 .It Pa /cgi-bin/man.cgi
-The path to the
+The usual file system path to the
 .Nm
-program relative to the server root.
-Can be overridden by
-.Ev SCRIPT_NAME .
+program inside the web server
+.Xr chroot 2
+directory.
+A different name can be chosen, but in any case, it needs to be configured in
+.Xr httpd.conf 5 .
 .It Pa /htdocs
-The path to the server document root relative to the server root.
+The file system path to the server document root directory
+relative to the server
+.Xr chroot 2
+directory.
 This is part of the web server configuration and not specific to
 .Nm .
 .It Pa /htdocs/mandoc.css
@@ -356,7 +365,7 @@ Default
 .Nm
 data directory containing all the manual trees.
 Can be overridden by
-.Ev MAN_DIR .
+.Dv MAN_DIR .
 .It Pa /man/mandoc/man1/apropos.1 , /man/mandoc/man8/man.cgi.8
 Manual pages documenting
 .Nm
