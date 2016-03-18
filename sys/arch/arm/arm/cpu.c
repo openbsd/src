@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.22 2015/09/19 02:13:05 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.23 2016/03/18 06:54:21 jsg Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -80,36 +80,10 @@ cpu_attach(struct device *dv)
 	    curcpu()->ci_arm_cpuid & CPU_ID_REVISION_MASK;
 
 	identify_arm_cpu(dv, curcpu());
-
-#ifdef CPU_ARM8
-	if ((curcpu()->ci_arm_cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
-		int clock = arm8_clock_config(0, 0);
-		char *fclk;
-		aprint_normal("%s: ARM810 cp15=%02x", dv->dv_xname, clock);
-		aprint_normal(" clock:%s", (clock & 1) ? " dynamic" : "");
-		aprint_normal("%s", (clock & 2) ? " sync" : "");
-		switch ((clock >> 2) & 3) {
-		case 0:
-			fclk = "bus clock";
-			break;
-		case 1:
-			fclk = "ref clock";
-			break;
-		case 3:
-			fclk = "pll";
-			break;
-		default:
-			fclk = "illegal";
-			break;
-		}
-		aprint_normal(" fclk source=%s\n", fclk);
- 	}
-#endif
 }
 
 enum cpu_class {
 	CPU_CLASS_NONE,
-	CPU_CLASS_ARM8,
 	CPU_CLASS_ARM9TDMI,
 	CPU_CLASS_ARM9ES,
 	CPU_CLASS_ARM9EJS,
@@ -219,9 +193,6 @@ struct cpuidtab {
 };
 
 const struct cpuidtab cpuids[] = {
-	{ CPU_ID_ARM810,	CPU_CLASS_ARM8,		"ARM810",
-	  generic_steppings },
-
 	{ CPU_ID_ARM920T,	CPU_CLASS_ARM9TDMI,	"ARM920T",
 	  generic_steppings },
 	{ CPU_ID_ARM922T,	CPU_CLASS_ARM9TDMI,	"ARM922T",
@@ -358,7 +329,6 @@ struct cpu_classtab {
 
 const struct cpu_classtab cpu_classes[] = {
 	{ "unknown",	NULL },			/* CPU_CLASS_NONE */
-	{ "ARM8",	"CPU_ARM8" },		/* CPU_CLASS_ARM8 */
 	{ "ARM9TDMI",	NULL },			/* CPU_CLASS_ARM9TDMI */
 	{ "ARM9E-S",	"CPU_ARM9E" },		/* CPU_CLASS_ARM9ES */
 	{ "ARM9EJ-S",	"CPU_ARM9E" },		/* CPU_CLASS_ARM9EJS */
@@ -429,12 +399,6 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	printf("%s:", dv->dv_xname);
 
 	switch (cpu_class) {
-	case CPU_CLASS_ARM8:
-		if ((ci->ci_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
-			printf(" IDC disabled");
-		else
-			printf(" IDC enabled");
-		break;
 	case CPU_CLASS_ARM9TDMI:
 	case CPU_CLASS_ARM9ES:
 	case CPU_CLASS_ARM9EJS:
@@ -490,9 +454,6 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
  skip_pcache:
 
 	switch (cpu_class) {
-#ifdef CPU_ARM8
-	case CPU_CLASS_ARM8:
-#endif
 #ifdef CPU_ARM9
 	case CPU_CLASS_ARM9TDMI:
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.19 2016/03/02 23:46:48 jsg Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.20 2016/03/18 06:54:21 jsg Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -176,7 +176,6 @@
 #define CPU_ID_ARM740T4K	0x41817400 /* XXX no MMU, 4KB cache */
 
 /* Post-ARM7 CPUs */
-#define CPU_ID_ARM810		0x41018100
 #define CPU_ID_ARM920T		0x41129200
 #define CPU_ID_ARM922T		0x41029220
 #define CPU_ID_ARM926EJS	0x41069260

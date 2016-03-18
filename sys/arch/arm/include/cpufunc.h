@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.16 2016/01/31 00:14:50 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.17 2016/03/18 06:54:21 jsg Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -212,31 +212,6 @@ u_int	cpufunc_dfsr		(void);
 u_int	cpufunc_dfar		(void);
 u_int	cpufunc_ifsr		(void);
 u_int	cpufunc_ifar		(void);
-
-#ifdef CPU_ARM8
-void	arm8_setttb		(u_int ttb);
-void	arm8_tlb_flushID	(void);
-void	arm8_tlb_flushID_SE	(u_int va);
-void	arm8_cache_flushID	(void);
-void	arm8_cache_flushID_E	(u_int entry);
-void	arm8_cache_cleanID	(void);
-void	arm8_cache_cleanID_E	(u_int entry);
-void	arm8_cache_purgeID	(void);
-void	arm8_cache_purgeID_E	(u_int entry);
-
-void	arm8_cache_syncI	(void);
-void	arm8_cache_cleanID_rng	(vaddr_t start, vsize_t end);
-void	arm8_cache_cleanD_rng	(vaddr_t start, vsize_t end);
-void	arm8_cache_purgeID_rng	(vaddr_t start, vsize_t end);
-void	arm8_cache_purgeD_rng	(vaddr_t start, vsize_t end);
-void	arm8_cache_syncI_rng	(vaddr_t start, vsize_t end);
-
-void	arm8_context_switch	(u_int);
-
-void	arm8_setup		(void);
-
-u_int	arm8_clock_config	(u_int, u_int);
-#endif
 
 #if defined(CPU_SA1100) || defined(CPU_SA1110)
 void	sa11x0_drain_readbuf	(void);

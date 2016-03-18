@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.28 2015/07/17 22:52:28 tedu Exp $
+#	$OpenBSD: files.arm,v 1.29 2016/03/18 06:54:21 jsg Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -39,7 +39,6 @@ file	arch/arm/arm/bcopyinout.S
 file	arch/arm/arm/copystr.S
 file	arch/arm/arm/cpufunc.c
 file	arch/arm/arm/cpufunc_asm.S
-file	arch/arm/arm/cpufunc_asm_arm8.S		cpu_arm8
 file	arch/arm/arm/cpufunc_asm_arm9.S		cpu_arm9
 file	arch/arm/arm/cpufunc_asm_arm10.S	cpu_arm9e | cpu_arm10
 file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_arm9e |

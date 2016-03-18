@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.28 2016/03/02 23:50:32 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.29 2016/03/18 06:54:21 jsg Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -96,63 +96,6 @@ int	arm_dcache_align_mask;
 
 /* 1 == use cpu_sleep(), 0 == don't */
 int cpu_do_powersave;
-
-#ifdef CPU_ARM8
-struct cpu_functions arm8_cpufuncs = {
-	/* CPU functions */
-
-	cpufunc_id,			/* id			*/
-	cpufunc_nullop,			/* cpwait		*/
-
-	/* MMU functions */
-
-	cpufunc_control,		/* control		*/
-	cpufunc_domains,		/* domain		*/
-	arm8_setttb,			/* setttb		*/
-	cpufunc_dfsr,			/* dfsr			*/
-	cpufunc_dfar,			/* dfar			*/
-	cpufunc_ifsr,			/* ifsr			*/
-	cpufunc_ifar,			/* ifar			*/
-
-	/* TLB functions */
-
-	arm8_tlb_flushID,		/* tlb_flushID		*/
-	arm8_tlb_flushID_SE,		/* tlb_flushID_SE	*/
-	arm8_tlb_flushID,		/* tlb_flushI		*/
-	arm8_tlb_flushID_SE,		/* tlb_flushI_SE	*/
-	arm8_tlb_flushID,		/* tlb_flushD		*/
-	arm8_tlb_flushID_SE,		/* tlb_flushD_SE	*/
-
-	/* Cache operations */
-
-	cpufunc_nullop,			/* icache_sync_all	*/
-	(void *)cpufunc_nullop,		/* icache_sync_range	*/
-
-	arm8_cache_purgeID,		/* dcache_wbinv_all	*/
-	(void *)arm8_cache_purgeID,	/* dcache_wbinv_range	*/
-/*XXX*/	(void *)arm8_cache_purgeID,	/* dcache_inv_range	*/
-	(void *)arm8_cache_cleanID,	/* dcache_wb_range	*/
-
-	arm8_cache_purgeID,		/* idcache_wbinv_all	*/
-	(void *)arm8_cache_purgeID,	/* idcache_wbinv_range	*/
-
-	cpufunc_nullop,			/* sdcache_wbinv_all	*/
-	(void *)cpufunc_nullop,		/* sdcache_wbinv_range	*/
-	(void *)cpufunc_nullop,		/* sdcache_inv_range	*/
-	(void *)cpufunc_nullop,		/* sdcache_wb_range	*/
-
-	/* Other functions */
-
-	cpufunc_nullop,			/* flush_prefetchbuf	*/
-	cpufunc_nullop,			/* drain_writebuf	*/
-
-	(void *)cpufunc_nullop,		/* sleep		*/
-
-	/* Soft functions */
-	arm8_context_switch,		/* context_switch	*/
-	arm8_setup			/* cpu setup		*/
-};
-#endif	/* CPU_ARM8 */
 
 #ifdef CPU_ARM9
 struct cpu_functions arm9_cpufuncs = {
@@ -624,7 +567,7 @@ struct cpu_functions cpufuncs;
 u_int cputype;
 u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
-#if defined(CPU_ARM8) || defined(CPU_ARM9) || \
+#if defined(CPU_ARM9) || \
     defined(CPU_ARM9E) || defined(CPU_ARM10) || defined(CPU_ARM11) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
@@ -704,7 +647,7 @@ get_cachetype_cp15()
  out:
 	arm_dcache_align_mask = arm_dcache_align - 1;
 }
-#endif /* ARM7TDMI || ARM8 || ARM9 || XSCALE */
+#endif /* ARM7TDMI || ARM9 || XSCALE */
 
 #if defined(CPU_SA1100) || defined(CPU_SA1110) || defined(CPU_IXP12X0)
 /* Cache information for CPUs without cache type registers. */
@@ -922,16 +865,6 @@ set_cpufuncs()
 	 * CPU type where we want to use it by default, then we set it.
 	 */
 
-#ifdef CPU_ARM8
-	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
-	    (cputype & 0x0000f000) == 0x00008000) {
-		cpufuncs = arm8_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 0;	/* XXX correct? */
-		get_cachetype_cp15();
-		pmap_pte_init_arm8();
-		return 0;
-	}
-#endif	/* CPU_ARM8 */
 #ifdef CPU_ARM9
 	if (((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD ||
 	     (cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_TI) &&
@@ -1196,41 +1129,6 @@ set_cpufuncs()
 /*
  * CPU Setup code
  */
-
-#ifdef CPU_ARM8
-void
-arm8_setup()
-{
-	int integer;
-	int cpuctrl, cpuctrlmask;
-	int clocktest;
-	int setclock = 0;
-
-	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
-		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
-		 | CPU_CONTROL_IDC_ENABLE | CPU_CONTROL_WBUF_ENABLE
-		 | CPU_CONTROL_AFLT_ENABLE;
-	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
-		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
-		 | CPU_CONTROL_IDC_ENABLE | CPU_CONTROL_WBUF_ENABLE
-		 | CPU_CONTROL_BPRD_ENABLE | CPU_CONTROL_ROM_ENABLE
-		 | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE;
-
-	/* Get clock configuration */
-	clocktest = arm8_clock_config(0, 0) & 0x0f;
-
-	/* Clear out the cache */
-	cpu_idcache_wbinv_all();
-
-	/* Set the control register */
-	curcpu()->ci_ctrl = cpuctrl;
-	cpu_control(0xffffffff, cpuctrl);
-
-	/* Set the clock/test register */
-	if (setclock)
-		arm8_clock_config(0x7f, clocktest);
-}
-#endif	/* CPU_ARM8 */
 
 #ifdef CPU_ARM9
 void
