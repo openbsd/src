@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.14 2015/07/20 19:44:32 pirofti Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.15 2016/03/18 05:38:10 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -48,6 +48,7 @@
 #include <octeon/dev/iobusvar.h>
 #include <octeon/dev/cn30xxgmxreg.h>
 #include <octeon/dev/octhcireg.h>	/* USBN_BASE */
+#include <octeon/dev/octuctlreg.h>
 
 int	iobusmatch(struct device *, void *, void *);
 void	iobusattach(struct device *, struct device *, void *);
@@ -150,6 +151,7 @@ static const struct octeon_iobus_addrs iobus_addrs[] = {
 	{ "octrng",	OCTEON_RNG_BASE },
 	{ "dwctwo",	USBN_BASE       },
 	{ "amdcf",	OCTEON_AMDCF_BASE},
+	{ "octuctl",	UCTL_BASE	},
 };
 
 /* There can only be one. */

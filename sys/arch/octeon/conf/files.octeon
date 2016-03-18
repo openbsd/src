@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.28 2016/01/14 17:20:34 visa Exp $
+#	$OpenBSD: files.octeon,v 1.29 2016/03/18 05:38:10 jmatthew Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -70,6 +70,14 @@ file	arch/octeon/dev/cn30xxsmi.c			iobus
 # On-board USB
 attach	dwctwo at iobus with octdwctwo
 file	arch/octeon/dev/octdwctwo.c			octdwctwo	needs-flag
+
+device	octuctl {}
+attach	octuctl at iobus
+file	arch/octeon/dev/octuctl.c			octuctl		needs-flag
+attach	ehci at octuctl with octehci
+file	arch/octeon/dev/octehci.c			octehci
+attach	ohci at octuctl with octohci
+file	arch/octeon/dev/octohci.c			octohci
 
 # On-board CF
 device	octcf: disk
