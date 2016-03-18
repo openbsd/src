@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.118 2016/02/23 17:45:43 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.119 2016/03/18 11:33:40 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -579,20 +579,24 @@ our %distant = ();
 
 sub drop_privileges_and_setup_env
 {
-	# we can't cache anything, we happen after the fork, right before exec
-	if (my (undef, undef, $uid, $gid) = getpwnam("_pfetch")) {
+	my $state = shift;
+	my $user = '_pkgfetch';
+	# we can't cache anything, we happen after the fork, 
+	# right before exec
+	if (my (undef, undef, $uid, $gid) = getpwnam($user)) {
 		$( = $gid;
 		$) = "$gid $gid";
 		$< = $uid;
 		$> = $uid;
-	} 
-	# don't error out yet if we can't change.
+	} else {
+		$state->fatal("Couldn't change identity: can't find #1", $user);
+	}
 
 	# create sanitized env for ftp
 	my %newenv = (
 		HOME => '/var/empty',
-		USER => '_pfetch',
-		LOGNAME => '_pfetch',
+		USER => $user,
+		LOGNAME => $user,
 		SHELL => '/bin/sh',
 		LC_ALL => 'C', # especially, laundry error messages
 		PATH => '/bin:/usr/bin'
