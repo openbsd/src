@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.9 2016/03/18 13:16:02 jsg Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.10 2016/03/18 13:35:25 jsg Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.7 2003/05/23 00:57:24 ichiro Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  * Determine which ARM architecture versions are configured.
  */
 #if (defined(CPU_SA1100) || defined(CPU_SA1110) || \
-     defined(CPU_IXP12X0) || defined(CPU_XSCALE_IXP425))
+     defined(CPU_IXP12X0))
 #define	ARM_ARCH_4	1
 #else
 #define	ARM_ARCH_4	0
@@ -57,7 +57,7 @@
 
 #if (defined(CPU_ARM9E) || defined(CPU_ARM10) || 			\
      defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
-     defined(CPU_XSCALE_PXA2X0))
+     defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425))
 #define	ARM_ARCH_5	1
 #else
 #define	ARM_ARCH_5	0
