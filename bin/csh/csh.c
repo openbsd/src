@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.37 2015/12/26 13:48:38 mestre Exp $	*/
+/*	$OpenBSD: csh.c,v 1.38 2016/03/18 15:16:07 millert Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -369,7 +369,7 @@ main(int argc, char *argv[])
 		stderror(ERR_SYSTEM, tempv[0], strerror(errno));
 		break;
 	    }
-	(void) ioctl(SHIN, FIOCLEX, NULL);
+	(void) fcntl(SHIN, F_SETFD, FD_CLOEXEC);
 	prompt = 0;
 	 /* argc not used any more */ tempv++;
     }
@@ -463,7 +463,7 @@ main(int argc, char *argv[])
 		 */
 		if (tcsetpgrp(f, shpgrp) == -1)
 		    goto notty;
-		(void) ioctl(dcopy(f, FSHTTY), FIOCLEX, NULL);
+		(void) fcntl(dcopy(f, FSHTTY), F_SETFD, FD_CLOEXEC);
 	    }
 	    if (tpgrp == -1) {
 notty:
@@ -625,7 +625,7 @@ srcfile(char *f, bool onlyown, bool flag)
 	return 0;
     unit = dmove(unit, -1);
 
-    (void) ioctl(unit, FIOCLEX, NULL);
+    (void) fcntl(unit, F_SETFD, FD_CLOEXEC);
     srcunit(unit, onlyown, flag);
     return 1;
 }
@@ -1237,10 +1237,10 @@ initdesc(void)
 {
 
     didfds = 0;			/* 0, 1, 2 aren't set up */
-    (void) ioctl(SHIN = dcopy(0, FSHIN), FIOCLEX, NULL);
-    (void) ioctl(SHOUT = dcopy(1, FSHOUT), FIOCLEX, NULL);
-    (void) ioctl(SHERR = dcopy(2, FSHERR), FIOCLEX, NULL);
-    (void) ioctl(OLDSTD = dcopy(SHIN, FOLDSTD), FIOCLEX, NULL);
+    (void) fcntl(SHIN = dcopy(0, FSHIN), F_SETFD, FD_CLOEXEC);
+    (void) fcntl(SHOUT = dcopy(1, FSHOUT), F_SETFD, FD_CLOEXEC);
+    (void) fcntl(SHERR = dcopy(2, FSHERR), F_SETFD, FD_CLOEXEC);
+    (void) fcntl(OLDSTD = dcopy(SHIN, FOLDSTD), F_SETFD, FD_CLOEXEC);
     closem();
 }
 
