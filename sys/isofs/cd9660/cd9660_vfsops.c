@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.75 2016/03/17 18:52:31 bluhm Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.76 2016/03/19 12:04:15 natano Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -190,7 +190,7 @@ cd9660_mount(mp, path, data, ndp, p)
 			vput(devvp);
 			return (error);
 		}
-		VOP_UNLOCK(devvp, 0, p);
+		VOP_UNLOCK(devvp, p);
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
 		error = iso_mountfs(devvp, mp, p, &args);
@@ -261,7 +261,7 @@ iso_mountfs(devvp, mp, p, argp)
 		return (EBUSY);
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
-	VOP_UNLOCK(devvp, 0, p);
+	VOP_UNLOCK(devvp, p);
 	if (error)
 		return (error);
 
@@ -452,7 +452,7 @@ out:
 
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-	VOP_UNLOCK(devvp, 0, p);
+	VOP_UNLOCK(devvp, p);
 
 	if (isomp) {
 		free((caddr_t)isomp, M_ISOFSMNT, 0);

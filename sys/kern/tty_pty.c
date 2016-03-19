@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.76 2016/01/28 18:02:36 stefan Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.77 2016/03/19 12:04:15 natano Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -1112,7 +1112,7 @@ retry:
 		cfp->f_type = DTYPE_VNODE;
 		cfp->f_ops = &vnops;
 		cfp->f_data = (caddr_t) cnd.ni_vp;
-		VOP_UNLOCK(cnd.ni_vp, 0, p);
+		VOP_UNLOCK(cnd.ni_vp, p);
 
 		/*
 		 * Open the slave.
@@ -1146,7 +1146,7 @@ retry:
 				goto bad;
 			}
 		}
-		VOP_UNLOCK(snd.ni_vp, 0, p);
+		VOP_UNLOCK(snd.ni_vp, p);
 		if (snd.ni_vp->v_usecount > 1 ||
 		    (snd.ni_vp->v_flag & (VALIASED)))
 			VOP_REVOKE(snd.ni_vp, REVOKEALL);
@@ -1167,7 +1167,7 @@ retry:
 		sfp->f_type = DTYPE_VNODE;
 		sfp->f_ops = &vnops;
 		sfp->f_data = (caddr_t) snd.ni_vp;
-		VOP_UNLOCK(snd.ni_vp, 0, p);
+		VOP_UNLOCK(snd.ni_vp, p);
 
 		/* now, put the indexen and names into struct ptmget */
 		ptm->cfd = cindx;

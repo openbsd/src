@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.47 2016/03/17 18:52:31 bluhm Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.48 2016/03/19 12:04:16 natano Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -196,7 +196,7 @@ ntfs_mount(struct mount *mp, const char *path, void *data,
 		amode = (mp->mnt_flag & MNT_RDONLY) ? VREAD : (VREAD | VWRITE);
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		err = VOP_ACCESS(devvp, amode, p->p_ucred, p);
-		VOP_UNLOCK(devvp, 0, p);
+		VOP_UNLOCK(devvp, p);
 		if (err)
 			goto error_2;
 	}
@@ -299,7 +299,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp,
 		return (EBUSY);
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
-	VOP_UNLOCK(devvp, 0, p);
+	VOP_UNLOCK(devvp, p);
 	if (error)
 		return (error);
 
@@ -463,7 +463,7 @@ out:
 	/* lock the device vnode before calling VOP_CLOSE() */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-	VOP_UNLOCK(devvp, 0, p);
+	VOP_UNLOCK(devvp, p);
 	
 	return (error);
 }

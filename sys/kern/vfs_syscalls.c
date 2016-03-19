@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.251 2016/01/06 17:59:30 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.252 2016/03/19 12:04:15 natano Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -297,7 +297,7 @@ update:
 		vfsp->vfc_refcount++;
 		TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 		checkdirs(vp);
-		VOP_UNLOCK(vp, 0, p);
+		VOP_UNLOCK(vp, p);
  		if ((mp->mnt_flag & MNT_RDONLY) == 0)
  			error = vfs_allocate_syncvnode(mp);
 		vfs_unbusy(mp);
@@ -705,7 +705,7 @@ sys_fchdir(struct proc *p, void *v, register_t *retval)
 		vput(vp);
 		return (error);
 	}
-	VOP_UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp, p);
 	old_cdir = fdp->fd_cdir;
 	fdp->fd_cdir = vp;
 	vrele(old_cdir);
@@ -793,7 +793,7 @@ change_dir(struct nameidata *ndp, struct proc *p)
 	if (error)
 		vput(vp);
 	else
-		VOP_UNLOCK(vp, 0, p);
+		VOP_UNLOCK(vp, p);
 	return (error);
 }
 
@@ -905,7 +905,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 		type = F_FLOCK;
 		if ((flags & FNONBLOCK) == 0)
 			type |= F_WAIT;
-		VOP_UNLOCK(vp, 0, p);
+		VOP_UNLOCK(vp, p);
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, type);
 		if (error) {
 			/* closef will vn_close the file for us. */
@@ -929,14 +929,14 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 			error = VOP_SETATTR(vp, &vattr, fp->f_cred, p);
 		}
 		if (error) {
-			VOP_UNLOCK(vp, 0, p);
+			VOP_UNLOCK(vp, p);
 			/* closef will close the file for us. */
 			fdremove(fdp, indx);
 			closef(fp, p);
 			goto out;
 		}
 	}
-	VOP_UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp, p);
 	*retval = indx;
 	FILE_SET_MATURE(fp, p);
 out:
@@ -1089,7 +1089,7 @@ sys_fhopen(struct proc *p, void *v, register_t *retval)
 		type = F_FLOCK;
 		if ((flags & FNONBLOCK) == 0)
 			type |= F_WAIT;
-		VOP_UNLOCK(vp, 0, p);
+		VOP_UNLOCK(vp, p);
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, type);
 		if (error) {
 			vp = NULL;	/* closef will vn_close the file */
@@ -1098,7 +1098,7 @@ sys_fhopen(struct proc *p, void *v, register_t *retval)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 		fp->f_iflags |= FIF_HASLOCK;
 	}
-	VOP_UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp, p);
 	*retval = indx;
 	FILE_SET_MATURE(fp, p);
 
@@ -2040,7 +2040,7 @@ sys_fchmod(struct proc *p, void *v, register_t *retval)
 		vattr.va_mode = mode & ALLPERMS;
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
-	VOP_UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp, p);
 	FRELE(fp, p);
 	return (error);
 }
@@ -2218,7 +2218,7 @@ sys_fchown(struct proc *p, void *v, register_t *retval)
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
 out:
-	VOP_UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp, p);
 	FRELE(fp, p);
 	return (error);
 }
@@ -2484,7 +2484,7 @@ sys_ftruncate(struct proc *p, void *v, register_t *retval)
 		vattr.va_size = len;
 		error = VOP_SETATTR(vp, &vattr, fp->f_cred, p);
 	}
-	VOP_UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp, p);
 bad:
 	FRELE(fp, p);
 	return (error);
@@ -2513,7 +2513,7 @@ sys_fsync(struct proc *p, void *v, register_t *retval)
 		error = softdep_fsync(vp);
 #endif
 
-	VOP_UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp, p);
 	FRELE(fp, p);
 	return (error);
 }
@@ -2749,7 +2749,7 @@ sys_getdents(struct proc *p, void *v, register_t *retval)
 	auio.uio_offset = fp->f_offset;
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag);
 	fp->f_offset = auio.uio_offset;
-	VOP_UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp, p);
 	if (error)
 		goto bad;
 	*retval = buflen - auio.uio_resid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.38 2016/03/14 23:08:06 krw Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.39 2016/03/19 12:04:16 natano Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -499,7 +499,7 @@ quotaon(struct proc *p, struct mount *mp, int type, caddr_t fname)
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	VOP_UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp, p);
 	if (vp->v_type != VREG) {
 		(void) vn_close(vp, FREAD|FWRITE, p->p_ucred, p);
 		return (EACCES);
@@ -921,7 +921,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	if (auio.uio_resid == sizeof(struct dqblk) && error == 0)
 		memset(&dq->dq_dqb, 0, sizeof(struct dqblk));
 	if (vp != dqvp)
-		VOP_UNLOCK(dqvp, 0, p);
+		VOP_UNLOCK(dqvp, p);
 	if (dq->dq_flags & DQ_WANT)
 		wakeup(dq);
 	dq->dq_flags = 0;
@@ -998,7 +998,7 @@ dqsync(struct vnode *vp, struct dquot *dq)
 		(void) tsleep(dq, PINOD+2, "dqsync", 0);
 		if ((dq->dq_flags & DQ_MOD) == 0) {
 			if (vp != dqvp)
-				VOP_UNLOCK(dqvp, 0, p);
+				VOP_UNLOCK(dqvp, p);
 			return (0);
 		}
 	}
@@ -1019,7 +1019,7 @@ dqsync(struct vnode *vp, struct dquot *dq)
 		wakeup(dq);
 	dq->dq_flags &= ~(DQ_MOD|DQ_LOCK|DQ_WANT);
 	if (vp != dqvp)
-		VOP_UNLOCK(dqvp, 0, p);
+		VOP_UNLOCK(dqvp, p);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.63 2016/02/09 00:56:04 mmcc Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.64 2016/03/19 12:04:16 natano Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ nfs_inactive(void *v)
 	}
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT);
 
-	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
+	VOP_UNLOCK(ap->a_vp, ap->a_p);
 	return (0);
 }
 

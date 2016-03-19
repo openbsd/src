@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.129 2016/02/13 15:45:05 stefan Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.130 2016/03/19 12:04:16 natano Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1470,7 +1470,7 @@ nfsrv_fhtovp(fhandle_t *fhp, int lockflag, struct vnode **vpp,
 	else
 		*rdonlyp = 0;
 	if (!lockflag)
-		VOP_UNLOCK(*vpp, 0, p);
+		VOP_UNLOCK(*vpp, p);
 
 	return (0);
 }

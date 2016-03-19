@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.153 2016/03/17 18:52:32 bluhm Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.154 2016/03/19 12:04:16 natano Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -272,7 +272,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 				error = VOP_ACCESS(devvp, VREAD | VWRITE,
 						   p->p_ucred, p);
-				VOP_UNLOCK(devvp, 0, p);
+				VOP_UNLOCK(devvp, p);
 				if (error)
 					goto error_1;
 			}
@@ -365,7 +365,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
-		VOP_UNLOCK(devvp, 0, p);
+		VOP_UNLOCK(devvp, p);
 		if (error)
 			goto error_2;
 	}
@@ -540,7 +540,7 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	devvp = VFSTOUFS(mountp)->um_devvp;
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = vinvalbuf(devvp, 0, cred, p, 0, 0);
-	VOP_UNLOCK(devvp, 0, p);
+	VOP_UNLOCK(devvp, p);
 	if (error)
 		panic("ffs_reload: dirty1");
 
@@ -686,7 +686,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		return (EBUSY);
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0);
-	VOP_UNLOCK(devvp, 0, p);
+	VOP_UNLOCK(devvp, p);
 	if (error)
 		return (error);
 
@@ -908,7 +908,7 @@ out:
 
 	vn_lock(devvp, LK_EXCLUSIVE|LK_RETRY, p);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
-	VOP_UNLOCK(devvp, 0, p);
+	VOP_UNLOCK(devvp, p);
 
 	if (ump) {
 		free(ump->um_fs, M_UFSMNT, ump->um_fs->fs_sbsize);
@@ -1073,7 +1073,7 @@ ffs_flushfiles(struct mount *mp, int flags, struct proc *p)
 	 */
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_FSYNC(ump->um_devvp, p->p_ucred, MNT_WAIT, p);
-	VOP_UNLOCK(ump->um_devvp, 0, p);
+	VOP_UNLOCK(ump->um_devvp, p);
 	return (error);
 }
 
@@ -1138,7 +1138,7 @@ ffs_sync_vnode(struct vnode *vp, void *arg) {
 
 	if ((error = VOP_FSYNC(vp, fsa->cred, fsa->waitfor, fsa->p)))
 		fsa->allerror = error;
-	VOP_UNLOCK(vp, 0, fsa->p);
+	VOP_UNLOCK(vp, fsa->p);
 	vrele(vp);
 
 	return (0);
@@ -1200,7 +1200,7 @@ ffs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		if ((error = VOP_FSYNC(ump->um_devvp, cred, waitfor, p)) != 0)
 			allerror = error;
-		VOP_UNLOCK(ump->um_devvp, 0, p);
+		VOP_UNLOCK(ump->um_devvp, p);
 	}
 	qsync(mp);
 	/*

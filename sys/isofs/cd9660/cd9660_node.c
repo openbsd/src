@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.29 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.30 2016/03/19 12:04:15 natano Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -194,7 +194,7 @@ cd9660_inactive(v)
 #endif
 	
 	ip->i_flag = 0;
-	VOP_UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp, p);
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.

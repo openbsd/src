@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.40 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.41 2016/03/19 12:04:16 natano Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -192,7 +192,7 @@ ntfs_inactive(void *v)
 		vprint("ntfs_inactive: pushing active", vp);
 #endif
 
-	VOP_UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp, p);
 
 	/* XXX since we don't support any filesystem changes
 	 * right now, nothing more needs to be done
@@ -634,7 +634,7 @@ ntfs_lookup(void *v)
 		DPRINTF("ntfs_lookup: faking .. directory in %u\n",
 		    dip->i_number);
 
-		VOP_UNLOCK(dvp, 0, p);
+		VOP_UNLOCK(dvp, p);
 		cnp->cn_flags |= PDIRUNLOCK;
 
 		error = ntfs_ntvattrget(ntmp, dip, NTFS_A_NAME, NULL, 0, &vap);
@@ -671,7 +671,7 @@ ntfs_lookup(void *v)
 		    VTONT(*ap->a_vpp)->i_number);
 
 		if(!lockparent || (cnp->cn_flags & ISLASTCN) == 0) {
-			VOP_UNLOCK(dvp, 0, p);
+			VOP_UNLOCK(dvp, p);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 	}

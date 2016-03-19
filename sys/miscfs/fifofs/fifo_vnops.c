@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.49 2015/09/01 07:17:57 deraadt Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.50 2016/03/19 12:04:15 natano Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ fifo_open(void *v)
 	}
 	if ((ap->a_mode & O_NONBLOCK) == 0) {
 		if ((ap->a_mode & FREAD) && fip->fi_writers == 0) {
-			VOP_UNLOCK(vp, 0, p);
+			VOP_UNLOCK(vp, p);
 			error = tsleep(&fip->fi_readers,
 			    PCATCH | PSOCK, "fifor", 0);
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -184,7 +184,7 @@ fifo_open(void *v)
 				goto bad;
 		}
 		if ((ap->a_mode & FWRITE) && fip->fi_readers == 0) {
-			VOP_UNLOCK(vp, 0, p);
+			VOP_UNLOCK(vp, p);
 			error = tsleep(&fip->fi_writers,
 			    PCATCH | PSOCK, "fifow", 0);
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -219,7 +219,7 @@ fifo_read(void *v)
 		return (0);
 	if (ap->a_ioflag & IO_NDELAY)
 		rso->so_state |= SS_NBIO;
-	VOP_UNLOCK(ap->a_vp, 0, p);
+	VOP_UNLOCK(ap->a_vp, p);
 	error = soreceive(rso, NULL, uio, NULL, NULL, NULL, 0);
 	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (ap->a_ioflag & IO_NDELAY) {
@@ -249,7 +249,7 @@ fifo_write(void *v)
 #endif
 	if (ap->a_ioflag & IO_NDELAY)
 		wso->so_state |= SS_NBIO;
-	VOP_UNLOCK(ap->a_vp, 0, p);
+	VOP_UNLOCK(ap->a_vp, p);
 	error = sosend(wso, NULL, ap->a_uio, NULL, NULL, 0);
 	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (ap->a_ioflag & IO_NDELAY)
@@ -335,7 +335,7 @@ fifo_inactive(void *v)
 {
 	struct vop_inactive_args *ap = v;
 
-	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
+	VOP_UNLOCK(ap->a_vp, ap->a_p);
 	return (0);
 }
 

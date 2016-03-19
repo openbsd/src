@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.41 2015/03/14 03:38:53 jsg Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.42 2016/03/19 12:04:16 natano Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ ufs_inactive(void *v)
 		UFS_UPDATE(ip, 0);
 	}
 out:
-	VOP_UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp, p);
 
 	/*
 	 * If we are done with the inode, reclaim it

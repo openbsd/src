@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.41 2015/12/29 04:46:28 mmcc Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.42 2016/03/19 12:04:15 natano Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -941,7 +941,7 @@ vdsp_open(void *arg1)
 			sc->sc_vdisk_size = va.va_size / DEV_BSIZE;
 		}
 
-		VOP_UNLOCK(nd.ni_vp, 0, p);
+		VOP_UNLOCK(nd.ni_vp, p);
 		sc->sc_vp = nd.ni_vp;
 
 		vdsp_readlabel(sc);
@@ -1013,7 +1013,7 @@ vdsp_readlabel(struct vdsp_softc *sc)
 
 	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
 	err = VOP_READ(sc->sc_vp, &uio, 0, p->p_ucred);
-	VOP_UNLOCK(sc->sc_vp, 0, p);
+	VOP_UNLOCK(sc->sc_vp, p);
 	if (err) {
 		free(sc->sc_label, M_DEVBUF, 0);
 		sc->sc_label = NULL;
@@ -1043,7 +1043,7 @@ vdsp_writelabel(struct vdsp_softc *sc)
 
 	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
 	err = VOP_WRITE(sc->sc_vp, &uio, 0, p->p_ucred);
-	VOP_UNLOCK(sc->sc_vp, 0, p);
+	VOP_UNLOCK(sc->sc_vp, p);
 
 	return (err);
 }
@@ -1074,7 +1074,7 @@ vdsp_is_iso(struct vdsp_softc *sc)
 
 	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
 	err = VOP_READ(sc->sc_vp, &uio, 0, p->p_ucred);
-	VOP_UNLOCK(sc->sc_vp, 0, p);
+	VOP_UNLOCK(sc->sc_vp, p);
 
 	if (err == 0 && memcmp(vdp->id, ISO_STANDARD_ID, sizeof(vdp->id)))
 		err = ENOENT;
@@ -1153,7 +1153,7 @@ vdsp_read_desc(struct vdsp_softc *sc, struct vdsk_desc_msg *dm)
 
 	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
 	dm->status = VOP_READ(sc->sc_vp, &uio, 0, p->p_ucred);
-	VOP_UNLOCK(sc->sc_vp, 0, p);
+	VOP_UNLOCK(sc->sc_vp, p);
 
 	KERNEL_UNLOCK();
 	if (dm->status == 0) {
@@ -1227,7 +1227,7 @@ vdsp_read_dring(void *arg1, void *arg2)
 
 	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
 	vd->status = VOP_READ(sc->sc_vp, &uio, 0, p->p_ucred);
-	VOP_UNLOCK(sc->sc_vp, 0, p);
+	VOP_UNLOCK(sc->sc_vp, p);
 
 	KERNEL_UNLOCK();
 	if (vd->status == 0) {
@@ -1326,7 +1326,7 @@ vdsp_write_dring(void *arg1, void *arg2)
 
 	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
 	vd->status = VOP_WRITE(sc->sc_vp, &uio, 0, p->p_ucred);
-	VOP_UNLOCK(sc->sc_vp, 0, p);
+	VOP_UNLOCK(sc->sc_vp, p);
 
 fail:
 	free(buf, M_DEVBUF, 0);

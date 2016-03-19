@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.57 2016/02/27 18:50:38 natano Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.58 2016/03/19 12:04:16 natano Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ ext2fs_inactive(void *v)
 		ext2fs_update(ip, 0);
 	}
 out:
-	VOP_UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp, p);
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.

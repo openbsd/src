@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.47 2016/03/17 18:52:31 bluhm Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.48 2016/03/19 12:04:15 natano Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -171,7 +171,7 @@ udf_mount(struct mount *mp, const char *path, void *data,
 	if (p->p_ucred->cr_uid) {
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		error = VOP_ACCESS(devvp, VREAD, p->p_ucred, p);
-		VOP_UNLOCK(devvp, 0, p);
+		VOP_UNLOCK(devvp, p);
 		if (error) {
 			vrele(devvp);
 			return (error);
@@ -251,7 +251,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, uint32_t lb, struct proc *p)
 		return (EBUSY);
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
-	VOP_UNLOCK(devvp, 0, p);
+	VOP_UNLOCK(devvp, p);
 	if (error)
 		return (error);
 
@@ -453,7 +453,7 @@ bail:
 
 	vn_lock(devvp, LK_EXCLUSIVE|LK_RETRY, p);
 	VOP_CLOSE(devvp, FREAD, FSCRED, p);
-	VOP_UNLOCK(devvp, 0, p);
+	VOP_UNLOCK(devvp, p);
 
 	return (error);
 }
@@ -477,7 +477,7 @@ udf_unmount(struct mount *mp, int mntflags, struct proc *p)
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	vinvalbuf(devvp, V_SAVE, NOCRED, p, 0, 0);
 	error = VOP_CLOSE(devvp, FREAD, NOCRED, p);
-	VOP_UNLOCK(devvp, 0, p);
+	VOP_UNLOCK(devvp, p);
 	if (error)
 		return (error);
 

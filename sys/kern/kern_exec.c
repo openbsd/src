@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.174 2016/03/06 20:25:27 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.175 2016/03/19 12:04:15 natano Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -164,7 +164,7 @@ check_exec(struct proc *p, struct exec_package *epp)
 		goto bad1;
 
 	/* unlock vp, we need it unlocked from here */
-	VOP_UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp, p);
 
 	/* now we have the file, get the exec header */
 	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,

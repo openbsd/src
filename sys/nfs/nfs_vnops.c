@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.167 2016/02/13 15:45:05 stefan Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.168 2016/03/19 12:04:16 natano Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -783,7 +783,7 @@ nfs_lookup(void *v)
 				cnp->cn_flags |= SAVENAME;
 			if ((!lockparent || !(flags & ISLASTCN)) &&
 			     newvp != dvp)
-				VOP_UNLOCK(dvp, 0, p);
+				VOP_UNLOCK(dvp, p);
 			return (0);
 		}
 		cache_purge(newvp);
@@ -840,7 +840,7 @@ dorpc:
 		m_freem(info.nmi_mrep);
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent) {
-			VOP_UNLOCK(dvp, 0, p);
+			VOP_UNLOCK(dvp, p);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		return (0);
@@ -861,7 +861,7 @@ dorpc:
 		} else
 			nfsm_loadattr(newvp, NULL);
 	} else if (flags & ISDOTDOT) {
-		VOP_UNLOCK(dvp, 0, p);
+		VOP_UNLOCK(dvp, p);
 		cnp->cn_flags |= PDIRUNLOCK;
 
 		error = nfs_nget(dvp->v_mount, fhp, fhsize, &np);
@@ -901,7 +901,7 @@ dorpc:
 		} else
 			nfsm_loadattr(newvp, NULL);
 		if (!lockparent || !(flags & ISLASTCN)) {
-			VOP_UNLOCK(dvp, 0, p);
+			VOP_UNLOCK(dvp, p);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 	}
@@ -931,7 +931,7 @@ nfsmout:
 		if (newvp != NULLVP) {
 			vrele(newvp);
 			if (newvp != dvp)
-				VOP_UNLOCK(newvp, 0, p);
+				VOP_UNLOCK(newvp, p);
 		}
 		if ((cnp->cn_nameiop == CREATE || cnp->cn_nameiop == RENAME) &&
 		    (flags & ISLASTCN) && error == ENOENT) {

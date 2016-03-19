@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vinvalbuf.9,v 1.9 2013/07/17 20:21:56 schwarze Exp $
+.\"     $OpenBSD: vinvalbuf.9,v 1.10 2016/03/19 12:04:15 natano Exp $
 .\"
 .\" Copyright (C) 2001 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/vinvalbuf.9,v 1.6 2001/10/06 11:19:41 sheldonh Exp $
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: March 19 2016 $
 .Dt VINVALBUF 9
 .Os
 .Sh NAME
@@ -87,7 +87,7 @@ A value of 0 is returned on success.
 .Bd -literal -offset indent
 vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0);
-VOP_UNLOCK(devvp, 0, p);
+VOP_UNLOCK(devvp, p);
 if (error)
 	return (error);
 .Ed

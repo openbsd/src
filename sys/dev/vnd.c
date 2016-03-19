@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.157 2015/08/26 22:36:18 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.158 2016/03/19 12:04:15 natano Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -459,14 +459,14 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		else {
 			error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p);
 			if (error) {
-				VOP_UNLOCK(nd.ni_vp, 0, p);
+				VOP_UNLOCK(nd.ni_vp, p);
 				vn_close(nd.ni_vp, VNDRW(sc), p->p_ucred, p);
 				disk_unlock(&sc->sc_dk);
 				return (error);
 			}
 			sc->sc_size = vattr.va_size / sc->sc_secsize;
 		}
-		VOP_UNLOCK(nd.ni_vp, 0, p);
+		VOP_UNLOCK(nd.ni_vp, p);
 		sc->sc_vp = nd.ni_vp;
 		if ((error = vndsetcred(sc, p->p_ucred)) != 0) {
 			(void) vn_close(nd.ni_vp, VNDRW(sc), p->p_ucred, p);

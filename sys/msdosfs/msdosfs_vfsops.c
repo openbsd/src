@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.74 2016/03/17 18:52:31 bluhm Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.75 2016/03/19 12:04:16 natano Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -148,7 +148,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 				error = VOP_ACCESS(devvp, VREAD | VWRITE,
 						   p->p_ucred, p);
-				VOP_UNLOCK(devvp, 0, p);
+				VOP_UNLOCK(devvp, p);
 				if (error)
 					return (error);
 			}
@@ -207,7 +207,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
-		VOP_UNLOCK(devvp, 0, p);
+		VOP_UNLOCK(devvp, p);
 		if (error)
 			goto error_devvp;
 	}
@@ -302,7 +302,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p,
 		return (EBUSY);
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
-	VOP_UNLOCK(devvp, 0, p);
+	VOP_UNLOCK(devvp, p);
 	if (error)
 		return (error);
 
@@ -584,7 +584,7 @@ error_exit:
 
 	vn_lock(devvp, LK_EXCLUSIVE|LK_RETRY, p);
 	(void) VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-	VOP_UNLOCK(devvp, 0, p);
+	VOP_UNLOCK(devvp, p);
 
 	if (pmp) {
 		if (pmp->pm_inusemap)
@@ -706,7 +706,7 @@ msdosfs_sync_vnode(struct vnode *vp, void *arg)
 
 	if ((error = VOP_FSYNC(vp, msa->cred, msa->waitfor, msa->p)) != 0)
 		msa->allerror = error;
-	VOP_UNLOCK(vp, 0, msa->p);
+	VOP_UNLOCK(vp, msa->p);
 	vrele(vp);
 
 	return (0);
@@ -748,7 +748,7 @@ msdosfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 		vn_lock(pmp->pm_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		if ((error = VOP_FSYNC(pmp->pm_devvp, cred, waitfor, p)) != 0)
 			msa.allerror = error;
-		VOP_UNLOCK(pmp->pm_devvp, 0, p);
+		VOP_UNLOCK(pmp->pm_devvp, p);
 	}
 
 	return (msa.allerror);

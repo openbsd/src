@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.55 2015/10/23 17:21:34 krw Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.56 2016/03/19 12:04:16 natano Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -661,7 +661,7 @@ msdosfs_inactive(void *v)
 	deupdat(dep, 0);
 
 out:
-	VOP_UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp, p);
 	/*
 	 * If we are done with the denode, reclaim it
 	 * so that it can be reused immediately.

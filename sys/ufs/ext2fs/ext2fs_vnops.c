@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.76 2016/02/27 18:50:38 natano Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.77 2016/03/19 12:04:16 natano Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -477,7 +477,7 @@ ext2fs_link(void *v)
 	pool_put(&namei_pool, cnp->cn_pnbuf);
 out1:
 	if (dvp != vp)
-		VOP_UNLOCK(vp, 0, p);
+		VOP_UNLOCK(vp, p);
 out2:
 	vput(dvp);
 	return (error);
@@ -585,13 +585,13 @@ abortit:
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);
 	if ((nlink_t)ip->i_e2fs_nlink >= LINK_MAX) {
-		VOP_UNLOCK(fvp, 0, p);
+		VOP_UNLOCK(fvp, p);
 		error = EMLINK;
 		goto abortit;
 	}
 	if ((ip->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) ||
 		(dp->i_e2fs_flags & EXT2_APPEND)) {
-		VOP_UNLOCK(fvp, 0, p);
+		VOP_UNLOCK(fvp, p);
 		error = EPERM;
 		goto abortit;
 	}
@@ -601,7 +601,7 @@ abortit:
                 	error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred,
 			    tcnp->cn_proc);
         	if (error) {
-                	VOP_UNLOCK(fvp, 0, p);
+                	VOP_UNLOCK(fvp, p);
                 	error = EACCES;
                 	goto abortit;
         	}
@@ -613,7 +613,7 @@ abortit:
 			(fcnp->cn_flags&ISDOTDOT) ||
 			(tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
-			VOP_UNLOCK(fvp, 0, p);
+			VOP_UNLOCK(fvp, p);
 			error = EINVAL;
 			goto abortit;
 		}
@@ -641,7 +641,7 @@ abortit:
 	ip->i_e2fs_nlink++;
 	ip->i_flag |= IN_CHANGE;
 	if ((error = ext2fs_update(ip, 1)) != 0) {
-		VOP_UNLOCK(fvp, 0, p);
+		VOP_UNLOCK(fvp, p);
 		goto bad;
 	}
 
@@ -656,7 +656,7 @@ abortit:
 	 * call to checkpath().
 	 */
 	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
-	VOP_UNLOCK(fvp, 0, p);
+	VOP_UNLOCK(fvp, p);
 	if (oldparent != dp->i_number)
 		newparent = dp->i_number;
 	if (doingdirectory && newparent) {

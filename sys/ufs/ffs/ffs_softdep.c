@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.131 2015/01/09 05:01:57 tedu Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.132 2016/03/19 12:04:16 natano Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -868,7 +868,7 @@ softdep_flushworklist(struct mount *oldmnt, int *countp, struct proc *p)
 		*countp += count;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		error = VOP_FSYNC(devvp, p->p_ucred, MNT_WAIT, p);
-		VOP_UNLOCK(devvp, 0, p);
+		VOP_UNLOCK(devvp, p);
 		if (error)
 			break;
 	}
@@ -4568,7 +4568,7 @@ softdep_fsync(struct vnode *vp)
 		 * ufs_lookup for details on possible races.
 		 */
 		FREE_LOCK(&lk);
-		VOP_UNLOCK(vp, 0, p);
+		VOP_UNLOCK(vp, p);
 		error = VFS_VGET(mnt, parentino, &pvp);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 		if (error != 0)
