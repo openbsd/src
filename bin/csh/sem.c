@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.21 2015/12/26 13:48:38 mestre Exp $	*/
+/*	$OpenBSD: sem.c,v 1.22 2016/03/19 15:42:38 krw Exp $	*/
 /*	$NetBSD: sem.c,v 1.9 1995/09/27 00:38:50 jtc Exp $	*/
 
 /*-
@@ -31,7 +31,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -547,7 +546,7 @@ doio(struct command *t, int *pipein, int *pipeout)
 	else {
 	    (void) close(0);
 	    (void) dup(OLDSTD);
-	    (void) ioctl(STDIN_FILENO, FIONCLEX, NULL);
+	    (void) fcntl(STDIN_FILENO, F_SETFD, 0);
 	}
     }
     if (t->t_drit) {
@@ -581,7 +580,7 @@ doio(struct command *t, int *pipein, int *pipeout)
     else {
 	(void) close(1);
 	(void) dup(SHOUT);
-	(void) ioctl(STDOUT_FILENO, FIONCLEX, NULL);
+	(void) fcntl(STDOUT_FILENO, F_SETFD, 0);
     }
 
     (void) close(2);
@@ -590,7 +589,7 @@ doio(struct command *t, int *pipein, int *pipeout)
     }
     else {
 	(void) dup(SHERR);
-	(void) ioctl(STDERR_FILENO, FIONCLEX, NULL);
+	(void) fcntl(STDERR_FILENO, F_SETFD, 0);
     }
     didfds = 1;
 }
