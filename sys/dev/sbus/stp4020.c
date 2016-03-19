@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020.c,v 1.18 2013/11/19 01:23:51 deraadt Exp $	*/
+/*	$OpenBSD: stp4020.c,v 1.19 2016/03/19 11:34:22 mpi Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -898,21 +898,21 @@ void
 stp4020_delay(ms)
 	unsigned int ms;
 {
-	unsigned int ticks;
+	unsigned int nticks;
 
-	/* Convert to ticks */
-	ticks = (ms * hz) / 1000000;
+	/* Convert to nticks */
+	nticks = (ms * hz) / 1000000;
 
-	if (cold || ticks == 0) {
+	if (cold || nticks == 0) {
 		delay(ms);
 		return;
 	}
 
 #ifdef DEBUG
-	if (ticks > 60 * hz)
-		panic("stp4020: preposterous delay: %u", ticks);
+	if (nticks > 60 * hz)
+		panic("stp4020: preposterous delay: %u", nticks);
 #endif
-	tsleep(&ticks, 0, "stp4020_delay", ticks);
+	tsleep(&nticks, 0, "stp4020_delay", nticks);
 }
 
 #ifdef STP4020_DEBUG

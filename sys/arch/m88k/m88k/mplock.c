@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.c,v 1.3 2015/02/11 07:05:39 dlg Exp $	*/
+/*	$OpenBSD: mplock.c,v 1.4 2016/03/19 11:34:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -50,12 +50,12 @@ __mp_lock_spin(struct __mp_lock *mpl)
 	while (mpl->mpl_count != 0)
 		SPINLOCK_SPIN_HOOK;
 #else
-	int ticks = __mp_lock_spinout;
+	int nticks = __mp_lock_spinout;
 
-	while (mpl->mpl_count != 0 && ticks-- > 0)
+	while (mpl->mpl_count != 0 && nticks-- > 0)
 		SPINLOCK_SPIN_HOOK;
 
-	if (ticks == 0) {
+	if (nticks == 0) {
  		db_printf("__mp_lock(0x%x): lock spun out", mpl);
 		Debugger();
 	}

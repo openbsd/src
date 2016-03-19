@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 2014/07/18 07:27:47 jasper Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.8 2016/03/19 11:34:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -161,10 +161,10 @@ parse_rootdev(void)
 time_t
 getsecs(void)
 {
-	u_int ticks = cp0_get_count();
+	u_int nticks = cp0_get_count();
 	uint32_t freq = boot_desc->eclock;
 
-	return (time_t)((0xffffffff - ticks) / freq);
+	return (time_t)((0xffffffff - nticks) / freq);
 }
 
 void

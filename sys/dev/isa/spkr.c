@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.20 2015/11/25 04:49:10 tedu Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.21 2016/03/19 11:34:22 mpi Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -83,16 +83,16 @@ static void playstring(char *, size_t);
 
 /* emit tone of frequency hz for given number of ticks */
 static void
-tone(hz, ticks)
-	u_int hz, ticks;
+tone(hz, nticks)
+	u_int hz, nticks;
 {
-	pcppi_bell(ppicookie, hz, ticks, PCPPI_BELL_SLEEP);
+	pcppi_bell(ppicookie, hz, nticks, PCPPI_BELL_SLEEP);
 }
 
 /* rest for given number of ticks */
 static void
-rest(ticks)
-	int ticks;
+rest(nticks)
+	int nticks;
 {
 	/*
 	 * Set timeout to endrest function, then give up the timeslice.
@@ -100,10 +100,10 @@ rest(ticks)
 	 * waited out.
 	 */
 #ifdef SPKRDEBUG
-	printf("rest: %d\n", ticks);
+	printf("rest: %d\n", nticks);
 #endif /* SPKRDEBUG */
-	if (ticks > 0)
-		tsleep(rest, SPKRPRI | PCATCH, "rest", ticks);
+	if (nticks > 0)
+		tsleep(rest, SPKRPRI | PCATCH, "rest", nticks);
 }
 
 /**************** PLAY STRING INTERPRETER BEGINS HERE **********************

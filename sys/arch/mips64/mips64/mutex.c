@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.3 2015/09/26 04:03:25 visa Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.4 2016/03/19 11:34:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -57,15 +57,15 @@ void
 mtx_enter(struct mutex *mtx)
 {
 #ifdef MP_LOCKDEBUG
-	int ticks = __mp_lock_spinout;
+	int nticks = __mp_lock_spinout;
 #endif
 
 	while (mtx_enter_try(mtx) == 0) {
 #ifdef MP_LOCKDEBUG
-		if (--ticks == 0) {
+		if (--nticks == 0) {
 			db_printf("%s(%p): lock spun out", __func__, mtx);
 			Debugger();
-			ticks = __mp_lock_spinout;
+			nticks = __mp_lock_spinout;
 		}
 #endif
 	}

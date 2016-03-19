@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.17 2016/03/07 13:21:51 naddy Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.18 2016/03/19 11:34:22 mpi Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
@@ -737,7 +737,7 @@ OF_milliseconds(void)
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
-		cell_t ticks;
+		cell_t nticks;
 	} args;
 	
 	args.name = ADR2CELL("milliseconds");
@@ -745,7 +745,7 @@ OF_milliseconds(void)
 	args.nreturns = 1;
 	if (openfirmware(&args) == -1)
 		return -1;
-	return (args.ticks);
+	return (args.nticks);
 }
 
 #ifdef DDB

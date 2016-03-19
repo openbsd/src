@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.30 2016/01/09 04:14:42 jcs Exp $   */
+/*	$OpenBSD: uthum.c,v 1.31 2016/03/19 11:34:22 mpi Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -742,7 +742,7 @@ uthum_ds75_temp(uint8_t msb, uint8_t lsb)
 int
 uthum_sht1x_temp(uint8_t msb, uint8_t lsb)
 {
-	int ticks;
+	int nticks;
 
 	/* sensor device VDD-bias value table
 	 * ----------------------------------------------
@@ -754,20 +754,20 @@ uthum_sht1x_temp(uint8_t msb, uint8_t lsb)
 	 * bias -3970 will be best for that device.
 	 */
 
-	ticks = (msb * 256 + lsb) & 0x3fff;
-	return (ticks - 3970);
+	nticks = (msb * 256 + lsb) & 0x3fff;
+	return (nticks - 3970);
 }
 
 /* return %RH * 1000 */
 int
 uthum_sht1x_rh(uint8_t msb, uint8_t lsb, int temp)
 {
-	int ticks, rh_l;
+	int nticks, rh_l;
 
-	ticks = (msb * 256 + lsb) & 0x0fff;
-	rh_l = (-40000 + 405 * ticks) - ((7 * ticks * ticks) / 250);
+	nticks = (msb * 256 + lsb) & 0x0fff;
+	rh_l = (-40000 + 405 * nticks) - ((7 * nticks * nticks) / 250);
 
-	return ((temp - 2500) * (1 + (ticks >> 7)) + rh_l) / 10;
+	return ((temp - 2500) * (1 + (nticks >> 7)) + rh_l) / 10;
 }
 
 /* return muK */

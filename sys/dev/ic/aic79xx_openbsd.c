@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.43 2015/07/17 21:42:49 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.44 2016/03/19 11:34:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -692,24 +692,24 @@ void
 aic_timer_reset(aic_timer_t *timer, u_int msec, ahd_callback_t *func,
     void *arg)
 {
-	uint64_t ticks;
+	uint64_t nticks;
 
-	ticks = msec;
-	ticks *= hz;
-	ticks /= 1000;
-	callout_reset(timer, ticks, func, arg);
+	nticks = msec;
+	nticks *= hz;
+	nticks /= 1000;
+	callout_reset(timer, nticks, func, arg);
 }
 
 void
 aic_scb_timer_reset(struct scb *scb, u_int msec)
 {
-	uint64_t ticks;
+	uint64_t nticks;
 
-	ticks = msec;
-	ticks *= hz;
-	ticks /= 1000;
+	nticks = msec;
+	nticks *= hz;
+	nticks /= 1000;
 	if (!(scb->xs->xs_control & XS_CTL_POLL))
-		callout_reset(&scb->xs->xs_callout, ticks, ahd_timeout, scb);
+		callout_reset(&scb->xs->xs_callout, nticks, ahd_timeout, scb);
 }
 
 void

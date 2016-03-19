@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichwdt.c,v 1.5 2014/12/10 12:27:57 mikeb Exp $	*/
+/*	$OpenBSD: ichwdt.c,v 1.6 2016/03/19 11:34:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -158,7 +158,7 @@ int
 ichwdt_cb(void *arg, int period)
 {
 	struct ichwdt_softc *sc = arg;
-	int ticks;
+	int nticks;
 
 	if (period == 0) {
 		if (sc->sc_period != 0) {
@@ -178,11 +178,11 @@ ichwdt_cb(void *arg, int period)
 
 		if (sc->sc_period != period) {
 			/* Set new timeout */
-			ticks = (period * 33000000) / sc->sc_divisor;
-			ichwdt_unlock_write(sc, ICH_WDT_PRE1, ticks);
+			nticks = (period * 33000000) / sc->sc_divisor;
+			ichwdt_unlock_write(sc, ICH_WDT_PRE1, nticks);
 			ichwdt_unlock_write(sc, ICH_WDT_PRE2, 2);
-			DPRINTF(("%s: timeout %ds (%d ticks)\n",
-			    sc->sc_dev.dv_xname, period, ticks));
+			DPRINTF(("%s: timeout %ds (%d nticks)\n",
+			    sc->sc_dev.dv_xname, period, nticks));
 		}
 		if (sc->sc_period == 0) {
 			/* Enable watchdog */

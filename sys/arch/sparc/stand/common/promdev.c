@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.c,v 1.17 2015/01/11 18:10:33 miod Exp $	*/
+/*	$OpenBSD: promdev.c,v 1.18 2016/03/19 11:34:22 mpi Exp $	*/
 /*	$NetBSD: promdev.c,v 1.16 1995/11/14 15:04:01 pk Exp $ */
 
 /*
@@ -476,8 +476,8 @@ int hz = 1000;
 time_t
 getsecs(void)
 {
-	register int ticks = getticks();
-	return ((time_t)(ticks / hz));
+	register int nticks = getticks();
+	return ((time_t)(nticks / hz));
 }
 
 int

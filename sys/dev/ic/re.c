@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.189 2016/01/04 05:41:22 dlg Exp $	*/
+/*	$OpenBSD: re.c,v 1.190 2016/03/19 11:34:22 mpi Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -2262,15 +2262,15 @@ re_setup_sim_im(struct rl_softc *sc)
 	if (sc->sc_hwrev == RL_HWREV_8139CPLUS)
 		CSR_WRITE_4(sc, RL_TIMERINT, 0x400); /* XXX */
 	else {
-		u_int32_t ticks;
+		u_int32_t nticks;
 
 		/*
 		 * Datasheet says tick decreases at bus speed,
 		 * but it seems the clock runs a little bit
 		 * faster, so we do some compensation here.
 		 */
-		ticks = (sc->rl_sim_time * sc->rl_bus_speed * 8) / 5;
-		CSR_WRITE_4(sc, RL_TIMERINT_8169, ticks);
+		nticks = (sc->rl_sim_time * sc->rl_bus_speed * 8) / 5;
+		CSR_WRITE_4(sc, RL_TIMERINT_8169, nticks);
 	}
 	CSR_WRITE_4(sc, RL_TIMERCNT, 1); /* reload */
 	sc->rl_timerintr = 1;

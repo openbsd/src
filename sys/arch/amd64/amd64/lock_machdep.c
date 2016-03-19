@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.9 2015/06/25 00:58:49 dlg Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.10 2016/03/19 11:34:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -50,12 +50,12 @@ __mp_lock_spin(struct __mp_lock *mpl, u_int me)
 	while (mpl->mpl_ticket != me)
 		SPINLOCK_SPIN_HOOK;
 #else
-	int ticks = __mp_lock_spinout;
+	int nticks = __mp_lock_spinout;
 
-	while (mpl->mpl_ticket != me && --ticks > 0)
+	while (mpl->mpl_ticket != me && --nticks > 0)
 		SPINLOCK_SPIN_HOOK;
 
-	if (ticks == 0) {
+	if (nticks == 0) {
 		db_printf("__mp_lock(%p): lock spun out", mpl);
 		Debugger();
 	}
