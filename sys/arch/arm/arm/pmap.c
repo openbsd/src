@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.60 2016/03/18 13:16:02 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.61 2016/03/19 09:36:56 patrick Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -3045,7 +3045,7 @@ pmap_reference(pmap_t pm)
  * StrongARM accesses to non-cached pages are non-burst making writing
  * _any_ bulk data very slow.
  */
-#if (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0
+#if ARM_MMU_GENERIC == 1
 void
 pmap_zero_page_generic(struct vm_page *pg)
 {
@@ -3069,7 +3069,7 @@ pmap_zero_page_generic(struct vm_page *pg)
 	bzero_page(cdstp);
 	cpu_dcache_wbinv_range(cdstp, PAGE_SIZE);
 }
-#endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
+#endif /* ARM_MMU_GENERIC == 1 */
 
 #if ARM_MMU_XSCALE == 1
 void
@@ -3105,7 +3105,7 @@ pmap_zero_page_xscale(struct vm_page *pg)
  * hook points. The same comment regarding cachability as in
  * pmap_zero_page also applies here.
  */
-#if (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0
+#if ARM_MMU_GENERIC == 1
 void
 pmap_copy_page_generic(struct vm_page *src_pg, struct vm_page *dst_pg)
 {
@@ -3144,7 +3144,7 @@ pmap_copy_page_generic(struct vm_page *src_pg, struct vm_page *dst_pg)
 	cpu_dcache_inv_range(csrcp, PAGE_SIZE);
 	cpu_dcache_wbinv_range(cdstp, PAGE_SIZE);
 }
-#endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
+#endif /* ARM_MMU_GENERIC == 1 */
 
 #if ARM_MMU_XSCALE == 1
 void
@@ -4380,7 +4380,7 @@ pt_entry_t	pte_l2_s_proto;
 void		(*pmap_copy_page_func)(struct vm_page *, struct vm_page *);
 void		(*pmap_zero_page_func)(struct vm_page *);
 
-#if (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0
+#if ARM_MMU_GENERIC == 1
 void
 pmap_pte_init_generic(void)
 {
@@ -4438,7 +4438,7 @@ pmap_pte_init_generic(void)
 	pmap_copy_page_func = pmap_copy_page_generic;
 	pmap_zero_page_func = pmap_zero_page_generic;
 }
-#endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
+#endif /* ARM_MMU_GENERIC == 1 */
 
 #if defined(CPU_ARM10)
 void
@@ -4545,27 +4545,6 @@ pmap_pte_init_armv7(void)
 	pmap_needs_pte_sync = 1;
 }
 #endif /* CPU_ARMv7 */
-
-#if ARM_MMU_SA1 == 1
-void
-pmap_pte_init_sa1(void)
-{
-
-	/*
-	 * The StrongARM SA-1 cache does not have a write-through
-	 * mode.  So, do the generic initialization, then reset
-	 * the page table cache mode to B=1,C=1, and note that
-	 * the PTEs need to be sync'd.
-	 */
-	pmap_pte_init_generic();
-
-	pte_l1_s_cache_mode_pt = L1_S_B|L1_S_C;
-	pte_l2_l_cache_mode_pt = L2_B|L2_C;
-	pte_l2_s_cache_mode_pt = L2_B|L2_C;
-
-	pmap_needs_pte_sync = 1;
-}
-#endif /* ARM_MMU_SA1 == 1*/
 
 #if ARM_MMU_XSCALE == 1
 #if (ARM_NMMUS > 1)

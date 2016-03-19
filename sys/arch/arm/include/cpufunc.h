@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.18 2016/03/18 13:16:02 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.19 2016/03/19 09:36:57 patrick Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -213,43 +213,6 @@ u_int	cpufunc_dfar		(void);
 u_int	cpufunc_ifsr		(void);
 u_int	cpufunc_ifar		(void);
 
-#if defined(CPU_SA1100) || defined(CPU_SA1110)
-void	sa11x0_drain_readbuf	(void);
-
-void	sa11x0_context_switch	(u_int);
-void	sa11x0_cpu_sleep	(int mode);
- 
-void	sa11x0_setup		(void);
-#endif
-
-#if defined(CPU_SA1100) || defined(CPU_SA1110)
-void	sa1_setttb		(u_int ttb);
-
-void	sa1_tlb_flushID_SE	(u_int va);
-
-void	sa1_cache_flushID	(void);
-void	sa1_cache_flushI	(void);
-void	sa1_cache_flushD	(void);
-void	sa1_cache_flushD_SE	(u_int entry);
-
-void	sa1_cache_cleanID	(void);
-void	sa1_cache_cleanD	(void);
-void	sa1_cache_cleanD_E	(u_int entry);
-
-void	sa1_cache_purgeID	(void);
-void	sa1_cache_purgeID_E	(u_int entry);
-void	sa1_cache_purgeD	(void);
-void	sa1_cache_purgeD_E	(u_int entry);
-
-void	sa1_cache_syncI		(void);
-void	sa1_cache_cleanID_rng	(vaddr_t start, vsize_t end);
-void	sa1_cache_cleanD_rng	(vaddr_t start, vsize_t end);
-void	sa1_cache_purgeID_rng	(vaddr_t start, vsize_t end);
-void	sa1_cache_purgeD_rng	(vaddr_t start, vsize_t end);
-void	sa1_cache_syncI_rng	(vaddr_t start, vsize_t end);
-
-#endif
-
 #if defined(CPU_ARM9E) || defined(CPU_ARM10)
 void	arm10_tlb_flushID_SE	(u_int);
 void	arm10_tlb_flushI_SE	(u_int);
@@ -352,7 +315,6 @@ extern unsigned armv7_dcache_index_inc;
 
 
 #if defined(CPU_ARM9E) || defined(CPU_ARM10) || \
-    defined(CPU_SA1100) || defined(CPU_SA1110) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
 
@@ -362,12 +324,6 @@ void	armv4_tlb_flushD	(void);
 void	armv4_tlb_flushD_SE	(u_int va);
 
 void	armv4_drain_writebuf	(void);
-#endif
-
-#if defined(CPU_IXP12X0)
-void	ixp12x0_drain_readbuf	(void);
-void	ixp12x0_context_switch	(u_int);
-void	ixp12x0_setup		(void);
 #endif
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \

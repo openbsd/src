@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.37 2016/03/18 13:16:02 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.38 2016/03/19 09:36:57 patrick Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -366,7 +366,7 @@ do {									\
 
 /************************* ARM MMU configuration *****************************/
 
-#if (ARM_MMU_GENERIC + ARM_MMU_SA1 + ARM_MMU_V7) != 0
+#if (ARM_MMU_GENERIC + ARM_MMU_V7) != 0
 void	pmap_copy_page_generic(struct vm_page *, struct vm_page *);
 void	pmap_zero_page_generic(struct vm_page *);
 
@@ -380,11 +380,7 @@ void	pmap_pte_init_arm11(void);
 #if defined(CPU_ARMv7)
 void	pmap_pte_init_armv7(void);
 #endif /* CPU_ARMv7 */
-#endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1 + ARM_MMU_V7) != 0 */
-
-#if ARM_MMU_SA1 == 1
-void	pmap_pte_init_sa1(void);
-#endif /* ARM_MMU_SA1 == 1 */
+#endif /* (ARM_MMU_GENERIC + ARM_MMU_V7) != 0 */
 
 #if ARM_MMU_V7 == 1
 void	pmap_pte_init_v7(void);
@@ -591,7 +587,7 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 
 #define	pmap_copy_page(s, d)	(*pmap_copy_page_func)((s), (d))
 #define	pmap_zero_page(d)	(*pmap_zero_page_func)((d))
-#elif (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0
+#elif ARM_MMU_GENERIC == 1
 #define	L1_S_PROT_UR		L1_S_PROT_UR_generic
 #define	L1_S_PROT_UW		L1_S_PROT_UW_generic
 #define	L1_S_PROT_KR		L1_S_PROT_KR_generic

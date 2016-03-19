@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.10 2016/03/18 13:35:25 jsg Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.11 2016/03/19 09:36:57 patrick Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.7 2003/05/23 00:57:24 ichiro Exp $	*/
 
 /*
@@ -48,13 +48,6 @@
 /*
  * Determine which ARM architecture versions are configured.
  */
-#if (defined(CPU_SA1100) || defined(CPU_SA1110) || \
-     defined(CPU_IXP12X0))
-#define	ARM_ARCH_4	1
-#else
-#define	ARM_ARCH_4	0
-#endif
-
 #if (defined(CPU_ARM9E) || defined(CPU_ARM10) || 			\
      defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
      defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425))
@@ -80,9 +73,6 @@
  *
  *	ARM_MMU_GENERIC		Generic ARM MMU, compatible with ARM6.
  *
- *	ARM_MMU_SA1		StrongARM SA-1 MMU.  Compatible with generic
- *				ARM MMU, but has no write-through cache mode.
- *
  *	ARM_MMU_XSCALE		XScale MMU.  Compatible with generic ARM
  *				MMU, but also has several extensions which
  *				require different PTE layout to use.
@@ -95,13 +85,6 @@
 #define	ARM_MMU_GENERIC		1
 #else
 #define	ARM_MMU_GENERIC		0
-#endif
-
-#if (defined(CPU_SA1100) || defined(CPU_SA1110) ||\
-     defined(CPU_IXP12X0))
-#define	ARM_MMU_SA1		1
-#else
-#define	ARM_MMU_SA1		0
 #endif
 
 #if (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
@@ -118,7 +101,7 @@
 #endif
 
 #define	ARM_NMMUS		(ARM_MMU_GENERIC +	\
-				 ARM_MMU_SA1 + ARM_MMU_XSCALE + ARM_MMU_V7)
+				 ARM_MMU_XSCALE + ARM_MMU_V7)
 
 /*
  * Define features that may be present on a subset of CPUs

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.30 2016/03/18 13:16:02 jsg Exp $
+#	$OpenBSD: files.arm,v 1.31 2016/03/19 09:36:56 patrick Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -41,10 +41,6 @@ file	arch/arm/arm/cpufunc.c
 file	arch/arm/arm/cpufunc_asm.S
 file	arch/arm/arm/cpufunc_asm_arm10.S	cpu_arm9e | cpu_arm10
 file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9e | cpu_arm10 |
-							cpu_sa110 |
-							cpu_sa1100 |
-							cpu_sa1110 |
-							cpu_ixp12x0 |
 							cpu_xscale_80200 |
 							cpu_xscale_80321 |
 							cpu_xscale_ixp425 |
@@ -52,15 +48,10 @@ file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9e | cpu_arm10 |
 file	arch/arm/arm/cpufunc_asm_armv5.S	cpu_arm10
 file	arch/arm/arm/cpufunc_asm_armv5_ec.S	cpu_arm9e | cpu_arm10
 file	arch/arm/arm/cpufunc_asm_armv7.S	cpu_armv7
-file	arch/arm/arm/cpufunc_asm_sa1.S		cpu_sa110 | cpu_sa1100 |
-							cpu_sa1110 |
-							cpu_ixp12x0
-file	arch/arm/arm/cpufunc_asm_sa11x0.S	cpu_sa1100 | cpu_sa1110
 file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale_80200 |
 							cpu_xscale_80321 |
 							cpu_xscale_ixp425 |
 							cpu_xscale_pxa2x0
-file	arch/arm/arm/cpufunc_asm_ixp12x0.S	cpu_ixp12x0
 file	arch/arm/arm/process_machdep.c
 file	arch/arm/arm/sig_machdep.c
 file	arch/arm/arm/sigcode.S

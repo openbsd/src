@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.24 2016/03/18 13:16:02 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.25 2016/03/19 09:36:56 patrick Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -87,7 +87,6 @@ enum cpu_class {
 	CPU_CLASS_ARM9ES,
 	CPU_CLASS_ARM9EJS,
 	CPU_CLASS_ARM10E,
-	CPU_CLASS_SA1,
 	CPU_CLASS_XSCALE,
 	CPU_CLASS_ARM11J,
 	CPU_CLASS_ARMv7
@@ -96,36 +95,6 @@ enum cpu_class {
 static const char * const generic_steppings[16] = {
 	"rev 0",	"rev 1",	"rev 2",	"rev 3",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
-	"rev 8",	"rev 9",	"rev 10",	"rev 11",
-	"rev 12",	"rev 13",	"rev 14",	"rev 15"
-};
-
-static const char * const sa110_steppings[16] = {
-	"rev 0",	"step J",	"step K",	"step S",
-	"step T",	"rev 5",	"rev 6",	"rev 7",
-	"rev 8",	"rev 9",	"rev 10",	"rev 11",
-	"rev 12",	"rev 13",	"rev 14",	"rev 15"
-};
-
-static const char * const sa1100_steppings[16] = {
-	"rev 0",	"step B",	"step C",	"rev 3",
-	"rev 4",	"rev 5",	"rev 6",	"rev 7",
-	"step D",	"step E",	"rev 10"	"step G",
-	"rev 12",	"rev 13",	"rev 14",	"rev 15"
-};
-
-static const char * const sa1110_steppings[16] = {
-	"step A-0",	"rev 1",	"rev 2",	"rev 3",
-	"step B-0",	"step B-1",	"step B-2",	"step B-3",
-	"step B-4",	"step B-5",	"rev 10",	"rev 11",
-	"rev 12",	"rev 13",	"rev 14",	"rev 15"
-};
-
-static const char * const ixp12x0_steppings[16] = {
-	"(IXP1200 step A)",		"(IXP1200 step B)",
-	"rev 2",			"(IXP1200 step C)",
-	"(IXP1200 step D)",		"(IXP1240/1250 step A)",
-	"(IXP1240 step B)",		"(IXP1250 step B)",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15"
 };
@@ -205,16 +174,6 @@ const struct cpuidtab cpuids[] = {
 	  generic_steppings },
 	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022E-S",
 	  generic_steppings },
-
-	{ CPU_ID_SA110,		CPU_CLASS_SA1,		"SA-110",
-	  sa110_steppings },
-	{ CPU_ID_SA1100,	CPU_CLASS_SA1,		"SA-1100",
-	  sa1100_steppings },
-	{ CPU_ID_SA1110,	CPU_CLASS_SA1,		"SA-1110",
-	  sa1110_steppings },
-
-	{ CPU_ID_IXP1200,	CPU_CLASS_SA1,		"IXP1200",
-	  ixp12x0_steppings },
 
 	{ CPU_ID_80200,		CPU_CLASS_XSCALE,	"i80200",
 	  xscale_steppings },
@@ -323,7 +282,6 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "ARM9E-S",	"CPU_ARM9E" },		/* CPU_CLASS_ARM9ES */
 	{ "ARM9EJ-S",	"CPU_ARM9E" },		/* CPU_CLASS_ARM9EJS */
 	{ "ARM10E",	"CPU_ARM10" },		/* CPU_CLASS_ARM10E */
-	{ "SA-1",	"CPU_SA1100" },		/* CPU_CLASS_SA1 */
 	{ "XScale",	"CPU_XSCALE_..." },	/* CPU_CLASS_XSCALE */
 	{ "ARM11J",	"CPU_ARM11" },		/* CPU_CLASS_ARM11J */
 	{ "ARMv7",	"CPU_ARMv7" }		/* CPU_CLASS_ARMv7 */
@@ -392,7 +350,6 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	case CPU_CLASS_ARM9ES:
 	case CPU_CLASS_ARM9EJS:
 	case CPU_CLASS_ARM10E:
-	case CPU_CLASS_SA1:
 	case CPU_CLASS_XSCALE:
 	case CPU_CLASS_ARM11J:
 	case CPU_CLASS_ARMv7:
@@ -457,9 +414,6 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	case CPU_CLASS_ARMv7:
 #endif
 
-#if defined(CPU_SA1100) || defined(CPU_SA1110) || defined(CPU_IXP12X0)
-	case CPU_CLASS_SA1:
-#endif
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
 	case CPU_CLASS_XSCALE:
