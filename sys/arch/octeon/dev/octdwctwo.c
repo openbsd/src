@@ -1,4 +1,4 @@
-/*	$OpenBSD: octdwctwo.c,v 1.9 2015/09/01 14:45:24 visa Exp $	*/
+/*	$OpenBSD: octdwctwo.c,v 1.10 2016/03/19 17:17:06 visa Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -24,6 +24,7 @@
 #include <machine/bus.h>
 #include <machine/octeonreg.h>
 #include <machine/octeonvar.h>
+#include <machine/octeon_model.h>
 
 #include <octeon/dev/iobusvar.h>
 #include <octeon/dev/octhcireg.h>
@@ -123,7 +124,17 @@ bus_space_t octdwctwo_tag = {
 int
 octdwctwo_match(struct device *parent, void *match, void *aux)
 {
-	return (1);
+	int id;
+
+	id = octeon_get_chipid();
+	switch (octeon_model_family(id)) {
+	case OCTEON_MODEL_FAMILY_CN30XX:
+	case OCTEON_MODEL_FAMILY_CN31XX:
+	case OCTEON_MODEL_FAMILY_CN50XX:
+		return (1);
+	default:
+		return (0);
+	}
 }
 
 void
