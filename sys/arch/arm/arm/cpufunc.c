@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.32 2016/03/19 09:47:54 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.33 2016/03/19 09:51:24 patrick Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -56,17 +56,12 @@
 #include <arm/cpuconf.h>
 #include <arm/cpufunc.h>
 
-#ifdef CPU_XSCALE_80200
-#include <arm/xscale/i80200reg.h>
-#include <arm/xscale/i80200var.h>
-#endif
-
 #ifdef CPU_XSCALE_80321
 #include <arm/xscale/i80321reg.h>
 #include <arm/xscale/i80321var.h>
 #endif
 
-#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
+#if defined(CPU_XSCALE_80321)
 #include <arm/xscale/xscalereg.h>
 #endif
 
@@ -322,8 +317,7 @@ struct cpu_functions armv7_cpufuncs = {
 };
 #endif /* CPU_ARMv7 */
 
-#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0)
+#if defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0)
 struct cpu_functions xscale_cpufuncs = {
 	/* CPU functions */
 
@@ -379,7 +373,7 @@ struct cpu_functions xscale_cpufuncs = {
 	xscale_setup			/* cpu setup		*/
 };
 #endif
-/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 */
+/* CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 */
 
 /*
  * Global constants also used by locore.s
@@ -390,8 +384,7 @@ u_int cputype;
 u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
 #if defined(CPU_ARM9E) || defined(CPU_ARM10) || defined(CPU_ARM11) || \
-    defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0)
+    defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0)
 static void get_cachetype_cp15 (void);
 
 /* Additional cache information local to this file.  Log2 of some of the
@@ -708,65 +701,6 @@ set_cpufuncs()
 		return 0;
 	}
 #endif /* CPU_ARMv7 */
-#ifdef CPU_XSCALE_80200
-	if (cputype == CPU_ID_80200) {
-		int rev = cpufunc_id() & CPU_ID_REVISION_MASK;
-
-		i80200_icu_init();
-
-#ifdef PERFCTRS
-		/*
-		 * Reset the Performance Monitoring Unit to a
-		 * pristine state:
-		 *	- CCNT, PMN0, PMN1 reset to 0
-		 *	- overflow indications cleared
-		 *	- all counters disabled
-		 */
-		__asm volatile("mcr p14, 0, %0, c0, c0, 0"
-			:
-			: "r" (PMNC_P|PMNC_C|PMNC_PMN0_IF|PMNC_PMN1_IF|
-			       PMNC_CC_IF));
-#endif /* PERFCTRS */
-
-#if defined(XSCALE_CCLKCFG)
-		/*
-		 * Crank CCLKCFG to maximum legal value.
-		 */
-		__asm volatile ("mcr p14, 0, %0, c6, c0, 0"
-			:
-			: "r" (XSCALE_CCLKCFG));
-#endif
-
-		/*
-		 * XXX Disable ECC in the Bus Controller Unit; we
-		 * don't really support it, yet.  Clear any pending
-		 * error indications.
-		 */
-		__asm volatile("mcr p13, 0, %0, c0, c1, 0"
-			:
-			: "r" (BCUCTL_E0|BCUCTL_E1|BCUCTL_EV));
-
-		cpufuncs = xscale_cpufuncs;
-#if defined(PERFCTRS)
-		xscale_pmu_init();
-#endif
-
-		/*
-		 * i80200 errata: Step-A0 and A1 have a bug where
-		 * D$ dirty bits are not cleared on "invalidate by
-		 * address".
-		 *
-		 * Workaround: Clean cache line before invalidating.
-		 */
-		if (rev == 0 || rev == 1)
-			cpufuncs.cf_dcache_inv_range = xscale_cache_purgeD_rng;
-
-		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
-		get_cachetype_cp15();
-		pmap_pte_init_xscale();
-		return 0;
-	}
-#endif /* CPU_XSCALE_80200 */
 #ifdef CPU_XSCALE_80321
 	if (cputype == CPU_ID_80321_400 || cputype == CPU_ID_80321_600 ||
 	    cputype == CPU_ID_80321_400_B0 || cputype == CPU_ID_80321_600_B0 ||
@@ -944,8 +878,7 @@ armv7_setup()
 }
 #endif	/* CPU_ARMv7 */
 
-#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0)
+#if defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0)
 void
 xscale_setup()
 {
@@ -996,4 +929,4 @@ xscale_setup()
 	__asm volatile("mcr p15, 0, %0, c1, c0, 1"
 		: : "r" (auxctl));
 }
-#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 */
+#endif	/* CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 */

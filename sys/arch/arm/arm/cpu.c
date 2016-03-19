@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.26 2016/03/19 09:47:54 patrick Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.27 2016/03/19 09:51:24 patrick Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -99,13 +99,6 @@ static const char * const generic_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15"
 };
 
-static const char * const xscale_steppings[16] = {
-	"step A-0",	"step A-1",	"step B-0",	"step C-0",
-	"step D-0",	"rev 5",	"rev 6",	"rev 7",
-	"rev 8",	"rev 9",	"rev 10",	"rev 11",
-	"rev 12",	"rev 13",	"rev 14",	"rev 15"
-};
-
 static const char * const i80321_steppings[16] = {
 	"step A-0",	"step B-0",	"rev 2",	"rev 3",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
@@ -167,9 +160,6 @@ const struct cpuidtab cpuids[] = {
 	  generic_steppings },
 	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022E-S",
 	  generic_steppings },
-
-	{ CPU_ID_80200,		CPU_CLASS_XSCALE,	"i80200",
-	  xscale_steppings },
 
 	{ CPU_ID_80321_400,	CPU_CLASS_XSCALE,	"i80321 400MHz",
 	  i80321_steppings },
@@ -400,8 +390,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	case CPU_CLASS_ARMv7:
 #endif
 
-#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0)
+#if defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0)
 	case CPU_CLASS_XSCALE:
 #endif
 		break;

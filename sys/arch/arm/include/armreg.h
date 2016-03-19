@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.23 2016/03/19 09:47:54 patrick Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.24 2016/03/19 09:51:24 patrick Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -185,7 +185,6 @@
 #define CPU_ID_ARM1026EJS	0x4106a260
 #define CPU_ID_ARM1136JS	0x4107b360
 #define CPU_ID_ARM1136JSR1	0x4117b360
-#define CPU_ID_80200		0x69052000
 #define CPU_ID_PXA250		0x69052100 /* sans core revision */
 #define CPU_ID_PXA210		0x69052120
 #define CPU_ID_PXA250A		0x69052100 /* 1st version Core */
