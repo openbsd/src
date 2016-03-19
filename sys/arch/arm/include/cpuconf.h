@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.11 2016/03/19 09:36:57 patrick Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.12 2016/03/19 09:47:54 patrick Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.7 2003/05/23 00:57:24 ichiro Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
  */
 #if (defined(CPU_ARM9E) || defined(CPU_ARM10) || 			\
      defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
-     defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425))
+     defined(CPU_XSCALE_PXA2X0))
 #define	ARM_ARCH_5	1
 #else
 #define	ARM_ARCH_5	0
@@ -88,7 +88,7 @@
 #endif
 
 #if (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
-     defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425))
+     defined(CPU_XSCALE_PXA2X0))
 #define	ARM_MMU_XSCALE		1
 #else
 #define	ARM_MMU_XSCALE		0

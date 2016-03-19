@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.19 2016/03/19 09:36:57 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.20 2016/03/19 09:47:54 patrick Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -316,7 +316,7 @@ extern unsigned armv7_dcache_index_inc;
 
 #if defined(CPU_ARM9E) || defined(CPU_ARM10) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
+    defined(CPU_XSCALE_PXA2X0)
 
 void	armv4_tlb_flushID	(void);
 void	armv4_tlb_flushI	(void);
@@ -327,8 +327,7 @@ void	armv4_drain_writebuf	(void);
 #endif
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425) || \
-    (ARM_MMU_XSCALE == 1)
+    defined(CPU_XSCALE_PXA2X0) || (ARM_MMU_XSCALE == 1)
 void	xscale_cpwait		(void);
 
 void	xscale_cpu_sleep	(int mode);
@@ -366,7 +365,7 @@ void	xscale_cache_flushD_rng	(vaddr_t start, vsize_t end);
 void	xscale_context_switch	(u_int);
 
 void	xscale_setup		(void);
-#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 || CPU_XSCALE_IXP425 */
+#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 */
 
 #define tlb_flush	cpu_tlb_flushID
 #define setttb		cpu_setttb

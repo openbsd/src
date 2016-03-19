@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.25 2016/03/19 09:36:56 patrick Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.26 2016/03/19 09:47:54 patrick Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -146,13 +146,6 @@ static const char * const pxa27x_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15"
 };
 
-static const char * const ixp425_steppings[16] = {
-	"step 0",	"rev 1",	"rev 2",	"rev 3",
-	"rev 4",	"rev 5",	"rev 6",	"rev 7",
-	"rev 8",	"rev 9",	"rev 10",	"rev 11",
-	"rev 12",	"rev 13",	"rev 14",	"rev 15"
-};
-
 struct cpuidtab {
 	u_int32_t	cpuid;
 	enum		cpu_class cpu_class;
@@ -206,13 +199,6 @@ const struct cpuidtab cpuids[] = {
 	  pxa27x_steppings },
 	{ CPU_ID_PXA210C, 	CPU_CLASS_XSCALE,	"PXA210",
 	  pxa2x0_steppings },
-
-	{ CPU_ID_IXP425_533,	CPU_CLASS_XSCALE,	"IXP425 533MHz",
-	  ixp425_steppings },
-	{ CPU_ID_IXP425_400,	CPU_CLASS_XSCALE,	"IXP425 400MHz",
-	  ixp425_steppings },
-	{ CPU_ID_IXP425_266,	CPU_CLASS_XSCALE,	"IXP425 266MHz",
-	  ixp425_steppings },
 
 	{ CPU_ID_ARM1136JS,	CPU_CLASS_ARM11J,	"ARM1136J-S",
 	  generic_steppings },
@@ -415,7 +401,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #endif
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
+    defined(CPU_XSCALE_PXA2X0)
 	case CPU_CLASS_XSCALE:
 #endif
 		break;
