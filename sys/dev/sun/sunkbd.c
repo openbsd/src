@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.26 2011/11/09 14:22:37 shadchin Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.27 2016/03/19 11:41:56 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -84,7 +84,7 @@ sunkbd_attach(struct sunkbd_softc *sc, struct wskbddev_attach_args *waa)
 void
 sunkbd_bell(struct sunkbd_softc *sc, u_int period, u_int pitch, u_int volume)
 {
-	int ticks, s;
+	int nticks, s;
 	u_int8_t c = SKBD_CMD_BELLON;
 
 #if NTCTRL > 0
@@ -103,14 +103,14 @@ sunkbd_bell(struct sunkbd_softc *sc, u_int period, u_int pitch, u_int volume)
 		return;
 	}
 	if (sc->sc_bellactive == 0) {
-		ticks = (period * hz) / 1000;
-		if (ticks <= 0)
-			ticks = 1;
+		nticks = (period * hz) / 1000;
+		if (nticks <= 0)
+			nticks = 1;
 
 		sc->sc_bellactive = 1;
 		sc->sc_belltimeout = 1;
 		(*sc->sc_sendcmd)(sc, &c, 1);
-		timeout_add(&sc->sc_bellto, ticks);
+		timeout_add(&sc->sc_bellto, nticks);
 	}
 	splx(s);
 }

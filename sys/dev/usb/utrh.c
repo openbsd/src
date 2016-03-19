@@ -1,4 +1,4 @@
-/*	$OpenBSD: utrh.c,v 1.19 2016/01/09 04:14:42 jcs Exp $   */
+/*	$OpenBSD: utrh.c,v 1.20 2016/03/19 11:41:56 mpi Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -243,18 +243,18 @@ utrh_refresh(void *arg)
 
 /* return C-degree * 100 value */
 int
-utrh_sht1x_temp(unsigned int ticks)
+utrh_sht1x_temp(unsigned int nticks)
 {
-	return (ticks - 4010);
+	return (nticks - 4010);
 }
 
 /* return %RH * 1000 */
 int
-utrh_sht1x_rh(unsigned int ticks, int temp)
+utrh_sht1x_rh(unsigned int nticks, int temp)
 {
 	int rh_l, rh;
 
-	rh_l = (-40000 + 405 * ticks) - ((7 * ticks * ticks) / 250);
-	rh = ((temp - 2500) * (1 + (ticks >> 7)) + rh_l) / 10;
+	rh_l = (-40000 + 405 * nticks) - ((7 * nticks * nticks) / 250);
+	rh = ((temp - 2500) * (1 + (nticks >> 7)) + rh_l) / 10;
 	return rh;
 }
