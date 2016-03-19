@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.268 2016/03/18 18:12:37 bluhm Exp $	*/
+/*	$OpenBSD: sd.c,v 1.269 2016/03/19 15:37:33 bluhm Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -450,10 +450,9 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		SC_DEBUG(link, SDEV_DB3, ("Params loaded\n"));
 
 		/* Load the partition info if not already loaded. */
-		if (sdgetdisklabel(dev, sc, sc->sc_dk.dk_label, 0) == EIO) {
-			error = EIO;
+		error = sdgetdisklabel(dev, sc, sc->sc_dk.dk_label, 0);
+		if (error == EIO || error == ENXIO)
 			goto bad;
-		}
 		SC_DEBUG(link, SDEV_DB3, ("Disklabel loaded\n"));
 	}
 
@@ -1140,6 +1139,8 @@ sdgetdisklabel(dev_t dev, struct sd_softc *sc, struct disklabel *lp,
 	char packname[sizeof(lp->d_packname) + 1];
 	char product[17], vendor[9];
 
+	if (sc->flags & SDF_DYING)
+		return (ENXIO);
 	link = sc->sc_link;
 
 	bzero(lp, sizeof(struct disklabel));
