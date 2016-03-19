@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socketpair.2,v 1.18 2014/12/14 07:42:50 schwarze Exp $
+.\"	$OpenBSD: socketpair.2,v 1.19 2016/03/19 22:10:49 guenther Exp $
 .\"	$NetBSD: socketpair.2,v 1.5 1995/02/27 12:38:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socketpair.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 14 2014 $
+.Dd $Mdocdate: March 19 2016 $
 .Dt SOCKETPAIR 2
 .Os
 .Sh NAME
@@ -103,11 +103,22 @@ The
 .Fn socketpair
 function conforms to
 .St -p1003.1-2008 .
+The
+.Dv SOCK_CLOEXEC
+and
+.Dv SOCK_NONBLOCK
+flags are expected to conform to a future revision of that standard.
 .Sh HISTORY
 The
 .Fn socketpair
 function call appeared in
 .Bx 4.2 .
+Support for the
+.Dv SOCK_CLOEXEC
+and
+.Dv SOCK_NONBLOCK
+flags appeared in
+.Ox 5.7 .
 .Sh BUGS
 This call is currently implemented only for the LOCAL domain.
 Many operating systems only accept a

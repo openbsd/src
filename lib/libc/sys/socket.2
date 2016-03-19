@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socket.2,v 1.40 2015/10/20 18:11:53 deraadt Exp $
+.\"	$OpenBSD: socket.2,v 1.41 2016/03/19 22:10:49 guenther Exp $
 .\"	$NetBSD: socket.2,v 1.5 1995/02/27 12:37:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socket.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: October 20 2015 $
+.Dd $Mdocdate: March 19 2016 $
 .Dt SOCKET 2
 .Os
 .Sh NAME
@@ -279,8 +279,29 @@ The
 .Fn socket
 function conforms to
 .St -p1003.1-2008 .
+The
+.Dv SOCK_CLOEXEC
+and
+.Dv SOCK_NONBLOCK
+flags are expected to conform to a future revision of that standard.
+.Pp
+The
+.Dv SOCK_DNS
+flag is an
+.Ox
+extension.
 .Sh HISTORY
 The
 .Fn socket
 system call first appeared in
 .Bx 4.1c .
+Support for the
+.Dv SOCK_CLOEXEC
+and
+.Dv SOCK_NONBLOCK
+flags appeared in
+.Ox 5.7 .
+Support for the
+.Dv SOCK_DNS
+flag appeared in
+.Ox 5.9 .
