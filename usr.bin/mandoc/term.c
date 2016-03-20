@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.116 2016/01/07 21:03:23 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.117 2016/03/20 16:50:30 krw Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -158,7 +158,7 @@ term_flushln(struct termp *p)
 			if (' ' == p->buf[j] || '\t' == p->buf[j])
 				break;
 
-			/* Back over the the last printed character. */
+			/* Back over the last printed character. */
 			if (8 == p->buf[j]) {
 				assert(j);
 				vend -= (*p->width)(p, p->buf[j - 1]);

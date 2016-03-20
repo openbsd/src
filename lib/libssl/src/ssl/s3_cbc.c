@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_cbc.c,v 1.11 2015/09/11 17:17:44 jsing Exp $ */
+/* $OpenBSD: s3_cbc.c,v 1.12 2016/03/20 16:50:29 krw Exp $ */
 /* ====================================================================
  * Copyright (c) 2012 The OpenSSL Project.  All rights reserved.
  *
@@ -601,7 +601,7 @@ ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char* md_out,
 			 * application data, and we are at the offset for the
 			 * 0x80 value, then overwrite b with 0x80. */
 			b = (b&~is_past_c) | (0x80&is_past_c);
-			/* If this the the block containing the end of the
+			/* If this is the block containing the end of the
 			 * application data and we're past the 0x80 value then
 			 * just write zero. */
 			b = b&~is_past_cp1;

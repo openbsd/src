@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.21 2015/10/16 15:15:39 jsing Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.22 2016/03/20 16:50:29 krw Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1019,7 +1019,7 @@ ec_asn1_group2pkparameters(const EC_GROUP * group, ECPKPARAMETERS * params)
 
 	if (EC_GROUP_get_asn1_flag(group)) {
 		/*
-		 * use the asn1 OID to describe the the elliptic curve
+		 * use the asn1 OID to describe the elliptic curve
 		 * parameters
 		 */
 		tmp = EC_GROUP_get_curve_name(group);
