@@ -1,4 +1,4 @@
-/*	$OpenBSD: eln.c,v 1.6 2016/01/30 17:32:52 schwarze Exp $	*/
+/*	$OpenBSD: eln.c,v 1.7 2016/03/20 19:14:29 schwarze Exp $	*/
 /*	$NetBSD: eln.c,v 1.9 2010/11/04 13:53:12 christos Exp $	*/
 
 /*-
@@ -38,6 +38,7 @@
 #include "histedit.h"
 #include "el.h"
 #include "read.h"
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,15 +49,18 @@ el_getc(EditLine *el, char *cp)
 	int num_read;
 	wchar_t wc = 0;
 
-	if (!(el->el_flags & CHARSET_IS_UTF8))
-		el->el_flags |= IGNORE_EXTCHARS;
-	num_read = el_wgetc (el, &wc);
-	if (!(el->el_flags & CHARSET_IS_UTF8))
-		el->el_flags &= ~IGNORE_EXTCHARS;
-
-	if (num_read > 0)
-		*cp = (unsigned char)wc;
-	return num_read;
+	num_read = el_wgetc(el, &wc);
+	*cp = '\0';
+	if (num_read <= 0)
+		return num_read;
+	num_read = ct_wctob(wc);
+	if (num_read == EOF) {
+		errno = ERANGE;
+		return -1;
+	} else {
+		*cp = num_read;
+		return 1;
+	}
 }
 
 

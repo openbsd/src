@@ -1,4 +1,4 @@
-/*	$OpenBSD: chartype.h,v 1.6 2016/03/20 17:19:48 schwarze Exp $	*/
+/*	$OpenBSD: chartype.h,v 1.7 2016/03/20 19:14:29 schwarze Exp $	*/
 /*	$NetBSD: chartype.h,v 1.5 2010/04/15 00:55:57 christos Exp $	*/
 
 /*-
@@ -62,6 +62,7 @@
 #endif
 
 #define ct_mbrtowc           mbrtowc
+#define ct_wctob             wctob
 #define ct_wctomb            wctomb
 #define ct_wctomb_reset      wctomb(0,0)
 #define ct_wcstombs          wcstombs
@@ -110,6 +111,7 @@
 #else /* NARROW */
 
 #define ct_mbrtowc           error
+#define ct_wctob(w)          ((int)(w))
 #define ct_wctomb            error
 #define ct_wctomb_reset      
 #define ct_wcstombs(a, b, c)    (strncpy(a, b, c), strlen(a))
