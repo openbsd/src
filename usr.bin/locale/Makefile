@@ -1,9 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 2013/06/03 14:27:50 stsp Exp $
-
-# for LOCALECHARSETS
-.include "${.CURDIR}/../../share/locale/ctype/Makefile.inc"
+#	$OpenBSD: Makefile,v 1.2 2016/03/20 15:42:35 jca Exp $
 
 PROG=	locale
-CFLAGS+=	-DLOCALE_CHARSETS="\"${LOCALECHARSETS}\""
 
 .include <bsd.prog.mk>

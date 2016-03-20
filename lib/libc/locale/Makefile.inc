@@ -1,10 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.20 2015/07/03 11:15:19 semarie Exp $
+#	$OpenBSD: Makefile.inc,v 1.21 2016/03/20 15:42:35 jca Exp $
 
 # locale sources
 .PATH: ${LIBCSRCDIR}/locale
-
-# for LOCALECHARSETS
-.include "${.CURDIR}/../../share/locale/ctype/Makefile.inc"
 
 SRCS+=	btowc.c _def_messages.c _def_monetary.c _def_numeric.c _def_time.c \
 	localeconv.c nl_langinfo.c setlocale.c iswctype.c __mb_cur_max.c \
@@ -43,4 +40,3 @@ MLINKS+=setlocale.3 localeconv.3 \
 	wcsrtombs.3 wcsnrtombs.3
 
 CFLAGS+=-I${.CURDIR} -I${LIBCSRCDIR}/citrus
-CFLAGS+=-DLOCALE_CHARSETS="\"${LOCALECHARSETS}\""
