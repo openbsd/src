@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.43 2016/03/19 23:59:49 vgross Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.44 2016/03/20 01:26:30 jca Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 	struct udphdr *udp6;
 	struct in6_addr *laddr, *faddr;
 	struct ip6_pktopts *optp, opt;
-	struct sockaddr_in6 tmp, valid;
+	struct sockaddr_in6 tmp;
 	struct proc *p = curproc;	/* XXX */
 	u_short fport;
 
@@ -168,14 +168,21 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 				goto release;
 		}
 
-		if (!IN6_ARE_ADDR_EQUAL(&in6p->inp_laddr6, laddr)) {
-			valid.sin6_addr = *laddr;
-			valid.sin6_port = in6p->inp_lport;
-			valid.sin6_family = AF_INET6;
-			valid.sin6_len = sizeof(valid);
-			error = in6_pcbaddrisavail(in6p, &valid, 0, p);
-			if (error)
+		if (!IN6_ARE_ADDR_EQUAL(&in6p->inp_laddr6, laddr) &&
+		    (in6p->inp_socket->so_euid != 0)) {
+			struct inpcb *t;
+
+			t = in_pcblookup(in6p->inp_table,
+			    (struct in_addr *)&zeroin6_addr, 0,
+			    (struct in_addr *)laddr, in6p->inp_lport,
+			    (INPLOOKUP_WILDCARD | INPLOOKUP_IPV6),
+			    in6p->inp_rtableid);
+			if (t &&
+			    (t->inp_socket->so_euid !=
+			    in6p->inp_socket->so_euid)) {
+				error = EADDRINUSE;
 				goto release;
+			}
 		}
 	} else {
 		if (IN6_IS_ADDR_UNSPECIFIED(&in6p->inp_faddr6)) {

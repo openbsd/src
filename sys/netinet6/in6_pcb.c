@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.86 2016/03/19 23:59:49 vgross Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.87 2016/03/20 01:26:30 jca Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -158,9 +158,10 @@ in6_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 {
 	struct socket *so = inp->inp_socket;
 
+	struct inpcbtable *head = inp->inp_table;
 	struct sockaddr_in6 *sin6;
 	u_short lport = 0;
-	int wild = INPLOOKUP_IPV6;
+	int wild = INPLOOKUP_IPV6, reuseport = (so->so_options & SO_REUSEPORT);
 	int error;
 
 	/*
@@ -193,10 +194,95 @@ in6_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 		if (sin6->sin6_family != AF_INET6)
 			return EAFNOSUPPORT;
 
-		if ((error = in6_pcbaddrisavail(inp, sin6, wild, p)))
-			return (error);
-		inp->inp_laddr6 = sin6->sin6_addr;
+		/* KAME hack: embed scopeid */
+		if (in6_embedscope(&sin6->sin6_addr, sin6, inp) != 0)
+			return EINVAL;
+		/* this must be cleared for ifa_ifwithaddr() */
+		sin6->sin6_scope_id = 0;
+
 		lport = sin6->sin6_port;
+
+		/* reject IPv4 mapped address, we have no support for it */
+		if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
+			return EADDRNOTAVAIL;
+
+		if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
+			/*
+			 * Treat SO_REUSEADDR as SO_REUSEPORT for multicast;
+			 * allow complete duplication of binding if
+			 * SO_REUSEPORT is set, or if SO_REUSEADDR is set
+			 * and a multicast address is bound on both
+			 * new and duplicated sockets.
+			 */
+			if (so->so_options & (SO_REUSEADDR|SO_REUSEPORT))
+				reuseport = SO_REUSEADDR | SO_REUSEPORT;
+		} else if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
+			struct ifaddr *ifa = NULL;
+
+			sin6->sin6_port = 0;  /*
+					       * Yechhhh, because of upcoming
+					       * call to ifa_ifwithaddr(), which
+					       * does bcmp's over the PORTS as
+					       * well.  (What about flow?)
+					       */
+			sin6->sin6_flowinfo = 0;
+			if (!(so->so_options & SO_BINDANY) &&
+			    (ifa = ifa_ifwithaddr(sin6tosa(sin6),
+			    inp->inp_rtableid)) == NULL)
+				return EADDRNOTAVAIL;
+
+			/*
+			 * bind to an anycast address might accidentally
+			 * cause sending a packet with an anycast source
+			 * address, so we forbid it.
+			 *
+			 * We should allow to bind to a deprecated address,
+			 * since the application dare to use it.
+			 * But, can we assume that they are careful enough
+			 * to check if the address is deprecated or not?
+			 * Maybe, as a safeguard, we should have a setsockopt
+			 * flag to control the bind(2) behavior against
+			 * deprecated addresses (default: forbid bind(2)).
+			 */
+			if (ifa &&
+			    ifatoia6(ifa)->ia6_flags &
+			    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|IN6_IFF_DETACHED))
+				return (EADDRNOTAVAIL);
+		}
+		if (lport) {
+			struct inpcb *t;
+
+			/*
+			 * Question:  Do we wish to continue the Berkeley
+			 * tradition of ports < IPPORT_RESERVED be only for
+			 * root?
+			 * Answer: For now yes, but IMHO, it should be REMOVED!
+			 * OUCH: One other thing, is there no better way of
+			 * finding a process for a socket instead of using
+			 * curproc?  (Marked with BSD's {in,}famous XXX ?
+			 */
+			if (ntohs(lport) < IPPORT_RESERVED &&
+			    (error = suser(p, 0)))
+				return error;
+			if (so->so_euid) {
+				t = in_pcblookup(head,
+				    (struct in_addr *)&zeroin6_addr, 0,
+				    (struct in_addr *)&sin6->sin6_addr, lport,
+				    INPLOOKUP_WILDCARD | INPLOOKUP_IPV6,
+				    inp->inp_rtableid);
+				if (t &&
+				    (so->so_euid != t->inp_socket->so_euid))
+					return EADDRINUSE;
+			}
+			t = in_pcblookup(head,
+			    (struct in_addr *)&zeroin6_addr, 0,
+			    (struct in_addr *)&sin6->sin6_addr, lport,
+			    wild, inp->inp_rtableid);
+
+			if (t && (reuseport & t->inp_socket->so_options) == 0)
+				return EADDRINUSE;
+		}
+		inp->inp_laddr6 = sin6->sin6_addr;
 	}
 
 	if (lport == 0)
@@ -205,103 +291,6 @@ in6_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 	inp->inp_lport = lport;
 	in_pcbrehash(inp);
 	return 0;
-}
-
-int
-in6_pcbaddrisavail(struct inpcb *inp, struct sockaddr_in6 *sin6, int wild,
-    struct proc *p)
-{
-	struct socket *so = inp->inp_socket;
-	struct inpcbtable *table = inp->inp_table;
-	u_short lport = sin6->sin6_port;
-	int reuseport = (so->so_options & SO_REUSEPORT);
-	int error;
-
-	wild |= INPLOOKUP_IPV6;
-	/* KAME hack: embed scopeid */
-	if (in6_embedscope(&sin6->sin6_addr, sin6, inp) != 0)
-		return (EINVAL);
-	/* this must be cleared for ifa_ifwithaddr() */
-	sin6->sin6_scope_id = 0;
-	/* reject IPv4 mapped address, we have no support for it */
-	if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
-		return (EADDRNOTAVAIL);
-
-	if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
-		/*
-		 * Treat SO_REUSEADDR as SO_REUSEPORT for multicast;
-		 * allow complete duplication of binding if
-		 * SO_REUSEPORT is set, or if SO_REUSEADDR is set
-		 * and a multicast address is bound on both
-		 * new and duplicated sockets.
-		 */
-		if (so->so_options & (SO_REUSEADDR|SO_REUSEPORT))
-			reuseport = SO_REUSEADDR | SO_REUSEPORT;
-	} else if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
-		struct ifaddr *ifa = NULL;
-
-		sin6->sin6_port = 0;  /*
-				       * Yechhhh, because of upcoming
-				       * call to ifa_ifwithaddr(), which
-				       * does bcmp's over the PORTS as
-				       * well.  (What about flow?)
-				       */
-		sin6->sin6_flowinfo = 0;
-		if (!(so->so_options & SO_BINDANY) &&
-		    (ifa = ifa_ifwithaddr(sin6tosa(sin6),
-		    inp->inp_rtableid)) == NULL)
-			return (EADDRNOTAVAIL);
-		sin6->sin6_port = lport;
-
-		/*
-		 * bind to an anycast address might accidentally
-		 * cause sending a packet with an anycast source
-		 * address, so we forbid it.
-		 *
-		 * We should allow to bind to a deprecated address,
-		 * since the application dare to use it.
-		 * But, can we assume that they are careful enough
-		 * to check if the address is deprecated or not?
-		 * Maybe, as a safeguard, we should have a setsockopt
-		 * flag to control the bind(2) behavior against
-		 * deprecated addresses (default: forbid bind(2)).
-		 */
-		if (ifa &&
-		    ifatoia6(ifa)->ia6_flags &
-		    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|IN6_IFF_DETACHED))
-			return (EADDRNOTAVAIL);
-	}
-	if (lport) {
-		struct inpcb *t;
-
-		/*
-		 * Question:  Do we wish to continue the Berkeley
-		 * tradition of ports < IPPORT_RESERVED be only for
-		 * root?
-		 * Answer: For now yes, but IMHO, it should be REMOVED!
-		 * OUCH: One other thing, is there no better way of
-		 * finding a process for a socket instead of using
-		 * curproc?  (Marked with BSD's {in,}famous XXX ?
-		 */
-		if (ntohs(lport) < IPPORT_RESERVED && (error = suser(p, 0)))
-			return error;
-		if (so->so_euid) {
-			t = in_pcblookup(table,
-			    (struct in_addr *)&zeroin6_addr, 0,
-			    (struct in_addr *)&sin6->sin6_addr, lport,
-			    INPLOOKUP_WILDCARD | INPLOOKUP_IPV6,
-			    inp->inp_rtableid);
-			if (t && (so->so_euid != t->inp_socket->so_euid))
-				return (EADDRINUSE);
-		}
-		t = in_pcblookup(table,
-		    (struct in_addr *)&zeroin6_addr, 0,
-		    (struct in_addr *)&sin6->sin6_addr, lport,
-		    wild, inp->inp_rtableid);
-		if (t && (reuseport & t->inp_socket->so_options) == 0)
-			return (EADDRINUSE);
-	}
-	return (0);
 }
 
 /*
