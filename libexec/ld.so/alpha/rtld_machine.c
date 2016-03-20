@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.57 2015/12/22 08:54:16 mmcc Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.58 2016/03/20 02:29:51 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -182,7 +182,7 @@ _dl_printf("unaligned RELATIVE: %p type: %d %s 0x%lx -> 0x%lx\n", r_addr,
 		default:
 			_dl_printf("%s:"
 			    " %s: unsupported relocation '%s' %d at %lx\n",
-			    _dl_progname, object->load_name, symn,
+			    __progname, object->load_name, symn,
 			    ELF64_R_TYPE(relas->r_info), r_addr );
 			_dl_exit(1);
 		}

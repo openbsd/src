@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.75 2016/01/24 03:54:34 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.76 2016/03/20 02:29:51 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -157,6 +157,15 @@ struct dep_node {
 	elf_object_t *data;
 };
 
+
+/* Please don't rename or make hidden; gdb(1) knows about these. */
+Elf_Addr _dl_bind(elf_object_t *object, int index);
+void	_dl_debug_state(void);
+
+/* exported to the application */
+extern char *__progname;
+
+__BEGIN_HIDDEN_DECLS
 void _dl_add_object(elf_object_t *object);
 elf_object_t *_dl_finalize_object(const char *objname, Elf_Dyn *dynp,
     Elf_Phdr *phdrp, int phdrc, const int objtype, const long lbase,
@@ -222,13 +231,9 @@ void _dl_unload_dlopen(void);
 
 void _dl_run_all_dtors(void);
 
-/* Please don't rename; gdb(1) knows about this. */
-Elf_Addr _dl_bind(elf_object_t *object, int index);
-
 int	_dl_match_file(struct sod *sodp, const char *name, int namelen);
 char	*_dl_find_shlib(struct sod *sodp, char **searchpath, int nohints);
 void	_dl_load_list_free(struct load_list *load_list);
-void	_dl_debug_state(void);
 
 void	_dl_thread_kern_go(void);
 void	_dl_thread_kern_stop(void);
@@ -245,7 +250,6 @@ extern elf_object_t *_dl_last_object;
 
 extern elf_object_t *_dl_loading_object;
 
-extern const char *_dl_progname;
 extern struct r_debug *_dl_debug_map;
 
 extern int  _dl_pagesz;
@@ -293,5 +297,6 @@ extern int _dl_symcachestat_hits;
 extern int _dl_symcachestat_lookups;
 TAILQ_HEAD(dlochld, dep_node);
 extern struct dlochld _dlopened_child_list;
+__END_HIDDEN_DECLS
 
 #endif /* _RESOLVE_H_ */

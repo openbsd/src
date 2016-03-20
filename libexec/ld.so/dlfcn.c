@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.93 2016/03/16 15:41:10 krw Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.94 2016/03/20 02:29:51 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -391,7 +391,7 @@ _dl_tracefmt(int fd, elf_object_t *object, const char *fmt1, const char *fmt2,
 				    _dl_traceprog : "");
 				break;
 			case 'a':
-				_dl_fdprintf(fd, "%s", _dl_progname);
+				_dl_fdprintf(fd, "%s", __progname);
 				break;
 			case 'e':
 				_dl_fdprintf(fd, "%lX",

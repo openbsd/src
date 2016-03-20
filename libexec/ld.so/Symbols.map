@@ -8,6 +8,8 @@
 		dlerror;
 		dlopen;
 		dlsym;
+		environ;
+		__progname;
 
 		/* looked up by gdb */
 		_dl_bind;

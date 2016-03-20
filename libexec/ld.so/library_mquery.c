@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.51 2015/12/22 08:54:16 mmcc Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.52 2016/03/20 02:29:51 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -206,7 +206,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 			break;
 		case PT_TLS:
 			_dl_printf("%s: unsupported TLS program header in %s\n",
-			    _dl_progname, libname);
+			    __progname, libname);
 			_dl_close(libfile);
 			_dl_errno = DL_CANT_LOAD_OBJ;
 			return(0);
@@ -314,8 +314,7 @@ retry:
 	}
 	return(object);
 fail:
-	_dl_printf("%s: rtld mmap failed mapping %s.\n",
-	    _dl_progname, libname);
+	_dl_printf("%s: rtld mmap failed mapping %s.\n", __progname, libname);
 	_dl_close(libfile);
 	_dl_errno = DL_CANT_MMAP;
 	_dl_load_list_free(lowld);

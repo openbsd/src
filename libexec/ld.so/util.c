@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.38 2015/01/20 19:51:00 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.39 2016/03/20 02:29:51 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -28,6 +28,7 @@
 
 #include <sys/types.h>
 #include "archdep.h"
+#include "resolve.h"
 
 /*
  * Stack protector dummies.
@@ -41,12 +42,11 @@ void __stack_smash_handler(char [], int);
 void
 __stack_smash_handler(char func[], int damaged)
 {
-	extern const char *_dl_progname;
 	char message[256];
 
 	/* <10> indicates LOG_CRIT */
 	_dl_strlcpy(message, "<10>ld.so:", sizeof message);
-	_dl_strlcat(message, _dl_progname, sizeof message);
+	_dl_strlcat(message, __progname, sizeof message);
 	if (_dl_strlen(message) > sizeof(message)/2)
 		_dl_strlcpy(message + sizeof(message)/2, "...",
 		    sizeof(message) - sizeof(message)/2);

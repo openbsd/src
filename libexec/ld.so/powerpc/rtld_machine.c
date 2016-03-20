@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.56 2015/11/02 07:02:53 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.57 2016/03/20 02:29:51 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -460,7 +460,7 @@ _dl_printf(" found other symbol at %x size %d\n",
 		default:
 			_dl_printf("%s:"
 			    " %s: unsupported relocation '%s' %d at %x\n",
-			    _dl_progname, object->load_name, symn,
+			    __progname, object->load_name, symn,
 			    ELF32_R_TYPE(relas->r_info), r_addr );
 			_dl_exit(1);
 		}

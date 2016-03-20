@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.71 2016/01/24 03:54:34 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.72 2016/03/20 02:29:51 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -692,7 +692,7 @@ found:
 		    (ELF_ST_BIND(ref_sym->st_info) != STB_WEAK)) &&
 		    (flags & SYM_WARNNOTFOUND))
 			_dl_printf("%s:%s: undefined symbol '%s'\n",
-			    _dl_progname, req_obj->load_name, name);
+			    __progname, req_obj->load_name, name);
 		return (0);
 	}
 
@@ -701,8 +701,7 @@ found:
 	    (ELF_ST_TYPE((*this)->st_info) != STT_FUNC) ) {
 		_dl_printf("%s:%s: %s : WARNING: "
 		    "symbol(%s) size mismatch, relink your program\n",
-		    _dl_progname, req_obj->load_name,
-		    object->load_name, name);
+		    __progname, req_obj->load_name, object->load_name, name);
 	}
 
 	if (pobj)

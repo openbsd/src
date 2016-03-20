@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.73 2015/12/22 08:54:16 mmcc Exp $ */
+/*	$OpenBSD: library.c,v 1.74 2016/03/20 02:29:51 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -165,7 +165,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 			break;
 		case PT_TLS:
 			_dl_printf("%s: unsupported TLS program header in %s\n",
-			    _dl_progname, libname);
+			    __progname, libname);
 			_dl_close(libfile);
 			_dl_errno = DL_CANT_LOAD_OBJ;
 			return(0);
@@ -188,7 +188,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	    MAP_PRIVATE|MAP_FILE, libfile, 0);
 	if (_dl_mmap_error(libaddr)) {
 		_dl_printf("%s: rtld mmap failed mapping %s.\n",
-		    _dl_progname, libname);
+		    __progname, libname);
 		_dl_close(libfile);
 		_dl_errno = DL_CANT_MMAP;
 		return(0);
@@ -222,7 +222,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 			next_load->prot = PFLAGS(phdp->p_flags);
 			if (size != 0 && _dl_mmap_error(res)) {
 				_dl_printf("%s: rtld mmap failed mapping %s.\n",
-				    _dl_progname, libname);
+				    __progname, libname);
 				_dl_close(libfile);
 				_dl_errno = DL_CANT_MMAP;
 				_dl_munmap((void *)libaddr, maxva - minva);
@@ -245,7 +245,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 				    MAP_FIXED|MAP_PRIVATE|MAP_ANON, -1, 0);
 				if (_dl_mmap_error(res)) {
 					_dl_printf("%s: rtld mmap failed mapping %s.\n",
-					    _dl_progname, libname);
+					    __progname, libname);
 					_dl_close(libfile);
 					_dl_errno = DL_CANT_MMAP;
 					_dl_munmap((void *)libaddr, maxva - minva);

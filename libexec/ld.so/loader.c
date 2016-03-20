@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.156 2015/11/15 03:41:24 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.157 2016/03/20 02:29:51 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -35,6 +35,7 @@
 #include <nlist.h>
 #include <string.h>
 #include <link.h>
+#include <limits.h>			/* NAME_MAX */
 #include <dlfcn.h>
 
 #include "syscall.h"
@@ -50,12 +51,11 @@
  */
 unsigned long _dl_boot(const char **, char **, const long, long *);
 void _dl_debug_state(void);
-void _dl_setup_env(char **);
+void _dl_setup_env(const char *_argv0, char **_envp);
 void _dl_dtors(void);
 void _dl_fixup_user_env(void);
 void _dl_call_init_recurse(elf_object_t *object, int initfirst);
 
-const char *_dl_progname;
 int  _dl_pagesz;
 
 char **_dl_libpath;
@@ -188,7 +188,7 @@ _dl_dopreload(char *paths)
 		_dl_objects->obj_flags);
 		if (shlib == NULL) {
 			_dl_printf("%s: can't preload library '%s'\n",
-			    _dl_progname, cp);
+			    __progname, cp);
 			_dl_exit(4);
 		}
 		_dl_add_object(shlib);
@@ -200,12 +200,15 @@ _dl_dopreload(char *paths)
 
 /*
  * grab interesting environment variables, zap bad env vars if
- * issetugid
+ * issetugid, and set the exported environ and __progname variables
  */
-char **_dl_so_envp;
+char **environ = NULL;
+char *__progname = NULL;
 void
-_dl_setup_env(char **envp)
+_dl_setup_env(const char *argv0, char **envp)
 {
+	static char progname_storage[NAME_MAX+1] = "";
+
 	/*
 	 * Get paths to various things we are going to use.
 	 */
@@ -244,9 +247,20 @@ _dl_setup_env(char **envp)
 			_dl_unsetenv("LD_DEBUG", envp);
 		}
 	}
-	_dl_so_envp = envp;
+	environ = envp;
 
 	_dl_trace_setup(envp);
+
+	if (argv0 != NULL) {		/* NULL ptr if argc = 0 */
+		const char *p = _dl_strrchr(argv0, '/');
+
+		if (p == NULL)
+			p = argv0;
+		else
+			p++;
+		_dl_strlcpy(progname_storage, p, sizeof(progname_storage));
+	}
+	__progname = progname_storage;
 }
 
 int
@@ -320,7 +334,7 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 					if (booting) {
 						_dl_printf(
 						    "%s: can't load library '%s'\n",
-						    _dl_progname, libname);
+						    __progname, libname);
 						_dl_exit(4);
 					} else  {
 						DL_DEB(("dlopen: failed to open %s\n",
@@ -365,7 +379,7 @@ unsigned long
 _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 {
 	struct elf_object *exe_obj;	/* Pointer to executable object */
-	struct elf_object *dyn_obj;	/* Pointer to executable object */
+	struct elf_object *dyn_obj;	/* Pointer to ld.so object */
 	struct r_debug **map_link;	/* Where to put pointer for gdb */
 	struct r_debug *debug_map;
 	struct load_list *next_load, *load_list = NULL;
@@ -379,9 +393,8 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	Elf_Addr minva, maxva, exe_loff;
 	int align;
 
-	_dl_setup_env(envp);
+	_dl_setup_env(argv[0], envp);
 
-	_dl_progname = argv[0];
 	if (dl_data[AUX_pagesz] != 0)
 		_dl_pagesz = dl_data[AUX_pagesz];
 	else
@@ -411,7 +424,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	}
 #endif
 
-	DL_DEB(("rtld loading: '%s'\n", _dl_progname));
+	DL_DEB(("rtld loading: '%s'\n", __progname));
 
 	/* init this in runtime, not statically */
 	TAILQ_INIT(&_dlopened_child_list);
@@ -468,7 +481,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 			break;
 		case PT_TLS:
 			_dl_printf("%s: unsupported TLS program header\n",
-			    _dl_progname);
+			    __progname);
 			_dl_exit(1);
 			break;
 		}
@@ -746,6 +759,7 @@ _dl_unsetenv(const char *var, char **env)
 void
 _dl_fixup_user_env(void)
 {
+	const struct elf_object *obj;
 	const Elf_Sym *sym;
 	Elf_Addr ooff;
 	struct elf_object dummy_obj;
@@ -755,7 +769,11 @@ _dl_fixup_user_env(void)
 
 	sym = NULL;
 	ooff = _dl_find_symbol("environ", &sym,
-	    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, &dummy_obj, NULL);
-	if (sym != NULL)
-		*((char ***)(sym->st_value + ooff)) = _dl_so_envp;
+	    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, &dummy_obj, &obj);
+	if (sym != NULL && (char ***)(sym->st_value + ooff) != &environ) {
+		DL_DEB(("setting environ %p@%s[%p] from %p\n",
+		    (void *)(sym->st_value + ooff), obj->load_name,
+		    (void *)obj, (void *)&environ));
+		*((char ***)(sym->st_value + ooff)) = environ;
+	}
 }

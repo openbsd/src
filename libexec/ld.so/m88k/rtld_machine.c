@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.13 2015/11/02 07:02:53 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.14 2016/03/20 02:29:51 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -209,7 +209,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			if ((newval >> 28) != 0 && (newval >> 28) != 0x0f) {
 				_dl_printf("%s: %s: out of range DISP26"
 				    " relocation to '%s' at %x\n",
-				    _dl_progname, object->load_name, symn,
+				    __progname, object->load_name, symn,
 				    r_addr);
 				_dl_exit(1);
 			}
@@ -228,8 +228,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		default:
 			_dl_printf("%s:"
 			    " %s: unsupported relocation '%s' %d at %x\n",
-			    _dl_progname, object->load_name, symn, type,
-			    r_addr);
+			    __progname, object->load_name, symn, type, r_addr);
 			_dl_exit(1);
 		}
 	}
