@@ -1,3 +1,4 @@
+/*	$OpenBSD: init.c,v 1.2 2016/03/20 03:01:57 guenther Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
