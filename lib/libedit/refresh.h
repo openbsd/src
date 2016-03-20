@@ -1,5 +1,5 @@
-/*	$OpenBSD: refresh.h,v 1.8 2016/03/20 20:35:38 schwarze Exp $	*/
-/*	$NetBSD: refresh.h,v 1.6 2009/12/30 22:37:40 christos Exp $	*/
+/*	$OpenBSD: refresh.h,v 1.9 2016/03/20 22:57:59 schwarze Exp $	*/
+/*	$NetBSD: refresh.h,v 1.9 2016/02/16 15:53:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,8 +40,6 @@
  */
 #ifndef _h_el_refresh
 #define	_h_el_refresh
-
-#include "histedit.h"
 
 typedef struct {
 	coord_t	r_cursor;	/* Refresh cursor position	*/

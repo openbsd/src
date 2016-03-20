@@ -1,5 +1,5 @@
-/*	$OpenBSD: hist.h,v 1.10 2016/01/30 17:32:52 schwarze Exp $	*/
-/*	$NetBSD: hist.h,v 1.14 2014/05/11 01:05:17 christos Exp $	*/
+/*	$OpenBSD: hist.h,v 1.11 2016/03/20 22:57:59 schwarze Exp $	*/
+/*	$NetBSD: hist.h,v 1.17 2016/02/16 15:53:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,8 +40,6 @@
  */
 #ifndef _h_el_hist
 #define	_h_el_hist
-
-#include "histedit.h"
 
 typedef int (*hist_fun_t)(void *, TYPE(HistEvent) *, int, ...);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.h,v 1.13 2016/03/20 19:33:16 schwarze Exp $	*/
+/*	$OpenBSD: el.h,v 1.14 2016/03/20 22:57:59 schwarze Exp $	*/
 /*	$NetBSD: el.h,v 1.21 2009/12/31 15:58:26 christos Exp $	*/
 
 /*-
@@ -97,13 +97,11 @@ typedef struct el_state_t {
 #include "terminal.h"
 #include "refresh.h"
 #include "chared.h"
-#include "common.h"
 #include "search.h"
 #include "hist.h"
+#include "fcns.h"	/* el_func_t is needed for map.h */
 #include "map.h"
-#include "parse.h"
 #include "sig.h"
-#include "help.h"
 #include "read.h"
 
 struct editline {

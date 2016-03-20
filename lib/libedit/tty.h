@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.9 2014/05/20 22:28:07 yasuoka Exp $	*/
+/*	$OpenBSD: tty.h,v 1.10 2016/03/20 22:57:59 schwarze Exp $	*/
 /*	$NetBSD: tty.h,v 1.12 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -41,8 +41,6 @@
 #ifndef _h_el_tty
 #define	_h_el_tty
 
-#include "sys.h"
-#include "histedit.h"
 #include <termios.h>
 #include <unistd.h>
 

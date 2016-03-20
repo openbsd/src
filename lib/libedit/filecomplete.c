@@ -1,4 +1,4 @@
-/*	$OpenBSD: filecomplete.c,v 1.7 2016/01/31 15:34:53 schwarze Exp $ */
+/*	$OpenBSD: filecomplete.c,v 1.8 2016/03/20 22:57:59 schwarze Exp $ */
 /*	$NetBSD: filecomplete.c,v 1.22 2010/12/02 04:42:46 dholland Exp $	*/
 
 /*-
@@ -46,8 +46,6 @@
 #include <fcntl.h>
 
 #include "el.h"
-#include "fcns.h"		/* for EL_NUM_FCNS */
-#include "histedit.h"
 #include "filecomplete.h"
 
 static const Char break_chars[] = { ' ', '\t', '\n', '"', '\\', '\'', '`', '@',

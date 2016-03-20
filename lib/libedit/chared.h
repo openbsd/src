@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.h,v 1.11 2016/03/20 20:35:38 schwarze Exp $	*/
+/*	$OpenBSD: chared.h,v 1.12 2016/03/20 22:57:59 schwarze Exp $	*/
 /*	$NetBSD: chared.h,v 1.20 2010/04/15 00:57:33 christos Exp $	*/
 
 /*-
@@ -43,8 +43,6 @@
 
 #include <ctype.h>
 #include <string.h>
-
-#include "histedit.h"
 
 #define	EL_MAXMACRO	10
 
@@ -136,12 +134,6 @@ typedef struct el_chared_t {
 #define	MODE_INSERT	0
 #define	MODE_REPLACE	1
 #define	MODE_REPLACE_1	2
-
-#include "common.h"
-#include "vi.h"
-#include "emacs.h"
-#include "search.h"
-#include "fcns.h"
 
 
 protected int	 cv__isword(wint_t);

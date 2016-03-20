@@ -1,5 +1,5 @@
-/*	$OpenBSD: sig.h,v 1.7 2010/06/30 00:05:35 nicm Exp $	*/
-/*	$NetBSD: sig.h,v 1.8 2009/02/19 15:20:22 christos Exp $	*/
+/*	$OpenBSD: sig.h,v 1.8 2016/03/20 22:57:59 schwarze Exp $	*/
+/*	$NetBSD: sig.h,v 1.10 2016/02/16 15:53:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,8 +42,6 @@
 #define	_h_el_sig
 
 #include <signal.h>
-
-#include "histedit.h"
 
 /*
  * Define here all the signals we are going to handle

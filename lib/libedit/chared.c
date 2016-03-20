@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.c,v 1.18 2016/03/20 20:35:38 schwarze Exp $	*/
+/*	$OpenBSD: chared.c,v 1.19 2016/03/20 22:57:59 schwarze Exp $	*/
 /*	$NetBSD: chared.c,v 1.28 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -39,7 +39,9 @@
  * chared.c: Character editor utilities
  */
 #include <stdlib.h>
+
 #include "el.h"
+#include "common.h"
 
 private void ch__clearmacro (EditLine *);
 

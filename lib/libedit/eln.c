@@ -1,4 +1,4 @@
-/*	$OpenBSD: eln.c,v 1.8 2016/03/20 19:33:16 schwarze Exp $	*/
+/*	$OpenBSD: eln.c,v 1.9 2016/03/20 22:57:59 schwarze Exp $	*/
 /*	$NetBSD: eln.c,v 1.9 2010/11/04 13:53:12 christos Exp $	*/
 
 /*-
@@ -35,13 +35,12 @@
  */
 #include "config.h"
 
-#include "histedit.h"
-#include "el.h"
-#include "read.h"
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "el.h"
 
 public int
 el_getc(EditLine *el, char *cp)

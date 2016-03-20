@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.19 2016/03/20 20:35:38 schwarze Exp $	*/
+/*	$OpenBSD: tty.c,v 1.20 2016/03/20 22:57:59 schwarze Exp $	*/
 /*	$NetBSD: tty.c,v 1.34 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -42,8 +42,9 @@
 #include <errno.h>
 #include <unistd.h>	/* for isatty */
 #include <strings.h>	/* for ffs */
+
 #include "el.h"
-#include "tty.h"
+#include "parse.h"
 
 typedef struct ttymodes_t {
 	const char *m_name;

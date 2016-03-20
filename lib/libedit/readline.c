@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.c,v 1.16 2016/03/20 00:01:21 krw Exp $	*/
+/*	$OpenBSD: readline.c,v 1.17 2016/03/20 22:57:59 schwarze Exp $	*/
 /*	$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
@@ -53,8 +53,6 @@
 #endif
 #include "readline/readline.h"
 #include "el.h"
-#include "fcns.h"		/* for EL_NUM_FCNS */
-#include "histedit.h"
 #include "filecomplete.h"
 
 void rl_prep_terminal(int);
@@ -2248,7 +2246,7 @@ rl_on_new_line(void)
 
 int
 /*ARGSUSED*/
-rl_set_keyboard_input_timeout(int u)
+rl_set_keyboard_input_timeout(int u __attribute__((__unused__)))
 {
 	return 0;
 }

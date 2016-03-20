@@ -1,5 +1,5 @@
-/*	$OpenBSD: search.c,v 1.17 2016/03/20 20:35:38 schwarze Exp $	*/
-/*	$NetBSD: search.c,v 1.24 2010/04/15 00:57:33 christos Exp $	*/
+/*	$OpenBSD: search.c,v 1.18 2016/03/20 22:57:59 schwarze Exp $	*/
+/*	$NetBSD: search.c,v 1.37 2016/02/16 19:08:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,7 +44,9 @@
 #elif defined(REGEXP)
 #include <regexp.h>
 #endif
+
 #include "el.h"
+#include "common.h"
 
 /*
  * Adjust cursor in vi mode to include the character under it

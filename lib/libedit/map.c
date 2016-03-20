@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.17 2016/03/20 20:35:38 schwarze Exp $	*/
+/*	$OpenBSD: map.c,v 1.18 2016/03/20 22:57:59 schwarze Exp $	*/
 /*	$NetBSD: map.c,v 1.25 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -39,7 +39,10 @@
  * map.c: Editor function definitions
  */
 #include <stdlib.h>
+
 #include "el.h"
+#include "help.h"
+#include "parse.h"
 
 private void	map_print_key(EditLine *, el_action_t *, const Char *);
 private void	map_print_some_keys(EditLine *, el_action_t *, wint_t, wint_t);

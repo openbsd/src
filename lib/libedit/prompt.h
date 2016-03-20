@@ -1,5 +1,5 @@
-/*	$OpenBSD: prompt.h,v 1.7 2010/06/30 00:05:35 nicm Exp $	*/
-/*	$NetBSD: prompt.h,v 1.10 2009/12/30 22:37:40 christos Exp $	*/
+/*	$OpenBSD: prompt.h,v 1.8 2016/03/20 22:57:59 schwarze Exp $	*/
+/*	$NetBSD: prompt.h,v 1.12 2016/02/16 15:53:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,8 +40,6 @@
  */
 #ifndef _h_el_prompt
 #define	_h_el_prompt
-
-#include "histedit.h"
 
 typedef Char    *(*el_pfunc_t)(EditLine *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.26 2016/03/20 22:09:24 schwarze Exp $	*/
+/*	$OpenBSD: el.c,v 1.27 2016/03/20 22:57:59 schwarze Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -50,6 +50,7 @@
 #endif
 
 #include "el.h"
+#include "parse.h"
 
 /* el_init():
  *	Initialize editline and set default parameters.

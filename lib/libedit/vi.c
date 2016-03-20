@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.16 2016/03/20 20:35:38 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.17 2016/03/20 22:57:59 schwarze Exp $	*/
 /*	$NetBSD: vi.c,v 1.33 2011/02/17 16:44:48 joerg Exp $	*/
 
 /*-
@@ -43,6 +43,9 @@
  * vi.c: Vi mode commands.
  */
 #include "el.h"
+#include "common.h"
+#include "emacs.h"
+#include "vi.h"
 
 private el_action_t	cv_action(EditLine *, wint_t);
 private el_action_t	cv_paste(EditLine *, wint_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.h,v 1.4 2016/03/20 20:35:38 schwarze Exp $	*/
+/*	$OpenBSD: terminal.h,v 1.5 2016/03/20 22:57:59 schwarze Exp $	*/
 /*	$NetBSD: term.h,v 1.21 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -40,8 +40,6 @@
  */
 #ifndef _h_el_terminal
 #define	_h_el_terminal
-
-#include "histedit.h"
 
 typedef struct {		/* Symbolic function key bindings	*/
 	const Char	*name;	/* name of the key			*/
