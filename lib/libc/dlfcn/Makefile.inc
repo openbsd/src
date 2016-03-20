@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2013/07/05 21:29:51 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2016/03/20 02:32:39 guenther Exp $
 
 .PATH: ${LIBCSRCDIR}/dlfcn
 
 .include <bsd.own.mk>
 
-SRCS+=		dlfcn_stubs.c
+SRCS+=		dlfcn_stubs.c init.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.5 2015/10/17 20:22:08 deraadt Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.6 2016/03/20 02:32:40 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -19,6 +19,11 @@
 #define	_LIBC_UNISTD_H_
 
 #include_next <unistd.h>
+
+__BEGIN_HIDDEN_DECLS
+/* shared between getpagesize(), sysconf(), and _csu_finish() */
+extern int	_pagesize;
+__END_HIDDEN_DECLS
 
 PROTO_NORMAL(__tfork_thread);
 PROTO_NORMAL(_exit);

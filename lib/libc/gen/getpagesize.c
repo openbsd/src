@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpagesize.c,v 1.8 2015/09/12 14:56:50 guenther Exp $ */
+/*	$OpenBSD: getpagesize.c,v 1.9 2016/03/20 02:32:40 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,18 +35,16 @@
 int
 getpagesize(void)
 {
-	static int pagsz;
-
-	if (pagsz == 0) {
+	if (_pagesize == 0) {
 		int mib[2];
 		size_t size;
 
 		mib[0] = CTL_HW;
 		mib[1] = HW_PAGESIZE;
-		size = sizeof pagsz;
-		if (sysctl(mib, 2, &pagsz, &size, NULL, 0) == -1)
+		size = sizeof _pagesize;
+		if (sysctl(mib, 2, &_pagesize, &size, NULL, 0) == -1)
 			return (-1);
 	}
-	return (pagsz);
+	return (_pagesize);
 }
 DEF_WEAK(getpagesize);

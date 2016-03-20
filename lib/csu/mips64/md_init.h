@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.12 2016/03/13 18:35:02 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.13 2016/03/20 02:32:39 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -166,12 +166,3 @@ struct kframe {
 	argc = kfp->kargc;			\
 	argv = &kfp->kargv[0];			\
 	envp = argv + argc + 1;
-
-#include <sys/syscall.h>
-#define	MD_DISABLE_KBIND						\
-	do {								\
-		register long syscall_num __asm("v0") = SYS_kbind;	\
-		register void *arg1 __asm("a0") = NULL;			\
-		__asm volatile("syscall" : "+r" (syscall_num)		\
-		    : "r" (arg1) : "v1", "a3");				\
-	} while (0)

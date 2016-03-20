@@ -467,6 +467,8 @@ nextkey
 store
 
 /* dlfcn */
+__progname
+_csu_finish
 dl_iterate_phdr
 dladdr
 dlclose
@@ -474,6 +476,7 @@ dlctl
 dlerror
 dlopen
 dlsym
+environ
 
 /* compat-43 */
 creat

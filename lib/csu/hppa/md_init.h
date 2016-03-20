@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.8 2016/03/13 18:35:02 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.9 2016/03/20 02:32:39 guenther Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -174,15 +174,3 @@
 	envp = arginfo->ps_envstr;
 
 #define	MD_EPROL_LABEL	__asm (".export _eprol, entry\n\t.label _eprol")
-
-#include <sys/syscall.h>
-#include <machine/vmparam.h>	/* SYSCALLGATE */
-#define	MD_DISABLE_KBIND						\
-do {									\
-	register long r1 __asm__("r1") = SYSCALLGATE;			\
-	register void *arg0 __asm__("r26") = NULL;			\
-	__asm__ __volatile__ ("ble 4(%%sr7, %%r1) ! ldi %0, %%r22"	\
-	    :								\
-	    : "i" (SYS_kbind), "r" (r1), "r"(arg0)			\
-	    : "r22", "r28", "r29", "cc", "memory");			\
-} while (0)
