@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.21 2015/12/26 13:48:38 mestre Exp $	*/
+/*	$OpenBSD: lex.c,v 1.22 2016/03/20 01:33:39 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -31,9 +31,9 @@
  */
 
 #include <sys/types.h>
-#include <sys/ioctl.h>
 #include <termios.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -1453,9 +1453,10 @@ again:
 	    if (c >= 0)
 		break;
 	    if (errno == EWOULDBLOCK) {
-		int     off = 0;
+		int     flags;
 
-		(void) ioctl(SHIN, FIONBIO, (ioctl_t) & off);
+		flags = fcntl(SHIN, F_GETFL, 0);
+		(void) fcntl(SHIN, F_SETFL, (flags & ~O_NONBLOCK));
 	    }
 	    else if (errno != EINTR)
 		break;
