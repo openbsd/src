@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys.h,v 1.13 2016/03/20 21:25:27 schwarze Exp $	*/
+/*	$OpenBSD: sys.h,v 1.14 2016/03/20 22:09:24 schwarze Exp $	*/
 /*	$NetBSD: sys.h,v 1.13 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -88,9 +88,9 @@ size_t	strlcat(char *dst, const char *src, size_t size);
 size_t	strlcpy(char *dst, const char *src, size_t size);
 #endif
 
-#ifndef HAVE_FGETLN
-#define	fgetln libedit_fgetln
-char	*fgetln(FILE *fp, size_t *len);
+#ifndef HAVE_GETLINE
+#define	getline libedit_getline
+ssize_t	getline(char **line, size_t *len, FILE *fp);
 #endif
 
 #define	REGEX		/* Use POSIX.2 regular expression functions */

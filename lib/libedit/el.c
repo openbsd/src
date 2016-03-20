@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.25 2016/02/02 00:43:12 schwarze Exp $	*/
+/*	$OpenBSD: el.c,v 1.26 2016/03/20 22:09:24 schwarze Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -500,7 +500,8 @@ el_source(EditLine *el, const char *fname)
 {
 	FILE *fp;
 	size_t len;
-	char *ptr, *lptr = NULL;
+	ssize_t slen;
+	char *ptr;
 #ifdef HAVE_ISSETUGID
 	char path[PATH_MAX];
 #endif
@@ -534,35 +535,29 @@ el_source(EditLine *el, const char *fname)
 	if (fp == NULL)
 		return -1;
 
-	while ((ptr = fgetln(fp, &len)) != NULL) {
-		if (ptr[len - 1] == '\n')
-			ptr[len - 1] = '\0';
-		else {
-			if ((lptr = (char *)malloc(len + 1)) == NULL) {
-				(void) fclose(fp);
-				return -1;
-			}
-			memcpy(lptr, ptr, len);
-			lptr[len] = '\0';
-			ptr = lptr;
-		}
+	ptr = NULL;
+	len = 0;
+	while ((slen = getline(&ptr, &len, fp)) != -1) {
+		if (*ptr == '\n')
+			continue;	/* Empty line. */
+		if (slen > 0 && ptr[--slen] == '\n')
+			ptr[slen] = '\0';
 
 		dptr = ct_decode_string(ptr, &el->el_scratch);
 		if (!dptr)
 			continue;
-
 		/* loop until first non-space char or EOL */
 		while (*dptr != '\0' && Isspace(*dptr))
 			dptr++;
 		if (*dptr == '#')
 			continue;   /* ignore, this is a comment line */
 		if (parse_line(el, dptr) == -1) {
-			free(lptr);
+			free(ptr);
 			(void) fclose(fp);
 			return -1;
 		}
 	}
-	free(lptr);
+	free(ptr);
 	(void) fclose(fp);
 	return 0;
 }

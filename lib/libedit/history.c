@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.21 2016/01/30 17:32:52 schwarze Exp $	*/
+/*	$OpenBSD: history.c,v 1.22 2016/03/20 22:09:24 schwarze Exp $	*/
 /*	$NetBSD: history.c,v 1.37 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
@@ -722,8 +722,10 @@ private int
 history_load(TYPE(History) *h, const char *fname)
 {
 	FILE *fp;
-	char *line, *lbuf;
-	size_t sz, max_size;
+	char *line;
+	size_t llen;
+	ssize_t sz;
+	size_t max_size;
 	char *ptr;
 	int i = -1;
 	TYPE(HistEvent) ev;
@@ -731,11 +733,12 @@ history_load(TYPE(History) *h, const char *fname)
 	static ct_buffer_t conv;
 #endif
 
-	lbuf = NULL;
 	if ((fp = fopen(fname, "r")) == NULL)
 		return i;
 
-	if ((line = fgetln(fp, &sz)) == NULL)
+	line = NULL;
+	llen = 0;
+	if ((sz = getline(&line, &llen, fp)) == -1)
 		goto done;
 
 	if (strncmp(line, hist_cookie, sz) != 0)
@@ -744,20 +747,10 @@ history_load(TYPE(History) *h, const char *fname)
 	ptr = malloc(max_size = 1024);
 	if (ptr == NULL)
 		goto done;
-	for (i = 0; (line = fgetln(fp, &sz)) != NULL; i++) {
-		if (line[sz - 1] == '\n')
-			line[sz - 1] = '\0';
-		else {
-			lbuf = malloc(sz + 1);
-			if (lbuf == NULL) {
-				i = -1;
-				goto oomem;
-			}
-			memcpy(lbuf, line, sz);
-			lbuf[sz++] = '\0';
-			line = lbuf;
-		}
-		if (sz > max_size) {
+	for (i = 0; (sz = getline(&line, &llen, fp)) != -1; i++) {
+		if (sz > 0 && line[sz - 1] == '\n')
+			line[--sz] = '\0';
+		if (max_size < sz) {
 			char *nptr;
 			max_size = (sz + 1024) & ~1023;
 			nptr = realloc(ptr, max_size);
@@ -776,7 +769,7 @@ history_load(TYPE(History) *h, const char *fname)
 oomem:
 	free(ptr);
 done:
-	free(lbuf);
+	free(line);
 	(void) fclose(fp);
 	return i;
 }
