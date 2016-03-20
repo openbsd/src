@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.h,v 1.14 2016/03/20 22:57:59 schwarze Exp $	*/
+/*	$OpenBSD: el.h,v 1.15 2016/03/20 23:24:18 schwarze Exp $	*/
 /*	$NetBSD: el.h,v 1.21 2009/12/31 15:58:26 christos Exp $	*/
 
 /*-
@@ -61,8 +61,6 @@
 #define	CHARSET_IS_UTF8 0x10
 #define	NARROW_HISTORY	0x40
 #define	NARROW_READ	0x80
-
-typedef int bool_t;			/* True or not			*/
 
 typedef unsigned char el_action_t;	/* Index to command array	*/
 

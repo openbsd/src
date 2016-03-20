@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.12 2016/03/20 22:57:59 schwarze Exp $	*/
+/*	$OpenBSD: common.c,v 1.13 2016/03/20 23:24:18 schwarze Exp $	*/
 /*	$NetBSD: common.c,v 1.24 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -706,7 +706,7 @@ ed_search_prev_history(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	const Char *hp;
 	int h;
-	bool_t found = 0;
+	int found = 0;
 
 	el->el_chared.c_vcmd.action = NOP;
 	el->el_chared.c_undo.len = -1;
@@ -745,7 +745,7 @@ ed_search_prev_history(EditLine *el, wint_t c __attribute__((__unused__)))
 			    (el->el_line.lastchar - el->el_line.buffer)) ||
 			hp[el->el_line.lastchar - el->el_line.buffer]) &&
 		    c_hmatch(el, hp)) {
-			found++;
+			found = 1;
 			break;
 		}
 		h++;
@@ -774,7 +774,7 @@ ed_search_next_history(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	const Char *hp;
 	int h;
-	bool_t found = 0;
+	int found = 0;
 
 	el->el_chared.c_vcmd.action = NOP;
 	el->el_chared.c_undo.len = -1;
