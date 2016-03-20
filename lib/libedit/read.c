@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.21 2016/03/20 17:19:48 schwarze Exp $	*/
+/*	$OpenBSD: read.c,v 1.22 2016/03/20 18:20:10 schwarze Exp $	*/
 /*	$NetBSD: read.c,v 1.57 2010/07/21 18:18:52 christos Exp $	*/
 
 /*-
@@ -332,7 +332,7 @@ read_char(EditLine *el, Char *cp)
 	}
 
 #ifdef WIDECHAR
-	if (el->el_flags & CHARSET_IS_UTF8) {
+	do {
 		mbstate_t mbs;
 		size_t rbytes;
 again_lastbyte:
@@ -355,7 +355,13 @@ again_lastbyte:
 				goto again;
 			}
 		case (size_t)-2:
-			if (cbp >= MB_LEN_MAX) { /* "shouldn't happen" */
+			/*
+			 * We don't support other multibyte charsets.
+			 * The second condition shouldn't happen
+			 * and is here merely for additional safety.
+			 */
+			if ((el->el_flags & CHARSET_IS_UTF8) == 0 ||
+			    cbp >= MB_LEN_MAX) {
 				errno = EILSEQ;
 				*cp = '\0';
 				return -1;
@@ -367,9 +373,10 @@ again_lastbyte:
 			bytes = (int)rbytes;
 			break;
 		}
-	} else  /* we don't support other multibyte charsets */
+	} while (/*CONSTCOND*/0);
+#else
+	*cp = (unsigned char)cbuf[0];
 #endif
-		*cp = (unsigned char)cbuf[0];
 
 	if ((el->el_flags & IGNORE_EXTCHARS) && bytes > 1) {
 		cbp = 0; /* skip this character */
