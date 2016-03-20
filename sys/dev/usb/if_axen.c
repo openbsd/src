@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.20 2015/11/25 03:10:00 dlg Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.21 2016/03/20 15:53:34 bmercer Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -115,10 +115,6 @@ int	axen_cmd(struct axen_softc *, int, int, int, void *);
 int	axen_ifmedia_upd(struct ifnet *);
 void	axen_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 void	axen_reset(struct axen_softc *sc);
-#if 0 /* not used */
-int	axen_ax88179_eeprom(struct axen_softc *, void *);
-#endif
-
 void	axen_iff(struct axen_softc *);
 void	axen_lock_mii(struct axen_softc *sc);
 void	axen_unlock_mii(struct axen_softc *sc);
@@ -398,69 +394,13 @@ axen_reset(struct axen_softc *sc)
 {
 	if (usbd_is_dying(sc->axen_udev))
 		return;
-	/* XXX What to reset? */
+	
+	axen_ax88179_init(sc);
 
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
 	return;
 }
-
-#if 0 /* not used */
-#define AXEN_GPIO_WRITE(x,y) do {                                \
-	axen_cmd(sc, AXEN_CMD_WRITE_GPIO, 0, (x), NULL);          \
-	usbd_delay_ms(sc->axen_udev, (y));			\
-} while (0)
-
-int
-axen_ax88179_eeprom(struct axen_softc *sc, void *addr)
-{
-	int		i, retry;
-	uWord		buf;
-	uint8_t		eeprom[20];
-	uint16_t	csum;
-
-	for (i = 0; i < 6; i++) {
-		/* set eeprom address */
-		USETW(buf, i);
-		axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_MAC_EEPROM_ADDR, buf);
-
-		/* set eeprom command */
-		USETW(buf, AXEN_EEPROM_READ);
-		axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_MAC_EEPROM_CMD, buf);
-
-		/* check the value is ready */
-		retry = 3;
-		do {
-			USETW(buf, AXEN_EEPROM_READ);
-			usbd_delay_ms(sc->axen_udev, 10);
-			axen_cmd(sc, AXEN_CMD_MAC_READ, 1, AXEN_MAC_EEPROM_CMD,
-			    buf);
-			retry--;
-			if (retry < 0)
-				return EINVAL;
-		} while ((UGETW(buf) & 0xff) & AXEN_EEPROM_BUSY);
-
-		/* read data */
-		axen_cmd(sc, AXEN_CMD_MAC_READ2, 2, AXEN_EEPROM_READ, 
-		    &eeprom[i * 2]);
-
-		/* sanity check */
-		if ((i == 0) && (eeprom[0] == 0xff))
-			return EINVAL;
-	}
-
-	/* check checksum */
-	csum = eeprom[6] + eeprom[7] + eeprom[8] + eeprom[9];
-	csum = (csum >> 8) + (csum & 0xff) + eeprom[10];
-	if (csum != 0xff) {
-		printf("eeprom checksum mismatchi(0x%02x)\n", csum);
-		return EINVAL;
-	}
-
-	memcpy(addr, eeprom, ETHER_ADDR_LEN);
-	return 0;
-}
-#endif
 
 void
 axen_ax88179_init(struct axen_softc *sc)
@@ -720,16 +660,10 @@ axen_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Get station address.
 	 */
-#if 0 /* read from eeprom */
-	if (axen_ax88179_eeprom(sc, &eaddr)) {
-		printf("EEPROM checksum error\n");
-		return;
-	}
-#else /* use MAC command */
+	/* use MAC command */
 	axen_lock_mii(sc);
 	axen_cmd(sc, AXEN_CMD_MAC_READ_ETHER, 6, AXEN_CMD_MAC_NODE_ID, &eaddr);
 	axen_unlock_mii(sc);
-#endif
 
 	axen_ax88179_init(sc);
 
@@ -1321,7 +1255,9 @@ axen_init(void *xsc)
 
 	/* XXX: ? */
 	bval = 0x01;
+	axen_lock_mii(sc);
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_UNK_28, &bval);
+	axen_unlock_mii(sc);
 
 	/* Init RX ring. */
 	if (axen_rx_list_init(sc) == ENOBUFS) {
