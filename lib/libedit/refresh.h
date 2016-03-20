@@ -1,4 +1,4 @@
-/*	$OpenBSD: refresh.h,v 1.7 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: refresh.h,v 1.8 2016/03/20 20:35:38 schwarze Exp $	*/
 /*	$NetBSD: refresh.h,v 1.6 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@ typedef struct {
 	int	r_newcv;
 } el_refresh_t;
 
-protected void	re_putc(EditLine *, Int, int);
+protected void	re_putc(EditLine *, wint_t, int);
 protected void	re_clear_lines(EditLine *);
 protected void	re_clear_display(EditLine *);
 protected void	re_refresh(EditLine *);

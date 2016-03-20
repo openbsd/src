@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.h,v 1.3 2016/01/30 00:06:39 schwarze Exp $	*/
+/*	$OpenBSD: terminal.h,v 1.4 2016/03/20 20:35:38 schwarze Exp $	*/
 /*	$NetBSD: term.h,v 1.21 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -104,8 +104,8 @@ protected int	terminal_settc(EditLine *, int, const Char **);
 protected int	terminal_gettc(EditLine *, int, char **);
 protected int	terminal_telltc(EditLine *, int, const Char **);
 protected int	terminal_echotc(EditLine *, int, const Char **);
-protected void	terminal_writec(EditLine *, Int);
-protected int	terminal__putc(EditLine *, Int);
+protected void	terminal_writec(EditLine *, wint_t);
+protected int	terminal__putc(EditLine *, wint_t);
 protected void	terminal__flush(EditLine *);
 
 /*

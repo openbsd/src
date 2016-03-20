@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymacro.c,v 1.5 2016/01/31 20:42:33 schwarze Exp $	*/
+/*	$OpenBSD: keymacro.c,v 1.6 2016/03/20 20:35:38 schwarze Exp $	*/
 /*	$NetBSD: key.c,v 1.23 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@ private int		 node_trav(EditLine *, keymacro_node_t *, Char *,
     keymacro_value_t *);
 private int		 node__try(EditLine *, keymacro_node_t *, const Char *,
     keymacro_value_t *, int);
-private keymacro_node_t	*node__get(Int);
+private keymacro_node_t	*node__get(wint_t);
 private void		 node__free(keymacro_node_t *);
 private void		 node__put(EditLine *, keymacro_node_t *);
 private int		 node__delete(EditLine *, keymacro_node_t **,
@@ -452,7 +452,7 @@ node__put(EditLine *el, keymacro_node_t *ptr)
  *	Returns pointer to a keymacro_node_t for ch.
  */
 private keymacro_node_t *
-node__get(Int ch)
+node__get(wint_t ch)
 {
 	keymacro_node_t *ptr;
 

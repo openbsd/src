@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.18 2016/01/30 12:22:20 schwarze Exp $	*/
+/*	$OpenBSD: tty.c,v 1.19 2016/03/20 20:35:38 schwarze Exp $	*/
 /*	$NetBSD: tty.c,v 1.34 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@ typedef struct ttymodes_t {
 }          ttymodes_t;
 
 typedef struct ttymap_t {
-	Int nch, och;		/* Internal and termio rep of chars */
+	wint_t nch, och;	/* Internal and termio rep of chars */
 	el_action_t bind[3];	/* emacs, vi, and vi-cmd */
 } ttymap_t;
 
@@ -148,7 +148,7 @@ private const ttymap_t tty_map[] = {
 	{C_LNEXT, VLNEXT,
 	{ED_QUOTED_INSERT, ED_QUOTED_INSERT, ED_UNASSIGNED}},
 #endif /* VLNEXT */
-	{-1, -1,
+	{(wint_t)-1, (wint_t)-1,
 	{ED_UNASSIGNED, ED_UNASSIGNED, ED_UNASSIGNED}}
 };
 
@@ -889,7 +889,7 @@ tty_bind_char(EditLine *el, int force)
 		dalt = NULL;
 	}
 
-	for (tp = tty_map; tp->nch != -1; tp++) {
+	for (tp = tty_map; tp->nch != (wint_t)-1; tp++) {
 		new[0] = t_n[tp->nch];
 		old[0] = t_o[tp->och];
 		if (new[0] == old[0] && !force)
@@ -1162,7 +1162,7 @@ tty_stty(EditLine *el, int argc __attribute__((__unused__)), const Char **argv)
 			break;
 		default:
 			(void) fprintf(el->el_errfile,
-			    "%s: Unknown switch `%c'.\n",
+			    "%s: Unknown switch `%lc'.\n",
 			    name, argv[0][1]);
 			return -1;
 		}

@@ -77,7 +77,8 @@ _EOF
 # XXX:	need a space between name and prototype so that -fc and -fh
 #	parsing is much easier
 #
-		printf("protected el_action_t\t%s (EditLine *, Int);\n", name);
+		printf("protected el_action_t\t%s (EditLine *, wint_t);\n",
+		    name);
 	    }
 	}
 	END {
@@ -161,7 +162,7 @@ _EOF
 	END {
 	    printf("#define\t%-30.30s\t%3d\n", "EL_NUM_FCNS", count);
 
-	    printf("typedef el_action_t (*el_func_t)(EditLine *, Int);");
+	    printf("typedef el_action_t (*el_func_t)(EditLine *, wint_t);");
 	    printf("\nprotected const el_func_t* func__get(void);\n");
 	    printf("#endif /* _h_fcns_c */\n");
 	}'

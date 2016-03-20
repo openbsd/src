@@ -1,4 +1,4 @@
-/*	$OpenBSD: chartype.h,v 1.8 2016/03/20 20:16:09 schwarze Exp $	*/
+/*	$OpenBSD: chartype.h,v 1.9 2016/03/20 20:35:38 schwarze Exp $	*/
 /*	$NetBSD: chartype.h,v 1.5 2010/04/15 00:55:57 christos Exp $	*/
 
 /*-
@@ -69,7 +69,6 @@
 #define ct_mbstowcs          mbstowcs
 
 #define Char			wchar_t
-#define Int			wint_t
 #define FUN(prefix,rest)	prefix ## _w ## rest
 #define FUNW(type)		type ## _w
 #define TYPE(type)		type ## W
@@ -118,7 +117,6 @@ size_t 	ct_mbrtowc(char *, const char *, size_t, void *);
 #define ct_mbstowcs(a, b, c)    (strncpy(a, b, c), strlen(a))
 
 #define Char			char
-#define Int			int
 #define FUN(prefix,rest)	prefix ## _ ## rest
 #define FUNW(type)		type
 #define TYPE(type)		type

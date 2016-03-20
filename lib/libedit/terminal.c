@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.6 2016/01/30 17:32:52 schwarze Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.7 2016/03/20 20:35:38 schwarze Exp $	*/
 /*	$NetBSD: term.c,v 1.57 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -1236,11 +1236,11 @@ terminal_tputs(EditLine *el, const char *cap, int affcnt)
  *	Add a character
  */
 protected int
-terminal__putc(EditLine *el, Int c)
+terminal__putc(EditLine *el, wint_t c)
 {
 	char buf[MB_LEN_MAX +1];
 	ssize_t i;
-	if (c == MB_FILL_CHAR)
+	if (c == (wint_t)MB_FILL_CHAR)
 		return 0;
 	i = ct_encode_char(buf, MB_LEN_MAX, c);
 	if (i <= 0)
@@ -1263,7 +1263,7 @@ terminal__flush(EditLine *el)
  *	Write the given character out, in a human readable form
  */
 protected void
-terminal_writec(EditLine *el, Int c)
+terminal_writec(EditLine *el, wint_t c)
 {
 	Char visbuf[VISUAL_WIDTH_MAX +1];
 	ssize_t vcnt = ct_visual_char(visbuf, VISUAL_WIDTH_MAX, c);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: refresh.c,v 1.12 2016/01/30 00:06:39 schwarze Exp $	*/
+/*	$OpenBSD: refresh.c,v 1.13 2016/03/20 20:35:38 schwarze Exp $	*/
 /*	$NetBSD: refresh.c,v 1.37 2011/07/29 23:44:45 christos Exp $	*/
 
 /*-
@@ -46,11 +46,11 @@
 #include "el.h"
 
 private void	re_nextline(EditLine *);
-private void	re_addc(EditLine *, Int);
+private void	re_addc(EditLine *, wint_t);
 private void	re_update_line(EditLine *, Char *, Char *, int);
 private void	re_insert (EditLine *, Char *, int, int, Char *, int);
 private void	re_delete(EditLine *, Char *, int, int, int);
-private void	re_fastputc(EditLine *, Int);
+private void	re_fastputc(EditLine *, wint_t);
 private void	re_clear_eol(EditLine *, int, int, int);
 private void	re__strncopy(Char *, Char *, size_t);
 private void	re__copy_and_pad(Char *, const Char *, size_t);
@@ -119,7 +119,7 @@ re_nextline(EditLine *el)
  *	Draw c, expanding tabs, control chars etc.
  */
 private void
-re_addc(EditLine *el, Int c)
+re_addc(EditLine *el, wint_t c)
 {
 	switch (ct_chr_class((Char)c)) {
 	case CHTYPE_TAB:        /* expand the tab */
@@ -155,10 +155,10 @@ re_addc(EditLine *el, Int c)
  *	Draw the character given
  */
 protected void
-re_putc(EditLine *el, Int c, int shift)
+re_putc(EditLine *el, wint_t c, int shift)
 {
 	int i, w = Width(c);
-	ELRE_DEBUG(1, (__F, "printing %5x '%c'\r\n", c, c));
+	ELRE_DEBUG(1, (__F, "printing %5x '%lc'\r\n", c, c));
 
 	while (shift && (el->el_refresh.r_cursor.h + w > el->el_terminal.t_size.h))
 	    re_putc(el, ' ', 1);
@@ -1046,7 +1046,7 @@ re_refresh_cursor(EditLine *el)
  *	Add a character fast.
  */
 private void
-re_fastputc(EditLine *el, Int c)
+re_fastputc(EditLine *el, wint_t c)
 {
 	int w = Width((Char)c);
 	while (w > 1 && el->el_cursor.h + w > el->el_terminal.t_size.h)

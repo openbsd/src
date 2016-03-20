@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.16 2016/01/30 17:32:52 schwarze Exp $	*/
+/*	$OpenBSD: map.c,v 1.17 2016/03/20 20:35:38 schwarze Exp $	*/
 /*	$NetBSD: map.c,v 1.25 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #include "el.h"
 
 private void	map_print_key(EditLine *, el_action_t *, const Char *);
-private void	map_print_some_keys(EditLine *, el_action_t *, Int, Int);
+private void	map_print_some_keys(EditLine *, el_action_t *, wint_t, wint_t);
 private void	map_print_all_keys(EditLine *);
 private void	map_init_nls(EditLine *);
 private void	map_init_meta(EditLine *);
@@ -1137,7 +1137,7 @@ map_print_key(EditLine *el, el_action_t *map, const Char *in)
  *	Print keys from first to last
  */
 private void
-map_print_some_keys(EditLine *el, el_action_t *map, Int first, Int last)
+map_print_some_keys(EditLine *el, el_action_t *map, wint_t first, wint_t last)
 {
 	el_bindings_t *bp, *ep;
 	Char firstbuf[2], lastbuf[2];
@@ -1295,8 +1295,8 @@ map_bind(EditLine *el, int argc, const Char **argv)
 				return 0;
 			default:
 				(void) fprintf(el->el_errfile,
-				    "" FSTR ": Invalid switch `%c'.\n",
-				    argv[0], p[1]);
+				    "" FSTR ": Invalid switch `%lc'.\n",
+				    argv[0], (wint_t)p[1]);
 			}
 		else
 			break;
