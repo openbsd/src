@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.87 2015/11/10 04:30:59 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.88 2016/03/20 02:30:28 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -106,28 +106,18 @@ _rthread_initlib(void)
 	static int tcb_set;
 	struct thread_control_block *tcb;
 
-	if (__predict_false(tcb_set == 0) && __get_tcb() == NULL) {
+	if (__predict_false(tcb_set == 0)) {
 		tcb_set = 1;
 
-		/* use libc's errno for the main thread */
-		tcb = &_initial_thread_tcb;
-		TCB_INIT(tcb, &_initial_thread, ___errno());
-		TCB_SET(tcb);
-	}
-}
+		tcb = __get_tcb();
+		if (tcb == NULL) {
+			tcb = &_initial_thread_tcb;
+			TCB_SET(tcb);
+		}
 
-/*
- * This is invoked by ___start() in crt0.  Eventually, when ld.so handles
- * TCB setup for dynamic executables, this will only be called to handle
- * the TCB setup for static executables and may migrate to libc.  The
- * envp argument is so that it can (someday) use that to find the Auxinfo
- * array and thus the ELF phdr and the PT_TLS info.
- */
-void __init_tcb(char **_envp);
-void
-__init_tcb(__unused char **envp)
-{
-	_rthread_initlib();
+		/* use libc's errno for the main thread */
+		TCB_INIT(tcb, &_initial_thread, ___errno());
+	}
 }
 
 int *

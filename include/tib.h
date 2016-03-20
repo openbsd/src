@@ -1,4 +1,4 @@
-/*	$OpenBSD: tib.h,v 1.1 2015/09/14 08:16:14 guenther Exp $	*/
+/*	$OpenBSD: tib.h,v 1.2 2016/03/20 02:30:28 guenther Exp $	*/
 /*
  * Copyright (c) 2011,2014 Philip Guenther <guenther@openbsd.org>
  *
@@ -50,9 +50,6 @@
  *		Initializes a TIB for a new thread, using the supplied
  *		value for the dtv pointer
  *
- *	TIB_COPY(tib, oldtib)
- *		Copies oldtib to tib, (re)initializing the internal members
- *
  *	TIB_TO_THREAD(tib)
  *		Given a TIB pointer, return a pointer to the struct pthread
  *
@@ -94,11 +91,15 @@
 
 
 /* If <machine/tcb.h> doesn't provide a better way, then use the default */
-#ifndef	TCB_GET
-#define	TCB_GET()	__get_tcb()
+#ifdef	TCB_GET
+# define TCB_HAVE_MD_GET	1
+#else
+# define TCB_GET()		__get_tcb()
 #endif
-#ifndef	TCB_SET
-#define	TCB_SET(tcb)	__set_tcb(tcb)
+#ifdef	TCB_SET
+# define TCB_HAVE_MD_SET	1
+#else
+# define TCB_SET(tcb)		__set_tcb(tcb)
 #endif
 
 
@@ -111,28 +112,34 @@
  * our thread bits before the TCB, at negative offsets from the
  * TCB pointer.  Ergo, memory is laid out, low to high, as:
  *
- *	pthread structure
+ *	[pthread structure]
  *	TIB {
  *		int cancel_flags
  *		int cancel_requested
  *		int errno
+ *		void *locale
  *		TCB {
  *			void *dtv
- *			void *locale
+ *			struct pthread *thread
  *		}
  *	}
  *	static TLS data
  */
 
 struct tib {
-	int	__tib_padding		/* padding for 8byte alignment */
+#ifdef __LP64__
+	int	__tib_padding;		/* padding for 8byte alignment */
+#endif
 	int	tib_cancel_flags;
 	int	tib_cancel;
 	int	tib_errno;
-	void	*tib_dtv;		/* internal to the runtime linker */
 	void	*tib_locale;
+	void	*tib_dtv;		/* internal to the runtime linker */
+	void	*tib_thread;
 };
-#define _TIB_PREP(tib)	((void)((tib)->__tib_padding = 0))
+#ifdef __LP64__
+# define _TIB_PREP(tib)	((void)((tib)->__tib_padding = 0))
+#endif
 
 #define	_TIBO_PTHREAD		(- _ALIGN(sizeof(struct pthread)))
 
@@ -149,38 +156,38 @@ struct tib {
  *			self pointer [i386/amd64 only]
  *			void *dtv
  *		}
+ *		struct pthread *thread
  *		void *locale
  *		int errno
  *		int cancel_count_flags
  *		int cancel_requested
  *	}
- *	pthread structure
+ *	[pthread structure]
  */
 
 struct tib {
 #if defined(__i386) || defined(__amd64)
 	struct	tib *__tib_self;
-#define	__tib_tcb __tib_self
+# define __tib_tcb __tib_self
 #endif
 	void	*tib_dtv;		/* internal to the runtime linker */
+	void	*tib_thread;
 	void	*tib_locale;
 	int	tib_errno;
 	int	tib_cancel;		/* set to request cancelation */
 	int	tib_cancel_flags;
-#if !defined(__i386)
+#if defined(__LP64__) || defined(__i386)
 	int	__tib_padding;		/* padding for 8byte alignment */
 #endif
 };
 
 #define	_TIBO_PTHREAD		_ALIGN(sizeof(struct tib))
 
-#if defined(__i386)
-#define _TIB_PREP(tib)	((void)((tib)->__tib_self = (tib)))
-#elif defined(__amd64)
-#define _TIB_PREP(tib)	\
+#if defined(__i386) || defined(__amd64)
+# define _TIB_PREP(tib)	\
 	((void)((tib)->__tib_self = (tib), (tib)->__tib_padding = 0))
-#else
-#define _TIB_PREP(tib)	((void)((tib)->__tib_padding = 0))
+#elif defined(__LP64__)
+# define _TIB_PREP(tib)	((void)((tib)->__tib_padding = 0))
 #endif
 
 #define	TIB_EXTRA_ALIGN		sizeof(void *)
@@ -191,10 +198,11 @@ struct tib {
 
 /* nothing to do by default */
 #ifndef	_TIB_PREP
-#define	_TIB_PREP(tib)	((void)0)
+# define _TIB_PREP(tib)	((void)0)
 #endif
 
-#define	TIB_INIT(tib, dtv)	do {		\
+#define	TIB_INIT(tib, dtv, thread)	do {		\
+		(tib)->tib_thread	= (thread);	\
 		(tib)->tib_locale	= NULL;		\
 		(tib)->tib_cancel_flags	= 0;		\
 		(tib)->tib_cancel	= 0;		\
@@ -202,37 +210,26 @@ struct tib {
 		(tib)->tib_errno	= 0;		\
 		_TIB_PREP(tib);				\
 	} while (0)
-#define	TIB_COPY(tib, oldtib)		do {		\
-		*(tib) = *(oldtib);			\
-		_TIB_PREP(tib);				\
-	} while (0)
 
 #ifndef	__tib_tcb
-#define	__tib_tcb		tib_dtv
+# define __tib_tcb		tib_dtv
 #endif
 #define	_TIBO_TCB		offsetof(struct tib, __tib_tcb)
 
 #define	TCB_TO_TIB(tcb)		((struct tib *)((char *)(tcb) - _TIBO_TCB))
 #define	TIB_TO_TCB(tib)		((char *)(tib) + _TIBO_TCB)
-#define	TIB_TO_THREAD(tib)	((struct pthread *)((char *)(tib) + \
-				_TIBO_PTHREAD))
-#define	THREAD_TO_TIB(thread)	((struct tib *)((char *)(thread) - \
-				_TIBO_PTHREAD))
+#define	TIB_TO_THREAD(tib)	((struct pthread *)(tib)->tib_thread)
 #define	TIB_GET()		TCB_TO_TIB(TCB_GET())
-#define	TIB_THREAD()		TIB_TO_THREAD(TIB_GET())
+#define	TCB_THREAD()		TIB_TO_THREAD(TIB_GET())
 
 
 __BEGIN_DECLS
-void	*_dl_allocate_tib(size_t _extra, int _flags) __dso_public;
-#define	DAT_UPDATE_CURRENT	1
+void	*_dl_allocate_tib(size_t _extra) __dso_public;
 void	_dl_free_tib(void *_tib, size_t _extra) __dso_public;
 
 /* The actual syscalls */
 void	*__get_tcb(void);
 void	__set_tcb(void *_tcb);
-
-/* The function in libc called by crt0 to init the tcb in static processes */
-void	__init_tcb(char **_envp) __dso_hidden;
 __END_DECLS
 
 #endif /* _TIB_H_ */
