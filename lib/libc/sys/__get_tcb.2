@@ -1,4 +1,4 @@
-.\" $OpenBSD: __get_tcb.2,v 1.4 2012/04/12 14:25:57 deraadt Exp $
+.\" $OpenBSD: __get_tcb.2,v 1.5 2016/03/20 05:00:22 guenther Exp $
 .\"
 .\" Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 12 2012 $
+.Dd $Mdocdate: March 20 2016 $
 .Dt __GET_TCB 2
 .Os
 .Sh NAME
@@ -31,21 +31,24 @@ The
 .Fn __get_tcb
 and
 .Fn __set_tcb
-functions are for use by librthread and other parts of the system
+functions are for use by libpthread and other parts of the C
 runtime to retrieve and set the address of the current thread's
 thread control block (TCB).
 This is used to locate per-thread data such as
 .Va errno .
 Each kernel-level thread in a process has a separate value for this
 address, which can be obtained and changed via these system calls.
-New threads (including the first thread of a new process) created using
-.Xr fork 2 ,
-.Xr vfork 2 ,
+.Pp
+The initial thread of a new process created using
+.Xr fork 2
 or
-.Xr __tfork 2 ,
-inherit the TCB address of the thread that created them.
+.Xr vfork 2
+inherits the TCB address of the thread that created it.
+A thread created using
+.Xr __tfork 2
+starts with the TCB address specified in that call.
 .Xr execve 2
-resets it to zero.
+resets the thread's TCB address to zero.
 .Pp
 On some platforms, this address is also directly mapped to a CPU
 register which can be accessed from userspace.
