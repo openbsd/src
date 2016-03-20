@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 2015/12/05 06:38:18 mmcc Exp $ */
+/*	$OpenBSD: util.c,v 1.7 2016/03/20 00:01:22 krw Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -110,7 +110,7 @@ socket_setblockmode(int fd, int nonblocking)
 {
 	int     flags;
 
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
+	if ((flags = fcntl(fd, F_GETFL)) == -1)
 		return -1;
 
 	if (nonblocking)

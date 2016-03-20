@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.30 2015/12/14 13:59:42 tb Exp $	*/
+/*	$OpenBSD: shf.c,v 1.31 2016/03/20 00:01:21 krw Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -79,7 +79,7 @@ shf_fdopen(int fd, int sflags, struct shf *shf)
 
 	/* use fcntl() to figure out correct read/write flags */
 	if (sflags & SHF_GETFL) {
-		int flags = fcntl(fd, F_GETFL, 0);
+		int flags = fcntl(fd, F_GETFL);
 
 		if (flags < 0)
 			/* will get an error on first read/write */
@@ -136,7 +136,7 @@ shf_reopen(int fd, int sflags, struct shf *shf)
 
 	/* use fcntl() to figure out correct read/write flags */
 	if (sflags & SHF_GETFL) {
-		int flags = fcntl(fd, F_GETFL, 0);
+		int flags = fcntl(fd, F_GETFL);
 
 		if (flags < 0)
 			/* will get an error on first read/write */

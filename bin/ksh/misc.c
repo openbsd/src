@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.54 2016/03/06 11:56:20 natano Exp $	*/
+/*	$OpenBSD: misc.c,v 1.55 2016/03/20 00:01:21 krw Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -1113,7 +1113,7 @@ reset_nonblock(int fd)
 {
 	int flags;
 
-	if ((flags = fcntl(fd, F_GETFL, 0)) < 0)
+	if ((flags = fcntl(fd, F_GETFL)) < 0)
 		return -1;
 	if (!(flags & O_NONBLOCK))
 		return 0;

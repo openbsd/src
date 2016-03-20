@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.35 2015/12/24 17:47:57 mmcc Exp $ */
+/*	$OpenBSD: btree.c,v 1.36 2016/03/20 00:01:22 krw Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -1083,7 +1083,7 @@ btree_open_fd(int fd, unsigned int flags)
 	struct btree	*bt;
 	int		 fl;
 
-	fl = fcntl(fd, F_GETFL, 0);
+	fl = fcntl(fd, F_GETFL);
 	if (fcntl(fd, F_SETFL, fl | O_APPEND) == -1)
 		return NULL;
 

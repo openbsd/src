@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.c,v 1.15 2016/01/30 12:22:20 schwarze Exp $	*/
+/*	$OpenBSD: readline.c,v 1.16 2016/03/20 00:01:21 krw Exp $	*/
 /*	$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
@@ -2051,7 +2051,7 @@ _rl_event_read_char(EditLine *el, char *cp)
 		else
 			num_read = 0;
 #elif defined(F_SETFL) && defined(O_NDELAY)
-		if ((n = fcntl(el->el_infd, F_GETFL, 0)) < 0)
+		if ((n = fcntl(el->el_infd, F_GETFL)) < 0)
 			return -1;
 		if (fcntl(el->el_infd, F_SETFL, n|O_NDELAY) < 0)
 			return -1;

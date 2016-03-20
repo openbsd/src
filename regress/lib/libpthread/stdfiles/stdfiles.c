@@ -1,4 +1,4 @@
-/* $OpenBSD: stdfiles.c,v 1.2 2003/11/27 22:51:36 marc Exp $ */
+/* $OpenBSD: stdfiles.c,v 1.3 2016/03/20 00:01:22 krw Exp $ */
 /* $snafu: stdfiles.c,v 1.3 2003/02/03 21:22:26 marc Exp $ */
 /* PUBLIC DOMAIN Oct 2002 Marco S Hyman <marc@snafu.org> */
 
@@ -28,13 +28,13 @@ main(int argc, char *argv[])
 	dup_stdout = dup(STDOUT_FILENO);
 
 	/* read std in/out/err flags */
-	stdin_flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+	stdin_flags = fcntl(STDIN_FILENO, F_GETFL);
 	assert(stdin_flags != -1);
-	stdout_flags = fcntl(STDOUT_FILENO, F_GETFL, 0);
+	stdout_flags = fcntl(STDOUT_FILENO, F_GETFL);
 	assert(stdout_flags != -1);
-	dup_flags = fcntl(dup_stdout, F_GETFL, 0);
+	dup_flags = fcntl(dup_stdout, F_GETFL);
 	assert(dup_flags != -1);
-	stderr_flags = fcntl(STDERR_FILENO, F_GETFL, 0);
+	stderr_flags = fcntl(STDERR_FILENO, F_GETFL);
 	assert(stderr_flags != -1);
 	printf("starting flags: in = %x, out = %x, dup = %x, err = %x\n",
 	       stdin_flags, stdout_flags, dup_flags, stderr_flags);
@@ -44,7 +44,7 @@ main(int argc, char *argv[])
 	printf("forcing stdin to O_NONBLOCK (flags %x)\n", new_flags);
 	assert(fcntl(STDIN_FILENO, F_SETFL, new_flags) != -1);
 
-	new_flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+	new_flags = fcntl(STDIN_FILENO, F_GETFL);
 	assert(new_flags != -1);
 	if (new_flags != stdin_flags) {
 		printf("stdin flags changed %x -> %x\n", stdin_flags,
@@ -52,7 +52,7 @@ main(int argc, char *argv[])
 		stdin_flags = new_flags;
 	}
 
-	new_flags = fcntl(STDOUT_FILENO, F_GETFL, 0);
+	new_flags = fcntl(STDOUT_FILENO, F_GETFL);
 	assert(new_flags != -1);
 	if (new_flags != stdout_flags) {
 		printf("stdout flags changed %x -> %x\n", stdout_flags,
@@ -60,7 +60,7 @@ main(int argc, char *argv[])
 		stdout_flags = new_flags;
 	}
 
-	new_flags = fcntl(dup_stdout, F_GETFL, 0);
+	new_flags = fcntl(dup_stdout, F_GETFL);
 	assert(new_flags != -1);
 	if (new_flags != dup_flags) {
 		printf("dup_stdout flags changed %x -> %x\n", dup_flags,
@@ -68,7 +68,7 @@ main(int argc, char *argv[])
 		dup_flags = new_flags;
 	}
 
-	new_flags = fcntl(STDERR_FILENO, F_GETFL, 0);
+	new_flags = fcntl(STDERR_FILENO, F_GETFL);
 	assert(new_flags != -1);
 	if (new_flags != stderr_flags) {
 		printf("stderr flags changed %x -> %x\n", stderr_flags,
@@ -84,7 +84,7 @@ main(int argc, char *argv[])
 	assert(close(STDERR_FILENO) != -1);
 	new_fd = open("/dev/tty", O_RDWR|O_CREAT, 0666);
 	assert(new_fd == STDERR_FILENO);
-	new_flags = fcntl(STDERR_FILENO, F_GETFL, 0);
+	new_flags = fcntl(STDERR_FILENO, F_GETFL);
 	assert(new_flags != -1);
 	printf("/dev/tty [STDERR_FILENO] flags are %x\n", new_flags);
 	stderr_flags = new_flags | O_NONBLOCK;
@@ -96,11 +96,11 @@ main(int argc, char *argv[])
 	printf("turning off O_NONBLOCK on stdin (flags %x)\n", stdin_flags);
 	assert(fcntl(STDIN_FILENO, F_SETFL, stdin_flags) != -1);
 
-	new_flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+	new_flags = fcntl(STDIN_FILENO, F_GETFL);
 	assert(new_flags != -1);
 	assert(new_flags == stdin_flags);
 
-	new_flags = fcntl(STDOUT_FILENO, F_GETFL, 0);
+	new_flags = fcntl(STDOUT_FILENO, F_GETFL);
 	assert(new_flags != -1);
 	if (new_flags != stdout_flags) {
 		printf("stdout flags changed %x -> %x\n", stdout_flags,
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 		stdout_flags = new_flags;
 	}
 
-	new_flags = fcntl(dup_stdout, F_GETFL, 0);
+	new_flags = fcntl(dup_stdout, F_GETFL);
 	assert(new_flags != -1);
 	if (new_flags != dup_flags) {
 		printf("dup_stdout flags changed %x -> %x\n", dup_flags,
@@ -116,7 +116,7 @@ main(int argc, char *argv[])
 		dup_flags = new_flags;
 	}
 
-	new_flags = fcntl(STDERR_FILENO, F_GETFL, 0);
+	new_flags = fcntl(STDERR_FILENO, F_GETFL);
 	assert(new_flags != -1);
 	if (new_flags != stderr_flags) {
 		printf("stderr flags changed %x -> %x\n", stderr_flags,
