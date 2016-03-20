@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.17 2016/03/20 22:57:59 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.18 2016/03/20 23:48:27 schwarze Exp $	*/
 /*	$NetBSD: vi.c,v 1.33 2011/02/17 16:44:48 joerg Exp $	*/
 
 /*-
@@ -34,14 +34,17 @@
  */
 
 #include "config.h"
-#include <stdlib.h>
-#include <unistd.h>
-#include <limits.h>
-#include <sys/wait.h>
 
 /*
  * vi.c: Vi mode commands.
  */
+#include <sys/wait.h>
+#include <ctype.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "el.h"
 #include "common.h"
 #include "emacs.h"
@@ -576,7 +579,7 @@ vi_zero(EditLine *el, wint_t c)
 
 
 /* vi_delete_prev_char():
- * 	Vi move to previous character (backspace)
+ *	Vi move to previous character (backspace)
  *	[^H] in insert mode only
  */
 protected el_action_t
@@ -976,7 +979,7 @@ vi_to_history_line(EditLine *el, wint_t c __attribute__((__unused__)))
 		el->el_history.eventno = 1;
 		if (hist_get(el) == CC_ERROR)
 			return CC_ERROR;
-		el->el_history.eventno = 1 + el->el_history.ev.num 
+		el->el_history.eventno = 1 + el->el_history.ev.num
 					- el->el_state.argument;
 		if (el->el_history.eventno < 0) {
 			el->el_history.eventno = sv_event_no;

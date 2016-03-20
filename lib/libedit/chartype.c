@@ -1,4 +1,4 @@
-/*	$OpenBSD: chartype.c,v 1.7 2016/03/20 20:16:09 schwarze Exp $	*/
+/*	$OpenBSD: chartype.c,v 1.8 2016/03/20 23:48:27 schwarze Exp $	*/
 /*	$NetBSD: chartype.c,v 1.6 2011/07/28 00:48:21 christos Exp $	*/
 
 /*-
@@ -38,8 +38,12 @@
  * chartype.c: character classification and meta information
  */
 #include "config.h"
-#include "el.h"
+
+#include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "el.h"
 
 #define CT_BUFSIZ 1024
 
@@ -55,7 +59,7 @@ ct_conv_buff_resize(ct_buffer_t *conv, size_t mincsize, size_t minwsize)
 			conv->csize = 0;
 			free(conv->cbuff);
 			conv->cbuff = NULL;
-		} else 
+		} else
 			conv->cbuff = p;
 	}
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: el.h,v 1.15 2016/03/20 23:24:18 schwarze Exp $	*/
-/*	$NetBSD: el.h,v 1.21 2009/12/31 15:58:26 christos Exp $	*/
+/*	$OpenBSD: el.h,v 1.16 2016/03/20 23:48:27 schwarze Exp $	*/
+/*	$NetBSD: el.h,v 1.33 2016/02/17 19:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,8 +49,6 @@
 
 #include "histedit.h"
 #include "chartype.h"
-#include <stdio.h>
-#include <sys/types.h>
 
 #define	EL_BUFSIZ	1024		/* Maximum line size		*/
 
@@ -70,7 +68,7 @@ typedef struct coord_t {		/* Position on the screen	*/
 } coord_t;
 
 typedef struct el_line_t {
-	Char 		*buffer;	/* Input line			*/
+	Char		*buffer;	/* Input line			*/
 	Char	        *cursor;	/* Cursor position		*/
 	Char	        *lastchar;	/* Last character		*/
 	const Char	*limit;		/* Max position			*/
@@ -85,7 +83,7 @@ typedef struct el_state_t {
 	int		argument;	/* Numeric argument		*/
 	int		metanext;	/* Is the next char a meta char */
 	el_action_t	lastcmd;	/* Previous command		*/
-	el_action_t	thiscmd;	/* this command 		*/
+	el_action_t	thiscmd;	/* this command			*/
 	Char		thisch;		/* char that generated it	*/
 } el_state_t;
 

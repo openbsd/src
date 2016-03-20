@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokenizer.c,v 1.16 2016/03/20 21:04:15 schwarze Exp $	*/
+/*	$OpenBSD: tokenizer.c,v 1.17 2016/03/20 23:48:27 schwarze Exp $	*/
 /*	$NetBSD: tokenizer.c,v 1.23 2016/02/15 15:37:20 christos Exp $	*/
 
 /*-
@@ -39,8 +39,9 @@
 /*
  * tokenize.c: Bourne shell like tokenizer
  */
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "histedit.h"
 #include "chartype.h"
 

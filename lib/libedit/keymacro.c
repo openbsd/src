@@ -1,5 +1,5 @@
-/*	$OpenBSD: keymacro.c,v 1.6 2016/03/20 20:35:38 schwarze Exp $	*/
-/*	$NetBSD: key.c,v 1.23 2009/12/30 22:37:40 christos Exp $	*/
+/*	$OpenBSD: keymacro.c,v 1.7 2016/03/20 23:48:27 schwarze Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.13 2016/02/17 19:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -57,8 +57,8 @@
  *      1) It is not possible to have one key that is a
  *	   substr of another.
  */
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "el.h"
 
@@ -67,10 +67,10 @@
  * linked list of these node elements
  */
 struct keymacro_node_t {
-	Char		 ch;		/* single character of key 	 */
+	Char		 ch;		/* single character of key	 */
 	int		 type;		/* node type			 */
 	keymacro_value_t val;		/* command code or pointer to str,  */
-					/* if this is a leaf 		 */
+					/* if this is a leaf		 */
 	struct keymacro_node_t *next;	/* ptr to next char of this key  */
 	struct keymacro_node_t *sibling;/* ptr to another key with same prefix*/
 };
@@ -269,7 +269,7 @@ keymacro_print(EditLine *el, const Char *key)
 
 /* node_trav():
  *	recursively traverses node in tree until match or mismatch is
- * 	found.  May read in more characters.
+ *	found.  May read in more characters.
  */
 private int
 node_trav(EditLine *el, keymacro_node_t *ptr, Char *ch, keymacro_value_t *val)
@@ -306,7 +306,7 @@ node_trav(EditLine *el, keymacro_node_t *ptr, Char *ch, keymacro_value_t *val)
 
 
 /* node__try():
- * 	Find a node that matches *str or allocate a new one
+ *	Find a node that matches *str or allocate a new one
  */
 private int
 node__try(EditLine *el, keymacro_node_t *ptr, const Char *str,
@@ -587,7 +587,7 @@ keymacro_kprint(EditLine *el, const Char *key, keymacro_value_t *val, int ntype)
 		case XK_STR:
 		case XK_EXE:
 			(void) keymacro__decode_str(val->str, unparsbuf,
-			    sizeof(unparsbuf), 
+			    sizeof(unparsbuf),
 			    ntype == XK_STR ? "\"\"" : "[]");
 			(void) fprintf(el->el_outfile, fmt,
 			    ct_encode_string(key, &el->el_scratch), unparsbuf);

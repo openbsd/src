@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.22 2016/03/20 22:09:24 schwarze Exp $	*/
+/*	$OpenBSD: history.c,v 1.23 2016/03/20 23:48:27 schwarze Exp $	*/
 /*	$NetBSD: history.c,v 1.37 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
@@ -38,15 +38,15 @@
 /*
  * hist.c: TYPE(History) access functions
  */
-#include <string.h>
-#include <stdlib.h>
+#include <sys/stat.h>
 #include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
 #ifdef HAVE_VIS_H
 #include <vis.h>
 #else
 #include "np/vis.h"
 #endif
-#include <sys/stat.h>
 
 static const char hist_cookie[] = "_HiStOrY_V2_\n";
 
@@ -432,7 +432,7 @@ history_def_del(void *p, TYPE(HistEvent) *ev __attribute__((__unused__)),
  */
 /* ARGSUSED */
 private void
-history_def_delete(history_t *h, 
+history_def_delete(history_t *h,
 		   TYPE(HistEvent) *ev __attribute__((__unused__)), hentry_t *hp)
 {
 	HistEventPrivate *evp = (void *)&hp->ev;

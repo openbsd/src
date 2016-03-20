@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.c,v 1.19 2016/03/20 22:57:59 schwarze Exp $	*/
+/*	$OpenBSD: chared.c,v 1.20 2016/03/20 23:48:27 schwarze Exp $	*/
 /*	$NetBSD: chared.c,v 1.28 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -38,7 +38,9 @@
 /*
  * chared.c: Character editor utilities
  */
+#include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "el.h"
 #include "common.h"
@@ -518,7 +520,7 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 
 	/* zero the newly added memory, leave old data in */
 	(void) memset(&newbuffer[sz], 0, (newsz - sz) * sizeof(*newbuffer));
-	    
+
 	oldbuf = el->el_line.buffer;
 
 	el->el_line.buffer = newbuffer;
@@ -567,7 +569,7 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 	el->el_chared.c_redo.lim = newbuffer +
 			(el->el_chared.c_redo.lim - el->el_chared.c_redo.buf);
 	el->el_chared.c_redo.buf = newbuffer;
-	
+
 	if (!hist_enlargebuf(el, sz, newsz))
 		return 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chartype.h,v 1.9 2016/03/20 20:35:38 schwarze Exp $	*/
+/*	$OpenBSD: chartype.h,v 1.10 2016/03/20 23:48:27 schwarze Exp $	*/
 /*	$NetBSD: chartype.h,v 1.5 2010/04/15 00:55:57 christos Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@
 #define FUNW(type)		type ## _w
 #define TYPE(type)		type ## W
 #define FSTR			"%ls"
-#define STR(x) 			L ## x
+#define STR(x)			L ## x
 #define UC(c)			c
 #define Isalpha(x)  iswalpha(x)
 #define Isalnum(x)  iswalnum(x)
@@ -109,10 +109,10 @@
 
 #else /* NARROW */
 
-size_t 	ct_mbrtowc(char *, const char *, size_t, void *);
+size_t	ct_mbrtowc(char *, const char *, size_t, void *);
 #define ct_wctob(w)          ((int)(w))
 #define ct_wctomb            error
-#define ct_wctomb_reset      
+#define ct_wctomb_reset
 #define ct_wcstombs(a, b, c)    (strncpy(a, b, c), strlen(a))
 #define ct_mbstowcs(a, b, c)    (strncpy(a, b, c), strlen(a))
 
@@ -121,7 +121,7 @@ size_t 	ct_mbrtowc(char *, const char *, size_t, void *);
 #define FUNW(type)		type
 #define TYPE(type)		type
 #define FSTR			"%s"
-#define STR(x) 			x
+#define STR(x)			x
 #define UC(c)			(unsigned char)(c)
 
 #define Isalpha(x)  isalpha((unsigned char)x)
@@ -208,7 +208,7 @@ protected size_t ct_enc_width(Char);
 #define VISUAL_WIDTH_MAX 8
 
 /* The terminal is thought of in terms of X columns by Y lines. In the cases
- * where a wide character takes up more than one column, the adjacent 
+ * where a wide character takes up more than one column, the adjacent
  * occupied column entries will contain this faux character. */
 #define MB_FILL_CHAR ((Char)-1)
 

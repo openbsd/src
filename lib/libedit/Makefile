@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2016/01/29 17:23:21 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.16 2016/03/20 23:48:27 schwarze Exp $
 #	$NetBSD: Makefile,v 1.41 2010/02/03 15:34:43 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
@@ -54,12 +54,12 @@ CLEANFILES+=editline.c
 CLEANFILES+=common.h.tmp editline.c.tmp emacs.h.tmp fcns.c.tmp fcns.h.tmp
 CLEANFILES+=help.c.tmp help.h.tmp vi.h.tmp tc1.o tc1
 CFLAGS+=-Wall
-CPPFLAGS+=-I. -I${LIBEDITDIR} 
+CPPFLAGS+=-I. -I${LIBEDITDIR}
 CPPFLAGS+=-I. -I${.CURDIR}
 CPPFLAGS+=#-DDEBUG_TTY -DDEBUG_KEY -DDEBUG_READ -DDEBUG -DDEBUG_REFRESH
 CPPFLAGS+=#-DDEBUG_PASTE -DDEBUG_EDIT
 
-AHDR=vi.h emacs.h common.h 
+AHDR=vi.h emacs.h common.h
 ASRC=${LIBEDITDIR}/vi.c ${LIBEDITDIR}/emacs.c ${LIBEDITDIR}/common.c
 
 CLEANFILES+=	${AHDR} fcns.h help.h fcns.c help.c
@@ -112,7 +112,7 @@ historyn.c: makelist
 
 tc1.o:	${LIBEDITDIR}/TEST/tc1.c
 
-tc1:	libedit.a tc1.o 
+tc1:	libedit.a tc1.o
 	${CC} ${LDFLAGS} ${.ALLSRC} -o ${.TARGET} libedit.a ${LDADD} -lcurses
 
 includes:

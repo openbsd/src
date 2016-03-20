@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys.h,v 1.14 2016/03/20 22:09:24 schwarze Exp $	*/
+/*	$OpenBSD: sys.h,v 1.15 2016/03/20 23:48:27 schwarze Exp $	*/
 /*	$NetBSD: sys.h,v 1.13 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@
 #  define __END_DECLS
 # endif
 #endif
- 
+
 #ifndef public
 # define public		/* Externally visible functions/variables */
 #endif
@@ -97,7 +97,7 @@ ssize_t	getline(char **line, size_t *len, FILE *fp);
 #undef	REGEXP		/* Use UNIX V8 regular expression functions */
 
 #ifndef WIDECHAR
-#define	setlocale(c, l) 	/*LINTED*/NULL
+#define	setlocale(c, l)		/*LINTED*/NULL
 #define	nl_langinfo(i)		""
 #endif
 

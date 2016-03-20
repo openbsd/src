@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.27 2016/03/20 22:57:59 schwarze Exp $	*/
+/*	$OpenBSD: el.c,v 1.28 2016/03/20 23:48:27 schwarze Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -39,11 +39,11 @@
  * el.c: EditLine interface functions
  */
 #include <sys/types.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdarg.h>
 #include <ctype.h>
 #include <limits.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
 #ifdef WIDECHAR
 #include <locale.h>
 #include <langinfo.h>
@@ -415,7 +415,7 @@ FUN(el,get)(EditLine *el, int op, ...)
 		char *argv[20];
 		int i;
 
- 		for (i = 1; i < (int)(sizeof(argv) / sizeof(argv[0])); i++)
+		for (i = 1; i < (int)(sizeof(argv) / sizeof(argv[0])); i++)
 			if ((argv[i] = va_arg(ap, char *)) == NULL)
 				break;
 

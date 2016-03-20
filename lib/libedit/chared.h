@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.h,v 1.12 2016/03/20 22:57:59 schwarze Exp $	*/
+/*	$OpenBSD: chared.h,v 1.13 2016/03/20 23:48:27 schwarze Exp $	*/
 /*	$NetBSD: chared.h,v 1.20 2010/04/15 00:57:33 christos Exp $	*/
 
 /*-
@@ -40,9 +40,6 @@
  */
 #ifndef _h_el_chared
 #define	_h_el_chared
-
-#include <ctype.h>
-#include <string.h>
 
 #define	EL_MAXMACRO	10
 

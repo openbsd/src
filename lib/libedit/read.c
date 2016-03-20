@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.24 2016/03/20 20:16:09 schwarze Exp $	*/
+/*	$OpenBSD: read.c,v 1.25 2016/03/20 23:48:27 schwarze Exp $	*/
 /*	$NetBSD: read.c,v 1.57 2010/07/21 18:18:52 christos Exp $	*/
 
 /*-
@@ -39,11 +39,14 @@
  * read.c: Clean this junk up! This is horrible code.
  *	   Terminal read functions
  */
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include <limits.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "el.h"
 
 #define OKCMD	-1	/* must be -1! */

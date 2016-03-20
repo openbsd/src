@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.8 2016/03/20 21:25:27 schwarze Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.9 2016/03/20 23:48:27 schwarze Exp $	*/
 /*	$NetBSD: terminal.c,v 1.17 2016/02/15 15:35:03 christos Exp $	*/
 
 /*-
@@ -40,12 +40,14 @@
  *	       We have to declare a static variable here, since the
  *	       termcap putchar routine does not take an argument!
  */
-#include <stdio.h>
-#include <signal.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
 #include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #ifdef HAVE_TERMCAP_H
 #include <termcap.h>
 #endif
@@ -59,8 +61,6 @@
 #if defined(HAVE_TERM_H) && !defined(__sun)
 #include <term.h>
 #endif
-#include <sys/types.h>
-#include <sys/ioctl.h>
 
 #ifdef _REENTRANT
 #include <pthread.h>
@@ -478,7 +478,7 @@ terminal_free_display(EditLine *el)
 
 /* terminal_move_to_line():
  *	move to line <where> (first line == 0)
- * 	as efficiently as possible
+ *	as efficiently as possible
  */
 protected void
 terminal_move_to_line(EditLine *el, int where)
@@ -594,7 +594,7 @@ mc_again:
 						    i < (where & ~0x7);
 						    i += 8)
 							terminal__putc(el,
-							    '\t');	
+							    '\t');
 							/* then tab over */
 						el->el_cursor.h = where & ~0x7;
 					}
@@ -1276,7 +1276,7 @@ terminal_writec(EditLine *el, wint_t c)
  */
 protected int
 /*ARGSUSED*/
-terminal_telltc(EditLine *el, int argc __attribute__((__unused__)), 
+terminal_telltc(EditLine *el, int argc __attribute__((__unused__)),
     const Char **argv __attribute__((__unused__)))
 {
 	const struct termcapstr *t;

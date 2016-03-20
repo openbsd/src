@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.20 2016/03/20 22:57:59 schwarze Exp $	*/
+/*	$OpenBSD: tty.c,v 1.21 2016/03/20 23:48:27 schwarze Exp $	*/
 /*	$NetBSD: tty.c,v 1.34 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -40,8 +40,10 @@
  */
 #include <assert.h>
 #include <errno.h>
-#include <unistd.h>	/* for isatty */
+#include <stdlib.h>	/* for abort */
+#include <string.h>
 #include <strings.h>	/* for ffs */
+#include <unistd.h>	/* for isatty */
 
 #include "el.h"
 #include "parse.h"
@@ -964,7 +966,7 @@ tty_update_char(EditLine *el, int mode, int c) {
 
 
 /* tty_rawmode():
- * 	Set terminal into 1 character at a time mode.
+ *	Set terminal into 1 character at a time mode.
  */
 protected int
 tty_rawmode(EditLine *el)

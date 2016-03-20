@@ -1,5 +1,5 @@
-/*	$OpenBSD: prompt.h,v 1.8 2016/03/20 22:57:59 schwarze Exp $	*/
-/*	$NetBSD: prompt.h,v 1.12 2016/02/16 15:53:48 christos Exp $	*/
+/*	$OpenBSD: prompt.h,v 1.9 2016/03/20 23:48:27 schwarze Exp $	*/
+/*	$NetBSD: prompt.h,v 1.13 2016/02/17 19:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@ typedef struct el_prompt_t {
 	el_pfunc_t	p_func;		/* Function to return the prompt */
 	coord_t		p_pos;		/* position in the line after prompt */
 	Char		p_ignore;	/* character to start/end literal */
-	int		p_wide;	
+	int		p_wide;
 } el_prompt_t;
 
 protected void	prompt_print(EditLine *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.h,v 1.6 2015/01/13 08:33:12 reyk Exp $	*/
+/*	$OpenBSD: readline.h,v 1.7 2016/03/20 23:48:27 schwarze Exp $	*/
 /*	$NetBSD: readline.h,v 1.31 2010/08/04 20:29:18 christos Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@ typedef void *histdata_t;
 
 typedef struct _hist_entry {
 	const char	*line;
-	histdata_t 	 data;
+	histdata_t	 data;
 } HIST_ENTRY;
 
 typedef struct _keymap_entry {
@@ -89,7 +89,7 @@ typedef KEYMAP_ENTRY *Keymap;
 
 #define RUBOUT		0x7f
 #define ABORT_CHAR	CTRL('G')
-#define RL_READLINE_VERSION 	0x0402
+#define RL_READLINE_VERSION	0x0402
 #define RL_PROMPT_START_IGNORE	'\1'
 #define RL_PROMPT_END_IGNORE	'\2'
 
@@ -98,7 +98,7 @@ typedef KEYMAP_ENTRY *Keymap;
 extern "C" {
 #endif
 extern const char	*rl_library_version;
-extern int 		rl_readline_version; 
+extern int		rl_readline_version;
 extern char		*rl_readline_name;
 extern FILE		*rl_instream;
 extern FILE		*rl_outstream;
@@ -196,10 +196,10 @@ int		 rl_add_defun(const char *, Function *, int);
 HISTORY_STATE	*history_get_history_state(void);
 void		 rl_get_screen_size(int *, int *);
 void		 rl_set_screen_size(int, int);
-char 		*rl_filename_completion_function (const char *, int);
+char		*rl_filename_completion_function (const char *, int);
 int		 _rl_abort_internal(void);
 int		 _rl_qsort_string_compare(char **, char **);
-char 	       **rl_completion_matches(const char *, rl_compentry_func_t *);
+char	       **rl_completion_matches(const char *, rl_compentry_func_t *);
 void		 rl_forced_update_display(void);
 int		 rl_set_prompt(const char *);
 int		 rl_on_new_line(void);

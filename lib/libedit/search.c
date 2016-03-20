@@ -1,5 +1,5 @@
-/*	$OpenBSD: search.c,v 1.18 2016/03/20 22:57:59 schwarze Exp $	*/
-/*	$NetBSD: search.c,v 1.37 2016/02/16 19:08:41 christos Exp $	*/
+/*	$OpenBSD: search.c,v 1.19 2016/03/20 23:48:27 schwarze Exp $	*/
+/*	$NetBSD: search.c,v 1.38 2016/02/16 22:53:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,6 +39,7 @@
  * search.c: History and character search functions
  */
 #include <stdlib.h>
+#include <string.h>
 #if defined(REGEX)
 #include <regex.h>
 #elif defined(REGEXP)

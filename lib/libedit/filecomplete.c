@@ -1,4 +1,4 @@
-/*	$OpenBSD: filecomplete.c,v 1.8 2016/03/20 22:57:59 schwarze Exp $ */
+/*	$OpenBSD: filecomplete.c,v 1.9 2016/03/20 23:48:27 schwarze Exp $ */
 /*	$NetBSD: filecomplete.c,v 1.22 2010/12/02 04:42:46 dholland Exp $	*/
 
 /*-
@@ -34,16 +34,15 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <stdio.h>
 #include <dirent.h>
-#include <string.h>
-#include <pwd.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <limits.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "el.h"
 #include "filecomplete.h"
@@ -442,7 +441,7 @@ fn_complete(EditLine *el,
 		    (int)(cur_off - len), cur_off);
 	} else
 		matches = 0;
-	if (!attempted_completion_function || 
+	if (!attempted_completion_function ||
 	    (over != NULL && !*over && !matches))
 		matches = completion_matches(
 		    ct_encode_string(temp, &el->el_scratch), complet_func);
@@ -491,7 +490,7 @@ fn_complete(EditLine *el,
 			}
 			/* matches[1] through matches[i-1] are available */
 			matches_num = i - 1;
-				
+
 			/* newline to get on next line from command line */
 			(void)fprintf(el->el_outfile, "\n");
 

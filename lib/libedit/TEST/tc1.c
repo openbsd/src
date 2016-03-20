@@ -37,15 +37,15 @@
 /*
  * test.c: A little test program
  */
-#include <stdio.h>
-#include <string.h>
-#include <signal.h>
 #include <sys/wait.h>
 #include <ctype.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <dirent.h>
 #include <locale.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "histedit.h"
 
@@ -145,7 +145,7 @@ main(int argc, char *argv[])
 					/* Add a user-defined function	*/
 	el_set(el, EL_ADDFN, "ed-complete", "Complete argument", complete);
 
-					/* Bind tab to it 		*/
+					/* Bind tab to it		*/
 	el_set(el, EL_BIND, "^I", "ed-complete", NULL);
 
 	/*

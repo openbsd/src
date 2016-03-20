@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig.c,v 1.17 2016/03/20 22:57:59 schwarze Exp $	*/
+/*	$OpenBSD: sig.c,v 1.18 2016/03/20 23:48:27 schwarze Exp $	*/
 /*	$NetBSD: sig.c,v 1.24 2016/02/16 19:08:41 christos Exp $	*/
 
 /*-
@@ -40,6 +40,7 @@
  *	  our policy is to trap all signals, set a good state
  *	  and pass the ball to our caller.
  */
+#include <errno.h>
 #include <stdlib.h>
 
 #include "el.h"

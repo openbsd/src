@@ -60,7 +60,7 @@ case $FLAG in
 #include "${FILES}"
 _EOF
     ;;
-    
+
 -h)
     set - `echo $FILES | sed -e 's/\\./_/g'`
     hdr="_h_`basename $1`"

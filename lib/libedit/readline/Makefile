@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 2003/10/31 08:42:24 otto Exp $
-#	$NetBSD: Makefile,v 1.7 2003/08/03 09:23:15 lukem Exp $	
+#	$OpenBSD: Makefile,v 1.2 2016/03/20 23:48:27 schwarze Exp $
+#	$NetBSD: Makefile,v 1.7 2003/08/03 09:23:15 lukem Exp $
 
 NOOBJ=          # defined
 
