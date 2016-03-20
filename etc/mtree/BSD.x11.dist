@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.41 2015/10/19 07:55:31 dcoppa Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.42 2016/03/20 09:33:56 jsg Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -79,8 +79,12 @@
                         ..
                     ..
                 ..
-		libdrm
-		..
+                libdrm
+                    nouveau
+                        nvif
+                        ..
+                    ..
+                ..
                 pixman-1
                 ..
                 xcb
