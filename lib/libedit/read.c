@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.22 2016/03/20 18:20:10 schwarze Exp $	*/
+/*	$OpenBSD: read.c,v 1.23 2016/03/20 19:33:16 schwarze Exp $	*/
 /*	$NetBSD: read.c,v 1.57 2010/07/21 18:18:52 christos Exp $	*/
 
 /*-
@@ -298,7 +298,6 @@ read_char(EditLine *el, Char *cp)
 	int tried = 0;
 	char cbuf[MB_LEN_MAX];
 	int cbp = 0;
-	int bytes = 0;
 	int save_errno = errno;
 
  again:
@@ -334,12 +333,11 @@ read_char(EditLine *el, Char *cp)
 #ifdef WIDECHAR
 	do {
 		mbstate_t mbs;
-		size_t rbytes;
 again_lastbyte:
 		++cbp;
 		/* This only works because UTF8 is stateless */
 		memset(&mbs, 0, sizeof(mbs));
-		switch (rbytes = ct_mbrtowc(cp, cbuf, cbp, &mbs)) {
+		switch (ct_mbrtowc(cp, cbuf, cbp, &mbs)) {
 		case (size_t)-1:
 			if (cbp > 1) {
 				/*
@@ -370,7 +368,6 @@ again_lastbyte:
 			goto again;
 		default:
 			/* Valid character, process it. */
-			bytes = (int)rbytes;
 			break;
 		}
 	} while (/*CONSTCOND*/0);
@@ -378,12 +375,7 @@ again_lastbyte:
 	*cp = (unsigned char)cbuf[0];
 #endif
 
-	if ((el->el_flags & IGNORE_EXTCHARS) && bytes > 1) {
-		cbp = 0; /* skip this character */
-		goto again;
-	}
-
-	return (int)num_read;
+	return 1;
 }
 
 /* read_pop():

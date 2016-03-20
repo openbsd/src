@@ -1,4 +1,4 @@
-/*	$OpenBSD: eln.c,v 1.7 2016/03/20 19:14:29 schwarze Exp $	*/
+/*	$OpenBSD: eln.c,v 1.8 2016/03/20 19:33:16 schwarze Exp $	*/
 /*	$NetBSD: eln.c,v 1.9 2010/11/04 13:53:12 christos Exp $	*/
 
 /*-
@@ -77,10 +77,24 @@ public const char *
 el_gets(EditLine *el, int *nread)
 {
 	const wchar_t *tmp;
+	wchar_t *rd, *wr;
 
-	el->el_flags |= IGNORE_EXTCHARS;
 	tmp = el_wgets(el, nread);
-	el->el_flags &= ~IGNORE_EXTCHARS;
+
+	/*
+	 * Temporary until the libedit audit is complete:
+	 * Filter out all non-ASCII characters.
+	 */
+	wr = (wchar_t *)tmp;
+	for (rd = wr; *rd != L'\0'; rd++) {
+		if (wr < rd)
+			*wr = *rd;
+		if (*rd < 128)
+			wr++;
+	}
+	*wr = L'\0';
+	*nread = wr - tmp;
+
 	return ct_encode_string(tmp, &el->el_lgcyconv);
 }
 

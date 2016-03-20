@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.h,v 1.12 2016/01/30 00:06:39 schwarze Exp $	*/
+/*	$OpenBSD: el.h,v 1.13 2016/03/20 19:33:16 schwarze Exp $	*/
 /*	$NetBSD: el.h,v 1.21 2009/12/31 15:58:26 christos Exp $	*/
 
 /*-
@@ -59,7 +59,6 @@
 #define	EDIT_DISABLED	0x04
 #define	UNBUFFERED	0x08
 #define	CHARSET_IS_UTF8 0x10
-#define	IGNORE_EXTCHARS 0x20            /* Ignore characters read > 0xff */
 #define	NARROW_HISTORY	0x40
 #define	NARROW_READ	0x80
 
