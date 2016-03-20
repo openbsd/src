@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.20 2015/10/09 01:37:07 deraadt Exp $	*/
+/*	$OpenBSD: head.c,v 1.21 2016/03/20 17:14:51 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987 Regents of the University of California.
@@ -49,7 +49,7 @@ int
 main(int argc, char *argv[])
 {
 	FILE	*fp;
-	long 	cnt;
+	long	cnt;
 	int	ch, firsttime;
 	long	linecnt = 10;
 	char	*p = NULL;
@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 			p = optarg;
 			break;
 		default:
-			usage();	
+			usage();
 		}
 	}
 	argc -= optind, argv += optind;
