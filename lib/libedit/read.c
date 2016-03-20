@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.20 2016/01/31 20:42:33 schwarze Exp $	*/
+/*	$OpenBSD: read.c,v 1.21 2016/03/20 17:19:48 schwarze Exp $	*/
 /*	$NetBSD: read.c,v 1.57 2010/07/21 18:18:52 christos Exp $	*/
 
 /*-
@@ -288,18 +288,6 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 	return OKCMD;
 }
 
-#ifdef WIDECHAR
-/* utf8_islead():
- *	Test whether a byte is a leading byte of a UTF-8 sequence.
- */
-private int
-utf8_islead(unsigned char c)
-{
-	return c < 0x80 ||	       /* single byte char */
-	       (c >= 0xc2 && c <= 0xf4); /* start of multibyte sequence */
-}
-#endif
-
 /* read_char():
  *	Read a character from the tty.
  */
@@ -311,10 +299,12 @@ read_char(EditLine *el, Char *cp)
 	char cbuf[MB_LEN_MAX];
 	int cbp = 0;
 	int bytes = 0;
+	int save_errno = errno;
 
  again:
 	el->el_signal->sig_no = 0;
 	while ((num_read = read(el->el_infd, cbuf + cbp, 1)) == -1) {
+		int e = errno;
 		switch (el->el_signal->sig_no) {
 		case SIGCONT:
 			el_set(el, EL_REFRESH);
@@ -325,26 +315,57 @@ read_char(EditLine *el, Char *cp)
 		default:
 			break;
 		}
-		if (!tried && read__fixio(el->el_infd, errno) == 0)
+		if (!tried && read__fixio(el->el_infd, e) == 0) {
+			errno = save_errno;
 			tried = 1;
-		else {
+		} else {
+			errno = e;
 			*cp = '\0';
 			return -1;
 		}
 	}
 
+	/* Test for EOF */
+	if (num_read == 0) {
+		*cp = '\0';
+		return 0;
+	}
+
 #ifdef WIDECHAR
 	if (el->el_flags & CHARSET_IS_UTF8) {
-		if (!utf8_islead((unsigned char)cbuf[0]))
-			goto again; /* discard the byte we read and try again */
+		mbstate_t mbs;
+		size_t rbytes;
+again_lastbyte:
 		++cbp;
-		if ((bytes = ct_mbtowc(cp, cbuf, cbp)) == -1) {
-			ct_mbtowc_reset;
+		/* This only works because UTF8 is stateless */
+		memset(&mbs, 0, sizeof(mbs));
+		switch (rbytes = ct_mbrtowc(cp, cbuf, cbp, &mbs)) {
+		case (size_t)-1:
+			if (cbp > 1) {
+				/*
+				 * Invalid sequence, discard all bytes
+				 * except the last one.
+				 */
+				cbuf[0] = cbuf[cbp - 1];
+				cbp = 0;
+				goto again_lastbyte;
+			} else {
+				/* Invalid byte, discard it. */
+				cbp = 0;
+				goto again;
+			}
+		case (size_t)-2:
 			if (cbp >= MB_LEN_MAX) { /* "shouldn't happen" */
+				errno = EILSEQ;
 				*cp = '\0';
 				return -1;
 			}
+			/* Incomplete sequence, read another byte. */
 			goto again;
+		default:
+			/* Valid character, process it. */
+			bytes = (int)rbytes;
+			break;
 		}
 	} else  /* we don't support other multibyte charsets */
 #endif
