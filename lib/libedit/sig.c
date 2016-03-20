@@ -1,5 +1,5 @@
-/*	$OpenBSD: sig.c,v 1.15 2016/01/30 00:06:39 schwarze Exp $	*/
-/*	$NetBSD: sig.c,v 1.17 2011/07/28 20:50:55 christos Exp $	*/
+/*	$OpenBSD: sig.c,v 1.16 2016/03/20 21:25:27 schwarze Exp $	*/
+/*	$NetBSD: sig.c,v 1.18 2016/02/15 15:29:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -62,9 +62,10 @@ private void sig_handler(int);
 private void
 sig_handler(int signo)
 {
-	int i, save_errno = errno;
+	int i, save_errno;
 	sigset_t nset, oset;
 
+	save_errno = errno;
 	(void) sigemptyset(&nset);
 	(void) sigaddset(&nset, signo);
 	(void) sigprocmask(SIG_BLOCK, &nset, &oset);

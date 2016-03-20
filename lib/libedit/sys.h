@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys.h,v 1.12 2016/02/02 00:43:12 schwarze Exp $	*/
+/*	$OpenBSD: sys.h,v 1.13 2016/03/20 21:25:27 schwarze Exp $	*/
 /*	$NetBSD: sys.h,v 1.13 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -93,13 +93,13 @@ size_t	strlcpy(char *dst, const char *src, size_t size);
 char	*fgetln(FILE *fp, size_t *len);
 #endif
 
-#ifndef WIDECHAR
-#define	setlocale(c, l) NULL
-#define	nl_langinfo(i) ""
-#endif
-
 #define	REGEX		/* Use POSIX.2 regular expression functions */
 #undef	REGEXP		/* Use UNIX V8 regular expression functions */
+
+#ifndef WIDECHAR
+#define	setlocale(c, l) 	/*LINTED*/NULL
+#define	nl_langinfo(i)		""
+#endif
 
 #if defined(__sun)
 extern int tgetent(char *, const char *);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: terminal.c,v 1.7 2016/03/20 20:35:38 schwarze Exp $	*/
-/*	$NetBSD: term.c,v 1.57 2009/12/30 22:37:40 christos Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.8 2016/03/20 21:25:27 schwarze Exp $	*/
+/*	$NetBSD: terminal.c,v 1.17 2016/02/15 15:35:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -262,7 +262,7 @@ terminal_init(EditLine *el)
 
 	el->el_terminal.t_buf = (char *)malloc(TC_BUFSIZE);
 	if (el->el_terminal.t_buf == NULL)
-		goto fail;
+		goto fail1;
 	el->el_terminal.t_cap = (char *)malloc(TC_BUFSIZE);
 	if (el->el_terminal.t_cap == NULL)
 		goto fail2;
@@ -294,7 +294,7 @@ fail3:
 fail2:
 	free(el->el_terminal.t_buf);
 	el->el_terminal.t_buf = NULL;
-fail:
+fail1:
 	return -1;
 }
 
@@ -410,7 +410,7 @@ terminal_rebuffer_display(EditLine *el)
 private int
 terminal_alloc_display(EditLine *el)
 {
-	int i, rv = -1;
+	int i;
 	Char **b;
 	coord_t *c = &el->el_terminal.t_size;
 
@@ -443,12 +443,10 @@ terminal_alloc_display(EditLine *el)
 	}
 	b[c->v] = NULL;
 	el->el_vdisplay = b;
-
-	rv = 0;
+	return 0;
 done:
-	if (rv)
-		terminal_free_display(el);
-	return rv;
+	terminal_free_display(el);
+	return -1;
 }
 
 
