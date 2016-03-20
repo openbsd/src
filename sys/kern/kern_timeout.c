@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.44 2016/03/17 10:53:57 uebayasi Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.45 2016/03/20 07:56:08 uebayasi Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -303,8 +303,6 @@ timeout_hardclock_update(void)
 	int ret;
 
 	mtx_enter(&timeout_mutex);
-
-	ticks++;
 
 	MOVEBUCKET(0, ticks);
 	if (MASKWHEEL(0, ticks) == 0) {
