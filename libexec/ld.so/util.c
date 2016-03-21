@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.40 2016/03/21 01:32:48 guenther Exp $	*/
+/*	$OpenBSD: util.c,v 1.41 2016/03/21 22:41:28 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -54,7 +54,7 @@ __stack_smash_handler(char func[], int damaged)
 	_dl_strlcat(message, "stack overflow in function ", sizeof message);
 	_dl_strlcat(message, func, sizeof message);
 
-	_dl_sendsyslog2(message, _dl_strlen(message), LOG_CONS);
+	_dl_sendsyslog(message, _dl_strlen(message), LOG_CONS);
 	_dl_exit(127);
 }
 

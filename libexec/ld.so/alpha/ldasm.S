@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.33 2016/03/21 01:32:48 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.34 2016/03/21 22:41:28 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -313,7 +313,7 @@ DL_SYSCALL(fstat)
 DL_SYSCALL2(getcwd,__getcwd)
 DL_SYSCALL(getdents)
 DL_SYSCALL(getentropy)
-DL_SYSCALL(sendsyslog2)
+DL_SYSCALL(sendsyslog)
 DL_SYSCALL(pledge)
 DL_SYSCALL(gettimeofday)
 DL_SYSCALL_NOERR(issetugid)

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.137 2015/11/25 00:01:21 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.138 2016/03/21 22:41:28 bluhm Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -51,7 +51,7 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	quotactl.o read.o readlink.o readlinkat.o readv.o reboot.o \
 	recvfrom.o recvmsg.o rename.o renameat.o revoke.o rmdir.o \
 	sched_yield.o select.o semget.o semop.o sendmsg.o sendsyslog.o \
-	sendsyslog2.o sendto.o \
+	sendto.o \
 	setegid.o seteuid.o setgid.o setgroups.o setitimer.o \
 	setpgid.o setpriority.o setregid.o setresgid.o setresuid.o \
 	setreuid.o setrlimit.o setrtable.o setsid.o setsockopt.o \

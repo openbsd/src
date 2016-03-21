@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.178 2015/11/24 23:50:50 deraadt Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.179 2016/03/21 22:41:29 bluhm Exp $	*/
 
 /*
  * System call names.
@@ -103,7 +103,7 @@ char *syscallnames[] = {
 	"setgroups",			/* 80 = setgroups */
 	"getpgrp",			/* 81 = getpgrp */
 	"setpgid",			/* 82 = setpgid */
-	"sendsyslog",			/* 83 = sendsyslog */
+	"osendsyslog",			/* 83 = osendsyslog */
 	"utimensat",			/* 84 = utimensat */
 	"futimens",			/* 85 = futimens */
 	"kbind",			/* 86 = kbind */
@@ -132,7 +132,7 @@ char *syscallnames[] = {
 	"ppoll",			/* 109 = ppoll */
 	"pselect",			/* 110 = pselect */
 	"sigsuspend",			/* 111 = sigsuspend */
-	"sendsyslog2",			/* 112 = sendsyslog2 */
+	"sendsyslog",			/* 112 = sendsyslog */
 	"#113 (obsolete orecvmsg)",		/* 113 = obsolete orecvmsg */
 	"#114 (obsolete osendmsg)",		/* 114 = obsolete osendmsg */
 	"#115 (obsolete vtrace)",		/* 115 = obsolete vtrace */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.179 2015/11/24 23:50:50 deraadt Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.180 2016/03/21 22:41:29 bluhm Exp $	*/
 
 /*
  * System call switch table.
@@ -198,8 +198,8 @@ struct sysent sysent[] = {
 	    sys_getpgrp },			/* 81 = getpgrp */
 	{ 2, s(struct sys_setpgid_args), 0,
 	    sys_setpgid },			/* 82 = setpgid */
-	{ 2, s(struct sys_sendsyslog_args), 0,
-	    sys_sendsyslog },			/* 83 = sendsyslog */
+	{ 2, s(struct sys_osendsyslog_args), 0,
+	    sys_osendsyslog },			/* 83 = osendsyslog */
 	{ 4, s(struct sys_utimensat_args), 0,
 	    sys_utimensat },			/* 84 = utimensat */
 	{ 2, s(struct sys_futimens_args), 0,
@@ -256,8 +256,8 @@ struct sysent sysent[] = {
 	    sys_pselect },			/* 110 = pselect */
 	{ 1, s(struct sys_sigsuspend_args), 0,
 	    sys_sigsuspend },			/* 111 = sigsuspend */
-	{ 3, s(struct sys_sendsyslog2_args), 0,
-	    sys_sendsyslog2 },			/* 112 = sendsyslog2 */
+	{ 3, s(struct sys_sendsyslog_args), 0,
+	    sys_sendsyslog },			/* 112 = sendsyslog */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 113 = obsolete orecvmsg */
 	{ 0, 0, 0,

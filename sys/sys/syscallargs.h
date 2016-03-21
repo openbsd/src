@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscallargs.h,v 1.180 2015/11/24 23:50:50 deraadt Exp $	*/
+/*	$OpenBSD: syscallargs.h,v 1.181 2016/03/21 22:41:29 bluhm Exp $	*/
 
 /*
  * System call argument lists.
@@ -401,7 +401,7 @@ struct sys_setpgid_args {
 	syscallarg(pid_t) pgid;
 };
 
-struct sys_sendsyslog_args {
+struct sys_osendsyslog_args {
 	syscallarg(const void *) buf;
 	syscallarg(size_t) nbyte;
 };
@@ -569,7 +569,7 @@ struct sys_sigsuspend_args {
 	syscallarg(int) mask;
 };
 
-struct sys_sendsyslog2_args {
+struct sys_sendsyslog_args {
 	syscallarg(const void *) buf;
 	syscallarg(size_t) nbyte;
 	syscallarg(int) flags;
@@ -1193,7 +1193,7 @@ int	sys_getgroups(struct proc *, void *, register_t *);
 int	sys_setgroups(struct proc *, void *, register_t *);
 int	sys_getpgrp(struct proc *, void *, register_t *);
 int	sys_setpgid(struct proc *, void *, register_t *);
-int	sys_sendsyslog(struct proc *, void *, register_t *);
+int	sys_osendsyslog(struct proc *, void *, register_t *);
 int	sys_utimensat(struct proc *, void *, register_t *);
 int	sys_futimens(struct proc *, void *, register_t *);
 int	sys_kbind(struct proc *, void *, register_t *);
@@ -1222,7 +1222,7 @@ int	sys_pledge(struct proc *, void *, register_t *);
 int	sys_ppoll(struct proc *, void *, register_t *);
 int	sys_pselect(struct proc *, void *, register_t *);
 int	sys_sigsuspend(struct proc *, void *, register_t *);
-int	sys_sendsyslog2(struct proc *, void *, register_t *);
+int	sys_sendsyslog(struct proc *, void *, register_t *);
 int	sys_getsockopt(struct proc *, void *, register_t *);
 int	sys_thrkill(struct proc *, void *, register_t *);
 int	sys_readv(struct proc *, void *, register_t *);

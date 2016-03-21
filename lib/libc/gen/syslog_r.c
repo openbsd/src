@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog_r.c,v 1.13 2016/03/13 18:34:20 guenther Exp $ */
+/*	$OpenBSD: syslog_r.c,v 1.14 2016/03/21 22:41:28 bluhm Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -190,10 +190,10 @@ __vsyslog_r(int pri, struct syslog_data *data,
 	}
 
 	/*
-	 * If the sendsyslog2() fails, it means that syslogd
+	 * If the sendsyslog() fails, it means that syslogd
 	 * is not running or the kernel ran out of buffers.
 	 */
-	sendsyslog2(tbuf, cnt, data->log_stat & LOG_CONS);
+	sendsyslog(tbuf, cnt, data->log_stat & LOG_CONS);
 }
 
 void

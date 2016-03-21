@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.21 2016/03/21 01:32:49 guenther Exp $ */
+/*	$OpenBSD: syscall.h,v 1.22 2016/03/21 22:41:29 bluhm Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -56,7 +56,7 @@ long	_dl__syscall(quad_t, ...);
 int	_dl_sysctl(const int *, u_int, void *, size_t *, void *, size_t);
 int	_dl_utrace(const char *, const void *, size_t);
 int	_dl_getentropy(char *, size_t);
-int	_dl_sendsyslog2(const char *, size_t, int);
+int	_dl_sendsyslog(const char *, size_t, int);
 
 static inline off_t
 _dl_lseek(int fd, off_t offset, int whence)

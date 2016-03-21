@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.41 2016/03/21 01:32:49 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.42 2016/03/21 22:41:29 bluhm Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -335,8 +335,8 @@ _ENTRY(_dl_getentropy)
 	retl
 	 sub %g0, %o0, %o0			! error: result = -errno
 
-_ENTRY(_dl_sendsyslog2)
-	mov SYS_sendsyslog2 | SYSCALL_G2RFLAG, %g1	! calling sys_sendsyslog
+_ENTRY(_dl_sendsyslog)
+	mov SYS_sendsyslog | SYSCALL_G2RFLAG, %g1	! calling sys_sendsyslog
 	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.158 2016/03/16 06:46:39 ratchov Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.159 2016/03/21 22:41:29 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -108,7 +108,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS___get_tcb] = PLEDGE_ALWAYS,
 	[SYS_pledge] = PLEDGE_ALWAYS,
 	[SYS_sendsyslog] = PLEDGE_ALWAYS,	/* stack protector reporting */
-	[SYS_sendsyslog2] = PLEDGE_ALWAYS,	/* stack protector reporting */
+	[SYS_osendsyslog] = PLEDGE_ALWAYS,	/* obsolete sendsyslog */
 	[SYS_thrkill] = PLEDGE_ALWAYS,		/* raise, abort, stack pro */
 	[SYS_utrace] = PLEDGE_ALWAYS,		/* ltrace(1) from ld.so */
 

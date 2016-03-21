@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.177 2015/11/24 23:50:50 deraadt Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.178 2016/03/21 22:41:29 bluhm Exp $	*/
 
 /*
  * System call numbers.
@@ -256,8 +256,8 @@
 /* syscall: "setpgid" ret: "int" args: "pid_t" "pid_t" */
 #define	SYS_setpgid	82
 
-/* syscall: "sendsyslog" ret: "int" args: "const void *" "size_t" */
-#define	SYS_sendsyslog	83
+/* syscall: "osendsyslog" ret: "int" args: "const void *" "size_t" */
+#define	SYS_osendsyslog	83
 
 /* syscall: "utimensat" ret: "int" args: "int" "const char *" "const struct timespec *" "int" */
 #define	SYS_utimensat	84
@@ -343,8 +343,8 @@
 /* syscall: "sigsuspend" ret: "int" args: "int" */
 #define	SYS_sigsuspend	111
 
-/* syscall: "sendsyslog2" ret: "int" args: "const void *" "size_t" "int" */
-#define	SYS_sendsyslog2	112
+/* syscall: "sendsyslog" ret: "int" args: "const void *" "size_t" "int" */
+#define	SYS_sendsyslog	112
 
 				/* 113 is obsolete orecvmsg */
 				/* 114 is obsolete osendmsg */
