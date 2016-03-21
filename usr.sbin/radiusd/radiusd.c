@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.15 2016/02/09 05:14:08 jsg Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.16 2016/03/21 00:49:36 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -196,7 +196,7 @@ radiusd_start(struct radiusd *radiusd)
 {
 	struct radiusd_listen	*l;
 	struct radiusd_module	*module;
-	int			 s, ival;
+	int			 s;
 	char			 hbuf[NI_MAXHOST];
 
 	TAILQ_FOREACH(l, &radiusd->listen, next) {
@@ -206,8 +206,8 @@ radiusd_start(struct radiusd *radiusd)
 			log_warn("%s: getnameinfo()", __func__);
 			goto on_error;
 		}
-		if ((s = socket(l->addr.ipv4.sin_family, l->stype, l->sproto))
-		    < 0) {
+		if ((s = socket(l->addr.ipv4.sin_family,
+		    l->stype | SOCK_NONBLOCK, l->sproto)) < 0) {
 			log_warn("Listen %s port %d is failed: socket()",
 			    hbuf, (int)htons(l->addr.ipv4.sin_port));
 			goto on_error;
@@ -216,16 +216,6 @@ radiusd_start(struct radiusd *radiusd)
 		    != 0) {
 			log_warn("Listen %s port %d is failed: bind()",
 			    hbuf, (int)htons(l->addr.ipv4.sin_port));
-			close(s);
-			goto on_error;
-		}
-		if ((ival = fcntl(s, F_GETFL, 0)) < 0) {
-			log_warn("fcntl(F_GETFL) failed at %s()", __func__);
-			close(s);
-			goto on_error;
-		}
-		if (fcntl(s, F_SETFL, ival | O_NONBLOCK) < 0) {
-			log_warn("fcntl(F_SETFL,O_NONBLOCK) failed at %s()", __func__);
 			close(s);
 			goto on_error;
 		}

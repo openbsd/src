@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tpd.c,v 1.18 2015/12/17 08:09:20 tb Exp $ */
+/*	$OpenBSD: l2tpd.c,v 1.19 2016/03/21 00:49:36 guenther Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file L2TP(Layer Two Tunneling Protocol "L2TP") / RFC2661 */
-/* $Id: l2tpd.c,v 1.18 2015/12/17 08:09:20 tb Exp $ */
+/* $Id: l2tpd.c,v 1.19 2016/03/21 00:49:36 guenther Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -272,7 +272,7 @@ l2tpd_listener_start(l2tpd_listener *_this)
 		strlcpy(_this->tun_name, L2TPD_DEFAULT_LAYER2_LABEL,
 		    sizeof(_this->tun_name));
 	if ((sock = socket(_this->bind.sin6.sin6_family,
-	    SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+	    SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP)) < 0) {
 		l2tpd_log(_l2tpd, LOG_ERR,
 		    "socket() failed in %s(): %m", __func__);
 		goto fail;
@@ -284,15 +284,6 @@ l2tpd_listener_start(l2tpd_listener *_this)
 		l2tpd_log(_l2tpd, LOG_WARNING,
 		    "%s(): setsockopt(IP_STRICT_RCVIF) failed: %m", __func__);
 #endif
-	if ((ival = fcntl(sock, F_GETFL, 0)) < 0) {
-		l2tpd_log(_l2tpd, LOG_ERR,
-		    "fcntl(,F_GETFL) failed in %s(): %m", __func__);
-		goto fail;
-	} else if (fcntl(sock, F_SETFL, ival | O_NONBLOCK) < 0) {
-		l2tpd_log(_l2tpd, LOG_ERR, "fcntl(,F_SETFL,O_NONBLOCK) failed "
-		    "in %s(): %m", __func__);
-		goto fail;
-	}
 	ival = 1;
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &ival, sizeof(ival))
 	    != 0) {

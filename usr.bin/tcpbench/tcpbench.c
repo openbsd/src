@@ -680,7 +680,8 @@ tcp_server_accept(int fd, short event, void *arg)
 	event_add(&ts->ev, NULL);
 	if (event & EV_TIMEOUT)
 		return;
-	if ((sock = accept(fd, (struct sockaddr *)&ss, &sslen)) == -1) {
+	if ((sock = accept4(fd, (struct sockaddr *)&ss, &sslen, SOCK_NONBLOCK))
+	    == -1) {
 		/*
 		 * Pause accept if we are out of file descriptors, or
 		 * libevent will haunt us here too.
@@ -697,11 +698,6 @@ tcp_server_accept(int fd, short event, void *arg)
 	}
 	saddr_ntop((struct sockaddr *)&ss, sslen,
 	    tmp, sizeof(tmp));
-	if ((r = fcntl(sock, F_GETFL, 0)) == -1)
-		err(1, "fcntl(F_GETFL)");
-	r |= O_NONBLOCK;
-	if (fcntl(sock, F_SETFL, r) == -1)
-		err(1, "fcntl(F_SETFL, O_NONBLOCK)");
 	if (ptb->Tflag != -1 && ss.ss_family == AF_INET) {
 		if (setsockopt(sock, IPPROTO_IP, IP_TOS,
 		    &ptb->Tflag, sizeof(ptb->Tflag)))

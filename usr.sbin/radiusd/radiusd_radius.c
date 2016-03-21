@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.11 2015/11/03 05:09:22 mmcc Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.12 2016/03/21 00:49:36 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -330,12 +330,12 @@ on_fail:
 static int
 radius_server_start(struct radius_server *server)
 {
-	int		 ival;
 	socklen_t	 locallen;
 	char		 buf0[NI_MAXHOST + NI_MAXSERV + 32];
 	char		 buf1[NI_MAXHOST + NI_MAXSERV + 32];
 
-	if ((server->sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+	if ((server->sock = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0))
+	    < 0) {
 		module_radius_log(server->module, LOG_WARNING,
 		    "%s: socket() failed", __func__);
 		goto on_error;
@@ -346,16 +346,6 @@ radius_server_start(struct radius_server *server)
 		    "%s: connect to %s failed", __func__,
 		    addrport_tostring((struct sockaddr *)&server->addr,
 			server->addr.sin4.sin_len, buf1, sizeof(buf1)));
-		goto on_error;
-	}
-	if ((ival = fcntl(server->sock, F_GETFL, 0)) < 0) {
-		module_radius_log(server->module, LOG_WARNING,
-		    "%s: fcntl(F_GETFL) failed", __func__);
-		goto on_error;
-	}
-	if (fcntl(server->sock, F_SETFL, ival | O_NONBLOCK) < 0) {
-		module_radius_log(server->module, LOG_WARNING,
-		    "%s: fcntl(F_SETFL) failed", __func__);
 		goto on_error;
 	}
 	locallen = sizeof(server->local);
