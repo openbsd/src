@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.72 2016/03/06 19:42:27 mpi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.73 2016/03/21 14:20:57 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -154,54 +154,52 @@ struct timecounter ipdclock_timecounter = {
 void
 octeon_memory_init(struct boot_info *boot_info)
 {
-	extern char end[];
+	struct octeon_bootmem_block *block;
+	struct octeon_bootmem_desc *memdesc;
+	paddr_t blockaddr;
+	uint64_t fp, lp;
 	int i;
-	uint32_t realmem_bytes;
 
-	realmem_bytes = boot_info->dram_size << 20;
-	physmem = atop(realmem_bytes);
+	physmem = atop((uint64_t)boot_info->dram_size << 20);
 
-	/*-
-	 * Octeon Memory looks as follows:
-         *   PA
-	 * First 256 MB DR0
-	 * 0000 0000 0000 0000     to  0000 0000 0FFF FFFF
-	 * Second 256 MB DR1
-	 * 0000 0004 1000 0000     to  0000 0004 1FFF FFFF
-	 * Over 512MB Memory DR2  15.5GB
-	 * 0000 0000 2000 0000     to  0000 0003 FFFF FFFF
-	 */
+	if (boot_info->phys_mem_desc_addr == 0)
+		panic("bootmem desc is missing");
+	memdesc = (struct octeon_bootmem_desc *)PHYS_TO_XKPHYS(
+	    boot_info->phys_mem_desc_addr, CCA_CACHED);
+	printf("bootmem desc 0x%x version %d.%d\n",
+	    boot_info->phys_mem_desc_addr, memdesc->major_version,
+	    memdesc->minor_version);
+	if (memdesc->major_version > 3)
+		panic("unhandled bootmem desc version %d.%d",
+		    memdesc->major_version, memdesc->minor_version);
 
-	/* DR0, ignoring everything below the kernel image */
-	mem_layout[0].mem_first_page =
-	    atop(CKSEG0_TO_PHYS(round_page((vaddr_t)&end)));
-	if (physmem > atop(256 << 20))
-		mem_layout[0].mem_last_page = atop(256 << 20);
-	else
-		mem_layout[0].mem_last_page = physmem;
+	blockaddr = memdesc->head_addr;
+	if (blockaddr == 0)
+		panic("bootmem list is empty");
+	for (i = 0; i < MAXMEMSEGS && blockaddr != 0; blockaddr = block->next) {
+		block = (struct octeon_bootmem_block *)PHYS_TO_XKPHYS(
+		    blockaddr, CCA_CACHED);
+		printf("avail phys mem 0x%016lx - 0x%016lx\n", blockaddr,
+		    (paddr_t)(blockaddr + block->size));
 
-	/* DR1 */
-	i = 1;
-	if (physmem > atop(256 << 20)) {
-		mem_layout[i].mem_first_page = atop(0x410000000ULL);
-		if (physmem > atop(512 << 20))
-			mem_layout[i].mem_last_page = atop(0x420000000ULL);
-		else
-			mem_layout[i].mem_last_page =
-			    atop(0x410000000ULL) + physmem - atop(256 << 20);
+		fp = atop(round_page(blockaddr));
+		lp = atop(trunc_page(blockaddr + block->size));
+
+		/* Clamp to the range of the pmap. */
+		if (fp > atop(pfn_to_pad(PG_FRAME)))
+			continue;
+		if (lp > atop(pfn_to_pad(PG_FRAME)) + 1)
+			lp = atop(pfn_to_pad(PG_FRAME)) + 1;
+		if (fp >= lp)
+			continue;
+
+		mem_layout[i].mem_first_page = fp;
+		mem_layout[i].mem_last_page = lp;
 		i++;
 	}
 
-	/* DR2 */
-	if (physmem > atop(512 << 20)) {
-		mem_layout[i].mem_first_page = atop(0x20000000ULL);
-		mem_layout[i].mem_last_page =
-		    atop(0x20000000ULL) + physmem - atop(512 << 20);
-		/* i++; */
-	}
-
-	printf("Total DRAM Size 0x%016X\n",
-	    (uint32_t)(boot_info->dram_size << 20));
+	printf("Total DRAM Size 0x%016llX\n",
+	    (uint64_t)boot_info->dram_size << 20);
 
 	for (i = 0; mem_layout[i].mem_last_page; i++) {
 		printf("mem_layout[%d] page 0x%016llX -> 0x%016llX\n", i,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.24 2015/07/20 19:44:32 pirofti Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.25 2016/03/21 14:20:57 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -271,6 +271,24 @@ struct boot_info {
 	uint64_t led_display_addr;
 	uint32_t dfaclock;
 	uint32_t config_flags;
+};
+
+struct octeon_bootmem_desc {
+	uint32_t	lock;
+	uint32_t	flags;
+	uint64_t	head_addr;
+	uint32_t	major_version;
+	uint32_t	minor_version;
+	uint64_t	app_data_addr;
+	uint64_t	app_data_size;
+	uint32_t	named_block_num_blocks;
+	uint32_t	named_block_name_len;
+	uint64_t	named_block_array_addr;
+};
+
+struct octeon_bootmem_block {
+	uint64_t	next;
+	uint64_t	size;
 };
 
 extern struct boot_desc *octeon_boot_desc;
