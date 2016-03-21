@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.93 2015/12/03 10:34:24 tedu Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.94 2016/03/21 21:21:35 vgross Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -262,6 +262,8 @@ struct inpcb *
 			       struct in6_addr *, u_int, int, struct mbuf *,
 			       u_int);
 int	 in6_pcbbind(struct inpcb *, struct mbuf *, struct proc *);
+int	 in6_pcbaddrisavail(struct inpcb *, struct sockaddr_in6 *, int,
+	    struct proc *);
 int	 in6_pcbconnect(struct inpcb *, struct mbuf *);
 int	 in6_setsockaddr(struct inpcb *, struct mbuf *);
 int	 in6_setpeeraddr(struct inpcb *, struct mbuf *);
