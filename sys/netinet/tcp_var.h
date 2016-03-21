@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.109 2015/08/27 20:56:16 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.110 2016/03/21 15:52:27 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -440,6 +440,7 @@ struct	tcpstat {
 	u_int64_t tcps_sc_dropped;	/* # of SYNs dropped (no route/mem) */
 	u_int64_t tcps_sc_collisions;	/* # of hash collisions */
 	u_int64_t tcps_sc_retransmitted;/* # of retransmissions */
+	u_int64_t tcps_sc_seedrandom;	/* # of syn cache seeds with random */
 
 	u_int64_t tcps_conndrained;	/* # of connections drained */
 
