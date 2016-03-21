@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.88 2016/03/21 21:16:01 stsp Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.89 2016/03/21 21:16:30 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -567,7 +567,7 @@ rt2860_alloc_tx_pool(struct rt2860_softc *sc)
 
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    RT2860_MAX_SCATTER, MCLBYTES, 0, BUS_DMA_NOWAIT,
-		    &data->map);
+		    &data->map); /* <0> */
 		if (error != 0) {
 			printf("%s: could not create DMA map\n",
 			    sc->sc_dev.dv_xname);
@@ -1171,7 +1171,7 @@ rt2860_tx_intr(struct rt2860_softc *sc, int qid)
 	}
 
 	sc->sc_tx_timer = 0;
-	if (ring->queued < RT2860_TX_RING_MAX)
+	if (ring->queued <= RT2860_TX_RING_ONEMORE)
 		sc->qfullmsk &= ~(1 << qid);
 	ifq_clr_oactive(&ifp->if_snd);
 	rt2860_start(ifp);
@@ -1481,12 +1481,11 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	struct rt2860_txd *txd;
 	struct rt2860_txwi *txwi;
 	struct ieee80211_frame *wh;
-	struct mbuf *m1;
 	bus_dma_segment_t *seg;
 	u_int hdrlen;
 	uint16_t qos, dur;
 	uint8_t type, qsel, mcs, pid, tid, qid;
-	int nsegs, ntxds, hasqos, ridx, ctl_ridx, error;
+	int nsegs, hasqos, ridx, ctl_ridx;
 
 	/* the data pool contains at least one element, pick the first */
 	data = SLIST_FIRST(&sc->data_pool);
@@ -1606,63 +1605,27 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	memcpy(txwi + 1, wh, hdrlen);
 	m_adj(m, hdrlen);
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
-	    BUS_DMA_NOWAIT);
-	if (__predict_false(error != 0 && error != EFBIG)) {
-		printf("%s: can't map mbuf (error %d)\n",
-		    sc->sc_dev.dv_xname, error);
-		m_freem(m);
-		return error;
+	KASSERT (ring->queued <= RT2860_TX_RING_ONEMORE); /* <1> */
+
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m, BUS_DMA_NOWAIT)) {
+		if (m_defrag(m, M_DONTWAIT))
+			return (ENOBUFS);
+		if (bus_dmamap_load_mbuf(sc->sc_dmat,
+		    data->map, m, BUS_DMA_NOWAIT))
+			return (EFBIG);
 	}
-	if (__predict_true(error == 0)) {
-		/* determine how many TXDs are required */
-		ntxds = 1 + (data->map->dm_nsegs / 2);
 
-		if (ring->queued + ntxds >= RT2860_TX_RING_MAX) {
-			/* not enough free TXDs, force mbuf defrag */
-			bus_dmamap_unload(sc->sc_dmat, data->map);
-			error = EFBIG;
-		}
-	}
-	if (__predict_false(error != 0)) {
-		/* too many fragments, linearize */
-		MGETHDR(m1, M_DONTWAIT, MT_DATA);
-		if (m1 == NULL) {
-			m_freem(m);
-			return ENOBUFS;
-		}
-		if (m->m_pkthdr.len > MHLEN) {
-			MCLGET(m1, M_DONTWAIT);
-			if (!(m1->m_flags & M_EXT)) {
-				m_freem(m);
-				m_freem(m1);
-				return ENOBUFS;
-			}
-		}
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(m1, caddr_t));
-		m1->m_pkthdr.len = m1->m_len = m->m_pkthdr.len;
-		m_freem(m);
-		m = m1;
-
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
-		    BUS_DMA_NOWAIT);
-		if (__predict_false(error != 0)) {
-			printf("%s: can't map mbuf (error %d)\n",
-			    sc->sc_dev.dv_xname, error);
-			m_freem(m);
-			return error;
-		}
-
-		/* determine how many TXDs are now required */
-		ntxds = 1 + (data->map->dm_nsegs / 2);
-
-		if (ring->queued + ntxds >= RT2860_TX_RING_MAX) {
-			/* this is a hopeless case, drop the mbuf! */
-			bus_dmamap_unload(sc->sc_dmat, data->map);
-			m_freem(m);
-			return ENOBUFS;
-		}
-	}
+	/* The map will fit into the tx ring: (a "full" ring may have a few
+	 * unused descriptors, at most (txds(MAX_SCATTER) - 1))
+	 *
+	 *   ring->queued + txds(data->map->nsegs)
+	 * <=	{ <0> data->map->nsegs <= MAX_SCATTER }
+	 *   ring->queued + txds(MAX_SCATTER)
+	 * <=	{ <1> ring->queued <= TX_RING_MAX - txds(MAX_SCATTER) }
+	 *   TX_RING_MAX - txds(MAX_SCATTER) + txds(MAX_SCATTER)
+	 * <=   { arithmetic }
+	 *   TX_RING_MAX
+	 */
 
 	qsel = (qid < EDCA_NUM_AC) ? RT2860_TX_QSEL_EDCA : RT2860_TX_QSEL_MGMT;
 
@@ -1713,8 +1676,8 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	    qid, txwi->wcid, data->map->dm_nsegs, ridx));
 
 	ring->cur = (ring->cur + 1) % RT2860_TX_RING_COUNT;
-	ring->queued += ntxds;
-	if (ring->queued >= RT2860_TX_RING_MAX)
+	ring->queued += 1 + (data->map->dm_nsegs / 2);
+	if (ring->queued > RT2860_TX_RING_ONEMORE)
 		sc->qfullmsk |= 1 << qid;
 
 	/* kick Tx */
@@ -1771,6 +1734,7 @@ sendit:
 			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
 		if (rt2860_tx(sc, m, ni) != 0) {
+			m_freem(m);
 			ieee80211_release_node(ic, ni);
 			ifp->if_oerrors++;
 			continue;
