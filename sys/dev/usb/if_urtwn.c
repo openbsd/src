@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.62 2016/03/09 22:07:46 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.63 2016/03/21 22:12:06 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1365,7 +1365,7 @@ urtwn_set_led(struct urtwn_softc *sc, int led, int on)
 	if (led == URTWN_LED_LINK) {
 		if (sc->chip & URTWN_CHIP_88E) {
 			reg = urtwn_read_1(sc, R92C_LEDCFG2) & 0xf0;
-			urtwn_write_1(sc, R92C_LEDCFG2, reg | 0x60);
+			urtwn_write_1(sc, R92C_LEDCFG2, reg | R92C_LEDCFG2_EN);
 			if (!on) {
 				reg = urtwn_read_1(sc, R92C_LEDCFG2) & 0x90;
 				urtwn_write_1(sc, R92C_LEDCFG2,
