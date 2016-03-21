@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_att.c,v 1.13 2014/09/29 16:20:40 miod Exp $ */
+/* $OpenBSD: x509_att.c,v 1.14 2016/03/21 04:05:33 mmcc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -297,7 +297,7 @@ X509_ATTRIBUTE_set1_object(X509_ATTRIBUTE *attr, const ASN1_OBJECT *obj)
 		return (0);
 	ASN1_OBJECT_free(attr->object);
 	attr->object = OBJ_dup(obj);
-	return (1);
+	return attr->object != NULL;
 }
 
 int
