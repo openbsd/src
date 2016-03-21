@@ -11,6 +11,9 @@
 		environ;
 		__progname;
 
+		/* alias in reserved namespace for libpthread to use */
+		_dlctl;
+
 		/* looked up by gdb */
 		_dl_bind;
 		_dl_debug_state;

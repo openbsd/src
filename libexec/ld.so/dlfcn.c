@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.94 2016/03/20 02:29:51 guenther Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.95 2016/03/21 01:52:45 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -251,6 +251,7 @@ dlctl(void *handle, int command, void *data)
 	}
 	return (retval);
 }
+__strong_alias(_dlctl,dlctl);
 
 int
 dlclose(void *handle)
