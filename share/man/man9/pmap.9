@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pmap.9,v 1.15 2015/11/23 17:53:57 jmc Exp $
+.\"	$OpenBSD: pmap.9,v 1.16 2016/03/21 21:14:42 natano Exp $
 .\"
 .\" Copyright (c) 2001, 2002, 2003 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 23 2015 $
+.Dd $Mdocdate: March 21 2016 $
 .Dt PMAP_INIT 9
 .Os
 .Sh NAME
@@ -56,13 +56,13 @@
 .In machine/pmap.h
 .Sh DESCRIPTION
 The architecture-dependent
-.Nm
+.Nm pmap
 module describes how the physical mapping is done between the user-processes
 and kernel virtual addresses and the physical addresses of the main memory,
 providing machine-dependent translation and access tables that are used
 directly or indirectly by the memory-management hardware.
 The
-.Nm
+.Nm pmap
 layer can be viewed as a big array of mapping entries that are indexed by
 virtual address to produce a physical address and flags.
 These flags describe
@@ -70,7 +70,7 @@ the page's protection, whether the page has been referenced or modified and
 other characteristics.
 .Pp
 The
-.Nm
+.Nm pmap
 interface is consistent across all platforms and hides the way page mappings
 are stored.
 .Sh INITIALIZATION
@@ -95,7 +95,7 @@ in interrupt context (such as
 or to enter mappings for physical addresses which are not managed by
 .Xr uvm 9 .
 This allows
-.Nm
+.Nm pmap
 modules to avoid blocking interrupts when manipulating data structures or
 holding locks.
 Unmanaged mappings may only be entered into the kernel's virtual address space.
@@ -175,7 +175,7 @@ If this flag is not set, and the
 .Fn pmap_enter
 call is unable to create the mapping, perhaps due to insufficient
 resources, the
-.Nm
+.Nm pmap
 module must panic.
 .El
 .Pp
@@ -234,7 +234,7 @@ must be made after
 or
 .Fn pmap_kremove
 to notify the
-.Nm
+.Nm pmap
 layer that the mappings need to be made correct.
 .Sh ACCESS PROTECTION
 .nr nS 1
@@ -387,17 +387,17 @@ function can preallocate kernel page tables to a specified virtual address.
 The
 .Fn pmap_update
 function notifies the
-.Nm
+.Nm pmap
 module to force processing of all delayed actions for all pmaps.
 .Pp
 The
 .Fn pmap_collect
 function informs the
-.Nm
+.Nm pmap
 module that the given
 .Em pmap
 is not expected to be used for some time, giving the
-.Nm
+.Nm pmap
 module a chance to prioritize.
 The initial bounds of the kernel virtual address space are returned by
 .Fn pmap_virtual_space .
@@ -427,12 +427,12 @@ mappings.
 .Sh HISTORY
 The
 .Bx 4.4
-.Nm
+.Nm pmap
 module is based on Mach 3.0.
 The introduction of
 .Xr uvm 9
 left the
-.Nm
+.Nm pmap
 interface unchanged for the most part.
 .Sh BUGS
 Ifdefs must be documented.
