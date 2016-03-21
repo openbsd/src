@@ -1,5 +1,5 @@
-/*	$OpenBSD: read.c,v 1.25 2016/03/20 23:48:27 schwarze Exp $	*/
-/*	$NetBSD: read.c,v 1.57 2010/07/21 18:18:52 christos Exp $	*/
+/*	$OpenBSD: read.c,v 1.26 2016/03/21 00:11:56 schwarze Exp $	*/
+/*	$NetBSD: read.c,v 1.81 2016/02/16 22:53:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -230,12 +230,13 @@ FUN(el,push)(EditLine *el, const Char *str)
 
 
 /* read_getcmd():
- *	Return next command from the input stream.
+ *	Get next command from the input stream, return OKCMD on success.
  *	Character values > 255 are not looked up in the map, but inserted.
  */
 private int
 read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 {
+	static const Char meta = (Char)0x80;
 	el_action_t cmd;
 	int num;
 
@@ -243,11 +244,11 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 	do {
 		if ((num = FUN(el,getc)(el, ch)) != 1) {/* if EOF or error */
 			el->el_errno = num == 0 ? 0 : errno;
-			return num;
+			return 0;	/* not OKCMD */
 		}
 
 #ifdef	KANJI
-		if ((*ch & 0200)) {
+		if ((*ch & meta)) {
 			el->el_state.metanext = 0;
 			cmd = CcViMap[' '];
 			break;
@@ -256,7 +257,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 
 		if (el->el_state.metanext) {
 			el->el_state.metanext = 0;
-			*ch |= 0200;
+			*ch |= meta;
 		}
 #ifdef WIDECHAR
 		if (*ch >= N_KEYS)
@@ -434,6 +435,8 @@ FUN(el,getc)(EditLine *el, Char *cp)
 	(void) fprintf(el->el_errfile, "Reading a character\n");
 #endif /* DEBUG_READ */
 	num_read = (*el->el_read.read_char)(el, cp);
+	if (num_read < 0)
+		el->el_errno = errno;
 #ifdef WIDECHAR
 	if (el->el_flags & NARROW_READ)
 		*cp = *(char *)(void *)cp;
@@ -579,6 +582,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 #endif /* DEBUG_EDIT */
 		/* if EOF or error */
 		if ((num = read_getcmd(el, &cmdnum, &ch)) != OKCMD) {
+			num = -1;
 #ifdef DEBUG_READ
 			(void) fprintf(el->el_errfile,
 			    "Returning from el_gets %d\n", num);
