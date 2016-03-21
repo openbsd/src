@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.54 2016/02/26 13:41:51 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.55 2016/03/21 00:18:54 stsp Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -169,6 +169,7 @@ struct vnet_softc {
 	struct ldc_map	*sc_lm;
 	struct vnet_dring *sc_vd;
 	struct vnet_soft_desc *sc_vsd;
+#define VNET_NUM_SOFT_DESC	128
 
 	size_t		sc_peer_desc_size;
 	struct ldc_cookie sc_peer_dring_cookie;
@@ -1399,10 +1400,10 @@ vnet_init(struct ifnet *ifp)
 		return;
 	}
 
-	sc->sc_vd = vnet_dring_alloc(sc->sc_dmatag, 128);
+	sc->sc_vd = vnet_dring_alloc(sc->sc_dmatag, VNET_NUM_SOFT_DESC);
 	if (sc->sc_vd == NULL)
 		return;
-	sc->sc_vsd = malloc(128 * sizeof(*sc->sc_vsd), M_DEVBUF,
+	sc->sc_vsd = malloc(VNET_NUM_SOFT_DESC * sizeof(*sc->sc_vsd), M_DEVBUF,
 	    M_NOWAIT|M_ZERO);
 	if (sc->sc_vsd == NULL)
 		return;
@@ -1453,6 +1454,8 @@ vnet_stop(struct ifnet *ifp)
 	lc->lc_state = 0;
 	lc->lc_tx_state = lc->lc_rx_state = LDC_CHANNEL_DOWN;
 	vnet_ldc_reset(lc);
+
+	free(sc->sc_vsd, M_DEVBUF, VNET_NUM_SOFT_DESC * sizeof(*sc->sc_vsd));
 
 	vnet_dring_free(sc->sc_dmatag, sc->sc_vd);
 
