@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.123 2016/03/06 22:33:48 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.124 2016/03/21 00:04:03 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -719,6 +719,7 @@ static const formatter scargs[][8] = {
     [SYS_madvise]	= { Pptr, Pbigsize, Madvisebehavname },
     [SYS_utimes]	= { Ppath, Pptr },
     [SYS_futimes]	= { Pfd, Pptr },
+    [SYS_kbind]		= { Pptr, Psize, Phexlonglong },
     [SYS_mincore]	= { Pptr, Pbigsize, Pptr },
     [SYS_getgroups]	= { Pcount, Pptr },
     [SYS_setgroups]	= { Pcount, Pptr },
