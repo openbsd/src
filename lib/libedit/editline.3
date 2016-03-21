@@ -1,5 +1,5 @@
-.\"	$OpenBSD: editline.3,v 1.40 2016/03/21 17:53:07 schwarze Exp $
-.\"	$NetBSD: editline.3,v 1.87 2016/02/24 19:45:48 christos Exp $
+.\"	$OpenBSD: editline.3,v 1.41 2016/03/21 18:04:40 schwarze Exp $
+.\"	$NetBSD: editline.3,v 1.88 2016/02/25 14:59:22 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -170,7 +170,7 @@ Programs should be linked with
 The
 .Nm
 library respects the
-.Dv LC_CTYPE
+.Ev LC_CTYPE
 locale set by the application program and never uses
 .Xr setlocale 3
 to change the locale.
@@ -241,10 +241,10 @@ if that is not empty, and store it in
 If an invalid or incomplete character is found, it is discarded,
 .Va errno
 is set to
-.Dv EILSEQ ,
+.Er EILSEQ ,
 and the next character is read and stored in
 .Fa ch .
-Returns 1 if a valid character was read, 0 on end of file, or -1 on
+Returns 1 if a valid character was read, 0 on end of file, or \-1 on
 .Xr read 2
 failure.
 In the latter case,
@@ -253,7 +253,7 @@ is set to indicate the error.
 .It Fn el_getc
 Read a wide character as described for
 .Fn el_wgetc
-and return 0 on end of file or -1 on failure.
+and return 0 on end of file or \-1 on failure.
 If the wide character can be represented as a single-byte character,
 convert it with
 .Xr wctob 3 ,
@@ -262,8 +262,8 @@ store the result in
 and return 1; otherwise, set
 .Va errno
 to
-.Dv ERANGE
-and return -1.
+.Er ERANGE
+and return \-1.
 In the C or POSIX locale, this simply reads a byte, but for any other
 locale, including UTF-8, this is rarely useful.
 .It Fn el_push
