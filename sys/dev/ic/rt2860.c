@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.87 2016/01/05 18:41:15 stsp Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.88 2016/03/21 21:16:01 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1171,7 +1171,7 @@ rt2860_tx_intr(struct rt2860_softc *sc, int qid)
 	}
 
 	sc->sc_tx_timer = 0;
-	if (ring->queued < RT2860_TX_RING_COUNT)
+	if (ring->queued < RT2860_TX_RING_MAX)
 		sc->qfullmsk &= ~(1 << qid);
 	ifq_clr_oactive(&ifp->if_snd);
 	rt2860_start(ifp);
@@ -1618,7 +1618,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		/* determine how many TXDs are required */
 		ntxds = 1 + (data->map->dm_nsegs / 2);
 
-		if (ring->queued + ntxds >= RT2860_TX_RING_COUNT) {
+		if (ring->queued + ntxds >= RT2860_TX_RING_MAX) {
 			/* not enough free TXDs, force mbuf defrag */
 			bus_dmamap_unload(sc->sc_dmat, data->map);
 			error = EFBIG;
@@ -1656,7 +1656,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		/* determine how many TXDs are now required */
 		ntxds = 1 + (data->map->dm_nsegs / 2);
 
-		if (ring->queued + ntxds >= RT2860_TX_RING_COUNT) {
+		if (ring->queued + ntxds >= RT2860_TX_RING_MAX) {
 			/* this is a hopeless case, drop the mbuf! */
 			bus_dmamap_unload(sc->sc_dmat, data->map);
 			m_freem(m);
@@ -1714,7 +1714,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	ring->cur = (ring->cur + 1) % RT2860_TX_RING_COUNT;
 	ring->queued += ntxds;
-	if (ring->queued >= RT2860_TX_RING_COUNT)
+	if (ring->queued >= RT2860_TX_RING_MAX)
 		sc->qfullmsk |= 1 << qid;
 
 	/* kick Tx */
