@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.2 2016/03/20 03:01:57 guenther Exp $ */
+/*	$OpenBSD: init.c,v 1.3 2016/03/21 00:41:13 guenther Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -20,12 +20,12 @@
 
 #include <sys/types.h>
 #include <sys/exec_elf.h>
+#include <sys/syscall.h>
 
 #include <limits.h>		/* NAME_MAX */
 #include <stdlib.h>		/* atexit */
 #include <string.h>
 #include <unistd.h>		/* _pagesize */
-#include "kbind.h"
 
 /* XXX should be in an include file shared with csu */
 char	***_csu_finish(char **_argv, char **_envp, void (*_cleanup)(void));
@@ -87,9 +87,10 @@ _csu_finish(char **argv, char **envp, void (*cleanup)(void))
 static inline void
 early_static_init(char **argv, char **envp)
 {
-	static char progname_storage[NAME_MAX+1] = "";
+	static char progname_storage[NAME_MAX+1];
 
-	MD_DISABLE_KBIND;
+	/* disable kbind */
+	syscall(SYS_kbind, (void *)NULL, (size_t)0, (long long)0);
 
 	environ = envp;
 
