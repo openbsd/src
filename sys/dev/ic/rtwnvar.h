@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwnvar.h,v 1.4 2016/03/15 10:28:31 stsp Exp $	*/
+/*	$OpenBSD: rtwnvar.h,v 1.5 2016/03/21 12:00:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -49,16 +49,17 @@ struct rtwn_softc {
 					    enum ieee80211_state, int);
 	struct task			init_task;
 	int				ac2idx[EDCA_NUM_AC];
-	u_int				sc_flags;
+	uint32_t			sc_flags;
 #define RTWN_FLAG_CCK_HIPWR	0x01
 #define RTWN_FLAG_BUSY		0x02
 
-	u_int				chip;
-#define RTWN_CHIP_88C		0x00
+	uint32_t		chip;
 #define RTWN_CHIP_92C		0x01
 #define RTWN_CHIP_92C_1T2R	0x02
 #define RTWN_CHIP_UMC		0x04
 #define RTWN_CHIP_UMC_A_CUT	0x08
+#define RTWN_CHIP_88C		0x10
+#define RTWN_CHIP_88E		0x20
 
 	uint8_t				board_type;
 	uint8_t				regulatory;
@@ -77,7 +78,7 @@ struct rtwn_softc {
 	uint32_t			rf_chnlbw[R92C_MAX_CHAINS];
 };
 
-int		rtwn_attach(struct device *, struct rtwn_softc *);
+int		rtwn_attach(struct device *, struct rtwn_softc *, uint32_t);
 int		rtwn_detach(struct rtwn_softc *, int);
 int		rtwn_activate(struct rtwn_softc *, int);
 int8_t		rtwn_get_rssi(struct rtwn_softc *, int, void *);

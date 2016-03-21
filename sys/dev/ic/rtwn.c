@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.5 2016/03/15 10:28:31 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.6 2016/03/21 12:00:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -84,7 +84,7 @@ uint32_t	rtwn_rf_read(struct rtwn_softc *, int, uint8_t);
 void		rtwn_cam_write(struct rtwn_softc *, uint32_t, uint32_t);
 uint8_t		rtwn_efuse_read_1(struct rtwn_softc *, uint16_t);
 void		rtwn_efuse_read(struct rtwn_softc *);
-int		rtwn_read_chipid(struct rtwn_softc *);
+int		rtwn_read_chipid(struct rtwn_softc *, uint32_t);
 void		rtwn_read_rom(struct rtwn_softc *);
 int		rtwn_media_change(struct ifnet *);
 int		rtwn_ra_init(struct rtwn_softc *);
@@ -140,7 +140,7 @@ void		rtwn_stop(struct ifnet *);
 #define rtwn_bb_read	rtwn_read_4
 
 int
-rtwn_attach(struct device *pdev, struct rtwn_softc *sc)
+rtwn_attach(struct device *pdev, struct rtwn_softc *sc, uint32_t chip_type)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
@@ -150,9 +150,13 @@ rtwn_attach(struct device *pdev, struct rtwn_softc *sc)
 
 	task_set(&sc->init_task, rtwn_init_task, sc);
 
-	error = rtwn_read_chipid(sc);
+	error = rtwn_read_chipid(sc, chip_type);
 	if (error != 0) {
 		printf("%s: unsupported test chip\n", sc->sc_pdev->dv_xname);
+		return (ENXIO);
+	}
+	if (sc->chip == 0) {
+		printf("%s: could not read chip ID\n", sc->sc_pdev->dv_xname);
 		return (ENXIO);
 	}
 
@@ -160,7 +164,7 @@ rtwn_attach(struct device *pdev, struct rtwn_softc *sc)
 	if (sc->chip & RTWN_CHIP_92C) {
 		sc->ntxchains = (sc->chip & RTWN_CHIP_92C_1T2R) ? 1 : 2;
 		sc->nrxchains = 2;
-	} else {
+	} else if (sc->chip & RTWN_CHIP_88C) {
 		sc->ntxchains = 1;
 		sc->nrxchains = 1;
 	}
@@ -475,9 +479,8 @@ rtwn_efuse_read(struct rtwn_softc *sc)
 #endif
 }
 
-/* rtwn_read_chipid: reg=0x40073b chipid=0x0 */
 int
-rtwn_read_chipid(struct rtwn_softc *sc)
+rtwn_read_chipid(struct rtwn_softc *sc, uint32_t chip_type)
 {
 	uint32_t reg;
 
@@ -486,18 +489,22 @@ rtwn_read_chipid(struct rtwn_softc *sc)
 		/* Unsupported test chip. */
 		return (EIO);
 
-	if (reg & R92C_SYS_CFG_TYPE_92C) {
-		sc->chip |= RTWN_CHIP_92C;
-		/* Check if it is a castrated 8192C. */
-		if (MS(rtwn_read_4(sc, R92C_HPON_FSM),
-		    R92C_HPON_FSM_CHIP_BONDING_ID) ==
-		    R92C_HPON_FSM_CHIP_BONDING_ID_92C_1T2R)
-			sc->chip |= RTWN_CHIP_92C_1T2R;
-	}
-	if (reg & R92C_SYS_CFG_VENDOR_UMC) {
-		sc->chip |= RTWN_CHIP_UMC;
-		if (MS(reg, R92C_SYS_CFG_CHIP_VER_RTL) == 0)
-			sc->chip |= RTWN_CHIP_UMC_A_CUT;
+	if ((chip_type & (RTWN_CHIP_92C | RTWN_CHIP_88C)) != 0) {
+		if (reg & R92C_SYS_CFG_TYPE_92C) {
+			sc->chip = RTWN_CHIP_92C;
+			/* Check if it is a castrated 8192C. */
+			if (MS(rtwn_read_4(sc, R92C_HPON_FSM),
+			    R92C_HPON_FSM_CHIP_BONDING_ID) ==
+			    R92C_HPON_FSM_CHIP_BONDING_ID_92C_1T2R)
+				sc->chip |= RTWN_CHIP_92C_1T2R;
+		} else
+			sc->chip = RTWN_CHIP_88C;
+
+		if (reg & R92C_SYS_CFG_VENDOR_UMC) {
+			sc->chip |= RTWN_CHIP_UMC;
+			if (MS(reg, R92C_SYS_CFG_CHIP_VER_RTL) == 0)
+				sc->chip |= RTWN_CHIP_UMC_A_CUT;
+		}
 	}
 	return (0);
 }
