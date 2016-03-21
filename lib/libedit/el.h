@@ -1,5 +1,5 @@
-/*	$OpenBSD: el.h,v 1.16 2016/03/20 23:48:27 schwarze Exp $	*/
-/*	$NetBSD: el.h,v 1.33 2016/02/17 19:47:49 christos Exp $	*/
+/*	$OpenBSD: el.h,v 1.17 2016/03/21 17:28:10 schwarze Exp $	*/
+/*	$NetBSD: el.h,v 1.34 2016/02/24 17:13:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -58,7 +58,6 @@
 #define	UNBUFFERED	0x08
 #define	CHARSET_IS_UTF8 0x10
 #define	NARROW_HISTORY	0x40
-#define	NARROW_READ	0x80
 
 typedef unsigned char el_action_t;	/* Index to command array	*/
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chartype.c,v 1.8 2016/03/20 23:48:27 schwarze Exp $	*/
+/*	$OpenBSD: chartype.c,v 1.9 2016/03/21 17:28:10 schwarze Exp $	*/
 /*	$NetBSD: chartype.c,v 1.6 2011/07/28 00:48:21 christos Exp $	*/
 
 /*-
@@ -209,7 +209,7 @@ ct_encode_char(char *dst, size_t len, Char c)
 
 size_t
 /*ARGSUSED*/
-ct_mbrtowc(char *wc, const char *s, size_t n,
+ct_mbrtowc(wchar_t *wc, const char *s, size_t n,
     void *mbs __attribute__((__unused__))) {
 	if (s == NULL)
 		return 0;

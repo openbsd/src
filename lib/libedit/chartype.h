@@ -1,4 +1,4 @@
-/*	$OpenBSD: chartype.h,v 1.10 2016/03/20 23:48:27 schwarze Exp $	*/
+/*	$OpenBSD: chartype.h,v 1.11 2016/03/21 17:28:10 schwarze Exp $	*/
 /*	$NetBSD: chartype.h,v 1.5 2010/04/15 00:55:57 christos Exp $	*/
 
 /*-
@@ -109,7 +109,7 @@
 
 #else /* NARROW */
 
-size_t	ct_mbrtowc(char *, const char *, size_t, void *);
+size_t	ct_mbrtowc(wchar_t *, const char *, size_t, void *);
 #define ct_wctob(w)          ((int)(w))
 #define ct_wctomb            error
 #define ct_wctomb_reset

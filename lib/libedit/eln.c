@@ -1,4 +1,4 @@
-/*	$OpenBSD: eln.c,v 1.10 2016/03/21 15:25:39 schwarze Exp $	*/
+/*	$OpenBSD: eln.c,v 1.11 2016/03/21 17:28:10 schwarze Exp $	*/
 /*	$NetBSD: eln.c,v 1.9 2010/11/04 13:53:12 christos Exp $	*/
 
 /*-
@@ -236,10 +236,8 @@ el_set(EditLine *el, int op, ...)
 		el->el_flags |= NARROW_HISTORY;
 		break;
 	}
-	/* XXX: do we need to change el_rfunc_t? */
 	case EL_GETCFN:         /* el_rfunc_t */
 		ret = el_wset(el, op, va_arg(ap, el_rfunc_t));
-		el->el_flags |= NARROW_READ;
 		break;
 	case EL_CLIENTDATA:     /* void * */
 		ret = el_wset(el, op, va_arg(ap, void *));
@@ -330,7 +328,6 @@ el_get(EditLine *el, int op, ...)
 		break;
 	}
 
-	/* XXX: do we need to change el_rfunc_t? */
 	case EL_GETCFN:         /* el_rfunc_t */
 		ret = el_wget(el, op, va_arg(ap, el_rfunc_t *));
 		break;

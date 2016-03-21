@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.28 2016/03/20 23:48:27 schwarze Exp $	*/
+/*	$OpenBSD: el.c,v 1.29 2016/03/21 17:28:10 schwarze Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -286,7 +286,6 @@ FUN(el,set)(EditLine *el, int op, ...)
 	{
 		el_rfunc_t rc = va_arg(ap, el_rfunc_t);
 		rv = el_read_setfn(el, rc);
-		el->el_flags &= ~NARROW_READ;
 		break;
 	}
 
