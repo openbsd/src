@@ -1,7 +1,7 @@
 # The client kills syslogd.
-# The client writes a message with sendsyslog2 LOG_CONS flag.
+# The client writes a message with sendsyslog LOG_CONS flag.
 # Find the message in console log.
-# Create a ktrace dump of the client and check for sendsyslog2.
+# Create a ktrace dump of the client and check for sendsyslog.
 # Check that no syslog priority or dropped message is logged to console.
 
 use strict;
@@ -17,24 +17,24 @@ our %args = (
 	    my $self = shift;
 	    ${$self->{syslogd}}->kill_syslogd('TERM');
 	    ${$self->{syslogd}}->down();
-	    sendsyslog2("<123>".get_testlog(), LOG_CONS)
-		and die ref($self), " sendsyslog2 succeeded";
-	    sendsyslog2(get_testlog(), LOG_CONS)
-		and die ref($self), " sendsyslog2 succeeded";
+	    sendsyslog("<123>".get_testlog(), LOG_CONS)
+		and die ref($self), " sendsyslog succeeded";
+	    sendsyslog(get_testlog(), LOG_CONS)
+		and die ref($self), " sendsyslog succeeded";
 	    foreach (qw(< <1 <12 <123 <1234)) {
-		sendsyslog2($_, LOG_CONS)
-		    and die ref($self), " sendsyslog2 succeeded";
-		sendsyslog2("$_>", LOG_CONS)
-		    and die ref($self), " sendsyslog2 succeeded";
-		sendsyslog2("$_>foo", LOG_CONS)
-		    and die ref($self), " sendsyslog2 succeeded";
+		sendsyslog($_, LOG_CONS)
+		    and die ref($self), " sendsyslog succeeded";
+		sendsyslog("$_>", LOG_CONS)
+		    and die ref($self), " sendsyslog succeeded";
+		sendsyslog("$_>foo", LOG_CONS)
+		    and die ref($self), " sendsyslog succeeded";
 	    }
 	    write_shutdown($self);
 	},
 	ktrace => {
-	    qr/CALL  sendsyslog2\(/ => 18,
+	    qr/CALL  sendsyslog\(/ => 18,
 	    qr/GIO   fd -1 wrote /.length(get_testlog()).qr/ bytes/ => 2,
-	    qr/RET   sendsyslog2 -1 errno $errno / => 18,
+	    qr/RET   sendsyslog -1 errno $errno / => 18,
 	},
 	loggrep => {},
     },

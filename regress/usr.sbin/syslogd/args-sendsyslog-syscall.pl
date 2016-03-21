@@ -11,13 +11,11 @@ use warnings;
 
 our %args = (
     client => {
-	connect => { domain => "sendsyslog", version => 0 },
+	connect => { domain => "sendsyslog" },
 	ktrace => {
-	    qr/CALL  sendsyslog\(/ => 1,
-	    qr/CALL  sendsyslog2\(/ => 1,
+	    qr/CALL  sendsyslog\(/ => 2,
 	    qr/GIO   fd -1 wrote \d+ bytes/ => 2,
-	    qr/RET   sendsyslog 0/ => 1,
-	    qr/RET   sendsyslog2 0/ => 1,
+	    qr/RET   sendsyslog 0/ => 2,
 	},
     },
 );
