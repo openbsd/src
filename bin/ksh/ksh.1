@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.177 2016/03/06 14:20:04 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.178 2016/03/21 13:35:00 tb Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: March 6 2016 $
+.Dd $Mdocdate: March 21 2016 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -2969,7 +2969,7 @@ is executed exactly as if
 had not been specified, with two exceptions:
 firstly,
 .Ar cmd
-cannot be a shell function;
+cannot be an alias or a shell function;
 and secondly, special built-in commands lose their specialness
 (i.e. redirection and utility errors do not cause the shell to
 exit, and command assignments are not permanent).
@@ -2981,6 +2981,8 @@ option is given, a default search path is used instead of the current value of
 (the actual value of the default path is system dependent: on
 POSIX-ish systems, it is the value returned by
 .Ic getconf PATH ) .
+Nevertheless, reserved words, aliases, shell functions, and
+builtin commands are still found before external commands.
 .Pp
 If the
 .Fl v
@@ -4437,7 +4439,7 @@ is similar to
 .Ic command Fl v
 except that
 .Ic whence
-will find reserved words and won't print aliases as alias commands.
+won't print aliases as alias commands.
 With the
 .Fl v
 option,

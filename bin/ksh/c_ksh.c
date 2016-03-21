@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.49 2016/01/15 17:55:45 mmcc Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.50 2016/03/21 13:35:00 tb Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -433,23 +433,23 @@ c_whence(char **wp)
 
 	fcflags = FC_BI | FC_PATH | FC_FUNC;
 	if (!iam_whence) {
-		/* Note that -p on its own is deal with in comexec() */
+		/* Note that -p on its own is dealt with in comexec() */
 		if (pflag)
 			fcflags |= FC_DEFPATH;
-		/* Convert command options to whence options - note that
-		 * command -pV uses a different path search than whence -v
-		 * or whence -pv.  This should be considered a feature.
+		/* Convert command options to whence options.  Note that
+		 * command -pV and command -pv use a different path search
+		 * than whence -v or whence -pv.  This should be considered
+		 * a feature.
 		 */
 		vflag = Vflag;
-	}
-	if (pflag)
+	} else if (pflag)
 		fcflags &= ~(FC_BI | FC_FUNC);
 
 	while ((vflag || ret == 0) && (id = *wp++) != NULL) {
 		tp = NULL;
-		if ((iam_whence || vflag) && !pflag)
+		if (!iam_whence || !pflag)
 			tp = ktsearch(&keywords, id, hash(id));
-		if (!tp && !pflag) {
+		if (!tp && (!iam_whence || !pflag)) {
 			tp = ktsearch(&aliases, id, hash(id));
 			if (tp && !(tp->flag & ISSET))
 				tp = NULL;

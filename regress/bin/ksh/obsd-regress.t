@@ -1,4 +1,4 @@
-#	$OpenBSD: obsd-regress.t,v 1.2 2016/03/05 12:30:17 czarkoff Exp $
+#	$OpenBSD: obsd-regress.t,v 1.3 2016/03/21 13:35:00 tb Exp $
 
 #
 # ksh regression tests from OpenBSD
@@ -272,6 +272,87 @@ description:
 stdin:
 	set foo bar baz ; for out in ; do echo $out ; done
 
+---
+
+name: command-pvV-posix-priorities
+description:
+	For POSIX compatibility, command -v should find aliases and reserved
+	words, and command -p[vV] should find aliases, reserved words, and
+	builtins over external commands.
+stdin:
+	PATH=$(command -p getconf PATH) || PATH=/bin:/usr/bin
+	alias foo="bar baz"
+	bar() { :; }
+	for word in 'if' 'foo' 'bar' 'set' 'true' 'ls'; do
+		command -v "$word"
+		command -pv "$word"
+		command -V "$word"
+		command -pV "$word"
+	done
+expected-stdout-pattern:
+	/^if
+	if
+	if is a reserved word
+	if is a reserved word
+	alias foo='bar baz'
+	alias foo='bar baz'
+	foo is an alias for 'bar baz'
+	foo is an alias for 'bar baz'
+	bar
+	bar
+	bar is a function
+	bar is a function
+	set
+	set
+	set is a special shell builtin
+	set is a special shell builtin
+	true
+	true
+	true is a shell builtin
+	true is a shell builtin
+	.*\/ls.*
+	.*\/ls.*
+	ls is a tracked alias for .*\/ls.*
+	ls is .*\/ls.*$/
+---
+
+name: whence-preserve-tradition
+description:
+	POSIX 'command' and ksh88/pdksh-specific 'whence' are handled by the
+	same c_whence() function.  This regression test is to ensure that
+	the POSIX compatibility changes for 'command' (see previous test) do
+	not affect traditional 'whence' behaviour.
+stdin:
+	PATH=$(command -p getconf PATH) || PATH=/bin:/usr/bin
+	alias foo="bar baz"
+	bar() { :; }
+	for word in 'if' 'foo' 'bar' 'set' 'true' 'ls'; do
+		whence "$word"
+		whence -p "$word"
+		whence -v "$word"
+		whence -pv "$word"
+	done
+expected-stdout-pattern:
+	/^if
+	if is a reserved word
+	if not found
+	'bar baz'
+	foo is an alias for 'bar baz'
+	foo not found
+	bar
+	bar is a function
+	bar not found
+	set
+	set is a special shell builtin
+	set not found
+	true
+	.*\/true.*
+	true is a shell builtin
+	true is a tracked alias for .*\/true.*
+	.*\/ls.*
+	.*\/ls.*
+	ls is a tracked alias for .*\/ls.*
+	ls is a tracked alias for .*\/ls.*$/
 ---
 
 name: shellopt-u-1

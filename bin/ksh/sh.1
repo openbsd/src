@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.130 2015/10/12 12:34:42 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.131 2016/03/21 13:35:00 tb Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 12 2015 $
+.Dd $Mdocdate: March 21 2016 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -329,6 +329,9 @@ but identify how the shell will interpret it
 Do not invoke
 .Ar command ,
 but identify the pathname the shell will use to run it.
+For aliases, a command to define that alias is printed.
+For shell reserved words, shell functions, and built-in utilities,
+just the name is printed.
 .El
 .Pp
 The exit status is that of
