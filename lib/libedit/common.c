@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.14 2016/03/20 23:48:27 schwarze Exp $	*/
+/*	$OpenBSD: common.c,v 1.15 2016/03/21 15:25:39 schwarze Exp $	*/
 /*	$NetBSD: common.c,v 1.24 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -362,11 +362,9 @@ protected el_action_t
 ed_quoted_insert(EditLine *el, wint_t c)
 {
 	int num;
-	Char tc;
 
 	tty_quotemode(el);
-	num = FUN(el,getc)(el, &tc);
-	c = tc;
+	num = el_wgetc(el, &c);
 	tty_noquotemode(el);
 	if (num == 1)
 		return ed_insert(el, c);

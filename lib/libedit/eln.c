@@ -1,4 +1,4 @@
-/*	$OpenBSD: eln.c,v 1.9 2016/03/20 22:57:59 schwarze Exp $	*/
+/*	$OpenBSD: eln.c,v 1.10 2016/03/21 15:25:39 schwarze Exp $	*/
 /*	$NetBSD: eln.c,v 1.9 2010/11/04 13:53:12 christos Exp $	*/
 
 /*-
@@ -63,6 +63,7 @@ el_getc(EditLine *el, char *cp)
 }
 
 
+#ifdef WIDECHAR
 public void
 el_push(EditLine *el, const char *str)
 {
@@ -384,3 +385,4 @@ el_insertstr(EditLine *el, const char *str)
 {
 	return el_winsertstr(el, ct_decode_string(str, &el->el_lgcyconv));
 }
+#endif /* WIDECHAR */

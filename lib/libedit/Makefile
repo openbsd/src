@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2016/03/20 23:48:27 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.17 2016/03/21 15:25:39 schwarze Exp $
 #	$NetBSD: Makefile,v 1.41 2010/02/03 15:34:43 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
@@ -6,7 +6,7 @@ LIB=	edit
 
 WIDECHAR=	yes
 
-OSRCS=	chared.c common.c el.c emacs.c fcns.c filecomplete.c help.c \
+OSRCS=	chared.c common.c el.c eln.c emacs.c fcns.c filecomplete.c help.c \
 	hist.c keymacro.c map.c chartype.c \
 	parse.c prompt.c read.c refresh.c search.c sig.c terminal.c tty.c vi.c
 
@@ -39,7 +39,6 @@ MLINKS=	editline.3 el_deletestr.3 editline.3 el_end.3 \
 SRCS=	editline.c tokenizer.c history.c readline.c
 
 .if "${WIDECHAR}" == "yes"
-OSRCS+= eln.c
 SRCS+= tokenizern.c historyn.c
 CLEANFILES+=tokenizern.c.tmp tokenizern.c historyn.c.tmp historyn.c
 CPPFLAGS+=-DWIDECHAR
