@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sendsyslog.2,v 1.6 2016/03/21 22:41:28 bluhm Exp $
+.\"	$OpenBSD: sendsyslog.2,v 1.7 2016/03/22 07:13:16 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Theo de Raadt
 .\"
@@ -14,11 +14,11 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 21 2016 $
+.Dd $Mdocdate: March 22 2016 $
 .Dt SENDSYSLOG 2
 .Os
 .Sh NAME
-.Nm sendsyslog ,
+.Nm sendsyslog
 .Nd send a message to syslogd
 .Sh SYNOPSIS
 .In sys/syslog.h
@@ -28,7 +28,7 @@
 .Sh DESCRIPTION
 The
 .Fn sendsyslog
-functions is used to transmit a
+function is used to transmit a
 .Xr syslog 3
 formatted message direct to
 .Xr syslogd 8
