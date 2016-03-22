@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.168 2016/02/12 10:12:42 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.169 2016/03/22 11:37:35 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -941,74 +941,6 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
 	}
 }
 
-#ifdef __STRICT_ALIGNMENT
-/*
- * Make sure protocol header (e.g. IP) is aligned on a 32-bit boundary.
- * This is achieved by copying mbufs so drivers should try to map their
- * buffers such that this copying is not necessary.  It is however not
- * always possible because 802.11 header length may vary (non-QoS+LLC
- * is 32 bytes while QoS+LLC is 34 bytes).  Some devices are smart and
- * add 2 padding bytes after the 802.11 header in the QoS case so this
- * function is there for stupid drivers/devices only.
- *
- * XXX -- this is horrible
- */
-struct mbuf *
-ieee80211_align_mbuf(struct mbuf *m)
-{
-	struct mbuf *n, *n0, **np;
-	caddr_t newdata;
-	int off, pktlen;
-
-	n0 = NULL;
-	np = &n0;
-	off = 0;
-	pktlen = m->m_pkthdr.len;
-	while (pktlen > off) {
-		if (n0 == NULL) {
-			MGETHDR(n, M_DONTWAIT, MT_DATA);
-			if (n == NULL) {
-				m_freem(m);
-				return NULL;
-			}
-			if (m_dup_pkthdr(n, m, M_DONTWAIT)) {
-				m_free(n);
-				m_freem(m);
-				return (NULL);
-			}
-			n->m_len = MHLEN;
-		} else {
-			MGET(n, M_DONTWAIT, MT_DATA);
-			if (n == NULL) {
-				m_freem(m);
-				m_freem(n0);
-				return NULL;
-			}
-			n->m_len = MLEN;
-		}
-		if (pktlen - off >= MINCLSIZE) {
-			MCLGET(n, M_DONTWAIT);
-			if (n->m_flags & M_EXT)
-				n->m_len = n->m_ext.ext_size;
-		}
-		if (n0 == NULL) {
-			newdata = (caddr_t)ALIGN(n->m_data + ETHER_HDR_LEN) -
-			    ETHER_HDR_LEN;
-			n->m_len -= newdata - n->m_data;
-			n->m_data = newdata;
-		}
-		if (n->m_len > pktlen - off)
-			n->m_len = pktlen - off;
-		m_copydata(m, off, n->m_len, mtod(n, caddr_t));
-		off += n->m_len;
-		*np = n;
-		np = &n->m_next;
-	}
-	m_freem(m);
-	return n0;
-}
-#endif	/* __STRICT_ALIGNMENT */
-
 void
 ieee80211_decap(struct ieee80211com *ic, struct mbuf *m,
     struct ieee80211_node *ni, int hdrlen)
@@ -1056,14 +988,15 @@ ieee80211_decap(struct ieee80211com *ic, struct mbuf *m,
 		m_adj(m, hdrlen - ETHER_HDR_LEN);
 	}
 	memcpy(mtod(m, caddr_t), &eh, ETHER_HDR_LEN);
-#ifdef __STRICT_ALIGNMENT
 	if (!ALIGNED_POINTER(mtod(m, caddr_t) + ETHER_HDR_LEN, u_int32_t)) {
-		if ((m = ieee80211_align_mbuf(m)) == NULL) {
+		struct mbuf *m0 = m;
+		m = m_dup_pkt(m0, ETHER_ALIGN, M_NOWAIT);
+		m_freem(m0);
+		if (m == NULL) {
 			ic->ic_stats.is_rx_decap++;
 			return;
 		}
 	}
-#endif
 	ieee80211_deliver_data(ic, m, ni);
 }
 
