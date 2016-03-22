@@ -45,6 +45,7 @@ main()
 	el.el_errno = ENOMSG;
 	el.el_flags = CHARSET_IS_UTF8;
 	el.el_infd = STDIN_FILENO;
+	el.el_state.metanext = 0;
 
 	el.el_map.alt = NULL;
 	if ((el.el_map.key = calloc(N_KEYS, sizeof(el_action_t))) == NULL)
