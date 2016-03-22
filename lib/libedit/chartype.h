@@ -1,4 +1,4 @@
-/*	$OpenBSD: chartype.h,v 1.12 2016/03/21 18:40:25 schwarze Exp $	*/
+/*	$OpenBSD: chartype.h,v 1.13 2016/03/22 11:32:18 schwarze Exp $	*/
 /*	$NetBSD: chartype.h,v 1.5 2010/04/15 00:55:57 christos Exp $	*/
 
 /*-
@@ -66,6 +66,7 @@
 #define FUNW(type)		type ## _w
 #define TYPE(type)		type ## W
 #define FSTR			"%ls"
+#define FSTARSTR		"%.*ls"
 #define STR(x)			L ## x
 #define UC(c)			c
 #define Isalpha(x)  iswalpha(x)
@@ -114,6 +115,7 @@ size_t	ct_mbrtowc(wchar_t *, const char *, size_t, void *);
 #define FUNW(type)		type
 #define TYPE(type)		type
 #define FSTR			"%s"
+#define FSTARSTR		"%.*s"
 #define STR(x)			x
 #define UC(c)			(unsigned char)(c)
 

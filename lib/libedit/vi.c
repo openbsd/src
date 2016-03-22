@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.18 2016/03/20 23:48:27 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.19 2016/03/22 11:32:18 schwarze Exp $	*/
 /*	$NetBSD: vi.c,v 1.33 2011/02/17 16:44:48 joerg Exp $	*/
 
 /*-
@@ -97,7 +97,8 @@ cv_paste(EditLine *el, wint_t c)
 	if (k->buf == NULL || len == 0)
 		return CC_ERROR;
 #ifdef DEBUG_PASTE
-	(void) fprintf(el->el_errfile, "Paste: \"%.*s\"\n", (int)len, k->buf);
+	(void) fprintf(el->el_errfile, "Paste: \"" FSTARSTR "\"\n", (int)len,
+	    k->buf);
 #endif
 
 	cv_undo(el);

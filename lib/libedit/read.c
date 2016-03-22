@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.28 2016/03/21 17:28:10 schwarze Exp $	*/
+/*	$OpenBSD: read.c,v 1.29 2016/03/22 11:32:18 schwarze Exp $	*/
 /*	$NetBSD: read.c,v 1.81 2016/02/16 22:53:14 christos Exp $	*/
 
 /*-
@@ -612,7 +612,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 					break;
 			if (b->name)
 				(void) fprintf(el->el_errfile,
-				    "Executing %s\n", b->name);
+				    "Executing " FSTR "\n", b->name);
 			else
 				(void) fprintf(el->el_errfile,
 				    "Error command = %d\n", cmdnum);

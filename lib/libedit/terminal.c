@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.10 2016/03/22 11:10:57 schwarze Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.11 2016/03/22 11:32:18 schwarze Exp $	*/
 /*	$NetBSD: terminal.c,v 1.17 2016/02/15 15:35:03 christos Exp $	*/
 
 /*-
@@ -652,7 +652,7 @@ terminal_overwrite(EditLine *el, const Char *cp, size_t n)
 	if (n > (size_t)el->el_terminal.t_size.h) {
 #ifdef DEBUG_SCREEN
 		(void) fprintf(el->el_errfile,
-		    "terminal_overwrite: n is riduculous: %d\r\n", n);
+		    "terminal_overwrite: n is riduculous: %zu\r\n", n);
 #endif /* DEBUG_SCREEN */
 		return;
 	}

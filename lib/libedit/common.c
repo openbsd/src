@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.15 2016/03/21 15:25:39 schwarze Exp $	*/
+/*	$OpenBSD: common.c,v 1.16 2016/03/22 11:32:18 schwarze Exp $	*/
 /*	$NetBSD: common.c,v 1.24 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -141,8 +141,9 @@ ed_delete_next_char(EditLine *el, wint_t c)
 {
 #ifdef notdef			/* XXX */
 #define	EL	el->el_line
-	(void) fprintf(el->el_errlfile,
-	    "\nD(b: %x(%s)  c: %x(%s) last: %x(%s) limit: %x(%s)\n",
+	(void) fprintf(el->el_errfile,
+	    "\nD(b: %p(" FSTR ")  c: %p(" FSTR ") last: %p(" FSTR
+	    ") limit: %p(" FSTR ")\n",
 	    EL.buffer, EL.buffer, EL.cursor, EL.cursor, EL.lastchar,
 	    EL.lastchar, EL.limit, EL.limit);
 #endif
