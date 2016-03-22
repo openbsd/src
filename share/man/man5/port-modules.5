@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.200 2016/02/19 09:15:32 jmc Exp $
+.\"	$OpenBSD: port-modules.5,v 1.201 2016/03/22 16:02:02 naddy Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 19 2016 $
+.Dd $Mdocdate: March 22 2016 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -283,7 +283,6 @@ The following variables can be overridden in a relatively safe fashion:
 .Ev TEST_IS_INTERACTIVE ,
 .Ev REORDER_DEPENDENCIES ,
 .Ev SEPARATE_BUILD ,
-.Ev SHARED_ONLY ,
 .Ev USE_GMAKE ,
 .Ev USE_LIBTOOL .
 .Pp
@@ -363,12 +362,12 @@ value:
 .Ev PKGPATH ,
 .Ev PORTSDIR ,
 .Ev X11BASE
-and all arch-dependent constant from
+and all arch-dependent constants from
 .Xr bsd.port.arch.mk 5 ,
 such as
 .Ev PROPERTIES
 or
-.Ev NO_SHARED_ARCHS .
+.Ev LP64_ARCHS .
 Note that this is only relevant for tests.
 It is perfectly okay to define variables or targets that depend on the
 basic ports framework without having to care whether that variable is
@@ -1151,7 +1150,6 @@ Also affects
 .Ev CATEGORIES ,
 .Ev MAKE_ENV ,
 .Ev CONFIGURE_ENV ,
-.Ev SHARED_ONLY ,
 and
 .Ev SUBST_VARS .
 May affect the
@@ -1311,9 +1309,8 @@ Sets
 .Ev MASTER_SITES ,
 .Ev DISTNAME ,
 .Ev USE_GMAKE ,
-.Ev ONLY_FOR_ARCHS
 and
-.Ev SHARED_ONLY .
+.Ev ONLY_FOR_ARCHS .
 .Ev EXTRACT_SUFX
 defaults to .tar.bz2.
 .Pp
@@ -1433,9 +1430,6 @@ is set to "Yes".
 If
 .Ev CONFIGURE_STYLE
 is set to "gnu" or "simple",
-.Ev CONFIGURE_SHARED
-is appended to
-.Ev CONFIGURE_ARGS ,
 .Li CPPFLAGS="-I${LOCALBASE}/include"
 and
 .Li LDFLAGS="-L${LOCALBASE}/lib"
@@ -1744,9 +1738,8 @@ set by a port:
 .Ev EXTRACT_SUFX ,
 .Ev ONLY_FOR_ARCHS ,
 .Ev PORTHOME ,
-.Ev SEPARATE_BUILD
 and
-.Ev SHARED_ONLY .
+.Ev SEPARATE_BUILD .
 .Pp
 The x11/kde4 module modifies the following variables if needed:
 .Ev BUILD_DEPENDS ,

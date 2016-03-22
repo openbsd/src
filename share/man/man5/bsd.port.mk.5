@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.433 2016/03/11 20:40:23 sthen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.434 2016/03/22 16:02:02 naddy Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 11 2016 $
+.Dd $Mdocdate: March 22 2016 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -834,20 +834,14 @@ as well.
 Update the packing lists for a port, using the fake installation and the
 existing packing lists.
 .Cm update-plist
-should produce mostly correct
-.Pa PLIST ,
-.Pa PFRAG.shared
-and
-.Pa PFRAG.no-shared
-files, handling shared libraries, GNU
+should produce a mostly correct
+.Pa PLIST
+file, handling GNU
 .Xr info 1
 files, setuid files, and empty directories.
-It moves existing files to
-.Pa PLIST.orig ,
-.Pa PFRAG.shared.orig
-and
-.Pa PFRAG.no-shared.orig .
-If the generated lists include files and directories that shouldn't be
+It moves an existing file to
+.Pa PLIST.orig .
+If the generated list includes files and directories that shouldn't be
 included, comment these like this:
 .Bd -literal
 @comment unwanted-file
@@ -1311,11 +1305,6 @@ Set to name of script invoked by the
 .Cm configure
 target, if appropriate.
 Should be either an absolute path, or relative to ${WRKSRC}.
-.It Ev CONFIGURE_SHARED
-Set by default to --enable-shared or --disable-shared, depending on whether
-the architecture supports shared libraries.
-Should be appended to CONFIGURE_ARGS, for ports that build dynamic libraries
-and whose configure script supports these options.
 .It Ev CONFIGURE_STYLE
 Set to style of configuration that needs to happen.
 .Pp
@@ -2035,11 +2024,6 @@ ${PACKAGE_REPOSITORY}/${NO_ARCH}.
 List of architectures on which this port does not build.
 See also
 .Ev ONLY_FOR_ARCHS .
-See also
-.Ev SHARED_ONLY .
-Do not use instead of
-.Ev SHARED_ONLY
-without very good reasons.
 .It Ev NO_BUILD
 Set to
 .Sq Yes
@@ -2090,20 +2074,6 @@ It should be left alone for ports with empty regression tests, and for
 ports with failing tests.
 That way, if a subsequent update of a port acquires actual regression tests,
 they will be picked up automatically.
-.It Ev NO_SHARED_ARCHS
-Set to the list of platforms that do not support shared libraries.
-Read-only.
-Use with
-.Ev NOT_FOR_ARCHS .
-.It Ev NO_SHARED_LIBS
-Set to
-.Sq Yes
-if platform does not support shared libraries.
-To be tested after including
-.Nm ,
-or
-.Xr bsd.port.arch.mk 5 ,
-if neither PFRAG.shared nor CONFIGURE_SHARED are enough.
 .It Ev NO_SYSTRACE
 Port does not build with systrace-enabled build targets.
 .It Ev OLD_WRKDIR_NAME
@@ -2493,22 +2463,17 @@ and
 .Ev BUILD_PACKAGES
 is generally preferred (and simpler).
 Possible properties include
-.Bl -tag -width no_shared
+.Bl -tag -width mono
 .It apm
 architecture possesses suspend (apm) support.
 .It be
 architecture is big-endian.
 .It gccN
 gccN architecture.
-.It elf
-.Xr elf 5
-architecture.
 .It le
 architecture is little-endian.
 .It lp64
 lp64 architecture.
-.It no_shared
-architecture has no shared library support.
 .It llvm
 there is
 .Pa lang/llvm
@@ -2667,10 +2632,6 @@ Porters of software using libtool should make sure
 .Ev MAKE_FLAGS
 get propagated to the libtool invocations.
 This should be enough in most cases.
-.It Ev SHARED_ONLY
-Set to
-.Sq Yes
-if port can only be built on architectures with shared libraries.
 .It Ev SIGNING_PARAMETERS
 User settings.
 Set to
@@ -3671,7 +3632,7 @@ e.g., if FLAVORS=no_map gfx qt2, if FLAVOR=gfx no_map, this is
 .Sq -no_map-gfx .
 .It
 Generate the actual PLIST from the template ${PLIST},
-by inserting shared/no-shared fragments, merging other fragments,
+by inserting fragments
 and applying the same variable substitutions as other package information.
 .El
 .Pp
@@ -3682,30 +3643,20 @@ generation.
 To avoid substitution, variables can be escaped as follows:
 .Li "$\e{PREFIX}"
 .Pp
-Constructs such as the line
-.Li "%%SHARED%%"
+If FLAVORS lists flv, then constructs such as the line
+.Li "%%flv%%"
 or
-.Li "!%%SHARED%%"
-in the packing-list template trigger the inclusion of the
-.Pa ${PKGDIR}/PFRAG.shared${SUBPACKAGE}
+.Li "!%%flv%%"
+in the packing-list template trigger the inclusion of
+.Pa ${PKGDIR}/PFRAG.flv${SUBPACKAGE}
 or
-.Pa ${PKGDIR}/PFRAG.no-shared${SUBPACKAGE} .
-.Pp
-Similarly, if FLAVORS lists flav1, then the line
-.Li "%%flav1%%"
-(resp.
-.Li "!%%flav1%%" )
-will trigger the inclusion of
-.Pa ${PKGDIR}/PFRAG.flav1${SUBPACKAGE}
-(resp.
-.Pa ${PKGDIR}/PFRAG.no-flav1${SUBPACKAGE} )
-in the packing-list.
+.Pa ${PKGDIR}/PFRAG.no-flv${SUBPACKAGE} .
 Other fragments can be defined by simply adding
 .Li "-Dfrag=1"
 or
 .Li "-Dfrag=0"
 to
-.Ev PKG_ARGS
+.Ev PKG_ARGS .
 .Pp
 If libraries are built using
 .Pa bsd.lib.mk ,
@@ -3741,8 +3692,7 @@ Some programs will prefer to use rpath to find their own libraries.
 .Pp
 The special
 .Cm update-plist
-target does a fairly good job of automatically generating PLIST and
-PFRAG.shared fragments.
+target does a fairly good job of automatically generating the PLIST.
 .Pp
 If
 .Ev PLIST_DB
@@ -3848,6 +3798,9 @@ Now hardwired to
 Used to be the name of the comment file for a package.
 It now holds the comment itself.
 Some magic has been put in to allow for a seamless transition.
+.It Ev CONFIGURE_SHARED
+Used to default to --enable-shared or --disable-shared, depending on whether
+the architecture supported shared libraries.
 .It Ev DESCR_SRC
 From
 .Nx .
@@ -3967,6 +3920,13 @@ All ports should generate a package, preferably before install.
 .It Ev NO_PATCH
 The absence of a patches directory does the same.
 Use PATCHDIR and PATCH_LIST if patches need to be changed dynamically.
+.It Ev NO_SHARED_ARCHS
+Used to be set to the list of platforms that did not support shared libraries.
+No such architectures remain.
+.It Ev NO_SHARED_LIBS
+Used to be set to
+.Sq Yes
+if platform did not support shared libraries.
 .It Ev NO_WRKDIR
 All ports should have a working directory, as this is necessary to store
 cookies and keep state.
@@ -4035,7 +3995,7 @@ Concentrate on real questions instead, make sure
 .Ev PERMIT_PACKAGE_CDROM
 is set correctly.
 .It Ev PKG_CMD
-replaced by
+Replaced by
 .Ev PKG_CREATE .
 .It Ev PKGREPOSITORY
 Old user settings.
@@ -4093,6 +4053,10 @@ Used to contain the environment for invoking various scripts.
 and
 .Ev MAKE_ENV
 are enough.
+.It Ev SHARED_ONLY
+Had to be set to
+.Sq Yes
+if port could only be built on architectures with shared libraries.
 .It Ev USE_AUTOCONF
 Use
 .Ev CONFIGURE_STYLE
@@ -4159,9 +4123,9 @@ Use COMMENT variable instead.
 Use @unexec annotations in the packing-list instead.
 .It Pa ${PKGDIR}/INSTALL*
 Use @exec annotations in the packing-list instead.
-.It Pa ${PKGDIR}/PLIST.noshared
-Use PFRAG.shared or PFRAG.no-shared instead.
-PLIST.noshared was too easy to forget when updating ports.
+.It Pa ${PKGDIR}/PLIST.{noshared,no-shared,shared}
+Packaging list fragments to handle platforms that did not support
+shared libraries.
 .It Pa ${PKGDIR}/PLIST.sed
 Use PLIST directly.
 Until revision 1.295,
