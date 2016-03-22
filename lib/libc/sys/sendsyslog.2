@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sendsyslog.2,v 1.7 2016/03/22 07:13:16 jmc Exp $
+.\"	$OpenBSD: sendsyslog.2,v 1.8 2016/03/22 13:09:08 bluhm Exp $
 .\"
 .\" Copyright (c) 2014 Theo de Raadt
 .\"
@@ -33,29 +33,36 @@ function is used to transmit a
 formatted message direct to
 .Xr syslogd 8
 without requiring the allocation of a socket.
-.Pp
-The
-.Fa flags
-argument of
-.Fn sendsyslog
-accepts the
-.Dv LOG_CONS
-flag.
 If
 .Dv LOG_CONS
-is specified, and
+is specified in the
+.Fa flags
+argument, and
 .Xr syslogd 8
-is not accepting messages, the message will be sent directly to the
-console.
+is not accepting messages, the message will be sent to the console.
 This is used internally by
 .Xr syslog_r 3 ,
 so that messages can be sent during difficult situations.
+If sending to
+.Xr syslogd 8
+fails, dropped messages are counted.
+When
+.Xr syslogd 8
+works again, a warning with the counter and error number is logged.
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
 .Fn sendsyslog
 can fail if:
 .Bl -tag -width Er
+.It Bq Er EFAULT
+An invalid user space address was specified for a parameter.
+.It Bq Er EMSGSIZE
+The socket requires that message be sent atomically,
+and the size of the message to be sent made this impossible.
+.It Bq Er ENOBUFS
+The system was unable to allocate an internal buffer.
+The operation may succeed when buffers become available.
 .It Bq Er ENOTCONN
 The message cannot be sent, likely because
 .Xr syslogd 8
@@ -69,3 +76,7 @@ The
 .Fn sendsyslog
 function call appeared in
 .Ox 5.6 .
+The
+.Fa flags
+argument was added in
+.Ox 6.0 .
