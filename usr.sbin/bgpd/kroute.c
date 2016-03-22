@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.207 2015/12/05 18:28:04 benno Exp $ */
+/*	$OpenBSD: kroute.c,v 1.208 2016/03/22 15:53:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3177,6 +3177,15 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX],
 			ifindex = rtm->rtm_index;
 			sa = NULL;
 			mpath = 0;	/* link local stuff can't be mpath */
+			break;
+		case AF_INET:
+		case AF_INET6:
+			if (rtm->rtm_flags & RTF_CONNECTED) {
+				flags |= F_CONNECTED;
+				ifindex = rtm->rtm_index;
+				sa = NULL;
+				mpath = 0; /* link local stuff can't be mpath */
+			}
 			break;
 		}
 
