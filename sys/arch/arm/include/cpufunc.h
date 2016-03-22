@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.22 2016/03/22 11:18:17 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.23 2016/03/22 23:28:02 patrick Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -213,29 +213,6 @@ u_int	cpufunc_dfar		(void);
 u_int	cpufunc_ifsr		(void);
 u_int	cpufunc_ifar		(void);
 
-#if defined(CPU_ARM10)
-void	arm10_tlb_flushID_SE	(u_int);
-void	arm10_tlb_flushI_SE	(u_int);
-
-void	arm10_context_switch	(u_int);
-
-void	arm9e_setup		(void);
-void	arm10_setup		(void);
-
-void	armv5_ec_setttb			(u_int);
-
-void	armv5_ec_icache_sync_all	(void);
-void	armv5_ec_icache_sync_range	(vaddr_t, vsize_t);
-
-void	armv5_ec_dcache_wbinv_all	(void);
-void	armv5_ec_dcache_wbinv_range	(vaddr_t, vsize_t);
-void	armv5_ec_dcache_inv_range	(vaddr_t, vsize_t);
-void	armv5_ec_dcache_wb_range	(vaddr_t, vsize_t);
-
-void	armv5_ec_idcache_wbinv_all	(void);
-void	armv5_ec_idcache_wbinv_range	(vaddr_t, vsize_t);
-#endif
-
 #ifdef CPU_ARM11
 void	arm11_setttb		(u_int);
 
@@ -255,7 +232,7 @@ void	arm11_cpu_sleep		(int	mode);
 #endif
 
 
-#if defined (CPU_ARM10) || defined(CPU_ARM11)
+#if defined(CPU_ARM11)
 void	armv5_setttb			(u_int);
 
 void	armv5_icache_sync_all		(void);
@@ -312,9 +289,7 @@ extern unsigned armv7_dcache_index_inc;
 #endif
 
 
-#if defined(CPU_ARM10) || \
-    defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0)
-
+#if defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0)
 void	armv4_tlb_flushID	(void);
 void	armv4_tlb_flushI	(void);
 void	armv4_tlb_flushD	(void);

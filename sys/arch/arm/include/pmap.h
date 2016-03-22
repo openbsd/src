@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.38 2016/03/19 09:36:57 patrick Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.39 2016/03/22 23:28:02 patrick Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -371,9 +371,6 @@ void	pmap_copy_page_generic(struct vm_page *, struct vm_page *);
 void	pmap_zero_page_generic(struct vm_page *);
 
 void	pmap_pte_init_generic(void);
-#if defined(CPU_ARM10)
-void	pmap_pte_init_arm10(void);
-#endif /* CPU_ARM10 */
 #if defined(CPU_ARM11)
 void	pmap_pte_init_arm11(void);
 #endif /* CPU_ARM11 */
