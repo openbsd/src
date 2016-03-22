@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.33 2016/03/19 09:51:24 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.34 2016/03/22 11:18:17 patrick Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ int	arm_dcache_align_mask;
 /* 1 == use cpu_sleep(), 0 == don't */
 int cpu_do_powersave;
 
-#if defined(CPU_ARM9E) || defined(CPU_ARM10)
+#if defined(CPU_ARM10)
 struct cpu_functions armv5_ec_cpufuncs = {
 	/* CPU functions */
 
@@ -143,7 +143,7 @@ struct cpu_functions armv5_ec_cpufuncs = {
 	arm10_context_switch,		/* context_switch	*/
 	arm9e_setup			/* cpu setup		*/
 };
-#endif /* CPU_ARM9E || CPU_ARM10 */
+#endif /* CPU_ARM10 */
 
 
 #ifdef CPU_ARM10
@@ -383,7 +383,7 @@ struct cpu_functions cpufuncs;
 u_int cputype;
 u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
-#if defined(CPU_ARM9E) || defined(CPU_ARM10) || defined(CPU_ARM11) || \
+#if defined(CPU_ARM10) || defined(CPU_ARM11) || \
     defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0)
 static void get_cachetype_cp15 (void);
 
@@ -461,7 +461,7 @@ get_cachetype_cp15()
  out:
 	arm_dcache_align_mask = arm_dcache_align - 1;
 }
-#endif /* ARM7TDMI || ARM9 || XSCALE */
+#endif /* XSCALE */
 
 #ifdef CPU_ARMv7
 void arm_get_cachetype_cp15v7 (void);
@@ -627,16 +627,14 @@ set_cpufuncs()
 	 * CPU type where we want to use it by default, then we set it.
 	 */
 
-#if defined(CPU_ARM9E) || defined(CPU_ARM10)
-	if (cputype == CPU_ID_ARM926EJS || cputype == CPU_ID_ARM1026EJS) {
+#ifdef CPU_ARM10
+	if (cputype == CPU_ID_ARM1026EJS) {
 		cpufuncs = armv5_ec_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
 		pmap_pte_init_generic();
 		return 0;
 	}
-#endif /* CPU_ARM9E || CPU_ARM10 */
-#ifdef CPU_ARM10
 	if (/* cputype == CPU_ID_ARM1020T || */
 	    cputype == CPU_ID_ARM1020E) {
 		/*
@@ -764,7 +762,7 @@ set_cpufuncs()
  * CPU Setup code
  */
 
-#if defined(CPU_ARM9E) || defined(CPU_ARM10)
+#if defined(CPU_ARM10)
 void
 arm9e_setup()
 {
@@ -797,9 +795,7 @@ arm9e_setup()
 	/* And again. */
 	cpu_idcache_wbinv_all();
 }
-#endif	/* CPU_ARM9E || CPU_ARM10 */
 
-#if defined(CPU_ARM10)
 void
 arm10_setup()
 {

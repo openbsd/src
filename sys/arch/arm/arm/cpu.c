@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.27 2016/03/19 09:51:24 patrick Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.28 2016/03/22 11:18:17 patrick Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -84,8 +84,6 @@ cpu_attach(struct device *dv)
 
 enum cpu_class {
 	CPU_CLASS_NONE,
-	CPU_CLASS_ARM9ES,
-	CPU_CLASS_ARM9EJS,
 	CPU_CLASS_ARM10E,
 	CPU_CLASS_XSCALE,
 	CPU_CLASS_ARM11J,
@@ -147,15 +145,6 @@ struct cpuidtab {
 };
 
 const struct cpuidtab cpuids[] = {
-	{ CPU_ID_ARM926EJS,	CPU_CLASS_ARM9EJS,	"ARM926EJ-S",
-	  generic_steppings },
-	{ CPU_ID_ARM946ES,	CPU_CLASS_ARM9ES,	"ARM946E-S",
-	  generic_steppings },
-	{ CPU_ID_ARM966ES,	CPU_CLASS_ARM9ES,	"ARM966E-S",
-	  generic_steppings },
-	{ CPU_ID_ARM966ESR1,	CPU_CLASS_ARM9ES,	"ARM966E-S",
-	  generic_steppings },
-
 	{ CPU_ID_ARM1020E,	CPU_CLASS_ARM10E,	"ARM1020E",
 	  generic_steppings },
 	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022E-S",
@@ -255,8 +244,6 @@ struct cpu_classtab {
 
 const struct cpu_classtab cpu_classes[] = {
 	{ "unknown",	NULL },			/* CPU_CLASS_NONE */
-	{ "ARM9E-S",	"CPU_ARM9E" },		/* CPU_CLASS_ARM9ES */
-	{ "ARM9EJ-S",	"CPU_ARM9E" },		/* CPU_CLASS_ARM9EJS */
 	{ "ARM10E",	"CPU_ARM10" },		/* CPU_CLASS_ARM10E */
 	{ "XScale",	"CPU_XSCALE_..." },	/* CPU_CLASS_XSCALE */
 	{ "ARM11J",	"CPU_ARM11" },		/* CPU_CLASS_ARM11J */
@@ -323,8 +310,6 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	printf("%s:", dv->dv_xname);
 
 	switch (cpu_class) {
-	case CPU_CLASS_ARM9ES:
-	case CPU_CLASS_ARM9EJS:
 	case CPU_CLASS_ARM10E:
 	case CPU_CLASS_XSCALE:
 	case CPU_CLASS_ARM11J:
@@ -376,10 +361,6 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
  skip_pcache:
 
 	switch (cpu_class) {
-#ifdef CPU_ARM9E
-	case CPU_CLASS_ARM9ES:
-	case CPU_CLASS_ARM9EJS:
-#endif
 #ifdef CPU_ARM10
 	case CPU_CLASS_ARM10E:
 #endif
