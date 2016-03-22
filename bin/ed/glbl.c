@@ -1,4 +1,4 @@
-/*	$OpenBSD: glbl.c,v 1.17 2015/10/09 20:27:28 tobias Exp $	*/
+/*	$OpenBSD: glbl.c,v 1.18 2016/03/22 17:58:28 mmcc Exp $	*/
 /*	$NetBSD: glbl.c,v 1.2 1995/03/21 09:04:41 cgd Exp $	*/
 
 /* glob.c: This file contains the global command routines for the ed line
@@ -31,6 +31,12 @@
 
 #include <sys/ioctl.h>
 #include <sys/wait.h>
+
+#include <regex.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "ed.h"
 

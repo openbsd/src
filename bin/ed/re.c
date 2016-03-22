@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.16 2015/10/09 21:24:05 tobias Exp $	*/
+/*	$OpenBSD: re.c,v 1.17 2016/03/22 17:58:28 mmcc Exp $	*/
 /*	$NetBSD: re.c,v 1.14 1995/03/21 09:04:48 cgd Exp $	*/
 
 /* re.c: This file contains the regular expression interface routines for
@@ -28,6 +28,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <regex.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "ed.h"
 

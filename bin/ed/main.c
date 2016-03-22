@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.56 2015/11/20 08:53:28 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.57 2016/03/22 17:58:28 mmcc Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -44,11 +44,19 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+
 #include <ctype.h>
-#include <setjmp.h>
-#include <unistd.h>
-#include <pwd.h>
 #include <err.h>
+#include <errno.h>
+#include <limits.h>
+#include <pwd.h>
+#include <regex.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "ed.h"
 

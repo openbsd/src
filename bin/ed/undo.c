@@ -1,4 +1,4 @@
-/*	$OpenBSD: undo.c,v 1.13 2015/10/09 19:47:02 millert Exp $	*/
+/*	$OpenBSD: undo.c,v 1.14 2016/03/22 17:58:28 mmcc Exp $	*/
 /*	$NetBSD: undo.c,v 1.2 1995/03/21 09:04:52 cgd Exp $	*/
 
 /* undo.c: This file contains the undo routines for the ed line editor */
@@ -28,8 +28,12 @@
  * SUCH DAMAGE.
  */
 
-#include "ed.h"
+#include <regex.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 
+#include "ed.h"
 
 #define USIZE 100				/* undo stack size */
 static undo_t *ustack = NULL;			/* undo stack */

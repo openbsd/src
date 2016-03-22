@@ -1,4 +1,4 @@
-/*	$OpenBSD: sub.c,v 1.14 2015/10/09 20:27:28 tobias Exp $	*/
+/*	$OpenBSD: sub.c,v 1.15 2016/03/22 17:58:28 mmcc Exp $	*/
 /*	$NetBSD: sub.c,v 1.4 1995/03/21 09:04:50 cgd Exp $	*/
 
 /* sub.c: This file contains the substitution routines for the ed
@@ -28,6 +28,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <limits.h>
+#include <regex.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "ed.h"
 
