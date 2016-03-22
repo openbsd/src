@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.14 2015/07/23 09:04:06 yasuoka Exp $ */
+/*	$OpenBSD: chap.c,v 1.15 2016/03/22 04:11:27 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -36,7 +36,7 @@
  * </ul></p>
  */
 /* RFC 1994, 2433 */
-/* $Id: chap.c,v 1.14 2015/07/23 09:04:06 yasuoka Exp $ */
+/* $Id: chap.c,v 1.15 2016/03/22 04:11:27 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -52,6 +52,7 @@
 #include <time.h>
 #include <event.h>
 #include <md5.h>
+#include <vis.h>
 
 #include "slist.h"
 #include "npppd.h"
@@ -915,6 +916,20 @@ chap_radius_response(void *context, RADIUS_PACKET *pkt, int flags,
 auth_failed:
 	chap_log(_this, LOG_WARNING, "Radius authentication request failed: %s",
 	    reason);
+	/* log reply messages from radius server */
+	if (pkt != NULL) {
+		char radmsg[255], vissed[1024];
+		size_t rmlen = 0;
+		if ((radius_get_raw_attr(pkt, RADIUS_TYPE_REPLY_MESSAGE,
+		    radmsg, &rmlen)) == 0) {
+			if (rmlen != 0) {
+				strvisx(vissed, radmsg, rmlen, VIS_WHITE);
+				chap_log(_this, LOG_WARNING,
+				    "Radius reply message: %s", vissed);
+			}
+		}
+	}
+
 	/* No extra information */
 	chap_failure(_this, "FAILED", errorCode);
 }

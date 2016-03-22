@@ -1,4 +1,4 @@
-/*	$OpenBSD: pap.c,v 1.9 2015/07/23 09:04:06 yasuoka Exp $ */
+/*	$OpenBSD: pap.c,v 1.10 2016/03/22 04:11:27 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pap.c,v 1.9 2015/07/23 09:04:06 yasuoka Exp $ */
+/* $Id: pap.c,v 1.10 2016/03/22 04:11:27 yasuoka Exp $ */
 /**@file
  * This file provides Password Authentication Protocol (PAP) handlers.
  * @author Yasuoka Masahiko
@@ -44,6 +44,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <errno.h>
+#include <vis.h>
 
 #include "slist.h"
 #include "npppd.h"
@@ -510,6 +511,20 @@ auth_failed:
 	/* Autentication failure */
 	pap_log(_this, LOG_WARNING, "Radius authentication request failed: %s",
 	    reason);
+	/* log reply messages from radius server */
+	if (pkt != NULL) {
+		char radmsg[255], vissed[1024];
+		size_t rmlen = 0;
+		if ((radius_get_raw_attr(pkt, RADIUS_TYPE_REPLY_MESSAGE,
+		    radmsg, &rmlen)) == 0) {
+			if (rmlen != 0) {
+				strvisx(vissed, radmsg, rmlen, VIS_WHITE);
+				pap_log(_this, LOG_WARNING,
+				    "Radius reply message: %s", vissed);
+			}
+		}
+	}
+
 	pap_response(_this, 0, DEFAULT_FAILURE_MESSAGE);
 }
 #endif
