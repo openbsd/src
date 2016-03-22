@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokenadm.c,v 1.11 2015/12/30 12:27:18 mestre Exp $	*/
+/*	$OpenBSD: tokenadm.c,v 1.12 2016/03/22 00:06:55 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -88,11 +88,6 @@ main(int argc, char **argv)
 
 	openlog(NULL, LOG_ODELAY, LOG_AUTH);
 
-	if (token_init(argv[0]) < 0) {
-		syslog(LOG_ERR, "unknown token type");
-		errx(1, "unknown token type");
-	}
-
 	/*
 	 * Make sure we never dump core as we might have a
 	 * valid user shared-secret in memory.
@@ -105,6 +100,11 @@ main(int argc, char **argv)
 
 	if (pledge("stdio rpath wpath cpath fattr flock getpw", NULL) == -1)
 		err(1, "pledge");
+
+	if (token_init(argv[0]) < 0) {
+		syslog(LOG_ERR, "unknown token type");
+		errx(1, "unknown token type");
+	}
 
 	while ((c = getopt(argc, argv, "BDERT1dem:r")) != -1)
 		switch (c) {

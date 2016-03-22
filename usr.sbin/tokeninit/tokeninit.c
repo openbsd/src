@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokeninit.c,v 1.11 2016/02/12 00:10:59 mmcc Exp $	*/
+/*	$OpenBSD: tokeninit.c,v 1.12 2016/03/22 00:06:55 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -75,10 +75,18 @@ main(int argc, char **argv)
 
 	openlog(NULL, LOG_ODELAY, LOG_AUTH);
 
+	/*
+	 * Make sure we never dump core as we might have a
+	 * valid user shared-secret in memory.
+	 */
+
 	cds.rlim_cur = 0;
 	cds.rlim_max = 0;
 	if (setrlimit(RLIMIT_CORE, &cds) < 0)
 		syslog(LOG_ERR, "couldn't set core dump size to 0: %m");
+
+	if (pledge("stdio rpath wpath cpath fattr flock getpw tty", NULL) == -1)
+		err(1, "pledge");
 
 	if (token_init(argv[0]) < 0) {
 		syslog(LOG_ERR, "unknown token type");
@@ -90,7 +98,7 @@ main(int argc, char **argv)
 	else
 		optstr = "fm:sv";
 
-    	while ((c = getopt(argc, argv, optstr)) != -1)
+	while ((c = getopt(argc, argv, optstr)) != -1)
 		switch (c) {
 		case 'f':	/* force initialize existing user account */
 			cmd |= TOKEN_FORCEINIT;
