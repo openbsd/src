@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.35 2016/03/22 23:28:02 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.36 2016/03/22 23:35:01 patrick Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -86,63 +86,6 @@ int	arm_dcache_align_mask;
 
 /* 1 == use cpu_sleep(), 0 == don't */
 int cpu_do_powersave;
-
-#ifdef CPU_ARM11
-struct cpu_functions arm11_cpufuncs = {
-	/* CPU functions */
-
-	cpufunc_id,			/* id				*/
-	cpufunc_nullop,			/* cpwait			*/
-
-	/* MMU functions */
-
-	cpufunc_control,		/* control			*/
-	cpufunc_domains,		/* Domain			*/
-	arm11_setttb,			/* Setttb			*/
-	cpufunc_dfsr,			/* dfsr			*/
-	cpufunc_dfar,			/* dfar			*/
-	cpufunc_ifsr,			/* ifsr			*/
-	cpufunc_ifar,			/* ifar			*/
-
-	/* TLB functions */
-
-	arm11_tlb_flushID,		/* tlb_flushID			*/
-	arm11_tlb_flushID_SE,		/* tlb_flushID_SE		*/
-	arm11_tlb_flushI,		/* tlb_flushI			*/
-	arm11_tlb_flushI_SE,		/* tlb_flushI_SE		*/
-	arm11_tlb_flushD,		/* tlb_flushD			*/
-	arm11_tlb_flushD_SE,		/* tlb_flushD_SE		*/
-
-	/* Cache operations */
-
-	armv5_icache_sync_all,		/* icache_sync_all	*/
-	armv5_icache_sync_range,	/* icache_sync_range	*/
-
-	armv5_dcache_wbinv_all,		/* dcache_wbinv_all	*/
-	armv5_dcache_wbinv_range,	/* dcache_wbinv_range	*/
-/*XXX*/	armv5_dcache_wbinv_range,	/* dcache_inv_range	*/
-	armv5_dcache_wb_range,		/* dcache_wb_range	*/
-
-	armv5_idcache_wbinv_all,	/* idcache_wbinv_all	*/
-	armv5_idcache_wbinv_range,	/* idcache_wbinv_range	*/
-
-	cpufunc_nullop,			/* sdcache_wbinv_all	*/
-	(void *)cpufunc_nullop,		/* sdcache_wbinv_range	*/
-	(void *)cpufunc_nullop,		/* sdcache_inv_range	*/
-	(void *)cpufunc_nullop,		/* sdcache_wb_range	*/
-
-	/* Other functions */
-
-	cpufunc_nullop,			/* flush_prefetchbuf	*/
-	arm11_drain_writebuf,		/* drain_writebuf	*/
-
-	arm11_cpu_sleep,		/* sleep (wait for interrupt) */
-
-	/* Soft functions */
-	arm11_context_switch,		/* context_switch	*/
-	arm11_setup			/* cpu setup		*/
-};
-#endif /* CPU_ARM11 */
 
 #ifdef CPU_ARMv7
 struct cpu_functions armv7_cpufuncs = {
@@ -267,8 +210,7 @@ struct cpu_functions cpufuncs;
 u_int cputype;
 u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
-#if defined(CPU_ARM11) || \
-    defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0)
+#if defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0)
 static void get_cachetype_cp15 (void);
 
 /* Additional cache information local to this file.  Log2 of some of the
@@ -511,25 +453,6 @@ set_cpufuncs()
 	 * CPU type where we want to use it by default, then we set it.
 	 */
 
-#ifdef CPU_ARM11
-	if (cputype == CPU_ID_ARM1136JS ||
-	    cputype == CPU_ID_ARM1136JSR1 || 1) {
-		cpufuncs = arm11_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
-		get_cachetype_cp15();
-		arm11_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
-		arm11_dcache_sets_max =
-		    (1U << (arm_dcache_l2_linesize + arm_dcache_l2_nsets)) -
-		    arm11_dcache_sets_inc;
-		arm11_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
-		arm11_dcache_index_max = 0U - arm11_dcache_index_inc;
-		pmap_pte_init_arm11();
-
-		/* Use powersave on this CPU. */
-		cpu_do_powersave = 1;
-		return 0;
-	}
-#endif /* CPU_ARM11 */
 #ifdef CPU_ARMv7
 	if ((cputype & CPU_ID_CORTEX_A5_MASK) == CPU_ID_CORTEX_A5 ||
 	    (cputype & CPU_ID_CORTEX_A7_MASK) == CPU_ID_CORTEX_A7 ||
@@ -618,36 +541,6 @@ set_cpufuncs()
 /*
  * CPU Setup code
  */
-
-#ifdef CPU_ARM11
-void
-arm11_setup()
-{
-	int cpuctrl, cpuctrlmask;
-
-	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
-	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
-	    | CPU_CONTROL_AFLT_ENABLE /* | CPU_CONTROL_BPRD_ENABLE */;
-	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
-	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
-	    | CPU_CONTROL_ROM_ENABLE | CPU_CONTROL_BPRD_ENABLE
-	    | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
-	    | CPU_CONTROL_ROUNDROBIN | CPU_CONTROL_CPCLK;
-
-	/* Clear out the cache */
-	cpu_idcache_wbinv_all();
-
-	/* Now really make sure they are clean.  */
-	asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
-
-	/* Set the control register */
-	curcpu()->ci_ctrl = cpuctrl;
-	cpu_control(0xffffffff, cpuctrl);
-
-	/* And again. */
-	cpu_idcache_wbinv_all();
-}
-#endif	/* CPU_ARM11 */
 
 #ifdef CPU_ARMv7
 void

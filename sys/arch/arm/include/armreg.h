@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.27 2016/03/22 23:28:02 patrick Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.28 2016/03/22 23:35:01 patrick Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -131,8 +131,6 @@
 
 /* Individual CPUs are probably best IDed by everything but the revision. */
 #define CPU_ID_CPU_MASK		0xfffffff0
-#define CPU_ID_ARM1136JS	0x4107b360
-#define CPU_ID_ARM1136JSR1	0x4117b360
 #define CPU_ID_PXA250		0x69052100 /* sans core revision */
 #define CPU_ID_PXA210		0x69052120
 #define CPU_ID_PXA250A		0x69052100 /* 1st version Core */

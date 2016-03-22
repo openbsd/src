@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.29 2016/03/22 23:28:02 patrick Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.30 2016/03/22 23:35:01 patrick Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -85,7 +85,6 @@ cpu_attach(struct device *dv)
 enum cpu_class {
 	CPU_CLASS_NONE,
 	CPU_CLASS_XSCALE,
-	CPU_CLASS_ARM11J,
 	CPU_CLASS_ARMv7
 };
 
@@ -173,11 +172,6 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_PXA210C, 	CPU_CLASS_XSCALE,	"PXA210",
 	  pxa2x0_steppings },
 
-	{ CPU_ID_ARM1136JS,	CPU_CLASS_ARM11J,	"ARM1136J-S",
-	  generic_steppings },
-	{ CPU_ID_ARM1136JSR1,	CPU_CLASS_ARM11J,	"ARM1136J-S R1",
-	  generic_steppings },
-
 	{ CPU_ID_CORTEX_A5,	CPU_CLASS_ARMv7,	"ARM Cortex A5",
 	  generic_steppings },
 	{ CPU_ID_CORTEX_A7,	CPU_CLASS_ARMv7,	"ARM Cortex A7",
@@ -239,7 +233,6 @@ struct cpu_classtab {
 const struct cpu_classtab cpu_classes[] = {
 	{ "unknown",	NULL },			/* CPU_CLASS_NONE */
 	{ "XScale",	"CPU_XSCALE_..." },	/* CPU_CLASS_XSCALE */
-	{ "ARM11J",	"CPU_ARM11" },		/* CPU_CLASS_ARM11J */
 	{ "ARMv7",	"CPU_ARMv7" }		/* CPU_CLASS_ARMv7 */
 
 };
@@ -304,7 +297,6 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 
 	switch (cpu_class) {
 	case CPU_CLASS_XSCALE:
-	case CPU_CLASS_ARM11J:
 	case CPU_CLASS_ARMv7:
 		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
 			printf(" DC disabled");
@@ -353,9 +345,6 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
  skip_pcache:
 
 	switch (cpu_class) {
-#ifdef CPU_ARM11
-	case CPU_CLASS_ARM11J:
-#endif
 #ifdef CPU_ARMv7
 	case CPU_CLASS_ARMv7:
 #endif

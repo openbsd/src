@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.15 2016/03/22 23:28:02 patrick Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.16 2016/03/22 23:35:01 patrick Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.7 2003/05/23 00:57:24 ichiro Exp $	*/
 
 /*
@@ -54,12 +54,6 @@
 #define	ARM_ARCH_5	0
 #endif
 
-#if defined(CPU_ARM11)
-#define ARM_ARCH_6     1
-#else 
-#define ARM_ARCH_6     0
-#endif
-
 #if defined(CPU_ARMv7)
 #define ARM_ARCH_7     1
 #else 
@@ -78,7 +72,7 @@
  *				protection is not used, TEX/AP is used instead.
  */
 
-#if (defined(CPU_ARM11) || defined(CPU_ARMv7))
+#if defined(CPU_ARMv7)
 #define	ARM_MMU_GENERIC		1
 #else
 #define	ARM_MMU_GENERIC		0

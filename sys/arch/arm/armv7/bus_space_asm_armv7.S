@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space_asm_armv7.S,v 1.4 2016/03/19 09:36:56 patrick Exp $	*/
+/*	$OpenBSD: bus_space_asm_armv7.S,v 1.5 2016/03/22 23:35:01 patrick Exp $	*/
 /*	$NetBSD: bus_space_asm_armv7.S,v 1.3 2003/03/27 19:46:14 mycroft Exp $	*/
 
 /*
@@ -51,12 +51,10 @@ ENTRY(armv7_bs_r_1)
 	ldrb	r0, [r1, r2]
 	mov	pc, lr
 
-#if (ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY(armv7_bs_r_2)
 	dsb	sy
 	ldrh	r0, [r1, r2]
 	mov	pc, lr
-#endif
 
 ENTRY(armv7_bs_r_4)
 	dsb	sy
