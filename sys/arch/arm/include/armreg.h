@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.24 2016/03/19 09:51:24 patrick Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.25 2016/03/22 01:32:41 jsg Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -109,35 +109,13 @@
 /* The high-order byte is always the implementor */
 #define CPU_ID_IMPLEMENTOR_MASK	0xff000000
 #define CPU_ID_ARM_LTD		0x41000000 /* 'A' */
-#define CPU_ID_DEC		0x44000000 /* 'D' */
 #define CPU_ID_INTEL		0x69000000 /* 'i' */
-#define CPU_ID_TI		0x54000000 /* 'T' */
 
-/* How to decide what format the CPUID is in. */
-#define CPU_ID_ISOLD(x)		(((x) & 0x0000f000) == 0x00000000)
-#define CPU_ID_IS7(x)		(((x) & 0x0000f000) == 0x00007000)
-#define CPU_ID_ISNEW(x)		(!CPU_ID_ISOLD(x) && !CPU_ID_IS7(x))
-
-/* On ARM3 and ARM6, this byte holds the foundry ID. */
-#define CPU_ID_FOUNDRY_MASK	0x00ff0000
-#define CPU_ID_FOUNDRY_VLSI	0x00560000
-
-/* On ARM7 it holds the architecture and variant (sub-model) */
-#define CPU_ID_7ARCH_MASK	0x00800000
-#define CPU_ID_7ARCH_V3		0x00000000
-#define CPU_ID_7ARCH_V4T	0x00800000
-#define CPU_ID_7VARIANT_MASK	0x007f0000
-
-/* On more recent ARMs, it does the same, but in a different format */
 #define CPU_ID_ARCH_MASK	0x000f0000
-#define CPU_ID_ARCH_V3		0x00000000
-#define CPU_ID_ARCH_V4		0x00010000
-#define CPU_ID_ARCH_V4T		0x00020000
-#define CPU_ID_ARCH_V5		0x00030000
-#define CPU_ID_ARCH_V5T		0x00040000
 #define CPU_ID_ARCH_V5TE	0x00050000
+#define CPU_ID_ARCH_V5TEJ	0x00060000
 #define CPU_ID_ARCH_V6		0x00070000
-#define CPU_ID_ARCH_V7		0x00080000
+#define CPU_ID_ARCH_CPUID	0x000f0000
 #define CPU_ID_VARIANT_MASK	0x00f00000
 
 /* Next three nybbles are part number */
@@ -153,29 +131,6 @@
 
 /* Individual CPUs are probably best IDed by everything but the revision. */
 #define CPU_ID_CPU_MASK		0xfffffff0
-
-/* Fake CPU IDs for ARMs without CP15 */
-#define CPU_ID_ARM2		0x41560200
-#define CPU_ID_ARM250		0x41560250
-
-/* Pre-ARM7 CPUs -- [15:12] == 0 */
-#define CPU_ID_ARM3		0x41560300
-#define CPU_ID_ARM600		0x41560600
-#define CPU_ID_ARM610		0x41560610
-#define CPU_ID_ARM620		0x41560620
-
-/* ARM7 CPUs -- [15:12] == 7 */
-#define CPU_ID_ARM700		0x41007000 /* XXX This is a guess. */
-#define CPU_ID_ARM710		0x41007100
-#define CPU_ID_ARM7500		0x41027100 /* XXX This is a guess. */
-#define CPU_ID_ARM710A		0x41047100 /* inc ARM7100 */
-#define CPU_ID_ARM7500FE	0x41077100
-#define CPU_ID_ARM710T		0x41807100
-#define CPU_ID_ARM720T		0x41807200
-#define CPU_ID_ARM740T8K	0x41807400 /* XXX no MMU, 8KB cache */
-#define CPU_ID_ARM740T4K	0x41817400 /* XXX no MMU, 4KB cache */
-
-/* Post-ARM7 CPUs */
 #define CPU_ID_ARM926EJS	0x41069260
 #define CPU_ID_ARM946ES		0x41049460 /* XXX no MMU */
 #define CPU_ID_ARM966ES		0x41049660 /* XXX no MMU */
@@ -233,18 +188,6 @@
 #define CPU_ID_CORTEX_A72	0x410fd080
 #define CPU_ID_CORTEX_A72_R1	0x411fd080
 #define CPU_ID_CORTEX_A72_MASK	0xff0ffff0
-
-/* ARM3-specific coprocessor 15 registers */
-#define ARM3_CP15_FLUSH		1
-#define ARM3_CP15_CONTROL	2
-#define ARM3_CP15_CACHEABLE	3
-#define ARM3_CP15_UPDATEABLE	4
-#define ARM3_CP15_DISRUPTIVE	5	
-
-/* ARM3 Control register bits */
-#define ARM3_CTL_CACHE_ON	0x00000001
-#define ARM3_CTL_SHARED		0x00000002
-#define ARM3_CTL_MONITOR	0x00000004
 
 /*
  * Post-ARM3 CP15 registers:
