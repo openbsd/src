@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.29 2016/01/14 05:27:42 guenther Exp $
+# $OpenBSD: mksubr,v 1.30 2016/03/22 16:45:07 guenther Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -300,6 +300,7 @@ cat <<_EOF_
 #include <nfsserver/nfs.h>
 #endif
 #include <ufs/ufs/quota.h>
+#include <sys/syslog.h>
 
 #include "kdump_subr.h"
 
@@ -360,6 +361,7 @@ auto_switch_type "itimername" "ITIMER_[[:alnum:]_]+" "sys/time.h"
 auto_switch_type "evfiltername" "EVFILT_[[:alnum:]_]+[[:space:]]+[(]" "sys/event.h"
 # exclude EV_{SYSFLAGS,FLAG1}
 auto_orz_type "evflagsname" "EV_[^S][A-Z]+[[:space:]]+0x" "sys/event.h"
+auto_orz_type "syslogflagname" "LOG_[A-Z]+[[:space:]]+0x0*[1248]0*[[:space:]]" "sys/syslog.h"
 
 cat <<_EOF_
 /*

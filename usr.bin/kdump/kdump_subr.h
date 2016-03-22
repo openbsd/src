@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump_subr.h,v 1.18 2016/01/14 05:27:42 guenther Exp $	*/
+/*	$OpenBSD: kdump_subr.h,v 1.19 2016/03/22 16:45:07 guenther Exp $	*/
 /*
  * Copyright(c) 2006 2006 David Kirchner <dpk@dpk.net>
  *
@@ -95,5 +95,6 @@ void itimername(int);
 void evfiltername(int);
 void evflagsname(int);
 void evfflagsname(int, int);
+void syslogflagname(int);
 
 extern int decimal, fancy, basecol, arg1;

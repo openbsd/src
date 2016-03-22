@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.124 2016/03/21 00:04:03 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.125 2016/03/22 16:45:07 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -546,6 +546,7 @@ static void (*formatters[])(int) = {
 	sigset,
 	uidname,
 	gidname,
+	syslogflagname,
 };
 
 enum {
@@ -628,6 +629,7 @@ enum {
 	Sigset,
 	Uidname,
 	Gidname,
+	Syslogflagname,
 };
 
 #define Pptr		Phexlong
@@ -724,7 +726,7 @@ static const formatter scargs[][8] = {
     [SYS_getgroups]	= { Pcount, Pptr },
     [SYS_setgroups]	= { Pcount, Pptr },
     [SYS_setpgid]	= { Ppid_t, Ppid_t },
-    [SYS_sendsyslog]	= { Pptr, Psize },
+    [SYS_sendsyslog]	= { Pptr, Psize, Syslogflagname },
     [SYS_utimensat]	= { Atfd, Ppath, Pptr, Atflagsname },
     [SYS_futimens]	= { Pfd, Pptr },
     [SYS_clock_gettime]	= { Clockname, Pptr },
