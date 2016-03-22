@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.4 2015/12/05 13:19:32 claudio Exp $	*/
+/*	$OpenBSD: control.c,v 1.5 2016/03/22 00:36:06 krw Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -49,7 +49,6 @@ void             control_accept (int, short, void *);
 void             control_close (int, struct control_sock *);
 void             control_dispatch_imsg (int, short, void *);
 void             control_imsg_forward (struct imsg *);
-void             fd_nonblock(int);
 
 int
 control_init(struct control_sock *cs)
@@ -61,7 +60,7 @@ control_init(struct control_sock *cs)
 	if (cs->cs_name == NULL)
 		return (0);
 
-	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+	if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1) {
 		log_warn("control_init: socket");
 		return (-1);
 	}
@@ -105,7 +104,6 @@ control_init(struct control_sock *cs)
 	}
 	TAILQ_INIT(&ctl_conns);
 
-	fd_nonblock(fd);
 	cs->cs_fd = fd;
 
 	return (0);
@@ -156,8 +154,8 @@ control_accept(int listenfd, short event, void *arg)
 		return;
 
 	len = sizeof(sun);
-	if ((connfd = accept(listenfd,
-	    (struct sockaddr *)&sun, &len)) == -1) {
+	if ((connfd = accept4(listenfd,
+	    (struct sockaddr *)&sun, &len, SOCK_NONBLOCK)) == -1) {
 		/*
 		 * Pause accept if we are out of file descriptors, or
 		 * libevent will haunt us here too.
@@ -171,8 +169,6 @@ control_accept(int listenfd, short event, void *arg)
 			log_warn("control_accept: accept");
 		return;
 	}
-
-	fd_nonblock(connfd);
 
 	if ((c = calloc(1, sizeof(struct ctl_conn))) == NULL) {
 		log_warn("control_accept");
@@ -344,16 +340,4 @@ control_imsg_forward(struct imsg *imsg)
 			imsg_compose(&c->iev.ibuf, imsg->hdr.type, 0,
 			    imsg->hdr.pid, -1, imsg->data,
 			    imsg->hdr.len - IMSG_HEADER_SIZE);
-}
-
-void
-fd_nonblock(int fd)
-{
-	int	flags;
-
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
-		fatal("fcntl F_GETFL");
-	flags |= O_NONBLOCK;
-	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
-		fatal("fcntl F_SETFL");
 }
