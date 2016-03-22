@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.9 2016/03/20 23:48:27 schwarze Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.10 2016/03/22 11:10:57 schwarze Exp $	*/
 /*	$NetBSD: terminal.c,v 1.17 2016/02/15 15:35:03 christos Exp $	*/
 
 /*-
@@ -363,7 +363,7 @@ terminal_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
          */
 	tlen = 0;
 	for (tmp = tlist; tmp < &tlist[T_str]; tmp++)
-		if (*tmp != NULL && *tmp != '\0' && *tmp != *str) {
+		if (*tmp != NULL && **tmp != '\0' && *tmp != *str) {
 			char *ptr;
 
 			for (ptr = *tmp; *ptr != '\0'; termbuf[tlen++] = *ptr++)
