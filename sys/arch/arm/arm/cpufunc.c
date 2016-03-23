@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.36 2016/03/22 23:35:01 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.37 2016/03/23 01:09:15 patrick Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -548,16 +548,20 @@ armv7_setup()
 {
 	int cpuctrl, cpuctrlmask;
 
-	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
-	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
-	    | CPU_CONTROL_BPRD_ENABLE | CPU_CONTROL_AFLT_ENABLE;
-	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
-	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
-	    | CPU_CONTROL_ROM_ENABLE | CPU_CONTROL_BPRD_ENABLE
-	    | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
-	    | CPU_CONTROL_ROUNDROBIN | CPU_CONTROL_CPCLK
-	    | CPU_CONTROL_VECRELOC | CPU_CONTROL_FI | CPU_CONTROL_VE
-	    | CPU_CONTROL_TRE | CPU_CONTROL_AFE;
+	cpuctrlmask = CPU_CONTROL_MMU_ENABLE
+	    | CPU_CONTROL_AFLT_ENABLE
+	    | CPU_CONTROL_DC_ENABLE
+	    | CPU_CONTROL_BPRD_ENABLE
+	    | CPU_CONTROL_IC_ENABLE
+	    | CPU_CONTROL_VECRELOC
+	    | CPU_CONTROL_TRE
+	    | CPU_CONTROL_AFE;
+
+	cpuctrl = CPU_CONTROL_MMU_ENABLE
+	    | CPU_CONTROL_AFLT_ENABLE
+	    | CPU_CONTROL_DC_ENABLE
+	    | CPU_CONTROL_BPRD_ENABLE
+	    | CPU_CONTROL_IC_ENABLE;
 
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
@@ -565,15 +569,11 @@ armv7_setup()
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Now really make sure they are clean.  */
-	/* XXX */
-	/*
-	asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
-	*/
-
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(cpuctrlmask, cpuctrl);
+
+	/* TODO: Set ACTLR.SMP to e.g. allow LDREX/STREX. */
 
 	/* And again. */
 	cpu_idcache_wbinv_all();
