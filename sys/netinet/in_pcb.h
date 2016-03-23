@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.94 2016/03/21 21:21:35 vgross Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.95 2016/03/23 00:07:31 vgross Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -244,6 +244,8 @@ extern struct baddynamicports baddynamicports;
 void	 in_losing(struct inpcb *);
 int	 in_pcballoc(struct socket *, struct inpcbtable *);
 int	 in_pcbbind(struct inpcb *, struct mbuf *, struct proc *);
+int	 in_pcbaddrisavail(struct inpcb *, struct sockaddr_in *, int,
+	    struct proc *);
 int	 in_pcbconnect(struct inpcb *, struct mbuf *);
 void	 in_pcbdetach(struct inpcb *);
 void	 in_pcbdisconnect(struct inpcb *);

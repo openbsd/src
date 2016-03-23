@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.195 2015/12/18 22:25:16 vgross Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.196 2016/03/23 00:07:31 vgross Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -284,10 +284,9 @@ int
 in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 {
 	struct socket *so = inp->inp_socket;
-	struct inpcbtable *table = inp->inp_table;
 	struct sockaddr_in *sin;
 	u_int16_t lport = 0;
-	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
+	int wild = 0;
 	int error;
 
 #ifdef INET6
@@ -310,57 +309,9 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 			return (EAFNOSUPPORT);
 
 		lport = sin->sin_port;
-		if (IN_MULTICAST(sin->sin_addr.s_addr)) {
-			/*
-			 * Treat SO_REUSEADDR as SO_REUSEPORT for multicast;
-			 * allow complete duplication of binding if
-			 * SO_REUSEPORT is set, or if SO_REUSEADDR is set
-			 * and a multicast address is bound on both
-			 * new and duplicated sockets.
-			 */
-			if (so->so_options & (SO_REUSEADDR|SO_REUSEPORT))
-				reuseport = SO_REUSEADDR|SO_REUSEPORT;
-		} else if (sin->sin_addr.s_addr != INADDR_ANY) {
-			sin->sin_port = 0;		/* yech... */
-			/* ... must also clear the zeropad in the sockaddr */
-			memset(sin->sin_zero, 0, sizeof(sin->sin_zero));
 
-			if (!((so->so_options & SO_BINDANY) ||
-			    (sin->sin_addr.s_addr == INADDR_BROADCAST &&
-			     so->so_type == SOCK_DGRAM))) {
-				struct in_ifaddr *ia;
-
-				ia = ifatoia(ifa_ifwithaddr(sintosa(sin),
-				    inp->inp_rtableid));
-
-				/* SOCK_RAW does not use in_pcbbind() */
-				if (ia == NULL &&
-				    (so->so_type != SOCK_DGRAM ||
-				    !in_broadcast(sin->sin_addr,
-					inp->inp_rtableid)))
-						return (EADDRNOTAVAIL);
-			}
-		}
-		if (lport) {
-			struct inpcb *t;
-
-			/* GROSS */
-			if (ntohs(lport) < IPPORT_RESERVED &&
-			    (error = suser(p, 0)))
-				return (EACCES);
-			if (so->so_euid) {
-				t = in_pcblookup(table, &zeroin_addr, 0,
-				    &sin->sin_addr, lport, INPLOOKUP_WILDCARD,
-				    inp->inp_rtableid);
-				if (t &&
-				    (so->so_euid != t->inp_socket->so_euid))
-					return (EADDRINUSE);
-			}
-			t = in_pcblookup(table, &zeroin_addr, 0,
-			    &sin->sin_addr, lport, wild, inp->inp_rtableid);
-			if (t && (reuseport & t->inp_socket->so_options) == 0)
-				return (EADDRINUSE);
-		}
+		if ((error = in_pcbaddrisavail(inp, sin, wild, p)))
+			return (error);
 		inp->inp_laddr = sin->sin_addr;
 	}
 
@@ -369,6 +320,74 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 			return (error);
 	inp->inp_lport = lport;
 	in_pcbrehash(inp);
+	return (0);
+}
+
+int
+in_pcbaddrisavail(struct inpcb *inp, struct sockaddr_in *sin, int wild,
+    struct proc *p)
+{
+	struct socket *so = inp->inp_socket;
+	struct inpcbtable *table = inp->inp_table;
+	u_int16_t lport = sin->sin_port;
+	int reuseport = (so->so_options & SO_REUSEPORT);
+	int error;
+
+	if (IN_MULTICAST(sin->sin_addr.s_addr)) {
+		/*
+		 * Treat SO_REUSEADDR as SO_REUSEPORT for multicast;
+		 * allow complete duplication of binding if
+		 * SO_REUSEPORT is set, or if SO_REUSEADDR is set
+		 * and a multicast address is bound on both
+		 * new and duplicated sockets.
+		 */
+		if (so->so_options & (SO_REUSEADDR|SO_REUSEPORT))
+			reuseport = SO_REUSEADDR|SO_REUSEPORT;
+	} else if (sin->sin_addr.s_addr != INADDR_ANY) {
+		/*
+		 * we must check that we are binding to an address we
+		 * own except when:
+		 * - SO_BINDANY is set or
+		 * - we are binding a UDP socket to 255.255.255.255 or
+		 * - we are binding a UDP socket to one of our broadcast
+		 *   addresses
+		 */
+		if (!ISSET(so->so_options, SO_BINDANY) &&
+		    !(so->so_type == SOCK_DGRAM &&
+		    sin->sin_addr.s_addr == INADDR_BROADCAST) &&
+		    !(so->so_type == SOCK_DGRAM &&
+		    in_broadcast(sin->sin_addr, inp->inp_rtableid))) {
+			struct ifaddr *ia;
+
+			sin->sin_port = 0;
+			memset(sin->sin_zero, 0, sizeof(sin->sin_zero));
+			ia = ifa_ifwithaddr(sintosa(sin), inp->inp_rtableid);
+			sin->sin_port = lport;
+
+			if (ia == NULL)
+				return (EADDRNOTAVAIL);
+		}
+	}
+	if (lport) {
+		struct inpcb *t;
+
+		/* GROSS */
+		if (ntohs(lport) < IPPORT_RESERVED &&
+		    (error = suser(p, 0)))
+			return (EACCES);
+		if (so->so_euid) {
+			t = in_pcblookup(table, &zeroin_addr, 0,
+			    &sin->sin_addr, lport, INPLOOKUP_WILDCARD,
+			    inp->inp_rtableid);
+			if (t && (so->so_euid != t->inp_socket->so_euid))
+				return (EADDRINUSE);
+		}
+		t = in_pcblookup(table, &zeroin_addr, 0,
+		    &sin->sin_addr, lport, wild, inp->inp_rtableid);
+		if (t && (reuseport & t->inp_socket->so_options) == 0)
+			return (EADDRINUSE);
+	}
+
 	return (0);
 }
 
