@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.45 2016/03/21 21:21:35 vgross Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.46 2016/03/23 15:50:36 vgross Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 
 		if (in6p->inp_lport == 0){
 			int s = splsoftnet();
-			error = in6_pcbbind(in6p, NULL, p);
+			error = in_pcbbind(in6p, NULL, p);
 			splx(s);
 			if (error)
 				goto release;

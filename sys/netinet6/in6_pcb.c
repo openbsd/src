@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.88 2016/03/21 21:21:35 vgross Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.89 2016/03/23 15:50:36 vgross Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -149,63 +149,6 @@ u_char inet6ctlerrmap[PRC_NCMDS] = {
 	ENOPROTOOPT
 };
 #endif
-
-/*
- * Bind an address (or at least a port) to an PF_INET6 socket.
- */
-int
-in6_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
-{
-	struct socket *so = inp->inp_socket;
-
-	struct sockaddr_in6 *sin6;
-	u_short lport = 0;
-	int wild = INPLOOKUP_IPV6;
-	int error;
-
-	/*
-	 * REMINDER:  Once up to speed, flow label processing should go here,
-	 * too.  (Same with in6_pcbconnect.)
-	 */
-	if (TAILQ_EMPTY(&in6_ifaddr))
-		return EADDRNOTAVAIL;
-
-	if (inp->inp_lport != 0 || !IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
-		return EINVAL;	/* If already bound, EINVAL! */
-
-	if ((so->so_options & (SO_REUSEADDR | SO_REUSEPORT)) == 0 &&
-	    ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
-	     (so->so_options & SO_ACCEPTCONN) == 0))
-		wild |= INPLOOKUP_WILDCARD;
-
-	/*
-	 * If I did get a sockaddr passed in...
-	 */
-	if (nam) {
-		sin6 = mtod(nam, struct sockaddr_in6 *);
-		if (nam->m_len != sizeof (*sin6))
-			return EINVAL;
-
-		/*
-		 * Unlike v4, I have no qualms about EAFNOSUPPORT if the
-		 * wretched family is not filled in!
-		 */
-		if (sin6->sin6_family != AF_INET6)
-			return EAFNOSUPPORT;
-
-		if ((error = in6_pcbaddrisavail(inp, sin6, wild, p)))
-			return (error);
-		inp->inp_laddr6 = sin6->sin6_addr;
-		lport = sin6->sin6_port;
-	}
-
-	if (lport == 0)
-		if ((error = in_pcbpickport(&lport, wild, inp, p)))
-			return (error);
-	inp->inp_lport = lport;
-	in_pcbrehash(inp);
-	return 0;
-}
 
 int
 in6_pcbaddrisavail(struct inpcb *inp, struct sockaddr_in6 *sin6, int wild,
@@ -371,7 +314,7 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6)) {
 		if (inp->inp_lport == 0 &&
-		    in6_pcbbind(inp, NULL, curproc) == EADDRNOTAVAIL)
+		    in_pcbbind(inp, NULL, curproc) == EADDRNOTAVAIL)
 			return (EADDRNOTAVAIL);
 		inp->inp_laddr6 = *in6a;
 	}

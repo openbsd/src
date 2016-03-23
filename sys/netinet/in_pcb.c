@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.196 2016/03/23 00:07:31 vgross Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.197 2016/03/23 15:50:36 vgross Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -284,35 +284,61 @@ int
 in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 {
 	struct socket *so = inp->inp_socket;
-	struct sockaddr_in *sin;
 	u_int16_t lport = 0;
 	int wild = 0;
 	int error;
 
-#ifdef INET6
-	if (sotopf(so) == PF_INET6)
-		return in6_pcbbind(inp, nam, p);
-#endif /* INET6 */
-
-	if (inp->inp_lport || inp->inp_laddr.s_addr != INADDR_ANY)
+	if (inp->inp_lport)
 		return (EINVAL);
+
 	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
 	    ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
 	     (so->so_options & SO_ACCEPTCONN) == 0))
 		wild = INPLOOKUP_WILDCARD;
+
 	if (nam) {
-		sin = mtod(nam, struct sockaddr_in *);
-		if (nam->m_len != sizeof(*sin))
+		switch (sotopf(so)) {
+#ifdef INET6
+		case PF_INET6: {
+			struct sockaddr_in6 *sin6;
+			if (TAILQ_EMPTY(&in6_ifaddr))
+				return (EADDRNOTAVAIL);
+			if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
+				return (EINVAL);
+
+			sin6 = mtod(nam, struct sockaddr_in6 *);
+			if (nam->m_len != sizeof(struct sockaddr_in6))
+				return (EINVAL);
+			if (sin6->sin6_family != AF_INET6)
+				return (EAFNOSUPPORT);
+
+			if ((error = in6_pcbaddrisavail(inp, sin6, wild, p)))
+				return (error);
+			inp->inp_laddr6 = sin6->sin6_addr;
+			lport = sin6->sin6_port;
+			break;
+		}
+#endif
+		case PF_INET: {
+			struct sockaddr_in *sin;
+			if (inp->inp_laddr.s_addr != INADDR_ANY)
+				return (EINVAL);
+
+			sin = mtod(nam, struct sockaddr_in *);
+			if (nam->m_len != sizeof(*sin))
+				return (EINVAL);
+			if (sin->sin_family != AF_INET)
+				return (EAFNOSUPPORT);
+
+			if ((error = in_pcbaddrisavail(inp, sin, wild, p)))
+				return (error);
+			inp->inp_laddr = sin->sin_addr;
+			lport = sin->sin_port;
+			break;
+		}
+		default:
 			return (EINVAL);
-
-		if (sin->sin_family != AF_INET)
-			return (EAFNOSUPPORT);
-
-		lport = sin->sin_port;
-
-		if ((error = in_pcbaddrisavail(inp, sin, wild, p)))
-			return (error);
-		inp->inp_laddr = sin->sin_addr;
+		}
 	}
 
 	if (lport == 0)

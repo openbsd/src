@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.128 2015/09/11 07:42:35 claudio Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.129 2016/03/23 15:50:36 vgross Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -220,28 +220,15 @@ tcp_usrreq(so, req, m, nam, control, p)
 	 * Give the socket an address.
 	 */
 	case PRU_BIND:
-#ifdef INET6
-		if (inp->inp_flags & INP_IPV6)
-			error = in6_pcbbind(inp, nam, p);
-		else
-#endif
-			error = in_pcbbind(inp, nam, p);
-		if (error)
-			break;
+		error = in_pcbbind(inp, nam, p);
 		break;
 
 	/*
 	 * Prepare to accept connections.
 	 */
 	case PRU_LISTEN:
-		if (inp->inp_lport == 0) {
-#ifdef INET6
-			if (inp->inp_flags & INP_IPV6)
-				error = in6_pcbbind(inp, NULL, p);
-			else
-#endif
-				error = in_pcbbind(inp, NULL, p);
-		}
+		if (inp->inp_lport == 0)
+			error = in_pcbbind(inp, NULL, p);
 		/* If the in_pcbbind() above is called, the tp->pf
 		   should still be whatever it was before. */
 		if (error == 0)
