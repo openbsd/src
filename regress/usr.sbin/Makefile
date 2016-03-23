@@ -1,5 +1,6 @@
-#	$OpenBSD: Makefile,v 1.10 2015/06/23 18:04:29 semarie Exp $
+#	$OpenBSD: Makefile,v 1.11 2016/03/23 08:58:32 mpi Exp $
 
+SUBDIR += arp
 SUBDIR += httpd
 SUBDIR += mtree
 SUBDIR += ospfd
