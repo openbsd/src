@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.17 2016/01/08 16:17:31 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.18 2016/03/23 06:16:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -38,7 +38,7 @@ void sock_slot_fill(void *);
 void sock_slot_flush(void *);
 void sock_slot_eof(void *);
 void sock_slot_onmove(void *);
-void sock_slot_onvol(void *, unsigned int);
+void sock_slot_onvol(void *);
 void sock_midi_imsg(void *, unsigned char *, int);
 void sock_midi_omsg(void *, unsigned char *, int);
 void sock_midi_fill(void *, int);
@@ -226,7 +226,7 @@ sock_slot_onmove(void *arg)
 }
 
 void
-sock_slot_onvol(void *arg, unsigned int delta)
+sock_slot_onvol(void *arg)
 {
 	struct sock *f = (struct sock *)arg;
 	struct slot *s = f->slot;

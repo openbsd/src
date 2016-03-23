@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.30 2016/01/09 10:06:57 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.31 2016/03/23 06:16:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -99,7 +99,7 @@ int opt_mmc(void);
 int opt_onoff(void);
 int getword(char *, char **);
 unsigned int opt_mode(void);
-void getbasepath(char *, size_t);
+void getbasepath(char *);
 void setsig(void);
 void unsetsig(void);
 struct dev *mkdev(char *, struct aparams *,
@@ -259,7 +259,7 @@ unsetsig(void)
 }
 
 void
-getbasepath(char *base, size_t size)
+getbasepath(char *base)
 {
 	uid_t uid;
 	struct stat sb;
@@ -336,7 +336,7 @@ mkopt(char *path, struct dev *d,
 	    MIDI_TO_ADATA(vol), mmc, dup, mode);
 	if (o == NULL)
 		return NULL;
-	dev_adjpar(d, o->mode, o->pmin, o->pmax, o->rmin, o->rmax);
+	dev_adjpar(d, o->mode, o->pmax, o->rmax);
 	return o;
 }
 
@@ -541,7 +541,7 @@ main(int argc, char **argv)
 		if (fdpass_new(s[0], &worker_fileops) == NULL)
 			return 1;
 
-		getbasepath(base, sizeof(base));
+		getbasepath(base);
 		snprintf(path,
 		    SOCKPATH_MAX, "%s/" SOCKPATH_FILE "%u",
 		    base, unit);
