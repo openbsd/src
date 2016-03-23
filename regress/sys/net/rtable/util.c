@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 2015/12/04 12:30:57 mpi Exp $ */
+/*	$OpenBSD: util.c,v 1.4 2016/03/23 09:55:08 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -65,7 +65,7 @@ route_insert(unsigned int rid, sa_family_t af, char *string)
 	struct sockaddr		*mask = (struct sockaddr *)&ms;
 	struct rtentry		*rt, *nrt;
 	char			 ip[INET6_ADDRSTRLEN];
-	int			 plen;
+	int			 plen, error;
 
 	rt = calloc(1, sizeof(*rt));
 	if (rt == NULL)
@@ -81,9 +81,9 @@ route_insert(unsigned int rid, sa_family_t af, char *string)
 		errx(1, "out of memory");
 	rt_maskedcopy(dst, ndst, mask);
 
-	if (rtable_insert(rid, ndst, mask, NULL, 0, rt)) {
+	if ((error = rtable_insert(rid, ndst, mask, NULL, 0, rt)) != 0) {
 		inet_net_satop(af, rt_key(rt), plen, ip, sizeof(ip));
-		errx(1, "can't add route: %s\n", ip);
+		errx(1, "can't add route: %s, %s\n", ip, strerror(error));
 	}
 	nrt = rtable_lookup(rid, dst, mask, NULL, RTP_ANY);
 	if (nrt != rt) {
@@ -103,7 +103,7 @@ route_delete(unsigned int rid, sa_family_t af, char *string)
 	struct sockaddr		*mask = (struct sockaddr *)&ms;
 	struct rtentry		*rt, *nrt;
 	char			 ip[INET6_ADDRSTRLEN];
-	int			 plen;
+	int			 plen, error;
 
 	plen = inet_net_ptosa(af, string, dst, mask);
 	if (plen == -1)
@@ -118,9 +118,9 @@ route_delete(unsigned int rid, sa_family_t af, char *string)
 	assert(memcmp(rt_key(rt), dst, dst->sa_len) == 0);
 	assert(rt_plen(rt) == rtable_satoplen(af, mask));
 
-	if (rtable_delete(0, dst, mask, rt)) {
+	if ((error = rtable_delete(0, dst, mask, rt)) != 0) {
 		inet_net_satop(af, dst, plen, ip, sizeof(ip));
-		errx(1, "can't rm route: %s\n", ip);
+		errx(1, "can't rm route: %s, %s\n", ip, strerror(error));
 	}
 
 	nrt = rtable_lookup(0, dst, mask, NULL, RTP_ANY);
@@ -204,11 +204,15 @@ rtentry_delete(struct rtentry *rt, void *w, unsigned int rid)
 	sa_family_t		 af = rt_key(rt)->sa_family;
 	struct sockaddr_in6	 sa_mask;
 	struct sockaddr		*mask = rt_plen2mask(rt, &sa_mask);
+	int			 error;
 
-	if (rtable_delete(0, rt_key(rt), mask, rt)) {
+	assert(rt_plen(rt) == rtable_satoplen(af, mask));
+
+	if ((error = rtable_delete(0, rt_key(rt), mask, rt)) != 0) {
 		inet_net_satop(af, rt_key(rt), rt_plen(rt), dest, sizeof(dest));
-		errx(1, "can't rm route: %s\n", dest);
+		errx(1, "can't rm route: %s, %s\n", dest, strerror(error));
 	}
+
 	return (0);
 }
 
