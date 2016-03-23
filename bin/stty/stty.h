@@ -1,4 +1,4 @@
-/*	$OpenBSD: stty.h,v 1.4 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: stty.h,v 1.5 2016/03/23 14:52:42 mmcc Exp $	*/
 /*	$NetBSD: stty.h,v 1.7 1996/05/07 18:20:11 jtc Exp $	*/
 
 /*-
@@ -31,9 +31,6 @@
  *
  *	@(#)stty.h	8.1 (Berkeley) 5/31/93
  */
-
-#include <sys/ioctl.h>
-#include <termios.h>
 
 struct info {
 	int fd;					/* file descriptor */

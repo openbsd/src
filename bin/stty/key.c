@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.16 2015/11/20 15:57:39 deraadt Exp $	*/
+/*	$OpenBSD: key.c,v 1.17 2016/03/23 14:52:42 mmcc Exp $	*/
 /*	$NetBSD: key.c,v 1.11 1995/09/07 06:57:11 jtc Exp $	*/
 
 /*-
@@ -31,13 +31,15 @@
  */
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 
 #include <err.h>
 #include <errno.h>
-#include <stdlib.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 
 #include "stty.h"
 #include "extern.h"

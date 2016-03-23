@@ -1,4 +1,4 @@
-/*	$OpenBSD: cchar.c,v 1.11 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: cchar.c,v 1.12 2016/03/23 14:52:42 mmcc Exp $	*/
 /*	$NetBSD: cchar.c,v 1.10 1996/05/07 18:20:05 jtc Exp $	*/
 
 /*-
@@ -31,12 +31,14 @@
  */
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 
 #include <err.h>
 #include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 
 #include "stty.h"
 #include "extern.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: modes.c,v 1.10 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: modes.c,v 1.11 2016/03/23 14:52:42 mmcc Exp $	*/
 /*	$NetBSD: modes.c,v 1.9 1996/05/07 18:20:09 jtc Exp $	*/
 
 /*-
@@ -31,8 +31,11 @@
  */
 
 #include <sys/types.h>
+
 #include <stddef.h>
 #include <string.h>
+#include <termios.h>
+
 #include "stty.h"
 #include "extern.h"
 

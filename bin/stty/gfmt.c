@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfmt.c,v 1.8 2009/10/28 07:12:59 guenther Exp $	*/
+/*	$OpenBSD: gfmt.c,v 1.9 2016/03/23 14:52:42 mmcc Exp $	*/
 /*	$NetBSD: gfmt.c,v 1.10 1996/05/07 18:20:08 jtc Exp $	*/
 
 /*-
@@ -35,6 +35,7 @@
 #include <err.h>
 #include <stdio.h>
 #include <string.h>
+#include <termios.h>
 
 #include "stty.h"
 #include "extern.h"
