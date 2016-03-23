@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.72 2016/03/23 08:17:35 mpi Exp $ */
+/*	$OpenBSD: arp.c,v 1.73 2016/03/23 08:19:58 mpi Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -104,7 +104,7 @@ extern int h_errno;
 int
 main(int argc, char *argv[])
 {
-	int		 ch, func = 0, rtn;
+	int		 ch, func = 0, error = 0;
 	const char	*errstr;
 
 	pid = getpid();
@@ -158,14 +158,13 @@ main(int argc, char *argv[])
 
 	if (!func)
 		func = F_GET;
-	rtn = 0;
 
 	switch (func) {
 	case F_GET:
 		if (aflag && argc == 0)
 			dump();
 		else if (!aflag && argc == 1)
-			rtn = get(argv[0]);
+			error = get(argv[0]);
 		else
 			usage();
 		break;
@@ -174,33 +173,33 @@ main(int argc, char *argv[])
 			usage();
 		if (replace)
 			delete(argv[0], NULL);
-		rtn = set(argc, argv) ? 1 : 0;
+		error = set(argc, argv) ? 1 : 0;
 		break;
 	case F_DELETE:
 		if (aflag && argc == 0)
 			search(0, nuke_entry);
 		else if (!aflag && argc == 1)
-			rtn = delete(argv[0], argv[1]);
+			error = delete(argv[0], argv[1]);
 		else
 			usage();
 		break;
 	case F_FILESET:
 		if (argc != 1)
 			usage();
-		rtn = file(argv[0]);
+		error = file(argv[0]);
 		break;
 	case F_WAKE:
 		if (aflag || nflag || replace || rdomain > 0)
 			usage();
 		if (argc == 1)
-			rtn = wake(argv[0], NULL);
+			error = wake(argv[0], NULL);
 		else if (argc == 2)
-			rtn = wake(argv[0], argv[1]);
+			error = wake(argv[0], argv[1]);
 		else
 			usage();
 		break;
 	}
-	return (rtn);
+	return (error);
 }
 
 /*
@@ -566,7 +565,7 @@ print_entry(struct sockaddr_dl *sdl, struct sockaddr_inarp *sin,
 	else
 		printf(" %-10.10s", "expired");
 
-	printf(" %s%s%s\n",
+	printf(" %s%s\n",
 	    (rtm->rtm_flags & RTF_LOCAL) ? "l" : "",
 	    (rtm->rtm_flags & RTF_ANNOUNCE) ? "p" : "");
 }
