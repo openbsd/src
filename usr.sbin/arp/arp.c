@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.73 2016/03/23 08:19:58 mpi Exp $ */
+/*	$OpenBSD: arp.c,v 1.74 2016/03/23 08:28:31 mpi Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -62,7 +62,7 @@
 #include <ifaddrs.h>
 
 void dump(void);
-int delete(const char *, const char *);
+int delete(const char *);
 void search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 	struct sockaddr_inarp *sin, struct rt_msghdr *rtm));
 void print_entry(struct sockaddr_dl *sdl,
@@ -172,14 +172,14 @@ main(int argc, char *argv[])
 		if (argc < 2 || argc > 5)
 			usage();
 		if (replace)
-			delete(argv[0], NULL);
+			delete(argv[0]);
 		error = set(argc, argv) ? 1 : 0;
 		break;
 	case F_DELETE:
 		if (aflag && argc == 0)
 			search(0, nuke_entry);
 		else if (!aflag && argc == 1)
-			error = delete(argv[0], argv[1]);
+			error = delete(argv[0]);
 		else
 			usage();
 		break;
@@ -229,7 +229,7 @@ file(char *name)
 			continue;
 		}
 		if (replace)
-			delete(arg[0], NULL);
+			delete(arg[0]);
 		if (set(i, args))
 			retval = 1;
 	}
@@ -397,7 +397,7 @@ get(const char *host)
  * Delete an arp entry
  */
 int
-delete(const char *host, const char *info)
+delete(const char *host)
 {
 	struct sockaddr_inarp *sin;
 	struct rt_msghdr *rtm;
@@ -406,8 +406,6 @@ delete(const char *host, const char *info)
 	sin = &sin_m;
 	rtm = &m_rtmsg.m_rtm;
 
-	if (info && strncmp(info, "pro", 3) )
-		export_only = 1;
 	getsocket();
 	sin_m = blank_sin;		/* struct copy */
 	if (getinetaddr(host, &sin->sin_addr) == -1)
@@ -580,7 +578,7 @@ nuke_entry(struct sockaddr_dl *sdl, struct sockaddr_inarp *sin,
 	char ip[20];
 
 	strlcpy(ip, inet_ntoa(sin->sin_addr), sizeof(ip));
-	delete(ip, NULL);
+	delete(ip);
 }
 
 static char *
