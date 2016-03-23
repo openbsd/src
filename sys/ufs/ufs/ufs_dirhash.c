@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.34 2016/02/27 18:50:38 natano Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.35 2016/03/23 19:39:48 natano Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -1054,8 +1054,6 @@ ufsdirhash_init(void)
 	TAILQ_INIT(&ufsdirhash_list);
 #if defined (__sparc__) && !defined (__sparc64__)
 	if (!CPU_ISSUN4OR4C)
-#elif defined (__vax__)
-	if (0)
 #endif
 		ufs_dirhashmaxmem = 2 * 1024 * 1024;
 	ufs_mindirhashsize = 5 * DIRBLKSIZ;

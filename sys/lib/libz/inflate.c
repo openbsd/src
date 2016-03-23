@@ -1,4 +1,4 @@
-/*	$OpenBSD: inflate.c,v 1.13 2005/07/20 15:56:46 millert Exp $	*/
+/*	$OpenBSD: inflate.c,v 1.14 2016/03/23 19:39:48 natano Exp $	*/
 /* inflate.c -- zlib decompression
  * Copyright (C) 1995-2005 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -575,10 +575,7 @@ int flush;
     static const unsigned short order[19] = /* permutation of code lengths */
         {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
 
-    if (strm == Z_NULL || strm->state == Z_NULL ||
-#ifndef __vax__
-	strm->next_out == Z_NULL ||
-#endif
+    if (strm == Z_NULL || strm->state == Z_NULL || strm->next_out == Z_NULL ||
         (strm->next_in == Z_NULL && strm->avail_in != 0))
         return Z_STREAM_ERROR;
 
