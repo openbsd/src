@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.36 2016/03/03 12:41:30 naddy Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.37 2016/03/24 04:56:08 guenther Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -70,8 +70,6 @@
 extern struct vm_map *kernel_map;
 
 int i386_iopl(struct proc *, void *, register_t *);
-int i386_get_ioperm(struct proc *, void *, register_t *);
-int i386_set_ioperm(struct proc *, void *, register_t *);
 
 #ifdef APERTURE
 extern int allowaperture;
@@ -103,42 +101,6 @@ i386_iopl(struct proc *p, void *args, register_t *retval)
 		tf->tf_eflags &= ~PSL_IOPL;
 
 	return 0;
-}
-
-int
-i386_get_ioperm(struct proc *p, void *args, register_t *retval)
-{
-	int error;
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct i386_get_ioperm_args ua;
-
-	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
-		return (error);
-
-	return copyout(pcb->pcb_iomap, ua.iomap, sizeof(pcb->pcb_iomap));
-}
-
-int
-i386_set_ioperm(struct proc *p, void *args, register_t *retval)
-{
-	int error;
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct i386_set_ioperm_args ua;
-
-	if ((error = suser(p, 0)) != 0)
-		return error;
-
-#ifdef APERTURE
-	if (!allowaperture && securelevel > 0)
-		return EPERM;
-#else
-	if (securelevel > 0)
-		return EPERM;
-#endif
-	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
-		return (error);
-
-	return copyin(ua.iomap, pcb->pcb_iomap, sizeof(pcb->pcb_iomap));
 }
 
 uint32_t
@@ -185,14 +147,6 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 	switch(SCARG(uap, op)) {
 	case I386_IOPL:
 		error = i386_iopl(p, SCARG(uap, parms), retval);
-		break;
-
-	case I386_GET_IOPERM:
-		error = i386_get_ioperm(p, SCARG(uap, parms), retval);
-		break;
-
-	case I386_SET_IOPERM:
-		error = i386_set_ioperm(p, SCARG(uap, parms), retval);
 		break;
 
 #ifdef VM86

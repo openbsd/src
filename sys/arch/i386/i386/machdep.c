@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.582 2016/03/15 03:17:51 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.583 2016/03/24 04:56:08 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -459,17 +459,11 @@ cpu_startup(void)
 void
 i386_proc0_tss_init(void)
 {
-	int x;
 	struct pcb *pcb;
 
 	curpcb = pcb = &proc0.p_addr->u_pcb;
 
-	pcb->pcb_tss.tss_ioopt =
-	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
-	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
-		pcb->pcb_iomap[x] = 0xffffffff;
-	pcb->pcb_iomap_pad = 0xff;
-
+	pcb->pcb_tss.tss_ioopt = sizeof(pcb->pcb_tss) << 16;
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
@@ -484,15 +478,9 @@ i386_proc0_tss_init(void)
 void
 i386_init_pcb_tss(struct cpu_info *ci)
 {
-	int x;
 	struct pcb *pcb = ci->ci_idle_pcb;
 
-	pcb->pcb_tss.tss_ioopt =
-	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
-	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
-		pcb->pcb_iomap[x] = 0xffffffff;
-	pcb->pcb_iomap_pad = 0xff;
-
+	pcb->pcb_tss.tss_ioopt = sizeof(pcb->pcb_tss) << 16;
 	pcb->pcb_cr0 = rcr0();
 	ci->ci_idle_tss_sel = tss_alloc(pcb);
 }

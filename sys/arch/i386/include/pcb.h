@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.19 2016/03/15 03:17:51 guenther Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.20 2016/03/24 04:56:08 guenther Exp $	*/
 /*	$NetBSD: pcb.h,v 1.21 1996/01/08 13:51:42 mycroft Exp $	*/
 
 /*-
@@ -50,8 +50,6 @@
 #include <machine/npx.h>
 #include <machine/sysarch.h>
 
-#define	NIOPORTS	1024		/* # of ports we allow to be mapped */
-
 struct pcb {
 	struct	i386tss pcb_tss;
 #define	pcb_cr3	pcb_tss.tss_cr3
@@ -59,21 +57,15 @@ struct pcb {
 #define	pcb_ebp	pcb_tss.tss_ebp
 #define	pcb_cs	pcb_tss.tss_cs
 	int	pcb_cr0;		/* saved image of CR0 */
-	int	__pcb_padding;		/* for 16-byte align of pcb_savefpu */
+	caddr_t	pcb_onfault;		/* copyin/out fault recovery */
 	union	savefpu pcb_savefpu;	/* floating point state for FPU */
 	struct	segment_descriptor pcb_threadsegs[2];
 					/* per-thread descriptors */
-/*
- * Software pcb (extension)
- */
-	caddr_t	pcb_onfault;		/* copyin/out fault recovery */
 	int	vm86_eflags;		/* virtual eflags for vm86 mode */
 	int	vm86_flagmask;		/* flag mask for vm86 mode */
 	void	*vm86_userp;		/* XXX performance hack */
 	struct  pmap *pcb_pmap;         /* back pointer to our pmap */
 	struct	cpu_info *pcb_fpcpu;	/* cpu holding our fpu state */
-	u_long	pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
-	u_char	pcb_iomap_pad;	/* required; must be 0xff, says intel */
 	int	pcb_flags;
 #define PCB_SAVECTX	0x00000001
 };
