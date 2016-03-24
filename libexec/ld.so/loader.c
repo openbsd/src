@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.157 2016/03/20 02:29:51 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.158 2016/03/24 05:27:19 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -770,10 +770,22 @@ _dl_fixup_user_env(void)
 	sym = NULL;
 	ooff = _dl_find_symbol("environ", &sym,
 	    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, &dummy_obj, &obj);
-	if (sym != NULL && (char ***)(sym->st_value + ooff) != &environ) {
+	if (sym != NULL) {
 		DL_DEB(("setting environ %p@%s[%p] from %p\n",
 		    (void *)(sym->st_value + ooff), obj->load_name,
 		    (void *)obj, (void *)&environ));
-		*((char ***)(sym->st_value + ooff)) = environ;
+		if ((char ***)(sym->st_value + ooff) != &environ)
+			*((char ***)(sym->st_value + ooff)) = environ;
+	}
+
+	sym = NULL;
+	ooff = _dl_find_symbol("__progname", &sym,
+	    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, &dummy_obj, &obj);
+	if (sym != NULL) {
+		DL_DEB(("setting __progname %p@%s[%p] from %p\n",
+		    (void *)(sym->st_value + ooff), obj->load_name,
+		    (void *)obj, (void *)&__progname));
+		if ((char **)(sym->st_value + ooff) != &__progname)
+			*((char **)(sym->st_value + ooff)) = __progname;
 	}
 }
