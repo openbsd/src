@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.110 2016/03/15 04:19:26 stefan Exp $	*/
+/*	$OpenBSD: systm.h,v 1.111 2016/03/24 08:57:51 mpi Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -85,13 +85,6 @@ extern int nblkdev;		/* number of entries in bdevsw */
 extern int nchrdev;		/* number of entries in cdevsw */
 
 extern int selwait;		/* select timeout address */
-
-#ifdef MULTIPROCESSOR
-#define curpriority (curcpu()->ci_schedstate.spc_curpriority)
-#else
-extern u_char curpriority;	/* priority of current process */
-#endif
-
 extern int maxmem;		/* max memory per process */
 extern int physmem;		/* physical memory */
 
