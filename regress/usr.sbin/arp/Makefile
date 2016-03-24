@@ -1,9 +1,10 @@
-# $OpenBSD: Makefile,v 1.1 2016/03/23 08:58:32 mpi Exp $
+# $OpenBSD: Makefile,v 1.2 2016/03/24 15:15:41 mpi Exp $
 
 RDOMAIN?=	5
 VETHER_MAC=	fe:e1:ba:d2:a3:18
 PRIV_MAC=	00:90:27:bb:cc:dd
 PUB_MAC=	fe:88:33:11:bb:aa
+OTHER_MAC=	cc:77:55:22:aa:66
 
 .MAIN: all
 
@@ -69,6 +70,16 @@ RTTEST_TARGETS+:=arptest${n}
 arptest${n}:
 	${ARP} -s 192.0.2.42 ${PRIV_MAC} "permanent"
 	${ARP} -a 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# Tryin to add two "pub" entries should generate and error
+n=	6
+RTTEST_TARGETS+:=arptest${n}
+arptest${n}:
+	${ARP} -s 192.0.2.42 ${PRIV_MAC}
+	${ARP} -s 192.0.2.42 ${PUB_MAC} pub
+	${ARP} -s 192.0.2.42 ${OTHER_MAC} pub && exit 1 || exit 0
+	${ARP} -a 2>&1| \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
 REGRESS_TARGETS=${RTTEST_TARGETS}
