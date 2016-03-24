@@ -38,8 +38,8 @@ Boston, MA 02111-1307, USA.  */
 
 #undef MULTILIB_DEFAULTS
 
-/* strongarm family default cpu.  */
-#define SUBTARGET_CPU_DEFAULT TARGET_CPU_strongarm
+/* armv5te default cpu.  */
+#define SUBTARGET_CPU_DEFAULT TARGET_CPU_arm9e
 
 /* Default is to use APCS-32 mode.  */
 
