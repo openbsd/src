@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2015/12/04 23:43:04 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2016/03/24 07:11:45 mpi Exp $
 
 # The following ports must be installed:
 #
@@ -31,6 +31,7 @@ LOCAL_IF ?=
 LOCAL_MAC ?=
 REMOTE_MAC ?=
 FAKE_MAC ?= 12:34:56:78:9a:bc
+PROXY_MAC ?= 00:90:27:bb:cc:dd
 REMOTE_SSH ?=
 
 LOCAL_ADDR ?= 10.188.70.17
@@ -271,9 +272,11 @@ TARGETS +=	arp-proxy
 run-regress-arp-proxy: addr.py
 	@echo '\n======== $@ ========'
 	@echo Send ARP Request for fake address that is proxied
+	ssh -t ${REMOTE_SSH} ${SUDO} arp -s ${FAKE_ADDR} ${PROXY_MAC}
 	ssh -t ${REMOTE_SSH} ${SUDO} arp -s ${FAKE_ADDR} ${FAKE_MAC} pub
 	${SUDO} ${PYTHON}arp_proxy.py
 	ssh ${REMOTE_SSH} ${SUDO} arp -an >arp.log
+	ssh -t ${REMOTE_SSH} ${SUDO} arp -d ${FAKE_ADDR}
 	ssh -t ${REMOTE_SSH} ${SUDO} arp -d ${FAKE_ADDR}
 	grep '^${FAKE_ADDR} .* ${FAKE_MAC} .* static * p$$' arp.log
 
