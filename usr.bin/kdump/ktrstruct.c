@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.17 2016/03/05 19:46:55 guenther Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.18 2016/03/24 05:05:42 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -54,6 +54,7 @@
 #include <grp.h>
 #include <pwd.h>
 #include <unistd.h>
+#include <vis.h>
 
 #include "kdump.h"
 #include "kdump_subr.h"
@@ -63,12 +64,11 @@
 static void
 ktrsockaddr(struct sockaddr *sa)
 {
-/*
- TODO: Support additional address families
-	#include <netmpls/mpls.h>
-	struct sockaddr_mpls	*mpls;
-*/
-	char addr[64];
+	/*
+	 * TODO: Support additional address families
+	 *	#include <netmpls/mpls.h>
+	 *	struct sockaddr_mpls	*mpls;
+	 */
 
 	/*
 	 * note: ktrstruct() has already verified that sa points to a
@@ -88,6 +88,7 @@ ktrsockaddr(struct sockaddr *sa)
 	switch(sa->sa_family) {
 	case AF_INET: {
 		struct sockaddr_in	*sa_in;
+		char addr[64];
 
 		sa_in = (struct sockaddr_in *)sa;
 		check_sockaddr_len(in);
@@ -97,6 +98,7 @@ ktrsockaddr(struct sockaddr *sa)
 	}
 	case AF_INET6: {
 		struct sockaddr_in6	*sa_in6;
+		char addr[64];
 
 		sa_in6 = (struct sockaddr_in6 *)sa;
 		check_sockaddr_len(in6);
@@ -104,28 +106,27 @@ ktrsockaddr(struct sockaddr *sa)
 		printf("[%s]:%u", addr, htons(sa_in6->sin6_port));
 		break;
 	}
-#ifdef IPX
-	case AF_IPX: {
-		struct sockaddr_ipx	*sa_ipx;
-
-		sa_ipx = (struct sockaddr_ipx *)sa;
-		check_sockaddr_len(ipx);
-		/* XXX wish we had ipx_ntop */
-		printf("%s", ipx_ntoa(sa_ipx->sipx_addr));
-		break;
-	}
-#endif
 	case AF_UNIX: {
 		struct sockaddr_un *sa_un;
+		char path[4 * sizeof(sa_un->sun_path) + 1];
+		size_t len;
 
 		sa_un = (struct sockaddr_un *)sa;
-		if (sa_un->sun_len <= offsetof(struct sockaddr_un, sun_path)) {
+		len = sa_un->sun_len;
+		if (len <= offsetof(struct sockaddr_un, sun_path)) {
 			printf("invalid");
 			break;
 		}
-		printf("\"%.*s\"", (int)(sa_un->sun_len -
-		    offsetof(struct sockaddr_un, sun_path)),
-		    sa_un->sun_path);
+		len -= offsetof(struct sockaddr_un, sun_path);
+		if (len > sizeof(sa_un->sun_path)) {
+			printf("too long");
+			break;
+		}
+		/* format, stopping at first NUL */
+		len = strnlen(sa_un->sun_path, len);
+		strvisx(path, sa_un->sun_path, len,
+		    VIS_CSTYLE | VIS_DQ | VIS_TAB | VIS_NL);
+		printf("\"%s\"", path);
 		break;
 	}
 	default:
@@ -597,11 +598,11 @@ ktrstruct(char *buf, size_t buflen)
 	} else if (strcmp(name, "pledgereq") == 0) {
 		printf("pledge request=");
 		showbufc(basecol + sizeof("pledge request=") - 1,
-		    (unsigned char *)data, datalen);
+		    (unsigned char *)data, datalen, VIS_DQ | VIS_TAB | VIS_NL);
 	} else if (strcmp(name, "pledgepath") == 0) {
 		printf("pledge path=");
 		showbufc(basecol + sizeof("pledge path=") - 1,
-		    (unsigned char *)data, datalen);
+		    (unsigned char *)data, datalen, VIS_DQ | VIS_TAB | VIS_NL);
 	} else {
 		printf("unknown structure %s\n", name);
 	}

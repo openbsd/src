@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.125 2016/03/22 16:45:07 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.126 2016/03/24 05:05:42 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1125,20 +1125,20 @@ ktrsysret(struct ktr_sysret *ktr, size_t ktrlen)
 static void
 ktrnamei(const char *cp, size_t len)
 {
-	(void)printf("\"%.*s\"\n", (int)len, cp);
+	showbufc(basecol, (unsigned char *)cp, len, VIS_DQ | VIS_TAB | VIS_NL);
 }
 
 void
-showbufc(int col, unsigned char *dp, size_t datalen)
+showbufc(int col, unsigned char *dp, size_t datalen, int flags)
 {
-	int i, j;
-	int width, bpl;
-	unsigned char visbuf[5], *cp, c;
+	int width;
+	unsigned char visbuf[5], *cp;
 
+	flags |= VIS_CSTYLE;
 	putchar('"');
 	col++;
 	for (; datalen > 0; datalen--, dp++) {
-		(void)vis(visbuf, *dp, VIS_CSTYLE, *(dp+1));
+		(void)vis(visbuf, *dp, flags, *(dp+1));
 		cp = visbuf;
 
 		/*
@@ -1178,8 +1178,8 @@ static void
 showbuf(unsigned char *dp, size_t datalen)
 {
 	int i, j;
-	int col = 0, width, bpl;
-	unsigned char visbuf[5], *cp, c;
+	int col = 0, bpl;
+	unsigned char c;
 
 	if (iohex == 1) {
 		putchar('\t');
@@ -1225,7 +1225,7 @@ showbuf(unsigned char *dp, size_t datalen)
 	}
 
 	(void)printf("       ");
-	showbufc(7, dp, datalen);
+	showbufc(7, dp, datalen, 0);
 }
 
 static void
@@ -1320,7 +1320,6 @@ ktruser(struct ktr_user *usr, size_t len)
 static void
 ktrexec(const char *ptr, size_t len)
 {
-	char buf[sizeof("[2147483648] = ")];
 	int i, col;
 	size_t l;
 
@@ -1330,7 +1329,7 @@ ktrexec(const char *ptr, size_t len)
 		l = strnlen(ptr, len);
 		col = printf("\t[%d] = ", i++);
 		col += 7;	/* tab expands from 1 to 8 columns */
-		showbufc(col, (unsigned char *)ptr, l);
+		showbufc(col, (unsigned char *)ptr, l, VIS_DQ|VIS_TAB|VIS_NL);
 		if (l == len) {
 			printf("\tunterminated argument\n");
 			break;
