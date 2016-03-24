@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.4 2016/03/23 09:55:08 mpi Exp $ */
+/*	$OpenBSD: util.c,v 1.5 2016/03/24 07:03:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -267,9 +267,7 @@ struct sockaddr *
 rt_plentosa(sa_family_t af, int plen, struct sockaddr_in6 *sa_mask)
 {
 	struct sockaddr_in	*sin = (struct sockaddr_in *)sa_mask;
-#ifdef INET6
 	struct sockaddr_in6	*sin6 = (struct sockaddr_in6 *)sa_mask;
-#endif
 
 	assert(plen >= 0 || plen == -1);
 
@@ -284,13 +282,11 @@ rt_plentosa(sa_family_t af, int plen, struct sockaddr_in6 *sa_mask)
 		sin->sin_len = sizeof(struct sockaddr_in);
 		in_prefixlen2mask(&sin->sin_addr, plen);
 		break;
-#ifdef INET6
 	case AF_INET6:
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_len = sizeof(struct sockaddr_in6);
 		in6_prefixlen2mask(&sin6->sin6_addr, plen);
 		break;
-#endif /* INET6 */
 	default:
 		return (NULL);
 	}
