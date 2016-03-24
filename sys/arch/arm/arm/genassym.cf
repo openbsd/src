@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.14 2014/08/21 14:24:08 mpi Exp $
+#	$OpenBSD: genassym.cf,v 1.15 2016/03/24 08:52:30 mpi Exp $
 #	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -152,7 +152,6 @@ member	cf_sleep
 member	cf_control
 
 struct	cpu_info
-#member	CI_CURPRIORITY		ci_schedstate.spc_curpriority
 member	ci_curproc
 member	ci_curpcb
 member	ci_idepth
