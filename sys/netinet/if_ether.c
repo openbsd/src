@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.202 2016/03/07 11:00:36 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.203 2016/03/24 07:15:10 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -696,6 +696,12 @@ arplookup(u_int32_t addr, int create, int proxy, u_int tableid)
 		rtfree(rt);
 		return (NULL);
 	}
+
+	if (proxy && !ISSET(rt->rt_flags, RTF_ANNOUNCE)) {
+		rtfree(rt);
+		return (NULL);
+	}
+
 	return (rt);
 }
 
