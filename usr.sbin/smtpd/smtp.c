@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.154 2016/02/13 20:43:07 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.155 2016/03/25 15:06:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -169,7 +169,7 @@ smtp_setup_events(void)
 		    " ca \"%s\"", ss_to_text(&l->ss), ntohs(l->port),
 		    l->flags, l->pki_name, l->ca_name);
 
-		session_socket_blockmode(l->fd, BM_NONBLOCK);
+		io_set_nonblocking(l->fd);
 		if (listen(l->fd, SMTPD_BACKLOG) == -1)
 			fatal("listen");
 		event_set(&l->ev, l->fd, EV_READ|EV_PERSIST, smtp_accept, l);
@@ -280,7 +280,7 @@ smtp_accept(int fd, short event, void *p)
 		close(sock);
 		return;
 	}
-	io_set_blocking(sock, 0);
+	io_set_nonblocking(sock);
 
 	sessions++;
 	stat_increment("smtp.session", 1);

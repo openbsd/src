@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.18 2016/02/10 15:03:37 millert Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.19 2016/03/25 15:06:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -52,8 +52,8 @@ mproc_fork(struct mproc *p, const char *path, char *argv[])
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) < 0)
 		return (-1);
 
-	session_socket_blockmode(sp[0], BM_NONBLOCK);
-	session_socket_blockmode(sp[1], BM_NONBLOCK);
+	io_set_nonblocking(sp[0]);
+	io_set_nonblocking(sp[1]);
 
 	if ((p->pid = fork()) == -1)
 		goto err;

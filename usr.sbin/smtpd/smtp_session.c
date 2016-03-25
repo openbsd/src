@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.268 2016/02/05 19:15:15 jung Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.269 2016/03/25 15:06:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1178,7 +1178,7 @@ smtp_filter_fd(uint64_t id, int fd)
 	}
 
 	iobuf_init(&s->obuf, 0, 0);
-	io_set_blocking(fd, 0);
+	io_set_nonblocking(fd);
 	io_init(&s->oev, fd, s, smtp_data_io, &s->obuf);
 
 	iobuf_fqueue(&s->obuf, "Received: ");

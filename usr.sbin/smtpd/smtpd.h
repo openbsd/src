@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.513 2016/02/21 15:17:25 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.514 2016/03/25 15:06:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -306,11 +306,6 @@ enum imsg_type {
 
 	IMSG_CA_PRIVENC,
 	IMSG_CA_PRIVDEC
-};
-
-enum blockmodes {
-	BM_NORMAL,
-	BM_NONBLOCK
 };
 
 enum smtp_proc_type {
@@ -1506,8 +1501,6 @@ void iobuf_xinit(struct iobuf *, size_t, size_t, const char *);
 void iobuf_xfqueue(struct iobuf *, const char *, const char *, ...);
 void log_envelope(const struct envelope *, const char *, const char *,
     const char *);
-void session_socket_blockmode(int, enum blockmodes);
-void session_socket_no_linger(int);
 int session_socket_error(int);
 int getmailname(char *, size_t);
 int base64_encode(unsigned char const *, size_t, char *, size_t);

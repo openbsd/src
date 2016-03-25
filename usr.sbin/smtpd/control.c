@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.111 2016/02/09 10:38:02 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.112 2016/03/25 15:06:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -235,7 +235,7 @@ control_create_socket(void)
 		fatal("control: chmod");
 	}
 
-	session_socket_blockmode(fd, BM_NONBLOCK);
+	io_set_nonblocking(fd);
 	control_state.fd = fd;
 
 	return fd;
@@ -358,7 +358,7 @@ control_accept(int listenfd, short event, void *arg)
 		fatal("control_accept: accept");
 	}
 
-	session_socket_blockmode(connfd, BM_NONBLOCK);
+	io_set_nonblocking(connfd);
 
 	if (getpeereid(connfd, &euid, &egid) == -1)
 		fatal("getpeereid");

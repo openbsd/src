@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.16 2016/02/03 11:14:08 eric Exp $	*/
+/*	$OpenBSD: filter.c,v 1.17 2016/03/25 15:06:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -665,8 +665,8 @@ filter_tx(struct filter_session *s, int sink)
 		return (-1);
 	}
 
-	io_set_blocking(sp[0], 0);
-	io_set_blocking(sp[1], 0);
+	io_set_nonblocking(sp[0]);
+	io_set_nonblocking(sp[1]);
 
 	iobuf_init(&s->ibuf, 0, 0);
 	io_init(&s->iev, sp[0], s, filter_tx_io, &s->ibuf);

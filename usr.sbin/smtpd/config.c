@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.33 2015/10/14 20:45:30 gilles Exp $	*/
+/*	$OpenBSD: config.c,v 1.34 2016/03/25 15:06:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -117,8 +117,8 @@ init_pipes(void)
 				fatal("socketpair");
 			pipes[i][j] = sockpair[0];
 			pipes[j][i] = sockpair[1];
-			session_socket_blockmode(pipes[i][j], BM_NONBLOCK);
-			session_socket_blockmode(pipes[j][i], BM_NONBLOCK);
+			io_set_nonblocking(pipes[i][j]);
+			io_set_nonblocking(pipes[j][i]);
 		}
 }
 

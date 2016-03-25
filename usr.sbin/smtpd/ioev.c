@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.24 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.25 2016/03/25 15:06:58 krw Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -131,30 +131,25 @@ io_strevent(int evt)
 }
 
 void
-io_set_blocking(int fd, int blocking)
+io_set_nonblocking(int fd)
 {
 	int	flags;
 
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
+	if ((flags = fcntl(fd, F_GETFL)) == -1)
 		err(1, "io_set_blocking:fcntl(F_GETFL)");
 
-	if (blocking)
-		flags &= ~O_NONBLOCK;
-	else
-		flags |= O_NONBLOCK;
+	flags |= O_NONBLOCK;
 
 	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
 		err(1, "io_set_blocking:fcntl(F_SETFL)");
 }
 
 void
-io_set_linger(int fd, int linger)
+io_set_nolinger(int fd)
 {
 	struct linger    l;
 
 	memset(&l, 0, sizeof(l));
-	l.l_onoff = linger ? 1 : 0;
-	l.l_linger = linger;
 	if (setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l)) == -1)
 		err(1, "io_set_linger:setsockopt()");
 }
@@ -596,8 +591,8 @@ io_connect(struct io *io, const struct sockaddr *sa, const struct sockaddr *bsa)
 	if ((sock = socket(sa->sa_family, SOCK_STREAM, 0)) == -1)
 		goto fail;
 
-	io_set_blocking(sock, 0);
-	io_set_linger(sock, 0);
+	io_set_nonblocking(sock);
+	io_set_nolinger(sock);
 
 	if (bsa && bind(sock, bsa, bsa->sa_len) == -1)
 		goto fail;
