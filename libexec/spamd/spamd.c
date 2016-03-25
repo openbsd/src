@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.138 2016/03/10 00:07:03 gsoares Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.139 2016/03/25 16:31:32 mestre Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -1507,11 +1507,10 @@ main(int argc, char *argv[])
 				exit(1);
 			}
 
-			if (pw)
-				if (setgroups(1, &pw->pw_gid) ||
-					setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-					setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-					err(1, "failed to drop privs");
+			if (setgroups(1, &pw->pw_gid) ||
+			    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+			    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+				err(1, "failed to drop privs");
 
 			goto jail;
 		}
@@ -1529,7 +1528,6 @@ main(int argc, char *argv[])
 		}
 		close(trappipe[0]);
 		return (greywatcher());
-		/* NOTREACHED */
 	}
 
 jail:

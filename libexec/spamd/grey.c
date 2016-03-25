@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.62 2015/12/10 16:06:29 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.63 2016/03/25 16:31:32 mestre Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -1000,7 +1000,6 @@ greyscanner(void)
 			    PATH_SPAMD_DB);
 		sleep(DB_SCAN_INTERVAL);
 	}
-	/* NOTREACHED */
 }
 
 static void
@@ -1009,12 +1008,11 @@ drop_privs(void)
 	/*
 	 * lose root, continue as non-root user
 	 */
-	if (pw) {
-		setgroups(1, &pw->pw_gid);
-		setegid(pw->pw_gid);
-		setgid(pw->pw_gid);
-		seteuid(pw->pw_uid);
-		setuid(pw->pw_uid);
+	if (setgroups(1, &pw->pw_gid) ||
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid)) {
+		syslog_r(LOG_ERR, &sdata, "failed to drop privs (%m)");
+		exit(1);
 	}
 }
 
@@ -1107,6 +1105,5 @@ greywatcher(void)
 
 	setproctitle("(pf <spamd-white> update)");
 	greyscanner();
-	/* NOTREACHED */
 	exit(1);
 }
