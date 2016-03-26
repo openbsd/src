@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.297 2016/03/26 21:41:18 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.298 2016/03/26 21:56:04 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -248,8 +248,8 @@ rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
 			error = rtrequest(RTM_RESOLVE, &info, RTP_DEFAULT,
 			    &rt, tableid);
 			if (error) {
-				rt_missmsg(RTM_MISS, &info, 0, 0, error,
-				    tableid);
+				rt_missmsg(RTM_MISS, &info, 0, RTP_NONE, 0,
+				    error, tableid);
 			} else {
 				/* Inform listeners of the new route */
 				rt_sendmsg(rt, RTM_ADD, tableid);
@@ -489,7 +489,8 @@ rt_sendmsg(struct rtentry *rt, int cmd, u_int rtableid)
 		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 	}
 
-	rt_missmsg(cmd, &info, rt->rt_flags, rt->rt_ifidx, 0, rtableid);
+	rt_missmsg(cmd, &info, rt->rt_flags, rt->rt_priority, rt->rt_ifidx, 0,
+	    rtableid);
 	if_put(ifp);
 }
 
@@ -523,6 +524,7 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
 	struct ifaddr		*ifa;
 	unsigned int		 ifidx = 0;
 	int 			 flags = RTF_GATEWAY|RTF_HOST;
+	uint8_t			 prio = RTP_NONE;
 
 	splsoftassert(IPL_SOFTNET);
 
@@ -579,8 +581,10 @@ create:
 			rt = NULL;
 			error = rtrequest(RTM_ADD, &info, RTP_DEFAULT, &rt,
 			    rdomain);
-			if (error == 0)
+			if (error == 0) {
 				flags = rt->rt_flags;
+				prio = rt->rt_priority;
+			}
 			stat = &rtstat.rts_dynamic;
 		} else {
 			/*
@@ -589,6 +593,7 @@ create:
 			 */
 			rt->rt_flags |= RTF_MODIFIED;
 			flags |= RTF_MODIFIED;
+			prio = rt->rt_priority;
 			stat = &rtstat.rts_newgateway;
 			rt_setgate(rt, gateway);
 		}
@@ -610,7 +615,7 @@ out:
 	info.rti_info[RTAX_DST] = dst;
 	info.rti_info[RTAX_GATEWAY] = gateway;
 	info.rti_info[RTAX_AUTHOR] = src;
-	rt_missmsg(RTM_REDIRECT, &info, flags, ifidx, error, rdomain);
+	rt_missmsg(RTM_REDIRECT, &info, flags, prio, ifidx, error, rdomain);
 }
 
 /*
@@ -639,7 +644,8 @@ rtdeletemsg(struct rtentry *rt, struct ifnet *ifp, u_int tableid)
 	info.rti_flags = rt->rt_flags;
 	ifidx = rt->rt_ifidx;
 	error = rtrequest_delete(&info, rt->rt_priority, ifp, &rt, tableid);
-	rt_missmsg(RTM_DELETE, &info, info.rti_flags, ifidx, error, tableid);
+	rt_missmsg(RTM_DELETE, &info, info.rti_flags, rt->rt_priority, ifidx,
+	    error, tableid);
 	if (error == 0)
 		rtfree(rt);
 	return (error);

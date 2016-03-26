@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.186 2016/01/12 09:27:46 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.187 2016/03/26 21:56:04 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1063,8 +1063,8 @@ again:
  * destination.
  */
 void
-rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags, u_int ifidx,
-    int error, u_int tableid)
+rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags, uint8_t prio,
+    u_int ifidx, int error, u_int tableid)
 {
 	struct rt_msghdr	*rtm;
 	struct mbuf		*m;
@@ -1077,6 +1077,7 @@ rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags, u_int ifidx,
 		return;
 	rtm = mtod(m, struct rt_msghdr *);
 	rtm->rtm_flags = RTF_DONE | flags;
+	rtm->rtm_priority = prio;
 	rtm->rtm_errno = error;
 	rtm->rtm_tableid = tableid;
 	rtm->rtm_addrs = rtinfo->rti_addrs;
