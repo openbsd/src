@@ -1,4 +1,4 @@
-.Dd $Mdocdate: November 11 2015 $
+.Dd $Mdocdate: March 26 2016 $
 .Dt CRYPTO_SET_LOCKING_CALLBACK 3
 .Os
 .Sh NAME
@@ -15,7 +15,14 @@
 .Nm CRYPTO_set_dynlock_destroy_callback ,
 .Nm CRYPTO_get_new_dynlockid ,
 .Nm CRYPTO_destroy_dynlockid ,
-.Nm CRYPTO_lock
+.Nm CRYPTO_lock ,
+.Nm CRYPTO_w_lock ,
+.Nm CRYPTO_w_unlock ,
+.Nm CRYPTO_r_lock ,
+.Nm CRYPTO_r_unlock ,
+.Nm CRYPTO_add ,
+.Nm CRYPTO_add_lock ,
+.Nm CRYPTO_set_id_callback
 .Nd OpenSSL thread support
 .Sh SYNOPSIS
 .In openssl/crypto.h
