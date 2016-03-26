@@ -1,6 +1,6 @@
-#	$OpenBSD: rc.subr,v 1.106 2016/03/26 09:21:24 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.107 2016/03/26 13:59:36 ajacoutot Exp $
 #
-# Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
+# Copyright (c) 2010, 2011, 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2010, 2011, 2014 Robert Nagy <robert@openbsd.org>
 #
@@ -168,6 +168,8 @@ rc_stop() {
 
 rc_cmd() {
 	local _bg _n
+
+	[ -n "${1}" ] && echo "${_rc_actions}" | grep -qw -- ${1} || _rc_usage
 
 	[ "$(id -u)" -eq 0 ] || \
 		[ X"${rc_usercheck}" != X"NO" -a X"$1" = "Xcheck" ] || \
