@@ -1,4 +1,4 @@
-/*	$OpenBSD: ul.c,v 1.20 2016/01/18 17:34:26 schwarze Exp $	*/
+/*	$OpenBSD: ul.c,v 1.21 2016/03/26 08:59:29 natano Exp $	*/
 /*	$NetBSD: ul.c,v 1.3 1994/12/07 00:28:24 jtc Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #define	SUBSC	004	/* Dim | Ul */
 #define	UNDERL	010	/* Ul */
 #define	BOLD	020	/* Bold */
+#define	INDET	040	/* Indeterminate: either Bold or Ul */
 
 int	must_use_uc, must_overstrike;
 char	*CURS_UP, *CURS_RIGHT, *CURS_LEFT,
@@ -266,6 +267,13 @@ mfilter(FILE *f)
 			if (obuf[col].c_char == L'\0') {
 				obuf[col].c_char = L'_';
 				obuf[col].c_width = 1;
+			} else if (obuf[col].c_char == L'_') {
+				if (obuf[col - 1].c_mode & UNDERL)
+					obuf[col].c_mode |= UNDERL | mode;
+				else if (obuf[col - 1].c_mode & BOLD)
+					obuf[col].c_mode |= BOLD | mode;
+				else
+					obuf[col].c_mode |= INDET | mode;
 			} else
 				obuf[col].c_mode |= UNDERL | mode;
 			/* FALLTHROUGH */
@@ -325,6 +333,16 @@ flushln(void)
 {
 	int lastmode, i;
 	int hadmodes = 0;
+
+	for (i = maxcol; i > 0; i--) {
+		if (obuf[i].c_mode & INDET) {
+			obuf[i].c_mode &= ~INDET;
+			if (i < maxcol && obuf[i + 1].c_mode & BOLD)
+				obuf[i].c_mode |= BOLD;
+			else
+				obuf[i].c_mode |= UNDERL;
+		}
+	}
 
 	lastmode = NORMAL;
 	for (i = 1; i < maxcol; i++) {

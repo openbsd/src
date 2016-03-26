@@ -32,7 +32,6 @@ off_t highest_hilite;		/* Pos of last hilite in file found so far */
 static int curr;		/* Index into linebuf */
 static int column;	/* Printable length, accounting for backspaces, etc. */
 static int overstrike;		/* Next char should overstrike previous char */
-static int last_overstrike = AT_NORMAL;
 static int is_null_line;	/* There is no current line */
 static int lmargin;		/* Left margin */
 static char pendc;
@@ -127,7 +126,6 @@ prewind(void)
 	column = 0;
 	cshift = 0;
 	overstrike = 0;
-	last_overstrike = AT_NORMAL;
 	mbc_buf_len = 0;
 	is_null_line = 0;
 	pendc = '\0';
@@ -515,10 +513,6 @@ store_char(LWCHAR ch, char a, char *rep, off_t pos)
 	char cs;
 	int matches;
 
-	w = (a & (AT_UNDERLINE|AT_BOLD));	/* Pre-use w.  */
-	if (w != AT_NORMAL)
-		last_overstrike = w;
-
 	if (is_hilited(pos, pos+1, 0, &matches)) {
 		/*
 		 * This character should be highlighted.
@@ -808,10 +802,12 @@ do_append(LWCHAR ch, char *rep, off_t pos)
 			if (ch == '_') {
 				if ((a & (AT_BOLD|AT_UNDERLINE)) != AT_NORMAL)
 					a |= (AT_BOLD|AT_UNDERLINE);
-				else if (last_overstrike != AT_NORMAL)
-					a |= last_overstrike;
-				else
+				else if (curr > 0 && attr[curr - 1] & AT_UNDERLINE)
+					a |= AT_UNDERLINE;
+				else if (curr > 0 && attr[curr - 1] & AT_BOLD)
 					a |= AT_BOLD;
+				else
+					a |= AT_INDET;
 			} else {
 				a |= AT_BOLD;
 			}
@@ -825,10 +821,13 @@ do_append(LWCHAR ch, char *rep, off_t pos)
 		/* Else we replace prev_ch, but we keep its attributes.  */
 	} else if (overstrike < 0) {
 		if (is_composing_char(ch) ||
-		    is_combining_char(get_wchar(linebuf + curr), ch))
+		    is_combining_char(get_wchar(linebuf + curr), ch)) {
 			/* Continuation of the same overstrike.  */
-			a = last_overstrike;
-		else
+			if (curr > 0)
+				a = attr[curr - 1] & (AT_UNDERLINE | AT_BOLD);
+			else
+				a = AT_NORMAL;
+		} else
 			overstrike = 0;
 	}
 
@@ -894,6 +893,8 @@ pflushmbc(void)
 void
 pdone(int endline, int forw)
 {
+	int i;
+
 	(void) pflushmbc();
 
 	if (pendc && (pendc != '\r' || !endline))
@@ -903,6 +904,16 @@ pdone(int endline, int forw)
 		 * (that is, discard the CR in a CR/LF sequence).
 		 */
 		(void) do_append(pendc, NULL, pendpos);
+
+	for (i = curr - 1; i >= 0; i--) {
+		if (attr[i] & AT_INDET) {
+			attr[i] &= ~AT_INDET;
+			if (i < curr - 1 && attr[i + 1] & AT_BOLD)
+				attr[i] |= AT_BOLD;
+			else
+				attr[i] |= AT_UNDERLINE;
+		}
+	}
 
 	/*
 	 * Make sure we've shifted the line, if we need to.

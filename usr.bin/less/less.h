@@ -149,6 +149,7 @@ struct textlist {
 #define	AT_ANSI		(1 << 4)  /* Content-supplied "ANSI" escape sequence */
 #define	AT_BINARY	(1 << 5)  /* LESS*BINFMT representation */
 #define	AT_HILITE	(1 << 6)  /* Internal highlights (e.g., for search) */
+#define	AT_INDET	(1 << 7)  /* Indeterminate: either bold or underline */
 
 #define	CONTROL(c)	((c)&037)
 
