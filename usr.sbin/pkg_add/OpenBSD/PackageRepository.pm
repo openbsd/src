@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.119 2016/03/18 11:33:40 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.120 2016/03/26 22:04:08 sthen Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -579,7 +579,7 @@ our %distant = ();
 
 sub drop_privileges_and_setup_env
 {
-	my $state = shift;
+	my $self = shift;
 	my $user = '_pkgfetch';
 	# we can't cache anything, we happen after the fork, 
 	# right before exec
@@ -589,7 +589,7 @@ sub drop_privileges_and_setup_env
 		$< = $uid;
 		$> = $uid;
 	} else {
-		$state->fatal("Couldn't change identity: can't find #1", $user);
+		$self->{state}->fatal("Couldn't change identity: can't find #1 user", $user);
 	}
 
 	# create sanitized env for ftp
