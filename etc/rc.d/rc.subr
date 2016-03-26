@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.105 2015/12/21 10:18:05 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.106 2016/03/26 09:21:24 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -25,10 +25,11 @@ _rc_err() {
 }
 
 _rc_not_supported() {
-	local _a _enotsup
+	local _a _enotsup _what=${1}
 	for _a in ${_rc_actions}; do
-		if [ "${1}" == "${_a}" ]; then
-			eval _enotsup=\${rc_$1}
+		[ "${_what}" == "restart" ] && _what="stop"
+		if [ "${_what}" == "${_a}" ]; then
+			eval _enotsup=\${rc_${_what}}
 			break
 		fi
 	done
@@ -172,10 +173,6 @@ rc_cmd() {
 		[ X"${rc_usercheck}" != X"NO" -a X"$1" = "Xcheck" ] || \
 		_rc_err "$0: need root privileges"
 
-	if _rc_not_supported start || _rc_not_supported stop; then
-		rc_restart=NO
-	fi
-
 	if _rc_not_supported $1; then
 		[ -n "${INRC}" ] && exit 1
 		_rc_err "$0: $1 is not supported"
@@ -230,7 +227,7 @@ rc_cmd() {
 		_rc_exit ok
 		;;
 	restart)
-		$0 ${_RC_DEBUG} ${_RC_FORCE} stop &&
+		$0 ${_RC_DEBUG} ${_RC_FORCE} stop && \
 			$0 ${_RC_DEBUG} ${_RC_FORCE} start
 		;;
 	*)
