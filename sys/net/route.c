@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.296 2016/03/07 18:44:00 naddy Exp $	*/
+/*	$OpenBSD: route.c,v 1.297 2016/03/26 21:41:18 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -480,7 +480,8 @@ rt_sendmsg(struct rtentry *rt, int cmd, u_int rtableid)
 	memset(&info, 0, sizeof(info));
 	info.rti_info[RTAX_DST] = rt_key(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-	info.rti_info[RTAX_NETMASK] = rt_plen2mask(rt, &sa_mask);
+	if (!ISSET(rt->rt_flags, RTF_HOST))
+		info.rti_info[RTAX_NETMASK] = rt_plen2mask(rt, &sa_mask);
 	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(rt->rt_labelid, &sa_rl);
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp != NULL) {
