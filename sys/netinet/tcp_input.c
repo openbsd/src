@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.315 2016/03/21 15:52:27 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.316 2016/03/27 19:19:01 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3260,40 +3260,46 @@ tcp_mss_adv(struct mbuf *m, int af)
 int	tcp_syn_cache_size = TCP_SYN_HASH_SIZE;
 int	tcp_syn_cache_limit = TCP_SYN_HASH_SIZE*TCP_SYN_BUCKET_SIZE;
 int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
-int	tcp_syn_cache_count;
-struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
-u_int32_t tcp_syn_hash[5];
+int	tcp_syn_use_limit = 100000;
 
-#define SYN_HASH(sa, sp, dp) \
-	(((sa)->s_addr ^ tcp_syn_hash[0]) *				\
-	(((((u_int32_t)(dp))<<16) + ((u_int32_t)(sp))) ^ tcp_syn_hash[4]))
+struct syn_cache_set {
+        struct		syn_cache_head scs_buckethead[TCP_SYN_HASH_SIZE];
+        int		scs_count;
+        int		scs_use;
+        u_int32_t	scs_random[5];
+} tcp_syn_cache[2];
+int tcp_syn_cache_active;
+
+#define SYN_HASH(sa, sp, dp, rand) \
+	(((sa)->s_addr ^ (rand)[0]) *				\
+	(((((u_int32_t)(dp))<<16) + ((u_int32_t)(sp))) ^ (rand)[4]))
 #ifndef INET6
-#define	SYN_HASHALL(hash, src, dst) \
+#define	SYN_HASHALL(hash, src, dst, rand) \
 do {									\
 	hash = SYN_HASH(&satosin(src)->sin_addr,			\
 		satosin(src)->sin_port,					\
-		satosin(dst)->sin_port);				\
+		satosin(dst)->sin_port, (rand));			\
 } while (/*CONSTCOND*/ 0)
 #else
-#define SYN_HASH6(sa, sp, dp) \
-	(((sa)->s6_addr32[0] ^ tcp_syn_hash[0]) *			\
-	((sa)->s6_addr32[1] ^ tcp_syn_hash[1]) *			\
-	((sa)->s6_addr32[2] ^ tcp_syn_hash[2]) *			\
-	((sa)->s6_addr32[3] ^ tcp_syn_hash[3]) *			\
-	(((((u_int32_t)(dp))<<16) + ((u_int32_t)(sp))) ^ tcp_syn_hash[4]))
+#define SYN_HASH6(sa, sp, dp, rand) \
+	(((sa)->s6_addr32[0] ^ (rand)[0]) *			\
+	((sa)->s6_addr32[1] ^ (rand)[1]) *			\
+	((sa)->s6_addr32[2] ^ (rand)[2]) *			\
+	((sa)->s6_addr32[3] ^ (rand)[3]) *			\
+	(((((u_int32_t)(dp))<<16) + ((u_int32_t)(sp))) ^ (rand)[4]))
 
-#define SYN_HASHALL(hash, src, dst) \
+#define SYN_HASHALL(hash, src, dst, rand) \
 do {									\
 	switch ((src)->sa_family) {					\
 	case AF_INET:							\
 		hash = SYN_HASH(&satosin(src)->sin_addr,		\
 			satosin(src)->sin_port,				\
-			satosin(dst)->sin_port);			\
+			satosin(dst)->sin_port, (rand));		\
 		break;							\
 	case AF_INET6:							\
 		hash = SYN_HASH6(&satosin6(src)->sin6_addr,		\
 			satosin6(src)->sin6_port,			\
-			satosin6(dst)->sin6_port);			\
+			satosin6(dst)->sin6_port, (rand));		\
 		break;							\
 	default:							\
 		hash = 0;						\
@@ -3305,13 +3311,12 @@ void
 syn_cache_rm(struct syn_cache *sc)
 {
 	sc->sc_flags |= SCF_DEAD;
-	TAILQ_REMOVE(&tcp_syn_cache[sc->sc_bucketidx].sch_bucket,
-	    sc, sc_bucketq);
+	TAILQ_REMOVE(&sc->sc_buckethead->sch_bucket, sc, sc_bucketq);
 	sc->sc_tp = NULL;
 	LIST_REMOVE(sc, sc_tpq);
-	tcp_syn_cache[sc->sc_bucketidx].sch_length--;
+	sc->sc_buckethead->sch_length--;
 	timeout_del(&sc->sc_timer);
-	tcp_syn_cache_count--;
+	sc->sc_set->scs_count--;
 }
 
 void
@@ -3351,8 +3356,10 @@ syn_cache_init(void)
 	int i;
 
 	/* Initialize the hash buckets. */
-	for (i = 0; i < tcp_syn_cache_size; i++)
-		TAILQ_INIT(&tcp_syn_cache[i].sch_bucket);
+	for (i = 0; i < tcp_syn_cache_size; i++) {
+		TAILQ_INIT(&tcp_syn_cache[0].scs_buckethead[i].sch_bucket);
+		TAILQ_INIT(&tcp_syn_cache[1].scs_buckethead[i].sch_bucket);
+	}
 
 	/* Initialize the syn cache pool. */
 	pool_init(&syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0,
@@ -3363,28 +3370,33 @@ syn_cache_init(void)
 void
 syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 {
+	struct syn_cache_set *set = &tcp_syn_cache[tcp_syn_cache_active];
 	struct syn_cache_head *scp;
 	struct syn_cache *sc2;
 	int s;
 
+	s = splsoftnet();
+
 	/*
 	 * If there are no entries in the hash table, reinitialize
-	 * the hash secrets.
+	 * the hash secrets.  To avoid useless cache swaps and
+	 * and reinitialization, use it until the limit is reached.
 	 */
-	if (tcp_syn_cache_count == 0) {
-		arc4random_buf(tcp_syn_hash, sizeof(tcp_syn_hash));
+	if (set->scs_count == 0 && set->scs_use <= 0) {
+		arc4random_buf(set->scs_random, sizeof(set->scs_random));
+		set->scs_use = tcp_syn_use_limit;
 		tcpstat.tcps_sc_seedrandom++;
 	}
 
-	SYN_HASHALL(sc->sc_hash, &sc->sc_src.sa, &sc->sc_dst.sa);
-	sc->sc_bucketidx = sc->sc_hash % tcp_syn_cache_size;
-	scp = &tcp_syn_cache[sc->sc_bucketidx];
+	SYN_HASHALL(sc->sc_hash, &sc->sc_src.sa, &sc->sc_dst.sa,
+	    set->scs_random);
+	scp = &set->scs_buckethead[sc->sc_hash % tcp_syn_cache_size];
+	sc->sc_buckethead = scp;
 
 	/*
 	 * Make sure that we don't overflow the per-bucket
 	 * limit or the total cache size limit.
 	 */
-	s = splsoftnet();
 	if (scp->sch_length >= tcp_syn_bucket_limit) {
 		tcpstat.tcps_sc_bucketoverflow++;
 		/*
@@ -3402,7 +3414,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 #endif
 		syn_cache_rm(sc2);
 		syn_cache_put(sc2);
-	} else if (tcp_syn_cache_count >= tcp_syn_cache_limit) {
+	} else if (set->scs_count >= tcp_syn_cache_limit) {
 		struct syn_cache_head *scp2, *sce;
 
 		tcpstat.tcps_sc_overflowed++;
@@ -3416,10 +3428,10 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 		 */
 		scp2 = scp;
 		if (TAILQ_EMPTY(&scp2->sch_bucket)) {
-			sce = &tcp_syn_cache[tcp_syn_cache_size];
+			sce = &set->scs_buckethead[tcp_syn_cache_size];
 			for (++scp2; scp2 != scp; scp2++) {
 				if (scp2 >= sce)
-					scp2 = &tcp_syn_cache[0];
+					scp2 = &set->scs_buckethead[0];
 				if (! TAILQ_EMPTY(&scp2->sch_bucket))
 					break;
 			}
@@ -3451,9 +3463,20 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	/* Put it into the bucket. */
 	TAILQ_INSERT_TAIL(&scp->sch_bucket, sc, sc_bucketq);
 	scp->sch_length++;
-	tcp_syn_cache_count++;
+	sc->sc_set = set;
+	set->scs_count++;
+	set->scs_use--;
 
 	tcpstat.tcps_sc_added++;
+
+	/*
+	 * If the active cache has exceeded its use limit and
+	 * the passive syn cache is empty, exchange their roles.
+	 */
+	if (set->scs_use <= 0 &&
+	    tcp_syn_cache[!tcp_syn_cache_active].scs_count == 0)
+		tcp_syn_cache_active = !tcp_syn_cache_active;
+
 	splx(s);
 }
 
@@ -3548,25 +3571,31 @@ struct syn_cache *
 syn_cache_lookup(struct sockaddr *src, struct sockaddr *dst,
     struct syn_cache_head **headp, u_int rtableid)
 {
+	struct syn_cache_set *sets[2];
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
 	u_int32_t hash;
+	int i;
 
 	splsoftassert(IPL_SOFTNET);
 
-	if (tcp_syn_cache_count == 0)
-		return (NULL);
-
-	SYN_HASHALL(hash, src, dst);
-	scp = &tcp_syn_cache[hash % tcp_syn_cache_size];
-	*headp = scp;
-	TAILQ_FOREACH(sc, &scp->sch_bucket, sc_bucketq) {
-		if (sc->sc_hash != hash)
+	/* Check the active cache first, the passive cache is likely emtpy. */
+	sets[0] = &tcp_syn_cache[tcp_syn_cache_active];
+	sets[1] = &tcp_syn_cache[!tcp_syn_cache_active];
+	for (i = 0; i < 2; i++) {
+		if (sets[i]->scs_count == 0)
 			continue;
-		if (!bcmp(&sc->sc_src, src, src->sa_len) &&
-		    !bcmp(&sc->sc_dst, dst, dst->sa_len) &&
-		    rtable_l2(rtableid) == rtable_l2(sc->sc_rtableid))
-			return (sc);
+		SYN_HASHALL(hash, src, dst, sets[i]->scs_random);
+		scp = &sets[i]->scs_buckethead[hash % tcp_syn_cache_size];
+		*headp = scp;
+		TAILQ_FOREACH(sc, &scp->sch_bucket, sc_bucketq) {
+			if (sc->sc_hash != hash)
+				continue;
+			if (!bcmp(&sc->sc_src, src, src->sa_len) &&
+			    !bcmp(&sc->sc_dst, dst, dst->sa_len) &&
+			    rtable_l2(rtableid) == rtable_l2(sc->sc_rtableid))
+				return (sc);
+		}
 	}
 	return (NULL);
 }

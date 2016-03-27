@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.110 2016/03/21 15:52:27 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.111 2016/03/27 19:19:01 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -271,7 +271,8 @@ struct syn_cache {
 #define sc_route6	sc_route_u.route6
 #endif
 	long sc_win;				/* advertised window */
-	int sc_bucketidx;			/* our bucket index */
+	struct syn_cache_head *sc_buckethead;	/* our bucket index */
+	struct syn_cache_set *sc_set;		/* our syn cache set */
 	u_int32_t sc_hash;
 	u_int32_t sc_timestamp;			/* timestamp from SYN */
 	u_int32_t sc_modulate;			/* our timestamp modulator */
