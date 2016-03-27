@@ -1,7 +1,7 @@
 /*
  * Musik
  *
- * $OpenBSD: calendar.musik,v 1.1 2015/10/23 09:32:14 tedu Exp $
+ * $OpenBSD: calendar.musik,v 1.2 2016/03/27 18:15:51 tim Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_musik_
@@ -19,7 +19,7 @@ LANG=de_DE.UTF-8
 03/21	Johann Sebastian Bach in Eisenach geboren, 1685
 03/25	Bela Bartok in Nagyszentmiklos geboren, 1881
 03/26	Ludwig van Beethoven in Wien gestorben, 1827
-03/28	Sergej Rachmaninow in Beverley Hills gestorben, 1943
+03/28	Sergej Rachmaninow in Beverly Hills gestorben, 1943
 03/29	Carl Orff in München gestorben, 1982
 03/31	Joseph Haydn in Rohrau geboren, 1732
 04/01	Sergej Rachmaninow in Oneg geboren, 1873

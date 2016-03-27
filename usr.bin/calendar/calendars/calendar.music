@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.33 2016/01/11 07:46:37 sthen Exp $
+ * $OpenBSD: calendar.music,v 1.34 2016/03/27 18:15:51 tim Exp $
  */
 
 #ifndef _calendar_music_
@@ -142,7 +142,7 @@
 03/26	Ludwig van Beethoven dies in Vienna, Austria, 1827
 03/26	Emerson, Lake, and Palmer record "Pictures at an Exhibition" live, 1971
 03/27	Ferde Grofe is born in New York City, 1892
-03/28	Sergei Rachmaninov dies in Beverley Hills, California, 1943
+03/28	Sergei Rachmaninov dies in Beverly Hills, California, 1943
 03/28	Modest Mussorgsky dies, 1881
 03/29	Dr. Hook gets a group picture on the cover of "Rolling Stone", 1973
 03/29	Carl Orff dies in Munich, Germany, 1982
