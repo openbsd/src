@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.129 2016/01/27 21:48:34 reyk Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.130 2016/03/27 11:16:12 krw Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -265,11 +265,6 @@ struct ctl_show_sensor {
 	double		 correction;
 };
 
-enum blockmodes {
-	BM_NORMAL,
-	BM_NONBLOCK
-};
-
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	entry;
 	struct imsgbuf		ibuf;
@@ -395,7 +390,7 @@ int			 control_accept(int);
 struct ctl_conn		*control_connbyfd(int);
 int			 control_close(int);
 int			 control_dispatch_msg(struct pollfd *, u_int *);
-void			 session_socket_blockmode(int, enum blockmodes);
+void			 session_socket_nonblockmode(int);
 void			 build_show_status(struct ctl_show_status *);
 void			 build_show_peer(struct ctl_show_peer *,
 			     struct ntp_peer *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.9 2015/12/05 13:12:16 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.10 2016/03/27 11:16:12 krw Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -77,7 +77,7 @@ control_init(char *path)
 		return (-1);
 	}
 
-	session_socket_blockmode(fd, BM_NONBLOCK);
+	session_socket_nonblockmode(fd);
 
 	return (fd);
 }
@@ -122,7 +122,7 @@ control_accept(int listenfd)
 		return (0);
 	}
 
-	session_socket_blockmode(connfd, BM_NONBLOCK);
+	session_socket_nonblockmode(connfd);
 
 	if ((ctl_conn = calloc(1, sizeof(struct ctl_conn))) == NULL) {
 		log_warn("control_accept");
@@ -273,17 +273,14 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 }
 
 void
-session_socket_blockmode(int fd, enum blockmodes bm)
+session_socket_nonblockmode(int fd)
 {
 	int	flags;
 
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
+	if ((flags = fcntl(fd, F_GETFL)) == -1)
 		fatal("fcntl F_GETFL");
 
-	if (bm == BM_NONBLOCK)
-		flags |= O_NONBLOCK;
-	else
-		flags &= ~O_NONBLOCK;
+	flags |= O_NONBLOCK;
 
 	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
 		fatal("fcntl F_SETFL");
