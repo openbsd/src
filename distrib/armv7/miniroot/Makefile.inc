@@ -40,7 +40,7 @@ ${IMAGE}: rd_setup do_files rd_teardown
 
 do_files:
 .if ${PLATFORM} == "OMAP"
-	cp /usr/mdec/${BOARD}/mlo ${MOUNT_POINT}/mlo
+	cp /usr/mdec/${BOARD}/MLO ${MOUNT_POINT}/MLO
 	echo "bootcmd=mmc rescan ; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; fatload mmc \$${mmcdev} \$${loadaddr} bsd.umg ; bootm \$${loadaddr} ;\nuenvcmd=boot" > ${MOUNT_POINT}/uenv.txt
 	cp /usr/mdec/${BOARD}/u-boot.* ${MOUNT_POINT}/
 	mkdir ${MOUNT_POINT}/u-boots

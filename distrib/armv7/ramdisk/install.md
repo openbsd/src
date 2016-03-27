@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.24 2016/02/08 17:28:08 krw Exp $
+#	$OpenBSD: install.md,v 1.25 2016/03/27 00:29:09 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -91,11 +91,11 @@ md_installboot() {
 	if [[ ${MDPLAT} == "OMAP" ]]; then
 
 		if [[ -n $BEAGLE ]]; then
-			cp /mnt/usr/mdec/beagle/{mlo,u-boot.img} /mnt/mnt/
+			cp /mnt/usr/mdec/beagle/{MLO,u-boot.img} /mnt/mnt/
 		elif [[ -n $BEAGLEBONE ]]; then
-			cp /mnt/usr/mdec/am335x/{mlo,u-boot.img} /mnt/mnt/
+			cp /mnt/usr/mdec/am335x/{MLO,u-boot.img} /mnt/mnt/
 		elif [[ -n $PANDA ]]; then
-			cp /mnt/usr/mdec/panda/{mlo,u-boot.img} /mnt/mnt/
+			cp /mnt/usr/mdec/panda/{MLO,u-boot.img} /mnt/mnt/
 		fi
 		cat > /mnt/mnt/uenv.txt<<__EOT
 bootcmd=mmc rescan ; setenv loadaddr ${LOADADDR}; setenv bootargs sd0i:/bsd.umg ; fatload mmc \${mmcdev} \${loadaddr} bsd.umg ; bootm \${loadaddr} ;
