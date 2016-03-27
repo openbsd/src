@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.21 2015/10/09 21:24:05 tobias Exp $	*/
+/*	$OpenBSD: ed.h,v 1.22 2016/03/27 00:43:38 mmcc Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -30,15 +30,9 @@
  *	@(#)ed.h,v 1.5 1994/02/01 00:34:39 alm Exp
  */
 
-#include <sys/types.h>
-#include <errno.h>
 #include <limits.h>
 #include <regex.h>
 #include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 #define ERR		(-2)
 #define EMOD		(-3)
