@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.66 2015/05/02 18:13:42 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.67 2016/03/27 11:06:19 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -122,8 +122,6 @@ int	aac_sync_fib(struct aac_softc *, u_int32_t, u_int32_t,
 void	aac_scsi_cmd(struct scsi_xfer *);
 void	aac_startio(struct aac_softc *);
 void	aac_startup(struct aac_softc *);
-void	aac_add_container(struct aac_softc *, struct aac_mntinforesp *, int);
-void	aac_shutdown(void *);
 int	aac_sync_command(struct aac_softc *, u_int32_t, u_int32_t,
     u_int32_t, u_int32_t, u_int32_t, u_int32_t *);
 
@@ -345,9 +343,6 @@ aac_startup(struct aac_softc *sc)
 		/* XXX Need to check if count changed */
 		count = mir->MntRespCount;
 
-#if 0
-		aac_add_container(sc, mir, 0);
-#else
 		/*
 		 * Check container volume type for validity.  Note
 		 * that many of the possible types may never show up.
@@ -383,20 +378,11 @@ aac_startup(struct aac_softc *sc)
 
 			/* XXX Save the name too for use in IDENTIFY later */
 		}
-#endif
 
 		i++;
 	} while ((i < count) && (i < AAC_MAX_CONTAINERS));
 
 	aac_release_sync_fib(sc);
-
-#if 0
-	/* poke the bus to actually attach the child devices */
-	if (bus_generic_attach(sc->aac_dev))
-		printf("%s: bus_generic_attach failed\n",
-		       sc->aac_dev.dv_xname);
-#endif
-
 
 	/* mark the controller up */
 	sc->aac_state &= ~AAC_STATE_SUSPEND;
@@ -404,257 +390,6 @@ aac_startup(struct aac_softc *sc)
 	/* enable interrupts now */
 	AAC_UNMASK_INTERRUPTS(sc);
 }
-
-#if 0
-/*
- * Create a device to respresent a new container
- */
-void
-aac_add_container(struct aac_softc *sc, struct aac_mntinforesp *mir, int f)
-{
-	struct aac_container *co;
-	device_t child;
-
-	/* 
-	 * Check container volume type for validity.  Note that many of
-	 * the possible types may never show up.
-	 */
-	if ((mir->Status == ST_OK) && (mir->MntTable[0].VolType != CT_NONE)) {
-		co = (struct aac_container *)malloc(sizeof *co, M_DEVBUF,
-		       M_NOWAIT);
-		if (co == NULL)
-			panic("Out of memory?!");
-		bzero(co, sizeof *co);
-		AAC_DPRINTF(AAC_D_MISC,
-			    ("%s: id %x  name '%.16s'  size %u  type %d\n", 
-			     sc->aac_dev.dv_xname,
-			     mir->MntTable[0].ObjectId,
-			     mir->MntTable[0].FileSystemName,
-			     mir->MntTable[0].Capacity,
-			     mir->MntTable[0].VolType);
-	
-		if ((child = device_add_child(sc->aac_dev, "aacd", -1)) == NULL)
-			printf("%s: device_add_child failed\n",
-			       sc->aac_dev.dv_xname);
-		else
-			device_set_ivars(child, co);
-		device_set_desc(child, aac_describe_code(aac_container_types,
-				mir->MntTable[0].VolType));
-		co->co_disk = child;
-		co->co_found = f;
-		bcopy(&mir->MntTable[0], &co->co_mntobj,
-		      sizeof(struct aac_mntobj));
-		AAC_LOCK_ACQUIRE(&sc->aac_container_lock);
-		TAILQ_INSERT_TAIL(&sc->aac_container_tqh, co, co_link);
-		AAC_LOCK_RELEASE(&sc->aac_container_lock);
-	}
-}
-#endif
-
-#if 0
-/*
- * Free all of the resources associated with (sc)
- *
- * Should not be called if the controller is active.
- */
-void
-aac_free(struct aac_softc *sc)
-{
-
-	debug_called(1);
-
-	/* remove the control device */
-	if (sc->aac_dev_t != NULL)
-		destroy_dev(sc->aac_dev_t);
-
-	/* throw away any FIB buffers, discard the FIB DMA tag */
-	aac_free_commands(sc);
-	if (sc->aac_fib_dmat)
-		bus_dma_tag_destroy(sc->aac_fib_dmat);
-
-	free(sc->aac_commands, M_AACBUF, 0);
-
-	/* destroy the common area */
-	if (sc->aac_common) {
-		bus_dmamap_unload(sc->aac_common_dmat, sc->aac_common_dmamap);
-		bus_dmamem_free(sc->aac_common_dmat, sc->aac_common,
-				sc->aac_common_dmamap);
-	}
-	if (sc->aac_common_dmat)
-		bus_dma_tag_destroy(sc->aac_common_dmat);
-
-	/* disconnect the interrupt handler */
-	if (sc->aac_intr)
-		bus_teardown_intr(sc->aac_dev, sc->aac_irq, sc->aac_intr);
-	if (sc->aac_irq != NULL)
-		bus_release_resource(sc->aac_dev, SYS_RES_IRQ, sc->aac_irq_rid,
-				     sc->aac_irq);
-
-	/* destroy data-transfer DMA tag */
-	if (sc->aac_buffer_dmat)
-		bus_dma_tag_destroy(sc->aac_buffer_dmat);
-
-	/* destroy the parent DMA tag */
-	if (sc->aac_parent_dmat)
-		bus_dma_tag_destroy(sc->aac_parent_dmat);
-
-	/* release the register window mapping */
-	if (sc->aac_regs_resource != NULL)
-		bus_release_resource(sc->aac_dev, SYS_RES_MEMORY,
-				     sc->aac_regs_rid, sc->aac_regs_resource);
-}
-
-/*
- * Disconnect from the controller completely, in preparation for unload.
- */
-int
-aac_detach(device_t dev)
-{
-	struct aac_softc *sc;
-	struct aac_container *co;
-	struct aac_sim	*sim;
-	int error;
-
-	debug_called(1);
-
-	sc = device_get_softc(dev);
-
-	if (sc->aac_state & AAC_STATE_OPEN)
-		return(EBUSY);
-
-	/* Remove the child containers */
-	while ((co = TAILQ_FIRST(&sc->aac_container_tqh)) != NULL) {
-		error = device_delete_child(dev, co->co_disk);
-		if (error)
-			return (error);
-		TAILQ_REMOVE(&sc->aac_container_tqh, co, co_link);
-		free(co, M_AACBUF, 0);
-	}
-
-	/* Remove the CAM SIMs */
-	while ((sim = TAILQ_FIRST(&sc->aac_sim_tqh)) != NULL) {
-		TAILQ_REMOVE(&sc->aac_sim_tqh, sim, sim_link);
-		error = device_delete_child(dev, sim->sim_dev);
-		if (error)
-			return (error);
-		free(sim, M_AACBUF, 0);
-	}
-
-	if (sc->aifflags & AAC_AIFFLAGS_RUNNING) {
-		sc->aifflags |= AAC_AIFFLAGS_EXIT;
-		wakeup(sc->aifthread);
-		tsleep(sc->aac_dev, PUSER | PCATCH, "aacdch", 30 * hz);
-	}
-
-	if (sc->aifflags & AAC_AIFFLAGS_RUNNING)
-		panic("Cannot shutdown AIF thread");
-
-	if ((error = aac_shutdown(dev)))
-		return(error);
-
-	EVENTHANDLER_DEREGISTER(shutdown_final, sc->eh);
-
-	aac_free(sc);
-
-	return(0);
-}
-
-/*
- * Bring the controller down to a dormant state and detach all child devices.
- *
- * This function is called before detach or system shutdown.
- *
- * Note that we can assume that the bioq on the controller is empty, as we won't
- * allow shutdown if any device is open.
- */
-int
-aac_shutdown(device_t dev)
-{
-	struct aac_softc *sc;
-	struct aac_fib *fib;
-	struct aac_close_command *cc;
-
-	debug_called(1);
-
-	sc = device_get_softc(dev);
-
-	sc->aac_state |= AAC_STATE_SUSPEND;
-
-	/* 
-	 * Send a Container shutdown followed by a HostShutdown FIB to the
-	 * controller to convince it that we don't want to talk to it anymore.
-	 * We've been closed and all I/O completed already
-	 */
-	device_printf(sc->aac_dev, "shutting down controller...");
-
-	aac_alloc_sync_fib(sc, &fib, AAC_SYNC_LOCK_FORCE);
-	cc = (struct aac_close_command *)&fib->data[0];
-
-	bzero(cc, sizeof(struct aac_close_command));
-	cc->Command = VM_CloseAll;
-	cc->ContainerId = 0xffffffff;
-	if (aac_sync_fib(sc, ContainerCommand, 0, fib,
-	    sizeof(struct aac_close_command)))
-		printf("FAILED.\n");
-	else
-		printf("done\n");
-	else {
-		fib->data[0] = 0;
-		/*
-		 * XXX Issuing this command to the controller makes it
-		 * shut down but also keeps it from coming back up
-		 * without a reset of the PCI bus.  This is not
-		 * desirable if you are just unloading the driver
-		 * module with the intent to reload it later.
-		 */
-		if (aac_sync_fib(sc, FsaHostShutdown, AAC_FIBSTATE_SHUTDOWN,
-		    fib, 1)) {
-			printf("FAILED.\n");
-		} else {
-			printf("done.\n");
-		}
-	}
-
-	AAC_MASK_INTERRUPTS(sc);
-
-	return(0);
-}
-
-/*
- * Bring the controller to a quiescent state, ready for system suspend.
- */
-int
-aac_suspend(device_t dev)
-{
-	struct aac_softc *sc;
-
-	debug_called(1);
-
-	sc = device_get_softc(dev);
-
-	sc->aac_state |= AAC_STATE_SUSPEND;
-	
-	AAC_MASK_INTERRUPTS(sc);
-	return(0);
-}
-
-/*
- * Bring the controller back to a state ready for operation.
- */
-int
-aac_resume(device_t dev)
-{
-	struct aac_softc *sc;
-
-	debug_called(1);
-
-	sc = device_get_softc(dev);
-
-	sc->aac_state &= ~AAC_STATE_SUSPEND;
-	AAC_UNMASK_INTERRUPTS(sc);
-	return(0);
-}
-#endif
 
 /*
  * Take an interrupt.
@@ -905,14 +640,6 @@ aac_command_thread(void *arg)
 	}
 	sc->aifflags &= ~AAC_AIFFLAGS_RUNNING;
 	AAC_LOCK_RELEASE(&sc->aac_io_lock);
-
-#if 0
-	/*
-	 * if we ever implement detach, we should have detach tsleep
-	 * to wait for this thread to finish
-	 */
-	wakeup(sc->aac_dev);
-#endif
 
 	AAC_DPRINTF(AAC_D_THREAD, ("%s: aac_command_thread: exiting\n",
 	    sc->aac_dev.dv_xname));
@@ -1732,16 +1459,6 @@ aac_sync_command(struct aac_softc *sc, u_int32_t command, u_int32_t arg0,
 	/* then set it to signal the adapter */
 	AAC_QNOTIFY(sc, AAC_DB_SYNC_COMMAND);
 
-#if 0
-	/* spin waiting for the command to complete */
-	then = time_uptime;
-	do {
-		if (time_uptime > (then + AAC_IMMEDIATE_TIMEOUT)) {
-			AAC_DPRINTF(AAC_D_MISC, ("timed out"));
-			return(EIO);
-		}
-	} while (!(AAC_GET_ISTATUS(sc) & AAC_DB_SYNC_COMMAND));
-#else
 	DELAY(AAC_SYNC_DELAY);
 
 	/* spin waiting for the command to complete */
@@ -1761,7 +1478,6 @@ aac_sync_command(struct aac_softc *sc, u_int32_t command, u_int32_t arg0,
 		printf("aac_sync_command: failed, reason=%#x\n", reason);
 		return (EIO);
 	}
-#endif
 
 	/* clear the completion flag */
 	AAC_CLEAR_ISTATUS(sc, AAC_DB_SYNC_COMMAND);
@@ -2658,27 +2374,6 @@ aac_describe_controller(struct aac_softc *sc)
 	       (u_int32_t)(info->SerialNumber & 0xffffff));
 
 	aac_release_sync_fib(sc);
-
-#if 0
-	if (1 || bootverbose) {
-		device_printf(sc->aac_dev, "Supported Options=%b\n",
-			      sc->supported_options,
-			      "\20"
-			      "\1SNAPSHOT"
-			      "\2CLUSTERS"
-			      "\3WCACHE"
-			      "\4DATA64"
-			      "\5HOSTTIME"
-			      "\6RAID50"
-			      "\7WINDOW4GB"
-			      "\10SCSIUPGD"
-			      "\11SOFTERR"
-			      "\12NORECOND"
-			      "\13SGMAP64"
-			      "\14ALARM"
-			      "\15NONDASD");
-	}
-#endif
 }
 
 /*
