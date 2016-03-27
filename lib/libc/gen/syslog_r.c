@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog_r.c,v 1.14 2016/03/21 22:41:28 bluhm Exp $ */
+/*	$OpenBSD: syslog_r.c,v 1.15 2016/03/27 16:28:56 chl Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -72,7 +72,7 @@ __vsyslog_r(int pri, struct syslog_data *data,
 {
 	int cnt;
 	char ch, *p, *t;
-	int fd, saved_errno;
+	int saved_errno;
 #define	TBUF_LEN	(8192+1)
 #define	FMT_LEN		1024
 	char *conp = NULL, *stdp = NULL, tbuf[TBUF_LEN], fmt_cpy[FMT_LEN];
