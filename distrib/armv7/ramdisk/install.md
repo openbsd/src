@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.25 2016/03/27 00:29:09 jsg Exp $
+#	$OpenBSD: install.md,v 1.26 2016/03/27 00:40:38 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ __EOT
 			dd if=/mnt/usr/mdec/cubox/SPL \
 			    of=/dev/${_disk}c bs=1024 seek=1 >/dev/null
 			dd if=/mnt/usr/mdec/cubox/u-boot.img \
-			    of=/dev/${_disk}c bs=1024 seek=42 >/dev/null
+			    of=/dev/${_disk}c bs=1024 seek=69 >/dev/null
 		elif [[ -n $NITROGEN ]]; then
 			cat > /tmp/6x_bootscript.scr<<__EOT
 	; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; for dtype in sata mmc ; do for disk in 0 1 ; do \${dtype} dev \${disk} ; for fs in fat ext2 ; do if \${fs}load \${dtype} \${disk}:1 \${loadaddr} bsd.umg ; then bootm \${loadaddr} ; fi ; done; done; done; echo; echo failed to load bsd.umg 
