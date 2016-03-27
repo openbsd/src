@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.252 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.253 2016/03/27 11:39:37 bluhm Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -437,7 +437,7 @@ dounmount(struct mount *mp, int flags, struct proc *p, struct vnode *olddp)
  	    (flags & MNT_FORCE))
  		error = VFS_UNMOUNT(mp, flags, p);
 
- 	if (error && error != EIO && !(flags & MNT_DOOMED)) {
+ 	if (error && !(flags & MNT_DOOMED)) {
  		if ((mp->mnt_flag & MNT_RDONLY) == 0 && hadsyncer)
  			(void) vfs_allocate_syncvnode(mp);
 		vfs_unbusy(mp);

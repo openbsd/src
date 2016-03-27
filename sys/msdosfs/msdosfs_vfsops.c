@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.75 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.76 2016/03/27 11:39:37 bluhm Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -626,14 +626,14 @@ msdosfs_unmount(struct mount *mp, int mntflags,struct proc *p)
 	vprint("msdosfs_umount(): just before calling VOP_CLOSE()\n", vp);
 #endif
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-	error = VOP_CLOSE(vp,
-	   pmp->pm_flags & MSDOSFSMNT_RONLY ? FREAD : FREAD|FWRITE, NOCRED, p);
+	(void)VOP_CLOSE(vp,
+	    pmp->pm_flags & MSDOSFSMNT_RONLY ? FREAD : FREAD|FWRITE, NOCRED, p);
 	vput(vp);
 	free(pmp->pm_inusemap, M_MSDOSFSFAT, 0);
 	free(pmp, M_MSDOSFSMNT, 0);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
-	return (error);
+	return (0);
 }
 
 int

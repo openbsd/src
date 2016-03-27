@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.88 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.89 2016/03/27 11:39:37 bluhm Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -636,7 +636,7 @@ ext2fs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	if (ump->um_devvp->v_type != VBAD)
 		ump->um_devvp->v_specmountpoint = NULL;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
-	error = VOP_CLOSE(ump->um_devvp, fs->e2fs_ronly ? FREAD : FREAD|FWRITE,
+	(void)VOP_CLOSE(ump->um_devvp, fs->e2fs_ronly ? FREAD : FREAD|FWRITE,
 	    NOCRED, p);
 	vput(ump->um_devvp);
 	free(fs->e2fs_gd, M_UFSMNT, gdescs_space);
@@ -644,7 +644,7 @@ ext2fs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	free(ump, M_UFSMNT, sizeof *ump);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
-	return (error);
+	return (0);
 }
 
 /*

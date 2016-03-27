@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.154 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.155 2016/03/27 11:39:37 bluhm Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1027,15 +1027,15 @@ ffs_unmount(struct mount *mp, int mntflags, struct proc *p)
 
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	vinvalbuf(ump->um_devvp, V_SAVE, NOCRED, p, 0, 0);
-	error = VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
-		NOCRED, p);
+	(void)VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
+	    NOCRED, p);
 	vput(ump->um_devvp);
 	free(fs->fs_csp, M_UFSMNT, 0);
 	free(fs, M_UFSMNT, fs->fs_sbsize);
 	free(ump, M_UFSMNT, sizeof(*ump));
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
-	return (error);
+	return (0);
 }
 
 /*

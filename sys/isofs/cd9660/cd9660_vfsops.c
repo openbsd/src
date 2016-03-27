@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.76 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.77 2016/03/27 11:39:37 bluhm Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -585,12 +585,12 @@ cd9660_unmount(mp, mntflags, p)
 
 	isomp->im_devvp->v_specmountpoint = NULL;
 	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY, p);
-	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, p);
+	(void)VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, p);
 	vput(isomp->im_devvp);
 	free((caddr_t)isomp, M_ISOFSMNT, 0);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
-	return (error);
+	return (0);
 }
 
 /*
