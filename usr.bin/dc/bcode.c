@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.48 2015/10/03 16:24:53 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.49 2016/03/27 15:55:13 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -937,9 +937,8 @@ badd(void)
 	struct number	*r;
 
 	a = pop_number();
-	if (a == NULL) {
+	if (a == NULL)
 		return;
-	}
 	b = pop_number();
 	if (b == NULL) {
 		push_number(a);
@@ -965,9 +964,8 @@ bsub(void)
 	struct number	*r;
 
 	a = pop_number();
-	if (a == NULL) {
+	if (a == NULL)
 		return;
-	}
 	b = pop_number();
 	if (b == NULL) {
 		push_number(a);
@@ -1014,9 +1012,8 @@ bmul(void)
 	struct number	*r;
 
 	a = pop_number();
-	if (a == NULL) {
+	if (a == NULL)
 		return;
-	}
 	b = pop_number();
 	if (b == NULL) {
 		push_number(a);
@@ -1040,9 +1037,8 @@ bdiv(void)
 	BN_CTX		*ctx;
 
 	a = pop_number();
-	if (a == NULL) {
+	if (a == NULL)
 		return;
-	}
 	b = pop_number();
 	if (b == NULL) {
 		push_number(a);
@@ -1078,9 +1074,8 @@ bmod(void)
 	BN_CTX		*ctx;
 
 	a = pop_number();
-	if (a == NULL) {
+	if (a == NULL)
 		return;
-	}
 	b = pop_number();
 	if (b == NULL) {
 		push_number(a);
@@ -1116,9 +1111,8 @@ bdivmod(void)
 	BN_CTX		*ctx;
 
 	a = pop_number();
-	if (a == NULL) {
+	if (a == NULL)
 		return;
-	}
 	b = pop_number();
 	if (b == NULL) {
 		push_number(a);
@@ -1158,9 +1152,8 @@ bexp(void)
 	u_int		rscale;
 
 	p = pop_number();
-	if (p == NULL) {
+	if (p == NULL)
 		return;
-	}
 	a = pop_number();
 	if (a == NULL) {
 		push_number(p);
@@ -1282,9 +1275,8 @@ bsqrt(void)
 
 	onecount = 0;
 	n = pop_number();
-	if (n == NULL) {
+	if (n == NULL)
 		return;
-	}
 	if (BN_is_zero(n->number)) {
 		r = new_number();
 		push_number(r);
@@ -1325,9 +1317,8 @@ not(void)
 	struct number	*a;
 
 	a = pop_number();
-	if (a == NULL) {
+	if (a == NULL)
 		return;
-	}
 	a->scale = 0;
 	bn_check(BN_set_word(a->number, BN_get_word(a->number) ? 0 : 1));
 	push_number(a);
@@ -1345,9 +1336,8 @@ equal_numbers(void)
 	struct number *a, *b, *r;
 
 	a = pop_number();
-	if (a == NULL) {
+	if (a == NULL)
 		return;
-	}
 	b = pop_number();
 	if (b == NULL) {
 		push_number(a);
@@ -1365,9 +1355,8 @@ less_numbers(void)
 	struct number *a, *b, *r;
 
 	a = pop_number();
-	if (a == NULL) {
+	if (a == NULL)
 		return;
-	}
 	b = pop_number();
 	if (b == NULL) {
 		push_number(a);
@@ -1385,9 +1374,8 @@ lesseq_numbers(void)
 	struct number *a, *b, *r;
 
 	a = pop_number();
-	if (a == NULL) {
+	if (a == NULL)
 		return;
-	}
 	b = pop_number();
 	if (b == NULL) {
 		push_number(a);
@@ -1711,9 +1699,8 @@ eval_tos(void)
 	char *p;
 
 	p = pop_string();
-	if (p == NULL)
-		return;
-	eval_string(p);
+	if (p != NULL)
+		eval_string(p);
 }
 
 void
