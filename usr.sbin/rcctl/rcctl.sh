@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.88 2016/01/24 08:51:50 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.89 2016/03/27 13:06:00 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -29,9 +29,9 @@ usage()
 {
 	_rc_err \
 	"usage:	rcctl get|getdef|set service | daemon [variable [arguments]]
-	rcctl [-df] action daemon ...
+	rcctl [-df] start|stop|restart|reload|check daemon ...
 	rcctl disable|enable|order [daemon ...]
-	rcctl ls lsarg"
+	rcctl ls all|faulty|off|on|started|stopped"
 }
 
 needs_root()
