@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.167 2015/12/29 19:37:31 rpe Exp $
+#	$OpenBSD: netstart,v 1.168 2016/03/27 20:32:42 sthen Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -268,9 +268,10 @@ done
 done
 
 # Multicast routing.
-route -qn delete 224.0.0.0/4 >/dev/null 2>&1
-[[ $multicast != YES ]] &&
+if [[ $multicast != YES ]]; then
+	route -qn delete 224.0.0.0/4 >/dev/null 2>&1
 	route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject >/dev/null
+fi
 
 # Configure PPPoE, GIF, GRE, TUN and PFLOW interfaces, delayed because they
 # require routes to be set. TUN might depend on PPPoE, and GIF or GRE may
