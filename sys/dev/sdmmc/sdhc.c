@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.41 2016/01/11 06:54:53 kettenis Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.42 2016/03/27 18:49:41 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -381,6 +381,10 @@ int
 sdhc_card_detect(sdmmc_chipset_handle_t sch)
 {
 	struct sdhc_host *hp = sch;
+
+	if (hp->sc->sc_card_detect)
+		return hp->sc->sc_card_detect(hp->sc);
+
 	return ISSET(HREAD4(hp, SDHC_PRESENT_STATE), SDHC_CARD_INSERTED) ?
 	    1 : 0;
 }
