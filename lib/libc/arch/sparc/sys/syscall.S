@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.S,v 1.4 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: syscall.S,v 1.5 2016/03/27 21:59:32 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +34,4 @@
 
 #include "SYS.h"
 
-ENTRY(syscall)
-	mov	0|SYSCALL_G2RFLAG, %g1	! 0 == indir
-	add	%o7, 8, %g2
-	t	ST_SYSCALL
-	ERROR()
+RSYSCALL(syscall)
