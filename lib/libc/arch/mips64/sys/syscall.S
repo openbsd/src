@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.S,v 1.2 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: syscall.S,v 1.3 2016/03/27 23:00:27 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +32,5 @@
  */
 
 #include "SYS.h"
-
-#define SYS_syscall	0
-
 
 RSYSCALL(syscall)
