@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.137 2016/03/11 07:08:45 mmcc Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.138 2016/03/27 00:55:38 mmcc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1641,6 +1641,7 @@ ssl3_get_certificate_request(SSL *s)
 			    ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
+		xn = NULL;	/* avoid free in err block */
 	}
 
 	/* we should setup a certificate to return.... */
@@ -1658,6 +1659,7 @@ truncated:
 		    SSL_R_BAD_PACKET_LENGTH);
 	}
 err:
+	X509_NAME_free(xn);
 	if (ca_sk != NULL)
 		sk_X509_NAME_pop_free(ca_sk, X509_NAME_free);
 	return (ret);
