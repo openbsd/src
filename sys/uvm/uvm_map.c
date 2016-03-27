@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.209 2016/03/15 20:50:23 krw Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.210 2016/03/27 09:51:37 stefan Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1448,14 +1448,14 @@ uvm_mapent_merge(struct vm_map *map, struct vm_map_entry *e1,
 	struct uvm_addr_state *free;
 
 	/*
-	 * Amap of e1 must be extended to include e2.
+	 * Merging is not supported for map entries that
+	 * contain an amap in e1. This should never happen
+	 * anyway, because only kernel entries are merged.
+	 * These do not contain amaps.
 	 * e2 contains no real information in its amap,
 	 * so it can be erased immediately.
 	 */
-	if (e1->aref.ar_amap) {
-		if (amap_extend(e1, e2->end - e2->start))
-			return NULL;
-	}
+	KASSERT(e1->aref.ar_amap == NULL);
 
 	/*
 	 * Don't drop obj reference:
