@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.1 2016/01/11 07:36:10 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.2 2016/03/28 17:53:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -43,6 +43,11 @@ struct sdhc_acpi_softc {
 	int sc_irq_flags;
 	void *sc_ih;
 
+	struct aml_node *sc_gpio_int_node;
+	struct aml_node *sc_gpio_io_node;
+	uint16_t sc_gpio_int_pin;
+	uint16_t sc_gpio_io_pin;
+
 	struct sdhc_host *sc_host;
 };
 
@@ -62,6 +67,7 @@ const char *sdhc_hids[] = {
 };
 
 int	sdhc_acpi_parse_resources(union acpi_resource *, void *);
+int	sdhc_acpi_card_detect(struct sdhc_softc *);
 
 int
 sdhc_acpi_match(struct device *parent, void *match, void *aux)
@@ -122,6 +128,9 @@ sdhc_acpi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	if (sc->sc_gpio_io_node && sc->sc_gpio_io_node->gpio)
+		sc->sc.sc_card_detect = sdhc_acpi_card_detect;
+
 	printf("\n");
 
 	sc->sc.sc_host = &sc->sc_host;
@@ -133,6 +142,8 @@ sdhc_acpi_parse_resources(union acpi_resource *crs, void *arg)
 {
 	struct sdhc_acpi_softc *sc = arg;
 	int type = AML_CRSTYPE(crs);
+	struct aml_node *node;
+	uint16_t pin;
 
 	switch (type) {
 	case LR_MEM32FIXED:
@@ -143,8 +154,21 @@ sdhc_acpi_parse_resources(union acpi_resource *crs, void *arg)
 		sc->sc_irq = crs->lr_extirq.irq[0];
 		sc->sc_irq_flags = crs->lr_extirq.flags;
 		break;
-	case 0x8c:
-		/* XXX GPIO; use for card detect. */
+	case LR_GPIO:
+		node = aml_searchname(sc->sc_node, (char *)&crs->pad[crs->lr_gpio.res_off]);
+		pin = *(uint16_t *)&crs->pad[crs->lr_gpio.pin_off];
+		printf(" %s pin %d\n", node->name, pin);
+		if (crs->lr_gpio.type == LR_GPIO_INT) {
+			sc->sc_gpio_int_node = node;
+			sc->sc_gpio_int_pin = pin;
+		} else if (crs->lr_gpio.type == LR_GPIO_IO) {
+			sc->sc_gpio_io_node = node;
+			sc->sc_gpio_io_pin = pin;
+		}
+		printf(" tflags 0x%x\n", crs->lr_gpio.tflags);
+		printf(" ppi 0x%x\n", crs->lr_gpio._ppi);
+		printf(" drs 0x%x\n", crs->lr_gpio._drs);
+		printf(" dbt 0x%x\n", crs->lr_gpio._dbt);
 		break;
 	default:
 		printf(" type 0x%x\n", type);
@@ -152,4 +176,15 @@ sdhc_acpi_parse_resources(union acpi_resource *crs, void *arg)
 	}
 
 	return 0;
+}
+
+int
+sdhc_acpi_card_detect(struct sdhc_softc *ssc)
+{
+	struct sdhc_acpi_softc *sc = (struct sdhc_acpi_softc *)ssc;
+	struct acpi_gpio *gpio = sc->sc_gpio_io_node->gpio;
+	uint16_t pin = sc->sc_gpio_io_pin;
+
+	/* Card detect GPIO signal is active-low. */
+	return !gpio->read_pin(gpio->cookie, pin);
 }
