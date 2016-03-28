@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.29 2016/03/03 18:00:49 naddy Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.30 2016/03/28 09:08:22 matthieu Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -392,14 +392,6 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 #undef d
 		return (0);
 
-#if defined(__i386__)
-	    case KDENABIO:
-		if (suser(p, 0) || securelevel > 0)
-			return (EPERM);
-		/* FALLTHROUGH */
-	    case KDDISABIO:
-		return (0);
-#else
 	    case KDENABIO:
 	    case KDDISABIO:
 		/*
@@ -407,7 +399,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		 * issue these ioctls anyway.
 		 */
 		return (0);
-#endif
+
 	    case KDSETRAD:
 		/* XXX ignore for now */
 		return (0);
