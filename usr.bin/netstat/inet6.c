@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.49 2015/09/11 19:35:37 mpi Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.50 2016/03/28 07:30:28 jca Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -50,9 +50,6 @@
 #include <netinet6/ip6_divert.h>
 
 #include <arpa/inet.h>
-#if 0
-#include "gethostbyname2.h"
-#endif
 #include <netdb.h>
 
 #include <err.h>
