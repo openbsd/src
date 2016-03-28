@@ -669,7 +669,7 @@ static void
 tcp_server_accept(int fd, short event, void *arg)
 {
 	struct tcpservsock *ts = arg;
-	int sock, r;
+	int sock;
 	struct statctx *sc;
 	struct sockaddr_storage ss;
 	socklen_t sslen;
