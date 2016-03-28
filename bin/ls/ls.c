@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.45 2016/03/17 05:27:10 bentley Exp $	*/
+/*	$OpenBSD: ls.c,v 1.46 2016/03/28 11:25:35 chl Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ ls_main(int argc, char *argv[])
 	static char dot[] = ".", *dotav[] = { dot, NULL };
 	struct winsize win;
 	int ch, fts_options, notused;
-	int kflag = 0, width = 0;
+	int kflag = 0;
 	char *p;
 
 #ifndef SMALL
