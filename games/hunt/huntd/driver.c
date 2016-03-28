@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.c,v 1.27 2016/03/21 00:49:36 guenther Exp $	*/
+/*	$OpenBSD: driver.c,v 1.28 2016/03/28 11:49:45 chl Exp $	*/
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -991,7 +991,6 @@ send_stats(void)
 	int	s;
 	struct sockaddr_in	sockstruct;
 	socklen_t	socklen;
-	int	flags;
 
 	/* Accept a connection to the statistics socket: */
 	socklen = sizeof sockstruct;
