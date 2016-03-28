@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.9 2016/01/22 22:57:23 jsg Exp $ */
+/* $OpenBSD: dwiic.c,v 1.10 2016/03/28 19:07:50 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -196,6 +196,15 @@ struct cfdriver dwiic_cd = {
 	NULL, "dwiic", DV_DULL
 };
 
+const char *dwiic_hids[] = {
+	"INT33C2",
+	"INT33C3",
+	"INT3432",
+	"INT3433",
+	"80860F41",
+	NULL
+};
+
 int
 dwiic_match(struct device *parent, void *match, void *aux)
 {
@@ -203,9 +212,7 @@ dwiic_match(struct device *parent, void *match, void *aux)
 	struct cfdata *cf = match;
 	int64_t sta;
 
-	if (aaa->aaa_name == NULL ||
-	    strcmp(aaa->aaa_name, cf->cf_driver->cd_name) != 0 ||
-	    aaa->aaa_table != NULL)
+	if (!acpi_matchhids(aaa, dwiic_hids, cf->cf_driver->cd_name))
 		return 0;
 
 	if (aml_evalinteger((struct acpi_softc *)parent, aaa->aaa_node,
