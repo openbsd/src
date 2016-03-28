@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.68 2016/03/14 06:37:31 guenther Exp $ */
+/* $OpenBSD: dsdt.h,v 1.69 2016/03/28 17:22:41 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -103,6 +103,7 @@ const char		*aml_nodename(struct aml_node *);
 #define LR_WORD			0x88
 #define LR_EXTIRQ		0x89
 #define LR_QWORD		0x8A
+#define LR_GPIO			0x8C
 #define LR_SERBUS		0x8E
 
 #define __amlflagbit(v,s,l)
@@ -226,6 +227,24 @@ union acpi_resource {
 		uint8_t		src_index;
 		char		src[1];
 	} __packed lr_qword;
+	struct {
+		uint8_t		typecode;
+		uint16_t	length;
+		uint8_t		revid;
+		uint8_t		type;
+#define LR_GPIO_INT	0x00
+#define LR_GPIO_IO	0x01
+		uint16_t	flags;
+		uint16_t	tflags;
+		uint8_t		_ppi;
+		uint16_t	_drs;
+		uint16_t	_dbt;
+		uint16_t	pin_off;
+		uint8_t		residx;
+		uint16_t	res_off;
+		uint16_t	vd_off;
+		uint16_t	vd_len;
+	} __packed lr_gpio;
 	struct {
 		uint8_t		typecode;
 		uint16_t	length;
