@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.90 2016/03/27 13:11:33 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.91 2016/03/28 08:10:19 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -24,8 +24,6 @@ readonly _special_svcs
 FUNCS_ONLY=1
 . /etc/rc.d/rc.subr
 _rc_parse_conf
-
-echo $_rc_actions
 
 usage()
 {
