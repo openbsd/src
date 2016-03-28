@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.37 2016/03/17 05:27:10 bentley Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.38 2016/03/28 11:06:09 chl Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -113,7 +113,7 @@ int
 main(int argc, char **argv)
 {
 	struct winsize win;
-	char *cp, *ep;
+	char *cp;
 	int ch;
 	
 	while ((ch = getopt(argc, argv, "ahilu")) != -1)
