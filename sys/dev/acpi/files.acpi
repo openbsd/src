@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.30 2016/01/12 01:11:15 jcs Exp $
+#	$OpenBSD: files.acpi,v 1.31 2016/03/28 17:29:11 kettenis Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -111,6 +111,11 @@ file	dev/acpi/acpipwrres.c		acpipwrres needs-flag
 device	aibs
 attach	aibs at acpi
 file	dev/acpi/atk0110.c		aibs
+
+# Intel Bay Trail GPIO
+device	bytgpio
+attach	bytgpio at acpi
+file	dev/acpi/bytgpio.c		bytgpio
 
 # SD Host Controller
 attach	sdhc at acpi with sdhc_acpi
