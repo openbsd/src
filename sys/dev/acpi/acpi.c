@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.305 2016/01/17 09:04:18 jsg Exp $ */
+/* $OpenBSD: acpi.c,v 1.306 2016/03/28 19:12:17 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1155,6 +1155,8 @@ acpi_print(void *aux, const char *pnp)
 	if (pnp) {
 		if (aa->aaa_name)
 			printf("%s at %s", aa->aaa_name, pnp);
+		else if (aa->aaa_dev)
+			printf("\"%s\" at %s", aa->aaa_dev, pnp);
 		else
 			return (QUIET);
 	}
@@ -2778,37 +2780,16 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	aaa.aaa_node = node->parent;
 	aaa.aaa_dev = dev;
 
-	if (!strcmp(dev, ACPI_DEV_AC)) {
-		aaa.aaa_name = "acpiac";
-	} else if (!strcmp(dev, ACPI_DEV_CMB)) {
-		aaa.aaa_name = "acpibat";
-	} else if (!strcmp(dev, ACPI_DEV_LD) ||
-	    !strcmp(dev, ACPI_DEV_PBD) ||
-	    !strcmp(dev, ACPI_DEV_SBD)) {
-		aaa.aaa_name = "acpibtn";
-	} else if (!strcmp(dev, ACPI_DEV_ASUS) ||
+	if (!strcmp(dev, ACPI_DEV_ASUS) ||
 	    !strcmp(dev, ACPI_DEV_ASUS1)) {
-		aaa.aaa_name = "acpiasus";
 		acpi_asus_enabled = 1;
 	} else if (!strcmp(dev, ACPI_DEV_IBM) ||
 	    !strcmp(dev, ACPI_DEV_LENOVO)) {
-		aaa.aaa_name = "acpithinkpad";
 		acpi_thinkpad_enabled = 1;
-	} else if (!strcmp(dev, ACPI_DEV_ASUSAIBOOSTER)) {
-		aaa.aaa_name = "aibs";
 	} else if (!strcmp(dev, ACPI_DEV_TOSHIBA_LIBRETTO) ||
 	    !strcmp(dev, ACPI_DEV_TOSHIBA_DYNABOOK) ||
 	    !strcmp(dev, ACPI_DEV_TOSHIBA_SPA40)) {
-		aaa.aaa_name = "acpitoshiba";
 		acpi_toshiba_enabled = 1;
-	} else if (!strcmp(dev, "80860F14") || !strcmp(dev, "PNP0FFF")) {
-		aaa.aaa_name = "sdhc";
-	} else if (!strcmp(dev, ACPI_DEV_DWIIC1) ||
-	    !strcmp(dev, ACPI_DEV_DWIIC2) ||
-	    !strcmp(dev, ACPI_DEV_DWIIC3) ||
-	    !strcmp(dev, ACPI_DEV_DWIIC4) ||
-	    !strcmp(dev, ACPI_DEV_DWIIC5)) {
-		aaa.aaa_name = "dwiic";
 	}
 
 #ifndef SMALL_KERNEL
@@ -2822,8 +2803,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	}
 #endif
 
-	if (aaa.aaa_name)
-		config_found(self, &aaa, acpi_print);
+	config_found(self, &aaa, acpi_print);
 
 	return (0);
 }
