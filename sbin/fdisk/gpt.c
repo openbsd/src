@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.10 2016/01/09 18:10:57 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.11 2016/03/28 16:55:09 mestre Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -304,7 +304,7 @@ GPT_init(void)
 	extern u_int32_t b_arg;
 	const int secsize = unit_types[SECTORS].conversion;
 	struct uuid guid;
-	int entries, needed;
+	int needed;
 	uint32_t status;
 	const uint8_t gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
 	const uint8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
@@ -312,7 +312,6 @@ GPT_init(void)
 	memset(&gh, 0, sizeof(gh));
 	memset(&gp, 0, sizeof(gp));
 
-	entries = sizeof(gp) / GPTMINPARTSIZE;
 	needed = sizeof(gp) / secsize + 2;
 	/* Start on 64 sector boundary */
 	if (needed % 64)
