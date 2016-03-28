@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.155 2016/03/18 02:40:04 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.156 2016/03/28 13:05:22 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -235,7 +235,12 @@ vlan_start(struct ifnet *ifp)
 	uint8_t		 prio;
 
 	ifv = ifp->if_softc;
-	ifp0 = ifv->ifv_p;
+	ifp0 = if_get(ifv->ifv_p);
+	if (ifp0 == NULL || (ifp0->if_flags & (IFF_UP|IFF_RUNNING)) !=
+	    (IFF_UP|IFF_RUNNING)) {
+		ifq_purge(&ifp->if_snd);
+		goto leave;
+	}
 
 	for (;;) {
 		IFQ_DEQUEUE(&ifp->if_snd, m);
@@ -247,12 +252,6 @@ vlan_start(struct ifnet *ifp)
 			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER > 0 */
 
-		if ((ifp0->if_flags & (IFF_UP|IFF_RUNNING)) !=
-		    (IFF_UP|IFF_RUNNING)) {
-			ifp->if_oerrors++;
-			m_freem(m);
-			continue;
-		}
 
 		/* IEEE 802.1p has prio 0 and 1 swapped */
 		prio = m->m_pkthdr.pf.prio;
@@ -290,6 +289,9 @@ vlan_start(struct ifnet *ifp)
 		}
 		ifp->if_opackets++;
 	}
+
+leave:
+	if_put(ifp0);
 }
 
 struct mbuf *
@@ -358,7 +360,7 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 
 	list = &tagh[TAG_HASH(tag)];
 	SRPL_FOREACH(ifv, list, &i, ifv_list) {
-		if (ifp0 == ifv->ifv_p && tag == ifv->ifv_tag &&
+		if (ifp0->if_index == ifv->ifv_p && tag == ifv->ifv_tag &&
 		    etype == ifv->ifv_type)
 			break;
 	}
@@ -417,13 +419,13 @@ vlan_config(struct ifvlan *ifv, struct ifnet *ifp0, u_int16_t tag)
 
 	if (ifp0->if_type != IFT_ETHER)
 		return EPROTONOSUPPORT;
-	if (ifv->ifv_p == ifp0 && ifv->ifv_tag == tag) /* noop */
+	if (ifp0->if_index == ifv->ifv_p && ifv->ifv_tag == tag) /* noop */
 		return (0);
 
 	/* Remember existing interface flags and reset the interface */
 	flags = ifv->ifv_flags;
 	vlan_unconfig(&ifv->ifv_if, ifp0);
-	ifv->ifv_p = ifp0;
+	ifv->ifv_p = ifp0->if_index;
 	ifv->ifv_if.if_baudrate = ifp0->if_baudrate;
 
 	if (ifp0->if_capabilities & IFCAP_VLAN_MTU) {
@@ -509,8 +511,9 @@ vlan_unconfig(struct ifnet *ifp, struct ifnet *newifp0)
 	struct ifnet		*ifp0;
 
 	ifv = ifp->if_softc;
-	if ((ifp0 = ifv->ifv_p) == NULL)
-		return 0;
+	ifp0 = if_get(ifv->ifv_p);
+	if (ifp0 == NULL)
+		goto disconnect;
 
 	/* Unset promisc mode on the interface and its parent */
 	if (ifv->ifv_flags & IFVF_PROMISC) {
@@ -544,8 +547,9 @@ vlan_unconfig(struct ifnet *ifp, struct ifnet *newifp0)
 	 */
 	vlan_multi_apply(ifv, ifp0, SIOCDELMULTI);
 
+disconnect:
 	/* Disconnect from parent. */
-	ifv->ifv_p = NULL;
+	ifv->ifv_p = 0;
 	ifv->ifv_if.if_mtu = ETHERMTU;
 	ifv->ifv_if.if_hardmtu = ETHERMTU;
 	ifv->ifv_flags = 0;
@@ -557,6 +561,8 @@ vlan_unconfig(struct ifnet *ifp, struct ifnet *newifp0)
 	bzero(LLADDR(sdl), ETHER_ADDR_LEN);
 	bzero(ifv->ifv_ac.ac_enaddr, ETHER_ADDR_LEN);
 
+	if_put(ifp0);
+
 	return (0);
 }
 
@@ -564,12 +570,22 @@ void
 vlan_vlandev_state(void *v)
 {
 	struct ifvlan	*ifv = v;
+	struct ifnet	*ifp0;
+	int		 link_state = LINK_STATE_DOWN;
+	uint64_t	 baudrate = 0;
 
-	if (ifv->ifv_if.if_link_state == ifv->ifv_p->if_link_state)
+	ifp0 = if_get(ifv->ifv_p);
+	if (ifp0 != NULL) {
+		link_state = ifp0->if_link_state;
+		baudrate = ifp0->if_baudrate;
+	}
+	if_put(ifp0);
+
+	if (ifv->ifv_if.if_link_state == link_state)
 		return;
 
-	ifv->ifv_if.if_link_state = ifv->ifv_p->if_link_state;
-	ifv->ifv_if.if_baudrate = ifv->ifv_p->if_baudrate;
+	ifv->ifv_if.if_link_state = link_state;
+	ifv->ifv_if.if_baudrate = baudrate;
 	if_link_state_change(&ifv->ifv_if);
 }
 
@@ -577,17 +593,26 @@ int
 vlan_set_promisc(struct ifnet *ifp)
 {
 	struct ifvlan	*ifv = ifp->if_softc;
+	struct ifnet	*ifp0;
 	int		 error = 0;
+
+	ifp0 = if_get(ifv->ifv_p);
+	if (ifp0 == NULL)
+		goto leave;
 
 	if ((ifp->if_flags & IFF_PROMISC) != 0) {
 		if ((ifv->ifv_flags & IFVF_PROMISC) == 0)
-			if ((error = ifpromisc(ifv->ifv_p, 1)) == 0)
+			if ((error = ifpromisc(ifp0, 1)) == 0)
 				ifv->ifv_flags |= IFVF_PROMISC;
 	} else {
 		if ((ifv->ifv_flags & IFVF_PROMISC) != 0)
-			if ((error = ifpromisc(ifv->ifv_p, 0)) == 0)
+			if ((error = ifpromisc(ifp0, 0)) == 0)
 				ifv->ifv_flags &= ~IFVF_PROMISC;
 	}
+
+leave:
+	if_put(ifp0);
+
 	return (0);
 }
 
@@ -608,14 +633,14 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		if (ifv->ifv_p != NULL)
+		if (ifv->ifv_p != 0)
 			ifp->if_flags |= IFF_UP;
 		else
 			error = EINVAL;
 		break;
 
 	case SIOCSIFMTU:
-		if (ifv->ifv_p != NULL) {
+		if (ifv->ifv_p != 0) {
 			if (ifr->ifr_mtu < ETHERMIN ||
 			    ifr->ifr_mtu > ifv->ifv_if.if_hardmtu)
 				error = EINVAL;
@@ -664,11 +689,13 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		
 	case SIOCGETVLAN:
 		bzero(&vlr, sizeof vlr);
-		if (ifv->ifv_p) {
+		ifp0 = if_get(ifv->ifv_p);
+		if (ifp0) {
 			snprintf(vlr.vlr_parent, sizeof(vlr.vlr_parent),
-			    "%s", ifv->ifv_p->if_xname);
+			    "%s", ifp0->if_xname);
 			vlr.vlr_tag = ifv->ifv_tag;
 		}
+		if_put(ifp0);
 		error = copyout(&vlr, ifr->ifr_data, sizeof vlr);
 		break;
 	case SIOCSIFFLAGS:
@@ -676,7 +703,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		 * For promiscuous mode, we enable promiscuous mode on
 		 * the parent if we need promiscuous on the VLAN interface.
 		 */
-		if (ifv->ifv_p != NULL)
+		if (ifv->ifv_p != 0)
 			error = vlan_set_promisc(ifp);
 		break;
 
@@ -725,9 +752,10 @@ vlan_multi_add(struct ifvlan *ifv, struct ifreq *ifr)
 	memcpy(&mc->mc_addr, &ifr->ifr_addr, ifr->ifr_addr.sa_len);
 	LIST_INSERT_HEAD(&ifv->vlan_mc_listhead, mc, mc_entries);
 
-	ifp0 = ifv->ifv_p;
+	ifp0 = if_get(ifv->ifv_p);
 	error = (ifp0 == NULL) ? 0 :
 	    (*ifp0->if_ioctl)(ifp0, SIOCADDMULTI, (caddr_t)ifr);
+	if_put(ifp0);
 
 	if (error != 0) 
 		goto ioctl_failed;
@@ -778,9 +806,10 @@ vlan_multi_del(struct ifvlan *ifv, struct ifreq *ifr)
 	if (!ISSET(ifv->ifv_if.if_flags, IFF_RUNNING))
 		goto forget;
 
-	ifp0 = ifv->ifv_p;
+	ifp0 = if_get(ifv->ifv_p);
 	error = (ifp0 == NULL) ? 0 :
 	    (*ifp0->if_ioctl)(ifp0, SIOCDELMULTI, (caddr_t)ifr);
+	if_put(ifp0);
 
 	if (error != 0) {
 		(void)ether_addmulti(ifr, &ifv->ifv_ac);
