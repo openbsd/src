@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.129 2016/03/09 13:38:50 mpi Exp $	*/
+/*	$openbsd: kern_synch.c,v 1.129 2016/03/09 13:38:50 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -432,7 +432,24 @@ wakeup(const volatile void *chan)
 int
 sys_sched_yield(struct proc *p, void *v, register_t *retval)
 {
-	yield();
+	struct proc *q;
+	int s;
+
+	SCHED_LOCK(s);
+	/*
+	 * If one of the threads of a multi-threaded process called
+	 * sched_yield(2), drop its priority to ensure its siblings
+	 * can make some progress.
+	 */
+	p->p_priority = p->p_usrpri;
+	TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link)
+		p->p_priority = max(p->p_priority, q->p_priority);
+	p->p_stat = SRUN;
+	setrunqueue(p);
+	p->p_ru.ru_nvcsw++;
+	mi_switch();
+	SCHED_UNLOCK(s);
+
 	return (0);
 }
 

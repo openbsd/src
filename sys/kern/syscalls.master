@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.167 2016/03/21 22:41:29 bluhm Exp $
+;	$OpenBSD: syscalls.master,v 1.168 2016/03/28 20:49:58 kettenis Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -514,7 +514,7 @@
 #else
 297	UNIMPL
 #endif
-298	STD NOLOCK	{ int sys_sched_yield(void); }
+298	STD		{ int sys_sched_yield(void); }
 299	STD NOLOCK	{ pid_t sys_getthrid(void); }
 300	OBSOL		t32___thrsleep
 301	STD		{ int sys___thrwakeup(const volatile void *ident, \
