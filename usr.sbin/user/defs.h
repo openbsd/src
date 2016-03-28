@@ -1,4 +1,4 @@
-/* $OpenBSD: defs.h,v 1.6 2015/08/20 22:39:29 deraadt Exp $ */
+/* $OpenBSD: defs.h,v 1.7 2016/03/28 19:09:08 mestre Exp $ */
 /* $NetBSD: defs.h,v 1.5 1999/12/24 09:08:49 agc Exp $ */
 
 /*
@@ -53,8 +53,6 @@
 } while( /* CONSTCOND */ 0)
 
 #define NEW(type, ptr, action)	NEWARRAY(type, ptr, 1, action)
-
-#define FREE(ptr)	(void) free(ptr)
 
 #ifndef MIN
 #define MIN(a,b)	(((a) < (b)) ? (a) : (b))

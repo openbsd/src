@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.104 2015/11/15 23:13:20 deraadt Exp $ */
+/* $OpenBSD: user.c,v 1.105 2016/03/28 19:09:08 mestre Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -192,9 +192,7 @@ static int	verbose;
 static void
 memsave(char **cpp, const char *s, size_t n)
 {
-	if (*cpp != NULL) {
-		FREE(*cpp);
-	}
+	free(*cpp);
 	NEWARRAY(char, *cpp, n + 1, exit(1));
 	(void) memcpy(*cpp, s, n);
 	(*cpp)[n] = '\0';
@@ -799,9 +797,7 @@ read_defaults(user_t *up)
 				for (cp = s + 8 ; isspace((unsigned char)*cp); cp++) {
 				}
 				if (strcmp(cp, UNSET_INACTIVE) == 0) {
-					if (up->u_inactive) {
-						FREE(up->u_inactive);
-					}
+					free(up->u_inactive);
 					up->u_inactive = NULL;
 				} else {
 					memsave(&up->u_inactive, cp, strlen(cp));
@@ -820,9 +816,7 @@ read_defaults(user_t *up)
 				for (cp = s + 6 ; isspace((unsigned char)*cp); cp++) {
 				}
 				if (strcmp(cp, UNSET_EXPIRY) == 0) {
-					if (up->u_expire) {
-						FREE(up->u_expire);
-					}
+					free(up->u_expire);
 					up->u_expire = NULL;
 				} else {
 					memsave(&up->u_expire, cp, strlen(cp));
@@ -1679,10 +1673,8 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		}
 	}
 	(void) close(ptmpfd);
-	if (pw_tmp)
-		FREE(pw_tmp);
-	if (shell_tmp)
-		FREE(shell_tmp);
+	free(pw_tmp);
+	free(shell_tmp);
 	if (up != NULL && strcmp(login_name, newlogin) == 0)
 		rval = pw_mkdb(login_name, 0);
 	else
