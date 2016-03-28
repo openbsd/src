@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.16 2015/10/09 01:37:08 deraadt Exp $	*/
+/*	$OpenBSD: logger.c,v 1.17 2016/03/28 18:18:52 chl Exp $	*/
 /*	$NetBSD: logger.c,v 1.4 1994/12/22 06:27:00 jtc Exp $	*/
 
 /*
@@ -160,7 +160,6 @@ pencode(char *s)
 int
 decode(char *name, CODE *codetab)
 {
-	int n;
 	CODE *c;
 
 	if (isdigit((unsigned char)*name)) {
