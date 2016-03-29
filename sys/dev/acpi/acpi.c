@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.307 2016/03/29 17:52:04 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.308 2016/03/29 18:04:09 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2761,12 +2761,19 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	char		 	 cdev[16];
 	char		 	 dev[16];
 	struct acpi_attach_args	 aaa;
+	int64_t			 sta;
 #ifndef SMALL_KERNEL
 	int			 i;
 #endif
 
 	if (acpi_parsehid(node, arg, cdev, dev, 16) != 0)
 		return (0);
+
+	if (aml_evalinteger(sc, node->parent, "_STA", 0, NULL, &sta))
+		sta = STA_PRESENT | STA_ENABLED | STA_DEV_OK | 0x1000;
+
+	if ((sta & STA_PRESENT) == 0)
+		return 0;
 
 	memset(&aaa, 0, sizeof(aaa));
 	aaa.aaa_iot = sc->sc_iot;

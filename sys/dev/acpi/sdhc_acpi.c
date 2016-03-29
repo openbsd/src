@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.3 2016/03/28 19:15:43 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.4 2016/03/29 18:04:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -74,19 +74,8 @@ sdhc_acpi_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args *aaa = aux;
 	struct cfdata *cf = match;
-	int64_t sta;
 
-	if (!acpi_matchhids(aaa, sdhc_hids, cf->cf_driver->cd_name))
-		return 0;
-
-	if (aml_evalinteger((struct acpi_softc *)parent, aaa->aaa_node,
-	    "_STA", 0, NULL, &sta))
-		sta = STA_PRESENT | STA_ENABLED | STA_DEV_OK | 0x1000;
-
-	if ((sta & STA_PRESENT) == 0)
-		return 0;
-
-	return 1;
+	return acpi_matchhids(aaa, sdhc_hids, cf->cf_driver->cd_name);
 }
 
 void

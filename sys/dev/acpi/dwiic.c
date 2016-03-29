@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.10 2016/03/28 19:07:50 kettenis Exp $ */
+/* $OpenBSD: dwiic.c,v 1.11 2016/03/29 18:04:09 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -210,19 +210,8 @@ dwiic_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args *aaa = aux;
 	struct cfdata *cf = match;
-	int64_t sta;
 
-	if (!acpi_matchhids(aaa, dwiic_hids, cf->cf_driver->cd_name))
-		return 0;
-
-	if (aml_evalinteger((struct acpi_softc *)parent, aaa->aaa_node,
-	    "_STA", 0, NULL, &sta))
-		sta = STA_PRESENT | STA_ENABLED | STA_DEV_OK | 0x1000;
-
-	if ((sta & STA_PRESENT) == 0)
-		return 0;
-
-	return 1;
+	return acpi_matchhids(aaa, dwiic_hids, cf->cf_driver->cd_name);
 }
 
 void
