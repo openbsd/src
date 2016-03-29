@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.316 2016/03/27 19:19:01 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.317 2016/03/29 18:13:20 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3255,19 +3255,12 @@ tcp_mss_adv(struct mbuf *m, int af)
  */
 
 /* syn hash parameters */
-#define	TCP_SYN_HASH_SIZE	293
-#define	TCP_SYN_BUCKET_SIZE	35
 int	tcp_syn_cache_size = TCP_SYN_HASH_SIZE;
 int	tcp_syn_cache_limit = TCP_SYN_HASH_SIZE*TCP_SYN_BUCKET_SIZE;
 int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
 int	tcp_syn_use_limit = 100000;
 
-struct syn_cache_set {
-        struct		syn_cache_head scs_buckethead[TCP_SYN_HASH_SIZE];
-        int		scs_count;
-        int		scs_use;
-        u_int32_t	scs_random[5];
-} tcp_syn_cache[2];
+struct syn_cache_set tcp_syn_cache[2];
 int tcp_syn_cache_active;
 
 #define SYN_HASH(sa, sp, dp, rand) \

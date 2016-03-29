@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.129 2016/03/23 15:50:36 vgross Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.130 2016/03/29 18:13:20 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -932,6 +932,23 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			return (EPERM);
 		return (sysctl_struct(oldp, oldlenp, newp, newlen,
 		    &tcpstat, sizeof(tcpstat)));
+
+	case TCPCTL_SYN_USE_LIMIT:
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_syn_use_limit);
+		if (error)
+			return (error);
+		if (newp != NULL) {
+			/*
+			 * Global tcp_syn_use_limit is used when reseeding a
+			 * new cache.  Also update the value in active cache.
+			 */
+			if (tcp_syn_cache[0].scs_use > tcp_syn_use_limit)
+				tcp_syn_cache[0].scs_use = tcp_syn_use_limit;
+			if (tcp_syn_cache[1].scs_use > tcp_syn_use_limit)
+				tcp_syn_cache[1].scs_use = tcp_syn_use_limit;
+		}
+		return (0);
 
 	default:
 		if (name[0] < TCPCTL_MAXID)
