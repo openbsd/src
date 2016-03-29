@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf_mtap.9,v 1.2 2016/03/29 05:20:09 dlg Exp $
+.\"	$OpenBSD: bpf_mtap.9,v 1.3 2016/03/29 07:33:21 jmc Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -31,10 +31,10 @@
 .Ft void
 .Fn bpf_mtap "caddr_t bpf" "struct mbuf *m" "u_int direction"
 .Ft void
-.Fo bpf_hdr
+.Fo bpf_mtap_hdr
 .Fa "caddr_t bpf"
 .Fa "caddr_t hdr"
-.Fa "u_int hdrlen" 
+.Fa "u_int hdrlen"
 .Fa "struct mbuf *m"
 .Fa "u_int direction"
 .Fa "void (*cpfn)(const void *, void *, size_t)"
@@ -45,8 +45,8 @@
 .Fn bpf_mtap_ether "caddr_t bpf" "struct mbuf *m" "u_int direction"
 .Sh DESCRIPTION
 The BPF kernel API provides incoming linkage from device drivers.
-A packet is parsed by the filters associated with each interface,
-and if accepted, stashed into the corresponding buffer.
+A packet is parsed by the filters associated with each interface
+and, if accepted, stashed into the corresponding buffer.
 .Pp
 .Fn bfp_tap
 runs the filters on the BPF interface referenced by
