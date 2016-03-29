@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.11 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.12 2016/03/29 17:52:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -92,6 +92,9 @@ acpivout_match(struct device *parent, void *match, void *aux)
 	if (aaa->aaa_name == NULL ||
 	    strcmp(aaa->aaa_name, cf->cf_driver->cd_name) != 0 ||
 	    aaa->aaa_table != NULL)
+		return (0);
+
+	if (ws_get_param || ws_set_param)
 		return (0);
 
 	return (1);

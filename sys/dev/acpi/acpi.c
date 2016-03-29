@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.306 2016/03/28 19:12:17 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.307 2016/03/29 17:52:04 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -120,10 +120,6 @@ int	acpi_add_device(struct aml_node *node, void *arg);
 
 void	acpi_thread(void *);
 void	acpi_create_thread(void *);
-
-int	acpi_thinkpad_enabled;
-int	acpi_toshiba_enabled;
-int	acpi_asus_enabled;
 
 #ifndef SMALL_KERNEL
 
@@ -1097,10 +1093,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* attach docks */
 	aml_find_node(&aml_root, "_DCK", acpi_founddock, sc);
 
-	/* attach video only if this is not a thinkpad or toshiba */
-	if (!acpi_thinkpad_enabled && !acpi_toshiba_enabled &&
-	    !acpi_asus_enabled)
-		aml_find_node(&aml_root, "_DOS", acpi_foundvideo, sc);
+	/* attach video */
+	aml_find_node(&aml_root, "_DOS", acpi_foundvideo, sc);
 
 	/* create list of devices we want to query when APM comes in */
 	SLIST_INIT(&sc->sc_ac);
@@ -2779,18 +2773,6 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	aaa.aaa_memt = sc->sc_memt;
 	aaa.aaa_node = node->parent;
 	aaa.aaa_dev = dev;
-
-	if (!strcmp(dev, ACPI_DEV_ASUS) ||
-	    !strcmp(dev, ACPI_DEV_ASUS1)) {
-		acpi_asus_enabled = 1;
-	} else if (!strcmp(dev, ACPI_DEV_IBM) ||
-	    !strcmp(dev, ACPI_DEV_LENOVO)) {
-		acpi_thinkpad_enabled = 1;
-	} else if (!strcmp(dev, ACPI_DEV_TOSHIBA_LIBRETTO) ||
-	    !strcmp(dev, ACPI_DEV_TOSHIBA_DYNABOOK) ||
-	    !strcmp(dev, ACPI_DEV_TOSHIBA_SPA40)) {
-		acpi_toshiba_enabled = 1;
-	}
 
 #ifndef SMALL_KERNEL
 	if (!strcmp(cdev, ACPI_DEV_MOUSE)) {
