@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.40 2016/03/23 15:50:36 vgross Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.41 2016/03/29 11:57:51 chl Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -87,7 +87,6 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control)
 {
 	struct sockaddr_in6 *sin6;
-	struct socket *so;
 	struct ifaddr *ifa;
 	int error = 0, min_hdrlen = 0, nxt = 0, off, dir;
 	struct ip6_hdr *ip6;
@@ -99,7 +98,6 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 	m_freem(control);
 
 	sin6 = mtod(nam, struct sockaddr_in6 *);
-	so = inp->inp_socket;
 
 	/* Do basic sanity checks. */
 	if (m->m_pkthdr.len < sizeof(struct ip6_hdr))

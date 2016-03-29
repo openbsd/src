@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.101 2015/12/09 15:05:51 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.102 2016/03/29 11:57:51 chl Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1375,16 +1375,12 @@ nd6_dad_ns_output(struct dadq *dp, struct ifaddr *ifa)
 void
 nd6_dad_ns_input(struct ifaddr *ifa)
 {
-	struct in6_ifaddr *ia6;
-	struct in6_addr *taddr6;
 	struct dadq *dp;
 	int duplicate;
 
 	if (!ifa)
 		panic("ifa == NULL in nd6_dad_ns_input");
 
-	ia6 = ifatoia6(ifa);
-	taddr6 = &ia6->ia_addr.sin6_addr;
 	duplicate = 0;
 	dp = nd6_dad_find(ifa);
 

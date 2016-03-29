@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.88 2016/03/07 18:44:00 naddy Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.89 2016/03/29 11:57:51 chl Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -343,7 +343,7 @@ rip6_output(struct mbuf *m, ...)
 	u_int	plen = m->m_pkthdr.len;
 	int error = 0;
 	struct ip6_pktopts opt, *optp = NULL, *origoptp;
-	int type, code;		/* for ICMPv6 output statistics only */
+	int type;		/* for ICMPv6 output statistics only */
 	int priv = 0;
 	va_list ap;
 	int flags;
@@ -382,7 +382,6 @@ rip6_output(struct mbuf *m, ...)
 		}
 		icmp6 = mtod(m, struct icmp6_hdr *);
 		type = icmp6->icmp6_type;
-		code = icmp6->icmp6_code;
 	}
 
 	M_PREPEND(m, sizeof(*ip6), M_DONTWAIT);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.86 2015/11/02 07:22:28 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.87 2016/03/29 11:57:51 chl Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -332,7 +332,6 @@ reroute:
 		}
 		if (m == NULL)
 			goto senderr;
-		ip6 = mtod(m, struct ip6_hdr *);
 		/*
 		 * PF_TAG_REROUTE handling or not...
 		 * Packet is entering IPsec so the routing is

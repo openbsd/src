@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.184 2016/01/21 06:32:19 jsg Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.185 2016/03/29 11:57:51 chl Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1156,8 +1156,6 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	struct icmp6_hdr *icmp6;
 	struct in6_ifaddr *ia6;
 	struct in6_addr t, *src = NULL;
-	int plen;
-	int type, code;
 	struct sockaddr_in6 sa6_src, sa6_dst;
 
 	/* too short to reflect */
@@ -1198,12 +1196,9 @@ icmp6_reflect(struct mbuf *m, size_t off)
 				return;
 		}
 	}
-	plen = m->m_pkthdr.len - sizeof(struct ip6_hdr);
 	ip6 = mtod(m, struct ip6_hdr *);
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
 	icmp6 = (struct icmp6_hdr *)(ip6 + 1);
-	type = icmp6->icmp6_type; /* keep type for statistics */
-	code = icmp6->icmp6_code; /* ditto. */
 
 	t = ip6->ip6_dst;
 	/*

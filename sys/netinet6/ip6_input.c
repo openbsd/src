@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.155 2016/03/14 23:08:06 krw Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.156 2016/03/29 11:57:51 chl Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -639,7 +639,6 @@ ip6_input(struct mbuf *m)
 		/* draft-itojun-ipv6-tcp-to-anycast */
 		if (isanycast && nxt == IPPROTO_TCP) {
 			if (m->m_len >= sizeof(struct ip6_hdr)) {
-				ip6 = mtod(m, struct ip6_hdr *);
 				icmp6_error(m, ICMP6_DST_UNREACH,
 					ICMP6_DST_UNREACH_ADDR,
 					offsetof(struct ip6_hdr, ip6_dst));
