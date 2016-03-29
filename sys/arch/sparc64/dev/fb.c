@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.27 2016/03/15 20:50:22 krw Exp $	*/
+/*	$OpenBSD: fb.c,v 1.28 2016/03/29 22:06:50 kettenis Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -131,7 +131,12 @@ fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
 {
 	int def_linebytes;
 
-	sf->sf_depth = getpropint(node, "depth", def_depth);
+	/*
+	 * Some PCI devices lack the `depth' property, but have a `depth '
+	 * property (with a trailing space) instead.
+	 */
+	sf->sf_depth = getpropint(node, "depth",
+	    getpropint(node, "depth ", def_depth));
 	sf->sf_width = getpropint(node, "width", def_width);
 	sf->sf_height = getpropint(node, "height", def_height);
 
