@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.272 2016/03/15 04:19:26 stefan Exp $
+#	$OpenBSD: Makefile,v 1.273 2016/03/29 05:18:24 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -7,8 +7,8 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	atomic_dec_int.9 atomic_inc_int.9 atomic_setbits_int.9 \
 	atomic_sub_int.9 atomic_swap_uint.9 \
 	audio.9 autoconf.9 \
-	bemtoh32.9 bio_register.9 boot.9 buffercache.9 bufq_init.9 bus_dma.9 \
-	bus_space.9 \
+	bemtoh32.9 bio_register.9 boot.9 bpf_mtap.9 buffercache.9 bufq_init.9 \
+	bus_dma.9 bus_space.9 \
 	copy.9 config_attach.9 config_defer.9 crypto.9 delay.9 \
 	disk.9 disklabel.9 dma_alloc.9 dohooks.9 \
 	dostartuphooks.9 \
@@ -66,6 +66,8 @@ MLINKS+=bemtoh32.9 bemtoh16.9 bemtoh32.9 bemtoh64.9 \
 	bemtoh32.9 lemtoh16.9 bemtoh32.9 lemtoh32.9 bemtoh32.9 lemtoh64.9 \
 	bemtoh32.9 htolem16.9 bemtoh32.9 htolem32.9 bemtoh32.9 htolem64.9
 MLINKS+=bio_register.9 bio_unregister.9
+MLINKS+=bpf_mtap.9 bpf_tap.9 bpf_mtap.9 bpf_mtap_hdr.9 \
+	bpf_mtap.9 bpf_tap_af.9 bpf_mtap.9 bpf_mtap_ether.9
 MLINKS+=buffercache.9 bread.9 buffercache.9 breadn.9 \
 	buffercache.9 bwrite.9 buffercache.9 bawrite.9 \
 	buffercache.9 bdwrite.9 buffercache.9 getblk.9 \

@@ -1,0 +1,126 @@
+.\"	$OpenBSD: bpf_mtap.9,v 1.1 2016/03/29 05:18:24 dlg Exp $
+.\"
+.\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: March 29 2016 $
+.Dt BPF_MTAP 9
+.Os
+.Sh NAME
+.Nm bpf_tap ,
+.Nm bpf_mtap ,
+.Nm bpf_mtap_hdr ,
+.Nm bpf_mtap_af ,
+.Nm bpf_mtap_ether
+.Nd BPF kernel API
+.Sh SYNOPSIS
+.In net/bpf.h
+.Ft int
+.Fn bpf_tap "caddr_t bpf" "u_char *pkt" "u_int pktlen" "u_int direction"
+.Ft void
+.Fn bpf_mtap "caddr_t bpf" "struct mbuf *m" "u_int direction"
+.Ft void
+.Fo bpf_hdr
+.Fa "caddr_t bpf"
+.Fa "caddr_t hdr"
+.Fa "u_int hdrlen" 
+.Fa "struct mbuf *m"
+.Fa "u_int direction"
+.Fa "void (*cpfn)(const void *, void *, size_t)"
+.Fc
+.Ft void
+.Fn bpf_mtap_af "caddr_t bpf" "u_int32_t af" "struct mbuf *m" "u_int direction"
+.Ft void
+.Fn bpf_mtap_ether "caddr_t bpf" "struct mbuf *m" "u_int direction"
+.Sh DESCRIPTION
+The BPF kernel API provides incoming linkage from device drivers.
+A packet is parsed by the filters associated with each interface,
+and if accepted, stashed into the corresponding buffer.
+.Pp
+.Fn bfp_tap
+runs the filters on the BPF interface referenced by
+.Fa bpf
+in the direction
+.Fa direction
+against the packet in the
+.Fa pkt
+buffer.
+.Pp
+.Fn bfp_mtap
+runs the filters on the BPF interface referenced by
+.Fa bpf
+in the direction
+.Fa direction
+against the packet in mbuf chain
+.Fa m .
+.Pp
+.Fn bfp_mtap_hdr
+runs the filters on the BPF interface referenced by
+.Fa bpf
+in the direction
+.Fa direction
+against the packet in mbuf chain
+.Fa m .
+The header referenced by
+.Fa hdr
+will be prefixed to the packet during filter evaluation.
+A custom packet copy function may be provided via
+.Fa cpfn .
+If
+.Fa cpfn
+is
+.Dv NULL
+an internal function for copying mbuf payloads will be used.
+.Pp
+.Fn bpf_mtap_af
+runs the filters on the BPF interface referenced by
+.Fa bpf
+in the direction
+.Fa direction
+against the packet in mbuf chain
+.Fa m .
+The address family specified by
+.Fa af
+will be prepended to the packet before matching occurs.
+.Pp
+.Fn bpf_mtap_ether
+runs the filters on the BPF interface referenced by
+.Fa bpf
+in the direction
+.Fa direction
+against an Ethernet packet in the mbuf
+.Fa m .
+If the mbuf is flagged with
+.Dv M_VLANTAG
+an Ethernet VLAN header is constructed using
+m->m_pkthdr.ether_vtag
+and
+m->m_pkthdr.pf.prio
+before matching occurs.
+.Sh CONTEXT
+.Fn bpf_tap ,
+.Fn bpf_mtap ,
+.Fn bpf_mtap_hdr ,
+.Fn bpf_mtap_af ,
+and
+.Fn bpf_mtap_ether
+can be called from process context, or from an interrupt context at or below
+.Dv IPL_HIGH .
+.Sh RETURN VALUES
+.Fn bpf_tap
+returns 1 if the packet matched a filter that indicates the packet
+should be dropped, otherwise 0.
+.Sh SEE ALSO
+.Xr mbuf 9 ,
+.Xr spl 9
