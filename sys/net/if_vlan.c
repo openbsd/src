@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.156 2016/03/28 13:05:22 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.157 2016/03/29 04:33:16 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -336,8 +336,8 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 		etype = ETHERTYPE_VLAN;
 		tagh = vlan_tagh;
 	} else if ((etype == ETHERTYPE_VLAN) || (etype == ETHERTYPE_QINQ)) {
-		if (m->m_len < EVL_ENCAPLEN &&
-		    (m = m_pullup(m, EVL_ENCAPLEN)) == NULL) {
+		if (m->m_len < sizeof(*evl) &&
+		    (m = m_pullup(m, sizeof(*evl))) == NULL) {
 			ifp0->if_ierrors++;
 			return (1);
 		}
@@ -395,8 +395,8 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 		m->m_flags &= ~M_VLANTAG;
 	} else {
 		eh->ether_type = evl->evl_proto;
-		memmove((char *)eh + EVL_ENCAPLEN, eh, sizeof(*eh));
-		m_adj(m, EVL_ENCAPLEN);
+		memmove((char *)eh + sizeof(*evl), eh, sizeof(*eh));
+		m_adj(m, sizeof(*evl));
 	}
 
 	ml_enqueue(&ml, m);
