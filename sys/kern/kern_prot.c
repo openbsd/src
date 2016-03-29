@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.63 2015/03/02 20:46:50 guenther Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.64 2016/03/29 16:53:49 guenther Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -1030,13 +1030,15 @@ sys_setlogin(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) namebuf;
 	} */ *uap = v;
 	struct session *s = p->p_p->ps_pgrp->pg_session;
+	char buf[sizeof(s->s_login)];
 	int error;
 
 	if ((error = suser(p, 0)) != 0)
 		return (error);
-	error = copyinstr((caddr_t)SCARG(uap, namebuf), (caddr_t)s->s_login,
-	    sizeof(s->s_login), NULL);
-	if (error == ENAMETOOLONG)
+	error = copyinstr(SCARG(uap, namebuf), buf, sizeof(buf), NULL);
+	if (error == 0)
+		strlcpy(s->s_login, buf, sizeof(s->s_login));
+	else if (error == ENAMETOOLONG)
 		error = EINVAL;
 	return (error);
 }
