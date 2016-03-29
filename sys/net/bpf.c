@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.135 2016/02/12 18:56:12 stefan Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.136 2016/03/29 10:38:27 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ LIST_HEAD(, bpf_d) bpf_d_list;
 void	bpf_allocbufs(struct bpf_d *);
 void	bpf_freed(struct bpf_d *);
 void	bpf_ifname(struct ifnet *, struct ifreq *);
-void	_bpf_mtap(caddr_t, struct mbuf *, u_int,
+int	_bpf_mtap(caddr_t, struct mbuf *, u_int,
 	    void (*)(const void *, void *, size_t));
 void	bpf_mcopy(const void *, void *, size_t);
 int	bpf_movein(struct uio *, u_int, struct mbuf **,
@@ -1178,7 +1178,7 @@ bpf_tap(caddr_t arg, u_char *pkt, u_int pktlen, u_int direction)
 			KERNEL_UNLOCK();
 
 			if (d->bd_fildrop)
-				drop++;
+				drop = 1;
 		}
 	}
 	SRPL_LEAVE(&i, d);
@@ -1213,7 +1213,7 @@ bpf_mcopy(const void *src_arg, void *dst_arg, size_t len)
 /*
  * like bpf_mtap, but copy fn can be given. used by various bpf_mtap*
  */
-void
+int
 _bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction,
     void (*cpfn)(const void *, void *, size_t))
 {
@@ -1224,16 +1224,17 @@ _bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction,
 	struct mbuf *m0;
 	struct timeval tv;
 	int gottime = 0;
+	int drop = 0;
 	int s;
 
 	if (m == NULL)
-		return;
+		return (0);
 
 	if (cpfn == NULL)
 		cpfn = bpf_mcopy;
 
 	if (bp == NULL)
-		return;
+		return (0);
 
 	pktlen = 0;
 	for (m0 = m; m0 != NULL; m0 = m0->m_next)
@@ -1271,19 +1272,24 @@ _bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction,
 			KERNEL_UNLOCK();
 
 			if (d->bd_fildrop)
-				m->m_flags |= M_FILDROP;
+				drop = 1;
 		}
 	}
 	SRPL_LEAVE(&i, d);
+
+	if (drop)
+		m->m_flags |= M_FILDROP;
+
+	return (drop);
 }
 
 /*
  * Incoming linkage from device drivers, when packet is in an mbuf chain.
  */
-void
+int
 bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction)
 {
-	_bpf_mtap(arg, m, direction, NULL);
+	return _bpf_mtap(arg, m, direction, NULL);
 }
 
 /*
@@ -1295,12 +1301,13 @@ bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction)
  * fields in this header that we initialize, and will not try to free
  * it or keep a pointer to it.
  */
-void
+int
 bpf_mtap_hdr(caddr_t arg, caddr_t data, u_int dlen, struct mbuf *m,
     u_int direction, void (*cpfn)(const void *, void *, size_t))
 {
 	struct m_hdr	 mh;
 	struct mbuf	*m0;
+	int		drop;
 
 	if (dlen > 0) {
 		mh.mh_flags = 0;
@@ -1311,9 +1318,12 @@ bpf_mtap_hdr(caddr_t arg, caddr_t data, u_int dlen, struct mbuf *m,
 	} else 
 		m0 = m;
 
-	_bpf_mtap(arg, m0, direction, cpfn);
+	drop = _bpf_mtap(arg, m0, direction, cpfn);
+
 	if (m0 != m)
 		m->m_flags |= m0->m_flags & M_FILDROP;
+
+	return (drop);
 }
 
 /*
@@ -1325,13 +1335,15 @@ bpf_mtap_hdr(caddr_t arg, caddr_t data, u_int dlen, struct mbuf *m,
  * fields in this header that we initialize, and will not try to free
  * it or keep a pointer to it.
  */
-void
+int
 bpf_mtap_af(caddr_t arg, u_int32_t af, struct mbuf *m, u_int direction)
 {
 	u_int32_t    afh;
 
 	afh = htonl(af);
-	bpf_mtap_hdr(arg, (caddr_t)&afh, sizeof(afh), m, direction, NULL);
+
+	return bpf_mtap_hdr(arg, (caddr_t)&afh, sizeof(afh),
+	    m, direction, NULL);
 }
 
 /*
@@ -1343,31 +1355,40 @@ bpf_mtap_af(caddr_t arg, u_int32_t af, struct mbuf *m, u_int direction)
  * fields in this header that we initialize, and will not try to free
  * it or keep a pointer to it.
  */
-void
+int
 bpf_mtap_ether(caddr_t arg, struct mbuf *m, u_int direction)
 {
 #if NVLAN > 0
 	struct ether_vlan_header evh;
+	struct m_hdr mh;
+	uint8_t prio;
 
 	if ((m->m_flags & M_VLANTAG) == 0)
 #endif
 	{
-		bpf_mtap(arg, m, direction);
-		return;
+		return bpf_mtap(arg, m, direction);
 	}
 
 #if NVLAN > 0
-	bcopy(mtod(m, char *), &evh, ETHER_HDR_LEN);
+	KASSERT(m->m_len >= ETHER_HDR_LEN);
+
+	prio = m->m_pkthdr.pf.prio;
+	if (prio <= 1)
+		prio = !prio;
+
+	memcpy(&evh, mtod(m, char *), ETHER_HDR_LEN);
 	evh.evl_proto = evh.evl_encap_proto;
 	evh.evl_encap_proto = htons(ETHERTYPE_VLAN);
-	evh.evl_tag = htons(m->m_pkthdr.ether_vtag);
-	m->m_len -= ETHER_HDR_LEN;
-	m->m_data += ETHER_HDR_LEN;
+	evh.evl_tag = htons(m->m_pkthdr.ether_vtag |
+	    (prio << EVL_PRIO_BITS));
 
-	bpf_mtap_hdr(arg, (caddr_t)&evh, sizeof(evh), m, direction, NULL);
+	mh.mh_flags = 0;
+	mh.mh_data = m->m_data + ETHER_HDR_LEN;
+	mh.mh_len = m->m_len - ETHER_HDR_LEN;
+	mh.mh_next = m->m_next;
 
-	m->m_len += ETHER_HDR_LEN;
-	m->m_data -= ETHER_HDR_LEN;
+	return bpf_mtap_hdr(arg, (caddr_t)&evh, sizeof(evh),
+	    (struct mbuf *)&mh, direction, NULL);
 #endif
 }
 

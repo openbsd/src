@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.50 2016/03/09 16:32:19 deraadt Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.51 2016/03/29 10:38:27 dlg Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -275,11 +275,11 @@ struct ifnet;
 
 int	 bpf_validate(struct bpf_insn *, int);
 int	 bpf_tap(caddr_t, u_char *, u_int, u_int);
-void	 bpf_mtap(caddr_t, struct mbuf *, u_int);
-void	 bpf_mtap_hdr(caddr_t, caddr_t, u_int, struct mbuf *, u_int,
+int	 bpf_mtap(caddr_t, struct mbuf *, u_int);
+int	 bpf_mtap_hdr(caddr_t, caddr_t, u_int, struct mbuf *, u_int,
 	    void (*)(const void *, void *, size_t));
-void	 bpf_mtap_af(caddr_t, u_int32_t, struct mbuf *, u_int);
-void	 bpf_mtap_ether(caddr_t, struct mbuf *, u_int);
+int	 bpf_mtap_af(caddr_t, u_int32_t, struct mbuf *, u_int);
+int	 bpf_mtap_ether(caddr_t, struct mbuf *, u_int);
 void	 bpfattach(caddr_t *, struct ifnet *, u_int, u_int);
 void	 bpfdetach(struct ifnet *);
 void	 bpfilterattach(int);
