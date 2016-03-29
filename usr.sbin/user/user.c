@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.107 2016/03/29 13:32:54 mestre Exp $ */
+/* $OpenBSD: user.c,v 1.108 2016/03/29 17:21:50 mestre Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -672,8 +672,7 @@ save_range(user_t *up, char *cp)
 		up->u_rsize *= 2;
 		if ((up->u_rv = reallocarray(up->u_rv, up->u_rsize,
 		    sizeof(range_t))) == NULL) {
-			warn("can't realloc %ld bytes",
-			    (long)(up->u_rsize * sizeof(range_t)));
+			warn(NULL);
 			return 0;
 		}
 	}
