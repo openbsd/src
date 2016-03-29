@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.123 2016/03/09 16:45:43 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.124 2016/03/29 12:04:26 chl Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -124,7 +124,6 @@ sys_mquery(struct proc *p, void *v, register_t *retval)
 		syscallarg(off_t) pos;
 	} */ *uap = v;
 	struct file *fp;
-	struct uvm_object *uobj;
 	voff_t uoff;
 	int error;
 	vaddr_t vaddr;
@@ -147,11 +146,9 @@ sys_mquery(struct proc *p, void *v, register_t *retval)
 	if (fd >= 0) {
 		if ((error = getvnode(p, fd, &fp)) != 0)
 			return (error);
-		uobj = &((struct vnode *)fp->f_data)->v_uvm->u_obj;
 		uoff = SCARG(uap, pos);
 	} else {
 		fp = NULL;
-		uobj = NULL;
 		uoff = UVM_UNKNOWN_OFFSET;
 	}
 

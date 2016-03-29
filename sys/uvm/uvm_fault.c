@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.88 2016/03/07 18:44:00 naddy Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.89 2016/03/29 12:04:26 chl Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1254,10 +1254,7 @@ int
 uvm_fault_wire(vm_map_t map, vaddr_t start, vaddr_t end, vm_prot_t access_type)
 {
 	vaddr_t va;
-	pmap_t  pmap;
 	int rv;
-
-	pmap = vm_map_pmap(map);
 
 	/*
 	 * now fault it in a page at a time.   if the fault fails then we have
