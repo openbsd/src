@@ -48,7 +48,6 @@ make_desktop(hfsvol *vol, int end)
 	unsigned short	clps;			/* clump size */
 	unsigned short	blks;			/* blocks in a clump */
 	unsigned char	*blk;			/* user data */
-	int		i;
 
 	/* set up default directory entries - not all these fields
 	   are needed, but we'll set them up anyway ... */
