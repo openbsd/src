@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf_mtap.9,v 1.1 2016/03/29 05:18:24 dlg Exp $
+.\"	$OpenBSD: bpf_mtap.9,v 1.2 2016/03/29 05:20:09 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -116,7 +116,7 @@ before matching occurs.
 and
 .Fn bpf_mtap_ether
 can be called from process context, or from an interrupt context at or below
-.Dv IPL_HIGH .
+.Dv IPL_NET .
 .Sh RETURN VALUES
 .Fn bpf_tap
 returns 1 if the packet matched a filter that indicates the packet
