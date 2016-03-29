@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.195 2016/03/26 21:38:54 beck Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.196 2016/03/29 08:46:08 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1495,8 +1495,7 @@ sigexit(struct proc *p, int signum)
 		p->p_sisig = signum;
 
 		/* if there are other threads, pause them */
-		if (TAILQ_FIRST(&p->p_p->ps_threads) != p ||
-		    TAILQ_NEXT(p, p_thr_link) != NULL)
+		if (P_HASSIBLING(p))
 			single_thread_set(p, SINGLE_SUSPEND, 0);
 
 		if (coredump(p) == 0)

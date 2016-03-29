@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.217 2016/03/09 13:38:50 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.218 2016/03/29 08:46:08 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -364,6 +364,8 @@ struct proc {
 #define	SONPROC	7		/* Thread is currently on a CPU. */
 
 #define	P_ZOMBIE(p)	((p)->p_stat == SDEAD)
+#define	P_HASSIBLING(p)	(TAILQ_FIRST(&(p)->p_p->ps_threads) != (p) || \
+			 TAILQ_NEXT((p), p_thr_link) != NULL)
 
 /*
  * These flags are per-thread and kept in p_flag
