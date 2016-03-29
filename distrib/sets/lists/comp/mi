@@ -6152,6 +6152,11 @@
 ./usr/share/man/man9/boot.9
 ./usr/share/man/man9/boottime.9
 ./usr/share/man/man9/bounds_check_with_label.9
+./usr/share/man/man9/bpf_mtap.9
+./usr/share/man/man9/bpf_mtap_ether.9
+./usr/share/man/man9/bpf_mtap_hdr.9
+./usr/share/man/man9/bpf_tap.9
+./usr/share/man/man9/bpf_tap_af.9
 ./usr/share/man/man9/bread.9
 ./usr/share/man/man9/breadn.9
 ./usr/share/man/man9/brelse.9
