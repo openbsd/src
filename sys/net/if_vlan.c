@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.157 2016/03/29 04:33:16 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.158 2016/03/29 13:55:42 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -373,18 +373,6 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 	if ((ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 	    (IFF_UP|IFF_RUNNING))
 		goto drop;
-
-	/*
-	 * Drop promiscuously received packets if we are not in
-	 * promiscuous mode.
-	 */
-	if (!ETHER_IS_MULTICAST(eh->ether_dhost) &&
-	    (ifp0->if_flags & IFF_PROMISC) &&
-	    (ifv->ifv_if.if_flags & IFF_PROMISC) == 0) {
-		if (bcmp(&ifv->ifv_ac.ac_enaddr, eh->ether_dhost,
-		    ETHER_ADDR_LEN))
-			goto drop;
-	}
 
 	/*
 	 * Having found a valid vlan interface corresponding to
