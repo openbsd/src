@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.106 2016/03/28 19:42:51 mestre Exp $ */
+/* $OpenBSD: user.c,v 1.107 2016/03/29 13:32:54 mestre Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -54,7 +54,6 @@
 #include <limits.h>
 #include <util.h>
 
-#include "defs.h"
 #include "usermgmt.h"
 
 
@@ -107,7 +106,8 @@ enum {
 	F_ACCTUNLOCK	= 0x10000
 };
 
-#define CONFFILE	"/etc/usermgmt.conf"
+#define CONFFILE		"/etc/usermgmt.conf"
+#define _PATH_NONEXISTENT       "/nonexistent"
 
 #ifndef DEF_GROUP
 #define DEF_GROUP	"=uid"
@@ -193,7 +193,8 @@ static void
 memsave(char **cpp, const char *s, size_t n)
 {
 	free(*cpp);
-	NEWARRAY(char, *cpp, n + 1, exit(1));
+	if ((*cpp = calloc (n + 1, sizeof(char))) == NULL)
+		err(1, NULL);
 	(void) memcpy(*cpp, s, n);
 	(*cpp)[n] = '\0';
 }
@@ -667,12 +668,14 @@ save_range(user_t *up, char *cp)
 	uid_t	to;
 	int	i;
 
-	if (up->u_rsize == 0) {
-		up->u_rsize = 32;
-		NEWARRAY(range_t, up->u_rv, up->u_rsize, return(0));
-	} else if (up->u_rc == up->u_rsize) {
+	if (up->u_rc == up->u_rsize) {
 		up->u_rsize *= 2;
-		RENEW(range_t, up->u_rv, up->u_rsize, return(0));
+		if ((up->u_rv = reallocarray(up->u_rv, up->u_rsize,
+		    sizeof(range_t))) == NULL) {
+			warn("can't realloc %ld bytes",
+			    (long)(up->u_rsize * sizeof(range_t)));
+			return 0;
+		}
 	}
 	if (up->u_rv && sscanf(cp, "%u..%u", &from, &to) == 2) {
 		for (i = up->u_defrc ; i < up->u_rc ; i++) {
@@ -758,7 +761,8 @@ read_defaults(user_t *up)
 	memsave(&up->u_class, DEF_CLASS, strlen(DEF_CLASS));
 	up->u_rsize = 16;
 	up->u_defrc = 0;
-	NEWARRAY(range_t, up->u_rv, up->u_rsize, exit(1));
+	if ((up->u_rv = calloc(up->u_rsize, sizeof(range_t))) == NULL)
+		err(1, NULL);
 	up->u_inactive = DEF_INACTIVE;
 	up->u_expire = DEF_EXPIRE;
 	if ((fp = fopen(CONFFILE, "r")) == NULL) {
@@ -1750,7 +1754,6 @@ usermgmt_usage(const char *prog)
 		(void) fprintf(stderr, "This program must be called as {user,group}{add,del,mod,info},\n%s is not an understood name.\n", prog);
 	}
 	exit(EXIT_FAILURE);
-	/* NOTREACHED */
 }
 
 int
@@ -1843,7 +1846,6 @@ useradd(int argc, char **argv)
 			break;
 		default:
 			usermgmt_usage("useradd");
-			/* NOTREACHED */
 		}
 	}
 	if (bigD) {
@@ -1978,7 +1980,6 @@ usermod(int argc, char **argv)
 			break;
 		default:
 			usermgmt_usage("usermod");
-			/* NOTREACHED */
 		}
 	}
 	if ((u.u_flags & F_MKDIR) && !(u.u_flags & F_HOMEDIR) &&
@@ -2036,7 +2037,6 @@ userdel(int argc, char **argv)
 			break;
 		default:
 			usermgmt_usage("userdel");
-			/* NOTREACHED */
 		}
 	}
 	if (bigD) {
@@ -2103,7 +2103,6 @@ groupadd(int argc, char **argv)
 			break;
 		default:
 			usermgmt_usage("groupadd");
-			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
@@ -2142,7 +2141,6 @@ groupdel(int argc, char **argv)
 			break;
 		default:
 			usermgmt_usage("groupdel");
-			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
@@ -2198,7 +2196,6 @@ groupmod(int argc, char **argv)
 			break;
 		default:
 			usermgmt_usage("groupmod");
-			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
@@ -2268,7 +2265,6 @@ userinfo(int argc, char **argv)
 			break;
 		default:
 			usermgmt_usage("userinfo");
-			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
@@ -2327,7 +2323,6 @@ groupinfo(int argc, char **argv)
 			break;
 		default:
 			usermgmt_usage("groupinfo");
-			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
