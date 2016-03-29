@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.62 2016/03/16 15:41:10 krw Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.63 2016/03/29 13:39:53 dlg Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -998,19 +998,6 @@ static __inline void
 iexmit(sc)
 	struct ie_softc *sc;
 {
-
-#if NBPFILTER > 0
-	/*
-	 * If BPF is listening on this interface, let it see the packet before
-	 * we push it on the wire.
-	 */
-	if (sc->sc_arpcom.ac_if.if_bpf)
-		bpf_tap(sc->sc_arpcom.ac_if.if_bpf,
-		    sc->xmit_cbuffs[sc->xctail],
-		    SWAP(sc->xmit_buffs[sc->xctail]->ie_xmit_flags),
-		    BPF_DIRECTION_OUT);
-#endif
-
 	sc->xmit_buffs[sc->xctail]->ie_xmit_flags |= IE_XMIT_LAST;
 	sc->xmit_buffs[sc->xctail]->ie_xmit_next = SWAP(0xffff);
 	ST_24(sc->xmit_buffs[sc->xctail]->ie_xmit_buf,
@@ -1314,6 +1301,11 @@ iestart(ifp)
 		IFQ_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
 		if (!m)
 			break;
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
 
 		len = 0;
 		buffer = sc->xmit_cbuffs[sc->xchead];
