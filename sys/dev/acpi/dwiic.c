@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.11 2016/03/29 18:04:09 kettenis Exp $ */
+/* $OpenBSD: dwiic.c,v 1.12 2016/03/29 22:35:09 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -246,7 +246,7 @@ dwiic_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf(", addr 0x%x len 0x%x", crs.addr_bas, crs.addr_len);
+	printf(" addr 0x%x/0x%x", crs.addr_bas, crs.addr_len);
 
 	sc->sc_iot = aa->aaa_memt;
 	if (bus_space_map(sc->sc_iot, crs.addr_bas, crs.addr_len, 0,
@@ -285,15 +285,12 @@ dwiic_attach(struct device *parent, struct device *self, void *aux)
 
 	/* try to register interrupt with apic, but not fatal without it */
 	if (crs.irq_int > 0) {
+		printf(" irq %d", crs.irq_int);
+
 		sc->sc_ih = acpi_intr_establish(crs.irq_int, crs.irq_flags,
 		    IPL_BIO, dwiic_intr, sc, sc->sc_dev.dv_xname);
 		if (sc->sc_ih == NULL)
-			printf(", failed establishing acpi int %d",
-			    crs.irq_int);
-		else {
-			printf(", apic int %d", crs.irq_int);
-			sc->sc_poll = 0;
-		}
+			printf(", can't establish interrupt");
 	}
 
 	printf("\n");
