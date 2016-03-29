@@ -1285,6 +1285,7 @@
 ./usr/share/man/man4/bridge.4
 ./usr/share/man/man4/brswphy.4
 ./usr/share/man/man4/bwi.4
+./usr/share/man/man4/bytgpio.4
 ./usr/share/man/man4/cac.4
 ./usr/share/man/man4/cardbus.4
 ./usr/share/man/man4/carp.4
