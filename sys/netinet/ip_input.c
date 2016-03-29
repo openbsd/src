@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.268 2016/01/31 00:18:07 sashan Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.269 2016/03/29 10:34:42 sashan Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1458,6 +1458,9 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
 		len = min(ntohs(ip->ip_len), 68);
 		m_copydata(m, 0, len, mfake.m_pktdat);
 		mfake.m_pkthdr.len = mfake.m_len = len;
+#if NPF > 0
+		pf_pkt_unlink_state_key(&mfake);
+#endif	/* NPF > 0 */
 		fake = 1;
 	}
 
