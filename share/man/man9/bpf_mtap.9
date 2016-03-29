@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf_mtap.9,v 1.3 2016/03/29 07:33:21 jmc Exp $
+.\"	$OpenBSD: bpf_mtap.9,v 1.4 2016/03/29 10:40:13 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -28,9 +28,9 @@
 .In net/bpf.h
 .Ft int
 .Fn bpf_tap "caddr_t bpf" "u_char *pkt" "u_int pktlen" "u_int direction"
-.Ft void
+.Ft int
 .Fn bpf_mtap "caddr_t bpf" "struct mbuf *m" "u_int direction"
-.Ft void
+.Ft int
 .Fo bpf_mtap_hdr
 .Fa "caddr_t bpf"
 .Fa "caddr_t hdr"
@@ -39,9 +39,9 @@
 .Fa "u_int direction"
 .Fa "void (*cpfn)(const void *, void *, size_t)"
 .Fc
-.Ft void
+.Ft int
 .Fn bpf_mtap_af "caddr_t bpf" "u_int32_t af" "struct mbuf *m" "u_int direction"
-.Ft void
+.Ft int
 .Fn bpf_mtap_ether "caddr_t bpf" "struct mbuf *m" "u_int direction"
 .Sh DESCRIPTION
 The BPF kernel API provides incoming linkage from device drivers.
@@ -118,8 +118,13 @@ and
 can be called from process context, or from an interrupt context at or below
 .Dv IPL_NET .
 .Sh RETURN VALUES
-.Fn bpf_tap
-returns 1 if the packet matched a filter that indicates the packet
+.Fn bpf_tap ,
+.Fn bpf_mtap ,
+.Fn bpf_mtap_hdr ,
+.Fn bpf_mtap_af ,
+and
+.Fn bpf_mtap_ether
+return 1 if the packet matched a filter that indicates the packet
 should be dropped, otherwise 0.
 .Sh SEE ALSO
 .Xr mbuf 9 ,
