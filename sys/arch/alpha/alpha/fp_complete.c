@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_complete.c,v 1.11 2014/11/18 20:51:00 krw Exp $	*/
+/*	$OpenBSD: fp_complete.c,v 1.12 2016/03/30 15:39:46 afresh1 Exp $	*/
 /*	$NetBSD: fp_complete.c,v 1.5 2002/01/18 22:15:56 ross Exp $	*/
 
 /*-
@@ -73,13 +73,17 @@
 
 #define IS_SUBNORMAL(v)	((v)->exp == 0 && (v)->frac != 0)
 
-#define	PREFILTER_SUBNORMAL(p,v) if ((p)->p_md.md_flags & IEEE_MAP_DMZ	\
-				     && IS_SUBNORMAL(v))		\
-					 (v)->frac = 0; else
+#define	PREFILTER_SUBNORMAL(p,v) \
+do { \
+	if ((p)->p_md.md_flags & IEEE_MAP_DMZ && IS_SUBNORMAL(v)) \
+		(v)->frac = 0; \
+} while (0)
 
-#define	POSTFILTER_SUBNORMAL(p,v) if ((p)->p_md.md_flags & IEEE_MAP_UMZ	\
-				      && IS_SUBNORMAL(v))		\
-					  (v)->frac = 0; else
+#define	POSTFILTER_SUBNORMAL(p,v) \
+do { \
+	if ((p)->p_md.md_flags & IEEE_MAP_UMZ && IS_SUBNORMAL(v)) \
+		(v)->frac = 0; \
+} while (0)
 
 	/* Alpha returns 2.0 for true, all zeroes for false. */
 
@@ -493,7 +497,7 @@ float64_unk(float64 a, float64 b)
  */
 
 static void
-alpha_fp_interpret(alpha_instruction *pc, struct proc *p, u_int64_t bits)
+alpha_fp_interpret(struct proc *p, u_int64_t bits)
 {
 	s_float sfa, sfb, sfc;
 	t_float tfa, tfb, tfc;
@@ -560,16 +564,15 @@ alpha_fp_interpret(alpha_instruction *pc, struct proc *p, u_int64_t bits)
 	}
 }
 
-static int
-alpha_fp_complete_at(alpha_instruction *trigger_pc, struct proc *p,
-    u_int64_t *ucode)
+int
+alpha_fp_complete_at(u_long trigger_pc, struct proc *p, u_int64_t *ucode)
 {
 	int needsig;
 	alpha_instruction inst;
 	u_int64_t rm, fpcr, orig_fpcr;
 	u_int64_t orig_flags, new_flags, changed_flags, md_flags;
 
-	if (__predict_false(copyin(trigger_pc, &inst, sizeof inst))) {
+	if (__predict_false(copyin((void *)trigger_pc, &inst, sizeof inst))) {
 		this_cannot_happen(6, -1);
 		return SIGSEGV;
 	}
@@ -589,7 +592,7 @@ alpha_fp_complete_at(alpha_instruction *trigger_pc, struct proc *p,
 	}
 	orig_flags = FP_C_TO_OPENBSD_FLAG(p->p_md.md_flags);
 
-	alpha_fp_interpret(trigger_pc, p, inst.bits);
+	alpha_fp_interpret(p, inst.bits);
 
 	md_flags = p->p_md.md_flags;
 
@@ -614,12 +617,12 @@ alpha_fp_complete(u_long a0, u_long a1, struct proc *p, u_int64_t *ucode)
 	u_int64_t op_class;
 	alpha_instruction inst;
 	/* "trigger_pc" is Compaq's term for the earliest faulting op */
-	alpha_instruction *trigger_pc, *usertrap_pc;
+	u_long trigger_pc, usertrap_pc;
 	alpha_instruction *pc, *win_begin, tsw[TSWINSIZE];
 
 	sig = SIGFPE;
 	pc = (alpha_instruction *)p->p_md.md_tf->tf_regs[FRAME_PC];
-	trigger_pc = pc - 1;	/* for ALPHA_AMASK_PAT case */
+	trigger_pc = (u_long)pc - 4;	/* for ALPHA_AMASK_PAT case */
 	if (cpu_amask & ALPHA_AMASK_PAT) {
 		if (a0 & 1 || alpha_fp_sync_complete) {
 			sig = alpha_fp_complete_at(trigger_pc, p, ucode);
@@ -639,12 +642,6 @@ alpha_fp_complete(u_long a0, u_long a1, struct proc *p, u_int64_t *ucode)
  * interpret this one instruction in SW. If a SIGFPE is not required, back up
  * the PC until just after this instruction and restart. This will execute all
  * trap shadow instructions between the trigger pc and the trap pc twice.
- * 
- * If a SIGFPE is generated from the OSF1 emulation,  back up one more
- * instruction to the trigger pc itself. Native binaries don't because it
- * is non-portable and completely defeats the intended purpose of IEEE
- * traps -- for example, to count the number of exponent wraps for a later
- * correction.
  */
 	trigger_pc = 0;
 	win_begin = pc;
@@ -665,10 +662,10 @@ alpha_fp_complete(u_long a0, u_long a1, struct proc *p, u_int64_t *ucode)
 		op_class = 1UL << inst.generic_format.opcode;
 		if (op_class & FPUREG_CLASS) {
 			a1 &= ~(1UL << (inst.operate_generic_format.rc + 32));
-			trigger_pc = pc;
+			trigger_pc = (u_long)pc;
 		} else if (op_class & CPUREG_CLASS) {
 			a1 &= ~(1UL << inst.operate_generic_format.rc);
-			trigger_pc = pc;
+			trigger_pc = (u_long)pc;
 		} else if (op_class & TRAPSHADOWBOUNDARY) {
 			if (op_class & CHECKFUNCTIONCODE) {
 				if (inst.mem_format.displacement == op_trapb ||
@@ -691,8 +688,8 @@ alpha_fp_complete(u_long a0, u_long a1, struct proc *p, u_int64_t *ucode)
 	}
 done:
 	if (sig) {
-		usertrap_pc = trigger_pc + 1;
-		p->p_md.md_tf->tf_regs[FRAME_PC] = (unsigned long)usertrap_pc;
+		usertrap_pc = trigger_pc + 4;
+		p->p_md.md_tf->tf_regs[FRAME_PC] = usertrap_pc;
 		return sig;
 	}
 	return 0;

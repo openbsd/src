@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.56 2016/03/01 19:17:37 mmcc Exp $ */
+/* $OpenBSD: cpu.h,v 1.57 2016/03/30 15:39:46 afresh1 Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -393,6 +393,7 @@ u_int64_t alpha_read_fp_c(struct proc *);
 void alpha_write_fp_c(struct proc *, u_int64_t);
 
 int alpha_fp_complete(u_long, u_long, struct proc *, u_int64_t *);
+int alpha_fp_complete_at(u_long, struct proc *, u_int64_t *);
 #endif
 
 void alpha_enable_fp(struct proc *, int);

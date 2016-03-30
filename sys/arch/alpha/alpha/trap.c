@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.80 2015/06/23 12:29:46 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.81 2016/03/30 15:39:46 afresh1 Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -1230,6 +1230,24 @@ handle_opdec(p, ucodep)
 			break;
 		}
 		goto sigill;
+
+#ifndef NO_IEEE
+	/* case op_fix_float: */
+	/* case op_vax_float: */
+	case op_ieee_float:
+	/* case op_any_float: */
+		/*
+		 * EV4 processors do not implement dynamic rounding
+		 * instructions at all.
+		 */
+		if (cpu_implver <= ALPHA_IMPLVER_EV4) {
+			sig = alpha_fp_complete_at(inst_pc, p, ucodep);
+			if (sig)
+				return sig;
+			break;
+		}
+		goto sigill;
+#endif
 
 	default:
 		goto sigill;
