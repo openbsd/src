@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.25 2015/01/20 09:00:16 guenther Exp $	*/
+/*	$OpenBSD: child.c,v 1.26 2016/03/30 20:12:18 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -426,18 +426,18 @@ waitup(void)
 }
 
 /*
- * Enable non-blocking I/O mode.
+ * Enable non-blocking I/O.
  */
 static int
 setnonblocking(int fd)
 {
-	int	mode;
+	int	flags;
 
-	if ((mode = fcntl(fd, F_GETFL)) < 0)
+	if ((flags = fcntl(fd, F_GETFL)) < 0)
 		return (-1);
-	if (mode & O_NONBLOCK)
+	if (flags & O_NONBLOCK)
 		return (0);
-	return (fcntl(fd, F_SETFL, mode | O_NONBLOCK));
+	return (fcntl(fd, F_SETFL, flags | O_NONBLOCK));
 }
 
 /*
