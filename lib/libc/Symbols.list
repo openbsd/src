@@ -46,7 +46,6 @@ _thread_sys___thrsigdivert
 _thread_sys___thrsleep
 _thread_sys___thrwakeup
 _thread_sys__exit
-_thread_sys__ptrace
 _thread_sys_accept4
 _thread_sys_accept
 _thread_sys_access
@@ -168,6 +167,7 @@ _thread_sys_pread
 _thread_sys_preadv
 _thread_sys_profil
 _thread_sys_pselect
+_thread_sys_ptrace
 _thread_sys_pwrite
 _thread_sys_pwritev
 _thread_sys_quotactl

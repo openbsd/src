@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.140 2016/03/30 07:52:47 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.141 2016/03/30 07:55:36 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -71,7 +71,7 @@ PASM=	${ASM:.o=.po}
 SASM=	${ASM:.o=.so}
 DASM=	${ASM:.o=.do}
 
-PSEUDO=	_ptrace.o
+PSEUDO=
 GPSEUDO=${PSEUDO:.o=.go}
 PPSEUDO=${PSEUDO:.o=.po}
 SPSEUDO=${PSEUDO:.o=.so}
@@ -83,7 +83,7 @@ PPSEUDO_NOERR=${PSEUDO_NOERR:.o=.po}
 SPSEUDO_NOERR=${PSEUDO_NOERR:.o=.so}
 DPSEUDO_NOERR=${PSEUDO_NOERR:.o=.do}
 
-HIDDEN= sigaction.o
+HIDDEN= sigaction.o _ptrace.o
 GHIDDEN=${HIDDEN:.o=.go}
 PHIDDEN=${HIDDEN:.o=.po}
 SHIDDEN=${HIDDEN:.o=.so}
