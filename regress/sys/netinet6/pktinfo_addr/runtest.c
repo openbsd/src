@@ -50,6 +50,7 @@ main(int argc, char *argv[])
 
 	int			  ch, rc, wstat, expected = -1;
 	int			  first_sock;
+	int			  reuse_addr = 0;
 	pid_t			  pid;
 
 	const char		 *numerr;
@@ -102,9 +103,6 @@ main(int argc, char *argv[])
 		optreset = 1; optind++;
 	} while (optind < argc);
 
-	if (*first_sin6p == NULL)
-		errx(2, "first_sin6p == NULL");
-
 	if (*bind_sin6p == NULL)
 		errx(2, "bind_sin6p == NULL");
 
@@ -114,15 +112,20 @@ main(int argc, char *argv[])
 	if (expected < 0)
 		errx(2, "need expected");
 
-	first_sock = udp6_first(*first_sin6p);
+	if (*first_sin6p) {
+		first_sock = udp6_first(*first_sin6p);
+		reuse_addr = 1;
+	}
 
 	pid = fork();
 	if (pid == 0) {
 		return udp6_override(*dst_sin6p, *bind_sin6p,
-		    *setsockopt_sin6p, *sendmsg_sin6p);
+		    *setsockopt_sin6p, *sendmsg_sin6p, reuse_addr);
 	}
 	(void)wait(&wstat);
-	close(first_sock);
+
+	if (*first_sin6p)
+		close(first_sock);
 
 	if (! WIFEXITED(wstat))
 		errx(2, "error setting up override");
@@ -152,7 +155,8 @@ udp6_first(struct sockaddr_in6 *src)
 
 int
 udp6_override(struct sockaddr_in6 *dst, struct sockaddr_in6 *src_bind,
-    struct sockaddr_in6 *src_setsockopt, struct sockaddr_in6 *src_sendmsg)
+    struct sockaddr_in6 *src_setsockopt, struct sockaddr_in6 *src_sendmsg,
+    int reuse_addr)
 {
 	int			 s, optval, error, saved_errno;
 	ssize_t			 send_rc;
@@ -176,10 +180,12 @@ udp6_override(struct sockaddr_in6 *dst, struct sockaddr_in6 *src_bind,
 		kill(getpid(), SIGTERM);
 	}
 
-	optval = 1;
-	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(int))) {
-		warn("udp6_override: setsockopt(SO_REUSEADDR)");
-		kill(getpid(), SIGTERM);
+	if (reuse_addr) {
+		optval = 1;
+		if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(int))) {
+			warn("udp6_override: setsockopt(SO_REUSEADDR)");
+			kill(getpid(), SIGTERM);
+		}
 	}
 
 	if (bind(s, (struct sockaddr *)src_bind, src_bind->sin6_len)) {

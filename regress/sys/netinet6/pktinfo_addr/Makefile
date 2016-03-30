@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/03/19 15:09:13 vgross Exp $
+# $OpenBSD: Makefile,v 1.2 2016/03/30 22:02:55 vgross Exp $
 
 PROG	   = runtest
 TESTIFACE  = vether11
@@ -27,8 +27,9 @@ run-regress-runtest: ${PROG}
 	${.OBJDIR}/${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b ${BASEADDR} -m ${ABSENTADDR} -e 49
 	${.OBJDIR}/${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b ${BASEADDR} -o ${FIRSTADDR} -e 48
 	${.OBJDIR}/${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b ${BASEADDR} -m ${FIRSTADDR} -e 48
-	${.OBJDIR}/${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b :: -o ${BASEADDR} -e 0
-	${.OBJDIR}/${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b :: -m ${BASEADDR} -e 0
+	${.OBJDIR}/${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b :: -e 0
+	${.OBJDIR}/${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b :: -o ${ADDR_3} -e 0
+	${.OBJDIR}/${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b :: -m ${ADDR_3} -e 0
 	${.OBJDIR}/${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b :: -o ${FIRSTADDR} -e 48
 	${.OBJDIR}/${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b :: -m ${FIRSTADDR} -e 48
 	${.OBJDIR}/${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b ${BASEADDR} -o :: -e 0
@@ -37,6 +38,9 @@ run-regress-runtest: ${PROG}
 	${.OBJDIR}/${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b ${BASEADDR} -o ${ABSENTADDR} -m ${ADDR_4} -e 0
 	${.OBJDIR}/${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b ${BASEADDR} -o ${ADDR_3} -m :: -e 0
 	${.OBJDIR}/${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b ${BASEADDR} -o ${FIRSTADDR} -m :: -e 0
+	${.OBJDIR}/${PROG} -d ${DESTADDR} -b :: -e 0
+	${.OBJDIR}/${PROG} -d ${DESTADDR} -b :: -o ${ADDR_3} -e 0
+	${.OBJDIR}/${PROG} -d ${DESTADDR} -b :: -m ${ADDR_3} -e 0
 	${SUDO} ifconfig ${TESTIFACE} destroy
 
 .include <bsd.regress.mk>
