@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytgpio.c,v 1.3 2016/03/29 18:04:09 kettenis Exp $	*/
+/*	$OpenBSD: bytgpio.c,v 1.4 2016/03/30 09:56:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -25,7 +25,21 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
 
+#define BYTGPIO_CONF_GD_LEVEL	0x01000000
+#define BYTGPIO_CONF_GD_TPE	0x02000000
+#define BYTGPIO_CONF_GD_TNE	0x04000000
+#define BYTGPIO_CONF_GD_MASK	0x0f000000
+
 #define BYTGPIO_PAD_VAL		0x00000001
+
+#define BYTGPIO_IRQ_TS_0	0x800
+#define BYTGPIO_IRQ_TS_1	0x804
+#define BYTGPIO_IRQ_TS_2	0x808
+
+struct bytgpio_intrhand {
+	void (*ih_func)(void *);
+	void *ih_arg;
+};
 
 struct bytgpio_softc {
 	struct device sc_dev;
@@ -43,6 +57,7 @@ struct bytgpio_softc {
 
 	const int *sc_pins;
 	int sc_npins;
+	struct bytgpio_intrhand *sc_pin_ih;
 
 	struct acpi_gpio sc_gpio;
 };
@@ -90,6 +105,7 @@ const int byt_sus_pins[] = {
 
 int	bytgpio_parse_resources(union acpi_resource *, void *);
 int	bytgpio_read_pin(void *, int);
+void	bytgpio_intr_establish(void *, int, int, void (*)(), void *);
 int	bytgpio_intr(void *);
 
 int
@@ -149,29 +165,39 @@ bytgpio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_pin_ih = mallocarray(sc->sc_npins, sizeof(*sc->sc_pin_ih),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (sc->sc_pin_ih == NULL) {
+		printf("\n");
+		return;
+	}
+
 	printf(" irq %d", sc->sc_irq);
 
 	sc->sc_memt = aaa->aaa_memt;
 	if (bus_space_map(sc->sc_memt, sc->sc_addr, sc->sc_size, 0,
 	    &sc->sc_memh)) {
 		printf(", can't map registers\n");
-		return;
+		goto fail;
 	}
 
-#if 0
 	sc->sc_ih = acpi_intr_establish(sc->sc_irq, sc->sc_irq_flags, IPL_BIO,
 	    bytgpio_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(", can't establish interrupt\n");
-		return;
+		goto fail;
 	}
-#endif
 
 	sc->sc_gpio.cookie = sc;
 	sc->sc_gpio.read_pin = bytgpio_read_pin;
+	sc->sc_gpio.intr_establish = bytgpio_intr_establish;
 	sc->sc_node->gpio = &sc->sc_gpio;
 
 	printf(", %d pins\n", sc->sc_npins);
+	return;
+
+fail:
+	free(sc->sc_pin_ih, M_DEVBUF, sc->sc_npins * sizeof(*sc->sc_pin_ih));
 }
 
 int
@@ -207,25 +233,52 @@ bytgpio_read_pin(void *cookie, int pin)
 	return (reg & BYTGPIO_PAD_VAL);
 }
 
-#if 0
+void
+bytgpio_intr_establish(void *cookie, int pin, int flags,
+    void (*func)(void *), void *arg)
+{
+	struct bytgpio_softc *sc = cookie;
+	uint32_t reg;
+
+	KASSERT(pin >= 0 && pin < sc->sc_npins);
+
+	sc->sc_pin_ih[pin].ih_func = func;
+	sc->sc_pin_ih[pin].ih_arg = arg;
+
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh, sc->sc_pins[pin] * 16);
+	reg &= ~BYTGPIO_CONF_GD_MASK;
+	if ((flags & LR_GPIO_MODE) == 0)
+		reg |= BYTGPIO_CONF_GD_LEVEL;
+	if ((flags & LR_GPIO_POLARITY) == LR_GPIO_ACTLO)
+		reg |= BYTGPIO_CONF_GD_TNE;
+	if ((flags & LR_GPIO_POLARITY) == LR_GPIO_ACTHI)
+		reg |= BYTGPIO_CONF_GD_TPE;
+	if ((flags & LR_GPIO_POLARITY) == LR_GPIO_ACTBOTH)
+		reg |= BYTGPIO_CONF_GD_TNE | BYTGPIO_CONF_GD_TPE;
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, sc->sc_pins[pin] * 16, reg);
+}
 
 int
 bytgpio_intr(void *arg)
 {
 	struct bytgpio_softc *sc = arg;
 	uint32_t reg;
+	int rc = 0;
 	int pin;
 
 	for (pin = 0; pin < sc->sc_npins; pin++) {
-		if (pin % 32 == 0)
-			reg = bus_space_read_4(sc->sc_memt, sc->sc_memh, 0x800 + (pin / 8));
+		if (pin % 32 == 0) {
+			reg = bus_space_read_4(sc->sc_memt, sc->sc_memh,
+			    BYTGPIO_IRQ_TS_0 + (pin / 8));
+			bus_space_write_4(sc->sc_memt, sc->sc_memh,
+			    BYTGPIO_IRQ_TS_0 + (pin / 8), reg);
+		}
 		if (reg & (1 << (pin % 32))) {
-			
+			if (sc->sc_pin_ih[pin].ih_func)
+				sc->sc_pin_ih[pin].ih_func(sc->sc_pin_ih[pin].ih_arg);
+			rc = 1;
 		}
 	}
 
-	printf("%s\n", __func__);
-	return 1;
+	return rc;
 }
-
-#endif
