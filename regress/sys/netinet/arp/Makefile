@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2016/03/24 07:11:45 mpi Exp $
+#	$OpenBSD: Makefile,v 1.5 2016/03/30 09:06:27 mpi Exp $
 
 # The following ports must be installed:
 #
@@ -118,7 +118,7 @@ run-regress-arp-multicast: addr.py
 	ssh -t ${REMOTE_SSH} ${SUDO} arp -d ${LOCAL_ADDR}
 	diff old.log new.log | grep '^> ' >diff.log
 	grep 'bsd: arp info overwritten for ${LOCAL_ADDR} by 33:33:33:33:33:33' diff.log
-	grep '^${LOCAL_ADDR} .* ${LOCAL_MAC} ' arp.log
+	grep '^${LOCAL_ADDR} .* 33:33:33:33:33:33 ' arp.log
 
 # Send an ARP probe from the local machine with the remote IP as
 # target.  Sender MAC is local and IP is 0.  The remote machine must
@@ -249,8 +249,8 @@ run-regress-arp-temporary: addr.py
 # Check that no answer is received.
 # Check that the attempt to add an entry is logged.
 # Check that the remote machine keeps its incomplete ARP entry.
-TARGETS +=	arp-incomlete
-run-regress-arp-incomlete: addr.py
+TARGETS +=	arp-incomplete
+run-regress-arp-incomplete: addr.py
 	@echo '\n======== $@ ========'
 	@echo Send ARP Request filling an incomplete entry on other interface
 	ssh -t ${REMOTE_SSH} logger -t "arp-regress[$$$$]" $@
