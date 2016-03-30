@@ -609,7 +609,7 @@
 ./usr/games
 ./usr/include
 ./usr/lib
-./usr/lib/libc.so.85.0
+./usr/lib/libc.so.86.0
 ./usr/lib/libcrypto.so.37.0
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
