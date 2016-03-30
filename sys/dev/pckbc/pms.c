@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.68 2016/02/27 22:01:58 mmcc Exp $ */
+/* $OpenBSD: pms.c,v 1.69 2016/03/30 23:34:12 bru Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -143,17 +143,8 @@ struct elantech_softc {
 
 	int min_x, min_y;
 	int max_x, max_y;
-	struct {
-		unsigned int x;
-		unsigned int y;
-		unsigned int z;
-	} mt[ELANTECH_MAX_FINGERS];
-	int mt_slots;
-	int mt_count;
-	int mt_filter;
-	int mt_lastid;
-	int mt_lastcount;
-	int mt_buttons;
+
+	u_int mt_slots;
 
 	int width;
 
@@ -997,8 +988,7 @@ synaptics_sec_proc(struct pms_softc *sc)
 	dy = (sc->packet[1] & PMS_PS2_YNEG) ?
 	    (int)sc->packet[5] - 256 : sc->packet[5];
 
-	wsmouse_input(sc->sc_sec_wsmousedev,
-	    buttons, dx, dy, 0, 0, WSMOUSE_INPUT_DELTA);
+	WSMOUSE_INPUT(sc->sc_sec_wsmousedev, buttons, dx, dy, 0, 0);
 }
 
 int
@@ -1162,7 +1152,7 @@ pms_proc_synaptics(struct pms_softc *sc)
 {
 	struct synaptics_softc *syn = sc->synaptics;
 	u_int buttons;
-	int x, y, z, w, dx, dy;
+	int x, y, z, w, dx, dy, width;
 
 	w = ((sc->packet[0] & 0x30) >> 2) | ((sc->packet[0] & 0x04) >> 1) |
 	    ((sc->packet[3] & 0x04) >> 2);
@@ -1230,8 +1220,9 @@ pms_proc_synaptics(struct pms_softc *sc)
 			    (sc->packet[5] & 0x01) ? WSMOUSE_BUTTON(3) : 0;
 			syn->sec_buttons |=
 			    (sc->packet[4] & 0x02) ? WSMOUSE_BUTTON(2) : 0;
-			wsmouse_input(sc->sc_sec_wsmousedev,
-			    syn->sec_buttons, 0, 0, 0, 0, WSMOUSE_INPUT_DELTA);
+			wsmouse_buttons(
+			    sc->sc_sec_wsmousedev, syn->sec_buttons);
+			wsmouse_input_sync(sc->sc_sec_wsmousedev);
 			return;
 		}
 
@@ -1254,9 +1245,14 @@ pms_proc_synaptics(struct pms_softc *sc)
 	}
 
 	if (syn->wsmode == WSMOUSE_NATIVE) {
-		wsmouse_input(sc->sc_wsmousedev, buttons, x, y, z, w,
-		    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
-		    WSMOUSE_INPUT_ABSOLUTE_Z | WSMOUSE_INPUT_ABSOLUTE_W);
+		if (z) {
+			width = imax(w, 4);
+			w = (w < 2 ? w + 2 : 1);
+		} else {
+			width = w = 0;
+		}
+		wsmouse_set(sc->sc_wsmousedev, WSMOUSE_TOUCH_WIDTH, width, 0);
+		WSMOUSE_TOUCH(sc->sc_wsmousedev, buttons, x, y, z, w);
 	} else {
 		dx = dy = 0;
 		if (z > SYNAPTICS_PRESSURE) {
@@ -1266,8 +1262,7 @@ pms_proc_synaptics(struct pms_softc *sc)
 			dy /= SYNAPTICS_SCALE;
 		}
 		if (dx || dy || buttons != syn->old_buttons)
-			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy, 0, 0,
-			    WSMOUSE_INPUT_DELTA);
+			WSMOUSE_INPUT(sc->sc_wsmousedev, buttons, dx, dy, 0, 0);
 		syn->old_buttons = buttons;
 	}
 
@@ -1313,8 +1308,7 @@ alps_sec_proc(struct pms_softc *sc)
 	dy = (sc->packet[pos] & PMS_PS2_YNEG) ?
 	    (int)sc->packet[pos + 2] - 256 : sc->packet[pos + 2];
 
-	wsmouse_input(sc->sc_sec_wsmousedev, alps->sec_buttons,
-	    dx, dy, 0, 0, WSMOUSE_INPUT_DELTA);
+	WSMOUSE_INPUT(sc->sc_sec_wsmousedev, alps->sec_buttons, dx, dy, 0, 0);
 
 	return (1);
 }
@@ -1514,7 +1508,7 @@ void
 pms_proc_alps(struct pms_softc *sc)
 {
 	struct alps_softc *alps = sc->alps;
-	int x, y, z, w, dx, dy;
+	int x, y, z, dx, dy;
 	u_int buttons, gesture;
 
 	if ((alps->model & ALPS_DUALPOINT) && alps_sec_proc(sc))
@@ -1532,8 +1526,7 @@ pms_proc_alps(struct pms_softc *sc)
 		dx = (x > ALPS_XSEC_BEZEL / 2) ? (x - ALPS_XSEC_BEZEL) : x;
 		dy = (y > ALPS_YSEC_BEZEL / 2) ? (y - ALPS_YSEC_BEZEL) : y;
 
-		wsmouse_input(sc->sc_sec_wsmousedev, buttons, dx, dy, 0, 0,
-		    WSMOUSE_INPUT_DELTA);
+		WSMOUSE_INPUT(sc->sc_sec_wsmousedev, buttons, dx, dy, 0, 0);
 
 		return;
 	}
@@ -1552,35 +1545,21 @@ pms_proc_alps(struct pms_softc *sc)
 	if (alps->wsmode == WSMOUSE_NATIVE) {
 		if (alps->gesture == ALPS_TAP) {
 			/* Report a touch with the tap coordinates. */
-			wsmouse_input(sc->sc_wsmousedev, buttons,
-			    alps->old_x, alps->old_y, ALPS_PRESSURE, 4,
-			    WSMOUSE_INPUT_ABSOLUTE_X
-			    | WSMOUSE_INPUT_ABSOLUTE_Y
-			    | WSMOUSE_INPUT_ABSOLUTE_Z
-			    | WSMOUSE_INPUT_ABSOLUTE_W);
+			WSMOUSE_TOUCH(sc->sc_wsmousedev, buttons,
+			    alps->old_x, alps->old_y, ALPS_PRESSURE, 0);
 			if (z > 0) {
 				/*
 				 * The hardware doesn't send a null pressure
 				 * event when dragging starts.
 				 */
-				wsmouse_input(sc->sc_wsmousedev, buttons,
-				    alps->old_x, alps->old_y, 0, 0,
-				    WSMOUSE_INPUT_ABSOLUTE_X
-				    | WSMOUSE_INPUT_ABSOLUTE_Y
-				    | WSMOUSE_INPUT_ABSOLUTE_Z
-				    | WSMOUSE_INPUT_ABSOLUTE_W);
+				WSMOUSE_TOUCH(sc->sc_wsmousedev, buttons,
+				    alps->old_x, alps->old_y, 0, 0);
 			}
 		}
 
 		gesture = sc->packet[2] & 0x03;
-		if (gesture != ALPS_TAP) {
-			w = z ? 4 : 0;
-			wsmouse_input(sc->sc_wsmousedev, buttons, x, y, z, w,
-			    WSMOUSE_INPUT_ABSOLUTE_X
-			    | WSMOUSE_INPUT_ABSOLUTE_Y
-			    | WSMOUSE_INPUT_ABSOLUTE_Z
-			    | WSMOUSE_INPUT_ABSOLUTE_W);
-		}
+		if (gesture != ALPS_TAP)
+			WSMOUSE_TOUCH(sc->sc_wsmousedev, buttons, x, y, z, 0);
 
 		if (alps->gesture != ALPS_DRAG || gesture != ALPS_TAP)
 			alps->gesture = gesture;
@@ -1600,8 +1579,7 @@ pms_proc_alps(struct pms_softc *sc)
 		}
 
 		if (dx || dy || buttons != alps->old_buttons)
-			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy, 0, 0,
-			    WSMOUSE_INPUT_DELTA);
+			WSMOUSE_INPUT(sc->sc_wsmousedev, buttons, dx, dy, 0, 0);
 
 		alps->old_x = x;
 		alps->old_y = y;
@@ -2045,6 +2023,18 @@ err:
 }
 
 int
+pms_elantech_v4_configure(struct device *sc_wsmousedev,
+    struct elantech_softc *elantech)
+{
+	if (wsmouse_mt_init(sc_wsmousedev, ELANTECH_MAX_FINGERS, 0))
+		return (-1);
+
+	wsmouse_set_param(sc_wsmousedev, WSMPARAM_DX_DIV, SYNAPTICS_SCALE);
+	wsmouse_set_param(sc_wsmousedev, WSMPARAM_DY_DIV, SYNAPTICS_SCALE);
+	return (0);
+}
+
+int
 pms_enable_elantech_v4(struct pms_softc *sc)
 {
 	struct elantech_softc *elantech = sc->elantech;
@@ -2067,6 +2057,15 @@ pms_enable_elantech_v4(struct pms_softc *sc)
 			sc->elantech = NULL;
 			goto err;
 		}
+
+		if (pms_elantech_v4_configure(
+		    sc->sc_wsmousedev, sc->elantech)) {
+			free(sc->elantech, M_DEVBUF, 0);
+			sc->elantech = NULL;
+			printf("%s: setup failed\n", DEVNAME(sc));
+			goto err;
+		}
+		wsmouse_set_mode(sc->sc_wsmousedev, WSMOUSE_COMPAT);
 
 		printf("%s: Elantech Clickpad, version %d, firmware 0x%x\n",
 		    DEVNAME(sc), 4, sc->elantech->fw_version);
@@ -2107,6 +2106,8 @@ pms_ioctl_elantech(struct pms_softc *sc, u_long cmd, caddr_t data, int flag,
 		if (wsmode != WSMOUSE_COMPAT && wsmode != WSMOUSE_NATIVE)
 			return (EINVAL);
 		elantech->wsmode = wsmode;
+		if (sc->protocol->type == PMS_ELANTECH_V4)
+			wsmouse_set_mode(sc->sc_wsmousedev, wsmode);
 		break;
 	default:
 		return (-1);
@@ -2352,41 +2353,29 @@ void
 pms_proc_elantech_v4(struct pms_softc *sc)
 {
 	struct elantech_softc *elantech = sc->elantech;
-	int n, id, slots, weight, dx, dy;
+	struct device *sc_wsmousedev = sc->sc_wsmousedev;
+	int id, weight, n, x, y, z;
+	u_int buttons, slots;
 
 	switch (sc->packet[3] & 0x1f) {
 	case ELANTECH_V4_PKT_STATUS:
-		if (elantech->mt_slots == 0)
-			elantech->mt_lastid = -1;
-		slots = sc->packet[1] & 0x1f;
-		if (slots == 0 && elantech->mt_lastid > -1)
-			/* Notify that we lifted. */
-			elantech_send_input(sc,
-			    elantech->mt[elantech->mt_lastid].x,
-			    elantech->mt[elantech->mt_lastid].y, 0, 0);
-
-		elantech->mt_filter = elantech->mt_slots = slots;
-
-		for (elantech->mt_count = 0; slots != 0; slots >>= 1)
-			elantech->mt_count += (1 & slots);
-
+		slots = elantech->mt_slots;
+		elantech->mt_slots = sc->packet[1] & 0x1f;
+		slots &= ~elantech->mt_slots;
+		for (id = 0; slots; id++, slots >>= 1) {
+			if (slots & 1)
+				wsmouse_mtstate(sc_wsmousedev, id, 0, 0, 0);
+		}
 		break;
 
 	case ELANTECH_V4_PKT_HEAD:
 		id = ((sc->packet[3] & 0xe0) >> 5) - 1;
 		if (id > -1 && id < ELANTECH_MAX_FINGERS) {
-			elantech->mt[id].x =
-			    ((sc->packet[1] & 0x0f) << 8) | sc->packet[2];
-			elantech->mt[id].y =
-			    ((sc->packet[4] & 0x0f) << 8) | sc->packet[5];
-			elantech->mt[id].z =
-			    (sc->packet[1] & 0xf0)
+			x = ((sc->packet[1] & 0x0f) << 8) | sc->packet[2];
+			y = ((sc->packet[4] & 0x0f) << 8) | sc->packet[5];
+			z = (sc->packet[1] & 0xf0)
 			    | ((sc->packet[4] & 0xf0) >> 4);
-
-			if (elantech->mt_filter & (1 << id)) {
-				elantech_send_mt_input(sc, id);
-				elantech->mt_filter = (1 << id);
-			}
+			wsmouse_mtstate(sc_wsmousedev, id, x, y, z);
 		}
 		break;
 
@@ -2396,22 +2385,12 @@ pms_proc_elantech_v4(struct pms_softc *sc)
 			id = ((sc->packet[n] & 0xe0) >> 5) - 1;
 			if (id < 0 || id >= ELANTECH_MAX_FINGERS)
 				continue;
-			dx = weight * (signed char)sc->packet[n + 1];
-			dy = weight * (signed char)sc->packet[n + 2];
-			elantech->mt[id].x += dx;
-			elantech->mt[id].y += dy;
-			elantech->mt[id].z = 1;
-			if (elantech->mt_filter & (1 << id)) {
-				if ((dx | dy)
-				    || elantech->mt_count !=
-				    elantech->mt_lastcount
-				    || (sc->packet[0] & 3) !=
-				    elantech->mt_buttons)
-					elantech_send_mt_input(sc, id);
-
-				elantech->mt_filter = (dx | dy) ?
-				    (1 << id) : elantech->mt_slots;
-			}
+			x = weight * (signed char)sc->packet[n + 1];
+			y = weight * (signed char)sc->packet[n + 2];
+			z = WSMOUSE_DEFAULT_PRESSURE;
+			wsmouse_set(sc_wsmousedev, WSMOUSE_MT_REL_X, x, id);
+			wsmouse_set(sc_wsmousedev, WSMOUSE_MT_REL_Y, y, id);
+			wsmouse_set(sc_wsmousedev, WSMOUSE_MT_PRESSURE, z, id);
 		}
 
 		break;
@@ -2421,37 +2400,15 @@ pms_proc_elantech_v4(struct pms_softc *sc)
 		    sc->packet[3] & 0x1f);
 		return;
 	}
-}
 
-void
-elantech_send_mt_input(struct pms_softc *sc, int id)
-{
-	struct elantech_softc *elantech = sc->elantech;
+	buttons = 0;
+	if (sc->packet[0] & 0x01)
+		buttons |= WSMOUSE_BUTTON(1);
+	if (sc->packet[0] & 0x02)
+		buttons |= WSMOUSE_BUTTON(3);
+	wsmouse_buttons(sc_wsmousedev, buttons);
 
-	if (id != elantech->mt_lastid) {
-		/* Correct for compatibility mode, but not useful yet: */
-		elantech->old_x = elantech->mt[id].x;
-		elantech->old_y = elantech->mt[id].y;
-		/*
-		 * To avoid a jump of the cursor, simulate a change of the
-		 * number of touches (without producing tapping gestures
-		 * accidentally). It should suffice to do that only if
-		 * mt_count hasn't changed, but we cannot rely on the
-		 * synaptics driver, which alters its finger counts when
-		 * handling click-and-drag actions (see HandleTapProcessing
-		 * and ComputeDeltas in synaptics.c).
-		 */
-		if (elantech->mt_lastid > -1)
-			elantech_send_input(sc,
-			    elantech->mt[id].x, elantech->mt[id].y,
-			    elantech->mt[id].z, ELANTECH_MAX_FINGERS);
-		elantech->mt_lastid = id;
-	}
-	elantech->mt_lastcount = elantech->mt_count;
-	elantech->mt_buttons = sc->packet[0] & 3;
-	elantech_send_input(sc,
-	    elantech->mt[id].x, elantech->mt[id].y,
-	    elantech->mt[id].z, elantech->mt_count);
+	wsmouse_input_sync(sc_wsmousedev);
 }
 
 void
@@ -2474,11 +2431,7 @@ elantech_send_input(struct pms_softc *sc, int x, int y, int z, int w)
 	}
 
 	if (elantech->wsmode == WSMOUSE_NATIVE) {
-		wsmouse_input(sc->sc_wsmousedev, buttons, x, y, z, w,
-		    WSMOUSE_INPUT_ABSOLUTE_X |
-		    WSMOUSE_INPUT_ABSOLUTE_Y |
-		    WSMOUSE_INPUT_ABSOLUTE_Z |
-		    WSMOUSE_INPUT_ABSOLUTE_W);
+		WSMOUSE_TOUCH(sc->sc_wsmousedev, buttons, x, y, z, w);
 	} else {
 		dx = dy = 0;
 
@@ -2490,8 +2443,7 @@ elantech_send_input(struct pms_softc *sc, int x, int y, int z, int w)
 			dy /= SYNAPTICS_SCALE;
 		}
 		if (dx || dy || buttons != elantech->old_buttons)
-			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy, 0, 0,
-			    WSMOUSE_INPUT_DELTA);
+			WSMOUSE_INPUT(sc->sc_wsmousedev, buttons, dx, dy, 0, 0);
 		elantech->old_buttons = buttons;
 	}
 

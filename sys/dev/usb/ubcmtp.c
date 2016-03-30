@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.11 2015/12/04 16:22:27 kettenis Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.12 2016/03/30 23:34:12 bru Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -865,20 +865,13 @@ ubcmtp_tp_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		if (sc->wsmode == WSMOUSE_NATIVE) {
 			DPRINTF("absolute input %d, %d (finger %d, button %d)\n",
 			    sc->pos[0].x, sc->pos[0].y, finger, sc->btn);
-			wsmouse_input(sc->sc_wsmousedev, sc->btn, sc->pos[0].x,
-			    sc->pos[0].y,
-			    (finger == 0 ? 0 : 50), /* fake z for now */
-			    finger,
-			    WSMOUSE_INPUT_ABSOLUTE_X |
-			    WSMOUSE_INPUT_ABSOLUTE_Y |
-			    WSMOUSE_INPUT_ABSOLUTE_Z |
-			    WSMOUSE_INPUT_ABSOLUTE_W);
+			WSMOUSE_TOUCH(sc->sc_wsmousedev, sc->btn, sc->pos[0].x,
+			    sc->pos[0].y, (finger ? 50 : 0), finger);
 		} else {
 			DPRINTF("relative input %d, %d (button %d)\n",
 			    sc->pos[0].dx, sc->pos[0].dy, sc->btn);
-			wsmouse_input(sc->sc_wsmousedev, sc->btn,
-			    sc->pos[0].dx, sc->pos[0].dy, 0, 0,
-			    WSMOUSE_INPUT_DELTA);
+			WSMOUSE_INPUT(sc->sc_wsmousedev, sc->btn,
+			    sc->pos[0].dx, sc->pos[0].dy, 0, 0);
 		}
 		splx(s);
 	}
@@ -915,17 +908,7 @@ ubcmtp_bt_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	if (pkt->button != sc->btn) {
 		sc->btn = pkt->button;
-
-		if (sc->wsmode == WSMOUSE_NATIVE)
-			wsmouse_input(sc->sc_wsmousedev, sc->btn, sc->pos[0].x,
-			    sc->pos[0].y, 50 /* fake z for now */,
-			    1,
-			    WSMOUSE_INPUT_ABSOLUTE_X |
-			    WSMOUSE_INPUT_ABSOLUTE_Y |
-			    WSMOUSE_INPUT_ABSOLUTE_Z |
-			    WSMOUSE_INPUT_ABSOLUTE_W);
-		else
-			wsmouse_input(sc->sc_wsmousedev, sc->btn,
-			    0, 0, 0, 0, WSMOUSE_INPUT_DELTA);
+		wsmouse_buttons(sc->sc_wsmousedev, sc->btn);
+		wsmouse_input_sync(sc->sc_wsmousedev);
 	}
 }

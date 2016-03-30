@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.28 2015/09/10 18:14:52 mpi Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.29 2016/03/30 23:34:12 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -88,10 +88,12 @@
 #include <sys/device.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
+#include <sys/malloc.h>
 
 #include <dev/wscons/wscons_features.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
+#include <dev/wscons/wsmouseinput.h>
 #include <dev/wscons/wseventvar.h>
 #include <dev/rndvar.h>
 
@@ -131,6 +133,8 @@ struct wsmouse_softc {
 	int		sc_y;		/* absolute-y */
 	int		sc_z;		/* absolute-z */
 	int		sc_w;		/* absolute-w */
+
+	struct wsmouseinput input;
 
 	int		sc_refcnt;
 	u_char		sc_dying;	/* device is being detached */
@@ -198,6 +202,8 @@ wsmouse_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_accessops = ap->accessops;
 	sc->sc_accesscookie = ap->accesscookie;
+
+	wsmouse_input_init(&sc->input, &sc->sc_base.me_evp);
 
 #if NWSMUX > 0
 	sc->sc_base.me_ops = &wsmouse_srcops;
@@ -278,6 +284,8 @@ wsmouse_detach(struct device *self, int flags)
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
+
+	wsmouse_input_cleanup(&sc->input);
 
 	return (0);
 }
@@ -734,3 +742,836 @@ wsmouse_add_mux(int unit, struct wsmux_softc *muxsc)
 	return (wsmux_attach_sc(muxsc, &sc->sc_base));
 }
 #endif	/* NWSMUX > 0 */
+
+
+void
+wsmouse_buttons(struct device *sc, u_int buttons)
+{
+	struct btn_state *btn =
+	    &((struct wsmouse_softc *) sc)->input.btn;
+
+	if (btn->sync)
+		/* Restore the old state. */
+		btn->buttons ^= btn->sync;
+
+	btn->sync = btn->buttons ^ buttons;
+	btn->buttons = buttons;
+}
+
+void
+wsmouse_motion(struct device *sc, int dx, int dy, int dz, int dw)
+{
+	struct motion_state *motion =
+	    &((struct wsmouse_softc *) sc)->input.motion;
+
+	motion->dx = dx;
+	motion->dy = dy;
+	motion->dz = dz;
+	motion->dw = dw;
+	if (dx || dy || dz || dw)
+		motion->sync |= SYNC_DELTAS;
+}
+
+/*
+ * Handle absolute coordinates.
+ *
+ * x_delta/y_delta are used by touchpad code. The values are only
+ * valid if the SYNC-flags are set, and will be cleared by update- or
+ * conversion-functions if a touch shouldn't trigger pointer motion.
+ */
+void
+wsmouse_position(struct device *sc, int x, int y)
+{
+	struct motion_state *motion =
+	    &((struct wsmouse_softc *) sc)->input.motion;
+	int delta;
+
+	delta = x - motion->x;
+	if (delta) {
+		motion->x = x;
+		motion->sync |= SYNC_X;
+		motion->x_delta = delta;
+	}
+	delta = y - motion->y;
+	if (delta) {
+		motion->y = y;
+		motion->sync |= SYNC_Y;
+		motion->y_delta = delta;
+	}
+}
+
+static __inline int
+normalized_pressure(struct wsmouseinput *input, int pressure)
+{
+	int limit = imax(input->touch.min_pressure, 1);
+
+	if (pressure >= limit)
+		return pressure;
+	else
+		return (pressure < 0 ? limit : 0);
+}
+
+void
+wsmouse_touch(struct device *sc, int pressure, int contacts)
+{
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->input;
+	struct touch_state *touch = &input->touch;
+
+	pressure = normalized_pressure(input, pressure);
+	contacts = (pressure ? imax(contacts, 1) : 0);
+
+	if (pressure == 0 || pressure != touch->pressure) {
+		/*
+		 * pressure == 0: Drivers may report possibly arbitrary
+		 * coordinates in this case; touch_update will correct them.
+		 */
+		touch->pressure = pressure;
+		touch->sync |= SYNC_PRESSURE;
+	}
+	if (contacts != touch->contacts) {
+		touch->contacts = contacts;
+		touch->sync |= SYNC_CONTACTS;
+	}
+}
+
+void
+wsmouse_mtstate(struct device *sc, int slot, int x, int y, int pressure)
+{
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->input;
+	struct mt_state *mt = &input->mt;
+	struct mt_slot *mts;
+	u_int bit;
+	int initial;
+
+	if (slot < 0 || slot >= mt->num_slots)
+		return;
+
+	bit = (1 << slot);
+	mt->frame |= bit;
+
+	/* Is this a new touch? */
+	initial = ((mt->touches & bit) == (mt->sync[MTS_TOUCH] & bit));
+
+	mts = &mt->slots[slot];
+	if (x != mts->x || initial) {
+		mts->x = x;
+		mt->sync[MTS_X] |= bit;
+	}
+	if (y != mts->y || initial) {
+		mts->y = y;
+		mt->sync[MTS_Y] |= bit;
+	}
+	pressure = normalized_pressure(input, pressure);
+	if (pressure != mts->pressure || initial) {
+		mts->pressure = pressure;
+		mt->sync[MTS_PRESSURE] |= bit;
+
+		if (pressure) {
+			if ((mt->touches & bit) == 0) {
+				mt->num_touches++;
+				mt->touches |= bit;
+				mt->sync[MTS_TOUCH] |= bit;
+			}
+		} else if (mt->touches & bit) {
+			mt->num_touches--;
+			mt->touches ^= bit;
+			mt->sync[MTS_TOUCH] |= bit;
+		}
+	}
+}
+
+void
+wsmouse_set(struct device *sc, enum wsmouseval type, int value, int aux)
+{
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->input;
+	struct mt_slot *mts;
+
+	if (WSMOUSE_IS_MT_CODE(type)) {
+		if (aux < 0 || aux >= input->mt.num_slots)
+			return;
+		mts = &input->mt.slots[aux];
+	}
+
+	switch (type) {
+	case WSMOUSE_REL_X:
+		value += input->motion.x; /* fall through */
+	case WSMOUSE_ABS_X:
+		wsmouse_position(sc, value, input->motion.y);
+		return;
+	case WSMOUSE_REL_Y:
+		value += input->motion.y;
+	case WSMOUSE_ABS_Y:
+		wsmouse_position(sc, input->motion.x, value);
+		return;
+	case WSMOUSE_PRESSURE:
+		wsmouse_touch(sc, value, input->touch.contacts);
+		return;
+	case WSMOUSE_CONTACTS:
+		/* Contact counts can be overridden by wsmouse_touch. */
+		if (value != input->touch.contacts) {
+			input->touch.contacts = value;
+			input->touch.sync |= SYNC_CONTACTS;
+		}
+		return;
+	case WSMOUSE_TOUCH_WIDTH:
+		if (value != input->touch.width) {
+			input->touch.width = value;
+			input->touch.sync |= SYNC_TOUCH_WIDTH;
+		}
+		return;
+	case WSMOUSE_MT_REL_X:
+		value += mts->x; /* fall through */
+	case WSMOUSE_MT_ABS_X:
+		wsmouse_mtstate(sc, aux, value, mts->y, mts->pressure);
+		return;
+	case WSMOUSE_MT_REL_Y:
+		value += mts->y;
+	case WSMOUSE_MT_ABS_Y:
+		wsmouse_mtstate(sc, aux, mts->x, value, mts->pressure);
+		return;
+	case WSMOUSE_MT_PRESSURE:
+		wsmouse_mtstate(sc, aux, mts->x, mts->y, value);
+		return;
+	}
+}
+
+/* Make touch and motion state consistent. */
+void
+wsmouse_touch_update(struct wsmouseinput *input)
+{
+	struct motion_state *motion = &input->motion;
+	struct touch_state *touch = &input->touch;
+
+	if (touch->pressure == 0) {
+		/* Restore valid coordinates. */
+		if (motion->sync & SYNC_X)
+			motion->x -= motion->x_delta;
+		if (motion->sync & SYNC_Y)
+			motion->y -= motion->y_delta;
+		/* Don't generate motion/position events. */
+		motion->sync &= ~SYNC_POSITION;
+	}
+	if (touch->sync & SYNC_CONTACTS)
+		/* Suppress pointer motion. */
+		motion->x_delta = motion->y_delta = 0;
+
+	if ((touch->sync & SYNC_PRESSURE) && touch->min_pressure) {
+		if (touch->pressure >= input->params.pressure_hi)
+			touch->min_pressure = input->params.pressure_lo;
+		else if (touch->pressure < input->params.pressure_lo)
+			touch->min_pressure = input->params.pressure_hi;
+	}
+}
+
+/* Normalize multitouch state. */
+void
+wsmouse_mt_update(struct wsmouseinput *input)
+{
+	int i;
+
+	/*
+	 * The same as above: There may be arbitrary coordinates if
+	 * (pressure == 0). Clear the sync flags for touches that have
+	 * been released.
+	 */
+	if (input->mt.sync[MTS_TOUCH] & ~input->mt.touches) {
+		for (i = MTS_X; i < MTS_SIZE; i++)
+			input->mt.sync[i] &= input->mt.touches;
+	}
+}
+
+/*
+ * Select the pointer-controlling MT slot.
+ *
+ * Pointer-control is assigned to slots with non-zero motion deltas if
+ * at least one such slot exists. This function doesn't impose any
+ * restrictions on the way drivers use wsmouse_mtstate(), it covers
+ * partial, unordered, and "delta-filtered" input.
+ *
+ * The "cycle" is the set of slots with X/Y updates in previous sync
+ * operations; it will be cleared and rebuilt whenever a slot that is
+ * being updated is already a member. If a cycle ends that doesn't
+ * contain the pointer-controlling slot, a new slot will be selected.
+ */
+void
+wsmouse_ptr_ctrl(struct mt_state *mt)
+{
+	u_int updates;
+	int select, slot;
+
+	mt->prev_ptr = mt->ptr;
+
+	if (mt->num_touches <= 1) {
+		mt->ptr = mt->touches;
+		mt->ptr_cycle = mt->ptr;
+		return;
+	}
+
+	/*
+	 * If there is no pointer-controlling slot or it is inactive,
+	 * select a new one.
+	 */
+	select = ((mt->ptr & mt->touches) == 0);
+
+	/* Remove slots without X/Y deltas from the cycle. */
+	updates = (mt->sync[MTS_X] | mt->sync[MTS_Y]) & ~mt->sync[MTS_TOUCH];
+	mt->ptr_cycle &= ~(mt->frame ^ updates);
+
+	if (mt->ptr_cycle & updates) {
+		select |= ((mt->ptr_cycle & mt->ptr) == 0);
+		mt->ptr_cycle = updates;
+	} else {
+		mt->ptr_cycle |= updates;
+	}
+	if (select) {
+		slot = (mt->ptr_cycle
+		    ? ffs(mt->ptr_cycle) - 1 : ffs(mt->touches) - 1);
+		mt->ptr = (1 << slot);
+	}
+}
+
+/* Derive touch and motion state from MT state. */
+void
+wsmouse_mt_convert(struct device *sc)
+{
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->input;
+	struct mt_state *mt = &input->mt;
+	struct mt_slot *mts;
+	int slot, pressure;
+
+	wsmouse_ptr_ctrl(mt);
+
+	if (mt->ptr) {
+		slot = ffs(mt->ptr) - 1;
+		mts = &mt->slots[slot];
+		wsmouse_position(sc, mts->x, mts->y);
+		if (mt->ptr != mt->prev_ptr)
+			/* Suppress pointer motion. */
+			input->motion.x_delta = input->motion.y_delta = 0;
+		pressure = mts->pressure;
+	} else {
+		pressure = 0;
+	}
+
+	wsmouse_touch(sc, pressure, mt->num_touches);
+}
+
+void
+wsmouse_evq_put(struct evq_access *evq, int ev_type, int ev_value)
+{
+	struct wscons_event *ev;
+	int space;
+
+	space = evq->evar->get - evq->put;
+	if (space != 1 && space != 1 - WSEVENT_QSIZE) {
+		ev = &evq->evar->q[evq->put++];
+		evq->put %= WSEVENT_QSIZE;
+		ev->type = ev_type;
+		ev->value = ev_value;
+		memcpy(&ev->time, &evq->ts, sizeof(struct timespec));
+		evq->result |= EVQ_RESULT_SUCCESS;
+	} else {
+		evq->result = EVQ_RESULT_OVERFLOW;
+	}
+}
+
+
+void
+wsmouse_btn_sync(struct wsmouseinput *input, struct evq_access *evq)
+{
+	struct btn_state *btn = &input->btn;
+	int button, ev_type;
+	u_int bit, sync;
+
+	for (sync = btn->sync; sync; sync ^= bit) {
+		button = ffs(sync) - 1;
+		bit = (1 << button);
+		ev_type = (btn->buttons & bit) ? BTN_DOWN_EV : BTN_UP_EV;
+		wsmouse_evq_put(evq, ev_type, button);
+	}
+}
+
+/*
+ * Scale with a [*.12] fixed-point factor and a remainder:
+ */
+static __inline int
+scale(int val, int factor, int *rmdr)
+{
+	val = val * factor + *rmdr;
+	if (val >= 0) {
+		*rmdr = val & 0xfff;
+		return (val >> 12);
+	} else {
+		*rmdr = -(-val & 0xfff);
+		return -(-val >> 12);
+	}
+}
+
+void
+wsmouse_motion_sync(struct wsmouseinput *input, struct evq_access *evq)
+{
+	struct motion_state *motion = &input->motion;
+	struct wsmouseparams *params = &input->params;
+	struct axis_filter *fltr;
+	int x, y, dx, dy;
+
+	if (motion->sync & SYNC_DELTAS) {
+		dx = params->x_inv ? -motion->dx : motion->dx;
+		dy = params->y_inv ? -motion->dy : motion->dy;
+		if (input->flags & SCALE_DELTAS) {
+			fltr = &input->fltr.h;
+			dx = scale(dx, fltr->scale, &fltr->rmdr);
+			fltr = &input->fltr.v;
+			dy = scale(dy, fltr->scale, &fltr->rmdr);
+		}
+		if (dx)
+			wsmouse_evq_put(evq, DELTA_X_EV(input->flags), dx);
+		if (dy)
+			wsmouse_evq_put(evq, DELTA_Y_EV(input->flags), dy);
+		if (motion->dz)
+			wsmouse_evq_put(evq, DELTA_Z_EV, motion->dz);
+		if (motion->dw)
+			wsmouse_evq_put(evq, DELTA_W_EV, motion->dw);
+	}
+	if (motion->sync & SYNC_POSITION) {
+		if (motion->sync & SYNC_X) {
+			x = (params->x_inv
+			    ? params->x_inv - motion->x : motion->x);
+			wsmouse_evq_put(evq, ABS_X_EV(input->flags), x);
+		}
+		if (motion->sync & SYNC_Y) {
+			y = (params->y_inv
+			    ? params->y_inv - motion->y : motion->y);
+			wsmouse_evq_put(evq, ABS_Y_EV(input->flags), y);
+		}
+		if (motion->x_delta == 0 && motion->y_delta == 0
+		    && (input->flags & TPAD_NATIVE_MODE))
+			/* Suppress pointer motion. */
+			wsmouse_evq_put(evq, WSCONS_EVENT_TOUCH_RESET, 0);
+	}
+}
+
+void
+wsmouse_touch_sync(struct wsmouseinput *input, struct evq_access *evq)
+{
+	struct touch_state *touch = &input->touch;
+
+	if (touch->sync & SYNC_PRESSURE)
+		wsmouse_evq_put(evq, ABS_Z_EV, touch->pressure);
+	if (touch->sync & SYNC_CONTACTS)
+		wsmouse_evq_put(evq, ABS_W_EV, touch->contacts);
+	if ((touch->sync & SYNC_TOUCH_WIDTH)
+	    && (input->flags & TPAD_NATIVE_MODE))
+		wsmouse_evq_put(evq, WSCONS_EVENT_TOUCH_WIDTH, touch->width);
+}
+
+/*
+ * Convert absolute touchpad input (compatibility mode).
+ */
+void
+wsmouse_compat_convert(struct device *sc, struct evq_access *evq)
+{
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->input;
+	struct wsmouseparams *params = &input->params;
+	int dx, dy, dz, dw;
+
+	dx = (input->motion.sync & SYNC_X) ? input->motion.x_delta : 0;
+	dy = (input->motion.sync & SYNC_Y) ? input->motion.y_delta : 0;
+	dz = (input->motion.sync & SYNC_DELTAS) ? input->motion.dz : 0;
+	dw = (input->motion.sync & SYNC_DELTAS) ? input->motion.dw : 0;
+
+	if ((params->dx_max && abs(dx) > params->dx_max)
+	    || (params->dy_max && abs(dy) > params->dy_max)) {
+
+		dx = dy = 0;
+	}
+
+	wsmouse_motion(sc, dx, dy, dz, dw);
+
+	input->motion.sync &= ~SYNC_POSITION;
+	input->touch.sync = 0;
+}
+
+static __inline void
+clear_sync_flags(struct wsmouseinput *input)
+{
+	int i;
+
+	input->btn.sync = 0;
+	input->motion.sync = 0;
+	input->touch.sync = 0;
+	if (input->mt.frame) {
+		input->mt.frame = 0;
+		for (i = 0; i < MTS_SIZE; i++)
+			input->mt.sync[i] = 0;
+	}
+}
+
+void
+wsmouse_input_sync(struct device *sc)
+{
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->input;
+	struct evq_access evq;
+
+	evq.evar = *input->evar;
+	if (evq.evar == NULL)
+		return;
+	evq.put = evq.evar->put;
+	evq.result = EVQ_RESULT_NONE;
+	getnanotime(&evq.ts);
+
+	add_mouse_randomness(input->btn.buttons
+	    ^ input->motion.dx ^ input->motion.dy
+	    ^ input->motion.x ^ input->motion.y
+	    ^ input->motion.dz ^ input->motion.dw);
+
+	if (input->mt.frame) {
+		wsmouse_mt_update(input);
+		wsmouse_mt_convert(sc);
+	}
+	if (input->touch.sync)
+		wsmouse_touch_update(input);
+
+	if (input->flags & TPAD_COMPAT_MODE)
+		wsmouse_compat_convert(sc, &evq);
+
+	if (input->flags & RESYNC) {
+		input->flags &= ~RESYNC;
+		input->motion.sync &= SYNC_POSITION;
+		input->motion.x_delta = input->motion.y_delta = 0;
+	}
+
+	if (input->btn.sync)
+		wsmouse_btn_sync(input, &evq);
+	if (input->motion.sync)
+		wsmouse_motion_sync(input, &evq);
+	if (input->touch.sync)
+		wsmouse_touch_sync(input, &evq);
+	/* No MT events are generated yet. */
+
+	if (evq.result == EVQ_RESULT_SUCCESS) {
+		wsmouse_evq_put(&evq, WSCONS_EVENT_SYNC, 0);
+		if (evq.result == EVQ_RESULT_SUCCESS) {
+			evq.evar->put = evq.put;
+			WSEVENT_WAKEUP(evq.evar);
+		}
+	}
+
+	if (evq.result != EVQ_RESULT_OVERFLOW)
+		clear_sync_flags(input);
+	else
+		input->flags |= RESYNC;
+}
+
+int
+wsmouse_id_to_slot(struct device *sc, int id)
+{
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->input;
+	struct mt_state *mt = &input->mt;
+	int slot;
+
+	if (mt->num_slots == 0)
+		return (-1);
+
+	FOREACHBIT(mt->touches, slot) {
+		if (mt->slots[slot].id == id)
+			return slot;
+	}
+	slot = ffs(~(mt->touches | mt->frame)) - 1;
+	if (slot >= 0 && slot < mt->num_slots) {
+		mt->frame |= 1 << slot;
+		mt->slots[slot].id = id;
+		return (slot);
+	} else {
+		return (-1);
+	}
+}
+
+/*
+ * Find a minimum-weight matching for an m-by-n matrix.
+ *
+ * m must be greater than or equal to n. The size of the buffer must be
+ * at least 4m + 3n.
+ *
+ * On return, the first m elements of the buffer contain the row-to-
+ * column mappings, i.e., buffer[i] is the column index for row i, or -1
+ * if there is no assignment for that row (which may happen if n < m).
+ *
+ * Wrong results because of overflows will not occur with input values
+ * in the range of 0 to INT_MAX / 2 inclusive.
+ *
+ * The function applies the Dinic-Kronrod algorithm. It is not modern or
+ * popular, but it seems to be a good choice for small matrices at least.
+ * The original form of the algorithm is modified as follows: There is no
+ * initial search for row minima, the initial assignments are in a
+ * "virtual" column with the index -1 and zero values. This permits inputs
+ * with n < m, and it simplifies the reassignments.
+ */
+void
+wsmouse_matching(int *matrix, int m, int n, int *buffer)
+{
+	int i, j, k, d, e, row, col, delta;
+	int *p;
+	int *r2c = buffer;	/* row-to-column assignments */
+	int *red = r2c + m;	/* reduced values of the assignments */
+	int *alt = red + m;	/* alternative assignments */
+	int *mc = alt + m;	/* row-wise minimal elements of cs */
+	int *cs = mc + m;	/* the column set */
+	int *c2r = cs + n;	/* column-to-row assignments in cs */
+	int *cd = c2r + n;	/* column deltas (reduction) */
+
+	for (p = r2c; p < red; *p++ = -1) {}
+	for (; p < alt; *p++ = 0) {}
+	for (col = 0; col < n; col++) {
+		delta = INT_MAX;
+		for (i = 0, p = matrix + col; i < m; i++, p += n)
+			if ((d = *p - red[i]) <= delta) {
+				delta = d;
+				row = i;
+			}
+		cd[col] = delta;
+		if (r2c[row] < 0) {
+			r2c[row] = col;
+			continue;
+		}
+		for (p = alt; p < mc; *p++ = -1) {}
+		for (; p < cs; *p++ = col) {}
+		for (k = 0; (j = r2c[row]) >= 0;) {
+			cs[k++] = j;
+			c2r[j] = row;
+			alt[row] = mc[row];
+			delta = INT_MAX;
+			for (i = 0, p = matrix; i < m; i++, p += n)
+				if (alt[i] < 0) {
+					d = p[mc[i]] - cd[mc[i]];
+					e = p[j] - cd[j];
+					if (e < d) {
+						d = e;
+						mc[i] = j;
+					}
+					d -= red[i];
+					if (d <= delta) {
+						delta = d;
+						row = i;
+					}
+				}
+			cd[col] += delta;
+			for (i = 0; i < k; i++) {
+				cd[cs[i]] += delta;
+				red[c2r[cs[i]]] -= delta;
+			}
+		}
+		for (j = mc[row]; (r2c[row] = j) != col;) {
+			row = c2r[j];
+			j = alt[row];
+		}
+	}
+}
+
+void
+wsmouse_mtframe(struct device *sc, struct mtpoint *pt, int size)
+{
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->input;
+	struct mt_state *mt = &input->mt;
+	int i, j, m, n, dx, dy, slot, maxdist;
+	int *p, *r2c, *c2r;
+	u_int touches;
+
+	if (mt->num_slots == 0 || mt->matrix == NULL)
+		return;
+
+	size = imax(0, imin(size, mt->num_slots));
+	p = mt->matrix;
+	touches = mt->touches;
+	if (mt->num_touches >= size) {
+		FOREACHBIT(touches, slot)
+			for (i = 0; i < size; i++) {
+				dx = pt[i].x - mt->slots[slot].x;
+				dy = pt[i].y - mt->slots[slot].y;
+				*p++ = dx * dx + dy * dy;
+			}
+		m = mt->num_touches;
+		n = size;
+	} else {
+		for (i = 0; i < size; i++)
+			FOREACHBIT(touches, slot) {
+				dx = pt[i].x - mt->slots[slot].x;
+				dy = pt[i].y - mt->slots[slot].y;
+				*p++ = dx * dx + dy * dy;
+			}
+		m = size;
+		n = mt->num_touches;
+	}
+	wsmouse_matching(mt->matrix, m, n, p);
+
+	r2c = p;
+	c2r = p + m;
+	maxdist = input->params.tracking_maxdist;
+	maxdist = (maxdist ? maxdist * maxdist : INT_MAX);
+	for (i = 0, p = mt->matrix; i < m; i++, p += n)
+		if ((j = r2c[i]) >= 0) {
+			if (p[j] <= maxdist)
+				c2r[j] = i;
+			else
+				c2r[j] = r2c[i] = -1;
+		}
+
+	p = (n == size ? c2r : r2c);
+	for (i = 0; i < size; i++)
+		if (*p++ < 0) {
+			slot = ffs(~(mt->touches | mt->frame)) - 1;
+			if (slot < 0 || slot >= mt->num_slots)
+				break;
+			wsmouse_mtstate(sc, slot,
+			    pt[i].x, pt[i].y, pt[i].pressure);
+			pt[i].slot = slot;
+		}
+
+	p = (n == size ? r2c : c2r);
+	FOREACHBIT(touches, slot)
+		if ((i = *p++) >= 0) {
+			wsmouse_mtstate(sc, slot,
+			    pt[i].x, pt[i].y, pt[i].pressure);
+			pt[i].slot = slot;
+		} else {
+			wsmouse_mtstate(sc, slot, 0, 0, 0);
+		}
+}
+
+static __inline void
+free_mt_slots(struct wsmouseinput *input)
+{
+	int n, size;
+
+	if ((n = input->mt.num_slots)) {
+		size = n * sizeof(struct mt_slot);
+		if (input->flags & MT_TRACKING)
+			size += MATRIX_SIZE(n);
+		input->mt.num_slots = 0;
+		free(input->mt.slots, M_DEVBUF, size);
+		input->mt.slots = NULL;
+		input->mt.matrix = NULL;
+	}
+}
+
+/* Allocate the MT slots and, if necessary, the buffers for MT tracking. */
+int
+wsmouse_mt_init(struct device *sc, int num_slots, int tracking)
+{
+	struct wsmouseinput *input =
+	    &((struct wsmouse_softc *) sc)->input;
+	int n, size;
+
+	if (num_slots == input->mt.num_slots
+	    && (!tracking == ((input->flags & MT_TRACKING) == 0)))
+		return (0);
+
+	free_mt_slots(input);
+
+	if (tracking)
+		input->flags |= MT_TRACKING;
+	else
+		input->flags &= ~MT_TRACKING;
+	n = imin(imax(num_slots, 0), WSMOUSE_MT_SLOTS_MAX);
+	if (n) {
+		size = n * sizeof(struct mt_slot);
+		if (input->flags & MT_TRACKING)
+			size += MATRIX_SIZE(n);
+		input->mt.slots = malloc(size, M_DEVBUF, M_WAITOK | M_ZERO);
+		if (input->mt.slots != NULL) {
+			if (input->flags & MT_TRACKING)
+				input->mt.matrix = (int *)
+				    (input->mt.slots + n);
+			input->mt.num_slots = n;
+			return (0);
+		}
+	}
+	return (-1);
+}
+
+void
+wsmouse_init_scaling(struct wsmouseinput *input)
+{
+	struct wsmouseparams *params = &input->params;
+	int m, n;
+
+	if (params->dx_mul || params->dx_div
+	    || params->dy_mul || params->dy_div) {
+		/* Scale factors have a [*.12] fixed point format. */
+		m = (params->dx_mul ? abs(params->dx_mul) : 1);
+		n = (params->dx_div ? abs(params->dx_div) : 1);
+		input->fltr.h.scale = (m << 12) / n;
+		input->fltr.h.rmdr = 0;
+		m = (params->dy_mul ? abs(params->dy_mul) : 1);
+		n = (params->dy_div ? abs(params->dy_div): 1);
+		input->fltr.v.scale = (m << 12) / n;
+		input->fltr.v.rmdr = 0;
+		input->flags |= SCALE_DELTAS;
+	} else {
+		input->flags &= ~SCALE_DELTAS;
+	}
+}
+
+void
+wsmouse_set_param(struct device *sc, size_t param, int value)
+{
+	struct wsmouseinput *input =
+	    &((struct wsmouse_softc *) sc)->input;
+	struct wsmouseparams *params = &input->params;
+	int *p;
+
+	if (param < 0 || param > WSMPARAM_LASTFIELD) {
+		printf("wsmouse_set_param: invalid parameter type\n");
+		return;
+	}
+
+	p = (int *) (((void *) params) + param);
+	*p = value;
+
+	if (IS_WSMFLTR_PARAM(param)) {
+		wsmouse_init_scaling(input);
+	} else if (param == WSMPARAM_SWAPXY) {
+		if (value)
+			input->flags |= SWAPXY;
+		else
+			input->flags &= ~SWAPXY;
+	} else if (param == WSMPARAM_PRESSURE_LO) {
+		params->pressure_hi =
+		    imax(params->pressure_lo, params->pressure_hi);
+		input->touch.min_pressure = params->pressure_hi;
+	} else if (param == WSMPARAM_PRESSURE_HI
+	    && params->pressure_lo == 0) {
+		params->pressure_lo = params->pressure_hi;
+		input->touch.min_pressure = params->pressure_hi;
+	}
+}
+
+int
+wsmouse_set_mode(struct device *sc, int mode)
+{
+	struct wsmouseinput *input =
+	    &((struct wsmouse_softc *) sc)->input;
+
+	if (mode == WSMOUSE_COMPAT) {
+		input->flags &= ~TPAD_NATIVE_MODE;
+		input->flags |= TPAD_COMPAT_MODE;
+		return (0);
+	} else if (mode == WSMOUSE_NATIVE) {
+		input->flags &= ~TPAD_COMPAT_MODE;
+		input->flags |= TPAD_NATIVE_MODE;
+		return (0);
+	}
+	return (-1);
+}
+
+void
+wsmouse_input_init(struct wsmouseinput *input, struct wseventvar **evar)
+{
+	input->evar = evar;
+}
+
+void
+wsmouse_input_cleanup(struct wsmouseinput *input)
+{
+	free_mt_slots(input);
+}

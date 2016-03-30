@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.73 2015/12/12 12:30:18 jung Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.74 2016/03/30 23:34:12 bru Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -76,10 +76,10 @@ struct wscons_event {
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_X	8	/* X location */
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_Y	9	/* Y location */
 #define	WSCONS_EVENT_MOUSE_DELTA_Z	10	/* Z delta amount */
-#define	WSCONS_EVENT_MOUSE_ABSOLUTE_Z	11	/* Z location */
+#define	WSCONS_EVENT_MOUSE_ABSOLUTE_Z	11	/* (legacy, see below) */
 				     /*	12-15, see below */
 #define	WSCONS_EVENT_MOUSE_DELTA_W	16	/* W delta amount */
-#define	WSCONS_EVENT_MOUSE_ABSOLUTE_W	17	/* W location */
+#define	WSCONS_EVENT_MOUSE_ABSOLUTE_W	17	/* (legacy, see below) */
 #define	WSCONS_EVENT_SYNC		18
 /* 
  * Following events are not real wscons_event but are used as parameters of the
@@ -96,6 +96,20 @@ struct wscons_event {
 			       ((type) == WSCONS_EVENT_MOUSE_DOWN))
 #define IS_CTRL_EVENT(type) ((type == WSCONS_EVENT_WSMOUSED_ON) || \
 			     (type == WSCONS_EVENT_WSMOUSED_OFF))
+
+
+/*
+ * (Single-) Touch Events
+ *
+ * A RESET event will be generated whenever a change of X and Y is
+ * coupled with a change of the contact count, or with a change of
+ * the pointer-controlling MT slot.
+ */
+#define	WSCONS_EVENT_TOUCH_PRESSURE	WSCONS_EVENT_MOUSE_ABSOLUTE_Z
+#define	WSCONS_EVENT_TOUCH_CONTACTS	WSCONS_EVENT_MOUSE_ABSOLUTE_W
+
+#define	WSCONS_EVENT_TOUCH_WIDTH	24	/* contact width */
+#define	WSCONS_EVENT_TOUCH_RESET	25	/* (no value) */
 
 /*
  * Keyboard ioctls (0 - 31)

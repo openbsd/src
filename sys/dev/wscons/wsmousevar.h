@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmousevar.h,v 1.8 2014/12/21 18:16:07 shadchin Exp $ */
+/* $OpenBSD: wsmousevar.h,v 1.9 2016/03/30 23:34:12 bru Exp $ */
 /* $NetBSD: wsmousevar.h,v 1.4 2000/01/08 02:57:24 takemura Exp $ */
 
 /*
@@ -29,6 +29,22 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Copyright (c) 2015, 2016 Ulf Brosziewski
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
@@ -75,3 +91,152 @@ int	wsmousedevprint(void *, const char *);
 
 void	wsmouse_input(struct device *kbddev, u_int btns,
 			   int x, int y, int z, int w, u_int flags);
+
+
+/* Process standard mouse input. */
+#define WSMOUSE_INPUT(sc_wsmousedev, btns, dx, dy, dz, dw)		\
+	do {								\
+		wsmouse_buttons((sc_wsmousedev), (btns));		\
+		wsmouse_motion((sc_wsmousedev), (dx), (dy), (dz), (dw));\
+		wsmouse_input_sync(sc_wsmousedev);			\
+	} while (0)
+
+
+/* Process standard touchpad input. */
+#define WSMOUSE_TOUCH(sc_wsmousedev, btns, x, y, pressure, contacts)	\
+	do {								\
+		wsmouse_buttons((sc_wsmousedev), (btns));		\
+		wsmouse_position((sc_wsmousedev), (x), (y));		\
+		wsmouse_touch((sc_wsmousedev), (pressure), (contacts));	\
+		wsmouse_input_sync(sc_wsmousedev);			\
+	} while (0)
+
+
+/*
+ * Drivers for touchpads that don't report pressure values can pass
+ * WSMOUSE_DEFAULT_PRESSURE to wsmouse_touch or wsmouse_mtstate.
+ *
+ * A pressure value of 0 signals that a touch has been released (coordinates
+ * will be ignored). Based on its pressure argument, wsmouse_touch will
+ * normalize the contact count (drivers for touch devices that don't
+ * recognize multiple contacts can always pass 0 as contact count to
+ * wsmouse_touch).
+ */
+#define WSMOUSE_DEFAULT_PRESSURE	-1
+
+
+struct device;
+enum wsmouseval;
+struct mtpoint;
+
+
+/* Report button state. */
+void wsmouse_buttons(struct device *, u_int);
+
+/* Report motion deltas (dx, dy, dz, dw). */
+void wsmouse_motion(struct device *, int, int, int, int);
+
+/* Report absolute coordinates (x, y). */
+void wsmouse_position(struct device *, int, int);
+
+/* Report (single-)touch input (pressure, contacts). */
+void wsmouse_touch(struct device *, int, int);
+
+/* Report slot-based multitouch input (slot, x, y, pressure). */
+void wsmouse_mtstate(struct device *, int, int, int, int);
+
+/* Report multitouch input (mtpoints, size). */
+void wsmouse_mtframe(struct device *, struct mtpoint *, int);
+
+/* Report a single value (type, value, aux). */
+void wsmouse_set(struct device *, enum wsmouseval, int, int);
+
+/* Assign or look up a slot number for a tracking ID (id). */
+int wsmouse_id_to_slot(struct device *, int);
+
+
+/* Synchronize (generate wscons events) */
+void wsmouse_input_sync(struct device *);
+
+
+/* Initialize MT structures (num_slots, tracking). */
+int wsmouse_mt_init(struct device *, int, int);
+
+/* Set a filter/transformation value (param type, value). */
+void wsmouse_set_param(struct device *, size_t, int);
+
+/* Switch between compatibility mode and native mode. */
+int wsmouse_set_mode(struct device *, int);
+
+
+/*
+ * Type codes for wsmouse_set. REL_X/Y, MT_REL_X/Y, and TOUCH_WIDTH
+ * cannot be reported by other functions. Please note that REL_X/Y
+ * values are deltas to be applied to the absolute coordinates and
+ * don't represent "pure" relative motion.
+ */
+enum wsmouseval {
+	WSMOUSE_REL_X,
+	WSMOUSE_ABS_X,
+	WSMOUSE_REL_Y,
+	WSMOUSE_ABS_Y,
+	WSMOUSE_PRESSURE,
+	WSMOUSE_CONTACTS,
+	WSMOUSE_TOUCH_WIDTH,
+	WSMOUSE_MT_REL_X,
+	WSMOUSE_MT_ABS_X,
+	WSMOUSE_MT_REL_Y,
+	WSMOUSE_MT_ABS_Y,
+	WSMOUSE_MT_PRESSURE
+};
+
+#define WSMOUSE_IS_MT_CODE(code) \
+    ((code) >= WSMOUSE_MT_REL_X && (code) <= WSMOUSE_MT_PRESSURE)
+
+
+struct mtpoint {
+	int x;
+	int y;
+	int pressure;
+	int slot;		/* An output field, set by wsmouse_mtframe. */
+};
+
+
+struct wsmouseparams {
+	int x_inv;
+	int y_inv;
+
+	int dx_mul;		/* delta scaling */
+	int dx_div;
+	int dy_mul;
+	int dy_div;
+
+	int swapxy;
+
+	int pressure_lo;
+	int pressure_hi;
+
+	int dx_max;		/* (compat mode) */
+	int dy_max;
+
+	int tracking_maxdist;
+};
+
+#define WSMPARAM_X_INV		offsetof(struct wsmouseparams, x_inv)
+#define WSMPARAM_Y_INV		offsetof(struct wsmouseparams, y_inv)
+#define WSMPARAM_DX_MUL		offsetof(struct wsmouseparams, dx_mul)
+#define WSMPARAM_DX_DIV		offsetof(struct wsmouseparams, dx_div)
+#define WSMPARAM_DY_MUL		offsetof(struct wsmouseparams, dy_mul)
+#define WSMPARAM_DY_DIV		offsetof(struct wsmouseparams, dy_div)
+#define WSMPARAM_SWAPXY		offsetof(struct wsmouseparams, swapxy)
+#define WSMPARAM_PRESSURE_LO	offsetof(struct wsmouseparams, pressure_lo)
+#define WSMPARAM_PRESSURE_HI	offsetof(struct wsmouseparams, pressure_hi)
+#define WSMPARAM_DX_MAX		offsetof(struct wsmouseparams, dx_max)
+#define WSMPARAM_DY_MAX		offsetof(struct wsmouseparams, dy_max)
+
+#define WSMPARAM_LASTFIELD	WSMPARAM_DY_MAX
+
+#define IS_WSMFLTR_PARAM(param) \
+    ((param) >= WSMPARAM_DX_MUL && (param) <= WSMPARAM_DY_DIV)
+
+#define WSMOUSE_MT_SLOTS_MAX	10

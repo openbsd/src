@@ -1,4 +1,4 @@
-/* $OpenBSD: hidmt.c,v 1.1 2016/01/20 01:26:00 jcs Exp $ */
+/* $OpenBSD: hidmt.c,v 1.2 2016/03/30 23:34:12 bru Exp $ */
 /*
  * HID multitouch driver for devices conforming to Windows Precision Touchpad
  * standard
@@ -329,20 +329,15 @@ hidmt_input(struct hidmt *mt, uint8_t *data, u_int len)
 					width = 50;
 			}
 
-			wsmouse_input(mt->sc_wsmousedev, mt->sc_button,
+			WSMOUSE_TOUCH(mt->sc_wsmousedev, mt->sc_button,
 			    (mt->last_x = mt->sc_contacts[i].x),
 			    (mt->last_y = mt->sc_contacts[i].y),
-			    width, tips,
-			    WSMOUSE_INPUT_ABSOLUTE_X |
-			    WSMOUSE_INPUT_ABSOLUTE_Y |
-			    WSMOUSE_INPUT_ABSOLUTE_Z |
-			    WSMOUSE_INPUT_ABSOLUTE_W);
+			    width, tips);
 		} else {
-			wsmouse_input(mt->sc_wsmousedev, mt->sc_button,
+			WSMOUSE_INPUT(mt->sc_wsmousedev, mt->sc_button,
 			    (mt->last_x - mt->sc_contacts[i].x),
 			    (mt->last_y - mt->sc_contacts[i].y),
-			    0, 0,
-			    WSMOUSE_INPUT_DELTA);
+			    0, 0);
 			mt->last_x = mt->sc_contacts[i].x;
 			mt->last_y = mt->sc_contacts[i].y;
 		}
