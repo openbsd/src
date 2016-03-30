@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.41 2016/03/30 17:03:06 millert Exp $	*/
+/*	$OpenBSD: server.c,v 1.42 2016/03/30 20:51:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -839,7 +839,7 @@ recvfile(char *new, opt_t opts, int mode, char *owner, char *group,
 				 * need to indicate to the master that
 				 * the file was not updated.
 				 */
-				error("");
+				error(NULL);
 				return;
 			}
 		debugmsg(DM_MISC, "Files are different '%s' '%s'.",
@@ -1144,7 +1144,7 @@ recvlink(char *new, opt_t opts, int mode, off_t size)
 
 	if (IS_ON(opts, DO_VERIFY) || uptodate) {
 		if (uptodate)
-			message(MT_REMOTE|MT_INFO, "");
+			message(MT_REMOTE|MT_INFO, NULL);
 		else
 			message(MT_REMOTE|MT_INFO, "%s: need to update",
 				target);
