@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.57 2016/03/03 12:57:15 jca Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.58 2016/03/30 10:13:14 mpi Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -34,11 +34,6 @@
 #define _NETINET6_ND6_H_
 
 #include <sys/task.h>
-
-/* see net/route.h, or net/if_inarp.h */
-#ifndef RTF_ANNOUNCE
-#define RTF_ANNOUNCE	RTF_PROTO2
-#endif
 
 #define ND6_LLINFO_PURGE	-3
 #define ND6_LLINFO_NOSTATE	-2

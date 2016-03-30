@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.69 2016/03/16 11:48:27 dlg Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.70 2016/03/30 10:13:14 mpi Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -148,7 +148,6 @@ struct sockaddr_inarp {
  * IP and ethernet specific routing flags
  */
 #define	RTF_USETRAILERS	  RTF_PROTO1	/* use trailers */
-#define	RTF_ANNOUNCE	  RTF_PROTO2	/* announce new arp entry */
 #define	RTF_PERMANENT_ARP RTF_PROTO3    /* only manual overwrite of entry */
 
 #ifdef _KERNEL

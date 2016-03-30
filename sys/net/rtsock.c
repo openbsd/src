@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.187 2016/03/26 21:56:04 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.188 2016/03/30 10:13:14 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -98,6 +98,7 @@ struct walkarg {
 
 int	route_ctloutput(int, struct socket *, int, int, struct mbuf **);
 void	route_input(struct mbuf *m0, ...);
+int	route_arp_conflict(struct rt_addrinfo *, unsigned int);
 
 struct mbuf	*rt_msg1(int, struct rt_addrinfo *);
 int		 rt_msg2(int, int, struct rt_addrinfo *, caddr_t,
@@ -600,6 +601,8 @@ route_output(struct mbuf *m, ...)
 			error = EINVAL;
 			goto flush;
 		}
+		if ((error = route_arp_conflict(&info, tableid)))
+			goto flush;
 		error = rtrequest(RTM_ADD, &info, prio, &saved_nrt, tableid);
 		if (error == 0) {
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
@@ -884,6 +887,47 @@ fail:
 		rp->rcb_proto.sp_family = PF_ROUTE;
 
 	return (error);
+}
+
+/*
+ * Check if the user request to insert an ARP entry does not conflict
+ * with existing ones.
+ *
+ * Only two entries are allowed for a given IP address: a private one
+ * (priv) and a public one (pub).
+ */
+int
+route_arp_conflict(struct rt_addrinfo *info, unsigned int tableid)
+{
+#if defined(ART) && !defined(SMALL_KERNEL)
+	struct rtentry	*rt;
+	int		 proxy = (info->rti_flags & RTF_ANNOUNCE);
+
+	if ((info->rti_flags & RTF_LLINFO) == 0 ||
+	    (info->rti_info[RTAX_DST]->sa_family != AF_INET))
+		return (0);
+
+	rt = rtalloc(info->rti_info[RTAX_DST], 0, tableid);
+	if (rt == NULL || !ISSET(rt->rt_flags, RTF_LLINFO)) {
+		rtfree(rt);
+		return (0);
+	}
+
+	/*
+	 * Same destination and both "priv" or "pub" conflict.
+	 * If a second entry exists, it always conflict.
+	 */
+	if ((ISSET(rt->rt_flags, RTF_ANNOUNCE) == proxy) ||
+	    (rtable_mpath_next(rt) != NULL)) {
+		rtfree(rt);
+		return (EEXIST);
+	}
+
+	/* No conflict but an entry exist so we need to force mpath. */
+	info->rti_flags |= RTF_MPATH;
+	rtfree(rt);
+#endif /* ART && !SMALL_KERNEL */
+	return (0);
 }
 
 void
