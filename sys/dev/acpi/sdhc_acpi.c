@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.4 2016/03/29 18:04:09 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.5 2016/03/30 10:00:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -46,6 +46,7 @@ struct sdhc_acpi_softc {
 	struct aml_node *sc_gpio_int_node;
 	struct aml_node *sc_gpio_io_node;
 	uint16_t sc_gpio_int_pin;
+	uint16_t sc_gpio_int_flags;
 	uint16_t sc_gpio_io_pin;
 
 	struct sdhc_host *sc_host;
@@ -68,6 +69,7 @@ const char *sdhc_hids[] = {
 
 int	sdhc_acpi_parse_resources(union acpi_resource *, void *);
 int	sdhc_acpi_card_detect(struct sdhc_softc *);
+void	sdhc_acpi_card_detect_intr(void *);
 
 int
 sdhc_acpi_match(struct device *parent, void *match, void *aux)
@@ -120,6 +122,13 @@ sdhc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_gpio_io_node && sc->sc_gpio_io_node->gpio)
 		sc->sc.sc_card_detect = sdhc_acpi_card_detect;
 
+	if (sc->sc_gpio_int_node && sc->sc_gpio_int_node->gpio) {
+		struct acpi_gpio *gpio = sc->sc_gpio_int_node->gpio;
+
+		gpio->intr_establish(gpio->cookie, sc->sc_gpio_int_pin,
+		    sc->sc_gpio_int_flags, sdhc_acpi_card_detect_intr, sc);
+	}
+
 	printf("\n");
 
 	sc->sc.sc_host = &sc->sc_host;
@@ -150,6 +159,7 @@ sdhc_acpi_parse_resources(union acpi_resource *crs, void *arg)
 		if (crs->lr_gpio.type == LR_GPIO_INT) {
 			sc->sc_gpio_int_node = node;
 			sc->sc_gpio_int_pin = pin;
+			sc->sc_gpio_int_flags = crs->lr_gpio.tflags;
 		} else if (crs->lr_gpio.type == LR_GPIO_IO) {
 			sc->sc_gpio_io_node = node;
 			sc->sc_gpio_io_pin = pin;
@@ -176,4 +186,12 @@ sdhc_acpi_card_detect(struct sdhc_softc *ssc)
 
 	/* Card detect GPIO signal is active-low. */
 	return !gpio->read_pin(gpio->cookie, pin);
+}
+
+void
+sdhc_acpi_card_detect_intr(void *arg)
+{
+	struct sdhc_acpi_softc *sc = arg;
+
+	sdhc_needs_discover(&sc->sc);
 }
