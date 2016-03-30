@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.157 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.158 2016/03/30 13:20:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -124,7 +124,7 @@ server_create_socket(void)
 		return (-1);
 	umask(mask);
 
-	if (listen(fd, 16) == -1)
+	if (listen(fd, 128) == -1)
 		return (-1);
 	setblocking(fd, 0);
 
