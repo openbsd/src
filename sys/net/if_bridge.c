@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.276 2016/03/08 09:09:43 sashan Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.277 2016/03/30 12:16:30 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -137,7 +137,6 @@ int bridge_ipsec(struct bridge_softc *, struct ifnet *,
 int     bridge_clone_create(struct if_clone *, int);
 int	bridge_clone_destroy(struct ifnet *ifp);
 int	bridge_delete(struct bridge_softc *, struct bridge_iflist *);
-struct	mbuf *bridge_m_dup(struct mbuf *);
 
 #define	ETHERADDR_IS_IP_MCAST(a) \
 	/* struct etheraddr *a;	*/				\
@@ -800,7 +799,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 				used = 1;
 				mc = m;
 			} else {
-				mc = bridge_m_dup(m);
+				mc = m_dup_pkt(m, ETHER_ALIGN, M_NOWAIT);
 				if (mc == NULL) {
 					sc->sc_if.if_oerrors++;
 					continue;
@@ -1090,7 +1089,7 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 		    (ifl->bif_state == BSTP_IFSTATE_DISCARDING))
 	    		goto reenqueue;
 
-		mc = bridge_m_dup(m);
+		mc = m_dup_pkt(m, ETHER_ALIGN, M_NOWAIT);
 		if (mc == NULL)
 	    		goto reenqueue;
 
@@ -1227,7 +1226,7 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 			mc = m;
 			used = 1;
 		} else {
-			mc = bridge_m_dup(m);
+			mc = m_dup_pkt(m, ETHER_ALIGN, M_NOWAIT);
 			if (mc == NULL) {
 				sc->sc_if.if_oerrors++;
 				continue;
@@ -1277,7 +1276,7 @@ bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
 			return;
 	}
 
-	m1 = bridge_m_dup(m);
+	m1 = m_dup_pkt(m, ETHER_ALIGN, M_NOWAIT);
 	if (m1 == NULL) {
 		sc->sc_if.if_oerrors++;
 		return;
@@ -2021,37 +2020,4 @@ bridge_copyaddr(struct sockaddr *src, struct sockaddr *dst)
 		memcpy(dst, src, src->sa_len);
 	else
 		dst->sa_family = AF_UNSPEC;
-}
-
-/*
- * Specialized deep copy to ensure that the payload after the Ethernet
- * header is nicely aligned.
- */
-struct mbuf *
-bridge_m_dup(struct mbuf *m)
-{
-	struct mbuf *m1, *m2, *mx;
-
-	m1 = m_copym2(m, 0, ETHER_HDR_LEN, M_DONTWAIT);
-	if (m1 == NULL) {
-		return (NULL);
-	}
-	m2 = m_copym2(m, ETHER_HDR_LEN, M_COPYALL, M_DONTWAIT);
-	if (m2 == NULL) {
-		m_freem(m1);
-		return (NULL);
-	}
-
-	for (mx = m1; mx->m_next != NULL; mx = mx->m_next)
-		/*EMPTY*/;
-	mx->m_next = m2;
-
-	if (m1->m_flags & M_PKTHDR) {
-		int len = 0;
-		for (mx = m1; mx != NULL; mx = mx->m_next)
-			len += mx->m_len;
-		m1->m_pkthdr.len = len;
-	}
-
-	return (m1);
 }
