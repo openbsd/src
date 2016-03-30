@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.40 2015/12/22 08:48:39 mmcc Exp $	*/
+/*	$OpenBSD: server.c,v 1.41 2016/03/30 17:03:06 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -750,12 +750,9 @@ recvfile(char *new, opt_t opts, int mode, char *owner, char *group,
 	/*
 	 * Create temporary file
 	 */
-	if ((f = mkstemp(new)) < 0) {
-		if (errno != ENOENT || chkparent(new, opts) < 0 ||
-		    (f = mkstemp(new)) < 0) {
-			error("%s: create failed: %s", new, SYSERR);
-			return;
-		}
+	if (chkparent(new, opts) < 0 || (f = mkstemp(new)) < 0) {
+		error("%s: create failed: %s", new, SYSERR);
+		return;
 	}
 
 	/*
@@ -1161,13 +1158,10 @@ recvlink(char *new, opt_t opts, int mode, off_t size)
 	/*
 	 * Make new symlink using a temporary name
 	 */
-	if (mktemp(new) == NULL || symlink(dbuf, new) < 0) {
-		if (errno != ENOENT || chkparent(new, opts) < 0 ||
-		    mktemp(new) == NULL || symlink(dbuf, new) < 0) {
-			error("%s -> %s: symlink failed: %s", new, dbuf,
-			    SYSERR);
-			return;
-		}
+	if (chkparent(new, opts) < 0 || mktemp(new) == NULL ||
+	    symlink(dbuf, new) < 0) {
+		error("%s -> %s: symlink failed: %s", new, dbuf, SYSERR);
+		return;
 	}
 
 	/*
