@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.89 2016/03/23 15:50:36 vgross Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.90 2016/03/30 13:02:22 vgross Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -304,9 +304,9 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 
 	inp->inp_ipv6.ip6_hlim = (u_int8_t)in6_selecthlim(inp);
 
-	if (in_pcblookup(inp->inp_table, &sin6->sin6_addr, sin6->sin6_port,
+	if (in6_pcbhashlookup(inp->inp_table, &sin6->sin6_addr, sin6->sin6_port,
 	    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) ? in6a : &inp->inp_laddr6,
-	    inp->inp_lport, INPLOOKUP_IPV6, inp->inp_rtableid)) {
+	    inp->inp_lport, inp->inp_rtableid)) {
 		return (EADDRINUSE);
 	}
 
