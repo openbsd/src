@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlogin.c,v 1.13 2015/09/12 14:56:50 guenther Exp $ */
+/*	$OpenBSD: getlogin.c,v 1.14 2016/03/30 07:52:47 guenther Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,70 +30,25 @@
 
 #include <errno.h>
 #include <limits.h>
-#include <pwd.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <utmp.h>
 
 #include "thread_private.h"
 
-_THREAD_PRIVATE_MUTEX(logname);
-static int  logname_valid = 0;
-static char logname[LOGIN_NAME_MAX + 1];
-
-int	_getlogin(char *, size_t);
-int	_setlogin(const char *);
+static char logname[LOGIN_NAME_MAX];
 
 char *
 getlogin(void)
 {
-	_THREAD_PRIVATE_KEY(getlogin);
-	char * name = (char *)_THREAD_PRIVATE(getlogin, logname, NULL);
+	int err;
 
-	if ((errno = getlogin_r(name, sizeof logname)) != 0)
+	if ((err = getlogin_r(logname, sizeof logname)) != 0) {
+		errno = err;
 		return NULL;
-	if (*name == '\0') {
+	}
+	if (*logname == '\0') {
 		errno = ENOENT;  /* well? */
 		return NULL;
 	}
-	return name;
-}
-
-int
-getlogin_r(char *name, size_t namelen)
-{
-	int logname_size;
-
-	_THREAD_PRIVATE_MUTEX_LOCK(logname);
-	if (!logname_valid) {
-		if (_getlogin(logname, sizeof(logname) - 1) < 0) {
-			_THREAD_PRIVATE_MUTEX_UNLOCK(logname);
-			return errno;
-		}
-		logname_valid = 1;
-		logname[LOGIN_NAME_MAX] = '\0';	/* paranoia */
-	}
-	logname_size = strlen(logname) + 1;
-	if (namelen < logname_size) {
-		_THREAD_PRIVATE_MUTEX_UNLOCK(logname);
-		return ERANGE;
-	}
-	memcpy(name, logname, logname_size);
-	_THREAD_PRIVATE_MUTEX_UNLOCK(logname);
-	return 0;
-}
-DEF_WEAK(getlogin_r);
-
-int
-setlogin(const char *name)
-{
-	int ret;
-
-	_THREAD_PRIVATE_MUTEX_LOCK(logname);
-	ret = _setlogin(name);
-	if (ret == 0)
-		logname_valid = 0;
-	_THREAD_PRIVATE_MUTEX_UNLOCK(logname);
-	return ret;
+	return logname;
 }

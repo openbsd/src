@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.6 2016/03/20 02:32:40 guenther Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.7 2016/03/30 07:52:47 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -73,7 +73,7 @@ PROTO_NORMAL(getgrouplist);
 PROTO_NORMAL(getgroups);
 PROTO_DEPRECATED(gethostid);
 PROTO_NORMAL(gethostname);
-/*PROTO_BARE(getlogin);*/
+PROTO_DEPRECATED(getlogin);
 PROTO_NORMAL(getlogin_r);
 PROTO_DEPRECATED(getmode);
 PROTO_DEPRECATED(getopt);
@@ -136,7 +136,7 @@ PROTO_NORMAL(setgid);
 PROTO_NORMAL(setgroups);
 PROTO_DEPRECATED(sethostid);
 PROTO_DEPRECATED(sethostname);
-/*PROTO_WRAP(setlogin);*/
+PROTO_NORMAL(setlogin);
 PROTO_DEPRECATED(setmode);
 PROTO_NORMAL(setpgid);
 PROTO_DEPRECATED(setpgrp);

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.139 2016/03/30 06:38:42 jmc Exp $
+#	$OpenBSD: Makefile.inc,v 1.140 2016/03/30 07:52:47 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -52,7 +52,7 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	recvfrom.o recvmsg.o rename.o renameat.o revoke.o rmdir.o \
 	sched_yield.o select.o semget.o semop.o sendmsg.o sendsyslog.o \
 	sendto.o \
-	setegid.o seteuid.o setgid.o setgroups.o setitimer.o \
+	setegid.o seteuid.o setgid.o setgroups.o setitimer.o setlogin.o \
 	setpgid.o setpriority.o setregid.o setresgid.o setresuid.o \
 	setreuid.o setrlimit.o setrtable.o setsid.o setsockopt.o \
 	settimeofday.o setuid.o shmat.o shmctl.o shmdt.o \
@@ -71,13 +71,13 @@ PASM=	${ASM:.o=.po}
 SASM=	${ASM:.o=.so}
 DASM=	${ASM:.o=.do}
 
-PSEUDO=	_getlogin.o _setlogin.o _ptrace.o
+PSEUDO=	_ptrace.o
 GPSEUDO=${PSEUDO:.o=.go}
 PPSEUDO=${PSEUDO:.o=.po}
 SPSEUDO=${PSEUDO:.o=.so}
 DPSEUDO=${PSEUDO:.o=.do}
 
-PSEUDO_NOERR=	_exit.o
+PSEUDO_NOERR=	_exit.o getlogin_r.o
 GPSEUDO_NOERR=${PSEUDO_NOERR:.o=.go}
 PPSEUDO_NOERR=${PSEUDO_NOERR:.o=.po}
 SPSEUDO_NOERR=${PSEUDO_NOERR:.o=.so}
@@ -104,13 +104,13 @@ GENERATE.rsyscall=\
 	printf '\#include "SYS.h"\nRSYSCALL(${.PREFIX})\n'
 GENERATE.pseudo=\
 	echo creating ${.TARGET} && \
-	printf '\#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/_//})\n'
+	printf '\#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/^_//})\n'
 GENERATE.pseudo_noerr=\
 	echo creating ${.TARGET} && \
-	printf '\#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n'
+	printf '\#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/^_//})\n'
 GENERATE.rsyscall_hidden=\
 	echo creating ${.TARGET} && \
-	printf '\#include "SYS.h"\nRSYSCALL_HIDDEN(${.PREFIX:S/_//})\n'
+	printf '\#include "SYS.h"\nRSYSCALL_HIDDEN(${.PREFIX:S/^_//})\n'
 
 # ...and one of these to control how it's compiled
 FINISH=	${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} -x assembler-with-cpp -

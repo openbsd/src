@@ -46,9 +46,7 @@ _thread_sys___thrsigdivert
 _thread_sys___thrsleep
 _thread_sys___thrwakeup
 _thread_sys__exit
-_thread_sys__getlogin
 _thread_sys__ptrace
-_thread_sys__setlogin
 _thread_sys_accept4
 _thread_sys_accept
 _thread_sys_access
@@ -103,6 +101,7 @@ _thread_sys_getfsstat
 _thread_sys_getgid
 _thread_sys_getgroups
 _thread_sys_getitimer
+_thread_sys_getlogin_r
 _thread_sys_getpeername
 _thread_sys_getpgid
 _thread_sys_getpgrp
@@ -195,6 +194,7 @@ _thread_sys_seteuid
 _thread_sys_setgid
 _thread_sys_setgroups
 _thread_sys_setitimer
+_thread_sys_setlogin
 _thread_sys_setpgid
 _thread_sys_setpriority
 _thread_sys_setregid
