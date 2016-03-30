@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.126 2016/03/24 05:05:42 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.127 2016/03/30 08:00:01 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -694,7 +694,7 @@ static const formatter scargs[][8] = {
     [SYS_ktrace]	= { Ppath, Ktraceopname, Ktracefacname, Ppgid },
     [SYS_sigaction]	= { Signame, Pptr, Pptr },
     [SYS_sigprocmask]	= { Sigprocmaskhowname, Sigset },
-    [SYS_getlogin]	= { Pptr, Pucount },
+    [SYS_getlogin_r]	= { Pptr, Psize },
     [SYS_setlogin]	= { Pptr },
     [SYS_acct]		= { Ppath },
     [SYS_fstat]		= { Pfd, Pptr },
@@ -1076,6 +1076,7 @@ ktrsysret(struct ktr_sysret *ktr, size_t ktrlen)
 	else
 		(void)printf("%s ", syscallnames[code]);
 
+doerr:
 	if (error == 0) {
 		if (fancy) {
 			switch (code) {
@@ -1099,6 +1100,12 @@ ktrsysret(struct ktr_sysret *ktr, size_t ktrlen)
 			case SYS_getegid:
 				gidname(ret);
 				break;
+			/* syscalls that return errno values */
+			case SYS_getlogin_r:
+			case SYS___thrsleep:
+				if ((error = ret) != 0)
+					goto doerr;
+				/* FALLTHROUGH */
 			default:
 				(void)printf("%ld", (long)ret);
 				if (ret < 0 || ret > 9)
@@ -1115,9 +1122,9 @@ ktrsysret(struct ktr_sysret *ktr, size_t ktrlen)
 	else if (error == EJUSTRETURN)
 		(void)printf("JUSTRETURN");
 	else {
-		(void)printf("-1 errno %d", ktr->ktr_error);
+		(void)printf("-1 errno %d", error);
 		if (fancy)
-			(void)printf(" %s", strerror(ktr->ktr_error));
+			(void)printf(" %s", strerror(error));
 	}
 	(void)putchar('\n');
 }
