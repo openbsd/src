@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.300 2016/01/08 09:48:42 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.301 2016/03/30 01:28:51 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -85,6 +85,7 @@ em*	at pci?			# Intel Pro/1000 ethernet
 #ixgb*	at pci?			# Intel Pro/10Gb ethernet
 ix*	at pci?			# Intel 82598EB 10Gb ethernet
 myx*	at pci?			# Myricom Myri-10G 10Gb ethernet
+oce*	at pci?			# Emulex OneConnect 10Gb ethernet
 bge*	at pci?			# Broadcom BCM570x (aka Tigon3)
 bnx*	at pci?			# Broadcom BCM5706/5708 GigE
 stge*	at pci?			# Sundance TC9021 GigE
