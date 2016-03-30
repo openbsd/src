@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2015/11/26 19:01:47 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.15 2016/03/30 06:38:45 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,6 @@ BINOWN=	root
 BINMODE=4555
 .PATH:	${.CURDIR}/../../lib/libc/gen
 LINKS=	${BINDIR}/chpass ${BINDIR}/chfn ${BINDIR}/chpass ${BINDIR}/chsh
-MLINKS=	chpass.1 chfn.1 chpass.1 chsh.1
 CFLAGS+=-I${.CURDIR}/../../lib/libc/include
 DPADD+= ${LIBUTIL}
 LDADD+= -lutil

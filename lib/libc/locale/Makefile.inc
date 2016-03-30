@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.21 2016/03/20 15:42:35 jca Exp $
+#	$OpenBSD: Makefile.inc,v 1.22 2016/03/30 06:38:41 jmc Exp $
 
 # locale sources
 .PATH: ${LIBCSRCDIR}/locale
@@ -16,27 +16,5 @@ MAN+=	nl_langinfo.3 setlocale.3 iswalnum.3 towlower.3 \
 	mbstowcs.3 mbtowc.3 wcrtomb.3 wcsrtombs.3 wcstod.3 wcstol.3 \
 	wcstombs.3 wctob.3 wctomb.3 \
 	wctype.3 iswctype.3 wctrans.3 towctrans.3 wcwidth.3
-MLINKS+=setlocale.3 localeconv.3 \
-	iswalnum.3 iswalpha.3 \
-	iswalnum.3 iswblank.3 \
-	iswalnum.3 iswcntrl.3 \
-	iswalnum.3 iswdigit.3 \
-	iswalnum.3 iswgraph.3 \
-	iswalnum.3 iswlower.3 \
-	iswalnum.3 iswprint.3 \
-	iswalnum.3 iswpunct.3 \
-	iswalnum.3 iswspace.3 \
-	iswalnum.3 iswupper.3 \
-	iswalnum.3 iswxdigit.3 \
-	towlower.3 towupper.3 \
-	wcstod.3 wcstof.3 \
-	wcstod.3 wcstold.3 \
-	wcstol.3 wcstoul.3 \
-	wcstol.3 wcstoll.3 \
-	wcstol.3 wcstoull.3 \
-	wcstol.3 wcstoimax.3 \
-	wcstol.3 wcstoumax.3 \
-	mbsrtowcs.3 mbsnrtowcs.3 \
-	wcsrtombs.3 wcsnrtombs.3
 
 CFLAGS+=-I${.CURDIR} -I${LIBCSRCDIR}/citrus

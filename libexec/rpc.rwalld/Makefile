@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.2 2001/01/28 19:34:32 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 2016/03/30 06:38:43 jmc Exp $
 
 PROG =	rpc.rwalld
 SRCS =	rwalld.c
 MAN =	rpc.rwalld.8
-MLINKS=	rpc.rwalld.8 rwalld.8
 
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc

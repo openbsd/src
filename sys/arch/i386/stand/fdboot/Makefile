@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.2 2012/10/13 14:10:35 jsing Exp $
+#	$OpenBSD: Makefile,v 1.3 2016/03/30 06:38:45 jmc Exp $
 
 MAN=
-MLINKS=
 
 .if ${MACHINE} == "i386"
 PROG=	fdboot

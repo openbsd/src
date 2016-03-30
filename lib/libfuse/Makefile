@@ -1,24 +1,7 @@
-#	$OpenBSD: Makefile,v 1.7 2015/06/03 19:57:53 reyk Exp $
+#	$OpenBSD: Makefile,v 1.8 2016/03/30 06:38:42 jmc Exp $
 
 LIB=	fuse
 MAN=	fuse_main.3
-
-MLINKS=	fuse_main.3 fuse_version.3 \
-	fuse_main.3 fuse_new.3 \
-	fuse_main.3 fuse_parse_cmdline.3 \
-	fuse_main.3 fuse_mount.3 \
-	fuse_main.3 fuse_remove_signal_handlers.3 \
-	fuse_main.3 fuse_set_signal_handlers.3 \
-	fuse_main.3 fuse_get_session.3 \
-	fuse_main.3 fuse_get_context.3 \
-	fuse_main.3 fuse_is_lib_option.3 \
-	fuse_main.3 fuse_loop.3 \
-	fuse_main.3 fuse_loop_mt.3 \
-	fuse_main.3 fuse_chan_fd.3 \
-	fuse_main.3 fuse_unmount.3 \
-	fuse_main.3 fuse_daemonize.3 \
-	fuse_main.3 fuse_destroy.3 \
-	fuse_main.3 fuse_teardown.3
 
 CFLAGS+=	-Wall -g -Wshadow -Wmissing-prototypes
 CFLAGS+=	-Wstrict-prototypes -Wsign-compare

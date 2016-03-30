@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2014/07/11 16:01:41 halex Exp $
+#	$OpenBSD: Makefile,v 1.13 2016/03/30 06:38:43 jmc Exp $
 
 #	dump.h			header file
 #	itime.c			reads /etc/dumpdates
@@ -18,6 +18,5 @@ DPADD+=	${LIBUTIL}
 LDADD+=	-lutil
 SRCS=	itime.c main.c optr.c dumprmt.c tape.c traverse.c
 MAN=	dump.8
-MLINKS+=dump.8 rdump.8
 
 .include <bsd.prog.mk>

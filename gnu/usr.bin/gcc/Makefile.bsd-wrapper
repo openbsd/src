@@ -1,15 +1,12 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.63 2012/12/09 22:04:51 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.64 2016/03/30 06:38:40 jmc Exp $
 
 MAN=		gcc.1 cpp.1 gcov.1 protoize.1
-MLINKS+=	protoize.1 unprotoize.1
-MLINKS+=	gcc.1 cc.1
 
 BINDIR=/usr/bin
 .if defined(BOOTSTRAP)
 LANGUAGES=--enable-languages=c
 .else
 LANGUAGES=--enable-languages='c,c++,objc' 
-MLINKS+=	gcc.1 g++.1 gcc.1 c++.1
 .endif
 V=3.3.6
 

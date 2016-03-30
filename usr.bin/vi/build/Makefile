@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2016/01/06 22:34:45 millert Exp $
+#	$OpenBSD: Makefile,v 1.24 2016/03/30 06:38:46 jmc Exp $
 #	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
 PROG=	vi
@@ -37,8 +37,6 @@ SRCS=	cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 
 LINKS=	${BINDIR}/vi ${BINDIR}/ex
 LINKS+=	${BINDIR}/vi ${BINDIR}/view
-MLINKS=	vi.1 ex.1
-MLINKS+=	vi.1 view.1
 
 .PATH: ${.CURDIR}/../vi ${.CURDIR}/../ex ${.CURDIR}/../cl ${.CURDIR}/../common ${.CURDIR}/../docs/USD.doc/vi.man
 

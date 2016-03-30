@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.7 2010/02/03 20:49:00 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 2016/03/30 06:38:42 jmc Exp $
 
 # yp sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/yp ${LIBCSRCDIR}/yp
@@ -14,9 +14,3 @@ SRCS+=	ypmatch_cache.c yp_bind.c yp_get_default_domain.c \
 	xdr_ypresp_key_val.c xdr_ypresp_maplist.c xdr_ypresp_master.c \
 	xdr_ypresp_order.c xdr_ypresp_val.c xdr_ypstat.c
 MAN+=	ypclnt.3
-
-MLINKS+=ypclnt.3 yp_all.3 ypclnt.3 yp_bind.3 ypclnt.3 yp_first.3 \
-	ypclnt.3 yp_get_default_domain.3 ypclnt.3 yp_maplist.3 \
-	ypclnt.3 yp_master.3 ypclnt.3 yp_match.3 ypclnt.3 yp_next.3 \
-	ypclnt.3 yp_order.3 ypclnt.3 yp_unbind.3 \
-	ypclnt.3 yperr_string.3 ypclnt.3 ypprot_err.3

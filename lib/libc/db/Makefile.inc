@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.6 2015/10/17 21:48:42 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2016/03/30 06:38:41 jmc Exp $
 #
 .PATH: ${LIBCSRCDIR}/db/btree
 
@@ -18,13 +18,6 @@ SRCS+=	hash.c hash_bigkey.c hash_buf.c hash_func.c hash_log2.c \
 .PATH: ${LIBCSRCDIR}/db/man
 
 MAN+=	btree.3 dbm.3 dbopen.3 hash.3 ndbm.3 recno.3
-MLINKS+= dbopen.3 db.3
-MLINKS+= dbm.3 dbminit.3 dbm.3 dbmclose.3 dbm.3 fetch.3 dbm.3 store.3
-MLINKS+= dbm.3 delete.3 dbm.3 firstkey.3 dbm.3 nextkey.3
-MLINKS+= ndbm.3 dbm_clearerr.3 ndbm.3 dbm_close.3 ndbm.3 dbm_delete.3
-MLINKS+= ndbm.3 dbm_dirfno.3 ndbm.3 dbm_error.3 ndbm.3 dbm_fetch.3
-MLINKS+= ndbm.3 dbm_firstkey.3 ndbm.3 dbm_nextkey.3 ndbm.3 dbm_open.3
-MLINKS+= ndbm.3 dbm_pagfno.3 ndbm.3 dbm_rdonly.3 ndbm.3 dbm_store.3
 
 .PATH: ${LIBCSRCDIR}/db/mpool
 

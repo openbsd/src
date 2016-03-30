@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile,v 1.4 2012/11/04 16:30:44 matthieu Exp $
+#	$OpenBSD: Makefile,v 1.5 2016/03/30 06:38:45 jmc Exp $
 
 NOMAN=
 #MAN=		boot.8
-#MLINKS=	boot.8 boot.conf.5
 .if ${MACHINE} == "loongson"
 PROG=		boot
 .include	"${.CURDIR}/Makefile.inc"

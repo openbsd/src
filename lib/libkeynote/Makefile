@@ -1,20 +1,7 @@
-#	$OpenBSD: Makefile,v 1.19 2012/12/21 08:50:27 espie Exp $
+#	$OpenBSD: Makefile,v 1.20 2016/03/30 06:38:42 jmc Exp $
 
 LIB=	keynote
 MAN=	keynote.3 keynote.4 keynote.5
-MLINKS=	keynote.3 kn_init.3 keynote.3 kn_add_assertion.3 \
-        keynote.3 kn_remove_assertion.3 keynote.3 kn_add_action.3 \
-        keynote.3 kn_remove_action.3 keynote.3 kn_add_authorizer.3 \
-        keynote.3 kn_remove_authorizer.3 keynote.3 kn_do_query.3 \
-        keynote.3 kn_get_failed.3 keynote.3 kn_cleanup_action_environment.3 \
-        keynote.3 kn_close.3 keynote.3 kn_query.3 keynote.3 \
-        kn_read_asserts.3 keynote.3 kn_keycompare.3 keynote.3 \
-        kn_get_authorizer.3 keynote.3 kn_get_licensees.3 keynote.3 \
-        kn_encode_base64.3 keynote.3 kn_decode_base64.3 keynote.3 \
-        kn_encode_hex.3 keynote.3 kn_decode_hex.3 keynote.3 \
-        kn_encode_key.3 keynote.3 kn_decode_key.3 keynote.3 \
-        kn_sign_assertion.3 keynote.3 kn_verify_assertion.3 \
-	keynote.3 kn_free_key.3 keynote.3 kn_get_string.3
 NOPIC=	
 CFLAGS+= -Wall -I. -I${.CURDIR}
 LEXFLAGS = -Cr -Pkn -s -i

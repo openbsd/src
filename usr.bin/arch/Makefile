@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.2 1999/08/19 22:17:38 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 2016/03/30 06:38:45 jmc Exp $
 
 PROG=	arch
 LINKS=	${BINDIR}/arch ${BINDIR}/machine
-MLINKS=	arch.1 machine.1
 
 .include <bsd.prog.mk>

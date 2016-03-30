@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2015/11/21 19:35:19 jmc Exp $
+#	$OpenBSD: Makefile,v 1.8 2016/03/30 06:38:43 jmc Exp $
 
 PROG=	newfs
 SRCS=	dkcksum.c getmntopts.c newfs.c mkfs.c
@@ -12,6 +12,5 @@ DPADD=	${LIBUTIL}
 LDADD=	-lutil
 
 LINKS=	${BINDIR}/newfs ${BINDIR}/mount_mfs
-MLINKS=	newfs.8 mount_mfs.8
 
 .include <bsd.prog.mk>

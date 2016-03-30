@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile,v 1.2 2014/07/12 23:45:33 jasper Exp $
+#	$OpenBSD: Makefile,v 1.3 2016/03/30 06:38:45 jmc Exp $
 
 NOMAN=
 #MAN=		boot.8
-#MLINKS=	boot.8 boot.conf.5
 
 .if ${MACHINE} == "octeon"
 PROG=		boot

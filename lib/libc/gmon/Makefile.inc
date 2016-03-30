@@ -1,12 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2012/08/22 22:54:44 pascal Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2016/03/30 06:38:41 jmc Exp $
 
 # gmon sources
 .PATH: ${LIBCSRCDIR}/gmon
 
 SRCS+=	gmon.c mcount.c
 MAN+=	moncontrol.3
-
-MLINKS+=moncontrol.3 monstartup.3
 
 # mcount cannot be compiled with profiling or pie
 mcount.po:

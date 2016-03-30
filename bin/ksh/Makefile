@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2016/03/04 15:11:06 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.33 2016/03/30 06:38:40 jmc Exp $
 
 PROG=	ksh
 SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c eval.c \
@@ -12,6 +12,5 @@ MAN=	ksh.1 sh.1
 
 LINKS=	${BINDIR}/ksh ${BINDIR}/rksh
 LINKS+=	${BINDIR}/ksh ${BINDIR}/sh
-MLINKS=	ksh.1 rksh.1
 
 .include <bsd.prog.mk>

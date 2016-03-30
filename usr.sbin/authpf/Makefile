@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.13 2008/02/14 01:49:17 mcbride Exp $
+#	$OpenBSD: Makefile,v 1.14 2016/03/30 06:38:46 jmc Exp $
 
 PROG=	authpf
 MAN=	authpf.8
 
 LINKS=  ${BINDIR}/authpf ${BINDIR}/authpf-noip
-MLINKS+=authpf.8 authpf-noip.8
 
 BINOWN= root
 BINGRP= authpf

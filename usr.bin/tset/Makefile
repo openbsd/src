@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2013/09/18 16:21:29 millert Exp $
+#	$OpenBSD: Makefile,v 1.10 2016/03/30 06:38:46 jmc Exp $
 
 PROG=	tset
 SRCS=	tset.c dump_entry.c
@@ -10,7 +10,6 @@ CFLAGS+= -I${CURSES} -I${TIC} -I${.CURDIR} -I. -DHAVE_GETTTYNAM -DHAVE_TTYENT_H
 CLEANFILES+= termsort.c
 .PATH:  ${TIC}
 LINKS=	${BINDIR}/tset ${BINDIR}/reset
-MLINKS=	tset.1 reset.1
 
 beforedepend: termsort.c
 

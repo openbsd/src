@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2014/07/22 17:05:45 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.11 2016/03/30 06:38:46 jmc Exp $
 
 PROG=	mail
 SRCS=	version.c aux.c cmd1.c cmd2.c cmd3.c cmdtab.c collect.c \
@@ -7,7 +7,6 @@ SRCS=	version.c aux.c cmd1.c cmd2.c cmd3.c cmdtab.c collect.c \
 SFILES=	mail.help mail.tildehelp
 EFILES=	mail.rc
 LINKS=	${BINDIR}/mail ${BINDIR}/Mail ${BINDIR}/mail ${BINDIR}/mailx
-MLINKS=	mail.1 Mail.1 mail.1 mailx.1
 
 distribution:
 	cd ${.CURDIR}/misc; ${INSTALL} ${INSTALL_COPY} -o root -g wheel \

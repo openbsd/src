@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.12 2014/07/13 21:18:44 jasper Exp $
+#	$OpenBSD: Makefile,v 1.13 2016/03/30 06:38:45 jmc Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
 MAN=	boot.8
-MLINKS=	boot.8 boot.conf.5
 
 .if ${MACHINE} == "armish"
 PROG=		boot

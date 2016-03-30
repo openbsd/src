@@ -1,11 +1,9 @@
-#	$OpenBSD: Makefile,v 1.9 2016/03/24 04:56:08 guenther Exp $
+#	$OpenBSD: Makefile,v 1.10 2016/03/30 06:38:41 jmc Exp $
 #	$NetBSD: Makefile,v 1.1 1996/02/21 02:45:47 jtk Exp $
 
 MAN+=	i386_get_fsbase.2 i386_get_gsbase.2 \
 	i386_iopl.2 i386_vm86.2
 MANSUBDIR=i386
-MLINKS+=i386_get_fsbase.2 i386_set_fsbase.2 \
-	i386_get_gsbase.2 i386_set_gsbase.2
 
 .if ${MACHINE} == "i386"
 .PATH: ${LIBC}/i386

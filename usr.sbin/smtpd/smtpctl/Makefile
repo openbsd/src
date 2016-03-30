@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.43 2015/12/28 13:26:44 benno Exp $
+#	$OpenBSD: Makefile,v 1.44 2016/03/30 06:38:46 jmc Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -10,7 +10,6 @@ BINMODE?=2555
 
 BINDIR=	/usr/sbin
 MAN=	smtpctl.8 aliases.5 forward.5 makemap.8 newaliases.8
-MLINKS=	smtpctl.8 mailq.8
 
 CFLAGS+=	-fstack-protector-all
 CFLAGS+=	-I${.CURDIR}/..

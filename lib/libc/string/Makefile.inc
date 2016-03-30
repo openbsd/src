@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.37 2014/12/09 07:28:46 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.38 2016/03/30 06:38:41 jmc Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/string ${LIBCSRCDIR}/string
@@ -33,23 +33,3 @@ MAN+=	bcmp.3 bcopy.3 bzero.3 ffs.3 memccpy.3 memchr.3 \
 	wcscspn.3 wcsdup.3 wcslcpy.3 wcslen.3 wcspbrk.3 wcsrchr.3 wcsspn.3 \
 	wcsstr.3 wcstok.3 wcswidth.3 wmemchr.3 wmemcmp.3 wmemcpy.3 wmemmove.3 \
 	wmemset.3
-
-MLINKS+=bzero.3 explicit_bzero.3
-MLINKS+=memchr.3 memrchr.3
-MLINKS+=stpcpy.3 stpncpy.3
-MLINKS+=strchr.3 index.3
-MLINKS+=strrchr.3 rindex.3
-MLINKS+=strcasecmp.3 strncasecmp.3
-MLINKS+=strcmp.3 strncmp.3
-MLINKS+=strdup.3 strndup.3
-MLINKS+=strlcpy.3 strlcat.3
-MLINKS+=strlen.3 strnlen.3
-MLINKS+=strstr.3 strcasestr.3
-MLINKS+=strtok.3 strtok_r.3
-MLINKS+=strerror.3 strerror_r.3
-MLINKS+=timingsafe_bcmp.3 timingsafe_memcmp.3
-MLINKS+=wcscasecmp.3 wcsncasecmp.3
-MLINKS+=wcscat.3 wcsncat.3
-MLINKS+=wcscmp.3 wcsncmp.3
-MLINKS+=wcscpy.3 wcsncpy.3
-MLINKS+=wcslcpy.3 wcslcat.3

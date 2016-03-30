@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2009/10/28 05:17:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2016/03/30 06:38:40 jmc Exp $
 
 COPTS+=	-DRMT
 PROG=	mt
@@ -7,6 +7,5 @@ DPADD=	${LIBUTIL}
 LDADD=	-lutil
 
 LINKS=	${BINDIR}/mt ${BINDIR}/eject
-MLINKS=	mt.1 eject.1
 
 .include <bsd.prog.mk>
