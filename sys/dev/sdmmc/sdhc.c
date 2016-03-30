@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.42 2016/03/27 18:49:41 kettenis Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.43 2016/03/30 09:58:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -974,6 +974,15 @@ sdhc_intr(void *arg)
 		}
 	}
 	return done;
+}
+
+void
+sdhc_needs_discover(struct sdhc_softc *sc)
+{
+	int host;
+
+	for (host = 0; host < sc->sc_nhosts; host++)
+		sdmmc_needs_discover(sc->sc_host[host]->sdmmc);
 }
 
 #ifdef SDHC_DEBUG

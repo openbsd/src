@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhcvar.h,v 1.7 2016/03/27 18:49:41 kettenis Exp $	*/
+/*	$OpenBSD: sdhcvar.h,v 1.8 2016/03/30 09:58:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -38,6 +38,8 @@ int	sdhc_host_found(struct sdhc_softc *, bus_space_tag_t,
 int	sdhc_activate(struct device *, int);
 void	sdhc_shutdown(void *);
 int	sdhc_intr(void *);
+
+void	sdhc_needs_discover(struct sdhc_softc *);
 
 /* flag values */
 #define SDHC_F_NOPWR0		(1 << 0)
