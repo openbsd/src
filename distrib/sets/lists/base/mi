@@ -2547,7 +2547,6 @@
 ./usr/share/man/man8/afterboot.8
 ./usr/share/man/man8/makemap.8
 ./usr/share/man/man8/newaliases.8
-./usr/share/man/man8/rmuser.8
 ./usr/share/man/man8/user.8
 ./usr/share/man/man8/useradd.8
 ./usr/share/man/man8/userdel.8

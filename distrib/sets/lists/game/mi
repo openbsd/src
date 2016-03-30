@@ -130,7 +130,6 @@
 ./usr/share/man/man6/bs.6
 ./usr/share/man/man6/caesar.6
 ./usr/share/man/man6/canfield.6
-./usr/share/man/man6/cfscores.6
 ./usr/share/man/man6/cribbage.6
 ./usr/share/man/man6/factor.6
 ./usr/share/man/man6/fish.6
@@ -150,12 +149,10 @@
 ./usr/share/man/man6/pig.6
 ./usr/share/man/man6/pom.6
 ./usr/share/man/man6/ppt.6
-./usr/share/man/man6/primes.6
 ./usr/share/man/man6/quiz.6
 ./usr/share/man/man6/rain.6
 ./usr/share/man/man6/random.6
 ./usr/share/man/man6/robots.6
-./usr/share/man/man6/rot13.6
 ./usr/share/man/man6/sail.6
 ./usr/share/man/man6/snake.6
 ./usr/share/man/man6/tetris.6
