@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2016/03/30 09:06:27 mpi Exp $
+#	$OpenBSD: Makefile,v 1.6 2016/03/30 11:09:56 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -73,14 +73,20 @@ PYTHON =	python2.7 ./
 PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
 .endif
 
+.PHONY: clean-arp
+
+# Clear local and remote ARP cache.
+clean-arp:
+	@echo '\n======== $@ ========'
+	${SUDO} arp -da
+	ssh -t ${REMOTE_SSH} ${SUDO} arp -da
+
 # Clear ARP cache and ping all addresses.  This ensures that
 # the IP addresses are configured and all routing table are set up
 # to allow bidirectional packet flow.
 TARGETS +=	ping
-run-regress-ping:
+run-regress-ping: clean-arp
 	@echo '\n======== $@ ========'
-	${SUDO} arp -da
-	ssh -t ${REMOTE_SSH} ${SUDO} arp -da
 .for ip in LOCAL_ADDR REMOTE_ADDR
 	@echo Check ping ${ip}
 	ping -n -c 1 ${${ip}}
@@ -91,10 +97,9 @@ run-regress-ping:
 # Check that all fields of the answer are filled out correctly.
 # Check that the remote machine has the local IP and MAC in its ARP table.
 TARGETS +=	arp-request
-run-regress-arp-request: addr.py
+run-regress-arp-request: addr.py clean-arp
 	@echo '\n======== $@ ========'
 	@echo Send ARP Request for remote address and insert local address
-	ssh -t ${REMOTE_SSH} ${SUDO} arp -d ${LOCAL_ADDR}
 	${SUDO} ${PYTHON}arp_request.py
 	ssh ${REMOTE_SSH} ${SUDO} arp -an >arp.log
 	grep '^${LOCAL_ADDR} .* ${LOCAL_MAC} ' arp.log
@@ -106,7 +111,7 @@ run-regress-arp-request: addr.py
 # Check that all fields of the answer are filled out correctly.
 # Check that the remote machine overwrites the local address.
 TARGETS +=	arp-multicast
-run-regress-arp-multicast: addr.py
+run-regress-arp-multicast: addr.py clean-arp
 	@echo '\n======== $@ ========'
 	@echo Send ARP Request and overwrite entry with multicast ethernet
 	ssh -t ${REMOTE_SSH} logger -t "arp-regress[$$$$]" $@
@@ -125,7 +130,7 @@ run-regress-arp-multicast: addr.py
 # defend its IP address with an ARP reply.
 # Check that all fields of the answer are filled out correctly.
 TARGETS +=	arp-probe
-run-regress-arp-probe: addr.py
+run-regress-arp-probe: addr.py clean-arp
 	@echo '\n======== $@ ========'
 	@echo Send ARP Probe for existing address and expect correct reply
 	${SUDO} ${PYTHON}arp_probe.py
@@ -134,7 +139,7 @@ run-regress-arp-probe: addr.py
 # Check that no answer is received.
 # Check that the remote machine rejects the broadcast sender.
 TARGETS +=	arp-broadcast
-run-regress-arp-broadcast: addr.py
+run-regress-arp-broadcast: addr.py clean-arp
 	@echo '\n======== $@ ========'
 	@echo Send ARP Request with broadcast as sender hardware address
 	ssh -t ${REMOTE_SSH} logger -t "arp-regress[$$$$]" $@
@@ -151,7 +156,7 @@ run-regress-arp-broadcast: addr.py
 # Check that the remote machine reports an duplicate address.
 # Check that the remote machine keeps its local ARP entry.
 TARGETS +=	arp-announcement
-run-regress-arp-announcement: addr.py
+run-regress-arp-announcement: addr.py clean-arp
 	@echo '\n======== $@ ========'
 	@echo Send ARP Announcement for existing address
 	ssh -t ${REMOTE_SSH} logger -t "arp-regress[$$$$]" $@
@@ -169,7 +174,7 @@ run-regress-arp-announcement: addr.py
 # Check that the remote machine reports an duplicate address.
 # Check that the remote machine keeps its local ARP entry.
 TARGETS +=	arp-gratuitous
-run-regress-arp-gratuitous: addr.py
+run-regress-arp-gratuitous: addr.py clean-arp
 	@echo '\n======== $@ ========'
 	@echo Send Gratuitous ARP for existing address
 	ssh -t ${REMOTE_SSH} logger -t "arp-regress[$$$$]" $@
@@ -188,7 +193,7 @@ run-regress-arp-gratuitous: addr.py
 # Check that the attempt to overwrite the permanent entry is logged.
 # Check that the remote machine keeps its permanent ARP entry.
 TARGETS +=	arp-permanent
-run-regress-arp-permanent: addr.py
+run-regress-arp-permanent: addr.py clean-arp
 	@echo '\n======== $@ ========'
 	@echo Send ARP Request to change permanent fake address
 	ssh -t ${REMOTE_SSH} logger -t "arp-regress[$$$$]" $@
@@ -208,7 +213,7 @@ run-regress-arp-permanent: addr.py
 # Check that the attempt to overwrite the permanent entry is logged.
 # Check that the remote machine keeps its local ARP entry.
 TARGETS +=	arp-address
-run-regress-arp-address: addr.py
+run-regress-arp-address: addr.py clean-arp
 	@echo '\n======== $@ ========'
 	@echo Send ARP Request to change address on other interface
 	ssh -t ${REMOTE_SSH} logger -t "arp-regress[$$$$]" $@
@@ -228,7 +233,7 @@ run-regress-arp-address: addr.py
 # Check that the attempt to overwrite the permanent entry is logged.
 # Check that the remote machine keeps its ARP entry.
 TARGETS +=	arp-temporary
-run-regress-arp-temporary: addr.py
+run-regress-arp-temporary: addr.py clean-arp
 	@echo '\n======== $@ ========'
 	@echo Send ARP Request to change temporary entry on other interface
 	ssh -t ${REMOTE_SSH} logger -t "arp-regress[$$$$]" $@
@@ -250,7 +255,7 @@ run-regress-arp-temporary: addr.py
 # Check that the attempt to add an entry is logged.
 # Check that the remote machine keeps its incomplete ARP entry.
 TARGETS +=	arp-incomplete
-run-regress-arp-incomplete: addr.py
+run-regress-arp-incomplete: addr.py clean-arp
 	@echo '\n======== $@ ========'
 	@echo Send ARP Request filling an incomplete entry on other interface
 	ssh -t ${REMOTE_SSH} logger -t "arp-regress[$$$$]" $@
@@ -269,7 +274,7 @@ run-regress-arp-incomplete: addr.py
 # Check that all fields of the answer are filled out correctly.
 # Check that the remote machine has a public ARP entry.
 TARGETS +=	arp-proxy
-run-regress-arp-proxy: addr.py
+run-regress-arp-proxy: addr.py clean-arp
 	@echo '\n======== $@ ========'
 	@echo Send ARP Request for fake address that is proxied
 	ssh -t ${REMOTE_SSH} ${SUDO} arp -s ${FAKE_ADDR} ${PROXY_MAC}
@@ -286,7 +291,7 @@ run-regress-arp-proxy: addr.py
 # Check that no answer is received.
 # Check that the remote machine has a static ARP entry.
 TARGETS +=	arp-nonproxy
-run-regress-arp-nonproxy: addr.py
+run-regress-arp-nonproxy: addr.py clean-arp
 	@echo '\n======== $@ ========'
 	@echo Send ARP Request for fake address that is not published
 	ssh -t ${REMOTE_SSH} ${SUDO} arp -s ${FAKE_ADDR} ${FAKE_MAC}
@@ -301,7 +306,7 @@ run-regress-arp-nonproxy: addr.py
 # Check that no answer is received.
 # Check that the remote machine has a public ARP entry.
 TARGETS +=	arp-otherproxy
-run-regress-arp-otherproxy: addr.py
+run-regress-arp-otherproxy: addr.py clean-arp
 	@echo '\n======== $@ ========'
 	@echo Send ARP Request for address proxied on another interface
 	ssh -t ${REMOTE_SSH} ${SUDO} arp -s ${OTHERFAKE_ADDR} ${FAKE_MAC} pub
