@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmstat.8,v 1.36 2012/04/12 12:33:04 deraadt Exp $
+.\"	$OpenBSD: vmstat.8,v 1.37 2016/03/30 06:58:06 jmc Exp $
 .\"	$NetBSD: vmstat.8,v 1.12 1996/05/10 23:19:30 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)vmstat.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: April 12 2012 $
+.Dd $Mdocdate: March 30 2016 $
 .Dt VMSTAT 8
 .Os
 .Sh NAME
@@ -70,7 +70,7 @@ interval is specified, the default is 1 second.
 .It Fl f
 Report on the number of
 .Xr fork 2 ,
-.Xr __tfork 2 ,
+.Xr __tfork 3 ,
 and
 .Xr vfork 2
 system calls as well as kernel thread creations since system startup,
