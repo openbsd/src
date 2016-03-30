@@ -8723,11 +8723,15 @@ summarize_insn (rtx x, struct shadow_summary *sum, int set)
    result of an instruction that might generate an UNPREDICTABLE
    result.
 
-   (c) Within the trap shadow, no register may be used more than once
+   (c) Within the trap shadow, the destination register of the potentially
+   trapping instruction may not be used as an input, for its value would be
+   UNPREDICTABLE.
+
+   (d) Within the trap shadow, no register may be used more than once
    as a destination register.  (This is to make life easier for the
    trap-handler.)
 
-   (d) The trap shadow may not include any branch instructions.  */
+   (e) The trap shadow may not include any branch instructions.  */
 
 static void
 alpha_handle_trap_shadows (void)
@@ -8799,7 +8803,7 @@ alpha_handle_trap_shadows (void)
 		      if ((sum.defd.i & shadow.defd.i)
 			  || (sum.defd.fp & shadow.defd.fp))
 			{
-			  /* (c) would be violated */
+			  /* (d) would be violated */
 			  goto close_shadow;
 			}
 
@@ -8822,11 +8826,19 @@ alpha_handle_trap_shadows (void)
 
 			  goto close_shadow;
 			}
+
+		      if ((sum.used.i & shadow.defd.i)
+			  || (sum.used.fp & shadow.defd.fp))
+			{
+			  /* (c) would be violated */
+			  goto close_shadow;
+			}
 		      break;
 
 		    case JUMP_INSN:
 		    case CALL_INSN:
 		    case CODE_LABEL:
+		      /* (e) would be violated */
 		      goto close_shadow;
 
 		    default:
