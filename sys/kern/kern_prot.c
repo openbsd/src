@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.64 2016/03/29 16:53:49 guenther Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.65 2016/03/30 07:49:11 guenther Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -1006,9 +1006,9 @@ crfromxucred(struct ucred *cr, const struct xucred *xcr)
  * Get login name, if available.
  */
 int
-sys_getlogin(struct proc *p, void *v, register_t *retval)
+sys_getlogin59(struct proc *p, void *v, register_t *retval)
 {
-	struct sys_getlogin_args /* {
+	struct sys_getlogin59_args /* {
 		syscallarg(char *) namebuf;
 		syscallarg(u_int) namelen;
 	} */ *uap = v;
@@ -1018,6 +1018,29 @@ sys_getlogin(struct proc *p, void *v, register_t *retval)
 		SCARG(uap, namelen) = sizeof(s->s_login);
 	return (copyout((caddr_t)s->s_login,
 	    (caddr_t)SCARG(uap, namebuf), SCARG(uap, namelen)));
+}
+
+/*
+ * Get login name, if available.
+ */
+int
+sys_getlogin_r(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_getlogin_r_args /* {
+		syscallarg(char *) namebuf;
+		syscallarg(size_t) namelen;
+	} */ *uap = v;
+	size_t namelen = SCARG(uap, namelen);
+	struct session *s = p->p_p->ps_pgrp->pg_session;
+	int error;
+
+	if (namelen > sizeof(s->s_login))
+		namelen = sizeof(s->s_login);
+	error = copyoutstr(s->s_login, SCARG(uap, namebuf), namelen, NULL);
+	if (error == ENAMETOOLONG)
+		error = ERANGE;
+	*retval = error;
+	return (0);
 }
 
 /*
