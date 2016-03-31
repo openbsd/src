@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.662 2016/01/08 09:31:32 mpi Exp $
+$OpenBSD: usbdevs,v 1.663 2016/03/31 12:27:48 reyk Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -623,6 +623,7 @@ vendor ARDUINO		0x2341	Arduino SA
 vendor TPLINK		0x2357	TP-Link
 vendor WMR		0x2405	West Mountain Radio
 vendor TRIPPLITE	0x2478	Tripp-Lite
+vendor ARUBA		0x2626	Aruba
 vendor NHJ		0x2770  NHJ
 vendor ASUSTEK		0x2821	ASUSTeK Computer
 vendor PLANEX		0x2c02	Planex Communications
@@ -999,6 +1000,9 @@ product ARDUINO LEONARDO	0x8036	Leonardo
 
 /* Arkmicro products */
 product ARKMICRO ARK3116	0x0232	ARK3116 Serial
+
+/* Aruba products */
+product ARUBA CP210X		0xea60	CP210x Serial
 
 /* Asahi Optical products */
 product ASAHIOPTICAL OPTIO230	0x0004	PENTAX Optio230
