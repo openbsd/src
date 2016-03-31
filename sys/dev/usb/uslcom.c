@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.37 2016/01/07 12:53:37 mpi Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.38 2016/03/31 12:41:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -113,6 +113,7 @@ struct ucom_methods uslcom_methods = {
 };
 
 static const struct usb_devno uslcom_devs[] = {
+	{ USB_VENDOR_ARUBA,		USB_PRODUCT_ARUBA_CP210X },
 	{ USB_VENDOR_BALTECH,		USB_PRODUCT_BALTECH_CARDREADER },
 	{ USB_VENDOR_CLIPSAL,		USB_PRODUCT_CLIPSAL_5000CT2 },
 	{ USB_VENDOR_CLIPSAL,		USB_PRODUCT_CLIPSAL_5500PACA },
