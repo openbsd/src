@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.46 2016/03/23 15:50:36 vgross Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.47 2016/03/31 11:59:28 vgross Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -171,6 +171,7 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 		if (!IN6_ARE_ADDR_EQUAL(&in6p->inp_laddr6, laddr)) {
 			valid.sin6_addr = *laddr;
 			valid.sin6_port = in6p->inp_lport;
+			valid.sin6_scope_id = 0;
 			valid.sin6_family = AF_INET6;
 			valid.sin6_len = sizeof(valid);
 			error = in6_pcbaddrisavail(in6p, &valid, 0, p);
