@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile,v 1.38 2015/12/01 07:50:05 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.39 2016/03/31 01:28:00 jsg Exp $
 
 #
 # Be sure to change src/distrib/special/kbd/Makefile as well if you add or
 # remove architectures on this list!
 #
-.if ${MACHINE} != "hppa64" && \
-    ${MACHINE} != "ia64" && ${MACHINE} != "octeon"
+.if ${MACHINE} != "hppa64" && ${MACHINE} != "octeon"
     
 PROG=	kbd
 
