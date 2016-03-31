@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.240 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.241 2016/03/31 20:00:17 natano Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -555,7 +555,13 @@ loop:
 		nvp->v_specnext = *vpp;
 		nvp->v_specmountpoint = NULL;
 		nvp->v_speclockf = NULL;
-		memset(nvp->v_specbitmap, 0, sizeof(nvp->v_specbitmap));
+		nvp->v_specbitmap = NULL;
+		if (nvp_rdev == VCHR &&
+		    (cdevsw[major(nvp_rdev)].d_flags & D_CLONE) &&
+		    minor(nvp_rdev) >> CLONE_SHIFT == 0) {
+			nvp->v_specbitmap = malloc(CLONE_MAP_SZ, M_VNODE,
+			    M_WAITOK | M_ZERO);
+		}
 		*vpp = nvp;
 		if (vp != NULLVP) {
 			nvp->v_flag |= VALIASED;
@@ -1092,6 +1098,11 @@ vgonel(struct vnode *vp, struct proc *p)
 			if (vq == NULL)
 				vx->v_flag &= ~VALIASED;
 			vp->v_flag &= ~VALIASED;
+		}
+		if (vp->v_rdev == VCHR &&
+		    (cdevsw[major(vp->v_rdev)].d_flags & D_CLONE) &&
+		    minor(vp->v_rdev) >> CLONE_SHIFT == 0) {
+			free(vp->v_specbitmap, M_VNODE, CLONE_MAP_SZ);
 		}
 		free(vp->v_specinfo, M_VNODE, sizeof(struct specinfo));
 		vp->v_specinfo = NULL;
