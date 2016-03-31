@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.35 2016/03/31 23:00:46 jca Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.36 2016/03/31 23:03:26 jca Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -153,7 +153,7 @@ struct tftp_client {
 
 __dead void	usage(void);
 const char	*getip(void *);
-int		rdaemon(int devnull);
+int		rdaemon(int);
 
 void		rewrite_connect(const char *);
 void		rewrite_events(void);
