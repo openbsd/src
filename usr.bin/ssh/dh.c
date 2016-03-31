@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.c,v 1.58 2016/02/28 22:27:00 djm Exp $ */
+/* $OpenBSD: dh.c,v 1.59 2016/03/31 05:24:06 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
@@ -28,6 +28,7 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -148,10 +149,9 @@ choose_dh(int min, int wantbits, int max)
 	int linenum;
 	struct dhgroup dhg;
 
-	if ((f = fopen(_PATH_DH_MODULI, "r")) == NULL &&
-	    (f = fopen(_PATH_DH_PRIMES, "r")) == NULL) {
-		logit("WARNING: %s does not exist, using fixed modulus",
-		    _PATH_DH_MODULI);
+	if ((f = fopen(_PATH_DH_MODULI, "r")) == NULL) {
+		logit("WARNING: could open open %s (%s), using fixed modulus",
+		    _PATH_DH_MODULI, strerror(errno));
 		return (dh_new_group_fallback(max));
 	}
 
@@ -179,7 +179,7 @@ choose_dh(int min, int wantbits, int max)
 
 	if (bestcount == 0) {
 		fclose(f);
-		logit("WARNING: no suitable primes in %s", _PATH_DH_PRIMES);
+		logit("WARNING: no suitable primes in %s", _PATH_DH_MODULI);
 		return (dh_new_group_fallback(max));
 	}
 
@@ -200,7 +200,7 @@ choose_dh(int min, int wantbits, int max)
 	fclose(f);
 	if (linenum != which+1) {
 		logit("WARNING: line %d disappeared in %s, giving up",
-		    which, _PATH_DH_PRIMES);
+		    which, _PATH_DH_MODULI);
 		return (dh_new_group_fallback(max));
 	}
 
