@@ -61,8 +61,6 @@
 ./etc/firmware/zd1211
 ./etc/firmware/zd1211-license
 ./etc/firmware/zd1211b
-./sbin/kbd
-./sbin/wsconsctl
 ./usr/libdata/perl5/hppa64-openbsd
 ./usr/libdata/perl5/hppa64-openbsd/5.20.2
 ./usr/libdata/perl5/hppa64-openbsd/5.20.2/.packlist
@@ -2041,5 +2039,3 @@
 ./usr/mdec/xxboot
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump
-./usr/sbin/wsconscfg
-./usr/sbin/wsfontload
