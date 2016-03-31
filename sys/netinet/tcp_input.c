@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.317 2016/03/29 18:13:20 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.318 2016/03/31 13:11:14 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3392,6 +3392,11 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	 */
 	if (scp->sch_length >= tcp_syn_bucket_limit) {
 		tcpstat.tcps_sc_bucketoverflow++;
+		/*
+		 * Someone might attack our bucket hash function.  Reseed
+		 * with random as soon as the passive syn cache gets empty.
+		 */
+		set->scs_use = 0;
 		/*
 		 * The bucket is full.  Toss the oldest element in the
 		 * bucket.  This will be the first entry in the bucket.
