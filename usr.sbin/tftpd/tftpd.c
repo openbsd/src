@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.34 2015/12/14 16:34:55 semarie Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.35 2016/03/31 23:00:46 jca Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -74,6 +74,7 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <poll.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -152,6 +153,7 @@ struct tftp_client {
 
 __dead void	usage(void);
 const char	*getip(void *);
+int		rdaemon(int devnull);
 
 void		rewrite_connect(const char *);
 void		rewrite_events(void);
@@ -285,6 +287,7 @@ main(int argc, char *argv[])
 	char *addr = NULL;
 	char *port = "tftp";
 	int family = AF_UNSPEC;
+	int devnull = -1;
 
 	while ((c = getopt(argc, argv, "46cdl:p:r:v")) != -1) {
 		switch (c) {
@@ -337,15 +340,15 @@ main(int argc, char *argv[])
 		openlog(__progname, LOG_PID|LOG_NDELAY, LOG_DAEMON);
 		tzset();
 		logger = &syslogger;
+		devnull = open(_PATH_DEVNULL, O_RDWR, 0);
+		if (devnull == -1)
+			err(1, "open %s", _PATH_DEVNULL);
 	}
 
 	if (rewrite != NULL)
 		rewrite_connect(rewrite);
 
 	tftpd_listen(addr, port, family);
-
-	if (!debug && daemon(1, 0) == -1)
-		err(1, "unable to daemonize");
 
 	if (chroot(dir))
 		err(1, "chroot %s", dir);
@@ -358,8 +361,11 @@ main(int argc, char *argv[])
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		errx(1, "can't drop privileges");
 
+	if (!debug && rdaemon(devnull) == -1)
+		err(1, "unable to daemonize");
+
 	if (pledge("stdio rpath wpath cpath fattr dns inet", NULL) == -1)
-		err(1, "pledge");
+		lerr(1, "pledge");
 
 	event_init();
 
@@ -1554,6 +1560,32 @@ getip(void *s)
 		strlcpy(hbuf, "0.0.0.0", sizeof(hbuf));
 
 	return(hbuf);
+}
+
+/* daemon(3) clone, intended to be used in a "r"estricted environment */
+int
+rdaemon(int devnull)
+{
+
+	switch (fork()) {
+	case -1:
+		return (-1);
+	case 0:
+		break;
+	default:
+		_exit(0);
+	}
+
+	if (setsid() == -1)
+		return (-1);
+
+	(void)dup2(devnull, STDIN_FILENO);
+	(void)dup2(devnull, STDOUT_FILENO);
+	(void)dup2(devnull, STDERR_FILENO);
+	if (devnull > 2)
+		(void)close(devnull);
+
+	return (0);
 }
 
 void
