@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.192 2016/03/03 12:41:30 naddy Exp $
+.\"	$OpenBSD: sysctl.8,v 1.193 2016/03/31 15:53:25 schwarze Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: March 3 2016 $
+.Dd $Mdocdate: March 31 2016 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -425,45 +425,45 @@ Use of the
 flag lists all the filesystems compiled into the running kernel.
 .Sh FILES
 .Bl -tag -width <uvm/uvm_swap_encrypt.h> -compact
-.It Aq Pa sys/sysctl.h
+.It In sys/sysctl.h
 definitions for top level identifiers and second level kernel and hardware
 identifiers
-.It Aq Pa dev/rndvar.h
+.It In dev/rndvar.h
 definitions for
 .Xr random 4
 device's statistics structure
-.It Aq Pa sys/socket.h
+.It In sys/socket.h
 definitions for second level network identifiers
-.It Aq Pa sys/gmon.h
+.It In sys/gmon.h
 definitions for third level profiling identifiers
-.It Aq Pa uvm/uvm_param.h
+.It In uvm/uvm_param.h
 definitions for second level virtual memory identifiers
-.It Aq Pa uvm/uvm_swap_encrypt.h
+.It In uvm/uvm_swap_encrypt.h
 definitions for third level virtual memory identifiers
-.It Aq Pa netinet/in.h
+.It In netinet/in.h
 definitions for third level IPv4/v6 identifiers and
 fourth level IPv4/v6 identifiers
-.It Aq Pa netinet/ip_divert.h
+.It In netinet/ip_divert.h
 definitions for fourth level divert identifiers
-.It Aq Pa netinet/icmp_var.h
+.It In netinet/icmp_var.h
 definitions for fourth level ICMP identifiers
-.It Aq Pa netinet6/icmp6.h
+.It In netinet6/icmp6.h
 definitions for fourth level ICMPv6 identifiers
-.It Aq Pa netinet/tcp_var.h
+.It In netinet/tcp_var.h
 definitions for fourth level TCP identifiers
-.It Aq Pa netinet/udp_var.h
+.It In netinet/udp_var.h
 definitions for fourth level UDP identifiers
-.It Aq Pa ddb/db_var.h
+.It In ddb/db_var.h
 definitions for second level ddb identifiers
-.It Aq Pa sys/mount.h
+.It In sys/mount.h
 definitions for second level vfs identifiers
-.It Aq Pa nfs/nfs.h
+.It In nfs/nfs.h
 definitions for third level NFS identifiers
-.It Aq Pa miscfs/fuse/fusefs.h
+.It In miscfs/fuse/fusefs.h
 definitions for third level fusefs identifiers
-.It Aq Pa ufs/ffs/ffs_extern.h
+.It In ufs/ffs/ffs_extern.h
 definitions for third level FFS identifiers
-.It Aq Pa machine/cpu.h
+.It In machine/cpu.h
 definitions for second level CPU identifiers
 .El
 .Sh EXAMPLES
