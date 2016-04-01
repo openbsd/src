@@ -1271,6 +1271,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wscons/wsksymdef.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wscons/wsksymvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wscons/wsmoused.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/wscons/wsmouseinput.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wscons/wsmousevar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wscons/wsmuxvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wsfont

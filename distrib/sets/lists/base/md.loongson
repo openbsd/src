@@ -1222,6 +1222,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/wscons/wsksymdef.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/wscons/wsksymvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/wscons/wsmoused.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/wscons/wsmouseinput.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/wscons/wsmousevar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/wscons/wsmuxvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/wsfont

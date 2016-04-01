@@ -806,6 +806,7 @@
 ./usr/include/dev/wscons/wsksymdef.h
 ./usr/include/dev/wscons/wsksymvar.h
 ./usr/include/dev/wscons/wsmoused.h
+./usr/include/dev/wscons/wsmouseinput.h
 ./usr/include/dev/wscons/wsmousevar.h
 ./usr/include/dev/wscons/wsmuxvar.h
 ./usr/include/dev/wsfont
