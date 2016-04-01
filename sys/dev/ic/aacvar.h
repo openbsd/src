@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacvar.h,v 1.12 2014/01/17 22:51:10 dlg Exp $	*/
+/*	$OpenBSD: aacvar.h,v 1.13 2016/04/01 04:16:27 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -37,9 +37,6 @@
  * in the FreeBSD driver where I found lots of inspiration.
  * - Niklas Hallqvist
  */
-
-/* compatibility */
-#define time_second (mono_time.tv_sec)
 
 /* Debugging */
 // #define AAC_DEBUG 0x0
