@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.4,v 1.29 2015/08/12 09:15:49 mpi Exp $
+.\"	$OpenBSD: pppoe.4,v 1.30 2016/04/01 04:03:35 jsg Exp $
 .\"	$NetBSD: pppoe.4,v 1.26 2003/10/02 07:06:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 12 2015 $
+.Dd $Mdocdate: April 1 2016 $
 .Dt PPPOE 4
 .Os
 .Sh NAME
@@ -153,19 +153,6 @@ driver with this option set will send a PADT packet
 The peer will immediately disconnect
 the orphaned session and allow a new one to be established.
 .Pp
-If the kernel is compiled with option
-.Dv PPPOE_SERVER ,
-there are two modes of connection, controlled via the
-.Em link0
-switch.
-The default mode,
-.Em link0
-not being set, is client mode.
-The
-.Dq PPPoE server
-mode, selected by setting
-.Em link0 ,
-is to wait for incoming PPPoE sessions.
 .Sh MTU/MSS ISSUES
 Problems can arise on machines with private IPs connecting to the Internet
 via a machine running both

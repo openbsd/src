@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.234 2016/03/01 01:48:14 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.235 2016/04/01 04:03:35 jsg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -392,10 +392,8 @@ decapsulate:
 #if NPPPOE > 0 || defined(PIPEX)
 	case ETHERTYPE_PPPOEDISC:
 	case ETHERTYPE_PPPOE:
-#ifndef PPPOE_SERVER
 		if (m->m_flags & (M_MCAST | M_BCAST))
 			goto dropanyway;
-#endif
 		M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
 		if (m == NULL)
 			return (1);
