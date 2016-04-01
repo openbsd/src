@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.50 2016/02/05 10:30:37 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.51 2016/04/01 15:41:12 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -17,6 +17,18 @@
  */
 
 #include <sys/param.h>
+
+/* Xen requires locked atomic operations */
+#ifndef MULTIPROCESSOR
+#define _XENMPATOMICS
+#define MULTIPROCESSOR
+#endif
+#include <sys/atomic.h>
+#ifdef _XENMPATOMICS
+#undef MULTIPROCESSOR
+#undef _XENMPATOMICS
+#endif
+
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
@@ -41,17 +53,6 @@
 #include <dev/pv/pvreg.h>
 #include <dev/pv/xenreg.h>
 #include <dev/pv/xenvar.h>
-
-/* Xen requires locked atomic operations */
-#ifndef MULTIPROCESSOR
-#define _XENMPATOMICS
-#define MULTIPROCESSOR
-#endif
-#include <sys/atomic.h>
-#ifdef _XENMPATOMICS
-#undef MULTIPROCESSOR
-#undef _XENMPATOMICS
-#endif
 
 struct xen_softc *xen_sc;
 
