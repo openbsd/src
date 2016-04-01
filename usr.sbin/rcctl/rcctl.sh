@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.91 2016/03/28 08:10:19 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.92 2016/04/01 08:18:57 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -31,7 +31,7 @@ usage()
 	"usage:	rcctl get|getdef|set service | daemon [variable [arguments]]
 	rcctl [-df] $(echo ${_rc_actions} | tr "[:blank:]" "|") daemon ...
 	rcctl disable|enable|order [daemon ...]
-	rcctl ls all|faulty|off|on|started|stopped"
+	rcctl ls all|failed|off|on|started|stopped"
 }
 
 needs_root()
@@ -182,7 +182,7 @@ svc_ls()
 				echo ${_special_svcs} | tr "[:blank:]" "\n"
 			) | sort
 			;;
-		faulty)
+		failed)
 			for _svc in $(svc_ls on); do
 				! svc_is_special ${_svc} && \
 					! /etc/rc.d/${_svc} check >/dev/null && \
@@ -444,7 +444,7 @@ ret=0
 case ${action} in
 	ls)
 		lsarg=$2
-		[[ ${lsarg} == @(all|faulty|off|on|started|stopped) ]] || usage
+		[[ ${lsarg} == @(all|failed|off|on|started|stopped) ]] || usage
 		;;
 	order)
 		shift 1
@@ -529,7 +529,7 @@ case ${action} in
 		;;
 	ls)
 		# some rc.d(8) scripts need root for rc_check()
-		[[ ${lsarg} == @(started|stopped|faulty) ]] && needs_root ${action} ${lsarg}
+		[[ ${lsarg} == @(started|stopped|failed) ]] && needs_root ${action} ${lsarg}
 		svc_ls ${lsarg}
 		;;
 	order)
