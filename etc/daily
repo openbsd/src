@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.86 2016/04/01 08:18:56 ajacoutot Exp $
+#	$OpenBSD: daily,v 1.87 2016/04/01 08:20:27 ajacoutot Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 # For local additions, create the file /etc/daily.local.
@@ -126,7 +126,7 @@ while [ "X$ROOTBACKUP" = X1 ]; do
 	break
 done
 
-next_part "Services that should run but don't:"
+next_part "Services that should be running but aren't:"
 rcctl ls failed
 
 next_part "Checking subsystem status:"
