@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.885 2016/04/02 13:34:48 rpe Exp $
+#	$OpenBSD: install.sub,v 1.886 2016/04/02 13:52:04 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2763,13 +2763,9 @@ md_consoleinfo
 # Selected sets will be installed in the order they are listed in $THESETS.
 # Ensure that siteXX.tgz is the *last* set listed so its contents overwrite
 # the contents of the other sets, not the other way around.
-THESETS="bsd bsd.rd bsd.mp $MDSETS"
-: ${DEFAULTSETS:="bsd bsd.rd"}
-for _set in base comp man game xbase xshare xfont xserv site; do
-	THESETS="$THESETS ${_set}${VERSION}.tgz"
-	isin $_set site && continue
-	DEFAULTSETS="$DEFAULTSETS ${_set}${VERSION}.tgz"
-done
+SETS=$(echo {base,comp,man,game,xbase,xshare,xfont,xserv}$VERSION.tgz)
+DEFAULTSETS="${DEFAULTSETS:-bsd bsd.rd} $SETS"
+THESETS="bsd bsd.rd bsd.mp $MDSETS $SETS site$VERSION.tgz"
 SANESETS="${SANESETS:-bsd} base${VERSION}.tgz"
 
 # Prepare COLUMNS sanely.
