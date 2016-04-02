@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.103 2015/08/20 22:02:21 deraadt Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.104 2016/04/02 14:37:42 krw Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -42,6 +42,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <paths.h>
 
 #include "app.h"
 #include "conf.h"
@@ -99,6 +100,7 @@ static char    *report_file = "/var/run/isakmpd.report";
 volatile sig_atomic_t sigtermed = 0;
 void            daemon_shutdown_now(int);
 void		set_slave_signals(void);
+void		sanitise_stdfd(void);
 
 /* The default path of the PID file.  */
 char	       *pid_file = "/var/run/isakmpd.pid";
@@ -360,6 +362,29 @@ write_pid_file(void)
 		    pid_file);
 }
 
+void
+sanitise_stdfd(void)
+{
+	int nullfd, dupfd;
+
+	if ((nullfd = dupfd = open(_PATH_DEVNULL, O_RDWR)) == -1) {
+		fprintf(stderr, "Couldn't open /dev/null: %s\n",
+		    strerror(errno));
+		exit(1);
+	}
+	while (++dupfd <= STDERR_FILENO) {
+		/* Only populate closed fds */
+		if (fcntl(dupfd, F_GETFL) == -1 && errno == EBADF) {
+			if (dup2(nullfd, dupfd) == -1) {
+				fprintf(stderr, "dup2: %s\n", strerror(errno));
+				exit(1);
+			}
+		}
+	}
+	if (nullfd > STDERR_FILENO)
+		close(nullfd);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -374,9 +399,7 @@ main(int argc, char *argv[])
 	 * Make sure init() won't alloc fd 0, 1 or 2, as daemon() will close
 	 * them.
 	 */
-	for (n = 0; n <= 2; n++)
-		if (fcntl(n, F_GETFL, 0) == -1 && errno == EBADF)
-			(void) open("/dev/null", n ? O_WRONLY : O_RDONLY, 0);
+	sanitise_stdfd();
 
 	/* Log cmd line parsing and initialization errors to stderr.  */
 	log_to(stderr);

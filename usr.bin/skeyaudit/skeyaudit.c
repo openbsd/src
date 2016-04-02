@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyaudit.c,v 1.26 2015/11/01 14:02:37 tim Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.27 2016/04/02 14:37:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -36,8 +36,32 @@
 #include <skey.h>
 
 void notify(struct passwd *, int, int);
+void sanitise_stdfd(void);
 FILE *runsendmail(struct passwd *, int *);
 __dead void usage(void);
+
+void
+sanitise_stdfd(void)
+{
+	int nullfd, dupfd;
+
+	if ((nullfd = dupfd = open(_PATH_DEVNULL, O_RDWR)) == -1) {
+		fprintf(stderr, "Couldn't open /dev/null: %s\n",
+		    strerror(errno));
+		exit(1);
+	}
+	while (++dupfd <= STDERR_FILENO) {
+		/* Only populate closed fds. */
+		if (fcntl(dupfd, F_GETFL) == -1 && errno == EBADF) {
+			if (dup2(nullfd, dupfd) == -1) {
+				fprintf(stderr, "dup2: %s\n", strerror(errno));
+				exit(1);
+			}
+		}
+	}
+	if (nullfd > STDERR_FILENO)
+		close(nullfd);
+}
 
 int
 main(int argc, char **argv)
@@ -80,19 +104,15 @@ main(int argc, char **argv)
 			err(1, "pledge");
 	}
 
+	 /* If we are in interactive mode, STDOUT_FILENO *must* be open. */
+	if (iflag && fcntl(STDOUT_FILENO, F_GETFL) == -1 && errno == EBADF)
+		exit(1);
+
 	/*
 	 * Make sure STDIN_FILENO, STDOUT_FILENO, and STDERR_FILENO are open.
 	 * If not, open /dev/null in their place or bail.
-	 * If we are in interactive mode, STDOUT_FILENO *must* be open.
 	 */
-	for (ch = STDIN_FILENO; ch <= STDERR_FILENO; ch++) {
-		if (fcntl(ch, F_GETFL, 0) == -1 && errno == EBADF) {
-			if (ch == STDOUT_FILENO && iflag)
-				exit(1);	/* need stdout for -i */
-			if (open(_PATH_DEVNULL, O_RDWR, 0644) == -1)
-				exit(1);	/* just bail */
-		}
-	}
+	sanitise_stdfd();
 
 	if (argc - optind > 0)
 		usage();
