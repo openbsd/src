@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.86 2015/01/04 14:10:20 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.87 2016/04/02 11:07:50 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -412,7 +412,7 @@ sub prepare
 	my $realname = "$destdir/$filename";
 
 	my ($dev, $ino, $mode, $uid, $gid, $rdev, $size, $mtime) =
-	    (lstat $realname)[0,1,2,4,5,6, 7,9];
+	    (lstat $realname)[0,1,2, 4,5,6,7, 9];
 
 	my $entry = {
 		key => "$dev/$ino",
