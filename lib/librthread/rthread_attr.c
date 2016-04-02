@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.20 2014/08/09 03:29:35 guenther Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.21 2016/04/02 19:56:53 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -170,6 +170,7 @@ pthread_attr_setstackaddr(pthread_attr_t *attrp, void *stackaddr)
 
 	return (0);
 }
+DEF_NONSTD(pthread_attr_setstackaddr);
 
 int
 pthread_attr_getscope(const pthread_attr_t *attrp, int *contentionscope)

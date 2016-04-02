@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.89 2016/04/02 19:00:51 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.90 2016/04/02 19:56:53 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -272,6 +272,7 @@ pthread_self(void)
 
 	return (TCB_THREAD());
 }
+DEF_STD(pthread_self);
 
 static void
 _rthread_reaper(void)
@@ -338,6 +339,7 @@ pthread_exit(void *retval)
 	__threxit(&thread->tid);
 	for(;;);
 }
+DEF_STD(pthread_exit);
 
 int
 pthread_join(pthread_t thread, void **retval)
@@ -539,6 +541,7 @@ pthread_setcancelstate(int state, int *oldstatep)
 
 	return (0);
 }
+DEF_STD(pthread_setcancelstate);
 
 int
 pthread_setcanceltype(int type, int *oldtypep)

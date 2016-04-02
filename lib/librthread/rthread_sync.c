@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.39 2013/06/01 23:06:26 tedu Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.40 2016/04/02 19:56:53 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -58,6 +58,7 @@ pthread_mutex_init(pthread_mutex_t *mutexp, const pthread_mutexattr_t *attr)
 
 	return (0);
 }
+DEF_STD(pthread_mutex_init);
 
 int
 pthread_mutex_destroy(pthread_mutex_t *mutexp)
@@ -79,6 +80,7 @@ pthread_mutex_destroy(pthread_mutex_t *mutexp)
 	}
 	return (0);
 }
+DEF_STD(pthread_mutex_destroy);
 
 static int
 _rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait,
@@ -170,6 +172,7 @@ pthread_mutex_lock(pthread_mutex_t *p)
 {
 	return (_rthread_mutex_lock(p, 0, NULL));
 }
+DEF_STD(pthread_mutex_lock);
 
 int
 pthread_mutex_trylock(pthread_mutex_t *p)
@@ -234,6 +237,7 @@ pthread_mutex_unlock(pthread_mutex_t *mutexp)
 
 	return (0);
 }
+DEF_STD(pthread_mutex_unlock);
 
 /*
  * condition variables
@@ -256,6 +260,7 @@ pthread_cond_init(pthread_cond_t *condp, const pthread_condattr_t *attr)
 
 	return (0);
 }
+DEF_STD(pthread_cond_init);
 
 int
 pthread_cond_destroy(pthread_cond_t *condp)
@@ -277,6 +282,7 @@ pthread_cond_destroy(pthread_cond_t *condp)
 
 	return (0);
 }
+DEF_STD(pthread_cond_destroy);
 
 int
 pthread_cond_timedwait(pthread_cond_t *condp, pthread_mutex_t *mutexp,
@@ -563,6 +569,7 @@ pthread_cond_wait(pthread_cond_t *condp, pthread_mutex_t *mutexp)
 
 	return (0);
 }
+DEF_STD(pthread_cond_wait);
 
 
 int
@@ -677,3 +684,4 @@ pthread_cond_broadcast(pthread_cond_t *condp)
 
 	return (0);
 }
+DEF_STD(pthread_cond_broadcast);

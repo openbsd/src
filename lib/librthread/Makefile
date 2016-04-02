@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.40 2015/05/19 20:50:06 guenther Exp $
+#	$OpenBSD: Makefile,v 1.41 2016/04/02 19:56:53 guenther Exp $
 
 LIB=pthread
 LIBCSRCDIR=	${.CURDIR}/../libc
@@ -6,7 +6,8 @@ LIBCSRCDIR=	${.CURDIR}/../libc
 CFLAGS+=-Wall -g -Werror -Wshadow
 CFLAGS+=-Wmissing-prototypes -Wstrict-prototypes
 CFLAGS+=-Wsign-compare
-CFLAGS+=-I${LIBCSRCDIR}/arch/${MACHINE_CPU} -I${LIBCSRCDIR}/include
+CFLAGS+=-I${.CURDIR} -include namespace.h \
+	-I${LIBCSRCDIR}/arch/${MACHINE_CPU} -I${LIBCSRCDIR}/include
 CDIAGFLAGS=
 LDADD = -Wl,-znodelete,-zinitfirst,-znodlopen
 
@@ -47,3 +48,5 @@ SRCDIR= ${.CURDIR}/../libpthread
 .include "${SRCDIR}/include/Makefile.inc"
 .include "${SRCDIR}/man/Makefile.inc"
 .include <bsd.lib.mk>
+
+${OBJS} ${GOBJS} ${POBJS} ${SOBJS} ${DOBJS}: ${.CURDIR}/namespace.h
