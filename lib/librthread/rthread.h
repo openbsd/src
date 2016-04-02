@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.55 2016/01/27 08:40:05 kettenis Exp $ */
+/*	$OpenBSD: rthread.h,v 1.56 2016/04/02 19:00:51 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -233,15 +233,10 @@ void	_leave_delayed_cancel(pthread_t, int);
 
 void	_thread_dump_info(void);
 
-/* syscalls */
+/* syscalls not declared in system headers */
+#define REDIRECT_SYSCALL(x)		typeof(x) x asm("_thread_sys_"#x)
 void	__threxit(pid_t *);
 int	__thrsleep(const volatile void *, clockid_t, const struct timespec *,
 	    volatile void *, const int *);
 int	__thrwakeup(const volatile void *, int n);
 int	__thrsigdivert(sigset_t, siginfo_t *, const struct timespec *);
-int	sched_yield(void);
-int	_thread_sys_sigaction(int, const struct sigaction *,
-	    struct sigaction *);
-int	_thread_sys_sigprocmask(int, const sigset_t *, sigset_t *);
-int	_thread_sys_thrkill(pid_t _tid, int _signum, void *_tcb);
-
