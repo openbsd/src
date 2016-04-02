@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.35 2015/04/13 21:27:07 deraadt Exp $
+#	$OpenBSD: list,v 1.36 2016/04/02 12:23:46 rpe Exp $
 
 SRCDIRS distrib/special
 
@@ -71,7 +71,8 @@ LINK	usr/mdec/sdboot				usr/mdec/boot.lif
 
 # and the installation scripts
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
-SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade
-SCRIPT	${CURDIR}/../../miniroot/install.sh	install
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
-SPECIAL	chmod 755 install upgrade
+SPECIAL	chmod 755 install.sub
+SYMLINK	install.sub				autoinstall
+SYMLINK	install.sub				install
+SYMLINK	install.sub				upgrade

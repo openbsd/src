@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.32 2015/04/13 21:27:07 deraadt Exp $
+#	$OpenBSD: list,v 1.33 2016/04/02 12:23:46 rpe Exp $
 
 SRCDIRS distrib/special
 
@@ -75,8 +75,9 @@ TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
 SCRIPT	${CURDIR}/install.md			install.md
-SCRIPT	${CURDIR}/../../miniroot/install.sh	install
-SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
 
-SPECIAL	chmod 755 install upgrade
+SPECIAL	chmod 755 install.sub
+SYMLINK	install.sub				autoinstall
+SYMLINK	install.sub				install
+SYMLINK	install.sub				upgrade

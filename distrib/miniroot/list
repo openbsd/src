@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.65 2015/04/13 21:27:07 deraadt Exp $
+#	$OpenBSD: list,v 1.66 2016/04/02 12:23:46 rpe Exp $
 
 SRCDIRS distrib/special
 
@@ -66,9 +66,10 @@ COPY	${CURDIR}/../miniroot/services		etc/services
 
 # and the installation scripts
 SCRIPT	${CURDIR}/dot.profile			.profile
-SCRIPT	${CURDIR}/upgrade.sh			upgrade
-SCRIPT	${CURDIR}/install.sh			install
 SCRIPT	${CURDIR}/install.sub			install.sub
-SPECIAL	chmod 755 install upgrade
+SPECIAL	chmod 755 install.sub
+SYMLINK	install.sub				autoinstall
+SYMLINK	install.sub				install
+SYMLINK	install.sub				upgrade
 
 TZ

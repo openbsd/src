@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.39 2015/04/13 21:27:07 deraadt Exp $
+#	$OpenBSD: list,v 1.40 2016/04/02 12:23:46 rpe Exp $
 
 SRCDIRS distrib/special
 
@@ -80,7 +80,8 @@ SYMLINK	/tmp/hosts				etc/hosts
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
 SCRIPT	${CURDIR}/../common/install.md		install.md
-SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade
-SCRIPT	${CURDIR}/../../miniroot/install.sh	install
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
-SPECIAL	chmod 755 install upgrade
+SPECIAL	chmod 755 install.sub
+SYMLINK	install.sub				autoinstall
+SYMLINK	install.sub				install
+SYMLINK	install.sub				upgrade
