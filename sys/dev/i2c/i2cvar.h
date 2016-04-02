@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2cvar.h,v 1.13 2016/01/12 17:30:23 deraadt Exp $	*/
+/*	$OpenBSD: i2cvar.h,v 1.14 2016/04/02 00:56:39 jsg Exp $	*/
 /*	$NetBSD: i2cvar.h,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -110,6 +110,7 @@ struct i2c_attach_args {
 	int		ia_int_flags;	/* IRQ flags */
 	char		*ia_name;	/* chip name */
 	void		*ia_cookie;	/* pass extra info from bus to dev */
+	void		*acpi_gpio;
 };
 
 /*

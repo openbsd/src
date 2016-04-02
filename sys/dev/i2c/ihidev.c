@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.9 2016/01/29 17:11:58 jcs Exp $ */
+/* $OpenBSD: ihidev.c,v 1.10 2016/04/02 00:56:39 jsg Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -30,8 +30,11 @@
 
 #include <dev/hid/hid.h>
 
-/* XXX */
+#if defined(__i386__) || defined(__amd64__)
+#include "acpi.h"
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/amltypes.h>
+#endif
 
 /* #define IHIDEV_DEBUG */
 
@@ -156,8 +159,14 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ibuf = malloc(sc->sc_isize, M_DEVBUF, M_NOWAIT | M_ZERO);
 
 	/* register interrupt with system */
+#if NACPI > 0
+	if (ia->ia_int > 0 && ia->acpi_gpio != NULL) {
+		struct acpi_gpio *gpio = ia->acpi_gpio;
+		gpio->intr_establish(gpio->cookie, ia->ia_int,
+		    ia->ia_int_flags, ihidev_intr, sc);
+	} else
+#endif
 	if (ia->ia_int > 0) {
-		/* XXX: don't assume this uses acpi_intr_establish */
 		sc->sc_ih = acpi_intr_establish(ia->ia_int, ia->ia_int_flags,
 		    IPL_BIO, ihidev_intr, sc, sc->sc_dev.dv_xname);
 		if (sc->sc_ih == NULL) {
