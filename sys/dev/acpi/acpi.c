@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.308 2016/03/29 18:04:09 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.309 2016/04/02 13:54:29 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2753,6 +2753,23 @@ acpi_parsehid(struct aml_node *node, void *arg, char *outcdev, char *outdev,
 	return (0);
 }
 
+/* Devices for which we don't want to attach a driver */
+const char *acpi_skip_hids[] = {
+	"INT0800",	/* Intel 82802Firmware Hub Device */
+	"PNP0000",	/* 8259-compatible Programmable Interrupt Controller */
+	"PNP0100",	/* PC-class System Timer */
+	"PNP0200",	/* PC-class DMA Controller */
+	"PNP0800",	/* Microsoft Sound System Compatible Device */
+	"PNP0A03",	/* PCI Bus */
+	"PNP0A08",	/* PCI Express Bus */
+	"PNP0B00",	/* AT Real-Time Clock */
+	"PNP0C01",	/* System Board */
+	"PNP0C02",	/* PNP Motherboard Resources */
+	"PNP0C04",	/* x87-compatible Floating Point Processing Unit */
+	"PNP0C0F",	/* PCI Interrupt Link Device */
+	NULL
+};
+
 int
 acpi_foundhid(struct aml_node *node, void *arg)
 {
@@ -2773,13 +2790,16 @@ acpi_foundhid(struct aml_node *node, void *arg)
 		sta = STA_PRESENT | STA_ENABLED | STA_DEV_OK | 0x1000;
 
 	if ((sta & STA_PRESENT) == 0)
-		return 0;
+		return (0);
 
 	memset(&aaa, 0, sizeof(aaa));
 	aaa.aaa_iot = sc->sc_iot;
 	aaa.aaa_memt = sc->sc_memt;
 	aaa.aaa_node = node->parent;
 	aaa.aaa_dev = dev;
+
+	if (acpi_matchhids(&aaa, acpi_skip_hids, "none"))
+		return (0);
 
 #ifndef SMALL_KERNEL
 	if (!strcmp(cdev, ACPI_DEV_MOUSE)) {
