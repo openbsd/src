@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.137 2016/03/30 12:33:10 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.138 2016/04/02 08:49:49 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1152,7 +1152,7 @@ bpf_tap(caddr_t arg, u_char *pkt, u_int pktlen, u_int direction)
 			bf = srp_enter(&d->bd_rfilter);
 			if (bf != NULL)
 				fcode = bf->bf_insns;
-			slen = bpf_filter(fcode, pkt, pktlen, 0);
+			slen = bpf_filter(fcode, pkt, pktlen, pktlen);
 			srp_leave(&d->bd_rfilter, bf);
 		}
 
@@ -1244,7 +1244,7 @@ _bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction,
 			bf = srp_enter(&d->bd_rfilter);
 			if (bf != NULL)
 				fcode = bf->bf_insns;
-			slen = bpf_filter(fcode, (u_char *)m, pktlen, 0);
+			slen = bpf_mfilter(fcode, m, pktlen);
 			srp_leave(&d->bd_rfilter, bf);
 		}
 
@@ -1738,4 +1738,104 @@ bpf_insn_dtor(void *null, void *f)
 
 	free(insns, M_DEVBUF, bf->bf_len * sizeof(*insns));
 	free(bf, M_DEVBUF, sizeof(*bf));
+}
+
+u_int32_t	bpf_mbuf_ldw(const void *, u_int32_t, int *);
+u_int32_t	bpf_mbuf_ldh(const void *, u_int32_t, int *);
+u_int32_t	bpf_mbuf_ldb(const void *, u_int32_t, int *);
+
+int		bpf_mbuf_copy(const struct mbuf *, u_int32_t,
+		    void *, u_int32_t);
+
+const struct bpf_ops bpf_mbuf_ops = {
+	bpf_mbuf_ldw,
+	bpf_mbuf_ldh,
+	bpf_mbuf_ldb,
+};
+
+int
+bpf_mbuf_copy(const struct mbuf *m, u_int32_t off, void *buf, u_int32_t len)
+{
+	u_int8_t *cp = buf;
+	u_int32_t count;
+
+	while (off >= m->m_len) {
+		off -= m->m_len;
+
+		m = m->m_next;
+		if (m == NULL)
+			return (-1);
+	}
+
+	for (;;) {
+		count = min(m->m_len - off, len);
+		
+		memcpy(cp, m->m_data + off, count);
+		len -= count;
+
+		if (len == 0)
+			return (0);
+
+		m = m->m_next;
+		if (m == NULL)
+			break;
+
+		cp += count;
+		off = 0;
+	}
+
+	return (-1);
+}
+
+u_int32_t
+bpf_mbuf_ldw(const void *m0, u_int32_t k, int *err)
+{
+	u_int32_t v;
+
+	if (bpf_mbuf_copy(m0, k, &v, sizeof(v)) != 0) {
+		*err = 1;
+		return (0);
+	}
+
+	*err = 0;
+	return ntohl(v);
+}
+
+u_int32_t
+bpf_mbuf_ldh(const void *m0, u_int32_t k, int *err)
+{
+	u_int16_t v;
+
+	if (bpf_mbuf_copy(m0, k, &v, sizeof(v)) != 0) {
+		*err = 1;
+		return (0);
+	}
+
+	*err = 0;
+	return ntohs(v);
+}
+
+u_int32_t
+bpf_mbuf_ldb(const void *m0, u_int32_t k, int *err)
+{
+	const struct mbuf *m = m0;
+
+	while (k >= m->m_len) {
+		k -= m->m_len;
+
+		m = m->m_next;
+		if (m == NULL) {
+			*err = 1;
+			return (0);
+		}
+	}
+
+	*err = 0;
+	return (m->m_data[k]);
+}
+
+u_int
+bpf_mfilter(const struct bpf_insn *pc, const struct mbuf *m, u_int wirelen)
+{
+	return _bpf_filter(pc, &bpf_mbuf_ops, m, wirelen);
 }

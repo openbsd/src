@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.27 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.28 2016/04/02 08:49:49 dlg Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -49,99 +49,75 @@
 #endif
 
 #include <sys/endian.h>
-#ifdef __STRICT_ALIGNMENT
-#define BPF_ALIGN
-#endif
-
-#ifndef BPF_ALIGN
-#define EXTRACT_SHORT(p)	((u_int16_t)ntohs(*(u_int16_t *)p))
-#define EXTRACT_LONG(p)		(ntohl(*(u_int32_t *)p))
-#else
-#define EXTRACT_SHORT(p)\
-	((u_int16_t)\
-		((u_int16_t)*((u_char *)p+0)<<8|\
-		 (u_int16_t)*((u_char *)p+1)<<0))
-#define EXTRACT_LONG(p)\
-		((u_int32_t)*((u_char *)p+0)<<24|\
-		 (u_int32_t)*((u_char *)p+1)<<16|\
-		 (u_int32_t)*((u_char *)p+2)<<8|\
-		 (u_int32_t)*((u_char *)p+3)<<0)
-#endif
 
 #ifdef _KERNEL
-#include <sys/mbuf.h>
-#define MINDEX(len, m, k) \
-{ \
-	len = m->m_len; \
-	while (k >= len) { \
-		k -= len; \
-		m = m->m_next; \
-		if (m == NULL) \
-			return 0; \
-		len = m->m_len; \
-	} \
-}
-
 extern int bpf_maxbufsize;
-
-int	bpf_m_xword(struct mbuf *, u_int32_t, int *);
-int	bpf_m_xhalf(struct mbuf *, u_int32_t, int *);
-
-int
-bpf_m_xword(struct mbuf *m, u_int32_t k, int *err)
-{
-	int len;
-	u_char *cp, *np;
-	struct mbuf *m0;
-
-	*err = 1;
-	MINDEX(len, m, k);
-	cp = mtod(m, u_char *) + k;
-	if (len >= k + 4) {
-		*err = 0;
-		return EXTRACT_LONG(cp);
-	}
-	m0 = m->m_next;
-	if (m0 == NULL || m0->m_len + len - k < 4)
-		return 0;
-	*err = 0;
-	np = mtod(m0, u_char *);
-	switch (len - k) {
-
-	case 1:
-		return (cp[0] << 24) | (np[0] << 16) | (np[1] << 8) | np[2];
-
-	case 2:
-		return (cp[0] << 24) | (cp[1] << 16) | (np[0] << 8) | np[1];
-
-	default:
-		return (cp[0] << 24) | (cp[1] << 16) | (cp[2] << 8) | np[0];
-	}
-}
-
-int
-bpf_m_xhalf(struct mbuf *m, u_int32_t k, int *err)
-{
-	int len;
-	u_char *cp;
-	struct mbuf *m0;
-
-	*err = 1;
-	MINDEX(len, m, k);
-	cp = mtod(m, u_char *) + k;
-	if (len >= k + 2) {
-		*err = 0;
-		return EXTRACT_SHORT(cp);
-	}
-	m0 = m->m_next;
-	if (m0 == NULL)
-		return 0;
-	*err = 0;
-	return (cp[0] << 8) | mtod(m0, u_char *)[0];
-}
 #endif
 
 #include <net/bpf.h>
+
+struct bpf_mem {
+	const u_char	*pkt;
+	u_int		 len;
+};
+
+u_int32_t	bpf_mem_ldw(const void *, u_int32_t, int *);
+u_int32_t	bpf_mem_ldh(const void *, u_int32_t, int *);
+u_int32_t	bpf_mem_ldb(const void *, u_int32_t, int *);
+
+const struct bpf_ops bpf_mem_ops = {
+	bpf_mem_ldw,
+	bpf_mem_ldh,
+	bpf_mem_ldb,
+};
+
+u_int32_t
+bpf_mem_ldw(const void *mem, u_int32_t k, int *err)
+{
+	const struct bpf_mem *bm = mem;
+	u_int32_t v;
+
+	*err = 1;
+
+	if (k + sizeof(v) > bm->len)
+		return (0);
+
+	memcpy(&v, bm->pkt + k, sizeof(v));
+
+	*err = 0;
+	return ntohl(v);
+}
+
+u_int32_t
+bpf_mem_ldh(const void *mem, u_int32_t k, int *err)
+{
+	const struct bpf_mem *bm = mem;
+	u_int16_t v;
+
+	*err = 1;
+
+	if (k + sizeof(v) > bm->len)
+		return (0);
+
+	memcpy(&v, bm->pkt + k, sizeof(v));
+
+	*err = 0;
+	return ntohs(v);
+}
+
+u_int32_t
+bpf_mem_ldb(const void *mem, u_int32_t k, int *err)
+{
+	const struct bpf_mem *bm = mem;
+
+	*err = 1;
+
+	if (k >= bm->len)
+		return (0);
+
+	*err = 0;
+	return bm->pkt[k];
+}
 
 /*
  * Execute the filter program starting at pc on the packet p
@@ -149,19 +125,34 @@ bpf_m_xhalf(struct mbuf *m, u_int32_t k, int *err)
  * buflen is the amount of data present
  */
 u_int
-bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
+bpf_filter(struct bpf_insn *pc, u_char *pkt, u_int wirelen, u_int buflen)
+{
+	struct bpf_mem bm;
+
+	bm.pkt = pkt;
+	bm.len = buflen;
+
+	return _bpf_filter(pc, &bpf_mem_ops, &bm, wirelen);
+}
+
+u_int
+_bpf_filter(const struct bpf_insn *pc, const struct bpf_ops *ops,
+    const void *pkt, u_int wirelen)
 {
 	u_int32_t A = 0, X = 0;
 	u_int32_t k;
 	int32_t mem[BPF_MEMWORDS];
+	int err;
 
 	bzero(mem, sizeof(mem));
 
-	if (pc == 0)
+	if (pc == NULL) {
 		/*
 		 * No filter means accept all.
 		 */
 		return (u_int)-1;
+	}
+
 	--pc;
 	while (1) {
 		++pc;
@@ -180,61 +171,21 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 			return (u_int)A;
 
 		case BPF_LD|BPF_W|BPF_ABS:
-			k = pc->k;
-			if (k > buflen || sizeof(int32_t) > buflen - k) {
-#ifdef _KERNEL
-				int merr;
-
-				if (buflen != 0)
-					return 0;
-				A = bpf_m_xword((struct mbuf *)p, k, &merr);
-				if (merr != 0)
-					return 0;
-				continue;
-#else
+			A = ops->ldw(pkt, pc->k, &err);
+			if (err != 0)
 				return 0;
-#endif
-			}
-			A = EXTRACT_LONG(&p[k]);
 			continue;
 
 		case BPF_LD|BPF_H|BPF_ABS:
-			k = pc->k;
-			if (k > buflen || sizeof(int16_t) > buflen - k) {
-#ifdef _KERNEL
-				int merr;
-
-				if (buflen != 0)
-					return 0;
-				A = bpf_m_xhalf((struct mbuf *)p, k, &merr);
-				if (merr != 0)
-					return 0;
-				continue;
-#else
+			A = ops->ldh(pkt, pc->k, &err);
+			if (err != 0)
 				return 0;
-#endif
-			}
-			A = EXTRACT_SHORT(&p[k]);
 			continue;
 
 		case BPF_LD|BPF_B|BPF_ABS:
-			k = pc->k;
-			if (k >= buflen) {
-#ifdef _KERNEL
-				struct mbuf *m;
-				int len;
-
-				if (buflen != 0)
-					return 0;
-				m = (struct mbuf *)p;
-				MINDEX(len, m, k);
-				A = mtod(m, u_char *)[k];
-				continue;
-#else
+			A = ops->ldb(pkt, pc->k, &err);
+			if (err != 0)
 				return 0;
-#endif
-			}
-			A = p[k];
 			continue;
 
 		case BPF_LD|BPF_W|BPF_LEN:
@@ -247,80 +198,31 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 
 		case BPF_LD|BPF_W|BPF_IND:
 			k = X + pc->k;
-			if (k > buflen || sizeof(int32_t) > buflen - k) {
-#ifdef _KERNEL
-				int merr;
-
-				if (buflen != 0)
-					return 0;
-				A = bpf_m_xword((struct mbuf *)p, k, &merr);
-				if (merr != 0)
-					return 0;
-				continue;
-#else
+			A = ops->ldw(pkt, k, &err);
+			if (err != 0)
 				return 0;
-#endif
-			}
-			A = EXTRACT_LONG(&p[k]);
 			continue;
 
 		case BPF_LD|BPF_H|BPF_IND:
 			k = X + pc->k;
-			if (k > buflen || sizeof(int16_t) > buflen - k) {
-#ifdef _KERNEL
-				int merr;
-
-				if (buflen != 0)
-					return 0;
-				A = bpf_m_xhalf((struct mbuf *)p, k, &merr);
-				if (merr != 0)
-					return 0;
-				continue;
-#else
+			A = ops->ldh(pkt, k, &err);
+			if (err != 0)
 				return 0;
-#endif
-			}
-			A = EXTRACT_SHORT(&p[k]);
 			continue;
 
 		case BPF_LD|BPF_B|BPF_IND:
 			k = X + pc->k;
-			if (k >= buflen) {
-#ifdef _KERNEL
-				struct mbuf *m;
-				int len;
-
-				if (buflen != 0)
-					return 0;
-				m = (struct mbuf *)p;
-				MINDEX(len, m, k);
-				A = mtod(m, u_char *)[k];
-				continue;
-#else
+			A = ops->ldb(pkt, k, &err);
+			if (err != 0)
 				return 0;
-#endif
-			}
-			A = p[k];
 			continue;
 
 		case BPF_LDX|BPF_MSH|BPF_B:
-			k = pc->k;
-			if (k >= buflen) {
-#ifdef _KERNEL
-				struct mbuf *m;
-				int len;
-
-				if (buflen != 0)
-					return 0;
-				m = (struct mbuf *)p;
-				MINDEX(len, m, k);
-				X = (mtod(m, u_char *)[k] & 0xf) << 2;
-				continue;
-#else
+			X = ops->ldb(pkt, pc->k, &err);
+			if (err != 0)
 				return 0;
-#endif
-			}
-			X = (p[pc->k] & 0xf) << 2;
+			X &= 0xf;
+			X <<= 2;
 			continue;
 
 		case BPF_LD|BPF_IMM:

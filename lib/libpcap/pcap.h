@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.h,v 1.16 2014/04/11 04:08:58 lteo Exp $	*/
+/*	$OpenBSD: pcap.h,v 1.17 2016/04/02 08:49:49 dlg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -226,8 +226,6 @@ void	pcap_freealldevs(pcap_if_t *);
 
 const char *pcap_lib_version(void);
 
-/* XXX this guy lives in the bpf tree */
-u_int	bpf_filter(struct bpf_insn *, u_char *, u_int, u_int);
 char	*bpf_image(struct bpf_insn *, int);
 
 int	pcap_get_selectable_fd(pcap_t *);
