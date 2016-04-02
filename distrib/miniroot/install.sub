@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.884 2016/04/02 12:23:46 rpe Exp $
+#	$OpenBSD: install.sub,v 1.885 2016/04/02 13:34:48 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1388,7 +1388,6 @@ install_files() {
 			fi
 		else
 			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
-			GOTSETS="$GOTSETS $_f"
 		fi
 		[[ -d $_tmpsrc ]] && rm -f "$_tmpsrc/$_f"
 	done
