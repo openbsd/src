@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytgpio.c,v 1.4 2016/03/30 09:56:10 kettenis Exp $	*/
+/*	$OpenBSD: bytgpio.c,v 1.5 2016/04/02 00:34:47 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -37,7 +37,7 @@
 #define BYTGPIO_IRQ_TS_2	0x808
 
 struct bytgpio_intrhand {
-	void (*ih_func)(void *);
+	int (*ih_func)(void *);
 	void *ih_arg;
 };
 
@@ -105,7 +105,7 @@ const int byt_sus_pins[] = {
 
 int	bytgpio_parse_resources(union acpi_resource *, void *);
 int	bytgpio_read_pin(void *, int);
-void	bytgpio_intr_establish(void *, int, int, void (*)(), void *);
+void	bytgpio_intr_establish(void *, int, int, int (*)(), void *);
 int	bytgpio_intr(void *);
 
 int
@@ -235,7 +235,7 @@ bytgpio_read_pin(void *cookie, int pin)
 
 void
 bytgpio_intr_establish(void *cookie, int pin, int flags,
-    void (*func)(void *), void *arg)
+    int (*func)(void *), void *arg)
 {
 	struct bytgpio_softc *sc = cookie;
 	uint32_t reg;

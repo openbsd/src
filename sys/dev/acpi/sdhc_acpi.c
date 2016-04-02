@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.5 2016/03/30 10:00:08 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.6 2016/04/02 00:34:47 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -69,7 +69,7 @@ const char *sdhc_hids[] = {
 
 int	sdhc_acpi_parse_resources(union acpi_resource *, void *);
 int	sdhc_acpi_card_detect(struct sdhc_softc *);
-void	sdhc_acpi_card_detect_intr(void *);
+int	sdhc_acpi_card_detect_intr(void *);
 
 int
 sdhc_acpi_match(struct device *parent, void *match, void *aux)
@@ -188,10 +188,12 @@ sdhc_acpi_card_detect(struct sdhc_softc *ssc)
 	return !gpio->read_pin(gpio->cookie, pin);
 }
 
-void
+int
 sdhc_acpi_card_detect_intr(void *arg)
 {
 	struct sdhc_acpi_softc *sc = arg;
 
 	sdhc_needs_discover(&sc->sc);
+
+	return (1);
 }
