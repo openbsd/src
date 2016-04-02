@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.29 2016/04/02 09:05:16 dlg Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.30 2016/04/02 10:26:58 dlg Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -52,7 +52,10 @@
 
 #ifdef _KERNEL
 extern int bpf_maxbufsize;
-#endif
+#define Static
+#else /* _KERNEL */
+#define Static static
+#endif /* _KERNEL */
 
 #include <net/bpf.h>
 
@@ -61,17 +64,17 @@ struct bpf_mem {
 	u_int		 len;
 };
 
-u_int32_t	bpf_mem_ldw(const void *, u_int32_t, int *);
-u_int32_t	bpf_mem_ldh(const void *, u_int32_t, int *);
-u_int32_t	bpf_mem_ldb(const void *, u_int32_t, int *);
+Static u_int32_t	bpf_mem_ldw(const void *, u_int32_t, int *);
+Static u_int32_t	bpf_mem_ldh(const void *, u_int32_t, int *);
+Static u_int32_t	bpf_mem_ldb(const void *, u_int32_t, int *);
 
-const struct bpf_ops bpf_mem_ops = {
+static const struct bpf_ops bpf_mem_ops = {
 	bpf_mem_ldw,
 	bpf_mem_ldh,
 	bpf_mem_ldb,
 };
 
-u_int32_t
+Static u_int32_t
 bpf_mem_ldw(const void *mem, u_int32_t k, int *err)
 {
 	const struct bpf_mem *bm = mem;
@@ -88,7 +91,7 @@ bpf_mem_ldw(const void *mem, u_int32_t k, int *err)
 	return ntohl(v);
 }
 
-u_int32_t
+Static u_int32_t
 bpf_mem_ldh(const void *mem, u_int32_t k, int *err)
 {
 	const struct bpf_mem *bm = mem;
@@ -105,7 +108,7 @@ bpf_mem_ldh(const void *mem, u_int32_t k, int *err)
 	return ntohs(v);
 }
 
-u_int32_t
+Static u_int32_t
 bpf_mem_ldb(const void *mem, u_int32_t k, int *err)
 {
 	const struct bpf_mem *bm = mem;
