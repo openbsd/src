@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.204 2016/02/17 18:31:28 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.205 2016/04/02 19:55:10 krw Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -436,10 +436,12 @@ main(int argc, char *argv[])
 		logerror("Couldn't open /dev/null");
 		die(0);
 	}
-	for (fd = nullfd + 1; fd <= 2; fd++) {
-		if (fcntl(fd, F_GETFL, 0) == -1)
-			if (dup2(nullfd, fd) == -1)
+	for (fd = nullfd + 1; fd <= STDERR_FILENO; fd++) {
+		if (fcntl(fd, F_GETFL) == -1 && errno == EBADF)
+			if (dup2(nullfd, fd) == -1) {
 				logerror("dup2");
+				die(0);
+			}
 	}
 
 	consfile.f_type = F_CONSOLE;
@@ -2651,7 +2653,7 @@ cfline(char *line, char *progblock, char *hostblock)
 				f->f_type = F_FILE;
 
 				/* Clear O_NONBLOCK flag on f->f_file */
-				if ((i = fcntl(f->f_file, F_GETFL, 0)) != -1) {
+				if ((i = fcntl(f->f_file, F_GETFL)) != -1) {
 					i &= ~O_NONBLOCK;
 					fcntl(f->f_file, F_SETFL, i);
 				}

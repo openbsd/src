@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.9 2015/10/23 16:28:52 bluhm Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.10 2016/04/02 19:55:10 krw Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 #include <dirent.h>
 #include <errno.h>
 #include <event.h>
-#include <fcntl.h>
 #include <paths.h>
 #include <signal.h>
 #include <stdio.h>
