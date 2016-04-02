@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.44 2015/10/12 16:54:30 uebayasi Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.45 2016/04/02 16:33:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -234,6 +234,7 @@ static char *cr;
 void
 notify(struct utmp *utp, off_t offset)
 {
+	int fd;
 	FILE *tp;
 	struct stat stb;
 	struct termios ttybuf;
@@ -257,7 +258,8 @@ notify(struct utmp *utp, off_t offset)
 		return;
 	(void)signal(SIGALRM, SIG_DFL);
 	(void)alarm(30);
-	if ((tp = fopen(tty, "w")) == NULL) {
+	fd = open(tty, O_WRONLY);
+	if (fd == -1 || (tp = fdopen(fd, "w")) == NULL) {
 		dsyslog(LOG_ERR, "%s: %s", tty, strerror(errno));
 		_exit(1);
 	}
