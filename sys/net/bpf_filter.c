@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.28 2016/04/02 08:49:49 dlg Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.29 2016/04/02 09:05:16 dlg Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -125,7 +125,8 @@ bpf_mem_ldb(const void *mem, u_int32_t k, int *err)
  * buflen is the amount of data present
  */
 u_int
-bpf_filter(struct bpf_insn *pc, u_char *pkt, u_int wirelen, u_int buflen)
+bpf_filter(const struct bpf_insn *pc, const u_char *pkt,
+    u_int wirelen, u_int buflen)
 {
 	struct bpf_mem bm;
 
