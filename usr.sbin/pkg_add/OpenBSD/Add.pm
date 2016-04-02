@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.169 2015/05/25 07:20:31 espie Exp $
+# $OpenBSD: Add.pm,v 1.170 2016/04/02 12:18:44 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -456,27 +456,7 @@ sub prepare_to_extract
 	my $destdir = $state->{destdir};
 
 	$file->{cwd} = $self->cwd;
-	if (defined $self->{symlink} || $file->isSymLink) {
-		unless (defined $self->{symlink} && $file->isSymLink) {
-			$state->fatal("bogus symlink #1", $self->name);
-		}
-		if (!$file->check_linkname($self->{symlink})) {
-			$state->fatal("archive symlink does not match #1 != #2",
-			    $file->{linkname}, $self->{symlink});
-		}
-	} elsif (defined $self->{link} || $file->isHardLink) {
-		unless (defined $self->{link} && $file->isHardLink) {
-			$state->fatal("bogus hardlink #1", $self->name);
-		}
-		if (!$file->check_linkname($self->{link})) {
-			$state->fatal("archive hardlink does not match #1 != #2",
-			    $file->{linkname}, $self->{link});
-		}
-	} elsif (!$file->isFile) {
-		$state->fatal("archive content for #1 should be file", 
-		    $self->name);
-	}
-	if (!$file->verify_modes($self)) {
+	if (!$file->validate_meta($self)) {
 		$state->fatal("can't continue");
 	}
 

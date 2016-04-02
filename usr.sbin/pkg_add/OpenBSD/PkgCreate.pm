@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.118 2015/11/06 08:53:12 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.119 2016/04/02 12:18:44 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -293,6 +293,9 @@ sub prepare_for_archival
 	my $o = $state->{archive}->prepare_long($self);
 	if (!$o->verify_modes($self)) {
 		$state->error("modes don't match for #1", $self->fullname);
+	}
+	if (!$o->is_allowed) {
+		$state->error("can't package #1", $self->fullname);
 	}
 	return $o;
 }

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.31 2014/12/23 08:46:31 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.32 2016/04/02 12:18:44 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -16,10 +16,16 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 # Supplementary code to handle archives in the package context.
-# Contrarily to GNU-tar, we do not change the archive format, but by
-# convention,  the names LongName\d+ and LongLink\d correspond to names
-# too long to fit. The actual names reside in the PLIST, but the archive
-# is still a valid archive.
+# Ustar allows about anything, but we want to forbid a lot of things.
+# this code is used during creation and extraction
+# specifically, during create time:
+# - prevent a lot of weird objects from entering the archives
+# - make sure all relevant users/modes are recorded in the PLIST item
+
+# during extraction:
+# - make sure complex objects have all their relevant properties recorded
+# - disallow extraction of non-files/links.
+# - guard against files much longer than they should be.
 
 use strict;
 use warnings;
@@ -27,15 +33,11 @@ use warnings;
 use OpenBSD::Ustar;
 
 package OpenBSD::Ustar::Object;
+use POSIX;
 
-# match archive header name against PackingElement item
-sub check_name
-{
-	my ($self, $item) = @_;
-	return $self->name eq $item->name;
-}
+sub is_allowed() { 0 }
 
-# match archive header link name against actual link names
+# match archive header link name against actual link name
 sub check_linkname
 {
 	my ($self, $linkname) = @_;
@@ -46,7 +48,48 @@ sub check_linkname
 	return $c eq $linkname;
 }
 
-use POSIX;
+sub validate_meta
+{
+	my ($o, $item) = @_;
+
+	$o->{cwd} = $item->cwd;
+	if (defined $item->{symlink} || $o->isSymLink) {
+		unless (defined $item->{symlink} && $o->isSymLink) {
+			$o->errsay("bogus symlink #1", $item->name);
+			return 0;
+		}
+		if (!$o->check_linkname($item->{symlink})) {
+			$o->errsay("archive symlink does not match #1 != #2",
+			    $o->{linkname}, $item->{symlink});
+			return 0;
+		}
+	} elsif (defined $item->{link} || $o->isHardLink) {
+		unless (defined $item->{link} && $o->isHardLink) {
+			$o->errsay("bogus hardlink #1", $item->name);
+			return 0;
+		}
+		if (!$o->check_linkname($item->{link})) {
+			$o->errsay("archive hardlink does not match #1 != #2",
+			    $o->{linkname}, $item->{link});
+			return 0;
+		}
+	} elsif ($o->isFile) {
+		if (!defined $item->{size}) {
+			$o->errsay("Error: file #1 does not have recorded size",
+			    $item->fullname);
+			return 0;
+		} elsif ($item->{size} != $o->{size}) {
+			$o->errsay("Error: size does not match for #1",
+			    $item->fullname);
+			return 0;
+		}
+	} else {
+		$o->errsay("archive content for #1 should be file", 
+		    $item->name);
+		return 0;
+	}
+	return $o->verify_modes($item);
+}
 
 sub verify_modes
 {
@@ -82,19 +125,17 @@ sub verify_modes
 	    		$result = 0;
 	    }
 	}
-	if ($o->isFile) {
-		if (!defined $item->{size}) {
-			$o->errsay("Error: file #1 does not have recorded size",
-			    $item->fullname);
-			$result = 0;
-		} elsif ($item->{size} != $o->{size}) {
-			$o->errsay("Error: size does not match for #1",
-			    $item->fullname);
-			$result = 0;
-		}
-	}
 	return $result;
 }
+
+package OpenBSD::Ustar::HardLink;
+sub is_allowed() { 1 }
+
+package OpenBSD::Ustar::SoftLink;
+sub is_allowed() { 1 }
+
+package OpenBSD::Ustar::File;
+sub is_allowed() { 1 }
 
 package OpenBSD::Ustar;
 use POSIX;
