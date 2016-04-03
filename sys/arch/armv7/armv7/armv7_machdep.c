@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.25 2016/01/31 01:04:24 jsg Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.26 2016/04/03 12:44:37 patrick Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -130,6 +130,7 @@
 #include <armv7/armv7/armv7_machdep.h>
 
 #include <dev/cons.h>
+#include <dev/ofw/fdt.h>
 
 #include <net/if.h>
 
@@ -387,8 +388,10 @@ initarm(void *arg0, void *arg1, void *arg2)
 	int loop, loop1, i, physsegs;
 	u_int l1pagetable;
 	pv_addr_t kernel_l1pt;
+	pv_addr_t fdt;
 	paddr_t memstart;
 	psize_t memsize;
+	void *config;
 	extern uint32_t esym; /* &_end if no symbols are loaded */
 
 	/* early bus_space_map support */
@@ -423,6 +426,49 @@ initarm(void *arg0, void *arg1, void *arg2)
 	armv7_a4x_bs_tag.bs_map = bootstrap_bs_map;
 	tmp_bs_tag.bs_map = bootstrap_bs_map;
 
+	/*
+	 * Now, map the bootconfig/FDT area.
+	 *
+	 * As we don't know the size of a possible FDT, map the size of a
+	 * typical bootstrap bs map.  The FDT might not be aligned, so this
+	 * might take up to two L1_S_SIZEd mappings.  In the unlikely case
+	 * that the FDT is bigger than L1_S_SIZE (0x00100000), we need to
+	 * remap it.
+	 *
+	 * XXX: There's (currently) no way to unmap a bootstrap mapping, so
+	 * we might lose a bit of the bootstrap address space.
+	 */
+	bootstrap_bs_map(NULL, (bus_addr_t)arg2, L1_S_SIZE, 0,
+	    (bus_space_handle_t *)&config);
+	if (fdt_init(config) && fdt_get_size(config) != 0) {
+		uint32_t size = fdt_get_size(config);
+		if (size > L1_S_SIZE)
+			bootstrap_bs_map(NULL, (bus_addr_t)arg2, size, 0,
+			    (bus_space_handle_t *)&config);
+	}
+
+	if (fdt_init(config) && fdt_get_size(config) != 0) {
+		struct fdt_memory mem;
+		void *node;
+
+		node = fdt_find_node("/memory");
+		if (node == NULL || fdt_get_memory_address(node, 0, &mem))
+			panic("initarm: no memory specificed");
+
+		memstart = mem.addr;
+		memsize = mem.size;
+		physical_start = mem.addr;
+		physical_end = MIN(mem.addr + mem.size, (paddr_t)-PAGE_SIZE);
+
+		node = fdt_find_node("/chosen");
+		if (node != NULL) {
+			char *bootargs;
+			if (fdt_node_property(node, "bootargs", &bootargs))
+				process_kernel_args(bootargs);
+		}
+	}
+
+	/* XXX: Use FDT information. */
 	platform_init();
 	platform_disable_l2_if_needed();
 
@@ -433,41 +479,36 @@ initarm(void *arg0, void *arg1, void *arg2)
 	printf("\n%s booting ...\n", platform_boot_name());
 
 	printf("arg0 %p arg1 %p arg2 %p\n", arg0, arg1, arg2);
-	parse_uboot_tags(arg2);
 
-	/*
-	 * Examine the boot args string for options we need to know about
-	 * now.
-	 */
-	process_kernel_args(bootconfig.bootstring);
+	if (fdt_get_size(config) == 0) {
+		parse_uboot_tags(config);
+
+		/*
+		 * Examine the boot args string for options we need to know about
+		 * now.
+		 */
+		process_kernel_args(bootconfig.bootstring);
+
+		/* normally u-boot will set up bootconfig.dramblocks */
+		bootconfig_dram(&bootconfig, &memstart, &memsize);
+
+		/*
+		 * Set up the variables that define the availablilty of
+		 * physical memory.
+		 *
+		 * XXX pmap_bootstrap() needs an enema.
+		 */
+		physical_start = bootconfig.dram[0].address;
+		physical_end = MIN((uint64_t)physical_start +
+		    (bootconfig.dram[0].pages * PAGE_SIZE), (paddr_t)-PAGE_SIZE);
+	}
+
 #ifdef RAMDISK_HOOKS
-        boothowto |= RB_DFLTROOT;
+	boothowto |= RB_DFLTROOT;
 #endif /* RAMDISK_HOOKS */
 
-	/* normally u-boot will set up bootconfig.dramblocks */
-	bootconfig_dram(&bootconfig, &memstart, &memsize);
-
-	/*
-	 * Set up the variables that define the availablilty of
-	 * physical memory.  For now, we're going to set
-	 * physical_freestart to 0xa0200000 (where the kernel
-	 * was loaded), and allocate the memory we need downwards.
-	 * If we get too close to the page tables that RedBoot
-	 * set up, we will panic.  We will update physical_freestart
-	 * and physical_freeend later to reflect what pmap_bootstrap()
-	 * wants to see.
-	 *
-	 * XXX pmap_bootstrap() needs an enema.
-	 */
-	physical_start = bootconfig.dram[0].address;
-	physical_end = MIN((uint64_t)physical_start +
-	    (bootconfig.dram[0].pages * PAGE_SIZE), (paddr_t)-PAGE_SIZE);
-
-	{
-		physical_freestart = (((unsigned long)esym - KERNEL_TEXT_BASE +0xfff) & ~0xfff) + memstart;
-		physical_freeend = MIN((uint64_t)memstart+memsize,
-		    (paddr_t)-PAGE_SIZE);
-	}
+	physical_freestart = (((unsigned long)esym - KERNEL_TEXT_BASE +0xfff) & ~0xfff) + memstart;
+	physical_freeend = MIN((uint64_t)memstart+memsize, (paddr_t)-PAGE_SIZE);
 
 	physmem = (physical_end - physical_start) / PAGE_SIZE;
 
@@ -566,6 +607,15 @@ initarm(void *arg0, void *arg1, void *arg2)
 #endif
 
 	/*
+	 * Allocate pages for an FDT copy.
+	 */
+	if (fdt_get_size(config) != 0) {
+		uint32_t size = fdt_get_size(config);
+		valloc_pages(fdt, round_page(size) / PAGE_SIZE);
+		memcpy((void *)fdt.pv_pa, config, size);
+	}
+
+	/*
 	 * XXX Defer this to later so that we can reclaim the memory
 	 * XXX used by the RedBoot page tables.
 	 */
@@ -656,6 +706,12 @@ initarm(void *arg0, void *arg1, void *arg2)
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
 	    PROT_READ | PROT_WRITE | PROT_EXEC, PTE_CACHE);
 
+	/* Map the FDT. */
+	if (fdt.pv_va && fdt.pv_pa)
+		pmap_map_chunk(l1pagetable, fdt.pv_va, fdt.pv_pa,
+		    round_page(fdt_get_size((void *)fdt.pv_pa)),
+		    PROT_READ | PROT_WRITE, PTE_CACHE);
+
 	/*
 	 * map integrated peripherals at same address in l1pagetable
 	 * so that we can continue to use console.
@@ -715,6 +771,10 @@ initarm(void *arg0, void *arg1, void *arg2)
 	data_abort_handler_address = (u_int)data_abort_handler;
 	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;
 	undefined_handler_address = (u_int)undefinedinstruction_bounce;
+
+	/* Now we can reinit the FDT, using the virtual address. */
+	if (fdt.pv_va && fdt.pv_pa)
+		fdt_init((void *)fdt.pv_va);
 
 	/* Initialise the undefined instruction handlers */
 #ifdef VERBOSE_INIT_ARM
