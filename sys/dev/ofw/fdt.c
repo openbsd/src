@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.3 2016/03/17 14:10:29 mpi Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.4 2016/04/03 11:22:51 patrick Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -30,6 +30,7 @@ char	*fdt_get_str(u_int32_t);
 void	*skip_property(u_int32_t *);
 void	*skip_props(u_int32_t *);
 void	*skip_node_name(u_int32_t *);
+void	*skip_node(void *);
 void	*fdt_parent_node_recurse(void *, void *);
 #ifdef DEBUG
 void 	 fdt_print_node_recurse(void *, int);
@@ -172,8 +173,30 @@ fdt_node_property(void *node, char *name, char **out)
 }
 
 /*
- * Retrieves next node, skipping all the children nodes of the pointed node
- * if passed 0 wil return first node of the tree (root)
+ * Retrieves next node, skipping all the children nodes of the pointed node,
+ * returns pointer to next node, no matter if it exists or not.
+ */
+void *
+skip_node(void *node)
+{
+	u_int32_t *ptr = node;
+
+	ptr++;
+
+	ptr = skip_node_name(ptr);
+	ptr = skip_props(ptr);
+
+	/* skip children */
+	while (betoh32(*ptr) == FDT_NODE_BEGIN)
+		ptr = skip_node(ptr);
+
+	return (ptr + 1);
+}
+
+/*
+ * Retrieves next node, skipping all the children nodes of the pointed node,
+ * returns pointer to next node if exists, otherwise returns NULL.
+ * If passed 0 will return first node of the tree (root).
  */
 void *
 fdt_next_node(void *node)
@@ -185,7 +208,7 @@ fdt_next_node(void *node)
 
 	ptr = node;
 
-	if (!node) {
+	if (node == NULL) {
 		ptr = tree.tree;
 		return (betoh32(*ptr) == FDT_NODE_BEGIN) ? ptr : NULL;
 	}
@@ -200,9 +223,15 @@ fdt_next_node(void *node)
 
 	/* skip children */
 	while (betoh32(*ptr) == FDT_NODE_BEGIN)
-		ptr = fdt_next_node(ptr);
+		ptr = skip_node(ptr);
 
-	return (betoh32(*ptr) == FDT_NODE_END) ? (ptr + 1) : NULL;
+	if (betoh32(*ptr) != FDT_NODE_END)
+		return NULL;
+
+	if (betoh32(*(ptr + 1)) != FDT_NODE_BEGIN)
+		return NULL;
+
+	return (ptr + 1);
 }
 
 /*
