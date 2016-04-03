@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.4 2016/04/03 11:22:51 patrick Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.5 2016/04/03 12:32:13 patrick Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -32,6 +32,8 @@ void	*skip_props(u_int32_t *);
 void	*skip_node_name(u_int32_t *);
 void	*skip_node(void *);
 void	*fdt_parent_node_recurse(void *, void *);
+int	 fdt_node_property_int(void *, char *, int *);
+int	 fdt_node_property_ints(void *, char *, int *, int);
 #ifdef DEBUG
 void 	 fdt_print_node_recurse(void *, int);
 #endif
@@ -94,6 +96,21 @@ fdt_init(void *fdt)
 	tree_inited = 1;
 
 	return version;
+}
+
+ /*
+ * Return the size of the FDT.
+ */
+size_t
+fdt_get_size(void *fdt)
+{
+	if (!fdt)
+		return 0;
+
+	if (!fdt_check_head(fdt))
+		return 0;
+
+	return betoh32(((struct fdt_head *)fdt)->fh_size);
 }
 
 /*
@@ -235,6 +252,35 @@ fdt_next_node(void *node)
 }
 
 /*
+ * Retrieves node property as integers and puts them in the given
+ * integer array.
+ */
+int
+fdt_node_property_ints(void *node, char *name, int *out, int outlen)
+{
+	int *data;
+	int i, inlen;
+
+	inlen = fdt_node_property(node, name, (char **)&data) / sizeof(int);
+	if (inlen <= 0)
+		return -1;
+
+	for (i = 0; i < inlen && i < outlen; i++)
+		out[i] = betoh32(data[i]);
+
+	return i;
+}
+
+/*
+ * Retrieves node property as an integer.
+ */
+int
+fdt_node_property_int(void *node, char *name, int *out)
+{
+	return fdt_node_property_ints(node, name, out, 1);
+}
+
+/*
  * Retrieves next node, skipping all the children nodes of the pointed node
  */
 void *
@@ -341,6 +387,52 @@ fdt_parent_node(void *node)
 		return NULL;
 
 	return fdt_parent_node_recurse(pnode, node);
+}
+
+/*
+ * Parse the memory address and size of a node.
+ */
+int
+fdt_get_memory_address(void *node, int idx, struct fdt_memory *mem)
+{
+	void *parent;
+	int ac, sc, off, ret, *in, inlen;
+
+	if (node == NULL)
+		return 1;
+
+	parent = fdt_parent_node(node);
+	if (parent == NULL)
+		return 1;
+
+	/* We only support 32-bit (1), and 64-bit (2) wide addresses here. */
+	ret = fdt_node_property_int(parent, "#address-cells", &ac);
+	if (ret != 1 || ac <= 0 || ac > 2)
+		return 1;
+
+	/* We only support 32-bit (1), and 64-bit (2) wide sizes here. */
+	ret = fdt_node_property_int(parent, "#size-cells", &sc);
+	if (ret != 1 || sc <= 0 || sc > 2)
+		return 1;
+
+	inlen = fdt_node_property(node, "reg", (char **)&in) / sizeof(int);
+	if (inlen < ((idx + 1) * (ac + sc)))
+		return 1;
+
+	off = idx * (ac + sc);
+
+	mem->addr = betoh32(in[off]);
+	if (ac == 2)
+		mem->addr = (mem->addr << 32) + betoh32(in[off + 1]);
+
+	mem->size = betoh32(in[off + ac]);
+	if (sc == 2)
+		mem->size = (mem->size << 32) + betoh32(in[off + ac + 1]);
+
+	/* TODO: translate memory address in ranges */
+	//return fdt_translate_memory_address(parent, mem);
+
+	return 0;
 }
 
 #ifdef DEBUG
