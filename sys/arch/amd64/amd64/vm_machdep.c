@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.34 2016/04/03 17:48:33 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.35 2016/04/03 19:49:35 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -89,13 +89,8 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
-	/* Copy pcb from proc p1 to p2. */
-	if (p1 == curproc) {
-		/* Sync the PCB before we copy it. */
-		savectx(curpcb);
-	}
 #ifdef DIAGNOSTIC
-	else if (p1 != &proc0)
+	if (p1 != curproc && p1 != &proc0)
 		panic("cpu_fork: curproc");
 #endif
 	*pcb = p1->p_addr->u_pcb;
