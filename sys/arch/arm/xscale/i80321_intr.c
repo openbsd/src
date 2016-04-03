@@ -1,4 +1,4 @@
-/* $OpenBSD: i80321_intr.c,v 1.17 2016/01/31 00:14:50 jsg Exp $ */
+/* $OpenBSD: i80321_intr.c,v 1.18 2016/04/03 10:29:41 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -174,17 +174,11 @@ i80321intc_calc_mask(void)
 void
 i80321intc_do_pending(void)
 {
-	static int processing = 0;
 	int oldirqstate, spl_save;
 
 	oldirqstate = disable_interrupts(PSR_I);
 
 	spl_save = current_ipl_level;
-
-	if (processing == 1) {
-		restore_interrupts(oldirqstate);
-		return;
-	}
 
 #define DO_SOFTINT(si, ipl) \
 	if ((softint_pending & i80321intc_smask[current_ipl_level]) &	\
@@ -205,8 +199,6 @@ i80321intc_do_pending(void)
 		DO_SOFTINT(SI_SOFT, IPL_SOFT);
 	} while (softint_pending & i80321intc_smask[current_ipl_level]);
 		
-
-	processing = 0;
 	restore_interrupts(oldirqstate);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.4 2016/01/31 00:14:50 jsg Exp $ */
+/* $OpenBSD: intr.c,v 1.5 2016/04/03 10:29:41 jsg Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -165,17 +165,9 @@ void
 arm_do_pending_intr(int pcpl)
 {
 	struct cpu_info *ci = curcpu();
-	static int processing = 0;
 	int oldirqstate;
 
 	oldirqstate = disable_interrupts(PSR_I);
-
-	if (processing == 1) {
-		/* Don't use splx... we are here already! */
-		arm_intr_func.setipl(pcpl);
-		restore_interrupts(oldirqstate);
-		return;
-	}
 
 #define DO_SOFTINT(si, ipl) \
 	if ((ci->ci_ipending & arm_smask[pcpl]) &	\
@@ -196,7 +188,6 @@ arm_do_pending_intr(int pcpl)
 
 	/* Don't use splx... we are here already! */
 	arm_intr_func.setipl(pcpl);
-	processing = 0;
 	restore_interrupts(oldirqstate);
 }
 

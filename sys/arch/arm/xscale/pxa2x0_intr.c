@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.27 2016/01/31 00:14:50 jsg Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.28 2016/04/03 10:29:41 jsg Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/lock.h>
 
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
@@ -448,17 +447,12 @@ pxa2x0_init_interrupt_masks(void)
 void
 pxa2x0_do_pending(void)
 {
-	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
 	int oldirqstate, spl_save;
-
-	if (__cpu_simple_lock_try(&processing) == 0)
-		return;
-
-	spl_save = current_spl_level;
 
 	oldirqstate = disable_interrupts(PSR_I);
 
-#if 1
+	spl_save = current_spl_level;
+
 #define	DO_SOFTINT(si,ipl)						\
 	if ((softint_pending & pxa2x0_imask[current_spl_level]) & 	\
 	    SI_TO_IRQBIT(si)) {		\
@@ -477,23 +471,9 @@ pxa2x0_do_pending(void)
 		DO_SOFTINT(SI_SOFTCLOCK, IPL_SOFTCLOCK);
 		DO_SOFTINT(SI_SOFT, IPL_SOFT);
 	} while( softint_pending & pxa2x0_imask[current_spl_level] );
-#else
-	while( (si = find_first_bit(softint_pending & pxa2x0_imask[current_spl_level])) >= 0 ){
-		softint_pending &= ~SI_TO_IRQBIT(si);
-		if (current_spl_level < ipl)
-			pxa2x0_setipl(ipl);
-		restore_interrupts(oldirqstate);
-		softintr_dispatch(si);
-		oldirqstate = disable_interrupts(PSR_I);
-		pxa2x0_setipl(spl_save);
-	}
-#endif
-
-	__cpu_simple_unlock(&processing);
 
 	restore_interrupts(oldirqstate);
 }
-
 
 #undef splx
 void
