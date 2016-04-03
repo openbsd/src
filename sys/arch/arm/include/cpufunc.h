@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.24 2016/03/22 23:35:01 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.25 2016/04/03 13:55:23 jsg Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -57,7 +57,8 @@ struct cpu_functions {
 
 	/* MMU functions */
 
-	u_int	(*cf_control)		(u_int bic, u_int eor);
+	u_int	(*cf_control)		(u_int clear, u_int set);
+	u_int	(*cf_auxcontrol)	(u_int clear, u_int set);
 	void	(*cf_domains)		(u_int domains);
 	void	(*cf_setttb)		(u_int ttb);
 	u_int	(*cf_dfsr)		(void);
@@ -158,7 +159,8 @@ extern u_int cputype;
 #define cpu_id()		cpufuncs.cf_id()
 #define	cpu_cpwait()		cpufuncs.cf_cpwait()
 
-#define cpu_control(c, e)	cpufuncs.cf_control(c, e)
+#define cpu_control(c, s)	cpufuncs.cf_control(c, s)
+#define cpu_auxcontrol(c, s)	cpufuncs.cf_auxcontrol(c, s)
 #define cpu_domains(d)		cpufuncs.cf_domains(d)
 #define cpu_setttb(t)		cpufuncs.cf_setttb(t)
 #define cpu_dfsr()		cpufuncs.cf_dfsr()
@@ -206,7 +208,8 @@ void	cpufunc_nullop		(void);
 int	early_abort_fixup	(void *);
 int	late_abort_fixup	(void *);
 u_int	cpufunc_id		(void);
-u_int	cpufunc_control		(u_int clear, u_int bic);
+u_int	cpufunc_control		(u_int clear, u_int set);
+u_int	cpufunc_auxcontrol	(u_int clear, u_int set);
 void	cpufunc_domains		(u_int domains);
 u_int	cpufunc_dfsr		(void);
 u_int	cpufunc_dfar		(void);

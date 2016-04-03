@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm.S,v 1.2 2013/01/23 19:57:47 patrick Exp $	*/
+/*	$OpenBSD: cpufunc_asm.S,v 1.3 2016/04/03 13:55:23 jsg Exp $	*/
 /*	$NetBSD: cpufunc_asm.S,v 1.12 2003/09/06 09:14:52 rearnsha Exp $	*/
 
 /*
@@ -124,10 +124,20 @@ ENTRY(cpufunc_domains)
 ENTRY(cpufunc_control)
 	mrc	p15, 0, r3, c1, c0, 0	/* Read the control register */
 	bic	r2, r3, r0		/* Clear bits */
-	eor     r2, r2, r1		/* XOR bits */
+	eor	r2, r2, r1		/* XOR bits */
 
 	teq	r2, r3			/* Only write if there is a change */
 	mcrne	p15, 0, r2, c1, c0, 0	/* Write new control register */
+	mov	r0, r3			/* Return old value */
+	mov	pc, lr
+ 
+ENTRY(cpufunc_auxcontrol)
+	mrc	p15, 0, r3, c1, c0, 1	/* Read the aux control register */
+	bic	r2, r3, r0		/* Clear bits */
+	eor	r2, r2, r1		/* XOR bits */
+
+	teq	r2, r3			/* Only write if there is a change */
+	mcrne	p15, 0, r2, c1, c0, 1	/* Write new aux control register */
 	mov	r0, r3			/* Return old value */
 	mov	pc, lr
 

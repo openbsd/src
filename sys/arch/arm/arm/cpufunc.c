@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.37 2016/03/23 01:09:15 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.38 2016/04/03 13:55:23 jsg Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -97,6 +97,7 @@ struct cpu_functions armv7_cpufuncs = {
 	/* MMU functions */
 
 	cpufunc_control,		/* control		*/
+	cpufunc_auxcontrol,		/* aux control		*/
 	cpufunc_domains,		/* Domain		*/
 	armv7_setttb,			/* Setttb		*/
 	cpufunc_dfsr,			/* dfsr			*/
@@ -154,6 +155,7 @@ struct cpu_functions xscale_cpufuncs = {
 	/* MMU functions */
 
 	xscale_control,			/* control		*/
+	cpufunc_auxcontrol,		/* aux control		*/
 	cpufunc_domains,		/* domain		*/
 	xscale_setttb,			/* setttb		*/
 	cpufunc_dfsr,			/* dfsr			*/
