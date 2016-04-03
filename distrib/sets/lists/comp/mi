@@ -2769,7 +2769,7 @@
 ./usr/share/man/man9/systrace.9
 ./usr/share/man/man9/task_add.9
 ./usr/share/man/man9/tc_init.9
-./usr/share/man/man9/time.9
+./usr/share/man/man9/time_second.9
 ./usr/share/man/man9/timeout.9
 ./usr/share/man/man9/tsleep.9
 ./usr/share/man/man9/tvtohz.9
