@@ -1,4 +1,4 @@
-.\"	$OpenBSD: time.9,v 1.11 2007/05/31 19:20:01 jmc Exp $
+.\"	$OpenBSD: time_second.9,v 1.1 2016/04/03 06:43:59 jsg Exp $
 .\"	$NetBSD: time.9,v 1.1 1995/11/25 21:24:53 perry Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -30,23 +30,19 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
-.Dt TIME 9
+.Dd $Mdocdate: April 3 2016 $
+.Dt TIME_SECOND 9
 .Os
 .Sh NAME
-.Nm boottime ,
-.Nm mono_time ,
-.Nm runtime ,
-.Nm time
+.Nm time_second ,
+.Nm time_uptime
 .Nd system time variables
 .Sh SYNOPSIS
-.Vt extern struct timeval boottime;
-.Vt extern volatile struct timeval mono_time;
-.Vt extern struct timeval runtime;
-.Vt extern volatile struct timeval time;
+.Vt extern volatile time_t time_second;
+.Vt extern volatile time_t time_uptime;
 .Sh DESCRIPTION
 The
-.Va time
+.Va time_second
 variable is the system's
 .Dq wall time
 clock.
@@ -57,64 +53,25 @@ and is updated by the
 system call and by periodic clock interrupts.
 .Pp
 The
-.Va boottime
-variable holds the system boot time.
-It is set from
-.Va time
-at system boot, and is updated when the system time is adjusted
-with
-.Xr settimeofday 2 .
-.Pp
-The
-.Va runtime
-variable holds the time that the system switched to the
-current process.
-It is set after each context switch,
-and is updated when the system time is adjusted with
-.Xr settimeofday 2 .
-Because
-.Va runtime
-is used for system accounting, it is set with the high-resolution
-.Xr microtime 9
-function, rather than being copied from
-.Va time .
-.Pp
-The
-.Va mono_time
+.Va time_uptime
 variable is a monotonically increasing system clock.
-It is set from
-.Va time
-at boot, and is updated by the periodic timer interrupt.
+It is set at boot, and is updated by the periodic timer interrupt.
 (It is not updated by
 .Xr settimeofday 2 . )
 .Pp
 All of these variables contain times
-expressed in seconds and microseconds since midnight (0 hour),
+expressed in seconds since midnight (0 hour),
 January 1, 1970.
 .Pp
 Clock interrupts should be blocked when reading or writing
-.Va time
+.Va time_second
 or
-.Va mono_time ,
+.Va time_uptime ,
 because those variables are updated by
 .Xr hardclock 9 .
-.Va Boottime
-and
-.Va runtime
-may be read and written without special precautions.
 .Sh SEE ALSO
 .Xr settimeofday 2 ,
 .Xr hardclock 9 ,
 .Xr hz 9 ,
 .Xr inittodr 9 ,
 .Xr microtime 9
-.Sh BUGS
-.Va Runtime
-should not be updated when the system time is
-changed with
-.Xr settimeofday 2 ,
-because it is used for resource accounting.
-.Pp
-The notion of having a single
-.Va runtime
-variable obviously won't be appropriate in multiprocessor systems.

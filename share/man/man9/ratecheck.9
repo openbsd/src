@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ratecheck.9,v 1.10 2013/06/04 19:27:12 schwarze Exp $
+.\"	$OpenBSD: ratecheck.9,v 1.11 2016/04/03 06:43:59 jsg Exp $
 .\"	$NetBSD: ratecheck.9,v 1.1.2.1 2000/02/18 20:26:43 he Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: April 3 2016 $
 .Dt RATECHECK 9
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@ function provides a simple time interval check which can be used
 when implementing time-based rate-limited actions.
 If the difference between the current monotonically-increasing
 system time
-.Pq Va mono_time
+.Pq Xr getmicrouptime 9
 and
 .Fa lasttime
 is less than the value given by the
@@ -130,7 +130,7 @@ drv_errhandler(int err1, int err2)
 .Sh SEE ALSO
 .Xr log 9 ,
 .Xr printf 9 ,
-.Xr time 9
+.Xr time_second 9
 .Sh HISTORY
 The
 .Fn ratecheck
