@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.217 2015/10/21 07:59:17 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.218 2016/04/03 17:48:33 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1003,10 +1003,12 @@ dumpsys(void)
 }
 
 /*
- * Set FS.base for userspace and reset %ds, %es, and %fs segment registers
+ * Force the userspace FS.base to be reloaded from the PCB on return from
+ * the kernel, and reset most the segment registers (%ds, %es, and %fs)
+ * to their expected userspace value.
  */
 void
-reset_segs(struct pcb *pcb, u_int64_t fsbase)
+reset_segs(void)
 {
 	/*
 	 * Segment registers (%ds, %es, %fs, %gs) aren't in the trapframe.
@@ -1022,7 +1024,6 @@ reset_segs(struct pcb *pcb, u_int64_t fsbase)
 		    "movw %%ax,%%es\n\t"
 		    "movw %%ax,%%fs" : : "a"(GSEL(GUDATA_SEL, SEL_UPL)));
 	}
-	pcb->pcb_fsbase = fsbase;
 }
 
 /*
@@ -1040,7 +1041,8 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 	p->p_md.md_flags |= MDP_IRET;
 
-	reset_segs(&p->p_addr->u_pcb, 0);
+	reset_segs();
+	p->p_addr->u_pcb.pcb_fsbase = 0;
 
 	tf = p->p_md.md_regs;
 	tf->tf_rdi = 0;
