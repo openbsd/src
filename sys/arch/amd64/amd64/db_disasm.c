@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.15 2015/06/24 20:50:39 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.16 2016/04/03 17:46:26 guenther Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -136,10 +136,10 @@ char *	db_Grp8[] = {
 };
 
 struct inst db_Grp9[] = {
-	{ "fxsave",   FALSE, NONE, op1(E),     0 },
-	{ "fxrstor",  FALSE, NONE, op1(E),     0 },
-	{ "ldmxcsr",  FALSE, NONE, op1(E),     0 },
-	{ "stmxcsr",  FALSE, NONE, op1(E),     0 },
+	{ "fxsave",   FALSE, NONE, op2(MEx,1), "rdfsbase" },
+	{ "fxrstor",  FALSE, NONE, op2(MEx,1), "rdgsbase" },
+	{ "ldmxcsr",  FALSE, NONE, op2(MEx,1), "wrfsbase" },
+	{ "stmxcsr",  FALSE, NONE, op2(MEx,1), "wrgsbase" },
 	{ "xsave",    FALSE, NONE, op1(E),     0 },
 	{ "xrstor",   FALSE, NONE, op2(MEx,1), "lfence" },
 	{ "xsaveopt", FALSE, NONE, op2(MEx,1), "mfence" },
