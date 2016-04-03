@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ath.4,v 1.61 2016/03/07 13:47:53 stsp Exp $
+.\"	$OpenBSD: ath.4,v 1.62 2016/04/03 05:36:28 stsp Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -42,7 +42,7 @@
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath.4,v 1.16 2004/02/18 08:30:08 maxim Exp $
 .\" parts from $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath_hal.4,v 1.7 2004/01/07 20:49:51 blackend Exp $
 .\"
-.Dd $Mdocdate: March 7 2016 $
+.Dd $Mdocdate: April 3 2016 $
 .Dt ATH 4
 .Os
 .Sh NAME
@@ -346,3 +346,6 @@ with a better one.
 .Pp
 The driver does not fully enable power-save operation of the chip;
 consequently power use is suboptimal.
+.Pp
+Operation in the 2GHz band is restricted to 11b mode because the driver
+driver does not support running the hardware in 11g mode.
