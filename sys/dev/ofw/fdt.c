@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.5 2016/04/03 12:32:13 patrick Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.6 2016/04/03 13:48:07 patrick Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -98,7 +98,7 @@ fdt_init(void *fdt)
 	return version;
 }
 
- /*
+/*
  * Return the size of the FDT.
  */
 size_t
