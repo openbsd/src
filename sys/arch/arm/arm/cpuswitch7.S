@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch7.S,v 1.4 2016/01/31 00:14:50 jsg Exp $	*/
+/*	$OpenBSD: cpuswitch7.S,v 1.5 2016/04/03 12:04:59 patrick Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -200,14 +200,8 @@ ENTRY(cpu_switchto)
 	/* Stage two: Save old context */
 
 	/* Save all the registers in the old proc's pcb */
-#ifndef __XSCALE__
 	add	r7, r6, #(PCB_R8)
 	stmia	r7, {r8-r13}
-#else
-	strd	r8, [r6, #(PCB_R8)]
-	strd	r10, [r6, #(PCB_R10)]
-	strd	r12, [r6, #(PCB_R12)]
-#endif
 
 .Lswitch_exited:
 	/*
@@ -367,20 +361,10 @@ ENTRY(cpu_switchto)
         msr	cpsr_c, r3		/* Restore the old mode */
 
 	/* Restore all the save registers */
-#ifndef __XSCALE__
 	add	r7, r9, #PCB_R8
 	ldmia	r7, {r8-r13}
 
 	sub	r7, r7, #PCB_R8		/* restore PCB pointer */
-#else
-	mov	r7, r9
-	ldr	r8, [r7, #(PCB_R8)]
-	ldr	r9, [r7, #(PCB_R9)]
-	ldr	r10, [r7, #(PCB_R10)]
-	ldr	r11, [r7, #(PCB_R11)]
-	ldr	r12, [r7, #(PCB_R12)]
-	ldr	r13, [r7, #(PCB_SP)]
-#endif
 
 	/* rem: r6 = new proc */
 	/* rem: r7 = new pcb */
@@ -408,14 +392,8 @@ ENTRY(savectx)
 	stmfd	sp!, {r4-r7, lr}
 
 	/* Store all the registers in the process's pcb */
-#ifndef __XSCALE__
 	add	r2, r0, #(PCB_R8)
 	stmia	r2, {r8-r13}
-#else
-	strd	r8, [r0, #(PCB_R8)]
-	strd	r10, [r0, #(PCB_R10)]
-	strd	r12, [r0, #(PCB_R12)]
-#endif
 
 	/* Pull the regs of the stack */
 	ldmfd	sp!, {r4-r7, pc}
