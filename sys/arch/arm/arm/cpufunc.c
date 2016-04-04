@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.38 2016/04/03 13:55:23 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.39 2016/04/04 00:41:36 jsg Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -548,6 +548,7 @@ set_cpufuncs()
 void
 armv7_setup()
 {
+	uint32_t auxctrl, auxctrlmask;
 	int cpuctrl, cpuctrlmask;
 
 	cpuctrlmask = CPU_CONTROL_MMU_ENABLE
@@ -575,7 +576,25 @@ armv7_setup()
 	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(cpuctrlmask, cpuctrl);
 
-	/* TODO: Set ACTLR.SMP to e.g. allow LDREX/STREX. */
+	auxctrl = auxctrlmask = 0;
+
+	switch (cputype & CPU_ID_CORTEX_MASK) {
+	case CPU_ID_CORTEX_A5:
+	case CPU_ID_CORTEX_A9:
+		/* Cache and TLB maintenance broadcast */
+#ifdef notyet
+		auxctrl |= (1 << 0);
+#endif
+		/* FALLTHROUGH */
+	case CPU_ID_CORTEX_A7:
+	case CPU_ID_CORTEX_A15:
+	case CPU_ID_CORTEX_A17:
+		/* Set SMP to allow LDREX/STREX */
+		auxctrl |= (1 << 6);
+		break;
+	}
+
+	cpu_auxcontrol(auxctrlmask, auxctrl);
 
 	/* And again. */
 	cpu_idcache_wbinv_all();

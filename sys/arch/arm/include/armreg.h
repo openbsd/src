@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.28 2016/03/22 23:35:01 patrick Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.29 2016/04/04 00:41:36 jsg Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -146,6 +146,7 @@
 #define CPU_ID_80321_600	0x69052430
 #define CPU_ID_80321_400_B0	0x69052c20
 #define CPU_ID_80321_600_B0	0x69052c30
+#define CPU_ID_CORTEX_MASK	0xff0ffff0
 #define CPU_ID_CORTEX_A5	0x410fc050
 #define CPU_ID_CORTEX_A5_MASK	0xff0ffff0
 #define CPU_ID_CORTEX_A7	0x410fc070
