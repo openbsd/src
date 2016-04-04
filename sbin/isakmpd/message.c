@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.128 2015/08/20 22:02:21 deraadt Exp $	 */
+/* $OpenBSD: message.c,v 1.129 2016/04/04 17:35:07 yasuoka Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -2182,7 +2182,7 @@ retry_transform:
 				 * the SA.
 				 */
 				while ((proto = TAILQ_FIRST(&sa->protos)))
-					TAILQ_REMOVE(&sa->protos, proto, link);
+					proto_free(proto);
 
 				/*
 				 * Skip to the last transform of this
@@ -2242,8 +2242,7 @@ retry_transform:
 					 */
 					while ((proto =
 					    TAILQ_FIRST(&sa->protos)))
-						TAILQ_REMOVE(&sa->protos,
-						    proto, link);
+						proto_free(proto);
 					goto retry_transform;
 				}
 			}
@@ -2270,10 +2269,9 @@ retry_transform:
 cleanup:
 	/*
 	 * Remove potentially succeeded choices from the SA.
-	 * XXX Do we leak struct protos and related data here?
 	 */
 	while ((proto = TAILQ_FIRST(&sa->protos)))
-		TAILQ_REMOVE(&sa->protos, proto, link);
+		proto_free(proto);
 	return -1;
 }
 
