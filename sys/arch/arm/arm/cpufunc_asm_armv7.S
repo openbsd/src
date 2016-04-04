@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm_armv7.S,v 1.8 2015/06/02 02:30:16 jsg Exp $ */
+/* $OpenBSD: cpufunc_asm_armv7.S,v 1.9 2016/04/04 09:06:28 patrick Exp $ */
 /*
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
  *
@@ -102,12 +102,19 @@ ENTRY(armv7_tlb_flushD_SE)
  * Cache operations.  For the entire cache we use the set/index
  * operations.
  */
+.Larmv7_dcache_line_size:
+	.word	_C_LABEL(arm_dcache_min_line_size)
+.Larmv7_icache_line_size:
+	.word	_C_LABEL(arm_icache_min_line_size)
+.Larmv7_idcache_line_size:
+	.word	_C_LABEL(arm_idcache_min_line_size)
+
 	s_max	.req r0
 	i_max	.req r1
 	s_inc	.req r2
 	i_inc	.req r3
 ENTRY(armv7_icache_sync_range)
-	ldr	ip, .Larmv7_line_size
+	ldr	ip, .Larmv7_icache_line_size
 	cmp	r1, #0x8000
 	movcs	r1, #0x8000	/* XXX needs to match cache size... */
 	ldr	ip, [ip]
@@ -139,11 +146,8 @@ ENTRY(armv7_icache_sync_all)
 	isb	sy
 	mov	pc, lr
 
-.Larmv7_line_size:
-	.word	_C_LABEL(arm_pdcache_line_size)
-
 ENTRY(armv7_dcache_wb_range)
-	ldr	ip, .Larmv7_line_size
+	ldr	ip, .Larmv7_dcache_line_size
 	cmp	r1, #0x8000
 	movcs	r1, #0x8000	/* XXX needs to match cache size... */
 	ldr	ip, [ip]
@@ -162,7 +166,7 @@ ENTRY(armv7_dcache_wb_range)
 	mov	pc, lr
 
 ENTRY(armv7_idcache_wbinv_range)
-	ldr	ip, .Larmv7_line_size
+	ldr	ip, .Larmv7_idcache_line_size
 	cmp	r1, #0x8000
 	movcs	r1, #0x8000	/* XXX needs to match cache size... */
 	ldr	ip, [ip]
@@ -184,7 +188,7 @@ ENTRY(armv7_idcache_wbinv_range)
 	mov	pc, lr
 
 ENTRY(armv7_dcache_wbinv_range)
-	ldr	ip, .Larmv7_line_size
+	ldr	ip, .Larmv7_dcache_line_size
 	cmp	r1, #0x8000
 	movcs	r1, #0x8000	/* XXX needs to match cache size... */
 	ldr	ip, [ip]
@@ -205,7 +209,7 @@ ENTRY(armv7_dcache_wbinv_range)
 	mov	pc, lr
 
 ENTRY(armv7_dcache_inv_range)
-	ldr	ip, .Larmv7_line_size
+	ldr	ip, .Larmv7_dcache_line_size
 	cmp	r1, #0x8000
 	movcs	r1, #0x8000	/* XXX needs to match cache size... */
 	ldr	ip, [ip]

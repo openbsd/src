@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.29 2016/04/04 00:41:36 jsg Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.30 2016/04/04 09:06:28 patrick Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -263,6 +263,9 @@
 #define CPU_CT_DSIZE(x)		(((x) >> 12) & 0xfff)	/* D$ info */
 #define CPU_CT_S		(1U << 24)		/* split cache */
 #define CPU_CT_CTYPE(x)		(((x) >> 25) & 0xf)	/* cache type */
+/* Cache type register definitions for ARM v7 */
+#define CPU_CT_IMINLINE(x)	((x) & 0xf)		/* I$ min line size */
+#define CPU_CT_DMINLINE(x)	(((x) >> 16) & 0xf)	/* D$ min line size */
 
 #define CPU_CT_CTYPE_WT		0	/* write-through */
 #define CPU_CT_CTYPE_WB1	1	/* write-back, clean w/ read */

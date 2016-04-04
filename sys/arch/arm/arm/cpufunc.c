@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.40 2016/04/04 05:13:50 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.41 2016/04/04 09:06:28 patrick Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -212,6 +212,10 @@ struct cpu_functions cpufuncs;
 u_int cputype;
 u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
+int	arm_icache_min_line_size = 32;
+int	arm_dcache_min_line_size = 32;
+int	arm_idcache_min_line_size = 32;
+
 #if defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0)
 static void get_cachetype_cp15 (void);
 
@@ -314,10 +318,20 @@ log2(unsigned int i)
 void
 arm_get_cachetype_cp15v7(void)
 {
+	uint32_t ctype;
 	uint32_t cachereg;
 	uint32_t cache_level_id;
 	uint32_t sets;
 	uint32_t sel, level;
+
+	/* CTR - Cache Type Register */
+	__asm volatile("mrc p15, 0, %0, c0, c0, 1"
+		: "=r" (ctype));
+
+	arm_dcache_min_line_size = 1 << (CPU_CT_DMINLINE(ctype) + 2);
+	arm_icache_min_line_size = 1 << (CPU_CT_IMINLINE(ctype) + 2);
+	arm_idcache_min_line_size =
+	    min(arm_icache_min_line_size, arm_dcache_min_line_size);
 
 	/* CLIDR - Cache Level ID Register */
 	__asm volatile("mrc p15, 1, %0, c0, c0, 1"
