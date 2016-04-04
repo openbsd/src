@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.39 2016/04/04 00:41:36 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.40 2016/04/04 05:13:50 jsg Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -549,7 +549,7 @@ void
 armv7_setup()
 {
 	uint32_t auxctrl, auxctrlmask;
-	int cpuctrl, cpuctrlmask;
+	uint32_t cpuctrl, cpuctrlmask;
 
 	cpuctrlmask = CPU_CONTROL_MMU_ENABLE
 	    | CPU_CONTROL_AFLT_ENABLE
@@ -606,7 +606,7 @@ void
 xscale_setup()
 {
 	uint32_t auxctl;
-	int cpuctrl, cpuctrlmask;
+	uint32_t cpuctrl, cpuctrlmask;
 
 	/*
 	 * The XScale Write Buffer is always enabled.  Our option
