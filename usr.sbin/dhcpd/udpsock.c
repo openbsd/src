@@ -1,4 +1,4 @@
-/*	$OpenBSD: udpsock.c,v 1.5 2016/02/08 02:06:07 krw Exp $	*/
+/*	$OpenBSD: udpsock.c,v 1.6 2016/04/04 14:00:42 mestre Exp $	*/
 
 /*
  * Copyright (c) 2014 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -65,7 +65,7 @@ udpsock_startup(struct in_addr bindaddr)
 		error("setsocketopt IP_RECVIF failed for udp: %s",
 		    strerror(errno));
 
-	if (pledge("stdio rpath inet sendfd proc id", NULL) == -1)
+	if (pledge("stdio rpath inet route sendfd proc id", NULL) == -1)
 		error("pledge: %s", strerror(errno));
 
 	sin4.sin_family = AF_INET;
