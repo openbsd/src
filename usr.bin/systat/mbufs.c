@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.40 2015/04/18 09:32:59 jsg Exp $ */
+/*	$OpenBSD: mbufs.c,v 1.41 2016/04/04 16:26:00 sthen Exp $ */
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/signal.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
+#include <sys/queue.h>
 #include <sys/mbuf.h>
 #include <sys/pool.h>
 #include <net/if.h>

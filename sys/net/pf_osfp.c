@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.32 2015/09/04 21:40:25 kettenis Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.33 2016/04/04 16:26:00 sthen Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -23,6 +23,7 @@
 # include <sys/systm.h>
 #include <sys/pool.h>
 #endif /* _KERNEL */
+#include <sys/queue.h>
 #include <sys/mbuf.h>
 #include <sys/syslog.h>
 

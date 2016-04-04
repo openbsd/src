@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.28 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.29 2016/04/04 16:26:00 sthen Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -26,6 +26,7 @@
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
+#include <sys/queue.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.36 2015/09/04 08:21:01 mpi Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.37 2016/04/04 16:26:00 sthen Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -31,6 +31,7 @@
  */
 
 #include <sys/socket.h>
+#include <sys/queue.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/pool.h>

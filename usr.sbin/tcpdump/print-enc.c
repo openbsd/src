@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-enc.c,v 1.14 2015/01/20 18:26:58 deraadt Exp $	*/
+/*	$OpenBSD: print-enc.c,v 1.15 2016/04/04 16:26:00 sthen Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -26,6 +26,7 @@
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
+#include <sys/queue.h>
 #include <sys/mbuf.h>
 
 struct rtentry;
