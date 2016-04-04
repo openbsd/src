@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.11 2016/03/13 13:11:47 stefan Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.12 2016/04/04 17:13:54 stefan Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ push_gdt(void)
 	setsegment(&sd[1], 0, 0xffffffff, SDT_MEMERA, SEL_KPL, 1, 1);
 	setsegment(&sd[2], 0, 0xffffffff, SDT_MEMRWA, SEL_KPL, 1, 1);
 
-	write_mem(GDT_PAGE, gdtpage, PAGE_SIZE, 1);
+	write_mem(GDT_PAGE, gdtpage, PAGE_SIZE);
 }
 
 /*
@@ -338,7 +338,7 @@ push_bootargs(bios_memmap_t *memmap, size_t n)
 	ba[i + 2] = consdev_sz;
 	memcpy(&ba[i + 3], &consdev, sizeof(bios_consdev_t));
 
-	write_mem(BOOTARGS_PAGE, ba, PAGE_SIZE, 1);
+	write_mem(BOOTARGS_PAGE, ba, PAGE_SIZE);
 
 	return (memmap_sz + consdev_sz);
 }
@@ -386,7 +386,7 @@ push_stack(uint32_t bootargsz, uint32_t end)
 	stack[--loc] = MAKEBOOTDEV(0x4, 0, 0, 0, 0); /* bootdev: sd0a */
 	stack[--loc] = 0x0;
 
-	write_mem(STACK_PAGE, &stack, PAGE_SIZE, 1);
+	write_mem(STACK_PAGE, &stack, PAGE_SIZE);
 
 	return (1024 - (loc - 1)) * sizeof(uint32_t);
 }
@@ -432,7 +432,7 @@ mread(int fd, paddr_t addr, size_t sz)
 		}
 		rd += ct;
 
-		if (write_mem(addr, buf, ct, 1))
+		if (write_mem(addr, buf, ct))
 			return (0);
 
 		addr += ct;
@@ -456,7 +456,7 @@ mread(int fd, paddr_t addr, size_t sz)
 		}
 		rd += ct;
 
-		if (write_mem(addr, buf, ct, 1))
+		if (write_mem(addr, buf, ct))
 			return (0);
 	}
 
@@ -493,7 +493,7 @@ marc4random_buf(paddr_t addr, int sz)
 
 		arc4random_buf(buf, ct);
 
-		if (write_mem(addr, buf, ct, 1))
+		if (write_mem(addr, buf, ct))
 			return;
 
 		addr += ct;
@@ -508,7 +508,7 @@ marc4random_buf(paddr_t addr, int sz)
 
 		arc4random_buf(buf, ct);
 
-		if (write_mem(addr, buf, ct, 1))
+		if (write_mem(addr, buf, ct))
 			return;
 	}
 }
@@ -541,7 +541,7 @@ mbzero(paddr_t addr, int sz)
 	if (addr % PAGE_SIZE != 0) {
 		ct = PAGE_SIZE - (addr % PAGE_SIZE);
 
-		if (write_mem(addr, buf, ct, 1))
+		if (write_mem(addr, buf, ct))
 			return;
 
 		addr += ct;
@@ -553,7 +553,7 @@ mbzero(paddr_t addr, int sz)
 		else
 			ct = PAGE_SIZE;
 
-		if (write_mem(addr, buf, ct, 1))
+		if (write_mem(addr, buf, ct))
 			return;
 	}
 }
@@ -665,8 +665,7 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
 				free(phdr);
 				return 1;
 			}
-			if (mread(fd, (phdr[i].p_paddr -
-			    0xffffffff80000000ULL), phdr[i].p_filesz) !=
+			if (mread(fd, phdr[i].p_paddr, phdr[i].p_filesz) !=
 			    phdr[i].p_filesz) {
 				free(phdr);
 				return 1;
@@ -687,8 +686,7 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
 
 		/* Zero out BSS. */
 		if (IS_BSS(phdr[i]) && (flags & LOAD_BSS)) {
-			mbzero((phdr[i].p_paddr -
-			    0xffffffff80000000 + phdr[i].p_filesz),
+			mbzero((phdr[i].p_paddr + phdr[i].p_filesz),
 			    phdr[i].p_memsz - phdr[i].p_filesz);
 		}
 		if (IS_BSS(phdr[i]) && (flags & (LOAD_BSS|COUNT_BSS))) {

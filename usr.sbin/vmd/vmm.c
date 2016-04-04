@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.23 2016/03/13 13:11:47 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.24 2016/04/04 17:13:54 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1544,29 +1544,18 @@ vcpu_exit(struct vm_run_params *vrp)
  *      in the guest's address space)
  *  buf: data to push
  *  len: size of 'buf'
- *  do_mask: 1 to mask the destination address (for kernel load), 0 to
- *      leave 'dst' unmasked
  *
  * Return values:
  *  various return values from ioctl(VMM_IOC_WRITEPAGE), or 0 if no error
  *      occurred.
- *
- * Note - this function only handles GPAs < 4GB. 
  */
 int
-write_mem(paddr_t dst, void *buf, size_t len, int do_mask)
+write_mem(paddr_t dst, void *buf, size_t len)
 {
 	char *p = buf;
 	size_t n, left;
 	paddr_t gpa;
 	struct vm_writepage_params vwp;
-
-	/*
-	 * Mask kernel load addresses to avoid uint32_t -> uint64_t cast
-	 * errors
-	 */
-	if (do_mask)
-		dst &= 0xFFFFFFF;
 
 	left = len;
 	for (gpa = dst; gpa < dst + len;
@@ -1603,29 +1592,18 @@ write_mem(paddr_t dst, void *buf, size_t len, int do_mask)
  *  src: the source paddr_t in the guest VM to read from.
  *  buf: destination (local) buffer
  *  len: size of 'buf'
- *  do_mask: 1 to mask the source address (for kernel load), 0 to
- *      leave 'src' unmasked
  *
  * Return values:
  *  various return values from ioctl(VMM_IOC_READPAGE), or 0 if no error
  *      occurred.
- *
- * Note - this function only handles GPAs < 4GB.
  */
 int
-read_mem(paddr_t src, void *buf, size_t len, int do_mask)
+read_mem(paddr_t src, void *buf, size_t len)
 {
 	char *p = buf;
 	size_t n, left;
 	paddr_t gpa;
 	struct vm_readpage_params vrp;
-
-	/*
-	 * Mask kernel load addresses to avoid uint32_t -> uint64_t cast
-	 * errors
-	 */
-	if (do_mask)
-		src &= 0xFFFFFFF;
 
 	left = len;
 	for (gpa = src; gpa < src + len;
