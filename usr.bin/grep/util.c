@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.54 2015/12/22 19:35:50 mmcc Exp $	*/
+/*	$OpenBSD: util.c,v 1.55 2016/04/04 05:49:47 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -391,7 +391,7 @@ nonspecial:
 	 * Determine if a reverse search would be faster based on the placement
 	 * of the dots.
 	 */
-	if ((!(lflag || cflag)) && ((!(bol || eol)) &&
+	if ((!(lflag || cflag || oflag)) && ((!(bol || eol)) &&
 	    ((lastHalfDot) && ((firstHalfDot < 0) ||
 	    ((fg->patternLen - (lastHalfDot + 1)) < firstHalfDot))))) {
 		fg->reversedSearch = 1;
