@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.366 2016/02/14 12:47:27 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.367 2016/04/04 18:48:39 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -942,6 +942,7 @@ sr_meta_validate(struct sr_discipline *sd, dev_t dev, struct sr_metadata *sm,
 		 */
 		if (sm->ssd_data_blkno == 0)
 			sm->ssd_data_blkno = SR_META_V3_DATA_OFFSET;
+		sm->ssdi.ssd_secsize = DEV_BSIZE;
 
 	} else if (sm->ssdi.ssd_version == 4) {
 
@@ -951,13 +952,21 @@ sr_meta_validate(struct sr_discipline *sd, dev_t dev, struct sr_metadata *sm,
 		 */
 		if (sm->ssd_data_blkno == 0)
 			sm->ssd_data_blkno = SR_DATA_OFFSET;
+		sm->ssdi.ssd_secsize = DEV_BSIZE;
 
-	} else if (sm->ssdi.ssd_version == SR_META_VERSION) {
+	} else if (sm->ssdi.ssd_version == 5) {
 
 		/*
 		 * Version 5 - variable length optional metadata. Migration
 		 * from earlier fixed length optional metadata is handled
 		 * in sr_meta_read().
+		 */
+		sm->ssdi.ssd_secsize = DEV_BSIZE;
+
+	} else if (sm->ssdi.ssd_version == SR_META_VERSION) {
+
+		/*
+		 * Version 6 - store & report a sector size.
 		 */
 
 	} else {
@@ -1049,13 +1058,6 @@ sr_meta_native_bootprobe(struct sr_softc *sc, dev_t devno,
 		goto done;
 	}
 	vput(vn);
-
-	/* Make sure this is a DEV_BSIZE byte/sector device. */
-	if (label.d_secsize != DEV_BSIZE) {
-		DNPRINTF(SR_D_META, "%s: %s has unsupported sector size (%d)",
-		    DEVNAME(sc), devname, label.d_secsize);
-		goto done;
-	}
 
 	md = malloc(SR_META_SIZE * DEV_BSIZE, M_DEVBUF, M_ZERO | M_NOWAIT);
 	if (md == NULL) {
@@ -1563,13 +1565,6 @@ sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 	}
 	memcpy(ch_entry->src_duid, label.d_uid, sizeof(ch_entry->src_duid));
 
-	/* Make sure this is a DEV_BSIZE byte/sector device. */
-	if (label.d_secsize != DEV_BSIZE) {
-		sr_error(sc, "%s has unsupported sector size (%u)",
-		    devname, label.d_secsize);
-		goto unwind;
-	}
-
 	/* make sure the partition is of the right type */
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
 		DNPRINTF(SR_D_META,
@@ -1592,6 +1587,7 @@ sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 		goto unwind;
 	}
 	ch_entry->src_size = size;
+	ch_entry->src_secsize = label.d_secsize;
 
 	DNPRINTF(SR_D_META, "%s: probe found %s size %lld\n", DEVNAME(sc),
 	    devname, (long long)size);
@@ -2871,11 +2867,6 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 		vput(vn);
 		goto fail;
 	}
-	if (label.d_secsize != DEV_BSIZE) {
-		sr_error(sc, "%s has unsupported sector size (%u)",
-		    devname, label.d_secsize);
-		goto fail;
-	}
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
 		sr_error(sc, "%s partition not of type RAID (%d)",
 		    devname, label.d_partitions[part].p_fstype);
@@ -2935,6 +2926,7 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	sm->ssdi.ssd_volid = SR_HOTSPARE_VOLID;
 	sm->ssdi.ssd_level = SR_HOTSPARE_LEVEL;
 	sm->ssdi.ssd_size = size;
+	sm->ssdi.ssd_secsize = label.d_secsize;
 	strlcpy(sm->ssdi.ssd_vendor, "OPENBSD", sizeof(sm->ssdi.ssd_vendor));
 	snprintf(sm->ssdi.ssd_product, sizeof(sm->ssdi.ssd_product),
 	    "SR %s", "HOTSPARE");
@@ -3185,11 +3177,6 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	    NOCRED, curproc)) {
 		DNPRINTF(SR_D_META, "%s: sr_ioctl_setstate ioctl failed\n",
 		    DEVNAME(sc));
-		goto done;
-	}
-	if (label.d_secsize != DEV_BSIZE) {
-		sr_error(sc, "%s has unsupported sector size (%u)",
-		    devname, label.d_secsize);
 		goto done;
 	}
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
@@ -3666,7 +3653,7 @@ sr_ioctl_installboot(struct sr_softc *sc, struct sr_discipline *sd,
 	struct sr_meta_opt_item *omi;
 	struct sr_meta_boot	*sbm;
 	struct disk		*dk;
-	u_int32_t		bbs, bls;
+	u_int32_t		bbs, bls, secsize;
 	u_char			duid[8];
 	int			rv = EINVAL;
 	int			i;
@@ -3710,14 +3697,16 @@ sr_ioctl_installboot(struct sr_softc *sc, struct sr_discipline *sd,
 	if (bb->bb_bootldr_size > SR_BOOT_LOADER_SIZE * DEV_BSIZE)
 		goto done;
 
+	secsize = sd->sd_meta->ssdi.ssd_secsize;
+
 	/* Copy in boot block. */
-	bbs = howmany(bb->bb_bootblk_size, DEV_BSIZE) * DEV_BSIZE;
+	bbs = howmany(bb->bb_bootblk_size, secsize) * secsize;
 	bootblk = malloc(bbs, M_DEVBUF, M_WAITOK | M_ZERO);
 	if (copyin(bb->bb_bootblk, bootblk, bb->bb_bootblk_size) != 0)
 		goto done;
 
 	/* Copy in boot loader. */
-	bls = howmany(bb->bb_bootldr_size, DEV_BSIZE) * DEV_BSIZE;
+	bls = howmany(bb->bb_bootldr_size, secsize) * secsize;
 	bootldr = malloc(bls, M_DEVBUF, M_WAITOK | M_ZERO);
 	if (copyin(bb->bb_bootldr, bootldr, bb->bb_bootldr_size) != 0)
 		goto done;
@@ -4033,25 +4022,28 @@ sr_raid_read_cap(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct scsi_read_cap_data rcd;
 	struct scsi_read_cap_data_16 rcd16;
-	int64_t			addr;
+	u_int64_t		addr;
 	int			rv = 1;
+	u_int32_t		secsize;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid_read_cap\n", DEVNAME(sd->sd_sc));
 
-	addr = sd->sd_meta->ssdi.ssd_size - 1;
+	secsize = sd->sd_meta->ssdi.ssd_secsize;
+
+	addr = ((sd->sd_meta->ssdi.ssd_size * DEV_BSIZE) / secsize) - 1;
 	if (xs->cmd->opcode == READ_CAPACITY) {
 		bzero(&rcd, sizeof(rcd));
 		if (addr > 0xffffffffllu)
 			_lto4b(0xffffffff, rcd.addr);
 		else
 			_lto4b(addr, rcd.addr);
-		_lto4b(DEV_BSIZE, rcd.length);
+		_lto4b(secsize, rcd.length);
 		sr_copy_internal_data(xs, &rcd, sizeof(rcd));
 		rv = 0;
 	} else if (xs->cmd->opcode == READ_CAPACITY_16) {
 		bzero(&rcd16, sizeof(rcd16));
 		_lto8b(addr, rcd16.addr);
-		_lto4b(DEV_BSIZE, rcd16.length);
+		_lto4b(secsize, rcd16.length);
 		sr_copy_internal_data(xs, &rcd16, sizeof(rcd16));
 		rv = 0;
 	}
@@ -4577,6 +4569,8 @@ sr_validate_io(struct sr_workunit *wu, daddr_t *blkno, char *func)
 		    DEVNAME(sd->sd_sc), func, sd->sd_meta->ssd_devname);
 		goto bad;
 	}
+
+	*blkno *= (sd->sd_meta->ssdi.ssd_secsize / DEV_BSIZE);
 
 	wu->swu_blk_start = *blkno;
 	wu->swu_blk_end = *blkno + (xs->datalen >> DEV_BSHIFT) - 1;
