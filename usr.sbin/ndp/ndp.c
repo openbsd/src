@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.69 2016/01/26 18:26:19 mmcc Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.70 2016/04/04 11:37:09 jca Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -240,6 +240,11 @@ main(int argc, char *argv[])
 			/*NOTREACHED*/
 		}
 		delete(arg);
+		break;
+	case 'f':
+		if (argc != 0)
+			usage();
+		file(arg);
 		break;
 	case 'p':
 		if (argc != 0) {
