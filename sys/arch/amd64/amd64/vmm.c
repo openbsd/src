@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.45 2016/03/13 13:11:47 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.46 2016/04/04 16:47:34 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2272,7 +2272,9 @@ vm_teardown(struct vm *vm)
 
 	vm_impl_deinit(vm);
 
-	/* XXX teardown guest vmspace, free pages */
+	/* teardown guest vmspace */
+	if (vm->vm_map != NULL)
+		uvm_map_deallocate(vm->vm_map);
 
 	vmm_softc->vm_ct--;
 	if (vmm_softc->vm_ct < 1)
