@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.137 2015/12/02 09:50:46 blambert Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.138 2016/04/04 16:34:16 stefan Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -106,12 +106,11 @@ typedef int		vm_prot_t;
 #define UVM_FLAG_OVERLAY 0x0020000 /* establish overlay */
 #define UVM_FLAG_NOMERGE 0x0040000 /* don't merge map entries */
 #define UVM_FLAG_COPYONW 0x0080000 /* set copy_on_write flag */
-#define UVM_FLAG_AMAPPAD 0x0100000 /* for bss: pad amap to reduce malloc() */
-#define UVM_FLAG_TRYLOCK 0x0200000 /* fail if we can not lock map */
-#define UVM_FLAG_HOLE    0x0400000 /* no backend */
-#define UVM_FLAG_QUERY   0x0800000 /* do everything, except actual execution */
-#define UVM_FLAG_NOFAULT 0x1000000 /* don't fault */
-#define UVM_FLAG_UNMAP   0x2000000 /* unmap to make space */
+#define UVM_FLAG_TRYLOCK 0x0100000 /* fail if we can not lock map */
+#define UVM_FLAG_HOLE    0x0200000 /* no backend */
+#define UVM_FLAG_QUERY   0x0400000 /* do everything, except actual execution */
+#define UVM_FLAG_NOFAULT 0x0800000 /* don't fault */
+#define UVM_FLAG_UNMAP   0x1000000 /* unmap to make space */
 
 
 /* macros to extract info */

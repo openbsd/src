@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.h,v 1.22 2016/03/27 09:51:37 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.h,v 1.23 2016/04/04 16:34:16 stefan Exp $	*/
 /*	$NetBSD: uvm_amap.h,v 1.14 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -66,14 +66,12 @@ struct vm_amap;
 void		amap_add(struct vm_aref *, vaddr_t, struct vm_anon *,
 		    boolean_t);
 					/* allocate a new amap */
-struct vm_amap	*amap_alloc(vaddr_t, vaddr_t, int);
+struct vm_amap	*amap_alloc(vaddr_t, int);
 					/* clear amap needs-copy flag */
 void		amap_copy(vm_map_t, vm_map_entry_t, int, boolean_t, vaddr_t,
 		    vaddr_t);
 					/* resolve all COW faults now */
 void		amap_cow_now(vm_map_t, vm_map_entry_t);
-					/* get amap's flags */
-int		amap_flags(struct vm_amap *);
 					/* free amap */
 void		amap_free(struct vm_amap *);
 					/* init amap module (at boot time) */
@@ -84,8 +82,6 @@ struct vm_anon	*amap_lookup(struct vm_aref *, vaddr_t);
 void		amap_lookups(struct vm_aref *, vaddr_t, struct vm_anon **, int);
 					/* add a reference to an amap */
 void		amap_ref(struct vm_amap *, vaddr_t, vsize_t, int);
-					/* get number of references of amap */
-int		amap_refs(struct vm_amap *);
 					/* split reference to amap into two */
 void		amap_splitref(struct vm_aref *, struct vm_aref *, vaddr_t);
 					/* remove an anon from an amap */

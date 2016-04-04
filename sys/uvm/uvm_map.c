@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.210 2016/03/27 09:51:37 stefan Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.211 2016/04/04 16:34:16 stefan Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1084,9 +1084,7 @@ uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	if (flags & UVM_FLAG_OVERLAY) {
 		KERNEL_LOCK();
 		entry->aref.ar_pageoff = 0;
-		entry->aref.ar_amap = amap_alloc(sz,
-		    ptoa(flags & UVM_FLAG_AMAPPAD ? UVM_AMAP_CHUNK : 0),
-		    M_WAITOK);
+		entry->aref.ar_amap = amap_alloc(sz, M_WAITOK);
 		KERNEL_UNLOCK();
 	}
 
@@ -1342,9 +1340,7 @@ uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	}
 	if (flags & UVM_FLAG_OVERLAY) {
 		entry->aref.ar_pageoff = 0;
-		entry->aref.ar_amap = amap_alloc(sz,
-		    ptoa(flags & UVM_FLAG_AMAPPAD ? UVM_AMAP_CHUNK : 0),
-		    M_WAITOK);
+		entry->aref.ar_amap = amap_alloc(sz, M_WAITOK);
 	}
 
 	/* Update map and process statistics. */
