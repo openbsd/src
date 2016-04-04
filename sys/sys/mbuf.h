@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.209 2016/03/29 10:34:42 sashan Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.210 2016/04/04 12:14:07 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -34,9 +34,6 @@
 
 #ifndef _SYS_MBUF_H_
 #define _SYS_MBUF_H_
-
-#include <sys/malloc.h>
-#include <sys/queue.h>
 
 /*
  * Constants related to network buffer management.
@@ -242,6 +239,7 @@ struct mbuf {
 #define M_FLOWID_MASK	0x7fff	/* flow id to map to path */
 
 /* flags to m_get/MGET */
+#include <sys/malloc.h>
 #define	M_DONTWAIT	M_NOWAIT
 #define	M_WAIT		M_WAITOK
 
