@@ -1,4 +1,4 @@
-/*	$OpenBSD: irq_dispatch.S,v 1.9 2013/09/12 11:42:22 patrick Exp $	*/
+/*	$OpenBSD: irq_dispatch.S,v 1.10 2016/04/04 09:13:44 patrick Exp $	*/
 /*	$NetBSD: irq_dispatch.S,v 1.5 2003/10/30 08:57:24 scw Exp $	*/
 
 /*
@@ -105,7 +105,11 @@ ASENTRY_NP(irq_entry)
 	 *	r5	address of the curcpu struct
 	 *	r6	old value of curcpu()->ci_idepth
 	 */
+#ifdef CPU_ARMv7
+	mrc	p15, 0, r5, c13, c0, 4	/* Get curcpu from TPIDRPRW. */
+#else
 	ldr	r5, .Lcpu_info_primary
+#endif
 	mov	r0, sp			/* arg for dispatcher */
 	ldr	r6, [r5, #CI_IDEPTH]
 	add	r1, r6, #1

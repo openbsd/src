@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.40 2016/01/31 00:14:50 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.41 2016/04/04 09:13:44 patrick Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -208,8 +208,19 @@ struct cpu_info {
 extern struct cpu_info cpu_info_primary;
 extern struct cpu_info *cpu_info_list;
 
-#ifndef MULTIPROCESSOR
+#ifdef CPU_ARMv7
+static inline struct cpu_info *
+curcpu(void)
+{
+	struct cpu_info *__ci;
+	__asm volatile("mrc	p15, 0, %0, c13, c0, 4" : "=r" (__ci));
+	return (__ci);
+}
+#else
 #define	curcpu()	(&cpu_info_primary)
+#endif
+
+#ifndef MULTIPROCESSOR
 #define cpu_number()	0
 #define CPU_IS_PRIMARY(ci)	1
 #define CPU_INFO_ITERATOR	int
