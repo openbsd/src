@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ndp.8,v 1.39 2016/04/05 18:14:55 jca Exp $
+.\"	$OpenBSD: ndp.8,v 1.40 2016/04/05 18:18:42 jca Exp $
 .\"	$KAME: ndp.8,v 1.28 2002/07/17 08:46:33 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -115,14 +115,12 @@ Erase all the NDP entries.
 .It Fl d Ar hostname
 Delete the specified NDP entry.
 .It Fl f Ar filename
-Parse the file specified by
-.Ar filename .
-Entries in the file should be of the form:
-.Bd -ragged -offset indent -compact
-.Ar nodename ether_addr
-.Op Ar temp
-.Op Ar proxy
-.Ed
+Parse entries from
+.Ar file
+to be inserted in the neighbor cache.
+See the
+.Fl s
+option for a description of the file format.
 .It Fl H
 Harmonize consistency between the routing table and the default router
 list; install the top entry of the list into the kernel routing table.
@@ -169,7 +167,10 @@ Show the default router list.
 .Op Cm temp
 .Op Cm proxy
 .Xc
-Register an NDP entry for a node.
+Register an NDP entry for the node called nodename with the Ether
+address ether_addr.
+The Ethernet address is given as six hexadecimal bytes separated by
+colons.
 The entry will be permanent unless the word
 .Cm temp
 is given in the command.

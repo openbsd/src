@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.8,v 1.38 2016/03/23 10:26:33 jmc Exp $
+.\"	$OpenBSD: arp.8,v 1.39 2016/04/05 18:18:42 jca Exp $
 .\"	$NetBSD: arp.8,v 1.7 1995/03/01 11:50:59 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)arp.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 23 2016 $
+.Dd $Mdocdate: April 5 2016 $
 .Dt ARP 8
 .Os
 .Sh NAME
@@ -125,17 +125,26 @@ options).
 Process entries from
 .Ar file
 to be set in the ARP tables.
-Any entries in the file that already exist for a given host
-will not be overwritten unless
+See the
+.Fl s
+option for a description of the file format and the effect of the
 .Fl F
-is given.
-Entries in the file should be of the form:
-.Bd -filled -offset indent
-.Ar hostname ether_addr
+option.
+.It Fl n
+Show network addresses as numbers (normally
+.Nm
+attempts to display addresses symbolically).
+.It Xo
+.Fl s Ar hostname ether_addr
 .Op Cm temp | permanent
 .Op Cm pub
-.Ed
-.Pp
+.Xc
+Create an ARP entry for the host called
+.Ar hostname
+with the Ethernet address
+.Ar ether_addr .
+The Ethernet address is given as six hexadecimal bytes separated by
+colons.
 The entry will be static (will not time out) unless the word
 .Cm temp
 is given in the command.
@@ -152,27 +161,6 @@ responding to requests for
 even though the host address is not its own.
 This behavior has traditionally been called
 .Em proxy ARP .
-.It Fl n
-Show network addresses as numbers (normally
-.Nm
-attempts to display addresses symbolically).
-.It Xo
-.Fl s Ar hostname ether_addr
-.Op Cm temp | permanent
-.Op Cm pub
-.Xc
-Create an ARP entry for the host called
-.Ar hostname
-with the Ethernet address
-.Ar ether_addr .
-The Ethernet address is given as six hexadecimal bytes separated by
-colons.
-.Pp
-The
-.Cm permanent , pub ,
-or
-.Cm temp
-modifiers may be specified with meanings as given above.
 .Pp
 If the entry already exists for the given host, it will not
 be replaced unless
