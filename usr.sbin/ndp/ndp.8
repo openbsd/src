@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ndp.8,v 1.37 2016/04/05 18:09:30 jca Exp $
+.\"	$OpenBSD: ndp.8,v 1.38 2016/04/05 18:11:33 jca Exp $
 .\"	$KAME: ndp.8,v 1.28 2002/07/17 08:46:33 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,6 @@ Note that
 would be needed before
 .Fl foo
 in this case.
-.\"
 .Bl -tag -width Ds
 .It Ic nud
 Turn on or off NUD (Neighbor Unreachability Detection) on the
@@ -154,17 +153,6 @@ received on the
 .Ar interface .
 Note that the kernel does not accept Router Advertisement messages
 unless the interface is configured for inet6 autoconfiguration.
-.\".It Xo
-.\".Ic prefer_source
-.\".Xc
-.\"Prefer addresses on the
-.\".Ar interface
-.\"as candidates of the source address for outgoing packets.
-.\"The default value of this flag is off.
-.\"For more details about the entire algorithm of source address
-.\"selection, see the
-.\".Pa IMPLEMENTATION
-.\"file supplied with the KAME kit.
 .El
 .It Fl n
 Do not try to resolve numeric addresses to hostnames.
@@ -203,18 +191,13 @@ The default is 0.
 .El
 .Sh EXIT STATUS
 .Ex -std ndp
-.\"
 .Sh SEE ALSO
 .Xr ip6 4 ,
 .Xr sysctl.conf 5 ,
 .Xr arp 8 ,
 .Xr sysctl 8 ,
 .Xr tcpdump 8
-.\"
 .Sh HISTORY
 The
 .Nm
 command first appeared in the WIDE Hydrangea IPv6 protocol stack kit.
-.\"
-.\" .Sh BUGS
-.\" (to be written)
