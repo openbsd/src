@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_context.c,v 1.13 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_context.c,v 1.14 2016/04/05 21:22:02 kettenis Exp $	*/
 /*
  * Copyright © 2011-2012 Intel Corporation
  *
@@ -100,9 +100,6 @@ static struct i915_hw_context *
 i915_gem_context_get(struct drm_i915_file_private *file_priv, u32 id);
 static int do_switch(struct i915_hw_context *to);
 
-int i915_ctx_handle_cmp(struct i915_ctx_handle *, struct i915_ctx_handle *);
-SPLAY_PROTOTYPE(i915_ctx_tree, i915_ctx_handle, entry, i915_ctx_handle_cmp);
-
 static int get_context_size(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -147,7 +144,6 @@ create_hw_context(struct drm_device *dev,
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct i915_hw_context *ctx;
-	struct i915_ctx_handle *han;
 	int ret;
 
 	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
@@ -182,21 +178,13 @@ create_hw_context(struct drm_device *dev,
 	if (file_priv == NULL)
 		return ctx;
 
-	han = malloc(sizeof(*han), M_DRM, M_WAITOK | M_CANFAIL | M_ZERO);
-	if (han == NULL) {
-		ret = -ENOMEM;
-		DRM_DEBUG_DRIVER("idr allocation failed\n");
+	ret = idr_alloc(&file_priv->context_idr, ctx, DEFAULT_CONTEXT_ID + 1, 0,
+			GFP_KERNEL);
+	if (ret < 0)
 		goto err_out;
-	}
-	han->ctx = ctx;
-again:
-	han->handle = ++file_priv->ctx_id;
-	if (han->handle <= DEFAULT_CONTEXT_ID + 1 || SPLAY_INSERT(i915_ctx_tree,
-	    &file_priv->ctx_tree, han))
-		goto again;
 
 	ctx->file_priv = file_priv;
-	ctx->id = han->handle;
+	ctx->id = ret;
 	/* NB: Mark all slices as needing a remap so that when the context first
 	 * loads it will restore whatever remap state already exists. If there
 	 * is no remap info, it will be a NOP. */
@@ -357,28 +345,15 @@ i915_gem_context_get_hang_stats(struct drm_device *dev,
 void i915_gem_context_close(struct drm_device *dev, struct drm_file *file)
 {
 	struct drm_i915_file_private *file_priv = file->driver_priv;
-	struct i915_ctx_handle *han, *nxt;
 
-	for (han = SPLAY_MIN(i915_ctx_tree, &file_priv->ctx_tree); han != NULL;
-	    han = nxt) {
-		nxt = SPLAY_NEXT(i915_ctx_tree, &file_priv->ctx_tree, han);
-		context_idr_cleanup(han->handle, han->ctx, NULL);
-		SPLAY_REMOVE(i915_ctx_tree, &file_priv->ctx_tree, han);
-		free(han, M_DRM, 0);
-	}
+	idr_for_each(&file_priv->context_idr, context_idr_cleanup, NULL);
+	idr_destroy(&file_priv->context_idr);
 }
 
 static struct i915_hw_context *
 i915_gem_context_get(struct drm_i915_file_private *file_priv, u32 id)
 {
-	struct i915_ctx_handle *han, search;
-
-	search.handle = id;
-	han = SPLAY_FIND(i915_ctx_tree, &file_priv->ctx_tree, &search);
-	if (han == NULL)
-		return NULL;
-
-	return (han->ctx);
+	return (struct i915_hw_context *)idr_find(&file_priv->context_idr, id);
 }
 
 static inline int
@@ -569,7 +544,7 @@ int i915_gem_context_create_ioctl(struct drm_device *dev, void *data,
 	struct i915_hw_context *ctx;
 	int ret;
 
-	if (!drm_core_check_feature(dev, DRIVER_GEM))
+	if (!(dev->driver->driver_features & DRIVER_GEM))
 		return -ENODEV;
 
 	if (!HAS_HW_CONTEXTS(dev))
@@ -596,10 +571,9 @@ int i915_gem_context_destroy_ioctl(struct drm_device *dev, void *data,
 	struct drm_i915_gem_context_destroy *args = data;
 	struct drm_i915_file_private *file_priv = file->driver_priv;
 	struct i915_hw_context *ctx;
-	struct i915_ctx_handle *han, find;
 	int ret;
 
-	if (!drm_core_check_feature(dev, DRIVER_GEM))
+	if (!(dev->driver->driver_features & DRIVER_GEM))
 		return -ENODEV;
 
 	ret = i915_mutex_lock_interruptible(dev);
@@ -612,21 +586,10 @@ int i915_gem_context_destroy_ioctl(struct drm_device *dev, void *data,
 		return -ENOENT;
 	}
 
-	find.handle = ctx->id;
-	han = SPLAY_FIND(i915_ctx_tree, &ctx->file_priv->ctx_tree, &find);
-	if (han != NULL)
-		SPLAY_REMOVE(i915_ctx_tree, &ctx->file_priv->ctx_tree, han);
+	idr_remove(&ctx->file_priv->context_idr, ctx->id);
 	i915_gem_context_unreference(ctx);
 	mutex_unlock(&dev->struct_mutex);
 
 	DRM_DEBUG_DRIVER("HW context %d destroyed\n", args->ctx_id);
 	return 0;
 }
-
-int
-i915_ctx_handle_cmp(struct i915_ctx_handle *a, struct i915_ctx_handle *b)
-{
-        return a->handle < b->handle ? -1 : a->handle > b->handle;
-}
-
-SPLAY_GENERATE(i915_ctx_tree, i915_ctx_handle, entry, i915_ctx_handle_cmp);

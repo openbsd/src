@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.73 2015/12/09 05:17:44 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.74 2016/04/05 21:22:02 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -784,12 +784,6 @@ struct i915_hw_context {
 	struct i915_ctx_hang_stats hang_stats;
 
 	struct list_head link;
-};
-
-struct i915_ctx_handle {
-	SPLAY_ENTRY(i915_ctx_handle)	 entry;
-	struct i915_hw_context		*ctx;
-	uint32_t			 handle;
 };
 
 struct i915_fbc {
@@ -1906,8 +1900,7 @@ struct drm_i915_file_private {
 		struct list_head request_list;
 		struct delayed_work idle_work;
 	} mm;
-	SPLAY_HEAD(i915_ctx_tree, i915_ctx_handle) ctx_tree;
-	uint32_t ctx_id;
+	struct idr context_idr;
 
 	struct i915_ctx_hang_stats hang_stats;
 	atomic_t rps_wait_boost;
