@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ndp.8,v 1.38 2016/04/05 18:11:33 jca Exp $
+.\"	$OpenBSD: ndp.8,v 1.39 2016/04/05 18:14:55 jca Exp $
 .\"	$KAME: ndp.8,v 1.28 2002/07/17 08:46:33 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -175,10 +175,10 @@ The entry will be permanent unless the word
 is given in the command.
 If the word
 .Cm proxy
-is given, this system will act as a proxy NDP server,
+is given, this system will act as an ND Proxy server,
 responding to requests for
-.Ar hostname
-even though the host address is not its own.
+.Ar nodename
+even though the node address is not its own.
 .It Fl t
 Print a timestamp on each entry,
 making it possible to merge output with
