@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.199 2016/04/05 19:34:05 vgross Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.200 2016/04/05 21:21:41 vgross Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -343,9 +343,13 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 		}
 	}
 
-	if (lport == 0)
+	if (lport == 0) {
 		if ((error = in_pcbpickport(&lport, laddr, wild, inp, p)))
 			return (error);
+	} else {
+		if (ntohs(lport) < IPPORT_RESERVED && (error = suser(p, 0)))
+			return (EACCES);
+	}
 	if (nam) {
 		switch (sotopf(so)) {
 #ifdef INET6
@@ -371,7 +375,6 @@ in_pcbaddrisavail(struct inpcb *inp, struct sockaddr_in *sin, int wild,
 	struct inpcbtable *table = inp->inp_table;
 	u_int16_t lport = sin->sin_port;
 	int reuseport = (so->so_options & SO_REUSEPORT);
-	int error;
 
 	if (IN_MULTICAST(sin->sin_addr.s_addr)) {
 		/*
@@ -411,10 +414,6 @@ in_pcbaddrisavail(struct inpcb *inp, struct sockaddr_in *sin, int wild,
 	if (lport) {
 		struct inpcb *t;
 
-		/* GROSS */
-		if (ntohs(lport) < IPPORT_RESERVED &&
-		    (error = suser(p, 0)))
-			return (EACCES);
 		if (so->so_euid) {
 			t = in_pcblookup(table, &zeroin_addr, 0,
 			    &sin->sin_addr, lport, INPLOOKUP_WILDCARD,
