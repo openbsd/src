@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.45 2016/02/05 15:51:10 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.46 2016/04/05 08:19:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -29,6 +29,8 @@ typedef u_int8_t u8;
 
 typedef int32_t s32;
 typedef int64_t s64;
+
+typedef uint64_t __u64;
 
 typedef uint16_t __le16;
 typedef uint16_t __be16;
@@ -1376,6 +1378,9 @@ struct fb_info {
 
 #define framebuffer_alloc(flags, device) \
 	kzalloc(sizeof(struct fb_info), GFP_KERNEL)
+
+struct address_space;
+#define unmap_mapping_range(mapping, holebegin, holeend, even_cows)
 
 /*
  * ACPI types and interfaces.
