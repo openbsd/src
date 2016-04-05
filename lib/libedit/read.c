@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.29 2016/03/22 11:32:18 schwarze Exp $	*/
+/*	$OpenBSD: read.c,v 1.30 2016/04/05 21:24:02 krw Exp $	*/
 /*	$NetBSD: read.c,v 1.81 2016/02/16 22:53:14 christos Exp $	*/
 
 /*-
@@ -146,7 +146,7 @@ read__fixio(int fd __attribute__((__unused__)), int e)
 		e = 0;
 #ifdef TRY_AGAIN
 #if defined(F_SETFL) && defined(O_NDELAY)
-		if ((e = fcntl(fd, F_GETFL, 0)) == -1)
+		if ((e = fcntl(fd, F_GETFL)) == -1)
 			return -1;
 
 		if (fcntl(fd, F_SETFL, e & ~O_NDELAY) == -1)

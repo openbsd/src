@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.34 2016/03/16 15:41:11 krw Exp $	*/
+/*	$OpenBSD: chat.c,v 1.35 2016/04/05 21:24:02 krw Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -468,7 +468,7 @@ int signo;
     alarmed = 1;		/* Reset alarm to avoid race window */
     signal(SIGALRM, sigalrm);	/* that can cause hanging in read() */
 
-    if ((flags = fcntl(0, F_GETFL, 0)) == -1)
+    if ((flags = fcntl(0, F_GETFL)) == -1)
 	fatal(2, "Can't get file mode flags on stdin: %m");
 
     if (fcntl(0, F_SETFL, flags | O_NONBLOCK) == -1)
@@ -482,7 +482,7 @@ void unalarm()
 {
     int flags;
 
-    if ((flags = fcntl(0, F_GETFL, 0)) == -1)
+    if ((flags = fcntl(0, F_GETFL)) == -1)
 	fatal(2, "Can't get file mode flags on stdin: %m");
 
     if (fcntl(0, F_SETFL, flags & ~O_NONBLOCK) == -1)
@@ -1139,7 +1139,7 @@ int get_char()
 	logmsg("warning: read() on stdin returned %d", status);
 
     case -1:
-	if ((status = fcntl(0, F_GETFL, 0)) == -1)
+	if ((status = fcntl(0, F_GETFL)) == -1)
 	    fatal(2, "Can't get file mode flags on stdin: %m");
 
 	if (fcntl(0, F_SETFL, status & ~O_NONBLOCK) == -1)
@@ -1167,7 +1167,7 @@ int c;
 	logmsg("warning: write() on stdout returned %d", status);
 	
     case -1:
-	if ((status = fcntl(0, F_GETFL, 0)) == -1)
+	if ((status = fcntl(0, F_GETFL)) == -1)
 	    fatal(2, "Can't get file mode flags on stdin, %m");
 
 	if (fcntl(0, F_SETFL, status & ~O_NONBLOCK) == -1)

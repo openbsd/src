@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_subr.c,v 1.17 2015/09/13 08:22:10 mpi Exp $ */
+/*	$OpenBSD: npppd_subr.c,v 1.18 2016/04/05 21:24:02 krw Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -140,7 +140,7 @@ in_route0(int type, struct in_addr *dest, struct in_addr *mask,
 	char *cp, buf[sizeof(*rtm) + sizeof(struct sockaddr_in) * 3 +
 	    sizeof(dl_buf) + 128];
 	const char *strtype;
-	int rval, dummy, flags, sock;
+	int rval, flags, sock;
 
 	sock = -1;
 
@@ -231,8 +231,7 @@ in_route0(int type, struct in_addr *dest, struct in_addr *mask,
 		goto fail;
 	}
 
-	dummy = 0;
-	if ((flags = fcntl(sock, F_GETFL, dummy)) < 0) {
+	if ((flags = fcntl(sock, F_GETFL)) < 0) {
 		log_printf(LOG_ERR, "fcntl(,F_GETFL) failed on %s : %m",
 		    __func__);
 		goto fail;

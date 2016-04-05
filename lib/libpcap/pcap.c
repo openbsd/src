@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.c,v 1.17 2015/11/17 21:39:23 mmcc Exp $	*/
+/*	$OpenBSD: pcap.c,v 1.18 2016/04/05 21:24:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -408,7 +408,7 @@ pcap_getnonblock(pcap_t *p, char *errbuf)
 {
 	int fdflags;
 
-	fdflags = fcntl(p->fd, F_GETFL, 0);
+	fdflags = fcntl(p->fd, F_GETFL);
 	if (fdflags == -1) {
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "F_GETFL: %s",
 		    pcap_strerror(errno));
@@ -425,7 +425,7 @@ pcap_setnonblock(pcap_t *p, int nonblock, char *errbuf)
 {
 	int fdflags;
 
-	fdflags = fcntl(p->fd, F_GETFL, 0);
+	fdflags = fcntl(p->fd, F_GETFL);
 	if (fdflags == -1) {
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "F_GETFL: %s",
 		    pcap_strerror(errno));
