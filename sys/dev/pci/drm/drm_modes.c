@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_modes.c,v 1.6 2015/09/23 23:12:11 kettenis Exp $	*/
+/*	$OpenBSD: drm_modes.c,v 1.7 2016/04/05 08:22:50 kettenis Exp $	*/
 /*
  * Copyright © 1997-2003 by The XFree86 Project, Inc.
  * Copyright © 2007 Dave Airlie
@@ -33,6 +33,9 @@
 
 #include "drmP.h"
 #include "drm_crtc.h"
+
+#undef RB_ROOT
+#define RB_ROOT(head)	(head)->rbh_root
 
 long simple_strtol(const char *, char **, int);
 

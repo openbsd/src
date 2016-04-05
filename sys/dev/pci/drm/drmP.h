@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.201 2016/02/05 10:05:12 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.202 2016/04/05 08:22:50 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -70,6 +70,7 @@
 #include "drm_linux.h"
 #include "drm_linux_list.h"
 #include "drm.h"
+#include "drm_vma_manager.h"
 #include "drm_mm.h"
 #include "drm_atomic.h"
 #include "agp.h"
@@ -347,7 +348,9 @@ struct drm_file {
 	u_int					 obj_id; /*next gem id*/
 	struct list_head			 fbs;
 	struct rwlock				 fbs_lock;
-	void					*driver_priv;
+
+	struct file *filp;
+	void *driver_priv;
 };
 
 /* This structure, in the struct drm_device, is always initialized while
@@ -443,25 +446,68 @@ struct drm_mem {
  * Subdrivers (radeon, intel, etc) may have other locking requirement, these
  * requirements will be detailed in those drivers.
  */
+
+/**
+ * This structure defines the drm_mm memory object, which will be used by the
+ * DRM for its buffer objects.
+ */
 struct drm_gem_object {
-	struct uvm_object		 uobj;
-	SPLAY_ENTRY(drm_gem_object) 	 entry;
-	struct drm_device		*dev;
-	struct uvm_object		*uao;
-	struct drm_local_map		*map;
+	/** Reference count of this object */
+	struct kref refcount;
 
-	size_t				 size;
-	int				 name;
-	int				 handlecount;
-/* any flags over 0x00000010 are device specific */
-#define	DRM_BUSY	0x00000001
-#define	DRM_WANTED	0x00000002
-	u_int				 do_flags;
-	uint32_t			 read_domains;
-	uint32_t			 write_domain;
+	/**
+	 * handle_count - gem file_priv handle count of this object
+	 *
+	 * Each handle also holds a reference. Note that when the handle_count
+	 * drops to 0 any global names (e.g. the id in the flink namespace) will
+	 * be cleared.
+	 *
+	 * Protected by dev->object_name_lock.
+	 * */
+	unsigned handle_count;
 
-	uint32_t			 pending_read_domains;
-	uint32_t			 pending_write_domain;
+	/** Related drm device */
+	struct drm_device *dev;
+
+	/** File representing the shmem storage */
+	struct file *filp;
+
+	/* Mapping info for this object */
+	struct drm_vma_offset_node vma_node;
+
+	/**
+	 * Size of the object, in bytes.  Immutable over the object's
+	 * lifetime.
+	 */
+	size_t size;
+
+	/**
+	 * Global name for this object, starts at 1. 0 means unnamed.
+	 * Access is covered by the object_name_lock in the related drm_device
+	 */
+	int name;
+
+	/**
+	 * Memory domains. These monitor which caches contain read/write data
+	 * related to the object. When transitioning from one set of domains
+	 * to another, the driver is called to ensure that caches are suitably
+	 * flushed and invalidated
+	 */
+	uint32_t read_domains;
+	uint32_t write_domain;
+
+	/**
+	 * While validating an exec operation, the
+	 * new read/write domain values are computed here.
+	 * They will be transferred to the above values
+	 * at the point that any cache flushing occurs
+	 */
+	uint32_t pending_read_domains;
+	uint32_t pending_write_domain;
+
+	struct uvm_object uobj;
+	SPLAY_ENTRY(drm_gem_object) entry;
+	struct uvm_object *uao;
 };
 
 struct drm_handle {
@@ -558,8 +604,10 @@ struct drm_driver_info {
 #define DRIVER_IRQ_SHARED  0x80
 #define DRIVER_GEM         0x1000
 #define DRIVER_MODESET     0x2000
+#define DRIVER_PRIME	   0x4000
 
 	u_int	flags;
+#define driver_features flags
 };
 
 #include "drm_crtc.h"
@@ -683,12 +731,12 @@ struct drm_device {
 
 	struct drm_agp_head	*agp;
 	void			*dev_private;
+	struct address_space	*dev_mapping;
 	struct drm_local_map	*agp_buffer_map;
 
 	struct drm_mode_config	 mode_config; /* Current mode config */
 
 	/* GEM info */
-	struct mutex		 obj_name_lock;
 	atomic_t		 obj_count;
 	u_int			 obj_name;
 	atomic_t		 obj_memory;
@@ -696,6 +744,12 @@ struct drm_device {
 	struct pool				objpl;
 	
 	/* mode stuff */
+
+	/** \name GEM information */
+	/*@{ */
+	struct rwlock object_name_lock;
+	struct drm_vma_offset_manager *vma_offset_manager;
+	/*@} */
 };
 
 struct drm_attach_args {
@@ -743,6 +797,7 @@ int	 drm_order(unsigned long);
 
 /* File operations helpers (drm_fops.c) */
 struct drm_file	*drm_find_file_by_minor(struct drm_device *, int);
+struct drm_device *drm_get_device_from_kdev(dev_t);
 
 /* Memory management support (drm_memory.c) */
 void	*drm_alloc(size_t);
@@ -842,13 +897,18 @@ drm_sysfs_hotplug_event(struct drm_device *dev)
 }
 
 /* Graphics Execution Manager library functions (drm_gem.c) */
+int drm_gem_init(struct drm_device *dev);
+void drm_gem_destroy(struct drm_device *dev);
 void drm_gem_object_release(struct drm_gem_object *obj);
+void drm_gem_object_free(struct kref *kref);
 int drm_gem_object_init(struct drm_device *dev,
 			struct drm_gem_object *obj, size_t size);
+void drm_gem_private_object_init(struct drm_device *dev,
+				 struct drm_gem_object *obj, size_t size);
 
-void	 drm_unref(struct uvm_object *);
-void	 drm_ref(struct uvm_object *);
-
+int drm_gem_handle_create_tail(struct drm_file *file_priv,
+			       struct drm_gem_object *obj,
+			       u32 *handlep);
 int drm_gem_handle_create(struct drm_file *file_priv,
 			  struct drm_gem_object *obj,
 			  u32 *handlep);
@@ -861,30 +921,39 @@ struct drm_gem_object *drm_gem_object_lookup(struct drm_device *dev,
 					     struct drm_file *filp,
 					     u32 handle);
 struct drm_gem_object *drm_gem_object_find(struct drm_file *, u32);
-int	drm_gem_close_ioctl(struct drm_device *, void *, struct drm_file *);
-int	drm_gem_flink_ioctl(struct drm_device *, void *, struct drm_file *);
-int	drm_gem_open_ioctl(struct drm_device *, void *, struct drm_file *);
+int drm_gem_close_ioctl(struct drm_device *dev, void *data,
+			struct drm_file *file_priv);
+int drm_gem_flink_ioctl(struct drm_device *dev, void *data,
+			struct drm_file *file_priv);
+int drm_gem_open_ioctl(struct drm_device *dev, void *data,
+		       struct drm_file *file_priv);
+void drm_gem_open(struct drm_device *dev, struct drm_file *file_private);
+void drm_gem_release(struct drm_device *dev,struct drm_file *file_private);
 
 static __inline void
 drm_gem_object_reference(struct drm_gem_object *obj)
 {
-	drm_ref(&obj->uobj);
+	kref_get(&obj->refcount);
 }
 
 static __inline void
 drm_gem_object_unreference(struct drm_gem_object *obj)
 {
-	drm_unref(&obj->uobj);
+	if (obj != NULL)
+		kref_put(&obj->refcount, drm_gem_object_free);
 }
 
 static __inline void
 drm_gem_object_unreference_unlocked(struct drm_gem_object *obj)
 {
-	struct drm_device *dev = obj->dev;
+	if (obj && !atomic_add_unless(&obj->refcount.refcount, -1, 1)) {
+		struct drm_device *dev = obj->dev;
 
-	mutex_lock(&dev->struct_mutex);
-	drm_unref(&obj->uobj);
-	mutex_unlock(&dev->struct_mutex);
+		mutex_lock(&dev->struct_mutex);
+		if (likely(atomic_dec_and_test(&obj->refcount.refcount)))
+			drm_gem_object_free(&obj->refcount);
+		mutex_unlock(&dev->struct_mutex);
+	}
 }
 
 int drm_gem_dumb_destroy(struct drm_file *file,

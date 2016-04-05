@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.8 2016/02/05 15:51:10 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.9 2016/04/05 08:22:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  *
@@ -207,6 +207,17 @@ vunmap(void *addr, size_t size)
 	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, va, size);
 }
+
+int
+panic_cmp(struct rb_node *a, struct rb_node *b)
+{
+	panic(__func__);
+}
+
+#undef RB_ROOT
+#define RB_ROOT(head)	(head)->rbh_root
+
+RB_GENERATE(linux_root, rb_node, __entry, panic_cmp);
 
 #if defined(__amd64__) || defined(__i386__)
 

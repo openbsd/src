@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.145 2016/02/05 10:05:12 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.146 2016/04/05 08:22:50 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -62,7 +62,6 @@
 int drm_debug_flag = 1;
 #endif
 
-struct drm_device *drm_get_device_from_kdev(dev_t);
 int	 drm_firstopen(struct drm_device *);
 int	 drm_lastclose(struct drm_device *);
 void	 drm_attach(struct device *, struct device *, void *);
@@ -85,21 +84,8 @@ int	 drm_authmagic(struct drm_device *, void *, struct drm_file *);
 int	 drm_file_cmp(struct drm_file *, struct drm_file *);
 SPLAY_PROTOTYPE(drm_file_tree, drm_file, link, drm_file_cmp);
 
-/* functions used by the per-open handle  code to grab references to object */
-void	 drm_gem_object_handle_reference(struct drm_gem_object *);
-void	 drm_gem_object_handle_unreference(struct drm_gem_object *);
-void	 drm_gem_object_handle_unreference_unlocked(struct drm_gem_object *);
-
-int	 drm_handle_cmp(struct drm_handle *, struct drm_handle *);
-int	 drm_name_cmp(struct drm_gem_object *, struct drm_gem_object *);
-int	 drm_fault(struct uvm_faultinfo *, vaddr_t, vm_page_t *, int, int,
-	     vm_fault_t, vm_prot_t, int);
-boolean_t	 drm_flush(struct uvm_object *, voff_t, voff_t, int);
 int	 drm_setunique(struct drm_device *, void *, struct drm_file *);
 int	 drm_noop(struct drm_device *, void *, struct drm_file *);
-
-SPLAY_PROTOTYPE(drm_obj_tree, drm_handle, entry, drm_handle_cmp);
-SPLAY_PROTOTYPE(drm_name_tree, drm_gem_object, entry, drm_name_cmp);
 
 int	 drm_getcap(struct drm_device *, void *, struct drm_file *);
 int	 drm_setclientcap(struct drm_device *, void *, struct drm_file *);
@@ -402,6 +388,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	struct drm_device *dev = (struct drm_device *)self;
 	struct drm_attach_args *da = aux;
 	int bus, slot, func;
+	int ret;
 
 	dev->dev_private = parent;
 	dev->driver = da->driver;
@@ -464,13 +451,19 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (dev->driver->flags & DRIVER_GEM) {
-		mtx_init(&dev->obj_name_lock, IPL_NONE);
-		SPLAY_INIT(&dev->name_tree);
 		KASSERT(dev->driver->gem_size >= sizeof(struct drm_gem_object));
 		/* XXX unique name */
 		pool_init(&dev->objpl, dev->driver->gem_size, 0, 0, 0,
 		    "drmobjpl", NULL);
 	}
+
+	if (dev->driver->flags & DRIVER_GEM) {
+		ret = drm_gem_init(dev);
+		if (ret) {
+			DRM_ERROR("Cannot initialize graphics execution manager (GEM)\n");
+			goto error;
+		}
+	}	
 
 	printf("\n");
 	return;
@@ -486,6 +479,9 @@ drm_detach(struct device *self, int flags)
 	struct drm_device *dev = (struct drm_device *)self;
 
 	drm_lastclose(dev);
+
+	if (dev->driver->flags & DRIVER_GEM)
+		drm_gem_destroy(dev);
 
 	if (dev->driver->flags & DRIVER_GEM)
 		pool_destroy(&dev->objpl);
@@ -672,6 +668,7 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 
 	file_priv->kdev = kdev;
 	file_priv->flags = flags;
+	file_priv->filp = (void *)&file_priv;
 	file_priv->minor = minor(kdev);
 	INIT_LIST_HEAD(&file_priv->fbs);
 	INIT_LIST_HEAD(&file_priv->event_list);
@@ -681,10 +678,8 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 	/* for compatibility root is always authenticated */
 	file_priv->authenticated = DRM_SUSER(p);
 
-	if (dev->driver->flags & DRIVER_GEM) {
-		SPLAY_INIT(&file_priv->obj_tree);
-		mtx_init(&file_priv->table_lock, IPL_NONE);
-	}
+	if (dev->driver->flags & DRIVER_GEM)
+		drm_gem_open(dev, file_priv);
 
 	if (dev->driver->open) {
 		ret = dev->driver->open(dev, file_priv);
@@ -769,19 +764,10 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 	if (dev->driver->flags & DRIVER_MODESET)
 		drm_fb_release(dev, file_priv);
 
+	if (dev->driver->flags & DRIVER_GEM)
+		drm_gem_release(dev, file_priv);
+
 	mutex_lock(&dev->struct_mutex);
-	if (dev->driver->flags & DRIVER_GEM) {
-		struct drm_handle	*han;
-		mtx_enter(&file_priv->table_lock);
-		while ((han = SPLAY_ROOT(&file_priv->obj_tree)) != NULL) {
-			SPLAY_REMOVE(drm_obj_tree, &file_priv->obj_tree, han);
-			mtx_leave(&file_priv->table_lock);
-			drm_gem_object_handle_unreference(han->obj);
-			drm_free(han);
-			mtx_enter(&file_priv->table_lock);
-		}
-		mtx_leave(&file_priv->table_lock);
-	}
 
 	dev->buf_pgid = 0;
 
@@ -1409,497 +1395,6 @@ drm_authmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	return ret;
 }
 
-struct uvm_pagerops drm_pgops = {
-	NULL,
-	drm_ref,
-	drm_unref,
-	drm_fault,
-	drm_flush,
-};
-
-void
-drm_ref(struct uvm_object *uobj)
-{
-	uobj->uo_refs++;
-}
-
-void
-drm_unref(struct uvm_object *uobj)
-{
-	struct drm_gem_object *obj = (struct drm_gem_object *)uobj;
-	struct drm_device *dev = obj->dev;
-
-	if (uobj->uo_refs > 1) {
-		uobj->uo_refs--;
-		return;
-	}
-
-	/* We own this thing now. It is on no queues, though it may still
-	 * be bound to the aperture (and on the inactive list, in which case
-	 * idling the buffer is what triggered the free. Since we know no one 
-	 * else can grab it now, we can nuke with impunity.
-	 */
-	if (dev->driver->gem_free_object != NULL)
-		dev->driver->gem_free_object(obj);
-}
-
-boolean_t	
-drm_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
-{
-	return (TRUE);
-}
-
-int
-drm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
-    int npages, int centeridx, vm_fault_t fault_type,
-    vm_prot_t access_type, int flags)
-{
-	struct vm_map_entry *entry = ufi->entry;
-	struct uvm_object *uobj = entry->object.uvm_obj;
-	struct drm_gem_object *obj = (struct drm_gem_object *)uobj;
-	struct drm_device *dev = obj->dev;
-	int ret;
-
-	/*
-	 * we do not allow device mappings to be mapped copy-on-write
-	 * so we kill any attempt to do so here.
-	 */
-	
-	if (UVM_ET_ISCOPYONWRITE(entry)) {
-		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
-		return(VM_PAGER_ERROR);
-	}
-
-	/*
-	 * We could end up here as the result of a copyin(9) or
-	 * copyout(9) while handling an ioctl.  So we must be careful
-	 * not to deadlock.  Therefore we only block if the quiesce
-	 * count is zero, which guarantees we didn't enter from within
-	 * an ioctl code path.
-	 */
-	mtx_enter(&dev->quiesce_mtx);
-	if (dev->quiesce && dev->quiesce_count == 0) {
-		mtx_leave(&dev->quiesce_mtx);
-		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
-		mtx_enter(&dev->quiesce_mtx);
-		while (dev->quiesce) {
-			msleep(&dev->quiesce, &dev->quiesce_mtx,
-			    PZERO, "drmflt", 0);
-		}
-		mtx_leave(&dev->quiesce_mtx);
-		return(VM_PAGER_REFAULT);
-	}
-	dev->quiesce_count++;
-	mtx_leave(&dev->quiesce_mtx);
-
-	/* Call down into driver to do the magic */
-	ret = dev->driver->gem_fault(obj, ufi, entry->offset + (vaddr -
-	    entry->start), vaddr, pps, npages, centeridx,
-	    access_type, flags);
-
-	mtx_enter(&dev->quiesce_mtx);
-	dev->quiesce_count--;
-	if (dev->quiesce)
-		wakeup(&dev->quiesce_count);
-	mtx_leave(&dev->quiesce_mtx);
-
-	return (ret);
-}
-
-/*
- * Code to support memory managers based on the GEM (Graphics
- * Execution Manager) api.
- */
-int
-drm_gem_object_init(struct drm_device *dev, struct drm_gem_object *obj, size_t size)
-{
-	BUG_ON((size & (PAGE_SIZE -1)) != 0);
-
-	obj->dev = dev;
-
-	/* uao create can't fail in the 0 case, it just sleeps */
-	obj->uao = uao_create(size, 0);
-	obj->size = size;
-	uvm_objinit(&obj->uobj, &drm_pgops, 1);
-
-	atomic_inc(&dev->obj_count);
-	atomic_add(obj->size, &dev->obj_memory);
-	return 0;
-}
-
-void
-drm_gem_object_release(struct drm_gem_object *obj)
-{
-	struct drm_device *dev = obj->dev;
-
-	if (obj->uao)
-		uao_detach(obj->uao);
-
-	atomic_dec(&dev->obj_count);
-	atomic_sub(obj->size, &dev->obj_memory);
-	if (obj->do_flags & DRM_WANTED) /* should never happen, not on lists */
-		wakeup(obj);
-}
-
-/**
- * Create a handle for this object. This adds a handle reference
- * to the object, which includes a regular reference count. Callers
- * will likely want to dereference the object afterwards.
- */
-int
-drm_gem_handle_create(struct drm_file *file_priv,
-		       struct drm_gem_object *obj,
-		       u32 *handlep)
-{
-	struct drm_device *dev = obj->dev;
-	struct drm_handle *han;
-	int ret;
-
-	if ((han = drm_calloc(1, sizeof(*han))) == NULL)
-		return -ENOMEM;
-
-	han->obj = obj;
-	mtx_enter(&file_priv->table_lock);
-again:
-	*handlep = han->handle = ++file_priv->obj_id;
-	/*
-	 * Make sure we have no duplicates. this'll hurt once we wrap, 0 is
-	 * reserved.
-	 */
-	if (han->handle == 0 || SPLAY_INSERT(drm_obj_tree,
-	    &file_priv->obj_tree, han))
-		goto again;
-	mtx_leave(&file_priv->table_lock);
-
-	drm_gem_object_handle_reference(obj);
-
-	if (dev->driver->gem_open_object) {
-		ret = dev->driver->gem_open_object(obj, file_priv);
-		if (ret) {
-			drm_gem_handle_delete(file_priv, *handlep);
-			return ret;
-		}
-	}
-
-	return 0;
-}
-
-/**
- * Removes the mapping from handle to filp for this object.
- */
-int
-drm_gem_handle_delete(struct drm_file *filp, u32 handle)
-{
-	struct drm_device *dev;
-	struct drm_gem_object *obj;
-	struct drm_handle *han, find;
-
-	find.handle = handle;
-	mtx_enter(&filp->table_lock);
-	han = SPLAY_FIND(drm_obj_tree, &filp->obj_tree, &find);
-	if (han == NULL) {
-		mtx_leave(&filp->table_lock);
-		return -EINVAL;
-	}
-	obj = han->obj;
-	dev = obj->dev;
-
-	SPLAY_REMOVE(drm_obj_tree, &filp->obj_tree, han);
-	mtx_leave(&filp->table_lock);
-
-	drm_free(han);
-
-	if (dev->driver->gem_close_object)
-		dev->driver->gem_close_object(obj, filp);
-	drm_gem_object_handle_unreference_unlocked(obj);
-
-	return 0;
-}
-
-/**
- * drm_gem_dumb_destroy - dumb fb callback helper for gem based drivers
- * 
- * This implements the ->dumb_destroy kms driver callback for drivers which use
- * gem to manage their backing storage.
- */
-int
-drm_gem_dumb_destroy(struct drm_file *file, struct drm_device *dev,
-		     u32 handle)
-{
-	return drm_gem_handle_delete(file, handle);
-}
-
-/** Returns a reference to the object named by the handle. */
-struct drm_gem_object *
-drm_gem_object_lookup(struct drm_device *dev, struct drm_file *filp,
-		      u32 handle)
-{
-	struct drm_gem_object *obj;
-	struct drm_handle *han, search;
-
-	mtx_enter(&filp->table_lock);
-
-	/* Check if we currently have a reference on the object */
-	search.handle = handle;
-	han = SPLAY_FIND(drm_obj_tree, &filp->obj_tree, &search);
-	if (han == NULL) {
-		mtx_leave(&filp->table_lock);
-		return NULL;
-	}
-	obj = han->obj;
-
-	drm_gem_object_reference(obj);
-
-	mtx_leave(&filp->table_lock);
-
-	return obj;
-}
-
-struct drm_gem_object *
-drm_gem_object_find(struct drm_file *filp, u32 handle)
-{
-	struct drm_handle *han, search;
-
-	MUTEX_ASSERT_LOCKED(&filp->table_lock);
-
-	search.handle = handle;
-	han = SPLAY_FIND(drm_obj_tree, &filp->obj_tree, &search);
-	if (han == NULL)
-		return NULL;
-
-	return han->obj;
-}
-
-/**
- * Releases the handle to an mm object.
- */
-int
-drm_gem_close_ioctl(struct drm_device *dev, void *data,
-		    struct drm_file *file_priv)
-{
-	struct drm_gem_close *args = data;
-	int ret;
-
-	if (!(dev->driver->flags & DRIVER_GEM))
-		return -ENODEV;
-
-	ret = drm_gem_handle_delete(file_priv, args->handle);
-
-	return ret;
-}
-
-int
-drm_gem_flink_ioctl(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
-{
-	struct drm_gem_flink	*args = data;
-	struct drm_gem_object	*obj;
-
-	if (!(dev->driver->flags & DRIVER_GEM))
-		return -ENODEV;
-
-	obj = drm_gem_object_lookup(dev, file_priv, args->handle);
-	if (obj == NULL)
-		return -ENOENT;
-
-	mtx_enter(&dev->obj_name_lock);
-	if (!obj->name) {
-again:
-		obj->name = ++dev->obj_name; 
-		/* 0 is reserved, make sure we don't clash. */
-		if (obj->name == 0 || SPLAY_INSERT(drm_name_tree,
-		    &dev->name_tree, obj))
-			goto again;
-		/* name holds a reference to the object */
-		drm_ref(&obj->uobj);
-	}
-	mtx_leave(&dev->obj_name_lock);
-
-	args->name = (uint64_t)obj->name;
-
-	drm_unref(&obj->uobj);
-
-	return 0;
-}
-
-/**
- * Open an object using the global name, returning a handle and the size.
- *
- * This handle (of course) holds a reference to the object, so the object
- * will not go away until the handle is deleted.
- */
-int
-drm_gem_open_ioctl(struct drm_device *dev, void *data,
-		   struct drm_file *file_priv)
-{
-	struct drm_gem_open *args = data;
-	struct drm_gem_object *obj, search;
-	int ret;
-	u32 handle;
-
-	if (!(dev->driver->flags & DRIVER_GEM))
-		return -ENODEV;
-
-	mtx_enter(&dev->obj_name_lock);
-	search.name = args->name;
-	obj = SPLAY_FIND(drm_name_tree, &dev->name_tree, &search);
-	if (obj)
-		drm_gem_object_reference(obj);
-	mtx_leave(&dev->obj_name_lock);
-	if (!obj)
-		return -ENOENT;
-
-	ret = drm_gem_handle_create(file_priv, obj, &handle);
-	drm_gem_object_unreference_unlocked(obj);
-	if (ret)
-		return ret;
-
-	args->handle = handle;
-	args->size = obj->size;
-
-        return 0;
-}
-
-void
-drm_gem_object_handle_reference(struct drm_gem_object *obj)
-{
-	drm_gem_object_reference(obj);
-	obj->handlecount++;
-}
-
-void
-drm_gem_object_handle_unreference(struct drm_gem_object *obj)
-{
-	/* do this first in case this is the last reference */
-	if (--obj->handlecount == 0) {
-		struct drm_device	*dev = obj->dev;
-
-		mtx_enter(&dev->obj_name_lock);
-		if (obj->name) {
-			SPLAY_REMOVE(drm_name_tree, &dev->name_tree, obj);
-			obj->name = 0;
-			mtx_leave(&dev->obj_name_lock);
-			/* name held a reference to object */
-			drm_gem_object_unreference(obj);
-		} else {
-			mtx_leave(&dev->obj_name_lock);
-		}
-	}
-
-	drm_gem_object_unreference(obj);
-}
-
-void
-drm_gem_object_handle_unreference_unlocked(struct drm_gem_object *obj)
-{
-	struct drm_device *dev = obj->dev;
-
-	mutex_lock(&dev->struct_mutex);
-	drm_gem_object_handle_unreference(obj);
-	mutex_unlock(&dev->struct_mutex);
-}
-
-/**
- * drm_gem_free_mmap_offset - release a fake mmap offset for an object
- * @obj: obj in question
- *
- * This routine frees fake offsets allocated by drm_gem_create_mmap_offset().
- */
-void
-drm_gem_free_mmap_offset(struct drm_gem_object *obj)
-{
-	struct drm_device *dev = obj->dev;
-	struct drm_local_map *map = obj->map;
-
-	TAILQ_REMOVE(&dev->maplist, map, link);
-	obj->map = NULL;
-
-	/* NOCOALESCE set, can't fail */
-	extent_free(dev->handle_ext, map->ext, map->size, EX_NOWAIT);
-
-	drm_free(map);
-}
-
-/**
- * drm_gem_create_mmap_offset - create a fake mmap offset for an object
- * @obj: obj in question
- *
- * GEM memory mapping works by handing back to userspace a fake mmap offset
- * it can use in a subsequent mmap(2) call.  The DRM core code then looks
- * up the object based on the offset and sets up the various memory mapping
- * structures.
- *
- * This routine allocates and attaches a fake offset for @obj.
- */
-int
-drm_gem_create_mmap_offset(struct drm_gem_object *obj)
-{
-	struct drm_device *dev = obj->dev;
-	struct drm_local_map *map;
-	int ret;
-
-	/* Set the object up for mmap'ing */
-	map = drm_calloc(1, sizeof(*map));
-	if (map == NULL)
-		return -ENOMEM;
-
-	map->flags = _DRM_DRIVER;
-	map->type = _DRM_GEM;
-	map->size = obj->size;
-	map->handle = obj;
-
-	/* Get a DRM GEM mmap offset allocated... */
-	ret = extent_alloc(dev->handle_ext, map->size, PAGE_SIZE, 0,
-	    0, EX_NOWAIT, &map->ext);
-	if (ret) {
-		DRM_ERROR("failed to allocate offset for bo %d\n", obj->name);
-		ret = -ENOSPC;
-		goto out_free_list;
-	}
-
-	TAILQ_INSERT_TAIL(&dev->maplist, map, link);
-	obj->map = map;
-	return 0;
-
-out_free_list:
-	drm_free(map);
-
-	return ret;
-}
-
-struct uvm_object *
-udv_attach_drm(dev_t device, vm_prot_t accessprot, voff_t off, vsize_t size)
-{
-	struct drm_device *dev = drm_get_device_from_kdev(device);
-	struct drm_local_map *map;
-	struct drm_gem_object *obj;
-
-	if (cdevsw[major(device)].d_mmap != drmmmap)
-		return NULL;
-
-	if (dev == NULL)
-		return NULL;
-
-	if (dev->driver->mmap)
-		return dev->driver->mmap(dev, off, size);
-
-	mutex_lock(&dev->struct_mutex);
-	TAILQ_FOREACH(map, &dev->maplist, link) {
-		if (off >= map->ext && off + size <= map->ext + map->size)
-			break;
-	}
-
-	if (map == NULL || map->type != _DRM_GEM) {
-		mutex_unlock(&dev->struct_mutex);
-		return NULL;
-	}
-
-	obj = (struct drm_gem_object *)map->handle;
-	drm_ref(&obj->uobj);
-	mutex_unlock(&dev->struct_mutex);
-	return &obj->uobj;
-}
-
 /*
  * Compute order.  Can be made faster.
  */
@@ -1969,19 +1464,3 @@ int drm_pcie_get_speed_cap_mask(struct drm_device *dev, u32 *mask)
 	    PCI_VENDOR(id), PCI_PRODUCT(id), lnkcap, lnkcap2);
 	return 0;
 }
-
-int
-drm_handle_cmp(struct drm_handle *a, struct drm_handle *b)
-{
-	return (a->handle < b->handle ? -1 : a->handle > b->handle);
-}
-
-int
-drm_name_cmp(struct drm_gem_object *a, struct drm_gem_object *b)
-{
-	return (a->name < b->name ? -1 : a->name > b->name);
-}
-
-SPLAY_GENERATE(drm_obj_tree, drm_handle, entry, drm_handle_cmp);
-
-SPLAY_GENERATE(drm_name_tree, drm_gem_object, entry, drm_name_cmp);

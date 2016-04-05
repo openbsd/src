@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.34 2015/10/29 07:47:03 kettenis Exp $
+# $OpenBSD: files.drm,v 1.35 2016/04/05 08:22:50 kettenis Exp $
 
 # direct rendering modules
 define drmbase {[console = -1]}
@@ -19,6 +19,8 @@ file   dev/pci/drm/drm_edid.c		drm
 file   dev/pci/drm/drm_dp_helper.c	drm
 file   dev/pci/drm/drm_fb_helper.c	drm
 file   dev/pci/drm/drm_rect.c		drm
+file   dev/pci/drm/drm_gem.c		drm
+file   dev/pci/drm/drm_vma_manager.c	drm
 file   dev/pci/drm/drm_linux.c		drm
 file   dev/pci/drm/linux_hdmi.c		drm
 

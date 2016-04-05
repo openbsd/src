@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_vm.c,v 1.9 2015/10/23 08:21:58 kettenis Exp $	*/
+/*	$OpenBSD: ttm_bo_vm.c,v 1.10 2016/04/05 08:22:50 kettenis Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -42,6 +42,9 @@ ssize_t	 ttm_bo_fbdev_io(struct ttm_buffer_object *, const char __user *,
 struct ttm_buffer_object *
 	 ttm_bo_vm_lookup_rb(struct ttm_bo_device *, unsigned long,
 	     unsigned long);
+
+#undef RB_ROOT
+#define RB_ROOT(head)	(head)->rbh_root
 
 RB_GENERATE(ttm_bo_device_buffer_objects, ttm_buffer_object, vm_rb,
     ttm_bo_cmp_rb_tree_items);

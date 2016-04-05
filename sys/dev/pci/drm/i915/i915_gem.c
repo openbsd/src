@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.104 2015/10/19 19:54:35 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.105 2016/04/05 08:22:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -42,7 +42,7 @@
  */
 
 #include <dev/pci/drm/drmP.h>
-#include <dev/pci/drm/drm.h>
+#include <dev/pci/drm/drm_vma_manager.h>
 #include <dev/pci/drm/i915_drm.h>
 #include "i915_drv.h"
 #include "i915_trace.h"
@@ -259,15 +259,10 @@ i915_gem_create(struct drm_file *file,
 		return -ENOMEM;
 
 	ret = drm_gem_handle_create(file, &obj->base, &handle);
-	if (ret) {
-		drm_gem_object_release(&obj->base);
-		i915_gem_info_remove_obj(dev->dev_private, obj->base.size);
-		pool_put(&dev->objpl, obj);
-		return ret;
-	}
-
 	/* drop reference from allocate - handle holds it now */
-	drm_gem_object_unreference(&obj->base);
+	drm_gem_object_unreference_unlocked(&obj->base);
+	if (ret)
+		return ret;
 
 	*handle_p = handle;
 	return 0;
@@ -1575,14 +1570,15 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 	 * copyout in one of the fast paths.  Return failure such that
 	 * we fall back on the slow path.
 	 */
-	if (!obj->base.map || RWLOCK_OWNER(&dev->struct_mutex) == curproc) {
+	if (!drm_vma_node_has_offset(&obj->base.vma_node) ||
+	    RWLOCK_OWNER(&dev->struct_mutex) == curproc) {
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
 		    &obj->base.uobj, NULL);
 		ret = VM_PAGER_BAD;
 		goto out;
 	}
 
-	offset -= obj->base.map->ext;
+	offset -= drm_vma_node_offset_addr(&obj->base.vma_node);
 
 	if (rw_enter(&dev->struct_mutex, RW_NOSLEEP | RW_WRITE) != 0) {
 		uvmfault_unlockall(ufi, NULL, &obj->base.uobj, NULL);
@@ -1745,6 +1741,7 @@ i915_gem_release_mmap(struct drm_i915_gem_object *obj)
 	     pg++)
 		pmap_page_protect(pg, PROT_NONE);
 
+	drm_vma_node_unmap(&obj->base.vma_node, obj->base.dev->dev_mapping);
 	obj->fault_mappable = false;
 }
 
@@ -1802,7 +1799,7 @@ static int i915_gem_object_create_mmap_offset(struct drm_i915_gem_object *obj)
 #endif
 	int ret;
 
-	if (obj->base.map)
+	if (drm_vma_node_has_offset(&obj->base.vma_node))
 		return 0;
 
 #if 0
@@ -1837,9 +1834,6 @@ out:
 
 static void i915_gem_object_free_mmap_offset(struct drm_i915_gem_object *obj)
 {
-	if (!obj->base.map)
-		return;
-
 	drm_gem_free_mmap_offset(&obj->base);
 }
 
@@ -1878,7 +1872,7 @@ i915_gem_mmap_gtt(struct drm_file *file,
 	if (ret)
 		goto out;
 
-	*offset = (u64)obj->base.map->ext;
+	*offset = drm_vma_node_offset_addr(&obj->base.vma_node);
 
 out:
 	drm_gem_object_unreference(&obj->base);
