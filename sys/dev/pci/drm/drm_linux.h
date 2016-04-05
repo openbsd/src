@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.46 2016/04/05 08:19:00 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.47 2016/04/05 20:44:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -679,6 +679,7 @@ ktime_sub_ns(struct timeval tv, int64_t ns)
 }
 
 #define GFP_ATOMIC	M_NOWAIT
+#define GFP_NOWAIT	M_NOWAIT
 #define GFP_KERNEL	(M_WAITOK | M_CANFAIL)
 #define GFP_TEMPORARY	(M_WAITOK | M_CANFAIL)
 #define __GFP_NOWARN	0
@@ -831,6 +832,25 @@ static inline void
 kobject_del(struct kobject *obj)
 {
 }
+
+struct idr_entry {
+	SPLAY_ENTRY(idr_entry) entry;
+	int id;
+	void *ptr;
+};
+
+struct idr {
+	SPLAY_HEAD(idr_tree, idr_entry) tree;
+};
+
+void idr_init(struct idr *);
+void idr_preload(unsigned int);
+int idr_alloc(struct idr *, void *, int, int, unsigned int);
+#define idr_preload_end()
+void *idr_find(struct idr *, int);
+void idr_remove(struct idr *, int);
+void idr_destroy(struct idr *);
+int idr_for_each(struct idr *, int (*)(int, void *, void *), void *);
 
 #define min_t(t, a, b) ({ \
 	t __min_a = (a); \
