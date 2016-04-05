@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_atomic.h,v 1.13 2015/09/23 23:12:11 kettenis Exp $ */
+/* $OpenBSD: drm_atomic.h,v 1.14 2016/04/05 08:17:34 kettenis Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -52,6 +52,20 @@ atomic_xchg(volatile int *v, int n)
 {
 	__sync_synchronize();
 	return __sync_lock_test_and_set(v, n);
+}
+
+static __inline int
+atomic_add_unless(volatile int *v, int n, int u)
+{
+	int o = *v;
+
+	do {
+		o = *v;
+		if (o == u)
+			return 0;
+	} while (__sync_val_compare_and_swap(v, o, o +n) != o);
+
+	return 1;
 }
 
 #ifdef __LP64__
