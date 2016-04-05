@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.198 2016/03/26 21:56:04 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.199 2016/04/05 19:34:05 vgross Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -286,6 +286,7 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 	struct socket *so = inp->inp_socket;
 	u_int16_t lport = 0;
 	int wild = 0;
+	void *laddr = &zeroin46_addr;
 	int error;
 
 	if (inp->inp_lport)
@@ -312,9 +313,10 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 			if (sin6->sin6_family != AF_INET6)
 				return (EAFNOSUPPORT);
 
+			wild |= INPLOOKUP_IPV6;
 			if ((error = in6_pcbaddrisavail(inp, sin6, wild, p)))
 				return (error);
-			inp->inp_laddr6 = sin6->sin6_addr;
+			laddr = &sin6->sin6_addr;
 			lport = sin6->sin6_port;
 			break;
 		}
@@ -332,7 +334,7 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 
 			if ((error = in_pcbaddrisavail(inp, sin, wild, p)))
 				return (error);
-			inp->inp_laddr = sin->sin_addr;
+			laddr = &sin->sin_addr;
 			lport = sin->sin_port;
 			break;
 		}
@@ -342,8 +344,20 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 	}
 
 	if (lport == 0)
-		if ((error = in_pcbpickport(&lport, wild, inp, p)))
+		if ((error = in_pcbpickport(&lport, laddr, wild, inp, p)))
 			return (error);
+	if (nam) {
+		switch (sotopf(so)) {
+#ifdef INET6
+		case PF_INET6:
+			inp->inp_laddr6 = *(struct in6_addr *)laddr;
+			break;
+#endif
+		case PF_INET:
+			inp->inp_laddr = *(struct in_addr *)laddr;
+			break;
+		}
+	}
 	inp->inp_lport = lport;
 	in_pcbrehash(inp);
 	return (0);
@@ -418,12 +432,12 @@ in_pcbaddrisavail(struct inpcb *inp, struct sockaddr_in *sin, int wild,
 }
 
 int
-in_pcbpickport(u_int16_t *lport, int wild, struct inpcb *inp, struct proc *p)
+in_pcbpickport(u_int16_t *lport, void *laddr, int wild, struct inpcb *inp,
+    struct proc *p)
 {
 	struct socket *so = inp->inp_socket;
 	struct inpcbtable *table = inp->inp_table;
 	u_int16_t first, last, lower, higher, candidate, localport;
-	void *laddr;
 	int count;
 
 	if (inp->inp_flags & INP_HIGHPORT) {
@@ -453,10 +467,6 @@ in_pcbpickport(u_int16_t *lport, int wild, struct inpcb *inp, struct proc *p)
 
 	count = higher - lower;
 	candidate = lower + arc4random_uniform(count);
-	if (sotopf(so) == PF_INET6)
-		laddr = &inp->inp_laddr6;
-	else
-		laddr = &inp->inp_laddr;
 
 	do {
 		if (count-- < 0) 	/* completely used? */
