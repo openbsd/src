@@ -1,3 +1,4 @@
+/*	$OpenBSD: drm_vma_manager.c,v 1.2 2016/04/05 20:50:44 kettenis Exp $	*/
 /*
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
  * Copyright (c) 2012 David Airlie <airlied@linux.ie>
