@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.9 2016/03/23 18:45:03 chrisz Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.10 2016/04/05 04:29:21 guenther Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -37,7 +37,7 @@ int h_errno;
 int
 res_init(void)
 {
-	_THREAD_PRIVATE_MUTEX(init);
+	static void *resinit_mutex;
 	struct asr_ctx	*ac;
 	int i;
 
@@ -48,7 +48,7 @@ res_init(void)
 	 * structure from the async context, not overriding fields set early
 	 * by the user.
 	 */
-	_THREAD_PRIVATE_MUTEX_LOCK(init);
+	_MUTEX_LOCK(&resinit_mutex);
 	if (!(_res.options & RES_INIT)) {
 		if (_res.retry == 0)
 			_res.retry = ac->ac_nsretries;
@@ -75,7 +75,7 @@ res_init(void)
 		_res.nscount = i;
 		_res.options |= RES_INIT;
 	}
-	_THREAD_PRIVATE_MUTEX_UNLOCK(init);
+	_MUTEX_UNLOCK(&resinit_mutex);
 
 	/*
 	 * If the program is not threaded, we want to reflect (some) changes

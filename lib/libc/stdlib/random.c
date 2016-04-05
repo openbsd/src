@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.29 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: random.c,v 1.30 2016/04/05 04:29:21 guenther Exp $ */
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -175,11 +175,11 @@ static int rand_sep = SEP_3;
 
 static int random_deterministic;
 
-_THREAD_PRIVATE_MUTEX(random);
+static void *random_mutex;
 static long random_l(void);
 
-#define LOCK() _THREAD_PRIVATE_MUTEX_LOCK(random)
-#define UNLOCK() _THREAD_PRIVATE_MUTEX_UNLOCK(random)
+#define LOCK()		_MUTEX_LOCK(&random_mutex)
+#define UNLOCK()	_MUTEX_UNLOCK(&random_mutex)
 
 /*
  * srandom:

@@ -1,4 +1,4 @@
-/* $OpenBSD: res_random.c,v 1.23 2015/10/05 02:57:16 guenther Exp $ */
+/* $OpenBSD: res_random.c,v 1.24 2016/04/05 04:29:21 guenther Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -230,12 +230,12 @@ __res_randomid(void)
 	struct timespec ts;
 	pid_t pid;
 	u_int r;
-	_THREAD_PRIVATE_MUTEX(random);
+	static void *randomid_mutex;
 
 	clock_gettime(CLOCK_MONOTONIC, &ts);
 	pid = getpid();
 
-	_THREAD_PRIVATE_MUTEX_LOCK(random);
+	_MUTEX_LOCK(&randomid_mutex);
 
 	if (ru_counter >= RU_MAX || ts.tv_sec > ru_reseed || pid != ru_pid) {
 		res_initid();
@@ -248,7 +248,7 @@ __res_randomid(void)
 
 	r = permute15(ru_seed ^ pmod(ru_g, ru_seed2 + ru_x, RU_N)) | ru_msb;
 
-	_THREAD_PRIVATE_MUTEX_UNLOCK(random);
+	_MUTEX_UNLOCK(&randomid_mutex);
 
 	return (r);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: findfp.c,v 1.18 2015/08/27 04:37:09 guenther Exp $ */
+/*	$OpenBSD: findfp.c,v 1.19 2016/04/05 04:29:21 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,7 @@ static FILE usual[FOPEN_MAX - 3];
 static struct __sfileext usualext[FOPEN_MAX - 3];
 static struct glue uglue = { 0, FOPEN_MAX - 3, usual };
 static struct glue *lastglue = &uglue;
-_THREAD_PRIVATE_MUTEX(__sfp_mutex);
+static void *sfp_mutex;
 
 static struct __sfileext __sFext[3];
 FILE __sF[3] = {
@@ -108,7 +108,7 @@ __sfp(void)
 	if (!__sdidinit)
 		__sinit();
 
-	_THREAD_PRIVATE_MUTEX_LOCK(__sfp_mutex);
+	_MUTEX_LOCK(&sfp_mutex);
 	for (g = &__sglue; g != NULL; g = g->next) {
 		for (fp = g->iobs, n = g->niobs; --n >= 0; fp++)
 			if (fp->_flags == 0)
@@ -116,16 +116,16 @@ __sfp(void)
 	}
 
 	/* release lock while mallocing */
-	_THREAD_PRIVATE_MUTEX_UNLOCK(__sfp_mutex);
+	_MUTEX_UNLOCK(&sfp_mutex);
 	if ((g = moreglue(NDYNAMIC)) == NULL)
 		return (NULL);
-	_THREAD_PRIVATE_MUTEX_LOCK(__sfp_mutex);
+	_MUTEX_LOCK(&sfp_mutex);
 	lastglue->next = g;
 	lastglue = g;
 	fp = g->iobs;
 found:
 	fp->_flags = 1;		/* reserve this slot; caller sets real flags */
-	_THREAD_PRIVATE_MUTEX_UNLOCK(__sfp_mutex);
+	_MUTEX_UNLOCK(&sfp_mutex);
 	fp->_p = NULL;		/* no current pointer */
 	fp->_w = 0;		/* nothing to read or write */
 	fp->_r = 0;
@@ -161,10 +161,10 @@ _cleanup(void)
 void
 __sinit(void)
 {
-	_THREAD_PRIVATE_MUTEX(__sinit_mutex);
+	static void *sinit_mutex;
 	int i;
 
-	_THREAD_PRIVATE_MUTEX_LOCK(__sinit_mutex);
+	_MUTEX_LOCK(&sinit_mutex);
 	if (__sdidinit)
 		goto out;	/* bail out if caller lost the race */
 	for (i = 0; i < FOPEN_MAX - 3; i++) {
@@ -174,5 +174,5 @@ __sinit(void)
 	__atexit_register_cleanup(_cleanup); /* conservative */
 	__sdidinit = 1;
 out: 
-	_THREAD_PRIVATE_MUTEX_UNLOCK(__sinit_mutex);
+	_MUTEX_UNLOCK(&sinit_mutex);
 }
