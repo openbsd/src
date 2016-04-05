@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.202 2016/04/05 08:22:50 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.203 2016/04/05 20:40:54 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -429,23 +429,6 @@ struct drm_mem {
 #define DRM_ATI_GART_PCIE 2
 #define DRM_ATI_GART_IGP  3
 #define DRM_ATI_GART_R600 4
-
-/*
- *  Locking protocol:
- * All drm object are uvm objects, as such they have a reference count and
- * a lock. On the other hand, operations carries out by the drm may involve
- * sleeping (waiting for rendering to finish, say), while you wish to have
- * mutual exclusion on an object. For this reason, all drm-related operations
- * on drm objects must acquire the DRM_BUSY flag on the object as the first
- * thing that they do. If the BUSY flag is already on the object, set DRM_WANTED
- * and sleep until the other locker is done with it. When the BUSY flag is 
- * acquired then only that flag and a reference is required to do most 
- * operations on the drm_object. The uvm object is still bound by uvm locking
- * protocol.
- *
- * Subdrivers (radeon, intel, etc) may have other locking requirement, these
- * requirements will be detailed in those drivers.
- */
 
 /**
  * This structure defines the drm_mm memory object, which will be used by the
