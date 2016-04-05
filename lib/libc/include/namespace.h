@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.h,v 1.8 2015/10/23 04:39:24 guenther Exp $	*/
+/*	$OpenBSD: namespace.h,v 1.9 2016/04/05 04:28:32 guenther Exp $	*/
 
 #ifndef _LIBC_NAMESPACE_H_
 #define _LIBC_NAMESPACE_H_
@@ -41,14 +41,14 @@
  *
  * Some other calls need to be wrapped for reasons other than cancellation,
  * such as to provide functionality beyond the underlying syscall (e.g.,
- * setlogin).  For these, there are identifiers for the raw call, without
+ * sigaction).  For these, there are identifiers for the raw call, without
  * the wrapping:
- *	_libc_setlogin		hidden alias, for use internal to libc only
- *	_thread_sys_setlogin	global name, for use outside libc only
+ *	_libc_sigaction		hidden alias, for use internal to libc only
+ *	_thread_sys_sigaction	global name, for use outside libc only
  * ...and identifiers that do provide the libc wrapping:
- *	setlogin		weak alias, for general use
- *	_libc_setlogin_wrap	hidden alias, for use internal to libc only
- * Inside libc, the bare name ("setlogin") binds to the wrapper; when the
+ *	sigaction		weak alias, for general use
+ *	_libc_sigaction_wrap	hidden alias, for use internal to libc only
+ * Inside libc, the bare name ("sigaction") binds to the wrapper; when the
  * raw version is necessary it can be obtained by calling HIDDEN(x) instead of
  * just x.
  *
@@ -118,7 +118,7 @@
  *   DEF_WRAP(x)
  *	This defines x as a weak alias for _libc_x_wrap.
  *	Matches with PROTO_WRAP()
- *	ex: DEF_WRAP(setlogin)
+ *	ex: DEF_WRAP(sigaction)
  *
  *   DEF_SYS(x)
  *	This defines _thread_sys_x as a strong alias for _libc_x.  This should
