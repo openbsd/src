@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.46 2016/04/04 16:47:34 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.47 2016/04/05 09:33:05 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1245,15 +1245,16 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_init_state *vis)
 int
 vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 {
-	int ret;
+	int ret, ug;
 	uint32_t cr0, cr4;
 	uint32_t pinbased, procbased, procbased2, exit, entry;
 	uint32_t want1, want0;
-	uint64_t msr, ctrlval, eptp, vmcs_ptr;
+	uint64_t msr, ctrlval, eptp, vmcs_ptr, cr3;
 	uint16_t ctrl;
 	struct vmx_msr_store *msr_store;
 
 	ret = 0;
+	ug = 0;
 
 	/* Flush any old state */
 	if (!vmptrst(&vmcs_ptr)) {
@@ -1443,8 +1444,10 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED_CTLS,
 	    IA32_VMX_ACTIVATE_SECONDARY_CONTROLS, 1)) {
 		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
-		    IA32_VMX_UNRESTRICTED_GUEST, 1))
+		    IA32_VMX_UNRESTRICTED_GUEST, 1)) {
 			want1 |= IA32_VMX_UNRESTRICTED_GUEST;
+			ug = 1;
+		}
 	}
 
 	want0 = ~want1;
@@ -1495,12 +1498,17 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 	/*
 	 * Entry ctrls
 	 *
+	 * We must be able to set the following:
+	 * IA32_VMX_IA32E_MODE_GUEST (if no unrestricted guest)
 	 * We must be able to clear the following:
 	 * IA32_VMX_ENTRY_TO_SMM - enter to SMM
 	 * IA32_VMX_DEACTIVATE_DUAL_MONITOR_TREATMENT
 	 * XXX clear load debug_ctrls on entry ?
 	 */
-	want1 = 0;
+	if (ug == 1)
+		want1 = 0;
+	else
+		want1 = IA32_VMX_IA32E_MODE_GUEST;
 	want0 = IA32_VMX_ENTRY_TO_SMM |
 	    IA32_VMX_DEACTIVATE_DUAL_MONITOR_TREATMENT;
 
@@ -1529,7 +1537,6 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 			/* Page walk length 4 supported */
 			eptp |= ((IA32_EPT_PAGE_WALK_LENGTH - 1) << 3);
 		}
-
 
 		if (msr & IA32_EPT_VPID_CAP_WB) {
 			/* WB cache type supported */
@@ -1597,15 +1604,14 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 	 * any value for CR0_PG and CR0_PE in vis->vis_cr0 if the CPU has
 	 * the unrestricted guest capability.
 	 */
-	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED_CTLS,
-	    IA32_VMX_ACTIVATE_SECONDARY_CONTROLS, 1)) {
-		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
-		    IA32_VMX_UNRESTRICTED_GUEST, 1))
-			want1 &= ~(CR0_PG | CR0_PE);
-			want0 &= ~(CR0_PG | CR0_PE);
+	cr0 = vis->vis_cr0;
+
+	if (ug) {
+		want1 &= ~(CR0_PG | CR0_PE);
+		want0 &= ~(CR0_PG | CR0_PE);
+		cr0 &= ~(CR0_PG | CR0_PE);
 	}
 
-	cr0 = vis->vis_cr0;
 
 	/*
 	 * VMX may require some bits to be set that userland should not have
@@ -1628,7 +1634,12 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 		goto exit;
 	}
 
-	if (vmwrite(VMCS_GUEST_IA32_CR3, vis->vis_cr3)) {
+	if (ug)
+		cr3 = 0;
+	else
+		cr3 = vis->vis_cr3;
+
+	if (vmwrite(VMCS_GUEST_IA32_CR3, cr3)) {
 		ret = EINVAL;
 		goto exit;
 	}
@@ -1639,6 +1650,12 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 	 */
 	cr4 = (curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed0) &
 	    (curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed1);
+
+	/*
+	 * If we are starting in restricted guest mode, enable PAE
+	 */
+	if (ug == 0)
+		cr4 |= CR4_PAE;
 
 	if (vmwrite(VMCS_GUEST_IA32_CR4, cr4)) {
 		ret = EINVAL;
@@ -1853,8 +1870,17 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 	 * Select MSRs to be loaded on entry / saved on exit
 	 */
 	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
+
+	/*
+	 * Make sure LME is enabled in EFER if restricted guest mode is
+	 * needed.
+	 */
 	msr_store[0].vms_index = MSR_EFER;
-	msr_store[0].vms_data = 0ULL;		/* Initial value */
+	if (ug == 1)
+		msr_store[0].vms_data = 0ULL;	/* Initial value */
+	else
+		msr_store[0].vms_data = EFER_LME;
+
 	msr_store[1].vms_index = MSR_CR_PAT;
 	msr_store[1].vms_data = 0ULL;		/* Initial value */
 	msr_store[2].vms_index = MSR_STAR;

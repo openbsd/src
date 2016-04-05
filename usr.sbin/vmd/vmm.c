@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.24 2016/04/04 17:13:54 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.25 2016/04/05 09:33:05 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -161,13 +161,16 @@ static struct privsep_proc procs[] = {
  *
  * Specific bootloaders should clone this structure and override
  * those fields as needed.
+ *
+ * Note - CR3 and various bits in CR0 may be overridden by vmm(4) based on
+ *        features of the CPU in use.
  */
 static const struct vcpu_init_state vcpu_init_flat32 = {
 	0x2,					/* RFLAGS */
 	0x0,					/* RIP */
 	0x0,					/* RSP */
-	CR0_CD | CR0_NW | CR0_ET | CR0_PE,	/* CR0 */
-	0x0,					/* CR3 */
+	CR0_CD | CR0_NW | CR0_ET | CR0_PE | CR0_PG, /* CR0 */
+	PML4_PAGE,				/* CR3 */
 	{ 0x8, 0xFFFFFFFF, 0xC09F, 0x0},	/* CS */
 	{ 0x10, 0xFFFFFFFF, 0xC093, 0x0},	/* DS */
 	{ 0x10, 0xFFFFFFFF, 0xC093, 0x0},	/* ES */
