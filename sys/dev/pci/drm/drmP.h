@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.203 2016/04/05 20:40:54 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.204 2016/04/05 20:46:45 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -327,13 +327,10 @@ struct drm_pending_event {
 };
 
 struct drm_file {
-	SPLAY_HEAD(drm_obj_tree, drm_handle)	 obj_tree;
-
 	wait_queue_head_t event_wait;
 	struct list_head event_list;
 	int event_space;
 
-	struct mutex				 table_lock;
 	struct selinfo				 rsel;
 	SPLAY_ENTRY(drm_file)			 link;
 	int					 authenticated;
@@ -345,9 +342,13 @@ struct drm_file {
 	int					 flags;
 	int					 master;
 	int					 minor;
-	u_int					 obj_id; /*next gem id*/
 	struct list_head			 fbs;
 	struct rwlock				 fbs_lock;
+
+	/** Mapping of mm object handles to object pointers. */
+	struct idr object_idr;
+	/** Lock for synchronization of access to object_idr. */
+	spinlock_t table_lock;
 
 	struct file *filp;
 	void *driver_priv;
@@ -723,14 +724,12 @@ struct drm_device {
 	atomic_t		 obj_count;
 	u_int			 obj_name;
 	atomic_t		 obj_memory;
-	SPLAY_HEAD(drm_name_tree, drm_gem_object) name_tree;
 	struct pool				objpl;
-	
-	/* mode stuff */
 
 	/** \name GEM information */
 	/*@{ */
 	struct rwlock object_name_lock;
+	struct idr object_name_idr;
 	struct drm_vma_offset_manager *vma_offset_manager;
 	/*@} */
 };

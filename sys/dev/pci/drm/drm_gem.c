@@ -30,12 +30,6 @@
 
 #include <uvm/uvm.h>
 
-int drm_handle_cmp(struct drm_handle *, struct drm_handle *);
-SPLAY_PROTOTYPE(drm_obj_tree, drm_handle, entry, drm_handle_cmp);
-int drm_name_cmp(struct drm_gem_object *, struct drm_gem_object *);
-SPLAY_PROTOTYPE(drm_name_tree, drm_gem_object, entry, drm_name_cmp);
-
-
 void drm_unref(struct uvm_object *);
 void drm_ref(struct uvm_object *);
 boolean_t drm_flush(struct uvm_object *, voff_t, voff_t, int);
@@ -232,11 +226,7 @@ drm_gem_init(struct drm_device *dev)
 	struct drm_vma_offset_manager *vma_offset_manager;
 
 	rw_init(&dev->object_name_lock, "drmonl");
-#ifdef __linux__
 	idr_init(&dev->object_name_idr);
-#else
-	SPLAY_INIT(&dev->name_tree);
-#endif
 
 	vma_offset_manager = kzalloc(sizeof(*vma_offset_manager), GFP_KERNEL);
 	if (!vma_offset_manager) {
@@ -339,8 +329,6 @@ drm_gem_remove_prime_handles(struct drm_gem_object *obj, struct drm_file *filp)
 #endif
 }
 
-#ifdef __linux__
-
 /**
  * Called after the last handle to the object has been closed
  *
@@ -358,21 +346,6 @@ static void drm_gem_object_handle_free(struct drm_gem_object *obj)
 		obj->name = 0;
 	}
 }
-
-#else
-
-static void drm_gem_object_handle_free(struct drm_gem_object *obj)
-{
-	struct drm_device *dev = obj->dev;
-
-	/* Remove any name for this object */
-	if (obj->name) {
-		SPLAY_REMOVE(drm_name_tree, &dev->name_tree, obj);
-		obj->name = 0;
-	}
-}
-
-#endif
 
 static void drm_gem_object_exported_dma_buf_free(struct drm_gem_object *obj)
 {
@@ -406,8 +379,6 @@ drm_gem_object_handle_unreference_unlocked(struct drm_gem_object *obj)
 
 	drm_gem_object_unreference_unlocked(obj);
 }
-
-#ifdef __linux__
 
 /**
  * Removes the mapping from handle to filp for this object.
@@ -453,44 +424,6 @@ drm_gem_handle_delete(struct drm_file *filp, u32 handle)
 }
 EXPORT_SYMBOL(drm_gem_handle_delete);
 
-#else
-
-int
-drm_gem_handle_delete(struct drm_file *filp, u32 handle)
-{
-	struct drm_device *dev;
-	struct drm_gem_object *obj;
-	struct drm_handle *han, find;
-
-	spin_lock(&filp->table_lock);
-
-	find.handle = handle;
-	han = SPLAY_FIND(drm_obj_tree, &filp->obj_tree, &find);
-	if (han == NULL) {
-		spin_unlock(&filp->table_lock);
-		return -EINVAL;
-	}
-	obj = han->obj;
-	dev = obj->dev;
-
-	SPLAY_REMOVE(drm_obj_tree, &filp->obj_tree, han);
-	spin_unlock(&filp->table_lock);
-
-	drm_free(han);
-
-	if (drm_core_check_feature(dev, DRIVER_PRIME))
-		drm_gem_remove_prime_handles(obj, filp);
-	drm_vma_node_revoke(&obj->vma_node, filp->filp);
-
-	if (dev->driver->gem_close_object)
-		dev->driver->gem_close_object(obj, filp);
-	drm_gem_object_handle_unreference_unlocked(obj);
-
-	return 0;
-}
-
-#endif
-
 /**
  * drm_gem_dumb_destroy - dumb fb callback helper for gem based drivers
  * 
@@ -504,8 +437,6 @@ int drm_gem_dumb_destroy(struct drm_file *file,
 	return drm_gem_handle_delete(file, handle);
 }
 EXPORT_SYMBOL(drm_gem_dumb_destroy);
-
-#ifdef __linux__
 
 /**
  * drm_gem_handle_create_tail - internal functions to create a handle
@@ -559,63 +490,6 @@ drm_gem_handle_create_tail(struct drm_file *file_priv,
 
 	return 0;
 }
-
-#else
-
-int
-drm_gem_handle_create_tail(struct drm_file *file_priv,
-			   struct drm_gem_object *obj,
-			   u32 *handlep)
-{
-	struct drm_device *dev = obj->dev;
-	struct drm_handle *han;
-	int ret;
-
-	WARN_ON(!mutex_is_locked(&dev->object_name_lock));
-
-	/*
-	 * Get the user-visible handle using idr.  Preload and perform
-	 * allocation under our spinlock.
-	 */
-	if ((han = drm_calloc(1, sizeof(*han))) == NULL)
-		return -ENOMEM;
-	han->obj = obj;
-	KASSERT(obj->dev != NULL);
-	spin_lock(&file_priv->table_lock);
-
-again:
-	han->handle = ++file_priv->obj_id;
-	/*
-	 * Make sure we have no duplicates. this'll hurt once we wrap, 0 is
-	 * reserved.
-	 */
-	if (han->handle == 0 || SPLAY_INSERT(drm_obj_tree,
-	    &file_priv->obj_tree, han))
-		goto again;
-	drm_gem_object_reference(obj);
-	obj->handle_count++;
-	spin_unlock(&file_priv->table_lock);
-	mutex_unlock(&dev->object_name_lock);
-	*handlep = han->handle;
-
-	ret = drm_vma_node_allow(&obj->vma_node, file_priv->filp);
-	if (ret) {
-		drm_gem_handle_delete(file_priv, *handlep);
-		return ret;
-	}
-
-	if (dev->driver->gem_open_object) {
-		ret = dev->driver->gem_open_object(obj, file_priv);
-		if (ret) {
-			drm_gem_handle_delete(file_priv, *handlep);
-			return ret;
-		}
-	}
-
-	return 0;
-}
-
-#endif
 
 /**
  * Create a handle for this object. This adds a handle reference
@@ -797,8 +671,6 @@ EXPORT_SYMBOL(drm_gem_put_pages);
 
 #endif
 
-#ifdef __linux__
-
 /** Returns a reference to the object named by the handle. */
 struct drm_gem_object *
 drm_gem_object_lookup(struct drm_device *dev, struct drm_file *filp,
@@ -823,35 +695,6 @@ drm_gem_object_lookup(struct drm_device *dev, struct drm_file *filp,
 }
 EXPORT_SYMBOL(drm_gem_object_lookup);
 
-#else
-
-struct drm_gem_object *
-drm_gem_object_lookup(struct drm_device *dev, struct drm_file *filp,
-		      u32 handle)
-{
-	struct drm_gem_object *obj;
-	struct drm_handle *han, search;
-
-	spin_lock(&filp->table_lock);
-
-	/* Check if we currently have a reference on the object */
-	search.handle = handle;
-	han = SPLAY_FIND(drm_obj_tree, &filp->obj_tree, &search);
-	if (han == NULL) {
-		spin_unlock(&filp->table_lock);
-		return NULL;
-	}
-	obj = han->obj;
-
-	drm_gem_object_reference(obj);
-
-	spin_unlock(&filp->table_lock);
-
-	return obj;
-}
-
-#endif
-
 /**
  * Releases the handle to an mm object.
  */
@@ -869,8 +712,6 @@ drm_gem_close_ioctl(struct drm_device *dev, void *data,
 
 	return ret;
 }
-
-#ifdef __linux__
 
 /**
  * Create a global name for an object, returning the name.
@@ -919,51 +760,6 @@ err:
 	return ret;
 }
 
-#else
-
-int
-drm_gem_flink_ioctl(struct drm_device *dev, void *data,
-		    struct drm_file *file_priv)
-{
-	struct drm_gem_flink *args = data;
-	struct drm_gem_object *obj;
-	int ret;
-
-	if (!(dev->driver->flags & DRIVER_GEM))
-		return -ENODEV;
-
-	obj = drm_gem_object_lookup(dev, file_priv, args->handle);
-	if (obj == NULL)
-		return -ENOENT;
-
-	mutex_lock(&dev->object_name_lock);
-	if (obj->handle_count == 0) {
-		ret = -ENOENT;
-		goto err;
-	}
-
-	if (!obj->name) {
-again:
-		obj->name = ++dev->obj_name; 
-		/* 0 is reserved, make sure we don't clash. */
-		if (obj->name == 0 || SPLAY_INSERT(drm_name_tree,
-		    &dev->name_tree, obj))
-			goto again;
-	}
-
-	args->name = (uint64_t)obj->name;
-	ret = 0;
-
-err:
-	mutex_unlock(&dev->object_name_lock);
-	drm_gem_object_unreference_unlocked(obj);
-	return ret;
-}
-
-#endif
-
-#ifdef __linux__
-
 /**
  * Open an object using the global name, returning a handle and the size.
  *
@@ -1003,46 +799,6 @@ drm_gem_open_ioctl(struct drm_device *dev, void *data,
 	return 0;
 }
 
-#else
-
-int
-drm_gem_open_ioctl(struct drm_device *dev, void *data,
-		   struct drm_file *file_priv)
-{
-	struct drm_gem_open *args = data;
-	struct drm_gem_object *obj, search;
-	int ret;
-	u32 handle;
-
-	if (!(dev->driver->flags & DRIVER_GEM))
-		return -ENODEV;
-
-	mutex_lock(&dev->object_name_lock);
-	search.name = args->name;
-	obj = SPLAY_FIND(drm_name_tree, &dev->name_tree, &search);
-	if (obj) {
-		drm_gem_object_reference(obj);
-	} else {
-		mutex_unlock(&dev->object_name_lock);
-		return -ENOENT;
-	}
-
-	/* drm_gem_handle_create_tail unlocks dev->object_name_lock. */
-	ret = drm_gem_handle_create_tail(file_priv, obj, &handle);
-	drm_gem_object_unreference_unlocked(obj);
-	if (ret)
-		return ret;
-
-	args->handle = handle;
-	args->size = obj->size;
-
-        return 0;
-}
-
-#endif
-
-#ifdef __linux__
-
 /**
  * Called at device open time, sets up the structure for handling refcounting
  * of mm objects.
@@ -1051,21 +807,8 @@ void
 drm_gem_open(struct drm_device *dev, struct drm_file *file_private)
 {
 	idr_init(&file_private->object_idr);
-	spin_lock_init(&file_private->table_lock);
-}
-
-#else
-
-void
-drm_gem_open(struct drm_device *dev, struct drm_file *file_private)
-{
-	SPLAY_INIT(&file_private->obj_tree);
 	mtx_init(&file_private->table_lock, IPL_NONE);
 }
-
-#endif
-
-#ifdef __linux__
 
 /**
  * Called at device close to release the file's
@@ -1102,40 +845,6 @@ drm_gem_release(struct drm_device *dev, struct drm_file *file_private)
 		     &drm_gem_object_release_handle, file_private);
 	idr_destroy(&file_private->object_idr);
 }
-
-#else
-
-static int
-drm_gem_object_release_handle(struct drm_file *file_priv,
-			      struct drm_gem_object *obj)
-{
-	struct drm_device *dev = obj->dev;
-
-	if (drm_core_check_feature(dev, DRIVER_PRIME))
-		drm_gem_remove_prime_handles(obj, file_priv);
-	drm_vma_node_revoke(&obj->vma_node, file_priv->filp);
-
-	if (dev->driver->gem_close_object)
-		dev->driver->gem_close_object(obj, file_priv);
-
-	drm_gem_object_handle_unreference_unlocked(obj);
-
-	return 0;
-}
-
-void
-drm_gem_release(struct drm_device *dev, struct drm_file *file_private)
-{
-	struct drm_handle *han;
-
-	while ((han = SPLAY_ROOT(&file_private->obj_tree)) != NULL) {
-		SPLAY_REMOVE(drm_obj_tree, &file_private->obj_tree, han);
-		drm_gem_object_release_handle(file_private, han->obj);
-		drm_free(han);
-	}
-}
-
-#endif
 
 #ifdef __linux__
 
@@ -1317,39 +1026,3 @@ int drm_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 EXPORT_SYMBOL(drm_gem_mmap);
 
 #endif
-
-/*
- * Code to support memory managers based on the GEM (Graphics
- * Execution Manager) api.
- */
-
-struct drm_gem_object *
-drm_gem_object_find(struct drm_file *filp, u32 handle)
-{
-	struct drm_handle *han, search;
-
-	MUTEX_ASSERT_LOCKED(&filp->table_lock);
-
-	search.handle = handle;
-	han = SPLAY_FIND(drm_obj_tree, &filp->obj_tree, &search);
-	if (han == NULL)
-		return NULL;
-
-	return han->obj;
-}
-
-int
-drm_handle_cmp(struct drm_handle *a, struct drm_handle *b)
-{
-	return (a->handle < b->handle ? -1 : a->handle > b->handle);
-}
-
-SPLAY_GENERATE(drm_obj_tree, drm_handle, entry, drm_handle_cmp);
-
-int
-drm_name_cmp(struct drm_gem_object *a, struct drm_gem_object *b)
-{
-	return (a->name < b->name ? -1 : a->name > b->name);
-}
-
-SPLAY_GENERATE(drm_name_tree, drm_gem_object, entry, drm_name_cmp);

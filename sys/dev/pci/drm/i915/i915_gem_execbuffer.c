@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.39 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.40 2016/04/05 20:46:45 kettenis Exp $	*/
 /*
  * Copyright © 2008,2010 Intel Corporation
  *
@@ -101,7 +101,7 @@ eb_lookup_vmas(struct eb_vmas *eb,
 	/* Grab a reference to the object and release the lock so we can lookup
 	 * or create the VMA without using GFP_ATOMIC */
 	for (i = 0; i < args->buffer_count; i++) {
-		obj = to_intel_bo(drm_gem_object_find(file, exec[i].handle));
+		obj = to_intel_bo(idr_find(&file->object_idr, exec[i].handle));
 		if (obj == NULL) {
 			spin_unlock(&file->table_lock);
 			DRM_DEBUG("Invalid object handle %d at index %d\n",
