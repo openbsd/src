@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.8 2014/04/21 17:41:52 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.9 2016/04/05 00:52:35 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -34,7 +34,6 @@
 #include "log.h"
 
 struct control {
-	TAILQ_ENTRY(control)	entry;
 	struct event		ev;
 	struct pduq		channel;
 	int			fd;
@@ -45,8 +44,6 @@ struct control_state {
 	struct event		evt;
 	int			fd;
 } *control_state;
-
-TAILQ_HEAD(, control)	controls;
 
 #define	CONTROL_BACKLOG	5
 
@@ -112,7 +109,6 @@ control_init(char *path)
 
 	socket_setblockmode(fd, 1);
 	control_state->fd = fd;
-	TAILQ_INIT(&controls);
 
 	return 0;
 }
@@ -120,15 +116,9 @@ control_init(char *path)
 void
 control_cleanup(char *path)
 {
-	struct control	*c;
-
 	if (path)
 		unlink(path);
 
-	while ((c = TAILQ_FIRST(&controls)) != NULL) {
-		TAILQ_REMOVE(&controls, c, entry);
-		control_close(c);
-	}
 	event_del(&control_state->ev);
 	event_del(&control_state->evt);
 	close(control_state->fd);
