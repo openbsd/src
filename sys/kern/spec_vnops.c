@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.88 2016/04/01 11:51:55 mikeb Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.89 2016/04/05 19:26:15 natano Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -707,13 +707,13 @@ spec_open_clone(struct vop_open_args *ap)
 	if (minor(vp->v_rdev) >= (1 << CLONE_SHIFT))
 		return (ENXIO);
 
-	for (i = 1; i < sizeof(vp->v_specbitmap) * NBBY; i++)
+	for (i = 1; i < CLONE_MAPSZ * NBBY; i++)
 		if (isclr(vp->v_specbitmap, i)) {
 			setbit(vp->v_specbitmap, i);
 			break;
 		}
 
-	if (i == sizeof(vp->v_specbitmap) * NBBY)
+	if (i == CLONE_MAPSZ * NBBY)
 		return (EBUSY); /* too many open instances */
 
 	error = cdevvp(makedev(major(vp->v_rdev),
