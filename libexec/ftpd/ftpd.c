@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.213 2016/03/16 15:41:10 krw Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.214 2016/04/06 07:14:17 semarie Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1151,7 +1151,7 @@ retrieve(char *cmd, char *name)
 	pid_t pid;
 	time_t start;
 
-	if (cmd == 0) {
+	if (cmd == NULL) {
 		fin = fopen(name, "r");
 		st.st_size = 0;
 	} else {
@@ -1166,14 +1166,15 @@ retrieve(char *cmd, char *name)
 	if (fin == NULL) {
 		if (errno != 0) {
 			perror_reply(550, name);
-			if (cmd == 0) {
+			if (cmd == NULL) {
 				LOGCMD("get", name);
 			}
 		}
 		return;
 	}
 	byte_count = -1;
-	if (cmd == 0 && (fstat(fileno(fin), &st) < 0 || !S_ISREG(st.st_mode))) {
+	if (cmd == NULL &&
+	    (fstat(fileno(fin), &st) < 0 || !S_ISREG(st.st_mode))) {
 		reply(550, "%s: not a plain file.", name);
 		goto done;
 	}
@@ -1205,8 +1206,8 @@ retrieve(char *cmd, char *name)
 		goto done;
 	time(&start);
 	send_data(fin, dout, (off_t)st.st_blksize, st.st_size,
-	    (restart_point == 0 && cmd == 0 && S_ISREG(st.st_mode)));
-	if ((cmd == 0) && stats)
+	    (restart_point == 0 && cmd == NULL && S_ISREG(st.st_mode)));
+	if ((cmd == NULL) && stats)
 		logxfer(name, byte_count, start);
 	(void) fclose(dout);
 	data = -1;
@@ -1214,7 +1215,7 @@ done:
 	if (pdata >= 0)
 		(void) close(pdata);
 	pdata = -1;
-	if (cmd == 0) {
+	if (cmd == NULL) {
 		LOGBYTES("get", name, byte_count);
 		fclose(fin);
 	} else {
