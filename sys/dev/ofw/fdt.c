@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.6 2016/04/03 13:48:07 patrick Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.7 2016/04/06 11:42:50 patrick Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -34,6 +34,7 @@ void	*skip_node(void *);
 void	*fdt_parent_node_recurse(void *, void *);
 int	 fdt_node_property_int(void *, char *, int *);
 int	 fdt_node_property_ints(void *, char *, int *, int);
+int	 fdt_translate_memory_address(void *, struct fdt_memory *);
 #ifdef DEBUG
 void 	 fdt_print_node_recurse(void *, int);
 #endif
@@ -390,6 +391,105 @@ fdt_parent_node(void *node)
 }
 
 /*
+ * Translate memory address depending on parent's range.
+ *
+ * Ranges are a way of mapping one address to another.  This ranges attribute
+ * is set on a node's parent.  This means if a node does not have a parent,
+ * there's nothing to translate.  If it does have a parent and the parent does
+ * not have a ranges attribute, there's nothing to translate either.
+ *
+ * If the parent has a ranges attribute and the attribute is not empty, the
+ * node's memory address has to be in one of the given ranges.  This range is
+ * then used to translate the memory address.
+ *
+ * If the parent has a ranges attribute, but the attribute is empty, there's
+ * nothing to translate.  But it's not a translation barrier.  It can be treated
+ * as a simple 1:1 mapping.
+ *
+ * Translation does not end here.  We need to check if the parent's parent also
+ * has a ranges attribute and ask the same questions again.
+ */
+int
+fdt_translate_memory_address(void *node, struct fdt_memory *mem)
+{
+	void *parent;
+	int pac, psc, ac, sc, ret, rlen, rone, *range;
+	uint64_t from, to, size;
+
+	/* No parent, no translation. */
+	parent = fdt_parent_node(node);
+	if (parent == NULL)
+		return 0;
+
+	/* Extract ranges property from node. */
+	rlen = fdt_node_property(node, "ranges", (char **)&range) / sizeof(int);
+
+	/* No ranges means translation barrier. Translation stops here. */
+	if (range == NULL)
+		return 0;
+
+	/* Empty ranges means 1:1 mapping. Continue translation on parent. */
+	if (rlen <= 0)
+		return fdt_translate_memory_address(parent, mem);
+
+	/* We only support 32-bit (1), and 64-bit (2) wide addresses here. */
+	ret = fdt_node_property_int(parent, "#address-cells", &pac);
+	if (ret != 1 || pac <= 0 || pac > 2)
+		return EINVAL;
+
+	/* We only support 32-bit (1), and 64-bit (2) wide sizes here. */
+	ret = fdt_node_property_int(parent, "#size-cells", &psc);
+	if (ret != 1 || psc <= 0 || psc > 2)
+		return EINVAL;
+
+	/* We only support 32-bit (1), and 64-bit (2) wide addresses here. */
+	ret = fdt_node_property_int(node, "#address-cells", &ac);
+	if (ret <= 0)
+		ac = pac;
+	else if (ret > 1 || ac <= 0 || ac > 2)
+		return EINVAL;
+
+	/* We only support 32-bit (1), and 64-bit (2) wide sizes here. */
+	ret = fdt_node_property_int(node, "#size-cells", &sc);
+	if (ret <= 0)
+		sc = psc;
+	else if (ret > 1 || sc <= 0 || sc > 2)
+		return EINVAL;
+
+	/* Must have at least one range. */
+	rone = pac + ac + sc;
+	if (rlen < rone)
+		return ESRCH;
+
+	/* For each range. */
+	for (; rlen >= rone; rlen -= rone, range += rone) {
+		/* Extract from and size, so we can see if we fit. */
+		from = betoh32(range[0]);
+		if (ac == 2)
+			from = (from << 32) + betoh32(range[1]);
+		size = betoh32(range[ac + pac]);
+		if (sc == 2)
+			size = (size << 32) + betoh32(range[ac + pac + 1]);
+
+		/* Try next, if we're not in the range. */
+		if (mem->addr < from || (mem->addr + mem->size) > (from + size))
+			continue;
+
+		/* All good, extract to address and translate. */
+		to = betoh32(range[ac]);
+		if (pac == 2)
+			to = (to << 32) + betoh32(range[ac + 1]);
+
+		mem->addr -= from;
+		mem->addr += to;
+		return fdt_translate_memory_address(parent, mem);
+	}
+
+	/* To be successful, we must have returned in the for-loop. */
+	return ESRCH;
+}
+
+/*
  * Parse the memory address and size of a node.
  */
 int
@@ -429,10 +529,7 @@ fdt_get_memory_address(void *node, int idx, struct fdt_memory *mem)
 	if (sc == 2)
 		mem->size = (mem->size << 32) + betoh32(in[off + ac + 1]);
 
-	/* TODO: translate memory address in ranges */
-	//return fdt_translate_memory_address(parent, mem);
-
-	return 0;
+	return fdt_translate_memory_address(parent, mem);
 }
 
 #ifdef DEBUG
