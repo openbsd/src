@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.318 2016/04/06 01:39:17 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.319 2016/04/06 11:48:51 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3375,97 +3375,6 @@ settunnelttl(const char *id, int param)
 }
 
 void
-setvnetid(const char *id, int param)
-{
-	const char *errmsg = NULL;
-	uint32_t vnetid;
-
-	vnetid = strtonum(id, 0, UINT_MAX, &errmsg);
-	if (errmsg)
-		errx(1, "vnetid %s: %s", id, errmsg);
-
-	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	ifr.ifr_vnetid = vnetid;
-	if (ioctl(s, SIOCSVNETID, (caddr_t)&ifr) < 0)
-		warn("SIOCSVNETID");
-}
-
-/* ARGSUSED */
-void
-delvnetid(const char *ignored, int alsoignored)
-{
-	if (ioctl(s, SIOCDVNETID, &ifr) < 0)
-		warn("SIOCDVNETID");
-}
-
-void
-getvnetid(void)
-{
-	if (strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name)) >=
-	    sizeof(ifr.ifr_name))
-		errx(1, "vnetid: name is too long");
-
-	if (ioctl(s, SIOCGVNETID, &ifr) == -1) {
-		if (errno != EADDRNOTAVAIL)
-			return;
-
-		printf("\tvnetid: none\n");
-
-		return;
-	}
-
-	printf("\tvnetid: %u\n", ifr.ifr_vnetid);
-}
-
-void
-setifparent(const char *id, int param)
-{
-	struct if_parent ifp;
-
-	if (strlcpy(ifp.ifp_name, name, sizeof(ifp.ifp_name)) >=
-	    sizeof(ifp.ifp_name))
-		errx(1, "parent: name too long");
-
-	if (strlcpy(ifp.ifp_parent, id, sizeof(ifp.ifp_parent)) >=
-	    sizeof(ifp.ifp_parent))
-		errx(1, "parent: parent too long");
-
-	if (ioctl(s, SIOCSIFPARENT, (caddr_t)&ifp) < 0)
-		warn("SIOCSIFPARENT");
-}
-
-/* ARGSUSED */
-void
-delifparent(const char *ignored, int alsoignored)
-{
-	if (ioctl(s, SIOCDIFPARENT, &ifr) < 0)
-		warn("SIOCDIFPARENT");
-}
-#endif /* !SMALL */
-
-void
-getifparent(void)
-{
-	struct if_parent ifp;
-	const char *parent = "none";
-
-	memset(&ifp, 0, sizeof(ifp));
-	if (strlcpy(ifp.ifp_name, name, sizeof(ifp.ifp_name)) >=
-	    sizeof(ifp.ifp_name))
-		errx(1, "parent: name too long");
-
-	if (ioctl(s, SIOCGIFPARENT, (caddr_t)&ifp) == -1) {
-		if (errno != EADDRNOTAVAIL)
-			return;
-	} else
-		parent = ifp.ifp_parent;
-
-	printf("\tparent: %s\n", parent);
-}
-
-#ifndef SMALL
-
-void
 mpe_status(void)
 {
 	struct shim_hdr	shim;
@@ -3650,6 +3559,94 @@ setmpwcontrolword(const char *value, int d)
 		imrsave.imr_flags &= ~IMR_FLAG_CONTROLWORD;
 }
 #endif /* SMALL */
+
+void
+setvnetid(const char *id, int param)
+{
+	const char *errmsg = NULL;
+	uint32_t vnetid;
+
+	vnetid = strtonum(id, 0, UINT_MAX, &errmsg);
+	if (errmsg)
+		errx(1, "vnetid %s: %s", id, errmsg);
+
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_vnetid = vnetid;
+	if (ioctl(s, SIOCSVNETID, (caddr_t)&ifr) < 0)
+		warn("SIOCSVNETID");
+}
+
+/* ARGSUSED */
+void
+delvnetid(const char *ignored, int alsoignored)
+{
+	if (ioctl(s, SIOCDVNETID, &ifr) < 0)
+		warn("SIOCDVNETID");
+}
+
+void
+getvnetid(void)
+{
+	if (strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name)) >=
+	    sizeof(ifr.ifr_name))
+		errx(1, "vnetid: name is too long");
+
+	if (ioctl(s, SIOCGVNETID, &ifr) == -1) {
+		if (errno != EADDRNOTAVAIL)
+			return;
+
+		printf("\tvnetid: none\n");
+
+		return;
+	}
+
+	printf("\tvnetid: %u\n", ifr.ifr_vnetid);
+}
+
+void
+setifparent(const char *id, int param)
+{
+	struct if_parent ifp;
+
+	if (strlcpy(ifp.ifp_name, name, sizeof(ifp.ifp_name)) >=
+	    sizeof(ifp.ifp_name))
+		errx(1, "parent: name too long");
+
+	if (strlcpy(ifp.ifp_parent, id, sizeof(ifp.ifp_parent)) >=
+	    sizeof(ifp.ifp_parent))
+		errx(1, "parent: parent too long");
+
+	if (ioctl(s, SIOCSIFPARENT, (caddr_t)&ifp) < 0)
+		warn("SIOCSIFPARENT");
+}
+
+/* ARGSUSED */
+void
+delifparent(const char *ignored, int alsoignored)
+{
+	if (ioctl(s, SIOCDIFPARENT, &ifr) < 0)
+		warn("SIOCDIFPARENT");
+}
+
+void
+getifparent(void)
+{
+	struct if_parent ifp;
+	const char *parent = "none";
+
+	memset(&ifp, 0, sizeof(ifp));
+	if (strlcpy(ifp.ifp_name, name, sizeof(ifp.ifp_name)) >=
+	    sizeof(ifp.ifp_name))
+		errx(1, "parent: name too long");
+
+	if (ioctl(s, SIOCGIFPARENT, (caddr_t)&ifp) == -1) {
+		if (errno != EADDRNOTAVAIL)
+			return;
+	} else
+		parent = ifp.ifp_parent;
+
+	printf("\tparent: %s\n", parent);
+}
 
 static int __tag = 0;
 static int __have_tag = 0;
