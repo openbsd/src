@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.7 2016/04/06 11:42:50 patrick Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.8 2016/04/06 12:10:04 patrick Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -498,26 +498,26 @@ fdt_get_memory_address(void *node, int idx, struct fdt_memory *mem)
 	void *parent;
 	int ac, sc, off, ret, *in, inlen;
 
-	if (node == NULL)
-		return 1;
+	if (node == NULL || mem == NULL)
+		return EINVAL;
 
 	parent = fdt_parent_node(node);
 	if (parent == NULL)
-		return 1;
+		return EINVAL;
 
 	/* We only support 32-bit (1), and 64-bit (2) wide addresses here. */
 	ret = fdt_node_property_int(parent, "#address-cells", &ac);
 	if (ret != 1 || ac <= 0 || ac > 2)
-		return 1;
+		return EINVAL;
 
 	/* We only support 32-bit (1), and 64-bit (2) wide sizes here. */
 	ret = fdt_node_property_int(parent, "#size-cells", &sc);
 	if (ret != 1 || sc <= 0 || sc > 2)
-		return 1;
+		return EINVAL;
 
 	inlen = fdt_node_property(node, "reg", (char **)&in) / sizeof(int);
 	if (inlen < ((idx + 1) * (ac + sc)))
-		return 1;
+		return EINVAL;
 
 	off = idx * (ac + sc);
 
