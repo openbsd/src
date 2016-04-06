@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.317 2016/03/02 19:45:10 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.318 2016/04/06 01:39:17 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -181,6 +181,7 @@ void	settunnelinst(const char *, int);
 void	settunnelttl(const char *, int);
 void	setvnetid(const char *, int);
 void	delvnetid(const char *, int);
+void	getvnetid(void);
 void	setifparent(const char *, int);
 void	delifparent(const char *, int);
 void	getifparent(void);
@@ -2850,8 +2851,6 @@ phys_status(int force)
 
 	if (dstport)
 		printf(":%u", ntohs(dstport));
-	if (ioctl(s, SIOCGVNETID, (caddr_t)&ifr) == 0)
-		printf(" vnetid %d", ifr.ifr_vnetid);
 	if (ioctl(s, SIOCGLIFPHYTTL, (caddr_t)&ifr) == 0 && ifr.ifr_ttl > 0)
 		printf(" ttl %d", ifr.ifr_ttl);
 #ifndef SMALL
@@ -2943,6 +2942,7 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 		printf("\tpatch: %s\n", ifname);
 #endif
 	vlan_status();
+	getvnetid();
 	getifparent();
 #ifndef SMALL
 	carp_status();
@@ -3396,6 +3396,25 @@ delvnetid(const char *ignored, int alsoignored)
 {
 	if (ioctl(s, SIOCDVNETID, &ifr) < 0)
 		warn("SIOCDVNETID");
+}
+
+void
+getvnetid(void)
+{
+	if (strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name)) >=
+	    sizeof(ifr.ifr_name))
+		errx(1, "vnetid: name is too long");
+
+	if (ioctl(s, SIOCGVNETID, &ifr) == -1) {
+		if (errno != EADDRNOTAVAIL)
+			return;
+
+		printf("\tvnetid: none\n");
+
+		return;
+	}
+
+	printf("\tvnetid: %u\n", ifr.ifr_vnetid);
 }
 
 void
