@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.47 2016/04/05 09:33:05 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.48 2016/04/06 06:15:06 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1894,17 +1894,21 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 	msr_store[6].vms_index = MSR_KERNELGSBASE;
 	msr_store[6].vms_data = 0ULL;		/* Initial value */
 
-	if (vmwrite(VMCS_EXIT_MSR_STORE_COUNT, 0x7)) {
+	/*
+	 * Currently we have the same count of entry/exit MSRs loads/stores
+	 * but this is not an architectural requirement.
+	 */
+	if (vmwrite(VMCS_EXIT_MSR_STORE_COUNT, VMX_NUM_MSR_STORE)) {
 		ret = EINVAL;
 		goto exit;
 	}
 
-	if (vmwrite(VMCS_EXIT_MSR_LOAD_COUNT, 0x7)) {
+	if (vmwrite(VMCS_EXIT_MSR_LOAD_COUNT, VMX_NUM_MSR_STORE)) {
 		ret = EINVAL;
 		goto exit;
 	}
 
-	if (vmwrite(VMCS_ENTRY_MSR_LOAD_COUNT, 0x7)) {
+	if (vmwrite(VMCS_ENTRY_MSR_LOAD_COUNT, VMX_NUM_MSR_STORE)) {
 		ret = EINVAL;
 		goto exit;
 	}
