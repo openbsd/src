@@ -896,7 +896,7 @@ client_init(struct addrinfo *aitop, int nconn, struct statctx *udp_sc,
 		}
 		if (sock == -1)
 			errx(1, "No host found");
-		if ((r = fcntl(sock, F_GETFL, 0)) == -1)
+		if ((r = fcntl(sock, F_GETFL)) == -1)
 			err(1, "fcntl(F_GETFL)");
 		r |= O_NONBLOCK;
 		if (fcntl(sock, F_SETFL, r) == -1)
