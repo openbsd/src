@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.c,v 1.20 2016/04/06 14:39:19 kettenis Exp $	*/
+/*	$OpenBSD: drm_crtc.c,v 1.21 2016/04/06 21:12:40 kettenis Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -98,6 +98,10 @@ EXPORT_SYMBOL(drm_warn_on_modeset_not_all_locked);
 		}						\
 		return "(unknown)";				\
 	}
+
+int	 drm_mode_handle_cmp(struct drm_mode_handle *, struct drm_mode_handle *);
+
+SPLAY_PROTOTYPE(drm_mode_tree, drm_mode_handle, entry, drm_mode_handle_cmp);
 
 /*
  * Global properties
@@ -309,21 +313,27 @@ EXPORT_SYMBOL(drm_get_format_name);
 static int drm_mode_object_get(struct drm_device *dev,
 			       struct drm_mode_object *obj, uint32_t obj_type)
 {
-	int ret;
+	struct drm_mode_handle *han;
+	int new_id = 0;
 
-	mutex_lock(&dev->mode_config.idr_mutex);
-	ret = idr_alloc(&dev->mode_config.crtc_idr, obj, 1, 0, GFP_KERNEL);
-	if (ret >= 0) {
-		/*
-		 * Set up the object linking under the protection of the idr
-		 * lock so that other users can't see inconsistent state.
-		 */
-		obj->id = ret;
-		obj->type = obj_type;
-	}
-	mutex_unlock(&dev->mode_config.idr_mutex);
-
-	return ret < 0 ? ret : 0;
+	if ((han = drm_calloc(1, sizeof(*han))) == NULL)
+		return -ENOMEM;
+	han->obj = obj;
+	rw_enter_write(&dev->mode_config.idr_rwl);
+	
+again:
+	new_id = han->handle = ++dev->mode_config.mode_obj_id;
+	/*
+	 * Make sure we have no duplicates. this'll hurt once we wrap, 0 is
+	 * reserved.
+	 */
+	obj->id = new_id;
+	obj->type = obj_type;
+	if (han->handle == 0 || SPLAY_INSERT(drm_mode_tree,
+		&dev->mode_config.mode_tree, han))
+		goto again;
+	rw_exit_write(&dev->mode_config.idr_rwl);
+	return 0;
 }
 
 /**
@@ -336,9 +346,13 @@ static int drm_mode_object_get(struct drm_device *dev,
 static void drm_mode_object_put(struct drm_device *dev,
 				struct drm_mode_object *object)
 {
-	mutex_lock(&dev->mode_config.idr_mutex);
-	idr_remove(&dev->mode_config.crtc_idr, object->id);
-	mutex_unlock(&dev->mode_config.idr_mutex);
+	struct drm_mode_handle han;
+	han.obj = object;
+	han.handle = object->id;
+
+	rw_enter_write(&dev->mode_config.idr_rwl);
+	SPLAY_REMOVE(drm_mode_tree, &dev->mode_config.mode_tree, &han);
+	rw_exit_write(&dev->mode_config.idr_rwl);
 }
 
 /**
@@ -354,16 +368,21 @@ struct drm_mode_object *drm_mode_object_find(struct drm_device *dev,
 		uint32_t id, uint32_t type)
 {
 	struct drm_mode_object *obj = NULL;
+	struct drm_mode_handle *han, search;
 
-	/* Framebuffers are reference counted and need their own lookup
-	 * function.*/
-	WARN_ON(type == DRM_MODE_OBJECT_FB);
-
-	mutex_lock(&dev->mode_config.idr_mutex);
-	obj = idr_find(&dev->mode_config.crtc_idr, id);
-	if (!obj || (obj->type != type) || (obj->id != id))
+	rw_enter_write(&dev->mode_config.idr_rwl);
+	search.handle = id;
+	han = SPLAY_FIND(drm_mode_tree, &dev->mode_config.mode_tree, &search);
+	if (han == NULL) {
+		rw_exit_write(&dev->mode_config.idr_rwl);
+		return NULL;
+	}
+	
+	obj = han->obj;
+	if (obj->type != type) {
 		obj = NULL;
-	mutex_unlock(&dev->mode_config.idr_mutex);
+	}
+	rw_exit_write(&dev->mode_config.idr_rwl);
 
 	return obj;
 }
@@ -425,15 +444,23 @@ static struct drm_framebuffer *__drm_framebuffer_lookup(struct drm_device *dev,
 							uint32_t id)
 {
 	struct drm_mode_object *obj = NULL;
+	struct drm_mode_handle *han, search;
 	struct drm_framebuffer *fb;
 
-	mutex_lock(&dev->mode_config.idr_mutex);
-	obj = idr_find(&dev->mode_config.crtc_idr, id);
+	rw_enter_write(&dev->mode_config.idr_rwl);
+	search.handle = id;
+	han = SPLAY_FIND(drm_mode_tree, &dev->mode_config.mode_tree, &search);
+	if (han == NULL) {
+		rw_exit_write(&dev->mode_config.idr_rwl);
+		return NULL;
+	}
+
+	obj = han->obj;
 	if (!obj || (obj->type != DRM_MODE_OBJECT_FB) || (obj->id != id))
 		fb = NULL;
 	else
 		fb = obj_to_fb(obj);
-	mutex_unlock(&dev->mode_config.idr_mutex);
+	rw_exit_write(&dev->mode_config.idr_rwl);
 
 	return fb;
 }
@@ -501,9 +528,13 @@ static void __drm_framebuffer_unreference(struct drm_framebuffer *fb)
 static void __drm_framebuffer_unregister(struct drm_device *dev,
 					 struct drm_framebuffer *fb)
 {
-	mutex_lock(&dev->mode_config.idr_mutex);
-	idr_remove(&dev->mode_config.crtc_idr, fb->base.id);
-	mutex_unlock(&dev->mode_config.idr_mutex);
+	struct drm_mode_handle han;
+	han.obj = &fb->base;
+	han.handle = fb->base.id;
+
+	rw_enter_write(&dev->mode_config.idr_rwl);
+	SPLAY_REMOVE(drm_mode_tree, &dev->mode_config.mode_tree, &han);
+	rw_exit_write(&dev->mode_config.idr_rwl);
 
 	fb->base.id = 0;
 
@@ -4058,7 +4089,7 @@ EXPORT_SYMBOL(drm_format_vert_chroma_subsampling);
 void drm_mode_config_init(struct drm_device *dev)
 {
 	rw_init(&dev->mode_config.mutex, "mcrwl");
-	rw_init(&dev->mode_config.idr_mutex, "idrwl");
+	rw_init(&dev->mode_config.idr_rwl, "idrwl");
 	rw_init(&dev->mode_config.fb_lock, "fblk");
 	INIT_LIST_HEAD(&dev->mode_config.fb_list);
 	INIT_LIST_HEAD(&dev->mode_config.crtc_list);
@@ -4068,7 +4099,7 @@ void drm_mode_config_init(struct drm_device *dev)
 	INIT_LIST_HEAD(&dev->mode_config.property_list);
 	INIT_LIST_HEAD(&dev->mode_config.property_blob_list);
 	INIT_LIST_HEAD(&dev->mode_config.plane_list);
-	idr_init(&dev->mode_config.crtc_idr);
+	SPLAY_INIT(&dev->mode_config.mode_tree);
 
 	drm_modeset_lock_all(dev);
 	drm_mode_create_standard_connector_properties(dev);
@@ -4153,6 +4184,18 @@ void drm_mode_config_cleanup(struct drm_device *dev)
 		crtc->funcs->destroy(crtc);
 	}
 
+#ifdef __linux__
 	idr_destroy(&dev->mode_config.crtc_idr);
+#else
+	/* XXX destroy idr/SPLAY tree */
+#endif
 }
 EXPORT_SYMBOL(drm_mode_config_cleanup);
+
+int      
+drm_mode_handle_cmp(struct drm_mode_handle *a, struct drm_mode_handle *b)
+{
+	return a->handle < b->handle ? -1 : a->handle > b->handle;
+}
+
+SPLAY_GENERATE(drm_mode_tree, drm_mode_handle, entry, drm_mode_handle_cmp);

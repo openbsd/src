@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.h,v 1.7 2016/04/06 14:39:19 kettenis Exp $	*/
+/*	$OpenBSD: drm_crtc.h,v 1.8 2016/04/06 21:12:40 kettenis Exp $	*/
 /*
  * Copyright © 2006 Keith Packard
  * Copyright © 2007-2008 Dave Airlie
@@ -837,8 +837,9 @@ struct drm_mode_group {
  */
 struct drm_mode_config {
 	struct rwlock mutex; /* protects configuration (mode lists etc.) */
-	struct rwlock idr_mutex; /* for IDR management */
-	struct idr crtc_idr; /* use this idr for all IDs, fb, crtc, connector, modes - just makes life easier */
+	struct rwlock idr_rwl; /* for IDR management */
+	SPLAY_HEAD(drm_mode_tree, drm_mode_handle) mode_tree; /* use this idr for all IDs, fb, crtc, connector, modes - just makes life easier */
+	uint32_t		 mode_obj_id;
 	/* this is limited to one for now */
 
 
