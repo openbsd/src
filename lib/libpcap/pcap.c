@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.c,v 1.18 2016/04/05 21:24:02 krw Exp $	*/
+/*	$OpenBSD: pcap.c,v 1.19 2016/04/06 08:02:56 jasper Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -276,6 +276,23 @@ pcap_list_datalinks(pcap_t *p, int **dlt_buffer)
 		    sizeof(**dlt_buffer) * p->dlt_count);
 		return (p->dlt_count);
 	}
+}
+
+/*
+ * In Windows, you might have a library built with one version of the
+ * C runtime library and an application built with another version of
+ * the C runtime library, which means that the library might use one
+ * version of malloc() and free() and the application might use another
+ * version of malloc() and free().  If so, that means something
+ * allocated by the library cannot be freed by the application, so we   
+ * need to have a pcap_free_datalinks() routine to free up the list
+ * allocated by pcap_list_datalinks(), even though it's just a wrapper
+ * around free().
+ */
+void
+pcap_free_datalinks(int *dlt_list)
+{
+	free(dlt_list);
 }
 
 struct dlt_choice {
@@ -620,6 +637,24 @@ pcap_open_dead(int linktype, int snaplen)
 	p->linktype = linktype;
 	p->fd = -1;
 	return p;
+}
+
+/*
+ * Given a BPF program, a pcap_pkthdr structure for a packet, and the raw
+ * data for the packet, check whether the packet passes the filter.
+ * Returns the return value of the filter program, which will be zero if
+ * the packet doesn't pass and non-zero if the packet does pass.
+ */
+int
+pcap_offline_filter(const struct bpf_program *fp, const struct pcap_pkthdr *h,
+        const u_char *pkt)
+{
+	struct bpf_insn *fcode = fp->bf_insns;
+
+	if (fcode != NULL)
+		return (bpf_filter(fcode, pkt, h->len, h->caplen));
+	else
+		return (0);
 }
 
 const char *

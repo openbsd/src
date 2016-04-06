@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.h,v 1.17 2016/04/02 08:49:49 dlg Exp $	*/
+/*	$OpenBSD: pcap.h,v 1.18 2016/04/06 08:02:56 jasper Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -198,9 +198,12 @@ int	pcap_compile(pcap_t *, struct bpf_program *, char *, int,
 int	pcap_compile_nopcap(int, int, struct bpf_program *,
 	    char *, int, bpf_u_int32);
 void	pcap_freecode(struct bpf_program *);
+int	pcap_offline_filter(const struct bpf_program *,
+	    const struct pcap_pkthdr *, const u_char *);
 int	pcap_datalink(pcap_t *);
 int	pcap_list_datalinks(pcap_t *, int **);
 int	pcap_set_datalink(pcap_t *, int);
+void	pcap_free_datalinks(int *);
 int	pcap_datalink_name_to_val(const char *);
 const char *pcap_datalink_val_to_name(int);
 const char *pcap_datalink_val_to_description(int);
