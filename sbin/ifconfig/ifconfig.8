@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.266 2016/02/28 21:55:36 tim Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.267 2016/04/06 10:07:14 jsg Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: February 28 2016 $
+.Dd $Mdocdate: April 6 2016 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1138,6 +1138,7 @@ Clear the IPv6 anycast address bit.
 .It Cm autoconfprivacy
 Enable privacy extensions for stateless IPv6 address autoconfiguration
 (RFC 4941) on the interface.
+These extensions are enabled by default.
 The purpose of these extensions is to prevent tracking of individual
 devices which connect to the IPv6 internet from different networks
 using stateless autoconfiguration.
