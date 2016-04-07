@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.10 2015/10/17 15:00:11 doug Exp $ */
+/* $OpenBSD: enc.c,v 1.11 2016/04/07 20:02:19 jmc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -178,14 +178,14 @@ static struct option enc_options[] = {
 	{
 		.name = "iv",
 		.argname = "IV",
-		.desc = "IV to use, specified as a hexidecimal string",
+		.desc = "IV to use, specified as a hexadecimal string",
 		.type = OPTION_ARG,
 		.opt.arg = &enc_config.hiv,
 	},
 	{
 		.name = "K",
 		.argname = "key",
-		.desc = "Key to use, specified as a hexidecimal string",
+		.desc = "Key to use, specified as a hexadecimal string",
 		.type = OPTION_ARG,
 		.opt.arg = &enc_config.hkey,
 	},
@@ -256,7 +256,7 @@ static struct option enc_options[] = {
 	{
 		.name = "S",
 		.argname = "salt",
-		.desc = "Salt to use, specified as a hexidecimal string",
+		.desc = "Salt to use, specified as a hexadecimal string",
 		.type = OPTION_ARG,
 		.opt.arg = &enc_config.hsalt,
 	},
