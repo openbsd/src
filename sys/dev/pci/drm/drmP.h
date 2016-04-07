@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.206 2016/04/06 21:12:40 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.207 2016/04/07 20:33:24 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -492,12 +492,6 @@ struct drm_gem_object {
 	struct uvm_object uobj;
 	SPLAY_ENTRY(drm_gem_object) entry;
 	struct uvm_object *uao;
-};
-
-struct drm_mode_handle {
-	SPLAY_ENTRY(drm_mode_handle) entry;
-	struct drm_mode_object	*obj;
-	uint32_t		 handle;
 };
 
 /* Size of ringbuffer for vblank timestamps. Just double-buffer
