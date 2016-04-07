@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.243 2016/04/05 19:26:15 natano Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.244 2016/04/07 09:58:11 natano Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -559,8 +559,11 @@ loop:
 		if (nvp->v_type == VCHR &&
 		    (cdevsw[major(nvp_rdev)].d_flags & D_CLONE) &&
 		    (minor(nvp_rdev) >> CLONE_SHIFT == 0)) {
-			nvp->v_specbitmap = malloc(CLONE_MAPSZ, M_VNODE,
-			    M_WAITOK | M_ZERO);
+			if (vp != NULLVP)
+				nvp->v_specbitmap = vp->v_specbitmap;
+			else
+				nvp->v_specbitmap = malloc(CLONE_MAPSZ,
+				    M_VNODE, M_WAITOK | M_ZERO);
 		}
 		*vpp = nvp;
 		if (vp != NULLVP) {
@@ -1071,6 +1074,11 @@ vgonel(struct vnode *vp, struct proc *p)
 	 * if it is on one.
 	 */
 	if ((vp->v_type == VBLK || vp->v_type == VCHR) && vp->v_specinfo != 0) {
+		if ((vp->v_flag & VALIASED) == 0 && vp->v_type == VCHR &&
+		    (cdevsw[major(vp->v_rdev)].d_flags & D_CLONE) &&
+		    (minor(vp->v_rdev) >> CLONE_SHIFT == 0)) {
+			free(vp->v_specbitmap, M_VNODE, CLONE_MAPSZ);
+		}
 		if (*vp->v_hashchain == vp) {
 			*vp->v_hashchain = vp->v_specnext;
 		} else {
@@ -1098,11 +1106,6 @@ vgonel(struct vnode *vp, struct proc *p)
 			if (vq == NULL)
 				vx->v_flag &= ~VALIASED;
 			vp->v_flag &= ~VALIASED;
-		}
-		if (vp->v_type == VCHR &&
-		    (cdevsw[major(vp->v_rdev)].d_flags & D_CLONE) &&
-		    (minor(vp->v_rdev) >> CLONE_SHIFT == 0)) {
-			free(vp->v_specbitmap, M_VNODE, CLONE_MAPSZ);
 		}
 		free(vp->v_specinfo, M_VNODE, sizeof(struct specinfo));
 		vp->v_specinfo = NULL;
