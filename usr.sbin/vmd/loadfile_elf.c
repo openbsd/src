@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.13 2016/04/05 09:33:05 mlarkin Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.14 2016/04/07 07:02:57 mlarkin Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -366,6 +366,9 @@ push_bootargs(bios_memmap_t *memmap, size_t n)
 	ba[i + 1] = consdev_sz;
 	ba[i + 2] = consdev_sz;
 	memcpy(&ba[i + 3], &consdev, sizeof(bios_consdev_t));
+	i = i + 3 + (sizeof(bios_consdev_t) / 4);
+
+	ba[i] = 0xFFFFFFFF; /* BOOTARG_END */
 
 	write_mem(BOOTARGS_PAGE, ba, PAGE_SIZE);
 
