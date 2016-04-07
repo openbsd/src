@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.25 2016/04/05 09:33:05 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.26 2016/04/07 05:51:26 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -21,10 +21,6 @@
 #include <sys/queue.h>
 #include <sys/uio.h>
 #include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/un.h>
-#include <sys/wait.h>
-#include <sys/mman.h>
 #include <sys/time.h>
 
 #include <dev/ic/comreg.h>
@@ -41,16 +37,10 @@
 #include <imsg.h>
 #include <limits.h>
 #include <pthread.h>
-#include <pwd.h>
-#include <signal.h>
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
-#include <termios.h>
 #include <unistd.h>
-#include <poll.h>
 #include <util.h>
 
 #include "vmd.h"
