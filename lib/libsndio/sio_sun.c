@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.25 2016/01/09 08:27:24 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.26 2016/04/07 06:30:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -75,43 +75,18 @@ static struct sio_ops sio_sun_ops = {
 	NULL, /* getvol */
 };
 
-/*
- * convert sun encoding to sio_par encoding
- */
 static int
-sio_sun_infotoenc(struct sio_sun_hdl *hdl, struct audio_prinfo *ai,
-    struct sio_par *par)
+sio_sun_adjpar(struct sio_sun_hdl *hdl, struct audio_swpar *ap)
 {
-	par->msb = ai->msb;
-	par->bits = ai->precision;
-	par->bps = ai->bps;
-	switch (ai->encoding) {
-	case AUDIO_ENCODING_SLINEAR_LE:
-		par->le = 1;
-		par->sig = 1;
-		break;
-	case AUDIO_ENCODING_SLINEAR_BE:
-		par->le = 0;
-		par->sig = 1;
-		break;
-	case AUDIO_ENCODING_ULINEAR_LE:
-		par->le = 1;
-		par->sig = 0;
-		break;
-	case AUDIO_ENCODING_ULINEAR_BE:
-		par->le = 0;
-		par->sig = 0;
-		break;
-	case AUDIO_ENCODING_SLINEAR:
-		par->le = SIO_LE_NATIVE;
-		par->sig = 1;
-		break;
-	case AUDIO_ENCODING_ULINEAR:
-		par->le = SIO_LE_NATIVE;
-		par->sig = 0;
-		break;
-	default:
-		DPRINTF("sio_sun_infotoenc: unsupported encoding\n");
+	if (hdl->sio.eof)
+		return 0;
+	if (ioctl(hdl->fd, AUDIO_SETPAR, ap)) {
+		DPERROR("AUDIO_SETPAR");
+		hdl->sio.eof = 1;
+		return 0;
+	}
+	if (ioctl(hdl->fd, AUDIO_GETPAR, ap)) {
+		DPERROR("AUDIO_GETPAR");
 		hdl->sio.eof = 1;
 		return 0;
 	}
@@ -119,83 +94,49 @@ sio_sun_infotoenc(struct sio_sun_hdl *hdl, struct audio_prinfo *ai,
 }
 
 /*
- * convert sio_par encoding to sun encoding
- */
-static void
-sio_sun_enctoinfo(struct sio_sun_hdl *hdl,
-    unsigned int *renc, struct sio_par *par)
-{
-	if (par->le == ~0U && par->sig == ~0U) {
-		*renc = ~0U;
-	} else if (par->le == ~0U || par->sig == ~0U) {
-		*renc = AUDIO_ENCODING_SLINEAR;
-	} else if (par->le && par->sig) {
-		*renc = AUDIO_ENCODING_SLINEAR_LE;
-	} else if (!par->le && par->sig) {
-		*renc = AUDIO_ENCODING_SLINEAR_BE;
-	} else if (par->le && !par->sig) {
-		*renc = AUDIO_ENCODING_ULINEAR_LE;
-	} else {
-		*renc = AUDIO_ENCODING_ULINEAR_BE;
-	}
-}
-
-/*
  * try to set the device to the given parameters and check that the
  * device can use them; return 1 on success, 0 on failure or error
  */
 static int
-sio_sun_tryinfo(struct sio_sun_hdl *hdl, struct sio_enc *enc,
+sio_sun_testpar(struct sio_sun_hdl *hdl, struct sio_enc *enc,
     unsigned int pchan, unsigned int rchan, unsigned int rate)
 {
-	struct audio_info aui;
-	struct audio_prinfo *pr;
+	struct audio_swpar ap;
 
-	pr = (hdl->sio.mode & SIO_PLAY) ? &aui.play : &aui.record;
-
-	AUDIO_INITINFO(&aui);
-	if (enc) {
-		if (enc->le && enc->sig) {
-			pr->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		} else if (!enc->le && enc->sig) {
-			pr->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		} else if (enc->le && !enc->sig) {
-			pr->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		} else {
-			pr->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		}
-		pr->precision = enc->bits;
+	AUDIO_INITPAR(&ap);
+	if (enc != NULL) {
+		ap.sig = enc->sig;
+		ap.bits = enc->bits;
+		ap.bps = enc->bps;
+		if (ap.bps > 1)
+			ap.le = enc->le;
+		if (ap.bps * 8 > ap.bits)
+			ap.msb = enc->msb;
 	}
 	if (rate)
-		pr->sample_rate = rate;
-	if ((hdl->sio.mode & (SIO_PLAY | SIO_REC)) == (SIO_PLAY | SIO_REC))
-		aui.record = aui.play;
+		ap.rate = rate;
 	if (pchan && (hdl->sio.mode & SIO_PLAY))
-		aui.play.channels = pchan;
+		ap.pchan = pchan;
 	if (rchan && (hdl->sio.mode & SIO_REC))
-		aui.record.channels = rchan;
-	if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
-		if (errno == EINVAL)
+		ap.rchan = rchan;
+	if (!sio_sun_adjpar(hdl, &ap))
+		return 0;
+	if (pchan && ap.pchan != pchan)
+		return 0;
+	if (rchan && ap.rchan != rchan)
+		return 0;
+	if (rate && ap.rate != rate)
+		return 0;
+	if (enc) {
+		if (ap.sig != enc->sig)
 			return 0;
-		DPERROR("sio_sun_tryinfo: setinfo");
-		hdl->sio.eof = 1;
-		return 0;
-	}
-	if (ioctl(hdl->fd, AUDIO_GETINFO, &aui) < 0) {
-		DPERROR("sio_sun_tryinfo: getinfo");
-		hdl->sio.eof = 1;
-		return 0;
-	}
-	if (pchan && aui.play.channels != pchan)
-		return 0;
-	if (rchan && aui.record.channels != rchan)
-		return 0;
-	if (rate) {
-		if ((hdl->sio.mode & SIO_PLAY) &&
-		    (aui.play.sample_rate != rate))
+		if (ap.bits != enc->bits)
 			return 0;
-		if ((hdl->sio.mode & SIO_REC) &&
-		    (aui.record.sample_rate != rate))
+		if (ap.bps != enc->bps)
+			return 0;
+		if (ap.bps > 1 && ap.le != enc->le)
+			return 0;
+		if (ap.bits < ap.bps * 8 && ap.msb != enc->msb)
 			return 0;
 	}
 	return 1;
@@ -207,8 +148,6 @@ sio_sun_tryinfo(struct sio_sun_hdl *hdl, struct sio_enc *enc,
 static int
 sio_sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 {
-#define NCHANS (sizeof(chans) / sizeof(chans[0]))
-#define NRATES (sizeof(rates) / sizeof(rates[0]))
 	static unsigned int chans[] = {
 		1, 2, 4, 6, 8, 10, 12
 	};
@@ -216,56 +155,38 @@ sio_sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 		8000, 11025, 12000, 16000, 22050, 24000,
 		32000, 44100, 48000, 64000, 88200, 96000
 	};
+	static unsigned int encs[] = {
+		8, 16, 24, 32
+	};
 	struct sio_sun_hdl *hdl = (struct sio_sun_hdl *)sh;
-	struct sio_par savepar;
-	struct audio_encoding ae;
-	unsigned int nenc = 0, nconf = 0;
+	struct audio_swpar savepar, ap;
+	unsigned int nconf = 0;
 	unsigned int enc_map = 0, rchan_map = 0, pchan_map = 0, rate_map;
 	unsigned int i, j, conf;
 
-	if (!sio_sun_getpar(&hdl->sio, &savepar))
+	if (ioctl(hdl->fd, AUDIO_GETPAR, &savepar)) {
+		DPERROR("AUDIO_GETPAR");
+		hdl->sio.eof = 1;
 		return 0;
+	}
 
 	/*
-	 * fill encoding list
+	 * get a subset of supported encodings
 	 */
-	for (ae.index = 0; nenc < SIO_NENC; ae.index++) {
-		if (ioctl(hdl->fd, AUDIO_GETENC, &ae) < 0) {
-			if (errno == EINVAL)
-				break;
-			DPERROR("sio_sun_getcap: getenc");
-			hdl->sio.eof = 1;
+	for (i = 0; i < sizeof(encs) / sizeof(encs[0]); i++) {
+		AUDIO_INITPAR(&ap);
+		ap.bits = encs[i];
+		ap.sig = (ap.bits > 8) ? 1 : 0;
+		if (!sio_sun_adjpar(hdl, &ap))
 			return 0;
+		if (ap.bits == encs[i]) {
+			cap->enc[i].sig = ap.sig;
+			cap->enc[i].bits = ap.bits;
+			cap->enc[i].le = ap.le;
+			cap->enc[i].bps = ap.bps;
+			cap->enc[i].msb = ap.msb;
+			enc_map |= 1 << i;
 		}
-		if (ae.flags & AUDIO_ENCODINGFLAG_EMULATED)
-			continue;
-		if (ae.encoding == AUDIO_ENCODING_SLINEAR_LE) {
-			cap->enc[nenc].le = 1;
-			cap->enc[nenc].sig = 1;
-		} else if (ae.encoding == AUDIO_ENCODING_SLINEAR_BE) {
-			cap->enc[nenc].le = 0;
-			cap->enc[nenc].sig = 1;
-		} else if (ae.encoding == AUDIO_ENCODING_ULINEAR_LE) {
-			cap->enc[nenc].le = 1;
-			cap->enc[nenc].sig = 0;
-		} else if (ae.encoding == AUDIO_ENCODING_ULINEAR_BE) {
-			cap->enc[nenc].le = 0;
-			cap->enc[nenc].sig = 0;
-		} else if (ae.encoding == AUDIO_ENCODING_SLINEAR) {
-			cap->enc[nenc].le = SIO_LE_NATIVE;
-			cap->enc[nenc].sig = 1;
-		} else if (ae.encoding == AUDIO_ENCODING_ULINEAR) {
-			cap->enc[nenc].le = SIO_LE_NATIVE;
-			cap->enc[nenc].sig = 0;
-		} else {
-			/* unsipported encoding */
-			continue;
-		}
-		cap->enc[nenc].bits = ae.precision;
-		cap->enc[nenc].bps = ae.bps;
-		cap->enc[nenc].msb = ae.msb;
-		enc_map |= (1 << nenc);
-		nenc++;
 	}
 
 	/*
@@ -276,17 +197,27 @@ sio_sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 	 * use the current encoding and try various channels.
 	 */
 	if (hdl->sio.mode & SIO_PLAY) {
-		memcpy(&cap->pchan, chans, NCHANS * sizeof(unsigned int));
-		for (i = 0; i < NCHANS; i++) {
-			if (sio_sun_tryinfo(hdl, NULL, chans[i], 0, 0))
+		for (i = 0; i < sizeof(chans) / sizeof(chans[0]); i++) {
+			AUDIO_INITPAR(&ap);
+			ap.pchan = chans[i];
+			if (!sio_sun_adjpar(hdl, &ap))
+				return 0;
+			if (ap.pchan == chans[i]) {
+				cap->pchan[i] = chans[i];
 				pchan_map |= (1 << i);
+			}
 		}
 	}
 	if (hdl->sio.mode & SIO_REC) {
-		memcpy(&cap->rchan, chans, NCHANS * sizeof(unsigned int));
-		for (i = 0; i < NCHANS; i++) {
-			if (sio_sun_tryinfo(hdl, NULL, 0, chans[i], 0))
+		for (i = 0; i < sizeof(chans) / sizeof(chans[0]); i++) {
+			AUDIO_INITPAR(&ap);
+			ap.pchan = chans[i];
+			if (!sio_sun_adjpar(hdl, &ap))
+				return 0;
+			if (ap.rchan == chans[i]) {
+				cap->rchan[i] = chans[i];
 				rchan_map |= (1 << i);
+			}
 		}
 	}
 
@@ -297,12 +228,16 @@ sio_sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 	 * uaudio devices), so certain rates may not be allowed with
 	 * certain encodings. We have to check rates for all encodings
 	 */
-	memcpy(&cap->rate, rates, NRATES * sizeof(unsigned int));
-	for (j = 0; j < nenc; j++) {
+	for (j = 0; j < sizeof(encs) / sizeof(encs[0]); j++) {
 		rate_map = 0;
-		for (i = 0; i < NRATES; i++) {
-			if (sio_sun_tryinfo(hdl, &cap->enc[j], 0, 0, rates[i]))
+		if ((enc_map & (1 << j)) == 0)
+			continue;
+		for (i = 0; i < sizeof(rates) / sizeof(rates[0]); i++) {
+			if (sio_sun_testpar(hdl,
+				&cap->enc[j], 0, 0, rates[i])) {
+				cap->rate[i] = rates[i];
 				rate_map |= (1 << i);
+			}
 		}
 		for (conf = 0; conf < nconf; conf++) {
 			if (cap->confs[conf].rate == rate_map) {
@@ -321,11 +256,13 @@ sio_sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 		}
 	}
 	cap->nconf = nconf;
-	if (!sio_sun_setpar(&hdl->sio, &savepar))
+
+	if (ioctl(hdl->fd, AUDIO_SETPAR, &savepar)) {
+		DPERROR("AUDIO_SETPAR");
+		hdl->sio.eof = 1;
 		return 0;
+	}
 	return 1;
-#undef NCHANS
-#undef NRATES
 }
 
 int
@@ -374,9 +311,7 @@ sio_sun_getfd(const char *str, unsigned int mode, int nbio)
 struct sio_hdl *
 sio_sun_fdopen(int fd, unsigned int mode, int nbio)
 {
-	struct audio_info aui;
 	struct sio_sun_hdl *hdl;
-	struct sio_par par;
 
 #ifdef DEBUG
 	_sndio_debug_init();
@@ -389,36 +324,14 @@ sio_sun_fdopen(int fd, unsigned int mode, int nbio)
 	/*
 	 * pause the device
 	 */
-	AUDIO_INITINFO(&aui);
-	if (mode & SIO_PLAY)
-		aui.play.pause = 1;
-	if (mode & SIO_REC)
-		aui.record.pause = 1;
-	if (ioctl(fd, AUDIO_SETINFO, &aui) < 0) {
-		DPERROR("sio_open_sun: setinfo");
-		goto bad_free;
+	if (ioctl(fd, AUDIO_STOP) < 0) {
+		DPERROR("AUDIO_STOP");
+		free(hdl);
+		return NULL;
 	}
 	hdl->fd = fd;
-
-	/*
-	 * Default parameters may not be compatible with libsndio (eg. mulaw
-	 * encodings, different playback and recording parameters, etc...), so
-	 * set parameters to a random value. If the requested parameters are
-	 * not supported by the device, then sio_setpar() will pick supported
-	 * ones.
-	 */
-	sio_initpar(&par);
-	par.rate = 48000;
-	par.le = SIO_LE_NATIVE;
-	par.sig = 1;
-	par.bits = 16;
-	par.appbufsz = 1200;
-	if (!sio_setpar(&hdl->sio, &par))
-		goto bad_free;
+	hdl->filling = 0;
 	return (struct sio_hdl *)hdl;
- bad_free:
-	free(hdl);
-	return NULL;
 }
 
 struct sio_hdl *
@@ -452,7 +365,6 @@ static int
 sio_sun_start(struct sio_hdl *sh)
 {
 	struct sio_sun_hdl *hdl = (struct sio_sun_hdl *)sh;
-	struct audio_info aui;
 
 	hdl->obpf = hdl->sio.par.pchan * hdl->sio.par.bps;
 	hdl->ibpf = hdl->sio.par.rchan * hdl->sio.par.bps;
@@ -465,7 +377,7 @@ sio_sun_start(struct sio_hdl *sh)
 
 	if (hdl->sio.mode & SIO_PLAY) {
 		/*
-		 * keep the device paused and let sio_sun_write() trigger the
+		 * keep the device paused and let sio_sun_pollfd() trigger the
 		 * start later, to avoid buffer underruns
 		 */
 		hdl->filling = 1;
@@ -473,15 +385,11 @@ sio_sun_start(struct sio_hdl *sh)
 		/*
 		 * no play buffers to fill, start now!
 		 */
-		AUDIO_INITINFO(&aui);
-		if (hdl->sio.mode & SIO_REC)
-			aui.record.pause = 0;
-		if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
-			DPERROR("sio_sun_start: setinfo");
+		if (ioctl(hdl->fd, AUDIO_START) < 0) {
+			DPERROR("AUDIO_START");
 			hdl->sio.eof = 1;
 			return 0;
 		}
-		hdl->filling = 0;
 		_sio_onmove_cb(&hdl->sio, 0);
 	}
 	return 1;
@@ -491,35 +399,13 @@ static int
 sio_sun_stop(struct sio_hdl *sh)
 {
 	struct sio_sun_hdl *hdl = (struct sio_sun_hdl *)sh;
-	struct audio_info aui;
-	int mode;
 
-	if (ioctl(hdl->fd, AUDIO_GETINFO, &aui) < 0) {
-		DPERROR("sio_sun_stop: getinfo");
-		hdl->sio.eof = 1;
-		return 0;
+	if (hdl->filling) {
+		hdl->filling = 0;
+		return 1;
 	}
-	mode = aui.mode;
-
-	/*
-	 * there's no way to drain the device without blocking, so just
-	 * stop it until the kernel driver get fixed
-	 */
-	AUDIO_INITINFO(&aui);
-	aui.mode = 0;
-	if (hdl->sio.mode & SIO_PLAY)
-		aui.play.pause = 1;
-	if (hdl->sio.mode & SIO_REC)
-		aui.record.pause = 1;
-	if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
-		DPERROR("sio_sun_stop: setinfo1");
-		hdl->sio.eof = 1;
-		return 0;
-	}
-	AUDIO_INITINFO(&aui);
-	aui.mode = mode;
-	if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
-		DPERROR("sio_sun_stop: setinfo2");
+	if (ioctl(hdl->fd, AUDIO_STOP) < 0) {
+		DPERROR("AUDIO_STOP");
 		hdl->sio.eof = 1;
 		return 0;
 	}
@@ -529,210 +415,59 @@ sio_sun_stop(struct sio_hdl *sh)
 static int
 sio_sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 {
-#define NRETRIES 8
 	struct sio_sun_hdl *hdl = (struct sio_sun_hdl *)sh;
-	struct audio_info aui;
-	unsigned int i, infr, ibpf, onfr, obpf;
-	unsigned int bufsz, round;
-	unsigned int rate, req_rate, prec, enc;
+	struct audio_swpar ap;
 
-	/*
-	 * try to set parameters until the device accepts
-	 * a common encoding and rate for play and record
-	 */
-	rate = par->rate;
-	prec = par->bits;
-	sio_sun_enctoinfo(hdl, &enc, par);
-	for (i = 0;; i++) {
-		if (i == NRETRIES) {
-			DPRINTF("sio_sun_setpar: couldn't set parameters\n");
-			hdl->sio.eof = 1;
-			return 0;
-		}
-		AUDIO_INITINFO(&aui);
-		if (hdl->sio.mode & SIO_PLAY) {
-			aui.play.sample_rate = rate;
-			aui.play.precision = prec;
-			aui.play.encoding = enc;
-			aui.play.channels = par->pchan;
-		}
-		if (hdl->sio.mode & SIO_REC) {
-			aui.record.sample_rate = rate;
-			aui.record.precision = prec;
-			aui.record.encoding = enc;
-			aui.record.channels = par->rchan;
-		}
-		DPRINTFN(2, "sio_sun_setpar: %i: trying pars = %u/%u/%u\n",
-		    i, rate, prec, enc);
-		if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0 &&
-		    errno != EINVAL) {
-			DPERROR("sio_sun_setpar: setinfo(pars)");
-			hdl->sio.eof = 1;
-			return 0;
-		}
-		if (ioctl(hdl->fd, AUDIO_GETINFO, &aui) < 0) {
-			DPERROR("sio_sun_setpar: getinfo(pars)");
-			hdl->sio.eof = 1;
-			return 0;
-		}
-		enc = (hdl->sio.mode & SIO_REC) ?
-		    aui.record.encoding : aui.play.encoding;
-		switch (enc) {
-		case AUDIO_ENCODING_SLINEAR_LE:
-		case AUDIO_ENCODING_SLINEAR_BE:
-		case AUDIO_ENCODING_ULINEAR_LE:
-		case AUDIO_ENCODING_ULINEAR_BE:
-		case AUDIO_ENCODING_SLINEAR:
-		case AUDIO_ENCODING_ULINEAR:
-			break;
-		default:
-			DPRINTF("sio_sun_setpar: couldn't find encoding\n");
-			hdl->sio.eof = 1;
-			return 0;
-		}
-		if (hdl->sio.mode != (SIO_REC | SIO_PLAY))
-			break;
-		if (aui.play.sample_rate == aui.record.sample_rate &&
-		    aui.play.precision == aui.record.precision &&
-		    aui.play.encoding == aui.record.encoding)
-			break;
-		if (i < NRETRIES / 2) {
-			rate = aui.play.sample_rate;
-			prec = aui.play.precision;
-			enc = aui.play.encoding;
-		} else {
-			rate = aui.record.sample_rate;
-			prec = aui.record.precision;
-			enc = aui.record.encoding;
-		}
+	AUDIO_INITPAR(&ap);
+	ap.sig = par->sig;
+	ap.le = par->le;
+	ap.bits = par->bits;
+	ap.bps = par->bps;
+	ap.msb = par->msb;
+	ap.rate = par->rate;
+	if (hdl->sio.mode & SIO_PLAY)
+		ap.pchan = par->pchan;
+	if (hdl->sio.mode & SIO_REC)
+		ap.rchan = par->rchan;
+	if (par->round != ~0U && par->appbufsz != ~0U) {
+		ap.round = par->round;
+		ap.nblks = par->appbufsz / par->round;
+	} else if (par->round != ~0U) {
+		ap.round = par->round;
+		ap.nblks = 2;
+	} else if (par->appbufsz != ~0U) {
+		ap.round = par->appbufsz / 2;
+		ap.nblks = 2;
 	}
-
-	/*
-	 * If the rate that the hardware is using is different than
-	 * the requested rate, scale buffer sizes so they will be the
-	 * same time duration as what was requested.  This just gets
-	 * the rates to use for scaling, that actual scaling is done
-	 * later.
-	 */
-	rate = (hdl->sio.mode & SIO_REC) ? aui.record.sample_rate :
-	    aui.play.sample_rate;
-	req_rate = rate;
-	if (par->rate && par->rate != ~0U)
-		req_rate = par->rate;
-
-	/*
-	 * if block size and buffer size are not both set then
-	 * set the blocksize to half the buffer size
-	 */
-	bufsz = par->appbufsz;
-	round = par->round;
-	if (bufsz != ~0U) {
-		bufsz = bufsz * rate / req_rate;
-		if (round == ~0U)
-			round = (bufsz + 1) / 2;
-		else
-			round = round * rate / req_rate;
-	} else if (round != ~0U) {
-		round = round * rate / req_rate;
-		bufsz = round * 2;
-	} else
-		return 1;
-
-	/*
-	 * get the play/record frame size in bytes
-	 */
-	if (ioctl(hdl->fd, AUDIO_GETINFO, &aui) < 0) {
-		DPERROR("sio_sun_setpar: GETINFO");
+	if (ioctl(hdl->fd, AUDIO_SETPAR, &ap) < 0) {
+		DPERROR("AUDIO_SETPAR");
 		hdl->sio.eof = 1;
 		return 0;
 	}
-	ibpf = (hdl->sio.mode & SIO_REC) ?
-	    aui.record.channels * aui.record.bps : 1;
-	obpf = (hdl->sio.mode & SIO_PLAY) ?
-	    aui.play.channels * aui.play.bps : 1;
-
-	DPRINTFN(2, "sio_sun_setpar: bpf = (%u, %u)\n", ibpf, obpf);
-
-	/*
-	 * try to set parameters until the device accepts
-	 * a common block size for play and record
-	 */
-	for (i = 0; i < NRETRIES; i++) {
-		AUDIO_INITINFO(&aui);
-		aui.hiwat = (bufsz + round - 1) / round;
-		aui.lowat = aui.hiwat;
-		if (hdl->sio.mode & SIO_REC)
-			aui.record.block_size = round * ibpf;
-		if (hdl->sio.mode & SIO_PLAY)
-			aui.play.block_size = round * obpf;
-		if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
-			DPERROR("sio_sun_setpar2: SETINFO");
-			hdl->sio.eof = 1;
-			return 0;
-		}
-		if (ioctl(hdl->fd, AUDIO_GETINFO, &aui) < 0) {
-			DPERROR("sio_sun_setpar2: GETINFO");
-			hdl->sio.eof = 1;
-			return 0;
-		}
-		infr = aui.record.block_size / ibpf;
-		onfr = aui.play.block_size / obpf;
-		DPRINTFN(2, "sio_sun_setpar: %i: round = %u -> (%u, %u)\n",
-		    i, round, infr, onfr);
-
-		/*
-		 * if half-duplex or both block sizes match, we're done
-		 */
-		if (hdl->sio.mode != (SIO_REC | SIO_PLAY) || infr == onfr) {
-			DPRINTFN(2, "sio_sun_setpar: blocksize ok\n");
-			return 1;
-		}
-
-		/*
-		 * half of the retries, retry with the smaller value,
-		 * then with the larger returned value
-		 */
-		if (i < NRETRIES / 2)
-			round = infr < onfr ? infr : onfr;
-		else
-			round = infr < onfr ? onfr : infr;
-	}
-	DPRINTFN(2, "sio_sun_setpar: couldn't find a working blocksize\n");
-	hdl->sio.eof = 1;
-	return 0;
-#undef NRETRIES
+	return 1;
 }
 
 static int
 sio_sun_getpar(struct sio_hdl *sh, struct sio_par *par)
 {
 	struct sio_sun_hdl *hdl = (struct sio_sun_hdl *)sh;
-	struct audio_info aui;
+	struct audio_swpar ap;
 
-	if (ioctl(hdl->fd, AUDIO_GETINFO, &aui) < 0) {
-		DPERROR("sio_sun_getpar: getinfo");
+	if (ioctl(hdl->fd, AUDIO_GETPAR, &ap) < 0) {
+		DPERROR("AUDIO_GETPAR");
 		hdl->sio.eof = 1;
 		return 0;
 	}
-	if (hdl->sio.mode & SIO_PLAY) {
-		par->rate = aui.play.sample_rate;
-		if (!sio_sun_infotoenc(hdl, &aui.play, par))
-			return 0;
-	} else if (hdl->sio.mode & SIO_REC) {
-		par->rate = aui.record.sample_rate;
-		if (!sio_sun_infotoenc(hdl, &aui.record, par))
-			return 0;
-	} else
-		return 0;
-	par->pchan = (hdl->sio.mode & SIO_PLAY) ?
-	    aui.play.channels : 0;
-	par->rchan = (hdl->sio.mode & SIO_REC) ?
-	    aui.record.channels : 0;
-	par->round = (hdl->sio.mode & SIO_REC) ?
-	    aui.record.block_size / (par->bps * par->rchan) :
-	    aui.play.block_size / (par->bps * par->pchan);
-	par->appbufsz = aui.hiwat * par->round;
-	par->bufsz = par->appbufsz;
+	par->sig = ap.sig;
+	par->le = ap.le;
+	par->bits = ap.bits;
+	par->bps = ap.bps;
+	par->msb = ap.msb;
+	par->rate = ap.rate;
+	par->pchan = ap.pchan;
+	par->rchan = ap.rchan;
+	par->round = ap.round;
+	par->appbufsz = par->bufsz = ap.nblks * ap.round;
 	par->xrun = SIO_IGNORE;
 	return 1;
 }
@@ -761,38 +496,6 @@ sio_sun_read(struct sio_hdl *sh, void *buf, size_t len)
 }
 
 static size_t
-sio_sun_autostart(struct sio_sun_hdl *hdl)
-{
-	struct audio_info aui;
-	struct pollfd pfd;
-
-	pfd.fd = hdl->fd;
-	pfd.events = POLLOUT;
-	while (poll(&pfd, 1, 0) < 0) {
-		if (errno == EINTR)
-			continue;
-		DPERROR("sio_sun_autostart: poll");
-		hdl->sio.eof = 1;
-		return 0;
-	}
-	if (!(pfd.revents & POLLOUT)) {
-		hdl->filling = 0;
-		AUDIO_INITINFO(&aui);
-		if (hdl->sio.mode & SIO_PLAY)
-			aui.play.pause = 0;
-		if (hdl->sio.mode & SIO_REC)
-			aui.record.pause = 0;
-		if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
-			DPERROR("sio_sun_autostart: setinfo");
-			hdl->sio.eof = 1;
-			return 0;
-		}
-		_sio_onmove_cb(&hdl->sio, 0);
-	}
-	return 1;
-}
-
-static size_t
 sio_sun_write(struct sio_hdl *sh, const void *buf, size_t len)
 {
 	struct sio_sun_hdl *hdl = (struct sio_sun_hdl *)sh;
@@ -808,10 +511,6 @@ sio_sun_write(struct sio_hdl *sh, const void *buf, size_t len)
 			hdl->sio.eof = 1;
 		}
 		return 0;
-	}
-	if (hdl->filling) {
-		if (!sio_sun_autostart(hdl))
-			return 0;
 	}
 	return n;
 }
@@ -829,6 +528,16 @@ sio_sun_pollfd(struct sio_hdl *sh, struct pollfd *pfd, int events)
 
 	pfd->fd = hdl->fd;
 	pfd->events = events;
+	if (hdl->filling && hdl->sio.wused == hdl->sio.par.bufsz *
+		hdl->sio.par.pchan * hdl->sio.par.bps) {
+		hdl->filling = 0;
+		if (ioctl(hdl->fd, AUDIO_START) < 0) {
+			DPERROR("AUDIO_START");
+			hdl->sio.eof = 1;
+			return 0;
+		}
+		_sio_onmove_cb(&hdl->sio, 0);
+	}
 	return 1;
 }
 
@@ -840,7 +549,8 @@ sio_sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 	int dierr = 0, doerr = 0, offset, delta;
 	int revents = pfd->revents;
 
-	if (!hdl->sio.started)
+	if ((pfd->revents & POLLHUP) ||
+	    (pfd->revents & (POLLIN | POLLOUT)) == 0)
 		return pfd->revents;
 	if (ioctl(hdl->fd, AUDIO_GETPOS, &ap) < 0) {
 		DPERROR("sio_sun_revents: GETPOS");
@@ -898,8 +608,5 @@ sio_sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 		hdl->idelta -= delta;
 		hdl->odelta -= delta;
 	}
-
-	if (hdl->filling)
-		revents |= POLLOUT; /* XXX: is this necessary ? */
 	return revents;
 }
