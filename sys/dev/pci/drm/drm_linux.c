@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.10 2016/04/05 20:44:03 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.11 2016/04/07 20:30:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -276,6 +276,7 @@ idr_alloc(struct idr *idr, void *ptr, int start, int end,
 {
 	int flags = (gfp_mask & GFP_NOWAIT) ? PR_NOWAIT : PR_WAITOK;
 	struct idr_entry *id;
+	int begin;
 
 	KERNEL_ASSERT_LOCKED();
 
@@ -291,10 +292,14 @@ idr_alloc(struct idr *idr, void *ptr, int start, int end,
 	if (end <= 0)
 		end = INT_MAX;
 
-	id->id = start + arc4random_uniform(end - start);
+	id->id = begin = start + arc4random_uniform(end - start);
 	while (SPLAY_INSERT(idr_tree, &idr->tree, id)) {
 		if (++id->id == end)
 			id->id = start;
+		if (id->id == begin) {
+			pool_put(&idr_pool, id);
+			return -ENOSPC;
+		}
 	}
 	id->ptr = ptr;
 	return id->id;
