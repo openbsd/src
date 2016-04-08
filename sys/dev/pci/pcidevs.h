@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1791 2016/03/17 20:25:00 uaa Exp 
+ *	OpenBSD: pcidevs,v 1.1792 2016/04/08 09:59:47 reyk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3110,6 +3110,7 @@
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_IGD_1	0x0f31		/* Bay Trail Video */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_IGD_2	0x0f32		/* Bay Trail Video */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_IGD_3	0x0f33		/* Bay Trail Video */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_EHCI	0x0f34		/* Bay Trail EHCI */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_XHCI	0x0f35		/* Bay Trail xHCI */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_8237	0x0f40		/* Bay Trail I2C DMA */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_I2C_1	0x0f41		/* Bay Trail I2C */
