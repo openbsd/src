@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.47 2016/02/03 07:42:14 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.48 2016/04/08 08:27:53 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -209,9 +209,10 @@ const struct drm_pcidev radeondrm_pciidlist[] = {
 };
 
 static struct drm_driver_info kms_driver = {
-	.flags =
-	    DRIVER_AGP | DRIVER_PCI_DMA | DRIVER_SG |
-	    DRIVER_HAVE_IRQ | DRIVER_HAVE_DMA | DRIVER_GEM | DRIVER_MODESET,
+	.driver_features =
+	    DRIVER_USE_AGP |
+	    DRIVER_HAVE_IRQ | DRIVER_IRQ_SHARED | DRIVER_GEM |
+	    DRIVER_MODESET,
 	.buf_priv_size = 0,
 	.firstopen = radeon_driver_firstopen_kms,
 	.open = radeon_driver_open_kms,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.c,v 1.22 2016/04/07 20:33:24 kettenis Exp $	*/
+/*	$OpenBSD: drm_crtc.c,v 1.23 2016/04/08 08:27:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -2759,7 +2759,7 @@ int drm_mode_getfb(struct drm_device *dev,
 	r->bpp = fb->bits_per_pixel;
 	r->pitch = fb->pitches[0];
 	if (fb->funcs->create_handle) {
-		if (file_priv->master || capable(CAP_SYS_ADMIN)) {
+		if (file_priv->is_master || capable(CAP_SYS_ADMIN)) {
 			ret = fb->funcs->create_handle(fb, file_priv,
 						       &r->handle);
 		} else {

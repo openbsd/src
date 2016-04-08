@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.146 2016/04/05 08:22:50 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.147 2016/04/08 08:27:53 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -418,31 +418,14 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	mtx_init(&dev->event_lock, IPL_TTY);
 	mtx_init(&dev->quiesce_mtx, IPL_NONE);
 
-	TAILQ_INIT(&dev->maplist);
 	SPLAY_INIT(&dev->files);
 	INIT_LIST_HEAD(&dev->vblank_event_list);
 
-	/*
-	 * the dma buffers api is just weird. offset 1Gb to ensure we don't
-	 * conflict with it.
-	 */
-	dev->handle_ext = extent_create("drmext", 1024*1024*1024, LONG_MAX,
-	    M_DRM, NULL, 0, EX_NOWAIT | EX_NOCOALESCE);
-	if (dev->handle_ext == NULL) {
-		DRM_ERROR("Failed to initialise handle extent\n");
-		goto error;
-	}
-
-	if (dev->driver->flags & DRIVER_AGP) {
+	if (drm_core_check_feature(dev, DRIVER_USE_AGP)) {
 #if __OS_HAS_AGP
 		if (da->is_agp)
 			dev->agp = drm_agp_init();
 #endif
-		if (dev->driver->flags & DRIVER_AGP_REQUIRE &&
-		    dev->agp == NULL) {
-			printf(": couldn't find agp\n");
-			goto error;
-		}
 		if (dev->agp != NULL) {
 			if (drm_mtrr_add(dev->agp->info.ai_aperture_base,
 			    dev->agp->info.ai_aperture_size, DRM_MTRR_WC) == 0)
@@ -450,14 +433,14 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	if (dev->driver->flags & DRIVER_GEM) {
+	if (dev->driver->driver_features & DRIVER_GEM) {
 		KASSERT(dev->driver->gem_size >= sizeof(struct drm_gem_object));
 		/* XXX unique name */
 		pool_init(&dev->objpl, dev->driver->gem_size, 0, 0, 0,
 		    "drmobjpl", NULL);
 	}
 
-	if (dev->driver->flags & DRIVER_GEM) {
+	if (dev->driver->driver_features & DRIVER_GEM) {
 		ret = drm_gem_init(dev);
 		if (ret) {
 			DRM_ERROR("Cannot initialize graphics execution manager (GEM)\n");
@@ -480,13 +463,11 @@ drm_detach(struct device *self, int flags)
 
 	drm_lastclose(dev);
 
-	if (dev->driver->flags & DRIVER_GEM)
+	if (dev->driver->driver_features & DRIVER_GEM)
 		drm_gem_destroy(dev);
 
-	if (dev->driver->flags & DRIVER_GEM)
+	if (dev->driver->driver_features & DRIVER_GEM)
 		pool_destroy(&dev->objpl);
-
-	extent_destroy(dev->handle_ext);
 
 	drm_vblank_cleanup(dev);
 
@@ -666,8 +647,6 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 		goto err;
 	}
 
-	file_priv->kdev = kdev;
-	file_priv->flags = flags;
 	file_priv->filp = (void *)&file_priv;
 	file_priv->minor = minor(kdev);
 	INIT_LIST_HEAD(&file_priv->fbs);
@@ -678,7 +657,7 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 	/* for compatibility root is always authenticated */
 	file_priv->authenticated = DRM_SUSER(p);
 
-	if (dev->driver->flags & DRIVER_GEM)
+	if (dev->driver->driver_features & DRIVER_GEM)
 		drm_gem_open(dev, file_priv);
 
 	if (dev->driver->open) {
@@ -696,7 +675,7 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 		goto free_priv;
 	}
 
-	file_priv->master = SPLAY_EMPTY(&dev->files);
+	file_priv->is_master = SPLAY_EMPTY(&dev->files);
 
 	SPLAY_INSERT(drm_file_tree, &dev->files, file_priv);
 	mutex_unlock(&dev->struct_mutex);
@@ -761,10 +740,10 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 
 	mtx_leave(&dev->event_lock);
 
-	if (dev->driver->flags & DRIVER_MODESET)
+	if (dev->driver->driver_features & DRIVER_MODESET)
 		drm_fb_release(dev, file_priv);
 
-	if (dev->driver->flags & DRIVER_GEM)
+	if (dev->driver->driver_features & DRIVER_GEM)
 		drm_gem_release(dev, file_priv);
 
 	mutex_lock(&dev->struct_mutex);
@@ -804,8 +783,6 @@ drm_do_ioctl(struct drm_device *dev, int minor, u_long cmd, caddr_t data)
 		DRM_ERROR("can't find authenticator\n");
 		return -EINVAL;
 	}
-
-	++file_priv->ioctl_count;
 
 	DRM_DEBUG("pid=%d, cmd=0x%02lx, nr=0x%02x, dev 0x%lx, auth=%d\n",
 	    DRM_CURRENTPID, cmd, (u_int)DRM_IOCTL_NR(cmd), (long)&dev->device,
@@ -856,7 +833,7 @@ drm_do_ioctl(struct drm_device *dev, int minor, u_long cmd, caddr_t data)
 
 	if (((ioctl->flags & DRM_ROOT_ONLY) && !DRM_SUSER(curproc)) ||
 	    ((ioctl->flags & DRM_AUTH) && !file_priv->authenticated) ||
-	    ((ioctl->flags & DRM_MASTER) && !file_priv->master))
+	    ((ioctl->flags & DRM_MASTER) && !file_priv->is_master))
 		return (-EACCES);
 
 	if (ioctl->flags & DRM_UNLOCKED)
@@ -1017,104 +994,10 @@ drmpoll(dev_t kdev, int events, struct proc *p)
 	return (revents);
 }
 
-struct drm_local_map *
-drm_getsarea(struct drm_device *dev)
-{
-	struct drm_local_map	*map;
-
-	mutex_lock(&dev->struct_mutex);
-	TAILQ_FOREACH(map, &dev->maplist, link) {
-		if (map->type == _DRM_SHM && (map->flags & _DRM_CONTAINS_LOCK))
-			break;
-	}
-	mutex_unlock(&dev->struct_mutex);
-	return (map);
-}
-
 paddr_t
 drmmmap(dev_t kdev, off_t offset, int prot)
 {
-	struct drm_device	*dev = drm_get_device_from_kdev(kdev);
-	struct drm_local_map	*map;
-	struct drm_file		*file_priv;
-	enum drm_map_type	 type;
-
-	if (dev == NULL)
-		return (-1);
-
-	mutex_lock(&dev->struct_mutex);
-	file_priv = drm_find_file_by_minor(dev, minor(kdev));
-	mutex_unlock(&dev->struct_mutex);
-	if (file_priv == NULL) {
-		DRM_ERROR("can't find authenticator\n");
-		return (-1);
-	}
-
-	if (!file_priv->authenticated)
-		return (-1);
-
-	if (dev->dma && offset >= 0 && offset < ptoa(dev->dma->page_count)) {
-		struct drm_device_dma *dma = dev->dma;
-		paddr_t	phys = -1;
-
-		rw_enter_write(&dma->dma_lock);
-		if (dma->pagelist != NULL)
-			phys = dma->pagelist[offset >> PAGE_SHIFT];
-		rw_exit_write(&dma->dma_lock);
-
-		return (phys);
-	}
-
-	/*
-	 * A sequential search of a linked list is
- 	 * fine here because: 1) there will only be
-	 * about 5-10 entries in the list and, 2) a
-	 * DRI client only has to do this mapping
-	 * once, so it doesn't have to be optimized
-	 * for performance, even if the list was a
-	 * bit longer.
-	 */
-	mutex_lock(&dev->struct_mutex);
-	TAILQ_FOREACH(map, &dev->maplist, link) {
-		if (offset >= map->ext &&
-		    offset < map->ext + map->size) {
-			offset -= map->ext;
-			break;
-		}
-	}
-
-	if (map == NULL) {
-		mutex_unlock(&dev->struct_mutex);
-		DRM_DEBUG("can't find map\n");
-		return (-1);
-	}
-	if (((map->flags & _DRM_RESTRICTED) && file_priv->master == 0)) {
-		mutex_unlock(&dev->struct_mutex);
-		DRM_DEBUG("restricted map\n");
-		return (-1);
-	}
-	type = map->type;
-	mutex_unlock(&dev->struct_mutex);
-
-	switch (type) {
-#if __OS_HAS_AGP
-	case _DRM_AGP:
-		return agp_mmap(dev->agp->agpdev,
-		    offset + map->offset - dev->agp->base, prot);
-#endif
-	case _DRM_FRAME_BUFFER:
-	case _DRM_REGISTERS:
-		return (offset + map->offset);
-		break;
-	case _DRM_SHM:
-	case _DRM_CONSISTENT:
-		return (bus_dmamem_mmap(dev->dmat, map->dmamem->segs,
-		    map->dmamem->nsegs, offset, prot, BUS_DMA_NOWAIT));
-	default:
-		DRM_ERROR("bad map type %d\n", type);
-		return (-1);	/* This should never happen. */
-	}
-	/* NOTREACHED */
+	return -1;
 }
 
 /*

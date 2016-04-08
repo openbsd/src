@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.40 2016/04/05 20:46:45 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.41 2016/04/08 08:27:53 kettenis Exp $	*/
 /*
  * Copyright © 2008,2010 Intel Corporation
  *
@@ -1031,7 +1031,7 @@ i915_gem_do_execbuffer(struct drm_device *dev, void *data,
 
 	flags = 0;
 	if (args->flags & I915_EXEC_SECURE) {
-		if (!file->master || !capable(CAP_SYS_ADMIN))
+		if (!file->is_master || !capable(CAP_SYS_ADMIN))
 		    return -EPERM;
 
 		flags |= I915_DISPATCH_SECURE;

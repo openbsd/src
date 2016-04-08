@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.207 2016/04/07 20:33:24 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.208 2016/04/08 08:27:53 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -74,6 +74,22 @@
 #include "drm_mm.h"
 #include "drm_atomic.h"
 #include "agp.h"
+
+/***********************************************************************/
+/** \name DRM template customization defaults */
+/*@{*/
+
+/* driver capabilities and requirements mask */
+#define DRIVER_USE_AGP     0x1
+#define DRIVER_PCI_DMA     0x8
+#define DRIVER_SG          0x10
+#define DRIVER_HAVE_DMA    0x20
+#define DRIVER_HAVE_IRQ    0x40
+#define DRIVER_IRQ_SHARED  0x80
+#define DRIVER_GEM         0x1000
+#define DRIVER_MODESET     0x2000
+#define DRIVER_PRIME       0x4000
+#define DRIVER_RENDER      0x8000
 
 #define	DRM_DEBUGBITS_DEBUG		0x1
 #define	DRM_DEBUGBITS_KMS		0x2
@@ -287,18 +303,6 @@ struct drm_ioctl_desc {
 #define DRM_IOCTL_DEF_DRV(ioctl, _func, _flags)			\
 	[DRM_IOCTL_NR(DRM_##ioctl)] = {.cmd = DRM_##ioctl, .func = _func, .flags = _flags, .cmd_drv = DRM_IOCTL_##ioctl}
 
-struct drm_buf {
-	int		  idx;	       /* Index into master buflist	     */
-	int		  total;       /* Buffer size			     */
-	int		  used;	       /* Amount of buffer in use (for DMA)  */
-	unsigned long	  offset;      /* Byte offset (used internally)	     */
-	void 		  *address;    /* KVA of buffer			     */
-	unsigned long	  bus_address; /* Bus address of buffer		     */
-	__volatile__ int  pending;     /* On hardware DMA queue		     */
-	struct drm_file   *file_priv;  /* Unique identifier of holding process */
-	void		  *dev_private;  /* Per-buffer private storage       */
-};
-
 struct drm_dmamem {
 	bus_dmamap_t		map;
 	caddr_t			kva;
@@ -307,15 +311,6 @@ struct drm_dmamem {
 	bus_dma_segment_t	segs[1];
 };
 typedef struct drm_dmamem drm_dma_handle_t;
-
-struct drm_buf_entry {
-	struct drm_dmamem	**seglist;
-	struct drm_buf		*buflist;
-	int			 buf_count;
-	int			 buf_size;
-	int			 page_order;
-	int			 seg_count;
-};
 
 struct drm_pending_event {
 	struct drm_event *event;
@@ -326,24 +321,16 @@ struct drm_pending_event {
 	void (*destroy)(struct drm_pending_event *event);
 };
 
+/** File private data */
 struct drm_file {
-	wait_queue_head_t event_wait;
-	struct list_head event_list;
-	int event_space;
-
-	struct selinfo				 rsel;
-	SPLAY_ENTRY(drm_file)			 link;
-	int					 authenticated;
+	unsigned always_authenticated :1;
+	unsigned authenticated :1;
+	unsigned is_master :1; /* this file private is a master for a minor */
 	/* true when the client has asked us to expose stereo 3D mode flags */
-	int					 stereo_allowed;
-	unsigned long				 ioctl_count;
-	dev_t					 kdev;
-	drm_magic_t				 magic;
-	int					 flags;
-	int					 master;
-	int					 minor;
-	struct list_head			 fbs;
-	struct rwlock				 fbs_lock;
+	unsigned stereo_allowed :1;
+
+	drm_magic_t magic;
+	int minor;
 
 	/** Mapping of mm object handles to object pointers. */
 	struct idr object_idr;
@@ -352,36 +339,22 @@ struct drm_file {
 
 	struct file *filp;
 	void *driver_priv;
-};
 
-/* This structure, in the struct drm_device, is always initialized while
- * the device is open.  dev->dma_lock protects the incrementing of
- * dev->buf_use, which when set marks that no further bufs may be allocated
- * until device teardown occurs (when the last open of the device has closed).
- * The high/low watermarks of bufs are only touched by the X Server, and thus
- * not concurrently accessed, so no locking is needed.
- */
-struct drm_device_dma {
-	struct rwlock	 	 dma_lock;
-	struct drm_buf_entry	 bufs[DRM_MAX_ORDER+1];
-	struct drm_buf		**buflist;	/* Vector of pointers info bufs*/
-	unsigned long		*pagelist;
-	unsigned long		 byte_count;
-	int			 buf_use;	/* Buffers used no more alloc */
-	int			 buf_count;
-	int			 page_count;
-	int			 seg_count;
-	enum {
-		_DRM_DMA_USE_AGP = 0x01,
-		_DRM_DMA_USE_SG  = 0x02
-	} flags;
-};
+	/**
+	 * fbs - List of framebuffers associated with this file.
+	 *
+	 * Protected by fbs_lock. Note that the fbs list holds a reference on
+	 * the fb object to prevent it from untimely disappearing.
+	 */
+	struct list_head fbs;
+	struct rwlock fbs_lock;
 
-struct drm_agp_mem {
-	void               *handle;
-	unsigned long      bound; /* address */
-	int                pages;
-	TAILQ_ENTRY(drm_agp_mem) link;
+	wait_queue_head_t event_wait;
+	struct list_head event_list;
+	int event_space;
+
+	struct selinfo rsel;
+	SPLAY_ENTRY(drm_file) link;
 };
 
 struct drm_agp_head {
@@ -396,30 +369,6 @@ struct drm_agp_head {
 	int					 cant_use_aperture;
 	int					 enabled;
    	int					 mtrr;
-};
-
-struct drm_local_map {
-	TAILQ_ENTRY(drm_local_map)	 link;	/* Link for map list */
-	struct drm_dmamem		*dmamem;/* Handle to DMA mem */
-	void				*handle;/* KVA, if mapped */
-	bus_space_tag_t			 bst;	/* Tag for mapped pci mem */
-	bus_space_handle_t		 bsh;	/* Handle to mapped pci mem */
-	u_long				 ext;	/* extent for mmap */
-	u_long				 offset;/* Physical address */
-	u_long				 size;	/* Physical size (bytes) */
-	int				 mtrr;	/* Boolean: MTRR used */
-	enum drm_map_flags		 flags;	/* Flags */
-	enum drm_map_type		 type;	/* Type of memory mapped */
-};
-
-/* Heap implementation for radeon and i915 legacy */
-TAILQ_HEAD(drm_heap, drm_mem);
-
-struct drm_mem {
-	TAILQ_ENTRY(drm_mem)	 link;
-	struct drm_file		*file_priv; /* NULL: free, other: real files */
-	int			 start;
-	int			 size;
 };
 
 /* location of GART table */
@@ -564,22 +513,10 @@ struct drm_driver_info {
 	const char *desc;		/* Longer driver name		   */
 	const char *date;		/* Date of last major changes.	   */
 
+	u32 driver_features;
 	const struct drm_ioctl_desc *ioctls;
 	int num_ioctls;
 
-#define DRIVER_AGP		0x1
-#define DRIVER_AGP_REQUIRE	0x2
-#define DRIVER_PCI_DMA     0x8
-#define DRIVER_SG          0x10
-#define DRIVER_HAVE_DMA    0x20
-#define DRIVER_HAVE_IRQ    0x40
-#define DRIVER_IRQ_SHARED  0x80
-#define DRIVER_GEM         0x1000
-#define DRIVER_MODESET     0x2000
-#define DRIVER_PRIME	   0x4000
-
-	u_int	flags;
-#define driver_features flags
 };
 
 #include "drm_crtc.h"
@@ -654,13 +591,6 @@ struct drm_device {
 				/* Authentication */
 	SPLAY_HEAD(drm_file_tree, drm_file)	files;
 	drm_magic_t	  magicid;
-
-	/* Linked list of mappable regions. Protected by struct_mutex */
-	struct extent				*handle_ext;
-	TAILQ_HEAD(drm_map_list, drm_local_map)	 maplist;
-
-				/* DMA queues (contexts) */
-	struct drm_device_dma  *dma;		/* Optional pointer for DMA support */
 
 				/* Context support */
 	int		  irq_enabled;	/* True if the irq handler is enabled */
@@ -933,7 +863,7 @@ int drm_gem_dumb_destroy(struct drm_file *file,
 static __inline__ int drm_core_check_feature(struct drm_device *dev,
 					     int feature)
 {
-	return ((dev->driver->flags & feature) ? 1 : 0);
+	return ((dev->driver->driver_features & feature) ? 1 : 0);
 }
 
 static inline int drm_dev_to_irq(struct drm_device *dev)
