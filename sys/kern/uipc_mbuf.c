@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.222 2016/04/06 01:36:06 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.223 2016/04/08 03:13:38 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -425,11 +425,28 @@ m_extfree(struct mbuf *m)
 	m->m_flags &= ~(M_EXT|M_EXTWR);
 }
 
-void
+struct mbuf *
 m_freem(struct mbuf *m)
 {
-	while (m != NULL)
+	struct mbuf *n;
+
+	if (m == NULL)
+		return (NULL);
+
+	n = m->m_nextpkt;
+
+	do
 		m = m_free(m);
+	while (m != NULL);
+
+	return (n);
+}
+
+void
+m_purge(struct mbuf *m)
+{
+	while (m != NULL)
+		m = m_freem(m);
 }
 
 /*

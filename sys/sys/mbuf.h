@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.210 2016/04/04 12:14:07 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.211 2016/04/08 03:13:38 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -439,7 +439,8 @@ void	m_extref(struct mbuf *, struct mbuf *);
 void	m_extfree_pool(caddr_t, u_int, void *);
 void	m_adj(struct mbuf *, int);
 int	m_copyback(struct mbuf *, int, int, const void *, int);
-void	m_freem(struct mbuf *);
+struct mbuf *m_freem(struct mbuf *);
+void	m_purge(struct mbuf *);
 void	m_reclaim(void *, int);
 void	m_copydata(struct mbuf *, int, int, caddr_t);
 void	m_cat(struct mbuf *, struct mbuf *);
