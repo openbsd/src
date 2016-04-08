@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.97 2016/04/08 03:19:33 dlg Exp $
+.\"     $OpenBSD: mbuf.9,v 1.98 2016/04/08 03:23:13 dlg Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -49,6 +49,7 @@
 .Nm m_copyback ,
 .Nm m_defrag ,
 .Nm m_freem ,
+.Nm m_purge ,
 .Nm m_reclaim ,
 .Nm m_copydata ,
 .Nm m_cat ,
@@ -105,6 +106,8 @@
 .Fn m_defrag "struct mbuf *m" "int wait"
 .Ft struct mbuf *
 .Fn m_freem "struct mbuf *m"
+.Ft void
+.Fn m_purge "struct mbuf *m"
 .Ft void
 .Fn m_reclaim "void"
 .Ft void
@@ -640,6 +643,16 @@ is a
 pointer, no action occurs and
 .Dv NULL
 is returned.
+.It Fn m_purge "struct mbuf *m"
+Free the list of mbufs linked by m_nextpkt that is pointed to by
+.Fa m .
+Each mbuf is freed by a call to
+.Fn m_freem .
+If
+.Fa m
+is a
+.Dv NULL
+pointer, no action occurs.
 .It Fn m_reclaim "void"
 Ask protocols to free unused memory space.
 .It Fn m_copydata "struct mbuf *m" "int off" "int len" "caddr_t cp"
