@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.31 2016/04/02 12:23:46 rpe Exp $
+#	$OpenBSD: dot.profile,v 1.32 2016/04/08 17:09:18 rpe Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -44,8 +44,7 @@ set -o emacs
 
 # Extract rootdisk from last 'root on ...' line. e.g.
 #	root on wd0a swap on wd0b dump on wd0b
-set -- $(dmesg | sed -n '/^root on /h;${g;p;}')
-rootdisk=$3
+rootdisk=$(dmesg | sed -E '/^root on ([^ ]+) .*$/h;$!d;g;s//\1/')
 
 if [[ -z $DONEPROFILE ]]; then
 	DONEPROFILE=YES
