@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.886 2016/04/02 13:52:04 rpe Exp $
+#	$OpenBSD: install.sub,v 1.887 2016/04/08 17:17:54 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -274,18 +274,15 @@ get_ifdevs() {
 }
 
 # Return the device name of the device $1, which may be a disklabel UID.
-getdevname() {
-	local _dev=$1
+get_dkdev_name() {
+	local _dev=${1#/dev/} _d
 
-	if [[ ${#_dev} == 18 && $_dev == +([0-9a-f]).[a-p] ||
-		${#_dev} == 16 && $_dev == +([0-9a-f]) ]]; then
-		# Lookup device name matching the disklabel UID.
-		sysctl -n hw.disknames |
-			sed -nE "s/^(.*,)*(.*):${_dev%.?}.*/\\2/p"
-	else
-		_dev=${_dev#/dev/}
-		print -r -- "${_dev%[a-p]}"
-	fi
+	_dev=${_dev%.[a-p]}
+	((${#_dev} < 16)) && _dev=${_dev%[a-p]}
+	local IFS=,
+	for _d in $(sysctl -n hw.disknames); do
+		[[ $_dev == @(${_d%:*}|${_d#*:}) ]] && echo ${_d%:*} && break
+	done
 }
 
 # Inspect disk $1 if it has a partition-table of type $2 and optionally
@@ -2095,7 +2092,7 @@ check_fs() {
 	ask_yn "Force checking of clean non-root filesystems?" && _f=f
 
 	while read _dev _mp _fstype _rest _rest _passno _rest; do
-		_dn=$(getdevname "$_dev")
+		_dn=$(get_dkdev_name "$_dev")
 		[[ $ROOTDEV == @(${_dev#/dev/}|$_dn${_dev##*.}) ]] && continue
 		[[ -f /sbin/fsck_$_fstype ]] || continue
 		# Make sure device exists before fsck'ing it.
