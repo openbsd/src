@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.98 2016/04/08 03:23:13 dlg Exp $
+.\"     $OpenBSD: mbuf.9,v 1.99 2016/04/08 10:01:12 dlg Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -219,18 +219,18 @@ struct mbuf {
 .Ed
 .Sh DESCRIPTION
 The
-.Nm
+.Nm mbuf
 functions provide a way to manage the memory buffers used by the kernel's
 networking subsystem.
 Several functions and macros are used to allocate and deallocate mbufs,
 but also to get, inject, remove, copy, modify, prepend or append data
 inside these mbufs.
 The size of an
-.Nm
+.Nm mbuf
 is defined by MSIZE.
 .Pp
 An
-.Nm
+.Nm mbuf
 structure is defined as an
 .Fa m_hdr
 structure followed by a
