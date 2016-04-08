@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.887 2016/04/08 17:17:54 rpe Exp $
+#	$OpenBSD: install.sub,v 1.888 2016/04/08 17:41:08 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -756,14 +756,14 @@ dhclient() {
 # Issue a DHCP request to configure interface $1 and add the host-name option to
 # /etc/dhclient.conf using $2.
 dhcp_request() {
-	local _ifs=$1 _hn=$2
+	local _if=$1 _hn=$2
 
 	echo "lookup file bind" >/etc/resolv.conf.tail
 	echo "send host-name \"$_hn\";" >/etc/dhclient.conf
 
-	ifconfig $_ifs group dhcp >/dev/null 2>&1
+	ifconfig $_if group dhcp >/dev/null 2>&1
 
-	dhclient -c /dev/stdin $_ifs <<__EOT
+	dhclient -c /dev/stdin $_if <<__EOT
 initial-interval 1;
 backoff-cutoff 2;
 reboot 5;
@@ -823,15 +823,15 @@ addhostent() {
 # $3 = /path/to/hostname.if
 #
 v4_config() {
-	local _ifs=$1 _name=$2 _hn=$3 _prompt _addr _mask
+	local _if=$1 _name=$2 _hn=$3 _prompt _addr _mask
 
-	if ifconfig $_ifs | grep -q 'groups:.* dhcp'; then
+	if ifconfig $_if | grep -q 'groups:.* dhcp'; then
 		_addr=dhcp
 	else
-		set -- $(v4_info $_ifs)
+		set -- $(v4_info $_if)
 		if [[ -n $2 ]]; then
 			_addr=$2; _mask=$(hextodec $3)
-			ifconfig $_ifs inet $_addr delete
+			ifconfig $_if inet $_addr delete
 		fi
 	fi
 
@@ -840,7 +840,7 @@ v4_config() {
 		# Don't make 'dhcp' the default if dhcp was already used.
 		ifconfig dhcp >/dev/null 2>&1 || _addr=dhcp
 	fi
-	_prompt="IPv4 address for $_ifs? (${_prompt}or 'none')"
+	_prompt="IPv4 address for $_if? (${_prompt}or 'none')"
 
 	ask_until "$_prompt" "$_addr"
 	case $resp in
@@ -848,14 +848,14 @@ v4_config() {
 	dhcp)	if [[ ! -x /sbin/dhclient ]]; then
 			echo "DHCP not possible - no /sbin/dhclient."
 		else
-			dhcp_request $_ifs "$_name"
+			dhcp_request $_if "$_name"
 			echo "dhcp" >>$_hn
 		fi
 		;;
 	*)	_addr=$resp
-		ask_until "Netmask for $_ifs?" "${_mask:=255.255.255.0}"
-		ifconfig $_ifs -group dhcp >/dev/null 2>&1
-		if ifconfig $_ifs inet $_addr netmask $resp up; then
+		ask_until "Netmask for $_if?" "${_mask:=255.255.255.0}"
+		ifconfig $_if -group dhcp >/dev/null 2>&1
+		if ifconfig $_if inet $_addr netmask $resp up; then
 			addhostent "$_addr" "$_name"
 			echo "inet $_addr $resp" >>$_hn
 		fi
@@ -909,34 +909,34 @@ v6_defroute() {
 # $3 = /path/to/hostname.if
 #
 v6_config() {
-	local _ifs=$1 _name=$2 _hn=$3 _addr _prefixlen _prompt
+	local _if=$1 _name=$2 _hn=$3 _addr _prefixlen _prompt
 
 	ifconfig lo0 inet6 >/dev/null 2>&1 || return
 
-	set -- $(v6_info $_ifs)
+	set -- $(v6_info $_if)
 	[[ -n $2 ]] && { _addr=$2; _prefixlen=$3; }
 
-	ifconfig $_ifs inet6 >/dev/null 2>&1 && _prompt="or 'rtsol' "
-	_prompt="IPv6 address for $_ifs? (${_prompt}or 'none')"
+	ifconfig $_if inet6 >/dev/null 2>&1 && _prompt="or 'rtsol' "
+	_prompt="IPv6 address for $_if? (${_prompt}or 'none')"
 	ask_until "$_prompt" "${_addr:-none}"
 
 	case $resp in
 	none)	return
 		;;
-	rtsol)	ifconfig $_ifs inet6 >/dev/null 2>&1 || { echo "No INET6 support."; return; }
-		ifconfig $_ifs up
-		ifconfig $_ifs inet6 autoconf && echo "up\nrtsol" >>$_hn
+	rtsol)	ifconfig $_if inet6 >/dev/null 2>&1 || { echo "No INET6 support."; return; }
+		ifconfig $_if up
+		ifconfig $_if inet6 autoconf && echo "up\nrtsol" >>$_hn
 		return
 		;;
 	esac
 
 	_addr=$resp
-	ask_until "IPv6 prefix length for $_ifs?" "${_prefixlen:=64}"
-	ifconfig $_ifs inet6 $_addr prefixlen $resp up || return
+	ask_until "IPv6 prefix length for $_if?" "${_prefixlen:=64}"
+	ifconfig $_if inet6 $_addr prefixlen $resp up || return
 	echo "inet6 $_addr $resp" >>$_hn
 	addhostent "$_addr" "$_name"
 
-	v6_defroute $_ifs
+	v6_defroute $_if
 }
 
 # Perform an 802.11 network scan on interface $1.
@@ -951,11 +951,11 @@ ieee80211_scan() {
 
 # Configure 802.11 interface $1 and append ifconfig options to hostname.if $2.
 ieee80211_config() {
-	local _ifs=$1 _hn=$2 _prompt _nwid _haswpa=0 _err
+	local _if=$1 _hn=$2 _prompt _nwid _haswpa=0 _err
 
 	# Reset 802.11 settings and determine wpa capability.
-	ifconfig $_ifs -nwid -nwkey
-	ifconfig $_ifs -wpa 2>/dev/null && _haswpa=1
+	ifconfig $_if -nwid -nwkey
+	ifconfig $_if -wpa 2>/dev/null && _haswpa=1
 
 	# Empty scan cache.
 	rm -f $WLANLIST
@@ -964,10 +964,10 @@ ieee80211_config() {
 		ask_until "Access point? (ESSID, 'any', list# or '?')" "any"
 		case "$resp" in
 		+([0-9]))
-			_nwid=$(ieee80211_scan $_ifs | sed -n "${resp}s/ .*//p")
+			_nwid=$(ieee80211_scan $_if | sed -n "${resp}s/ .*//p")
 			[[ -z $_nwid ]] && echo "There is no line $resp."
 			;;
-		\?)	ieee80211_scan $_ifs |
+		\?)	ieee80211_scan $_if |
 				sed -n 's/^\([^ ]*\) chan .* bssid \([^ ]*\) .*$/	\1 (\2)/p' |
 				cat -n | more -c
 			;;
@@ -978,7 +978,7 @@ ieee80211_config() {
 
 	# 'any' implies that only open access points are considered.
 	if [[ $_nwid != any ]]; then
-		ifconfig $_ifs nwid "$_nwid"
+		ifconfig $_if nwid "$_nwid"
 		quote nwid "$_nwid" >>$_hn
 
 		_prompt="Security protocol? (O)pen, (W)EP"
@@ -990,7 +990,7 @@ ieee80211_config() {
 				;;
 			?-[Ww])	ask_until "WEP key? (will echo)"
 				# Make sure ifconfig accepts the key.
-				if _err=$(ifconfig $_ifs nwkey "$resp" 2>&1) &&
+				if _err=$(ifconfig $_if nwkey "$resp" 2>&1) &&
 					[[ -z $_err ]]; then
 					quote nwkey "$resp" >>$_hn
 					break
@@ -999,7 +999,7 @@ ieee80211_config() {
 				;;
 			1-[Pp])	ask_until "WPA passphrase? (will echo)"
 				# Make sure ifconfig accepts the key.
-				if ifconfig $_ifs wpakey "$resp"; then
+				if ifconfig $_if wpakey "$resp"; then
 					quote wpakey "$resp" >>$_hn
 					break
 				fi
@@ -1013,7 +1013,7 @@ ieee80211_config() {
 
 # Set up IPv4 and IPv6 interface configuration.
 configure_ifs() {
-	local _first _ifdevs _ifs _name _hn _vl=0 _vd _vi _p _tags
+	local _first _ifdevs _if _name _hn _vl=0 _vd _vi _p _tags
 
 	# In case of restart, discover last vlan configured.
 	while :; do
@@ -1039,15 +1039,15 @@ configure_ifs() {
 			${_p:-'$( (get_ifdevs netboot; get_ifdevs) | sed q )'}
 		[[ $resp == done ]] && break
 
-		_ifs=$resp
-		_hn=/tmp/hostname.$_ifs
+		_if=$resp
+		_hn=/tmp/hostname.$_if
 		rm -f $_hn
 
 		# If the offered vlan is chosen, ask the relevant
 		# questions and bring it up.
-		if [[ $_ifs == vlan+([0-9]) ]]; then
+		if [[ $_if == vlan+([0-9]) ]]; then
 			# Get existing tag for this vlan.
-			_vi=$(ifconfig $_ifs 2>/dev/null |
+			_vi=$(ifconfig $_if 2>/dev/null |
 				sed -n 's/vlan: \([0-9]*\).*/\1/p')
 			# Get list of all in-use tags.
 			_tags=$(ifconfig vlan 2>/dev/null |
@@ -1065,7 +1065,7 @@ configure_ifs() {
 			while [[ $1 == vlan+([0-9]) ]]; do
 				shift
 			done
-			ask "Which interface:tag should $_ifs be on?" "${_vd:=$1}:$_vi"
+			ask "Which interface:tag should $_if be on?" "${_vd:=$1}:$_vi"
 			_vd=${resp%%:*}
 			_vi=${resp##*:}
 
@@ -1089,31 +1089,31 @@ configure_ifs() {
 			chmod 640 /tmp/hostname.$_vd
 			ifconfig $_vd up
 
-			# Make sure a hostname.$_ifs is created with this info.
-			ifconfig $_ifs destroy >/dev/null 2>&1
-			ifconfig $_ifs vlan $_vi vlandev $_vd
+			# Make sure a hostname.$_if is created with this info.
+			ifconfig $_if destroy >/dev/null 2>&1
+			ifconfig $_if vlan $_vi vlandev $_vd
 			echo "vlan $_vi vlandev $_vd" >>$_hn
 			# Create a new vlan if we just configured the highest.
-			[[ ${_ifs##vlan} == $_vl ]] && ((_vl++))
+			[[ ${_if##vlan} == $_vl ]] && ((_vl++))
 		fi
 
 		# Test if it is an 802.11 interface.
-		ifconfig $_ifs 2>/dev/null | grep -q "^[[:space:]]*ieee80211:" &&
-			ieee80211_config $_ifs $_hn
+		ifconfig $_if 2>/dev/null | grep -q "^[[:space:]]*ieee80211:" &&
+			ieee80211_config $_if $_hn
 
 		# First interface configured will use the hostname without
 		# asking the user.
 		resp=$(hostname -s)
-		[[ -n $_first && $_first != $_ifs ]] &&
-			ask "Symbolic (host) name for $_ifs?" $resp
+		[[ -n $_first && $_first != $_if ]] &&
+			ask "Symbolic (host) name for $_if?" $resp
 		_name=$resp
 
-		v4_config $_ifs $_name $_hn
-		v6_config $_ifs $_name $_hn
+		v4_config $_if $_name $_hn
+		v6_config $_if $_name $_hn
 
 		if [[ -f $_hn ]]; then
 			chmod 640 $_hn
-			: ${_first:=$_ifs}
+			: ${_first:=$_if}
 		fi
 
 		NIFS=$(ls -1 /tmp/hostname.* 2>/dev/null | grep -c ^)
@@ -2779,10 +2779,10 @@ cd /
 umount -af 1>/dev/null 2>&1
 
 # Make sure only successful dhcp requests retain their state.
-for _ifs in $(get_ifdevs dhcp); do
-	set -- $(v4_info $_ifs)
+for _if in $(get_ifdevs dhcp); do
+	set -- $(v4_info $_if)
 	[[ $1 == UP && -n $2 ]] && continue
-	ifconfig $_ifs delete down -group dhcp 2>/dev/null
+	ifconfig $_if delete down -group dhcp 2>/dev/null
 done
 
 # Interactive or automatic installation?
