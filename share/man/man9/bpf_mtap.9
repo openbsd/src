@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf_mtap.9,v 1.6 2016/04/08 03:53:35 dlg Exp $
+.\"	$OpenBSD: bpf_mtap.9,v 1.7 2016/04/08 06:40:07 jmc Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -172,10 +172,10 @@ can be called from process context, or from an interrupt context at or below
 .Dv IPL_NET .
 .Sh RETURN VALUES
 .Fn bpf_filter ,
-and 
+and
 .Fn bpf_mfilter
 return -1 (cast to an unsigned integer) if the filter program is
-.Dv NULL,
+.Dv NULL ,
 or the result of the filter program.
 Filter programs should return the maximum number of bytes of the
 packet to capture, or 0 if the packet does not match the filter
