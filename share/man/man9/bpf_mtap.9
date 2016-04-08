@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf_mtap.9,v 1.4 2016/03/29 10:40:13 dlg Exp $
+.\"	$OpenBSD: bpf_mtap.9,v 1.5 2016/04/08 03:49:16 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,10 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 29 2016 $
+.Dd $Mdocdate: April 8 2016 $
 .Dt BPF_MTAP 9
 .Os
 .Sh NAME
+.Nm bpf_filter ,
+.Nm bpf_mfilter ,
 .Nm bpf_tap ,
 .Nm bpf_mtap ,
 .Nm bpf_mtap_hdr ,
@@ -26,6 +28,19 @@
 .Nd BPF kernel API
 .Sh SYNOPSIS
 .In net/bpf.h
+.Ft u_int
+.Fo bpf_filter
+.Fa "const struct bpf_insn *pc"
+.Fa "const u_char *pkt"
+.Fa "u_int wirelen"
+.Fa "u_int pktlen"
+.Fc
+.Ft u_int
+.Fo bpf_mfilter
+.Fa "const struct bpf_insn *pc"
+.Fa "const struct mbuf *m"
+.Fa "u_int wirelen"
+.Fc
 .Ft int
 .Fn bpf_tap "caddr_t bpf" "u_char *pkt" "u_int pktlen" "u_int direction"
 .Ft int
@@ -44,9 +59,29 @@
 .Ft int
 .Fn bpf_mtap_ether "caddr_t bpf" "struct mbuf *m" "u_int direction"
 .Sh DESCRIPTION
-The BPF kernel API provides incoming linkage from device drivers.
+The BPF kernel API provides functions for evaluating BPF instructions
+against packets, and incoming linkage from device drivers.
 A packet is parsed by the filters associated with each interface
 and, if accepted, stashed into the corresponding buffer.
+.Pp
+.Fn bpf_filter
+executes the BPF program referenced by
+.Fa pc
+against the packet buffer starting at
+.Fa pkt
+of
+.Fa pktlen
+bytes in length.
+.Fa wirelen
+is the length of the original packet on the wire.
+.Pp
+.Fn bpf_mfilter
+executes the BPF program referenced by
+.Fa pc
+against the packet in the mbuf
+.Fa m .
+.Fa wirelen
+is the length of the original packet on the wire.
 .Pp
 .Fn bfp_tap
 runs the filters on the BPF interface referenced by
@@ -109,6 +144,12 @@ and
 m->m_pkthdr.pf.prio
 before matching occurs.
 .Sh CONTEXT
+.Fn bpf_filter ,
+and
+.Fn bpf_mfilter
+can be called from process context, or from an interrupt context.
+.Pp
+.Fn bpf_mtap ,
 .Fn bpf_tap ,
 .Fn bpf_mtap ,
 .Fn bpf_mtap_hdr ,
@@ -118,6 +159,16 @@ and
 can be called from process context, or from an interrupt context at or below
 .Dv IPL_NET .
 .Sh RETURN VALUES
+.Fn bpf_filter ,
+and 
+.Fn bpf_mfilter
+return -1 (cast to an unsigned integer) if the filter program is
+.Dv NULL,
+or the result of the filter program.
+Filter programs should return the maximum number of bytes of the
+packet to capture, or 0 if the packet does not match the filter
+program.
+.Pp
 .Fn bpf_tap ,
 .Fn bpf_mtap ,
 .Fn bpf_mtap_hdr ,
