@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.200 2016/04/05 21:21:41 vgross Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.201 2016/04/08 14:34:21 vgross Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -297,35 +297,36 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 	     (so->so_options & SO_ACCEPTCONN) == 0))
 		wild = INPLOOKUP_WILDCARD;
 
-	if (nam) {
-		switch (sotopf(so)) {
+	switch (sotopf(so)) {
 #ifdef INET6
-		case PF_INET6: {
-			struct sockaddr_in6 *sin6;
-			if (TAILQ_EMPTY(&in6_ifaddr))
-				return (EADDRNOTAVAIL);
-			if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
-				return (EINVAL);
+	case PF_INET6:
+		if (TAILQ_EMPTY(&in6_ifaddr))
+			return (EADDRNOTAVAIL);
+		if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
+			return (EINVAL);
+		wild |= INPLOOKUP_IPV6;
 
+		if (nam) {
+			struct sockaddr_in6 *sin6;
 			sin6 = mtod(nam, struct sockaddr_in6 *);
 			if (nam->m_len != sizeof(struct sockaddr_in6))
 				return (EINVAL);
 			if (sin6->sin6_family != AF_INET6)
 				return (EAFNOSUPPORT);
 
-			wild |= INPLOOKUP_IPV6;
 			if ((error = in6_pcbaddrisavail(inp, sin6, wild, p)))
 				return (error);
 			laddr = &sin6->sin6_addr;
 			lport = sin6->sin6_port;
-			break;
 		}
+		break;
 #endif
-		case PF_INET: {
-			struct sockaddr_in *sin;
-			if (inp->inp_laddr.s_addr != INADDR_ANY)
-				return (EINVAL);
+	case PF_INET:
+		if (inp->inp_laddr.s_addr != INADDR_ANY)
+			return (EINVAL);
 
+		if (nam) {
+			struct sockaddr_in *sin;
 			sin = mtod(nam, struct sockaddr_in *);
 			if (nam->m_len != sizeof(*sin))
 				return (EINVAL);
@@ -336,11 +337,10 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 				return (error);
 			laddr = &sin->sin_addr;
 			lport = sin->sin_port;
-			break;
 		}
-		default:
-			return (EINVAL);
-		}
+		break;
+	default:
+		return (EINVAL);
 	}
 
 	if (lport == 0) {
