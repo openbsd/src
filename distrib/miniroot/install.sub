@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.889 2016/04/09 11:03:42 rpe Exp $
+#	$OpenBSD: install.sub,v 1.890 2016/04/09 15:14:47 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1766,7 +1766,7 @@ ask_root_sshd() {
 
 # Set TZ variable based on zonefile $1 and user selection.
 set_timezone() {
-	local _zonefile=$1 _zonepath _zsed _tz _zoneroot=/usr/share/zoneinfo
+	local _zonefile=$1 _zonepath _zsed _zoneroot=/usr/share/zoneinfo
 
 	# If the timezone file is not available,
 	# return immediately.
@@ -1781,10 +1781,7 @@ set_timezone() {
 	fi
 
 	waitcgiinfo
-	if [[ -n $CGI_TZ ]]; then
-		_tz=$CGI_TZ
-		[[ -n $_tz ]] && isin "$_tz" $(<$_zonefile) && TZ=$_tz
-	fi
+	isin "$CGI_TZ" $(<$_zonefile) && TZ=$CGI_TZ
 
 	# If neither the base or HTTP_LIST gave a hint, and this is the
 	# early question, give up, and ask after the sets are installed.
