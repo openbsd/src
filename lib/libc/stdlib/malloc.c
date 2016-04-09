@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.185 2016/03/17 17:55:33 mmcc Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.186 2016/04/09 12:23:59 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -703,7 +703,6 @@ omalloc_grow(struct dir_info *d)
 		return 1;
 
 	STATS_ADD(d->malloc_used, newsize);
-	memset(p, 0, newsize);
 	STATS_ZERO(d->inserts);
 	STATS_ZERO(d->insert_collisions);
 	for (i = 0; i < d->regions_total; i++) {
