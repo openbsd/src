@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.92 2016/04/01 08:18:57 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.93 2016/04/09 08:02:22 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -27,9 +27,12 @@ _rc_parse_conf
 
 usage()
 {
+	local _a _i
+	for _i in ${_rc_actions}; do _a="$(echo -n ${_i}${_a:+|${_a}})"; done
+
 	_rc_err \
 	"usage:	rcctl get|getdef|set service | daemon [variable [arguments]]
-	rcctl [-df] $(echo ${_rc_actions} | tr "[:blank:]" "|") daemon ...
+	rcctl [-df] ${_a} daemon ...
 	rcctl disable|enable|order [daemon ...]
 	rcctl ls all|failed|off|on|started|stopped"
 }
