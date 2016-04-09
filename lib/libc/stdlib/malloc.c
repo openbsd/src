@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.186 2016/04/09 12:23:59 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.187 2016/04/09 14:08:40 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -172,7 +172,7 @@ struct chunk_info {
 	u_short size;			/* size of this page's chunks */
 	u_short shift;			/* how far to shift for this size */
 	u_short free;			/* how many free chunks */
-	u_short total;			/* how many chunk */
+	u_short total;			/* how many chunks */
 					/* which chunks are free */
 	u_short bits[1];
 };
@@ -1758,16 +1758,20 @@ putleakinfo(void *f, size_t sz, int cnt)
 static struct malloc_leak *malloc_leaks;
 
 static void
+writestr(int fd, const char *p)
+{
+	write(fd, p, strlen(p));
+}
+
+static void
 dump_leaks(int fd)
 {
 	struct leaknode *p;
 	char buf[64];
 	int i = 0;
 
-	snprintf(buf, sizeof(buf), "Leak report\n");
-	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "                 f     sum      #    avg\n");
-	write(fd, buf, strlen(buf));
+	writestr(fd, "Leak report\n");
+	writestr(fd, "                 f     sum      #    avg\n");
 	/* XXX only one page of summary */
 	if (malloc_leaks == NULL)
 		malloc_leaks = MMAP(MALLOC_PAGESIZE);
@@ -1808,10 +1812,8 @@ dump_chunk(int fd, struct chunk_info *p, void *f, int fromfreelist)
 			break;
 		}
 		p = LIST_NEXT(p, entries);
-		if (p != NULL) {
-			snprintf(buf, sizeof(buf), "        ");
-			write(fd, buf, strlen(buf));
-		}
+		if (p != NULL)
+			writestr(fd, "        ");
 	}
 }
 
@@ -1822,8 +1824,7 @@ dump_free_chunk_info(int fd, struct dir_info *d)
 	int i, j, count;
 	struct chunk_info *p;
 
-	snprintf(buf, sizeof(buf), "Free chunk structs:\n");
-	write(fd, buf, strlen(buf));
+	writestr(fd, "Free chunk structs:\n");
 	for (i = 0; i <= MALLOC_MAXSHIFT; i++) {
 		count = 0;
 		LIST_FOREACH(p, &d->chunk_info_list[i], entries)
@@ -1890,9 +1891,8 @@ malloc_dump1(int fd, struct dir_info *d)
 	write(fd, buf, strlen(buf));
 	dump_free_chunk_info(fd, d);
 	dump_free_page_info(fd, d);
-	snprintf(buf, sizeof(buf),
+	writestr(fd,
 	    "slot)  hash d  type               page                  f size [free/n]\n");
-	write(fd, buf, strlen(buf));
 	for (i = 0; i < d->regions_total; i++) {
 		if (d->r[i].p != NULL) {
 			size_t h = hash(d->r[i].p) &
