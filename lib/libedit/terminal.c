@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.11 2016/03/22 11:32:18 schwarze Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.12 2016/04/09 19:31:55 schwarze Exp $	*/
 /*	$NetBSD: terminal.c,v 1.17 2016/02/15 15:35:03 christos Exp $	*/
 
 /*-
@@ -501,13 +501,11 @@ terminal_move_to_line(EditLine *el, int where)
 			if (EL_HAS_AUTO_MARGINS &&
 			    el->el_display[el->el_cursor.v][0] != '\0') {
                                 size_t h = el->el_terminal.t_size.h - 1;
-#ifdef WIDECHAR
                                 for (; h > 0 &&
                                          el->el_display[el->el_cursor.v][h] ==
                                                  MB_FILL_CHAR;
                                          h--)
                                                 continue;
-#endif
 				/* move without newline */
 				terminal_move_to_char(el, (int)h);
 				terminal_overwrite(el, &el->el_display
@@ -582,11 +580,9 @@ mc_again:
 				if (EL_CAN_TAB) {
 					if ((el->el_cursor.h & 0370) !=
 					    (where & ~0x7)
-#ifdef WIDECHAR
 					    && (el->el_display[
 					    el->el_cursor.v][where & 0370] !=
 					    MB_FILL_CHAR)
-#endif
 					    ) {
 						/* if not within tab stop */
 						for (i =
@@ -674,11 +670,9 @@ terminal_overwrite(EditLine *el, const Char *cp, size_t n)
 				if ((c = el->el_display[el->el_cursor.v]
 				    [el->el_cursor.h]) != '\0') {
 					terminal_overwrite(el, &c, 1);
-#ifdef WIDECHAR
 					while (el->el_display[el->el_cursor.v]
 					    [el->el_cursor.h] == MB_FILL_CHAR)
 						el->el_cursor.h++;
-#endif
 				} else {
 					terminal__putc(el, ' ');
 					el->el_cursor.h = 1;

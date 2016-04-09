@@ -55,7 +55,6 @@ case $FLAG in
 #
 -n)
     cat << _EOF
-#undef WIDECHAR
 #define NARROWCHAR
 #include "${FILES}"
 _EOF

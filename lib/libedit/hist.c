@@ -1,5 +1,5 @@
-/*	$OpenBSD: hist.c,v 1.13 2016/03/20 23:48:27 schwarze Exp $	*/
-/*	$NetBSD: hist.c,v 1.17 2009/12/30 23:54:52 christos Exp $	*/
+/*	$OpenBSD: hist.c,v 1.14 2016/04/09 19:31:55 schwarze Exp $	*/
+/*	$NetBSD: hist.c,v 1.25 2016/03/23 22:27:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -207,7 +207,6 @@ hist_enlargebuf(EditLine *el, size_t oldsz, size_t newsz)
 	return 1;
 }
 
-#ifdef WIDECHAR
 protected wchar_t *
 hist_convert(EditLine *el, int fn, void *arg)
 {
@@ -217,4 +216,3 @@ hist_convert(EditLine *el, int fn, void *arg)
 	return ct_decode_string((const char *)(const void *)ev.str,
 	    &el->el_scratch);
 }
-#endif

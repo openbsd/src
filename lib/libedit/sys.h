@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys.h,v 1.15 2016/03/20 23:48:27 schwarze Exp $	*/
+/*	$OpenBSD: sys.h,v 1.16 2016/04/09 19:31:55 schwarze Exp $	*/
 /*	$NetBSD: sys.h,v 1.13 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -95,11 +95,6 @@ ssize_t	getline(char **line, size_t *len, FILE *fp);
 
 #define	REGEX		/* Use POSIX.2 regular expression functions */
 #undef	REGEXP		/* Use UNIX V8 regular expression functions */
-
-#ifndef WIDECHAR
-#define	setlocale(c, l)		/*LINTED*/NULL
-#define	nl_langinfo(i)		""
-#endif
 
 #if defined(__sun)
 extern int tgetent(char *, const char *);

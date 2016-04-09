@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.30 2016/04/05 21:24:02 krw Exp $	*/
+/*	$OpenBSD: read.c,v 1.31 2016/04/09 19:31:55 schwarze Exp $	*/
 /*	$NetBSD: read.c,v 1.81 2016/02/16 22:53:14 christos Exp $	*/
 
 /*-
@@ -52,7 +52,6 @@
 #define OKCMD	-1	/* must be -1! */
 
 private int	read__fixio(int, int);
-private int	read_preread(EditLine *);
 private int	read_char(EditLine *, wchar_t *);
 private int	read_getcmd(EditLine *, el_action_t *, Char *);
 private void	read_pop(c_macro_t *);
@@ -178,38 +177,6 @@ read__fixio(int fd __attribute__((__unused__)), int e)
 }
 
 
-/* read_preread():
- *	Try to read the stuff in the input queue;
- */
-private int
-read_preread(EditLine *el)
-{
-	int chrs = 0;
-
-	if (el->el_tty.t_mode == ED_IO)
-		return 0;
-
-#ifndef WIDECHAR
-/* FIONREAD attempts to buffer up multiple bytes, and to make that work
- * properly with partial wide/UTF-8 characters would need some careful work. */
-#ifdef FIONREAD
-	(void) ioctl(el->el_infd, FIONREAD, &chrs);
-	if (chrs > 0) {
-		char buf[EL_BUFSIZ];
-
-		chrs = read(el->el_infd, buf,
-		    (size_t) MIN(chrs, EL_BUFSIZ - 1));
-		if (chrs > 0) {
-			buf[chrs] = '\0';
-			el_push(el, buf);
-		}
-	}
-#endif /* FIONREAD */
-#endif
-	return chrs > 0;
-}
-
-
 /* el_push():
  *	Push a macro
  */
@@ -261,11 +228,9 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 			el->el_state.metanext = 0;
 			*ch |= meta;
 		}
-#ifdef WIDECHAR
 		if (*ch >= N_KEYS)
 			cmd = ED_INSERT;
 		else
-#endif
 			cmd = el->el_map.current[(unsigned char) *ch];
 		if (cmd == ED_SEQUENCE_LEAD_IN) {
 			keymacro_value_t val;
@@ -404,11 +369,6 @@ el_wgetc(EditLine *el, wchar_t *cp)
 
 	terminal__flush(el);
 	for (;;) {
-		if (ma->level < 0) {
-			if (!read_preread(el))
-				break;
-		}
-
 		if (ma->level < 0)
 			break;
 

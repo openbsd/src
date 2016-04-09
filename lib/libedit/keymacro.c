@@ -1,5 +1,5 @@
-/*	$OpenBSD: keymacro.c,v 1.8 2016/03/21 15:25:39 schwarze Exp $	*/
-/*	$NetBSD: keymacro.c,v 1.14 2016/02/24 14:25:38 christos Exp $	*/
+/*	$OpenBSD: keymacro.c,v 1.9 2016/04/09 19:31:55 schwarze Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.15 2016/03/23 22:27:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -212,10 +212,8 @@ keymacro_add(EditLine *el, const Char *key, keymacro_value_t *val, int ntype)
 protected void
 keymacro_clear(EditLine *el, el_action_t *map, const Char *in)
 {
-#ifdef WIDECHAR
         if (*in > N_KEYS) /* can't be in the map */
                 return;
-#endif
 	if ((map[(unsigned char)*in] == ED_SEQUENCE_LEAD_IN) &&
 	    ((map == el->el_map.key &&
 	    el->el_map.alt[(unsigned char)*in] != ED_SEQUENCE_LEAD_IN) ||

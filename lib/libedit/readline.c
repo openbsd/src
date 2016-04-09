@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.c,v 1.19 2016/03/21 17:28:10 schwarze Exp $	*/
+/*	$OpenBSD: readline.c,v 1.20 2016/04/09 19:31:55 schwarze Exp $	*/
 /*	$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
@@ -1746,9 +1746,7 @@ _rl_completion_append_character_function(const char *dummy
 int
 rl_complete(int ignore __attribute__((__unused__)), int invoking_key)
 {
-#ifdef WIDECHAR
 	static ct_buffer_t wbreak_conv, sprefix_conv;
-#endif
 
 	if (h == NULL || e == NULL)
 		rl_initialize();

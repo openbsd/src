@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.23 2016/03/20 23:48:27 schwarze Exp $	*/
+/*	$OpenBSD: history.c,v 1.24 2016/04/09 19:31:55 schwarze Exp $	*/
 /*	$NetBSD: history.c,v 1.37 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
@@ -729,7 +729,7 @@ history_load(TYPE(History) *h, const char *fname)
 	char *ptr;
 	int i = -1;
 	TYPE(HistEvent) ev;
-#ifdef WIDECHAR
+#ifndef NARROWCHAR
 	static ct_buffer_t conv;
 #endif
 
@@ -785,7 +785,7 @@ history_save_fp(TYPE(History) *h, FILE *fp)
 	int i = -1, retval;
 	size_t len, max_size;
 	char *ptr;
-#ifdef WIDECHAR
+#ifndef NARROWCHAR
 	static ct_buffer_t conv;
 #endif
 

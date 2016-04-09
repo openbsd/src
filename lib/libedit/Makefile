@@ -1,10 +1,8 @@
-#	$OpenBSD: Makefile,v 1.19 2016/03/30 06:38:42 jmc Exp $
+#	$OpenBSD: Makefile,v 1.20 2016/04/09 19:31:55 schwarze Exp $
 #	$NetBSD: Makefile,v 1.41 2010/02/03 15:34:43 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
-
-WIDECHAR=	yes
 
 OSRCS=	chared.c common.c el.c eln.c emacs.c fcns.c filecomplete.c help.c \
 	hist.c keymacro.c map.c chartype.c \
@@ -17,11 +15,8 @@ MAN=	editline.3 editrc.5
 # For protection
 SRCS=	editline.c tokenizer.c history.c readline.c
 
-.if "${WIDECHAR}" == "yes"
 SRCS+= tokenizern.c historyn.c
 CLEANFILES+=tokenizern.c.tmp tokenizern.c historyn.c.tmp historyn.c
-CPPFLAGS+=-DWIDECHAR
-.endif
 
 LIBEDITDIR?=${.CURDIR}
 
