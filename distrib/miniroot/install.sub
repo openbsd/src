@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.888 2016/04/08 17:41:08 rpe Exp $
+#	$OpenBSD: install.sub,v 1.889 2016/04/09 11:03:42 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -264,7 +264,7 @@ get_dkdevs_uninitialized() {
 
 # Return list of network devices. Filter out dynamically created network
 # pseudo-devices except vlan.
-get_ifdevs() {
+get_ifs() {
 	local _if _iflist=$(rmel vlan $(ifconfig -C))
 
 	for _if in $(ifconfig "$@" 2>/dev/null |
@@ -459,7 +459,7 @@ retrap() {
 
 # Fetch response file for autoinstall.
 get_responsefile() {
-	local _rf _ifdev _mac _mode _lf _hn _path
+	local _rf _if _mac _mode _lf _hn _path
 	action=
 
 	[[ -f /auto_upgrade.conf ]] && _rf=/auto_upgrade.conf _mode=upgrade
@@ -470,18 +470,18 @@ get_responsefile() {
 	# Ask if multiple were found and system was not netbooted.
 	# Extract server ip address, installer mode and response file path
 	# from lease file. Prime hostname with host-name option.
-	for _ifdev in ''; do
+	for _if in ''; do
 		[[ -x /sbin/dhclient ]] || break
-		set -- $(get_ifdevs netboot)
-		(($# == 0)) && set -- $(get_ifdevs)
-		(($# == 1)) && _ifdev=$1
+		set -- $(get_ifs netboot)
+		(($# == 0)) && set -- $(get_ifs)
+		(($# == 1)) && _if=$1
 		while (($# > 1)); do
 			ask_which "network interface" \
 				"should be used for the initial DHCP request" "$*"
-			isin "$resp" $* && _ifdev=$resp && break
+			isin "$resp" $* && _if=$resp && break
 		done
-		[[ -n $_ifdev ]] && dhclient $_ifdev || break
-		_lf=/var/db/dhclient.leases.$_ifdev
+		[[ -n $_if ]] && dhclient $_if || break
+		_lf=/var/db/dhclient.leases.$_if
 		export AI_SERVER=$(sed "/^ *next-server /!d;s///;s/;$//;q" $_lf)
 		_mode=$(sed -E '/^ *filename "(.*\/)?auto_(install|upgrade)";$/!d;s//\2/;q' $_lf)
 		_path=$(sed -E '/^ *filename "(.*\/)[^/]+";$/!d;s//\1/;q' $_lf)
@@ -493,13 +493,13 @@ get_responsefile() {
 	# one was missing. Try to fetch mac-mode.conf, then hostname-mode.conf,
 	# and finally mode.conf.
 	if [[ -n $AI_SERVER && -n $_mode ]]; then
-		_mac=$(ifconfig $_ifdev | sed 's/.*lladdr \(.*\)/\1/p;d')
+		_mac=$(ifconfig $_if | sed 's/.*lladdr \(.*\)/\1/p;d')
 		for _rf in {$_mac-,${_hn:+$_hn-,}}$_mode; do
 			_url="http://$AI_SERVER/$_path$_rf.conf?path=$HTTP_SETDIR"
 			echo "Fetching $_url"
 			if ftp -Vo "/ai.$_mode.conf" "$_url" 2>/dev/null; then
 				action=$_mode
-				ifconfig $_ifdev delete down 2>/dev/null
+				ifconfig $_if delete down 2>/dev/null
 				return 0
 			fi
 		done
@@ -527,7 +527,7 @@ get_responsefile() {
 	echo "Fetching $_rf"
 	[[ -f $_rf ]] && _rf="file://$_rf"
 	ftp -Vo "/ai.$_mode.conf" "$_rf" 2>/dev/null && action=$_mode
-	ifconfig $_ifdev delete down 2>/dev/null
+	ifconfig $_if delete down 2>/dev/null
 	[[ -n $action ]]
 }
 
@@ -1013,7 +1013,7 @@ ieee80211_config() {
 
 # Set up IPv4 and IPv6 interface configuration.
 configure_ifs() {
-	local _first _ifdevs _if _name _hn _vl=0 _vd _vi _p _tags
+	local _first _ifs _if _name _hn _vl=0 _vd _vi _p _tags
 
 	# In case of restart, discover last vlan configured.
 	while :; do
@@ -1035,8 +1035,8 @@ configure_ifs() {
 		ifconfig vlan$_vl create >/dev/null 2>&1
 
 		ask_which "network interface" "do you wish to configure" \
-			'$(get_ifdevs)' \
-			${_p:-'$( (get_ifdevs netboot; get_ifdevs) | sed q )'}
+			'$(get_ifs)' \
+			${_p:-'$( (get_ifs netboot; get_ifs) | sed q )'}
 		[[ $resp == done ]] && break
 
 		_if=$resp
@@ -1060,8 +1060,8 @@ configure_ifs() {
 					! isin "$_vi" $_tags && break
 				done
 			fi
-			_ifdevs=$(get_ifdevs)
-			set -- $_ifdevs
+			_ifs=$(get_ifs)
+			set -- $_ifs
 			while [[ $1 == vlan+([0-9]) ]]; do
 				shift
 			done
@@ -1070,7 +1070,7 @@ configure_ifs() {
 			_vi=${resp##*:}
 
 			# Validate that $_vd is a real interface.
-			if ! (isin "$_vd" $_ifdevs && [[ $_vd != vlan+([0-9]) ]]); then
+			if ! (isin "$_vd" $_ifs && [[ $_vd != vlan+([0-9]) ]]); then
 				echo "Invalid interface choice '$_vd'"
 				_vd=
 				continue
@@ -2779,7 +2779,7 @@ cd /
 umount -af 1>/dev/null 2>&1
 
 # Make sure only successful dhcp requests retain their state.
-for _if in $(get_ifdevs dhcp); do
+for _if in $(get_ifs dhcp); do
 	set -- $(v4_info $_if)
 	[[ $1 == UP && -n $2 ]] && continue
 	ifconfig $_if delete down -group dhcp 2>/dev/null
