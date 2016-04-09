@@ -1,4 +1,4 @@
-.\"	$OpenBSD: munmap.2,v 1.16 2014/07/02 22:22:35 matthew Exp $
+.\"	$OpenBSD: munmap.2,v 1.17 2016/04/09 04:04:09 guenther Exp $
 .\"	$NetBSD: munmap.2,v 1.5 1995/02/27 12:35:03 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)munmap.2	8.2 (Berkeley) 4/15/94
 .\"
-.Dd $Mdocdate: July 2 2014 $
+.Dd $Mdocdate: April 9 2016 $
 .Dt MUNMAP 2
 .Os
 .Sh NAME
@@ -56,10 +56,9 @@ will fail if:
 .It Bq Er EINVAL
 The
 .Fa addr
-parameter was not page aligned,
-.Fa addr
 and
 .Fa len
+parameters
 specify a region that would extend beyond the end of the address space,
 or some part of the region being unmapped is not part of the currently
 valid address space.
@@ -73,8 +72,26 @@ valid address space.
 .Xr mprotect 2 ,
 .Xr msync 2 ,
 .Xr getpagesize 3
+.Sh STANDARDS
+When
+.Fa len
+is non-zero, the
+.Fn munmap
+function conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn munmap
 system call first appeared in
 .Bx 4.1c .
+.Sh CAVEATS
+.St -p1003.1-2008
+specifies that
+.Fn munmap
+shall fail with
+.Er EINVAL
+if
+.Fa len
+is 0.
+.Ox
+performs no action in this case.
