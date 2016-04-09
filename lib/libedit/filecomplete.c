@@ -1,4 +1,4 @@
-/*	$OpenBSD: filecomplete.c,v 1.9 2016/03/20 23:48:27 schwarze Exp $ */
+/*	$OpenBSD: filecomplete.c,v 1.10 2016/04/09 20:28:27 schwarze Exp $ */
 /*	$NetBSD: filecomplete.c,v 1.22 2010/12/02 04:42:46 dholland Exp $	*/
 
 /*-
@@ -429,7 +429,7 @@ fn_complete(EditLine *el,
 
 	/* these can be used by function called in completion_matches() */
 	/* or (*attempted_completion_function)() */
-	if (point != 0)
+	if (point != NULL)
 		*point = (int)(li->cursor - li->buffer);
 	if (end != NULL)
 		*end = (int)(li->lastchar - li->buffer);
@@ -440,7 +440,7 @@ fn_complete(EditLine *el,
 		    ct_encode_string(temp, &el->el_scratch),
 		    (int)(cur_off - len), cur_off);
 	} else
-		matches = 0;
+		matches = NULL;
 	if (!attempted_completion_function ||
 	    (over != NULL && !*over && !matches))
 		matches = completion_matches(
