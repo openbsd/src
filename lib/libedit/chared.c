@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.c,v 1.21 2016/03/21 15:25:39 schwarze Exp $	*/
+/*	$OpenBSD: chared.c,v 1.22 2016/04/09 20:15:26 schwarze Exp $	*/
 /*	$NetBSD: chared.c,v 1.28 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -199,7 +199,7 @@ c_delbefore1(EditLine *el)
 protected int
 ce__isword(wint_t p)
 {
-	return Isalnum(p) || Strchr(STR("*?_-.[]~="), p) != NULL;
+	return iswalnum(p) || Strchr(STR("*?_-.[]~="), p) != NULL;
 }
 
 
@@ -209,9 +209,9 @@ ce__isword(wint_t p)
 protected int
 cv__isword(wint_t p)
 {
-	if (Isalnum(p) || p == '_')
+	if (iswalnum(p) || p == L'_')
 		return 1;
-	if (Isgraph(p))
+	if (iswgraph(p))
 		return 2;
 	return 0;
 }
@@ -223,7 +223,7 @@ cv__isword(wint_t p)
 protected int
 cv__isWord(wint_t p)
 {
-	return !Isspace(p);
+	return !iswspace(p);
 }
 
 
@@ -286,7 +286,7 @@ cv_next_word(EditLine *el, Char *p, Char *high, int n, int (*wtest)(wint_t))
 		 * trailing whitespace! This is not what 'w' does..
 		 */
 		if (n || el->el_chared.c_vcmd.action != (DELETE|INSERT))
-			while ((p < high) && Isspace(*p))
+			while ((p < high) && iswspace(*p))
 				p++;
 	}
 
@@ -308,7 +308,7 @@ cv_prev_word(Char *p, Char *low, int n, int (*wtest)(wint_t))
 
 	p--;
 	while (n--) {
-		while ((p > low) && Isspace(*p))
+		while ((p > low) && iswspace(*p))
 			p--;
 		test = (*wtest)(*p);
 		while ((p >= low) && (*wtest)(*p) == test)
@@ -373,7 +373,7 @@ cv__endword(Char *p, Char *high, int n, int (*wtest)(wint_t))
 	p++;
 
 	while (n--) {
-		while ((p < high) && Isspace(*p))
+		while ((p < high) && iswspace(*p))
 			p++;
 
 		test = (*wtest)(*p);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.16 2016/03/22 11:32:18 schwarze Exp $	*/
+/*	$OpenBSD: common.c,v 1.17 2016/04/09 20:15:26 schwarze Exp $	*/
 /*	$NetBSD: common.c,v 1.24 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -142,8 +142,7 @@ ed_delete_next_char(EditLine *el, wint_t c)
 #ifdef notdef			/* XXX */
 #define	EL	el->el_line
 	(void) fprintf(el->el_errfile,
-	    "\nD(b: %p(" FSTR ")  c: %p(" FSTR ") last: %p(" FSTR
-	    ") limit: %p(" FSTR ")\n",
+	    "\nD(b: %p(%ls)  c: %p(%ls) last: %p(%ls) limit: %p(%ls)\n",
 	    EL.buffer, EL.buffer, EL.cursor, EL.cursor, EL.lastchar,
 	    EL.lastchar, EL.limit, EL.limit);
 #endif
@@ -239,7 +238,7 @@ ed_move_to_beg(EditLine *el, wint_t c __attribute__((__unused__)))
 
 	if (el->el_map.type == MAP_VI) {
 			/* We want FIRST non space character */
-		while (Isspace(*el->el_line.cursor))
+		while (iswspace(*el->el_line.cursor))
 			el->el_line.cursor++;
 		if (el->el_chared.c_vcmd.action != NOP) {
 			cv_delfini(el);
@@ -381,7 +380,7 @@ protected el_action_t
 ed_digit(EditLine *el, wint_t c)
 {
 
-	if (!Isdigit(c))
+	if (!iswdigit(c))
 		return CC_ERROR;
 
 	if (el->el_state.doingarg) {
@@ -409,7 +408,7 @@ protected el_action_t
 ed_argument_digit(EditLine *el, wint_t c)
 {
 
-	if (!Isdigit(c))
+	if (!iswdigit(c))
 		return CC_ERROR;
 
 	if (el->el_state.doingarg) {

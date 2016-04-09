@@ -1,5 +1,5 @@
-/*	$OpenBSD: emacs.c,v 1.14 2016/03/20 23:48:27 schwarze Exp $	*/
-/*	$NetBSD: emacs.c,v 1.32 2016/02/16 22:53:14 christos Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.15 2016/04/09 20:15:26 schwarze Exp $	*/
+/*	$NetBSD: emacs.c,v 1.33 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -287,8 +287,8 @@ em_upper_case(EditLine *el, wint_t c __attribute__((__unused__)))
 	    el->el_state.argument, ce__isword);
 
 	for (cp = el->el_line.cursor; cp < ep; cp++)
-		if (Islower(*cp))
-			*cp = Toupper(*cp);
+		if (iswlower(*cp))
+			*cp = towupper(*cp);
 
 	el->el_line.cursor = ep;
 	if (el->el_line.cursor > el->el_line.lastchar)
@@ -311,16 +311,16 @@ em_capitol_case(EditLine *el, wint_t c __attribute__((__unused__)))
 	    el->el_state.argument, ce__isword);
 
 	for (cp = el->el_line.cursor; cp < ep; cp++) {
-		if (Isalpha(*cp)) {
-			if (Islower(*cp))
-				*cp = Toupper(*cp);
+		if (iswalpha(*cp)) {
+			if (iswlower(*cp))
+				*cp = towupper(*cp);
 			cp++;
 			break;
 		}
 	}
 	for (; cp < ep; cp++)
-		if (Isupper(*cp))
-			*cp = Tolower(*cp);
+		if (iswupper(*cp))
+			*cp = towlower(*cp);
 
 	el->el_line.cursor = ep;
 	if (el->el_line.cursor > el->el_line.lastchar)
@@ -343,8 +343,8 @@ em_lower_case(EditLine *el, wint_t c __attribute__((__unused__)))
 	    el->el_state.argument, ce__isword);
 
 	for (cp = el->el_line.cursor; cp < ep; cp++)
-		if (Isupper(*cp))
-			*cp = Tolower(*cp);
+		if (iswupper(*cp))
+			*cp = towlower(*cp);
 
 	el->el_line.cursor = ep;
 	if (el->el_line.cursor > el->el_line.lastchar)

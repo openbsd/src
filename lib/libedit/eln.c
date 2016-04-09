@@ -1,4 +1,4 @@
-/*	$OpenBSD: eln.c,v 1.14 2016/04/09 19:31:55 schwarze Exp $	*/
+/*	$OpenBSD: eln.c,v 1.15 2016/04/09 20:15:26 schwarze Exp $	*/
 /*	$NetBSD: eln.c,v 1.9 2010/11/04 13:53:12 christos Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@ el_getc(EditLine *el, char *cp)
 	*cp = '\0';
 	if (num_read <= 0)
 		return num_read;
-	num_read = ct_wctob(wc);
+	num_read = wctob(wc);
 	if (num_read == EOF) {
 		errno = ERANGE;
 		return -1;
@@ -103,7 +103,7 @@ el_parse(EditLine *el, int argc, const char *argv[])
 	if (!wargv)
 		return -1;
 	ret = el_wparse(el, argc, wargv);
-	ct_free_argv(wargv);
+	free(wargv);
 
 	return ret;
 }
@@ -197,7 +197,7 @@ el_set(EditLine *el, int op, ...)
 		default:
 			ret = -1;
 		}
-		ct_free_argv(wargv);
+		free(wargv);
 		break;
 	}
 
@@ -219,7 +219,7 @@ el_set(EditLine *el, int op, ...)
 		/* XXX: The two strdup's leak */
 		ret = map_addfunc(el, Strdup(wargv[0]), Strdup(wargv[1]),
 		    func);
-		ct_free_argv(wargv);
+		free(wargv);
 		break;
 	}
 	case EL_HIST: {           /* hist_fun_t, const char * */

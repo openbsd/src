@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.30 2016/04/09 19:31:55 schwarze Exp $	*/
+/*	$OpenBSD: el.c,v 1.31 2016/04/09 20:15:26 schwarze Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -543,7 +543,7 @@ el_source(EditLine *el, const char *fname)
 		if (!dptr)
 			continue;
 		/* loop until first non-space char or EOL */
-		while (*dptr != '\0' && Isspace(*dptr))
+		while (*dptr != '\0' && iswspace(*dptr))
 			dptr++;
 		if (*dptr == '#')
 			continue;   /* ignore, this is a comment line */
@@ -612,7 +612,7 @@ el_editmode(EditLine *el, int argc, const Char **argv)
 		el->el_flags |= EDIT_DISABLED;
 	}
 	else {
-		(void) fprintf(el->el_errfile, "edit: Bad value `" FSTR "'.\n",
+		(void) fprintf(el->el_errfile, "edit: Bad value `%ls'.\n",
 		    how);
 		return -1;
 	}

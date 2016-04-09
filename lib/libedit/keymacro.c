@@ -1,5 +1,5 @@
-/*	$OpenBSD: keymacro.c,v 1.9 2016/04/09 19:31:55 schwarze Exp $	*/
-/*	$NetBSD: keymacro.c,v 1.15 2016/03/23 22:27:48 christos Exp $	*/
+/*	$OpenBSD: keymacro.c,v 1.10 2016/04/09 20:15:26 schwarze Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.16 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -259,7 +259,7 @@ keymacro_print(EditLine *el, const Char *key)
 	el->el_keymacro.buf[0] = '"';
 	if (node_lookup(el, key, el->el_keymacro.map, 1) <= -1)
 		/* key is not bound */
-		(void) fprintf(el->el_errfile, "Unbound extended key \"" FSTR
+		(void) fprintf(el->el_errfile, "Unbound extended key \"%ls"
 		    "\"\n", key);
 	return;
 }
@@ -542,7 +542,7 @@ node_enum(EditLine *el, keymacro_node_t *ptr, size_t cnt)
 		el->el_keymacro.buf[++cnt] = '\0';
 		(void) fprintf(el->el_errfile,
 		    "Some extended keys too long for internal print buffer");
-		(void) fprintf(el->el_errfile, " \"" FSTR "...\"\n",
+		(void) fprintf(el->el_errfile, " \"%ls...\"\n",
 		    el->el_keymacro.buf);
 		return 0;
 	}
@@ -595,7 +595,7 @@ keymacro_kprint(EditLine *el, const Char *key, keymacro_value_t *val, int ntype)
 		case XK_CMD:
 			for (fp = el->el_map.help; fp->name; fp++)
 				if (val->cmd == fp->func) {
-                    ct_wcstombs(unparsbuf, fp->name, sizeof(unparsbuf));
+                    wcstombs(unparsbuf, fp->name, sizeof(unparsbuf));
                     unparsbuf[sizeof(unparsbuf) -1] = '\0';
 					(void) fprintf(el->el_outfile, fmt,
                         ct_encode_string(key, &el->el_scratch), unparsbuf);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: hist.c,v 1.14 2016/04/09 19:31:55 schwarze Exp $	*/
-/*	$NetBSD: hist.c,v 1.25 2016/03/23 22:27:48 christos Exp $	*/
+/*	$OpenBSD: hist.c,v 1.15 2016/04/09 20:15:26 schwarze Exp $	*/
+/*	$NetBSD: hist.c,v 1.26 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -172,7 +172,7 @@ hist_command(EditLine *el, int argc, const Char **argv)
 	if (argc != 3)
 		return -1;
 
-	num = (int)Strtol(argv[2], NULL, 0);
+	num = (int)wcstol(argv[2], NULL, 0);
 
 	if (Strcmp(argv[1], STR("size")) == 0)
 		return history(el->el_history.ref, &ev, H_SETSIZE, num);

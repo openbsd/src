@@ -1,5 +1,5 @@
-/*	$OpenBSD: read.c,v 1.31 2016/04/09 19:31:55 schwarze Exp $	*/
-/*	$NetBSD: read.c,v 1.81 2016/02/16 22:53:14 christos Exp $	*/
+/*	$OpenBSD: read.c,v 1.32 2016/04/09 20:15:26 schwarze Exp $	*/
+/*	$NetBSD: read.c,v 1.88 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -305,9 +305,9 @@ read_char(EditLine *el, wchar_t *cp)
 		mbstate_t mbs;
 
 		++cbp;
-		/* This only works because UTF8 is stateless */
+		/* This only works because UTF8 is stateless. */
 		memset(&mbs, 0, sizeof(mbs));
-		switch (ct_mbrtowc(cp, cbuf, cbp, &mbs)) {
+		switch (mbrtowc(cp, cbuf, cbp, &mbs)) {
 		case (size_t)-1:
 			if (cbp > 1) {
 				/*
@@ -572,7 +572,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 					break;
 			if (b->name)
 				(void) fprintf(el->el_errfile,
-				    "Executing " FSTR "\n", b->name);
+				    "Executing %ls\n", b->name);
 			else
 				(void) fprintf(el->el_errfile,
 				    "Error command = %d\n", cmdnum);
@@ -586,7 +586,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 		    el->el_chared.c_redo.pos < el->el_chared.c_redo.lim) {
 			if (cmdnum == VI_DELETE_PREV_CHAR &&
 			    el->el_chared.c_redo.pos != el->el_chared.c_redo.buf
-			    && Isprint(el->el_chared.c_redo.pos[-1]))
+			    && iswprint(el->el_chared.c_redo.pos[-1]))
 				el->el_chared.c_redo.pos--;
 			else
 				*el->el_chared.c_redo.pos++ = ch;

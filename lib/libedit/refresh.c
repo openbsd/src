@@ -1,5 +1,5 @@
-/*	$OpenBSD: refresh.c,v 1.15 2016/03/22 11:32:18 schwarze Exp $	*/
-/*	$NetBSD: refresh.c,v 1.45 2016/03/02 19:24:20 christos Exp $	*/
+/*	$OpenBSD: refresh.c,v 1.16 2016/04/09 20:15:26 schwarze Exp $	*/
+/*	$NetBSD: refresh.c,v 1.46 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -156,8 +156,10 @@ re_addc(EditLine *el, wint_t c)
 protected void
 re_putc(EditLine *el, wint_t c, int shift)
 {
-	int i, w = Width(c);
+	int i, w = wcwidth(c);
 	ELRE_DEBUG(1, (__F, "printing %5x '%lc'\r\n", c, c));
+	if (w == -1)
+		w = 0;
 
 	while (shift && (el->el_refresh.r_cursor.h + w > el->el_terminal.t_size.h))
 	    re_putc(el, ' ', 1);
@@ -199,7 +201,7 @@ re_refresh(EditLine *el)
 	size_t termsz;
 #endif
 
-	ELRE_DEBUG(1, (__F, "el->el_line.buffer = :" FSTR ":\r\n",
+	ELRE_DEBUG(1, (__F, "el->el_line.buffer = :%ls:\r\n",
 	    el->el_line.buffer));
 
 	/* reset the Drawing cursor */
@@ -245,7 +247,7 @@ re_refresh(EditLine *el)
 
 	for (cp = st; cp < el->el_line.lastchar; cp++) {
 		if (cp == el->el_line.cursor) {
-                        int w = Width(*cp);
+                        int w = wcwidth(*cp);
 			/* save for later */
 			cur.h = el->el_refresh.r_cursor.h;
 			cur.v = el->el_refresh.r_cursor.v;
@@ -1015,7 +1017,7 @@ re_refresh_cursor(EditLine *el)
 				continue;
 			break;
 		default:
-			w = Width(*cp);
+			w = wcwidth(*cp);
 			if (w > 1 && h + w > th) { /* won't fit on line */
 				h = 0;
 				v++;
@@ -1031,7 +1033,7 @@ re_refresh_cursor(EditLine *el)
 	}
         /* if we have a next character, and it's a doublewidth one, we need to
          * check whether we need to linebreak for it to fit */
-        if (cp < el->el_line.lastchar && (w = Width(*cp)) > 1)
+        if (cp < el->el_line.lastchar && (w = wcwidth(*cp)) > 1)
                 if (h + w > th) {
                     h = 0;
                     v++;
@@ -1050,7 +1052,7 @@ re_refresh_cursor(EditLine *el)
 private void
 re_fastputc(EditLine *el, wint_t c)
 {
-	int w = Width((Char)c);
+	int w = wcwidth((Char)c);
 	while (w > 1 && el->el_cursor.h + w > el->el_terminal.t_size.h)
 	    re_fastputc(el, ' ');
 

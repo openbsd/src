@@ -1,4 +1,4 @@
-/*	$OpenBSD: chartype.c,v 1.11 2016/04/09 19:31:55 schwarze Exp $	*/
+/*	$OpenBSD: chartype.c,v 1.12 2016/04/09 20:15:26 schwarze Exp $	*/
 /*	$NetBSD: chartype.c,v 1.6 2011/07/28 00:48:21 christos Exp $	*/
 
 /*-
@@ -113,14 +113,15 @@ ct_decode_string(const char *s, ct_buffer_t *conv)
 	if (!conv->wbuff)
 		return NULL;
 
-	len = ct_mbstowcs(NULL, s, 0);
+	len = mbstowcs(NULL, s, 0);
 	if (len == (size_t)-1)
 		return NULL;
 	if (len > conv->wsize)
 		ct_conv_buff_resize(conv, 0, len + 1);
 	if (!conv->wbuff)
 		return NULL;
-	ct_mbstowcs(conv->wbuff, s, conv->wsize);
+
+	mbstowcs(conv->wbuff, s, conv->wsize);
 	return conv->wbuff;
 }
 
@@ -188,10 +189,10 @@ ct_encode_char(char *dst, size_t len, Char c)
 	ssize_t l = 0;
 	if (len < ct_enc_width(c))
 		return -1;
-	l = ct_wctomb(dst, c);
+	l = wctomb(dst, c);
 
 	if (l < 0) {
-		ct_wctomb_reset;
+		wctomb(NULL, L'\0');
 		l = 0;
 	}
 	return l;
@@ -327,9 +328,9 @@ ct_chr_class(Char c)
 		return CHTYPE_TAB;
 	else if (c == '\n')
 		return CHTYPE_NL;
-	else if (IsASCII(c) && Iscntrl(c))
+	else if (c < 0x100 && iswcntrl(c))
 		return CHTYPE_ASCIICTL;
-	else if (Isprint(c))
+	else if (iswprint(c))
 		return CHTYPE_PRINT;
 	else
 		return CHTYPE_NONPRINT;

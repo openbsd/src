@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.22 2016/04/09 18:42:49 schwarze Exp $	*/
+/*	$OpenBSD: tty.c,v 1.23 2016/04/09 20:15:26 schwarze Exp $	*/
 /*	$NetBSD: tty.c,v 1.34 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -914,15 +914,17 @@ tty_bind_char(EditLine *el, int force)
 			continue;
 		/* Put the old default binding back, and set the new binding */
 		keymacro_clear(el, map, old);
-		map[UC(old[0])] = dmap[UC(old[0])];
+		map[(unsigned char)old[0]] = dmap[(unsigned char)old[0]];
 		keymacro_clear(el, map, new);
 		/* MAP_VI == 1, MAP_EMACS == 0... */
-		map[UC(new[0])] = tp->bind[el->el_map.type];
+		map[(unsigned char)new[0]] = tp->bind[el->el_map.type];
 		if (dalt) {
 			keymacro_clear(el, alt, old);
-			alt[UC(old[0])] = dalt[UC(old[0])];
+			alt[(unsigned char)old[0]] =
+			    dalt[(unsigned char)old[0]];
 			keymacro_clear(el, alt, new);
-			alt[UC(new[0])] = tp->bind[el->el_map.type + 1];
+			alt[(unsigned char)new[0]] =
+			    tp->bind[el->el_map.type + 1];
 		}
 	}
 }
@@ -1250,7 +1252,7 @@ tty_stty(EditLine *el, int argc __attribute__((__unused__)), const Char **argv)
 
 		if (!m->m_name) {
 			(void) fprintf(el->el_errfile,
-			    "%s: Invalid argument `" FSTR "'.\n", name, d);
+			    "%s: Invalid argument `%ls'.\n", name, d);
 			return -1;
 		}
 		if (p) {
