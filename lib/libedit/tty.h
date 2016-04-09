@@ -1,5 +1,5 @@
-/*	$OpenBSD: tty.h,v 1.10 2016/03/20 22:57:59 schwarze Exp $	*/
-/*	$NetBSD: tty.h,v 1.12 2009/12/30 22:37:40 christos Exp $	*/
+/*	$OpenBSD: tty.h,v 1.11 2016/04/09 18:42:49 schwarze Exp $	*/
+/*	$NetBSD: tty.h,v 1.19 2016/02/27 18:13:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -469,12 +469,13 @@ protected void	tty_bind_char(EditLine *, int);
 typedef struct {
     ttyperm_t t_t;
     ttychar_t t_c;
-    struct termios t_ex, t_ed, t_ts;
+    struct termios t_or, t_ex, t_ed, t_ts;
     int t_tabs;
     int t_eight;
     speed_t t_speed;
-    int t_mode;
+    unsigned char t_mode;
     unsigned char t_vdisable;
+    unsigned char t_initialized;
 } el_tty_t;
 
 
