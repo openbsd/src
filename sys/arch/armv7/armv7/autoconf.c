@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.4 2016/04/10 12:24:13 jsg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.5 2016/04/10 12:32:46 jsg Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -53,10 +53,7 @@
 #include <machine/intr.h>
 #include <machine/bus.h>
 
-#include <armv7/armv7/armv7_machdep.h>
-
 struct device *bootdv = NULL;
-extern char *hw_prod;
 
 void dumpconf(void);
 
