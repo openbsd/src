@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.139 2016/03/25 16:31:32 mestre Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.140 2016/04/10 03:04:21 tedu Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -849,7 +849,9 @@ nextstate(struct con *cp)
 				    cp->blacklists == NULL &&
 				    match(cp->ibuf, "EHLO")) {
 					snprintf(cp->obuf, cp->osize,
-					    "250 STARTTLS\r\n");
+					    "250-%s\r\n"
+					    "250 STARTTLS\r\n",
+					    hostname);
 					nextstate = 7;
 				} else {
 					snprintf(cp->obuf, cp->osize,
