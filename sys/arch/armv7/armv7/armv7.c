@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7.c,v 1.11 2015/07/15 21:09:40 jsg Exp $ */
+/* $OpenBSD: armv7.c,v 1.12 2016/04/10 12:24:13 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -18,6 +18,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/types.h>
+#include <sys/malloc.h>
+
 #define _ARM32_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <arm/armv7/armv7var.h>
@@ -100,13 +103,22 @@ armv7_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct armv7_softc *sc = (struct armv7_softc *)self;
 	struct board_dev *bd;
+	int len;
+	const char *name = platform_board_name();
 
-	sc->sc_board_devs = platform_board_devs();
+	if (hw_prod == NULL && name != NULL) {
+		len = strlen(name) + 1;
+		hw_prod = malloc(len, M_DEVBUF, M_NOWAIT);
+		if (hw_prod)
+			strlcpy(hw_prod, name, len);
+	}
 
-	if (hw_prod)
-		printf(": %s\n", hw_prod);
+	if (name != NULL)
+		printf(": %s\n", name);
 	else
 		printf(": UNKNOWN BOARD %u\n", board_id);
+
+	sc->sc_board_devs = platform_board_devs();
 
 	/* Directly configure on-board devices (dev* in config file). */
 	for (bd = sc->sc_board_devs; bd->name != NULL; bd++) {
