@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.13 2016/04/02 00:56:39 jsg Exp $ */
+/* $OpenBSD: dwiic.c,v 1.14 2016/04/10 16:43:17 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -173,6 +173,9 @@ int		dwiic_init(struct dwiic_softc *);
 void		dwiic_enable(struct dwiic_softc *, int);
 int		dwiic_intr(void *);
 
+void *		dwiic_i2c_intr_establish(void *, void *, int,
+		    int (*)(void *), void *, const char *);
+
 int		dwiic_acpi_parse_crs(union acpi_resource *, void *);
 int		dwiic_acpi_foundhid(struct aml_node *, void *);
 void		dwiic_acpi_get_params(struct dwiic_softc *, char *, uint16_t *,
@@ -307,6 +310,7 @@ dwiic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c_tag.ic_acquire_bus = dwiic_i2c_acquire_bus;
 	sc->sc_i2c_tag.ic_release_bus = dwiic_i2c_release_bus;
 	sc->sc_i2c_tag.ic_exec = dwiic_i2c_exec;
+	sc->sc_i2c_tag.ic_intr_establish = dwiic_i2c_intr_establish;
 
 	bzero(&sc->sc_iba, sizeof(sc->sc_iba));
 	sc->sc_iba.iba_name = "iic";
@@ -483,6 +487,23 @@ dwiic_i2c_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
+void *
+dwiic_i2c_intr_establish(void *cookie, void *ih, int level,
+    int (*func)(void *), void *arg, const char *name)
+{
+	struct dwiic_crs *crs = ih;
+
+	if (crs->gpio_int_node && crs->gpio_int_node->gpio) {
+		struct acpi_gpio *gpio = crs->gpio_int_node->gpio;
+		gpio->intr_establish(gpio->cookie, crs->gpio_int_pin,
+				     crs->gpio_int_flags, func, arg);
+		return ih;
+	}
+
+	return acpi_intr_establish(crs->irq_int, crs->irq_flags,
+	    level, func, arg, name);
+}
+
 int
 dwiic_acpi_foundhid(struct aml_node *node, void *arg)
 {
@@ -575,23 +596,14 @@ dwiic_acpi_foundhid(struct aml_node *node, void *arg)
 	aml_parse_resource(&res, dwiic_acpi_parse_crs, &crs);
 	aml_freevalue(&res);
 
-	if (crs.gpio_int_node && crs.gpio_int_node->gpio) {
-		struct acpi_gpio *gpio = crs.gpio_int_node->gpio;
-		ia.ia_int = crs.gpio_int_pin;
-		ia.ia_int_flags = crs.gpio_int_flags;
-		ia.acpi_gpio = gpio;
-	} else {
-		ia.ia_int = crs.irq_int;
-		ia.ia_int_flags = crs.irq_flags;
-		ia.acpi_gpio = NULL;
-	}
 	ia.ia_addr = crs.i2c_addr;
 
-	if (ia.ia_int <= 0) {
+	if (crs.irq_int <= 0 && crs.gpio_int_node == NULL) {
 		printf("%s: couldn't find irq for %s\n", sc->sc_dev.dv_xname,
 		    aml_nodename(node->parent));
 		return 0;
 	}
+	ia.ia_intr = &crs;
 
 	if (config_found(sc->sc_iic, &ia, dwiic_i2c_print))
 		return 0;

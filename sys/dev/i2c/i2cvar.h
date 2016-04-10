@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2cvar.h,v 1.14 2016/04/02 00:56:39 jsg Exp $	*/
+/*	$OpenBSD: i2cvar.h,v 1.15 2016/04/10 16:43:17 kettenis Exp $	*/
 /*	$NetBSD: i2cvar.h,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -90,6 +90,9 @@ typedef struct i2c_controller {
 	int	(*ic_initiate_xfer)(void *, i2c_addr_t, int);
 	int	(*ic_read_byte)(void *, uint8_t *, int);
 	int	(*ic_write_byte)(void *, uint8_t, int);
+
+	void	*(*ic_intr_establish)(void *, void *, int, int (*)(void *),
+		    void *, const char *);
 } *i2c_tag_t;
 
 /* Used to attach the i2c framework to the controller. */
@@ -106,11 +109,9 @@ struct i2c_attach_args {
 	i2c_tag_t	ia_tag;		/* our controller */
 	i2c_addr_t	ia_addr;	/* address of device */
 	int		ia_size;	/* size (for EEPROMs) */
-	int		ia_int;		/* IRQ */
-	int		ia_int_flags;	/* IRQ flags */
 	char		*ia_name;	/* chip name */
 	void		*ia_cookie;	/* pass extra info from bus to dev */
-	void		*acpi_gpio;
+	void		*ia_intr;	/* interrupt info */
 };
 
 /*
@@ -153,6 +154,10 @@ int	iic_exec(i2c_tag_t, i2c_op_t, i2c_addr_t, const void *,
 int	iic_smbus_write_byte(i2c_tag_t, i2c_addr_t, uint8_t, uint8_t, int);
 int	iic_smbus_read_byte(i2c_tag_t, i2c_addr_t, uint8_t, uint8_t *, int);
 int	iic_smbus_receive_byte(i2c_tag_t, i2c_addr_t, uint8_t *, int);
+
+#define iic_intr_establish(ic, ih, level, func, arg, name)		\
+	(*(ic)->ic_intr_establish)((ic)->ic_cookie, (ih), (level),	\
+	    (func), (arg), (name))
 
 void	iic_ignore_addr(u_int8_t addr);
 
