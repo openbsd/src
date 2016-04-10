@@ -1,4 +1,4 @@
-/*	$OpenBSD: rev.c,v 1.12 2015/10/09 01:37:08 deraadt Exp $	*/
+/*	$OpenBSD: rev.c,v 1.13 2016/04/10 17:06:52 martijn Exp $	*/
 /*	$NetBSD: rev.c,v 1.5 1995/09/28 08:49:40 tls Exp $	*/
 
 /*-
@@ -34,27 +34,31 @@
 
 #include <err.h>
 #include <errno.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+int isu8cont(unsigned char);
 void usage(void);
 
 int
 main(int argc, char *argv[])
 {
-	char *filename, *p, *t;
+	char *filename, *p = NULL, *t, *u;
 	FILE *fp;
-	size_t len;
+	ssize_t len;
+	size_t ps = 0;
 	int ch, rval;
+
+	setlocale(LC_CTYPE, "");
 
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
-		case '?':
 		default:
 			usage();
 		}
@@ -75,11 +79,17 @@ main(int argc, char *argv[])
 			}
 			filename = *argv++;
 		}
-		while ((p = fgetln(fp, &len)) != NULL) {
+		while ((len = getline(&p, &ps, fp)) != -1) {
 			if (p[len - 1] == '\n')
 				--len;
-			for (t = p + len - 1; t >= p; --t)
-				putchar(*t);
+			for (t = p + len - 1; t >= p; --t) {
+				if (isu8cont(*t))
+					continue;
+				u = t;
+				do {
+					putchar(*u);
+				} while (isu8cont(*(++u)));
+			}
 			putchar('\n');
 		}
 		if (ferror(fp)) {
@@ -88,7 +98,13 @@ main(int argc, char *argv[])
 		}
 		(void)fclose(fp);
 	} while(*argv);
-	exit(rval);
+	return rval;
+}
+
+int
+isu8cont(unsigned char c)
+{
+	return MB_CUR_MAX > 1 && (c & (0x80 | 0x40)) == 0x80;
 }
 
 void
