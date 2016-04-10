@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.35 2013/06/02 20:23:33 tedu Exp $
+.\"	$OpenBSD: com.4,v 1.36 2016/04/10 04:04:26 visa Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: June 2 2013 $
+.Dd $Mdocdate: April 10 2016 $
 .Dt COM 4
 .Os
 .Sh NAME
@@ -78,6 +78,9 @@
 .Cd "com* at puc?"
 .Cd "com* at pcmcia?"
 .Cd "com* at cardbus?"
+.Pp
+.Cd "# octeon"
+.Cd "com* at uartbus0"
 .Pp
 .Cd "# sgi"
 .Cd "com0 at macebus0 base 0x00390000 irq 5"
