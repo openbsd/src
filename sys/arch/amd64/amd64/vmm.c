@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.48 2016/04/06 06:15:06 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.49 2016/04/11 06:58:34 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2700,6 +2700,11 @@ vm_run(struct vm_run_params *vrp)
 			break;
 	}
 
+	/*
+	 * Attempt to locate the requested VCPU. If found, attempt to
+	 * to transition from VCPU_STATE_STOPPED -> VCPU_STATE_RUNNING.
+	 * Failure to make the transition indicates the VCPU is busy.
+	 */
 	if (vm != NULL) {
 		rw_enter_read(&vm->vm_vcpu_lock);
 		SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
@@ -2731,7 +2736,9 @@ vm_run(struct vm_run_params *vrp)
 
 	/*
 	 * We may be returning from userland helping us from the last exit.
-	 * If so (vrp_continue == 1), copy in the exit data from vmd.
+	 * If so (vrp_continue == 1), copy in the exit data from vmd. The
+	 * exit data will be consumed before the next entry (this typically
+	 * comprises VCPU register changes as the result of vmd(8)'s actions).
 	 */
 	if (vrp->vrp_continue) {
 		if (copyin(vrp->vrp_exit, &vcpu->vc_exit,
