@@ -36,7 +36,7 @@ main()
 	EditLine	 el;
 	c_macro_t	*ma;
 	int		 irc;
-	Char		 ch;
+	wchar_t		 ch;
 	el_action_t	 cmdnum;
 
 	if (setlocale(LC_CTYPE, "") == NULL)

@@ -41,7 +41,7 @@ main(void)
 {
 	EditLine el;
 	int irc;
-	Char cp;
+	wchar_t cp;
 
 	if (setlocale(LC_CTYPE, "") == NULL)
 		err(1, "setlocale");

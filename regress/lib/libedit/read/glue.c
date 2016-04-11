@@ -40,9 +40,9 @@ int tty_cookedmode(EL) { return 0; }
 int tty_rawmode(EL) { return 0; }
 
 int
-keymacro_get(EL, Char *ch, keymacro_value_t *val)
+keymacro_get(EL, wchar_t *ch, keymacro_value_t *val)
 {
-	static Char value[] = L"ic";
+	static wchar_t value[] = L"ic";
 
 	switch (*ch) {
 	case L'c':

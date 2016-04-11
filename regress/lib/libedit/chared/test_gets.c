@@ -45,7 +45,7 @@ ed_end_of_file(EditLine *el, wint_t c UU) {
 }
 
 int
-el_wgetc(EL, Char *cp) {
+el_wgetc(EL, wchar_t *cp) {
 	return (*cp = getwchar()) != WEOF ? 1 : feof(stdin) ? 0 : -1;
 }
 
@@ -60,7 +60,7 @@ int
 main()
 {
 	EditLine el;
-	Char buf[EL_BUFSIZ];
+	wchar_t buf[EL_BUFSIZ];
 	int i, len;
 
 	if (setlocale(LC_CTYPE, "") == NULL)

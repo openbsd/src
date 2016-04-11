@@ -29,20 +29,24 @@
 #define EL EditLine *el __attribute__((__unused__))
 #define UU __attribute__((__unused__))
 
-ssize_t ct_encode_char(char *dst UU, size_t len UU, Char c UU) { return -1; }
-char *ct_encode_string(const Char *s UU, ct_buffer_t *conv UU) { return NULL; }
+ssize_t ct_encode_char(char *dst UU, size_t len UU, wchar_t c UU) { return -1; }
+
+char *ct_encode_string(const wchar_t *s UU, ct_buffer_t *conv UU)
+{
+	return NULL;
+}
 
 ssize_t
-ct_visual_char(Char *dst, size_t len UU, Char c)
+ct_visual_char(wchar_t *dst, size_t len UU, wchar_t c)
 {
 	*dst = c;
 	return 1;
 }
 
 int
-el_wgetc(EL, Char *cp) {
-	static const Char *const input_buffer = L"adalixi";
-	static const Char *input_ptr = input_buffer;
+el_wgetc(EL, wchar_t *cp) {
+	static const wchar_t *const input_buffer = L"adalixi";
+	static const wchar_t *input_ptr = input_buffer;
 
 	*cp = *input_ptr;
 	if (*cp == '\0') {
@@ -66,8 +70,8 @@ main()
 {
 	EditLine el;
 	keymacro_value_t val;
-	Char repl[] = L"repl";
-	Char ch;
+	wchar_t repl[] = L"repl";
+	wchar_t ch;
 	int irc;
 
 	if (keymacro_init(&el) == -1)
