@@ -1,5 +1,5 @@
-/*	$OpenBSD: tokenizer.c,v 1.18 2016/04/11 19:54:54 schwarze Exp $	*/
-/*	$NetBSD: tokenizer.c,v 1.23 2016/02/15 15:37:20 christos Exp $	*/
+/*	$OpenBSD: tokenizer.c,v 1.19 2016/04/11 20:43:33 schwarze Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.26 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -58,12 +58,14 @@ typedef enum {
 #define	IFS		STR("\t \n")
 
 #ifdef NARROWCHAR
+#define	Char			char
 #define	FUN(prefix, rest)	prefix ## _ ## rest
 #define	TYPE(type)		type
 #define	STR(x)			x
 #define	Strchr(s, c)		strchr(s, c)
 #define	tok_strdup(s)		strdup(s)
 #else
+#define	Char			wchar_t
 #define	FUN(prefix, rest)	prefix ## _w ## rest
 #define	TYPE(type)		type ## W
 #define	STR(x)			L ## x

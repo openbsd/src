@@ -1,5 +1,5 @@
-/*	$OpenBSD: el.h,v 1.18 2016/04/09 19:31:55 schwarze Exp $	*/
-/*	$NetBSD: el.h,v 1.35 2016/03/23 22:27:48 christos Exp $	*/
+/*	$OpenBSD: el.h,v 1.19 2016/04/11 20:43:33 schwarze Exp $	*/
+/*	$NetBSD: el.h,v 1.36 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -67,10 +67,10 @@ typedef struct coord_t {		/* Position on the screen	*/
 } coord_t;
 
 typedef struct el_line_t {
-	Char		*buffer;	/* Input line			*/
-	Char	        *cursor;	/* Cursor position		*/
-	Char	        *lastchar;	/* Last character		*/
-	const Char	*limit;		/* Max position			*/
+	wchar_t		*buffer;	/* Input line			*/
+	wchar_t	        *cursor;	/* Cursor position		*/
+	wchar_t	        *lastchar;	/* Last character		*/
+	const wchar_t	*limit;		/* Max position			*/
 } el_line_t;
 
 /*
@@ -83,7 +83,7 @@ typedef struct el_state_t {
 	int		metanext;	/* Is the next char a meta char */
 	el_action_t	lastcmd;	/* Previous command		*/
 	el_action_t	thiscmd;	/* this command			*/
-	Char		thisch;		/* char that generated it	*/
+	wchar_t		thisch;		/* char that generated it	*/
 } el_state_t;
 
 #include "tty.h"
@@ -100,7 +100,7 @@ typedef struct el_state_t {
 #include "read.h"
 
 struct editline {
-	Char		 *el_prog;	/* the program name		*/
+	wchar_t		 *el_prog;	/* the program name		*/
 	FILE		 *el_infile;	/* Stdio stuff			*/
 	FILE		 *el_outfile;	/* Stdio stuff			*/
 	FILE		 *el_errfile;	/* Stdio stuff			*/
@@ -110,8 +110,8 @@ struct editline {
 	int		  el_flags;	/* Various flags.		*/
 	int		  el_errno;	/* Local copy of errno		*/
 	coord_t		  el_cursor;	/* Cursor location		*/
-	Char		**el_display;	/* Real screen image = what is there */
-	Char		**el_vdisplay;	/* Virtual screen image = what we see */
+	wchar_t		**el_display;	/* Real screen image = what is there */
+	wchar_t		**el_vdisplay;	/* Virtual screen image = what we see */
 	void		 *el_data;	/* Client data			*/
 	el_line_t	  el_line;	/* The current line information	*/
 	el_state_t	  el_state;	/* Current editor state		*/
@@ -132,7 +132,7 @@ struct editline {
 	LineInfo          el_lgcylinfo; /* Legacy LineInfo buffer       */
 };
 
-protected int	el_editmode(EditLine *, int, const Char **);
+protected int	el_editmode(EditLine *, int, const wchar_t **);
 
 #ifdef DEBUG
 #define	EL_ABORT(a)	do { \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.21 2016/04/11 19:54:54 schwarze Exp $	*/
+/*	$OpenBSD: map.c,v 1.22 2016/04/11 20:43:33 schwarze Exp $	*/
 /*	$NetBSD: map.c,v 1.25 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 #include "help.h"
 #include "parse.h"
 
-private void	map_print_key(EditLine *, el_action_t *, const Char *);
+private void	map_print_key(EditLine *, el_action_t *, const wchar_t *);
 private void	map_print_some_keys(EditLine *, el_action_t *, wint_t, wint_t);
 private void	map_print_all_keys(EditLine *);
 private void	map_init_nls(EditLine *);
@@ -976,7 +976,7 @@ map_init_nls(EditLine *el)
 private void
 map_init_meta(EditLine *el)
 {
-	Char buf[3];
+	wchar_t buf[3];
 	int i;
 	el_action_t *map = el->el_map.key;
 	el_action_t *alt = el->el_map.alt;
@@ -994,7 +994,7 @@ map_init_meta(EditLine *el)
 		} else
 			map = alt;
 	}
-	buf[0] = (Char) i;
+	buf[0] = (wchar_t)i;
 	buf[2] = 0;
 	for (i = 0200; i <= 0377; i++)
 		switch (map[i]) {
@@ -1048,7 +1048,7 @@ protected void
 map_init_emacs(EditLine *el)
 {
 	int i;
-	Char buf[3];
+	wchar_t buf[3];
 	el_action_t *key = el->el_map.key;
 	el_action_t *alt = el->el_map.alt;
 	const el_action_t *emacs = el->el_map.emacs;
@@ -1079,7 +1079,7 @@ map_init_emacs(EditLine *el)
  *	Set the editor
  */
 protected int
-map_set_editor(EditLine *el, Char *editor)
+map_set_editor(EditLine *el, wchar_t *editor)
 {
 
 	if (wcscmp(editor, L"emacs") == 0) {
@@ -1098,7 +1098,7 @@ map_set_editor(EditLine *el, Char *editor)
  *	Retrieve the editor
  */
 protected int
-map_get_editor(EditLine *el, const Char **editor)
+map_get_editor(EditLine *el, const wchar_t **editor)
 {
 
 	if (editor == NULL)
@@ -1119,7 +1119,7 @@ map_get_editor(EditLine *el, const Char **editor)
  *	Print the function description for 1 key
  */
 private void
-map_print_key(EditLine *el, el_action_t *map, const Char *in)
+map_print_key(EditLine *el, el_action_t *map, const wchar_t *in)
 {
 	char outbuf[EL_BUFSIZ];
 	el_bindings_t *bp, *ep;
@@ -1145,7 +1145,7 @@ private void
 map_print_some_keys(EditLine *el, el_action_t *map, wint_t first, wint_t last)
 {
 	el_bindings_t *bp, *ep;
-	Char firstbuf[2], lastbuf[2];
+	wchar_t firstbuf[2], lastbuf[2];
 	char unparsbuf[EL_BUFSIZ], extrabuf[EL_BUFSIZ];
 
 	firstbuf[0] = first;
@@ -1241,15 +1241,15 @@ map_print_all_keys(EditLine *el)
  *	Add/remove/change bindings
  */
 protected int
-map_bind(EditLine *el, int argc, const Char **argv)
+map_bind(EditLine *el, int argc, const wchar_t **argv)
 {
 	el_action_t *map;
 	int ntype, rem;
-	const Char *p;
-	Char inbuf[EL_BUFSIZ];
-	Char outbuf[EL_BUFSIZ];
-	const Char *in = NULL;
-	Char *out = NULL;
+	const wchar_t *p;
+	wchar_t inbuf[EL_BUFSIZ];
+	wchar_t outbuf[EL_BUFSIZ];
+	const wchar_t *in = NULL;
+	wchar_t *out = NULL;
 	el_bindings_t *bp, *ep;
 	int cmd;
 	int key;
@@ -1392,7 +1392,8 @@ map_bind(EditLine *el, int argc, const Char **argv)
  *	add a user defined function
  */
 protected int
-map_addfunc(EditLine *el, const Char *name, const Char *help, el_func_t func)
+map_addfunc(EditLine *el, const wchar_t *name, const wchar_t *help,
+    el_func_t func)
 {
 	void *p;
 	int nf = el->el_map.nfunc + 1;

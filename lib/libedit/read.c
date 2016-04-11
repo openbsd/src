@@ -1,5 +1,5 @@
-/*	$OpenBSD: read.c,v 1.33 2016/04/11 19:54:54 schwarze Exp $	*/
-/*	$NetBSD: read.c,v 1.88 2016/04/09 18:43:17 christos Exp $	*/
+/*	$OpenBSD: read.c,v 1.34 2016/04/11 20:43:33 schwarze Exp $	*/
+/*	$NetBSD: read.c,v 1.90 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
 
 private int	read__fixio(int, int);
 private int	read_char(EditLine *, wchar_t *);
-private int	read_getcmd(EditLine *, el_action_t *, Char *);
+private int	read_getcmd(EditLine *, el_action_t *, wchar_t *);
 private void	read_pop(c_macro_t *);
 
 /* read_init():
@@ -181,7 +181,7 @@ read__fixio(int fd __attribute__((__unused__)), int e)
  *	Push a macro
  */
 public void
-el_wpush(EditLine *el, const Char *str)
+el_wpush(EditLine *el, const wchar_t *str)
 {
 	c_macro_t *ma = &el->el_chared.c_macro;
 
@@ -201,20 +201,18 @@ el_wpush(EditLine *el, const Char *str)
  *	Character values > 255 are not looked up in the map, but inserted.
  */
 private int
-read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
+read_getcmd(EditLine *el, el_action_t *cmdnum, wchar_t *ch)
 {
-	static const Char meta = (Char)0x80;
+	static const wchar_t meta = (wchar_t)0x80;
 	el_action_t cmd;
-	wchar_t wc;
 	int num;
 
 	el->el_errno = 0;
 	do {
-		if ((num = el_wgetc(el, &wc)) != 1) {/* if EOF or error */
+		if ((num = el_wgetc(el, ch)) != 1) {/* if EOF or error */
 			el->el_errno = num == 0 ? 0 : errno;
 			return 0;	/* not OKCMD */
 		}
-		*ch = (Char)wc;
 
 #ifdef	KANJI
 		if ((*ch & meta)) {
@@ -435,14 +433,14 @@ read_finish(EditLine *el)
 		sig_clr(el);
 }
 
-public const Char *
+public const wchar_t *
 el_wgets(EditLine *el, int *nread)
 {
 	int retval;
 	el_action_t cmdnum = 0;
 	int num;		/* how many chars we have read at NL */
 	wchar_t wc;
-	Char ch, *cp;
+	wchar_t ch, *cp;
 	int crlf = 0;
 	int nrb;
 #ifdef FIONREAD
@@ -458,7 +456,7 @@ el_wgets(EditLine *el, int *nread)
 
 		cp = el->el_line.buffer;
 		while ((num = (*el->el_read.read_char)(el, &wc)) == 1) {
-			*cp = (Char)wc;
+			*cp = wc;
 			/* make sure there is space for next character */
 			if (cp + 1 >= el->el_line.limit) {
 				idx = (cp - el->el_line.buffer);
@@ -511,7 +509,7 @@ el_wgets(EditLine *el, int *nread)
 		terminal__flush(el);
 
 		while ((num = (*el->el_read.read_char)(el, &wc)) == 1) {
-			*cp = (Char)wc;
+			*cp = wc;
 			/* make sure there is space next character */
 			if (cp + 1 >= el->el_line.limit) {
 				idx = (cp - el->el_line.buffer);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: hist.c,v 1.16 2016/04/11 19:54:54 schwarze Exp $	*/
-/*	$NetBSD: hist.c,v 1.26 2016/04/09 18:43:17 christos Exp $	*/
+/*	$OpenBSD: hist.c,v 1.17 2016/04/11 20:43:33 schwarze Exp $	*/
+/*	$NetBSD: hist.c,v 1.28 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ hist_set(EditLine *el, hist_fun_t fun, void *ptr)
 protected el_action_t
 hist_get(EditLine *el)
 {
-	const Char *hp;
+	const wchar_t *hp;
 	int h;
 
 	if (el->el_history.eventno == 0) {	/* if really the current line */
@@ -151,9 +151,9 @@ hist_get(EditLine *el)
  *	process a history command
  */
 protected int
-hist_command(EditLine *el, int argc, const Char **argv)
+hist_command(EditLine *el, int argc, const wchar_t **argv)
 {
-	const Char *str;
+	const wchar_t *str;
 	int num;
 	HistEvent ev;
 
@@ -191,7 +191,7 @@ protected int
 /*ARGSUSED*/
 hist_enlargebuf(EditLine *el, size_t oldsz, size_t newsz)
 {
-	Char *newbuf;
+	wchar_t *newbuf;
 
 	newbuf = reallocarray(el->el_history.buf, newsz, sizeof(*newbuf));
 	if (!newbuf)

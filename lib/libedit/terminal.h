@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.h,v 1.5 2016/03/20 22:57:59 schwarze Exp $	*/
+/*	$OpenBSD: terminal.h,v 1.6 2016/04/11 20:43:33 schwarze Exp $	*/
 /*	$NetBSD: term.h,v 1.21 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #define	_h_el_terminal
 
 typedef struct {		/* Symbolic function key bindings	*/
-	const Char	*name;	/* name of the key			*/
+	const wchar_t	*name;	/* name of the key			*/
 	int		 key;	/* Index in termcap table		*/
 	keymacro_value_t	 fun;	/* Function bound to it			*/
 	int		 type;	/* Type of function			*/
@@ -83,8 +83,8 @@ typedef struct {
 protected void	terminal_move_to_line(EditLine *, int);
 protected void	terminal_move_to_char(EditLine *, int);
 protected void	terminal_clear_EOL(EditLine *, int);
-protected void	terminal_overwrite(EditLine *, const Char *, size_t);
-protected void	terminal_insertwrite(EditLine *, Char *, int);
+protected void	terminal_overwrite(EditLine *, const wchar_t *, size_t);
+protected void	terminal_insertwrite(EditLine *, wchar_t *, int);
 protected void	terminal_deletechars(EditLine *, int);
 protected void	terminal_clear_screen(EditLine *);
 protected void	terminal_beep(EditLine *);
@@ -92,16 +92,17 @@ protected int	terminal_change_size(EditLine *, int, int);
 protected int	terminal_get_size(EditLine *, int *, int *);
 protected int	terminal_init(EditLine *);
 protected void	terminal_bind_arrow(EditLine *);
-protected void	terminal_print_arrow(EditLine *, const Char *);
-protected int	terminal_clear_arrow(EditLine *, const Char *);
-protected int	terminal_set_arrow(EditLine *, const Char *, keymacro_value_t *, int);
+protected void	terminal_print_arrow(EditLine *, const wchar_t *);
+protected int	terminal_clear_arrow(EditLine *, const wchar_t *);
+protected int	terminal_set_arrow(EditLine *, const wchar_t *,
+    keymacro_value_t *, int);
 protected void	terminal_end(EditLine *);
 protected void	terminal_get(EditLine *, const char **);
 protected int	terminal_set(EditLine *, const char *);
-protected int	terminal_settc(EditLine *, int, const Char **);
+protected int	terminal_settc(EditLine *, int, const wchar_t **);
 protected int	terminal_gettc(EditLine *, int, char **);
-protected int	terminal_telltc(EditLine *, int, const Char **);
-protected int	terminal_echotc(EditLine *, int, const Char **);
+protected int	terminal_telltc(EditLine *, int, const wchar_t **);
+protected int	terminal_echotc(EditLine *, int, const wchar_t **);
 protected void	terminal_writec(EditLine *, wint_t);
 protected int	terminal__putc(EditLine *, wint_t);
 protected void	terminal__flush(EditLine *);

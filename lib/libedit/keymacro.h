@@ -1,5 +1,5 @@
-/*	$OpenBSD: keymacro.h,v 1.2 2016/01/29 19:32:33 schwarze Exp $	*/
-/*	$NetBSD: keymacro.h,v 1.2 2011/07/28 03:44:36 christos Exp $	*/
+/*	$OpenBSD: keymacro.h,v 1.3 2016/04/11 20:43:33 schwarze Exp $	*/
+/*	$NetBSD: keymacro.h,v 1.4 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,13 +43,13 @@
 
 typedef union keymacro_value_t {
 	el_action_t	 cmd;	/* If it is a command the #	*/
-	Char		*str;	/* If it is a string...		*/
+	wchar_t		*str;	/* If it is a string...		*/
 } keymacro_value_t;
 
 typedef struct keymacro_node_t keymacro_node_t;
 
 typedef struct el_keymacro_t {
-	Char		*buf;	/* Key print buffer		*/
+	wchar_t		*buf;	/* Key print buffer		*/
 	keymacro_node_t	*map;	/* Key map			*/
 	keymacro_value_t val;	/* Local conversion buffer	*/
 } el_keymacro_t;
@@ -62,16 +62,17 @@ typedef struct el_keymacro_t {
 protected int keymacro_init(EditLine *);
 protected void keymacro_end(EditLine *);
 protected keymacro_value_t *keymacro_map_cmd(EditLine *, int);
-protected keymacro_value_t *keymacro_map_str(EditLine *, Char *);
+protected keymacro_value_t *keymacro_map_str(EditLine *, wchar_t *);
 protected void keymacro_reset(EditLine *);
-protected int keymacro_get(EditLine *, Char *, keymacro_value_t *);
-protected void keymacro_add(EditLine *, const Char *, keymacro_value_t *, int);
-protected void keymacro_clear(EditLine *, el_action_t *, const Char *);
-protected int keymacro_delete(EditLine *, const Char *);
-protected void keymacro_print(EditLine *, const Char *);
-protected void keymacro_kprint(EditLine *, const Char *, keymacro_value_t *,
-    int);
-protected size_t keymacro__decode_str(const Char *, char *, size_t,
+protected int keymacro_get(EditLine *, wchar_t *, keymacro_value_t *);
+protected void keymacro_add(EditLine *, const wchar_t *,
+    keymacro_value_t *, int);
+protected void keymacro_clear(EditLine *, el_action_t *, const wchar_t *);
+protected int keymacro_delete(EditLine *, const wchar_t *);
+protected void keymacro_print(EditLine *, const wchar_t *);
+protected void keymacro_kprint(EditLine *, const wchar_t *,
+    keymacro_value_t *, int);
+protected size_t keymacro__decode_str(const wchar_t *, char *, size_t,
     const char *);
 
 #endif /* _h_el_keymacro */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eln.c,v 1.16 2016/04/11 19:54:54 schwarze Exp $	*/
+/*	$OpenBSD: eln.c,v 1.17 2016/04/11 20:43:33 schwarze Exp $	*/
 /*	$NetBSD: eln.c,v 1.9 2010/11/04 13:53:12 christos Exp $	*/
 
 /*-
@@ -352,7 +352,7 @@ el_line(EditLine *el)
 	const LineInfoW *winfo = el_wline(el);
 	LineInfo *info = &el->el_lgcylinfo;
 	size_t offset;
-	const Char *p;
+	const wchar_t *p;
 
 	info->buffer   = ct_encode_string(winfo->buffer, &el->el_lgcyconv);
 

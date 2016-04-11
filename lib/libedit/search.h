@@ -1,5 +1,5 @@
-/*	$OpenBSD: search.h,v 1.10 2016/03/20 22:57:59 schwarze Exp $	*/
-/*	$NetBSD: search.h,v 1.12 2016/02/16 15:53:48 christos Exp $	*/
+/*	$OpenBSD: search.h,v 1.11 2016/04/11 20:43:33 schwarze Exp $	*/
+/*	$NetBSD: search.h,v 1.13 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,19 +42,19 @@
 #define	_h_el_search
 
 typedef struct el_search_t {
-	Char	*patbuf;		/* The pattern buffer		*/
+	wchar_t	*patbuf;		/* The pattern buffer		*/
 	size_t	 patlen;		/* Length of the pattern buffer	*/
 	int	 patdir;		/* Direction of the last search	*/
 	int	 chadir;		/* Character search direction	*/
-	Char	 chacha;		/* Character we are looking for	*/
+	wchar_t	 chacha;		/* Character we are looking for	*/
 	char	 chatflg;		/* 0 if f, 1 if t */
 } el_search_t;
 
 
-protected int		el_match(const Char *, const Char *);
+protected int		el_match(const wchar_t *, const wchar_t *);
 protected int		search_init(EditLine *);
 protected void		search_end(EditLine *);
-protected int		c_hmatch(EditLine *, const Char *);
+protected int		c_hmatch(EditLine *, const wchar_t *);
 protected void		c_setpat(EditLine *);
 protected el_action_t	ce_inc_search(EditLine *, int);
 protected el_action_t	cv_search(EditLine *, int);

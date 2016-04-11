@@ -1,4 +1,4 @@
-/*	$OpenBSD: filecomplete.c,v 1.11 2016/04/11 19:54:54 schwarze Exp $ */
+/*	$OpenBSD: filecomplete.c,v 1.12 2016/04/11 20:43:33 schwarze Exp $ */
 /*	$NetBSD: filecomplete.c,v 1.22 2010/12/02 04:42:46 dholland Exp $	*/
 
 /*-
@@ -47,9 +47,7 @@
 #include "el.h"
 #include "filecomplete.h"
 
-static const Char break_chars[] = { ' ', '\t', '\n', '"', '\\', '\'', '`', '@',
-    '$', '>', '<', '=', ';', '|', '&', '{', '(', '\0' };
-
+static const wchar_t break_chars[] = L" \t\n\"\\'`@$><=;|&{(";
 
 /********************************/
 /* completion functions */
@@ -390,14 +388,14 @@ int
 fn_complete(EditLine *el,
 	char *(*complet_func)(const char *, int),
 	char **(*attempted_completion_function)(const char *, int, int),
-	const Char *word_break, const Char *special_prefixes,
+	const wchar_t *word_break, const wchar_t *special_prefixes,
 	const char *(*app_func)(const char *), size_t query_items,
 	int *completion_type, int *over, int *point, int *end)
 {
 	const LineInfoW *li;
-	Char *temp;
+	wchar_t *temp;
         char **matches;
-	const Char *ctemp;
+	const wchar_t *ctemp;
 	size_t len;
 	int what_to_do = '\t';
 	int retval = CC_NORM;

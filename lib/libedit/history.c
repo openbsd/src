@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.25 2016/04/11 19:54:54 schwarze Exp $	*/
+/*	$OpenBSD: history.c,v 1.26 2016/04/11 20:43:33 schwarze Exp $	*/
 /*	$NetBSD: history.c,v 1.37 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@ static const char hist_cookie[] = "_HiStOrY_V2_\n";
 
 #ifdef NARROWCHAR
 
+#define	Char			char
 #define	FUN(prefix, rest)	prefix ## _ ## rest
 #define	FUNW(type)		type
 #define	TYPE(type)		type
@@ -70,6 +71,7 @@ static const char hist_cookie[] = "_HiStOrY_V2_\n";
 
 #else
 
+#define	Char			wchar_t
 #define	FUN(prefix, rest)	prefix ## _w ## rest
 #define	FUNW(type)		type ## _w
 #define	TYPE(type)		type ## W

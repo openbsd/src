@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.14 2016/04/11 19:54:54 schwarze Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.15 2016/04/11 20:43:33 schwarze Exp $	*/
 /*	$NetBSD: terminal.c,v 1.17 2016/02/15 15:35:03 christos Exp $	*/
 
 /*-
@@ -411,7 +411,7 @@ private int
 terminal_alloc_display(EditLine *el)
 {
 	int i;
-	Char **b;
+	wchar_t **b;
 	coord_t *c = &el->el_terminal.t_size;
 
 	b = reallocarray(NULL, c->v + 1, sizeof(*b));
@@ -456,8 +456,8 @@ done:
 private void
 terminal_free_display(EditLine *el)
 {
-	Char **b;
-	Char **bufp;
+	wchar_t **b;
+	wchar_t **bufp;
 
 	b = el->el_display;
 	el->el_display = NULL;
@@ -640,7 +640,7 @@ mc_again:
  *	Assumes MB_FILL_CHARs are present to keep the column count correct
  */
 protected void
-terminal_overwrite(EditLine *el, const Char *cp, size_t n)
+terminal_overwrite(EditLine *el, const wchar_t *cp, size_t n)
 {
 	if (n == 0)
 		return;
@@ -666,7 +666,7 @@ terminal_overwrite(EditLine *el, const Char *cp, size_t n)
 			if (EL_HAS_MAGIC_MARGINS) {
 				/* force the wrap to avoid the "magic"
 				 * situation */
-				Char c;
+				wchar_t c;
 				if ((c = el->el_display[el->el_cursor.v]
 				    [el->el_cursor.h]) != '\0') {
 					terminal_overwrite(el, &c, 1);
@@ -730,7 +730,7 @@ terminal_deletechars(EditLine *el, int num)
  *      Assumes MB_FILL_CHARs are present to keep column count correct
  */
 protected void
-terminal_insertwrite(EditLine *el, Char *cp, int num)
+terminal_insertwrite(EditLine *el, wchar_t *cp, int num)
 {
 	if (num <= 0)
 		return;
@@ -1037,18 +1037,18 @@ private void
 terminal_reset_arrow(EditLine *el)
 {
 	funckey_t *arrow = el->el_terminal.t_fkey;
-	static const Char strA[] = {033, '[', 'A', '\0'};
-	static const Char strB[] = {033, '[', 'B', '\0'};
-	static const Char strC[] = {033, '[', 'C', '\0'};
-	static const Char strD[] = {033, '[', 'D', '\0'};
-	static const Char strH[] = {033, '[', 'H', '\0'};
-	static const Char strF[] = {033, '[', 'F', '\0'};
-	static const Char stOA[] = {033, 'O', 'A', '\0'};
-	static const Char stOB[] = {033, 'O', 'B', '\0'};
-	static const Char stOC[] = {033, 'O', 'C', '\0'};
-	static const Char stOD[] = {033, 'O', 'D', '\0'};
-	static const Char stOH[] = {033, 'O', 'H', '\0'};
-	static const Char stOF[] = {033, 'O', 'F', '\0'};
+	static const wchar_t strA[] = L"\033[A";
+	static const wchar_t strB[] = L"\033[B";
+	static const wchar_t strC[] = L"\033[C";
+	static const wchar_t strD[] = L"\033[D";
+	static const wchar_t strH[] = L"\033[H";
+	static const wchar_t strF[] = L"\033[F";
+	static const wchar_t stOA[] = L"\033OA";
+	static const wchar_t stOB[] = L"\033OB";
+	static const wchar_t stOC[] = L"\033OC";
+	static const wchar_t stOD[] = L"\033OD";
+	static const wchar_t stOH[] = L"\033OH";
+	static const wchar_t stOF[] = L"\033OF";
 
 	keymacro_add(el, strA, &arrow[A_K_UP].fun, arrow[A_K_UP].type);
 	keymacro_add(el, strB, &arrow[A_K_DN].fun, arrow[A_K_DN].type);
@@ -1084,7 +1084,7 @@ terminal_reset_arrow(EditLine *el)
  *	Set an arrow key binding
  */
 protected int
-terminal_set_arrow(EditLine *el, const Char *name, keymacro_value_t *fun,
+terminal_set_arrow(EditLine *el, const wchar_t *name, keymacro_value_t *fun,
     int type)
 {
 	funckey_t *arrow = el->el_terminal.t_fkey;
@@ -1104,7 +1104,7 @@ terminal_set_arrow(EditLine *el, const Char *name, keymacro_value_t *fun,
  *	Clear an arrow key binding
  */
 protected int
-terminal_clear_arrow(EditLine *el, const Char *name)
+terminal_clear_arrow(EditLine *el, const wchar_t *name)
 {
 	funckey_t *arrow = el->el_terminal.t_fkey;
 	int i;
@@ -1122,7 +1122,7 @@ terminal_clear_arrow(EditLine *el, const Char *name)
  *	Print the arrow key bindings
  */
 protected void
-terminal_print_arrow(EditLine *el, const Char *name)
+terminal_print_arrow(EditLine *el, const wchar_t *name)
 {
 	int i;
 	funckey_t *arrow = el->el_terminal.t_fkey;
@@ -1157,8 +1157,8 @@ terminal_bind_arrow(EditLine *el)
 	terminal_reset_arrow(el);
 
 	for (i = 0; i < A_K_NKEYS; i++) {
-		Char wt_str[VISUAL_WIDTH_MAX];
-		Char *px;
+		wchar_t wt_str[VISUAL_WIDTH_MAX];
+		wchar_t *px;
 		size_t n;
 
 		p = el->el_terminal.t_str[arrow[i].key];
@@ -1257,7 +1257,7 @@ terminal__flush(EditLine *el)
 protected void
 terminal_writec(EditLine *el, wint_t c)
 {
-	Char visbuf[VISUAL_WIDTH_MAX +1];
+	wchar_t visbuf[VISUAL_WIDTH_MAX +1];
 	ssize_t vcnt = ct_visual_char(visbuf, VISUAL_WIDTH_MAX, c);
 	visbuf[vcnt] = '\0';
 	terminal_overwrite(el, visbuf, (size_t)vcnt);
@@ -1271,7 +1271,7 @@ terminal_writec(EditLine *el, wint_t c)
 protected int
 /*ARGSUSED*/
 terminal_telltc(EditLine *el, int argc __attribute__((__unused__)),
-    const Char **argv __attribute__((__unused__)))
+    const wchar_t **argv __attribute__((__unused__)))
 {
 	const struct termcapstr *t;
 	char **ts;
@@ -1313,7 +1313,7 @@ terminal_telltc(EditLine *el, int argc __attribute__((__unused__)),
 protected int
 /*ARGSUSED*/
 terminal_settc(EditLine *el, int argc __attribute__((__unused__)),
-    const Char **argv)
+    const wchar_t **argv)
 {
 	const struct termcapstr *ts;
 	const struct termcapval *tv;
@@ -1446,10 +1446,10 @@ terminal_gettc(EditLine *el, int argc __attribute__((__unused__)), char **argv)
 protected int
 /*ARGSUSED*/
 terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
-    const Char **argv)
+    const wchar_t **argv)
 {
 	char *cap, *scap;
-	Char *ep;
+	wchar_t *ep;
 	int arg_need, arg_cols, arg_rows;
 	int verbose = 0, silent = 0;
 	char *area;

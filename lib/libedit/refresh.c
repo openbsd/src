@@ -1,5 +1,5 @@
-/*	$OpenBSD: refresh.c,v 1.17 2016/04/11 19:54:54 schwarze Exp $	*/
-/*	$NetBSD: refresh.c,v 1.46 2016/04/09 18:43:17 christos Exp $	*/
+/*	$OpenBSD: refresh.c,v 1.18 2016/04/11 20:43:33 schwarze Exp $	*/
+/*	$NetBSD: refresh.c,v 1.48 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,16 +46,16 @@
 
 private void	re_nextline(EditLine *);
 private void	re_addc(EditLine *, wint_t);
-private void	re_update_line(EditLine *, Char *, Char *, int);
-private void	re_insert (EditLine *, Char *, int, int, Char *, int);
-private void	re_delete(EditLine *, Char *, int, int, int);
+private void	re_update_line(EditLine *, wchar_t *, wchar_t *, int);
+private void	re_insert (EditLine *, wchar_t *, int, int, wchar_t *, int);
+private void	re_delete(EditLine *, wchar_t *, int, int, int);
 private void	re_fastputc(EditLine *, wint_t);
 private void	re_clear_eol(EditLine *, int, int, int);
-private void	re__strncopy(Char *, Char *, size_t);
-private void	re__copy_and_pad(Char *, const Char *, size_t);
+private void	re__strncopy(wchar_t *, wchar_t *, size_t);
+private void	re__copy_and_pad(wchar_t *, const wchar_t *, size_t);
 
 #ifdef DEBUG_REFRESH
-private void	re_printstr(EditLine *, const char *, Char *, Char *);
+private void	re_printstr(EditLine *, const char *, wchar_t *, wchar_t *);
 #define	__F el->el_errfile
 #define	ELRE_ASSERT(a, b, c)	do				\
 				    if (/*CONSTCOND*/ a) {	\
@@ -69,7 +69,7 @@ private void	re_printstr(EditLine *, const char *, Char *, Char *);
  *	Print a string on the debugging pty
  */
 private void
-re_printstr(EditLine *el, const char *str, Char *f, Char *t)
+re_printstr(EditLine *el, const char *str, wchar_t *f, wchar_t *t)
 {
 
 	ELRE_DEBUG(1, (__F, "%s:\"", str));
@@ -98,7 +98,7 @@ re_nextline(EditLine *el)
 	 */
 	if (el->el_refresh.r_cursor.v + 1 >= el->el_terminal.t_size.v) {
 		int i, lins = el->el_terminal.t_size.v;
-		Char *firstline = el->el_vdisplay[0];
+		wchar_t *firstline = el->el_vdisplay[0];
 
 		for(i = 1; i < lins; i++)
 			el->el_vdisplay[i - 1] = el->el_vdisplay[i];
@@ -120,7 +120,7 @@ re_nextline(EditLine *el)
 private void
 re_addc(EditLine *el, wint_t c)
 {
-	switch (ct_chr_class((Char)c)) {
+	switch (ct_chr_class(c)) {
 	case CHTYPE_TAB:        /* expand the tab */
 		for (;;) {
 			re_putc(el, ' ', 1);
@@ -139,9 +139,9 @@ re_addc(EditLine *el, wint_t c)
 		re_putc(el, c, 1);
 		break;
 	default: {
-		Char visbuf[VISUAL_WIDTH_MAX];
+		wchar_t visbuf[VISUAL_WIDTH_MAX];
 		ssize_t i, n =
-		    ct_visual_char(visbuf, VISUAL_WIDTH_MAX, (Char)c);
+		    ct_visual_char(visbuf, VISUAL_WIDTH_MAX, c);
 		for (i = 0; n-- > 0; ++i)
 		    re_putc(el, visbuf[i], 1);
 		break;
@@ -195,7 +195,7 @@ protected void
 re_refresh(EditLine *el)
 {
 	int i, rhdiff;
-	Char *cp, *st;
+	wchar_t *cp, *st;
 	coord_t cur;
 #ifdef notyet
 	size_t termsz;
@@ -354,9 +354,9 @@ re_goto_bottom(EditLine *el)
 private void
 /*ARGSUSED*/
 re_insert(EditLine *el __attribute__((__unused__)),
-    Char *d, int dat, int dlen, Char *s, int num)
+    wchar_t *d, int dat, int dlen, wchar_t *s, int num)
 {
-	Char *a, *b;
+	wchar_t *a, *b;
 
 	if (num <= 0)
 		return;
@@ -405,9 +405,9 @@ re_insert(EditLine *el __attribute__((__unused__)),
 private void
 /*ARGSUSED*/
 re_delete(EditLine *el __attribute__((__unused__)),
-    Char *d, int dat, int dlen, int num)
+    wchar_t *d, int dat, int dlen, int num)
 {
-	Char *a, *b;
+	wchar_t *a, *b;
 
 	if (num <= 0)
 		return;
@@ -437,7 +437,7 @@ re_delete(EditLine *el __attribute__((__unused__)),
  *	Like strncpy without padding.
  */
 private void
-re__strncopy(Char *a, Char *b, size_t n)
+re__strncopy(wchar_t *a, wchar_t *b, size_t n)
 {
 
 	while (n-- && *b)
@@ -496,11 +496,11 @@ new:	eddie> Oh, my little buggy says to me, as lurgid as
 #define	MIN_END_KEEP	4
 
 private void
-re_update_line(EditLine *el, Char *old, Char *new, int i)
+re_update_line(EditLine *el, wchar_t *old, wchar_t *new, int i)
 {
-	Char *o, *n, *p, c;
-	Char *ofd, *ols, *oe, *nfd, *nls, *ne;
-	Char *osb, *ose, *nsb, *nse;
+	wchar_t *o, *n, *p, c;
+	wchar_t *ofd, *ols, *oe, *nfd, *nls, *ne;
+	wchar_t *osb, *ose, *nsb, *nse;
 	int fx, sx;
 	size_t len;
 
@@ -966,7 +966,7 @@ re_update_line(EditLine *el, Char *old, Char *new, int i)
  *	Copy string and pad with spaces
  */
 private void
-re__copy_and_pad(Char *dst, const Char *src, size_t width)
+re__copy_and_pad(wchar_t *dst, const wchar_t *src, size_t width)
 {
 	size_t i;
 
@@ -989,7 +989,7 @@ re__copy_and_pad(Char *dst, const Char *src, size_t width)
 protected void
 re_refresh_cursor(EditLine *el)
 {
-	Char *cp;
+	wchar_t *cp;
 	int h, v, th, w;
 
 	if (el->el_line.cursor >= el->el_line.lastchar) {
@@ -1052,7 +1052,7 @@ re_refresh_cursor(EditLine *el)
 private void
 re_fastputc(EditLine *el, wint_t c)
 {
-	int w = wcwidth((Char)c);
+	int w = wcwidth(c);
 	while (w > 1 && el->el_cursor.h + w > el->el_terminal.t_size.h)
 	    re_fastputc(el, ' ');
 
@@ -1074,7 +1074,7 @@ re_fastputc(EditLine *el, wint_t c)
 		 */
 		if (el->el_cursor.v + 1 >= el->el_terminal.t_size.v) {
 			int i, lins = el->el_terminal.t_size.v;
-			Char *firstline = el->el_display[0];
+			wchar_t *firstline = el->el_display[0];
 
 			for(i = 1; i < lins; i++)
 				el->el_display[i - 1] = el->el_display[i];
@@ -1105,7 +1105,7 @@ re_fastputc(EditLine *el, wint_t c)
 protected void
 re_fastaddc(EditLine *el)
 {
-	Char c;
+	wchar_t c;
 	int rhdiff;
 
 	c = el->el_line.cursor[-1];
@@ -1129,9 +1129,9 @@ re_fastaddc(EditLine *el)
 		break;
 	case CHTYPE_ASCIICTL:
 	case CHTYPE_NONPRINT: {
-		Char visbuf[VISUAL_WIDTH_MAX];
+		wchar_t visbuf[VISUAL_WIDTH_MAX];
 		ssize_t i, n =
-		    ct_visual_char(visbuf, VISUAL_WIDTH_MAX, (Char)c);
+		    ct_visual_char(visbuf, VISUAL_WIDTH_MAX, c);
 		for (i = 0; n-- > 0; ++i)
 			re_fastputc(el, visbuf[i]);
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.32 2016/04/11 19:54:54 schwarze Exp $	*/
+/*	$OpenBSD: el.c,v 1.33 2016/04/11 20:43:33 schwarze Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -192,7 +192,7 @@ el_wset(EditLine *el, int op, ...)
 		break;
 
 	case EL_EDITOR:
-		rv = map_set_editor(el, va_arg(ap, Char *));
+		rv = map_set_editor(el, va_arg(ap, wchar_t *));
 		break;
 
 	case EL_SIGNAL:
@@ -208,11 +208,11 @@ el_wset(EditLine *el, int op, ...)
 	case EL_ECHOTC:
 	case EL_SETTY:
 	{
-		const Char *argv[20];
+		const wchar_t *argv[20];
 		int i;
 
 		for (i = 1; i < 20; i++)
-			if ((argv[i] = va_arg(ap, Char *)) == NULL)
+			if ((argv[i] = va_arg(ap, wchar_t *)) == NULL)
 				break;
 
 		switch (op) {
@@ -251,8 +251,8 @@ el_wset(EditLine *el, int op, ...)
 
 	case EL_ADDFN:
 	{
-		Char *name = va_arg(ap, Char *);
-		Char *help = va_arg(ap, Char *);
+		wchar_t *name = va_arg(ap, wchar_t *);
+		wchar_t *help = va_arg(ap, wchar_t *);
 		el_func_t func = va_arg(ap, el_func_t);
 
 		rv = map_addfunc(el, name, help, func);
@@ -379,14 +379,14 @@ el_wget(EditLine *el, int op, ...)
 	case EL_PROMPT_ESC:
 	case EL_RPROMPT_ESC: {
 		el_pfunc_t *p = va_arg(ap, el_pfunc_t *);
-		Char *c = va_arg(ap, Char *);
+		wchar_t *c = va_arg(ap, wchar_t *);
 
 		rv = prompt_get(el, p, c, op);
 		break;
 	}
 
 	case EL_EDITOR:
-		rv = map_get_editor(el, va_arg(ap, const Char **));
+		rv = map_get_editor(el, va_arg(ap, const wchar_t **));
 		break;
 
 	case EL_SIGNAL:
@@ -501,7 +501,7 @@ el_source(EditLine *el, const char *fname)
 #ifdef HAVE_ISSETUGID
 	char path[PATH_MAX];
 #endif
-	const Char *dptr;
+	const wchar_t *dptr;
 
 	fp = NULL;
 	if (fname == NULL) {
@@ -596,9 +596,9 @@ el_beep(EditLine *el)
  */
 protected int
 /*ARGSUSED*/
-el_editmode(EditLine *el, int argc, const Char **argv)
+el_editmode(EditLine *el, int argc, const wchar_t **argv)
 {
-	const Char *how;
+	const wchar_t *how;
 
 	if (argv == NULL || argc != 2 || argv[1] == NULL)
 		return -1;

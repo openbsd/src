@@ -1,4 +1,4 @@
-/*	$OpenBSD: chartype.c,v 1.12 2016/04/09 20:15:26 schwarze Exp $	*/
+/*	$OpenBSD: chartype.c,v 1.13 2016/04/11 20:43:33 schwarze Exp $	*/
 /*	$NetBSD: chartype.c,v 1.6 2011/07/28 00:48:21 christos Exp $	*/
 
 /*-
@@ -57,7 +57,7 @@ ct_conv_buff_resize(ct_buffer_t *conv, size_t mincsize, size_t minwsize)
 
 	if (minwsize > conv->wsize) {
 		conv->wsize = minwsize;
-		p = reallocarray(conv->wbuff, conv->wsize, sizeof(Char));
+		p = reallocarray(conv->wbuff, conv->wsize, sizeof(wchar_t));
 		if (p == NULL) {
 			conv->wsize = 0;
 			free(conv->wbuff);
@@ -69,7 +69,7 @@ ct_conv_buff_resize(ct_buffer_t *conv, size_t mincsize, size_t minwsize)
 
 
 public char *
-ct_encode_string(const Char *s, ct_buffer_t *conv)
+ct_encode_string(const wchar_t *s, ct_buffer_t *conv)
 {
 	char *dst;
 	ssize_t used = 0;
@@ -101,7 +101,7 @@ ct_encode_string(const Char *s, ct_buffer_t *conv)
 	return conv->cbuff;
 }
 
-public Char *
+public wchar_t *
 ct_decode_string(const char *s, ct_buffer_t *conv)
 {
 	size_t len = 0;
@@ -126,13 +126,13 @@ ct_decode_string(const char *s, ct_buffer_t *conv)
 }
 
 
-protected Char **
+protected wchar_t **
 ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 {
 	size_t bufspace;
 	int i;
-	Char *p;
-	Char **wargv;
+	wchar_t *p;
+	wchar_t **wargv;
 	size_t wlen;
 
 	/* Make sure we have enough space in the conversion buffer to store all
@@ -168,7 +168,7 @@ ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 
 
 protected size_t
-ct_enc_width(Char c)
+ct_enc_width(wchar_t c)
 {
 	/* UTF-8 encoding specific values */
 	if (c < 0x80)
@@ -184,7 +184,7 @@ ct_enc_width(Char c)
 }
 
 protected ssize_t
-ct_encode_char(char *dst, size_t len, Char c)
+ct_encode_char(char *dst, size_t len, wchar_t c)
 {
 	ssize_t l = 0;
 	if (len < ct_enc_width(c))
@@ -198,13 +198,13 @@ ct_encode_char(char *dst, size_t len, Char c)
 	return l;
 }
 
-protected const Char *
-ct_visual_string(const Char *s)
+protected const wchar_t *
+ct_visual_string(const wchar_t *s)
 {
-	static Char *buff = NULL;
+	static wchar_t *buff = NULL;
 	static size_t buffsize = 0;
 	void *p;
-	Char *dst;
+	wchar_t *dst;
 	ssize_t used = 0;
 
 	if (!s)
@@ -249,7 +249,7 @@ out:
 
 
 protected int
-ct_visual_width(Char c)
+ct_visual_width(wchar_t c)
 {
 	int t = ct_chr_class(c);
 	int w;
@@ -275,7 +275,7 @@ ct_visual_width(Char c)
 
 
 protected ssize_t
-ct_visual_char(Char *dst, size_t len, Char c)
+ct_visual_char(wchar_t *dst, size_t len, wchar_t c)
 {
 	int t = ct_chr_class(c);
 	switch (t) {
@@ -322,7 +322,7 @@ ct_visual_char(Char *dst, size_t len, Char c)
 
 
 protected int
-ct_chr_class(Char c)
+ct_chr_class(wchar_t c)
 {
 	if (c == '\t')
 		return CHTYPE_TAB;
