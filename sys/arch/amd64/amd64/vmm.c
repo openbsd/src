@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.49 2016/04/11 06:58:34 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.50 2016/04/11 07:34:55 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -155,6 +155,9 @@ const char *vcpu_state_decode(u_int);
 const char *vmx_exit_reason_decode(uint32_t);
 const char *vmx_instruction_error_decode(uint32_t);
 void dump_vcpu(struct vcpu *);
+void vmx_vcpu_dump_regs(struct vcpu *);
+const char *msr_name_decode(uint32_t);
+void vmm_segment_desc_decode(uint64_t);
 
 const char *vmm_hv_signature = VMM_HV_SIGNATURE;
 
@@ -3899,5 +3902,434 @@ dump_vcpu(struct vcpu *vcpu)
 		CTRL_DUMP(vcpu, EXIT, SAVE_IA32_EFER_ON_EXIT);
 		CTRL_DUMP(vcpu, EXIT, LOAD_IA32_EFER_ON_EXIT);
 		CTRL_DUMP(vcpu, EXIT, SAVE_VMX_PREEMPTION_TIMER);
+	}
+}
+
+/*
+ * vmx_vcpu_dump_regs
+ *
+ * Debug function to print vcpu regs from the current vcpu
+ *  note - vmcs for 'vcpu' must be on this pcpu.
+ *
+ * Parameters:
+ *  vcpu - vcpu whose registers should be dumped
+ */
+void
+vmx_vcpu_dump_regs(struct vcpu *vcpu)
+{
+	uint64_t r;
+	int i;
+	struct vmx_msr_store *msr_store;
+
+	/* XXX reformat this for 32 bit guest as needed */
+	DPRINTF("vcpu @ %p\n", vcpu);
+	DPRINTF(" rax=0x%016llx rbx=0x%016llx rcx=0x%016llx\n",
+	    vcpu->vc_gueststate.vg_rax, vcpu->vc_gueststate.vg_rbx,
+	    vcpu->vc_gueststate.vg_rcx);
+	DPRINTF(" rdx=0x%016llx rbp=0x%016llx rdi=0x%016llx\n",
+	    vcpu->vc_gueststate.vg_rdx, vcpu->vc_gueststate.vg_rbp,
+	    vcpu->vc_gueststate.vg_rdi);
+	DPRINTF(" rsi=0x%016llx  r8=0x%016llx  r9=0x%016llx\n",
+	    vcpu->vc_gueststate.vg_rsi, vcpu->vc_gueststate.vg_r8,
+	    vcpu->vc_gueststate.vg_r9);
+	DPRINTF(" r10=0x%016llx r11=0x%016llx r12=0x%016llx\n",
+	    vcpu->vc_gueststate.vg_r10, vcpu->vc_gueststate.vg_r11,
+	    vcpu->vc_gueststate.vg_r12);
+	DPRINTF(" r13=0x%016llx r14=0x%016llx r15=0x%016llx\n",
+	    vcpu->vc_gueststate.vg_r13, vcpu->vc_gueststate.vg_r14,
+	    vcpu->vc_gueststate.vg_r15);
+
+	DPRINTF(" rip=0x%016llx rsp=", vcpu->vc_gueststate.vg_rip);
+	if (vmread(VMCS_GUEST_IA32_RSP, &r))
+		DPRINTF("(error reading)\n");
+	else
+		DPRINTF("0x%016llx\n", r);
+
+	DPRINTF(" cr0=");
+	if (vmread(VMCS_GUEST_IA32_CR0, &r))
+		DPRINTF("(error reading)   ");
+	else
+		DPRINTF("0x%016llx", r);
+	DPRINTF(" cr2=0x%016llx\n", vcpu->vc_gueststate.vg_cr2);
+
+	DPRINTF(" cr3=");
+	if (vmread(VMCS_GUEST_IA32_CR3, &r))
+		DPRINTF("(error reading)   ");
+	else
+		DPRINTF("0x%016llx", r);
+	DPRINTF(" cr4=");
+	if (vmread(VMCS_GUEST_IA32_CR4, &r))
+		DPRINTF("(error reading)\n");
+	else
+		DPRINTF("0x%016llx\n", r);
+
+	DPRINTF(" --Guest Segment Info--\n");
+
+	DPRINTF(" cs=");
+	if (vmread(VMCS_GUEST_IA32_CS_SEL, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%04llx rpl=%lld", r, r & 0x3);
+
+	DPRINTF(" base=");
+	if (vmread(VMCS_GUEST_IA32_CS_BASE, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" limit=");
+	if (vmread(VMCS_GUEST_IA32_CS_LIMIT, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" a/r=");
+	if (vmread(VMCS_GUEST_IA32_CS_AR, &r))
+		DPRINTF("(error reading)\n");
+	else {
+		DPRINTF("0x%04llx\n  ", r);
+		vmm_segment_desc_decode(r);
+	}	
+
+	DPRINTF(" ds=");
+	if (vmread(VMCS_GUEST_IA32_DS_SEL, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%04llx rpl=%lld", r, r & 0x3);
+
+	DPRINTF(" base=");
+	if (vmread(VMCS_GUEST_IA32_DS_BASE, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" limit=");
+	if (vmread(VMCS_GUEST_IA32_DS_LIMIT, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" a/r=");
+	if (vmread(VMCS_GUEST_IA32_DS_AR, &r))
+		DPRINTF("(error reading)\n");
+	else {
+		DPRINTF("0x%04llx\n  ", r);
+		vmm_segment_desc_decode(r);
+	}	
+
+	DPRINTF(" es=");
+	if (vmread(VMCS_GUEST_IA32_ES_SEL, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%04llx rpl=%lld", r, r & 0x3);
+
+	DPRINTF(" base=");
+	if (vmread(VMCS_GUEST_IA32_ES_BASE, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" limit=");
+	if (vmread(VMCS_GUEST_IA32_ES_LIMIT, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" a/r=");
+	if (vmread(VMCS_GUEST_IA32_ES_AR, &r))
+		DPRINTF("(error reading)\n");
+	else {
+		DPRINTF("0x%04llx\n  ", r);
+		vmm_segment_desc_decode(r);
+	}	
+
+	DPRINTF(" fs=");
+	if (vmread(VMCS_GUEST_IA32_FS_SEL, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%04llx rpl=%lld", r, r & 0x3);
+
+	DPRINTF(" base=");
+	if (vmread(VMCS_GUEST_IA32_FS_BASE, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" limit=");
+	if (vmread(VMCS_GUEST_IA32_FS_LIMIT, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" a/r=");
+	if (vmread(VMCS_GUEST_IA32_FS_AR, &r))
+		DPRINTF("(error reading)\n");
+	else {
+		DPRINTF("0x%04llx\n  ", r);
+		vmm_segment_desc_decode(r);
+	}
+
+	DPRINTF(" gs=");
+	if (vmread(VMCS_GUEST_IA32_GS_SEL, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%04llx rpl=%lld", r, r & 0x3);
+
+	DPRINTF(" base=");
+	if (vmread(VMCS_GUEST_IA32_GS_BASE, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" limit=");
+	if (vmread(VMCS_GUEST_IA32_GS_LIMIT, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" a/r=");
+	if (vmread(VMCS_GUEST_IA32_GS_AR, &r))
+		DPRINTF("(error reading)\n");
+	else {
+		DPRINTF("0x%04llx\n  ", r);
+		vmm_segment_desc_decode(r);
+	}	
+
+	DPRINTF(" ss=");
+	if (vmread(VMCS_GUEST_IA32_SS_SEL, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%04llx rpl=%lld", r, r & 0x3);
+
+	DPRINTF(" base=");
+	if (vmread(VMCS_GUEST_IA32_SS_BASE, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" limit=");
+	if (vmread(VMCS_GUEST_IA32_SS_LIMIT, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" a/r=");
+	if (vmread(VMCS_GUEST_IA32_SS_AR, &r))
+		DPRINTF("(error reading)\n");
+	else {
+		DPRINTF("0x%04llx\n  ", r);
+		vmm_segment_desc_decode(r);
+	}	
+
+	DPRINTF(" tr=");
+	if (vmread(VMCS_GUEST_IA32_TR_SEL, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%04llx", r);
+
+	DPRINTF(" base=");
+	if (vmread(VMCS_GUEST_IA32_TR_BASE, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" limit=");
+	if (vmread(VMCS_GUEST_IA32_TR_LIMIT, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" a/r=");
+	if (vmread(VMCS_GUEST_IA32_TR_AR, &r))
+		DPRINTF("(error reading)\n");
+	else {
+		DPRINTF("0x%04llx\n  ", r);
+		vmm_segment_desc_decode(r);
+	}	
+		
+	DPRINTF(" gdtr base=");
+	if (vmread(VMCS_GUEST_IA32_GDTR_BASE, &r))
+		DPRINTF("(error reading)   ");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" limit=");
+	if (vmread(VMCS_GUEST_IA32_GDTR_LIMIT, &r))
+		DPRINTF("(error reading)\n");
+	else
+		DPRINTF("0x%016llx\n", r);
+
+	DPRINTF(" idtr base=");
+	if (vmread(VMCS_GUEST_IA32_IDTR_BASE, &r))
+		DPRINTF("(error reading)   ");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" limit=");
+	if (vmread(VMCS_GUEST_IA32_IDTR_LIMIT, &r))
+		DPRINTF("(error reading)\n");
+	else
+		DPRINTF("0x%016llx\n", r);
+	
+	DPRINTF(" ldtr=");
+	if (vmread(VMCS_GUEST_IA32_LDTR_SEL, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%04llx", r);
+
+	DPRINTF(" base=");
+	if (vmread(VMCS_GUEST_IA32_LDTR_BASE, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" limit=");
+	if (vmread(VMCS_GUEST_IA32_LDTR_LIMIT, &r))
+		DPRINTF("(error reading)");
+	else
+		DPRINTF("0x%016llx", r);
+
+	DPRINTF(" a/r=");
+	if (vmread(VMCS_GUEST_IA32_LDTR_AR, &r))
+		DPRINTF("(error reading)\n");
+	else {
+		DPRINTF("0x%04llx\n  ", r);
+		vmm_segment_desc_decode(r);
+	}	
+
+	DPRINTF(" --Guest MSRs @ 0x%016llx (paddr: 0x%016llx)--\n",
+	    (uint64_t)vcpu->vc_vmx_msr_exit_save_va,
+	    (uint64_t)vcpu->vc_vmx_msr_exit_save_pa);
+
+	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
+
+	for (i = 0; i < VMX_NUM_MSR_STORE; i++) {
+		DPRINTF("  MSR %d @ %p : 0x%08x (%s), "
+		    "value=0x%016llx\n",
+		    i, &msr_store[i], msr_store[i].vms_index,
+		    msr_name_decode(msr_store[i].vms_index),
+		    msr_store[i].vms_data); 
+	}
+
+	DPRINTF(" last PIC irq=%d\n", vcpu->vc_intr);
+}
+
+/*
+ * msr_name_decode
+ *
+ * Returns a human-readable name for the MSR supplied in 'msr'.
+ *
+ * Parameters:
+ *  msr - The MSR to decode
+ *
+ * Return value:
+ *  NULL-terminated character string containing the name of the MSR requested
+ */
+const char *
+msr_name_decode(uint32_t msr)
+{
+	/* Add as needed ... */
+
+	switch (msr) {
+	case MSR_TSC: return "TSC";
+	case MSR_APICBASE: return "APIC base";
+	case MSR_IA32_FEATURE_CONTROL: return "IA32 feature control";
+	case MSR_PERFCTR0: return "perf counter 0";
+	case MSR_PERFCTR1: return "perf counter 1";
+	case MSR_TEMPERATURE_TARGET: return "temperature target";
+	case MSR_MTRRcap: return "MTRR cap";
+	case MSR_PERF_STATUS: return "perf status";
+	case MSR_PERF_CTL: return "perf control";
+	case MSR_MTRRvarBase: return "MTRR variable base";
+	case MSR_MTRRfix64K_00000: return "MTRR fixed 64K";
+	case MSR_MTRRfix16K_80000: return "MTRR fixed 16K";
+	case MSR_MTRRfix4K_C0000: return "MTRR fixed 4K";
+	case MSR_CR_PAT: return "PAT";
+	case MSR_MTRRdefType: return "MTRR default type";
+	case MSR_EFER: return "EFER";
+	case MSR_STAR: return "STAR";
+	case MSR_LSTAR: return "LSTAR";
+	case MSR_CSTAR: return "CSTAR";
+	case MSR_SFMASK: return "SFMASK";
+	case MSR_FSBASE: return "FSBASE";
+	case MSR_GSBASE: return "GSBASE";
+	case MSR_KERNELGSBASE: return "KGSBASE";
+	default: return "Unknown MSR";
+	}
+}
+
+/*
+ * vmm_segment_desc_decode
+ *
+ * Debug function to print segment information for supplied descriptor
+ *
+ * Parameters:
+ *  val - The A/R bytes for the segment descriptor to decode
+ */
+void
+vmm_segment_desc_decode(uint64_t val)
+{
+	uint16_t ar;
+	uint8_t g, type, s, dpl, p, dib, l;
+	uint32_t unusable;
+
+	/* Exit early on unusable descriptors */
+	unusable = val & 0x10000;
+	if (unusable) {
+		DPRINTF("(unusable)\n");
+		return;
+	}
+
+	ar = (uint16_t)val;
+
+	g = (ar & 0x8000) >> 15;
+	dib = (ar & 0x4000) >> 14;
+	l = (ar & 0x2000) >> 13;
+	p = (ar & 0x80) >> 7;
+	dpl = (ar & 0x60) >> 5;
+	s = (ar & 0x10) >> 4;
+	type = (ar & 0xf);
+
+	DPRINTF("granularity=%d dib=%d l(64 bit)=%d present=%d sys=%d ",
+	    g, dib, l, p, s);
+
+	DPRINTF("type=");
+	if (!s) {
+		switch (type) {
+		case SDT_SYSLDT: DPRINTF("ldt\n"); break;
+		case SDT_SYS386TSS: DPRINTF("tss (available)\n"); break;
+		case SDT_SYS386BSY: DPRINTF("tss (busy)\n"); break;
+		case SDT_SYS386CGT: DPRINTF("call gate\n"); break;
+		case SDT_SYS386IGT: DPRINTF("interrupt gate\n"); break;
+		case SDT_SYS386TGT: DPRINTF("trap gate\n"); break;
+		/* XXX handle 32 bit segment types by inspecting mode */
+		default: DPRINTF("unknown");
+		}
+	} else {
+		switch (type + 16) {
+		case SDT_MEMRO: DPRINTF("data, r/o\n"); break;
+		case SDT_MEMROA: DPRINTF("data, r/o, accessed\n"); break;
+		case SDT_MEMRW: DPRINTF("data, r/w\n"); break;
+		case SDT_MEMRWA: DPRINTF("data, r/w, accessed\n"); break;
+		case SDT_MEMROD: DPRINTF("data, r/o, expand down\n"); break;
+		case SDT_MEMRODA: DPRINTF("data, r/o, expand down, "
+		    "accessed\n");
+			break;
+		case SDT_MEMRWD: DPRINTF("data, r/w, expand down\n"); break;
+		case SDT_MEMRWDA: DPRINTF("data, r/w, expand down, "
+		    "accessed\n");
+			break;
+		case SDT_MEME: DPRINTF("code, x only\n"); break;
+		case SDT_MEMEA: DPRINTF("code, x only, accessed\n");
+		case SDT_MEMER: DPRINTF("code, r/x\n"); break;
+		case SDT_MEMERA: DPRINTF("code, r/x, accessed\n"); break;
+		case SDT_MEMEC: DPRINTF("code, x only, conforming\n"); break;
+		case SDT_MEMEAC: DPRINTF("code, x only, conforming, "
+		    "accessed\n");
+			break;
+		case SDT_MEMERC: DPRINTF("code, r/x, conforming\n"); break;
+		case SDT_MEMERAC: DPRINTF("code, r/x, conforming, accessed\n");
+			break;
+		}
 	}
 }
