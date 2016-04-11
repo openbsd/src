@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.890 2016/04/09 15:14:47 rpe Exp $
+#	$OpenBSD: install.sub,v 1.891 2016/04/11 18:47:05 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -91,20 +91,18 @@ waitcgiinfo() {
 # Utils functions
 # ------------------------------------------------------------------------------
 
-# Sort and print provided arguments.
+# Sort and print unique list of provided arguments.
 bsort() {
-	local _l _a=$1 _b
+	local _a=$1 _b _l
 
-	(($# > 0)) || return
+	(($#)) && shift || return
 
-	shift
 	for _b; do
-		if [[ $_a != $_b ]]; then
-			if [[ $_a > $_b ]]; then
-				_l="$_a $_l"; _a=$_b
-			else
-				_l="$_b $_l"
-			fi
+		[[ $_a == "$_b" ]] && continue
+		if [[ $_a > $_b ]]; then
+			_l="$_a $_l" _a=$_b
+		else
+			_l="$_b $_l"
 		fi
 	done
 
