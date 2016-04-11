@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2016/03/01 16:12:11 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.2 2016/04/11 21:15:11 schwarze Exp $
 #
 # Author: Ingo Schwarze <schwarze@openbsd.org>, 2016.  Public Domain.
 #
@@ -7,7 +7,6 @@
 REGRESS_TARGETS = gets
 
 PROG =		test_gets
-CPPFLAGS +=	-DWIDECHAR
 CPPFLAGS +=	-I${.CURDIR}/../../../../lib/libedit
 CPPFLAGS +=	-I${.OBJDIR}/../../../../lib/libedit
 MAN =
