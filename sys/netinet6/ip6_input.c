@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.156 2016/03/29 11:57:51 chl Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.157 2016/04/11 13:02:35 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -416,9 +416,7 @@ ip6_input(struct mbuf *m)
 		goto hbhcheck;
 	}
 
-#if NPF > 0
 	rtableid = m->m_pkthdr.ph_rtableid;
-#endif
 
 	/*
 	 *  Unicast check
