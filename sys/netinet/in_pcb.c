@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.201 2016/04/08 14:34:21 vgross Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.202 2016/04/11 21:24:29 vgross Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -415,14 +415,13 @@ in_pcbaddrisavail(struct inpcb *inp, struct sockaddr_in *sin, int wild,
 		struct inpcb *t;
 
 		if (so->so_euid) {
-			t = in_pcblookup(table, &zeroin_addr, 0,
-			    &sin->sin_addr, lport, INPLOOKUP_WILDCARD,
-			    inp->inp_rtableid);
+			t = in_pcblookup_local(table, &sin->sin_addr, lport,
+			    INPLOOKUP_WILDCARD, inp->inp_rtableid);
 			if (t && (so->so_euid != t->inp_socket->so_euid))
 				return (EADDRINUSE);
 		}
-		t = in_pcblookup(table, &zeroin_addr, 0,
-		    &sin->sin_addr, lport, wild, inp->inp_rtableid);
+		t = in_pcblookup_local(table, &sin->sin_addr, lport,
+		    wild, inp->inp_rtableid);
 		if (t && (reuseport & t->inp_socket->so_options) == 0)
 			return (EADDRINUSE);
 	}
@@ -475,8 +474,8 @@ in_pcbpickport(u_int16_t *lport, void *laddr, int wild, struct inpcb *inp,
 			candidate = lower;
 		localport = htons(candidate);
 	} while (in_baddynamic(localport, so->so_proto->pr_protocol) ||
-	    in_pcblookup(table, &zeroin46_addr, 0,
-	    laddr, localport, wild, inp->inp_rtableid));
+	    in_pcblookup_local(table, laddr, localport, wild,
+	    inp->inp_rtableid));
 	*lport = localport;
 
 	return (0);
@@ -734,13 +733,15 @@ in_rtchange(struct inpcb *inp, int errno)
 }
 
 struct inpcb *
-in_pcblookup(struct inpcbtable *table, void *faddrp, u_int fport_arg,
-    void *laddrp, u_int lport_arg, int flags, u_int rdomain)
+in_pcblookup_local(struct inpcbtable *table, void *laddrp, u_int lport_arg,
+    int flags, u_int rdomain)
 {
 	struct inpcb *inp, *match = NULL;
 	int matchwild = 3, wildcard;
-	u_int16_t fport = fport_arg, lport = lport_arg;
-	struct in_addr faddr = *(struct in_addr *)faddrp;
+	u_int16_t fport = 0;
+	u_int16_t lport = lport_arg;
+	struct in_addr faddr = zeroin_addr;
+	struct in6_addr *faddrp = &zeroin6_addr;
 	struct in_addr laddr = *(struct in_addr *)laddrp;
 	struct inpcbhead *head;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.97 2016/04/05 19:34:05 vgross Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.98 2016/04/11 21:24:29 vgross Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -271,8 +271,7 @@ int	 in6_setpeeraddr(struct inpcb *, struct mbuf *);
 #endif /* INET6 */
 void	 in_pcbinit(struct inpcbtable *, int);
 struct inpcb *
-	 in_pcblookup(struct inpcbtable *, void *, u_int, void *,
-	    u_int, int, u_int);
+	 in_pcblookup_local(struct inpcbtable *, void *, u_int, int, u_int);
 void	 in_pcbnotifyall(struct inpcbtable *, struct sockaddr *,
 	    u_int, int, void (*)(struct inpcb *, int));
 void	 in_pcbrehash(struct inpcb *);
