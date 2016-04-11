@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.891 2016/04/11 18:47:05 rpe Exp $
+#	$OpenBSD: install.sub,v 1.892 2016/04/11 19:04:30 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -119,7 +119,7 @@ isin() {
 
 	shift
 	for _b; do
-		[[ $_a == $_b ]] && return 0
+		[[ $_a == "$_b" ]] && return 0
 	done
 	return 1
 }
@@ -267,7 +267,7 @@ get_ifs() {
 
 	for _if in $(ifconfig "$@" 2>/dev/null |
 		sed -n 's/^\([^[:space:]]*\):.*/\1/p'); do
-		isin ${_if%%+([0-9])} $_iflist || echo $_if
+		isin "${_if%%+([0-9])}" $_iflist || echo $_if
 	done
 }
 
@@ -1167,7 +1167,7 @@ sane_install() {
 	local _q=$1 _s
 
 	for _s in $SANESETS; do
-		isin $_s $DEFAULTSETS || continue
+		isin "$_s" $DEFAULTSETS || continue
 		[[ -n $_q ]] && return 1
 		# If sane_install has no argument, harass the user.
 		if ! ask_yn "Are you *SURE* your $MODE is complete without '$_s'?"; then
@@ -1198,7 +1198,7 @@ sets are labelled '[X]'.
 __EOT
 	while :; do
 		for _f in $_avail; do
-			isin $_f $_selected && echo "[X] $_f" || echo "[ ] $_f"
+			isin "$_f" $_selected && echo "[X] $_f" || echo "[ ] $_f"
 		done | showcols | sed 's/^/    /'
 		ask "Set name(s)? (or 'abort' or 'done')" done
 
@@ -1239,9 +1239,9 @@ install_files() {
 	# installation.  So, to minimize user confusion display the sets in the
 	# order in which they will be installed.
 	for _f in $THESETS; do
-		isin $_f $_files || continue
+		isin "$_f" $_files || continue
 		_sets=$(addel $_f $_sets)
-		isin $_f $DEFAULTSETS "site$VERSION-$(hostname -s).tgz" &&
+		isin "$_f" $DEFAULTSETS "site$VERSION-$(hostname -s).tgz" &&
 			_get_sets=$(addel $_f $_get_sets)
 	done
 
@@ -1258,7 +1258,7 @@ install_files() {
 		return
 	fi
 
-	isin INSTALL.$ARCH $_files ||
+	isin "INSTALL.$ARCH" $_files ||
 		ask_yn "INSTALL.$ARCH not found. Use sets found here anyway?" ||
 		return
 
@@ -1268,7 +1268,7 @@ install_files() {
 	_get_sets=$resp
 
 	# Reorder $_get_sets.
-	_get_sets=$(for s in $THESETS; do isin $s $_get_sets && echo $s; done)
+	_get_sets=$(for s in $THESETS; do isin "$s" $_get_sets && echo $s; done)
 
 	# Note which sets didn't verify ok.
 	_unver=$_get_sets
@@ -1957,7 +1957,7 @@ enable_network() {
 	for hn in /mnt/etc/hostname.*; do
 		# Strip off prefix to get interface name.
 		if=${hn#/mnt/etc/hostname.}
-		if isin ${if%%+([0-9])} $(ifconfig -C); then
+		if isin "${if%%+([0-9])}" $(ifconfig -C); then
 			# Dynamic interfaces must be done later.
 			case ${if%%+([0-9])} in
 			trunk)	_trunks="$_trunks $hn";;
@@ -2153,7 +2153,7 @@ install_sets() {
 
 	if ! isin "$_d" $_cddevs $_locs; then
 		for _src in http $_cddevs nfs disk; do
-			isin $_src $_cddevs $_locs && _d=$_src && break
+			isin "$_src" $_cddevs $_locs && _d=$_src && break
 		done
 	fi
 
@@ -2376,7 +2376,7 @@ do_install(){
 	# Configure the disk(s).
 	while :; do
 		# Always do ROOTDISK first, and repeat until it is configured.
-		if ! isin $ROOTDISK $DISKS_DONE; then
+		if ! isin "$ROOTDISK" $DISKS_DONE; then
 			resp=$ROOTDISK
 			rm -f /tmp/fstab
 		else
