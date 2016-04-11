@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.62 2016/02/16 09:08:51 jmc Exp $
+ * $OpenBSD: calendar.birthday,v 1.63 2016/04/11 09:03:41 sthen Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -144,6 +144,7 @@
 04/09	J. Presper Eckert born, 1919
 04/10	Commodore Matthew Calbraith Perry born, 1794
 04/10	William Booth born, 1829, founder of the Salvation Army
+04/10	Howard Marks dies, 2016
 04/11	Edsger Wybe Dijkstra was born at Rotterdam, 1930
 04/12	Feodor Ivanovich Chaliapin died in Paris, 1938
 04/13	Samuel Beckett born in Foxrock, County Dublin, 1906
@@ -238,6 +239,7 @@
 08/12	Thomas Mann's Death, 1955
 08/13	Annie Oakley born, 1860
 08/13	Fidel Castro born, 1926
+08/13	Howard Marks born, 1945
 08/15	Louis Victor de Broglie born, 1892, physicist
 08/17	Mae West born, 1892/93
 08/18	Meriwether Lewis born, 1774
