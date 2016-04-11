@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.24 2016/04/09 19:31:55 schwarze Exp $	*/
+/*	$OpenBSD: history.c,v 1.25 2016/04/11 19:54:54 schwarze Exp $	*/
 /*	$NetBSD: history.c,v 1.37 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
@@ -52,6 +52,38 @@ static const char hist_cookie[] = "_HiStOrY_V2_\n";
 
 #include "histedit.h"
 #include "chartype.h"
+
+
+#ifdef NARROWCHAR
+
+#define	FUN(prefix, rest)	prefix ## _ ## rest
+#define	FUNW(type)		type
+#define	TYPE(type)		type
+#define	STR(x)			x
+
+#define	Strlen(s)		strlen(s)
+#define	Strdup(s)		strdup(s)
+#define	Strcmp(d, s)		strcmp(d, s)
+#define	Strncmp(d, s, n)	strncmp(d, s, n)
+#define	Strncpy(d, s, n)	strncpy(d, s, n)
+#define	Strncat(d, s, n)	strncat(d, s, n)
+
+#else
+
+#define	FUN(prefix, rest)	prefix ## _w ## rest
+#define	FUNW(type)		type ## _w
+#define	TYPE(type)		type ## W
+#define	STR(x)			L ## x
+
+#define	Strlen(s)		wcslen(s)
+#define	Strdup(s)		wcsdup(s)
+#define	Strcmp(d, s)		wcscmp(d, s)
+#define	Strncmp(d, s, n)	wcsncmp(d, s, n)
+#define	Strncpy(d, s, n)	wcsncpy(d, s, n)
+#define	Strncat(d, s, n)	wcsncat(d, s, n)
+
+#endif
+
 
 typedef int (*history_gfun_t)(void *, TYPE(HistEvent) *);
 typedef int (*history_efun_t)(void *, TYPE(HistEvent) *, const Char *);

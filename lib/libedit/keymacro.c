@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymacro.c,v 1.10 2016/04/09 20:15:26 schwarze Exp $	*/
+/*	$OpenBSD: keymacro.c,v 1.11 2016/04/11 19:54:54 schwarze Exp $	*/
 /*	$NetBSD: keymacro.c,v 1.16 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
@@ -351,7 +351,7 @@ node__try(EditLine *el, keymacro_node_t *ptr, const Char *str,
 			break;
 		case XK_STR:
 		case XK_EXE:
-			if ((ptr->val.str = Strdup(val->str)) == NULL)
+			if ((ptr->val.str = wcsdup(val->str)) == NULL)
 				return -1;
 			break;
 		default:

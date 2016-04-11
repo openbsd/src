@@ -1,4 +1,4 @@
-/*	$OpenBSD: hist.c,v 1.15 2016/04/09 20:15:26 schwarze Exp $	*/
+/*	$OpenBSD: hist.c,v 1.16 2016/04/11 19:54:54 schwarze Exp $	*/
 /*	$NetBSD: hist.c,v 1.26 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@ hist_get(EditLine *el)
 	int h;
 
 	if (el->el_history.eventno == 0) {	/* if really the current line */
-		(void) Strncpy(el->el_line.buffer, el->el_history.buf,
+		(void) wcsncpy(el->el_line.buffer, el->el_history.buf,
 		    el->el_history.sz);
 		el->el_line.lastchar = el->el_line.buffer +
 		    (el->el_history.last - el->el_history.buf);
@@ -125,10 +125,10 @@ hist_get(EditLine *el)
 			el->el_history.eventno = h;
 			return CC_ERROR;
 		}
-	(void) Strncpy(el->el_line.buffer, hp,
+	(void) wcsncpy(el->el_line.buffer, hp,
 			(size_t)(el->el_line.limit - el->el_line.buffer));
 	el->el_line.buffer[el->el_line.limit - el->el_line.buffer - 1] = '\0';
-	el->el_line.lastchar = el->el_line.buffer + Strlen(el->el_line.buffer);
+	el->el_line.lastchar = el->el_line.buffer + wcslen(el->el_line.buffer);
 
 	if (el->el_line.lastchar > el->el_line.buffer
 	    && el->el_line.lastchar[-1] == '\n')
@@ -160,7 +160,7 @@ hist_command(EditLine *el, int argc, const Char **argv)
 	if (el->el_history.ref == NULL)
 		return -1;
 
-	if (argc == 1 || Strcmp(argv[1], STR("list")) == 0) {
+	if (argc == 1 || wcscmp(argv[1], L"list") == 0) {
 		 /* List history entries */
 
 		for (str = HIST_LAST(el); str != NULL; str = HIST_PREV(el))
@@ -174,10 +174,10 @@ hist_command(EditLine *el, int argc, const Char **argv)
 
 	num = (int)wcstol(argv[2], NULL, 0);
 
-	if (Strcmp(argv[1], STR("size")) == 0)
+	if (wcscmp(argv[1], L"size") == 0)
 		return history(el->el_history.ref, &ev, H_SETSIZE, num);
 
-	if (Strcmp(argv[1], STR("unique")) == 0)
+	if (wcscmp(argv[1], L"unique") == 0)
 		return history(el->el_history.ref, &ev, H_SETUNIQUE, num);
 
 	return -1;

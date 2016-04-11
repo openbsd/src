@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.22 2016/04/09 20:15:26 schwarze Exp $	*/
+/*	$OpenBSD: search.c,v 1.23 2016/04/11 19:54:54 schwarze Exp $	*/
 /*	$NetBSD: search.c,v 1.41 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
@@ -173,11 +173,11 @@ c_setpat(EditLine *el)
 		if (el->el_search.patlen >= EL_BUFSIZ)
 			el->el_search.patlen = EL_BUFSIZ - 1;
 		if (el->el_search.patlen != 0) {
-			(void) Strncpy(el->el_search.patbuf, el->el_line.buffer,
+			(void) wcsncpy(el->el_search.patbuf, el->el_line.buffer,
 			    el->el_search.patlen);
 			el->el_search.patbuf[el->el_search.patlen] = '\0';
 		} else
-			el->el_search.patlen = Strlen(el->el_search.patbuf);
+			el->el_search.patlen = wcslen(el->el_search.patbuf);
 	}
 #ifdef SDEBUG
 	(void) fprintf(el->el_errfile, "\neventno = %d\n",
@@ -321,7 +321,7 @@ ce_inc_search(EditLine *el, int dir)
 
 			default:	/* Terminate and execute cmd */
 				endcmd[0] = ch;
-				FUN(el,push)(el, endcmd);
+				el_wpush(el, endcmd);
 				/* FALLTHROUGH */
 
 			case 0033:	/* ESC: Terminate */
@@ -461,7 +461,7 @@ cv_search(EditLine *el, int dir)
 	el->el_search.patdir = dir;
 
 	tmplen = c_gets(el, &tmpbuf[LEN],
-		dir == ED_SEARCH_PREV_HISTORY ? STR("\n/") : STR("\n?") );
+		dir == ED_SEARCH_PREV_HISTORY ? L"\n/" : L"\n?" );
 	if (tmplen == -1)
 		return CC_REFRESH;
 
@@ -480,11 +480,11 @@ cv_search(EditLine *el, int dir)
 #ifdef ANCHOR
 		if (el->el_search.patbuf[0] != '.' &&
 		    el->el_search.patbuf[0] != '*') {
-			(void) Strncpy(tmpbuf, el->el_search.patbuf,
+			(void) wcsncpy(tmpbuf, el->el_search.patbuf,
 			    sizeof(tmpbuf) / sizeof(*tmpbuf) - 1);
 			el->el_search.patbuf[0] = '.';
 			el->el_search.patbuf[1] = '*';
-			(void) Strncpy(&el->el_search.patbuf[2], tmpbuf,
+			(void) wcsncpy(&el->el_search.patbuf[2], tmpbuf,
 			    EL_BUFSIZ - 3);
 			el->el_search.patlen++;
 			el->el_search.patbuf[el->el_search.patlen++] = '.';
@@ -498,7 +498,7 @@ cv_search(EditLine *el, int dir)
 		tmpbuf[tmplen++] = '*';
 #endif
 		tmpbuf[tmplen] = '\0';
-		(void) Strncpy(el->el_search.patbuf, tmpbuf, EL_BUFSIZ - 1);
+		(void) wcsncpy(el->el_search.patbuf, tmpbuf, EL_BUFSIZ - 1);
 		el->el_search.patlen = tmplen;
 	}
 	el->el_state.lastcmd = (el_action_t) dir;	/* avoid c_setpat */

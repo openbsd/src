@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokenizer.c,v 1.17 2016/03/20 23:48:27 schwarze Exp $	*/
+/*	$OpenBSD: tokenizer.c,v 1.18 2016/04/11 19:54:54 schwarze Exp $	*/
 /*	$NetBSD: tokenizer.c,v 1.23 2016/02/15 15:37:20 christos Exp $	*/
 
 /*-
@@ -57,8 +57,19 @@ typedef enum {
 
 #define	IFS		STR("\t \n")
 
-#define	tok_strdup(a)		Strdup(a)
-
+#ifdef NARROWCHAR
+#define	FUN(prefix, rest)	prefix ## _ ## rest
+#define	TYPE(type)		type
+#define	STR(x)			x
+#define	Strchr(s, c)		strchr(s, c)
+#define	tok_strdup(s)		strdup(s)
+#else
+#define	FUN(prefix, rest)	prefix ## _w ## rest
+#define	TYPE(type)		type ## W
+#define	STR(x)			L ## x
+#define	Strchr(s, c)		wcschr(s, c)
+#define	tok_strdup(s)		wcsdup(s)
+#endif
 
 struct TYPE(tokenizer) {
 	Char	*ifs;		/* In field separator			 */

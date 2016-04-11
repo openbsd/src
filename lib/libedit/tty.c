@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.23 2016/04/09 20:15:26 schwarze Exp $	*/
+/*	$OpenBSD: tty.c,v 1.24 2016/04/11 19:54:54 schwarze Exp $	*/
 /*	$NetBSD: tty.c,v 1.34 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -1243,7 +1243,7 @@ tty_stty(EditLine *el, int argc __attribute__((__unused__)), const Char **argv)
 			break;
 		}
 		d = s;
-		p = Strchr(s, '=');
+		p = wcschr(s, L'=');
 		for (m = ttymodes; m->m_name; m++)
 			if ((p ? strncmp(m->m_name, ct_encode_string(d, &el->el_scratch), (size_t)(p - d)) :
 			    strcmp(m->m_name, ct_encode_string(d, &el->el_scratch))) == 0 &&

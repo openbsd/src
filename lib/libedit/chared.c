@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.c,v 1.22 2016/04/09 20:15:26 schwarze Exp $	*/
+/*	$OpenBSD: chared.c,v 1.23 2016/04/11 19:54:53 schwarze Exp $	*/
 /*	$NetBSD: chared.c,v 1.28 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -199,7 +199,7 @@ c_delbefore1(EditLine *el)
 protected int
 ce__isword(wint_t p)
 {
-	return iswalnum(p) || Strchr(STR("*?_-.[]~="), p) != NULL;
+	return iswalnum(p) || wcschr(L"*?_-.[]~=", p) != NULL;
 }
 
 
@@ -608,11 +608,11 @@ ch_end(EditLine *el)
  *	Insert string at cursorI
  */
 public int
-FUN(el,insertstr)(EditLine *el, const Char *s)
+el_winsertstr(EditLine *el, const Char *s)
 {
 	size_t len;
 
-	if ((len = Strlen(s)) == 0)
+	if ((len = wcslen(s)) == 0)
 		return -1;
 	if (el->el_line.lastchar + len >= el->el_line.limit) {
 		if (!ch_enlargebufs(el, len))
@@ -655,7 +655,7 @@ c_gets(EditLine *el, Char *buf, const Char *prompt)
 	Char *cp = el->el_line.buffer, ch;
 
 	if (prompt) {
-		len = Strlen(prompt);
+		len = wcslen(prompt);
 		(void)memcpy(cp, prompt, len * sizeof(*cp));
 		cp += len;
 	}

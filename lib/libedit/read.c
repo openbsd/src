@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.32 2016/04/09 20:15:26 schwarze Exp $	*/
+/*	$OpenBSD: read.c,v 1.33 2016/04/11 19:54:54 schwarze Exp $	*/
 /*	$NetBSD: read.c,v 1.88 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
@@ -181,13 +181,13 @@ read__fixio(int fd __attribute__((__unused__)), int e)
  *	Push a macro
  */
 public void
-FUN(el,push)(EditLine *el, const Char *str)
+el_wpush(EditLine *el, const Char *str)
 {
 	c_macro_t *ma = &el->el_chared.c_macro;
 
 	if (str != NULL && ma->level + 1 < EL_MAXMACRO) {
 		ma->level++;
-		if ((ma->macro[ma->level] = Strdup(str)) != NULL)
+		if ((ma->macro[ma->level] = wcsdup(str)) != NULL)
 			return;
 		ma->level--;
 	}
@@ -239,7 +239,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 				cmd = val.cmd;
 				break;
 			case XK_STR:
-				FUN(el,push)(el, val.str);
+				el_wpush(el, val.str);
 				break;
 #ifdef notyet
 			case XK_EXE:
@@ -436,7 +436,7 @@ read_finish(EditLine *el)
 }
 
 public const Char *
-FUN(el,gets)(EditLine *el, int *nread)
+el_wgets(EditLine *el, int *nread)
 {
 	int retval;
 	el_action_t cmdnum = 0;

@@ -113,16 +113,16 @@ _EOF
 		    fname = fname s;
 		}
 
-		printf("    { %-30.30s %-30.30s\n","STR(\"" fname "\"),", uname ",");
+		printf("    { %-30.30s %-30.30s\n","L\"" fname "\",", uname ",");
 		ok = 1;
 	    }
 	}
 	/^ \*/ {
 	    if (ok) {
-		printf("      STR(\"");
+		printf("      L\"");
 		for (i = 2; i < NF; i++)
 		    printf("%s ", $i);
-		printf("%s\") },\n", $i);
+		printf("%s\" },\n", $i);
 		ok = 0;
 	    }
 	}

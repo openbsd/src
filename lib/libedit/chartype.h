@@ -1,4 +1,4 @@
-/*	$OpenBSD: chartype.h,v 1.15 2016/04/09 20:15:26 schwarze Exp $	*/
+/*	$OpenBSD: chartype.h,v 1.16 2016/04/11 19:54:53 schwarze Exp $	*/
 /*	$NetBSD: chartype.h,v 1.5 2010/04/15 00:55:57 christos Exp $	*/
 
 /*-
@@ -53,35 +53,8 @@
 #endif
 
 #define Char			wchar_t
-#define FUN(prefix,rest)	prefix ## _w ## rest
-#define FUNW(type)		type ## _w
-#define TYPE(type)		type ## W
-#define STR(x)			L ## x
-
-#define Strlen(x)       wcslen(x)
-#define Strchr(s,c)     wcschr(s,c)
-#define Strdup(x)       wcsdup(x)
-#define Strncpy(d,s,n)  wcsncpy(d,s,n)
-#define Strncat(d,s,n)  wcsncat(d,s,n)
-#define Strcmp(s,v)     wcscmp(s,v)
-#define Strncmp(s,v,n)  wcsncmp(s,v,n)
-
 #else /* NARROW */
-
 #define Char			char
-#define FUN(prefix,rest)	prefix ## _ ## rest
-#define FUNW(type)		type
-#define TYPE(type)		type
-#define STR(x)			x
-
-#define Strlen(x)       strlen(x)
-#define Strchr(s,c)     strchr(s,c)
-#define Strdup(x)       strdup(x)
-#define Strncpy(d,s,n)  strncpy(d,s,n)
-#define Strncat(d,s,n)  strncat(d,s,n)
-
-#define Strcmp(s,v)     strcmp(s,v)
-#define Strncmp(s,v,n)  strncmp(s,v,n)
 #endif
 
 

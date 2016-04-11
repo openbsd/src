@@ -1,4 +1,4 @@
-/*	$OpenBSD: refresh.c,v 1.16 2016/04/09 20:15:26 schwarze Exp $	*/
+/*	$OpenBSD: refresh.c,v 1.17 2016/04/11 19:54:54 schwarze Exp $	*/
 /*	$NetBSD: refresh.c,v 1.46 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
@@ -315,10 +315,10 @@ re_refresh(EditLine *el)
 		for (; i <= el->el_refresh.r_oldcv; i++) {
 			terminal_move_to_line(el, i);
 			terminal_move_to_char(el, 0);
-                        /* This Strlen should be safe even with MB_FILL_CHARs */
-			terminal_clear_EOL(el, (int) Strlen(el->el_display[i]));
+                        /* This wcslen should be safe even with MB_FILL_CHARs */
+			terminal_clear_EOL(el, (int) wcslen(el->el_display[i]));
 #ifdef DEBUG_REFRESH
-			terminal_overwrite(el, STR("C\b"), 2);
+			terminal_overwrite(el, L"C\b", 2);
 #endif /* DEBUG_REFRESH */
 			el->el_display[i][0] = '\0';
 		}
@@ -1079,7 +1079,7 @@ re_fastputc(EditLine *el, wint_t c)
 			for(i = 1; i < lins; i++)
 				el->el_display[i - 1] = el->el_display[i];
 
-			re__copy_and_pad(firstline, STR(""), 0);
+			re__copy_and_pad(firstline, L"", 0);
 			el->el_display[i - 1] = firstline;
 		} else {
 			el->el_cursor.v++;

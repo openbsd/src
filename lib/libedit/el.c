@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.31 2016/04/09 20:15:26 schwarze Exp $	*/
+/*	$OpenBSD: el.c,v 1.32 2016/04/11 19:54:54 schwarze Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 	el->el_outfd = fileno(fout);
 	el->el_errfd = fileno(ferr);
 
-	el->el_prog = Strdup(ct_decode_string(prog, &el->el_scratch));
+	el->el_prog = wcsdup(ct_decode_string(prog, &el->el_scratch));
 	if (el->el_prog == NULL) {
 		free(el);
 		return NULL;
@@ -153,7 +153,7 @@ el_reset(EditLine *el)
  *	set the editline parameters
  */
 public int
-FUN(el,set)(EditLine *el, int op, ...)
+el_wset(EditLine *el, int op, ...)
 {
 	va_list ap;
 	int rv = 0;
@@ -217,27 +217,27 @@ FUN(el,set)(EditLine *el, int op, ...)
 
 		switch (op) {
 		case EL_BIND:
-			argv[0] = STR("bind");
+			argv[0] = L"bind";
 			rv = map_bind(el, i, argv);
 			break;
 
 		case EL_TELLTC:
-			argv[0] = STR("telltc");
+			argv[0] = L"telltc";
 			rv = terminal_telltc(el, i, argv);
 			break;
 
 		case EL_SETTC:
-			argv[0] = STR("settc");
+			argv[0] = L"settc";
 			rv = terminal_settc(el, i, argv);
 			break;
 
 		case EL_ECHOTC:
-			argv[0] = STR("echotc");
+			argv[0] = L"echotc";
 			rv = terminal_echotc(el, i, argv);
 			break;
 
 		case EL_SETTY:
-			argv[0] = STR("setty");
+			argv[0] = L"setty";
 			rv = tty_stty(el, i, argv);
 			break;
 
@@ -359,7 +359,7 @@ FUN(el,set)(EditLine *el, int op, ...)
  *	retrieve the editline parameters
  */
 public int
-FUN(el,get)(EditLine *el, int op, ...)
+el_wget(EditLine *el, int op, ...)
 {
 	va_list ap;
 	int rv;
@@ -480,11 +480,11 @@ FUN(el,get)(EditLine *el, int op, ...)
 /* el_line():
  *	Return editing info
  */
-public const TYPE(LineInfo) *
-FUN(el,line)(EditLine *el)
+public const LineInfoW *
+el_wline(EditLine *el)
 {
 
-	return (const TYPE(LineInfo) *)(void *)&el->el_line;
+	return (const LineInfoW *)(void *)&el->el_line;
 }
 
 
@@ -604,10 +604,10 @@ el_editmode(EditLine *el, int argc, const Char **argv)
 		return -1;
 
 	how = argv[1];
-	if (Strcmp(how, STR("on")) == 0) {
+	if (wcscmp(how, L"on") == 0) {
 		el->el_flags &= ~EDIT_DISABLED;
 		tty_rawmode(el);
-	} else if (Strcmp(how, STR("off")) == 0) {
+	} else if (wcscmp(how, L"off") == 0) {
 		tty_cookedmode(el);
 		el->el_flags |= EDIT_DISABLED;
 	}
