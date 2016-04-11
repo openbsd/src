@@ -1,5 +1,5 @@
-/*	$OpenBSD: prompt.c,v 1.12 2016/04/11 20:43:33 schwarze Exp $	*/
-/*	$NetBSD: prompt.c,v 1.20 2011/07/29 15:16:33 christos Exp $	*/
+/*	$OpenBSD: prompt.c,v 1.13 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$NetBSD: prompt.c,v 1.25 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,13 +41,13 @@
 #include <stdio.h>
 #include "el.h"
 
-private wchar_t	*prompt_default(EditLine *);
-private wchar_t	*prompt_default_r(EditLine *);
+static wchar_t	*prompt_default(EditLine *);
+static wchar_t	*prompt_default_r(EditLine *);
 
 /* prompt_default():
  *	Just a default prompt, in case the user did not provide one
  */
-private wchar_t *
+static wchar_t *
 /*ARGSUSED*/
 prompt_default(EditLine *el __attribute__((__unused__)))
 {
@@ -60,7 +60,7 @@ prompt_default(EditLine *el __attribute__((__unused__)))
 /* prompt_default_r():
  *	Just a default rprompt, in case the user did not provide one
  */
-private wchar_t *
+static wchar_t *
 /*ARGSUSED*/
 prompt_default_r(EditLine *el __attribute__((__unused__)))
 {

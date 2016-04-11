@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.22 2016/04/11 20:43:33 schwarze Exp $	*/
+/*	$OpenBSD: map.c,v 1.23 2016/04/11 21:17:29 schwarze Exp $	*/
 /*	$NetBSD: map.c,v 1.25 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -46,16 +46,16 @@
 #include "help.h"
 #include "parse.h"
 
-private void	map_print_key(EditLine *, el_action_t *, const wchar_t *);
-private void	map_print_some_keys(EditLine *, el_action_t *, wint_t, wint_t);
-private void	map_print_all_keys(EditLine *);
-private void	map_init_nls(EditLine *);
-private void	map_init_meta(EditLine *);
+static void	map_print_key(EditLine *, el_action_t *, const wchar_t *);
+static void	map_print_some_keys(EditLine *, el_action_t *, wint_t, wint_t);
+static void	map_print_all_keys(EditLine *);
+static void	map_init_nls(EditLine *);
+static void	map_init_meta(EditLine *);
 
 /* keymap tables ; should be N_KEYS*sizeof(KEYCMD) bytes long */
 
 
-private const el_action_t  el_map_emacs[] = {
+static const el_action_t  el_map_emacs[] = {
 	/*   0 */	EM_SET_MARK,		/* ^@ */
 	/*   1 */	ED_MOVE_TO_BEG,		/* ^A */
 	/*   2 */	ED_PREV_CHAR,		/* ^B */
@@ -322,7 +322,7 @@ private const el_action_t  el_map_emacs[] = {
  * insert mode characters are in the normal keymap, and command mode
  * in the extended keymap.
  */
-private const el_action_t  el_map_vi_insert[] = {
+static const el_action_t  el_map_vi_insert[] = {
 #ifdef KSHVI
 	/*   0 */	ED_UNASSIGNED,		/* ^@ */
 	/*   1 */	ED_INSERT,		/* ^A */
@@ -623,7 +623,7 @@ private const el_action_t  el_map_vi_insert[] = {
 	/* 255 */	ED_INSERT		/* M-^? */
 };
 
-private const el_action_t el_map_vi_command[] = {
+static const el_action_t el_map_vi_command[] = {
 	/*   0 */	ED_UNASSIGNED,		/* ^@ */
 	/*   1 */	ED_MOVE_TO_BEG,		/* ^A */
 	/*   2 */	ED_UNASSIGNED,		/* ^B */
@@ -957,7 +957,7 @@ map_end(EditLine *el)
 /* map_init_nls():
  *	Find all the printable keys and bind them to self insert
  */
-private void
+static void
 map_init_nls(EditLine *el)
 {
 	int i;
@@ -973,7 +973,7 @@ map_init_nls(EditLine *el)
 /* map_init_meta():
  *	Bind all the meta keys to the appropriate ESC-<key> sequence
  */
-private void
+static void
 map_init_meta(EditLine *el)
 {
 	wchar_t buf[3];
@@ -1118,7 +1118,7 @@ map_get_editor(EditLine *el, const wchar_t **editor)
 /* map_print_key():
  *	Print the function description for 1 key
  */
-private void
+static void
 map_print_key(EditLine *el, el_action_t *map, const wchar_t *in)
 {
 	char outbuf[EL_BUFSIZ];
@@ -1141,7 +1141,7 @@ map_print_key(EditLine *el, el_action_t *map, const wchar_t *in)
 /* map_print_some_keys():
  *	Print keys from first to last
  */
-private void
+static void
 map_print_some_keys(EditLine *el, el_action_t *map, wint_t first, wint_t last)
 {
 	el_bindings_t *bp, *ep;
@@ -1205,7 +1205,7 @@ map_print_some_keys(EditLine *el, el_action_t *map, wint_t first, wint_t last)
 /* map_print_all_keys():
  *	Print the function description for all keys.
  */
-private void
+static void
 map_print_all_keys(EditLine *el)
 {
 	int prev, i;

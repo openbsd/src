@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.15 2016/04/11 20:43:33 schwarze Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.16 2016/04/11 21:17:29 schwarze Exp $	*/
 /*	$NetBSD: terminal.c,v 1.17 2016/02/15 15:35:03 christos Exp $	*/
 
 /*-
@@ -82,7 +82,7 @@
 #define	Str(a)		el->el_terminal.t_str[a]
 #define	Val(a)		el->el_terminal.t_val[a]
 
-private const struct termcapstr {
+static const struct termcapstr {
 	const char *name;
 	const char *long_name;
 } tstr[] = {
@@ -166,7 +166,7 @@ private const struct termcapstr {
 	{ NULL, NULL }
 };
 
-private const struct termcapval {
+static const struct termcapval {
 	const char *name;
 	const char *long_name;
 } tval[] = {
@@ -191,27 +191,27 @@ private const struct termcapval {
 };
 /* do two or more of the attributes use me */
 
-private void	terminal_setflags(EditLine *);
-private int	terminal_rebuffer_display(EditLine *);
-private void	terminal_free_display(EditLine *);
-private int	terminal_alloc_display(EditLine *);
-private void	terminal_alloc(EditLine *, const struct termcapstr *,
+static void	terminal_setflags(EditLine *);
+static int	terminal_rebuffer_display(EditLine *);
+static void	terminal_free_display(EditLine *);
+static int	terminal_alloc_display(EditLine *);
+static void	terminal_alloc(EditLine *, const struct termcapstr *,
     const char *);
-private void	terminal_init_arrow(EditLine *);
-private void	terminal_reset_arrow(EditLine *);
-private int	terminal_putc(int);
-private void	terminal_tputs(EditLine *, const char *, int);
+static void	terminal_init_arrow(EditLine *);
+static void	terminal_reset_arrow(EditLine *);
+static int	terminal_putc(int);
+static void	terminal_tputs(EditLine *, const char *, int);
 
 #ifdef _REENTRANT
-private pthread_mutex_t terminal_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t terminal_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
-private FILE *terminal_outfile = NULL;
+static FILE *terminal_outfile = NULL;
 
 
 /* terminal_setflags():
  *	Set the terminal capability flags
  */
-private void
+static void
 terminal_setflags(EditLine *el)
 {
 	EL_FLAGS = 0;
@@ -323,7 +323,7 @@ terminal_end(EditLine *el)
 /* terminal_alloc():
  *	Maintain a string pool for termcap strings
  */
-private void
+static void
 terminal_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 {
 	char termbuf[TC_BUFSIZE];
@@ -388,7 +388,7 @@ terminal_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 /* terminal_rebuffer_display():
  *	Rebuffer the display after the screen changed size
  */
-private int
+static int
 terminal_rebuffer_display(EditLine *el)
 {
 	coord_t *c = &el->el_terminal.t_size;
@@ -407,7 +407,7 @@ terminal_rebuffer_display(EditLine *el)
 /* terminal_alloc_display():
  *	Allocate a new display.
  */
-private int
+static int
 terminal_alloc_display(EditLine *el)
 {
 	int i;
@@ -453,7 +453,7 @@ done:
 /* terminal_free_display():
  *	Free the display buffers
  */
-private void
+static void
 terminal_free_display(EditLine *el)
 {
 	wchar_t **b;
@@ -993,7 +993,7 @@ terminal_change_size(EditLine *el, int lins, int cols)
 /* terminal_init_arrow():
  *	Initialize the arrow key bindings from termcap
  */
-private void
+static void
 terminal_init_arrow(EditLine *el)
 {
 	funckey_t *arrow = el->el_terminal.t_fkey;
@@ -1033,7 +1033,7 @@ terminal_init_arrow(EditLine *el)
 /* terminal_reset_arrow():
  *	Reset arrow key bindings
  */
-private void
+static void
 terminal_reset_arrow(EditLine *el)
 {
 	funckey_t *arrow = el->el_terminal.t_fkey;
@@ -1203,7 +1203,7 @@ terminal_bind_arrow(EditLine *el)
 /* terminal_putc():
  *	Add a character
  */
-private int
+static int
 terminal_putc(int c)
 {
 	if (terminal_outfile == NULL)
@@ -1211,7 +1211,7 @@ terminal_putc(int c)
 	return fputc(c, terminal_outfile);
 }
 
-private void
+static void
 terminal_tputs(EditLine *el, const char *cap, int affcnt)
 {
 #ifdef _REENTRANT

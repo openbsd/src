@@ -1,5 +1,5 @@
-/*	$OpenBSD: tokenizer.c,v 1.20 2016/04/11 20:54:05 schwarze Exp $	*/
-/*	$NetBSD: tokenizer.c,v 1.27 2016/04/11 16:06:52 christos Exp $	*/
+/*	$OpenBSD: tokenizer.c,v 1.21 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.28 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -84,13 +84,13 @@ struct TYPE(tokenizer) {
 };
 
 
-private void FUN(tok,finish)(TYPE(Tokenizer) *);
+static void FUN(tok,finish)(TYPE(Tokenizer) *);
 
 
 /* FUN(tok,finish)():
  *	Finish a word in the tokenizer.
  */
-private void
+static void
 FUN(tok,finish)(TYPE(Tokenizer) *tok)
 {
 
@@ -107,7 +107,7 @@ FUN(tok,finish)(TYPE(Tokenizer) *tok)
 /* FUN(tok,init)():
  *	Initialize the tokenizer
  */
-public TYPE(Tokenizer) *
+TYPE(Tokenizer) *
 FUN(tok,init)(const Char *ifs)
 {
 	TYPE(Tokenizer) *tok = malloc(sizeof(TYPE(Tokenizer)));
@@ -148,7 +148,7 @@ FUN(tok,init)(const Char *ifs)
 /* FUN(tok,reset)():
  *	Reset the tokenizer
  */
-public void
+void
 FUN(tok,reset)(TYPE(Tokenizer) *tok)
 {
 
@@ -163,7 +163,7 @@ FUN(tok,reset)(TYPE(Tokenizer) *tok)
 /* FUN(tok,end)():
  *	Clean up
  */
-public void
+void
 FUN(tok,end)(TYPE(Tokenizer) *tok)
 {
 
@@ -192,7 +192,7 @@ FUN(tok,end)(TYPE(Tokenizer) *tok)
  *		cursorc	if !NULL, argv element containing cursor
  *		cursorv	if !NULL, offset in argv[cursorc] of cursor
  */
-public int
+int
 FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
     int *argc, const Char ***argv, int *cursorc, int *cursoro)
 {
@@ -442,7 +442,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
  *	Simpler version of tok_line, taking a NUL terminated line
  *	and splitting into words, ignoring cursor state.
  */
-public int
+int
 FUN(tok,str)(TYPE(Tokenizer) *tok, const Char *line, int *argc,
     const Char ***argv)
 {

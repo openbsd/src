@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.c,v 1.24 2016/04/11 20:43:33 schwarze Exp $	*/
+/*	$OpenBSD: chared.c,v 1.25 2016/04/11 21:17:29 schwarze Exp $	*/
 /*	$NetBSD: chared.c,v 1.28 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@
 #include "el.h"
 #include "common.h"
 
-private void ch__clearmacro (EditLine *);
+static void ch__clearmacro (EditLine *);
 
 /* value to leave unused in line buffer */
 #define	EL_LEAVE	2
@@ -482,7 +482,7 @@ ch_reset(EditLine *el, int mclear)
 		ch__clearmacro(el);
 }
 
-private void
+static void
 ch__clearmacro(EditLine *el)
 {
 	c_macro_t *ma = &el->el_chared.c_macro;
@@ -608,7 +608,7 @@ ch_end(EditLine *el)
 /* el_insertstr():
  *	Insert string at cursorI
  */
-public int
+int
 el_winsertstr(EditLine *el, const wchar_t *s)
 {
 	size_t len;
@@ -630,7 +630,7 @@ el_winsertstr(EditLine *el, const wchar_t *s)
 /* el_deletestr():
  *	Delete num characters before the cursor
  */
-public void
+void
 el_deletestr(EditLine *el, int n)
 {
 	if (n <= 0)

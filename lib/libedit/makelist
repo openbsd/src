@@ -93,7 +93,7 @@ _EOF
 	    printf("/* Automatically generated file, do not edit */\n");
 	    printf("#include \"config.h\"\n#include \"el.h\"\n");
 	    printf("#include \"help.h\"\n");
-	    printf("private const struct el_bindings_t el_func_help[] = {\n");
+	    printf("static const struct el_bindings_t el_func_help[] = {\n");
 	    low = "abcdefghijklmnopqrstuvwxyz_";
 	    high = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_";
 	    for (i = 1; i <= length(low); i++)
@@ -177,7 +177,7 @@ _EOF
 	    printf("#include \"common.h\"\n");
 	    printf("#include \"emacs.h\"\n");
 	    printf("#include \"vi.h\"\n");
-	    printf("private const el_func_t el_func[] = {");
+	    printf("static const el_func_t el_func[] = {");
 	    maxlen = 80;
 	    needn = 1;
 	    len = 0;

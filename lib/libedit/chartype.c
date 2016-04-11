@@ -1,4 +1,4 @@
-/*	$OpenBSD: chartype.c,v 1.14 2016/04/11 20:54:05 schwarze Exp $	*/
+/*	$OpenBSD: chartype.c,v 1.15 2016/04/11 21:17:29 schwarze Exp $	*/
 /*	$NetBSD: chartype.c,v 1.6 2011/07/28 00:48:21 christos Exp $	*/
 
 /*-
@@ -40,9 +40,9 @@
 
 #define CT_BUFSIZ 1024
 
-private void ct_conv_buff_resize(ct_buffer_t *, size_t, size_t);
+static void ct_conv_buff_resize(ct_buffer_t *, size_t, size_t);
 
-private void
+static void
 ct_conv_buff_resize(ct_buffer_t *conv, size_t mincsize, size_t minwsize)
 {
 	void *p;
@@ -70,7 +70,7 @@ ct_conv_buff_resize(ct_buffer_t *conv, size_t mincsize, size_t minwsize)
 }
 
 
-public char *
+char *
 ct_encode_string(const wchar_t *s, ct_buffer_t *conv)
 {
 	char *dst;
@@ -103,7 +103,7 @@ ct_encode_string(const wchar_t *s, ct_buffer_t *conv)
 	return conv->cbuff;
 }
 
-public wchar_t *
+wchar_t *
 ct_decode_string(const char *s, ct_buffer_t *conv)
 {
 	size_t len = 0;

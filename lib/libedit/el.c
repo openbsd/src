@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.33 2016/04/11 20:43:33 schwarze Exp $	*/
+/*	$OpenBSD: el.c,v 1.34 2016/04/11 21:17:29 schwarze Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -53,7 +53,7 @@
 /* el_init():
  *	Initialize editline and set default parameters.
  */
-public EditLine *
+EditLine *
 el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 {
 	EditLine *el = (EditLine *) malloc(sizeof(EditLine));
@@ -109,7 +109,7 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 /* el_end():
  *	Clean up.
  */
-public void
+void
 el_end(EditLine *el)
 {
 
@@ -140,7 +140,7 @@ el_end(EditLine *el)
 /* el_reset():
  *	Reset the tty and the parser
  */
-public void
+void
 el_reset(EditLine *el)
 {
 
@@ -152,7 +152,7 @@ el_reset(EditLine *el)
 /* el_set():
  *	set the editline parameters
  */
-public int
+int
 el_wset(EditLine *el, int op, ...)
 {
 	va_list ap;
@@ -358,7 +358,7 @@ el_wset(EditLine *el, int op, ...)
 /* el_get():
  *	retrieve the editline parameters
  */
-public int
+int
 el_wget(EditLine *el, int op, ...)
 {
 	va_list ap;
@@ -480,7 +480,7 @@ el_wget(EditLine *el, int op, ...)
 /* el_line():
  *	Return editing info
  */
-public const LineInfoW *
+const LineInfoW *
 el_wline(EditLine *el)
 {
 
@@ -491,7 +491,7 @@ el_wline(EditLine *el)
 /* el_source():
  *	Source a file
  */
-public int
+int
 el_source(EditLine *el, const char *fname)
 {
 	FILE *fp;
@@ -562,7 +562,7 @@ el_source(EditLine *el, const char *fname)
 /* el_resize():
  *	Called from program when terminal is resized
  */
-public void
+void
 el_resize(EditLine *el)
 {
 	int lins, cols;
@@ -583,7 +583,7 @@ el_resize(EditLine *el)
 /* el_beep():
  *	Called from the program to beep
  */
-public void
+void
 el_beep(EditLine *el)
 {
 

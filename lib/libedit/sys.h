@@ -1,5 +1,5 @@
-/*	$OpenBSD: sys.h,v 1.16 2016/04/09 19:31:55 schwarze Exp $	*/
-/*	$NetBSD: sys.h,v 1.13 2009/12/30 22:37:40 christos Exp $	*/
+/*	$OpenBSD: sys.h,v 1.17 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$NetBSD: sys.h,v 1.25 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -57,14 +57,6 @@
 #  define __BEGIN_DECLS
 #  define __END_DECLS
 # endif
-#endif
-
-#ifndef public
-# define public		/* Externally visible functions/variables */
-#endif
-
-#ifndef private
-# define private	static	/* Always hidden internals */
 #endif
 
 #ifndef protected

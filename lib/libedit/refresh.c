@@ -1,5 +1,5 @@
-/*	$OpenBSD: refresh.c,v 1.18 2016/04/11 20:43:33 schwarze Exp $	*/
-/*	$NetBSD: refresh.c,v 1.48 2016/04/11 00:50:13 christos Exp $	*/
+/*	$OpenBSD: refresh.c,v 1.19 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$NetBSD: refresh.c,v 1.49 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,18 +44,18 @@
 
 #include "el.h"
 
-private void	re_nextline(EditLine *);
-private void	re_addc(EditLine *, wint_t);
-private void	re_update_line(EditLine *, wchar_t *, wchar_t *, int);
-private void	re_insert (EditLine *, wchar_t *, int, int, wchar_t *, int);
-private void	re_delete(EditLine *, wchar_t *, int, int, int);
-private void	re_fastputc(EditLine *, wint_t);
-private void	re_clear_eol(EditLine *, int, int, int);
-private void	re__strncopy(wchar_t *, wchar_t *, size_t);
-private void	re__copy_and_pad(wchar_t *, const wchar_t *, size_t);
+static void	re_nextline(EditLine *);
+static void	re_addc(EditLine *, wint_t);
+static void	re_update_line(EditLine *, wchar_t *, wchar_t *, int);
+static void	re_insert (EditLine *, wchar_t *, int, int, wchar_t *, int);
+static void	re_delete(EditLine *, wchar_t *, int, int, int);
+static void	re_fastputc(EditLine *, wint_t);
+static void	re_clear_eol(EditLine *, int, int, int);
+static void	re__strncopy(wchar_t *, wchar_t *, size_t);
+static void	re__copy_and_pad(wchar_t *, const wchar_t *, size_t);
 
 #ifdef DEBUG_REFRESH
-private void	re_printstr(EditLine *, const char *, wchar_t *, wchar_t *);
+static void	re_printstr(EditLine *, const char *, wchar_t *, wchar_t *);
 #define	__F el->el_errfile
 #define	ELRE_ASSERT(a, b, c)	do				\
 				    if (/*CONSTCOND*/ a) {	\
@@ -68,7 +68,7 @@ private void	re_printstr(EditLine *, const char *, wchar_t *, wchar_t *);
 /* re_printstr():
  *	Print a string on the debugging pty
  */
-private void
+static void
 re_printstr(EditLine *el, const char *str, wchar_t *f, wchar_t *t)
 {
 
@@ -85,7 +85,7 @@ re_printstr(EditLine *el, const char *str, wchar_t *f, wchar_t *t)
 /* re_nextline():
  *	Move to the next line or scroll
  */
-private void
+static void
 re_nextline(EditLine *el)
 {
 	el->el_refresh.r_cursor.h = 0;	/* reset it. */
@@ -117,7 +117,7 @@ re_nextline(EditLine *el)
 /* re_addc():
  *	Draw c, expanding tabs, control chars etc.
  */
-private void
+static void
 re_addc(EditLine *el, wint_t c)
 {
 	switch (ct_chr_class(c)) {
@@ -351,7 +351,7 @@ re_goto_bottom(EditLine *el)
  *	insert num characters of s into d (in front of the character)
  *	at dat, maximum length of d is dlen
  */
-private void
+static void
 /*ARGSUSED*/
 re_insert(EditLine *el __attribute__((__unused__)),
     wchar_t *d, int dat, int dlen, wchar_t *s, int num)
@@ -402,7 +402,7 @@ re_insert(EditLine *el __attribute__((__unused__)),
 /* re_delete():
  *	delete num characters d at dat, maximum length of d is dlen
  */
-private void
+static void
 /*ARGSUSED*/
 re_delete(EditLine *el __attribute__((__unused__)),
     wchar_t *d, int dat, int dlen, int num)
@@ -436,7 +436,7 @@ re_delete(EditLine *el __attribute__((__unused__)),
 /* re__strncopy():
  *	Like strncpy without padding.
  */
-private void
+static void
 re__strncopy(wchar_t *a, wchar_t *b, size_t n)
 {
 
@@ -451,7 +451,7 @@ re__strncopy(wchar_t *a, wchar_t *b, size_t n)
  *	in the first or second diff, diff is the difference between the
  *	number of characters between the new and old line.
  */
-private void
+static void
 re_clear_eol(EditLine *el, int fx, int sx, int diff)
 {
 
@@ -495,7 +495,7 @@ new:	eddie> Oh, my little buggy says to me, as lurgid as
  */
 #define	MIN_END_KEEP	4
 
-private void
+static void
 re_update_line(EditLine *el, wchar_t *old, wchar_t *new, int i)
 {
 	wchar_t *o, *n, *p, c;
@@ -965,7 +965,7 @@ re_update_line(EditLine *el, wchar_t *old, wchar_t *new, int i)
 /* re__copy_and_pad():
  *	Copy string and pad with spaces
  */
-private void
+static void
 re__copy_and_pad(wchar_t *dst, const wchar_t *src, size_t width)
 {
 	size_t i;
@@ -1049,7 +1049,7 @@ re_refresh_cursor(EditLine *el)
 /* re_fastputc():
  *	Add a character fast.
  */
-private void
+static void
 re_fastputc(EditLine *el, wint_t c)
 {
 	int w = wcwidth(c);

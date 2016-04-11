@@ -1,5 +1,5 @@
-/*	$OpenBSD: sig.c,v 1.18 2016/03/20 23:48:27 schwarze Exp $	*/
-/*	$NetBSD: sig.c,v 1.24 2016/02/16 19:08:41 christos Exp $	*/
+/*	$OpenBSD: sig.c,v 1.19 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$NetBSD: sig.c,v 1.25 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,23 +46,23 @@
 #include "el.h"
 #include "common.h"
 
-private EditLine *sel = NULL;
+static EditLine *sel = NULL;
 
-private const int sighdl[] = {
+static const int sighdl[] = {
 #define	_DO(a)	(a),
 	ALLSIGS
 #undef	_DO
 	- 1
 };
 
-private void sig_handler(int);
+static void sig_handler(int);
 
 /* sig_handler():
  *	This is the handler called for all signals
  *	XXX: we cannot pass any data so we just store the old editline
  *	state in a private variable
  */
-private void
+static void
 sig_handler(int signo)
 {
 	int i, save_errno;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.23 2016/04/11 20:43:33 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.24 2016/04/11 21:17:29 schwarze Exp $	*/
 /*	$NetBSD: vi.c,v 1.33 2011/02/17 16:44:48 joerg Exp $	*/
 
 /*-
@@ -50,13 +50,13 @@
 #include "emacs.h"
 #include "vi.h"
 
-private el_action_t	cv_action(EditLine *, wint_t);
-private el_action_t	cv_paste(EditLine *, wint_t);
+static el_action_t	cv_action(EditLine *, wint_t);
+static el_action_t	cv_paste(EditLine *, wint_t);
 
 /* cv_action():
  *	Handle vi actions.
  */
-private el_action_t
+static el_action_t
 cv_action(EditLine *el, wint_t c)
 {
 
@@ -88,7 +88,7 @@ cv_action(EditLine *el, wint_t c)
 /* cv_paste():
  *	Paste previous deletion before or after the cursor
  */
-private el_action_t
+static el_action_t
 cv_paste(EditLine *el, wint_t c)
 {
 	c_kill_t *k = &el->el_chared.c_kill;

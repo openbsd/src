@@ -1,5 +1,5 @@
-/*	$OpenBSD: chartype.h,v 1.18 2016/04/11 20:54:05 schwarze Exp $	*/
-/*	$NetBSD: chartype.h,v 1.30 2016/04/11 16:06:52 christos Exp $	*/
+/*	$OpenBSD: chartype.h,v 1.19 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$NetBSD: chartype.h,v 1.31 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,10 +61,10 @@ typedef struct ct_buffer_t {
 } ct_buffer_t;
 
 /* Encode a wide-character string and return the UTF-8 encoded result. */
-public char *ct_encode_string(const wchar_t *, ct_buffer_t *);
+char *ct_encode_string(const wchar_t *, ct_buffer_t *);
 
 /* Decode a (multi)?byte string and return the wide-character string result. */
-public wchar_t *ct_decode_string(const char *, ct_buffer_t *);
+wchar_t *ct_decode_string(const char *, ct_buffer_t *);
 
 /* Decode a (multi)?byte argv string array.
  * The pointer returned must be free()d when done. */

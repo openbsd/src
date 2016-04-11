@@ -1,5 +1,5 @@
-/*	$OpenBSD: parse.c,v 1.19 2016/04/11 20:43:33 schwarze Exp $	*/
-/*	$NetBSD: parse.c,v 1.37 2016/04/11 00:50:13 christos Exp $	*/
+/*	$OpenBSD: parse.c,v 1.20 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$NetBSD: parse.c,v 1.38 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@
 #include "el.h"
 #include "parse.h"
 
-private const struct {
+static const struct {
 	const wchar_t *name;
 	int (*func)(EditLine *, int, const wchar_t **);
 } cmds[] = {
@@ -90,7 +90,7 @@ parse_line(EditLine *el, const wchar_t *line)
 /* el_parse():
  *	Command dispatcher
  */
-public int
+int
 el_wparse(EditLine *el, int argc, const wchar_t *argv[])
 {
 	const wchar_t *ptr;
