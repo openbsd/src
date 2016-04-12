@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.100 2016/03/03 07:20:45 gerhard Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.101 2016/04/12 14:33:27 mpi Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1847,7 +1847,7 @@ ieee80211_notify_dtim(struct ieee80211com *ic)
 			wh->i_fc[1] |= IEEE80211_FC1_MORE_DATA;
 		}
 		mq_enqueue(&ic->ic_pwrsaveq, m);
-		(*ifp->if_start)(ifp);
+		if_start(ifp);
 	}
 	/* XXX assumes everything has been sent */
 	ic->ic_tim_mcast_pending = 0;

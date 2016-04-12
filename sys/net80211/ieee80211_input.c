@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.169 2016/03/22 11:37:35 dlg Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.170 2016/04/12 14:33:27 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -360,7 +360,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			/* dequeue buffered unicast frames */
 			while ((m = mq_dequeue(&ni->ni_savedq)) != NULL) {
 				mq_enqueue(&ic->ic_pwrsaveq, m);
-				(*ifp->if_start)(ifp);
+				if_start(ifp);
 			}
 		}
 	}
@@ -2870,7 +2870,7 @@ ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m,
 		wh->i_fc[1] |= IEEE80211_FC1_MORE_DATA;
 	}
 	mq_enqueue(&ic->ic_pwrsaveq, m);
-	(*ifp->if_start)(ifp);
+	if_start(ifp);
 }
 #endif	/* IEEE80211_STA_ONLY */
 

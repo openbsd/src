@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.110 2016/02/05 19:11:31 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.111 2016/04/12 14:33:27 mpi Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -241,7 +241,7 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 #endif
 	mq_enqueue(&ic->ic_mgtq, m);
 	ifp->if_timer = 1;
-	(*ifp->if_start)(ifp);
+	if_start(ifp);
 	return 0;
 }
 

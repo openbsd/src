@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.64 2016/02/08 01:00:47 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.65 2016/04/12 14:33:27 mpi Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -1043,7 +1043,7 @@ justcleanup:
 				ieee80211_set_link_state(ic, LINK_STATE_UP);
 			}
 			ic->ic_mgt_timer = 0;
-			(*ifp->if_start)(ifp);
+			if_start(ifp);
 			break;
 		}
 		break;
