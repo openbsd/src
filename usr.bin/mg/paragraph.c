@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.42 2015/12/14 03:25:59 mmcc Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.43 2016/04/12 06:20:50 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -208,13 +208,13 @@ fillpara(int f, int n)
 			 * behave the same way if a ')' is preceded by a
 			 * [.?!] and followed by a doublespace.
 			 */
-			if ((eolflag ||
+			if (!eopflag && ((eolflag ||
 			    curwp->w_doto == llength(curwp->w_dotp) ||
 			    (c = lgetc(curwp->w_dotp, curwp->w_doto)) == ' '
 			    || c == '\t') && (ISEOSP(wbuf[wordlen - 1]) ||
 			    (wbuf[wordlen - 1] == ')' && wordlen >= 2 &&
 			    ISEOSP(wbuf[wordlen - 2]))) &&
-			    wordlen < MAXWORD - 1)
+			    wordlen < MAXWORD - 1))
 				wbuf[wordlen++] = ' ';
 
 			/* at a word break with a word waiting */
