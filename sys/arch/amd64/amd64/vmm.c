@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.51 2016/04/12 04:42:58 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.52 2016/04/12 06:41:09 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -552,8 +552,13 @@ vm_resetcpu(struct vm_resetcpu_params *vrp)
 	DPRINTF("vm_resetcpu: resetting vm %d vcpu %d to power on defaults\n",
 	    vm->vm_id, vcpu->vc_id);
 
-	if (vcpu_reset_regs(vcpu, &vrp->vrp_init_state))
+	if (vcpu_reset_regs(vcpu, &vrp->vrp_init_state)) {
+		printf("vm_resetcpu: failed\n");
+#ifdef VMM_DEBUG
+		dump_vcpu(vcpu);
+#endif /* VMM_DEBUG */
 		return (EIO);
+	}
 
 	return (0);
 }
@@ -2737,6 +2742,7 @@ vm_run(struct vm_run_params *vrp)
 	if (vm == NULL)
 		ret = ENOENT;
 
+	/* Bail if errors detected in the previous steps */
 	if (ret)
 		return (ret);
 
@@ -3020,6 +3026,7 @@ vcpu_run_vmx(struct vcpu *vcpu, uint8_t from_exit, int16_t *injint)
 			if (!locked)
 				KERNEL_LOCK();
 
+			/* Exit to vmd if we are terminating or failed enter */
 			if (ret || vcpu_must_stop(vcpu))
 				break;
 
@@ -3175,6 +3182,11 @@ vmx_handle_exit(struct vcpu *vcpu)
 		update_rip = 1;
 		break;
 	case VMX_EXIT_TRIPLE_FAULT:
+#ifdef VMM_DEBUG
+		DPRINTF("vmx_handle_exit: vm %d vcpu %d triple fault\n");
+		vmx_vcpu_dump_regs(vcpu);
+		dump_vcpu(vcpu);
+#endif /* VMM_DEBUG */
 		ret = EAGAIN;
 		update_rip = 0;
 		break;
