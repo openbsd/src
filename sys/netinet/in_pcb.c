@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.203 2016/04/11 21:39:18 vgross Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.204 2016/04/12 14:42:54 krw Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -740,7 +740,9 @@ in_pcblookup_local(struct inpcbtable *table, void *laddrp, u_int lport_arg,
 	int matchwild = 3, wildcard;
 	u_int16_t lport = lport_arg;
 	struct in_addr laddr = *(struct in_addr *)laddrp;
+#ifdef INET6
 	struct in6_addr *laddr6 = (struct in6_addr *)laddrp;
+#endif
 	struct inpcbhead *head;
 
 	rdomain = rtable_l2(rdomain);	/* convert passed rtableid to rdomain */
