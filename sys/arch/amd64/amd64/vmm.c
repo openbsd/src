@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.50 2016/04/11 07:34:55 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.51 2016/04/12 04:42:58 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -154,10 +154,13 @@ int vmx_handle_np_fault(struct vcpu *);
 const char *vcpu_state_decode(u_int);
 const char *vmx_exit_reason_decode(uint32_t);
 const char *vmx_instruction_error_decode(uint32_t);
+
+#ifdef VMM_DEBUG
 void dump_vcpu(struct vcpu *);
 void vmx_vcpu_dump_regs(struct vcpu *);
 const char *msr_name_decode(uint32_t);
 void vmm_segment_desc_decode(uint64_t);
+#endif /* VMM_DEBUG */
 
 const char *vmm_hv_signature = VMM_HV_SIGNATURE;
 
@@ -3812,6 +3815,7 @@ vcpu_state_decode(u_int state)
 	}
 }
 
+#ifdef VMM_DEBUG
 /*
  * dump_vcpu
  *
@@ -4333,3 +4337,4 @@ vmm_segment_desc_decode(uint64_t val)
 		}
 	}
 }
+#endif /* VMM_DEBUG */
