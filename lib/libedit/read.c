@@ -1,5 +1,5 @@
-/*	$OpenBSD: read.c,v 1.36 2016/04/12 09:04:02 schwarze Exp $	*/
-/*	$NetBSD: read.c,v 1.91 2016/04/11 18:56:31 christos Exp $	*/
+/*	$OpenBSD: read.c,v 1.37 2016/04/12 09:07:21 schwarze Exp $	*/
+/*	$NetBSD: read.c,v 1.92 2016/04/12 00:16:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,8 +48,6 @@
 #include <unistd.h>
 
 #include "el.h"
-
-#define OKCMD	-1	/* must be -1! */
 
 static int	read__fixio(int, int);
 static int	read_char(EditLine *, wchar_t *);
@@ -193,7 +191,8 @@ el_wpush(EditLine *el, const wchar_t *str)
 
 
 /* read_getcmd():
- *	Get next command from the input stream, return OKCMD on success.
+ *	Get next command from the input stream,
+ *	return 0 on success or -1 on EOF or error.
  *	Character values > 255 are not looked up in the map, but inserted.
  */
 static int
@@ -207,7 +206,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, wchar_t *ch)
 	do {
 		if ((num = el_wgetc(el, ch)) != 1) {/* if EOF or error */
 			el->el_errno = num == 0 ? 0 : errno;
-			return 0;	/* not OKCMD */
+			return -1;
 		}
 
 #ifdef	KANJI
@@ -244,7 +243,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, wchar_t *ch)
 			el->el_map.current = el->el_map.key;
 	} while (cmd == ED_SEQUENCE_LEAD_IN);
 	*cmdnum = cmd;
-	return OKCMD;
+	return 0;
 }
 
 /* read_char():
@@ -433,9 +432,6 @@ el_wgets(EditLine *el, int *nread)
 	wchar_t ch, *cp;
 	int crlf = 0;
 	int nrb;
-#ifdef FIONREAD
-	c_macro_t *ma = &el->el_chared.c_macro;
-#endif /* FIONREAD */
 
 	if (nread == NULL)
 		nread = &nrb;
@@ -471,7 +467,7 @@ el_wgets(EditLine *el, int *nread)
 
 
 #ifdef FIONREAD
-	if (el->el_tty.t_mode == EX_IO && ma->level < 0) {
+	if (el->el_tty.t_mode == EX_IO && el->el_chared.c_macro.level < 0) {
 		long chrs = 0;
 
 		(void) ioctl(el->el_infd, FIONREAD, &chrs);
@@ -524,17 +520,15 @@ el_wgets(EditLine *el, int *nread)
 		goto noedit;
 	}
 
-	for (num = OKCMD; num == OKCMD;) {	/* while still editing this
-						 * line */
+	for (num = -1; num == -1;) {  /* while still editing this line */
 #ifdef DEBUG_EDIT
 		read_debug(el);
 #endif /* DEBUG_EDIT */
 		/* if EOF or error */
-		if ((num = read_getcmd(el, &cmdnum, &ch)) != OKCMD) {
-			num = -1;
+		if (read_getcmd(el, &cmdnum, &ch) == -1) {
 #ifdef DEBUG_READ
 			(void) fprintf(el->el_errfile,
-			    "Returning from el_gets %d\n", num);
+			    "Returning from el_gets\n");
 #endif /* DEBUG_READ */
 			break;
 		}
