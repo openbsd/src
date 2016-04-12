@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.277 2016/03/30 12:16:30 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.278 2016/04/12 06:20:30 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -127,6 +127,8 @@ struct mbuf *bridge_ip(struct bridge_softc *, int, struct ifnet *,
     struct ether_header *, struct mbuf *m);
 int	bridge_ifenqueue(struct bridge_softc *, struct ifnet *, struct mbuf *);
 void	bridge_ifinput(struct ifnet *, struct mbuf *);
+int	bridge_dummy_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+    struct rtentry *);
 void	bridge_fragment(struct bridge_softc *, struct ifnet *,
     struct ether_header *, struct mbuf *);
 #ifdef IPSEC
@@ -186,7 +188,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_ioctl = bridge_ioctl;
-	ifp->if_output = NULL;
+	ifp->if_output = bridge_dummy_output;
 	ifp->if_start = NULL;
 	ifp->if_type = IFT_BRIDGE;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
@@ -202,6 +204,14 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	if_ih_insert(ifp, ether_input, NULL);
 
 	return (0);
+}
+
+int
+bridge_dummy_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
+{
+	m_freem(m);
+	return (EAFNOSUPPORT);
 }
 
 int
