@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.12 2016/01/18 18:27:11 mpi Exp $ */
+/*	$OpenBSD: art.c,v 1.13 2016/04/12 06:40:44 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -124,7 +124,7 @@ art_alloc(unsigned int rtableid, unsigned int alen, unsigned int off)
 		break;
 	default:
 		printf("%s: incorrect address length %u\n", __func__, alen);
-		art_free(ar);
+		free(ar, M_RTABLE, sizeof(*ar));
 		return (NULL);
 	}
 
@@ -132,13 +132,6 @@ art_alloc(unsigned int rtableid, unsigned int alen, unsigned int off)
 	ar->ar_rtableid = rtableid;
 
 	return (ar);
-}
-
-void
-art_free(struct art_root *ar)
-{
-	KASSERT(ar->ar_root == NULL);
-	free(ar, M_RTABLE, sizeof(*ar));
 }
 
 /*
