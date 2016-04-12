@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.28 2016/04/10 18:52:07 tb Exp $
+.\" $OpenBSD: pledge.2,v 1.29 2016/04/12 12:47:46 semarie Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 10 2016 $
+.Dd $Mdocdate: April 12 2016 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -80,7 +80,8 @@ Only the
 and
 .Dv FIONBIO
 operations are allowed by default.
-Use of the "tty" and "ioctl" promises receive more ioctl requests.
+The "audio", "ioctl", "pf", "route", and "tty" promises permit more ioctl
+requests.
 .Pp
 .It Xr chmod 2
 .It Xr fchmod 2
@@ -495,6 +496,25 @@ process:
 .Xr setrlimit 2 ,
 .Xr getpriority 2 ,
 .Xr setpriority 2 .
+.It Va "route"
+Allows a subset of read-only
+.Xr ioctl 2
+operations on network interfaces:
+.Pp
+.Dv SIOCGIFADDR ,
+.Dv SIOCGIFFLAGS ,
+.Dv SIOCGIFMETRIC ,
+.Dv SIOCGIFGMEMB ,
+.Dv SIOCGIFRDOMAIN ,
+.Dv SIOCGIFDSTADDR_IN6 ,
+.Dv SIOCGIFNETMASK_IN6 ,
+.Dv SIOCGNBRINFO_IN6 ,
+.Dv SIOCGIFINFO_IN6 ,
+.Dv SIOCGIFMEDIA .
+.Pp
+It also allows read access to some
+.Xr sysctl 3
+nodes for inspection of routing table.
 .It Va "pf"
 Allows a subset of
 .Xr ioctl 2
