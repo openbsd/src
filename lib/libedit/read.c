@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.35 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$OpenBSD: read.c,v 1.36 2016/04/12 09:04:02 schwarze Exp $	*/
 /*	$NetBSD: read.c,v 1.91 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
@@ -91,10 +91,6 @@ el_read_getfn(EditLine *el)
 	    EL_BUILTIN_GETCFN : el->el_read.read_char;
 }
 
-
-#ifndef MIN
-#define MIN(A,B) ((A) < (B) ? (A) : (B))
-#endif
 
 #ifdef DEBUG_EDIT
 static void
@@ -239,12 +235,6 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, wchar_t *ch)
 			case XK_STR:
 				el_wpush(el, val.str);
 				break;
-#ifdef notyet
-			case XK_EXE:
-				/* XXX: In the future to run a user function */
-				RunCommand(val.str);
-				break;
-#endif
 			default:
 				EL_ABORT((el->el_errfile, "Bad XK_ type \n"));
 				break;

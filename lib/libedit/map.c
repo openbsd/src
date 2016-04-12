@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.23 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$OpenBSD: map.c,v 1.24 2016/04/12 09:04:02 schwarze Exp $	*/
 /*	$NetBSD: map.c,v 1.25 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -1270,11 +1270,6 @@ map_bind(EditLine *el, int argc, const wchar_t **argv)
 			case 's':
 				ntype = XK_STR;
 				break;
-#ifdef notyet
-			case 'c':
-				ntype = XK_EXE;
-				break;
-#endif
 			case 'k':
 				key = 1;
 				break;
@@ -1347,7 +1342,6 @@ map_bind(EditLine *el, int argc, const wchar_t **argv)
 
 	switch (ntype) {
 	case XK_STR:
-	case XK_EXE:
 		if ((out = parse__string(outbuf, argv[argc])) == NULL) {
 			(void) fprintf(el->el_errfile,
 			    "%ls: Invalid \\ or ^ in outstring.\n", argv[0]);

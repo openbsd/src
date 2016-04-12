@@ -1,5 +1,5 @@
-/*	$OpenBSD: keymacro.c,v 1.13 2016/04/11 21:17:29 schwarze Exp $	*/
-/*	$NetBSD: keymacro.c,v 1.19 2016/04/11 18:56:31 christos Exp $	*/
+/*	$OpenBSD: keymacro.c,v 1.14 2016/04/12 09:04:02 schwarze Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.20 2016/04/12 00:16:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  *	number of characters.  This module maintains a map (the
  *	el->el_keymacro.map)
  *	to convert these extended-key sequences into input strs
- *	(XK_STR), editor functions (XK_CMD), or unix commands (XK_EXE).
+ *	(XK_STR) or editor functions (XK_CMD).
  *
  *      Warning:
  *	  If key is a substr of some other keys, then the longer
@@ -163,7 +163,7 @@ keymacro_reset(EditLine *el)
  *	Calls the recursive function with entry point el->el_keymacro.map
  *      Looks up *ch in map and then reads characters until a
  *      complete match is found or a mismatch occurs. Returns the
- *      type of the match found (XK_STR, XK_CMD, or XK_EXE).
+ *      type of the match found (XK_STR or XK_CMD).
  *      Returns NULL in val.str and XK_STR for no match.
  *      The last character read is returned in *ch.
  */
@@ -335,7 +335,6 @@ node__try(EditLine *el, keymacro_node_t *ptr, const wchar_t *str,
 		case XK_NOD:
 			break;
 		case XK_STR:
-		case XK_EXE:
 			if (ptr->val.str)
 				free(ptr->val.str);
 			break;
@@ -350,7 +349,6 @@ node__try(EditLine *el, keymacro_node_t *ptr, const wchar_t *str,
 			ptr->val = *val;
 			break;
 		case XK_STR:
-		case XK_EXE:
 			if ((ptr->val.str = wcsdup(val->str)) == NULL)
 				return -1;
 			break;
@@ -435,7 +433,6 @@ node__put(EditLine *el, keymacro_node_t *ptr)
 	case XK_CMD:
 	case XK_NOD:
 		break;
-	case XK_EXE:
 	case XK_STR:
 		if (ptr->val.str != NULL)
 			free(ptr->val.str);
@@ -587,7 +584,6 @@ keymacro_kprint(EditLine *el, const wchar_t *key, keymacro_value_t *val,
 	if (val != NULL)
 		switch (ntype) {
 		case XK_STR:
-		case XK_EXE:
 			(void) keymacro__decode_str(val->str, unparsbuf,
 			    sizeof(unparsbuf),
 			    ntype == XK_STR ? "\"\"" : "[]");
