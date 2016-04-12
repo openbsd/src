@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.187 2016/04/09 14:08:40 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.188 2016/04/12 18:14:02 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -92,15 +92,6 @@
 
 #define MQUERY(a, sz)	mquery((a), (size_t)(sz), PROT_READ | PROT_WRITE, \
     MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t)0)
-
-#define _MALLOC_LEAVE(d) do { if (__isthreaded) { \
-	(d)->active--; \
-	_MALLOC_UNLOCK(); } \
-} while (0)
-#define _MALLOC_ENTER(d) do { if (__isthreaded) { \
-	_MALLOC_LOCK(); \
-	(d)->active++; } \
-} while (0)
 
 struct region_info {
 	void *p;		/* page; low bits used to mark chunks */
@@ -223,6 +214,24 @@ static void malloc_exit(void);
 #define REALSIZE(sz, r)						\
 	(sz) = (uintptr_t)(r)->p & MALLOC_PAGEMASK,		\
 	(sz) = ((sz) == 0 ? (r)->size : ((sz) == 1 ? 0 : (1 << ((sz)-1))))
+
+static inline void
+_MALLOC_LEAVE(struct dir_info *d)
+{
+	if (__isthreaded) {
+		d->active--;
+		_MALLOC_UNLOCK();
+	}
+}
+
+static inline void
+_MALLOC_ENTER(struct dir_info *d)
+{
+	if (__isthreaded) {
+		_MALLOC_LOCK();
+		d->active++;
+	}
+}
 
 static inline size_t
 hash(void *p)
