@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.21 2015/03/27 10:09:30 tobiasu Exp $	*/
+/*	$OpenBSD: lib.c,v 1.22 2016/04/12 19:43:38 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -64,6 +64,7 @@ void recinit(unsigned int n)
 	  || (fldtab = (Cell **) calloc(nfields+1, sizeof(Cell *))) == NULL
 	  || (fldtab[0] = (Cell *) malloc(sizeof(Cell))) == NULL )
 		FATAL("out of space for $0 and fields");
+	*record = '\0';
 	*fldtab[0] = dollar0;
 	fldtab[0]->sval = record;
 	fldtab[0]->nval = tostring("0");
