@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.41 2015/11/25 03:10:00 dlg Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.42 2016/04/12 10:15:25 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -121,8 +121,6 @@ struct usbf_function_methods cdcef_methods = {
 
 #define DEVNAME(sc)	((sc)->sc_dev.bdev.dv_xname)
 
-extern int ticks;
-
 /*
  * USB function match/attach/detach
  */
@@ -139,11 +137,10 @@ cdcef_attach(struct device *parent, struct device *self, void *aux)
 	struct cdcef_softc *sc = (struct cdcef_softc *)self;
 	struct usbf_attach_arg *uaa = aux;
 	struct usbf_device *dev = uaa->device;
-	struct ifnet *ifp;
+	struct ifnet *ifp = GET_IFP(sc);
 	usbf_status err;
 	struct usb_cdc_union_descriptor udesc;
 	int s;
-	u_int16_t macaddr_hi;
 
 
 	/* Set the device identification according to the function. */
@@ -237,14 +234,9 @@ cdcef_attach(struct device *parent, struct device *self, void *aux)
 
 	s = splnet();
 
-	macaddr_hi = htons(0x2acb);
-	bcopy(&macaddr_hi, &sc->sc_arpcom.ac_enaddr[0], sizeof(u_int16_t));
-	bcopy(&ticks, &sc->sc_arpcom.ac_enaddr[2], sizeof(u_int32_t));
-	sc->sc_arpcom.ac_enaddr[5] = (u_int8_t)(sc->sc_dev.bdev.dv_unit);
-
+	ether_fakeaddr(ifp);
 	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
-	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = cdcef_ioctl;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.68 2015/11/25 03:10:00 dlg Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.69 2016/04/12 10:15:25 mpi Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -151,7 +151,7 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 	struct cdce_softc		*sc = (struct cdce_softc *)self;
 	struct usb_attach_arg		*uaa = aux;
 	int				 s;
-	struct ifnet			*ifp;
+	struct ifnet			*ifp = GET_IFP(sc);
 	struct usbd_device		*dev = uaa->device;
 	const struct cdce_type		*t;
 	usb_interface_descriptor_t	*id;
@@ -162,9 +162,6 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 	const usb_descriptor_t		*desc;
 	struct usbd_desc_iter		 iter;
 	usb_string_descriptor_t		 eaddr_str;
-	struct timeval			 now;
-	u_int32_t			 macaddr_lo;
-	u_int16_t			 macaddr_hi;
 	int				 i, j, numalts, len;
 	int				 ctl_ifcno = -1;
 	int				 data_ifcno = -1;
@@ -310,13 +307,7 @@ found:
 
 	if (!ethd || usbd_get_string_desc(sc->cdce_udev, ethd->iMacAddress, 0,
 	    &eaddr_str, &len)) {
-		macaddr_hi = htons(0x2acb);
-		bcopy(&macaddr_hi, &sc->cdce_arpcom.ac_enaddr[0],
-		    sizeof(u_int16_t));
-		getmicrotime(&now);
-		macaddr_lo = htonl(now.tv_usec << 8);
-		bcopy(&macaddr_lo, &sc->cdce_arpcom.ac_enaddr[2], sizeof(u_int32_t));
-		sc->cdce_arpcom.ac_enaddr[5] = (u_int8_t)(sc->cdce_dev.dv_unit);
+		ether_fakeaddr(ifp);
 	} else {
 		for (i = 0; i < ETHER_ADDR_LEN * 2; i++) {
 			int c = UGETW(eaddr_str.bString[i]);
@@ -337,7 +328,6 @@ found:
 	printf("%s: address %s\n", sc->cdce_dev.dv_xname,
 	    ether_sprintf(sc->cdce_arpcom.ac_enaddr));
 
-	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = cdce_ioctl;

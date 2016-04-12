@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ugl.c,v 1.18 2015/11/25 11:20:38 mpi Exp $	*/
+/*	$OpenBSD: if_ugl.c,v 1.19 2016/04/12 10:15:25 mpi Exp $	*/
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2013 SASANO Takayoshi <uaa@uaa.org.uk>
@@ -152,8 +152,6 @@ int	ugldebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-extern int ticks;
-
 /*
  * Various supported device vendors/products.
  */
@@ -210,11 +208,10 @@ ugl_attach(struct device *parent, struct device *self, void *aux)
 	int			s;
 	struct usbd_device	*dev = uaa->device;
 	struct usbd_interface	*iface = uaa->iface;
-	struct ifnet		*ifp;
+	struct ifnet		*ifp = GET_IFP(sc);
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
 	int			i;
-	u_int16_t		macaddr_hi;
 
 	DPRINTFN(5,(" : ugl_attach: sc=%p, dev=%p", sc, dev));
 
@@ -251,16 +248,11 @@ ugl_attach(struct device *parent, struct device *self, void *aux)
 
 	s = splnet();
 
-	macaddr_hi = htons(0x2acb);
-	bcopy(&macaddr_hi, &sc->sc_arpcom.ac_enaddr[0], sizeof(u_int16_t));
-	bcopy(&ticks, &sc->sc_arpcom.ac_enaddr[2], sizeof(u_int32_t));
-	sc->sc_arpcom.ac_enaddr[5] = (u_int8_t)(sc->sc_dev.dv_unit);
-
+	ether_fakeaddr(ifp);
 	printf("%s: address %s\n",
 	    sc->sc_dev.dv_xname, ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/* Initialize interface info.*/
-	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
 	ifp->if_hardmtu = UGL_MAX_MTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
