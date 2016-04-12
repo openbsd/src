@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.64 2016/04/04 16:34:16 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.65 2016/04/12 16:47:33 stefan Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -733,20 +733,10 @@ amap_swap_off(int startslot, int endslot)
 {
 	struct vm_amap *am;
 	struct vm_amap *am_next;
-	struct vm_amap marker_prev;
-	struct vm_amap marker_next;
 	boolean_t rv = FALSE;
-
-#if defined(DIAGNOSTIC)
-	memset(&marker_prev, 0, sizeof(marker_prev));
-	memset(&marker_next, 0, sizeof(marker_next));
-#endif /* defined(DIAGNOSTIC) */
 
 	for (am = LIST_FIRST(&amap_list); am != NULL && !rv; am = am_next) {
 		int i;
-
-		LIST_INSERT_BEFORE(am, &marker_prev, am_list);
-		LIST_INSERT_AFTER(am, &marker_next, am_list);
 
 		for (i = 0; i < am->am_nused; i++) {
 			int slot;
@@ -766,23 +756,14 @@ amap_swap_off(int startslot, int endslot)
 			rv = uvm_anon_pagein(anon);
 
 			am->am_flags &= ~AMAP_SWAPOFF;
-			if (amap_refs(am) == 0) {
-				amap_wipeout(am);
-				am = NULL;
+			if (rv || amap_refs(am) == 0)
 				break;
-			}
-			if (rv) {
-				break;
-			}
 			i = 0;
 		}
 
-		KASSERT(LIST_NEXT(&marker_prev, am_list) == &marker_next ||
-		    LIST_NEXT(LIST_NEXT(&marker_prev, am_list), am_list) ==
-		    &marker_next);
-		am_next = LIST_NEXT(&marker_next, am_list);
-		LIST_REMOVE(&marker_prev, am_list);
-		LIST_REMOVE(&marker_next, am_list);
+		am_next = LIST_NEXT(am, am_list);
+		if (amap_refs(am) == 0)
+			amap_wipeout(am);
 	}
 
 	return rv;
