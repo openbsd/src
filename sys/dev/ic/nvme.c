@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.14 2016/01/15 06:38:33 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.15 2016/04/12 10:20:25 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -261,6 +261,10 @@ nvme_attach(struct nvme_softc *sc)
 	u_int dstrd;
 	u_int mps = PAGE_SHIFT;
 
+	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
+	SIMPLEQ_INIT(&sc->sc_ccb_list);
+	scsi_iopool_init(&sc->sc_iopool, sc, nvme_ccb_get, nvme_ccb_put);
+
 	reg = nvme_read4(sc, NVME_VS);
 	if (reg == 0xffffffff) {
 		printf(", invalid mapping\n");
@@ -269,11 +273,6 @@ nvme_attach(struct nvme_softc *sc)
 
 	nvme_version(sc, reg);
 	printf("\n");
-
-	if (nvme_disable(sc) != 0) {
-		printf("%s: unable to disable controller\n", DEVNAME(sc));
-		return (1);
-	}
 
 	cap = nvme_read8(sc, NVME_CAP);
 	dstrd = NVME_CAP_DSTRD(cap);
@@ -286,9 +285,11 @@ nvme_attach(struct nvme_softc *sc)
 	sc->sc_mps = 1 << mps;
 	sc->sc_mdts = MAXPHYS;
 	sc->sc_max_sgl = 2;
-	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
-	SIMPLEQ_INIT(&sc->sc_ccb_list);
-	scsi_iopool_init(&sc->sc_iopool, sc, nvme_ccb_get, nvme_ccb_put);
+
+	if (nvme_disable(sc) != 0) {
+		printf("%s: unable to disable controller\n", DEVNAME(sc));
+		return (1);
+	}
 
 	sc->sc_admin_q = nvme_q_alloc(sc, NVME_ADMIN_Q, 128, dstrd);
 	if (sc->sc_admin_q == NULL) {
