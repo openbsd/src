@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.125 2016/04/04 18:48:39 krw Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.126 2016/04/12 16:26:54 krw Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -179,7 +179,6 @@ sr_crypto_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 		goto done;
 
 	sd->sd_meta->ssdi.ssd_size = coerced_size;
-	sd->sd_meta->ssdi.ssd_secsize = sd->sd_vol.sv_chunks[0]->src_secsize;
 
 	sr_crypto_create_keys(sd);
 

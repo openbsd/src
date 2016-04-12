@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.367 2016/04/04 18:48:39 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.368 2016/04/12 16:26:54 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -539,6 +539,7 @@ sr_meta_init(struct sr_discipline *sd, int level, int no_chunk)
 	struct sr_chunk		*chunk;
 	int			cid = 0;
 	u_int64_t		max_chunk_sz = 0, min_chunk_sz = 0;
+	u_int32_t		secsize = DEV_BSIZE;
 
 	DNPRINTF(SR_D_META, "%s: sr_meta_init\n", DEVNAME(sc));
 
@@ -558,7 +559,7 @@ sr_meta_init(struct sr_discipline *sd, int level, int no_chunk)
 
 	sr_uuid_generate(&sm->ssdi.ssd_uuid);
 
-	/* Initialise chunk metadata and get min/max chunk sizes. */
+	/* Initialise chunk metadata and get min/max chunk sizes & secsize. */
 	SLIST_FOREACH(chunk, cl, src_link) {
 		scm = &chunk->src_meta;
 		scm->scmi.scm_size = chunk->src_size;
@@ -574,9 +575,13 @@ sr_meta_init(struct sr_discipline *sd, int level, int no_chunk)
 
 		if (min_chunk_sz == 0)
 			min_chunk_sz = scm->scmi.scm_size;
+		if (chunk->src_secsize > secsize)
+			secsize = chunk->src_secsize;
 		min_chunk_sz = MIN(min_chunk_sz, scm->scmi.scm_size);
 		max_chunk_sz = MAX(max_chunk_sz, scm->scmi.scm_size);
 	}
+
+	sm->ssdi.ssd_secsize = secsize;
 
 	/* Equalize chunk sizes. */
 	SLIST_FOREACH(chunk, cl, src_link)
