@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.63 2015/11/25 03:09:59 dlg Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.64 2016/04/13 10:34:32 mpi Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -902,7 +902,6 @@ ste_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = ste_start;
 	ifp->if_watchdog = ste_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, STE_TX_LIST_CNT - 1);
-	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 

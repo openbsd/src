@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.94 2016/03/14 01:16:39 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.95 2016/04/13 10:34:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -824,7 +824,6 @@ oce_attach_ifp(struct oce_softc *sc)
 	ifp->if_hardmtu = OCE_MAX_MTU;
 	ifp->if_softc = sc;
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->sc_tx_ring_size - 1);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
 	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;

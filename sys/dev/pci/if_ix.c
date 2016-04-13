@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.131 2015/12/31 19:07:37 kettenis Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.132 2016/04/13 10:34:32 mpi Exp $	*/
 
 /******************************************************************************
 
@@ -1539,7 +1539,6 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	ifp->if_hardmtu = IXGBE_MAX_FRAME_SIZE -
 	    ETHER_HDR_LEN - ETHER_CRC_LEN;
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->num_tx_desc - 1);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 

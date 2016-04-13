@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.131 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.132 2016/04/13 10:34:32 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -294,7 +294,6 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = iwi_ioctl;
 	ifp->if_start = iwi_start;
 	ifp->if_watchdog = iwi_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	if_attach(ifp);

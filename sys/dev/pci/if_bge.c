@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.381 2015/12/29 12:47:22 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.382 2016/04/13 10:34:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2999,7 +2999,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = bge_start;
 	ifp->if_watchdog = bge_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, BGE_TX_RING_CNT - 1);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	DPRINTFN(5, ("bcopy\n"));
 	bcopy(sc->bge_dev.dv_xname, ifp->if_xname, IFNAMSIZ);

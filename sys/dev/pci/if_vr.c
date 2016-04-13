@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.151 2016/03/15 16:45:52 naddy Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.152 2016/04/13 10:34:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -623,7 +623,6 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->vr_quirks & VR_Q_BABYJUMBO)
 		ifp->if_hardmtu = VR_RXLEN_BABYJUMBO -
 		    ETHER_HDR_LEN - ETHER_CRC_LEN;
-	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;

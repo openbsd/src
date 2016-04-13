@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.18 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.19 2016/04/13 10:34:32 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -691,7 +691,6 @@ se_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = se_start;
 	ifp->if_watchdog = se_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, SE_TX_RING_CNT - 1);
-	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;

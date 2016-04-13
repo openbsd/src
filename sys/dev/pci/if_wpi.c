@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.132 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.133 2016/04/13 10:34:32 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -299,7 +299,6 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = wpi_ioctl;
 	ifp->if_start = wpi_start;
 	ifp->if_watchdog = wpi_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	if_attach(ifp);

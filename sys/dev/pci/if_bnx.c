@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.120 2015/12/11 16:07:01 mpi Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.121 2016/04/13 10:34:32 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -876,7 +876,6 @@ bnx_attachhook(struct device *self)
 	ifp->if_start = bnx_start;
 	ifp->if_watchdog = bnx_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, USABLE_TX_BD - 1);
-	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->eaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	bcopy(sc->bnx_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 

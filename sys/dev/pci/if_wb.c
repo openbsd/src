@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.66 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.67 2016/04/13 10:34:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -786,7 +786,6 @@ wb_attach(parent, self, aux)
 	ifp->if_start = wb_start;
 	ifp->if_watchdog = wb_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, WB_TX_LIST_CNT - 1);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 

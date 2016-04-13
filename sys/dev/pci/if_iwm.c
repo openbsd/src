@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.78 2016/02/13 10:29:13 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.79 2016/04/13 10:34:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -6856,7 +6856,6 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = iwm_ioctl;
 	ifp->if_start = iwm_start;
 	ifp->if_watchdog = iwm_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 
 	if_attach(ifp);

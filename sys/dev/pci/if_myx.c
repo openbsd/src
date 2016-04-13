@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.92 2015/12/11 16:07:02 mpi Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.93 2016/04/13 10:34:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -515,7 +515,6 @@ myx_attachhook(struct device *self)
 	ifp->if_hardmtu = 9000;
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	IFQ_SET_MAXLEN(&ifp->if_snd, 1);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 #if 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.163 2016/02/07 23:56:19 tb Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.164 2016/04/13 10:34:32 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -506,7 +506,6 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = iwn_ioctl;
 	ifp->if_start = iwn_start;
 	ifp->if_watchdog = iwn_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	if_attach(ifp);

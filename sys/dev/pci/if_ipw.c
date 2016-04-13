@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.114 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.115 2016/04/13 10:34:32 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -263,7 +263,6 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = ipw_ioctl;
 	ifp->if_start = ipw_start;
 	ifp->if_watchdog = ipw_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	if_attach(ifp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.43 2016/01/26 10:23:19 reyk Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.44 2016/04/13 10:34:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -274,7 +274,6 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, NTXDESC);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ifmedia_init(&sc->sc_media, IFM_IMASK, vmxnet3_media_change,
 	    vmxnet3_media_status);

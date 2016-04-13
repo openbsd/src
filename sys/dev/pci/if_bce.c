@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.50 2015/11/25 03:09:59 dlg Exp $ */
+/* $OpenBSD: if_bce.c,v 1.51 2016/04/13 10:34:32 mpi Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -374,7 +374,6 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = bce_ioctl;
 	ifp->if_start = bce_start;
 	ifp->if_watchdog = bce_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
