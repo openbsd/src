@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.52 2016/04/12 06:41:09 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.53 2016/04/13 04:44:41 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3183,7 +3183,8 @@ vmx_handle_exit(struct vcpu *vcpu)
 		break;
 	case VMX_EXIT_TRIPLE_FAULT:
 #ifdef VMM_DEBUG
-		DPRINTF("vmx_handle_exit: vm %d vcpu %d triple fault\n");
+		DPRINTF("vmx_handle_exit: vm %d vcpu %d triple fault\n",
+		    vcpu->vc_parent->vm_id, vcpu->vc_id);
 		vmx_vcpu_dump_regs(vcpu);
 		dump_vcpu(vcpu);
 #endif /* VMM_DEBUG */
