@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.28 2016/04/13 13:05:10 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.29 2016/04/13 13:09:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -423,6 +423,13 @@ nvme_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	case READ_CAPACITY:
 		nvme_scsi_capacity(xs);
+		return;
+
+	case TEST_UNIT_READY:
+	case PREVENT_ALLOW:
+	case START_STOP:
+		xs->error = XS_NOERROR;
+		scsi_done(xs);
 		return;
 
 	default:
