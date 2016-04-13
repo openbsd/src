@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.170 2016/01/16 21:56:32 florian Exp $ */
+/*	$OpenBSD: main.c,v 1.171 2016/04/13 12:26:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -112,9 +112,9 @@ main(int argc, char *argv[])
 	unsigned char	*uc;
 	struct manpage	*res, *resp;
 	char		*conf_file, *defpaths;
-	size_t		 isec, i, sz;
+	const char	*sec;
+	size_t		 i, sz;
 	int		 prio, best_prio;
-	char		 sec;
 	enum outmode	 outmode;
 	int		 fd;
 	int		 show_usage;
@@ -350,7 +350,7 @@ main(int argc, char *argv[])
 
 		if (outmode == OUTMODE_ONE) {
 			argc = 1;
-			best_prio = 10;
+			best_prio = 20;
 		} else if (outmode == OUTMODE_ALL)
 			argc = (int)sz;
 
@@ -366,11 +366,13 @@ main(int argc, char *argv[])
 				    res[i].output);
 			else if (outmode == OUTMODE_ONE) {
 				/* Search for the best section. */
-				isec = strcspn(res[i].file, "123456789");
-				sec = res[i].file[isec];
-				if ('\0' == sec)
+				sec = res[i].file;
+				sec += strcspn(sec, "123456789");
+				if (sec[0] == '\0')
 					continue;
-				prio = sec_prios[sec - '1'];
+				prio = sec_prios[sec[0] - '1'];
+				if (sec[1] != '/')
+					prio += 10;
 				if (prio >= best_prio)
 					continue;
 				best_prio = prio;
@@ -636,7 +638,7 @@ fs_search(const struct mansearch *cfg, const struct manpaths *paths,
 	int argc, char **argv, struct manpage **res, size_t *ressz)
 {
 	const char *const sections[] =
-	    {"1", "8", "6", "2", "3", "3p", "5", "7", "4", "9"};
+	    {"1", "8", "6", "2", "3", "5", "7", "4", "9", "3p"};
 	const size_t nsec = sizeof(sections)/sizeof(sections[0]);
 
 	size_t		 ipath, isec, lastsz;
