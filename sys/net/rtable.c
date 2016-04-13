@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.39 2016/02/24 22:41:53 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.40 2016/04/13 08:04:14 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -23,7 +23,6 @@
 #include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/malloc.h>
-#include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/domain.h>
 #include <sys/srp.h>
@@ -505,8 +504,6 @@ rtable_mpath_next(struct rtentry *rt)
 
 #else /* ART */
 
-struct pool		 an_pool;	/* pool for ART node structures */
-
 static inline uint8_t	*satoaddr(struct art_root *, struct sockaddr *);
 
 void	rtentry_ref(void *, void *);
@@ -518,7 +515,6 @@ void
 rtable_init_backend(unsigned int keylen)
 {
 	art_init();
-	pool_init(&an_pool, sizeof(struct art_node), 0, 0, 0, "art_node", NULL);
 }
 
 void *
@@ -699,24 +695,22 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	}
 #endif /* SMALL_KERNEL */
 
-	an = pool_get(&an_pool, PR_NOWAIT | PR_ZERO);
+	an = art_get(dst, plen);
 	if (an == NULL)
 		return (ENOBUFS);
 
-	an->an_dst = dst;
-	an->an_plen = plen;
 	SRPL_INIT(&an->an_rtlist);
 
 	prev = art_insert(ar, an, addr, plen);
 	if (prev == NULL) {
-		pool_put(&an_pool, an);
+		art_put(an);
 		return (ESRCH);
 	}
 
 	if (prev == an) {
 		rt->rt_flags &= ~RTF_MPATH;
 	} else {
-		pool_put(&an_pool, an);
+		art_put(an);
 #ifndef SMALL_KERNEL
 		an = prev;
 
@@ -816,7 +810,7 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist, rt, rtentry, rt_next);
 	rtfree(rt);
 
-	pool_put(&an_pool, an);
+	art_put(an);
 	return (0);
 }
 

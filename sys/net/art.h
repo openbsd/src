@@ -1,4 +1,4 @@
-/* $OpenBSD: art.h,v 1.11 2016/04/12 06:40:44 mpi Exp $ */
+/* $OpenBSD: art.h,v 1.12 2016/04/13 08:04:14 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -58,5 +58,8 @@ struct art_node	*art_match(struct art_root *, uint8_t *);
 struct art_node *art_lookup(struct art_root *, uint8_t *, int);
 int		 art_walk(struct art_root *,
 		     int (*)(struct art_node *, void *), void *);
+
+struct art_node	*art_get(struct sockaddr *, uint8_t);
+void		 art_put(struct art_node *);
 
 #endif /* _NET_ART_H_ */

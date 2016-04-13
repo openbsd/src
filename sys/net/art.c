@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.13 2016/04/12 06:40:44 mpi Exp $ */
+/*	$OpenBSD: art.c,v 1.14 2016/04/13 08:04:14 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -83,11 +83,12 @@ int			 art_table_free(struct art_root *, struct art_table *);
 int			 art_table_walk(struct art_root *, struct art_table *,
 			     int (*f)(struct art_node *, void *), void *);
 
-struct pool		at_pool, at_heap_4_pool, at_heap_8_pool;
+struct pool		an_pool, at_pool, at_heap_4_pool, at_heap_8_pool;
 
 void
 art_init(void)
 {
+	pool_init(&an_pool, sizeof(struct art_node), 0, 0, 0, "art_node", NULL);
 	pool_init(&at_pool, sizeof(struct art_table), 0, 0, 0, "art_table",
 	    NULL);
 	pool_init(&at_heap_4_pool, AT_HEAPSIZE(4), 0, 0, 0, "art_heap4", NULL);
@@ -789,4 +790,25 @@ moveup:
 	/* Change non-fringe node. */
 	if (k != i)
 		goto moveon;
+}
+
+struct art_node *
+art_get(struct sockaddr *dst, uint8_t plen)
+{
+	struct art_node		*an;
+
+	an = pool_get(&an_pool, PR_NOWAIT | PR_ZERO);
+	if (an == NULL)
+		return (NULL);
+
+	an->an_dst = dst;
+	an->an_plen = plen;
+
+	return (an);
+}
+
+void
+art_put(struct art_node *an)
+{
+	pool_put(&an_pool, an);
 }
