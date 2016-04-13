@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.12 2015/11/02 15:43:55 reyk Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.13 2016/04/13 13:25:05 jsing Exp $ */
 
 /*
  * Copyright (c) 2015 Reyk Floter <reyk@openbsd.org>
@@ -209,11 +209,11 @@ aead_chacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 	const struct aead_chacha20_poly1305_ctx *c20_ctx = ctx->aead_state;
 	unsigned char mac[POLY1305_TAG_LEN];
 	unsigned char poly1305_key[32];
-	const unsigned char *iv;
+	const unsigned char *iv = nonce;
 	poly1305_state poly1305;
 	const uint64_t in_len_64 = in_len;
 	size_t plaintext_len;
-	uint64_t ctr;
+	uint64_t ctr = 0;
 
 	if (in_len < c20_ctx->tag_len) {
 		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_OPEN, EVP_R_BAD_DECRYPT);
@@ -280,7 +280,7 @@ aead_chacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 		return 0;
 	}
 
-	CRYPTO_chacha_20(out, in, plaintext_len, c20_ctx->key, nonce, 1);
+	CRYPTO_chacha_20(out, in, plaintext_len, c20_ctx->key, iv, ctr + 1);
 	*out_len = plaintext_len;
 	return 1;
 }
