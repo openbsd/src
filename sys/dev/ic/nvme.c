@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.17 2016/04/13 11:45:06 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.18 2016/04/13 11:48:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -610,6 +610,7 @@ nvme_q_alloc(struct nvme_softc *sc, u_int16_t id, u_int entries, u_int dstrd)
 	mtx_init(&q->q_cq_mtx, IPL_BIO);
 	q->q_sqtdbl = NVME_SQTDBL(id, dstrd);
 	q->q_cqhdbl = NVME_CQHDBL(id, dstrd);
+	q->q_id = id;
 	q->q_entries = entries;
 	q->q_sq_tail = 0;
 	q->q_cq_head = 0;
