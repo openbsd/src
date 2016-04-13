@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmereg.h,v 1.6 2016/01/15 03:39:13 dlg Exp $ */
+/*	$OpenBSD: nvmereg.h,v 1.7 2016/04/13 12:36:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -186,6 +186,13 @@ struct nvme_cqe {
 #define NVM_ADMIN_ASYNC_EV_REQ	0x0c /* Asynchronous Event Request */
 #define NVM_ADMIN_FW_ACTIVATE	0x10 /* Firmware Activate */
 #define NVM_ADMIN_FW_DOWNLOAD	0x11 /* Firmware Image Download */
+
+#define NVM_CMD_FLUSH		0x00 /* Flush */
+#define NVM_CMD_WRITE		0x01 /* Write */
+#define NVM_CMD_READ		0x02 /* Read */
+#define NVM_CMD_WR_UNCOR	0x04 /* Write Uncorrectable */
+#define NVM_CMD_COMPARE		0x05 /* Compare */
+#define NVM_CMD_DSM		0x09 /* Dataset Management */
 
 /* Power State Descriptor Data */
 struct nvm_identify_psd {
