@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.24 2016/04/13 12:21:15 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.25 2016/04/13 12:28:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -270,6 +270,7 @@ nvme_disable(struct nvme_softc *sc)
 int
 nvme_attach(struct nvme_softc *sc)
 {
+	struct scsibus_attach_args saa;
 	u_int64_t cap;
 	u_int32_t reg;
 	u_int dstrd;
@@ -328,6 +329,20 @@ nvme_attach(struct nvme_softc *sc)
 
 	sc->sc_namespaces = mallocarray(sc->sc_nn, sizeof(*sc->sc_namespaces),
 	    M_DEVBUF, M_WAITOK|M_ZERO);
+
+	sc->sc_link.adapter = &nvme_switch;
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter_buswidth = sc->sc_nn;
+	sc->sc_link.luns = 1;
+	sc->sc_link.adapter_target = sc->sc_nn;
+	sc->sc_link.openings = 1; /* XXX */
+	sc->sc_link.pool = &sc->sc_iopool;
+
+	memset(&saa, 0, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
+	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
+	    &saa, scsiprint);
 
 	return (0);
 
