@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.20 2016/04/13 11:54:33 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.21 2016/04/13 11:56:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -60,6 +60,7 @@ int	nvme_poll(struct nvme_softc *, struct nvme_queue *, struct nvme_ccb *,
 void	nvme_poll_fill(struct nvme_softc *, struct nvme_ccb *, void *);
 void	nvme_poll_done(struct nvme_softc *, struct nvme_ccb *,
 	    struct nvme_cqe *);
+void	nvme_sqe_fill(struct nvme_softc *, struct nvme_ccb *, void *);
 void	nvme_empty_done(struct nvme_softc *, struct nvme_ccb *,
 	    struct nvme_cqe *);
 
@@ -406,6 +407,15 @@ nvme_poll_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
 
 	SET(cqe->flags, htole16(NVME_CQE_PHASE));
 	state->c = *cqe;
+}
+
+void
+nvme_sqe_fill(struct nvme_softc *sc, struct nvme_ccb *ccb, void *slot)
+{
+	struct nvme_sqe *src = ccb->ccb_cookie;
+	struct nvme_sqe *dst = slot;
+
+	*dst = *src;
 }
 
 void
