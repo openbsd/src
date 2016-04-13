@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.16 2016/04/13 11:42:04 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.17 2016/04/13 11:45:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -64,7 +64,7 @@ void	nvme_empty_done(struct nvme_softc *, struct nvme_ccb *,
 	    struct nvme_cqe *);
 
 struct nvme_queue *
-	nvme_q_alloc(struct nvme_softc *, u_int, u_int, u_int);
+	nvme_q_alloc(struct nvme_softc *, u_int16_t, u_int, u_int);
 void	nvme_q_submit(struct nvme_softc *,
 	    struct nvme_queue *, struct nvme_ccb *,
 	    void (*)(struct nvme_softc *, struct nvme_ccb *, void *));
@@ -585,7 +585,7 @@ nvme_ccbs_free(struct nvme_softc *sc)
 }
 
 struct nvme_queue *
-nvme_q_alloc(struct nvme_softc *sc, u_int idx, u_int entries, u_int dstrd)
+nvme_q_alloc(struct nvme_softc *sc, u_int16_t id, u_int entries, u_int dstrd)
 {
 	struct nvme_queue *q;
 
@@ -608,8 +608,8 @@ nvme_q_alloc(struct nvme_softc *sc, u_int idx, u_int entries, u_int dstrd)
 
 	mtx_init(&q->q_sq_mtx, IPL_BIO);
 	mtx_init(&q->q_cq_mtx, IPL_BIO);
-	q->q_sqtdbl = NVME_SQTDBL(idx, dstrd);
-	q->q_cqhdbl = NVME_CQHDBL(idx, dstrd);
+	q->q_sqtdbl = NVME_SQTDBL(id, dstrd);
+	q->q_cqhdbl = NVME_CQHDBL(id, dstrd);
 	q->q_entries = entries;
 	q->q_sq_tail = 0;
 	q->q_cq_head = 0;
