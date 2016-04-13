@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.16 2016/03/21 00:49:36 guenther Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.17 2016/04/13 06:33:36 semarie Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -175,7 +175,7 @@ main(int argc, char *argv[])
 		errx(EXIT_FAILURE, "start failed");
 
 #ifdef RADIUSD_DEBUG
-	if (pledge("stdio inet proc abort", NULL) == -1)
+	if (pledge("stdio inet proc", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 #else
 	if (pledge("stdio inet", NULL) == -1)
