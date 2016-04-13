@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.29 2016/04/13 13:09:36 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.30 2016/04/13 13:13:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -67,6 +67,7 @@ void	nvme_empty_done(struct nvme_softc *, struct nvme_ccb *,
 
 struct nvme_queue *
 	nvme_q_alloc(struct nvme_softc *, u_int16_t, u_int, u_int);
+int	nvme_q_create(struct nvme_softc *, struct nvme_queue *);
 void	nvme_q_submit(struct nvme_softc *,
 	    struct nvme_queue *, struct nvme_ccb *,
 	    void (*)(struct nvme_softc *, struct nvme_ccb *, void *));
@@ -756,6 +757,50 @@ nvme_identify(struct nvme_softc *sc, u_int mps)
 done:
 	nvme_dmamem_free(sc, mem);
 
+	return (rv);
+}
+
+int
+nvme_q_create(struct nvme_softc *sc, struct nvme_queue *q)
+{
+	struct nvme_sqe_q sqe;
+	struct nvme_ccb *ccb;
+	int rv;
+
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	KASSERT(ccb != NULL);
+
+	ccb->ccb_done = nvme_empty_done;
+	ccb->ccb_cookie = &sqe;
+
+	memset(&sqe, 0, sizeof(sqe));
+	sqe.opcode = NVM_ADMIN_ADD_IOCQ;
+	htolem64(&sqe.prp1, NVME_DMA_DVA(q->q_cq_dmamem));
+	htolem16(&sqe.qsize, q->q_entries - 1);
+	htolem16(&sqe.qid, q->q_id);
+	sqe.qflags = NVM_SQE_CQ_IEN | NVM_SQE_Q_PC;
+
+	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill);
+	if (rv != 0)
+		goto fail;
+
+	ccb->ccb_done = nvme_empty_done;
+	ccb->ccb_cookie = &sqe;
+
+	memset(&sqe, 0, sizeof(sqe));
+	sqe.opcode = NVM_ADMIN_ADD_IOSQ;
+	htolem64(&sqe.prp1, NVME_DMA_DVA(q->q_sq_dmamem));
+	htolem16(&sqe.qsize, q->q_entries - 1);
+	htolem16(&sqe.qid, q->q_id);
+	htolem16(&sqe.cqid, q->q_id);
+	sqe.qflags = NVM_SQE_Q_PC;
+
+	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill);
+	if (rv != 0)
+		goto fail;
+
+fail:
+	scsi_io_put(&sc->sc_iopool, ccb);
 	return (rv);
 }
 
