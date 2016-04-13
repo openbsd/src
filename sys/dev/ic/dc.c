@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.149 2015/11/28 22:57:43 dlg Exp $	*/
+/*	$OpenBSD: dc.c,v 1.150 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1687,7 +1687,6 @@ hasmac:
 	ifp->if_start = dc_start;
 	ifp->if_watchdog = dc_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, DC_TX_LIST_CNT - 1);
-	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;

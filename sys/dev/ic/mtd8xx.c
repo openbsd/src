@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.29 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.30 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -160,7 +160,6 @@ mtd_attach(struct mtd_softc *sc)
 	ifp->if_ioctl = mtd_ioctl;
 	ifp->if_start = mtd_start;
 	ifp->if_watchdog = mtd_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;

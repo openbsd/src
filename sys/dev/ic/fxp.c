@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.129 2015/12/03 08:29:35 claudio Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.130 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -430,7 +430,6 @@ fxp_attach(struct fxp_softc *sc, const char *intrstr)
 	ifp->if_start = fxp_start;
 	ifp->if_watchdog = fxp_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, FXP_NTXCB - 1);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 

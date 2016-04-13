@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.25 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.26 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -279,7 +279,6 @@ epic_attach(struct epic_softc *sc, const char *intrstr)
 	ifp->if_start = epic_start;
 	ifp->if_watchdog = epic_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, EPIC_NTXDESC - 1);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 

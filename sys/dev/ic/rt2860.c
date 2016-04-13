@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.89 2016/03/21 21:16:30 stsp Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -335,7 +335,6 @@ rt2860_attachhook(struct device *self)
 	ifp->if_ioctl = rt2860_ioctl;
 	ifp->if_start = rt2860_start;
 	ifp->if_watchdog = rt2860_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	if_attach(ifp);

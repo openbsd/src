@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.190 2016/03/19 11:34:22 mpi Exp $	*/
+/*	$OpenBSD: re.c,v 1.191 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1048,7 +1048,6 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	ifp->if_watchdog = re_watchdog;
 	ifp->if_hardmtu = sc->rl_max_mtu;
 	IFQ_SET_MAXLEN(&ifp->if_snd, RL_TX_QLEN);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_TCPv4 |
 	    IFCAP_CSUM_UDPv4;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.165 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.166 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -228,7 +228,6 @@ wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 	ifp->if_ioctl = funcs->f_ioctl;
 	ifp->if_start = funcs->f_start;
 	ifp->if_watchdog = funcs->f_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 
 	(void)wi_set_ssid(&sc->wi_node_name, WI_DEFAULT_NODENAME,
 	    sizeof(WI_DEFAULT_NODENAME) - 1);

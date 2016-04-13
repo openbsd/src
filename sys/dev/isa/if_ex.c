@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.43 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.44 2016/04/13 10:49:26 mpi Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -252,7 +252,6 @@ ex_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = ex_ioctl;
 	ifp->if_watchdog = ex_watchdog;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ifmedia_init(&sc->ifmedia, 0, ex_ifmedia_upd, ex_ifmedia_sts);
 

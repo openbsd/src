@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.90 2015/12/11 16:07:02 mpi Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.91 2016/04/13 10:49:26 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -326,7 +326,6 @@ cmalo_attach(struct device *self)
 	ifp->if_watchdog = cmalo_watchdog;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;

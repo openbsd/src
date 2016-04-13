@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.95 2015/12/08 13:34:22 tedu Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.96 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -4001,7 +4001,6 @@ rtw_attach(struct rtw_softc *sc)
 	ifp->if_start = rtw_start;
 	ifp->if_watchdog = rtw_watchdog;
 
-	IFQ_SET_READY(&sc->sc_if.if_snd);
 
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;

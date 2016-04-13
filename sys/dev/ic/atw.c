@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.93 2016/03/15 20:50:22 krw Exp $	*/
+/*	$OpenBSD: atw.c,v 1.94 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -790,7 +790,6 @@ atw_attach(struct atw_softc *sc)
 	ifp->if_ioctl = atw_ioctl;
 	ifp->if_start = atw_start;
 	ifp->if_watchdog = atw_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;

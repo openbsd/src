@@ -1,4 +1,4 @@
-/*	$OpenBSD: lance.c,v 1.12 2015/12/17 19:26:28 mmcc Exp $	*/
+/*	$OpenBSD: lance.c,v 1.13 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$NetBSD: lance.c,v 1.46 2012/02/02 19:43:03 tls Exp $	*/
 
 /*-
@@ -180,7 +180,6 @@ lance_config(struct lance_softc *sc)
 	ifp->if_flags &= ~IFF_MULTICAST;
 #endif
 	ifp->if_baudrate = IF_Mbps(10);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize ifmedia structures. */
 	ifmedia_init(&sc->sc_ifmedia, 0, lance_mediachange, lance_mediastatus);

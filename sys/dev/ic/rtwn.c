@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.6 2016/03/21 12:00:32 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.7 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -224,7 +224,6 @@ rtwn_attach(struct device *pdev, struct rtwn_softc *sc, uint32_t chip_type)
 	ifp->if_ioctl = rtwn_ioctl;
 	ifp->if_start = rtwn_start;
 	ifp->if_watchdog = rtwn_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, sc->sc_pdev->dv_xname, IFNAMSIZ);
 
 	if_attach(ifp);

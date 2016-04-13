@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.92 2016/01/05 18:41:15 stsp Exp $	*/
+/*	$OpenBSD: athn.c,v 1.93 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -341,7 +341,6 @@ athn_attach(struct athn_softc *sc)
 	ifp->if_ioctl = athn_ioctl;
 	ifp->if_start = athn_start;
 	ifp->if_watchdog = athn_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	if_attach(ifp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.122 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.123 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -791,7 +791,6 @@ bwi_attach(struct bwi_softc *sc)
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Get locale */
 	sc->sc_locale = __SHIFTOUT(bwi_read_sprom(sc, BWI_SPROM_CARD_INFO),

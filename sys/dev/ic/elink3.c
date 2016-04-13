@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.93 2015/12/08 13:34:22 tedu Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.94 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -335,7 +335,6 @@ epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	/* 64 packets are around 100ms on 10Mbps */
 	IFQ_SET_MAXLEN(&ifp->if_snd, 64);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	ether_ifattach(ifp);

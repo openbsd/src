@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.79 2015/12/05 12:13:55 dlg Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.80 2016/04/13 10:49:26 mpi Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -258,7 +258,6 @@ rt2560_attach(void *xsc, int id)
 	ifp->if_ioctl = rt2560_ioctl;
 	ifp->if_start = rt2560_start;
 	ifp->if_watchdog = rt2560_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	if_attach(ifp);

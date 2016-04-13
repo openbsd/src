@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.70 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: an.c,v 1.71 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -266,7 +266,6 @@ an_attach(struct an_softc *sc)
 	ifp->if_ioctl = an_ioctl;
 	ifp->if_start = an_start;
 	ifp->if_watchdog = an_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;

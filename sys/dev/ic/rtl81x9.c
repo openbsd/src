@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.94 2015/11/25 03:09:58 dlg Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.95 2016/04/13 10:49:26 mpi Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1187,7 +1187,6 @@ rl_attach(struct rl_softc *sc)
 	ifp->if_ioctl = rl_ioctl;
 	ifp->if_start = rl_start;
 	ifp->if_watchdog = rl_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 

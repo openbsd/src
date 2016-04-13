@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.117 2015/11/25 03:09:58 dlg Exp $ */
+/*	$OpenBSD: acx.c,v 1.118 2016/04/13 10:49:26 mpi Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -285,7 +285,6 @@ acx_attach(struct acx_softc *sc)
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Set channels */
 	for (i = 1; i <= 14; ++i) {
