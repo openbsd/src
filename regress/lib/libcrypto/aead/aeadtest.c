@@ -199,6 +199,11 @@ run_test_case(const EVP_AEAD* aead, unsigned char bufs[NUM_TYPES][BUF_MAX],
 		return 0;
 	}
 
+	if (memcmp(out2, bufs[IN], out_len2) != 0) {
+		fprintf(stderr, "Plaintext mismatch on line %u\n", line_no);
+		return 0;
+	}
+
 	out[0] ^= 0x80;
 	if (EVP_AEAD_CTX_open(&ctx, out2, &out_len2, lengths[IN], bufs[NONCE],
 	    lengths[NONCE], out, out_len, bufs[AD], lengths[AD])) {
