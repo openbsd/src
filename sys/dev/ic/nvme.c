@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.27 2016/04/13 12:59:28 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.28 2016/04/13 13:05:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -29,7 +29,7 @@
 #include <machine/bus.h>
 
 #include <scsi/scsi_all.h>
-#include <scsi/scsi_all.h>
+#include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
 
 #include <dev/ic/nvmereg.h>
@@ -92,6 +92,8 @@ struct scsi_adapter nvme_switch = {
 
 void	nvme_scsi_inq(struct scsi_xfer *);
 void	nvme_scsi_inquiry(struct scsi_xfer *);
+void	nvme_scsi_capacity16(struct scsi_xfer *);
+void	nvme_scsi_capacity(struct scsi_xfer *);
 
 #define nvme_read4(_s, _r) \
 	bus_space_read_4((_s)->sc_iot, (_s)->sc_ioh, (_r))
@@ -416,6 +418,13 @@ nvme_scsi_cmd(struct scsi_xfer *xs)
 	case INQUIRY:
 		nvme_scsi_inq(xs);
 		return;
+	case READ_CAPACITY_16:
+		nvme_scsi_capacity16(xs);
+		return;
+	case READ_CAPACITY:
+		nvme_scsi_capacity(xs);
+		return;
+
 	default:
 		break;
 	}
@@ -466,6 +475,73 @@ nvme_scsi_inquiry(struct scsi_xfer *xs)
 	memcpy(inq.revision, sc->sc_identify.fr, sizeof(inq.revision));
 
 	memcpy(xs->data, &inq, MIN(sizeof(inq), xs->datalen));
+
+	xs->error = XS_NOERROR;
+	scsi_done(xs);
+}
+
+void
+nvme_scsi_capacity16(struct scsi_xfer *xs)
+{
+	struct scsi_read_cap_data_16 rcd;
+	struct scsi_link *link = xs->sc_link;
+	struct nvme_softc *sc = link->adapter_softc;
+	struct nvm_identify_namespace *ns;
+	struct nvm_namespace_format *f;
+	u_int64_t nsze;
+	u_int16_t tpe = READ_CAP_16_TPE;
+
+	ns = sc->sc_namespaces[link->target].ident;
+
+	if (xs->cmdlen != sizeof(struct scsi_read_capacity_16)) {
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		return;
+	}
+
+	nsze = lemtoh64(&ns->nsze);
+	f = &ns->lbaf[NVME_ID_NS_FLBAS(ns->flbas)];
+
+	memset(&rcd, 0, sizeof(rcd));
+	_lto8b(nsze, rcd.addr);
+	_lto4b(1 << f->lbads, rcd.length);
+	_lto2b(tpe, rcd.lowest_aligned);
+
+	memcpy(xs->data, &rcd, MIN(sizeof(rcd), xs->datalen));
+
+	xs->error = XS_NOERROR;
+	scsi_done(xs);
+}
+
+void
+nvme_scsi_capacity(struct scsi_xfer *xs)
+{
+	struct scsi_read_cap_data rcd;
+	struct scsi_link *link = xs->sc_link;
+	struct nvme_softc *sc = link->adapter_softc;
+	struct nvm_identify_namespace *ns;
+	struct nvm_namespace_format *f;
+	u_int64_t nsze;
+
+	ns = sc->sc_namespaces[link->target].ident;
+
+	if (xs->cmdlen != sizeof(struct scsi_read_capacity)) {
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		return;
+	}
+
+	nsze = lemtoh64(&ns->nsze);
+	if (nsze > 0xffffffff)
+		nsze = 0xffffffff;
+
+	f = &ns->lbaf[NVME_ID_NS_FLBAS(ns->flbas)];
+
+	memset(&rcd, 0, sizeof(rcd));
+	_lto4b(nsze, rcd.addr);
+	_lto4b(1 << f->lbads, rcd.length);
+
+	memcpy(xs->data, &rcd, MIN(sizeof(rcd), xs->datalen));
 
 	xs->error = XS_NOERROR;
 	scsi_done(xs);
