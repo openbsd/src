@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.61 2015/12/18 19:43:14 stsp Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.62 2016/04/13 11:03:37 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -717,7 +717,6 @@ urtw_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = urtw_ioctl;
 	ifp->if_start = urtw_start;
 	ifp->if_watchdog = urtw_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	if_attach(ifp);

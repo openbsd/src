@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.69 2016/04/12 10:15:25 mpi Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.70 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -334,8 +334,6 @@ found:
 	ifp->if_start = cdce_start;
 	ifp->if_watchdog = cdce_watchdog;
 	strlcpy(ifp->if_xname, sc->cdce_dev.dv_xname, IFNAMSIZ);
-
-	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	ether_ifattach(ifp);

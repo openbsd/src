@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.76 2015/12/11 16:07:02 mpi Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.77 2016/04/13 11:03:37 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -373,7 +373,6 @@ uath_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = uath_ioctl;
 	ifp->if_start = uath_start;
 	ifp->if_watchdog = uath_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	if_attach(ifp);

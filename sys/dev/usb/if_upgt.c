@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.76 2015/12/11 16:07:02 mpi Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.77 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -411,7 +411,6 @@ upgt_attach_hook(struct device *self)
 	ifp->if_ioctl = upgt_ioctl;
 	ifp->if_start = upgt_start;
 	ifp->if_watchdog = upgt_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	if_attach(ifp);

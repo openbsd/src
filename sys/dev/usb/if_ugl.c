@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ugl.c,v 1.19 2016/04/12 10:15:25 mpi Exp $	*/
+/*	$OpenBSD: if_ugl.c,v 1.20 2016/04/13 11:03:37 mpi Exp $	*/
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2013 SASANO Takayoshi <uaa@uaa.org.uk>
@@ -260,8 +260,6 @@ ugl_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = ugl_start;
 	ifp->if_watchdog = ugl_watchdog;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
-
-	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);

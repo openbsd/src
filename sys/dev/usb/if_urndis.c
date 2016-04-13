@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.60 2016/03/16 21:04:40 stsp Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.61 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -1418,8 +1418,6 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
-
-	IFQ_SET_READY(&ifp->if_snd);
 
 	s = splnet();
 

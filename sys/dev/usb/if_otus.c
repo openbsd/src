@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.52 2015/12/11 16:07:02 mpi Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.53 2016/04/13 11:03:37 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -355,7 +355,6 @@ otus_attachhook(struct device *self)
 	ifp->if_ioctl = otus_ioctl;
 	ifp->if_start = otus_start;
 	ifp->if_watchdog = otus_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	if_attach(ifp);

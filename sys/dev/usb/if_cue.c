@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.74 2015/11/25 03:10:00 dlg Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.75 2016/04/13 11:03:37 mpi Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -517,8 +517,6 @@ cue_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = cue_start;
 	ifp->if_watchdog = cue_watchdog;
 	strlcpy(ifp->if_xname, sc->cue_dev.dv_xname, IFNAMSIZ);
-
-	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);

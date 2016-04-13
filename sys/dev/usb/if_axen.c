@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.21 2016/03/20 15:53:34 bmercer Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.22 2016/04/13 11:03:37 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -687,7 +687,6 @@ axen_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = axen_ioctl;
 	ifp->if_start = axen_start;
 	ifp->if_watchdog = axen_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 #ifdef AXEN_TOE

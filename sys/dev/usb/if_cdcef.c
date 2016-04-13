@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.42 2016/04/12 10:15:25 mpi Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.43 2016/04/13 11:03:37 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -243,8 +243,6 @@ cdcef_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = cdcef_start;
 	ifp->if_watchdog = cdcef_watchdog;
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
-
-	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	ether_ifattach(ifp);

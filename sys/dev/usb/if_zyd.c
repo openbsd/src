@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.114 2015/12/11 16:07:02 mpi Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.115 2016/04/13 11:03:37 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -382,7 +382,6 @@ zyd_complete_attach(struct zyd_softc *sc)
 	ifp->if_ioctl = zyd_ioctl;
 	ifp->if_start = zyd_start;
 	ifp->if_watchdog = zyd_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	if_attach(ifp);

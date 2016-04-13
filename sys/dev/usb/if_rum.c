@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.118 2015/12/11 16:07:02 mpi Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.119 2016/04/13 11:03:37 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -389,7 +389,6 @@ rum_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = rum_ioctl;
 	ifp->if_start = rum_start;
 	ifp->if_watchdog = rum_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	if_attach(ifp);

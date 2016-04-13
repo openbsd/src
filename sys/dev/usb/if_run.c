@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.115 2015/11/25 03:10:00 dlg Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.116 2016/04/13 11:03:37 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -644,7 +644,6 @@ run_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = run_ioctl;
 	ifp->if_start = run_start;
 	ifp->if_watchdog = run_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	if_attach(ifp);

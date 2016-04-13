@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.136 2015/11/25 03:10:00 dlg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -801,7 +801,6 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = axe_ioctl;
 	ifp->if_start = axe_start;
 	ifp->if_watchdog = axe_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
