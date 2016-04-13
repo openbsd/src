@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.37 2015/12/18 13:36:12 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.38 2016/04/13 11:34:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -321,7 +321,6 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = octeon_eth_start;
 	ifp->if_watchdog = octeon_eth_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(GATHER_QUEUE_SIZE, IFQ_MAXLEN));
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_TCPv4 |
 	    IFCAP_CSUM_UDPv4 | IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;

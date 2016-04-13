@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.20 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.21 2016/04/13 11:34:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -406,7 +406,6 @@ iec_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = iec_ioctl;
 	ifp->if_start = iec_start;
 	ifp->if_watchdog = iec_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	IFQ_SET_MAXLEN(&ifp->if_snd, IEC_NTXDESC - 1);

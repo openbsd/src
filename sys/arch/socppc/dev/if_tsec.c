@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.42 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.43 2016/04/13 11:34:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -412,7 +412,6 @@ tsec_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = tsec_start;
 	ifp->if_watchdog = tsec_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, TSEC_NTXDESC - 1);
-	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;

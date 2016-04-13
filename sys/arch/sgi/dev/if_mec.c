@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.35 2015/11/25 03:09:58 dlg Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.36 2016/04/13 11:34:00 mpi Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -460,7 +460,6 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = mec_ioctl;
 	ifp->if_start = mec_start;
 	ifp->if_watchdog = mec_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	IFQ_SET_MAXLEN(&ifp->if_snd, MEC_NTXDESC - 1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.78 2015/12/08 13:34:22 tedu Exp $	*/
+/*	$OpenBSD: hme.c,v 1.79 2016/04/13 11:34:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -238,7 +238,6 @@ hmeattach(parent, self, aux)
 		IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, HME_TX_RING_SIZE);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);

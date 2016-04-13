@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.27 2015/12/08 13:34:22 tedu Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.28 2016/04/13 11:34:00 mpi Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
@@ -459,7 +459,6 @@ mc_attach(struct device *parent, struct device *self, void *aux)
 		IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_watchdog = mc_watchdog;
 	ifp->if_timer = 0;
-	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	ether_ifattach(ifp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.49 2015/12/08 13:34:22 tedu Exp $	*/
+/*	$OpenBSD: qe.c,v 1.50 2016/04/13 11:34:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -159,7 +159,6 @@ qeattach(parent, self, aux)
 	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T);
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, QE_TX_RING_SIZE);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);

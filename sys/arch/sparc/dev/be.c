@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.59 2015/12/08 13:34:22 tedu Exp $	*/
+/*	$OpenBSD: be.c,v 1.60 2016/04/13 11:34:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -213,7 +213,6 @@ beattach(parent, self, aux)
 	    IFF_MULTICAST;
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, BE_TX_RING_SIZE);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);

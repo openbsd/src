@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.55 2016/03/21 00:18:54 stsp Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.56 2016/04/13 11:34:00 mpi Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -316,7 +316,6 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = vnet_watchdog;
 	strlcpy(ifp->if_xname, sc->sc_dv.dv_xname, IFNAMSIZ);
 	IFQ_SET_MAXLEN(&ifp->if_snd, 31); /* XXX */
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ifmedia_init(&sc->sc_media, 0, vnet_media_change, vnet_media_status);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
