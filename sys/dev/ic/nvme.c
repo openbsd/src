@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.23 2016/04/13 12:14:12 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.24 2016/04/13 12:21:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -325,6 +325,9 @@ nvme_attach(struct nvme_softc *sc)
 		printf("%s: unable to identify controller\n", DEVNAME(sc));
 		goto disable;
 	}
+
+	sc->sc_namespaces = mallocarray(sc->sc_nn, sizeof(*sc->sc_namespaces),
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 
 	return (0);
 

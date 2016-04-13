@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmevar.h,v 1.4 2016/04/13 12:14:12 dlg Exp $ */
+/*	$OpenBSD: nvmevar.h,v 1.5 2016/04/13 12:21:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -57,6 +57,10 @@ struct nvme_queue {
 	u_int16_t		q_cq_phase;
 };
 
+struct nvme_namespace {
+	struct nvm_identify_namespace *ident;
+};
+
 struct nvme_softc {
 	struct device		sc_dev;
 
@@ -76,6 +80,7 @@ struct nvme_softc {
 				sc_identify;
 
 	u_int                   sc_nn;
+	struct nvme_namespace   *sc_namespaces;
 
 	struct nvme_queue	*sc_admin_q;
 	struct nvme_queue	*sc_q;
