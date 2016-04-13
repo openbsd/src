@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.75 2015/12/05 10:07:55 tedu Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.76 2016/04/13 11:41:15 mpi Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -179,7 +179,6 @@ loop_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_type = IFT_LOOP;
 	ifp->if_hdrlen = sizeof(u_int32_t);
 	ifp->if_addrlen = 0;
-	IFQ_SET_READY(&ifp->if_snd);
 	if (unit == 0) {
 		if_attachhead(ifp);
 		if_addgroup(ifp, ifc->ifc_name);

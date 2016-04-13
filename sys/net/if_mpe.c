@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.53 2016/01/14 09:20:31 mpi Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.54 2016/04/13 11:41:15 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -97,7 +97,6 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_type = IFT_MPLS;
 	ifp->if_hdrlen = MPE_HDRLEN;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
-	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 #if NBPFILTER > 0

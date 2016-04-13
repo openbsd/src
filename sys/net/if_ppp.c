@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.97 2015/11/20 06:22:09 jsg Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.98 2016/04/13 11:41:15 mpi Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -226,7 +226,6 @@ ppp_clone_create(struct if_clone *ifc, int unit)
 	IFQ_SET_MAXLEN(&sc->sc_if.if_snd, IFQ_MAXLEN);
 	mq_init(&sc->sc_inq, IFQ_MAXLEN, IPL_NET);
 	ppp_pkt_list_init(&sc->sc_rawq, IFQ_MAXLEN);
-	IFQ_SET_READY(&sc->sc_if.if_snd);
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0

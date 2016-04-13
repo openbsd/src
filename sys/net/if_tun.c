@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.167 2016/03/01 21:47:52 stsp Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.168 2016/04/13 11:41:15 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -211,7 +211,6 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	ifp->if_hardmtu = TUNMRU;
 	ifp->if_link_state = LINK_STATE_DOWN;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	if ((flags & TUN_LAYER2) == 0) {
 		tp->tun_flags &= ~TUN_LAYER2;

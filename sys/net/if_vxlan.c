@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.37 2016/01/22 11:56:14 goda Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.38 2016/04/13 11:41:15 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -138,7 +138,6 @@ vxlan_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_ioctl = vxlanioctl;
 	ifp->if_start = vxlanstart;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_hardmtu = 0xffff;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;

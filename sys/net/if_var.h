@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.69 2015/12/18 14:02:15 visa Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.70 2016/04/13 11:41:15 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -257,7 +257,6 @@ do {									\
 #define	IFQ_LEN(ifq)			ifq_len(ifq)
 #define	IFQ_IS_EMPTY(ifq)		ifq_empty(ifq)
 #define	IFQ_SET_MAXLEN(ifq, len)	ifq_set_maxlen(ifq, len)
-#define	IFQ_SET_READY(ifq)		do { } while (0)
 
 /* default interface priorities */
 #define IF_WIRED_DEFAULT_PRIORITY	0

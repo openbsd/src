@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.53 2016/04/01 04:03:35 jsg Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.54 2016/04/13 11:41:15 mpi Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -218,7 +218,6 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_sppp.pp_tls = pppoe_tls;
 	sc->sc_sppp.pp_tlf = pppoe_tlf;
 	IFQ_SET_MAXLEN(&sc->sc_sppp.pp_if.if_snd, IFQ_MAXLEN);
-	IFQ_SET_READY(&sc->sc_sppp.pp_if.if_snd);
 
 	/* changed to real address later */
 	memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));

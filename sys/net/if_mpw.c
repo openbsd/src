@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.13 2016/03/09 04:19:43 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.14 2016/04/13 11:41:15 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -98,7 +98,6 @@ mpw_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_type = IFT_MPLSTUNNEL;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
