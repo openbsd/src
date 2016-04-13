@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.58 2016/03/18 13:21:07 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.59 2016/04/13 12:58:13 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@usta.de>
@@ -552,10 +552,10 @@ static void
 pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 {
 	char		*arch, *archend;
-	size_t		 i, iuse, isec;
+	const char	*sec;
+	size_t		 i, iuse;
 	int		 archprio, archpriouse;
 	int		 prio, priouse;
-	char		 sec;
 
 	for (i = 0; i < sz; i++) {
 		if (validate_filename(r[i].file))
@@ -614,20 +614,22 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 	if (req->q.equal) {
 		puts("<HR>");
 		iuse = 0;
-		priouse = 10;
+		priouse = 20;
 		archpriouse = 3;
 		for (i = 0; i < sz; i++) {
-			isec = strcspn(r[i].file, "123456789");
-			sec = r[i].file[isec];
-			if ('\0' == sec)
+			sec = r[i].file;
+			sec += strcspn(sec, "123456789");
+			if (sec[0] == '\0')
 				continue;
-			prio = sec_prios[sec - '1'];
-			if (NULL == req->q.arch) {
+			prio = sec_prios[sec[0] - '1'];
+			if (sec[1] != '/')
+				prio += 10;
+			if (req->q.arch == NULL) {
 				archprio =
-				    (NULL == (arch = strchr(
-					r[i].file + isec, '/'))) ? 3 :
-				    (NULL == (archend = strchr(
-					arch + 1, '/'))) ? 0 :
+				    ((arch = strchr(sec + 1, '/'))
+					== NULL) ? 3 :
+				    ((archend = strchr(arch + 1, '/'))
+					== NULL) ? 0 :
 				    strncmp(arch, "amd64/",
 					archend - arch) ? 2 : 1;
 				if (archprio < archpriouse) {
