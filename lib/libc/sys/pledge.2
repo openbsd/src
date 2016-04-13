@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.31 2016/04/12 21:11:50 jmc Exp $
+.\" $OpenBSD: pledge.2,v 1.32 2016/04/13 14:24:30 tb Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 12 2016 $
+.Dd $Mdocdate: April 13 2016 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -80,8 +80,7 @@ Only the
 and
 .Dv FIONBIO
 operations are allowed by default.
-The "audio", "ioctl", "pf", "route", and "tty" promises permit more ioctl
-requests.
+Use of the "tty" and "ioctl" promises receive more ioctl requests.
 .Pp
 .It Xr chmod 2
 .It Xr fchmod 2
@@ -134,7 +133,6 @@ The following system calls are permitted to allow most basic functions
 in libc, including memory allocation, most types of IO operations on
 previously allocated file descriptors:
 .Pp
-.Xr brk 2 ,
 .Xr clock_getres 2 ,
 .Xr clock_gettime 2 ,
 .Xr close 2 ,
@@ -144,10 +142,10 @@ previously allocated file descriptors:
 .Xr dup3 2 ,
 .Xr fchdir 2 ,
 .Xr fcntl 2 ,
-.Xr fpathconf 2 ,
 .Xr fstat 2 ,
 .Xr fsync 2 ,
 .Xr ftruncate 2 ,
+.Xr getdents 2 ,
 .Xr getdtablecount 2 ,
 .Xr getegid 2 ,
 .Xr getentropy 2 ,
@@ -156,7 +154,6 @@ previously allocated file descriptors:
 .Xr getgroups 2 ,
 .Xr getitimer 2 ,
 .Xr getlogin 2 ,
-.Xr getlogin_r 2 ,
 .Xr getpgid 2 ,
 .Xr getpgrp 2 ,
 .Xr getpid 2 ,
@@ -164,10 +161,10 @@ previously allocated file descriptors:
 .Xr getresgid 2 ,
 .Xr getresuid 2 ,
 .Xr getrlimit 2 ,
-.Xr getrusage 2 ,
 .Xr getsid 2 ,
 .Xr getthrid 2 ,
 .Xr gettimeofday 2 ,
+.Xr getuid 2 ,
 .Xr getuid 2 ,
 .Xr issetugid 2 ,
 .Xr kevent 2 ,
@@ -179,15 +176,12 @@ previously allocated file descriptors:
 .Xr mprotect 2 ,
 .Xr mquery 2 ,
 .Xr munmap 2 ,
-.Xr msync 2 ,
 .Xr nanosleep 2 ,
 .Xr pipe 2 ,
 .Xr pipe2 2 ,
 .Xr poll 2 ,
-.Xr ppoll 2 ,
 .Xr pread 2 ,
 .Xr preadv 2 ,
-.Xr pselect 2 ,
 .Xr pwrite 2 ,
 .Xr pwritev 2 ,
 .Xr read 2 ,
@@ -201,13 +195,9 @@ previously allocated file descriptors:
 .Xr setitimer 2 ,
 .Xr shutdown 2 ,
 .Xr sigaction 2 ,
-.Xr sigaltstack 2 ,
-.Xr sigpending 2 ,
 .Xr sigprocmask 2 ,
 .Xr sigreturn 2 ,
-.Xr sigsuspend 2 ,
 .Xr socketpair 2 ,
-.Xr stat 2 ,
 .Xr umask 2 ,
 .Xr wait4 2 ,
 .Xr write 2 ,
@@ -225,35 +215,46 @@ read-only effects on the filesystem:
 .Xr chdir 2 ,
 .Xr getcwd 3 ,
 .Xr openat 2 ,
-.Xr faccessat 2 ,
-.Xr fstat 2 ,
 .Xr fstatat 2 ,
-.Xr fstatfs 2 ,
-.Xr getdents 2 ,
-.Xr getfsstat 2 .
-.Xr lstat 2 ,
-.Xr pathconf 2 ,
+.Xr faccessat 2 ,
 .Xr readlinkat 2 ,
-.Xr statfs 2 .
+.Xr lstat 2 ,
+.Xr chmod 2 ,
+.Xr fchmod 2 ,
+.Xr fchmodat 2 ,
+.Xr chflags 2 ,
+.Xr chflagsat 2 ,
+.Xr chown 2 ,
+.Xr fchown 2 ,
+.Xr fchownat 2 ,
+.Xr fstat 2 ,
+.Xr getfsstat 2 .
 .It Va "wpath"
 A number of system calls are allowed and may cause
 write-effects on the filesystem:
 .Pp
 .Xr getcwd 3 ,
 .Xr openat 2 ,
-.Xr faccessat 2 ,
-.Xr fstat 2 .
 .Xr fstatat 2 ,
-.Xr lstat 2 ,
+.Xr faccessat 2 ,
 .Xr readlinkat 2 ,
-.Xr truncate 2 .
+.Xr lstat 2 ,
+.Xr chmod 2 ,
+.Xr fchmod 2 ,
+.Xr fchmodat 2 ,
+.Xr chflags 2 ,
+.Xr chflagsat 2 ,
+.Xr chown 2 ,
+.Xr fchown 2 ,
+.Xr fchownat 2 ,
+.Xr fstat 2 .
 .It Va "cpath"
 A number of system calls and sub-modes are allowed, which may
 create new files or directories in the filesystem:
 .Pp
 .Xr rename 2 ,
-.Xr renameat 2 ,
 .Xr rmdir 2 ,
+.Xr renameat 2 ,
 .Xr link 2 ,
 .Xr linkat 2 ,
 .Xr symlink 2 ,
@@ -272,11 +273,11 @@ A number of system calls are allowed to do operations in the
 directory, including create, read, or write:
 .Pp
 .Xr lstat 2 ,
-.Xr chflags 2 ,
 .Xr chmod 2 ,
+.Xr chflags 2 ,
 .Xr chown 2 ,
-.Xr fstat 2 ,
-.Xr unlink 2 .
+.Xr unlink 2 ,
+.Xr fstat 2 .
 .It Va "inet"
 The following system calls are allowed to operate in the
 .Dv AF_INET
@@ -297,21 +298,6 @@ domains:
 .Pp
 .Xr setsockopt 2
 has been reduced in functionality substantially.
-.It Va "mcast"
-Allows the configuration of an interface from which multicast packets will
-be sent and to join or leave a multicast group.
-The following options of
-.Xr getsockopt 2
-and
-.Xr setsockopt 2
-are permitted:
-.Pp
-.Dv IP_MULTICAST_IF ,
-.Dv IP_ADD_MEMBERSHIP ,
-.Dv IP_DROP_MEMBERSHIP ,
-.Dv IPV6_MULTICAST_IF ,
-.Dv IPV6_JOIN_GROUP ,
-.Dv IPV6_LEAVE_GROUP .
 .It Va "fattr"
 The following system calls are allowed to make explicit changes
 to fields in
@@ -322,15 +308,15 @@ relating to a file:
 .Xr futimes 2 ,
 .Xr utimensat 2 ,
 .Xr futimens 2 ,
-.Xr chflags 2 ,
-.Xr chflagsat 2 ,
 .Xr chmod 2 ,
 .Xr fchmod 2 ,
 .Xr fchmodat 2 ,
+.Xr chflags 2 ,
+.Xr chflagsat 2 ,
 .Xr chown 2 ,
-.Xr fchown 2 ,
 .Xr fchownat 2 ,
 .Xr lchown 2 ,
+.Xr fchown 2 ,
 .Xr utimes 2 .
 .It Va "flock"
 File locking via
@@ -367,9 +353,7 @@ a few system calls become able to allow DNS network transactions:
 .Xr sendto 2 ,
 .Xr recvfrom 2 ,
 .Xr socket 2 ,
-.Xr bind 2 ,
-.Xr connect 2 ,
-.Xr getsockname 2 .
+.Xr connect 2 .
 .It Va "getpw"
 This allows read-only opening of files in
 .Pa /etc
@@ -392,11 +376,11 @@ operations.
 .It Va "sendfd"
 Allows sending of file descriptors using
 .Xr sendmsg 2 .
-File descriptors referring to directories may not be passed.
+File descriptors referering to directories may not be passed.
 .It Va "recvfd"
 Allows receiving of file descriptors using
 .Xr recvmsg 2 .
-File descriptors referring to directories may not be passed.
+File descriptors referering to directories may not be passed.
 .It Va "ioctl"
 Allows a subset of
 .Xr ioctl 2
@@ -492,8 +476,6 @@ programs like
 .Xr top 1
 and
 .Xr vmstat 8 .
-Also allows
-.Xr swapctl 2 .
 .It Va "id"
 Allows the following system calls which can change the rights of a
 process:
@@ -511,25 +493,6 @@ process:
 .Xr setrlimit 2 ,
 .Xr getpriority 2 ,
 .Xr setpriority 2 .
-.It Va "route"
-Allows a subset of read-only
-.Xr ioctl 2
-operations on network interfaces:
-.Pp
-.Dv SIOCGIFADDR ,
-.Dv SIOCGIFFLAGS ,
-.Dv SIOCGIFMETRIC ,
-.Dv SIOCGIFGMEMB ,
-.Dv SIOCGIFRDOMAIN ,
-.Dv SIOCGIFDSTADDR_IN6 ,
-.Dv SIOCGIFNETMASK_IN6 ,
-.Dv SIOCGNBRINFO_IN6 ,
-.Dv SIOCGIFINFO_IN6 ,
-.Dv SIOCGIFMEDIA .
-.Pp
-It also allows read access to some
-.Xr sysctl 3
-nodes for inspection of routing table.
 .It Va "pf"
 Allows a subset of
 .Xr ioctl 2
