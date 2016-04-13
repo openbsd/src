@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.38 2015/12/08 13:34:22 tedu Exp $	*/
+/*	$OpenBSD: qe.c,v 1.39 2016/04/13 11:36:00 mpi Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -295,7 +295,6 @@ qeattach(parent, self, aux)
 	ifp->if_watchdog = qewatchdog;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX |
 	    IFF_MULTICAST;
-	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);

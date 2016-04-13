@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.17 2016/02/05 10:34:52 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.18 2016/04/13 11:36:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -298,7 +298,6 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, XNF_TX_DESC - 1);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	ifmedia_init(&sc->sc_media, IFM_IMASK, xnf_media_change,
 	    xnf_media_status);
