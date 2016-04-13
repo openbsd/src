@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.18 2016/04/13 11:48:38 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.19 2016/04/13 11:51:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -386,7 +386,7 @@ nvme_poll(struct nvme_softc *sc, struct nvme_queue *q, struct nvme_ccb *ccb,
 
 	flags = lemtoh16(&state.c.flags);
 
-	return (NVME_CQE_SCT(flags) | NVME_CQE_SC(flags));
+	return (flags & ~NVME_CQE_PHASE);
 }
 
 void
