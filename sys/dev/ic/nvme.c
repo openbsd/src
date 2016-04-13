@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.31 2016/04/13 13:16:32 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.32 2016/04/13 13:17:24 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -343,6 +343,8 @@ nvme_attach(struct nvme_softc *sc)
 		printf("%s: unable to create io q\n", DEVNAME(sc));
 		goto free_q;
 	}
+
+	nvme_write4(sc, NVME_INTMC, 1);
 
 	sc->sc_namespaces = mallocarray(sc->sc_nn, sizeof(*sc->sc_namespaces),
 	    M_DEVBUF, M_WAITOK|M_ZERO);
