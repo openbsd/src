@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.21 2016/04/13 11:56:50 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.22 2016/04/13 12:04:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -28,6 +28,7 @@
 
 #include <machine/bus.h>
 
+#include <scsi/scsi_all.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
@@ -76,6 +77,18 @@ struct nvme_dmamem *
 	nvme_dmamem_alloc(struct nvme_softc *, size_t);
 void	nvme_dmamem_free(struct nvme_softc *, struct nvme_dmamem *);
 void	nvme_dmamem_sync(struct nvme_softc *, struct nvme_dmamem *, int);
+
+void	nvme_scsi_cmd(struct scsi_xfer *);
+int	nvme_scsi_probe(struct scsi_link *);
+void	nvme_scsi_free(struct scsi_link *);
+
+struct scsi_adapter nvme_switch = {
+	nvme_scsi_cmd,		/* cmd */
+	scsi_minphys,		/* minphys */
+	nvme_scsi_probe,	/* dev probe */
+	nvme_scsi_free,		/* dev free */
+	NULL,			/* ioctl */
+};
 
 #define nvme_read4(_s, _r) \
 	bus_space_read_4((_s)->sc_iot, (_s)->sc_ioh, (_r))
@@ -323,6 +336,25 @@ free_admin_q:
 	nvme_q_free(sc, sc->sc_admin_q);
 
 	return (1);
+}
+
+int
+nvme_scsi_probe(struct scsi_link *link)
+{
+	return (ENXIO);
+}
+
+void
+nvme_scsi_cmd(struct scsi_xfer *xs)
+{
+	xs->error = XS_DRIVER_STUFFUP;
+	scsi_done(xs);
+}
+
+void
+nvme_scsi_free(struct scsi_link *link)
+{
+
 }
 
 void
