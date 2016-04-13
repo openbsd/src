@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.25 2016/04/13 12:28:57 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.26 2016/04/13 12:42:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -359,7 +359,51 @@ free_admin_q:
 int
 nvme_scsi_probe(struct scsi_link *link)
 {
-	return (ENXIO);
+	struct nvme_softc *sc = link->adapter_softc;
+	struct nvme_sqe sqe;
+	struct nvm_identify_namespace *identify;
+	struct nvme_dmamem *mem;
+	struct nvme_ccb *ccb;
+	int rv;
+
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	KASSERT(ccb != NULL);
+
+	mem = nvme_dmamem_alloc(sc, sizeof(*identify));
+	if (mem == NULL)
+		return (ENOMEM);
+
+	memset(&sqe, 0, sizeof(sqe));
+	sqe.opcode = NVM_ADMIN_IDENTIFY;
+	htolem32(&sqe.nsid, link->target + 1);
+	htolem64(&sqe.entry.prp[0], NVME_DMA_DVA(mem));
+	htolem32(&sqe.cdw10, 0);
+
+	ccb->ccb_done = nvme_empty_done;
+	ccb->ccb_cookie = &sqe;
+
+	nvme_dmamem_sync(sc, mem, BUS_DMASYNC_PREREAD);
+	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill);
+	nvme_dmamem_sync(sc, mem, BUS_DMASYNC_POSTREAD);
+
+	scsi_io_put(&sc->sc_iopool, ccb);
+
+	if (rv != 0) {
+		rv = EIO;
+		goto done;
+	}
+
+	/* commit */
+
+	identify = malloc(sizeof(*identify), M_DEVBUF, M_WAITOK|M_ZERO);
+	memcpy(identify, NVME_DMA_KVA(mem), sizeof(*identify));
+
+	sc->sc_namespaces[link->target].ident = identify;
+
+done:
+	nvme_dmamem_free(sc, mem);
+
+	return (rv);
 }
 
 void
@@ -372,7 +416,13 @@ nvme_scsi_cmd(struct scsi_xfer *xs)
 void
 nvme_scsi_free(struct scsi_link *link)
 {
+	struct nvme_softc *sc = link->adapter_softc;
+	struct nvm_identify_namespace *identify;
 
+	identify = sc->sc_namespaces[link->target].ident;
+	sc->sc_namespaces[link->target].ident = NULL;
+
+	free(identify, M_DEVBUF, sizeof(*identify));
 }
 
 void
