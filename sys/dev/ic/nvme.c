@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.32 2016/04/13 13:17:24 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.33 2016/04/13 13:39:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -90,6 +90,15 @@ struct scsi_adapter nvme_switch = {
 	nvme_scsi_free,		/* dev free */
 	NULL,			/* ioctl */
 };
+
+void	nvme_scsi_io(struct scsi_xfer *,
+	    void (*)(struct nvme_softc *, struct nvme_ccb *, void *));
+void	nvme_scsi_rd_fill(struct nvme_softc *, struct nvme_ccb *, void *);
+void	nvme_scsi_wr_fill(struct nvme_softc *, struct nvme_ccb *, void *);
+void	nvme_scsi_io_fill(struct nvme_softc *, struct nvme_ccb *,
+	    struct nvme_sqe_io *);
+void	nvme_scsi_io_done(struct nvme_softc *, struct nvme_ccb *,
+	    struct nvme_cqe *);
 
 void	nvme_scsi_inq(struct scsi_xfer *);
 void	nvme_scsi_inquiry(struct scsi_xfer *);
@@ -431,6 +440,19 @@ void
 nvme_scsi_cmd(struct scsi_xfer *xs)
 {
 	switch (xs->cmd->opcode) {
+	case READ_COMMAND:
+	case READ_BIG:
+	case READ_12:
+	case READ_16:
+		nvme_scsi_io(xs, nvme_scsi_rd_fill);
+		return;
+	case WRITE_COMMAND:
+	case WRITE_BIG:
+	case WRITE_12:
+	case WRITE_16:
+		nvme_scsi_io(xs, nvme_scsi_wr_fill);
+		break;
+
 	case INQUIRY:
 		nvme_scsi_inq(xs);
 		return;
@@ -453,6 +475,109 @@ nvme_scsi_cmd(struct scsi_xfer *xs)
 	}
 
 	xs->error = XS_DRIVER_STUFFUP;
+	scsi_done(xs);
+}
+
+void
+nvme_scsi_io(struct scsi_xfer *xs,
+    void (*fill)(struct nvme_softc *, struct nvme_ccb *, void *))
+{
+	struct scsi_link *link = xs->sc_link;
+	struct nvme_softc *sc = link->adapter_softc;
+	struct nvme_ccb *ccb = xs->io;
+	bus_dmamap_t dmap = ccb->ccb_dmamap;
+
+	ccb->ccb_done = nvme_scsi_io_done;
+	ccb->ccb_cookie = xs;
+
+	if (bus_dmamap_load(sc->sc_dmat, dmap,
+	    xs->data, xs->datalen, NULL, ISSET(xs->flags, SCSI_NOSLEEP) ?
+	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) != 0)
+		goto stuffup;
+
+	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
+	    ISSET(xs->flags, SCSI_DATA_IN) ?
+	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+
+	if (ISSET(xs->flags, SCSI_POLL)) {
+		nvme_poll(sc, sc->sc_q, ccb, fill);
+		return;
+	}
+
+	nvme_q_submit(sc, sc->sc_q, ccb, fill);
+	return;
+
+stuffup:
+	xs->error = XS_DRIVER_STUFFUP;
+	scsi_done(xs);
+}
+
+void
+nvme_scsi_rd_fill(struct nvme_softc *sc, struct nvme_ccb *ccb, void *slot)
+{
+	struct nvme_sqe_io *sqe = slot;
+
+	sqe->opcode = NVM_CMD_READ;
+	nvme_scsi_io_fill(sc, ccb, sqe);
+}
+
+void
+nvme_scsi_wr_fill(struct nvme_softc *sc, struct nvme_ccb *ccb, void *slot)
+{
+	struct nvme_sqe_io *sqe = slot;
+
+	sqe->opcode = NVM_CMD_WRITE;
+	nvme_scsi_io_fill(sc, ccb, sqe);
+}
+
+void
+nvme_scsi_io_fill(struct nvme_softc *sc, struct nvme_ccb *ccb,
+    struct nvme_sqe_io *sqe)
+{
+	struct scsi_xfer *xs = ccb->ccb_cookie;
+	struct scsi_link *link = xs->sc_link;
+	bus_dmamap_t dmap = ccb->ccb_dmamap;
+	u_int64_t lba;
+	u_int32_t blocks;
+
+	scsi_cmd_rw_decode(xs->cmd, &lba, &blocks);
+
+	htolem32(&sqe->nsid, link->target + 1);
+
+	htolem64(&sqe->entry.prp[0], dmap->dm_segs[0].ds_addr);
+	switch (dmap->dm_nsegs) {
+	case 1:
+		break;
+	case 2:
+		htolem64(&sqe->entry.prp[1], dmap->dm_segs[1].ds_addr);
+		break;
+	default:
+		panic("not yet");
+	}
+
+	htolem64(&sqe->slba, lba);
+	htolem16(&sqe->nlb, blocks - 1);
+}
+
+void
+nvme_scsi_io_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
+    struct nvme_cqe *cqe)
+{
+	struct scsi_xfer *xs = ccb->ccb_cookie;
+	bus_dmamap_t dmap = ccb->ccb_dmamap;
+	u_int16_t flags;
+
+	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
+	    ISSET(xs->flags, SCSI_DATA_IN) ?
+	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+
+	bus_dmamap_unload(sc->sc_dmat, dmap);
+
+	flags = lemtoh16(&cqe->flags);
+
+	xs->error = (NVME_CQE_SC(flags) == NVME_CQE_SC_SUCCESS) ?
+	    XS_NOERROR : XS_DRIVER_STUFFUP;
+	xs->resid = 0;
 	scsi_done(xs);
 }
 
