@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.22 2016/04/13 12:04:20 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.23 2016/04/13 12:14:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -514,8 +514,6 @@ nvme_identify(struct nvme_softc *sc, u_int mps)
 	if (mem == NULL)
 		return (1);
 
-	identify = NVME_DMA_KVA(mem);
-
 	ccb->ccb_done = nvme_empty_done;
 	ccb->ccb_cookie = mem;
 
@@ -528,6 +526,8 @@ nvme_identify(struct nvme_softc *sc, u_int mps)
 	if (rv != 0)
 		goto done;
 
+	identify = NVME_DMA_KVA(mem);
+
 	scsi_strvis(sn, identify->sn, sizeof(identify->sn));
 	scsi_strvis(mn, identify->mn, sizeof(identify->mn));
 	scsi_strvis(fr, identify->fr, sizeof(identify->fr));
@@ -539,6 +539,10 @@ nvme_identify(struct nvme_softc *sc, u_int mps)
 		if (mdts < sc->sc_mdts)
 			sc->sc_mdts = mdts;
 	}
+
+	sc->sc_nn = lemtoh32(&identify->nn);
+
+	memcpy(&sc->sc_identify, identify, sizeof(sc->sc_identify));
 
 done:
 	nvme_dmamem_free(sc, mem);
