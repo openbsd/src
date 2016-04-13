@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.33 2016/01/16 03:30:26 canacar Exp $	 */
+/* $OpenBSD: pftop.c,v 1.34 2016/04/13 05:25:45 jasper Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -116,7 +116,6 @@ u_int32_t num_queues = 0;
 int cachestates = 0;
 
 char *filter_string = NULL;
-int dumpfilter = 0;
 
 #define MIN_LABEL_SIZE 5
 #define ANCHOR_FLD_SIZE 12
@@ -680,14 +679,6 @@ read_states(void)
 			break;
 
 		alloc_buf(num_states_all);
-	}
-
-	if (dumpfilter) {
-		int fd = open("state.dmp", O_WRONLY|O_CREAT|O_EXCL, 0);
-		if (fd > 0) {
-			write(fd, state_buf, ps.ps_len);
-			close(fd);
-		}
 	}
 
 	num_states =  num_states_all;
