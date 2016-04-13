@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.204 2016/04/12 14:42:54 krw Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.205 2016/04/13 06:06:04 vgross Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -905,7 +905,7 @@ in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 		rtfree(ro->ro_rt);
 		ro->ro_rt = NULL;
 	}
-	if ((ro->ro_rt == NULL)) {
+	if (ro->ro_rt == NULL) {
 		/* No route yet, so try to acquire one */
 		ro->ro_dst.sa_family = AF_INET;
 		ro->ro_dst.sa_len = sizeof(struct sockaddr_in);
