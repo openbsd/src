@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmereg.h,v 1.7 2016/04/13 12:36:35 dlg Exp $ */
+/*	$OpenBSD: nvmereg.h,v 1.8 2016/04/13 12:39:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -286,4 +286,38 @@ struct nvm_identify_controller {
 	/* Vendor Specific */
 
 	u_int8_t	_reserved8[1024];
+} __packed __aligned(8);
+
+struct nvm_namespace_format {
+	u_int16_t	ms;		/* Metadata Size */
+	u_int8_t	lbads;		/* LBA Data Size */
+	u_int8_t	rp;		/* Relative Performance */
+} __packed __aligned(4);
+
+struct nvm_identify_namespace {
+	u_int64_t	nsze;		/* Namespace Size */
+
+	u_int64_t	ncap;		/* Namespace Capacity */
+
+	u_int64_t	nuse;		/* Namespace Utilization */
+
+	u_int8_t	nsfeat;		/* Namespace Features */
+	u_int8_t	nlbaf;		/* Number of LBA Formats */
+	u_int8_t	flbas;		/* Formatted LBA Size */
+#define NVME_ID_NS_FLBAS(_f)			((_f) & 0x0f)
+#define NVME_ID_NS_FLBAS_MD			0x10
+	u_int8_t	mc;		/* Metadata Capabilities */
+	u_int8_t	dpc;		/* End-to-end Data Protection
+					   Capabilities */
+	u_int8_t	dps;		/* End-to-end Data Protection
+					   Type Settings */
+
+	u_int8_t	_reserved1[98];
+
+	struct nvm_namespace_format
+			lbaf[16];	/* LBA Format Support */
+
+	u_int8_t	_reserved2[192];
+
+	u_int8_t	vs[3712];
 } __packed __aligned(8);
