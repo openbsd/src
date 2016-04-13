@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.30 2016/04/13 13:13:27 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.31 2016/04/13 13:16:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -333,6 +333,17 @@ nvme_attach(struct nvme_softc *sc)
 		goto disable;
 	}
 
+	sc->sc_q = nvme_q_alloc(sc, 1, 128, dstrd);
+	if (sc->sc_q == NULL) {
+		printf("%s: unable to allocate io q\n", DEVNAME(sc));
+		goto disable;
+	}
+
+	if (nvme_q_create(sc, sc->sc_q) != 0) {
+		printf("%s: unable to create io q\n", DEVNAME(sc));
+		goto free_q;
+	}
+
 	sc->sc_namespaces = mallocarray(sc->sc_nn, sizeof(*sc->sc_namespaces),
 	    M_DEVBUF, M_WAITOK|M_ZERO);
 
@@ -352,6 +363,8 @@ nvme_attach(struct nvme_softc *sc)
 
 	return (0);
 
+free_q:
+	nvme_q_free(sc, sc->sc_q);
 disable:
 	nvme_disable(sc);
 free_ccbs:
