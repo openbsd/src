@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmereg.h,v 1.8 2016/04/13 12:39:52 dlg Exp $ */
+/*	$OpenBSD: nvmereg.h,v 1.9 2016/04/13 12:49:24 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -129,6 +129,66 @@ struct nvme_sqe {
 	u_int32_t	cdw13;
 	u_int32_t	cdw14;
 	u_int32_t	cdw15;
+} __packed __aligned(8);
+
+struct nvme_sqe_q {
+	u_int8_t	opcode;
+	u_int8_t	flags;
+	u_int16_t	cid;
+
+	u_int8_t	_reserved1[20];
+
+	u_int64_t	prp1;
+
+	u_int8_t	_reserved2[8];
+
+	u_int16_t	qid;
+	u_int16_t	qsize;
+
+	u_int8_t	qflags;
+#define NVM_SQE_SQ_QPRIO_URG	(0x0 << 1)
+#define NVM_SQE_SQ_QPRIO_HI	(0x1 << 1)
+#define NVM_SQE_SQ_QPRIO_MED	(0x2 << 1)
+#define NVM_SQE_SQ_QPRIO_LOW	(0x3 << 1)
+#define NVM_SQE_CQ_IEN		(1 << 1) /* interrupt enable */
+#define NVM_SQE_Q_PC		(1 << 0)
+	u_int8_t	_reserved3;
+	u_int16_t	cqid; /* XXX interrupt vector for cq */
+
+	u_int8_t	_reserved4[16];
+} __packed __aligned(8);
+
+struct nvme_sqe_io {
+	u_int8_t	opcode;
+	u_int8_t	flags;
+	u_int16_t	cid;
+
+	u_int32_t	nsid;
+
+	u_int8_t	_reserved[8];
+
+	u_int64_t	mptr;
+
+	union {
+		u_int64_t	prp[2];
+		struct nvme_sge	sge;
+	} __packed	entry;
+
+	u_int64_t	slba;	/* Starting LBA */
+
+	u_int16_t	nlb;	/* Number of Logical Blocks */
+	u_int16_t	ioflags;
+
+	u_int8_t	dsm;	/* Dataset Management */
+	u_int8_t	_reserved2[3];
+
+	u_int32_t	eilbrt;	/* Expected Initial Logical Block
+				   Reference Tag */
+
+	u_int16_t	elbat;	/* Expected Logical Block
+				   Application Tag */
+	u_int16_t	elbatm;	/* Expected Logical Block
+				   Application Tag Mask */
 } __packed __aligned(8);
 
 struct nvme_cqe {
