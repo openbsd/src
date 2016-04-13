@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.15 2016/04/12 10:20:25 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.16 2016/04/13 11:42:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -652,26 +652,26 @@ nvme_dmamem_alloc(struct nvme_softc *sc, size_t size)
 	struct nvme_dmamem *ndm;
 	int nsegs;
 
-	ndm = malloc(sizeof(*ndm), M_DEVBUF, M_NOWAIT | M_ZERO);
+	ndm = malloc(sizeof(*ndm), M_DEVBUF, M_WAITOK | M_ZERO);
 	if (ndm == NULL)
 		return (NULL);
 
 	ndm->ndm_size = size;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
-	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ndm->ndm_map) != 0)
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ndm->ndm_map) != 0)
 		goto ndmfree;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, sc->sc_mps, 0, &ndm->ndm_seg,
-	    1, &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0)
+	    1, &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO) != 0)
 		goto destroy;
 
 	if (bus_dmamem_map(sc->sc_dmat, &ndm->ndm_seg, nsegs, size,
-	    &ndm->ndm_kva, BUS_DMA_NOWAIT) != 0)
+	    &ndm->ndm_kva, BUS_DMA_WAITOK) != 0)
 		goto free;
 
 	if (bus_dmamap_load(sc->sc_dmat, ndm->ndm_map, ndm->ndm_kva, size,
-	    NULL, BUS_DMA_NOWAIT) != 0)
+	    NULL, BUS_DMA_WAITOK) != 0)
 		goto unmap;
 
 	return (ndm);
