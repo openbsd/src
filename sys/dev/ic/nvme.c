@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.42 2016/04/14 06:20:34 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.43 2016/04/14 06:23:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -499,6 +499,7 @@ nvme_scsi_io(struct scsi_xfer *xs,
 	struct nvme_softc *sc = link->adapter_softc;
 	struct nvme_ccb *ccb = xs->io;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
+	int i;
 
 	ccb->ccb_done = nvme_scsi_io_done;
 	ccb->ccb_cookie = xs;
@@ -511,6 +512,18 @@ nvme_scsi_io(struct scsi_xfer *xs,
 	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 	    ISSET(xs->flags, SCSI_DATA_IN) ?
 	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+
+	if (dmap->dm_nsegs > 2) {
+		for (i = 1; i < dmap->dm_nsegs; i++) {
+			htolem64(&ccb->ccb_prpl[i - 1],
+			    dmap->dm_segs[i].ds_addr);
+		}
+		bus_dmamap_sync(sc->sc_dmat,
+		    NVME_DMA_MAP(sc->sc_ccb_prpls),
+		    ccb->ccb_prpl_off,
+		    sizeof(*ccb->ccb_prpl) * dmap->dm_nsegs - 1,
+		    BUS_DMASYNC_PREWRITE);
+	}
 
 	if (ISSET(xs->flags, SCSI_POLL)) {
 		nvme_poll(sc, sc->sc_q, ccb, fill);
@@ -565,7 +578,9 @@ nvme_scsi_io_fill(struct nvme_softc *sc, struct nvme_ccb *ccb,
 		htolem64(&sqe->entry.prp[1], dmap->dm_segs[1].ds_addr);
 		break;
 	default:
-		panic("not yet");
+		/* the prp list is already set up and synced */
+		htolem64(&sqe->entry.prp[1], ccb->ccb_prpl_dva);
+		break;
 	}
 
 	htolem64(&sqe->slba, lba);
@@ -579,6 +594,14 @@ nvme_scsi_io_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
 	struct scsi_xfer *xs = ccb->ccb_cookie;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
 	u_int16_t flags;
+
+	if (dmap->dm_nsegs > 2) {
+		bus_dmamap_sync(sc->sc_dmat,
+		    NVME_DMA_MAP(sc->sc_ccb_prpls),
+		    ccb->ccb_prpl_off,
+		    sizeof(*ccb->ccb_prpl) * dmap->dm_nsegs - 1,
+		    BUS_DMASYNC_POSTWRITE);
+	}
 
 	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 	    ISSET(xs->flags, SCSI_DATA_IN) ?
