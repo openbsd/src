@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxuart.c,v 1.7 2015/02/05 23:29:33 uebayasi Exp $	*/
+/*	$OpenBSD: cn30xxuart.c,v 1.8 2016/04/14 13:49:27 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -46,6 +46,7 @@
 
 int	cn30xxuart_probe(struct device *, void *, void *);
 void	cn30xxuart_attach(struct device *, struct device *, void *);
+int	cn30xxuart_intr(void *);
 
 struct cfattach cn30xxuart_ca = {
 	sizeof(struct com_softc), cn30xxuart_probe, cn30xxuart_attach
@@ -129,8 +130,22 @@ cn30xxuart_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(sc);
 
-	octeon_intr_establish(uba->uba_intr, IPL_TTY, comintr,
+	octeon_intr_establish(uba->uba_intr, IPL_TTY, cn30xxuart_intr,
 	    (void *)sc, sc->sc_dev.dv_xname);
+}
+
+int
+cn30xxuart_intr(void *arg)
+{
+	comintr(arg);
+
+	/*
+	 * Always return non-zero to prevent console clutter about spurious
+	 * interrupts. comstart() enables the transmitter holding register
+	 * empty interrupt before adding data to the FIFO, which can trigger
+	 * a premature interrupt on the primary CPU in a multiprocessor system.
+	 */
+	return 1;
 }
 
 /*
