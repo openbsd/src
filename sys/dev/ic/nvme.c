@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.47 2016/04/14 11:20:19 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.48 2016/04/14 12:08:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -93,12 +93,8 @@ struct scsi_adapter nvme_switch = {
 	NULL,			/* ioctl */
 };
 
-void	nvme_scsi_io(struct scsi_xfer *,
-	    void (*)(struct nvme_softc *, struct nvme_ccb *, void *));
-void	nvme_scsi_rd_fill(struct nvme_softc *, struct nvme_ccb *, void *);
-void	nvme_scsi_wr_fill(struct nvme_softc *, struct nvme_ccb *, void *);
-void	nvme_scsi_io_fill(struct nvme_softc *, struct nvme_ccb *,
-	    struct nvme_sqe_io *);
+void	nvme_scsi_io(struct scsi_xfer *, int);
+void	nvme_scsi_io_fill(struct nvme_softc *, struct nvme_ccb *, void *);
 void	nvme_scsi_io_done(struct nvme_softc *, struct nvme_ccb *,
 	    struct nvme_cqe *);
 
@@ -517,13 +513,13 @@ nvme_scsi_cmd(struct scsi_xfer *xs)
 	case READ_BIG:
 	case READ_12:
 	case READ_16:
-		nvme_scsi_io(xs, nvme_scsi_rd_fill);
+		nvme_scsi_io(xs, SCSI_DATA_IN);
 		return;
 	case WRITE_COMMAND:
 	case WRITE_BIG:
 	case WRITE_12:
 	case WRITE_16:
-		nvme_scsi_io(xs, nvme_scsi_wr_fill);
+		nvme_scsi_io(xs, SCSI_DATA_OUT);
 		return;
 
 	case SYNCHRONIZE_CACHE:
@@ -556,14 +552,16 @@ nvme_scsi_cmd(struct scsi_xfer *xs)
 }
 
 void
-nvme_scsi_io(struct scsi_xfer *xs,
-    void (*fill)(struct nvme_softc *, struct nvme_ccb *, void *))
+nvme_scsi_io(struct scsi_xfer *xs, int dir)
 {
 	struct scsi_link *link = xs->sc_link;
 	struct nvme_softc *sc = link->adapter_softc;
 	struct nvme_ccb *ccb = xs->io;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
 	int i;
+
+	if ((xs->flags & (SCSI_DATA_IN|SCSI_DATA_OUT)) != dir)
+		goto stuffup;
 
 	ccb->ccb_done = nvme_scsi_io_done;
 	ccb->ccb_cookie = xs;
@@ -590,11 +588,11 @@ nvme_scsi_io(struct scsi_xfer *xs,
 	}
 
 	if (ISSET(xs->flags, SCSI_POLL)) {
-		nvme_poll(sc, sc->sc_q, ccb, fill);
+		nvme_poll(sc, sc->sc_q, ccb, nvme_scsi_io_fill);
 		return;
 	}
 
-	nvme_q_submit(sc, sc->sc_q, ccb, fill);
+	nvme_q_submit(sc, sc->sc_q, ccb, nvme_scsi_io_fill);
 	return;
 
 stuffup:
@@ -603,27 +601,9 @@ stuffup:
 }
 
 void
-nvme_scsi_rd_fill(struct nvme_softc *sc, struct nvme_ccb *ccb, void *slot)
+nvme_scsi_io_fill(struct nvme_softc *sc, struct nvme_ccb *ccb, void *slot)
 {
 	struct nvme_sqe_io *sqe = slot;
-
-	sqe->opcode = NVM_CMD_READ;
-	nvme_scsi_io_fill(sc, ccb, sqe);
-}
-
-void
-nvme_scsi_wr_fill(struct nvme_softc *sc, struct nvme_ccb *ccb, void *slot)
-{
-	struct nvme_sqe_io *sqe = slot;
-
-	sqe->opcode = NVM_CMD_WRITE;
-	nvme_scsi_io_fill(sc, ccb, sqe);
-}
-
-void
-nvme_scsi_io_fill(struct nvme_softc *sc, struct nvme_ccb *ccb,
-    struct nvme_sqe_io *sqe)
-{
 	struct scsi_xfer *xs = ccb->ccb_cookie;
 	struct scsi_link *link = xs->sc_link;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
@@ -632,6 +612,8 @@ nvme_scsi_io_fill(struct nvme_softc *sc, struct nvme_ccb *ccb,
 
 	scsi_cmd_rw_decode(xs->cmd, &lba, &blocks);
 
+	sqe->opcode = ISSET(xs->flags, SCSI_DATA_IN) ?
+	    NVM_CMD_READ : NVM_CMD_WRITE;
 	htolem32(&sqe->nsid, link->target + 1);
 
 	htolem64(&sqe->entry.prp[0], dmap->dm_segs[0].ds_addr);
