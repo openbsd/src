@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.27 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.28 2016/04/14 07:00:24 mlarkin Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -24,19 +24,21 @@
 
 #define PCTR_AMD_NUM	PCTR_NUM
 #define PCTR_INTEL_NUM	2		/* Intel supports only 2 counters */
+#define PCTR_INTEL_VERSION_MASK 0xff
 
 #define usetsc		(cpu_feature & CPUID_TSC)
 #define usep5ctr	(pctr_isintel && (((cpu_id >> 8) & 15) == 5) && \
 				(((cpu_id >> 4) & 15) > 0))
-#define usepctr		((pctr_isamd || pctr_isintel) && \
-			    ((cpu_id >> 8) & 15) >= 6)
+#define usepctr		((pctr_isamd && ((cpu_id >> 8) & 15) >= 6) || \
+			    (pctr_isintel && \
+			    (pctr_intel_cap & PCTR_INTEL_VERSION_MASK) >= 1))
 
 int			pctr_isamd;
 int			pctr_isintel;
+uint32_t		pctr_intel_cap;
 
 static int		p5ctrsel(int fflag, u_int cmd, u_int fn);
 static int		pctrsel(int fflag, u_int cmd, u_int fn);
-static void		pctrrd(struct pctrst *);
 static void		pctrrd(struct pctrst *);
 
 static void
@@ -73,13 +75,16 @@ pctrrd(struct pctrst *st)
 void
 pctrattach(int num)
 {
+	uint32_t dummy;
 
 	if (num > 1)
 		return;
 
 	pctr_isamd = (strcmp(cpu_vendor, "AuthenticAMD") == 0);
-	if (!pctr_isamd)
+	if (!pctr_isamd) {
 		pctr_isintel = (strcmp(cpu_vendor, "GenuineIntel") == 0);
+		CPUID(0xa, pctr_intel_cap, dummy, dummy, dummy);
+	}
 
 	if (usepctr) {
 		/* Enable RDTSC and RDPMC instructions from user-level. */
