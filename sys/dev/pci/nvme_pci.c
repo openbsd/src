@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme_pci.c,v 1.2 2014/04/15 10:28:07 dlg Exp $ */
+/*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -130,5 +130,7 @@ nvme_pci_detach(struct device *self, int flags)
 int
 nvme_pci_activate(struct device *self, int act)
 {
-	return (0);
+	struct nvme_pci_softc *psc = (struct nvme_pci_softc *)self;
+
+	return (nvme_activate(&psc->psc_nvme, act));
 }

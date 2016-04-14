@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.45 2016/04/14 10:26:33 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.46 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -44,6 +44,7 @@ struct cfdriver nvme_cd = {
 int	nvme_ready(struct nvme_softc *, u_int32_t);
 int	nvme_enable(struct nvme_softc *, u_int);
 int	nvme_disable(struct nvme_softc *);
+int	nvme_shutdown(struct nvme_softc *);
 
 void	nvme_version(struct nvme_softc *, u_int32_t);
 void	nvme_dumpregs(struct nvme_softc *);
@@ -68,6 +69,7 @@ void	nvme_empty_done(struct nvme_softc *, struct nvme_ccb *,
 struct nvme_queue *
 	nvme_q_alloc(struct nvme_softc *, u_int16_t, u_int, u_int);
 int	nvme_q_create(struct nvme_softc *, struct nvme_queue *);
+int	nvme_q_delete(struct nvme_softc *, struct nvme_queue *);
 void	nvme_q_submit(struct nvme_softc *,
 	    struct nvme_queue *, struct nvme_ccb *,
 	    void (*)(struct nvme_softc *, struct nvme_ccb *, void *));
@@ -450,6 +452,59 @@ nvme_scsi_probe(struct scsi_link *link)
 
 done:
 	nvme_dmamem_free(sc, mem);
+
+	return (rv);
+}
+
+int
+nvme_shutdown(struct nvme_softc *sc)
+{
+	u_int32_t cc, csts;
+	int i;
+
+	nvme_write4(sc, NVME_INTMC, 0);
+
+	if (nvme_q_delete(sc, sc->sc_q) != 0) {
+		printf("%s: unable to delete q, disabling\n", DEVNAME(sc));
+		goto disable;
+	}
+
+	cc = nvme_read4(sc, NVME_CC);
+	CLR(cc, NVME_CC_SHN_MASK);
+	SET(cc, NVME_CC_SHN(NVME_CC_SHN_NORMAL));
+	nvme_write4(sc, NVME_CC, cc);
+
+	for (i = 0; i < 4000; i++) {
+		nvme_barrier(sc, 0, sc->sc_ios,
+		    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+		csts = nvme_read4(sc, NVME_CSTS);
+		if ((csts & NVME_CSTS_SHST_MASK) == NVME_CSTS_SHST_DONE)
+			return (0);
+
+		delay(1000);
+	}
+
+	printf("%s: unable to shudown, disabling\n", DEVNAME(sc));
+
+disable:
+	nvme_disable(sc);
+	return (0);
+}
+
+int
+nvme_activate(struct nvme_softc *sc, int act)
+{
+	int rv;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(&sc->sc_dev, act);
+		nvme_shutdown(sc);
+		break;
+	default:
+		rv = config_activate_children(&sc->sc_dev, act);
+		break;
+	}
 
 	return (rv);
 }
@@ -1033,6 +1088,45 @@ nvme_q_create(struct nvme_softc *sc, struct nvme_queue *q)
 fail:
 	scsi_io_put(&sc->sc_iopool, ccb);
 	return (rv);
+}
+
+int
+nvme_q_delete(struct nvme_softc *sc, struct nvme_queue *q)
+{
+	struct nvme_sqe_q sqe;
+	struct nvme_ccb *ccb;
+	int rv;
+
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	KASSERT(ccb != NULL);
+
+	ccb->ccb_done = nvme_empty_done;
+	ccb->ccb_cookie = &sqe;
+
+	memset(&sqe, 0, sizeof(sqe));
+	sqe.opcode = NVM_ADMIN_DEL_IOSQ;
+	htolem16(&sqe.qid, q->q_id);
+
+	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill);
+	if (rv != 0)
+		goto fail;
+
+	ccb->ccb_done = nvme_empty_done;
+	ccb->ccb_cookie = &sqe;
+
+	memset(&sqe, 0, sizeof(sqe));
+	sqe.opcode = NVM_ADMIN_DEL_IOCQ;
+	htolem64(&sqe.prp1, NVME_DMA_DVA(q->q_sq_dmamem));
+	htolem16(&sqe.qid, q->q_id);
+
+	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill);
+	if (rv != 0)
+		goto fail;
+
+fail:
+	scsi_io_put(&sc->sc_iopool, ccb);
+	return (rv);
+
 }
 
 void

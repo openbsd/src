@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmereg.h,v 1.9 2016/04/13 12:49:24 dlg Exp $ */
+/*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -67,6 +67,10 @@
 #define  NVME_CC_CSS_NVM	0
 #define  NVME_CC_EN		(1 << 0)
 #define NVME_CSTS	0x001c	/* Controller Status */
+#define  NVME_CSTS_SHST_MASK	(0x3 << 2)
+#define  NVME_CSTS_SHST_NONE	(0x0 << 2) /* normal operation */
+#define  NVME_CSTS_SHST_WAIT	(0x1 << 2) /* shutdown processing occurring */
+#define  NVME_CSTS_SHST_DONE	(0x2 << 2) /* shutdown processing complete */
 #define  NVME_CSTS_CFS		(1 << 1)
 #define  NVME_CSTS_RDY		(1 << 0)
 #define NVME_NSSR	0x0020	/* NVM Subsystem Reset (Optional) */
@@ -150,7 +154,7 @@ struct nvme_sqe_q {
 #define NVM_SQE_SQ_QPRIO_HI	(0x1 << 1)
 #define NVM_SQE_SQ_QPRIO_MED	(0x2 << 1)
 #define NVM_SQE_SQ_QPRIO_LOW	(0x3 << 1)
-#define NVM_SQE_CQ_IEN		(1 << 1) /* interrupt enable */
+#define NVM_SQE_CQ_IEN		(1 << 1)
 #define NVM_SQE_Q_PC		(1 << 0)
 	u_int8_t	_reserved3;
 	u_int16_t	cqid; /* XXX interrupt vector for cq */
@@ -369,8 +373,7 @@ struct nvm_identify_namespace {
 	u_int8_t	mc;		/* Metadata Capabilities */
 	u_int8_t	dpc;		/* End-to-end Data Protection
 					   Capabilities */
-	u_int8_t	dps;		/* End-to-end Data Protection
-					   Type Settings */
+	u_int8_t	dps;		/* End-to-end Data Protection Type Settings */
 
 	u_int8_t	_reserved1[98];
 
