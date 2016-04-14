@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.36 2016/04/14 00:26:38 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.37 2016/04/14 03:04:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -970,7 +970,7 @@ nvme_ccbs_alloc(struct nvme_softc *sc, u_int nccbs)
 		ccb = &sc->sc_ccbs[i];
 
 		if (bus_dmamap_create(sc->sc_dmat, sc->sc_mdts, sc->sc_max_sgl,
-		    sc->sc_mps, sc->sc_mps, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    sc->sc_mps, sc->sc_mps, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &ccb->ccb_dmamap) != 0)
 			goto free_maps;
 
