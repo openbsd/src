@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.46 2016/04/14 11:18:32 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.47 2016/04/14 11:20:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -176,7 +176,7 @@ nvme_version(struct nvme_softc *sc, u_int32_t version)
 		return;
 	}
 
-	printf(", NVME %s", v);
+	printf(", NVMe %s", v);
 }
 
 void
