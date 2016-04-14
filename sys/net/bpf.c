@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.138 2016/04/02 08:49:49 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.139 2016/04/14 08:27:24 natano Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <sys/rwlock.h>
 #include <sys/atomic.h>
 #include <sys/srp.h>
+#include <sys/specdev.h>
 
 #include <net/if.h>
 #include <net/bpf.h>
@@ -332,6 +333,9 @@ int
 bpfopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct bpf_d *d;
+
+	if (minor(dev) & ((1 << CLONE_SHIFT) - 1))
+		return (ENXIO);
 
 	/* create on demand */
 	if ((d = bpfilter_create(minor(dev))) == NULL)
@@ -1644,8 +1648,8 @@ bpfilter_create(int unit)
 {
 	struct bpf_d *bd;
 
-	if ((bd = bpfilter_lookup(unit)) != NULL)
-		return (NULL);
+	KASSERT(bpfilter_lookup(unit) == NULL);
+
 	if ((bd = malloc(sizeof(*bd), M_DEVBUF, M_NOWAIT|M_ZERO)) != NULL) {
 		bd->bd_unit = unit;
 		LIST_INSERT_HEAD(&bpf_d_list, bd, bd_list);
