@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxuart.c,v 1.8 2016/04/14 13:49:27 visa Exp $	*/
+/*	$OpenBSD: cn30xxuart.c,v 1.9 2016/04/14 13:51:58 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -43,6 +43,8 @@
 #include <octeon/dev/iobusvar.h>
 #include <octeon/dev/uartbusvar.h>
 #include <octeon/dev/cn30xxuartreg.h>
+
+#define OCTEON_UART_FIFO_SIZE		64
 
 int	cn30xxuart_probe(struct device *, void *, void *);
 void	cn30xxuart_attach(struct device *, struct device *, void *);
@@ -108,7 +110,8 @@ cn30xxuart_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
 	sc->sc_frequency = octeon_ioclock_speed();
-	sc->sc_uarttype = COM_UART_16550;
+	sc->sc_uarttype = COM_UART_16550A;
+	sc->sc_fifolen = OCTEON_UART_FIFO_SIZE;
 
 	/* if it's in use as console, it's there. */
 	if (bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS, 0, &sc->sc_ioh)) {
