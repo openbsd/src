@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.42 2015/05/04 09:33:46 mpi Exp $ */
+/* $OpenBSD: pckbd.c,v 1.43 2016/04/14 07:06:03 mlarkin Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -123,13 +123,14 @@ static int pckbd_is_console(pckbc_tag_t, pckbc_slot_t);
 
 int pckbdprobe(struct device *, void *, void *);
 void pckbdattach(struct device *, struct device *, void *);
+int pckbdactivate(struct device *, int);
 
 struct cfattach pckbd_ca = {
 	sizeof(struct pckbd_softc), 
 	pckbdprobe, 
 	pckbdattach, 
 	NULL, 
-	NULL
+	pckbdactivate
 };
 
 int	pckbd_enable(void *, int);
@@ -181,6 +182,33 @@ static int	pckbd_decode(struct pckbd_internal *, int,
 static int	pckbd_led_encode(int);
 
 struct pckbd_internal pckbd_consdata;
+
+int
+pckbdactivate(struct device *self, int act)
+{
+	struct pckbd_softc *sc = (struct pckbd_softc *)self;
+	int rv = 0;
+	u_char cmd[1];
+
+	switch(act) {
+	case DVACT_RESUME:
+		if (sc->sc_enabled) {
+			/*
+			 * Some keyboards are not enabled after a reset,
+			 * so make sure it is enabled now.
+			 */
+			cmd[0] = KBC_ENABLE;
+			(void) pckbc_poll_cmd(sc->id->t_kbctag,
+			    sc->id->t_kbcslot, cmd, 1, 0, NULL, 0);
+			/* XXX - also invoke pckbd_set_xtscancode() too? */
+		}
+		break;
+	}
+
+	rv = config_activate_children(self, act);
+
+	return (rv);
+}
 
 int
 pckbd_set_xtscancode(pckbc_tag_t kbctag, pckbc_slot_t kbcslot,
