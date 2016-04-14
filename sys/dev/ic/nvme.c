@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.39 2016/04/14 06:10:49 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.40 2016/04/14 06:16:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -963,6 +963,8 @@ int
 nvme_ccbs_alloc(struct nvme_softc *sc, u_int nccbs)
 {
 	struct nvme_ccb *ccb;
+	bus_addr_t off;
+	u_int64_t *prpl;
 	u_int i;
 
 	sc->sc_ccbs = mallocarray(nccbs, sizeof(*ccb), M_DEVBUF,
@@ -970,16 +972,30 @@ nvme_ccbs_alloc(struct nvme_softc *sc, u_int nccbs)
 	if (sc->sc_ccbs == NULL)
 		return (1);
 
+	sc->sc_ccb_prpls = nvme_dmamem_alloc(sc, 
+	    sizeof(*prpl) * sc->sc_max_sgl * nccbs);
+
+	prpl = NVME_DMA_KVA(sc->sc_ccb_prpls);
+	off = 0;
+
 	for (i = 0; i < nccbs; i++) {
 		ccb = &sc->sc_ccbs[i];
 
-		if (bus_dmamap_create(sc->sc_dmat, sc->sc_mdts, sc->sc_max_sgl,
+		if (bus_dmamap_create(sc->sc_dmat, sc->sc_mdts,
+		    sc->sc_max_sgl + 1 /* we get a free prp in the sqe */,
 		    sc->sc_mps, sc->sc_mps, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &ccb->ccb_dmamap) != 0)
 			goto free_maps;
 
 		ccb->ccb_id = i;
+		ccb->ccb_prpl = prpl;
+		ccb->ccb_prpl_off = off;
+		ccb->ccb_prpl_dva = NVME_DMA_DVA(sc->sc_ccb_prpls) + off;
+
 		SIMPLEQ_INSERT_TAIL(&sc->sc_ccb_list, ccb, ccb_entry);
+
+		prpl += sc->sc_max_sgl;
+		off += sizeof(*prpl) * sc->sc_max_sgl;
 	}
 
 	return (0);
@@ -1025,6 +1041,7 @@ nvme_ccbs_free(struct nvme_softc *sc)
 		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
 	}
 
+	nvme_dmamem_free(sc, sc->sc_ccb_prpls);
 	free(sc->sc_ccbs, M_DEVBUF, 0);
 }
 
