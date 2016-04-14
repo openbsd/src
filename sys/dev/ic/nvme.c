@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.38 2016/04/14 06:06:46 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.39 2016/04/14 06:10:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -306,9 +306,13 @@ nvme_attach(struct nvme_softc *sc)
 
 	cap = nvme_read8(sc, NVME_CAP);
 	dstrd = NVME_CAP_DSTRD(cap);
-	if (NVME_CAP_MPSMIN(cap) > mps)
-		mps = NVME_CAP_MPSMIN(cap);
-	else if (NVME_CAP_MPSMAX(cap) < mps)
+	if (NVME_CAP_MPSMIN(cap) > PAGE_SHIFT) {
+		printf("%s: NVMe minimum page size %u "
+		    "is greater than CPU page size %u\n", DEVNAME(sc),
+		    1 << NVME_CAP_MPSMIN(cap), 1 << PAGE_SHIFT);
+		return (1);
+	}
+	if (NVME_CAP_MPSMAX(cap) < mps)
 		mps = NVME_CAP_MPSMAX(cap);
 
 	sc->sc_rdy_to = NVME_CAP_TO(cap);
