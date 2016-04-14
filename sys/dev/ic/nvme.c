@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.43 2016/04/14 06:23:20 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.44 2016/04/14 09:07:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -376,7 +376,7 @@ nvme_attach(struct nvme_softc *sc)
 	sc->sc_link.adapter_buswidth = sc->sc_nn;
 	sc->sc_link.luns = 1;
 	sc->sc_link.adapter_target = sc->sc_nn;
-	sc->sc_link.openings = 1; /* XXX */
+	sc->sc_link.openings = 64;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	memset(&saa, 0, sizeof(saa));
