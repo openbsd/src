@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.154 2016/01/02 10:39:19 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.155 2016/04/14 17:05:32 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -593,6 +593,7 @@ int		 fillword(int, int);
 int		 setfillcol(int, int);
 int		 markpara(int, int);
 int		 transposepara(int, int);
+int		 sentencespace(int, int);
 
 /* word.c X */
 int		 backword(int, int);
@@ -734,6 +735,7 @@ extern int		 defb_nmodes;
 extern int		 defb_flag;
 extern int		 doaudiblebell;
 extern int		 dovisiblebell;
+extern int		 dblspace;
 extern char	 	 cinfo[];
 extern char		*keystrings[];
 extern char		 pat[NPAT];

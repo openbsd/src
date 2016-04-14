@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.43 2016/04/12 06:20:50 lum Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.44 2016/04/14 17:05:32 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -208,12 +208,12 @@ fillpara(int f, int n)
 			 * behave the same way if a ')' is preceded by a
 			 * [.?!] and followed by a doublespace.
 			 */
-			if (!eopflag && ((eolflag ||
+			if (dblspace && (!eopflag && ((eolflag ||
 			    curwp->w_doto == llength(curwp->w_dotp) ||
 			    (c = lgetc(curwp->w_dotp, curwp->w_doto)) == ' '
 			    || c == '\t') && (ISEOSP(wbuf[wordlen - 1]) ||
 			    (wbuf[wordlen - 1] == ')' && wordlen >= 2 &&
-			    ISEOSP(wbuf[wordlen - 2]))) &&
+			    ISEOSP(wbuf[wordlen - 2])))) &&
 			    wordlen < MAXWORD - 1))
 				wbuf[wordlen++] = ' ';
 
@@ -480,5 +480,16 @@ setfillcol(int f, int n)
 		fillcol = nfill;
 		ewprintf("Fill column set to %d", fillcol);
 	}
+	return (TRUE);
+}
+
+int
+sentencespace(int f, int n)
+{
+	if (f & FFARG)
+		dblspace = n > 1;
+	else
+		dblspace = !dblspace;
+
 	return (TRUE);
 }

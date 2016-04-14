@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.103 2016/03/17 21:56:12 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.104 2016/04/14 17:05:32 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: March 17 2016 $
+.Dd $Mdocdate: April 14 2016 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -838,6 +838,10 @@ If found, dot gets moved to just after the matched
 characters, if not found, print a message.
 .It self-insert-command
 Insert a character.
+.It sentence-end-double-space
+Toggle double or single spaces for end of sentences.
+Double is the default.
+Currently only affects fill-paragraph.
 .It set-case-fold-search
 Set case-fold searching, causing case not to matter
 in regular expression searches.

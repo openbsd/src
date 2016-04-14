@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.81 2015/12/24 09:07:47 lum Exp $	*/
+/*	$OpenBSD: main.c,v 1.82 2016/04/14 17:05:32 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -27,6 +27,7 @@ int		 curgoal;			/* goal column		*/
 int		 startrow;			/* row to start		*/
 int		 doaudiblebell;			/* audible bell toggle	*/
 int		 dovisiblebell;			/* visible bell toggle	*/
+int		 dblspace;			/* sentence end #spaces	*/
 struct buffer	*curbp;				/* current buffer	*/
 struct buffer	*bheadp;			/* BUFFER list head	*/
 struct mgwin	*curwp;				/* current window	*/
@@ -109,6 +110,7 @@ main(int argc, char **argv)
 	edinit(bp);		/* Buffers, windows.		*/
 	ttykeymapinit();	/* Symbols, bindings.		*/
 	bellinit();		/* Audible and visible bell.	*/
+	dblspace = 1;		/* two spaces for sentence end. */
 
 	/*
 	 * doing update() before reading files causes the error messages from
