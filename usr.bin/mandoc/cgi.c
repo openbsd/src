@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.60 2016/04/14 20:38:50 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.61 2016/04/14 23:48:06 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@usta.de>
@@ -814,12 +814,8 @@ format(const struct req *req, const char *file)
 	memset(&conf, 0, sizeof(conf));
 	conf.fragment = 1;
 	usepath = strcmp(req->q.manpath, req->p[0]);
-	mandoc_asprintf(&conf.man, "/%s?query=%%N&sec=%%S%s%s%s%s",
-	    scriptname,
-	    req->q.arch	? "&arch="       : "",
-	    req->q.arch	? req->q.arch    : "",
-	    usepath	? "&manpath="    : "",
-	    usepath	? req->q.manpath : "");
+	mandoc_asprintf(&conf.man, "/%s%s%%N.%%S",
+	    usepath ? req->q.manpath : "", usepath ? "/" : "");
 
 	mparse_result(mp, &man, NULL);
 	if (man == NULL) {
