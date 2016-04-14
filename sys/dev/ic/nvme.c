@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.44 2016/04/14 09:07:30 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.45 2016/04/14 10:26:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -98,6 +98,11 @@ void	nvme_scsi_wr_fill(struct nvme_softc *, struct nvme_ccb *, void *);
 void	nvme_scsi_io_fill(struct nvme_softc *, struct nvme_ccb *,
 	    struct nvme_sqe_io *);
 void	nvme_scsi_io_done(struct nvme_softc *, struct nvme_ccb *,
+	    struct nvme_cqe *);
+
+void	nvme_scsi_sync(struct scsi_xfer *);
+void	nvme_scsi_sync_fill(struct nvme_softc *, struct nvme_ccb *, void *);
+void	nvme_scsi_sync_done(struct nvme_softc *, struct nvme_ccb *,
 	    struct nvme_cqe *);
 
 void	nvme_scsi_inq(struct scsi_xfer *);
@@ -466,6 +471,10 @@ nvme_scsi_cmd(struct scsi_xfer *xs)
 		nvme_scsi_io(xs, nvme_scsi_wr_fill);
 		return;
 
+	case SYNCHRONIZE_CACHE:
+		nvme_scsi_sync(xs);
+		return;
+
 	case INQUIRY:
 		nvme_scsi_inq(xs);
 		return;
@@ -608,6 +617,51 @@ nvme_scsi_io_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
 	bus_dmamap_unload(sc->sc_dmat, dmap);
+
+	flags = lemtoh16(&cqe->flags);
+
+	xs->error = (NVME_CQE_SC(flags) == NVME_CQE_SC_SUCCESS) ?
+	    XS_NOERROR : XS_DRIVER_STUFFUP;
+	xs->status = SCSI_OK;
+	xs->resid = 0;
+	scsi_done(xs);
+}
+
+void
+nvme_scsi_sync(struct scsi_xfer *xs)
+{
+	struct scsi_link *link = xs->sc_link;
+	struct nvme_softc *sc = link->adapter_softc;
+	struct nvme_ccb *ccb = xs->io;
+
+	ccb->ccb_done = nvme_scsi_sync_done;
+	ccb->ccb_cookie = xs;
+
+	if (ISSET(xs->flags, SCSI_POLL)) {
+		nvme_poll(sc, sc->sc_q, ccb, nvme_scsi_sync_fill);
+		return;
+	}
+
+	nvme_q_submit(sc, sc->sc_q, ccb, nvme_scsi_sync_fill);
+}
+
+void
+nvme_scsi_sync_fill(struct nvme_softc *sc, struct nvme_ccb *ccb, void *slot)
+{
+	struct nvme_sqe *sqe = slot;
+	struct scsi_xfer *xs = ccb->ccb_cookie;
+	struct scsi_link *link = xs->sc_link;
+
+	sqe->opcode = NVM_CMD_FLUSH;
+	htolem32(&sqe->nsid, link->target + 1);
+}
+
+void
+nvme_scsi_sync_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
+    struct nvme_cqe *cqe)
+{
+	struct scsi_xfer *xs = ccb->ccb_cookie;
+	u_int16_t flags;
 
 	flags = lemtoh16(&cqe->flags);
 
