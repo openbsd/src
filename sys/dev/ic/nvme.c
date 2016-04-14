@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.40 2016/04/14 06:16:36 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.41 2016/04/14 06:17:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -581,6 +581,7 @@ nvme_scsi_io_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
 
 	xs->error = (NVME_CQE_SC(flags) == NVME_CQE_SC_SUCCESS) ?
 	    XS_NOERROR : XS_DRIVER_STUFFUP;
+	xs->status = SCSI_OK;
 	xs->resid = 0;
 	scsi_done(xs);
 }
