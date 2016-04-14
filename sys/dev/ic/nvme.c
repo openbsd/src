@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.33 2016/04/13 13:39:16 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.34 2016/04/14 00:12:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -57,7 +57,7 @@ void *	nvme_ccb_get(void *);
 void	nvme_ccb_put(void *, void *);
 
 int	nvme_poll(struct nvme_softc *, struct nvme_queue *, struct nvme_ccb *,
-	    void (*fill)(struct nvme_softc *, struct nvme_ccb *, void *));
+	    void (*)(struct nvme_softc *, struct nvme_ccb *, void *));
 void	nvme_poll_fill(struct nvme_softc *, struct nvme_ccb *, void *);
 void	nvme_poll_done(struct nvme_softc *, struct nvme_ccb *,
 	    struct nvme_cqe *);
