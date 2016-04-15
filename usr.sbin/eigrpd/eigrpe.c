@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.16 2016/04/15 13:10:56 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.17 2016/04/15 13:21:45 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -84,39 +84,39 @@ eigrpe(struct eigrpd_conf *xconf, int pipe_parent2eigrpe[2],
 	}
 
 	/* create eigrpd control socket outside chroot */
-	if (control_init(xconf->csock) == -1)
+	if (control_init(global.csock) == -1)
 		fatalx("control socket setup failed");
 
 	/* create the raw ipv4 socket */
-	if ((xconf->eigrp_socket_v4 = socket(AF_INET,
+	if ((global.eigrp_socket_v4 = socket(AF_INET,
 	    SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK, IPPROTO_EIGRP)) == -1)
 		fatal("error creating raw ipv4 socket");
 
 	/* set some defaults */
-	if (if_set_ipv4_mcast_ttl(xconf->eigrp_socket_v4, EIGRP_IP_TTL) == -1)
+	if (if_set_ipv4_mcast_ttl(global.eigrp_socket_v4, EIGRP_IP_TTL) == -1)
 		fatal("if_set_ipv4_mcast_ttl");
-	if (if_set_ipv4_mcast_loop(xconf->eigrp_socket_v4) == -1)
+	if (if_set_ipv4_mcast_loop(global.eigrp_socket_v4) == -1)
 		fatal("if_set_ipv4_mcast_loop");
-	if (if_set_ipv4_recvif(xconf->eigrp_socket_v4, 1) == -1)
+	if (if_set_ipv4_recvif(global.eigrp_socket_v4, 1) == -1)
 		fatal("if_set_ipv4_recvif");
-	if (if_set_ipv4_hdrincl(xconf->eigrp_socket_v4) == -1)
+	if (if_set_ipv4_hdrincl(global.eigrp_socket_v4) == -1)
 		fatal("if_set_ipv4_hdrincl");
-	if_set_sockbuf(xconf->eigrp_socket_v4);
+	if_set_sockbuf(global.eigrp_socket_v4);
 
 	/* create the raw ipv6 socket */
-	if ((xconf->eigrp_socket_v6 = socket(AF_INET6,
+	if ((global.eigrp_socket_v6 = socket(AF_INET6,
 	    SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK, IPPROTO_EIGRP)) == -1)
 		fatal("error creating raw ipv6 socket");
 
 	/* set some defaults */
-	if (if_set_ipv6_mcast_loop(xconf->eigrp_socket_v6) == -1)
+	if (if_set_ipv6_mcast_loop(global.eigrp_socket_v6) == -1)
 		fatal("if_set_ipv6_mcast_loop");
-	if (if_set_ipv6_pktinfo(xconf->eigrp_socket_v6, 1) == -1)
+	if (if_set_ipv6_pktinfo(global.eigrp_socket_v6, 1) == -1)
 		fatal("if_set_ipv6_pktinfo");
-	if (if_set_ipv6_dscp(xconf->eigrp_socket_v6,
+	if (if_set_ipv6_dscp(global.eigrp_socket_v6,
 	    IPTOS_PREC_NETCONTROL) == -1)
 		fatal("if_set_ipv6_dscp");
-	if_set_sockbuf(xconf->eigrp_socket_v6);
+	if_set_sockbuf(global.eigrp_socket_v6);
 
 	econf = xconf;
 
@@ -171,11 +171,11 @@ eigrpe(struct eigrpd_conf *xconf, int pipe_parent2eigrpe[2],
 	    iev_main->handler, iev_main);
 	event_add(&iev_main->ev, NULL);
 
-	event_set(&ev4, econf->eigrp_socket_v4, EV_READ|EV_PERSIST,
+	event_set(&ev4, global.eigrp_socket_v4, EV_READ|EV_PERSIST,
 	    recv_packet_v4, econf);
 	event_add(&ev4, NULL);
 
-	event_set(&ev6, econf->eigrp_socket_v6, EV_READ|EV_PERSIST,
+	event_set(&ev6, global.eigrp_socket_v6, EV_READ|EV_PERSIST,
 	    recv_packet_v6, econf);
 	event_add(&ev6, NULL);
 
@@ -203,14 +203,14 @@ eigrpe(struct eigrpd_conf *xconf, int pipe_parent2eigrpe[2],
 void
 eigrpe_shutdown(void)
 {
-	control_cleanup(econf->csock);
+	control_cleanup(global.csock);
 
 	config_clear(econf);
 
 	event_del(&ev4);
 	event_del(&ev6);
-	close(econf->eigrp_socket_v4);
-	close(econf->eigrp_socket_v6);
+	close(global.eigrp_socket_v4);
+	close(global.eigrp_socket_v6);
 
 	/* clean up */
 	msgbuf_write(&iev_rde->ibuf.w);

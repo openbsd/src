@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.10 2016/04/15 13:18:38 renato Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.11 2016/04/15 13:21:45 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -112,7 +112,7 @@ usage(void)
 	exit(1);
 }
 
-int	cmd_opts;
+struct eigrpd_global global;
 
 int
 main(int argc, char *argv[])
@@ -146,15 +146,15 @@ main(int argc, char *argv[])
 			conffile = optarg;
 			break;
 		case 'n':
-			cmd_opts |= EIGRPD_OPT_NOACTION;
+			global.cmd_opts |= EIGRPD_OPT_NOACTION;
 			break;
 		case 's':
 			sockname = optarg;
 			break;
 		case 'v':
-			if (cmd_opts & EIGRPD_OPT_VERBOSE)
-				cmd_opts |= EIGRPD_OPT_VERBOSE2;
-			cmd_opts |= EIGRPD_OPT_VERBOSE;
+			if (global.cmd_opts & EIGRPD_OPT_VERBOSE)
+				global.cmd_opts |= EIGRPD_OPT_VERBOSE2;
+			global.cmd_opts |= EIGRPD_OPT_VERBOSE;
 			break;
 		default:
 			usage();
@@ -186,10 +186,10 @@ main(int argc, char *argv[])
 		kif_clear();
 		exit(1);
 	}
-	eigrpd_conf->csock = sockname;
+	global.csock = sockname;
 
-	if (cmd_opts & EIGRPD_OPT_NOACTION) {
-		if (cmd_opts & EIGRPD_OPT_VERBOSE)
+	if (global.cmd_opts & EIGRPD_OPT_NOACTION) {
+		if (global.cmd_opts & EIGRPD_OPT_VERBOSE)
 			print_config(eigrpd_conf);
 		else
 			fprintf(stderr, "configuration OK\n");
@@ -206,7 +206,7 @@ main(int argc, char *argv[])
 		errx(1, "unknown user %s", EIGRPD_USER);
 
 	log_init(debug);
-	log_verbose(cmd_opts & EIGRPD_OPT_VERBOSE);
+	log_verbose(global.cmd_opts & EIGRPD_OPT_VERBOSE);
 
 	if (!debug)
 		daemon(1, 0);

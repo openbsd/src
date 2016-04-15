@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.12 2016/04/15 13:18:38 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.13 2016/04/15 13:21:45 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -310,22 +310,25 @@ enum {
 
 struct eigrpd_conf {
 	struct in_addr		 rtr_id;
-	int			 flags;
-#define	EIGRPD_FLAG_NO_FIB_UPDATE 0x0001
-
-	time_t			 uptime;
-	int			 eigrp_socket_v4;
-	int			 eigrp_socket_v6;
 	unsigned int		 rdomain;
 	uint8_t			 fib_priority_internal;
 	uint8_t			 fib_priority_external;
 	uint8_t			 fib_priority_summary;
 	TAILQ_HEAD(, iface)	 iface_list;
 	TAILQ_HEAD(, eigrp)	 instances;
+	int			 flags;
+#define	EIGRPD_FLAG_NO_FIB_UPDATE 0x0001
+};
+
+struct eigrpd_global {
+	int			 cmd_opts;
+	time_t			 uptime;
+	int			 eigrp_socket_v4;
+	int			 eigrp_socket_v6;
 	char			*csock;
 };
 
-extern int cmd_opts;
+extern struct eigrpd_global global;
 
 /* kroute */
 struct kroute {

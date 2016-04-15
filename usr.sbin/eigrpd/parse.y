@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2016/04/15 13:18:38 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.12 2016/04/15 13:21:45 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -197,7 +197,7 @@ eigrp_af	: IPV4	{ $$ = AF_INET; }
 		;
 
 varset		: STRING '=' string {
-			if (cmd_opts & EIGRPD_OPT_VERBOSE)
+			if (global.cmd_opts & EIGRPD_OPT_VERBOSE)
 				printf("%s = \"%s\"\n", $1, $3);
 			if (symset($1, $3, 0) == -1)
 				fatal("cannot store variable");
@@ -959,7 +959,8 @@ parse_config(char *filename)
 	defs->bandwidth = DEFAULT_BANDWIDTH;
 	defs->splithorizon = 1;
 
-	if ((file = pushfile(filename, !(cmd_opts & EIGRPD_OPT_NOACTION))) == NULL) {
+	if ((file = pushfile(filename,
+	    !(global.cmd_opts & EIGRPD_OPT_NOACTION))) == NULL) {
 		free(conf);
 		return (NULL);
 	}
@@ -975,7 +976,7 @@ parse_config(char *filename)
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
 		next = TAILQ_NEXT(sym, entry);
-		if ((cmd_opts & EIGRPD_OPT_VERBOSE2) && !sym->used)
+		if ((global.cmd_opts & EIGRPD_OPT_VERBOSE2) && !sym->used)
 			fprintf(stderr, "warning: macro '%s' not "
 			    "used\n", sym->nam);
 		if (!sym->persist) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.11 2016/02/21 18:56:49 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.12 2016/04/15 13:21:45 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -146,7 +146,7 @@ rde(struct eigrpd_conf *xconf, int pipe_parent2rde[2], int pipe_eigrpe2rde[2],
 	event_add(&iev_main->ev, NULL);
 
 	gettimeofday(&now, NULL);
-	rdeconf->uptime = now.tv_sec;
+	global.uptime = now.tv_sec;
 
 	TAILQ_FOREACH(eigrp, &rdeconf->instances, entry)
 		rde_instance_init(eigrp);
