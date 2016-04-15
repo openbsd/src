@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.160 2016/03/29 02:49:57 jsg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.161 2016/04/15 05:52:13 jsg Exp $
 
 machine		amd64
 maxusers	4
@@ -158,6 +158,7 @@ siop*		at pci?			# NCR 538XX SCSI controllers(new)
 adw*		at pci?			# AdvanSys ULTRA WIDE SCSI
 pcscp*		at pci?			# AMD 53c974 PCscsi-PCI SCSI
 vmwpvs*		at pci?			# VMware ParaVirtual SCSI
+nvme*		at pci?			# NVMe controllers
 softraid0	at root
 
 scsibus*	at scsi?

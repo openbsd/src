@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.415 2016/03/28 17:54:37 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.416 2016/04/15 05:52:13 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -388,6 +388,7 @@ adw*	at pci?				# AdvanSys ULTRA WIDE SCSI
 pcscp*	at pci?				# AMD 53c974 PCscsi-PCI SCSI
 #trm*	at pci?				# Tekram DC-3x5U SCSI Controllers
 vmwpvs*	at pci?				# VMware ParaVirtual SCSI
+nvme*	at pci?				# NVMe controllers
 
 scsibus* at scsi?
 sd*	at scsibus?			# SCSI disk drives
