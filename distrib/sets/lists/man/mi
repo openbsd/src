@@ -1551,6 +1551,7 @@
 ./usr/share/man/man4/nsphyter.4
 ./usr/share/man/man4/null.4
 ./usr/share/man/man4/nviic.4
+./usr/share/man/man4/nvme.4
 ./usr/share/man/man4/nvt.4
 ./usr/share/man/man4/oce.4
 ./usr/share/man/man4/octeon
