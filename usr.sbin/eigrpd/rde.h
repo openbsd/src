@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.7 2016/04/15 13:10:56 renato Exp $ */
+/*	$OpenBSD: rde.h,v 1.8 2016/04/15 13:34:08 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -25,8 +25,6 @@
 #include <sys/queue.h>
 #include <event.h>
 #include <limits.h>
-
-#define min(x,y) ((x) <= (y) ? (x) : (y))
 
 /* just the info RDE needs */
 struct rde_nbr {

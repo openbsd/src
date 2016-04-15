@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.13 2016/04/15 13:21:45 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.14 2016/04/15 13:34:08 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -432,6 +432,8 @@ struct ctl_stats {
 	uint16_t		 as;
 	struct eigrp_stats	 stats;
 };
+
+#define min(x,y) ((x) <= (y) ? (x) : (y))
 
 /* parse.y */
 struct eigrpd_conf	*parse_config(char *);
