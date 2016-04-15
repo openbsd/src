@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.70 2016/04/13 11:41:15 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.71 2016/04/15 05:05:21 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -281,7 +281,6 @@ int		niq_enlist(struct niqueue *, struct mbuf_list *);
 #define niq_dequeue(_q)			mq_dequeue(&(_q)->ni_q)
 #define niq_dechain(_q)			mq_dechain(&(_q)->ni_q)
 #define niq_delist(_q, _ml)		mq_delist(&(_q)->ni_q, (_ml))
-#define niq_filter(_q, _f, _c)		mq_filter(&(_q)->ni_q, (_f), (_c))
 #define niq_len(_q)			mq_len(&(_q)->ni_q)
 #define niq_drops(_q)			mq_drops(&(_q)->ni_q)
 #define sysctl_niq(_n, _l, _op, _olp, _np, _nl, _niq) \

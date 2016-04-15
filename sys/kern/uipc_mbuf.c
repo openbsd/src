@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.223 2016/04/08 03:13:38 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.224 2016/04/15 05:05:21 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1396,35 +1396,6 @@ ml_dechain(struct mbuf_list *ml)
 	return (m0);
 }
 
-struct mbuf *
-ml_filter(struct mbuf_list *ml,
-    int (*filter)(void *, const struct mbuf *), void *ctx)
-{
-	struct mbuf_list matches = MBUF_LIST_INITIALIZER();
-	struct mbuf *m, *n;
-	struct mbuf **mp;
-
-	mp = &ml->ml_head;
-
-	for (m = ml->ml_head; m != NULL; m = n) {
-		n = m->m_nextpkt;
-		if ((*filter)(ctx, m)) {
-			*mp = n;
-			ml_enqueue(&matches, m);
-		} else {
-			mp = &m->m_nextpkt;
-			ml->ml_tail = m;
-		}
-	}
-
-	/* fixup ml */
-	if (ml->ml_head == NULL)
-		ml->ml_tail = NULL;
-	ml->ml_len -= ml_len(&matches);
-
-	return (matches.ml_head); /* ml_dechain */
-}
-
 unsigned int
 ml_purge(struct mbuf_list *ml)
 {
@@ -1525,19 +1496,6 @@ mq_dechain(struct mbuf_queue *mq)
 
 	mtx_enter(&mq->mq_mtx);
 	m0 = ml_dechain(&mq->mq_list);
-	mtx_leave(&mq->mq_mtx);
-
-	return (m0);
-}
-
-struct mbuf *
-mq_filter(struct mbuf_queue *mq,
-    int (*filter)(void *, const struct mbuf *), void *ctx)
-{
-	struct mbuf *m0;
-
-	mtx_enter(&mq->mq_mtx);
-	m0 = ml_filter(&mq->mq_list, filter, ctx);
 	mtx_leave(&mq->mq_mtx);
 
 	return (m0);

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ml_init.9,v 1.12 2015/11/24 14:56:10 jmc Exp $
+.\"     $OpenBSD: ml_init.9,v 1.13 2016/04/15 05:05:21 dlg Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 24 2015 $
+.Dd $Mdocdate: April 15 2016 $
 .Dt ML_INIT 9
 .Os
 .Sh NAME
@@ -23,7 +23,6 @@
 .Nm ml_dequeue ,
 .Nm ml_enlist ,
 .Nm ml_dechain ,
-.Nm ml_filter ,
 .Nm ml_len ,
 .Nm ml_empty ,
 .Nm ml_purge ,
@@ -44,12 +43,6 @@
 .Fn ml_enlist "struct mbuf_list *ml" "struct mbuf_list *src"
 .Ft struct mbuf *
 .Fn ml_dechain "struct mbuf_list *ml"
-.Ft struct mbuf *
-.Fo ml_filter
-.Fa "struct mbuf_list *ml"
-.Fa "int (*filter)(void *, struct mbuf *)"
-.Fa "void *context"
-.Fc
 .Ft unsigned int
 .Fn ml_len "struct mbuf_list *ml"
 .Ft int
@@ -102,25 +95,6 @@ mbuf list.
 Dequeues all mbufs from the
 .Fa ml
 mbuf list.
-.It Fo ml_filter
-.Fa "struct mbuf_list *ml"
-.Fa "int (*filter)(void *, struct mbuf *)"
-.Fa "void *context"
-.Fc
-Iterates over the mbufs on the
-.Fa ml
-mbuf list, passing each of them to the
-.Fa filter
-function.
-If the
-.Fa filter
-returns non-zero, the packet is removed from the
-.Fa ml
-mbuf list to be returned as part of an mbuf chain by
-.Fn ml_filter .
-.Fa context
-is passed as the first argument to each call of
-.Fa filter .
 .It Fn ml_len "struct mbuf_list *ml"
 Return the number of mbufs on the
 .Fa ml
@@ -175,13 +149,6 @@ is returned.
 returns all the mbufs that were on the list via
 a pointer to an mbuf with the chain accessible via m_nextpkt members.
 If the list was empty,
-.Dv NULL
-is returned.
-.Pp
-.Fn ml_filter
-returns the mbufs that were successfully matched by the filter
-function on the list via a pointer to a chain of mbufs.
-If no packets matched the filter,
 .Dv NULL
 is returned.
 .Pp
