@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.11 2016/04/15 13:10:56 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.12 2016/04/15 13:18:38 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -36,6 +36,10 @@
 #define CONF_FILE		"/etc/eigrpd.conf"
 #define	EIGRPD_SOCKET		"/var/run/eigrpd.sock"
 #define EIGRPD_USER		"_eigrpd"
+
+#define EIGRPD_OPT_VERBOSE	0x00000001
+#define EIGRPD_OPT_VERBOSE2	0x00000002
+#define EIGRPD_OPT_NOACTION	0x00000004
 
 #define NBR_IDSELF		1
 #define NBR_CNTSTART		(NBR_IDSELF + 1)
@@ -306,12 +310,6 @@ enum {
 
 struct eigrpd_conf {
 	struct in_addr		 rtr_id;
-
-	uint32_t		 opts;
-#define EIGRPD_OPT_VERBOSE	0x00000001
-#define EIGRPD_OPT_VERBOSE2	0x00000002
-#define EIGRPD_OPT_NOACTION	0x00000004
-
 	int			 flags;
 #define	EIGRPD_FLAG_NO_FIB_UPDATE 0x0001
 
@@ -326,6 +324,8 @@ struct eigrpd_conf {
 	TAILQ_HEAD(, eigrp)	 instances;
 	char			*csock;
 };
+
+extern int cmd_opts;
 
 /* kroute */
 struct kroute {
@@ -431,7 +431,7 @@ struct ctl_stats {
 };
 
 /* parse.y */
-struct eigrpd_conf	*parse_config(char *, int);
+struct eigrpd_conf	*parse_config(char *);
 int			 cmdline_symset(char *);
 
 /* in_cksum.c */
