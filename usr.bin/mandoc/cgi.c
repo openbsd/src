@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.65 2016/04/15 01:33:48 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.66 2016/04/15 15:13:02 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@usta.de>
@@ -1083,7 +1083,7 @@ main(void)
 static void
 path_parse(struct req *req, const char *path)
 {
-	int	 dir_done;
+	char	*dir;
 
 	req->isquery = 0;
 	req->q.equal = 1;
@@ -1113,23 +1113,19 @@ path_parse(struct req *req, const char *path)
 	req->q.query = mandoc_strdup(req->q.query);
 
 	/* Optional architecture. */
-	dir_done = 0;
-	for (;;) {
-		if ((req->q.arch = strrchr(req->q.manpath, '/')) == NULL)
-			break;
-		*req->q.arch++ = '\0';
-		if (dir_done || strncmp(req->q.arch, "man", 3)) {
-			req->q.arch = mandoc_strdup(req->q.arch);
-			break;
-		}
+	dir = strrchr(req->q.manpath, '/');
+	if (dir != NULL && strncmp(dir + 1, "man", 3) != 0) {
+		*dir++ = '\0';
+		req->q.arch = mandoc_strdup(dir);
+		dir = strrchr(req->q.manpath, '/');
+	} else
+		req->q.arch = NULL;
 
-		/* Optional directory name. */
-		req->q.arch += 3;
-		if (*req->q.arch != '\0') {
-			free(req->q.sec);
-			req->q.sec = mandoc_strdup(req->q.arch);
-		}
-		dir_done = 1;
+	/* Optional directory name. */
+	if (dir != NULL && strncmp(dir + 1, "man", 3) == 0) {
+		*dir++ = '\0';
+		free(req->q.sec);
+		req->q.sec = mandoc_strdup(dir + 3);
 	}
 }
 
