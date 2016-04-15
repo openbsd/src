@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.84 2016/03/04 02:30:36 djm Exp $
+#	$OpenBSD: Makefile,v 1.85 2016/04/15 00:31:10 djm Exp $
 
 .ifndef SKIP_UNIT
 SUBDIR=		unittests
@@ -72,7 +72,8 @@ LTESTS= 	connect \
 		keygen-knownhosts \
 		hostkey-rotate \
 		principals-command \
-		cert-file
+		cert-file \
+		cfginclude
 
 INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex conch-ciphers
 #INTEROP_TESTS+=ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
@@ -95,7 +96,7 @@ CLEANFILES+=	*.core authorized_keys_${USER} known_hosts pidfile \
 		sftp-server.sh sftp-server.log sftp.log kh.* hkr.* \
 		user_key* user_ca* host_* key.* agent-key.* ed25519-agent* \
 		known_hosts.* data modpipe ssh_proxy keys-command-args \
-		scp-ssh-wrapper.scp ssh_proxy_bak
+		scp-ssh-wrapper.scp ssh_proxy_bak ssh_config.*
 
 SUDO_CLEAN+=	/var/run/testdata_${USER} /var/run/keycommand_${USER}
 
