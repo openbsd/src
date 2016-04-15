@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.13 2016/04/15 13:27:58 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.14 2016/04/15 13:31:03 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -315,11 +315,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	}
 	if (!shut)
 		imsg_event_add(iev);
-	else {
-		/* this pipe is dead, so remove the event handler */
-		event_del(&iev->ev);
-		event_loopexit(NULL);
-	}
+	else
+		rde_shutdown();
 }
 
 /* ARGSUSED */
@@ -444,11 +441,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	}
 	if (!shut)
 		imsg_event_add(iev);
-	else {
-		/* this pipe is dead, so remove the event handler */
-		event_del(&iev->ev);
-		event_loopexit(NULL);
-	}
+	else
+		rde_shutdown();
 }
 
 void
