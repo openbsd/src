@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.17 2016/04/15 13:21:45 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.18 2016/04/15 13:27:58 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -358,6 +358,7 @@ eigrpe_dispatch_main(int fd, short event, void *bula)
 				fatal(NULL);
 			memcpy(niface, imsg.data, sizeof(struct iface));
 
+			TAILQ_INIT(&niface->ei_list);
 			TAILQ_INIT(&niface->addr_list);
 			TAILQ_INSERT_TAIL(&nconf->iface_list, niface, entry);
 			break;
