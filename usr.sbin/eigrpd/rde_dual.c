@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.25 2016/04/15 13:10:56 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.26 2016/04/15 13:15:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -608,7 +608,7 @@ rt_update_fib(struct rt_node *rn)
 			 * Only feasible successors and the successor itself
 			 * are elegible to be installed.
 			 */
-			if (route->rdistance > rn->successor.fdistance)
+			if (route->rdistance >= rn->successor.fdistance)
 				goto uninstall;
 
 			if (route->distance >
