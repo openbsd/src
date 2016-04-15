@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.62 2016/04/15 00:12:50 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.63 2016/04/15 00:36:18 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@usta.de>
@@ -1035,9 +1035,10 @@ main(void)
 	else if (*path == '/')
 		path++;
 
-	if (*path != '\0' && access(path, F_OK) == -1) {
+	if (*path != '\0') {
 		path_parse(&req, path);
-		path = "";
+		if (access(path, F_OK) == -1)
+			path = "";
 	} else if ((querystring = getenv("QUERY_STRING")) != NULL)
 		http_parse(&req, querystring);
 
