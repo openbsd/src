@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.36 2016/02/01 22:34:19 gsoares Exp $	*/
+/*	$OpenBSD: rm.c,v 1.37 2016/04/15 23:09:57 tedu Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -395,9 +395,17 @@ checkdot(char **argv)
 {
 	char *p, **save, **t;
 	int complained;
+	struct stat sb, root;
 
+	stat("/", &root);
 	complained = 0;
 	for (t = argv; *t;) {
+		if (lstat(*t, &sb) == 0 &&
+		    root.st_ino == sb.st_ino && root.st_dev == sb.st_dev) {
+			if (!complained++)
+				warnx("\"/\" may not be removed");
+			goto skip;
+		}
 		/* strip trailing slashes */
 		p = strrchr(*t, '\0');
 		while (--p > *t && *p == '/')
@@ -412,6 +420,7 @@ checkdot(char **argv)
 		if (ISDOT(p)) {
 			if (!complained++)
 				warnx("\".\" and \"..\" may not be removed");
+skip:
 			eval = 1;
 			for (save = t; (t[0] = t[1]) != NULL; ++t)
 				continue;
