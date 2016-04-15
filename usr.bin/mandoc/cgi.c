@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.64 2016/04/15 00:51:39 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.65 2016/04/15 01:33:48 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@usta.de>
@@ -339,14 +339,14 @@ resp_begin_html(int code, const char *msg)
 	resp_begin_http(code, msg);
 
 	printf("<!DOCTYPE html>\n"
-	       "<HTML>\n"
-	       "<HEAD>\n"
-	       "<META CHARSET=\"UTF-8\" />\n"
-	       "<LINK REL=\"stylesheet\" HREF=\"%s/mandoc.css\""
-	       " TYPE=\"text/css\" media=\"all\">\n"
-	       "<TITLE>%s</TITLE>\n"
-	       "</HEAD>\n"
-	       "<BODY>\n"
+	       "<html>\n"
+	       "<head>\n"
+	       "<meta charset=\"UTF-8\"/>\n"
+	       "<link rel=\"stylesheet\" href=\"%s/mandoc.css\""
+	       " type=\"text/css\" media=\"all\">\n"
+	       "<title>%s</title>\n"
+	       "</head>\n"
+	       "<body>\n"
 	       "<!-- Begin page content. //-->\n",
 	       CSS_DIR, CUSTOMIZE_TITLE);
 
@@ -359,8 +359,8 @@ resp_end_html(void)
 
 	resp_copy(MAN_DIR "/footer.html");
 
-	puts("</BODY>\n"
-	     "</HTML>");
+	puts("</body>\n"
+	     "</html>");
 }
 
 static void
@@ -369,93 +369,93 @@ resp_searchform(const struct req *req)
 	int		 i;
 
 	puts("<!-- Begin search form. //-->");
-	printf("<DIV ID=\"mancgi\">\n"
-	       "<FORM ACTION=\"/%s\" METHOD=\"get\">\n"
-	       "<FIELDSET>\n"
-	       "<LEGEND>Manual Page Search Parameters</LEGEND>\n",
+	printf("<div id=\"mancgi\">\n"
+	       "<form action=\"/%s\" method=\"get\">\n"
+	       "<fieldset>\n"
+	       "<legend>Manual Page Search Parameters</legend>\n",
 	       scriptname);
 
 	/* Write query input box. */
 
-	printf(	"<TABLE><TR><TD>\n"
-		"<INPUT TYPE=\"text\" NAME=\"query\" VALUE=\"");
+	printf(	"<table><tr><td>\n"
+		"<input type=\"text\" name=\"query\" value=\"");
 	if (NULL != req->q.query)
 		html_print(req->q.query);
-	puts("\" SIZE=\"40\">");
+	puts("\" size=\"40\">");
 
 	/* Write submission and reset buttons. */
 
-	printf(	"<INPUT TYPE=\"submit\" VALUE=\"Submit\">\n"
-		"<INPUT TYPE=\"reset\" VALUE=\"Reset\">\n");
+	printf(	"<input type=\"submit\" value=\"Submit\">\n"
+		"<input type=\"reset\" value=\"Reset\">\n");
 
 	/* Write show radio button */
 
-	printf(	"</TD><TD>\n"
-		"<INPUT TYPE=\"radio\" ");
+	printf(	"</td><td>\n"
+		"<input type=\"radio\" ");
 	if (req->q.equal)
-		printf("CHECKED=\"checked\" ");
-	printf(	"NAME=\"apropos\" ID=\"show\" VALUE=\"0\">\n"
-		"<LABEL FOR=\"show\">Show named manual page</LABEL>\n");
+		printf("checked=\"checked\" ");
+	printf(	"name=\"apropos\" id=\"show\" value=\"0\">\n"
+		"<label for=\"show\">Show named manual page</label>\n");
 
 	/* Write section selector. */
 
-	puts(	"</TD></TR><TR><TD>\n"
-		"<SELECT NAME=\"sec\">");
+	puts(	"</td></tr><tr><td>\n"
+		"<select name=\"sec\">");
 	for (i = 0; i < sec_MAX; i++) {
-		printf("<OPTION VALUE=\"%s\"", sec_numbers[i]);
+		printf("<option value=\"%s\"", sec_numbers[i]);
 		if (NULL != req->q.sec &&
 		    0 == strcmp(sec_numbers[i], req->q.sec))
-			printf(" SELECTED=\"selected\"");
-		printf(">%s</OPTION>\n", sec_names[i]);
+			printf(" selected=\"selected\"");
+		printf(">%s</option>\n", sec_names[i]);
 	}
-	puts("</SELECT>");
+	puts("</select>");
 
 	/* Write architecture selector. */
 
-	printf(	"<SELECT NAME=\"arch\">\n"
-		"<OPTION VALUE=\"default\"");
+	printf(	"<select name=\"arch\">\n"
+		"<option value=\"default\"");
 	if (NULL == req->q.arch)
-		printf(" SELECTED=\"selected\"");
-	puts(">All Architectures</OPTION>");
+		printf(" selected=\"selected\"");
+	puts(">All Architectures</option>");
 	for (i = 0; i < arch_MAX; i++) {
-		printf("<OPTION VALUE=\"%s\"", arch_names[i]);
+		printf("<option value=\"%s\"", arch_names[i]);
 		if (NULL != req->q.arch &&
 		    0 == strcmp(arch_names[i], req->q.arch))
-			printf(" SELECTED=\"selected\"");
-		printf(">%s</OPTION>\n", arch_names[i]);
+			printf(" selected=\"selected\"");
+		printf(">%s</option>\n", arch_names[i]);
 	}
-	puts("</SELECT>");
+	puts("</select>");
 
 	/* Write manpath selector. */
 
 	if (req->psz > 1) {
-		puts("<SELECT NAME=\"manpath\">");
+		puts("<select name=\"manpath\">");
 		for (i = 0; i < (int)req->psz; i++) {
-			printf("<OPTION ");
+			printf("<option ");
 			if (strcmp(req->q.manpath, req->p[i]) == 0)
-				printf("SELECTED=\"selected\" ");
-			printf("VALUE=\"");
+				printf("selected=\"selected\" ");
+			printf("value=\"");
 			html_print(req->p[i]);
 			printf("\">");
 			html_print(req->p[i]);
-			puts("</OPTION>");
+			puts("</option>");
 		}
-		puts("</SELECT>");
+		puts("</select>");
 	}
 
 	/* Write search radio button */
 
-	printf(	"</TD><TD>\n"
-		"<INPUT TYPE=\"radio\" ");
+	printf(	"</td><td>\n"
+		"<input type=\"radio\" ");
 	if (0 == req->q.equal)
-		printf("CHECKED=\"checked\" ");
-	printf(	"NAME=\"apropos\" ID=\"search\" VALUE=\"1\">\n"
-		"<LABEL FOR=\"search\">Search with apropos query</LABEL>\n");
+		printf("checked=\"checked\" ");
+	printf(	"name=\"apropos\" id=\"search\" value=\"1\">\n"
+		"<label for=\"search\">Search with apropos query</label>\n");
 
-	puts("</TD></TR></TABLE>\n"
-	     "</FIELDSET>\n"
-	     "</FORM>\n"
-	     "</DIV>");
+	puts("</td></tr></table>\n"
+	     "</fieldset>\n"
+	     "</form>\n"
+	     "</div>");
 	puts("<!-- End search form. //-->");
 }
 
@@ -505,13 +505,13 @@ pg_index(const struct req *req)
 
 	resp_begin_html(200, NULL);
 	resp_searchform(req);
-	printf("<P>\n"
+	printf("<p>\n"
 	       "This web interface is documented in the\n"
-	       "<A HREF=\"/%s%smandoc/man8/man.cgi.8\">man.cgi</A>\n"
+	       "<a href=\"/%s%smandoc/man8/man.cgi.8\">man.cgi</a>\n"
 	       "manual, and the\n"
-	       "<A HREF=\"/%s%smandoc/man1/apropos.1\">apropos</A>\n"
+	       "<a href=\"/%s%smandoc/man1/apropos.1\">apropos</a>\n"
 	       "manual explains the query syntax.\n"
-	       "</P>\n",
+	       "</p>\n",
 	       scriptname, *scriptname == '\0' ? "" : "/",
 	       scriptname, *scriptname == '\0' ? "" : "/");
 	resp_end_html();
@@ -522,9 +522,9 @@ pg_noresult(const struct req *req, const char *msg)
 {
 	resp_begin_html(200, NULL);
 	resp_searchform(req);
-	puts("<P>");
+	puts("<p>");
 	puts(msg);
-	puts("</P>");
+	puts("</p>");
 	resp_end_html();
 }
 
@@ -533,12 +533,12 @@ pg_error_badrequest(const char *msg)
 {
 
 	resp_begin_html(400, "Bad Request");
-	puts("<H1>Bad Request</H1>\n"
-	     "<P>\n");
+	puts("<h1>Bad Request</h1>\n"
+	     "<p>\n");
 	puts(msg);
 	printf("Try again from the\n"
-	       "<A HREF=\"/%s\">main page</A>.\n"
-	       "</P>", scriptname);
+	       "<a href=\"/%s\">main page</a>.\n"
+	       "</p>", scriptname);
 	resp_end_html();
 }
 
@@ -546,7 +546,7 @@ static void
 pg_error_internal(void)
 {
 	resp_begin_html(500, "Internal Server Error");
-	puts("<P>Internal Server Error</P>");
+	puts("<p>Internal Server Error</p>");
 	resp_end_html();
 }
 
@@ -588,27 +588,27 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 	resp_searchform(req);
 
 	if (sz > 1) {
-		puts("<DIV CLASS=\"results\">");
-		puts("<TABLE>");
+		puts("<div class=\"results\">");
+		puts("<table>");
 
 		for (i = 0; i < sz; i++) {
-			printf("<TR>\n"
-			       "<TD CLASS=\"title\">\n"
-			       "<A HREF=\"/%s%s%s/%s",
+			printf("<tr>\n"
+			       "<td class=\"title\">\n"
+			       "<a href=\"/%s%s%s/%s",
 			    scriptname, *scriptname == '\0' ? "" : "/",
 			    req->q.manpath, r[i].file);
 			printf("\">");
 			html_print(r[i].names);
-			printf("</A>\n"
-			       "</TD>\n"
-			       "<TD CLASS=\"desc\">");
+			printf("</a>\n"
+			       "</td>\n"
+			       "<td class=\"desc\">");
 			html_print(r[i].output);
-			puts("</TD>\n"
-			     "</TR>");
+			puts("</td>\n"
+			     "</tr>");
 		}
 
-		puts("</TABLE>\n"
-		     "</DIV>");
+		puts("</table>\n"
+		     "</div>");
 	}
 
 	/*
@@ -617,7 +617,7 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 	 */
 
 	if (req->q.equal || sz == 1) {
-		puts("<HR>");
+		puts("<hr>");
 		iuse = 0;
 		priouse = 20;
 		archpriouse = 3;
@@ -668,12 +668,12 @@ catman(const struct req *req, const char *file)
 	int		 italic, bold;
 
 	if ((f = fopen(file, "r")) == NULL) {
-		puts("<P>You specified an invalid manual file.</P>");
+		puts("<p>You specified an invalid manual file.</p>");
 		return;
 	}
 
-	puts("<DIV CLASS=\"catman\">\n"
-	     "<PRE>");
+	puts("<div class=\"catman\">\n"
+	     "<pre>");
 
 	p = NULL;
 	sz = 0;
@@ -699,9 +699,9 @@ catman(const struct req *req, const char *file)
 
 			if ('\b' != p[i + 1]) {
 				if (italic)
-					printf("</I>");
+					printf("</i>");
 				if (bold)
-					printf("</B>");
+					printf("</b>");
 				italic = bold = 0;
 				html_putchar(p[i]);
 				continue;
@@ -712,9 +712,9 @@ catman(const struct req *req, const char *file)
 
 			if ('_' == p[i]) {
 				if (bold)
-					printf("</B>");
+					printf("</b>");
 				if ( ! italic)
-					printf("<I>");
+					printf("<i>");
 				bold = 0;
 				italic = 1;
 				i += 2;
@@ -736,9 +736,9 @@ catman(const struct req *req, const char *file)
 					('*' == p[i] && '|' == p[i + 2]) ||
 					('|' == p[i] && '*' == p[i + 2]))  {
 				if (italic)
-					printf("</I>");
+					printf("</i>");
 				if (bold)
-					printf("</B>");
+					printf("</b>");
 				italic = bold = 0;
 				putchar('*');
 				i += 2;
@@ -750,9 +750,9 @@ catman(const struct req *req, const char *file)
 					('+' == p[i] && '|' == p[i + 1]) ||
 					('|' == p[i] && '+' == p[i + 1]))  {
 				if (italic)
-					printf("</I>");
+					printf("</i>");
 				if (bold)
-					printf("</B>");
+					printf("</b>");
 				italic = bold = 0;
 				putchar('+');
 				i += 2;
@@ -762,9 +762,9 @@ catman(const struct req *req, const char *file)
 			/* Bold mode. */
 
 			if (italic)
-				printf("</I>");
+				printf("</i>");
 			if ( ! bold)
-				printf("<B>");
+				printf("<b>");
 			bold = 1;
 			italic = 0;
 			i += 2;
@@ -777,9 +777,9 @@ catman(const struct req *req, const char *file)
 		 */
 
 		if (italic)
-			printf("</I>");
+			printf("</i>");
 		if (bold)
-			printf("</B>");
+			printf("</b>");
 
 		if (i == len - 1 && p[i] != '\n')
 			html_putchar(p[i]);
@@ -788,8 +788,8 @@ catman(const struct req *req, const char *file)
 	}
 	free(p);
 
-	puts("</PRE>\n"
-	     "</DIV>");
+	puts("</pre>\n"
+	     "</div>");
 
 	fclose(f);
 }
@@ -805,7 +805,7 @@ format(const struct req *req, const char *file)
 	int		 usepath;
 
 	if (-1 == (fd = open(file, O_RDONLY, 0))) {
-		puts("<P>You specified an invalid manual file.</P>");
+		puts("<p>You specified an invalid manual file.</p>");
 		return;
 	}
 
