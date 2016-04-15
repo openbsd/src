@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.61 2016/04/14 23:48:06 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.62 2016/04/15 00:12:50 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@usta.de>
@@ -586,34 +586,37 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 
 	resp_begin_html(200, NULL);
 	resp_searchform(req);
-	puts("<DIV CLASS=\"results\">");
-	puts("<TABLE>");
 
-	for (i = 0; i < sz; i++) {
-		printf("<TR>\n"
-		       "<TD CLASS=\"title\">\n"
-		       "<A HREF=\"/%s%s%s/%s",
-		    scriptname, *scriptname == '\0' ? "" : "/",
-		    req->q.manpath, r[i].file);
-		printf("\">");
-		html_print(r[i].names);
-		printf("</A>\n"
-		       "</TD>\n"
-		       "<TD CLASS=\"desc\">");
-		html_print(r[i].output);
-		puts("</TD>\n"
-		     "</TR>");
+	if (sz > 1) {
+		puts("<DIV CLASS=\"results\">");
+		puts("<TABLE>");
+
+		for (i = 0; i < sz; i++) {
+			printf("<TR>\n"
+			       "<TD CLASS=\"title\">\n"
+			       "<A HREF=\"/%s%s%s/%s",
+			    scriptname, *scriptname == '\0' ? "" : "/",
+			    req->q.manpath, r[i].file);
+			printf("\">");
+			html_print(r[i].names);
+			printf("</A>\n"
+			       "</TD>\n"
+			       "<TD CLASS=\"desc\">");
+			html_print(r[i].output);
+			puts("</TD>\n"
+			     "</TR>");
+		}
+
+		puts("</TABLE>\n"
+		     "</DIV>");
 	}
-
-	puts("</TABLE>\n"
-	     "</DIV>");
 
 	/*
 	 * In man(1) mode, show one of the pages
 	 * even if more than one is found.
 	 */
 
-	if (req->q.equal) {
+	if (req->q.equal || sz == 1) {
 		puts("<HR>");
 		iuse = 0;
 		priouse = 20;
