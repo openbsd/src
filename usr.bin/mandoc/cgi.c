@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.67 2016/04/15 16:42:39 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.68 2016/04/15 21:14:03 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@usta.de>
@@ -57,14 +57,12 @@ struct	req {
 	int		  isquery; /* QUERY_STRING used, not PATH_INFO */
 };
 
-static	void		 catman(const struct req *, const char *);
-static	void		 format(const struct req *, const char *);
 static	void		 html_print(const char *);
 static	void		 html_putchar(char);
 static	int		 http_decode(char *);
-static	void		 http_parse(struct req *, const char *);
-static	void		 pathgen(struct req *);
-static	void		 path_parse(struct req *req, const char *path);
+static	void		 parse_manpath_conf(struct req *);
+static	void		 parse_path_info(struct req *req, const char *path);
+static	void		 parse_query_string(struct req *, const char *);
 static	void		 pg_error_badrequest(const char *);
 static	void		 pg_error_internal(void);
 static	void		 pg_index(const struct req *);
@@ -75,8 +73,10 @@ static	void		 pg_searchres(const struct req *,
 static	void		 pg_show(struct req *, const char *);
 static	void		 resp_begin_html(int, const char *);
 static	void		 resp_begin_http(int, const char *);
+static	void		 resp_catman(const struct req *, const char *);
 static	void		 resp_copy(const char *);
 static	void		 resp_end_html(void);
+static	void		 resp_format(const struct req *, const char *);
 static	void		 resp_searchform(const struct req *);
 static	void		 resp_show(const struct req *, const char *);
 static	void		 set_query_attr(char **, char **);
@@ -183,7 +183,7 @@ set_query_attr(char **attr, char **val)
  * and store the values into the query structure.
  */
 static void
-http_parse(struct req *req, const char *qs)
+parse_query_string(struct req *req, const char *qs)
 {
 	char		*key, *val;
 	size_t		 keysz, valsz;
@@ -659,7 +659,7 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 }
 
 static void
-catman(const struct req *req, const char *file)
+resp_catman(const struct req *req, const char *file)
 {
 	FILE		*f;
 	char		*p;
@@ -796,7 +796,7 @@ catman(const struct req *req, const char *file)
 }
 
 static void
-format(const struct req *req, const char *file)
+resp_format(const struct req *req, const char *file)
 {
 	struct manoutput conf;
 	struct mparse	*mp;
@@ -854,9 +854,9 @@ resp_show(const struct req *req, const char *file)
 		file += 2;
 
 	if ('c' == *file)
-		catman(req, file);
+		resp_catman(req, file);
 	else
-		format(req, file);
+		resp_format(req, file);
 }
 
 static void
@@ -1023,7 +1023,7 @@ main(void)
 
 	memset(&req, 0, sizeof(struct req));
 	req.q.equal = 1;
-	pathgen(&req);
+	parse_manpath_conf(&req);
 
 	/* Parse the path info and the query string. */
 
@@ -1033,11 +1033,11 @@ main(void)
 		path++;
 
 	if (*path != '\0') {
-		path_parse(&req, path);
+		parse_path_info(&req, path);
 		if (access(path, F_OK) == -1)
 			path = "";
 	} else if ((querystring = getenv("QUERY_STRING")) != NULL)
-		http_parse(&req, querystring);
+		parse_query_string(&req, querystring);
 
 	/* Validate parsed data and add defaults. */
 
@@ -1078,7 +1078,7 @@ main(void)
  * If PATH_INFO is not a file name, translate it to a query.
  */
 static void
-path_parse(struct req *req, const char *path)
+parse_path_info(struct req *req, const char *path)
 {
 	char	*dir;
 
@@ -1130,7 +1130,7 @@ path_parse(struct req *req, const char *path)
  * Scan for indexable paths.
  */
 static void
-pathgen(struct req *req)
+parse_manpath_conf(struct req *req)
 {
 	FILE	*fp;
 	char	*dp;
