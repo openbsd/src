@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.968 2016/04/07 14:28:16 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.969 2016/04/15 02:54:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5517,7 +5517,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	}
 
 	if (r->rt == PF_DUPTO) {
-		if ((m0 = m_copym2(*m, 0, M_COPYALL, M_NOWAIT)) == NULL)
+		if ((m0 = m_dup_pkt(*m, max_linkhdr, M_NOWAIT)) == NULL)
 			return;
 	} else {
 		if ((r->rt == PF_REPLYTO) == (r->direction == dir))
@@ -5676,7 +5676,7 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	}
 
 	if (r->rt == PF_DUPTO) {
-		if ((m0 = m_copym2(*m, 0, M_COPYALL, M_NOWAIT)) == NULL)
+		if ((m0 = m_dup_pkt(*m, max_linkhdr, M_NOWAIT)) == NULL)
 			return;
 	} else {
 		if ((r->rt == PF_REPLYTO) == (r->direction == dir))
