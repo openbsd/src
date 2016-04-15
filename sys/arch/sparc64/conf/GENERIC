@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.302 2016/04/10 19:16:16 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.303 2016/04/15 01:40:25 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -126,6 +126,7 @@ pciide*	at jmb?
 ahci*	at pci? flags 0x0000	# AHCI SATA controllers
 				# flags 0x0001 to force SATA 1 (1.5Gb/s)
 sili*	at pci?			# Silicon Image 3124/3132/3531 SATA controllers
+nvme*	at pci?			# NVMe controllers
 
 # PCI crypto
 hifn*	at pci?			# Hifn 7751/7811/7951

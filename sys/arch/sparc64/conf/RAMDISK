@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.118 2015/07/17 22:52:29 tedu Exp $
+#	$OpenBSD: RAMDISK,v 1.119 2016/04/15 01:40:25 dlg Exp $
 
 machine		sparc64
 maxusers	4
@@ -168,6 +168,7 @@ jmb*		at pci?
 ahci*		at jmb?
 pciide*		at jmb?
 ahci*		at pci?
+nvme*		at pci?
 
 scsibus*	at scsi?
 sd*		at scsibus?		# SCSI disks
