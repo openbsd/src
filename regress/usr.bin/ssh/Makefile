@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.86 2016/04/15 00:48:01 djm Exp $
+#	$OpenBSD: Makefile,v 1.87 2016/04/15 02:55:53 djm Exp $
 
 .ifndef SKIP_UNIT
 SUBDIR=		unittests
@@ -7,10 +7,6 @@ SUBDIR+=	misc
 
 REGRESS_FAIL_EARLY=	yes
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12
-
-CLEANFILES+=	t2.out t6.out1 t6.out2 t7.out t7.out.pub copy.1 copy.2 \
-		t8.out t8.out.pub t9.out t9.out.pub t10.out t10.out.pub \
-		t12.out t12.out.pub
 
 LTESTS= 	connect \
 		proxy-connect \
