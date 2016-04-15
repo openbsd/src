@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.269 2016/03/29 10:34:42 sashan Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.270 2016/04/15 11:18:40 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1013,6 +1013,8 @@ int
 ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 {
 	struct ip *ip = mtod(m, struct ip *);
+	unsigned int rtableid = m->m_pkthdr.ph_rtableid;
+	struct rtentry *rt;
 	struct sockaddr_in ipaddr;
 	u_char *cp;
 	struct ip_timestamp ipt;
@@ -1108,19 +1110,31 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 				m->m_pkthdr.ph_rtableid))) == NULL)
 				ia = ifatoia(ifa_ifwithnet(sintosa(&ipaddr),
 				    m->m_pkthdr.ph_rtableid));
-			} else
+				if (ia == NULL) {
+					type = ICMP_UNREACH;
+					code = ICMP_UNREACH_SRCFAIL;
+					goto bad;
+				}
+				memcpy(cp + off, &ia->ia_addr.sin_addr,
+				    sizeof(struct in_addr));
+				cp[IPOPT_OFFSET] += sizeof(struct in_addr);
+			} else {
 				/* keep packet in the virtual instance */
-				ia = ip_rtaddr(ipaddr.sin_addr,
-				    m->m_pkthdr.ph_rtableid);
-			if (ia == NULL) {
-				type = ICMP_UNREACH;
-				code = ICMP_UNREACH_SRCFAIL;
-				goto bad;
+				rt = rtalloc(sintosa(&ipaddr), RT_RESOLVE,
+				    rtableid);
+				if (!rtisvalid(rt)) {
+					type = ICMP_UNREACH;
+					code = ICMP_UNREACH_SRCFAIL;
+					rtfree(rt);
+					goto bad;
+				}
+				ia = ifatoia(rt->rt_ifa);
+				memcpy(cp + off, &ia->ia_addr.sin_addr,
+				    sizeof(struct in_addr));
+				rtfree(rt);
+				cp[IPOPT_OFFSET] += sizeof(struct in_addr);
 			}
 			ip->ip_dst = ipaddr.sin_addr;
-			memcpy(cp + off, &ia->ia_addr.sin_addr,
-			    sizeof(struct in_addr));
-			cp[IPOPT_OFFSET] += sizeof(struct in_addr);
 			/*
 			 * Let ip_intr's mcast routing check handle mcast pkts
 			 */
@@ -1152,16 +1166,17 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 			 * use the incoming interface (should be same).
 			 * Again keep the packet inside the virtual instance.
 			 */
-			if ((ia = ifatoia(ifa_ifwithaddr(sintosa(&ipaddr),
-			    m->m_pkthdr.ph_rtableid))) == NULL &&
-			    (ia = ip_rtaddr(ipaddr.sin_addr,
-			    m->m_pkthdr.ph_rtableid)) == NULL) {
+			rt = rtalloc(sintosa(&ipaddr), RT_RESOLVE, rtableid);
+			if (!rtisvalid(rt)) {
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_HOST;
+				rtfree(rt);
 				goto bad;
 			}
+			ia = ifatoia(rt->rt_ifa);
 			memcpy(cp + off, &ia->ia_addr.sin_addr,
 			    sizeof(struct in_addr));
+			rtfree(rt);
 			cp[IPOPT_OFFSET] += sizeof(struct in_addr);
 			break;
 
@@ -1234,34 +1249,6 @@ bad:
 	icmp_error(m, type, code, 0, 0);
 	ipstat.ips_badoptions++;
 	return (1);
-}
-
-/*
- * Given address of next destination (final or next hop),
- * return internet address info of interface to be used to get there.
- */
-struct in_ifaddr *
-ip_rtaddr(struct in_addr dst, u_int rtableid)
-{
-	struct sockaddr_in *sin;
-
-	sin = satosin(&ipforward_rt.ro_dst);
-
-	if (ipforward_rt.ro_rt == 0 || dst.s_addr != sin->sin_addr.s_addr) {
-		if (ipforward_rt.ro_rt) {
-			rtfree(ipforward_rt.ro_rt);
-			ipforward_rt.ro_rt = NULL;
-		}
-		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_addr = dst;
-
-		ipforward_rt.ro_rt = rtalloc(&ipforward_rt.ro_dst,
-		    RT_RESOLVE, rtableid);
-	}
-	if (ipforward_rt.ro_rt == 0)
-		return (NULL);
-	return (ifatoia(ipforward_rt.ro_rt->rt_ifa));
 }
 
 /*
