@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2016/04/15 13:21:45 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.13 2016/04/15 13:24:52 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -1129,9 +1129,43 @@ conf_get_if(struct kif *kif)
 	return (e);
 }
 
+extern struct iface_id_head ifaces_by_id;
+RB_PROTOTYPE(iface_id_head, eigrp_iface, id_tree, iface_id_compare)
+
 void
 clear_config(struct eigrpd_conf *xconf)
 {
+	struct eigrp		*e;
+	struct redistribute	*r;
+	struct eigrp_iface	*i;
+	struct summary_addr	*s;
+
+	while ((e = TAILQ_FIRST(&xconf->instances)) != NULL) {
+		while (!SIMPLEQ_EMPTY(&e->redist_list)) {
+			r = SIMPLEQ_FIRST(&e->redist_list);
+			SIMPLEQ_REMOVE_HEAD(&e->redist_list, entry);
+			free(r);
+		}
+
+		while ((i = TAILQ_FIRST(&e->ei_list)) != NULL) {
+			RB_REMOVE(iface_id_head, &ifaces_by_id, i);
+			TAILQ_REMOVE(&e->ei_list, i, e_entry);
+			TAILQ_REMOVE(&e->ei_list, i, i_entry);
+			while ((s = TAILQ_FIRST(&i->summary_list)) != NULL) {
+				TAILQ_REMOVE(&i->summary_list, s, entry);
+				free(s);
+			}
+			if (TAILQ_EMPTY(&i->iface->ei_list)) {
+				TAILQ_REMOVE(&xconf->iface_list, i->iface, entry);
+				free(i->iface);
+			}
+			free(i);
+		}
+
+		TAILQ_REMOVE(&xconf->instances, e, entry);
+		free(e);
+	}
+
 	free(xconf);
 }
 
