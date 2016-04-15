@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.170 2016/04/12 14:33:27 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.171 2016/04/15 03:04:27 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -901,7 +901,7 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
 		struct ieee80211_node *ni1;
 
 		if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
-			m1 = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
+			m1 = m_dup_pkt(m, ETHER_ALIGN, M_DONTWAIT);
 			if (m1 == NULL)
 				ifp->if_oerrors++;
 			else
