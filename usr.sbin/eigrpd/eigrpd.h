@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.10 2016/02/21 18:53:54 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.11 2016/04/15 13:10:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -145,7 +145,7 @@ struct iface {
 	TAILQ_HEAD(, eigrp_iface) ei_list;
 	unsigned int		 ifindex;
 	char			 name[IF_NAMESIZE];
-	struct if_addr_head      addr_list;
+	struct if_addr_head	 addr_list;
 	struct in6_addr		 linklocal;
 	int			 mtu;
 	enum iface_type		 type;
@@ -460,12 +460,12 @@ uint8_t		 mask2prefixlen6(struct sockaddr_in6 *);
 in_addr_t	 prefixlen2mask(uint8_t);
 struct in6_addr	*prefixlen2mask6(uint8_t);
 void		 eigrp_applymask(int, union eigrpd_addr *,
-    const union eigrpd_addr *, int);
+		    const union eigrpd_addr *, int);
 int		 eigrp_addrcmp(int, const union eigrpd_addr *,
-    const union eigrpd_addr *);
+		    const union eigrpd_addr *);
 int		 eigrp_addrisset(int, const union eigrpd_addr *);
 int		 eigrp_prefixcmp(int, const union eigrpd_addr *,
-    const union eigrpd_addr *, uint8_t);
+		    const union eigrpd_addr *, uint8_t);
 int		 bad_addr_v4(struct in_addr);
 int		 bad_addr_v6(struct in6_addr *);
 int		 bad_addr(int, union eigrpd_addr *);
@@ -481,11 +481,11 @@ void		 merge_config(struct eigrpd_conf *, struct eigrpd_conf *);
 void		 config_clear(struct eigrpd_conf *);
 void		 imsg_event_add(struct imsgev *);
 int		 imsg_compose_event(struct imsgev *, uint16_t, uint32_t,
-    pid_t, int, void *, uint16_t);
+		    pid_t, int, void *, uint16_t);
 uint32_t	 eigrp_router_id(struct eigrpd_conf *);
 struct eigrp	*eigrp_find(struct eigrpd_conf *, int, uint16_t);
 
 /* printconf.c */
-void	print_config(struct eigrpd_conf *);
+void		 print_config(struct eigrpd_conf *);
 
 #endif	/* _EIGRPD_H_ */

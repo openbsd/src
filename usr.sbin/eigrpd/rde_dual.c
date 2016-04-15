@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.24 2016/02/21 19:03:58 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.25 2016/04/15 13:10:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -226,21 +226,6 @@ route_find(struct rde_nbr *nbr, struct rt_node *rn)
 	return (NULL);
 }
 
-static const char *
-route_print_origin(int af, struct rde_nbr *nbr)
-{
-	if (nbr->flags & F_RDE_NBR_SELF) {
-		if (nbr->flags & F_RDE_NBR_REDIST)
-			return ("redistribute");
-		if (nbr->flags & F_RDE_NBR_SUMMARY)
-			return ("summary");
-		else
-			return ("connected");
-	}
-
-	return (log_addr(af, &nbr->addr));
-}
-
 struct eigrp_route *
 route_new(struct rt_node *rn, struct rde_nbr *nbr, struct rinfo *ri)
 {
@@ -269,7 +254,7 @@ route_new(struct rt_node *rn, struct rde_nbr *nbr, struct rinfo *ri)
 		TAILQ_INSERT_TAIL(&rn->routes, route, entry);
 
 	log_debug("%s: prefix %s via %s distance (%u/%u)", __func__,
-	    log_prefix(rn), route_print_origin(eigrp->af, route->nbr),
+	    log_prefix(rn), log_route_origin(eigrp->af, route->nbr),
 	    route->distance, route->rdistance);
 
 	return (route);
@@ -281,7 +266,7 @@ route_del(struct rt_node *rn, struct eigrp_route *route)
 	struct eigrp		*eigrp = rn->eigrp;
 
 	log_debug("%s: prefix %s via %s", __func__, log_prefix(rn),
-	    route_print_origin(eigrp->af, route->nbr));
+	    log_route_origin(eigrp->af, route->nbr));
 
 	if (route->flags & F_EIGRP_ROUTE_INSTALLED)
 		rde_send_delete_kroute(rn, route);
@@ -878,9 +863,8 @@ rde_check_update(struct rde_nbr *nbr, struct rinfo *ri)
 
 		if (ri->metric.delay == EIGRP_INFINITE_METRIC) {
 			route = route_find(nbr, rn);
-			if (route) {
+			if (route)
 				route_del(rn, route);
-			}
 		} else {
 			route = route_find(nbr, rn);
 			if (route == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.15 2016/02/21 19:01:12 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.16 2016/04/15 13:10:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -37,22 +37,19 @@ void		 eigrp_if_hello_timer(int, short, void *);
 void		 eigrp_if_start_hello_timer(struct eigrp_iface *);
 void		 eigrp_if_stop_hello_timer(struct eigrp_iface *);
 
-static __inline int iface_id_compare(struct eigrp_iface *,
-    struct eigrp_iface *);
-
-RB_HEAD(iface_id_head, eigrp_iface);
-RB_PROTOTYPE(iface_id_head, eigrp_iface, id_tree, iface_id_compare)
-RB_GENERATE(iface_id_head, eigrp_iface, id_tree, iface_id_compare)
-
 static __inline int
 iface_id_compare(struct eigrp_iface *a, struct eigrp_iface *b)
 {
 	return (a->ifaceid - b->ifaceid);
 }
 
+RB_HEAD(iface_id_head, eigrp_iface);
+RB_PROTOTYPE(iface_id_head, eigrp_iface, id_tree, iface_id_compare)
+RB_GENERATE(iface_id_head, eigrp_iface, id_tree, iface_id_compare)
+
 struct iface_id_head ifaces_by_id = RB_INITIALIZER(&ifaces_by_id);
 
-uint32_t	ifacecnt = 1;
+static uint32_t	ifacecnt = 1;
 
 struct iface *
 if_new(struct eigrpd_conf *xconf, struct kif *kif)
@@ -494,7 +491,10 @@ if_to_ctl(struct eigrp_iface *ei)
 		break;
 	case AF_INET6:
 		ictl.addr.v6 = ei->iface->linklocal;
-		ictl.prefixlen = 64;
+		if (!IN6_IS_ADDR_UNSPECIFIED(&ei->iface->linklocal))
+			ictl.prefixlen = 64;
+		else
+			ictl.prefixlen = 0;
 		break;
 	default:
 		fatalx("if_to_ctl: unknown af");
@@ -561,7 +561,7 @@ if_join_ipv4_group(struct iface *iface, struct in_addr *addr)
 	log_debug("%s: interface %s addr %s", __func__, iface->name,
 	    inet_ntoa(*addr));
 
-	mreq.imr_multiaddr.s_addr = addr->s_addr;
+	mreq.imr_multiaddr = *addr;
 	mreq.imr_interface.s_addr = if_primary_addr(iface);
 
 	if (setsockopt(econf->eigrp_socket_v4, IPPROTO_IP, IP_ADD_MEMBERSHIP,
@@ -586,7 +586,7 @@ if_leave_ipv4_group(struct iface *iface, struct in_addr *addr)
 	log_debug("%s: interface %s addr %s", __func__, iface->name,
 	    inet_ntoa(*addr));
 
-	mreq.imr_multiaddr.s_addr = addr->s_addr;
+	mreq.imr_multiaddr = *addr;
 	mreq.imr_interface.s_addr = if_primary_addr(iface);
 
 	if (setsockopt(econf->eigrp_socket_v4, IPPROTO_IP, IP_DROP_MEMBERSHIP,
@@ -749,7 +749,7 @@ if_set_ipv6_pktinfo(int fd, int enable)
 {
 	if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &enable,
 	    sizeof(enable)) < 0) {
-		log_warn("%s: error setting IPV6_PKTINFO", __func__);
+		log_warn("%s: error setting IPV6_RECVPKTINFO", __func__);
 		return (-1);
 	}
 

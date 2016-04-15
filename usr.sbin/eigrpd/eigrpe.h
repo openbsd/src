@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.h,v 1.9 2016/02/21 19:01:12 renato Exp $ */
+/*	$OpenBSD: eigrpe.h,v 1.10 2016/04/15 13:10:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -75,14 +75,14 @@ void		 eigrpe_dispatch_main(int, short, void *);
 void		 eigrpe_dispatch_rde(int, short, void *);
 int		 eigrpe_imsg_compose_parent(int, pid_t, void *, uint16_t);
 int		 eigrpe_imsg_compose_rde(int, uint32_t, pid_t, void *,
-    uint16_t);
+		    uint16_t);
 void		 eigrpe_instance_init(struct eigrp *);
 void		 eigrpe_instance_del(struct eigrp *);
 void		 message_add(struct rinfo_head *, struct rinfo *);
 void		 message_list_clr(struct rinfo_head *);
 void		 seq_addr_list_clr(struct seq_addr_head *);
 void		 eigrpe_orig_local_route(struct eigrp_iface *,
-    struct if_addr *, int);
+		    struct if_addr *, int);
 void		 eigrpe_iface_ctl(struct ctl_conn *, unsigned int);
 void		 eigrpe_nbr_ctl(struct ctl_conn *);
 void		 eigrpe_stats_ctl(struct ctl_conn *);
@@ -99,7 +99,7 @@ in_addr_t		 if_primary_addr(struct iface *);
 uint8_t			 if_primary_addr_prefixlen(struct iface *);
 void			 if_update(struct iface *, int);
 struct eigrp_iface	*eigrp_if_new(struct eigrpd_conf *, struct eigrp *,
-    struct kif *);
+			    struct kif *);
 void			 eigrp_if_del(struct eigrp_iface *);
 struct eigrp_iface	*eigrp_if_lookup(struct iface *, int, uint16_t);
 struct eigrp_iface	*eigrp_if_lookup_id(uint32_t);
@@ -123,7 +123,7 @@ int			 if_set_ipv6_dscp(int, int);
 
 /* neighbor.c */
 struct nbr	*nbr_new(struct eigrp_iface *, union eigrpd_addr *,
-    uint16_t, int);
+		    uint16_t, int);
 void		 nbr_init(struct nbr *);
 void		 nbr_del(struct nbr *);
 void		 nbr_update_peerid(struct nbr *);
@@ -154,28 +154,28 @@ void		 rtp_ack_stop_timer(struct nbr *);
 
 /* packet.c */
 int	 gen_eigrp_hdr(struct ibuf *, uint16_t, uint8_t, uint32_t,
-    uint16_t);
+	    uint16_t);
 int	 send_packet(struct eigrp_iface *, struct nbr *, uint32_t,
-    struct ibuf *);
+	    struct ibuf *);
 void	 recv_packet_v4(int, short, void *);
 void	 recv_packet_v6(int, short, void *);
 
 /* tlv.c */
 int			 gen_parameter_tlv(struct ibuf *, struct eigrp_iface *,
-    int);
+			    int);
 int			 gen_sequence_tlv(struct ibuf *,
-    struct seq_addr_head *);
+			    struct seq_addr_head *);
 int			 gen_sw_version_tlv(struct ibuf *);
 int			 gen_mcast_seq_tlv(struct ibuf *, uint32_t);
 uint16_t		 len_route_tlv(struct rinfo *);
 int			 gen_route_tlv(struct ibuf *, struct rinfo *);
 struct tlv_parameter	*tlv_decode_parameter(struct tlv *, char *);
 int			 tlv_decode_seq(int, struct tlv *, char *,
-    struct seq_addr_head *);
+			    struct seq_addr_head *);
 struct tlv_sw_version	*tlv_decode_sw_version(struct tlv *, char *);
 struct tlv_mcast_seq	*tlv_decode_mcast_seq(struct tlv *, char *);
 int			 tlv_decode_route(int, struct tlv *, char *,
-    struct rinfo *);
+			    struct rinfo *);
 void			 metric_encode_mtu(uint8_t *, int);
 int			 metric_decode_mtu(uint8_t *);
 
@@ -183,16 +183,16 @@ int			 metric_decode_mtu(uint8_t *);
 void	 send_hello(struct eigrp_iface *, struct seq_addr_head *, uint32_t);
 void	 send_peerterm(struct nbr *);
 void	 recv_hello(struct eigrp_iface *, union eigrpd_addr *, struct nbr *,
-    struct tlv_parameter *);
+	    struct tlv_parameter *);
 
 /* update.c */
 void	 send_update(struct eigrp_iface *, struct nbr *, uint32_t,
-    struct rinfo_head *);
+	    struct rinfo_head *);
 void	 recv_update(struct nbr *, struct rinfo_head *, uint32_t);
 
 /* query.c */
 void	 send_query(struct eigrp_iface *, struct nbr *, struct rinfo_head *,
-    int);
+	    int);
 void	 recv_query(struct nbr *, struct rinfo_head *, int);
 
 /* reply.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.15 2016/02/21 19:01:12 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.16 2016/04/15 13:10:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -378,7 +378,7 @@ eigrpe_dispatch_main(int fd, short event, void *bula)
 			TAILQ_INSERT_TAIL(&neigrp->ei_list, nei, e_entry);
 			if (RB_INSERT(iface_id_head, &ifaces_by_id, nei) !=
 			    NULL)
-				fatalx("rde_dispatch_parent: "
+				fatalx("eigrpe_dispatch_main: "
 				    "RB_INSERT(ifaces_by_id) failed");
 			break;
 		case IMSG_RECONF_END:

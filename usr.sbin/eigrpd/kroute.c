@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.13 2016/02/21 19:01:12 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.14 2016/04/15 13:10:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -87,11 +87,11 @@ void			 kr_redist_remove(struct kroute *);
 int			 kr_redist_eval(struct kroute *);
 void			 kr_redistribute(struct kroute_prefix *);
 int			 kroute_compare(struct kroute_prefix *,
-    struct kroute_prefix *);
+			    struct kroute_prefix *);
 struct kroute_prefix	*kroute_find_prefix(int, union eigrpd_addr *, uint8_t);
 struct kroute_priority	*kroute_find_prio(struct kroute_prefix *, uint8_t);
 struct kroute_node	*kroute_find_gw(struct kroute_priority *,
-    union eigrpd_addr *);
+			    union eigrpd_addr *);
 struct kroute_node	*kroute_insert(struct kroute *);
 int			 kroute_remove(struct kroute *);
 void			 kroute_clear(void);
@@ -101,18 +101,18 @@ struct kif_node		*kif_find(unsigned short);
 struct kif_node		*kif_insert(unsigned short);
 int			 kif_remove(struct kif_node *);
 struct kif		*kif_update(unsigned short, int, struct if_data *,
-    struct sockaddr_dl *);
+			    struct sockaddr_dl *);
 int			 kif_validate(unsigned short);
 
 void		protect_lo(void);
 uint8_t		prefixlen_classful(in_addr_t);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(unsigned short, int, struct if_data *,
-    struct sockaddr_dl *);
+		    struct sockaddr_dl *);
 void		if_newaddr(unsigned short, struct sockaddr *, struct sockaddr *,
-    struct sockaddr *);
+		    struct sockaddr *);
 void		if_deladdr(unsigned short, struct sockaddr *, struct sockaddr *,
-    struct sockaddr *);
+		    struct sockaddr *);
 void		if_announce(void *);
 
 int		send_rtmsg(int, int, struct kroute *);
@@ -121,7 +121,7 @@ int		fetchtable(void);
 int		fetchifs(void);
 int		rtmsg_process(char *, size_t);
 int		rtmsg_process_route(struct rt_msghdr *,
-    struct sockaddr *[RTAX_MAX]);
+		    struct sockaddr *[RTAX_MAX]);
 
 RB_HEAD(kroute_tree, kroute_prefix)	krt = RB_INITIALIZER(&krt);
 RB_PROTOTYPE(kroute_tree, kroute_prefix, entry, kroute_compare)
@@ -900,12 +900,12 @@ if_newaddr(unsigned short ifindex, struct sockaddr *ifa, struct sockaddr *mask,
 
 		if ((ka = calloc(1, sizeof(struct kif_addr))) == NULL)
 			fatal("if_newaddr");
-		ka->a.addr.v4.s_addr = ifa4->sin_addr.s_addr;
+		ka->a.addr.v4 = ifa4->sin_addr;
 		if (mask4)
 			ka->a.prefixlen =
 			    mask2prefixlen(mask4->sin_addr.s_addr);
 		if (brd4)
-			ka->a.dstbrd.v4.s_addr = brd4->sin_addr.s_addr;
+			ka->a.dstbrd.v4 = brd4->sin_addr;
 		break;
 	case AF_INET6:
 		ifa6 = (struct sockaddr_in6 *) ifa;
@@ -968,11 +968,11 @@ if_deladdr(unsigned short ifindex, struct sockaddr *ifa, struct sockaddr *mask,
 		if (bad_addr_v4(ifa4->sin_addr))
 			return;
 
-		k.addr.v4.s_addr = ifa4->sin_addr.s_addr;
+		k.addr.v4 = ifa4->sin_addr;
 		if (mask4)
 			k.prefixlen = mask2prefixlen(mask4->sin_addr.s_addr);
 		if (brd4)
-			k.dstbrd.v4.s_addr = brd4->sin_addr.s_addr;
+			k.dstbrd.v4 = brd4->sin_addr;
 		break;
 	case AF_INET6:
 		ifa6 = (struct sockaddr_in6 *) ifa;
@@ -999,23 +999,10 @@ if_deladdr(unsigned short ifindex, struct sockaddr *ifa, struct sockaddr *mask,
 		nka = TAILQ_NEXT(ka, entry);
 
 		if (ka->a.af != k.af ||
-		    ka->a.prefixlen != k.prefixlen)
+		    ka->a.prefixlen != k.prefixlen ||
+		    eigrp_addrcmp(ka->a.af, &ka->a.addr, &k.addr) ||
+		    eigrp_addrcmp(ka->a.af, &ka->a.dstbrd, &k.dstbrd))
 			continue;
-
-		switch (ifa->sa_family) {
-		case AF_INET:
-			if (ka->a.addr.v4.s_addr != k.addr.v4.s_addr ||
-			    ka->a.dstbrd.v4.s_addr != k.dstbrd.v4.s_addr)
-				continue;
-			break;
-		case AF_INET6:
-			if (!IN6_ARE_ADDR_EQUAL(&ka->a.addr.v6, &k.addr.v6) ||
-			    !IN6_ARE_ADDR_EQUAL(&ka->a.dstbrd.v6, &k.dstbrd.v6))
-				continue;
-			break;
-		default:
-			break;
-		}
 
 		/* notify eigrpe about removed address */
 		main_imsg_compose_eigrpe(IMSG_DELADDR, 0, &ka->a,
@@ -1084,7 +1071,7 @@ send_rtmsg_v4(int fd, int action, struct kroute *kr)
 	memset(&prefix, 0, sizeof(prefix));
 	prefix.sin_len = sizeof(prefix);
 	prefix.sin_family = AF_INET;
-	prefix.sin_addr.s_addr = kr->prefix.v4.s_addr;
+	prefix.sin_addr = kr->prefix.v4;
 	/* adjust header */
 	hdr.rtm_addrs |= RTA_DST;
 	hdr.rtm_msglen += sizeof(prefix);
@@ -1096,7 +1083,7 @@ send_rtmsg_v4(int fd, int action, struct kroute *kr)
 		memset(&nexthop, 0, sizeof(nexthop));
 		nexthop.sin_len = sizeof(nexthop);
 		nexthop.sin_family = AF_INET;
-		nexthop.sin_addr.s_addr = kr->nexthop.v4.s_addr;
+		nexthop.sin_addr = kr->nexthop.v4;
 		/* adjust header */
 		hdr.rtm_flags |= RTF_GATEWAY;
 		hdr.rtm_addrs |= RTA_GATEWAY;
@@ -1440,8 +1427,7 @@ rtmsg_process_route(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 	kr.af = sa->sa_family;
 	switch (kr.af) {
 	case AF_INET:
-		kr.prefix.v4.s_addr =
-		    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
+		kr.prefix.v4 = ((struct sockaddr_in *)sa)->sin_addr;
 		sa_in = (struct sockaddr_in *) rti_info[RTAX_NETMASK];
 		if (sa_in != NULL && sa_in->sin_len != 0)
 			kr.prefixlen = mask2prefixlen(sa_in->sin_addr.s_addr);
@@ -1471,8 +1457,7 @@ rtmsg_process_route(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 	if ((sa = rti_info[RTAX_GATEWAY]) != NULL) {
 		switch (sa->sa_family) {
 		case AF_INET:
-			kr.nexthop.v4.s_addr =
-			    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
+			kr.nexthop.v4 = ((struct sockaddr_in *)sa)->sin_addr;
 			break;
 		case AF_INET6:
 			sa_in6 = (struct sockaddr_in6 *)sa;

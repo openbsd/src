@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.6 2015/12/13 19:02:49 renato Exp $ */
+/*	$OpenBSD: rde.h,v 1.7 2016/04/15 13:10:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -127,7 +127,7 @@ enum dual_event {
 pid_t		 rde(struct eigrpd_conf *, int [2], int [2], int [2]);
 int		 rde_imsg_compose_parent(int, pid_t, void *, uint16_t);
 int		 rde_imsg_compose_eigrpe(int, uint32_t, pid_t, void *,
-    uint16_t);
+		    uint16_t);
 
 void		 rde_instance_init(struct eigrp *);
 void		 rde_instance_del(struct eigrp *);
@@ -135,7 +135,7 @@ void		 rde_send_change_kroute(struct rt_node *, struct eigrp_route *);
 void		 rde_send_delete_kroute(struct rt_node *, struct eigrp_route *);
 void		 rt_redist_set(struct kroute *, int);
 void		 rt_summary_set(struct eigrp *, struct summary_addr *,
-    struct classic_metric *);
+		    struct classic_metric *);
 void		 rt_snap(struct rde_nbr *);
 struct ctl_rt	*rt_to_ctl(struct rt_node *, struct eigrp_route *);
 void		 rt_dump(struct ctl_show_topology_req *, pid_t);
@@ -152,7 +152,7 @@ struct rt_node		*rt_new(struct eigrp *, struct rinfo *);
 void			 rt_del(struct rt_node *);
 struct eigrp_route	*route_find(struct rde_nbr *, struct rt_node *);
 struct eigrp_route	*route_new(struct rt_node *, struct rde_nbr *,
-    struct rinfo *);
+			    struct rinfo *);
 void			 route_del(struct rt_node *, struct eigrp_route *);
 uint32_t		 safe_sum_uint32(uint32_t, uint32_t);
 uint32_t		 safe_mul_uint32(uint32_t, uint32_t);
@@ -161,31 +161,31 @@ uint32_t		 eigrp_real_delay(uint32_t);
 uint32_t		 eigrp_composite_bandwidth(uint32_t);
 uint32_t		 eigrp_real_bandwidth(uint32_t);
 uint32_t		 route_composite_metric(uint8_t *, uint32_t, uint32_t,
-    uint8_t, uint8_t);
+			    uint8_t, uint8_t);
 void			 route_update_metrics(struct eigrp *,
-    struct eigrp_route *, struct rinfo *);
+			    struct eigrp_route *, struct rinfo *);
 void			 reply_outstanding_add(struct rt_node *,
-    struct rde_nbr *);
+			    struct rde_nbr *);
 struct reply_node	*reply_outstanding_find(struct rt_node *,
-    struct rde_nbr *);
+			    struct rde_nbr *);
 void			 reply_outstanding_remove(struct reply_node *);
 void			 rinfo_fill_successor(struct rt_node *, struct rinfo *);
 void			 rinfo_fill_infinite(struct rt_node *, enum route_type,
-    struct rinfo *);
+			    struct rinfo *);
 void			 rt_update_fib(struct rt_node *);
 void			 rt_set_successor(struct rt_node *,
-    struct eigrp_route *);
+			    struct eigrp_route *);
 struct eigrp_route	*rt_get_successor_fc(struct rt_node *);
 
 struct summary_addr	*rde_summary_check(struct eigrp_iface *,
-    union eigrpd_addr *, uint8_t);
+			    union eigrpd_addr *, uint8_t);
 void			 rde_send_update(struct eigrp_iface *, struct rinfo *);
 void			 rde_send_update_all(struct rt_node *, struct rinfo *);
 void			 rde_send_query(struct eigrp_iface *, struct rinfo *,
-    int);
+			    int);
 void			 rde_send_siaquery(struct rde_nbr *, struct rinfo *);
 void			 rde_send_query_all(struct eigrp *, struct rt_node *,
-    int);
+			    int);
 void			 rde_flush_queries(void);
 void			 rde_send_reply(struct rde_nbr *, struct rinfo *, int);
 void			 rde_check_update(struct rde_nbr *, struct rinfo *);
@@ -193,10 +193,10 @@ void			 rde_check_query(struct rde_nbr *, struct rinfo *, int);
 void			 rde_last_reply(struct rt_node *);
 void			 rde_check_reply(struct rde_nbr *, struct rinfo *, int);
 void			 rde_check_link_down_rn(struct rde_nbr *,
-    struct rt_node *, struct eigrp_route *);
+			    struct rt_node *, struct eigrp_route *);
 void			 rde_check_link_down_nbr(struct rde_nbr *);
 void			 rde_check_link_down(unsigned int);
 void			 rde_check_link_cost_change(struct rde_nbr *,
-    struct eigrp_iface *);
+			    struct eigrp_iface *);
 
 #endif	/* _RDE_H_ */

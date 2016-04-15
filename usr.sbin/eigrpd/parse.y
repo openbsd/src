@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2016/02/21 19:01:12 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.10 2016/04/15 13:10:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -1084,6 +1084,9 @@ conf_get_instance(uint16_t as)
 	}
 
 	e = calloc(1, sizeof(struct eigrp));
+	if (e == NULL)
+		fatal(NULL);
+
 	e->af = af;
 	e->as = as;
 	SIMPLEQ_INIT(&e->redist_list);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.8 2016/02/23 14:51:13 gsoares Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.9 2016/04/15 13:10:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -650,6 +650,9 @@ config_clear(struct eigrpd_conf *conf)
 
 	/* merge current config with an empty config */
 	xconf = malloc(sizeof(*xconf));
+	if (xconf == NULL)
+		fatal(NULL);
+
 	*xconf = *conf;
 	TAILQ_INIT(&xconf->instances);
 	merge_config(conf, xconf);

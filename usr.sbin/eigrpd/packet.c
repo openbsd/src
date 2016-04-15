@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.12 2016/02/21 18:56:49 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.13 2016/04/15 13:10:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -33,7 +33,7 @@ extern struct eigrpd_conf	*econf;
 
 int		 ip_hdr_sanity_check(const struct ip *, uint16_t);
 int		 eigrp_hdr_sanity_check(int, union eigrpd_addr *,
-    struct eigrp_hdr *, uint16_t, const struct iface *);
+		    struct eigrp_hdr *, uint16_t, const struct iface *);
 struct iface	*find_iface(unsigned int, int, union eigrpd_addr *);
 
 int
@@ -68,7 +68,7 @@ send_packet_v4(struct iface *iface, struct nbr *nbr, struct ibuf *buf)
 	dst.sin_family = AF_INET;
 	dst.sin_len = sizeof(struct sockaddr_in);
 	if (nbr)
-		dst.sin_addr.s_addr = nbr->addr.v4.s_addr;
+		dst.sin_addr = nbr->addr.v4;
 	else
 		dst.sin_addr.s_addr = AllEIGRPRouters_v4;
 
@@ -518,8 +518,8 @@ recv_packet_v4(int fd, short event, void *bula)
 	buf += l;
 	len -= l;
 
-	src.v4.s_addr = ip_hdr.ip_src.s_addr;
-	dest.v4.s_addr = ip_hdr.ip_dst.s_addr;
+	src.v4 = ip_hdr.ip_src;
+	dest.v4 = ip_hdr.ip_dst;
 
 	/* find a matching interface */
 	if ((iface = find_iface(ifindex, AF_INET, &src)) == NULL)
