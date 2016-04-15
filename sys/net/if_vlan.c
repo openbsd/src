@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.161 2016/04/15 04:29:59 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.162 2016/04/15 04:34:10 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -245,7 +245,7 @@ vlan_start(struct ifnet *ifp)
 	uint8_t		 prio;
 
 	ifv = ifp->if_softc;
-	ifp0 = if_get(ifv->ifv_p);
+	ifp0 = if_get(ifv->ifv_ifp0);
 	if (ifp0 == NULL || (ifp0->if_flags & (IFF_UP|IFF_RUNNING)) !=
 	    (IFF_UP|IFF_RUNNING)) {
 		ifq_purge(&ifp->if_snd);
@@ -370,7 +370,7 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 
 	list = &tagh[TAG_HASH(tag)];
 	SRPL_FOREACH(ifv, list, &i, ifv_list) {
-		if (ifp0->if_index == ifv->ifv_p && tag == ifv->ifv_tag &&
+		if (ifp0->if_index == ifv->ifv_ifp0 && tag == ifv->ifv_tag &&
 		    etype == ifv->ifv_type)
 			break;
 	}
@@ -448,7 +448,7 @@ vlan_up(struct ifvlan *ifv)
 	tagh = ifv->ifv_type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
 	list = &tagh[TAG_HASH(ifv->ifv_tag)];
 
-	ifp0 = if_get(ifv->ifv_p);
+	ifp0 = if_get(ifv->ifv_ifp0);
 	if (ifp0 == NULL)
 		return (ENXIO);
 
@@ -495,7 +495,7 @@ vlan_up(struct ifvlan *ifv)
 	if (error != 0)
 		goto scrub;
 
-	error = vlan_inuse_locked(ifv->ifv_type, ifv->ifv_p, ifv->ifv_tag);
+	error = vlan_inuse_locked(ifv->ifv_type, ifv->ifv_ifp0, ifv->ifv_tag);
 	if (error != 0)
 		goto leave;
 
@@ -548,7 +548,7 @@ vlan_down(struct ifvlan *ifv)
 
 	ifq_barrier(&ifp->if_snd);
 
-	ifp0 = if_get(ifv->ifv_p);
+	ifp0 = if_get(ifv->ifv_ifp0);
 	if (ifp0 != NULL) {
 		if_ih_remove(ifp0, vlan_input, NULL);
 		if (ISSET(ifv->ifv_flags, IFVF_PROMISC))
@@ -582,7 +582,7 @@ vlan_ifdetach(void *v)
 		CLR(ifp->if_flags, IFF_UP);
 	}
 
-	ifv->ifv_p = 0;
+	ifv->ifv_ifp0 = 0;
 }
 
 void
@@ -594,7 +594,7 @@ vlan_link_hook(void *v)
 	u_char link = LINK_STATE_DOWN;
 	uint64_t baud = 0;
 
-	ifp0 = if_get(ifv->ifv_p);
+	ifp0 = if_get(ifv->ifv_ifp0);
 	if (ifp0 != NULL) {
 		link = ifp0->if_link_state;
 		baud = ifp0->if_baudrate;
@@ -625,7 +625,7 @@ vlan_promisc(struct ifvlan *ifv, int promisc)
 	if ((ISSET(ifv->ifv_flags, IFVF_PROMISC) ? 1 : 0) == promisc)
 		return (0);
 
-	ifp0 = if_get(ifv->ifv_p);
+	ifp0 = if_get(ifv->ifv_ifp0);
 	if (ifp0 != NULL) {
 		error = ifpromisc(ifp0, promisc);
 	}
@@ -705,7 +705,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 
-		if (ifv->ifv_p == ifp0->if_index) {
+		if (ifv->ifv_ifp0 == ifp0->if_index) {
 			/* nop */
 			break;
 		}
@@ -719,11 +719,11 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (error != 0)
 			break;
 
-		ifv->ifv_p = ifp0->if_index;
+		ifv->ifv_ifp0 = ifp0->if_index;
 		break;
 
 	case SIOCGIFPARENT:
-		ifp0 = if_get(ifv->ifv_p);
+		ifp0 = if_get(ifv->ifv_ifp0);
 		if (ifp0 == NULL)
 			error = EADDRNOTAVAIL;
 		else {
@@ -739,7 +739,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 
-		ifv->ifv_p = 0;
+		ifv->ifv_ifp0 = 0;
 		break;
 
 	case SIOCADDMULTI:
@@ -782,7 +782,7 @@ vlan_set_vnetid(struct ifvlan *ifv, uint16_t tag)
 	if (error != 0)
 		return (error);
 
-	error = vlan_inuse_locked(ifv->ifv_type, ifv->ifv_p, tag);
+	error = vlan_inuse_locked(ifv->ifv_type, ifv->ifv_ifp0, tag);
 	if (error != 0)
 		goto unlock;
 
@@ -855,7 +855,7 @@ vlan_get_compat(struct ifnet *ifp, struct ifreq *ifr)
 	struct ifnet *p;
 
 	memset(&vlr, 0, sizeof(vlr));
-	p = if_get(ifv->ifv_p);
+	p = if_get(ifv->ifv_ifp0);
 	if (p != NULL)
 		memcpy(vlr.vlr_parent, p->if_xname, sizeof(vlr.vlr_parent));
 	if_put(p);
@@ -899,7 +899,7 @@ vlan_inuse_locked(uint16_t type, unsigned int ifidx, uint16_t tag)
 	SRPL_FOREACH_LOCKED(ifv, list, ifv_list) {
 		if (ifv->ifv_tag == tag &&
 		    ifv->ifv_type == type && /* wat */
-		    ifv->ifv_p == ifidx)
+		    ifv->ifv_ifp0 == ifidx)
 			return (EADDRINUSE);
 	}
 
@@ -937,7 +937,7 @@ vlan_multi_add(struct ifvlan *ifv, struct ifreq *ifr)
 	memcpy(&mc->mc_addr, &ifr->ifr_addr, ifr->ifr_addr.sa_len);
 	LIST_INSERT_HEAD(&ifv->vlan_mc_listhead, mc, mc_entries);
 
-	ifp0 = if_get(ifv->ifv_p);
+	ifp0 = if_get(ifv->ifv_ifp0);
 	error = (ifp0 == NULL) ? 0 :
 	    (*ifp0->if_ioctl)(ifp0, SIOCADDMULTI, (caddr_t)ifr);
 	if_put(ifp0);
@@ -991,7 +991,7 @@ vlan_multi_del(struct ifvlan *ifv, struct ifreq *ifr)
 	if (!ISSET(ifv->ifv_if.if_flags, IFF_RUNNING))
 		goto forget;
 
-	ifp0 = if_get(ifv->ifv_p);
+	ifp0 = if_get(ifv->ifv_ifp0);
 	error = (ifp0 == NULL) ? 0 :
 	    (*ifp0->if_ioctl)(ifp0, SIOCDELMULTI, (caddr_t)ifr);
 	if_put(ifp0);
