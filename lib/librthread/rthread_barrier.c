@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_barrier.c,v 1.2 2012/04/23 08:30:33 pirofti Exp $	*/
+/*	$OpenBSD: rthread_barrier.c,v 1.3 2016/04/15 17:54:17 tedu Exp $	*/
 /*
  * Copyright (c) 2012 Paul Irofti <pirofti@openbsd.org>
  *
@@ -69,17 +69,24 @@ err:
 int
 pthread_barrier_destroy(pthread_barrier_t *barrier)
 {
+	int rc;
 	pthread_barrier_t b;
 
 	if (barrier == NULL || *barrier == NULL)
 		return (EINVAL);
 
+	if ((rc = pthread_mutex_lock(&(*barrier)->mutex)))
+		return (rc);
+
 	b = *barrier;
 
-	if (b->sofar > 0)
+	if (b->out > 0 || b->in > 0) {
+		pthread_mutex_unlock(&b->mutex);
 		return (EBUSY);
+	}
 
 	*barrier = NULL;
+	pthread_mutex_unlock(&b->mutex);
 	pthread_mutex_destroy(&b->mutex);
 	pthread_cond_destroy(&b->cond);
 	free(b);
@@ -103,11 +110,12 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 	if ((rc = pthread_mutex_lock(&b->mutex)))
 		goto cancel;
 
-	_rthread_debug(6, "sofar: %d, threshold: %d\n", b->sofar, b->threshold);
-	if (++b->sofar == b->threshold) {
-		b->sofar = 0;
+	_rthread_debug(6, "in: %d, threshold: %d\n", b->in, b->threshold);
+	if (++b->in == b->threshold) {
+		b->out = b->in - 1;
+		b->in = 0;
 		b->generation++;
-		if ((rc = pthread_cond_broadcast(&b->cond)))
+		if ((rc = pthread_cond_signal(&b->cond)))
 			goto err;
 		done = 1;
 		_rthread_debug(6, "threshold reached\n");
@@ -118,6 +126,9 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 			if ((rc = pthread_cond_wait(&b->cond, &b->mutex)))
 				goto err;
 		} while (gen == b->generation);
+		b->out--; /* mark thread exit */
+		if ((rc = pthread_cond_signal(&b->cond)))
+			goto err;
 	}
 
 err:

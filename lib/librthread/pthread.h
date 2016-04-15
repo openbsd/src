@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.1 2016/04/02 19:56:53 guenther Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.2 2016/04/15 17:54:17 tedu Exp $	*/
 /*
  * Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
  *
@@ -51,7 +51,7 @@ PROTO_STD_DEPRECATED(pthread_cleanup_push);
 PROTO_NORMAL(pthread_cond_broadcast);
 PROTO_NORMAL(pthread_cond_destroy);
 PROTO_NORMAL(pthread_cond_init);
-PROTO_STD_DEPRECATED(pthread_cond_signal);
+PROTO_NORMAL(pthread_cond_signal);
 PROTO_STD_DEPRECATED(pthread_cond_timedwait);
 PROTO_NORMAL(pthread_cond_wait);
 PROTO_STD_DEPRECATED(pthread_condattr_destroy);

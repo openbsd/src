@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.56 2016/04/02 19:00:51 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.57 2016/04/15 17:54:17 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -141,7 +141,8 @@ struct pthread_barrier {
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
 	int threshold;
-	int sofar;
+	int in;
+	int out;
 	int generation;
 };
 
