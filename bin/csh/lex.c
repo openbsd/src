@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.22 2016/03/20 01:33:39 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.23 2016/04/16 18:32:29 krw Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -1455,7 +1455,7 @@ again:
 	    if (errno == EWOULDBLOCK) {
 		int     flags;
 
-		flags = fcntl(SHIN, F_GETFL, 0);
+		flags = fcntl(SHIN, F_GETFL);
 		(void) fcntl(SHIN, F_SETFL, (flags & ~O_NONBLOCK));
 	    }
 	    else if (errno != EINTR)

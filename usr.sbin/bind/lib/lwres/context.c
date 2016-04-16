@@ -120,7 +120,7 @@
 #ifndef MAKE_NONBLOCKING
 #define MAKE_NONBLOCKING(sd, retval) \
 do { \
-	retval = fcntl(sd, F_GETFL, 0); \
+	retval = fcntl(sd, F_GETFL); \
 	if (retval != -1) { \
 		retval |= O_NONBLOCK; \
 		retval = fcntl(sd, F_SETFL, retval); \

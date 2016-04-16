@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptp_ctrl.c,v 1.10 2015/05/12 05:30:24 yasuoka Exp $	*/
+/*	$OpenBSD: pptp_ctrl.c,v 1.11 2016/04/16 18:32:29 krw Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * PPTP(RFC 2637) control connection implementation.
  * currently it only support PAC part
  */
-/* $Id: pptp_ctrl.c,v 1.10 2015/05/12 05:30:24 yasuoka Exp $ */
+/* $Id: pptp_ctrl.c,v 1.11 2016/04/16 18:32:29 krw Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -181,7 +181,7 @@ pptp_ctrl_start(pptp_ctrl *_this)
 	pptp_ctrl_log(_this, LOG_INFO, "Starting peer=%s:%s/tcp "
 	    "sock=%s:%s/tcp", hbuf0, sbuf0, hbuf1, sbuf1);
 
-	if ((ival = fcntl(_this->sock, F_GETFL, 0)) < 0) {
+	if ((ival = fcntl(_this->sock, F_GETFL)) < 0) {
 		pptp_ctrl_log(_this, LOG_ERR,
 		    "fcntl(F_GET_FL) failed at %s(): %m", __func__);
 		goto fail;

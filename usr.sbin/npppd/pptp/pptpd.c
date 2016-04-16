@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.30 2016/03/21 00:49:36 guenther Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.31 2016/04/16 18:32:29 krw Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.30 2016/03/21 00:49:36 guenther Exp $ */
+/* $Id: pptpd.c,v 1.31 2016/04/16 18:32:29 krw Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.30 2016/03/21 00:49:36 guenther Exp $
+ * $Id: pptpd.c,v 1.31 2016/04/16 18:32:29 krw Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -358,7 +358,7 @@ pptpd_listener_start(pptpd_listener *_this)
 		pptpd_log(_this->self, LOG_WARNING,
 		    "%s(): setsockopt(IP_PIPEX) failed: %m", __func__);
 #endif
-	if ((ival = fcntl(sock_gre, F_GETFL, 0)) < 0) {
+	if ((ival = fcntl(sock_gre, F_GETFL)) < 0) {
 		pptpd_log(_this->self, LOG_ERR,
 		    "fcntl(F_GET_FL) failed at %s(): %m", __func__);
 		goto fail;

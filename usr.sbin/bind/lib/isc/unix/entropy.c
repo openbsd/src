@@ -452,7 +452,7 @@ make_nonblock(int fd) {
 
 	ret = ioctl(fd, FIONBIO, (char *)&on);
 #else
-	flags = fcntl(fd, F_GETFL, 0);
+	flags = fcntl(fd, F_GETFL);
 	flags |= PORT_NONBLOCK;
 	ret = fcntl(fd, F_SETFL, flags);
 #endif

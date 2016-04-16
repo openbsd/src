@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.17 2016/04/13 06:33:36 semarie Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.18 2016/04/16 18:32:29 krw Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -967,7 +967,7 @@ radiusd_module_load(struct radiusd *radiusd, const char *path, const char *name)
 	close(pairsock[1]);
 
 	module->fd = pairsock[0];
-	if ((ival = fcntl(module->fd, F_GETFL, 0)) < 0) {
+	if ((ival = fcntl(module->fd, F_GETFL)) < 0) {
 		log_warn("Could not load module `%s': fcntl(F_GETFL)",
 		    name);
 		goto on_error;
