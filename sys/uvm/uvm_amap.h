@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.h,v 1.23 2016/04/04 16:34:16 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.h,v 1.24 2016/04/16 18:39:31 stefan Exp $	*/
 /*	$NetBSD: uvm_amap.h,v 1.14 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -124,8 +124,7 @@ boolean_t	amap_swap_off(int, int);
 struct vm_amap {
 	int am_ref;		/* reference count */
 	int am_flags;		/* flags */
-	int am_maxslot;		/* max # of slots allocated */
-	int am_nslot;		/* # of slots currently in map ( <= maxslot) */
+	int am_nslot;		/* # of slots currently in map */
 	int am_nused;		/* # of slots currently in use */
 	int *am_slots;		/* contig array of active slots */
 	int *am_bckptr;		/* back pointer array to am_slots */

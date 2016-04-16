@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.59 2015/01/19 19:25:28 kettenis Exp $ */
+/*	$OpenBSD: procmap.c,v 1.60 2016/04/16 18:39:30 stefan Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -97,7 +97,6 @@ rlim_t maxssiz;
 
 struct sum {
 	unsigned long s_am_nslots;
-	unsigned long s_am_maxslots;
 	unsigned long s_am_nusedslots;
 };
 
@@ -347,12 +346,10 @@ void
 print_sum(struct sum *sum, struct sum *total_sum)
 {
 	const char *t = total_sum == NULL ? "total " : "";
-	printf("%samap allocated slots: %lu\n", t, sum->s_am_maxslots);
 	printf("%samap mapped slots: %lu\n", t, sum->s_am_nslots);
 	printf("%samap used slots: %lu\n", t, sum->s_am_nusedslots);
 
 	if (total_sum) {
-		total_sum->s_am_maxslots += sum->s_am_maxslots;
 		total_sum->s_am_nslots += sum->s_am_nslots;
 		total_sum->s_am_nusedslots += sum->s_am_nusedslots;
 	}
@@ -785,15 +782,13 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 	}
 
 	if (print_amap && vme->aref.ar_amap) {
-		printf(" amap - ref: %d fl: 0x%x maxsl: %d nsl: %d nuse: %d\n",
+		printf(" amap - ref: %d fl: 0x%x nsl: %d nuse: %d\n",
 		    D(amap, vm_amap)->am_ref,
 		    D(amap, vm_amap)->am_flags,
-		    D(amap, vm_amap)->am_maxslot,
 		    D(amap, vm_amap)->am_nslot,
 		    D(amap, vm_amap)->am_nused);
 		if (sum) {
 			sum->s_am_nslots += D(amap, vm_amap)->am_nslot;
-			sum->s_am_maxslots += D(amap, vm_amap)->am_maxslot;
 			sum->s_am_nusedslots += D(amap, vm_amap)->am_nused;
 		}
 	}

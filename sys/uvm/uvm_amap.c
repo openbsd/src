@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.65 2016/04/12 16:47:33 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.66 2016/04/16 18:39:31 stefan Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -180,44 +180,37 @@ static inline struct vm_amap *
 amap_alloc1(int slots, int waitf)
 {
 	struct vm_amap *amap;
-	int totalslots;
 
 	amap = pool_get(&uvm_amap_pool, (waitf == M_WAITOK) ? PR_WAITOK
 	    : PR_NOWAIT);
 	if (amap == NULL)
 		return(NULL);
 
-	totalslots = slots;
-	KASSERT(totalslots > 0);
-
-	if (totalslots > UVM_AMAP_CHUNK)
-		totalslots = malloc_roundup(totalslots * MALLOC_SLOT_UNIT) /
-		    MALLOC_SLOT_UNIT;
+	KASSERT(slots > 0);
 
 	amap->am_ref = 1;
 	amap->am_flags = 0;
 #ifdef UVM_AMAP_PPREF
 	amap->am_ppref = NULL;
 #endif
-	amap->am_maxslot = totalslots;
 	amap->am_nslot = slots;
 	amap->am_nused = 0;
 
-	if (totalslots > UVM_AMAP_CHUNK)
-		amap->am_slots = malloc(totalslots * MALLOC_SLOT_UNIT,
+	if (slots > UVM_AMAP_CHUNK)
+		amap->am_slots = malloc(slots * MALLOC_SLOT_UNIT,
 		    M_UVMAMAP, waitf);
 	else
 		amap->am_slots = pool_get(
-		    &uvm_amap_slot_pools[totalslots - 1],
+		    &uvm_amap_slot_pools[slots - 1],
 		    (waitf == M_WAITOK) ? PR_WAITOK : PR_NOWAIT);
 
 	if (amap->am_slots == NULL)
 		goto fail1;
 
-	amap->am_bckptr = (int *)(((char *)amap->am_slots) + totalslots *
+	amap->am_bckptr = (int *)(((char *)amap->am_slots) + slots *
 	    sizeof(int));
 	amap->am_anon = (struct vm_anon **)(((char *)amap->am_bckptr) +
-	    totalslots * sizeof(int));
+	    slots * sizeof(int));
 
 	return(amap);
 
@@ -243,7 +236,7 @@ amap_alloc(vaddr_t sz, int waitf)
 	amap = amap_alloc1(slots, waitf);
 	if (amap) {
 		memset(amap->am_anon, 0,
-		    amap->am_maxslot * sizeof(struct vm_anon *));
+		    amap->am_nslot * sizeof(struct vm_anon *));
 		amap_list_insert(amap);
 	}
 
@@ -263,10 +256,10 @@ amap_free(struct vm_amap *amap)
 	KASSERT(amap->am_ref == 0 && amap->am_nused == 0);
 	KASSERT((amap->am_flags & AMAP_SWAPOFF) == 0);
 
-	if (amap->am_maxslot > UVM_AMAP_CHUNK)
+	if (amap->am_nslot > UVM_AMAP_CHUNK)
 		free(amap->am_slots, M_UVMAMAP, 0);
 	else
-		pool_put(&uvm_amap_slot_pools[amap->am_maxslot - 1],
+		pool_put(&uvm_amap_slot_pools[amap->am_nslot - 1],
 		    amap->am_slots);
 
 #ifdef UVM_AMAP_PPREF
@@ -409,8 +402,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 		amap->am_slots[amap->am_nused] = lcv;
 		amap->am_nused++;
 	}
-	memset(&amap->am_anon[lcv], 0,
-	    (amap->am_maxslot - lcv) * sizeof(struct vm_anon *));
+	KASSERT(lcv == amap->am_nslot);
 
 	/*
 	 * drop our reference to the old amap (srcamap).
@@ -570,7 +562,7 @@ void
 amap_pp_establish(struct vm_amap *amap)
 {
 
-	amap->am_ppref = mallocarray(amap->am_maxslot, sizeof(int),
+	amap->am_ppref = mallocarray(amap->am_nslot, sizeof(int),
 	    M_UVMAMAP, M_NOWAIT|M_ZERO);
 
 	/* if we fail then we just won't use ppref for this amap */
