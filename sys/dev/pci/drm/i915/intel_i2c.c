@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_i2c.c,v 1.7 2015/09/26 22:00:00 kettenis Exp $	*/
+/*	$OpenBSD: intel_i2c.c,v 1.8 2016/04/16 17:39:44 kettenis Exp $	*/
 /*
  * Copyright (c) 2012, 2013 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -144,6 +144,8 @@ intel_gmbus_acquire_bus(void *cookie, int flags)
 	struct intel_gmbus *bus = cookie;
 	struct inteldrm_softc *dev_priv = bus->dev_priv;
 
+	intel_aux_display_runtime_get(dev_priv);
+
 	I915_WRITE(dev_priv->gpio_mmio_base + GMBUS0, bus->reg0);
 
 	return (0);
@@ -156,6 +158,8 @@ intel_gmbus_release_bus(void *cookie, int flags)
 	struct inteldrm_softc *dev_priv = bus->dev_priv;
 
 	I915_WRITE(dev_priv->gpio_mmio_base + GMBUS0, 0);
+
+	intel_aux_display_runtime_put(dev_priv);
 }
 
 int
@@ -371,8 +375,12 @@ intel_setup_gmbus(struct drm_device *dev)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int i;
 
-	if (HAS_PCH_SPLIT(dev))
+	if (HAS_PCH_NOP(dev))
+		return 0;
+	else if (HAS_PCH_SPLIT(dev))
 		dev_priv->gpio_mmio_base = PCH_GPIOA - GPIOA;
+	else if (IS_VALLEYVIEW(dev))
+		dev_priv->gpio_mmio_base = VLV_DISPLAY_BASE;
 	else
 		dev_priv->gpio_mmio_base = 0;
 
@@ -399,6 +407,8 @@ intel_setup_gmbus(struct drm_device *dev)
 		bus->controller.ic_read_byte = intel_gpio_read_byte;
 		bus->controller.ic_write_byte = intel_gpio_write_byte;
 	}
+
+	intel_i2c_reset(dev_priv->dev);
 
 	return (0);
 }
