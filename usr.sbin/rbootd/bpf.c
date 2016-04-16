@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.23 2015/08/20 22:39:29 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.24 2016/04/16 22:23:01 natano Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -362,8 +362,8 @@ BpfRead(RMPCONN *rconn, int doread)
 			    caplen);
 		else {
 			rconn->rmplen = caplen;
-			bcopy((char *)&bhp->bh_tstamp, (char *)&rconn->tstamp,
-			    sizeof(struct timeval));
+			rconn->tstamp.tv_sec = bhp->bh_tstamp.tv_sec;
+			rconn->tstamp.tv_usec = bhp->bh_tstamp.tv_usec;
 			bcopy((char *)bp + hdrlen, (char *)&rconn->rmp, caplen);
 		}
 		bp += BPF_WORDALIGN(caplen + hdrlen);
