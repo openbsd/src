@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.36 2015/11/07 01:37:26 naddy Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.37 2016/04/17 03:12:08 dlg Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -170,6 +170,7 @@ aesni_setup(void)
 
 	pool_init(&aesnipl, sizeof(struct aesni_session), 16, 0, 0,
 	    "aesni", NULL);
+	pool_setipl(&aesnipl, IPL_VM);
 	pool_setlowat(&aesnipl, 2);
 
 	crypto_register(aesni_sc->sc_cid, algs, aesni_newsession,
