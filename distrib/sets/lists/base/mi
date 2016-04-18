@@ -5676,6 +5676,7 @@
 ./usr/share/zoneinfo/Asia/Thimbu
 ./usr/share/zoneinfo/Asia/Thimphu
 ./usr/share/zoneinfo/Asia/Tokyo
+./usr/share/zoneinfo/Asia/Tomsk
 ./usr/share/zoneinfo/Asia/Ujung_Pandang
 ./usr/share/zoneinfo/Asia/Ulaanbaatar
 ./usr/share/zoneinfo/Asia/Ulan_Bator
@@ -5809,6 +5810,7 @@
 ./usr/share/zoneinfo/Europe/Jersey
 ./usr/share/zoneinfo/Europe/Kaliningrad
 ./usr/share/zoneinfo/Europe/Kiev
+./usr/share/zoneinfo/Europe/Kirov
 ./usr/share/zoneinfo/Europe/Lisbon
 ./usr/share/zoneinfo/Europe/Ljubljana
 ./usr/share/zoneinfo/Europe/London
@@ -6291,6 +6293,7 @@
 ./usr/share/zoneinfo/posix/Asia/Thimbu
 ./usr/share/zoneinfo/posix/Asia/Thimphu
 ./usr/share/zoneinfo/posix/Asia/Tokyo
+./usr/share/zoneinfo/posix/Asia/Tomsk
 ./usr/share/zoneinfo/posix/Asia/Ujung_Pandang
 ./usr/share/zoneinfo/posix/Asia/Ulaanbaatar
 ./usr/share/zoneinfo/posix/Asia/Ulan_Bator
@@ -6424,6 +6427,7 @@
 ./usr/share/zoneinfo/posix/Europe/Jersey
 ./usr/share/zoneinfo/posix/Europe/Kaliningrad
 ./usr/share/zoneinfo/posix/Europe/Kiev
+./usr/share/zoneinfo/posix/Europe/Kirov
 ./usr/share/zoneinfo/posix/Europe/Lisbon
 ./usr/share/zoneinfo/posix/Europe/Ljubljana
 ./usr/share/zoneinfo/posix/Europe/London
@@ -6907,6 +6911,7 @@
 ./usr/share/zoneinfo/right/Asia/Thimbu
 ./usr/share/zoneinfo/right/Asia/Thimphu
 ./usr/share/zoneinfo/right/Asia/Tokyo
+./usr/share/zoneinfo/right/Asia/Tomsk
 ./usr/share/zoneinfo/right/Asia/Ujung_Pandang
 ./usr/share/zoneinfo/right/Asia/Ulaanbaatar
 ./usr/share/zoneinfo/right/Asia/Ulan_Bator
@@ -7040,6 +7045,7 @@
 ./usr/share/zoneinfo/right/Europe/Jersey
 ./usr/share/zoneinfo/right/Europe/Kaliningrad
 ./usr/share/zoneinfo/right/Europe/Kiev
+./usr/share/zoneinfo/right/Europe/Kirov
 ./usr/share/zoneinfo/right/Europe/Lisbon
 ./usr/share/zoneinfo/right/Europe/Ljubljana
 ./usr/share/zoneinfo/right/Europe/London
