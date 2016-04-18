@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.270 2016/04/15 11:18:40 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.271 2016/04/18 06:43:51 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -227,7 +227,7 @@ ipv4_input(struct mbuf *m)
 {
 	struct ifnet *ifp;
 	struct ip *ip;
-	int hlen, len;
+	int rv, hlen, len;
 	in_addr_t pfrdr = 0;
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
@@ -355,8 +355,6 @@ ipv4_input(struct mbuf *m)
 
 #ifdef MROUTING
 		if (ipmforwarding && ip_mrouter) {
-			int rv;
-
 			if (m->m_flags & M_EXT) {
 				if ((m = m_pullup(m, hlen)) == NULL) {
 					ipstat.ips_toosmall++;
@@ -430,7 +428,10 @@ ipv4_input(struct mbuf *m)
 	}
 #ifdef IPSEC
 	if (ipsec_in_use) {
-		if (ip_input_ipsec_fwd_check(m, hlen) != 0) {
+		KERNEL_LOCK();
+		rv = ip_input_ipsec_fwd_check(m, hlen);
+		KERNEL_UNLOCK();
+		if (rv != 0) {
 			ipstat.ips_cantforward++;
 			goto bad;
 		}
@@ -1027,6 +1028,7 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 	cp = (u_char *)(ip + 1);
 	cnt = (ip->ip_hl << 2) - sizeof (struct ip);
 
+	KERNEL_LOCK();
 	for (; cnt > 0; cnt -= optlen, cp += optlen) {
 		opt = cp[IPOPT_OPTVAL];
 		if (opt == IPOPT_EOL)
@@ -1240,12 +1242,14 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 			ipt.ipt_ptr += sizeof(u_int32_t);
 		}
 	}
+	KERNEL_UNLOCK();
 	if (forward && ipforwarding) {
 		ip_forward(m, ifp, 1);
 		return (1);
 	}
 	return (0);
 bad:
+	KERNEL_UNLOCK();
 	icmp_error(m, type, code, 0, 0);
 	ipstat.ips_badoptions++;
 	return (1);

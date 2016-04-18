@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.318 2016/02/11 12:56:08 jca Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.319 2016/04/18 06:43:51 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -100,10 +100,9 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	struct ifnet *ifp = NULL;
 	struct mbuf *m = m0;
 	int hlen = sizeof (struct ip);
-	int len, error = 0;
+	int rv, len, error = 0;
 	struct route iproute;
 	struct sockaddr_in *dst;
-	struct in_ifaddr *ia;
 	struct tdb *tdb = NULL;
 	u_long mtu;
 
@@ -183,9 +182,17 @@ reroute:
 	if ((IN_MULTICAST(ip->ip_dst.s_addr) ||
 	    (ip->ip_dst.s_addr == INADDR_BROADCAST)) &&
 	    imo != NULL && (ifp = if_get(imo->imo_ifidx)) != NULL) {
+		struct in_ifaddr *ia;
+
 		mtu = ifp->if_mtu;
+		KERNEL_LOCK();
 		IFP_TO_IA(ifp, ia);
+		if (ip->ip_src.s_addr == INADDR_ANY && ia)
+			ip->ip_src = ia->ia_addr.sin_addr;
+		KERNEL_UNLOCK();
 	} else {
+		struct in_ifaddr *ia;
+
 		if (ro->ro_rt == NULL)
 			ro->ro_rt = rtalloc_mpath(&ro->ro_dst,
 			    &ip->ip_src.s_addr, ro->ro_tableid);
@@ -206,17 +213,19 @@ reroute:
 
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = satosin(ro->ro_rt->rt_gateway);
-	}
 
-	/* Set the source IP address */
-	if (ip->ip_src.s_addr == INADDR_ANY && ia)
-		ip->ip_src = ia->ia_addr.sin_addr;
+		/* Set the source IP address */
+		if (ip->ip_src.s_addr == INADDR_ANY && ia)
+			ip->ip_src = ia->ia_addr.sin_addr;
+	}
 
 #ifdef IPSEC
 	if (ipsec_in_use || inp != NULL) {
+		KERNEL_LOCK();
 		/* Do we have any pending SAs to apply ? */
 		tdb = ip_output_ipsec_lookup(m, hlen, &error, inp,
 		    ipsecflowinfo);
+		KERNEL_UNLOCK();
 		if (error != 0) {
 			/* Should silently drop packet */
 			if (error == -EINVAL)
@@ -289,9 +298,13 @@ reroute:
 		 * of outgoing interface.
 		 */
 		if (ip->ip_src.s_addr == INADDR_ANY) {
+			struct in_ifaddr *ia;
+
+			KERNEL_LOCK();
 			IFP_TO_IA(ifp, ia);
 			if (ia != NULL)
 				ip->ip_src = ia->ia_addr.sin_addr;
+			KERNEL_UNLOCK();
 		}
 
 		if ((imo == NULL || imo->imo_loop) &&
@@ -322,8 +335,6 @@ reroute:
 			 */
 			if (ipmforwarding && ip_mrouter &&
 			    (flags & IP_FORWARDING) == 0) {
-				int rv;
-
 				KERNEL_LOCK();
 				rv = ip_mforward(m, ifp);
 				KERNEL_UNLOCK();
@@ -389,8 +400,10 @@ sendit:
 	 * Check if the packet needs encapsulation.
 	 */
 	if (tdb != NULL) {
+		KERNEL_LOCK();
 		/* Callee frees mbuf */
 		error = ip_output_ipsec_send(tdb, m, ifp, ro);
+		KERNEL_UNLOCK();
 		goto done;
 	}
 #endif /* IPSEC */

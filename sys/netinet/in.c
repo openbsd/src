@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.126 2016/01/21 11:23:48 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.127 2016/04/18 06:43:51 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -890,8 +890,10 @@ in_hasmulti(struct in_addr *ap, struct ifnet *ifp)
 	struct in_multi *inm;
 	int joined;
 
+	KERNEL_LOCK();
 	IN_LOOKUP_MULTI(*ap, ifp, inm);
 	joined = (inm != NULL);
+	KERNEL_UNLOCK();
 
 	return (joined);
 }
