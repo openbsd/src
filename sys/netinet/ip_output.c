@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.319 2016/04/18 06:43:51 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.320 2016/04/18 12:10:34 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -100,11 +100,14 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	struct ifnet *ifp = NULL;
 	struct mbuf *m = m0;
 	int hlen = sizeof (struct ip);
-	int rv, len, error = 0;
+	int len, error = 0;
 	struct route iproute;
 	struct sockaddr_in *dst;
 	struct tdb *tdb = NULL;
 	u_long mtu;
+#if defined(MROUTING)
+	int rv;
+#endif
 
 #ifdef IPSEC
 	if (inp && (inp->inp_flags & INP_IPV6) != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.271 2016/04/18 06:43:51 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.272 2016/04/18 12:10:34 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -227,7 +227,10 @@ ipv4_input(struct mbuf *m)
 {
 	struct ifnet *ifp;
 	struct ip *ip;
-	int rv, hlen, len;
+	int hlen, len;
+#if defined(MROUTING) || defined(IPSEC)
+	int rv;
+#endif
 	in_addr_t pfrdr = 0;
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
