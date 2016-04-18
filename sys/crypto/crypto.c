@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.75 2015/08/28 00:03:53 deraadt Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.76 2016/04/18 21:05:55 kettenis Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -36,6 +36,7 @@ struct pool cryptop_pool;
 struct pool cryptodesc_pool;
 
 struct taskq *crypto_taskq;
+struct taskq *crypto_taskq_mpsafe;
 
 /*
  * Create a new session.
@@ -371,9 +372,21 @@ crypto_unregister(u_int32_t driverid, int alg)
 int
 crypto_dispatch(struct cryptop *crp)
 {
-	if (crypto_taskq && !(crp->crp_flags & CRYPTO_F_NOQUEUE)) {
+	struct taskq *tq = crypto_taskq;
+	int s;
+	u_int32_t hid;
+
+	s = splvm();
+	hid = (crp->crp_sid >> 32) & 0xffffffff;
+	if (hid < crypto_drivers_num) {
+		if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_MPSAFE)
+			tq = crypto_taskq_mpsafe;
+	}
+	splx(s);
+
+	if (tq && !(crp->crp_flags & CRYPTO_F_NOQUEUE)) {
 		task_set(&crp->crp_task, (void (*))crypto_invoke, crp);
-		task_add(crypto_taskq, &crp->crp_task);
+		task_add(tq, &crp->crp_task);
 	} else {
 		crypto_invoke(crp);
 	}
@@ -498,6 +511,7 @@ void
 crypto_init(void)
 {
 	crypto_taskq = taskq_create("crypto", 1, IPL_VM, 0);
+	crypto_taskq_mpsafe = taskq_create("crynlk", 1, IPL_VM|IPL_MPSAFE, 0);
 
 	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0,
 	    0, "cryptop", NULL);

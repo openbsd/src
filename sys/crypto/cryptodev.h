@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.67 2015/12/10 21:00:51 naddy Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.68 2016/04/18 21:05:55 kettenis Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -208,6 +208,7 @@ struct cryptocap {
 	u_int8_t	cc_flags;
 #define CRYPTOCAP_F_CLEANUP     0x01
 #define CRYPTOCAP_F_SOFTWARE    0x02
+#define CRYPTOCAP_F_MPSAFE      0x04
 
 	int		(*cc_newsession) (u_int32_t *, struct cryptoini *);
 	int		(*cc_process) (struct cryptop *);
