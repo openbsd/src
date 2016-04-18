@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.48 2016/04/14 12:08:21 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1218,12 +1218,12 @@ nvme_q_alloc(struct nvme_softc *sc, u_int16_t id, u_int entries, u_int dstrd)
 		return (NULL);
 
 	q->q_sq_dmamem = nvme_dmamem_alloc(sc,
-	    sizeof(struct nvme_sqe *) * entries);
+	    sizeof(struct nvme_sqe) * entries);
 	if (q->q_sq_dmamem == NULL)
 		goto free;
 
 	q->q_cq_dmamem = nvme_dmamem_alloc(sc,
-	    sizeof(struct nvme_cqe *) * entries);
+	    sizeof(struct nvme_cqe) * entries);
 	if (q->q_sq_dmamem == NULL)
 		goto free_sq;
 
