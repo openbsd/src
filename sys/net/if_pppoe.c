@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.54 2016/04/13 11:41:15 mpi Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.55 2016/04/18 14:38:08 mikeb Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -792,7 +792,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 	struct proc *p = curproc;	/* XXX */
 	struct pppoe_softc *sc = (struct pppoe_softc *)ifp;
 	struct ifnet *eth_if;
-	int error = 0;
+	int s, error = 0;
 
 	switch (cmd) {
 	case PPPOESETPARMS:
@@ -923,7 +923,34 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		return (sppp_ioctl(ifp, cmd, data));
 	}
 	default:
-		return (sppp_ioctl(ifp, cmd, data));
+		error = sppp_ioctl(ifp, cmd, data);
+		if (error == ENETRESET) {
+			error = 0;
+			if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+			    (IFF_UP | IFF_RUNNING)) {
+				s = splnet();
+				if_down(ifp);
+				splx(s);
+				if (sc->sc_state >= PPPOE_STATE_PADI_SENT &&
+				    sc->sc_state < PPPOE_STATE_SESSION) {
+					timeout_del(&sc->sc_timeout);
+					sc->sc_state = PPPOE_STATE_INITIAL;
+					sc->sc_padi_retried = 0;
+					sc->sc_padr_retried = 0;
+					memcpy(&sc->sc_dest,
+					    etherbroadcastaddr,
+					    sizeof(sc->sc_dest));
+				}
+				error = sppp_ioctl(ifp, SIOCSIFFLAGS, NULL);
+				if (error)
+					return (error);
+				s = splnet();
+				if_up(ifp);
+				splx(s);
+				return (sppp_ioctl(ifp, SIOCSIFFLAGS, NULL));
+			}
+		}
+		return (error);
 	}
 	return (0);
 }

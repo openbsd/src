@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.149 2015/11/23 14:41:05 sthen Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.150 2016/04/18 14:38:09 mikeb Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -4529,19 +4529,6 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 	if (copyin((caddr_t)ifr->ifr_data, &cmd, sizeof cmd) != 0)
 		return EFAULT;
 
-	/*
-	 * We have a very specific idea of which fields we allow
-	 * being passed back from userland, so to not clobber our
-	 * current state.  For one, we only allow setting
-	 * anything if LCP is in dead phase.  Once the LCP
-	 * negotiations started, the authentication settings must
-	 * not be changed again.  (The administrator can force an
-	 * ifconfig down in order to get LCP back into dead
-	 * phase.)
-	 */
-	if (sp->pp_phase != PHASE_DEAD)
-		return EBUSY;
-
 	switch (cmd) {
 	case SPPPIOSDEFS:
 	{
@@ -4638,7 +4625,7 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 		return EINVAL;
 	}
 
-	return 0;
+	return (ENETRESET);
 }
 
 void
