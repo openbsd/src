@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.37 2016/04/17 03:12:08 dlg Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.38 2016/04/18 21:15:18 kettenis Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -66,13 +66,14 @@ struct aesni_session {
 	struct swcr_data	*ses_swd;
 	LIST_ENTRY(aesni_session)
 				 ses_entries;
+	uint8_t			*ses_buf;
+	size_t			 ses_buflen;
 };
 
 struct aesni_softc {
-	uint8_t			*sc_buf;
-	size_t			 sc_buflen;
 	int32_t			 sc_cid;
 	uint32_t		 sc_sid;
+	struct mutex		 sc_mtx;
 	LIST_HEAD(, aesni_session)
 				 sc_sessions;
 } *aesni_sc;
@@ -132,10 +133,6 @@ aesni_setup(void)
 	if (aesni_sc == NULL)
 		return;
 
-	aesni_sc->sc_buf = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (aesni_sc->sc_buf != NULL)
-		aesni_sc->sc_buflen = PAGE_SIZE;
-
 	bzero(algs, sizeof(algs));
 
 	/* Encryption algorithms. */
@@ -161,9 +158,8 @@ aesni_setup(void)
 	/* IPsec Extended Sequence Numbers. */
 	algs[CRYPTO_ESN] = CRYPTO_ALG_FLAG_SUPPORTED;
 
-	aesni_sc->sc_cid = crypto_get_driverid(0);
+	aesni_sc->sc_cid = crypto_get_driverid(CRYPTOCAP_F_MPSAFE);
 	if (aesni_sc->sc_cid < 0) {
-		free(aesni_sc->sc_buf, M_DEVBUF, aesni_sc->sc_buflen);
 		free(aesni_sc, M_DEVBUF, sizeof(*aesni_sc));
 		return;
 	}
@@ -172,6 +168,8 @@ aesni_setup(void)
 	    "aesni", NULL);
 	pool_setipl(&aesnipl, IPL_VM);
 	pool_setlowat(&aesnipl, 2);
+
+	mtx_init(&aesni_sc->sc_mtx, IPL_VM);
 
 	crypto_register(aesni_sc->sc_cid, algs, aesni_newsession,
 	    aesni_freesession, aesni_process);
@@ -193,7 +191,14 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	ses = pool_get(&aesnipl, PR_NOWAIT | PR_ZERO);
 	if (!ses)
 		return (ENOMEM);
+
+	ses->ses_buf = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (ses->ses_buf != NULL)
+		ses->ses_buflen = PAGE_SIZE;
+
+	mtx_enter(&aesni_sc->sc_mtx);
 	LIST_INSERT_HEAD(&aesni_sc->sc_sessions, ses, ses_entries);
+	mtx_leave(&aesni_sc->sc_mtx);
 	ses->ses_sid = ++aesni_sc->sc_sid;
 
 	for (c = cri; c != NULL; c = c->cri_next) {
@@ -343,15 +348,19 @@ aesni_freesession(u_int64_t tid)
 	struct auth_hash *axf;
 	u_int32_t sid = (u_int32_t)tid;
 
+	mtx_enter(&aesni_sc->sc_mtx);
 	LIST_FOREACH(ses, &aesni_sc->sc_sessions, ses_entries) {
 		if (ses->ses_sid == sid)
 			break;
 	}
+	mtx_leave(&aesni_sc->sc_mtx);
 
 	if (ses == NULL)
 		return (EINVAL);
 
+	mtx_enter(&aesni_sc->sc_mtx);
 	LIST_REMOVE(ses, ses_entries);
+	mtx_leave(&aesni_sc->sc_mtx);
 
 	if (ses->ses_ghash) {
 		explicit_bzero(ses->ses_ghash, sizeof(GHASH_CTX));
@@ -376,6 +385,11 @@ aesni_freesession(u_int64_t tid)
 			free(swd->sw_octx, M_CRYPTO_DATA, axf->ctxsize);
 		}
 		free(swd, M_CRYPTO_DATA, sizeof(*swd));
+	}
+
+	if (ses->ses_buf) {
+		explicit_bzero(ses->ses_buf, ses->ses_buflen);
+		free(ses->ses_buf, M_DEVBUF, ses->ses_buflen);
 	}
 
 	explicit_bzero(ses, sizeof (*ses));
@@ -406,24 +420,26 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	uint8_t iv[EALG_MAX_BLOCK_LEN];
 	uint8_t icb[AESCTR_BLOCKSIZE];
 	uint8_t tag[GMAC_DIGEST_LEN];
-	uint8_t *buf = aesni_sc->sc_buf;
+	uint8_t *buf = ses->ses_buf;
 	uint32_t *dw;
 
 	aadlen = rlen = err = iskip = oskip = 0;
 
-	if (crd->crd_len > aesni_sc->sc_buflen) {
+	if (crd->crd_len > ses->ses_buflen) {
+		KERNEL_LOCK();
 		if (buf != NULL) {
-			explicit_bzero(buf, aesni_sc->sc_buflen);
-			free(buf, M_DEVBUF, aesni_sc->sc_buflen);
+			explicit_bzero(buf, ses->ses_buflen);
+			free(buf, M_DEVBUF, ses->ses_buflen);
 		}
 
-		aesni_sc->sc_buflen = 0;
+		ses->ses_buflen = 0;
 		rlen = roundup(crd->crd_len, EALG_MAX_BLOCK_LEN);
-		aesni_sc->sc_buf = buf = malloc(rlen, M_DEVBUF, M_NOWAIT |
+		ses->ses_buf = buf = malloc(rlen, M_DEVBUF, M_NOWAIT |
 		    M_ZERO);
+		KERNEL_UNLOCK();
 		if (buf == NULL)
 			return (ENOMEM);
-		aesni_sc->sc_buflen = rlen;
+		ses->ses_buflen = rlen;
 	}
 
 	/* CBC uses 16, CTR/XTS only 8. */
@@ -605,10 +621,12 @@ aesni_process(struct cryptop *crp)
 	if (crp == NULL || crp->crp_callback == NULL)
 		return (EINVAL);
 
+	mtx_enter(&aesni_sc->sc_mtx);
 	LIST_FOREACH(ses, &aesni_sc->sc_sessions, ses_entries) {
 		if (ses->ses_sid == (crp->crp_sid & 0xffffffff))
 			break;
 	}
+	mtx_leave(&aesni_sc->sc_mtx);
 
 	if (!ses) {
 		err = EINVAL;
