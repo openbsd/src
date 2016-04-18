@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.319 2016/04/06 11:48:51 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.320 2016/04/18 06:20:23 mpi Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2929,8 +2929,14 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	    strlen(ifrdesc.ifr_data))
 		printf("\tdescription: %s\n", ifrdesc.ifr_data);
 
-	if (!is_bridge(name) && ioctl(s, SIOCGIFPRIORITY, &ifrdesc) == 0)
-		printf("\tpriority: %d\n", ifrdesc.ifr_metric);
+	if (sdl != NULL)
+		printf("\tindex %u", sdl->sdl_index);
+	if (!is_bridge(name) && ioctl(s, SIOCGIFPRIORITY, &ifrdesc) == 0) {
+		printf("%cpriority %d\n", (sdl != NULL) ? ' ' : '\t',
+		    ifrdesc.ifr_metric);
+	} else if (sdl != NULL) {
+		putchar('\n');
+	}
 	(void) memset(&ikardesc, 0, sizeof(ikardesc));
 	(void) strlcpy(ikardesc.ikar_name, name, sizeof(ikardesc.ikar_name));
 	if (ioctl(s, SIOCGETKALIVE, &ikardesc) == 0 &&
