@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.12 2016/04/15 13:31:03 renato Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.13 2016/04/18 13:14:27 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -406,8 +406,9 @@ main_dispatch_eigrpe(int fd, short event, void *bula)
 	if (!shut)
 		imsg_event_add(iev);
 	else {
-		eigrpe_pid = 0;
-		eigrpd_shutdown();
+		/* this pipe is dead, so remove the event handler */
+		event_del(&iev->ev);
+		event_loopexit(NULL);
 	}
 }
 
@@ -469,8 +470,9 @@ main_dispatch_rde(int fd, short event, void *bula)
 	if (!shut)
 		imsg_event_add(iev);
 	else {
-		rde_pid = 0;
-		eigrpd_shutdown();
+		/* this pipe is dead, so remove the event handler */
+		event_del(&iev->ev);
+		event_loopexit(NULL);
 	}
 }
 

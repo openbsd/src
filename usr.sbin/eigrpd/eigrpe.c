@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.19 2016/04/15 13:31:03 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.20 2016/04/18 13:14:27 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -400,8 +400,11 @@ eigrpe_dispatch_main(int fd, short event, void *bula)
 	}
 	if (!shut)
 		imsg_event_add(iev);
-	else
-		eigrpe_shutdown();
+	else {
+		/* this pipe is dead, so remove the event handler */
+		event_del(&iev->ev);
+		event_loopexit(NULL);
+	}
 }
 
 /* ARGSUSED */
@@ -558,8 +561,11 @@ eigrpe_dispatch_rde(int fd, short event, void *bula)
 	}
 	if (!shut)
 		imsg_event_add(iev);
-	else
-		eigrpe_shutdown();
+	else {
+		/* this pipe is dead, so remove the event handler */
+		event_del(&iev->ev);
+		event_loopexit(NULL);
+	}
 }
 
 void
