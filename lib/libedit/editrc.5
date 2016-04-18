@@ -1,5 +1,5 @@
-.\"	$OpenBSD: editrc.5,v 1.29 2016/01/08 20:26:54 zhuk Exp $
-.\"	$NetBSD: editrc.5,v 1.27 2013/01/10 16:03:42 wiz Exp $
+.\"	$OpenBSD: editrc.5,v 1.30 2016/04/18 20:13:07 schwarze Exp $
+.\"	$NetBSD: editrc.5,v 1.30 2016/04/17 18:39:14 christos Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 8 2016 $
+.Dd $Mdocdate: April 18 2016 $
 .Dt EDITRC 5
 .Os
 .Sh NAME
@@ -462,20 +462,8 @@ Adds to argument or enters a digit.
 Digit that starts argument.
 .It Ic ed-unassigned
 Indicates unbound character.
-.It Ic ed-tty-sigint
-Tty interrupt character.
-.It Ic ed-tty-dsusp
-Tty delayed suspend character.
-.It Ic ed-tty-flush-output
-Tty flush output characters.
-.It Ic ed-tty-sigquit
-Tty quit character.
-.It Ic ed-tty-sigtstp
-Tty suspend character.
-.It Ic ed-tty-stop-output
-Tty disallow output characters.
-.It Ic ed-tty-start-output
-Tty allow output characters.
+.It Ic ed-ignore
+Ignore this character.
 .It Ic ed-newline
 Execute command.
 .It Ic ed-delete-prev-char

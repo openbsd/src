@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.19 2016/04/11 20:43:33 schwarze Exp $	*/
+/*	$OpenBSD: common.c,v 1.20 2016/04/18 20:13:07 schwarze Exp $	*/
 /*	$NetBSD: common.c,v 1.24 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -437,102 +437,14 @@ ed_unassigned(EditLine *el, wint_t c __attribute__((__unused__)))
 }
 
 
-/**
- ** TTY key handling.
- **/
-
-/* ed_tty_sigint():
- *	Tty interrupt character
- *	[^C]
+/* ed_ignore():
+ *	Input characters that have no effect
+ *	[^C ^O ^Q ^S ^Z ^\ ^]] [^C ^O ^Q ^S ^\]
  */
 protected el_action_t
 /*ARGSUSED*/
-ed_tty_sigint(EditLine *el __attribute__((__unused__)),
+ed_ignore(EditLine *el __attribute__((__unused__)),
 	      wint_t c __attribute__((__unused__)))
-{
-
-	return CC_NORM;
-}
-
-
-/* ed_tty_dsusp():
- *	Tty delayed suspend character
- *	[^Y]
- */
-protected el_action_t
-/*ARGSUSED*/
-ed_tty_dsusp(EditLine *el __attribute__((__unused__)),
-	     wint_t c __attribute__((__unused__)))
-{
-
-	return CC_NORM;
-}
-
-
-/* ed_tty_flush_output():
- *	Tty flush output characters
- *	[^O]
- */
-protected el_action_t
-/*ARGSUSED*/
-ed_tty_flush_output(EditLine *el __attribute__((__unused__)),
-		    wint_t c __attribute__((__unused__)))
-{
-
-	return CC_NORM;
-}
-
-
-/* ed_tty_sigquit():
- *	Tty quit character
- *	[^\]
- */
-protected el_action_t
-/*ARGSUSED*/
-ed_tty_sigquit(EditLine *el __attribute__((__unused__)),
-	       wint_t c __attribute__((__unused__)))
-{
-
-	return CC_NORM;
-}
-
-
-/* ed_tty_sigtstp():
- *	Tty suspend character
- *	[^Z]
- */
-protected el_action_t
-/*ARGSUSED*/
-ed_tty_sigtstp(EditLine *el __attribute__((__unused__)),
-	       wint_t c __attribute__((__unused__)))
-{
-
-	return CC_NORM;
-}
-
-
-/* ed_tty_stop_output():
- *	Tty disallow output characters
- *	[^S]
- */
-protected el_action_t
-/*ARGSUSED*/
-ed_tty_stop_output(EditLine *el __attribute__((__unused__)),
-		   wint_t c __attribute__((__unused__)))
-{
-
-	return CC_NORM;
-}
-
-
-/* ed_tty_start_output():
- *	Tty allow output characters
- *	[^Q]
- */
-protected el_action_t
-/*ARGSUSED*/
-ed_tty_start_output(EditLine *el __attribute__((__unused__)),
-		    wint_t c __attribute__((__unused__)))
 {
 
 	return CC_NORM;
