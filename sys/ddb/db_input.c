@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_input.c,v 1.15 2016/01/25 14:30:30 mpi Exp $	*/
+/*	$OpenBSD: db_input.c,v 1.16 2016/04/19 12:23:25 mpi Exp $	*/
 /*	$NetBSD: db_input.c,v 1.7 1996/02/05 01:57:02 christos Exp $	*/
 
 /*
@@ -45,6 +45,12 @@
 /*
  * Character input and editing.
  */
+
+void db_putstring(char *, int);
+void db_putnchars(int, int);
+void db_delete(int, int);
+void db_delete_line(void);
+int db_inputchar(int);
 
 /*
  * We don't track output position while editing input,

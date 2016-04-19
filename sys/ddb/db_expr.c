@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_expr.c,v 1.12 2016/01/25 14:30:30 mpi Exp $	*/
+/*	$OpenBSD: db_expr.c,v 1.13 2016/04/19 12:23:25 mpi Exp $	*/
 /*	$NetBSD: db_expr.c,v 1.5 1996/02/05 01:56:58 christos Exp $	*/
 
 /*
@@ -40,6 +40,12 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_variables.h>
+
+boolean_t db_term(db_expr_t *);
+boolean_t db_unary(db_expr_t *);
+boolean_t db_mult_expr(db_expr_t *);
+boolean_t db_add_expr(db_expr_t *);
+boolean_t db_shift_expr(db_expr_t *);
 
 boolean_t
 db_term(db_expr_t *valuep)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_extern.h,v 1.15 2016/04/19 10:12:36 mpi Exp $	*/
+/*	$OpenBSD: db_extern.h,v 1.16 2016/04/19 12:23:25 mpi Exp $	*/
 /*	$NetBSD: db_extern.h,v 1.1 1996/02/05 01:57:00 christos Exp $	*/
 
 /*
@@ -37,30 +37,18 @@ void ddb_init(void);
 
 /* db_examine.c */
 void db_examine_cmd(db_expr_t, int, db_expr_t, char *);
-void db_examine(db_addr_t, char *, int);
 void db_print_cmd(db_expr_t, int, db_expr_t, char *);
+void db_search_cmd(db_expr_t, boolean_t, db_expr_t, char *);
 void db_print_loc_and_inst(db_addr_t);
 size_t db_strlcpy(char *, const char *, size_t);
-void db_search_cmd(db_expr_t, boolean_t, db_expr_t, char *);
-void db_search(db_addr_t, int, db_expr_t, db_expr_t, db_expr_t);
 
 /* db_expr.c */
-boolean_t db_term(db_expr_t *);
-boolean_t db_unary(db_expr_t *);
-boolean_t db_mult_expr(db_expr_t *);
-boolean_t db_add_expr(db_expr_t *);
-boolean_t db_shift_expr(db_expr_t *);
 int db_expression(db_expr_t *);
 
 /* db_hangman.c */
 void db_hangman(db_expr_t, int, db_expr_t, char *);
 
 /* db_input.c */
-void db_putstring(char *, int);
-void db_putnchars(int, int);
-void db_delete(int, int);
-void db_delete_line(void);
-int db_inputchar(int);
 int db_readline(char *, int);
 
 /* db_trap.c */

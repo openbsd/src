@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.20 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.21 2016/04/19 12:23:25 mpi Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -44,6 +44,9 @@
 #include <ddb/db_interface.h>
 
 char	db_examine_format[TOK_STRING_SIZE] = "x";
+
+void db_examine(db_addr_t, char *, int);
+void db_search(db_addr_t, int, db_expr_t, db_expr_t, db_expr_t);
 
 /*
  * Examine (print) data.  Syntax is:

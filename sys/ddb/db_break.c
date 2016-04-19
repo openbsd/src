@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_break.c,v 1.19 2016/04/19 10:24:42 mpi Exp $	*/
+/*	$OpenBSD: db_break.c,v 1.20 2016/04/19 12:23:25 mpi Exp $	*/
 /*	$NetBSD: db_break.c,v 1.7 1996/03/30 22:30:03 christos Exp $	*/
 
 /*
@@ -48,6 +48,12 @@ struct db_breakpoint	db_break_table[NBREAKPOINTS];
 db_breakpoint_t		db_next_free_breakpoint = &db_break_table[0];
 db_breakpoint_t		db_free_breakpoints = 0;
 db_breakpoint_t		db_breakpoint_list = 0;
+
+db_breakpoint_t db_breakpoint_alloc(void);
+void db_breakpoint_free(db_breakpoint_t);
+void db_set_breakpoint(db_addr_t, int);
+void db_delete_breakpoint(db_addr_t);
+void db_list_breakpoints(void);
 
 db_breakpoint_t
 db_breakpoint_alloc(void)

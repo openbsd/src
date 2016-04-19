@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_lex.c,v 1.13 2016/01/25 14:30:30 mpi Exp $	*/
+/*	$OpenBSD: db_lex.c,v 1.14 2016/04/19 12:23:25 mpi Exp $	*/
 /*	$NetBSD: db_lex.c,v 1.8 1996/02/05 01:57:05 christos Exp $	*/
 
 /*
@@ -49,6 +49,10 @@ char *	db_lp, *db_endlp;
 
 db_expr_t db_tok_number;
 char	db_tok_string[TOK_STRING_SIZE];
+
+void db_flush_line(void);
+int db_read_char(void);
+void db_unread_char(int);
 
 int
 db_read_line(void)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.h,v 1.31 2016/01/25 14:30:30 mpi Exp $	*/
+/*	$OpenBSD: db_command.h,v 1.32 2016/04/19 12:23:25 mpi Exp $	*/
 /*	$NetBSD: db_command.h,v 1.8 1996/02/05 01:56:55 christos Exp $	*/
 
 /*
@@ -33,45 +33,13 @@
 /*
  * Command loop declarations.
  */
-void db_skip_to_eol(void);
 struct db_command;
-int db_cmd_search(char *, struct db_command *, struct db_command **);
-void db_cmd_list(struct db_command *);
-void db_command(struct db_command **, struct db_command *);
-void db_buf_print_cmd(db_expr_t, int, db_expr_t, char *);
-void db_map_print_cmd(db_expr_t, int, db_expr_t, char *);
-void db_malloc_print_cmd(db_expr_t, int, db_expr_t, char *);
-void db_mbuf_print_cmd(db_expr_t, int, db_expr_t, char *);
-void db_mount_print_cmd(db_expr_t, int, db_expr_t, char *);
-void db_show_all_mounts(db_expr_t, int, db_expr_t, char *);
-void db_show_all_vnodes(db_expr_t, int, db_expr_t, char *);
-void db_show_all_bufs(db_expr_t, int, db_expr_t, char *);
-void db_object_print_cmd(db_expr_t, int, db_expr_t, char *);
-void db_page_print_cmd(db_expr_t, int, db_expr_t, char *);
-void db_extent_print_cmd(db_expr_t, int, db_expr_t, char *);
-void db_pool_print_cmd(db_expr_t, int, db_expr_t, char *);
-void db_proc_print_cmd(db_expr_t, int, db_expr_t, char *);
-void db_uvmexp_print_cmd(db_expr_t, int, db_expr_t, char *);
-void db_vnode_print_cmd(db_expr_t, int, db_expr_t, char *);
-void db_nfsreq_print_cmd(db_expr_t, int, db_expr_t, char *);
-void db_nfsnode_print_cmd(db_expr_t, int, db_expr_t, char *);
-void db_machine_commands_install(struct db_command *);
-void db_help_cmd(db_expr_t, int, db_expr_t, char *);
-void db_command_loop(void);
+
 void db_error(char *);
-void db_fncall(db_expr_t, int, db_expr_t, char *);
-void db_boot_sync_cmd(db_expr_t, int, db_expr_t, char *);
-void db_boot_crash_cmd(db_expr_t, int, db_expr_t, char *);
-void db_boot_dump_cmd(db_expr_t, int, db_expr_t, char *);
-void db_boot_halt_cmd(db_expr_t, int, db_expr_t, char *);
-void db_boot_reboot_cmd(db_expr_t, int, db_expr_t, char *);
-void db_boot_poweroff_cmd(db_expr_t, int, db_expr_t, char *);
-void db_stack_trace_cmd(db_expr_t, int, db_expr_t, char *);
-void db_dmesg_cmd(db_expr_t, int, db_expr_t, char *);
-void db_show_panic_cmd(db_expr_t, int, db_expr_t, char *);
-void db_bcstats_print_cmd(db_expr_t, int, db_expr_t, char *);
-void db_struct_offset_cmd(db_expr_t, int, db_expr_t, char *);
-void db_struct_layout_cmd(db_expr_t, int, db_expr_t, char *);
+void db_skip_to_eol(void);
+void db_command_loop(void);
+void db_command(struct db_command **, struct db_command *);
+void db_machine_commands_install(struct db_command *);
 
 extern	db_addr_t db_dot, db_last_addr, db_prev, db_next;
 
