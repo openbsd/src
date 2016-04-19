@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.272 2016/04/18 12:10:34 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.273 2016/04/19 08:23:13 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1416,8 +1416,9 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
 
 	rtableid = m->m_pkthdr.ph_rtableid;
 
+	rt = ipforward_rt.ro_rt;
 	sin = satosin(&ipforward_rt.ro_dst);
-	if ((rt = ipforward_rt.ro_rt) == NULL ||
+	if (rt == NULL || ISSET(rt->rt_flags, RTF_MPATH) ||
 	    ip->ip_dst.s_addr != sin->sin_addr.s_addr ||
 	    rtableid != ipforward_rt.ro_tableid) {
 		if (ipforward_rt.ro_rt) {
@@ -1500,7 +1501,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
 			goto freecopy;
 	}
 	if (!fake)
-		goto freert;
+		return;
 
 	switch (error) {
 
@@ -1522,9 +1523,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
 		code = ICMP_UNREACH_NEEDFRAG;
 
 #ifdef IPSEC
-		if (ipforward_rt.ro_rt) {
-			struct rtentry *rt = ipforward_rt.ro_rt;
-
+		if (rt != NULL) {
 			if (rt->rt_rmx.rmx_mtu)
 				destmtu = rt->rt_rmx.rmx_mtu;
 			else {
@@ -1563,15 +1562,6 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
  freecopy:
 	if (fake)
 		m_tag_delete_chain(&mfake);
- freert:
-#ifndef SMALL_KERNEL
-	if (ipmultipath && ipforward_rt.ro_rt &&
-	    (ipforward_rt.ro_rt->rt_flags & RTF_MPATH)) {
-		rtfree(ipforward_rt.ro_rt);
-		ipforward_rt.ro_rt = NULL;
-	}
-#endif
-	return;
 }
 
 int

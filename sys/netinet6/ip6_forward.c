@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.87 2016/03/29 11:57:51 chl Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.88 2016/04/19 08:23:13 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -225,6 +225,7 @@ reroute:
 		 * ip6_forward_rt.ro_dst.sin6_addr is equal to ip6->ip6_dst
 		 */
 		if (!rtisvalid(ip6_forward_rt.ro_rt) ||
+		    ISSET(ip6_forward_rt.ro_rt->rt_flags, RTF_MPATH) ||
 		    ip6_forward_rt.ro_tableid != rtableid) {
 			if (ip6_forward_rt.ro_rt) {
 				rtfree(ip6_forward_rt.ro_rt);
@@ -248,6 +249,7 @@ reroute:
 			return;
 		}
 	} else if (!rtisvalid(ip6_forward_rt.ro_rt) ||
+	   ISSET(ip6_forward_rt.ro_rt->rt_flags, RTF_MPATH) ||
 	   !IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst->sin6_addr) ||
 	   ip6_forward_rt.ro_tableid != rtableid) {
 		if (ip6_forward_rt.ro_rt) {
@@ -303,7 +305,7 @@ reroute:
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_BEYONDSCOPE, 0);
 		m_freem(m);
-		goto freert;
+		goto out;
 	}
 
 #ifdef IPSEC
@@ -346,7 +348,7 @@ reroute:
 		/* Callee frees mbuf */
 		error = ipsp_process_packet(m, tdb, AF_INET6, 0);
 		m_freem(mcopy);
-		goto freert;
+		goto out;
 	}
 #endif /* IPSEC */
 
@@ -387,7 +389,7 @@ reroute:
 				icmp6_error(mcopy, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_ADDR, 0);
 			m_freem(m);
-			goto freert;
+			goto out;
 		}
 		type = ND_REDIRECT;
 	}
@@ -434,7 +436,7 @@ reroute:
 			icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0,
 			    ifp->if_mtu);
 		m_freem(m);
-		goto freert;
+		goto out;
 	}
 
 	error = nd6_output(ifp, m, dst, rt);
@@ -454,12 +456,12 @@ reroute:
 senderr:
 #endif
 	if (mcopy == NULL)
-		goto freert;
+		goto out;
 	switch (error) {
 	case 0:
 		if (type == ND_REDIRECT) {
 			icmp6_redirect_output(mcopy, rt);
-			goto freert;
+			goto out;
 		}
 		goto freecopy;
 
@@ -481,17 +483,10 @@ senderr:
 		break;
 	}
 	icmp6_error(mcopy, type, code, 0);
-	goto freert;
+	goto out;
 
- freecopy:
+freecopy:
 	m_freem(mcopy);
- freert:
-#ifndef SMALL_KERNEL
-	if (ip6_multipath && ip6_forward_rt.ro_rt &&
-	    (ip6_forward_rt.ro_rt->rt_flags & RTF_MPATH)) {
-		rtfree(ip6_forward_rt.ro_rt);
-		ip6_forward_rt.ro_rt = NULL;
-	}
-#endif
+out:
 	if_put(ifp);
 }
