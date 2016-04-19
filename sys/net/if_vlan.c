@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.163 2016/04/19 23:31:32 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.164 2016/04/19 23:32:15 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -287,7 +287,7 @@ vlan_start(struct ifnet *ifp)
 			m->m_flags |= M_VLANTAG;
 		} else {
 			m = vlan_inject(m, ifv->ifv_type, ifv->ifv_tag |
-                            (prio << EVL_PRIO_BITS));
+			    (prio << EVL_PRIO_BITS));
 			if (m == NULL) {
 				ifp->if_oerrors++;
 				continue;
@@ -420,7 +420,7 @@ vlan_parent_up(struct ifvlan *ifv, struct ifnet *ifp0)
 			return (error);
 	}
 
-        /* Register callback for physical link state changes */
+	/* Register callback for physical link state changes */
 	ifv->lh_cookie = hook_establish(ifp0->if_linkstatehooks, 1,
 	    vlan_link_hook, ifv);
 
