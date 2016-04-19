@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.69 2016/03/09 09:04:15 mpi Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.70 2016/04/19 10:12:36 mpi Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <uvm/uvm_extern.h>
 #include <machine/db_machdep.h>		/* type definitions */
 
+#include <ddb/db_access.h>
 #include <ddb/db_lex.h>
 #include <ddb/db_output.h>
 #include <ddb/db_command.h>
@@ -77,6 +78,8 @@ db_addr_t	db_next;	/* next address to be examined
 				   or written */
 
 void db_show_regs(db_expr_t, boolean_t, db_expr_t, char *);
+void db_write_cmd(db_expr_t, boolean_t, db_expr_t, char *);
+
 
 /*
  * Utility routine - discard tokens through end-of-line.
@@ -815,4 +818,67 @@ db_show_regs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	    db_printf("\n");
 	}
 	db_print_loc_and_inst(PC_REGS(&ddb_regs));
+}
+
+/*
+ * Write to file.
+ */
+/*ARGSUSED*/
+void
+db_write_cmd(db_expr_t	address, boolean_t have_addr, db_expr_t count,
+    char *modif)
+{
+	db_addr_t	addr;
+	db_expr_t	old_value;
+	db_expr_t	new_value;
+	int		size;
+	boolean_t	wrote_one = FALSE;
+	char		tmpfmt[28];
+
+	addr = (db_addr_t) address;
+
+	switch (modif[0]) {
+	case 'b':
+		size = 1;
+		break;
+	case 'h':
+		size = 2;
+		break;
+	case 'l':
+	case '\0':
+		size = 4;
+		break;
+#ifdef __LP64__
+	case 'q':
+		size = 8;
+		break;
+#endif
+	default:
+		size = -1;
+		db_error("Unknown size\n");
+		/*NOTREACHED*/
+	}
+
+	while (db_expression(&new_value)) {
+		old_value = db_get_value(addr, size, FALSE);
+		db_printsym(addr, DB_STGY_ANY, db_printf);
+		db_printf("\t\t%s\t", db_format(tmpfmt, sizeof tmpfmt,
+		    old_value, DB_FORMAT_N, 0, 8));
+		db_printf("=\t%s\n",  db_format(tmpfmt, sizeof tmpfmt,
+		    new_value, DB_FORMAT_N, 0, 8));
+		db_put_value(addr, size, new_value);
+		addr += size;
+
+		wrote_one = TRUE;
+	}
+
+	if (!wrote_one) {
+		db_error("Nothing written.\n");
+		/*NOTREACHED*/
+	}
+
+	db_next = addr;
+	db_prev = addr - size;
+
+	db_skip_to_eol();
 }
