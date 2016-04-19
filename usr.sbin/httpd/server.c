@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.83 2015/12/02 15:13:00 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.84 2016/04/19 16:22:34 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -165,15 +165,15 @@ server_tls_init(struct server *srv)
 	log_debug("%s: setting up TLS for %s", __func__, srv->srv_conf.name);
 
 	if (tls_init() != 0) {
-		log_warn("%s: failed to initialise tls", __func__);
+		log_warnx("%s: failed to initialise tls", __func__);
 		return (-1);
 	}
 	if ((srv->srv_tls_config = tls_config_new()) == NULL) {
-		log_warn("%s: failed to get tls config", __func__);
+		log_warnx("%s: failed to get tls config", __func__);
 		return (-1);
 	}
 	if ((srv->srv_tls_ctx = tls_server()) == NULL) {
-		log_warn("%s: failed to get tls server", __func__);
+		log_warnx("%s: failed to get tls server", __func__);
 		return (-1);
 	}
 
@@ -182,33 +182,33 @@ server_tls_init(struct server *srv)
 
 	if (tls_config_set_ciphers(srv->srv_tls_config,
 	    srv->srv_conf.tls_ciphers) != 0) {
-		log_warn("%s: failed to set tls ciphers", __func__);
+		log_warnx("%s: failed to set tls ciphers", __func__);
 		return (-1);
 	}
 	if (tls_config_set_dheparams(srv->srv_tls_config,
 	    srv->srv_conf.tls_dhe_params) != 0) {
-		log_warn("%s: failed to set tls dhe params", __func__);
+		log_warnx("%s: failed to set tls dhe params", __func__);
 		return (-1);
 	}
 	if (tls_config_set_ecdhecurve(srv->srv_tls_config,
 	    srv->srv_conf.tls_ecdhe_curve) != 0) {
-		log_warn("%s: failed to set tls ecdhe curve", __func__);
+		log_warnx("%s: failed to set tls ecdhe curve", __func__);
 		return (-1);
 	}
 
 	if (tls_config_set_cert_mem(srv->srv_tls_config,
 	    srv->srv_conf.tls_cert, srv->srv_conf.tls_cert_len) != 0) {
-		log_warn("%s: failed to set tls cert", __func__);
+		log_warnx("%s: failed to set tls cert", __func__);
 		return (-1);
 	}
 	if (tls_config_set_key_mem(srv->srv_tls_config,
 	    srv->srv_conf.tls_key, srv->srv_conf.tls_key_len) != 0) {
-		log_warn("%s: failed to set tls key", __func__);
+		log_warnx("%s: failed to set tls key", __func__);
 		return (-1);
 	}
 
 	if (tls_configure(srv->srv_tls_ctx, srv->srv_tls_config) != 0) {
-		log_warn("%s: failed to configure TLS - %s", __func__,
+		log_warnx("%s: failed to configure TLS - %s", __func__,
 		    tls_error(srv->srv_tls_ctx));
 		return (-1);
 	}
