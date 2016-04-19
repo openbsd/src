@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_term.c,v 1.22 2016/03/17 03:44:05 bentley Exp $	*/
+/*	$OpenBSD: cl_term.c,v 1.23 2016/04/19 17:23:09 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -40,7 +40,6 @@ typedef struct _tklist {
 	char	*ts;			/* Key's termcap string. */
 	char	*output;		/* Corresponding vi command. */
 	char	*name;			/* Name. */
-	u_char	 value;			/* Special value (for lookup). */
 } TKLIST;
 static TKLIST const c_tklist[] = {	/* Command mappings. */
 	{"kil1",	"O",	"insert line"},
@@ -59,17 +58,14 @@ static TKLIST const c_tklist[] = {	/* Command mappings. */
 	{"ked",	       "dG",	"delete to end of screen"},
 	{"kcuf1",	"l",	"cursor right"},
 	{"kcuu1",	"k",	"cursor up"},
-	{NULL},
+	{NULL, NULL, NULL},
 };
-static TKLIST const m1_tklist[] = {	/* Input mappings (lookup). */
-	{NULL},
-};
-static TKLIST const m2_tklist[] = {	/* Input mappings (set or delete). */
+static TKLIST const m1_tklist[] = {	/* Input mappings (set or delete). */
 	{"kcud1",  "\033ja",	"cursor down"},			/* ^[ja */
 	{"kcub1",  "\033ha",	"cursor left"},			/* ^[ha */
 	{"kcuu1",  "\033ka",	"cursor up"},			/* ^[ka */
 	{"kcuf1",  "\033la",	"cursor right"},		/* ^[la */
-	{NULL},
+	{NULL, NULL, NULL},
 };
 
 /*
@@ -96,22 +92,8 @@ cl_term_init(SCR *sp)
 			return (1);
 	}
 
-	/* Input mappings needing to be looked up. */
-	for (tkp = m1_tklist; tkp->name != NULL; ++tkp) {
-		if ((t = tigetstr(tkp->ts)) == NULL || t == (char *)-1)
-			continue;
-		for (kp = keylist;; ++kp)
-			if (kp->value == tkp->value)
-				break;
-		if (kp == NULL)
-			continue;
-		if (seq_set(sp, tkp->name, strlen(tkp->name), t, strlen(t),
-		    &kp->ch, 1, SEQ_INPUT, SEQ_NOOVERWRITE | SEQ_SCREEN))
-			return (1);
-	}
-
 	/* Input mappings that are already set or are text deletions. */
-	for (tkp = m2_tklist; tkp->name != NULL; ++tkp) {
+	for (tkp = m1_tklist; tkp->name != NULL; ++tkp) {
 		if ((t = tigetstr(tkp->ts)) == NULL || t == (char *)-1)
 			continue;
 		/*
