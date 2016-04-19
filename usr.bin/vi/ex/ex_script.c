@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_script.c,v 1.23 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: ex_script.c,v 1.24 2016/04/19 17:42:09 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -44,7 +44,6 @@ static int	sscr_getprompt(SCR *);
 static int	sscr_init(SCR *);
 static int	sscr_insert(SCR *);
 static int	sscr_matchprompt(SCR *, char *, size_t, size_t *);
-static int	sscr_pty(int *, int *, char *, size_t, struct termios *, void *);
 static int	sscr_setprompt(SCR *, char *, size_t);
 
 /*
