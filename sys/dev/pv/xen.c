@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.54 2016/04/19 14:19:44 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.55 2016/04/19 18:15:41 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -662,7 +662,7 @@ xen_intr_signal(xen_intr_handle_t xih)
 }
 
 int
-xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih,
+xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih, int domain,
     void (*handler)(void *), void *arg, char *name)
 {
 	struct xen_softc *sc = xen_sc;
@@ -693,6 +693,7 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih,
 		/* We're being asked to allocate a new event port */
 		memset(&eau, 0, sizeof(eau));
 		eau.dom = DOMID_SELF;
+		eau.remote_dom = domain;
 		if (xen_evtchn_hypercall(sc, EVTCHNOP_alloc_unbound, &eau,
 		    sizeof(eau)) != 0) {
 			DPRINTF("%s: failed to allocate new event port\n",

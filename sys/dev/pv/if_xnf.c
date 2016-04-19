@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.21 2016/04/19 14:19:44 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.22 2016/04/19 18:15:41 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -253,7 +253,8 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (xen_intr_establish(0, &sc->sc_xih, xnf_intr, sc, ifp->if_xname)) {
+	if (xen_intr_establish(0, &sc->sc_xih, sc->sc_domid, xnf_intr, sc,
+	    ifp->if_xname)) {
 		printf(": failed to establish an interrupt\n");
 		return;
 	}
