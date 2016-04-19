@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_access.c,v 1.14 2016/01/25 14:30:30 mpi Exp $	*/
+/*	$OpenBSD: db_access.c,v 1.15 2016/04/19 10:24:42 mpi Exp $	*/
 /*	$NetBSD: db_access.c,v 1.8 1994/10/09 08:37:35 mycroft Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  * boundaries.
  */
 db_expr_t
-db_get_value(db_addr_t addr, size_t size, boolean_t is_signed)
+db_get_value(db_addr_t addr, size_t size, int is_signed)
 {
 	char data[sizeof(db_expr_t)];
 	db_expr_t value, extend;

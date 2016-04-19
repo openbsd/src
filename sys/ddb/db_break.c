@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_break.c,v 1.18 2016/01/25 14:30:30 mpi Exp $	*/
+/*	$OpenBSD: db_break.c,v 1.19 2016/04/19 10:24:42 mpi Exp $	*/
 /*	$NetBSD: db_break.c,v 1.7 1996/03/30 22:30:03 christos Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ db_find_breakpoint(db_addr_t addr)
 	return (0);
 }
 
-boolean_t	db_breakpoints_inserted = TRUE;
+int db_breakpoints_inserted = 1;
 
 void
 db_set_breakpoints(void)
@@ -150,11 +150,11 @@ db_set_breakpoints(void)
 	if (!db_breakpoints_inserted) {
 		for (bkpt = db_breakpoint_list; bkpt != 0; bkpt = bkpt->link) {
 			bkpt->bkpt_inst =
-			    db_get_value(bkpt->address, BKPT_SIZE, FALSE);
+			    db_get_value(bkpt->address, BKPT_SIZE, 0);
 			db_put_value(bkpt->address, BKPT_SIZE,
 			    BKPT_SET(bkpt->bkpt_inst));
 		}
-		db_breakpoints_inserted = TRUE;
+		db_breakpoints_inserted = 1;
 	}
 }
 
@@ -166,7 +166,7 @@ db_clear_breakpoints(void)
 	if (db_breakpoints_inserted) {
 		for (bkpt = db_breakpoint_list; bkpt != 0; bkpt = bkpt->link)
 			db_put_value(bkpt->address, BKPT_SIZE, bkpt->bkpt_inst);
-		db_breakpoints_inserted = FALSE;
+		db_breakpoints_inserted = 0;
 	}
 }
 
@@ -198,7 +198,7 @@ db_set_temp_breakpoint(db_addr_t addr)
 	bkpt->init_count = 1;
 	bkpt->count = 1;
 
-	bkpt->bkpt_inst = db_get_value(bkpt->address, BKPT_SIZE, FALSE);
+	bkpt->bkpt_inst = db_get_value(bkpt->address, BKPT_SIZE, 0);
 	db_put_value(bkpt->address, BKPT_SIZE, BKPT_SET(bkpt->bkpt_inst));
 	return bkpt;
 }

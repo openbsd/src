@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_watch.c,v 1.15 2016/01/25 14:30:30 mpi Exp $ */
+/*	$OpenBSD: db_watch.c,v 1.16 2016/04/19 10:24:42 mpi Exp $ */
 /*	$NetBSD: db_watch.c,v 1.9 1996/03/30 22:30:12 christos Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  * Watchpoints.
  */
 
-boolean_t	db_watchpoints_inserted = TRUE;
+int db_watchpoints_inserted = 1;
 
 #define	NWATCHPOINTS	100
 struct db_watchpoint	db_watch_table[NWATCHPOINTS];
@@ -109,7 +109,7 @@ db_set_watchpoint(db_addr_t addr, vsize_t size)
 	watch->link = db_watchpoint_list;
 	db_watchpoint_list = watch;
 
-	db_watchpoints_inserted = FALSE;
+	db_watchpoints_inserted = 0;
 }
 
 void
@@ -189,12 +189,12 @@ db_set_watchpoints(void)
 			pmap_protect(pmap_kernel(), trunc_page(watch->loaddr),
 			    round_page(watch->hiaddr), PROT_READ);
 		pmap_update(pmap_kernel());
-		db_watchpoints_inserted = TRUE;
+		db_watchpoints_inserted = 1;
 	}
 }
 
 void
 db_clear_watchpoints(void)
 {
-	db_watchpoints_inserted = FALSE;
+	db_watchpoints_inserted = 0;
 }
