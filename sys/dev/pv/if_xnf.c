@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.19 2016/04/19 12:39:31 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.20 2016/04/19 13:55:19 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -152,6 +152,7 @@ struct xnf_softc {
 	struct xen_attach_args	 sc_xa;
 	struct xen_softc	*sc_xen;
 	bus_dma_tag_t		 sc_dmat;
+	int			 sc_domid;
 
 	struct arpcom		 sc_ac;
 	struct ifmedia		 sc_media;
@@ -243,6 +244,7 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_xa = *xa;
 	sc->sc_xen = xa->xa_parent;
 	sc->sc_dmat = xa->xa_dmat;
+	sc->sc_domid = xa->xa_domid;
 
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
@@ -257,8 +259,8 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 	}
 	xen_intr_mask(sc->sc_xih);
 
-	printf(": event channel %u, address %s\n", sc->sc_xih,
-	    ether_sprintf(sc->sc_ac.ac_enaddr));
+	printf(": backend %d, event channel %u, address %s\n", sc->sc_domid,
+	    sc->sc_xih, ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	if (xnf_capabilities(sc)) {
 		xen_intr_disestablish(sc->sc_xih);
