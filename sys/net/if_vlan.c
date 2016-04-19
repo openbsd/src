@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.162 2016/04/15 04:34:10 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.163 2016/04/19 23:31:32 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -92,8 +92,6 @@ int	vlan_up(struct ifvlan *);
 int	vlan_parent_up(struct ifvlan *, struct ifnet *);
 int	vlan_down(struct ifvlan *);
 
-int	vlan_promisc(struct ifvlan *, int);
-
 void	vlan_ifdetach(void *);
 void	vlan_link_hook(void *);
 void	vlan_link_state(struct ifvlan *, u_char, u_int64_t);
@@ -106,6 +104,9 @@ int	vlan_multi_add(struct ifvlan *, struct ifreq *);
 int	vlan_multi_del(struct ifvlan *, struct ifreq *);
 void	vlan_multi_apply(struct ifvlan *, struct ifnet *, u_long);
 void	vlan_multi_free(struct ifvlan *);
+
+int	vlan_iff(struct ifvlan *);
+int	vlan_setlladdr(struct ifvlan *, struct ifreq *);
 
 int	vlan_set_compat(struct ifnet *, struct ifreq *);
 int	vlan_get_compat(struct ifnet *, struct ifreq *);
@@ -470,7 +471,8 @@ vlan_up(struct ifvlan *ifv)
 	/* parent is fine, let's prepare the ifv to handle packets */
 	ifp->if_hardmtu = hardmtu;
 	SET(ifp->if_flags, ifp0->if_flags & IFF_SIMPLEX);
-	if_setlladdr(ifp, LLADDR(ifp0->if_sadl));
+	if (!ISSET(ifv->ifv_flags, IFVF_LLADDR))
+		if_setlladdr(ifp, LLADDR(ifp0->if_sadl));
 
 	if (ifv->ifv_type != ETHERTYPE_VLAN) {
 		/*
@@ -522,7 +524,8 @@ leave:
 	rw_exit(&vlan_tagh_lk);
 scrub:
 	ifp->if_capabilities = 0;
-	if_setlladdr(ifp, etheranyaddr);
+	if (!ISSET(ifv->ifv_flags, IFVF_LLADDR))
+		if_setlladdr(ifp, etheranyaddr);
 	CLR(ifp->if_flags, IFF_SIMPLEX);
 	ifp->if_hardmtu = 0xffff;
 put:
@@ -564,7 +567,8 @@ vlan_down(struct ifvlan *ifv)
 	rw_exit_write(&vlan_tagh_lk);
 
 	ifp->if_capabilities = 0;
-	if_setlladdr(ifp, etheranyaddr);
+	if (!ISSET(ifv->ifv_flags, IFVF_LLADDR))
+		if_setlladdr(ifp, etheranyaddr);
 	CLR(ifp->if_flags, IFF_SIMPLEX);
 	ifp->if_hardmtu = 0xffff;
 
@@ -617,29 +621,6 @@ vlan_link_state(struct ifvlan *ifv, u_char link, uint64_t baud)
 }
 
 int
-vlan_promisc(struct ifvlan *ifv, int promisc)
-{
-	struct ifnet *ifp0;
-	int error = 0;
-
-	if ((ISSET(ifv->ifv_flags, IFVF_PROMISC) ? 1 : 0) == promisc)
-		return (0);
-
-	ifp0 = if_get(ifv->ifv_ifp0);
-	if (ifp0 != NULL) {
-		error = ifpromisc(ifp0, promisc);
-	}
-	if_put(ifp0);
-
-	if (error == 0) {
-		CLR(ifv->ifv_flags, IFVF_PROMISC);
-		SET(ifv->ifv_flags, promisc ? IFVF_PROMISC : 0);
-	}
-
-	return (error);
-}
-
-int
 vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ifvlan *ifv = ifp->if_softc;
@@ -655,14 +636,11 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		/* FALLTHROUGH */
 
 	case SIOCSIFFLAGS:
-		error = vlan_promisc(ifv,
-		    ISSET(ifp->if_flags, IFF_PROMISC) ? 1 : 0);
-		if (error != 0)
-			break;
-
 		if (ISSET(ifp->if_flags, IFF_UP)) {
 			if (!ISSET(ifp->if_flags, IFF_RUNNING))
 				error = vlan_up(ifv);
+			else
+				error = ENETRESET;
 		} else {
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
 				error = vlan_down(ifv);
@@ -749,6 +727,10 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = vlan_multi_del(ifv, ifr);
 		break;
 
+	case SIOCSIFLLADDR:
+		error = vlan_setlladdr(ifv, ifr);
+		break;
+
 	case SIOCSETVLAN:
 		error = vlan_set_compat(ifp, ifr);
 		break;
@@ -761,7 +743,69 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	}
 
+	if (error == ENETRESET) {
+		vlan_iff(ifv);
+		error = 0;
+	}
+
 	return error;
+}
+
+int
+vlan_iff(struct ifvlan *ifv)
+{
+	struct ifnet *ifp0;
+	int promisc = 0;
+	int error = 0;
+
+	if (ISSET(ifv->ifv_if.if_flags, IFF_PROMISC) ||
+	    ISSET(ifv->ifv_flags, IFVF_LLADDR))
+		promisc = IFVF_PROMISC;
+
+	if (ISSET(ifv->ifv_flags, IFVF_PROMISC) == promisc)
+		return (0);
+
+	if (ISSET(ifv->ifv_if.if_flags, IFF_RUNNING)) {
+		ifp0 = if_get(ifv->ifv_ifp0);
+		if (ifp0 != NULL)
+			error = ifpromisc(ifp0, promisc);
+		if_put(ifp0);
+	}
+
+	if (error == 0) {
+		CLR(ifv->ifv_flags, IFVF_PROMISC);
+		SET(ifv->ifv_flags, promisc);
+	}
+
+	return (error);
+}
+
+int
+vlan_setlladdr(struct ifvlan *ifv, struct ifreq *ifr)
+{
+	struct ifnet *ifp = &ifv->ifv_if;;
+	struct ifnet *ifp0;
+	int flag = IFVF_LLADDR;
+
+	/* setting the mac addr to 00:00:00:00:00:00 means reset lladdr */
+	if (memcmp(ifr->ifr_addr.sa_data, etheranyaddr, ETHER_ADDR_LEN) == 0)
+		flag = 0;
+
+	if (ISSET(ifv->ifv_flags, IFVF_LLADDR) == flag)
+		return (0);
+
+	/* if we're up and the mac is reset, inherit the parents mac */
+	if (ISSET(ifp->if_flags, IFF_RUNNING) && flag == 0) {
+		ifp0 = if_get(ifv->ifv_ifp0);
+		if (ifp0 != NULL)
+			if_setlladdr(ifp, LLADDR(ifp0->if_sadl));
+		if_put(ifp0);
+	}
+
+	CLR(ifv->ifv_flags, IFVF_LLADDR);
+	SET(ifv->ifv_flags, flag);
+
+	return (ENETRESET);
 }
 
 int

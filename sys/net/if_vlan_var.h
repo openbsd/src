@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan_var.h,v 1.35 2016/04/15 04:34:10 dlg Exp $	*/
+/*	$OpenBSD: if_vlan_var.h,v 1.36 2016/04/19 23:31:32 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -81,7 +81,8 @@ struct	ifvlan {
 #define	ifv_tag		ifv_mib.ifvm_tag
 #define	ifv_prio	ifv_mib.ifvm_prio
 #define	ifv_type	ifv_mib.ifvm_type
-#define	IFVF_PROMISC	0x01
+#define	IFVF_PROMISC	0x01	/* the parent should be made promisc */
+#define	IFVF_LLADDR	0x02	/* don't inherit the parents mac */
 
 struct mbuf	*vlan_inject(struct mbuf *, uint16_t, uint16_t);
 #endif /* _KERNEL */
