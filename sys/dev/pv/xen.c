@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.51 2016/04/01 15:41:12 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.52 2016/04/19 12:39:31 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -1169,10 +1169,6 @@ xen_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		xen_grant_table_enter(sc, gm[i].gm_ref, map->dm_segs[i].ds_addr,
 		    flags & BUS_DMA_WRITE ? GTF_readonly : 0);
 		gm[i].gm_paddr = map->dm_segs[i].ds_addr;
-		map->dm_segs[i].ds_offset = map->dm_segs[i].ds_addr &
-		    PAGE_MASK;
-		KASSERT(map->dm_segs[i].ds_offset +
-		    map->dm_segs[i].ds_len <= PAGE_SIZE);
 		map->dm_segs[i].ds_addr = gm[i].gm_ref;
 	}
 	return (0);
@@ -1193,10 +1189,6 @@ xen_bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 		xen_grant_table_enter(sc, gm[i].gm_ref, map->dm_segs[i].ds_addr,
 		    flags & BUS_DMA_WRITE ? GTF_readonly : 0);
 		gm[i].gm_paddr = map->dm_segs[i].ds_addr;
-		map->dm_segs[i].ds_offset = map->dm_segs[i].ds_addr &
-		    PAGE_MASK;
-		KASSERT(map->dm_segs[i].ds_offset +
-		    map->dm_segs[i].ds_len <= PAGE_SIZE);
 		map->dm_segs[i].ds_addr = gm[i].gm_ref;
 	}
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.18 2016/04/13 11:36:00 mpi Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.19 2016/04/19 12:39:31 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -567,7 +567,7 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 			txd->txd_req.txq_flags |= XNF_TXF_CHUNK;
 
 		txd->txd_req.txq_ref = dmap->dm_segs[0].ds_addr;
-		txd->txd_req.txq_offset = dmap->dm_segs[0].ds_offset;
+		txd->txd_req.txq_offset = mtod(m, vaddr_t) & PAGE_MASK;
 		sc->sc_tx_buf[i] = m;
 		(*prod)++;
 	}
