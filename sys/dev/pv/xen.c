@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.53 2016/04/19 13:55:19 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.54 2016/04/19 14:19:44 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -66,7 +66,8 @@ struct xen_gntent *
 	xen_grant_table_grow(struct xen_softc *);
 int	xen_grant_table_alloc(struct xen_softc *, grant_ref_t *);
 void	xen_grant_table_free(struct xen_softc *, grant_ref_t);
-void	xen_grant_table_enter(struct xen_softc *, grant_ref_t, paddr_t, int);
+void	xen_grant_table_enter(struct xen_softc *, grant_ref_t, paddr_t,
+	    int, int);
 void	xen_grant_table_remove(struct xen_softc *, grant_ref_t);
 void	xen_disable_emulated_devices(struct xen_softc *);
 
@@ -1039,7 +1040,7 @@ xen_grant_table_free(struct xen_softc *sc, grant_ref_t ref)
 
 void
 xen_grant_table_enter(struct xen_softc *sc, grant_ref_t ref, paddr_t pa,
-    int flags)
+    int domain, int flags)
 {
 	struct xen_gntent *ge;
 
@@ -1057,7 +1058,7 @@ xen_grant_table_enter(struct xen_softc *sc, grant_ref_t ref, paddr_t pa,
 #endif
 	ref -= ge->ge_start;
 	ge->ge_table[ref].frame = atop(pa);
-	ge->ge_table[ref].domid = 0;
+	ge->ge_table[ref].domid = domain;
 	virtio_membar_sync();
 	ge->ge_table[ref].flags = GTF_permit_access | flags;
 	virtio_membar_sync();
@@ -1160,14 +1161,16 @@ xen_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 {
 	struct xen_softc *sc = t->_cookie;
 	struct xen_gntmap *gm = map->_dm_cookie;
-	int i, error;
+	int i, domain, error;
 
+	domain = flags >> 16;
+	flags &= 0xffff;
 	error = _bus_dmamap_load(t, map, buf, buflen, p, flags);
 	if (error)
 		return (error);
 	for (i = 0; i < map->dm_nsegs; i++) {
 		xen_grant_table_enter(sc, gm[i].gm_ref, map->dm_segs[i].ds_addr,
-		    flags & BUS_DMA_WRITE ? GTF_readonly : 0);
+		    domain, flags & BUS_DMA_WRITE ? GTF_readonly : 0);
 		gm[i].gm_paddr = map->dm_segs[i].ds_addr;
 		map->dm_segs[i].ds_addr = gm[i].gm_ref;
 	}
@@ -1180,14 +1183,16 @@ xen_bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 {
 	struct xen_softc *sc = t->_cookie;
 	struct xen_gntmap *gm = map->_dm_cookie;
-	int i, error;
+	int i, domain, error;
 
+	domain = flags >> 16;
+	flags &= 0xffff;
 	error = _bus_dmamap_load_mbuf(t, map, m0, flags);
 	if (error)
 		return (error);
 	for (i = 0; i < map->dm_nsegs; i++) {
 		xen_grant_table_enter(sc, gm[i].gm_ref, map->dm_segs[i].ds_addr,
-		    flags & BUS_DMA_WRITE ? GTF_readonly : 0);
+		    domain, flags & BUS_DMA_WRITE ? GTF_readonly : 0);
 		gm[i].gm_paddr = map->dm_segs[i].ds_addr;
 		map->dm_segs[i].ds_addr = gm[i].gm_ref;
 	}
