@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.92 2015/12/06 12:00:16 tobias Exp $	*/
+/*	$OpenBSD: options.c,v 1.93 2016/04/19 03:26:11 guenther Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -74,12 +74,6 @@ static int compress_id(char *_blk, int _size);
 static int gzip_id(char *_blk, int _size);
 static int bzip2_id(char *_blk, int _size);
 static int xz_id(char *_blk, int _size);
-
-/* errors from get_line */
-#define GETLINE_FILE_CORRUPT 1
-#define GETLINE_OUT_OF_MEM 2
-static int getline_error;
-
 
 #define GZIP_CMD	"gzip"		/* command to run as gzip */
 #define COMPRESS_CMD	"compress"	/* command to run as compress */
@@ -933,7 +927,8 @@ tar_options(int argc, char **argv)
 					if (strcmp(file, "-") == 0)
 						fp = stdin;
 					else if ((fp = fopen(file, "r")) == NULL) {
-						paxwarn(1, "Unable to open file '%s' for read", file);
+						syswarn(1, errno,
+						    "Unable to open %s", file);
 						tar_usage();
 					}
 					while ((str = get_line(fp)) != NULL) {
@@ -941,12 +936,15 @@ tar_options(int argc, char **argv)
 							tar_usage();
 						sawpat = 1;
 					}
-					if (strcmp(file, "-") != 0)
-						fclose(fp);
-					if (getline_error) {
-						paxwarn(1, "Problem with file '%s'", file);
+					if (ferror(fp)) {
+						syswarn(1, errno,
+						    "Unable to read from %s",
+						    strcmp(file, "-") ? file :
+						    "stdin");
 						tar_usage();
 					}
+					if (strcmp(file, "-") != 0)
+						fclose(fp);
 				} else if (strcmp(*argv, "-C") == 0) {
 					if (*++argv == NULL)
 						break;
@@ -1009,20 +1007,22 @@ tar_options(int argc, char **argv)
 				if (strcmp(file, "-") == 0)
 					fp = stdin;
 				else if ((fp = fopen(file, "r")) == NULL) {
-					paxwarn(1, "Unable to open file '%s' for read", file);
+					syswarn(1, errno, "Unable to open %s",
+					    file);
 					tar_usage();
 				}
 				while ((str = get_line(fp)) != NULL) {
 					if (ftree_add(str, 0) < 0)
 						tar_usage();
 				}
-				if (strcmp(file, "-") != 0)
-					fclose(fp);
-				if (getline_error) {
-					paxwarn(1, "Problem with file '%s'",
-					    file);
+				if (ferror(fp)) {
+					syswarn(1, errno,
+					    "Unable to read from %s",
+					    strcmp(file, "-") ? file : "stdin");
 					tar_usage();
 				}
+				if (strcmp(file, "-") != 0)
+					fclose(fp);
 			} else if (strcmp(*argv, "-C") == 0) {
 				if (*++argv == NULL)
 					break;
@@ -1234,17 +1234,19 @@ cpio_options(int argc, char **argv)
 				 * file with patterns to extract or list
 				 */
 				if ((fp = fopen(optarg, "r")) == NULL) {
-					paxwarn(1, "Unable to open file '%s' for read", optarg);
+					syswarn(1, errno, "Unable to open %s",
+					    optarg);
 					cpio_usage();
 				}
 				while ((str = get_line(fp)) != NULL) {
 					pat_add(str, NULL);
 				}
-				fclose(fp);
-				if (getline_error) {
-					paxwarn(1, "Problem with file '%s'", optarg);
+				if (ferror(fp)) {
+					syswarn(1, errno,
+					    "Unable to read from %s", optarg);
 					cpio_usage();
 				}
+				fclose(fp);
 				break;
 			case 'F':
 			case 'I':
@@ -1345,8 +1347,9 @@ cpio_options(int argc, char **argv)
 			while ((str = get_line(stdin)) != NULL) {
 				ftree_add(str, 0);
 			}
-			if (getline_error) {
-				paxwarn(1, "Problem while reading stdin");
+			if (ferror(stdin)) {
+				syswarn(1, errno, "Unable to read from %s",
+				    "stdin");
 				cpio_usage();
 			}
 			break;
@@ -1559,24 +1562,20 @@ str_offt(char *val)
 char *
 get_line(FILE *f)
 {
-	char *name, *temp;
-	size_t len;
+	char *str = NULL;
+	size_t size = 0;
+	ssize_t len;
 
-	name = fgetln(f, &len);
-	if (!name) {
-		getline_error = ferror(f) ? GETLINE_FILE_CORRUPT : 0;
-		return(0);
-	}
-	if (name[len-1] != '\n')
-		len++;
-	temp = malloc(len);
-	if (!temp) {
-		getline_error = GETLINE_OUT_OF_MEM;
-		return(0);
-	}
-	memcpy(temp, name, len-1);
-	temp[len-1] = 0;
-	return(temp);
+	do {
+		len = getline(&str, &size, f);
+		if (len == -1) {
+			free(str);
+			return NULL;
+		}
+		if (str[len - 1] == '\n')
+			str[len - 1] = '\0';
+	} while (str[0] == '\0');
+	return str;
 }
 
 /*
