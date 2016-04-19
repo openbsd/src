@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.369 2016/04/19 21:19:58 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.370 2016/04/19 21:40:48 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3014,15 +3014,13 @@ sr_hotspare_rebuild(struct sr_discipline *sd)
 	 * Attempt to locate a hotspare and initiate rebuild.
 	 */
 
-	for (i = 0; i < sd->sd_meta->ssdi.ssd_chunk_no; i++) {
-		if (sd->sd_vol.sv_chunks[i]->src_meta.scm_status ==
+	for (cid = 0; cid < sd->sd_meta->ssdi.ssd_chunk_no; cid++) {
+		if (sd->sd_vol.sv_chunks[cid]->src_meta.scm_status ==
 		    BIOC_SDOFFLINE) {
-			cid = i;
-			chunk = sd->sd_vol.sv_chunks[i];
+			chunk = sd->sd_vol.sv_chunks[cid];
 			break;
 		}
 	}
-
 	if (chunk == NULL) {
 		printf("%s: no offline chunk found on %s!\n",
 		    DEVNAME(sc), sd->sd_meta->ssd_devname);
