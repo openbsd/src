@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.78 2015/10/21 07:59:18 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.79 2016/04/20 23:52:04 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -285,6 +285,7 @@ TODO hpmc/toc/pfr
 	proc0paddr->u_pcb.pcb_fpstate = &proc0fpstate;
 	pool_init(&hppa_fppl, sizeof(struct hppa_fpstate), 16, 0, 0,
 	    "hppafp", NULL);
+	pool_setipl(&hppa_fppl, IPL_NONE);
 }
 
 void
