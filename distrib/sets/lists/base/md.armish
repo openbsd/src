@@ -582,7 +582,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/ddb/db_access.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ddb/db_break.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ddb/db_command.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/ddb/db_dwarf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ddb/db_extern.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ddb/db_interface.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ddb/db_lex.ph
