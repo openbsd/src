@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.31 2016/02/03 01:47:25 mmcc Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.32 2016/04/20 19:34:32 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -48,16 +48,11 @@ static void	   term_init(char *);
 int
 main(int argc, char *argv[])
 {
-	static int reenter;
 	CL_PRIVATE *clp;
 	GS *gp;
 	size_t rows, cols;
 	int rval;
 	char *ttype;
-
-	/* If loaded at 0 and jumping through a NULL pointer, stop. */
-	if (reenter++)
-		abort();
 
 	/* Create and initialize the global structure. */
 	__global_list = gp = gs_init();
