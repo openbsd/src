@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.117 2016/03/08 00:16:47 tb Exp $
+#	$OpenBSD: special,v 1.118 2016/04/20 21:14:44 schwarze Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -73,7 +73,7 @@ ospfd.conf	type=file mode=0600 uname=root gname=wheel optional
 ospf6d.conf	type=file mode=0600 uname=root gname=wheel optional
 passwd		type=file mode=0644 uname=root gname=wheel
 pf.conf		type=file mode=0600 uname=root gname=wheel optional
-printcap	type=file mode=0644 uname=root gname=wheel optional
+printcap	mode=0644 uname=root gname=wheel optional
 radiusd.conf	type=file mode=0600 uname=root gname=wheel optional
 rc		type=file mode=0644 uname=root gname=wheel
 rc.conf		type=file mode=0644 uname=root gname=wheel
