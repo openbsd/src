@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.5 2011/09/20 22:02:10 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.6 2016/04/20 07:59:25 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /* 
@@ -102,7 +102,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	}
 
 	if (!have_addr)
-		frame = (u_int32_t *)(DDB_REGS->tf_r11);
+		frame = (u_int32_t *)(ddb_regs.tf_r11);
 	else {
 		if (trace_thread) {
 			struct proc *p;

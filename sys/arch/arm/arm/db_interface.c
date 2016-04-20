@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.10 2016/02/27 13:08:06 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.11 2016/04/20 07:59:25 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /* 
@@ -64,28 +64,28 @@ u_int db_fetch_reg (int, db_regs_t *);
 int db_trapper (u_int, u_int, trapframe_t *, int);
 
 struct db_variable db_regs[] = {
-	{ "spsr", (long *)&DDB_REGS->tf_spsr, FCN_NULL, },
-	{ "r0", (long *)&DDB_REGS->tf_r0, FCN_NULL, },
-	{ "r1", (long *)&DDB_REGS->tf_r1, FCN_NULL, },
-	{ "r2", (long *)&DDB_REGS->tf_r2, FCN_NULL, },
-	{ "r3", (long *)&DDB_REGS->tf_r3, FCN_NULL, },
-	{ "r4", (long *)&DDB_REGS->tf_r4, FCN_NULL, },
-	{ "r5", (long *)&DDB_REGS->tf_r5, FCN_NULL, },
-	{ "r6", (long *)&DDB_REGS->tf_r6, FCN_NULL, },
-	{ "r7", (long *)&DDB_REGS->tf_r7, FCN_NULL, },
-	{ "r8", (long *)&DDB_REGS->tf_r8, FCN_NULL, },
-	{ "r9", (long *)&DDB_REGS->tf_r9, FCN_NULL, },
-	{ "r10", (long *)&DDB_REGS->tf_r10, FCN_NULL, },
-	{ "r11", (long *)&DDB_REGS->tf_r11, FCN_NULL, },
-	{ "r12", (long *)&DDB_REGS->tf_r12, FCN_NULL, },
-	{ "usr_sp", (long *)&DDB_REGS->tf_usr_sp, FCN_NULL, },
-	{ "usr_lr", (long *)&DDB_REGS->tf_usr_lr, FCN_NULL, },
-	{ "svc_sp", (long *)&DDB_REGS->tf_svc_sp, FCN_NULL, },
-	{ "svc_lr", (long *)&DDB_REGS->tf_svc_lr, FCN_NULL, },
-	{ "pc", (long *)&DDB_REGS->tf_pc, FCN_NULL, },
-	{ "und_sp", (long *)&nil, db_access_und_sp, },
-	{ "abt_sp", (long *)&nil, db_access_abt_sp, },
-	{ "irq_sp", (long *)&nil, db_access_irq_sp, },
+	{ "spsr",	(long *)&ddb_regs.tf_spsr,	FCN_NULL, },
+	{ "r0",		(long *)&ddb_regs.tf_r0,	FCN_NULL, },
+	{ "r1",		(long *)&ddb_regs.tf_r1,	FCN_NULL, },
+	{ "r2",		(long *)&ddb_regs.tf_r2,	FCN_NULL, },
+	{ "r3",		(long *)&ddb_regs.tf_r3,	FCN_NULL, },
+	{ "r4",		(long *)&ddb_regs.tf_r4,	FCN_NULL, },
+	{ "r5",		(long *)&ddb_regs.tf_r5,	FCN_NULL, },
+	{ "r6",		(long *)&ddb_regs.tf_r6,	FCN_NULL, },
+	{ "r7",		(long *)&ddb_regs.tf_r7,	FCN_NULL, },
+	{ "r8",		(long *)&ddb_regs.tf_r8,	FCN_NULL, },
+	{ "r9",		(long *)&ddb_regs.tf_r9,	FCN_NULL, },
+	{ "r10",	(long *)&ddb_regs.tf_r10,	FCN_NULL, },
+	{ "r11",	(long *)&ddb_regs.tf_r11,	FCN_NULL, },
+	{ "r12",	(long *)&ddb_regs.tf_r12,	FCN_NULL, },
+	{ "usr_sp",	(long *)&ddb_regs.tf_usr_sp,	FCN_NULL, },
+	{ "usr_lr",	(long *)&ddb_regs.tf_usr_lr,	FCN_NULL, },
+	{ "svc_sp",	(long *)&ddb_regs.tf_svc_sp,	FCN_NULL, },
+	{ "svc_lr",	(long *)&ddb_regs.tf_svc_lr,	FCN_NULL, },
+	{ "pc",		(long *)&ddb_regs.tf_pc,	FCN_NULL, },
+	{ "und_sp",	(long *)&nil,			db_access_und_sp, },
+	{ "abt_sp",	(long *)&nil,			db_access_abt_sp, },
+	{ "irq_sp",	(long *)&nil,			db_access_irq_sp, },
 };
 
 extern label_t       *db_recover;
