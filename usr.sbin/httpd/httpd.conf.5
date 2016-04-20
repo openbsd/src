@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.68 2015/07/19 05:17:27 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.69 2016/04/20 12:48:54 jmc Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 19 2015 $
+.Dd $Mdocdate: April 20 2016 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -299,11 +299,14 @@ The
 argument will be matched against the request path with shell globbing rules.
 A location section may include most of the server configuration rules
 except
+.Ic alias ,
 .Ic connection ,
+.Ic hsts ,
 .Ic listen on ,
-.Ic location
+.Ic location ,
+.Ic tcp
 and
-.Ic tcp .
+.Ic tls .
 .It Ic location match Ar path Brq ...
 Like the
 .Ic location
