@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2016/04/09 19:31:55 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.21 2016/04/20 01:11:45 schwarze Exp $
 #	$NetBSD: Makefile,v 1.41 2010/02/03 15:34:43 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
@@ -8,7 +8,7 @@ OSRCS=	chared.c common.c el.c eln.c emacs.c fcns.c filecomplete.c help.c \
 	hist.c keymacro.c map.c chartype.c \
 	parse.c prompt.c read.c refresh.c search.c sig.c terminal.c tty.c vi.c
 
-MAN=	editline.3 editrc.5
+MAN=	editline.3 editrc.5 editline.7
 
 # For speed and debugging
 #SRCS=   ${OSRCS} tokenizer.c history.c readline.c
