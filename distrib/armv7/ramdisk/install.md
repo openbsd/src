@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.26 2016/03/27 00:40:38 jsg Exp $
+#	$OpenBSD: install.md,v 1.27 2016/04/20 14:40:59 abieber Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ if dmesg | grep -q '^imx0 at mainbus0:'; then
 	LOADADDR=0x18800000
 fi
 
-if dmesg | grep '^sunxi0 at mainbus0:'; then
+if dmesg | grep -q '^sunxi0 at mainbus0:'; then
 	MDPLAT=SUNXI
 	LOADADDR=0x40200000
 fi
