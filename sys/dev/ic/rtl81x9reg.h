@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.97 2015/12/28 05:49:15 jmatthew Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.98 2016/04/20 12:15:24 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -151,6 +151,13 @@
 #define RL_MAXRXPKTLEN		0x00DA	/* 16 bits, chip multiplies by 8 */
 #define RL_IM			0x00E2
 #define RL_MISC			0x00F0
+
+/*
+ * Register used on RTL8111E
+ */
+#define RL_LEDSEL		0x0018
+#define RL_LED_LINK		0x7		/* link at any speed */
+#define RL_LED_ACT		0x8
 
 /*
  * TX config register bits
@@ -449,6 +456,7 @@
 /*
  * Config 4 register
  */
+#define RL_CFG4_CUSTOM_LED	0x40
 #define RL_CFG4_LWPTN		0x04
 #define RL_CFG4_LWPME		0x10
 #define RL_CFG4_JUMBO_EN1	0x02

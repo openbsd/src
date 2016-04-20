@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.191 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: re.c,v 1.192 2016/04/20 12:15:24 sthen Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -197,6 +197,8 @@ void	in_delayed_cksum(struct mbuf *);
 struct cfdriver re_cd = {
 	0, "re", DV_IFNET
 };
+
+extern char *hw_vendor, *hw_prod;
 
 #define EE_SET(x)					\
 	CSR_WRITE_1(sc, RL_EECMD,			\
@@ -1940,6 +1942,21 @@ re_init(struct ifnet *ifp)
 	    htole32(*(u_int32_t *)(&eaddr.eaddr[4])));
 	CSR_WRITE_4(sc, RL_IDR0,
 	    htole32(*(u_int32_t *)(&eaddr.eaddr[0])));
+	/*
+	 * Default on PC Engines APU1 is to have all LEDs off unless
+	 * there is network activity. Override to provide a link status
+	 * LED.
+	 */
+	if (sc->sc_hwrev == RL_HWREV_8168E &&
+	    hw_vendor != NULL && hw_prod != NULL &&
+	    strcmp(hw_vendor, "PC Engines") == 0 &&
+	    strcmp(hw_prod, "APU") == 0) {
+		CSR_SETBIT_1(sc, RL_CFG4, RL_CFG4_CUSTOM_LED);
+		CSR_WRITE_1(sc, RL_LEDSEL, RL_LED_LINK | RL_LED_ACT << 4);
+	}
+	/*
+	 * Protect config register again
+	 */
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_OFF);
 
 	if ((sc->rl_flags & RL_FLAG_JUMBOV2) != 0)
