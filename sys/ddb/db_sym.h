@@ -29,6 +29,11 @@
  *	Date:	8/90
  */
 
+#ifndef _DDB_DB_SYM_H_
+#define _DDB_DB_SYM_H_
+
+#include <sys/stdint.h>
+
 /*
  * Symbol representation is specific to the symtab style:
  * BSD compilers use dbx' nlist, other compilers might use
@@ -90,3 +95,8 @@ int db_elf_sym_init(int, void *, void *, const char *);
 db_sym_t db_elf_sym_search(db_addr_t, db_strategy_t, db_expr_t *);
 int db_elf_line_at_pc(db_sym_t, char **, int *, db_expr_t);
 void db_elf_sym_forall(db_forall_func_t db_forall_func, void *);
+
+bool db_dwarf_line_at_pc(const char *, size_t, uintptr_t,
+    const char **, const char **, int *);
+
+#endif /* _DDB_DB_SYM_H_ */

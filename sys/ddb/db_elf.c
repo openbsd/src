@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.21 2016/03/07 11:26:43 mpi Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.22 2016/04/20 08:02:59 mpi Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -39,7 +39,6 @@
 
 #include <machine/db_machdep.h>
 
-#include <ddb/db_dwarf.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 
