@@ -36,7 +36,7 @@
 # makelist.sh: Automatically generate header files...
 
 AWK=awk
-USAGE="Usage: $0 -n|-h|-e|-fc|-fh|-bc|-bh|-m <filenames>"
+USAGE="Usage: $0 -n|-h|-e|-fc|-fh|-bc|-bh <filenames>"
 
 if [ "x$1" = "x" ]
 then
@@ -211,44 +211,6 @@ _EOF
 	}
 	{
 	    printf("#include \"%s\"\n", $1);
-	}'
-	;;
-
-#	generate man page fragment from various .c files
-#
--m)
-    cat $FILES | $AWK '
-	BEGIN {
-	    printf(".\\\" Section automatically generated with makelist\n");
-	    printf(".Bl -tag -width 4n\n");
-	}
-	/\(\):/ {
-	    pr = substr($2, 1, 2);
-	    if (pr == "vi" || pr == "em" || pr == "ed") {
-		name = substr($2, 1, length($2) - 3);
-		fname = "";
-		for (i = 1; i <= length(name); i++) {
-		    s = substr(name, i, 1);
-		    if (s == "_")
-			s = "-";
-		    fname = fname s;
-		}
-
-		printf(".It Ic %s\n", fname);
-		ok = 1;
-	    }
-	}
-	/^ \*/ {
-	    if (ok) {
-		for (i = 2; i < NF; i++)
-		    printf("%s ", $i);
-		printf("%s.\n", $i);
-		ok = 0;
-	    }
-	}
-	END {
-	    printf(".El\n");
-	    printf(".\\\" End of section automatically generated with makelist\n");
 	}'
 	;;
 
