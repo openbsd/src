@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.111 2016/04/20 08:46:14 semarie Exp $
+#	$OpenBSD: changelist,v 1.112 2016/04/20 12:41:30 sthen Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -152,7 +152,6 @@
 /var/cron/cron.deny
 /var/cron/tabs/root
 +/var/nsd/etc/nsd.conf
-/var/unbound/db/root.key
 /var/unbound/etc/unbound.conf
 /var/yp/Makefile.main
 /var/yp/Makefile.yp
