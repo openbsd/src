@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.25 2015/06/07 12:16:27 jsg Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.26 2016/04/21 22:13:27 mlarkin Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -123,11 +123,6 @@
 #endif
 
 #include "pci.h"
-
-
-static struct mpbios_ioapic default_ioapic = {
-    2, 0, 1, IOAPICENTRY_FLAG_EN, (u_int32_t)IOAPIC_BASE_DEFAULT
-};
 
 /* descriptions of MP basetable entries */
 struct mpbios_baseentry {
@@ -341,16 +336,14 @@ mpbios_probe(struct device *self)
 		    self->dv_xname, loc_where[scan_loc], mp_fp_map.pa);
 
 	if (mp_fps->pap == 0) {
-		if (mp_fps->mpfb1 == 0) {
+		if (mp_fps->mpfb1 == 0)
 			printf("%s: MP fps invalid: "
 			    "no default config and no configuration table\n",
 			    self->dv_xname);
-
-			goto err;
-		}
-		printf("%s: MP default configuration %d\n",
-		    self->dv_xname, mp_fps->mpfb1);
-		return (10);
+		else
+			printf("%s: MP default configuration %d not "
+			    "supported\n", self->dv_xname, mp_fps->mpfb1);
+		goto err;
 	}
 
 	cthpa = mp_fps->pap;
@@ -377,7 +370,7 @@ mpbios_probe(struct device *self)
 		    self->dv_xname);
 		goto err;
 	}
-	return (10);
+	return (1);
 
  err:
 	if (mp_fps) {
@@ -524,143 +517,107 @@ mpbios_scan(struct device *self)
 
 	lapic_boot_init(lapic_base);
 
-	/* check for use of 'default' configuration */
-	if (mp_fps->mpfb1 != 0) {
-		struct mpbios_proc pe;
+	/*
+	 * Walk the table once, counting items
+	 */
+	position = (const u_int8_t *)(mp_cth);
+	end = position + mp_cth->base_len;
+	position += sizeof(*mp_cth);
 
-		printf("%s: MP default configuration %d\n",
-		    self->dv_xname, mp_fps->mpfb1);
+	count = mp_cth->entry_count;
+	intr_cnt = 0;
 
-		/* use default addresses */
-		pe.apic_id = lapic_cpu_number();
-		pe.cpu_flags = PROCENTRY_FLAG_EN|PROCENTRY_FLAG_BP;
-		pe.cpu_signature = cpu_info_primary.ci_signature;
-		pe.feature_flags = cpu_info_primary.ci_feature_flags;
-
-		mpbios_cpu((u_int8_t *)&pe, self);
-
-		pe.apic_id = 1 - lapic_cpu_number();
-		pe.cpu_flags = PROCENTRY_FLAG_EN;
-
-		mpbios_cpu((u_int8_t *)&pe, self);
-
-		mpbios_ioapic((u_int8_t *)&default_ioapic, self);
-
-		/* XXX */
-		printf("%s: WARNING: interrupts not configured\n",
-		    self->dv_xname);
-		panic("lazy bum");
-		return;
-	} else {
-		/*
-		 * should not happen; mp_probe returns 0 in this case,
-		 * but..
-		 */
-		if (mp_cth == NULL)
-			panic("mpbios_scan: no config (can't happen?)");
-
-		/*
-		 * Walk the table once, counting items
-		 */
-		position = (const u_int8_t *)(mp_cth);
-		end = position + mp_cth->base_len;
-		position += sizeof(*mp_cth);
-
-		count = mp_cth->entry_count;
-		intr_cnt = 0;
-
-		while ((count--) && (position < end)) {
-			type = *position;
-			if (type >= MPS_MCT_NTYPES) {
-				printf("%s: unknown entry type %x"
-				    " in MP config table\n",
-				    self->dv_xname, type);
-				break;
-			}
-			mp_conf[type].count++;
-			if (type == MPS_MCT_BUS) {
-				const struct mpbios_bus *bp =
-				    (const struct mpbios_bus *)position;
-				if (bp->bus_id >= mp_nbusses)
-					mp_nbusses = bp->bus_id + 1;
-			}
-			/*
-			 * Count actual interrupt instances.
-			 * dst_apic_id of MPS_ALL_APICS means "wired to all
-			 * apics of this type".
-			 */
-			if (type == MPS_MCT_IOINT) {
-				iep = (const struct mpbios_int *)position;
-				if (iep->dst_apic_id == MPS_ALL_APICS)
-					intr_cnt +=
-					    mp_conf[MPS_MCT_IOAPIC].count;
-				else
-					intr_cnt++;
-			} else if (type == MPS_MCT_LINT)
-				intr_cnt++;
-			position += mp_conf[type].length;
+	while ((count--) && (position < end)) {
+		type = *position;
+		if (type >= MPS_MCT_NTYPES) {
+			printf("%s: unknown entry type %x"
+			    " in MP config table\n",
+			    self->dv_xname, type);
+			break;
 		}
+		mp_conf[type].count++;
+		if (type == MPS_MCT_BUS) {
+			const struct mpbios_bus *bp =
+			    (const struct mpbios_bus *)position;
+			if (bp->bus_id >= mp_nbusses)
+				mp_nbusses = bp->bus_id + 1;
+		}
+		/*
+		 * Count actual interrupt instances.
+		 * dst_apic_id of MPS_ALL_APICS means "wired to all
+		 * apics of this type".
+		 */
+		if (type == MPS_MCT_IOINT) {
+			iep = (const struct mpbios_int *)position;
+			if (iep->dst_apic_id == MPS_ALL_APICS)
+				intr_cnt +=
+				    mp_conf[MPS_MCT_IOAPIC].count;
+			else
+				intr_cnt++;
+		} else if (type == MPS_MCT_LINT)
+			intr_cnt++;
+		position += mp_conf[type].length;
+	}
 
-		mp_busses = mallocarray(mp_nbusses, sizeof(struct mp_bus),
-		    M_DEVBUF, M_NOWAIT|M_ZERO);
-		mp_intrs = mallocarray(intr_cnt, sizeof(struct mp_intr_map),
-		    M_DEVBUF, M_NOWAIT);
+	mp_busses = mallocarray(mp_nbusses, sizeof(struct mp_bus),
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
+	mp_intrs = mallocarray(intr_cnt, sizeof(struct mp_intr_map),
+	    M_DEVBUF, M_NOWAIT);
 
-		/* re-walk the table, recording info of interest */
-		position = (const u_int8_t *)mp_cth + sizeof(*mp_cth);
-		count = mp_cth->entry_count;
-		cur_intr = 0;
+	/* re-walk the table, recording info of interest */
+	position = (const u_int8_t *)mp_cth + sizeof(*mp_cth);
+	count = mp_cth->entry_count;
+	cur_intr = 0;
 
-		while ((count--) && (position < end)) {
-			switch (type = *(u_char *)position) {
-			case MPS_MCT_CPU:
-				mpbios_cpu(position, self);
-				break;
-			case MPS_MCT_BUS:
-				mpbios_bus(position, self);
-				break;
-			case MPS_MCT_IOAPIC:
-				mpbios_ioapic(position, self);
-				break;
-			case MPS_MCT_IOINT:
-				iep = (const struct mpbios_int *)position;
-				ie = *iep;
-				if (iep->dst_apic_id == MPS_ALL_APICS) {
-					for (sc = ioapics ; sc != NULL;
-					     sc = sc->sc_next) {
-						ie.dst_apic_id = sc->sc_apicid;
-						if (mpbios_int((char *)&ie,
-						    type, &mp_intrs[cur_intr]) == 0)
-							cur_intr++;
-					}
-				} else {
-					if (mpbios_int(position, type,
-					    &mp_intrs[cur_intr]) == 0)
+	while ((count--) && (position < end)) {
+		switch (type = *(u_char *)position) {
+		case MPS_MCT_CPU:
+			mpbios_cpu(position, self);
+			break;
+		case MPS_MCT_BUS:
+			mpbios_bus(position, self);
+			break;
+		case MPS_MCT_IOAPIC:
+			mpbios_ioapic(position, self);
+			break;
+		case MPS_MCT_IOINT:
+			iep = (const struct mpbios_int *)position;
+			ie = *iep;
+			if (iep->dst_apic_id == MPS_ALL_APICS) {
+				for (sc = ioapics ; sc != NULL;
+				     sc = sc->sc_next) {
+					ie.dst_apic_id = sc->sc_apicid;
+					if (mpbios_int((char *)&ie,
+					    type, &mp_intrs[cur_intr]) == 0)
 						cur_intr++;
 				}
-				break;
-			case MPS_MCT_LINT:
+			} else {
 				if (mpbios_int(position, type,
 				    &mp_intrs[cur_intr]) == 0)
 					cur_intr++;
-				break;
-			default:
-				printf("%s: unknown entry type %x "
-				    "in MP config table\n",
-				    self->dv_xname, type);
-				/* NOTREACHED */
-				return;
 			}
-
-			position += mp_conf[type].length;
+			break;
+		case MPS_MCT_LINT:
+			if (mpbios_int(position, type,
+			    &mp_intrs[cur_intr]) == 0)
+				cur_intr++;
+			break;
+		default:
+			printf("%s: unknown entry type %x "
+			    "in MP config table\n",
+			    self->dv_xname, type);
+			/* NOTREACHED */
+			return;
 		}
-		mp_nintrs = cur_intr;
 
-		if (mp_verbose && mp_cth->ext_len)
-			printf("%s: MP WARNING: %d "
-			    "bytes of extended entries not examined\n",
-			    self->dv_xname, mp_cth->ext_len);
+		position += mp_conf[type].length;
 	}
+	mp_nintrs = cur_intr;
+
+	if (mp_verbose && mp_cth->ext_len)
+		printf("%s: MP WARNING: %d "
+		    "bytes of extended entries not examined\n",
+		    self->dv_xname, mp_cth->ext_len);
 
 	/* Clean up. */
 	mp_fps = NULL;
