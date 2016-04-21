@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.32 2015/03/25 21:05:18 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.33 2016/04/21 22:08:27 mlarkin Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -152,7 +152,6 @@ fpuinit(struct cpu_info *ci)
  * Reinitializing the state allows naive SIGFPE handlers to longjmp without
  * doing any fixups.
  */
-
 void
 fputrap(struct trapframe *frame)
 {
@@ -319,11 +318,11 @@ fpusave_cpu(struct cpu_info *ci, int save)
 		if (ci->ci_fpsaving != 0)
 			panic("fpusave_cpu: recursive save!");
 #endif
-		 /*
-		  * Set ci->ci_fpsaving, so that any pending exception will be
-		  * thrown away.  (It will be caught again if/when the FPU
-		  * state is restored.)
-		  */
+		/*
+		 * Set ci->ci_fpsaving, so that any pending exception will be
+		 * thrown away.  (It will be caught again if/when the FPU
+		 * state is restored.)
+		 */
 		clts();
 		ci->ci_fpsaving = 1;
 		if (xsave_mask)
