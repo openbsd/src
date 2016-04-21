@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.183 2016/02/22 16:19:05 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.184 2016/04/21 14:27:41 jsing Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -176,7 +176,7 @@ typedef struct {
 %token	TABLE SECURE SMTPS CERTIFICATE DOMAIN BOUNCEWARN LIMIT INET4 INET6 NODSN SESSION
 %token  RELAY BACKUP VIA DELIVER TO LMTP MAILDIR MBOX RCPTTO HOSTNAME HOSTNAMES
 %token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR SOURCE MTA PKI SCHEDULER
-%token	ARROW AUTH TLS LOCAL VIRTUAL TAG TAGGED ALIAS FILTER KEY CA DHPARAMS
+%token	ARROW AUTH TLS LOCAL VIRTUAL TAG TAGGED ALIAS FILTER KEY CA DHE
 %token	AUTH_OPTIONAL TLS_REQUIRE USERBASE SENDER SENDERS MASK_SOURCE VERIFY FORWARDONLY RECIPIENT
 %token	CIPHERS RECEIVEDAUTH MASQUERADE SOCKET
 %token	<v.string>	STRING
@@ -397,8 +397,19 @@ opt_pki		: CERTIFICATE STRING {
 		| KEY STRING {
 			pki->pki_key_file = $2;
 		}
-		| DHPARAMS STRING {
-			pki->pki_dhparams_file = $2;
+		| DHE STRING {
+			if (strcasecmp($2, "none") == 0)
+				pki->pki_dhe = 0;
+			else if (strcasecmp($2, "auto") == 0)
+				pki->pki_dhe = 1;
+			else if (strcasecmp($2, "legacy") == 0)
+				pki->pki_dhe = 2;
+			else {
+				yyerror("invalid DHE keyword: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
 		}
 		;
 
@@ -1460,7 +1471,7 @@ lookup(char *s)
 		{ "ciphers",		CIPHERS },
 		{ "compression",	COMPRESSION },
 		{ "deliver",		DELIVER },
-		{ "dhparams",		DHPARAMS },
+		{ "dhe",		DHE },
 		{ "domain",		DOMAIN },
 		{ "encryption",		ENCRYPTION },
 		{ "expire",		EXPIRE },

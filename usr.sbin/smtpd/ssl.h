@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.h,v 1.19 2015/12/13 09:52:44 gilles Exp $	*/
+/*	$OpenBSD: ssl.h,v 1.20 2016/04/21 14:27:41 jsing Exp $	*/
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
  *
@@ -31,9 +31,7 @@ struct pki {
 
 	EVP_PKEY		*pki_pkey;
 
-	char			*pki_dhparams_file;
-	char			*pki_dhparams;
-	off_t			 pki_dhparams_len;
+	int			 pki_dhe;
 };
 
 struct ca {
@@ -51,7 +49,6 @@ int		ssl_setup(SSL_CTX **, struct pki *,
     int (*)(SSL *, int *, void *), const char *);
 SSL_CTX	       *ssl_ctx_create(const char *, char *, off_t, const char *);
 int	        ssl_cmp(struct pki *, struct pki *);
-void		ssl_set_ephemeral_key_exchange(SSL_CTX *, DH *);
 char	       *ssl_load_file(const char *, off_t *, mode_t);
 char	       *ssl_load_key(const char *, off_t *, char *, mode_t, const char *);
 
@@ -61,7 +58,6 @@ void		ssl_error(const char *);
 int		ssl_load_certificate(struct pki *, const char *);
 int		ssl_load_keyfile(struct pki *, const char *, const char *);
 int		ssl_load_cafile(struct ca *, const char *);
-int		ssl_load_dhparams(struct pki *, const char *);
 int		ssl_load_pkey(const void *, size_t, char *, off_t,
 		    X509 **, EVP_PKEY **);
 int		ssl_ctx_fake_private_key(SSL_CTX *, const void *, size_t,

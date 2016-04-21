@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.157 2016/04/10 06:48:07 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.158 2016/04/21 14:27:41 jsing Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: April 10 2016 $
+.Dd $Mdocdate: April 21 2016 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -851,19 +851,13 @@ Associate the key located in
 .Ar keyfile
 with
 .Ar hostname .
-.It Ic pki Ar hostname Ic dhparams Ar dhfile
-Associate the Diffie-Hellman parameters located in
-.Ar dhfile
-with
+.It Ic pki Ar hostname Ic dhe Ar params
+Specify the DHE parameters to use for DHE cipher suites with
 .Ar hostname .
-.Pp
-The parameters are used for ephemeral key exchange.
-If not specified,
-.Xr smtpd 8
-will use safely generated built-in parameters.
-.Pp
-Creation of Diffie-Hellman parameters is documented in
-.Xr openssl 1 .
+Valid parameter values are none, legacy and auto.
+For legacy a fixed key length of 1024 bits is used, whereas for auto the key
+length is determined automatically.
+The default is none, which disables DHE cipher suites.
 .It Ic queue compression
 Enable transparent compression of envelopes and messages.
 The only supported algorithm at the moment is gzip.
