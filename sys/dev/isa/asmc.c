@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.29 2016/04/19 19:35:06 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.30 2016/04/22 20:45:53 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -59,6 +59,7 @@
 
 struct asmc_prod {
 	const char	*pr_name;
+	uint8_t		 pr_light;
 	const char	*pr_temp[ASMC_MAXTEMP];
 };
 
@@ -108,7 +109,7 @@ struct cfdriver asmc_cd = {
 };
 
 static struct asmc_prod asmc_prods[] = {
-	{ "MacBookAir", {
+	{ "MacBookAir", 1, {
 		"TB0T", "TB1S", "TB1T", "TB2S", "TB2T", "TBXT", "TC0C", "TC0D",
 		"TC0E", "TC0F", "TC0P", "TC1C", "TC1E", "TC2C", "TCFP", "TCGC",
 		"TCHP", "TCMX", "TCSA", "TCXC", "TCZ3", "TCZ4", "TCZ5", "TG0E",
@@ -117,7 +118,7 @@ static struct asmc_prod asmc_prods[] = {
 		"TV0P", "TVFP", "TW0P", "Ta0P", "Th0H", "Th0P", "Th1H", "Tm0P",
 		"Tm1P", "Tp0P", "Tp1P", "TpFP", "Ts0P", "Ts0S", NULL }
 	},
-	{ "MacBookPro", {
+	{ "MacBookPro", 1, {
 		"TA0P", "TA1P", "TALP", "TB0T", "TB1T", "TB2T", "TB3T", "TBXT",
 		"TC0C", "TC0D", "TC0E", "TC0F", "TC0P", "TC1C", "TC2C", "TC3C",
 		"TC4C", "TCGC", "TCSA", "TCXC", "TG0D", "TG0F", "TG0H", "TG0P",
@@ -127,12 +128,12 @@ static struct asmc_prod asmc_prods[] = {
 		"TN1S", "TP0P", "TPCD", "TTF0", "TW0P", "Ta0P", "TaSP", "Th0H",
 		"Th1H", "Th2H", "Tm0P", "Ts0P", "Ts0S", "Ts1P", "Ts1S", NULL }
 	},
-	{ "MacBook", {
+	{ "MacBook", 0, {
 		"TB0T", "TB1T", "TB2T", "TB3T", "TC0D", "TC0P", "TM0P", "TN0D",
 		"TN0P", "TN1P", "TTF0", "TW0P", "Th0H", "Th0S", "Th1H", "ThFH",
 		"Ts0P", "Ts0S", NULL }
 	},
-	{ "MacPro", {
+	{ "MacPro", 0, {
 		"TA0P", "TC0C", "TC0D", "TC0P", "TC1C", "TC1D", "TC2C", "TC2D",
 		"TC3C", "TC3D", "TCAC", "TCAD", "TCAG", "TCAH", "TCAS", "TCBC",
 		"TCBD", "TCBG", "TCBH", "TCBS", "TH0P", "TH1F", "TH1P", "TH1V",
@@ -147,16 +148,16 @@ static struct asmc_prod asmc_prods[] = {
 		"Te5S", "TeGG", "TeGP", "TeRG", "TeRP", "TeRV", "Tp0C", "Tp1C",
 		"TpPS", "TpTG", "Tv0S", "Tv1S", NULL }
 	},
-	{ "MacMini", {
+	{ "MacMini", 0, {
 		"TC0D", "TC0H", "TC0P", "TH0P", "TN0D", "TN0P", "TN1P", "TW0P",
 		NULL }
 	},
-	{ "iMac", {
+	{ "iMac", 0, {
 		"TA0P", "TC0D", "TC0H", "TC0P", "TG0D", "TG0H", "TG0P", "TH0P",
 		"TL0P", "TN0D", "TN0H", "TN0P", "TO0P", "TW0P", "Tm0P", "Tp0C",
 		"Tp0P", NULL }
 	},
-	{ NULL, { NULL } }
+	{ NULL, 0, { NULL } }
 };
 
 static const char *asmc_temp_desc[][2] = {
@@ -664,7 +665,7 @@ asmc_init(struct asmc_softc *sc)
 			printf("%s: read fan %d failed (0x%x)\n",
 			    sc->sc_dev.dv_xname, i, r);
 	/* left and right light sensors are optional */
-	for (i = 0; i < ASMC_MAXLIGHT; i++)
+	for (i = 0; sc->sc_prod->pr_light && i < ASMC_MAXLIGHT; i++)
 		if ((r = asmc_light(sc, i, 1)) && r != ASMC_NOTFOUND)
 			printf("%s: read light %d failed (0x%x)\n",
 			    sc->sc_dev.dv_xname, i, r);
