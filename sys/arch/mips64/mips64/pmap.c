@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.86 2016/02/01 16:15:18 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.87 2016/04/23 12:53:28 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -69,10 +69,12 @@ struct pool_allocator pmap_pg_allocator = {
 };
 
 void	pmap_invalidate_user_page(pmap_t, vaddr_t);
+void	pmap_invalidate_icache(pmap_t, vaddr_t, pt_entry_t);
 #ifdef MULTIPROCESSOR
 void	pmap_invalidate_kernel_page(vaddr_t);
 void	pmap_invalidate_kernel_page_action(void *);
 void	pmap_invalidate_user_page_action(void *);
+void	pmap_invalidate_icache_action(void *);
 void	pmap_update_kernel_page_action(void *);
 void	pmap_update_user_page_action(void *);
 #else
@@ -312,6 +314,48 @@ pmap_update_user_page_action(void *arg)
 	asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
 	tlb_update(va | asid, entry);
 }
+
+struct pmap_invalidate_icache_arg {
+	vaddr_t		va;
+	pt_entry_t	entry;
+};
+
+void
+pmap_invalidate_icache(pmap_t pmap, vaddr_t va, pt_entry_t entry)
+{
+	struct pmap_invalidate_icache_arg ii_args;
+	unsigned long cpuid = cpu_number();
+	unsigned long cpumask = 0;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (cpuset_isset(&cpus_running, ci) &&
+		    pmap->pm_asid[ci->ci_cpuid].pma_asidgen != 0)
+			cpumask |= 1ul << ci->ci_cpuid;
+	}
+
+	if (cpumask == 1ul << cpuid) {
+		ci = curcpu();
+		Mips_SyncDCachePage(ci, va, pfn_to_pad(entry));
+		Mips_InvalidateICache(ci, va, PAGE_SIZE);
+	} else if (cpumask != 0) {
+		ii_args.va = va;
+		ii_args.entry = entry;
+		smp_rendezvous_cpus(cpumask, pmap_invalidate_icache_action,
+		    &ii_args);
+	}
+}
+
+void
+pmap_invalidate_icache_action(void *arg)
+{
+	struct cpu_info *ci = curcpu();
+	struct pmap_invalidate_icache_arg *ii_args = arg;
+
+	Mips_SyncDCachePage(ci, ii_args->va, pfn_to_pad(ii_args->entry));
+	Mips_InvalidateICache(ci, ii_args->va, PAGE_SIZE);
+}
 #else
 void
 pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
@@ -339,6 +383,15 @@ pmap_update_user_page(pmap_t pmap, vaddr_t va, pt_entry_t entry)
 	if (pmap->pm_asid[cpuid].pma_asidgen ==
 	    pmap_asid_info[cpuid].pma_asidgen)
 		tlb_update(va | asid, entry);
+}
+
+void
+pmap_invalidate_icache(pmap_t pmap, vaddr_t va, pt_entry_t entry)
+{
+	struct cpu_info *ci = curcpu();
+
+	Mips_SyncDCachePage(ci, va, pfn_to_pad(entry));
+	Mips_InvalidateICache(ci, va, PAGE_SIZE);
 }
 #endif
 
@@ -853,10 +906,16 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			entry = *pte;
 			if (!(entry & PG_V))
 				continue;
-			if ((entry & PG_M) != 0 /* && p != PG_M */)
-				if ((entry & PG_CACHEMODE) == PG_CACHED)
+			if ((entry & PG_M) != 0 /* && p != PG_M */ &&
+			    (entry & PG_CACHEMODE) == PG_CACHED) {
+				if (prot & PROT_EXEC) {
+					/* This will also sync D$. */
+					pmap_invalidate_icache(pmap, sva,
+					    entry);
+				} else
 					Mips_SyncDCachePage(ci, sva,
 					    pfn_to_pad(entry));
+			}
 			entry = (entry & ~(PG_M | PG_RO)) | p;
 			*pte = entry;
 			pmap_update_user_page(pmap, sva, entry);
@@ -1061,10 +1120,16 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	pmap_update_user_page(pmap, va, npte);
 
 	/*
-	 * If mapping an executable page, invalidate ICache.
+	 * If mapping an executable page, invalidate ICache
+	 * and make sure there are no pending writes.
 	 */
-	if (pg != NULL && (prot & PROT_EXEC))
-		Mips_InvalidateICache(ci, va, PAGE_SIZE);
+	if (pg != NULL && (prot & PROT_EXEC)) {
+		if ((npte & PG_CACHEMODE) == PG_CACHED) {
+			/* This will also sync D$. */
+			pmap_invalidate_icache(pmap, va, npte);
+		} else
+			Mips_InvalidateICache(ci, va, PAGE_SIZE);
+	}
 
 	return 0;
 }
