@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1792 2016/04/08 09:59:47 reyk Exp $
+$OpenBSD: pcidevs,v 1.1793 2016/04/23 10:30:18 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3535,7 +3535,7 @@ product INTEL BSW_SIO_DMA_2	0x2286	Braswell SIO DMA
 product INTEL BSW_SIO_HSUART_1	0x228a	Braswell Serial
 product INTEL BSW_SIO_HSUART_2	0x228c	Braswell Serial
 product INTEL BRASWELL_SMB	0x2292	Braswell SMBus
-product INTEL BSW_TXE		0x2298	Baswell TXE
+product INTEL BSW_TXE		0x2298	Braswell TXE
 product INTEL BSW_PCU_LPC	0x229c	Braswell PCU LPC
 product INTEL BSW_AHCI		0x22a3	Braswell AHCI
 product INTEL CHV_IGD_1		0x22b0	HD Graphics
@@ -3543,6 +3543,7 @@ product INTEL CHV_IGD_2		0x22b1	HD Graphics
 product INTEL CHV_IGD_3		0x22b2	HD Graphics
 product INTEL CHV_IGD_4		0x22b3	HD Graphics
 product INTEL BSW_XHCI		0x22b5	Braswell xHCI
+product INTEL BSW_ISP		0x22b8	Braswell Camera ISP
 product INTEL BSW_SIO_DMA_1	0x22c0	Braswell SIO DMA
 product INTEL BSW_SIO_I2C_1	0x22c1	Braswell SIO I2C
 product INTEL BSW_SIO_I2C_2	0x22c2	Braswell SIO I2C
@@ -3555,6 +3556,7 @@ product INTEL BSW_PCIE_1	0x22c8	Braswell PCIE
 product INTEL BSW_PCIE_2	0x22ca	Braswell PCIE
 product INTEL BSW_PCIE_3	0x22cc	Braswell PCIE
 product INTEL BSW_PCIE_4	0x22ce	Braswell PCIE
+product INTEL BSW_PM		0x22dc	Braswell Power
 product INTEL DH8900_LPC	0x2310	DH8900 LPC
 product INTEL DH8900_AHCI	0x2323	DH8900 AHCI
 product INTEL DH8900_SATA_1	0x2326	DH8900 SATA
