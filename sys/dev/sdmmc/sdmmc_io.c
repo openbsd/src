@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.22 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.23 2016/04/23 14:15:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -171,21 +171,17 @@ sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
 	rw_assert_wrlock(&sc->sc_lock);
 
-	if (sf->number == 0) {
-		sdmmc_io_write_1(sf, SD_IO_CCCR_BUS_WIDTH,
-		    CCCR_BUS_WIDTH_1);
-
-		if (sdmmc_read_cis(sf, &sf->cis) != 0) {
-			printf("%s: can't read CIS\n", DEVNAME(sc));
-			SET(sf->flags, SFF_ERROR);
-			return 1;
-		}
-
-		sdmmc_check_cis_quirks(sf);
-
-		if (sdmmc_verbose)
-			sdmmc_print_cis(sf);
+	if (sdmmc_read_cis(sf, &sf->cis) != 0) {
+		printf("%s: can't read CIS\n", DEVNAME(sc));
+		SET(sf->flags, SFF_ERROR);
+		return 1;
 	}
+
+	sdmmc_check_cis_quirks(sf);
+
+	if (sdmmc_verbose)
+		sdmmc_print_cis(sf);
+
 	return 0;
 }
 

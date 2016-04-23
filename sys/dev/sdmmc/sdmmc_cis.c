@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_cis.c,v 1.6 2016/01/11 07:32:38 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc_cis.c,v 1.7 2016/04/23 14:15:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -37,18 +37,16 @@ u_int32_t sdmmc_cisptr(struct sdmmc_function *);
 u_int32_t
 sdmmc_cisptr(struct sdmmc_function *sf)
 {
+	struct sdmmc_function *sf0 = sf->sc->sc_fn0;
 	u_int32_t cisptr = 0;
+	int reg;
 
 	rw_assert_wrlock(&sf->sc->sc_lock);
 
-	/* XXX where is the per-function CIS pointer register? */
-	if (sf->number != 0)
-		return SD_IO_CIS_START;
-
-	/* XXX is the CIS pointer stored in little-endian format? */
-	cisptr |= sdmmc_io_read_1(sf, SD_IO_CCCR_CISPTR+0) << 0;
-	cisptr |= sdmmc_io_read_1(sf, SD_IO_CCCR_CISPTR+1) << 8;
-	cisptr |= sdmmc_io_read_1(sf, SD_IO_CCCR_CISPTR+2) << 16;
+	reg = SD_IO_CCCR_CISPTR + (sf->number * SD_IO_CCCR_SIZE);
+	cisptr |= sdmmc_io_read_1(sf0, reg + 0) << 0;
+	cisptr |= sdmmc_io_read_1(sf0, reg + 1) << 8;
+	cisptr |= sdmmc_io_read_1(sf0, reg + 2) << 16;
 
 	return cisptr;
 }
@@ -56,17 +54,12 @@ sdmmc_cisptr(struct sdmmc_function *sf)
 int
 sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 {
+	struct sdmmc_function *sf0 = sf->sc->sc_fn0;
 	int reg;
 	u_int8_t tplcode;
 	u_int8_t tpllen;
 
 	rw_assert_wrlock(&sf->sc->sc_lock);
-
-	bzero(cis, sizeof *cis);
-
-	/* XXX read per-function CIS */
-	if (sf->number != 0)
-		return 1;
 
 	reg = (int)sdmmc_cisptr(sf);
 	if (reg < SD_IO_CIS_START ||
@@ -76,13 +69,13 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 	}
 
 	for (;;) {
-		tplcode = sdmmc_io_read_1(sf, reg++);
+		tplcode = sdmmc_io_read_1(sf0, reg++);
 		if (tplcode == SD_IO_CISTPL_END)
 			break;
 		if (tplcode == SD_IO_CISTPL_NULL)
 			continue;
 
-		tpllen = sdmmc_io_read_1(sf, reg++);
+		tpllen = sdmmc_io_read_1(sf0, reg++);
 		if (tpllen == 0) {
 			printf("%s: CIS parse error at %d, "
 			    "tuple code %#x, length %d\n",
@@ -98,7 +91,7 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 				reg += tpllen;
 				break;
 			}
-			cis->function = sdmmc_io_read_1(sf, reg);
+			cis->function = sdmmc_io_read_1(sf0, reg);
 			reg += tpllen;
 			break;
 		case SD_IO_CISTPL_MANFID:
@@ -108,10 +101,10 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 				reg += tpllen;
 				break;
 			}
-			cis->manufacturer = sdmmc_io_read_1(sf, reg++);
-			cis->manufacturer |= sdmmc_io_read_1(sf, reg++) << 8;
-			cis->product = sdmmc_io_read_1(sf, reg++);
-			cis->product |= sdmmc_io_read_1(sf, reg++) << 8;
+			cis->manufacturer = sdmmc_io_read_1(sf0, reg++);
+			cis->manufacturer |= sdmmc_io_read_1(sf0, reg++) << 8;
+			cis->product = sdmmc_io_read_1(sf0, reg++);
+			cis->product |= sdmmc_io_read_1(sf0, reg++) << 8;
 			break;
 		case SD_IO_CISTPL_VERS_1:
 			if (tpllen < 2) {
@@ -123,12 +116,12 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 			{
 				int start, i, ch, count;
 
-				cis->cis1_major = sdmmc_io_read_1(sf, reg++);
-				cis->cis1_minor = sdmmc_io_read_1(sf, reg++);
+				cis->cis1_major = sdmmc_io_read_1(sf0, reg++);
+				cis->cis1_minor = sdmmc_io_read_1(sf0, reg++);
 
 				for (count = 0, start = 0, i = 0;
 				     (count < 4) && ((i + 4) < 256); i++) {
-					ch = sdmmc_io_read_1(sf, reg + i);
+					ch = sdmmc_io_read_1(sf0, reg + i);
 					if (ch == 0xff)
 						break;
 					cis->cis1_info_buf[i] = ch;
@@ -178,8 +171,8 @@ sdmmc_print_cis(struct sdmmc_function *sf)
 
 	printf("%s: function %d: ", DEVNAME(sf->sc), sf->number);
 	switch (sf->cis.function) {
-	case SDMMC_FUNCTION_WLAN:
-		printf("wireless network adapter");
+	case TPLFID_FUNCTION_SDIO:
+		printf("SDIO");
 		break;
 	default:
 		printf("unknown (%d)", sf->cis.function);
