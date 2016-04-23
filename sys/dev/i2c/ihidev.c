@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.11 2016/04/10 16:43:17 kettenis Exp $ */
+/* $OpenBSD: ihidev.c,v 1.12 2016/04/23 09:40:28 kettenis Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -108,9 +108,8 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_hid_desc_addr = ia->ia_size;
 
-	/* XXX print proper interrupt string */
 	if (ia->ia_intr)
-		printf(": interrupt");
+		printf(" %s", iic_intr_string(sc->sc_tag, ia->ia_intr));
 
 	if (ihidev_hid_command(sc, I2C_HID_CMD_DESCR, NULL) ||
 	    ihidev_hid_desc_parse(sc)) {
