@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1792 2016/04/08 09:59:47 reyk Exp 
+ *	OpenBSD: pcidevs,v 1.1793 2016/04/23 10:30:18 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3540,7 +3540,7 @@
 #define	PCI_PRODUCT_INTEL_BSW_SIO_HSUART_1	0x228a		/* Braswell Serial */
 #define	PCI_PRODUCT_INTEL_BSW_SIO_HSUART_2	0x228c		/* Braswell Serial */
 #define	PCI_PRODUCT_INTEL_BRASWELL_SMB	0x2292		/* Braswell SMBus */
-#define	PCI_PRODUCT_INTEL_BSW_TXE	0x2298		/* Baswell TXE */
+#define	PCI_PRODUCT_INTEL_BSW_TXE	0x2298		/* Braswell TXE */
 #define	PCI_PRODUCT_INTEL_BSW_PCU_LPC	0x229c		/* Braswell PCU LPC */
 #define	PCI_PRODUCT_INTEL_BSW_AHCI	0x22a3		/* Braswell AHCI */
 #define	PCI_PRODUCT_INTEL_CHV_IGD_1	0x22b0		/* HD Graphics */
@@ -3548,6 +3548,7 @@
 #define	PCI_PRODUCT_INTEL_CHV_IGD_3	0x22b2		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CHV_IGD_4	0x22b3		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_BSW_XHCI	0x22b5		/* Braswell xHCI */
+#define	PCI_PRODUCT_INTEL_BSW_ISP	0x22b8		/* Braswell Camera ISP */
 #define	PCI_PRODUCT_INTEL_BSW_SIO_DMA_1	0x22c0		/* Braswell SIO DMA */
 #define	PCI_PRODUCT_INTEL_BSW_SIO_I2C_1	0x22c1		/* Braswell SIO I2C */
 #define	PCI_PRODUCT_INTEL_BSW_SIO_I2C_2	0x22c2		/* Braswell SIO I2C */
@@ -3560,6 +3561,7 @@
 #define	PCI_PRODUCT_INTEL_BSW_PCIE_2	0x22ca		/* Braswell PCIE */
 #define	PCI_PRODUCT_INTEL_BSW_PCIE_3	0x22cc		/* Braswell PCIE */
 #define	PCI_PRODUCT_INTEL_BSW_PCIE_4	0x22ce		/* Braswell PCIE */
+#define	PCI_PRODUCT_INTEL_BSW_PM	0x22dc		/* Braswell Power */
 #define	PCI_PRODUCT_INTEL_DH8900_LPC	0x2310		/* DH8900 LPC */
 #define	PCI_PRODUCT_INTEL_DH8900_AHCI	0x2323		/* DH8900 AHCI */
 #define	PCI_PRODUCT_INTEL_DH8900_SATA_1	0x2326		/* DH8900 SATA */
