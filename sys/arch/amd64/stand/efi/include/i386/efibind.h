@@ -88,8 +88,8 @@ Revision History
 #ifndef ACPI_THREAD_ID		/* ACPI's definitions are fine, use those */
 #define ACPI_USE_SYSTEM_INTTYPES 1	/* Tell ACPI we've defined types */
 
-typedef uint64_t   UINT64;
-typedef int64_t    INT64;
+typedef uint64_t   UINT64 __attribute__((__aligned__(8)));
+typedef int64_t    INT64 __attribute__((__aligned__(8)));
 
 #ifndef _BASETSD_H_
     typedef uint32_t   UINT32;
