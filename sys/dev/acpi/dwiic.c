@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.15 2016/04/23 09:40:28 kettenis Exp $ */
+/* $OpenBSD: dwiic.c,v 1.16 2016/04/23 10:23:44 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -210,6 +210,7 @@ const char *dwiic_hids[] = {
 	"INT3432",
 	"INT3433",
 	"80860F41",
+	"808622C1",
 	NULL
 };
 
