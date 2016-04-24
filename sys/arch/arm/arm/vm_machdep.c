@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.16 2015/08/15 22:20:20 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.17 2016/04/24 01:31:02 patrick Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -140,10 +140,11 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	*tf = *p1->p_addr->u_pcb.pcb_tf;
 
 	/*
-	 * If specified, give the child a different stack.
+	 * If specified, give the child a different stack (make sure
+	 * it's 8-byte aligned).
 	 */
 	if (stack != NULL)
-		tf->tf_usr_sp = (u_int)stack + stacksize;
+		tf->tf_usr_sp = ((vaddr_t)(stack) + stacksize) & -8;
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_r4 = (u_int)func;

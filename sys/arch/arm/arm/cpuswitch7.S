@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch7.S,v 1.6 2016/04/04 09:13:44 patrick Exp $	*/
+/*	$OpenBSD: cpuswitch7.S,v 1.7 2016/04/24 01:31:02 patrick Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -158,6 +158,7 @@ ENTRY(cpu_idle_leave)
 
 ENTRY(cpu_switchto)
 	stmfd	sp!, {r4-r7, lr}
+	sub	sp, sp, #4
 
 	/* Get curcpu from TPIDRPRW. */
 	mrc	p15, 0, r3, c13, c0, 4
@@ -371,6 +372,7 @@ ENTRY(cpu_switchto)
 	 * Pull the registers that got pushed when either savectx() or
 	 * cpu_switch() was called and return.
 	 */
+	add	sp, sp, #4
 	ldmfd	sp!, {r4-r7, pc}
 
 /* LINTSTUB: Func: void savectx(struct pcb *pcb) */
@@ -381,12 +383,14 @@ ENTRY(savectx)
 
 	/* Push registers.*/
 	stmfd	sp!, {r4-r7, lr}
+	sub	sp, sp, #4
 
 	/* Store all the registers in the process's pcb */
 	add	r2, r0, #(PCB_R8)
 	stmia	r2, {r8-r13}
 
 	/* Pull the regs of the stack */
+	add	sp, sp, #4
 	ldmfd	sp!, {r4-r7, pc}
 
 ENTRY(proc_trampoline)
