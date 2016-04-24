@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.8 2016/04/24 01:31:02 patrick Exp $	*/
+/*	$OpenBSD: frame.h,v 1.9 2016/04/24 12:11:46 patrick Exp $	*/
 /*	$NetBSD: frame.h,v 1.9 2003/12/01 08:48:33 scw Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ struct switchframe {
 	u_int	sf_r7;
 	u_int	sf_pc;
 };
- 
+
 /*
  * Stack frame. Used during stack traces (db_trace.c)
  */
@@ -210,7 +210,7 @@ struct frame {
 	str	lr, [sp, #-4]!;		/* Push the return address */	   \
 	sub	sp, sp, #(4*17);	/* Adjust the stack pointer */	   \
 	stmia	sp, {r0-r14}^;		/* Push the user mode registers */ \
-        mov     r0, r0;                 /* NOP for previous instruction */ \
+	mov	r0, r0;			/* NOP for previous instruction */ \
 	mrs	r0, spsr;		/* Put the SPSR on the stack */	   \
 	str	r0, [sp, #-4]!
 
@@ -220,10 +220,10 @@ struct frame {
  */
 
 #define PULLFRAME							   \
-        ldr     r0, [sp], #0x0004;      /* Get the SPSR from stack */	   \
-        msr     spsr_fsxc, r0;						   \
-        ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
-        mov     r0, r0;                 /* NOP for previous instruction */ \
+	ldr	r0, [sp], #0x0004;	/* Get the SPSR from stack */	   \
+	msr	spsr_fsxc, r0;						   \
+	ldmia	sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
+	mov	r0, r0;			/* NOP for previous instruction */ \
 	add	sp, sp, #(4*17);	/* Adjust the stack pointer */	   \
 	ldr	lr, [sp], #0x0004;	/* Pull the return address */	   \
 	add	sp, sp, #4		/* Align the stack */
@@ -233,7 +233,7 @@ struct frame {
  * This should only be used if the processor is not currently in SVC32
  * mode. The processor mode is switched to SVC mode and the trap frame is
  * stored. The SVC lr field is used to store the previous value of
- * lr in SVC mode.  
+ * lr in SVC mode.
  */
 
 #define PUSHFRAMEINSVC							   \
@@ -241,21 +241,21 @@ struct frame {
 	mov	r0, lr;			/* Save xxx32 r14 */		   \
 	mov	r1, sp;			/* Save xxx32 sp */		   \
 	mrs	r3, spsr;		/* Save xxx32 spsr */		   \
-	mrs     r2, cpsr; 		/* Get the CPSR */		   \
-	bic     r2, r2, #(PSR_MODE);	/* Fix for SVC mode */		   \
-	orr     r2, r2, #(PSR_SVC32_MODE);				   \
-	msr     cpsr_c, r2;		/* Punch into SVC mode */	   \
+	mrs	r2, cpsr; 		/* Get the CPSR */		   \
+	bic	r2, r2, #(PSR_MODE);	/* Fix for SVC mode */		   \
+	orr	r2, r2, #(PSR_SVC32_MODE);				   \
+	msr	cpsr_c, r2;		/* Punch into SVC mode */	   \
 	mov	r2, sp;			/* Save	SVC sp */		   \
 	bic	sp, sp, #7;		/* Align sp to an 8-byte address */   \
 	sub	sp, sp, #4;		/* Pad trapframe to keep alignment */ \
 	str	r0, [sp, #-4]!;		/* Push return address */	   \
 	str	lr, [sp, #-4]!;		/* Push SVC lr */		   \
 	str	r2, [sp, #-4]!;		/* Push SVC sp */		   \
-	msr     spsr_fsxc, r3;		/* Restore correct spsr */	   \
+	msr	spsr_fsxc, r3;		/* Restore correct spsr */	   \
 	ldmdb	r1, {r0-r3};		/* Restore 4 regs from xxx mode */ \
 	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
 	stmia	sp, {r0-r14}^;		/* Push the user mode registers */ \
-        mov     r0, r0;                 /* NOP for previous instruction */ \
+	mov	r0, r0;			/* NOP for previous instruction */ \
 	mrs	r0, spsr;		/* Put the SPSR on the stack */	   \
 	str	r0, [sp, #-4]!
 
@@ -267,15 +267,15 @@ struct frame {
  */
 
 #define PULLFRAMEFROMSVCANDEXIT						   \
-        ldr     r0, [sp], #0x0004;	/* Get the SPSR from stack */	   \
-        msr     spsr_fsxc, r0;		/* restore SPSR */		   \
-        ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
-        mov     r0, r0;	  		/* NOP for previous instruction */ \
+	ldr	r0, [sp], #0x0004;	/* Get the SPSR from stack */	   \
+	msr	spsr_fsxc, r0;		/* restore SPSR */		   \
+	ldmia	sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
+	mov	r0, r0;			/* NOP for previous instruction */ \
 	add	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
 	ldmia	sp, {sp, lr, pc}^	/* Restore lr and exit */
 
 #endif /* _LOCORE */
 
 #endif /* _ARM_FRAME_H_ */
-  
+
 /* End of frame.h */
