@@ -14,8 +14,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "fdt.h"
-
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>

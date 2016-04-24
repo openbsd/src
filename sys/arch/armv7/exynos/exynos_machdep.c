@@ -1,4 +1,4 @@
-/*	$OpenBSD: exynos_machdep.c,v 1.5 2015/06/07 16:54:16 jsg Exp $	*/
+/*	$OpenBSD: exynos_machdep.c,v 1.6 2016/04/24 00:57:23 patrick Exp $	*/
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -14,8 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include "fdt.h"
 
 #include <sys/param.h>
 #include <sys/types.h>

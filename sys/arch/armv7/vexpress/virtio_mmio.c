@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.1 2015/06/08 06:33:16 jsg Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.2 2016/04/24 00:57:23 patrick Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -27,7 +27,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "fdt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

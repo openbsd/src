@@ -1,4 +1,4 @@
-/* $OpenBSD: exgpio.c,v 1.2 2015/05/27 00:06:14 jsg Exp $ */
+/* $OpenBSD: exgpio.c,v 1.3 2016/04/24 00:57:23 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -15,8 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include "fdt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

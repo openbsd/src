@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl011.c,v 1.1 2015/06/08 06:33:16 jsg Exp $	*/
+/*	$OpenBSD: pl011.c,v 1.2 2016/04/24 00:57:23 patrick Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -16,8 +16,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include "fdt.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

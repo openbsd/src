@@ -1,4 +1,4 @@
-/* $OpenBSD: exynos.c,v 1.9 2016/02/02 03:31:22 jsg Exp $ */
+/* $OpenBSD: exynos.c,v 1.10 2016/04/24 00:57:23 patrick Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -15,8 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include "fdt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
