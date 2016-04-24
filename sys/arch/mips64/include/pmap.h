@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.42 2016/02/01 16:18:30 visa Exp $ */
+/*      $OpenBSD: pmap.h,v 1.43 2016/04/24 04:25:03 visa Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -161,13 +161,6 @@ void	pmap_page_cache(vm_page_t, u_int);
 #define	pmap_collect(x)			do { /* nothing */ } while (0)
 #define	pmap_unuse_final(p)		do { /* nothing yet */ } while (0)
 #define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)
-
-void	pmap_update_user_page(pmap_t, vaddr_t, pt_entry_t);
-#ifdef MULTIPROCESSOR
-void	pmap_update_kernel_page(vaddr_t, pt_entry_t);
-#else
-#define	pmap_update_kernel_page(va, entry)	tlb_update(va, entry)
-#endif
 
 /*
  * Most R5000 processors (and related families) have a silicon bug preventing

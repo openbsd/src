@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.87 2016/04/23 12:53:28 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.88 2016/04/24 04:25:03 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -70,15 +70,18 @@ struct pool_allocator pmap_pg_allocator = {
 
 void	pmap_invalidate_user_page(pmap_t, vaddr_t);
 void	pmap_invalidate_icache(pmap_t, vaddr_t, pt_entry_t);
+void	pmap_update_user_page(pmap_t, vaddr_t, pt_entry_t);
 #ifdef MULTIPROCESSOR
 void	pmap_invalidate_kernel_page(vaddr_t);
 void	pmap_invalidate_kernel_page_action(void *);
 void	pmap_invalidate_user_page_action(void *);
 void	pmap_invalidate_icache_action(void *);
+void	pmap_update_kernel_page(vaddr_t, pt_entry_t);
 void	pmap_update_kernel_page_action(void *);
 void	pmap_update_user_page_action(void *);
 #else
 #define pmap_invalidate_kernel_page(va) tlb_flush_addr(va)
+#define pmap_update_kernel_page(va, entry) tlb_update(va, entry)
 #endif
 
 #ifdef PMAPDEBUG
