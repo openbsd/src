@@ -1,4 +1,4 @@
-.\" $OpenBSD: wscons.4,v 1.20 2016/03/03 18:00:49 naddy Exp $
+.\" $OpenBSD: wscons.4,v 1.21 2016/04/24 17:31:33 matthieu Exp $
 .\" $NetBSD: wscons.4,v 1.11 2000/04/13 11:14:42 is Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 3 2016 $
+.Dd $Mdocdate: April 24 2016 $
 .Dt WSCONS 4
 .Os
 .Sh NAME
@@ -37,7 +37,6 @@
 .Cd option WSEMUL_DEFAULT=\&"xxx\&"
 .Cd option WS_KERNEL_FG=WSCOL_XXX
 .Cd option WS_KERNEL_BG=WSCOL_XXX
-.Cd option WSDISPLAY_COMPAT_PCVT
 .Cd option WSDISPLAY_COMPAT_USL
 .Cd option WSDISPLAY_COMPAT_RAWKBD
 .Pp
@@ -194,13 +193,7 @@ Support the protocol for switches between multiple virtual screens on
 one display as used by most PC-UNIX variants.
 .It Cd WSDISPLAY_COMPAT_RAWKBD
 Allows getting raw XT keyboard scancodes from PC keyboards as needed
-by i386 X servers.
-.It Cd WSDISPLAY_COMPAT_PCVT
-Emulates enough of the
-.Ox
-/ i386
-.Dq pcvt
-driver to make X servers work.
+by X servers.
 .El
 .Pp
 .Em Other options :
