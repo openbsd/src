@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.70 2016/04/24 20:12:25 chrisz Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.71 2016/04/24 21:06:53 jmc Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -290,13 +290,14 @@ any.
 .It Ic HTTPS
 A variable that is set to
 .Qq on
-when the server has been configured to use TLS. This variable is
-omitted otherwise.
+when the server has been configured to use TLS.
+This variable is omitted otherwise.
 .It Ic REQUEST_URI
 The path and optional query string as requested by the connected client.
 .It Ic DOCUMENT_URI
 The canonicalized request path, possibly with a slash or
-directory index file name appended. This is the same as
+directory index file name appended.
+This is the same as
 .Ic PATH_INFO
 appended to
 .Ic SCRIPT_NAME .
@@ -311,7 +312,8 @@ The absolute, physical path to the script within the
 .Xr chroot 2
 directory.
 .It Ic QUERY_STRING
-The optional query string of the request. This variable is an empty
+The optional query string of the request.
+This variable is an empty
 string if there is no query string in the request.
 .It Ic REMOTE_ADDR
 The IP address of the connected client.
