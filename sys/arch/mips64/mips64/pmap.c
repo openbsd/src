@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.88 2016/04/24 04:25:03 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.89 2016/04/24 13:35:45 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -68,20 +68,18 @@ struct pool_allocator pmap_pg_allocator = {
 	pmap_pg_alloc, pmap_pg_free
 };
 
+#define	pmap_invalidate_kernel_page(va) tlb_flush_addr(va)
+#define	pmap_update_kernel_page(va, entry) tlb_update((va), (entry))
+
 void	pmap_invalidate_user_page(pmap_t, vaddr_t);
 void	pmap_invalidate_icache(pmap_t, vaddr_t, pt_entry_t);
 void	pmap_update_user_page(pmap_t, vaddr_t, pt_entry_t);
 #ifdef MULTIPROCESSOR
-void	pmap_invalidate_kernel_page(vaddr_t);
-void	pmap_invalidate_kernel_page_action(void *);
-void	pmap_invalidate_user_page_action(void *);
 void	pmap_invalidate_icache_action(void *);
-void	pmap_update_kernel_page(vaddr_t, pt_entry_t);
-void	pmap_update_kernel_page_action(void *);
-void	pmap_update_user_page_action(void *);
+void	pmap_shootdown_page(pmap_t, vaddr_t);
+void	pmap_shootdown_page_action(void *);
 #else
-#define pmap_invalidate_kernel_page(va) tlb_flush_addr(va)
-#define pmap_update_kernel_page(va, entry) tlb_update(va, entry)
+#define	pmap_shootdown_page(pmap, va)	do { /* nothing */ } while (0)
 #endif
 
 #ifdef PMAPDEBUG
@@ -154,169 +152,35 @@ pt_entry_t	*Sysmap;		/* kernel pte table */
 u_int		Sysmapsize;		/* number of pte's in Sysmap */
 const vaddr_t	Sysmapbase = VM_MIN_KERNEL_ADDRESS;	/* for libkvm */
 
-
-#ifdef MULTIPROCESSOR
-
-struct pmap_invalidate_page_arg {
-	pmap_t pmap;
-	vaddr_t va;
-};
-
-void
-pmap_invalidate_kernel_page(vaddr_t va)
-{
-	struct pmap_invalidate_page_arg arg;
-	unsigned int cpumask = 0;
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
-
-	CPU_INFO_FOREACH(cii, ci) 
-		if (cpuset_isset(&cpus_running, ci))
-			cpumask |= 1 << ci->ci_cpuid;
-	arg.va = va;
-
-	smp_rendezvous_cpus(cpumask, pmap_invalidate_kernel_page_action, &arg);
-}
-
-void
-pmap_invalidate_kernel_page_action(void *arg)
-{
-	vaddr_t va = ((struct pmap_invalidate_page_arg *)arg)->va;
-
-	tlb_flush_addr(va);
-}
-
 void
 pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
 {
-	unsigned int cpuid = cpu_number();
-	unsigned int cpumask = 0;
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
+	u_long cpuid = cpu_number();
+	u_long asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
 
-	CPU_INFO_FOREACH(cii, ci) 
-		if (cpuset_isset(&cpus_running, ci)) {
-			unsigned int i = ci->ci_cpuid;
-			unsigned int m = 1 << i;
-			if (pmap->pm_asid[i].pma_asidgen !=
-			    pmap_asid_info[i].pma_asidgen)
-				continue;
-			else if (ci->ci_curpmap != pmap) {
-				pmap->pm_asid[i].pma_asidgen = 0;
-				continue;
-			}
-			cpumask |= m;
-		}
-
-	if (cpumask == 1 << cpuid) {
-		u_long asid;
-
-		asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
-		tlb_flush_addr(va | asid);
-	} else if (cpumask) {
-		struct pmap_invalidate_page_arg arg;
-		arg.pmap = pmap;
-		arg.va = va;
-
-		smp_rendezvous_cpus(cpumask, pmap_invalidate_user_page_action,
-			&arg);
+	if (pmap->pm_asid[cpuid].pma_asidgen ==
+	    pmap_asid_info[cpuid].pma_asidgen) {
+#ifdef CPU_R4000
+		if (r4000_errata != 0)
+			eop_tlb_flush_addr(pmap, va, asid);
+		else
+#endif
+			tlb_flush_addr(va | asid);
 	}
-}
-
-void
-pmap_invalidate_user_page_action(void *arg)
-{
-	pmap_t pmap = ((struct pmap_invalidate_page_arg *)arg)->pmap;
-	vaddr_t va = ((struct pmap_invalidate_page_arg *)arg)->va;
-	unsigned int cpuid = cpu_number();
-	u_long asid;
-
-	asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
-	tlb_flush_addr(va | asid);
-}
-
-struct pmap_update_page_arg {
-	pmap_t pmap;
-	vaddr_t va;
-	pt_entry_t entry;
-};
-
-void
-pmap_update_kernel_page(vaddr_t va, pt_entry_t entry)
-{
-	struct pmap_update_page_arg arg;
-	unsigned long cpumask = 0;
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
-
-	CPU_INFO_FOREACH(cii, ci) 
-		if (cpuset_isset(&cpus_running, ci))
-			cpumask |= 1 << ci->ci_cpuid;
-
-	arg.va = va;
-	arg.entry = entry;
-	smp_rendezvous_cpus(cpumask,
-			    pmap_update_kernel_page_action, &arg);
-}
-
-void
-pmap_update_kernel_page_action(void *arg)
-{
-	vaddr_t va = ((struct pmap_update_page_arg *)arg)->va;
-	pt_entry_t entry = ((struct pmap_update_page_arg *)arg)->entry;
-
-	tlb_update(va, entry);
 }
 
 void
 pmap_update_user_page(pmap_t pmap, vaddr_t va, pt_entry_t entry)
 {
-	unsigned int cpuid = cpu_number();
-	unsigned long cpumask = 0;
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
+	u_long cpuid = cpu_number();
+	u_long asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
 
-	CPU_INFO_FOREACH(cii, ci) 
-		if (cpuset_isset(&cpus_running, ci)) {
-			unsigned int i = ci->ci_cpuid;
-			unsigned int m = 1 << i;
-			if (pmap->pm_asid[i].pma_asidgen != 
-			    pmap_asid_info[i].pma_asidgen)
-				continue;
-			else if (ci->ci_curpmap != pmap) {
-				pmap->pm_asid[i].pma_asidgen = 0;
-				continue;
-			}
-			cpumask |= m;
-		}
-
-	if (cpumask == 1 << cpuid) {
-		u_long asid;
-
-		asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
+	if (pmap->pm_asid[cpuid].pma_asidgen ==
+	    pmap_asid_info[cpuid].pma_asidgen)
 		tlb_update(va | asid, entry);
-	} else if (cpumask) {
-		struct pmap_update_page_arg arg;
-		arg.pmap = pmap;
-		arg.va = va;
-		arg.entry = entry;
-		smp_rendezvous_cpus(cpumask,
-				    pmap_update_user_page_action, &arg);
-	}
 }
 
-void
-pmap_update_user_page_action(void *arg)
-{
-	pmap_t pmap = ((struct pmap_update_page_arg *)arg)->pmap;
-	vaddr_t va = ((struct pmap_update_page_arg *)arg)->va;
-	pt_entry_t entry = ((struct pmap_update_page_arg *)arg)->entry;
-	unsigned int cpuid = cpu_number();
-	u_long asid;
-
-	asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
-	tlb_update(va | asid, entry);
-}
+#ifdef MULTIPROCESSOR
 
 struct pmap_invalidate_icache_arg {
 	vaddr_t		va;
@@ -359,34 +223,56 @@ pmap_invalidate_icache_action(void *arg)
 	Mips_SyncDCachePage(ci, ii_args->va, pfn_to_pad(ii_args->entry));
 	Mips_InvalidateICache(ci, ii_args->va, PAGE_SIZE);
 }
-#else
-void
-pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
-{
-	u_long cpuid = cpu_number();
-	u_long asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
 
-	if (pmap->pm_asid[cpuid].pma_asidgen ==
-	    pmap_asid_info[cpuid].pma_asidgen) {
-#ifdef CPU_R4000
-		if (r4000_errata != 0)
-			eop_tlb_flush_addr(pmap, va, asid);
-		else
-#endif
-			tlb_flush_addr(va | asid);
+struct pmap_shootdown_page_arg {
+	pmap_t		pmap;
+	vaddr_t		va;
+};
+
+void
+pmap_shootdown_page(pmap_t pmap, vaddr_t va)
+{
+	struct pmap_shootdown_page_arg sp_arg;
+	struct cpu_info *ci, *self = curcpu();
+	CPU_INFO_ITERATOR cii;
+	unsigned int cpumask = 0;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (ci == self)
+			continue;
+		if (!cpuset_isset(&cpus_running, ci))
+			continue;
+		if (pmap != pmap_kernel()) {
+			if (pmap->pm_asid[ci->ci_cpuid].pma_asidgen !=
+			    pmap_asid_info[ci->ci_cpuid].pma_asidgen) {
+				continue;
+			} else if (ci->ci_curpmap != pmap) {
+				pmap->pm_asid[ci->ci_cpuid].pma_asidgen = 0;
+				continue;
+			}
+		}
+		cpumask |= 1 << ci->ci_cpuid;
+	}
+	if (cpumask != 0) {
+		sp_arg.pmap = pmap;
+		sp_arg.va = va;
+		smp_rendezvous_cpus(cpumask, pmap_shootdown_page_action,
+		    &sp_arg);
 	}
 }
 
 void
-pmap_update_user_page(pmap_t pmap, vaddr_t va, pt_entry_t entry)
+pmap_shootdown_page_action(void *arg)
 {
-	u_long cpuid = cpu_number();
-	u_long asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
+	struct pmap_shootdown_page_arg *sp_arg = arg;
 
-	if (pmap->pm_asid[cpuid].pma_asidgen ==
-	    pmap_asid_info[cpuid].pma_asidgen)
-		tlb_update(va | asid, entry);
+	if (sp_arg->pmap == pmap_kernel())
+		pmap_invalidate_kernel_page(sp_arg->va);
+	else
+		pmap_invalidate_user_page(sp_arg->pmap, sp_arg->va);
 }
+
+#else /* MULTIPROCESSOR */
 
 void
 pmap_invalidate_icache(pmap_t pmap, vaddr_t va, pt_entry_t entry)
@@ -396,7 +282,8 @@ pmap_invalidate_icache(pmap_t pmap, vaddr_t va, pt_entry_t entry)
 	Mips_SyncDCachePage(ci, va, pfn_to_pad(entry));
 	Mips_InvalidateICache(ci, va, PAGE_SIZE);
 }
-#endif
+
+#endif /* MULTIPROCESSOR */
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -727,6 +614,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			 * Flush the TLB for the given address.
 			 */
 			pmap_invalidate_kernel_page(sva);
+			pmap_shootdown_page(pmap_kernel(), sva);
 			stat_count(remove_stats.flushes);
 		}
 		KERNEL_UNLOCK();
@@ -769,6 +657,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			 * Flush the TLB for the given address.
 			 */
 			pmap_invalidate_user_page(pmap, sva);
+			pmap_shootdown_page(pmap, sva);
 			stat_count(remove_stats.flushes);
 		}
 	}
@@ -881,6 +770,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			 * Update the TLB if the given address is in the cache.
 			 */
 			pmap_update_kernel_page(sva, entry);
+			pmap_shootdown_page(pmap_kernel(), sva);
 		}
 		return;
 	}
@@ -922,6 +812,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			entry = (entry & ~(PG_M | PG_RO)) | p;
 			*pte = entry;
 			pmap_update_user_page(pmap, sva, entry);
+			pmap_shootdown_page(pmap, sva);
 		}
 	}
 }
@@ -1040,6 +931,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 */
 		*pte = npte;
 		pmap_update_kernel_page(va, npte);
+		pmap_shootdown_page(pmap_kernel(), va);
 		return 0;
 	}
 
@@ -1121,6 +1013,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	*pte = npte;
 	pmap_update_user_page(pmap, va, npte);
+	pmap_shootdown_page(pmap, va);
 
 	/*
 	 * If mapping an executable page, invalidate ICache
@@ -1166,6 +1059,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	}
 	*pte = npte;
 	pmap_update_kernel_page(va, npte);
+	pmap_shootdown_page(pmap_kernel(), va);
 }
 
 /*
@@ -1198,6 +1092,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 			Mips_HitSyncDCachePage(ci, va, pfn_to_pad(entry));
 		*pte = PG_NV | PG_G;
 		pmap_invalidate_kernel_page(va);
+		pmap_shootdown_page(pmap_kernel(), va);
 		pmap_kernel()->pm_stats.wired_count--;
 		pmap_kernel()->pm_stats.resident_count--;
 	}
@@ -1444,6 +1339,7 @@ pmap_clear_modify(struct vm_page *pg)
 				entry &= ~PG_M;
 				*pte = entry;
 				pmap_update_kernel_page(pv->pv_va, entry);
+				pmap_shootdown_page(pmap_kernel(), pv->pv_va);
 			}
 		} else if (pv->pv_pmap != NULL) {
 			if ((pte = pmap_segmap(pv->pv_pmap, pv->pv_va)) == NULL)
@@ -1456,7 +1352,9 @@ pmap_clear_modify(struct vm_page *pg)
 				rv = TRUE;
 				entry &= ~PG_M;
 				*pte = entry;
-				pmap_update_user_page(pv->pv_pmap, pv->pv_va, entry);
+				pmap_update_user_page(pv->pv_pmap, pv->pv_va,
+				    entry);
+				pmap_shootdown_page(pv->pv_pmap, pv->pv_va);
 			}
 		}
 	}
@@ -1532,11 +1430,19 @@ pmap_emulate_modify(pmap_t pmap, vaddr_t va)
 		pte += uvtopte(va);
 	}
 	entry = *pte;
-#ifdef DIAGNOSTIC
-	if (!(entry & PG_V) || (entry & PG_M))
+	if (!(entry & PG_V) || (entry & PG_M)) {
+#ifdef MULTIPROCESSOR
+		/* Another CPU might have changed the mapping. */
+		if (pmap == pmap_kernel())
+			pmap_update_kernel_page(trunc_page(va), entry);
+		else
+			pmap_update_user_page(pmap, trunc_page(va), entry);
+		return (0);
+#else
 		panic("%s: invalid pte 0x%lx in pmap %p va %p", __func__,
 		    (unsigned long)entry, pmap, (void *)va);
 #endif
+	}
 	if (entry & PG_RO)
 		return (1);
 	entry |= PG_M;
@@ -1587,6 +1493,7 @@ pmap_page_cache(vm_page_t pg, u_int mode)
 				entry = (entry & ~PG_CACHEMODE) | newmode;
 				*pte = entry;
 				pmap_update_kernel_page(pv->pv_va, entry);
+				pmap_shootdown_page(pmap_kernel(), pv->pv_va);
 			}
 		} else if (pv->pv_pmap != NULL) {
 			if ((pte = pmap_segmap(pv->pv_pmap, pv->pv_va))) {
@@ -1595,7 +1502,10 @@ pmap_page_cache(vm_page_t pg, u_int mode)
 				if (entry & PG_V) {
 					entry = (entry & ~PG_CACHEMODE) | newmode;
 					*pte = entry;
-					pmap_update_user_page(pv->pv_pmap, pv->pv_va, entry);
+					pmap_update_user_page(pv->pv_pmap,
+					    pv->pv_va, entry);
+					pmap_shootdown_page(pv->pv_pmap,
+					    pv->pv_va);
 				}
 			}
 		}
