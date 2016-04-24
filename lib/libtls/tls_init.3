@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.55 2016/04/24 07:02:07 jmc Exp $
+.\" $OpenBSD: tls_init.3,v 1.56 2016/04/24 12:16:36 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -550,8 +550,7 @@ reads
 .Fa buflen
 bytes of data from the socket into
 .Fa buf .
-The amount of data read is returned in
-.Fa outlen .
+It returns the amount of data read.
 .It
 .Fn tls_write
 writes
@@ -559,8 +558,7 @@ writes
 bytes of data from
 .Fa buf
 to the socket.
-The amount of data written is returned in
-.Fa outlen .
+It returns the amount of data written.
 .It
 .Fn tls_close
 closes a connection after use.
