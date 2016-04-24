@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.54 2015/11/09 17:52:07 jmc Exp $
+.\" $OpenBSD: tls_init.3,v 1.55 2016/04/24 07:02:07 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 9 2015 $
+.Dd $Mdocdate: April 24 2016 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -468,7 +468,7 @@ will only succeed after the handshake is complete.
 .It
 .Fn tls_conn_cipher
 returns a string
-corresponding to a the cipher suite negotated with the peer
+corresponding to the cipher suite negotiated with the peer
 connected to
 .Ar ctx .
 .Fn tls_conn_cipher
