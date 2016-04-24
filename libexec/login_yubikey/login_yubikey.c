@@ -1,4 +1,4 @@
-/* $OpenBSD: login_yubikey.c,v 1.13 2015/10/22 23:56:30 bmercer Exp $ */
+/* $OpenBSD: login_yubikey.c,v 1.14 2016/04/24 18:52:52 benno Exp $ */
 
 /*
  * Copyright (c) 2010 Daniel Hartmeier <daniel@benzedrine.cx>
@@ -228,6 +228,8 @@ yubikey_login(const char *username, const char *password)
 	yubikey_hex_decode(uid, hexuid, YUBIKEY_UID_SIZE);
 	yubikey_hex_decode(key, hexkey, YUBIKEY_KEY_SIZE);
 
+	explicit_bzero(hexkey, sizeof(hexkey));
+
 	/*
 	 * Cycle through the key mapping table.
          * XXX brute force, unoptimized; a lookup table for valid mappings may
@@ -239,6 +241,7 @@ yubikey_login(const char *username, const char *password)
 		case EMSGSIZE:
 			syslog(LOG_INFO, "user %s failed: password too short.",
 			    username);
+			explicit_bzero(key, sizeof(key));
 			return (AUTH_FAILED);
 		case EINVAL:	/* keyboard mapping invalid */
 			continue;
@@ -264,14 +267,18 @@ yubikey_login(const char *username, const char *password)
 			syslog(LOG_INFO, "user %s: could not decode password "
 			    "with any keymap (%d crc ok)",
 			    username, crcok);
+			explicit_bzero(key, sizeof(key));
 			return (AUTH_FAILED);
 		default:
 			syslog(LOG_DEBUG, "user %s failed: %s",
 			    username, strerror(r));
+			explicit_bzero(key, sizeof(key));
 			return (AUTH_FAILED);
 		}
 		break; /* only reached through the bottom of case 0 */
 	}
+
+	explicit_bzero(key, sizeof(key));
 
 	syslog(LOG_INFO, "user %s uid %s: %d matching keymaps (%d checked), "
 	    "%d crc ok", username, hexuid, mapok, i, crcok);
