@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.255 2016/01/08 09:48:41 mpi Exp $g
+#	$OpenBSD: GENERIC,v 1.256 2016/04/24 17:30:31 matthieu Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -23,7 +23,6 @@ option		APERTURE	# in-kernel aperture driver for XFree86
 option	WSDISPLAY_COMPAT_USL		# VT handling
 option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
 option	WSDISPLAY_DEFAULTSCREENS=6	# initial number of text consoles
-option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls; needed for X11
 
 option		USER_PCICONF	# user-space PCI configuration
 

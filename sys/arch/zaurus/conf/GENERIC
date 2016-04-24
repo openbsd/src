@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.100 2016/01/08 09:48:42 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.101 2016/04/24 17:30:31 matthieu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -28,7 +28,6 @@ makeoptions	CPUFLAGS="-mcpu=xscale"
 option	WSDISPLAY_COMPAT_USL		# VT handling
 option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
 option	WSDISPLAY_DEFAULTSCREENS=2	# initial number of text consoles
-option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls; needed for X11
 
 option USBVERBOSE
 

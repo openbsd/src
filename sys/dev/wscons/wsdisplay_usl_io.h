@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_usl_io.h,v 1.3 2016/03/03 18:00:49 naddy Exp $ */
+/* $OpenBSD: wsdisplay_usl_io.h,v 1.4 2016/04/24 17:30:31 matthieu Exp $ */
 /* $NetBSD: wsdisplay_usl_io.h,v 1.1 1998/06/11 22:00:04 drochner Exp $ */
 
 #define VT_OPENQRY	_IOR('v', 1, int)
@@ -68,13 +68,3 @@ struct kbentry {
 #define LED_SCR		4
 
 #define KDSETRAD	_IO('K', 67 /*, int */)
-
-/* pcvt compatibility */
-#define VGAPCVTID	_IOWR('V',113, struct pcvtid)	/* get driver id */
-
-struct pcvtid {
-#define PCVTIDNAMELN  16		/* driver id - string length	*/
-	char name[PCVTIDNAMELN];	/* driver name			*/
-	int rmajor;			/* revision number, major	*/
-	int rminor;			/* revision number, minor	*/
-};

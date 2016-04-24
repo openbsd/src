@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.813 2016/03/03 12:41:30 naddy Exp $
+#	$OpenBSD: GENERIC,v 1.814 2016/04/24 17:30:31 matthieu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -343,7 +343,6 @@ isapnp0	at isa?
 option	WSDISPLAY_COMPAT_USL		# VT handling
 option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
 option	WSDISPLAY_DEFAULTSCREENS=6	# initial number of text consoles
-option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls; needed for X11
 
 pckbc0		at isa? flags 0x00	# PC keyboard controller
 pckbd*		at pckbc?	# PC keyboard
