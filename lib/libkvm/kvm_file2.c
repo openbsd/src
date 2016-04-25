@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.47 2015/09/04 02:58:14 dlg Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.48 2016/04/25 20:42:55 tedu Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -61,7 +61,6 @@
 #define _KERNEL
 #include <sys/file.h>
 #include <sys/mount.h>
-#include <dev/systrace.h>
 #undef _KERNEL
 #include <sys/vnode.h>
 #include <sys/socket.h>
@@ -713,16 +712,6 @@ fill_file(kvm_t *kd, struct kinfo_file *kf, struct file *fp, u_long fpaddr,
 		}
 		kf->kq_count = kqi.kq_count;
 		kf->kq_state = kqi.kq_state;
-		break;
-	    }
-	case DTYPE_SYSTRACE: {
-		struct fsystrace f;
-
-		if (KREAD(kd, (u_long)fp->f_data, &f)) {
-			_kvm_err(kd, kd->program, "can't read fsystrace");
-			return (-1);
-		}
-		kf->str_npolicies = f.npolicies;
 		break;
 	    }
 	}
