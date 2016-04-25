@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.66 2016/01/10 14:04:16 schwarze Exp $	*/
+/*	$OpenBSD: print.c,v 1.67 2016/04/25 19:12:07 tedu Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -264,8 +264,6 @@ printstate(const struct kinfo_proc *kp, VARENT *ve)
 		*cp++ = 'N';
 	if (kp->p_psflags & PS_TRACED)
 		*cp++ = 'X';
-	if (flag & P_SYSTRACE)
-		*cp++ = 'x';
 	if ((kp->p_psflags & (PS_EXITING | PS_ZOMBIE)) == PS_EXITING)
 		*cp++ = 'E';
 	if (kp->p_psflags & PS_ISPWAIT)
