@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.15 2015/11/03 16:14:14 deraadt Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.16 2016/04/25 20:00:33 tedu Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,11 +35,6 @@
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-
-#include "systrace.h"
-#if NSYSTRACE > 0
-#include <dev/systrace.h>
 #endif
 
 
@@ -79,19 +74,7 @@ mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
 		KERNEL_UNLOCK();
 		return (error);
 	}
-#if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		if (!lock)
-			KERNEL_LOCK();
-		error = systrace_redirect(code, p, argp, retval);
-		lock = 1;
-		goto done;
-	}
-#endif
 	error = (*callp->sy_call)(p, argp, retval);
-#if NSYSTRACE > 0
-done:
-#endif
 	if (lock)
 		KERNEL_UNLOCK();
 

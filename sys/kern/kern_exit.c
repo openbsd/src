@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.156 2016/03/29 08:46:08 mpi Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.157 2016/04/25 20:00:33 tedu Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -64,9 +64,6 @@
 #ifdef SYSVSEM
 #include <sys/sem.h>
 #endif
-
-#include "systrace.h"
-#include <dev/systrace.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -244,11 +241,6 @@ exit1(struct proc *p, int rv, int flags)
 	}
 
 	p->p_fd = NULL;		/* zap the thread's copy */
-
-#if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE))
-		systrace_exit(p);
-#endif
 
 	/*
 	 * If emulation has thread exit hook, call it now.

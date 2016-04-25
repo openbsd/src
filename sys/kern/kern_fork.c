@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.185 2016/03/11 19:10:14 tedu Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.186 2016/04/25 20:00:33 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -62,9 +62,6 @@
 #include <sys/unistd.h>
 
 #include <sys/syscallargs.h>
-
-#include "systrace.h"
-#include <dev/systrace.h>
 
 #include <uvm/uvm.h>
 
@@ -432,10 +429,6 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 
 	if (pr->ps_flags & PS_TRACED && flags & FORK_FORK)
 		newptstat = malloc(sizeof(*newptstat), M_SUBPROC, M_WAITOK);
-#if NSYSTRACE > 0
-	if (ISSET(curp->p_flag, P_SYSTRACE))
-		newstrp = systrace_getproc();
-#endif
 
 	p->p_pid = allocpid();
 
@@ -473,11 +466,6 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 			atomic_setbits_int(&p->p_flag, P_SUSPSINGLE);
 		}
 	}
-
-#if NSYSTRACE > 0
-	if (newstrp)
-		systrace_fork(curp, p, newstrp);
-#endif
 
 	if (tidptr != NULL) {
 		pid_t	pid = p->p_pid + THREAD_PID_OFFSET;

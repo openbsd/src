@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.60 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.61 2016/04/25 20:00:33 tedu Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -57,10 +57,6 @@
 #include <sys/ktrace.h>
 #endif
 
-#include "systrace.h"
-#if NSYSTRACE > 0
-#include <dev/systrace.h>
-#endif
 
 /*
  * Convert a pathname into a pointer to a vnode.
@@ -136,10 +132,6 @@ fail:
 #ifdef KTRACE
 	if (KTRPOINT(cnp->cn_proc, KTR_NAMEI))
 		ktrnamei(cnp->cn_proc, cnp->cn_pnbuf);
-#endif
-#if NSYSTRACE > 0
-	if (ISSET(cnp->cn_proc->p_flag, P_SYSTRACE))
-		systrace_namei(ndp);
 #endif
 
 	/*

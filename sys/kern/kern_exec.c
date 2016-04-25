@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.175 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.176 2016/04/25 20:00:33 tedu Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -64,12 +64,6 @@
 
 #ifdef __HAVE_MD_TCB
 # include <machine/tcb.h>
-#endif
-
-#include "systrace.h"
-
-#if NSYSTRACE > 0
-#include <dev/systrace.h>
 #endif
 
 const struct kmem_va_mode kv_exec = {
@@ -263,10 +257,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	struct vmspace *vm = pr->ps_vmspace;
 	char **tmpfap;
 	extern struct emul emul_native;
-#if NSYSTRACE > 0
-	int wassugid = ISSET(pr->ps_flags, PS_SUGID | PS_SUGIDEXEC);
-	size_t pathbuflen;
-#endif
 	char *pathbuf = NULL;
 	struct vnode *otvp;
 
@@ -280,16 +270,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 */
 	atomic_setbits_int(&pr->ps_flags, PS_INEXEC);
 
-#if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		systrace_execve0(p);
-		pathbuf = pool_get(&namei_pool, PR_WAITOK);
-		error = copyinstr(SCARG(uap, path), pathbuf, MAXPATHLEN,
-		    &pathbuflen);
-		if (error != 0)
-			goto clrflag;
-	}
-#endif
 	if (pathbuf != NULL) {
 		NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_SYSSPACE, pathbuf, p);
 	} else {
@@ -739,12 +719,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);
 	single_thread_clear(p, P_SUSPSIG);
 
-#if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE) &&
-	    wassugid && !ISSET(pr->ps_flags, PS_SUGID | PS_SUGIDEXEC))
-		systrace_execve1(pathbuf, p);
-#endif
-
 	if (pathbuf != NULL)
 		pool_put(&namei_pool, pathbuf);
 
@@ -769,11 +743,8 @@ bad:
 	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
 	km_free(argp, NCARGS, &kv_exec, &kp_pageable);
 
- freehdr:
+freehdr:
 	free(pack.ep_hdr, M_EXEC, pack.ep_hdrlen);
-#if NSYSTRACE > 0
- clrflag:
-#endif
 	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);
 	single_thread_clear(p, P_SUSPSIG);
 

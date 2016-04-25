@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.300 2016/02/29 19:44:07 naddy Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.301 2016/04/25 20:00:33 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -82,7 +82,6 @@
 
 #include <dev/cons.h>
 #include <dev/rndvar.h>
-#include <dev/systrace.h>
 
 #include <net/route.h>
 #include <netinet/in.h>
@@ -1189,12 +1188,6 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 
 		kf->kq_count = kqi->kq_count;
 		kf->kq_state = kqi->kq_state;
-		break;
-	    }
-	case DTYPE_SYSTRACE: {
-		struct fsystrace *f = (struct fsystrace *)fp->f_data;
-
-		kf->str_npolicies = f->npolicies;
 		break;
 	    }
 	}

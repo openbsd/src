@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.38 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.39 2016/04/25 20:00:33 tedu Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -44,12 +44,6 @@
 #include <sys/exec.h>
 
 #include <sys/exec_script.h>
-
-#include "systrace.h"
-
-#if NSYSTRACE > 0
-#include <dev/systrace.h>
-#endif
 
 
 /*
@@ -205,21 +199,8 @@ check_shell:
 	}
 	*tmpsap = malloc(MAXPATHLEN, M_EXEC, M_WAITOK);
 	if ((epp->ep_flags & EXEC_HASFD) == 0) {
-#if NSYSTRACE > 0
-		if (ISSET(p->p_flag, P_SYSTRACE)) {
-			error = systrace_scriptname(p, *tmpsap);
-			if (error != 0)
-				/*
-				 * Since systrace_scriptname() provides a
-				 * convenience, not a security issue, we are
-				 * safe to do this.
-				 */
-				error = copystr(epp->ep_name, *tmpsap,
-				    MAXPATHLEN, NULL);
-		} else
-#endif
-			error = copyinstr(epp->ep_name, *tmpsap, MAXPATHLEN,
-			    NULL);
+		error = copyinstr(epp->ep_name, *tmpsap, MAXPATHLEN,
+		    NULL);
 		if (error != 0) {
 			*(tmpsap + 1) = NULL;
 			goto fail;
