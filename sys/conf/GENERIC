@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.226 2016/03/24 07:18:11 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.227 2016/04/25 19:05:09 tedu Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -86,7 +86,6 @@ pseudo-device	msts	1	# MSTS line discipline
 pseudo-device	endrun	1	# EndRun line discipline
 pseudo-device	vnd	4	# vnode disk devices
 pseudo-device	ksyms	1	# kernel symbols device
-pseudo-device	systrace 1	# system call tracing device
 
 # clonable devices
 pseudo-device	bpfilter	# packet filter
