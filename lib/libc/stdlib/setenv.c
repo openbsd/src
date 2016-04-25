@@ -1,4 +1,4 @@
-/*	$OpenBSD: setenv.c,v 1.17 2016/03/13 18:34:21 guenther Exp $ */
+/*	$OpenBSD: setenv.c,v 1.18 2016/04/25 21:36:04 millert Exp $ */
 /*
  * Copyright (c) 1987 Regents of the University of California.
  * All rights reserved.
@@ -43,7 +43,7 @@ int
 putenv(char *str)
 {
 	char **P, *cp;
-	size_t cnt;
+	size_t cnt = 0;
 	int offset = 0;
 
 	for (cp = str; *cp && *cp != '='; ++cp)
@@ -65,13 +65,15 @@ putenv(char *str)
 	}
 
 	/* create new slot for string */
-	for (P = environ; *P != NULL; P++)
-		;
-	cnt = P - environ;
+	if (environ != NULL) {
+		for (P = environ; *P != NULL; P++)
+			;
+		cnt = P - environ;
+	}
 	P = reallocarray(lastenv, cnt + 2, sizeof(char *));
 	if (!P)
 		return (-1);
-	if (lastenv != environ)
+	if (lastenv != environ && environ != NULL)
 		memcpy(P, environ, cnt * sizeof(char *));
 	lastenv = environ = P;
 	environ[cnt] = str;
@@ -122,15 +124,17 @@ setenv(const char *name, const char *value, int rewrite)
 					break;
 		}
 	} else {					/* create new slot */
-		size_t cnt;
+		size_t cnt = 0;
 
-		for (P = environ; *P != NULL; P++)
-			;
-		cnt = P - environ;
+		if (environ != NULL) {
+			for (P = environ; *P != NULL; P++)
+				;
+			cnt = P - environ;
+		}
 		P = reallocarray(lastenv, cnt + 2, sizeof(char *));
 		if (!P)
 			return (-1);
-		if (lastenv != environ)
+		if (lastenv != environ && environ != NULL)
 			memcpy(P, environ, cnt * sizeof(char *));
 		lastenv = environ = P;
 		offset = cnt;
