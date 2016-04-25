@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.100 2016/04/25 10:12:58 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.101 2016/04/25 10:16:33 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -612,25 +612,6 @@ Set default ownership for all subsequently extracted files to
 .Ar user .
 Use without an arg to set back to default (extraction)
 ownership.
-.Pp
-.It Cm @pkgcfl Ar pkgcflname
-Declare a conflict to the
-.Ar pkgcflname
-package.
-The
-.Ar pkgcflname
-package must
-.Em not
-be installed if
-.Ar pkgname
-package gets installed because they install the same files and thus conflict.
-.Ar pkgcflname
-may use
-.Xr fnmatch 3
-wildcards.
-Deprecated, use
-.Cm @conflict
-instead.
 .Pp
 .It Cm @pkgpath Ar pkgpath
 Declare a secondary
