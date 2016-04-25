@@ -1776,15 +1776,22 @@ S_Internals_V(pTHX_ CV *cv)
     PUSHs(Perl_newSVpvn_flags(aTHX_ non_bincompat_options,
 			      sizeof(non_bincompat_options) - 1, SVs_TEMP));
 
-#ifdef __DATE__
-#  ifdef __TIME__
-    PUSHs(Perl_newSVpvn_flags(aTHX_
-			      STR_WITH_LEN("Compiled at " __DATE__ " " __TIME__),
-			      SVs_TEMP));
-#  else
-    PUSHs(Perl_newSVpvn_flags(aTHX_ STR_WITH_LEN("Compiled on " __DATE__),
-			      SVs_TEMP));
+#ifndef PERL_BUILD_DATE
+#  ifdef __DATE__
+#    ifdef __TIME__
+#      define PERL_BUILD_DATE __DATE__ " " __TIME__
+#    else
+#      define PERL_BUILD_DATE __DATE__
+#    endif
 #  endif
+#endif
+
+#undef PERL_BUILD_DATE
+
+#ifdef PERL_BUILD_DATE
+    PUSHs(Perl_newSVpvn_flags(aTHX_
+			      STR_WITH_LEN("Compiled at " PERL_BUILD_DATE),
+			      SVs_TEMP));
 #else
     PUSHs(&PL_sv_undef);
 #endif
