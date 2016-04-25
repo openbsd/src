@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2016/03/17 19:40:43 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2016/04/25 15:14:34 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -56,7 +56,7 @@ int		 ctl_stop(struct parse_result *, int, char *[]);
 
 struct ctl_command ctl_commands[] = {
 	{ "console",	CMD_CONSOLE,	ctl_console,	"id" },
-	{ "create",	CMD_CREATE,	ctl_create,	"\"name\" -s size", 1 },
+	{ "create",	CMD_CREATE,	ctl_create,	"\"path\" -s size", 1 },
 	{ "load",	CMD_LOAD,	ctl_load,	"[path]" },
 	{ "reload",	CMD_RELOAD,	ctl_load,	"[path]" },
 	{ "start",	CMD_START,	ctl_start,	"\"name\""
