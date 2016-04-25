@@ -3,9 +3,9 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.65 2015/10/23 15:14:11 claudio Exp 
+#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.66 2016/04/25 20:38:10 tedu Exp 
 #	OpenBSD: MAKEDEV.common,v 1.85 2016/02/05 06:29:45 uebayasi Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
@@ -80,7 +80,6 @@
 #	*random	In-kernel random data source
 #	rmidi*	Raw MIDI devices
 #	speaker	PC speaker
-#	systrace*	System call tracing device
 #	tun*	Network tunnel driver
 #	tap*	Ethernet tunnel driver
 #	tuner*	Tuner devices
@@ -266,10 +265,6 @@ tap*)
 
 tun*)
 	M tun$U c 7 $U 600
-	;;
-
-systrace)
-	M systrace c 50 0 644
 	;;
 
 speaker)
@@ -533,7 +528,7 @@ all)
 	R lpa2 lpt0 lpt1 lpt2 tty00 tty01 tty02 tty03 tty04 tty05
 	R tty06 tty07 tty08 tty09 tty0a tty0b ttyc0 ttyc1 ttyc2 ttyc3
 	R ttyc4 ttyc5 ttyc6 ttyc7 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5
-	R pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
+	R pf wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)

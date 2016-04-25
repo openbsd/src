@@ -3,9 +3,9 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.44 2015/10/23 15:14:12 claudio Exp 
+#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.45 2016/04/25 20:38:11 tedu Exp 
 #	OpenBSD: MAKEDEV.common,v 1.85 2016/02/05 06:29:45 uebayasi Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
@@ -71,7 +71,6 @@
 #	pf*	Packet Filter
 #	pppx*	PPP Multiplexer
 #	*random	In-kernel random data source
-#	systrace*	System call tracing device
 #	tun*	Network tunnel driver
 #	tap*	Ethernet tunnel driver
 #	uk*	Unknown SCSI devices
@@ -236,10 +235,6 @@ tap*)
 
 tun*)
 	M tun$U c 13 $U 600
-	;;
-
-systrace)
-	M systrace c 50 0 644
 	;;
 
 *random)
@@ -463,8 +458,8 @@ all)
 	R pty0 pty1 pty2 diskmap vscsi0 ch0 audio0 audio1 audio2 fuse
 	R pppx hotplug ptm local wscons pci0 pci1 pci2 pci3 uall
 	R video0 video1 uk0 random tty00 tty01 tty02 tty03 tty04 tty05
-	R tty06 tty07 tty08 tty09 tty0a tty0b pf systrace wd0 wd1 wd2
-	R wd3 std st0 st1 fd
+	R tty06 tty07 tty08 tty09 tty0a tty0b pf wd0 wd1 wd2 wd3 std
+	R st0 st1 fd
 	;;
 
 wd*|sd*)
