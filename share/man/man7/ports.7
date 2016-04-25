@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.108 2016/04/07 20:43:50 tb Exp $
+.\" $OpenBSD: ports.7,v 1.109 2016/04/25 19:24:42 tedu Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: April 7 2016 $
+.Dd $Mdocdate: April 25 2016 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -681,19 +681,6 @@ If defined, display verbose output when applying each patch.
 If defined, only operate on a port if it requires interaction.
 .It Ev BATCH
 If defined, only operate on a port if it can be installed 100% automatically.
-.It Ev USE_SYSTRACE
-Set to
-.Dv Yes
-to protect the
-.Cm configure , build ,
-and
-.Cm fake
-targets with
-.Xr systrace 1 .
-This way it is ensured that ports do not make any network connections
-during build or write outside some well defined directories.
-The filter list is stored in
-.Pa ${PORTSDIR}/infrastructure/db/systrace.filter .
 .El
 .Sh USING A READ-ONLY PORTS TREE
 Select read-write partition(s) that can accommodate working directories, the
@@ -723,8 +710,6 @@ The ports main engine.
 Network configuration defaults.
 .It Pa /usr/ports/infrastructure/db/network.conf
 Local network configuration.
-.It Pa /usr/ports/infrastructure/db/systrace.filter
-Filter list for systrace.
 .It Pa /usr/ports/infrastructure/db/user.list
 List of users and groups created by ports.
 .El

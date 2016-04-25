@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syscall.9,v 1.12 2016/03/02 15:04:20 naddy Exp $
+.\"	$OpenBSD: syscall.9,v 1.13 2016/04/25 19:24:42 tedu Exp $
 .\"
 .\" Copyright (c) 2003 Michael Shalayeff
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 2 2016 $
+.Dd $Mdocdate: April 25 2016 $
 .Dt SYSCALL 9
 .Os
 .Sh NAME
@@ -130,12 +130,7 @@ else
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, code, argsize, args);
 #endif
-#if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE))
-		error = systrace_redirect(code, p, args, rval);
-	else
-#endif
-		error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(p, args, rval);
 
 	switch (error) {
 	case 0:
@@ -188,12 +183,6 @@ For the
 portions of the code refer to the
 .Xr ktrace 9
 document for further explanations.
-.Dq NSYSTRACE
-is a system call tracing facility and is explained in the
-.Xr systrace 9
-and
-.Xr systrace 4
-documents.
 .Ss Debugging
 For debugging purposes the line
 .Pp
@@ -247,10 +236,8 @@ Machine-independent syscall entry end return handling.
 .Sh SEE ALSO
 .Xr ktrace 2 ,
 .Xr syscall 2 ,
-.Xr systrace 4 ,
 .Xr ktrace 9 ,
-.Xr sysctl_int 9 ,
-.Xr systrace 9
+.Xr sysctl_int 9
 .Sh HISTORY
 The
 .Nm

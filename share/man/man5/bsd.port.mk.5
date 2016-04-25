@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.434 2016/03/22 16:02:02 naddy Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.435 2016/04/25 19:24:42 tedu Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2016 $
+.Dd $Mdocdate: April 25 2016 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2074,8 +2074,6 @@ It should be left alone for ports with empty regression tests, and for
 ports with failing tests.
 That way, if a subsequent update of a port acquires actual regression tests,
 they will be picked up automatically.
-.It Ev NO_SYSTRACE
-Port does not build with systrace-enabled build targets.
 .It Ev OLD_WRKDIR_NAME
 Base name for
 .Ev WRKDIR
@@ -2784,25 +2782,6 @@ from
 which defaults to
 .Pa /etc .
 Passed to gnu configure scripts and substituted in PLISTs.
-.It Ev SYSTRACE_FILTER
-Location of the systrace filter file which is the basis for a port's
-actual systrace policy file.
-Defaults to
-.Pa ${PORTSDIR}/infrastructure/db/systrace.filter .
-.It Ev SYSTRACE_FILTER_CCACHE
-Location of the supplementary systrace filter file which is used when
-.Ev USE_CCACHE
-is enabled.
-Defaults to
-.Pa ${PORTSDIR}/infrastructure/db/systrace.filter.ccache .
-.It Ev SYSTRACE_SUBST_VARS
-List of variables used in ${SYSTRACE_FILTER} that will be substituted
-by their real value when creating the systrace policy file.
-Always holds
-.Ev WRKOBJDIR ,
-.Ev PORTSDIR ,
-and
-.Ev DISTDIR .
 .It Ev TAR
 Name of the tar binary.
 .It Ev TARGETS
@@ -2936,11 +2915,6 @@ and not intended to be a user setting.
 See
 .Ev WRKOBJDIR_MFS
 for configuration.
-.It Ev USE_SYSTRACE
-User settings.
-Set to
-.Sq Yes
-to protect port building with systrace.
 .It Ev USE_X11
 Normally, presence of ${X11BASE} is enforced by default for building ports.
 But there is an experimental way to hook the xenocara build into
@@ -3310,10 +3284,6 @@ Extra directory used to store local ports before committing them.
 All depend targets will normally look there after the normal lookup fails.
 See
 .Ev PORTSDIR_PATH .
-.It Pa systrace.filter
-List of additional port specific filters, included automatically.
-.It Pa systrace.policy
-List of additional port specific policies, included automatically.
 .El
 .Sh THE FAKE FRAMEWORK
 The
