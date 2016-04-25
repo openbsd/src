@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.54 2016/04/17 00:15:28 dlg Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.55 2016/04/25 15:24:55 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3778,6 +3778,9 @@ vmx_exit_reason_decode(uint32_t code)
 	case VMX_EXIT_RDRAND: return "RDRAND instruction";
 	case VMX_EXIT_INVPCID: return "INVPCID instruction";
 	case VMX_EXIT_VMFUNC: return "VMFUNC instruction";
+	case VMX_EXIT_RDSEED: return "RDSEED instruction";
+	case VMX_EXIT_XSAVES: return "XSAVES instruction";
+	case VMX_EXIT_XRSTORS: return "XRSTORS instruction";
 	default: return "unknown";
 	}
 }

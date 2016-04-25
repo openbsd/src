@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.12 2016/04/06 06:15:06 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.13 2016/04/25 15:24:55 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -97,6 +97,9 @@
 #define VMX_EXIT_RDRAND				57
 #define VMX_EXIT_INVPCID			58
 #define VMX_EXIT_VMFUNC				59
+#define VMX_EXIT_RDSEED				61
+#define VMX_EXIT_XSAVES				63
+#define VMX_EXIT_XRSTORS			64
 
 #define VM_EXIT_TERMINATED			0xFFFE
 #define VM_EXIT_NONE				0xFFFF
