@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.40 2016/01/10 18:18:25 stefan Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.41 2016/04/25 17:50:21 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -70,6 +70,12 @@
 /* the remaining 7 bits of this register are reserved */
 
 /*
+ * bits in CR3
+ */
+#define CR3_PWT		(1ULL << 3)
+#define CR3_PCD		(1ULL << 4)
+
+/*
  * bits in the pentiums %cr4 register:
  */
 
@@ -91,6 +97,7 @@
 #define	CR4_OSXSAVE	0x00040000	/* enable XSAVE and extended states */
 #define	CR4_SMEP	0x00100000	/* supervisor mode exec protection */
 #define	CR4_SMAP	0x00200000	/* supervisor mode access prevention */
+#define CR4_PKE		0x00400000	/* protection key enable */
 
 /*
  * Extended Control Register XCR0

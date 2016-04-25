@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.55 2016/04/25 15:24:55 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.56 2016/04/25 17:50:21 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -160,6 +160,15 @@ void dump_vcpu(struct vcpu *);
 void vmx_vcpu_dump_regs(struct vcpu *);
 const char *msr_name_decode(uint32_t);
 void vmm_segment_desc_decode(uint64_t);
+void vmm_decode_cr0(uint64_t);
+void vmm_decode_cr3(uint64_t);
+void vmm_decode_cr4(uint64_t);
+
+struct vmm_reg_debug_info {
+	uint64_t	vrdi_bit;
+	const char	*vrdi_present;
+	const char 	*vrdi_absent;
+};
 #endif /* VMM_DEBUG */
 
 const char *vmm_hv_signature = VMM_HV_SIGNATURE;
@@ -3969,21 +3978,29 @@ vmx_vcpu_dump_regs(struct vcpu *vcpu)
 
 	DPRINTF(" cr0=");
 	if (vmread(VMCS_GUEST_IA32_CR0, &r))
-		DPRINTF("(error reading)   ");
-	else
-		DPRINTF("0x%016llx", r);
+		DPRINTF("(error reading)\n");
+	else {
+		DPRINTF("0x%016llx ", r);
+		vmm_decode_cr0(r);
+	}
+
 	DPRINTF(" cr2=0x%016llx\n", vcpu->vc_gueststate.vg_cr2);
 
 	DPRINTF(" cr3=");
 	if (vmread(VMCS_GUEST_IA32_CR3, &r))
-		DPRINTF("(error reading)   ");
-	else
-		DPRINTF("0x%016llx", r);
+		DPRINTF("(error reading)\n");
+	else {
+		DPRINTF("0x%016llx ", r);
+		vmm_decode_cr3(r);
+	}
+
 	DPRINTF(" cr4=");
 	if (vmread(VMCS_GUEST_IA32_CR4, &r))
 		DPRINTF("(error reading)\n");
-	else
-		DPRINTF("0x%016llx\n", r);
+	else {
+		DPRINTF("0x%016llx ", r);
+		vmm_decode_cr4(r);
+	}
 
 	DPRINTF(" --Guest Segment Info--\n");
 
@@ -4354,5 +4371,102 @@ vmm_segment_desc_decode(uint64_t val)
 			break;
 		}
 	}
+}
+
+void
+vmm_decode_cr0(uint64_t cr0)
+{
+	struct vmm_reg_debug_info cr0_info[11] = {
+		{ CR0_PG, "PG ", "pg " },
+		{ CR0_CD, "CD ", "cd " },
+		{ CR0_NW, "NW ", "nw " },
+		{ CR0_AM, "AM ", "am " },
+		{ CR0_WP, "WP ", "wp " },
+		{ CR0_NE, "NE ", "ne " },
+		{ CR0_ET, "ET ", "et " },
+		{ CR0_TS, "TS ", "ts " },
+		{ CR0_EM, "EM ", "em " },
+		{ CR0_MP, "MP ", "mp " },
+		{ CR0_PE, "PE", "pe" }
+	};
+
+	uint8_t i;
+
+	DPRINTF("(");
+	for (i = 0; i < 11; i++)
+		if (cr0 & cr0_info[i].vrdi_bit)
+			DPRINTF(cr0_info[i].vrdi_present);
+		else
+			DPRINTF(cr0_info[i].vrdi_absent);
+	
+	DPRINTF(")\n");
+}
+
+void
+vmm_decode_cr3(uint64_t cr3)
+{
+	struct vmm_reg_debug_info cr3_info[2] = {
+		{ CR3_PWT, "PWT ", "pwt "},
+		{ CR3_PCD, "PCD", "pcd"}
+	};
+
+	uint64_t cr4;
+	uint8_t i;
+
+	if (vmread(VMCS_GUEST_IA32_CR4, &cr4)) {
+		DPRINTF("(error)\n");
+		return;
+	}
+
+	/* If CR4.PCIDE = 0, interpret CR3.PWT and CR3.PCD */
+	if ((cr4 & CR4_PCIDE) == 0) {
+		DPRINTF("(");
+		for (i = 0 ; i < 2 ; i++)
+			if (cr3 & cr3_info[i].vrdi_bit)
+				DPRINTF(cr3_info[i].vrdi_present);
+			else
+				DPRINTF(cr3_info[i].vrdi_absent);
+
+		DPRINTF(")\n");
+	} else {
+		DPRINTF("(pcid=0x%llx)\n", cr3 & 0xFFF);
+	}
+}
+
+void
+vmm_decode_cr4(uint64_t cr4)
+{
+	struct vmm_reg_debug_info cr4_info[19] = {
+		{ CR4_PKE, "PKE ", "pke "},
+		{ CR4_SMAP, "SMAP ", "smap "},
+		{ CR4_SMEP, "SMEP ", "smep "},
+		{ CR4_OSXSAVE, "OSXSAVE ", "osxsave "},
+		{ CR4_PCIDE, "PCIDE ", "pcide "},
+		{ CR4_FSGSBASE, "FSGSBASE ", "fsgsbase "},
+		{ CR4_SMXE, "SMXE ", "smxe "},
+		{ CR4_VMXE, "VMXE ", "vmxe "},
+		{ CR4_OSXMMEXCPT, "OSXMMEXCPT ", "osxmmexcpt "},
+		{ CR4_OSFXSR, "OSFXSR ", "osfxsr "},
+		{ CR4_PCE, "PCE ", "pce "},
+		{ CR4_PGE, "PGE ", "pge "},
+		{ CR4_MCE, "MCE ", "mce "},
+		{ CR4_PAE, "PAE ", "pae "},
+		{ CR4_PSE, "PSE ", "pse "},
+		{ CR4_DE, "DE ", "de "},
+		{ CR4_TSD, "TSD ", "tsd "},
+		{ CR4_PVI, "PVI ", "pvi "},
+		{ CR4_VME, "VME", "vme"}
+	};
+
+	uint8_t i;
+
+	DPRINTF("(");
+	for (i = 0; i < 19; i++)
+		if (cr4 & cr4_info[i].vrdi_bit)
+			DPRINTF(cr4_info[i].vrdi_present);
+		else
+			DPRINTF(cr4_info[i].vrdi_absent);
+	
+	DPRINTF(")\n");
 }
 #endif /* VMM_DEBUG */
