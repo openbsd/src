@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.56 2016/04/25 17:50:21 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.57 2016/04/25 19:26:27 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -167,7 +167,7 @@ void vmm_decode_cr4(uint64_t);
 struct vmm_reg_debug_info {
 	uint64_t	vrdi_bit;
 	const char	*vrdi_present;
-	const char 	*vrdi_absent;
+	const char	*vrdi_absent;
 };
 #endif /* VMM_DEBUG */
 
