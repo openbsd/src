@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.85 2016/02/05 06:29:45 uebayasi Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.86 2016/04/25 20:39:42 tedu Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -129,7 +129,6 @@ target(all, ra, 0, 1, 2, 3)dnl
 target(all, rx, 0, 1)dnl
 target(all, wd, 0, 1, 2, 3)dnl
 target(all, xd, 0, 1, 2, 3)dnl
-target(all, systrace)dnl
 target(all, pctr)dnl
 target(all, pctr0)dnl
 target(all, pf)dnl
@@ -420,8 +419,6 @@ _mkdev(apm, apm*, {-M apm	c major_apm_c 0 644
 _mkdev(acpi, acpi*, {-M acpi	c major_acpi_c 0 644-})dnl
 __devitem(pctr, pctr*, PC Performance Tuning Register access device)dnl
 _mkdev(pctr, pctr, {-M pctr c major_pctr_c 0 644-})dnl
-__devitem(systrace, systrace*, System call tracing device)dnl
-_mkdev(systrace, systrace, {-M systrace c major_systrace_c 0 644-})dnl
 __devitem(au, audio*, Audio devices,audio)dnl
 _mkdev(au, audio*, {-M sound$U	c major_au_c $U
 	M mixer$U	c major_au_c Add($U, 16)
