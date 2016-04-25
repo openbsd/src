@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.64 2016/02/26 09:10:05 natano Exp $ */
+/*	$OpenBSD: conf.c,v 1.65 2016/04/25 20:09:14 tedu Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -117,8 +117,6 @@ cdev_decl(pci);
 
 #include "pf.h"
 
-#include "systrace.h"
-
 #include "radio.h"
 #include "bktr.h"
 #include "hotplug.h"
@@ -179,7 +177,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 47: was: /dev/crypto */
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
-	cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */
+	cdev_notdef(),			/* 50 */
 	cdev_notdef(),			/* 51 */
 	cdev_midi_init(NMIDI,midi),	/* 52: MIDI I/O */
 	cdev_notdef(),			/* 53 was: sequencer I/O */

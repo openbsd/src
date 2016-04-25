@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.34 2016/03/05 17:16:33 tobiasu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.35 2016/04/25 20:09:14 tedu Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -240,8 +240,6 @@ struct bdevsw bdevsw[] = {
 #define ptctty          ptytty
 #define ptcioctl        ptyioctl
 
-#include "systrace.h"
-
 #include "hotplug.h"
 #include "scif.h"
 #include "vscsi.h"
@@ -299,7 +297,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),				/* 47: was /dev/crypto */
 	cdev_notdef(),				/* 48: reserved */
 	cdev_notdef(),				/* 49: reserved */
-	cdev_systrace_init(NSYSTRACE,systrace),	/* 50: system call tracing */
+	cdev_notdef(),				/* 50: reserved */
 	cdev_notdef(),				/* 51: reserved */
 	cdev_notdef(),				/* 52: reserved */
 	cdev_notdef(),				/* 53: reserved */

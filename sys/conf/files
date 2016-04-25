@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.617 2016/04/19 10:12:36 mpi Exp $
+#	$OpenBSD: files,v 1.618 2016/04/25 20:09:14 tedu Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -59,7 +59,6 @@ define	onewire_bitbang
 
 # net device attributes - we have generic code for ether(net)
 define	crypto
-define	systrace
 define	ether
 define	sppp
 define	wlan
@@ -550,8 +549,6 @@ pseudo-device vether: ifnet, ether
 pseudo-device pppx: ifnet
 pseudo-device vxlan: ifnet, ether, ifmedia
 
-pseudo-device systrace
-
 pseudo-device ksyms
 file	dev/ksyms.c			ksyms needs-flag
 
@@ -627,7 +624,6 @@ file dev/ic/tc921x.c			tc921x
 file dev/ic/pt2254a.c			pt2254a
 file dev/midi.c				midi | midibus		needs-flag
 file dev/mulaw.c			audio			needs-flag
-file dev/systrace.c			systrace		needs-flag
 file dev/vnd.c				vnd			needs-flag
 file dev/rnd.c
 file dev/video.c			video			needs-flag
@@ -699,7 +695,7 @@ file kern/subr_userconf.c		boot_config
 file kern/subr_xxx.c
 file kern/sys_generic.c
 file kern/sys_pipe.c
-file kern/sys_process.c			ptrace | systrace
+file kern/sys_process.c			ptrace
 file kern/sys_socket.c
 file kern/syscalls.c			syscall_debug
 file kern/sysv_ipc.c			sysvshm | sysvsem | sysvmsg

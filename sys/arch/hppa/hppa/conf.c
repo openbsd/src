@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.63 2015/10/23 15:10:52 claudio Exp $	*/
+/*	$OpenBSD: conf.c,v 1.64 2016/04/25 20:09:14 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -100,7 +100,6 @@ cdev_decl(com);
 
 #include "pf.h"
 
-#include "systrace.h"
 #include "hotplug.h"
 #include "vscsi.h"
 #include "pppx.h"
@@ -157,9 +156,9 @@ struct cdevsw   cdevsw[] =
 #else
 	cdev_notdef(),			/* 31: */
 #endif
-	cdev_notdef(),
+	cdev_notdef(),			/* 32 */
 	cdev_video_init(NVIDEO,video),	/* 33: generic video I/O */
-	cdev_systrace_init(NSYSTRACE,systrace),	/* 34: system call tracing */
+	cdev_notdef(),			/* 34 */
 	cdev_audio_init(NAUDIO,audio),	/* 35: /dev/audio */
 	cdev_notdef(),			/* 36: was: /dev/crypto */
 	cdev_bio_init(NBIO,bio),	/* 37: ioctl tunnel */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.66 2016/02/26 09:10:05 natano Exp $	*/
+/*	$OpenBSD: conf.c,v 1.67 2016/04/25 20:09:14 tedu Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -119,7 +119,6 @@ struct bdevsw	bdevsw[] =
 int	nblkdev = nitems(bdevsw);
 
 #include "pf.h"
-#include "systrace.h"
 #include "tctrl.h"
 #include "vscsi.h"
 #include "pppx.h"
@@ -178,7 +177,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 47 */
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
-	cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */
+	cdev_notdef(),			/* 50 */
 	cdev_notdef(),			/* 51 */
 	cdev_notdef(),			/* 52 */
 	cdev_notdef(),			/* 53 */

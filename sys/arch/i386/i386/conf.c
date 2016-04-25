@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.154 2016/02/26 09:10:04 natano Exp $	*/
+/*	$OpenBSD: conf.c,v 1.155 2016/04/25 20:09:14 tedu Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -110,7 +110,6 @@ int	nblkdev = nitems(bdevsw);
 #define	mmwrite	mmrw
 cdev_decl(mm);
 cdev_decl(wd);
-#include "systrace.h"
 #include "bio.h"
 #include "pty.h"
 #include "com.h"
@@ -271,7 +270,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),
 	cdev_radio_init(NRADIO, radio), /* 76: generic radio I/O */
 	cdev_notdef(),			/* 77: was USB scanners */
-	cdev_systrace_init(NSYSTRACE,systrace),	/* 78: system call tracing */
+	cdev_notdef(),			/* 78: */
  	cdev_bio_init(NBIO,bio),	/* 79: ioctl tunnel */
 	cdev_ch_init(NGPR,gpr),		/* 80: GPR400 SmartCard reader */
 	cdev_ptm_init(NPTY,ptm),	/* 81: pseudo-tty ptm device */
