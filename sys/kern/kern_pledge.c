@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.162 2016/03/30 07:49:11 guenther Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.163 2016/04/25 09:58:23 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -433,9 +433,6 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 			flags |= f;
 		}
 		free(rbuf, M_TEMP, MAXPATHLEN);
-
-		if (flags & ~PLEDGE_USERSET)
-			return (EINVAL);
 
 		if ((p->p_p->ps_flags & PS_PLEDGE)) {
 			/* Already pledged, only allow reductions */
