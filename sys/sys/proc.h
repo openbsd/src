@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.218 2016/03/29 08:46:08 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.219 2016/04/25 20:18:31 tedu Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -309,8 +309,6 @@ struct proc {
 	struct	tusage p_tu;		/* accumulated times. */
 	struct	timespec p_rtime;	/* Real time. */
 
-	void	*p_systrace;		/* Back pointer to systrace */
-
 	void	*p_emuldata;		/* Per-process emulation data, or */
 					/* NULL. Malloc type M_EMULDATA */
 	int	 p_siglist;		/* Signals arrived but not delivered. */
@@ -382,7 +380,6 @@ struct proc {
 #define	P_WEXIT		0x00002000	/* Working on exiting. */
 #define	P_OWEUPC	0x00008000	/* Owe proc an addupc() at next ast. */
 #define	P_SUSPSINGLE	0x00080000	/* Need to stop for single threading. */
-#define P_SYSTRACE	0x00400000	/* Process system call tracing active*/
 #define P_CONTINUED	0x00800000	/* Proc has continued from a stopped state. */
 #define	P_THREAD	0x04000000	/* Only a thread, not a real process */
 #define	P_SUSPSIG	0x08000000	/* Stopped from signal. */
@@ -392,7 +389,7 @@ struct proc {
 #define	P_BITS \
     ("\20" "\01INKTR" "\02PROFPEND" "\03ALRMPEND" "\04SIGSUSPEND" \
      "\05CANTSLEEP" "\07SELECT" "\010SINTR" "\012SYSTEM" "\013TIMEOUT" \
-     "\016WEXIT" "\020OWEUPC" "\024SUSPSINGLE" "\027SYSTRACE" \
+     "\016WEXIT" "\020OWEUPC" "\024SUSPSINGLE" "\027XX" \
      "\030CONTINUED" "\033THREAD" "\034SUSPSIG" "\035SOFTDEP" "\037CPUPEG")
 
 #define	THREAD_PID_OFFSET	1000000

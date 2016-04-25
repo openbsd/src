@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.186 2016/04/25 20:00:33 tedu Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.187 2016/04/25 20:18:31 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -261,9 +261,6 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 	vaddr_t uaddr;
 	int s;
 	struct  ptrace_state *newptstat = NULL;
-#if NSYSTRACE > 0
-	void *newstrp = NULL;
-#endif
 
 	/* sanity check some flag combinations */
 	if (flags & FORK_THREAD) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.96 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.97 2016/04/25 20:18:31 tedu Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -852,9 +852,8 @@ morespace:
 		if (error)
 			goto fail;
 		    
-		/* kq and systrace descriptors cannot be copied */
-		if (fp->f_type == DTYPE_KQUEUE ||
-		    fp->f_type == DTYPE_SYSTRACE) {
+		/* kqueue descriptors cannot be copied */
+		if (fp->f_type == DTYPE_KQUEUE) {
 			error = EINVAL;
 			goto fail;
 		}
