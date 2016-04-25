@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.23 2015/11/16 17:31:14 tedu Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.24 2016/04/25 15:43:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
@@ -182,14 +182,10 @@ monitor_init(void)
 
 		if (setgroups(1, &pw->pw_gid) == -1)
 			fatalx("setgroups: %m");
-		if (setegid(pw->pw_gid) == -1)
-			fatalx("setegid failed");
-		if (setgid(pw->pw_gid) == -1)
-			fatalx("setgid failed");
-		if (seteuid(pw->pw_uid) == -1)
-			fatalx("seteuid failed");
-		if (setuid(pw->pw_uid) == -1)
-			fatalx("setuid failed");
+		if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
+			fatalx("setresgid failed");
+		if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
+			fatalx("setresuid failed");
 
 		endpwent();
 		close(fd_slave);

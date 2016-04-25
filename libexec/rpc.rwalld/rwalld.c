@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwalld.c,v 1.14 2009/10/27 23:59:31 deraadt Exp $	*/
+/*	$OpenBSD: rwalld.c,v 1.15 2016/04/25 15:43:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -75,10 +75,8 @@ main(int argc, char *argv[])
 	}
 
 	setgroups(1, &pw->pw_gid);
-	setegid(pw->pw_gid);
-	setgid(pw->pw_gid);
-	seteuid(pw->pw_uid);
-	setuid(pw->pw_uid);
+	setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid);
+	setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid);
 
 	/*
 	 * See if inetd started us

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.214 2016/04/06 07:14:17 semarie Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.215 2016/04/25 15:43:34 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1077,11 +1077,11 @@ pass(char *passwd)
 		} else
 			lreply(230, "No directory! Logging in with home=/");
 	}
-	if (setegid(pw->pw_gid) < 0 || setgid(pw->pw_gid) < 0) {
+	if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) < 0) {
 		reply(550, "Can't set gid.");
 		goto bad;
 	}
-	if (seteuid(pw->pw_uid) < 0 || setuid(pw->pw_uid) < 0) {
+	if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) < 0) {
 		reply(550, "Can't set uid.");
 		goto bad;
 	}

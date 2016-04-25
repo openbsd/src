@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusersd.c,v 1.17 2015/12/01 20:23:46 tim Exp $	*/
+/*	$OpenBSD: rusersd.c,v 1.18 2016/04/25 15:43:34 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -87,10 +87,8 @@ main(int argc, char *argv[])
 
 	if (pw) {
 		setgroups(1, &pw->pw_gid);
-		setegid(pw->pw_gid);
-		setgid(pw->pw_gid);
-		seteuid(pw->pw_uid);
-		setuid(pw->pw_uid);
+		setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid);
+		setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid);
 	}
 
 	/*
