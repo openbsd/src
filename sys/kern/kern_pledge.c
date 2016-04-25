@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.163 2016/04/25 09:58:23 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.164 2016/04/25 10:01:23 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -434,16 +434,14 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 		}
 		free(rbuf, M_TEMP, MAXPATHLEN);
 
-		if ((p->p_p->ps_flags & PS_PLEDGE)) {
-			/* Already pledged, only allow reductions */
-			if (((flags | p->p_p->ps_pledge) & PLEDGE_USERSET) !=
-			    (p->p_p->ps_pledge & PLEDGE_USERSET)) {
-				return (EPERM);
-			}
-
-			flags &= p->p_p->ps_pledge;
-			flags &= PLEDGE_USERSET;	/* Relearn _ACTIVE */
-		}
+		/*
+		 * if we are already pledged, allow only promises reductions.
+		 * flags doesn't contain flags outside _USERSET: they will be
+		 * relearned.
+		 */
+		if (ISSET(p->p_p->ps_flags, PS_PLEDGE) &&
+		    (((flags | p->p_p->ps_pledge) != p->p_p->ps_pledge)))
+			return (EPERM);
 	}
 
 	if (SCARG(uap, paths)) {
