@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm_asm.S,v 1.5 2016/01/31 00:14:50 jsg Exp $	*/
+/*	$OpenBSD: pxa2x0_apm_asm.S,v 1.6 2016/04/25 04:46:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <machine/asm.h>
+#include <arm/sysreg.h>
 #include <machine/cpu.h>
 
 #include <arch/arm/xscale/pxa2x0reg.h>
@@ -147,19 +148,19 @@ ENTRY(pxa2x0_cpu_suspend)
 	ldr	r2, =pxa2x0_cpu_resume_virt
 	str	r2, [r3], #4
 	
-	mrc	p15, 0, r2, c1, c0, 0	/* Load MMU control register. */
+	mrc	CP15_SCTLR(r2)		/* Load MMU control register. */
 	mov	r0,     #0xff000000
 	orr	r0, r0, #0x00ff0000
 	bic	r2, r2, r0		/* Clear undefined bits. */
 	str	r2, [r3], #4		/* Save MMU control register. */
 
-	mrc	p15, 0, r2, c2, c0, 0	/* Load TTB address. */
+	mrc	CP15_TTBR0(r2)		/* Load TTB address. */
 	mov	r0,     #0x00003f00
 	orr	r0, r0, #0x000000ff
 	bic	r2, r2, r0		/* Clear undefined bits. */
 	str	r2, [r3], #4		/* Save TTB address. */
 
-	mrc	p15, 0, r2, c3, c0, 0	/* Load domain access control. */
+	mrc	CP15_DACR(r2)		/* Load domain access control. */
 	str	r2, [r3], #4		/* Save domain access control. */
 
 	mrs	r2, spsr		/* Load SVC saved CPSR. */
@@ -196,7 +197,7 @@ ENTRY(pxa2x0_cpu_suspend)
 	/* At this point all critical registers have been saved. */
 
 	mov	r0, #0
-	mcr	p15, 0, r0, c7, c10, 4  /* drain write buffer */
+	mcr	CP15_CP15DSB(r0)  /* drain write buffer */
 
 	mov     r1, #DCACHE_CACHELINECOUNT
 	ldr	r2, .Lxscale_cache_clean_addr
@@ -215,7 +216,7 @@ cache_flush_loop:
 	msr	cpsr_c, r2		/* disable IRQ/FIQ */
 
 	mcr	p15, 0, r0, c7, c2, 5	/* allocate cache line */
-	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
+	mcr	CP15_DCIMVAC(r0)	/* flush D cache single entry */
 
 	mrs	r2, cpsr
 	and	r2, r2, #~(PSR_I|PSR_F)
@@ -226,7 +227,7 @@ cache_flush_loop:
 	bne	cache_flush_loop
 
 	mov	r0, #0
-	mcr	p15, 0, r0, c7, c10, 4  /* drain write buffer */
+	mcr	CP15_CP15DSB(r0)  /* drain write buffer */
 
 	b	1f
 1:
@@ -305,11 +306,11 @@ ENTRY(pxa2x0_cpu_resume)
 	ldr	r0, .Lsleepdata_phys	/* Point to PA of saved data. */
 
 	ldmia	r0!, {r7-r10}
-	mcr	p15, 0, r10, c3, c0, 0	/* Restore domain access control. */
-	mcr	p15, 0, r9, c2, c0, 0	/* Restore TTB address. */
-	mcr	p15, 0, r0, c8, c7, 0	/* Flush I+D TLBs. */
+	mcr	CP15_DACR(r10)		/* Restore domain access control. */
+	mcr	CP15_TTBR0(r9)		/* Restore TTB address. */
+	mcr	CP15_TLBIALL(r0)	/* Flush I+D TLBs. */
 	mcr	p15, 0, r0, c7, c7, 0	/* Flush I+D BTB. */
-	mcr	p15, 0, r8, c1, c0, 0	/* Restore MMU control. */
+	mcr	CP15_SCTLR(r8)		/* Restore MMU control. */
 	mov	pc, r7			/* Jump to virtual address. */
 	nop
 	nop

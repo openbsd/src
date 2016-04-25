@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch.S,v 1.16 2016/04/24 01:31:02 patrick Exp $	*/
+/*	$OpenBSD: cpuswitch.S,v 1.17 2016/04/25 04:46:56 jsg Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -83,6 +83,7 @@
 #include <machine/frame.h>
 #include <machine/intr.h>
 #include <machine/asm.h>
+#include <arm/sysreg.h>
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -338,7 +339,7 @@ ENTRY(cpu_switchto)
 	cmp	r7, #0			/* No need to fixup vector table? */
 	ldrne	r2, [r7]		/* But if yes, fetch current value */
 	ldrne	r0, [r9, #(PCB_L1VEC)]	/* Fetch new vector_page value */
-	mcr	p15, 0, r1, c3, c0, 0	/* Update DACR for new context */
+	mcr	CP15_DACR(r1)		/* Update DACR for new context */
 	cmpne	r2, r0			/* Stuffing the same value? */
 #ifndef PMAP_INCLUDE_PTE_SYNC
 	strne	r0, [r7]		/* Nope, update it */

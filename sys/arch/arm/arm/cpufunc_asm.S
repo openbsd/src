@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm.S,v 1.3 2016/04/03 13:55:23 jsg Exp $	*/
+/*	$OpenBSD: cpufunc_asm.S,v 1.4 2016/04/25 04:46:56 jsg Exp $	*/
 /*	$NetBSD: cpufunc_asm.S,v 1.12 2003/09/06 09:14:52 rearnsha Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
  
 #include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/sysreg.h>
 
 	.text
 	.align	0
@@ -62,31 +63,31 @@ ENTRY(cpufunc_nullop)
  */
 
 ENTRY(cpufunc_id)
-	mrc	p15, 0, r0, c0, c0, 0
+	mrc	CP15_MIDR(r0)	
 	mov	pc, lr
 
 ENTRY(cpu_get_control)
-	mrc	p15, 0, r0, c1, c0, 0
+	mrc	CP15_SCTLR(r0)	
 	mov	pc, lr
 
 ENTRY(cpu_read_cache_config)
-	mrc	p15, 0, r0, c0, c0, 1
+	mrc	CP15_CTR(r0)	
 	mov	pc, lr
 
 ENTRY(cpufunc_dfsr)
-	mrc	p15, 0, r0, c5, c0, 0
+	mrc	CP15_DFSR(r0)	
 	mov	pc, lr
 
 ENTRY(cpufunc_dfar)
-	mrc	p15, 0, r0, c6, c0, 0
+	mrc	CP15_DFAR(r0)	
 	mov	pc, lr
 
 ENTRY(cpufunc_ifsr)
-	mrc	p15, 0, r0, c5, c0, 1
+	mrc	CP15_IFSR(r0)	
 	mov	pc, lr
 
 ENTRY(cpufunc_ifar)
-	mrc	p15, 0, r0, c6, c0, 2
+	mrc	CP15_IFAR(r0)	
 	mov	pc, lr
 
 
@@ -103,12 +104,12 @@ ENTRY(cpufunc_ifar)
  
 #if 0 /* See below. */
 ENTRY(cpufunc_control)
-	mcr	p15, 0, r0, c1, c0, 0
+	mcr	CP15_SCTLR(r0)	
 	mov	pc, lr
 #endif
 
 ENTRY(cpufunc_domains)
-	mcr	p15, 0, r0, c3, c0, 0
+	mcr	CP15_DACR(r0)	
 	mov	pc, lr
 
 /*
@@ -122,22 +123,22 @@ ENTRY(cpufunc_domains)
  */
  
 ENTRY(cpufunc_control)
-	mrc	p15, 0, r3, c1, c0, 0	/* Read the control register */
+	mrc	CP15_SCTLR(r3)		/* Read the control register */
 	bic	r2, r3, r0		/* Clear bits */
 	eor	r2, r2, r1		/* XOR bits */
 
 	teq	r2, r3			/* Only write if there is a change */
-	mcrne	p15, 0, r2, c1, c0, 0	/* Write new control register */
+	mcrne	CP15_SCTLR(r2)		/* Write new control register */
 	mov	r0, r3			/* Return old value */
 	mov	pc, lr
  
 ENTRY(cpufunc_auxcontrol)
-	mrc	p15, 0, r3, c1, c0, 1	/* Read the aux control register */
+	mrc	CP15_ACTLR(r3)		/* Read the aux control register */
 	bic	r2, r3, r0		/* Clear bits */
 	eor	r2, r2, r1		/* XOR bits */
 
 	teq	r2, r3			/* Only write if there is a change */
-	mcrne	p15, 0, r2, c1, c0, 1	/* Write new aux control register */
+	mcrne	CP15_ACTLR(r2)		/* Write new aux control register */
 	mov	r0, r3			/* Return old value */
 	mov	pc, lr
 

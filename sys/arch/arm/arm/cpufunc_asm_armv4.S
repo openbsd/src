@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm_armv4.S,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: cpufunc_asm_armv4.S,v 1.2 2016/04/25 04:46:56 jsg Exp $	*/
 /*	$NetBSD: cpufunc_asm_armv4.S,v 1.1 2001/11/10 23:14:09 thorpej Exp $	*/
 
 /*
@@ -39,29 +39,30 @@
  
 #include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/sysreg.h>
 
 /*
  * TLB functions
  */
 ENTRY(armv4_tlb_flushID)
-	mcr	p15, 0, r0, c8, c7, 0	/* flush I+D tlb */
+	mcr	CP15_TLBIALL(r0)	/* flush I+D tlb */
 	mov	pc, lr
 
 ENTRY(armv4_tlb_flushI)
-	mcr	p15, 0, r0, c8, c5, 0	/* flush I tlb */
+	mcr	CP15_ITLBIALL		/* flush I tlb */
 	mov	pc, lr
 
 ENTRY(armv4_tlb_flushD)
-	mcr	p15, 0, r0, c8, c6, 0	/* flush D tlb */
+	mcr	CP15_DTLBIALL		/* flush D tlb */
 	mov	pc, lr
 
 ENTRY(armv4_tlb_flushD_SE)
-	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
+	mcr	CP15_DTLBIMVA		/* flush D tlb single entry */
 	mov	pc, lr
 
 /*
  * Other functions
  */
 ENTRY(armv4_drain_writebuf)
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	mcr	CP15_CP15DSB(r0)	/* drain write buffer */
 	mov	pc, lr

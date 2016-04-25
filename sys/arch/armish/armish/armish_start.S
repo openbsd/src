@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_start.S,v 1.2 2006/05/29 17:30:26 drahn Exp $	*/
+/*	$OpenBSD: armish_start.S,v 1.3 2016/04/25 04:46:56 jsg Exp $	*/
 /*	$NetBSD: iq80321_start.S,v 1.4 2002/10/14 22:32:54 bjh21 Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
  */
 
 #include <machine/asm.h>
+#include <arm/sysreg.h>
 #include <arm/armreg.h>
 #include <arm/pte.h>
 
@@ -55,9 +56,9 @@ _C_LABEL(iq80321_start):
 	bic	r8, r8, #0xff000000	/* clear upper 8 bits */
 	orr	r8, r8, #0xa0000000	/* OR in physical base address */
 
-	mrc	p15, 0, r2, c1, c0, 0
+	mrc	CP15_SCTLR(r2)	
 	bic	r2, r2, #CPU_CONTROL_MMU_ENABLE
-	mcr	p15, 0, r2, c1, c0, 0
+	mcr	CP15_SCTLR(r2)	
 
 	nop
 	nop
@@ -118,29 +119,29 @@ Lunmapped:
 	/* OK!  Page table is set up.  Give it to the CPU. */
 	adr	r0, Ltable
 	ldr	r0, [r0]
-	mcr	p15, 0, r0, c2, c0, 0
+	mcr	CP15_TTBR0(r0)	
 
 	/* Flush the old TLBs, just in case. */
-	mcr	p15, 0, r0, c8, c7, 0
+	mcr	CP15_TLBIALL(r0)
 
 	/* Set the Domain Access register.  Very important! */
 	mov	r0, #1
-	mcr	p15, 0, r0, c3, c0, 0
+	mcr	CP15_DACR(r0)	
 
 	/* Get ready to jump to the "real" kernel entry point... */
 	ldr	r0, Lstart
 
 	/* OK, let's enable the MMU. */
-	mrc	p15, 0, r2, c1, c0, 0
+	mrc	CP15_SCTLR(r2)	
 	orr	r2, r2, #CPU_CONTROL_MMU_ENABLE
-	mcr	p15, 0, r2, c1, c0, 0
+	mcr	CP15_SCTLR(r2)	
 
 	nop
 	nop
 	nop
 
 	/* CPWAIT sequence to make sure the MMU is on... */
-	mrc	p15, 0, r2, c2, c0, 0	/* arbitrary read of CP15 */
+	mrc	CP15_TTBR0(r2)		/* arbitrary read of CP15 */
 	mov	r2, r2			/* force it to complete */
 	mov	pc, r0			/* leap to kernel entry point! */
 

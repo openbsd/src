@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_start.S,v 1.3 2014/02/12 05:31:58 miod Exp $	*/
+/*	$OpenBSD: zaurus_start.S,v 1.4 2016/04/25 04:46:57 jsg Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -31,6 +31,7 @@
  */
 
 #include <machine/asm.h>
+#include <arm/sysreg.h>
 #include <arm/armreg.h>
 #include <arm/pte.h>
 
@@ -51,7 +52,7 @@
 	sub	pc, pc, #4
 
 #define	CPWAIT(tmp)							 \
-	mrc	p15, 0, tmp, c2, c0, 0	/* arbitrary read of CP15 */	;\
+	mrc	CP15_TTBR0(tmp)		/* arbitrary read of CP15 */	;\
 	mov	tmp, tmp		/* wait for it to complete */	;\
 	CPWAIT_BRANCH			/* branch to next insn */
 	
@@ -107,12 +108,12 @@ zaurus_start_ram:
 	 *  in VA 0xc0200000..  
 	 */
 
-	mrc	p15, 0, r0, c2, c0, 0		/* get ttb prepared by redboot */
+	mrc	CP15_TTBR0(r0)			/* get ttb prepared by redboot */
 	adr	r4, mmu_init_table2
 	
 #define BUILD_STARTUP_PAGETABLE
 #ifdef BUILD_STARTUP_PAGETABLE
-	mrc	p15, 0, r2, c1, c0, 0
+	mrc	CP15_SCTLR(r2)	
 	mov	r2, #0
 	tst	r2, #CPU_CONTROL_MMU_ENABLE		/* we already have a page table? */
 	bne	3f
@@ -134,17 +135,17 @@ zaurus_start_ram:
 	bne	2b	
 #endif
 
-	mcr	p15, 0, r0, c2, c0, 0	/* Set TTB */
-	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
+	mcr	CP15_TTBR0(r0)		/* Set TTB */
+	mcr	CP15_TLBIALL(r0)	/* Flush TLB */
 
 	/* Set the Domain Access register.  Very important! */
         mov     r0, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
-	mcr	p15, 0, r0, c3, c0, 0
+	mcr	CP15_DACR(r0)	
 
 	/* Enable MMU */
-	mrc	p15, 0, r0, c1, c0, 0
+	mrc	CP15_SCTLR(r0)	
 	orr	r0, r0, #CPU_CONTROL_MMU_ENABLE
-	mcr	p15, 0, r0, c1, c0, 0
+	mcr	CP15_SCTLR(r0)	
 	CPWAIT(r0)
 
 	/* Jump to kernel code in TRUE VA */

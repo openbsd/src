@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm_xscale.S,v 1.7 2016/01/31 00:14:50 jsg Exp $ */
+/*	$OpenBSD: cpufunc_asm_xscale.S,v 1.8 2016/04/25 04:46:56 jsg Exp $ */
 /*	$NetBSD: cpufunc_asm_xscale.S,v 1.16 2002/08/17 16:36:32 thorpej Exp $	*/
 
 /*
@@ -74,6 +74,7 @@
  
 #include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/sysreg.h>
 
 /*
  * Size of the XScale core caches.
@@ -90,14 +91,14 @@
 	sub	pc, pc, #4
 
 #define	CPWAIT(tmp)							 \
-	mrc	p15, 0, tmp, c2, c0, 0	/* arbitrary read of CP15 */	;\
+	mrc	CP15_TTBR0(tmp)		/* arbitrary read of CP15 */	;\
 	mov	tmp, tmp		/* wait for it to complete */	;\
 	CPWAIT_BRANCH			/* branch to next insn */
 
 #define	CPWAIT_AND_RETURN_SHIFTER	lsr #32
 
 #define	CPWAIT_AND_RETURN(tmp)						 \
-	mrc	p15, 0, tmp, c2, c0, 0	/* arbitrary read of CP15 */	;\
+	mrc	CP15_TTBR0(tmp)		/* arbitrary read of CP15 */	;\
 	/* Wait for it to complete and branch to the return address */	 \
 	sub	pc, lr, tmp, CPWAIT_AND_RETURN_SHIFTER
 
@@ -110,13 +111,13 @@ ENTRY(xscale_cpwait)
  * changes in the control register.
  */
 ENTRY(xscale_control)
-	mrc	p15, 0, r3, c1, c0, 0	/* Read the control register */
+	mrc	CP15_SCTLR(r3)		/* Read the control register */
 	bic	r2, r3, r0		/* Clear bits */
 	eor	r2, r2, r1		/* XOR bits */
 
 	teq	r2, r3			/* Only write if there was a change */
-	mcrne	p15, 0, r0, c7, c5, 6	/* Invalidate the BTB */
-	mcrne	p15, 0, r2, c1, c0, 0	/* Write new control register */
+	mcrne	CP15_BPIALL		/* Invalidate the BTB */
+	mcrne	CP15_SCTLR(r2)		/* Write new control register */
 	mov	r0, r3			/* Return old value */
 
 	CPWAIT_AND_RETURN(r1)
@@ -134,21 +135,21 @@ ENTRY(xscale_setttb)
 
 	stmfd	sp!, {r0-r3, lr}
 	bl	_C_LABEL(xscale_cache_cleanID)
-	mcr	p15, 0, r0, c7, c5, 0	/* invalidate I$ and BTB */
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write and fill buffer */
+	mcr	CP15_ICIALLU		/* invalidate I$ and BTB */
+	mcr	CP15_CP15DSB(r0)	/* drain write and fill buffer */
 
 	CPWAIT(r0)
 
 	ldmfd	sp!, {r0-r3, lr}
 
 	/* Write the TTB */ 
-	mcr	p15, 0, r0, c2, c0, 0
+	mcr	CP15_TTBR0(r0)	
 
 	/* If we have updated the TTB we must flush the TLB */
-	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLB */
+	mcr	CP15_TLBIALL(r0)	/* invalidate I+D TLB */
 
 	/* The cleanID above means we only need to flush the I cache here */
-	mcr	p15, 0, r0, c7, c5, 0	/* invalidate I$ and BTB */
+	mcr	CP15_ICIALLU		/* invalidate I$ and BTB */
 
 	CPWAIT(r0)
 
@@ -162,8 +163,8 @@ ENTRY(xscale_setttb)
  * TLB operations, because we expect a pmap_update() to follow.
  */
 ENTRY(xscale_tlb_flushID_SE)
-	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
-	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
+	mcr	CP15_DTLBIMVA		/* flush D tlb single entry */
+	mcr	CP15_ITLBIMVA		/* flush I tlb single entry */
 	mov	pc, lr
 
 /*
@@ -174,7 +175,7 @@ ENTRY(xscale_cache_flushID)
 	CPWAIT_AND_RETURN(r0)
 
 ENTRY(xscale_cache_flushI)
-	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
+	mcr	CP15_ICIALLU		/* flush I cache */
 	CPWAIT_AND_RETURN(r0)
 
 ENTRY(xscale_cache_flushD)
@@ -182,7 +183,7 @@ ENTRY(xscale_cache_flushD)
 	CPWAIT_AND_RETURN(r0)
 
 ENTRY(xscale_cache_flushI_SE)
-	mcr	p15, 0, r0, c7, c5, 1	/* flush I cache single entry */
+	mcr	CP15_ICIMVAU(r0)	/* flush I cache single entry */
 	CPWAIT_AND_RETURN(r0)
 
 ENTRY(xscale_cache_flushD_SE)
@@ -191,12 +192,12 @@ ENTRY(xscale_cache_flushD_SE)
 	 * before invalidate-dcache-line to an address, or dirty
 	 * bits will not be cleared in the dcache array.
 	 */
-	mcr	p15, 0, r0, c7, c10, 1
-	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
+	mcr	CP15_DCCMVAC(r0)
+	mcr	CP15_DCIMVAC(r0)	/* flush D cache single entry */
 	CPWAIT_AND_RETURN(r0)
 
 ENTRY(xscale_cache_cleanD_E)
-	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
+	mcr	CP15_DCCMVAC(r0)	/* clean D cache entry */
 	CPWAIT_AND_RETURN(r0)
 
 /*
@@ -275,7 +276,7 @@ _C_LABEL(xscale_cache_clean_size):
 
 ENTRY_NP(xscale_cache_syncI)
 ENTRY_NP(xscale_cache_purgeID)
-	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache (D cleaned below) */
+	mcr	CP15_ICIALLU		/* flush I cache (D cleaned below) */
 ENTRY_NP(xscale_cache_cleanID)
 ENTRY_NP(xscale_cache_purgeD)
 ENTRY(xscale_cache_cleanD)
@@ -288,7 +289,7 @@ ENTRY(xscale_cache_cleanD)
 
 	CPWAIT(r0)
 
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	mcr	CP15_CP15DSB(r0)	/* drain write buffer */
 
 	CPWAIT(r0)
 
@@ -310,23 +311,23 @@ ENTRY(xscale_cache_clean_minidata)
 	subs	r1, r1, #32
 	bne	1b
 
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	mcr	CP15_CP15DSB(r0)	/* drain write buffer */
 
 	CPWAIT_AND_RETURN(r1)
 
 ENTRY(xscale_cache_purgeID_E)
-	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
+	mcr	CP15_DCCMVAC(r0)	/* clean D cache entry */
 	CPWAIT(r1)
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-	mcr	p15, 0, r0, c7, c5, 1	/* flush I cache single entry */
-	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
+	mcr	CP15_CP15DSB(r0)	/* drain write buffer */
+	mcr	CP15_ICIMVAU(r0)	/* flush I cache single entry */
+	mcr	CP15_DCIMVAC(r0)	/* flush D cache single entry */
 	CPWAIT_AND_RETURN(r1)
 
 ENTRY(xscale_cache_purgeD_E)
-	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
+	mcr	CP15_DCCMVAC(r0)	/* clean D cache entry */
 	CPWAIT(r1)
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
+	mcr	CP15_CP15DSB(r0)	/* drain write buffer */
+	mcr	CP15_DCIMVAC(r0)	/* flush D cache single entry */
 	CPWAIT_AND_RETURN(r1)
 
 /*
@@ -343,14 +344,14 @@ ENTRY(xscale_cache_cleanD_rng)
 	add	r1, r1, r2
 	bic	r0, r0, #0x1f
 
-1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
+1:	mcr	CP15_DCCMVAC(r0)	/* clean D cache entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bhi	1b
 
 	CPWAIT(r0)
 
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	mcr	CP15_CP15DSB(r0)	/* drain write buffer */
 
 	CPWAIT_AND_RETURN(r0)
 
@@ -362,16 +363,16 @@ ENTRY(xscale_cache_purgeID_rng)
 	add	r1, r1, r2
 	bic	r0, r0, #0x1f
 
-1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
-	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
-	mcr	p15, 0, r0, c7, c5, 1	/* flush I cache single entry */
+1:	mcr	CP15_DCCMVAC(r0)	/* clean D cache entry */
+	mcr	CP15_DCIMVAC(r0)	/* flush D cache single entry */
+	mcr	CP15_ICIMVAU(r0)	/* flush I cache single entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bhi	1b
 
 	CPWAIT(r0)
 
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	mcr	CP15_CP15DSB(r0)	/* drain write buffer */
 
 	CPWAIT_AND_RETURN(r0)
 
@@ -383,15 +384,15 @@ ENTRY(xscale_cache_purgeD_rng)
 	add	r1, r1, r2
 	bic	r0, r0, #0x1f
 
-1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
-	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
+1:	mcr	CP15_DCCMVAC(r0)	/* clean D cache entry */
+	mcr	CP15_DCIMVAC(r0)	/* flush D cache single entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bhi	1b
 
 	CPWAIT(r0)
 
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	mcr	CP15_CP15DSB(r0)	/* drain write buffer */
 
 	CPWAIT_AND_RETURN(r0)
 
@@ -403,15 +404,15 @@ ENTRY(xscale_cache_syncI_rng)
 	add	r1, r1, r2
 	bic	r0, r0, #0x1f
 
-1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
-	mcr	p15, 0, r0, c7, c5, 1	/* flush I cache single entry */
+1:	mcr	CP15_DCCMVAC(r0)	/* clean D cache entry */
+	mcr	CP15_ICIMVAU(r0)	/* flush I cache single entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bhi	1b
 
 	CPWAIT(r0)
 
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	mcr	CP15_CP15DSB(r0)	/* drain write buffer */
 
 	CPWAIT_AND_RETURN(r0)
 
@@ -423,12 +424,12 @@ ENTRY(xscale_cache_flushD_rng)
 	add	r1, r1, r2
 	bic	r0, r0, #0x1f
 
-1:	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
+1:	mcr	CP15_DCIMVAC(r0)	/* flush D cache single entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bhi	1b
 
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	mcr	CP15_CP15DSB(r0)	/* drain write buffer */
 
 	CPWAIT_AND_RETURN(r0)
 
@@ -450,10 +451,10 @@ ENTRY(xscale_context_switch)
 	 */
 
 	/* Write the TTB */
-	mcr	p15, 0, r0, c2, c0, 0
+	mcr	CP15_TTBR0(r0)	
 
 	/* If we have updated the TTB we must flush the TLB */
-	mcr	p15, 0, r0, c8, c7, 0	/* flush the I+D tlb */
+	mcr	CP15_TLBIALL(r0)	/* flush the I+D tlb */
 
 	CPWAIT_AND_RETURN(r0)
 

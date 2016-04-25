@@ -1,4 +1,4 @@
-/*	$OpenBSD: irq_dispatch.S,v 1.10 2016/04/04 09:13:44 patrick Exp $	*/
+/*	$OpenBSD: irq_dispatch.S,v 1.11 2016/04/25 04:46:56 jsg Exp $	*/
 /*	$NetBSD: irq_dispatch.S,v 1.5 2003/10/30 08:57:24 scw Exp $	*/
 
 /*
@@ -71,6 +71,7 @@
 #include "assym.h"
 
 #include <machine/asm.h>
+#include <arm/sysreg.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>
@@ -106,7 +107,7 @@ ASENTRY_NP(irq_entry)
 	 *	r6	old value of curcpu()->ci_idepth
 	 */
 #ifdef CPU_ARMv7
-	mrc	p15, 0, r5, c13, c0, 4	/* Get curcpu from TPIDRPRW. */
+	mrc	CP15_TPIDRPRW(r5)	/* Get curcpu from TPIDRPRW. */
 #else
 	ldr	r5, .Lcpu_info_primary
 #endif

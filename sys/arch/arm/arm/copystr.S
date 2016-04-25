@@ -1,4 +1,4 @@
-/*	$OpenBSD: copystr.S,v 1.5 2016/04/04 09:13:44 patrick Exp $	*/
+/*	$OpenBSD: copystr.S,v 1.6 2016/04/25 04:46:56 jsg Exp $	*/
 /*	$NetBSD: copystr.S,v 1.8 2002/10/13 14:54:48 bjh21 Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 
 #include "assym.h"
 #include <machine/asm.h>
+#include <arm/sysreg.h>
 #include <sys/errno.h>
 
 	.text
@@ -106,7 +107,7 @@ ENTRY(copyinstr)
 
 #ifdef CPU_ARMv7
 	/* Get curcpu from TPIDRPRW. */
-	mrc	p15, 0, r4, c13, c0, 4
+	mrc	CP15_TPIDRPRW(r4)
 #else
 	ldr	r4, .Lcpu_info_primary
 #endif
@@ -158,7 +159,7 @@ ENTRY(copyoutstr)
 
 #ifdef CPU_ARMv7
 	/* Get curcpu from TPIDRPRW. */
-	mrc	p15, 0, r4, c13, c0, 4
+	mrc	CP15_TPIDRPRW(r4)
 #else
 	ldr	r4, .Lcpu_info_primary
 #endif

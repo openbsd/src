@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopyinout.S,v 1.4 2016/04/04 09:13:44 patrick Exp $	*/
+/*	$OpenBSD: bcopyinout.S,v 1.5 2016/04/25 04:46:56 jsg Exp $	*/
 /*	$NetBSD: bcopyinout.S,v 1.13 2003/10/31 16:54:05 scw Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include "assym.h"
 
 #include <machine/asm.h>
+#include <arm/sysreg.h>
 
 #ifdef __XSCALE__
 #include "bcopyinout_xscale.S"
@@ -85,7 +86,7 @@ ENTRY(copyin)
 
 #ifdef CPU_ARMv7
 	/* Get curcpu from TPIDRPRW. */
-	mrc	p15, 0, r4, c13, c0, 4
+	mrc	CP15_TPIDRPRW(r4)
 #else
 	ldr	r4, .Lcpu_info_primary
 #endif
@@ -304,7 +305,7 @@ ENTRY(copyout)
 
 #ifdef CPU_ARMv7
 	/* Get curcpu from TPIDRPRW. */
-	mrc	p15, 0, r4, c13, c0, 4
+	mrc	CP15_TPIDRPRW(r4)
 #else
 	ldr	r4, .Lcpu_info_primary
 #endif
@@ -513,7 +514,7 @@ ENTRY(kcopy)
 
 #ifdef CPU_ARMv7
 	/* Get curcpu from TPIDRPRW. */
-	mrc	p15, 0, r4, c13, c0, 4
+	mrc	CP15_TPIDRPRW(r4)
 #else
 	ldr	r4, .Lcpu_info_primary
 #endif
@@ -701,7 +702,7 @@ ENTRY(kcopy)
 ENTRY(badaddr_read_1)
 #ifdef CPU_ARMv7
 	/* Get curcpu from TPIDRPRW. */
-	mrc	p15, 0, r2, c13, c0, 4
+	mrc	CP15_TPIDRPRW(r2)
 #else
 	ldr	r2, .Lcpu_info_primary
 #endif
@@ -730,7 +731,7 @@ ENTRY(badaddr_read_1)
 ENTRY(badaddr_read_2)
 #ifdef CPU_ARMv7
 	/* Get curcpu from TPIDRPRW. */
-	mrc	p15, 0, r2, c13, c0, 4
+	mrc	CP15_TPIDRPRW(r2)
 #else
 	ldr	r2, .Lcpu_info_primary
 #endif
@@ -759,7 +760,7 @@ ENTRY(badaddr_read_2)
 ENTRY(badaddr_read_4)
 #ifdef CPU_ARMv7
 	/* Get curcpu from TPIDRPRW. */
-	mrc	p15, 0, r2, c13, c0, 4
+	mrc	CP15_TPIDRPRW(r2)
 #else
 	ldr	r2, .Lcpu_info_primary
 #endif

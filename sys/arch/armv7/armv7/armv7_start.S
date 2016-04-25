@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_start.S,v 1.5 2016/01/31 00:14:50 jsg Exp $	*/
+/*	$OpenBSD: armv7_start.S,v 1.6 2016/04/25 04:46:57 jsg Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -31,6 +31,7 @@
  */
 
 #include <machine/asm.h>
+#include <arm/sysreg.h>
 #include <arm/armreg.h>
 #include <arm/pte.h>
 
@@ -50,7 +51,7 @@
 	sub	pc, pc, #4
 
 #define	CPWAIT(tmp)							 \
-	mrc	p15, 0, tmp, c2, c0, 0	/* arbitrary read of CP15 */	;\
+	mrc	CP15_TTBR0(tmp)		/* arbitrary read of CP15 */	;\
 	mov	tmp, tmp		/* wait for it to complete */	;\
 	CPWAIT_BRANCH			/* branch to next insn */
 	
@@ -146,17 +147,17 @@ _C_LABEL(bootstrap_start):
 	cmp	r1, #0
 	bne	2b	
 
-	mcr	p15, 0, r0, c2, c0, 0	/* Set TTB */
-	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
+	mcr	CP15_TTBR0(r0)		/* Set TTB */
+	mcr	CP15_TLBIALL(r0)	/* Flush TLB */
 
 	/* Set the Domain Access register.  Very important! */
         mov     r0, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
-	mcr	p15, 0, r0, c3, c0, 0
+	mcr	CP15_DACR(r0)	
 
 	/* Enable MMU */
-	mrc	p15, 0, r0, c1, c0, 0
+	mrc	CP15_SCTLR(r0)	
 	orr	r0, r0, #CPU_CONTROL_MMU_ENABLE
-	mcr	p15, 0, r0, c1, c0, 0
+	mcr	CP15_SCTLR(r0)	
 	CPWAIT(r0)
 
 	/* Restore U-Boot arguments */
