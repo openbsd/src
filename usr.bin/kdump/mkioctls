@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.36 2016/03/13 11:37:42 natano Exp $
+#	$OpenBSD: mkioctls,v 1.37 2016/04/25 19:18:41 tedu Exp $
 
 #
 # Copyright (c) 1994
@@ -80,7 +80,6 @@ BEGIN {
 	print "#include <sys/videoio.h>"
 	print "#include <dev/biovar.h>"
 	print "#include <dev/ipmi.h>"
-	print "#include <dev/systrace.h>"
 	print "#include <dev/wscons/wsconsio.h>"
 	print "#include <dev/vndioctl.h>"
 	print "#include <scsi/scsi_all.h>"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.86 2016/01/02 13:22:52 semarie Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.87 2016/04/25 19:18:41 tedu Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -120,7 +120,6 @@ void print_inet6_details(struct kinfo_file *);
 #endif
 void print_sock_details(struct kinfo_file *);
 void socktrans(struct kinfo_file *);
-void systracetrans(struct kinfo_file *);
 void vtrans(struct kinfo_file *);
 const char *inet6_addrstr(struct in6_addr *);
 int signame_to_signum(char *);
@@ -386,10 +385,6 @@ fstat_dofile(struct kinfo_file *kf)
 		if (checkfile == 0)
 			kqueuetrans(kf);
 		break;
-	case DTYPE_SYSTRACE:
-		if (checkfile == 0)
-			systracetrans(kf);
-		break;
 	default:
 		if (vflg) {
 			warnx("unknown file type %d for file %d of pid %ld",
@@ -536,19 +531,6 @@ kqueuetrans(struct kinfo_file *kf)
 	    kf->kq_count,
 	    (kf->kq_state & KQ_SEL) ? "S" : "",
 	    (kf->kq_state & KQ_SLEEP) ? "W" : "");
-	return;
-}
-
-void
-systracetrans(struct kinfo_file *kf)
-{
-	PREFIX(kf->fd_fd);
-
-	printf(" ");
-
-	printf("systrace ");
-	hide((void *)(uintptr_t)kf->f_data);
-	printf(" npol %d\n", kf->str_npolicies);
 	return;
 }
 
