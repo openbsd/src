@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.309 2016/04/02 13:54:29 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.310 2016/04/25 15:43:30 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2758,6 +2758,7 @@ const char *acpi_skip_hids[] = {
 	"INT0800",	/* Intel 82802Firmware Hub Device */
 	"PNP0000",	/* 8259-compatible Programmable Interrupt Controller */
 	"PNP0100",	/* PC-class System Timer */
+	"PNP0103",	/* HPET System Timer */
 	"PNP0200",	/* PC-class DMA Controller */
 	"PNP0800",	/* Microsoft Sound System Compatible Device */
 	"PNP0A03",	/* PCI Bus */
@@ -2766,6 +2767,7 @@ const char *acpi_skip_hids[] = {
 	"PNP0C01",	/* System Board */
 	"PNP0C02",	/* PNP Motherboard Resources */
 	"PNP0C04",	/* x87-compatible Floating Point Processing Unit */
+	"PNP0C09",	/* Embedded Controller Device */
 	"PNP0C0F",	/* PCI Interrupt Link Device */
 	NULL
 };
