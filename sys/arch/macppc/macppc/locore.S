@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.52 2016/02/28 11:56:40 mpi Exp $	*/
+/*	$OpenBSD: locore.S,v 1.53 2016/04/25 07:58:14 mpi Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -710,12 +710,12 @@ _C_LABEL(ddbsize) =	.-_C_LABEL(ddblow)
  * the result of this interrupt directly and not when coming back from
  * sleep, when the next clock tick or interrupt will fire.
  */
-#define CPU_IDLE_CHECK(sr1,sr2,sr3,rSRR0)				\
+#define CPU_IDLE_CHECK(sr1,sr2,sr3,rSRR0,flag)				\
 	GET_CPUINFO(sr1);						\
 	lwz	sr2,CI_FLAGS(sr1);					\
-	andi.	sr3,sr2,CI_FLAGS_SLEEPING@l;				\
+	andi.	sr3,sr2,flag@l;						\
 	beq	1f;							\
-	andi.	sr2,sr2,~CI_FLAGS_SLEEPING@l;				\
+	andi.	sr2,sr2,~flag@l;					\
 	stw	sr2,CI_FLAGS(sr1);					\
 	lis	rSRR0,_C_LABEL(idledone)@ha;				\
 	addi	rSRR0,rSRR0,_C_LABEL(idledone)@l;			\
@@ -731,7 +731,9 @@ _C_LABEL(ddbsize) =	.-_C_LABEL(ddblow)
  *	LR		trap type
  *	SRR0/1		as at start of trap
  */
-#define	FRAME_SETUP(savearea)						\
+#define FRAME_SETUP(savearea)	FRAME_SETUP_FLAG(savearea, CI_FLAGS_SLEEPING)
+
+#define	FRAME_SETUP_FLAG(savearea, flag)				\
 /* Have to enable translation to allow access of kernel stack: */	\
 	GET_CPUINFO(%r31);						\
 	mfsrr0	%r30;							\
@@ -781,7 +783,7 @@ _C_LABEL(ddbsize) =	.-_C_LABEL(ddblow)
 	stw	%r5,FRAME_EXC+8(%r1);					\
 	stw	%r28,FRAME_DAR+8(%r1);					\
 	stw	%r29,FRAME_DSISR+8(%r1);				\
-	CPU_IDLE_CHECK(%r5,%r6,%r0,%r30)				\
+	CPU_IDLE_CHECK(%r5,%r6,%r0,%r30,flag)				\
 	stw	%r30,FRAME_SRR0+8(%r1);					\
 	stw	%r31,FRAME_SRR1+8(%r1)
 
@@ -1268,16 +1270,6 @@ _C_LABEL(ddb_trap):
 	GET_CPUINFO(%r3)
 	stmw	%r28,CI_DDBSAVE(%r3)
 
-	/*
-	 * If we are already running in interrupt context, the CPU
-	 * problably got interrupted while idle.  But since we are
-	 * about to enter to ddb(8), do not let FRAME_SETUP() below
-	 * change the return address of, and corrupt, this frame.
-	 */
-	lwz	%r28,CI_FLAGS(%r3)
-	andi.	%r28,%r28,~CI_FLAGS_SLEEPING@l
-	stw	%r28,CI_FLAGS(%r3)
-
 	mflr	%r28
 	li	%r29,EXC_BPT
 	mtlr	%r29
@@ -1288,7 +1280,11 @@ _C_LABEL(ddb_trap):
  * Now the ddb trap catching code.
  */
 ddbtrap:
-	FRAME_SETUP(CI_DDBSAVE)
+	/*
+	 * Do not let FRAME_SETUP() change the return address of, and
+	 * corrupt, this frame.
+	 */
+	FRAME_SETUP_FLAG(CI_DDBSAVE, 0)
 /* Call C trap code: */
 	addi	%r3,%r1,8
 	bl	_C_LABEL(db_trap_glue)
