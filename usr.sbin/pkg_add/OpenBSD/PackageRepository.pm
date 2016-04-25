@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.122 2016/04/25 10:45:54 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.123 2016/04/25 10:53:13 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -581,17 +581,20 @@ sub drop_privileges_and_setup_env
 {
 	my $self = shift;
 	my $user = '_pkgfetch';
-	# we can't cache anything, we happen after the fork, 
-	# right before exec
-	if (my (undef, undef, $uid, $gid) = getpwnam($user)) {
-		$( = $gid;
-		$) = "$gid $gid";
-		$< = $uid;
-		$> = $uid;
+	if ($< == 0) {
+		# we can't cache anything, we happen after the fork, 
+		# right before exec
+		if (my (undef, undef, $uid, $gid) = getpwnam($user)) {
+			$( = $gid;
+			$) = "$gid $gid";
+			$< = $uid;
+			$> = $uid;
+		} else {
+			$self->{state}->fatal("Couldn't change identity: can't find #1 user", $user);
+		}
 	} else {
-		$self->{state}->fatal("Couldn't change identity: can't find #1 user", $user);
+		($user) = getpwuid($<);
 	}
-
 	# create sanitized env for ftp
 	my %newenv = (
 		HOME => '/var/empty',
