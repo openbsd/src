@@ -1,4 +1,4 @@
-/*	$OpenBSD: disassem.c,v 1.3 2014/05/08 21:17:00 miod Exp $	*/
+/*	$OpenBSD: disassem.c,v 1.4 2016/04/25 04:05:55 jsg Exp $	*/
 /*	$NetBSD: disassem.c,v 1.14 2003/03/27 16:58:36 mycroft Exp $	*/
 
 /*
@@ -129,6 +129,7 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0d700000, 0x04600000, "strbt",	"daW" },
     { 0x0d700000, 0x04700000, "ldrbt",	"daW" },
     { 0xfffffff0, 0xf57ff040, "dsb",    "" },
+    { 0xfffffff0, 0xf57ff050, "dmb",    "" },
     { 0xfffffff0, 0xf57ff060, "isb",    "" },
     { 0x0c500000, 0x04000000, "str",	"daW" },
     { 0x0c500000, 0x04100000, "ldr",	"daW" },
