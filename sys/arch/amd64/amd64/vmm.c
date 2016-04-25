@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.57 2016/04/25 19:26:27 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.58 2016/04/25 19:53:45 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2923,8 +2923,10 @@ vcpu_run_vmx(struct vcpu *vcpu, uint8_t from_exit, int16_t *injint)
 				break;
 			default:
 				printf("vcpu_run_vmx: returning from exit "
-				    "with unknown reason %d\n",
-				    vcpu->vc_gueststate.vg_exit_reason);
+				    "with unknown reason %d (%s)\n",
+				    vcpu->vc_gueststate.vg_exit_reason,
+				    vmx_exit_reason_decode(
+					vcpu->vc_gueststate.vg_exit_reason));
 				break;
 			}
 		}
