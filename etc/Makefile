@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.421 2016/03/09 16:28:46 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.422 2016/04/25 20:38:10 tedu Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -154,9 +154,6 @@ distribution-etc-root-var: distrib-dirs
 	cd signify; \
 		${INSTALL} -c -o root -g wheel -m 644 *.pub \
 		    ${DESTDIR}/etc/signify
-	cd systrace; \
-		${INSTALL} -c -o root -g wheel -m 600 usr_sbin_lpd \
-		    ${DESTDIR}/etc/systrace; \
 	ln -fs ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	ln -fs /usr/sbin/rmt ${DESTDIR}/etc/rmt
 	${INSTALL} -c -o root -g wheel -m 644 minfree \

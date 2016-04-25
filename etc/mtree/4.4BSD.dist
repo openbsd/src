@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.280 2016/03/09 16:28:46 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.281 2016/04/25 20:38:11 tedu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -111,9 +111,6 @@ etc
         ..
     ..
 
-    # ./etc/systrace
-    systrace
-    ..
 ..
 
 # ./home

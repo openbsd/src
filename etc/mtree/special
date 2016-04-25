@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.118 2016/04/20 21:14:44 schwarze Exp $
+#	$OpenBSD: special,v 1.119 2016/04/25 20:38:11 tedu Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -108,8 +108,6 @@ ssh_host_rsa_key	type=file mode=0600 uname=root gname=wheel optional
 ssh_host_rsa_key.pub	type=file mode=0644 uname=root gname=wheel optional
 sshd_config	type=file mode=0644 uname=root gname=wheel
 ..	#ssh
-systrace	type=dir mode=0755 uname=root gname=wheel optional
-..	#systrace
 syslog.conf	type=file mode=0644 uname=root gname=wheel
 ttys		type=file mode=0644 uname=root gname=wheel
 weekly		type=file mode=0644 uname=root gname=wheel
