@@ -1,11 +1,11 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.72 2016/03/12 18:02:18 espie Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.73 2016/04/25 20:38:45 tedu Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.82 2015/10/23 15:14:12 claudio Exp 
+.\"	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.83 2016/04/25 20:38:11 tedu Exp 
 .\"	OpenBSD: MAKEDEV.common,v 1.85 2016/02/05 06:29:45 uebayasi Exp 
-.\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
+.\"	OpenBSD: MAKEDEV.man,v 1.8 2016/03/12 17:59:27 espie Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
 .\" Copyright (c) 2004, Miodrag Vallat
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 12 2016 $
+.Dd $Mdocdate: April 25 2016 $
 .Dt MAKEDEV 8 sparc64
 .Os
 .Sh NAME
@@ -258,9 +258,6 @@ Raw MIDI devices, see
 .It Ar *random
 In-kernel random data source, see
 .Xr random 4 .
-.It Ar systrace*
-System call tracing device, see
-.Xr systrace 4 .
 .It Ar tun*
 Network tunnel driver, see
 .Xr tun 4 .
