@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch7.S,v 1.9 2016/04/25 06:49:46 jsg Exp $	*/
+/*	$OpenBSD: cpuswitch7.S,v 1.10 2016/04/25 12:16:20 jsg Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -95,14 +95,10 @@
  * XXX: This is not necessary if the vector table is relocated.
  */
 #define IRQdisableALL \
-	mrs	r14, cpsr ; \
-	orr	r14, r14, #(PSR_I | PSR_F) ; \
-	msr	cpsr_c, r14
+	cpsid	if
 
 #define IRQenableALL \
-	mrs	r14, cpsr ; \
-	bic	r14, r14, #(PSR_I | PSR_F) ; \
-	msr	cpsr_c, r14
+	cpsie	if
 
 	.text
 
@@ -211,14 +207,8 @@ ENTRY(cpu_switchto)
 	/* Get the user structure for the new process in r9 */
 	ldr	r9, [r6, #(P_ADDR)]
 
-	/*
-	 * This can be optimised... We know we want to go from SVC32
-	 * mode to UND32 mode
-	 */
 	mrs	r3, cpsr
-	bic	r2, r3, #(PSR_MODE)
-	orr	r2, r2, #(PSR_UND32_MODE | PSR_I)
-	msr	cpsr_c, r2
+	cpsid	i, #(PSR_UND32_MODE)
 
 #ifdef notworthit
 	teq	r0, #0x00000000
@@ -340,14 +330,8 @@ ENTRY(cpu_switchto)
 	/* rem: r6 = new proc */
 	/* rem: r9 = new PCB */
 
-	/*
-	 * This can be optimised... We know we want to go from SVC32
-	 * mode to UND32 mode
-	 */
 	mrs	r3, cpsr
-	bic	r2, r3, #(PSR_MODE)
-	orr	r2, r2, #(PSR_UND32_MODE)
-	msr	cpsr_c, r2
+	cps	#(PSR_UND32_MODE)
 
 	ldr	sp, [r9, #(PCB_UND_SP)]
 
@@ -407,9 +391,7 @@ ENTRY(proc_trampoline)
 	mov	pc, r4
 
 	/* Kill irq's */
-	mrs	r0, cpsr
-	orr	r0, r0, #(PSR_I)
-	msr	cpsr_c, r0
+	cpsid	i
 
 	PULLFRAME
 
