@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch.S,v 1.17 2016/04/25 04:46:56 jsg Exp $	*/
+/*	$OpenBSD: cpuswitch.S,v 1.18 2016/04/25 06:49:46 jsg Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -236,10 +236,10 @@ ENTRY(cpu_switchto)
 	 * This can be optimised... We know we want to go from SVC32
 	 * mode to UND32 mode
 	 */
-        mrs	r3, cpsr
+	mrs	r3, cpsr
 	bic	r2, r3, #(PSR_MODE)
 	orr	r2, r2, #(PSR_UND32_MODE | PSR_I)
-        msr	cpsr_c, r2
+	msr	cpsr_c, r2
 
 #ifdef notworthit
 	teq	r0, #0x00000000
@@ -248,7 +248,7 @@ ENTRY(cpu_switchto)
 	str	sp, [r8, #(PCB_UND_SP)]
 #endif
 
-        msr	cpsr_c, r3		/* Restore the old mode */
+	msr	cpsr_c, r3		/* Restore the old mode */
 
 	/* rem: r0 = old proc */
 	/* rem: r1 = r6 = new process */
@@ -414,14 +414,14 @@ ENTRY(cpu_switchto)
 	 * This can be optimised... We know we want to go from SVC32
 	 * mode to UND32 mode
 	 */
-        mrs	r3, cpsr
+	mrs	r3, cpsr
 	bic	r2, r3, #(PSR_MODE)
 	orr	r2, r2, #(PSR_UND32_MODE)
-        msr	cpsr_c, r2
+	msr	cpsr_c, r2
 
 	ldr	sp, [r9, #(PCB_UND_SP)]
 
-        msr	cpsr_c, r3		/* Restore the old mode */
+	msr	cpsr_c, r3		/* Restore the old mode */
 
 	/* Restore all the save registers */
 #ifndef __XSCALE__
@@ -493,9 +493,9 @@ ENTRY(proc_trampoline)
 	mov	pc, r4
 
 	/* Kill irq's */
-        mrs     r0, cpsr
-        orr     r0, r0, #(PSR_I)
-        msr     cpsr_c, r0
+	mrs	r0, cpsr
+	orr	r0, r0, #(PSR_I)
+	msr	cpsr_c, r0
 
 	PULLFRAME
 
