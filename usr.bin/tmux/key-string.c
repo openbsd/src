@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.36 2016/03/18 07:28:27 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.37 2016/04/25 17:05:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -226,6 +226,7 @@ key_string_lookup_key(key_code key)
 	char			tmp[8];
 	u_int			i;
 	struct utf8_data	ud;
+	size_t			off;
 
 	*out = '\0';
 
@@ -270,8 +271,9 @@ key_string_lookup_key(key_code key)
 	/* Is this a UTF-8 key? */
 	if (key > 127 && key < KEYC_BASE) {
 		if (utf8_split(key, &ud) == UTF8_DONE) {
-			memcpy(out, ud.data, ud.size);
-			out[ud.size] = '\0';
+			off = strlen(out);
+			memcpy(out + off, ud.data, ud.size);
+			out[off + ud.size] = '\0';
 			return (out);
 		}
 	}
