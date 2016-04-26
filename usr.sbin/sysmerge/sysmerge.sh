@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.221 2016/02/02 07:02:32 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.222 2016/04/26 11:19:35 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -588,8 +588,8 @@ sm_post() {
 	if [[ -d ${_TMPROOT} ]]; then
 		for _f in $(find ${_TMPROOT} ! -type d ! -name \*.merged -size +0)
 		do
-			sm_info "${_f} left for comparison"
-			${BATCHMODE} && [[ -f ${_f} ]] && \
+			sm_info "${_f##*${_TMPROOT}} unhandled, re-run ${0##*/} to merge the new version"
+			! ${DIFFMODE} && [[ -f ${_f} ]] && \
 				sed -i "/$(sha256 -q ${_f})/d" /var/sysmerge/*sum
 		done
 	fi
