@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fmax.3,v 1.2 2011/07/07 01:34:52 martynas Exp $
+.\"	$OpenBSD: fmax.3,v 1.3 2016/04/26 19:49:22 tb Exp $
 .\"
 .\" Copyright (c) 2004 David Schultz <das@FreeBSD.org>
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/msun/man/fmax.3,v 1.2 2005/01/14 09:12:05 ru Exp $
 .\"
-.Dd $Mdocdate: July 7 2011 $
+.Dd $Mdocdate: April 26 2016 $
 .Dt FMAX 3
 .Os
 .Sh NAME
@@ -74,8 +74,8 @@ They treat
 .Li +0.0
 as being larger than
 .Li -0.0 .
-If one argument is an \*(Na, then the other argument is returned.
-If both arguments are \*(Nas, then the result is an \*(Na.
+If one argument is an NaN, then the other argument is returned.
+If both arguments are NaNs, then the result is an NaN.
 These routines do not raise any floating-point exceptions.
 .Sh SEE ALSO
 .Xr fabs 3 ,

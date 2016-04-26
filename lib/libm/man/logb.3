@@ -1,4 +1,4 @@
-.\"	$OpenBSD: logb.3,v 1.9 2013/06/05 03:40:26 tedu Exp $
+.\"	$OpenBSD: logb.3,v 1.10 2016/04/26 19:49:22 tb Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: April 26 2016 $
 .Dt LOGB 3
 .Os
 .Sh NAME
@@ -69,10 +69,10 @@ returns
 .Fa x Ns 's exponent
 .Fa n ,
 a signed integer converted to double\-precision floating\-point.
-.Fn logb \*(Pm\*(If
-= +\*(If;
+.Fn logb \(+-infinity
+= +infinity;
 .Fn logb 0
-= -\*(If with a division by zero exception.
+= -infinity with a division by zero exception.
 .Fn logbf
 is the single precision form of
 .Fn logb .
@@ -82,7 +82,7 @@ is the extended precision form of
 .Pp
 .Fn scalb x n
 returns
-.Fa x Ns \(**(2** Ns Fa n )
+.Fa x Ns *(2** Ns Fa n )
 computed by exponent manipulation.
 .Fn scalbf
 is the single precision form of
@@ -97,18 +97,19 @@ returns
 where
 .Fa x
 :=
-.Fa sig No \(** 2** Ns Fa n
+.Fa sig No * 2** Ns Fa n
 with 1 \(<=
 .Fa sig
 < 2.
 .Fn significand x
 is not defined when
 .Fa x
-is 0, \*(Pm\*(If, or \*(Na.
+is 0, \(+-infinity, or NaN.
 .Fn significandf
 is the single precision for of
 .Fn significand .
 .Sh SEE ALSO
+.Xr fpclassify 3 ,
 .Xr ilogb 3 ,
 .Xr scalbn 3
 .Sh STANDARDS

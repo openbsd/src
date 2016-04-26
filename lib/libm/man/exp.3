@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exp.3,v 1.32 2016/03/12 18:15:20 tb Exp $
+.\"	$OpenBSD: exp.3,v 1.33 2016/04/26 19:49:22 tb Exp $
 .\"
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
 .\"
-.Dd $Mdocdate: March 12 2016 $
+.Dd $Mdocdate: April 26 2016 $
 .Dt EXP 3
 .Os
 .Sh NAME
@@ -282,16 +282,12 @@ expm1 and logp1 in BASIC on the Hewlett\-Packard HP-71B
 and APPLE Macintosh, EXP1 and LN1 in Pascal, exp1 and log1 in C
 on APPLE Macintoshes, where they have been provided to make
 sure financial calculations of ((1+x)**n\-1)/x, namely
-expm1(n\(**log1p(x))/x, will be accurate when x is tiny.
+expm1(n*log1p(x))/x, will be accurate when x is tiny.
 They also provide accurate inverse hyperbolic functions.
 .Pp
 The function
 .Fn pow x 0
-returns x**0 = 1 for all x including x = 0 and
-.if n \
-\*(If.
-.if t \
-\(if.
+returns x**0 = 1 for all x including x = 0 and infinity.
 Previous implementations of
 .Fn pow
 may have defined x**0 to be undefined in some or all of these cases.
@@ -299,7 +295,7 @@ Here are reasons for returning x**0 = 1 always:
 .Bl -enum -width indent
 .It
 Any program that already tests whether x is zero (or
-infinite or \*(Na) before computing x**0 cannot care
+infinite or NaN) before computing x**0 cannot care
 whether 0**0 = 1 or not.
 Any program that depends upon 0**0 to be invalid is dubious anyway since that
 expression's meaning and, if invalid, its consequences
@@ -310,10 +306,10 @@ all x, including x = 0.
 This is compatible with the convention that accepts a[0]
 as the value of polynomial
 .Bd -literal -offset indent
-p(x) = a[0]\(**x**0 + a[1]\(**x**1 + a[2]\(**x**2 +...+ a[n]\(**x**n
+p(x) = a[0]*x**0 + a[1]*x**1 + a[2]*x**2 +...+ a[n]*x**n
 .Ed
 .Pp
-at x = 0 rather than reject a[0]\(**0**0 as invalid.
+at x = 0 rather than reject a[0]*0**0 as invalid.
 .It
 Analysts will accept 0**0 = 1 despite that x**y can
 approach anything or nothing as x and y approach 0
@@ -327,15 +323,12 @@ in power series) in z around z = 0, and if there
 x(0) = y(0) = 0, then x(z)**y(z) \(-> 1 as z \(-> 0.
 .Ed
 .It
-If 0**0 = 1, then
-.if n \
-\*(If**0 = 1/0**0 = 1 too; and
-.if t \
-\(if**0 = 1/0**0 = 1 too; and
-then \*(Na**0 = 1 too because x**0 = 1 for all finite
+If 0**0 = 1, then infinity**0 = 1/0**0 = 1 too; and
+then NaN**0 = 1 too because x**0 = 1 for all finite
 and infinite x, i.e., independently of x.
 .El
 .Sh SEE ALSO
+.Xr fpclassify 3 ,
 .Xr ilogb 3
 .Sh HISTORY
 The

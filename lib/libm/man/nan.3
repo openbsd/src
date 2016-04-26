@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nan.3,v 1.5 2011/07/07 01:34:52 martynas Exp $
+.\"	$OpenBSD: nan.3,v 1.6 2016/04/26 19:49:22 tb Exp $
 .\"
 .\" Copyright (c) 2007 David Schultz <das@FreeBSD.org>
 .\" All rights reserved.
@@ -26,14 +26,14 @@
 .\"
 .\" $FreeBSD: src/lib/msun/man/nan.3,v 1.1 2007/12/16 21:19:28 das Exp $
 .\"
-.Dd $Mdocdate: July 7 2011 $
+.Dd $Mdocdate: April 26 2016 $
 .Dt NAN 3
 .Os
 .Sh NAME
 .Nm nan ,
 .Nm nanf ,
 .Nm nanl
-.Nd quiet \*(Nas
+.Nd quiet NaNs
 .Sh SYNOPSIS
 .In math.h
 .Ft double
@@ -45,20 +45,20 @@
 .Sh DESCRIPTION
 The
 .Dv NAN
-macro expands to a quiet \*(Na (Not A Number).
+macro expands to a quiet NaN (Not A Number).
 Similarly both the
 .Fn nan ,
 .Fn nanf
 and
 .Fn nanl
-functions generate a quiet \*(Na value without raising an invalid exception.
+functions generate a quiet NaN value without raising an invalid exception.
 The argument
 .Fa s
 should point to either an empty string or a hexadecimal representation
 of a non-negative integer (e.g. 0x1234).
 In the latter case, the integer is encoded in some free bits in the
-representation of the \*(Na, which sometimes stores
-machine-specific information about why a particular \*(Na was generated.
+representation of the NaN, which sometimes stores
+machine-specific information about why a particular NaN was generated.
 There are 22 such bits available for
 .Vt float
 variables, 51 bits for
@@ -68,12 +68,12 @@ variables, and at least 51 bits for a
 If
 .Fa s
 is improperly formatted or represents an integer that is too large,
-then the particular encoding of the quiet \*(Na that is returned
+then the particular encoding of the quiet NaN that is returned
 is indeterminate.
 .Sh COMPATIBILITY
 Calling these functions with a non-empty string isn't portable.
 Another operating system may translate the string into a different
-\*(Na encoding, and furthermore, the meaning of a given \*(Na encoding
+NaN encoding, and furthermore, the meaning of a given NaN encoding
 varies across machine architectures.
 If you understood the innards of a particular platform well enough to
 know what string to use, then you would have no need for these functions

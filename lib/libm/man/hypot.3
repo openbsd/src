@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hypot.3,v 1.22 2016/03/10 22:29:38 tb Exp $
+.\"	$OpenBSD: hypot.3,v 1.23 2016/04/26 19:49:22 tb Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)hypot.3	6.7 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: March 10 2016 $
+.Dd $Mdocdate: April 26 2016 $
 .Dt HYPOT 3
 .Os
 .Sh NAME
@@ -66,12 +66,10 @@ sqrt(x*x+y*y)
 in such a way that underflow will not happen, and overflow
 occurs only if the final result deserves it.
 .Pp
-.Fn hypot "\*(If" "v"
-=
-.Fn hypot "v" "\*(If"
-= +\*(If for all
+.Fn hypot "infinity" "v" No = Fn hypot "v" "infinity" No = +infinity
+for all
 .Ar v ,
-including \*(Na.
+including NaN.
 .Pp
 The
 .Fn cabs ,
@@ -84,37 +82,35 @@ functions return the absolute value of the complex number
 Below 0.97
 .Em ulps .
 Consequently
-.Fn hypot "5.0" "12.0"
-= 13.0
+.Fn hypot "5.0" "12.0" No = 13.0
 exactly;
 in general, hypot and cabs return an integer whenever an
 integer might be expected.
 .Sh NOTES
 As might be expected,
-.Fn hypot "v" "\*(Na"
+.Fn hypot "v" "NaN"
 and
-.Fn hypot "\*(Na" "v"
-are \*(Na for all
+.Fn hypot "NaN" "v"
+are NaN for all
 .Em finite
 .Ar v .
 Programmers might be surprised at first to discover that
-.Fn hypot "\(+-\*(If" "\*(Na"
-= +\*(If.
+.Fn hypot "\(+-infinity" "NaN" No = +infinity.
 This is intentional; it happens because
-.Fn hypot "\*(If" "v"
-= +\*(If
+.Fn hypot "infinity" "v" No = +infinity
 for
 .Em all
 .Ar v ,
 finite or infinite.
 Hence
-.Fn hypot "\*(If" "v"
+.Fn hypot "infinity" "v"
 is independent of
 .Ar v .
-The IEEE \*(Na is designed to disappear
+The IEEE NaN is designed to disappear
 when it turns out to be irrelevant, as it does in
-.Fn hypot "\*(If" "\*(Na" .
+.Fn hypot "infinity" "NaN" .
 .Sh SEE ALSO
+.Xr fpclassify 3 ,
 .Xr sqrt 3
 .Sh HISTORY
 A
