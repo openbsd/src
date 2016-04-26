@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.94 2016/04/26 17:58:42 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.95 2016/04/26 18:39:29 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -474,10 +474,13 @@ case ${action} in
 		shift 1
 		svcs="$*"
 		[ -z "${svcs}" ] && usage
-		for svc in ${svcs}; do
-			svc_is_avail ${svc} || \
-				rcctl_err "service ${svc} does not exist" 2
-		done
+		# it's ok to disable a non-existing daemon
+		if [ "${action}" != "disable" ]; then
+			for svc in ${svcs}; do
+				svc_is_avail ${svc} || \
+					rcctl_err "service ${svc} does not exist" 2
+			done
+		fi
 		;;
 	get|getdef)
 		svc=$2
@@ -503,8 +506,11 @@ case ${action} in
 		[ $# -ge 3 ] && shift 3 || shift $#
 		args="$*"
 		[ -z "${svc}" ] && usage
-		svc_is_avail ${svc} || \
-			rcctl_err "service ${svc} does not exist" 2
+		# it's ok to disable a non-existing daemon
+		if [ "${action} ${var} ${args}" != "set status off" ]; then
+			svc_is_avail ${svc} || \
+				rcctl_err "service ${svc} does not exist" 2
+		fi
 		[[ ${var} != @(class|flags|rtable|status|timeout|user) ]] && usage
 		svc_is_meta ${svc} && [ "${var}" != "status" ] && \
 			rcctl_err "/etc/rc.d/${svc} is a meta script, cannot \"${action} ${var}\""
