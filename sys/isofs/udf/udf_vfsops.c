@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.49 2016/03/27 11:39:37 bluhm Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.50 2016/04/26 18:37:02 natano Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -264,6 +264,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, uint32_t lb, struct proc *p)
 	mp->mnt_data = (qaddr_t) ump;
 	mp->mnt_stat.f_fsid.val[0] = devvp->v_rdev;
 	mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
+	mp->mnt_stat.f_namemax = NAME_MAX;
 	mp->mnt_flag |= MNT_LOCAL;
 
 	ump->um_mountp = mp;
@@ -542,6 +543,8 @@ udf_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	sbp->f_bavail = 0;
 	sbp->f_files = 0;
 	sbp->f_ffree = 0;
+	sbp->f_favail = 0;
+	copy_statfs_info(sbp, mp);
 
 	return (0);
 }

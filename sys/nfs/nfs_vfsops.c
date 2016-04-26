@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.108 2016/03/17 18:52:31 bluhm Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.109 2016/04/26 18:37:03 natano Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -152,7 +152,6 @@ nfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 		tquad = fxdr_hyper(&sfp->sf_ffiles);
 		sbp->f_ffree = tquad;
 		sbp->f_favail = tquad;
-		sbp->f_namemax = MAXNAMLEN;
 	} else {
 		sbp->f_bsize = fxdr_unsigned(int32_t, sfp->sf_bsize);
 		sbp->f_blocks = fxdr_unsigned(int32_t, sfp->sf_blocks);
@@ -160,6 +159,7 @@ nfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 		sbp->f_bavail = fxdr_unsigned(int32_t, sfp->sf_bavail);
 		sbp->f_files = 0;
 		sbp->f_ffree = 0;
+		sbp->f_favail = 0;
 	}
 	copy_statfs_info(sbp, mp);
 	m_freem(info.nmi_mrep);
@@ -641,10 +641,13 @@ mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam,
 	nmp->nm_acdirmin = NFS_MINATTRTIMO;
 	nmp->nm_acdirmax = NFS_MAXATTRTIMO;
 	bcopy(argp->fh, nmp->nm_fh, argp->fhsize);
-	strncpy(&mp->mnt_stat.f_fstypename[0], mp->mnt_vfc->vfc_name, MFSNAMELEN);
-	bcopy(pth, mp->mnt_stat.f_mntonname, MNAMELEN);
-	bcopy(hst, mp->mnt_stat.f_mntfromname, MNAMELEN);
-	bcopy(hst, mp->mnt_stat.f_mntfromspec, MNAMELEN);
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
+	memset(mp->mnt_stat.f_mntonname, 0, MNAMELEN);
+	strlcpy(mp->mnt_stat.f_mntonname, pth, MNAMELEN);
+	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
+	strlcpy(mp->mnt_stat.f_mntfromname, hst, MNAMELEN);
+	memset(mp->mnt_stat.f_mntfromspec, 0, MNAMELEN);
+	strlcpy(mp->mnt_stat.f_mntfromspec, hst, MNAMELEN);
 	bcopy(argp, &mp->mnt_stat.mount_info.nfs_args, sizeof(*argp));
 	nmp->nm_nam = nam;
 	nfs_decode_args(nmp, argp, &mp->mnt_stat.mount_info.nfs_args);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.77 2016/03/27 11:39:37 bluhm Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.78 2016/04/26 18:37:02 natano Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -383,6 +383,7 @@ iso_mountfs(devvp, mp, p, argp)
 	mp->mnt_data = (qaddr_t)isomp;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
+	mp->mnt_stat.f_namemax = NAME_MAX;
 	mp->mnt_flag |= MNT_LOCAL;
 	isomp->im_mountp = mp;
 	isomp->im_dev = dev;
@@ -650,13 +651,9 @@ cd9660_statfs(mp, sbp, p)
 	sbp->f_bavail = 0; /* blocks free for non superuser */
 	sbp->f_files =  0; /* total files */
 	sbp->f_ffree = 0; /* free file nodes */
-	if (sbp != &mp->mnt_stat) {
-		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname,
-		    MNAMELEN);
-		bcopy(&mp->mnt_stat.mount_info.iso_args,
-		    &sbp->mount_info.iso_args, sizeof(struct iso_args));
-	}
+	sbp->f_favail = 0; /* file nodes free for non superuser */
+	copy_statfs_info(sbp, mp);
+
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.76 2016/03/27 11:39:37 bluhm Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.77 2016/04/26 18:37:03 natano Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -251,6 +251,11 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 			vput(rvp);
 		}
 	}
+
+	if (pmp->pm_flags & MSDOSFSMNT_LONGNAME)
+		mp->mnt_stat.f_namemax = WIN_MAXLEN;
+	else
+		mp->mnt_stat.f_namemax = 12;
 
 	bzero(mp->mnt_stat.f_mntonname, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntonname, path, MNAMELEN);
@@ -667,14 +672,9 @@ msdosfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	sbp->f_bfree = pmp->pm_freeclustercount;
 	sbp->f_bavail = pmp->pm_freeclustercount;
 	sbp->f_files = pmp->pm_RootDirEnts;			/* XXX */
-	sbp->f_ffree = 0;	/* what to put in here? */
-	if (sbp != &mp->mnt_stat) {
-		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
-		bcopy(&mp->mnt_stat.mount_info.msdosfs_args,
-		    &sbp->mount_info.msdosfs_args, sizeof(struct msdosfs_args));
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
+	sbp->f_ffree = sbp->f_favail = 0;	/* what to put in here? */
+	copy_statfs_info(sbp, mp);
+
 	return (0);
 }
 

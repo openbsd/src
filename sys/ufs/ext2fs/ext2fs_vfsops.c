@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.89 2016/03/27 11:39:37 bluhm Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.90 2016/04/26 18:37:03 natano Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -293,6 +293,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 	strlcpy(mp->mnt_stat.f_mntfromname, fname, MNAMELEN);
 	memset(mp->mnt_stat.f_mntfromspec, 0, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntfromspec, fspec, MNAMELEN);
+	memcpy(&mp->mnt_stat.mount_info.ufs_args, &args, sizeof(args));
 
 	if (fs->e2fs_fmod != 0) {	/* XXX */
 		fs->e2fs_fmod = 0;
@@ -583,6 +584,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	mp->mnt_data = (qaddr_t)ump;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
@@ -711,13 +713,9 @@ ext2fs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	sbp->f_bfree = fs->e2fs.e2fs_fbcount;
 	sbp->f_bavail = sbp->f_bfree - fs->e2fs.e2fs_rbcount;
 	sbp->f_files =  fs->e2fs.e2fs_icount;
-	sbp->f_ffree = fs->e2fs.e2fs_ficount;
-	if (sbp != &mp->mnt_stat) {
-		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
-		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
-		memcpy(sbp->f_mntfromspec, mp->mnt_stat.f_mntfromspec, MNAMELEN);
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
+	sbp->f_favail = sbp->f_ffree = fs->e2fs.e2fs_ficount;
+	copy_statfs_info(sbp, mp);
+
 	return (0);
 }
 

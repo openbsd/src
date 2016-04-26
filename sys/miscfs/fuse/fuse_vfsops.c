@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.20 2016/03/27 11:39:37 bluhm Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.21 2016/04/26 18:37:02 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -111,7 +111,9 @@ fusefs_mount(struct mount *mp, const char *path, void *data,
 	bzero(mp->mnt_stat.f_mntonname, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntonname, path, MNAMELEN);
 	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
-	bcopy("fusefs", mp->mnt_stat.f_mntfromname, sizeof("fusefs"));
+	strlcpy(mp->mnt_stat.f_mntfromname, "fusefs", MNAMELEN);
+	bzero(mp->mnt_stat.f_mntfromspec, MNAMELEN);
+	strlcpy(mp->mnt_stat.f_mntfromspec, "fusefs", MNAMELEN);
 
 	fuse_device_set_fmp(fmp, 1);
 	fbuf = fb_setup(0, 0, FBT_INIT, p);
@@ -204,6 +206,8 @@ fusefs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 
 	fmp = VFSTOFUSEFS(mp);
 
+	copy_statfs_info(sbp, mp);
+
 	if (fmp->sess_init) {
 		fbuf = fb_setup(0, FUSE_ROOT_ID, FBT_STATFS, p);
 
@@ -219,7 +223,9 @@ fusefs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 		sbp->f_blocks = fbuf->fb_stat.f_blocks;
 		sbp->f_files = fbuf->fb_stat.f_files;
 		sbp->f_ffree = fbuf->fb_stat.f_ffree;
+		sbp->f_favail = fbuf->fb_stat.f_favail;
 		sbp->f_bsize = fbuf->fb_stat.f_frsize;
+		sbp->f_iosize = fbuf->fb_stat.f_bsize;
 		sbp->f_namemax = fbuf->fb_stat.f_namemax;
 		fb_delete(fbuf);
 	} else {
@@ -227,8 +233,10 @@ fusefs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 		sbp->f_bfree = 0;
 		sbp->f_blocks = 0;
 		sbp->f_ffree = 0;
+		sbp->f_favail = 0;
 		sbp->f_files = 0;
 		sbp->f_bsize = 0;
+		sbp->f_iosize = 0;
 		sbp->f_namemax = 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.49 2016/03/27 11:39:37 bluhm Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.50 2016/04/26 18:37:03 natano Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -436,6 +436,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp,
 
 	mp->mnt_stat.f_fsid.val[0] = dev;
 	mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
+	mp->mnt_stat.f_namemax = NTFS_MAXFILENAME;
 	mp->mnt_flag |= MNT_LOCAL;
 	devvp->v_specmountpoint = mp;
 	return (0);
@@ -609,17 +610,10 @@ ntfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	sbp->f_iosize = ntmp->ntm_bps * ntmp->ntm_spc;
 	sbp->f_blocks = ntmp->ntm_bootfile.bf_spv;
 	sbp->f_bfree = sbp->f_bavail = ntfs_cntobn(ntmp->ntm_cfree);
-	sbp->f_ffree = sbp->f_bfree / ntmp->ntm_bpmftrec;
+	sbp->f_ffree = sbp->f_favail = sbp->f_bfree / ntmp->ntm_bpmftrec;
 	sbp->f_files = mftallocated / ntfs_bntob(ntmp->ntm_bpmftrec) +
 		       sbp->f_ffree;
-	sbp->f_flags = mp->mnt_flag;
-	if (sbp != &mp->mnt_stat) {
-		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
-		bcopy(&mp->mnt_stat.mount_info.ntfs_args,
-		    &sbp->mount_info.ntfs_args, sizeof(struct ntfs_args));
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
+	copy_statfs_info(sbp, mp);
 
 	return (0);
 }
