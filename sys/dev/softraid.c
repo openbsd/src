@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.372 2016/04/26 13:22:16 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.373 2016/04/26 13:38:24 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3032,7 +3032,8 @@ sr_hotspare_rebuild(struct sr_discipline *sd)
 	rw_enter_write(&sc->sc_hs_lock);
 	cl = &sc->sc_hotspare_list;
 	SLIST_FOREACH(hotspare, cl, src_link)
-		if (hotspare->src_size >= chunk->src_size)
+		if (hotspare->src_size >= chunk->src_size &&
+		    hotspare->src_secsize <= sd->sd_meta->ssdi.ssd_secsize)
 			break;
 
 	if (hotspare != NULL) {
@@ -3209,6 +3210,11 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	} else if (size > csize)
 		sr_warn(sc, "%s partition too large, wasting %lld bytes",
 		    devname, (long long)((size - csize) << DEV_BSHIFT));
+	if (label.d_secsize > sd->sd_meta->ssdi.ssd_secsize) {
+		sr_error(sc, "%s sector size too large, <= %u bytes "
+		    "required", devname, label.d_secsize);
+		goto done;
+	}
 
 	/* Ensure that this chunk is not already in use. */
 	status = sr_chunk_in_use(sc, dev);
