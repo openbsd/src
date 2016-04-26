@@ -394,6 +394,12 @@ const struct mips_arch_choice mips_arch_choices[] =
     mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
     mips_hwr_names_mips3264r2 },
 
+  { "octeon",   1, bfd_mach_mips_octeon, CPU_OCTEON,
+    ISA_MIPS64R2 | INSN_OCTEON,
+    mips_cp0_names_mips3264r2,
+    mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
+    mips_hwr_names_mips3264r2 },
+
   { "sb1",	1, bfd_mach_mips_sb1, CPU_SB1,
     ISA_MIPS64 | INSN_MIPS3D | INSN_SB1,
     mips_cp0_names_sb1,

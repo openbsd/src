@@ -480,6 +480,8 @@ struct mips_opcode
 
 /* Chip specific instructions.  These are bitmasks.  */
 
+#define INSN_CHIP_MASK            0x0bff0000
+
 /* MIPS R4650 instruction.  */
 #define INSN_4650                 0x00010000
 /* LSI R4010 instruction.  */
@@ -502,6 +504,9 @@ struct mips_opcode
 #define INSN_5500		  0x02000000
 /* MT ASE */
 #define INSN_MT                   0x04000000
+/* Cavium Networks Octeon instruction.  */
+#define INSN_OCTEON               0x08000000
+
 
 /* MIPS ISA defines, use instead of hardcoding ISA level.  */
 
@@ -549,6 +554,7 @@ struct mips_opcode
 #define CPU_MIPS64      64
 #define CPU_MIPS64R2	65
 #define CPU_SB1         12310201        /* octal 'SB', 01.  */
+#define CPU_OCTEON	6501
 
 /* Test for membership in an ISA including chip specific ISAs.  INSN
    is pointer to an element of the opcode table; ISA is the specified
@@ -570,6 +576,7 @@ struct mips_opcode
      || (cpu == CPU_VR4120 && ((insn)->membership & INSN_4120) != 0)	\
      || (cpu == CPU_VR5400 && ((insn)->membership & INSN_5400) != 0)	\
      || (cpu == CPU_VR5500 && ((insn)->membership & INSN_5500) != 0)	\
+     || (cpu == CPU_OCTEON && ((insn)->membership & INSN_OCTEON) != 0)	\
      || 0)	/* Please keep this term for easier source merging.  */
 
 /* This is a list of macro expanded instructions.

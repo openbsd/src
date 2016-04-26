@@ -109,6 +109,7 @@ Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, US
 #define N5	(INSN_5400 | INSN_5500)
 #define N54	INSN_5400
 #define N55	INSN_5500
+#define IOCT	INSN_OCTEON
 
 #define G1      (T3             \
                  )
@@ -1182,6 +1183,10 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"invalidate", "t,o(b)",0xb8000000, 0xfc000000,	RD_t|RD_b,		0,		I2	}, /* same */
 {"invalidate", "t,A(b)",0,    (int) M_SWR_AB,	INSN_MACRO,		0,		I2	}, /* as swr */
 {"swxc1",   "S,t(b)",   0x4c000008, 0xfc0007ff, SM|RD_S|RD_t|RD_b|FP_S,	0,		I4|I33	},
+{"synciobdma",	"",	0x0000008f, 0xffffffff,	INSN_SYNC,		0,		IOCT	},
+{"syncs",	"",	0x0000018f, 0xffffffff,	INSN_SYNC,		0,		IOCT	},
+{"syncw",	"",	0x0000010f, 0xffffffff,	INSN_SYNC,		0,		IOCT	},
+{"syncws",	"",	0x0000014f, 0xffffffff,	INSN_SYNC,		0,		IOCT	},
 {"sync",    "",		0x0000000f, 0xffffffff,	INSN_SYNC,		0,		I2|G1	},
 {"sync.p",  "",		0x0000040f, 0xffffffff,	INSN_SYNC,		0,		I2	},
 {"sync.l",  "",		0x0000000f, 0xffffffff,	INSN_SYNC,		0,		I2	},
