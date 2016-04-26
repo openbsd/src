@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.38 2016/04/13 11:34:00 mpi Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.39 2016/04/26 11:07:09 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1427,24 +1427,6 @@ octeon_eth_tick_misc(void *arg)
 
 	mii_tick(&sc->sc_mii);
 
-#ifdef OCTEON_ETH_FIXUP_ODD_NIBBLE_DYNAMIC
-	if (sc->sc_gmx_port->sc_proc_nibble_by_soft &&
-	    sc->sc_gmx_port->sc_even_nibble_cnt > PROC_NIBBLE_SOFT_THRESHOLD) {
-#ifdef OCTEON_ETH_DEBUG
-		log(LOG_DEBUG, "%s: even nibble preamble count %d\n",
-		    sc->sc_dev.dv_xname, sc->sc_gmx_port->sc_even_nibble_cnt);
-#endif
-		if (OCTEON_ETH_FIXUP_ODD_NIBBLE_MODEL_P(sc) &&
-		    OCTEON_ETH_FIXUP_ODD_NIBBLE_DYNAMIC_SPEED_P(sc->sc_gmx_port, ifp)) {
-			log(LOG_NOTICE, 
-			    "%s: the preamble processing switched to hardware\n", 
-			    sc->sc_dev.dv_xname);
-		}
-		sc->sc_gmx_port->sc_proc_nibble_by_soft = 0;
-		octeon_eth_mii_statchg((struct device *)sc);
-		sc->sc_gmx_port->sc_even_nibble_cnt = 0;
-	}
-#endif
 	splx(s);
 
 	timeout_add_sec(&sc->sc_tick_misc_ch, 1);
