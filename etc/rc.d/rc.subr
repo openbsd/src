@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.108 2016/04/26 16:39:59 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.109 2016/04/26 16:59:15 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -49,6 +49,7 @@ _rc_write_runfile() {
 		cat >${_RC_RUNFILE} <<EOF
 daemon_class=${daemon_class}
 daemon_flags=${daemon_flags}
+daemon_rtable=${daemon_rtable}
 daemon_timeout=${daemon_timeout}
 daemon_user=${daemon_user}
 pexp=${pexp}
@@ -130,7 +131,7 @@ _rc_parse_conf() {
 		while IFS=' 	' read -r _l; do
 			[[ $_l == [!#=]*=* ]] || continue
 			_key=${_l%%*([[:blank:]])=*}
-			[[ $_key == *_@(flags|user|timeout) ]] || \
+			[[ $_key == *_@(flags|rtable|user|timeout) ]] || \
 				[[ " ${_allowed_keys[*]} " == *" $_key "* ]] || \
 				continue
 			[[ $_key == "" ]] && continue
@@ -154,15 +155,15 @@ rc_start() {
 }
 
 rc_check() {
-	pgrep -U "${daemon_user}" -q -xf "${pexp}"
+	pgrep -T "${daemon_rtable}" -U "${daemon_user}" -q -xf "${pexp}"
 }
 
 rc_reload() {
-	pkill -U "${daemon_user}" -HUP -xf "${pexp}"
+	pkill -T "${daemon_rtable}" -U "${daemon_user}" -HUP -xf "${pexp}"
 }
 
 rc_stop() {
-	pkill -U "${daemon_user}" -xf "${pexp}"
+	pkill -T "${daemon_rtable}" -U "${daemon_user}" -xf "${pexp}"
 }
 
 rc_cmd() {
@@ -257,12 +258,14 @@ _RC_RUNFILE=${_RC_RUNDIR}/${_name}
 _rc_do _rc_parse_conf
 
 eval _rcflags=\${${_name}_flags}
+eval _rcrtable=\${${_name}_rtable}
 eval _rcuser=\${${_name}_user}
 eval _rctimeout=\${${_name}_timeout}
 
 # set default values; duplicated in rcctl(8)
 getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && \
 	daemon_class=${_name} || daemon_class=daemon
+[ -z "${daemon_rtable}" ] && daemon_rtable=0
 [ -z "${daemon_user}" ] && daemon_user=root
 [ -z "${daemon_timeout}" ] && daemon_timeout=30
 
@@ -271,6 +274,7 @@ getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && \
 	unset _rcflags
 
 [ -n "${_rcflags}" ] && daemon_flags=${_rcflags}
+[ -n "${_rcrtable}" ] && daemon_rtable=${_rcrtable}
 [ -n "${_rcuser}" ] && daemon_user=${_rcuser}
 [ -n "${_rctimeout}" ] && daemon_timeout=${_rctimeout}
 
@@ -281,6 +285,8 @@ if [ -n "${_RC_DEBUG}" ]; then
 fi
 
 readonly daemon_class
-unset _rcflags _rcuser _rctimeout
+unset _rcflags _rcrtable _rcuser _rctimeout
 pexp="${daemon}${daemon_flags:+ ${daemon_flags}}"
 rcexec="su -l -c ${daemon_class} -s /bin/sh ${daemon_user} -c"
+[ "${daemon_rtable}" -eq 0 ] || \
+	rcexec="route -T ${daemon_rtable} exec ${rcexec}"
