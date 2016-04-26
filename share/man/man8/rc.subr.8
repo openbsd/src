@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.29 2015/09/25 08:24:52 sobrado Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.30 2016/04/26 17:43:12 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 25 2015 $
+.Dd $Mdocdate: April 26 2016 $
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -227,11 +227,25 @@ It is an error to source
 without defining
 .Va daemon
 first.
+.It Va daemon_class
+Login class to run the daemon with, using
+.Xr su 1 .
+This is a read only variable that gets set by
+.Nm rc.subr
+itself.
+It searches
+.Xr login.conf 5
+for a login class that has the same name as the
+.Nm rc.d
+script itself and uses that.
+If no such login class exists then
+.Dq daemon
+will be used.
 .It Va daemon_flags
 Arguments to call the daemon with.
-.It Va daemon_user
-User to run the daemon as, using
-.Xr su 1 .
+.It Va daemon_rtable
+Routing table to run the daemon under, using
+.Xr route 8 .
 .It Va daemon_timeout
 Maximum time in seconds to wait for the
 .Cm start
@@ -248,20 +262,9 @@ This is only guaranteed with the default
 and
 .Ic rc_reload
 functions.
-.It Va daemon_class
-Login class to run the daemon with, using
+.It Va daemon_user
+User to run the daemon as, using
 .Xr su 1 .
-This is a read only variable that gets set by
-.Nm rc.subr
-itself.
-It searches
-.Xr login.conf 5
-for a login class that has the same name as the
-.Nm rc.d
-script itself and uses that.
-If no such login class exists then
-.Dq daemon
-will be used.
 .It Va pexp
 A regular expression to be passed to
 .Xr pgrep 1
@@ -310,6 +313,15 @@ Defaults to:
 .Pp
 .Dl "su -l -c ${daemon_class} -s /bin/sh ${daemon_user} -c"
 .El
+If
+.Va daemon_rtable
+is set, the following
+.Xr route 8
+command is prepended to
+.Va rcexec :
+.Pp
+.Dl "route -T ${daemon_rtable}"
+.El
 .Pp
 All
 .Va daemon_*
@@ -320,7 +332,8 @@ Global defaults are provided by
 .Nm :
 .Bd -literal -offset indent
 daemon_class=daemon
-daemon_flags=""
+daemon_flags=
+daemon_rtable=0
 daemon_timeout=30
 daemon_user=root
 .Ed
@@ -339,6 +352,7 @@ site-specific values provided in
 .Xr rc.conf.local 8
 for
 .Va daemon_flags ,
+.Va daemon_rtable ,
 .Va daemon_timeout ,
 and
 .Va daemon_user
