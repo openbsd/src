@@ -1,6 +1,10 @@
 ./etc/examples/wsconsctl.conf
 ./sbin/kbd
 ./sbin/wsconsctl
+./usr/lib/gcc-lib/m88k-unknown-openbsd5.9
+./usr/lib/gcc-lib/m88k-unknown-openbsd5.9/3.3.6/fPIC/libgcc.a
+./usr/lib/gcc-lib/m88k-unknown-openbsd5.9/3.3.6/fpic/libgcc.a
+./usr/lib/gcc-lib/m88k-unknown-openbsd5.9/3.3.6/libgcc.a
 ./usr/libdata/perl5/m88k-openbsd
 ./usr/libdata/perl5/m88k-openbsd/5.20.2
 ./usr/libdata/perl5/m88k-openbsd/5.20.2/.packlist

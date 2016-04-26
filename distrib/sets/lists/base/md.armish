@@ -34,6 +34,11 @@
 ./etc/firmware/zd1211b
 ./sbin/kbd
 ./sbin/wsconsctl
+./usr/lib/gcc-lib/arm-unknown-openbsd5.9
+./usr/lib/gcc-lib/arm-unknown-openbsd5.9/4.2.1
+./usr/lib/gcc-lib/arm-unknown-openbsd5.9/4.2.1/collect2
+./usr/lib/gcc-lib/arm-unknown-openbsd5.9/4.2.1/libgcc.a
+./usr/lib/gcc-lib/arm-unknown-openbsd5.9/4.2.1/specs
 ./usr/libdata/perl5/arm-openbsd
 ./usr/libdata/perl5/arm-openbsd/5.20.2
 ./usr/libdata/perl5/arm-openbsd/5.20.2/.packlist

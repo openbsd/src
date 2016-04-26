@@ -302,6 +302,7 @@
 ./usr/bin/a2p
 ./usr/bin/apply
 ./usr/bin/apropos
+./usr/bin/ar
 ./usr/bin/arch
 ./usr/bin/at
 ./usr/bin/atq
@@ -322,6 +323,7 @@
 ./usr/bin/calendar
 ./usr/bin/cap_mkdb
 ./usr/bin/captoinfo
+./usr/bin/cc
 ./usr/bin/cdio
 ./usr/bin/chflags
 ./usr/bin/chfn
@@ -410,6 +412,7 @@
 ./usr/bin/lam
 ./usr/bin/last
 ./usr/bin/lastcomm
+./usr/bin/ld
 ./usr/bin/ldd
 ./usr/bin/leave
 ./usr/bin/less
@@ -608,6 +611,7 @@
 ./usr/include
 ./usr/lib
 ./usr/lib/libc.so.86.0
+./usr/lib/libc.so.86.0.a
 ./usr/lib/libcrypto.so.37.0
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2

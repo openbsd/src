@@ -1,3 +1,8 @@
+./usr/lib/gcc-lib/hppa64-unknown-openbsd5.9
+./usr/lib/gcc-lib/hppa64-unknown-openbsd5.9/4.2.1
+./usr/lib/gcc-lib/hppa64-unknown-openbsd5.9/4.2.1/collect2
+./usr/lib/gcc-lib/hppa64-unknown-openbsd5.9/4.2.1/libgcc.a
+./usr/lib/gcc-lib/hppa64-unknown-openbsd5.9/4.2.1/specs
 ./etc/examples/wsconsctl.conf
 ./etc/firmware/3c990
 ./etc/firmware/3c990-license

@@ -65,6 +65,11 @@
 ./etc/firmware/zd1211b
 ./sbin/kbd
 ./sbin/wsconsctl
+./usr/lib/gcc-lib/sparc64-unknown-openbsd5.9
+./usr/lib/gcc-lib/sparc64-unknown-openbsd5.9/4.2.1
+./usr/lib/gcc-lib/sparc64-unknown-openbsd5.9/4.2.1/collect2
+./usr/lib/gcc-lib/sparc64-unknown-openbsd5.9/4.2.1/libgcc.a
+./usr/lib/gcc-lib/sparc64-unknown-openbsd5.9/4.2.1/specs
 ./usr/libdata/perl5/site_perl/sparc64-openbsd
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/a.out.ph

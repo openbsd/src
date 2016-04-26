@@ -7,6 +7,11 @@
 ./etc/firmware/tigon2
 ./sbin/kbd
 ./sbin/wsconsctl
+./usr/lib/gcc-lib/sparc-unknown-openbsd5.9
+./usr/lib/gcc-lib/sparc-unknown-openbsd5.9/4.2.1
+./usr/lib/gcc-lib/sparc-unknown-openbsd5.9/4.2.1/collect2
+./usr/lib/gcc-lib/sparc-unknown-openbsd5.9/4.2.1/libgcc.a
+./usr/lib/gcc-lib/sparc-unknown-openbsd5.9/4.2.1/specs
 ./usr/libdata/perl5/site_perl/sparc-openbsd
 ./usr/libdata/perl5/site_perl/sparc-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/a.out.ph

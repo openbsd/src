@@ -1,9 +1,7 @@
 ./sys
-./usr/bin/ar
 ./usr/bin/as
 ./usr/bin/c++
 ./usr/bin/c++filt
-./usr/bin/cc
 ./usr/bin/cpp
 ./usr/bin/flex
 ./usr/bin/flex++
@@ -12,7 +10,6 @@
 ./usr/bin/gcov
 ./usr/bin/gdb
 ./usr/bin/gprof
-./usr/bin/ld
 ./usr/bin/lex
 ./usr/bin/libtool
 ./usr/bin/lorder
