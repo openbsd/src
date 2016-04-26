@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.39 2016/04/26 11:07:09 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.40 2016/04/26 11:22:05 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1068,7 +1068,6 @@ octeon_eth_stop(struct ifnet *ifp, int disable)
 
 	timeout_del(&sc->sc_tick_misc_ch);
 	timeout_del(&sc->sc_tick_free_ch);
-	timeout_del(&sc->sc_resume_ch);
 
 	mii_down(&sc->sc_mii);
 
