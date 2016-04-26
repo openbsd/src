@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.59 2016/04/26 11:59:21 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.60 2016/04/26 15:57:09 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -27,6 +27,7 @@
 #include <sys/queue.h>
 #include <sys/rwlock.h>
 #include <sys/pledge.h>
+#include <sys/memrange.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -163,6 +164,16 @@ void vmm_segment_desc_decode(uint64_t);
 void vmm_decode_cr0(uint64_t);
 void vmm_decode_cr3(uint64_t);
 void vmm_decode_cr4(uint64_t);
+void vmm_decode_msr_value(uint64_t, uint64_t);
+void vmm_decode_apicbase_msr_value(uint64_t);
+void vmm_decode_ia32_fc_value(uint64_t);
+void vmm_decode_mtrrcap_value(uint64_t);
+void vmm_decode_perf_status_value(uint64_t);
+void vmm_decode_perf_ctl_value(uint64_t);
+void vmm_decode_mtrrdeftype_value(uint64_t);
+void vmm_decode_efer_value(uint64_t);
+
+extern int mtrr2mrt(int);
 
 struct vmm_reg_debug_info {
 	uint64_t	vrdi_bit;
@@ -4268,7 +4279,10 @@ vmx_vcpu_dump_regs(struct vcpu *vcpu)
 const char *
 msr_name_decode(uint32_t msr)
 {
-	/* Add as needed ... */
+	/*
+	 * Add as needed. Also consider adding a decode function when
+	 * adding to this table.
+	 */
 
 	switch (msr) {
 	case MSR_TSC: return "TSC";
@@ -4469,5 +4483,161 @@ vmm_decode_cr4(uint64_t cr4)
 			DPRINTF(cr4_info[i].vrdi_absent);
 	
 	DPRINTF(")\n");
+}
+
+void
+vmm_decode_apicbase_msr_value(uint64_t apicbase)
+{
+	struct vmm_reg_debug_info apicbase_info[3] = {
+		{ APICBASE_BSP, "BSP ", "bsp "},
+		{ APICBASE_ENABLE_X2APIC, "X2APIC ", "x2apic "},
+		{ APICBASE_GLOBAL_ENABLE, "GLB_EN", "glb_en"}
+	};
+
+	uint8_t i;
+
+	DPRINTF("(");
+	for (i = 0; i < 3; i++)
+		if (apicbase & apicbase_info[i].vrdi_bit)
+			DPRINTF(apicbase_info[i].vrdi_present);
+		else
+			DPRINTF(apicbase_info[i].vrdi_absent);
+	
+	DPRINTF(")\n");
+}
+
+void
+vmm_decode_ia32_fc_value(uint64_t fcr)
+{
+	struct vmm_reg_debug_info fcr_info[4] = {
+		{ IA32_FEATURE_CONTROL_LOCK, "LOCK ", "lock "},
+		{ IA32_FEATURE_CONTROL_SMX_EN, "SMX ", "smx "},
+		{ IA32_FEATURE_CONTROL_VMX_EN, "VMX ", "vmx "},
+		{ IA32_FEATURE_CONTROL_SENTER_EN, "SENTER ", "senter "}
+	};
+
+	uint8_t i;
+
+	DPRINTF("(");
+	for (i = 0; i < 4; i++)
+		if (fcr & fcr_info[i].vrdi_bit)
+			DPRINTF(fcr_info[i].vrdi_present);
+		else
+			DPRINTF(fcr_info[i].vrdi_absent);
+
+	if (fcr & IA32_FEATURE_CONTROL_SENTER_EN)
+		DPRINTF(" [SENTER param = 0x%llx]",
+		    (fcr & IA32_FEATURE_CONTROL_SENTER_PARAM_MASK) >> 8);
+
+	DPRINTF(")\n");
+}
+
+void
+vmm_decode_mtrrcap_value(uint64_t val)
+{
+	struct vmm_reg_debug_info mtrrcap_info[3] = {
+		{ MTRRcap_FIXED, "FIXED ", "fixed "},
+		{ MTRRcap_WC, "WC ", "wc "},
+		{ MTRRcap_SMRR, "SMRR ", "smrr "}
+	};
+
+	uint8_t i;
+
+	DPRINTF("(");
+	for (i = 0; i < 3; i++)
+		if (val & mtrrcap_info[i].vrdi_bit)
+			DPRINTF(mtrrcap_info[i].vrdi_present);
+		else
+			DPRINTF(mtrrcap_info[i].vrdi_absent);
+
+	if (val & MTRRcap_FIXED)
+		DPRINTF(" [nr fixed ranges = 0x%llx]",
+		    (val & 0xff));
+
+	DPRINTF(")\n");
+}
+
+void
+vmm_decode_perf_status_value(uint64_t val)
+{
+	DPRINTF("(pstate ratio = 0x%llx)\n", (val & 0xffff));
+}
+
+void vmm_decode_perf_ctl_value(uint64_t val)
+{
+	DPRINTF("(%s ", (val & PERF_CTL_TURBO) ? "TURBO" : "turbo");
+	DPRINTF("pstate req = 0x%llx)\n", (val & 0xfffF));
+}
+
+void
+vmm_decode_mtrrdeftype_value(uint64_t mtrrdeftype)
+{
+	struct vmm_reg_debug_info mtrrdeftype_info[2] = {
+		{ MTRRdefType_FIXED_ENABLE, "FIXED ", "fixed "},
+		{ MTRRdefType_ENABLE, "ENABLED ", "enabled "},
+	};
+
+	uint8_t i;
+	int type;
+
+	DPRINTF("(");
+	for (i = 0; i < 2; i++)
+		if (mtrrdeftype & mtrrdeftype_info[i].vrdi_bit)
+			DPRINTF(mtrrdeftype_info[i].vrdi_present);
+		else
+			DPRINTF(mtrrdeftype_info[i].vrdi_absent);
+
+	DPRINTF("type = ");
+	type = mtrr2mrt(mtrrdeftype & 0xff);
+	switch (type) {
+	case MDF_UNCACHEABLE: DPRINTF("UC"); break;
+	case MDF_WRITECOMBINE: DPRINTF("WC"); break;
+	case MDF_WRITETHROUGH: DPRINTF("WT"); break;
+	case MDF_WRITEPROTECT: DPRINTF("RO"); break;
+	case MDF_WRITEBACK: DPRINTF("WB"); break;
+	case MDF_UNKNOWN:
+	default:
+		DPRINTF("??");
+		break;
+	}
+
+	DPRINTF(")\n");
+}
+
+void
+vmm_decode_efer_value(uint64_t efer)
+{
+	struct vmm_reg_debug_info efer_info[4] = {
+		{ EFER_SCE, "SCE ", "sce "},
+		{ EFER_LME, "LME ", "lme "},
+		{ EFER_LMA, "LMA ", "lma "},
+		{ EFER_NXE, "NXE ", "nxe "},
+	};
+
+	uint8_t i;
+
+	DPRINTF("(");
+	for (i = 0; i < 4; i++)
+		if (efer & efer_info[i].vrdi_bit)
+			DPRINTF(efer_info[i].vrdi_present);
+		else
+			DPRINTF(efer_info[i].vrdi_absent);
+
+	DPRINTF(")\n");
+}
+
+void
+vmm_decode_msr_value(uint64_t msr, uint64_t val)
+{
+	switch (msr) {
+	case MSR_APICBASE: vmm_decode_apicbase_msr_value(val); break;
+	case MSR_IA32_FEATURE_CONTROL: vmm_decode_ia32_fc_value(val); break;
+	case MSR_MTRRcap: vmm_decode_mtrrcap_value(val); break;
+	case MSR_PERF_STATUS: vmm_decode_perf_status_value(val); break;
+	case MSR_PERF_CTL: vmm_decode_perf_ctl_value(val); break;
+	case MSR_MTRRdefType: vmm_decode_mtrrdeftype_value(val); break;
+	case MSR_EFER: vmm_decode_efer_value(val); break;
+	default: DPRINTF("\n");
+	}
 }
 #endif /* VMM_DEBUG */

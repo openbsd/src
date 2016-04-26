@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.42 2016/04/26 15:27:32 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.43 2016/04/26 15:57:09 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -308,7 +308,9 @@
 #define	MSR_CTR0		0x012	/* P5 only (trap on P6) */
 #define	MSR_CTR1		0x013	/* P5 only (trap on P6) */
 #define MSR_APICBASE		0x01b
+#define APICBASE_BSP		0x100
 #define APICBASE_ENABLE_X2APIC	0x400
+#define APICBASE_GLOBAL_ENABLE	0x800
 #define MSR_EBL_CR_POWERON	0x02a
 #define MSR_EBC_FREQUENCY_ID    0x02c   /* Pentium 4 only */
 #define	MSR_TEST_CTL		0x033
@@ -838,6 +840,8 @@
 #define IA32_FEATURE_CONTROL_LOCK	0x01
 #define IA32_FEATURE_CONTROL_SMX_EN	0x02
 #define IA32_FEATURE_CONTROL_VMX_EN	0x04
+#define IA32_FEATURE_CONTROL_SENTER_EN (1ULL << 15)
+#define IA32_FEATURE_CONTROL_SENTER_PARAM_MASK 0x7f00
 #define IA32_VMX_BASIC			0x480
 #define IA32_VMX_PINBASED_CTLS		0x481
 #define IA32_VMX_PROCBASED_CTLS		0x482
