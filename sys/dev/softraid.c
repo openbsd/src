@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.371 2016/04/19 21:47:56 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.372 2016/04/26 13:22:16 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3009,6 +3009,10 @@ sr_hotspare_rebuild(struct sr_discipline *sd)
 	struct sr_workunit	*wu;
 	struct sr_ccb		*ccb;
 	int			i, s, cid, busy;
+
+	/*
+	 * Attempt to locate a hotspare and initiate rebuild.
+	 */
 
 	/* Find first offline chunk. */
 	for (cid = 0; cid < sd->sd_meta->ssdi.ssd_chunk_no; cid++) {
