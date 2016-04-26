@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_reject.c,v 1.13 2015/11/19 18:37:01 millert Exp $	*/
+/*	$OpenBSD: login_reject.c,v 1.14 2016/04/26 20:30:00 mestre Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -65,7 +65,7 @@ main(int argc, char *argv[])
 
 	(void)setpriority(PRIO_PROCESS, 0, 0);
 
-	if (pledge("stdio rpath", NULL) == -1) {
+	if (pledge("stdio rpath tty", NULL) == -1) {
 		syslog(LOG_AUTH|LOG_ERR, "pledge: %m");
 		exit(1);
 	}
