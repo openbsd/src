@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.107 2016/03/26 13:59:36 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.108 2016/04/26 16:39:59 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -46,13 +46,13 @@ _rc_usage() {
 
 _rc_write_runfile() {
 	[ -d ${_RC_RUNDIR} ] || mkdir -p ${_RC_RUNDIR} && \
-		print -rn -- "${pexp}" > ${_RC_RUNFILE}
-}
-
-_rc_read_runfile() {
-	local _new_pexp
-	[ -f ${_RC_RUNFILE} ] && _new_pexp=$(< ${_RC_RUNFILE})
-	[ -n "${_new_pexp}" ] && pexp="${_new_pexp}"
+		cat >${_RC_RUNFILE} <<EOF
+daemon_class=${daemon_class}
+daemon_flags=${daemon_flags}
+daemon_timeout=${daemon_timeout}
+daemon_user=${daemon_user}
+pexp=${pexp}
+EOF
 }
 
 _rc_rm_runfile() {
@@ -121,9 +121,8 @@ _rc_parse_conf() {
 	typeset -l _key
 	local _l _rcfile _val
 	set -A _allowed_keys -- \
-		spamd_black pf ipsec check_quotas accounting \
-		multicast amd_master \
-		shlib_dirs pkg_scripts nfs_server
+		accounting amd_master check_quotas ipsec multicast nfs_server \
+		pexp pf pkg_scripts shlib_dirs spamd_black
 
 	[ $# -gt 0 ] || set -- /etc/rc.conf /etc/rc.conf.local
 	for _rcfile; do
@@ -155,15 +154,15 @@ rc_start() {
 }
 
 rc_check() {
-	pgrep -q -xf "${pexp}"
+	pgrep -U "${daemon_user}" -q -xf "${pexp}"
 }
 
 rc_reload() {
-	pkill -HUP -xf "${pexp}"
+	pkill -U "${daemon_user}" -HUP -xf "${pexp}"
 }
 
 rc_stop() {
-	pkill -xf "${pexp}"
+	pkill -U "${daemon_user}" -xf "${pexp}"
 }
 
 rc_cmd() {
@@ -183,7 +182,7 @@ rc_cmd() {
 	[ X"${rc_bg}" = X"YES" ] && _bg="&"
 	[ -n "${_RC_DEBUG}" ] || _n="-n"
 
-	_rc_do _rc_read_runfile
+	_rc_do _rc_parse_conf ${_RC_RUNFILE}
 
 	case "$1" in
 	check)
