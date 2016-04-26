@@ -1,4 +1,4 @@
-/* $OpenBSD: i686_mem.c,v 1.17 2014/12/09 06:58:28 doug Exp $ */
+/* $OpenBSD: i686_mem.c,v 1.18 2016/04/26 15:27:32 mlarkin Exp $ */
 /*
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -305,7 +305,7 @@ mrstoreone(struct mem_range_softc *sc)
 	/* Flush caches, then disable caches, then disable MTRRs */
 	wbinvd();
 	lcr0((rcr0() & ~CR0_NW) | CR0_CD);
-	wrmsr(MSR_MTRRdefType, rdmsr(MSR_MTRRdefType) & ~0x800);
+	wrmsr(MSR_MTRRdefType, rdmsr(MSR_MTRRdefType) & ~MTRRdefType_ENABLE);
 	
 	/* Set fixed-range MTRRs */
 	if (sc->mr_cap & MR_FIXMTRR) {
@@ -362,7 +362,7 @@ mrstoreone(struct mem_range_softc *sc)
 	}
 
 	/* Re-enable caches and MTRRs */
-	wrmsr(MSR_MTRRdefType, mtrrdef | 0x800);
+	wrmsr(MSR_MTRRdefType, mtrrdef | MTRRdefType_ENABLE);
 	lcr0(rcr0() & ~(CR0_CD | CR0_NW));
 	lcr4(cr4save);
 }
@@ -535,7 +535,7 @@ mrinit(struct mem_range_softc *sc)
 	mtrrdef = rdmsr(MSR_MTRRdefType);
 	
 	/* For now, bail out if MTRRs are not enabled */
-	if (!(mtrrdef & 0x800)) {
+	if (!(mtrrdef & MTRRdefType_ENABLE)) {
 		printf("mtrr: CPU supports MTRRs but not enabled by BIOS\n");
 		return;
 	}
@@ -543,7 +543,8 @@ mrinit(struct mem_range_softc *sc)
 	printf("mtrr: Pentium Pro MTRR support, %d var ranges", nmdesc);
 	
 	/* If fixed MTRRs supported and enabled */
-	if ((mtrrcap & 0x100) && (mtrrdef & 0x400)) {
+	if ((mtrrcap & MTRRcap_FIXED) && 
+	    (mtrrdef & MTRRdefType_FIXED_ENABLE)) {
 		sc->mr_cap = MR_FIXMTRR;
 		nmdesc += MTRR_N64K + MTRR_N16K + MTRR_N4K;
 		printf(", %d fixed ranges", MTRR_N64K + MTRR_N16K + MTRR_N4K);
@@ -582,7 +583,7 @@ mrinit(struct mem_range_softc *sc)
 	 * Fetch maximum physical address size supported by the
 	 * processor as supported by CPUID leaf function 0x80000008.
 	 * If CPUID does not support leaf function 0x80000008, use the
-	 * default a 36-bit address size.
+	 * default 36-bit address size.
 	 */
 	CPUID(0x80000000, regs[0], regs[1], regs[2], regs[3]);
 	if (regs[0] >= 0x80000008) {

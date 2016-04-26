@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.53 2015/12/07 06:34:14 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.54 2016/04/26 15:27:32 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -318,6 +318,9 @@
 #define MSR_TEMPERATURE_TARGET_UNDOCUMENTED	0x0ee
 #define MSR_TEMPERATURE_TARGET_LOW_BIT_UNDOCUMENTED	0x40000000
 #define MSR_MTRRcap		0x0fe
+#define MTRRcap_FIXED		0x100	/* bit 8 - fixed MTRRs supported */
+#define MTRRcap_WC		0x400	/* bit 10 - WC type supported */
+#define MTRRcap_SMRR		0x800	/* bit 11 - SMM range reg supported */
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define	MSR_BBL_CR_DECC		0x118	/* PII+ only */
 #define	MSR_BBL_CR_CTL		0x119	/* PII+ only */
@@ -334,6 +337,7 @@
 #define P6MSR_CTRSEL1		0x187
 #define MSR_PERF_STATUS		0x198	/* Pentium M */
 #define MSR_PERF_CTL		0x199	/* Pentium M */
+#define PERF_CTL_TURBO		0x100000000ULL /* bit 32 - turbo mode */
 #define MSR_THERM_CONTROL	0x19a
 #define MSR_THERM_INTERRUPT	0x19b
 #define MSR_THERM_STATUS	0x19c
@@ -353,6 +357,8 @@
 #define MSR_MTRRfix4K_C0000	0x268
 #define MSR_CR_PAT		0x277
 #define MSR_MTRRdefType		0x2ff
+#define MTRRdefType_FIXED_ENABLE	0x400 /* bit 10 - fixed MTRR enabled */
+#define MTRRdefType_ENABLE	0x800 /* bit 11 - MTRRs enabled */
 #define MSR_PERF_FIXED_CTR1	0x30a	/* CPU_CLK_Unhalted.Core */
 #define MSR_PERF_FIXED_CTR2	0x30b	/* CPU_CLK.Unhalted.Ref */
 #define MSR_PERF_FIXED_CTR_CTRL	0x38d

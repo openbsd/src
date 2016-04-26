@@ -1,4 +1,4 @@
-/* $OpenBSD: amd64_mem.c,v 1.12 2016/02/03 03:25:07 guenther Exp $ */
+/* $OpenBSD: amd64_mem.c,v 1.13 2016/04/26 15:27:32 mlarkin Exp $ */
 /*
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -534,7 +534,7 @@ mrinit(struct mem_range_softc *sc)
 	mtrrdef = rdmsr(MSR_MTRRdefType);
 	
 	/* For now, bail out if MTRRs are not enabled */
-	if (!(mtrrdef & 0x800)) {
+	if (!(mtrrdef & MTRRdefType_ENABLE)) {
 		printf("mtrr: CPU supports MTRRs but not enabled by BIOS\n");
 		return;
 	}
@@ -542,7 +542,8 @@ mrinit(struct mem_range_softc *sc)
 	printf("mtrr: Pentium Pro MTRR support, %d var ranges", nmdesc);
 	
 	/* If fixed MTRRs supported and enabled */
-	if ((mtrrcap & 0x100) && (mtrrdef & 0x400)) {
+	if ((mtrrcap & MTRRcap_FIXED) &&
+	    (mtrrdef & MTRRdefType_FIXED_ENABLE)) {
 		sc->mr_cap = MR_FIXMTRR;
 		nmdesc += MTRR_N64K + MTRR_N16K + MTRR_N4K;
 		printf(", %d fixed ranges", MTRR_N64K + MTRR_N16K + MTRR_N4K);
@@ -581,7 +582,7 @@ mrinit(struct mem_range_softc *sc)
 	 * Fetch maximum physical address size supported by the
 	 * processor as supported by CPUID leaf function 0x80000008.
 	 * If CPUID does not support leaf function 0x80000008, use the
-	 * default a 36-bit address size.
+	 * default 36-bit address size.
 	 */
 	if (curcpu()->ci_pnfeatset >= 0x80000008) {
 		CPUID(0x80000008, regs[0], regs[1], regs[2], regs[3]);
