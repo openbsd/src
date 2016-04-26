@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.74 2015/10/26 10:43:42 bluhm Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.75 2016/04/26 14:49:15 deraadt Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -174,6 +174,15 @@ FULLSHLIBNAME=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 _LIBS+=${FULLSHLIBNAME}
 .endif
 
+.if defined(LIBREBUILD)
+_LIBS+=${FULLSHLIBNAME}.a
+
+.if exists(${.CURDIR}/Symbols.list)
+SYMBOLSMAP=Symbols.map
+.endif
+
+.endif
+
 .if defined(VERSION_SCRIPT)
 ${FULLSHLIBNAME}:	${VERSION_SCRIPT}
 LDADD+=	-Wl,--version-script=${VERSION_SCRIPT}
@@ -209,7 +218,13 @@ ${FULLSHLIBNAME}: ${SOBJS} ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f ${.TARGET}
 	${CC} -shared ${PICFLAG} -o ${.TARGET} \
-	    `${LORDER} ${SOBJS}|tsort -q` ${LDADD}
+	    `echo ${SOBJS} | tr ' ' '\n' | sort -R` ${LDADD}
+
+${FULLSHLIBNAME}.a: ${SOBJS}
+	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\) ar
+	@rm -f ${.TARGET}
+	@echo ${PICFLAG} ${LDADD} > .ldadd
+	ar cq ${FULLSHLIBNAME}.a ${SOBJS} .ldadd ${SYMBOLSMAP}
 
 # all .do files...
 DOBJS+=	${OBJS:.o=.do}
@@ -290,6 +305,10 @@ realinstall:
 .if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
 	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    ${FULLSHLIBNAME} ${DESTDIR}${LIBDIR}
+.if defined(LIBREBUILD)
+	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	    ${FULLSHLIBNAME}.a ${DESTDIR}${LIBDIR}
+.endif
 .endif
 .if defined(LINKS) && !empty(LINKS)
 .  for lnk file in ${LINKS}
