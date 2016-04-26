@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.60 2016/04/26 15:57:09 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.61 2016/04/26 16:11:27 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4256,10 +4256,12 @@ vmx_vcpu_dump_regs(struct vcpu *vcpu)
 
 	for (i = 0; i < VMX_NUM_MSR_STORE; i++) {
 		DPRINTF("  MSR %d @ %p : 0x%08x (%s), "
-		    "value=0x%016llx\n",
+		    "value=0x%016llx ",
 		    i, &msr_store[i], msr_store[i].vms_index,
 		    msr_name_decode(msr_store[i].vms_index),
 		    msr_store[i].vms_data); 
+		vmm_decode_msr_value(msr_store[i].vms_index,
+		    msr_store[i].vms_data);
 	}
 
 	DPRINTF(" last PIC irq=%d\n", vcpu->vc_intr);
