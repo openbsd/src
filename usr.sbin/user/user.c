@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.108 2016/03/29 17:21:50 mestre Exp $ */
+/* $OpenBSD: user.c,v 1.109 2016/04/26 13:30:12 mestre Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1847,6 +1847,11 @@ useradd(int argc, char **argv)
 			usermgmt_usage("useradd");
 		}
 	}
+
+	if (pledge("stdio rpath wpath cpath fattr flock proc exec getpw id",
+	    NULL) == -1)
+		err(1, "pledge");
+
 	if (bigD) {
 		if (defaultfield) {
 			checkeuid();
@@ -1981,6 +1986,11 @@ usermod(int argc, char **argv)
 			usermgmt_usage("usermod");
 		}
 	}
+
+	if (pledge("stdio rpath wpath cpath fattr flock proc exec getpw id",
+	    NULL) == -1)
+		err(1, "pledge");
+
 	if ((u.u_flags & F_MKDIR) && !(u.u_flags & F_HOMEDIR) &&
 	    !(u.u_flags & F_USERNAME)) {
 		warnx("option 'm' useless without 'd' or 'l' -- ignored");
@@ -2051,6 +2061,11 @@ userdel(int argc, char **argv)
 	if (argc != 1) {
 		usermgmt_usage("userdel");
 	}
+
+	if (pledge("stdio rpath wpath cpath fattr flock proc exec getpw id",
+	    NULL) == -1)
+		err(1, "pledge");
+
 	checkeuid();
 	if ((pwp = getpwnam(*argv)) == NULL) {
 		warnx("No such user `%s'", *argv);
@@ -2109,6 +2124,10 @@ groupadd(int argc, char **argv)
 	if (argc != 1) {
 		usermgmt_usage("groupadd");
 	}
+
+	if (pledge("stdio rpath wpath cpath fattr flock getpw", NULL) == -1)
+		err(1, "pledge");
+
 	checkeuid();
 	if (!valid_group(*argv)) {
 		errx(EXIT_FAILURE, "invalid group name `%s'", *argv);
@@ -2153,6 +2172,10 @@ groupdel(int argc, char **argv)
 		warnx("No such group: `%s'", *argv);
 		return EXIT_FAILURE;
 	}
+
+	if (pledge("stdio rpath wpath cpath fattr flock", NULL) == -1)
+		err(1, "pledge");
+
 	if (!modify_gid(*argv, NULL)) {
 		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
 	}
@@ -2212,6 +2235,10 @@ groupmod(int argc, char **argv)
 	if ((grp = getgrnam(*argv)) == NULL) {
 		errx(EXIT_FAILURE, "can't find group `%s' to modify", *argv);
 	}
+
+	if (pledge("stdio rpath wpath cpath fattr flock", NULL) == -1)
+		err(1, "pledge");
+
 	if (!is_local(*argv, _PATH_GROUP)) {
 		errx(EXIT_FAILURE, "Group `%s' must be a local group", *argv);
 	}
@@ -2271,6 +2298,10 @@ userinfo(int argc, char **argv)
 	if (argc != 1) {
 		usermgmt_usage("userinfo");
 	}
+
+	if (pledge("stdio getpw", NULL) == -1)
+		err(1, "pledge");
+
 	pwp = find_user_info(*argv);
 	if (exists) {
 		exit((pwp) ? EXIT_SUCCESS : EXIT_FAILURE);
@@ -2329,6 +2360,10 @@ groupinfo(int argc, char **argv)
 	if (argc != 1) {
 		usermgmt_usage("groupinfo");
 	}
+
+	if (pledge("stdio getpw", NULL) == -1)
+		err(1, "pledge");
+
 	grp = find_group_info(*argv);
 	if (exists) {
 		exit((grp) ? EXIT_SUCCESS : EXIT_FAILURE);
