@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.373 2016/04/26 13:38:24 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.374 2016/04/26 13:42:39 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3212,7 +3212,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 		    devname, (long long)((size - csize) << DEV_BSHIFT));
 	if (label.d_secsize > sd->sd_meta->ssdi.ssd_secsize) {
 		sr_error(sc, "%s sector size too large, <= %u bytes "
-		    "required", devname, label.d_secsize);
+		    "required", devname, sd->sd_meta->ssdi.ssd_secsize);
 		goto done;
 	}
 
