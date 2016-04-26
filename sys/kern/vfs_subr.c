@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.245 2016/04/26 09:51:22 beck Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.246 2016/04/26 18:23:07 natano Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2276,6 +2276,6 @@ copy_statfs_info(struct statfs *sbp, const struct mount *mp)
 	memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
 	memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
 	memcpy(sbp->f_mntfromspec, mp->mnt_stat.f_mntfromspec, MNAMELEN);
-	memcpy(&sbp->mount_info.ufs_args, &mp->mnt_stat.mount_info.ufs_args,
-	    sizeof(struct ufs_args));
+	memcpy(&sbp->mount_info, &mp->mnt_stat.mount_info,
+	    sizeof(union mount_info));
 }
