@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.6 2016/04/02 00:34:47 jsg Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.7 2016/04/26 19:10:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -119,8 +119,10 @@ sdhc_acpi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (sc->sc_gpio_io_node && sc->sc_gpio_io_node->gpio)
+	if (sc->sc_gpio_io_node && sc->sc_gpio_io_node->gpio) {
 		sc->sc.sc_card_detect = sdhc_acpi_card_detect;
+		printf(", gpio");
+	}
 
 	if (sc->sc_gpio_int_node && sc->sc_gpio_int_node->gpio) {
 		struct acpi_gpio *gpio = sc->sc_gpio_int_node->gpio;
@@ -155,7 +157,6 @@ sdhc_acpi_parse_resources(union acpi_resource *crs, void *arg)
 	case LR_GPIO:
 		node = aml_searchname(sc->sc_node, (char *)&crs->pad[crs->lr_gpio.res_off]);
 		pin = *(uint16_t *)&crs->pad[crs->lr_gpio.pin_off];
-		printf(" %s pin %d\n", node->name, pin);
 		if (crs->lr_gpio.type == LR_GPIO_INT) {
 			sc->sc_gpio_int_node = node;
 			sc->sc_gpio_int_pin = pin;
@@ -164,13 +165,6 @@ sdhc_acpi_parse_resources(union acpi_resource *crs, void *arg)
 			sc->sc_gpio_io_node = node;
 			sc->sc_gpio_io_pin = pin;
 		}
-		printf(" tflags 0x%x\n", crs->lr_gpio.tflags);
-		printf(" ppi 0x%x\n", crs->lr_gpio._ppi);
-		printf(" drs 0x%x\n", crs->lr_gpio._drs);
-		printf(" dbt 0x%x\n", crs->lr_gpio._dbt);
-		break;
-	default:
-		printf(" type 0x%x\n", type);
 		break;
 	}
 
