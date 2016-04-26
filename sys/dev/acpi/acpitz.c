@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.49 2015/05/06 01:41:55 jsg Exp $ */
+/* $OpenBSD: acpitz.c,v 1.50 2016/04/26 09:42:57 semarie Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -37,6 +37,7 @@
 #define KTOC(k)			((k - 2732) / 10)
 #define ACPITZ_MAX_AC		(10)
 #define ACPITZ_TMP_RETRY	(3)
+#define ACPITZ_UNKNOWN		(-1)
 
 struct acpitz_softc {
 	struct device		sc_dev;
@@ -139,7 +140,6 @@ acpitz_init(struct acpitz_softc *sc, int flag)
 		for (i = 0; i < ACPITZ_MAX_AC; i++) {
 			snprintf(name, sizeof(name), "_AC%d", i);
 			sc->sc_ac[i] = acpitz_getreading(sc, name);
-			sc->sc_ac_stat[i] = -1;
 		}
 	}
 
@@ -160,6 +160,8 @@ acpitz_init(struct acpitz_softc *sc, int flag)
 				    sc->sc_devnode, &res, 0);
 				aml_freevalue(&res);
 			}
+			/* initialize current state to unknown */
+			sc->sc_ac_stat[i] = ACPITZ_UNKNOWN;
 		}
 	}
 }
@@ -423,7 +425,8 @@ acpitz_refresh(void *arg)
 				acpitz_setfan(sc, i, "_ON_");
 		} else if (sc->sc_ac[i] != -1) {
 			/* turn off fan i */
-			if (sc->sc_ac_stat[i] > 0)
+			if ((sc->sc_ac_stat[i] == ACPITZ_UNKNOWN) ||
+			    (sc->sc_ac_stat[i] > 0))
 				acpitz_setfan(sc, i, "_OFF");
 		}
 	}
