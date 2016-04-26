@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.244 2016/04/07 09:58:11 natano Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.245 2016/04/26 09:51:22 beck Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2163,8 +2163,8 @@ vfs_vnode_print(void *v, int full,
 	struct vnode *vp = v;
 
 	(*pr)("tag %s(%d) type %s(%d) mount %p typedata %p\n",
-	      vp->v_tag > nitems(vtags)? "<unk>":vtags[vp->v_tag], vp->v_tag,
-	      vp->v_type > nitems(vtypes)? "<unk>":vtypes[vp->v_type],
+	      vp->v_tag >= nitems(vtags)? "<unk>":vtags[vp->v_tag], vp->v_tag,
+	      vp->v_type >= nitems(vtypes)? "<unk>":vtypes[vp->v_type],
 	      vp->v_type, vp->v_mount, vp->v_mountedhere);
 
 	(*pr)("data %p usecount %d writecount %d holdcnt %d numoutput %d\n",
