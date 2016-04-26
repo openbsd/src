@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.31 2016/04/01 08:18:57 ajacoutot Exp $
+.\"	$OpenBSD: rcctl.8,v 1.32 2016/04/26 17:58:42 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 1 2016 $
+.Dd $Mdocdate: April 26 2016 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -189,6 +189,7 @@ flags:
 # rcctl get apmd
 apmd_class=daemon
 apmd_flags=-A
+apmd_rtable=0
 apmd_timeout=30
 apmd_user=root
 # echo $?

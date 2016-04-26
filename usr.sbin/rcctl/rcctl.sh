@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.93 2016/04/09 08:02:22 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.94 2016/04/26 17:58:42 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -223,7 +223,7 @@ svc_get()
 	[ -n "${_svc}" ] || return
 
 	local _status=0 _val _var=$2
-	local daemon_class daemon_flags daemon_timeout daemon_user
+	local daemon_class daemon_flags daemon_rtable daemon_timeout daemon_user
 
 	if svc_is_special ${_svc}; then
 		daemon_flags="$(eval echo \${${_svc}})"
@@ -248,6 +248,12 @@ svc_get()
 					daemon_flags="$(eval echo \"\${${_svc}_flags}\")"
 				[ -z "${daemon_flags}" ] && \
 					daemon_flags="$(svc_getdef ${_svc} flags)"
+			fi
+			if [ -z "${_var}" -o "${_var}" = "rtable" ]; then
+				[ -z "${daemon_rtable}" ] && \
+					daemon_rtable="$(eval echo \"\${${_svc}_rtable}\")"
+				[ -z "${daemon_rtable}" ] && \
+					daemon_rtable="$(svc_getdef ${_svc} rtable)"
 			fi
 			if [ -z "${_var}" -o "${_var}" = "timeout" ]; then
 				[ -z "${daemon_timeout}" ] && \
@@ -277,6 +283,7 @@ svc_get()
 		else
 			echo "${_svc}_class=${daemon_class}"
 			echo "${_svc}_flags=${daemon_flags}"
+			echo "${_svc}_rtable=${daemon_rtable}"
 			echo "${_svc}_timeout=${daemon_timeout}"
 			echo "${_svc}_user=${daemon_user}"
 		fi
@@ -291,7 +298,7 @@ svc_getdef()
 	[ -n "${_svc}" ] || return
 
 	local _status=0 _val _var=$2
-	local daemon_class daemon_flags daemon_timeout daemon_user
+	local daemon_class daemon_flags daemon_rtable daemon_timeout daemon_user
 
 	if svc_is_special ${_svc}; then
 		# unconditionally parse: we always output flags and/or status
@@ -315,6 +322,7 @@ svc_getdef()
 			. /etc/rc.d/${_svc} >/dev/null 2>&1
 
 			daemon_class=daemon
+			[ -z "${daemon_rtable}" ] && daemon_rtable=0
 			[ -z "${daemon_timeout}" ] && daemon_timeout=30
 			[ -z "${daemon_user}" ] && daemon_user=root
 		fi
@@ -331,6 +339,7 @@ svc_getdef()
 		else
 			echo "${_svc}_class=${daemon_class}"
 			echo "${_svc}_flags=${daemon_flags}"
+			echo "${_svc}_rtable=${daemon_rtable}"
 			echo "${_svc}_timeout=${daemon_timeout}"
 			echo "${_svc}_user=${daemon_user}"
 		fi
@@ -349,7 +358,7 @@ svc_rm()
 		( svc_getdef ${_svc} status ) && \
 			echo "${_svc}=NO" >>${_TMP_RCCONF}
 	else
-		grep -Ev "^${_svc}_(flags|timeout|user).*=" \
+		grep -Ev "^${_svc}_(flags|rtable|timeout|user).*=" \
 			/etc/rc.conf.local >${_TMP_RCCONF}
 		( svc_getdef ${_svc} status ) && \
 			echo "${_svc}_flags=NO" >>${_TMP_RCCONF}
@@ -402,6 +411,10 @@ svc_set()
 	fi
 
 	if [ -n "${_args}" ]; then
+		if [ "${_var}" = "rtable" ]; then
+			[[ ${_args} != +([[:digit:]]) || ${_args} -lt 0 ]] && \
+				rcctl_err "\"${_args}\" is not an integer"
+		fi
 		if [ "${_var}" = "timeout" ]; then
 			[[ ${_args} != +([[:digit:]]) || ${_args} -le 0 ]] && \
 				rcctl_err "\"${_args}\" is not a positive integer"
@@ -473,13 +486,13 @@ case ${action} in
 		svc_is_avail ${svc} || \
 			rcctl_err "service ${svc} does not exist" 2
 		if [ -n "${var}" ]; then
-			[[ ${var} != @(class|flags|status|timeout|user) ]] && usage
+			[[ ${var} != @(class|flags|status|rtable|timeout|user) ]] && usage
 			if svc_is_meta ${svc}; then
 				[ "${var}" != "status" ] && \
 					rcctl_err "/etc/rc.d/${svc} is a meta script, cannot \"${action} ${var}\""
 			fi
 			if svc_is_special ${svc}; then
-				[[ ${var} == @(class|timeout|user) ]] && \
+				[[ ${var} == @(class|rtable|timeout|user) ]] && \
 					rcctl_err "\"${svc}\" is a special variable, cannot \"${action} ${var}\""
 			fi
 		fi
@@ -492,7 +505,7 @@ case ${action} in
 		[ -z "${svc}" ] && usage
 		svc_is_avail ${svc} || \
 			rcctl_err "service ${svc} does not exist" 2
-		[[ ${var} != @(class|flags|status|timeout|user) ]] && usage
+		[[ ${var} != @(class|flags|rtable|status|timeout|user) ]] && usage
 		svc_is_meta ${svc} && [ "${var}" != "status" ] && \
 			rcctl_err "/etc/rc.d/${svc} is a meta script, cannot \"${action} ${var}\""
 		[[ ${var} = flags && ${args} = NO ]] && \
