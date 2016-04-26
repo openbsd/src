@@ -438,7 +438,6 @@
 ./usr/share/man/man1/stty.1
 ./usr/share/man/man1/su.1
 ./usr/share/man/man1/systat.1
-./usr/share/man/man1/systrace.1
 ./usr/share/man/man1/tail.1
 ./usr/share/man/man1/talk.1
 ./usr/share/man/man1/tar.1
@@ -1831,7 +1830,6 @@
 ./usr/share/man/man4/stp.4
 ./usr/share/man/man4/sv.4
 ./usr/share/man/man4/sym.4
-./usr/share/man/man4/systrace.4
 ./usr/share/man/man4/tap.4
 ./usr/share/man/man4/tcic.4
 ./usr/share/man/man4/tcp.4

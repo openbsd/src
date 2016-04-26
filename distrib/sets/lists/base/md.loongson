@@ -1109,7 +1109,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/sun/sunkbdvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/sun/sunmsvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/sun/uperfio.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/systrace.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/tc
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/tc/ascvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/tc/if_levar.ph

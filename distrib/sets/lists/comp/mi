@@ -693,7 +693,6 @@
 ./usr/include/dev/sun/sunkbdvar.h
 ./usr/include/dev/sun/sunmsvar.h
 ./usr/include/dev/sun/uperfio.h
-./usr/include/dev/systrace.h
 ./usr/include/dev/tc
 ./usr/include/dev/tc/ascvar.h
 ./usr/include/dev/tc/if_levar.h
@@ -2765,7 +2764,6 @@
 ./usr/share/man/man9/style.9
 ./usr/share/man/man9/syscall.9
 ./usr/share/man/man9/sysctl_int.9
-./usr/share/man/man9/systrace.9
 ./usr/share/man/man9/task_add.9
 ./usr/share/man/man9/tc_init.9
 ./usr/share/man/man9/time_second.9

@@ -46,7 +46,6 @@
 ./etc/ssl/openssl.cnf
 ./etc/ssl/x509v3.cnf
 ./etc/syslog.conf
-./etc/systrace/usr_sbin_lpd
 ./etc/ttys
 ./root/.Xdefaults
 ./root/.cshrc

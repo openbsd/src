@@ -39,7 +39,6 @@
 ./bin/sleep
 ./bin/stty
 ./bin/sync
-./bin/systrace
 ./bin/tar
 ./bin/test
 ./dev
@@ -223,7 +222,6 @@
 ./etc/ssl
 ./etc/ssl/lib
 ./etc/ssl/private
-./etc/systrace
 ./etc/termcap
 ./etc/weekly
 ./home
