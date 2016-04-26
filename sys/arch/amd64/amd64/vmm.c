@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.58 2016/04/25 19:53:45 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.59 2016/04/26 11:59:21 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -632,11 +632,10 @@ vm_intr_pending(struct vm_intr_params *vip)
 	 * simply re-enter the guest. This "fast notification" is done only
 	 * as an optimization.
 	 */
-        if (vcpu->vc_state == VCPU_STATE_RUNNING) {
-                x86_send_ipi(vcpu->vc_last_pcpu, X86_IPI_NOP);
-        }
+	if (vcpu->vc_state == VCPU_STATE_RUNNING) {
+		x86_send_ipi(vcpu->vc_last_pcpu, X86_IPI_NOP);
+	}
 #endif /* MULTIPROCESSOR */
-
 
 	return (0);
 }
