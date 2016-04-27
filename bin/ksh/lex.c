@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.68 2016/03/04 09:37:23 czarkoff Exp $	*/
+/*	$OpenBSD: lex.c,v 1.69 2016/04/27 12:46:23 naddy Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -427,40 +427,22 @@ yylex(int cf)
 				/* Need to know if we are inside double quotes
 				 * since sh/at&t-ksh translate the \" to " in
 				 * "`..\"..`".
-				 * This is not done in posix mode (section
-				 * 3.2.3, Double Quotes: "The backquote shall
-				 * retain its special meaning introducing the
-				 * other form of command substitution (see
-				 * 3.6.3). The portion of the quoted string
-				 * from the initial backquote and the
-				 * characters up to the next backquote that
-				 * is not preceded by a backslash (having
-				 * escape characters removed) defines that
-				 * command whose output replaces `...` when
-				 * the word is expanded."
-				 * Section 3.6.3, Command Substitution:
-				 * "Within the backquoted style of command
-				 * substitution, backslash shall retain its
-				 * literal meaning, except when followed by
-				 * $ ` \.").
 				 */
 				statep->ls_sbquote.indquotes = 0;
-				if (!Flag(FPOSIX)) {
-					Lex_state *s = statep;
-					Lex_state *base = state_info.base;
-					while (1) {
-						for (; s != base; s--) {
-							if (s->ls_state == SDQUOTE) {
-								statep->ls_sbquote.indquotes = 1;
-								break;
-							}
+				Lex_state *s = statep;
+				Lex_state *base = state_info.base;
+				while (1) {
+					for (; s != base; s--) {
+						if (s->ls_state == SDQUOTE) {
+							statep->ls_sbquote.indquotes = 1;
+							break;
 						}
-						if (s != base)
-							break;
-						if (!(s = s->ls_info.base))
-							break;
-						base = s-- - STATE_BSIZE;
 					}
+					if (s != base)
+						break;
+					if (!(s = s->ls_info.base))
+						break;
+					base = s-- - STATE_BSIZE;
 				}
 				break;
 			default:

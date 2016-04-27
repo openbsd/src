@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.178 2016/03/21 13:35:00 tb Exp $
+.\"	$OpenBSD: ksh.1,v 1.179 2016/04/27 12:46:23 naddy Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: March 21 2016 $
+.Dd $Mdocdate: April 27 2016 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -822,12 +822,6 @@ the
 and the newline are stripped; otherwise, both the
 .Ql \e
 and the character following are unchanged.
-.Pp
-.Sy Note :
-See
-.Sx POSIX mode
-below for a special rule regarding
-differences in quoting when the shell is in POSIX mode.
 .Ss Aliases
 There are two types of aliases: normal command aliases and tracked aliases.
 Command aliases are normally used as a short hand for a long or often used
@@ -2472,27 +2466,6 @@ The following is a list of things that are affected by the state of the
 .Ic posix
 option:
 .Bl -bullet
-.It
-Occurrences of
-.Ic \e\&"
-inside double quoted
-.Ic `..`
-command substitutions.
-In POSIX mode, the
-.Ic \e\&"
-is interpreted when the command is interpreted;
-in non-POSIX mode,
-the backslash is stripped before the command substitution is interpreted.
-For example,
-.Ic echo \&"`echo \e\&"hi\e\&"`\&"
-produces
-.Dq \&"hi\&"
-in POSIX mode,
-.Dq hi
-in non-POSIX mode.
-To avoid problems, use the
-.Ic $(...)\&
-form of command substitution.
 .It
 .Ic kill -l
 output.
