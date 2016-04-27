@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.30 2015/09/21 08:49:06 ajacoutot Exp $
+# $OpenBSD: Link.pm,v 1.31 2016/04/27 09:50:57 ajacoutot Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -131,7 +131,7 @@ sub run
 	    'dlpreopen:',
 	    'export-dynamic',
 	    'export-symbols:',
-	    '-export-symbols:', sub { shortdie "the option is -export-symbols.\n--export-symbols wil be ignored by gnu libtool"; },
+	    '-export-symbols:', sub { shortdie "the option is -export-symbols.\n--export-symbols will be ignored by gnu libtool"; },
 	    'export-symbols-regex:',
 	    'module',
 	    'no-fast-install',
