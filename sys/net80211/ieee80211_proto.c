@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.65 2016/04/12 14:33:27 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.66 2016/04/27 11:58:10 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -560,15 +560,19 @@ ieee80211_ht_negotiate(struct ieee80211com *ic, struct ieee80211_node *ni)
 		return;
 
 	/* Check if the peer supports HT. MCS 0-7 are mandatory. */
-	if (ni->ni_rxmcs[0] != 0xff)
+	if (ni->ni_rxmcs[0] != 0xff) {
+		ic->ic_stats.is_ht_nego_no_mandatory_mcs++;
 		return;
+	}
 
 	if (ic->ic_opmode == IEEE80211_M_STA) {
 		/* We must support the AP's basic MCS set. */
 		for (i = 0; i < IEEE80211_HT_NUM_MCS; i++) {
 			if (isset(ni->ni_basic_mcs, i) &&
-			    !isset(ic->ic_sup_mcs, i))
+			    !isset(ic->ic_sup_mcs, i)) {
+				ic->ic_stats.is_ht_nego_no_basic_mcs++;
 				return;
+			}
 		}
 	}
 
@@ -576,12 +580,16 @@ ieee80211_ht_negotiate(struct ieee80211com *ic, struct ieee80211_node *ni)
 	 * Don't allow group cipher (includes WEP) or TKIP
 	 * for pairwise encryption (see 802.11-2012 11.1.6).
 	 */
-	if (ic->ic_flags & IEEE80211_F_WEPON)
+	if (ic->ic_flags & IEEE80211_F_WEPON) {
+		ic->ic_stats.is_ht_nego_bad_crypto++;
 		return;
+	}
 	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 	    (ni->ni_rsnciphers & IEEE80211_CIPHER_USEGROUP ||
-	    ni->ni_rsnciphers & IEEE80211_CIPHER_TKIP))
+	    ni->ni_rsnciphers & IEEE80211_CIPHER_TKIP)) {
+		ic->ic_stats.is_ht_nego_bad_crypto++;
 		return;
+	}
 
 	ni->ni_flags |= IEEE80211_NODE_HT; 
 }
@@ -594,6 +602,8 @@ ieee80211_tx_ba_timeout(void *arg)
 	struct ieee80211com *ic = ni->ni_ic;
 	u_int8_t tid;
 	int s;
+
+	ic->ic_stats.is_ht_tx_ba_timeout++;
 
 	s = splnet();
 	if (ba->ba_state == IEEE80211_BA_REQUESTED) {
@@ -617,6 +627,8 @@ ieee80211_rx_ba_timeout(void *arg)
 	struct ieee80211com *ic = ni->ni_ic;
 	u_int8_t tid;
 	int s;
+
+	ic->ic_stats.is_ht_rx_ba_timeout++;
 
 	s = splnet();
 
