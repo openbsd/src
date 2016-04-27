@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.893 2016/04/25 09:55:23 ajacoutot Exp $
+#	$OpenBSD: install.sub,v 1.894 2016/04/27 14:50:18 ajacoutot Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2301,8 +2301,7 @@ finish_up() {
 
 	# Ensure that fw_update is run on reboot.
 	[[ $MODE == upgrade ]] &&
-		echo 'echo "running sysmerge..."' >>/mnt/etc/rc.firsttime &&
-		echo "/usr/sbin/sysmerge -b" >>/mnt/etc/rc.firsttime
+		echo "/usr/sbin/sysmerge -b" >>/mnt/etc/rc.sysmerge
 	echo "/usr/sbin/fw_update -v" >>/mnt/etc/rc.firsttime
 
 	store_random
