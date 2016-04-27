@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hypot.3,v 1.23 2016/04/26 19:49:22 tb Exp $
+.\"	$OpenBSD: hypot.3,v 1.24 2016/04/27 06:44:54 jmc Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)hypot.3	6.7 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: April 26 2016 $
+.Dd $Mdocdate: April 27 2016 $
 .Dt HYPOT 3
 .Os
 .Sh NAME
@@ -95,7 +95,7 @@ are NaN for all
 .Em finite
 .Ar v .
 Programmers might be surprised at first to discover that
-.Fn hypot "\(+-infinity" "NaN" No = +infinity.
+.Fn hypot "\(+-infinity" "NaN" No = +infinity .
 This is intentional; it happens because
 .Fn hypot "infinity" "v" No = +infinity
 for
