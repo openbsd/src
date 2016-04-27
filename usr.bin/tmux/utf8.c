@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.30 2016/04/26 07:33:36 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.31 2016/04/27 09:36:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -119,6 +119,14 @@ utf8_width(wchar_t wc)
 	width = wcwidth(wc);
 	if (width < 0 || width > 0xff) {
 		log_debug("Unicode %04x, wcwidth() %d", wc, width);
+
+		/*
+		 * Many platforms have no width for relatively common
+		 * characters (wcwidth() returns -1); assume width 1 in this
+		 * case and hope for the best.
+		 */
+		if (width < 0)
+			return (1);
 		return (-1);
 	}
 	return (width);
