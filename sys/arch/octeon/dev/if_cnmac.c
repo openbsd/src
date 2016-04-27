@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.40 2016/04/26 11:22:05 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.41 2016/04/27 15:44:27 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -107,17 +107,6 @@
 #define OCTEON_POOL_NWORDS_CMD	\
 	    (((uint32_t)OCTEON_POOL_SIZE_CMD / sizeof(uint64_t)) - 1)
 #define FPA_COMMAND_BUFFER_POOL_NWORDS	OCTEON_POOL_NWORDS_CMD	/* XXX */
-
-#if NBPFILTER > 0
-#define	OCTEON_ETH_TAP(ifp, m, dir) \
-	do { \
-		/* Pass this up to any BPF listeners. */ \
-		if ((ifp)->if_bpf) \
-			bpf_mtap((ifp)->if_bpf, (m), (dir)); \
-	} while (0/* CONSTCOND */)
-#else
-#define	OCTEON_ETH_TAP(ifp, m, dir)
-#endif /* NBPFILTER > 0 */
 
 void	octeon_eth_buf_init(struct octeon_eth_softc *);
 
@@ -988,7 +977,10 @@ octeon_eth_start(struct ifnet *ifp)
 		if (m == NULL)
 			return;
 
-		OCTEON_ETH_TAP(ifp, m, BPF_DIRECTION_OUT);
+#if NBPFILTER > 0
+		if (ifp->if_bpf != NULL)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
 
 		/* XXX */
 		if (ml_len(&sc->sc_sendq) > sc->sc_soft_req_thresh)
