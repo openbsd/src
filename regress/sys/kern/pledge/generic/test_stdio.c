@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_stdio.c,v 1.1 2015/10/26 18:52:19 semarie Exp $ */
+/*	$OpenBSD: test_stdio.c,v 1.2 2016/04/27 13:05:05 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -29,14 +29,14 @@ test_request_stdio()
 		_exit(errno);
 
 	clock_getres(CLOCK_MONOTONIC, NULL);
-	clock_gettime(CLOCK_MONOTONIC, NULL);
+	{ struct timespec tp; clock_gettime(CLOCK_MONOTONIC, &tp); }
 	/* fchdir(); */
 	getdtablecount();
 	getegid();
 	geteuid();
 	getgid();
 	getgroups(0, NULL);
-	getitimer(ITIMER_REAL, NULL);
+	{ struct itimerval v; getitimer(ITIMER_REAL, &v); }
 	getlogin();
 	getpgid(0);
 	getpgrp();
