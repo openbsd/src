@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.68 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.69 2016/04/27 12:54:20 dlg Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -120,7 +120,7 @@
  * Magic to fix a bug when the MAC address cannot be read correctly.
  * This came from the Linux driver.
  */
-static uint64_t fix_mac[] = {
+static const uint64_t xge_fix_mac[] = {
 	0x0060000000000000ULL, 0x0060600000000000ULL,
 	0x0040600000000000ULL, 0x0000600000000000ULL,
 	0x0020600000000000ULL, 0x0060600000000000ULL,
@@ -141,8 +141,7 @@ static uint64_t fix_mac[] = {
  * Constants to be programmed into Hercules's registers, to configure
  * the XGXS transciever.
  */
-#define END_SIGN 0x0
-static uint64_t herc_dtx_cfg[] = {
+static const uint64_t xge_herc_dtx_cfg[] = {
 	0x8000051536750000ULL, 0x80000515367500E0ULL,
 	0x8000051536750004ULL, 0x80000515367500E4ULL,
 
@@ -154,9 +153,18 @@ static uint64_t herc_dtx_cfg[] = {
 
 	0x80020515F2100000ULL, 0x80020515F21000E0ULL,
 	0x80020515F2100004ULL, 0x80020515F21000E4ULL,
-
-	END_SIGN
 };
+
+static const uint64_t xge_xena_dtx_cfg[] = {
+	0x8000051500000000ULL, 0x80000515000000E0ULL,
+	0x80000515D9350004ULL, 0x80000515D93500E4ULL,
+ 
+	0x8001051500000000ULL, 0x80010515000000E0ULL,
+	0x80010515001E0004ULL, 0x80010515001E00E4ULL,
+
+	0x8002051500000000ULL, 0x80020515000000E0ULL,
+	0x80020515F2100004ULL, 0x80020515F21000E4ULL,
+ };
 
 struct xge_softc {
 	struct device		sc_dev;
@@ -385,8 +393,8 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 		 * Resolve it by writing some magics to GPIO_CONTROL and 
 		 * force a chip reset to read in the serial eeprom again.
 		 */
-		for (i = 0; i < nitems(fix_mac); i++) {
-			PIF_WCSR(GPIO_CONTROL, fix_mac[i]);
+		for (i = 0; i < nitems(xge_fix_mac); i++) {
+			PIF_WCSR(GPIO_CONTROL, xge_fix_mac[i]);
 			PIF_RCSR(GPIO_CONTROL);
 		}
 
@@ -1353,100 +1361,24 @@ xge_add_rxbuf(struct xge_softc *sc, int id)
 int
 xge_setup_xgxs_xena(struct xge_softc *sc)
 {
-	/* The magic numbers are described in the users guide */
+	int i;
 
-	/* Writing to MDIO 0x8000 (Global Config 0) */
-	PIF_WCSR(DTX_CONTROL, 0x8000051500000000ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x80000515000000E0ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x80000515D93500E4ULL); DELAY(50);
-
-	/* Writing to MDIO 0x8000 (Global Config 1) */
-	PIF_WCSR(DTX_CONTROL, 0x8001051500000000ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x80010515000000e0ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x80010515001e00e4ULL); DELAY(50);
-
-	/* Reset the Gigablaze */
-	PIF_WCSR(DTX_CONTROL, 0x8002051500000000ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x80020515000000E0ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x80020515F21000E4ULL); DELAY(50);
-
-	/* read the pole settings */
-	PIF_WCSR(DTX_CONTROL, 0x8000051500000000ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x80000515000000e0ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x80000515000000ecULL); DELAY(50);
-
-	PIF_WCSR(DTX_CONTROL, 0x8001051500000000ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x80010515000000e0ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x80010515000000ecULL); DELAY(50);
-
-	PIF_WCSR(DTX_CONTROL, 0x8002051500000000ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x80020515000000e0ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x80020515000000ecULL); DELAY(50);
-
-	/* Workaround for TX Lane XAUI initialization error.
-	   Read Xpak PHY register 24 for XAUI lane status */
-	PIF_WCSR(DTX_CONTROL, 0x0018040000000000ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x00180400000000e0ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x00180400000000ecULL); DELAY(50);
-
-	/* 
-	 * Reading the MDIO control with value 0x1804001c0F001c
-	 * means the TxLanes were already in sync
-	 * Reading the MDIO control with value 0x1804000c0x001c
-	 * means some TxLanes are not in sync where x is a 4-bit
-	 * value representing each lanes
-	 */
-#if 0
-	val = PIF_RCSR(MDIO_CONTROL);
-	if (val != 0x1804001c0F001cULL) {
-		printf("%s: MDIO_CONTROL: %llx != %llx\n", 
-		    XNAME, val, 0x1804001c0F001cULL);
-		return (1);
+	for (i = 0; i < nitems(xge_xena_dtx_cfg); i++) {
+		PIF_WCSR(DTX_CONTROL, xge_xena_dtx_cfg[i]);
+		DELAY(100);
 	}
-#endif
 
-	/* Set and remove the DTE XS INTLoopBackN */
-	PIF_WCSR(DTX_CONTROL, 0x0000051500000000ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x00000515604000e0ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x00000515604000e4ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x00000515204000e4ULL); DELAY(50);
-	PIF_WCSR(DTX_CONTROL, 0x00000515204000ecULL); DELAY(50);
-
-#if 0
-	/* Reading the DTX control register Should be 0x5152040001c */
-	val = PIF_RCSR(DTX_CONTROL);
-	if (val != 0x5152040001cULL) {
-		printf("%s: DTX_CONTROL: %llx != %llx\n", 
-		    XNAME, val, 0x5152040001cULL);
-		return (1);
-	}
-#endif
-
-	PIF_WCSR(MDIO_CONTROL, 0x0018040000000000ULL); DELAY(50);
-	PIF_WCSR(MDIO_CONTROL, 0x00180400000000e0ULL); DELAY(50);
-	PIF_WCSR(MDIO_CONTROL, 0x00180400000000ecULL); DELAY(50);
-
-#if 0
-	/* Reading the MIOD control should be 0x1804001c0f001c */
-	val = PIF_RCSR(MDIO_CONTROL);
-	if (val != 0x1804001c0f001cULL) {
-		printf("%s: MDIO_CONTROL2: %llx != %llx\n",
-		    XNAME, val, 0x1804001c0f001cULL);
-		return (1);
-	}
-#endif
 	return (0);
 }
 
 int
 xge_setup_xgxs_herc(struct xge_softc *sc)
 {
-	int dtx_cnt = 0;
+	int i;
 
-	while (herc_dtx_cfg[dtx_cnt] != END_SIGN) {
-		PIF_WCSR(DTX_CONTROL, herc_dtx_cfg[dtx_cnt]);
+	for (i = 0; i < nitems(xge_herc_dtx_cfg); i++) {
+		PIF_WCSR(DTX_CONTROL, xge_herc_dtx_cfg[i]);
 		DELAY(100);
-		dtx_cnt++;
 	}
 
 	return (0);
