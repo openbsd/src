@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs.h,v 1.22 2014/12/19 22:44:59 guenther Exp $	*/
+/*	$OpenBSD: ext2fs.h,v 1.23 2016/04/27 11:27:24 krw Exp $	*/
 /*	$NetBSD: ext2fs.h,v 1.10 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ struct ext2fs {
 	u_int32_t  e2fs_features_rocompat; /* RO-compatible feature set */
 	u_int8_t   e2fs_uuid[16];	/* 128-bit uuid for volume */
 	char       e2fs_vname[16];	/* volume name */
-	char       e2fs_fsmnt[64]; 	/* name mounted on */
+	char       e2fs_fsmnt[64];	/* name mounted on */
 	u_int32_t  e2fs_algo;		/* For compression */
 	u_int8_t   e2fs_prealloc;	/* # of blocks to preallocate */
 	u_int8_t   e2fs_dir_prealloc;	/* # of blocks to preallocate for dir */
@@ -156,7 +156,7 @@ struct ext2fs {
 	u_int32_t  e2fs_first_meta_bg;
 	u_int32_t  e2fs_mkfs_time;
 	u_int32_t  e2fs_journal_backup[17];
-	u_int32_t  reserved2[76];
+	u_int32_t  reserved2[172];
 };
 
 
