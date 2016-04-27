@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.57 2015/12/03 21:11:54 sashan Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.58 2016/04/27 21:14:29 markus Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -304,6 +304,14 @@ struct rtentry *in6_selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
 	    struct route_in6 *, unsigned int rtableid);
 
 u_int32_t ip6_randomflowlabel(void);
+
+#ifdef IPSEC
+struct tdb;
+struct tdb *
+	ip6_output_ipsec_lookup(struct mbuf *, int *, struct inpcb *);
+int	ip6_output_ipsec_send(struct tdb *, struct mbuf *, int, int);
+#endif /* IPSEC */
+
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IP6_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.88 2016/04/19 08:23:13 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.89 2016/04/27 21:14:29 markus Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -93,15 +93,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	int error = 0, type = 0, code = 0;
 	struct mbuf *mcopy = NULL;
 #ifdef IPSEC
-	u_int8_t sproto = 0;
-	struct m_tag *mtag;
-	union sockaddr_union sdst;
-	struct tdb_ident *tdbi;
-	u_int32_t sspi;
-	struct tdb *tdb;
-#if NPF > 0
-	struct ifnet *encif;
-#endif
+	struct tdb *tdb = NULL;
 #endif /* IPSEC */
 	u_int rtableid = 0;
 	char src6[INET6_ADDRSTRLEN], dst6[INET6_ADDRSTRLEN];
@@ -155,64 +147,21 @@ reroute:
 #endif
 
 #ifdef IPSEC
-	if (!ipsec_in_use)
-		goto done_spd;
-
-	/*
-	 * Check if there was an outgoing SA bound to the flow
-	 * from a transport protocol.
-	 */
-
-	/* Do we have any pending SAs to apply ? */
-	tdb = ipsp_spd_lookup(m, AF_INET6, sizeof(struct ip6_hdr),
-	    &error, IPSP_DIRECTION_OUT, NULL, NULL, 0);
-
-	if (tdb == NULL) {
-		if (error == 0) {
-		        /*
-			 * No IPsec processing required, we'll just send the
-			 * packet out.
-			 */
-		        sproto = 0;
-
-			/* Fall through to routing/multicast handling */
-		} else {
-		        /*
+	if (ipsec_in_use) {
+		tdb = ip6_output_ipsec_lookup(m, &error, NULL);
+		if (error != 0) {
+			/*
 			 * -EINVAL is used to indicate that the packet should
 			 * be silently dropped, typically because we've asked
 			 * key management for an SA.
 			 */
-		        if (error == -EINVAL) /* Should silently drop packet */
+			if (error == -EINVAL) /* Should silently drop packet */
 				error = 0;
 
 			m_freem(m);
 			goto freecopy;
 		}
-	} else {
-		/* Loop detection */
-		for (mtag = m_tag_first(m); mtag != NULL;
-		    mtag = m_tag_next(m, mtag)) {
-			if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE)
-				continue;
-			tdbi = (struct tdb_ident *)(mtag + 1);
-			if (tdbi->spi == tdb->tdb_spi &&
-			    tdbi->proto == tdb->tdb_sproto &&
-			    tdbi->rdomain == tdb->tdb_rdomain &&
-			    !bcmp(&tdbi->dst, &tdb->tdb_dst,
-			    sizeof(union sockaddr_union))) {
-				sproto = 0; /* mark as no-IPsec-needed */
-				goto done_spd;
-			}
-		}
-
-	        /* We need to do IPsec */
-	        bcopy(&tdb->tdb_dst, &sdst, sizeof(sdst));
-		sspi = tdb->tdb_spi;
-		sproto = tdb->tdb_sproto;
 	}
-
-	/* Fall through to the routing/multicast handling code */
- done_spd:
 #endif /* IPSEC */
 
 #if NPF > 0
@@ -315,40 +264,12 @@ reroute:
 	 * XXX ipsp_process_packet() calls ip6_output(), and there'll be no
 	 * PMTU notification.  is it okay?
 	 */
-	if (sproto != 0) {
-		tdb = gettdb(rtable_l2(m->m_pkthdr.ph_rtableid),
-		    sspi, &sdst, sproto);
-		if (tdb == NULL) {
-			error = EHOSTUNREACH;
-			m_freem(m);
-			goto senderr;	/*XXX*/
-		}
-
-#if NPF > 0
-		if ((encif = enc_getif(tdb->tdb_rdomain,
-		    tdb->tdb_tap)) == NULL ||
-		    pf_test(AF_INET6, PF_FWD, encif, &m) != PF_PASS) {
-			error = EHOSTUNREACH;
-			m_freem(m);
-			goto senderr;
-		}
-		if (m == NULL)
-			goto senderr;
-		/*
-		 * PF_TAG_REROUTE handling or not...
-		 * Packet is entering IPsec so the routing is
-		 * already overruled by the IPsec policy.
-		 * Until now the change was not reconsidered.
-		 * What's the behaviour?
-		 */
-		in6_proto_cksum_out(m, encif);
-#endif
-		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
-
+	if (tdb != NULL) {
 		/* Callee frees mbuf */
-		error = ipsp_process_packet(m, tdb, AF_INET6, 0);
-		m_freem(mcopy);
-		goto out;
+		error = ip6_output_ipsec_send(tdb, m, 0, 1);
+		if (error)
+			goto senderr;
+		goto freecopy;
 	}
 #endif /* IPSEC */
 

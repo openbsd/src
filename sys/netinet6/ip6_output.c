@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.204 2016/01/21 11:23:48 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.205 2016/04/27 21:14:29 markus Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -172,14 +172,7 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 	int hdrsplit = 0;
 	u_int8_t sproto = 0;
 #ifdef IPSEC
-	struct m_tag *mtag;
-	union sockaddr_union sdst;
-	struct tdb_ident *tdbi;
-	u_int32_t sspi;
-	struct tdb *tdb;
-#if NPF > 0
-	struct ifnet *encif;
-#endif
+	struct tdb *tdb = NULL;
 #endif /* IPSEC */
 
 #ifdef IPSEC
@@ -215,28 +208,9 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 	}
 
 #ifdef IPSEC
-	if (!ipsec_in_use && !inp)
-		goto done_spd;
-
-	/*
-	 * Check if there was an outgoing SA bound to the flow
-	 * from a transport protocol.
-	 */
-
-	/* Do we have any pending SAs to apply ? */
-	tdb = ipsp_spd_lookup(m, AF_INET6, sizeof(struct ip6_hdr),
-	    &error, IPSP_DIRECTION_OUT, NULL, inp, 0);
-
-	if (tdb == NULL) {
-		if (error == 0) {
-		        /*
-			 * No IPsec processing required, we'll just send the
-			 * packet out.
-			 */
-		        sproto = 0;
-
-			/* Fall through to routing/multicast handling */
-		} else {
+	if (ipsec_in_use || inp) {
+		tdb = ip6_output_ipsec_lookup(m, &error, inp);
+		if (error != 0) {
 		        /*
 			 * -EINVAL is used to indicate that the packet should
 			 * be silently dropped, typically because we've asked
@@ -247,31 +221,7 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 
 			goto freehdrs;
 		}
-	} else {
-		/* Loop detection */
-		for (mtag = m_tag_first(m); mtag != NULL;
-		    mtag = m_tag_next(m, mtag)) {
-			if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE)
-				continue;
-			tdbi = (struct tdb_ident *)(mtag + 1);
-			if (tdbi->spi == tdb->tdb_spi &&
-			    tdbi->proto == tdb->tdb_sproto &&
-			    tdbi->rdomain == tdb->tdb_rdomain &&
-			    !bcmp(&tdbi->dst, &tdb->tdb_dst,
-			    sizeof(union sockaddr_union))) {
-				sproto = 0; /* mark as no-IPsec-needed */
-				goto done_spd;
-			}
-		}
-
-	        /* We need to do IPsec */
-	        bcopy(&tdb->tdb_dst, &sdst, sizeof(sdst));
-		sspi = tdb->tdb_spi;
-		sproto = tdb->tdb_sproto;
 	}
-
-	/* Fall through to the routing/multicast handling code */
- done_spd:
 #endif /* IPSEC */
 
 	/*
@@ -469,55 +419,19 @@ reroute:
 	}
 
 #ifdef IPSEC
-	/*
-	 * Check if the packet needs encapsulation.
-	 * ipsp_process_packet will never come back to here.
-	 */
-	if (sproto != 0) {
+	if (tdb) {
 		/*
 		 * XXX what should we do if ip6_hlim == 0 and the
 		 * packet gets tunneled?
 		 */
-
-		tdb = gettdb(rtable_l2(m->m_pkthdr.ph_rtableid),
-		    sspi, &sdst, sproto);
-		if (tdb == NULL) {
-			error = EHOSTUNREACH;
-			m_freem(m);
-			goto done;
-		}
-
-#if NPF > 0
-		if ((encif = enc_getif(tdb->tdb_rdomain,
-		    tdb->tdb_tap)) == NULL ||
-		    pf_test(AF_INET6, PF_OUT, encif, &m) != PF_PASS) {
-			error = EHOSTUNREACH;
-			m_freem(m);
-			goto done;
-		}
-		if (m == NULL)
-			goto done;
-		/*
-		 * PF_TAG_REROUTE handling or not...
-		 * Packet is entering IPsec so the routing is
-		 * already overruled by the IPsec policy.
-		 * Until now the change was not reconsidered.
-		 * What's the behaviour?
-		 */
-		in6_proto_cksum_out(m, encif);
-#endif
-		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
-
-		/* Callee frees mbuf */
 		/*
 		 * if we are source-routing, do not attempt to tunnel the
 		 * packet just because ip6_dst is different from what tdb has.
 		 * XXX
 		 */
-		error = ipsp_process_packet(m, tdb, AF_INET6,
-		    exthdrs.ip6e_rthdr ? 1 : 0);
-
-		return error;  /* Nothing more to be done */
+		error = ip6_output_ipsec_send(tdb, m,
+		    exthdrs.ip6e_rthdr ? 1 : 0, 0);
+		goto done;
 	}
 #endif /* IPSEC */
 
@@ -2944,3 +2858,70 @@ in6_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 		m->m_pkthdr.csum_flags &= ~M_ICMP_CSUM_OUT; /* Clear */
 	}
 }
+
+#ifdef IPSEC
+struct tdb *
+ip6_output_ipsec_lookup(struct mbuf *m, int *error, struct inpcb *inp)
+{
+	struct tdb *tdb;
+	struct m_tag *mtag;
+	struct tdb_ident *tdbi;
+
+	/*
+	 * Check if there was an outgoing SA bound to the flow
+	 * from a transport protocol.
+	 */
+
+	/* Do we have any pending SAs to apply ? */
+	tdb = ipsp_spd_lookup(m, AF_INET6, sizeof(struct ip6_hdr),
+	    error, IPSP_DIRECTION_OUT, NULL, inp, 0);
+
+	if (tdb != NULL) {
+		/* Loop detection */
+		for (mtag = m_tag_first(m); mtag != NULL;
+		    mtag = m_tag_next(m, mtag)) {
+			if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE)
+				continue;
+			tdbi = (struct tdb_ident *)(mtag + 1);
+			if (tdbi->spi == tdb->tdb_spi &&
+			    tdbi->proto == tdb->tdb_sproto &&
+			    tdbi->rdomain == tdb->tdb_rdomain &&
+			    !bcmp(&tdbi->dst, &tdb->tdb_dst,
+			    sizeof(union sockaddr_union)))
+				tdb = NULL;
+		}
+		/* We need to do IPsec */
+	}
+	return tdb;
+}
+
+int
+ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, int tunalready, int fwd)
+{
+#if NPF > 0
+	struct ifnet *encif;
+#endif
+
+#if NPF > 0
+	if ((encif = enc_getif(tdb->tdb_rdomain, tdb->tdb_tap)) == NULL ||
+	    pf_test(AF_INET6, fwd ? PF_FWD : PF_OUT, encif, &m) != PF_PASS) {
+		m_freem(m);
+		return EHOSTUNREACH;
+	}
+	if (m == NULL)
+		return 0;
+	/*
+	 * PF_TAG_REROUTE handling or not...
+	 * Packet is entering IPsec so the routing is
+	 * already overruled by the IPsec policy.
+	 * Until now the change was not reconsidered.
+	 * What's the behaviour?
+	 */
+	in6_proto_cksum_out(m, encif);
+#endif
+	m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
+
+	/* Callee frees mbuf */
+	return ipsp_process_packet(m, tdb, AF_INET6, tunalready);
+}
+#endif /* IPSEC */
