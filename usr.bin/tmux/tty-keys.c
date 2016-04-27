@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.87 2016/04/27 16:40:12 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.88 2016/04/27 16:46:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -600,16 +600,6 @@ first_key:
 	/* No longer key found, use the first character. */
 	key = (u_char)*buf;
 	size = 1;
-
-	/*
-	 * Check for backspace key using termios VERASE - the terminfo
-	 * kbs entry is extremely unreliable, so cannot be safely
-	 * used. termios should have a better idea.
-	 */
-	bspace = tty->tio.c_cc[VERASE];
-	if (bspace != _POSIX_VDISABLE && key == bspace)
-		key = KEYC_BSPACE;
-
 	goto complete_key;
 
 partial_key:
@@ -641,6 +631,15 @@ partial_key:
 
 complete_key:
 	log_debug("complete key %.*s %#llx", (int)size, buf, key);
+
+	/*
+	 * Check for backspace key using termios VERASE - the terminfo
+	 * kbs entry is extremely unreliable, so cannot be safely
+	 * used. termios should have a better idea.
+	 */
+	bspace = tty->tio.c_cc[VERASE];
+	if (bspace != _POSIX_VDISABLE && (key & KEYC_MASK_KEY) == bspace)
+		key = (key & KEYC_MASK_MOD) | KEYC_BSPACE;
 
 	/* Remove data from buffer. */
 	evbuffer_drain(tty->event->input, size);
