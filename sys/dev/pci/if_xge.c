@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.69 2016/04/27 12:54:20 dlg Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.70 2016/04/27 12:56:20 dlg Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -1327,6 +1327,8 @@ xge_add_rxbuf(struct xge_softc *sc, int id)
 	if (sc->sc_rxb[id])
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_rxm[id]);
 	sc->sc_rxb[id] = m[0];
+
+	m_adj(m[0], ETHER_ALIGN);
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, sc->sc_rxm[id], m[0],
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
