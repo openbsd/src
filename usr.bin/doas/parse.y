@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.14 2015/12/04 09:41:49 tedu Exp $ */
+/* $OpenBSD: parse.y,v 1.15 2016/04/27 02:35:55 gsoares Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -176,6 +176,7 @@ yyerror(const char *fmt, ...)
 {
 	va_list va;
 
+	fprintf(stderr, "doas: ");
 	va_start(va, fmt);
 	vfprintf(stderr, fmt, va);
 	va_end(va);
