@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.70 2016/04/27 12:56:20 dlg Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.71 2016/04/27 13:02:39 dlg Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -158,7 +158,7 @@ static const uint64_t xge_herc_dtx_cfg[] = {
 static const uint64_t xge_xena_dtx_cfg[] = {
 	0x8000051500000000ULL, 0x80000515000000E0ULL,
 	0x80000515D9350004ULL, 0x80000515D93500E4ULL,
- 
+
 	0x8001051500000000ULL, 0x80010515000000E0ULL,
 	0x80010515001E0004ULL, 0x80010515001E00E4ULL,
 
@@ -243,7 +243,7 @@ pif_wcsr(struct xge_softc *sc, bus_size_t csr, uint64_t val)
 	lval = val&0xffffffff;
 	hval = val>>32;
 
-	bus_space_write_4(sc->sc_st, sc->sc_sh, csr, lval); 
+	bus_space_write_4(sc->sc_st, sc->sc_sh, csr, lval);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, csr+4, hval);
 }
 
@@ -266,7 +266,7 @@ txp_wcsr(struct xge_softc *sc, bus_size_t csr, uint64_t val)
 	lval = val&0xffffffff;
 	hval = val>>32;
 
-	bus_space_write_4(sc->sc_txt, sc->sc_txh, csr, lval); 
+	bus_space_write_4(sc->sc_txt, sc->sc_txh, csr, lval);
 	bus_space_write_4(sc->sc_txt, sc->sc_txh, csr+4, hval);
 }
 
@@ -386,11 +386,11 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Fix for all "FFs" MAC address problems observed on
 	 * Alpha platforms. Not needed for Herc.
-	 */ 
+	 */
 	if (sc->xge_type == XGE_TYPE_XENA) {
 		/*
 		 * The MAC addr may be all FF's, which is not good.
-		 * Resolve it by writing some magics to GPIO_CONTROL and 
+		 * Resolve it by writing some magics to GPIO_CONTROL and
 		 * force a chip reset to read in the serial eeprom again.
 		 */
 		for (i = 0; i < nitems(xge_fix_mac); i++) {
@@ -633,7 +633,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, NTXDESCS - 1);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
-			       IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
@@ -672,7 +672,7 @@ xge_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_active = IFM_ETHER|IFM_10G_SR;
 
 	reg = PIF_RCSR(ADAPTER_STATUS);
-	if ((reg & (RMAC_REMOTE_FAULT|RMAC_LOCAL_FAULT)) == 0)	
+	if ((reg & (RMAC_REMOTE_FAULT|RMAC_LOCAL_FAULT)) == 0)
 		ifmr->ifm_status |= IFM_ACTIVE;
 }
 
@@ -701,7 +701,7 @@ xge_enable(struct xge_softc *sc)
 #endif
 }
 
-int 
+int
 xge_init(struct ifnet *ifp)
 {
 	struct xge_softc *sc = ifp->if_softc;
@@ -825,7 +825,7 @@ xge_intr(void *pv)
 		while ((PIF_RCSR(ADAPTER_STATUS) & QUIESCENT) != QUIESCENT)
 			;
 		PIF_WCSR(MAC_RMAC_ERR_REG, RMAC_LINK_STATE_CHANGE_INT);
-			
+
 		val = PIF_RCSR(ADAPTER_STATUS);
 		if ((val & (RMAC_REMOTE_FAULT|RMAC_LOCAL_FAULT)) == 0)
 			xge_enable(sc); /* Only if link restored */
@@ -939,7 +939,7 @@ xge_intr(void *pv)
 	return (1);
 }
 
-int 
+int
 xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct xge_softc *sc = ifp->if_softc;
@@ -965,7 +965,7 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				if (!(ifp->if_flags & IFF_RUNNING))
 					xge_init(ifp);
 			}
-                } else {
+		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				xge_stop(ifp, 1);
 		}
@@ -1060,7 +1060,7 @@ xge_setpromisc(struct xge_softc *sc)
 	PIF_WCSR(MAC_CFG, val);
 }
 
-void 
+void
 xge_start(struct ifnet *ifp)
 {
 	struct xge_softc *sc = ifp->if_softc;
@@ -1246,7 +1246,7 @@ xge_alloc_rxmem(struct xge_softc *sc)
 		rxpp->r4_next = (uint64_t)sc->sc_rxmap->dm_segs[0].ds_addr +
 		    (i*sizeof(struct rxd_4k)) + sizeof(struct rxd_4k);
 	}
-	sc->sc_rxd_4k[NRXPAGES-1]->r4_next = 
+	sc->sc_rxd_4k[NRXPAGES-1]->r4_next =
 	    (uint64_t)sc->sc_rxmap->dm_segs[0].ds_addr;
 
 	return (0);
@@ -1307,7 +1307,7 @@ xge_add_rxbuf(struct xge_softc *sc, int id)
 		MCLGET(m[3], M_DONTWAIT);
 	if (m[4])
 		MCLGET(m[4], M_DONTWAIT);
-	if (!m[0] || !m[1] || !m[2] || !m[3] || !m[4] || 
+	if (!m[0] || !m[1] || !m[2] || !m[3] || !m[4] ||
 	    ((m[3]->m_flags & M_EXT) == 0) || ((m[4]->m_flags & M_EXT) == 0)) {
 		/* Out of something */
 		for (i = 0; i < 5; i++)
