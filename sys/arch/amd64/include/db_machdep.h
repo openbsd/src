@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.13 2016/02/27 13:08:06 mpi Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.14 2016/04/27 11:10:48 mpi Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.2 2003/04/29 17:06:04 scw Exp $	*/
 
 /* 
@@ -45,7 +45,6 @@ typedef	long		db_expr_t;	/* expression - signed */
 typedef struct trapframe db_regs_t;
 
 extern db_regs_t ddb_regs;	/* register state */
-#define	DDB_REGS	(&ddb_regs)
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_rip)
 #define	SET_PC_REGS(regs, value) (regs)->tf_rip = (int64_t)(value)

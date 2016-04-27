@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.16 2016/03/06 19:42:27 mpi Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.17 2016/04/27 11:10:48 mpi Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -53,7 +53,6 @@ db_addr_t	next_instr_address(db_addr_t, boolean_t);
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->pc)
 #define	SET_PC_REGS(regs, value)	(regs)->pc = (register_t)(value)
-#define DDB_REGS	(&ddb_regs)
 
 /*
  *  Test of instructions to see class.

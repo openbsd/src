@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.19 2016/02/27 13:08:06 mpi Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.20 2016/04/27 11:10:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 Michael Shalayeff
@@ -28,7 +28,6 @@ typedef	long db_expr_t;
 
 typedef struct trapframe db_regs_t;
 extern db_regs_t	ddb_regs;
-#define	DDB_REGS	(&ddb_regs)
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_iioq_head)
 #define	SET_PC_REGS(regs, value)					\

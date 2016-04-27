@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.17 2016/03/07 13:21:51 naddy Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.18 2016/04/27 11:10:48 mpi Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2001/07/07 15:16:13 eeh Exp $ */
 
 /*
@@ -81,7 +81,6 @@ typedef struct db_regs {
 #endif
 
 extern	db_regs_t ddb_regs;	/* register state */
-#define	DDB_REGS	(&ddb_regs)
 #define	DDB_TF		(&ddb_regs.ddb_tf)
 #define	DDB_FR		(&ddb_regs.ddb_fr)
 #define	DDB_FP		(&ddb_regs.ddb_fpstate)

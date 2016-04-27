@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.18 2014/03/16 20:31:46 guenther Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.19 2016/04/27 11:10:48 mpi Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -60,7 +60,6 @@ typedef	vaddr_t		db_addr_t;
 typedef	long		db_expr_t;
 typedef	struct reg	db_regs_t;
 extern db_regs_t	ddb_regs;	/* register state */
-#define	DDB_REGS	(&ddb_regs)
 
 int	ddb_break_trap(int, db_regs_t *);
 int	ddb_entry_trap(int, db_regs_t *);
