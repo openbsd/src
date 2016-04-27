@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.111 2016/04/27 12:58:12 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.112 2016/04/27 17:29:50 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -155,15 +155,15 @@ rc_start() {
 }
 
 rc_check() {
-	pgrep -T "${daemon_rtable}" -q -xf "${pexp}"
+	pgrep -T "${daemon_rtable}" -U "${daemon_user}" -q -xf "${pexp}"
 }
 
 rc_reload() {
-	pkill -T "${daemon_rtable}" -HUP -xf "${pexp}"
+	pkill -T "${daemon_rtable}" -U "${daemon_user}" -HUP -xf "${pexp}"
 }
 
 rc_stop() {
-	pkill -T "${daemon_rtable}" -xf "${pexp}"
+	pkill -T "${daemon_rtable}" -U "${daemon_user}" -xf "${pexp}"
 }
 
 rc_cmd() {
