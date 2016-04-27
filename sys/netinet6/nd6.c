@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.177 2016/03/07 11:00:36 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.178 2016/04/27 14:47:27 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1519,8 +1519,7 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 	 * next hop determination.
 	 */
 	if (rt0 != NULL) {
-		error = rt_checkgate(ifp, rt0, sin6tosa(dst),
-		    m->m_pkthdr.ph_rtableid, &rt);
+		error = rt_checkgate(rt0, &rt);
 		if (error) {
 			m_freem(m);
 			return (error);
@@ -1698,7 +1697,7 @@ nd6_storelladdr(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		return (ENOMEM);
 	}
 
-	error = rt_checkgate(ifp, rt0, dst, m->m_pkthdr.ph_rtableid, &rt);
+	error = rt_checkgate(rt0, &rt);
 	if (error) {
 		m_freem(m);
 		return (error);

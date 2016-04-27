@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.298 2016/03/26 21:56:04 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.299 2016/04/27 14:47:27 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1168,8 +1168,7 @@ rt_setgate(struct rtentry *rt, struct sockaddr *gate)
 }
 
 int
-rt_checkgate(struct ifnet *ifp, struct rtentry *rt, struct sockaddr *dst,
-    unsigned int rtableid, struct rtentry **rtp)
+rt_checkgate(struct rtentry *rt, struct rtentry **rtp)
 {
 	struct rtentry *rt0;
 

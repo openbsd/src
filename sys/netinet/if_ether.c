@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.204 2016/03/30 10:13:14 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.205 2016/04/27 14:47:27 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -294,8 +294,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	}
 
 	if (rt0 != NULL) {
-		error = rt_checkgate(ifp, rt0, dst,
-		    m->m_pkthdr.ph_rtableid, &rt);
+		error = rt_checkgate(rt0, &rt);
 		if (error) {
 			m_freem(m);
 			return (error);
