@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.16 2014/01/30 20:11:14 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.17 2016/04/27 11:03:24 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -195,7 +195,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		(*pr)("alpha trace requires a trap frame... giving up.\n");
 		return;
 	}
-	regs = DDB_REGS;
+	regs = &ddb_regs;
 trapframe:
 	/* remember where various registers are stored */
 	for (i = 0; i < 31; i++)

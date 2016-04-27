@@ -1,4 +1,4 @@
-/* $OpenBSD: db_disasm.c,v 1.22 2008/10/04 15:34:45 martynas Exp $ */
+/* $OpenBSD: db_disasm.c,v 1.23 2016/04/27 11:03:24 mpi Exp $ */
 /* $NetBSD: db_disasm.c,v 1.8 2000/05/25 19:57:30 jhawk Exp $ */
 
 /* 
@@ -1052,7 +1052,7 @@ loadstore_address:
 			if (i.mem_format.opcode == op_ldah)
 				signed_immediate <<= 16;
 			db_printf(" <0x%lx>", signed_immediate +
-			    db_register_value(DDB_REGS, i.mem_format.rb));
+			    db_register_value(&ddb_regs, i.mem_format.rb));
 		}
 		break;
 	case op_br:
@@ -1098,7 +1098,7 @@ branch_displacement:
 				db_printf(",");
 			db_printf("%s=0x%lx",
 			    name_of_register[regnum[ireg]],
-			    db_register_value(DDB_REGS, regnum[ireg]));
+			    db_register_value(&ddb_regs, regnum[ireg]));
 		}
 		db_printf(">");
 	}
