@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.476 2016/04/27 09:17:53 rpe Exp $
+#	$OpenBSD: rc,v 1.477 2016/04/27 14:49:11 ajacoutot Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -185,6 +185,17 @@ rebuildlibs() {
 		)
 		rm -rf /tmp/_librebuild.${_tmpdir#*.}
 	done
+}
+
+run_upgrade_script() {
+	local _suffix=$1
+	[[ -n $_suffix ]] || return 1
+	if [[ -f /etc/rc.$_suffix ]]; then
+		mv /etc/rc.$_suffix /etc/rc.$_suffix.run
+		. /etc/rc.$_suffix.run 2>&1 | tee /dev/tty |
+			mail -Es "$(hostname) rc.$_suffix output" root >/dev/null
+	fi
+	rm -f /etc/rc.$_suffix.run
 }
 
 # Check filesystems, optionally by using a fsck(8) flag.
@@ -476,6 +487,9 @@ fi
 
 echo 'preserving editor files.'; /usr/libexec/vi.recover
 
+# If rc.sysmerge exists, run it just once, and make sure it is deleted.
+run_upgrade_script sysmerge
+
 echo -n 'starting network daemons:'
 start_daemon ldomd vmd sshd snmpd ldpd ripd ospfd ospf6d bgpd ifstated
 start_daemon relayd dhcpd dhcrelay mrouted dvmrpd radiusd eigrpd
@@ -492,12 +506,7 @@ start_daemon rbootd mopd spamd spamlogd sndiod
 echo '.'
 
 # If rc.firsttime exists, run it just once, and make sure it is deleted.
-if [[ -f /etc/rc.firsttime ]]; then
-	mv /etc/rc.firsttime /etc/rc.firsttime.run
-	. /etc/rc.firsttime.run 2>&1 | tee /dev/tty |
-		mail -Es "$(hostname) rc.firsttime output" root >/dev/null
-fi
-rm -f /etc/rc.firsttime.run
+run_upgrade_script firsttime
 
 # Run rc.d(8) scripts from packages.
 if [[ -n $pkg_scripts ]]; then
