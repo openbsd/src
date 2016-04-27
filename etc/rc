@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.475 2016/04/26 14:56:14 deraadt Exp $
+#	$OpenBSD: rc,v 1.476 2016/04/27 09:17:53 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -163,7 +163,7 @@ rebuildlibs() {
 
 	# Only choose newest
 	for _liba in /usr/lib/libc.so.*.a; do
-		_liba=$(ls ${_liba%%.[0-9]*}*.a | sort -n | tail -1)
+		_liba=$(ls ${_liba%%.[0-9]*}*.a | sort -V | tail -1)
 		for _l in $_libas; do
 			[[ $_l == $_liba ]] && continue 2
 		done
