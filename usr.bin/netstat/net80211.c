@@ -1,4 +1,4 @@
-/*	$OpenBSD: net80211.c,v 1.13 2015/01/16 06:40:10 deraadt Exp $	*/
+/*	$OpenBSD: net80211.c,v 1.14 2016/04/27 11:59:03 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -114,6 +114,30 @@ net80211_ifstats(char *ifname)
 	p(is_cmac_replays, "\t%lu cmac replayed frame%s\n");
 	p(is_tkip_icv_errs, "\t%lu tkip icv error%s\n");
 	p(is_tkip_replays, "\t%lu tkip replay%s\n");
+	p(is_pbac_errs, "\t%lu pbac error%s\n");
+	p(is_ht_nego_no_mandatory_mcs, "\t%lu HT negotiation failure%s because "
+	    "peer does not support MCS 0-7\n");
+	p(is_ht_nego_no_mandatory_mcs, "\t%lu HT negotiation failure%s because "
+	    "we do not support basic MCS set\n");
+	p(is_ht_nego_bad_crypto,
+	    "\t%lu HT negotiation failure%s because peer uses bad crypto\n");
+	p(is_ht_prot_change, "\t%lu HT protection change%s\n");
+	p(is_ht_rx_ba_agreements, "\t%lu new input block ack agreement%s\n");
+	p(is_ht_tx_ba_agreements, "\t%lu new output block ack agreement%s\n");
+	p(is_ht_rx_frame_below_ba_winstart,
+	    "\t%lu input frame%s below block ack window start\n");
+	p(is_ht_rx_frame_above_ba_winend,
+	    "\t%lu input frame%s above block ack window end\n");
+	p(is_ht_rx_ba_window_jump, "\t%lu input block ack window jump%s\n");
+	p(is_ht_rx_ba_no_buf, "\t%lu duplicate input block ack frame%s\n");
+	p(is_ht_rx_ba_frame_lost,
+	    "\t%lu expected input block ack frame%s never arrived\n");
+	p(is_ht_rx_ba_window_gap_timeout,
+	    "\t%lu input block ack window gap%s timed out\n");
+	p(is_ht_rx_ba_timeout,
+	    "\t%lu input block ack agreement%s timed out\n");
+	p(is_ht_tx_ba_timeout,
+	    "\t%lu output block ack agreement%s timed out\n");
 
 	close(s);
 
