@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.25 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: inode.c,v 1.26 2016/04/28 12:17:15 krw Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -358,7 +358,8 @@ getnextinode(ino_t inumber)
 {
 	long size;
 	daddr32_t dblk;
-	static struct ext2fs_dinode *dp;
+	struct ext2fs_dinode *dp;
+	static char *bp;
 
 	if (inumber != nextino++ || inumber > maxino)
 		errexit("bad inode number %llu to nextinode\n",
@@ -374,9 +375,13 @@ getnextinode(ino_t inumber)
 			lastinum += fullcnt;
 		}
 		(void)bread(fsreadfd, (char *)inodebuf, dblk, size);
-		dp = inodebuf;
+		bp = (char *)inodebuf;
 	}
-	return (dp++);
+
+	dp = (struct ext2fs_dinode *)bp;
+	bp += EXT2_DINODE_SIZE(&sblock);
+
+	return (dp);
 }
 
 void
@@ -388,10 +393,10 @@ resetinodebuf(void)
 	lastinum = 1;
 	readcnt = 0;
 	inobufsize = blkroundup(&sblock, INOBUFSIZE);
-	fullcnt = inobufsize / sizeof(struct ext2fs_dinode);
+	fullcnt = inobufsize / EXT2_DINODE_SIZE(&sblock);
 	readpercg = sblock.e2fs.e2fs_ipg / fullcnt;
 	partialcnt = sblock.e2fs.e2fs_ipg % fullcnt;
-	partialsize = partialcnt * sizeof(struct ext2fs_dinode);
+	partialsize = partialcnt * EXT2_DINODE_SIZE(&sblock);
 	if (partialcnt != 0) {
 		readpercg++;
 	} else {

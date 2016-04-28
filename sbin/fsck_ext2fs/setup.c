@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.29 2015/10/15 15:11:10 semarie Exp $	*/
+/*	$OpenBSD: setup.c,v 1.30 2016/04/28 12:17:15 krw Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -299,7 +299,7 @@ readsb(int listerr)
 	sblock.e2fs_bmask = ~sblock.e2fs_qbmask;
 	sblock.e2fs_ngdb = howmany(sblock.e2fs_ncg,
 		sblock.e2fs_bsize / sizeof(struct ext2_gd));
-	sblock.e2fs_ipb = sblock.e2fs_bsize / sizeof(struct ext2fs_dinode);
+	sblock.e2fs_ipb = sblock.e2fs_bsize / EXT2_DINODE_SIZE(&sblock);
 	sblock.e2fs_itpg = sblock.e2fs.e2fs_ipg/sblock.e2fs_ipb;
 
 	/*

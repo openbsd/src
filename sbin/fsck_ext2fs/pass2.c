@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.14 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.15 2016/04/28 12:17:15 krw Exp $	*/
 /*	$NetBSD: pass2.c,v 1.6 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ pass2(void)
 				inodirty();
 			}
 		}
-		memset(&dino, 0, sizeof(struct ext2fs_dinode));
+		memset(&dino, 0, EXT2_DINODE_SIZE(&sblock));
 		dino.e2di_mode = htole16(IFDIR);
 		inossize(&dino, inp->i_isize);
 		memcpy(&dino.e2di_blocks[0], &inp->i_blks[0], (size_t)inp->i_numblks);
