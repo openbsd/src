@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.44 2015/12/02 15:13:00 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.45 2016/04/28 14:20:11 jsing Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -233,59 +233,56 @@ int
 config_settls(struct httpd *env, struct server *srv)
 {
 	struct privsep		*ps = env->sc_ps;
+	struct server_config	*srv_conf = &srv->srv_conf;
 	struct tls_config	 tls;
 	struct iovec		 iov[2];
 	size_t			 c;
 
-	if ((srv->srv_conf.flags & SRVFLAG_TLS) == 0)
+	if ((srv_conf->flags & SRVFLAG_TLS) == 0)
 		return (0);
 
-	log_debug("%s: configuring TLS for %s", __func__, srv->srv_conf.name);
+	log_debug("%s: configuring TLS for %s", __func__, srv_conf->name);
 
-	if (srv->srv_conf.tls_cert_len != 0) {
+	if (srv_conf->tls_cert_len != 0) {
 		DPRINTF("%s: sending TLS cert \"%s[%u]\" to %s fd %d", __func__,
-		    srv->srv_conf.name, srv->srv_conf.id,
-		    ps->ps_title[PROC_SERVER], srv->srv_s);
+		    srv_conf->name, srv_conf->id, ps->ps_title[PROC_SERVER],
+		    srv->srv_s);
 
 		memset(&tls, 0, sizeof(tls));
-		tls.id = srv->srv_conf.id;
-		tls.port = srv->srv_conf.port;
-		memcpy(&tls.ss, &srv->srv_conf.ss, sizeof(tls.ss));
-		tls.tls_cert_len = srv->srv_conf.tls_cert_len;
+		tls.id = srv_conf->id;
+		tls.tls_cert_len = srv_conf->tls_cert_len;
 
 		c = 0;
 		iov[c].iov_base = &tls;
 		iov[c++].iov_len = sizeof(tls);
-		iov[c].iov_base = srv->srv_conf.tls_cert;
-		iov[c++].iov_len = srv->srv_conf.tls_cert_len;
+		iov[c].iov_base = srv_conf->tls_cert;
+		iov[c++].iov_len = srv_conf->tls_cert_len;
 
 		if (proc_composev(ps, PROC_SERVER, IMSG_CFG_TLS, iov, c) != 0) {
 			log_warn("%s: failed to compose IMSG_CFG_TLS imsg for "
-			    "`%s'", __func__, srv->srv_conf.name);
+			    "`%s'", __func__, srv_conf->name);
 			return (-1);
 		}
 	}
 
-	if (srv->srv_conf.tls_key_len != 0) {
+	if (srv_conf->tls_key_len != 0) {
 		DPRINTF("%s: sending TLS key \"%s[%u]\" to %s fd %d", __func__,
-		    srv->srv_conf.name, srv->srv_conf.id,
-		    ps->ps_title[PROC_SERVER], srv->srv_s);
+		    srv_conf->name, srv_conf->id, ps->ps_title[PROC_SERVER],
+		    srv->srv_s);
 
 		memset(&tls, 0, sizeof(tls));
-		tls.id = srv->srv_conf.id;
-		tls.port = srv->srv_conf.port;
-		memcpy(&tls.ss, &srv->srv_conf.ss, sizeof(tls.ss));
-		tls.tls_key_len = srv->srv_conf.tls_key_len;
+		tls.id = srv_conf->id;
+		tls.tls_key_len = srv_conf->tls_key_len;
 
 		c = 0;
 		iov[c].iov_base = &tls;
 		iov[c++].iov_len = sizeof(tls);
-		iov[c].iov_base = srv->srv_conf.tls_key;
-		iov[c++].iov_len = srv->srv_conf.tls_key_len;
+		iov[c].iov_base = srv_conf->tls_key;
+		iov[c++].iov_len = srv_conf->tls_key_len;
 
 		if (proc_composev(ps, PROC_SERVER, IMSG_CFG_TLS, iov, c) != 0) {
 			log_warn("%s: failed to compose IMSG_CFG_TLS imsg for "
-			    "`%s'", __func__, srv->srv_conf.name);
+			    "`%s'", __func__, srv_conf->name);
 			return (-1);
 		}
 	}
@@ -563,7 +560,7 @@ config_gettls(struct httpd *env, struct imsg *imsg)
 #ifdef DEBUG
 	struct privsep		*ps = env->sc_ps;
 #endif
-	struct server		*srv = NULL;
+	struct server_config	*srv_conf = NULL;
 	struct tls_config	 tls_conf;
 	uint8_t			*p = imsg->data;
 	size_t			 s;
@@ -578,27 +575,25 @@ config_gettls(struct httpd *env, struct imsg *imsg)
 		goto fail;
 	}
 
-	/* Find server with matching listening socket. */
-	if ((srv = server_byaddr((struct sockaddr *)
-	    &tls_conf.ss, tls_conf.port)) == NULL) {
+	if ((srv_conf = serverconfig_byid(tls_conf.id)) == NULL) {
 		log_debug("%s: server not found", __func__);
 		goto fail;
 	}
 
 	DPRINTF("%s: %s %d TLS configuration \"%s[%u]\"", __func__,
 	    ps->ps_title[privsep_process], ps->ps_instance,
-	    srv->srv_conf.name, srv->srv_conf.id);
+	    srv_conf->name, srv->srv_conf.id);
 
 	if (tls_conf.tls_cert_len != 0) {
-		srv->srv_conf.tls_cert_len = tls_conf.tls_cert_len;
-		if ((srv->srv_conf.tls_cert = get_data(p + s,
+		srv_conf->tls_cert_len = tls_conf.tls_cert_len;
+		if ((srv_conf->tls_cert = get_data(p + s,
 		    tls_conf.tls_cert_len)) == NULL)
 			goto fail;
 		s += tls_conf.tls_cert_len;
 	}
 	if (tls_conf.tls_key_len != 0) {
-		srv->srv_conf.tls_key_len = tls_conf.tls_key_len;
-		if ((srv->srv_conf.tls_key = get_data(p + s,
+		srv_conf->tls_key_len = tls_conf.tls_key_len;
+		if ((srv_conf->tls_key = get_data(p + s,
 		    tls_conf.tls_key_len)) == NULL)
 			goto fail;
 		s += tls_conf.tls_key_len;
