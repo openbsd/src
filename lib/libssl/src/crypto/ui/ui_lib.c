@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.30 2015/02/10 11:22:21 jsing Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.31 2016/04/28 16:42:28 tedu Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -491,6 +491,7 @@ UI_process(UI *ui)
 			switch (ui->meth->ui_read_string(ui,
 			    sk_UI_STRING_value(ui->strings, i))) {
 			case -1:	/* Interrupt/Cancel/something... */
+				ui->flags &= ~UI_FLAG_REDOABLE;
 				ok = -2;
 				goto err;
 			case 0:		/* Errors */
