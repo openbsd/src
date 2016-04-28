@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.222 2016/04/26 11:19:35 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.223 2016/04/28 16:42:29 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -246,7 +246,8 @@ sm_run() {
 		      /etc/pwd.db
 		      /etc/spwd.db
 		      /var/db/locate.database
-		      /var/mail/root"
+		      /var/mail/root
+		      /var/sysmerge/examplessum"
 	# in case X(7) is not installed, xetcsum is not removed by the loop above
 	_ignorefiles="${_ignorefiles} /var/sysmerge/xetcsum"
 	[[ -f /etc/sysmerge.ignore ]] && \
@@ -292,7 +293,7 @@ sm_run() {
 		sm_diff_loop
 	done
 
-	sm_check_an_eg
+#	sm_check_an_eg
 }
 
 sm_install() {
