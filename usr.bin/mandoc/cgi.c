@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.68 2016/04/15 21:14:03 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.69 2016/04/28 17:59:00 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@usta.de>
@@ -382,7 +382,7 @@ resp_searchform(const struct req *req)
 		"<input type=\"text\" name=\"query\" value=\"");
 	if (NULL != req->q.query)
 		html_print(req->q.query);
-	puts("\" size=\"40\">");
+	puts("\" size=\"40\" autofocus>");
 
 	/* Write submission and reset buttons. */
 
