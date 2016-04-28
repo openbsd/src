@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.320 2016/04/18 06:20:23 mpi Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.321 2016/04/28 13:51:22 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -63,6 +63,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/param.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -2283,7 +2284,7 @@ ieee80211_listnodes(void)
 void
 ieee80211_printnode(struct ieee80211_nodereq *nr)
 {
-	int len;
+	int len, i;
 
 	if (nr->nr_flags & IEEE80211_NODEREQ_AP ||
 	    nr->nr_capinfo & IEEE80211_CAPINFO_IBSS) {
@@ -2311,8 +2312,16 @@ ieee80211_printnode(struct ieee80211_nodereq *nr)
 
 	if (nr->nr_pwrsave)
 		printf("powersave ");
-	if (nr->nr_nrates) {
-		/* Only print the fastest rate */
+	/* Only print the fastest rate */
+	if (nr->nr_max_rxrate) {
+		printf("%uM HT ", nr->nr_max_rxrate);
+	} else if (nr->nr_rxmcs[0] != 0) {
+		for (i = IEEE80211_HT_NUM_MCS - 1; i >= 0; i--) {
+			if (isset(nr->nr_rxmcs, i))
+				break;
+		}
+		printf("HT-MCS%d ", i);
+	} else if (nr->nr_nrates) {
 		printf("%uM",
 		    (nr->nr_rates[nr->nr_nrates - 1] & IEEE80211_RATE_VAL) / 2);
 		putchar(' ');
