@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.172 2016/04/27 11:58:10 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.173 2016/04/28 13:58:00 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -767,6 +767,8 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 	}
 	/* WinStartB <= SN <= WinEndB */
 
+	ba->ba_winmiss = 0;
+	ba->ba_missedsn = 0;
 	idx = (sn - ba->ba_winstart) & 0xfff;
 	idx = (ba->ba_head + idx) % IEEE80211_BA_MAX_WINSZ;
 	/* store the received MPDU in the buffer */
