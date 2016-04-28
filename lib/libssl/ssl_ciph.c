@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.84 2015/12/12 22:04:10 mmcc Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.85 2016/04/28 16:06:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -731,7 +731,7 @@ ssl_cipher_get_evp_aead(const SSL_SESSION *s, const EVP_AEAD **aead)
 #endif
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 	case SSL_CHACHA20POLY1305:
-		*aead = EVP_aead_chacha20_poly1305();
+		*aead = EVP_aead_chacha20_poly1305_old();
 		return 1;
 #endif
 	default:

@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.13 2016/04/13 13:25:05 jsing Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.14 2016/04/28 16:06:53 jsing Exp $ */
 
 /*
  * Copyright (c) 2015 Reyk Floter <reyk@openbsd.org>
@@ -32,7 +32,7 @@
 #include "evp_locl.h"
 
 #define POLY1305_TAG_LEN 16
-#define CHACHA20_NONCE_LEN 8
+#define CHACHA20_NONCE_LEN_OLD 8
 
 /*
  * The informational RFC 7539, "ChaCha20 and Poly1305 for IETF Protocols",
@@ -42,7 +42,7 @@
  */
 #define CHACHA20_CONSTANT_LEN 4
 #define CHACHA20_IV_LEN 8
-#define CHACHA20_NONCE_LEN_IETF (CHACHA20_CONSTANT_LEN + CHACHA20_IV_LEN)
+#define CHACHA20_NONCE_LEN (CHACHA20_CONSTANT_LEN + CHACHA20_IV_LEN)
 
 struct aead_chacha20_poly1305_ctx {
 	unsigned char key[32];
@@ -157,7 +157,7 @@ aead_chacha20_poly1305_seal(const EVP_AEAD_CTX *ctx, unsigned char *out,
 		return 0;
 	}
 
-	if (nonce_len == CHACHA20_NONCE_LEN) {
+	if (nonce_len == CHACHA20_NONCE_LEN_OLD) {
 		/* Google's draft-agl-tls-chacha20poly1305-04, Nov 2013 */
 
 		memset(poly1305_key, 0, sizeof(poly1305_key));
@@ -168,7 +168,7 @@ aead_chacha20_poly1305_seal(const EVP_AEAD_CTX *ctx, unsigned char *out,
 		poly1305_update_with_length(&poly1305, ad, ad_len);
 		CRYPTO_chacha_20(out, in, in_len, c20_ctx->key, nonce, 1);
 		poly1305_update_with_length(&poly1305, out, in_len);
-	} else if (nonce_len == CHACHA20_NONCE_LEN_IETF) {
+	} else if (nonce_len == CHACHA20_NONCE_LEN) {
 		/* RFC 7539, May 2015 */
 
 		ctr = (uint64_t)(nonce[0] | nonce[1] << 8 |
@@ -245,7 +245,7 @@ aead_chacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 		return 0;
 	}
 
-	if (nonce_len == CHACHA20_NONCE_LEN) {
+	if (nonce_len == CHACHA20_NONCE_LEN_OLD) {
 		/* Google's draft-agl-tls-chacha20poly1305-04, Nov 2013 */
 
 		memset(poly1305_key, 0, sizeof(poly1305_key));
@@ -255,7 +255,7 @@ aead_chacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 		CRYPTO_poly1305_init(&poly1305, poly1305_key);
 		poly1305_update_with_length(&poly1305, ad, ad_len);
 		poly1305_update_with_length(&poly1305, in, plaintext_len);
-	} else if (nonce_len == CHACHA20_NONCE_LEN_IETF) {
+	} else if (nonce_len == CHACHA20_NONCE_LEN) {
 		/* RFC 7539, May 2015 */
 
 		ctr = (uint64_t)(nonce[0] | nonce[1] << 8 |
@@ -297,9 +297,9 @@ static const EVP_AEAD aead_chacha20_poly1305 = {
 	.open = aead_chacha20_poly1305_open,
 };
 
-static const EVP_AEAD aead_chacha20_poly1305_ietf = {
+static const EVP_AEAD aead_chacha20_poly1305_old = {
 	.key_len = 32,
-	.nonce_len = CHACHA20_NONCE_LEN_IETF,
+	.nonce_len = CHACHA20_NONCE_LEN_OLD,
 	.overhead = POLY1305_TAG_LEN,
 	.max_tag_len = POLY1305_TAG_LEN,
 
@@ -316,9 +316,9 @@ EVP_aead_chacha20_poly1305()
 }
 
 const EVP_AEAD *
-EVP_aead_chacha20_poly1305_ietf()
+EVP_aead_chacha20_poly1305_old()
 {
-	return &aead_chacha20_poly1305_ietf;
+	return &aead_chacha20_poly1305_old;
 }
 
 #endif  /* !OPENSSL_NO_CHACHA && !OPENSSL_NO_POLY1305 */
