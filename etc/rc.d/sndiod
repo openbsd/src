@@ -1,23 +1,11 @@
 #!/bin/sh
 #
-# $OpenBSD: sndiod,v 1.3 2016/04/27 17:29:08 ajacoutot Exp $
+# $OpenBSD: sndiod,v 1.4 2016/04/28 09:15:16 ajacoutot Exp $
 
 daemon="/usr/bin/sndiod"
 
 . /etc/rc.d/rc.subr
 
 rc_reload=NO
-
-rc_check() {
-	pgrep -T "${daemon_rtable}" -U _sndio -q -xf "${pexp}"
-}
-
-rc_reload() {
-	pkill -T "${daemon_rtable}" -U _sndio -HUP -xf "${pexp}"
-}
-
-rc_stop() {
-	pkill -T "${daemon_rtable}" -U _sndio -xf "${pexp}"
-}
 
 rc_cmd $1
