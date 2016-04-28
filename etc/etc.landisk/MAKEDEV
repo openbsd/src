@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.landisk/MAKEDEV.md,v 1.39 2016/04/25 20:38:11 tedu Exp 
-#	OpenBSD: MAKEDEV.common,v 1.85 2016/02/05 06:29:45 uebayasi Exp 
+#	OpenBSD: MAKEDEV.common,v 1.86 2016/04/25 20:39:42 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -60,7 +60,7 @@
 # Special purpose devices:
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
-#	bpf*	Berkeley Packet Filter
+#	bpf	Berkeley Packet Filter
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
@@ -203,7 +203,7 @@ U=`unt $i`
 
 case $i in
 ramdisk)
-	R std bpf0 wd0 wd1 sd0 rd0 wsmouse
+	R std bpf wd0 wd1 sd0 rd0 wsmouse
 	R st0 ttyC0 wskbd0 bio diskmap random
 	;;
 
@@ -291,8 +291,9 @@ diskmap)
 	M diskmap c 101 0 640 operator
 	;;
 
-bpf*)
-	M bpf$U c 22 $U 600
+bpf)
+	M bpf c 22 0 600
+	M bpf0 c 22 0 600
 	;;
 
 bio)
@@ -444,12 +445,11 @@ local)
 
 all)
 	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
-	R cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio bpf0
-	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap
-	R vscsi0 ch0 ttya audio0 audio1 audio2 fuse pppx hotplug ptm
-	R local wscons pci0 pci1 pci2 pci3 uall rmidi0 rmidi1 rmidi2
-	R rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 radio0 video0 video1 uk0
-	R random pf wd0 wd1 wd2 wd3 std st0 st1 fd
+	R cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio pty0
+	R diskmap vscsi0 ch0 ttya audio0 audio1 audio2 bpf fuse pppx
+	R hotplug ptm local wscons pci0 pci1 pci2 pci3 uall rmidi0
+	R rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 radio0
+	R video0 video1 uk0 random pf wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)

@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.894 2016/04/27 14:50:18 ajacoutot Exp $
+#	$OpenBSD: install.sub,v 1.895 2016/04/28 18:17:30 natano Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -740,16 +740,6 @@ askpassword() {
 # ------------------------------------------------------------------------------
 # Support functions for donetconfig()
 # ------------------------------------------------------------------------------
-
-# Run dhclient, making sure there is a free bpf first.
-dhclient() {
-	local _i=0
-
-	while makedev bpf$_i && ! </dev/bpf$_i; do
-		((++_i < 50)) || return
-	done 2>/dev/null
-	/sbin/dhclient "$@"
-}
 
 # Issue a DHCP request to configure interface $1 and add the host-name option to
 # /etc/dhclient.conf using $2.

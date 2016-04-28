@@ -1,6 +1,6 @@
 define(MACHINE,hppa)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.57 2016/04/25 20:38:10 tedu Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.58 2016/04/28 18:17:31 natano Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -79,7 +79,7 @@ divert(__mddivert)dnl
 dnl
 ramdisk)
 	_recurse std fd st0 st1 sd0 sd1 sd2 sd3 rd0 random
-	_recurse pty0 bpf0 bpf1 bio diskmap
+	_recurse pty0 bpf bio diskmap
 	;;
 
 _std(1, 2, 25, 6)
@@ -96,7 +96,6 @@ target(all, diskmap)dnl
 twrget(all, flo, fd, 0, 0B, 0C, 0D, 0E, 0F, 0G, 0H)dnl
 twrget(all, flo, fd, 1, 1B, 1C, 1D, 1E, 1F, 1G, 1H)dnl
 target(all, pty, 0)dnl
-target(all, bpf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, tun, 0, 1, 2, 3)dnl
 target(all, tap, 0, 1, 2, 3)dnl
 target(all, xy, 0, 1, 2, 3)dnl

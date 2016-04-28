@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc/MAKEDEV.md,v 1.57 2016/04/25 20:38:11 tedu Exp 
-#	OpenBSD: MAKEDEV.common,v 1.85 2016/02/05 06:29:45 uebayasi Exp 
+#	OpenBSD: MAKEDEV.common,v 1.86 2016/04/25 20:39:42 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -66,7 +66,7 @@
 #	apm	Power management device
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
-#	bpf*	Berkeley Packet Filter
+#	bpf	Berkeley Packet Filter
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
@@ -206,7 +206,7 @@ U=`unt $i`
 
 case $i in
 ramdisk)
-	R std bpf0 bio diskmap random
+	R std bpf bio diskmap random
 	R fd0 sd0 sd1 sd2 rd0 cd0
 	;;
 
@@ -281,8 +281,9 @@ diskmap)
 	M diskmap c 129 0 640 operator
 	;;
 
-bpf*)
-	M bpf$U c 105 $U 600
+bpf)
+	M bpf c 105 0 600
+	M bpf0 c 105 0 600
 	;;
 
 bio)
@@ -516,13 +517,12 @@ local)
 all)
 	R presto0 bpp0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0
 	R cd1 rd0 xy0 xy1 xy2 xy3 tap0 tap1 tap2 tap3 tun0 tun1 tun2
-	R tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
-	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D
-	R fd0E fd0F fd0G fd0H diskmap vscsi0 ch0 bio cuaa cuab cuac
-	R cuad ttya ttyb ttyc ttyd audio0 audio1 audio2 fuse pppx
-	R hotplug ptm local wscons uk0 random tty00 tty01 tty02 tty03
-	R tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b apm pf xd0
-	R xd1 xd2 xd3 std st0 st1 fd
+	R tun3 pty0 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B
+	R fd0C fd0D fd0E fd0F fd0G fd0H diskmap vscsi0 ch0 bio cuaa
+	R cuab cuac cuad ttya ttyb ttyc ttyd audio0 audio1 audio2 bpf
+	R fuse pppx hotplug ptm local wscons uk0 random tty00 tty01
+	R tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b
+	R apm pf xd0 xd1 xd2 xd3 std st0 st1 fd
 	;;
 
 presto*|xd*|xy*|sd*)

@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.27 2016/04/25 20:38:11 tedu Exp 
-#	OpenBSD: MAKEDEV.common,v 1.85 2016/02/05 06:29:45 uebayasi Exp 
+#	OpenBSD: MAKEDEV.common,v 1.86 2016/04/25 20:39:42 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -55,7 +55,7 @@
 # Special purpose devices:
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
-#	bpf*	Berkeley Packet Filter
+#	bpf	Berkeley Packet Filter
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
@@ -265,8 +265,9 @@ diskmap)
 	M diskmap c 54 0 640 operator
 	;;
 
-bpf*)
-	M bpf$U c 22 $U 600
+bpf)
+	M bpf c 22 0 600
+	M bpf0 c 22 0 600
 	;;
 
 bio)
@@ -392,16 +393,15 @@ local)
 
 ramdisk)
 	R diskmap bio pty0 ttya rd0 cd0 cd1 st0 st1 wd0 wd1 wd2 wd3
-	R wd4 sd0 sd1 sd2 sd3 sd4 tty00 tty01 bpf0 std
+	R wd4 sd0 sd1 sd2 sd3 sd4 tty00 tty01 bpf std
 	;;
 
 all)
 	R pcex audio0 lcd ttya vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3
 	R sd4 cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio
-	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
-	R diskmap vscsi0 ch0 fuse pppx ptm local wscons uk0 random
-	R tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09
-	R tty0a tty0b pf wd0 wd1 wd2 wd3 std st0 st1 fd
+	R pty0 diskmap vscsi0 ch0 bpf fuse pppx ptm local wscons uk0
+	R random tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08
+	R tty09 tty0a tty0b pf wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)

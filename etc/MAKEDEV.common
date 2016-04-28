@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.86 2016/04/25 20:39:42 tedu Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.87 2016/04/28 18:17:30 natano Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -168,6 +168,7 @@ target(all, pppx)dnl
 target(all, fuse)dnl
 target(all, vmm)dnl
 target(all, pvbus, 0)dnl
+target(all, bpf)dnl
 dnl
 _mkdev(all, {-all-}, {-dnl
 show_target(all)dnl
@@ -215,7 +216,7 @@ show_target(ramd)dnl
 -})dnl
 dnl
 target(ramd, std)dnl
-target(ramd, bpf, 0)dnl
+target(ramd, bpf)dnl
 twrget(ramd, com, tty0, 0, 1)dnl
 target(ramd, sd, 0, 1, 2, 3, 4)dnl
 target(ramd, wd, 0, 1, 2, 3, 4)dnl
@@ -446,8 +447,9 @@ __devitem(oppr, openprom,PROM settings,openprom)dnl
 _cdev(oppr, openprom, 70, 0)dnl
 __devitem(pf, pf*, Packet Filter)dnl
 _mkdev(pf, {-pf*-}, {-M pf c major_pf_c 0 600-})dnl
-__devitem(bpf, bpf*, Berkeley Packet Filter)dnl
-_mkdev(bpf, {-bpf*-}, {-M bpf$U c major_bpf_c $U 600-}, 600)dnl
+__devitem(bpf, bpf, Berkeley Packet Filter)dnl
+_mkdev(bpf, bpf, {-M bpf c major_bpf_c 0 600
+	M bpf0 c major_bpf_c 0 600-})dnl
 _mkdev(tun, {-tun*-}, {-M tun$U c major_tun_c $U 600-}, 600)dnl
 _mkdev(tap, {-tap*-}, {-M tap$U c major_tap_c $U 600-}, 600)dnl
 __devitem(speak, speaker, PC speaker,spkr)dnl

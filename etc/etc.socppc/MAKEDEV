@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.socppc/MAKEDEV.md,v 1.28 2016/04/25 20:38:11 tedu Exp 
-#	OpenBSD: MAKEDEV.common,v 1.85 2016/02/05 06:29:45 uebayasi Exp 
+#	OpenBSD: MAKEDEV.common,v 1.86 2016/04/25 20:39:42 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -59,7 +59,7 @@
 #	ulpt*	Printer devices
 #	usb*	Bus control devices used by usbd for attach/detach
 # Special purpose devices:
-#	bpf*	Berkeley Packet Filter
+#	bpf	Berkeley Packet Filter
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
@@ -270,8 +270,9 @@ diskmap)
 	M diskmap c 82 0 640 operator
 	;;
 
-bpf*)
-	M bpf$U c 22 $U 600
+bpf)
+	M bpf c 22 0 600
+	M bpf0 c 22 0 600
 	;;
 
 usb*)
@@ -411,17 +412,16 @@ local)
 
 ramdisk)
 	R diskmap rd0 cd0 cd1 st0 st1 wd0 wd1 wd2 wd3 wd4 sd0 sd1 sd2
-	R sd3 sd4 tty00 tty01 bpf0 std
+	R sd3 sd4 tty00 tty01 bpf std
 	;;
 
 all)
 	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
-	R cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3 bpf0
-	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap
-	R vscsi0 ch0 fuse pppx hotplug ptm local wscons pci0 pci1 pci2
-	R pci3 uall video0 video1 random tty00 tty01 tty02 tty03 tty04
-	R tty05 tty06 tty07 tty08 tty09 tty0a tty0b pf wd0 wd1 wd2 wd3
-	R std st0 st1 fd
+	R cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3 pty0
+	R diskmap vscsi0 ch0 bpf fuse pppx hotplug ptm local wscons
+	R pci0 pci1 pci2 pci3 uall video0 video1 random tty00 tty01
+	R tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b
+	R pf wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)
