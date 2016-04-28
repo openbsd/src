@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.51 2016/02/15 19:56:11 martijn Exp $ */
+/* $OpenBSD: doas.c,v 1.52 2016/04/28 04:48:56 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -325,6 +325,8 @@ main(int argc, char **argv, char **envp)
 	char cwdpath[PATH_MAX];
 	const char *cwd;
 	char *login_style = NULL;
+
+	setprogname("doas");
 
 	if (pledge("stdio rpath getpw tty proc exec id", NULL) == -1)
 		err(1, "pledge");
