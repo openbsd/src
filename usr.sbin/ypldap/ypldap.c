@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.18 2015/12/05 13:15:06 claudio Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.19 2016/04/28 22:28:36 schwarze Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -241,9 +241,8 @@ main_create_user_groups(struct env *env)
 			if ((ue = RB_FIND(user_name_tree, env->sc_user_names_t,
 			    &ukey)) == NULL) {
 				/* User not found */
-				log_warnx("main: user: %s is referenced as a "
-					"group member, but can't be found in the "
-					"users map.\n", ukey.ue_line);
+				log_warnx("main: unknown user %s in group %s\n",
+				    ukey.ue_line, ge->ge_line);
 				if (bp != NULL)
 					*(bp-1) = ',';
 				continue;
