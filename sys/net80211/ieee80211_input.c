@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.173 2016/04/28 13:58:00 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.174 2016/04/28 15:00:27 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -67,6 +67,8 @@ void	ieee80211_input_ba_flush(struct ieee80211com *, struct ieee80211_node *,
 void	ieee80211_input_ba_gap_timeout(void *arg);
 void	ieee80211_ba_move_window(struct ieee80211com *,
 	    struct ieee80211_node *, u_int8_t, u_int16_t);
+void	ieee80211_input_ba_seq(struct ieee80211com *,
+	    struct ieee80211_node *, uint8_t, uint16_t);
 struct	mbuf *ieee80211_align_mbuf(struct mbuf *);
 void	ieee80211_decap(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, int);
@@ -712,26 +714,13 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 		return;
 	}
 	if (SEQ_LT(ba->ba_winend, sn)) {	/* WinEndB < SN */
-		/* 
-		 * If this frame would move the window outside the range of
-		 * winend + winsize, drop it. This is likely a fluke and the
-		 * next frame will fit into the window again. Allowing the
-		 * window to be moved too far ahead makes us drop frames
-		 * until their sequence numbers catch up with the new window.
-		 *
-		 * However, if the window really did move arbitrarily, we must
-		 * allow it to move forward. We try to detect this condition
-		 * by counting missed consecutive frames.
-		 */
-		count = (sn - ba->ba_winend) & 0xfff;
-#ifdef DIAGNOSTIC
-		if ((ifp->if_flags & IFF_DEBUG) && count > 1)
-			printf("%s: received frame with bad sequence number "
-			    "%d, expecting %d:%d\n", __func__,
-			    sn, ba->ba_winstart, ba->ba_winend);
-#endif
 		ic->ic_stats.is_ht_rx_frame_above_ba_winend++;
+		count = (sn - ba->ba_winend) & 0xfff;
 		if (count > ba->ba_winsize) {
+			/* 
+			 * Check whether we're consistently behind the window,
+			 * and let the window move forward if neccessary.
+			 */
 			if (ba->ba_winmiss < IEEE80211_BA_MAX_WINMISS) { 
 				if (ba->ba_missedsn == sn - 1)
 					ba->ba_winmiss++;
@@ -747,23 +736,13 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 			ic->ic_stats.is_ht_rx_ba_window_jump++;
 			ba->ba_winmiss = 0;
 			ba->ba_missedsn = 0;
-
-			count = ba->ba_winsize;	/* no overlap */
+			ieee80211_ba_move_window(ic, ni, tid, sn);
+		} else {
+			ic->ic_stats.is_ht_rx_ba_window_slide++;
+			ieee80211_input_ba_seq(ic, ni, tid,
+			    ba->ba_winstart + count);
+			ieee80211_input_ba_flush(ic, ni, ba);
 		}
-		while (count-- > 0) {
-			/* gaps may exist */
-			if (ba->ba_buf[ba->ba_head].m != NULL) {
-				ieee80211_input(ifp, ba->ba_buf[ba->ba_head].m,
-				    ni, &ba->ba_buf[ba->ba_head].rxi);
-				ba->ba_buf[ba->ba_head].m = NULL;
-			} else
-				ic->ic_stats.is_ht_rx_ba_frame_lost++;
-			ba->ba_head = (ba->ba_head + 1) %
-			    IEEE80211_BA_MAX_WINSZ;
-		}
-		/* move window forward */
-		ba->ba_winend = sn;
-		ba->ba_winstart = (sn - ba->ba_winsize + 1) & 0xfff;
 	}
 	/* WinStartB <= SN <= WinEndB */
 
@@ -789,6 +768,39 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 		timeout_del(&ba->ba_gap_to);
 
 	ieee80211_input_ba_flush(ic, ni, ba);
+}
+
+/* 
+ * Forward buffered frames with sequence number lower than max_seq.
+ * See 802.11-2012 9.21.7.6.2 b.
+ */
+void
+ieee80211_input_ba_seq(struct ieee80211com *ic, struct ieee80211_node *ni,
+    uint8_t tid, uint16_t max_seq)
+{
+	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_rx_ba *ba = &ni->ni_rx_ba[tid];
+	struct ieee80211_frame *wh;
+	uint16_t seq;
+	int i = 0;
+
+	while (i++ < ba->ba_winsize) {
+		/* gaps may exist */
+		if (ba->ba_buf[ba->ba_head].m != NULL) {
+			wh = mtod(ba->ba_buf[ba->ba_head].m,
+			    struct ieee80211_frame *);
+			KASSERT(ieee80211_has_seq(wh));
+			seq = letoh16(*(u_int16_t *)wh->i_seq) >>
+			    IEEE80211_SEQ_SEQ_SHIFT;
+			if (!SEQ_LT(seq, max_seq))
+				return;
+			ieee80211_input(ifp, ba->ba_buf[ba->ba_head].m,
+			    ni, &ba->ba_buf[ba->ba_head].rxi);
+			ba->ba_buf[ba->ba_head].m = NULL;
+		} else
+			ic->ic_stats.is_ht_rx_ba_frame_lost++;
+		ba->ba_head = (ba->ba_head + 1) % IEEE80211_BA_MAX_WINSZ;
+	}
 }
 
 /* Flush a consecutive sequence of frames from the reorder buffer. */
