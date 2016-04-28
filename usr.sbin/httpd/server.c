@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.84 2016/04/19 16:22:34 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.85 2016/04/28 17:18:06 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -182,28 +182,28 @@ server_tls_init(struct server *srv)
 
 	if (tls_config_set_ciphers(srv->srv_tls_config,
 	    srv->srv_conf.tls_ciphers) != 0) {
-		log_warnx("%s: failed to set tls ciphers", __func__);
+		log_warnx("%s: failed to set tls ciphers: %s",
+		    __func__, tls_config_error(srv->srv_tls_config));
 		return (-1);
 	}
 	if (tls_config_set_dheparams(srv->srv_tls_config,
 	    srv->srv_conf.tls_dhe_params) != 0) {
-		log_warnx("%s: failed to set tls dhe params", __func__);
+		log_warnx("%s: failed to set tls dhe params: %s",
+		    __func__, tls_config_error(srv->srv_tls_config));
 		return (-1);
 	}
 	if (tls_config_set_ecdhecurve(srv->srv_tls_config,
 	    srv->srv_conf.tls_ecdhe_curve) != 0) {
-		log_warnx("%s: failed to set tls ecdhe curve", __func__);
+		log_warnx("%s: failed to set tls ecdhe curve: %s",
+		    __func__, tls_config_error(srv->srv_tls_config));
 		return (-1);
 	}
 
-	if (tls_config_set_cert_mem(srv->srv_tls_config,
-	    srv->srv_conf.tls_cert, srv->srv_conf.tls_cert_len) != 0) {
-		log_warnx("%s: failed to set tls cert", __func__);
-		return (-1);
-	}
-	if (tls_config_set_key_mem(srv->srv_tls_config,
+	if (tls_config_set_keypair_mem(srv->srv_tls_config,
+	    srv->srv_conf.tls_cert, srv->srv_conf.tls_cert_len,
 	    srv->srv_conf.tls_key, srv->srv_conf.tls_key_len) != 0) {
-		log_warnx("%s: failed to set tls key", __func__);
+		log_warnx("%s: failed to set tls certificate/key: %s",
+		    __func__, tls_config_error(srv->srv_tls_config));
 		return (-1);
 	}
 
