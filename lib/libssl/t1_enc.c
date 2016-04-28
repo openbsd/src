@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.84 2016/03/06 14:52:15 beck Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.85 2016/04/28 16:39:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -471,13 +471,25 @@ tls1_change_cipher_state_aead(SSL *s, char is_read, const unsigned char *key,
 	aead_ctx->variable_nonce_in_record =
 	    (s->s3->tmp.new_cipher->algorithm2 &
 	    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD) != 0;
-	if (aead_ctx->variable_nonce_len + aead_ctx->fixed_nonce_len !=
-	    EVP_AEAD_nonce_length(aead)) {
-		SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE_AEAD,
-		    ERR_R_INTERNAL_ERROR);
-		return (0);
-	}
+	aead_ctx->xor_fixed_nonce =
+	    s->s3->tmp.new_cipher->algorithm_enc == SSL_CHACHA20POLY1305;
 	aead_ctx->tag_len = EVP_AEAD_max_overhead(aead);
+
+	if (aead_ctx->xor_fixed_nonce) {
+		if (aead_ctx->fixed_nonce_len != EVP_AEAD_nonce_length(aead) ||
+		    aead_ctx->variable_nonce_len > EVP_AEAD_nonce_length(aead)) {
+			SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE_AEAD,
+			    ERR_R_INTERNAL_ERROR);
+			return (0);
+		}
+	} else {
+		if (aead_ctx->variable_nonce_len + aead_ctx->fixed_nonce_len !=
+		    EVP_AEAD_nonce_length(aead)) {
+			SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE_AEAD,
+			    ERR_R_INTERNAL_ERROR);
+			return (0);
+		}
+	}
 
 	return (1);
 }
@@ -819,8 +831,8 @@ tls1_enc(SSL *s, int send)
 
 	if (aead) {
 		unsigned char ad[13], *in, *out, nonce[16];
-		unsigned nonce_used;
-		size_t out_len;
+		size_t out_len, pad_len = 0;
+		unsigned int nonce_used;
 
 		if (SSL_IS_DTLS(s)) {
 			dtls1_build_sequence_number(ad, seq,
@@ -834,13 +846,20 @@ tls1_enc(SSL *s, int send)
 		ad[9] = (unsigned char)(s->version >> 8);
 		ad[10] = (unsigned char)(s->version);
 
-		if (aead->fixed_nonce_len +
-		    aead->variable_nonce_len > sizeof(nonce) ||
-		    aead->variable_nonce_len > 8)
-			return -1;  /* internal error - should never happen. */
+		if (aead->variable_nonce_len > 8 ||
+		    aead->variable_nonce_len > sizeof(nonce))
+			return -1;
 
-		memcpy(nonce, aead->fixed_nonce, aead->fixed_nonce_len);
-		nonce_used = aead->fixed_nonce_len;
+		if (aead->xor_fixed_nonce) {
+			if (aead->fixed_nonce_len > sizeof(nonce) ||
+			    aead->variable_nonce_len > aead->fixed_nonce_len)
+				return -1;  /* Should never happen. */
+			pad_len = aead->fixed_nonce_len - aead->variable_nonce_len;
+		} else {
+			if (aead->fixed_nonce_len +
+			    aead->variable_nonce_len > sizeof(nonce))
+				return -1;  /* Should never happen. */
+		}
 
 		if (send) {
 			size_t len = rec->length;
@@ -848,15 +867,30 @@ tls1_enc(SSL *s, int send)
 			in = rec->input;
 			out = rec->data;
 
-			/*
-			 * When sending we use the sequence number as the
-			 * variable part of the nonce.
-			 */
-			if (aead->variable_nonce_len > 8)
-				return -1;
-			memcpy(nonce + nonce_used, ad,
-			    aead->variable_nonce_len);
-			nonce_used += aead->variable_nonce_len;
+			if (aead->xor_fixed_nonce) {
+				/*
+				 * The sequence number is left zero
+				 * padded, then xored with the fixed
+				 * nonce.
+				 */
+				memset(nonce, 0, pad_len);
+				memcpy(nonce + pad_len, ad,
+				    aead->variable_nonce_len);
+				for (i = 0; i < aead->fixed_nonce_len; i++)
+					nonce[i] ^= aead->fixed_nonce[i];
+				nonce_used = aead->fixed_nonce_len;
+			} else {
+				/*
+				 * When sending we use the sequence number as
+				 * the variable part of the nonce.
+				 */
+				memcpy(nonce, aead->fixed_nonce,
+				    aead->fixed_nonce_len);
+				nonce_used = aead->fixed_nonce_len;
+				memcpy(nonce + nonce_used, ad,
+				    aead->variable_nonce_len);
+				nonce_used += aead->variable_nonce_len;
+			}
 
 			/*
 			 * In do_ssl3_write, rec->input is moved forward by
@@ -890,10 +924,29 @@ tls1_enc(SSL *s, int send)
 
 			if (len < aead->variable_nonce_len)
 				return 0;
-			memcpy(nonce + nonce_used,
-			    aead->variable_nonce_in_record ? in : ad,
-			    aead->variable_nonce_len);
-			nonce_used += aead->variable_nonce_len;
+
+			if (aead->xor_fixed_nonce) {
+				/*
+				 * The sequence number is left zero
+				 * padded, then xored with the fixed
+				 * nonce.
+				 */
+				memset(nonce, 0, pad_len);
+				memcpy(nonce + pad_len, ad,
+				    aead->variable_nonce_len);
+				for (i = 0; i < aead->fixed_nonce_len; i++)
+					nonce[i] ^= aead->fixed_nonce[i];
+				nonce_used = aead->fixed_nonce_len;
+			} else {
+				memcpy(nonce, aead->fixed_nonce,
+				    aead->fixed_nonce_len);
+				nonce_used = aead->fixed_nonce_len;
+
+				memcpy(nonce + nonce_used,
+				    aead->variable_nonce_in_record ? in : ad,
+				    aead->variable_nonce_len);
+				nonce_used += aead->variable_nonce_len;
+			}
 
 			if (aead->variable_nonce_in_record) {
 				in += aead->variable_nonce_len;

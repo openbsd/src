@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.128 2015/09/12 15:08:54 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.129 2016/04/28 16:39:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -283,6 +283,7 @@
 #define SSL_AES128GCM		0x00000400L
 #define SSL_AES256GCM		0x00000800L
 #define SSL_CHACHA20POLY1305	0x00001000L
+#define SSL_CHACHA20POLY1305_OLD	0x00002000L
 
 #define SSL_AES        		(SSL_AES128|SSL_AES256|SSL_AES128GCM|SSL_AES256GCM)
 #define SSL_CAMELLIA		(SSL_CAMELLIA128|SSL_CAMELLIA256)
@@ -529,9 +530,10 @@ struct ssl_aead_ctx_st {
 	 * fixed_nonce contains any bytes of the nonce that are fixed for all
 	 * records.
 	 */
-	unsigned char fixed_nonce[8];
+	unsigned char fixed_nonce[12];
 	unsigned char fixed_nonce_len;
 	unsigned char variable_nonce_len;
+	unsigned char xor_fixed_nonce;
 	unsigned char tag_len;
 	/*
 	 * variable_nonce_in_record is non-zero if the variable nonce
