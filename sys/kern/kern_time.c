@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.96 2015/12/05 10:11:53 tedu Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.97 2016/04/28 20:11:20 tedu Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -624,9 +624,11 @@ realitexpire(void *arg)
 int
 timespecfix(struct timespec *ts)
 {
-	if (ts->tv_sec < 0 || ts->tv_sec > 100000000 ||
+	if (ts->tv_sec < 0 ||
 	    ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
 		return (EINVAL);
+	if (ts->tv_sec > 100000000)
+		ts->tv_sec = 100000000;
 	return (0);
 }
 
