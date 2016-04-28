@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.61 2016/04/25 20:00:33 tedu Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.62 2016/04/28 14:25:08 beck Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -52,11 +52,48 @@
 #include <sys/pledge.h>
 #include <sys/file.h>
 #include <sys/fcntl.h>
+#include <sys/types.h>
+#include <sys/malloc.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
 
+
+void
+push_component(struct nameidata *ndp, char *cp, size_t cplen)
+{
+	KASSERT(cplen < MAXPATHLEN);
+	if (ndp->ni_p_size - ndp->ni_p_length <= cplen) {
+		char *tmp = malloc(ndp->ni_p_size + MAXPATHLEN, M_TEMP, M_WAITOK);
+		memcpy(tmp, ndp->ni_p_path, ndp->ni_p_length);
+		ndp->ni_p_next = tmp + (ndp->ni_p_next - ndp->ni_p_path);
+		ndp->ni_p_prev = tmp + (ndp->ni_p_prev - ndp->ni_p_path);
+		free(ndp->ni_p_path, M_TEMP, ndp->ni_p_size);
+		ndp->ni_p_path = tmp;
+		ndp->ni_p_size += MAXPATHLEN;
+	}
+	memcpy(ndp->ni_p_next, cp, cplen);
+	ndp->ni_p_prev = ndp->ni_p_next;
+	ndp->ni_p_next += cplen;
+	ndp->ni_p_length += cplen;
+	*ndp->ni_p_next = '\0';
+#ifdef NAMEI_DIAGNOSTIC_PLEDGE
+	printf("push: ndp->ni_p_path = %s\n", ndp->ni_p_path);
+#endif
+}
+
+void
+pop_symlink(struct nameidata *ndp)
+{
+	KASSERT(ndp->ni_p_next != ndp->ni_p_prev);
+	ndp->ni_p_length = ndp->ni_p_prev - ndp->ni_p_path;
+	ndp->ni_p_next = ndp->ni_p_prev;
+	*ndp->ni_p_next = '\0';
+#ifdef NAMEI_DIAGNOSTIC_PLEDGE
+	printf("pop: ndp->ni_p_path = %s\n", ndp->ni_p_path);
+#endif
+}
 
 /*
  * Convert a pathname into a pointer to a vnode.
@@ -158,10 +195,25 @@ fail:
 	 */
 	if ((ndp->ni_rootdir = fdp->fd_rdir) == NULL)
 		ndp->ni_rootdir = rootvnode;
-	
+
 	error = pledge_namei(p, ndp, cnp->cn_pnbuf);
 	if (error)
 		goto fail;
+
+	/*
+	 * Decide if we need to call pledge_namei_wlpath after namei lookup, if
+	 * so give namei a place to store a path for it to look at.
+	 */
+	if (!ISSET(p->p_p->ps_flags, PS_COREDUMP) &&
+	    ISSET(p->p_p->ps_flags, PS_PLEDGE) && p->p_p->ps_pledgepaths) {
+		ndp->ni_p_path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+		ndp->ni_p_next = ndp->ni_p_prev = ndp->ni_p_path;
+		ndp->ni_p_size = MAXPATHLEN;
+		ndp->ni_p_length = 0;
+	} else {
+		ndp->ni_p_path = NULL;
+		ndp->ni_p_size = 0;
+	}
 
 	/*
 	 * Check if starting from root directory or current directory.
@@ -169,17 +221,25 @@ fail:
 	if (cnp->cn_pnbuf[0] == '/') {
 		dp = ndp->ni_rootdir;
 		vref(dp);
+		if (ndp->ni_p_path != NULL) {
+			*ndp->ni_p_path = '/';
+			ndp->ni_p_next++;
+			*ndp->ni_p_next = '\0';
+			ndp->ni_p_length = 1;
+		}
 	} else if (ndp->ni_dirfd == AT_FDCWD) {
 		dp = fdp->fd_cdir;
 		vref(dp);
 	} else {
 		struct file *fp = fd_getfile(fdp, ndp->ni_dirfd);
 		if (fp == NULL) {
+			free(ndp->ni_p_path, M_TEMP, ndp->ni_p_size);
 			pool_put(&namei_pool, cnp->cn_pnbuf);
 			return (EBADF);
 		}
 		dp = (struct vnode *)fp->f_data;
 		if (fp->f_type != DTYPE_VNODE || dp->v_type != VDIR) {
+			free(ndp->ni_p_path, M_TEMP, ndp->ni_p_size);
 			pool_put(&namei_pool, cnp->cn_pnbuf);
 			return (ENOTDIR);
 		}
@@ -188,12 +248,14 @@ fail:
 	for (;;) {
 		if (!dp->v_mount) {
 			/* Give up if the directory is no longer mounted */
+			free(ndp->ni_p_path, M_TEMP, ndp->ni_p_size);
 			pool_put(&namei_pool, cnp->cn_pnbuf);
 			return (ENOENT);
 		}
 		cnp->cn_nameptr = cnp->cn_pnbuf;
 		ndp->ni_startdir = dp;
 		if ((error = vfs_lookup(ndp)) != 0) {
+			free(ndp->ni_p_path, M_TEMP, ndp->ni_p_size);
 			pool_put(&namei_pool, cnp->cn_pnbuf);
 			return (error);
 		}
@@ -201,11 +263,24 @@ fail:
 		 * If not a symbolic link, return search result.
 		 */
 		if ((cnp->cn_flags & ISSYMLINK) == 0) {
+			error = pledge_namei_wlpath(p, ndp);
+			if (error) {
+#ifdef NAMEI_DIAGNOSTIC_PLEDGE
+				printf("pledge_namei error %d for path %s\n", error, ndp->ni_p_path);
+#endif
+				free(ndp->ni_p_path, M_TEMP, ndp->ni_p_size);
+				pool_put(&namei_pool, cnp->cn_pnbuf);
+				if (ndp->ni_vp)
+					vput(ndp->ni_vp);
+				ndp->ni_vp = NULL;
+				return(error);
+			}
+			free(ndp->ni_p_path, M_TEMP, ndp->ni_p_size);
 			if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0)
 				pool_put(&namei_pool, cnp->cn_pnbuf);
 			else
 				cnp->cn_flags |= HASBUF;
-			return (0);
+			return(0);
 		}
 		if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))
 			VOP_UNLOCK(ndp->ni_dvp, p);
@@ -258,9 +333,17 @@ badlink:
 			vrele(dp);
 			dp = ndp->ni_rootdir;
 			vref(dp);
+			if (ndp->ni_p_path != NULL) {
+				ndp->ni_p_next = ndp->ni_p_prev = ndp->ni_p_path;
+				*ndp->ni_p_path = '/';
+				ndp->ni_p_next++;
+				*ndp->ni_p_next = '\0';
+				ndp->ni_p_length = 1;
+			}
 		}
 	}
 	pool_put(&namei_pool, cnp->cn_pnbuf);
+	free(ndp->ni_p_path, M_TEMP, ndp->ni_p_size);
 	vrele(ndp->ni_dvp);
 	vput(ndp->ni_vp);
 	ndp->ni_vp = NULL;
@@ -392,11 +475,17 @@ dirloop:
 	}
 
 #ifdef NAMEI_DIAGNOSTIC
+#ifdef NAMEI_DIAGNOSTIC_PLEDGE
+	if (p && p->p_p && p->p_p->ps_pledgepaths)
+#endif
 	{ char c = *cp;
 	*cp = '\0';
 	printf("{%s}: ", cnp->cn_nameptr);
 	*cp = c; }
 #endif
+	if (ndp->ni_p_path != NULL)
+		push_component(ndp, cnp->cn_nameptr, cnp->cn_namelen);
+
 	ndp->ni_pathlen -= cnp->cn_namelen;
 	ndp->ni_next = cp;
 	/*
@@ -478,7 +567,10 @@ dirloop:
 			panic("leaf should be empty");
 #endif
 #ifdef NAMEI_DIAGNOSTIC
-		printf("not found\n");
+#ifdef NAMEI_DIAGNOSTIC_PLEDGE
+		if (p && p->p_p && p->p_p->ps_pledgepaths)
+#endif
+			printf("not found\n");
 #endif
 		if (error != EJUSTRETURN)
 			goto bad;
@@ -510,7 +602,10 @@ dirloop:
 		return (0);
 	}
 #ifdef NAMEI_DIAGNOSTIC
-	printf("found\n");
+#ifdef NAMEI_DIAGNOSTIC_PLEDGE
+	if (p && p->p_p && p->p_p->ps_pledgepaths)
+#endif
+		printf("found\n");
 #endif
 
 	/*
@@ -558,6 +653,8 @@ dirloop:
 		ndp->ni_pathlen += slashes;
 		ndp->ni_next -= slashes;
 		cnp->cn_flags |= ISSYMLINK;
+		if (ndp->ni_p_path != NULL)
+			pop_symlink(ndp);
 		return (0);
 	}
 
@@ -578,6 +675,8 @@ nextname:
 	if (!(cnp->cn_flags & ISLASTCN)) {
 		cnp->cn_nameptr = ndp->ni_next;
 		vrele(ndp->ni_dvp);
+		if (ndp->ni_p_path != NULL)
+			push_component(ndp, "/", 1);
 		goto dirloop;
 	}
 
@@ -658,16 +757,21 @@ vfs_relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	 */
 
 #ifdef NAMEI_DIAGNOSTIC
-	/* XXX: Figure out the length of the last component. */
-	cp = cnp->cn_nameptr;
-	while (*cp && (*cp != '/')) {
-		cp++;
+#ifdef NAMEI_DIAGNOSTIC_PLEDGE
+	if (p && p->p_p && p->p_p->ps_pledgepaths)
+#endif
+	{
+		/* XXX: Figure out the length of the last component. */
+		cp = cnp->cn_nameptr;
+		while (*cp && (*cp != '/')) {
+			cp++;
+		}
+		if (cnp->cn_namelen != cp - cnp->cn_nameptr)
+			panic("relookup: bad len");
+		if (*cp != 0)
+			panic("relookup: not last component");
+		printf("{%s}: ", cnp->cn_nameptr);
 	}
-	if (cnp->cn_namelen != cp - cnp->cn_nameptr)
-		panic("relookup: bad len");
-	if (*cp != 0)
-		panic("relookup: not last component");
-	printf("{%s}: ", cnp->cn_nameptr);
 #endif
 
 	/*

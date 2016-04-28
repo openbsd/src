@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.164 2016/04/25 10:01:23 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.165 2016/04/28 14:25:08 beck Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -739,82 +739,94 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 	if (ni->ni_pledge & ~p->p_p->ps_pledge)
 		return (pledge_fail(p, EPERM, (ni->ni_pledge & ~p->p_p->ps_pledge)));
 
+	return (0);
+}
+
+/*
+ * wlpath lookup - only done after namei lookup has succeeded on the last compoent of
+ * a namei lookup, with a possibly non-canonicalized path given in "origpath" from namei.
+ */
+int
+pledge_namei_wlpath(struct proc *p, struct nameidata *ni)
+{
+	struct whitepaths *wl = p->p_p->ps_pledgepaths;
+	char *rdir = NULL, *cwd = NULL, *resolved = NULL;
+	size_t rdirlen, cwdlen, resolvedlen;
+	int i, error, pardir_found;
+
 	/*
 	 * If a whitelist is set, compare canonical paths.  Anything
 	 * not on the whitelist gets ENOENT.
 	 */
-	if (p->p_p->ps_pledgepaths) {
-		struct whitepaths *wl = p->p_p->ps_pledgepaths;
-		char *rdir = NULL, *cwd = NULL, *resolved = NULL;
-		size_t rdirlen, cwdlen, resolvedlen;
-		int i, error, pardir_found;
+	if (ni->ni_p_path == NULL)
+		return(0);
 
-		error = resolvpath(p, &rdir, &rdirlen, &cwd, &cwdlen,
-		    origpath, strlen(origpath)+1, &resolved, &resolvedlen);
+	KASSERT(p->p_p->ps_pledgepaths);
 
-		free(rdir, M_TEMP, rdirlen);
-		free(cwd, M_TEMP, cwdlen);
+	// XXX change later or more help from namei?
+	error = resolvpath(p, &rdir, &rdirlen, &cwd, &cwdlen,
+	    ni->ni_p_path, ni->ni_p_length+1, &resolved, &resolvedlen);
 
-		if (error != 0)
-			/* resolved is allocated only if !error */
-			return (error);
+	free(rdir, M_TEMP, rdirlen);
+	free(cwd, M_TEMP, cwdlen);
 
-		/* print resolved path (viewed as without chroot) */
-		DNPRINTF(2, "pledge_namei: resolved=\"%s\" [%lld] strlen=%lld\n",
-		    resolved, (long long)resolvedlen,
-		    (long long)strlen(resolved));
+	if (error != 0)
+		/* resolved is allocated only if !error */
+		return (error);
 
-		error = ENOENT;
-		pardir_found = 0;
-		for (i = 0; i < wl->wl_count && wl->wl_paths[i].name && error; i++) {
-			int substr = substrcmp(wl->wl_paths[i].name,
-			    wl->wl_paths[i].len - 1, resolved, resolvedlen - 1);
+	/* print resolved path (viewed as without chroot) */
+	DNPRINTF(2, "pledge_namei: resolved=\"%s\" [%lld] strlen=%lld\n",
+	    resolved, (long long)resolvedlen,
+	    (long long)strlen(resolved));
 
-			/* print check between registered wl_path and resolved */
-			DNPRINTF(3,
-			    "pledge: check: \"%s\" (%ld) \"%s\" (%ld) = %d\n",
-			    wl->wl_paths[i].name, wl->wl_paths[i].len - 1,
-			    resolved, resolvedlen - 1,
-			    substr);
+	error = ENOENT;
+	pardir_found = 0;
+	for (i = 0; i < wl->wl_count && wl->wl_paths[i].name && error; i++) {
+		int substr = substrcmp(wl->wl_paths[i].name,
+		    wl->wl_paths[i].len - 1, resolved, resolvedlen - 1);
 
-			/* wl_paths[i].name is a substring of resolved */
-			if (substr == 1) {
-				u_char term = resolved[wl->wl_paths[i].len - 1];
+		/* print check between registered wl_path and resolved */
+		DNPRINTF(3,
+		    "pledge: check: \"%s\" (%ld) \"%s\" (%ld) = %d\n",
+		    wl->wl_paths[i].name, wl->wl_paths[i].len - 1,
+		    resolved, resolvedlen - 1,
+		    substr);
 
-				if (term == '\0' || term == '/' ||
-				    wl->wl_paths[i].name[1] == '\0')
-					error = 0;
+		/* wl_paths[i].name is a substring of resolved */
+		if (substr == 1) {
+			u_char term = resolved[wl->wl_paths[i].len - 1];
+
+			if (term == '\0' || term == '/' ||
+			    wl->wl_paths[i].name[1] == '\0')
+				error = 0;
 
 			/* resolved is a substring of wl_paths[i].name */
-			} else if (substr == 2) {
-				u_char term = wl->wl_paths[i].name[resolvedlen - 1];
+		} else if (substr == 2) {
+			u_char term = wl->wl_paths[i].name[resolvedlen - 1];
 
-				if (resolved[1] == '\0' || term == '/')
-					pardir_found = 1;
-			}
+			if (resolved[1] == '\0' || term == '/')
+				pardir_found = 1;
 		}
-		if (pardir_found)
-			switch (p->p_pledge_syscall) {
-			case SYS_stat:
-			case SYS_lstat:
-			case SYS_fstatat:
-			case SYS_fstat:
-				ni->ni_pledge |= PLEDGE_STATLIE;
-				error = 0;
-			}
+	}
+	if (pardir_found)
+		switch (p->p_pledge_syscall) {
+		case SYS_stat:
+		case SYS_lstat:
+		case SYS_fstatat:
+		case SYS_fstat:
+			ni->ni_pledge |= PLEDGE_STATLIE;
+			error = 0;
+		}
 
 #ifdef DEBUG_PLEDGE
-		if (error == ENOENT)
-			/* print the path that is reported as ENOENT */
-			DNPRINTF(1, "pledge: %s(%d): wl_path ENOENT: \"%s\"\n",
-			    p->p_comm, p->p_pid, resolved);
+	if (error == ENOENT)
+		/* print the path that is reported as ENOENT */
+		DNPRINTF(1, "pledge: %s(%d): wl_path ENOENT: \"%s\"\n",
+		    p->p_comm, p->p_pid, resolved);
 #endif
 
-		free(resolved, M_TEMP, resolvedlen);
-		return (error);			/* Don't hint why it failed */
-	}
-
-	return (0);
+	free(resolved, M_TEMP, resolvedlen);
+	return (error);			/* Don't hint why it failed */
 }
 
 /*

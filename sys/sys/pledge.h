@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.27 2016/01/09 06:13:44 semarie Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.28 2016/04/28 14:25:08 beck Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -112,6 +112,7 @@ int	pledge_fail(struct proc *, int, uint64_t);
 struct mbuf;
 struct nameidata;
 int	pledge_namei(struct proc *, struct nameidata *, char *);
+int	pledge_namei_wlpath(struct proc *, struct nameidata *);
 int	pledge_sendfd(struct proc *p, struct file *);
 int	pledge_recvfd(struct proc *p, struct file *);
 int	pledge_sysctl(struct proc *p, int namelen, int *name, void *new);
