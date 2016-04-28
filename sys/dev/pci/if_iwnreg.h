@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.52 2016/02/05 16:09:19 stsp Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.53 2016/04/28 08:28:18 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -524,6 +524,22 @@ struct iwn_rxon {
 	uint8_t		reserved5;
 	uint16_t	acquisition;
 	uint16_t	reserved6;
+} __packed;
+
+/* Structure for command IWN_CMD_RXON_ASSOC. */
+struct iwn_rxon_assoc {
+	uint32_t flags;
+	uint32_t filter;
+	uint8_t ofdm_mask;
+	uint8_t cck_mask;
+	uint16_t reserved1;
+	uint8_t ht_single_mask;
+	uint8_t ht_dual_mask;
+	uint8_t ht_triple_mask;
+	uint8_t reserved2;
+	uint16_t rxchain;
+	uint16_t acquisition;
+	uint32_t reserved3;
 } __packed;
 
 #define IWN4965_RXONSZ	(sizeof (struct iwn_rxon) - 6)

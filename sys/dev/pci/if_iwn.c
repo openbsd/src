@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.164 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.165 2016/04/28 08:28:18 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -5046,94 +5046,37 @@ iwn_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 void
 iwn_update_htprot(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
+	/* XXX Disabled for now. It seems to cause output errors
+	 * (tx status=0x83) and to make block ack sessions degrade
+	 * into a half-working state. */
+#if 0
 	struct iwn_softc *sc = ic->ic_softc;
-	struct iwn_ops *ops = &sc->ops;
 	enum ieee80211_htprot htprot;
-	struct iwn_node_info node;
-	int error, ridx;
-
-	timeout_del(&sc->calib_to);
-
-	/* Fake a "disassociation" so we can change RXON configuration. */
-	sc->rxon.filter &= ~htole32(IWN_FILTER_BSS);
-	error = iwn_cmd(sc, IWN_CMD_RXON, &sc->rxon, sc->rxonsz, 1);
-	if (error != 0) {
-		printf("%s: RXON command failed\n", sc->sc_dev.dv_xname);
-		return;
-	}
+	struct iwn_rxon_assoc rxon_assoc;
+	int s, error;
 
 	/* Update HT protection mode setting. */
 	htprot = (ni->ni_htop1 & IEEE80211_HTOP1_PROT_MASK) >>
 	    IEEE80211_HTOP1_PROT_SHIFT;
 	sc->rxon.flags &= ~htole32(IWN_RXON_HT_PROTMODE(3));
 	sc->rxon.flags |= htole32(IWN_RXON_HT_PROTMODE(htprot));
-	sc->rxon.filter |= htole32(IWN_FILTER_BSS);
-	error = iwn_cmd(sc, IWN_CMD_RXON, &sc->rxon, sc->rxonsz, 1);
-	if (error != 0) {
-		printf("%s: RXON command failed\n", sc->sc_dev.dv_xname);
-		return;
-	}
 
-	/* 
-	 * The firmware loses TX power table, node table, LQ table,
-	 * and sensitivity calibration after an RXON command.
-	 */
+	/* Update RXON config. */
+	memset(&rxon_assoc, 0, sizeof(rxon_assoc));
+	rxon_assoc.flags = sc->rxon.flags;
+	rxon_assoc.filter = sc->rxon.filter;
+	rxon_assoc.ofdm_mask = sc->rxon.ofdm_mask;
+	rxon_assoc.ht_single_mask = sc->rxon.ht_single_mask;
+	rxon_assoc.ht_dual_mask = sc->rxon.ht_dual_mask;
+	rxon_assoc.ht_triple_mask = sc->rxon.ht_triple_mask;
+	rxon_assoc.rxchain = sc->rxon.rxchain;
+	rxon_assoc.acquisition = sc->rxon.acquisition;
 
-	if ((error = ops->set_txpower(sc, 1)) != 0) {
-		printf("%s: could not set TX power\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-	ridx = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ?
-	    IWN_RIDX_OFDM6 : IWN_RIDX_CCK1;
-	if ((error = iwn_add_broadcast_node(sc, 1, ridx)) != 0) {
-		printf("%s: could not add broadcast node\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	memset(&node, 0, sizeof node);
-	IEEE80211_ADDR_COPY(node.macaddr, ni->ni_macaddr);
-	node.id = IWN_ID_BSS;
-	if (ni->ni_flags & IEEE80211_NODE_HT) {
-		node.htmask = (IWN_AMDPU_SIZE_FACTOR_MASK |
-		    IWN_AMDPU_DENSITY_MASK);
-		node.htflags = htole32(
-		    IWN_AMDPU_SIZE_FACTOR(
-			(ic->ic_ampdu_params & IEEE80211_AMPDU_PARAM_LE)) |
-		    IWN_AMDPU_DENSITY(
-			(ic->ic_ampdu_params & IEEE80211_AMPDU_PARAM_SS) >> 2));
-	}
-	error = ops->add_node(sc, &node, 1);
-	if (error != 0) {
-		printf("%s: could not add BSS node\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-	if ((error = iwn_set_link_quality(sc, ni)) != 0) {
-		printf("%s: could not setup link quality for node %d\n",
-		    sc->sc_dev.dv_xname, node.id);
-		return;
-	}
-
-	if ((error = iwn_init_sensitivity(sc)) != 0) {
-		printf("%s: could not set sensitivity\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	sc->calib.state = IWN_CALIB_STATE_ASSOC;
-	sc->calib_cnt = 0;
-	timeout_add_msec(&sc->calib_to, 500);
-
-	if ((ni->ni_flags & IEEE80211_NODE_RXPROT) &&
-	    ni->ni_pairwise_key.k_cipher == IEEE80211_CIPHER_CCMP) {
-		if ((error = iwn_set_key(ic, ni, &ni->ni_pairwise_key)) != 0) {
-			printf("%s: could not set pairwise ccmp key\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
-	}
+	error = iwn_cmd(sc, IWN_CMD_RXON_ASSOC, &rxon_assoc,
+	    sizeof(rxon_assoc), 1);
+	if (error != 0)
+		printf("%s: RXON_ASSOC command failed\n", sc->sc_dev.dv_xname);
+#endif
 }
 
 /*
