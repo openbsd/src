@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.183 2016/03/18 07:28:27 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.184 2016/04/28 06:51:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1090,12 +1090,13 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 
 		if (gettimeofday(&c->activity_time, NULL) != 0)
 			fatal("gettimeofday failed");
-		if (s != NULL)
-			session_update_activity(s, &c->activity_time);
 
 		tty_start_tty(&c->tty);
 		server_redraw_client(c);
 		recalculate_sizes();
+
+		if (s != NULL)
+			session_update_activity(s, &c->activity_time);
 		break;
 	case MSG_SHELL:
 		if (datalen != 0)
