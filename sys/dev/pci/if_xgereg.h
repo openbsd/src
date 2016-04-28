@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xgereg.h,v 1.4 2007/02/27 22:39:39 kettenis Exp $	*/
+/*	$OpenBSD: if_xgereg.h,v 1.5 2016/04/28 00:11:56 dlg Exp $	*/
 /*	$NetBSD: if_xgereg.h,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -134,6 +134,8 @@
 /* Diagnostic register to check byte-swapping conf */
 #define	PIF_RD_SWAPPER_Fb	PCIXB(0x110)
 #define	 SWAPPER_MAGIC		0x0123456789abcdefULL
+
+#define XMSI_ADDRESS		PCIXB(0x160)
 
 /* Stats registers */
 #define	STAT_CFG		PCIXB(0x1d0)

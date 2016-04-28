@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.71 2016/04/27 13:02:39 dlg Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.72 2016/04/28 00:11:56 dlg Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -238,42 +238,74 @@ int xge_intr(void  *);
 static inline void
 pif_wcsr(struct xge_softc *sc, bus_size_t csr, uint64_t val)
 {
+#if defined(__LP64__)
+	bus_space_write_raw_8(sc->sc_st, sc->sc_sh, csr, val);
+#else
 	uint32_t lval, hval;
 
 	lval = val&0xffffffff;
 	hval = val>>32;
 
-	bus_space_write_4(sc->sc_st, sc->sc_sh, csr, lval);
-	bus_space_write_4(sc->sc_st, sc->sc_sh, csr+4, hval);
+#if BYTE_ORDER == LITTLE_ENDIAN
+	bus_space_write_raw_4(sc->sc_st, sc->sc_sh, csr, lval);
+	bus_space_write_raw_4(sc->sc_st, sc->sc_sh, csr+4, hval);
+#else
+	bus_space_write_raw_4(sc->sc_st, sc->sc_sh, csr+4, lval);
+	bus_space_write_raw_4(sc->sc_st, sc->sc_sh, csr, hval);
+#endif
+#endif
 }
 
 static inline uint64_t
 pif_rcsr(struct xge_softc *sc, bus_size_t csr)
 {
-	uint64_t val, val2;
+	uint64_t val;
+#if defined(__LP64__)
+	val = bus_space_read_raw_8(sc->sc_st, sc->sc_sh, csr);
+#else
+	uint64_t val2;
 
-	val = bus_space_read_4(sc->sc_st, sc->sc_sh, csr);
-	val2 = bus_space_read_4(sc->sc_st, sc->sc_sh, csr+4);
+	val = bus_space_read_raw_4(sc->sc_st, sc->sc_sh, csr);
+	val2 = bus_space_read_raw_4(sc->sc_st, sc->sc_sh, csr+4);
+#if BYTE_ORDER == LITTLE_ENDIAN
 	val |= (val2 << 32);
+#else
+	val = (val << 32 | val2);
+#endif
+#endif
 	return (val);
 }
 
 static inline void
 txp_wcsr(struct xge_softc *sc, bus_size_t csr, uint64_t val)
 {
+#if defined(__LP64__)
+	bus_space_write_raw_8(sc->sc_txt, sc->sc_txh, csr, val);
+#else
 	uint32_t lval, hval;
 
 	lval = val&0xffffffff;
 	hval = val>>32;
 
-	bus_space_write_4(sc->sc_txt, sc->sc_txh, csr, lval);
-	bus_space_write_4(sc->sc_txt, sc->sc_txh, csr+4, hval);
+#if BYTE_ORDER == LITTLE_ENDIAN
+	bus_space_write_raw_4(sc->sc_txt, sc->sc_txh, csr, lval);
+	bus_space_write_raw_4(sc->sc_txt, sc->sc_txh, csr+4, hval);
+#else
+	bus_space_write_raw_4(sc->sc_txt, sc->sc_txh, csr, hval);
+	bus_space_write_raw_4(sc->sc_txt, sc->sc_txh, csr+4, lval);
+#endif
+#endif
 }
-
 
 static inline void
 pif_wkey(struct xge_softc *sc, bus_size_t csr, uint64_t val)
 {
+#if defined(__LP64__)
+	if (sc->xge_type == XGE_TYPE_XENA)
+		PIF_WCSR(RMAC_CFG_KEY, RMAC_KEY_VALUE);
+
+	bus_space_write_raw_8(sc->sc_st, sc->sc_sh, csr, val);
+#else
 	uint32_t lval, hval;
 
 	lval = val&0xffffffff;
@@ -282,12 +314,20 @@ pif_wkey(struct xge_softc *sc, bus_size_t csr, uint64_t val)
 	if (sc->xge_type == XGE_TYPE_XENA)
 		PIF_WCSR(RMAC_CFG_KEY, RMAC_KEY_VALUE);
 
-	bus_space_write_4(sc->sc_st, sc->sc_sh, csr, lval);
+#if BYTE_ORDER == LITTLE_ENDIAN
+	bus_space_write_raw_4(sc->sc_st, sc->sc_sh, csr, lval);
+#else
+	bus_space_write_raw_4(sc->sc_st, sc->sc_sh, csr, hval);
+#endif
 
 	if (sc->xge_type == XGE_TYPE_XENA)
 		PIF_WCSR(RMAC_CFG_KEY, RMAC_KEY_VALUE);
-
-	bus_space_write_4(sc->sc_st, sc->sc_sh, csr+4, hval);
+#if BYTE_ORDER == LITTLE_ENDIAN
+	bus_space_write_raw_4(sc->sc_st, sc->sc_sh, csr+4, hval);
+#else
+	bus_space_write_raw_4(sc->sc_st, sc->sc_sh, csr+4, lval);
+#endif
+#endif
 }
 
 struct cfattach xge_ca = {
@@ -368,6 +408,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 		/* Save PCI config space */
 		for (i = 0; i < XGE_PCISIZE_XENA; i += 4)
 			sc->sc_pciregs[i/4] = pci_conf_read(pa->pa_pc, pa->pa_tag, i);
+			sc->sc_pciregs[i/4] = pci_conf_read(pa->pa_pc, pa->pa_tag, i);
 	}
 
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -376,12 +417,16 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	PIF_WCSR(SWAPPER_CTRL, val);
 	PIF_WCSR(SWAPPER_CTRL, val);
 #endif
-
 	if ((val = PIF_RCSR(PIF_RD_SWAPPER_Fb)) != SWAPPER_MAGIC) {
-		printf(": failed configuring endian, %llx != %llx!\n",
+		printf(": failed configuring endian (read), %llx != %llx!\n",
 		    (unsigned long long)val, SWAPPER_MAGIC);
-		return;
 	}
+
+	PIF_WCSR(XMSI_ADDRESS, SWAPPER_MAGIC);
+	if ((val = PIF_RCSR(XMSI_ADDRESS)) != SWAPPER_MAGIC) {
+		printf(": failed configuring endian (write), %llx != %llx!\n",
+			(unsigned long long)val, SWAPPER_MAGIC);
+	} 
 
 	/*
 	 * Fix for all "FFs" MAC address problems observed on
@@ -417,7 +462,14 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 		if ((val = PIF_RCSR(PIF_RD_SWAPPER_Fb)) != SWAPPER_MAGIC) {
-			printf(": failed configuring endian2, %llx != %llx!\n",
+			printf(": failed configuring endian2 (read), %llx != %llx!\n",
+			    (unsigned long long)val, SWAPPER_MAGIC);
+			return;
+		}
+
+		PIF_WCSR(XMSI_ADDRESS, SWAPPER_MAGIC);
+		if ((val = PIF_RCSR(XMSI_ADDRESS)) != SWAPPER_MAGIC) {
+			printf(": failed configuring endian2 (write), %llx != %llx!\n",
 			    (unsigned long long)val, SWAPPER_MAGIC);
 			return;
 		}
@@ -763,12 +815,13 @@ xge_init(struct ifnet *ifp)
 	 */
 	PIF_WCSR(TX_TRAFFIC_MASK, 0);
 	PIF_WCSR(RX_TRAFFIC_MASK, 0);
-	PIF_WCSR(GENERAL_INT_MASK, 0);
 	PIF_WCSR(TXPIC_INT_MASK, 0);
 	PIF_WCSR(RXPIC_INT_MASK, 0);
 
 	PIF_WCSR(MAC_INT_MASK, MAC_TMAC_INT); /* only from RMAC */
+	PIF_WCSR(MAC_RMAC_ERR_REG, RMAC_LINK_STATE_CHANGE_INT);
 	PIF_WCSR(MAC_RMAC_ERR_MASK, ~RMAC_LINK_STATE_CHANGE_INT);
+	PIF_WCSR(GENERAL_INT_MASK, 0);
 
 	xge_setpromisc(sc);
 
