@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.35 2016/03/17 03:57:51 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.36 2016/04/28 13:13:02 beck Exp $ */
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -361,7 +361,7 @@ buf_realloc_pages(struct buf *bp, struct uvm_constraint_range *where,
 		if (r == 0)
 			break;
 	} while	((bufbackoff(where, 100) == 0) && (flags & UVM_PLA_WAITOK));
-	if (r != 0 && (! flags & UVM_PLA_NOWAIT))
+	if (r != 0 && !(flags & UVM_PLA_NOWAIT))
 		r = uvm_pagerealloc_multi(bp->b_pobj, bp->b_poffs,
 		    bp->b_bufsize, flags, where);
 
