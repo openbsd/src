@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.25 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$OpenBSD: search.c,v 1.26 2016/04/28 09:44:36 schwarze Exp $	*/
 /*	$NetBSD: search.c,v 1.44 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
@@ -67,6 +67,7 @@ search_init(EditLine *el)
 	    sizeof(*el->el_search.patbuf));
 	if (el->el_search.patbuf == NULL)
 		return -1;
+	*el->el_search.patbuf = L'\0';
 	el->el_search.patlen = 0;
 	el->el_search.patdir = -1;
 	el->el_search.chacha = '\0';
