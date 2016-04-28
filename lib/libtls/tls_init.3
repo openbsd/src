@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.57 2016/04/28 16:48:44 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.58 2016/04/28 17:05:59 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -34,6 +34,8 @@
 .Nm tls_config_set_ecdhecurve ,
 .Nm tls_config_set_key_file ,
 .Nm tls_config_set_key_mem ,
+.Nm tls_config_set_keypair_file ,
+.Nm tls_config_set_keypair_mem ,
 .Nm tls_config_set_protocols ,
 .Nm tls_config_set_verify_depth ,
 .Nm tls_config_prefer_ciphers_client ,
@@ -105,6 +107,10 @@
 .Fn tls_config_set_key_file "struct tls_config *config" "const char *key_file"
 .Ft "int"
 .Fn tls_config_set_key_mem "struct tls_config *config" "const uint8_t *key" "size_t len"
+.Ft "int"
+.Fn tls_config_set_keypair_file "struct tls_config *config" "const char *cert_file" "const char *key_file"
+.Ft "int"
+.Fn tls_config_set_keypair_mem "struct tls_config *config" "const uint8_t *cert" "size_t cert_len" "const uint8_t *key" "size_t key_len"
 .Ft "void"
 .Fn tls_config_set_protocols "struct tls_config *config" "uint32_t protocols"
 .Ft "void"
@@ -327,11 +333,19 @@ permitted names are:
 .It
 .Fn tls_config_set_key_file
 sets the file from which the private key will be read.
-.Em (Server)
+.Em (Client and server)
 .It
 .Fn tls_config_set_key_mem
 directly sets the private key from memory.
-.Em (Server)
+.Em (Client and server)
+.It
+.Fn tls_config_set_keypair_file
+sets the files from which the public certificate and private key will be read.
+.Em (Client and server)
+.It
+.Fn tls_config_set_keypair_mem
+directly sets the public certifcate and private key from memory.
+.Em (Client and server)
 .It
 .Fn tls_config_set_protocols
 sets which versions of the protocol may be used.

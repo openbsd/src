@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.36 2016/04/28 16:48:44 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.37 2016/04/28 17:05:59 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -179,40 +179,41 @@ tls_configure(struct tls *ctx, struct tls_config *config)
 }
 
 int
-tls_configure_keypair(struct tls *ctx, int required)
+tls_configure_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
+    struct tls_keypair *keypair, int required)
 {
 	EVP_PKEY *pkey = NULL;
 	X509 *cert = NULL;
 	BIO *bio = NULL;
 
 	if (!required &&
-	    ctx->config->cert_mem == NULL &&
-	    ctx->config->key_mem == NULL &&
-	    ctx->config->cert_file == NULL &&
-	    ctx->config->key_file == NULL)
+	    keypair->cert_mem == NULL &&
+	    keypair->key_mem == NULL &&
+	    keypair->cert_file == NULL &&
+	    keypair->key_file == NULL)
 		return(0);
 
-	if (ctx->config->cert_mem != NULL) {
-		if (ctx->config->cert_len > INT_MAX) {
+	if (keypair->cert_mem != NULL) {
+		if (keypair->cert_len > INT_MAX) {
 			tls_set_errorx(ctx, "certificate too long");
 			goto err;
 		}
 
-		if (SSL_CTX_use_certificate_chain_mem(ctx->ssl_ctx,
-		    ctx->config->cert_mem, ctx->config->cert_len) != 1) {
+		if (SSL_CTX_use_certificate_chain_mem(ssl_ctx,
+		    keypair->cert_mem, keypair->cert_len) != 1) {
 			tls_set_errorx(ctx, "failed to load certificate");
 			goto err;
 		}
 		cert = NULL;
 	}
-	if (ctx->config->key_mem != NULL) {
-		if (ctx->config->key_len > INT_MAX) {
+	if (keypair->key_mem != NULL) {
+		if (keypair->key_len > INT_MAX) {
 			tls_set_errorx(ctx, "key too long");
 			goto err;
 		}
 
-		if ((bio = BIO_new_mem_buf(ctx->config->key_mem,
-		    ctx->config->key_len)) == NULL) {
+		if ((bio = BIO_new_mem_buf(keypair->key_mem,
+		    keypair->key_len)) == NULL) {
 			tls_set_errorx(ctx, "failed to create buffer");
 			goto err;
 		}
@@ -221,7 +222,7 @@ tls_configure_keypair(struct tls *ctx, int required)
 			tls_set_errorx(ctx, "failed to read private key");
 			goto err;
 		}
-		if (SSL_CTX_use_PrivateKey(ctx->ssl_ctx, pkey) != 1) {
+		if (SSL_CTX_use_PrivateKey(ssl_ctx, pkey) != 1) {
 			tls_set_errorx(ctx, "failed to load private key");
 			goto err;
 		}
@@ -231,22 +232,22 @@ tls_configure_keypair(struct tls *ctx, int required)
 		pkey = NULL;
 	}
 
-	if (ctx->config->cert_file != NULL) {
-		if (SSL_CTX_use_certificate_chain_file(ctx->ssl_ctx,
-		    ctx->config->cert_file) != 1) {
+	if (keypair->cert_file != NULL) {
+		if (SSL_CTX_use_certificate_chain_file(ssl_ctx,
+		    keypair->cert_file) != 1) {
 			tls_set_errorx(ctx, "failed to load certificate file");
 			goto err;
 		}
 	}
-	if (ctx->config->key_file != NULL) {
-		if (SSL_CTX_use_PrivateKey_file(ctx->ssl_ctx,
-		    ctx->config->key_file, SSL_FILETYPE_PEM) != 1) {
+	if (keypair->key_file != NULL) {
+		if (SSL_CTX_use_PrivateKey_file(ssl_ctx,
+		    keypair->key_file, SSL_FILETYPE_PEM) != 1) {
 			tls_set_errorx(ctx, "failed to load private key file");
 			goto err;
 		}
 	}
 
-	if (SSL_CTX_check_private_key(ctx->ssl_ctx) != 1) {
+	if (SSL_CTX_check_private_key(ssl_ctx) != 1) {
 		tls_set_errorx(ctx, "private/public key mismatch");
 		goto err;
 	}
