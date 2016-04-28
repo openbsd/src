@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_softraid.c,v 1.9 2015/12/01 06:39:52 krw Exp $	*/
+/*	$OpenBSD: i386_softraid.c,v 1.10 2016/04/28 16:48:18 krw Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -194,5 +194,6 @@ sr_install_bootldr(int devfd, char *dev)
 		fprintf(stderr, "%s is %d blocks x %d bytes\n",
 		    stage2, nblocks, bsize);
 
+	free(p);
 	close(fd);
 }
