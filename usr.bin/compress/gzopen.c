@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.29 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.30 2016/04/28 14:21:24 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -83,14 +83,15 @@
 typedef
 struct gz_stream {
 	int	z_fd;		/* .gz file */
-	z_stream z_stream;	/* libz stream */
 	int	z_eof;		/* set if end of input file */
+	z_stream z_stream;	/* libz stream */
 	u_char	z_buf[Z_BUFSIZE]; /* i/o buffer */
-	u_int32_t z_time;	/* timestamp (mtime) */
-	u_int32_t z_hlen;	/* length of the gz header */
-	u_int32_t z_crc;	/* crc32 of uncompressed data */
 	char	z_mode;		/* 'w' or 'r' */
-
+	u_int32_t z_time;	/* timestamp (mtime) */
+	u_int32_t z_crc;	/* crc32 of uncompressed data */
+	u_int32_t z_hlen;	/* length of the gz header */
+	u_int64_t z_total_in;	/* # bytes in */
+	u_int64_t z_total_out;	/* # bytes out */
 } gz_stream;
 
 static const u_char gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
@@ -128,6 +129,8 @@ gz_open(int fd, const char *mode, char *name, int bits,
 	s->z_eof = 0;
 	s->z_time = 0;
 	s->z_hlen = 0;
+	s->z_total_in = 0;
+	s->z_total_out = 0;
 	s->z_crc = crc32(0L, Z_NULL, 0);
 	s->z_mode = mode[0];
 
@@ -206,8 +209,8 @@ gz_close(void *cookie, struct z_info *info, const char *name, struct stat *sb)
 		info->mtime = s->z_time;
 		info->crc = s->z_crc;
 		info->hlen = s->z_hlen;
-		info->total_in = (off_t)s->z_stream.total_in;
-		info->total_out = (off_t)s->z_stream.total_out;
+		info->total_in = s->z_total_in;
+		info->total_out = s->z_total_out;
 	}
 
 	setfile(name, s->z_fd, sb);
@@ -336,7 +339,7 @@ get_header(gz_stream *s, char *name, int gotmagic)
 	(void)get_byte(s);
 	(void)get_byte(s);
 
-	s->z_hlen = 10; /* magic, method, flags, time, xflags, OS code */
+	s->z_hlen += 10; /* magic, method, flags, time, xflags, OS code */
 	if ((flags & EXTRA_FIELD) != 0) { /* skip the extra field */
 		len  =  (uInt)get_byte(s);
 		len += ((uInt)get_byte(s))<<8;
@@ -438,11 +441,11 @@ gz_read(void *cookie, char *buf, int len)
 
 		if (error == Z_DATA_ERROR) {
 			errno = EINVAL;
-			return -1;
+			goto bad;
 		}
 		if (error == Z_BUF_ERROR) {
 			errno = EIO;
-			return -1;
+			goto bad;
 		}
 		if (error == Z_STREAM_END) {
 			/* Check CRC and original size */
@@ -452,13 +455,18 @@ gz_read(void *cookie, char *buf, int len)
 
 			if (get_int32(s) != s->z_crc) {
 				errno = EINVAL;
-				return -1;
+				goto bad;
 			}
 			if (get_int32(s) != (u_int32_t)s->z_stream.total_out) {
 				errno = EIO;
 				return -1;
 			}
 			s->z_hlen += 2 * sizeof(int32_t);
+
+			/* Add byte counts from the finished stream. */
+			s->z_total_in += s->z_stream.total_in;
+			s->z_total_out += s->z_stream.total_out;
+
 			/* Check for the existence of an appended file. */
 			if (get_header(s, NULL, 0) != 0) {
 				s->z_eof = 1;
@@ -474,6 +482,11 @@ gz_read(void *cookie, char *buf, int len)
 	len -= s->z_stream.avail_out;
 
 	return (len);
+bad:
+	/* Add byte counts from the finished stream. */
+	s->z_total_in += s->z_stream.total_in;
+	s->z_total_out += s->z_stream.total_out;
+	return (-1);
 }
 
 int
