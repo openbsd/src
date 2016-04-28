@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.372 2016/02/06 19:30:52 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.373 2016/04/28 17:34:49 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1346,6 +1346,7 @@ void
 send_discover(void)
 {
 	time_t cur_time;
+	ssize_t rslt;
 	int interval;
 
 	time(&cur_time);
@@ -1393,9 +1394,12 @@ send_discover(void)
 	note("DHCPDISCOVER on %s - interval %lld", ifi->name,
 	    (long long)client->interval);
 
-	send_packet(inaddr_any, inaddr_broadcast);
-
-	set_timeout_interval(client->interval, send_discover);
+	rslt = send_packet(inaddr_any, inaddr_broadcast);
+	if (rslt == -1 && errno == EAFNOSUPPORT) {
+		warning("dhclient cannot be used on %s", ifi->name);
+		quit = INTERNALSIG;
+	} else
+		set_timeout_interval(client->interval, send_discover);
 }
 
 /*
