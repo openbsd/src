@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.37 2016/03/10 04:48:27 deraadt Exp $
+.\"	$OpenBSD: bpf.4,v 1.38 2016/04/28 19:07:19 natano Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: March 10 2016 $
+.Dd $Mdocdate: April 28 2016 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -38,25 +38,13 @@ All packets on the network, even those destined for other hosts, are
 accessible through this mechanism.
 .Pp
 The packet filter appears as a character special device,
-.Pa /dev/bpf0 ,
-.Pa /dev/bpf1 ,
-etc.
+.Pa /dev/bpf .
 After opening the device, the file descriptor must be bound to a specific
 network interface with the
 .Dv BIOCSETIF
 .Xr ioctl 2 .
 A given interface can be shared between multiple listeners, and the filter
 underlying each descriptor will see an identical packet stream.
-.Pp
-A separate device file is required for each minor device.
-If a file is in use, the open will fail and
-.Va errno
-will be set to
-.Er EBUSY .
-The number of open files can be increased by creating additional
-device nodes with the
-.Xr MAKEDEV 8
-script.
 .Pp
 Associated with each open instance of a
 .Nm
@@ -959,10 +947,10 @@ interface provides the following macros to facilitate array initializers:
 .Ar false_offset )
 .Ed
 .Sh FILES
-.Bl -tag -width /dev/bpf[0-9] -compact
-.It Pa /dev/bpf[0-9]
+.Bl -tag -width /dev/bpf -compact
+.It Pa /dev/bpf
 .Nm
-devices
+device
 .El
 .Sh EXAMPLES
 The following filter is taken from the Reverse ARP daemon.
