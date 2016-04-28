@@ -1,4 +1,4 @@
-#	$OpenBSD: sniffer,v 1.5 2008/05/08 01:40:57 chl Exp $
+#	$OpenBSD: sniffer,v 1.6 2016/04/28 12:26:40 sthen Exp $
 
 #------------------------------------------------------------------------------
 # sniffer:  file(1) magic for packet capture files
@@ -17,6 +17,7 @@
 >6	leshort		2		(Token Ring)
 >6	leshort		3		(FDDI)
 >6	leshort		4		(ATM)
+>6	leshort		>4		(type %d)
 
 #
 # Microsoft Network Monitor 2.x capture files.
@@ -29,11 +30,18 @@
 >6	leshort		2		(Token Ring)
 >6	leshort		3		(FDDI)
 >6	leshort		4		(ATM)
+>6	leshort		5		(IP-over-IEEE 1394)
+>6	leshort		6		(802.11)
+>6	leshort		7		(Raw IP)
+>6	leshort		8		(Raw IP)
+>6	leshort		9		(Raw IP)
+>6	leshort		>9		(type %d)
 
 #
 # Network General Sniffer capture files.
 # Sorry, make that "Network Associates Sniffer capture files."
 # Sorry, make that "Network General old DOS Sniffer capture files."
+# Sorry, make that "NetScout Sniffer capture files."
 #
 0	string		TRSNIFF\ data\ \ \ \ \032	Sniffer capture file
 >33	byte		2		(compressed)
@@ -115,8 +123,10 @@
 >20	belong		127		(802.11 with radiotap header
 >20	belong		129		(Linux ARCNET
 >20	belong		138		(Apple IP over IEEE 1394
+>20	belong		139		(MTP2 with pseudo-header
 >20	belong		140		(MTP2
 >20	belong		141		(MTP3
+>20	belong		142		(SCCP
 >20	belong		143		(DOCSIS
 >20	belong		144		(IrDA
 >20	belong		147		(Private use 0
@@ -136,6 +146,45 @@
 >20	belong		161		(Private use 14
 >20	belong		162		(Private use 15
 >20	belong		163		(802.11 with AVS header
+>20	belong		165		(BACnet MS/TP
+>20	belong		166		(PPPD
+>20	belong		169		(GPRS LLC
+>20	belong		177		(Linux LAPD
+>20	belong		187		(Bluetooth HCI H4
+>20	belong		189		(Linux USB
+>20	belong		192		(PPI
+>20	belong		195		(802.15.4
+>20	belong		196		(SITA
+>20	belong		197		(Endace ERF
+>20	belong		201		(Bluetooth HCI H4 with pseudo-header
+>20	belong		202		(AX.25 with KISS header
+>20	belong		203		(LAPD
+>20	belong		204		(PPP with direction pseudo-header
+>20	belong		205		(Cisco HDLC with direction pseudo-header
+>20	belong		206		(Frame Relay with direction pseudo-header
+>20	belong		209		(Linux IPMB
+>20	belong		215		(802.15.4 with non-ASK PHY header
+>20	belong		220		(Memory-mapped Linux USB
+>20	belong		224		(Fibre Channel FC-2
+>20	belong		225		(Fibre Channel FC-2 with frame delimiters
+>20	belong		226		(Solaris IPNET
+>20	belong		227		(SocketCAN
+>20	belong		228		(Raw IPv4
+>20	belong		229		(Raw IPv6
+>20	belong		230		(802.15.4 without FCS
+>20	belong		231		(D-Bus messages
+>20	belong		235		(DVB-CI
+>20	belong		236		(MUX27010
+>20	belong		237		(STANAG 5066 D_PDUs
+>20	belong		239		(Linux netlink NFLOG messages
+>20	belong		240		(Hilscher netAnalyzer
+>20	belong		241		(Hilscher netAnalyzer with delimiters
+>20	belong		242		(IP-over-Infiniband
+>20	belong		243		(MPEG-2 Transport Stream packets
+>20	belong		244		(ng4t ng40
+>20	belong		245		(NFC LLCP
+>20	belong		247		(Infiniband
+>20	belong		248		(SCTP
 >16	belong		x		\b, capture length %d)
 0	ulelong		0xa1b2c3d4	tcpdump capture file (little-endian)
 >4	leshort		x		- version %d
@@ -179,8 +228,10 @@
 >20	lelong		127		(802.11 with radiotap header
 >20	lelong		129		(Linux ARCNET
 >20	lelong		138		(Apple IP over IEEE 1394
+>20	lelong		139		(MTP2 with pseudo-header
 >20	lelong		140		(MTP2
 >20	lelong		141		(MTP3
+>20	lelong		142		(SCCP
 >20	lelong		143		(DOCSIS
 >20	lelong		144		(IrDA
 >20	lelong		147		(Private use 0
@@ -200,6 +251,45 @@
 >20	lelong		161		(Private use 14
 >20	lelong		162		(Private use 15
 >20	lelong		163		(802.11 with AVS header
+>20	lelong		165		(BACnet MS/TP
+>20	lelong		166		(PPPD
+>20	lelong		169		(GPRS LLC
+>20	lelong		177		(Linux LAPD
+>20	lelong		187		(Bluetooth HCI H4
+>20	lelong		189		(Linux USB
+>20	lelong		192		(PPI
+>20	lelong		195		(802.15.4
+>20	lelong		196		(SITA
+>20	lelong		197		(Endace ERF
+>20	lelong		201		(Bluetooth HCI H4 with pseudo-header
+>20	lelong		202		(AX.25 with KISS header
+>20	lelong		203		(LAPD
+>20	lelong		204		(PPP with direction pseudo-header
+>20	lelong		205		(Cisco HDLC with direction pseudo-header
+>20	lelong		206		(Frame Relay with direction pseudo-header
+>20	lelong		209		(Linux IPMB
+>20	lelong		215		(802.15.4 with non-ASK PHY header
+>20	lelong		220		(Memory-mapped Linux USB
+>20	lelong		224		(Fibre Channel FC-2
+>20	lelong		225		(Fibre Channel FC-2 with frame delimiters
+>20	lelong		226		(Solaris IPNET
+>20	lelong		227		(SocketCAN
+>20	lelong		228		(Raw IPv4
+>20	lelong		229		(Raw IPv6
+>20	lelong		230		(802.15.4 without FCS
+>20	lelong		231		(D-Bus messages
+>20	lelong		235		(DVB-CI
+>20	lelong		236		(MUX27010
+>20	lelong		237		(STANAG 5066 D_PDUs
+>20	lelong		239		(Linux netlink NFLOG messages
+>20	lelong		240		(Hilscher netAnalyzer
+>20	lelong		241		(Hilscher netAnalyzer with delimiters
+>20	lelong		242		(IP-over-Infiniband
+>20	lelong		243		(MPEG-2 Transport Stream packets
+>20	lelong		244		(ng4t ng40
+>20	lelong		245		(NFC LLCP
+>20	lelong		247		(Infiniband
+>20	lelong		248		(SCTP
 >16	lelong		x		\b, capture length %d)
 
 #
@@ -248,6 +338,21 @@
 >16	lelong		x		\b, capture length %d)
 
 #
+# "pcap-ng" capture files.
+# http://www.winpcap.org/ntar/draft/PCAP-DumpFileFormat.html
+# Pcap-ng files can contain multiple sections. Printing the endianness,
+# snaplen, or other information from the first SHB may be misleading.
+#
+0	ubelong		0x0a0d0d0a
+>8	ubelong		0x1a2b3c4d	pcap-ng capture file
+>>12	beshort		x		- version %d
+>>14	beshort		x		\b.%d
+0	ulelong		0x0a0d0d0a
+>8	ulelong		0x1a2b3c4d	pcap-ng capture file
+>>12	leshort		x		- version %d
+>>14	leshort		x		\b.%d
+
+#
 # AIX "iptrace" capture files.
 #
 0	string		iptrace\ 1.0	"iptrace" capture file
@@ -278,9 +383,9 @@
 >8	lelong		x		\b, %d stations found
 
 #
-# EtherPeek/AiroPeek "version 9" capture files.
+# *Peek "version 9" capture files.
 #
-0	string		\177ver		EtherPeek/AiroPeek capture file
+0	string		\177ver		EtherPeek/AiroPeek/OmniPeek capture file
 
 #
 # Visual Networks traffic capture files.
