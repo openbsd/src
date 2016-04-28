@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.55 2016/04/19 18:15:41 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.56 2016/04/28 16:40:10 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -1088,7 +1088,8 @@ xen_grant_table_remove(struct xen_softc *sc, grant_ref_t ref)
 	/* Invalidate the grant reference */
 	virtio_membar_sync();
 	ptr = (uint32_t *)&ge->ge_table[ref];
-	flags = (ge->ge_table[ref].flags & ~(GTF_reading|GTF_writing));
+	flags = (ge->ge_table[ref].flags & ~(GTF_reading|GTF_writing)) |
+	    (ge->ge_table[ref].domid << 16);
 	loop = 0;
 	while (atomic_cas_uint(ptr, flags, GTF_invalid) != flags) {
 		if (loop++ > 10000000) {
