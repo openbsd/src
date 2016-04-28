@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.56 2016/04/24 12:16:36 jmc Exp $
+.\" $OpenBSD: tls_init.3,v 1.57 2016/04/28 16:48:44 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,11 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 24 2016 $
+.Dd $Mdocdate: April 28 2016 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
 .Nm tls_init ,
+.Nm tls_config_error ,
 .Nm tls_error ,
 .Nm tls_config_new ,
 .Nm tls_config_free ,
@@ -75,8 +76,10 @@
 .Ft "int"
 .Fn tls_init "void"
 .Ft "const char *"
-.Fn tls_error "struct tls *ctx"
+.Fn tls_config_error "struct tls *config"
 .Ft "struct tls_config *"
+.Fn tls_error "struct tls *ctx"
+.Ft "const char *"
 .Fn tls_config_new "void"
 .Ft "void"
 .Fn tls_config_free "struct tls_config *config"
@@ -668,9 +671,11 @@ while (len > 0) {
 .Ed
 .Sh ERRORS
 The
+.Fn tls_config_error
+and
 .Fn tls_error
-function may be used to retrieve a string containing more information
-about the most recent error.
+functions may be used to retrieve a string containing more information
+about the most recent error relating to a configuration or context.
 .\" .Sh SEE ALSO
 .Sh HISTORY
 The

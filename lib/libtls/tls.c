@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.35 2016/01/18 16:15:14 bcook Exp $ */
+/* $OpenBSD: tls.c,v 1.36 2016/04/28 16:48:44 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -58,17 +58,18 @@ tls_init(void)
 const char *
 tls_error(struct tls *ctx)
 {
-	return ctx->errmsg;
+	return ctx->error.msg;
 }
 
 static int
-tls_set_verror(struct tls *ctx, int errnum, const char *fmt, va_list ap)
+tls_set_verror(struct tls_error *error, int errnum, const char *fmt, va_list ap)
 {
 	char *errmsg = NULL;
 	int rv = -1;
 
-	free(ctx->errmsg);
-	ctx->errmsg = NULL;
+	free(error->msg);
+	error->msg = NULL;
+	error->num = errnum;
 
 	if (vasprintf(&errmsg, fmt, ap) == -1) {
 		errmsg = NULL;
@@ -76,12 +77,12 @@ tls_set_verror(struct tls *ctx, int errnum, const char *fmt, va_list ap)
 	}
 
 	if (errnum == -1) {
-		ctx->errmsg = errmsg;
+		error->msg = errmsg;
 		return (0);
 	}
 
-	if (asprintf(&ctx->errmsg, "%s: %s", errmsg, strerror(errnum)) == -1) {
-		ctx->errmsg = NULL;
+	if (asprintf(&error->msg, "%s: %s", errmsg, strerror(errnum)) == -1) {
+		error->msg = NULL;
 		goto err;
 	}
 	rv = 0;
@@ -93,15 +94,43 @@ tls_set_verror(struct tls *ctx, int errnum, const char *fmt, va_list ap)
 }
 
 int
-tls_set_error(struct tls *ctx, const char *fmt, ...)
+tls_set_config_error(struct tls_config *config, const char *fmt, ...)
+{
+	va_list ap;
+	int errnum, rv;
+
+	errnum = errno;
+
+	va_start(ap, fmt);
+	rv = tls_set_verror(&config->error, errnum, fmt, ap);
+	va_end(ap);
+
+	return (rv);
+}
+
+int
+tls_set_config_errorx(struct tls_config *config, const char *fmt, ...)
 {
 	va_list ap;
 	int rv;
 
-	ctx->errnum = errno;
+	va_start(ap, fmt);
+	rv = tls_set_verror(&config->error, -1, fmt, ap);
+	va_end(ap);
+
+	return (rv);
+}
+
+int
+tls_set_error(struct tls *ctx, const char *fmt, ...)
+{
+	va_list ap;
+	int errnum, rv;
+
+	errnum = errno;
 
 	va_start(ap, fmt);
-	rv = tls_set_verror(ctx, ctx->errnum, fmt, ap);
+	rv = tls_set_verror(&ctx->error, errnum, fmt, ap);
 	va_end(ap);
 
 	return (rv);
@@ -114,7 +143,7 @@ tls_set_errorx(struct tls *ctx, const char *fmt, ...)
 	int rv;
 
 	va_start(ap, fmt);
-	rv = tls_set_verror(ctx, -1, fmt, ap);
+	rv = tls_set_verror(&ctx->error, -1, fmt, ap);
 	va_end(ap);
 
 	return (rv);
@@ -328,9 +357,9 @@ tls_reset(struct tls *ctx)
 	free(ctx->servername);
 	ctx->servername = NULL;
 
-	free(ctx->errmsg);
-	ctx->errmsg = NULL;
-	ctx->errnum = 0;
+	free(ctx->error.msg);
+	ctx->error.msg = NULL;
+	ctx->error.num = -1;
 
 	tls_free_conninfo(ctx->conninfo);
 	free(ctx->conninfo);

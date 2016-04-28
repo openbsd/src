@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.26 2015/10/07 23:33:38 beck Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.27 2016/04/28 16:48:44 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -34,7 +34,14 @@ union tls_addr {
 	struct in6_addr ip6;
 };
 
+struct tls_error {
+	char *msg;
+	int num;
+};
+
 struct tls_config {
+	struct tls_error error;
+
 	const char *ca_file;
 	const char *ca_path;
 	char *ca_mem;
@@ -78,11 +85,10 @@ struct tls_conninfo {
 
 struct tls {
 	struct tls_config *config;
+	struct tls_error error;
+
 	uint32_t flags;
 	uint32_t state;
-
-	char *errmsg;
-	int errnum;
 
 	char *servername;
 	int socket;
@@ -104,14 +110,23 @@ int tls_configure_ssl_verify(struct tls *ctx, int verify);
 int tls_handshake_client(struct tls *ctx);
 int tls_handshake_server(struct tls *ctx);
 int tls_host_port(const char *hostport, char **host, char **port);
+
+int tls_set_config_error(struct tls_config *cfg, const char *fmt, ...)
+    __attribute__((__format__ (printf, 2, 3)))
+    __attribute__((__nonnull__ (2)));
+int tls_set_config_errorx(struct tls_config *cfg, const char *fmt, ...)
+    __attribute__((__format__ (printf, 2, 3)))
+    __attribute__((__nonnull__ (2)));
 int tls_set_error(struct tls *ctx, const char *fmt, ...)
     __attribute__((__format__ (printf, 2, 3)))
     __attribute__((__nonnull__ (2)));
 int tls_set_errorx(struct tls *ctx, const char *fmt, ...)
     __attribute__((__format__ (printf, 2, 3)))
     __attribute__((__nonnull__ (2)));
+
 int tls_ssl_error(struct tls *ctx, SSL *ssl_conn, int ssl_ret,
     const char *prefix);
+
 int tls_get_conninfo(struct tls *ctx);
 void tls_free_conninfo(struct tls_conninfo *conninfo);
 
