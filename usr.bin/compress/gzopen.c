@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.30 2016/04/28 14:21:24 millert Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.31 2016/04/29 13:50:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -509,6 +509,8 @@ gz_write(void *cookie, const char *buf, int len)
 			break;
 	}
 	s->z_crc = crc32(s->z_crc, buf, len);
+	s->z_total_in += s->z_stream.total_in;
+	s->z_total_out += s->z_stream.total_out;
 
 	return (int)(len - s->z_stream.avail_in);
 #endif
