@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.374 2016/04/26 13:42:39 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.375 2016/04/29 14:01:37 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2350,10 +2350,8 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 	    DEVNAME(sc), link->target, xs, xs->flags);
 
 	sd = sc->sc_targets[link->target];
-	if (sd == NULL) {
-		printf("%s: sr_scsi_cmd NULL discipline\n", DEVNAME(sc));
-		goto stuffup;
-	}
+	if (sd == NULL)
+		panic("%s: sr_scsi_cmd NULL discipline", DEVNAME(sc));
 
 	if (sd->sd_deleted) {
 		printf("%s: %s device is being deleted, failing io\n",
@@ -2432,7 +2430,7 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 
 	return;
 stuffup:
-	if (sd && sd->sd_scsi_sense.error_code) {
+	if (sd->sd_scsi_sense.error_code) {
 		xs->error = XS_SENSE;
 		memcpy(&xs->sense, &sd->sd_scsi_sense, sizeof(xs->sense));
 		bzero(&sd->sd_scsi_sense, sizeof(sd->sd_scsi_sense));
