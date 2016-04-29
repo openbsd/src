@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.223 2016/04/28 16:42:29 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.224 2016/04/29 12:32:45 sthen Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -375,6 +375,33 @@ sm_add_user_grp() {
 	done <${_pw}
 }
 
+sm_warn_valid() {
+	# done as a separate function to print a warning with the
+	# filename above output from the check command
+	local _res
+
+	_res=$(eval $* 2>&1)
+	if [[ $? -ne 0 || -n ${_res} ]]; then
+	       sm_warn "${_file} appears to be invalid"
+	       echo "${_res}"
+	fi
+}
+
+sm_check_validity() {
+	local _file=$1.merged
+	local _fail
+
+	case $1 in
+	./etc/ssh/sshd_config)
+		sm_warn_valid sshd -f ${_file} -t ;;
+	./etc/pf.conf)
+		sm_warn_valid pfctl -nf ${_file} ;;
+	./etc/login.conf)
+		sm_warn_valid "cap_mkdb -f ${_TMPROOT}/login.conf.check ${_file} || true"
+		rm -f ${_TMPROOT}/login.conf.check.db ;;
+	esac
+}
+
 sm_merge_loop() {
 	local _instmerged _tomerge
 	echo "===> Type h at the sdiff prompt (%) to get usage help\n"
@@ -395,6 +422,7 @@ sm_merge_loop() {
 			echo "  Use 'x' to delete the merged file and go back to previous menu"
 			echo "  Default is to leave the temporary file to deal with by hand"
 			echo
+			sm_check_validity ${COMPFILE}
 			echo -n "===> How should I deal with the merged file? [Leave it for later] "
 			read _instmerged
 			case ${_instmerged} in
