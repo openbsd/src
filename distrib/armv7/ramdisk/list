@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.19 2016/04/02 12:23:46 rpe Exp $
+#	$OpenBSD: list,v 1.20 2016/04/29 11:19:33 patrick Exp $
 
 SRCDIRS distrib/special
 
@@ -87,7 +87,7 @@ COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-ext etc/firmware/atu-rfmd2958smc-ex
 COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-int etc/firmware/atu-rfmd2958smc-int
 
 # this is the list from distrib/miniroot/makeconf.awk with -lz added.
-LIBS	-lstubs -lutil -lotermcap -lm -lz
+LIBS	-lstubs -lutil -lm -lc -lz
 
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
