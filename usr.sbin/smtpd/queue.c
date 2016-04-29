@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.176 2016/01/27 12:46:03 sunil Exp $	*/
+/*	$OpenBSD: queue.c,v 1.177 2016/04/29 08:55:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -72,9 +72,8 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 	uint64_t		 reqid, evpid, holdq;
 	uint32_t		 msgid;
 	time_t			 nexttry;
-	size_t			 buflen, id_sz, n_evp;
+	size_t			 n_evp;
 	int			 fd, mta_ext, ret, v, flags, code;
-	char			 buf[sizeof(evp)];
 
 	memset(&bounce, 0, sizeof(struct delivery_bounce));
 	if (p->proc == PROC_PONY) {
@@ -319,9 +318,6 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 			 * its way back to the scheduler.  We need to detect
 			 * this properly and report that state.
 			 */
-			evp.flags |= flags;
-			/* In the past if running or runnable */
-			evp.nexttry = nexttry;
 			if (flags & EF_INFLIGHT) {
 				/*
 				 * Not exactly correct but pretty close: The
@@ -331,12 +327,12 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 				evp.lasttry = nexttry;
 			}
 
-			id_sz = sizeof evp.id;
-			(void)memcpy(buf, &evp.id, id_sz);
-			buflen = envelope_dump_buffer(&evp, buf + id_sz,
-			    sizeof(buf) - id_sz);
-			m_compose(p_control, IMSG_CTL_LIST_ENVELOPES,
-			    imsg->hdr.peerid, 0, -1, buf, id_sz + buflen + 1);
+			m_create(p_control, IMSG_CTL_LIST_ENVELOPES,
+			    imsg->hdr.peerid, 0, -1);
+			m_add_int(p_control, flags);
+			m_add_time(p_control, nexttry);
+			m_add_envelope(p_control, &evp);
+			m_close(p_control);
 			return;
 		}
 	}
