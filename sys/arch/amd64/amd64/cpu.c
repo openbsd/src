@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.96 2016/03/17 13:18:47 mpi Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.97 2016/04/29 16:49:53 mpi Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -443,7 +443,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #if defined(MULTIPROCESSOR)
 		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
-		sched_init_cpu(ci);
 		cpu_start_secondary(ci);
 		ncpus++;
 		if (ci->ci_flags & CPUF_PRESENT) {
@@ -571,6 +570,7 @@ cpu_boot_secondary_processors(void)
 			continue;
 		if (ci->ci_flags & (CPUF_BSP | CPUF_SP | CPUF_PRIMARY))
 			continue;
+		sched_init_cpu(ci);
 		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 		cpu_boot_secondary(ci);
 	}
