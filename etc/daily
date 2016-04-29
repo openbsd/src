@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.87 2016/04/01 08:20:27 ajacoutot Exp $
+#	$OpenBSD: daily,v 1.88 2016/04/29 13:05:33 schwarze Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 # For local additions, create the file /etc/daily.local.
@@ -139,13 +139,6 @@ if [ "X$VERBOSESTATUS" != X0 ]; then
 else
 	dump w | grep -vB1 ^Dump
 fi
-
-# The first two regular expressions handle sendmail, the third postfix.
-# When the queue is empty, smtpd(8) and exim -bp keep silent.
-next_part "mail:"
-mailq | grep -v -e "^/var/spool/mqueue is empty$" \
-		-e "^[[:blank:]]*Total requests: 0$" \
-		-e "^Mail queue is empty$"
 
 next_part "network:"
 if [ "X$VERBOSESTATUS" != X0 ]; then

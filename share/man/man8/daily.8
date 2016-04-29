@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daily.8,v 1.23 2016/01/28 15:57:01 schwarze Exp $
+.\"	$OpenBSD: daily.8,v 1.24 2016/04/29 13:05:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2016 $
+.Dd $Mdocdate: April 29 2016 $
 .Dt DAILY 8
 .Os
 .Sh NAME
@@ -119,9 +119,6 @@ Reports on the amount of disk used/available via
 .Xr df 1 .
 Reports on which file systems need to be dumped via
 .Xr dump 8 .
-.It
-Reports on the status of the mail queue via
-.Xr mailq 8 .
 .It
 Reports networking statistics via
 .Xr netstat 1 .
@@ -266,7 +263,6 @@ Root
 .Xr cron 8 ,
 .Xr dump 8 ,
 .Xr fsck 8 ,
-.Xr mailq 8 ,
 .Xr makewhatis 8 ,
 .Xr sa 8 ,
 .Xr security 8 ,
