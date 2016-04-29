@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.12 2015/06/08 06:33:16 jsg Exp $
+#	$OpenBSD: Makefile.armv7,v 1.13 2016/04/29 12:44:52 mpi Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -82,14 +82,13 @@ SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
-LINKFLAGS+=	-X
-STRIPFLAGS=	-g -x
+STRIPFLAGS=	-S
 SYSTEM_LD_TAIL+=; \
 		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S
 .endif
 
 %LOAD

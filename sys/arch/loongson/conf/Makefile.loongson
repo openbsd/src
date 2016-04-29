@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.loongson,v 1.45 2015/01/13 01:12:49 deraadt Exp $
+#	$OpenBSD: Makefile.loongson,v 1.46 2016/04/29 12:44:52 mpi Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -84,14 +84,13 @@ SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
-LINKFLAGS+=	-X
-STRIPFLAGS=	-g -x
+STRIPFLAGS=	-S
 SYSTEM_LD_TAIL+=; \
 		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S
 .endif
 
 %LOAD

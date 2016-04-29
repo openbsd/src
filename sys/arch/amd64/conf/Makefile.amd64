@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.66 2015/11/13 07:52:20 mlarkin Exp $
+#	$OpenBSD: Makefile.amd64,v 1.67 2016/04/29 12:44:52 mpi Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -81,13 +81,13 @@ SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
-STRIPFLAGS=	-g -x
+STRIPFLAGS=	-S
 SYSTEM_LD_TAIL+=; \
 		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
-LINKFLAGS+=	-S -x
+LINKFLAGS+=	-S
 .endif
 
 %LOAD
