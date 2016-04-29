@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.62 2016/04/28 14:25:08 beck Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.63 2016/04/29 14:40:36 beck Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -95,6 +95,19 @@ pop_symlink(struct nameidata *ndp)
 #endif
 }
 
+void
+ndinitat(struct nameidata *ndp, u_long op, u_long flags,
+    enum uio_seg segflg, int dirfd, const char *namep, struct proc *p)
+{
+	memset(ndp, 0, sizeof(*ndp));
+	(ndp)->ni_cnd.cn_nameiop = op;
+	(ndp)->ni_cnd.cn_flags = flags;
+	(ndp)->ni_segflg = segflg;
+	(ndp)->ni_dirfd = dirfd;
+	(ndp)->ni_dirp = namep;
+	(ndp)->ni_cnd.cn_proc = p;
+}
+
 /*
  * Convert a pathname into a pointer to a vnode.
  *
@@ -128,6 +141,12 @@ namei(struct nameidata *ndp)
 	int error, linklen;
 	struct componentname *cnp = &ndp->ni_cnd;
 	struct proc *p = cnp->cn_proc;
+
+	/*
+	 * Should be 0, if not someone didn't init ndp with NDINIT,
+	 * go find and murder the offender messily.
+	 */
+	KASSERT (ndp->ni_p_path == NULL && ndp->ni_p_size == 0);
 
 	ndp->ni_cnd.cn_cred = ndp->ni_cnd.cn_proc->p_ucred;
 #ifdef DIAGNOSTIC

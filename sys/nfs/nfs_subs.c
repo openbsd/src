@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.130 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.131 2016/04/29 14:40:36 beck Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1244,6 +1244,13 @@ nfs_namei(struct nameidata *ndp, fhandle_t *fhp, int len,
 		cnp->cn_flags |= (NOCROSSMOUNT | RDONLY);
 	else
 		cnp->cn_flags |= NOCROSSMOUNT;
+
+	/*
+	 * Should be 0, if not someone didn't init ndp with NDINIT,
+	 * go find and murder the offender messily.
+	 */
+	KASSERT (ndp->ni_p_path == NULL && ndp->ni_p_size == 0);
+
 	/*
 	 * And call lookup() to do the real work
 	 */

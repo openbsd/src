@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.107 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.108 2016/04/29 14:40:36 beck Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -368,9 +368,9 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	nfsm_srvnamesiz(len);
+
+	NDINIT(&nd, LOOKUP, LOCKLEAF | SAVESTART, UIO_SYSSPACE, NULL, procp);
 	nd.ni_cnd.cn_cred = cred;
-	nd.ni_cnd.cn_nameiop = LOOKUP;
-	nd.ni_cnd.cn_flags = LOCKLEAF | SAVESTART;
 	error = nfs_namei(&nd, fhp, len, slp, nam, &info.nmi_md, &info.nmi_dpos, &dirp, procp);
 	if (dirp) {
 		if (info.nmi_v3)
@@ -882,9 +882,10 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	nfsm_srvnamesiz(len);
+
+	NDINIT(&nd, CREATE, LOCKPARENT | LOCKLEAF | SAVESTART, UIO_SYSSPACE,
+	    NULL, procp);
 	nd.ni_cnd.cn_cred = cred;
-	nd.ni_cnd.cn_nameiop = CREATE;
-	nd.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF | SAVESTART;
 	error = nfs_namei(&nd, fhp, len, slp, nam, &info.nmi_md,
 	    &info.nmi_dpos, &dirp, procp);
 	if (dirp) {
@@ -1136,13 +1137,13 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_dpos = nfsd->nd_dpos;
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 
-	nd.ni_cnd.cn_nameiop = 0;
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	nfsm_srvnamesiz(len);
+
+	NDINIT(&nd, CREATE, LOCKPARENT | LOCKLEAF | SAVESTART, UIO_SYSSPACE,
+	    NULL, procp);
 	nd.ni_cnd.cn_cred = cred;
-	nd.ni_cnd.cn_nameiop = CREATE;
-	nd.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF | SAVESTART;
 	error = nfs_namei(&nd, fhp, len, slp, nam, &info.nmi_md, &info.nmi_dpos, &dirp, procp);
 	if (dirp)
 		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, procp);
@@ -1289,9 +1290,9 @@ nfsrv_remove(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	nfsm_srvnamesiz(len);
+
+ 	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF, UIO_SYSSPACE, NULL, procp);
 	nd.ni_cnd.cn_cred = cred;
-	nd.ni_cnd.cn_nameiop = DELETE;
-	nd.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
 	error = nfs_namei(&nd, fhp, len, slp, nam, &info.nmi_md, &info.nmi_dpos, &dirp, procp);
 	if (dirp) {
 		if (info.nmi_v3)
@@ -1374,8 +1375,6 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 
 	ffhp = &fnfh.fh_generic;
 	tfhp = &tnfh.fh_generic;
-	fromnd.ni_cnd.cn_nameiop = 0;
-	tond.ni_cnd.cn_nameiop = 0;
 	nfsm_srvmtofh(ffhp);
 	nfsm_srvnamesiz(len);
 
@@ -1384,9 +1383,10 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	 * the second nfs_namei() call, in case it is remapped.
 	 */
 	saved_uid = cred->cr_uid;
+
+	NDINIT(&fromnd, DELETE, WANTPARENT | SAVESTART, UIO_SYSSPACE, NULL,
+	    procp);
 	fromnd.ni_cnd.cn_cred = cred;
-	fromnd.ni_cnd.cn_nameiop = DELETE;
-	fromnd.ni_cnd.cn_flags = WANTPARENT | SAVESTART;
 	error = nfs_namei(&fromnd, ffhp, len, slp, nam, &info.nmi_md,
 	    &info.nmi_dpos, &fdirp, procp);
 	if (fdirp) {
@@ -1413,9 +1413,10 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	nfsm_srvmtofh(tfhp);
 	nfsm_strsiz(len2, NFS_MAXNAMLEN);
 	cred->cr_uid = saved_uid;
+
+	NDINIT(&tond, RENAME, LOCKPARENT | LOCKLEAF| NOCACHE | SAVESTART,
+	    UIO_SYSSPACE, NULL, procp);
 	tond.ni_cnd.cn_cred = cred;
-	tond.ni_cnd.cn_nameiop = RENAME;
-	tond.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART;
 	error = nfs_namei(&tond, tfhp, len2, slp, nam, &info.nmi_md,
 	    &info.nmi_dpos, &tdirp, procp);
 	if (tdirp) {
@@ -1579,9 +1580,9 @@ nfsrv_link(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	}
 	if (vp->v_type == VDIR && (error = suser_ucred(cred)) != 0)
 		goto out1;
+
+	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, NULL, procp);
 	nd.ni_cnd.cn_cred = cred;
-	nd.ni_cnd.cn_nameiop = CREATE;
-	nd.ni_cnd.cn_flags = LOCKPARENT;
 	error = nfs_namei(&nd, dfhp, len, slp, nam, &info.nmi_md,
 	    &info.nmi_dpos, &dirp, procp);
 	if (dirp) {
@@ -1663,14 +1664,12 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_dpos = nfsd->nd_dpos;
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 
-	nd.ni_cnd.cn_nameiop = 0;
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	nfsm_srvnamesiz(len);
 
+	NDINIT(&nd, CREATE, LOCKPARENT | SAVESTART, UIO_SYSSPACE, NULL, procp);
 	nd.ni_cnd.cn_cred = cred;
-	nd.ni_cnd.cn_nameiop = CREATE;
-	nd.ni_cnd.cn_flags = LOCKPARENT | SAVESTART;
 	error = nfs_namei(&nd, fhp, len, slp, nam, &info.nmi_md,
 	    &info.nmi_dpos, &dirp, procp);
 	if (dirp) {
@@ -1813,9 +1812,8 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	nfsm_srvmtofh(fhp);
 	nfsm_srvnamesiz(len);
 
+	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, NULL, procp);
 	nd.ni_cnd.cn_cred = cred;
-	nd.ni_cnd.cn_nameiop = CREATE;
-	nd.ni_cnd.cn_flags = LOCKPARENT;
 	error = nfs_namei(&nd, fhp, len, slp, nam, &info.nmi_md,
 	    &info.nmi_dpos, &dirp, procp);
 	if (dirp) {
@@ -1929,9 +1927,9 @@ nfsrv_rmdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	nfsm_srvnamesiz(len);
+
+	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF, UIO_SYSSPACE, NULL, procp);
 	nd.ni_cnd.cn_cred = cred;
-	nd.ni_cnd.cn_nameiop = DELETE;
-	nd.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
 	error = nfs_namei(&nd, fhp, len, slp, nam, &info.nmi_md,
 	    &info.nmi_dpos, &dirp, procp);
 	if (dirp) {

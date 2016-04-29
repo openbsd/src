@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.168 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.169 2016/04/29 14:40:36 beck Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2008,7 +2008,7 @@ nfs_readdir(void *v)
 
 		if (nmp->nm_flag & NFSMNT_RDIRPLUS) {
 			error = nfs_readdirplusrpc(vp, &readdir_uio, cred,
-			    &eof);
+			    &eof, p);
 			if (error == NFSERR_NOTSUPP)
 				nmp->nm_flag &= ~NFSMNT_RDIRPLUS;
 		}
@@ -2260,7 +2260,7 @@ nfsmout:
  */
 int
 nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
-    int *end_of_directory)
+    int *end_of_directory, struct proc *p)
 {
 	int len, left;
 	struct nfs_dirent *ndirp = NULL;
@@ -2287,6 +2287,7 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
 		(uiop->uio_resid & (NFS_DIRBLKSIZ - 1)))
 		panic("nfs readdirplusrpc bad uio");
 #endif
+	NDINIT(ndp, 0, 0, UIO_SYSSPACE, NULL, p);
 	ndp->ni_dvp = vp;
 	newvp = NULLVP;
 
