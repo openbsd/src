@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.320 2016/04/18 12:10:34 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.321 2016/04/29 11:40:27 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1049,7 +1049,12 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 				error = EINVAL;
 				break;
 			}
+			if (inp->inp_lport) {
+				error = EBUSY;
+				break;
+			}
 			inp->inp_rtableid = rtid;
+			in_pcbrehash(inp);
 			break;
 		case IP_PIPEX:
 			if (m != NULL && m->m_len == sizeof(int))
