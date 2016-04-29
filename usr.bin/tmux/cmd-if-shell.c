@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.42 2016/04/29 14:05:24 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.43 2016/04/29 17:12:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -81,7 +81,7 @@ cmd_if_shell_exec(struct cmd *self, struct cmd_q *cmdq)
 		cwd = NULL;
 
 	ft = format_create(cmdq, 0);
-	format_defaults(ft, NULL, s, wl, wp);
+	format_defaults(ft, cmdq->state.c, s, wl, wp);
 	shellcmd = format_expand(ft, args->argv[0]);
 	format_free(ft);
 
