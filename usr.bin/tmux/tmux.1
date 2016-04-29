@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.483 2016/04/29 14:05:24 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.484 2016/04/29 15:00:48 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -3064,6 +3064,14 @@ Attributes are ignored.
 Like
 .Ic base-index ,
 but set the starting index for pane numbers.
+.Pp
+.It Ic pane-border-format Ar format
+Set the text shown in pane border status lines.
+.Pp
+.It Xo Ic pane-border-status
+.Op Ic off | top | bottom
+.Xc
+Turn pane border status lines off or set their position.
 .Pp
 .It Ic pane-border-style Ar style
 Set the pane border style for panes aside from the active pane.

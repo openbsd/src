@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.626 2016/04/29 13:36:10 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.627 2016/04/29 15:00:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -893,6 +893,9 @@ struct window_pane {
 
 	struct screen	*screen;
 	struct screen	 base;
+
+	struct screen	 status_screen;
+	size_t		 status_size;
 
 	/* Saved in alternative screen mode. */
 	u_int		 saved_cx;
