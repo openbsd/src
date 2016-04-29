@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.69 2016/04/28 17:59:00 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.70 2016/04/29 10:45:06 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@usta.de>
@@ -57,6 +57,11 @@ struct	req {
 	int		  isquery; /* QUERY_STRING used, not PATH_INFO */
 };
 
+enum	focus {
+	FOCUS_NONE = 0,
+	FOCUS_QUERY
+};
+
 static	void		 html_print(const char *);
 static	void		 html_putchar(char);
 static	int		 http_decode(char *);
@@ -77,7 +82,7 @@ static	void		 resp_catman(const struct req *, const char *);
 static	void		 resp_copy(const char *);
 static	void		 resp_end_html(void);
 static	void		 resp_format(const struct req *, const char *);
-static	void		 resp_searchform(const struct req *);
+static	void		 resp_searchform(const struct req *, enum focus);
 static	void		 resp_show(const struct req *, const char *);
 static	void		 set_query_attr(char **, char **);
 static	int		 validate_filename(const char *);
@@ -365,7 +370,7 @@ resp_end_html(void)
 }
 
 static void
-resp_searchform(const struct req *req)
+resp_searchform(const struct req *req, enum focus focus)
 {
 	int		 i;
 
@@ -380,9 +385,12 @@ resp_searchform(const struct req *req)
 
 	printf(	"<table><tr><td>\n"
 		"<input type=\"text\" name=\"query\" value=\"");
-	if (NULL != req->q.query)
+	if (req->q.query != NULL)
 		html_print(req->q.query);
-	puts("\" size=\"40\" autofocus>");
+	printf( "\" size=\"40\"");
+	if (focus == FOCUS_QUERY)
+		printf(" autofocus");
+	puts(">");
 
 	/* Write submission and reset buttons. */
 
@@ -505,7 +513,7 @@ pg_index(const struct req *req)
 {
 
 	resp_begin_html(200, NULL);
-	resp_searchform(req);
+	resp_searchform(req, FOCUS_QUERY);
 	printf("<p>\n"
 	       "This web interface is documented in the\n"
 	       "<a href=\"/%s%smandoc/man8/man.cgi.8\">man.cgi</a>\n"
@@ -522,7 +530,7 @@ static void
 pg_noresult(const struct req *req, const char *msg)
 {
 	resp_begin_html(200, NULL);
-	resp_searchform(req);
+	resp_searchform(req, FOCUS_QUERY);
 	puts("<p>");
 	puts(msg);
 	puts("</p>");
@@ -586,7 +594,8 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 	}
 
 	resp_begin_html(200, NULL);
-	resp_searchform(req);
+	resp_searchform(req,
+	    req->q.equal || sz == 1 ? FOCUS_NONE : FOCUS_QUERY);
 
 	if (sz > 1) {
 		puts("<div class=\"results\">");
@@ -906,7 +915,7 @@ pg_show(struct req *req, const char *fullpath)
 	}
 
 	resp_begin_html(200, NULL);
-	resp_searchform(req);
+	resp_searchform(req, FOCUS_NONE);
 	resp_show(req, file);
 	resp_end_html();
 }
