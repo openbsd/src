@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.41 2016/03/01 12:06:07 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.42 2016/04/29 14:05:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -157,6 +157,7 @@ cmd_if_shell_callback(struct job *job)
 	}
 
 	cmdq1 = cmdq_new(cmdq->client);
+	cmdq1->flags |= cmdq->flags & CMD_Q_NOHOOKS;
 	cmdq1->emptyfn = cmd_if_shell_done;
 	cmdq1->data = cdata;
 
