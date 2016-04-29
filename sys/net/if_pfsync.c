@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.228 2016/03/29 10:34:42 sashan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.229 2016/04/29 08:55:03 krw Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1224,8 +1224,8 @@ int
 pfsyncoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct rtentry *rt)
 {
-	m_freem(m);
-	return (0);
+	m_freem(m);	/* drop packet */
+	return (EAFNOSUPPORT);
 }
 
 int

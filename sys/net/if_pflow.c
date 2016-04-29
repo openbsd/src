@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.60 2015/10/03 10:44:23 florian Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.61 2016/04/29 08:55:03 krw Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -65,6 +65,8 @@ SLIST_HEAD(, pflow_softc) pflowif_list;
 struct pflowstats	 pflowstats;
 
 void	pflowattach(int);
+int	pflow_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+	struct rtentry *rt);
 int	pflow_clone_create(struct if_clone *, int);
 int	pflow_clone_destroy(struct ifnet *);
 void	pflow_init_timeouts(struct pflow_softc *);
@@ -111,6 +113,14 @@ pflowattach(int npflow)
 {
 	SLIST_INIT(&pflowif_list);
 	if_clone_attach(&pflow_cloner);
+}
+
+int
+pflow_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+	struct rtentry *rt)
+{
+	m_freem(m);	/* drop packet */
+	return (EAFNOSUPPORT);
 }
 
 int
@@ -222,7 +232,7 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "pflow%d", unit);
 	ifp->if_softc = pflowif;
 	ifp->if_ioctl = pflowioctl;
-	ifp->if_output = NULL;
+	ifp->if_output = pflow_output;
 	ifp->if_start = NULL;
 	ifp->if_type = IFT_PFLOW;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
