@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.17 2016/04/30 21:10:28 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.18 2016/04/30 21:42:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1054,7 +1054,7 @@ static int
 magic_test_type_default(__unused struct magic_line *ml,
     __unused struct magic_state *ms)
 {
-	return (1);
+	return (!ms->matched);
 }
 
 static int (*magic_test_functions[])(struct magic_line *,
@@ -1219,11 +1219,14 @@ magic_test_line(struct magic_line *ml, struct magic_state *ms)
 	    ml->type_string, ml->test_operator, offset, ms->offset,
 	    ml->result == NULL ? "" : ml->result);
 
+	ms->matched = 0;
 	offset = ms->offset;
 	TAILQ_FOREACH(child, &ml->children, entry) {
 		ms->offset = offset;
 		magic_test_line(child, ms);
 	}
+
+	ms->matched = 1;
 	return (ml->result != NULL);
 }
 
