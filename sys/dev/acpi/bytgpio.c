@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytgpio.c,v 1.5 2016/04/02 00:34:47 jsg Exp $	*/
+/*	$OpenBSD: bytgpio.c,v 1.6 2016/04/30 16:27:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -28,7 +28,7 @@
 #define BYTGPIO_CONF_GD_LEVEL	0x01000000
 #define BYTGPIO_CONF_GD_TPE	0x02000000
 #define BYTGPIO_CONF_GD_TNE	0x04000000
-#define BYTGPIO_CONF_GD_MASK	0x0f000000
+#define BYTGPIO_CONF_GD_MASK	0x07000000
 
 #define BYTGPIO_PAD_VAL		0x00000001
 
@@ -124,6 +124,8 @@ bytgpio_attach(struct device *parent, struct device *self, void *aux)
 	struct bytgpio_softc *sc = (struct bytgpio_softc *)self;
 	struct aml_value res;
 	int64_t uid;
+	uint32_t reg;
+	int i;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_node = aaa->aaa_node;
@@ -193,6 +195,13 @@ bytgpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gpio.intr_establish = bytgpio_intr_establish;
 	sc->sc_node->gpio = &sc->sc_gpio;
 
+	/* Mask all interrupts. */
+	for (i = 0; i < sc->sc_npins; i++) {
+		reg = bus_space_read_4(sc->sc_memt, sc->sc_memh, sc->sc_pins[i] * 16);
+		reg &= ~BYTGPIO_CONF_GD_MASK;
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, sc->sc_pins[i] * 16, reg);
+	}
+		
 	printf(", %d pins\n", sc->sc_npins);
 	return;
 
