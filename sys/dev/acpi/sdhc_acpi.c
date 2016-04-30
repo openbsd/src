@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.7 2016/04/26 19:10:10 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.8 2016/04/30 11:32:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -28,6 +28,8 @@
 #include <dev/sdmmc/sdhcreg.h>
 #include <dev/sdmmc/sdhcvar.h>
 #include <dev/sdmmc/sdmmcvar.h>
+
+extern struct bus_dma_tag pci_bus_dma_tag;
 
 struct sdhc_acpi_softc {
 	struct sdhc_softc sc;
@@ -134,7 +136,8 @@ sdhc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	sc->sc.sc_host = &sc->sc_host;
-	sdhc_host_found(&sc->sc, sc->sc_memt, sc->sc_memh, sc->sc_size, 0, 0);
+	sc->sc.sc_dmat = &pci_bus_dma_tag;
+	sdhc_host_found(&sc->sc, sc->sc_memt, sc->sc_memh, sc->sc_size, 1, 0);
 }
 
 int

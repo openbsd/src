@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.43 2016/03/30 09:58:01 kettenis Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.44 2016/04/30 11:32:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -36,6 +36,7 @@
 #define SDHC_COMMAND_TIMEOUT	hz
 #define SDHC_BUFFER_TIMEOUT	hz
 #define SDHC_TRANSFER_TIMEOUT	hz
+#define SDHC_DMA_TIMEOUT	(hz*3)
 
 struct sdhc_host {
 	struct sdhc_softc *sc;		/* host controller device */
@@ -50,6 +51,10 @@ struct sdhc_host {
 	u_int8_t regs[14];		/* host controller state */
 	u_int16_t intr_status;		/* soft interrupt status */
 	u_int16_t intr_error_status;	/* soft error status */
+
+	bus_dmamap_t adma_map;
+	bus_dma_segment_t adma_segs[1];
+	caddr_t adma2;
 };
 
 /* flag values */
@@ -174,7 +179,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		caps = HREAD4(hp, SDHC_CAPABILITIES);
 
 	/* Use DMA if the host system and the controller support it. */
-	if (usedma && ISSET(caps, SDHC_DMA_SUPPORT))
+	if (usedma && ISSET(caps, SDHC_ADMA2_SUPP))
 		SET(hp->flags, SHF_USE_DMA);
 
 	/*
@@ -236,6 +241,46 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		break;
 	}
 
+	if (ISSET(hp->flags, SHF_USE_DMA)) {
+		int rseg;
+
+		/* Allocate ADMA2 descriptor memory */
+		error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE,
+		    PAGE_SIZE, hp->adma_segs, 1, &rseg,
+		    BUS_DMA_WAITOK | BUS_DMA_ZERO);
+		if (error)
+			goto adma_done;
+		error = bus_dmamem_map(sc->sc_dmat, hp->adma_segs, rseg,
+		    PAGE_SIZE, &hp->adma2, BUS_DMA_WAITOK);
+		if (error) {
+			bus_dmamem_free(sc->sc_dmat, hp->adma_segs, rseg);
+			goto adma_done;
+		}
+		error = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE,
+		    0, BUS_DMA_WAITOK, &hp->adma_map);
+		if (error) {
+			bus_dmamem_unmap(sc->sc_dmat, hp->adma2, PAGE_SIZE);
+			bus_dmamem_free(sc->sc_dmat, hp->adma_segs, rseg);
+			goto adma_done;
+		}
+		error = bus_dmamap_load(sc->sc_dmat, hp->adma_map,
+		    hp->adma2, PAGE_SIZE, NULL,
+		    BUS_DMA_WAITOK | BUS_DMA_WRITE);
+		if (error) {
+			bus_dmamap_destroy(sc->sc_dmat, hp->adma_map);
+			bus_dmamem_unmap(sc->sc_dmat, hp->adma2, PAGE_SIZE);
+			bus_dmamem_free(sc->sc_dmat, hp->adma_segs, rseg);
+			goto adma_done;
+		}
+
+	adma_done:
+		if (error) {
+			printf("%s: can't allocate DMA descriptor table\n",
+			    DEVNAME(hp->sc));
+			CLR(hp->flags, SHF_USE_DMA);
+		}
+	}
+
 	/*
 	 * Attach the generic SD/MMC bus driver.  (The bus driver must
 	 * not invoke any chipset functions before it is attached.)
@@ -244,6 +289,9 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	saa.saa_busname = "sdmmc";
 	saa.sct = &sdhc_functions;
 	saa.sch = hp;
+	saa.dmat = sc->sc_dmat;
+	if (ISSET(hp->flags, SHF_USE_DMA))
+		saa.caps |= SMC_CAPS_DMA;
 
 	hp->sdmmc = config_found(&sc->sc_dev, &saa, NULL);
 	if (hp->sdmmc == NULL) {
@@ -641,11 +689,14 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 int
 sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 {
+	struct sdhc_adma2_descriptor32 *desc = (void *)hp->adma2;
+	struct sdhc_softc *sc = hp->sc;
 	u_int16_t blksize = 0;
 	u_int16_t blkcount = 0;
 	u_int16_t mode;
 	u_int16_t command;
 	int error;
+	int seg;
 	int s;
 	
 	DPRINTF(1,("%s: start cmd %u arg=%#x data=%#x dlen=%d flags=%#x "
@@ -688,10 +739,9 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 			mode |= SDHC_AUTO_CMD12_ENABLE;
 		}
 	}
-#ifdef notyet
-	if (ISSET(hp->flags, SHF_USE_DMA))
+	if (cmd->c_dmamap && cmd->c_datalen > 0 &&
+	    ISSET(hp->flags, SHF_USE_DMA))
 		mode |= SDHC_DMA_ENABLE;
-#endif
 
 	/*
 	 * Prepare command register value. (2.2.6)
@@ -724,7 +774,36 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	/* Alert the user not to remove the card. */
 	HSET1(hp, SDHC_HOST_CTL, SDHC_LED_ON);
 
-	/* XXX: Set DMA start address if SHF_USE_DMA is set. */
+	/* Set DMA start address if SHF_USE_DMA is set. */
+	if (cmd->c_dmamap && ISSET(hp->flags, SHF_USE_DMA)) {
+		for (seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
+			bus_addr_t paddr =
+			    cmd->c_dmamap->dm_segs[seg].ds_addr;
+			uint16_t len =
+			    cmd->c_dmamap->dm_segs[seg].ds_len == 65536 ?
+			    0 : cmd->c_dmamap->dm_segs[seg].ds_len;
+			uint16_t attr;
+
+			attr = SDHC_ADMA2_VALID | SDHC_ADMA2_ACT_TRANS;
+			if (seg == cmd->c_dmamap->dm_nsegs - 1)
+				attr |= SDHC_ADMA2_END;
+
+			desc[seg].attribute = htole16(attr);
+			desc[seg].length = htole16(len);
+			desc[seg].address = htole32(paddr);
+		}
+
+		desc[cmd->c_dmamap->dm_nsegs].attribute = htole16(0);
+
+		bus_dmamap_sync(sc->sc_dmat, hp->adma_map, 0, PAGE_SIZE,
+		    BUS_DMASYNC_PREWRITE);
+
+		HCLR1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT);
+		HSET1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT_ADMA2);
+
+		HWRITE4(hp, SDHC_ADMA_SYSTEM_ADDR,
+		    hp->adma_map->dm_segs[0].ds_addr);
+	}
 
 	DPRINTF(1,("%s: cmd=%#x mode=%#x blksize=%d blkcount=%d\n",
 	    DEVNAME(hp->sc), command, mode, blksize, blkcount));
@@ -751,6 +830,25 @@ sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	int i, datalen;
 	int mask;
 	int error;
+
+	if (cmd->c_dmamap) {
+		int status;
+
+		error = 0;
+		for (;;) {
+			status = sdhc_wait_intr(hp,
+			    SDHC_DMA_INTERRUPT|SDHC_TRANSFER_COMPLETE,
+			    SDHC_DMA_TIMEOUT);
+			if (status & SDHC_TRANSFER_COMPLETE)
+				break;
+			if (!status) {
+				error = ETIMEDOUT;
+				break;
+			}
+		}
+
+		goto done;
+	}
 
 	mask = ISSET(cmd->c_flags, SCF_CMD_READ) ?
 	    SDHC_BUFFER_READ_ENABLE : SDHC_BUFFER_WRITE_ENABLE;
@@ -792,6 +890,7 @@ sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	    SDHC_TRANSFER_TIMEOUT))
 		error = ETIMEDOUT;
 
+done:
 	if (error != 0)
 		cmd->c_error = error;
 	SET(cmd->c_flags, SCF_ITSDONE);

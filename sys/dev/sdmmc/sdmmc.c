@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.39 2016/03/19 11:41:56 mpi Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.40 2016/04/30 11:32:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -97,14 +97,25 @@ sdmmc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sdmmc_softc *sc = (struct sdmmc_softc *)self;
 	struct sdmmcbus_attach_args *saa = aux;
+	int error;
 
 	printf("\n");
 
 	sc->sct = saa->sct;
 	sc->sch = saa->sch;
+	sc->sc_dmat = saa->dmat;
 	sc->sc_flags = saa->flags;
 	sc->sc_caps = saa->caps;
 	sc->sc_max_xfer = saa->max_xfer;
+
+	if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
+		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, SDMMC_MAXNSEGS,
+		    MAXPHYS, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &sc->sc_dmap);
+		if (error) {
+			printf("%s: can't create DMA map\n", DEVNAME(sc));
+			return;
+		}
+	}
 
 	SIMPLEQ_INIT(&sc->sf_head);
 	TAILQ_INIT(&sc->sc_tskq);
@@ -138,6 +149,10 @@ sdmmc_detach(struct device *self, int flags)
 		wakeup(&sc->sc_tskq);
 		tsleep(sc, PWAIT, "mmcdie", 0);
 	}
+
+	if (sc->sc_dmap)
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmap);
+
 	return 0;
 }
 

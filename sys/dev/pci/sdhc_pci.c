@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.19 2015/11/24 19:38:01 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.20 2016/04/30 11:32:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -149,6 +149,7 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Enable use of DMA if supported by the interface. */
 	usedma = PCI_INTERFACE(pa->pa_class) == SDHC_PCI_INTERFACE_DMA;
+	sc->sc.sc_dmat = pa->pa_dmat;
 
 	/*
 	 * Map and attach all hosts supported by the host controller.

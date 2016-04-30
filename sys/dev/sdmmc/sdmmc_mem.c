@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.22 2015/11/08 12:10:27 jsg Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.23 2016/04/30 11:32:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -44,12 +44,12 @@ int	sdmmc_mem_sd_init(struct sdmmc_softc *, struct sdmmc_function *);
 int	sdmmc_mem_mmc_init(struct sdmmc_softc *, struct sdmmc_function *);
 int	sdmmc_mem_single_read_block(struct sdmmc_function *, int, u_char *,
 	size_t);
-int	sdmmc_mem_read_block_subr(struct sdmmc_function *, int, u_char *,
-	size_t);
+int	sdmmc_mem_read_block_subr(struct sdmmc_function *, bus_dmamap_t,
+	int, u_char *, size_t);
 int	sdmmc_mem_single_write_block(struct sdmmc_function *, int, u_char *,
 	size_t);
-int	sdmmc_mem_write_block_subr(struct sdmmc_function *, int, u_char *,
-	size_t);
+int	sdmmc_mem_write_block_subr(struct sdmmc_function *, bus_dmamap_t,
+	int, u_char *, size_t);
 
 #ifdef SDMMC_DEBUG
 #define DPRINTF(s)	printf s
@@ -566,8 +566,8 @@ sdmmc_mem_set_blocklen(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 }
 
 int
-sdmmc_mem_read_block_subr(struct sdmmc_function *sf, int blkno, u_char *data,
-    size_t datalen)
+sdmmc_mem_read_block_subr(struct sdmmc_function *sf, bus_dmamap_t dmap,
+    int blkno, u_char *data, size_t datalen)
 {
 	struct sdmmc_softc *sc = sf->sc;
 	struct sdmmc_command cmd;
@@ -588,6 +588,7 @@ sdmmc_mem_read_block_subr(struct sdmmc_function *sf, int blkno, u_char *data,
 	else
 		cmd.c_arg = blkno << 9;
 	cmd.c_flags = SCF_CMD_ADTC | SCF_CMD_READ | SCF_RSP_R1;
+	cmd.c_dmamap = dmap;
 
 	error = sdmmc_mmc_command(sc, &cmd);
 	if (error != 0)
@@ -627,8 +628,8 @@ sdmmc_mem_single_read_block(struct sdmmc_function *sf, int blkno, u_char *data,
 	int i;
 
 	for (i = 0; i < datalen / sf->csd.sector_size; i++) {
-		error = sdmmc_mem_read_block_subr(sf, blkno + i, data + i *
-		    sf->csd.sector_size, sf->csd.sector_size);
+		error = sdmmc_mem_read_block_subr(sf, NULL,  blkno + i,
+		    data + i * sf->csd.sector_size, sf->csd.sector_size);
 		if (error)
 			break;
 	}
@@ -647,17 +648,42 @@ sdmmc_mem_read_block(struct sdmmc_function *sf, int blkno, u_char *data,
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_SINGLE_ONLY)) {
 		error = sdmmc_mem_single_read_block(sf, blkno, data, datalen);
-	} else {
-		error = sdmmc_mem_read_block_subr(sf, blkno, data, datalen);
+		goto out;
 	}
 
+	if (!ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
+		error = sdmmc_mem_read_block_subr(sf, NULL, blkno,
+		    data, datalen);
+		goto out;
+	}
+
+	/* DMA transfer */
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmap, data, datalen,
+	    NULL, BUS_DMA_NOWAIT|BUS_DMA_READ);
+	if (error)
+		goto out;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, datalen,
+	    BUS_DMASYNC_PREREAD);
+
+	error = sdmmc_mem_read_block_subr(sf, sc->sc_dmap, blkno, data,
+	    datalen);
+	if (error)
+		goto unload;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, datalen,
+	    BUS_DMASYNC_POSTREAD);
+unload:
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
+
+out:
 	rw_exit(&sc->sc_lock);
 	return (error);
 }
 
 int
-sdmmc_mem_write_block_subr(struct sdmmc_function *sf, int blkno, u_char *data,
-    size_t datalen)
+sdmmc_mem_write_block_subr(struct sdmmc_function *sf, bus_dmamap_t dmap,
+    int blkno, u_char *data, size_t datalen)
 {
 	struct sdmmc_softc *sc = sf->sc;
 	struct sdmmc_command cmd;
@@ -677,6 +703,7 @@ sdmmc_mem_write_block_subr(struct sdmmc_function *sf, int blkno, u_char *data,
 	else
 		cmd.c_arg = blkno << 9;
 	cmd.c_flags = SCF_CMD_ADTC | SCF_RSP_R1;
+	cmd.c_dmamap = dmap;
 
 	error = sdmmc_mmc_command(sc, &cmd);
 	if (error != 0)
@@ -715,8 +742,8 @@ sdmmc_mem_single_write_block(struct sdmmc_function *sf, int blkno, u_char *data,
 	int i;
 
 	for (i = 0; i < datalen / sf->csd.sector_size; i++) {
-		error = sdmmc_mem_write_block_subr(sf, blkno + i, data + i *
-		    sf->csd.sector_size, sf->csd.sector_size);
+		error = sdmmc_mem_write_block_subr(sf, NULL, blkno + i,
+		    data + i * sf->csd.sector_size, sf->csd.sector_size);
 		if (error)
 			break;
 	}
@@ -735,10 +762,35 @@ sdmmc_mem_write_block(struct sdmmc_function *sf, int blkno, u_char *data,
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_SINGLE_ONLY)) {
 		error = sdmmc_mem_single_write_block(sf, blkno, data, datalen);
-	} else {
-		error = sdmmc_mem_write_block_subr(sf, blkno, data, datalen);
+		goto out;
 	}
 
+	if (!ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
+		error = sdmmc_mem_write_block_subr(sf, NULL, blkno,
+		    data, datalen);
+		goto out;
+	}
+
+	/* DMA transfer */
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmap, data, datalen,
+	    NULL, BUS_DMA_NOWAIT|BUS_DMA_WRITE);
+	if (error)
+		goto out;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, datalen,
+	    BUS_DMASYNC_PREWRITE);
+
+	error = sdmmc_mem_write_block_subr(sf, sc->sc_dmap, blkno, data,
+	    datalen);
+	if (error)
+		goto unload;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, datalen,
+	    BUS_DMASYNC_POSTWRITE);
+unload:
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
+
+out:
 	rw_exit(&sc->sc_lock);
 	return (error);
 }

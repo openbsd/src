@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.22 2013/09/12 11:54:04 rapha Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.23 2016/04/30 11:32:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -21,6 +21,8 @@
 
 #include <sys/queue.h>
 #include <sys/rwlock.h>
+
+#include <machine/bus.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -72,6 +74,7 @@ struct sdmmc_command {
 	u_int16_t	 c_opcode;	/* SD or MMC command index */
 	u_int32_t	 c_arg;		/* SD/MMC command argument */
 	sdmmc_response	 c_resp;	/* response buffer */
+	bus_dmamap_t	 c_dmamap;
 	void		*c_data;	/* buffer to send or read into */
 	int		 c_datalen;	/* length of data buffer */
 	int		 c_blklen;	/* block length */
@@ -156,6 +159,11 @@ struct sdmmc_softc {
 #define DEVNAME(sc)	((sc)->sc_dev.dv_xname)
 	sdmmc_chipset_tag_t sct;	/* host controller chipset tag */
 	sdmmc_chipset_handle_t sch;	/* host controller chipset handle */
+
+	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_dmap;
+#define SDMMC_MAXNSEGS	((MAXPHYS / PAGE_SIZE) + 1)
+
 	int sc_flags;
 #define SMF_SD_MODE		0x0001	/* host in SD mode (MMC otherwise) */
 #define SMF_IO_MODE		0x0002	/* host in I/O mode (SD mode only) */
