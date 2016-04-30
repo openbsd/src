@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhcreg.h,v 1.6 2016/04/30 11:32:23 kettenis Exp $	*/
+/*	$OpenBSD: sdhcreg.h,v 1.7 2016/04/30 11:49:29 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -113,6 +113,7 @@
 #define  SDHC_RESET_ALL			(1<<0)
 #define SDHC_NINTR_STATUS		0x30
 #define  SDHC_ERROR_INTERRUPT		(1<<15)
+#define  SDHC_RETUNING_EVENT		(1<<12)
 #define  SDHC_CARD_INTERRUPT		(1<<8)
 #define  SDHC_CARD_REMOVAL		(1<<7)
 #define  SDHC_CARD_INSERTION		(1<<6)
@@ -122,8 +123,9 @@
 #define  SDHC_BLOCK_GAP_EVENT		(1<<2)
 #define  SDHC_TRANSFER_COMPLETE		(1<<1)
 #define  SDHC_COMMAND_COMPLETE		(1<<0)
-#define  SDHC_NINTR_STATUS_MASK		0x81ff
+#define  SDHC_NINTR_STATUS_MASK		0x91ff
 #define SDHC_EINTR_STATUS		0x32
+#define  SDHC_ADMA_ERROR		(1<<9)
 #define  SDHC_AUTO_CMD12_ERROR		(1<<8)
 #define  SDHC_CURRENT_LIMIT_ERROR	(1<<7)
 #define  SDHC_DATA_END_BIT_ERROR	(1<<6)
@@ -133,13 +135,13 @@
 #define  SDHC_CMD_END_BIT_ERROR		(1<<2)
 #define  SDHC_CMD_CRC_ERROR		(1<<1)
 #define  SDHC_CMD_TIMEOUT_ERROR		(1<<0)
-#define  SDHC_EINTR_STATUS_MASK		0x01ff	/* excluding vendor signals */
+#define  SDHC_EINTR_STATUS_MASK		0x03ff	/* excluding vendor signals */
 #define SDHC_NINTR_STATUS_EN		0x34
 #define SDHC_EINTR_STATUS_EN		0x36
 #define SDHC_NINTR_SIGNAL_EN		0x38
 #define  SDHC_NINTR_SIGNAL_MASK		0x01ff
 #define SDHC_EINTR_SIGNAL_EN		0x3a
-#define  SDHC_EINTR_SIGNAL_MASK		0x01ff	/* excluding vendor signals */
+#define  SDHC_EINTR_SIGNAL_MASK		0x03ff	/* excluding vendor signals */
 #define SDHC_CMD12_ERROR_STATUS		0x3c
 #define SDHC_HOST_CTL2			0x3e
 #define  SDHC_SAMPLING_CLOCK_SEL	(1<<7)
