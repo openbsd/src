@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.185 2016/04/29 15:00:48 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.186 2016/04/30 18:59:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -854,10 +854,7 @@ server_client_reset_state(struct client *c)
 	struct options		*oo = c->session->options;
 	int			 status, mode, o;
 
-	if (c->flags & CLIENT_SUSPENDED)
-		return;
-
-	if (c->flags & CLIENT_CONTROL)
+	if (c->flags & (CLIENT_CONTROL|CLIENT_SUSPENDED))
 		return;
 
 	tty_region(&c->tty, 0, c->tty.sy - 1);
