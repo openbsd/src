@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.44 2016/04/30 11:32:23 kettenis Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.45 2016/04/30 13:33:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -293,6 +293,11 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	if (ISSET(hp->flags, SHF_USE_DMA))
 		saa.caps |= SMC_CAPS_DMA;
 
+	if (ISSET(caps, SDHC_HIGH_SPEED_SUPP))
+		saa.caps |= SMC_CAPS_SD_HIGHSPEED;
+	if (ISSET(caps, SDHC_HIGH_SPEED_SUPP))
+		saa.caps |= SMC_CAPS_MMC_HIGHSPEED;
+
 	hp->sdmmc = config_found(&sc->sc_dev, &saa, NULL);
 	if (hp->sdmmc == NULL) {
 		error = 0;
@@ -583,6 +588,11 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 	 * Enable SD clock.
 	 */
 	HSET2(hp, SDHC_CLOCK_CTL, SDHC_SDCLK_ENABLE);
+
+	if (freq > 26000)
+		HSET1(hp, SDHC_HOST_CTL, SDHC_HIGH_SPEED);
+	else
+		HCLR1(hp, SDHC_HOST_CTL, SDHC_HIGH_SPEED);
 
 ret:
 	splx(s);
