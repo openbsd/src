@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.25 2015/11/02 06:32:51 jmatthew Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.26 2016/05/01 00:32:37 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -30,11 +30,13 @@
 #include <limits.h>
 #include <pwd.h>
 #include <stdarg.h>
+#include <tls.h>
 
 #include "aldap.h"
 #include "schema.h"
 #include "btree.h"
 #include "imsgev.h"
+#include "evbuffer_tls.h"
 
 #define CONFFILE		 "/etc/ldapd.conf"
 #define LDAPD_USER		 "_ldapd"
@@ -203,7 +205,7 @@ struct listener {
 	struct event		 evt;
 	char			 ssl_cert_name[PATH_MAX];
 	struct ssl		*ssl;
-	void			*ssl_ctx;
+	struct tls		*tls;
 	TAILQ_ENTRY(listener)	 entry;
 };
 TAILQ_HEAD(listenerlist, listener);
@@ -223,12 +225,8 @@ struct conn {
 	struct listener		*listener;	/* where it connected from */
 
 	/* SSL support */
-	struct event		 s_ev;
-	struct timeval		 s_tv;
-	struct listener		*s_l;
-	void			*s_ssl;
-	unsigned char		*s_buf;
-	int			 s_buflen;
+	struct tls		*tls;
+	struct buffertls	 buftls;
 	unsigned int		 s_flags;
 };
 TAILQ_HEAD(conn_list, conn)	 conn_list;
@@ -236,11 +234,12 @@ TAILQ_HEAD(conn_list, conn)	 conn_list;
 struct ssl {
 	SPLAY_ENTRY(ssl)	 ssl_nodes;
 	char			 ssl_name[PATH_MAX];
-	char			*ssl_cert;
-	off_t			 ssl_cert_len;
-	char			*ssl_key;
-	off_t			 ssl_key_len;
+	uint8_t			*ssl_cert;
+	size_t			 ssl_cert_len;
+	uint8_t			*ssl_key;
+	size_t			 ssl_key_len;
 	uint8_t			 flags;
+	struct tls_config	*config;
 };
 
 struct ldapd_config
@@ -461,6 +460,9 @@ int			 authorized(struct conn *conn, struct namespace *ns,
 /* parse.y */
 int			 parse_config(char *filename);
 int			 cmdline_symset(char *s);
+int			 ssl_cmp(struct ssl *, struct ssl *);
+SPLAY_PROTOTYPE(ssltree, ssl, ssl_nodes, ssl_cmp);
+
 
 /* log.c */
 void			 log_init(int);
@@ -498,21 +500,6 @@ int			 unindex_entry(struct namespace *ns, struct btval *dn,
 				struct ber_element *elm);
 int			 index_to_dn(struct namespace *ns, struct btval *indx,
 				struct btval *dn);
-
-/* ssl.c */
-void	 ssl_init(void);
-void	 ssl_transaction(struct conn *);
-
-void	 ssl_session_init(struct conn *);
-void	 ssl_session_destroy(struct conn *);
-int	 ssl_load_certfile(struct ldapd_config *, const char *, u_int8_t);
-void	 ssl_setup(struct ldapd_config *, struct listener *);
-int	 ssl_cmp(struct ssl *, struct ssl *);
-SPLAY_PROTOTYPE(ssltree, ssl, ssl_nodes, ssl_cmp);
-
-/* ssl_privsep.c */
-int	 ssl_ctx_use_private_key(void *, char *, off_t);
-int	 ssl_ctx_use_certificate_chain(void *, char *, off_t);
 
 /* validate.c */
 int	validate_entry(const char *dn, struct ber_element *entry, int relax);

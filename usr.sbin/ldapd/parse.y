@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2014/11/20 05:51:20 jsg Exp $ */
+/*	$OpenBSD: parse.y,v 1.17 2016/05/01 00:32:37 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -77,6 +77,7 @@ int		 host(const char *, const char *,
 		    struct listenerlist *, int, in_port_t, u_int8_t);
 int		 interface(const char *, const char *,
 		    struct listenerlist *, int, in_port_t, u_int8_t);
+int		 load_certfile(struct ldapd_config *, const char *, u_int8_t);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -90,6 +91,8 @@ int		 symset(const char *, const char *, int);
 char		*symget(const char *);
 
 struct ldapd_config	*conf;
+
+SPLAY_GENERATE(ssltree, ssl, ssl_nodes, ssl_cmp);
 
 static struct aci	*mk_aci(int type, int rights, enum scope scope,
 				char *target, char *subject);
@@ -181,7 +184,7 @@ conf_main	: LISTEN ON STRING port ssl certname	{
 			cert = ($6 != NULL) ? $6 : $3;
 
 			if (($5 == F_STARTTLS || $5 == F_LDAPS) &&
-			    ssl_load_certfile(conf, cert, F_SCERT) < 0) {
+			    load_certfile(conf, cert, F_SCERT) < 0) {
 				yyerror("cannot load certificate: %s", cert);
 				free($6);
 				free($3);
@@ -1167,3 +1170,93 @@ namespace_new(const char *suffix)
 	return ns;
 }
 
+int
+ssl_cmp(struct ssl *s1, struct ssl *s2)
+{
+	return (strcmp(s1->ssl_name, s2->ssl_name));
+}
+
+int
+load_certfile(struct ldapd_config *env, const char *name, u_int8_t flags)
+{
+	struct ssl	*s;
+	struct ssl	 key;
+	char		 certfile[PATH_MAX];
+
+	if (strlcpy(key.ssl_name, name, sizeof(key.ssl_name))
+	    >= sizeof(key.ssl_name)) {
+		log_warn("load_certfile: certificate name truncated");
+		return -1;
+	}
+
+	s = SPLAY_FIND(ssltree, env->sc_ssl, &key);
+	if (s != NULL) {
+		s->flags |= flags;
+		return 0;
+	}
+
+	if ((s = calloc(1, sizeof(*s))) == NULL)
+		fatal(NULL);
+
+	s->flags = flags;
+	(void)strlcpy(s->ssl_name, key.ssl_name, sizeof(s->ssl_name));
+
+	s->config = tls_config_new();
+	if (s->config == NULL)
+		goto err;
+
+	tls_config_set_protocols(s->config, TLS_PROTOCOLS_ALL);
+	if (tls_config_set_ciphers(s->config, "compat")) {
+		log_warn("load_certfile: failed to set tls ciphers: %s",
+		    tls_config_error(s->config));
+		goto err;
+	}
+
+	if ((name[0] == '/' &&
+	     !bsnprintf(certfile, sizeof(certfile), "%s.crt", name)) ||
+	    !bsnprintf(certfile, sizeof(certfile), "/etc/ldap/certs/%s.crt",
+		name)) {
+		log_warn("load_certfile: path truncated");
+		goto err;
+	}
+
+	log_debug("loading certificate file %s", certfile);
+	s->ssl_cert = tls_load_file(certfile, &s->ssl_cert_len, NULL);
+	if (s->ssl_cert == NULL)
+		goto err;
+
+	if (tls_config_set_cert_mem(s->config, s->ssl_cert, s->ssl_cert_len)) {
+		log_warn("load_certfile: failed to set tls certificate: %s",
+		    tls_config_error(s->config));
+		goto err;
+	}
+
+	if ((name[0] == '/' &&
+	     !bsnprintf(certfile, sizeof(certfile), "%s.key", name)) ||
+	    !bsnprintf(certfile, sizeof(certfile), "/etc/ldap/certs/%s.key",
+		name)) {
+		log_warn("load_certfile: path truncated");
+		goto err;
+	}
+
+	log_debug("loading key file %s", certfile);
+	s->ssl_key = tls_load_file(certfile, &s->ssl_key_len, NULL);
+	if (s->ssl_key == NULL)
+		goto err;
+
+	if (tls_config_set_key_mem(s->config, s->ssl_key, s->ssl_key_len)) {
+		log_warn("load_certfile: failed to set tls key: %s",
+		    tls_config_error(s->config));
+		goto err;
+	}
+
+	SPLAY_INSERT(ssltree, env->sc_ssl, s);
+
+	return (0);
+err:
+	free(s->ssl_cert);
+	free(s->ssl_key);
+	tls_config_free(s->config);
+	free(s);
+	return (-1);
+}

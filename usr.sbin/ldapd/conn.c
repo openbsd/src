@@ -1,4 +1,4 @@
-/*	$OpenBSD: conn.c,v 1.12 2015/11/02 06:32:51 jmatthew Exp $ */
+/*	$OpenBSD: conn.c,v 1.13 2016/05/01 00:32:37 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -26,6 +26,7 @@
 #include "ldapd.h"
 
 int			 conn_dispatch(struct conn *conn);
+int			 conn_tls_init(struct conn *);
 unsigned long		 ldap_application(struct ber_element *elm);
 
 struct conn_list	 conn_list;
@@ -61,7 +62,7 @@ conn_close(struct conn *conn)
 	/* Cancel any queued requests on this connection. */
 	namespace_cancel_conn(conn);
 
-	ssl_session_destroy(conn);
+	tls_free(conn->tls);
 
 	TAILQ_REMOVE(&conn_list, conn, next);
 	ber_free(&conn->ber);
@@ -225,9 +226,8 @@ conn_write(struct bufferevent *bev, void *data)
 		conn_close(conn);
 	else if (conn->s_flags & F_STARTTLS) {
 		conn->s_flags &= ~F_STARTTLS;
-		bufferevent_free(conn->bev);
-		conn->bev = NULL;
-		ssl_session_init(conn);
+		if (conn_tls_init(conn) == -1)
+			conn_close(conn);
 	}
 }
 
@@ -296,24 +296,22 @@ conn_accept(int fd, short event, void *data)
 		goto giveup;
 	}
 	conn->ber.fd = -1;
-	conn->s_l = l;
 	ber_set_application(&conn->ber, ldap_application);
 	conn->fd = afd;
 	conn->listener = l;
 
-	if (l->flags & F_LDAPS) {
-		ssl_session_init(conn);
-	} else {
-		conn->bev = bufferevent_new(afd, conn_read, conn_write,
-		    conn_err, conn);
-		if (conn->bev == NULL) {
-			log_warn("conn_accept: bufferevent_new");
-			free(conn);
-			goto giveup;
-		}
-		bufferevent_enable(conn->bev, EV_READ);
-		bufferevent_settimeout(conn->bev, 0, 60);
+	conn->bev = bufferevent_new(afd, conn_read, conn_write,
+	    conn_err, conn);
+	if (conn->bev == NULL) {
+		log_warn("conn_accept: bufferevent_new");
+		free(conn);
+		goto giveup;
 	}
+	bufferevent_enable(conn->bev, EV_READ);
+	bufferevent_settimeout(conn->bev, 0, 60);
+	if (l->flags & F_LDAPS)
+		if (conn_tls_init(conn) == -1)
+			conn_close(conn);
 
 	TAILQ_INIT(&conn->searches);
 	TAILQ_INSERT_HEAD(&conn_list, conn, next);
@@ -365,4 +363,25 @@ conn_close_any()
 	}
 
 	return -1;
+}
+
+int
+conn_tls_init(struct conn *conn)
+{
+	struct listener *l = conn->listener;
+
+	if (!(l->flags & F_SSL))
+		return 0;
+
+	log_debug("conn_tls_init: switching to TLS");
+
+	if (tls_accept_socket(l->tls, &conn->tls, conn->fd) < 0) {
+		log_debug("tls_accept_socket failed");
+		return -1;
+	}
+	
+	conn->s_flags |= F_SECURE;
+	buffertls_set(&conn->buftls, conn->bev, conn->tls, conn->fd);
+	buffertls_accept(&conn->buftls, conn->fd);
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.23 2015/12/24 17:47:57 mmcc Exp $ */
+/*	$OpenBSD: ldape.c,v 1.24 2016/05/01 00:32:37 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -341,6 +341,7 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 	struct event		 ev_sigterm;
 	struct event		 ev_sigchld;
 	struct event		 ev_sighup;
+	struct ssl		 key;
 	char			 host[128];
 	mode_t			old_umask = 0;
 
@@ -424,7 +425,24 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 		event_add(&l->ev, NULL);
 		evtimer_set(&l->evt, conn_accept, l);
 
-		ssl_setup(conf, l);
+		if (l->flags & F_SSL) {
+			if (strlcpy(key.ssl_name, l->ssl_cert_name,
+			    sizeof(key.ssl_name)) >= sizeof(key.ssl_name))
+				fatal("ldape: certificate name truncated");
+
+			l->ssl = SPLAY_FIND(ssltree, conf->sc_ssl, &key);
+			if (l->ssl == NULL)
+				fatal("ldape: certificate tree corrupted");
+
+			l->tls = tls_server();
+			if (l->tls == NULL)
+				fatal("ldape: couldn't allocate tls context");
+
+			if (tls_configure(l->tls, l->ssl->config)) {
+				log_warn("ldape: %s", tls_error(l->tls));
+				fatal("ldape: couldn't configure tls");
+			}
+		}
 	}
 
 	TAILQ_FOREACH(ns, &conf->namespaces, next) {

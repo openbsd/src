@@ -1,15 +1,15 @@
-#	$OpenBSD: Makefile,v 1.12 2014/07/16 20:07:03 okan Exp $
+#	$OpenBSD: Makefile,v 1.13 2016/05/01 00:32:37 jmatthew Exp $
 
 PROG=		ldapd
 MAN=		ldapd.8 ldapd.conf.5
 SRCS=		ber.c log.c control.c \
 		util.c ldapd.c ldape.c conn.c attributes.c namespace.c \
 		btree.c filter.c search.c parse.y \
-		auth.c modify.c index.c ssl.c ssl_privsep.c \
+		auth.c modify.c index.c evbuffer_tls.c \
 		validate.c uuid.c schema.c imsgev.c syntax.c matching.c
 
-LDADD=		-levent -lssl -lcrypto -lz -lutil
-DPADD=		${LIBEVENT} ${LIBCRYPTO} ${LIBSSL} ${LIBZ} ${LIBUTIL}
+LDADD=		-ltls -levent -lz -lutil
+DPADD=		${LIBEVENT} ${LIBTLS} ${LIBCRYPTO} ${LIBSSL} ${LIBZ} ${LIBUTIL}
 CFLAGS+=	-I${.CURDIR} -g
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
