@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7.c,v 1.12 2016/04/10 12:24:13 jsg Exp $ */
+/* $OpenBSD: armv7.c,v 1.13 2016/05/01 21:07:40 patrick Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -88,12 +88,6 @@ armv7_find_dev(const char *name, int unit)
 	}
 
 	return (NULL);
-}
-
-int
-armv7_match(struct device *parent, void *cfdata, void *aux)
-{
-	return (1);
 }
 
 extern char *hw_prod;

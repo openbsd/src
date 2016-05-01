@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7var.h,v 1.9 2015/06/08 06:33:16 jsg Exp $ */
+/* $OpenBSD: armv7var.h,v 1.10 2016/05/01 21:07:40 patrick Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -70,7 +70,6 @@ extern struct armv7_dev *armv7_devs;
 
 void	armv7_set_devs(struct armv7_dev *);
 struct	armv7_dev *armv7_find_dev(const char *, int);
-int	armv7_match(struct device *, void *, void *);
 void	armv7_attach(struct device *, struct device *, void *);
 int	armv7_submatch(struct device *, void *, void *);
 
