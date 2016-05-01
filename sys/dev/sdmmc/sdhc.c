@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.46 2016/05/01 16:04:39 kettenis Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.47 2016/05/01 17:13:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -857,8 +857,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	 */
 	HWRITE2(hp, SDHC_TRANSFER_MODE, mode);
 	HWRITE2(hp, SDHC_BLOCK_SIZE, blksize);
-	if (blkcount > 1)
-		HWRITE2(hp, SDHC_BLOCK_COUNT, blkcount);
+	HWRITE2(hp, SDHC_BLOCK_COUNT, blkcount);
 	HWRITE4(hp, SDHC_ARGUMENT, cmd->c_arg);
 	HWRITE2(hp, SDHC_COMMAND, command);
 
