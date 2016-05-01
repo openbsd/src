@@ -1,9 +1,10 @@
-# $OpenBSD: Makefile,v 1.1 2006/06/02 01:07:44 ian Exp $
+# $OpenBSD: Makefile,v 1.2 2016/05/01 08:51:47 nicm Exp $
 
 FILE=file
 
 # temporarily excluded - t23
-REGRESS_TARGETS=t0 t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t15 t17 t18 t20 t21 t22 t30
+REGRESS_TARGETS=t0 t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t15 t17 t18 t20 t21 t22 t30 \
+		t31
 
 # .in: input file
 # .out: desired result
