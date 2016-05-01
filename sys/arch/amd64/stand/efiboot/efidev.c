@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.16 2016/01/06 02:10:03 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.17 2016/05/01 10:43:05 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -62,7 +62,7 @@ static EFI_STATUS
 		 efid_io(int, efi_diskinfo_t, u_int, int, void *);
 static int	 efid_diskio(int, struct diskinfo *, u_int, int, void *);
 static u_int	 findopenbsd(efi_diskinfo_t, const char **);
-static uint64_t	 findopenbsd_gpt(efi_diskinfo_t, const char **);
+static u_int	 findopenbsd_gpt(efi_diskinfo_t, const char **);
 static int	 gpt_chk_mbr(struct dos_partition *, u_int64_t);
 
 void
@@ -198,7 +198,15 @@ gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
 }
 
 /*
- * Try to read the bsd label on the given BIOS device.
+ * Try to find the disk address of the first MBR OpenBSD partition.
+ *
+ * N.B.: must boot from a partition within first 2^32-1 sectors!
+ *
+ * Called only if the MBR on sector 0 is *not* a protective MBR
+ * and *does* have a valid signature.
+ *
+ * We don't check the signatures of EBR's, and they cannot be
+ * protective MBR's so there is no need to check for that.
  */
 static u_int
 findopenbsd(efi_diskinfo_t ed, const char **err)
@@ -206,7 +214,6 @@ findopenbsd(efi_diskinfo_t ed, const char **err)
 	EFI_STATUS status;
 	struct dos_mbr mbr;
 	struct dos_partition *dp;
-	uint64_t gptoff;
 	u_int mbroff = DOSBBSECTOR;
 	u_int mbr_eoff = DOSBBSECTOR;	/* Offset of MBR extended partition. */
 	int i, maxebr = DOS_MAXEBR, nextebr;
@@ -223,25 +230,6 @@ again:
 	if (EFI_ERROR(status)) {
 		*err = "Disk I/O Error";
 		return (-1);
-	}
-
-	/* check mbr signature */
-	if (mbr.dmbr_sign != DOSMBR_SIGNATURE) {
-		*err = "bad MBR signature\n";
-		return (-1);
-	}
-
-	/* check for GPT protective MBR. */
-	if (mbroff == DOSBBSECTOR && gpt_chk_mbr(mbr.dmbr_parts,
-	    ed->blkio->Media->LastBlock + 1) == 0) {
-		gptoff = findopenbsd_gpt(ed, err);
-		if (gptoff > UINT_MAX || EFI_SECTOBLK(ed, gptoff) > UINT_MAX) {
-			*err = "Paritition LBA > 2**32";
-			return (-1);
-		}
-		if (gptoff == -1)
-			return (-1);
-		return EFI_SECTOBLK(ed, gptoff);
 	}
 
 	/* Search for OpenBSD partition */
@@ -286,8 +274,15 @@ again:
 	return (-1);
 }
 
-/* call this only if LBA1 == GPT */
-static uint64_t
+/*
+ * Try to find the disk address of the first GPT OpenBSD partition.
+ *
+ * N.B.: must boot from a partition within first 2^32-1 sectors!
+ *
+ * Called only if the MBR on sector 0 *is* a protective MBR
+ * with a valid signature and sector 1 is a valid GPT header.
+ */
+static u_int
 findopenbsd_gpt(efi_diskinfo_t ed, const char **err)
 {
 	EFI_STATUS		 status;
@@ -391,8 +386,15 @@ findopenbsd_gpt(efi_diskinfo_t ed, const char **err)
 		*err = "bad GPT entries checksum\n";
 		return (-1);
 	}
-	if (found)
-		return (letoh64(gp.gp_lba_start));
+	if (found) {
+		lba = letoh64(gp.gp_lba_start);
+		/* Bootloaders do not current handle addresses > UINT_MAX! */
+		if (lba > UINT_MAX || EFI_SECTOBLK(ed, lba) > UINT_MAX) {
+			*err = "OpenBSD Partition LBA > 2**32 - 1";
+			return (-1);
+		}
+		return (u_int)lba;
+	}
 
 	return (-1);
 }
@@ -401,18 +403,45 @@ const char *
 efi_getdisklabel(efi_diskinfo_t ed, struct disklabel *label)
 {
 	u_int start = 0;
-	char buf[DEV_BSIZE];
+	uint8_t buf[DEV_BSIZE];
+	struct dos_partition dosparts[NDOSPART];
+	EFI_STATUS status;
 	const char *err = NULL;
 	int error;
 
-	/* Sanity check */
-	/* XXX */
+	/*
+	 * Read sector 0. Ensure it has a valid MBR signature.
+	 *
+	 * If it's a protective MBR then try to find the disklabel via
+	 * GPT. If it's not a protective MBR, try to find the disklabel
+	 * via MBR.
+	 */
+	memset(buf, 0, sizeof(buf));
+	status = efid_io(F_READ, ed, DOSBBSECTOR, 1, buf);
+	if (EFI_ERROR(status))
+		return ("Disk I/O Error");
 
-	start = findopenbsd(ed, &err);
-	if (start == (u_int)-1) {
-		if (err != NULL)
-			return (err);
-		return "no OpenBSD partition\n";
+	/* Check MBR signature. */
+	if (buf[510] != 0x55 || buf[511] != 0xaa)
+		return ("invalid MBR signature");
+
+	memcpy(dosparts, buf+DOSPARTOFF, sizeof(dosparts));
+
+	/* check for GPT protective MBR. */
+	if (gpt_chk_mbr(dosparts, ed->blkio->Media->LastBlock + 1) == 0) {
+		start = findopenbsd_gpt(ed, &err);
+		if (start == (u_int)-1) {
+			if (err != NULL)
+				return (err);
+			return ("no OpenBSD GPT partition");
+		}
+	} else {
+		start = findopenbsd(ed, &err);
+		if (start == (u_int)-1) {
+			if (err != NULL)
+				return (err);
+			return "no OpenBSD MBR partition\n";
+		}
 	}
 
 	/* Load BSD disklabel */
