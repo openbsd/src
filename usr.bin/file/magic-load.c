@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.22 2016/05/01 10:56:03 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.23 2016/05/01 14:57:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -638,12 +638,12 @@ magic_parse_type(struct magic_line *ml, char **line)
 	ml->type_operator = ' ';
 	ml->type_operand = 0;
 
-	if (strncmp(s, "name", (sizeof "name") - 1) == 0) {
+	if (strcmp(s, "name") == 0) {
 		ml->type = MAGIC_TYPE_NAME;
 		ml->type_string = xstrdup(s);
 		goto done;
 	}
-	if (strncmp(s, "use", (sizeof "use") - 1) == 0) {
+	if (strcmp(s, "use") == 0) {
 		ml->type = MAGIC_TYPE_USE;
 		ml->type_string = xstrdup(s);
 		goto done;
