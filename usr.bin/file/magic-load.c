@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.20 2016/05/01 08:48:39 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.21 2016/05/01 10:34:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -862,6 +862,8 @@ magic_parse_value(struct magic_line *ml, char **line)
 		}
 		/* FALLTHROUGH */
 	case MAGIC_TYPE_REGEX:
+		if (**line == '=')
+			(*line)++;
 		copy = s = xmalloc(strlen(*line) + 1);
 		if (magic_get_string(line, s, &slen) != 0) {
 			magic_warn(ml, "can't parse string");
