@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.23 2016/04/30 11:32:23 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.24 2016/05/01 16:04:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -37,7 +37,12 @@ void	sdmmc_print_cid(struct sdmmc_cid *);
 int	sdmmc_mem_send_op_cond(struct sdmmc_softc *, u_int32_t, u_int32_t *);
 int	sdmmc_mem_set_blocklen(struct sdmmc_softc *, struct sdmmc_function *);
 
+int	sdmmc_mem_send_scr(struct sdmmc_softc *, uint32_t *);
+int	sdmmc_mem_decode_scr(struct sdmmc_softc *, uint32_t *,
+	    struct sdmmc_function *);
+
 int	sdmmc_mem_send_cxd_data(struct sdmmc_softc *, int, void *, size_t);
+int	sdmmc_set_bus_width(struct sdmmc_function *, int);
 int	sdmmc_mem_mmc_switch(struct sdmmc_function *, uint8_t, uint8_t, uint8_t);
 
 int	sdmmc_mem_sd_init(struct sdmmc_softc *, struct sdmmc_function *);
@@ -339,6 +344,70 @@ sdmmc_print_cid(struct sdmmc_cid *cid)
 #endif
 
 int
+sdmmc_mem_send_scr(struct sdmmc_softc *sc, uint32_t *scr)
+{
+	struct sdmmc_command cmd;
+	void *ptr = NULL;
+	int datalen = 8;
+	int error = 0;
+
+	ptr = malloc(datalen, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (ptr == NULL)
+		goto out;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.c_data = ptr;
+	cmd.c_datalen = datalen;
+	cmd.c_blklen = datalen;
+	cmd.c_arg = 0;
+	cmd.c_flags = SCF_CMD_ADTC | SCF_CMD_READ | SCF_RSP_R1;
+	cmd.c_opcode = SD_APP_SEND_SCR;
+
+	error = sdmmc_app_command(sc, &cmd);
+	if (error == 0) {
+		memcpy(scr, ptr, datalen);
+	}
+
+out:
+	if (ptr != NULL)
+		free(ptr, M_DEVBUF, datalen);
+
+	return error;
+}
+
+int
+sdmmc_mem_decode_scr(struct sdmmc_softc *sc, uint32_t *raw_scr,
+    struct sdmmc_function *sf)
+{
+	sdmmc_response resp;
+	int ver;
+
+	memset(resp, 0, sizeof(resp));
+	/*
+	 * Change the raw SCR to a response.
+	 */
+	resp[0] = be32toh(raw_scr[1]) >> 8;		// LSW
+	resp[1] = be32toh(raw_scr[0]);			// MSW
+	resp[0] |= (resp[1] & 0xff) << 24;
+	resp[1] >>= 8;
+
+	ver = SCR_STRUCTURE(resp);
+	sf->scr.sd_spec = SCR_SD_SPEC(resp);
+	sf->scr.bus_width = SCR_SD_BUS_WIDTHS(resp);
+
+	DPRINTF(("%s: %s: %08x%08x ver=%d, spec=%d, bus width=%d\n",
+	    DEVNAME(sc), __func__, resp[1], resp[0],
+	    ver, sf->scr.sd_spec, sf->scr.bus_width));
+
+	if (ver != 0) {
+		DPRINTF(("%s: unknown SCR structure version: %d\n",
+		    DEVNAME(sc), ver));
+		return EINVAL;
+	}
+	return 0;
+}
+
+int
 sdmmc_mem_send_cxd_data(struct sdmmc_softc *sc, int opcode, void *data,
     size_t datalen)
 {
@@ -372,6 +441,36 @@ out:
 	if (ptr != NULL)
 		free(ptr, M_DEVBUF, 0);
 
+	return error;
+}
+
+int
+sdmmc_set_bus_width(struct sdmmc_function *sf, int width)
+{
+	struct sdmmc_softc *sc = sf->sc;
+	struct sdmmc_command cmd;
+	int error;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.c_opcode = SD_APP_SET_BUS_WIDTH;
+	cmd.c_flags = SCF_RSP_R1 | SCF_CMD_AC;
+
+	switch (width) {
+	case 1:
+		cmd.c_arg = SD_ARG_BUS_WIDTH_1;
+		break;
+
+	case 4:
+		cmd.c_arg = SD_ARG_BUS_WIDTH_4;
+		break;
+
+	default:
+		return EINVAL;
+	}
+
+	error = sdmmc_app_command(sc, &cmd);
+	if (error == 0)
+		error = sdmmc_chip_bus_width(sc->sct, sc->sch, width);
 	return error;
 }
 
@@ -416,7 +515,27 @@ sdmmc_mem_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 int
 sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
-	/* XXX */
+	uint32_t raw_scr[2];
+	int error;
+
+	error = sdmmc_mem_send_scr(sc, raw_scr);
+	if (error) {
+		printf("%s: SD_SEND_SCR send failed\n", DEVNAME(sc));
+		return error;
+	}
+	error = sdmmc_mem_decode_scr(sc, raw_scr, sf);
+	if (error)
+		return error;
+
+	if (ISSET(sc->sc_caps, SMC_CAPS_4BIT_MODE) &&
+	    ISSET(sf->scr.bus_width, SCR_SD_BUS_WIDTHS_4BIT)) {
+		DPRINTF(("%s: change bus width\n", DEVNAME(sc)));
+		error = sdmmc_set_bus_width(sf, 4);
+		if (error) {
+			printf("%s: can't change bus width\n", DEVNAME(sc));
+			return error;
+		}
+	}
 
 	return 0;
 }

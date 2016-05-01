@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.40 2016/04/30 11:32:23 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.41 2016/05/01 16:04:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -60,7 +60,6 @@ int	sdmmc_enable(struct sdmmc_softc *);
 void	sdmmc_disable(struct sdmmc_softc *);
 int	sdmmc_scan(struct sdmmc_softc *);
 int	sdmmc_init(struct sdmmc_softc *);
-int	sdmmc_set_bus_width(struct sdmmc_function *);
 #ifdef SDMMC_IOCTL
 int	sdmmc_ioctl(struct device *, u_long, caddr_t);
 #endif
@@ -698,37 +697,6 @@ sdmmc_set_relative_addr(struct sdmmc_softc *sc,
 	if (ISSET(sc->sc_flags, SMF_SD_MODE))
 		sf->rca = SD_R6_RCA(cmd.c_resp);
 	return 0;
-}
-
-/*
- * Switch card and host to the maximum supported bus width.
- */
-int
-sdmmc_set_bus_width(struct sdmmc_function *sf)
-{
-	struct sdmmc_softc *sc = sf->sc;
-	struct sdmmc_command cmd;
-	int error;
-
-	rw_enter_write(&sc->sc_lock);
-
-	if (!ISSET(sc->sc_flags, SMF_SD_MODE)) {
-		rw_exit(&sc->sc_lock);
-		return EOPNOTSUPP;
-	}
-
-	if ((error = sdmmc_select_card(sc, sf)) != 0) {
-		rw_exit(&sc->sc_lock);
-		return error;
-	}
-
-	bzero(&cmd, sizeof cmd);
-	cmd.c_opcode = SD_APP_SET_BUS_WIDTH;
-	cmd.c_arg = SD_ARG_BUS_WIDTH_4;
-	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1;
-	error = sdmmc_app_command(sc, &cmd);
-	rw_exit(&sc->sc_lock);
-	return error;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcreg.h,v 1.8 2016/01/10 14:11:43 kettenis Exp $	*/
+/*	$OpenBSD: sdmmcreg.h,v 1.9 2016/05/01 16:04:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -45,6 +45,7 @@
 /* SD application commands */			/* response type */
 #define SD_APP_SET_BUS_WIDTH		6	/* R1 */
 #define SD_APP_OP_COND			41	/* R3 */
+#define SD_APP_SEND_SCR			51	/* R1 */
 
 /* OCR bits */
 #define MMC_OCR_MEM_READY		(1<<31)	/* memory power-up status bit */
@@ -235,6 +236,29 @@
 #define SD_CID_REV(resp)		MMC_RSP_BITS((resp), 56, 8)
 #define SD_CID_PSN(resp)		MMC_RSP_BITS((resp), 24, 32)
 #define SD_CID_MDT(resp)		MMC_RSP_BITS((resp), 8, 12)
+
+/* SCR (SD Configuration Register) */
+#define SCR_STRUCTURE(scr)		MMC_RSP_BITS((scr), 60, 4)
+#define  SCR_STRUCTURE_VER_1_0		0 /* Version 1.0 */
+#define SCR_SD_SPEC(scr)		MMC_RSP_BITS((scr), 56, 4)
+#define  SCR_SD_SPEC_VER_1_0		0 /* Version 1.0 and 1.01 */
+#define  SCR_SD_SPEC_VER_1_10		1 /* Version 1.10 */
+#define  SCR_SD_SPEC_VER_2		2 /* Version 2.00 or Version 3.0X */
+#define SCR_DATA_STAT_AFTER_ERASE(scr)	MMC_RSP_BITS((scr), 55, 1)
+#define SCR_SD_SECURITY(scr)		MMC_RSP_BITS((scr), 52, 3)
+#define  SCR_SD_SECURITY_NONE		0 /* no security */
+#define  SCR_SD_SECURITY_1_0		1 /* security protocol 1.0 */
+#define  SCR_SD_SECURITY_1_0_2		2 /* security protocol 1.0 */
+#define SCR_SD_BUS_WIDTHS(scr)		MMC_RSP_BITS((scr), 48, 4)
+#define  SCR_SD_BUS_WIDTHS_1BIT		(1 << 0) /* 1bit (DAT0) */
+#define  SCR_SD_BUS_WIDTHS_4BIT		(1 << 2) /* 4bit (DAT0-3) */
+#define SCR_SD_SPEC3(scr)		MMC_RSP_BITS((scr), 47, 1)
+#define SCR_EX_SECURITY(scr)		MMC_RSP_BITS((scr), 43, 4)
+#define SCR_SD_SPEC4(scr)		MMC_RSP_BITS((scr), 42, 1)
+#define SCR_RESERVED(scr)		MMC_RSP_BITS((scr), 34, 8)
+#define SCR_CMD_SUPPORT_CMD23(scr)	MMC_RSP_BITS((scr), 33, 1)
+#define SCR_CMD_SUPPORT_CMD20(scr)	MMC_RSP_BITS((scr), 32, 1)
+#define SCR_RESERVED2(scr)		MMC_RSP_BITS((scr), 0, 32)
 
 /* Might be slow, but it should work on big and little endian systems. */
 #define MMC_RSP_BITS(resp, start, len)	__bitfield((resp), (start)-8, (len))

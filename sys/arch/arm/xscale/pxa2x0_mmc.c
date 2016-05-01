@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_mmc.c,v 1.11 2012/08/22 13:37:04 jsg Exp $	*/
+/*	$OpenBSD: pxa2x0_mmc.c,v 1.12 2016/05/01 16:04:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -90,6 +90,7 @@ struct sdmmc_chip_functions pxammc_functions = {
 	/* bus power and clock frequency */
 	pxammc_bus_power,
 	pxammc_bus_clock,
+	NULL,
 	/* command execution */
 	pxammc_exec_command
 };

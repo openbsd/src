@@ -1,4 +1,4 @@
-/*	$OpenBSD: exesdhc.c,v 1.5 2016/04/24 00:57:23 patrick Exp $	*/
+/*	$OpenBSD: exesdhc.c,v 1.6 2016/05/01 16:04:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -228,6 +228,7 @@ struct sdmmc_chip_functions exesdhc_functions = {
 	/* bus power and clock frequency */
 	exesdhc_bus_power,
 	exesdhc_bus_clock,
+	NULL,
 	/* command execution */
 	exesdhc_exec_command,
 	/* card interrupt */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83l518d_sdmmc.c,v 1.2 2014/05/10 18:41:55 kettenis Exp $	*/
+/*	$OpenBSD: w83l518d_sdmmc.c,v 1.3 2016/05/01 16:04:39 kettenis Exp $	*/
 /*	$NetBSD: w83l518d_sdmmc.c,v 1.1 2009/09/30 20:44:50 jmcneill Exp $ */
 
 /*
@@ -66,9 +66,7 @@ int	wb_sdmmc_write_protect(sdmmc_chipset_handle_t);
 #endif
 int	wb_sdmmc_bus_power(sdmmc_chipset_handle_t, uint32_t);
 int	wb_sdmmc_bus_clock(sdmmc_chipset_handle_t, int);
-#if 0
 int	wb_sdmmc_bus_width(sdmmc_chipset_handle_t, int);
-#endif
 void	wb_sdmmc_exec_command(sdmmc_chipset_handle_t,
 			      struct sdmmc_command *);
 void	wb_sdmmc_card_intr_mask(sdmmc_chipset_handle_t, int);
@@ -88,9 +86,7 @@ struct sdmmc_chip_functions wb_sdmmc_chip_functions = {
 	/* bus power and clock frequency */
 	wb_sdmmc_bus_power,
 	wb_sdmmc_bus_clock,
-#if 0
-	.bus_width = wb_sdmmc_bus_width,
-#endif
+	wb_sdmmc_bus_width,
 	/* command execution */
 	wb_sdmmc_exec_command,
 	/* card interrupt */
@@ -304,7 +300,6 @@ wb_sdmmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 	return 0;
 }
 
-#if 0
 int
 wb_sdmmc_bus_width(sdmmc_chipset_handle_t sch, int width)
 {
@@ -319,7 +314,6 @@ wb_sdmmc_bus_width(sdmmc_chipset_handle_t sch, int width)
 
 	return 0;
 }
-#endif
 
 void
 wb_sdmmc_rsp_read_long(struct wb_softc *wb, struct sdmmc_command *cmd)

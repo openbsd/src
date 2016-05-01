@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.13 2016/01/10 14:11:43 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.14 2016/05/01 16:04:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -226,6 +226,7 @@ struct sdmmc_chip_functions imxesdhc_functions = {
 	/* bus power and clock frequency */
 	imxesdhc_bus_power,
 	imxesdhc_bus_clock,
+	NULL,
 	/* command execution */
 	imxesdhc_exec_command,
 	/* card interrupt */

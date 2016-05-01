@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcchip.h,v 1.6 2016/04/30 11:32:23 kettenis Exp $	*/
+/*	$OpenBSD: sdmmcchip.h,v 1.7 2016/05/01 16:04:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -37,6 +37,7 @@ struct sdmmc_chip_functions {
 	/* bus power and clock frequency */
 	int	(*bus_power)(sdmmc_chipset_handle_t, u_int32_t);
 	int	(*bus_clock)(sdmmc_chipset_handle_t, int);
+	int	(*bus_width)(sdmmc_chipset_handle_t, int);
 	/* command execution */
 	void	(*exec_command)(sdmmc_chipset_handle_t,
 		    struct sdmmc_command *);
@@ -61,6 +62,8 @@ struct sdmmc_chip_functions {
 	((tag)->bus_power((handle), (ocr)))
 #define sdmmc_chip_bus_clock(tag, handle, freq)				\
 	((tag)->bus_clock((handle), (freq)))
+#define sdmmc_chip_bus_width(tag, handle, width)			\
+	((tag)->bus_width((handle), (width)))
 /* command execution */
 #define sdmmc_chip_exec_command(tag, handle, cmdp)			\
 	((tag)->exec_command((handle), (cmdp)))

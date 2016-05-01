@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx.c,v 1.12 2015/04/28 07:55:13 stsp Exp $	*/
+/*	$OpenBSD: rtsx.c,v 1.13 2016/05/01 16:04:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -146,6 +146,7 @@ struct sdmmc_chip_functions rtsx_functions = {
 	/* bus power and clock frequency */
 	rtsx_bus_power,
 	rtsx_bus_clock,
+	NULL,
 	/* command execution */
 	rtsx_exec_command,
 	/* card interrupt */

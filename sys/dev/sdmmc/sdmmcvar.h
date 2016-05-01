@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.23 2016/04/30 11:32:23 kettenis Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.24 2016/05/01 16:04:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -46,6 +46,11 @@ struct sdmmc_cid {
 	int	rev;		/* product revision */
 	int	psn;		/* product serial number */
 	int	mdt;		/* manufacturing date */
+};
+
+struct sdmmc_scr {
+	int	sd_spec;
+	int	bus_width;
 };
 
 typedef u_int32_t sdmmc_response[4];
@@ -149,6 +154,7 @@ struct sdmmc_function {
 	struct sdmmc_csd csd;		/* decoded CSD value */
 	struct sdmmc_cid cid;		/* decoded CID value */
 	sdmmc_response raw_cid;		/* temp. storage for decoding */
+	struct sdmmc_scr scr;		/* decoded SCR value */
 };
 
 /*
