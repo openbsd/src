@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_comp.c,v 1.19 2015/12/14 03:25:59 mmcc Exp $	*/
+/*	$OpenBSD: res_comp.c,v 1.20 2016/05/01 15:17:29 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -443,18 +443,6 @@ _getshort(const u_char *msgp)
 	return (u);
 }
 DEF_STRONG(_getshort);
-
-#ifdef NeXT
-/*
- * nExt machines have some funky library conventions, which we must maintain.
- */
-u_int16_t
-res_getshort(msgp)
-	const u_char *msgp;
-{
-	return (_getshort(msgp));
-}
-#endif
 
 u_int32_t
 _getlong(const u_char *msgp)
