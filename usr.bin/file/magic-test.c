@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.20 2016/05/01 08:48:39 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.21 2016/05/01 08:53:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1051,7 +1051,7 @@ magic_test_type_search(struct magic_line *ml, struct magic_state *ms)
 }
 
 static int
-magic_test_type_default(__unused struct magic_line *ml, struct magic_state *ms)
+magic_test_type_default(struct magic_line *ml, struct magic_state *ms)
 {
 	if (!ms->matched && ml->result != NULL)
 		magic_add_result(ms, ml, "%s", "");
@@ -1059,8 +1059,7 @@ magic_test_type_default(__unused struct magic_line *ml, struct magic_state *ms)
 }
 
 static int
-magic_test_type_clear(__unused struct magic_line *ml,
-    __unused struct magic_state *ms)
+magic_test_type_clear(struct magic_line *ml, struct magic_state *ms)
 {
 	if (ml->result != NULL)
 		magic_add_result(ms, ml, "%s", "");
