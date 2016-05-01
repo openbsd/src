@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.21 2016/05/01 08:53:26 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.22 2016/05/01 10:56:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -32,6 +32,92 @@
 
 #include "magic.h"
 #include "xmalloc.h"
+
+static int magic_test_line(struct magic_line *, struct magic_state *);
+
+static struct magic_line *
+magic_get_named(struct magic *m, const char *name)
+{
+	struct magic_line	ml;
+
+	ml.name = name;
+	return (RB_FIND(magic_named_tree, &m->named, &ml));
+}
+
+static enum magic_type
+magic_reverse_type(struct magic_state *ms, enum magic_type type)
+{
+	if (!ms->reverse)
+		return (type);
+	switch (type) {
+	case MAGIC_TYPE_BESHORT:
+		return (MAGIC_TYPE_LESHORT);
+	case MAGIC_TYPE_BELONG:
+		return (MAGIC_TYPE_LELONG);
+	case MAGIC_TYPE_BEQUAD:
+		return (MAGIC_TYPE_LEQUAD);
+	case MAGIC_TYPE_UBESHORT:
+		return (MAGIC_TYPE_ULESHORT);
+	case MAGIC_TYPE_UBELONG:
+		return (MAGIC_TYPE_ULELONG);
+	case MAGIC_TYPE_UBEQUAD:
+		return (MAGIC_TYPE_ULEQUAD);
+	case MAGIC_TYPE_BEFLOAT:
+		return (MAGIC_TYPE_LEFLOAT);
+	case MAGIC_TYPE_BEDOUBLE:
+		return (MAGIC_TYPE_LEDOUBLE);
+	case MAGIC_TYPE_BEDATE:
+		return (MAGIC_TYPE_LEDATE);
+	case MAGIC_TYPE_BEQDATE:
+		return (MAGIC_TYPE_LEQDATE);
+	case MAGIC_TYPE_BELDATE:
+		return (MAGIC_TYPE_LELDATE);
+	case MAGIC_TYPE_BEQLDATE:
+		return (MAGIC_TYPE_LEQLDATE);
+	case MAGIC_TYPE_UBEDATE:
+		return (MAGIC_TYPE_ULEDATE);
+	case MAGIC_TYPE_UBEQDATE:
+		return (MAGIC_TYPE_ULEQDATE);
+	case MAGIC_TYPE_UBELDATE:
+		return (MAGIC_TYPE_ULELDATE);
+	case MAGIC_TYPE_UBEQLDATE:
+		return (MAGIC_TYPE_ULEQLDATE);
+	case MAGIC_TYPE_LESHORT:
+		return (MAGIC_TYPE_BESHORT);
+	case MAGIC_TYPE_LELONG:
+		return (MAGIC_TYPE_LELONG);
+	case MAGIC_TYPE_LEQUAD:
+		return (MAGIC_TYPE_LEQUAD);
+	case MAGIC_TYPE_ULESHORT:
+		return (MAGIC_TYPE_UBESHORT);
+	case MAGIC_TYPE_ULELONG:
+		return (MAGIC_TYPE_UBELONG);
+	case MAGIC_TYPE_ULEQUAD:
+		return (MAGIC_TYPE_UBEQUAD);
+	case MAGIC_TYPE_LEFLOAT:
+		return (MAGIC_TYPE_BEFLOAT);
+	case MAGIC_TYPE_LEDOUBLE:
+		return (MAGIC_TYPE_BEDOUBLE);
+	case MAGIC_TYPE_LEDATE:
+		return (MAGIC_TYPE_BEDATE);
+	case MAGIC_TYPE_LEQDATE:
+		return (MAGIC_TYPE_BEQDATE);
+	case MAGIC_TYPE_LELDATE:
+		return (MAGIC_TYPE_BELDATE);
+	case MAGIC_TYPE_LEQLDATE:
+		return (MAGIC_TYPE_BEQLDATE);
+	case MAGIC_TYPE_ULEDATE:
+		return (MAGIC_TYPE_UBEDATE);
+	case MAGIC_TYPE_ULEQDATE:
+		return (MAGIC_TYPE_UBEQDATE);
+	case MAGIC_TYPE_ULELDATE:
+		return (MAGIC_TYPE_UBELDATE);
+	case MAGIC_TYPE_ULEQLDATE:
+		return (MAGIC_TYPE_UBEQLDATE);
+	default:
+		return (type);
+	}
+}
 
 static int
 magic_one_eq(char a, char b, int cflag)
@@ -264,9 +350,9 @@ magic_test_type_short(struct magic_line *ml, struct magic_state *ms)
 
 	if (magic_copy_from(ms, -1, &value, sizeof value) != 0)
 		return (0);
-	if (ml->type == MAGIC_TYPE_BESHORT)
+	if (ml->type == magic_reverse_type(ms, MAGIC_TYPE_BESHORT))
 		value = be16toh(value);
-	if (ml->type == MAGIC_TYPE_LESHORT)
+	if (ml->type == magic_reverse_type(ms, MAGIC_TYPE_LESHORT))
 		value = le16toh(value);
 
 	if (ml->type_operator == '&')
@@ -300,9 +386,9 @@ magic_test_type_long(struct magic_line *ml, struct magic_state *ms)
 
 	if (magic_copy_from(ms, -1, &value, sizeof value) != 0)
 		return (0);
-	if (ml->type == MAGIC_TYPE_BELONG)
+	if (ml->type == magic_reverse_type(ms, MAGIC_TYPE_BELONG))
 		value = be32toh(value);
-	if (ml->type == MAGIC_TYPE_LELONG)
+	if (ml->type == magic_reverse_type(ms, MAGIC_TYPE_LELONG))
 		value = le32toh(value);
 
 	if (ml->type_operator == '&')
@@ -336,9 +422,9 @@ magic_test_type_quad(struct magic_line *ml, struct magic_state *ms)
 
 	if (magic_copy_from(ms, -1, &value, sizeof value) != 0)
 		return (0);
-	if (ml->type == MAGIC_TYPE_BEQUAD)
+	if (ml->type == magic_reverse_type(ms, MAGIC_TYPE_BEQUAD))
 		value = be64toh(value);
-	if (ml->type == MAGIC_TYPE_LEQUAD)
+	if (ml->type == magic_reverse_type(ms, MAGIC_TYPE_LEQUAD))
 		value = le64toh(value);
 
 	if (ml->type_operator == '&')
@@ -513,9 +599,9 @@ magic_test_type_float(struct magic_line *ml, struct magic_state *ms)
 
 	if (magic_copy_from(ms, -1, &value0, sizeof value0) != 0)
 		return (0);
-	if (ml->type == MAGIC_TYPE_BEFLOAT)
+	if (ml->type == magic_reverse_type(ms, MAGIC_TYPE_BEFLOAT))
 		value0 = be32toh(value0);
-	if (ml->type == MAGIC_TYPE_LEFLOAT)
+	if (ml->type == magic_reverse_type(ms, MAGIC_TYPE_LEFLOAT))
 		value0 = le32toh(value0);
 	memcpy(&value, &value0, sizeof value);
 
@@ -539,9 +625,9 @@ magic_test_type_double(struct magic_line *ml, struct magic_state *ms)
 
 	if (magic_copy_from(ms, -1, &value0, sizeof value0) != 0)
 		return (0);
-	if (ml->type == MAGIC_TYPE_BEDOUBLE)
+	if (ml->type == magic_reverse_type(ms, MAGIC_TYPE_BEDOUBLE))
 		value0 = be64toh(value0);
-	if (ml->type == MAGIC_TYPE_LEDOUBLE)
+	if (ml->type == magic_reverse_type(ms, MAGIC_TYPE_LEDOUBLE))
 		value0 = le64toh(value0);
 	memcpy(&value, &value0, sizeof value);
 
@@ -693,11 +779,11 @@ magic_test_type_date(struct magic_line *ml, struct magic_state *ms)
 
 	if (magic_copy_from(ms, -1, &value, sizeof value) != 0)
 		return (0);
-	if (ml->type == MAGIC_TYPE_BEDATE ||
-	    ml->type == MAGIC_TYPE_BELDATE)
+	if (ml->type == magic_reverse_type(ms, MAGIC_TYPE_BEDATE) ||
+	    ml->type == magic_reverse_type(ms, MAGIC_TYPE_BELDATE))
 		value = be32toh(value);
-	if (ml->type == MAGIC_TYPE_LEDATE ||
-	    ml->type == MAGIC_TYPE_LELDATE)
+	if (ml->type == magic_reverse_type(ms, MAGIC_TYPE_LEDATE) ||
+	    ml->type == magic_reverse_type(ms, MAGIC_TYPE_LELDATE))
 		value = le32toh(value);
 
 	if (ml->type_operator == '&')
@@ -739,11 +825,11 @@ magic_test_type_qdate(struct magic_line *ml, struct magic_state *ms)
 
 	if (magic_copy_from(ms, -1, &value, sizeof value) != 0)
 		return (0);
-	if (ml->type == MAGIC_TYPE_BEQDATE ||
-	    ml->type == MAGIC_TYPE_BEQLDATE)
+	if (ml->type == magic_reverse_type(ms, MAGIC_TYPE_BEQDATE) ||
+	    ml->type == magic_reverse_type(ms, MAGIC_TYPE_BEQLDATE))
 		value = be64toh(value);
-	if (ml->type == MAGIC_TYPE_LEQDATE ||
-	    ml->type == MAGIC_TYPE_LEQLDATE)
+	if (ml->type == magic_reverse_type(ms, MAGIC_TYPE_LEQDATE) ||
+	    ml->type == magic_reverse_type(ms, MAGIC_TYPE_LEQLDATE))
 		value = le64toh(value);
 
 	if (ml->type_operator == '&')
@@ -785,11 +871,11 @@ magic_test_type_udate(struct magic_line *ml, struct magic_state *ms)
 
 	if (magic_copy_from(ms, -1, &value, sizeof value) != 0)
 		return (0);
-	if (ml->type == MAGIC_TYPE_BEDATE ||
-	    ml->type == MAGIC_TYPE_BELDATE)
+	if (ml->type == magic_reverse_type(ms, MAGIC_TYPE_BEDATE) ||
+	    ml->type == magic_reverse_type(ms, MAGIC_TYPE_BELDATE))
 		value = be32toh(value);
-	if (ml->type == MAGIC_TYPE_LEDATE ||
-	    ml->type == MAGIC_TYPE_LELDATE)
+	if (ml->type == magic_reverse_type(ms, MAGIC_TYPE_LEDATE) ||
+	    ml->type == magic_reverse_type(ms, MAGIC_TYPE_LELDATE))
 		value = le32toh(value);
 
 	if (ml->type_operator == '&')
@@ -1066,6 +1152,20 @@ magic_test_type_clear(struct magic_line *ml, struct magic_state *ms)
 	return (1);
 }
 
+static int
+magic_test_type_name(__unused struct magic_line *ml,
+    __unused struct magic_state *ms)
+{
+	return (-1);
+}
+
+static int
+magic_test_type_use(__unused struct magic_line *ml,
+    __unused struct magic_state *ms)
+{
+	return (1);
+}
+
 static int (*magic_test_functions[])(struct magic_line *,
     struct magic_state *) = {
 	magic_test_type_none,
@@ -1130,12 +1230,42 @@ static int (*magic_test_functions[])(struct magic_line *,
 	magic_test_type_search,
 	magic_test_type_default,
 	magic_test_type_clear,
+	magic_test_type_name,
+	magic_test_type_use,
 };
+
+static void
+magic_test_children(struct magic_line *ml, struct magic_state *ms, size_t start,
+    int reverse)
+{
+	struct magic_line	*child;
+	size_t			 saved_start, saved_offset;
+	int			 saved_reverse;
+
+	saved_start = ms->start;
+	saved_reverse = ms->reverse;
+	saved_offset = ms->offset;
+
+	ms->matched = 0; /* no need to save, caller will set too */
+
+	TAILQ_FOREACH(child, &ml->children, entry) {
+		ms->start = start;
+		ms->reverse = reverse;
+		ms->offset = saved_offset;
+
+		magic_test_line(child, ms);
+	}
+
+	ms->start = saved_start;
+	ms->reverse = saved_reverse;
+	ms->offset = saved_offset;
+}
 
 static int
 magic_test_line(struct magic_line *ml, struct magic_state *ms)
 {
-	struct magic_line	*child;
+	struct magic		*m = ml->root;
+	struct magic_line	*named;
 	int64_t			 offset, wanted, next;
 	int			 result;
 	uint8_t			 b;
@@ -1143,7 +1273,7 @@ magic_test_line(struct magic_line *ml, struct magic_state *ms)
 	uint32_t		 l;
 
 	if (ml->indirect_type == ' ')
-		wanted = ml->offset;
+		wanted = ms->start + ml->offset;
 	else {
 		wanted = ml->indirect_offset;
 		if (ml->indirect_relative) {
@@ -1207,7 +1337,7 @@ magic_test_line(struct magic_line *ml, struct magic_state *ms)
 		offset = wanted;
 	if (offset < 0 || (size_t)offset > ms->size)
 		return (0);
-	ms->offset = offset;
+	ms->offset = offset; /* test function may update */
 
 	result = magic_test_functions[ml->type](ml, ms);
 	if (result == -1) {
@@ -1225,16 +1355,24 @@ magic_test_line(struct magic_line *ml, struct magic_state *ms)
 	if (ml->mimetype != NULL)
 		ms->mimetype = ml->mimetype;
 
-	magic_warn(ml, "test %s/%c matched at offset %lld (now %zu): '%s'",
-	    ml->type_string, ml->test_operator, offset, ms->offset,
-	    ml->result == NULL ? "" : ml->result);
+	magic_warn(ml, "test %s/%c matched at offset %lld (now %zu): "
+	    "'%s'", ml->type_string, ml->test_operator, offset,
+	    ms->offset, ml->result == NULL ? "" : ml->result);
 
-	ms->matched = 0;
-	offset = ms->offset;
-	TAILQ_FOREACH(child, &ml->children, entry) {
-		ms->offset = offset;
-		magic_test_line(child, ms);
+	if (ml->type == MAGIC_TYPE_USE) {
+		if (*ml->name == '^')
+			named = magic_get_named(m, ml->name + 1);
+		else
+			named = magic_get_named(m, ml->name);
+		if (named == NULL) {
+			magic_warn(ml, "no name found for use %s", ml->name);
+			return (0);
+		}
+		magic_warn(ml, "use %s at offset %lld", ml->name, offset);
+		magic_test_children(named, ms, offset, *ml->name == '^');
 	}
+
+	magic_test_children(ml, ms, ms->start, ms->reverse);
 
 	if (ml->type == MAGIC_TYPE_CLEAR)
 		ms->matched = 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.21 2016/05/01 10:34:30 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.22 2016/05/01 10:56:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -193,6 +193,8 @@ magic_set_result(struct magic_line *ml, const char *s)
 		case MAGIC_TYPE_NONE:
 		case MAGIC_TYPE_BESTRING16:
 		case MAGIC_TYPE_LESTRING16:
+		case MAGIC_TYPE_NAME:
+		case MAGIC_TYPE_USE:
 			return (0); /* don't use result */
 		case MAGIC_TYPE_BYTE:
 		case MAGIC_TYPE_UBYTE:
@@ -297,6 +299,8 @@ magic_get_strength(struct magic_line *ml)
 	case MAGIC_TYPE_DEFAULT:
 		return (0);
 	case MAGIC_TYPE_CLEAR:
+	case MAGIC_TYPE_NAME:
+	case MAGIC_TYPE_USE:
 		break;
 	case MAGIC_TYPE_BYTE:
 	case MAGIC_TYPE_UBYTE:
@@ -634,6 +638,17 @@ magic_parse_type(struct magic_line *ml, char **line)
 	ml->type_operator = ' ';
 	ml->type_operand = 0;
 
+	if (strncmp(s, "name", (sizeof "name") - 1) == 0) {
+		ml->type = MAGIC_TYPE_NAME;
+		ml->type_string = xstrdup(s);
+		goto done;
+	}
+	if (strncmp(s, "use", (sizeof "use") - 1) == 0) {
+		ml->type = MAGIC_TYPE_USE;
+		ml->type_string = xstrdup(s);
+		goto done;
+	}
+
 	if (strncmp(s, "string", (sizeof "string") - 1) == 0 ||
 	    strncmp(s, "ustring", (sizeof "ustring") - 1) == 0) {
 		if (*s == 'u')
@@ -853,6 +868,19 @@ magic_parse_value(struct magic_line *ml, char **line)
 	}
 
 	switch (ml->type) {
+	case MAGIC_TYPE_NAME:
+	case MAGIC_TYPE_USE:
+		copy = s = xmalloc(strlen(*line) + 1);
+		if (magic_get_string(line, s, &slen) != 0 || slen == 0) {
+			magic_warn(ml, "can't parse string");
+			goto fail;
+		}
+		if (slen == 0 || *s == '\0' || strcmp(s, "^") == 0) {
+			magic_warn(ml, "invalid name");
+			goto fail;
+		}
+		ml->name = s;
+		return (0); /* do not free */
 	case MAGIC_TYPE_STRING:
 	case MAGIC_TYPE_PSTRING:
 	case MAGIC_TYPE_SEARCH:
@@ -959,6 +987,13 @@ magic_compare(struct magic_line *ml1, struct magic_line *ml2)
 	return (0);
 }
 RB_GENERATE(magic_tree, magic_line, node, magic_compare);
+
+int
+magic_named_compare(struct magic_line *ml1, struct magic_line *ml2)
+{
+	return (strcmp(ml1->name, ml2->name));
+}
+RB_GENERATE(magic_named_tree, magic_line, node, magic_named_compare);
 
 static void
 magic_adjust_strength(struct magic *m, u_int at, struct magic_line *ml,
@@ -1125,9 +1160,12 @@ magic_load(FILE *f, const char *path, int warnings)
 		}
 
 		ml->strength = magic_get_strength(ml);
-		if (ml->parent == NULL)
-			RB_INSERT(magic_tree, &m->tree, ml);
-		else
+		if (ml->parent == NULL) {
+			if (ml->name != NULL)
+				RB_INSERT(magic_named_tree, &m->named, ml);
+			else
+				RB_INSERT(magic_tree, &m->tree, ml);
+		} else
 			TAILQ_INSERT_TAIL(&ml->parent->children, ml, entry);
 		parent0 = ml;
 	}

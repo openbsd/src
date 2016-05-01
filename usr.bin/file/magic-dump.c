@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-dump.c,v 1.1 2015/04/24 16:24:11 nicm Exp $ */
+/* $OpenBSD: magic-dump.c,v 1.2 2016/05/01 10:56:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -31,12 +31,16 @@ magic_dump_line(struct magic_line *ml, u_int depth)
 	printf("%u", ml->line);
 	for (i = 0; i < depth; i++)
 		printf(">");
-	printf(" %s/%s%s%s%s [%u]%s\n", ml->type_string,
-	    ml->result == NULL ? "" : ml->result,
-	    ml->mimetype == NULL ? "" : " (",
-	    ml->mimetype == NULL ? "" : ml->mimetype,
-	    ml->mimetype == NULL ? "" : ")",
-	    ml->strength, ml->text ? " (text)" : "");
+	if (ml->name != NULL)
+		printf(" %s %s\n", ml->type_string, ml->name);
+	else {
+		printf(" %s/%s%s%s%s [%u]%s\n", ml->type_string,
+		    ml->result == NULL ? "" : ml->result,
+		    ml->mimetype == NULL ? "" : " (",
+		    ml->mimetype == NULL ? "" : ml->mimetype,
+		    ml->mimetype == NULL ? "" : ")",
+		    ml->strength, ml->text ? " (text)" : "");
+	}
 
 	TAILQ_FOREACH(child, &ml->children, entry)
 		magic_dump_line(child, depth + 1);
@@ -49,5 +53,8 @@ magic_dump(struct magic *m)
 	struct magic_line	*ml;
 
 	RB_FOREACH(ml, magic_tree, &m->tree)
+		magic_dump_line(ml, 0);
+
+	RB_FOREACH(ml, magic_named_tree, &m->named)
 		magic_dump_line(ml, 0);
 }
