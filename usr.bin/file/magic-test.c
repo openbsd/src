@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.22 2016/05/01 10:56:03 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.23 2016/05/01 11:26:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -733,7 +733,7 @@ magic_test_type_pstring(struct magic_line *ml, struct magic_state *ms)
 	if (ms->size - ms->offset < 1)
 		return (-1);
 	slen = *(u_char *)s;
-	if (slen > ms->size - ms->offset)
+	if (slen + 1 > ms->size - ms->offset)
 		return (-1);
 	s++;
 
