@@ -1,4 +1,4 @@
-/* $OpenBSD: magic.h,v 1.14 2016/05/01 10:56:03 nicm Exp $ */
+/* $OpenBSD: magic.h,v 1.15 2016/05/01 20:34:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -19,16 +19,13 @@
 #ifndef MAGIC_H
 #define MAGIC_H
 
+#include <sys/types.h>
 #include <sys/tree.h>
 #include <sys/queue.h>
-#include <sys/stat.h>
 
-#include <err.h>
 #include <regex.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define MAGIC_STRING_SIZE 31
 #define MAGIC_STRENGTH_MULTIPLIER 10

@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.57 2015/12/24 11:45:34 jca Exp $ */
+/* $OpenBSD: file.c,v 1.58 2016/05/01 20:34:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -19,21 +19,25 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-#include <sys/socket.h>
 #include <sys/queue.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/uio.h>
 #include <sys/wait.h>
 
+#include <err.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <getopt.h>
 #include <imsg.h>
 #include <libgen.h>
-#include <getopt.h>
-#include <fcntl.h>
+#include <limits.h>
 #include <pwd.h>
 #include <stdlib.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <limits.h>
 
 #include "file.h"
 #include "magic.h"
