@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.24 2016/05/01 16:04:39 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.25 2016/05/01 17:18:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -580,6 +580,8 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 				    DEVNAME(sc));
 				return error;
 			}
+
+			sdmmc_delay(10000);
 		}
 
 		error =
