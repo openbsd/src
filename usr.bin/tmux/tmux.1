@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.486 2016/04/29 20:57:10 jmc Exp $
+.\" $OpenBSD: tmux.1,v 1.487 2016/05/01 11:46:12 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 29 2016 $
+.Dd $Mdocdate: May 1 2016 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3536,9 +3536,10 @@ The following variables are available, where appropriate:
 .It Li "session_name" Ta "#S" Ta "Name of session"
 .It Li "session_width" Ta "" Ta "Width of session"
 .It Li "session_windows" Ta "" Ta "Number of windows in session"
-.It Li "socket_path" Ta "" "Server socket path"
+.It Li "socket_path" Ta "" Ta "Server socket path"
 .It Li "start_time" Ta "" Ta "Server start time"
 .It Li "window_activity" Ta "" Ta "Integer time of window last activity"
+.It Li "window_activity_flag" Ta "" Ta "1 if window has activity"
 .It Li "window_active" Ta "" Ta "1 if window active"
 .It Li "window_bell_flag" Ta "" Ta "1 if window has bell"
 .It Li "window_find_matches" Ta "" Ta "Matched data from the find-window"
