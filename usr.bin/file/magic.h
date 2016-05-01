@@ -1,4 +1,4 @@
-/* $OpenBSD: magic.h,v 1.12 2016/04/30 21:42:11 nicm Exp $ */
+/* $OpenBSD: magic.h,v 1.13 2016/05/01 08:48:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -95,6 +95,7 @@ enum magic_type {
 	MAGIC_TYPE_REGEX,
 	MAGIC_TYPE_SEARCH,
 	MAGIC_TYPE_DEFAULT,
+	MAGIC_TYPE_CLEAR,
 };
 
 TAILQ_HEAD(magic_lines, magic_line);

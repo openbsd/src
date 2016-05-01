@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.19 2015/11/15 22:11:18 tobias Exp $ */
+/* $OpenBSD: magic-load.c,v 1.20 2016/05/01 08:48:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -191,7 +191,6 @@ magic_set_result(struct magic_line *ml, const char *s)
 	else {
 		switch (ml->type) {
 		case MAGIC_TYPE_NONE:
-		case MAGIC_TYPE_DEFAULT:
 		case MAGIC_TYPE_BESTRING16:
 		case MAGIC_TYPE_LESTRING16:
 			return (0); /* don't use result */
@@ -260,6 +259,8 @@ magic_set_result(struct magic_line *ml, const char *s)
 		case MAGIC_TYPE_PSTRING:
 		case MAGIC_TYPE_REGEX:
 		case MAGIC_TYPE_SEARCH:
+		case MAGIC_TYPE_DEFAULT:
+		case MAGIC_TYPE_CLEAR:
 			re = &ml->root->format_string;
 			break;
 		}
@@ -295,6 +296,8 @@ magic_get_strength(struct magic_line *ml)
 	case MAGIC_TYPE_NONE:
 	case MAGIC_TYPE_DEFAULT:
 		return (0);
+	case MAGIC_TYPE_CLEAR:
+		break;
 	case MAGIC_TYPE_BYTE:
 	case MAGIC_TYPE_UBYTE:
 		n += 1 * MAGIC_STRENGTH_MULTIPLIER;
@@ -794,6 +797,8 @@ magic_parse_type(struct magic_line *ml, char **line)
 		ml->type = MAGIC_TYPE_MELDATE;
 	else if (strcmp(s, "default") == 0 || strcmp(s, "udefault") == 0)
 		ml->type = MAGIC_TYPE_DEFAULT;
+	else if (strcmp(s, "clear") == 0 || strcmp(s, "uclear") == 0)
+		ml->type = MAGIC_TYPE_CLEAR;
 	else {
 		magic_warn(ml, "unknown type: %s", s);
 		goto fail;
@@ -832,6 +837,12 @@ magic_parse_value(struct magic_line *ml, char **line)
 	s = *line;
 	if (s[0] == 'x' && (s[1] == '\0' || isspace((u_char)s[1]))) {
 		(*line)++;
+		ml->test_operator = 'x';
+		return (0);
+	}
+
+	if (ml->type == MAGIC_TYPE_DEFAULT || ml->type == MAGIC_TYPE_CLEAR) {
+		magic_warn(ml, "test specified for default or clear");
 		ml->test_operator = 'x';
 		return (0);
 	}
