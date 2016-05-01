@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.47 2016/05/01 17:13:55 kettenis Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.48 2016/05/01 18:29:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -300,6 +300,11 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		saa.caps |= SMC_CAPS_SD_HIGHSPEED;
 	if (ISSET(caps, SDHC_HIGH_SPEED_SUPP))
 		saa.caps |= SMC_CAPS_MMC_HIGHSPEED;
+
+	if (SDHC_SPEC_VERSION(hp->version) >= SDHC_SPEC_V3) {
+		if (ISSET(caps, SDHC_8BIT_MODE_SUPP))
+			saa.caps |= SMC_CAPS_8BIT_MODE;
+	}
 
 	hp->sdmmc = config_found(&sc->sc_dev, &saa, NULL);
 	if (hp->sdmmc == NULL) {

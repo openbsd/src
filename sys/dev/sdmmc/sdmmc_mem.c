@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.25 2016/05/01 17:18:43 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.26 2016/05/01 18:29:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -543,6 +543,7 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 int
 sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
+	int width, value;
 	int error = 0;
 	u_int8_t ext_csd[512];
 	int speed = 0;
@@ -568,6 +569,34 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			printf("%s: unknown CARD_TYPE 0x%x\n", DEVNAME(sc),
 			    ext_csd[EXT_CSD_CARD_TYPE]);
 		}
+
+		if (ISSET(sc->sc_caps, SMC_CAPS_8BIT_MODE)) {
+			width = 8;
+			value = EXT_CSD_BUS_WIDTH_8;
+		} else if (ISSET(sc->sc_caps, SMC_CAPS_4BIT_MODE)) {
+			width = 4;
+			value = EXT_CSD_BUS_WIDTH_4;
+		} else {
+			width = 1;
+			value = EXT_CSD_BUS_WIDTH_1;
+		}
+
+		if (width != 1) {
+			error = sdmmc_mem_mmc_switch(sf, EXT_CSD_CMD_SET_NORMAL,
+			    EXT_CSD_BUS_WIDTH, value);
+			if (error == 0)
+				error = sdmmc_chip_bus_width(sc->sct,
+				    sc->sch, width);
+			else {
+				DPRINTF(("%s: can't change bus width"
+				    " (%d bit)\n", DEVNAME(sc), width));
+				return error;
+			}
+
+			/* XXXX: need bus test? (using by CMD14 & CMD19) */
+			sdmmc_delay(10000);
+		}
+
 		if (!ISSET(sc->sc_caps, SMC_CAPS_MMC_HIGHSPEED))
 			hs_timing = 0;
 
@@ -584,8 +613,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			sdmmc_delay(10000);
 		}
 
-		error =
-		    sdmmc_chip_bus_clock(sc->sct, sc->sch, speed);
+		error = sdmmc_chip_bus_clock(sc->sct, sc->sch, speed);
 		if (error != 0) {
 			printf("%s: can't change bus clock\n", DEVNAME(sc));
 			return error;
@@ -599,7 +627,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 				printf("%s: can't re-read EXT_CSD\n", DEVNAME(sc));
 				return error;
 			}
-			if (ext_csd[EXT_CSD_HS_TIMING] != 1) {
+			if (ext_csd[EXT_CSD_HS_TIMING] != hs_timing) {
 				printf("%s, HS_TIMING set failed\n", DEVNAME(sc));
 				return EINVAL;
 			}
