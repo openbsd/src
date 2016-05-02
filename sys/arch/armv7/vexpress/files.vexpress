@@ -1,8 +1,8 @@
-#	$OpenBSD: files.vexpress,v 1.2 2015/06/14 05:01:31 jsg Exp $
+#	$OpenBSD: files.vexpress,v 1.3 2016/05/02 08:15:55 patrick Exp $
 
 define vexpress {}
 device vexpress: vexpress
-attach vexpress at mainbus
+attach vexpress at fdt
 file	arch/armv7/vexpress/vexpress_machdep.c	vexpress needs-flag
 file	arch/armv7/vexpress/vexpress.c		vexpress
 file	arch/armv7/vexpress/vexpress_a9.c	vexpress

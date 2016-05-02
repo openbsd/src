@@ -1,0 +1,118 @@
+/* $OpenBSD: simplebus.c,v 1.1 2016/05/02 08:15:55 patrick Exp $ */
+/*
+ * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
+
+#include <dev/ofw/openfirm.h>
+
+#include <arm/fdt.h>
+
+int simplebus_match(struct device *, void *, void *);
+void simplebus_attach(struct device *, struct device *, void *);
+
+void simplebus_attach_node(struct device *, int);
+
+struct simplebus_softc {
+	struct device		 sc_dev;
+	int			 sc_node;
+	bus_space_tag_t		 sc_iot;
+	bus_dma_tag_t		 sc_dmat;
+};
+
+struct cfattach simplebus_ca = {
+	sizeof(struct simplebus_softc), simplebus_match, simplebus_attach, NULL,
+	config_activate_children
+};
+
+struct cfdriver simplebus_cd = {
+	NULL, "simplebus", DV_DULL
+};
+
+/*
+ * Simplebus is a generic bus with no special casings.
+ */
+int
+simplebus_match(struct device *parent, void *cfdata, void *aux)
+{
+	struct fdt_attach_args *fa = (struct fdt_attach_args *)aux;
+	char buffer[128];
+
+	if (fa->fa_node == 0)
+		return (0);
+
+	if (!OF_getprop(fa->fa_node, "compatible", buffer,
+	    sizeof(buffer)))
+		return (0);
+
+	if (strcmp(buffer, "simple-bus"))
+		return (0);
+
+	return (1);
+}
+
+void
+simplebus_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct simplebus_softc *sc = (struct simplebus_softc *)self;
+	struct fdt_attach_args *fa = (struct fdt_attach_args *)aux;
+	int node;
+
+	sc->sc_node = fa->fa_node;
+	sc->sc_iot = fa->fa_iot;
+	sc->sc_dmat = fa->fa_dmat;
+
+	printf("\n");
+
+	/* Scan the whole tree. */
+	for (node = OF_child(sc->sc_node);
+	    node != 0;
+	    node = OF_peer(node))
+	{
+		simplebus_attach_node(self, node);
+	}
+}
+
+/*
+ * Look for a driver that wants to be attached to this node.
+ */
+void
+simplebus_attach_node(struct device *self, int node)
+{
+	struct simplebus_softc	*sc = (struct simplebus_softc *)self;
+	struct fdt_attach_args	 fa;
+	char			 buffer[128];
+
+	if (!OF_getprop(node, "compatible", buffer, sizeof(buffer)))
+		return;
+
+	if (OF_getprop(node, "status", buffer, sizeof(buffer)))
+		if (!strcmp(buffer, "disabled"))
+			return;
+
+	memset(&fa, 0, sizeof(fa));
+	fa.fa_name = "";
+	fa.fa_node = node;
+	fa.fa_iot = sc->sc_iot;
+	fa.fa_dmat = sc->sc_dmat;
+
+	/* TODO: attach the device's clocks first? */
+
+	config_found(self, &fa, NULL);
+}

@@ -1,8 +1,8 @@
-#	$OpenBSD: files.exynos,v 1.3 2016/04/24 00:57:23 patrick Exp $
+#	$OpenBSD: files.exynos,v 1.4 2016/05/02 08:15:55 patrick Exp $
 
 define exynos {}
 device exynos: exynos
-attach exynos at mainbus
+attach exynos at fdt
 file	arch/armv7/exynos/exynos_machdep.c	exynos	needs-flag
 file	arch/armv7/exynos/exynos.c		exynos
 file	arch/armv7/exynos/exynos4.c		exynos

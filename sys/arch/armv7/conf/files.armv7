@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.16 2016/04/24 00:57:23 patrick Exp $
+#	$OpenBSD: files.armv7,v 1.17 2016/05/02 08:15:55 patrick Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -7,9 +7,6 @@ major	{wd = 16}
 major	{sd = 24}
 major	{cd = 26}
 major	{rd = 18}
-
-define	fdt {}
-file	dev/ofw/fdt.c
 
 file	arch/arm/arm/conf.c
 

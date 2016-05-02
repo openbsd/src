@@ -1,8 +1,8 @@
-#	$OpenBSD: files.omap,v 1.7 2015/05/15 15:35:43 jsg Exp $
+#	$OpenBSD: files.omap,v 1.8 2016/05/02 08:15:55 patrick Exp $
 
 define omap {}
 device omap: omap
-attach omap at mainbus
+attach omap at fdt
 file	arch/armv7/omap/omap_machdep.c		omap	needs-flag
 file	arch/armv7/omap/omap.c			omap
 file	arch/armv7/omap/omap3.c

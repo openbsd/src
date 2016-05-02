@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.h,v 1.3 2016/05/02 08:15:55 patrick Exp $ */
+/* $OpenBSD: fdt.h,v 1.1 2016/05/02 08:15:55 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -15,15 +15,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __MAINBUS_H__
-#define __MAINBUS_H__
+#ifndef __ARM_FDT_H__
+#define __ARM_FDT_H__
 
-#include <arm/fdt.h>
+#define _ARM32_BUS_DMA_PRIVATE
+#include <machine/bus.h>
 
-/* Passed as third arg to attach functions. */
-union mainbus_attach_args {
-	const char		*ma_name;
-	struct fdt_attach_args	 ma_faa;
+struct fdt_attach_args {
+	const char		*fa_name;
+	int			 fa_node;
+	bus_space_tag_t		 fa_iot;
+	bus_dma_tag_t		 fa_dmat;
 };
 
-#endif /* __MAINBUS_H__ */
+#endif /* __ARM_FDT_H__ */

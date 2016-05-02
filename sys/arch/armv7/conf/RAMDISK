@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.7 2015/09/13 14:43:42 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.8 2016/05/02 08:15:55 patrick Exp $
 
 machine		armv7 arm
 
@@ -27,6 +27,7 @@ config		bsd root on rd0a swap on rd0b
 
 # The main bus device
 mainbus0	at root
+simplebus*	at fdt?
 cpu0		at mainbus?
 
 # Cortex-A9

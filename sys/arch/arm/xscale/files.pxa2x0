@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pxa2x0,v 1.24 2014/10/18 12:21:56 miod Exp $
+#	$OpenBSD: files.pxa2x0,v 1.25 2016/05/02 08:15:55 patrick Exp $
 #	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
@@ -9,7 +9,7 @@ file	arch/arm/arm/softintr.c	# Use the generic ARM soft interrupt code.
 # PXA2[51]0's integrated peripherals bus.
 define	pxaip {[addr=-1], [size=0], [intr=-1], [index=-1]}
 device	pxaip
-attach	pxaip at mainbus
+attach	pxaip at fdt
 file	arch/arm/xscale/pxa2x0.c
 file	arch/arm/arm/irq_dispatch.S
 file	arch/arm/xscale/pxa2x0_space.c

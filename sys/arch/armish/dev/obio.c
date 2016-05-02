@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.3 2006/06/01 17:06:16 drahn Exp $	*/
+/*	$OpenBSD: obio.c,v 1.4 2016/05/02 08:15:55 patrick Exp $	*/
 /*	$NetBSD: obio.c,v 1.14 2005/12/11 12:17:09 christos Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ int	obio_found;
 int
 obio_match(struct device *parent, void *match, void *aux)
 {
-	struct mainbus_attach_args *ma = aux;
+	union mainbus_attach_args *ma = aux;
 	struct cfdata *cf = match;
 
 	if (obio_found)

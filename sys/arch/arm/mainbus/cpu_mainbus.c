@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu_mainbus.c,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: cpu_mainbus.c,v 1.2 2016/05/02 08:15:55 patrick Exp $	*/
 /*	$NetBSD: cpu_mainbus.c,v 1.3 2002/01/05 22:41:48 chris Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ static void cpu_mainbus_attach (struct device *, struct device *, void *);
 static int
 cpu_mainbus_match(struct device *parent, void *vcf, void *aux)
 {
-	struct mainbus_attach_args *ma = aux;
+	union mainbus_attach_args *ma = aux;
 	struct cfdata *cf = (struct cfdata *)vcf;
 
 	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
