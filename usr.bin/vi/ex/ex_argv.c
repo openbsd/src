@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_argv.c,v 1.18 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: ex_argv.c,v 1.19 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -425,7 +425,7 @@ argv_alloc(SCR *sp, size_t len)
 	ap->len = 0;
 	if (ap->blen < len + 1) {
 		ap->blen = len + 1;
-		REALLOCARRAY(sp, ap->bp, ap->blen, sizeof(CHAR_T));
+		REALLOC(sp, ap->bp, ap->blen);
 		if (ap->bp == NULL) {
 			ap->bp = NULL;
 			ap->blen = 0;

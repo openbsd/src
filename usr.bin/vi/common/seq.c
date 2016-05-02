@@ -1,4 +1,4 @@
-/*	$OpenBSD: seq.c,v 1.11 2015/12/07 20:39:19 mmcc Exp $	*/
+/*	$OpenBSD: seq.c,v 1.12 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -29,14 +29,14 @@
  * seq_set --
  *	Internal version to enter a sequence.
  *
- * PUBLIC: int seq_set(SCR *, CHAR_T *,
- * PUBLIC:    size_t, CHAR_T *, size_t, CHAR_T *, size_t, seq_t, int);
+ * PUBLIC: int seq_set(SCR *, char *,
+ * PUBLIC:    size_t, char *, size_t, char *, size_t, seq_t, int);
  */
 int
-seq_set(SCR *sp, CHAR_T *name, size_t nlen, CHAR_T *input, size_t ilen,
-    CHAR_T *output, size_t olen, seq_t stype, int flags)
+seq_set(SCR *sp, char *name, size_t nlen, char *input, size_t ilen,
+    char *output, size_t olen, seq_t stype, int flags)
 {
-	CHAR_T *p;
+	char *p;
 	SEQ *lastqp, *qp;
 	int sv_errno;
 
@@ -116,7 +116,7 @@ mem1:		errno = sv_errno;
 	}
 
 	/* Set the fast lookup bit. */
-	if (qp->input[0] < MAX_BIT_SEQ)
+	if ((unsigned char) qp->input[0] < MAX_BIT_SEQ)
 		bit_set(sp->gp->seqb, qp->input[0]);
 
 	return (0);
@@ -126,10 +126,10 @@ mem1:		errno = sv_errno;
  * seq_delete --
  *	Delete a sequence.
  *
- * PUBLIC: int seq_delete(SCR *, CHAR_T *, size_t, seq_t);
+ * PUBLIC: int seq_delete(SCR *, char *, size_t, seq_t);
  */
 int
-seq_delete(SCR *sp, CHAR_T *input, size_t ilen, seq_t stype)
+seq_delete(SCR *sp, char *input, size_t ilen, seq_t stype)
 {
 	SEQ *qp;
 
@@ -163,10 +163,10 @@ seq_mdel(SEQ *qp)
  *	isn't NULL, partial matches count.
  *
  * PUBLIC: SEQ *seq_find
- * PUBLIC:(SCR *, SEQ **, EVENT *, CHAR_T *, size_t, seq_t, int *);
+ * PUBLIC:(SCR *, SEQ **, EVENT *, char *, size_t, seq_t, int *);
  */
 SEQ *
-seq_find(SCR *sp, SEQ **lastqp, EVENT *e_input, CHAR_T *c_input, size_t ilen,
+seq_find(SCR *sp, SEQ **lastqp, EVENT *e_input, char *c_input, size_t ilen,
     seq_t stype, int *ispartialp)
 {
 	SEQ *lqp, *qp;
@@ -270,7 +270,7 @@ seq_close(GS *gp)
 int
 seq_dump(SCR *sp, seq_t stype, int isname)
 {
-	CHAR_T *p;
+	char *p;
 	GS *gp;
 	SEQ *qp;
 	int cnt, len, olen;
@@ -315,7 +315,7 @@ seq_dump(SCR *sp, seq_t stype, int isname)
 int
 seq_save(SCR *sp, FILE *fp, char *prefix, seq_t stype)
 {
-	CHAR_T *p;
+	char *p;
 	SEQ *qp;
 	size_t olen;
 	int ch;
@@ -350,12 +350,12 @@ seq_save(SCR *sp, FILE *fp, char *prefix, seq_t stype)
 
 /*
  * e_memcmp --
- *	Compare a string of EVENT's to a string of CHAR_T's.
+ *	Compare a string of EVENT's to a string of chars.
  *
- * PUBLIC: int e_memcmp(CHAR_T *, EVENT *, size_t);
+ * PUBLIC: int e_memcmp(char *, EVENT *, size_t);
  */
 int
-e_memcmp(CHAR_T *p1, EVENT *ep, size_t n)
+e_memcmp(char *p1, EVENT *ep, size_t n)
 {
 	if (n != 0) {
                 do {

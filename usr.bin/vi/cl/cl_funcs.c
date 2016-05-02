@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_funcs.c,v 1.18 2015/03/29 01:04:23 bcallah Exp $	*/
+/*	$OpenBSD: cl_funcs.c,v 1.19 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -370,10 +370,10 @@ cl_insertln(SCR *sp)
  * cl_keyval --
  *	Return the value for a special key.
  *
- * PUBLIC: int cl_keyval(SCR *, scr_keyval_t, CHAR_T *, int *);
+ * PUBLIC: int cl_keyval(SCR *, scr_keyval_t, unsigned char *, int *);
  */
 int
-cl_keyval(SCR *sp, scr_keyval_t val, CHAR_T *chp, int *dnep)
+cl_keyval(SCR *sp, scr_keyval_t val, unsigned char *chp, int *dnep)
 {
 	CL_PRIVATE *clp;
 

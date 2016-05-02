@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.26 2016/01/06 22:29:38 millert Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.27 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -1245,7 +1245,7 @@ re_sub(SCR *sp, char *ip, char **lbp, size_t *lbclenp, size_t *lblenp,
 	 * all escaping characters.  This (hopefully) matches historic practice.
 	 */
 #define	OUTCH(ch, nltrans) {						\
-	CHAR_T __ch = (ch);						\
+	char __ch = (ch);						\
 	u_int __value = KEY_VAL(sp, __ch);				\
 	if ((nltrans) && (__value == K_CR || __value == K_NL)) {	\
 		NEEDNEWLINE(sp);					\

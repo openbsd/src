@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.h,v 1.9 2015/12/03 08:13:15 bentley Exp $	*/
+/*	$OpenBSD: vi.h,v 1.10 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -18,9 +18,9 @@ typedef struct _vikeys VIKEYS;
 
 /* Structure passed around to functions implementing vi commands. */
 typedef struct _vicmd {
-	CHAR_T	key;			/* Command key. */
-	CHAR_T	buffer;			/* Buffer. */
-	CHAR_T	character;		/* Character. */
+	char	key;			/* Command key. */
+	char	buffer;			/* Buffer. */
+	char	character;		/* Character. */
 	u_long	count;			/* Count. */
 	u_long	count2;			/* Second count (only used by z). */
 	EVENT	ev;			/* Associated event. */
@@ -153,9 +153,9 @@ extern VIKEYS const tmotion;		/* XXX Hacked ~ command. */
 typedef struct _vcs {
 	recno_t	 cs_lno;		/* Line. */
 	size_t	 cs_cno;		/* Column. */
-	CHAR_T	*cs_bp;			/* Buffer. */
+	char	*cs_bp;			/* Buffer. */
 	size_t	 cs_len;		/* Length. */
-	CHAR_T	 cs_ch;			/* Character. */
+	char	 cs_ch;			/* Character. */
 #define	CS_EMP	1			/* Empty line. */
 #define	CS_EOF	2			/* End-of-file. */
 #define	CS_EOL	3			/* End-of-line. */
@@ -233,11 +233,11 @@ typedef struct _vi_private {
 	VICMD	sdot;		/* Saved dot, motion command. */
 	VICMD	sdotmotion;
 
-	CHAR_T *keyw;		/* Keyword buffer. */
+	char   *keyw;		/* Keyword buffer. */
 	size_t	klen;		/* Keyword length. */
 	size_t	keywlen;	/* Keyword buffer length. */
 
-	CHAR_T	rlast;		/* Last 'r' replacement character. */
+	char	rlast;		/* Last 'r' replacement character. */
 	e_key_t	rvalue;		/* Value of last replacement character. */
 
 	EVENT  *rep;		/* Input replay buffer. */
@@ -261,7 +261,7 @@ typedef struct _vi_private {
 
 	u_long	u_ccnt;		/* Undo command count. */
 
-	CHAR_T	lastckey;	/* Last search character. */
+	char	lastckey;	/* Last search character. */
 	cdir_t	csearchdir;	/* Character search direction. */
 
 	SMAP   *h_smap;		/* First slot of the line map. */

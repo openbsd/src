@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_read.c,v 1.19 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: cl_read.c,v 1.20 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -32,7 +32,7 @@
 #include "cl.h"
 
 static input_t	cl_read(SCR *,
-		    u_int32_t, CHAR_T *, size_t, int *, struct timeval *);
+		    u_int32_t, char *, size_t, int *, struct timeval *);
 static int	cl_resize(SCR *, size_t, size_t);
 
 /*
@@ -123,7 +123,7 @@ retest:	if (LF_ISSET(EC_INTERRUPT) || F_ISSET(clp, CL_SIGINT)) {
  *	Read characters from the input.
  */
 static input_t
-cl_read(SCR *sp, u_int32_t flags, CHAR_T *bp, size_t blen, int *nrp,
+cl_read(SCR *sp, u_int32_t flags, char *bp, size_t blen, int *nrp,
     struct timeval *tp)
 {
 	struct termios term1, term2;

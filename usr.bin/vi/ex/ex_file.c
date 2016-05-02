@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_file.c,v 1.7 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_file.c,v 1.8 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -32,7 +32,7 @@
 int
 ex_file(SCR *sp, EXCMD *cmdp)
 {
-	CHAR_T *p;
+	char *p;
 	FREF *frp;
 
 	NEEDFILE(sp, cmdp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_extern.h,v 1.14 2016/01/20 08:43:27 bentley Exp $	*/
+/*	$OpenBSD: ex_extern.h,v 1.15 2016/05/02 18:24:25 martijn Exp $	*/
 
 int ex(SCR **);
 int ex_cmd(SCR *);
@@ -100,7 +100,7 @@ int tagq_free(SCR *, TAGQ *);
 void tag_msg(SCR *, tagmsg_t, char *);
 int ex_tagf_alloc(SCR *, char *);
 int ex_tag_free(SCR *);
-int ex_txt(SCR *, TEXTH *, CHAR_T, u_int32_t);
+int ex_txt(SCR *, TEXTH *, char, u_int32_t);
 int ex_undo(SCR *, EXCMD *);
 int ex_help(SCR *, EXCMD *);
 int ex_usage(SCR *, EXCMD *);

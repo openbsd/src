@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_display.c,v 1.11 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: ex_display.c,v 1.12 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -24,7 +24,7 @@
 #include "tag.h"
 
 static int	bdisplay(SCR *);
-static void	db(SCR *, CB *, CHAR_T *);
+static void	db(SCR *, CB *, char *);
 
 /*
  * ex_display -- :display b[uffers] | s[creens] | t[ags]
@@ -107,9 +107,9 @@ bdisplay(SCR *sp)
  *	Display a buffer.
  */
 static void
-db(SCR *sp, CB *cbp, CHAR_T *name)
+db(SCR *sp, CB *cbp, char *name)
 {
-	CHAR_T *p;
+	char *p;
 	TEXT *tp;
 	size_t len;
 

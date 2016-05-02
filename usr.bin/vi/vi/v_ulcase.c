@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_ulcase.c,v 1.8 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: v_ulcase.c,v 1.9 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -26,7 +26,7 @@
 #include "../common/common.h"
 #include "vi.h"
 
-static int ulcase(SCR *, recno_t, CHAR_T *, size_t, size_t, size_t);
+static int ulcase(SCR *, recno_t, char *, size_t, size_t, size_t);
 
 /*
  * v_ulcase -- [count]~
@@ -105,12 +105,12 @@ v_ulcase(SCR *sp, VICMD *vp)
 int
 v_mulcase(SCR *sp, VICMD *vp)
 {
-	CHAR_T *p;
+	char *p;
 	size_t len;
 	recno_t lno;
 
 	for (lno = vp->m_start.lno;;) {
-		if (db_get(sp, lno, DBG_FATAL, (char **) &p, &len))
+		if (db_get(sp, lno, DBG_FATAL, &p, &len))
 			return (1);
 		if (len != 0 && ulcase(sp, lno, p, len,
 		    lno == vp->m_start.lno ? vp->m_start.cno : 0,
@@ -139,11 +139,11 @@ v_mulcase(SCR *sp, VICMD *vp)
  *	Change part of a line's case.
  */
 static int
-ulcase(SCR *sp, recno_t lno, CHAR_T *lp, size_t len, size_t scno, size_t ecno)
+ulcase(SCR *sp, recno_t lno, char *lp, size_t len, size_t scno, size_t ecno)
 {
 	size_t blen;
 	int change, rval;
-	CHAR_T ch, *p, *t;
+	char ch, *p, *t;
 	char *bp;
 
 	GET_SPACE_RET(sp, bp, blen, len);

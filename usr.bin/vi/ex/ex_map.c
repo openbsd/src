@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_map.c,v 1.7 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: ex_map.c,v 1.8 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -43,7 +43,7 @@ int
 ex_map(SCR *sp, EXCMD *cmdp)
 {
 	seq_t stype;
-	CHAR_T *input, *p;
+	char *input, *p;
 
 	stype = FL_ISSET(cmdp->iflags, E_C_FORCE) ? SEQ_INPUT : SEQ_COMMAND;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.31 2016/01/20 08:43:27 bentley Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.32 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -29,7 +29,7 @@
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
-static int	 txt_abbrev(SCR *, TEXT *, CHAR_T *, int, int *, int *);
+static int	 txt_abbrev(SCR *, TEXT *, char *, int, int *, int *);
 static void	 txt_ai_resolve(SCR *, TEXT *, int *);
 static TEXT	*txt_backup(SCR *, TEXTH *, TEXT *, u_int32_t *);
 static int	 txt_dent(SCR *, TEXT *, int);
@@ -38,7 +38,7 @@ static void	 txt_err(SCR *, TEXTH *);
 static int	 txt_fc(SCR *, TEXT *, int *);
 static int	 txt_fc_col(SCR *, int, ARGS **);
 static int	 txt_hex(SCR *, TEXT *);
-static int	 txt_insch(SCR *, TEXT *, CHAR_T *, u_int);
+static int	 txt_insch(SCR *, TEXT *, char *, u_int);
 static int	 txt_isrch(SCR *, VICMD *, TEXT *, u_int8_t *);
 static int	 txt_map_end(SCR *);
 static int	 txt_map_init(SCR *);
@@ -59,10 +59,10 @@ static void	 txt_unmap(SCR *, TEXT *, u_int32_t *);
  * v_tcmd --
  *	Fill a buffer from the terminal for vi.
  *
- * PUBLIC: int v_tcmd(SCR *, VICMD *, CHAR_T, u_int);
+ * PUBLIC: int v_tcmd(SCR *, VICMD *, char, u_int);
  */
 int
-v_tcmd(SCR *sp, VICMD *vp, CHAR_T prompt, u_int flags)
+v_tcmd(SCR *sp, VICMD *vp, char prompt, u_int flags)
 {
 	/* Normally, we end up where we started. */
 	vp->m_final.lno = sp->lno;
@@ -235,11 +235,11 @@ txt_map_end(SCR *sp)
  *	Vi text input.
  *
  * PUBLIC: int v_txt(SCR *, VICMD *, MARK *,
- * PUBLIC:    const char *, size_t, CHAR_T, recno_t, u_long, u_int32_t);
+ * PUBLIC:    const char *, size_t, char, recno_t, u_long, u_int32_t);
  */
 int
 v_txt(SCR *sp, VICMD *vp, MARK *tm, const char *lp, size_t len,
-    CHAR_T prompt, recno_t ai_line, u_long rcount, u_int32_t flags)
+    char prompt, recno_t ai_line, u_long rcount, u_int32_t flags)
 {
 	EVENT ev, *evp = NULL;	/* Current event. */
 	EVENT fc;		/* File name completion event. */
@@ -1280,7 +1280,7 @@ insl_ch:	if (txt_insch(sp, tp, &evp->e_c, flags))
 		 * number of hex bytes.  Offset by one, we use 0 to mean
 		 * that we've found <CH_HEX>.
 		 */
-		if (hexcnt != 0 && hexcnt++ == sizeof(CHAR_T) * 2 + 1) {
+		if (hexcnt != 0 && hexcnt++ == sizeof(char) * 2 + 1) {
 			hexcnt = 0;
 			if (txt_hex(sp, tp))
 				goto err;
@@ -1431,10 +1431,10 @@ alloc_err:
  *	Handle abbreviations.
  */
 static int
-txt_abbrev(SCR *sp, TEXT *tp, CHAR_T *pushcp, int isinfoline, int *didsubp,
+txt_abbrev(SCR *sp, TEXT *tp, char *pushcp, int isinfoline, int *didsubp,
     int *turnoffp)
 {
-	CHAR_T ch, *p;
+	char ch, *p;
 	SEQ *qp;
 	size_t len, off;
 
@@ -1848,7 +1848,7 @@ txt_backup(SCR *sp, TEXTH *tiqh, TEXT *tp, u_int32_t *flagsp)
 static int
 txt_dent(SCR *sp, TEXT *tp, int isindent)
 {
-	CHAR_T ch;
+	char ch;
 	u_long sw, ts;
 	size_t cno, current, spaces, target, tabs;
 	int ai_reset;
@@ -1951,7 +1951,7 @@ txt_fc(SCR *sp, TEXT *tp, int *redrawp)
 {
 	struct stat sb;
 	ARGS **argv;
-	CHAR_T s_ch;
+	char s_ch;
 	EXCMD cmd;
 	size_t indx, len, nlen, off;
 	int argc, trydir;
@@ -2103,7 +2103,7 @@ static int
 txt_fc_col(SCR *sp, int argc, ARGS **argv)
 {
 	ARGS **av;
-	CHAR_T *p;
+	char *p;
 	GS *gp;
 	size_t base, cnt, col, colwidth, numrows, numcols, prefix, row;
 	int ac, nf, reset;
@@ -2211,7 +2211,7 @@ intr:		F_CLR(gp, G_INTERRUPTED);
 static int
 txt_emark(SCR *sp, TEXT *tp, size_t cno)
 {
-	CHAR_T ch, *kp;
+	char ch, *kp;
 	size_t chlen, nlen, olen;
 	char *p;
 
@@ -2294,7 +2294,7 @@ txt_err(SCR *sp, TEXTH *tiqh)
 static int
 txt_hex(SCR *sp, TEXT *tp)
 {
-	CHAR_T savec;
+	char savec;
 	size_t len, off;
 	u_long value;
 	char *p, *wp;
@@ -2325,7 +2325,7 @@ txt_hex(SCR *sp, TEXT *tp)
 	/* Get the value. */
 	errno = 0;
 	value = strtol(wp, NULL, 16);
-	if (errno || value > MAX_CHAR_T) {
+	if (errno || value > MAX_CHAR) {
 nothex:		tp->lb[tp->cno] = savec;
 		return (0);
 	}
@@ -2370,9 +2370,9 @@ nothex:		tp->lb[tp->cno] = savec;
  * of the screen space they require, but that it not overwrite other characters.
  */
 static int
-txt_insch(SCR *sp, TEXT *tp, CHAR_T *chp, u_int flags)
+txt_insch(SCR *sp, TEXT *tp, char *chp, u_int flags)
 {
-	CHAR_T *kp, savech;
+	char *kp, savech;
 	size_t chlen, cno, copydown, olen, nlen;
 	char *p;
 

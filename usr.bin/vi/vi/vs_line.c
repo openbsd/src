@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_line.c,v 1.14 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: vs_line.c,v 1.15 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -38,7 +38,6 @@
 int
 vs_line(SCR *sp, SMAP *smp, size_t *yp, size_t *xp)
 {
-	CHAR_T *kp;
 	GS *gp;
 	SMAP *tsmp;
 	size_t chlen = 0, cno_cnt, cols_per_screen, len, nlen;
@@ -46,7 +45,7 @@ vs_line(SCR *sp, SMAP *smp, size_t *yp, size_t *xp)
 	size_t scno, skip_cols, skip_screens;
 	int ch = 0, dne, is_cached, is_partial, is_tab, no_draw;
 	int list_tab, list_dollar;
-	char *p, *cbp, *ecbp, cbuf[128];
+	char *kp, *p, *cbp, *ecbp, cbuf[128];
 
 #if defined(DEBUG) && 0
 	TRACE(sp, "vs_line: row %u: line: %u off: %u\n",

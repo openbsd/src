@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.36 2016/02/03 01:47:25 mmcc Exp $	*/
+/*	$OpenBSD: main.c,v 1.37 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -275,7 +275,7 @@ editor(GS *gp, int argc, char *argv[])
 	if (wsizearg != NULL) {
 		ARGS *av[2], a, b;
 		(void)snprintf(path, sizeof(path), "window=%s", wsizearg);
-		a.bp = (CHAR_T *)path;
+		a.bp = path;
 		a.len = strlen(path);
 		b.bp = NULL;
 		b.len = 0;
@@ -380,7 +380,7 @@ editor(GS *gp, int argc, char *argv[])
 			if ((frp = file_add(sp, NULL)) == NULL)
 				goto err;
 		} else  {
-			if ((frp = file_add(sp, (CHAR_T *)sp->argv[0])) == NULL)
+			if ((frp = file_add(sp, sp->argv[0])) == NULL)
 				goto err;
 			if (F_ISSET(sp, SC_ARGRECOVER))
 				F_SET(frp, FR_RECOVER);

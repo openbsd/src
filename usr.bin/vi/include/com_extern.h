@@ -1,13 +1,13 @@
-/*	$OpenBSD: com_extern.h,v 1.12 2016/01/30 21:31:08 martijn Exp $	*/
+/*	$OpenBSD: com_extern.h,v 1.13 2016/05/02 18:24:25 martijn Exp $	*/
 
-int cut(SCR *, CHAR_T *, MARK *, MARK *, int);
+int cut(SCR *, char *, MARK *, MARK *, int);
 int cut_line(SCR *, recno_t, size_t, size_t, CB *);
 void cut_close(GS *);
 TEXT *text_init(SCR *, const char *, size_t, size_t);
 void text_lfree(TEXTH *);
 void text_free(TEXT *);
 int del(SCR *, MARK *, MARK *, int);
-FREF *file_add(SCR *, CHAR_T *);
+FREF *file_add(SCR *, char *);
 int file_init(SCR *, FREF *, char *, int);
 int file_end(SCR *, EXF *, int);
 int file_write(SCR *, MARK *, MARK *, char *, int);
@@ -19,10 +19,10 @@ void set_alt_name(SCR *, char *);
 lockr_t file_lock(SCR *, char *, int *, int, int);
 int v_key_init(SCR *);
 void v_key_ilookup(SCR *);
-size_t v_key_len(SCR *, CHAR_T);
-CHAR_T *v_key_name(SCR *, CHAR_T);
-int v_key_val(SCR *, CHAR_T);
-int v_event_push(SCR *, EVENT *, CHAR_T *, size_t, u_int);
+size_t v_key_len(SCR *, char);
+char *v_key_name(SCR *, char);
+int v_key_val(SCR *, char);
+int v_event_push(SCR *, EVENT *, char *, size_t, u_int);
 int v_event_get(SCR *, EVENT *, int, u_int32_t);
 void v_event_err(SCR *, EVENT *);
 int v_event_flush(SCR *, u_int);
@@ -47,8 +47,8 @@ int editor(GS *, int, char *[]);
 void v_end(GS *);
 int mark_init(SCR *, EXF *);
 int mark_end(SCR *, EXF *);
-int mark_get(SCR *, CHAR_T, MARK *, mtype_t);
-int mark_set(SCR *, CHAR_T, MARK *, int);
+int mark_get(SCR *, char, MARK *, mtype_t);
+int mark_set(SCR *, char, MARK *, int);
 int mark_insdel(SCR *, lnop_t, recno_t);
 void msgq(SCR *, mtype_t, const char *, ...);
 void msgq_str(SCR *, mtype_t, char *, char *);
@@ -81,7 +81,7 @@ int f_w300(SCR *, OPTION *, char *, u_long *);
 int f_w1200(SCR *, OPTION *, char *, u_long *);
 int f_w9600(SCR *, OPTION *, char *, u_long *);
 int f_window(SCR *, OPTION *, char *, u_long *);
-int put(SCR *, CB *, CHAR_T *, MARK *, MARK *, int);
+int put(SCR *, CB *, char *, MARK *, MARK *, int);
 int rcv_tmp(SCR *, EXF *, char *);
 int rcv_init(SCR *);
 int rcv_sync(SCR *, u_int);
@@ -93,19 +93,19 @@ SCR *screen_next(SCR *);
 int f_search(SCR *, MARK *, MARK *, char *, size_t, char **, u_int);
 int b_search(SCR *, MARK *, MARK *, char *, size_t, char **, u_int);
 void search_busy(SCR *, busy_t);
-int seq_set(SCR *, CHAR_T *,
-   size_t, CHAR_T *, size_t, CHAR_T *, size_t, seq_t, int);
-int seq_delete(SCR *, CHAR_T *, size_t, seq_t);
+int seq_set(SCR *, char *,
+   size_t, char *, size_t, char *, size_t, seq_t, int);
+int seq_delete(SCR *, char *, size_t, seq_t);
 int seq_mdel(SEQ *);
 SEQ *seq_find
-(SCR *, SEQ **, EVENT *, CHAR_T *, size_t, seq_t, int *);
+(SCR *, SEQ **, EVENT *, char *, size_t, seq_t, int *);
 void seq_close(GS *);
 int seq_dump(SCR *, seq_t, int);
 int seq_save(SCR *, FILE *, char *, seq_t);
-int e_memcmp(CHAR_T *, EVENT *, size_t);
+int e_memcmp(char *, EVENT *, size_t);
 void *binc(SCR *, void *, size_t *, size_t);
 int nonblank(SCR *, recno_t, size_t *);
-CHAR_T *v_strdup(SCR *, const CHAR_T *, size_t);
+char *v_strdup(SCR *, const char *, size_t);
 enum nresult nget_uslong(u_long *, const char *, char **, int);
 enum nresult nget_slong(long *, const char *, char **, int);
 void TRACE(SCR *, const char *, ...);

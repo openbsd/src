@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.13 2016/01/30 21:31:08 martijn Exp $	*/
+/*	$OpenBSD: util.c,v 1.14 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -100,17 +100,17 @@ nonblank(SCR *sp, recno_t lno, size_t *cnop)
  * v_strdup --
  *	Strdup for wide character strings with an associated length.
  *
- * PUBLIC: CHAR_T *v_strdup(SCR *, const CHAR_T *, size_t);
+ * PUBLIC: char *v_strdup(SCR *, const char *, size_t);
  */
-CHAR_T *
-v_strdup(SCR *sp, const CHAR_T *str, size_t len)
+char *
+v_strdup(SCR *sp, const char *str, size_t len)
 {
-	CHAR_T *copy;
+	char *copy;
 
 	MALLOC(sp, copy, len + 1);
 	if (copy == NULL)
 		return (NULL);
-	memcpy(copy, str, len * sizeof(CHAR_T));
+	memcpy(copy, str, len);
 	copy[len] = '\0';
 	return (copy);
 }

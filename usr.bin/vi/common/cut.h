@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.h,v 1.7 2013/11/25 23:27:11 krw Exp $	*/
+/*	$OpenBSD: cut.h,v 1.8 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -18,7 +18,7 @@ TAILQ_HEAD(_texth, _text);
 struct _cb {
 	LIST_ENTRY(_cb) q;		/* Linked list of cut buffers. */
 	TEXTH	 textq;			/* Linked list of TEXT structures. */
-	CHAR_T	 name;			/* Cut buffer name. */
+	char	 name;			/* Cut buffer name. */
 	size_t	 len;			/* Total length of cut text. */
 
 #define	CB_LMODE	0x01		/* Cut was in line mode. */
@@ -65,7 +65,7 @@ struct _text {				/* Text: a linked list of lines. */
  * Translate upper-case buffer names to lower-case buffer names.
  */
 #define	CBNAME(sp, cbp, nch) {						\
-	CHAR_T L__name;							\
+	char L__name;							\
 	L__name = isupper(nch) ? tolower(nch) : (nch);			\
 	LIST_FOREACH((cbp), &(sp)->gp->cutq, q)				\
 		if ((cbp)->name == L__name)				\

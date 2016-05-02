@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.h,v 1.6 2016/01/20 08:43:27 bentley Exp $	*/
+/*	$OpenBSD: key.h,v 1.7 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -12,15 +12,9 @@
  */
 
 /*
- * Fundamental character types.
- *
- * CHAR_T	An integral type that can hold any character.
- * MAX_CHAR_T	The maximum value of any character.
- *
- * If no integral type can hold a character, don't even try the port.
+ * MAX_CHAR	The maximum value of any character.
  */
-typedef	u_char		CHAR_T;
-#define	MAX_CHAR_T	0xff
+#define	MAX_CHAR	0xff
 
 /* The maximum number of columns any character can take up on a screen. */
 #define	MAX_CHARACTER_COLUMNS	4
@@ -81,7 +75,7 @@ struct _event {
 	e_event_t e_event;		/* Event type. */
 	union {
 		struct {		/* Input character. */
-			CHAR_T c;	/* Character. */
+			char c;		/* Character. */
 			e_key_t value;	/* Key type. */
 
 #define	CH_ABBREVIATED	0x01		/* Character is from an abbreviation. */
@@ -109,8 +103,8 @@ struct _event {
 #define	e_tcno	_u_event._e_mark.cno2
 
 		struct {		/* Input string. */
-			CHAR_T	*asp;	/* Allocated string. */
-			CHAR_T	*csp;	/* String. */
+			char	*asp;	/* Allocated string. */
+			char	*csp;	/* String. */
 			size_t	 len;	/* String length. */
 		} _e_str;
 #define	e_asp	_u_event._e_str.asp
@@ -121,7 +115,7 @@ struct _event {
 
 typedef struct _keylist {
 	e_key_t value;			/* Special value. */
-	CHAR_T ch;			/* Key. */
+	char ch;			/* Key. */
 } KEYLIST;
 extern KEYLIST keylist[];
 

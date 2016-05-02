@@ -1,4 +1,4 @@
-/*	$OpenBSD: gs.h,v 1.16 2016/01/30 21:23:50 martijn Exp $	*/
+/*	$OpenBSD: gs.h,v 1.17 2016/05/02 18:24:25 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -74,7 +74,7 @@ struct _gs {
 
 	MSGH	 msgq;			/* User message list. */
 #define	DEFAULT_NOPRINT	'\1'		/* Emergency non-printable character. */
-	CHAR_T	 noprint;		/* Cached, unprintable character. */
+	char	 noprint;		/* Cached, unprintable character. */
 
 	char	*tmp_bp;		/* Temporary buffer. */
 	size_t	 tmp_blen;		/* Temporary buffer size. */
@@ -118,7 +118,7 @@ struct _gs {
 	    (sp)->gp->cname[(unsigned char)(ch)].name :			\
 	    v_key_name((sp), (ch)))
 	struct {
-		CHAR_T	 name[MAX_CHARACTER_COLUMNS + 1];
+		char	 name[MAX_CHARACTER_COLUMNS + 1];
 		u_int8_t len;
 	} cname[MAX_FAST_KEY + 1];	/* Fast lookup table. */
 
@@ -127,7 +127,7 @@ struct _gs {
 	    (sp)->gp->special_key[(unsigned char)(ch)] :		\
 	    (unsigned char)(ch) > (sp)->gp->max_special ? 0 :		\
 	    v_key_val((sp),(ch)))
-	CHAR_T	 max_special;		/* Max special character. */
+	char	 max_special;		/* Max special character. */
 	u_char				/* Fast lookup table. */
 	    special_key[MAX_FAST_KEY + 1];
 
@@ -165,9 +165,9 @@ struct _gs {
 					/* Ex: screen adjustment routine. */
 	int	(*scr_ex_adjust)(SCR *, exadj_t);
 	int	(*scr_fmap)		/* Set a function key. */
-(SCR *, seq_t, CHAR_T *, size_t, CHAR_T *, size_t);
+(SCR *, seq_t, char *, size_t, char *, size_t);
 					/* Get terminal key value. */
-	int	(*scr_keyval)(SCR *, scr_keyval_t, CHAR_T *, int *);
+	int	(*scr_keyval)(SCR *, scr_keyval_t, unsigned char *, int *);
 					/* Insert a line. */
 	int	(*scr_insertln)(SCR *);
 					/* Handle an option change. */
