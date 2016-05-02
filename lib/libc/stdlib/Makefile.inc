@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.59 2016/03/30 06:38:41 jmc Exp $
+#	$OpenBSD: Makefile.inc,v 1.60 2016/05/02 12:59:24 millert Exp $
 
 # stdlib sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/stdlib ${LIBCSRCDIR}/stdlib
@@ -16,8 +16,6 @@ SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c atoll.c bsearch.c \
 
 .if (${MACHINE_CPU} == "i386")
 SRCS+=	abs.S div.S labs.S ldiv.S
-.elif (${MACHINE_CPU} == "vax")
-SRCS+=	abs.c div.c labs.c ldiv.c
 .elif (${MACHINE_CPU} == "alpha")
 # XXX should be .S's
 SRCS+=	abs.c div.c labs.c ldiv.c
