@@ -1,4 +1,4 @@
-/* $OpenBSD: exynos.c,v 1.10 2016/04/24 00:57:23 patrick Exp $ */
+/* $OpenBSD: exynos.c,v 1.11 2016/05/02 15:27:24 patrick Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -20,10 +20,8 @@
 #include <sys/systm.h>
 
 #include <machine/bus.h>
-#if NFDT > 0
-#include <machine/fdt.h>
-#endif
 
+#include <arm/mainbus/mainbus.h>
 #include <armv7/armv7/armv7var.h>
 
 int	exynos_match(struct device *, void *, void *);
@@ -171,12 +169,14 @@ exynos_board_name(void)
 int
 exynos_match(struct device *parent, void *cfdata, void *aux)
 {
-#if NFDT > 0
-	/* If we're running with fdt, do not attach. */
-	/* XXX: Find a better way. */
-	if (fdt_next_node(0))
+	union mainbus_attach_args *ma = (union mainbus_attach_args *)aux;
+	struct cfdata *cf = (struct cfdata *)cfdata;
+
+	if (ma->ma_name == NULL)
 		return (0);
-#endif
+
+	if (strcmp(cf->cf_driver->cd_name, ma->ma_name) != 0)
+		return (0);
 
 	return (exynos_board_devs() != NULL);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: sunxi.c,v 1.8 2016/02/02 03:31:22 jsg Exp $ */
+/* $OpenBSD: sunxi.c,v 1.9 2016/05/02 15:27:24 patrick Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -21,6 +21,7 @@
 #include <machine/bus.h>
 
 #include <arm/armv7/armv7var.h>
+#include <arm/mainbus/mainbus.h>
 #include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
 
@@ -155,5 +156,14 @@ sunxi_board_name(void)
 int
 sunxi_match(struct device *parent, void *cfdata, void *aux)
 {
+	union mainbus_attach_args *ma = (union mainbus_attach_args *)aux;
+	struct cfdata *cf = (struct cfdata *)cfdata;
+
+	if (ma->ma_name == NULL)
+		return (0);
+
+	if (strcmp(cf->cf_driver->cd_name, ma->ma_name) != 0)
+		return (0);
+
 	return (sunxi_board_devs() != NULL);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vexpress.c,v 1.3 2016/02/02 03:31:22 jsg Exp $	*/
+/*	$OpenBSD: vexpress.c,v 1.4 2016/05/02 15:27:24 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 Jonathan Gray <jsg@openbsd.org>
@@ -22,6 +22,7 @@
 #include <machine/bus.h>
 
 #include <arm/cpufunc.h>
+#include <arm/mainbus/mainbus.h>
 #include <armv7/armv7/armv7var.h>
 
 int	vexpress_match(struct device *, void *, void *);
@@ -105,5 +106,14 @@ vexpress_board_name(void)
 int
 vexpress_match(struct device *parent, void *cfdata, void *aux)
 {
+	union mainbus_attach_args *ma = (union mainbus_attach_args *)aux;
+	struct cfdata *cf = (struct cfdata *)cfdata;
+
+	if (ma->ma_name == NULL)
+		return (0);
+
+	if (strcmp(cf->cf_driver->cd_name, ma->ma_name) != 0)
+		return (0);
+
 	return (vexpress_board_devs() != NULL);
 }

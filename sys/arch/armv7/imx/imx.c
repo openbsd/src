@@ -1,4 +1,4 @@
-/* $OpenBSD: imx.c,v 1.9 2016/02/02 03:31:22 jsg Exp $ */
+/* $OpenBSD: imx.c,v 1.10 2016/05/02 15:27:24 patrick Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -21,6 +21,7 @@
 
 #include <machine/bus.h>
 
+#include <arm/mainbus/mainbus.h>
 #include <armv7/armv7/armv7var.h>
 
 int	imx_match(struct device *, void *, void *);
@@ -301,5 +302,14 @@ imx_board_name(void)
 int
 imx_match(struct device *parent, void *cfdata, void *aux)
 {
+	union mainbus_attach_args *ma = (union mainbus_attach_args *)aux;
+	struct cfdata *cf = (struct cfdata *)cfdata;
+
+	if (ma->ma_name == NULL)
+		return (0);
+
+	if (strcmp(cf->cf_driver->cd_name, ma->ma_name) != 0)
+		return (0);
+
 	return (imx_board_devs() != NULL);
 }
