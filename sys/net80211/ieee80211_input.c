@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.175 2016/05/02 08:12:42 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.176 2016/05/02 09:35:49 tb Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -722,7 +722,7 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 			 * and let the window move forward if neccessary.
 			 */
 			if (ba->ba_winmiss < IEEE80211_BA_MAX_WINMISS) { 
-				if (ba->ba_missedsn == sn - 1)
+				if (ba->ba_missedsn == ((sn - 1) & 0xfff))
 					ba->ba_winmiss++;
 				else
 					ba->ba_winmiss = 0;
