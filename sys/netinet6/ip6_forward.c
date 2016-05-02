@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.89 2016/04/27 21:14:29 markus Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.90 2016/05/02 09:30:47 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -169,35 +169,7 @@ reroute:
 #endif
 
 	dst = &ip6_forward_rt.ro_dst;
-	if (!srcrt) {
-		/*
-		 * ip6_forward_rt.ro_dst.sin6_addr is equal to ip6->ip6_dst
-		 */
-		if (!rtisvalid(ip6_forward_rt.ro_rt) ||
-		    ISSET(ip6_forward_rt.ro_rt->rt_flags, RTF_MPATH) ||
-		    ip6_forward_rt.ro_tableid != rtableid) {
-			if (ip6_forward_rt.ro_rt) {
-				rtfree(ip6_forward_rt.ro_rt);
-				ip6_forward_rt.ro_rt = NULL;
-			}
-			/* this probably fails but give it a try again */
-			ip6_forward_rt.ro_tableid = rtableid;
-			ip6_forward_rt.ro_rt = rtalloc_mpath(
-			    sin6tosa(&ip6_forward_rt.ro_dst),
-			    &ip6->ip6_src.s6_addr32[0],
-			    ip6_forward_rt.ro_tableid);
-		}
-
-		if (ip6_forward_rt.ro_rt == NULL) {
-			ip6stat.ip6s_noroute++;
-			if (mcopy) {
-				icmp6_error(mcopy, ICMP6_DST_UNREACH,
-					    ICMP6_DST_UNREACH_NOROUTE, 0);
-			}
-			m_freem(m);
-			return;
-		}
-	} else if (!rtisvalid(ip6_forward_rt.ro_rt) ||
+	if (!rtisvalid(ip6_forward_rt.ro_rt) ||
 	   ISSET(ip6_forward_rt.ro_rt->rt_flags, RTF_MPATH) ||
 	   !IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst->sin6_addr) ||
 	   ip6_forward_rt.ro_tableid != rtableid) {
