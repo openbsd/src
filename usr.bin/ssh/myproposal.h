@@ -1,4 +1,4 @@
-/* $OpenBSD: myproposal.h,v 1.50 2016/02/09 05:30:04 djm Exp $ */
+/* $OpenBSD: myproposal.h,v 1.51 2016/05/02 10:26:04 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -31,13 +31,17 @@
 	"ecdh-sha2-nistp256," \
 	"ecdh-sha2-nistp384," \
 	"ecdh-sha2-nistp521," \
-	"diffie-hellman-group-exchange-sha256"
+	"diffie-hellman-group-exchange-sha256," \
+	"diffie-hellman-group16-sha512," \
+	"diffie-hellman-group18-sha512" \
 
 #define KEX_SERVER_KEX KEX_COMMON_KEX "," \
+	"diffie-hellman-group14-sha256," \
 	"diffie-hellman-group14-sha1"
 
 #define KEX_CLIENT_KEX KEX_COMMON_KEX "," \
 	"diffie-hellman-group-exchange-sha1," \
+	"diffie-hellman-group14-sha256," \
 	"diffie-hellman-group14-sha1"
 
 #define	KEX_DEFAULT_PK_ALG	\
