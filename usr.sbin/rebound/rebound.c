@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.60 2016/01/03 18:15:17 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.61 2016/05/02 06:21:26 semarie Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -606,9 +606,6 @@ main(int argc, char **argv)
 	struct timespec ts, *timeout = NULL;
 	const char *confname = "/etc/rebound.conf";
 	FILE *conf;
-
-	if (pledge("stdio rpath getpw inet proc id", NULL) == -1)
-		logerr("pledge failed");
 
 	while ((ch = getopt(argc, argv, "c:d")) != -1) {
 		switch (ch) {
