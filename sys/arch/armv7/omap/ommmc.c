@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.16 2016/05/01 16:04:39 kettenis Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.17 2016/05/02 03:01:36 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -229,6 +229,7 @@ int	ommmc_host_maxblklen(sdmmc_chipset_handle_t);
 int	ommmc_card_detect(sdmmc_chipset_handle_t);
 int	ommmc_bus_power(sdmmc_chipset_handle_t, uint32_t);
 int	ommmc_bus_clock(sdmmc_chipset_handle_t, int);
+int	ommmc_bus_width(sdmmc_chipset_handle_t, int);
 void	ommmc_card_intr_mask(sdmmc_chipset_handle_t, int);
 void	ommmc_card_intr_ack(sdmmc_chipset_handle_t);
 void	ommmc_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
@@ -260,7 +261,7 @@ struct sdmmc_chip_functions ommmc_functions = {
 	/* bus power and clock frequency */
 	ommmc_bus_power,
 	ommmc_bus_clock,
-	NULL,
+	ommmc_bus_width,
 	/* command execution */
 	ommmc_exec_command,
 	/* card interrupt */
@@ -391,7 +392,7 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 	saa.saa_busname = "sdmmc";
 	saa.sct = &ommmc_functions;
 	saa.sch = sc;
-	saa.caps = 0;
+	saa.caps = SMC_CAPS_4BIT_MODE;
 	if (caps & MMCHS_CAPA_HSS)
 		saa.caps |= SMC_CAPS_MMC_HIGHSPEED;
 
@@ -694,6 +695,32 @@ ommmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 ret:
 	splx(s);
 	return (error);
+}
+
+int
+ommmc_bus_width(sdmmc_chipset_handle_t sch, int width)
+{
+	struct ommmc_softc *sc = sch;
+	int s;
+
+	if (width != 1 && width != 4 && width != 8)
+		return (1);
+
+	s = splsdmmc();
+
+	if (width == 8)
+		HSET4(sc, MMCHS_CON, MMCHS_CON_DW8);
+	else
+		HCLR4(sc, MMCHS_CON, MMCHS_CON_DW8);
+
+	if (width == 4)
+		HSET4(sc, MMCHS_HCTL, MMCHS_HCTL_DTW);
+	else if (width == 1)
+		HCLR4(sc, MMCHS_HCTL, MMCHS_HCTL_DTW);
+
+	splx(s);
+
+	return (0);
 }
 
 void
