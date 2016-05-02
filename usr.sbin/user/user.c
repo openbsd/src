@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.109 2016/04/26 13:30:12 mestre Exp $ */
+/* $OpenBSD: user.c,v 1.110 2016/05/02 15:25:03 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1140,14 +1140,14 @@ adduser(char *login_name, user_t *up)
 				up->u_password, password);
 		}
 	}
-	cc = snprintf(buf, sizeof(buf), "%s:%s:%u:%u:%s:%ld:%ld:%s:%s:%s\n",
+	cc = snprintf(buf, sizeof(buf), "%s:%s:%u:%u:%s:%lld:%lld:%s:%s:%s\n",
 	    login_name,
 	    password,
 	    up->u_uid,
 	    gid,
 	    up->u_class,
-	    (long) inactive,
-	    (long) expire,
+	    (long long) inactive,
+	    (long long) expire,
 	    up->u_comment,
 	    home,
 	    up->u_shell);
@@ -1601,14 +1601,14 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		if (strncmp(login_name, buf, loginc) == 0 && loginc == colonc) {
 			if (up != NULL) {
 				if ((len = snprintf(buf, sizeof(buf),
-				    "%s:%s:%u:%u:%s:%ld:%ld:%s:%s:%s\n",
+				    "%s:%s:%u:%u:%s:%lld:%lld:%s:%s:%s\n",
 				    newlogin,
 				    pwp->pw_passwd,
 				    pwp->pw_uid,
 				    pwp->pw_gid,
 				    pwp->pw_class,
-				    (long)pwp->pw_change,
-				    (long)pwp->pw_expire,
+				    (long long)pwp->pw_change,
+				    (long long)pwp->pw_expire,
 				    pwp->pw_gecos,
 				    pwp->pw_dir,
 				    pwp->pw_shell)) >= sizeof(buf) || len < 0 ||
