@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.174 2016/04/28 15:00:27 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.175 2016/05/02 08:12:42 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -740,7 +740,7 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 		} else {
 			ic->ic_stats.is_ht_rx_ba_window_slide++;
 			ieee80211_input_ba_seq(ic, ni, tid,
-			    ba->ba_winstart + count);
+			    (ba->ba_winstart + count) & 0xfff);
 			ieee80211_input_ba_flush(ic, ni, ba);
 		}
 	}
