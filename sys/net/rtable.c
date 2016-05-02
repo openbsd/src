@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.40 2016/04/13 08:04:14 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.41 2016/05/02 22:15:49 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -459,12 +459,16 @@ rtable_walk(unsigned int rtableid, sa_family_t af,
 {
 	struct radix_node_head	*rnh;
 	int (*f)(struct radix_node *, void *, unsigned int) = (void *)func;
+	int error;
 
 	rnh = rtable_get(rtableid, af);
 	if (rnh == NULL)
 		return (EAFNOSUPPORT);
 
-	return (rn_walktree(rnh, f, arg));
+	while ((error = rn_walktree(rnh, f, arg)) == EAGAIN)
+		;	/* nothing */
+
+	return (error);
 }
 
 #ifndef SMALL_KERNEL
@@ -846,6 +850,7 @@ rtable_walk(unsigned int rtableid, sa_family_t af,
 {
 	struct art_root			*ar;
 	struct rtable_walk_cookie	 rwc;
+	int				 error;
 
 	ar = rtable_get(rtableid, af);
 	if (ar == NULL)
@@ -855,7 +860,10 @@ rtable_walk(unsigned int rtableid, sa_family_t af,
 	rwc.rwc_arg = arg;
 	rwc.rwc_rid = rtableid;
 
-	return (art_walk(ar, rtable_walk_helper, &rwc));
+	while ((error = art_walk(ar, rtable_walk_helper, &rwc)) == EAGAIN)
+		; /* nothing */
+
+	return (error);
 }
 
 #ifndef SMALL_KERNEL

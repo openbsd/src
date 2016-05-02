@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.299 2016/04/27 14:47:27 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.300 2016/05/02 22:15:49 jmatthew Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -669,6 +669,7 @@ rtflushclone1(struct rtentry *rt, void *arg, u_int id)
 {
 	struct rtentry *parent = arg;
 	struct ifnet *ifp;
+	int error;
 
 	ifp = if_get(rt->rt_ifidx);
 
@@ -680,11 +681,14 @@ rtflushclone1(struct rtentry *rt, void *arg, u_int id)
 	if (ifp == NULL)
 	        return 0;
 
-	if (ISSET(rt->rt_flags, RTF_CLONED) && rtequal(rt->rt_parent, parent))
+	if (ISSET(rt->rt_flags, RTF_CLONED) && rtequal(rt->rt_parent, parent)) {
 	        rtdeletemsg(rt, ifp, id);
+		error = EAGAIN;
+	} else
+		error = 0;
 
 	if_put(ifp);
-	return 0;
+	return error;
 }
 
 void
@@ -1708,9 +1712,7 @@ rt_if_remove(struct ifnet *ifp)
 		if (rtable_l2(tid) != ifp->if_rdomain)
 			continue;
 		for (i = 1; i <= AF_MAX; i++) {
-			while (rtable_walk(tid, i, rt_if_remove_rtdelete,
-				ifp) == EAGAIN)
-					;	/* nothing */
+			rtable_walk(tid, i, rt_if_remove_rtdelete, ifp);
 		}
 	}
 }
@@ -1751,9 +1753,7 @@ rt_if_track(struct ifnet *ifp)
 			if (!rtable_mpath_capable(tid, i))
 				continue;
 
-			while (rtable_walk(tid, i,
-			    rt_if_linkstate_change, ifp) == EAGAIN)
-				;	/* nothing */
+			rtable_walk(tid, i, rt_if_linkstate_change, ifp);
 		}
 	}
 }
@@ -1790,7 +1790,7 @@ rt_if_linkstate_change(struct rtentry *rt, void *arg, u_int id)
 			 */
 			if (rt->rt_flags & RTF_CLONED) {
 				rtdeletemsg(rt, ifp, id);
-				return (0);
+				return (EAGAIN);
 			}
 			/* take route down */
 			rt->rt_flags &= ~RTF_UP;
