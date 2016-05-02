@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.25 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.26 2016/05/02 20:06:58 natano Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -551,9 +551,10 @@ tmpfs_read(void *v)
 	if (uio->uio_offset < 0) {
 		return EINVAL;
 	}
+	if (uio->uio_resid == 0)
+		return 0;
 
 	node = VP_TO_TMPFS_NODE(vp);
-	tmpfs_update(node, TMPFS_NODE_ACCESSED);
 	error = 0;
 
 	while (error == 0 && uio->uio_resid > 0) {
@@ -568,6 +569,9 @@ tmpfs_read(void *v)
 		}
 		error = tmpfs_uiomove(node, uio, len);
 	}
+
+	if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
+		tmpfs_update(node, TMPFS_NODE_ACCESSED);
 
 	return error;
 }
@@ -634,8 +638,7 @@ tmpfs_write(void *v)
 		(void)tmpfs_reg_resize(vp, oldsize);
 	}
 
-	tmpfs_update(node, TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED |
-	    (extended ? TMPFS_NODE_CHANGED : 0));
+	tmpfs_update(node, TMPFS_NODE_MODIFIED | TMPFS_NODE_CHANGED);
 	if (extended)
 		VN_KNOTE(vp, NOTE_WRITE | NOTE_EXTEND);
 	else
@@ -1019,7 +1022,9 @@ tmpfs_readlink(void *v)
 	node = VP_TO_TMPFS_NODE(vp);
 	error = uiomove(node->tn_spec.tn_lnk.tn_link,
 	    MIN((size_t)node->tn_size, uio->uio_resid), uio);
-	tmpfs_update(node, TMPFS_NODE_ACCESSED);
+
+	if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
+		tmpfs_update(node, TMPFS_NODE_ACCESSED);
 
 	return error;
 }
