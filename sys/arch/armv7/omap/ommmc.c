@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.17 2016/05/02 03:01:36 jsg Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.18 2016/05/02 07:38:34 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -1144,3 +1144,10 @@ ommmc_intr(void *arg)
 	}
 	return 1;
 }
+
+#ifdef SDHC_DEBUG
+void
+ommmc_dump_regs(struct ommmc_softc *sc)
+{
+}
+#endif
