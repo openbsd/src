@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1794 2016/04/24 06:42:24 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1795 2016/05/03 03:12:46 dlg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -22732,8 +22732,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SM951 AHCI",
 	},
 	{
-	    PCI_VENDOR_SAMSUNG2, PCI_PRODUCT_SAMSUNG2_SM951_NVME,
-	    "SM951 NVMe",
+	    PCI_VENDOR_SAMSUNG2, PCI_PRODUCT_SAMSUNG2_NVME,
+	    "NVMe",
 	},
 	{
 	    PCI_VENDOR_SANGOMA, PCI_PRODUCT_SANGOMA_A10X,

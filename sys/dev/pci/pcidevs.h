@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1794 2016/04/24 06:42:24 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1795 2016/05/03 03:12:46 dlg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6516,7 +6516,7 @@
 #define	PCI_PRODUCT_SAMSUNG2_S4LN053X01	0x1600		/* S4LN053X01 */
 #define	PCI_PRODUCT_SAMSUNG2_XP941	0xa800		/* XP941 */
 #define	PCI_PRODUCT_SAMSUNG2_SM951_AHCI	0xa801		/* SM951 AHCI */
-#define	PCI_PRODUCT_SAMSUNG2_SM951_NVME	0xa802		/* SM951 NVMe */
+#define	PCI_PRODUCT_SAMSUNG2_NVME	0xa802		/* NVMe */
 
 /* Sangoma products */
 #define	PCI_PRODUCT_SANGOMA_A10X	0x0300		/* A10x */
