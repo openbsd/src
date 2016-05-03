@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_pcap.c,v 1.19 2015/10/01 13:18:40 jsg Exp $ */
+/*	$OpenBSD: privsep_pcap.c,v 1.20 2016/05/03 07:41:24 natano Exp $ */
 
 /*
  * Copyright (c) 2004 Can Erkin Acar
@@ -175,20 +175,14 @@ int
 pcap_live(const char *device, int snaplen, int promisc, u_int dlt,
     u_int dirfilt)
 {
-	char		bpf[sizeof "/dev/bpf0000000000"];
-	int		fd, n = 0;
+	int		fd;
 	struct ifreq	ifr;
 	unsigned	v;
 
 	if (device == NULL || snaplen <= 0)
 		return (-1);
 
-	do {
-		snprintf(bpf, sizeof(bpf), "/dev/bpf%d", n++);
-		fd = open(bpf, O_RDONLY);
-	} while (fd < 0 && errno == EBUSY);
-
-	if (fd < 0)
+	if ((fd = open("/dev/bpf", O_RDONLY)) == -1)
 		return (-1);
 
 	v = 32768;	/* XXX this should be a user-accessible hook */
