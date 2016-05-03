@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2012/09/07 00:20:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2016/05/03 17:54:31 jca Exp $
 
 PROG=	ifconfig
 SRCS=   ifconfig.c
@@ -8,10 +8,5 @@ LDADD=	-lutil
 DPADD=	${LIBUTIL}
 
 .PATH:  ${.CURDIR}/../../../sbin/ifconfig
-
-CPPFLAGS+=-DINET6
-
-# kame scopeid hack
-CPPFLAGS+=-DKAME_SCOPEID
 
 .include <bsd.prog.mk>
