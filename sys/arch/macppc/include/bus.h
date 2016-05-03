@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.24 2015/01/24 20:59:42 kettenis Exp $	*/
+/*	$OpenBSD: bus.h,v 1.25 2016/05/03 12:23:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -117,6 +117,34 @@ bus_space_write(2,16)
 bus_space_write(4,32)
 
 #define	bus_space_write_8	!!! bus_space_write_8 unimplemented !!!
+
+#define bus_space_read_raw(n,m)						      \
+static __inline CAT3(u_int,m,_t)					      \
+CAT(bus_space_read_raw_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
+    bus_addr_t ba)							      \
+{									      \
+	return CAT(in,m)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)));	      \
+}
+
+bus_space_read_raw(1,8)
+bus_space_read_raw(2,16)
+bus_space_read_raw(4,32)
+
+#define	bus_space_read_raw_8	!!! bus_space_read_raw_8 unimplemented !!!
+
+#define bus_space_write_raw(n,m)					      \
+static __inline void							      \
+CAT(bus_space_write_raw_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,      \
+    bus_addr_t ba, CAT3(u_int,m,_t) x)					      \
+{									      \
+	CAT(out,m)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)), x);	      \
+}
+
+bus_space_write_raw(1,8)
+bus_space_write_raw(2,16)
+bus_space_write_raw(4,32)
+
+#define	bus_space_write_raw_8	!!! bus_space_write_raw_8 unimplemented !!!
 
 #define bus_space_read_multi(n, m)					      \
 static __inline void						       	      \
