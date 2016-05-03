@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1794 2016/04/24 06:42:24 jsg Exp $
+$OpenBSD: pcidevs,v 1.1795 2016/05/03 03:12:46 dlg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -6511,7 +6511,7 @@ product SAMSUNG SWL2210P	0xa000	MagicLAN SWL-2210P
 product SAMSUNG2 S4LN053X01	0x1600	S4LN053X01
 product SAMSUNG2 XP941		0xa800	XP941
 product SAMSUNG2 SM951_AHCI	0xa801	SM951 AHCI
-product SAMSUNG2 SM951_NVME	0xa802	SM951 NVMe
+product SAMSUNG2 NVME		0xa802	NVMe
 
 /* Sangoma products */
 product SANGOMA A10X		0x0300	A10x
