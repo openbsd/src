@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.321 2016/04/28 13:51:22 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.322 2016/05/03 17:52:33 jca Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -118,11 +118,9 @@
 
 struct	ifreq		ifr, ridreq;
 struct	in_aliasreq	in_addreq;
-#ifdef INET6
 struct	in6_ifreq	ifr6;
 struct	in6_ifreq	in6_ridreq;
 struct	in6_aliasreq	in6_addreq;
-#endif /* INET6 */
 struct	sockaddr_in	netmask;
 
 #ifndef SMALL
@@ -141,9 +139,7 @@ int	clearaddr, s;
 int	newaddr = 0;
 int	af = AF_INET;
 int	explicit_prefix = 0;
-#ifdef INET6
 int	Lflag = 1;
-#endif /* INET6 */
 
 int	showmediaflag;
 int	showcapsflag;
@@ -186,7 +182,6 @@ void	getvnetid(void);
 void	setifparent(const char *, int);
 void	delifparent(const char *, int);
 void	getifparent(void);
-#ifdef INET6
 void	setia6flags(const char *, int);
 void	setia6pltime(const char *, int);
 void	setia6vltime(const char *, int);
@@ -194,7 +189,6 @@ void	setia6lifetime(const char *, const char *);
 void	setia6eui64(const char *, int);
 void	setkeepalive(const char *, const char *);
 void	unsetkeepalive(const char *, int);
-#endif /* INET6 */
 void	setmedia(const char *, int);
 void	setmediaopt(const char *, int);
 void	setmediamode(const char *, int);
@@ -362,7 +356,6 @@ const struct	cmd {
 	{ "trunkport",	NEXTARG,	0,		settrunkport },
 	{ "-trunkport",	NEXTARG,	0,		unsettrunkport },
 	{ "trunkproto",	NEXTARG,	0,		settrunkproto },
-#ifdef INET6
 	{ "anycast",	IN6_IFF_ANYCAST,	0,	setia6flags },
 	{ "-anycast",	-IN6_IFF_ANYCAST,	0,	setia6flags },
 	{ "tentative",	IN6_IFF_TENTATIVE,	0,	setia6flags },
@@ -372,7 +365,6 @@ const struct	cmd {
 	{ "eui64",	0,		0,		setia6eui64 },
 	{ "autoconfprivacy",	-IFXF_INET6_NOPRIVACY,	0,	setifxflags },
 	{ "-autoconfprivacy",	IFXF_INET6_NOPRIVACY,	0,	setifxflags },
-#endif /*INET6*/
 #ifndef SMALL
 	{ "hwfeatures", NEXTARG0,	0,		printifhwfeatures },
 	{ "metric",	NEXTARG,	0,		setifmetric },
@@ -562,13 +554,11 @@ unsigned long get_ts_map(int, int, int);
 void	in_status(int);
 void	in_getaddr(const char *, int);
 void	in_getprefix(const char *, int);
-#ifdef INET6
 void	in6_fillscopeid(struct sockaddr_in6 *sin6);
 void	in6_alias(struct in6_ifreq *);
 void	in6_status(int);
 void	in6_getaddr(const char *, int);
 void	in6_getprefix(const char *, int);
-#endif /* INET6 */
 void	ieee80211_status(void);
 void	ieee80211_listchans(void);
 void	ieee80211_listnodes(void);
@@ -593,10 +583,8 @@ const struct afswtch {
 #define C(x) ((caddr_t) &x)
 	{ "inet", AF_INET, in_status, in_getaddr, in_getprefix,
 	    SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(in_addreq) },
-#ifdef INET6
 	{ "inet6", AF_INET6, in6_status, in6_getaddr, in6_getprefix,
 	    SIOCDIFADDR_IN6, SIOCAIFADDR_IN6, C(in6_ridreq), C(in6_addreq) },
-#endif /* INET6 */
 	{ 0,	0,	    0,		0 }
 };
 
@@ -683,11 +671,10 @@ main(int argc, char *argv[])
 	}
 	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 
-#ifdef INET6
 	/* initialization */
 	in6_addreq.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
 	in6_addreq.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
-#endif /* INET6 */
+
 	/*
 	 * NOTE:  We must special-case the `create' command right
 	 * here as we would otherwise fail in getinfo().
@@ -702,10 +689,10 @@ main(int argc, char *argv[])
 		create = (argc > 0) && strcmp(argv[0], "destroy") != 0;
 		(void)getinfo(&ifr, create);
 	}
-#ifdef INET6
+
 	if (argc != 0 && af == AF_INET6)
 		addaf(name, AF_INET6);
-#endif
+
 	while (argc > 0) {
 		const struct cmd *p;
 
@@ -995,16 +982,13 @@ printif(char *ifname, int ifaliases)
 					continue;
 			}
 		}
-#ifdef INET6
 		/* quickhack: sizeof(ifr) < sizeof(ifr6) */
 		if (ifa->ifa_addr->sa_family == AF_INET6) {
 			memset(&ifr6, 0, sizeof(ifr6));
 			memcpy(&ifr6.ifr_addr, ifa->ifa_addr,
 			    MINIMUM(sizeof(ifr6.ifr_addr), ifa->ifa_addr->sa_len));
 			ifrp = (struct ifreq *)&ifr6;
-		} else
-#endif
-		{
+		} else {
 			memset(&ifr, 0, sizeof(ifr));
 			memcpy(&ifr.ifr_addr, ifa->ifa_addr,
 			    MINIMUM(sizeof(ifr.ifr_addr), ifa->ifa_addr->sa_len));
@@ -1297,7 +1281,6 @@ removeaf(const char *vname, int value)
 		warn("SIOCIFAFDETACH");
 }
 
-#ifdef INET6
 void
 setia6flags(const char *vname, int value)
 {
@@ -1356,9 +1339,9 @@ setia6eui64(const char *cmd, int val)
 
 	if (afp->af_af != AF_INET6)
 		errx(1, "%s not allowed for the AF", cmd);
-#ifdef INET6
+
 	addaf(name, AF_INET6);
-#endif
+
 	in6 = (struct in6_addr *)&in6_addreq.ifra_addr.sin6_addr;
 	if (memcmp(&in6addr_any.s6_addr[8], &in6->s6_addr[8], 8) != 0)
 		errx(1, "interface index is already filled");
@@ -1381,17 +1364,14 @@ setia6eui64(const char *cmd, int val)
 
 	freeifaddrs(ifap);
 }
-#endif /* INET6 */
 
 void
 setautoconf(const char *cmd, int val)
 {
 	switch (afp->af_af) {
-#ifdef INET6
 	case AF_INET6:
 		setifxflags("inet6", val * IFXF_AUTOCONF6);
 		break;
-#endif
 	default:
 		errx(1, "autoconf not allowed for this AF");
 	}
@@ -2831,26 +2811,20 @@ phys_status(int force)
 	(void) strlcpy(req.iflr_name, name, sizeof(req.iflr_name));
 	if (ioctl(s, SIOCGLIFPHYADDR, (caddr_t)&req) < 0)
 		return;
-#ifdef INET6
 	if (req.addr.ss_family == AF_INET6)
 		in6_fillscopeid((struct sockaddr_in6 *)&req.addr);
-#endif /* INET6 */
 	if (getnameinfo((struct sockaddr *)&req.addr, req.addr.ss_len,
 	    psrcaddr, sizeof(psrcaddr), 0, 0, niflag) != 0)
 		strlcpy(psrcaddr, "<error>", sizeof(psrcaddr));
-#ifdef INET6
 	if (req.addr.ss_family == AF_INET6)
 		ver = "6";
-#endif /* INET6 */
 
 	if (req.dstaddr.ss_family == AF_INET)
 		dstport = ((struct sockaddr_in *)&req.dstaddr)->sin_port;
-#ifdef INET6
 	else if (req.dstaddr.ss_family == AF_INET6) {
 		in6_fillscopeid((struct sockaddr_in6 *)&req.dstaddr);
 		dstport = ((struct sockaddr_in6 *)&req.dstaddr)->sin6_port;
 	}
-#endif /* INET6 */
 	if (getnameinfo((struct sockaddr *)&req.dstaddr, req.dstaddr.ss_len,
 	    pdstaddr, sizeof(pdstaddr), 0, 0, niflag) != 0)
 		strlcpy(pdstaddr, "<error>", sizeof(pdstaddr));
@@ -3162,7 +3136,6 @@ setifprefixlen(const char *addr, int d)
 	explicit_prefix = 1;
 }
 
-#ifdef INET6
 void
 in6_fillscopeid(struct sockaddr_in6 *sin6)
 {
@@ -3298,7 +3271,6 @@ in6_status(int force)
 {
 	in6_alias((struct in6_ifreq *)&ifr6);
 }
-#endif /*INET6*/
 
 #ifndef SMALL
 void
@@ -5026,7 +4998,6 @@ printb_status(unsigned short v, unsigned char *bits)
 	}
 }
 
-#ifdef INET6
 #define SIN6(x) ((struct sockaddr_in6 *) &(x))
 struct sockaddr_in6 *sin6tab[] = {
 SIN6(in6_ridreq.ifr_addr), SIN6(in6_addreq.ifra_addr),
@@ -5121,7 +5092,6 @@ prefix(void *val, int size)
 			return (0);
 	return (plen);
 }
-#endif /*INET6*/
 
 /* Print usage, exit(value) if value is non-zero. */
 void
@@ -5202,7 +5172,6 @@ printifhwfeatures(const char *unused, int show)
 }
 #endif
 
-#ifdef INET6
 char *
 sec2str(time_t total)
 {
@@ -5213,7 +5182,6 @@ sec2str(time_t total)
 	snprintf(p, end - p, "%lld", (long long)total);
 	return (result);
 }
-#endif /* INET6 */
 
 /*ARGSUSED*/
 void
