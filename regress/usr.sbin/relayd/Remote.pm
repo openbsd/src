@@ -1,4 +1,4 @@
-#	$OpenBSD: Remote.pm,v 1.6 2015/06/25 19:29:57 bluhm Exp $
+#	$OpenBSD: Remote.pm,v 1.7 2016/05/03 19:13:04 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -84,7 +84,7 @@ sub up {
 sub child {
 	my $self = shift;
 
-	my @opts = split(' ', $ENV{SSH_OPTIONS}) if $ENV{SSH_OPTIONS};
+	my @opts = $ENV{SSH_OPTIONS} ? split(' ', $ENV{SSH_OPTIONS}) : ();
 	my @sudo = $ENV{SUDO} ? "SUDO=$ENV{SUDO}" : ();
 	my @ktrace = $ENV{KTRACE} ? "KTRACE=$ENV{KTRACE}" : ();
 	my @relayd = $ENV{RELAYD} ? "RELAYD=$ENV{RELAYD}" : ();

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: httpd.pl,v 1.1 2015/07/16 16:35:57 reyk Exp $
+#	$OpenBSD: httpd.pl,v 1.2 2016/05/03 19:13:04 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -41,7 +41,8 @@ if (@ARGV and -f $ARGV[-1]) {
 my $redo = $args{lengths} && @{$args{lengths}};
 $redo = 0 if $args{client}{http_vers};  # run only one persistent connection
 my($sport, $rport) = find_ports(num => 2);
-my $d = Httpd->new(
+my($d, $c);
+$d = Httpd->new(
     chroot              => $ARGV[0],
     listendomain        => AF_INET,
     listenaddr          => "127.0.0.1",
@@ -52,7 +53,7 @@ my $d = Httpd->new(
     %{$args{httpd}},
     testfile            => $testfile,
 );
-my $c = Client->new(
+$c = Client->new(
     chroot              => $ARGV[0],
     func                => \&http_client,
     connectdomain       => AF_INET,

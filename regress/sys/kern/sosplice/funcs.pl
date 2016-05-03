@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.7 2014/08/18 21:51:45 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.8 2016/05/03 19:13:04 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -658,11 +658,12 @@ sub check_relay {
 sub check_len {
 	my ($c, $r, $s, %args) = @_;
 
-	my $clen = $c->loggrep(qr/^LEN: /) // die "no client len"
+	my ($clen, $rlen, $slen);
+	$clen = $c->loggrep(qr/^LEN: /) // die "no client len"
 	    unless $args{client}{nocheck};
-	my $rlen = $r->loggrep(qr/^LEN: /) // die "no relay len"
+	$rlen = $r->loggrep(qr/^LEN: /) // die "no relay len"
 	    if $r && ! $args{relay}{nocheck};
-	my $slen = $s->loggrep(qr/^LEN: /) // die "no server len"
+	$slen = $s->loggrep(qr/^LEN: /) // die "no server len"
 	    unless $args{server}{nocheck};
 	!$clen || !$rlen || $clen eq $rlen
 	    or die "client: $clen", "relay: $rlen", "len mismatch";
@@ -681,9 +682,10 @@ sub check_len {
 sub check_lengths {
 	my ($c, $r, $s, %args) = @_;
 
-	my $clengths = $c->loggrep(qr/^LENGTHS: /)
+	my ($clengths, $slengths);
+	$clengths = $c->loggrep(qr/^LENGTHS: /)
 	    unless $args{client}{nocheck};
-	my $slengths = $s->loggrep(qr/^LENGTHS: /)
+	$slengths = $s->loggrep(qr/^LENGTHS: /)
 	    unless $args{server}{nocheck};
 	!$clengths || !$slengths || $clengths eq $slengths
 	    or die "client: $clengths", "server: $slengths", "lengths mismatch";
@@ -698,8 +700,9 @@ sub check_lengths {
 sub check_md5 {
 	my ($c, $r, $s, %args) = @_;
 
-	my $cmd5 = $c->loggrep(qr/^MD5: /) unless $args{client}{nocheck};
-	my $smd5 = $s->loggrep(qr/^MD5: /) unless $args{server}{nocheck};
+	my ($cmd5, $smd5);
+	$cmd5 = $c->loggrep(qr/^MD5: /) unless $args{client}{nocheck};
+	$smd5 = $s->loggrep(qr/^MD5: /) unless $args{server}{nocheck};
 	!$cmd5 || !$smd5 || ref($args{md5}) eq 'ARRAY' || $cmd5 eq $smd5
 	    or die "client: $cmd5", "server: $smd5", "md5 mismatch";
 	my $md5 = ref($args{md5}) eq 'ARRAY' ?

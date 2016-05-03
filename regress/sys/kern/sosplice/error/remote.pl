@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.2 2014/08/18 22:58:19 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.3 2016/05/03 19:13:04 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -28,7 +28,7 @@ sub usage {
 
 my($remotessh, $testfile) = @ARGV;
 
-my @opts = split(' ', $ENV{SSH_OPTIONS}) if $ENV{SSH_OPTIONS};
+my @opts = $ENV{SSH_OPTIONS} ? split(' ', $ENV{SSH_OPTIONS}) : ();
 my $dir = dirname($0);
 $dir = getcwd() if ! $dir || $dir eq ".";
 my @cmd = ("ssh", "-n", @opts, $remotessh, "perl",

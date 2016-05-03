@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.7 2014/08/18 22:58:19 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.8 2016/05/03 19:13:04 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -56,7 +56,7 @@ my $mode =
 	@ARGV == 4 && $ARGV[1] !~ /^\d+$/ && $ARGV[3] !~ /^\d+$/ ? "auto"   :
 	usage();
 
-my $r;
+my($s, $r, $c);
 if ($mode eq "relay") {
 	my($rport) = find_ports(num => 1);
 	$r = Relayd->new(
@@ -98,7 +98,7 @@ if ($mode eq "relay") {
 
 my $redo = $args{lengths} && @{$args{lengths}};
 $redo = 0 if $args{client}{http_vers};  # run only one persistent connection
-my $s = Server->new(
+$s = Server->new(
     forward             => $ARGV[0],
     func                => \&read_char,
     redo                => $redo,
@@ -121,7 +121,7 @@ if ($mode eq "auto") {
 	);
 	$r->run->up;
 }
-my $c = Client->new(
+$c = Client->new(
     forward             => $ARGV[0],
     func                => \&write_char,
     %{$args{client}},

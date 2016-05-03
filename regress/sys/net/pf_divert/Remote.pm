@@ -1,4 +1,4 @@
-#	$OpenBSD: Remote.pm,v 1.5 2015/06/25 19:29:57 bluhm Exp $
+#	$OpenBSD: Remote.pm,v 1.6 2016/05/03 19:13:04 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -66,7 +66,7 @@ sub child {
 	my $self = shift;
 
 	print STDERR $self->{up}, "\n";
-	my @opts = split(' ', $ENV{SSH_OPTIONS}) if $ENV{SSH_OPTIONS};
+	my @opts = $ENV{SSH_OPTIONS} ? split(' ', $ENV{SSH_OPTIONS}) : ();
 	my @sudo = $ENV{SUDO} ? ($ENV{SUDO}, "SUDO=$ENV{SUDO}") : ();
 	my $dir = dirname($0);
 	$dir = getcwd() if ! $dir || $dir eq ".";

@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.5 2015/07/18 19:17:13 benno Exp $
+#	$OpenBSD: funcs.pl,v 1.6 2016/05/03 19:13:04 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -425,7 +425,8 @@ sub check_len {
 
 	$args{len} ||= 512 unless $args{lengths};
 
-	my @clen = $c->loggrep(qr/^LEN: /) or die "no client len"
+	my @clen;
+	@clen = $c->loggrep(qr/^LEN: /) or die "no client len"
 	    unless $args{client}{nocheck};
 #	!@clen
 #	    or die "client: @clen", "len mismatch";
@@ -445,7 +446,8 @@ sub check_len {
 sub check_md5 {
 	my ($c, $r, %args) = @_;
 
-	my @cmd5 = $c->loggrep(qr/^MD5: /) unless $args{client}{nocheck};
+	my @cmd5;
+	@cmd5 = $c->loggrep(qr/^MD5: /) unless $args{client}{nocheck};
 	my @md5 = ref($args{md5}) eq 'ARRAY' ? @{$args{md5}} : $args{md5} || ()
 	    or return;
 	foreach my $md5 (@md5) {
