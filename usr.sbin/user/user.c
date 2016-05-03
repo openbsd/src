@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.110 2016/05/02 15:25:03 millert Exp $ */
+/* $OpenBSD: user.c,v 1.111 2016/05/03 21:05:14 mestre Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1377,7 +1377,7 @@ is_local(char *name, const char *file)
 static int
 moduser(char *login_name, char *newlogin, user_t *up)
 {
-	struct passwd	*pwp;
+	struct passwd	*pwp = NULL;
 	struct group	*grp;
 	const char	*homedir;
 	char		buf[LINE_MAX];
@@ -1405,9 +1405,23 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	if (!valid_login(newlogin)) {
 		errx(EXIT_FAILURE, "`%s' is not a valid login name", login_name);
 	}
-	if ((pwp = getpwnam(login_name)) == NULL) {
+	if ((pwp = getpwnam_shadow(login_name)) == NULL) {
 		errx(EXIT_FAILURE, "No such user `%s'", login_name);
 	}
+	if (up != NULL) {
+		if ((*pwp->pw_passwd != '\0') && (up->u_flags &~ F_PASSWORD)) {
+			up->u_flags |= F_PASSWORD;
+			memsave(&up->u_password, pwp->pw_passwd,
+			    strlen(pwp->pw_passwd));
+			memset(pwp->pw_passwd, 'X', strlen(pwp->pw_passwd));
+		}
+	}
+	endpwent();
+
+	if (pledge("stdio rpath wpath cpath fattr flock proc exec getpw id",
+	    NULL) == -1)
+		err(1, "pledge");
+
 	if (!is_local(login_name, _PATH_MASTERPASSWD)) {
 		errx(EXIT_FAILURE, "User `%s' must be a local user", login_name);
 	}
@@ -1986,10 +2000,6 @@ usermod(int argc, char **argv)
 			usermgmt_usage("usermod");
 		}
 	}
-
-	if (pledge("stdio rpath wpath cpath fattr flock proc exec getpw id",
-	    NULL) == -1)
-		err(1, "pledge");
 
 	if ((u.u_flags & F_MKDIR) && !(u.u_flags & F_HOMEDIR) &&
 	    !(u.u_flags & F_USERNAME)) {
