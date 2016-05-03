@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
+# Copyright (c) 2015, 2016 Ingo Schwarze <schwarze@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -16,10 +16,26 @@
 
 test_fmt()
 {
-	expected=`echo -n "$3" ; echo .`
-	result=`echo -n "$2" | fmt $1 2>&1 ; echo .`
-	if [ "$result" != "$expected" ]; then
-		echo "fmt $1 \"$2\": expected \"$expected\", got \"$result\""
+	expect=`echo -n "$3" ; echo .`
+	result=`echo -n "$2" | LC_ALL=en_US.UTF-8 fmt $1 2>&1 ; echo .`
+	if [ "$result" != "$expect" ]; then
+		echo "LC_ALL=en_US.UTF-8 fmt $1 \"$2\":"
+		echo -n "$2" | hexdump -C
+		echo "expect: $expect"
+		echo -n "$expect" | hexdump -C
+		echo "result: $result"
+		echo -n "$result" | hexdump -C
+		exit 1
+	fi
+	[ -n "$4" ] && expect=`echo -n "$4" ; echo .`
+	result=`echo -n "$2" | LC_ALL=C fmt $1 2>&1 ; echo .`
+	if [ "$result" != "$expect" ]; then
+		echo "LC_ALL=C fmt $1 \"$2\":"
+		echo -n "$2" | hexdump -C
+		echo "expect: $expect"
+		echo -n "$expect" | hexdump -C
+		echo "result: $result"
+		echo -n "$result" | hexdump -C
 		exit 1
 	fi
 }
@@ -103,6 +119,10 @@ test_fmt "" "a \n" "a\n"
 test_fmt "" "a\t\n" "a\n"
 
 #utf-8
-test_fmt "14" "pöüöüöü üüp\n" "pöüöüöü üüp\n"
+test_fmt "14" \
+    "pöüöüöü üüp\n" \
+    "pöüöüöü üüp\n" \
+    "pöüöüöü\nüüp\n"
+
 
 exit 0
