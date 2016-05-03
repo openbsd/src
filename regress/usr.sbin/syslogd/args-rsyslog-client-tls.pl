@@ -20,7 +20,7 @@ our %args = (
 	connect => { domain => AF_INET, proto => "tls", addr => "127.0.0.1",
 	    port => 6514 },
 	loggrep => {
-	    get_testgrep() => 1,
+	    qr/omfile.* /.get_testgrep() => 1,
 	    qr/GnuTLS handshake succeeded/ => 1,
 	},
     },

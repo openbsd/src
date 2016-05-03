@@ -19,6 +19,9 @@ our %args = (
 	listen => { domain => AF_INET, proto => "udp", addr => "127.0.0.1" },
 	connect => { domain => AF_INET, proto => "udp", addr => "127.0.0.1",
 	    port => 514 },
+	loggrep => {
+	    qr/omfile.* /.get_testgrep() => 1,
+	},
     },
     syslogd => {
 	options => ["-U", "127.0.0.1:514"],
