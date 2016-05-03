@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.75 2016/04/29 16:49:53 mpi Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.76 2016/05/03 08:30:15 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -323,6 +323,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		gdt_alloc_cpu(ci);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_AP;
 		identifycpu(ci);
+		sched_init_cpu(ci);
 		ci->ci_next = cpu_info_list->ci_next;
 		cpu_info_list->ci_next = ci;
 		ncpus++;
@@ -499,7 +500,6 @@ cpu_boot_secondary_processors(void)
 			continue;
 		if (ci->ci_flags & (CPUF_BSP|CPUF_SP|CPUF_PRIMARY))
 			continue;
-		sched_init_cpu(ci);
 		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 		cpu_boot_secondary(ci);
 	}

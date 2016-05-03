@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.64 2016/04/29 16:49:53 mpi Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.65 2016/05/03 08:30:15 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -179,6 +179,8 @@ alloc_cpuinfo(struct mainbus_attach_args *ma)
 #endif
 	cpi->ci_self = cpi;
 	cpi->ci_node = ma->ma_node;
+
+	sched_init_cpu(cpi);
 
 	/*
 	 * Finally, add itself to the list of active cpus.
@@ -699,8 +701,6 @@ cpu_boot_secondary_processors(void)
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		if (ci->ci_upaid == cpu_myid())
 			continue;
-
-		sched_init_cpu(ci);
 		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 
 		if (CPU_ISSUN4V)
