@@ -36,7 +36,7 @@
 # makelist.sh: Automatically generate header files...
 
 AWK=awk
-USAGE="Usage: $0 -h|-fc|-fh|-bc|-bh <filenames>"
+USAGE="Usage: $0 -h|-fc|-fh|-bh <filenames>"
 
 if [ "x$1" = "x" ]
 then
@@ -76,14 +76,12 @@ case $FLAG in
 	}'
 	;;
 
-#	generate help.c from various .c files
+#	generate help.h from various .c files
 #
--bc)
+-bh)
     cat $FILES | $AWK '
 	BEGIN {
 	    printf("/* Automatically generated file, do not edit */\n");
-	    printf("#include \"config.h\"\n#include \"el.h\"\n");
-	    printf("#include \"help.h\"\n");
 	    printf("static const struct el_bindings_t el_func_help[] = {\n");
 	    low = "abcdefghijklmnopqrstuvwxyz_";
 	    high = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_";
@@ -119,21 +117,7 @@ case $FLAG in
 	}
 	END {
 	    printf("};\n");
-	    printf("\nprotected const el_bindings_t* help__get()");
-	    printf("{ return el_func_help; }\n");
 	}'
-	;;
-
-#	generate help.h from various .c files
-#
--bh)
-    $AWK '
-	BEGIN {
-	    printf("/* Automatically generated file, do not edit */\n");
-	    printf("#ifndef _h_help_c\n#define _h_help_c\n");
-	    printf("protected const el_bindings_t *help__get(void);\n");
-	    printf("#endif /* _h_help_c */\n");
-	}' /dev/null
 	;;
 
 #	generate fcns.h from various .h files

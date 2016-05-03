@@ -7,7 +7,6 @@
 #include "emacs.c"
 #include "fcns.c"
 #include "filecomplete.c"
-#include "help.c"
 #include "hist.c"
 #include "keymacro.c"
 #include "map.c"

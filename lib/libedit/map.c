@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.25 2016/04/18 20:13:07 schwarze Exp $	*/
+/*	$OpenBSD: map.c,v 1.26 2016/05/03 11:36:17 schwarze Exp $	*/
 /*	$NetBSD: map.c,v 1.25 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -915,7 +915,7 @@ map_init(EditLine *el)
 	    sizeof(el_bindings_t));
 	if (el->el_map.help == NULL)
 		return -1;
-	(void) memcpy(el->el_map.help, help__get(),
+	(void) memcpy(el->el_map.help, el_func_help,
 	    sizeof(el_bindings_t) * EL_NUM_FCNS);
 	el->el_map.func = reallocarray(NULL, EL_NUM_FCNS,
 	    sizeof(el_func_t));

@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.22 2016/05/03 11:19:30 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.23 2016/05/03 11:36:17 schwarze Exp $
 #	$NetBSD: Makefile,v 1.41 2010/02/03 15:34:43 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
 
-OSRCS=	chared.c common.c el.c eln.c emacs.c fcns.c filecomplete.c help.c \
+OSRCS=	chared.c common.c el.c eln.c emacs.c fcns.c filecomplete.c \
 	hist.c keymacro.c map.c chartype.c \
 	parse.c prompt.c read.c refresh.c search.c sig.c terminal.c tty.c vi.c
 
@@ -23,7 +23,8 @@ INCS= histedit.h
 INCSDIR=/usr/include
 
 CLEANFILES+=common.h.tmp emacs.h.tmp fcns.c.tmp fcns.h.tmp
-CLEANFILES+=help.c.tmp help.h.tmp vi.h.tmp tc1.o tc1 .depend
+CLEANFILES+=help.h.tmp vi.h.tmp tc1.o tc1 .depend
+
 CFLAGS+=-Wall
 CPPFLAGS+=-I. -I${LIBEDITDIR}
 CPPFLAGS+=-I. -I${.CURDIR}
@@ -33,12 +34,12 @@ CPPFLAGS+=-I. -I${.CURDIR}
 AHDR=vi.h emacs.h common.h
 ASRC=${LIBEDITDIR}/vi.c ${LIBEDITDIR}/emacs.c ${LIBEDITDIR}/common.c
 
-CLEANFILES+=	${AHDR} fcns.h help.h fcns.c help.c
+CLEANFILES+=	${AHDR} fcns.h help.h fcns.c
 
 #SUBDIR+=	readline
 HOST_SH=	sh
 
-.depend: ${AHDR} fcns.h help.h fcns.c help.c
+.depend: ${AHDR} fcns.h help.h fcns.c
 
 vi.h: vi.c makelist
 	${HOST_SH} ${LIBEDITDIR}/makelist -h ${LIBEDITDIR}/vi.c \
@@ -61,10 +62,6 @@ fcns.h: ${AHDR} makelist
 
 fcns.c: ${AHDR} fcns.h help.h makelist
 	${HOST_SH} ${LIBEDITDIR}/makelist -fc ${AHDR} > ${.TARGET}.tmp && \
-	    mv ${.TARGET}.tmp ${.TARGET}
-
-help.c: ${ASRC} makelist
-	${HOST_SH} ${LIBEDITDIR}/makelist -bc ${ASRC} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 help.h: ${ASRC} makelist
