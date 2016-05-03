@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.32 2015/12/22 19:51:04 mmcc Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.33 2016/05/03 07:38:38 natano Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -215,69 +215,20 @@ static __inline int
 bpf_open(pcap_t *p)
 {
 	int fd;
-	int n = 0;
-	char device[sizeof "/dev/bpf0000000000"];
 
-	/*
-	 * Go through all the minors and find one that isn't in use.
-	 */
-	do {
-		(void)snprintf(device, sizeof device, "/dev/bpf%d", n++);
-		fd = open(device, O_RDWR);
-		if (fd < 0 && errno == EACCES)
-			fd = open(device, O_RDONLY);
-	} while (fd < 0 && errno == EBUSY);
+	fd = open("/dev/bpf", O_RDWR);
+	if (fd == -1 && errno == EACCES)
+		fd = open("/dev/bpf", O_RDONLY);
 
-	/*
-	 * XXX better message for all minors used
-	 */
-	if (fd < 0) {
-		switch (errno) {
-
-		case ENOENT:
-			fd = PCAP_ERROR;
-			if (n == 1) {
-				/*
-				 * /dev/bpf0 doesn't exist, which
-				 * means we probably have no BPF
-				 * devices.
-				 */
-				snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
-				    "(there are no BPF devices)");
-			} else {
-				/*
-				 * We got EBUSY on at least one
-				 * BPF device, so we have BPF
-				 * devices, but all the ones
-				 * that exist are busy.
-				 */
-				snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
-				    "(all BPF devices are busy)");
-			}
-			break;
-
-		case EACCES:
-			/*
-			 * Got EACCES on the last device we tried,
-			 * and EBUSY on all devices before that,
-			 * if any.
-			 */
+	if (fd == -1) {
+		if (errno == EACCES)
 			fd = PCAP_ERROR_PERM_DENIED;
-			snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
-			    "(cannot open BPF device) %s: %s", device,
-			    pcap_strerror(errno));
-			break;
-
-		default:
-			/*
-			 * Some other problem.
-			 */
+		else
 			fd = PCAP_ERROR;
-			snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
-			    "(cannot open BPF device) %s: %s", device,
-			    pcap_strerror(errno));
-			break;
-		}
+
+		snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
+		    "(cannot open BPF device): %s",
+		    pcap_strerror(errno));
 	}
 
 	return (fd);
