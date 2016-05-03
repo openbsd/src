@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.274 2016/04/25 12:33:48 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.275 2016/05/03 12:19:13 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -126,8 +126,8 @@ static struct mbuf_queue	ipsend_mq;
 
 void	ip_ours(struct mbuf *);
 int	ip_dooptions(struct mbuf *, struct ifnet *);
-int	in_ouraddr(struct mbuf *, struct ifnet *, struct in_addr);
-void	ip_forward(struct mbuf *, struct ifnet *, int);
+int	in_ouraddr(struct mbuf *, struct ifnet *, struct rtentry **);
+void	ip_forward(struct mbuf *, struct ifnet *, struct rtentry *, int);
 #ifdef IPSEC
 int	ip_input_ipsec_fwd_check(struct mbuf *, int);
 int	ip_input_ipsec_ours_check(struct mbuf *, int);
@@ -223,8 +223,9 @@ ipintr(void)
 void
 ipv4_input(struct mbuf *m)
 {
-	struct ifnet *ifp;
-	struct ip *ip;
+	struct ifnet	*ifp;
+	struct rtentry	*rt = NULL;
+	struct ip	*ip;
 	int hlen, len;
 #if defined(MROUTING) || defined(IPSEC)
 	int rv;
@@ -341,7 +342,7 @@ ipv4_input(struct mbuf *m)
 	        goto out;
 	}
 
-	if (in_ouraddr(m, ifp, ip->ip_dst)) {
+	if (in_ouraddr(m, ifp, &rt)) {
 		ip_ours(m);
 		goto out;
 	}
@@ -443,12 +444,13 @@ ipv4_input(struct mbuf *m)
 	}
 #endif /* IPSEC */
 
-	ip_forward(m, ifp, pfrdr);
+	ip_forward(m, ifp, rt, pfrdr);
 	if_put(ifp);
 	return;
 bad:
 	m_freem(m);
 out:
+	rtfree(rt);
 	if_put(ifp);
 }
 
@@ -575,9 +577,10 @@ bad:
 }
 
 int
-in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct in_addr ina)
+in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct rtentry **prt)
 {
 	struct rtentry		*rt;
+	struct ip		*ip;
 	struct sockaddr_in	 sin;
 	int			 match = 0;
 #if NPF > 0
@@ -597,10 +600,12 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct in_addr ina)
 	}
 #endif
 
+	ip = mtod(m, struct ip *);
+
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
-	sin.sin_addr = ina;
+	sin.sin_addr = ip->ip_dst;
 	rt = rtalloc(sintosa(&sin), 0, m->m_pkthdr.ph_rtableid);
 	if (rtisvalid(rt)) {
 		if (ISSET(rt->rt_flags, RTF_LOCAL))
@@ -618,7 +623,7 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct in_addr ina)
 			m->m_flags |= M_BCAST;
 		}
 	}
-	rtfree(rt);
+	*prt = rt;
 
 	if (!match) {
 		struct ifaddr *ifa;
@@ -630,7 +635,7 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct in_addr ina)
 		 * address on the interface it was received on.
 		 */
 		if (!ISSET(m->m_flags, M_BCAST) ||
-		    !IN_CLASSFULBROADCAST(ina.s_addr, ina.s_addr))
+		    !IN_CLASSFULBROADCAST(ip->ip_dst.s_addr, ip->ip_dst.s_addr))
 			return (0);
 
 		if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.ph_rtableid))
@@ -645,7 +650,7 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct in_addr ina)
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 
-			if (IN_CLASSFULBROADCAST(ina.s_addr,
+			if (IN_CLASSFULBROADCAST(ip->ip_dst.s_addr,
 			    ifatoia(ifa)->ia_addr.sin_addr.s_addr)) {
 			    	match = 1;
 			    	break;
@@ -1241,7 +1246,7 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 	}
 	KERNEL_UNLOCK();
 	if (forward && ipforwarding) {
-		ip_forward(m, ifp, 1);
+		ip_forward(m, ifp, NULL, 1);
 		return (1);
 	}
 	return (0);
@@ -1387,12 +1392,11 @@ int inetctlerrmap[PRC_NCMDS] = {
  * via a source route.
  */
 void
-ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
+ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 {
 	struct mbuf mfake, *mcopy = NULL;
 	struct ip *ip = mtod(m, struct ip *);
 	struct sockaddr_in *sin;
-	struct rtentry *rt;
 	struct route ro;
 	int error, type = 0, code = 0, destmtu = 0, fake = 0, len;
 	u_int32_t dest;
@@ -1401,13 +1405,12 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
 	if (m->m_flags & (M_BCAST|M_MCAST) || in_canforward(ip->ip_dst) == 0) {
 		ipstat.ips_cantforward++;
 		m_freem(m);
-		return;
+		goto freecopy;
 	}
 	if (ip->ip_ttl <= IPTTLDEC) {
 		icmp_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, dest, 0);
-		return;
+		goto freecopy;
 	}
-
 
 	sin = satosin(&ro.ro_dst);
 	memset(sin, 0, sizeof(*sin));
@@ -1415,11 +1418,14 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
 	sin->sin_len = sizeof(*sin);
 	sin->sin_addr = ip->ip_dst;
 
-	rt = rtalloc_mpath(sintosa(sin), &ip->ip_src.s_addr,
-	    m->m_pkthdr.ph_rtableid);
-	if (rt == NULL) {
-		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, dest, 0);
-		return;
+	if (!rtisvalid(rt)) {
+		rtfree(rt);
+		rt = rtalloc_mpath(sintosa(sin), &ip->ip_src.s_addr,
+		    m->m_pkthdr.ph_rtableid);
+		if (rt == NULL) {
+			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, dest, 0);
+			return;
+		}
 	}
 
 	/*
