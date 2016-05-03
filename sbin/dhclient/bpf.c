@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.38 2016/02/06 19:30:52 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.39 2016/05/03 07:47:26 natano Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -64,8 +64,6 @@
 #include "dhcp.h"
 #include "dhcpd.h"
 
-#define BPF_FORMAT "/dev/bpf%d"
-
 int if_register_bpf(void);
 
 /*
@@ -76,29 +74,17 @@ int if_register_bpf(void);
 int
 if_register_bpf(void)
 {
-	char filename[50];
 	struct ifreq ifr;
-	int sock, b;
+	int sock;
 
-	/* Open a BPF device */
-	for (b = 0; 1; b++) {
-		snprintf(filename, sizeof(filename), BPF_FORMAT, b);
-		sock = open(filename, O_RDWR | O_CLOEXEC, 0);
-		if (sock < 0) {
-			if (errno == EBUSY)
-				continue;
-			else
-				error("Can't find free bpf: %s",
-				    strerror(errno));
-		} else
-			break;
-	}
+	if ((sock = open("/dev/bpf", O_RDWR | O_CLOEXEC)) == -1)
+		error("Can't open bpf: %s", strerror(errno));
 
 	/* Set the BPF device to point at this interface. */
 	strlcpy(ifr.ifr_name, ifi->name, IFNAMSIZ);
 	if (ioctl(sock, BIOCSETIF, &ifr) < 0)
-		error("Can't attach interface %s to %s: %s",
-		    ifi->name, filename, strerror(errno));
+		error("Can't attach interface %s to /dev/bpf: %s",
+		    ifi->name, strerror(errno));
 
 	return (sock);
 }
