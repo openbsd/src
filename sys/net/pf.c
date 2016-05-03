@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.969 2016/04/15 02:54:17 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.970 2016/05/03 12:13:38 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6570,13 +6570,10 @@ done:
 		 * deal with IP tunnels.
 		 */
 		if (pd.m->m_pkthdr.pf.statekey != NULL) {
-			printf("WARNING incoming mbuf already has a statekey:");
 #ifdef DDB
 			m_print(pd.m, printf);
-#else
-			printf("%p\n", pd.m);
 #endif
-			pf_pkt_unlink_state_key(pd.m);
+			panic("incoming mbuf already has a statekey");
 		}
 		pd.m->m_pkthdr.pf.statekey =
 		    pf_state_key_ref(s->key[PF_SK_STACK]);
