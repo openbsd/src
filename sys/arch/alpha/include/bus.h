@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.29 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: bus.h,v 1.30 2016/05/03 11:22:08 dlg Exp $	*/
 /*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
@@ -260,6 +260,15 @@ struct alpha_bus_space {
 
 
 /*
+ * Bus read (single) operations.
+ */
+#define	bus_space_read_raw_1(t, h, o)	__abs_rs(1,(t),(h),(o))
+#define	bus_space_read_raw_2(t, h, o)	__abs_rs(2,(t),(h),(o))
+#define	bus_space_read_raw_4(t, h, o)	__abs_rs(4,(t),(h),(o))
+#define	bus_space_read_raw_8(t, h, o)	__abs_rs(8,(t),(h),(o))
+
+
+/*
  * Bus read multiple operations.
  */
 #define	bus_space_read_multi_1(t, h, o, a, c)				\
@@ -327,6 +336,15 @@ struct alpha_bus_space {
 #define	bus_space_write_2(t, h, o, v)	__abs_ws(2,(t),(h),(o),(v))
 #define	bus_space_write_4(t, h, o, v)	__abs_ws(4,(t),(h),(o),(v))
 #define	bus_space_write_8(t, h, o, v)	__abs_ws(8,(t),(h),(o),(v))
+
+
+/*
+ * Bus write raw (single) operations.
+ */
+#define	bus_space_write_raw_1(t, h, o, v)	__abs_ws(1,(t),(h),(o),(v))
+#define	bus_space_write_raw_2(t, h, o, v)	__abs_ws(2,(t),(h),(o),(v))
+#define	bus_space_write_raw_4(t, h, o, v)	__abs_ws(4,(t),(h),(o),(v))
+#define	bus_space_write_raw_8(t, h, o, v)	__abs_ws(8,(t),(h),(o),(v))
 
 
 /*
