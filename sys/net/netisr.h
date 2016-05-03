@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.44 2016/01/08 13:53:24 mpi Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.45 2016/05/03 14:52:39 mpi Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -61,7 +61,12 @@
 
 #ifndef _LOCORE
 #ifdef _KERNEL
+
+#include <sys/task.h>
+#include <sys/atomic.h>
+
 extern int	netisr;			/* scheduling bits for network */
+extern struct task if_input_task_locked;
 
 void	ipintr(void);
 void	ip6intr(void);
@@ -70,16 +75,11 @@ void	bridgeintr(void);
 void	pppoeintr(void);
 void	pfsyncintr(void);
 
-#include <machine/atomic.h>
-
-extern void *netisr_intr;
 #define	schednetisr(anisr)						\
 do {									\
 	atomic_setbits_int(&netisr, (1 << (anisr)));			\
-	softintr_schedule(netisr_intr);					\
+	task_add(softnettq, &if_input_task_locked);			\
 } while (/* CONSTCOND */0)
-
-void	netisr_init(void);
 
 #endif /* _KERNEL */
 #endif /*_LOCORE */

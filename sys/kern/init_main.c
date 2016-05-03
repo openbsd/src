@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.249 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.250 2016/05/03 14:52:39 mpi Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -394,7 +394,6 @@ main(void *framep)
 	 * until everything is ready.
 	 */
 	s = splnet();
-	netisr_init();
 	domaininit();
 	splx(s);
 

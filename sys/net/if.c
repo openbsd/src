@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.429 2016/03/16 12:08:09 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.430 2016/05/03 14:52:39 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -64,9 +64,12 @@
 #include "bpfilter.h"
 #include "bridge.h"
 #include "carp.h"
-#include "pf.h"
-#include "trunk.h"
 #include "ether.h"
+#include "pf.h"
+#include "pfsync.h"
+#include "ppp.h"
+#include "pppoe.h"
+#include "trunk.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +151,7 @@ int	if_group_egress_build(void);
 void	if_watchdog_task(void *);
 
 void	if_input_process(void *);
+void	if_netisr(void *);
 
 #ifdef DDB
 void	ifa_print_all(void);
@@ -216,13 +220,15 @@ void	net_tick(void *);
 int	net_livelocked(void);
 int	ifq_congestion;
 
-struct taskq *softnettq;
+int		 netisr;
+struct taskq	*softnettq;
+
+struct mbuf_queue if_input_queue = MBUF_QUEUE_INITIALIZER(8192, IPL_NET);
+struct task if_input_task = TASK_INITIALIZER(if_input_process, &if_input_queue);
+struct task if_input_task_locked = TASK_INITIALIZER(if_netisr, NULL);
 
 /*
  * Network interface utility routines.
- *
- * Routines with ifa_ifwith* names take sockaddr *'s as
- * parameters.
  */
 void
 ifinit(void)
@@ -590,9 +596,6 @@ if_enqueue(struct ifnet *ifp, struct mbuf *m)
 	return (0);
 }
 
-struct mbuf_queue if_input_queue = MBUF_QUEUE_INITIALIZER(8192, IPL_NET);
-struct task if_input_task = TASK_INITIALIZER(if_input_process, &if_input_queue);
-
 void
 if_input(struct ifnet *ifp, struct mbuf_list *ml)
 {
@@ -803,6 +806,50 @@ if_input_process(void *xmq)
 		if_put(ifp);
 	}
 	splx(s);
+}
+
+void
+if_netisr(void *unused)
+{
+	int n, t = 0;
+	int s;
+
+	KERNEL_LOCK();
+	s = splsoftnet();
+
+	while ((n = netisr) != 0) {
+		sched_pause();
+
+		atomic_clearbits_int(&netisr, n);
+
+		if (n & (1 << NETISR_IP))
+			ipintr();
+#ifdef INET6
+		if (n & (1 << NETISR_IPV6))
+			ip6intr();
+#endif
+#if NPPP > 0
+		if (n & (1 << NETISR_PPP))
+			pppintr();
+#endif
+#if NBRIDGE > 0
+		if (n & (1 << NETISR_BRIDGE))
+			bridgeintr();
+#endif
+#if NPPPOE > 0
+		if (n & (1 << NETISR_PPPOE))
+			pppoeintr();
+#endif
+		t |= n;
+	}
+
+#if NPFSYNC > 0
+	if (t & (1 << NETISR_PFSYNC))
+		pfsyncintr();
+#endif
+
+	splx(s);
+	KERNEL_UNLOCK();
 }
 
 void
