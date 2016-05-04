@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getfiles.3,v 1.18 2016/04/25 20:42:55 tedu Exp $
+.\"	$OpenBSD: kvm_getfiles.3,v 1.19 2016/05/04 01:32:04 zhuk Exp $
 .\"	$NetBSD: kvm_getfiles.3,v 1.3 1996/03/18 22:33:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_getfiles.3	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: April 25 2016 $
+.Dd $Mdocdate: May 4 2016 $
 .Dt KVM_GETFILES 3
 .Os
 .Sh NAME
@@ -105,7 +105,7 @@ the kernel will only return the requested amount of data for
 each array entry and programs that use
 .Fn kvm_getfiles
 will continue to function without the need for recompilation.
-.Pp
+.Sh RETURN VALUES
 The files are returned as a contiguous array of
 .Vt kinfo_file
 structures.
@@ -116,11 +116,26 @@ This memory is owned by kvm and will be overwritten by subsequent calls to
 and destroyed by
 .Fn kvm_close .
 Data should be copied out if it needs to be saved.
-.Sh RETURN VALUES
+.Pp
 .Fn kvm_getfiles
 will return
 .Dv NULL
 on failure.
+.Sh ERRORS
+.Fn kvm_getfiles
+will fail if:
+.Bl -tag -width Er
+.It Bq Er ENOMEM
+Could not allocate enough memory for internal buffer.
+.It Bq Er ESRCH
+The
+.Fa op
+argument has
+.Dv KERN_FILE_BYPID
+value and the process specified by
+.Fa arg
+was not found.
+.El
 .Sh SEE ALSO
 .Xr kvm 3 ,
 .Xr kvm_geterr 3 ,
