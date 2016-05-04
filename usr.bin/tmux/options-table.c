@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.72 2016/04/29 15:00:48 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.73 2016/05/04 21:29:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -699,7 +699,8 @@ const struct options_table_entry options_table[] = {
 	{ .name = "pane-border-format",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .default_str = "#{?pane_active,#[reverse],}#{pane_index}#[default] \"#{pane_title}\""
+	  .default_str = "#{?pane_active,#[reverse],}#{pane_index}#[default] "
+	                 "\"#{pane_title}\""
 	},
 
 	{ .name = "pane-border-status",
