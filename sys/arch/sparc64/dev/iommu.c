@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.72 2015/01/09 14:23:25 kettenis Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.73 2016/05/04 18:26:12 kettenis Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -194,6 +194,13 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, u_int32_t iovabase)
 	}
 	pmap_update(pmap_kernel());
 	memset(is->is_tsb, 0, size);
+
+	TAILQ_INIT(&mlist);
+	if (uvm_pglistalloc(PAGE_SIZE, 0, -1, PAGE_SIZE, 0, &mlist, 1,
+	    UVM_PLA_NOWAIT | UVM_PLA_ZERO) != 0)
+		panic("%s: no memory", __func__);
+	m = TAILQ_FIRST(&mlist);
+	is->is_scratch = VM_PAGE_TO_PHYS(m);
 
 #ifdef DEBUG
 	if (iommudebug & IDB_INFO) {
@@ -734,6 +741,13 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 			}
 		}
 	}
+	if (flags & BUS_DMA_OVERRUN) {
+		err = iommu_iomap_insert_page(ims, is->is_scratch);
+		if (err) {
+			iommu_iomap_clear_pages(ims);
+			return (EFBIG);
+		}
+	}
 	sgsize = ims->ims_map.ipm_pagecnt * PAGE_SIZE;
 
 	mtx_enter(&is->is_mtx);
@@ -939,6 +953,13 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 			}
 
 			left -= seg_len;
+		}
+	}
+	if (flags & BUS_DMA_OVERRUN) {
+		err = iommu_iomap_insert_page(ims, is->is_scratch);
+		if (err) {
+			iommu_iomap_clear_pages(ims);
+			return (EFBIG);
 		}
 	}
 	sgsize = ims->ims_map.ipm_pagecnt * PAGE_SIZE;

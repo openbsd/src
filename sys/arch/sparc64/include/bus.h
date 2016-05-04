@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.29 2013/05/13 17:46:42 kettenis Exp $	*/
+/*	$OpenBSD: bus.h,v 1.30 2016/05/04 18:26:12 kettenis Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -356,19 +356,20 @@ bus_space_barrier(t, h, o, s, f)
 /*
  * Flags used in various bus DMA methods.
  */
-#define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
-#define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */
-#define	BUS_DMA_ALLOCNOW	0x002	/* perform resource allocation now */
-#define	BUS_DMA_COHERENT	0x004	/* hint: map memory DMA coherent */
-#define	BUS_DMA_NOWRITE		0x008	/* I suppose the following two should default on */
-#define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
-#define	BUS_DMA_BUS2		0x020
-#define	BUS_DMA_BUS3		0x040
-#define	BUS_DMA_BUS4		0x080
-#define	BUS_DMA_STREAMING	0x100	/* hint: sequential, unidirectional */
-#define	BUS_DMA_READ		0x200	/* mapping is device -> memory only */
-#define	BUS_DMA_WRITE		0x400	/* mapping is memory -> device only */
-#define	BUS_DMA_ZERO		0x800	/* zero memory in dmamem_alloc */
+#define	BUS_DMA_WAITOK		0x0000	/* safe to sleep (pseudo-flag) */
+#define	BUS_DMA_NOWAIT		0x0001	/* not safe to sleep */
+#define	BUS_DMA_ALLOCNOW	0x0002	/* perform resource allocation now */
+#define	BUS_DMA_COHERENT	0x0004	/* hint: map memory DMA coherent */
+#define	BUS_DMA_NOWRITE		0x0008	/* I suppose the following two should default on */
+#define	BUS_DMA_BUS1		0x0010	/* placeholders for bus functions... */
+#define	BUS_DMA_BUS2		0x0020
+#define	BUS_DMA_BUS3		0x0040
+#define	BUS_DMA_BUS4		0x0080
+#define	BUS_DMA_STREAMING	0x0100	/* hint: sequential, unidirectional */
+#define	BUS_DMA_READ		0x0200	/* mapping is device -> memory only */
+#define	BUS_DMA_WRITE		0x0400	/* mapping is memory -> device only */
+#define	BUS_DMA_ZERO		0x0800	/* zero memory in dmamem_alloc */
+#define BUS_DMA_OVERRUN		0x1000  /* tolerate DMA overruns */
 
 #define	BUS_DMA_NOCACHE		BUS_DMA_BUS1
 #define	BUS_DMA_DVMA		BUS_DMA_BUS2	/* Don't bother with alignment */

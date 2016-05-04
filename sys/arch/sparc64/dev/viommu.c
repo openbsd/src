@@ -1,4 +1,4 @@
-/*	$OpenBSD: viommu.c,v 1.16 2015/01/09 14:23:25 kettenis Exp $	*/
+/*	$OpenBSD: viommu.c,v 1.17 2016/05/04 18:26:12 kettenis Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -106,6 +106,9 @@ void
 viommu_init(char *name, struct iommu_state *is, int tsbsize,
     u_int32_t iovabase)
 {
+	struct vm_page *m;
+	struct pglist mlist;
+
 	/*
 	 * Setup the iommu.
 	 *
@@ -120,6 +123,13 @@ viommu_init(char *name, struct iommu_state *is, int tsbsize,
 		is->is_dvmabase = iovabase;
 		is->is_dvmaend = iovabase + IOTSB_VSIZE(tsbsize) - 1;
 	}
+
+	TAILQ_INIT(&mlist);
+	if (uvm_pglistalloc(PAGE_SIZE, 0, -1, PAGE_SIZE, 0, &mlist, 1,
+	    UVM_PLA_NOWAIT | UVM_PLA_ZERO) != 0)
+		panic("%s: no memory", __func__);
+	m = TAILQ_FIRST(&mlist);
+	is->is_scratch = VM_PAGE_TO_PHYS(m);
 
 	/*
 	 * Allocate a dvma map.
@@ -341,6 +351,13 @@ viommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 			}
 		}
 	}
+	if (flags & BUS_DMA_OVERRUN) {
+		err = iommu_iomap_insert_page(ims, is->is_scratch);
+		if (err) {
+			iommu_iomap_clear_pages(ims);
+			return (EFBIG);
+		}
+	}
 	sgsize = ims->ims_map.ipm_pagecnt * PAGE_SIZE;
 
 	mtx_enter(&is->is_mtx);
@@ -522,6 +539,13 @@ viommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 			}
 
 			left -= seg_len;
+		}
+	}
+	if (flags & BUS_DMA_OVERRUN) {
+		err = iommu_iomap_insert_page(ims, is->is_scratch);
+		if (err) {
+			iommu_iomap_clear_pages(ims);
+			return (EFBIG);
 		}
 	}
 	sgsize = ims->ims_map.ipm_pagecnt * PAGE_SIZE;
