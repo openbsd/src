@@ -1,4 +1,4 @@
-/* $OpenBSD: a_d2i_fp.c,v 1.13 2016/05/04 14:53:29 tedu Exp $ */
+/* $OpenBSD: a_d2i_fp.c,v 1.14 2016/05/04 14:58:09 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -144,6 +144,7 @@ ASN1_item_d2i_fp(const ASN1_ITEM *it, FILE *in, void *x)
 }
 
 #define HEADER_SIZE   8
+#define ASN1_CHUNK_INITIAL_SIZE (16 * 1024)
 static int
 asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 {
@@ -167,18 +168,22 @@ asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 		if (want >= (len - off)) {
 			want -= (len - off);
 
-			if (len + want < len || !BUF_MEM_grow_clean(b, len + want)) {
-				ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ERR_R_MALLOC_FAILURE);
+			if (len + want < len ||
+			    !BUF_MEM_grow_clean(b, len + want)) {
+				ASN1err(ASN1_F_ASN1_D2I_READ_BIO,
+				    ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
 			i = BIO_read(in, &(b->data[len]), want);
 			if ((i < 0) && ((len - off) == 0)) {
-				ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ASN1_R_NOT_ENOUGH_DATA);
+				ASN1err(ASN1_F_ASN1_D2I_READ_BIO,
+				    ASN1_R_NOT_ENOUGH_DATA);
 				goto err;
 			}
 			if (i > 0) {
 				if (len + i < len) {
-					ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ASN1_R_TOO_LONG);
+					ASN1err(ASN1_F_ASN1_D2I_READ_BIO,
+					    ASN1_R_TOO_LONG);
 					goto err;
 				}
 				len += i;
@@ -206,7 +211,8 @@ asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 			/* no data body so go round again */
 			eos++;
 			if (eos < 0) {
-				ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ASN1_R_HEADER_TOO_LONG);
+				ASN1err(ASN1_F_ASN1_D2I_READ_BIO,
+				    ASN1_R_HEADER_TOO_LONG);
 				goto err;
 			}
 			want = HEADER_SIZE;
@@ -221,28 +227,45 @@ asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 			/* suck in c.slen bytes of data */
 			want = c.slen;
 			if (want > (len - off)) {
+				size_t chunk_max = ASN1_CHUNK_INITIAL_SIZE;
+
 				want -= (len - off);
 				if (want > INT_MAX /* BIO_read takes an int length */ ||
 				    len+want < len) {
-					ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ASN1_R_TOO_LONG);
+					ASN1err(ASN1_F_ASN1_D2I_READ_BIO,
+					    ASN1_R_TOO_LONG);
 					goto err;
 				}
-				if (!BUF_MEM_grow_clean(b, len + want)) {
-					ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ERR_R_MALLOC_FAILURE);
+				/*
+				 * Read content in chunks of increasing size
+				 * so we can return an error for EOF without
+				 * having to allocate the entire content length
+				 * in one go.
+				 */
+				size_t chunk = want > chunk_max ? chunk_max : want;
+
+				if (!BUF_MEM_grow_clean(b, len + chunk)) {
+					ASN1err(ASN1_F_ASN1_D2I_READ_BIO,
+					    ERR_R_MALLOC_FAILURE);
 					goto err;
 				}
-				while (want > 0) {
-					i = BIO_read(in, &(b->data[len]), want);
+				want -= chunk;
+				while (chunk > 0) {
+					i = BIO_read(in, &(b->data[len]), chunk);
 					if (i <= 0) {
 						ASN1err(ASN1_F_ASN1_D2I_READ_BIO,
 						    ASN1_R_NOT_ENOUGH_DATA);
 						goto err;
 					}
-					/* This can't overflow because
-					 * |len+want| didn't overflow. */
+					/*
+					 * This can't overflow because |len+want|
+					 * didn't overflow.
+					 */
 					len += i;
-					want -= i;
+					chunk -= i;
 				}
+				if (chunk_max < INT_MAX/2)
+					chunk_max *= 2;
 			}
 			if (off + c.slen < off) {
 				ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ASN1_R_TOO_LONG);
