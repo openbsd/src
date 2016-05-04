@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.11 2016/05/04 14:53:29 tedu Exp $ */
+/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.12 2016/05/04 15:01:33 tedu Exp $ */
 /* ====================================================================
  * Copyright (c) 2011-2013 The OpenSSL Project.  All rights reserved.
  *
@@ -60,6 +60,7 @@
 #include <openssl/aes.h>
 #include <openssl/sha.h>
 #include "evp_locl.h"
+#include "constant_time_locl.h"
 
 #ifndef EVP_CIPH_FLAG_AEAD_CIPHER
 #define EVP_CIPH_FLAG_AEAD_CIPHER	0x200000
@@ -281,6 +282,8 @@ aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			maxpad = len - (SHA_DIGEST_LENGTH + 1);
 			maxpad |= (255 - maxpad) >> (sizeof(maxpad) * 8 - 8);
 			maxpad &= 255;
+
+			ret &= constant_time_ge(maxpad, pad);
 
 			inp_len = len - (SHA_DIGEST_LENGTH + pad + 1);
 			mask = (0 - ((inp_len - len) >>
