@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.27 2015/06/04 18:01:44 kettenis Exp $	*/
+/*	$OpenBSD: smu.c,v 1.28 2016/05/04 08:20:58 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -280,9 +280,12 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 		if (OF_getprop(node, "max-value", &val, sizeof val) <= 0)
 			val = 0xffff;
 		fan->max_rpm = val;
-		if (OF_getprop(node, "unmanage-value", &val, sizeof val) <= 0)
-			val = fan->max_rpm;
-		fan->unmanaged_rpm = val;
+		if (OF_getprop(node, "unmanage-value", &val, sizeof val) > 0)
+			fan->unmanaged_rpm = val;
+		else if (OF_getprop(node, "safe-value", &val, sizeof val) > 0)
+			fan->unmanaged_rpm = val;
+		else
+			fan->unmanaged_rpm = fan->max_rpm;
 
 		if (OF_getprop(node, "location", loc, sizeof loc) <= 0)
 			strlcpy(loc, "Unknown", sizeof loc);
