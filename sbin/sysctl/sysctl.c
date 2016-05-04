@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.212 2016/02/29 19:44:07 naddy Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.213 2016/05/04 19:48:08 jca Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -72,13 +72,11 @@
 #include <net/if_pfsync.h>
 #include <net/pipex.h>
 
-#ifdef INET6
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/pim6_var.h>
 #include <netinet6/ip6_divert.h>
-#endif
 
 #include <netmpls/mpls.h>
 
@@ -189,9 +187,7 @@ void parse_baddynamic(int *, size_t, char *, void **, size_t *, int, int);
 void usage(void);
 int findname(char *, char *, char **, struct list *);
 int sysctl_inet(char *, char **, int *, int, int *);
-#ifdef INET6
 int sysctl_inet6(char *, char **, int *, int, int *);
-#endif
 int sysctl_bpf(char *, char **, int *, int, int *);
 int sysctl_mpls(char *, char **, int *, int, int *);
 int sysctl_pipex(char *, char **, int *, int, int *);
@@ -565,7 +561,6 @@ parse(char *string, int flags)
 			}
 			break;
 		}
-#ifdef INET6
 		if (mib[1] == PF_INET6) {
 			len = sysctl_inet6(string, &bufp, mib, flags, &type);
 			if (len < 0)
@@ -583,7 +578,6 @@ parse(char *string, int flags)
 			}
 			break;
 		}
-#endif
 		if (mib[1] == PF_BPF) {
 			len = sysctl_bpf(string, &bufp, mib, flags, &type);
 			if (len < 0)
@@ -2018,7 +2012,6 @@ sysctl_inet(char *string, char **bufpp, int mib[], int flags, int *typep)
 	return (4);
 }
 
-#ifdef INET6
 struct ctlname inet6name[] = CTL_IPV6PROTO_NAMES;
 struct ctlname ip6name[] = IPV6CTL_NAMES;
 struct ctlname icmp6name[] = ICMPV6CTL_NAMES;
@@ -2155,7 +2148,6 @@ sysctl_inet6(char *string, char **bufpp, int mib[], int flags, int *typep)
 	}
 	return (4);
 }
-#endif
 
 /* handle bpf requests */
 int

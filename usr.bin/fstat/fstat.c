@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.87 2016/04/25 19:18:41 tedu Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.88 2016/05/04 19:48:08 jca Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -115,9 +115,7 @@ struct kinfo_file *splice_find(char, u_int64_t);
 void splice_insert(char, u_int64_t, struct kinfo_file *);
 void find_splices(struct kinfo_file *, int);
 void print_inet_details(struct kinfo_file *);
-#ifdef INET6
 void print_inet6_details(struct kinfo_file *);
-#endif
 void print_sock_details(struct kinfo_file *);
 void socktrans(struct kinfo_file *);
 void vtrans(struct kinfo_file *);
@@ -534,7 +532,6 @@ kqueuetrans(struct kinfo_file *kf)
 	return;
 }
 
-#ifdef INET6
 const char *
 inet6_addrstr(struct in6_addr *p)
 {
@@ -559,7 +556,6 @@ inet6_addrstr(struct in6_addr *p)
 
 	return hbuf;
 }
-#endif
 
 void
 splice_insert(char type, u_int64_t ptr, struct kinfo_file *data)
@@ -643,7 +639,6 @@ print_inet_details(struct kinfo_file *kf)
 	}
 }
 
-#ifdef INET6
 void
 print_inet6_details(struct kinfo_file *kf)
 {
@@ -689,17 +684,14 @@ print_inet6_details(struct kinfo_file *kf)
 		hide((void *)(uintptr_t)kf->so_pcb);
 	}
 }
-#endif
 
 void
 print_sock_details(struct kinfo_file *kf)
 {
 	if (kf->so_family == AF_INET)
 		print_inet_details(kf);
-#ifdef INET6
 	else if (kf->so_family == AF_INET6)
 		print_inet6_details(kf);
-#endif
 }
 
 void
@@ -742,13 +734,11 @@ socktrans(struct kinfo_file *kf)
 		getinetproto(kf->so_protocol);
 		print_inet_details(kf);
 		break;
-#ifdef INET6
 	case AF_INET6:
 		printf("* internet6 %s", stype);
 		getinetproto(kf->so_protocol);
 		print_inet6_details(kf);
 		break;
-#endif
 	case AF_UNIX:
 		/* print address of pcb and connected pcb */
 		printf("* unix %s", stype);
