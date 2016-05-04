@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytgpio.c,v 1.7 2016/05/03 22:17:57 kettenis Exp $	*/
+/*	$OpenBSD: bytgpio.c,v 1.8 2016/05/04 08:30:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -29,6 +29,7 @@
 #define BYTGPIO_CONF_GD_TPE	0x02000000
 #define BYTGPIO_CONF_GD_TNE	0x04000000
 #define BYTGPIO_CONF_GD_MASK	0x07000000
+#define BYTGPIO_CONF_DIRECT_IRQ_EN	0x08000000
 
 #define BYTGPIO_PAD_VAL		0x00000001
 
@@ -199,6 +200,14 @@ bytgpio_attach(struct device *parent, struct device *self, void *aux)
 	/* Mask all interrupts. */
 	for (i = 0; i < sc->sc_npins; i++) {
 		reg = bus_space_read_4(sc->sc_memt, sc->sc_memh, sc->sc_pins[i] * 16);
+
+		/*
+		 * Skip pins configured as direct IRQ.  Those are tied
+		 * directly to the APIC.
+		 */
+		if (reg & BYTGPIO_CONF_DIRECT_IRQ_EN)
+			continue;
+
 		reg &= ~BYTGPIO_CONF_GD_MASK;
 		bus_space_write_4(sc->sc_memt, sc->sc_memh, sc->sc_pins[i] * 16, reg);
 	}
