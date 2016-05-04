@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.48 2015/06/02 15:26:19 mpi Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.49 2016/05/04 14:30:00 kettenis Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -592,6 +592,21 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PCIE_SLCSR_LACS	0x01000000
 #define PCI_PCIE_RCSR		0x1c
 #define PCI_PCIE_LCAP2		0x2c
+
+/*
+ * Extended Message Signaled Interrups; access via capability pointer.
+ */
+#define PCI_MSIX_MC_MSIXE	0x80000000
+#define PCI_MSIX_MC_TBLSZ	0x000007ff
+#define PCI_MSIX_TABLE		0x04
+#define  PCI_MSIX_TABLE_BIR	0x00000007
+#define  PCI_MSIX_TABLE_OFF	~(PCI_MSIX_TABLE_BIR)
+
+#define PCI_MSIX_MA(i)		((i) * 16 + 0)
+#define PCI_MSIX_MAU32(i)	((i) * 16 + 0)
+#define PCI_MSIX_MD(i)		((i) * 16 + 8)
+#define PCI_MSIX_VC(i)		((i) * 16 + 12)
+#define  PCI_MSIX_VC_MASK	0x00000001
 
 /*
  * Interrupt Configuration Register; contains interrupt pin and line.

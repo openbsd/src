@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.7 2013/11/05 10:12:35 mpi Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.8 2016/05/04 14:30:01 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -104,6 +104,7 @@ static inline void pci_conf_write_db(void * c, pcitag_t t, int r, pcireg_t v,
 #define	pci_intr_map(c, ihp)				\
     (*(c)->pa_pc->pc_intr_map)((c), (ihp))
 #define	pci_intr_map_msi(c, ihp)	(-1)
+#define	pci_intr_map_msix(c, vec, ihp)	(-1)
 #define	pci_intr_string(c, ih)						\
     (*(c)->pc_intr_string)((c)->pc_intr_v, (ih))
 #define	pci_intr_establish(c, ih, l, h, a, nm)				\

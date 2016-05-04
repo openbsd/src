@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.9 2014/03/27 22:16:03 miod Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.10 2016/05/04 14:30:01 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -76,6 +76,7 @@ struct mips_pci_chipset {
 #define	pci_intr_map(c, ihp)				\
     (*(c)->pa_pc->pc_intr_map)((c), (ihp))
 #define	pci_intr_map_msi(c, ihp)	(-1)
+#define	pci_intr_map_msix(c, vec, ihp)	(-1)
 #define	pci_intr_string(c, ih)						\
     (*(c)->pc_intr_string)((c)->pc_intr_v, (ih))
 #define	pci_intr_establish(c, ih, l, h, a, nm)				\

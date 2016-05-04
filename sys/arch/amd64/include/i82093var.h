@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093var.h,v 1.4 2011/05/21 15:58:27 kettenis Exp $	*/
+/*	$OpenBSD: i82093var.h,v 1.5 2016/05/04 14:30:00 kettenis Exp $	*/
 /* $NetBSD: i82093var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $ */
 
 /*-
@@ -70,6 +70,7 @@ struct ioapic_softc {
 
 #define APIC_INT_VIA_APIC	0x10000000
 #define APIC_INT_VIA_MSG	0x20000000
+#define APIC_INT_VIA_MSGX	0x40000000
 #define APIC_INT_APIC_MASK	0x00ff0000
 #define APIC_INT_APIC_SHIFT	16
 #define APIC_INT_PIN_MASK	0x0000ff00

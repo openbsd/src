@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.62 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.63 2016/05/04 14:30:00 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -395,6 +395,143 @@ pci_intr_map_msi(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	return 0;
 }
 
+void msix_hwmask(struct pic *, int);
+void msix_hwunmask(struct pic *, int);
+void msix_addroute(struct pic *, struct cpu_info *, int, int, int);
+void msix_delroute(struct pic *, struct cpu_info *, int, int, int);
+
+struct pic msix_pic = {
+	{0, {NULL}, NULL, 0, "msix", NULL, 0, 0},
+	PIC_MSI,
+#ifdef MULTIPROCESSOR
+	{},
+#endif
+	msix_hwmask,
+	msix_hwunmask,
+	msix_addroute,
+	msix_delroute,
+	NULL,
+	ioapic_edge_stubs
+};
+
+/*
+ * We pack the MSI-X vector number into the lower 8 bits of the PCI
+ * tag and use that as the MSI-X "PIC" pin number.  This allows us to
+ * address 256 MSI-X vectors which ought to be enough for anybody.
+ */
+#define PCI_MSIX_VEC_MASK	0xff
+#define PCI_MSIX_VEC(pin)	((pin) & PCI_MSIX_VEC_MASK)
+#define PCI_MSIX_TAG(pin)	((pin) & ~PCI_MSIX_VEC_MASK)
+#define PCI_MSIX_PIN(tag, vec)	((tag) | (vec))
+
+void
+msix_hwmask(struct pic *pic, int pin)
+{
+}
+
+void
+msix_hwunmask(struct pic *pic, int pin)
+{
+}
+
+void
+msix_addroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
+{
+	pci_chipset_tag_t pc = NULL; /* XXX */
+	bus_space_tag_t memt = X86_BUS_SPACE_MEM; /* XXX */
+	bus_space_handle_t memh;
+	bus_addr_t base;
+	pcitag_t tag = PCI_MSIX_TAG(pin);
+	int entry = PCI_MSIX_VEC(pin);
+	pcireg_t reg, addr, table;
+	uint32_t ctrl;
+	int bir, offset;
+	int off, tblsz;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, &reg) == 0)
+		panic("%s: no msix capability", __func__);
+
+	addr = 0xfee00000UL | (ci->ci_apicid << 12);
+
+	table = pci_conf_read(pc, tag, off + PCI_MSIX_TABLE);
+	bir = (table & PCI_MSIX_TABLE_BIR);
+	offset = (table & PCI_MSIX_TABLE_OFF);
+	tblsz = (reg & PCI_MSIX_MC_TBLSZ) + 1;
+
+	bir = PCI_MAPREG_START + bir * 4;
+	if (pci_mem_find(pc, tag, bir, &base, NULL, NULL) ||
+	    _bus_space_map(memt, base + offset, tblsz * 16, 0, &memh))
+		panic("%s: cannot map registers", __func__);
+
+	bus_space_write_8(memt, memh, PCI_MSIX_MA(entry), addr);
+	bus_space_write_4(memt, memh, PCI_MSIX_MD(entry), vec);
+	bus_space_barrier(memt, memh, PCI_MSIX_MA(entry), 16,
+	    BUS_SPACE_BARRIER_WRITE);
+	ctrl = bus_space_read_4(memt, memh, PCI_MSIX_VC(entry));
+	bus_space_write_4(memt, memh, PCI_MSIX_VC(entry),
+	    ctrl & ~PCI_MSIX_VC_MASK);
+
+	_bus_space_unmap(memt, memh, tblsz * 16, NULL);
+
+	pci_conf_write(pc, tag, off, reg | PCI_MSIX_MC_MSIXE);
+}
+
+void
+msix_delroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
+{
+	pci_chipset_tag_t pc = NULL; /* XXX */
+	bus_space_tag_t memt = X86_BUS_SPACE_MEM; /* XXX */
+	bus_space_handle_t memh;
+	bus_addr_t base;
+	pcitag_t tag = PCI_MSIX_TAG(pin);
+	int entry = PCI_MSIX_VEC(pin);
+	pcireg_t reg, table;
+	uint32_t ctrl;
+	int bir, offset;
+	int off, tblsz;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, &reg) == 0)
+		return;
+
+	table = pci_conf_read(pc, tag, off + PCI_MSIX_TABLE);
+	bir = (table & PCI_MSIX_TABLE_BIR);
+	offset = (table & PCI_MSIX_TABLE_OFF);
+	tblsz = (reg & PCI_MSIX_MC_TBLSZ) + 1;
+
+	bir = PCI_MAPREG_START + bir * 4;
+	if (pci_mem_find(pc, tag, bir, &base, NULL, NULL) ||
+	    _bus_space_map(memt, base + offset, tblsz * 16, 0, &memh))
+		panic("%s: cannot map registers", __func__);
+
+	ctrl = bus_space_read_4(memt, memh, PCI_MSIX_VC(entry));
+	bus_space_write_4(memt, memh, PCI_MSIX_VC(entry),
+	    ctrl | PCI_MSIX_VC_MASK);
+
+	_bus_space_unmap(memt, memh, tblsz * 16, NULL);
+}
+
+int
+pci_intr_map_msix(struct pci_attach_args *pa, int vec, pci_intr_handle_t *ihp)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+	pcireg_t reg;
+
+	KASSERT(PCI_MSIX_VEC(vec) == vec);
+
+	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 || mp_busses == NULL ||
+	    pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, NULL) == 0)
+		return 1;
+
+	if (vec > (reg & PCI_MSIX_MC_TBLSZ))
+		return 1;
+
+	ihp->tag = PCI_MSIX_PIN(tag, vec);
+	ihp->line = APIC_INT_VIA_MSGX;
+	ihp->pin = 0;
+	return 0;
+}
+
 int
 pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
@@ -527,6 +664,8 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 
 	if (ih.line & APIC_INT_VIA_MSG)
 		return ("msi");
+	if (ih.line & APIC_INT_VIA_MSGX)
+		return ("msix");
 
 #if NIOAPIC > 0
 	if (ih.line & APIC_INT_VIA_APIC)
@@ -557,6 +696,10 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 
 	if (ih.line & APIC_INT_VIA_MSG) {
 		return intr_establish(-1, &msi_pic, tag, IST_PULSE, level,
+		    func, arg, what);
+	}
+	if (ih.line & APIC_INT_VIA_MSGX) {
+		return intr_establish(-1, &msix_pic, tag, IST_PULSE, level,
 		    func, arg, what);
 	}
 
