@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.31 2016/05/04 14:53:29 tedu Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.32 2016/05/04 15:00:24 tedu Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -861,9 +861,7 @@ asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
 		break;
 
 	case V_ASN1_INTEGER:
-	case V_ASN1_NEG_INTEGER:
 	case V_ASN1_ENUMERATED:
-	case V_ASN1_NEG_ENUMERATED:
 		tint = (ASN1_INTEGER **)pval;
 		if (!c2i_ASN1_INTEGER(tint, &cont, len))
 			goto err;
