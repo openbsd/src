@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh_api.c,v 1.6 2016/05/02 10:26:04 djm Exp $ */
+/* $OpenBSD: ssh_api.c,v 1.7 2016/05/04 14:22:33 markus Exp $ */
 /*
  * Copyright (c) 2012 Markus Friedl.  All rights reserved.
  *
@@ -15,14 +15,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ssh1.h" /* For SSH_MSG_NONE */
 #include "ssh_api.h"
 #include "compat.h"
 #include "log.h"
 #include "authfile.h"
 #include "sshkey.h"
 #include "misc.h"
-#include "ssh1.h"
 #include "ssh2.h"
 #include "version.h"
 #include "myproposal.h"
