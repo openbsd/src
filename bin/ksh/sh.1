@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.132 2016/05/04 06:20:42 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.133 2016/05/04 08:31:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -1380,7 +1380,7 @@ greater than, and greater than or equal to, respectively.
 The result is 1 if true, or 0 otherwise.
 .It == !=
 Equal (the result is 1 if both arguments are equal, and 0 otherwise)
-and not equal (the result is 1 if both arguments are non-zero, and 0 otherwise),
+and not equal (the result is 0 if both arguments are equal, and 1 otherwise),
 respectively.
 .It &
 Bitwise AND.
