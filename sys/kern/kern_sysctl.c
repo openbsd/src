@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.301 2016/04/25 20:00:33 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.302 2016/05/04 01:28:42 zhuk Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1218,7 +1218,7 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 	struct process *pr;
 	size_t buflen, elem_size, elem_count, outsize;
 	char *dp = where;
-	int arg, i, error = 0, needed = 0;
+	int arg, i, error = 0, needed = 0, matched;
 	u_int op;
 	int show_pointers;
 
@@ -1318,6 +1318,7 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 			error = EINVAL;
 			break;
 		}
+		matched = 0;
 		LIST_FOREACH(pr, &allprocess, ps_list) {
 			/*
 			 * skip system, exiting, embryonic and undead
@@ -1329,6 +1330,7 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 				/* not the pid we are looking for */
 				continue;
 			}
+			matched = 1;
 			fdp = pr->ps_fd;
 			if (pr->ps_textvp)
 				FILLIT(NULL, NULL, KERN_FILE_TEXT, pr->ps_textvp, pr);
@@ -1346,6 +1348,8 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 				FILLIT(fp, fdp, i, NULL, pr);
 			}
 		}
+		if (!matched)
+			error = ESRCH;
 		break;
 	case KERN_FILE_BYUID:
 		LIST_FOREACH(pr, &allprocess, ps_list) {
