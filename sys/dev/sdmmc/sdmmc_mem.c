@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.26 2016/05/01 18:29:44 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.27 2016/05/04 09:30:06 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -27,6 +27,10 @@
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcreg.h>
 #include <dev/sdmmc/sdmmcvar.h>
+
+typedef struct { uint32_t _bits[512/32]; } __packed __aligned(4) sdmmc_bitfield512_t;
+
+void	sdmmc_be512_to_bitfield512(sdmmc_bitfield512_t *);
 
 int	sdmmc_decode_csd(struct sdmmc_softc *, sdmmc_response,
 	    struct sdmmc_function *);
@@ -269,7 +273,7 @@ sdmmc_decode_csd(struct sdmmc_softc *sc, sdmmc_response resp,
 			return 1;
 			break;
 		}
-
+		csd->ccc = SD_CSD_CCC(resp);
 	} else {
 		csd->csdver = MMC_CSD_CSDVER(resp);
 		if (csd->csdver == MMC_CSD_CSDVER_1_0 ||
@@ -364,9 +368,8 @@ sdmmc_mem_send_scr(struct sdmmc_softc *sc, uint32_t *scr)
 	cmd.c_opcode = SD_APP_SEND_SCR;
 
 	error = sdmmc_app_command(sc, &cmd);
-	if (error == 0) {
+	if (error == 0)
 		memcpy(scr, ptr, datalen);
-	}
 
 out:
 	if (ptr != NULL)
@@ -475,6 +478,53 @@ sdmmc_set_bus_width(struct sdmmc_function *sf, int width)
 }
 
 int
+sdmmc_mem_sd_switch(struct sdmmc_function *sf, int mode, int group,
+    int function, sdmmc_bitfield512_t *status)
+{
+	struct sdmmc_softc *sc = sf->sc;
+	struct sdmmc_command cmd;
+	void *ptr = NULL;
+	int gsft, error = 0;
+	const int statlen = 64;
+
+	if (sf->scr.sd_spec >= SCR_SD_SPEC_VER_1_10 &&
+	    !ISSET(sf->csd.ccc, SD_CSD_CCC_SWITCH))
+		return EINVAL;
+
+	if (group <= 0 || group > 6 ||
+	    function < 0 || function > 15)
+		return EINVAL;
+
+	gsft = (group - 1) << 2;
+
+	ptr = malloc(statlen, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (ptr == NULL)
+		goto out;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.c_data = ptr;
+	cmd.c_datalen = statlen;
+	cmd.c_blklen = statlen;
+	cmd.c_opcode = SD_SEND_SWITCH_FUNC;
+	cmd.c_arg =
+	    (!!mode << 31) | (function << gsft) | (0x00ffffff & ~(0xf << gsft));
+	cmd.c_flags = SCF_CMD_ADTC | SCF_CMD_READ | SCF_RSP_R1;
+
+	error = sdmmc_mmc_command(sc, &cmd);
+	if (error == 0)
+		memcpy(status, ptr, statlen);
+
+out:
+	if (ptr != NULL)
+		free(ptr, M_DEVBUF, statlen);
+
+	if (error == 0)
+		sdmmc_be512_to_bitfield512(status);
+
+	return error;
+}
+
+int
 sdmmc_mem_mmc_switch(struct sdmmc_function *sf, uint8_t set, uint8_t index,
     uint8_t value)
 {
@@ -512,11 +562,26 @@ sdmmc_mem_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	return error;
 }
 
+/* make 512-bit BE quantity __bitfield()-compatible */
+void
+sdmmc_be512_to_bitfield512(sdmmc_bitfield512_t *buf) {
+	size_t i;
+	uint32_t tmp0, tmp1;
+	const size_t bitswords = nitems(buf->_bits);
+	for (i = 0; i < bitswords/2; i++) {
+		tmp0 = buf->_bits[i];
+		tmp1 = buf->_bits[bitswords - 1 - i];
+		buf->_bits[i] = be32toh(tmp1);
+		buf->_bits[bitswords - 1 - i] = be32toh(tmp0);
+	}
+}
+
 int
 sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
+	int support_func, best_func, bus_clock, error;
+	sdmmc_bitfield512_t status; /* Switch Function Status */
 	uint32_t raw_scr[2];
-	int error;
 
 	error = sdmmc_mem_send_scr(sc, raw_scr);
 	if (error) {
@@ -535,6 +600,47 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			printf("%s: can't change bus width\n", DEVNAME(sc));
 			return error;
 		}
+	}
+
+	best_func = 0;
+	bus_clock = 25000;
+	if (sf->scr.sd_spec >= SCR_SD_SPEC_VER_1_10 &&
+	    ISSET(sf->csd.ccc, SD_CSD_CCC_SWITCH)) {
+		DPRINTF(("%s: switch func mode 0\n", DEVNAME(sc)));
+		error = sdmmc_mem_sd_switch(sf, 0, 1, 0, &status);
+		if (error) {
+			printf("%s: switch func mode 0 failed\n", DEVNAME(sc));
+			return error;
+		}
+
+		support_func = SFUNC_STATUS_GROUP(&status, 1);
+
+		if (support_func & (1 << SD_ACCESS_MODE_SDR25))
+			best_func = 1;
+
+		if (best_func != 0) {
+			DPRINTF(("%s: switch func mode 1(func=%d)\n",
+			    DEVNAME(sc), best_func));
+			error =
+			    sdmmc_mem_sd_switch(sf, 1, 1, best_func, &status);
+			if (error) {
+				printf("%s: switch func mode 1 failed:"
+				    " group 1 function %d(0x%2x)\n",
+				    DEVNAME(sc), best_func, support_func);
+				return error;
+			}
+			bus_clock = 50000;
+
+			/* Wait 400KHz x 8 clock (2.5us * 8 + slop) */
+			delay(25);
+		}
+	}
+
+	/* change bus clock */
+	error = sdmmc_chip_bus_clock(sc->sct, sc->sch, bus_clock);
+	if (error) {
+		printf("%s: can't change bus clock\n", DEVNAME(sc));
+		return error;
 	}
 
 	return 0;

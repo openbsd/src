@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.42 2016/05/01 22:07:42 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.43 2016/05/04 09:30:06 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -437,11 +437,6 @@ sdmmc_enable(struct sdmmc_softc *sc)
 	if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
 	    (error = sdmmc_mem_enable(sc)) != 0)
 		goto err;
-
-	/* XXX respect host and card capabilities */
-	if (ISSET(sc->sc_flags, SMF_SD_MODE))
-		(void)sdmmc_chip_bus_clock(sc->sct, sc->sch,
-		    SDMMC_SDCLK_25MHZ);
 
  err:
 	if (error != 0)

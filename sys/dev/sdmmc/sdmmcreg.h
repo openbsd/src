@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcreg.h,v 1.9 2016/05/01 16:04:39 kettenis Exp $	*/
+/*	$OpenBSD: sdmmcreg.h,v 1.10 2016/05/04 09:30:06 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -40,6 +40,7 @@
 
 /* SD commands */				/* response type */
 #define SD_SEND_RELATIVE_ADDR		3	/* R6 */
+#define SD_SEND_SWITCH_FUNC		6	/* R1 */
 #define SD_SEND_IF_COND			8	/* R7 */
 
 /* SD application commands */			/* response type */
@@ -187,7 +188,15 @@
 #define  SD_CSD_SPEED_25_MHZ		0x32
 #define  SD_CSD_SPEED_50_MHZ		0x5a
 #define SD_CSD_CCC(resp)		MMC_RSP_BITS((resp), 84, 12)
-#define  SD_CSD_CCC_ALL			0x5f5
+#define  SD_CSD_CCC_BASIC		(1 << 0)	/* basic */
+#define  SD_CSD_CCC_BR			(1 << 2)	/* block read */
+#define  SD_CSD_CCC_BW			(1 << 4)	/* block write */
+#define  SD_CSD_CCC_ERACE		(1 << 5)	/* erase */
+#define  SD_CSD_CCC_WP			(1 << 6)	/* write protection */
+#define  SD_CSD_CCC_LC			(1 << 7)	/* lock card */
+#define  SD_CSD_CCC_AS			(1 << 8)	/*application specific*/
+#define  SD_CSD_CCC_IOM			(1 << 9)	/* I/O mode */
+#define  SD_CSD_CCC_SWITCH		(1 << 10)	/* switch */
 #define SD_CSD_READ_BL_LEN(resp)	MMC_RSP_BITS((resp), 80, 4)
 #define SD_CSD_READ_BL_PARTIAL(resp)	MMC_RSP_BITS((resp), 79, 1)
 #define SD_CSD_WRITE_BLK_MISALIGN(resp)	MMC_RSP_BITS((resp), 78, 1)
@@ -259,6 +268,16 @@
 #define SCR_CMD_SUPPORT_CMD23(scr)	MMC_RSP_BITS((scr), 33, 1)
 #define SCR_CMD_SUPPORT_CMD20(scr)	MMC_RSP_BITS((scr), 32, 1)
 #define SCR_RESERVED2(scr)		MMC_RSP_BITS((scr), 0, 32)
+
+/* Status of Switch Function */
+#define SFUNC_STATUS_GROUP(status, group) \
+	(__bitfield((uint32_t *)(status), 400 + (group - 1) * 16, 16))
+
+#define SD_ACCESS_MODE_SDR12	0
+#define SD_ACCESS_MODE_SDR25	1
+#define SD_ACCESS_MODE_SDR50	2
+#define SD_ACCESS_MODE_SDR104	3
+#define SD_ACCESS_MODE_DDR50	4
 
 /* Might be slow, but it should work on big and little endian systems. */
 #define MMC_RSP_BITS(resp, start, len)	__bitfield((resp), (start)-8, (len))
