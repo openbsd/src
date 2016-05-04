@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.28 2016/05/03 12:38:53 tedu Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.29 2016/05/04 14:53:29 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -334,7 +334,7 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		return 0;
 	}
 	if (i != 0) {
-		if (bl - i > inl) {
+		if (i + inl < bl) {
 			memcpy(&(ctx->buf[i]), in, inl);
 			ctx->buf_len += inl;
 			*outl = 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: a_type.c,v 1.17 2016/05/03 12:38:53 tedu Exp $ */
+/* $OpenBSD: a_type.c,v 1.18 2016/05/04 14:53:29 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,7 +127,9 @@ ASN1_TYPE_cmp(ASN1_TYPE *a, ASN1_TYPE *b)
 		break;
 
 	case V_ASN1_INTEGER:
+	case V_ASN1_NEG_INTEGER:
 	case V_ASN1_ENUMERATED:
+	case V_ASN1_NEG_ENUMERATED:
 	case V_ASN1_BIT_STRING:
 	case V_ASN1_OCTET_STRING:
 	case V_ASN1_SEQUENCE:
