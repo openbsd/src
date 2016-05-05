@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.32 2016/04/20 19:34:32 martijn Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.33 2016/05/05 20:36:41 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -32,7 +32,6 @@
 #include "cl.h"
 
 GS *__global_list;				/* GLOBAL: List of screens. */
-sigset_t __sigblockset;				/* GLOBAL: Blocked signals. */
 
 static void	   cl_func_std(GS *);
 static CL_PRIVATE *cl_init(GS *);
@@ -262,19 +261,12 @@ sig_init(GS *gp, SCR *sp)
 	clp = GCLP(gp);
 
 	if (sp == NULL) {
-		(void)sigemptyset(&__sigblockset);
-		if (sigaddset(&__sigblockset, SIGHUP) ||
-		    setsig(SIGHUP, &clp->oact[INDX_HUP], h_hup) ||
-		    sigaddset(&__sigblockset, SIGINT) ||
+		if (setsig(SIGHUP, &clp->oact[INDX_HUP], h_hup) ||
 		    setsig(SIGINT, &clp->oact[INDX_INT], h_int) ||
-		    sigaddset(&__sigblockset, SIGTERM) ||
 		    setsig(SIGTERM, &clp->oact[INDX_TERM], h_term) ||
-		    sigaddset(&__sigblockset, SIGWINCH) ||
 		    setsig(SIGWINCH, &clp->oact[INDX_WINCH], h_winch)
-		    ) {
+		    )
 			err(1, NULL);
-			return (1);
-		}
 	} else
 		if (setsig(SIGHUP, NULL, h_hup) ||
 		    setsig(SIGINT, NULL, h_int) ||
