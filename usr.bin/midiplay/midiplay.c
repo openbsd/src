@@ -1,4 +1,4 @@
-/*	$OpenBSD: midiplay.c,v 1.17 2015/02/08 23:40:34 deraadt Exp $	*/
+/*	$OpenBSD: midiplay.c,v 1.18 2016/05/05 09:18:12 ratchov Exp $	*/
 /*	$NetBSD: midiplay.c,v 1.8 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -312,7 +312,7 @@ playdata(u_char *buf, u_int tot, char *name)
 			goto ret;
 		}
 		len = GET32(p + MARK_LEN);
-		if (len > 1000000) { /* a safe guard */
+		if (len > end - (p + MARK_LEN + SIZE_LEN)) {
 			warnx("Crazy track length");
 			goto ret;
 		}
