@@ -18,6 +18,7 @@
 ./usr/include/arm/disklabel.h
 ./usr/include/arm/endian.h
 ./usr/include/arm/exec.h
+./usr/include/arm/fdt.h
 ./usr/include/arm/fenv.h
 ./usr/include/arm/fiq.h
 ./usr/include/arm/fp.h
@@ -69,6 +70,7 @@
 ./usr/include/armv7/elf_abi.h
 ./usr/include/armv7/endian.h
 ./usr/include/armv7/exec.h
+./usr/include/armv7/fdt.h
 ./usr/include/armv7/fenv.h
 ./usr/include/armv7/fp.h
 ./usr/include/armv7/frame.h
