@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.477 2016/04/27 14:49:11 ajacoutot Exp $
+#	$OpenBSD: rc,v 1.478 2016/05/05 21:52:16 sthen Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -378,7 +378,9 @@ mount -s /var >/dev/null 2>&1
 
 random_seed
 
+echo -n 're-ordering libraries:'
 rebuildlibs
+echo ' done.'
 
 # Clean up left-over files.
 rm -f /etc/nologin /var/spool/lock/LCK.* /var/spool/uucp/STST/*
