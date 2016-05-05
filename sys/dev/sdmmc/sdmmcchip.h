@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcchip.h,v 1.8 2016/05/05 11:01:08 kettenis Exp $	*/
+/*	$OpenBSD: sdmmcchip.h,v 1.9 2016/05/05 20:40:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -82,6 +82,7 @@ struct sdmmc_chip_functions {
 #define SDMMC_SDCLK_OFF		0
 #define SDMMC_SDCLK_400KHZ	400
 #define SDMMC_SDCLK_25MHZ	25000
+#define SDMMC_SDCLK_50MHZ	50000
 
 /* voltage levels for sdmmc_chip_signal_voltage() */
 #define SDMMC_SIGNAL_VOLTAGE_330	0

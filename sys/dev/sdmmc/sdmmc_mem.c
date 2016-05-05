@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.28 2016/05/05 11:01:08 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.29 2016/05/05 20:40:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -579,9 +579,23 @@ sdmmc_be512_to_bitfield512(sdmmc_bitfield512_t *buf) {
 int
 sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
-	int support_func, best_func, bus_clock, timing, error;
+	int support_func, best_func, error;
 	sdmmc_bitfield512_t status; /* Switch Function Status */
 	uint32_t raw_scr[2];
+
+	/*
+	 * All SD cards are supposed to support Default Speed mode
+	 * with frequencies up to 25 MHz.  Bump up the clock frequency
+	 * now as data transfers don't seem to work on the Realtek
+	 * RTS5229 host controller if it is running at a low clock
+	 * frequency.  Reading the SCR requires a data transfer.
+	 */
+	error = sdmmc_chip_bus_clock(sc->sct, sc->sch, SDMMC_SDCLK_25MHZ,
+	    SDMMC_TIMING_LEGACY);
+	if (error) {
+		printf("%s: can't change bus clock\n", DEVNAME(sc));
+		return error;
+	}
 
 	error = sdmmc_mem_send_scr(sc, raw_scr);
 	if (error) {
@@ -603,8 +617,6 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	}
 
 	best_func = 0;
-	bus_clock = 25000;
-	timing = SDMMC_TIMING_LEGACY;
 	if (sf->scr.sd_spec >= SCR_SD_SPEC_VER_1_10 &&
 	    ISSET(sf->csd.ccc, SD_CSD_CCC_SWITCH)) {
 		DPRINTF(("%s: switch func mode 0\n", DEVNAME(sc)));
@@ -618,31 +630,30 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 		if (support_func & (1 << SD_ACCESS_MODE_SDR25))
 			best_func = 1;
-
-		if (best_func != 0) {
-			DPRINTF(("%s: switch func mode 1(func=%d)\n",
-			    DEVNAME(sc), best_func));
-			error =
-			    sdmmc_mem_sd_switch(sf, 1, 1, best_func, &status);
-			if (error) {
-				printf("%s: switch func mode 1 failed:"
-				    " group 1 function %d(0x%2x)\n",
-				    DEVNAME(sc), best_func, support_func);
-				return error;
-			}
-			bus_clock = 50000;
-			timing = SDMMC_TIMING_HIGHSPEED;
-
-			/* Wait 400KHz x 8 clock (2.5us * 8 + slop) */
-			delay(25);
-		}
 	}
 
-	/* change bus clock */
-	error = sdmmc_chip_bus_clock(sc->sct, sc->sch, bus_clock, timing);
-	if (error) {
-		printf("%s: can't change bus clock\n", DEVNAME(sc));
-		return error;
+	if (best_func != 0) {
+		DPRINTF(("%s: switch func mode 1(func=%d)\n",
+		    DEVNAME(sc), best_func));
+		error =
+		    sdmmc_mem_sd_switch(sf, 1, 1, best_func, &status);
+		if (error) {
+			printf("%s: switch func mode 1 failed:"
+			    " group 1 function %d(0x%2x)\n",
+			    DEVNAME(sc), best_func, support_func);
+			return error;
+		}
+
+		/* Wait 400KHz x 8 clock (2.5us * 8 + slop) */
+		delay(25);
+
+		/* High Speed mode, Frequency up to 50MHz. */
+		error = sdmmc_chip_bus_clock(sc->sct, sc->sch,
+		    SDMMC_SDCLK_50MHZ, SDMMC_TIMING_HIGHSPEED);
+		if (error) {
+			printf("%s: can't change bus clock\n", DEVNAME(sc));
+			return error;
+		}
 	}
 
 	return 0;
