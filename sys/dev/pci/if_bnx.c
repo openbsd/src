@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.121 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.122 2016/05/05 23:01:28 jmatthew Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -2417,7 +2417,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	 */
 	for (i = 0; i < TOTAL_TX_BD; i++) {
 		if (bus_dmamap_create(sc->bnx_dmatag,
-		    MCLBYTES * BNX_MAX_SEGMENTS, USABLE_TX_BD,
+		    MCLBYTES * BNX_MAX_SEGMENTS, BNX_MAX_SEGMENTS,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT, &sc->tx_mbuf_map[i])) {
 			printf(": Could not create Tx mbuf %d DMA map!\n", 1);
 			rc = ENOMEM;
@@ -4892,7 +4892,8 @@ bnx_start(struct ifnet *ifp)
 	 */
 	used = 0;
 	while (1) {
-		if (sc->used_tx_bd + used + BNX_MAX_SEGMENTS >= sc->max_tx_bd) {
+		if (sc->used_tx_bd + used + BNX_MAX_SEGMENTS + 1 >=
+		    sc->max_tx_bd) {
 			DBPRINT(sc, BNX_INFO_SEND, "TX chain is closed for "
 			    "business! Total tx_bd used = %d\n",
 			    sc->used_tx_bd + used);
