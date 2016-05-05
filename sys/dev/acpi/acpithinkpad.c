@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.51 2016/01/10 16:30:43 stsp Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.52 2016/05/05 05:12:49 jsg Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -631,6 +631,10 @@ thinkpad_get_backlight(struct wskbd_backlight *kbl)
 	kbl->min = 0;
 	kbl->max = (sc->sc_thinklight >> 8) & 0x0f;
 	kbl->curval = sc->sc_thinklight & 0x0f;
+
+	if (kbl->max == 0)
+		return (ENOTTY);
+
 	return 0;
 }
 
@@ -641,6 +645,9 @@ thinkpad_set_backlight(struct wskbd_backlight *kbl)
 	int maxval = (sc->sc_thinklight >> 8) & 0x0f;
 
 	KASSERT(sc != NULL);
+
+	if (maxval == 0)
+		return (ENOTTY);
 
 	if (kbl->curval > maxval)
 		return EINVAL;
