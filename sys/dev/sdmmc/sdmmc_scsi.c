@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.35 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.36 2016/05/05 10:51:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -376,8 +376,14 @@ void
 sdmmc_inquiry(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
+	struct sdmmc_softc *sc = link->adapter_softc;
+	struct sdmmc_scsi_softc *scbus = sc->sc_scsibus;
+	struct sdmmc_scsi_target *tgt = &scbus->sc_tgt[link->target];
 	struct scsi_inquiry_data inq;
 	struct scsi_inquiry *cdb = (struct scsi_inquiry *)xs->cmd;
+	char vendor[sizeof(inq.vendor) + 1];
+	char product[sizeof(inq.product) + 1];
+	char revision[sizeof(inq.revision) + 1];
 
         if (xs->cmdlen != sizeof(*cdb)) {
 		xs->error = XS_DRIVER_STUFFUP;
@@ -389,17 +395,43 @@ sdmmc_inquiry(struct scsi_xfer *xs)
 		goto done;
 	}
 
-	bzero(&inq, sizeof inq);
+	memset(vendor, 0, sizeof(vendor));
+	memset(product, 0, sizeof(product));
+	memset(revision, 0, sizeof(revision));
+	switch (tgt->card->cid.mid) {
+	case 0x02:
+	case 0x45:
+		strlcpy(vendor, "Sandisk", sizeof(vendor));
+		break;
+	case 0x11:
+		strlcpy(vendor, "Toshiba", sizeof(vendor));
+		break;
+	case 0x13:
+		strlcpy(vendor, "Micron", sizeof(vendor));
+		break;
+	case 0x15:
+		strlcpy(vendor, "Samsung", sizeof(vendor));
+		break;
+	case 0x70:
+		strlcpy(vendor, "Kingston", sizeof(vendor));
+		break;
+	default:
+		strlcpy(vendor, "SD/MMC", sizeof(vendor));
+		break;
+	}
+	strlcpy(product, tgt->card->cid.pnm, sizeof(product));
+	snprintf(revision, sizeof(revision), "%04X", tgt->card->cid.rev);
+
+	memset(&inq, 0, sizeof inq);
 	inq.device = T_DIRECT;
 	inq.version = 2;
 	inq.response_format = 2;
 	inq.additional_length = 32;
-	strlcpy(inq.vendor, "SD/MMC ", sizeof(inq.vendor));
-	snprintf(inq.product, sizeof(inq.product),
-	    "Drive #%02d", link->target);
-	strlcpy(inq.revision, "   ", sizeof(inq.revision));
+	memcpy(inq.vendor, vendor, sizeof(inq.vendor));
+	memcpy(inq.product, product, sizeof(inq.product));
+	memcpy(inq.revision, revision, sizeof(inq.revision));
 
-	bcopy(&inq, xs->data, MIN(xs->datalen, sizeof(inq)));
+	memcpy(xs->data, &inq, MIN(xs->datalen, sizeof(inq)));
 
 done:
 	scsi_done(xs);
