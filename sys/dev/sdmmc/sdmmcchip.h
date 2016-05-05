@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcchip.h,v 1.7 2016/05/01 16:04:39 kettenis Exp $	*/
+/*	$OpenBSD: sdmmcchip.h,v 1.8 2016/05/05 11:01:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -36,7 +36,7 @@ struct sdmmc_chip_functions {
 	int	(*card_detect)(sdmmc_chipset_handle_t);
 	/* bus power and clock frequency */
 	int	(*bus_power)(sdmmc_chipset_handle_t, u_int32_t);
-	int	(*bus_clock)(sdmmc_chipset_handle_t, int);
+	int	(*bus_clock)(sdmmc_chipset_handle_t, int, int);
 	int	(*bus_width)(sdmmc_chipset_handle_t, int);
 	/* command execution */
 	void	(*exec_command)(sdmmc_chipset_handle_t,
@@ -44,6 +44,8 @@ struct sdmmc_chip_functions {
 	/* card interrupt */
 	void	(*card_intr_mask)(sdmmc_chipset_handle_t, int);
 	void	(*card_intr_ack)(sdmmc_chipset_handle_t);
+	/* UHS functions */
+	int		(*signal_voltage)(sdmmc_chipset_handle_t, int);
 };
 
 /* host controller reset */
@@ -60,8 +62,8 @@ struct sdmmc_chip_functions {
 /* bus power and clock frequency */
 #define sdmmc_chip_bus_power(tag, handle, ocr)				\
 	((tag)->bus_power((handle), (ocr)))
-#define sdmmc_chip_bus_clock(tag, handle, freq)				\
-	((tag)->bus_clock((handle), (freq)))
+#define sdmmc_chip_bus_clock(tag, handle, freq, timing)			\
+	((tag)->bus_clock((handle), (freq), (timing)))
 #define sdmmc_chip_bus_width(tag, handle, width)			\
 	((tag)->bus_width((handle), (width)))
 /* command execution */
@@ -72,11 +74,22 @@ struct sdmmc_chip_functions {
 	((tag)->card_intr_mask((handle), (enable)))
 #define sdmmc_chip_card_intr_ack(tag, handle)				\
 	((tag)->card_intr_ack((handle)))
+/* UHS functions */
+#define sdmmc_chip_signal_voltage(tag, handle, voltage)			\
+	((tag)->signal_voltage((handle), (voltage)))
 
 /* clock frequencies for sdmmc_chip_bus_clock() */
 #define SDMMC_SDCLK_OFF		0
 #define SDMMC_SDCLK_400KHZ	400
 #define SDMMC_SDCLK_25MHZ	25000
+
+/* voltage levels for sdmmc_chip_signal_voltage() */
+#define SDMMC_SIGNAL_VOLTAGE_330	0
+#define SDMMC_SIGNAL_VOLTAGE_180	1
+
+#define SDMMC_TIMING_LEGACY	0
+#define SDMMC_TIMING_HIGHSPEED	1
+#define SDMMC_TIMING_MMC_DDR52	2
 
 struct sdmmcbus_attach_args {
 	const char *saa_busname;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.50 2016/05/04 14:05:32 kettenis Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.51 2016/05/05 11:01:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -86,10 +86,11 @@ u_int32_t sdhc_host_ocr(sdmmc_chipset_handle_t);
 int	sdhc_host_maxblklen(sdmmc_chipset_handle_t);
 int	sdhc_card_detect(sdmmc_chipset_handle_t);
 int	sdhc_bus_power(sdmmc_chipset_handle_t, u_int32_t);
-int	sdhc_bus_clock(sdmmc_chipset_handle_t, int);
+int	sdhc_bus_clock(sdmmc_chipset_handle_t, int, int);
 int	sdhc_bus_width(sdmmc_chipset_handle_t, int);
 void	sdhc_card_intr_mask(sdmmc_chipset_handle_t, int);
 void	sdhc_card_intr_ack(sdmmc_chipset_handle_t);
+int	sdhc_signal_voltage(sdmmc_chipset_handle_t, int);
 void	sdhc_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
 int	sdhc_start_command(struct sdhc_host *, struct sdmmc_command *);
 int	sdhc_wait_state(struct sdhc_host *, u_int32_t, u_int32_t);
@@ -123,7 +124,9 @@ struct sdmmc_chip_functions sdhc_functions = {
 	sdhc_exec_command,
 	/* card interrupt */
 	sdhc_card_intr_mask,
-	sdhc_card_intr_ack
+	sdhc_card_intr_ack,
+	/* UHS functions */
+	sdhc_signal_voltage
 };
 
 struct cfdriver sdhc_cd = {
@@ -305,8 +308,13 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		saa.caps |= SMC_CAPS_MMC_HIGHSPEED;
 
 	if (SDHC_SPEC_VERSION(hp->version) >= SDHC_SPEC_V3) {
+		uint32_t caps2 = HREAD4(hp, SDHC_CAPABILITIES2);
+
 		if (ISSET(caps, SDHC_8BIT_MODE_SUPP))
 			saa.caps |= SMC_CAPS_8BIT_MODE;
+
+		if (ISSET(caps2, SDHC_DDR50_SUPP))
+			saa.caps |= SMC_CAPS_MMC_DDR52;
 	}
 
 	hp->sdmmc = config_found(&sc->sc_dev, &saa, NULL);
@@ -542,7 +550,7 @@ sdhc_clock_divisor(struct sdhc_host *hp, u_int freq)
  * Return zero on success.
  */
 int
-sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
+sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 {
 	struct sdhc_host *hp = sch;
 	int s;
@@ -566,6 +574,20 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 	HWRITE2(hp, SDHC_CLOCK_CTL, 0);
 	if (freq == SDMMC_SDCLK_OFF)
 		goto ret;
+
+	if (timing == SDMMC_TIMING_LEGACY)
+		HCLR1(hp, SDHC_HOST_CTL, SDHC_HIGH_SPEED);
+	else
+		HSET1(hp, SDHC_HOST_CTL, SDHC_HIGH_SPEED);
+
+	if (SDHC_SPEC_VERSION(hp->version) >= SDHC_SPEC_V3) {
+		switch (timing) {
+		case SDMMC_TIMING_MMC_DDR52:
+			HCLR2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_MASK);
+			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_DDR50);
+			break;
+		}
+	}
 
 	/*
 	 * Set the minimum base clock frequency divisor.
@@ -600,11 +622,6 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 	 */
 	HSET2(hp, SDHC_CLOCK_CTL, SDHC_SDCLK_ENABLE);
 
-	if (freq > 26000)
-		HSET1(hp, SDHC_HOST_CTL, SDHC_HIGH_SPEED);
-	else
-		HCLR1(hp, SDHC_HOST_CTL, SDHC_HIGH_SPEED);
-
 ret:
 	splx(s);
 	return error;
@@ -618,7 +635,7 @@ sdhc_bus_width(sdmmc_chipset_handle_t sch, int width)
 	int s;
 
 	if (width != 1 && width != 4 && width != 8)
-		return 1;
+		return EINVAL;
 
 	s = splsdmmc();
 
@@ -660,6 +677,36 @@ sdhc_card_intr_ack(sdmmc_chipset_handle_t sch)
 	struct sdhc_host *hp = sch;
 
 	HSET2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
+}
+
+int
+sdhc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
+{
+	struct sdhc_host *hp = sch;
+
+	if (SDHC_SPEC_VERSION(hp->version) < SDHC_SPEC_V3)
+		return EINVAL;
+
+	switch (signal_voltage) {
+	case SDMMC_SIGNAL_VOLTAGE_180:
+		HSET2(hp, SDHC_HOST_CTL2, SDHC_1_8V_SIGNAL_EN);
+		break;
+	case SDMMC_SIGNAL_VOLTAGE_330:
+		HCLR2(hp, SDHC_HOST_CTL2, SDHC_1_8V_SIGNAL_EN);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	/* Regulator output shall be stable within 5 ms. */
+	sdmmc_delay(5000);
+
+	/* Host controller clears this bit if 1.8V signalling fails. */
+	if (signal_voltage == SDMMC_SIGNAL_VOLTAGE_180 &&
+	    !ISSET(HREAD4(hp, SDHC_HOST_CTL2), SDHC_1_8V_SIGNAL_EN))
+		return EIO;
+
+	return 0;
 }
 
 int

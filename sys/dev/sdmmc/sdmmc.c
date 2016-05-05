@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.43 2016/05/04 09:30:06 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.44 2016/05/05 11:01:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -420,7 +420,8 @@ sdmmc_enable(struct sdmmc_softc *sc)
 	/*
 	 * Select the minimum clock frequency.
 	 */
-	error = sdmmc_chip_bus_clock(sc->sct, sc->sch, SDMMC_SDCLK_400KHZ);
+	error = sdmmc_chip_bus_clock(sc->sct, sc->sch,
+	    SDMMC_SDCLK_400KHZ, SDMMC_TIMING_LEGACY);
 	if (error != 0) {
 		printf("%s: can't supply clock\n", DEVNAME(sc));
 		goto err;
@@ -456,7 +457,8 @@ sdmmc_disable(struct sdmmc_softc *sc)
 	(void)sdmmc_select_card(sc, NULL);
 
 	/* Turn off bus power and clock. */
-	(void)sdmmc_chip_bus_clock(sc->sct, sc->sch, SDMMC_SDCLK_OFF);
+	(void)sdmmc_chip_bus_clock(sc->sct, sc->sch,
+	    SDMMC_SDCLK_OFF, SDMMC_TIMING_LEGACY);
 	(void)sdmmc_chip_bus_power(sc->sct, sc->sch, 0);
 }
 

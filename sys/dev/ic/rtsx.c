@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx.c,v 1.13 2016/05/01 16:04:39 kettenis Exp $	*/
+/*	$OpenBSD: rtsx.c,v 1.14 2016/05/05 11:01:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -95,7 +95,7 @@ u_int32_t rtsx_host_ocr(sdmmc_chipset_handle_t);
 int	rtsx_host_maxblklen(sdmmc_chipset_handle_t);
 int	rtsx_card_detect(sdmmc_chipset_handle_t);
 int	rtsx_bus_power(sdmmc_chipset_handle_t, u_int32_t);
-int	rtsx_bus_clock(sdmmc_chipset_handle_t, int);
+int	rtsx_bus_clock(sdmmc_chipset_handle_t, int, int);
 void	rtsx_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
 int	rtsx_init(struct rtsx_softc *, int);
 void	rtsx_soft_reset(struct rtsx_softc *);
@@ -614,7 +614,7 @@ ret:
  * Return zero on success.
  */
 int
-rtsx_bus_clock(sdmmc_chipset_handle_t sch, int freq)
+rtsx_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 {
 	struct rtsx_softc *sc = sch;
 	int s;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_mmc.c,v 1.12 2016/05/01 16:04:39 kettenis Exp $	*/
+/*	$OpenBSD: pxa2x0_mmc.c,v 1.13 2016/05/05 11:01:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -56,7 +56,7 @@ u_int32_t pxammc_host_ocr(sdmmc_chipset_handle_t);
 int	pxammc_host_maxblklen(sdmmc_chipset_handle_t);
 int	pxammc_card_detect(sdmmc_chipset_handle_t);
 int	pxammc_bus_power(sdmmc_chipset_handle_t, u_int32_t);
-int	pxammc_bus_clock(sdmmc_chipset_handle_t, int);
+int	pxammc_bus_clock(sdmmc_chipset_handle_t, int, int);
 void	pxammc_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
 void	pxammc_clock_stop(struct pxammc_softc *);
 void	pxammc_clock_start(struct pxammc_softc *);
@@ -278,7 +278,7 @@ pxammc_bus_power(sdmmc_chipset_handle_t sch, u_int32_t ocr)
 }
 
 int
-pxammc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
+pxammc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 {
 	struct pxammc_softc *sc = sch;
 	int actfreq = 19500; /* KHz */

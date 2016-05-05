@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.27 2016/05/04 09:30:06 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.28 2016/05/05 11:01:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -579,7 +579,7 @@ sdmmc_be512_to_bitfield512(sdmmc_bitfield512_t *buf) {
 int
 sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
-	int support_func, best_func, bus_clock, error;
+	int support_func, best_func, bus_clock, timing, error;
 	sdmmc_bitfield512_t status; /* Switch Function Status */
 	uint32_t raw_scr[2];
 
@@ -604,6 +604,7 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 	best_func = 0;
 	bus_clock = 25000;
+	timing = SDMMC_TIMING_LEGACY;
 	if (sf->scr.sd_spec >= SCR_SD_SPEC_VER_1_10 &&
 	    ISSET(sf->csd.ccc, SD_CSD_CCC_SWITCH)) {
 		DPRINTF(("%s: switch func mode 0\n", DEVNAME(sc)));
@@ -630,6 +631,7 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 				return error;
 			}
 			bus_clock = 50000;
+			timing = SDMMC_TIMING_HIGHSPEED;
 
 			/* Wait 400KHz x 8 clock (2.5us * 8 + slop) */
 			delay(25);
@@ -637,7 +639,7 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	}
 
 	/* change bus clock */
-	error = sdmmc_chip_bus_clock(sc->sct, sc->sch, bus_clock);
+	error = sdmmc_chip_bus_clock(sc->sct, sc->sch, bus_clock, timing);
 	if (error) {
 		printf("%s: can't change bus clock\n", DEVNAME(sc));
 		return error;
@@ -650,10 +652,11 @@ int
 sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
 	int width, value;
+	int card_type;
 	int error = 0;
 	u_int8_t ext_csd[512];
-	int speed = 0;
-	int hs_timing = 0;
+	int speed = 20000;
+	int timing = SDMMC_TIMING_LEGACY;
 	u_int32_t sectors = 0;
 
 	if (sf->csd.mmcver >= MMC_CSD_MMCVER_4_0) {
@@ -666,14 +669,54 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			return error;
 		}
 
-		if (ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_52M) {
+		card_type = ext_csd[EXT_CSD_CARD_TYPE];
+
+		if (card_type & EXT_CSD_CARD_TYPE_F_52M_1_8V &&
+		    ISSET(sc->sc_caps, SMC_CAPS_MMC_DDR52)) {
 			speed = 52000;
-			hs_timing = 1;
-		} else if (ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_26M) {
+			timing = SDMMC_TIMING_MMC_DDR52;
+		} else if (card_type & EXT_CSD_CARD_TYPE_F_52M &&
+		    ISSET(sc->sc_caps, SMC_CAPS_MMC_HIGHSPEED)) {
+			speed = 52000;
+			timing = SDMMC_TIMING_HIGHSPEED;
+		} else if (card_type & EXT_CSD_CARD_TYPE_F_26M) {
 			speed = 26000;
 		} else {
 			printf("%s: unknown CARD_TYPE 0x%x\n", DEVNAME(sc),
 			    ext_csd[EXT_CSD_CARD_TYPE]);
+		}
+
+		if (timing != SDMMC_TIMING_LEGACY) {
+			/* switch to high speed timing */
+			error = sdmmc_mem_mmc_switch(sf, EXT_CSD_CMD_SET_NORMAL,
+			    EXT_CSD_HS_TIMING, EXT_CSD_HS_TIMING_HS);
+			if (error != 0) {
+				printf("%s: can't change high speed\n",
+				    DEVNAME(sc));
+				return error;
+			}
+
+			sdmmc_delay(10000);
+		}
+
+		error = sdmmc_chip_bus_clock(sc->sct, sc->sch, speed, SDMMC_TIMING_HIGHSPEED);
+		if (error != 0) {
+			printf("%s: can't change bus clock\n", DEVNAME(sc));
+			return error;
+		}
+
+		if (timing != SDMMC_TIMING_LEGACY) {
+			/* read EXT_CSD again */
+			error = sdmmc_mem_send_cxd_data(sc,
+			    MMC_SEND_EXT_CSD, ext_csd, sizeof(ext_csd));
+			if (error != 0) {
+				printf("%s: can't re-read EXT_CSD\n", DEVNAME(sc));
+				return error;
+			}
+			if (ext_csd[EXT_CSD_HS_TIMING] != EXT_CSD_HS_TIMING_HS) {
+				printf("%s, HS_TIMING set failed\n", DEVNAME(sc));
+				return EINVAL;
+			}
 		}
 
 		if (ISSET(sc->sc_caps, SMC_CAPS_8BIT_MODE)) {
@@ -703,40 +746,41 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			sdmmc_delay(10000);
 		}
 
-		if (!ISSET(sc->sc_caps, SMC_CAPS_MMC_HIGHSPEED))
-			hs_timing = 0;
+		if (timing == SDMMC_TIMING_MMC_DDR52) {
+			switch (width) {
+			case 4:
+				value = EXT_CSD_BUS_WIDTH_4_DDR;
+				break;
+			case 8:
+				value = EXT_CSD_BUS_WIDTH_8_DDR;
+				break;
+			}
 
-		if (hs_timing) {
-			/* switch to high speed timing */
 			error = sdmmc_mem_mmc_switch(sf, EXT_CSD_CMD_SET_NORMAL,
-			    EXT_CSD_HS_TIMING, hs_timing);
-			if (error != 0) {
-				printf("%s: can't change high speed\n",
+			    EXT_CSD_BUS_WIDTH, value);
+			if (error) {
+				printf("%s: can't switch to DDR\n",
 				    DEVNAME(sc));
 				return error;
 			}
 
 			sdmmc_delay(10000);
-		}
 
-		error = sdmmc_chip_bus_clock(sc->sct, sc->sch, speed);
-		if (error != 0) {
-			printf("%s: can't change bus clock\n", DEVNAME(sc));
-			return error;
-		}
-
-		if (hs_timing) {
-			/* read EXT_CSD again */
-			error = sdmmc_mem_send_cxd_data(sc,
-			    MMC_SEND_EXT_CSD, ext_csd, sizeof(ext_csd));
-			if (error != 0) {
-				printf("%s: can't re-read EXT_CSD\n", DEVNAME(sc));
+			error = sdmmc_chip_signal_voltage(sc->sct, sc->sch,
+			    SDMMC_SIGNAL_VOLTAGE_180);
+			if (error) {
+				printf("%s: can't switch signalling voltage\n",
+				    DEVNAME(sc));
 				return error;
 			}
-			if (ext_csd[EXT_CSD_HS_TIMING] != hs_timing) {
-				printf("%s, HS_TIMING set failed\n", DEVNAME(sc));
-				return EINVAL;
+
+			error = sdmmc_chip_bus_clock(sc->sct, sc->sch, speed, timing);
+			if (error != 0) {
+				printf("%s: can't change bus clock\n", DEVNAME(sc));
+				return error;
 			}
+
+			sdmmc_delay(10000);
 		}
 
 		sectors = ext_csd[EXT_CSD_SEC_COUNT + 0] << 0 |

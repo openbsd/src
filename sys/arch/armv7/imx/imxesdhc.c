@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.14 2016/05/01 16:04:39 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.15 2016/05/05 11:01:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -195,7 +195,7 @@ uint32_t imxesdhc_host_ocr(sdmmc_chipset_handle_t);
 int	imxesdhc_host_maxblklen(sdmmc_chipset_handle_t);
 int	imxesdhc_card_detect(sdmmc_chipset_handle_t);
 int	imxesdhc_bus_power(sdmmc_chipset_handle_t, uint32_t);
-int	imxesdhc_bus_clock(sdmmc_chipset_handle_t, int);
+int	imxesdhc_bus_clock(sdmmc_chipset_handle_t, int, int);
 void	imxesdhc_card_intr_mask(sdmmc_chipset_handle_t, int);
 void	imxesdhc_card_intr_ack(sdmmc_chipset_handle_t);
 void	imxesdhc_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
@@ -555,7 +555,7 @@ imxesdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
  * Return zero on success.
  */
 int
-imxesdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
+imxesdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 {
 	struct imxesdhc_softc *sc = sch;
 	int div, pre_div, cur_freq, s;

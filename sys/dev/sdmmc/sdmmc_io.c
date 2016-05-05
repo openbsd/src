@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.24 2016/05/04 09:30:06 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.25 2016/05/05 11:01:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -185,7 +185,7 @@ sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	if (sf->number == 0) {
 		/* XXX respect host and card capabilities */
 		(void)sdmmc_chip_bus_clock(sc->sct, sc->sch,
-		    SDMMC_SDCLK_25MHZ);
+		    25000, SDMMC_TIMING_LEGACY);
 	}
 
 	return 0;

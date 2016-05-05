@@ -1,4 +1,4 @@
-/*	$OpenBSD: exesdhc.c,v 1.6 2016/05/01 16:04:39 kettenis Exp $	*/
+/*	$OpenBSD: exesdhc.c,v 1.7 2016/05/05 11:01:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -197,7 +197,7 @@ uint32_t exesdhc_host_ocr(sdmmc_chipset_handle_t);
 int	exesdhc_host_maxblklen(sdmmc_chipset_handle_t);
 int	exesdhc_card_detect(sdmmc_chipset_handle_t);
 int	exesdhc_bus_power(sdmmc_chipset_handle_t, uint32_t);
-int	exesdhc_bus_clock(sdmmc_chipset_handle_t, int);
+int	exesdhc_bus_clock(sdmmc_chipset_handle_t, int, int);
 void	exesdhc_card_intr_mask(sdmmc_chipset_handle_t, int);
 void	exesdhc_card_intr_ack(sdmmc_chipset_handle_t);
 void	exesdhc_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
@@ -517,7 +517,7 @@ exesdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
  * Return zero on success.
  */
 int
-exesdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
+exesdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 {
 	struct exesdhc_softc *sc = sch;
 	int div, pre_div, cur_freq, s;

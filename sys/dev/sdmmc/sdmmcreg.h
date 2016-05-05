@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcreg.h,v 1.10 2016/05/04 09:30:06 kettenis Exp $	*/
+/*	$OpenBSD: sdmmcreg.h,v 1.11 2016/05/05 11:01:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -104,10 +104,18 @@
 #define EXT_CSD_CMD_SET_SECURE		(1U << 1)
 #define EXT_CSD_CMD_SET_CPSECURE	(1U << 2)
 
+/* EXT_CSD_HS_TIMING */
+#define EXT_CSD_HS_TIMING_BC		0
+#define EXT_CSD_HS_TIMING_HS		1
+#define EXT_CSD_HS_TIMING_HS200		2
+#define EXT_CSD_HS_TIMING_HS400		3
+
 /* EXT_CSD_BUS_WIDTH  */
 #define EXT_CSD_BUS_WIDTH_1		0
 #define EXT_CSD_BUS_WIDTH_4		1
 #define EXT_CSD_BUS_WIDTH_8		2
+#define EXT_CSD_BUS_WIDTH_4_DDR		5
+#define EXT_CSD_BUS_WIDTH_8_DDR		6
 
 /* EXT_CSD_CARD_TYPE */
 /* The only currently valid values for this field are 0x01, 0x03, 0x07,

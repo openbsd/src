@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.25 2016/05/04 09:30:06 kettenis Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.26 2016/05/05 11:01:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -191,6 +191,13 @@ struct sdmmc_softc {
 #define SMC_CAPS_MULTI_SEG_DMA	0x0080	/* multiple segment DMA transfer */
 #define SMC_CAPS_SD_HIGHSPEED	0x0100	/* SD high-speed timing */
 #define SMC_CAPS_MMC_HIGHSPEED	0x0200	/* MMC high-speed timing */
+#define SMC_CAPS_UHS_SDR50	0x0400	/* UHS SDR50 timing */
+#define SMC_CAPS_UHS_SDR104	0x0800	/* UHS SDR104 timing */
+#define SMC_CAPS_UHS_DDR50	0x1000	/* UHS DDR50 timing */
+#define SMC_CAPS_UHS_MASK	0x1c00
+#define SMC_CAPS_MMC_DDR52	0x2000  /* eMMC DDR52 timing */
+#define SMC_CAPS_MMC_HS200	0x4000	/* eMMC HS200 timing */
+#define SMC_CAPS_MMC_HS400	0x8000	/* eMMC HS400 timing */
 
 	int sc_function_count;		/* number of I/O functions (SDIO) */
 	struct sdmmc_function *sc_card;	/* selected card */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83l518d_sdmmc.c,v 1.3 2016/05/01 16:04:39 kettenis Exp $	*/
+/*	$OpenBSD: w83l518d_sdmmc.c,v 1.4 2016/05/05 11:01:08 kettenis Exp $	*/
 /*	$NetBSD: w83l518d_sdmmc.c,v 1.1 2009/09/30 20:44:50 jmcneill Exp $ */
 
 /*
@@ -65,7 +65,7 @@ int	wb_sdmmc_card_detect(sdmmc_chipset_handle_t);
 int	wb_sdmmc_write_protect(sdmmc_chipset_handle_t);
 #endif
 int	wb_sdmmc_bus_power(sdmmc_chipset_handle_t, uint32_t);
-int	wb_sdmmc_bus_clock(sdmmc_chipset_handle_t, int);
+int	wb_sdmmc_bus_clock(sdmmc_chipset_handle_t, int, int);
 int	wb_sdmmc_bus_width(sdmmc_chipset_handle_t, int);
 void	wb_sdmmc_exec_command(sdmmc_chipset_handle_t,
 			      struct sdmmc_command *);
@@ -278,7 +278,7 @@ wb_sdmmc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 }
 
 int
-wb_sdmmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
+wb_sdmmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 {
 	struct wb_softc *wb = sch;
 	uint8_t clk;

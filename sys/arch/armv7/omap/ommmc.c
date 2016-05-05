@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.18 2016/05/02 07:38:34 jsg Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.19 2016/05/05 11:01:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -228,7 +228,7 @@ uint32_t ommmc_host_ocr(sdmmc_chipset_handle_t);
 int	ommmc_host_maxblklen(sdmmc_chipset_handle_t);
 int	ommmc_card_detect(sdmmc_chipset_handle_t);
 int	ommmc_bus_power(sdmmc_chipset_handle_t, uint32_t);
-int	ommmc_bus_clock(sdmmc_chipset_handle_t, int);
+int	ommmc_bus_clock(sdmmc_chipset_handle_t, int, int);
 int	ommmc_bus_width(sdmmc_chipset_handle_t, int);
 void	ommmc_card_intr_mask(sdmmc_chipset_handle_t, int);
 void	ommmc_card_intr_ack(sdmmc_chipset_handle_t);
@@ -631,7 +631,7 @@ ommmc_clock_divisor(struct ommmc_softc *sc, uint32_t freq)
  * Return zero on success.
  */
 int
-ommmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
+ommmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 {
 	int error = 0;
 	struct ommmc_softc *sc = sch;
