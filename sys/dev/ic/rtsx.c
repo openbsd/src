@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx.c,v 1.16 2016/05/06 08:11:58 kettenis Exp $	*/
+/*	$OpenBSD: rtsx.c,v 1.17 2016/05/06 08:17:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -96,6 +96,7 @@ int	rtsx_host_maxblklen(sdmmc_chipset_handle_t);
 int	rtsx_card_detect(sdmmc_chipset_handle_t);
 int	rtsx_bus_power(sdmmc_chipset_handle_t, u_int32_t);
 int	rtsx_bus_clock(sdmmc_chipset_handle_t, int, int);
+int	rtsx_bus_width(sdmmc_chipset_handle_t, int);
 void	rtsx_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
 int	rtsx_init(struct rtsx_softc *, int);
 void	rtsx_soft_reset(struct rtsx_softc *);
@@ -146,7 +147,7 @@ struct sdmmc_chip_functions rtsx_functions = {
 	/* bus power and clock frequency */
 	rtsx_bus_power,
 	rtsx_bus_clock,
-	NULL,
+	rtsx_bus_width,
 	/* command execution */
 	rtsx_exec_command,
 	/* card interrupt */
@@ -199,6 +200,7 @@ rtsx_attach(struct rtsx_softc *sc, bus_space_tag_t iot,
 	saa.sct = &rtsx_functions;
 	saa.sch = sc;
 	saa.flags = SMF_STOP_AFTER_MULTIPLE;
+	saa.caps = SMC_CAPS_4BIT_MODE;
 
 	sc->sdmmc = config_found(&sc->sc_dev, &saa, NULL);
 	if (sc->sdmmc == NULL)
@@ -506,6 +508,7 @@ int
 rtsx_set_bus_width(struct rtsx_softc *sc, int w)
 {
 	u_int32_t bus_width;
+	int error;
 
 	switch (w) {
 		case 8:
@@ -520,12 +523,8 @@ rtsx_set_bus_width(struct rtsx_softc *sc, int w)
 			break;
 	}
 
-	if (bus_width == RTSX_BUS_WIDTH_1)
-		RTSX_CLR(sc, RTSX_SD_CFG1, RTSX_BUS_WIDTH_MASK);
-	else
-		RTSX_SET(sc, RTSX_SD_CFG1, bus_width);
-
-	return 0;
+	error = rtsx_write(sc, RTSX_SD_CFG1, RTSX_BUS_WIDTH_MASK, bus_width);
+	return error;
 }
 
 int
@@ -599,11 +598,11 @@ rtsx_bus_power(sdmmc_chipset_handle_t sch, u_int32_t ocr)
 		goto ret;
 	}
 
-	error = rtsx_set_bus_width(sc, 1);
+	error = rtsx_bus_power_on(sc);
 	if (error)
 		goto ret;
 
-	error = rtsx_bus_power_on(sc);
+	error = rtsx_set_bus_width(sc, 1);
 ret:
 	splx(s);
 	return error;
@@ -672,6 +671,14 @@ rtsx_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 ret:
 	splx(s);
 	return error;
+}
+
+int
+rtsx_bus_width(sdmmc_chipset_handle_t sch, int width)
+{
+	struct rtsx_softc *sc = sch;
+
+	return rtsx_set_bus_width(sc, width);
 }
 
 int
