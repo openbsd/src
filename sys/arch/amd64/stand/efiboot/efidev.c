@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.17 2016/05/01 10:43:05 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.18 2016/05/06 03:13:52 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -88,6 +88,9 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 
 	/* block count of the intrisic block size in DEV_BSIZE */
 	blks = EFI_BLKSPERSEC(ed);
+	if (blks == 0)
+		/* block size < 512.  HP Stream 13 actually has such a disk. */
+		return (EFI_UNSUPPORTED);
 	lba = off / blks;
 
 	/* leading and trailing unaligned blocks in intrisic block */
