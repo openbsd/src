@@ -1,5 +1,5 @@
-/*	$OpenBSD: read.c,v 1.38 2016/04/13 09:42:41 schwarze Exp $	*/
-/*	$NetBSD: read.c,v 1.92 2016/04/12 00:16:06 christos Exp $	*/
+/*	$OpenBSD: read.c,v 1.39 2016/05/06 13:12:52 schwarze Exp $	*/
+/*	$NetBSD: read.c,v 1.94 2016/04/18 17:01:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,6 +48,7 @@
 #include <unistd.h>
 
 #include "el.h"
+#include "fcns.h"
 
 static int	read__fixio(int, int);
 static int	read_char(EditLine *, wchar_t *);

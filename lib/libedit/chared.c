@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.c,v 1.25 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$OpenBSD: chared.c,v 1.26 2016/05/06 13:12:52 schwarze Exp $	*/
 /*	$NetBSD: chared.c,v 1.28 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -44,6 +44,7 @@
 
 #include "el.h"
 #include "common.h"
+#include "fcns.h"
 
 static void ch__clearmacro (EditLine *);
 

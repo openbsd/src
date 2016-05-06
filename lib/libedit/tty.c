@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.26 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$OpenBSD: tty.c,v 1.27 2016/05/06 13:12:52 schwarze Exp $	*/
 /*	$NetBSD: tty.c,v 1.34 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -46,6 +46,7 @@
 #include <unistd.h>	/* for isatty */
 
 #include "el.h"
+#include "fcns.h"
 #include "parse.h"
 
 typedef struct ttymodes_t {

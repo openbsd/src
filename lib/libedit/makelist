@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: makelist,v 1.16 2010/04/18 21:17:05 christos Exp $
+#	$NetBSD: makelist,v 1.28 2016/04/18 17:01:19 christos Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 # makelist.sh: Automatically generate header files...
 
 AWK=awk
-USAGE="Usage: $0 -h|-fc|-fh|-bh <filenames>"
+USAGE="Usage: $0 -h|-dh|-fh|-bh <filenames>"
 
 if [ "x$1" = "x" ]
 then
@@ -64,7 +64,7 @@ case $FLAG in
 	    if (pr == "vi" || pr == "em" || pr == "ed") {
 		name = substr($2, 1, length($2) - 3);
 #
-# XXX:	need a space between name and prototype so that -fc and -fh
+# XXX:	need a space between name and prototype so that -dh and -fh
 #	parsing is much easier
 #
 		printf("protected el_action_t\t%s (EditLine *, wint_t);\n",
@@ -127,7 +127,6 @@ case $FLAG in
     sort | tr '[:lower:]' '[:upper:]' | $AWK '
 	BEGIN {
 	    printf("/* Automatically generated file, do not edit */\n");
-	    printf("#ifndef _h_fcns_c\n#define _h_fcns_c\n");
 	    count = 0;
 	}
 	{
@@ -135,23 +134,15 @@ case $FLAG in
 	}
 	END {
 	    printf("#define\t%-30.30s\t%3d\n", "EL_NUM_FCNS", count);
-
-	    printf("typedef el_action_t (*el_func_t)(EditLine *, wint_t);");
-	    printf("\nprotected const el_func_t* func__get(void);\n");
-	    printf("#endif /* _h_fcns_c */\n");
 	}'
 	;;
 
-#	generate fcns.c from various .h files
+#	generate dispatch table func.h from various .h files
 #
--fc)
+-dh)
     cat $FILES | $AWK '/el_action_t/ { print $3 }' | sort | $AWK '
 	BEGIN {
 	    printf("/* Automatically generated file, do not edit */\n");
-	    printf("#include \"config.h\"\n#include \"el.h\"\n");
-	    printf("#include \"common.h\"\n");
-	    printf("#include \"emacs.h\"\n");
-	    printf("#include \"vi.h\"\n");
 	    printf("static const el_func_t el_func[] = {");
 	    maxlen = 80;
 	    needn = 1;
@@ -172,7 +163,6 @@ case $FLAG in
 	}
 	END {
 	    printf("\n};\n");
-	    printf("\nprotected const el_func_t* func__get() { return el_func; }\n");
 	}'
 	;;
 

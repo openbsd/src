@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.26 2016/05/03 11:36:17 schwarze Exp $	*/
+/*	$OpenBSD: map.c,v 1.27 2016/05/06 13:12:52 schwarze Exp $	*/
 /*	$NetBSD: map.c,v 1.25 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -43,6 +43,11 @@
 #include <string.h>
 
 #include "el.h"
+#include "common.h"
+#include "emacs.h"
+#include "vi.h"
+#include "fcns.h"
+#include "func.h"
 #include "help.h"
 #include "parse.h"
 
@@ -921,7 +926,7 @@ map_init(EditLine *el)
 	    sizeof(el_func_t));
 	if (el->el_map.func == NULL)
 		return -1;
-	memcpy(el->el_map.func, func__get(), sizeof(el_func_t) * EL_NUM_FCNS);
+	memcpy(el->el_map.func, el_func, sizeof(el_func_t) * EL_NUM_FCNS);
 	el->el_map.nfunc = EL_NUM_FCNS;
 
 #ifdef VIDEFAULT

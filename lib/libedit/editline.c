@@ -5,7 +5,6 @@
 #include "el.c"
 #include "eln.c"
 #include "emacs.c"
-#include "fcns.c"
 #include "filecomplete.c"
 #include "hist.c"
 #include "keymacro.c"

@@ -1,5 +1,5 @@
-/*	$OpenBSD: emacs.c,v 1.16 2016/04/11 20:43:33 schwarze Exp $	*/
-/*	$NetBSD: emacs.c,v 1.34 2016/04/11 00:50:13 christos Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.17 2016/05/06 13:12:52 schwarze Exp $	*/
+/*	$NetBSD: emacs.c,v 1.35 2016/04/18 17:01:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,6 +42,7 @@
 
 #include "el.h"
 #include "emacs.h"
+#include "fcns.h"
 
 /* em_delete_or_list():
  *	Delete character under cursor or list completions if at end of line
