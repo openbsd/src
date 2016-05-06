@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx.c,v 1.15 2016/05/06 08:09:20 kettenis Exp $	*/
+/*	$OpenBSD: rtsx.c,v 1.16 2016/05/06 08:11:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -630,6 +630,14 @@ rtsx_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 		goto ret;
 	}
 
+	/* Round down to a supported frequency. */
+	if (freq >= SDMMC_SDCLK_50MHZ)
+		freq = SDMMC_SDCLK_50MHZ;
+	else if (freq >= SDMMC_SDCLK_25MHZ)
+		freq = SDMMC_SDCLK_25MHZ;
+	else
+		freq = SDMMC_SDCLK_400KHZ;
+
 	/*
 	 * Configure the clock frequency.
 	 */
@@ -643,6 +651,12 @@ rtsx_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 	case SDMMC_SDCLK_25MHZ:
 		n = 100;
 		div = RTSX_CLK_DIV_4;
+		mcu = 7;
+		RTSX_CLR(sc, RTSX_SD_CFG1, RTSX_CLK_DIVIDE_MASK);
+		break;
+	case SDMMC_SDCLK_50MHZ:
+		n = 100;
+		div = RTSX_CLK_DIV_2;
 		mcu = 7;
 		RTSX_CLR(sc, RTSX_SD_CFG1, RTSX_CLK_DIVIDE_MASK);
 		break;
