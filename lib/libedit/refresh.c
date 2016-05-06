@@ -1,5 +1,5 @@
-/*	$OpenBSD: refresh.c,v 1.19 2016/04/11 21:17:29 schwarze Exp $	*/
-/*	$NetBSD: refresh.c,v 1.49 2016/04/11 18:56:31 christos Exp $	*/
+/*	$OpenBSD: refresh.c,v 1.20 2016/05/06 18:01:40 schwarze Exp $	*/
+/*	$NetBSD: refresh.c,v 1.50 2016/05/02 16:35:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -557,7 +557,7 @@ re_update_line(EditLine *el, wchar_t *old, wchar_t *new, int i)
 	nls = ++n;
 
 	/*
-         * find same begining and same end
+         * find same beginning and same end
          */
 	osb = ols;
 	nsb = nls;
