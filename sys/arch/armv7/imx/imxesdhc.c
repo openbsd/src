@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.15 2016/05/05 11:01:08 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.16 2016/05/06 20:24:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -124,6 +124,9 @@
 #define SDHC_MIX_CTRL_AC12EN			(1 << 2)
 #define SDHC_MIX_CTRL_DTDSEL			(1 << 4)
 #define SDHC_MIX_CTRL_MSBSEL			(1 << 5)
+#define SDHC_PROT_CTRL_DTW_MASK			(0x3 << 1)
+#define SDHC_PROT_CTRL_DTW_4BIT			(1 << 1)
+#define SDHC_PROT_CTRL_DTW_8BIT			(1 << 2)
 #define SDHC_PROT_CTRL_DMASEL_SDMA_MASK		(0x3 << 8)
 #define SDHC_HOST_CTRL_CAP_MBL_SHIFT		16
 #define SDHC_HOST_CTRL_CAP_MBL_MASK		0x7
@@ -409,6 +412,9 @@ imxesdhc_host_reset(sdmmc_chipset_handle_t sch)
 	// Use no or simple DMA
 	HWRITE4(sc, SDHC_PROT_CTRL,
 	    HREAD4(sc, SDHC_PROT_CTRL) & ~SDHC_PROT_CTRL_DMASEL_SDMA_MASK);
+
+	/* Switch back to 1-bit bus. */
+	HCLR4(sc, SDHC_PROT_CTRL, SDHC_PROT_CTRL_DTW_MASK);
 
 	splx(s);
 	return 0;
