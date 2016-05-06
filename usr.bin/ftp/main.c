@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.106 2016/03/16 15:41:11 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.107 2016/05/06 22:06:09 jca Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -143,11 +143,7 @@ main(volatile int argc, char *argv[])
 	marg_sl = sl_init();
 #endif /* !SMALL */
 	mark = HASHBYTES;
-#ifdef INET6
 	epsv4 = 1;
-#else
-	epsv4 = 0;
-#endif
 	epsv4bad = 0;
 
 	/* Set default operation mode based on FTPMODE environment variable */

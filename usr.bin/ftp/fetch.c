@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.145 2016/01/28 21:31:50 martijn Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.146 2016/05/06 22:06:09 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1161,7 +1161,6 @@ bad_ftp_url:
 				pass = urldecode(pass);
 			}
 
-#ifdef INET6
 			/* check [host]:port, or [host] */
 			if (host[0] == '[') {
 				cp = strchr(host, ']');
@@ -1175,9 +1174,6 @@ bad_ftp_url:
 					cp = host;
 			} else
 				cp = host;
-#else
-			cp = host;
-#endif
 
 			/* split off host[:port] if there is */
 			if (cp) {

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2015/10/12 16:39:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.30 2016/05/06 22:06:09 jca Exp $
 
 # Define SMALL to disable command line editing and https support
 #CFLAGS+=-DSMALL
@@ -6,8 +6,6 @@
 PROG=	ftp
 SRCS=	cmds.c cmdtab.c complete.c cookie.c domacro.c fetch.c ftp.c \
 	list.c main.c ruserpass.c small.c stringlist.c util.c
-
-CPPFLAGS+= -DINET6
 
 LDADD+=	-ledit -lcurses -lutil -ltls -lssl -lcrypto
 DPADD+=	${LIBEDIT} ${LIBCURSES} ${LIBUTIL} ${LIBTLS} ${LIBSSL} ${LIBCRYPTO}
