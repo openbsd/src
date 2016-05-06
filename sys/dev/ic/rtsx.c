@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx.c,v 1.14 2016/05/05 11:01:08 kettenis Exp $	*/
+/*	$OpenBSD: rtsx.c,v 1.15 2016/05/06 08:09:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -977,9 +977,11 @@ rtsx_xfer(struct rtsx_softc *sc, struct sdmmc_command *cmd, u_int32_t *cmdbuf)
 
 	/* Queue commands to configure data transfer size. */
 	rtsx_hostcmd(cmdbuf, &ncmd,
-	    RTSX_WRITE_REG_CMD, RTSX_SD_BYTE_CNT_L, 0xff, 0);
+	    RTSX_WRITE_REG_CMD, RTSX_SD_BYTE_CNT_L, 0xff,
+	    (cmd->c_blklen & 0xff));
 	rtsx_hostcmd(cmdbuf, &ncmd,
-	    RTSX_WRITE_REG_CMD, RTSX_SD_BYTE_CNT_H, 0xff, 0x02);
+	    RTSX_WRITE_REG_CMD, RTSX_SD_BYTE_CNT_H, 0xff,
+	    (cmd->c_blklen >> 8));
 	rtsx_hostcmd(cmdbuf, &ncmd,
 	    RTSX_WRITE_REG_CMD, RTSX_SD_BLOCK_CNT_L, 0xff,
 	    ((cmd->c_datalen / cmd->c_blklen) & 0xff));
