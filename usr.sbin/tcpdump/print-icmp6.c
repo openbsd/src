@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.18 2016/03/15 05:03:11 mmcc Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.19 2016/05/06 17:16:24 jca Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -305,8 +305,24 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 				printf("M");
 			if (p->nd_ra_flags_reserved & ND_RA_FLAG_OTHER)
 				printf("O");
-			if (p->nd_ra_flags_reserved != 0)
-				printf(" ");
+			if (p->nd_ra_flags_reserved &
+			    (ND_RA_FLAG_MANAGED|ND_RA_FLAG_OTHER))
+				printf(", ");
+			switch (p->nd_ra_flags_reserved
+			    & ND_RA_FLAG_RTPREF_MASK) {
+			case ND_RA_FLAG_RTPREF_HIGH:
+				printf("pref=high, ");
+				break;
+			case ND_RA_FLAG_RTPREF_MEDIUM:
+				printf("pref=medium, ");
+				break;
+			case ND_RA_FLAG_RTPREF_LOW:
+				printf("pref=low, ");
+				break;
+			case ND_RA_FLAG_RTPREF_RSV:
+				printf("pref=rsv, ");
+				break;
+			}
 			printf("router_ltime=%d, ", ntohs(p->nd_ra_router_lifetime));
 			printf("reachable_time=%u, ",
 				(u_int32_t)ntohl(p->nd_ra_reachable));
