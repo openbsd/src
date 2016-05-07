@@ -848,7 +848,9 @@ strtof
 strtold
 
 /* gmon */
+_gmonparam
 _mcleanup
+_monstartup
 moncontrol
 monstartup
 

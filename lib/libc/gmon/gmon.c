@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.c,v 1.28 2016/03/14 14:48:02 mmcc Exp $ */
+/*	$OpenBSD: gmon.c,v 1.29 2016/05/07 19:30:52 guenther Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -48,11 +48,9 @@ static int	s_scale;
 
 #define ERR(s) write(STDERR_FILENO, s, sizeof(s))
 
-void	moncontrol(int);
 PROTO_NORMAL(moncontrol);
+PROTO_DEPRECATED(monstartup);
 static int hertz(void);
-void	monstartup(u_long lowpc, u_long highpc);
-void	_mcleanup(void);
 
 void
 monstartup(u_long lowpc, u_long highpc)
@@ -134,6 +132,7 @@ mapfailed:
 	}
 	ERR("monstartup: out of memory\n");
 }
+__strong_alias(_monstartup,monstartup);
 
 void
 _mcleanup(void)

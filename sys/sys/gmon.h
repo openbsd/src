@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.h,v 1.7 2013/03/12 09:37:16 mpi Exp $	*/
+/*	$OpenBSD: gmon.h,v 1.8 2016/05/07 19:30:52 guenther Exp $	*/
 /*	$NetBSD: gmon.h,v 1.5 1996/04/09 20:55:30 cgd Exp $	*/
 
 /*-
@@ -137,11 +137,6 @@ struct gmonparam {
 	u_long		textsize;
 	u_long		hashfraction;
 };
-#ifdef _KERNEL
-extern int gmoninit;		/* Is the kernel ready for beeing profiled? */
-#else
-extern struct gmonparam _gmonparam;
-#endif
 
 /*
  * Possible states of profiling.
@@ -159,4 +154,22 @@ extern struct gmonparam _gmonparam;
 #define	GPROF_FROMS	2	/* struct: from location hash bucket */
 #define	GPROF_TOS	3	/* struct: destination/count structure */
 #define	GPROF_GMONPARAM	4	/* struct: profiling parameters (see above) */
+
+#ifdef _KERNEL
+extern int gmoninit;		/* Is the kernel ready for beeing profiled? */
+
+#else /* !_KERNEL */
+
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
+extern struct gmonparam _gmonparam;
+void	_mcleanup(void);
+void	_monstartup(u_long, u_long);
+void	moncontrol(int);
+void	monstartup(u_long, u_long);
+__END_DECLS
+
+#endif /* !_KERNEL */
+
 #endif /* !_SYS_GMON_H_ */

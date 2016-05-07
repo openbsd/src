@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.6 2016/03/20 02:32:39 guenther Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.7 2016/05/07 19:30:53 guenther Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -55,8 +55,7 @@ static void		___start(MD_START_ARGS) __used;
 char	***_csu_finish(char **_argv, char **_envp, void (*_cleanup)(void));
 
 #ifdef MCRT0
-extern void	monstartup(u_long, u_long);
-extern void	_mcleanup(void);
+#include <sys/gmon.h>
 extern unsigned char _etext, _eprol;
 #endif /* MCRT0 */
 
@@ -86,7 +85,7 @@ MD_START(MD_START_ARGS)
 
 #ifdef MCRT0
 	atexit(_mcleanup);
-	monstartup((u_long)&_eprol, (u_long)&_etext);
+	_monstartup((u_long)&_eprol, (u_long)&_etext);
 #endif
 
 	__init();
