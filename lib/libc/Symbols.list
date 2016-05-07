@@ -454,14 +454,7 @@ dbm_nextkey
 dbm_open
 dbm_rdonly
 dbm_store
-dbmclose
-dbminit
 dbopen
-delete
-fetch
-firstkey
-nextkey
-store
 
 /* dlfcn */
 __progname

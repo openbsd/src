@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.c,v 1.25 2015/11/01 03:45:28 guenther Exp $	*/
+/*	$OpenBSD: ndbm.c,v 1.26 2016/05/07 21:58:06 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,7 +39,6 @@
 #include <string.h>
 
 #include <ndbm.h>
-#include <dbm.h>
 #include "hash.h"
 
 /*
@@ -51,127 +50,6 @@
 static DBM *__cur_db;
 
 static DBM *_dbm_open(const char *, const char *, int, mode_t);
-
-/*
- * Returns:
- * 	 0 on success
- *	<0 on failure
- */
-int
-dbminit(file)
-	const char *file;
-{
-
-	if (__cur_db != NULL)
-		(void)dbm_close(__cur_db);
-	if ((__cur_db = _dbm_open(file, ".pag", O_RDWR, 0)) != NULL)
-		return (0);
-	if ((__cur_db = _dbm_open(file, ".pag", O_RDONLY, 0)) != NULL)
-		return (0);
-	return (-1);
-}
-
-/*
- * Returns:
- * 	 0 on success
- *	<0 on failure
- */
-int
-dbmclose()
-{
-	int rval;
-
-	if (__cur_db == NULL)
-		return (-1);
-	rval = (__cur_db->close)(__cur_db);
-	__cur_db = NULL;
-	return (rval);
-}
-
-/*
- * Returns:
- *	DATUM on success
- *	NULL on failure
- */
-datum
-fetch(key)
-	datum key;
-{
-	datum item;
-
-	if (__cur_db == NULL) {
-		item.dptr = NULL;
-		item.dsize = 0;
-		return (item);
-	}
-	return (dbm_fetch(__cur_db, key));
-}
-
-/*
- * Returns:
- *	DATUM on success
- *	NULL on failure
- */
-datum
-firstkey()
-{
-	datum item;
-
-	if (__cur_db == NULL) {
-		item.dptr = NULL;
-		item.dsize = 0;
-		return (item);
-	}
-	return (dbm_firstkey(__cur_db));
-}
-
-/*
- * Returns:
- *	DATUM on success
- *	NULL on failure
- */
-datum
-nextkey(datum key)
-{
-	datum item;
-
-	if (__cur_db == NULL) {
-		item.dptr = NULL;
-		item.dsize = 0;
-		return (item);
-	}
-	return (dbm_nextkey(__cur_db));
-}
-
-/*
- * Returns:
- * 	 0 on success
- *	<0 on failure
- */
-int
-delete(key)
-	datum key;
-{
-
-	if (__cur_db == NULL || dbm_rdonly(__cur_db))
-		return (-1);
-	return (dbm_delete(__cur_db, key));
-}
-
-/*
- * Returns:
- * 	 0 on success
- *	<0 on failure
- */
-int
-store(key, dat)
-	datum key, dat;
-{
-
-	if (__cur_db == NULL || dbm_rdonly(__cur_db))
-		return (-1);
-	return (dbm_store(__cur_db, key, dat, DBM_REPLACE));
-}
 
 /*
  * Returns:
