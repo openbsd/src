@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.24 2016/05/07 19:05:23 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.25 2016/05/07 21:20:11 guenther Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn
@@ -195,7 +195,6 @@ DL_SYSCALL(sendsyslog)
 DL_SYSCALL(pledge)
 DL_SYSCALL2(getcwd,__getcwd)
 DL_SYSCALL(sysctl)
-DL_SYSCALL2_NOERR(set_tcb,__set_tcb)
-
 DL_SYSCALL(getdents)
+DL_SYSCALL2_NOERR(set_tcb,__set_tcb)
 
