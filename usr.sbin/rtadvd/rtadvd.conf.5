@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.conf.5,v 1.35 2015/04/21 16:32:24 florian Exp $
+.\"	$OpenBSD: rtadvd.conf.5,v 1.36 2016/05/07 19:28:35 jca Exp $
 .\"	$KAME: rtadvd.conf.5,v 1.46 2003/06/17 08:26:35 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 21 2015 $
+.Dd $Mdocdate: May 7 2016 $
 .Dt RTADVD.CONF 5
 .Os
 .Sh NAME
@@ -116,6 +116,26 @@ and Bit 6
 .Li 0x40
 .Pc
 means Other stateful configuration flag bit.
+Bit 4
+.Po
+.Li 0x10
+.Pc
+and
+Bit 3
+.Po
+.Li 0x08
+.Pc
+are used to encode the route preference for the route as follows:
+.Pp
+.Bl -tag -width "0x08XXX" -offset indent -compact
+.It 0x08
+High
+.It 0x00
+Medium (the default)
+.It 0x18
+Low
+.El
+.Pp
 The default value is 0.
 .It Cm \&rltime
 (num) Router lifetime field
@@ -252,18 +272,7 @@ The default value is 64.
 .It Cm \&rtflags
 (str or num) A 8-bit flags field in route information option.
 Currently only the preference values are defined.
-The notation is same as that of the raflags field.
-Bit 4
-.Po
-.Li 0x10
-.Pc
-and
-Bit 3
-.Po
-.Li 0x08
-.Pc
-are used to encode the route preference for the route.
-The default value is 0x00, i.e., medium preference.
+The notation for those is the same as that of the raflags field.
 .It Cm \&rtltime
 (num) route lifetime field in route information option.
 .Pq unit: seconds .
