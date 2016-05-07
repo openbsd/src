@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.52 2015/03/14 03:38:46 jsg Exp $ */
+/* $OpenBSD: acpiec.c,v 1.53 2016/05/07 18:03:36 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -74,8 +74,6 @@ void		acpiec_unlock(struct acpiec_softc *);
 #define		EC_CMD_BE	0x82	/* Burst Enable */
 #define		EC_CMD_BD	0x83	/* Burst Disable */
 #define		EC_CMD_QR	0x84	/* Query */
-
-#define		REG_TYPE_EC	3
 
 int	acpiec_reg(struct acpiec_softc *);
 
@@ -524,7 +522,7 @@ acpiec_reg(struct acpiec_softc *sc)
 
 	memset(&arg, 0, sizeof(arg));
 	arg[0].type = AML_OBJTYPE_INTEGER;
-	arg[0].v_integer = REG_TYPE_EC;
+	arg[0].v_integer = ACPI_OPREG_EC;
 	arg[1].type = AML_OBJTYPE_INTEGER;
 	arg[1].v_integer = 1;
 

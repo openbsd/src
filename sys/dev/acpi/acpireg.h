@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.34 2016/01/14 21:37:18 kettenis Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.35 2016/05/07 18:03:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -694,6 +694,19 @@ struct acpi_ivrs {
 #define ACPI_PM2_CONTROL		0x06
 #define	ACPI_PM2_ARB_DIS		0x0001
 
+/*
+ * Operation Region Address Space Identifiers
+ */
+#define ACPI_OPREG_SYSMEM	0	/* SystemMemory */
+#define ACPI_OPREG_SYSIO	1	/* SystemIO */
+#define ACPI_OPREG_PCICFG	2	/* PCI_Config */
+#define ACPI_OPREG_EC		3	/* EmbeddedControl */
+#define ACPI_OPREG_SMBUS	4	/* SMBus */
+#define ACPI_OPREG_CMOS		5	/* CMOS */
+#define ACPI_OPREG_PCIBAR	6	/* PCIBARTarget */
+#define ACPI_OPREG_IPMI		7	/* IPMI */
+#define ACPI_OPREG_GPIO		8	/* GeneralPurposeIO */
+#define ACPI_OPREG_GSB		9	/* GenericSerialBus */
 
 /*
  * Sleeping States
