@@ -690,6 +690,7 @@ _quick3p=
     Term::ANSIColor 3p			lib/Term/ANSIColor.pm \
     Term::Cap 3p			lib/Term/Cap.pm \
     Term::Complete 3p			lib/Term/Complete.pm \
+    Term::ReadKey 3p			cpan/Term-ReadKey/ReadKey.pm \
     Term::ReadLine 3p			lib/Term/ReadLine.pm \
     Test 3p				lib/Test.pm \
     Test::Builder 3p			lib/Test/Builder.pm \
