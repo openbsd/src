@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.h,v 1.8 2016/02/03 01:47:25 mmcc Exp $	*/
+/*	$OpenBSD: mem.h,v 1.9 2016/05/07 14:03:01 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -143,13 +143,21 @@
 }
 
 #define	REALLOC(sp, p, size) {						\
-	if (((p) = (realloc((p), (size)))) == NULL)			\
+	void *tmpp;							\
+	if (((tmpp) = (realloc((p), (size)))) == NULL) {		\
 		msgq((sp), M_SYSERR, NULL);				\
+		free(p);						\
+	}								\
+	p = tmpp;							\
 }
 
 #define	REALLOCARRAY(sp, p, nelem, size) {				\
-	if (((p) = (reallocarray((p), (nelem), (size)))) == NULL)	\
+	void *tmpp;							\
+	if (((tmpp) = (reallocarray((p), (nelem), (size)))) == NULL) {	\
 		msgq((sp), M_SYSERR, NULL);				\
+		free(p);						\
+	}								\
+	p = tmpp;							\
 }
 
 /*
