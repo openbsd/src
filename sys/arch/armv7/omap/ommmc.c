@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.19 2016/05/05 11:01:08 kettenis Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.20 2016/05/07 00:18:23 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -673,6 +673,11 @@ ommmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 	reg &= ~MMCHS_SYSCTL_CLKD_MASK;
 	reg |= div << MMCHS_SYSCTL_CLKD_SH;
 	HWRITE4(sc, MMCHS_SYSCTL, reg);
+
+	if (timing == SDMMC_TIMING_LEGACY)
+		HCLR4(sc, MMCHS_HCTL, MMCHS_HCTL_HSPE);
+	else
+		HSET4(sc, MMCHS_HCTL, MMCHS_HCTL_HSPE);
 
 	/*
 	 * Start internal clock.  Wait 10ms for stabilization.
