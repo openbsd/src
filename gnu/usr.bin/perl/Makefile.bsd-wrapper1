@@ -557,7 +557,6 @@ _quick3p=
     Net::Time 3p			lib/Net/Time.pm \
     NEXT 3p				lib/NEXT.pm \
     O 3p				lib/O.pm \
-    ODBM_File 3p			lib/ODBM_File.pm \
     Opcode 3p				lib/Opcode.pm \
     open 3p				lib/open.pm \
     OpenBSD::MkTemp 3p			lib/OpenBSD/MkTemp.pm \
