@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.19 2016/05/06 17:16:24 jca Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.20 2016/05/07 19:36:45 jca Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -526,7 +526,10 @@ icmp6_opt_print(const u_char *bp, int resid)
 	const struct icmp6_opts_redirect *opr;
 	const struct nd_opt_mtu *opm;
 	const struct nd_opt_rdnss *oprd;
+	const struct nd_opt_route_info *opri;
 	const u_char *ep;
+	const struct in6_addr *in6p;
+	struct in6_addr in6;
 	int	i, opts_len;
 #if 0
 	const struct ip6_hdr *ip;
@@ -642,7 +645,43 @@ icmp6_opt_print(const u_char *bp, int resid)
 				resid - (op->nd_opt_len << 3));
 		break;
 	case ND_OPT_ROUTE_INFO:
-		printf("(route-info: opt_len=%d)", op->nd_opt_len);
+		opri = (struct nd_opt_route_info *)op;
+		TCHECK(opri->nd_opt_rti_lifetime);
+		printf("(route-info: ");
+		memset(&in6, 0, sizeof(in6));
+		in6p = (const struct in6_addr *)(opri + 1);
+		switch (op->nd_opt_len) {
+		case 1:
+			break;
+		case 2:
+			TCHECK2(*in6p, 8);
+			memcpy(&in6, opri + 1, 8);
+			break;
+		case 3:
+			TCHECK(*in6p);
+			memcpy(&in6, opri + 1, sizeof(in6));
+			break;
+		default:
+			goto trunc;
+		}
+		printf("%s/%u, ", ip6addr_string(&in6),
+		    opri->nd_opt_rti_prefixlen);
+		switch (opri->nd_opt_rti_flags & ND_RA_FLAG_RTPREF_MASK) {
+		case ND_RA_FLAG_RTPREF_HIGH:
+			printf("pref=high, ");
+			break;
+		case ND_RA_FLAG_RTPREF_MEDIUM:
+			printf("pref=medium, ");
+			break;
+		case ND_RA_FLAG_RTPREF_LOW:
+			printf("pref=low, ");
+			break;
+		case ND_RA_FLAG_RTPREF_RSV:
+			printf("pref=rsv, ");
+			break;
+		}
+		printf("lifetime=%us)",
+		    (u_int32_t)ntohl(opri->nd_opt_rti_lifetime));
 		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3),
 				resid - (op->nd_opt_len << 3));
 		break;
