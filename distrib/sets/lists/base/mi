@@ -1410,6 +1410,12 @@
 ./usr/libdata/perl5/User/pwent.pm
 ./usr/libdata/perl5/XSLoader.pm
 ./usr/libdata/perl5/_charnames.pm
+./usr/libdata/perl5/amd64-openbsd/5.20.2/Term
+./usr/libdata/perl5/amd64-openbsd/5.20.2/Term/ReadKey.pm
+./usr/libdata/perl5/amd64-openbsd/5.20.2/auto/Term
+./usr/libdata/perl5/amd64-openbsd/5.20.2/auto/Term/ReadKey
+./usr/libdata/perl5/amd64-openbsd/5.20.2/auto/Term/ReadKey/ReadKey.so
+./usr/libdata/perl5/amd64-openbsd/5.20.2/auto/Term/ReadKey/autosplit.ix
 ./usr/libdata/perl5/autodie
 ./usr/libdata/perl5/autodie.pm
 ./usr/libdata/perl5/autodie/exception

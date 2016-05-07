@@ -951,6 +951,7 @@
 ./usr/share/man/man3p/Term::ANSIColor.3p
 ./usr/share/man/man3p/Term::Cap.3p
 ./usr/share/man/man3p/Term::Complete.3p
+./usr/share/man/man3p/Term::ReadKey.3p
 ./usr/share/man/man3p/Term::ReadLine.3p
 ./usr/share/man/man3p/Test.3p
 ./usr/share/man/man3p/Test::Builder.3p
