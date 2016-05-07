@@ -1,4 +1,3 @@
-./etc/examples/wsconsctl.conf
 ./etc/firmware/symbol-eprim
 ./etc/firmware/symbol-esec
 ./etc/firmware/symbol-license
@@ -1894,6 +1893,8 @@
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/Sys
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/Sys/Hostname.pm
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/Sys/Syslog.pm
+./usr/libdata/perl5/sparc-openbsd/5.20.2/Term
+./usr/libdata/perl5/sparc-openbsd/5.20.2/Term/ReadKey.pm
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/Tie
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/Tie/Hash
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/Tie/Hash/NamedCapture.pm
@@ -2019,6 +2020,10 @@
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Sys/Hostname/Hostname.so
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Sys/Syslog
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Sys/Syslog/Syslog.so
+./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Term
+./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Term/ReadKey
+./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Term/ReadKey/ReadKey.so
+./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Term/ReadKey/autosplit.ix.
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Tie
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Tie/Hash
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Tie/Hash/NamedCapture
@@ -2067,3 +2072,4 @@
 ./usr/sbin/fdformat
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz
+/etc/examples/wsconsctl.conf
