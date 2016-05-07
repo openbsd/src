@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.158 2016/04/19 08:23:13 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.159 2016/05/07 09:58:06 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -598,21 +598,6 @@ ip6_input(struct mbuf *m)
 	in6_proto_cksum_out(m, NULL);
 
 	ip6 = mtod(m, struct ip6_hdr *);
-
-	/*
-	 * Malicious party may be able to use IPv4 mapped addr to confuse
-	 * tcp/udp stack and bypass security checks (act as if it was from
-	 * 127.0.0.1 by using IPv6 src ::ffff:127.0.0.1).  Be cautious.
-	 *
-	 * For SIIT end node behavior, you may want to disable the check.
-	 * However, you will  become vulnerable to attacks using IPv4 mapped
-	 * source.
-	 */
-	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
-	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
-		ip6stat.ip6s_badscope++;
-		goto bad;
-	}
 
 	/*
 	 * Tell launch routine the next header
