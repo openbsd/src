@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.16 2016/05/06 20:24:35 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.17 2016/05/07 00:11:31 jsg Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -199,6 +199,7 @@ int	imxesdhc_host_maxblklen(sdmmc_chipset_handle_t);
 int	imxesdhc_card_detect(sdmmc_chipset_handle_t);
 int	imxesdhc_bus_power(sdmmc_chipset_handle_t, uint32_t);
 int	imxesdhc_bus_clock(sdmmc_chipset_handle_t, int, int);
+int	imxesdhc_bus_width(sdmmc_chipset_handle_t, int);
 void	imxesdhc_card_intr_mask(sdmmc_chipset_handle_t, int);
 void	imxesdhc_card_intr_ack(sdmmc_chipset_handle_t);
 void	imxesdhc_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
@@ -229,7 +230,7 @@ struct sdmmc_chip_functions imxesdhc_functions = {
 	/* bus power and clock frequency */
 	imxesdhc_bus_power,
 	imxesdhc_bus_clock,
-	NULL,
+	imxesdhc_bus_width,
 	/* command execution */
 	imxesdhc_exec_command,
 	/* card interrupt */
@@ -326,6 +327,7 @@ imxesdhc_attach(struct device *parent, struct device *self, void *args)
 	saa.saa_busname = "sdmmc";
 	saa.sct = &imxesdhc_functions;
 	saa.sch = sc;
+	saa.caps = SMC_CAPS_4BIT_MODE;
 	if (caps & SDHC_HOST_CTRL_CAP_HSS)
 		saa.caps |= SMC_CAPS_MMC_HIGHSPEED;
 
@@ -605,6 +607,30 @@ imxesdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 ret:
 	splx(s);
 	return error;
+}
+
+int
+imxesdhc_bus_width(sdmmc_chipset_handle_t sch, int width)
+{
+	struct imxesdhc_softc *sc = sch;
+	uint32_t reg;
+	int s;
+
+	if (width != 1 && width != 4 && width != 8)
+		return (1);
+
+	s = splsdmmc();
+
+	reg = HREAD4(sc, SDHC_PROT_CTRL) & ~SDHC_PROT_CTRL_DTW_MASK;
+	if (width == 4)
+		reg |= SDHC_PROT_CTRL_DTW_4BIT;
+	else if (width == 8)
+		reg |= SDHC_PROT_CTRL_DTW_8BIT;
+	HWRITE4(sc, SDHC_PROT_CTRL, reg);
+
+	splx(s);
+
+	return (0);
 }
 
 void
