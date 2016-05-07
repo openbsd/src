@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.60 2015/12/28 22:08:18 mmcc Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.61 2016/05/07 21:52:29 tedu Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -743,8 +743,7 @@ int
 getpwnam_r(const char *name, struct passwd *pw, char *buf, size_t buflen,
     struct passwd **pwretp)
 {
-	/* XXX shadow should be 0 XXX */
-	return getpwnam_internal(name, pw, buf, buflen, pwretp, 1);
+	return getpwnam_internal(name, pw, buf, buflen, pwretp, 0);
 }
 DEF_WEAK(getpwnam_r);
 
@@ -828,8 +827,7 @@ int
 getpwuid_r(uid_t uid, struct passwd *pw, char *buf, size_t buflen,
     struct passwd **pwretp)
 {
-	/* XXX shadow should be 0 XXX */
-	return getpwuid_internal(uid, pw, buf, buflen, pwretp, 1);
+	return getpwuid_internal(uid, pw, buf, buflen, pwretp, 0);
 }
 DEF_WEAK(getpwuid_r);
 
