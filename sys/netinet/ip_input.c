@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.275 2016/05/03 12:19:13 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.276 2016/05/07 09:56:39 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -606,7 +606,8 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct rtentry **prt)
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr = ip->ip_dst;
-	rt = rtalloc(sintosa(&sin), 0, m->m_pkthdr.ph_rtableid);
+	rt = rtalloc_mpath(sintosa(&sin), &ip->ip_src.s_addr,
+	    m->m_pkthdr.ph_rtableid);
 	if (rtisvalid(rt)) {
 		if (ISSET(rt->rt_flags, RTF_LOCAL))
 			match = 1;
