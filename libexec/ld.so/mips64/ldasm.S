@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.18 2016/03/21 22:41:29 bluhm Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.19 2016/05/07 19:05:23 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -28,6 +28,7 @@
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
+#define __cerror	_dl_cerror
 #include <SYS.h>
 
 /* Stack at this stage is:
@@ -155,6 +156,7 @@ DL_SYSCALL(sendsyslog)
 DL_SYSCALL(pledge)
 DL_SYSCALL(gettimeofday)
 DL_SYSCALL_NOERR(issetugid)
+DL_SYSCALL_NOERR(getthrid)
 DL_SYSCALL(lstat)
 DL_SYSCALL(mprotect)
 DL_SYSCALL(munmap)
@@ -162,6 +164,7 @@ DL_SYSCALL(open)
 DL_SYSCALL(read)
 DL_SYSCALL(readlink)
 DL_SYSCALL2(_syscall,__syscall)
+DL_SYSCALL2_NOERR(set_tcb,__set_tcb)
 DL_SYSCALL(sysctl)
 DL_SYSCALL(utrace)
 DL_SYSCALL(write)

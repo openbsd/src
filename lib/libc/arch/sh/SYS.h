@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.9 2015/10/23 04:39:24 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.10 2016/05/07 19:05:22 guenther Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -85,7 +85,6 @@
 	904:
 
 #define	CERROR	_C_LABEL(__cerror)
-#define	_CERROR	_C_LABEL(___cerror)
 
 #define _SYSCALL_NOERROR(x,y)				\
 		SYSENTRY(x);				\

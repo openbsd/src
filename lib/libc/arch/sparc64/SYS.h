@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.15 2015/10/23 04:39:25 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.16 2016/05/07 19:05:22 guenther Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,9 @@
 #include <sys/syscall.h>
 #include <machine/trap.h>
 
+/* offsetof(struct tib, tib_errno) - offsetof(struct tib, __tib_tcb) */
+#define	TCB_OFFSET_ERRNO	24
+
 #define _CAT(x,y) x##y
 
 #define	__ENTRY(p,x)		ENTRY(_CAT(p,x)) ; .weak x; x = _CAT(p,x)
@@ -76,23 +79,12 @@
 #define __END(p,x)		__END_HIDDEN(p,x); END(x)
 
 /*
- * ERROR branches to cerror.  This is done with a macro so that I can
- * change it to be position independent later, if need be.
+ * ERROR sets the thread's errno and returns
  */
-#ifdef __PIC__
-#define	CALL(name) \
-	PIC_PROLOGUE(%g1,%g2); \
-	sethi %hi(name),%g2; \
-	or %g2,%lo(name),%g2; \
-	ldx [%g1+%g2],%g2; \
-	jmp %g2; \
-	nop
-#else
-#define	CALL(name) \
-	sethi %hi(name),%g1; or %lo(name),%g1,%g1; \
-	jmp %g1; nop
-#endif
-#define	ERROR()	CALL(_C_LABEL(__cerror))
+#define	ERROR()							\
+	st	%o0, [%g7 + TCB_OFFSET_ERRNO];			\
+	retl;							\
+	 mov	-1, %o0
 
 /*
  * SYSCALL is used when further action must be taken before returning.
@@ -154,8 +146,6 @@
 #define __PSEUDO_NOERROR(p,x,y) \
 	__ENTRY(p,x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL; __END(p,x)
-
-	.globl	_C_LABEL(__cerror)
 
 /*
  * SYSENTRY is for functions that pretend to be syscalls.

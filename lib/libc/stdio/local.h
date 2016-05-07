@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.h,v 1.23 2015/10/25 18:01:24 guenther Exp $	*/
+/*	$OpenBSD: local.h,v 1.24 2016/05/07 19:05:22 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,6 +40,7 @@
 #include <wchar.h> 
 #include "wcio.h"
 #include "fileext.h"
+#include "thread_private.h"
 
 void	_cleanup(void);
 int	_fwalk(int (*)(FILE *));
@@ -96,5 +97,13 @@ __END_HIDDEN_DECLS
 	(fp)->_lb._base = NULL; \
 }
 
-#define FLOCKFILE(fp)	do { if (__isthreaded) flockfile(fp); } while (0)
-#define FUNLOCKFILE(fp)	do { if (__isthreaded) funlockfile(fp); } while (0)
+#define FLOCKFILE(fp)							\
+	do {								\
+		if (_thread_cb.tc_flockfile != NULL)			\
+			_thread_cb.tc_flockfile(fp);			\
+	} while (0)
+#define FUNLOCKFILE(fp)							\
+	do {								\
+		if (_thread_cb.tc_funlockfile != NULL)			\
+			_thread_cb.tc_funlockfile(fp);			\
+	} while (0)

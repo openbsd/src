@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.5 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.6 2016/05/07 19:05:22 guenther Exp $	*/
 /*	$NetBSD: cerror.S,v 1.10 2006/01/06 05:14:39 uwe Exp $	*/
 
 /*-
@@ -37,29 +37,22 @@
 
 #include "SYS.h"
 
-WEAK_ALIAS(CERROR, _CERROR)
-
-ASENTRY(_CERROR)
-#ifdef __PIC__
-	mova	L_GOT, r0
-	mov.l	L_GOT, r1
-	add	r0, r1
-	mov.l	L_errno, r0
-	mov.l	@(r0, r1), r1
-	mov.l	r4, @r1
-#else
-	mov.l	L_errno, r1
-	mov.l	r4, @r1
-#endif
-	mov	#-1, r0
+ASENTRY(CERROR)
+	mov.l	.L___errno, r1
+	PIC_PROLOGUE(.L_got)
+	sts.l   pr, @-sp
+1:	CALL	r1
+	 mov.l	r4, @-sp	! save error code
+	mov.l	@sp+, r4
+	lds.l   @sp+, pr
+	PIC_EPILOGUE
+	mov.l	r4, @r0
+	mov	#-1, r1
 	rts
-	 mov	#-1, r1
+	 mov	#-1, r0
 
 	.align	2
-#ifdef __PIC__
-L_GOT:		.long	_GLOBAL_OFFSET_TABLE_
-L_errno:	.long	_C_LABEL(errno)@GOT
-#else
-L_errno:	.long	_C_LABEL(errno)
-#endif
-	SET_ENTRY_SIZE(_CERROR)
+.L_got:		PIC_GOT_DATUM
+.L___errno:	CALL_DATUM(_C_LABEL(__errno), 1b)
+	SET_ASENTRY_SIZE(CERROR)
+

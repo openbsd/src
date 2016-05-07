@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.11 2015/09/05 06:22:47 guenther Exp $ */
+/*	$OpenBSD: brk.S,v 1.12 2016/05/07 19:05:21 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -64,12 +64,6 @@ ENTRY(brk)
 	PIC_EPILOGUE
 	xorl	%eax,%eax
 	movl	%ecx,(%edx)
-	ret
-2:
-	PIC_PROLOGUE
-	movl	PIC_GOT(CERROR),%ecx	# set up GOT addressing
-	PIC_EPILOGUE
-	jmp	*%ecx
 
 #else
 
@@ -84,8 +78,9 @@ ENTRY(brk)
 	jc	2f
 	xorl	%eax,%eax
 	movl	%ecx,__curbrk
+#endif
 	ret
 2:
-	jmp	CERROR
-#endif
+	SET_ERRNO()
+	ret
 END(brk)

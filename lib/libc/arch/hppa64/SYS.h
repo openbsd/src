@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.10 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.11 2016/05/07 19:05:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -32,6 +32,9 @@
 #include <machine/frame.h>
 #include <machine/vmparam.h>
 #undef _LOCORE
+
+/* offsetof(struct tib, tib_errno) - offsetof(struct tib, __tib_tcb) */
+#define TCB_OFFSET_ERRNO	-12
 
 /*
  * We define a hidden alias with the prefix "_libc_" for each global symbol
@@ -84,10 +87,15 @@ LEAF_ENTRY(__CONCAT(_thread_sys_,x))
 	depd	%r0, 31, 32, %r1		!\
 	ble	4(%sr7, %r1)			!\
 	ldi	__CONCAT(SYS_,x), %r1		!\
-	.import	__cerror, code			!\
-	sub,*=	%r0, %r1, %r0			!\
-	b,l	__cerror, %rp			!\
-	ldd	HPPA_FRAME_RP(%sr0,%sp), %rp
+	comb,==,tr %r0, %ret0, 1f		!\
+	ldd	HPPA_FRAME_RP(%sr0,%sp), %rp	!\
+	/* set errno */				\
+	mfctl	%cr27, %r1			!\
+	stw	%t1, TCB_OFFSET_ERRNO(%r1)	!\
+	bv	%r0(%rp)			!\
+	 ldi	-1, %ret0			!\
+1:	
+
 
 #define	PSEUDO(x,y)				!\
 SYSENTRY(x)					!\

@@ -2044,6 +2044,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/termios.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/tgmath.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/tib.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/time.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/tls.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/ttyent.ph

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.158 2016/03/24 05:27:19 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.159 2016/05/07 19:05:23 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -391,6 +391,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	int failed;
 	struct dep_node *n;
 	Elf_Addr minva, maxva, exe_loff;
+	Elf_Phdr *ptls = NULL;
 	int align;
 
 	_dl_setup_env(argv[0], envp);
@@ -480,9 +481,12 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 			}
 			break;
 		case PT_TLS:
-			_dl_printf("%s: unsupported TLS program header\n",
-			    __progname);
-			_dl_exit(1);
+			if (phdp->p_filesz > phdp->p_memsz) {
+				_dl_printf("%s: invalid tls data.\n",
+				    __progname);
+				_dl_exit(5);
+			}
+			ptls = phdp;
 			break;
 		}
 		phdp++;
@@ -491,6 +495,10 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	exe_obj->obj_flags |= DF_1_GLOBAL;
 	exe_obj->load_size = maxva - minva;
 	_dl_set_sod(exe_obj->load_name, &exe_obj->sod);
+
+	/* TLS bits in the base executable */
+	if (ptls != NULL && ptls->p_memsz)
+		_dl_set_tls(exe_obj, ptls, exe_loff, NULL);
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
@@ -522,6 +530,9 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	dyn_obj->status |= STAT_RELOC_DONE;
 	_dl_set_sod(dyn_obj->load_name, &dyn_obj->sod);
 
+	/* calculate the offsets for static TLS allocations */
+	_dl_allocate_tls_offsets();
+
 	/*
 	 * Everything should be in place now for doing the relocation
 	 * and binding. Call _dl_rtld to do the job. Fingers crossed.
@@ -550,6 +561,9 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 		_dl_exit(0);
 
 	_dl_loading_object = NULL;
+
+	/* set up the TIB for the initial thread */
+	_dl_allocate_first_tib();
 
 	_dl_fixup_user_env();
 

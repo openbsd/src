@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.21 2016/04/02 19:56:53 guenther Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.22 2016/05/07 19:05:22 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -44,12 +44,10 @@ int
 pthread_attr_init(pthread_attr_t *attrp)
 {
 	pthread_attr_t attr;
-	int error;
 
 	/* make sure _rthread_attr_default has been initialized */
 	if (!_threads_ready)
-		if ((error = _rthread_init()))
-			return (error);
+		_rthread_init();
 
 	attr = calloc(1, sizeof(*attr));
 	if (!attr)

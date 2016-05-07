@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.h,v 1.9 2016/04/05 04:28:32 guenther Exp $	*/
+/*	$OpenBSD: namespace.h,v 1.10 2016/05/07 19:05:22 guenther Exp $	*/
 
 #ifndef _LIBC_NAMESPACE_H_
 #define _LIBC_NAMESPACE_H_
@@ -139,12 +139,14 @@
 #define	CANCEL(x)		_libc_##x##_cancel
 #define	WRAP(x)			_libc_##x##_wrap
 #define	HIDDEN_STRING(x)	"_libc_" __STRING(x)
+#define	CANCEL_STRING(x)	"_libc_" __STRING(x) "_cancel"
 #define	WRAP_STRING(x)		"_libc_" __STRING(x) "_wrap"
 
 #define	PROTO_NORMAL(x)		__dso_hidden typeof(x) x asm(HIDDEN_STRING(x))
 #define	PROTO_STD_DEPRECATED(x)	typeof(x) x __attribute__((deprecated))
 #define	PROTO_DEPRECATED(x)	typeof(x) x __attribute__((deprecated, weak))
-#define	PROTO_CANCEL(x)		PROTO_NORMAL(x), CANCEL(x)
+#define	PROTO_CANCEL(x)		__dso_hidden typeof(x) HIDDEN(x), \
+					x asm(CANCEL_STRING(x))
 #define	PROTO_WRAP(x)		PROTO_NORMAL(x), WRAP(x)
 
 #define	DEF_STRONG(x)		__strong_alias(x, HIDDEN(x))

@@ -2076,6 +2076,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/termios.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/tgmath.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/tib.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/time.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/tls.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/ttyent.ph

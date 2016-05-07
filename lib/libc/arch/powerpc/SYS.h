@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.20 2015/10/23 04:39:24 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.21 2016/05/07 19:05:22 guenther Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -68,13 +68,13 @@
 
 
 #define _CONCAT(x,y)	x##y
-#define PSEUDO_PREFIX(p,x,y)	.extern _ASM_LABEL(___cerror) ; \
+#define PSEUDO_PREFIX(p,x,y)	.extern _ASM_LABEL(__cerror) ; \
 			ENTRY(p##x) \
 				li 0, SYS_##y ; \
 				/* sc */
 #define PSEUDO_SUFFIX		cmpwi 0, 0 ; \
 				beqlr+ ; \
-				b _ASM_LABEL(___cerror)
+				b _ASM_LABEL(__cerror)
 
 #define PSEUDO_NOERROR_SUFFIX	blr
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.5 2015/06/01 09:27:53 uebayasi Exp $ */
+/*	$OpenBSD: tfork_thread.S,v 1.6 2016/05/07 19:05:21 guenther Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * Copyright (c) 2003 Alan L. Cox <alc@cs.rice.edu>
@@ -85,10 +85,6 @@ ENTRY(__tfork_thread)
 	 * Branch here if the thread creation fails:
 	 */
 2:
-#ifdef __PIC__
-	movq	PIC_GOT(CERROR), %rcx
-	jmp	*%rcx
-#else
-	jmp	CERROR
-#endif
+	SET_ERRNO
+	ret
 END(__tfork_thread)

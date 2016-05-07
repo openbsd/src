@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2016/04/02 19:56:53 guenther Exp $
+#	$OpenBSD: Makefile,v 1.42 2016/05/07 19:05:22 guenther Exp $
 
 LIB=pthread
 LIBCSRCDIR=	${.CURDIR}/../libc
@@ -9,18 +9,19 @@ CFLAGS+=-Wsign-compare
 CFLAGS+=-I${.CURDIR} -include namespace.h \
 	-I${LIBCSRCDIR}/arch/${MACHINE_CPU} -I${LIBCSRCDIR}/include
 CDIAGFLAGS=
-LDADD = -Wl,-znodelete,-zinitfirst,-znodlopen
+LDADD = -Wl,-znodelete
 
 .if defined(NOPIC)
 CFLAGS+=-DNO_PIC
 .endif
+
+VERSION_SCRIPT= ${.CURDIR}/Symbols.map
 
 .PATH: ${.CURDIR}/arch/${MACHINE_CPU}
 SRCS=	rthread.c \
 	rthread_attr.c \
 	rthread_barrier.c \
 	rthread_barrier_attr.c \
-	rthread_cancel.c \
 	rthread_condattr.c \
 	rthread_debug.c \
 	rthread_file.c \
@@ -42,7 +43,7 @@ SRCS=	rthread.c \
 	rthread_tls.c \
 	sched_prio.c
 
-OBJS+= _atomic_lock.o cerror.o
+OBJS+= _atomic_lock.o
 
 SRCDIR= ${.CURDIR}/../libpthread
 .include "${SRCDIR}/include/Makefile.inc"

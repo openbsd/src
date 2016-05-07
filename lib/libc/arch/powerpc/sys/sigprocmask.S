@@ -1,4 +1,4 @@
-/* $OpenBSD: sigprocmask.S,v 1.10 2015/10/23 04:39:24 guenther Exp $ */
+/* $OpenBSD: sigprocmask.S,v 1.11 2016/05/07 19:05:22 guenther Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -49,7 +49,7 @@ PREFIX_HIDDEN(sigprocmask)
 	/* didnt work? */
 	cmpwi	0, 0
 	beq+	.L_sigprocmask_ok
-	b	_ASM_LABEL(___cerror)
+	b	_ASM_LABEL(__cerror)
 
 .L_sigprocmask_ok:
 	lwz	5, 12(1)

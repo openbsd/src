@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.3 2015/09/19 04:02:21 guenther Exp $	*/
+/*	$OpenBSD: time.h,v 1.4 2016/05/07 19:05:22 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -39,7 +39,7 @@ PROTO_NORMAL(gmtime_r);
 PROTO_NORMAL(localtime);
 PROTO_NORMAL(localtime_r);
 PROTO_NORMAL(mktime);
-/*PROTO_CANCEL(nanosleep);*/
+PROTO_CANCEL(nanosleep);
 PROTO_NORMAL(strftime);
 PROTO_NORMAL(strptime);
 PROTO_NORMAL(time);

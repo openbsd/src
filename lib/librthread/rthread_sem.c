@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.22 2016/04/02 19:56:53 guenther Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.23 2016/05/07 19:05:22 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -32,6 +32,7 @@
 #include <pthread.h>
 
 #include "rthread.h"
+#include "cancel.h"		/* in libc/include */
 
 #define SHARED_IDENT ((void *)-1)
 
@@ -229,18 +230,24 @@ sem_post(sem_t *semp)
 int
 sem_wait(sem_t *semp)
 {
-	pthread_t self = pthread_self();
+	struct tib *tib = TIB_GET();
+	pthread_t self;
 	sem_t sem;
 	int r;
+	PREP_CANCEL_POINT(tib);
+
+	if (!_threads_ready)
+		_rthread_init();
+	self = tib->tib_thread;
 
 	if (!semp || !(sem = *semp)) {
 		errno = EINVAL;
 		return (-1);
 	}
 
-	_enter_delayed_cancel(self);
+	ENTER_DELAYED_CANCEL_POINT(tib, self);
 	r = _sem_wait(sem, 0, NULL, &self->delayed_cancel);
-	_leave_delayed_cancel(self, r);
+	LEAVE_CANCEL_POINT_INNER(tib, r);
 
 	if (r) {
 		errno = r;
@@ -253,18 +260,24 @@ sem_wait(sem_t *semp)
 int
 sem_timedwait(sem_t *semp, const struct timespec *abstime)
 {
-	pthread_t self = pthread_self();
+	struct tib *tib = TIB_GET();
+	pthread_t self;
 	sem_t sem;
 	int r;
+	PREP_CANCEL_POINT(tib);
+
+	if (!_threads_ready)
+		_rthread_init();
+	self = tib->tib_thread;
 
 	if (!semp || !(sem = *semp)) {
 		errno = EINVAL;
 		return (-1);
 	}
 
-	_enter_delayed_cancel(self);
+	ENTER_DELAYED_CANCEL_POINT(tib, self);
 	r = _sem_wait(sem, 0, abstime, &self->delayed_cancel);
-	_leave_delayed_cancel(self, r);
+	LEAVE_CANCEL_POINT_INNER(tib, r);
 
 	if (r) {
 		errno = r == EWOULDBLOCK ? ETIMEDOUT : r;
@@ -313,6 +326,9 @@ sem_open(const char *name, int oflag, ...)
 	sem_t sem, *semp;
 	unsigned int value = 0;
 	int created = 0, fd;
+
+	if (!_threads_ready)
+		_rthread_init();
 
 	if (oflag & ~(O_CREAT | O_EXCL)) {
 		errno = EINVAL;

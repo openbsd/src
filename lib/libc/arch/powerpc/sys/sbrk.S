@@ -1,4 +1,4 @@
-/* $OpenBSD: sbrk.S,v 1.10 2015/09/05 06:22:47 guenther Exp $ */
+/* $OpenBSD: sbrk.S,v 1.11 2016/05/07 19:05:22 guenther Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -63,7 +63,7 @@ PSEUDO_PREFIX(,sbrk,break)
 	/* check for error */
 	cmpwi	0, 0
 	beq+	.L_sbrk_ok
-	b	_ASM_LABEL(___cerror)
+	b	_ASM_LABEL(__cerror)
 
 	/* update, __curbrk and return */
 .L_sbrk_ok:

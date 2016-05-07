@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.5 2015/09/19 04:02:21 guenther Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.6 2016/05/07 19:05:22 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -51,7 +51,7 @@ PROTO_NORMAL(fgetln);
 PROTO_NORMAL(fgetpos);
 PROTO_NORMAL(fgets);
 PROTO_NORMAL(fileno);
-/*PROTO_NORMAL(flockfile);*/
+PROTO_NORMAL(flockfile);
 PROTO_NORMAL(fmemopen);
 PROTO_NORMAL(fopen);
 PROTO_NORMAL(fprintf);
@@ -66,8 +66,8 @@ PROTO_NORMAL(fseeko);
 PROTO_NORMAL(fsetpos);
 PROTO_NORMAL(ftell);
 PROTO_NORMAL(ftello);
-/*PROTO_NORMAL(ftrylockfile);*/
-/*PROTO_NORMAL(funlockfile);*/
+PROTO_NORMAL(ftrylockfile);
+PROTO_NORMAL(funlockfile);
 PROTO_NORMAL(funopen);
 PROTO_NORMAL(fwrite);
 PROTO_NORMAL(getc);

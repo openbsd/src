@@ -30,12 +30,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.20 2015/10/23 04:39:25 guenther Exp $
+ *	$OpenBSD: SYS.h,v 1.21 2016/05/07 19:05:22 guenther Exp $
  */
 
 #include "DEFS.h"
 #include <sys/syscall.h>
 #include <machine/trap.h>
+
+/* offsetof(struct tib, tib_errno) - offsetof(struct tib, __tib_tcb) */
+#define	TCB_OFFSET_ERRNO	12
 
 #define _CAT(x,y) x##y
 
@@ -48,27 +51,13 @@
 #define __END(p,x)		__END_HIDDEN(p,x); END(x)
 
 /*
- * ERROR branches to cerror.
+ * ERROR sets the thread's errno and returns
  */
-#ifdef __PIC__
-#if __PIC__ == 1
-#define	ERROR() \
-	PIC_PROLOGUE(%g1,%g2); \
-	ld [%g1+_C_LABEL(__cerror)],%g2; jmp %g2; nop
-#else /* __PIC__ == 2 */
-#define	ERROR() \
-	PIC_PROLOGUE(%g1,%g2); \
-	sethi %hi(_C_LABEL(__cerror)),%g2; \
-	or %g2,%lo(_C_LABEL(__cerror)),%g2; \
-	ld [%g1+%g2],%g2; jmp %g2; nop
-#endif
-#else
-#define	ERROR() \
-	sethi %hi(_C_LABEL(__cerror)),%g1; \
-	or %lo(_C_LABEL(__cerror)),%g1,%g1; \
-	jmp %g1; \
-	nop
-#endif
+#define	ERROR()						\
+	st	%o0, [%g7 + TCB_OFFSET_ERRNO];		\
+	mov	-1, %o0;				\
+	retl;						\
+	 mov	-1, %o1
 
 /*
  * SYSCALL is used when further action must be taken before returning.
@@ -112,5 +101,3 @@
 # define SYSENTRY_HIDDEN(x)	__ENTRY_HIDDEN(_thread_sys_,x)
 # define SYSCALL_END(x)		__END(_thread_sys_,x)
 # define SYSCALL_END_HIDDEN(x)	__END_HIDDEN(_thread_sys_,x)
-
-	.globl	_C_LABEL(__cerror)

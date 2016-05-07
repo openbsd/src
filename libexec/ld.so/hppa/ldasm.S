@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.20 2016/03/21 22:41:29 bluhm Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.21 2016/05/07 19:05:23 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -182,6 +182,12 @@ ENTRY(_dl_issetugid,0)
 	nop
 EXIT(_dl_issetugid)
 
+ENTRY(_dl_getthrid,0)
+	SYSCALL(getthrid)
+	bv	r0(rp)
+	nop
+EXIT(_dl_getthrid)
+
 ENTRY(_dl__syscall,0)
 	SYSCALL(__syscall)
 	bv	r0(rp)
@@ -277,6 +283,12 @@ ENTRY(_dl_sendsyslog,0)
 	bv	r0(rp)
 	nop
 EXIT(_dl_sendsyslog)
+
+ENTRY(_dl_set_tcb,0)
+	SYSCALL(__set_tcb)
+	bv	r0(rp)
+	nop
+EXIT(_dl_set_tcb)
 
 ENTRY(_dl_pledge,0)
 	SYSCALL(pledge)

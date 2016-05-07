@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.7 2015/09/05 06:22:47 guenther Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.8 2016/05/07 19:05:21 guenther Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $	*/
 
 /*-
@@ -55,21 +55,6 @@ __curbrk:	.quad	_end
 
 	.weak	sbrk
 ENTRY(sbrk)
-#ifdef __PIC__
-	movq	PIC_GOT(__curbrk),%rdx
-	movslq  %edi, %rax
-	movq	(%rdx),%rdi
-	addq	%rax,%rdi
-	SYSTRAP(break)
-	jc	1f
-	movq	PIC_GOT(__curbrk),%rdx
-	movq	(%rdx),%rax
-	movq	%rdi,(%rdx)
-	ret
-1:
-	mov	PIC_GOT(CERROR),%rdx
-	jmp	*%rdx
-#else
 	movq	__curbrk(%rip),%rax
 	movslq	%edi,%rsi
 	movq	%rsi,%rdi
@@ -80,6 +65,6 @@ ENTRY(sbrk)
 	addq	%rsi,__curbrk(%rip)
 	ret
 1:
-	jmp	CERROR
-#endif
+	SET_ERRNO
+	ret
 END(sbrk)

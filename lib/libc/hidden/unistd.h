@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.7 2016/03/30 07:52:47 guenther Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.8 2016/05/07 19:05:22 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -34,8 +34,8 @@ PROTO_DEPRECATED(brk);
 PROTO_NORMAL(chdir);
 PROTO_NORMAL(chown);
 PROTO_NORMAL(chroot);
-/*PROTO_CANCEL(close);*/
-/*PROTO_CANCEL(closefrom);*/
+PROTO_CANCEL(close);
+PROTO_CANCEL(closefrom);
 PROTO_DEPRECATED(confstr);
 PROTO_NORMAL(crypt);
 PROTO_NORMAL(crypt_checkpass);
@@ -57,11 +57,11 @@ PROTO_NORMAL(fchown);
 PROTO_NORMAL(fchownat);
 /*PROTO_CANCEL(fdatasync);*/
 PROTO_DEPRECATED(fflagstostr);
-/*PROTO_WRAP(fork);*/
+PROTO_WRAP(fork);
 PROTO_NORMAL(fpathconf);
-/*PROTO_CANCEL(fsync);*/
+PROTO_CANCEL(fsync);
 PROTO_NORMAL(ftruncate);
-/*PROTO_BARE(getcwd);*/
+PROTO_NORMAL(getcwd);
 PROTO_NORMAL(getdomainname);
 PROTO_NORMAL(getdtablecount);
 PROTO_DEPRECATED(getdtablesize);
@@ -111,14 +111,14 @@ PROTO_NORMAL(pathconf);
 PROTO_NORMAL(pipe);
 PROTO_NORMAL(pipe2);
 PROTO_NORMAL(pledge);
-/*PROTO_CANCEL(pread);*/
+PROTO_CANCEL(pread);
 PROTO_NORMAL(profil);
-/*PROTO_CANCEL(pwrite);*/
+PROTO_CANCEL(pwrite);
 PROTO_NORMAL(quotactl);
 PROTO_DEPRECATED(rcmd);
 PROTO_NORMAL(rcmd_af);
 PROTO_NORMAL(rcmdsh);
-/*PROTO_CANCEL(read);*/
+PROTO_CANCEL(read);
 PROTO_NORMAL(readlink);
 PROTO_NORMAL(readlinkat);
 PROTO_NORMAL(reboot);
@@ -128,7 +128,7 @@ PROTO_DEPRECATED(rresvport);
 PROTO_NORMAL(rresvport_af);
 PROTO_DEPRECATED(ruserok);
 PROTO_DEPRECATED(sbrk);
-/*PROTO_CANCEL(select);*/
+PROTO_CANCEL(select);
 PROTO_DEPRECATED(setdomainname);
 PROTO_NORMAL(setegid);
 PROTO_NORMAL(seteuid);
@@ -165,7 +165,7 @@ PROTO_DEPRECATED(ualarm);
 PROTO_NORMAL(unlink);
 PROTO_NORMAL(unlinkat);
 PROTO_DEPRECATED(usleep);
-/*PROTO_WRAP(vfork);*/
-/*PROTO_CANCEL(write);*/
+PROTO_WRAP(vfork);
+PROTO_CANCEL(write);
 
 #endif /* !_LIBC_UNISTD_H_ */

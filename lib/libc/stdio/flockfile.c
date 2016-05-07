@@ -1,41 +1,29 @@
-/*	$OpenBSD: flockfile.c,v 1.8 2012/09/01 01:08:16 fgsch Exp $	*/
+/*	$OpenBSD: flockfile.c,v 1.9 2016/05/07 19:05:22 guenther Exp $	*/
 
-#include <sys/time.h>
 #include <stdio.h>
-#include "thread_private.h"
-
-/*
- * Subroutine versions of the macros in <stdio.h>
- * Note that these are all no-ops because libc does not do threads.
- * Strong implementation of file locking in librthread/rthread_file.c
- */
-
-#undef flockfile
-#undef ftrylockfile
-#undef funlockfile
-
-WEAK_PROTOTYPE(flockfile);
-WEAK_PROTOTYPE(ftrylockfile);
-WEAK_PROTOTYPE(funlockfile);
-
-WEAK_ALIAS(flockfile);
-WEAK_ALIAS(ftrylockfile);
-WEAK_ALIAS(funlockfile);
+#include "local.h"
 
 void
-WEAK_NAME(flockfile)(FILE * fp)
+flockfile(FILE *fp)
 {
+	FLOCKFILE(fp);
 }
+DEF_WEAK(flockfile);
 
 
 int
-WEAK_NAME(ftrylockfile)(FILE *fp)
+ftrylockfile(FILE *fp)
 {
+	if (_thread_cb.tc_ftrylockfile != NULL)
+		return (_thread_cb.tc_ftrylockfile(fp));
 
 	return 0;
 }
+DEF_WEAK(ftrylockfile);
 
 void
-WEAK_NAME(funlockfile)(FILE * fp)
+funlockfile(FILE *fp)
 {
+	FUNLOCKFILE(fp);
 }
+DEF_WEAK(funlockfile);

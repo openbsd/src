@@ -1410,6 +1410,7 @@
 ./usr/include/termcap.h
 ./usr/include/termios.h
 ./usr/include/tgmath.h
+./usr/include/tib.h
 ./usr/include/time.h
 ./usr/include/tls.h
 ./usr/include/ttyent.h

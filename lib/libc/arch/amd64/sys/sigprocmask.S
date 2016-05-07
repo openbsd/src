@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.8 2015/10/23 04:39:24 guenther Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.9 2016/05/07 19:05:21 guenther Exp $	*/
 /*	$NetBSD: sigprocmask.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $	*/
 
 /*-
@@ -48,16 +48,12 @@ SYSENTRY_HIDDEN(sigprocmask)
 2:	SYSTRAP(sigprocmask)
 	jc	1f
 	testq	%rdx,%rdx		# test if old mask requested
-	jz	out
+	jz	3f
 	movl	%eax,(%rdx)		# store old mask
-out:
+3:
 	xorl	%eax,%eax
 	ret
 1:
-#ifdef __PIC__
-	movq	PIC_GOT(CERROR), %rcx
-	jmp	*%rcx
-#else
-	jmp	CERROR
-#endif
+	SET_ERRNO
+	ret
 SYSCALL_END_HIDDEN(sigprocmask)

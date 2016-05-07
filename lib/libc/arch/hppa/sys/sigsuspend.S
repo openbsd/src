@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.10 2006/01/05 22:13:55 kettenis Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.11 2016/05/07 19:05:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -28,11 +28,11 @@
 
 #include "SYS.h"
 
-SYSENTRY(sigsuspend)
+SYSENTRY_HIDDEN(sigsuspend)
 	ldw	0(arg0), arg0
 	stw	arg0, HPPA_FRAME_ARG(0)(sp)
 
 	SYSCALL(sigsuspend)
-SYSEXIT(sigsuspend)
+SYSEXIT_HIDDEN(sigsuspend)
 
 	.end

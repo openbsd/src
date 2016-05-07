@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.11 2015/10/23 04:39:24 guenther Exp $ */
+/*	$OpenBSD: sigprocmask.S,v 1.12 2016/05/07 19:05:21 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -53,13 +53,6 @@ out:
 	xorl	%eax,%eax
 	ret
 1:
-#ifdef __PIC__
-	PIC_PROLOGUE             
-	movl	PIC_GOT(CERROR), %ecx
-	PIC_EPILOGUE
-	jmp	*%ecx
-
-#else
-	jmp	CERROR
-#endif
+	SET_ERRNO()
+	ret
 SYSCALL_END_HIDDEN(sigprocmask)

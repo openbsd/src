@@ -1,4 +1,4 @@
-/*	$OpenBSD: errno.h,v 1.3 2015/09/19 04:02:21 guenther Exp $	*/
+/*	$OpenBSD: errno.h,v 1.4 2016/05/07 19:05:22 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -31,6 +31,6 @@ extern PROTO_NORMAL(sys_nerr);
 extern PROTO_NORMAL(sys_errlist);
 #endif
 
-/*PROTO_OVERRIDABLE(__errno);*/
+PROTO_NORMAL(__errno);
 
 #endif /* _LIBC_ERRNO_H_ */

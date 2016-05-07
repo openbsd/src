@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.18 2015/11/14 21:53:03 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.19 2016/05/07 19:05:21 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,6 +38,8 @@
 #include "DEFS.h"
 #include <sys/syscall.h>
 
+/* offsetof(struct tib, tib_errno) - offsetof(struct tib, __tib_tcb) */
+#define	TCB_OFFSET_ERRNO	32
 
 #define SYSTRAP(x)	movl $(SYS_ ## x),%eax; movq %rcx, %r10; syscall
 
@@ -53,8 +55,14 @@
 	END(_HIDDEN(x))
 #define	SYSCALL_END(x)		SYSCALL_END_HIDDEN(x); END(x)
 
-#define CERROR		_C_LABEL(__cerror)
-#define _CERROR		_C_LABEL(___cerror)
+
+#define SET_ERRNO							\
+	movl	%eax,%fs:(TCB_OFFSET_ERRNO);				\
+	movq	$-1, %rax
+#define HANDLE_ERRNO							\
+	jnc,pt	99f;							\
+	SET_ERRNO;							\
+	99:
 
 #define _SYSCALL_NOERROR(x,y)						\
 	SYSENTRY(x);							\
@@ -63,39 +71,23 @@
 	SYSENTRY_HIDDEN(x);						\
 	SYSTRAP(y)
 
-#ifdef __PIC__
-#define _SYSCALL(x,y)							\
-	.text; _ALIGN_TEXT;						\
-	2: mov PIC_GOT(CERROR), %rcx;					\
-	jmp *%rcx;							\
-	_SYSCALL_NOERROR(x,y);						\
-	jc 2b
-#define _SYSCALL_HIDDEN(x,y)						\
-	.text; _ALIGN_TEXT;						\
-	2: mov PIC_GOT(CERROR), %rcx;					\
-	jmp *%rcx;							\
-	_SYSCALL_HIDDEN_NOERROR(x,y);					\
-	jc 2b
-#else
-#define _SYSCALL(x,y)							\
-	.text; _ALIGN_TEXT;						\
-	2: jmp CERROR;							\
-	_SYSCALL_NOERROR(x,y);						\
-	jc 2b
-#define _SYSCALL_HIDDEN(x,y)						\
-	.text; _ALIGN_TEXT;						\
-	2: jmp CERROR;							\
-	_SYSCALL_HIDDEN_NOERROR(x,y);					\
-	jc 2b
-#endif
-
 #define SYSCALL_NOERROR(x)						\
 	_SYSCALL_NOERROR(x,x)
 
 #define SYSCALL_HIDDEN(x)						\
-	_SYSCALL_HIDDEN(x,x)
+	_SYSCALL_HIDDEN_NOERROR(x,x);					\
+	HANDLE_ERRNO
 #define SYSCALL(x)							\
-	_SYSCALL(x,x)
+	_SYSCALL_NOERROR(x,x);						\
+	HANDLE_ERRNO
+
+
+/* return, handling errno for failed calls */
+#define _RSYSCALL_RET							\
+	jc,pn	99f;							\
+	ret;								\
+	99: SET_ERRNO;							\
+	ret
 
 #define PSEUDO_NOERROR(x,y)						\
 	_SYSCALL_NOERROR(x,y);						\
@@ -103,12 +95,12 @@
 	SYSCALL_END(x)
 
 #define PSEUDO(x,y)							\
-	_SYSCALL(x,y);							\
-	ret;								\
+	_SYSCALL_NOERROR(x,y);						\
+	_RSYSCALL_RET;							\
 	SYSCALL_END(x)
 #define PSEUDO_HIDDEN(x,y)						\
-	_SYSCALL_HIDDEN(x,y);						\
-	ret;								\
+	_SYSCALL_HIDDEN_NOERROR(x,y);					\
+	_RSYSCALL_RET;							\
 	SYSCALL_END_HIDDEN(x)
 
 #define RSYSCALL_NOERROR(x)						\
@@ -118,5 +110,3 @@
 	PSEUDO(x,x)
 #define RSYSCALL_HIDDEN(x)						\
 	PSEUDO_HIDDEN(x,x)
-
-	.globl	CERROR

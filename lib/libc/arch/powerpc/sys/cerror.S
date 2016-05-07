@@ -1,4 +1,4 @@
-/* $OpenBSD: cerror.S,v 1.12 2015/09/09 08:24:12 kettenis Exp $ */
+/* $OpenBSD: cerror.S,v 1.13 2016/05/07 19:05:22 guenther Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -30,11 +30,10 @@
 
 #define ERRNOPTR_OFFSET	16
 
-WEAK_ALIAS(__cerror, ___cerror)
-
 	.text
-	.protected _ASM_LABEL(___cerror)
-ASENTRY(___cerror)
+	.hidden _ASM_LABEL(__cerror)
+	.hidden _ASM_LABEL(_HIDDEN(__errno))
+ASENTRY(__cerror)
 	stwu	1, -16(1)		/* follow the SVR4 ABI */
 	mflr	3			/* error value is in r0, use r3 */
 	stw	3, 20(1)
@@ -47,7 +46,7 @@ ASENTRY(___cerror)
 	addi	30, 30, _GLOBAL_OFFSET_TABLE_-1b@l
 #endif
 	mr	31, 0
-	bl	PIC_PLT(__errno)
+	bl	_ASM_LABEL(_HIDDEN(__errno))
 	stw	31, 0(3)
 #ifdef __PIC__
 	lwz	30, 8(1)
@@ -59,4 +58,4 @@ ASENTRY(___cerror)
 	li	3, -1
 	li	4, -1
 	blr
-END(___cerror)
+END(__cerror)

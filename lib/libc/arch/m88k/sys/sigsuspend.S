@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.12 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.13 2016/05/07 19:05:21 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,11 +42,11 @@
  * sigset_t != sizeof int.
  */
 
-SYSENTRY(sigsuspend)
+SYSENTRY_HIDDEN(sigsuspend)
 	ld	%r2,%r2,0		/* dereference the pointer mask */
 	or	%r13,%r0,SYS_sigsuspend
 	tb0	0,%r0,450
 	br	CERROR
 	jmp.n	%r1
 	 or	%r2,%r0,0
-SYSCALL_END(sigsuspend)
+SYSCALL_END_HIDDEN(sigsuspend)

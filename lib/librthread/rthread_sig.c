@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sig.c,v 1.17 2015/10/23 04:39:24 guenther Exp $ */
+/*	$OpenBSD: rthread_sig.c,v 1.18 2016/05/07 19:05:22 guenther Exp $ */
 /*
  * Copyright (c) 2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -25,19 +25,19 @@
 #include <pthread.h>
 
 #include "rthread.h"
+#include "cancel.h"		/* in libc/include */
 
 int
 sigwait(const sigset_t *set, int *sig)
 {
-	pthread_t self = pthread_self();
 	sigset_t s = *set;
 	int ret;
 
 	sigdelset(&s, SIGTHR);
 	do {
-		_enter_cancel(self);
+		ENTER_CANCEL_POINT(1);
 		ret = __thrsigdivert(s, NULL, NULL);
-		_leave_cancel(self);
+		LEAVE_CANCEL_POINT(ret == -1);
 	} while (ret == -1 && errno == EINTR);
 	if (ret == -1)
 		return (errno);
@@ -49,14 +49,13 @@ sigwait(const sigset_t *set, int *sig)
 int
 sigwaitinfo(const sigset_t *set, siginfo_t *info)
 {
-	pthread_t self = pthread_self();
 	sigset_t s = *set;
 	int ret;
 
 	sigdelset(&s, SIGTHR);
-	_enter_cancel(self);
+	ENTER_CANCEL_POINT(1);
 	ret = __thrsigdivert(s, info, NULL);
-	_leave_cancel(self);
+	LEAVE_CANCEL_POINT(ret == -1);
 	return (ret);
 }
 
@@ -64,14 +63,13 @@ int
 sigtimedwait(const sigset_t *set, siginfo_t *info,
     const struct timespec *timeout)
 {
-	pthread_t self = pthread_self();
 	sigset_t s = *set;
 	int ret;
 
 	sigdelset(&s, SIGTHR);
-	_enter_cancel(self);
+	ENTER_CANCEL_POINT(1);
 	ret = __thrsigdivert(s, info, timeout);
-	_leave_cancel(self);
+	LEAVE_CANCEL_POINT(ret == -1);
 	return (ret);
 }
 #endif

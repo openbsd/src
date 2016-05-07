@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.6 2015/10/17 22:40:54 guenther Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.7 2016/05/07 19:05:21 guenther Exp $	*/
 /*	$NetBSD: sigsuspend.S,v 1.1 2001/06/19 00:25:07 fvdl Exp $	*/
 
 /*-
@@ -39,17 +39,9 @@
 
 #include "SYS.h"
 
-SYSENTRY(sigsuspend)
+SYSENTRY_HIDDEN(sigsuspend)
 	movl	(%rdi),%edi		# indirect to mask arg
 	SYSTRAP(sigsuspend)
-	jc	1f
-	xorl	%eax,%eax		# shouldn t happen
+	SET_ERRNO
 	ret
-1:
-#ifdef __PIC__
-	movq	PIC_GOT(CERROR), %rcx
-	jmp	*%rcx
-#else
-	jmp	CERROR
-#endif
-SYSCALL_END(sigsuspend)
+SYSCALL_END_HIDDEN(sigsuspend)

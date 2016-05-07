@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.76 2016/03/20 02:29:51 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.77 2016/05/07 19:05:23 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -143,6 +143,13 @@ struct elf_object {
 	dev_t	dev;
 	ino_t inode;
 
+	/* thread local storage info */
+	Elf_Addr	tls_fsize;
+	Elf_Addr	tls_msize;
+	Elf_Addr	tls_align;
+	const void	*tls_static_data;
+	int		tls_offset;
+
 	/* generation number of last grpsym insert on this object */
 	unsigned int grpsym_gen;
 
@@ -244,6 +251,13 @@ void	_dl_unsetenv(const char *, char **);
 void	_dl_trace_setup(char **);
 void	_dl_trace_object_setup(elf_object_t *);
 int	_dl_trace_plt(const elf_object_t *, const char *);
+
+/* tib.c */
+void	_dl_allocate_tls_offsets(void);
+void	_dl_allocate_first_tib(void);
+void	_dl_set_tls(elf_object_t *_object, Elf_Phdr *_ptls, Elf_Addr _libaddr,
+	    const char *_libname);
+extern int _dl_tib_static_done;
 
 extern elf_object_t *_dl_objects;
 extern elf_object_t *_dl_last_object;

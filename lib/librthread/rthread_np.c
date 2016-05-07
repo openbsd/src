@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_np.c,v 1.18 2016/04/02 19:00:51 guenther Exp $	*/
+/*	$OpenBSD: rthread_np.c,v 1.19 2016/05/07 19:05:22 guenther Exp $	*/
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2005 Otto Moerbeek <otto@openbsd.org>
@@ -24,15 +24,14 @@
 #include <sys/queue.h>
 #include <sys/sysctl.h>
 
-#include <stdint.h>
 #include <errno.h>
 #include <pthread.h>
 #include <pthread_np.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
+#include <tib.h>
 #include <unistd.h>
-
-#include <machine/spinlock.h>
 
 #include "rthread.h"
 
@@ -47,8 +46,8 @@ pthread_set_name_np(pthread_t thread, const char *name)
 int
 pthread_main_np(void)
 {
-	return (!_threads_ready || (pthread_self()->flags & THREAD_ORIGINAL)
-	    ? 1 : 0);
+	return (!_threads_ready ||
+	    (TIB_GET()->tib_thread_flags & TIB_THREAD_INITIAL_STACK) ? 1 : 0);
 }
 
 
@@ -76,7 +75,7 @@ pthread_stackseg_np(pthread_t thread, stack_t *sinfo)
 			sinfo->ss_size -= thread->stack->guardsize;
 		sinfo->ss_flags = 0;
 		return (0);
-	} else if (thread->flags & THREAD_INITIAL_STACK) {
+	} else if (thread->tib->tib_thread_flags & TIB_THREAD_INITIAL_STACK) {
 		static struct _ps_strings _ps;
 		static struct rlimit rl;
 		static int gotself;

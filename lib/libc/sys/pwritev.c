@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwritev.c,v 1.10 2015/09/11 13:26:20 guenther Exp $	*/
+/*	$OpenBSD: pwritev.c,v 1.11 2016/05/07 19:05:22 guenther Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -29,25 +29,22 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/types.h>
 #include <sys/syscall.h>
 #include <sys/uio.h>
-#include <unistd.h>
-#include "thread_private.h"
 
 ssize_t	__syscall(quad_t, ...);
 PROTO_NORMAL(__syscall);
 
 
-STUB_PROTOTYPE(pwritev);
-
-STUB_ALIAS(pwritev);
+DEF_SYS(pwritev);
 
 /*
  * This function provides 64-bit offset padding that
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
 ssize_t
-STUB_NAME(pwritev)(int fd, const struct iovec *iovp, int iovcnt, off_t offset)
+HIDDEN(pwritev)(int fd, const struct iovec *iovp, int iovcnt, off_t offset)
 {
 
 	return (__syscall(SYS_pwritev, fd, iovp, iovcnt, 0, offset));

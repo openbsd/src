@@ -2076,6 +2076,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/termios.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/tgmath.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/tib.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/time.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/tls.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ttyent.ph

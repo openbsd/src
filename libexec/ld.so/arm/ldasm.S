@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.21 2016/03/21 22:41:29 bluhm Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.22 2016/05/07 19:05:23 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -113,6 +113,7 @@ _dl_exit:
 		b 1b
 
 DL_SYSCALL(issetugid)
+DL_SYSCALL(getthrid)
 DL_SYSCALL2(_syscall,__syscall)
 DL_SYSCALL(munmap)
 DL_SYSCALL(mprotect)
@@ -129,6 +130,7 @@ DL_SYSCALL(sendsyslog)
 DL_SYSCALL(pledge)
 DL_SYSCALL2(getcwd,__getcwd)
 DL_SYSCALL(sysctl)
+DL_SYSCALL2(set_tcb,__set_tcb)
 
 DL_SYSCALL(getdents)
 

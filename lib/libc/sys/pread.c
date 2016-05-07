@@ -1,4 +1,4 @@
-/*	$OpenBSD: pread.c,v 1.10 2015/09/11 13:26:20 guenther Exp $	*/
+/*	$OpenBSD: pread.c,v 1.11 2016/05/07 19:05:22 guenther Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -31,24 +31,20 @@
 
 #include <sys/syscall.h>
 #include <unistd.h>
-#include "thread_private.h"
 
 ssize_t	__syscall(quad_t, ...);
 PROTO_NORMAL(__syscall);
 
-DEF_SYS(ftruncate);
 
+DEF_SYS(pread);
 
-STUB_PROTOTYPE(pread);
-
-STUB_ALIAS(pread);
 
 /*
  * This function provides 64-bit offset padding that
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
 ssize_t
-STUB_NAME(pread)(int fd, void *buf, size_t nbyte, off_t offset)
+HIDDEN(pread)(int fd, void *buf, size_t nbyte, off_t offset)
 {
 	return (__syscall(SYS_pread, fd, buf, nbyte, 0, offset));
 }

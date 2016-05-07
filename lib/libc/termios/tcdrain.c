@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcdrain.c,v 1.5 2005/08/05 13:03:00 espie Exp $ */
+/*	$OpenBSD: tcdrain.c,v 1.6 2016/05/07 19:05:22 guenther Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +31,15 @@
 #include <sys/ioctl.h>
 #include <termios.h>
 
+#include "cancel.h"
+
 int
 tcdrain(int fd)
 {
-	return (ioctl(fd, TIOCDRAIN, 0));
+	int ret;
+
+	ENTER_CANCEL_POINT(1);
+	ret = ioctl(fd, TIOCDRAIN, 0);
+	LEAVE_CANCEL_POINT(ret == -1);
+	return (ret);
 }

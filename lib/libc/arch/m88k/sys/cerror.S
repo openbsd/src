@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.12 2013/01/11 21:23:24 miod Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.13 2016/05/07 19:05:21 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,28 +33,40 @@
  * SUCH DAMAGE.
  */
 
-#include "SYS.h"
+#include "DEFS.h"
 
-WEAK_ALIAS(__cerror,___cerror)
+	.globl	_C_LABEL(__errno)
 
-	.globl	_C_LABEL(errno)
-ENTRY(___cerror)
+/*
+ * long long __cerror(register_t errcode)
+ * stores `errcode' into the current thread's errno variable, and returns
+ * -1LL.
+ */
+
+ASENTRY(__cerror)
+	/* if %r26 has been initialized, don't bother setting up a frame */
+	bcnd	ne0, %r26, has_r26
+
+	subu	%r31,%r31,16
+	st	%r25,%r0,%r31
+	st	%r1,%r31,4
+
 #ifdef __PIC__
-	PIC_SAVE(%r9)
-	PIC_SETUP
-#endif
-
-#ifdef __PIC__
-	PIC_STORE(%r2,_C_LABEL(errno))
+	bsr.n	_C_LABEL(__errno)#plt
 #else
-	or.u	%r4,%r0,%hi16(_C_LABEL(errno))
-	st	%r2,%r4,%lo16(_C_LABEL(errno))
+	bsr.n	_C_LABEL(__errno)
 #endif
+	 or	%r25,%r0,%r2
+	or	%r26,%r0,%r2	/* save errno ptr */
+	or	%r2,%r0,%r25	/* and restore errno value */
 
-#ifdef __PIC__
-	PIC_RESTORE(%r9)
-#endif
-	sub	%r2,%r0,0x1
+	ld	%r1,%r31,4
+	ld	%r25,%r0,%r31
+	addu	%r31,%r31,16
+
+has_r26:
+	st	%r2,%r0,%r26
+	subu	%r2,%r0,1
 	jmp.n	%r1
-	 sub	%r3,%r0,0x1
-END(___cerror)
+	 or	%r3, %r0, %r2
+END(__cerror)

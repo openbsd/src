@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.18 2016/03/21 22:41:29 bluhm Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.19 2016/05/07 19:05:23 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -171,6 +171,9 @@ ENTRY(_dl_exit)
 1:	br	1b
 
 DL_SYSCALL(issetugid)
+	jmp	%r1
+
+DL_SYSCALL(getthrid)
 	jmp	%r1
 
 DL_SYSCALL2(_syscall,__syscall)

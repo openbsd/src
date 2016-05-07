@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.14 2015/10/23 04:39:24 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.15 2016/05/07 19:05:21 guenther Exp $	*/
 /*	$NetBSD: SYS.h,v 1.8 2003/08/07 16:42:02 agc Exp $	*/
 
 /*-
@@ -80,7 +80,6 @@
 	swi	0
 
 #define	CERROR		_C_LABEL(__cerror)
-#define	_CERROR		_C_LABEL(___cerror)
 
 #define _SYSCALL_NOERROR(x,y)						\
 	SYSENTRY(x);							\

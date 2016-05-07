@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.2 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.3 2016/05/07 19:05:22 guenther Exp $	*/
 /*	$NetBSD: sigsuspend.S,v 1.5 2003/08/07 16:42:21 agc Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 
 #include "SYS.h"
 
-SYSENTRY(sigsuspend)
+SYSENTRY_HIDDEN(sigsuspend)
 	mov	r4, r0		/* fetch mask arg */
 	mov.l	@r0, r0		/* indirect to mask arg */
 	mov	r0, r4
@@ -53,4 +53,4 @@ SYSENTRY(sigsuspend)
 	.align	2
 LSYS_sigsuspend:
 	.long	SYS_sigsuspend
-SYSCALL_END(sigsuspend)
+SYSCALL_END_HIDDEN(sigsuspend)

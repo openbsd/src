@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.3 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.4 2016/05/07 19:05:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -30,6 +30,9 @@
 
 /* ELF TLS ABI calls for small TCB, with static TLS data after it */
 #define TLS_VARIANT	1
+
+/* powerpc offsets the TCB pointer 0x7000 bytes after the data */
+#define TCB_OFFSET	0x7000
 
 #if 0	/* XXX perhaps use the gcc global register extension? */
 struct thread_control_block;

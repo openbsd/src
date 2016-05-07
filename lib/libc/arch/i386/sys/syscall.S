@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.S,v 1.10 2015/09/05 06:22:47 guenther Exp $ */
+/*	$OpenBSD: syscall.S,v 1.11 2016/05/07 19:05:21 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,15 +39,6 @@ SYSENTRY(syscall)
 	push	%ecx
 	int	$0x80
 	push	%ecx	/* Keep stack frame consistent */
-	jc	1f
+	HANDLE_ERRNO()
 	ret
-1:
-#ifdef __PIC__
-	PIC_PROLOGUE             
-	movl	PIC_GOT(CERROR), %ecx
-	PIC_EPILOGUE
-	jmp	*%ecx
-#else
-	jmp	CERROR
-#endif
 SYSCALL_END(syscall)

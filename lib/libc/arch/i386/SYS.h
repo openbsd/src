@@ -29,12 +29,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.24 2015/10/23 04:39:24 guenther Exp $
+ *	$OpenBSD: SYS.h,v 1.25 2016/05/07 19:05:21 guenther Exp $
  */
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
+#define TCB_OFFSET_ERRNO	16
 
 /*
  * We define a hidden alias with the prefix "_libc_" for each global symbol
@@ -70,9 +71,8 @@
 /* Use both _thread_sys_{syscall} and [weak] {syscall}. */
 
 #define	SYSENTRY(x)					\
-			ENTRY(_thread_sys_ ## x);	\
-			.weak _C_LABEL(x);		\
-			_C_LABEL(x) = _C_LABEL(_thread_sys_ ## x)
+			ENTRY(_thread_sys_##x);		\
+			WEAK_ALIAS(x, _thread_sys_##x)
 #define	SYSENTRY_HIDDEN(x)				\
 			ENTRY(_thread_sys_ ## x)
 #define	__END_HIDDEN(x)	END(_thread_sys_ ## x);			\
@@ -84,8 +84,14 @@
 			movl $(SYS_ ## x),%eax;		\
 			int $0x80
 
-#define CERROR		_C_LABEL(__cerror)
-#define _CERROR		_C_LABEL(___cerror)
+#define SET_ERRNO()					\
+	movl	%eax,%gs:(TCB_OFFSET_ERRNO);		\
+	movl	$-1, %eax;				\
+	movl	$-1, %edx	/* for lseek */
+#define HANDLE_ERRNO()					\
+	jnc,pt	99f;					\
+	SET_ERRNO();					\
+	99:
 
 /* perform a syscall */
 #define	_SYSCALL_NOERROR(x,y)				\
@@ -99,44 +105,21 @@
 		_SYSCALL_NOERROR(x,x)
 
 /* perform a syscall, set errno */
-#ifdef __PIC__
 #define	_SYSCALL(x,y)					\
 			.text;				\
 			.align 2;			\
-		2:	PIC_PROLOGUE;			\
-			movl PIC_GOT(CERROR), %ecx;	\
-			PIC_EPILOGUE;			\
-			jmp *%ecx;			\
 		_SYSCALL_NOERROR(x,y)			\
-			jc 2b
+			HANDLE_ERRNO()
 #define	_SYSCALL_HIDDEN(x,y)				\
 			.text;				\
 			.align 2;			\
-		2:	PIC_PROLOGUE;			\
-			movl PIC_GOT(CERROR), %ecx;	\
-			PIC_EPILOGUE;			\
-			jmp *%ecx;			\
 		_SYSCALL_HIDDEN_NOERROR(x,y)		\
-			jc 2b
-#else
-#define	_SYSCALL(x,y)					\
-			.text;				\
-			.align 2;			\
-		2:					\
-			jmp PIC_PLT(CERROR);		\
-		_SYSCALL_NOERROR(x,y)			\
-			jc 2b
-#define	_SYSCALL_HIDDEN(x,y)				\
-			.text;				\
-			.align 2;			\
-		2:					\
-			jmp PIC_PLT(CERROR);		\
-		_SYSCALL_HIDDEN_NOERROR(x,y)		\
-			jc 2b
-#endif
+			HANDLE_ERRNO()
 
 #define	SYSCALL(x)					\
 		_SYSCALL(x,x)
+#define	SYSCALL_HIDDEN(x)				\
+		_SYSCALL_HIDDEN(x,y)
 
 /* perform a syscall, return */
 #define	PSEUDO_NOERROR(x,y)				\
@@ -162,5 +145,3 @@
 #define	SYSCALL_END(x)	__END(x)
 #define	SYSCALL_END_HIDDEN(x)				\
 			__END_HIDDEN(x)
-
-	.globl	CERROR

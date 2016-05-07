@@ -1,4 +1,4 @@
-/* $OpenBSD: sigsuspend.S,v 1.4 2015/09/05 20:06:04 guenther Exp $ */
+/* $OpenBSD: sigsuspend.S,v 1.5 2016/05/07 19:05:22 guenther Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -30,8 +30,8 @@
 #include "SYS.h"
 
 	.text
-PREFIX(sigsuspend)
+PREFIX_HIDDEN(sigsuspend)
 	lwz 3, 0(3)		/* load the mask */
 	sc
 	PSEUDO_SUFFIX
-SYSCALL_END(sigsuspend)
+SYSCALL_END_HIDDEN(sigsuspend)

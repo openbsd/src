@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile.inc,v 1.5 2014/06/09 20:47:10 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.6 2016/05/07 19:05:21 guenther Exp $
 # $NetBSD: Makefile.inc,v 1.5 2002/07/10 04:29:06 thorpej Exp $
 
 .include <bsd.own.mk>
 
-#SRCS+=	__sigaction14_sigtramp.c __sigtramp1.S
+CERROR=	cerror.S
 
 CPPFLAGS += -DSOFTFLOAT
 

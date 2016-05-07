@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.74 2016/03/20 02:29:51 guenther Exp $ */
+/*	$OpenBSD: library.c,v 1.75 2016/05/07 19:05:23 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -104,6 +104,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	Elf_Dyn *dynp = NULL;
 	Elf_Ehdr *ehdr;
 	Elf_Phdr *phdp;
+	Elf_Phdr *ptls = NULL;
 	struct stat sb;
 	void *prebind_data;
 
@@ -164,6 +165,17 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 			dynp = (Elf_Dyn *)phdp->p_vaddr;
 			break;
 		case PT_TLS:
+			if (phdp->p_filesz > phdp->p_memsz) {
+				_dl_printf("%s: invalid tls data in %s.\n",
+				    __progname, libname);
+				_dl_close(libfile);
+				_dl_errno = DL_CANT_LOAD_OBJ;
+				return(0);
+			}
+			if (!_dl_tib_static_done) {
+				ptls = phdp;
+				break;
+			}
 			_dl_printf("%s: unsupported TLS program header in %s\n",
 			    __progname, libname);
 			_dl_close(libfile);
@@ -283,6 +295,8 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 		object->inode = sb.st_ino;
 		object->obj_flags |= flags;
 		_dl_set_sod(object->load_name, &object->sod);
+		if (ptls != NULL && ptls->p_memsz)
+			_dl_set_tls(object, ptls, libaddr, libname);
 	} else {
 		_dl_munmap((void *)libaddr, maxva - minva);
 		_dl_load_list_free(load_list);

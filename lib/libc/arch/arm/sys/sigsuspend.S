@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.4 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.5 2016/05/07 19:05:21 guenther Exp $	*/
 /*	$NetBSD: sigsuspend.S,v 1.6 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -34,10 +34,10 @@
 
 #include "SYS.h"
 
-SYSENTRY(sigsuspend)
+SYSENTRY_HIDDEN(sigsuspend)
 	ldr	r0, [r0]
 	SYSTRAP(sigsuspend)
 	bcs	PIC_SYM(CERROR, PLT)
 	mov	r0, #0x00000000
 	mov	r15, r14
-SYSCALL_END(sigsuspend)
+SYSCALL_END_HIDDEN(sigsuspend)

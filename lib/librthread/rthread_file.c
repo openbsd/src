@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_file.c,v 1.7 2013/11/21 17:45:10 fgsch Exp $	*/
+/*	$OpenBSD: rthread_file.c,v 1.8 2016/05/07 19:05:22 guenther Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -43,6 +43,7 @@
 #include <sys/queue.h>
 #include <pthread.h>
 #include "rthread.h"
+#include "rthread_cb.h"
 
 /*
  * The FILE lock structure. The FILE *fp is locked if the owner is
@@ -167,7 +168,7 @@ do_lock(int idx, FILE *fp)
 }
 
 void
-(flockfile)(FILE * fp)
+_thread_flockfile(FILE * fp)
 {
 	int	idx = file_idx(fp);
 	struct	file_lock	*p;
@@ -215,7 +216,7 @@ void
 }
 
 int
-(ftrylockfile)(FILE * fp)
+_thread_ftrylockfile(FILE * fp)
 {
 	int	ret = -1;
 	int	idx = file_idx(fp);
@@ -264,7 +265,7 @@ int
 }
 
 void 
-(funlockfile)(FILE * fp)
+_thread_funlockfile(FILE * fp)
 {
 	int	idx = file_idx(fp);
 	struct	file_lock	*p;

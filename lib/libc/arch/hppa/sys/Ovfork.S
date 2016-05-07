@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.14 2015/03/31 04:32:01 guenther Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.15 2016/05/07 19:05:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999,2002 Michael Shalayeff
@@ -28,17 +28,20 @@
 
 #include "SYS.h"
 
-SYSENTRY(vfork)
+SYSENTRY_HIDDEN(vfork)
 	.import errno, data
 	copy	rp, t4
 	ldil	L%SYSCALLGATE, r1
 	ble	4(sr7, r1)
 	ldi	__CONCAT(SYS_,vfork), t1
-	.import	__cerror, code
-	comb,<>	r0, t1, __cerror
+	comb,=	r0, t1, 1f
 	copy	t4, rp
-	bv	r0(rp)
-	nop
-SYSEXIT(vfork)
+	/* set errno */
+	mfctl	cr27, r1
+	stw	t1, TCB_OFFSET_ERRNO(r1)
+	ldi	-1, ret0
+1:	bv	r0(rp)
+	 nop
+SYSEXIT_HIDDEN(vfork)
 
 	.end

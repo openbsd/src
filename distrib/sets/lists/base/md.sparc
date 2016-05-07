@@ -1591,6 +1591,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/termios.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/tgmath.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/tib.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/time.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/tls.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ttyent.ph

@@ -22,8 +22,6 @@ __plt_start
 __plt_end
 
 /* sys */
-___cerror
-__cerror
 __get_tcb
 __semctl
 __set_tcb
@@ -35,7 +33,6 @@ __thrsigdivert
 __thrsleep
 __thrwakeup
 _exit
-_thread_fork
 _thread_sys___get_tcb
 _thread_sys___getcwd
 _thread_sys___semctl
@@ -469,6 +466,8 @@ store
 /* dlfcn */
 __progname
 _csu_finish
+_dl_allocate_tib
+_dl_free_tib
 dl_iterate_phdr
 dladdr
 dlclose
@@ -492,7 +491,6 @@ sigsetmask
 sigvec
 
 /* gen */
-___errno
 __assert
 __assert2
 __errno
@@ -592,7 +590,6 @@ endpwent
 endttyent
 endusershell
 err
-errno
 errx
 execl
 execle
@@ -1622,21 +1619,8 @@ tcsetattr
 tcsetpgrp
 
 /* thread */
-_thread_arc4_lock
-_thread_arc4_unlock
-_thread_atexit_lock
-_thread_atexit_unlock
 _thread_atfork
-_thread_atfork_lock
-_thread_atfork_unlock
-_thread_malloc_lock
-_thread_malloc_unlock
-_thread_mutex_destroy
-_thread_mutex_lock
-_thread_mutex_unlock
-_thread_tag_lock
-_thread_tag_storage
-_thread_tag_unlock
+_thread_set_callbacks
 pthread_atfork
 
 /* time */

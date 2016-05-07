@@ -2079,6 +2079,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/termios.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/tgmath.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/tib.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/time.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/tls.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ttyent.ph

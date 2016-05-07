@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.30 2016/03/21 22:41:29 bluhm Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.31 2016/05/07 19:05:23 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -168,6 +168,18 @@ _dl_exit:
 	.type _dl_issetugid,@function
 _dl_issetugid:
 	mov SYS_issetugid | SYSCALL_G2RFLAG, %g1	! call sys_issetugid
+	add %o7, 8, %g2				! just return on success
+	t ST_SYSCALL				! off to wonderland
+	retl
+	 sub %g0, %o0, %o0			! error: result = -errno
+
+
+	.section ".text"
+	.align 4
+	.global _dl_getthrid
+	.type _dl_getthrid,@function
+_dl_getthrid:
+	mov SYS_getthrid | SYSCALL_G2RFLAG, %g1	! call sys_getthrid
 	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl

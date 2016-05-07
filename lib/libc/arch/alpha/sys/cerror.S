@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.6 2011/04/04 12:42:39 guenther Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.7 2016/05/07 19:05:21 guenther Exp $	*/
 /*	$NetBSD: cerror.S,v 1.3 1996/10/17 03:08:17 cgd Exp $	*/
 
 /*
@@ -30,14 +30,25 @@
 
 #include "SYS.h"
 
-IMPORT(errno, 4)
+#define	FRAME_SIZE		16
+#define	FRAME_RA_OFFSET		0
+#define	FRAME_V0_OFFSET		8
 
-WEAK_ALIAS(__cerror, ___cerror)
-
-LEAF(___cerror, 0)
+NESTED(__cerror, 0, FRAME_SIZE, ra, IM_RA|IM_V0, 0)
+LEAF_NOPROFILE(__cerror, 0)
 	br	t0, L1
 L1:	LDGP(t0)
-	stl	v0, errno
+
+	lda	sp, -FRAME_SIZE(sp)
+	stq	ra, FRAME_RA_OFFSET(sp)
+	stq	v0, FRAME_V0_OFFSET(sp)
+
+	CALL(__errno)
+
+	ldq	t0, FRAME_V0_OFFSET(sp)
+	stl	t0, 0(v0)
 	ldiq	v0, -1
+	ldq	ra, FRAME_RA_OFFSET(sp)
+	lda	sp, FRAME_SIZE(sp)
 	RET
-END(___cerror)
+END(__cerror)

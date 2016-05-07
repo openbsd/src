@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.6 2011/07/08 19:31:41 miod Exp $ */
+/*	$OpenBSD: cerror.S,v 1.7 2016/05/07 19:05:22 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,20 +33,36 @@
 
 #include "SYS.h"
 
-FRAMESZ= MKFSIZ(1,1)
+FRAMESZ= 4*REGSZ
+S0OFF= FRAMESZ-3*REGSZ
 GPOFF= FRAMESZ-2*REGSZ
+RAOFF= FRAMESZ-1*REGSZ
 
-WEAK_ALIAS(CERROR, _CERROR)
+	.hidden	_thread_cb
+	.hidden	CERROR
 
-	.globl	_C_LABEL(errno)
-LEAF(_CERROR, FRAMESZ)
+NON_LEAF(CERROR, FRAMESZ, ra)
 	PTR_SUBU sp, FRAMESZ
-	SETUP_GP64(GPOFF, _CERROR)
-	.set	noreorder
-	sw	v0, _C_LABEL(errno)
-	li	v0, -1
+#if !__PIC__ || !notyet
+	SETUP_GP64(GPOFF, CERROR)
+#endif
+	.set	reorder
+	REG_S	ra, RAOFF(sp)
+	REG_S	s0, S0OFF(sp)
+
+	move	s0, v0
+	dla	v0, _thread_cb
+	ld	t9, 0(v0)
+	jal	t9
+
+	sw	s0, 0(v0)
+
+	LI	v0, -1
+	REG_L	s0, S0OFF(sp)
+	REG_L	ra, RAOFF(sp)
+#if !__PIC__ || !notyet
 	RESTORE_GP64
+#endif
 	PTR_ADDU sp, FRAMESZ
 	j	ra
-	li	v1, -1
-END(_CERROR)
+END(CERROR)

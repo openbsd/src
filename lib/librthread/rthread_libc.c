@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.13 2016/01/27 08:40:05 kettenis Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.14 2016/05/07 19:05:22 guenther Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -12,6 +12,7 @@
 #include "thread_private.h"	/* in libc/include */
 
 #include "rthread.h"
+#include "rthread_cb.h"
 
 /*
  * A thread tag is a pointer to a structure of this type.  An opaque

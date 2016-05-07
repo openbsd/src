@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.7 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.8 2016/05/07 19:05:21 guenther Exp $	*/
 /*	$NetBSD: cerror.S,v 1.5 2003/08/07 16:42:04 agc Exp $	*/
 
 /*-
@@ -34,32 +34,11 @@
 
 #include "SYS.h"
 
-WEAK_ALIAS(CERROR, _CERROR)
-
-ASENTRY(_CERROR)
-#ifdef __PIC__
-	/* Setup the GOT */
-	ldr	r3, .Lgot
-	ldr	r1, .Lerrno
-.L1:
-	add	r3, pc, r3
-	ldr	r1, [r3, r1]
-#else
-	ldr	r1, .Lerrno
-#endif /* PIC */
-	str	r0, [r1]
+_ENTRY(CERROR)
+	stmfd	sp!, {r4, lr}
+	mov	r4, r0
+	bl	PIC_SYM(_C_LABEL(__errno), PLT)
+	str	r4, [r0]
 	mvn	r0, #0x00000000
 	mvn	r1, #0x00000000
-	mov	pc, lr
-
-#ifdef __PIC__
-	.align	0
-.Lgot:
-	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) - (.L1+8)
-#endif /* PIC */
-
-	.globl	_C_LABEL(errno)
-
-.Lerrno:
-	.word	PIC_SYM(_C_LABEL(errno), GOT)
-END(_CERROR)
+	ldmfd	sp!, {r4, pc}

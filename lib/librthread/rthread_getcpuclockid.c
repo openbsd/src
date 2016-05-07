@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_getcpuclockid.c,v 1.1 2013/06/17 19:11:54 guenther Exp $ */
+/*	$OpenBSD: rthread_getcpuclockid.c,v 1.2 2016/05/07 19:05:22 guenther Exp $ */
 /*
  * Copyright (c) 2013 Philip Guenther <guenther@openbsd.org>
  *
@@ -15,14 +15,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <time.h>
 #include <pthread.h>
+#include <tib.h>
+#include <time.h>
 
 #include "rthread.h"
 
 int
 pthread_getcpuclockid(pthread_t thread, clockid_t *clock_id)
 {
-	*clock_id = __CLOCK_ENCODE(CLOCK_THREAD_CPUTIME_ID, thread->tid);
+	*clock_id = __CLOCK_ENCODE(CLOCK_THREAD_CPUTIME_ID,
+	    thread->tib->tib_tid);
 	return (0);
 }

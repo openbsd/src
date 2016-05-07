@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.141 2016/03/30 07:55:36 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.142 2016/05/07 19:05:22 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -6,16 +6,15 @@
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/sys ${LIBCSRCDIR}/sys
 
 # modules with non-default implementations on at least one architecture:
-SRCS+=	Ovfork.S brk.S cerror.S fork.S \
+SRCS+=	Ovfork.S brk.S ${CERROR} \
 	sbrk.S sigpending.S sigprocmask.S sigreturn.S \
 	sigsuspend.S syscall.S tfork_thread.S
 
 # glue to offer userland wrappers for some syscalls
 SRCS+=	posix_madvise.c pthread_sigmask.c \
-	w_fork.c w_sigaction.c w_sigprocmask.c
+	w_fork.c w_sigaction.c w_sigprocmask.c w_sigsuspend.c w_vfork.c
 
-# glue to provide compatibility between GCC 1.X and 2.X and for compat
-# with old syscall interfaces.
+# glue for compat with old syscall interfaces.
 SRCS+=	ftruncate.c lseek.c mquery.c mmap.c ptrace.c semctl.c truncate.c \
 	timer_create.c timer_delete.c timer_getoverrun.c timer_gettime.c \
 	timer_settime.c pread.c preadv.c pwrite.c pwritev.c
@@ -23,18 +22,37 @@ SRCS+=	ftruncate.c lseek.c mquery.c mmap.c ptrace.c semctl.c truncate.c \
 # stack protector helper functions
 SRCS+=	stack_protector.c
 
+# cancelation details
+SRCS+=	canceled.c
+
+# syscalls that would be normal...except for cancellation or SIGTHR
+CANCEL=	accept accept4 \
+	close closefrom connect \
+	fcntl fsync \
+	msgrcv msgsnd msync \
+	nanosleep \
+	open openat \
+	poll ppoll pselect \
+	read readv recvfrom recvmsg \
+	select sendmsg sendto \
+	wait4 write writev
+SRCS+=	${CANCEL:%=w_%.c} w_pread.c w_preadv.c w_pwrite.c w_pwritev.c
+
 # modules with default implementations on all architectures, unless overridden
 # below:
 ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	__threxit.o __thrsigdivert.o __thrsleep.o \
-	__thrwakeup.o accept.o accept4.o access.o acct.o adjfreq.o adjtime.o \
+	__thrwakeup.o \
+	access.o acct.o adjfreq.o adjtime.o \
 	bind.o chdir.o chflags.o chflagsat.o chmod.o chown.o chroot.o \
-	clock_getres.o clock_gettime.o clock_settime.o close.o \
-	closefrom.o connect.o dup.o dup2.o dup3.o execve.o faccessat.o \
-	fchdir.o fchflags.o fchmod.o fchmodat.o fchown.o \
-	fchownat.o fcntl.o fhopen.o fhstat.o fhstatfs.o \
+	clock_getres.o clock_gettime.o clock_settime.o \
+	dup.o dup2.o dup3.o \
+	execve.o \
+	faccessat.o fchdir.o fchflags.o fchmod.o fchmodat.o fchown.o \
+	fchownat.o fhopen.o fhstat.o fhstatfs.o \
 	flock.o fpathconf.o fstat.o fstatat.o fstatfs.o \
-	fsync.o futimens.o futimes.o getentropy.o getdents.o getdtablecount.o \
+	futimens.o futimes.o \
+	getentropy.o getdents.o getdtablecount.o \
 	getegid.o geteuid.o getfh.o getfsstat.o getgid.o \
 	getgroups.o getitimer.o getpeername.o getpgid.o getpgrp.o \
 	getpid.o getppid.o getpriority.o getresgid.o getresuid.o \
@@ -44,14 +62,13 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	link.o linkat.o listen.o lstat.o madvise.o mincore.o \
 	minherit.o mkdir.o mkdirat.o mkfifo.o mkfifoat.o \
 	mknod.o mknodat.o mlock.o mlockall.o mount.o mprotect.o \
-	msgctl.o msgget.o msgrcv.o msgsnd.o msync.o munlock.o \
-	munlockall.o munmap.o nanosleep.o nfssvc.o \
-	open.o openat.o pathconf.o pipe.o pipe2.o pledge.o \
-	poll.o ppoll.o profil.o pselect.o \
-	quotactl.o read.o readlink.o readlinkat.o readv.o reboot.o \
-	recvfrom.o recvmsg.o rename.o renameat.o revoke.o rmdir.o \
-	sched_yield.o select.o semget.o semop.o sendmsg.o sendsyslog.o \
-	sendto.o \
+	msgctl.o msgget.o munlock.o munlockall.o munmap.o \
+	nfssvc.o \
+	pathconf.o pipe.o pipe2.o pledge.o profil.o \
+	quotactl.o \
+	readlink.o readlinkat.o reboot.o \
+	rename.o renameat.o revoke.o rmdir.o \
+	sched_yield.o semget.o semop.o sendsyslog.o \
 	setegid.o seteuid.o setgid.o setgroups.o setitimer.o setlogin.o \
 	setpgid.o setpriority.o setregid.o setresgid.o setresuid.o \
 	setreuid.o setrlimit.o setrtable.o setsid.o setsockopt.o \
@@ -59,7 +76,7 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	shmget.o shutdown.o sigaltstack.o socket.o \
 	socketpair.o stat.o statfs.o swapctl.o symlink.o symlinkat.o \
 	sync.o sysarch.o sysctl.o thrkill.o umask.o unlink.o unlinkat.o \
-	unmount.o utimensat.o utimes.o utrace.o wait4.o write.o writev.o
+	unmount.o utimensat.o utimes.o utrace.o
 
 SRCS+=	${SRCS_${MACHINE_CPU}}
 .for i in ${SRCS_${MACHINE_CPU}}
@@ -83,7 +100,7 @@ PPSEUDO_NOERR=${PSEUDO_NOERR:.o=.po}
 SPSEUDO_NOERR=${PSEUDO_NOERR:.o=.so}
 DPSEUDO_NOERR=${PSEUDO_NOERR:.o=.do}
 
-HIDDEN= sigaction.o _ptrace.o
+HIDDEN= fork.o sigaction.o _ptrace.o ${CANCEL:=.o}
 GHIDDEN=${HIDDEN:.o=.go}
 PHIDDEN=${HIDDEN:.o=.po}
 SHIDDEN=${HIDDEN:.o=.so}

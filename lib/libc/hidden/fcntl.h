@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.1 2015/09/12 16:40:50 guenther Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.2 2016/05/07 19:05:22 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -21,9 +21,9 @@
 #include_next <fcntl.h>
 
 PROTO_DEPRECATED(creat);
-/*PROTO_CANCEL(fcntl);*/
+PROTO_CANCEL(fcntl);
 PROTO_NORMAL(flock);
-/*PROTO_CANCEL(open);*/
-/*PROTO_CANCEL(openat);*/
+PROTO_CANCEL(open);
+PROTO_CANCEL(openat);
 
 #endif /* !_LIBC_FCNTL_H_ */
