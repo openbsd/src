@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_apple.c,v 1.7 2015/12/19 11:29:41 mpi Exp $	*/
+/*	$OpenBSD: agp_apple.c,v 1.8 2016/05/07 22:46:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Martin Pieuchot <mpi@openbsd.org>
@@ -187,8 +187,9 @@ agp_apple_bind_page(void *v, bus_addr_t off, paddr_t pa, int flags)
 	else
 		entry = htole32(pa | 0x01);
 
-	asc->gatt->ag_virtual[off >> AGP_PAGE_SHIFT] = entry;
+	flushdcache((void *)pa, PAGE_SIZE);
 
+	asc->gatt->ag_virtual[off >> AGP_PAGE_SHIFT] = entry;
 	flushd(&asc->gatt->ag_virtual[off >> AGP_PAGE_SHIFT]);
 }
 

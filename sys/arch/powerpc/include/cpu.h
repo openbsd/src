@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.62 2015/07/02 01:33:59 dlg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.63 2016/05/07 22:46:54 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -227,6 +227,22 @@ invdcache(void *from, int len)
 
 	do {
 		__asm volatile ("dcbi 0,%0" :: "r"(p));
+		p += CACHELINESIZE;
+	} while ((l -= CACHELINESIZE) > 0);
+	__asm volatile ("sync");
+}
+
+static __inline void
+flushdcache(void *from, int len)
+{
+	int l;
+	char *p = from;
+
+	len = len + (((u_int32_t) from) & (CACHELINESIZE - 1));
+	l = len;
+
+	do {
+		__asm volatile ("dcbf 0,%0" :: "r"(p));
 		p += CACHELINESIZE;
 	} while ((l -= CACHELINESIZE) > 0);
 	__asm volatile ("sync");
