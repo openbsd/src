@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.31 2016/03/28 17:29:11 kettenis Exp $
+#	$OpenBSD: files.acpi,v 1.32 2016/05/07 23:10:50 kettenis Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -116,6 +116,11 @@ file	dev/acpi/atk0110.c		aibs
 device	bytgpio
 attach	bytgpio at acpi
 file	dev/acpi/bytgpio.c		bytgpio
+
+# Intel Cherry View GPIO
+device	chvgpio
+attach	chvgpio at acpi
+file	dev/acpi/chvgpio.c		chvgpio
 
 # SD Host Controller
 attach	sdhc at acpi with sdhc_acpi
