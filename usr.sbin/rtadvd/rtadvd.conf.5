@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.conf.5,v 1.36 2016/05/07 19:28:35 jca Exp $
+.\"	$OpenBSD: rtadvd.conf.5,v 1.37 2016/05/07 19:33:03 jca Exp $
 .\"	$KAME: rtadvd.conf.5,v 1.46 2003/06/17 08:26:35 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -107,24 +107,16 @@ The default value is 64.
 .It Cm \&raflags
 (num) Flags field in router advertisement message header.
 Bit 7
-.Po
-.Li 0x80
-.Pc
+.Pq 0x80
 means Managed address configuration flag bit,
 and Bit 6
-.Po
-.Li 0x40
-.Pc
+.Pq 0x40
 means Other stateful configuration flag bit.
 Bit 4
-.Po
-.Li 0x10
-.Pc
+.Pq 0x10
 and
 Bit 3
-.Po
-.Li 0x08
-.Pc
+.Pq 0x08
 are used to encode the route preference for the route as follows:
 .Pp
 .Bl -tag -width "0x08XXX" -offset indent -compact
@@ -188,14 +180,10 @@ The default value is 64.
 .It Cm \&pinfoflags
 (num) Flags field in prefix information option.
 Bit 7
-.Po
-.Li 0x80
-.Pc
+.Pq 0x80
 means On-link flag bit,
 and Bit 6
-.Po
-.Li 0x40
-.Pc
+.Pq 0x40
 means Autonomous address-configuration flag bit.
 The default value is 0xc0, i.e., both bits are set.
 .It Cm \&addr
