@@ -1,0 +1,314 @@
+2015-06-04  Jonathan Stowe <jns+git@gellyfish.co.uk>
+
+	* .gitignore, Changes, META.yml, README, ReadKey.pm: Up version
+
+2015-06-04  Jonathan Stowe <jns+git@gellyfish.co.uk>
+
+	* .gitignore: Add .bs file to .gitignore
+
+2015-06-04  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* : Merge pull request #6 from ntyni/master Make genchars.pl output reproducible by sorting hash keys
+
+2015-04-30  Jonathan Stowe <jns+git@gellyfish.co.uk>
+
+	* Makefile.PL: Fix for "[rt.cpan.org #100932] Parallel build fails"
+	from Petr Pisar
+
+2015-04-30  Jonathan Stowe <jns+git@gellyfish.co.uk>
+
+	* MANIFEST.SKIP: Add .git directory to the MANIFEST.SKIP
+
+2015-04-13  Jonathan Stowe <jns+git@gellyfish.co.uk>
+
+	* MANIFEST, MANIFEST.SKIP: Add new artefacts
+
+2015-04-13  Jonathan Stowe <jns+git@gellyfish.co.uk>
+
+	* .travis.yml: Add travis-ci testing
+
+2015-04-13  Jonathan Stowe <jns+git@gellyfish.co.uk>
+
+	* .gitignore: Add .gitignore
+
+2015-04-13  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* : Merge pull request #5 from
+	sdeseille/Create_T_directory_and_split_test.pl Create t directory and split test.pl
+
+2015-04-11  Sébastien Deseille <sebastien.deseille@gmail.com>
+
+	* README: Update README to reflect the move of test.pl in example
+	subdirectory
+
+2015-04-11  Sébastien Deseille <sebastien.deseille@gmail.com>
+
+	* README: Revert "Update README to reflect the move of test.pl in
+	example subdirectory" This reverts commit 09402dcd68d8d0417e0eb2f9ea0aeaf4b4c72e9a.
+
+2015-04-11  Sébastien Deseille <sebastien.deseille@gmail.com>
+
+	* README: Update README to reflect the move of test.pl in example
+	subdirectory
+
+2015-04-11  Sébastien Deseille <sebastien.deseille@gmail.com>
+
+	* example/test.pl, test.pl: Move test.pl in example's subdirectory
+	in order to keep the possibility to use its interactive mode
+
+2015-04-11  Sébastien Deseille <sebastien.deseille@gmail.com>
+
+	* t/02_terminal_functions.t: Finished to implement all tests from
+	test.pl
+
+2015-04-11  Sébastien Deseille <sebastien.deseille@gmail.com>
+
+	* t/02_terminal_functions.t: Add test to Check TerminalSize OUT
+
+2015-04-11  Sébastien Deseille <sebastien.deseille@gmail.com>
+
+	* t/02_terminal_functions.t: Add test to Check non-blocking read
+
+2015-04-10  Sébastien Deseille <sebastien.deseille@gmail.com>
+
+	* t/02_terminal_functions.t: Add second test about Comparing
+	TerminalSize
+
+2015-04-10  Sébastien Deseille <sebastien.deseille@gmail.com>
+
+	* t/01_basic.t: Add first test to validate module loading
+
+2015-04-03  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* : Merge pull request #3 from kmx/master no resize, no stty on MS Windows
+
+2014-05-10  Jonathan Stowe <jns+git@gellyfish.co.uk>
+
+	* Changes: Update changes with git2cl (some manual reordering)
+
+2014-05-10  Jonathan Stowe <jns+git@gellyfish.co.uk>
+
+	* Makefile.PL: Makefile.PL more specific
+
+2014-05-10  Jonathan Stowe <jns+git@gellyfish.co.uk>
+
+	* : Merge pull request #2 from jacquesg/warnings Fix some warnings
+
+2014-03-09  Jonathan Stowe <jns+git@gellyfish.co.uk>
+
+	* Configure.pm, META.yml, Makefile.PL: Don't index Configure.pm
+
+2014-03-03  Jonathan Stowe <jns+git@gellyfish.co.uk>
+
+	* Changes, README, ReadKey.pm: Added documentation patch as per
+	Chris Marshall Bumped version
+
+2013-10-28  Jonathan Stowe <jns+git@gellyfish.co.uk>
+
+	* README: Some changes to README
+
+2013-10-28  Brian Wightman <MidLifeXis@wightmanfam.org>
+
+	* ReadKey.pm: Promote SUPPORT and LICENSE to top-level head sections SUPPORT and LICENSE sections were in item sections, but outside of
+	an over/back block.
+
+2013-10-27  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* Makefile.PL, README, ReadKey.pm, ReadKey.xs, genchars.pl: Change
+	licensing Fix some warnings
+
+2013-10-26  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* ReadKey.pm: Applied patch from rt #35669
+
+2013-10-26  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* Makefile.PL, ReadKey.xs: Applied change from rt #26235 Also fixed
+	repo name
+
+2013-10-26  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* ReadKey.pm: Patch from rt #35671
+
+2013-10-26  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* ppport.h: Updated ppport.h as per #78831
+
+2013-10-26  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* Makefile.PL: Changed distname per RT #87885 Added additional
+	metadata
+
+2013-10-26  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* ReadKey.pm: Added changes for RT #86584
+
+2013-10-26  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* ReadKey.pm: Added patch from jpeacock@cpan.org for RT #88266
+
+2011-04-19  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* Changes: Added Changes
+
+2011-04-19  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* : commit 40ba6a2a80ae495b921ab416f6b024014daac25e Author: Stas
+	Grabois <CENSORED> Date:   Tue Jun 24 01:57:37 2008 -0800
+
+2006-01-13  jonathan <jonathan@d4a3e428-c23c-0410-a93a-b1ce904c0fb3>
+
+	* MANIFEST, Makefile.PL: Added Changes git-svn-id: http://jstowe.googlecode.com/svn/trunk/TermReadKey@74
+	d4a3e428-c23c-0410-a93a-b1ce904c0fb3
+
+2005-01-11  jonathan <jonathan@d4a3e428-c23c-0410-a93a-b1ce904c0fb3>
+
+	* test.pl: Skip tests if /dev/tty for automated testing git-svn-id: http://jstowe.googlecode.com/svn/trunk/TermReadKey@53
+	d4a3e428-c23c-0410-a93a-b1ce904c0fb3
+
+2005-01-11  jonathan <jonathan@d4a3e428-c23c-0410-a93a-b1ce904c0fb3>
+
+	* ReadKey.pm: Fixed POD git-svn-id: http://jstowe.googlecode.com/svn/trunk/TermReadKey@52
+	d4a3e428-c23c-0410-a93a-b1ce904c0fb3
+
+2005-01-11  jonathan <jonathan@d4a3e428-c23c-0410-a93a-b1ce904c0fb3>
+
+	* README, ReadKey.pm, ReadKey.xs, genchars.pl, ppport.h: * Updated ppport.h * Fixed example in synopsis * termio branch not updated git-svn-id: http://jstowe.googlecode.com/svn/trunk/TermReadKey@51
+	d4a3e428-c23c-0410-a93a-b1ce904c0fb3
+
+2004-03-02  jonathan <jonathan@d4a3e428-c23c-0410-a93a-b1ce904c0fb3>
+
+	* Put back in CVS git-svn-id: http://jstowe.googlecode.com/svn/trunk/TermReadKey@19
+	d4a3e428-c23c-0410-a93a-b1ce904c0fb3
+
+2005-01-12  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* Configure.pm, MANIFEST, META.yml, Makefile.PL, README,
+	ReadKey.pm, ReadKey.xs, genchars.pl, ppport.h, test.pl: import
+	TermReadKey 2.30 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.30
+	git-cpan-authorid: JSTOWE git-cpan-file:
+	authors/id/J/JS/JSTOWE/TermReadKey-2.30.tar.gz
+
+2002-07-28  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* README, ReadKey.pm, ReadKey.xs, ppport.h, test.pl: import
+	TermReadKey 2.21 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.21
+	git-cpan-authorid: JSTOWE git-cpan-file:
+	authors/id/J/JS/JSTOWE/TermReadKey-2.21.tar.gz
+
+2002-05-24  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* README, ReadKey.pm, ReadKey.xs: import TermReadKey 2.20 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.20
+	git-cpan-authorid: JSTOWE git-cpan-file:
+	authors/id/J/JS/JSTOWE/TermReadKey-2.20.tar.gz
+
+2002-03-21  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* README, ReadKey.pm, ReadKey.xs: import TermReadKey 2.19 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.19
+	git-cpan-authorid: JSTOWE git-cpan-file:
+	authors/id/J/JS/JSTOWE/TermReadKey-2.19.tar.gz
+
+2002-02-10  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* Configure.pm, Makefile.PL, README, ReadKey.pm, ReadKey.xs,
+	genchars.pl: import TermReadKey 2.18 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.18
+	git-cpan-authorid: JSTOWE git-cpan-file:
+	authors/id/J/JS/JSTOWE/TermReadKey-2.18.tar.gz
+
+2002-01-25  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* Makefile.PL, README, ReadKey.pm, ReadKey.xs, test.pl: import
+	TermReadKey 2.17 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.17
+	git-cpan-authorid: JSTOWE git-cpan-file:
+	authors/id/J/JS/JSTOWE/TermReadKey-2.17.tar.gz
+
+2001-11-29  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* ReadKey.pm, ReadKey.xs, genchars.pl, ppport.h: import TermReadKey
+	2.16 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.16
+	git-cpan-authorid: JSTOWE git-cpan-file:
+	authors/id/J/JS/JSTOWE/TermReadKey-2.16.tar.gz
+
+2001-11-07  Jonathan Stowe <jns@gellyfish.co.uk>
+
+	* ReadKey.pm, ReadKey.xs: import TermReadKey 2.15 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.15
+	git-cpan-authorid: JSTOWE git-cpan-file:
+	authors/id/J/JS/JSTOWE/TermReadKey-2.15.tar.gz
+
+1999-03-29  Kenneth Albanowski <kjahds@kjahds.com>
+
+	* Makefile.PL, ReadKey.pm, ReadKey.xs, ppport.h: import TermReadKey
+	2.14 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.14
+	git-cpan-authorid: KJALB git-cpan-file:
+	authors/id/K/KJ/KJALB/TermReadKey-2.14.tar.gz
+
+1999-03-24  Kenneth Albanowski <kjahds@kjahds.com>
+
+	* MANIFEST, Makefile.PL, README, ReadKey.pm, ReadKey.xs,
+	genchars.pl, ppport.h: import TermReadKey 2.13 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.13
+	git-cpan-authorid: KJALB git-cpan-file:
+	authors/id/K/KJ/KJALB/TermReadKey-2.13.tar.gz
+
+1998-01-07  Kenneth Albanowski <kjahds@kjahds.com>
+
+	* Makefile.PL, README, ReadKey.pm, ReadKey.xs, test.pl: import
+	TermReadKey 2.12 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.12
+	git-cpan-authorid: KJALB git-cpan-file:
+	authors/id/K/KJ/KJALB/TermReadKey-2.12.tar.gz
+
+1997-12-13  Kenneth Albanowski <kjahds@kjahds.com>
+
+	* Makefile.PL, README, ReadKey.pm, ReadKey.xs, test.pl: import
+	TermReadKey 2.11 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.11
+	git-cpan-authorid: KJALB git-cpan-file:
+	authors/id/K/KJ/KJALB/TermReadKey-2.11.tar.gz
+
+1997-10-07  Kenneth Albanowski <kjahds@kjahds.com>
+
+	* Makefile.PL, ReadKey.pm, ReadKey.xs, genchars.pl: import
+	TermReadKey 2.09 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.09
+	git-cpan-authorid: KJALB git-cpan-file:
+	authors/id/K/KJ/KJALB/TermReadKey-2.09.tar.gz
+
+1997-10-06  Kenneth Albanowski <kjahds@kjahds.com>
+
+	* Makefile.PL, README, ReadKey.pm, ReadKey.xs: import TermReadKey
+	2.08 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.08
+	git-cpan-authorid: KJALB git-cpan-file:
+	authors/id/K/KJ/KJALB/TermReadKey-2.08.tar.gz
+
+1997-01-27  Kenneth Albanowski <kjahds@kjahds.com>
+
+	* Makefile.PL, ReadKey.pm, ReadKey.xs: import TermReadKey 2.07 from
+	CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.07
+	git-cpan-authorid: KJALB git-cpan-file:
+	authors/id/K/KJ/KJALB/TermReadKey-2.07.tar.gz
+
+1996-11-25  Kenneth Albanowski <kjahds@kjahds.com>
+
+	* Makefile.PL, README, ReadKey.pm, ReadKey.xs, test.pl: import
+	TermReadKey 2.06 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.06
+	git-cpan-authorid: KJALB git-cpan-file:
+	authors/id/K/KJ/KJALB/TermReadKey-2.06.tar.gz
+
+1996-03-14  Kenneth Albanowski <kjahds@kjahds.com>
+
+	* Makefile.PL, README, ReadKey.pm, ReadKey.xs: import TermReadKey
+	2.05 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.05
+	git-cpan-authorid: KJALB git-cpan-file:
+	authors/id/K/KJ/KJALB/TermReadKey-2.05.tar.gz
+
+1995-10-11  Kenneth Albanowski <kjahds@kjahds.com>
+
+	* Makefile.PL, README, ReadKey.xs: import TermReadKey 2.04 from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.04
+	git-cpan-authorid: KJALB git-cpan-file:
+	authors/id/K/KJ/KJALB/TermReadKey-2.04.tar.gz
+
+1995-09-29  Kenneth Albanowski <kjahds@kjahds.com>
+
+	* Configure.pm, MANIFEST, Makefile.PL, README, ReadKey.pm,
+	ReadKey.xs, genchars.pl, test.pl: initial import of TermReadKey 2.03
+	from CPAN git-cpan-module:   TermReadKey git-cpan-version:  2.03
+	git-cpan-authorid: KJALB git-cpan-file:
+	authors/id/K/KJ/KJALB/TermReadKey-2.03.tar.gz
+

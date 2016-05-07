@@ -1,0 +1,15 @@
+Configure.pm
+MANIFEST
+MANIFEST.SKIP
+Makefile.PL
+README
+ReadKey.pm
+ReadKey.xs
+genchars.pl
+ppport.h
+example/test.pl
+t/01_basic.t
+t/02_terminal_functions.t
+Changes
+META.yml                                Module meta-data (added by MakeMaker)
+META.json                                Module JSON meta-data (added by MakeMaker)
