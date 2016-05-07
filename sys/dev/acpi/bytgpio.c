@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytgpio.c,v 1.8 2016/05/04 08:30:56 kettenis Exp $	*/
+/*	$OpenBSD: bytgpio.c,v 1.9 2016/05/07 18:08:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -124,6 +124,8 @@ bytgpio_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aaa = aux;
 	struct bytgpio_softc *sc = (struct bytgpio_softc *)self;
 	struct aml_value res;
+	struct aml_value arg[2];
+	struct aml_node *node;
 	int64_t uid;
 	uint32_t reg;
 	int i;
@@ -211,8 +213,19 @@ bytgpio_attach(struct device *parent, struct device *self, void *aux)
 		reg &= ~BYTGPIO_CONF_GD_MASK;
 		bus_space_write_4(sc->sc_memt, sc->sc_memh, sc->sc_pins[i] * 16, reg);
 	}
-		
+
 	printf(", %d pins\n", sc->sc_npins);
+
+	/* Register address space. */
+	memset(&arg, 0, sizeof(arg));
+	arg[0].type = AML_OBJTYPE_INTEGER;
+	arg[0].v_integer = ACPI_OPREG_GPIO;
+	arg[1].type = AML_OBJTYPE_INTEGER;
+	arg[1].v_integer = 1;
+	node = aml_searchname(sc->sc_node, "_REG");
+	if (node && aml_evalnode(sc->sc_acpi, node, 2, arg, NULL))
+		printf("%s: _REG failed\n", sc->sc_dev.dv_xname);
+		
 	return;
 
 fail:

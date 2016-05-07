@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.221 2016/03/14 06:37:31 guenther Exp $ */
+/* $OpenBSD: dsdt.c,v 1.222 2016/05/07 18:08:27 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2206,6 +2206,7 @@ aml_evalhid(struct aml_node *node, struct aml_value *val)
 }
 
 void aml_rwgas(struct aml_value *, int, int, struct aml_value *, int, int);
+void aml_rwgpio(struct aml_value *, int, int, struct aml_value *, int, int);
 void aml_rwindexfield(struct aml_value *, struct aml_value *val, int);
 void aml_rwfield(struct aml_value *, int, int, struct aml_value *, int);
 
@@ -2332,6 +2333,37 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
 }
 
 void
+aml_rwgpio(struct aml_value *conn, int bpos, int blen, struct aml_value *val,
+    int mode, int flag)
+{
+	union acpi_resource *crs = (union acpi_resource *)conn->v_buffer;
+	struct aml_node *node;
+	uint16_t pin;
+	int v = 0;
+
+	if (conn->type != AML_OBJTYPE_BUFFER || conn->length < 5 ||
+	    AML_CRSTYPE(crs) != LR_GPIO || AML_CRSLEN(crs) > conn->length)
+		aml_die("Invalid GpioIo");
+	if (bpos != 0 || blen != 1)
+		aml_die("Invalid GpioIo access");
+
+	node = aml_searchname(conn->node,
+	    (char *)&crs->pad[crs->lr_gpio.res_off]);
+	pin = *(uint16_t *)&crs->pad[crs->lr_gpio.pin_off];
+
+	if (node == NULL || node->gpio == NULL)
+		aml_die("Could not find GpioIo pin");
+
+	if (mode == ACPI_IOWRITE) {
+		printf("GpioIO write unimplemented\n");
+		return;
+	}
+
+	v = node->gpio->read_pin(node->gpio->cookie, pin);
+	_aml_setvalue(val, AML_OBJTYPE_INTEGER, v, NULL);
+}
+
+void
 aml_rwindexfield(struct aml_value *fld, struct aml_value *val, int mode)
 {
 	struct aml_value tmp, *ref1, *ref2;
@@ -2427,8 +2459,22 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val,
 		aml_rwgas(ref1, fld->v_field.bitpos, fld->v_field.bitlen,
 		    val, mode, fld->v_field.flags);
 	} else if (fld->v_field.type == AMLOP_FIELD) {
-		aml_rwgas(ref1, fld->v_field.bitpos + bpos, blen, val, mode,
-		    fld->v_field.flags);
+		switch (ref1->v_opregion.iospace) {
+		case ACPI_OPREG_GPIO:
+			aml_rwgpio(ref2, bpos, blen, val, mode,
+			    fld->v_field.flags);
+			break;
+		case ACPI_OPREG_SYSMEM:
+		case ACPI_OPREG_SYSIO:
+		case ACPI_OPREG_PCICFG:
+		case ACPI_OPREG_EC:
+			aml_rwgas(ref1, fld->v_field.bitpos + bpos, blen,
+			    val, mode, fld->v_field.flags);
+			break;
+		default:
+			aml_die("Unsupported RegionSpace");
+			break;
+		}
 	} else if (mode == ACPI_IOREAD) {
 		/* bufferfield:read */
 		_aml_setvalue(val, AML_OBJTYPE_INTEGER, 0, 0);
@@ -2498,6 +2544,7 @@ void
 aml_parsefieldlist(struct aml_scope *mscope, int opcode, int flags,
     struct aml_value *data, struct aml_value *index, int indexval)
 {
+	struct aml_value *conn = NULL;
 	struct aml_value *rv;
 	int bpos, blen;
 
@@ -2506,20 +2553,28 @@ aml_parsefieldlist(struct aml_scope *mscope, int opcode, int flags,
 	bpos = 0;
 	while (mscope->pos < mscope->end) {
 		switch (*mscope->pos) {
-		case 0x00: // reserved, length
+		case 0x00: /* reserved, length */
 			mscope->pos++;
 			blen = aml_parselength(mscope);
 			break;
-		case 0x01: // flags
+		case 0x01: /* flags */
 			mscope->pos += 3;
 			blen = 0;
 			break;
-		default: // 4-byte name, length
+		case 0x02: /* connection */
+			mscope->pos++;
+			blen = 0;
+			conn = aml_parse(mscope, 'o', "Connection");
+			if (conn == NULL)
+				aml_die("Could not parse connection");
+			conn->node = mscope->node;
+			break;
+		default: /* 4-byte name, length */
 			mscope->pos = aml_parsename(mscope->node, mscope->pos,
 			    &rv, 1);
 			blen = aml_parselength(mscope);
-			aml_createfield(rv, opcode, data, bpos, blen, index,
-				indexval, flags);
+			aml_createfield(rv, opcode, data, bpos, blen,
+			    conn ? conn : index, indexval, flags);
 			aml_delref(&rv, 0);
 			break;
 		}
