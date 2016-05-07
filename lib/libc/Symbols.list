@@ -213,7 +213,6 @@ _thread_sys_sigaction
 _thread_sys_sigaltstack
 _thread_sys_sigpending
 _thread_sys_sigprocmask
-_thread_sys_sigreturn
 _thread_sys_sigsuspend
 _thread_sys_socket
 _thread_sys_socketpair
@@ -411,7 +410,6 @@ sigaction
 sigaltstack
 sigpending
 sigprocmask
-sigreturn
 sigsuspend
 socket
 socketpair
