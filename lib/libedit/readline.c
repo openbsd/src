@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.c,v 1.21 2016/05/06 13:12:52 schwarze Exp $	*/
+/*	$OpenBSD: readline.c,v 1.22 2016/05/08 13:34:35 schwarze Exp $	*/
 /*	$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
@@ -1544,7 +1544,7 @@ history_set_pos(int pos)
 	int curr_num;
 
 	if (pos >= history_length || pos < 0)
-		return -1;
+		return 0;
 
 	(void)history(h, &ev, H_CURR);
 	curr_num = ev.num;
@@ -1555,9 +1555,9 @@ history_set_pos(int pos)
 	 */
 	if (history(h, &ev, H_DELDATA, pos, (void **)-1)) {
 		(void)history(h, &ev, H_SET, curr_num);
-		return -1;
+		return 0;
 	}
-	return 0;
+	return 1;
 }
 
 
@@ -1640,7 +1640,7 @@ history_search_pos(const char *str,
 		return -1;
 	curr_num = ev.num;
 
-	if (history_set_pos(off) != 0 || history(h, &ev, H_CURR) != 0)
+	if (!history_set_pos(off) || history(h, &ev, H_CURR) != 0)
 		return -1;
 
 	for (;;) {
