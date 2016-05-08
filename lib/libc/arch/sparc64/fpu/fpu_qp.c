@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_qp.c,v 1.5 2014/04/17 09:01:25 guenther Exp $	*/
+/*	$OpenBSD: fpu_qp.c,v 1.6 2016/05/08 18:41:17 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2002 Jake Burkholder.
@@ -37,7 +37,8 @@ __FBSDID("$FreeBSD: src/lib/libc/sparc64/fpu/fpu_qp.c,v 1.3 2002/09/02 02:30:20 
 #include "fpu_extern.h"
 
 #define	_QP_OP(op) \
-void _Qp_ ## op(u_int *c, u_int *a, u_int *b); \
+__dso_hidden void _Qp_ ## op(u_int *c, u_int *a, u_int *b); \
+PROTO_NORMAL(_Qp_ ## op); \
 void \
 _Qp_ ## op(u_int *c, u_int *a, u_int *b) \
 { \
@@ -52,10 +53,12 @@ _Qp_ ## op(u_int *c, u_int *a, u_int *b) \
 	fe.fe_f2.fp_class = __fpu_qtof(&fe.fe_f2, b[0], b[1], b[2], b[3]); \
 	r = __fpu_ ## op(&fe); \
 	c[0] = __fpu_ftoq(&fe, r, c); \
-}
+} \
+DEF_STRONG(_Qp_ ## op);
 
 #define	_QP_TTOQ(qname, fname, ntype, atype, signed, ...) \
 void _Qp_ ## qname ## toq(u_int *c, ntype n); \
+PROTO_NORMAL(_Qp_ ## qname ## toq); \
 void \
 _Qp_ ## qname ## toq(u_int *c, ntype n) \
 { \
@@ -67,10 +70,12 @@ _Qp_ ## qname ## toq(u_int *c, ntype n) \
 	fe.fe_f1.fp_sticky = 0; \
 	fe.fe_f1.fp_class = __fpu_ ## fname ## tof(&fe.fe_f1, __VA_ARGS__); \
 	c[0] = __fpu_ftoq(&fe, &fe.fe_f1, c); \
-}
+} \
+DEF_STRONG(_Qp_ ## qname ## toq);
 
 #define	_QP_QTOT4(qname, fname, type, x)		\
 type _Qp_qto ## qname(u_int *c); \
+PROTO_NORMAL(_Qp_qto ## qname); \
 type \
 _Qp_qto ## qname(u_int *c) \
 { \
@@ -84,10 +89,12 @@ _Qp_qto ## qname(u_int *c) \
 	fe.fe_f1.fp_class = __fpu_qtof(&fe.fe_f1, c[0], c[1], c[2], c[3]); \
 	a[0] = __fpu_fto ## fname(&fe, &fe.fe_f1, x); \
 	return (n); \
-}
+} \
+DEF_STRONG(_Qp_qto ## qname);
 
 #define	_QP_QTOT3(qname, fname, type)		\
 type _Qp_qto ## qname(u_int *c); \
+PROTO_NORMAL(_Qp_qto ## qname); \
 type \
 _Qp_qto ## qname(u_int *c) \
 { \
@@ -101,10 +108,12 @@ _Qp_qto ## qname(u_int *c) \
 	fe.fe_f1.fp_class = __fpu_qtof(&fe.fe_f1, c[0], c[1], c[2], c[3]); \
 	a[0] = __fpu_fto ## fname(&fe, &fe.fe_f1); \
 	return (n); \
-}
+} \
+DEF_STRONG(_Qp_qto ## qname);
 
 #define	_QP_QTOT(qname, fname, type, ...) \
 type _Qp_qto ## qname(u_int *c); \
+PROTO_NORMAL(_Qp_qto ## qname); \
 type \
 _Qp_qto ## qname(u_int *c) \
 { \
@@ -118,7 +127,8 @@ _Qp_qto ## qname(u_int *c) \
 	fe.fe_f1.fp_class = __fpu_qtof(&fe.fe_f1, c[0], c[1], c[2], c[3]); \
 	a[0] = __fpu_fto ## fname(&fe, &fe.fe_f1, ## __VA_ARGS__); \
 	return (n); \
-}
+} \
+DEF_STRONG(_Qp_qto ## qname);
 
 #define	FCC_EQ(fcc)	((fcc) == FSR_CC_EQ)
 #define	FCC_GE(fcc)	((fcc) == FSR_CC_EQ || (fcc) == FSR_CC_GT)
@@ -132,6 +142,7 @@ _Qp_qto ## qname(u_int *c) \
 
 #define	_QP_CMP(name, cmpe, test) \
 int _Qp_ ## name(u_int *a, u_int *b) ; \
+PROTO_NORMAL(_Qp_ ## name); \
 int \
 _Qp_ ## name(u_int *a, u_int *b) \
 { \
@@ -145,9 +156,11 @@ _Qp_ ## name(u_int *a, u_int *b) \
 	fe.fe_f2.fp_class = __fpu_qtof(&fe.fe_f2, b[0], b[1], b[2], b[3]); \
 	__fpu_compare(&fe, cmpe, 0); \
 	return (test(FSR_GET_FCC0(fe.fe_fsr))); \
-}
+} \
+DEF_STRONG(_Qp_ ## name);
 
 void _Qp_sqrt(u_int *c, u_int *a);
+PROTO_NORMAL(_Qp_sqrt);
 void
 _Qp_sqrt(u_int *c, u_int *a)
 {
@@ -160,6 +173,7 @@ _Qp_sqrt(u_int *c, u_int *a)
 	r = __fpu_sqrt(&fe);
 	c[0] = __fpu_ftoq(&fe, r, c);
 }
+DEF_STRONG(_Qp_sqrt);
 
 _QP_OP(add)
 _QP_OP(div)

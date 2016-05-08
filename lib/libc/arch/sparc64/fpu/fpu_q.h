@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_q.h,v 1.2 2004/02/03 17:18:13 jason Exp $	*/
+/*	$OpenBSD: fpu_q.h,v 1.3 2016/05/08 18:41:17 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -70,3 +70,23 @@ int _Qp_fgt(long double *, long double *);
 int _Qp_flt(long double *, long double *);
 int _Qp_fne(long double *, long double *);
 void _Qp_sqrt(long double *, long double *);
+
+PROTO_NORMAL(_Qp_add);
+PROTO_NORMAL(_Qp_div);
+PROTO_NORMAL(_Qp_dtoq);
+PROTO_NORMAL(_Qp_feq);
+PROTO_NORMAL(_Qp_fge);
+PROTO_NORMAL(_Qp_fgt);
+PROTO_NORMAL(_Qp_fle);
+PROTO_NORMAL(_Qp_flt);
+PROTO_NORMAL(_Qp_fne);
+PROTO_NORMAL(_Qp_itoq);
+PROTO_NORMAL(_Qp_mul);
+PROTO_NORMAL(_Qp_qtod);
+PROTO_NORMAL(_Qp_qtoi);
+PROTO_NORMAL(_Qp_qtos);
+PROTO_NORMAL(_Qp_qtoui);
+PROTO_NORMAL(_Qp_sqrt);
+PROTO_NORMAL(_Qp_stoq);
+PROTO_NORMAL(_Qp_sub);
+PROTO_NORMAL(_Qp_uitoq);
