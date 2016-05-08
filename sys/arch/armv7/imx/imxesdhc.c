@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.17 2016/05/07 00:11:31 jsg Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.18 2016/05/08 20:22:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -127,20 +127,42 @@
 #define SDHC_PROT_CTRL_DTW_MASK			(0x3 << 1)
 #define SDHC_PROT_CTRL_DTW_4BIT			(1 << 1)
 #define SDHC_PROT_CTRL_DTW_8BIT			(1 << 2)
-#define SDHC_PROT_CTRL_DMASEL_SDMA_MASK		(0x3 << 8)
+#define SDHC_PROT_CTRL_DMASEL_MASK		(0x3 << 8)
+#define SDHC_PROT_CTRL_DMASEL_SDMA		(0x0 << 8)
+#define SDHC_PROT_CTRL_DMASEL_ADMA1		(0x1 << 8)
+#define SDHC_PROT_CTRL_DMASEL_ADMA2		(0x2 << 8)
 #define SDHC_HOST_CTRL_CAP_MBL_SHIFT		16
 #define SDHC_HOST_CTRL_CAP_MBL_MASK		0x7
+#define SDHC_HOST_CTRL_CAP_ADMAS		(1 << 20)
 #define SDHC_HOST_CTRL_CAP_HSS			(1 << 21)
 #define SDHC_HOST_CTRL_CAP_VS33			(1 << 24)
 #define SDHC_HOST_CTRL_CAP_VS30			(1 << 25)
 #define SDHC_HOST_CTRL_CAP_VS18			(1 << 26)
 #define SDHC_VEND_SPEC_FRC_SDCLK_ON		(1 << 8)
 #define SDHC_WTMK_LVL_RD_WML_SHIFT		0
+#define SDHC_WTMK_LVL_RD_BRST_LEN_SHIFT		8
 #define SDHC_WTMK_LVL_WR_WML_SHIFT		16
+#define SDHC_WTMK_LVL_WR_BRST_LEN_SHIFT		24
 
 #define SDHC_COMMAND_TIMEOUT	hz
 #define SDHC_BUFFER_TIMEOUT	hz
 #define SDHC_TRANSFER_TIMEOUT	hz
+#define SDHC_DMA_TIMEOUT	(3*hz)
+
+#define SDHC_ADMA2_VALID	(1<<0)
+#define SDHC_ADMA2_END		(1<<1)
+#define SDHC_ADMA2_INT		(1<<2)
+#define SDHC_ADMA2_ACT		(3<<4)
+#define SDHC_ADMA2_ACT_NOP	(0<<4)
+#define SDHC_ADMA2_ACT_TRANS	(2<<4)
+#define SDHC_ADMA2_ACT_LINK	(3<<4)
+
+struct sdhc_adma2_descriptor32 {
+	uint16_t	attribute;
+	uint16_t	length;
+	uint32_t	address;
+} __packed;
+
 
 void imxesdhc_attach(struct device *parent, struct device *self, void *args);
 
@@ -150,6 +172,7 @@ struct imxesdhc_softc {
 	struct device sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	bus_dma_tag_t		sc_dmat;
 	void			*sc_ih; /* Interrupt handler */
 	u_int sc_flags;
 
@@ -163,6 +186,10 @@ struct imxesdhc_softc {
 //	u_int8_t regs[14];		/* host controller state */
 	uint32_t intr_status;		/* soft interrupt status */
 	uint32_t intr_error_status;	/*  */
+
+	bus_dmamap_t adma_map;
+	bus_dma_segment_t adma_segs[1];
+	caddr_t adma2;
 };
 
 
@@ -256,6 +283,7 @@ imxesdhc_attach(struct device *parent, struct device *self, void *args)
 	uint32_t			 caps;
 
 	sc->unit = aa->aa_dev->unit;
+	sc->sc_dmat = aa->aa_dmat;
 	sc->sc_iot = aa->aa_iot;
 	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
 	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
@@ -277,10 +305,16 @@ imxesdhc_attach(struct device *parent, struct device *self, void *args)
 	/* Determine host capabilities. */
 	caps = HREAD4(sc, SDHC_HOST_CTRL_CAP);
 
+	/* Use DMA if the host system and the controller support it. */
+	if (ISSET(caps, SDHC_HOST_CTRL_CAP_ADMAS))
+		SET(sc->flags, SHF_USE_DMA);
+
 	/*
 	 * Determine the base clock frequency. (2.2.24)
 	 */
 	sc->clkbase = imxccm_get_usdhx(aa->aa_dev->unit + 1);
+
+	printf("%s: %d MHz base clock\n", DEVNAME(sc), sc->clkbase / 1000);
 
 	/*
 	 * Determine SD bus voltage levels supported by the controller.
@@ -318,6 +352,46 @@ imxesdhc_attach(struct device *parent, struct device *self, void *args)
 	/* somewhere this blksize might be used instead of the device's */
 	sc->maxblklen = 512;
 
+	if (ISSET(sc->flags, SHF_USE_DMA)) {
+		int rseg;
+
+		/* Allocate ADMA2 descriptor memory */
+		error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE,
+		    PAGE_SIZE, sc->adma_segs, 1, &rseg,
+		    BUS_DMA_WAITOK | BUS_DMA_ZERO);
+		if (error)
+			goto adma_done;
+		error = bus_dmamem_map(sc->sc_dmat, sc->adma_segs, rseg,
+		    PAGE_SIZE, &sc->adma2, BUS_DMA_WAITOK);
+		if (error) {
+			bus_dmamem_free(sc->sc_dmat, sc->adma_segs, rseg);
+			goto adma_done;
+		}
+		error = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE,
+		    0, BUS_DMA_WAITOK, &sc->adma_map);
+		if (error) {
+			bus_dmamem_unmap(sc->sc_dmat, sc->adma2, PAGE_SIZE);
+			bus_dmamem_free(sc->sc_dmat, sc->adma_segs, rseg);
+			goto adma_done;
+		}
+		error = bus_dmamap_load(sc->sc_dmat, sc->adma_map,
+		    sc->adma2, PAGE_SIZE, NULL,
+		    BUS_DMA_WAITOK | BUS_DMA_WRITE);
+		if (error) {
+			bus_dmamap_destroy(sc->sc_dmat, sc->adma_map);
+			bus_dmamem_unmap(sc->sc_dmat, sc->adma2, PAGE_SIZE);
+			bus_dmamem_free(sc->sc_dmat, sc->adma_segs, rseg);
+			goto adma_done;
+		}
+
+	adma_done:
+		if (error) {
+			printf("%s: can't allocate DMA descriptor table\n",
+			    DEVNAME(sc));
+			CLR(sc->flags, SHF_USE_DMA);
+		}
+	}
+
 	/*
 	 * Attach the generic SD/MMC bus driver.  (The bus driver must
 	 * not invoke any chipset functions before it is attached.)
@@ -328,6 +402,10 @@ imxesdhc_attach(struct device *parent, struct device *self, void *args)
 	saa.sct = &imxesdhc_functions;
 	saa.sch = sc;
 	saa.caps = SMC_CAPS_4BIT_MODE;
+	saa.dmat = sc->sc_dmat;
+	if (ISSET(sc->flags, SHF_USE_DMA))
+		saa.caps |= SMC_CAPS_DMA;
+	
 	if (caps & SDHC_HOST_CTRL_CAP_HSS)
 		saa.caps |= SMC_CAPS_MMC_HIGHSPEED;
 
@@ -396,12 +474,8 @@ imxesdhc_host_reset(sdmmc_chipset_handle_t sch)
 
 	/* Enable interrupts. */
 	imask = SDHC_INT_STATUS_CC | SDHC_INT_STATUS_TC |
-	    SDHC_INT_STATUS_BGE |
-#ifdef SDHC_DMA
-	    SHDC_INT_STATUS_DINT;
-#else
+	    SDHC_INT_STATUS_BGE | SDHC_INT_STATUS_DINT |
 	    SDHC_INT_STATUS_BRR | SDHC_INT_STATUS_BWR;
-#endif
 
 	imask |= SDHC_INT_STATUS_CTOE | SDHC_INT_STATUS_CCE |
 	    SDHC_INT_STATUS_CEBE | SDHC_INT_STATUS_CIC |
@@ -411,12 +485,18 @@ imxesdhc_host_reset(sdmmc_chipset_handle_t sch)
 	HWRITE4(sc, SDHC_INT_STATUS_EN, imask);
 	HWRITE4(sc, SDHC_INT_SIGNAL_EN, imask);
 
-	// Use no or simple DMA
-	HWRITE4(sc, SDHC_PROT_CTRL,
-	    HREAD4(sc, SDHC_PROT_CTRL) & ~SDHC_PROT_CTRL_DMASEL_SDMA_MASK);
+	/* Switch back to no-DMA/SDMA. */
+	HCLR4(sc, SDHC_PROT_CTRL, SDHC_PROT_CTRL_DMASEL_MASK);
 
 	/* Switch back to 1-bit bus. */
 	HCLR4(sc, SDHC_PROT_CTRL, SDHC_PROT_CTRL_DTW_MASK);
+
+	/* Set watermarks and burst lengths to something sane. */
+	HWRITE4(sc, SDHC_WTMK_LVL,
+	   (64 << SDHC_WTMK_LVL_RD_WML_SHIFT) |
+	   (16 << SDHC_WTMK_LVL_RD_BRST_LEN_SHIFT) |
+	   (64 << SDHC_WTMK_LVL_WR_WML_SHIFT) |
+	   (16 << SDHC_WTMK_LVL_WR_BRST_LEN_SHIFT));
 
 	splx(s);
 	return 0;
@@ -740,10 +820,12 @@ imxesdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 int
 imxesdhc_start_command(struct imxesdhc_softc *sc, struct sdmmc_command *cmd)
 {
+	struct sdhc_adma2_descriptor32 *desc = (void *)sc->adma2;
 	u_int32_t blksize = 0;
 	u_int32_t blkcount = 0;
 	u_int32_t command;
 	int error;
+	int seg;
 	int s;
 
 	DPRINTF(1,("%s: start cmd %u arg=%#x data=%p dlen=%d flags=%#x "
@@ -774,7 +856,7 @@ imxesdhc_start_command(struct imxesdhc_softc *sc, struct sdmmc_command *cmd)
 		return EINVAL;
 	}
 
-	/* setup for PIO, check for write protection */
+	/* Check for write protection. */
 	if (!ISSET(cmd->c_flags, SCF_CMD_READ)) {
 		if (!(HREAD4(sc, SDHC_PRES_STATE) & SDHC_PRES_STATE_WPSPL)) {
 			printf("%s: card is write protected\n",
@@ -783,20 +865,6 @@ imxesdhc_start_command(struct imxesdhc_softc *sc, struct sdmmc_command *cmd)
 		}
 	}
 
-#ifdef SDHC_DMA
-	/* set watermark level */
-	uint32_t wml = blksize / sizeof(uint32_t);
-	if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
-		if (wml > 16)
-			wml = 16;
-		HWRITE4(sc, SDHC_WTMK_LVL, wml << SDHC_WTMK_LVL_RD_WML_SHIFT);
-	} else {
-		if (wml > 128)
-			wml = 128;
-		HWRITE4(sc, SDHC_WTMK_LVL, wml << SDHC_WTMK_LVL_WR_WML_SHIFT);
-	}
-#endif
-
 	/* Prepare transfer mode register value. (2.2.5) */
 	command = 0;
 
@@ -804,14 +872,14 @@ imxesdhc_start_command(struct imxesdhc_softc *sc, struct sdmmc_command *cmd)
 		command |= SDHC_MIX_CTRL_DTDSEL;
 	if (blkcount > 0) {
 		command |= SDHC_MIX_CTRL_BCEN;
-#ifdef SDHC_DMA
-		command |= SDHC_MIX_CTRL_DMAEN;
-#endif
 		if (blkcount > 1) {
 			command |= SDHC_MIX_CTRL_MSBSEL;
 			command |= SDHC_MIX_CTRL_AC12EN;
 		}
 	}
+	if (cmd->c_dmamap && cmd->c_datalen > 0 &&
+	    ISSET(sc->flags, SHF_USE_DMA))
+		command |= SDHC_MIX_CTRL_DMAEN;
 
 	command |= (cmd->c_opcode << SDHC_CMD_XFR_TYP_CMDINDX_SHIFT) &
 	   SDHC_CMD_XFR_TYP_CMDINDX_SHIFT_MASK;
@@ -838,14 +906,41 @@ imxesdhc_start_command(struct imxesdhc_softc *sc, struct sdmmc_command *cmd)
 
 	s = splsdmmc();
 
+	/* Set DMA start address if SHF_USE_DMA is set. */
+	if (cmd->c_dmamap && ISSET(sc->flags, SHF_USE_DMA)) {
+		for (seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
+			bus_addr_t paddr =
+			    cmd->c_dmamap->dm_segs[seg].ds_addr;
+			uint16_t len =
+			    cmd->c_dmamap->dm_segs[seg].ds_len == 65536 ?
+			    0 : cmd->c_dmamap->dm_segs[seg].ds_len;
+			uint16_t attr;
+
+			attr = SDHC_ADMA2_VALID | SDHC_ADMA2_ACT_TRANS;
+			if (seg == cmd->c_dmamap->dm_nsegs - 1)
+				attr |= SDHC_ADMA2_END;
+
+			desc[seg].attribute = htole16(attr);
+			desc[seg].length = htole16(len);
+			desc[seg].address = htole32(paddr);
+		}
+
+		desc[cmd->c_dmamap->dm_nsegs].attribute = htole16(0);
+
+		bus_dmamap_sync(sc->sc_dmat, sc->adma_map, 0, PAGE_SIZE,
+		    BUS_DMASYNC_PREWRITE);
+
+		HCLR4(sc, SDHC_PROT_CTRL, SDHC_PROT_CTRL_DMASEL_MASK);
+		HSET4(sc, SDHC_PROT_CTRL, SDHC_PROT_CTRL_DMASEL_ADMA2);
+
+		HWRITE4(sc, SDHC_ADMA_SYS_ADDR,
+		    sc->adma_map->dm_segs[0].ds_addr);
+	}
+
 	/*
 	 * Start a CPU data transfer.  Writing to the high order byte
 	 * of the SDHC_COMMAND register triggers the SD command. (1.5)
 	 */
-#ifdef SDHC_DMA
-	if (cmd->c_data)
-		HWRITE4(sc, SDHC_DS_ADDR, (uint32_t)cmd->c_data);
-#endif
 	HWRITE4(sc, SDHC_BLK_ATT, blkcount << SDHC_BLK_ATT_BLKCNT_SHIFT |
 	    blksize << SDHC_BLK_ATT_BLKSIZE_SHIFT);
 	HWRITE4(sc, SDHC_CMD_ARG, cmd->c_arg);
@@ -860,13 +955,29 @@ imxesdhc_start_command(struct imxesdhc_softc *sc, struct sdmmc_command *cmd)
 void
 imxesdhc_transfer_data(struct imxesdhc_softc *sc, struct sdmmc_command *cmd)
 {
-#ifndef SDHC_DMA
 	u_char *datap = cmd->c_data;
-	int i;
-#endif
-	int datalen;
+	int i, datalen;
 	int mask;
 	int error;
+
+	if (cmd->c_dmamap) {
+		int status;
+
+		error = 0;
+		for (;;) {
+			status = imxesdhc_wait_intr(sc,
+			    SDHC_INT_STATUS_DINT|SDHC_INT_STATUS_TC,
+			    SDHC_DMA_TIMEOUT);
+			if (status & SDHC_INT_STATUS_TC)
+				break;
+			if (!status) {
+				error = ETIMEDOUT;
+				break;
+			}
+		}
+
+		goto done;
+	}
 
 	mask = ISSET(cmd->c_flags, SCF_CMD_READ) ?
 	    SDHC_PRES_STATE_BREN : SDHC_PRES_STATE_BWEN;
@@ -876,7 +987,6 @@ imxesdhc_transfer_data(struct imxesdhc_softc *sc, struct sdmmc_command *cmd)
 	DPRINTF(1,("%s: resp=%#x datalen=%d\n", HDEVNAME(sc),
 	    MMC_R1(cmd->c_resp), datalen));
 
-#ifndef SDHC_DMA
 	while (datalen > 0) {
 		if (!imxesdhc_wait_intr(sc, SDHC_INT_STATUS_BRR | SDHC_INT_STATUS_BWR,
 		    SDHC_BUFFER_TIMEOUT)) {
@@ -898,12 +1008,12 @@ imxesdhc_transfer_data(struct imxesdhc_softc *sc, struct sdmmc_command *cmd)
 		datap += i;
 		datalen -= i;
 	}
-#endif
 
 	if (error == 0 && !imxesdhc_wait_intr(sc, SDHC_INT_STATUS_TC,
 	    SDHC_TRANSFER_TIMEOUT))
 		error = ETIMEDOUT;
 
+done:
 	if (error != 0)
 		cmd->c_error = error;
 	SET(cmd->c_flags, SCF_ITSDONE);
@@ -1028,11 +1138,9 @@ imxesdhc_intr(void *arg)
 	/* Find out which interrupts are pending. */
 	status = HREAD4(sc, SDHC_INT_STATUS);
 
-#ifndef SDHC_DMA
 	/* disable interrupts for brr and bwr, else we get flooded */
 	if (status & (SDHC_INT_STATUS_BRR | SDHC_INT_STATUS_BWR))
 		HCLR4(sc, SDHC_INT_SIGNAL_EN, (SDHC_INT_STATUS_BRR | SDHC_INT_STATUS_BWR));
-#endif
 
 	/* Acknowledge the interrupts we are about to handle. */
 	HWRITE4(sc, SDHC_INT_STATUS, status);
