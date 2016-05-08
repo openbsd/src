@@ -16,16 +16,16 @@ XSLoader::load('OpenBSD::MkTemp', $VERSION);
 sub mkstemp($)
 {
 	my $template = shift;
-	my $fh = mkstemps_real($template, 0);
-	return $fh && ($fh, $template)
+	my $fh = mkstemps_real($template, 0) || return;
+	return wantarray() ? ($fh, $template) : $fh;
 }
 
 sub mkstemps($$)
 {
 	my($template, $suffix) = @_;
 	$template .= $suffix;
-	my $fh = mkstemps_real($template, length($suffix));
-	return $fh && ($fh, $template)
+	my $fh = mkstemps_real($template, length($suffix)) || return;
+	return wantarray() ? ($fh, $template) : $fh;
 }
 
 
