@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.310 2016/04/25 15:43:30 pirofti Exp $ */
+/* $OpenBSD: acpi.c,v 1.311 2016/05/08 10:09:25 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2772,6 +2772,33 @@ const char *acpi_skip_hids[] = {
 	NULL
 };
 
+void
+acpi_attach_deps(struct acpi_softc *sc, struct aml_node *node)
+{
+	struct aml_value res;
+	struct aml_node *dep;
+	int i;
+
+	if (aml_evalname(sc, node, "_DEP", 0, NULL, &res))
+		return;
+
+	if (res.type != AML_OBJTYPE_PACKAGE)
+		return;
+
+	for (i = 0; i < res.length; i++) {
+		if (res.v_package[i]->type != AML_OBJTYPE_STRING)
+			continue;
+		dep = aml_searchrel(node, res.v_package[i]->v_string);
+		if (dep == NULL || dep->attached)
+			continue;
+		dep = aml_searchname(dep, "_HID");
+		if (dep)
+			acpi_foundhid(dep, sc);
+	}
+
+	aml_freevalue(&res);
+}
+
 int
 acpi_foundhid(struct aml_node *node, void *arg)
 {
@@ -2794,6 +2821,8 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	if ((sta & STA_PRESENT) == 0)
 		return (0);
 
+	acpi_attach_deps(sc, node->parent);
+
 	memset(&aaa, 0, sizeof(aaa));
 	aaa.aaa_iot = sc->sc_iot;
 	aaa.aaa_memt = sc->sc_memt;
@@ -2814,7 +2843,10 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	}
 #endif
 
-	config_found(self, &aaa, acpi_print);
+	if (!node->parent->attached) {
+		config_found(self, &aaa, acpi_print);
+		node->parent->attached = 1;
+	}
 
 	return (0);
 }

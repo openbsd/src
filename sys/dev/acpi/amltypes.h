@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.43 2016/04/02 00:34:47 jsg Exp $ */
+/* $OpenBSD: amltypes.h,v 1.44 2016/05/08 10:09:25 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -375,6 +375,8 @@ struct aml_node {
 
 	SIMPLEQ_HEAD(,aml_node)	son;
 	SIMPLEQ_ENTRY(aml_node)	sib;
+
+	int		attached;
 
 	char		name[5];
 	u_int16_t	opcode;
