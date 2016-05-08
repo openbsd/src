@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.30 2016/05/08 16:19:35 martijn Exp $	*/
+/*	$OpenBSD: wall.c,v 1.31 2016/05/08 17:09:42 schwarze Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <utmp.h>
-#include <vis.h>
 
 struct wallgroup {
 	gid_t	gid;
