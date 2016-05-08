@@ -1,4 +1,4 @@
-/*	$OpenBSD: chvgpio.c,v 1.4 2016/05/08 11:08:01 kettenis Exp $	*/
+/*	$OpenBSD: chvgpio.c,v 1.5 2016/05/08 18:18:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -40,6 +40,8 @@
 #define CHVGPIO_PAD_CFG1_INTWAKECFG_RISING	0x00000002
 #define CHVGPIO_PAD_CFG1_INTWAKECFG_BOTH	0x00000003
 #define CHVGPIO_PAD_CFG1_INTWAKECFG_LEVEL	0x00000004
+#define CHVGPIO_PAD_CFG1_INVRXTX_MASK		0x000000f0
+#define CHVGPIO_PAD_CFG1_INVRXTX_RXDATA		0x00000040
 
 struct chvgpio_intrhand {
 	int (*ih_func)(void *);
@@ -344,7 +346,11 @@ chvgpio_intr_establish(void *cookie, int pin, int flags,
 
 	reg = chvgpio_read_pad_cfg1(sc, pin);
 	reg &= ~CHVGPIO_PAD_CFG1_INTWAKECFG_MASK;
+	reg &= ~CHVGPIO_PAD_CFG1_INVRXTX_MASK;
 	switch (flags & (LR_GPIO_MODE | LR_GPIO_POLARITY)) {
+	case LR_GPIO_LEVEL | LR_GPIO_ACTLO:
+		reg |= CHVGPIO_PAD_CFG1_INVRXTX_RXDATA;
+		/* FALLTHROUGH */
 	case LR_GPIO_LEVEL | LR_GPIO_ACTHI:
 		reg |= CHVGPIO_PAD_CFG1_INTWAKECFG_LEVEL;
 		break;
