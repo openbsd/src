@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.67 2016/05/08 11:52:32 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.68 2016/05/08 16:29:57 stefan Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ static char amap_slot_pool_names[UVM_AMAP_CHUNK][13];
  * local functions
  */
 
-static struct vm_amap *amap_alloc1(int, int);
+static struct vm_amap *amap_alloc1(int, int, int);
 static __inline void amap_list_insert(struct vm_amap *);
 static __inline void amap_list_remove(struct vm_amap *);   
 
@@ -177,7 +177,7 @@ amap_init(void)
  *	init the overlay.
  */
 static inline struct vm_amap *
-amap_alloc1(int slots, int waitf)
+amap_alloc1(int slots, int waitf, int lazyalloc)
 {
 	struct vm_amap *amap;
 
@@ -226,14 +226,14 @@ fail1:
  * => reference count to new amap is set to one
  */
 struct vm_amap *
-amap_alloc(vaddr_t sz, int waitf)
+amap_alloc(vaddr_t sz, int waitf, int lazyalloc)
 {
 	struct vm_amap *amap;
 	int slots;
 
 	AMAP_B2SLOT(slots, sz);		/* load slots */
 
-	amap = amap_alloc1(slots, waitf);
+	amap = amap_alloc1(slots, waitf, lazyalloc);
 	if (amap) {
 		memset(amap->am_anon, 0,
 		    amap->am_nslot * sizeof(struct vm_anon *));
@@ -330,7 +330,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
     boolean_t canchunk, vaddr_t startva, vaddr_t endva)
 {
 	struct vm_amap *amap, *srcamap;
-	int slots, lcv;
+	int slots, lcv, lazyalloc = 0;
 	vaddr_t chunksize;
 
 	/* is there a map to copy?   if not, create one from scratch. */
@@ -339,22 +339,28 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 		 * check to see if we have a large amap that we can
 		 * chunk.  we align startva/endva to chunk-sized
 		 * boundaries and then clip to them.
+		 *
+		 * if we cannot chunk the amap, allocate it in a way
+		 * that makes it grow or shrink dynamically with
+		 * the number of slots.
 		 */
-		if (canchunk && atop(entry->end - entry->start) >=
-		    UVM_AMAP_LARGE) {
-			/* convert slots to bytes */
-			chunksize = UVM_AMAP_CHUNK << PAGE_SHIFT;
-			startva = (startva / chunksize) * chunksize;
-			endva = roundup(endva, chunksize);
-			UVM_MAP_CLIP_START(map, entry, startva);
-			/* watch out for endva wrap-around! */
-			if (endva >= startva)
-				UVM_MAP_CLIP_END(map, entry, endva);
+		if (atop(entry->end - entry->start) >= UVM_AMAP_LARGE) {
+			if (canchunk) {
+				/* convert slots to bytes */
+				chunksize = UVM_AMAP_CHUNK << PAGE_SHIFT;
+				startva = (startva / chunksize) * chunksize;
+				endva = roundup(endva, chunksize);
+				UVM_MAP_CLIP_START(map, entry, startva);
+				/* watch out for endva wrap-around! */
+				if (endva >= startva)
+					UVM_MAP_CLIP_END(map, entry, endva);
+			} else
+				lazyalloc = 1;
 		}
 
 		entry->aref.ar_pageoff = 0;
 		entry->aref.ar_amap = amap_alloc(entry->end - entry->start,
-		    waitf);
+		    waitf, lazyalloc);
 		if (entry->aref.ar_amap != NULL)
 			entry->etype &= ~UVM_ET_NEEDSCOPY;
 		return;
@@ -373,7 +379,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 
 	/* looks like we need to copy the map. */
 	AMAP_B2SLOT(slots, entry->end - entry->start);
-	amap = amap_alloc1(slots, waitf);
+	amap = amap_alloc1(slots, waitf, lazyalloc);
 	if (amap == NULL)
 		return;
 	srcamap = entry->aref.ar_amap;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.h,v 1.25 2016/05/08 11:52:32 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.h,v 1.26 2016/05/08 16:29:57 stefan Exp $	*/
 /*	$NetBSD: uvm_amap.h,v 1.14 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ void		amap_populate(struct vm_aref *, vaddr_t);
 int		amap_add(struct vm_aref *, vaddr_t, struct vm_anon *,
 		    boolean_t);
 					/* allocate a new amap */
-struct vm_amap	*amap_alloc(vaddr_t, int);
+struct vm_amap	*amap_alloc(vaddr_t, int, int);
 					/* clear amap needs-copy flag */
 void		amap_copy(vm_map_t, vm_map_entry_t, int, boolean_t, vaddr_t,
 		    vaddr_t);
