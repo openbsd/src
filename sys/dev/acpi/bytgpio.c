@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytgpio.c,v 1.9 2016/05/07 18:08:27 kettenis Exp $	*/
+/*	$OpenBSD: bytgpio.c,v 1.10 2016/05/08 09:30:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -170,6 +170,7 @@ bytgpio_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		return;
 	}
+	aml_freevalue(&res);
 
 	sc->sc_pin_ih = mallocarray(sc->sc_npins, sizeof(*sc->sc_pin_ih),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
@@ -184,14 +185,14 @@ bytgpio_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_memt, sc->sc_addr, sc->sc_size, 0,
 	    &sc->sc_memh)) {
 		printf(", can't map registers\n");
-		goto fail;
+		goto free;
 	}
 
 	sc->sc_ih = acpi_intr_establish(sc->sc_irq, sc->sc_irq_flags, IPL_BIO,
 	    bytgpio_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(", can't establish interrupt\n");
-		goto fail;
+		goto unmap;
 	}
 
 	sc->sc_gpio.cookie = sc;
@@ -228,7 +229,9 @@ bytgpio_attach(struct device *parent, struct device *self, void *aux)
 		
 	return;
 
-fail:
+unmap:
+	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_size);
+free:
 	free(sc->sc_pin_ih, M_DEVBUF, sc->sc_npins * sizeof(*sc->sc_pin_ih));
 }
 
