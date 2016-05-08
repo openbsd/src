@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.32 2016/04/02 12:18:44 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.33 2016/05/08 09:21:32 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -192,7 +192,12 @@ sub prepare_long
 	}
 	# disallow writable files/dirs without explicit annotation
 	if (!defined $item->{mode}) {
-		$entry->{mode} &= ~(S_IWUSR|S_IWGRP|S_IWOTH);
+		# if there's an owner, we have to be explicit
+		if (defined $item->{owner}) {
+			$entry->{mode} &= ~(S_IWUSR|S_IWGRP|S_IWOTH);
+		} else {
+			$entry->{mode} &= ~(S_IWGRP|S_IWOTH);
+		}
 		# and make libraries non-executable
 		if ($item->is_a_library) {
 			$entry->{mode} &= ~(S_IXUSR|S_IXGRP|S_IXOTH);
