@@ -1,4 +1,4 @@
-/*	$OpenBSD: yacc.y,v 1.9 2015/11/11 02:52:46 deraadt Exp $	*/
+/*	$OpenBSD: yacc.y,v 1.10 2016/05/08 15:25:44 schwarze Exp $	*/
 /*	$NetBSD: yacc.y,v 1.24 2004/01/05 23:23:36 jmmv Exp $	*/
 
 %{
@@ -64,7 +64,6 @@ rune_t	charsetmask = (rune_t)0x0000007f;
 rune_t	charsetmask = (rune_t)0xffffffff;
 
 void set_map(rune_map *, rune_list *, u_int32_t);
-void set_digitmap(rune_map *, rune_list *);
 void add_map(rune_map *, rune_list *, u_int32_t);
 
 int		main(int, char *[]);
@@ -164,8 +163,8 @@ entry	:	ENCODING STRING
 		{ set_map(&maplower, $2, 0); }
 	|	MAPUPPER map
 		{ set_map(&mapupper, $2, 0); }
-	|	DIGITMAP map
-		{ set_digitmap(&types, $2); }
+	|	DIGITMAP mapignore
+		{ }
 	;
 
 list	:	RUNE
@@ -234,6 +233,12 @@ map	:	LBRK RUNE RUNE RBRK
 		    $$->map = $7;
 		    $$->next = $1;
 		}
+	;
+
+mapignore :	LBRK RUNE RUNE RBRK { }
+	|	map LBRK RUNE RUNE RBRK { }
+	|	LBRK RUNE THRU RUNE ':' RUNE RBRK { }
+	|	map LBRK RUNE THRU RUNE ':' RUNE RBRK { }
 	;
 %%
 
@@ -343,26 +348,6 @@ set_map(rune_map *map, rune_list *list, u_int32_t flag)
     while (list) {
 	rune_list *nlist = list->next;
 	add_map(map, list, flag);
-	list = nlist;
-    }
-}
-
-void
-set_digitmap(rune_map *map, rune_list *list)
-{
-    rune_t i;
-
-    while (list) {
-	rune_list *nlist = list->next;
-	for (i = list->min; i <= list->max; ++i) {
-	    if (list->map + (i - list->min)) {
-		rune_list *tmp = xmalloc(sizeof(rune_list));
-		tmp->min = i;
-		tmp->max = i;
-		add_map(map, tmp, list->map + (i - list->min));
-	    }
-	}
-	free(list);
 	list = nlist;
     }
 }

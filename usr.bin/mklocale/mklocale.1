@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mklocale.1,v 1.4 2010/09/19 21:30:05 jmc Exp $
+.\"	$OpenBSD: mklocale.1,v 1.5 2016/05/08 15:25:44 schwarze Exp $
 .\"
 .\" $NetBSD: mklocale.1,v 1.13 2004/01/24 17:03:26 wiz Exp $
 .\" FreeBSD: src/usr.bin/mklocale/mklocale.1,v 1.6 1999/09/20 09:15:21 phantom Exp
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)mklocale.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: September 19 2010 $
+.Dd $Mdocdate: May 8 2016 $
 .Dt MKLOCALE 1
 .Os
 .Sh NAME
@@ -204,7 +204,9 @@ is the integer value represented by
 For example, the ASCII character
 .Sq 0
 would map to the decimal value 0.
-Only values up to 255 are allowed.
+On
+.Ox ,
+this information is ignored and not put into the binary output file.
 .El
 .Pp
 The following keywords may appear multiple times and have the following
