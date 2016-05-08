@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.222 2016/05/07 18:08:27 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.223 2016/05/08 11:08:01 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2355,12 +2355,12 @@ aml_rwgpio(struct aml_value *conn, int bpos, int blen, struct aml_value *val,
 		aml_die("Could not find GpioIo pin");
 
 	if (mode == ACPI_IOWRITE) {
-		printf("GpioIO write unimplemented\n");
-		return;
+		v = aml_val2int(val);
+		node->gpio->write_pin(node->gpio->cookie, pin, v);
+	} else {
+		v = node->gpio->read_pin(node->gpio->cookie, pin);
+		_aml_setvalue(val, AML_OBJTYPE_INTEGER, v, NULL);
 	}
-
-	v = node->gpio->read_pin(node->gpio->cookie, pin);
-	_aml_setvalue(val, AML_OBJTYPE_INTEGER, v, NULL);
 }
 
 void

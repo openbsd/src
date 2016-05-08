@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytgpio.c,v 1.10 2016/05/08 09:30:23 kettenis Exp $	*/
+/*	$OpenBSD: bytgpio.c,v 1.11 2016/05/08 11:08:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -106,6 +106,7 @@ const int byt_sus_pins[] = {
 
 int	bytgpio_parse_resources(union acpi_resource *, void *);
 int	bytgpio_read_pin(void *, int);
+void	bytgpio_write_pin(void *, int, int);
 void	bytgpio_intr_establish(void *, int, int, int (*)(), void *);
 int	bytgpio_intr(void *);
 
@@ -197,6 +198,7 @@ bytgpio_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_gpio.cookie = sc;
 	sc->sc_gpio.read_pin = bytgpio_read_pin;
+	sc->sc_gpio.write_pin = bytgpio_write_pin;
 	sc->sc_gpio.intr_establish = bytgpio_intr_establish;
 	sc->sc_node->gpio = &sc->sc_gpio;
 
@@ -266,6 +268,20 @@ bytgpio_read_pin(void *cookie, int pin)
 
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh, sc->sc_pins[pin] * 16 + 8);
 	return (reg & BYTGPIO_PAD_VAL);
+}
+
+void
+bytgpio_write_pin(void *cookie, int pin, int value)
+{
+	struct bytgpio_softc *sc = cookie;
+	uint32_t reg;
+
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh, sc->sc_pins[pin] * 16 + 8);
+	if (value)
+		reg |= BYTGPIO_PAD_VAL;
+	else
+		reg &= ~BYTGPIO_PAD_VAL;
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, sc->sc_pins[pin] * 16 + 8, reg);
 }
 
 void

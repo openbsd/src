@@ -1,4 +1,4 @@
-/*	$OpenBSD: chvgpio.c,v 1.3 2016/05/08 10:03:14 kettenis Exp $	*/
+/*	$OpenBSD: chvgpio.c,v 1.4 2016/05/08 11:08:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -31,6 +31,7 @@
 #define CHVGPIO_PAD_CFG1		0x4404
 
 #define CHVGPIO_PAD_CFG0_GPIORXSTATE		0x00000001
+#define CHVGPIO_PAD_CFG0_GPIOTXSTATE		0x00000002
 #define CHVGPIO_PAD_CFG0_INTSEL_MASK		0xf0000000
 #define CHVGPIO_PAD_CFG0_INTSEL_SHIFT		28
 
@@ -143,6 +144,7 @@ const int chv_southeast_pins[] = {
 int	chvgpio_parse_resources(union acpi_resource *, void *);
 int	chvgpio_check_pin(struct chvgpio_softc *, int);
 int	chvgpio_read_pin(void *, int);
+void	chvgpio_write_pin(void *, int, int);
 void	chvgpio_intr_establish(void *, int, int, int (*)(), void *);
 int	chvgpio_intr(void *);
 
@@ -231,6 +233,7 @@ chvgpio_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_gpio.cookie = sc;
 	sc->sc_gpio.read_pin = chvgpio_read_pin;
+	sc->sc_gpio.write_pin = chvgpio_write_pin;
 	sc->sc_gpio.intr_establish = chvgpio_intr_establish;
 	sc->sc_node->gpio = &sc->sc_gpio;
 
@@ -304,6 +307,22 @@ chvgpio_read_pin(void *cookie, int pin)
 
 	reg = chvgpio_read_pad_cfg0(sc, pin);
 	return (reg & CHVGPIO_PAD_CFG0_GPIORXSTATE);
+}
+
+void
+chvgpio_write_pin(void *cookie, int pin, int value)
+{
+	struct chvgpio_softc *sc = cookie;
+	uint32_t reg;
+
+	KASSERT(chvgpio_check_pin(sc, pin) == 0);
+
+	reg = chvgpio_read_pad_cfg0(sc, pin);
+	if (value)
+		reg |= CHVGPIO_PAD_CFG0_GPIOTXSTATE;
+	else
+		reg &= ~CHVGPIO_PAD_CFG0_GPIOTXSTATE;
+	chvgpio_write_pad_cfg0(sc, pin, reg);
 }
 
 void
