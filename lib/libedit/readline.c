@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.c,v 1.22 2016/05/08 13:34:35 schwarze Exp $	*/
+/*	$OpenBSD: readline.c,v 1.23 2016/05/08 13:52:33 schwarze Exp $	*/
 /*	$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
@@ -1487,9 +1487,12 @@ where_history(void)
 		return 0;
 	curr_num = ev.num;
 
-	(void)history(h, &ev, H_FIRST);
-	off = 1;
-	while (ev.num != curr_num && history(h, &ev, H_NEXT) == 0)
+	/* start from the oldest */
+	(void)history(h, &ev, H_LAST);
+
+	/* position is zero-based */
+	off = 0;
+	while (ev.num != curr_num && history(h, &ev, H_PREV) == 0)
 		off++;
 
 	return off;
