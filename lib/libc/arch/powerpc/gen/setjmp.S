@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.8 2015/09/13 07:36:58 guenther Exp $ */
+/*	$OpenBSD: setjmp.S,v 1.9 2016/05/08 18:57:14 guenther Exp $ */
 /*
  * Copyright (c) 1996 Dale Rahn. All rights reserved.
  *
@@ -73,7 +73,6 @@ ENTRY(setjmp)
 	li 3, 0
 	bl PIC_PLT(_libc_sigblock)
 	stw 3, JMP_sig(31)
-	/* should sigaltstack be checked and saved */
 	mr 3, 31
 #ifdef __PIC__
 	lwz 30, JMP_r30(3)
