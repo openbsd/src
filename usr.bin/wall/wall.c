@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.29 2015/11/05 22:20:11 benno Exp $	*/
+/*	$OpenBSD: wall.c,v 1.30 2016/05/08 16:19:35 martijn Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -40,17 +40,18 @@
 #include <sys/time.h>
 #include <sys/uio.h>
 
+#include <ctype.h>
+#include <err.h>
+#include <grp.h>
+#include <limits.h>
 #include <paths.h>
 #include <pwd.h>
-#include <grp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
 #include <utmp.h>
 #include <vis.h>
-#include <err.h>
 
 struct wallgroup {
 	gid_t	gid;
@@ -68,6 +69,7 @@ void	makemsg(char *);
 void	addgroup(struct group *, char *);
 char   *ttymsg(struct iovec *, int, char *, int);
 __dead	void usage(void);
+static int isu8cont(unsigned char);
 
 int nobanner;
 int mbufsize;
@@ -168,7 +170,7 @@ main(int argc, char **argv)
 void
 makemsg(char *fname)
 {
-	int ch, cnt;
+	int cnt;
 	struct tm *lt;
 	struct passwd *pw;
 	struct stat sbuf;
@@ -176,8 +178,8 @@ makemsg(char *fname)
 	FILE *fp;
 	int fd;
 	char *p, *whom, hostname[HOST_NAME_MAX+1], lbuf[100], tmpname[PATH_MAX];
-	char tmpbuf[5];
 	char *ttynam;
+	unsigned char ch;
 
 	snprintf(tmpname, sizeof(tmpname), "%s/wall.XXXXXXXXXX", _PATH_TMP);
 	if ((fd = mkstemp(tmpname)) >= 0) {
@@ -224,20 +226,15 @@ makemsg(char *fname)
 	}
 	while (fgets(lbuf, sizeof(lbuf), stdin))
 		for (cnt = 0, p = lbuf; (ch = *p) != '\0'; ++p, ++cnt) {
-			vis(tmpbuf, ch, VIS_SAFE|VIS_NOSLASH, p[1]);
-			if (cnt == 79+1-strlen(tmpbuf) || ch == '\n') {
-				for (; cnt < 79+1-strlen(tmpbuf); ++cnt)
+			if (cnt == 79 || ch == '\n') {
+				for (; cnt < 79; ++cnt)
 					putc(' ', fp);
 				putc('\r', fp);
 				putc('\n', fp);
 				cnt = -1;
-			}
-			if (ch != '\n') {
-				int xx;
-
-				for (xx = 0; tmpbuf[xx]; xx++)
-					putc(tmpbuf[xx], fp);
-			}
+			} else if (!isu8cont(ch))
+				putc(isprint(ch) || isspace(ch) ?
+				    ch : '?', fp);
 		}
 	(void)fprintf(fp, "%79s\r\n", " ");
 	rewind(fp);
@@ -287,4 +284,10 @@ usage(void)
 
 	(void)fprintf(stderr, "usage: %s [-g group] [file]\n", __progname);
 	exit(1);
+}
+
+static int
+isu8cont(unsigned char c)
+{
+	return (c & (0x80 | 0x40)) == 0x80;
 }
