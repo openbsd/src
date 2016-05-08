@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.46 2015/11/26 19:01:47 deraadt Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.47 2016/05/08 20:27:43 tim Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,7 +65,7 @@ local_passwd(char *uname, int authenticated)
 	int i, pfd, tfd = -1;
 	int pwflags = _PASSWORD_OMITV7;
 
-	if (!(pw = getpwnam(uname))) {
+	if (!(pw = getpwnam_shadow(uname))) {
 		warnx("unknown user %s.", uname);
 		return(1);
 	}
