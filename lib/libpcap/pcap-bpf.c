@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.33 2016/05/03 07:38:38 natano Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.34 2016/05/08 08:20:50 natano Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -216,9 +216,9 @@ bpf_open(pcap_t *p)
 {
 	int fd;
 
-	fd = open("/dev/bpf", O_RDWR);
+	fd = open("/dev/bpf0", O_RDWR);
 	if (fd == -1 && errno == EACCES)
-		fd = open("/dev/bpf", O_RDONLY);
+		fd = open("/dev/bpf0", O_RDONLY);
 
 	if (fd == -1) {
 		if (errno == EACCES)
