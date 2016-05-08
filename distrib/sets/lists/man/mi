@@ -813,7 +813,6 @@
 ./usr/share/man/man3p/Net::protoent.3p
 ./usr/share/man/man3p/Net::servent.3p
 ./usr/share/man/man3p/O.3p
-./usr/share/man/man3p/ODBM_File.3p
 ./usr/share/man/man3p/Opcode.3p
 ./usr/share/man/man3p/OpenBSD::Getopt.3p
 ./usr/share/man/man3p/OpenBSD::IdCache.3p

@@ -58,7 +58,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ctype.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/curses.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/db.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dbm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ddb
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ddb/db_access.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ddb/db_break.ph
@@ -1873,7 +1872,6 @@
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/Math/BigInt/FastCalc.pm
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/NDBM_File.pm
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/O.pm
-./usr/libdata/perl5/sparc-openbsd/5.20.2/ODBM_File.pm
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/Opcode.pm
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/OpenBSD
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/OpenBSD/MkTemp.pm
@@ -1989,8 +1987,6 @@
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Math/BigInt/FastCalc/FastCalc.so
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/NDBM_File
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/NDBM_File/NDBM_File.so
-./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/ODBM_File
-./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/ODBM_File/ODBM_File.so
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Opcode
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Opcode/Opcode.so
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/OpenBSD

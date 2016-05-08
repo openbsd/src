@@ -63,7 +63,6 @@
 ./usr/include/ctype.h
 ./usr/include/curses.h
 ./usr/include/db.h
-./usr/include/dbm.h
 ./usr/include/ddb
 ./usr/include/ddb/db_access.h
 ./usr/include/ddb/db_break.h
@@ -2125,7 +2124,6 @@
 ./usr/share/man/man3/d2i_X509_REQ.3
 ./usr/share/man/man3/d2i_X509_SIG.3
 ./usr/share/man/man3/daemon.3
-./usr/share/man/man3/dbm.3
 ./usr/share/man/man3/dbopen.3
 ./usr/share/man/man3/default_colors.3
 ./usr/share/man/man3/define_key.3
