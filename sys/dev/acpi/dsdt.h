@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.70 2016/03/30 09:56:10 kettenis Exp $ */
+/* $OpenBSD: dsdt.h,v 1.71 2016/05/08 00:03:12 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -242,6 +242,8 @@ union acpi_resource {
 #define  LR_GPIO_ACTLO		(1L << 1)
 #define  LR_GPIO_ACTBOTH	(2L << 1)
 #define LR_GPIO_MODE		(1L << 0)
+#define  LR_GPIO_LEVEL		(0L << 0)
+#define  LR_GPIO_EDGE		(1L << 0)
 		uint8_t		_ppi;
 		uint16_t	_drs;
 		uint16_t	_dbt;
