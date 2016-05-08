@@ -1,4 +1,4 @@
-/* $OpenBSD: sigsetjmp.S,v 1.5 2005/08/07 16:40:15 espie Exp $ */
+/* $OpenBSD: sigsetjmp.S,v 1.6 2016/05/08 21:50:58 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1995,
  *	The Regents of the University of California.  All rights reserved.
@@ -48,12 +48,12 @@ LEAF(sigsetjmp, FRAMESZ)
 	.set	reorder
 	REG_S	a1, (_JBLEN*REGSZ)(a0)		# save "savemask"
 	bne	a1, 0x0, 1f			# do saving of signal mask?
-	LA	t9, _setjmp
+	LA	t9, _libc__setjmp
 	RESTORE_GP64
 	PTR_ADDU sp, FRAMESZ
 	jr t9
 
-1:	LA	t9, setjmp
+1:	LA	t9, _libc_setjmp
 	RESTORE_GP64
 	PTR_ADDU sp, FRAMESZ
 	jr t9
@@ -65,12 +65,12 @@ LEAF(siglongjmp, FRAMESZ)
 	.set	reorder
 	REG_L	t0, (_JBLEN*REGSZ)(a0)		# get "savemask"
 	bne	t0, 0x0, 1f			# restore signal mask?
-	LA	t9, _longjmp
+	LA	t9, _libc__longjmp
 	RESTORE_GP64
 	PTR_ADDU sp, FRAMESZ
 	jr	t9
 1:
-	LA	t9, longjmp
+	LA	t9, _libc_longjmp
 	RESTORE_GP64
 	PTR_ADDU sp, FRAMESZ
 	jr	t9

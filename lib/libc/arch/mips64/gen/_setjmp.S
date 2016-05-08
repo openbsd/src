@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.4 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: _setjmp.S,v 1.5 2016/05/08 21:50:58 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -29,7 +29,7 @@
  *
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 #include <machine/regnum.h>
 #include <machine/signal.h>
 
@@ -101,7 +101,7 @@ LEAF(_setjmp, FRAMESZ)
 	PTR_ADDU sp, FRAMESZ
 	j	ra
 	move	v0, zero
-END(_setjmp)
+END_STRONG(_setjmp)
 
 LEAF(_longjmp, FRAMESZ)
 	PTR_SUBU sp, FRAMESZ
@@ -159,9 +159,9 @@ LEAF(_longjmp, FRAMESZ)
 botch:
 	jal	longjmperror
 	nop
-	jal	abort
+	jal	_libc_abort
 	nop
 	RESTORE_GP64
 	PTR_ADDU sp, FRAMESZ
-END(_longjmp)
+END_STRONG(_longjmp)
 
