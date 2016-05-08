@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.h,v 1.24 2016/04/16 18:39:31 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.h,v 1.25 2016/05/08 11:52:32 stefan Exp $	*/
 /*	$NetBSD: uvm_amap.h,v 1.14 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -62,8 +62,10 @@ struct vm_amap;
  * prototypes for the amap interface 
  */
 
+					/* ensure amap can store anon */
+void		amap_populate(struct vm_aref *, vaddr_t);
 					/* add an anon to an amap */
-void		amap_add(struct vm_aref *, vaddr_t, struct vm_anon *,
+int		amap_add(struct vm_aref *, vaddr_t, struct vm_anon *,
 		    boolean_t);
 					/* allocate a new amap */
 struct vm_amap	*amap_alloc(vaddr_t, int);

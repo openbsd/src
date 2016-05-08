@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvmexp.h,v 1.1 2014/07/08 17:19:26 deraadt Exp $	*/
+/*	$OpenBSD: uvmexp.h,v 1.2 2016/05/08 11:52:32 stefan Exp $	*/
 
 #ifndef	_UVM_UVMEXP_
 #define	_UVM_UVMEXP_
@@ -107,6 +107,7 @@ struct uvmexp {
 	/* fault subcounters */
 	int fltnoram;	/* number of times fault was out of ram */
 	int fltnoanon;	/* number of times fault was out of anons */
+	int fltnoamap;	/* number of times fault was out of amap chunks */
 	int fltpgwait;	/* number of times fault had to wait on a page */
 	int fltpgrele;	/* number of times fault found a released page */
 	int fltrelck;	/* number of times fault relock called */

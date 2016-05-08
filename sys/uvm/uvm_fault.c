@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.89 2016/03/29 12:04:26 chl Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.90 2016/05/08 11:52:32 stefan Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -493,7 +493,7 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	struct uvm_faultinfo ufi;
 	vm_prot_t enter_prot;
 	boolean_t wired, narrow, promote, locked, shadowed;
-	int npages, nback, nforw, centeridx, result, lcv, gotpages;
+	int npages, nback, nforw, centeridx, result, lcv, gotpages, ret;
 	vaddr_t startva, currva;
 	voff_t uoff;
 	paddr_t pa; 
@@ -870,7 +870,7 @@ ReFault:
 	 * in the (hopefully very rare) case that we are out of RAM we 
 	 * will wait for more RAM, and refault.    
 	 *
-	 * if we are out of anon VM we kill the process (XXX: could wait?).
+	 * if we are out of anon VM we wait for RAM to become available.
 	 */
 
 	if ((access_type & PROT_WRITE) != 0 && anon->an_ref > 1) {
@@ -883,17 +883,23 @@ ReFault:
 
 		/* check for out of RAM */
 		if (anon == NULL || pg == NULL) {
-			if (anon)
-				uvm_anfree(anon);
 			uvmfault_unlockall(&ufi, amap, NULL, oanon);
 			KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-			if (anon == NULL || uvmexp.swpgonly == uvmexp.swpages) {
+			if (anon == NULL)
 				uvmexp.fltnoanon++;
-				return (ENOMEM);
+			else {
+				uvm_anfree(anon);
+				uvmexp.fltnoram++;
 			}
 
-			uvmexp.fltnoram++;
-			uvm_wait("flt_noram3");	/* out of RAM, wait for more */
+			if (uvmexp.swpgonly == uvmexp.swpages)
+				return (ENOMEM);
+
+			/* out of RAM, wait for more */
+			if (anon == NULL)
+				uvm_anwait();
+			else
+				uvm_wait("flt_noram3");
 			goto ReFault;
 		}
 
@@ -902,8 +908,9 @@ ReFault:
 		/* un-busy! new page */
 		atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
-		amap_add(&ufi.entry->aref, ufi.orig_rvaddr - ufi.entry->start,
-		    anon, 1);
+		ret = amap_add(&ufi.entry->aref,
+		    ufi.orig_rvaddr - ufi.entry->start, anon, 1);
+		KASSERT(ret == 0);
 
 		/* deref: can not drop to zero here by defn! */
 		oanon->an_ref--;
@@ -1132,14 +1139,21 @@ Case2:
 			/* unlock and fail ... */
 			uvmfault_unlockall(&ufi, amap, uobj, NULL);
 			KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-			if (anon == NULL || uvmexp.swpgonly == uvmexp.swpages) {
+			if (anon == NULL)
 				uvmexp.fltnoanon++;
-				return (ENOMEM);
+			else {
+				uvm_anfree(anon);
+				uvmexp.fltnoram++;
 			}
 
-			uvm_anfree(anon);
-			uvmexp.fltnoram++;
-			uvm_wait("flt_noram5");
+			if (uvmexp.swpgonly == uvmexp.swpages)
+				return (ENOMEM);
+
+			/* out of RAM, wait for more */
+			if (anon == NULL)
+				uvm_anwait();
+			else
+				uvm_wait("flt_noram5");
 			goto ReFault;
 		}
 
@@ -1175,8 +1189,20 @@ Case2:
 			 */
 		}
 
-		amap_add(&ufi.entry->aref, ufi.orig_rvaddr - ufi.entry->start,
-		    anon, 0);
+		if (amap_add(&ufi.entry->aref,
+		    ufi.orig_rvaddr - ufi.entry->start, anon, 0)) {
+			uvmfault_unlockall(&ufi, amap, NULL, oanon);
+			KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
+			uvm_anfree(anon);
+			uvmexp.fltnoamap++;
+
+			if (uvmexp.swpgonly == uvmexp.swpages)
+				return (ENOMEM);
+
+			amap_populate(&ufi.entry->aref,
+			    ufi.orig_rvaddr - ufi.entry->start);
+			goto ReFault;
+		}
 	}
 
 	/* note: pg is either the uobjpage or the new page in the new anon */

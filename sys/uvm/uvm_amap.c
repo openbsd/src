@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.66 2016/04/16 18:39:31 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.67 2016/05/08 11:52:32 stefan Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -803,11 +803,21 @@ amap_lookups(struct vm_aref *aref, vaddr_t offset,
 }
 
 /*
- * amap_add: add (or replace) a page to an amap
- *
- * => returns an "offset" which is meaningful to amap_unadd().
+ * amap_populate: ensure that the amap can store an anon for the page at
+ * offset. This function can sleep until memory to store the anon is
+ * available.
  */
 void
+amap_populate(struct vm_aref *aref, vaddr_t offset)
+{
+}
+
+/*
+ * amap_add: add (or replace) a page to an amap
+ *
+ * => returns 0 if adding the page was successful or 1 when not.
+ */
+int
 amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
     boolean_t replace)
 {
@@ -840,6 +850,8 @@ amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
 		amap->am_nused++;
 	}
 	amap->am_anon[slot] = anon;
+
+	return 0;
 }
 
 /*
