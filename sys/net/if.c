@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.430 2016/05/03 14:52:39 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.431 2016/05/08 08:58:27 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1668,7 +1668,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case SIOCGIFXFLAGS:
-		ifr->ifr_flags = ifp->if_xflags;
+		ifr->ifr_flags = ifp->if_xflags & ~IFXF_MPSAFE;
 		break;
 
 	case SIOCGIFMETRIC:
