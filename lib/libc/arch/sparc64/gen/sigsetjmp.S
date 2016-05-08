@@ -1,8 +1,12 @@
-/*	$OpenBSD: sigsetjmp.S,v 1.3 2012/08/22 17:19:35 pascal Exp $	*/
+/*	$OpenBSD: sigsetjmp.S,v 1.4 2016/05/08 18:29:34 guenther Exp $	*/
 /*	$NetBSD: sigsetjmp.S,v 1.5 2000/08/28 00:45:59 eeh Exp $	*/
 /*
- * Copyright (c) 1995 Paul Kranenburg
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,64 +16,58 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Paul Kranenburg.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include "SYS.h"
 
-#ifdef __PIC__
-
 ENTRY(sigsetjmp)
-	PIC_PROLOGUE(%g1,%o2)		! %g1 = _GLOBAL_OFFSET_TABLE
-	set	_C_LABEL(setjmp), %o2	! if (%o1 != 0) goto _setjmp;
-	set	_C_LABEL(_setjmp), %o3	! else goto __setjmp;
-	movrnz	%o1, %o2, %o3
-	ldx [%g1+%o3], %g1
-	jmp %g1
-	 st	%o1,[%o0 + 8*14]	! jmpbuf[JBLEN]
+	mov	%o0, %o3		/* Save our jmp_buf in %o3 */
+	brz,pt	%o1, 1f
+	 st	%o1, [%o0 + 8*14]	! jmpbuf[JBLEN]
 
+	mov	1, %o0			/* SIG_BLOCK */
+	mov	SYS_sigprocmask, %g1	
+	clr	%o1			/* sigprocmask(SIG_BLOCK, 0) */
+	t	ST_SYSCALL
+	stx	%o0, [%o3 + 0x10]
+
+1:	stx	%sp, [%o3 + 0x00]	/* store caller's stack pointer */
+	stx	%o7, [%o3 + 0x08]	/* ... and return pc */
+	retl
+	 clr	%o0			/* return 0 */
+END_WEAK(sigsetjmp)
 
 ENTRY(siglongjmp)
-	PIC_PROLOGUE(%g1,%o2)		! %g1 = _GLOBAL_OFFSET_TABLE
-	ld	[%o0 + 8*14],%o2	! jmpbuf[JBLEN]
-	set	_C_LABEL(longjmp), %o3	! if (%o2 != 0) goto _longjmp;
-	set	_C_LABEL(_longjmp), %o4	! else goto __longjmp;
-	movrnz	%o2, %o3, %o4 
-	ldx	[%g1 + %o4], %g1
-	jmp %g1
-	 nop
-	unimp 0
+	save	%sp, -CC64FSZ, %sp
+	flushw
+	ld	[%i0 + 8*14], %g1
 
-#else /* PIC */
+	brz,pt	%g1, 1f
 
-ENTRY(sigsetjmp)
-	brz,pt	%o1,_C_LABEL(_setjmp)
-	 st	%o1,[%o0 + 8*14]	! jmpbuf[JBLEN]
-	ba,a,pt	%icc,_C_LABEL(setjmp)
-	 nop				! spitfire bug
-	unimp 0
+	 mov	3, %o0			/* SIG_SETMASK */
+	ldx	[%i0 + 0x10], %o1
+	mov	SYS_sigprocmask, %g1	
+	t	ST_SYSCALL
 
-ENTRY(siglongjmp)
-	ld	[%o0 + 8*14], %g1
-	brz,pt	%g1, _C_LABEL(_longjmp)
-	 nop
-	ba,a,pt	%icc, _C_LABEL(longjmp)
-	unimp 0
-
-#endif /* PIC */
+1:	ldx	[%i0 + 0x00], %fp
+	ldx	[%i0 + 0x08], %i7
+	mov	1, %i0
+	movrnz	%i1, %i1, %i0		! compute v ? v : 1
+	ret
+	 restore
+END_WEAK(siglongjmp)
