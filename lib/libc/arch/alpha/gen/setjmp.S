@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.8 2015/09/13 07:36:58 guenther Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.9 2016/05/09 16:33:48 guenther Exp $	*/
 /*	$NetBSD: setjmp.S,v 1.2 1996/10/17 03:08:06 cgd Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 /*
  * C library -- setjmp, longjmp
@@ -57,32 +57,22 @@ LEAF(setjmp, 1)
 	stq	sp, ((30 + 4) * 8)(a0)
 
 	/*
-	 * get signal information
+	 * get signal mask
 	 */
 	mov	a0, s0				/* squirrel away ptr to sc */
+	ldiq	a0, 1				/* how == SIG_BLOCK */
+	mov	zero, a1			/* set == empty */
+	CALLSYS_NOERROR(sigprocmask)
+	bne	a3, botch			/* impossible */
+	stq	v0, (1 * 8)(s0)			/* save oset in sc_mask */
 
-	/* see what's blocked */
-	mov	zero, a0
-	CALL(_libc_sigblock)			/* see what's blocked */
-	stq	v0, (1 * 8)(s0)			/* and remember it in sc_mask */
-
-	lda	sp, -24(sp)			/* padded struct sigaltstack */
-	mov	zero, a0
-	mov	sp, a1
-	CALL(sigaltstack)
-	ldl	t0, 16(sp)
-	lda	sp, 24(sp)
-	ldq	ra, ((26 + 4) * 8)(s0)		/* restore return address */
-	blt	v0, botch			/* check for error */
-	and	t0, 0x1, t0			/* get SA_ONSTACK flag */
-	stq	t0, (0 * 8)(s0)			/* and save it in sc_onstack */
 	/*
 	 * Restore old s0 and a0, and continue saving registers
 	 */
 	mov	s0, a0
 	ldq	s0, (( 9 + 4) * 8)(a0)
 
-	ldiq	t0, 0xacedbade			/* sigcontext magic number */
+	ldiq	t0, 0xacedbadf			/* *not* sigcontext magic */
 	stq	t0, ((31 + 4) * 8)(a0)		/* magic in sc_regs[31] */
 	/* Too bad we can't check if we actually used FP */
 	ldiq	t0, 1
@@ -111,19 +101,59 @@ LEAF(setjmp, 1)
 
 	mov	zero, v0			/* return zero */
 	RET
-END(setjmp)
+END_STRONG(setjmp)
 
 LEAF(longjmp, 2)
 	LDGP(pv)
+	ldq	t0, ((31 + 4) * 8)(a0)		/* magic in sc_regs[31] */
+	ldiq	t1, 0xacedbadf
+	cmpeq	t0, t1, t0
+	beq	t0, botch			/* If the magic was bad, punt */
+
+	/*
+	 * set signal mask
+	 */
+	mov	a0, s0				/* squirrel away ptr to sc */
+	mov	a1, s1				/* and the return value */
+	ldiq	a0, 3				/* how == SIG_SETMASK */
+	ldq	a1, (1 * 8)(s0)			/* get set from sc_mask */
+	CALLSYS_NOERROR(sigprocmask)
+	bne	a3, botch			/* impossible */
+
+	/*
+	 * Restore a0 and a1, and continue restoring registers
+	 */
+	mov	s0, a0
+	mov	s1, a1
+
+	ldq	ra, (2 * 8)(a0)			/* sc_pc = return address */
+	ldq	s0, (( 9 + 4) * 8)(a0)		/* saved bits of sc_regs */
+	ldq	s1, ((10 + 4) * 8)(a0)
+	ldq	s2, ((11 + 4) * 8)(a0)
+	ldq	s3, ((12 + 4) * 8)(a0)
+	ldq	s4, ((13 + 4) * 8)(a0)
+	ldq	s5, ((14 + 4) * 8)(a0)
+	ldq	s6, ((15 + 4) * 8)(a0)
+	/* ldq	ra, ((26 + 4) * 8)(a0)		set above */
+	ldq	sp, ((30 + 4) * 8)(a0)
+	ldt	fs0, ((2 + 37) * 8)(a0)		/* saved bits of sc_fpregs */
+	ldt	fs1, ((3 + 37) * 8)(a0)
+	ldt	fs2, ((4 + 37) * 8)(a0)
+	ldt	fs3, ((5 + 37) * 8)(a0)
+	ldt	fs4, ((6 + 37) * 8)(a0)
+	ldt	fs5, ((7 + 37) * 8)(a0)
+	ldt	fs6, ((8 + 37) * 8)(a0)
+	ldt	fs7, ((9 + 37) * 8)(a0)
+	ldt	ft0, (69 * 8)(a0)		/* get sc_fpcr */
+	mt_fpcr	ft0				/* and restore it. */
+
 	bne	a1, 1f
 	addq	a1, 1, a1
 1:
-	stq	a1, (( 0 + 4) * 8)(a0)		/* save return value */
-	CALL(sigreturn)				/* use sigreturn to return */
+	mov	a1, v0				/* return second arg */
+	RET
 
 botch:
-	CALL(longjmperror)
-	CALL(abort)
+	CALL(_HIDDEN(abort))
 	RET					/* "can't" get here... */
-END(longjmp)
-
+END_STRONG(longjmp)

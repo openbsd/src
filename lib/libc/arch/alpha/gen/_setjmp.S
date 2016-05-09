@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.5 2005/08/07 16:40:13 espie Exp $	*/
+/*	$OpenBSD: _setjmp.S,v 1.6 2016/05/09 16:33:48 guenther Exp $	*/
 /*	$NetBSD: _setjmp.S,v 1.2 1996/10/17 03:08:03 cgd Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 /*
  * C library -- _setjmp, _longjmp
@@ -84,7 +84,7 @@ LEAF(_setjmp, 1)
 
 	mov	zero, v0			/* return zero */
 	RET
-END(_setjmp)
+END_STRONG(_setjmp)
 
 LEAF(_longjmp, 2)
 	LDGP(pv)
@@ -121,7 +121,6 @@ LEAF(_longjmp, 2)
 	RET
 
 botch:
-	CALL(longjmperror)
-	CALL(abort)
+	CALL(_HIDDEN(abort))
 	RET					/* "can't" get here... */
-END(_longjmp)
+END_STRONG(_longjmp)
