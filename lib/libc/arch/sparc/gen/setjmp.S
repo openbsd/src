@@ -1,5 +1,6 @@
-/* $OpenBSD: setjmp.S,v 1.6 2011/11/22 21:13:30 guenther Exp $ */
+/* $OpenBSD: setjmp.S,v 1.7 2016/05/09 14:39:47 kettenis Exp $ */
 /*
+ *
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -33,72 +34,50 @@
  */
 
 /*
- * C library -- setjmp, longjmp
+ * C library -- _setjmp, _longjmp
  *
- *	longjmp(a,v)
- * will generate a "return(v)" from
+ *	_longjmp(a,v)
+ * will generate a "return(v?v:1)" from
  * the last call to
- *	setjmp(a)
- * by restoring registers from the stack,
- * and a struct sigcontext, see <signal.h>
+ *	_setjmp(a)
+ * by restoring the previous context.
+ * The previous signal state is restored.
  */
 
-#include "SYS.h"
+#include "DEFS.h"
+#include <machine/trap.h>	/* T_FLUSHWIN */
+#define	CCFSZ	96		/* from locore.S */
 
 ENTRY(setjmp)
-	/*
-	 * We use the caller's `arg dump' area (%sp+0x44; there are 6 ints
-	 * reserved there for us) to avoid having to allocate stack space
-	 * here.
-	 */
-	mov	%o0, %o2	/* build sigcontext in [%o2] */
-	mov	1, %o0		/* SIG_BLOCK */
-	mov	SYS_sigprocmask, %g1
-	clr	%o1		/* sigprocmask(SIG_BLOCK, (sigset_t *)NULL) */
-	t	ST_SYSCALL
-	st	%o0, [%o2 + 4]	/* sc.sc_mask = current mask; */
-	mov	SYS_sigaltstack, %g1
-	clr	%o0		/* sigaltstack(NULL, &foo) */
-	add	%sp, 0x48, %o1	/* (foo being in arg dump area) */
-	t	ST_SYSCALL
-	ld	[%sp + 0x50], %o0	/* foo.ss_flags */
-	and	%o0, 1, %o1	/* onstack = foo.ss_flags & 1; */
-	st	%o0, [%o2 + 0]	/* sc.sc_onstack = current onstack; */
-	st	%sp, [%o2 + 8]	/* sc.sc_sp = sp (both ours and caller's) */
-	add	%o7, 8, %o0
-	st	%o0, [%o2 + 12]	/* sc.sc_pc = return_pc */
-	add	%o7, 12, %o0
-	st	%o0, [%o2 + 16]	/* sc.sc_npc = return_pc + 4 */
-	st	%g0, [%o2 + 20]	/* sc.sc_psr = (clean psr) */
-	st	%fp, [%o2 + 24]	/* sc.sc_g1 = %fp (misuse, but what the heck) */
-				/* sc.sc_o0 = random(), set in longjmp */
-	retl			/* return 0 */
-	 clr	%o0
+	mov	%o0, %o3		/* Save our jmp_buf in %o3 */
 
-/*
- * All we need to do here is force sigreturn to load a new stack pointer,
- * new <pc,npc>, and appropriate %o0 return value from the sigcontext built
- * in setjmp.  The %i and %l registers will be reloaded from the place to
- * which %sp points, due to sigreturn() semantics (sigreturn does not modify
- * the window pointer in the psr, hence it must force all windows to reload).
- */
+	mov	1, %o0			/* SIG_BLOCK */
+	mov	SYS_sigprocmask, %g1	
+	clr	%o1			/* sigprocmask(SIG_BLOCK, 0) */
+	t	ST_SYSCALL
+	st	%o0, [%o3 + 8]
+
+	st	%sp, [%o0 + 0]		/* store caller's stack pointer */
+	st	%o7, [%o0 + 4]		/* ... and return pc */
+	retl
+	 clr	%o0			/* return 0 */
+
 ENTRY(longjmp)
-	save	%sp, -96, %sp
-	ld	[%i0 + 8], %o2	/* make sure sc->sc_sp, sc->sc_fp nonzero */
-	ld	[%i0 + 24], %o3
-	orcc	%o2, %o3, %g0
-	bz	Lbotch
-	 tst	%i1		/* if (v == 0) v = 1; */
-	bz,a	1f
-	 mov	1, %i1
-1:
-	st	%i1, [%i0 + 28]	/* sc.sc_o0 = v; */
-	mov	SYS_sigreturn, %g1
-	mov	%i0, %o0
-	t	ST_SYSCALL	/* sigreturn(scp); */
+	save	%sp, -CCFSZ, %sp
+	t	ST_FLUSHWIN	! flush register windows out to the stack
 
-Lbotch:
-	/* oops, caller botched it */
-	call	_C_LABEL(longjmperror)
-	 nop
-	unimp	0
+	mov	3, %o0			/* SIG_SETMASK */
+	ld	[%i0 + 8], %o1
+	mov	SYS_sigprocmask, %g1	
+	t	ST_SYSCALL
+
+	ld	[%i0 + 0], %fp
+	ld	[%i0 + 4], %i7
+
+	tst	%i1	       ! compute v ? v : 1
+	be,a	0f
+	 mov	1, %i1
+0:
+	mov	%i1, %o0
+	ret
+	 restore
