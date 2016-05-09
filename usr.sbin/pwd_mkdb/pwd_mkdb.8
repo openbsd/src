@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwd_mkdb.8,v 1.24 2015/11/30 17:03:05 jmc Exp $
+.\"	$OpenBSD: pwd_mkdb.8,v 1.25 2016/05/09 11:13:10 naddy Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)pwd_mkdb.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: November 30 2015 $
+.Dd $Mdocdate: May 9 2016 $
 .Dt PWD_MKDB 8
 .Os
 .Sh NAME
@@ -142,16 +142,6 @@ temporary file
 .Xr getpwent 3 ,
 .Xr passwd 5 ,
 .Xr vipw 8
-.Sh STANDARDS
-Previous versions of the system had a program similar to
-.Nm pwd_mkdb ,
-.Sy mkpasswd ,
-which built
-.Xr dbm 3
-style databases for the password file but depended on the calling programs
-to install them.
-The program was renamed in order that previous users of the program
-not be surprised by the changes in functionality.
 .Sh BUGS
 Because of the necessity for atomic update of the password files,
 .Nm

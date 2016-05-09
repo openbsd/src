@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hash.3,v 1.19 2015/09/10 10:20:55 jmc Exp $
+.\"	$OpenBSD: hash.3,v 1.20 2016/05/09 11:13:10 naddy Exp $
 .\"	$NetBSD: hash.3,v 1.6 1996/05/03 21:26:50 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)hash.3	8.6 (Berkeley) 8/18/94
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: May 9 2016 $
 .Dt HASH 3
 .Os
 .Sh NAME
@@ -130,8 +130,6 @@ will attempt to determine if the hash function specified is the same as
 the one with which the database was created, and will fail if it is not.
 .Pp
 Backward compatible interfaces to the routines described in
-.Xr dbm 3
-and
 .Xr ndbm 3
 are provided, although these interfaces are not compatible with
 previous file formats.
