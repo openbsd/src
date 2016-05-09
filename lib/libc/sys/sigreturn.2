@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigreturn.2,v 1.11 2014/09/09 08:17:59 guenther Exp $
+.\"	$OpenBSD: sigreturn.2,v 1.12 2016/05/09 23:57:10 guenther Exp $
 .\"	$NetBSD: sigreturn.2,v 1.6 1995/02/27 12:37:40 cgd Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,35 +30,32 @@
 .\"
 .\"     @(#)sigreturn.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 9 2014 $
+.Dd $Mdocdate: May 9 2016 $
 .Dt SIGRETURN 2
 .Os
 .Sh NAME
 .Nm sigreturn
 .Nd return from signal
 .Sh SYNOPSIS
-.In signal.h
 .Ft int
 .Fn sigreturn "struct sigcontext *scp"
 .Sh DESCRIPTION
+The
 .Fn sigreturn
-allows users to atomically unmask, switch stacks,
-and return from a signal context.
-The processes signal mask and stack status are
-restored from the context.
-The system call does not return;
-the users stack pointer, frame pointer, argument pointer,
-and processor status longword are restored from the context.
-Execution resumes at the specified pc.
-This system call is used by the trampoline code and
-.Xr longjmp 3
-when returning from a signal to the previously executing program.
+syscall is used by the signal handling facility to
+atomically switch stacks, restore registers and the thread's signal mask,
+and return from a signal context
+to resume the processing that was interrupted by the signal.
 .Pp
 Note that sigcontext contains machine dependent information.
-.Sh NOTES
-This system call is not available in
-.Bx 4.2
-hence it should not be used if backward compatibility is needed.
+.Pp
+Direct use of
+.Nm
+is no longer supported and it is not provided as a function.
+As used in the signal trampoline provided by the system,
+if
+.Nm
+fails and returns then the process is terminated.
 .Sh RETURN VALUES
 If successful, the system call does not return.
 Otherwise, a value of \-1 is returned and
@@ -74,7 +71,7 @@ if one of the following occurs.
 points to memory that is not a valid part of the process
 address space.
 .It Bq Er EINVAL
-The process status longword is invalid or would improperly
+The sigcontext provided is invalid or would improperly
 raise the privilege level of the process.
 .El
 .Sh SEE ALSO
@@ -83,5 +80,7 @@ raise the privilege level of the process.
 .Sh HISTORY
 The
 .Fn sigreturn
-function call appeared in
+function appeared in
 .Bx 4.3 .
+The function was removed from libc in
+.Ox 6.0 .
