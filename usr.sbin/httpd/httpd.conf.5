@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.72 2016/04/28 22:16:41 schwarze Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.73 2016/05/09 19:36:54 tj Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2016 $
+.Dd $Mdocdate: May 9 2016 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -648,7 +648,7 @@ directive:
 .Bd -literal -offset indent
 server "example.com" {
 	listen on 10.0.0.1 port 80
-	block return 301 "http://www.example.com/"
+	block return 301 "http://www.example.com$REQUEST_URI"
 }
 
 server "www.example.com" {
