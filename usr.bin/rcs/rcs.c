@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.84 2015/11/02 16:45:21 nicm Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.85 2016/05/09 13:03:55 schwarze Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -66,6 +66,7 @@ struct rcs_kw rcs_expkw[] =  {
 	{ "Revision",	RCS_KW_REVISION },
 	{ "Source",	RCS_KW_SOURCE   },
 	{ "State",	RCS_KW_STATE    },
+	{ "Mdocdate",	RCS_KW_MDOCDATE },
 };
 
 int rcs_errno = RCS_ERR_NOERR;
@@ -1594,6 +1595,16 @@ rcs_expand_keywords(char *rcsfile_in, struct rcs_delta *rdp, BUF *bp, int mode)
 			if (kwtype & RCS_KW_SOURCE) {
 				buf_puts(newbuf, rcsfile);
 				buf_putc(newbuf, ' ');
+			}
+
+			if (kwtype & RCS_KW_MDOCDATE) {
+				strftime(buf, sizeof(buf), "%B", &tb);
+				buf_puts(newbuf, buf);
+				/* Only one blank before single-digit day. */
+				snprintf(buf, sizeof(buf), " %d", tb.tm_mday);
+				buf_puts(newbuf, buf);
+				strftime(buf, sizeof(buf), " %Y ", &tb);
+				buf_puts(newbuf, buf);
 			}
 
 			if (kwtype & RCS_KW_NAME)
