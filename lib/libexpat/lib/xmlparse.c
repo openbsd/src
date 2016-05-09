@@ -1555,7 +1555,7 @@ XML_Parse(XML_Parser parser, const char *s, int len, int isFinal)
   else if (bufferPtr == bufferEnd) {
     const char *end;
     int nLeftOver;
-    enum XML_Error result;
+    enum XML_Status result;
     parseEndByteIndex += len;
     positionPtr = s;
     ps_finalBuffer = (XML_Bool)isFinal;
@@ -1588,6 +1588,7 @@ XML_Parse(XML_Parser parser, const char *s, int len, int isFinal)
     nLeftOver = s + len - end;
     if (nLeftOver) {
       if (buffer == NULL || nLeftOver > bufferLim - buffer) {
+        /* FIXME avoid integer overflow */
         char *temp;
         temp = (buffer == NULL
                 ? (char *)MALLOC(len * 2)
@@ -1682,6 +1683,10 @@ XML_ParseBuffer(XML_Parser parser, int len, int isFinal)
 void * XMLCALL
 XML_GetBuffer(XML_Parser parser, int len)
 {
+  if (len < 0) {
+    errorCode = XML_ERROR_NO_MEMORY;
+    return NULL;
+  }
   switch (ps_parsing) {
   case XML_SUSPENDED:
     errorCode = XML_ERROR_SUSPENDED;
@@ -1692,13 +1697,12 @@ XML_GetBuffer(XML_Parser parser, int len)
   default: ;
   }
 
-  /* Avoid integer overflow */
-  if (len < 0 || len > MAXLEN - (bufferEnd - bufferPtr)) {
-    errorCode = XML_ERROR_NO_MEMORY;
-    return NULL; 
-  }
   if (len > bufferLim - bufferEnd) {
     int neededSize = len + (int)(bufferEnd - bufferPtr);
+    if (neededSize < 0) {
+      errorCode = XML_ERROR_NO_MEMORY;
+      return NULL;
+    }
 #ifdef XML_CONTEXT_BYTES
     int keep = (int)(bufferPtr - buffer);
 
@@ -1726,12 +1730,12 @@ XML_GetBuffer(XML_Parser parser, int len)
       if (bufferSize == 0)
         bufferSize = INIT_BUFFER_SIZE;
       do {
-        if (bufferSize > MAXLEN / 2) {
-          errorCode = XML_ERROR_NO_MEMORY;
-          return NULL;
-        }
         bufferSize *= 2;
-      } while (bufferSize < neededSize);
+      } while (bufferSize < neededSize && bufferSize > 0);
+      if (bufferSize <= 0) {
+        errorCode = XML_ERROR_NO_MEMORY;
+        return NULL;
+      }
       newBuf = (char *)MALLOC(bufferSize);
       if (newBuf == 0) {
         errorCode = XML_ERROR_NO_MEMORY;
@@ -2923,6 +2927,8 @@ storeAtts(XML_Parser parser, const ENCODING *enc,
         unsigned long uriHash = hash_secret_salt;
         ((XML_Char *)s)[-1] = 0;  /* clear flag */
         id = (ATTRIBUTE_ID *)lookup(parser, &dtd->attributeIds, s, 0);
+        if (!id || !id->prefix)
+          return XML_ERROR_NO_MEMORY;
         b = id->prefix->binding;
         if (!b)
           return XML_ERROR_UNBOUND_PREFIX;
@@ -5487,6 +5493,8 @@ getAttributeId(XML_Parser parser, const ENCODING *enc,
             return NULL;
           id->prefix = (PREFIX *)lookup(parser, &dtd->prefixes, poolStart(&dtd->pool),
                                         sizeof(PREFIX));
+          if (!id->prefix)
+            return NULL;
           if (id->prefix->name == poolStart(&dtd->pool))
             poolFinish(&dtd->pool);
           else
