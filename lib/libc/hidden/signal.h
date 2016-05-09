@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.11 2016/05/07 19:05:22 guenther Exp $	*/
+/*	$OpenBSD: signal.h,v 1.12 2016/05/09 23:55:52 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -51,7 +51,6 @@ PROTO_STD_DEPRECATED(signal);
 PROTO_DEPRECATED(sigpause);
 PROTO_NORMAL(sigpending);
 PROTO_WRAP(sigprocmask);
-PROTO_NORMAL(sigreturn);
 PROTO_NORMAL(sigsetmask);
 PROTO_CANCEL(sigsuspend);
 PROTO_DEPRECATED(sigvec);

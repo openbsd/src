@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.142 2016/05/07 19:05:22 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.143 2016/05/09 23:55:52 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -7,7 +7,7 @@
 
 # modules with non-default implementations on at least one architecture:
 SRCS+=	Ovfork.S brk.S ${CERROR} \
-	sbrk.S sigpending.S sigprocmask.S sigreturn.S \
+	sbrk.S sigpending.S sigprocmask.S \
 	sigsuspend.S syscall.S tfork_thread.S
 
 # glue to offer userland wrappers for some syscalls
