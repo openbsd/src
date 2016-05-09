@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.32 2015/05/18 10:41:20 espie Exp $
+# $OpenBSD: Term.pm,v 1.33 2016/05/09 13:23:34 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -84,6 +84,7 @@ package OpenBSD::ProgressMeter::Term;
 our @ISA = qw(OpenBSD::ProgressMeter::Real);
 use POSIX;
 use Term::Cap;
+use Term::ReadKey;
 
 sub init
 {
@@ -113,23 +114,19 @@ sub init
 	}
 }
 
-my $wsz_format = 'SSSS';
-our %sizeof;
-
 sub find_window_size
 {
 	my $self = shift;
-	# try to get exact window width
-	my $r;
-	$r = pack($wsz_format, 0, 0, 0, 0);
-	$sizeof{'struct winsize'} = 8;
-	require 'sys/ttycom.ph';
-	if (ioctl(STDOUT, &TIOCGWINSZ, $r)) {
-		my ($rows, $cols, $xpix, $ypix) =
-		    unpack($wsz_format, $r);
-		$self->{width} = $cols;
-	} else {
+
+	# shut up warnings for Term::ReadKey 2.33
+	local $SIG{__WARN__} = sub {};
+	my @l;
+	# XXX don't die! in case people still have Term::ReadKey 2.30 as a port
+	eval { @l = GetTerminalSize(\*STDOUT); } ;
+	if (@l != 4) {
 		$self->{width} = 80;
+	} else {
+		$self->{width} = $l[0];
 	}
 }
 
