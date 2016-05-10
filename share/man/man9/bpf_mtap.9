@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf_mtap.9,v 1.7 2016/04/08 06:40:07 jmc Exp $
+.\"	$OpenBSD: bpf_mtap.9,v 1.8 2016/05/10 23:51:50 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 8 2016 $
+.Dd $Mdocdate: May 10 2016 $
 .Dt BPF_MTAP 9
 .Os
 .Sh NAME
@@ -47,20 +47,25 @@
 .Ft int
 .Fn bpf_tap "caddr_t bpf" "u_char *pkt" "u_int pktlen" "u_int direction"
 .Ft int
-.Fn bpf_mtap "caddr_t bpf" "struct mbuf *m" "u_int direction"
+.Fn bpf_mtap "caddr_t bpf" "const struct mbuf *m" "u_int direction"
 .Ft int
 .Fo bpf_mtap_hdr
 .Fa "caddr_t bpf"
 .Fa "caddr_t hdr"
 .Fa "u_int hdrlen"
-.Fa "struct mbuf *m"
+.Fa "const struct mbuf *m"
 .Fa "u_int direction"
 .Fa "void (*cpfn)(const void *, void *, size_t)"
 .Fc
 .Ft int
-.Fn bpf_mtap_af "caddr_t bpf" "u_int32_t af" "struct mbuf *m" "u_int direction"
+.Fo bpf_mtap_af
+.Fa "caddr_t bpf"
+.Fa "u_int32_t af"
+.Fa "const struct mbuf *m"
+.Fa "u_int direction"
+.Fc
 .Ft int
-.Fn bpf_mtap_ether "caddr_t bpf" "struct mbuf *m" "u_int direction"
+.Fn bpf_mtap_ether "caddr_t bpf" "const struct mbuf *m" "u_int direction"
 .Sh DESCRIPTION
 The BPF kernel API provides functions for evaluating BPF instructions
 against packets, and incoming linkage from device drivers.
