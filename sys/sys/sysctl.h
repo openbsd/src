@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.160 2016/04/25 20:18:31 tedu Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.161 2016/05/10 01:33:03 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -721,7 +721,7 @@ struct kinfo_file {
 	uint32_t	kq_count;	/* INT: number of pending events */
 	uint32_t	kq_state;	/* INT: kqueue status information */
 
-	uint32_t	str_npolicies;	/* INT: DEAD number systrace policies */
+	uint32_t	__unused1;	/* INT: unused */
 
 	/* process information when retrieved via KERN_FILE_BY[PU]ID */
 	uint32_t	p_pid;		/* PID_T: process id */
