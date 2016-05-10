@@ -1,4 +1,4 @@
-.\"	$OpenBSD: editline.7,v 1.1 2016/04/20 01:11:45 schwarze Exp $
+.\"	$OpenBSD: editline.7,v 1.2 2016/05/10 11:07:53 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 20 2016 $
+.Dd $Mdocdate: May 10 2016 $
 .Dt EDITLINE 7
 .Os
 .Sh NAME
@@ -407,6 +407,7 @@ It is an error if the cursor is already at the end of the edit
 buffer.
 .It Ic ed-next-history Pq vi command: j, +, Ctrl-N; emacs: Ctrl-N
 Replace the edit buffer with the next history line.
+That line is older than the current line.
 With an argument, go forward by that number of history lines.
 It is a non-fatal error to advance by more lines than are available.
 .It Ic ed-next-line Pq not bound by default
@@ -426,6 +427,7 @@ It is an error if the cursor is already at the beginning of the
 edit buffer.
 .It Ic ed-prev-history Pq vi command: k, -, Ctrl-P; emacs: Ctrl-P
 Replace the edit buffer with the previous history line.
+That line is newer than the current line.
 With an argument, go back by that number of lines.
 It is a non-fatal error to back up by more lines than are available.
 .It Ic ed-prev-line Pq not bound by default
