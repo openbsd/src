@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.155 2016/03/27 11:39:37 bluhm Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.156 2016/05/10 10:37:57 krw Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -97,6 +97,47 @@ struct inode_vtbl ffs_vtbl = {
 	ffs_bufatoff
 };
 
+int
+ffs_checkrange(struct mount *mp, uint32_t ino)
+{
+	struct buf *bp;
+	struct cg *cgp;
+	struct fs *fs;
+	struct ufsmount *ump;
+	int cg, error;
+
+	fs = VFSTOUFS(mp)->um_fs;
+	if (ino < ROOTINO || ino >= fs->fs_ncg * fs->fs_ipg)
+		return ESTALE;
+
+	/*
+	 * Need to check if inode is initialized because ffsv2 does
+	 * lazy initialization and we can get here from nfs_fhtovp
+	 */
+	if (fs->fs_magic != FS_UFS2_MAGIC)
+		return 0;
+
+	cg = ino_to_cg(fs, ino);
+	ump = VFSTOUFS(mp);
+
+	error = bread(ump->um_devvp, fsbtodb(fs, cgtod(fs, cg)),
+	    (int)fs->fs_cgsize, &bp);
+	if (error)
+		return error;
+
+	cgp = (struct cg *)bp->b_data;
+	if (!cg_chkmagic(cgp)) {
+		brelse(bp);
+		return ESTALE;
+	}
+
+	brelse(bp);
+
+	if (cg * fs->fs_ipg + cgp->cg_initediblk < ino)
+		return ESTALE;
+
+	return 0;
+}
 
 /*
  * Called by main() when ufs is going to be mounted as root.
@@ -1361,23 +1402,21 @@ retry:
 /*
  * File handle to vnode
  *
- * Have to be really careful about stale file handles:
- * - check that the inode number is valid
- * - call ffs_vget() to get the locked inode
- * - check for an unallocated inode (i_mode == 0)
+ * Have to be really careful about stale file handles.
  */
 int
 ffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct ufid *ufhp;
-	struct fs *fs;
+	int error;
 
 	ufhp = (struct ufid *)fhp;
-	fs = VFSTOUFS(mp)->um_fs;
-	if (ufhp->ufid_len != sizeof(*ufhp) ||
-	    ufhp->ufid_ino < ROOTINO ||
-	    ufhp->ufid_ino >= fs->fs_ncg * fs->fs_ipg)
-		return (ESTALE);
+	if (ufhp->ufid_len != sizeof(*ufhp))
+		return EINVAL;
+
+	if ((error = ffs_checkrange(mp, ufhp->ufid_ino)) != 0)
+		return error;
+
 	return (ufs_fhtovp(mp, ufhp, vpp));
 }
 
