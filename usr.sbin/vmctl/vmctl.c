@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.13 2016/03/13 13:11:47 stefan Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.14 2016/05/10 10:49:22 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -239,7 +239,7 @@ get_info_vm(uint32_t id, const char *name, int console)
 }
 
 /*
- * chec_info_id
+ * check_info_id
  *
  * Check if requested name or ID of a VM matches specified arguments
  *
