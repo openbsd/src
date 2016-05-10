@@ -1,4 +1,4 @@
-/* $OpenBSD: pthread_kill.c,v 1.4 2003/07/31 21:48:05 deraadt Exp $ */
+/* $OpenBSD: pthread_kill.c,v 1.5 2016/05/10 04:04:34 guenther Exp $ */
 /* PUBLIC DOMAIN Oct 2002 <marc@snafu.org> */
 
 /*
@@ -18,15 +18,15 @@ static void
 act_handler(int signal, siginfo_t *siginfo, void *context)
 {
 	struct sigaction sa;
-	char *str;
+	char buf[200];
 
 	CHECKe(sigaction(SIGUSR1, NULL, &sa));
 	ASSERT(sa.sa_handler == SIG_DFL);
 	ASSERT(siginfo != NULL);
-	asprintf(&str, "act_handler: signal %d, siginfo %p, context %p\n",
-		 signal, siginfo, context);
-	write(STDOUT_FILENO, str, strlen(str));
-	free(str);
+	snprintf(buf, sizeof buf,
+	    "act_handler: signal %d, siginfo %p, context %p\n",
+	    signal, siginfo, context);
+	write(STDOUT_FILENO, buf, strlen(buf));
 }
  
 static void *
