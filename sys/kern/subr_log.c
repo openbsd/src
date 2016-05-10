@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.38 2016/03/21 22:41:29 bluhm Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.39 2016/05/10 23:54:00 bluhm Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -415,7 +415,7 @@ dosendsyslog(struct proc *p, const char *buf, size_t nbyte, int flags,
 
 	if (syslogf)
 		FREF(syslogf);
-	else if ((flags & LOG_CONS) == 0)
+	else if (!ISSET(flags, LOG_CONS) || consolevp == NULL)
 		return (ENOTCONN);
 	else {
 		/*
