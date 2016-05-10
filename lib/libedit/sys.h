@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys.h,v 1.17 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$OpenBSD: sys.h,v 1.18 2016/05/10 11:53:54 schwarze Exp $	*/
 /*	$NetBSD: sys.h,v 1.25 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
@@ -59,10 +59,7 @@
 # endif
 #endif
 
-#ifndef protected
-# define protected	/* Redefined from elsewhere to "static" */
-			/* When we want to hide everything	*/
-#endif
+#define protected __dso_hidden
 
 #ifndef __arraycount
 # define __arraycount(a) (sizeof(a) / sizeof(*(a)))

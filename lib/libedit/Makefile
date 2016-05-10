@@ -1,21 +1,15 @@
-#	$OpenBSD: Makefile,v 1.24 2016/05/06 13:12:52 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.25 2016/05/10 11:53:54 schwarze Exp $
 #	$NetBSD: Makefile,v 1.41 2010/02/03 15:34:43 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
 
-OSRCS=	chared.c common.c el.c eln.c emacs.c filecomplete.c \
-	hist.c keymacro.c map.c chartype.c \
-	parse.c prompt.c read.c refresh.c search.c sig.c terminal.c tty.c vi.c
+SRCS =	chared.c chartype.c common.c el.c eln.c emacs.c filecomplete.c \
+	hist.c history.c historyn.c keymacro.c map.c \
+	parse.c prompt.c read.c readline.c refresh.c search.c sig.c \
+	terminal.c tokenizer.c tokenizern.c tty.c vi.c
 
 MAN=	editline.3 editrc.5 editline.7
-
-# For speed and debugging
-#SRCS=   ${OSRCS}
-# For protection
-SRCS=	editline.c
-
-SRCS += history.c historyn.c tokenizer.c tokenizern.c readline.c
 
 LIBEDITDIR?=${.CURDIR}
 
