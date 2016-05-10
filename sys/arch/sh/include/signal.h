@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.6 2012/12/02 07:03:31 guenther Exp $	*/
+/*	$OpenBSD: signal.h,v 1.7 2016/05/10 18:39:47 deraadt Exp $	*/
 /*	$NetBSD: signal.h,v 1.12 2005/12/11 12:18:58 christos Exp $	*/
 
 /*
@@ -52,12 +52,12 @@ struct sigcontext {
 	int	sc_reg[21];
 	int	sc_fpreg[34];
 
-	int	__sc_unused;
+	long	sc_cookie;
 
 	int	sc_expevt;	/* XXX should be above */
 	int	sc_err;
 
-	unsigned int sc_mask;	/* signal mask to restore */
+	int	sc_mask;	/* signal mask to restore */
 };
 
 #endif	/* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.11 2013/04/01 17:18:20 deraadt Exp $	*/
+/*	$OpenBSD: signal.h,v 1.12 2016/05/10 18:39:48 deraadt Exp $	*/
 /*	$NetBSD: signal.h,v 1.4 1996/02/01 22:32:35 mycroft Exp $ */
 
 /*
@@ -58,7 +58,7 @@ typedef int sig_atomic_t;
  * a non-standard exit is performed.
  */
 struct sigcontext {
-	int	__sc_unused;
+	long	sc_cookie;
 	int	sc_mask;		/* signal mask to restore */
 	/* begin machine dependent portion */
 	int	sc_sp;			/* %sp to restore */

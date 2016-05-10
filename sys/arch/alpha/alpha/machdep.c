@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.171 2015/10/21 07:59:17 mpi Exp $ */
+/* $OpenBSD: machdep.c,v 1.172 2016/05/10 18:39:40 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1477,9 +1477,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	} else
 		sip = NULL;
 
-	/*
-	 * copy the frame out to userland.
-	 */
+	ksc.sc_cookie = (long)scp ^ p->p_p->ps_sigcookie;
 	if (copyout((caddr_t)&ksc, (caddr_t)scp, kscsize) != 0) {
 trash:
 #ifdef DEBUG
@@ -1542,9 +1540,7 @@ sys_sigreturn(p, v, retval)
 	} */ *uap = v;
 	struct sigcontext ksc;
 	struct fpreg *fpregs = (struct fpreg *)&ksc.sc_fpregs;
-#ifdef DEBUG
-	struct sigcontext *scp;
-#endif
+	struct sigcontext *scp = SCARG(uap, sigcntxp);
 	int error;
 
 #ifdef DEBUG
@@ -1552,12 +1548,27 @@ sys_sigreturn(p, v, retval)
 	    printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 
+	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
+		printf("%s(%d): sigreturn not from tramp [pc 0x%lx 0x%lx]\n",
+		    p->p_comm, p->p_pid, PROC_PC(p), p->p_p->ps_sigcoderet);
+		sigexit(p, SIGILL);
+		return (EPERM);
+	}
+
 	/*
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
-	if ((error = copyin(SCARG(uap, sigcntxp), &ksc, sizeof(ksc))) != 0)
+	if ((error = copyin(scp, &ksc, sizeof(ksc))) != 0)
 		return (error);
+
+	if (ksc.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
+		printf("%s(%d): cookie %lx should have been %lx\n",
+		    p->p_comm, p->p_pid, ksc.sc_cookie,
+		    (long)scp ^ p->p_p->ps_sigcookie);
+		sigexit(p, SIGILL);
+		return (EFAULT);
+	}
 
 	if (ksc.sc_regs[R_ZERO] != 0xACEDBADE)		/* magic number */
 		return (EINVAL);

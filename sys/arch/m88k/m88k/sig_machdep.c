@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.23 2015/02/09 08:48:23 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.24 2016/05/10 18:39:46 deraadt Exp $	*/
 /*
  * Copyright (c) 2014 Miodrag Vallat.
  *
@@ -207,18 +207,35 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	struct sys_sigreturn_args /* {
 	   syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext *scp;
+	struct sigcontext *scp = SCARG(uap, sigcntxp);
 	struct trapframe *tf;
 	struct sigcontext ksc;
 
-	scp = (struct sigcontext *)SCARG(uap, sigcntxp);
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
-#endif
-	if (((vaddr_t)scp & 3) != 0 ||
-	    copyin((caddr_t)scp, (caddr_t)&ksc, sizeof(struct sigcontext)))
+	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
+		printf("%s(%d): sigreturn not from tramp [pc 0x%llx %llx]\n",
+		    p->p_comm, p->p_pid, PROC_PC(p), p->p_p->ps_sigcoderet);
+		sigexit(p, SIGILL);
+		return (EPERM);
+	}
+
+	if (((vaddr_t)scp & 3) != 0)
 		return (EINVAL);
+	if ((error = copyin((caddr_t)scp, (caddr_t)&ksc, sizeof(*scp))))
+		return (error);
+
+	if (ksc.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
+		printf("%s(%d): cookie %lx should have been %lx\n",
+		    p->p_comm, p->p_pid, ksc.sc_cookie,
+		    (long)scp ^ p->p_p->ps_sigcookie);
+		sigexit(p, SIGILL);
+		return (EFAULT);
+	}
+
+	/* Prevent reuse of the sigcontext cookie */
+	ksc.sc_cookie = 0;
+	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
+	    offsetof(struct sigcontext, sc_cookie),
+	    sizeof (ksc.sc_cookie));
 
 	tf = p->p_md.md_tf;
 	scp = &ksc;

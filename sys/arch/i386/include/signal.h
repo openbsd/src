@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.10 2013/04/01 17:18:20 deraadt Exp $	*/
+/*	$OpenBSD: signal.h,v 1.11 2016/05/10 18:39:45 deraadt Exp $	*/
 /*	$NetBSD: signal.h,v 1.6 1996/01/08 13:51:43 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ struct	sigcontext {
 	int	sc_esp;
 	int	sc_ss;
 
-	int	__sc_unused;
+	long	sc_cookie;
 	int	sc_mask;		/* signal mask to restore */
 
 	int	sc_trapno;		/* XXX should be above */

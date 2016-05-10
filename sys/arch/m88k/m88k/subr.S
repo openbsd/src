@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.24 2014/06/08 13:20:39 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.25 2016/05/10 18:39:46 deraadt Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -1087,6 +1087,8 @@ ENTRY(sigcode)			/* r31 points to sigframe */
 	ld	%r2,  %r31, 0	/* pick sigcontext* */
 	or	%r13, %r0,  SYS_sigreturn
 	tb0	0,    %r0,  450	/* syscall trap, calling sigreturn */
+	.globl  _C_LABEL(sigcoderet)
+_C_LABEL(sigcoderet):
 	NOP			| failure return
 #ifdef dontbother		/* sigreturn will not return unless it fails */
 	NOP			| success return

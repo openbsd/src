@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.175 2015/10/21 07:59:18 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.176 2016/05/10 18:39:48 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -432,7 +432,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	 */
 	newsp = (int)fp - sizeof(struct rwindow);
 	write_user_windows();
-	/* XXX do not copyout siginfo if not needed */
+	sf.sf_sc.sc_cookie = (long)fp ^ p->p_p->ps_sigcookie;
 	if (rwindow_save(p) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) ||
 	    copyout(&oldsp, &((struct rwindow *)newsp)->rw_in[6],
 	      sizeof(register_t)) != 0) {
@@ -486,7 +486,7 @@ sys_sigreturn(p, v, retval)
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext ksc;
+	struct sigcontext ksc, *sc = SCARG(uap, sigcntxp);
 	struct trapframe *tf;
 	int error;
 
@@ -499,8 +499,30 @@ sys_sigreturn(p, v, retval)
 		printf("sigreturn: %s[%d], sigcntxp %p\n",
 		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
 #endif
-	if ((error = copyin(SCARG(uap, sigcntxp), &ksc, sizeof(ksc))) != 0)
+	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
+		printf("%s(%d): sigreturn not from tramp [pc 0x%lx 0x%lx]\n",
+		    p->p_comm, p->p_pid, PROC_PC(p), p->p_p->ps_sigcoderet);
+		sigexit(p, SIGILL);
+		return (EPERM);
+	}
+
+	if ((error = copyin(sc, &ksc, sizeof(ksc))) != 0)
 		return (error);
+
+	if (ksc.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
+		printf("%s(%d): cookie %lx should have been %lx\n",
+		    p->p_comm, p->p_pid, ksc.sc_cookie,
+		    (long)scp ^ p->p_p->ps_sigcookie);
+		sigexit(p, SIGILL);
+		return (EFAULT);
+	}
+
+	/* Prevent reuse of the sigcontext cookie */
+	ksc.sc_cookie = 0;
+	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
+	    offsetof(struct sigcontext, sc_cookie),
+	    sizeof (ksc.sc_cookie));
+
 	tf = p->p_md.md_tf;
 	/*
 	 * Only the icc bits in the psr are used, so it need not be

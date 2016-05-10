@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.219 2016/04/25 20:18:31 tedu Exp $	*/
+/*	$OpenBSD: proc.h,v 1.220 2016/05/10 18:39:53 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -107,6 +107,7 @@ struct	emul {
 	int	(*e_coredump)(struct proc *, void *cookie);
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
+	char	*e_esigret;		/* sigaction RET position */
 	int	e_flags;		/* Flags, see below */
 	struct uvm_object *e_sigobject;	/* shared sigcode object */
 					/* Per-process hooks */
@@ -200,6 +201,8 @@ struct process {
 	vaddr_t	ps_strings;		/* User pointers to argv/env */
 	vaddr_t	ps_stackgap;		/* User pointer to the "stackgap" */
 	vaddr_t	ps_sigcode;		/* User pointer to the signal code */
+	vaddr_t ps_sigcoderet;		/* User pointer to sigreturn retPC */
+	u_long	ps_sigcookie;
 	u_int	ps_rtableid;		/* Process routing table/domain. */
 	char	ps_nice;		/* Process "nice" value. */
 

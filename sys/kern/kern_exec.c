@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.176 2016/04/25 20:00:33 tedu Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.177 2016/05/10 18:39:51 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -498,6 +498,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	TCB_SET(p, NULL);	/* reset the TCB address */
 	pr->ps_kbind_addr = 0;	/* reset the kbind bits */
 	pr->ps_kbind_cookie = 0;
+	arc4random_buf(&pr->ps_sigcookie, sizeof pr->ps_sigcookie);
 
 	/* set command name & other accounting info */
 	memset(p->p_comm, 0, sizeof(p->p_comm));
@@ -867,6 +868,10 @@ exec_sigcode_map(struct process *pr, struct emul *e)
 		uao_detach(e->e_sigobject);
 		return (ENOMEM);
 	}
+
+	/* Calculate PC at point of sigreturn entry */
+	pr->ps_sigcoderet = pr->ps_sigcode +
+	    (pr->ps_emul->e_esigret - pr->ps_emul->e_sigcode);
 
 	return (0);
 }

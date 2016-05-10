@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.10 2012/12/02 07:03:31 guenther Exp $	*/
+/*	$OpenBSD: signal.h,v 1.11 2016/05/10 18:39:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,8 +56,8 @@ typedef int sig_atomic_t;
  * a non-standard exit is performed.
  */
 struct	sigcontext {
-	long	__sc_unused;
-	long	 sc_mask;	/* signal mask to restore */
+	long	sc_cookie;
+	long	 sc_mask;	/* signal mask to restore XXX should be int */
 	__register_t sc_pc;	/* pc at time of signal */
 	__register_t sc_regs[32]; /* processor regs 0 to 31 */
 	__register_t mullo;	/* mullo and mulhi registers... */

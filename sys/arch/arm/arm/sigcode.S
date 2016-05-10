@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigcode.S,v 1.2 2006/12/27 17:49:26 drahn Exp $	*/
+/*	$OpenBSD: sigcode.S,v 1.3 2016/05/10 18:39:43 deraadt Exp $	*/
 /*	$NetBSD: sigcode.S,v 1.6 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
@@ -52,6 +52,8 @@ ENTRY_NP(sigcode)
 	add	r0, sp, #SIGF_SC
 	ldr	r12, =SYS_sigreturn
 	swi	SYS_sigreturn
+	.globl  _C_LABEL(sigcoderet)
+_C_LABEL(sigcoderet):
 
 /* Well if that failed we better exit quick ! */
 

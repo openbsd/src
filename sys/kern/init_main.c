@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.250 2016/05/03 14:52:39 mpi Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.251 2016/05/10 18:39:51 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ void	kqueue_init(void);
 void	taskq_init(void);
 void	pool_gc_pages(void *);
 
-extern char sigcode[], esigcode[];
+extern char sigcode[], esigcode[], sigcoderet[];
 #ifdef SYSCALL_DEBUG
 extern char *syscallnames[];
 #endif
@@ -168,6 +168,7 @@ struct emul emul_native = {
 	NULL,		/* coredump */
 	sigcode,
 	esigcode,
+	sigcoderet,
 	EMUL_ENABLED | EMUL_NATIVE,
 };
 

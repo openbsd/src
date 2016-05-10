@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.12 2016/01/31 00:14:50 jsg Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.13 2016/05/10 18:39:43 deraadt Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.22 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
@@ -136,6 +136,7 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 		initsiginfo(&frame.sf_si, sig, code, type, val);
 	}
 
+	frame.sf_sc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
@@ -182,23 +183,32 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext *scp, context;
+	struct sigcontext *scp = SCARG(uap, sigcntxp), context;
 	struct trapframe *tf;
 
-	/*
-	 * we do a rather scary test in userland
-	 */
-	if (v == NULL)
+	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
+		printf("%s(%d): sigreturn not from tramp [pc 0x%lx %lx]\n",
+		    p->p_comm, p->p_pid, PROC_PC(p), p->p_p->ps_sigcoderet);
+		sigexit(p, SIGILL);
+		return (EPERM);
+	}
+
+	if (copyin(scp, &context, sizeof(*scp)) != 0)
 		return (EFAULT);
-	
-	/*
-	 * The trampoline code hands us the context.
-	 * It is unsafe to keep track of it ourselves, in the event that a
-	 * program jumps out of a signal handler.
-	 */
-	scp = SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
+
+	if (context.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
+		printf("%s(%d): cookie %lx should have been %lx\n",
+		    p->p_comm, p->p_pid, context.sc_cookie,
+		    (long)scp ^ p->p_p->ps_sigcookie);
+		sigexit(p, SIGILL);
 		return (EFAULT);
+	}
+
+	/* Prevent reuse of the sigcontext cookie */
+	context.sc_cookie = 0;
+	(void)copyout(&context.sc_cookie, (caddr_t)scp +
+	    offsetof(struct sigcontext, sc_cookie),
+	    sizeof (context.sc_cookie));
 
 	/*
 	 * Make sure the processor mode has not been tampered with and

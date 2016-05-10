@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.25 2016/03/06 19:42:27 mpi Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.26 2016/05/10 18:39:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -164,6 +164,7 @@ sendsig(catcher, sig, mask, code, type, val)
 			goto bail;
 	}
 
+	ksc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;
 	if (copyout((caddr_t)&ksc, (caddr_t)&fp->sf_sc, sizeof(ksc))) {
 bail:
 		/*
@@ -215,34 +216,46 @@ sys_sigreturn(p, v, retval)
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext *scp;
+	struct sigcontext *scp = SCARG(uap, sigcntxp);
 	struct trapframe *regs;
 	struct sigcontext ksc;
 	int error;
 
-	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	regs = p->p_md.md_regs;
+
+	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
+		printf("%s(%d): sigreturn not from tramp [pc 0x%lx 0x%lx]\n",
+		    p->p_comm, p->p_pid, PROC_PC(p), p->p_p->ps_sigcoderet);
+		sigexit(p, SIGILL);
+		return (EPERM);
+	}
+
 	/*
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
 	error = copyin((caddr_t)scp, (caddr_t)&ksc, sizeof(ksc));
-	if (error || ksc.sc_regs[ZERO] != 0xACEDBADE) {
-#ifdef DEBUG
-		if (!(sigdebug & SDB_FOLLOW))
-			printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
-		printf("  old sp %lx ra %lx pc %lx\n",
-			regs->sp, regs->ra, regs->pc);
-		printf("  new sp %lx ra %lx pc %lx err %d z %lx\n",
-			ksc.sc_regs[SP], ksc.sc_regs[RA], ksc.sc_regs[PC],
-			error, ksc.sc_regs[ZERO]);
-#endif
-		return (EINVAL);
+	if (error)
+		return (error);
+
+	if (ksc.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
+		printf("%s(%d): cookie %lx should have been %lx\n",
+		    p->p_comm, p->p_pid, ksc.sc_cookie,
+		    (long)scp ^ p->p_p->ps_sigcookie);
+		sigexit(p, SIGILL);
+		return (EFAULT);
 	}
+
+	/* Prevent reuse of the sigcontext cookie */
+	ksc.sc_cookie = 0;
+	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
+	    offsetof(struct sigcontext, sc_cookie),
+	    sizeof (ksc.sc_cookie));
+
 	scp = &ksc;
 	/*
 	 * Restore the user supplied information

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.175 2016/03/07 13:21:51 naddy Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.176 2016/05/10 18:39:49 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -492,7 +492,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	newsp = (vaddr_t)fp - sizeof(struct rwindow);
 	write_user_windows();
 
-	/* XXX do not copyout siginfo if not needed */
+	sf.sf_sc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;
 	if (rwindow_save(p) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
 	    CPOUTREG(&(((struct rwindow *)newsp)->rw_in[6]), tf->tf_out[6])) {
 		/*
@@ -544,9 +544,17 @@ sys_sigreturn(p, v, retval)
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext sc, *scp;
+	struct sigcontext *scp = SCARG(uap, sigcntxp), ksc;
 	struct trapframe64 *tf;
 	int error = EINVAL;
+
+	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
+		printf("%s(%d): sigreturn not from tramp [pc 0x%llx 0x%lx]\n",
+		    p->p_comm, p->p_pid, PROC_PC(p),
+		     p->p_p->ps_sigcoderet);
+		sigexit(p, SIGILL);
+		return (EPERM);
+	}
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
@@ -558,15 +566,27 @@ sys_sigreturn(p, v, retval)
 #endif
 		sigexit(p, SIGILL);
 	}
-	scp = SCARG(uap, sigcntxp);
- 	if ((vaddr_t)scp & 3 ||
-	    (error = copyin((caddr_t)scp, &sc, sizeof sc)) != 0) {
-#ifdef DEBUG
-		printf("sigreturn: copyin failed: scp=%p\n", scp);
-#endif
+
+	if ((vaddr_t)scp & 3)
+		return (EINVAL);
+	if ((error = copyin((caddr_t)scp, &ksc, sizeof ksc)))
 		return (error);
+
+	if (ksc.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
+		printf("%s(%d): cookie %lx should have been %lx\n",
+		    p->p_comm, p->p_pid, ksc.sc_cookie,
+		    (long)scp ^ p->p_p->ps_sigcookie);
+		sigexit(p, SIGILL);
+		return (EFAULT);
 	}
-	scp = &sc;
+
+	/* Prevent reuse of the sigcontext cookie */
+	ksc.sc_cookie = 0;
+	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
+	    offsetof(struct sigcontext, sc_cookie),
+	    sizeof (ksc.sc_cookie));
+
+	scp = &ksc;
 
 	tf = p->p_md.md_tf;
 	/*
@@ -574,12 +594,12 @@ sys_sigreturn(p, v, retval)
 	 * verified.  pc and npc must be multiples of 4.  This is all
 	 * that is required; if it holds, just do it.
 	 */
-	if (((sc.sc_pc | sc.sc_npc) & 3) != 0 ||
-	    (sc.sc_pc == 0) || (sc.sc_npc == 0)) {
+	if (((ksc.sc_pc | ksc.sc_npc) & 3) != 0 ||
+	    (ksc.sc_pc == 0) || (ksc.sc_npc == 0)) {
 #ifdef DEBUG
 		printf("sigreturn: pc %p or npc %p invalid\n",
-		   (void *)(unsigned long)sc.sc_pc,
-		   (void *)(unsigned long)sc.sc_npc);
+		   (void *)(unsigned long)ksc.sc_pc,
+		   (void *)(unsigned long)ksc.sc_npc);
 #endif
 		return (EINVAL);
 	}

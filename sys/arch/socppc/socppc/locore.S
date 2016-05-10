@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.20 2016/04/25 07:58:14 mpi Exp $	*/
+/*	$OpenBSD: locore.S,v 1.21 2016/05/10 18:39:48 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -1269,6 +1269,8 @@ _C_LABEL(sigcode):
 	addi	%r3,%r1,((16+FPSIG_SIZEOF+15)&~0xf)+SF_SC	/* compute &sf_sc */
 	li	%r0,SYS_sigreturn
 	sc				/* sigreturn(scp) */
+	.globl  _C_LABEL(sigcoderet)
+_C_LABEL(sigcoderet):
 	li	%r0,SYS_exit
 	sc				/* exit(errno) */
 _C_LABEL(esigcode):

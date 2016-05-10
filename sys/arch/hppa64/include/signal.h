@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.6 2013/04/01 17:18:20 deraadt Exp $	*/
+/*	$OpenBSD: signal.h,v 1.7 2016/05/10 18:39:44 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1994, The University of Utah and
@@ -47,8 +47,8 @@ typedef int sig_atomic_t;
  * a non-standard exit is performed.
  */
 struct	sigcontext {
-	unsigned long	__sc_unused;
-	unsigned long	sc_mask;	/* signal mask to restore */
+	long		__sc_unused;
+	long		sc_mask;	/* signal mask to restore XXX should be int */
 	unsigned long	sc_ps;		/* psl to restore */
 	unsigned long	sc_fp;		/* fp to restore */
 	unsigned long	sc_pcoqh;	/* pc offset queue (head) to restore */
@@ -56,6 +56,7 @@ struct	sigcontext {
 	unsigned long	sc_resv[2];
 	unsigned long	sc_regs[32];
 	unsigned long	sc_fpregs[64];
+	long		sc_cookie;
 };
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
 #endif  /* !_MACHINE_SIGNAL_H_ */

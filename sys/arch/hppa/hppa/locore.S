@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.193 2014/10/23 16:57:45 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.194 2016/05/10 18:39:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -3042,6 +3042,8 @@ sigcode_call
 	.call
 	ble	4(sr7, r1)
 	ldi	SYS_sigreturn, t1
+	.globl  sigcoderet
+sigcoderet:
 
 	ldil	L%SYSCALLGATE, r1
 	copy	ret0, arg0

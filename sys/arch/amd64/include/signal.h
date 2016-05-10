@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.8 2013/04/01 17:18:19 deraadt Exp $	*/
+/*	$OpenBSD: signal.h,v 1.9 2016/05/10 18:39:42 deraadt Exp $	*/
 /*	$NetBSD: signal.h,v 1.2 2003/04/28 23:16:17 bjh21 Exp $	*/
 
 /*
@@ -83,6 +83,7 @@ struct sigcontext {
 	struct fxsave64 *sc_fpstate;
 	int	__sc_unused;
 	int	sc_mask;
+	long	sc_cookie;
 };
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
 #endif	/* !_MACHINE_SIGNAL_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.8 2012/12/02 07:03:31 guenther Exp $	*/
+/*	$OpenBSD: signal.h,v 1.9 2016/05/10 18:39:47 deraadt Exp $	*/
 /*	$NetBSD: signal.h,v 1.1 1996/09/30 16:34:34 ws Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ struct trapframe {
 };
 
 struct sigcontext {
-	int __sc_unused;
+	long sc_cookie;
 	int sc_mask;			/* saved signal mask */
 	struct trapframe sc_frame;	/* saved registers */
 };

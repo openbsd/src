@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.120 2016/02/28 15:46:18 naddy Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.121 2016/05/10 18:39:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -108,7 +108,7 @@ void ELFNAME(load_psection)(struct exec_vmcmd_set *, struct vnode *,
 	Elf_Phdr *, Elf_Addr *, Elf_Addr *, int *, int);
 int ELFNAMEEND(coredump)(struct proc *, void *);
 
-extern char sigcode[], esigcode[];
+extern char sigcode[], esigcode[], sigcoderet[];
 #ifdef SYSCALL_DEBUG
 extern char *syscallnames[];
 #endif
@@ -145,6 +145,7 @@ struct emul ELFNAMEEND(emul) = {
 	ELFNAMEEND(coredump),
 	sigcode,
 	esigcode,
+	sigcoderet,
 	EMUL_ENABLED | EMUL_NATIVE,
 };
 
