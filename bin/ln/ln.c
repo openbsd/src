@@ -1,4 +1,4 @@
-/*	$OpenBSD: ln.c,v 1.23 2015/10/10 22:36:46 doug Exp $	*/
+/*	$OpenBSD: ln.c,v 1.24 2016/05/10 20:20:43 tim Exp $	*/
 /*	$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $	*/
 
 /*
@@ -179,9 +179,9 @@ linkit(char *target, char *source, int isdir)
 	 * Attempt the link.
 	 */
 	if ((fflag && unlink(source) < 0 && errno != ENOENT) ||
-	    sflag ? symlink(target, source) :
+	    (sflag ? symlink(target, source) :
 	    linkat(AT_FDCWD, target, AT_FDCWD, source,
-	    Pflag ? 0 : AT_SYMLINK_FOLLOW)) {
+	    Pflag ? 0 : AT_SYMLINK_FOLLOW))) {
 		warn("%s", source);
 		return (1);
 	}
