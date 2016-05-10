@@ -69,7 +69,7 @@ main()
 	do {
 		irc = read_getcmd(&el, &cmdnum, &ch);
 		switch (irc) {
-		case OKCMD:
+		case 0:
 			fputs("OK ", stdout);
 			switch (cmdnum) {
 			case ED_COMMAND:
@@ -84,7 +84,7 @@ main()
 			}
 			printf(" L'%lc'", ch);
 			break;
-		case 0:
+		case -1:
 			fputs("EOF", stdout);
 			break;
 		default:
@@ -97,7 +97,7 @@ main()
 			printf(" macro[%d]=%ls(%d)", ma->level,
 			    *ma->macro, ma->offset);
 		putchar('\n');
-	} while (irc);
+	} while (irc == 0);
 
 	return 0;
 }
