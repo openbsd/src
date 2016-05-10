@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.33 2016/05/09 13:23:34 espie Exp $
+# $OpenBSD: Term.pm,v 1.34 2016/05/10 14:46:04 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -118,11 +118,7 @@ sub find_window_size
 {
 	my $self = shift;
 
-	# shut up warnings for Term::ReadKey 2.33
-	local $SIG{__WARN__} = sub {};
-	my @l;
-	# XXX don't die! in case people still have Term::ReadKey 2.30 as a port
-	eval { @l = GetTerminalSize(\*STDOUT); } ;
+	my @l = Term::ReadKey::GetTermSizeGWINSZ(\*STDOUT);
 	if (@l != 4) {
 		$self->{width} = 80;
 	} else {
