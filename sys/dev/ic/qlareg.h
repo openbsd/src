@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlareg.h,v 1.7 2014/04/14 04:14:11 jmatthew Exp $ */
+/*	$OpenBSD: qlareg.h,v 1.8 2016/05/10 11:16:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -529,9 +529,10 @@ struct qla_sns_gid_ft {
 #define QLA_IOCB_MARKER_SYNC_ALL	2
 
 struct qla_iocb_seg {
-	u_int64_t	seg_addr;
+	u_int32_t	seg_addr_lo;
+	u_int32_t	seg_addr_hi;
 	u_int32_t	seg_len;
-} __packed;
+} __packed __aligned(4);
 
 #if 0
 struct qla_iocb_cont1 {

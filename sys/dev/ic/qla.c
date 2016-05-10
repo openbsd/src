@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.53 2015/09/07 01:37:59 deraadt Exp $ */
+/*	$OpenBSD: qla.c,v 1.54 2016/05/10 11:16:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -2187,8 +2187,11 @@ qla_put_marker(struct qla_softc *sc, void *buf)
 void
 qla_put_data_seg(struct qla_iocb_seg *seg, bus_dmamap_t dmap, int num)
 {
-	seg->seg_addr = htole64(dmap->dm_segs[num].ds_addr);
-	seg->seg_len = htole32(dmap->dm_segs[num].ds_len);
+	uint64_t addr = dmap->dm_segs[num].ds_addr;
+
+	htolem32(&seg->seg_addr_lo, addr);
+	htolem32(&seg->seg_addr_hi, addr >> 32);
+	htolem32(&seg->seg_len, dmap->dm_segs[num].ds_len);
 }
 
 void
