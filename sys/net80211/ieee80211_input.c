@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.176 2016/05/02 09:35:49 tb Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.177 2016/05/10 06:37:15 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -548,14 +548,12 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		if (ifp->if_flags & IFF_DEBUG)
 			ieee80211_input_print(ic, ifp, wh, rxi);
 #if NBPFILTER > 0
-		if (ic->ic_rawbpf)
-			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_IN);
-		/*
-		 * Drop mbuf if it was filtered by bpf. Normally, this is
-		 * done in ether_input() but IEEE 802.11 management frames
-		 * are a special case.
-		 */
-		if (m->m_flags & M_FILDROP) {
+		if (bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_IN) != 0) {
+			/*
+			 * Drop mbuf if it was filtered by bpf. Normally,
+			 * this is done in ether_input() but IEEE 802.11
+			 * management frames are a special case.
+			 */
 			m_freem(m);
 			return;
 		}
