@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.76 2016/02/26 02:23:07 mlarkin Exp $	*/
+/*	$OpenBSD: locore.S,v 1.77 2016/05/10 14:15:57 mikeb Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -1180,5 +1180,5 @@ _C_LABEL(codepatch_end):
 	.align	NBPG
 	.globl	_C_LABEL(xen_hypercall_page)
 _C_LABEL(xen_hypercall_page):
-	.skip	0x1000, 0x90	/* Fill with NOPs */
+	.skip	0x1000, 0xcc	/* Fill with int3 */
 #endif /* NXEN > 0 */
