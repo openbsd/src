@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.c,v 1.24 2016/05/09 12:31:55 schwarze Exp $	*/
+/*	$OpenBSD: readline.c,v 1.25 2016/05/10 10:49:37 schwarze Exp $	*/
 /*	$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
@@ -1358,25 +1358,37 @@ history_get(int num)
 	if (h == NULL || e == NULL)
 		rl_initialize();
 
+	if (num < history_base)
+		return NULL;
+
 	/* save current position */
 	if (history(h, &ev, H_CURR) != 0)
 		return NULL;
 	curr_num = ev.num;
 
-	/* start from the oldest */
-	if (history(h, &ev, H_LAST) != 0)
-		return NULL;	/* error */
+	/*
+	 * use H_DELDATA to set to nth history (without delete) by passing
+	 * (void **)-1  -- as in history_set_pos
+	 */
+	if (history(h, &ev, H_DELDATA, num - history_base, (void **)-1) != 0)
+		goto out;
 
-	/* look forwards for event matching specified offset */
-	if (history(h, &ev, H_NEXT_EVDATA, num, &she.data))
-		return NULL;
-
+	/* get current entry */
+	if (history(h, &ev, H_CURR) != 0)
+		goto out;
+	if (history(h, &ev, H_NEXT_EVDATA, ev.num, &she.data) != 0)
+		goto out;
 	she.line = ev.str;
 
 	/* restore pointer to where it was */
 	(void)history(h, &ev, H_SET, curr_num);
 
 	return &she;
+
+out:
+	/* restore pointer to where it was */
+	(void)history(h, &ev, H_SET, curr_num);
+	return NULL;
 }
 
 
