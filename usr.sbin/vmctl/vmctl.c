@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.14 2016/05/10 10:49:22 mlarkin Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.15 2016/05/10 11:00:54 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -66,6 +66,19 @@ start_vm(const char *name, int memsize, int nnics, int ndisks, char **disks,
 {
 	struct vm_create_params *vcp;
 	int i;
+
+	if (memsize < 1)
+		errx(1, "specified memory size too small");
+	if (kernel == NULL)
+		errx(1, "no kernel specified");
+	if (ndisks > VMM_MAX_DISKS_PER_VM)
+		errx(1, "too many disks");
+	else if (ndisks == 0)
+		warnx("starting without disks");
+	if (nnics == -1)
+		nnics = 0;
+	if (nnics == 0)
+		warnx("starting without network interfaces");
 
 	vcp = malloc(sizeof(struct vm_create_params));
 	if (vcp == NULL)

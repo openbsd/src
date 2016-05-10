@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2016/04/25 15:14:34 mlarkin Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2016/05/10 11:00:54 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -188,20 +188,6 @@ vmmaction(struct parse_result *res)
 
 	switch (res->action) {
 	case CMD_START:
-		/* XXX validation should be done in start_vm() */
-		if (res->size < 1)
-			errx(1, "specified memory size too small");
-		if (res->path == NULL)
-			errx(1, "no kernel specified");
-		if (res->ndisks > VMM_MAX_DISKS_PER_VM)
-			errx(1, "too many disks");
-		else if (res->ndisks == 0)
-			warnx("starting without disks");
-		if (res->nifs == -1)
-			res->nifs = 0;
-		if (res->nifs == 0)
-			warnx("starting without network interfaces");
-
 		ret = start_vm(res->name, res->size, res->nifs,
 		    res->ndisks, res->disks, res->path);
 		if (ret) {
