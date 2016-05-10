@@ -1,4 +1,4 @@
-/*	$OpenBSD: cancel.h,v 1.1 2016/05/07 19:05:22 guenther Exp $ */
+/*	$OpenBSD: cancel.h,v 1.2 2016/05/10 05:42:31 guenther Exp $ */
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -26,7 +26,7 @@ __BEGIN_HIDDEN_DECLS
 __dead void	_thread_canceled(void);
 __END_HIDDEN_DECLS
 
-#ifdef LIBC
+#ifdef __LIBC__
 /*
  * Redirect macros that would use the syscall to instead use our callback
  */
