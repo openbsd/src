@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.46 2015/09/14 08:02:59 guenther Exp $
+# $OpenBSD: Makefile,v 1.47 2016/05/10 03:59:55 guenther Exp $
 
 # disabled because it requires a buggy behavior that uthread had:
 #	dup2_race
@@ -12,8 +12,9 @@
 #	blocked_fifo
 
 SUBDIR+= barrier blocked_shutdown \
-	 cancel cancel2 cancel_wait close close_race closefrom cwd earlysig \
-	 errno execve fork \
+	 cancel cancel2 cancel_wait close close_race closefrom cwd \
+	 dlopen \
+	 earlysig errno execve fork \
 	 group netdb pcap poll preemption preemption_float \
 	 pthread_atfork pthread_cond_timedwait pthread_create \
 	 pthread_join pthread_kill pthread_mutex \
