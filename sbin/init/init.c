@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.58 2016/02/01 20:14:51 jca Exp $	*/
+/*	$OpenBSD: init.c,v 1.59 2016/05/10 21:54:59 bluhm Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -192,7 +192,7 @@ DB *session_db;
 int
 main(int argc, char *argv[])
 {
-	int c;
+	int c, fd;
 	struct sigaction sa;
 	sigset_t mask;
 
@@ -206,6 +206,17 @@ main(int argc, char *argv[])
 	if (getpid() != 1) {
 		(void)fprintf(stderr, "init: already running\n");
 		exit (1);
+	}
+
+	/*
+	 * Paranoia.
+	 */
+	if ((fd = open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
+		(void)dup2(fd, STDIN_FILENO);
+		(void)dup2(fd, STDOUT_FILENO);
+		(void)dup2(fd, STDERR_FILENO);
+		if (fd > 2)
+			(void)close(fd);
 	}
 
 	/*
@@ -268,13 +279,6 @@ main(int argc, char *argv[])
 	sa.sa_handler = SIG_IGN;
 	(void) sigaction(SIGTTIN, &sa, NULL);
 	(void) sigaction(SIGTTOU, &sa, NULL);
-
-	/*
-	 * Paranoia.
-	 */
-	close(STDIN_FILENO);
-	close(STDOUT_FILENO);
-	close(STDERR_FILENO);
 
 	/*
 	 * Start the state machine.
