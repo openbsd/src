@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.146 2016/05/11 07:51:45 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.147 2016/05/11 16:16:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -594,7 +594,7 @@ audio_setpar(struct audio_softc *sc)
 {
 	struct audio_params p, r;
 	unsigned int nr, np, max, min, mult;
-	unsigned int blk_mult;
+	unsigned int blk_mult, blk_max;
 	int error;
 
 	DPRINTF("%s: setpar: req enc=%d bits=%d, bps=%d, msb=%d "
@@ -787,13 +787,21 @@ audio_setpar(struct audio_softc *sc)
 	/*
 	 * get minumum and maximum frames per block
 	 */
+	if (sc->ops->round_blocksize)
+		blk_max = sc->ops->round_blocksize(sc->arg, AUDIO_BUFSZ);
+	else
+		blk_max = AUDIO_BUFSZ;
+	if ((sc->mode & AUMODE_PLAY) && blk_max > sc->play.datalen / 2)
+		blk_max = sc->play.datalen / 2;
+	if ((sc->mode & AUMODE_RECORD) && blk_max > sc->rec.datalen / 2)
+		blk_max = sc->rec.datalen / 2;
 	if (sc->mode & AUMODE_PLAY) {
-		np = sc->play.datalen / (sc->pchan * sc->bps * 2);
+		np = blk_max / (sc->pchan * sc->bps);
 		if (!(sc->mode & AUMODE_RECORD))
 			nr = np;
 	}
 	if (sc->mode & AUMODE_RECORD) {
-		nr = sc->rec.datalen / (sc->rchan * sc->bps * 2);
+		nr = blk_max / (sc->rchan * sc->bps);
 		if (!(sc->mode & AUMODE_PLAY))
 			np = nr;
 	}
