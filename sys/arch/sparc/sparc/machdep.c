@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.176 2016/05/10 18:39:48 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.177 2016/05/11 20:21:26 phessler Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -432,7 +432,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	 */
 	newsp = (int)fp - sizeof(struct rwindow);
 	write_user_windows();
-	sf.sf_sc.sc_cookie = (long)fp ^ p->p_p->ps_sigcookie;
+	sf.sf_sc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;
 	if (rwindow_save(p) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) ||
 	    copyout(&oldsp, &((struct rwindow *)newsp)->rw_in[6],
 	      sizeof(register_t)) != 0) {
@@ -500,7 +500,7 @@ sys_sigreturn(p, v, retval)
 		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
 #endif
 	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
-		printf("%s(%d): sigreturn not from tramp [pc 0x%lx 0x%lx]\n",
+		printf("%s(%d): sigreturn not from tramp [pc 0x%x 0x%lx]\n",
 		    p->p_comm, p->p_pid, PROC_PC(p), p->p_p->ps_sigcoderet);
 		sigexit(p, SIGILL);
 		return (EPERM);
@@ -509,17 +509,17 @@ sys_sigreturn(p, v, retval)
 	if ((error = copyin(sc, &ksc, sizeof(ksc))) != 0)
 		return (error);
 
-	if (ksc.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
+	if (ksc.sc_cookie != ((long)sc ^ p->p_p->ps_sigcookie)) {
 		printf("%s(%d): cookie %lx should have been %lx\n",
 		    p->p_comm, p->p_pid, ksc.sc_cookie,
-		    (long)scp ^ p->p_p->ps_sigcookie);
+		    (long)sc ^ p->p_p->ps_sigcookie);
 		sigexit(p, SIGILL);
 		return (EFAULT);
 	}
 
 	/* Prevent reuse of the sigcontext cookie */
 	ksc.sc_cookie = 0;
-	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
+	(void)copyout(&ksc.sc_cookie, (caddr_t)sc +
 	    offsetof(struct sigcontext, sc_cookie),
 	    sizeof (ksc.sc_cookie));
 
