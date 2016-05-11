@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.145 2016/03/16 06:46:39 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.146 2016/05/11 07:51:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -594,6 +594,7 @@ audio_setpar(struct audio_softc *sc)
 {
 	struct audio_params p, r;
 	unsigned int nr, np, max, min, mult;
+	unsigned int blk_mult;
 	int error;
 
 	DPRINTF("%s: setpar: req enc=%d bits=%d, bps=%d, msb=%d "
@@ -756,24 +757,24 @@ audio_setpar(struct audio_softc *sc)
 	 * get least multiplier of the number of frames per block
 	 */
 	if (sc->ops->round_blocksize) {
-		mult = sc->ops->round_blocksize(sc->arg, 1);
-		if (mult == 0) {
+		blk_mult = sc->ops->round_blocksize(sc->arg, 1);
+		if (blk_mult == 0) {
 			printf("%s: 0x%x: bad block size multiplier\n",
-			    DEVNAME(sc), mult);
+			    DEVNAME(sc), blk_mult);
 			return ENODEV;
 		}
 	} else
-		mult = 1;
-	DPRINTF("%s: hw block size multiplier: %u\n", DEVNAME(sc), mult);
+		blk_mult = 1;
+	DPRINTF("%s: hw block size multiplier: %u\n", DEVNAME(sc), blk_mult);
 	if (sc->mode & AUMODE_PLAY) {
-		np = mult / audio_gcd(sc->pchan * sc->bps, mult);
+		np = blk_mult / audio_gcd(sc->pchan * sc->bps, blk_mult);
 		if (!(sc->mode & AUMODE_RECORD))
 			nr = np;
 		DPRINTF("%s: play number of frames multiplier: %u\n",
 		    DEVNAME(sc), np);
 	}
 	if (sc->mode & AUMODE_RECORD) {
-		nr = mult / audio_gcd(sc->rchan * sc->bps, mult);
+		nr = blk_mult / audio_gcd(sc->rchan * sc->bps, blk_mult);
 		if (!(sc->mode & AUMODE_PLAY))
 			np = nr;
 		DPRINTF("%s: record number of frames multiplier: %u\n",
