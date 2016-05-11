@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile.common,v 1.4 2015/11/07 17:53:23 yasuoka Exp $
+#	$OpenBSD: Makefile.common,v 1.5 2016/05/11 08:30:58 kettenis Exp $
 
 S=		${.CURDIR}/../../../../..
 SADIR=		${.CURDIR}/../..
-EFIDIR=		${.CURDIR}/../../efi
+EFIDIR=		${S}/stand/efi
 
 OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
