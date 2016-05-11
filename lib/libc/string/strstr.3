@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strstr.3,v 1.12 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: strstr.3,v 1.13 2016/05/11 17:51:50 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: May 11 2016 $
 .Dt STRSTR 3
 .Os
 .Sh NAME
@@ -56,7 +56,7 @@ The
 function is similar to
 .Fn strstr
 but ignores the case of both strings.
-.Pp
+.Sh RETURN VALUES
 If
 .Fa little
 is an empty string,
@@ -73,6 +73,7 @@ otherwise a pointer to the first character of the first occurrence of
 is returned.
 .Sh SEE ALSO
 .Xr memchr 3 ,
+.Xr memmem 3 ,
 .Xr strchr 3 ,
 .Xr strcspn 3 ,
 .Xr strpbrk 3 ,
