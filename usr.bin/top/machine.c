@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.85 2015/08/20 22:32:42 deraadt Exp $	 */
+/* $OpenBSD: machine.c,v 1.86 2016/05/11 08:11:27 edd Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -57,6 +57,8 @@
 static int	swapmode(int *, int *);
 static char	*state_abbr(struct kinfo_proc *);
 static char	*format_comm(struct kinfo_proc *);
+static int	cmd_matches(struct kinfo_proc *, char *);
+static char	**get_proc_args(struct kinfo_proc *);
 
 /* get_process_info passes back a handle.  This is what it looks like: */
 
@@ -360,6 +362,60 @@ getprocs(int op, int arg, int *cnt)
 	return (procbase);
 }
 
+static char **
+get_proc_args(struct kinfo_proc *kp)
+{
+	static char	**s;
+	size_t		siz = 100;
+	int		mib[4];
+
+	for (;; siz *= 2) {
+		if ((s = realloc(s, siz)) == NULL)
+			err(1, NULL);
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_PROC_ARGS;
+		mib[2] = kp->p_pid;
+		mib[3] = KERN_PROC_ARGV;
+		if (sysctl(mib, 4, s, &siz, NULL, 0) == 0)
+			break;
+		if (errno != ENOMEM)
+			return NULL;
+	}
+	return s;
+}
+
+static int
+cmd_matches(struct kinfo_proc *proc, char *term)
+{
+	extern int	show_args;
+	char		**args = NULL;
+
+	if (!term) {
+		/* No command filter set */
+		return 1;
+	} else {
+		/* Filter set, process name needs to contain term */
+		if (strstr(proc->p_comm, term))
+			return 1;
+		/* If showing arguments, search those as well */
+		if (show_args) {
+			args = get_proc_args(proc);
+
+			if (args == NULL) {
+				/* Failed to get args, so can't search them */
+				return 0;
+			}
+
+			while (*args != NULL) {
+				if (strstr(*args, term))
+					return 1;
+				args++;
+			}
+		}
+	}
+	return 0;
+}
+
 caddr_t
 get_process_info(struct system_info *si, struct process_select *sel,
     int (*compare) (const void *, const void *))
@@ -421,8 +477,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
 			    (!hide_uid || pp->p_ruid != sel->huid) &&
 			    (!show_uid || pp->p_ruid == sel->uid) &&
 			    (!show_pid || pp->p_pid == sel->pid) &&
-			    (!show_cmd || strstr(pp->p_comm,
-				sel->command))) {
+			    (!show_cmd || cmd_matches(pp, sel->command))) {
 				*prefp++ = pp;
 				active_procs++;
 			}
@@ -462,27 +517,17 @@ state_abbr(struct kinfo_proc *pp)
 static char *
 format_comm(struct kinfo_proc *kp)
 {
-	static char **s, buf[MAX_COLS];
-	size_t siz = 100;
-	char **p;
-	int mib[4];
-	extern int show_args;
+	static char	buf[MAX_COLS];
+	char		**p, **s;
+	extern int	show_args;
 
 	if (!show_args)
 		return (kp->p_comm);
 
-	for (;; siz *= 2) {
-		if ((s = realloc(s, siz)) == NULL)
-			err(1, NULL);
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_PROC_ARGS;
-		mib[2] = kp->p_pid;
-		mib[3] = KERN_PROC_ARGV;
-		if (sysctl(mib, 4, s, &siz, NULL, 0) == 0)
-			break;
-		if (errno != ENOMEM)
-			return (kp->p_comm);
-	}
+	s = get_proc_args(kp);
+	if (s == NULL)
+		return kp->p_comm;
+
 	buf[0] = '\0';
 	for (p = s; *p != NULL; p++) {
 		if (p != s)

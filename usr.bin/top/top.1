@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.66 2015/05/06 07:53:29 mpi Exp $
+.\"	$OpenBSD: top.1,v 1.67 2016/05/11 08:11:27 edd Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 6 2015 $
+.Dd $Mdocdate: May 11 2016 $
 .Dt TOP 1
 .Os
 .Sh NAME
@@ -108,6 +108,7 @@ The default is 1 for dumb terminals.
 Display only processes that contain
 .Ar string
 in their command name.
+If displaying of arguments is enabled, the arguments are searched too.
 .It Fl H
 Show process threads in the display.
 Normally, only the main process is shown.
@@ -306,6 +307,7 @@ command.
 Display only processes that contain
 .Ar string
 in their command name.
+If displaying of arguments is enabled, the arguments are searched too.
 .Sq g+
 shows all processes.
 .It H
