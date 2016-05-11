@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.172 2016/05/10 18:39:40 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.173 2016/05/11 17:59:58 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1569,6 +1569,12 @@ sys_sigreturn(p, v, retval)
 		sigexit(p, SIGILL);
 		return (EFAULT);
 	}
+
+	/* Prevent reuse of the sigcontext cookie */
+	ksc.sc_cookie = 0;
+	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
+	    offsetof(struct sigcontext, sc_cookie),
+	    sizeof (ksc.sc_cookie));
 
 	if (ksc.sc_regs[R_ZERO] != 0xACEDBADE)		/* magic number */
 		return (EINVAL);
