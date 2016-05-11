@@ -216,6 +216,9 @@
 ./etc/signify/openbsd-60-base.pub
 ./etc/signify/openbsd-60-fw.pub
 ./etc/signify/openbsd-60-pkg.pub
+./etc/signify/openbsd-61-base.pub
+./etc/signify/openbsd-61-fw.pub
+./etc/signify/openbsd-61-pkg.pub
 ./etc/skel
 ./etc/skel/.ssh
 ./etc/ssh
