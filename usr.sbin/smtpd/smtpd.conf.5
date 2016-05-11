@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.159 2016/05/03 18:43:45 jung Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.160 2016/05/11 18:34:44 jung Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 3 2016 $
+.Dd $Mdocdate: May 11 2016 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -664,6 +664,7 @@ Changing the default value might degrade performance.
 .Op Ic filter Ar name
 .Op Ic tls | tls-require | tls-require verify | smtps | secure
 .Op Ic pki Ar pkiname
+.Op Ic ca Ar caname
 .Op Ic auth | auth-optional Op < Ns Ar authtable Ns >
 .Op Ic tag Ar tag
 .Op Ic hostname Ar hostname
@@ -742,6 +743,9 @@ is specified,
 a certificate matching
 .Ic name
 is searched for.
+Moreover, a previously declared
+.Ic ca
+directive may be specified to use a custom CA certificate.
 .Pp
 If the
 .Ic auth
