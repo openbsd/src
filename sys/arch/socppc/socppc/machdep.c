@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.66 2016/05/10 18:39:48 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.67 2016/05/11 20:19:01 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -508,10 +508,9 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 		frame.sf_sip = &fp->sf_si;
 		initsiginfo(&frame.sf_si, sig, code, type, val);
 	}
-	frame.sf_sc.sc_cookie = (long)fp ^ p->p_p->ps_sigcookie;
+	frame.sf_sc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;
 	if (copyout(&frame, fp, sizeof frame) != 0)
 		sigexit(p, SIGILL);
-
 
 	tf->fixreg[1] = (int)fp;
 	tf->lr = (int)catcher;
