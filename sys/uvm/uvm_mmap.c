@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.124 2016/03/29 12:04:26 chl Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.125 2016/05/11 21:52:51 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1134,12 +1134,6 @@ uvm_mmapfile(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 int
 sys_kbind(struct proc *p, void *v, register_t *retval)
 {
-#if defined(__hppa64__)
-	/* only exists to support ld.so */
-	sigexit(p, SIGSYS);
-	/* NOTREACHED */
-	return EINVAL;
-#else
 	struct sys_kbind_args /* {
 		syscallarg(const struct __kbind *) param;
 		syscallarg(size_t) psize;
@@ -1255,5 +1249,4 @@ sys_kbind(struct proc *p, void *v, register_t *retval)
 	uvm_unmap_detach(&dead_entries, AMAP_REFALL);
 
 	return (error);
-#endif	/* !hppa64 */
 }

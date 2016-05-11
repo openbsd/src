@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2007/08/01 21:42:43 deraadt Exp $
+# $OpenBSD: Makefile,v 1.7 2016/05/11 21:52:50 deraadt Exp $
 
 NOPROG=
 NOMAN=
@@ -8,7 +8,7 @@ CC=${HOSTCC}
 .if (${MACHINE} == "i386") || (${MACHINE} == "amd64") || \
     (${MACHINE} == "alpha") || (${MACHINE} == "sparc64") || \
     (${MACHINE_ARCH} == "powerpc") || (${MACHINE} == "hppa") || \
-    (${MACHINE} == "hppa64") || (${MACHINE} == "sgi")
+    (${MACHINE} == "sgi")
 
 FIRM=  fxp-d101a fxp-d101b0 fxp-d101ma fxp-d101s fxp-d102 fxp-d102c fxp-d102e
 

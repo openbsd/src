@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2016/03/09 16:28:45 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2016/05/11 21:52:48 deraadt Exp $
 
 .PATH: ${.CURDIR}/../../../usr.sbin/installboot
 
@@ -31,11 +31,6 @@ SRCS += stubs.c
 .if ${MACHINE} == "hppa"
 CFLAGS += -DBOOTSTRAP
 SRCS += hppa_installboot.c
-.endif
-
-.if ${MACHINE} == "hppa64"
-CFLAGS += -DBOOTSTRAP
-SRCS += hppa64_installboot.c
 .endif
 
 .if ${MACHINE} == "i386"

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2009/08/29 21:37:14 kettenis Exp $
+# $OpenBSD: Makefile,v 1.8 2016/05/11 21:52:51 deraadt Exp $
 
 NOPROG=
 NOMAN=
@@ -8,8 +8,7 @@ CC=${HOSTCC}
 .if (${MACHINE} == "i386") || (${MACHINE} == "amd64") || \
     (${MACHINE} == "alpha") || (${MACHINE} == "sparc64") || \
     (${MACHINE} == "sparc") || (${MACHINE_ARCH} == "powerpc") || \
-    (${MACHINE} == "hppa") ||  (${MACHINE} == "hppa64") || \
-    (${MACHINE} == "sgi")
+    (${MACHINE} == "hppa") || (${MACHINE} == "sgi")
 
 FIRM= 	tigon1 tigon2
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2015/05/26 02:21:54 jsg Exp $
+# $OpenBSD: Makefile,v 1.7 2016/05/11 21:52:51 deraadt Exp $
 
 NOPROG=
 NOMAN=
@@ -8,8 +8,7 @@ CC=${HOSTCC}
 .if (${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "armish" || ${MACHINE} == "armv7" || \
-    ${MACHINE} == "hppa" || \
-    ${MACHINE} == "hppa64" || ${MACHINE} == "i386" || \
+    ${MACHINE} == "hppa" || ${MACHINE} == "i386" || \
     ${MACHINE} == "landisk" || ${MACHINE} == "loongson" || \
     ${MACHINE} == "sgi" || \
     ${MACHINE} == "sparc64" || ${MACHINE} == "zaurus")

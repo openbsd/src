@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2016/03/09 16:28:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 2016/05/11 21:52:51 deraadt Exp $
 
 PROG=		installboot
 SRCS=		installboot.c util.c
@@ -32,11 +32,6 @@ SRCS += stubs.c
 .if ${MACHINE} == "hppa"
 CFLAGS += -DBOOTSTRAP
 SRCS += hppa_installboot.c
-.endif
-
-.if ${MACHINE} == "hppa64"
-CFLAGS += -DBOOTSTRAP
-SRCS += hppa64_installboot.c
 .endif
 
 .if ${MACHINE} == "i386"

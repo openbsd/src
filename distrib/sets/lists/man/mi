@@ -2032,7 +2032,6 @@
 ./usr/share/man/man5/hostname.if.5
 ./usr/share/man/man5/hosts.5
 ./usr/share/man/man5/hppa
-./usr/share/man/man5/hppa64
 ./usr/share/man/man5/httpd.conf.5
 ./usr/share/man/man5/i386
 ./usr/share/man/man5/ifstated.conf.5
@@ -2236,11 +2235,6 @@
 ./usr/share/man/man8/hppa/boot.8
 ./usr/share/man/man8/hppa/boot_hppa.8
 ./usr/share/man/man8/hppa/mkboot.8
-./usr/share/man/man8/hppa64
-./usr/share/man/man8/hppa64/MAKEDEV.8
-./usr/share/man/man8/hppa64/boot.8
-./usr/share/man/man8/hppa64/boot_hppa64.8
-./usr/share/man/man8/hppa64/mkboot.8
 ./usr/share/man/man8/httpd.8
 ./usr/share/man/man8/i386
 ./usr/share/man/man8/i386/MAKEDEV.8

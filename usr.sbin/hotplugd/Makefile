@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.16 2013/09/04 14:54:13 patrick Exp $
+# $OpenBSD: Makefile,v 1.17 2016/05/11 21:52:51 deraadt Exp $
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "armish" || ${MACHINE} == "armv7" || \
-    ${MACHINE} == "hppa" || ${MACHINE} == "hppa64" || \
+    ${MACHINE} == "hppa" || \
     ${MACHINE} == "i386" || ${MACHINE} == "landisk" || \
     ${MACHINE} == "loongson" || ${MACHINE} == "macppc" || \
     ${MACHINE} == "sgi" || ${MACHINE} == "socppc" || \

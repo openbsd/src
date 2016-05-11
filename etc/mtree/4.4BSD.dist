@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.281 2016/04/25 20:38:11 tedu Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.282 2016/05/11 21:52:48 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -530,8 +530,6 @@ usr
                 ..
                 hppa
                 ..
-                hppa64
-                ..
                 i386
                 ..
                 landisk
@@ -561,8 +559,6 @@ usr
                 armv7
                 ..
                 hppa
-                ..
-                hppa64
                 ..
                 i386
                 ..

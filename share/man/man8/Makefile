@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.92 2016/03/30 06:38:44 jmc Exp $
+#	$OpenBSD: Makefile,v 1.93 2016/05/11 21:52:49 deraadt Exp $
 #	$NetBSD: Makefile,v 1.13 1996/03/28 21:36:40 mark Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
@@ -9,7 +9,7 @@ MAN=	afterboot.8 autoinstall.8 boot_config.8 \
 	security.8 ssl.8 starttls.8 sticky.8 yp.8
 
 SUBDIR=	man8.alpha man8.amd64 man8.armish man8.armv7 \
-	man8.hppa man8.hppa64 man8.i386 man8.landisk \
+	man8.hppa man8.i386 man8.landisk \
 	man8.loongson man8.luna88k man8.macppc \
 	man8.octeon man8.sgi man8.socppc man8.sparc man8.sparc64 \
 	man8.zaurus
