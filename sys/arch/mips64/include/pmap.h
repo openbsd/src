@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.43 2016/04/24 04:25:03 visa Exp $ */
+/*      $OpenBSD: pmap.h,v 1.44 2016/05/11 15:50:29 visa Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -37,6 +37,8 @@
 
 #ifndef	_MIPS64_PMAP_H_
 #define	_MIPS64_PMAP_H_
+
+#include <sys/mutex.h>
 
 #ifdef	_KERNEL
 
@@ -110,6 +112,7 @@ struct pmap_asid_info {
  * Machine dependent pmap structure.
  */
 typedef struct pmap {
+	struct mutex		pm_mtx;		/* pmap lock */
 	int			pm_count;	/* pmap reference count */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
@@ -203,11 +206,13 @@ typedef struct pv_entry {
 } *pv_entry_t;
 
 struct vm_page_md {
+	struct mutex	pv_mtx;		/* pv list lock */
 	struct pv_entry pv_ent;		/* pv list of this seg */
 };
 
 #define	VM_MDPAGE_INIT(pg) \
 	do { \
+		mtx_init(&(pg)->mdpage.pv_mtx, IPL_VM); \
 		(pg)->mdpage.pv_ent.pv_next = NULL; \
 		(pg)->mdpage.pv_ent.pv_pmap = NULL; \
 		(pg)->mdpage.pv_ent.pv_va = 0; \
