@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.59 2015/12/19 18:40:30 mmcc Exp $ */
+/*	$OpenBSD: kvm.c,v 1.60 2016/05/11 17:46:44 tedu Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -713,7 +713,7 @@ kvm_dbopen(kvm_t *kd, const char *uf)
 	if (rec.data == 0 || rec.size > sizeof(dbversion))
 		goto close;
 
-	bcopy(rec.data, dbversion, rec.size);
+	memcpy(dbversion, rec.data, rec.size);
 	dbversionlen = rec.size;
 
 	/*
@@ -727,7 +727,7 @@ kvm_dbopen(kvm_t *kd, const char *uf)
 		goto close;
 	if (rec.data == 0 || rec.size != sizeof(struct nlist))
 		goto close;
-	bcopy(rec.data, &nitem, sizeof(nitem));
+	memcpy(&nitem, rec.data, sizeof(nitem));
 	if (kvm_read(kd, (u_long)nitem.n_value, kversion, dbversionlen) !=
 	    dbversionlen)
 		goto close;
@@ -791,10 +791,10 @@ kvm_nlist(kvm_t *kd, struct nlist *nl)
 		/*
 		 * Avoid alignment issues.
 		 */
-		bcopy(&((struct nlist *)rec.data)->n_type,
-		    &p->n_type, sizeof(p->n_type));
-		bcopy(&((struct nlist *)rec.data)->n_value,
-		    &p->n_value, sizeof(p->n_value));
+		memcpy(&p->n_type, &((struct nlist *)rec.data)->n_type,
+		    sizeof(p->n_type));
+		memcpy(&p->n_value, &((struct nlist *)rec.data)->n_value,
+		    sizeof(p->n_value));
 	}
 	/*
 	 * Return the number of entries that weren't found.
