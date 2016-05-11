@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.43 2016/05/10 18:39:47 deraadt Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.44 2016/05/11 22:33:11 deraadt Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -487,7 +487,6 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	frame.sf_uc.sc_mask = mask;
 
 	frame.sf_uc.sc_cookie = (long)&fp->sf_uc ^ p->p_p->ps_sigcookie;
-printf("cookie %lx\n", frame.sf_uc.sc_cookie);
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
