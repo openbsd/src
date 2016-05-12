@@ -1,4 +1,4 @@
-.\"	$OpenBSD: install.1,v 1.27 2016/02/01 15:54:58 jmc Exp $
+.\"	$OpenBSD: install.1,v 1.28 2016/05/12 21:43:27 millert Exp $
 .\"	$NetBSD: install.1,v 1.4 1994/11/14 04:57:17 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)install.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 1 2016 $
+.Dd $Mdocdate: May 12 2016 $
 .Dt INSTALL 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd install binaries
 .Sh SYNOPSIS
 .Nm install
-.Op Fl bCcDdpSs
+.Op Fl bCcDdFpSs
 .Op Fl B Ar suffix
 .Op Fl f Ar flags
 .Op Fl g Ar group
@@ -105,6 +105,12 @@ This option cannot be used with the
 or
 .Fl s
 options.
+.It Fl F
+Flush the file's contents to disk.
+When copying a file, use the
+.Xr fsync 2
+function to syncronize the installed file's contents with the
+on-disk version.
 .It Fl f Ar flags
 Specify the target's file
 .Ar flags .

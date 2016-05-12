@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.63 2015/12/31 16:16:54 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.64 2016/05/12 21:43:27 millert Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 
 #define	DIRECTORY	0x01		/* Tell install it's a directory. */
 #define	SETFLAGS	0x02		/* Tell install to set flags. */
+#define	USEFSYNC	0x04		/* Tell install to use fsync(2). */
 #define NOCHANGEBITS	(UF_IMMUTABLE | UF_APPEND | SF_IMMUTABLE | SF_APPEND)
 #define BACKUP_SUFFIX	".old"
 
@@ -90,7 +91,7 @@ main(int argc, char *argv[])
 	char *flags, *to_name, *group = NULL, *owner = NULL;
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "B:bCcDdf:g:m:o:pSs")) != -1)
+	while ((ch = getopt(argc, argv, "B:bCcDdFf:g:m:o:pSs")) != -1)
 		switch(ch) {
 		case 'C':
 			docompare = 1;
@@ -103,6 +104,9 @@ main(int argc, char *argv[])
 			break;
 		case 'c':
 			/* For backwards compatibility. */
+			break;
+		case 'F':
+			iflags |= USEFSYNC;
 			break;
 		case 'f':
 			flags = optarg;
@@ -377,6 +381,8 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 			    safecopy ? tempfile :to_name, strerror(errno));
 	}
 
+	if (flags & USEFSYNC)
+		fsync(to_fd);
 	(void)close(to_fd);
 	if (!devnull)
 		(void)close(from_fd);
@@ -618,7 +624,7 @@ void
 usage(void)
 {
 	(void)fprintf(stderr, "\
-usage: install [-bCcDdpSs] [-B suffix] [-f flags] [-g group] [-m mode] [-o owner]\n	       source ... target ...\n");
+usage: install [-bCcDdDpSs] [-B suffix] [-f flags] [-g group] [-m mode] [-o owner]\n	       source ... target ...\n");
 	exit(1);
 	/* NOTREACHED */
 }
