@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.20 2016/04/18 13:14:27 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.21 2016/05/12 00:15:24 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -244,7 +244,7 @@ eigrpe_imsg_compose_rde(int type, uint32_t peerid, pid_t pid,
 void
 eigrpe_dispatch_main(int fd, short event, void *bula)
 {
-	struct iface		*niface = NULL;
+	static struct iface	*niface = NULL;
 	static struct eigrp	*neigrp;
 	struct eigrp_iface	*nei;
 	struct imsg		 imsg;

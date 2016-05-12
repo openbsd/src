@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.15 2016/04/18 13:14:27 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.16 2016/05/12 00:15:24 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -326,7 +326,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 void
 rde_dispatch_parent(int fd, short event, void *bula)
 {
-	struct iface		*niface = NULL;
+	static struct iface	*niface = NULL;
 	static struct eigrp	*neigrp;
 	struct eigrp_iface	*nei;
 	struct imsg		 imsg;

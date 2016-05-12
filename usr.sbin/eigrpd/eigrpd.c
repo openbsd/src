@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.13 2016/04/18 13:14:27 renato Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.14 2016/05/12 00:15:24 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -582,14 +582,34 @@ eigrp_sendboth(enum imsg_type type, void *buf, uint16_t len)
 void
 merge_config(struct eigrpd_conf *conf, struct eigrpd_conf *xconf)
 {
+	struct iface		*iface, *itmp, *xi;
 	struct eigrp		*eigrp, *etmp, *xe;
 
-	/* change of rtr_id needs a restart */
+	conf->rtr_id = xconf->rtr_id;
 	conf->flags = xconf->flags;
 	conf->rdomain= xconf->rdomain;
 	conf->fib_priority_internal = xconf->fib_priority_internal;
 	conf->fib_priority_external = xconf->fib_priority_external;
 	conf->fib_priority_summary = xconf->fib_priority_summary;
+
+	/* merge interfaces */
+	TAILQ_FOREACH_SAFE(iface, &conf->iface_list, entry, itmp) {
+		/* find deleted ifaces */
+		if ((xi = if_lookup(xconf, iface->ifindex)) == NULL) {
+			TAILQ_REMOVE(&conf->iface_list, iface, entry);
+			free(iface);
+		}
+	}
+	TAILQ_FOREACH_SAFE(xi, &xconf->iface_list, entry, itmp) {
+		/* find new ifaces */
+		if ((iface = if_lookup(conf, xi->ifindex)) == NULL) {
+			TAILQ_REMOVE(&xconf->iface_list, xi, entry);
+			TAILQ_INSERT_TAIL(&conf->iface_list, xi, entry);
+			continue;
+		}
+
+		/* TODO update existing ifaces */
+	}
 
 	/* merge instances */
 	TAILQ_FOREACH_SAFE(eigrp, &conf->instances, entry, etmp) {
@@ -632,6 +652,7 @@ merge_config(struct eigrpd_conf *conf, struct eigrpd_conf *xconf)
 		/* update existing instances */
 		merge_instances(conf, eigrp, xe);
 	}
+
 	/* resend addresses to activate new interfaces */
 	if (eigrpd_process == PROC_MAIN)
 		kif_redistribute();
