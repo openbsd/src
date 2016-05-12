@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds1631.c,v 1.11 2009/08/12 17:13:30 kettenis Exp $	*/
+/*	$OpenBSD: ds1631.c,v 1.12 2016/05/12 21:00:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -108,6 +108,10 @@ dostart:
 			    sc->sc_addr, &cmd, sizeof cmd, NULL, 0, 0);
 			printf(", starting");
 		}
+	} else {
+		iic_release_bus(sc->sc_tag, 0);
+		printf(", fails to respond\n");
+		return;
 	}
 
 	iic_release_bus(sc->sc_tag, 0);
