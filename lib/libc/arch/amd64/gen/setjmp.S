@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.5 2015/09/13 07:36:58 guenther Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.6 2016/05/12 15:46:03 deraadt Exp $	*/
 /*	$NetBSD: __setjmp14.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $	*/
 
 /*
@@ -40,6 +40,14 @@
 #include <machine/asm.h>
 #include <machine/setjmp.h>
 
+	.section        .openbsd.randomdata,"aw",@progbits
+	.align 8
+	.globl	__jmpxor
+__jmpxor:
+	.zero 8*3		# (rbp, rsp, pc)
+	END(__jmpxor)
+	.type	__jmpxor,@object
+
 /*
  * C library -- _setjmp, _longjmp
  *
@@ -58,16 +66,24 @@ ENTRY(setjmp)
 	movq	%rax,(_JB_SIGMASK * 8)(%rdi)
 
 	movq	(%rsp),%r11
+	leaq	__jmpxor(%rip),%rcx
 	movq	%rbx,(_JB_RBX * 8)(%rdi)
-	movq	%rbp,(_JB_RBP * 8)(%rdi)
+	movq	%rbp,%rax
+	xorq	(0*8)(%rcx),%rax
+	movq	%rax,(_JB_RBP * 8)(%rdi)
 	movq	%r12,(_JB_R12 * 8)(%rdi)
 	movq	%r13,(_JB_R13 * 8)(%rdi)
 	movq	%r14,(_JB_R14 * 8)(%rdi)
 	movq	%r15,(_JB_R15 * 8)(%rdi)
-	movq	%rsp,(_JB_RSP * 8)(%rdi)
-	movq	%r11,(_JB_PC  * 8)(%rdi)
+	movq	%rsp,%rax
+	xorq	(1*8)(%rcx),%rax
+	movq	%rax,(_JB_RSP * 8)(%rdi)
+	movq	%r11,%rax
+	xorq	(2*8)(%rcx),%rax
+	movq	%rax,(_JB_PC  * 8)(%rdi)
+	xorq	%rcx,%rcx
 
-2:	xorl	%eax,%eax
+	xorq	%rax,%rax
 	ret
 END(setjmp)
 
@@ -79,14 +95,22 @@ ENTRY(longjmp)
 	pushq	%r8
 	call	_C_LABEL(_libc_sigsetmask)
 	popq	%r8
+
+	leaq	 __jmpxor(%rip),%rcx
 	movq	(_JB_RBX * 8)(%r12),%rbx
-	movq	(_JB_RBP * 8)(%r12),%rbp
+	movq	(_JB_RBP * 8)(%r12),%r11
+	xorq	(0*8)(%rcx),%r11
+	movq	%r11,%rbp
 	movq	(_JB_R13 * 8)(%r12),%r13
 	movq	(_JB_R14 * 8)(%r12),%r14
 	movq	(_JB_R15 * 8)(%r12),%r15
-	movq	(_JB_RSP * 8)(%r12),%rsp
+	movq	(_JB_RSP * 8)(%r12),%r11
+	xorq	(1*8)(%rcx),%r11
+	movq	%r11,%rsp
 	movq	(_JB_PC  * 8)(%r12),%r11
+	xorq	(2*8)(%rcx),%r11
 	movq	(_JB_R12 * 8)(%r12),%r12
+	xorq	%rcx,%rcx
 
 	movl	%r8d,%eax
 	testl	%eax,%eax

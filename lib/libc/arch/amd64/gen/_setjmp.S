@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.2 2015/05/29 08:50:12 uebayasi Exp $	*/
+/*	$OpenBSD: _setjmp.S,v 1.3 2016/05/12 15:46:03 deraadt Exp $	*/
 /*	$NetBSD: _setjmp.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $	*/
 
 /*
@@ -40,6 +40,8 @@
 #include <machine/asm.h>
 #include <machine/setjmp.h>
 
+	.hidden __jmpxor
+
 /*
  * C library -- _setjmp, _longjmp
  *
@@ -52,28 +54,43 @@
 
 ENTRY(_setjmp)
 	movq    (%rsp),%r11
+	leaq	__jmpxor(%rip),%rcx
 	movq    %rbx,(_JB_RBX * 8)(%rdi)
-	movq    %rbp,(_JB_RBP * 8)(%rdi)
+	movq	%rbp,%rax
+	xorq	(0*8)(%rcx),%rax
+	movq    %rax,(_JB_RBP * 8)(%rdi)
 	movq    %r12,(_JB_R12 * 8)(%rdi)
 	movq    %r13,(_JB_R13 * 8)(%rdi)
 	movq    %r14,(_JB_R14 * 8)(%rdi)
 	movq    %r15,(_JB_R15 * 8)(%rdi)
-	movq    %rsp,(_JB_RSP * 8)(%rdi)
-	movq    %r11,(_JB_PC  * 8)(%rdi)
+	movq	%rsp,%rax
+	xorq	(1*8)(%rcx),%rax
+	movq    %rax,(_JB_RSP * 8)(%rdi)
+	movq	%r11,%rax
+	xorq	(2*8)(%rcx),%rax
+	movq    %rax,(_JB_PC  * 8)(%rdi)
+	xorq	%rcx,%rcx
 
-	xorl	%eax,%eax
+	xorq	%rax,%rax
 	ret
 END(_setjmp)
 
 ENTRY(_longjmp)
+	leaq	 __jmpxor(%rip),%rcx
 	movq    (_JB_RBX * 8)(%rdi),%rbx
-	movq    (_JB_RBP * 8)(%rdi),%rbp
+	movq    (_JB_RBP * 8)(%rdi),%r11
+	xorq    (0*8)(%rcx),%r11
+	movq	%r11,%rbp
 	movq    (_JB_R12 * 8)(%rdi),%r12
 	movq    (_JB_R13 * 8)(%rdi),%r13
 	movq    (_JB_R14 * 8)(%rdi),%r14
 	movq    (_JB_R15 * 8)(%rdi),%r15
-	movq    (_JB_RSP * 8)(%rdi),%rsp
+	movq    (_JB_RSP * 8)(%rdi),%r11
+	xorq	(1*8)(%rcx),%r11
+	movq	%r11,%rsp
 	movq    (_JB_PC  * 8)(%rdi),%r11
+	xorq	(2*8)(%rcx),%r11
+	xorq	%rcx,%rcx
 
 	movl	%esi,%eax
 	testl	%eax,%eax
