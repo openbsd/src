@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.25 2016/05/05 11:01:08 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.26 2016/05/12 15:26:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -424,7 +424,7 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 		cmd.c_flags |= SCF_CMD_READ;
 
 	error = sdmmc_mmc_command(sc, &cmd);
-	rw_exit(&sc->sc_lock);
+
 	return error;
 }
 
