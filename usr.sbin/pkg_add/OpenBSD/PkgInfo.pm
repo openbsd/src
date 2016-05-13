@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.36 2015/10/07 17:52:38 jmc Exp $
+# $OpenBSD: PkgInfo.pm,v 1.37 2016/05/13 00:22:50 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -160,6 +160,16 @@ sub setopts
 	my ($self, $string) = @_;
 	for my $i (split //, $string) {
 		$self->{opt}{$i} = 1;
+	}
+}
+
+sub log
+{
+	my $self = shift;
+	if (@_ == 0) {
+		return $self;
+	} else {
+		$self->say(@_);
 	}
 }
 
@@ -385,7 +395,7 @@ sub may_check_data
 			    $pkgname);
 		} else {
 			if (!$$r->check_signature($state)) {
-				$state->fatal("#1 is corrupted", $pkgname);
+				$state->fatal("Couldn't check signature for #1", $pkgname);
 			}
 		}
 	}
