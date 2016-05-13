@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.39 2015/05/11 06:46:22 ratchov Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.40 2016/05/13 19:51:39 ratchov Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -1238,7 +1238,7 @@ maestro_trigger_output(void *hdl, void *start, void *end, int blksize,
 	mtx_enter(&audio_lock);
 	sc->play.mode |= MAESTRO_RUNNING;
 	sc->play.wpwa = APU_USE_SYSMEM | (offset >> 8);
-	DPRINTF(("maestro_trigger_output: start=%x, end=%x, blksize=%x ",
+	DPRINTF(("maestro_trigger_output: start=%p, end=%p, blksize=%x ",
 		start, end, blksize));
     	DPRINTF(("offset = %x, size=%x\n", offset, size));
 
