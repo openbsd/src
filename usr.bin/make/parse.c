@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.115 2015/12/22 21:50:54 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.116 2016/05/13 12:18:11 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ static bool handle_undef(const char *);
 #define ParseReadLoopLine(linebuf) Parse_ReadUnparsedLine(linebuf, "for loop")
 static bool handle_bsd_command(Buffer, Buffer, const char *);
 static char *strip_comments(Buffer, const char *);
-static char *resolve_include_filename(const char *, bool);
+static char *resolve_include_filename(const char *, const char *, bool);
 static void handle_include_file(const char *, const char *, bool, bool);
 static bool lookup_bsd_include(const char *);
 static void lookup_sysv_style_include(const char *, const char *, bool);
@@ -1081,13 +1081,13 @@ Parse_AddIncludeDir(const char	*dir)
 }
 
 static char *
-resolve_include_filename(const char *file, bool isSystem)
+resolve_include_filename(const char *file, const char *efile, bool isSystem)
 {
 	char *fullname;
 
 	/* Look up system files on the system path first */
 	if (isSystem) {
-		fullname = Dir_FindFileNoDot(file, systemIncludePath);
+		fullname = Dir_FindFileNoDoti(file, efile, systemIncludePath);
 		if (fullname)
 			return fullname;
 	}
@@ -1107,8 +1107,7 @@ resolve_include_filename(const char *file, bool isSystem)
 		if (slash != NULL) {
 			char *newName;
 
-			newName = Str_concati(fname, slash, file,
-			    strchr(file, '\0'), '/');
+			newName = Str_concati(fname, slash, file, efile, '/');
 			fullname = Dir_FindFile(newName, userIncludePath);
 			if (fullname == NULL)
 				fullname = Dir_FindFile(newName, defaultPath);
@@ -1121,10 +1120,10 @@ resolve_include_filename(const char *file, bool isSystem)
 	/* Now look first on the -I search path, then on the .PATH
 	 * search path, if not found in a -I directory.
 	 * XXX: Suffix specific?  */
-	fullname = Dir_FindFile(file, userIncludePath);
+	fullname = Dir_FindFilei(file, efile, userIncludePath);
 	if (fullname)
 		return fullname;
-	fullname = Dir_FindFile(file, defaultPath);
+	fullname = Dir_FindFilei(file, efile, defaultPath);
 	if (fullname)
 		return fullname;
 
@@ -1133,25 +1132,19 @@ resolve_include_filename(const char *file, bool isSystem)
 	if (isSystem)
 		return NULL;
 	else
-		return Dir_FindFile(file, systemIncludePath);
+		return Dir_FindFilei(file, efile, systemIncludePath);
 }
 
 static void
-handle_include_file(const char *name, const char *ename, bool isSystem,
+handle_include_file(const char *file, const char *efile, bool isSystem,
     bool errIfNotFound)
 {
-	char *file;
 	char *fullname;
 
-	/* Substitute for any variables in the file name before trying to
-	 * find the thing. */
-	file = Var_Substi(name, ename, NULL, false);
-
-	fullname = resolve_include_filename(file, isSystem);
+	fullname = resolve_include_filename(file, efile, isSystem);
 	if (fullname == NULL && errIfNotFound)
-		Parse_Error(PARSE_FATAL, "Could not find %s", file);
-	free(file);
-
+		Parse_Error(PARSE_FATAL, "Could not find %.*s", 
+		    (int)(efile - file), file);
 
 	if (fullname != NULL) {
 		FILE *f;
@@ -1170,6 +1163,7 @@ lookup_bsd_include(const char *file)
 {
 	char endc;
 	const char *efile;
+	char *file2;
 	bool isSystem;
 
 	/* find starting delimiter */
@@ -1197,30 +1191,48 @@ lookup_bsd_include(const char *file)
 			return false;
 		}
 	}
-	handle_include_file(file, efile, isSystem, true);
+	/* Substitute for any variables in the file name before trying to
+	 * find the thing. */
+	file2 = Var_Substi(file, efile, NULL, false);
+	handle_include_file(file2, strchr(file2, '\0'), isSystem, true);
+	free(file2);
 	return true;
 }
 
 
 static void
-lookup_sysv_style_include(const char *file, const char *directive,
+lookup_sysv_style_include(const char *line, const char *directive,
     bool errIfMissing)
 {
-	const char *efile;
+	char *file;
+	char *name;
+	char *ename;
+	bool okay = false;
 
-	/* find beginning of name */
-	while (ISSPACE(*file))
-		file++;
-	if (*file == '\0') {
-		Parse_Error(PARSE_FATAL, "Filename missing from \"%s\"",
-		    directive);
-		return;
+	/* Substitute for any variables in the file name before trying to
+	 * find the thing. */
+	file = Var_Subst(line, NULL, false);
+
+	/* sys5 allows for list of files separated by spaces */
+	name = file;
+	while (1) {
+		/* find beginning of name */
+		while (ISSPACE(*name))
+			name++;
+		if (*name == '\0')
+			break;
+		for (ename = name; *ename != '\0' && !ISSPACE(*ename);)
+			ename++;
+		handle_include_file(name, ename, true, errIfMissing);
+		okay = true;
+		name = ename;
 	}
-	/* sys5 delimits file up to next blank character or end of line */
-	for (efile = file; *efile != '\0' && !ISSPACE(*efile);)
-		efile++;
 
-	handle_include_file(file, efile, true, errIfMissing);
+	free(file);
+	if (!okay) {
+		Parse_Error(PARSE_FATAL, "Filename missing from \"%s\"",
+		directive);
+	}
 }
 
 
