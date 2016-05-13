@@ -1683,7 +1683,7 @@ XML_ParseBuffer(XML_Parser parser, int len, int isFinal)
 void * XMLCALL
 XML_GetBuffer(XML_Parser parser, int len)
 {
-  if (len < 0) {
+  if (len < 0 || len > MAXLEN - (bufferEnd - bufferPtr)) {
     errorCode = XML_ERROR_NO_MEMORY;
     return NULL;
   }
@@ -1730,12 +1730,12 @@ XML_GetBuffer(XML_Parser parser, int len)
       if (bufferSize == 0)
         bufferSize = INIT_BUFFER_SIZE;
       do {
+        if (bufferSize > MAXLEN / 2) {
+          errorCode = XML_ERROR_NO_MEMORY;
+          return NULL;
+        }
         bufferSize *= 2;
-      } while (bufferSize < neededSize && bufferSize > 0);
-      if (bufferSize <= 0) {
-        errorCode = XML_ERROR_NO_MEMORY;
-        return NULL;
-      }
+      } while (bufferSize < neededSize);
       newBuf = (char *)MALLOC(bufferSize);
       if (newBuf == 0) {
         errorCode = XML_ERROR_NO_MEMORY;
