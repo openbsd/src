@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.64 2016/05/12 21:43:27 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.65 2016/05/13 17:51:15 jmc Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -624,7 +624,7 @@ void
 usage(void)
 {
 	(void)fprintf(stderr, "\
-usage: install [-bCcDdDpSs] [-B suffix] [-f flags] [-g group] [-m mode] [-o owner]\n	       source ... target ...\n");
+usage: install [-bCcDdFpSs] [-B suffix] [-f flags] [-g group] [-m mode] [-o owner]\n	       source ... target ...\n");
 	exit(1);
 	/* NOTREACHED */
 }
