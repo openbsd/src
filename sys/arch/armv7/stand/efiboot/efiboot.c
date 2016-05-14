@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.2 2016/05/14 19:45:37 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.3 2016/05/14 20:00:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -291,7 +291,7 @@ getsecs(void)
 void
 devboot(dev_t dev, char *p)
 {
-	strlcpy(p, "efi0a", 6);
+	strlcpy(p, "sd0a", 5);
 }
 
 int

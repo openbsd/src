@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2016/05/14 17:55:15 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.2 2016/05/14 20:00:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -45,7 +45,7 @@ struct fs_ops file_system[] = {
 int nfsys = nitems(file_system);
 
 struct devsw	devsw[] = {
-	{ "efi", efistrategy, efiopen, eficlose, efiioctl },
+	{ "sd", efistrategy, efiopen, eficlose, efiioctl },
 };
 int ndevs = nitems(devsw);
 

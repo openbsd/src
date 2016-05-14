@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.2 2016/05/14 18:26:39 kettenis Exp $	*/
+/*	$OpenBSD: exec.c,v 1.3 2016/05/14 20:00:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2016 Mark Kettenis
@@ -55,7 +55,7 @@ struct uboot_tag_mem32 {
 	uint32_t	start;
 };
 struct uboot_tag_cmdline {
-	char		cmdline[1];
+	char		cmdline[64];
 };
 
 #define ATAG_CORE	0x54410001
@@ -75,16 +75,16 @@ struct uboot_tag {
 	} u;
 };
 
-struct uboot_tag tags[2];
+struct uboot_tag tags[3];
 
 void
 run_loadfile(u_long *marks, int howto)
 {
-#ifdef BOOT_ELF
 	Elf_Ehdr *elf = (Elf_Ehdr *)marks[MARK_SYM];
 	Elf_Shdr *shp = (Elf_Shdr *)(marks[MARK_SYM] + elf->e_shoff);
 	u_long esym = marks[MARK_END] & 0x0fffffff;
 	u_long offset = 0;
+	char args[256];
 	char *cp;
 	int i;
 
@@ -102,36 +102,33 @@ run_loadfile(u_long *marks, int howto)
 			break;
 		}
 	}
-#endif
 
-#if 0
-	cp = (char *)0x00200000 - MAX_BOOT_STRING - 1;
+	snprintf(args, sizeof(args) - 8, "%s:%s", cmd.bootdev, cmd.image);
+	cp = args + strlen(args);
 
-#define      BOOT_STRING_MAGIC 0x4f425344
-
-	*(int *)cp = BOOT_STRING_MAGIC;
-
-	cp += sizeof(int);
-	snprintf(cp, MAX_BOOT_STRING, "%s:%s -", cmd.bootdev, cmd.image);
-
-	while (*cp != '\0')
-		cp++;
-	if (howto & RB_ASKNAME)
-		*cp++ = 'a';
-	if (howto & RB_CONFIG)
-		*cp++ = 'c';
-	if (howto & RB_KDB)
-		*cp++ = 'd';
-	if (howto & RB_SINGLE)
-		*cp++ = 's';
-
-	*cp = '\0';
-#endif
+	*cp++ = ' ';
+	*cp = '-';
+        if (howto & RB_ASKNAME)
+                *++cp = 'a';
+        if (howto & RB_CONFIG)
+                *++cp = 'c';
+        if (howto & RB_SINGLE)
+                *++cp = 's';
+        if (howto & RB_KDB)
+                *++cp = 'd';
+        if (*cp == '-')
+		*--cp = 0;
+	else
+		*++cp = 0;
 
 	tags[0].hdr.tag = ATAG_MEM;
-	tags[0].hdr.size = sizeof(struct uboot_tag);
+	tags[0].hdr.size = sizeof(struct uboot_tag) / sizeof(uint32_t);
 	tags[0].u.mem.start = 0x10000000;
 	tags[0].u.mem.size = 0x80000000;
+	tags[1].hdr.tag = ATAG_CMDLINE;
+	tags[1].hdr.size = sizeof(struct uboot_tag) / sizeof(uint32_t);
+	strlcpy(tags[1].u.cmdline.cmdline, args,
+	    sizeof(tags[1].u.cmdline.cmdline));
 
 	memcpy((void *)0x10000000, tags, sizeof(tags));
 
