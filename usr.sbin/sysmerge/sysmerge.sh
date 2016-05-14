@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.225 2016/05/14 14:44:35 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.226 2016/05/14 16:14:40 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -184,6 +184,8 @@ sm_run() {
 		cp -fp /usr/share/sysmerge/*sum /var/sysmerge/ 2>/dev/null
 		rm -rf /usr/share/sysmerge
 	fi
+	# XXX remove after OPENBSD_6_1
+	rm -f /var/sysmerge/examplessum
 
 	sm_extract_sets
 	sm_add_user_grp
