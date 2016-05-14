@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.224 2016/04/29 12:32:45 sthen Exp $
+# $OpenBSD: sysmerge.sh,v 1.225 2016/05/14 14:44:35 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -246,8 +246,7 @@ sm_run() {
 		      /etc/pwd.db
 		      /etc/spwd.db
 		      /var/db/locate.database
-		      /var/mail/root
-		      /var/sysmerge/examplessum"
+		      /var/mail/root"
 	# in case X(7) is not installed, xetcsum is not removed by the loop above
 	_ignorefiles="${_ignorefiles} /var/sysmerge/xetcsum"
 	[[ -f /etc/sysmerge.ignore ]] && \
@@ -256,10 +255,8 @@ sm_run() {
 		rm -f ./${_i}
 	done
 
-	# aliases(5) needs to be handled last in case mailer.conf(5) changes;
-	# examples are checked later, we don't want to handle examplessum
-	_c1=$(find . -type f -or -type l | \
-		grep -vE '^./(etc/mail/aliases|var/sysmerge/examplessum)$')
+	# aliases(5) needs to be handled last in case mailer.conf(5) changes
+	_c1=$(find . -type f -or -type l | grep -v '^./etc/mail/aliases$')
 	[[ -f ./etc/mail/aliases ]] && _c2="./etc/mail/aliases"
 	for COMPFILE in ${_c1} ${_c2}; do
 		IS_BIN=false
@@ -292,8 +289,6 @@ sm_run() {
 
 		sm_diff_loop
 	done
-
-#	sm_check_an_eg
 }
 
 sm_install() {
@@ -586,25 +581,6 @@ sm_diff_loop() {
 			;;
 		esac
 	done
-}
-
-sm_check_an_eg() {
-	${PKGMODE} && return
-	local _egmods _i _managed
-
-	if [[ -f /var/sysmerge/examplessum ]]; then
-		_egmods=$(cd / && \
-			 sha256 -c /var/sysmerge/examplessum 2>/dev/null | \
-			 sed -n 's/^(SHA256) \(.*\): FAILED$/\1/p')
-	fi
-	for _i in ${_egmods}; do
-		_i=${_i##*/}
-		# only check files we care about
-		[[ -f /etc/${_i} ]] && \
-			sm_info "Updated /etc/examples/${_i}, syntax may have changed"
-	done
-	mv ./var/sysmerge/examplessum \
-		/var/sysmerge/examplessum
 }
 
 sm_post() {

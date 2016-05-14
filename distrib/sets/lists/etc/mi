@@ -72,7 +72,6 @@
 ./var/mail/root
 ./var/nsd/etc/nsd.conf
 ./var/sysmerge/etcsum
-./var/sysmerge/examplessum
 ./var/unbound/etc/unbound.conf
 ./var/www/conf/bgplg.css
 ./var/www/conf/bgplg.foot
