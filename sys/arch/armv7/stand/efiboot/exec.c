@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.1 2016/05/14 17:55:15 kettenis Exp $	*/
+/*	$OpenBSD: exec.c,v 1.2 2016/05/14 18:26:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2016 Mark Kettenis
@@ -80,11 +80,11 @@ struct uboot_tag tags[2];
 void
 run_loadfile(u_long *marks, int howto)
 {
-#if 0
 #ifdef BOOT_ELF
 	Elf_Ehdr *elf = (Elf_Ehdr *)marks[MARK_SYM];
 	Elf_Shdr *shp = (Elf_Shdr *)(marks[MARK_SYM] + elf->e_shoff);
-	u_long esym = marks[MARK_END];
+	u_long esym = marks[MARK_END] & 0x0fffffff;
+	u_long offset = 0;
 	char *cp;
 	int i;
 
@@ -97,12 +97,14 @@ run_loadfile(u_long *marks, int howto)
 		/* XXX Assume .data is the first writable segment. */
 		if (shp[i].sh_flags & SHF_WRITE) {
 			/* XXX We have to store the virtual address. */
-			esym |= shp[i].sh_addr & 0xff000000;
-			*(u_long *)(shp[i].sh_addr & 0x00ffffff) = esym;
+			esym |= shp[i].sh_addr & 0xf0000000;
+			*(u_long *)(LOADADDR(shp[i].sh_addr)) = esym;
 			break;
 		}
 	}
 #endif
+
+#if 0
 	cp = (char *)0x00200000 - MAX_BOOT_STRING - 1;
 
 #define      BOOT_STRING_MAGIC 0x4f425344
@@ -124,7 +126,6 @@ run_loadfile(u_long *marks, int howto)
 		*cp++ = 's';
 
 	*cp = '\0';
-
 #endif
 
 	tags[0].hdr.tag = ATAG_MEM;
