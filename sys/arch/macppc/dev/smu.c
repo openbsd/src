@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.30 2016/05/14 20:13:42 mglocker Exp $	*/
+/*	$OpenBSD: smu.c,v 1.31 2016/05/14 21:22:17 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -148,6 +148,7 @@ int	smu_time_write(time_t);
 int	smu_get_datablock(struct smu_softc *sc, u_int8_t, u_int8_t *, size_t);
 int	smu_fan_set_rpm(struct smu_softc *, struct smu_fan *, u_int16_t);
 int	smu_fan_set_pwm(struct smu_softc *, struct smu_fan *, u_int16_t);
+int	smu_fan_read_rpm(struct smu_softc *, struct smu_fan *, u_int16_t *);
 int	smu_fan_read_pwm(struct smu_softc *, struct smu_fan *, u_int16_t *,
 	    u_int16_t *);
 int	smu_fan_refresh(struct smu_softc *, struct smu_fan *);
@@ -626,6 +627,23 @@ smu_fan_set_pwm(struct smu_softc *sc, struct smu_fan *fan, u_int16_t pwm)
 }
 
 int
+smu_fan_read_rpm(struct smu_softc *sc, struct smu_fan *fan, u_int16_t *rpm)
+{
+	struct smu_cmd *cmd = (struct smu_cmd *)sc->sc_cmd;
+	int error;
+
+	cmd->cmd = SMU_FAN;
+	cmd->len = 1;
+	cmd->data[0] = 0x01;	/* fan-rpm-control */
+	error = smu_do_cmd(sc, 800);
+	if (error)
+		return (error);
+	*rpm = (cmd->data[fan->reg * 2 + 1] << 8) | cmd->data[fan->reg * 2 + 2];
+
+	return (0);
+}
+
+int
 smu_fan_read_pwm(struct smu_softc *sc, struct smu_fan *fan, u_int16_t *pwm,
     u_int16_t *rpm)
 {
@@ -657,7 +675,6 @@ smu_fan_read_pwm(struct smu_softc *sc, struct smu_fan *fan, u_int16_t *pwm,
 int
 smu_fan_refresh(struct smu_softc *sc, struct smu_fan *fan)
 {
-	struct smu_cmd *cmd = (struct smu_cmd *)sc->sc_cmd;
 	int error;
 	u_int16_t rpm, pwm;
 
@@ -669,20 +686,16 @@ smu_fan_refresh(struct smu_softc *sc, struct smu_fan *fan)
 		}
 		fan->sensor.value = pwm * 1000;
 		fan->sensor.flags = 0;
-		return (0);
+	} else {
+		error = smu_fan_read_rpm(sc, fan, &rpm);
+		if (error) {
+			fan->sensor.flags = SENSOR_FINVALID;
+			return (error);
+		}
+		fan->sensor.value = rpm;
+		fan->sensor.flags = 0;
 	}
 
-	cmd->cmd = SMU_FAN;
-	cmd->len = 1;
-	cmd->data[0] = 0x01;	/* fan-rpm-control */
-	error = smu_do_cmd(sc, 800);
-	if (error) {
-		fan->sensor.flags = SENSOR_FINVALID;
-		return (error);
-	}
-	fan->sensor.value =
-	    (cmd->data[fan->reg * 2 + 1] << 8) | cmd->data[fan->reg * 2 + 2];
-	fan->sensor.flags = 0;
 	return (0);
 }
 
