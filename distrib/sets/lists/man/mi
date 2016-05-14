@@ -1163,6 +1163,7 @@
 ./usr/share/man/man4/amd64/pctr.4
 ./usr/share/man/man4/amd64/skgpio.4
 ./usr/share/man/man4/amd64/tcpcib.4
+./usr/share/man/man4/amd64/vmm.4
 ./usr/share/man/man4/amdiic.4
 ./usr/share/man/man4/amdpm.4
 ./usr/share/man/man4/ami.4
@@ -1992,6 +1993,7 @@
 ./usr/share/man/man4/zyd.4
 ./usr/share/man/man5
 ./usr/share/man/man5/acct.5
+./usr/share/man/man5/aliases.5
 ./usr/share/man/man5/amd64
 ./usr/share/man/man5/ar.5
 ./usr/share/man/man5/armish
@@ -2023,6 +2025,7 @@
 ./usr/share/man/man5/exports.5
 ./usr/share/man/man5/fbtab.5
 ./usr/share/man/man5/files.conf.5
+./usr/share/man/man5/forward.5
 ./usr/share/man/man5/fs.5
 ./usr/share/man/man5/fstab.5
 ./usr/share/man/man5/genassym.cf.5
@@ -2307,6 +2310,7 @@
 ./usr/share/man/man8/mail.local.8
 ./usr/share/man/man8/mailwrapper.8
 ./usr/share/man/man8/makedbm.8
+./usr/share/man/man8/makemap.8
 ./usr/share/man/man8/makewhatis.8
 ./usr/share/man/man8/map-mbone.8
 ./usr/share/man/man8/mkalias.8
@@ -2334,6 +2338,7 @@
 ./usr/share/man/man8/ndp.8
 ./usr/share/man/man8/netgroup_mkdb.8
 ./usr/share/man/man8/netstart.8
+./usr/share/man/man8/newaliases.8
 ./usr/share/man/man8/newfs.8
 ./usr/share/man/man8/newfs_ext2fs.8
 ./usr/share/man/man8/newfs_msdos.8

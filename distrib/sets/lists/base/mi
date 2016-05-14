@@ -2542,16 +2542,11 @@
 ./usr/share/man/man2
 ./usr/share/man/man3
 ./usr/share/man/man3p
-./usr/share/man/man4/amd64/vmm.4
-./usr/share/man/man5/aliases.5
-./usr/share/man/man5/forward.5
 ./usr/share/man/man7
 ./usr/share/man/man7/packages.7
 ./usr/share/man/man8
 ./usr/share/man/man8/adduser.8
 ./usr/share/man/man8/afterboot.8
-./usr/share/man/man8/makemap.8
-./usr/share/man/man8/newaliases.8
 ./usr/share/man/man8/user.8
 ./usr/share/man/man8/useradd.8
 ./usr/share/man/man8/userdel.8
