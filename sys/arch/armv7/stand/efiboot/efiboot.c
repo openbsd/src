@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.1 2016/05/14 17:55:15 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.2 2016/05/14 19:45:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -258,6 +258,7 @@ time_t
 getsecs(void)
 {
 	EFI_TIME	t;
+	EFI_STATUS	status;
 	time_t		r = 0;
 	int		y = 0;
 	const int	daytab[][14] = {
@@ -266,7 +267,9 @@ getsecs(void)
 	};
 #define isleap(_y) (((_y) % 4) == 0 && (((_y) % 100) != 0 || ((_y) % 400) == 0))
 
-	EFI_CALL(ST->RuntimeServices->GetTime, &t, NULL);
+	status = EFI_CALL(ST->RuntimeServices->GetTime, &t, NULL);
+	if (EFI_ERROR(status))
+		return 0;
 
 	/* Calc days from UNIX epoch */
 	r = (t.Year - 1970) * 365;
