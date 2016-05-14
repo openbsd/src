@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.134 2015/11/04 16:59:58 mmcc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.135 2016/05/14 03:41:48 tj Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: November 4 2015 $
+.Dd $Mdocdate: May 14 2016 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -132,7 +132,7 @@ package name itself plus the
 suffix) or a URL referring to FTP, HTTP, HTTPS, or SCP locations.
 The following examples are valid:
 .Pp
-.Li pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386/m4-1.4.tgz
+.Li pkg_add -v http://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386/m4-1.4.tgz
 .Li pkg_add -v scp://login@host/usr/ports/packages/sparc/all/tcl-8.4.7.tgz
 .Pp
 If the given package names are not found in the current working directory,
