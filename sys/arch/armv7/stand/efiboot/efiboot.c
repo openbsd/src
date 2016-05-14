@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.3 2016/05/14 20:00:24 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.4 2016/05/14 21:22:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -40,6 +40,9 @@ EFI_HANDLE		 efi_bootdp;
 static EFI_GUID		 imgp_guid = LOADED_IMAGE_PROTOCOL;
 static EFI_GUID		 blkio_guid = BLOCK_IO_PROTOCOL;
 static EFI_GUID		 devp_guid = DEVICE_PATH_PROTOCOL;
+
+static void efi_timer_init(void);
+static void efi_timer_cleanup(void);
 
 EFI_STATUS
 efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
@@ -231,7 +234,16 @@ machdep(void)
 	efi_loadaddr = addr;
 
 	efi_heap_init();
+	efi_timer_init();
 	efi_diskprobe();
+}
+
+void
+efi_cleanup(void)
+{
+	efi_timer_cleanup();
+
+	BS->ExitBootServices(NULL, 0);
 }
 
 void
@@ -254,39 +266,51 @@ _rtt(void)
 	while (1) { }
 }
 
+/*
+ * U-Boot only implements the GetTime() Runtime Service if it has been
+ * configured with CONFIG_DM_RTC.  Most board configurations don't
+ * include that option, so we can't use it to implement our boot
+ * prompt timeout.  Instead we use timer events to simulate a clock
+ * that ticks ever second.
+ */
+
+EFI_EVENT timer;
+int ticks;
+
+static VOID
+efi_timer(EFI_EVENT event, VOID *context)
+{
+	ticks++;
+}
+
+static void
+efi_timer_init(void)
+{
+	EFI_STATUS status;
+
+	status = BS->CreateEvent(EVT_TIMER, TPL_CALLBACK,
+	    efi_timer, NULL, &timer);
+	if (status == EFI_SUCCESS)
+		status = BS->SetTimer(timer, TimerPeriodic, 10000000);
+	if (EFI_ERROR(status))
+		printf("Can't create timer\n");
+}
+
+static void
+efi_timer_cleanup(void)
+{
+	BS->CloseEvent(timer);
+}
+
 time_t
 getsecs(void)
 {
-	EFI_TIME	t;
-	EFI_STATUS	status;
-	time_t		r = 0;
-	int		y = 0;
-	const int	daytab[][14] = {
-	    { 0, -1, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333, 364 },
-	    { 0, -1, 30, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365 },
-	};
-#define isleap(_y) (((_y) % 4) == 0 && (((_y) % 100) != 0 || ((_y) % 400) == 0))
-
-	status = EFI_CALL(ST->RuntimeServices->GetTime, &t, NULL);
-	if (EFI_ERROR(status))
-		return 0;
-
-	/* Calc days from UNIX epoch */
-	r = (t.Year - 1970) * 365;
-	for (y = 1970; y < t.Year; y++) {
-		if (isleap(y))
-			r++;
-	}
-	r += daytab[isleap(t.Year)? 1 : 0][t.Month] + t.Day;
-
-	/* Calc secs */
-	r *= 60 * 60 * 24;
-	r += ((t.Hour * 60) + t.Minute) * 60 + t.Second;
-	if (-24 * 60 < t.TimeZone && t.TimeZone < 24 * 60)
-		r += t.TimeZone * 60;
-
-	return (r);
+	return ticks;
 }
+
+/*
+ * Various device-related bits.
+ */
 
 void
 devboot(dev_t dev, char *p)

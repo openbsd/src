@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.3 2016/05/14 20:00:24 kettenis Exp $	*/
+/*	$OpenBSD: exec.c,v 1.4 2016/05/14 21:22:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2016 Mark Kettenis
@@ -132,7 +132,7 @@ run_loadfile(u_long *marks, int howto)
 
 	memcpy((void *)0x10000000, tags, sizeof(tags));
 
-	BS->ExitBootServices(NULL, 0);
+	efi_cleanup();
 
 	(*(startfuncp)(marks[MARK_ENTRY]))(NULL, (void *)4821, (void *)0x10000000);
 
