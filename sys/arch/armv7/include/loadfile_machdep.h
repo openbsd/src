@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile_machdep.h,v 1.3 2015/07/17 20:44:38 miod Exp $	*/
+/*	$OpenBSD: loadfile_machdep.h,v 1.4 2016/05/14 18:04:02 kettenis Exp $	*/
 /*	$NetBSD: loadfile_machdep.h,v 1.1 1999/04/29 03:17:12 tsubai Exp $	*/
 
 /*-
@@ -36,7 +36,9 @@
 #define LOAD_KERNEL		LOAD_ALL
 #define COUNT_KERNEL		COUNT_ALL
 
-#define LOADADDR(a)		((((u_long)(a)) + offset)&0xfffffff)
+extern u_long			efi_loadaddr;
+#define LOADADDR(a)		(((((u_long)(a)) + offset)&0xfffffff) + \
+				    efi_loadaddr)
 #define ALIGNENTRY(a)		((u_long)(a))
 #define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
 #define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
