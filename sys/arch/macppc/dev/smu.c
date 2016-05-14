@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.29 2016/05/14 15:44:23 mglocker Exp $	*/
+/*	$OpenBSD: smu.c,v 1.30 2016/05/14 20:13:42 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -44,6 +44,9 @@ struct smu_fan {
 	u_int16_t	min_rpm;
 	u_int16_t	max_rpm;
 	u_int16_t	unmanaged_rpm;
+	u_int16_t	min_pwm;
+	u_int16_t	max_pwm;
+	u_int16_t	unmanaged_pwm;
 	struct ksensor	sensor;
 };
 
@@ -144,6 +147,9 @@ int	smu_time_read(time_t *);
 int	smu_time_write(time_t);
 int	smu_get_datablock(struct smu_softc *sc, u_int8_t, u_int8_t *, size_t);
 int	smu_fan_set_rpm(struct smu_softc *, struct smu_fan *, u_int16_t);
+int	smu_fan_set_pwm(struct smu_softc *, struct smu_fan *, u_int16_t);
+int	smu_fan_read_pwm(struct smu_softc *, struct smu_fan *, u_int16_t *,
+	    u_int16_t *);
 int	smu_fan_refresh(struct smu_softc *, struct smu_fan *);
 int	smu_sensor_refresh(struct smu_softc *, struct smu_sensor *);
 void	smu_refresh_sensors(void *);
@@ -250,7 +256,7 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 	time_read = smu_time_read;
 	time_write = smu_time_write;
 
-	/* Fans */
+	/* RPM Fans */
 	node = OF_getnodebyname(ca->ca_node, "rpm-fans");
 	if (node == 0)
 		node = OF_getnodebyname(ca->ca_node, "fans");
@@ -260,7 +266,7 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 
 		if (strcmp(type, "fan-rpm-control") != 0) {
-			printf(": unsupported fan type: %s\n", type);
+			printf(": unsupported rpm-fan type: %s\n", type);
 			return;
 		}
 
@@ -293,6 +299,53 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 
 		/* Start running fans at their "unmanaged" speed. */
 		smu_fan_set_rpm(sc, fan, fan->unmanaged_rpm);
+
+#ifndef SMALL_KERNEL
+		sensor_attach(&sc->sc_sensordev, &fan->sensor);
+#endif
+	}
+
+	/* PWM Fans */
+	node = OF_getnodebyname(ca->ca_node, "pwm-fans");
+	for (node = OF_child(node); node; node = OF_peer(node)) {
+		if (OF_getprop(node, "reg", &reg, sizeof reg) <= 0 ||
+		    OF_getprop(node, "device_type", type, sizeof type) <= 0)
+			continue;
+
+		if (strcmp(type, "fan-pwm-control") != 0) {
+			printf(": unsupported pwm-fan type: %s\n", type);
+			return;
+		}
+
+		if (sc->sc_num_fans >= SMU_MAXFANS) {
+			printf(": too many fans\n");
+			return;
+		}
+
+		fan = &sc->sc_fans[sc->sc_num_fans++];
+		fan->sensor.type = SENSOR_PERCENT;
+		fan->sensor.flags = SENSOR_FINVALID;
+		fan->reg = reg;
+
+		if (OF_getprop(node, "min-value", &val, sizeof val) <= 0)
+			val = 0;
+		fan->min_pwm = val;
+		if (OF_getprop(node, "max-value", &val, sizeof val) <= 0)
+			val = 0xffff;
+		fan->max_pwm = val;
+		if (OF_getprop(node, "unmanage-value", &val, sizeof val) > 0)
+			fan->unmanaged_pwm = val;
+		else if (OF_getprop(node, "safe-value", &val, sizeof val) > 0)
+			fan->unmanaged_pwm = val;
+		else
+			fan->unmanaged_pwm = fan->min_pwm;
+
+		if (OF_getprop(node, "location", loc, sizeof loc) <= 0)
+			strlcpy(loc, "Unknown", sizeof loc);
+		strlcpy(fan->sensor.desc, loc, sizeof sensor->sensor.desc);
+
+		/* Start running fans at their "unmanaged" speed. */
+		smu_fan_set_pwm(sc, fan, fan->unmanaged_pwm);
 
 #ifndef SMALL_KERNEL
 		sensor_attach(&sc->sc_sensordev, &fan->sensor);
@@ -559,10 +612,65 @@ smu_fan_set_rpm(struct smu_softc *sc, struct smu_fan *fan, u_int16_t rpm)
 }
 
 int
+smu_fan_set_pwm(struct smu_softc *sc, struct smu_fan *fan, u_int16_t pwm)
+{
+	struct smu_cmd *cmd = (struct smu_cmd *)sc->sc_cmd;
+
+	cmd->cmd = SMU_FAN;
+	cmd->len = 14;
+	cmd->data[0] = 0x10;	/* fan-pwm-control */
+	cmd->data[1] = 0x01 << fan->reg;
+	cmd->data[2] = cmd->data[2 + fan->reg * 2] = (pwm >> 8) & 0xff;
+	cmd->data[3] = cmd->data[3 + fan->reg * 2] = (pwm & 0xff);
+	return smu_do_cmd(sc, 800);
+}
+
+int
+smu_fan_read_pwm(struct smu_softc *sc, struct smu_fan *fan, u_int16_t *pwm,
+    u_int16_t *rpm)
+{
+	struct smu_cmd *cmd = (struct smu_cmd *)sc->sc_cmd;
+	int error;
+
+	/* read PWM value */
+	cmd->cmd = SMU_FAN;
+	cmd->len = 14;
+	cmd->data[0] = 0x12;
+	cmd->data[1] = 0x01 << fan->reg;
+	error = smu_do_cmd(sc, 800);
+	if (error)
+		return (error);
+	*pwm = cmd->data[fan->reg * 2 + 2];
+
+	/* read RPM value */
+	cmd->cmd = SMU_FAN;
+	cmd->len = 1;
+	cmd->data[0] = 0x11;
+	error = smu_do_cmd(sc, 800);
+	if (error)
+		return (error);
+	*rpm = (cmd->data[fan->reg * 2 + 1] << 8) | cmd->data[fan->reg * 2 + 2];
+
+	return (0);
+}
+
+int
 smu_fan_refresh(struct smu_softc *sc, struct smu_fan *fan)
 {
 	struct smu_cmd *cmd = (struct smu_cmd *)sc->sc_cmd;
 	int error;
+	u_int16_t rpm, pwm;
+
+	if (fan->sensor.type == SENSOR_PERCENT) {
+		error = smu_fan_read_pwm(sc, fan, &pwm, &rpm);
+		if (error) {
+			fan->sensor.flags = SENSOR_FINVALID;
+			return (error);
+		}
+		fan->sensor.value = pwm * 1000;
+		fan->sensor.flags = 0;
+		return (0);
+	}
 
 	cmd->cmd = SMU_FAN;
 	cmd->len = 1;
