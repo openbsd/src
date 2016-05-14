@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.28 2016/05/04 08:20:58 mpi Exp $	*/
+/*	$OpenBSD: smu.c,v 1.29 2016/05/14 15:44:23 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -565,15 +565,15 @@ smu_fan_refresh(struct smu_softc *sc, struct smu_fan *fan)
 	int error;
 
 	cmd->cmd = SMU_FAN;
-	cmd->len = 2;
+	cmd->len = 1;
 	cmd->data[0] = 0x01;	/* fan-rpm-control */
-	cmd->data[1] = 0x01 << fan->reg;
 	error = smu_do_cmd(sc, 800);
 	if (error) {
 		fan->sensor.flags = SENSOR_FINVALID;
 		return (error);
 	}
-	fan->sensor.value = (cmd->data[1] << 8) + cmd->data[2];
+	fan->sensor.value =
+	    (cmd->data[fan->reg * 2 + 1] << 8) | cmd->data[fan->reg * 2 + 2];
 	fan->sensor.flags = 0;
 	return (0);
 }
