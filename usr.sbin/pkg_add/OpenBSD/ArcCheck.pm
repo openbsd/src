@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.33 2016/05/08 09:21:32 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.34 2016/05/14 21:12:40 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -91,40 +91,65 @@ sub validate_meta
 	return $o->verify_modes($item);
 }
 
+sub strip_modes
+{
+	my ($o, $item) = @_;
+
+	my $result = $o->{mode};
+
+	# disallow writable files/dirs without explicit annotation
+	if (!defined $item->{mode}) {
+		# if there's an owner, we have to be explicit
+		if (defined $item->{owner}) {
+			$result &= ~(S_IWUSR|S_IWGRP|S_IWOTH);
+		} else {
+			$result &= ~(S_IWGRP|S_IWOTH);
+		}
+		# and make libraries non-executable
+		if ($item->is_a_library) {
+			$result &= ~(S_IXUSR|S_IXGRP|S_IXOTH);
+		}
+		$result |= S_IROTH | S_IRGRP;
+	}
+	# if we're going to set the group or owner, sguid bits won't
+	# survive the extraction
+	if (defined $item->{group} || defined $item->{owner}) {
+		$result &= ~(S_ISUID|S_ISGID);
+	}
+	return $result;
+}
+
+sub printable_mode
+{
+	my $o = shift;
+	return sprintf("%4o", 
+	    $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID));
+}
+
 sub verify_modes
 {
 	my ($o, $item) = @_;
 	my $result = 1;
 
 	if (!defined $item->{owner}) {
-	    if ($o->{uname} ne 'root') {
-		    $o->errsay("Error: no \@owner for #1 (#2)",
-			$item->fullname, $o->{uname});
+		if ($o->{uname} ne 'root') {
+			$o->errsay("Error: no \@owner for #1 (#2)",
+			    $item->fullname, $o->{uname});
 	    		$result = 0;
-	    }
+		}
 	}
 	if (!defined $item->{group}) {
-	    if ($o->{gname} ne 'bin' && $o->{gname} ne 'wheel') {
-		if (($o->{mode} & (S_ISUID | S_ISGID | S_IWGRP)) != 0) {
-		    $o->errsay("Error: no \@group for #1 (#2), which has mode #3",
-			$item->fullname, $o->{uname},
-			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)));
-	    		$result = 0;
-		} else {
-		    $o->errsay("Warning: no \@group for #1 (#2)",
-			$item->fullname, $o->{gname});
-	    	}
-	    }
+		if ($o->{gname} ne 'bin' && $o->{gname} ne 'wheel') {
+			$o->errsay("Error: no \@group for #1 (#2)",
+			    $item->fullname, $o->{gname});
+			$result = 0;
+		}
 	}
-	if (!defined $item->{mode}) {
-	    if (($o->{mode} & (S_ISUID | S_ISGID | S_IWOTH)) != 0 ||
-	    	($o->{mode} & S_IROTH) == 0 || ($o->{mode} & S_IRGRP) == 0) {
-		    $o->errsay("Error: weird mode for #1: #2",
-			$item->fullname,
-			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)));
-	    		$result = 0;
-	    }
-	}
+	if ($o->{mode} != $o->strip_modes($o)) {
+		$o->errsay("Error: weird mode for #1: #2", $item->fullname,
+		    $o->printable_mode);
+		    $result = 0;
+ 	}
 	return $result;
 }
 
@@ -190,24 +215,7 @@ sub prepare_long
 		$self->fatal("No group name for #1 (gid #2)",
 		    $item->name, $entry->{gid});
 	}
-	# disallow writable files/dirs without explicit annotation
-	if (!defined $item->{mode}) {
-		# if there's an owner, we have to be explicit
-		if (defined $item->{owner}) {
-			$entry->{mode} &= ~(S_IWUSR|S_IWGRP|S_IWOTH);
-		} else {
-			$entry->{mode} &= ~(S_IWGRP|S_IWOTH);
-		}
-		# and make libraries non-executable
-		if ($item->is_a_library) {
-			$entry->{mode} &= ~(S_IXUSR|S_IXGRP|S_IXOTH);
-		}
-	}
-	# if we're going to set the group or owner, sguid bits won't
-	# survive the extraction
-	if (defined $item->{group} || defined $item->{owner}) {
-		$entry->{mode} &= ~(S_ISUID|S_ISGID);
-	}
+	$entry->{mode} = $entry->strip_modes($item);
 	if (defined $item->{ts}) {
 		delete $entry->{mtime};
 	}
