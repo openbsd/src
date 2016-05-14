@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.478 2016/05/05 21:52:16 sthen Exp $
+#	$OpenBSD: rc,v 1.479 2016/05/14 08:21:40 jmc Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -378,7 +378,7 @@ mount -s /var >/dev/null 2>&1
 
 random_seed
 
-echo -n 're-ordering libraries:'
+echo -n 'reordering libraries:'
 rebuildlibs
 echo ' done.'
 
