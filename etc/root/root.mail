@@ -33,7 +33,7 @@ CD-ROM space permitted us to include a subset of the full FTP packages
 for the most common architectures.  Please see the FTP sites to see a
 full list of packages for each architecture:
 
-	ftp://ftp.openbsd.org/pub/OpenBSD/6.0/packages/
+	http://ftp.openbsd.org/pub/OpenBSD/6.0/packages/
 
 If you do not find a package you want on the CD, please go look at your
 nearest FTP mirror site.
