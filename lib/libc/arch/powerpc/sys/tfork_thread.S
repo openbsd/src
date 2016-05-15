@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.6 2016/05/07 19:05:22 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.7 2016/05/15 00:15:10 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Tim Wiess <tim@nop.cx>
@@ -16,19 +16,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/syscall.h>
-#include <machine/asm.h>
+#include "SYS.h"
 
 ENTRY(__tfork_thread)
-	/* sanity check */
-	cmpwi	%r5, 0
-	beq	1f
-	
 	/* call __tfork */
 	li	%r0, SYS___tfork
 	sc
 	cmpwi	%r0, 0
-	bne	2f
+	bne	1f
 	
 	/* check if we are parent or child */
 	cmpwi	%r3, 0
@@ -44,7 +39,7 @@ ENTRY(__tfork_thread)
 	li	%r0, SYS___threxit
 	sc
 1:
+	stw	0, R2_OFFSET_ERRNO(%r2)
 	li	%r3, -1
-2:
-	b	_C_LABEL(__cerror)
+	blr
 END(__tfork_thread)

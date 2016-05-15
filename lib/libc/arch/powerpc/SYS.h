@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.21 2016/05/07 19:05:22 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.22 2016/05/15 00:15:10 guenther Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -44,6 +44,15 @@
 
 #include "machine/asm.h"
 
+
+/* offsetof(struct tib, tib_errno) - offsetof(struct tib, __tib_tcb) */
+#define	TCB_OFFSET_ERRNO	(-8)
+/* from <powerpc/tcb.h>: TCB address == %r2 - TCB_OFFSET */
+#define	TCB_OFFSET		0x7000
+
+/* offset of errno from %r2 */
+#define	R2_OFFSET_ERRNO		(-TCB_OFFSET + TCB_OFFSET_ERRNO)
+
 /*
  * We define a hidden alias with the prefix "_libc_" for each global symbol
  * that may be used internally.  By referencing _libc_x instead of x, other
@@ -68,13 +77,16 @@
 
 
 #define _CONCAT(x,y)	x##y
-#define PSEUDO_PREFIX(p,x,y)	.extern _ASM_LABEL(__cerror) ; \
+#define PSEUDO_PREFIX(p,x,y)	\
 			ENTRY(p##x) \
 				li 0, SYS_##y ; \
 				/* sc */
 #define PSEUDO_SUFFIX		cmpwi 0, 0 ; \
 				beqlr+ ; \
-				b _ASM_LABEL(__cerror)
+				stw	0, R2_OFFSET_ERRNO(2); \
+				li	3, -1; \
+				li	4, -1; /* for __syscall(lseek) */ \
+				blr
 
 #define PSEUDO_NOERROR_SUFFIX	blr
 
