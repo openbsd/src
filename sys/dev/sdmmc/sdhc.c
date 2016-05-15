@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.51 2016/05/05 11:01:08 kettenis Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.52 2016/05/15 22:21:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -259,7 +259,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		if (error)
 			goto adma_done;
 		error = bus_dmamem_map(sc->sc_dmat, hp->adma_segs, rseg,
-		    PAGE_SIZE, &hp->adma2, BUS_DMA_WAITOK);
+		    PAGE_SIZE, &hp->adma2, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 		if (error) {
 			bus_dmamem_free(sc->sc_dmat, hp->adma_segs, rseg);
 			goto adma_done;
@@ -923,6 +923,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 void
 sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 {
+	struct sdhc_softc *sc = hp->sc;
 	u_char *datap = cmd->c_data;
 	int i, datalen;
 	int mask;
@@ -944,6 +945,8 @@ sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 			}
 		}
 
+		bus_dmamap_sync(sc->sc_dmat, hp->adma_map, 0, PAGE_SIZE,
+		    BUS_DMASYNC_POSTWRITE);
 		goto done;
 	}
 
