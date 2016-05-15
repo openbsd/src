@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.18 2016/05/08 20:22:03 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.19 2016/05/15 22:10:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -362,7 +362,7 @@ imxesdhc_attach(struct device *parent, struct device *self, void *args)
 		if (error)
 			goto adma_done;
 		error = bus_dmamem_map(sc->sc_dmat, sc->adma_segs, rseg,
-		    PAGE_SIZE, &sc->adma2, BUS_DMA_WAITOK);
+		    PAGE_SIZE, &sc->adma2, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 		if (error) {
 			bus_dmamem_free(sc->sc_dmat, sc->adma_segs, rseg);
 			goto adma_done;
@@ -976,6 +976,8 @@ imxesdhc_transfer_data(struct imxesdhc_softc *sc, struct sdmmc_command *cmd)
 			}
 		}
 
+		bus_dmamap_sync(sc->sc_dmat, sc->adma_map, 0, PAGE_SIZE,
+		    BUS_DMASYNC_POSTWRITE);
 		goto done;
 	}
 
