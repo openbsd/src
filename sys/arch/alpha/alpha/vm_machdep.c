@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.43 2015/05/05 02:13:46 guenther Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.44 2016/05/15 23:37:42 guenther Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -241,4 +241,22 @@ vunmapbuf(bp, len)
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
+}
+
+void *
+tcb_get(struct proc *p)
+{
+	if (p == curproc)
+		return (void *)alpha_pal_rdunique();
+	else
+		return (void *)p->p_addr->u_pcb.pcb_hw.apcb_unique;
+}
+
+void
+tcb_set(struct proc *p, void *newtcb)
+{
+	KASSERT(p == curproc);
+
+	p->p_addr->u_pcb.pcb_hw.apcb_unique = (unsigned long)newtcb;
+	alpha_pal_wrunique((unsigned long)newtcb);
 }

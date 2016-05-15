@@ -1,4 +1,4 @@
-/* $OpenBSD: alpha_cpu.h,v 1.12 2014/03/29 18:09:28 guenther Exp $ */
+/* $OpenBSD: alpha_cpu.h,v 1.13 2016/05/15 23:37:42 guenther Exp $ */
 /* $NetBSD: alpha_cpu.h,v 1.43 2001/12/18 04:18:22 thorpej Exp $ */
 
 /*
@@ -62,7 +62,6 @@ struct alpha_pcb {
 	unsigned int	apcb_cpc;	/* charged process cycles */
 	unsigned int	apcb_asn;	/* address space number */
 	unsigned long	apcb_unique;	/* process unique value */
-#define	apcb_backup_ksp	apcb_unique	/* backup kernel stack ptr */
 	unsigned long	apcb_flags;	/* flags; see below */
 	unsigned long	apcb_decrsv0;	/* DEC reserved */
 	unsigned long	apcb_decrsv1;	/* DEC reserved */
@@ -390,6 +389,18 @@ alpha_pal_rdps(void)
 }
 
 static __inline unsigned long
+alpha_pal_rdunique(void)
+{
+	register unsigned long v0 __asm("$0");
+
+	__asm volatile("call_pal %1 # PAL_rdunique"
+		: "=r" (v0)
+		: "i" (PAL_rdunique));
+
+	return (v0);
+}
+
+static __inline unsigned long
 alpha_pal_rdusp(void)
 {
 	register unsigned long v0 __asm("$0");
@@ -496,6 +507,16 @@ alpha_pal_wripir(unsigned long cpu_id)
 		: "i" (PAL_ipir), "0" (a0)
 		/* clobbers t0, t8..t11, a0 (above) */
 		: "$1", "$22", "$23", "$24", "$25");
+}
+
+static __inline void
+alpha_pal_wrunique(unsigned long unique)
+{
+	register unsigned long a0 __asm("$16") = unique;
+
+	__asm volatile("call_pal %1 # PAL_wrunique"
+		: "=r" (a0)
+		: "i" (PAL_wrunique), "0" (a0));
 }
 
 static __inline void

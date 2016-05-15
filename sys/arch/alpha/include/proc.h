@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.11 2012/11/01 21:09:17 miod Exp $	*/
+/*	$OpenBSD: proc.h,v 1.12 2016/05/15 23:37:42 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.2 1995/03/24 15:01:36 cgd Exp $	*/
 
 /*
@@ -45,6 +45,8 @@ struct mdproc {
 	struct pcb *md_pcbpaddr;	/* phys addr of the pcb */
 	struct mdbpt md_sstep[2];	/* two breakpoints for sstep */
 };
+
+#define	__HAVE_MD_TCB
 
 /*
  * md_flags usage
