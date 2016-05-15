@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.253 2016/03/27 11:39:37 bluhm Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.254 2016/05/15 05:04:28 semarie Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -755,7 +755,6 @@ sys_chroot(struct proc *p, void *v, register_t *retval)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
-	nd.ni_pledge = PLEDGE_ID | PLEDGE_PROC | PLEDGE_RPATH;
 	if ((error = change_dir(&nd, p)) != 0)
 		return (error);
 	if (fdp->fd_rdir != NULL) {
