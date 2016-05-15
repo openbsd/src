@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.11 2016/02/04 09:19:39 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.12 2016/05/15 22:48:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -108,7 +108,11 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	/* can't use sa_cleanup since printf is used after sa_cleanup() */
 	/* sa_cleanup = efi_cleanup; */
 
-	progname = "EFIBOOT";
+#ifdef __amd64__
+	progname = "BOOTX64";
+#else
+	progname = "BOOTIA32";
+#endif
 
 	/*
 	 * Move the stack before calling boot().  UEFI on some machines
