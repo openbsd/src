@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.9 2016/05/08 18:57:14 guenther Exp $ */
+/*	$OpenBSD: setjmp.S,v 1.10 2016/05/15 05:48:24 guenther Exp $ */
 /*
  * Copyright (c) 1996 Dale Rahn. All rights reserved.
  *
@@ -113,7 +113,8 @@ ENTRY(_setjmp)
 	/* f14-f31, fpscr */
 	li 3, 0
 	blr
-
+END(_setjmp)
+END(setjmp)
 
 .extern _libc_sigsetmask
 ENTRY(longjmp)
@@ -172,3 +173,5 @@ ENTRY(_longjmp)
 	li	3, 1
 1:
 	blr
+END(_longjmp)
+END(longjmp)

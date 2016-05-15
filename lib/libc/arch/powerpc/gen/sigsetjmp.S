@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsetjmp.S,v 1.5 2005/08/07 16:40:15 espie Exp $	*/
+/*	$OpenBSD: sigsetjmp.S,v 1.6 2016/05/15 05:48:24 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,6 +54,7 @@ ENTRY(sigsetjmp)
 	stmw	7,0(6)
 	li	3,0
 	blr
+END(sigsetjmp)
 
 ENTRY(siglongjmp)
 	lmw	7,0(3)
@@ -73,3 +74,4 @@ ENTRY(siglongjmp)
 	bnelr
 	li	3,1
 	blr
+END(siglongjmp)
