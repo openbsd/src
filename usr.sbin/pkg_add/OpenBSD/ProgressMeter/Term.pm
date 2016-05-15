@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.34 2016/05/10 14:46:04 espie Exp $
+# $OpenBSD: Term.pm,v 1.35 2016/05/15 10:29:01 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -102,7 +102,7 @@ sub init
 	$termios->getattr(0);
 	my $terminal = Term::Cap->Tgetent({ OSPEED =>
 	    $termios->getospeed});
-	$self->{glitch} = $terminal->Tputs("xn", 1);
+	$self->{glitch} = $terminal->{_xn};
 	$self->{cleareol} = $terminal->Tputs("ce", 1);
 	$self->{hpa} = $terminal->Tputs("ch", 1);
 	if (!defined $self->{hpa}) {
