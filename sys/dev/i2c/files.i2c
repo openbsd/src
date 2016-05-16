@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.54 2016/01/20 01:26:00 jcs Exp $
+# $OpenBSD: files.i2c,v 1.55 2016/05/16 22:05:36 kettenis Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -122,6 +122,11 @@ file	dev/i2c/w83795g.c			nvt
 device	glenv
 attach	glenv at i2c
 file	dev/i2c/gl518sm.c			glenv
+
+# NXP PCF8523 Real Time Clock
+device  pcfrtc
+attach	pcfrtc at i2c
+file	dev/i2c/pcf8523.c			pcfrtc
 
 # RICOH RS5C372[AB] Real Time Clock
 device	ricohrtc
