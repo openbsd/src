@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.3 2016/03/15 20:50:22 krw Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.4 2016/05/16 01:51:23 deraadt Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -27,9 +27,6 @@
 #define VMX_FAIL_LAUNCH_INVALID_VMCS 2
 #define VMX_FAIL_LAUNCH_VALID_VMCS 3
 
-	.text
-	.code64
-	.align 16
 	.global _C_LABEL(vmxon)
 	.global _C_LABEL(vmxoff)
 	.global _C_LABEL(vmclear)
@@ -41,6 +38,10 @@
 	.global _C_LABEL(invept)
 	.global _C_LABEL(vmx_enter_guest)
 	.global _C_LABEL(vmm_dispatch_intr)
+
+	.text
+	.code64
+	.align 16,0xcc
 _C_LABEL(vmm_dispatch_intr):
 	movq	%rsp, %r11	/* r11 = temporary register */
 	andq    $0xFFFFFFFFFFFFFFF0, %rsp
