@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.8 2016/04/06 12:10:04 patrick Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.9 2016/05/16 21:12:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -701,3 +701,22 @@ OF_getprop(int handle, char *prop, void *buf, int buflen)
 		memcpy(buf, data, min(len, buflen));
 	return len;
 }
+
+int
+OF_is_compatible(int handle, const char *name)
+{
+	void *node = (char *)tree.header + handle;
+	char *data;
+	int len;
+
+	len = fdt_node_property(node, "compatible", &data);
+	while (len > 0) {
+		if (strcmp(data, name) == 0)
+			return 1;
+		len -= strlen(data) + 1;
+		data += strlen(data) + 1;
+	}
+
+	return 0;
+}
+
