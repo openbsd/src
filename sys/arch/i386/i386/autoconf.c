@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.97 2016/05/16 03:46:55 mlarkin Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.98 2016/05/16 05:53:27 mlarkin Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -139,7 +139,7 @@ cpu_configure(void)
 #ifdef MULTIPROCESSOR
 	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,		/* virtual */
 	    (paddr_t)MP_TRAMPOLINE,			/* physical */
-	    PROT_READ | PROT_EXEC);			/* protection */
+	    PROT_READ | PROT_WRITE | PROT_EXEC);	/* protection */
 #endif
 
 #if NACPI > 0 && !defined(SMALL_KERNEL)
