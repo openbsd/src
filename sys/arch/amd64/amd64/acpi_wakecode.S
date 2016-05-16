@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.37 2015/09/11 14:26:12 sf Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.38 2016/05/16 01:19:27 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -84,7 +84,7 @@
  */
 	.text
 	.code16
-	.align 4
+	.align 4, 0xcc
 	.global _C_LABEL(acpi_real_mode_resume)
 	.global _C_LABEL(acpi_protected_mode_resume)
 	.global _C_LABEL(acpi_long_mode_resume)
@@ -157,7 +157,7 @@ _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	ljmpl	$0x8, $acpi_protected_mode_trampoline
 
 	.code32
-	.align 16
+	.align 16, 0xcc
 _ACPI_TRMP_LABEL(acpi_protected_mode_trampoline)
 _C_LABEL(acpi_protected_mode_resume):
 	nop
@@ -225,7 +225,7 @@ _C_LABEL(acpi_protected_mode_resume):
 	ljmp 	$0x8, $acpi_long_mode_trampoline
 
 	.code64
-	.align 16
+	.align 16, 0xcc
 _ACPI_TRMP_LABEL(acpi_long_mode_trampoline)
 _C_LABEL(acpi_long_mode_resume):
 
@@ -479,7 +479,7 @@ _ACPI_TRMP_DATA_OFFSET(tmp_gdt)
 	.word	tmp_gdt_end - tmp_gdtable
 	.long	tmp_gdtable
 
-	.align 8
+	.align 8, 0xcc
 _ACPI_TRMP_DATA_LABEL(tmp_gdtable)
 	/*
 	 * null
@@ -519,30 +519,30 @@ _ACPI_TRMP_DATA_LABEL(tmp_gdtable)
 	.byte	0, 0x93, 0xcf, 0
 _ACPI_TRMP_DATA_LABEL(tmp_gdt_end)
 
-	.align 8
+	.align 8, 0xcc
 _ACPI_TRMP_DATA_OFFSET(clean_idt)
 	.word	0xffff
 	.long	0
 	.word	0
 
-	.align 8
+	.align 8, 0xcc
 _ACPI_TRMP_DATA_LABEL(tmp_gdt64)
 	.word 	tmp_gdt64_end - tmp_gdtable64
 	.long	tmp_gdtable64
 
-	.align 8
+	.align 8, 0xcc
 _ACPI_TRMP_DATA_LABEL(tmp_gdtable64)
 	.quad	0x0000000000000000
 	.quad	0x00af9a000000ffff
 	.quad	0x00cf92000000ffff
 _ACPI_TRMP_DATA_LABEL(tmp_gdt64_end)
 
-	.align 8
+	.align 8, 0xcc
 _ACPI_TRMP_DATA_LABEL(tmp_gdt6416)
 	.word 	tmp_gdt6416_end - tmp_gdtable6416
 	.quad	tmp_gdtable6416
 
-	.align 8
+	.align 8, 0xcc
 _ACPI_TRMP_DATA_LABEL(tmp_gdtable6416)
 	.quad	0x0000000000000000
 	.quad	0x00af9a000000ffff
@@ -551,7 +551,7 @@ _ACPI_TRMP_DATA_LABEL(tmp_gdtable6416)
 	.byte	(ACPI_TRAMPOLINE >> 16), 0x9a, 0, 0
 _ACPI_TRMP_DATA_LABEL(tmp_gdt6416_end)
 
-	.align 8
+	.align 8, 0xcc
 _ACPI_TRMP_DATA_LABEL(acpi_saved_rbx)
 	.quad 0
 _ACPI_TRMP_DATA_LABEL(acpi_saved_rcx)
@@ -597,26 +597,26 @@ _ACPI_TRMP_DATA_LABEL(acpi_saved_cr8)
 _ACPI_TRMP_DATA_LABEL(acpi_saved_ret)
 	.quad 0
 
-	.align 8
+	.align 8, 0xcc
 _ACPI_TRMP_DATA_LABEL(acpi_saved_idt)
 	.space 10
 
-	.align 8
+	.align 8, 0xcc
 _ACPI_TRMP_DATA_LABEL(acpi_saved_gdt)
 	.space 10
 
-	.align 8
+	.align 8, 0xcc
 _ACPI_TRMP_DATA_LABEL(acpi_saved_ldt)	
 	.space 10
 	
 _ACPI_TRMP_DATA_LABEL(acpi_saved_tr)
 	.short 0
 
-	.align 4
+	.align 4, 0xcc
 _ACPI_TRMP_DATA_LABEL(acpi_saved_efer)
 	.long 0
 
-	.align 8
+	.align 8, 0xcc
 _ACPI_TRMP_DATA_LABEL(acpi_saved_fsbase)
 	.quad 0
 _ACPI_TRMP_DATA_LABEL(acpi_saved_gsbase)
@@ -636,7 +636,7 @@ _ACPI_TRMP_DATA_LABEL(acpi_saved_apicbase)
 	.quad 0
 #endif
 
-	.align 4
+	.align 4, 0xcc
 _ACPI_TRMP_DATA_LABEL(acpi_pdirpa)
 	.long 0
 #ifdef HIBERNATE

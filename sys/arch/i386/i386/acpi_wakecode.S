@@ -81,7 +81,7 @@
 
 	.text
 	.code16
-	.align 4
+	.align 4, 0xcc
 	.global _C_LABEL(acpi_real_mode_resume)
 	.global _C_LABEL(acpi_protected_mode_resume)
 	.global _C_LABEL(acpi_resume_end)
@@ -159,7 +159,7 @@ _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	ljmpl	$0x8, $acpi_protected_mode_trampoline
 
 	.code32
-	.align 16
+	.align 16, 0xcc
 _ACPI_TRMP_LABEL(acpi_protected_mode_trampoline)
 _C_LABEL(acpi_protected_mode_resume):
 	nop
@@ -401,12 +401,12 @@ NENTRY(hibernate_flush)
 #endif /* HIBERNATE */
 
 	.code16
-	.align 8
+	.align 8, 0xcc
 _ACPI_TRMP_OFFSET(tmp_gdt)
 	.word	tmp_gdt_end - tmp_gdtable
 	.long	tmp_gdtable
 
-	.align 8
+	.align 8, 0xcc
 _ACPI_TRMP_LABEL(tmp_gdtable)
 	/*
 	 * null
@@ -446,7 +446,7 @@ _ACPI_TRMP_LABEL(tmp_gdtable)
 	.byte	0, 0x93, 0xcf, 0
 _ACPI_TRMP_LABEL(tmp_gdt_end)
 
-	.align 8
+	.align 8, 0xcc
 _ACPI_TRMP_OFFSET(clean_idt)
 	.word	0xffff
 	.long	0
@@ -456,12 +456,12 @@ _ACPI_TRMP_OFFSET(clean_idt)
 	 * gdt_16 is the gdt used when returning to real mode for bios
 	 * reads/writes (sets up a 16 bit segment)
 	 */
-	.align 8
+	.align 8, 0xcc
 _ACPI_TRMP_LABEL(gdt_16)
 	.word   gdt_16_end - gdt_16_table
 	.long   gdt_16_table
 
-	.align 8
+	.align 8, 0xcc
 _ACPI_TRMP_LABEL(gdt_16_table)
 	/*
 	 * null
@@ -502,7 +502,7 @@ _ACPI_TRMP_LABEL(gdt_16_table)
 
 _ACPI_TRMP_LABEL(gdt_16_end)
 
-	.align 4
+	.align 4, 0xcc
 _ACPI_TRMP_LABEL(acpi_saved_ebx)
 	.long 0
 _ACPI_TRMP_LABEL(acpi_saved_ecx)
@@ -530,15 +530,15 @@ _ACPI_TRMP_LABEL(acpi_saved_cr4)
 _ACPI_TRMP_LABEL(acpi_saved_ret)
 	.long 0
 
-	.align 16
+	.align 16, 0xcc
 _ACPI_TRMP_LABEL(acpi_saved_idt)
 	.space 6
 
-	.align 16
+	.align 16, 0xcc
 _ACPI_TRMP_LABEL(acpi_saved_gdt)
 	.space 6
 
-	.align 16
+	.align 16, 0xcc
 _ACPI_TRMP_LABEL(acpi_saved_ldt)
 	.short 0
 _ACPI_TRMP_LABEL(acpi_saved_cs)
