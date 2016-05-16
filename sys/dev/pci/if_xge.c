@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.72 2016/04/28 00:11:56 dlg Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.73 2016/05/16 04:34:25 dlg Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -556,7 +556,8 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	/* Create transmit DMA maps */
 	for (i = 0; i < NTXDESCS; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, XGE_MAX_FRAMELEN,
-		    NTXFRAGS, MCLBYTES, 0, BUS_DMA_NOWAIT, &sc->sc_txm[i])) {
+		    NTXFRAGS, XGE_MAX_FRAMELEN, 0, BUS_DMA_NOWAIT,
+		    &sc->sc_txm[i])) {
 			printf(": cannot create TX DMA maps\n");
 			return;
 		}
@@ -577,7 +578,8 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	/* Create receive buffer DMA maps */
 	for (i = 0; i < NRXREAL; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, XGE_MAX_FRAMELEN,
-		    NRXFRAGS, MCLBYTES, 0, BUS_DMA_NOWAIT, &sc->sc_rxm[i])) {
+		    NRXFRAGS, XGE_MAX_FRAMELEN, 0, BUS_DMA_NOWAIT,
+		    &sc->sc_rxm[i])) {
 			printf(": cannot create RX DMA maps\n");
 			return;
 		}
@@ -679,9 +681,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = xge_ioctl;
 	ifp->if_start = xge_start;
-#ifdef XGE_JUMBO
 	ifp->if_hardmtu = XGE_MAX_MTU;
-#endif
 	IFQ_SET_MAXLEN(&ifp->if_snd, NTXDESCS - 1);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
@@ -797,11 +797,7 @@ xge_init(struct ifnet *ifp)
 	}
 
 	/* set MRU */
-#ifdef XGE_JUMBO
 	PIF_WCSR(RMAC_MAX_PYLD_LEN, RMAC_PYLD_LEN(XGE_MAX_FRAMELEN));
-#else
-	PIF_WCSR(RMAC_MAX_PYLD_LEN, RMAC_PYLD_LEN(ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN));
-#endif
 
 	/* 56, enable the transmit laser */
 	val = PIF_RCSR(ADAPTER_CONTROL);
@@ -1343,12 +1339,12 @@ xge_add_rxbuf(struct xge_softc *sc, int id)
 	MGETHDR(m[0], M_DONTWAIT, MT_DATA);
 	if (m[0] == NULL)
 		return (ENOBUFS);
-	MCLGET(m[0], M_DONTWAIT);
+	MCLGETI(m[0], M_DONTWAIT, NULL, XGE_MAX_FRAMELEN + ETHER_ALIGN);
 	if ((m[0]->m_flags & M_EXT) == 0) {
 		m_freem(m[0]);
 		return (ENOBUFS);
 	}
-	m[0]->m_len = m[0]->m_pkthdr.len = m[0]->m_ext.ext_size;
+	m[0]->m_len = m[0]->m_pkthdr.len = XGE_MAX_FRAMELEN + ETHER_ALIGN;
 #elif RX_MODE == RX_MODE_3
 #error missing rxmode 3.
 #elif RX_MODE == RX_MODE_5
