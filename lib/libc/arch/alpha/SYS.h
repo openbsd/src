@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.13 2015/10/23 04:39:24 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.14 2016/05/16 16:20:58 guenther Exp $	*/
 /*	$NetBSD: SYS.h,v 1.4 1996/10/17 03:03:53 cgd Exp $	*/
 
 /*
@@ -29,7 +29,12 @@
  */
 
 #include <machine/asm.h>
+#include <machine/pal.h>		/* for PAL_rdunique */
 #include <sys/syscall.h>
+
+
+/* offsetof(struct tib, tib_errno) - offsetof(struct tib, __tib_tcb) */
+#define	TCB_OFFSET_ERRNO	(-12)
 
 /*
  * We define a hidden alias with the prefix "_libc_" for each global symbol
@@ -67,7 +72,11 @@
 LLABEL(name,0):							\
 	LDGP(gp);						\
 	beq	a3, LLABEL(name,1);				\
-	jmp	zero, __cerror;					\
+	mov	v0, t0;						\
+	call_pal PAL_rdunique;					\
+	stl	t0, TCB_OFFSET_ERRNO(v0);			\
+	ldiq	v0, -1;						\
+	RET;							\
 LLABEL(name,1):
 
 #define __LEAF(p,n,e)						\

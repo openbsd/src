@@ -1,7 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.7 2016/05/07 19:05:21 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 2016/05/16 16:20:58 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.4 1996/10/17 02:58:18 cgd Exp $
-
-CERROR=	cerror.S
 
 # `source' files built from m4 source
 SRCS+=	__divqu.S __divq.S __divlu.S __divl.S
