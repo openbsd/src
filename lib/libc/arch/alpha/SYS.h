@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.14 2016/05/16 16:20:58 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.15 2016/05/16 16:25:06 guenther Exp $	*/
 /*	$NetBSD: SYS.h,v 1.4 1996/10/17 03:03:53 cgd Exp $	*/
 
 /*
@@ -68,9 +68,6 @@
 
 #define	CALLSYS_ERROR(name)					\
 	CALLSYS_NOERROR(name);					\
-	br	gp, LLABEL(name,0);				\
-LLABEL(name,0):							\
-	LDGP(gp);						\
 	beq	a3, LLABEL(name,1);				\
 	mov	v0, t0;						\
 	call_pal PAL_rdunique;					\
