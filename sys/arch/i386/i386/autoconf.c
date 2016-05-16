@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.96 2016/03/15 03:17:50 guenther Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.97 2016/05/16 03:46:55 mlarkin Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -137,15 +137,15 @@ cpu_configure(void)
 #endif
 
 #ifdef MULTIPROCESSOR
-	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,          /* virtual */
-	    (paddr_t)MP_TRAMPOLINE,                     /* physical */
-	    PROT_READ | PROT_WRITE | PROT_EXEC);        /* protection */
+	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,		/* virtual */
+	    (paddr_t)MP_TRAMPOLINE,			/* physical */
+	    PROT_READ | PROT_EXEC);			/* protection */
 #endif
 
 #if NACPI > 0 && !defined(SMALL_KERNEL)
-	pmap_kenter_pa((vaddr_t)ACPI_TRAMPOLINE,        /* virtual */
-	    (paddr_t)ACPI_TRAMPOLINE,                   /* physical */
-	    PROT_READ | PROT_WRITE | PROT_EXEC);        /* protection */
+	pmap_kenter_pa((vaddr_t)ACPI_TRAMPOLINE,	/* virtual */
+	    (paddr_t)ACPI_TRAMPOLINE,			/* physical */
+	    PROT_READ | PROT_WRITE | PROT_EXEC);	/* protection */
 #endif
 
 	if (config_rootfound("mainbus", NULL) == NULL)
