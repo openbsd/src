@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.184 2016/03/19 12:04:15 natano Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.185 2016/05/17 08:27:17 kettenis Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -31,6 +31,7 @@
 #include <sys/poll.h>
 #include <sys/timeout.h>
 #include <sys/kthread.h>
+#include <sys/stdint.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -74,6 +75,7 @@ struct uvideo_softc {
 
 	struct uvideo_mmap			 sc_mmap[UVIDEO_MAX_BUFFERS];
 	uint8_t					*sc_mmap_buffer;
+	size_t					 sc_mmap_buffer_size;
 	q_mmap					 sc_mmap_q;
 	int					 sc_mmap_count;
 	int					 sc_mmap_cur;
@@ -1685,8 +1687,9 @@ uvideo_vs_free_frame(struct uvideo_softc *sc)
 	}
 
 	if (sc->sc_mmap_buffer != NULL) {
-		free(sc->sc_mmap_buffer, M_DEVBUF, 0);
+		free(sc->sc_mmap_buffer, M_DEVBUF, sc->sc_mmap_buffer_size);
 		sc->sc_mmap_buffer = NULL;
+		sc->sc_mmap_buffer_size = 0;
 	}
 
 	while (!SIMPLEQ_EMPTY(&sc->sc_mmap_q))
@@ -3171,13 +3174,20 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 
 	/* allocate the total mmap buffer */	
 	buf_size = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
+	if (buf_size >= SIZE_MAX / UVIDEO_MAX_BUFFERS) {
+		printf("%s: video frame size too large!\n", DEVNAME(sc));
+		sc->sc_mmap_count = 0;
+		return (EINVAL);
+	}
 	buf_size_total = sc->sc_mmap_count * buf_size;
 	buf_size_total = round_page(buf_size_total); /* page align buffer */
 	sc->sc_mmap_buffer = malloc(buf_size_total, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_mmap_buffer == NULL) {
 		printf("%s: can't allocate mmap buffer!\n", DEVNAME(sc));
+		sc->sc_mmap_count = 0;
 		return (EINVAL);
 	}
+	sc->sc_mmap_buffer_size = buf_size_total;
 	DPRINTF(1, "%s: allocated %d bytes mmap buffer\n",
 	    DEVNAME(sc), buf_size_total);
 
@@ -3216,7 +3226,8 @@ uvideo_querybuf(void *v, struct v4l2_buffer *qb)
 	struct uvideo_softc *sc = v;
 
 	if (qb->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
-	    qb->memory != V4L2_MEMORY_MMAP)
+	    qb->memory != V4L2_MEMORY_MMAP ||
+	    qb->index >= sc->sc_mmap_count)
 		return (EINVAL);
 
 	bcopy(&sc->sc_mmap[qb->index].v4l2_buf, qb,
@@ -3236,6 +3247,11 @@ uvideo_qbuf(void *v, struct v4l2_buffer *qb)
 {
 	struct uvideo_softc *sc = v;
 
+	if (qb->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
+	    qb->memory != V4L2_MEMORY_MMAP ||
+	    qb->index >= sc->sc_mmap_count)
+		return (EINVAL);
+
 	sc->sc_mmap[qb->index].v4l2_buf.flags &= ~V4L2_BUF_FLAG_DONE;
 	sc->sc_mmap[qb->index].v4l2_buf.flags |= V4L2_BUF_FLAG_MAPPED;
 	sc->sc_mmap[qb->index].v4l2_buf.flags |= V4L2_BUF_FLAG_QUEUED;
@@ -3252,6 +3268,10 @@ uvideo_dqbuf(void *v, struct v4l2_buffer *dqb)
 	struct uvideo_softc *sc = v;
 	struct uvideo_mmap *mmap;
 	int error;
+
+	if (dqb->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
+	    dqb->memory != V4L2_MEMORY_MMAP)
+		return (EINVAL);
 
 	if (SIMPLEQ_EMPTY(&sc->sc_mmap_q)) {
 		/* mmap queue is empty, block until first frame is queued */
@@ -3569,6 +3589,9 @@ uvideo_mappage(void *v, off_t off, int prot)
 {
 	struct uvideo_softc *sc = v;
 	caddr_t p;
+
+	if (off >= sc->sc_mmap_buffer_size)
+		return NULL;
 
 	if (!sc->sc_mmap_flag)
 		sc->sc_mmap_flag = 1;
