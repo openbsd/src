@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.69 2016/02/21 22:53:40 tb Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.70 2016/05/17 20:54:07 millert Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -117,9 +117,19 @@ main(int argc, char **argv)
 		exit(0);
 	}
 
-	if (pledge("stdio rpath wpath cpath fattr flock tty proc exec getpw",
-	    NULL) == -1)
-		err(1, "pledge");
+	if (getuid() != 0) {
+		if (pledge("stdio rpath wpath cpath fattr flock tty proc exec "
+		    "getpw", NULL) == -1)
+			err(1, "pledge");
+	} else if (argc == 1) {
+		if (pledge("stdio rpath wpath cpath fattr flock tty getpw id",
+		    NULL) == -1)
+			err(1, "pledge");
+	} else {
+		if (pledge("stdio rpath wpath cpath fattr flock tty getpw",
+		    NULL) == -1)
+			err(1, "pledge");
+	}
 
 	/* Build up a default seed based on the hostname and some randomness */
 	if (gethostname(hostname, sizeof(hostname)) < 0)
@@ -148,9 +158,17 @@ main(int argc, char **argv)
 			} else {
 				errx(1, "User unknown: %s", argv[0]);
 			}
-		} else if (strcmp(pp->pw_name, me) != 0 && getuid() != 0) {
-			/* Only root can change other's S/Keys. */
-			errx(1, "Permission denied.");
+		} else if (getuid() == 0) {
+			/* So the file ends up owned by the proper ID. */
+			if (setresuid(-1, pp->pw_uid, -1) != 0)
+			    errx(1, "unable to change user ID to %u",
+				pp->pw_uid);
+			if (pledge("stdio rpath wpath cpath fattr flock tty",
+			    NULL) == -1)
+				err(1, "pledge");
+		} else {
+			if (strcmp(pp->pw_name, me) != 0)
+				errx(1, "Permission denied.");
 		}
 	}
 
