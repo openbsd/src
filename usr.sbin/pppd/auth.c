@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.36 2016/05/09 17:32:24 tedu Exp $	*/
+/*	$OpenBSD: auth.c,v 1.37 2016/05/17 20:51:56 tedu Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -94,16 +94,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#ifdef USE_PAM
-#include <security/pam_appl.h>
-#endif
 
-#ifdef HAS_SHADOW
-#include <shadow.h>
-#ifndef PW_PPP
-#define PW_PPP PW_LOGIN
-#endif
-#endif
 
 #include "pppd.h"
 #include "fsm.h"
@@ -734,75 +725,6 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg, msglen)
 }
 
 /*
- * This function is needed for PAM.
- */
-
-#ifdef USE_PAM
-static char *PAM_username = "";
-static char *PAM_password = "";
-
-#ifdef PAM_ESTABLISH_CRED       /* new PAM defines :(^ */
-#define MY_PAM_STRERROR(err_code)  (char *) pam_strerror(pamh,err_code)
-#else
-#define MY_PAM_STRERROR(err_code)  (char *) pam_strerror(err_code)
-#endif
-
-static int pam_conv (int num_msg,
-                     const struct pam_message **msg,
-                     struct pam_response **resp,
-                     void *appdata_ptr)
-{
-    int count = 0, replies = 0;
-    struct pam_response *reply = NULL;
-    int size = 0;
-
-    for (count = 0; count < num_msg; count++)
-      {
-	struct pam_response *newreply;
-	int newsize = size + sizeof (struct pam_response);
-	newreply = realloc (reply, newsize); /* ANSI: is malloc() if reply==NULL */
-	if (!newreply) {
-	    free(reply);
-	    reply = NULL;
-	    return PAM_CONV_ERR;
-	}
-	reply = newreply;
-	size = newsize;
-
-	switch (msg[count]->msg_style)
-	  {
-	case PAM_PROMPT_ECHO_ON:
-	    reply[replies].resp_retcode = PAM_SUCCESS;
-	    reply[replies++].resp = strdup(PAM_username); /* never NULL */
-	    break;
-
-	case PAM_PROMPT_ECHO_OFF:
-	    reply[replies].resp_retcode = PAM_SUCCESS;
-	    reply[replies++].resp = strdup(PAM_password); /* never NULL */
-	    break;
-
-	case PAM_TEXT_INFO:
-	    reply[replies].resp_retcode = PAM_SUCCESS;
-	    reply[replies++].resp = NULL;
-	    break;
-
-	case PAM_ERROR_MSG:
-	default:
-	    free (reply);
-	    return PAM_CONV_ERR;
-	  }
-      }
-
-    if (resp)
-        *resp = reply;
-    else
-        free (reply);
-
-    return PAM_SUCCESS;
-}
-#endif
-
-/*
  * plogin - Check the user name and password against the system
  * password database, and login the user if OK.
  *
@@ -820,64 +742,10 @@ plogin(user, passwd, msg, msglen)
     int *msglen;
 {
 
-#ifdef USE_PAM
-
-    struct pam_conv pam_conversation;
-    pam_handle_t *pamh;
-    int pam_error;
-/*
- * Fill the pam_conversion structure
- */
-    memset (&pam_conversation, '\0', sizeof (struct pam_conv));
-    pam_conversation.conv = &pam_conv;
-
-    pam_error = pam_start ("ppp", user, &pam_conversation, &pamh);
-
-    if (pam_error != PAM_SUCCESS) {
-	*msg = MY_PAM_STRERROR (pam_error);
-	return UPAP_AUTHNAK;
-    }
-/*
- * Define the fields for the credential validation
- */
-    (void) pam_set_item (pamh, PAM_TTY, devnam);
-    PAM_username = user;
-    PAM_password = passwd;
-/*
- * Validate the user
- */
-    pam_error = pam_authenticate (pamh, PAM_SILENT);
-    if (pam_error == PAM_SUCCESS) {
-        pam_error = pam_acct_mgmt (pamh, PAM_SILENT);
-
-	/* start a session for this user. Session closed when link ends. */
-	if (pam_error == PAM_SUCCESS)
-	    (void) pam_open_session (pamh, PAM_SILENT);
-    }
-
-    *msg = MY_PAM_STRERROR (pam_error);
-
-    PAM_username =
-    PAM_password = "";
-/*
- * Clean up the mess
- */
-    (void) pam_end (pamh, pam_error);
-
-    if (pam_error != PAM_SUCCESS)
-        return UPAP_AUTHNAK;
-/*
- * Use the non-PAM methods directly
- */
-#else /* #ifdef USE_PAM */
 
     struct passwd *pw;
     char *tty;
 
-#ifdef HAS_SHADOW
-    struct spwd *spwd;
-    struct spwd *getspnam();
-#endif
 
     pw = getpwnam_shadow(user);
     endpwent();
@@ -885,23 +753,6 @@ plogin(user, passwd, msg, msglen)
 	return (UPAP_AUTHNAK);
     }
 
-#ifdef HAS_SHADOW
-    spwd = getspnam(user);
-    endspent();
-    if (spwd) {
-	/* check the age of the password entry */
-	long now = time(NULL) / 86400L;
-
-	if ((spwd->sp_expire > 0 && now >= spwd->sp_expire)
-	    || ((spwd->sp_max >= 0 && spwd->sp_max < 10000)
-		&& spwd->sp_lstchg >= 0
-		&& now >= spwd->sp_lstchg + spwd->sp_max)) {
-	    syslog(LOG_WARNING, "Password for %s has expired", user);
-	    return (UPAP_AUTHNAK);
-	}
-	pw->pw_passwd = spwd->sp_pwdp;
-    }
-#endif
 
     /*
      * If no passwd, don't let them login.
@@ -909,12 +760,6 @@ plogin(user, passwd, msg, msglen)
     if (pw->pw_passwd == NULL || *pw->pw_passwd == '\0'
 	|| strcmp(crypt(passwd, pw->pw_passwd), pw->pw_passwd) != 0)
 	return (UPAP_AUTHNAK);
-
-    /* These functions are not enabled for PAM. The reason for this is that */
-    /* there is not necessarily a "passwd" entry for this user. That is     */
-    /* real purpose of 'PAM' -- to virtualize the account data from the     */
-    /* application. If you want to do the same thing, write the entry in    */
-    /* the 'session' hook.                                                  */
 
     /*
      * Write a wtmp entry for this user.
@@ -941,7 +786,6 @@ plogin(user, passwd, msg, msglen)
     }
 #endif
 
-#endif /* #ifdef USE_PAM */
 
     syslog(LOG_INFO, "user %s logged in", user);
     logged_in = TRUE;
@@ -955,33 +799,12 @@ plogin(user, passwd, msg, msglen)
 static void
 plogout()
 {
-#ifdef USE_PAM
-    struct pam_conv pam_conversation;
-    pam_handle_t *pamh;
-    int pam_error;
-/*
- * Fill the pam_conversion structure. The PAM specification states that the
- * session must be able to be closed by a totally different handle from which
- * it was created. Hold the PAM group to their own specification!
- */
-    memset (&pam_conversation, '\0', sizeof (struct pam_conv));
-    pam_conversation.conv = &pam_conv;
-
-    pam_error = pam_start ("ppp", user, &pam_conversation, &pamh);
-    if (pam_error == PAM_SUCCESS) {
-        (void) pam_set_item (pamh, PAM_TTY, devnam);
-        (void) pam_close_session (pamh, PAM_SILENT);
-	(void) pam_end (pamh, PAM_SUCCESS);
-    }
-
-#else
     char *tty;
 
     tty = devnam;
     if (strncmp(tty, "/dev/", 5) == 0)
 	tty += 5;
     logwtmp(tty, "", "");		/* Wipe out utmp logout entry */
-#endif
 
     logged_in = FALSE;
 }
