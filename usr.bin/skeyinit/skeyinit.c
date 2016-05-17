@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.71 2016/05/17 23:07:47 tb Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.72 2016/05/17 23:36:29 tb Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -50,7 +50,7 @@ main(int argc, char **argv)
 	char	hostname[HOST_NAME_MAX+1];
 	char	seed[SKEY_MAX_SEED_LEN + 1];
 	char    buf[256], key[SKEY_BINKEY_SIZE], filename[PATH_MAX], *ht;
-	char    lastc, me[UT_NAMESIZE + 1], *p, *auth_type;
+	char    lastc, *p, *auth_type;
 	const char *errstr;
 	struct skey skey;
 	struct passwd *pp;
@@ -121,44 +121,43 @@ main(int argc, char **argv)
 		if (pledge("stdio rpath wpath cpath fattr flock tty proc exec "
 		    "getpw", NULL) == -1)
 			err(1, "pledge");
-	} else if (argc == 1) {
+
+		if ((pp = getpwuid(getuid())) == NULL)
+			err(1, "no user with uid %u", getuid());
+
+		if (argc == 1) {
+			char me[UT_NAMESIZE + 1]; 
+
+			(void)strlcpy(me, pp->pw_name, sizeof me);
+			if ((pp = getpwnam(argv[0])) == NULL)
+				errx(1, "User unknown: %s", argv[0]);
+			if (strcmp(pp->pw_name, me) != 0)
+				errx(1, "Permission denied.");
+		}
+	} else {
 		if (pledge("stdio rpath wpath cpath fattr flock tty getpw id",
 		    NULL) == -1)
 			err(1, "pledge");
-	} else {
-		if (pledge("stdio rpath wpath cpath fattr flock tty getpw",
-		    NULL) == -1)
-			err(1, "pledge");
-	}
 
-	if ((pp = getpwuid(getuid())) == NULL)
-		err(1, "no user with uid %u", getuid());
-	(void)strlcpy(me, pp->pw_name, sizeof me);
-
-	/* Check for optional user string. */
-	if (argc == 1) {
-		if ((pp = getpwnam(argv[0])) == NULL) {
-			if (getuid() == 0) {
+		if (argc == 1) {
+			if ((pp = getpwnam(argv[0])) == NULL) {
 				static struct passwd _pp;
 
 				_pp.pw_name = argv[0];
 				pp = &_pp;
 				warnx("Warning, user unknown: %s", argv[0]);
 			} else {
-				errx(1, "User unknown: %s", argv[0]);
+				/* So the file ends up owned by the proper ID */
+				if (setresuid(-1, pp->pw_uid, -1) != 0)
+					errx(1, "unable to change uid to %u",
+					    pp->pw_uid);
 			}
-		} else if (getuid() == 0) {
-			/* So the file ends up owned by the proper ID. */
-			if (setresuid(-1, pp->pw_uid, -1) != 0)
-				errx(1, "unable to change user ID to %u",
-				    pp->pw_uid);
-			if (pledge("stdio rpath wpath cpath fattr flock tty",
-			    NULL) == -1)
-				err(1, "pledge");
-		} else {
-			if (strcmp(pp->pw_name, me) != 0)
-				errx(1, "Permission denied.");
-		}
+		} else if ((pp = getpwuid(0)) == NULL)
+			err(1, "no user with uid 0");
+
+		if (pledge("stdio rpath wpath cpath fattr flock tty", NULL)
+		    == -1)
+			err(1, "pledge");
 	}
 
 	switch (skey_haskey(pp->pw_name)) {
