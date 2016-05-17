@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.4 2016/05/14 21:22:56 kettenis Exp $	*/
+/*	$OpenBSD: exec.c,v 1.5 2016/05/17 21:26:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2016 Mark Kettenis
@@ -17,20 +17,19 @@
  */
 
 #include <sys/param.h>
+#include <sys/reboot.h>
+#include <machine/bootconfig.h>
+#include <dev/cons.h>
 
 #include <lib/libsa/loadfile.h>
-
-#ifdef BOOT_ELF
 #include <sys/exec_elf.h>
-#endif
-
-#include <sys/reboot.h>
-#include <stand/boot/cmd.h>
-#include <machine/bootconfig.h>
 
 #include <efi.h>
+#include <stand/boot/cmd.h>
 
-extern EFI_BOOT_SERVICES *BS;
+#include "efiboot.h"
+
+extern void *fdt;
 
 typedef void (*startfuncp)(void *, void *, void *) __attribute__ ((noreturn));
 
@@ -86,6 +85,7 @@ run_loadfile(u_long *marks, int howto)
 	u_long offset = 0;
 	char args[256];
 	char *cp;
+	void *fdt;
 	int i;
 
 	/*
@@ -121,20 +121,24 @@ run_loadfile(u_long *marks, int howto)
 	else
 		*++cp = 0;
 
-	tags[0].hdr.tag = ATAG_MEM;
-	tags[0].hdr.size = sizeof(struct uboot_tag) / sizeof(uint32_t);
-	tags[0].u.mem.start = 0x10000000;
-	tags[0].u.mem.size = 0x80000000;
-	tags[1].hdr.tag = ATAG_CMDLINE;
-	tags[1].hdr.size = sizeof(struct uboot_tag) / sizeof(uint32_t);
-	strlcpy(tags[1].u.cmdline.cmdline, args,
-	    sizeof(tags[1].u.cmdline.cmdline));
+	fdt = efi_makebootargs(args);
+	if (fdt == 0) {
+		tags[0].hdr.tag = ATAG_MEM;
+		tags[0].hdr.size = sizeof(struct uboot_tag) / sizeof(uint32_t);
+		tags[0].u.mem.start = 0x10000000;
+		tags[0].u.mem.size = 0x80000000;
+		tags[1].hdr.tag = ATAG_CMDLINE;
+		tags[1].hdr.size = sizeof(struct uboot_tag) / sizeof(uint32_t);
+		strlcpy(tags[1].u.cmdline.cmdline, args,
+			sizeof(tags[1].u.cmdline.cmdline));
 
-	memcpy((void *)0x10000000, tags, sizeof(tags));
+		memcpy((void *)0x10000000, tags, sizeof(tags));
+		fdt = (void *)0x10000000;
+	}
 
 	efi_cleanup();
 
-	(*(startfuncp)(marks[MARK_ENTRY]))(NULL, (void *)4821, (void *)0x10000000);
+	(*(startfuncp)(marks[MARK_ENTRY]))(NULL, (void *)4821, fdt);
 
 	/* NOTREACHED */
 }

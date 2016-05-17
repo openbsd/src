@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.h,v 1.1 2016/05/14 17:55:15 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.h,v 1.2 2016/05/17 21:26:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -16,12 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-void	 efi_cleanup(void);
-void	 efi_cons_probe (struct consdev *);
-void	 efi_memprobe (void);
-void	 efi_hardprobe (void);
-void	 efi_diskprobe (void);
-void	 efi_cons_init (struct consdev *);
-int	 efi_cons_getc (dev_t);
-void	 efi_cons_putc (dev_t, int);
-int	 efi_cons_getshifts(dev_t dev);
+void	efi_cleanup(void);
+void	efi_diskprobe(void);
+void	*efi_makebootargs(char *);
+void	efi_cons_probe(struct consdev *);
+void	efi_cons_init(struct consdev *);
+int	efi_cons_getc(dev_t);
+void	efi_cons_putc(dev_t, int);

@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.1 2016/05/14 17:55:15 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.2 2016/05/17 21:26:32 kettenis Exp $
 
 PROG=		BOOTARM.EFI
 NOMAN=		#
 OBJFMT=		binary
-SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c
+SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c fdt.c
 
 S=		${.CURDIR}/../../../..
 EFIDIR=		${S}/stand/efi
@@ -17,9 +17,9 @@ LDFLAGS+=-nostdlib -T ${.CURDIR}/ldscript.arm -Bsymbolic -shared
 SRCS+=	boot.c cmd.c vars.c
 
 .PATH:	${S}/lib/libsa
-SRCS+=	alloc.c ctime.c exit.c getchar.c memcmp.o memcpy.o memset.c printf.c \
-	putchar.c snprintf.c strchr.c strcmp.c strerror.c strncmp.c strncpy.c \
-	strtol.c
+SRCS+=	alloc.c ctime.c exit.c getchar.c memcmp.o memcpy.o memmove.c memset.c \
+	printf.c putchar.c snprintf.c strchr.c strcmp.c strerror.c strncmp.c \
+	strncpy.c strtol.c
 SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
 	lseek.c open.c read.c readdir.c stat.c
 SRCS+=	loadfile.c
