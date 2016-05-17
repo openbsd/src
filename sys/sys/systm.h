@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.112 2016/05/10 23:54:01 bluhm Exp $	*/
+/*	$OpenBSD: systm.h,v 1.113 2016/05/17 23:28:03 bluhm Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -98,8 +98,6 @@ extern struct vnode *rootvp;	/* vnode equivalent to above */
 
 extern dev_t swapdev;		/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
-
-extern struct vnode *consolevp; /* vnode of console tty device */
 
 struct proc;
 struct process;
