@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.3 2016/05/16 21:38:35 kettenis Exp $ */
+/* $OpenBSD: imxiic.c,v 1.4 2016/05/17 00:04:35 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -85,6 +85,7 @@ int imxiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 #define HCLR2(sc, reg, bits)						\
 	HWRITE2((sc), (reg), HREAD2((sc), (reg)) & ~(bits))
 
+void imxiic_scan(struct device *, struct i2cbus_attach_args *, void *);
 
 struct cfattach imxiic_ca = {
 	sizeof(struct imxiic_softc), NULL, imxiic_attach, imxiic_detach
@@ -137,7 +138,8 @@ imxiic_attach(struct device *parent, struct device *self, void *args)
 	bzero(&iba, sizeof iba);
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->i2c_tag;
-	config_found(&sc->sc_dev, &iba, NULL);
+	iba.iba_bus_scan = imxiic_scan;
+	config_found(&sc->sc_dev, &iba, iicbus_print);
 }
 
 void
@@ -379,4 +381,18 @@ imxiic_detach(struct device *self, int flags)
 
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 	return 0;
+}
+
+void
+imxiic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
+{
+	extern int iic_print(void *, const char *);
+	struct i2c_attach_args ia;
+
+	memset(&ia, 0, sizeof(ia));
+	ia.ia_tag = iba->iba_tag;
+	ia.ia_addr = 0x68;
+	ia.ia_name = "pcf8523";
+	
+	config_found(self, &ia, iic_print);
 }

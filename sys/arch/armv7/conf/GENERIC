@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.9 2016/05/02 08:15:55 patrick Exp $
+#	$OpenBSD: GENERIC,v 1.10 2016/05/17 00:04:35 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -126,6 +126,7 @@ exuart*		at exynos?
 
 crosec*		at iic?
 wskbd*		at crosec? mux 1
+pcfrtc*		at iic?
 tpspmic*	at iic?
 
 # virtio devices
