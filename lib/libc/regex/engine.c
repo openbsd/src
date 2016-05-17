@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.19 2015/12/28 23:01:22 mmcc Exp $	*/
+/*	$OpenBSD: engine.c,v 1.20 2016/05/17 22:03:18 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -506,9 +506,9 @@ backref(struct match *m, char *start, char *stop, sopno startst, sopno stopst,
 				return(NULL);
 			break;
 		case OBOL:
-			if ( (sp == m->beginp && !(m->eflags&REG_NOTBOL)) ||
-					(sp < m->endp && *(sp-1) == '\n' &&
-						(m->g->cflags&REG_NEWLINE)) )
+			if ((sp == m->beginp && !(m->eflags&REG_NOTBOL)) ||
+			    (sp > m->offp && sp < m->endp &&
+			     *(sp-1) == '\n' && (m->g->cflags&REG_NEWLINE)))
 				{ /* yes */ }
 			else
 				return(NULL);
