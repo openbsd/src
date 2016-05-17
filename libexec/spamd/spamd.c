@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.141 2016/04/27 10:24:50 mestre Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.142 2016/05/17 17:51:47 jca Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -1470,7 +1470,7 @@ main(int argc, char *argv[])
 			syslog(LOG_ERR, "pipe (%m)");
 			exit(1);
 		}
-		/* open pipe to recieve spamtrap configs */
+		/* open pipe to receive spamtrap configs */
 		if (pipe(trappipe) == -1) {
 			syslog(LOG_ERR, "pipe (%m)");
 			exit(1);
