@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.179 2016/02/19 19:15:59 stefan Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.180 2016/05/17 21:05:49 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -227,7 +227,7 @@ struct rand_event {
 	u_int re_val;
 } rnd_event_space[QEVLEN];
 /* index of next free slot */
-int rnd_event_idx;
+u_int rnd_event_idx;
 
 struct timeout rnd_timeout;
 struct rndstats rndstats;
@@ -257,6 +257,9 @@ rnd_get(void)
 {
 	if (rnd_event_idx == 0)
 		return NULL;
+	/* if it wrapped around, start dequeuing at the end */
+	if (rnd_event_idx > QEVLEN)
+		rnd_event_idx = QEVLEN;
 
 	return &rnd_event_space[--rnd_event_idx];
 }
@@ -264,13 +267,15 @@ rnd_get(void)
 static __inline struct rand_event *
 rnd_put(void)
 {
-	if (rnd_event_idx == QEVLEN)
-		return NULL;
+	u_int idx = rnd_event_idx++;
+	
+	/* allow wrapping. caller will use xor. */
+	idx = idx % QEVLEN;
 
-	return &rnd_event_space[rnd_event_idx++];
+	return &rnd_event_space[idx];
 }
 
-static __inline int
+static __inline u_int
 rnd_qlen(void)
 {
 	return rnd_event_idx;
@@ -284,11 +289,9 @@ rnd_qlen(void)
  * The number "val" is also added to the pool - it should somehow describe
  * the type of event which just happened.  Currently the values of 0-255
  * are for keyboard scan codes, 256 and upwards - for interrupts.
- * On the i386, this is assumed to be at most 16 bits, and the high bits
- * are used for a high-resolution timer.
  */
 void
-enqueue_randomness(int state, int val)
+enqueue_randomness(u_int state, u_int val)
 {
 	int	delta, delta2, delta3;
 	struct timer_rand_state *p;
@@ -297,7 +300,7 @@ enqueue_randomness(int state, int val)
 	u_int	time, nbits;
 
 #ifdef DIAGNOSTIC
-	if (state < 0 || state >= RND_SRC_NUM)
+	if (state >= RND_SRC_NUM)
 		return;
 #endif
 
@@ -362,28 +365,17 @@ enqueue_randomness(int state, int val)
 
 	mtx_enter(&entropylock);
 	if (!p->dont_count_entropy) {
-		/*
-		 * the logic is to drop low-entropy entries,
-		 * in hope for dequeuing to be more randomfull
-		 */
-		if (rnd_qlen() > QEVSLOW && nbits < QEVSBITS) {
-			rndstats.rnd_drople++;
-			goto done;
-		}
 		p->last_time = time;
 		p->last_delta  = delta3;
 		p->last_delta2 = delta2;
 	}
 
-	if ((rep = rnd_put()) == NULL) {
-		rndstats.rnd_drops++;
-		goto done;
-	}
+	rep = rnd_put();
 
 	rep->re_state = p;
 	rep->re_nbits = nbits;
-	rep->re_time = ts.tv_nsec ^ (ts.tv_sec << 20);
-	rep->re_val = val;
+	rep->re_time += ts.tv_nsec ^ (ts.tv_sec << 20);
+	rep->re_val += val;
 
 	rndstats.rnd_enqs++;
 	rndstats.rnd_ed[nbits]++;
@@ -393,7 +385,7 @@ enqueue_randomness(int state, int val)
 	if (rnd_qlen() > QEVSLOW/2 && timeout_initialized(&rnd_timeout) &&
 	    !timeout_pending(&rnd_timeout))
 		timeout_add(&rnd_timeout, 1);
-done:
+
 	mtx_leave(&entropylock);
 }
 
