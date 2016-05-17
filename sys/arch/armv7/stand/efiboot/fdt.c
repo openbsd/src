@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.2 2016/05/17 22:41:20 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.3 2016/05/17 23:16:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -19,6 +19,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+
+#include <lib/libkern/libkern.h>
 
 #include "fdt.h"
 

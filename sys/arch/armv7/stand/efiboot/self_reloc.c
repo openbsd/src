@@ -24,8 +24,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/exec_elf.h>
 #include <machine/reloc.h>
 
@@ -69,7 +68,7 @@ self_reloc(Elf_Addr baseaddr, ElfW_Dyn *dynamic)
 {
 	Elf_Word relsz, relent;
 	Elf_Addr *newaddr;
-	ElfW_Rel *rel;
+	ElfW_Rel *rel = NULL;
 	ElfW_Dyn *dynp;
 
 	/*
