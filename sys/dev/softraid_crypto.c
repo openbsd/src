@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.126 2016/04/12 16:26:54 krw Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.127 2016/05/17 19:28:59 tedu Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -646,8 +646,6 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 	    FREAD, NOCRED, curproc)) {
 		DNPRINTF(SR_D_META, "%s: sr_crypto_create_key_disk ioctl "
 		    "failed\n", DEVNAME(sc));
-		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, curproc);
-		vput(vn);
 		goto fail;
 	}
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
