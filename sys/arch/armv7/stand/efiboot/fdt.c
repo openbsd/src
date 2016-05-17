@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.1 2016/05/17 21:26:32 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.2 2016/05/17 22:41:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -253,7 +253,7 @@ fdt_node_set_property(void *node, char *name, char *data, int len)
 			tree.end += delta;
 			*(ptr + 1) = htobe32(len);
 			memcpy(ptr + 3, data, len);
-			return;
+			return 1;
 		}
 		ptr = next;
 	}
@@ -458,6 +458,23 @@ fdt_parent_node(void *node)
 		return NULL;
 
 	return fdt_parent_node_recurse(pnode, node);
+}
+
+int
+fdt_node_is_compatible(void *node, const char *name)
+{
+	char *data;
+	int len;
+
+	len = fdt_node_property(node, "compatible", &data);
+	while (len > 0) {
+		if (strcmp(data, name) == 0)
+			return 1;
+		len -= strlen(data) + 1;
+		data += strlen(data) + 1;
+	}
+
+	return 0;
 }
 
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.5 2016/05/17 21:26:32 kettenis Exp $	*/
+/*	$OpenBSD: exec.c,v 1.6 2016/05/17 22:41:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2016 Mark Kettenis
@@ -86,6 +86,7 @@ run_loadfile(u_long *marks, int howto)
 	char args[256];
 	char *cp;
 	void *fdt;
+	uint32_t board_id;
 	int i;
 
 	/*
@@ -121,7 +122,7 @@ run_loadfile(u_long *marks, int howto)
 	else
 		*++cp = 0;
 
-	fdt = efi_makebootargs(args);
+	fdt = efi_makebootargs(args, &board_id);
 	if (fdt == 0) {
 		tags[0].hdr.tag = ATAG_MEM;
 		tags[0].hdr.size = sizeof(struct uboot_tag) / sizeof(uint32_t);
@@ -134,11 +135,12 @@ run_loadfile(u_long *marks, int howto)
 
 		memcpy((void *)0x10000000, tags, sizeof(tags));
 		fdt = (void *)0x10000000;
+		board_id = 4821;
 	}
 
 	efi_cleanup();
 
-	(*(startfuncp)(marks[MARK_ENTRY]))(NULL, (void *)4821, fdt);
+	(*(startfuncp)(marks[MARK_ENTRY]))(NULL, (void *)board_id, fdt);
 
 	/* NOTREACHED */
 }

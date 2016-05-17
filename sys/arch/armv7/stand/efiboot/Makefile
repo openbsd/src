@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2016/05/17 21:26:32 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.3 2016/05/17 22:41:20 kettenis Exp $
 
 PROG=		BOOTARM.EFI
 NOMAN=		#
@@ -39,6 +39,7 @@ CPPFLAGS+=	-DSMALL -DSLOW -DNOBYFOUR -D__INTERNAL_LIBSA_CREAD
 CPPFLAGS+=	-DNEEDS_HEAP_H
 COPTS+=		-ffreestanding -fno-stack-protector
 COPTS+=		-fshort-wchar -fPIC -fno-builtin
+COPTS+=		-Wall -Werror
 
 PROG.elf=	${PROG:S/.EFI/.elf/}
 CLEANFILES+=	${PROG.elf} ${PROG.elf}.tmp
