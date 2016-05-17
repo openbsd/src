@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.70 2016/05/17 20:54:07 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.71 2016/05/17 23:07:47 tb Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -131,17 +131,6 @@ main(int argc, char **argv)
 			err(1, "pledge");
 	}
 
-	/* Build up a default seed based on the hostname and some randomness */
-	if (gethostname(hostname, sizeof(hostname)) < 0)
-		err(1, "gethostname");
-	for (i = 0, p = seed; hostname[i] && i < SKEY_NAMELEN; i++) {
-		if (isalnum((unsigned char)hostname[i]))
-			*p++ = tolower((unsigned char)hostname[i]);
-	}
-	for (i = 0; i < 5; i++)
-		*p++ = arc4random_uniform(10) + '0';
-	*p = '\0';
-
 	if ((pp = getpwuid(getuid())) == NULL)
 		err(1, "no user with uid %u", getuid());
 	(void)strlcpy(me, pp->pw_name, sizeof me);
@@ -161,8 +150,8 @@ main(int argc, char **argv)
 		} else if (getuid() == 0) {
 			/* So the file ends up owned by the proper ID. */
 			if (setresuid(-1, pp->pw_uid, -1) != 0)
-			    errx(1, "unable to change user ID to %u",
-				pp->pw_uid);
+				errx(1, "unable to change user ID to %u",
+				    pp->pw_uid);
 			if (pledge("stdio rpath wpath cpath fattr flock tty",
 			    NULL) == -1)
 				err(1, "pledge");
@@ -206,6 +195,17 @@ main(int argc, char **argv)
 
 	if (pledge("stdio rpath wpath cpath fattr flock tty", NULL) == -1)
 		err(1, "pledge");
+
+	/* Build up a default seed based on the hostname and some randomness */
+	if (gethostname(hostname, sizeof(hostname)) < 0)
+		err(1, "gethostname");
+	for (i = 0, p = seed; hostname[i] && i < SKEY_NAMELEN; i++) {
+		if (isalnum((unsigned char)hostname[i]))
+			*p++ = tolower((unsigned char)hostname[i]);
+	}
+	for (i = 0; i < 5; i++)
+		*p++ = arc4random_uniform(10) + '0';
+	*p = '\0';
 
 	/*
 	 * Lookup and lock the record we are about to modify.
