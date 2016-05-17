@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.178 2016/04/27 14:47:27 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.179 2016/05/17 08:29:14 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1512,9 +1512,6 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 	if (IN6_IS_ADDR_MULTICAST(&dst->sin6_addr))
 		goto sendpkt;
 
-	if (nd6_need_cache(ifp) == 0)
-		goto sendpkt;
-
 	/*
 	 * next hop determination.
 	 */
@@ -1524,20 +1521,10 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 			m_freem(m);
 			return (error);
 		}
-
-		/*
-		 * We skip link-layer address resolution and NUD
-		 * if the gateway is not a neighbor from ND point
-		 * of view, regardless of the value of nd_ifinfo.flags.
-		 * The second condition is a bit tricky; we skip
-		 * if the gateway is our own address, which is
-		 * sometimes used to install a route to a p2p link.
-		 */
-		if ((ifp->if_flags & IFF_POINTOPOINT) &&
-		    ((nd6_is_addr_neighbor(satosin6(rt_key(rt)), ifp) == 0) ||
-		    in6ifa_ifpwithaddr(ifp, &satosin6(rt_key(rt))->sin6_addr)))
-			goto sendpkt;
 	}
+
+	if (nd6_need_cache(ifp) == 0)
+		goto sendpkt;
 
 	/*
 	 * Address resolution or Neighbor Unreachability Detection
@@ -1565,8 +1552,7 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 		}
 	}
 	if (ln == NULL || rt == NULL) {
-		if ((ifp->if_flags & IFF_POINTOPOINT) == 0 &&
-		    !(ND_IFINFO(ifp)->flags & ND6_IFF_PERFORMNUD)) {
+		if ((ND_IFINFO(ifp)->flags & ND6_IFF_PERFORMNUD) == 0) {
 			char addr[INET6_ADDRSTRLEN];
 
 			log(LOG_DEBUG, "%s: can't allocate llinfo for %s "
@@ -1590,13 +1576,6 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 	 */
 	TAILQ_REMOVE(&nd6_list, ln, ln_list);
 	TAILQ_INSERT_HEAD(&nd6_list, ln, ln_list);
-
-	/* We don't have to do link-layer address resolution on a p2p link. */
-	if ((ifp->if_flags & IFF_POINTOPOINT) != 0 &&
-	    ln->ln_state < ND6_LLINFO_REACHABLE) {
-		ln->ln_state = ND6_LLINFO_STALE;
-		nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
-	}
 
 	/*
 	 * The first time we send a packet to a neighbor whose entry is
@@ -1658,11 +1637,8 @@ nd6_need_cache(struct ifnet *ifp)
 	 */
 	switch (ifp->if_type) {
 	case IFT_ETHER:
-	case IFT_IEEE1394:
-	case IFT_PROPVIRTUAL:
 	case IFT_IEEE80211:
 	case IFT_CARP:
-	case IFT_GIF:		/* XXX need more cases? */
 		return (1);
 	default:
 		return (0);
