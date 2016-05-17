@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.86 2015/09/29 03:19:24 guenther Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.87 2016/05/17 23:43:47 bluhm Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -99,7 +99,6 @@ struct mutex kprintf_mutex = MUTEX_INITIALIZER(IPL_HIGH);
  * globals
  */
 
-extern struct	tty *constty;	/* pointer to console "window" tty */
 extern	int log_open;	/* subr_log: is /dev/klog open? */
 const	char *panicstr; /* arg to first call to panic (used as a flag
 			   to indicate that panic has already been called). */

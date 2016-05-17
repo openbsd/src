@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.40 2016/05/17 23:28:03 bluhm Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.41 2016/05/17 23:43:47 bluhm Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -407,7 +407,7 @@ dosendsyslog(struct proc *p, const char *buf, size_t nbyte, int flags,
 	struct iovec *ktriov = NULL;
 	int iovlen;
 #endif
-	char pri[6];
+	char pri[6], *kbuf;
 	struct iovec aiov;
 	struct uio auio;
 	size_t i, len;
@@ -467,11 +467,34 @@ dosendsyslog(struct proc *p, const char *buf, size_t nbyte, int flags,
 	len = auio.uio_resid;
 	if (syslogf)
 		error = sosend(syslogf->f_data, NULL, &auio, NULL, NULL, 0);
-	else
+	else if (cn_devvp)
 		error = cnwrite(0, &auio, 0);
+	else {
+		/* XXX console redirection breaks down... */
+		if (sflg == UIO_USERSPACE) {
+			kbuf = malloc(len, M_TEMP, M_WAITOK);
+			error = copyin(aiov.iov_base, kbuf, len);
+		} else {
+			kbuf = aiov.iov_base;
+			error = 0;
+		}
+		if (error == 0)
+			for (i = 0; i < len; i++) {
+				if (kbuf[i] == '\0')
+					break;
+				cnputc(kbuf[i]);
+				auio.uio_resid--;
+			}
+		if (sflg == UIO_USERSPACE)
+			free(kbuf, M_TEMP, len);
+	}
+
 	if (error == 0)
 		len -= auio.uio_resid;
-	if (syslogf == NULL) {
+
+	if (syslogf)
+		;
+	else if (cn_devvp) {
 		aiov.iov_base = "\r\n";
 		aiov.iov_len = 2;
 		auio.uio_iov = &aiov;
@@ -482,7 +505,8 @@ dosendsyslog(struct proc *p, const char *buf, size_t nbyte, int flags,
 		auio.uio_offset = 0;
 		auio.uio_resid = aiov.iov_len;
 		cnwrite(0, &auio, 0);
-	}
+	} else
+		cnputc('\n');
 
 #ifdef KTRACE
 	if (ktriov != NULL) {

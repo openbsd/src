@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.130 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: tty.c,v 1.131 2016/05/17 23:43:47 bluhm Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -201,8 +201,6 @@ ttyopen(dev_t device, struct tty *tp, struct proc *p)
 int
 ttyclose(struct tty *tp)
 {
-	extern struct tty *constty;	/* Temporary virtual console. */
-
 	if (constty == tp)
 		constty = NULL;
 
@@ -719,7 +717,6 @@ ttyoutput(int c, struct tty *tp)
 int
 ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	extern struct tty *constty;	/* Temporary virtual console. */
 	extern int nlinesw;
 	struct process *pr = p->p_p;
 	int s, error;
