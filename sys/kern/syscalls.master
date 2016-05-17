@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.169 2016/03/30 07:49:11 guenther Exp $
+;	$OpenBSD: syscalls.master,v 1.170 2016/05/17 08:12:06 mpi Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -8,17 +8,18 @@
 ;
 ; Fields: number type [type-dependent ...]
 ;	number	system call number, must be in order
-;	type	one of STD, OBSOL, UNIMPL, NODEF, NOARGS, or one of
-;		the compatibility options defined in syscalls.conf.
+;	type	one of the types described below, or one of the
+;		compatibility options defined in syscalls.conf
 ;
 ; types:
-;	STD	always included
-;	OBSOL	obsolete, not included in system
-;	UNIMPL	unimplemented, not included in system
-;	NODEF	included, but don't define the syscall number
-;	NOARGS	included, but don't define the syscall args structure
 ;	INDIR	included, but don't define the syscall args structure,
-;		and allow it to be "really" varargs.
+;		and allow it to be "really" varargs
+;	NOARGS	included, but don't define the syscall args structure
+;	NODEF	included, but don't define the syscall number
+;	NOLOCK	don't acquire the kernel lock when calling this syscall
+;	OBSOL	obsolete, not included in system
+;	STD	always included
+;	UNIMPL	unimplemented, not included in system
 ;
 ; The compat options are defined in the syscalls.conf file, and the
 ; compat option name is prefixed to the syscall name.  Other than
