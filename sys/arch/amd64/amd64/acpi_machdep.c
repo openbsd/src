@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.73 2016/05/16 01:19:27 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.74 2016/05/18 04:33:01 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -287,9 +287,10 @@ acpi_attach_machdep(struct acpi_softc *sc)
 #ifndef SMALL_KERNEL
 	/*
 	 * Sanity check before setting up trampoline.
-	 * Ensure the trampoline size is < PAGE_SIZE
+	 * Ensure the trampoline page sizes are < PAGE_SIZE
 	 */
 	KASSERT(acpi_resume_end - acpi_real_mode_resume < PAGE_SIZE);
+	KASSERT(acpi_tramp_data_end - acpi_tramp_data_start < PAGE_SIZE);
 
 	/* Map ACPI tramp code and data pages RW for copy */
 	pmap_kenter_pa(ACPI_TRAMPOLINE, ACPI_TRAMPOLINE,
