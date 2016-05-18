@@ -1,4 +1,4 @@
-/*	$OpenBSD: imx_machdep.c,v 1.15 2015/05/19 03:30:54 jsg Exp $	*/
+/*	$OpenBSD: imx_machdep.c,v 1.16 2016/05/18 22:55:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -28,6 +28,7 @@
 
 #include <arm/cortex/smc.h>
 #include <arm/armv7/armv7var.h>
+#include <arm/mainbus/mainbus.h>
 #include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxuartvar.h>
 #include <armv7/armv7/armv7_machdep.h>
@@ -79,6 +80,13 @@ imx_platform_init_cons(void)
 }
 
 void
+imx_platform_init_mainbus(struct device *self)
+{
+	mainbus_legacy_found(self, "cortex");
+	mainbus_legacy_found(self, "imx");
+}
+
+void
 imx_platform_watchdog_reset(void)
 {
 	imxdog_reset();
@@ -117,6 +125,7 @@ struct armv7_platform imx_platform = {
 	.watchdog_reset = imx_platform_watchdog_reset,
 	.powerdown = imx_platform_powerdown,
 	.disable_l2_if_needed = imx_platform_disable_l2_if_needed,
+	.init_mainbus = imx_platform_init_mainbus,
 };
 
 struct armv7_platform *

@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.8 2016/05/02 08:15:55 patrick Exp $ */
+/* $OpenBSD: mainbus.c,v 1.9 2016/05/18 22:55:23 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -30,7 +30,6 @@ void mainbus_attach(struct device *, struct device *, void *);
 void mainbus_attach_node(struct device *, int);
 
 int mainbus_legacy_search(struct device *, void *, void *);
-void mainbus_legacy_found(struct device *, char *);
 
 struct mainbus_softc {
 	struct device		 sc_dev;
@@ -102,6 +101,10 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach CPU first. */
 	mainbus_legacy_found(self, "cpu");
+#ifdef CPU_ARMv7
+	extern void platform_init_mainbus(struct device *);
+	platform_init_mainbus(self);
+#endif
 
 	/* TODO: Scan for interrupt controllers and attach them first? */
 

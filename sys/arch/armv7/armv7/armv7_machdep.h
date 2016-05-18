@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.h,v 1.5 2015/07/15 21:09:40 jsg Exp $	*/
+/*	$OpenBSD: armv7_machdep.h,v 1.6 2016/05/18 22:55:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -22,6 +22,7 @@ void platform_init(void);
 void platform_powerdown(void);
 void platform_watchdog_reset(void);
 void platform_init_cons(void);
+void platform_init_mainbus(struct device *);
 void platform_disable_l2_if_needed(void);
 const char *platform_boot_name(void);
 const char *platform_board_name(void);
@@ -38,6 +39,7 @@ struct armv7_platform {
 	void (*watchdog_reset)(void);
 	void (*powerdown)(void);
 	void (*disable_l2_if_needed)(void);
+	void (*init_mainbus)(struct device *);
 };
 
 #endif /* __PLATFORMVAR_H__ */
