@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.74 2016/05/18 04:33:01 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.75 2016/05/18 04:42:49 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -381,7 +381,7 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 	/* Map trampoline and data page */
 	pmap_kenter_pa(ACPI_TRAMPOLINE, ACPI_TRAMPOLINE, PROT_READ | PROT_EXEC);
 	pmap_kenter_pa(ACPI_TRAMP_DATA, ACPI_TRAMP_DATA,
-		PROT_READ | PROT_WRITE);
+	    PROT_READ | PROT_WRITE);
 
 	/*
 	 * Copy the current cpu registers into a safe place for resume.
