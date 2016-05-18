@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.42 2016/05/18 23:28:43 bluhm Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.43 2016/05/18 23:42:12 bluhm Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ struct	file *syslogf;
 
 void filt_logrdetach(struct knote *kn);
 int filt_logread(struct knote *kn, long hint);
-   
+
 struct filterops logread_filtops =
 	{ 1, NULL, filt_logrdetach, filt_logread};
 
@@ -114,7 +114,7 @@ initmsgbuf(caddr_t buf, size_t bufsize)
 		mbp->msg_magic = MSG_MAGIC;
 		mbp->msg_bufs = new_bufs;
 	}
-	
+
 	/* Always start new buffer data on a new line. */
 	if (mbp->msg_bufx > 0 && mbp->msg_bufc[mbp->msg_bufx - 1] != '\n')
 		msgbuf_putchar(msgbufp, '\n');
@@ -138,7 +138,7 @@ initconsbuf(void)
 }
 
 void
-msgbuf_putchar(struct msgbuf *mbp, const char c) 
+msgbuf_putchar(struct msgbuf *mbp, const char c)
 {
 	if (mbp->msg_magic != MSG_MAGIC)
 		/* Nothing we can do */
