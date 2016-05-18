@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.120 2016/03/03 18:13:24 stefan Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.121 2016/05/18 18:28:58 patrick Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -63,6 +63,7 @@ usbd_status	usbd_set_config(struct usbd_device *, int);
 void		usbd_devinfo(struct usbd_device *, int, char *, size_t);
 void		usbd_devinfo_vp(struct usbd_device *, char *, size_t,
 		    char *, size_t, int);
+void		usbd_get_device_string(struct usbd_device *, uByte, char **);
 char		*usbd_get_string(struct usbd_device *, int, char *, size_t);
 int		usbd_getnewaddr(struct usbd_bus *);
 int		usbd_print(void *, const char *);
@@ -212,6 +213,28 @@ usbd_trim_spaces(char *p)
 }
 
 void
+usbd_get_device_string(struct usbd_device *dev, uByte index, char **buf)
+{
+	char *b = malloc(USB_MAX_STRING_LEN, M_USB, M_NOWAIT);
+	if (b != NULL) {
+		usbd_get_string(dev, index, b, USB_MAX_STRING_LEN);
+		usbd_trim_spaces(b);
+	}
+	*buf = b;
+}
+
+void
+usbd_get_device_strings(struct usbd_device *dev)
+{
+	usbd_get_device_string(dev, dev->ddesc.iManufacturer,
+	    &dev->vendor);
+	usbd_get_device_string(dev, dev->ddesc.iProduct,
+	    &dev->product);
+	usbd_get_device_string(dev, dev->ddesc.iSerialNumber,
+	    &dev->serial);
+}
+
+void
 usbd_devinfo_vp(struct usbd_device *dev, char *v, size_t vl,
     char *p, size_t pl, int usedev)
 {
@@ -232,6 +255,11 @@ usbd_devinfo_vp(struct usbd_device *dev, char *v, size_t vl,
 		usbd_trim_spaces(vendor);
 		product = usbd_get_string(dev, udd->iProduct, p, pl);
 		usbd_trim_spaces(product);
+	} else {
+		if (dev->vendor != NULL)
+			vendor = dev->vendor;
+		if (dev->product != NULL)
+			product = dev->product;
 	}
 #ifdef USBVERBOSE
 	if (vendor == NULL || product == NULL) {
@@ -294,7 +322,7 @@ usbd_devinfo(struct usbd_device *dev, int showclass, char *base, size_t len)
 	char *cp = base;
 	int bcdDevice, bcdUSB;
 
-	usbd_devinfo_vp(dev, vendor, sizeof vendor, product, sizeof product, 1);
+	usbd_devinfo_vp(dev, vendor, sizeof vendor, product, sizeof product, 0);
 	snprintf(cp, len, "\"%s %s\"", vendor, product);
 	cp += strlen(cp);
 	if (showclass) {
@@ -1188,6 +1216,8 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	DPRINTF(("usbd_new_device: new dev (addr %d), dev=%p, parent=%p\n",
 		 addr, dev, parent));
 
+	usbd_get_device_strings(dev);
+
 	err = usbd_probe_and_attach(parent, dev, port, addr);
 	if (err) {
 		usb_free_device(dev);
@@ -1304,8 +1334,13 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di,
 		di->udi_nports = 0;
 
 	bzero(di->udi_serial, sizeof(di->udi_serial));
-	usbd_get_string(dev, dev->ddesc.iSerialNumber, di->udi_serial,
-	    sizeof(di->udi_serial));
+	if (!usedev && dev->serial != NULL) {
+		strlcpy(di->udi_serial, dev->serial,
+		    sizeof(di->udi_serial));
+	} else {
+		usbd_get_string(dev, dev->ddesc.iSerialNumber,
+		    di->udi_serial, sizeof(di->udi_serial));
+	}
 }
 
 /* Retrieve a complete descriptor for a certain device and index. */
@@ -1367,6 +1402,13 @@ usb_free_device(struct usbd_device *dev)
 	if (dev->subdevs != NULL)
 		free(dev->subdevs, M_USB, 0);
 	dev->bus->devices[dev->address] = NULL;
+
+	if (dev->vendor != NULL)
+		free(dev->vendor, M_USB, USB_MAX_STRING_LEN);
+	if (dev->product != NULL)
+		free(dev->product, M_USB, USB_MAX_STRING_LEN);
+	if (dev->serial != NULL)
+		free(dev->serial, M_USB, USB_MAX_STRING_LEN);
 
 	free(dev, M_USB, 0);
 }
