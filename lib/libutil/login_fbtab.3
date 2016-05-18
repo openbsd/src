@@ -1,4 +1,4 @@
-.\"	$OpenBSD: login_fbtab.3,v 1.13 2015/09/10 15:53:26 schwarze Exp $
+.\"	$OpenBSD: login_fbtab.3,v 1.14 2016/05/18 00:58:40 millert Exp $
 .\"
 .\" Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
 .\" files may be covered by other copyrights.
@@ -15,7 +15,7 @@
 .\" warranties, including, without limitation, the implied warranties of
 .\" merchantibility and fitness for any particular purpose.
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: May 18 2016 $
 .Dt LOGIN_FBTAB 3
 .Os
 .Sh NAME
@@ -51,10 +51,3 @@ daemon with the severity of
 Eindhoven University of Technology
 The Netherlands
 .Ed
-.Sh CAVEATS
-Previous versions of this routine used
-.Xr strtok 3 ,
-which can cause conflicts with other uses of that routine.
-This may be an issue when porting programs to
-.Ox 3.1
-and below.
