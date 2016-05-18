@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.70 2016/03/30 10:13:14 mpi Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.71 2016/05/18 20:15:14 mpi Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -211,12 +211,12 @@ extern u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 extern unsigned int revarp_ifidx;
 #endif /* NFSCLIENT */
 
-void	revarpinput(struct mbuf *);
+void	revarpinput(struct ifnet *, struct mbuf *);
 void	revarprequest(struct ifnet *);
 int	revarpwhoarewe(struct ifnet *, struct in_addr *, struct in_addr *);
 int	revarpwhoami(struct in_addr *, struct ifnet *);
 
-void	arpinput(struct mbuf *);
+void	arpinput(struct ifnet *, struct mbuf *);
 void	arprequest(struct ifnet *, u_int32_t *, u_int32_t *, u_int8_t *);
 void	arpwhohas(struct arpcom *, struct in_addr *);
 int	arpproxy(struct in_addr, unsigned int);

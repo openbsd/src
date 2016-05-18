@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.206 2016/05/18 08:05:51 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.207 2016/05/18 20:15:14 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -81,8 +81,8 @@ int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
 void arptfree(struct rtentry *);
 void arptimer(void *);
 struct rtentry *arplookup(u_int32_t, int, int, u_int);
-void in_arpinput(struct mbuf *);
-void in_revarpinput(struct mbuf *);
+void in_arpinput(struct ifnet *, struct mbuf *);
+void in_revarpinput(struct ifnet *, struct mbuf *);
 int arpcache(struct ifnet *, struct ether_arp *, struct rtentry *);
 
 LIST_HEAD(, llinfo_arp) arp_list;
@@ -413,7 +413,7 @@ bad:
  * then the protocol-specific routine is called.
  */
 void
-arpinput(struct mbuf *m)
+arpinput(struct ifnet *ifp, struct mbuf *m)
 {
 	struct arphdr *ar;
 	int len;
@@ -438,7 +438,7 @@ arpinput(struct mbuf *m)
 	if (m->m_len < len && (m = m_pullup(m, len)) == NULL)
 		return;
 
-	in_arpinput(m);
+	in_arpinput(ifp, m);
 }
 
 /*
@@ -447,10 +447,9 @@ arpinput(struct mbuf *m)
  * protocol address, to catch impersonators.
  */
 void
-in_arpinput(struct mbuf *m)
+in_arpinput(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ether_arp *ea;
-	struct ifnet *ifp;
 	struct ether_header *eh;
 	struct rtentry *rt = NULL;
 	struct sockaddr sa;
@@ -463,11 +462,6 @@ in_arpinput(struct mbuf *m)
 
 	rdomain = rtable_l2(m->m_pkthdr.ph_rtableid);
 
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	if (ifp == NULL) {
-		m_freem(m);
-		return;
-	}
 	ea = mtod(m, struct ether_arp *);
 	op = ntohs(ea->arp_op);
 	if ((op != ARPOP_REQUEST) && (op != ARPOP_REPLY))
@@ -557,12 +551,10 @@ in_arpinput(struct mbuf *m)
 	sa.sa_family = pseudo_AF_HDRCMPLT;
 	sa.sa_len = sizeof(sa);
 	ifp->if_output(ifp, m, &sa, NULL);
-	if_put(ifp);
 	return;
 
 out:
 	rtfree(rt);
-	if_put(ifp);
 	m_freem(m);
 }
 
@@ -770,7 +762,7 @@ arpproxy(struct in_addr in, unsigned int rtableid)
  * then the protocol-specific routine is called.
  */
 void
-revarpinput(struct mbuf *m)
+revarpinput(struct ifnet *ifp, struct mbuf *m)
 {
 	struct arphdr *ar;
 
@@ -784,7 +776,7 @@ revarpinput(struct mbuf *m)
 	switch (ntohs(ar->ar_pro)) {
 
 	case ETHERTYPE_IP:
-		in_revarpinput(m);
+		in_revarpinput(ifp, m);
 		return;
 
 	default:
@@ -806,9 +798,8 @@ out:
  * Note: also supports ARP via RARP packets, per the RFC.
  */
 void
-in_revarpinput(struct mbuf *m)
+in_revarpinput(struct ifnet *ifp, struct mbuf *m)
 {
-	struct ifnet *ifp = NULL;
 	struct ether_arp *ar;
 	int op;
 
@@ -817,7 +808,7 @@ in_revarpinput(struct mbuf *m)
 	switch (op) {
 	case ARPOP_REQUEST:
 	case ARPOP_REPLY:	/* per RFC */
-		in_arpinput(m);
+		in_arpinput(ifp, m);
 		return;
 	case ARPOP_REVREPLY:
 		break;
@@ -832,9 +823,6 @@ in_revarpinput(struct mbuf *m)
 		goto out;
 	if (revarp_finished)
 		goto wake;
-	ifp = if_get(revarp_ifidx);
-	if (ifp == NULL)
-		goto out;
 	if (memcmp(ar->arp_tha, LLADDR(ifp->if_sadl), sizeof(ar->arp_tha)))
 		goto out;
 	memcpy(&revarp_srvip, ar->arp_spa, sizeof(revarp_srvip));
@@ -842,11 +830,10 @@ in_revarpinput(struct mbuf *m)
 	revarp_finished = 1;
 wake:	/* Do wakeup every time in case it was missed. */
 	wakeup((caddr_t)&revarp_myip);
-#endif
+#endif /* NFSCLIENT */
 
 out:
 	m_freem(m);
-	if_put(ifp);
 }
 
 /*
