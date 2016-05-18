@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.66 2016/04/27 11:58:10 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.67 2016/05/18 08:15:28 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -852,7 +852,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 			case IEEE80211_M_HOSTAP:
 				s = splnet();
 				RB_FOREACH(ni, ieee80211_tree, &ic->ic_tree) {
-					if (ni->ni_associd == 0)
+					if (ni->ni_state != IEEE80211_STA_ASSOC)
 						continue;
 					IEEE80211_SEND_MGMT(ic, ni,
 					    IEEE80211_FC0_SUBTYPE_DISASSOC,

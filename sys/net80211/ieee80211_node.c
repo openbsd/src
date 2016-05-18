@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.101 2016/04/12 14:33:27 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.102 2016/05/18 08:15:28 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1496,7 +1496,7 @@ void
 ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
     int resp)
 {
-	int newassoc;
+	int newassoc = (ni->ni_state != IEEE80211_STA_ASSOC);
 
 	if (ni->ni_associd == 0) {
 		u_int16_t aid;
@@ -1518,13 +1518,11 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 		}
 		ni->ni_associd = aid | 0xc000;
 		IEEE80211_AID_SET(ni->ni_associd, ic->ic_aid_bitmap);
-		newassoc = 1;
 		if (ic->ic_curmode == IEEE80211_MODE_11G ||
 		    (ic->ic_curmode == IEEE80211_MODE_11N &&
 		    IEEE80211_IS_CHAN_2GHZ(ic->ic_bss->ni_chan)))
 			ieee80211_node_join_11g(ic, ni);
-	} else
-		newassoc = 0;
+	}
 
 	DPRINTF(("station %s %s associated at aid %d\n",
 	    ether_sprintf(ni->ni_macaddr), newassoc ? "newly" : "already",
@@ -1699,8 +1697,6 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if (ic->ic_node_leave != NULL)
 		(*ic->ic_node_leave)(ic, ni);
 
-	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
-	ni->ni_associd = 0;
 	ieee80211_node_newstate(ni, IEEE80211_STA_COLLECT);
 
 #if NBRIDGE > 0

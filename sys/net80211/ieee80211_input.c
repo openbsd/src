@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.177 2016/05/10 06:37:15 dlg Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.178 2016/05/18 08:15:28 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -447,7 +447,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				ic->ic_stats.is_rx_notassoc++;
 				goto err;
 			}
-			if (ni->ni_associd == 0) {
+			if (ni->ni_state != IEEE80211_STA_ASSOC) {
 				DPRINTF(("data from unassoc src %s\n",
 				    ether_sprintf(wh->i_addr2)));
 				IEEE80211_SEND_MGMT(ic, ni,
