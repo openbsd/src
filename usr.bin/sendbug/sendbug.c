@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.74 2016/03/17 19:40:43 krw Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.75 2016/05/18 19:06:25 jca Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -30,7 +30,7 @@
 #define BEGIN64 "begin-base64 "
 #define END64 "===="
 
-int	checkfile(const char *);
+void	checkfile(const char *);
 void	debase(void);
 void	dmesg(FILE *);
 int	editit(const char *);
@@ -164,8 +164,7 @@ main(int argc, char *argv[])
 		errx(1, "report unchanged, nothing sent");
 
  prompt:
-	if (!checkfile(tmppath))
-		fprintf(stderr, "fields are blank, must be filled in\n");
+	checkfile(tmppath);
 	c = prompt();
 	switch (c) {
 	case 'a':
@@ -508,7 +507,7 @@ matchline(const char *s, const char *line, size_t linelen)
 /*
  * Are all required fields filled out?
  */
-int
+void
 checkfile(const char *pathname)
 {
 	FILE *fp;
@@ -518,7 +517,7 @@ checkfile(const char *pathname)
 
 	if ((fp = fopen(pathname, "r")) == NULL) {
 		warn("%s", pathname);
-		return (0);
+		return;
 	}
 	while ((buf = fgetln(fp, &len))) {
 		if (matchline(">Category:", buf, len))
@@ -527,7 +526,14 @@ checkfile(const char *pathname)
 			synopsis = 1;
 	}
 	fclose(fp);
-	return (category && synopsis);
+	if (!category || !synopsis) {
+		fprintf(stderr, "Some fields are blank, please fill them in: ");
+		if (!synopsis)
+			fprintf(stderr, "Synopsis ");
+		if (!category)
+			fprintf(stderr, "Category ");
+		fputc('\n', stderr);
+	}
 }
 
 void
