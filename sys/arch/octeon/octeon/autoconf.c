@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 2015/07/20 19:44:32 pirofti Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 2016/05/18 01:21:40 visa Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -44,9 +44,43 @@ cpu_configure(void)
 	cold = 0;
 }
 
+struct devmap {
+	char		*dev;
+	enum devclass	 class;
+};
+
+struct devmap *
+findtype(void)
+{
+	static struct devmap devmap[] = {
+		{ "wd", DV_DISK },
+		{ "sd", DV_DISK },
+		{ "octcf", DV_DISK },
+		{ "amdcf", DV_DISK },
+		{ "cnmac", DV_IFNET },
+		{ NULL, DV_DULL }
+	};
+	struct devmap *dp = &devmap[0];
+
+	if (strlen(bootdev) < 2)
+		return dp;
+
+	while (dp->dev) {
+		if (strncmp(bootdev, dp->dev, strlen(dp->dev)) == 0)
+			break;
+		dp++;
+	}
+
+	if (dp->dev == NULL)
+		printf("%s is not a valid rootdev\n", bootdev);
+
+	return dp;
+}
+
 void
 parse_uboot_root(void)
 {
+	struct devmap *dp;
 	char *p;
 	size_t len;
 
@@ -62,9 +96,10 @@ parse_uboot_root(void)
 	if (len <= 2 || len >= sizeof bootdev - 1)
 		return;
 
-	memcpy(bootdev, p, len);
-	bootdev[len] = '\0';
-	bootdev_class = DV_DISK;
+	strlcpy(bootdev, p, sizeof(bootdev));
+
+	dp = findtype();
+	bootdev_class = dp->class;
 }
 
 void
@@ -80,30 +115,14 @@ diskconf(void)
 void
 device_register(struct device *dev, void *aux)
 {
-	if (bootdv != NULL)
-		return;
-
-	const char *drvrname = dev->dv_cfdata->cf_driver->cd_name;
-	const char *name = dev->dv_xname;
-
-	if (dev->dv_class != bootdev_class)
+	if (bootdv != NULL || dev->dv_class != bootdev_class)
 		return;
 
 	switch (bootdev_class) {
 	case DV_DISK:
-		if ((strcmp(drvrname, "wd") == 0 ||
-		    strcmp(drvrname, "sd") == 0 ||
-		    strcmp(drvrname, "octcf") == 0 ||
-		    strcmp(drvrname, "amdcf") == 0) &&
-		    strcmp(name, bootdev) == 0)
-			bootdv = dev;
-		break;
 	case DV_IFNET:
-		/*
-		 * This relies on the onboard Ethernet interface being
-		 * attached before any other (usb) interface.
-		 */
-		bootdv = dev;
+		if (strcmp(dev->dv_xname, bootdev) == 0)
+			bootdv = dev;
 		break;
 	default:
 		break;
