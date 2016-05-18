@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.75 2016/05/18 19:06:25 jca Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.76 2016/05/18 19:10:26 jca Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -512,7 +512,7 @@ checkfile(const char *pathname)
 {
 	FILE *fp;
 	size_t len;
-	int category = 0, synopsis = 0;
+	int category = 0, synopsis = 0, subject = 0;
 	char *buf;
 
 	if ((fp = fopen(pathname, "r")) == NULL) {
@@ -524,10 +524,14 @@ checkfile(const char *pathname)
 			category = 1;
 		else if (matchline(">Synopsis:", buf, len))
 			synopsis = 1;
+		else if (matchline("Subject:", buf, len))
+			subject = 1;
 	}
 	fclose(fp);
-	if (!category || !synopsis) {
+	if (!category || !synopsis || !subject) {
 		fprintf(stderr, "Some fields are blank, please fill them in: ");
+		if (!subject)
+			fprintf(stderr, "Subject ");
 		if (!synopsis)
 			fprintf(stderr, "Synopsis ");
 		if (!category)
