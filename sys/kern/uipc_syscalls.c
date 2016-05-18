@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.131 2016/01/08 05:50:08 guenther Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.132 2016/05/18 01:13:13 millert Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1110,7 +1110,7 @@ sockargs(struct mbuf **mp, const void *buf, size_t buflen, int type)
 
 	/* Allocate an mbuf to hold the arguments. */
 	m = m_get(M_WAIT, type);
-	if ((u_int)buflen > MLEN) {
+	if (buflen > MLEN) {
 		MCLGET(m, M_WAITOK);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_free(m);
