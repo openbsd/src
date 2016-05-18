@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.s,v 1.17 2015/04/26 09:48:29 kettenis Exp $	*/
+/*	$OpenBSD: mptramp.s,v 1.18 2016/05/18 03:45:11 mlarkin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -90,6 +90,9 @@
 
 #define _TRMP_LABEL(a)  a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
 #define _TRMP_OFFSET(a)  a = . - _C_LABEL(cpu_spinup_trampoline)
+#define _TRMP_DATA_LABEL(a)  a = . - _C_LABEL(mp_tramp_data_start) + \
+				MP_TRAMP_DATA
+#define _TRMP_DATA_OFFSET(a)  a = . - _C_LABEL(mp_tramp_data_start)
 
 /*
  * Debug code to stop aux. processors in various stages based on the
@@ -116,15 +119,18 @@
 	.global _C_LABEL(cpu_spinup_trampoline_end)
 	.global _C_LABEL(cpu_hatch)
 	.global _C_LABEL(mp_pdirpa)
+	.global _C_LABEL(mp_tramp_data_start)
+	.global _C_LABEL(mp_tramp_data_end)
 	.global _C_LABEL(gdt), _C_LABEL(local_apic)
 
 	.text
-	.align 4,0x0
+	.align 4, 0xcc
 	.code16
 _C_LABEL(cpu_spinup_trampoline):
 	cli
-	movw	%cs, %ax
+	movw	$(MP_TRAMP_DATA >> 4), %ax
 	movw	%ax, %ds
+	movw	%cs, %ax
 	movw	%ax, %es
 	movw	%ax, %ss
 	data32 addr32 lgdt	(gdt_desc)	# load flat descriptor table
@@ -142,7 +148,7 @@ _TRMP_LABEL(mp_startup)
 	movw	%ax, %es
 	movw	%ax, %fs
 	movw	%ax, %gs
-	movl	$(MP_TRAMPOLINE+NBPG-16),%esp	# bootstrap stack end,
+	movl	$(MP_TRAMP_DATA+NBPG-16),%esp	# bootstrap stack end,
 						# with scratch space..
 
 #ifdef MPDEBUG
@@ -225,14 +231,6 @@ nopae:
 	pushl	$mp_cont
 	HALT(0x14)
 	lret
-	.align 4,0x0
-_TRMP_LABEL(gdt_table)
-	.word	0x0,0x0,0x0,0x0			# null GDTE
-	 GDTE(0x9f,0xcf)			# Kernel text
-	 GDTE(0x93,0xcf)			# Kernel data
-_TRMP_OFFSET(gdt_desc)
-	.word	0x17				# limit 3 entries
-	.long	gdt_table			# where is gdt
 
 _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 mp_cont:
@@ -267,13 +265,20 @@ mp_cont:
 	call	_C_LABEL(cpu_hatch)
 	/* NOTREACHED */
 
-	.data
-_C_LABEL(mp_pdirpa):
-	.long	0
+	.section .rodata
+_C_LABEL(mp_tramp_data_start):
+_TRMP_DATA_LABEL(gdt_table)
+	.word	0x0,0x0,0x0,0x0			# null GDTE
+	 GDTE(0x9f,0xcf)			# Kernel text
+	 GDTE(0x93,0xcf)			# Kernel data
+_TRMP_DATA_OFFSET(gdt_desc)
+	.word	0x17				# limit 3 entries
+	.long	gdt_table			# where is gdt
 #ifdef MPDEBUG
 	.global _C_LABEL(cpu_trace)
-_C_LABEL(cpu_trace):
+_TRMP_DATA_LABEL(cpu_trace)
 	.long	0x40
 	.long	0xff
 	.long	0xff
 #endif
+_C_LABEL(mp_tramp_data_end):

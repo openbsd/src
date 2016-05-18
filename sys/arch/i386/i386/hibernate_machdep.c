@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.47 2015/08/21 07:01:38 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.48 2016/05/18 03:45:11 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -146,6 +146,7 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 	hiber_info->nranges++;
 #endif
 #ifdef MULTIPROCESSOR
+	/* Record MP trampoline code page */
 	if (hiber_info->nranges >= VM_PHYSSEG_MAX)
 		return (1);
 	hiber_info->ranges[hiber_info->nranges].base = MP_TRAMPOLINE;
@@ -153,7 +154,16 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 	    hiber_info->ranges[hiber_info->nranges].base + PAGE_SIZE;
 	hiber_info->image_size += PAGE_SIZE;
 	hiber_info->nranges++;
-#endif
+
+	/* Record MP trampoline data page */
+	if (hiber_info->nranges >= VM_PHYSSEG_MAX)
+		return (1);
+	hiber_info->ranges[hiber_info->nranges].base = MP_TRAMP_DATA;
+	hiber_info->ranges[hiber_info->nranges].end =
+	    hiber_info->ranges[hiber_info->nranges].base + PAGE_SIZE;
+	hiber_info->image_size += PAGE_SIZE;
+	hiber_info->nranges++;
+#endif /* MULTIPROCESSOR */
 
 	for (bmp = bios_memmap; bmp->type != BIOS_MAP_END; bmp++) {
 		/* Skip non-NVS ranges (already processed) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.584 2016/05/10 18:39:45 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.585 2016/05/18 03:45:11 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3228,6 +3228,10 @@ init386(paddr_t first_avail)
 			/* skip MP trampoline code page */
 			if (a < MP_TRAMPOLINE + NBPG)
 				a = MP_TRAMPOLINE + NBPG;
+
+			/* skip MP trampoline data page */
+			if (a < MP_TRAMP_DATA + NBPG)
+				a = MP_TRAMP_DATA + NBPG;
 #endif /* MULTIPROCESSOR */
 
 #if NACPI > 0 && !defined(SMALL_KERNEL)

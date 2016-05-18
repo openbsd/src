@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.76 2016/05/03 08:30:15 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.77 2016/05/18 03:45:11 mlarkin Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -171,6 +171,8 @@ void	replacesmap(void);
 
 extern int _stac;
 extern int _clac;
+
+u_int32_t mp_pdirpa;
 
 void
 replacesmap(void)
@@ -529,7 +531,6 @@ cpu_boot_secondary(struct cpu_info *ci)
 	struct pcb *pcb;
 	int i;
 	struct pmap *kpm = pmap_kernel();
-	extern u_int32_t mp_pdirpa;
 
 	if (mp_verbose)
 		printf("%s: starting", ci->ci_dev.dv_xname);
@@ -608,9 +609,16 @@ cpu_copy_trampoline(void)
 	 */
 	extern u_char cpu_spinup_trampoline[];
 	extern u_char cpu_spinup_trampoline_end[];
+	extern u_char mp_tramp_data_start[];
+	extern u_char mp_tramp_data_end[];
 
-	bcopy(cpu_spinup_trampoline, (caddr_t)MP_TRAMPOLINE,
+	memcpy((caddr_t)MP_TRAMPOLINE, cpu_spinup_trampoline,
 	    cpu_spinup_trampoline_end - cpu_spinup_trampoline);
+	memcpy((caddr_t)MP_TRAMP_DATA, mp_tramp_data_start,
+	    mp_tramp_data_end - mp_tramp_data_start);
+
+	pmap_write_protect(pmap_kernel(), (vaddr_t)MP_TRAMPOLINE,
+	    (vaddr_t)(MP_TRAMPOLINE + NBPG), PROT_READ | PROT_EXEC);
 }
 
 #endif
