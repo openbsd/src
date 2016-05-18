@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.3 2015/05/12 02:49:48 jsg Exp $ */
+/* $OpenBSD: imxuart.c,v 1.4 2016/05/18 06:49:28 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -84,7 +84,6 @@ struct imxuart_softc {
 };
 
 
-int     imxuartprobe(struct device *parent, void *self, void *aux);
 void    imxuartattach(struct device *parent, struct device *self, void *aux);
 
 void imxuartcnprobe(struct consdev *cp);
@@ -115,7 +114,7 @@ struct cfdriver imxuart_cd = {
 };
 
 struct cfattach imxuart_ca = {
-	sizeof(struct imxuart_softc), imxuartprobe, imxuartattach
+	sizeof(struct imxuart_softc), NULL, imxuartattach
 };
 
 bus_space_tag_t	imxuartconsiot;
@@ -123,12 +122,6 @@ bus_space_handle_t imxuartconsioh;
 bus_addr_t	imxuartconsaddr;
 tcflag_t	imxuartconscflag = TTYDEF_CFLAG;
 int		imxuartdefaultrate = B115200;
-
-int
-imxuartprobe(struct device *parent, void *self, void *aux)
-{
-	return 1;
-}
 
 struct cdevsw imxuartdev =
 	cdev_tty_init(3/*XXX NIMXUART */ ,imxuart);		/* 12: serial port */
