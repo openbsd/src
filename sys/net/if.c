@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.432 2016/05/10 06:37:15 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.433 2016/05/18 03:46:03 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -774,7 +774,7 @@ if_input_process(void *xmq)
 	struct mbuf *m;
 	struct ifnet *ifp;
 	struct ifih *ifih;
-	struct srpl_iter i;
+	struct srp_ref sr;
 	int s;
 
 	mq_delist(mq, &ml);
@@ -795,11 +795,11 @@ if_input_process(void *xmq)
 		 * Pass this mbuf to all input handlers of its
 		 * interface until it is consumed.
 		 */
-		SRPL_FOREACH(ifih, &ifp->if_inputs, &i, ifih_next) {
+		SRPL_FOREACH(ifih, &sr, &ifp->if_inputs, ifih_next) {
 			if ((*ifih->ifih_input)(ifp, m, ifih->ifih_cookie))
 				break;
 		}
-		SRPL_LEAVE(&i, ifih);
+		SRPL_LEAVE(&sr);
 
 		if (ifih == NULL)
 			m_freem(m);
@@ -1532,22 +1532,22 @@ ifunit(const char *name)
 struct ifnet *
 if_get(unsigned int index)
 {
+	struct srp_ref sr;
 	struct if_map *if_map;
 	struct srp *map;
 	struct ifnet *ifp = NULL;
 
-	if_map = srp_enter(&if_idxmap.map);
+	if_map = srp_enter(&sr, &if_idxmap.map);
 	if (index < if_map->limit) {
 		map = (struct srp *)(if_map + 1);
 
-		ifp = srp_follow(&if_idxmap.map, if_map, &map[index]);
+		ifp = srp_follow(&sr, &map[index]);
 		if (ifp != NULL) {
 			KASSERT(ifp->if_index == index);
 			if_ref(ifp);
 		}
-		srp_leave(&map[index], ifp);
-	} else
-		srp_leave(&if_idxmap.map, if_map);
+	}
+	srp_leave(&sr);
 
 	return (ifp);
 }

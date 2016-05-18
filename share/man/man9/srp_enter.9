@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srp_enter.9,v 1.9 2016/02/12 12:52:28 dlg Exp $
+.\"	$OpenBSD: srp_enter.9,v 1.10 2016/05/18 03:46:03 dlg Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 12 2016 $
+.Dd $Mdocdate: May 18 2016 $
 .Dt SRP_ENTER 9
 .Os
 .Sh NAME
@@ -45,11 +45,11 @@
 .Ft void
 .Fn srp_update_locked "struct srp_gc *gc" "struct srp *p" "void *v"
 .Ft void *
-.Fn srp_enter "struct srp *p"
+.Fn srp_enter "struct srp_ref *sr" "struct srp *p"
 .Ft void *
-.Fn srp_follow "struct srp *p" "void *v" "struct srp *n"
+.Fn srp_follow "struct srp_ref *sr" "struct srp *n"
 .Ft void
-.Fn srp_leave "struct srp *p" "void *v"
+.Fn srp_leave "struct srp_ref *sr"
 .Ft void *
 .Fn srp_get_locked "struct srp *p"
 .Ft void
@@ -118,39 +118,18 @@ call to
 .Fn srp_leave
 or
 .Fn srp_follow .
+The reference is held via
+.Fa sr .
 .Pp
 .Fn srp_follow
-returns a pointer to the data structure referenced by the srp struct
-.Fa n
-that exists within the structure referenced by
-.Fa v
-via
-.Fa p ,
-while releasing the reference to
-.Fa v
-and making it available for garbage collection.
-It is equivalent to a call to
-.Fn srp_enter
-using
-.Fa n
-as an argument
-followed by a call to
-.Fn srp_leave
-with
-.Fa p
-and
-.Fa v
-as arguments.
-.Fn srp_follow
-is necessary to correctly order the taking and releasing of SRP
-critical sections in situations such as following a chain of data
-structures linked with SRPs.
+replaces the reference held via
+.Fa sr
+with a reference to the data structure represented by
+.Fa p .
 .Pp
 .Fn srp_leave
-releases the reference to
-.Fa v
-by the srp struct
-.Fa p
+releases the reference held via
+.Fa sr
 and makes it available for garbage collection.
 .Pp
 .Fn srp_get_locked
@@ -195,22 +174,6 @@ can be called during autoconf, or from process context.
 and
 .Fn srp_leave
 can be called during autoconf, from process context, or from interrupt context.
-Calling
-.Fn srp_follow
-or
-.Fn srp_leave
-from a different context or on a different CPU to the preceding
-.Fn srp_enter
-or
-.Fn srp_follow
-calls will lead to undefined behaviour.
-.Pp
-SRP critical sections must be released with
-.Fn srp_leave
-in the opposite order in which they were taken with
-.Fn srp_enter
-unless a critical section is exchanged with
-.Fn srp_follow .
 .Sh RETURN VALUES
 .Fn srp_enter ,
 .Fn srp_follow ,

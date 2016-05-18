@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.140 2016/05/10 23:48:07 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.141 2016/05/18 03:46:03 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1134,7 +1134,7 @@ int
 bpf_tap(caddr_t arg, u_char *pkt, u_int pktlen, u_int direction)
 {
 	struct bpf_if *bp = (struct bpf_if *)arg;
-	struct srpl_iter i;
+	struct srp_ref sr;
 	struct bpf_d *d;
 	size_t slen;
 	struct timeval tv;
@@ -1144,20 +1144,21 @@ bpf_tap(caddr_t arg, u_char *pkt, u_int pktlen, u_int direction)
 	if (bp == NULL)
 		return (0);
 
-	SRPL_FOREACH(d, &bp->bif_dlist, &i, bd_next) {
+	SRPL_FOREACH(d, &sr, &bp->bif_dlist, bd_next) {
 		atomic_inc_long(&d->bd_rcount);
 
 		if ((direction & d->bd_dirfilt) != 0)
 			slen = 0;
 		else {
+			struct srp_ref sr;
 			struct bpf_program *bf;
 			struct bpf_insn *fcode = NULL;
 
-			bf = srp_enter(&d->bd_rfilter);
+			bf = srp_enter(&sr, &d->bd_rfilter);
 			if (bf != NULL)
 				fcode = bf->bf_insns;
 			slen = bpf_filter(fcode, pkt, pktlen, pktlen);
-			srp_leave(&d->bd_rfilter, bf);
+			srp_leave(&sr);
 		}
 
 		if (slen > 0) {
@@ -1177,7 +1178,7 @@ bpf_tap(caddr_t arg, u_char *pkt, u_int pktlen, u_int direction)
 				drop = 1;
 		}
 	}
-	SRPL_LEAVE(&i, d);
+	SRPL_LEAVE(&sr);
 
 	return (drop);
 }
@@ -1214,7 +1215,7 @@ _bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction,
     void (*cpfn)(const void *, void *, size_t))
 {
 	struct bpf_if *bp = (struct bpf_if *)arg;
-	struct srpl_iter i;
+	struct srp_ref sr;
 	struct bpf_d *d;
 	size_t pktlen, slen;
 	const struct mbuf *m0;
@@ -1236,20 +1237,21 @@ _bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction,
 	for (m0 = m; m0 != NULL; m0 = m0->m_next)
 		pktlen += m0->m_len;
 
-	SRPL_FOREACH(d, &bp->bif_dlist, &i, bd_next) {
+	SRPL_FOREACH(d, &sr, &bp->bif_dlist, bd_next) {
 		atomic_inc_long(&d->bd_rcount);
 
 		if ((direction & d->bd_dirfilt) != 0)
 			slen = 0;
 		else {
+			struct srp_ref bsr;
 			struct bpf_program *bf;
 			struct bpf_insn *fcode = NULL;
 
-			bf = srp_enter(&d->bd_rfilter);
+			bf = srp_enter(&bsr, &d->bd_rfilter);
 			if (bf != NULL)
 				fcode = bf->bf_insns;
 			slen = bpf_mfilter(fcode, m, pktlen);
-			srp_leave(&d->bd_rfilter, bf);
+			srp_leave(&bsr);
 		}
 
 		if (slen > 0) {
@@ -1269,7 +1271,7 @@ _bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction,
 				drop = 1;
 		}
 	}
-	SRPL_LEAVE(&i, d);
+	SRPL_LEAVE(&sr);
 
 	return (drop);
 }

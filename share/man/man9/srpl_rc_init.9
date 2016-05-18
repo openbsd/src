@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srpl_rc_init.9,v 1.9 2015/12/03 16:27:32 mpi Exp $
+.\"	$OpenBSD: srpl_rc_init.9,v 1.10 2016/05/18 03:46:03 dlg Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 3 2015 $
+.Dd $Mdocdate: May 18 2016 $
 .Dt SRPL_RC_INIT 9
 .Os
 .Sh NAME
@@ -38,7 +38,6 @@
 .Nd singly-linked shared reference pointer list
 .Sh SYNOPSIS
 .In sys/srp.h
-.Vt struct srpl_iter;
 .Vt struct srpl_rc;
 .Ft void
 .Fo "srpl_rc_init"
@@ -51,16 +50,16 @@
 .Fn SRPL_ENTRY "TYPE"
 .Fn "SRPL_INIT" "SRPL_HEAD *sl"
 .Ft void *
-.Fn "SRPL_ENTER" "SRPL_HEAD *sl" "struct srpl_iter *si"
+.Fn "SRPL_ENTER" "struct srp_ref *sr" "SRPL_HEAD *sl"
 .Ft void *
-.Fn "SRPL_NEXT" "struct srpl_iter *si" "struct TYPE *listelm" "FIELDNAME"
+.Fn "SRPL_NEXT" "struct srp_ref *sr" "struct TYPE *listelm" "FIELDNAME"
 .Fo "SRPL_FOREACH"
 .Fa "VARNAME"
+.Fa "struct srp_ref *sr"
 .Fa "SRPL_HEAD *sl"
-.Fa "struct srpl_iter *si"
 .Fa "FIELDNAME"
 .Fc
-.Fn "SRPL_LEAVE" "struct srpl_iter *si" "struct TYPE *listelm"
+.Fn "SRPL_LEAVE" "struct srp_ref *sr"
 .Fn "SRPL_EMPTY_LOCKED" "SRPL_HEAD *sl"
 .Ft void *
 .Fn "SRPL_FIRST_LOCKED" "SRPL_HEAD *sl"
@@ -139,9 +138,8 @@ to an empty state.
 .Fn SRPL_ENTER
 begins iterating over elements in the SRP list
 .Fa sl .
-Local state necessary for iterating over the list is stored in the
-SRP list iterator structure
-.Fa si .
+The reference to the list item is held via
+.Fa sr .
 Every call to
 .Fn SRPL_ENTER
 must have a corresponding call to
@@ -163,7 +161,8 @@ to release references to the list and its elements.
 .Fn SRPL_LEAVE
 releases references to the list and its elements held by previous
 calls to
-.Fn SRPL_ENTER
+.Fn SRPL_ENTER ,
+.Fn SRPL_NEXT ,
 or
 .Fn SRPL_FOREACH .
 .Pp

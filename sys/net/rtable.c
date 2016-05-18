@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.41 2016/05/02 22:15:49 jmatthew Exp $ */
+/*	$OpenBSD: rtable.c,v 1.42 2016/05/18 03:46:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -231,14 +231,15 @@ rtable_get(unsigned int rtableid, sa_family_t af)
 {
 	struct rtmap	*map;
 	void		*tbl = NULL;
+	struct srp_ref	 sr;
 
 	if (af >= nitems(af2idx) || af2idx[af] == 0)
 		return (NULL);
 
-	map = srp_enter(&afmap[af2idx[af]]);
+	map = srp_enter(&sr, &afmap[af2idx[af]]);
 	if (rtableid < map->limit)
 		tbl = map->tbl[rtableid];
-	srp_leave(&afmap[af2idx[af]], map);
+	srp_leave(&sr);
 
 	return (tbl);
 }
@@ -267,11 +268,12 @@ rtable_l2(unsigned int rtableid)
 {
 	struct dommp	*dmm;
 	unsigned int	 rdomain = 0;
+	struct srp_ref	 sr;
 
-	dmm = srp_enter(&afmap[0]);
+	dmm = srp_enter(&sr, &afmap[0]);
 	if (rtableid < dmm->limit)
 		rdomain = dmm->dom[rtableid];
-	srp_leave(&afmap[0], dmm);
+	srp_leave(&sr);
 
 	return (rdomain);
 }
@@ -534,7 +536,7 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 	struct art_root			*ar;
 	struct art_node			*an;
 	struct rtentry			*rt;
-	struct srpl_iter		 i;
+	struct srp_ref			 sr;
 	uint8_t				*addr;
 	int				 plen;
 
@@ -562,9 +564,9 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 	}
 
 #ifdef SMALL_KERNEL
-	rt = SRPL_ENTER(&an->an_rtlist, &i);
+	rt = SRPL_ENTER(&sr, &an->an_rtlist);
 #else
-	SRPL_FOREACH(rt, &an->an_rtlist, &i, rt_next) {
+	SRPL_FOREACH(rt, &sr, &an->an_rtlist, rt_next) {
 		if (prio != RTP_ANY &&
 		    (rt->rt_priority & RTP_MASK) != (prio & RTP_MASK))
 			continue;
@@ -577,13 +579,13 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 			break;
 	}
 	if (rt == NULL) {
-		SRPL_LEAVE(&i, rt);
+		SRPL_LEAVE(&sr);
 		return (NULL);
 	}
 #endif /* SMALL_KERNEL */
 
 	rtref(rt);
-	SRPL_LEAVE(&i, rt);
+	SRPL_LEAVE(&sr);
 
 	return (rt);
 }
@@ -594,7 +596,7 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 	struct art_root			*ar;
 	struct art_node			*an;
 	struct rtentry			*rt = NULL;
-	struct srpl_iter		 i;
+	struct srp_ref			 sr;
 	uint8_t				*addr;
 #ifndef SMALL_KERNEL
 	int				 hash;
@@ -611,33 +613,32 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 	if (an == NULL)
 		goto out;
 
-	rt = SRPL_ENTER(&an->an_rtlist, &i);
+	rt = SRPL_ENTER(&sr, &an->an_rtlist);
 	rtref(rt);
-	SRPL_LEAVE(&i, rt);
+	SRPL_LEAVE(&sr);
 
 #ifndef SMALL_KERNEL
 	/* Gateway selection by Hash-Threshold (RFC 2992) */
 	if ((hash = rt_hash(rt, dst, src)) != -1) {
 		struct rtentry		*mrt;
-		struct srpl_iter	 i;
 		int			 threshold, npaths = 0;
 
 		KASSERT(hash <= 0xffff);
 
-		SRPL_FOREACH(mrt, &an->an_rtlist, &i, rt_next) {
+		SRPL_FOREACH(mrt, &sr, &an->an_rtlist, rt_next) {
 			/* Only count nexthops with the same priority. */
 			if (mrt->rt_priority == rt->rt_priority)
 				npaths++;
 		}
-		SRPL_LEAVE(&i, mrt);
+		SRPL_LEAVE(&sr);
 
 		threshold = (0xffff / npaths) + 1;
 
-		mrt = SRPL_ENTER(&an->an_rtlist, &i);
+		mrt = SRPL_ENTER(&sr, &an->an_rtlist);
 		while (hash > threshold && mrt != NULL) {
 			if (mrt->rt_priority == rt->rt_priority)
 				hash -= threshold;
-			mrt = SRPL_NEXT(&i, mrt, rt_next);
+			mrt = SRPL_NEXT(&sr, mrt, rt_next);
 		}
 
 		if (mrt != NULL) {
@@ -645,7 +646,7 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 			rtfree(rt);
 			rt = mrt;
 		}
-		SRPL_LEAVE(&i, mrt);
+		SRPL_LEAVE(&sr);
 	}
 #endif /* SMALL_KERNEL */
 out:

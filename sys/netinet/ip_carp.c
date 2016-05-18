@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.288 2016/04/13 11:41:15 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.289 2016/05/18 03:46:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1321,10 +1321,10 @@ carp_iamatch(struct ifnet *ifp, uint8_t *enaddr)
 {
 	struct carp_softc *sc = ifp->if_softc;
 	struct carp_vhost_entry *vhe;
-	struct srpl_iter i;
+	struct srp_ref sr;
 	int match = 0;
 
-	vhe = SRPL_ENTER(&sc->carp_vhosts, &i); /* head */
+	vhe = SRPL_ENTER(&sr, &sc->carp_vhosts); /* head */
 	if (vhe->state == MASTER) {
 		if (sc->sc_balancing == CARP_BAL_IPSTEALTH ||
 		    sc->sc_balancing == CARP_BAL_IP) {
@@ -1333,7 +1333,7 @@ carp_iamatch(struct ifnet *ifp, uint8_t *enaddr)
 		}
 		match = 1;
 	}
-	SRPL_LEAVE(&i, vhe);
+	SRPL_LEAVE(&sr);
 
 	return (match);
 }
@@ -1379,13 +1379,13 @@ int
 carp_vhe_match(struct carp_softc *sc, uint8_t *ena)
 {
 	struct carp_vhost_entry *vhe;
-	struct srpl_iter i;
+	struct srp_ref sr;
 	int match = 0;
 
-	vhe = SRPL_ENTER(&sc->carp_vhosts, &i); /* head */
+	vhe = SRPL_ENTER(&sr, &sc->carp_vhosts); /* head */
 	match = (vhe->state == MASTER || sc->sc_balancing >= CARP_BAL_IP) &&
 	    !memcmp(ena, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
-	SRPL_LEAVE(&i, vhe);
+	SRPL_LEAVE(&sr);
 
 	return (match);
 }
@@ -1397,13 +1397,13 @@ carp_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct carp_if *cif;
 	struct carp_softc *sc;
-	struct srpl_iter i;
+	struct srp_ref sr;
 
 	eh = mtod(m, struct ether_header *);
 	cif = (struct carp_if *)cookie;
 	KASSERT(cif == (struct carp_if *)ifp0->if_carp);
 
-	SRPL_FOREACH(sc, &cif->vhif_vrs, &i, sc_list) {
+	SRPL_FOREACH(sc, &sr, &cif->vhif_vrs, sc_list) {
 		if ((sc->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 		    (IFF_UP|IFF_RUNNING))
 			continue;
@@ -1413,7 +1413,7 @@ carp_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 	}
 
 	if (sc == NULL) {
-		SRPL_LEAVE(&i, sc);
+		SRPL_LEAVE(&sr);
 
 		if (!ETHER_IS_MULTICAST(eh->ether_dhost))
 			return (0);
@@ -1422,7 +1422,7 @@ carp_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 		 * XXX Should really check the list of multicast addresses
 		 * for each CARP interface _before_ copying.
 		 */
-		SRPL_FOREACH(sc, &cif->vhif_vrs, &i, sc_list) {
+		SRPL_FOREACH(sc, &sr, &cif->vhif_vrs, sc_list) {
 			struct mbuf *m0;
 
 			if (!(sc->sc_if.if_flags & IFF_UP))
@@ -1437,7 +1437,7 @@ carp_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 
 			if_input(&sc->sc_if, &ml);
 		}
-		SRPL_LEAVE(&i, sc);
+		SRPL_LEAVE(&sr);
 
 		return (0);
 	}
@@ -1451,7 +1451,7 @@ carp_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 
 	ml_enqueue(&ml, m);
 	if_input(&sc->sc_if, &ml);
-	SRPL_LEAVE(&i, sc);
+	SRPL_LEAVE(&sr);
 
 	return (1);
 }
@@ -2299,15 +2299,15 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 {
 	struct carp_softc *sc = ((struct carp_softc *)ifp->if_softc);
 	struct carp_vhost_entry *vhe;
-	struct srpl_iter i;
+	struct srp_ref sr;
 	int ismaster;
 
 	KASSERT(sc->sc_carpdev != NULL);
 
 	if (sc->cur_vhe == NULL) {
-		vhe = SRPL_ENTER(&sc->carp_vhosts, &i); /* head */
+		vhe = SRPL_ENTER(&sr, &sc->carp_vhosts); /* head */
 		ismaster = (vhe->state == MASTER);
-		SRPL_LEAVE(&i, vhe);
+		SRPL_LEAVE(&sr);
 	} else {
 		ismaster = (sc->cur_vhe->state == MASTER);
 	}

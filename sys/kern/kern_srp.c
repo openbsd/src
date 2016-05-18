@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_srp.c,v 1.7 2015/11/23 10:56:19 mpi Exp $ */
+/*	$OpenBSD: kern_srp.c,v 1.8 2016/05/18 03:46:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -207,7 +207,7 @@ srp_v(struct srp_hazard *hzrd, struct srp *srp)
 }
 
 void *
-srp_enter(struct srp *srp)
+srp_enter(struct srp_ref *sr, struct srp *srp)
 {
 	struct cpu_info *ci = curcpu();
 	struct srp_hazard *hzrd;
@@ -215,8 +215,10 @@ srp_enter(struct srp *srp)
 
 	for (i = 0; i < nitems(ci->ci_srp_hazards); i++) {
 		hzrd = &ci->ci_srp_hazards[i];
-		if (hzrd->sh_p == NULL)
+		if (hzrd->sh_p == NULL) {
+			sr->hz = hzrd;
 			return (srp_v(hzrd, srp));
+		}
 	}
 
 	panic("%s: not enough srp hazard records", __func__);
@@ -226,38 +228,15 @@ srp_enter(struct srp *srp)
 }
 
 void *
-srp_follow(struct srp *srp, void *v, struct srp *next)
+srp_follow(struct srp_ref *sr, struct srp *srp)
 {
-	struct cpu_info *ci = curcpu();
-	struct srp_hazard *hzrd;
-
-	hzrd = ci->ci_srp_hazards + nitems(ci->ci_srp_hazards);
-	while (hzrd-- != ci->ci_srp_hazards) {
-		if (hzrd->sh_p == srp && hzrd->sh_v == v)
-			return (srp_v(hzrd, next));
-	}
-
-	panic("%s: unexpected ref %p via %p", __func__, v, srp);
-
-	/* NOTREACHED */
-	return (NULL);
+	return (srp_v(sr->hz, srp));
 }
 
 void
-srp_leave(struct srp *srp, void *v)
+srp_leave(struct srp_ref *sr)
 {
-	struct cpu_info *ci = curcpu();
-	struct srp_hazard *hzrd;
-
-	hzrd = ci->ci_srp_hazards + nitems(ci->ci_srp_hazards);
-	while (hzrd-- != ci->ci_srp_hazards) {
-		if (hzrd->sh_p == srp && hzrd->sh_v == v) {
-			hzrd->sh_p = NULL;
-			return;
-		}
-	}
-
-	panic("%s: unexpected ref %p via %p", __func__, v, srp);
+	sr->hz->sh_p = NULL;
 }
 
 #else /* MULTIPROCESSOR */
