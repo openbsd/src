@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.10 2016/05/07 19:05:22 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.11 2016/05/18 20:21:13 guenther Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,6 +36,16 @@
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
+
+
+/*
+ * We need to offset the TCB pointer (in register gbr) by this much:
+ *	offsetof(struct tib, tib_errno) - offsetof(struct tib, __tib_tcb)
+ * That's negative on a variant I arch like sh, but you can't directly
+ * load negative numbers or use them as displacements.  Ha!  So this is the
+ * negative of the real value and we'll explicitly subtract it in the asm
+ */
+#define	TCB_OFFSET_ERRNO_NEG	8
 
 /*
  * We define a hidden alias with the prefix "_libc_" for each global symbol
@@ -84,8 +94,6 @@
 	903:	.long	(SYS_ ## x);			\
 	904:
 
-#define	CERROR	_C_LABEL(__cerror)
-
 #define _SYSCALL_NOERROR(x,y)				\
 		SYSENTRY(x);				\
 		SYSTRAP(y)
@@ -93,40 +101,23 @@
 		SYSENTRY_HIDDEN(x);			\
 		SYSTRAP(y)
 
-#ifdef __PIC__
-
-#define JUMP_CERROR					\
-		mov	r0, r4;				\
-		mov.l	912f, r1;			\
-		mova	912f, r0;			\
-		mov.l	913f, r2;			\
-		add	r1, r0;				\
-		mov.l	@(r0, r2), r3;			\
-		jmp	@r3;				\
-		 nop;					\
-		.align	2;				\
-	912:	.long	_GLOBAL_OFFSET_TABLE_;		\
-	913:	.long	PIC_GOT(CERROR)
-
-#else  /* !PIC */
-
-#define JUMP_CERROR					\
-		mov.l	912f, r3;			\
-		jmp	@r3;				\
-		 mov	r0, r4;				\
-		.align	2;				\
-	912:	.long	CERROR
-
-#endif /* !PIC */
+#define SET_ERRNO_AND_RETURN				\
+		stc	gbr,r1;				\
+		mov	#TCB_OFFSET_ERRNO_NEG,r2;	\
+		sub	r2,r1;				\
+		mov.l	r0,@r1;				\
+		mov	#-1, r1;			\
+		rts;					\
+		 mov	#-1, r0
 
 #define _SYSCALL(x,y)					\
 		.text;					\
-	911:	JUMP_CERROR;				\
+	911:	SET_ERRNO_AND_RETURN;			\
 		_SYSCALL_NOERROR(x,y);			\
 		bf	911b
 #define _SYSCALL_HIDDEN(x,y)				\
 		.text;					\
-	911:	JUMP_CERROR;				\
+	911:	SET_ERRNO_AND_RETURN;			\
 		_SYSCALL_HIDDEN_NOERROR(x,y);		\
 		bf	911b
 
@@ -159,5 +150,3 @@
 #define RSYSCALL_HIDDEN(x)		PSEUDO_HIDDEN(x,x)
 #define SYSCALL_END(x)			__END(x)
 #define SYSCALL_END_HIDDEN(x)		__END_HIDDEN(x)
-
-	.globl	CERROR

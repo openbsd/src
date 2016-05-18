@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.4 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: brk.S,v 1.5 2016/05/18 20:21:13 guenther Exp $	*/
 /*	$NetBSD: brk.S,v 1.10 2006/01/06 03:58:31 uwe Exp $	*/
 
 /*-
@@ -76,9 +76,9 @@ ENTRY(brk)
 	mov.l	Lcurbrk, r1
 #endif
 	rts
-	mov.l	r4, @r1
+	 mov.l	r4, @r1
 2:
-	JUMP_CERROR
+	SET_ERRNO_AND_RETURN
 
 	.align	2
 LSYS_break:	.long	SYS_break

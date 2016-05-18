@@ -1,2 +1,1 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2016/05/07 19:05:22 guenther Exp $
-CERROR=	cerror.S
+#	$OpenBSD: Makefile.inc,v 1.6 2016/05/18 20:21:13 guenther Exp $

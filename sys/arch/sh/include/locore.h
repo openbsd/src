@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.5 2010/09/06 08:00:31 jsg Exp $	*/
+/*	$OpenBSD: locore.h,v 1.6 2016/05/18 20:21:13 guenther Exp $	*/
 /*	$NetBSD: locore.h,v 1.11 2006/01/23 22:32:50 uwe Exp $	*/
 
 /*-
@@ -89,6 +89,7 @@
 	sts.l	pr,	@-r14	/* tf_pr  */				;\
 	sts.l	mach,	@-r14	/* tf_mach*/				;\
 	sts.l	macl,	@-r14	/* tf_macl*/				;\
+	stc.l	gbr,	@-r14	/* tf_gbr */				;\
 	mov.l	r2,	@-r14	/* tf_ssr */				;\
 	stc.l	spc,	@-r14	/* tf_spc */				;\
 	add	#-TF_SPC, r14	/* skip tf_ubc, tf_expevt */		;\
@@ -125,6 +126,7 @@
 	ldc	r0,	spc						;\
 	mov.l	@r14+,	r0	/* tf_ssr */				;\
 	ldc	r0,	ssr						;\
+	ldc.l	@r14+,	gbr	/* tf_gbr */				;\
 	lds.l	@r14+,	macl	/* tf_macl*/				;\
 	lds.l	@r14+,	mach	/* tf_mach*/				;\
 	lds.l	@r14+,	pr	/* tf_pr  */				;\

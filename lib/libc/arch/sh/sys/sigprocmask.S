@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.4 2015/10/31 09:30:57 miod Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.5 2016/05/18 20:21:13 guenther Exp $	*/
 /*	$NetBSD: sigprocmask.S,v 1.6 2003/08/07 16:42:21 agc Exp $	*/
 
 /*-
@@ -56,9 +56,9 @@ SYSENTRY_HIDDEN(sigprocmask)
 3:
 	xor	r0, r0
 	rts
-	nop
+	 nop
 4:
-	JUMP_CERROR
+	SET_ERRNO_AND_RETURN
 
 	.align	2
 LSYS_sigprocmask:

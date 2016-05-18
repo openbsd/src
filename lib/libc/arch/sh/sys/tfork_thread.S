@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.2 2012/06/21 00:56:59 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.3 2016/05/18 20:21:13 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007 Miodrag Vallat.
@@ -51,7 +51,7 @@ ENTRY(__tfork_thread)
 	/*
 	 * System call failure.
 	 */
-	JUMP_CERROR
+	SET_ERRNO_AND_RETURN
 
 	.align 2
 .LSYS___tfork:	.long SYS___tfork

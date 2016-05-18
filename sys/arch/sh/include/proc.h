@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.2 2006/11/28 18:52:23 kettenis Exp $	*/
+/*	$OpenBSD: proc.h,v 1.3 2016/05/18 20:21:13 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.10 2005/12/11 12:18:58 christos Exp $	*/
 
 /*
@@ -56,6 +56,8 @@ struct mdproc {
 	/* u-area PTE: *2 .. SH4 data/address data array access */
 	struct md_upte md_upte[UPAGES * 2];
 };
+
+#define __HAVE_MD_TCB
 
 /* md_flags */
 #define	MDP_USEDFPU	0x0001	/* has used the FPU */

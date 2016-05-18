@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.7 2016/03/05 17:16:33 tobiasu Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.8 2016/05/18 20:21:13 guenther Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.37 2006/09/06 00:11:49 uwe Exp $	*/
 
 /*-
@@ -560,6 +560,7 @@ db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		TF(ubc);
 		TF(spc);
 		TF(ssr);
+		TF(gbr);
 		TF(macl);
 		TF(mach);
 		TF(pr);
