@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.205 2016/04/27 14:47:27 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.206 2016/05/18 08:05:51 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -83,6 +83,7 @@ void arptimer(void *);
 struct rtentry *arplookup(u_int32_t, int, int, u_int);
 void in_arpinput(struct mbuf *);
 void in_revarpinput(struct mbuf *);
+int arpcache(struct ifnet *, struct ether_arp *, struct rtentry *);
 
 LIST_HEAD(, llinfo_arp) arp_list;
 struct	pool arp_pool;		/* pool for llinfo_arp structures */
@@ -451,17 +452,14 @@ in_arpinput(struct mbuf *m)
 	struct ether_arp *ea;
 	struct ifnet *ifp;
 	struct ether_header *eh;
-	struct llinfo_arp *la = NULL;
 	struct rtentry *rt = NULL;
-	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
 	struct sockaddr_in sin;
 	struct in_addr isaddr, itaddr;
-	struct mbuf *mh;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	char addr[INET_ADDRSTRLEN];
-	int op, changed = 0, target = 0;
-	unsigned int len, rdomain;
+	int op, target = 0;
+	unsigned int rdomain;
 
 	rdomain = rtable_l2(m->m_pkthdr.ph_rtableid);
 
@@ -481,14 +479,12 @@ in_arpinput(struct mbuf *m)
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 
-	if (ETHER_IS_MULTICAST(&ea->arp_sha[0])) {
-		if (!memcmp(ea->arp_sha, etherbroadcastaddr,
-		    sizeof (ea->arp_sha))) {
-			inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
-			log(LOG_ERR, "arp: ether address is broadcast for "
-			    "IP address %s!\n", addr);
-			goto out;
-		}
+	if (ETHER_IS_MULTICAST(&ea->arp_sha[0]) &&
+	    !memcmp(ea->arp_sha, etherbroadcastaddr, sizeof(ea->arp_sha))) {
+		inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
+		log(LOG_ERR, "arp: ether address is broadcast for IP address "
+		    "%s!\n", addr);
+		goto out;
 	}
 
 	memcpy(enaddr, LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
@@ -521,101 +517,13 @@ in_arpinput(struct mbuf *m)
 		   "duplicate IP address %s sent from ethernet address %s\n",
 		   addr, ether_sprintf(ea->arp_sha));
 		itaddr = isaddr;
-	} else if (rt != NULL && (sdl = satosdl(rt->rt_gateway)) != NULL) {
-		la = (struct llinfo_arp *)rt->rt_llinfo;
-		if (sdl->sdl_alen) {
-			if (memcmp(ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
-				if (rt->rt_flags &
-				    (RTF_PERMANENT_ARP|RTF_LOCAL)) {
-					inet_ntop(AF_INET, &isaddr, addr,
-					    sizeof(addr));
-					log(LOG_WARNING, "arp: attempt to"
-					   " overwrite permanent entry for %s"
-					   " by %s on %s\n", addr,
-					   ether_sprintf(ea->arp_sha),
-					   ifp->if_xname);
-					goto out;
-				} else if (rt->rt_ifidx != ifp->if_index) {
-#if NCARP > 0
-					if (ifp->if_type != IFT_CARP)
-#endif
-					{
-						struct ifnet *rifp = if_get(
-						    rt->rt_ifidx);
-						if (rifp == NULL)
-							goto out;
-						inet_ntop(AF_INET, &isaddr,
-						    addr, sizeof(addr));
-						log(LOG_WARNING, "arp: attempt"
-						   " to overwrite entry for"
-						   " %s on %s by %s on %s\n",
-						   addr, rifp->if_xname,
-						   ether_sprintf(ea->arp_sha),
-						   ifp->if_xname);
-						if_put(rifp);
-					}
-					goto out;
-				} else {
-					inet_ntop(AF_INET, &isaddr, addr,
-					    sizeof(addr));
-					log(LOG_INFO, "arp info overwritten for"
-					   " %s by %s on %s\n", addr,
-					   ether_sprintf(ea->arp_sha),
-					   ifp->if_xname);
-					rt->rt_expire = 1;/* no longer static */
-				}
-			changed = 1;
-			}
-		} else if (!if_isconnected(ifp, rt->rt_ifidx)) {
-			struct ifnet *rifp = if_get(rt->rt_ifidx);
-			if (rifp == NULL)
-				goto out;
-			inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
-			log(LOG_WARNING,
-			    "arp: attempt to add entry for %s "
-			    "on %s by %s on %s\n", addr,
-			    rifp->if_xname,
-			    ether_sprintf(ea->arp_sha),
-			    ifp->if_xname);
-			if_put(rifp);
+	} else if (rt != NULL) {
+		if (arpcache(ifp, ea, rt))
 			goto out;
-		}
-		sdl->sdl_alen = sizeof(ea->arp_sha);
-		memcpy(LLADDR(sdl), ea->arp_sha, sizeof(ea->arp_sha));
-		if (rt->rt_expire)
-			rt->rt_expire = time_second + arpt_keep;
-		rt->rt_flags &= ~RTF_REJECT;
-		/* Notify userland that an ARP resolution has been done. */
-		if (la->la_asked || changed) {
-			KERNEL_LOCK();
-			rt_sendmsg(rt, RTM_RESOLVE, ifp->if_rdomain);
-			KERNEL_UNLOCK();
-		}
-		la->la_asked = 0;
-		while ((len = ml_len(&la->la_ml)) != 0) {
-			mh = ml_dequeue(&la->la_ml);
-			la_hold_total--;
-
-			ifp->if_output(ifp, mh, rt_key(rt), rt);
-
-			if (ml_len(&la->la_ml) == len) {
-				/* mbuf is back in queue. Discard. */
-				while ((mh = ml_dequeue(&la->la_ml)) != NULL) {
-					la_hold_total--;
-					m_freem(mh);
-				}
-				break;
-			}
-		}
 	}
 
-	if (op != ARPOP_REQUEST) {
-out:
-		rtfree(rt);
-		if_put(ifp);
-		m_freem(m);
-		return;
-	}
+	if (op != ARPOP_REQUEST)
+		goto out;
 
 	rtfree(rt);
 	if (target) {
@@ -623,6 +531,8 @@ out:
 		memcpy(ea->arp_tha, ea->arp_sha, sizeof(ea->arp_sha));
 		memcpy(ea->arp_sha, LLADDR(ifp->if_sadl), sizeof(ea->arp_sha));
 	} else {
+		struct sockaddr_dl *sdl;
+
 		rt = arplookup(itaddr.s_addr, 0, SIN_PROXY, rdomain);
 		if (rt == NULL)
 			goto out;
@@ -648,8 +558,107 @@ out:
 	sa.sa_len = sizeof(sa);
 	ifp->if_output(ifp, m, &sa, NULL);
 	if_put(ifp);
+	return;
+
+out:
+	rtfree(rt);
+	if_put(ifp);
+	m_freem(m);
 }
 
+int
+arpcache(struct ifnet *ifp, struct ether_arp *ea, struct rtentry *rt)
+{
+	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
+	struct sockaddr_dl *sdl = satosdl(rt->rt_gateway);
+	struct in_addr *spa = (struct in_addr *)ea->arp_spa;
+	char addr[INET_ADDRSTRLEN];
+	struct ifnet *rifp;
+	unsigned int len;
+	int changed = 0;
+
+	KASSERT(sdl != NULL);
+
+	if (sdl->sdl_alen > 0) {
+		if (memcmp(ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
+			if (ISSET(rt->rt_flags, RTF_PERMANENT_ARP|RTF_LOCAL)) {
+				inet_ntop(AF_INET, spa, addr, sizeof(addr));
+				log(LOG_WARNING, "arp: attempt to overwrite "
+				   "permanent entry for %s by %s on %s\n", addr,
+				   ether_sprintf(ea->arp_sha), ifp->if_xname);
+				return (-1);
+			} else if (rt->rt_ifidx != ifp->if_index) {
+#if NCARP > 0
+				if (ifp->if_type != IFT_CARP)
+#endif
+				{
+					rifp = if_get(rt->rt_ifidx);
+					if (rifp == NULL)
+						return (-1);
+					inet_ntop(AF_INET, spa, addr,
+					    sizeof(addr));
+					log(LOG_WARNING, "arp: attempt to "
+					    "overwrite entry for %s on %s by "
+					    "%s on %s\n", addr, rifp->if_xname,
+					    ether_sprintf(ea->arp_sha),
+					    ifp->if_xname);
+					if_put(rifp);
+				}
+				return (-1);
+			} else {
+				inet_ntop(AF_INET, spa, addr, sizeof(addr));
+				log(LOG_INFO, "arp info overwritten for %s by "
+				    "%s on %s\n", addr,
+				    ether_sprintf(ea->arp_sha), ifp->if_xname);
+				rt->rt_expire = 1;/* no longer static */
+			}
+			changed = 1;
+		}
+	} else if (!if_isconnected(ifp, rt->rt_ifidx)) {
+		rifp = if_get(rt->rt_ifidx);
+		if (rifp == NULL)
+			return (-1);
+		inet_ntop(AF_INET, spa, addr, sizeof(addr));
+		log(LOG_WARNING, "arp: attempt to add entry for %s on %s by %s"
+		    " on %s\n", addr, rifp->if_xname,
+		    ether_sprintf(ea->arp_sha), ifp->if_xname);
+		if_put(rifp);
+		return (-1);
+	}
+	sdl->sdl_alen = sizeof(ea->arp_sha);
+	memcpy(LLADDR(sdl), ea->arp_sha, sizeof(ea->arp_sha));
+	if (rt->rt_expire)
+		rt->rt_expire = time_second + arpt_keep;
+	rt->rt_flags &= ~RTF_REJECT;
+
+	/* Notify userland that an ARP resolution has been done. */
+	if (la->la_asked || changed) {
+		KERNEL_LOCK();
+		rt_sendmsg(rt, RTM_RESOLVE, ifp->if_rdomain);
+		KERNEL_UNLOCK();
+	}
+
+	la->la_asked = 0;
+	while ((len = ml_len(&la->la_ml)) != 0) {
+		struct mbuf *mh;
+
+		mh = ml_dequeue(&la->la_ml);
+		la_hold_total--;
+
+		ifp->if_output(ifp, mh, rt_key(rt), rt);
+
+		if (ml_len(&la->la_ml) == len) {
+			/* mbuf is back in queue. Discard. */
+			while ((mh = ml_dequeue(&la->la_ml)) != NULL) {
+				la_hold_total--;
+				m_freem(mh);
+			}
+			break;
+		}
+	}
+
+	return (0);
+}
 /*
  * Free an arp entry.
  */
