@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_srp.c,v 1.8 2016/05/18 03:46:03 dlg Exp $ */
+/*	$OpenBSD: kern_srp.c,v 1.9 2016/05/18 03:58:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -74,7 +74,7 @@ srp_get_locked(struct srp *srp)
 }
 
 void
-srp_finalize(struct srp_gc *srp_gc)
+srp_gc_finalize(struct srp_gc *srp_gc)
 {
 	refcnt_finalize(&srp_gc->srp_gc_refcnt, "srpfini");
 }
