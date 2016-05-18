@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.80 2016/05/18 07:26:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.81 2016/05/18 07:28:01 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -262,12 +262,10 @@ int	iwm_nic_tx_init(struct iwm_softc *);
 int	iwm_nic_init(struct iwm_softc *);
 void	iwm_enable_txq(struct iwm_softc *, int, int);
 int	iwm_post_alive(struct iwm_softc *);
-#ifdef notyet
 struct iwm_phy_db_entry *iwm_phy_db_get_section(struct iwm_softc *,
 					enum iwm_phy_db_section_type, uint16_t);
 int	iwm_phy_db_set_section(struct iwm_softc *,
 				struct iwm_calib_res_notif_phy_db *);
-#endif
 int	iwm_is_valid_channel(uint16_t);
 uint8_t	iwm_ch_id_to_ch_index(uint16_t);
 uint16_t iwm_channel_id_to_papd(uint16_t);
@@ -275,11 +273,8 @@ uint16_t iwm_channel_id_to_txp(struct iwm_softc *, uint16_t);
 int	iwm_phy_db_get_section_data(struct iwm_softc *, uint32_t, uint8_t **,
 					uint16_t *, uint16_t);
 int	iwm_send_phy_db_cmd(struct iwm_softc *, uint16_t, uint16_t, void *);
-#ifdef notyet
 int	iwm_phy_db_send_all_channel_groups(struct iwm_softc *,
 		enum iwm_phy_db_section_type, uint8_t);
-#endif
-int	iwm_send_phy_db_data(struct iwm_softc *);
 int	iwm_send_phy_db_data(struct iwm_softc *);
 void	iwm_mvm_te_v2_to_v1(const struct iwm_time_event_cmd_v2 *,
 				struct iwm_time_event_cmd_v1 *);
@@ -322,7 +317,6 @@ int	iwm_firmware_load_chunk(struct iwm_softc *, uint32_t, const uint8_t *,
 				uint32_t);
 int	iwm_load_firmware(struct iwm_softc *, enum iwm_ucode_type);
 int	iwm_start_fw(struct iwm_softc *, enum iwm_ucode_type);
-int	iwm_fw_alive(struct iwm_softc *, uint32_t);
 int	iwm_send_tx_ant_cfg(struct iwm_softc *, uint8_t);
 int	iwm_send_phy_cfg_cmd(struct iwm_softc *);
 int	iwm_mvm_load_ucode_wait_alive(struct iwm_softc *, enum iwm_ucode_type);
@@ -1324,11 +1318,12 @@ iwm_set_hw_ready(struct iwm_softc *sc)
 int
 iwm_prepare_card_hw(struct iwm_softc *sc)
 {
-	int rv = 0;
 	int t = 0;
 
 	if (iwm_set_hw_ready(sc))
-		goto out;
+		return 0;
+
+	DELAY(100);
 
 	/* If HW is not ready, prepare the conditions to check again */
 	IWM_SETBITS(sc, IWM_CSR_HW_IF_CONFIG_REG,
@@ -1336,15 +1331,12 @@ iwm_prepare_card_hw(struct iwm_softc *sc)
 
 	do {
 		if (iwm_set_hw_ready(sc))
-			goto out;
+			return 0;
 		DELAY(200);
 		t += 200;
 	} while (t < 150000);
 
-	rv = ETIMEDOUT;
-
- out:
-	return rv;
+	return ETIMEDOUT;
 }
 
 void
@@ -1423,6 +1415,7 @@ iwm_apm_init(struct iwm_softc *sc)
 	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY, 25000)) {
 		printf("%s: timeout waiting for clock stabilization\n",
 		    DEVNAME(sc));
+		error = ETIMEDOUT;
 		goto out;
 	}
 
@@ -1739,14 +1732,6 @@ iwm_nic_init(struct iwm_softc *sc)
 	return 0;
 }
 
-enum iwm_mvm_tx_fifo {
-	IWM_MVM_TX_FIFO_BK = 0,
-	IWM_MVM_TX_FIFO_BE,
-	IWM_MVM_TX_FIFO_VI,
-	IWM_MVM_TX_FIFO_VO,
-	IWM_MVM_TX_FIFO_MCAST = 5,
-};
-
 const uint8_t iwm_mvm_ac_to_tx_fifo[] = {
 	IWM_MVM_TX_FIFO_VO,
 	IWM_MVM_TX_FIFO_VI,
@@ -1852,45 +1837,6 @@ iwm_post_alive(struct iwm_softc *sc)
  	iwm_nic_unlock(sc);
 	return error;
 }
-
-/*
- * PHY db
- */
-
-enum iwm_phy_db_section_type {
-	IWM_PHY_DB_CFG = 1,
-	IWM_PHY_DB_CALIB_NCH,
-	IWM_PHY_DB_UNUSED,
-	IWM_PHY_DB_CALIB_CHG_PAPD,
-	IWM_PHY_DB_CALIB_CHG_TXP,
-	IWM_PHY_DB_MAX
-};
-
-#define IWM_PHY_DB_CMD 0x6c /* TEMP API - The actual is 0x8c */
-
-/*
- * phy db - configure operational ucode
- */
-struct iwm_phy_db_cmd {
-	uint16_t type;
-	uint16_t length;
-	uint8_t data[];
-} __packed;
-
-/* for parsing of tx power channel group data that comes from the firmware*/
-struct iwm_phy_db_chg_txp {
-	uint32_t space;
-	uint16_t max_channel_idx;
-} __packed;
-
-/*
- * phy db - Receive phy db chunk after calibrations
- */
-struct iwm_calib_res_notif_phy_db {
-	uint16_t type;
-	uint16_t length;
-	uint8_t data[];
-} __packed;
 
 /*
  * get phy db section: returns a pointer to a phy db section specified by
@@ -2921,12 +2867,6 @@ iwm_start_fw(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 }
 
 int
-iwm_fw_alive(struct iwm_softc *sc, uint32_t sched_base)
-{
-	return iwm_post_alive(sc);
-}
-
-int
 iwm_send_tx_ant_cfg(struct iwm_softc *sc, uint8_t valid_tx_ant)
 {
 	struct iwm_tx_ant_cfg_cmd tx_ant_cmd = {
@@ -2972,7 +2912,7 @@ iwm_mvm_load_ucode_wait_alive(struct iwm_softc *sc,
 		return error;
 	}
 
-	return iwm_fw_alive(sc, sc->sched_base);
+	return iwm_post_alive(sc);
 }
 
 /*
@@ -2993,8 +2933,10 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 
 	sc->sc_init_complete = 0;
 	if ((error = iwm_mvm_load_ucode_wait_alive(sc,
-	    IWM_UCODE_TYPE_INIT)) != 0)
+	    IWM_UCODE_TYPE_INIT)) != 0) {
+		printf("%s: failed to load init firmware\n", DEVNAME(sc));
 		return error;
+	}
 
 	if (justnvm) {
 		if ((error = iwm_nvm_init(sc)) != 0) {
@@ -3741,8 +3683,6 @@ iwm_mvm_send_cmd_status(struct iwm_softc *sc,
 	struct iwm_cmd_response *resp;
 	int error, resp_len;
 
-	//lockdep_assert_held(&mvm->mutex);
-
 	KASSERT((cmd->flags & IWM_CMD_WANT_SKB) == 0);
 	cmd->flags |= IWM_CMD_SYNC | IWM_CMD_WANT_SKB;
 
@@ -4289,30 +4229,6 @@ iwm_mvm_power_log(struct iwm_softc *sc, struct iwm_mac_power_cmd *cmd)
 		DPRINTF(("Disable power management\n"));
 		return;
 	}
-	KASSERT(0);
-
-#if 0
-	DPRINTF(mvm, "Rx timeout = %u usec\n",
-			le32_to_cpu(cmd->rx_data_timeout));
-	DPRINTF(mvm, "Tx timeout = %u usec\n",
-			le32_to_cpu(cmd->tx_data_timeout));
-	if (cmd->flags & cpu_to_le16(IWM_POWER_FLAGS_SKIP_OVER_DTIM_MSK))
-		DPRINTF(mvm, "DTIM periods to skip = %u\n",
-				cmd->skip_dtim_periods);
-	if (cmd->flags & cpu_to_le16(IWM_POWER_FLAGS_LPRX_ENA_MSK))
-		DPRINTF(mvm, "LP RX RSSI threshold = %u\n",
-				cmd->lprx_rssi_threshold);
-	if (cmd->flags & cpu_to_le16(IWM_POWER_FLAGS_ADVANCE_PM_ENA_MSK)) {
-		DPRINTF(mvm, "uAPSD enabled\n");
-		DPRINTF(mvm, "Rx timeout (uAPSD) = %u usec\n",
-				le32_to_cpu(cmd->rx_data_timeout_uapsd));
-		DPRINTF(mvm, "Tx timeout (uAPSD) = %u usec\n",
-				le32_to_cpu(cmd->tx_data_timeout_uapsd));
-		DPRINTF(mvm, "QNDP TID = %d\n", cmd->qndp_tid);
-		DPRINTF(mvm, "ACs flags = 0x%x\n", cmd->uapsd_ac_flags);
-		DPRINTF(mvm, "Max SP = %d\n", cmd->uapsd_max_sp);
-	}
-#endif
 }
 
 void
@@ -4537,13 +4453,7 @@ iwm_mvm_sta_send_to_fw(struct iwm_softc *sc, struct iwm_node *in, int update)
 int
 iwm_mvm_add_sta(struct iwm_softc *sc, struct iwm_node *in)
 {
-	int ret;
-
-	ret = iwm_mvm_sta_send_to_fw(sc, in, 0);
-	if (ret)
-		return ret;
-
-	return 0;
+	return iwm_mvm_sta_send_to_fw(sc, in, 0);
 }
 
 int
