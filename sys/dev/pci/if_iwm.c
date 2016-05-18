@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.79 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.80 2016/05/18 07:26:56 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -235,6 +235,7 @@ void	iwm_free_kw(struct iwm_softc *);
 int	iwm_alloc_ict(struct iwm_softc *);
 void	iwm_free_ict(struct iwm_softc *);
 int	iwm_alloc_rx_ring(struct iwm_softc *, struct iwm_rx_ring *);
+void	iwm_disable_rx_dma(struct iwm_softc *);
 void	iwm_reset_rx_ring(struct iwm_softc *, struct iwm_rx_ring *);
 void	iwm_free_rx_ring(struct iwm_softc *, struct iwm_rx_ring *);
 int	iwm_alloc_tx_ring(struct iwm_softc *, struct iwm_tx_ring *, int);
@@ -1050,7 +1051,7 @@ fail:	iwm_free_rx_ring(sc, ring);
 }
 
 void
-iwm_reset_rx_ring(struct iwm_softc *sc, struct iwm_rx_ring *ring)
+iwm_disable_rx_dma(struct iwm_softc *sc)
 {
 	int ntries;
 
@@ -1064,6 +1065,11 @@ iwm_reset_rx_ring(struct iwm_softc *sc, struct iwm_rx_ring *ring)
 		}
 		iwm_nic_unlock(sc);
 	}
+}
+
+void
+iwm_reset_rx_ring(struct iwm_softc *sc, struct iwm_rx_ring *ring)
+{
 	ring->cur = 0;
 	bus_dmamap_sync(sc->sc_dmat, ring->stat_dma.map, 0,
 	    ring->stat_dma.size, BUS_DMASYNC_PREWRITE);
@@ -1537,6 +1543,7 @@ iwm_stop_device(struct iwm_softc *sc)
 		}
 		iwm_nic_unlock(sc);
 	}
+	iwm_disable_rx_dma(sc);
 
 	/* Stop RX ring. */
 	iwm_reset_rx_ring(sc, &sc->rxq);
@@ -1631,7 +1638,7 @@ iwm_nic_rx_init(struct iwm_softc *sc)
 	memset(sc->rxq.stat, 0, sizeof(*sc->rxq.stat));
 
 	/* stop DMA */
-	IWM_WRITE(sc, IWM_FH_MEM_RCSR_CHNL0_CONFIG_REG, 0);
+	iwm_disable_rx_dma(sc);
 	IWM_WRITE(sc, IWM_FH_MEM_RCSR_CHNL0_RBDCB_WPTR, 0);
 	IWM_WRITE(sc, IWM_FH_MEM_RCSR_CHNL0_FLUSH_RB_REQ, 0);
 	IWM_WRITE(sc, IWM_FH_RSCSR_CHNL0_RDPTR, 0);
