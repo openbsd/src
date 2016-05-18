@@ -79,7 +79,7 @@ _dl_allocate_tib(size_t extra)
 
 			_dl_memset(addr + obj->tls_fsize, 0,
 			    obj->tls_msize - obj->tls_fsize);
-			if (obj->tls_static_data != NULL) 
+			if (obj->tls_static_data != NULL)
 				_dl_bcopy(obj->tls_static_data, addr,
 				    obj->tls_fsize);
 			DL_DEB(("\t%s has index %u addr %p msize %u fsize %u\n",
