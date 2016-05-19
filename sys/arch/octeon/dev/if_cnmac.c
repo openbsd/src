@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.42 2016/05/19 15:42:03 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.43 2016/05/19 16:17:07 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1140,11 +1140,11 @@ octeon_eth_recv_mbuf(struct octeon_eth_softc *sc, uint64_t *work,
 	uint64_t word2 = work[2];
 	uint64_t word3 = work[3];
 
-	cn30xxfpa_buf_put_paddr(octeon_eth_fb_wqe, XKPHYS_TO_PHYS(work));
-
 	MGETHDR(m, M_NOWAIT, MT_DATA);
 	if (m == NULL)
 		return 1;
+
+	cn30xxfpa_buf_put_paddr(octeon_eth_fb_wqe, XKPHYS_TO_PHYS(work));
 
 	KASSERT((word2 >> PIP_WQE_WORD2_IP_BUFS_SHIFT) == 1);
 
