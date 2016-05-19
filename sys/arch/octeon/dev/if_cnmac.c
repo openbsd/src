@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.41 2016/04/27 15:44:27 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.42 2016/05/19 15:42:03 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -655,20 +655,8 @@ octeon_eth_buf_free_work(struct octeon_eth_softc *sc, uint64_t *work,
 }
 
 void
-octeon_eth_buf_ext_free_m(caddr_t buf, u_int size, void *arg)
+octeon_eth_buf_ext_free(caddr_t buf, u_int size, void *arg)
 {
-	uint64_t *work = (void *)arg;
-
-	cn30xxfpa_buf_put_paddr(octeon_eth_fb_wqe, XKPHYS_TO_PHYS(work));
-}
-
-void
-octeon_eth_buf_ext_free_ext(caddr_t buf, u_int size,
-    void *arg)
-{
-	uint64_t *work = (void *)arg;
-
-	cn30xxfpa_buf_put_paddr(octeon_eth_fb_wqe, XKPHYS_TO_PHYS(work));
 	cn30xxfpa_buf_put_paddr(octeon_eth_fb_pkt, XKPHYS_TO_PHYS(buf));
 }
 
@@ -1145,62 +1133,31 @@ octeon_eth_recv_mbuf(struct octeon_eth_softc *sc, uint64_t *work,
     struct mbuf **rm)
 {
 	struct mbuf *m;
-	void (*ext_free)(caddr_t, u_int, void *);
-	void *ext_buf;
+	vaddr_t addr;
+	vaddr_t ext_buf;
 	size_t ext_size;
-	caddr_t data;
 	uint64_t word1 = work[1];
 	uint64_t word2 = work[2];
 	uint64_t word3 = work[3];
 
+	cn30xxfpa_buf_put_paddr(octeon_eth_fb_wqe, XKPHYS_TO_PHYS(work));
+
 	MGETHDR(m, M_NOWAIT, MT_DATA);
 	if (m == NULL)
 		return 1;
-	OCTEON_ETH_KASSERT(m != NULL);
 
-	if ((word2 & PIP_WQE_WORD2_IP_BUFS) == 0) {
-		/* Dynamic short */
-		ext_free = octeon_eth_buf_ext_free_m;
-		ext_buf = &work[4];
-		ext_size = 96;
+	KASSERT((word2 >> PIP_WQE_WORD2_IP_BUFS_SHIFT) == 1);
 
-		/*
-		 * If the packet is IP, the hardware has padded it so that the
-		 * IP source address starts on the next 64-bit word boundary.
-		 */
-		data = (caddr_t)&work[4] + ETHER_ALIGN;
-		if (!ISSET(word2, PIP_WQE_WORD2_IP_NI) &&
-		    !ISSET(word2, PIP_WQE_WORD2_IP_V6))
-			data += 4;
-	} else {
-		vaddr_t addr;
-		vaddr_t start_buffer;
+	addr = PHYS_TO_XKPHYS(word3 & PIP_WQE_WORD3_ADDR, CCA_CACHED);
 
-		addr = PHYS_TO_XKPHYS(word3 & PIP_WQE_WORD3_ADDR, CCA_CACHED);
-		start_buffer = addr & ~(2048 - 1);
+	ext_size = OCTEON_POOL_SIZE_PKT;
+	ext_buf = addr & ~(ext_size - 1);
+	MEXTADD(m, ext_buf, ext_size, 0, octeon_eth_buf_ext_free, NULL);
 
-		ext_free = octeon_eth_buf_ext_free_ext;
-		ext_buf = (void *)start_buffer;
-		ext_size = 2048;
-
-		data = (void *)addr;
-	}
-
-	MEXTADD(m, ext_buf, ext_size, 0, ext_free, work);
-	OCTEON_ETH_KASSERT(ISSET(m->m_flags, M_EXT));
-
-	m->m_data = data;
+	m->m_data = (void *)addr;
 	m->m_len = m->m_pkthdr.len = (word1 & PIP_WQE_WORD1_LEN) >> 48;
-#if 0
-	/*
-	 * not readonly buffer
-	 */
-	m->m_flags |= M_EXT_RW;
-#endif
 
 	*rm = m;
-
-	OCTEON_ETH_KASSERT(*rm != NULL);
 
 	return 0;
 }

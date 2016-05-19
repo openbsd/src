@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpip.c,v 1.4 2014/12/05 15:50:03 mpi Exp $	*/
+/*	$OpenBSD: cn30xxpip.c,v 1.5 2016/05/19 15:42:02 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -157,7 +157,7 @@ cn30xxpip_port_config(struct cn30xxpip_softc *sc)
 	prt_cfg = 0;
 	/* RAWDRP=0; don't allow raw packet drop */
 	/* TAGINC=0 */
-	SET(prt_cfg, PIP_PRT_CFGN_DYN_RS);
+	/* DYN_RS=0; disable dynamic short buffering */
 	/* INST_HDR=0 */
 	/* GRP_WAT=0 */
 	SET(prt_cfg, (sc->sc_port << 24) & PIP_PRT_CFGN_QOS);
