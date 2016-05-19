@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.143 2016/05/09 23:55:52 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.144 2016/05/19 05:31:22 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -40,9 +40,7 @@ SRCS+=	${CANCEL:%=w_%.c} w_pread.c w_preadv.c w_pwrite.c w_pwritev.c
 
 # modules with default implementations on all architectures, unless overridden
 # below:
-ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
-	__threxit.o __thrsigdivert.o __thrsleep.o \
-	__thrwakeup.o \
+ASM=	__getcwd.o __semctl.o __syscall.o __thrsigdivert.o \
 	access.o acct.o adjfreq.o adjtime.o \
 	bind.o chdir.o chflags.o chflagsat.o chmod.o chown.o chroot.o \
 	clock_getres.o clock_gettime.o clock_settime.o \
@@ -52,13 +50,12 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	fchownat.o fhopen.o fhstat.o fhstatfs.o \
 	flock.o fpathconf.o fstat.o fstatat.o fstatfs.o \
 	futimens.o futimes.o \
-	getentropy.o getdents.o getdtablecount.o \
-	getegid.o geteuid.o getfh.o getfsstat.o getgid.o \
-	getgroups.o getitimer.o getpeername.o getpgid.o getpgrp.o \
-	getpid.o getppid.o getpriority.o getresgid.o getresuid.o \
-	getrlimit.o getrtable.o getrusage.o getsid.o getsockname.o \
-	getsockopt.o getthrid.o gettimeofday.o getuid.o ioctl.o \
-	issetugid.o kevent.o kill.o kqueue.o ktrace.o lchown.o \
+	getentropy.o getdents.o getfh.o getfsstat.o \
+	getgroups.o getitimer.o getpeername.o getpgid.o \
+	getpriority.o getresgid.o getresuid.o \
+	getrlimit.o getrusage.o getsid.o getsockname.o \
+	getsockopt.o gettimeofday.o ioctl.o \
+	kevent.o kill.o kqueue.o ktrace.o lchown.o \
 	link.o linkat.o listen.o lstat.o madvise.o mincore.o \
 	minherit.o mkdir.o mkdirat.o mkfifo.o mkfifoat.o \
 	mknod.o mknodat.o mlock.o mlockall.o mount.o mprotect.o \
@@ -68,14 +65,14 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	quotactl.o \
 	readlink.o readlinkat.o reboot.o \
 	rename.o renameat.o revoke.o rmdir.o \
-	sched_yield.o semget.o semop.o sendsyslog.o \
+	semget.o semop.o sendsyslog.o \
 	setegid.o seteuid.o setgid.o setgroups.o setitimer.o setlogin.o \
 	setpgid.o setpriority.o setregid.o setresgid.o setresuid.o \
 	setreuid.o setrlimit.o setrtable.o setsid.o setsockopt.o \
 	settimeofday.o setuid.o shmat.o shmctl.o shmdt.o \
 	shmget.o shutdown.o sigaltstack.o socket.o \
 	socketpair.o stat.o statfs.o swapctl.o symlink.o symlinkat.o \
-	sync.o sysarch.o sysctl.o thrkill.o umask.o unlink.o unlinkat.o \
+	sysarch.o sysctl.o thrkill.o unlink.o unlinkat.o \
 	unmount.o utimensat.o utimes.o utrace.o
 
 SRCS+=	${SRCS_${MACHINE_CPU}}
@@ -88,13 +85,28 @@ PASM=	${ASM:.o=.po}
 SASM=	${ASM:.o=.so}
 DASM=	${ASM:.o=.do}
 
+# syscalls that CANNOT FAIL.  They can return whatever value they want,
+# they just never want to set errno.
+ASM_NOERR=__get_tcb.o __set_tcb.o __threxit.o __thrsleep.o __thrwakeup.o \
+	getdtablecount.o getegid.o geteuid.o getgid.o getlogin_r.o \
+	getpgrp.o getpid.o getppid.o getrtable.o getthrid.o getuid.o \
+	issetugid.o \
+	sched_yield.o sync.o \
+	umask.o 
+GASM_NOERR=	${ASM_NOERR:.o=.go}
+PASM_NOERR=	${ASM_NOERR:.o=.po}
+SASM_NOERR=	${ASM_NOERR:.o=.so}
+DASM_NOERR=	${ASM_NOERR:.o=.do}
+
 PSEUDO=
 GPSEUDO=${PSEUDO:.o=.go}
 PPSEUDO=${PSEUDO:.o=.po}
 SPSEUDO=${PSEUDO:.o=.so}
 DPSEUDO=${PSEUDO:.o=.do}
 
-PSEUDO_NOERR=	_exit.o getlogin_r.o
+# syscalls that CANNOT FAIL and whose function has one more leading underbar
+# than its matching SYS_* symbol.  E.g., _exit() --> SYS_exit
+PSEUDO_NOERR=	_exit.o
 GPSEUDO_NOERR=${PSEUDO_NOERR:.o=.go}
 PPSEUDO_NOERR=${PSEUDO_NOERR:.o=.po}
 SPSEUDO_NOERR=${PSEUDO_NOERR:.o=.so}
@@ -106,7 +118,7 @@ PHIDDEN=${HIDDEN:.o=.po}
 SHIDDEN=${HIDDEN:.o=.so}
 DHIDDEN=${HIDDEN:.o=.do}
 
-OBJS+=	${ASM} ${PSEUDO} ${PSEUDO_NOERR} ${HIDDEN}
+OBJS+=	${ASM} ${ASM_NOERR} ${PSEUDO} ${PSEUDO_NOERR} ${HIDDEN}
 
 SYS_DEP =  ${LIBCSRCDIR}/arch/${MACHINE_CPU}/SYS.h /usr/include/sys/syscall.h
 
@@ -119,6 +131,9 @@ TRIM.debug=${LD} -X -r ${.TARGET}.o -o ${.TARGET} && rm -f ${.TARGET}.o
 GENERATE.rsyscall=\
 	echo creating ${.TARGET} && \
 	printf '\#include "SYS.h"\nRSYSCALL(${.PREFIX})\n'
+GENERATE.rsyscall_noerr=\
+	echo creating ${.TARGET} && \
+	printf '\#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX})\n'
 GENERATE.pseudo=\
 	echo creating ${.TARGET} && \
 	printf '\#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/^_//})\n'
@@ -143,6 +158,12 @@ ${PASM}: ${SYS_DEP} ; @${GENERATE.rsyscall} | ${FINISH.po}
 ${SASM}: ${SYS_DEP} ; @${GENERATE.rsyscall} | ${FINISH.so}
 ${DASM}: ${SYS_DEP} ; @${GENERATE.rsyscall} | ${FINISH.do}
 ${ASM}:  ${SYS_DEP} ; @${GENERATE.rsyscall} | ${FINISH.o}
+
+${GASM_NOERR}: ${SYS_DEP} ; @${GENERATE.rsyscall_noerr} | ${FINISH.go}
+${PASM_NOERR}: ${SYS_DEP} ; @${GENERATE.rsyscall_noerr} | ${FINISH.po}
+${SASM_NOERR}: ${SYS_DEP} ; @${GENERATE.rsyscall_noerr} | ${FINISH.so}
+${DASM_NOERR}: ${SYS_DEP} ; @${GENERATE.rsyscall_noerr} | ${FINISH.do}
+${ASM_NOERR}:  ${SYS_DEP} ; @${GENERATE.rsyscall_noerr} | ${FINISH.o}
 
 ${GPSEUDO}: ${SYS_DEP} ; @${GENERATE.pseudo} | ${FINISH.go}
 ${PPSEUDO}: ${SYS_DEP} ; @${GENERATE.pseudo} | ${FINISH.po}
