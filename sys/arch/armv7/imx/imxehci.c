@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.8 2015/05/30 08:09:19 jsg Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.9 2016/05/19 09:54:18 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -74,8 +74,6 @@
 #define EHCI_HUMMINGBOARD_USB_H1_PWR	0
 #define EHCI_HUMMINGBOARD_USB_OTG_PWR	(2*32+22)
 #define EHCI_NITROGEN6X_USB_HUB_RST	(6*32+12)
-#define EHCI_PHYFLEX_USB_H1_PWR		0
-#define EHCI_PHYFLEX_USB_OTG_PWR	111
 #define EHCI_SABRESD_USB_PWR		(0*32+29)
 #define EHCI_UTILITE_USB_HUB_RST	(6*32+8)
 
@@ -141,12 +139,6 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 		/* enable usb port power */
 		switch (board_id)
 		{
-		case BOARD_ID_IMX6_PHYFLEX:
-			imxgpio_set_dir(EHCI_PHYFLEX_USB_H1_PWR, IMXGPIO_DIR_OUT);
-			delay(10);
-			imxgpio_set_bit(EHCI_PHYFLEX_USB_H1_PWR);
-			delay(10);
-			break;
 		case BOARD_ID_IMX6_CUBOXI:
 		case BOARD_ID_IMX6_HUMMINGBOARD:
 			imxgpio_set_bit(EHCI_HUMMINGBOARD_USB_H1_PWR);

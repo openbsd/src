@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.19 2016/05/15 22:10:24 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.20 2016/05/19 09:54:18 jsg Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -532,19 +532,6 @@ imxesdhc_card_detect(sdmmc_chipset_handle_t sch)
 		switch (sc->unit) {
 			case 1:
 				gpio = 0*32 + 4;
-				break;
-			default:
-				return 0;
-		}
-		imxgpio_set_dir(gpio, IMXGPIO_DIR_IN);
-		return imxgpio_get_bit(gpio) ? 0 : 1;
-	case BOARD_ID_IMX6_PHYFLEX:
-		switch (sc->unit) {
-			case 1:
-				gpio = 0*32 + 4;
-				break;
-			case 2:
-				gpio = 0*32 + 27;
 				break;
 			default:
 				return 0;

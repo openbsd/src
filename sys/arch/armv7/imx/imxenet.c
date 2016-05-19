@@ -1,4 +1,4 @@
-/* $OpenBSD: imxenet.c,v 1.21 2016/04/13 11:33:59 mpi Exp $ */
+/* $OpenBSD: imxenet.c,v 1.22 2016/05/19 09:54:18 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -144,8 +144,6 @@
 #define ENET_UDOO_PWR				(1*32+31)
 #define ENET_UTILITE_PHY			0
 #define ENET_WANDBOARD_PHY			1
-#define ENET_PHYFLEX_PHY			3
-#define ENET_PHYFLEX_PHY_RST			(2*32+23)
 #define ENET_NOVENA_PHY				7
 #define ENET_NOVENA_PHY_RST			(2*32+23)
 
@@ -248,9 +246,8 @@ imxenet_attach(struct device *parent, struct device *self, void *args)
 		imxgpio_set_bit(ENET_HUMMINGBOARD_PHY_RST);
 		delay(2000);
 		break;
-	case BOARD_ID_IMX6_PHYFLEX:
 	case BOARD_ID_IMX6_SABRELITE:
-		/* phyFLEX i.MX6 and SABRE Lite PHY reset */
+		/* SABRE Lite PHY reset */
 		imxgpio_clear_bit(ENET_SABRELITE_PHY_RST);
 		imxgpio_set_dir(ENET_SABRELITE_PHY_RST, IMXGPIO_DIR_OUT);
 		imxgpio_clear_bit(ENET_NITROGEN6X_PHY_RST);
@@ -460,9 +457,6 @@ imxenet_chip_init(struct imxenet_softc *sc)
 	case BOARD_ID_IMX6_HUMMINGBOARD:
 		phy = ENET_HUMMINGBOARD_PHY;
 		break;
-	case BOARD_ID_IMX6_PHYFLEX:
-		phy = ENET_PHYFLEX_PHY;
-		break;
 	case BOARD_ID_IMX6_SABRELITE:
 		phy = ENET_SABRELITE_PHY;
 		break;
@@ -513,7 +507,6 @@ imxenet_chip_init(struct imxenet_softc *sc)
 		imxenet_miibus_writereg(dev, phy, 0x0d, 0x4002);
 		imxenet_miibus_writereg(dev, phy, 0x0e, 0x03ff);
 		break;
-	case BOARD_ID_IMX6_PHYFLEX:
 	case BOARD_ID_IMX6_SABRELITE:	/* Micrel KSZ9021 */
 		/* prefer master mode */
 		imxenet_miibus_writereg(dev, phy, 0x9, 0x1f00);

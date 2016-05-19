@@ -1,4 +1,4 @@
-/* $OpenBSD: imx.c,v 1.11 2016/05/17 00:04:35 kettenis Exp $ */
+/* $OpenBSD: imx.c,v 1.12 2016/05/19 09:54:18 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -53,27 +53,6 @@ struct board_dev hummingboard_devs[] = {
 	{ "imxesdhc",	1 },
 	{ "ehci",	0 },
 	{ "ehci",	1 },
-	{ "imxenet",	0 },
-	{ "ahci",	0 },
-	{ NULL,		0 }
-};
-
-struct board_dev phyflex_imx6_devs[] = {
-	{ "imxccm",	0 },
-	{ "imxiomuxc",	0 },
-	{ "imxdog",	0 },
-	{ "imxocotp",	0 },
-	{ "imxuart",	3 },
-	{ "imxgpio",	0 },
-	{ "imxgpio",	1 },
-	{ "imxgpio",	2 },
-	{ "imxgpio",	3 },
-	{ "imxgpio",	4 },
-	{ "imxgpio",	5 },
-	{ "imxgpio",	6 },
-	{ "imxesdhc",	1 },
-	{ "imxesdhc",	2 },
-	{ "ehci",	0 },
 	{ "imxenet",	0 },
 	{ "ahci",	0 },
 	{ NULL,		0 }
@@ -216,12 +195,6 @@ struct armv7_board imx_boards[] = {
 		BOARD_ID_IMX6_HUMMINGBOARD,
 		"SolidRun HummingBoard",
 		hummingboard_devs,
-		imx6_init,
-	},
-	{
-		BOARD_ID_IMX6_PHYFLEX,
-		"Phytec phyFLEX-i.MX6",
-		phyflex_imx6_devs,
 		imx6_init,
 	},
 	{
