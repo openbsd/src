@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.6 2016/05/17 22:41:20 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.7 2016/05/19 09:39:06 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -225,14 +225,16 @@ struct board_id {
 };
 
 struct board_id board_id_table[] = {
-	{ "phytec,imx6q-pbab01",	3529 },
-	{ "fsl,imx6q-sabrelite",	3769 },
-	{ "fsl,imx6q-sabresd",		3980 },
-	{ "kosagi,imx6q-novena",	4269 },
-	{ "solidrun,hummingboard/q",	4773 },
-	{ "solidrun,cubox-i/q",		4821 },
-	{ "wand,imx6q-wandboard",	4412 },
-	{ "udoo,imx6q-udoo",		4800 },
+	{ "boundary,imx6q-nitrogen6_max",	3769 },
+	{ "boundary,imx6q-nitrogen6x",		3769 },
+	{ "compulab,cm-fx6",			4273 },
+	{ "fsl,imx6q-sabrelite",		3769 },
+	{ "fsl,imx6q-sabresd",			3980 },
+	{ "kosagi,imx6q-novena",		4269 },
+	{ "solidrun,cubox-i/q",			4821 },
+	{ "solidrun,hummingboard/q",		4773 },
+	{ "udoo,imx6q-udoo",			4800 },
+	{ "wand,imx6q-wandboard",		4412 },
 };
 
 static EFI_GUID fdt_guid = FDT_TABLE_GUID;
