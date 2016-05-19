@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.206 2016/04/29 11:40:27 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.207 2016/05/19 11:34:40 jca Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1237,11 +1237,11 @@ do { \
 						error = EINVAL;
 						break;
 					}
-					if ((ip6_v6only && optval) ||
-					    (!ip6_v6only && !optval))
-						error = 0;
-					else
+					/* No support for IPv4-mapped addresses. */
+					if (!optval)
 						error = EINVAL;
+					else
+						error = 0;
 					break;
 				case IPV6_RECVTCLASS:
 					OPTSET(IN6P_TCLASS);
@@ -1493,7 +1493,7 @@ do { \
 					break;
 
 				case IPV6_V6ONLY:
-					optval = (ip6_v6only != 0); /* XXX */
+					optval = 1;
 					break;
 
 				case IPV6_PORTRANGE:
