@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.160 2016/05/11 18:34:44 jung Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.161 2016/05/19 08:21:23 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 11 2016 $
+.Dd $Mdocdate: May 19 2016 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -202,7 +202,7 @@ holds a key-value mapping of virtual to system users.
 For an example of how to configure the
 .Ar users
 table, see
-.Xr makemap 8 .
+.Xr table 5 .
 .It Xo
 .Ic for
 .Op Ic \&!
@@ -219,7 +219,7 @@ holds a key-value mapping of virtual to system users.
 For an example of how to configure the
 .Ar users
 table, see
-.Xr makemap 8 .
+.Xr table 5 .
 .It Xo
 .Ic for
 .Op Ic \&!
