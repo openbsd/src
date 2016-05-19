@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.19 2015/09/27 11:29:20 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.20 2016/05/19 09:18:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -135,18 +135,11 @@ int
 vpci_match(struct device *parent, void *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-	char compat[32];
 
 	if (strcmp(ma->ma_name, "pci") != 0)
 		return (0);
 
-	if (OF_getprop(ma->ma_node, "compatible", compat, sizeof(compat)) == -1)
-		return (0);
-
-	if (strcmp(compat, "SUNW,sun4v-pci") == 0)
-		return (1);
-
-	return (0);
+	return OF_is_compatible(ma->ma_node, "SUNW,sun4v-pci");
 }
 
 void
