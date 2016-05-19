@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.3 2016/05/17 23:16:10 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.4 2016/05/19 19:32:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -265,28 +265,30 @@ fdt_node_set_property(void *node, char *name, char *data, int len)
 int
 fdt_node_add_property(void *node, char *name, char *data, int len)
 {
-	uint32_t *ptr;
-	
+	char *dummy;
+
 	if (!tree_inited)
 		return 0;
 
-	ptr = (uint32_t *)node;
+	if (!fdt_node_property(node, name, &dummy)) {
+		uint32_t *ptr = (uint32_t *)node;
 
-	if (betoh32(*ptr) != FDT_NODE_BEGIN)
-		return 0;
+		if (betoh32(*ptr) != FDT_NODE_BEGIN)
+			return 0;
 
-	ptr = skip_node_name(ptr + 1);
+		ptr = skip_node_name(ptr + 1);
 
-	memmove(ptr + 3, ptr, tree.end - (char *)ptr);
-	tree.struct_size += 3 * sizeof(uint32_t);
-	if (tree.strings > tree.tree)
-		tree.strings += 3 * sizeof(uint32_t);
-	if (tree.memory > tree.tree)
-		tree.memory += 3 * sizeof(uint32_t);
-	tree.end += 3 * sizeof(uint32_t);
-	*ptr++ = htobe32(FDT_PROPERTY);
-	*ptr++ = htobe32(0);
-	*ptr++ = htobe32(fdt_add_str(name));
+		memmove(ptr + 3, ptr, tree.end - (char *)ptr);
+		tree.struct_size += 3 * sizeof(uint32_t);
+		if (tree.strings > tree.tree)
+			tree.strings += 3 * sizeof(uint32_t);
+		if (tree.memory > tree.tree)
+			tree.memory += 3 * sizeof(uint32_t);
+		tree.end += 3 * sizeof(uint32_t);
+		*ptr++ = htobe32(FDT_PROPERTY);
+		*ptr++ = htobe32(0);
+		*ptr++ = htobe32(fdt_add_str(name));
+	}
 
 	return fdt_node_set_property(node, name, data, len);
 }
