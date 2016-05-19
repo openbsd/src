@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.257 2016/05/13 21:36:28 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.258 2016/05/19 12:08:17 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 13 2016 $
+.Dd $Mdocdate: May 19 2016 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -1673,7 +1673,6 @@ The currently defined protocols and names are:
 .It ip6 Ta redirect Ta integer Ta yes
 .It ip6 Ta rr_prune Ta integer Ta yes
 .It ip6 Ta use_deprecated Ta integer Ta yes
-.It ip6 Ta v6only Ta integer Ta no
 .El
 .Pp
 The variables are as follows:
@@ -1875,15 +1874,6 @@ babysitting in seconds.
 .It Li ip6.use_deprecated
 This variable controls the use of deprecated addresses, specified in
 RFC 4862 5.5.4.
-.Pp
-.It Li ip6.v6only
-The variable specifies the initial value for the
-.Dv IPV6_V6ONLY
-socket option for an
-.Dv AF_INET6
-socket.
-It is always 1 for
-.Ox .
 .El
 .Pp
 We reuse

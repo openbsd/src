@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.35 2015/11/03 02:17:45 jca Exp $
+.\"	$OpenBSD: ip6.4,v 1.36 2016/05/19 12:08:17 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -26,7 +26,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd $Mdocdate: November 3 2015 $
+.Dd $Mdocdate: May 19 2016 $
 .Dt IP6 4
 .Os
 .Sh NAME
@@ -342,13 +342,6 @@ packets and that no checksums will be computed or stored on outgoing
 packets.
 The offset of the checksum for ICMPv6 sockets cannot be relocated or
 turned off.
-.It Dv IPV6_V6ONLY Fa "int *"
-Get or set whether only IPv6 connections can be made to this socket.
-For wildcard sockets, this can restrict connections to IPv6 only.
-With
-.Ox
-IPv6 sockets are always IPv6-only, so the socket option is read-only
-(not modifiable).
 .It Dv IPV6_USE_MIN_MTU Fa "int *"
 Get or set whether the minimal IPv6 maximum transmission unit (MTU) size
 will be used to avoid fragmentation from occurring for subsequent
