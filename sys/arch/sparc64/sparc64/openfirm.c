@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.18 2016/03/19 11:34:22 mpi Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.19 2016/05/19 09:15:28 kettenis Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
@@ -839,3 +839,28 @@ void OF_val2sym(cells)
        
 }
 #endif
+
+int
+OF_is_compatible(int handle, const char *name)
+{
+	char compat[256];
+	char *str;
+	int len;
+
+	len = OF_getprop(handle, "compatible", &compat, sizeof(compat));
+	if (len <= 0)
+		return 0;
+
+	/* Guarantee that the buffer is null-terminated. */
+	compat[sizeof(compat) - 1] = 0;
+
+	str = compat;
+	while (len > 0) {
+		if (strcmp(str, name) == 0)
+			return 1;
+		len -= strlen(str) + 1;
+		str += strlen(str) + 1;
+	}
+
+	return 0;
+}
