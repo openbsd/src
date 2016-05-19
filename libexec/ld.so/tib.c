@@ -57,6 +57,8 @@ _dl_allocate_tib(size_t extra)
 	/* round up the extra size to align the tib after it */
 	extra = ELF_ROUND(extra, sizeof(void *));
 	base = _dl_malloc(extra + sizeof *tib + static_tls_size);
+	if (base == NULL)
+		return NULL;
 	tib = (struct tib *)(base + extra);
 	if (extra)
 		thread = base;
@@ -66,6 +68,8 @@ _dl_allocate_tib(size_t extra)
 	/* round up the tib size to align the extra area after it */
 	base = _dl_malloc(ELF_ROUND(sizeof *tib, TIB_EXTRA_ALIGN) +
 	    extra + static_tls_size);
+	if (base == NULL)
+		return NULL;
 	tib = (struct tib *)(base + static_tls_size);
 	if (extra)
 		thread = (char *)tib + ELF_ROUND(sizeof *tib, TIB_EXTRA_ALIGN);
