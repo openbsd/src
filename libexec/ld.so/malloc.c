@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.7 2015/01/22 05:48:17 deraadt Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.8 2016/05/19 18:50:01 guenther Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -31,6 +31,7 @@
 #include <unistd.h>
 
 #include  "archdep.h"
+#include  "resolve.h"
 
 #if defined(__sparc__) && !defined(__sparcv9__)
 #define MALLOC_PAGESHIFT	(13U)
@@ -875,18 +876,23 @@ _dl_malloc(size_t size)
 {
 	void *r;
 
+	_dl_thread_kern_stop();
 	malloc_func = "malloc():";
 	if (g_pool == NULL) {
 		if (malloc_init() != 0)
-			return NULL;
+			goto fail;
 	}
 	if (malloc_active++) {
 		malloc_recurse();
-		return NULL;
+		goto fail;
 	}
 	r = omalloc(size, 0);
 	malloc_active--;
+	_dl_thread_kern_go();
 	return r;
+fail:
+	_dl_thread_kern_go();
+	return NULL;
 }
 
 static void
@@ -971,17 +977,20 @@ _dl_free(void *ptr)
 	if (ptr == NULL)
 		return;
 
+	_dl_thread_kern_stop();
 	malloc_func = "free():";
 	if (g_pool == NULL) {
 		wrterror("free() called before allocation");
-		return;
+		goto fail;
 	}
 	if (malloc_active++) {
 		malloc_recurse();
-		return;
+		goto fail;
 	}
 	ofree(ptr);
 	malloc_active--;
+fail:
+	_dl_thread_kern_go();
 }
 
 
@@ -996,26 +1005,31 @@ _dl_calloc(size_t nmemb, size_t size)
 {
 	void *r;
 
+	_dl_thread_kern_stop();
 	malloc_func = "calloc():";
 	if (g_pool == NULL) {
 		if (malloc_init() != 0)
-			return NULL;
+			goto fail;
 	}
 	if ((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) &&
 	    nmemb > 0 && SIZE_MAX / nmemb < size) {
-		return NULL;
+		goto fail;
 	}
 
 	if (malloc_active++) {
 		malloc_recurse();
-		return NULL;
+		goto fail;
 	}
 
 	size *= nmemb;
 	r = omalloc(size, 1);
 
 	malloc_active--;
+	_dl_thread_kern_go();
 	return r;
+fail:
+	_dl_thread_kern_go();
+	return NULL;
 }
 
 
@@ -1049,17 +1063,22 @@ _dl_realloc(void *ptr, size_t size)
 {
 	void *r;
 
+	_dl_thread_kern_stop();
 	malloc_func = "realloc():";
 	if (g_pool == NULL) {
 		if (malloc_init() != 0)
-			return NULL;
+			goto fail;
 	}
 	if (malloc_active++) {
 		malloc_recurse();
-		return NULL;
+		goto fail;
 	}
 	r = orealloc(ptr, size);
 	malloc_active--;
+	_dl_thread_kern_go();
 	return r;
+fail:
+	_dl_thread_kern_go();
+	return NULL;
 }
 
