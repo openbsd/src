@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.223 2016/02/08 22:12:51 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.224 2016/05/19 21:31:04 kettenis Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1447,14 +1447,22 @@ setroot(struct device *bootdv, int part, int exitflags)
 		printf("\n");
 	}
 
-	/* Locate DUID for boot disk if not already provided. */
 	memset(duid, 0, sizeof(duid));
 	if (memcmp(bootduid, duid, sizeof(bootduid)) == 0) {
+		/* Locate DUID for boot disk since it was not provided. */
 		TAILQ_FOREACH(dk, &disklist, dk_link)
 			if (dk->dk_device == bootdv)
 				break;
 		if (dk && (dk->dk_flags & DKF_LABELVALID))
 			bcopy(dk->dk_label->d_uid, bootduid, sizeof(bootduid));
+	} else if (bootdv == NULL) {
+		/* Locate boot disk based on the provided DUID. */
+		TAILQ_FOREACH(dk, &disklist, dk_link)
+			if (memcmp(dk->dk_label->d_uid, bootduid,
+			    sizeof(bootduid)) == 0)
+				break;
+		if (dk && (dk->dk_flags & DKF_LABELVALID))
+			bootdv = dk->dk_device;
 	}
 	bcopy(bootduid, rootduid, sizeof(rootduid));
 
