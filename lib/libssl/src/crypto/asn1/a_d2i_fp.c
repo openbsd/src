@@ -1,4 +1,4 @@
-/* $OpenBSD: a_d2i_fp.c,v 1.14 2016/05/04 14:58:09 tedu Exp $ */
+/* $OpenBSD: a_d2i_fp.c,v 1.15 2016/05/20 15:46:21 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -236,36 +236,38 @@ asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 					    ASN1_R_TOO_LONG);
 					goto err;
 				}
-				/*
-				 * Read content in chunks of increasing size
-				 * so we can return an error for EOF without
-				 * having to allocate the entire content length
-				 * in one go.
-				 */
-				size_t chunk = want > chunk_max ? chunk_max : want;
+				while (want > 0) {
+					/*
+					 * Read content in chunks of increasing size
+					 * so we can return an error for EOF without
+					 * having to allocate the entire content length
+					 * in one go.
+					 */
+					size_t chunk = want > chunk_max ? chunk_max : want;
 
-				if (!BUF_MEM_grow_clean(b, len + chunk)) {
-					ASN1err(ASN1_F_ASN1_D2I_READ_BIO,
-					    ERR_R_MALLOC_FAILURE);
-					goto err;
-				}
-				want -= chunk;
-				while (chunk > 0) {
-					i = BIO_read(in, &(b->data[len]), chunk);
-					if (i <= 0) {
+					if (!BUF_MEM_grow_clean(b, len + chunk)) {
 						ASN1err(ASN1_F_ASN1_D2I_READ_BIO,
-						    ASN1_R_NOT_ENOUGH_DATA);
+						    ERR_R_MALLOC_FAILURE);
 						goto err;
 					}
-					/*
-					 * This can't overflow because |len+want|
-					 * didn't overflow.
-					 */
-					len += i;
-					chunk -= i;
+					want -= chunk;
+					while (chunk > 0) {
+						i = BIO_read(in, &(b->data[len]), chunk);
+						if (i <= 0) {
+							ASN1err(ASN1_F_ASN1_D2I_READ_BIO,
+							    ASN1_R_NOT_ENOUGH_DATA);
+							goto err;
+						}
+						/*
+						 * This can't overflow because |len+want|
+						 * didn't overflow.
+						 */
+						len += i;
+						chunk -= i;
+					}
+					if (chunk_max < INT_MAX/2)
+						chunk_max *= 2;
 				}
-				if (chunk_max < INT_MAX/2)
-					chunk_max *= 2;
 			}
 			if (off + c.slen < off) {
 				ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ASN1_R_TOO_LONG);
