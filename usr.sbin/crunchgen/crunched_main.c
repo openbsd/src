@@ -1,4 +1,4 @@
-/* $OpenBSD: crunched_main.c,v 1.5 2015/12/06 12:00:16 tobias Exp $	 */
+/* $OpenBSD: crunched_main.c,v 1.6 2016/05/20 01:28:43 guenther Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -44,35 +44,38 @@ struct stub {
 
 extern struct stub entry_points[];
 
-int
-main(int argc, char *argv[], char **envp)
+static int
+crunched_main2(char *progname, int argc, char **argv, char **envp)
 {
-	extern char	*__progname;
 	struct stub	*ep;
 
-	if (__progname == NULL || *__progname == '\0')
+	if (progname == NULL || *progname == '\0')
 		crunched_usage();
 
 	for (ep = entry_points; ep->name != NULL; ep++)
-		if (!strcmp(__progname, ep->name))
+		if (!strcmp(progname, ep->name))
 			break;
 
 	if (ep->name)
 		return ep->f(argc, argv, envp);
-	fprintf(stderr, "%s: %s not compiled in\n", EXECNAME, __progname);
+	fprintf(stderr, "%s: %s not compiled in\n", EXECNAME, progname);
 	crunched_usage();
+}
+
+int
+main(int argc, char *argv[], char **envp)
+{
+	extern char	*__progname;
+
+	return crunched_main2(__progname, argc, argv, envp);
 }
 
 int
 crunched_main(int argc, char **argv, char **envp)
 {
-	struct stub	*ep;
-	int		columns, len;
-
 	if (argc <= 1)
 		crunched_usage();
-
-	return main(--argc, ++argv, envp);
+	return crunched_main2(argv[1], argc-1, argv+1, envp);
 }
 
 int
