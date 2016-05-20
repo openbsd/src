@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.S,v 1.10 2015/07/16 05:10:14 guenther Exp $	*/
+/*	$OpenBSD: spl.S,v 1.11 2016/05/20 14:37:53 deraadt Exp $	*/
 /*	$NetBSD: spl.S,v 1.3 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -84,13 +84,13 @@
  */
 	.globl	_C_LABEL(splhigh), _C_LABEL(splx)
 
-	ALIGN_TEXT
+	.align 16, 0xcc
 _C_LABEL(splhigh):
 	movl	$IPL_HIGH,%eax
 	xchgl	%eax,CPUVAR(ILEVEL)
 	ret
 
-	ALIGN_TEXT
+	.align 16, 0xcc
 _C_LABEL(splx):
 	movl	4(%esp),%eax
 	movl	%eax,CPUVAR(ILEVEL)
