@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.31 2016/05/14 21:22:17 mglocker Exp $	*/
+/*	$OpenBSD: smu.c,v 1.32 2016/05/20 21:56:00 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -32,14 +32,20 @@
 #include <dev/ofw/openfirm.h>
 
 #include <macppc/dev/maci2cvar.h>
+#include <macppc/dev/thermal.h>
 #include <macppc/pci/macobio.h>
 
 int     smu_match(struct device *, void *, void *);
 void    smu_attach(struct device *, struct device *, void *);
 
+/* Target and Max. temperature in muK. */
+#define TEMP_TRG	38 * 1000000 + 273150000
+#define TEMP_MAX	70 * 1000000 + 273150000
+
 #define SMU_MAXFANS	8
 
 struct smu_fan {
+	struct thermal_fan fan;
 	u_int8_t	reg;
 	u_int16_t	min_rpm;
 	u_int16_t	max_rpm;
@@ -53,6 +59,7 @@ struct smu_fan {
 #define SMU_MAXSENSORS	4
 
 struct smu_sensor {
+	struct thermal_temp therm;
 	u_int8_t	reg;
 	struct ksensor	sensor;
 };
@@ -152,8 +159,12 @@ int	smu_fan_read_rpm(struct smu_softc *, struct smu_fan *, u_int16_t *);
 int	smu_fan_read_pwm(struct smu_softc *, struct smu_fan *, u_int16_t *,
 	    u_int16_t *);
 int	smu_fan_refresh(struct smu_softc *, struct smu_fan *);
-int	smu_sensor_refresh(struct smu_softc *, struct smu_sensor *);
+int	smu_sensor_refresh(struct smu_softc *, struct smu_sensor *, int);
 void	smu_refresh_sensors(void *);
+
+int	smu_fan_set_rpm_thermal(struct smu_fan *, int);
+int	smu_fan_set_pwm_thermal(struct smu_fan *, int);
+int	smu_sensor_refresh_thermal(struct smu_sensor *);
 
 int	smu_i2c_acquire_bus(void *, int);
 void	smu_i2c_release_bus(void *, int);
@@ -301,6 +312,15 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 		/* Start running fans at their "unmanaged" speed. */
 		smu_fan_set_rpm(sc, fan, fan->unmanaged_rpm);
 
+		/* Register fan at thermal management framework. */
+		fan->fan.min_rpm = fan->min_rpm;
+		fan->fan.max_rpm = fan->max_rpm;
+		fan->fan.default_rpm = fan->unmanaged_rpm;
+		strlcpy(fan->fan.name, loc, sizeof fan->fan.name);
+		OF_getprop(node, "zone", &fan->fan.zone, sizeof fan->fan.zone);
+		fan->fan.set = (int (*)(struct thermal_fan *, int))
+		    smu_fan_set_rpm_thermal;
+		thermal_fan_register(&fan->fan);
 #ifndef SMALL_KERNEL
 		sensor_attach(&sc->sc_sensordev, &fan->sensor);
 #endif
@@ -348,6 +368,15 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 		/* Start running fans at their "unmanaged" speed. */
 		smu_fan_set_pwm(sc, fan, fan->unmanaged_pwm);
 
+		/* Register fan at thermal management framework. */
+		fan->fan.min_rpm = fan->min_pwm;
+		fan->fan.max_rpm = fan->max_pwm;
+		fan->fan.default_rpm = fan->unmanaged_pwm;
+		strlcpy(fan->fan.name, loc, sizeof fan->fan.name);
+		OF_getprop(node, "zone", &fan->fan.zone, sizeof fan->fan.zone);
+		fan->fan.set = (int (*)(struct thermal_fan *, int))
+		    smu_fan_set_pwm_thermal;
+		thermal_fan_register(&fan->fan);
 #ifndef SMALL_KERNEL
 		sensor_attach(&sc->sc_sensordev, &fan->sensor);
 #endif
@@ -396,6 +425,19 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 		if (OF_getprop(node, "location", loc, sizeof loc) <= 0)
 			strlcpy(loc, "Unknown", sizeof loc);
 		strlcpy(sensor->sensor.desc, loc, sizeof sensor->sensor.desc);
+
+		/* Register temp. sensor at thermal management framework. */
+		if (sensor->sensor.type == SENSOR_TEMP) {
+			sensor->therm.target_temp = TEMP_TRG;
+			sensor->therm.max_temp = TEMP_MAX;
+			strlcpy(sensor->therm.name, loc,
+			    sizeof sensor->therm.name);
+			OF_getprop(node, "zone", &sensor->therm.zone,
+			    sizeof sensor->therm.zone);
+			sensor->therm.read = (int (*)
+			    (struct thermal_temp *))smu_sensor_refresh_thermal;
+			thermal_sensor_register(&sensor->therm);
+		}
 
 		sensor_attach(&sc->sc_sensordev, &sensor->sensor);
 	}
@@ -700,7 +742,8 @@ smu_fan_refresh(struct smu_softc *sc, struct smu_fan *fan)
 }
 
 int
-smu_sensor_refresh(struct smu_softc *sc, struct smu_sensor *sensor)
+smu_sensor_refresh(struct smu_softc *sc, struct smu_sensor *sensor,
+    int update_sysctl)
 {
 	struct smu_cmd *cmd = (struct smu_cmd *)sc->sc_cmd;
 	int64_t value;
@@ -761,9 +804,11 @@ smu_sensor_refresh(struct smu_softc *sc, struct smu_sensor *sensor)
 	default:
 		break;
 	}
-	sensor->sensor.value = value;
-	sensor->sensor.flags = 0;
-	return (0);
+	if (update_sysctl) {
+		sensor->sensor.value = value;
+		sensor->sensor.flags = 0;
+	}
+	return (value);
 }
 
 void
@@ -774,10 +819,50 @@ smu_refresh_sensors(void *arg)
 
 	rw_enter_write(&sc->sc_lock);
 	for (i = 0; i < sc->sc_num_sensors; i++)
-		smu_sensor_refresh(sc, &sc->sc_sensors[i]);
+		smu_sensor_refresh(sc, &sc->sc_sensors[i], 1);
 	for (i = 0; i < sc->sc_num_fans; i++)
 		smu_fan_refresh(sc, &sc->sc_fans[i]);
 	rw_exit_write(&sc->sc_lock);
+}
+
+/*
+ * Wrapper functions for the thermal management framework.
+ */
+int
+smu_fan_set_rpm_thermal(struct smu_fan *fan, int rpm)
+{
+	struct smu_softc *sc = smu_cd.cd_devs[0];
+
+	rw_enter_write(&sc->sc_lock);
+	(void)smu_fan_set_rpm(sc, fan, rpm);
+	rw_exit_write(&sc->sc_lock);
+
+	return (0);
+}
+
+int
+smu_fan_set_pwm_thermal(struct smu_fan *fan, int pwm)
+{
+	struct smu_softc *sc = smu_cd.cd_devs[0];
+
+	rw_enter_write(&sc->sc_lock);
+	(void)smu_fan_set_pwm(sc, fan, pwm);
+	rw_exit_write(&sc->sc_lock);
+
+	return (0);
+}
+
+int
+smu_sensor_refresh_thermal(struct smu_sensor *sensor)
+{
+	struct smu_softc *sc = smu_cd.cd_devs[0];
+	int value;
+
+	rw_enter_write(&sc->sc_lock);
+	value = smu_sensor_refresh(sc, sensor, 0);
+	rw_exit_write(&sc->sc_lock);
+
+	return (value);
 }
 
 int
