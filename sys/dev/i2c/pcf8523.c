@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8523.c,v 1.2 2016/05/16 22:55:23 kettenis Exp $	*/
+/*	$OpenBSD: pcf8523.c,v 1.3 2016/05/20 20:33:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka
@@ -117,7 +117,7 @@ pcfrtc_match(struct device *parent, void *v, void *arg)
 {
 	struct i2c_attach_args *ia = arg;
 
-	if (strcmp(ia->ia_name, "pcf8523") == 0 &&
+	if (strcmp(ia->ia_name, "nxp,pcf8523") == 0 &&
 	    ia->ia_addr == PCF8523_ADDR)
 		return (1);
 

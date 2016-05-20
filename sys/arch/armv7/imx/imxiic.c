@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.4 2016/05/17 00:04:35 kettenis Exp $ */
+/* $OpenBSD: imxiic.c,v 1.5 2016/05/20 20:33:54 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -392,7 +392,7 @@ imxiic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 	memset(&ia, 0, sizeof(ia));
 	ia.ia_tag = iba->iba_tag;
 	ia.ia_addr = 0x68;
-	ia.ia_name = "pcf8523";
+	ia.ia_name = "npx,pcf8523";
 	
 	config_found(self, &ia, iic_print);
 }
