@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.896 2016/05/20 17:12:42 rpe Exp $
+#	$OpenBSD: install.sub,v 1.897 2016/05/20 17:28:43 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -479,6 +479,14 @@ retrap() {
 # Functions to ask (or auto-answer) questions
 # ------------------------------------------------------------------------------
 
+# Log installer questions and answers so that the resulting file can be used as
+# response file for an unattended install/upgrade.
+log_answers() {
+	if [[ -n $1 && -n $2 ]]; then
+		print -r -- "${1%%'?'*} = $2" >>/tmp/$MODE.resp
+	fi
+}
+
 # Fetch response file for autoinstall.
 get_responsefile() {
 	local _rf _if _mac _mode _lf _hn _path
@@ -633,6 +641,7 @@ _ask() {
 # repeatedly until it succeds.
 ask() {
 	while ! _ask "$1" "$2"; do done
+	log_answers "$1" "$resp"
 }
 
 # Ask the user for a y or n, and insist on 'y', 'yes', 'n' or 'no'.
@@ -697,7 +706,10 @@ ask_which() {
 
 		# Quote $resp to prevent user from confusing isin() by
 		# entering something like 'a a'.
-		isin "$resp" $_dynlist done && break
+		if isin "$resp" $_dynlist done; then
+			log_answers "$_q" "$resp"
+			break
+		fi
 		echo "'$resp' is not a valid choice."
 		$AUTO && [[ -n $RESPFILE ]] && exit 1
 	done
@@ -2318,6 +2330,9 @@ finish_up() {
 		echo "/usr/sbin/sysmerge -b" >>/mnt/etc/rc.sysmerge
 	echo "/usr/sbin/fw_update -v" >>/mnt/etc/rc.firsttime
 
+	# Email installer questions and their answers to root on next boot.
+	prep_root_mail /tmp/$MODE.resp "$(hostname) $MODE response file"
+
 	store_random
 
 	# Pat on the back.
@@ -2825,6 +2840,9 @@ fi
 
 # Configure the terminal and keyboard.
 set_term
+
+# In case of restart, delete previously logged answers.
+rm -f /tmp/$MODE.resp
 
 case $MODE in
 install)	do_install;;
