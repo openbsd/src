@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.26 2016/04/03 12:44:37 patrick Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.27 2016/05/20 11:21:08 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -462,9 +462,16 @@ initarm(void *arg0, void *arg1, void *arg2)
 
 		node = fdt_find_node("/chosen");
 		if (node != NULL) {
-			char *bootargs;
-			if (fdt_node_property(node, "bootargs", &bootargs))
-				process_kernel_args(bootargs);
+			char *args, *duid;
+			int len;
+
+			len = fdt_node_property(node, "bootargs", &args);
+			if (len > 0)
+				process_kernel_args(args);
+
+			len = fdt_node_property(node, "openbsd,bootduid", &duid);
+			if (len == sizeof(bootduid))
+				memcpy(bootduid, duid, sizeof(bootduid));
 		}
 	}
 
