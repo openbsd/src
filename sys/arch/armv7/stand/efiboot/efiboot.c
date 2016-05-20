@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.8 2016/05/20 11:53:19 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.9 2016/05/20 19:09:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -294,18 +294,27 @@ u_long efi_loadaddr;
 void
 machdep(void)
 {
-	EFI_STATUS		 status;
-	EFI_PHYSICAL_ADDRESS	 addr = 0x10000000;
+	EFI_PHYSICAL_ADDRESS addr;
+	EFI_STATUS status;
 
 	cninit();
 
-	printf("pos %p\n", machdep);
-
-	status = BS->AllocatePages(AllocateAddress, EfiLoaderData,
-	    EFI_SIZE_TO_PAGES(32 * 1024 * 1024), &addr);
-	if (status != EFI_SUCCESS)
+	/*
+	 * The kernel expects to be loaded at offset 0x00300000 into a
+	 * block of memory aligned on a 256MB boundary.  We allocate a
+	 * block of 32MB of memory, which gives us plenty of room for
+	 * growth.
+	 */
+	for (addr = 0x10000000; addr <= 0xf0000000; addr += 0x10000000) {
+		status = BS->AllocatePages(AllocateAddress, EfiLoaderData,
+		    EFI_SIZE_TO_PAGES(32 * 1024 * 1024), &addr);
+		if (status == EFI_SUCCESS) {
+			efi_loadaddr = addr;
+			break;
+		}
+	}
+	if (efi_loadaddr == 0)
 		printf("Can't allocate memory\n");
-	efi_loadaddr = addr;
 
 	efi_heap_init();
 	efi_timer_init();
