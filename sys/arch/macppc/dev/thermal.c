@@ -1,4 +1,4 @@
-/*	$ OpenBSD $ */
+/*	$OpenBSD: thermal.c,v 1.2 2016/05/20 22:00:45 mglocker Exp $ */
 
 /*-
  * Copyright (c) 2009-2011 Nathan Whitehorn
