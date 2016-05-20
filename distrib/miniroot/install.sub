@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.895 2016/04/28 18:17:30 natano Exp $
+#	$OpenBSD: install.sub,v 1.896 2016/05/20 17:12:42 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -203,6 +203,30 @@ tmpdir() {
 	echo "$_dir"
 }
 
+# Generate unique filename based on the supplied filename $1.
+unique_filename() {
+	local _fn=$1 _ufn
+
+	while _ufn=${_fn}.$RANDOM && [[ -e $_ufn ]]; do done
+	print -- "$_ufn"
+}
+
+# Let rc.firsttime feed file $1 using $2 as subject to whatever mail system we
+# have at hand by then.
+prep_root_mail() {
+	local _fn=$1 _subject=$2 _ufn
+
+	[[ -s $_fn ]] || return
+
+	_ufn=$(unique_filename /mnt/var/log/${_fn##*/})
+	cp $_fn $_ufn
+	chmod 600 $_ufn
+	_ufn=${_ufn#/mnt}
+
+	cat <<__EOT >>/mnt/etc/rc.firsttime
+( /usr/bin/mail -s '$_subject' root <$_ufn && rm $_ufn ) >/dev/null 2>&1 &
+__EOT
+}
 
 # ------------------------------------------------------------------------------
 # Device related functions
@@ -2788,16 +2812,8 @@ elif [[ -z $RESPFILE ]]; then
 	echo "Performing non-interactive $action..."
 	/$action -af /ai.$action.conf 2>&1 </dev/null | sed 's/^.*//;w/ai.log'
 	if [[ -f /ai.done ]]; then
-		# Generate unique filename and let rc.firsttime feed it to
-		# whatever mail system we have at hand by then.
-		while _lf=/mnt/var/log/ai.log.$RANDOM && [[ -e $_lf ]]; do done
-		cp /ai.log $_lf
-		chmod 600 $_lf
-		_lf=${_lf#/mnt}
-		cat <<__EOT >>/mnt/etc/rc.firsttime
-( /usr/bin/mail -s '$(hostname) $action log' root <$_lf &&
-	rm $_lf ) >/dev/null 2>&1 &
-__EOT
+		# Email ai.log to root on next boot.
+		prep_root_mail /ai.log "$(hostname) $action log"
 		exec reboot
 	else
 		echo "failed; check /ai.log"
