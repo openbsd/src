@@ -12,8 +12,6 @@ __bss_start
 _edata
 _end
 __end
-_SDA2_BASE
-_SDA_BASE
 
 /* needed by ld.so unless/until we switch to RELRO */
 __got_start
@@ -1012,7 +1010,7 @@ res_send_async
 /* net */
 __b64_ntop
 __b64_pton
-__check_rhosts_file
+/*__check_rhosts_file*/
 __dn_comp
 __dn_skipname
 __ivaliduser
@@ -1293,8 +1291,6 @@ xprt_unregister
 __sF
 __srget
 __swbuf
-_cleanup
-_fwalk
 asprintf
 clearerr
 dprintf

@@ -8,8 +8,6 @@
 		_edata;
 		_end;
 		__end;
-		_SDA2_BASE;
-		_SDA_BASE;
 
 		/* needed by ld.so until we switch to RELRO */
 		__got_start;
