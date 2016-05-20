@@ -1,4 +1,4 @@
-/*	$OpenBSD: exynos_machdep.c,v 1.6 2016/04/24 00:57:23 patrick Exp $	*/
+/*	$OpenBSD: exynos_machdep.c,v 1.7 2016/05/20 01:42:56 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -28,6 +28,7 @@
 
 #include <arm/cortex/smc.h>
 #include <arm/armv7/armv7var.h>
+#include <arm/mainbus/mainbus.h>
 #include <armv7/armv7/armv7var.h>
 #include <armv7/exynos/exdisplayvar.h>
 #include <armv7/exynos/exuartvar.h>
@@ -83,6 +84,13 @@ exynos_platform_init_cons(void)
 	}
 }
 
+void
+exynos_platform_init_mainbus(struct device *self)
+{
+	mainbus_legacy_found(self, "cortex");
+	mainbus_legacy_found(self, "exynos");
+}
+
 static void
 exynos_platform_watchdog_reset(void)
 {
@@ -122,6 +130,7 @@ struct armv7_platform exynos_platform = {
 	.watchdog_reset = exynos_platform_watchdog_reset,
 	.powerdown = exynos_platform_powerdown,
 	.disable_l2_if_needed = exynos_platform_disable_l2_if_needed,
+	.init_mainbus = exynos_platform_init_mainbus,
 };
 
 struct armv7_platform *

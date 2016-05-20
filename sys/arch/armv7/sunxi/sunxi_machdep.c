@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunxi_machdep.c,v 1.8 2015/05/19 03:30:54 jsg Exp $	*/
+/*	$OpenBSD: sunxi_machdep.c,v 1.9 2016/05/20 01:42:56 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -28,6 +28,7 @@
 
 #include <arm/cortex/smc.h>
 #include <arm/armv7/armv7var.h>
+#include <arm/mainbus/mainbus.h>
 #include <armv7/armv7/armv7var.h>
 #include <armv7/armv7/armv7_machdep.h>
 
@@ -64,6 +65,13 @@ sunxi_platform_init_cons(void)
 
 	sxiuartcnattach(&armv7_a4x_bs_tag, paddr, comcnspeed, 24000000,
 	    comcnmode);
+}
+
+void
+sunxi_platform_init_mainbus(struct device *self)
+{
+	mainbus_legacy_found(self, "cortex");
+	mainbus_legacy_found(self, "sunxi");
 }
 
 void
@@ -105,6 +113,7 @@ struct armv7_platform sunxi_platform = {
 	.watchdog_reset = sunxi_platform_watchdog_reset,
 	.powerdown = sunxi_platform_powerdown,
 	.disable_l2_if_needed = sunxi_platform_disable_l2_if_needed,
+	.init_mainbus = sunxi_platform_init_mainbus,
 };
 
 struct armv7_platform *

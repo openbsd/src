@@ -1,4 +1,4 @@
-/*	$OpenBSD: vexpress_machdep.c,v 1.1 2015/06/08 06:33:16 jsg Exp $	*/
+/*	$OpenBSD: vexpress_machdep.c,v 1.2 2016/05/20 01:42:56 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -28,6 +28,7 @@
 
 #include <arm/cortex/smc.h>
 #include <arm/armv7/armv7var.h>
+#include <arm/mainbus/mainbus.h>
 #include <armv7/armv7/armv7var.h>
 #include <armv7/vexpress/pl011var.h>
 #include <armv7/armv7/armv7_machdep.h>
@@ -63,6 +64,13 @@ vexpress_platform_init_cons(void)
 		break;
 	}
 	pl011cnattach(&armv7_bs_tag, paddr, comcnspeed, comcnmode);
+}
+
+void
+vexpress_platform_init_mainbus(struct device *self)
+{
+	mainbus_legacy_found(self, "cortex");
+	mainbus_legacy_found(self, "vexpress");
 }
 
 void
@@ -104,6 +112,7 @@ struct armv7_platform vexpress_platform = {
 	.watchdog_reset = vexpress_platform_watchdog_reset,
 	.powerdown = vexpress_platform_powerdown,
 	.disable_l2_if_needed = vexpress_platform_disable_l2_if_needed,
+	.init_mainbus = vexpress_platform_init_mainbus,
 };
 
 struct armv7_platform *

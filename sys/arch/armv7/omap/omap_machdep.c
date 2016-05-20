@@ -1,4 +1,4 @@
-/*	$OpenBSD: omap_machdep.c,v 1.6 2015/05/19 03:30:54 jsg Exp $	*/
+/*	$OpenBSD: omap_machdep.c,v 1.7 2016/05/20 01:42:56 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -29,6 +29,7 @@
 
 #include <arm/cortex/smc.h>
 #include <arm/armv7/armv7var.h>
+#include <arm/mainbus/mainbus.h>
 #include <armv7/armv7/armv7var.h>
 #include <armv7/armv7/armv7_machdep.h>
 
@@ -78,6 +79,13 @@ omap_platform_init_cons(void)
 }
 
 void
+omap_platform_init_mainbus(struct device *self)
+{
+	mainbus_legacy_found(self, "cortex");
+	mainbus_legacy_found(self, "omap");
+}
+
+void
 omap_platform_watchdog_reset(void)
 {
 	omdog_reset();
@@ -121,6 +129,7 @@ struct armv7_platform omap_platform = {
 	.watchdog_reset = omap_platform_watchdog_reset,
 	.powerdown = omap_platform_powerdown,
 	.disable_l2_if_needed = omap_platform_disable_l2_if_needed,
+	.init_mainbus = omap_platform_init_mainbus,
 };
 
 struct armv7_platform *
