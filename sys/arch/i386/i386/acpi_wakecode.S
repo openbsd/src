@@ -54,7 +54,11 @@
 
 #define _ACPI_TRMP_LABEL(a) a = . - _C_LABEL(acpi_real_mode_resume) + ACPI_TRAMPOLINE
 #define _ACPI_TRMP_OFFSET(a) a = . - _C_LABEL(acpi_real_mode_resume)
-#define _ACPI_RM_SEGMENT (ACPI_TRAMPOLINE >> 4)
+#define _ACPI_TRMP_DATA_LABEL(a) a = . - _C_LABEL(acpi_tramp_data_start) + \
+	ACPI_TRAMP_DATA
+#define _ACPI_TRMP_DATA_OFFSET(a) a = . - _C_LABEL(acpi_tramp_data_start)
+#define _ACPI_RM_CODE_SEG (ACPI_TRAMPOLINE >> 4)
+#define _ACPI_RM_DATA_SEG (ACPI_TRAMP_DATA >> 4)
 
 #ifdef HIBERNATE
 #define HIBERNATE_STACK_OFFSET 0x0F00
@@ -85,6 +89,8 @@
 	.global _C_LABEL(acpi_real_mode_resume)
 	.global _C_LABEL(acpi_protected_mode_resume)
 	.global _C_LABEL(acpi_resume_end)
+	.global _C_LABEL(acpi_tramp_data_start)
+	.global _C_LABEL(acpi_tramp_data_end)
 _C_LABEL(acpi_real_mode_resume):
 _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	nop
@@ -97,10 +103,11 @@ _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	 * want real dependencies on data or stack, so we'll just use
 	 * the code segment for data and stack (eg, a 64k memory space).
 	 */
-	movw	%cs,%ax
-	movw	%ax,%ds
-	movw	%ax,%es
-	movw	%ax,%ss
+	movw	$(_ACPI_RM_DATA_SEG), %ax
+	movw	%ax, %ds
+	movw	%ax, %ss
+	movw	%cs, %ax
+	movw	%ax, %es
 	lidtl	clean_idt
 
 	/*
@@ -116,13 +123,6 @@ _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	 */
 	pushl	$0
 	popfl
-
-	/*
-	 * Set up esi to point to start of current routine's CS.
-	 */
-	xorl    %esi,%esi
-	movw    %cs,%si
-	shll    $4,%esi
 
 	/*
 	 * Flush instruction prefetch queue
@@ -184,9 +184,7 @@ _C_LABEL(acpi_protected_mode_resume):
 	 * because we haven't put anything on the stack via a
 	 * call or push that we haven't cleaned up already.
 	 */
-	movl    %esi, %esp
-	addl    $0x0FFE, %esp
-
+	addl	$(ACPI_TRAMP_DATA), %esp
 
 	/*
 	 * Reset our page size extension (via restoring cr4) to what
@@ -337,8 +335,9 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_3)
 	movl	%eax, %cr3
 
 	/* Set up real mode segment selectors */
-	movw	$0x1300, %ax
+	movw	$(_ACPI_RM_DATA_SEG), %ax
 	movw	%ax, %ds
+	movw	%ax, %ss
 	movw	%ax, %es
 	movw	%ax, %fs
 	movw	%ax, %gs
@@ -346,7 +345,7 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_3)
 	lidtl	clean_idt
 
 	/* Jump to the S3 resume vector */
-	ljmp	$0x1300, $acpi_s3_vector_real
+	ljmp	$(_ACPI_RM_CODE_SEG), $acpi_s3_vector_real
 
 	.code32
 	/* Switch to hibernate resume pagetable */
@@ -400,14 +399,23 @@ NENTRY(hibernate_flush)
 	ret
 #endif /* HIBERNATE */
 
-	.code16
-	.align 8, 0xcc
-_ACPI_TRMP_OFFSET(tmp_gdt)
+	/*
+	 * End of resume code (code copied to ACPI_TRAMPOLINE)
+	 */
+_C_LABEL(acpi_resume_end):
+
+	/*
+	 * Initial copy of this data gets placed in .rodata, kernel makes
+	 * RW copy of it in the tramp data page.
+	 */
+	.section .rodata
+_C_LABEL(acpi_tramp_data_start):
+_ACPI_TRMP_DATA_OFFSET(tmp_gdt)
 	.word	tmp_gdt_end - tmp_gdtable
 	.long	tmp_gdtable
 
 	.align 8, 0xcc
-_ACPI_TRMP_LABEL(tmp_gdtable)
+_ACPI_TRMP_DATA_LABEL(tmp_gdtable)
 	/*
 	 * null
 	 */
@@ -444,10 +452,10 @@ _ACPI_TRMP_LABEL(tmp_gdtable)
 	 */
 	.word	0xffff, 0
 	.byte	0, 0x93, 0xcf, 0
-_ACPI_TRMP_LABEL(tmp_gdt_end)
+_ACPI_TRMP_DATA_LABEL(tmp_gdt_end)
 
 	.align 8, 0xcc
-_ACPI_TRMP_OFFSET(clean_idt)
+_ACPI_TRMP_DATA_OFFSET(clean_idt)
 	.word	0xffff
 	.long	0
 	.word	0
@@ -457,12 +465,12 @@ _ACPI_TRMP_OFFSET(clean_idt)
 	 * reads/writes (sets up a 16 bit segment)
 	 */
 	.align 8, 0xcc
-_ACPI_TRMP_LABEL(gdt_16)
+_ACPI_TRMP_DATA_LABEL(gdt_16)
 	.word   gdt_16_end - gdt_16_table
 	.long   gdt_16_table
 
 	.align 8, 0xcc
-_ACPI_TRMP_LABEL(gdt_16_table)
+_ACPI_TRMP_DATA_LABEL(gdt_16_table)
 	/*
 	 * null
 	 */
@@ -500,66 +508,63 @@ _ACPI_TRMP_LABEL(gdt_16_table)
 	.word   0xffff, 0
 	.byte   0, 0x93, 0x8f, 0
 
-_ACPI_TRMP_LABEL(gdt_16_end)
+_ACPI_TRMP_DATA_LABEL(gdt_16_end)
 
 	.align 4, 0xcc
-_ACPI_TRMP_LABEL(acpi_saved_ebx)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_ebx)
 	.long 0
-_ACPI_TRMP_LABEL(acpi_saved_ecx)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_ecx)
 	.long 0
-_ACPI_TRMP_LABEL(acpi_saved_edx)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_edx)
 	.long 0
-_ACPI_TRMP_LABEL(acpi_saved_ebp)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_ebp)
 	.long 0
-_ACPI_TRMP_LABEL(acpi_saved_esi)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_esi)
 	.long 0
-_ACPI_TRMP_LABEL(acpi_saved_edi)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_edi)
 	.long 0
-_ACPI_TRMP_LABEL(acpi_saved_esp)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_esp)
 	.long 0
-_ACPI_TRMP_LABEL(acpi_saved_fl)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_fl)
 	.long 0
-_ACPI_TRMP_LABEL(acpi_saved_cr0)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_cr0)
 	.long 0
-_ACPI_TRMP_LABEL(acpi_saved_cr2)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_cr2)
 	.long 0
-_ACPI_TRMP_LABEL(acpi_saved_cr3)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_cr3)
 	.long 0
-_ACPI_TRMP_LABEL(acpi_saved_cr4)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_cr4)
 	.long 0
-_ACPI_TRMP_LABEL(acpi_saved_ret)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_ret)
 	.long 0
 
 	.align 16, 0xcc
-_ACPI_TRMP_LABEL(acpi_saved_idt)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_idt)
 	.space 6
 
 	.align 16, 0xcc
-_ACPI_TRMP_LABEL(acpi_saved_gdt)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_gdt)
 	.space 6
 
 	.align 16, 0xcc
-_ACPI_TRMP_LABEL(acpi_saved_ldt)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_ldt)
 	.short 0
-_ACPI_TRMP_LABEL(acpi_saved_cs)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_cs)
 	.short 0
-_ACPI_TRMP_LABEL(acpi_saved_ds)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_ds)
 	.short 0
-_ACPI_TRMP_LABEL(acpi_saved_es)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_es)
 	.short 0
-_ACPI_TRMP_LABEL(acpi_saved_fs)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_fs)
 	.short 0
-_ACPI_TRMP_LABEL(acpi_saved_gs)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_gs)
 	.short 0
-_ACPI_TRMP_LABEL(acpi_saved_ss)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_ss)
 	.short 0
-_ACPI_TRMP_LABEL(acpi_saved_tr)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_tr)
 	.short 0
 
-	/*
-	 * End of resume code (code copied to ACPI_TRAMPOLINE)
-	 */
-_C_LABEL(acpi_resume_end):
+_C_LABEL(acpi_tramp_data_end):
 
 	/*
 	 * acpi_savecpu saves the processor's registers and flags

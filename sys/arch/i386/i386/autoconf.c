@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.99 2016/05/18 03:45:11 mlarkin Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.100 2016/05/20 02:30:41 mlarkin Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -143,12 +143,6 @@ cpu_configure(void)
 	pmap_kenter_pa((vaddr_t)MP_TRAMP_DATA,		/* virtual */
 	    (paddr_t)MP_TRAMP_DATA,			/* physical */
 	    PROT_READ | PROT_WRITE);			/* protection */
-#endif
-
-#if NACPI > 0 && !defined(SMALL_KERNEL)
-	pmap_kenter_pa((vaddr_t)ACPI_TRAMPOLINE,	/* virtual */
-	    (paddr_t)ACPI_TRAMPOLINE,			/* physical */
-	    PROT_READ | PROT_WRITE | PROT_EXEC);	/* protection */
 #endif
 
 	if (config_rootfound("mainbus", NULL) == NULL)

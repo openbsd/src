@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.59 2015/05/30 08:41:30 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.60 2016/05/20 02:30:41 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -63,6 +63,7 @@ int haveacpibutusingapm;
 #endif
 
 extern u_char acpi_real_mode_resume[], acpi_resume_end[];
+extern u_char acpi_tramp_data_start[], acpi_tramp_data_end[];
 
 extern int acpi_savecpu(void) __returns_twice;
 extern void intr_calculatemasks(void);
@@ -239,12 +240,31 @@ acpi_attach_machdep(struct acpi_softc *sc)
 
 	/*
 	 * Sanity check before setting up trampoline.
-	 * Ensure the trampoline size is < PAGE_SIZE
+	 * Ensure the trampoline page sizes are < PAGE_SIZE
 	 */
 	KASSERT(acpi_resume_end - acpi_real_mode_resume < PAGE_SIZE);
+	KASSERT(acpi_tramp_data_end - acpi_tramp_data_start < PAGE_SIZE);
 
-	bcopy(acpi_real_mode_resume, (caddr_t)ACPI_TRAMPOLINE,
+	/* Map ACPI tramp code and data pages RW for copy */
+	pmap_kenter_pa(ACPI_TRAMPOLINE, ACPI_TRAMPOLINE,
+	    PROT_READ | PROT_WRITE);
+	pmap_kenter_pa(ACPI_TRAMP_DATA, ACPI_TRAMP_DATA,
+	    PROT_READ | PROT_WRITE);
+
+	/* Fill the trampoline pages with int3 */
+	memset((caddr_t)ACPI_TRAMPOLINE, 0xcc, PAGE_SIZE);
+	memset((caddr_t)ACPI_TRAMP_DATA, 0xcc, PAGE_SIZE);
+
+	/* Copy over real trampoline pages (code and data) */
+	memcpy((caddr_t)ACPI_TRAMPOLINE, acpi_real_mode_resume,
 	    acpi_resume_end - acpi_real_mode_resume);
+	memcpy((caddr_t)ACPI_TRAMP_DATA, acpi_tramp_data_start,
+	    acpi_tramp_data_end - acpi_tramp_data_start);
+
+	/* Unmap, will be remapped in acpi_sleep_cpu */
+	pmap_kremove(ACPI_TRAMPOLINE, PAGE_SIZE);
+	pmap_kremove(ACPI_TRAMP_DATA, PAGE_SIZE);
+
 #endif /* SMALL_KERNEL */
 }
 
@@ -318,6 +338,11 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 	if (sc->sc_facs->length > 32 && sc->sc_facs->version >= 1)
 		sc->sc_facs->x_wakeup_vector = 0;
 
+	/* Map trampoline and data page */
+	pmap_kenter_pa(ACPI_TRAMPOLINE, ACPI_TRAMPOLINE, PROT_READ | PROT_EXEC);
+	pmap_kenter_pa(ACPI_TRAMP_DATA, ACPI_TRAMP_DATA,
+	    PROT_READ | PROT_WRITE);
+
 	/* Copy the current cpu registers into a safe place for resume.
 	 * acpi_savecpu actually returns twice - once in the suspend
 	 * path and once in the resume path (see setjmp(3)).
@@ -356,6 +381,9 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 	sc->sc_facs->wakeup_vector = 0;
 	if (sc->sc_facs->length > 32 && sc->sc_facs->version >= 1)
 		sc->sc_facs->x_wakeup_vector = 0;
+
+	pmap_kremove(ACPI_TRAMPOLINE, PAGE_SIZE);
+	pmap_kremove(ACPI_TRAMP_DATA, PAGE_SIZE);
 
 	return (0);
 }

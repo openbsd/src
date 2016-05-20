@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.48 2016/05/18 03:45:11 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.49 2016/05/20 02:30:41 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -136,10 +136,29 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 		    hiber_info->ranges[i].base;
 	}
 
+	/* Record lowmem PTP page */
+	if (hiber_info->nranges >= VM_PHYSSEG_MAX)
+		return (1);
+	hiber_info->ranges[hiber_info->nranges].base = PTP0_PA;
+	hiber_info->ranges[hiber_info->nranges].end =
+	    hiber_info->ranges[hiber_info->nranges].base + PAGE_SIZE;
+	hiber_info->image_size += PAGE_SIZE;
+	hiber_info->nranges++;
+
 #if NACPI > 0
+	/* Record ACPI trampoline code page */
 	if (hiber_info->nranges >= VM_PHYSSEG_MAX)
 		return (1);
 	hiber_info->ranges[hiber_info->nranges].base = ACPI_TRAMPOLINE;
+	hiber_info->ranges[hiber_info->nranges].end =
+	    hiber_info->ranges[hiber_info->nranges].base + PAGE_SIZE;
+	hiber_info->image_size += PAGE_SIZE;
+	hiber_info->nranges++;
+
+	/* Record ACPI trampoline data page */
+	if (hiber_info->nranges >= VM_PHYSSEG_MAX)
+		return (1);
+	hiber_info->ranges[hiber_info->nranges].base = ACPI_TRAMP_DATA;
 	hiber_info->ranges[hiber_info->nranges].end =
 	    hiber_info->ranges[hiber_info->nranges].base + PAGE_SIZE;
 	hiber_info->image_size += PAGE_SIZE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.585 2016/05/18 03:45:11 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.586 2016/05/20 02:30:41 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3238,6 +3238,10 @@ init386(paddr_t first_avail)
 			/* skip ACPI resume trampoline code page */
 			if (a < ACPI_TRAMPOLINE + NBPG)
 				a = ACPI_TRAMPOLINE + NBPG;
+
+			/* skip ACPI resume trampoline data page */
+			if (a < ACPI_TRAMP_DATA + NBPG)
+				a = ACPI_TRAMP_DATA + NBPG;
 #endif /* ACPI */
 
 #ifdef HIBERNATE
