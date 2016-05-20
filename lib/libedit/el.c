@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.34 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$OpenBSD: el.c,v 1.35 2016/05/20 15:30:17 schwarze Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -49,6 +49,7 @@
 
 #include "el.h"
 #include "parse.h"
+#include "read.h"
 
 /* el_init():
  *	Initialize editline and set default parameters.
@@ -100,8 +101,10 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 	(void) hist_init(el);
 	(void) prompt_init(el);
 	(void) sig_init(el);
-	(void) read_init(el);
-
+	if (read_init(el) == -1) {
+		el_end(el);
+		return NULL;
+	}
 	return el;
 }
 
@@ -281,7 +284,7 @@ el_wset(EditLine *el, int op, ...)
 	case EL_GETCFN:
 	{
 		el_rfunc_t rc = va_arg(ap, el_rfunc_t);
-		rv = el_read_setfn(el, rc);
+		rv = el_read_setfn(el->el_read, rc);
 		break;
 	}
 
@@ -429,7 +432,7 @@ el_wget(EditLine *el, int op, ...)
 	}
 
 	case EL_GETCFN:
-		*va_arg(ap, el_rfunc_t *) = el_read_getfn(el);
+		*va_arg(ap, el_rfunc_t *) = el_read_getfn(el->el_read);
 		rv = 0;
 		break;
 

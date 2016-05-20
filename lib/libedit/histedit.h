@@ -1,4 +1,4 @@
-/*	$OpenBSD: histedit.h,v 1.14 2016/03/20 23:48:27 schwarze Exp $	*/
+/*	$OpenBSD: histedit.h,v 1.15 2016/05/20 15:30:17 schwarze Exp $	*/
 /*	$NetBSD: histedit.h,v 1.46 2010/04/15 00:50:03 christos Exp $	*/
 
 /*-
@@ -260,6 +260,8 @@ typedef struct lineinfow {
 	const wchar_t	*cursor;
 	const wchar_t	*lastchar;
 } LineInfoW;
+
+typedef int	(*el_rfunc_t)(EditLine *, wchar_t *);
 
 const wchar_t	*el_wgets(EditLine *, int *);
 int		 el_wgetc(EditLine *, wchar_t *);
