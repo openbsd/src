@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.86 2016/03/05 17:41:55 mpi Exp $
+#	$OpenBSD: files.macppc,v 1.87 2016/05/20 21:45:04 mglocker Exp $
 
 #
 # macppc-specific configuration info
@@ -29,6 +29,7 @@ include "dev/mii/files.mii"
 # MAC generic
 #
 file	arch/macppc/dev/dbdma.c
+file	arch/macppc/dev/thermal.c
 
 #
 # Openfirmware support
