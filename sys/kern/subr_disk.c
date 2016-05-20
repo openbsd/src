@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.224 2016/05/19 21:31:04 kettenis Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.225 2016/05/20 14:01:27 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1121,9 +1121,8 @@ disk_attach_callback(void *xdat)
 {
 	struct disk_attach_task *dat = xdat;
 	struct disk *dk = dat->dk;
-	char errbuf[100];
 	struct disklabel dl;
-	dev_t dev;
+	char errbuf[100];
 
 	free(dat, M_TEMP, sizeof(*dat));
 
@@ -1131,7 +1130,6 @@ disk_attach_callback(void *xdat)
 		goto done;
 
 	/* Read disklabel. */
-	dev = dk->dk_devno;
 	if (disk_readlabel(&dl, dk->dk_devno, errbuf, sizeof(errbuf)) == NULL) {
 		add_timer_randomness(dl.d_checksum);
 		dk->dk_flags |= DKF_LABELVALID;
