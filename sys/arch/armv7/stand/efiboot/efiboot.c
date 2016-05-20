@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.7 2016/05/19 09:39:06 jsg Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.8 2016/05/20 11:53:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -30,6 +30,7 @@
 #include <lib/libkern/libkern.h>
 #include <stand/boot/cmd.h>
 
+#include "disk.h"
 #include "eficall.h"
 #include "fdt.h"
 #include "libsa.h"
@@ -245,7 +246,8 @@ void *
 efi_makebootargs(char *bootargs, uint32_t *board_id)
 {
 	void *fdt = NULL;
-	char *dummy;
+	u_char bootduid[8];
+	u_char zero[8];
 	void *node;
 	size_t len;
 	int i;
@@ -264,10 +266,16 @@ efi_makebootargs(char *bootargs, uint32_t *board_id)
 		return NULL;
 
 	len = strlen(bootargs) + 1;
-	if (fdt_node_property(node, "bootargs", &dummy))
-		fdt_node_set_property(node, "bootargs", bootargs, len);
-	else
-		fdt_node_add_property(node, "bootargs", bootargs, len);
+	fdt_node_add_property(node, "bootargs", bootargs, len);
+
+	/* Pass DUID of the boot disk. */
+	memset(&zero, 0, sizeof(zero));
+	memcpy(&bootduid, diskinfo.disklabel.d_uid, sizeof(bootduid));
+	if (memcmp(bootduid, zero, sizeof(bootduid)) != 0) {
+		fdt_node_add_property(node, "openbsd,bootduid", bootduid,
+		    sizeof(bootduid));
+	}
+
 	fdt_finalize();
 
 	node = fdt_find_node("/");

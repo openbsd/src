@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.1 2016/05/14 17:55:15 kettenis Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.2 2016/05/20 11:53:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -41,22 +41,11 @@ extern EFI_BOOT_SERVICES *BS;
 
 extern int debug;
 
+#include "disk.h"
 #include "efidev.h"
 
 #define EFI_BLKSPERSEC(_ed)	((_ed)->blkio->Media->BlockSize / DEV_BSIZE)
 #define EFI_SECTOBLK(_ed, _n)	((_n) * EFI_BLKSPERSEC(_ed))
-
-typedef struct efi_diskinfo {
-	EFI_BLOCK_IO		*blkio;
-	UINT32			 mediaid;
-} *efi_diskinfo_t;
-
-struct diskinfo {
-	struct efi_diskinfo ed;
-	struct disklabel disklabel;
-
-	u_int sc_part;
-};
 
 extern EFI_BLOCK_IO *disk;
 struct diskinfo diskinfo;
