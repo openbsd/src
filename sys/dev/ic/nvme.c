@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.50 2016/05/20 11:11:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1224,7 +1224,7 @@ nvme_q_alloc(struct nvme_softc *sc, u_int16_t id, u_int entries, u_int dstrd)
 
 	q->q_cq_dmamem = nvme_dmamem_alloc(sc,
 	    sizeof(struct nvme_cqe) * entries);
-	if (q->q_sq_dmamem == NULL)
+	if (q->q_cq_dmamem == NULL)
 		goto free_sq;
 
 	memset(NVME_DMA_KVA(q->q_sq_dmamem), 0, NVME_DMA_LEN(q->q_sq_dmamem));
