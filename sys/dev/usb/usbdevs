@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.663 2016/03/31 12:27:48 reyk Exp $
+$OpenBSD: usbdevs,v 1.664 2016/05/20 02:04:24 chris Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -831,7 +831,8 @@ product AGFA SNAPSCANE26	0x2097	SnapScan e26
 product AGFA SNAPSCANE52	0x20fd	SnapScan e52
 
 /* Airprime, Inc. products */
-product AIRPRIME PC5220		0x0112	AirPrime CDMA Wireless EVDO card
+product AIRPRIME PC5220		0x0112	CDMA Wireless EVDO card
+product AIRPRIME AIRCARD_313U	0x68aa	Aircard 313U
   
 /* Aincomm products */
 product AINCOMM AWU2000B	0x1001	AWU2000B
@@ -3832,6 +3833,7 @@ product SIERRA AC885U		0x6880	885U
 product SIERRA C01SW		0x6890	C01SW
 product SIERRA USB305		0x68a3	USB305
 product SIERRA MC8355		0x9013	MC8355
+product SIERRA AIRCARD_770S	0x9053	Aircard 770S
 
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA
