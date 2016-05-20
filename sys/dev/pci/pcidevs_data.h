@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1795 2016/05/03 03:12:46 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1796 2016/05/20 03:12:04 mlarkin Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -10968,6 +10968,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "I218-V",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X552_SFP,
+	    "X552",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X557_AT2,
 	    "X557-AT2",
 	},
@@ -15476,6 +15480,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "5100 PCIE",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOAT_SCNB,
+	    "I/OAT SCNB",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_HB,
 	    "Xeon-D Host",
 	},
@@ -15520,6 +15528,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Xeon-D PCIE",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_PCIE_11,
+	    "Xeon-D PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_UBOX_0,
+	    "Xeon-D Ubox",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_UBOX_1,
+	    "Xeon-D Ubox",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_ADDRMAP,
 	    "Xeon-D Address Map",
 	},
@@ -15534,6 +15554,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_IOAPIC,
 	    "Xeon-D I/O APIC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_IOAPIC_2,
+	    "Xeon-D I/O APIC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_HA_0,
+	    "Xeon-D Home Agent",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_QPI_R3_0,
+	    "Xeon-D QPI Link",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_QPI_R3_1,
+	    "Xeon-D QPI Link",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_QD_1,
@@ -15552,8 +15588,160 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Xeon-D QuickData",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOAT_SCNB,
-	    "I/OAT SCNB",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_0,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_QPI_R3_2,
+	    "Xeon-D QPI Debug",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_UBOX_2,
+	    "Xeon-D Ubox",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_PCU_0,
+	    "Xeon-D PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_PCU_1,
+	    "Xeon-D PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_PCU_2,
+	    "Xeon-D PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_PCU_3,
+	    "Xeon-D PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_PCU_4,
+	    "Xeon-D PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_PCU_5,
+	    "Xeon-D PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_QPI_R3_3,
+	    "Xeon-D QPI Link",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_HA_1,
+	    "Xeon-D Home Agent",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_1,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_2,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_3,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_4,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_5,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_6,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_7,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_8,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_9,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_10,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_11,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_12,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_13,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_14,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_15,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_16,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_17,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_18,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_19,
+	    "Xeon-D Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_PCU_6,
+	    "Xeon-D PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_CACHE_0,
+	    "Xeon-D Cache",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_CACHE_1,
+	    "Xeon-D Cache",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_CACHE_2,
+	    "Xeon-D Cache",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_CACHE_3,
+	    "Xeon-D Cache",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_CACHE_4,
+	    "Xeon-D Cache",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_CACHE_5,
+	    "Xeon-D Cache",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_CACHE_6,
+	    "Xeon-D Cache",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_CACHE_7,
+	    "Xeon-D Cache",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_ISA,
