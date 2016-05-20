@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.185 2016/05/17 08:27:17 kettenis Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.186 2016/05/20 19:25:53 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -3202,7 +3202,7 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 		sc->sc_mmap[i].v4l2_buf.sequence = 0;
 		sc->sc_mmap[i].v4l2_buf.field = V4L2_FIELD_NONE;
 		sc->sc_mmap[i].v4l2_buf.memory = V4L2_MEMORY_MMAP;
-		sc->sc_mmap[i].v4l2_buf.flags = V4L2_MEMORY_MMAP;
+		sc->sc_mmap[i].v4l2_buf.flags = V4L2_BUF_FLAG_MAPPED;
 
 		DPRINTF(1, "%s: %s: index=%d, offset=%d, length=%d\n",
 		    DEVNAME(sc), __func__,
