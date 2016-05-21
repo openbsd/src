@@ -1,4 +1,4 @@
-/*	$OpenBSD: optree.c,v 1.7 2016/05/21 19:06:15 kettenis Exp $	*/
+/*	$OpenBSD: optree.c,v 1.8 2016/05/21 19:08:29 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Federico G. Schwindt <fgsch@openbsd.org>
@@ -37,6 +37,7 @@ op_print(struct opiocdesc *opio, int depth)
 {
 	char *p;
 	int i, special;
+	uint32_t cell;
 
 	opio->op_name[opio->op_namelen] = '\0';
 	printf("%*s%s: ", depth * 4, " ", opio->op_name);
@@ -79,7 +80,8 @@ op_print(struct opiocdesc *opio, int depth)
 			    i += sizeof(int)) {
 				if (i)
 					printf(".");
-				printf("%08x", *(int *)(long)&opio->op_buf[i]);
+				cell = *(uint32_t *)&opio->op_buf[i];
+				printf("%08x", betoh32(cell));
 			}
 			if (i < opio->op_buflen) {
 				if (i)
