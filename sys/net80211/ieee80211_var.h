@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.71 2016/01/25 11:27:11 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.72 2016/05/21 09:07:11 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -369,6 +369,7 @@ extern struct ieee80211com_head ieee80211com_head;
 #define IEEE80211_C_RSN		0x00001000	/* CAPABILITY: RSN avail */
 #define IEEE80211_C_MFP		0x00002000	/* CAPABILITY: MFP avail */
 #define IEEE80211_C_RAWCTL	0x00004000	/* CAPABILITY: raw ctl */
+#define IEEE80211_C_SCANALLBAND	0x00008000	/* CAPABILITY: scan all bands */
 
 /* flags for ieee80211_fix_rate() */
 #define	IEEE80211_F_DOSORT	0x00000001	/* sort rate list */

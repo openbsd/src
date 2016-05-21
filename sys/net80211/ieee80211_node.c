@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.102 2016/05/18 08:15:28 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.103 2016/05/21 09:07:11 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -585,14 +585,17 @@ ieee80211_end_scan(struct ifnet *ifp)
 		 * Scan the next mode if nothing has been found. This
 		 * is necessary if the device supports different
 		 * incompatible modes in the same channel range, like
-		 * like 11b and "pure" 11G mode. This will loop
-		 * forever except for user-initiated scans.
+		 * like 11b and "pure" 11G mode.
+		 * If the device scans all bands in one fell swoop, return
+		 * current scan results to userspace regardless of mode.
+		 * This will loop forever except for user-initiated scans.
 		 */
-		if (ieee80211_next_mode(ifp) == IEEE80211_MODE_AUTO) {
+		if (ieee80211_next_mode(ifp) == IEEE80211_MODE_AUTO ||
+		    (ic->ic_caps & IEEE80211_C_SCANALLBAND)) {
 			if (ic->ic_scan_lock & IEEE80211_SCAN_REQUEST &&
 			    ic->ic_scan_lock & IEEE80211_SCAN_RESUME) {
 				ic->ic_scan_lock = IEEE80211_SCAN_LOCKED;
-				/* Return from an user-initiated scan */
+				/* Return from a user-initiated scan. */
 				wakeup(&ic->ic_scan_lock);
 			} else if (ic->ic_scan_lock & IEEE80211_SCAN_REQUEST)
 				goto wakeup;
@@ -652,7 +655,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 
  wakeup:
 	if (ic->ic_scan_lock & IEEE80211_SCAN_REQUEST) {
-		/* Return from an user-initiated scan */
+		/* Return from a user-initiated scan. */
 		wakeup(&ic->ic_scan_lock);
 	}
 
