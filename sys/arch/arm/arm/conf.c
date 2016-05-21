@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.44 2016/04/25 20:09:14 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.45 2016/05/21 21:24:36 kettenis Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -353,7 +353,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),                          /* 79: removed device */
 	cdev_notdef(),                          /* 80: removed device */
 	cdev_notdef(),                          /* 81: removed device */
-	cdev_notdef(),                          /* 82: removed device */
+	cdev_openprom_init(1,openprom),         /* 82: /dev/openprom */
 	cdev_notdef(),                          /* 83: removed device */
 	cdev_notdef(),                          /* 84: removed device */
 	cdev_notdef(),                          /* 85: removed device */

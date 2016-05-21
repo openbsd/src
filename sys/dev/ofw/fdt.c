@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.9 2016/05/16 21:12:17 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.10 2016/05/21 21:24:36 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -17,13 +17,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
+
+/* XXX */
+#define OPROMMAXPARAM	32
 
 unsigned int fdt_check_head(void *);
 char	*fdt_get_str(u_int32_t);
@@ -250,6 +252,42 @@ fdt_next_node(void *node)
 		return NULL;
 
 	return (ptr + 1);
+}
+
+int
+fdt_next_property(void *node, char *name, char **nextname)
+{
+	u_int32_t *ptr;
+	u_int32_t nameid;
+	
+	if (!tree_inited)
+		return 0;
+
+	ptr = (u_int32_t *)node;
+
+	if (betoh32(*ptr) != FDT_NODE_BEGIN)
+		return 0;
+
+	ptr = skip_node_name(ptr + 1);
+
+	while (betoh32(*ptr) == FDT_PROPERTY) {
+		nameid = betoh32(*(ptr + 2)); /* id of name in strings table */
+		if (strcmp(name, "") == 0) {
+			*nextname = fdt_get_str(nameid);
+			return 1;
+		}
+		if (strcmp(name, fdt_get_str(nameid)) == 0) {
+			ptr = skip_property(ptr);
+			if (betoh32(*ptr) != FDT_PROPERTY)
+				break;
+			nameid = betoh32(*(ptr + 2));
+			*nextname = fdt_get_str(nameid);
+			return 1;
+		}
+		ptr = skip_property(ptr);
+	}
+	*nextname = "";
+	return 1;
 }
 
 /*
@@ -664,12 +702,48 @@ OF_finddevice(char *name)
 }
 
 int
+OF_getnodebyname(int handle, const char *name)
+{
+	void *node = (char *)tree.header + handle;
+
+	if (handle == 0)
+		node = fdt_find_node("/");
+
+	while (node) {
+		if (strcmp(name, fdt_node_name(node)) == 0)
+			break;
+
+		node = fdt_next_node(node);
+	}
+
+	return node ? ((char *)node - (char *)tree.header) : 0;
+}
+
+int
 OF_getproplen(int handle, char *prop)
 {
 	void *node = (char *)tree.header + handle;
-	char *data;
+	char *data, *name;
+	int len;
 
-	return fdt_node_property(node, prop, &data);
+	len = fdt_node_property(node, prop, &data);
+
+	/*
+	 * The "name" property is optional since version 16 of the
+	 * flattened device tree specification, so we synthesize one
+	 * from the unit name of the node if it is missing.
+	 */
+	if (len == 0 && strcmp(prop, "name") == 0) {
+		name = fdt_node_name(node);
+		data = strchr(name, '@');
+		if (data)
+			len = data - name;
+		else
+			len = strlen(name);
+		return len + 1;
+	}
+
+	return len;
 }
 
 int
@@ -700,6 +774,24 @@ OF_getprop(int handle, char *prop, void *buf, int buflen)
 	if (len > 0)
 		memcpy(buf, data, min(len, buflen));
 	return len;
+}
+
+int
+OF_nextprop(int handle, char *prop, void *nextprop)
+{
+	void *node = (char *)tree.header + handle;
+	char *data;
+
+	if (fdt_node_property(node, "name", &data) == 0) {
+		if (strcmp(prop, "") == 0)
+			return strlcpy(nextprop, "name", OPROMMAXPARAM);
+		if (strcmp(prop, "name") == 0)
+			prop = "";
+	}
+
+	if (fdt_next_property(node, prop, &data))
+		return strlcpy(nextprop, data, OPROMMAXPARAM);
+	return -1;
 }
 
 int

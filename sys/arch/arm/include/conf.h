@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.10 2011/07/04 16:52:41 nicm Exp $	*/
+/*	$OpenBSD: conf.h,v 1.11 2016/05/21 21:24:36 kettenis Exp $	*/
 /*	$NetBSD: conf.h,v 1.7 2002/04/19 01:04:39 wiz Exp $	*/
 
 /*
@@ -69,5 +69,14 @@ cdev_decl(lpt);
 cdev_decl(pci);
 cdev_decl(apm);
 cdev_decl(spkr);
+
+/* open, close, ioctl */
+#define cdev_openprom_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, 0, selfalse, \
+	(dev_type_mmap((*))) enodev }
+
+cdev_decl(openprom);
 
 #endif	/* _ARM_CONF_H__ */
