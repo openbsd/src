@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.69 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.70 2016/05/21 19:28:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -126,8 +126,8 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 
 	/* first, check if entry has a user-part tag */
 	if (tag[0]) {
-		if (!bsnprintf(buf, sizeof(buf), "%s+%s@%s",
-			user, tag, domain))
+		if (!bsnprintf(buf, sizeof(buf), "%s%c%s@%s",
+			user, TAG_CHAR, tag, domain))
 			return 0;
 		ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
 		if (ret < 0)
@@ -147,7 +147,7 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 
 	if (tag[0]) {
 		/* Failed ? We lookup for username + user-part tag */
-		if (!bsnprintf(buf, sizeof(buf), "%s+%s", user, tag))
+		if (!bsnprintf(buf, sizeof(buf), "%s%c%s", user, TAG_CHAR, tag))
 			return 0;
 		ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
 		if (ret < 0)
