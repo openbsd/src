@@ -1,4 +1,4 @@
-.\"	$OpenBSD: editline.3,v 1.44 2016/05/21 16:17:09 schwarze Exp $
+.\"	$OpenBSD: editline.3,v 1.45 2016/05/21 16:34:30 schwarze Exp $
 .\"	$NetBSD: editline.3,v 1.88 2016/02/25 14:59:22 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -190,7 +190,7 @@ counterparts.
 The following functions are available:
 .Bl -tag -width 4n
 .It Fn el_init
-Initialise the line editor, and return a data structure
+Initialize the line editor, and return a data structure
 to be used by all other line editing functions, or
 .Dv NULL
 on failure.
@@ -487,7 +487,7 @@ In unbuffered mode,
 will return immediately after processing a single character.
 .It Dv EL_GETCFN , Fa "el_rfunc_t f"
 Whenever reading a character, use the function
-.Bd -offset indent -compact
+.Bd -ragged -offset indent -compact
 .Ft int
 .Fo f
 .Fa "EditLine *e"
@@ -552,43 +552,50 @@ are supported, along with actual type of
 .Fa result :
 .Bl -tag -width 4n
 .It Dv EL_PROMPT , Fa "char *(*f)(EditLine *)" , Fa "char *c"
-Return a pointer to the function that displays the prompt in
-.Fa f .
+Set
+.Fa f
+to a pointer to the function that displays the prompt.
 If
 .Fa c
 is not
 .Dv NULL ,
-return the start/stop literal prompt character in it.
+set it to the start/stop literal prompt character.
 .It Dv EL_RPROMPT , Fa "char *(*f)(EditLine *)" , Fa "char *c"
-Return a pointer to the function that displays the prompt in
-.Fa f .
+Set
+.Fa f
+to a pointer to the function that displays the prompt.
 If
 .Fa c
 is not
 .Dv NULL ,
-return the start/stop literal prompt character in it.
-.It Dv EL_EDITOR , Fa "const char **"
-Return the name of the editor, which will be one of
+set it to the start/stop literal prompt character.
+.It Dv EL_EDITOR , Fa "const char **n"
+Set the name of the editor in
+.Fa n ,
+which will be one of
 .Dq emacs
 or
 .Dq vi .
 .It Dv EL_GETTC , Fa "const char *name" , Fa "void *value"
-Return non-zero if
+If
 .Fa name
 is a valid
 .Xr termcap 5
-capability
-and set
+capability set
 .Fa value
 to the current value of that capability.
-.It Dv EL_SIGNAL , Fa "int *"
-Return non-zero if
+.It Dv EL_SIGNAL , Fa "int *s"
+Set
+.Fa s
+to non-zero if
 .Nm
 has installed private signal handlers (see
 .Fn el_get
 above).
-.It Dv EL_EDITMODE , Fa "int *"
-Return non-zero if editing is enabled.
+.It Dv EL_EDITMODE , Fa "int *c"
+Set
+.Fa c
+to non-zero if editing is enabled.
 .It Dv EL_GETCFN , Fa "el_rfunc_t *f"
 Set
 .Fa f
@@ -596,19 +603,21 @@ to a pointer to the function that reads characters, or to
 .Dv EL_BUILTIN_GETCFN
 if the builtin function is in use.
 .It Dv EL_CLIENTDATA , Fa "void **data"
-Retrieve
+Set
 .Fa data
-previously registered with the corresponding
+to the previously registered client data set by an
 .Fn el_set
 call.
-.It Dv EL_UNBUFFERED , Fa "int"
-Return non-zero if unbuffered mode is enabled.
+.It Dv EL_UNBUFFERED , Fa "int *c"
+Set
+.Fa c
+to non-zero if unbuffered mode is enabled.
 .It Dv EL_PREP_TERM , Fa "int"
 Sets or clears terminal editing mode.
 .It Dv EL_GETFP , Fa "int fd", Fa "FILE **fp"
-Return in
+Set
 .Fa fp
-the current
+to the current
 .Nm editline
 file pointer for
 .Dq input
@@ -626,7 +635,7 @@ or
 .Dv 2 .
 .El
 .It Fn el_source
-Initialise
+Initialize
 .Nm
 by reading the contents of
 .Fa file .
@@ -699,7 +708,7 @@ and freed by
 The following functions are available:
 .Bl -tag -width 4n
 .It Fn history_init
-Initialise the history list, and return a data structure
+Initialize the history list, and return a data structure
 to be used by all other history list functions, or
 .Dv NULL
 on failure.
@@ -840,7 +849,7 @@ and freed by
 The following functions are available:
 .Bl -tag -width 4n
 .It Fn tok_init
-Initialise the tokenizer, and return a data structure
+Initialize the tokenizer, and return a data structure
 to be used by all other tokenizer functions.
 .Fa IFS
 contains the Input Field Separators, which defaults to
