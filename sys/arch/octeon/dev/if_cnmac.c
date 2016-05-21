@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.43 2016/05/19 16:17:07 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.44 2016/05/21 10:45:22 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1146,7 +1146,9 @@ octeon_eth_recv_mbuf(struct octeon_eth_softc *sc, uint64_t *work,
 
 	cn30xxfpa_buf_put_paddr(octeon_eth_fb_wqe, XKPHYS_TO_PHYS(work));
 
-	KASSERT((word2 >> PIP_WQE_WORD2_IP_BUFS_SHIFT) == 1);
+	if ((word2 >> PIP_WQE_WORD2_IP_BUFS_SHIFT) != 1)
+		panic("%s: expected one buffer, got %llu", __func__,
+		    word2 >> PIP_WQE_WORD2_IP_BUFS_SHIFT);
 
 	addr = PHYS_TO_XKPHYS(word3 & PIP_WQE_WORD3_ADDR, CCA_CACHED);
 
