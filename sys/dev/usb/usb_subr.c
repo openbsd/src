@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.121 2016/05/18 18:28:58 patrick Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.122 2016/05/21 10:40:45 patrick Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -217,8 +217,12 @@ usbd_get_device_string(struct usbd_device *dev, uByte index, char **buf)
 {
 	char *b = malloc(USB_MAX_STRING_LEN, M_USB, M_NOWAIT);
 	if (b != NULL) {
-		usbd_get_string(dev, index, b, USB_MAX_STRING_LEN);
-		usbd_trim_spaces(b);
+		if (usbd_get_string(dev, index, b, USB_MAX_STRING_LEN) != NULL)
+			usbd_trim_spaces(b);
+		else {
+			free(b, M_USB, USB_MAX_STRING_LEN);
+			b = NULL;
+		}
 	}
 	*buf = b;
 }
