@@ -1,4 +1,4 @@
-/*	$OpenBSD: optree.c,v 1.6 2009/01/14 21:05:53 fgsch Exp $	*/
+/*	$OpenBSD: optree.c,v 1.7 2016/05/21 19:06:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Federico G. Schwindt <fgsch@openbsd.org>
@@ -111,6 +111,7 @@ op_nodes(int fd, int node, int depth)
 	char op_name[BUFSIZE];
 	struct opiocdesc opio;
 
+	memset(op_name, 0, sizeof(op_name));
 	opio.op_nodeid = node;
 	opio.op_buf = op_buf;
 	opio.op_name = op_name;
