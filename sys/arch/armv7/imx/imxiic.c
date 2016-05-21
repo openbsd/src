@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.5 2016/05/20 20:33:54 kettenis Exp $ */
+/* $OpenBSD: imxiic.c,v 1.6 2016/05/21 12:37:28 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -22,11 +22,14 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxiomuxcvar.h>
 #include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxiicvar.h>
+
+#include <dev/ofw/openfirm.h>
 
 /* registers */
 #define I2C_IADR	0x00
@@ -51,6 +54,7 @@ struct imxiic_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_ios;
 	void			*sc_ih;
+	int			sc_node;
 	int			unit;
 
 	struct rwlock		sc_buslock;
@@ -61,6 +65,7 @@ struct imxiic_softc {
 	uint16_t		stopped;
 };
 
+int imxiic_match(struct device *, void *, void *);
 void imxiic_attach(struct device *, struct device *, void *);
 int imxiic_detach(struct device *, int);
 void imxiic_setspeed(struct imxiic_softc *, u_int);
@@ -88,24 +93,38 @@ int imxiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 void imxiic_scan(struct device *, struct i2cbus_attach_args *, void *);
 
 struct cfattach imxiic_ca = {
-	sizeof(struct imxiic_softc), NULL, imxiic_attach, imxiic_detach
+	sizeof(struct imxiic_softc), imxiic_match, imxiic_attach,
+	imxiic_detach
 };
 
 struct cfdriver imxiic_cd = {
 	NULL, "imxiic", DV_DULL
 };
 
+int
+imxiic_match(struct device *parent, void *match, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
+
+	return OF_is_compatible(faa->fa_node, "fsl,imx21-i2c");
+}
+
 void
-imxiic_attach(struct device *parent, struct device *self, void *args)
+imxiic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct imxiic_softc *sc = (struct imxiic_softc *)self;
-	struct armv7_attach_args *aa = args;
+	struct fdt_attach_args *faa = aux;
+	uint32_t reg[2];
 
-	sc->sc_iot = aa->aa_iot;
-	sc->sc_ios = aa->aa_dev->mem[0].size;
-	sc->unit = aa->aa_dev->unit;
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
+	if (OF_getprop(faa->fa_node, "reg", &reg, sizeof(reg)) != sizeof(reg))
+		return;
+
+	sc->sc_iot = faa->fa_iot;
+	sc->sc_ios = bemtoh32(&reg[1]);
+	sc->sc_node = faa->fa_node;
+	sc->unit = (bemtoh32(&reg[0]) & 0xc000) >> 14;
+	if (bus_space_map(sc->sc_iot, bemtoh32(&reg[0]),
+	    bemtoh32(&reg[1]), 0, &sc->sc_ioh))
 		panic("imxiic_attach: bus_space_map failed!");
 
 #if 0
@@ -139,6 +158,7 @@ imxiic_attach(struct device *parent, struct device *self, void *args)
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->i2c_tag;
 	iba.iba_bus_scan = imxiic_scan;
+	iba.iba_bus_scan_arg = &sc->sc_node;
 	config_found(&sc->sc_dev, &iba, iicbus_print);
 }
 
@@ -386,13 +406,31 @@ imxiic_detach(struct device *self, int flags)
 void
 imxiic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 {
+	int iba_node = *(int *)aux;
 	extern int iic_print(void *, const char *);
 	struct i2c_attach_args ia;
+	char name[32];
+	uint32_t reg[1];
+	int node;
 
-	memset(&ia, 0, sizeof(ia));
-	ia.ia_tag = iba->iba_tag;
-	ia.ia_addr = 0x68;
-	ia.ia_name = "npx,pcf8523";
+	for (node = OF_child(iba_node); node; node = OF_peer(node)) {
+		memset(name, 0, sizeof(name));
+		memset(reg, 0, sizeof(reg));
+
+		if (OF_getprop(node, "compatible", name, sizeof(name)) == -1)
+			continue;
+		if (name[0] == '\0')
+			continue;
+
+		if (OF_getprop(node, "reg", &reg, sizeof(reg)) != sizeof(reg))
+			continue;
+
+		memset(&ia, 0, sizeof(ia));
+		ia.ia_tag = iba->iba_tag;
+		ia.ia_addr = bemtoh32(&reg[0]);
+		ia.ia_name = name;
+		ia.ia_cookie = &node;
 	
-	config_found(self, &ia, iic_print);
+		config_found(self, &ia, iic_print);
+	}
 }

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.9 2016/05/21 07:19:24 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.10 2016/05/21 12:37:28 kettenis Exp $
 
 machine		armv7 arm
 
@@ -46,7 +46,7 @@ imxocotp*	at imx?			# on-chip otp controller
 imxgpio*	at imx?			# user-visible GPIO pins?
 imxenet*	at imx?			# ethernet
 imxuart*	at imx?			# onboard uarts
-imxiic*		at imx?			# i2c
+imxiic*		at fdt?			# i2c
 iic*		at imxiic?
 imxesdhc*	at imx?			# SDHC controller
 sdmmc*		at imxesdhc?		# SD/MMC bus
@@ -125,6 +125,7 @@ exuart*		at exynos?
 
 crosec*		at iic?
 wskbd*		at crosec? mux 1
+pcfrtc*		at iic?
 tpspmic*	at iic?
 
 # virtio devices
