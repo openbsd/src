@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfsmount.h,v 1.20 2015/10/23 10:45:31 krw Exp $	*/
+/*	$OpenBSD: msdosfsmount.h,v 1.21 2016/05/21 18:11:36 natano Exp $	*/
 /*	$NetBSD: msdosfsmount.h,v 1.16 1997/10/17 11:24:24 ws Exp $	*/
 
 /*-
@@ -96,13 +96,11 @@ struct msdosfsmount {
 #define	MSDOSFSMNT_SHORTNAME	0x01
 #define	MSDOSFSMNT_LONGNAME	0x02
 #define	MSDOSFSMNT_NOWIN95	0x04
-#define MSDOSFSMNT_ALLOWDIRX	0x10
 #endif
 
 /* All flags above: */
 #define	MSDOSFSMNT_MNTOPT \
-	(MSDOSFSMNT_SHORTNAME|MSDOSFSMNT_LONGNAME|MSDOSFSMNT_NOWIN95 \
-	 |MSDOSFSMNT_ALLOWDIRX)
+	(MSDOSFSMNT_SHORTNAME|MSDOSFSMNT_LONGNAME|MSDOSFSMNT_NOWIN95)
 #define	MSDOSFSMNT_RONLY	0x80000000	/* mounted read-only	*/
 #define	MSDOSFSMNT_WAITONFAT	0x40000000	/* mounted synchronous	*/
 #define	MSDOSFS_FATMIRROR	0x20000000	/* FAT is mirrored */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.61 2015/11/23 23:26:59 deraadt Exp $	*/
+/*	$OpenBSD: mount.c,v 1.62 2016/05/21 18:11:36 natano Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -588,8 +588,6 @@ prmount(struct statfs *sf)
 			(void)printf("%s%s", !f++ ? " (" : ", ", "long");
 		if (msdosfs_args->flags & MSDOSFSMNT_NOWIN95)
 			(void)printf("%s%s", !f++ ? " (" : ", ", "nowin95");
-		if (msdosfs_args->flags & MSDOSFSMNT_ALLOWDIRX)
-			(void)printf("%s%s", !f++ ? " (" : ", ", "direxec");
 	} else if (strcmp(sf->f_fstypename, MOUNT_CD9660) == 0) {
 		struct iso_args *iso_args = &sf->mount_info.iso_args;
 
