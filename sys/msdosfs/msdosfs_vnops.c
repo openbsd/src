@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.109 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.110 2016/05/21 15:11:46 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -222,7 +222,7 @@ msdosfs_access(void *v)
 	struct msdosfsmount *pmp = dep->de_pmp;
 	mode_t dosmode;
 
-	dosmode = (S_IXUSR|S_IXGRP|S_IXOTH) | (S_IRUSR|S_IRGRP|S_IROTH);
+	dosmode = (S_IRUSR|S_IRGRP|S_IROTH);
 	if ((dep->de_Attributes & ATTR_READONLY) == 0)
 		dosmode |= (S_IWUSR|S_IWGRP|S_IWOTH);
 	dosmode &= pmp->pm_mask;
@@ -303,7 +303,7 @@ msdosfs_getattr(void *v)
 	}
 
 	vap->va_fileid = fileid;
-	vap->va_mode = (S_IXUSR|S_IXGRP|S_IXOTH) | (S_IRUSR|S_IRGRP|S_IROTH) |
+	vap->va_mode = (S_IRUSR|S_IRGRP|S_IROTH) |
 	    ((dep->de_Attributes & ATTR_READONLY) ? 0 : (S_IWUSR|S_IWGRP|S_IWOTH));
 	vap->va_mode &= dep->de_pmp->pm_mask;
 	if (dep->de_Attributes & ATTR_DIRECTORY) {
