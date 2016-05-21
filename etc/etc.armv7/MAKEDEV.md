@@ -1,6 +1,6 @@
 define(MACHINE,armv7)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.11 2016/04/28 18:17:31 natano Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.12 2016/05/21 21:30:22 kettenis Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -94,6 +94,7 @@ ramdisk)
 	;;
 
 _std(1, 2, 8, 6)
+	M openprom	c 82 0 600
 	;;
 dnl
 dnl *** armv7 specific targets
