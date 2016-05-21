@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.177 2016/05/11 20:21:26 phessler Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.178 2016/05/21 00:56:44 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -362,12 +362,8 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code, type, val)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
-	int type;
-	union sigval val;
+sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
+    union sigval val)
 {
 	struct proc *p = curproc;
 	struct sigacts *psp = p->p_p->ps_sigacts;
@@ -391,11 +387,6 @@ sendsig(catcher, sig, mask, code, type, val)
 		fp = (struct sigframe *)oldsp;
 	fp = (struct sigframe *)((int)(fp - 1) & ~7);
 
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig: %s[%d] sig %d newusp %p scp %p\n",
-		    p->p_comm, p->p_pid, sig, fp, &fp->sf_sc);
-#endif
 	/*
 	 * Now set up the signal frame.  We build it in kernel space
 	 * and then copy it out.  We probably ought to just build it
@@ -440,18 +431,10 @@ sendsig(catcher, sig, mask, code, type, val)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-#ifdef DEBUG
-		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig: window save or copyout error\n");
-#endif
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig: %s[%d] sig %d scp %p\n",
-		       p->p_comm, p->p_pid, sig, &fp->sf_sc);
-#endif
+
 	/*
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
@@ -461,10 +444,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	tf->tf_pc = caddr;
 	tf->tf_npc = caddr + 4;
 	tf->tf_out[6] = newsp;
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig: about to return to catcher\n");
-#endif
 }
 
 /*
@@ -478,15 +457,12 @@ sendsig(catcher, sig, mask, code, type, val)
  */
 /* ARGSUSED */
 int
-sys_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sigreturn(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext ksc, *sc = SCARG(uap, sigcntxp);
+	struct sigcontext ksc, *scp = SCARG(uap, sigcntxp);
 	struct trapframe *tf;
 	int error;
 
@@ -494,34 +470,24 @@ sys_sigreturn(p, v, retval)
 	write_user_windows();
 	if (rwindow_save(p))
 		sigexit(p, SIGILL);
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: %s[%d], sigcntxp %p\n",
-		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
-#endif
+
 	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
-		printf("%s(%d): sigreturn not from tramp [pc 0x%x 0x%lx]\n",
-		    p->p_comm, p->p_pid, PROC_PC(p), p->p_p->ps_sigcoderet);
 		sigexit(p, SIGILL);
 		return (EPERM);
 	}
 
-	if ((error = copyin(sc, &ksc, sizeof(ksc))) != 0)
+	if ((error = copyin(scp, &ksc, sizeof(ksc))) != 0)
 		return (error);
 
-	if (ksc.sc_cookie != ((long)sc ^ p->p_p->ps_sigcookie)) {
-		printf("%s(%d): cookie %lx should have been %lx\n",
-		    p->p_comm, p->p_pid, ksc.sc_cookie,
-		    (long)sc ^ p->p_p->ps_sigcookie);
+	if (ksc.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
 		sigexit(p, SIGILL);
 		return (EFAULT);
 	}
 
 	/* Prevent reuse of the sigcontext cookie */
 	ksc.sc_cookie = 0;
-	(void)copyout(&ksc.sc_cookie, (caddr_t)sc +
-	    offsetof(struct sigcontext, sc_cookie),
-	    sizeof (ksc.sc_cookie));
+	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
+	    offsetof(struct sigcontext, sc_cookie), sizeof (ksc.sc_cookie));
 
 	tf = p->p_md.md_tf;
 	/*

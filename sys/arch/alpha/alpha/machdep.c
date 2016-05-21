@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.173 2016/05/11 17:59:58 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.174 2016/05/21 00:56:41 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1401,15 +1401,11 @@ pid_t sigpid = 0;
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code, type, val)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
-	int type;
-	union sigval val;
+sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
+    union sigval val)
 {
 	struct proc *p = curproc;
-	struct sigcontext *scp, ksc;
+	struct sigcontext ksc, *scp;
 	struct fpreg *fpregs = (struct fpreg *)&ksc.sc_fpregs;
 	struct trapframe *frame;
 	struct sigacts *psp = p->p_p->ps_sigacts;
@@ -1436,11 +1432,6 @@ sendsig(catcher, sig, mask, code, type, val)
 		    p->p_sigstk.ss_size - rndfsize);
 	else
 		scp = (struct sigcontext *)(oldsp - rndfsize);
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d ssp %p usp %p\n", p->p_pid,
-		    sig, &ksc, scp);
-#endif
 
 	/*
 	 * Build the signal context to be used by sigreturn.
@@ -1452,7 +1443,6 @@ sendsig(catcher, sig, mask, code, type, val)
 
 	/* copy the registers. */
 	frametoreg(frame, (struct reg *)ksc.sc_regs);
-	ksc.sc_regs[R_ZERO] = 0xACEDBADE;		/* magic number */
 	ksc.sc_regs[R_SP] = oldsp;
 
 	/* save the floating-point state, if necessary, then copy it. */
@@ -1480,11 +1470,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	ksc.sc_cookie = (long)scp ^ p->p_p->ps_sigcookie;
 	if (copyout((caddr_t)&ksc, (caddr_t)scp, kscsize) != 0) {
 trash:
-#ifdef DEBUG
-		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig(%d): copyout failed on sig %d\n",
-			    p->p_pid, sig);
-#endif
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -1492,11 +1477,6 @@ trash:
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig(%d): sig %d scp %p code %lx\n", p->p_pid, sig,
-		    scp, code);
-#endif
 
 	/*
 	 * Set up the registers to return to sigcode.
@@ -1507,15 +1487,6 @@ trash:
 	frame->tf_regs[FRAME_A2] = (u_int64_t)scp;
 	frame->tf_regs[FRAME_T12] = (u_int64_t)catcher;		/* t12 is pv */
 	alpha_pal_wrusp((unsigned long)scp);
-
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig(%d): pc %lx, catcher %lx\n", p->p_pid,
-		    frame->tf_regs[FRAME_PC], frame->tf_regs[FRAME_A3]);
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d returns\n",
-		    p->p_pid, sig);
-#endif
 }
 
 /*
@@ -1530,42 +1501,24 @@ trash:
  */
 /* ARGSUSED */
 int
-sys_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sigreturn(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext ksc;
+	struct sigcontext ksc, *scp = SCARG(uap, sigcntxp);
 	struct fpreg *fpregs = (struct fpreg *)&ksc.sc_fpregs;
-	struct sigcontext *scp = SCARG(uap, sigcntxp);
 	int error;
 
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-	    printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
-#endif
-
 	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
-		printf("%s(%d): sigreturn not from tramp [pc 0x%lx 0x%lx]\n",
-		    p->p_comm, p->p_pid, PROC_PC(p), p->p_p->ps_sigcoderet);
 		sigexit(p, SIGILL);
 		return (EPERM);
 	}
 
-	/*
-	 * Test and fetch the context structure.
-	 * We grab it all at once for speed.
-	 */
 	if ((error = copyin(scp, &ksc, sizeof(ksc))) != 0)
 		return (error);
 
 	if (ksc.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
-		printf("%s(%d): cookie %lx should have been %lx\n",
-		    p->p_comm, p->p_pid, ksc.sc_cookie,
-		    (long)scp ^ p->p_p->ps_sigcookie);
 		sigexit(p, SIGILL);
 		return (EFAULT);
 	}
@@ -1573,11 +1526,8 @@ sys_sigreturn(p, v, retval)
 	/* Prevent reuse of the sigcontext cookie */
 	ksc.sc_cookie = 0;
 	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
-	    offsetof(struct sigcontext, sc_cookie),
-	    sizeof (ksc.sc_cookie));
+	    offsetof(struct sigcontext, sc_cookie), sizeof (ksc.sc_cookie));
 
-	if (ksc.sc_regs[R_ZERO] != 0xACEDBADE)		/* magic number */
-		return (EINVAL);
 	/*
 	 * Restore the user-supplied information
 	 */
@@ -1598,11 +1548,6 @@ sys_sigreturn(p, v, retval)
 #ifndef NO_IEEE
 	p->p_addr->u_pcb.pcb_fp.fpr_cr = ksc.sc_fpcr;
 	p->p_md.md_flags = ksc.sc_fp_control & MDP_FP_C;
-#endif
-
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn(%d): returns\n", p->p_pid);
 #endif
 	return (EJUSTRETURN);
 }

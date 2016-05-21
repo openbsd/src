@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.220 2016/05/16 01:48:28 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.221 2016/05/21 00:56:43 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -528,12 +528,6 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	register_t sp, scp, sip;
 	u_long sss;
 
-#ifdef DEBUG
-	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
-		printf("sendsig: %s[%d] sig %d catcher %p\n",
-		    p->p_comm, p->p_pid, sig, catcher);
-#endif
-
 	memcpy(&ksc, tf, sizeof(*tf));
 	bzero((char *)&ksc + sizeof(*tf), sizeof(ksc) - sizeof(*tf));
 	ksc.sc_mask = mask;
@@ -588,12 +582,6 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	tf->tf_rflags &= ~(PSL_T|PSL_D|PSL_VM|PSL_AC);
 	tf->tf_rsp = scp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
-
-#ifdef DEBUG
-	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
-		printf("sendsig(%d): pc 0x%llx, catcher 0x%llx\n", p->p_pid,
-		    tf->tf_rip, tf->tf_rax);
-#endif
 }
 
 /*
@@ -612,13 +600,11 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext *scp = SCARG(uap, sigcntxp), ksc;
+	struct sigcontext ksc, *scp = SCARG(uap, sigcntxp);
 	struct trapframe *tf = p->p_md.md_regs;
 	int error;
 
 	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
-		printf("%s(%d): sigreturn not from tramp [pc 0x%llx %lx]\n",
-		    p->p_comm, p->p_pid, PROC_PC(p), p->p_p->ps_sigcoderet);
 		sigexit(p, SIGILL);
 		return (EPERM);
 	}
@@ -627,9 +613,6 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		return (error);
 
 	if (ksc.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
-		printf("%s(%d): cookie %lx should have been %lx\n",
-		    p->p_comm, p->p_pid, ksc.sc_cookie,
-		    (long)scp ^ p->p_p->ps_sigcookie);
 		sigexit(p, SIGILL);
 		return (EFAULT);
 	}
@@ -637,8 +620,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	/* Prevent reuse of the sigcontext cookie */
 	ksc.sc_cookie = 0;
 	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
-	    offsetof(struct sigcontext, sc_cookie),
-	    sizeof (ksc.sc_cookie));
+	    offsetof(struct sigcontext, sc_cookie), sizeof (ksc.sc_cookie));
 
 	if (((ksc.sc_rflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
 	    !USERMODE(ksc.sc_cs, ksc.sc_eflags))

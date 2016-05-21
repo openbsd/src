@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.26 2016/05/10 18:39:47 deraadt Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.27 2016/05/21 00:56:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -100,12 +100,8 @@ pid_t sigpid = 0;
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code, type, val)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
-	int type;
-	union sigval val;
+sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
+    union sigval val)
 {
 	struct cpu_info *ci = curcpu();
 	struct proc *p = curproc;
@@ -129,12 +125,6 @@ sendsig(catcher, sig, mask, code, type, val)
 					 p->p_sigstk.ss_size - fsize);
 	else
 		fp = (struct sigframe *)(regs->sp - fsize);
-#ifdef DEBUG
-	if ((sigdebug & SDB_FOLLOW) ||
-	    ((sigdebug & SDB_KSTACK) && (p->p_pid == sigpid)))
-		printf("sendsig(%d): sig %d ssp %p usp %p scp %p\n",
-		       p->p_pid, sig, &ksc, fp, &fp->sf_sc);
-#endif
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
@@ -143,7 +133,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	ksc.sc_pc = regs->pc;
 	ksc.mullo = regs->mullo;
 	ksc.mulhi = regs->mulhi;
-	ksc.sc_regs[ZERO] = 0xACEDBADE;		/* magic number */
 	bcopy((caddr_t)&regs->ast, (caddr_t)&ksc.sc_regs[1],
 		sizeof(ksc.sc_regs) - sizeof(register_t));
 	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
@@ -187,12 +176,6 @@ bail:
 	regs->sp = (register_t)fp;
 
 	regs->ra = p->p_p->ps_sigcode;
-#ifdef DEBUG
-	if ((sigdebug & SDB_FOLLOW) ||
-	    ((sigdebug & SDB_KSTACK) && (p->p_pid == sigpid)))
-		printf("sendsig(%d): sig %d returns\n",
-		       p->p_pid, sig);
-#endif
 }
 
 /*
@@ -207,29 +190,17 @@ bail:
  */
 /* ARGSUSED */
 int
-sys_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sigreturn(struct proc *p, void *v, register_t *retval)
 {
 	struct cpu_info *ci = curcpu();
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext *scp = SCARG(uap, sigcntxp);
-	struct trapframe *regs;
-	struct sigcontext ksc;
+	struct sigcontext ksc, *scp = SCARG(uap, sigcntxp);
+	struct trapframe *regs = p->p_md.md_regs;
 	int error;
 
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
-#endif
-	regs = p->p_md.md_regs;
-
 	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
-		printf("%s(%d): sigreturn not from tramp [pc 0x%lx 0x%lx]\n",
-		    p->p_comm, p->p_pid, PROC_PC(p), p->p_p->ps_sigcoderet);
 		sigexit(p, SIGILL);
 		return (EPERM);
 	}
@@ -243,9 +214,6 @@ sys_sigreturn(p, v, retval)
 		return (error);
 
 	if (ksc.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
-		printf("%s(%d): cookie %lx should have been %lx\n",
-		    p->p_comm, p->p_pid, ksc.sc_cookie,
-		    (long)scp ^ p->p_p->ps_sigcookie);
 		sigexit(p, SIGILL);
 		return (EFAULT);
 	}
@@ -253,24 +221,22 @@ sys_sigreturn(p, v, retval)
 	/* Prevent reuse of the sigcontext cookie */
 	ksc.sc_cookie = 0;
 	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
-	    offsetof(struct sigcontext, sc_cookie),
-	    sizeof (ksc.sc_cookie));
+	    offsetof(struct sigcontext, sc_cookie), sizeof (ksc.sc_cookie));
 
-	scp = &ksc;
 	/*
 	 * Restore the user supplied information
 	 */
-	p->p_sigmask = scp->sc_mask &~ sigcantmask;
-	regs->pc = scp->sc_pc;
-	regs->mullo = scp->mullo;
-	regs->mulhi = scp->mulhi;
+	p->p_sigmask = ksc.sc_mask &~ sigcantmask;
+	regs->pc = ksc.sc_pc;
+	regs->mullo = ksc.mullo;
+	regs->mulhi = ksc.mulhi;
 	regs->sr &= ~SR_COP_1_BIT;	/* Zap current FP state */
 	if (p == ci->ci_fpuproc)
 		ci->ci_fpuproc = NULL;
-	bcopy((caddr_t)&scp->sc_regs[1], (caddr_t)&regs->ast,
-		sizeof(scp->sc_regs) - sizeof(register_t));
-	if (scp->sc_fpused)
-		bcopy((caddr_t)scp->sc_fpregs, (caddr_t)&p->p_md.md_regs->f0,
-			sizeof(scp->sc_fpregs));
+	bcopy((caddr_t)&ksc.sc_regs[1], (caddr_t)&regs->ast,
+		sizeof(ksc.sc_regs) - sizeof(register_t));
+	if (ksc.sc_fpused)
+		bcopy((caddr_t)ksc.sc_fpregs, (caddr_t)&p->p_md.md_regs->f0,
+			sizeof(ksc.sc_fpregs));
 	return (EJUSTRETURN);
 }

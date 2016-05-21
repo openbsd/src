@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.45 2016/05/18 20:21:13 guenther Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.46 2016/05/21 00:56:44 deraadt Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -520,50 +520,44 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext *scp = SCARG(uap, sigcntxp), context;
+	struct sigcontext ksc, *scp = SCARG(uap, sigcntxp);
 	struct trapframe *tf;
 	int error;
 
 	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
-		printf("%s(%d): sigreturn not from sigtramp [pc 0x%x 0x%lx]\n",
-		    p->p_comm, p->p_pid, PROC_PC(p), p->p_p->ps_sigcoderet);
 		sigexit(p, SIGILL);
 		return (EPERM);
 	}
 
-	if ((error = copyin(scp, &context, sizeof(*scp))) != 0)
+	if ((error = copyin(scp, &ksc, sizeof(*scp))) != 0)
 		return (error);
 
-	if (context.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
-		printf("%s(%d): cookie %lx should have been %lx\n",
-		    p->p_comm, p->p_pid, context.sc_cookie,
-		    (long)scp ^ p->p_p->ps_sigcookie);
+	if (ksc.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
 		sigexit(p, SIGILL);
 		return (EFAULT);
 	}
 
 	/* Prevent reuse of the sigcontext cookie */
-	context.sc_cookie = 0;
-	(void)copyout(&context.sc_cookie, (caddr_t)scp +
-	    offsetof(struct sigcontext, sc_cookie),
-	    sizeof (context.sc_cookie));
+	ksc.sc_cookie = 0;
+	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
+	    offsetof(struct sigcontext, sc_cookie), sizeof(ksc.sc_cookie));
 
 	/* Restore signal context. */
 	tf = p->p_md.md_regs;
 
 	/* Check for security violations. */
-	if (((context.sc_reg[1] /* ssr */ ^ tf->tf_ssr) & PSL_USERSTATIC) != 0)
+	if (((ksc.sc_reg[1] /* ssr */ ^ tf->tf_ssr) & PSL_USERSTATIC) != 0)
 		return (EINVAL);
 
-	memcpy(&tf->tf_spc, context.sc_reg, sizeof(context.sc_reg));
+	memcpy(&tf->tf_spc, ksc.sc_reg, sizeof(ksc.sc_reg));
 
 #ifdef SH4
 	if (CPU_IS_SH4)
-		fpu_restore((struct fpreg *)&context.sc_fpreg);
+		fpu_restore((struct fpreg *)&ksc.sc_fpreg);
 #endif
 
 	/* Restore signal mask. */
-	p->p_sigmask = context.sc_mask & ~sigcantmask;
+	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
 
 	return (EJUSTRETURN);
 }
