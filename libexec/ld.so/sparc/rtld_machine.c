@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.42 2015/11/02 07:02:53 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.43 2016/05/21 22:07:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -501,39 +501,39 @@ _dl_mul_fixup()
 		return;
 
 	_dl_mprotect(&__mul, _mulreplace_end-_mulreplace,
-	    PROT_READ|PROT_WRITE|PROT_EXEC);
+	    PROT_READ|PROT_WRITE);
 	_dl_bcopy(_mulreplace, __mul, _mulreplace_end-_mulreplace);
 	_dl_mprotect(&__mul, _mulreplace_end-_mulreplace,
 	    PROT_READ|PROT_EXEC);
 
 	_dl_mprotect(&__umul, _umulreplace_end-_umulreplace,
-	    PROT_READ|PROT_WRITE|PROT_EXEC);
+	    PROT_READ|PROT_WRITE);
 	_dl_bcopy(_umulreplace, __umul, _umulreplace_end-_umulreplace);
 	_dl_mprotect(&__umul, _umulreplace_end-_umulreplace,
 	    PROT_READ|PROT_EXEC);
 
 
 	_dl_mprotect(&__div, _divreplace_end-_divreplace,
-	    PROT_READ|PROT_WRITE|PROT_EXEC);
+	    PROT_READ|PROT_WRITE);
 	_dl_bcopy(_divreplace, __div, _divreplace_end-_divreplace);
 	_dl_mprotect(&__div, _divreplace_end-_divreplace,
 	    PROT_READ|PROT_EXEC);
 
 	_dl_mprotect(&__udiv, _udivreplace_end-_udivreplace,
-	    PROT_READ|PROT_WRITE|PROT_EXEC);
+	    PROT_READ|PROT_WRITE);
 	_dl_bcopy(_udivreplace, __udiv, _udivreplace_end-_udivreplace);
 	_dl_mprotect(&__udiv, _udivreplace_end-_udivreplace,
 	    PROT_READ|PROT_EXEC);
 
 
 	_dl_mprotect(&__rem, _remreplace_end-_remreplace,
-	    PROT_READ|PROT_WRITE|PROT_EXEC);
+	    PROT_READ|PROT_WRITE);
 	_dl_bcopy(_remreplace, __rem, _remreplace_end-_remreplace);
 	_dl_mprotect(&__rem, _remreplace_end-_remreplace,
 	    PROT_READ|PROT_EXEC);
 
 	_dl_mprotect(&__urem, _uremreplace_end-_uremreplace,
-	    PROT_READ|PROT_WRITE|PROT_EXEC);
+	    PROT_READ|PROT_WRITE);
 	_dl_bcopy(_uremreplace, __urem, _uremreplace_end-_uremreplace);
 	_dl_mprotect(&__urem, _uremreplace_end-_uremreplace,
 	    PROT_READ|PROT_EXEC);
