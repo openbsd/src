@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.armv7/MAKEDEV.md,v 1.11 2016/04/28 18:17:31 natano Exp 
+#	OpenBSD: etc.armv7/MAKEDEV.md,v 1.12 2016/05/21 21:30:22 kettenis Exp 
 #	OpenBSD: MAKEDEV.common,v 1.88 2016/05/21 15:17:49 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -223,6 +223,7 @@ std)
 	M stderr	c 7 2
 	M ksyms		c 8 0 640 kmem
 	M klog		c 6 0 600
+	M openprom	c 82 0 600
 	;;
 
 vscsi*)
