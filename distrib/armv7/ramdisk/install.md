@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.27 2016/04/20 14:40:59 abieber Exp $
+#	$OpenBSD: install.md,v 1.28 2016/05/21 07:19:24 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -92,10 +92,13 @@ md_installboot() {
 
 		if [[ -n $BEAGLE ]]; then
 			cp /mnt/usr/mdec/beagle/{MLO,u-boot.img} /mnt/mnt/
+			cp /mnt/usr/mdec/beagle/*.dtb /mnt/mnt/
 		elif [[ -n $BEAGLEBONE ]]; then
 			cp /mnt/usr/mdec/am335x/{MLO,u-boot.img} /mnt/mnt/
+			cp /mnt/usr/mdec/am335x/*.dtb /mnt/mnt/
 		elif [[ -n $PANDA ]]; then
 			cp /mnt/usr/mdec/panda/{MLO,u-boot.img} /mnt/mnt/
+			cp /mnt/usr/mdec/panda/*.dtb /mnt/mnt/
 		fi
 		cat > /mnt/mnt/uenv.txt<<__EOT
 bootcmd=mmc rescan ; setenv loadaddr ${LOADADDR}; setenv bootargs sd0i:/bsd.umg ; fatload mmc \${mmcdev} \${loadaddr} bsd.umg ; bootm \${loadaddr} ;
@@ -108,6 +111,7 @@ __EOT
 __EOT
 			mkuboot -t script -a arm -o linux /tmp/boot.cmd \
 			    /mnt/mnt/boot.scr
+			cp /mnt/usr/mdec/cubox/*.dtb /mnt/mnt/
 			dd if=/mnt/usr/mdec/cubox/SPL \
 			    of=/dev/${_disk}c bs=1024 seek=1 >/dev/null
 			dd if=/mnt/usr/mdec/cubox/u-boot.img \
@@ -123,6 +127,7 @@ __EOT
 __EOT
 			mkuboot -t script -a arm -o linux /tmp/boot.cmd \
 			    /mnt/mnt/boot.scr
+			cp /mnt/usr/mdec/wandboard/*.dtb /mnt/mnt/
 			dd if=/mnt/usr/mdec/wandboard/SPL \
 			    of=/dev/${_disk}c bs=1024 seek=1 >/dev/null
 			dd if=/mnt/usr/mdec/wandboard/u-boot.img \
@@ -135,6 +140,7 @@ mmcboot=mmc rescan ; fatload mmc 0 ${LOADADDR} bsd.umg && bootm ${LOADADDR};
 uenvcmd=run mmcboot;
 __EOT
 		cp /mnt/usr/mdec/cubie/u-boot-sunxi-with-spl.bin /mnt/mnt/
+		cp /mnt/usr/mdec/cubie/*.dtb /mnt/mnt/
 	fi
 }
 

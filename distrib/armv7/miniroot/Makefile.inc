@@ -22,6 +22,8 @@ PART_ID?=C
 
 NEWFS_ARGS_msdos=-F 16 -L boot
 NEWFS_ARGS_ext2fs=-v boot
+MOUNT_ARGS_msdos=-o-l
+MOUNT_ARGS_ext2fs=
 
 cleandir: clean
 clean:
@@ -43,8 +45,7 @@ do_files:
 	cp /usr/mdec/${BOARD}/MLO ${MOUNT_POINT}/MLO
 	echo "bootcmd=mmc rescan ; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; fatload mmc \$${mmcdev} \$${loadaddr} bsd.umg ; bootm \$${loadaddr} ;\nuenvcmd=boot" > ${MOUNT_POINT}/uenv.txt
 	cp /usr/mdec/${BOARD}/u-boot.* ${MOUNT_POINT}/
-	mkdir ${MOUNT_POINT}/u-boots
-	cp -r /usr/mdec/{am335x,beagle,panda} ${MOUNT_POINT}/u-boots
+	cp /usr/mdec/${BOARD}/*.dtb ${MOUNT_POINT}/
 .endif
 .if ${BOARD} == "nitrogen"
 	echo "; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; for dtype in sata mmc ; do for disk in 0 1 ; do \$${dtype} dev \$${disk} ; for fs in fat ext2 ; do if \$${fs}load \$${dtype} \$${disk}:1 \$${loadaddr} bsd.umg ; then  bootm \$${loadaddr} ; fi ; done; done; done; echo; echo failed to load bsd.umg" > 6x_bootscript.cmd
@@ -55,6 +56,7 @@ do_files:
 	echo "; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; for dtype in mmc usb ; do for disk in 0 1 ; do \$${dtype} dev \$${disk} ; for fs in fat ext2 ; do if \$${fs}load \$${dtype} \$${disk}:1 \$${loadaddr} bsd.umg ; then bootm \$${loadaddr} ; fi ; done; done; done; echo; echo failed to load bsd.umg" > boot.cmd
 	${MKUBOOT} -t script -a arm -o linux boot.cmd boot.scr
 	cp boot.scr ${MOUNT_POINT}/boot.scr
+	cp /usr/mdec/${BOARD}/*.dtb ${MOUNT_POINT}/
 	dd if=/usr/mdec/cubox/SPL of=${VND_CDEV} bs=1024 seek=1
 	dd if=/usr/mdec/cubox/u-boot.img of=${VND_CDEV} bs=1024 seek=69
 .endif
@@ -62,13 +64,15 @@ do_files:
 	echo "; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; for dtype in mmc ; do for disk in 0 1 ; do \$${dtype} dev \$${disk} ; for fs in fat ext2 ; do if \$${fs}load \$${dtype} \$${disk}:1 \$${loadaddr} bsd.umg ; then bootm \$${loadaddr} ; fi ; done; done; done; echo; echo failed to load bsd.umg" > boot.cmd
 	${MKUBOOT} -t script -a arm -o linux boot.cmd boot.scr
 	cp boot.scr ${MOUNT_POINT}/boot.scr
+	cp /usr/mdec/${BOARD}/*.dtb ${MOUNT_POINT}/
 	dd if=/usr/mdec/wandboard/SPL of=${VND_CDEV} bs=1024 seek=1
 	dd if=/usr/mdec/wandboard/u-boot.img of=${VND_CDEV} bs=1024 seek=69
 .endif
 .if ${PLATFORM} == "SUNXI"
-	echo 'bootargs=sd0a:/bsd' > ${MOUNT_POINT}/uEnv.tx
+	echo 'bootargs=sd0a:/bsd' > ${MOUNT_POINT}/uEnv.txt
 	echo 'mmcboot=mmc rescan ; fatload mmc 0 ${LOADADDR} bsd.umg && bootm ${LOADADDR};' >> ${MOUNT_POINT}/uEnv.txt
 	echo 'uenvcmd=run mmcboot;' >> ${MOUNT_POINT}/uEnv.txt
+	cp /usr/mdec/${BOARD}/*.dtb ${MOUNT_POINT}/
 	dd if=/usr/mdec/${BOARD}/u-boot-sunxi-with-spl.bin \
 	    of=${VND_CDEV} bs=1024 seek=8
 .endif
@@ -89,7 +93,7 @@ rd_setup:
 	    | fdisk -c 2 -h 255 -s 63 -e ${VND} >/dev/null
 .endif
 	newfs_${FS} ${NEWFS_ARGS_${FS}} ${VND_RIDEV} >/dev/null
-	mount ${VND_IDEV} ${MOUNT_POINT}
+	mount ${MOUNT_ARGS_${FS}} ${VND_IDEV} ${MOUNT_POINT}
 
 rd_teardown:
 	@df -i ${MOUNT_POINT}

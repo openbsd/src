@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2015/07/17 17:02:52 jsg Exp $
+#	$OpenBSD: Makefile,v 1.12 2016/05/21 07:19:24 jsg Exp $
 
 REV=	${OSrev}
 
@@ -29,7 +29,7 @@ KERNADDR_VEXPRESSA9=0x60300000
 KERNADDR_EXYNOS=0x40300000
 
 DISKTYPE=       rdroot
-NBLKS=		10240
+NBLKS=		15360
 # minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -m 0 -o space -i 4096
 
