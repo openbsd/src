@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.226 2016/05/21 14:00:27 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.227 2016/05/21 14:22:31 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -917,7 +917,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_int openmask)
 				if (dk->dk_label &&
 				    duid_equal(dk->dk_label->d_uid, nlp->d_uid))
 					break;
-		} while (dk != NULL && duid_iszero(nlp->d_uid));
+		} while (dk != NULL || duid_iszero(nlp->d_uid));
 	}
 
 	/* Preserve the disk size and RAW_PART values. */
