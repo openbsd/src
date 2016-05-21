@@ -1,4 +1,4 @@
-.\"	$OpenBSD: editline.3,v 1.43 2016/05/10 11:07:53 schwarze Exp $
+.\"	$OpenBSD: editline.3,v 1.44 2016/05/21 16:17:09 schwarze Exp $
 .\"	$NetBSD: editline.3,v 1.88 2016/02/25 14:59:22 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 10 2016 $
+.Dd $Mdocdate: May 21 2016 $
 .Dt EDITLINE 3
 .Os
 .Sh NAME
@@ -87,7 +87,7 @@
 .Ft int
 .Fn el_getc "EditLine *e" "char *ch"
 .Ft int
-.Fn el_wgetc "EditLine *e" "wchar_t *ch"
+.Fn el_wgetc "EditLine *e" "wchar_t *wc"
 .Ft void
 .Fn el_push "EditLine *e" "const char *str"
 .Ft void
@@ -237,13 +237,13 @@ or from the input stream written by
 and
 .Fn el_push
 if that is not empty, and store it in
-.Fa ch .
+.Fa wc .
 If an invalid or incomplete character is found, it is discarded,
 .Va errno
 is set to
 .Er EILSEQ ,
 and the next character is read and stored in
-.Fa ch .
+.Fa wc .
 Returns 1 if a valid character was read, 0 on end of file, or \-1 on
 .Xr read 2
 failure.
@@ -485,18 +485,31 @@ unbuffered mode is disabled (the default).
 In unbuffered mode,
 .Fn el_gets
 will return immediately after processing a single character.
-.It Dv EL_GETCFN , Fa "int (*f)(EditLine *, char *c)"
-Define the character reading function as
-.Fa f ,
-which is to return the number of characters read and store them in
-.Fa c .
-This function is called internally by
-.Fn el_gets
+.It Dv EL_GETCFN , Fa "el_rfunc_t f"
+Whenever reading a character, use the function
+.Bd -offset indent -compact
+.Ft int
+.Fo f
+.Fa "EditLine *e"
+.Fa "wchar_t *wc"
+.Fc
+.Ed
+which stores the character in
+.Fa wc
+and returns 1 on success, 0 on end of file, or \-1 on I/O or encoding
+errors.
+Functions internally using it include
+.Fn el_wgets ,
+.Fn el_wgetc ,
+.Fn el_gets ,
 and
 .Fn el_getc .
-The builtin function can be set or restored with the special function
-name
-.Dq Dv EL_BUILTIN_GETCFN .
+Initially, a builtin function is installed, and replacing it
+is discouraged because writing such a function is very error prone.
+The builtin function can be restored at any time by passing the
+special value
+.Dv EL_BUILTIN_GETCFN
+instead of a function pointer.
 .It Dv EL_CLIENTDATA , Fa "void *data"
 Register
 .Fa data
@@ -576,10 +589,12 @@ has installed private signal handlers (see
 above).
 .It Dv EL_EDITMODE , Fa "int *"
 Return non-zero if editing is enabled.
-.It Dv EL_GETCFN , Fa "int (**f)(EditLine *, char *)"
-Return a pointer to the function that read characters, which is equal to
-.Dq Dv EL_BUILTIN_GETCFN
-in the case of the default builtin function.
+.It Dv EL_GETCFN , Fa "el_rfunc_t *f"
+Set
+.Fa f
+to a pointer to the function that reads characters, or to
+.Dv EL_BUILTIN_GETCFN
+if the builtin function is in use.
 .It Dv EL_CLIENTDATA , Fa "void **data"
 Retrieve
 .Fa data
