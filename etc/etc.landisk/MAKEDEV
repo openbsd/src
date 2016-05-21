@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.landisk/MAKEDEV.md,v 1.40 2016/04/28 18:17:31 natano Exp 
-#	OpenBSD: MAKEDEV.common,v 1.87 2016/04/28 18:17:30 natano Exp 
+#	OpenBSD: MAKEDEV.common,v 1.88 2016/05/21 15:17:49 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -226,7 +226,7 @@ vscsi*)
 	;;
 
 video*)
-	M video$U  c 77 $U
+	M video$U  c 77 $U 600 
 	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
 	;;
 
