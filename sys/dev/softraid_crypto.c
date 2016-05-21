@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.127 2016/05/17 19:28:59 tedu Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.128 2016/05/21 14:19:03 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -636,7 +636,7 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 		DNPRINTF(SR_D_META,"%s: sr_crypto_create_key_disk cannot "
 		    "open %s\n", DEVNAME(sc), devname);
 		vput(vn);
-		goto fail;
+		goto done;
 	}
 	open = 1; /* close dev on error */
 
@@ -646,12 +646,12 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 	    FREAD, NOCRED, curproc)) {
 		DNPRINTF(SR_D_META, "%s: sr_crypto_create_key_disk ioctl "
 		    "failed\n", DEVNAME(sc));
-		goto fail;
+		goto done;
 	}
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
 		sr_error(sc, "%s partition not of type RAID (%d)",
 		    devname, label.d_partitions[part].p_fstype);
-		goto fail;
+		goto done;
 	}
 
 	/*
@@ -809,8 +809,6 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 	    NOCRED, curproc)) {
 		DNPRINTF(SR_D_META, "%s: sr_crypto_read_key_disk ioctl "
 		    "failed\n", DEVNAME(sc));
-		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, curproc);
-		vput(vn);
 		goto done;
 	}
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
