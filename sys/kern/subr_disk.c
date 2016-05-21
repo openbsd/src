@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.225 2016/05/20 14:01:27 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.226 2016/05/21 14:00:27 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -87,8 +87,10 @@ int	disk_change;		/* set if a disk has been attached/detached
 				 * is reset by hw_sysctl()
 				 */
 
-u_char	bootduid[8];		/* DUID of boot disk. */
-u_char	rootduid[8];		/* DUID of root disk. */
+#define DUID_SIZE 8
+
+u_char	bootduid[DUID_SIZE];	/* DUID of boot disk. */
+u_char	rootduid[DUID_SIZE];	/* DUID of root disk. */
 
 /* softraid callback, do not use! */
 void (*softraid_disk_attach)(struct disk *, int);
@@ -108,6 +110,8 @@ int gpt_chk_mbr(struct dos_partition *, u_int64_t);
 int gpt_chk_hdr(struct gpt_header *, struct disklabel *);
 int gpt_chk_parts(struct gpt_header *, struct gpt_partition *);
 int gpt_get_fstype(struct uuid *);
+
+int duid_equal(u_char *, u_char *);
 
 /*
  * Compute checksum for disk label.
@@ -869,7 +873,6 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_int openmask)
 {
 	struct partition *opp, *npp;
 	struct disk *dk;
-	u_int64_t uid;
 	int i;
 
 	/* sanity clause */
@@ -907,16 +910,14 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_int openmask)
 	}
 
 	/* Generate a UID if the disklabel does not already have one. */
-	uid = 0;
-	if (memcmp(nlp->d_uid, &uid, sizeof(nlp->d_uid)) == 0) {
+	if (duid_iszero(nlp->d_uid)) {
 		do {
 			arc4random_buf(nlp->d_uid, sizeof(nlp->d_uid));
 			TAILQ_FOREACH(dk, &disklist, dk_link)
-				if (dk->dk_label && memcmp(dk->dk_label->d_uid,
-				    nlp->d_uid, sizeof(nlp->d_uid)) == 0)
+				if (dk->dk_label &&
+				    duid_equal(dk->dk_label->d_uid, nlp->d_uid))
 					break;
-		} while (dk != NULL &&
-		    memcmp(nlp->d_uid, &uid, sizeof(nlp->d_uid)) == 0);
+		} while (dk != NULL && duid_iszero(nlp->d_uid));
 	}
 
 	/* Preserve the disk size and RAW_PART values. */
@@ -1418,7 +1419,6 @@ setroot(struct device *bootdv, int part, int exitflags)
 	dev_t nrootdev, nswapdev = NODEV, temp = NODEV;
 	struct ifnet *ifp = NULL;
 	struct disk *dk;
-	u_char duid[8];
 	char buf[128];
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
@@ -1445,8 +1445,7 @@ setroot(struct device *bootdv, int part, int exitflags)
 		printf("\n");
 	}
 
-	memset(duid, 0, sizeof(duid));
-	if (memcmp(bootduid, duid, sizeof(bootduid)) == 0) {
+	if (duid_iszero(bootduid)) {
 		/* Locate DUID for boot disk since it was not provided. */
 		TAILQ_FOREACH(dk, &disklist, dk_link)
 			if (dk->dk_device == bootdv)
@@ -1456,8 +1455,7 @@ setroot(struct device *bootdv, int part, int exitflags)
 	} else if (bootdv == NULL) {
 		/* Locate boot disk based on the provided DUID. */
 		TAILQ_FOREACH(dk, &disklist, dk_link)
-			if (memcmp(dk->dk_label->d_uid, bootduid,
-			    sizeof(bootduid)) == 0)
+			if (duid_equal(dk->dk_label->d_uid, bootduid))
 				break;
 		if (dk && (dk->dk_flags & DKF_LABELVALID))
 			bootdv = dk->dk_device;
@@ -1571,19 +1569,15 @@ gotswap:
 		rootdv = bootdv;
 
 		if (bootdv->dv_class == DV_DISK) {
-			memset(&duid, 0, sizeof(duid));
-			if (memcmp(rootduid, &duid, sizeof(rootduid)) != 0) {
+			if (!duid_iszero(rootduid)) {
 				TAILQ_FOREACH(dk, &disklist, dk_link)
 					if ((dk->dk_flags & DKF_LABELVALID) &&
-					    dk->dk_label && memcmp(dk->dk_label->d_uid,
-					    &rootduid, sizeof(rootduid)) == 0)
+					    dk->dk_label && duid_equal(
+					    dk->dk_label->d_uid, rootduid))
 						break;
 				if (dk == NULL)
-					panic("root device (%02hx%02hx%02hx%02hx"
-					    "%02hx%02hx%02hx%02hx) not found",
-					    rootduid[0], rootduid[1], rootduid[2],
-					    rootduid[3], rootduid[4], rootduid[5],
-					    rootduid[6], rootduid[7]);
+					panic("root device (%s) not found",
+					    duid_format(rootduid));
 				rootdv = dk->dk_device;
 			}
 		}
@@ -1646,10 +1640,7 @@ gotswap:
 	printf("root on %s%c", rootdv->dv_xname, 'a' + part);
 
 	if (dk && dk->dk_device == rootdv)
-		printf(" (%02hx%02hx%02hx%02hx%02hx%02hx%02hx%02hx.%c)",
-		    rootduid[0], rootduid[1], rootduid[2], rootduid[3],
-		    rootduid[4], rootduid[5], rootduid[6], rootduid[7],
-		    'a' + part);
+		printf(" (%s.%c)", duid_format(rootduid), 'a' + part);
 
 	/*
 	 * Make the swap partition on the root drive the primary swap.
@@ -1849,4 +1840,33 @@ disk_lookup(struct cfdriver *cd, int unit)
 	}
 
 	return (dv);
+}
+
+int
+duid_equal(u_char *duid1, u_char *duid2)
+{
+	return (memcmp(duid1, duid2, DUID_SIZE) == 0);
+}
+
+int
+duid_iszero(u_char *duid)
+{
+	u_char zeroduid[DUID_SIZE];
+
+	memset(zeroduid, 0, sizeof(zeroduid));
+
+	return (duid_equal(duid, zeroduid));
+}
+
+const char *
+duid_format(u_char *duid)
+{
+	static char duid_str[17];
+
+	snprintf(duid_str, sizeof(duid_str),
+	    "%02hx%02hx%02hx%02hx%02hx%02hx%02hx%02hx",
+	    duid[0], duid[1], duid[2], duid[3],
+	    duid[4], duid[5], duid[6], duid[7]);
+
+	return (duid_str);
 }

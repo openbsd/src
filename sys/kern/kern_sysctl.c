@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.302 2016/05/04 01:28:42 zhuk Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.303 2016/05/21 14:00:27 jsing Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -2049,11 +2049,9 @@ done:
 int
 sysctl_diskinit(int update, struct proc *p)
 {
-	struct disklabel *dl;
 	struct diskstats *sdk;
 	struct disk *dk;
-	char duid[17];
-	u_int64_t uid = 0;
+	const char *duid;
 	int i, tlen, l;
 
 	if ((i = rw_enter(&sysctl_disklock, RW_WRITE|RW_INTR)) != 0)
@@ -2083,18 +2081,12 @@ sysctl_diskinit(int update, struct proc *p)
 
 		for (dk = TAILQ_FIRST(&disklist), i = 0, l = 0; dk;
 		    dk = TAILQ_NEXT(dk, dk_link), i++) {
-			dl = dk->dk_label;
-			memset(duid, 0, sizeof(duid));
-			if (dl && memcmp(dl->d_uid, &uid, sizeof(dl->d_uid))) {
-				snprintf(duid, sizeof(duid), 
-				    "%02hx%02hx%02hx%02hx"
-				    "%02hx%02hx%02hx%02hx",
-				    dl->d_uid[0], dl->d_uid[1], dl->d_uid[2],
-				    dl->d_uid[3], dl->d_uid[4], dl->d_uid[5],
-				    dl->d_uid[6], dl->d_uid[7]);
-			}
+			duid = NULL;
+			if (dk->dk_label && !duid_iszero(dk->dk_label->d_uid))
+				duid = duid_format(dk->dk_label->d_uid);
 			snprintf(disknames + l, tlen - l, "%s:%s,",
-			    dk->dk_name ? dk->dk_name : "", duid);
+			    dk->dk_name ? dk->dk_name : "",
+			    duid ? duid : "");
 			l += strlen(disknames + l);
 			sdk = diskstats + i;
 			strlcpy(sdk->ds_name, dk->dk_name,
