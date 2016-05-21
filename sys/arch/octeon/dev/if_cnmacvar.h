@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmacvar.h,v 1.9 2016/04/26 11:22:05 visa Exp $	*/
+/*	$OpenBSD: if_cnmacvar.h,v 1.10 2016/05/21 11:04:38 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -70,6 +70,8 @@ struct octeon_eth_softc {
 
 	struct timeout		sc_tick_misc_ch;
 	struct timeout		sc_tick_free_ch;
+
+	struct task		sc_free_task;
 
 	int64_t			sc_soft_req_thresh;
 	int64_t			sc_hard_done_cnt;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.44 2016/05/21 10:45:22 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.45 2016/05/21 11:04:38 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -162,6 +162,7 @@ int	octeon_eth_reset(struct octeon_eth_softc *);
 int	octeon_eth_configure(struct octeon_eth_softc *);
 int	octeon_eth_configure_common(struct octeon_eth_softc *);
 
+void	octeon_eth_free_task(void *);
 void	octeon_eth_tick_free(void *arg);
 void	octeon_eth_tick_misc(void *);
 
@@ -279,6 +280,7 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 
 	cn30xxgmx_stats_init(sc->sc_gmx_port);
 
+	task_set(&sc->sc_free_task, octeon_eth_free_task, sc);
 	timeout_set(&sc->sc_tick_misc_ch, octeon_eth_tick_misc, sc);
 	timeout_set(&sc->sc_tick_free_ch, octeon_eth_tick_free, sc);
 
@@ -306,6 +308,7 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	strncpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof(ifp->if_xname));
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_xflags = IFXF_MPSAFE;
 	ifp->if_ioctl = octeon_eth_ioctl;
 	ifp->if_start = octeon_eth_start;
 	ifp->if_watchdog = octeon_eth_watchdog;
@@ -719,7 +722,7 @@ octeon_eth_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = 0;
 	}
 
-	octeon_eth_start(ifp);
+	if_start(ifp);
 
 	splx(s);
 	return (error);
@@ -936,17 +939,16 @@ octeon_eth_start(struct ifnet *ifp)
 	struct octeon_eth_softc *sc = ifp->if_softc;
 	struct mbuf *m;
 
+	if (__predict_false(!cn30xxgmx_link_status(sc->sc_gmx_port))) {
+		ifq_purge(&ifp->if_snd);
+		return;
+	}
+
 	/*
 	 * performance tuning
 	 * presend iobdma request 
 	 */
 	octeon_eth_send_queue_flush_prefetch(sc);
-
-	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
-		goto last;
-
-	if (__predict_false(!cn30xxgmx_link_status(sc->sc_gmx_port)))
-		goto last;
 
 	for (;;) {
 		octeon_eth_send_queue_flush_fetch(sc); /* XXX */
@@ -957,11 +959,12 @@ octeon_eth_start(struct ifnet *ifp)
 		 * and bail out.
 		 */
 		if (octeon_eth_send_queue_is_full(sc)) {
+			ifq_set_oactive(&ifp->if_snd);
+			timeout_add(&sc->sc_tick_free_ch, 1);
 			return;
 		}
-		/* XXX */
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			return;
 
@@ -988,7 +991,6 @@ octeon_eth_start(struct ifnet *ifp)
 		octeon_eth_send_queue_flush_prefetch(sc);
 	}
 
-last:
 	octeon_eth_send_queue_flush_fetch(sc);
 }
 
@@ -999,13 +1001,14 @@ octeon_eth_watchdog(struct ifnet *ifp)
 
 	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
 
+	octeon_eth_stop(ifp, 0);
+
 	octeon_eth_configure(sc);
 
 	SET(ifp->if_flags, IFF_RUNNING);
-	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
-	octeon_eth_start(ifp);
+	ifq_restart(&ifp->if_snd);
 }
 
 int
@@ -1046,6 +1049,8 @@ octeon_eth_stop(struct ifnet *ifp, int disable)
 {
 	struct octeon_eth_softc *sc = ifp->if_softc;
 
+	CLR(ifp->if_flags, IFF_RUNNING);
+
 	timeout_del(&sc->sc_tick_misc_ch);
 	timeout_del(&sc->sc_tick_free_ch);
 
@@ -1053,12 +1058,11 @@ octeon_eth_stop(struct ifnet *ifp, int disable)
 
 	cn30xxgmx_port_enable(sc->sc_gmx_port, 0);
 
-	/* Mark the interface as down and cancel the watchdog timer. */
-	CLR(ifp->if_flags, IFF_RUNNING);
+	intr_barrier(octeon_eth_pow_recv_ih);
+	ifq_barrier(&ifp->if_snd);
+
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
-
-	intr_barrier(octeon_eth_pow_recv_ih);
 
 	return 0;
 }
@@ -1311,6 +1315,35 @@ octeon_eth_recv_intr(void *data, uint64_t *work)
 
 /* ---- tick */
 
+void
+octeon_eth_free_task(void *arg)
+{
+	struct octeon_eth_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int resched = 1;
+	int timeout;
+
+	if (ml_len(&sc->sc_sendq) > 0) {
+		octeon_eth_send_queue_flush_prefetch(sc);
+		octeon_eth_send_queue_flush_fetch(sc);
+		octeon_eth_send_queue_flush(sc);
+	}
+
+	if (ifq_is_oactive(&ifp->if_snd)) {
+		ifq_clr_oactive(&ifp->if_snd);
+		octeon_eth_start(ifp);
+
+		if (ifq_is_oactive(&ifp->if_snd))
+			/* The start routine did rescheduling already. */
+			resched = 0;
+	}
+
+	if (resched) {
+		timeout = (sc->sc_ext_callback_cnt > 0) ? 1 : hz;
+		timeout_add(&sc->sc_tick_free_ch, timeout);
+	}
+}
+
 /*
  * octeon_eth_tick_free
  *
@@ -1321,25 +1354,9 @@ void
 octeon_eth_tick_free(void *arg)
 {
 	struct octeon_eth_softc *sc = arg;
-	int timo;
-	int s;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
-	s = splnet();
-	/* XXX */
-	if (ml_len(&sc->sc_sendq) > 0) {
-		octeon_eth_send_queue_flush_prefetch(sc);
-		octeon_eth_send_queue_flush_fetch(sc);
-		octeon_eth_send_queue_flush(sc);
-	}
-	/* XXX */
-
-	/* XXX ??? */
-	timo = hz - (100 * sc->sc_ext_callback_cnt);
-	if (timo < 10)
-		 timo = 10;
-	timeout_add_msec(&sc->sc_tick_free_ch, 1000 * timo / hz);
-	/* XXX */
-	splx(s);
+	ifq_serialize(&ifp->if_snd, &sc->sc_free_task);
 }
 
 /*
