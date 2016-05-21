@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.586 2016/05/20 02:30:41 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.587 2016/05/21 01:06:53 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2480,44 +2480,38 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext *scp = SCARG(uap, sigcntxp), context;
+	struct sigcontext ksc, *scp = SCARG(uap, sigcntxp);
 	struct trapframe *tf = p->p_md.md_regs;
 	int error;
 
 	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
-		printf("%s(%d): sigreturn not from tramp [pc 0x%x 0x%lx]\n",
-		    p->p_comm, p->p_pid, PROC_PC(p), p->p_p->ps_sigcoderet);
 		sigexit(p, SIGILL);
 		return (EPERM);
 	}
 
-	if ((error = copyin((caddr_t)scp, &context, sizeof(*scp))))
+	if ((error = copyin((caddr_t)scp, &ksc, sizeof(*scp))))
 		return (error);
 
-	if (context.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
-		printf("%s(%d): cookie %lx should have been %lx\n",
-		    p->p_comm, p->p_pid, context.sc_cookie,
-		    (long)scp ^ p->p_p->ps_sigcookie);
+	if (ksc.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
 		sigexit(p, SIGILL);
 		return (EFAULT);
 	}
 
 	/* Prevent reuse of the sigcontext cookie */
-	context.sc_cookie = 0;
-	(void)copyout(&context.sc_cookie, (caddr_t)scp +
-	    offsetof(struct sigcontext, sc_cookie),
-	    sizeof (context.sc_cookie));
+	ksc.sc_cookie = 0;
+	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
+	    offsetof(struct sigcontext, sc_cookie), sizeof (ksc.sc_cookie));
 
 	/*
-	 * Restore signal context.
+	 * Restore signal ksc.
 	 */
 #ifdef VM86
-	if (context.sc_eflags & PSL_VM) {
-		tf->tf_vm86_gs = context.sc_gs;
-		tf->tf_vm86_fs = context.sc_fs;
-		tf->tf_vm86_es = context.sc_es;
-		tf->tf_vm86_ds = context.sc_ds;
-		set_vflags(p, context.sc_eflags);
+	if (ksc.sc_eflags & PSL_VM) {
+		tf->tf_vm86_gs = ksc.sc_gs;
+		tf->tf_vm86_fs = ksc.sc_fs;
+		tf->tf_vm86_es = ksc.sc_es;
+		tf->tf_vm86_ds = ksc.sc_ds;
+		set_vflags(p, ksc.sc_eflags);
 	} else
 #endif
 	{
@@ -2527,42 +2521,42 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		 * automatically and generate a trap on violations.  We handle
 		 * the trap, rather than doing all of the checking here.
 		 */
-		if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-		    !USERMODE(context.sc_cs, context.sc_eflags))
+		if (((ksc.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+		    !USERMODE(ksc.sc_cs, ksc.sc_eflags))
 			return (EINVAL);
 
-		tf->tf_fs = context.sc_fs;
-		tf->tf_gs = context.sc_gs;
-		tf->tf_es = context.sc_es;
-		tf->tf_ds = context.sc_ds;
-		tf->tf_eflags = context.sc_eflags;
+		tf->tf_fs = ksc.sc_fs;
+		tf->tf_gs = ksc.sc_gs;
+		tf->tf_es = ksc.sc_es;
+		tf->tf_ds = ksc.sc_ds;
+		tf->tf_eflags = ksc.sc_eflags;
 	}
-	tf->tf_edi = context.sc_edi;
-	tf->tf_esi = context.sc_esi;
-	tf->tf_ebp = context.sc_ebp;
-	tf->tf_ebx = context.sc_ebx;
-	tf->tf_edx = context.sc_edx;
-	tf->tf_ecx = context.sc_ecx;
-	tf->tf_eax = context.sc_eax;
-	tf->tf_eip = context.sc_eip;
-	tf->tf_cs = context.sc_cs;
-	tf->tf_esp = context.sc_esp;
-	tf->tf_ss = context.sc_ss;
+	tf->tf_edi = ksc.sc_edi;
+	tf->tf_esi = ksc.sc_esi;
+	tf->tf_ebp = ksc.sc_ebp;
+	tf->tf_ebx = ksc.sc_ebx;
+	tf->tf_edx = ksc.sc_edx;
+	tf->tf_ecx = ksc.sc_ecx;
+	tf->tf_eax = ksc.sc_eax;
+	tf->tf_eip = ksc.sc_eip;
+	tf->tf_cs = ksc.sc_cs;
+	tf->tf_esp = ksc.sc_esp;
+	tf->tf_ss = ksc.sc_ss;
 
 	if (p->p_md.md_flags & MDP_USEDFPU)
 		npxsave_proc(p, 0);
 
-	if (context.sc_fpstate) {
+	if (ksc.sc_fpstate) {
 		union savefpu *sfp = &p->p_addr->u_pcb.pcb_savefpu;
 
-		if ((error = copyin(context.sc_fpstate, sfp, sizeof(*sfp))))
+		if ((error = copyin(ksc.sc_fpstate, sfp, sizeof(*sfp))))
 			return (error);
 		if (i386_use_fxsave)
 			sfp->sv_xmm.sv_env.en_mxcsr &= fpu_mxcsr_mask;
 		p->p_md.md_flags |= MDP_USEDFPU;
 	}
 
-	p->p_sigmask = context.sc_mask & ~sigcantmask;
+	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
 
 	return (EJUSTRETURN);
 }
