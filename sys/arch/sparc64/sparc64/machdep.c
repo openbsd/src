@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.176 2016/05/10 18:39:49 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.177 2016/05/21 01:12:35 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -424,12 +424,8 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code, type, val)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
-	int type;
-	union sigval val;
+sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
+    union sigval val)
 {
 	struct proc *p = curproc;
 	struct sigacts *psp = p->p_p->ps_sigacts;
@@ -536,22 +532,16 @@ sendsig(catcher, sig, mask, code, type, val)
  */
 /* ARGSUSED */
 int
-sys_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sigreturn(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext *scp = SCARG(uap, sigcntxp), ksc;
+	struct sigcontext ksc, *scp = SCARG(uap, sigcntxp);
 	struct trapframe64 *tf;
 	int error = EINVAL;
 
 	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
-		printf("%s(%d): sigreturn not from tramp [pc 0x%llx 0x%lx]\n",
-		    p->p_comm, p->p_pid, PROC_PC(p),
-		     p->p_p->ps_sigcoderet);
 		sigexit(p, SIGILL);
 		return (EPERM);
 	}
@@ -573,9 +563,6 @@ sys_sigreturn(p, v, retval)
 		return (error);
 
 	if (ksc.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
-		printf("%s(%d): cookie %lx should have been %lx\n",
-		    p->p_comm, p->p_pid, ksc.sc_cookie,
-		    (long)scp ^ p->p_p->ps_sigcookie);
 		sigexit(p, SIGILL);
 		return (EFAULT);
 	}
@@ -583,8 +570,7 @@ sys_sigreturn(p, v, retval)
 	/* Prevent reuse of the sigcontext cookie */
 	ksc.sc_cookie = 0;
 	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
-	    offsetof(struct sigcontext, sc_cookie),
-	    sizeof (ksc.sc_cookie));
+	    offsetof(struct sigcontext, sc_cookie), sizeof (ksc.sc_cookie));
 
 	scp = &ksc;
 
