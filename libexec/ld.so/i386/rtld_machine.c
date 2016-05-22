@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.32 2015/11/02 07:02:53 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.33 2016/05/22 01:40:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -443,7 +443,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		    llist = llist->next) {
 			if (!(llist->prot & PROT_WRITE))
 				_dl_mprotect(llist->start, llist->size,
-				    llist->prot|PROT_WRITE);
+				    PROT_READ | PROT_WRITE);
 		}
 		for (i = 0; i < num/sizeof(Elf_Rel); i++, rel++) {
 			Elf_Addr *where;
