@@ -2176,6 +2176,7 @@
 ./usr/share/man/man8/armish/boot.8
 ./usr/share/man/man8/armv7
 ./usr/share/man/man8/armv7/MAKEDEV.8
+./usr/share/man/man8/armv7/eeprom.8
 ./usr/share/man/man8/armv7/gpioctl.8
 ./usr/share/man/man8/arp.8
 ./usr/share/man/man8/atactl.8
