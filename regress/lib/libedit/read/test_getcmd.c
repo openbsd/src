@@ -34,7 +34,7 @@ int
 main()
 {
 	EditLine	 el;
-	c_macro_t	*ma;
+	struct macros	*ma;
 	int		 irc;
 	wchar_t		 ch;
 	el_action_t	 cmdnum;
@@ -57,14 +57,9 @@ main()
 	if ((el.el_signal = calloc(1, sizeof(*el.el_signal))) == NULL)
 		err(1, NULL);
 
-	ma = &el.el_chared.c_macro;
-	ma->level = -1;
-	ma->offset = 0;
-	if ((ma->macro = calloc(EL_MAXMACRO, sizeof(*ma->macro))) == NULL)
-		err(1, NULL);
-
 	if (read_init(&el) != 0)
 		err(1, "read_init");
+	ma = &el.el_read->macros;
 
 	do {
 		irc = read_getcmd(&el, &cmdnum, &ch);
