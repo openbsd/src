@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.10 2016/05/15 05:48:24 guenther Exp $ */
+/*	$OpenBSD: setjmp.S,v 1.11 2016/05/22 23:56:30 guenther Exp $ */
 /*
  * Copyright (c) 1996 Dale Rahn. All rights reserved.
  *
@@ -54,36 +54,37 @@
 #define JMP_xer	0x5c
 #define JMP_sig	0x60
 
+	.section	.openbsd.randomdata,"aw",@progbits
+	.align	8
+	.globl	__jmpxor
+	.hidden	__jmpxor
+__jmpxor:
+	.zero	4*2		# (r1, lr)
+	END(__jmpxor)
+	.type	__jmpxor,@object
 
-.extern _libc_sigblock
 
 ENTRY(setjmp)
-	/* r31, mask */
-	stw 31, JMP_r31(3)
-	mflr 0
-	stw 0, JMP_lr(3)
-#ifdef __PIC__
-	stw 30, JMP_r30(3)
-	bcl 20, 31, 1f
-1:	mflr 30
-	addis 30, 30, _GLOBAL_OFFSET_TABLE_-1b@ha
-	addi 30, 30, _GLOBAL_OFFSET_TABLE_-1b@l
-#endif
-	mr 31, 3
-	li 3, 0
-	bl PIC_PLT(_libc_sigblock)
-	stw 3, JMP_sig(31)
-	mr 3, 31
-#ifdef __PIC__
-	lwz 30, JMP_r30(3)
-#endif
-	lwz 0, JMP_lr(3)
-	mtlr 0
-	lwz 31, JMP_r31(3)
+	mr	5, 3			/* save jmpbuf addr in r5 */
+	li	3, 1			/* how = SIG_BLOCK */
+	li	4, 0			/* oset = empty */
+	li	0, SYS_sigprocmask
+	sc
+	stw	3, JMP_sig(5)
+	mr	3, 5
 ENTRY(_setjmp)
-	stw 31, JMP_r31(3)
-	/* r1, r14-r30 */
-	stw 1,  JMP_r1 (3)
+	mflr	6
+	bcl	20, 31, 1f
+1:	mflr	7
+	addis	7, 7, __jmpxor-1b@ha
+	addi	7, 7, __jmpxor-1b@l
+	mtlr	6
+	lwz	0, 0(7)			/* xor for r1 */
+	lwz	7, 4(7)			/* xor for lr, overwrite addr */
+
+	/* r1, r14-r31 */
+	xor  0, 0, 1			/* use and overwrite the r1 xor */
+	stw  0, JMP_r1 (3)
 	stw 14, JMP_r14(3)
 	stw 15, JMP_r15(3)
 	stw 16, JMP_r16(3)
@@ -101,11 +102,13 @@ ENTRY(_setjmp)
 	stw 28, JMP_r28(3)
 	stw 29, JMP_r29(3)
 	stw 30, JMP_r30(3)
+	stw 31, JMP_r31(3)
 	/* cr, lr, ctr, xer */
 	mfcr 0
 	stw 0, JMP_cr(3)
-	mflr 0
-	stw 0, JMP_lr(3)
+	/* "mflr 6" done at start of _setjmp() */
+	xor  7, 6, 7			/* use and overwrite the lr xor */
+	stw 7, JMP_lr(3)
 	mfctr 0
 	stw 0, JMP_ctr(3)
 	mfxer 0
@@ -116,28 +119,28 @@ ENTRY(_setjmp)
 END(_setjmp)
 END(setjmp)
 
-.extern _libc_sigsetmask
+
 ENTRY(longjmp)
-	/* r31, mask */
-	mr 29, 3
-	mr 31, 4
-#ifdef __PIC__
-	mflr 0
-	bcl 20, 31, 1f
-1:	mflr 30
-	addis 30, 30, _GLOBAL_OFFSET_TABLE_-1b@ha
-	addi 30, 30, _GLOBAL_OFFSET_TABLE_-1b@l
-	mtlr 0
-#endif
-	lwz 3, JMP_sig(3)
-	bl PIC_PLT(_libc_sigsetmask)
-	/* should we deal with sigonstack here ?? */
-	mr 4, 31
-	mr 3, 29
+	mr	5, 3			/* save jmpbuf addr in r5 */
+	mr	6, 4			/* save val in r6 */
+	li	3, 3			/* how = SIG_SETMASK */
+	lwz	4, JMP_sig(5)		/* oset from the jmpbuf */
+	li	0, SYS_sigprocmask
+	sc
+	mr	3, 5			/* restore jmpbuf and val to r3,r4 */
+	mr	4, 6
+
 ENTRY(_longjmp)
-	lwz 31, JMP_r31(3)
+	bcl	20, 31, 1f
+1:	mflr	9
+	addis	9, 9, __jmpxor-1b@ha
+	addi	9, 9, __jmpxor-1b@l
+	lwz	8, 0(9)			/* xor for r1 */
+	lwz	9, 4(9)			/* xor for lr, overwrite addr */
+
 	/* r1, r14-r30 */
-	lwz 1,  JMP_r1 (3)
+	lwz  0, JMP_r1 (3)
+	xor  1, 0, 8			/* use the r1 xor */
 	lwz 14, JMP_r14(3)
 	lwz 15, JMP_r15(3)
 	lwz 16, JMP_r16(3)
@@ -155,23 +158,24 @@ ENTRY(_longjmp)
 	lwz 28, JMP_r28(3)
 	lwz 29, JMP_r29(3)
 	lwz 30, JMP_r30(3)
+	lwz 31, JMP_r31(3)
 	/* cr, lr, ctr, xer */
-	lwz 0, JMP_cr(3)
-	mtcr 0
+	lwz 8, JMP_cr(3)		/* overwrite the r1 xor */
+	mtcr 8
 	lwz 0, JMP_lr(3)
+	xor  0, 0, 9			/* use the lr xor */
 	mtlr 0
-	lwz 0, JMP_ctr(3)
-	mtctr 0
+	lwz 9, JMP_ctr(3)		/* overwrite the lr xor */
+	mtctr 9
 	lwz 0, JMP_xer(3)
 	mtxer 0
 	/* f14-f31, fpscr */
 
 	/* if r4 == 0, return 1, not 0 */
 	mr	3, 4
-	cmpwi	4,0
-	bne	1f
+	cmpwi	4, 0
+	bnelr
 	li	3, 1
-1:
 	blr
 END(_longjmp)
 END(longjmp)
