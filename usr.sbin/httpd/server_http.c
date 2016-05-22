@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.106 2016/03/08 09:33:15 florian Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.107 2016/05/22 19:20:03 jung Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -826,8 +826,10 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 	    "<hr>\n<address>%s</address>\n"
 	    "</body>\n"
 	    "</html>\n",
-	    code, httperr, style, code, httperr, HTTPD_SERVERNAME)) == -1)
+	    code, httperr, style, code, httperr, HTTPD_SERVERNAME)) == -1) {
+		body = NULL;
 		goto done;
+	}
 
 	if (srv_conf->flags & SRVFLAG_SERVER_HSTS) {
 		if (asprintf(&hstsheader, "Strict-Transport-Security: "
@@ -835,8 +837,10 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 		    srv_conf->hsts_flags & HSTSFLAG_SUBDOMAINS ?
 		    "; includeSubDomains" : "",
 		    srv_conf->hsts_flags & HSTSFLAG_PRELOAD ?
-		    "; preload" : "") == -1)
+		    "; preload" : "") == -1) {
+			hstsheader = NULL;
 			goto done;
+		}
 	}
 
 	/* Add basic HTTP headers */
