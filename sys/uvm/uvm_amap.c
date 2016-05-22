@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.69 2016/05/22 16:18:26 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.70 2016/05/22 22:52:01 guenther Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -44,19 +44,20 @@
 #include <uvm/uvm_swap.h>
 
 /*
- * pools for allocation of vm_amap structures.  note that in order to
+ * pool for allocation of vm_map structures.  note that in order to
  * avoid an endless loop, the amap pool's allocator cannot allocate
  * memory from an amap (it currently goes through the kernel uobj, so
  * we are ok).
  */
 
 struct pool uvm_amap_pool;
-struct pool uvm_small_amap_pool[UVM_AMAP_CHUNK];
-struct pool uvm_amap_chunk_pool;
+
+/* Pools for amap slots for the most common amap slot sizes */
+struct pool uvm_amap_slot_pools[UVM_AMAP_CHUNK];
 
 LIST_HEAD(, vm_amap) amap_list;
 
-static char amap_small_pool_names[UVM_AMAP_CHUNK][9];
+static char amap_slot_pool_names[UVM_AMAP_CHUNK][13];
 
 #define MALLOC_SLOT_UNIT (2 * sizeof(int) + sizeof(struct vm_anon *))
 
@@ -68,8 +69,6 @@ static struct vm_amap *amap_alloc1(int, int, int);
 static __inline void amap_list_insert(struct vm_amap *);
 static __inline void amap_list_remove(struct vm_amap *);   
 
-struct vm_amap_chunk *amap_chunk_get(struct vm_amap *, int, int, int);
-
 static __inline void
 amap_list_insert(struct vm_amap *amap)
 {
@@ -80,72 +79,6 @@ static __inline void
 amap_list_remove(struct vm_amap *amap)
 { 
 	LIST_REMOVE(amap, am_list);
-}
-
-/*
- * amap_chunk_get: lookup a chunk for slot. if create is non-zero,
- * the chunk is created if it does not yet exist.
- *
- * => returns the chunk on success or NULL on error
- */
-struct vm_amap_chunk *
-amap_chunk_get(struct vm_amap *amap, int slot, int create, int waitf)
-{
-	int bucket = UVM_AMAP_BUCKET(amap, slot);
-	int baseslot = AMAP_BASE_SLOT(slot);
-	int n;
-	struct vm_amap_chunk *chunk, *newchunk, *pchunk = NULL;
-
-	if (UVM_AMAP_SMALL(amap))
-		return &amap->am_small;
-
-	for (chunk = amap->am_buckets[bucket]; chunk != NULL;
-	    chunk = TAILQ_NEXT(chunk, ac_list)) {
-		if (UVM_AMAP_BUCKET(amap, chunk->ac_baseslot) != bucket)
-			break;
-		if (chunk->ac_baseslot == baseslot)
-			return chunk;
-		pchunk = chunk;
-	}
-	if (!create)
-		return NULL;
-
-	if (amap->am_nslot - baseslot >= UVM_AMAP_CHUNK)
-		n = UVM_AMAP_CHUNK;
-	else
-		n = amap->am_nslot - baseslot;
-
-	newchunk = pool_get(&uvm_amap_chunk_pool, waitf | PR_ZERO);
-	if (newchunk == NULL)
-		return NULL;
-
-	if (pchunk == NULL) {
-		TAILQ_INSERT_TAIL(&amap->am_chunks, newchunk, ac_list);
-		KASSERT(amap->am_buckets[bucket] == NULL);
-		amap->am_buckets[bucket] = newchunk;
-	} else
-		TAILQ_INSERT_AFTER(&amap->am_chunks, pchunk, newchunk,
-		    ac_list);
-
-	amap->am_ncused++;
-	newchunk->ac_baseslot = baseslot;
-	newchunk->ac_nslot = n;
-	return newchunk;
-}
-
-void
-amap_chunk_free(struct vm_amap *amap, struct vm_amap_chunk *chunk)
-{
-	int bucket = UVM_AMAP_BUCKET(amap, chunk->ac_baseslot);
-
-	if (UVM_AMAP_SMALL(amap))
-		return;
-
-	TAILQ_REMOVE(&amap->am_chunks, chunk, ac_list);
-	if (amap->am_buckets[bucket] == chunk)
-		amap->am_buckets[bucket] = NULL;
-	pool_put(&uvm_amap_chunk_pool, chunk);
-	amap->am_ncused--;
 }
 
 #ifdef UVM_AMAP_PPREF
@@ -224,28 +157,19 @@ void
 amap_init(void)
 {
 	int i;
-	size_t size;
 
 	/* Initialize the vm_amap pool. */
 	pool_init(&uvm_amap_pool, sizeof(struct vm_amap), 0, 0, PR_WAITOK,
 	    "amappl", NULL);
 	pool_sethiwat(&uvm_amap_pool, 4096);
 
-	/* initialize small amap pools */
-	for (i = 0; i < nitems(uvm_small_amap_pool); i++) {
-		snprintf(amap_small_pool_names[i],
-		    sizeof(amap_small_pool_names[0]), "amappl%d", i + 1);
-		size = offsetof(struct vm_amap, am_small.ac_anon) +
-		    (i + 1) * sizeof(struct vm_anon *);
-		pool_init(&uvm_small_amap_pool[i], size, 0, 0, 0,
-		    amap_small_pool_names[i], NULL);
+	for (i = 0; i < nitems(uvm_amap_slot_pools); i++) {
+		snprintf(amap_slot_pool_names[i],
+		    sizeof(amap_slot_pool_names[0]), "amapslotpl%d", i + 1);
+		pool_init(&uvm_amap_slot_pools[i], (i + 1) * MALLOC_SLOT_UNIT,
+		    0, 0, PR_WAITOK, amap_slot_pool_names[i], NULL);
+		pool_sethiwat(&uvm_amap_slot_pools[i], 4096);
 	}
-
-	pool_init(&uvm_amap_chunk_pool,
-	    sizeof(struct vm_amap_chunk) +
-	    UVM_AMAP_CHUNK * sizeof(struct vm_anon *), 0, 0, 0,
-	    "amapchunkpl", NULL);
-	pool_sethiwat(&uvm_amap_chunk_pool, 4096);
 }
 
 /*
@@ -256,50 +180,9 @@ static inline struct vm_amap *
 amap_alloc1(int slots, int waitf, int lazyalloc)
 {
 	struct vm_amap *amap;
-	struct vm_amap_chunk *chunk, *tmp;
-	int chunks, chunkperbucket = 1, hashshift = 0;
-	int buckets, i, n;
-	int pwaitf = (waitf == M_WAITOK) ? PR_WAITOK : PR_NOWAIT;
 
-	chunks = roundup(slots, UVM_AMAP_CHUNK) / UVM_AMAP_CHUNK;
-
-	if (lazyalloc) {
-		/*
-		 * Basically, the amap is a hash map where the number of
-		 * buckets is fixed. We select the number of buckets using the
-		 * following strategy:
-		 *
-		 * 1. The maximal number of entries to search in a bucket upon
-		 * a collision should be less than or equal to
-		 * log2(slots / UVM_AMAP_CHUNK). This is the worst-case number
-		 * of lookups we would have if we could chunk the amap. The
-		 * log2(n) comes from the fact that amaps are chunked by
-		 * splitting up their vm_map_entries and organizing those
-		 * in a binary search tree.
-		 *
-		 * 2. The maximal number of entries in a bucket must be a
-		 * power of two.
-		 *
-		 * The maximal number of entries per bucket is used to hash
-		 * a slot to a bucket.
-		 *
-		 * In the future, this strategy could be refined to make it
-		 * even harder/impossible that the total amount of KVA needed
-		 * for the hash buckets of all amaps to exceed the maximal
-		 * amount of KVA memory reserved for amaps.
-		 */
-		chunkperbucket = 1 << hashshift;
-		while ((1 << chunkperbucket) * 2 <= chunks) {
-			hashshift++;
-			chunkperbucket = 1 << hashshift;
-		}
-	}
-
-	if (slots > UVM_AMAP_CHUNK)
-		amap = pool_get(&uvm_amap_pool, pwaitf);
-	else
-		amap = pool_get(&uvm_small_amap_pool[slots - 1],
-		    pwaitf | PR_ZERO);
+	amap = pool_get(&uvm_amap_pool, (waitf == M_WAITOK) ? PR_WAITOK
+	    : PR_NOWAIT);
 	if (amap == NULL)
 		return(NULL);
 
@@ -313,48 +196,25 @@ amap_alloc1(int slots, int waitf, int lazyalloc)
 	amap->am_nslot = slots;
 	amap->am_nused = 0;
 
-	if (UVM_AMAP_SMALL(amap))
-		return (amap);
+	if (slots > UVM_AMAP_CHUNK)
+		amap->am_slots = malloc(slots * MALLOC_SLOT_UNIT,
+		    M_UVMAMAP, waitf);
+	else
+		amap->am_slots = pool_get(
+		    &uvm_amap_slot_pools[slots - 1],
+		    (waitf == M_WAITOK) ? PR_WAITOK : PR_NOWAIT);
 
-	amap->am_ncused = 0;
-	TAILQ_INIT(&amap->am_chunks);
-	amap->am_hashshift = hashshift;
-	amap->am_buckets = NULL;
-
-	buckets = howmany(chunks, chunkperbucket);
-	amap->am_buckets = mallocarray(buckets, sizeof(amap->am_buckets),
-	    M_UVMAMAP, waitf | (lazyalloc ? M_ZERO : 0));
-	if (amap->am_buckets == NULL)
+	if (amap->am_slots == NULL)
 		goto fail1;
 
-	if (!lazyalloc) {
-		for (i = 0; i < buckets; i++) {
-			if (i == buckets - 1) {
-				n = slots % UVM_AMAP_CHUNK;
-				if (n == 0)
-					n = UVM_AMAP_CHUNK;
-			} else
-				n = UVM_AMAP_CHUNK;
-
-			chunk = pool_get(&uvm_amap_chunk_pool,
-			    PR_ZERO | pwaitf);
-			if (chunk == NULL)
-				goto fail1;
-
-			amap->am_buckets[i] = chunk;
-			amap->am_ncused++;
-			chunk->ac_baseslot = i * UVM_AMAP_CHUNK;
-			chunk->ac_nslot = n;
-			TAILQ_INSERT_TAIL(&amap->am_chunks, chunk, ac_list);
-		}
-	}
+	amap->am_bckptr = (int *)(((char *)amap->am_slots) + slots *
+	    sizeof(int));
+	amap->am_anon = (struct vm_anon **)(((char *)amap->am_bckptr) +
+	    slots * sizeof(int));
 
 	return(amap);
 
 fail1:
-	free(amap->am_buckets, M_UVMAMAP, 0);
-	TAILQ_FOREACH_SAFE(chunk, &amap->am_chunks, ac_list, tmp)
-		pool_put(&uvm_amap_chunk_pool, chunk);
 	pool_put(&uvm_amap_pool, amap);
 	return (NULL);
 }
@@ -374,8 +234,11 @@ amap_alloc(vaddr_t sz, int waitf, int lazyalloc)
 	AMAP_B2SLOT(slots, sz);		/* load slots */
 
 	amap = amap_alloc1(slots, waitf, lazyalloc);
-	if (amap)
+	if (amap) {
+		memset(amap->am_anon, 0,
+		    amap->am_nslot * sizeof(struct vm_anon *));
 		amap_list_insert(amap);
+	}
 
 	return(amap);
 }
@@ -389,24 +252,22 @@ amap_alloc(vaddr_t sz, int waitf, int lazyalloc)
 void
 amap_free(struct vm_amap *amap)
 {
-	struct vm_amap_chunk *chunk, *tmp;
 
 	KASSERT(amap->am_ref == 0 && amap->am_nused == 0);
 	KASSERT((amap->am_flags & AMAP_SWAPOFF) == 0);
+
+	if (amap->am_nslot > UVM_AMAP_CHUNK)
+		free(amap->am_slots, M_UVMAMAP, 0);
+	else
+		pool_put(&uvm_amap_slot_pools[amap->am_nslot - 1],
+		    amap->am_slots);
 
 #ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
 		free(amap->am_ppref, M_UVMAMAP, 0);
 #endif
+	pool_put(&uvm_amap_pool, amap);
 
-	if (UVM_AMAP_SMALL(amap))
-		pool_put(&uvm_small_amap_pool[amap->am_nslot - 1], amap);
-	else {
-		TAILQ_FOREACH_SAFE(chunk, &amap->am_chunks, ac_list, tmp)
-		    pool_put(&uvm_amap_chunk_pool, chunk);
-		free(amap->am_buckets, M_UVMAMAP, 0);
-		pool_put(&uvm_amap_pool, amap);
-	}
 }
 
 /*
@@ -419,9 +280,8 @@ amap_free(struct vm_amap *amap)
 void
 amap_wipeout(struct vm_amap *amap)
 {
-	int slot;
+	int lcv, slot;
 	struct vm_anon *anon;
-	struct vm_amap_chunk *chunk;
 
 	KASSERT(amap->am_ref == 0);
 
@@ -431,25 +291,19 @@ amap_wipeout(struct vm_amap *amap)
 	}
 	amap_list_remove(amap);
 
-	AMAP_CHUNK_FOREACH(chunk, amap) {
-		int i, refs, map = chunk->ac_usedmap;
+	for (lcv = 0 ; lcv < amap->am_nused ; lcv++) {
+		int refs;
 
-		for (i = ffs(map); i != 0; i = ffs(map)) {
-			slot = i - 1;
-			map ^= 1 << slot;
-			anon = chunk->ac_anon[slot];
+		slot = amap->am_slots[lcv];
+		anon = amap->am_anon[slot];
 
-			if (anon == NULL || anon->an_ref == 0)
-				panic("amap_wipeout: corrupt amap");
+		if (anon == NULL || anon->an_ref == 0)
+			panic("amap_wipeout: corrupt amap");
 
-			refs = --anon->an_ref;
-			if (refs == 0) {
-				/*
-				 * we had the last reference to a vm_anon.
-				 * free it.
-				 */
-				uvm_anfree(anon);
-			}
+		refs = --anon->an_ref;
+		if (refs == 0) {
+			/* we had the last reference to a vm_anon. free it. */
+			uvm_anfree(anon);
 		}
 	}
 
@@ -478,8 +332,6 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 	struct vm_amap *amap, *srcamap;
 	int slots, lcv, lazyalloc = 0;
 	vaddr_t chunksize;
-	int i, j, k, n, srcslot;
-	struct vm_amap_chunk *chunk = NULL, *srcchunk = NULL;
 
 	/* is there a map to copy?   if not, create one from scratch. */
 	if (entry->aref.ar_amap == NULL) {
@@ -527,9 +379,6 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 
 	/* looks like we need to copy the map. */
 	AMAP_B2SLOT(slots, entry->end - entry->start);
-	if (!UVM_AMAP_SMALL(entry->aref.ar_amap) &&
-	    entry->aref.ar_amap->am_hashshift != 0)
-		lazyalloc = 1;
 	amap = amap_alloc1(slots, waitf, lazyalloc);
 	if (amap == NULL)
 		return;
@@ -549,39 +398,17 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 	}
 
 	/* we must copy it now. */
-	for (lcv = 0; lcv < slots; lcv += n) {
-		srcslot = entry->aref.ar_pageoff + lcv;
-		i = UVM_AMAP_SLOTIDX(lcv);
-		j = UVM_AMAP_SLOTIDX(srcslot);
-		n = UVM_AMAP_CHUNK;
-		if (i > j)
-			n -= i;
-		else
-			n -= j;
-		if (lcv + n > slots)
-			n = slots - lcv;
-
-		srcchunk = amap_chunk_get(srcamap, srcslot, 0, PR_NOWAIT);
-		if (srcchunk == NULL)
+	for (lcv = 0 ; lcv < slots; lcv++) {
+		amap->am_anon[lcv] =
+		    srcamap->am_anon[entry->aref.ar_pageoff + lcv];
+		if (amap->am_anon[lcv] == NULL)
 			continue;
-
-		chunk = amap_chunk_get(amap, lcv, 1, PR_NOWAIT);
-		if (chunk == NULL) {
-			amap->am_ref = 0;
-			amap_wipeout(amap);
-			return;
-		}
-
-		for (k = 0; k < n; i++, j++, k++) {
-			chunk->ac_anon[i] = srcchunk->ac_anon[j];
-			if (chunk->ac_anon[i] == NULL)
-				continue;
-
-			chunk->ac_usedmap |= (1 << i);
-			chunk->ac_anon[i]->an_ref++;
-			amap->am_nused++;
-		}
+		amap->am_anon[lcv]->an_ref++;
+		amap->am_bckptr[lcv] = amap->am_nused;
+		amap->am_slots[amap->am_nused] = lcv;
+		amap->am_nused++;
 	}
+	KASSERT(lcv == amap->am_nslot);
 
 	/*
 	 * drop our reference to the old amap (srcamap).
@@ -625,10 +452,9 @@ void
 amap_cow_now(struct vm_map *map, struct vm_map_entry *entry)
 {
 	struct vm_amap *amap = entry->aref.ar_amap;
-	int slot;
+	int lcv, slot;
 	struct vm_anon *anon, *nanon;
 	struct vm_page *pg, *npg;
-	struct vm_amap_chunk *chunk;
 
 	/*
 	 * note that if we wait, we must ReStart the "lcv" for loop because
@@ -636,27 +462,22 @@ amap_cow_now(struct vm_map *map, struct vm_map_entry *entry)
 	 * am_anon[] array on us.
 	 */
 ReStart:
-	AMAP_CHUNK_FOREACH(chunk, amap) {
-		int i, map = chunk->ac_usedmap;
+	for (lcv = 0 ; lcv < amap->am_nused ; lcv++) {
+		/* get the page */
+		slot = amap->am_slots[lcv];
+		anon = amap->am_anon[slot];
+		pg = anon->an_page;
 
-		for (i = ffs(map); i != 0; i = ffs(map)) {
-			slot = i - 1;
-			map ^= 1 << slot;
-			anon = chunk->ac_anon[slot];
-			pg = anon->an_page;
+		/* page must be resident since parent is wired */
+		if (pg == NULL)
+			panic("amap_cow_now: non-resident wired page"
+			    " in anon %p", anon);
 
-			/* page must be resident since parent is wired */
-			if (pg == NULL)
-				panic("amap_cow_now: non-resident wired page"
-				    " in anon %p", anon);
-
-			/*
-			 * if the anon ref count is one, we are safe (the child
-			 * has exclusive access to the page).
-			 */
-			if (anon->an_ref <= 1)
-				continue;
-
+		/*
+		 * if the anon ref count is one, we are safe (the child has
+		 * exclusive access to the page).
+		 */
+		if (anon->an_ref > 1) {
 			/*
 			 * if the page is busy then we have to wait for
 			 * it and then restart.
@@ -686,14 +507,14 @@ ReStart:
 				uvm_wait("cownowpage");
 				goto ReStart;
 			}
-
+	
 			/*
 			 * got it... now we can copy the data and replace anon
 			 * with our new one...
 			 */
 			uvm_pagecopy(pg, npg);		/* old -> new */
 			anon->an_ref--;			/* can't drop to zero */
-			chunk->ac_anon[slot] = nanon;	/* replace */
+			amap->am_anon[slot] = nanon;	/* replace */
 
 			/*
 			 * drop PG_BUSY on new page ... since we have had its
@@ -837,83 +658,61 @@ amap_pp_adjref(struct vm_amap *amap, int curslot, vsize_t slotlen, int adjval)
 void
 amap_wiperange(struct vm_amap *amap, int slotoff, int slots)
 {
-	int curslot, i, map, bybucket;
-	int bucket, startbucket, endbucket;
-	int startbase, endbase;
+	int byanon, lcv, stop, curslot, ptr, slotend;
 	struct vm_anon *anon;
-	struct vm_amap_chunk *chunk, *nchunk;
 
 	/*
-	 * we can either traverse the amap by am_chunks or by am_buckets
-	 * depending on which is cheaper.    decide now.
+	 * we can either traverse the amap by am_anon or by am_slots depending
+	 * on which is cheaper.    decide now.
 	 */
-	startbucket = UVM_AMAP_BUCKET(amap, slotoff);
-	endbucket = UVM_AMAP_BUCKET(amap, slotoff + slots - 1);
-
-	if (UVM_AMAP_SMALL(amap)) {
-		bybucket = FALSE;
-		chunk = &amap->am_small;
-	} else if (endbucket + 1 - startbucket >= amap->am_ncused) {
-		bybucket = FALSE;
-		chunk = TAILQ_FIRST(&amap->am_chunks);
+	if (slots < amap->am_nused) {
+		byanon = TRUE;
+		lcv = slotoff;
+		stop = slotoff + slots;
 	} else {
-		bybucket = TRUE;
-		bucket = startbucket;
-		chunk = amap->am_buckets[bucket];
+		byanon = FALSE;
+		lcv = 0;
+		stop = amap->am_nused;
+		slotend = slotoff + slots;
 	}
 
-	startbase = AMAP_BASE_SLOT(slotoff);
-	endbase = AMAP_BASE_SLOT(slotoff + slots - 1);
-	for (;;) {
-		if (chunk == NULL || (bybucket &&
-		    UVM_AMAP_BUCKET(amap, chunk->ac_baseslot) != bucket)) {
-			if (!bybucket || bucket >= endbucket)
-				break;
-			bucket++;
-			chunk = amap->am_buckets[bucket];
-			continue;
-		} else if (!bybucket) {
-			if (chunk->ac_baseslot + chunk->ac_nslot <= slotoff)
-				goto next;
-			if (chunk->ac_baseslot >= slotoff + slots)
-				goto next;
-		}
+	while (lcv < stop) {
+		int refs;
 
-		map = chunk->ac_usedmap;
-		if (startbase == chunk->ac_baseslot)
-			map &= ~((1 << (slotoff - startbase)) - 1);
-		if (endbase == chunk->ac_baseslot)
-			map &= (1 << (slotoff + slots - endbase)) - 1;
-
-		for (i = ffs(map); i != 0; i = ffs(map)) {
-			int refs;
-
-			curslot = i - 1;
-			map ^= 1 << curslot;
-			chunk->ac_usedmap ^= 1 << curslot;
-			anon = chunk->ac_anon[curslot];
-
-			/* remove it from the amap */
-			chunk->ac_anon[curslot] = NULL;
-
-			amap->am_nused--;
-
-			/* drop anon reference count */
-			refs = --anon->an_ref;
-			if (refs == 0) {
-				/*
-				 * we just eliminated the last reference to an
-				 * anon.  free it.
-				 */
-				uvm_anfree(anon);
+  		if (byanon) {
+			curslot = lcv++;	/* lcv advances here */
+			if (amap->am_anon[curslot] == NULL)
+				continue;
+		} else {
+			curslot = amap->am_slots[lcv];
+			if (curslot < slotoff || curslot >= slotend) {
+				lcv++;		/* lcv advances here */
+				continue;
 			}
+			stop--;	/* drop stop, since anon will be removed */
 		}
+		anon = amap->am_anon[curslot];
 
-next:
-		nchunk = TAILQ_NEXT(chunk, ac_list);
-		if (chunk->ac_usedmap == 0)
-			amap_chunk_free(amap, chunk);
-		chunk = nchunk;
+		/* remove it from the amap */
+		amap->am_anon[curslot] = NULL;
+		ptr = amap->am_bckptr[curslot];
+		if (ptr != (amap->am_nused - 1)) {
+			amap->am_slots[ptr] =
+			    amap->am_slots[amap->am_nused - 1];
+			amap->am_bckptr[amap->am_slots[ptr]] =
+			    ptr;    /* back ptr. */
+		}
+		amap->am_nused--;
+
+		/* drop anon reference count */
+		refs = --anon->an_ref;
+		if (refs == 0) {
+			/*
+			 * we just eliminated the last reference to an anon.
+			 * free it.
+			 */
+			uvm_anfree(anon);
+		}
 	}
 }
 
@@ -935,38 +734,31 @@ amap_swap_off(int startslot, int endslot)
 	boolean_t rv = FALSE;
 
 	for (am = LIST_FIRST(&amap_list); am != NULL && !rv; am = am_next) {
-		int i, map;
-		struct vm_amap_chunk *chunk;
+		int i;
 
-again:
-		AMAP_CHUNK_FOREACH(chunk, am) {
-			map = chunk->ac_usedmap;
+		for (i = 0; i < am->am_nused; i++) {
+			int slot;
+			int swslot;
+			struct vm_anon *anon;
 
-			for (i = ffs(map); i != 0; i = ffs(map)) {
-				int swslot;
-				int slot = i - 1;
-				struct vm_anon *anon;
+			slot = am->am_slots[i];
+			anon = am->am_anon[slot];
 
-				map ^= 1 << slot;
-				anon = chunk->ac_anon[slot];
-
-				swslot = anon->an_swslot;
-				if (swslot < startslot || endslot <= swslot) {
-					continue;
-				}
-
-				am->am_flags |= AMAP_SWAPOFF;
-
-				rv = uvm_anon_pagein(anon);
-
-				am->am_flags &= ~AMAP_SWAPOFF;
-				if (rv || amap_refs(am) == 0)
-					goto nextamap;
-				goto again;
+			swslot = anon->an_swslot;
+			if (swslot < startslot || endslot <= swslot) {
+				continue;
 			}
+
+			am->am_flags |= AMAP_SWAPOFF;
+
+			rv = uvm_anon_pagein(anon);
+
+			am->am_flags &= ~AMAP_SWAPOFF;
+			if (rv || amap_refs(am) == 0)
+				break;
+			i = 0;
 		}
 
-nextamap:
 		am_next = LIST_NEXT(am, am_list);
 		if (amap_refs(am) == 0)
 			amap_wipeout(am);
@@ -983,7 +775,6 @@ amap_lookup(struct vm_aref *aref, vaddr_t offset)
 {
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
-	struct vm_amap_chunk *chunk;
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
@@ -991,11 +782,7 @@ amap_lookup(struct vm_aref *aref, vaddr_t offset)
 	if (slot >= amap->am_nslot)
 		panic("amap_lookup: offset out of range");
 
-	chunk = amap_chunk_get(amap, slot, 0, PR_NOWAIT);
-	if (chunk == NULL)
-		return NULL;
-
-	return chunk->ac_anon[UVM_AMAP_SLOTIDX(slot)];
+	return(amap->am_anon[slot]);
 }
 
 /*
@@ -1007,9 +794,8 @@ void
 amap_lookups(struct vm_aref *aref, vaddr_t offset,
     struct vm_anon **anons, int npages)
 {
-	int i, lcv, n, slot;
+	int slot;
 	struct vm_amap *amap = aref->ar_amap;
-	struct vm_amap_chunk *chunk = NULL;
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
@@ -1017,19 +803,9 @@ amap_lookups(struct vm_aref *aref, vaddr_t offset,
 	if ((slot + (npages - 1)) >= amap->am_nslot)
 		panic("amap_lookups: offset out of range");
 
-	for (i = 0, lcv = slot; lcv < slot + npages; i += n, lcv += n) {
-		n = UVM_AMAP_CHUNK - UVM_AMAP_SLOTIDX(lcv);
-		if (lcv + n > slot + npages)
-			n = slot + npages - lcv;
+	memcpy(anons, &amap->am_anon[slot], npages * sizeof(struct vm_anon *));
 
-		chunk = amap_chunk_get(amap, lcv, 0, PR_NOWAIT);
-		if (chunk == NULL)
-			memset(&anons[i], 0, n * sizeof(*anons[i]));
-		else
-			memcpy(&anons[i],
-			    &chunk->ac_anon[UVM_AMAP_SLOTIDX(lcv)],
-			    n * sizeof(*anons[i]));
-	}
+	return;
 }
 
 /*
@@ -1040,18 +816,6 @@ amap_lookups(struct vm_aref *aref, vaddr_t offset,
 void
 amap_populate(struct vm_aref *aref, vaddr_t offset)
 {
-	int slot;
-	struct vm_amap *amap = aref->ar_amap;
-	struct vm_amap_chunk *chunk;
-
-	AMAP_B2SLOT(slot, offset);
-	slot += aref->ar_pageoff;
-
-	if (slot >= amap->am_nslot)
-		panic("amap_populate: offset out of range");
-
-	chunk = amap_chunk_get(amap, slot, 1, PR_WAITOK);
-	KASSERT(chunk != NULL);
 }
 
 /*
@@ -1065,37 +829,33 @@ amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
 {
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
-	struct vm_amap_chunk *chunk;
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
 
 	if (slot >= amap->am_nslot)
 		panic("amap_add: offset out of range");
-	chunk = amap_chunk_get(amap, slot, 1, PR_NOWAIT);
-	if (chunk == NULL)
-		return 1;
 
-	slot = UVM_AMAP_SLOTIDX(slot);
 	if (replace) {
-		if (chunk->ac_anon[slot] == NULL)
+		if (amap->am_anon[slot] == NULL)
 			panic("amap_add: replacing null anon");
-		if (chunk->ac_anon[slot]->an_page != NULL &&
+		if (amap->am_anon[slot]->an_page != NULL && 
 		    (amap->am_flags & AMAP_SHARED) != 0) {
-			pmap_page_protect(chunk->ac_anon[slot]->an_page,
+			pmap_page_protect(amap->am_anon[slot]->an_page,
 			    PROT_NONE);
 			/*
 			 * XXX: suppose page is supposed to be wired somewhere?
 			 */
 		}
 	} else {   /* !replace */
-		if (chunk->ac_anon[slot] != NULL)
+		if (amap->am_anon[slot] != NULL)
 			panic("amap_add: slot in use");
 
-		chunk->ac_usedmap |= 1 << slot;
+		amap->am_bckptr[slot] = amap->am_nused;
+		amap->am_slots[amap->am_nused] = slot;
 		amap->am_nused++;
 	}
-	chunk->ac_anon[slot] = anon;
+	amap->am_anon[slot] = anon;
 
 	return 0;
 }
@@ -1106,29 +866,26 @@ amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
 void
 amap_unadd(struct vm_aref *aref, vaddr_t offset)
 {
-	int slot;
+	int ptr, slot;
 	struct vm_amap *amap = aref->ar_amap;
-	struct vm_amap_chunk *chunk;
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
 
 	if (slot >= amap->am_nslot)
 		panic("amap_unadd: offset out of range");
-	chunk = amap_chunk_get(amap, slot, 0, PR_NOWAIT);
-	if (chunk == NULL)
-		panic("amap_unadd: chunk for slot %d not present", slot);
 
-	slot = UVM_AMAP_SLOTIDX(slot);
-	if (chunk->ac_anon[slot] == NULL)
+	if (amap->am_anon[slot] == NULL)
 		panic("amap_unadd: nothing there");
 
-	chunk->ac_anon[slot] = NULL;
-	chunk->ac_usedmap &= ~(1 << slot);
-	amap->am_nused--;
+	amap->am_anon[slot] = NULL;
+	ptr = amap->am_bckptr[slot];
 
-	if (chunk->ac_usedmap == 0)
-		amap_chunk_free(amap, chunk);
+	if (ptr != (amap->am_nused - 1)) {	/* swap to keep slots contig? */
+		amap->am_slots[ptr] = amap->am_slots[amap->am_nused - 1];
+		amap->am_bckptr[amap->am_slots[ptr]] = ptr;	/* back link */
+	}
+	amap->am_nused--;
 }
 
 /*
