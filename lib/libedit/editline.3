@@ -1,4 +1,4 @@
-.\"	$OpenBSD: editline.3,v 1.45 2016/05/21 16:34:30 schwarze Exp $
+.\"	$OpenBSD: editline.3,v 1.46 2016/05/22 22:08:42 schwarze Exp $
 .\"	$NetBSD: editline.3,v 1.88 2016/02/25 14:59:22 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 21 2016 $
+.Dd $Mdocdate: May 22 2016 $
 .Dt EDITLINE 3
 .Os
 .Sh NAME
@@ -89,9 +89,9 @@
 .Ft int
 .Fn el_wgetc "EditLine *e" "wchar_t *wc"
 .Ft void
-.Fn el_push "EditLine *e" "const char *str"
+.Fn el_push "EditLine *e" "const char *mbs"
 .Ft void
-.Fn el_wpush "EditLine *e" "const wchar_t *str"
+.Fn el_wpush "EditLine *e" "const wchar_t *wcs"
 .Ft int
 .Fn el_parse "EditLine *e" "int argc" "const char *argv[]"
 .Ft int
@@ -232,10 +232,8 @@ The return value may not remain valid across calls to
 and must be copied if the data is to be retained.
 .It Fn el_wgetc
 Read a wide character from the tty, respecting the current locale,
-or from the input stream written by
-.Fn el_wpush
-and
-.Fn el_push
+or from the input queue described in
+.Xr editline 7
 if that is not empty, and store it in
 .Fa wc .
 If an invalid or incomplete character is found, it is discarded,
@@ -266,17 +264,23 @@ to
 and return \-1.
 In the C or POSIX locale, this simply reads a byte, but for any other
 locale, including UTF-8, this is rarely useful.
+.It Fn el_wpush
+Push the wide character string
+.Fa wcs
+back onto the input queue described in
+.Xr editline 7 .
+If the queue overflows, for example due to a recursive macro,
+or if an error occurs, for example because
+.Fa wcs
+is
+.Dv NULL
+or memory allocation fails, the function beeps at the user,
+but does not report the problem to the caller.
 .It Fn el_push
-Pushes
-.Fa str
-back onto the input stream.
-This is used by the macro expansion mechanism.
-Refer to the description of
-.Ic bind
-.Fl s
-in
-.Xr editrc 5
-for more information.
+Use the current locale to convert the multibyte string
+.Fa mbs
+to a wide character string, and pass the result to
+.Fn el_wpush .
 .It Fn el_parse
 Parses the
 .Fa argv
