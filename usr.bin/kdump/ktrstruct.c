@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.18 2016/03/24 05:05:42 guenther Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.19 2016/05/22 23:02:28 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -266,10 +266,16 @@ ktrsigaction(const struct sigaction *sa)
 	 * note: ktrstruct() has already verified that sa points to a
 	 * buffer exactly sizeof(struct sigaction) bytes long.
 	 */
+	/*
+	 * Fuck!  Comparison of function pointers on hppa assumes you can
+	 * dereference them if they're plabels!  Cast everything to void *
+	 * to suppress that extra logic; sorry folks, the address we report
+	 * here might not match what you see in your executable...
+	 */
 	printf("struct sigaction { ");
-	if (sa->sa_handler == SIG_DFL)
+	if ((void *)sa->sa_handler == (void *)SIG_DFL)
 		printf("handler=SIG_DFL");
-	else if (sa->sa_handler == SIG_IGN)
+	else if ((void *)sa->sa_handler == (void *)SIG_IGN)
 		printf("handler=SIG_IGN");
 	else if (sa->sa_flags & SA_SIGINFO)
 		printf("sigaction=%p", (void *)sa->sa_sigaction);
