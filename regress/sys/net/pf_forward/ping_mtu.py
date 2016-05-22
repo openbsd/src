@@ -11,7 +11,7 @@ srcaddr=sys.argv[1]
 dstaddr=sys.argv[2]
 size=int(sys.argv[3])
 expect=int(sys.argv[4])
-pid=os.getpid()
+pid=os.getpid() & 0xffff
 hdr=IP(flags="DF", src=srcaddr, dst=dstaddr)/ICMP(id=pid)
 payload="a" * (size - len(str(hdr)))
 ip=hdr/payload
@@ -20,7 +20,7 @@ eth=Ether(src=SRC_MAC, dst=PF_MAC)/ip
 a=srp1(eth, iface=SRC_IF, timeout=2)
 
 if a and a.payload.payload.type==3 and a.payload.payload.code==4:
-	mtu=a.payload.payload.unused
+	mtu=a.payload.payload.nexthopmtu
 	print "mtu=%d" % (mtu)
 	if mtu != expect:
 		print "MTU!=%d" % (expect)

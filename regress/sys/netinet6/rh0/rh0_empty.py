@@ -7,7 +7,7 @@ import os
 from addr import *
 from scapy.all import *
 
-pid=os.getpid()
+pid=os.getpid() & 0xffff
 payload="ABCDEFGHIJKLMNOP"
 packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/\
     IPv6ExtHdrRouting(addresses=[])/\

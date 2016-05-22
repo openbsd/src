@@ -6,7 +6,7 @@ from addr import *
 from scapy.all import *
 
 dstaddr=sys.argv[1]
-pid=os.getpid()
+pid=os.getpid() & 0xffff
 payload="a" * 1472
 p=(Ether(src=SRC_MAC, dst=PF_MAC)/IP(flags="DF", src=SRC_OUT, dst=dstaddr)/
     UDP(sport=pid,dport=9)/payload)

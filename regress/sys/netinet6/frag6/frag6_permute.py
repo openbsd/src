@@ -17,7 +17,7 @@ permute.append([2,0,1])
 permute.append([1,2,0])
 permute.append([2,1,0])
 
-pid=os.getpid()
+pid=os.getpid() & 0xffff
 payload="ABCDEFGHIJKLMNOP"
 for p in permute:
 	pid += 1

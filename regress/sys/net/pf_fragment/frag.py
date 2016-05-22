@@ -6,7 +6,7 @@ from addr import *
 from scapy.all import *
 
 dstaddr=sys.argv[1]
-pid=os.getpid()
+pid=os.getpid() & 0xffff
 payload="ABCDEFGHIJKLOMNO"
 packet=IP(src=SRC_OUT, dst=dstaddr)/ICMP(id=pid)/payload
 frag0=str(packet)[20:36]
