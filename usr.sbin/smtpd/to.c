@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.26 2016/02/15 12:53:50 mpi Exp $	*/
+/*	$OpenBSD: to.c,v 1.27 2016/05/22 11:15:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -194,10 +194,15 @@ time_to_text(time_t when)
 	char *day[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 	char *month[] = {"Jan","Feb","Mar","Apr","May","Jun",
 			 "Jul","Aug","Sep","Oct","Nov","Dec"};
+	char *tz;
+	long offset;
 
 	lt = localtime(&when);
 	if (lt == NULL || when == 0)
 		fatalx("time_to_text: localtime");
+
+	offset = lt->tm_gmtoff;
+	tz = lt->tm_zone;
 
 	/* We do not use strftime because it is subject to locale substitution*/
 	if (!bsnprintf(buf, sizeof(buf),
@@ -205,10 +210,10 @@ time_to_text(time_t when)
 	    day[lt->tm_wday], lt->tm_mday, month[lt->tm_mon],
 	    lt->tm_year + 1900,
 	    lt->tm_hour, lt->tm_min, lt->tm_sec,
-	    lt->tm_gmtoff >= 0 ? '+' : '-',
-	    abs((int)lt->tm_gmtoff / 3600),
-	    abs((int)lt->tm_gmtoff % 3600) / 60,
-	    lt->tm_zone))
+	    offset >= 0 ? '+' : '-',
+	    abs((int)offset / 3600),
+	    abs((int)offset % 3600) / 60,
+	    tz))
 		fatalx("time_to_text: bsnprintf");
 
 	return buf;
