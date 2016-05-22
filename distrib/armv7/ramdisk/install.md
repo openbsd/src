@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.29 2016/05/22 06:43:03 jsg Exp $
+#	$OpenBSD: install.md,v 1.30 2016/05/22 08:01:04 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,10 +61,12 @@ DEFAULTSETS="bsd bsd.rd ${MDSETS}"
 
 NEWFSARGS_msdos="-F 16 -L boot"
 NEWFSARGS_ext2fs="-v boot"
+MOUNT_ARGS_msdos="-o-l"
+MOUNT_ARGS_ext2fs=
 
 md_installboot() {
 	local _disk=$1
-	mount /dev/${_disk}i /mnt/mnt
+	local mount_args=${MOUNT_ARGS_msdos}
 
 	BEAGLE=$(scan_dmesg '/^omap0 at mainbus0: TI OMAP3 \(BeagleBoard\).*/s//\1/p')
 	BEAGLEBONE=$(scan_dmesg '/^omap0 at mainbus0: TI AM335x \(BeagleBone\).*/s//\1/p')
@@ -72,6 +74,12 @@ md_installboot() {
 	CUBOX=$(scan_dmesg '/^imx0 at mainbus0: \(SolidRun.*\)/s//CUBOX/p')
 	NITROGEN=$(scan_dmesg '/^imx0 at mainbus0: \(Freescale i.MX6 SABRE Lite.*\)/s//NITROGEN/p')
 	WANDBOARD=$(scan_dmesg '/^imx0 at mainbus0: \(Wandboard i.MX6.*\)/s//WANDBOARD/p')
+
+	if [[ ${MDPLAT} == "IMX" && ! -n $WANDBOARD ]]; then
+		mount_args=${MOUNT_ARGS_ext2fs}
+	fi
+
+	mount ${mount_args} /dev/${_disk}i /mnt/mnt
 
         if [[ -f /mnt/bsd.${MDPLAT}.umg ]]; then
                 mv /mnt/bsd.${MDPLAT}.umg /mnt/mnt/bsd.umg
