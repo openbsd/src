@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.21 2016/05/06 13:12:52 schwarze Exp $	*/
+/*	$OpenBSD: common.c,v 1.22 2016/05/22 23:09:56 schwarze Exp $	*/
 /*	$NetBSD: common.c,v 1.24 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -526,7 +526,7 @@ protected el_action_t
 ed_start_over(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
-	ch_reset(el, 0);
+	ch_reset(el);
 	return CC_REFRESH;
 }
 

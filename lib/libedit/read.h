@@ -1,5 +1,5 @@
-/*	$OpenBSD: read.h,v 1.6 2016/05/20 15:30:17 schwarze Exp $	*/
-/*	$NetBSD: read.h,v 1.9 2016/02/24 17:13:22 christos Exp $	*/
+/*	$OpenBSD: read.h,v 1.7 2016/05/22 23:09:56 schwarze Exp $	*/
+/*	$NetBSD: read.h,v 1.12 2016/05/22 19:44:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #define	_h_el_read
 
 protected int		read_init(EditLine *);
+protected void		read_end(struct el_read_t *);
 protected void		read_prepare(EditLine *);
 protected void		read_finish(EditLine *);
 protected int		el_read_setfn(struct el_read_t *, el_rfunc_t);

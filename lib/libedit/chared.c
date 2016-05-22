@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.c,v 1.26 2016/05/06 13:12:52 schwarze Exp $	*/
+/*	$OpenBSD: chared.c,v 1.27 2016/05/22 23:09:56 schwarze Exp $	*/
 /*	$NetBSD: chared.c,v 1.28 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -45,8 +45,6 @@
 #include "el.h"
 #include "common.h"
 #include "fcns.h"
-
-static void ch__clearmacro (EditLine *);
 
 /* value to leave unused in line buffer */
 #define	EL_LEAVE	2
@@ -392,8 +390,6 @@ cv__endword(wchar_t *p, wchar_t *high, int n, int (*wtest)(wint_t))
 protected int
 ch_init(EditLine *el)
 {
-	c_macro_t *ma = &el->el_chared.c_macro;
-
 	el->el_line.buffer = reallocarray(NULL, EL_BUFSIZ,
 	    sizeof(*el->el_line.buffer));
 	if (el->el_line.buffer == NULL)
@@ -443,12 +439,6 @@ ch_init(EditLine *el)
 	el->el_state.argument = 1;
 	el->el_state.lastcmd = ED_UNASSIGNED;
 
-	ma->level = -1;
-	ma->offset = 0;
-	ma->macro = reallocarray(NULL, EL_MAXMACRO,
-	    sizeof(*ma->macro));
-	if (ma->macro == NULL)
-		return -1;
 	return 0;
 }
 
@@ -456,7 +446,7 @@ ch_init(EditLine *el)
  *	Reset the character editor
  */
 protected void
-ch_reset(EditLine *el, int mclear)
+ch_reset(EditLine *el)
 {
 	el->el_line.cursor		= el->el_line.buffer;
 	el->el_line.lastchar		= el->el_line.buffer;
@@ -478,17 +468,6 @@ ch_reset(EditLine *el, int mclear)
 	el->el_state.lastcmd		= ED_UNASSIGNED;
 
 	el->el_history.eventno		= 0;
-
-	if (mclear)
-		ch__clearmacro(el);
-}
-
-static void
-ch__clearmacro(EditLine *el)
-{
-	c_macro_t *ma = &el->el_chared.c_macro;
-	while (ma->level >= 0)
-		free(ma->macro[ma->level--]);
 }
 
 /* ch_enlargebufs():
@@ -600,9 +579,7 @@ ch_end(EditLine *el)
 	el->el_chared.c_redo.cmd = ED_UNASSIGNED;
 	free(el->el_chared.c_kill.buf);
 	el->el_chared.c_kill.buf = NULL;
-	ch_reset(el, 1);
-	free(el->el_chared.c_macro.macro);
-	el->el_chared.c_macro.macro = NULL;
+	ch_reset(el);
 }
 
 

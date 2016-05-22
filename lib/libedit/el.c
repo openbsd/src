@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.35 2016/05/20 15:30:17 schwarze Exp $	*/
+/*	$OpenBSD: el.c,v 1.36 2016/05/22 23:09:56 schwarze Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -126,6 +126,7 @@ el_end(EditLine *el)
 	map_end(el);
 	tty_end(el);
 	ch_end(el);
+	read_end(el->el_read);
 	search_end(el);
 	hist_end(el);
 	prompt_end(el);
@@ -148,7 +149,7 @@ el_reset(EditLine *el)
 {
 
 	tty_cookedmode(el);
-	ch_reset(el, 0);		/* XXX: Do we want that? */
+	ch_reset(el);		/* XXX: Do we want that? */
 }
 
 

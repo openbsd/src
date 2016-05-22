@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.h,v 1.14 2016/04/11 20:43:33 schwarze Exp $	*/
+/*	$OpenBSD: chared.h,v 1.15 2016/05/22 23:09:56 schwarze Exp $	*/
 /*	$NetBSD: chared.h,v 1.20 2010/04/15 00:57:33 christos Exp $	*/
 
 /*-
@@ -41,8 +41,6 @@
 #ifndef _h_el_chared
 #define	_h_el_chared
 
-#define	EL_MAXMACRO	10
-
 /*
  * This is an issue of basic "vi" look-and-feel. Defining VI_MOVE works
  * like real vi: i.e. the transition from command<->insert modes moves
@@ -54,13 +52,6 @@
  * this fact.
  */
 #define	VI_MOVE
-
-
-typedef struct c_macro_t {
-	int	  level;
-	int	  offset;
-	wchar_t	**macro;
-} c_macro_t;
 
 /*
  * Undo information for vi - no undo in emacs (yet)
@@ -110,7 +101,6 @@ typedef struct el_chared_t {
 	c_kill_t	c_kill;
 	c_redo_t	c_redo;
 	c_vcmd_t	c_vcmd;
-	c_macro_t	c_macro;
 	el_zfunc_t	c_resizefun;
 	void *		c_resizearg;
 } el_chared_t;
@@ -154,7 +144,7 @@ protected int	 c_gets(EditLine *, wchar_t *, const wchar_t *);
 protected int	 c_hpos(EditLine *);
 
 protected int	 ch_init(EditLine *);
-protected void	 ch_reset(EditLine *, int);
+protected void	 ch_reset(EditLine *);
 protected int	 ch_resizefun(EditLine *, el_zfunc_t, void *);
 protected int	 ch_enlargebufs(EditLine *, size_t);
 protected void	 ch_end(EditLine *);

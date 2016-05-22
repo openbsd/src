@@ -1,5 +1,5 @@
-/*	$OpenBSD: read.c,v 1.40 2016/05/20 15:30:17 schwarze Exp $	*/
-/*	$NetBSD: read.c,v 1.94 2016/04/18 17:01:19 christos Exp $	*/
+/*	$OpenBSD: read.c,v 1.41 2016/05/22 23:09:56 schwarze Exp $	*/
+/*	$NetBSD: read.c,v 1.97 2016/05/22 19:44:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -51,14 +51,24 @@
 #include "fcns.h"
 #include "read.h"
 
+#define	EL_MAXMACRO	10
+
+struct macros {
+	wchar_t	**macro;
+	int	  level;
+	int	  offset;
+};
+
 struct el_read_t {
+	struct macros	 macros;
 	el_rfunc_t	 read_char;	/* Function to read a character. */
 };
 
 static int	read__fixio(int, int);
 static int	read_char(EditLine *, wchar_t *);
 static int	read_getcmd(EditLine *, el_action_t *, wchar_t *);
-static void	read_pop(c_macro_t *);
+static void	read_clearmacros(struct macros *);
+static void	read_pop(struct macros *);
 
 /* read_init():
  *	Initialize the read stuff
@@ -66,13 +76,35 @@ static void	read_pop(c_macro_t *);
 protected int
 read_init(EditLine *el)
 {
+	struct macros *ma;
+
 	if ((el->el_read = malloc(sizeof(*el->el_read))) == NULL)
 		return -1;
+
+	ma = &el->el_read->macros;
+	if ((ma->macro = reallocarray(NULL, EL_MAXMACRO,
+	    sizeof(*ma->macro))) == NULL) {
+		free(el->el_read);
+		return -1;
+	}
+	ma->level = -1;
+	ma->offset = 0;
+
 	/* builtin read_char */
 	el->el_read->read_char = read_char;
 	return 0;
 }
 
+/* el_read_end():
+ *	Free the data structures used by the read stuff.
+ */
+protected void
+read_end(struct el_read_t *el_read)
+{
+	read_clearmacros(&el_read->macros);
+	free(el_read->macros.macro);
+	el_read->macros.macro = NULL;
+}
 
 /* el_read_setfn():
  *	Set the read char function to the one provided.
@@ -185,7 +217,7 @@ read__fixio(int fd __attribute__((__unused__)), int e)
 void
 el_wpush(EditLine *el, const wchar_t *str)
 {
-	c_macro_t *ma = &el->el_chared.c_macro;
+	struct macros *ma = &el->el_read->macros;
 
 	if (str != NULL && ma->level + 1 < EL_MAXMACRO) {
 		ma->level++;
@@ -342,7 +374,7 @@ read_char(EditLine *el, wchar_t *cp)
  *	Pop a macro from the stack
  */
 static void
-read_pop(c_macro_t *ma)
+read_pop(struct macros *ma)
 {
 	int i;
 
@@ -353,14 +385,22 @@ read_pop(c_macro_t *ma)
 	ma->offset = 0;
 }
 
+static void
+read_clearmacros(struct macros *ma)
+{
+	while (ma->level >= 0)
+		free(ma->macro[ma->level--]);
+	ma->offset = 0;
+}
+
 /* el_wgetc():
  *	Read a wide character
  */
 int
 el_wgetc(EditLine *el, wchar_t *cp)
 {
+	struct macros *ma = &el->el_read->macros;
 	int num_read;
-	c_macro_t *ma = &el->el_chared.c_macro;
 
 	terminal__flush(el);
 	for (;;) {
@@ -414,7 +454,7 @@ read_prepare(EditLine *el)
 	   we have the wrong size. */
 	el_resize(el);
 	re_clear_display(el);	/* reset the display stuff */
-	ch_reset(el, 0);
+	ch_reset(el);
 	re_refresh(el);		/* print the prompt */
 
 	if (el->el_flags & UNBUFFERED)
@@ -475,7 +515,7 @@ el_wgets(EditLine *el, int *nread)
 
 
 #ifdef FIONREAD
-	if (el->el_tty.t_mode == EX_IO && el->el_chared.c_macro.level < 0) {
+	if (el->el_tty.t_mode == EX_IO && el->el_read->macros.level < 0) {
 		int chrs = 0;
 
 		(void) ioctl(el->el_infd, FIONREAD, &chrs);
@@ -638,7 +678,8 @@ el_wgets(EditLine *el, int *nread)
 #endif /* DEBUG_READ */
 			/* put (real) cursor in a known place */
 			re_clear_display(el);	/* reset the display stuff */
-			ch_reset(el, 1);	/* reset the input pointers */
+			ch_reset(el);	/* reset the input pointers */
+			read_clearmacros(&el->el_read->macros);
 			re_refresh(el); /* print the prompt again */
 			break;
 
