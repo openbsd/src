@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.69 2016/03/30 23:34:12 bru Exp $ */
+/* $OpenBSD: pms.c,v 1.70 2016/05/22 22:06:11 bru Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -632,8 +632,7 @@ pms_proc_mouse(struct pms_softc *sc)
 	else
 		dz = 0;
 
-	wsmouse_input(sc->sc_wsmousedev,
-	    buttons, dx, dy, dz, 0, WSMOUSE_INPUT_DELTA);
+	WSMOUSE_INPUT(sc->sc_wsmousedev, buttons, dx, dy, dz, 0);
 }
 
 int

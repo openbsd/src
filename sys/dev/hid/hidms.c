@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.2 2016/02/10 05:49:50 guenther Exp $ */
+/*	$OpenBSD: hidms.c,v 1.3 2016/05/22 22:06:11 bru Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -331,7 +331,6 @@ hidms_input(struct hidms *ms, uint8_t *data, u_int len)
 {
 	int dx, dy, dz, dw;
 	u_int32_t buttons = 0;
-	int flags;
 	int i, s;
 
 	DPRINTFN(5,("hidms_input: len=%d\n", len));
@@ -357,12 +356,6 @@ hidms_input(struct hidms *ms, uint8_t *data, u_int len)
 		if (*data == 0x14 || *data == 0x15)
 			return;
 	}
-
-	flags = WSMOUSE_INPUT_DELTA;
-	if (ms->sc_flags & HIDMS_ABSX)
-		flags |= WSMOUSE_INPUT_ABSOLUTE_X;
-	if (ms->sc_flags & HIDMS_ABSY)
-		flags |= WSMOUSE_INPUT_ABSOLUTE_Y;
 
 	dx =  hid_get_data(data, len, &ms->sc_loc_x);
 	dy = -hid_get_data(data, len, &ms->sc_loc_y);
@@ -403,8 +396,18 @@ hidms_input(struct hidms *ms, uint8_t *data, u_int len)
 		ms->sc_buttons = buttons;
 		if (ms->sc_wsmousedev != NULL) {
 			s = spltty();
-			wsmouse_input(ms->sc_wsmousedev, buttons,
-			    dx, dy, dz, dw, flags);
+			if (ms->sc_flags & HIDMS_ABSX) {
+				wsmouse_set(ms->sc_wsmousedev,
+				    WSMOUSE_ABS_X, dx, 0);
+				dx = 0;
+			}
+			if (ms->sc_flags & HIDMS_ABSY) {
+				wsmouse_set(ms->sc_wsmousedev,
+				    WSMOUSE_ABS_Y, dy, 0);
+				dy = 0;
+			}
+			WSMOUSE_INPUT(ms->sc_wsmousedev,
+			    buttons, dx, dy, dz, dw);
 			splx(s);
 		}
 	}
