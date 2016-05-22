@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.156 2016/05/10 10:37:57 krw Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.157 2016/05/22 20:27:04 bluhm Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -943,7 +943,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	}
 	return (0);
 out:
-	devvp->v_specmountpoint = NULL;
+	if (devvp->v_specinfo)
+		devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.90 2016/04/26 18:37:03 natano Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.91 2016/05/22 20:27:04 bluhm Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -596,6 +596,8 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	devvp->v_specmountpoint = mp;
 	return (0);
 out:
+	if (devvp->v_specinfo)
+		devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.50 2016/04/26 18:37:03 natano Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.51 2016/05/22 20:27:04 bluhm Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -450,7 +450,8 @@ out1:
 		DPRINTF("ntfs_mountfs: vflush failed\n");
 
 out:
-	devvp->v_specmountpoint = NULL;
+	if (devvp->v_specinfo)
+		devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
 
