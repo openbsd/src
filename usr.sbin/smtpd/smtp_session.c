@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.271 2016/05/16 19:25:05 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.272 2016/05/22 16:31:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -908,11 +908,10 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		    evpid_to_msgid(s->evp.id));
 
 		TAILQ_FOREACH(rcpt, &s->rcpts, entry) {
-			log_info("smtp-in: Accepted message %08x "
-			    "on session %016"PRIx64
-			    ": from=<%s%s%s>, to=<%s%s%s>, size=%zu, ndest=%zu, proto=%s",
-			    evpid_to_msgid(s->evp.id),
+			log_info("%016"PRIx64" smtp event=message msgid=%08x "
+			    "from=<%s%s%s> to=<%s%s%s> size=%zu ndest=%zu proto=%s",
 			    s->id,
+			    evpid_to_msgid(s->evp.id),
 			    s->evp.sender.user,
 			    s->evp.sender.user[0] == '\0' ? "" : "@",
 			    s->evp.sender.domain,
@@ -940,21 +939,24 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		s = tree_xpop(&wait_parent_auth, reqid);
 		strnvis(user, s->username, sizeof user, VIS_WHITE | VIS_SAFE);
 		if (success == LKA_OK) {
-			log_info("smtp-in: Accepted authentication for user %s "
-			    "on session %016"PRIx64, user, s->id);
+			log_info("%016"PRIx64" smtp "
+			    "event=authentication user=%s result=ok",
+			    s->id, user);
 			s->flags |= SF_AUTHENTICATED;
 			smtp_reply(s, "235 %s: Authentication succeeded",
 			    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 		}
 		else if (success == LKA_PERMFAIL) {
-			log_info("smtp-in: Authentication failed for user %s "
-			    "on session %016"PRIx64, user, s->id);
+			log_info("%016"PRIx64" smtp "
+			    "event=authentication user=%s result=permfail",
+			    s->id, user);
 			smtp_auth_failure_pause(s);
 			return;
 		}
 		else if (success == LKA_TEMPFAIL) {
-			log_info("smtp-in: Authentication temporarily failed "
-			    "for user %s on session %016"PRIx64, user, s->id);
+			log_info("%016"PRIx64" smtp "
+			    "event=authentication user=%s result=tempfail",
+			    s->id, user);
 			smtp_reply(s, "421 %s: Temporary failure",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 		}
@@ -970,8 +972,8 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		s = tree_xpop(&wait_ssl_init, resp_ca_cert->reqid);
 
 		if (resp_ca_cert->status == CA_FAIL) {
-			log_info("smtp-in: Disconnecting session %016" PRIx64
-			    ": CA failure", s->id);
+			log_info("%016"PRIx64" smtp event=closed reason=ca-failure",
+			    s->id);
 			smtp_free(s, "CA failure");
 			return;
 		}
@@ -996,8 +998,9 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		if (resp_ca_vrfy->status == CA_OK)
 			s->flags |= SF_VERIFIED;
 		else if (s->listener->flags & F_TLS_VERIFY) {
-			log_info("smtp-in: Disconnecting session %016" PRIx64
-			    ": SSL certificate check failed", s->id);
+			log_info("%016"PRIx64" smtp "
+			    "event=closed reason=cert-check-failed",
+			    s->id);
 			smtp_free(s, "SSL certificate check failed");
 			return;
 		}
@@ -1033,8 +1036,9 @@ smtp_filter_response(uint64_t id, int query, int status, uint32_t code,
 
 	case QUERY_CONNECT:
 		if (status != FILTER_OK) {
-			log_info("smtp-in: Disconnecting session %016" PRIx64
-			    ": rejected by filter", s->id);
+			log_info("%016"PRIx64" smtp "
+			    "event=closed reason=filter-reject",
+			    s->id);
 			smtp_free(s, "rejected by filter");
 			return;
 		}
@@ -1254,7 +1258,7 @@ smtp_io(struct io *io, int evt)
 	switch (evt) {
 
 	case IO_TLSREADY:
-		log_info("smtp-in: Started TLS on session %016"PRIx64": %s",
+		log_info("%016"PRIx64" smtp event=starttls ciphers=%s",
 		    s->id, ssl_to_text(s->io.ssl));
 
 		s->flags |= SF_SECURE;
@@ -1266,8 +1270,9 @@ smtp_io(struct io *io, int evt)
 		}
 
 		if (s->listener->flags & F_TLS_VERIFY) {
-			log_info("smtp-in: Disconnecting session %016" PRIx64
-			    ": client did not present certificate", s->id);
+			log_info("%016"PRIx64" smtp "
+			    "event=closed reason=no-client-cert",
+			    s->id);
 			smtp_free(s, "client did not present certificate");
 			return;
 		}
@@ -1277,10 +1282,10 @@ smtp_io(struct io *io, int evt)
 	case IO_TLSVERIFIED:
 		x = SSL_get_peer_certificate(s->io.ssl);
 		if (x) {
-			log_info("smtp-in: Client certificate verification %s "
-			    "on session %016"PRIx64,
-			    (s->flags & SF_VERIFIED) ? "succeeded" : "failed",
-			    s->id);
+			log_info("%016"PRIx64" smtp "
+			    "event=client-cert-check result=%s",
+			    s->id,
+			    (s->flags & SF_VERIFIED) ? "success" : "failure");
 			X509_free(x);
 		}
 
@@ -1355,7 +1360,8 @@ smtp_io(struct io *io, int evt)
 
 	case IO_LOWAT:
 		if (s->state == STATE_QUIT) {
-			log_info("smtp-in: Closing session %016" PRIx64, s->id);
+			log_info("%016"PRIx64" smtp event=closed reason=quit",
+			    s->id);
 			smtp_free(s, "done");
 			break;
 		}
@@ -1384,20 +1390,20 @@ smtp_io(struct io *io, int evt)
 		break;
 
 	case IO_TIMEOUT:
-		log_info("smtp-in: Disconnecting session %016"PRIx64": "
-		    "session timeout", s->id);
+		log_info("%016"PRIx64" smtp event=closed reason=timeout",
+		    s->id);
 		smtp_free(s, "timeout");
 		break;
 
 	case IO_DISCONNECTED:
-		log_info("smtp-in: Received disconnect from session %016"PRIx64,
+		log_info("%016"PRIx64" smtp event=closed reason=disconnect",
 		    s->id);
 		smtp_free(s, "disconnected");
 		break;
 
 	case IO_ERROR:
-		log_info("smtp-in: Disconnecting session %016"PRIx64": "
-		    "IO error: %s", s->id, io->error);
+		log_info("%016"PRIx64" smtp event=closed reason=io-error: %s",
+		    s->id, io->error);
 		smtp_free(s, "IO error");
 		break;
 
@@ -2041,8 +2047,8 @@ smtp_connected(struct smtp_session *s)
 
 	smtp_enter_state(s, STATE_CONNECTED);
 
-	log_info("smtp-in: New session %016"PRIx64" from host %s [%s]",
-	    s->id, s->hostname, ss_to_text(&s->ss));
+	log_info("%016"PRIx64" smtp event=connected address=%s host=%s",
+	    s->id, ss_to_text(&s->ss), s->hostname);
 
 	sl = sizeof(ss);
 	if (getsockname(s->io.sock, (struct sockaddr*)&ss, &sl) == -1) {
@@ -2176,8 +2182,9 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 	case '5':
 	case '4':
 		if (s->flags & SF_BADINPUT) {
-			log_info("smtp-in: Bad input on session %016"PRIx64
-			    ": %.*s", s->id, n, buf);
+			log_info("%016"PRIx64" smtp "
+			    "event=bad-input result=%.*s",
+			    s->id, n, buf);
 		}
 		else if (s->state == STATE_AUTH_INIT) {
 			log_info("smtp-in: Failed command on session %016"PRIx64
@@ -2193,8 +2200,9 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 		}
 		else {
 			strnvis(tmp, s->cmd, sizeof tmp, VIS_SAFE | VIS_CSTYLE);
-			log_info("smtp-in: Failed command on session %016"PRIx64
-			    ": \"%s\" => %.*s", s->id, tmp, n, buf);
+			log_info("%016"PRIx64" smtp "
+			    "event=failed-command command=%s result=%.*s",
+			    s->id, tmp, n, buf);
 		}
 		break;
 	}

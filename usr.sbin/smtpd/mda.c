@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.118 2016/03/25 15:06:58 krw Exp $	*/
+/*	$OpenBSD: mda.c,v 1.119 2016/05/22 16:31:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -786,9 +786,9 @@ mda_log(const struct mda_envelope *evp, const char *prefix, const char *status)
 	else
 		method = "???";
 
-	log_info("delivery: %s for %016" PRIx64 ": from=<%s>, to=<%s>, "
-	    "%suser=%s, method=%s, delay=%s, stat=%s",
-	    prefix,
+	log_info("%016"PRIx64" mda event=delivery evpid=%016" PRIx64 " from=<%s> to=<%s> "
+	    "%suser=%s method=%s delay=%s result=%s stat=%s",
+	    (uint64_t)0,
 	    evp->id,
 	    evp->sender ? evp->sender : "",
 	    evp->dest,
@@ -796,6 +796,7 @@ mda_log(const struct mda_envelope *evp, const char *prefix, const char *status)
 	    evp->user,
 	    method,
 	    duration_to_text(time(NULL) - evp->creation),
+	    prefix,
 	    status);
 }
 

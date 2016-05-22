@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.82 2015/12/12 20:02:31 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.83 2016/05/22 16:31:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -319,8 +319,9 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 
 		if (resp_ca_cert->status == CA_FAIL) {
 			if (s->relay->pki_name) {
-				log_info("smtp-out: Disconnecting session %016"PRIx64
-				    ": CA failure", s->id);
+				log_info("%016"PRIx64" mta "
+				    "event=closing reason=ca-failure",
+				    s->id);
 				mta_free(s);
 				return;
 			}
@@ -551,9 +552,10 @@ mta_connect(struct mta_session *s)
 	else
 		schema = "smtp://";
 
-	log_info("smtp-out: Connecting to %s%s:%d (%s) on session"
-	    " %016"PRIx64"...", schema, sa_to_text(s->route->dst->sa),
-	    portno, s->route->dst->ptrname, s->id);
+	log_info("%016"PRIx64" mta "
+	    "event=connecting address=%s%s:%d host=%s",
+	    s->id, schema, sa_to_text(s->route->dst->sa),
+	    portno, s->route->dst->ptrname);
 
 	mta_enter_state(s, MTA_INIT);
 	iobuf_xinit(&s->iobuf, 0, 0, "mta_connect");
@@ -717,7 +719,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 		}
 
 		if (s->msgtried >= MAX_TRYBEFOREDISABLE) {
-			log_info("smtp-out: Remote host seems to reject all mails on session %016"PRIx64,
+			log_info("%016"PRIx64" mta event=host-rejects-all-mails",
 			    s->id);
 			mta_route_down(s->relay, s->route);
 			mta_enter_state(s, MTA_QUIT);
@@ -1147,7 +1149,7 @@ mta_io(struct io *io, int evt)
 	switch (evt) {
 
 	case IO_CONNECTED:
-		log_info("smtp-out: Connected on session %016"PRIx64, s->id);
+		log_info("%016"PRIx64" mta event=connected", s->id);
 
 		if (s->use_smtps) {
 			io_set_write(io);
@@ -1160,7 +1162,7 @@ mta_io(struct io *io, int evt)
 		break;
 
 	case IO_TLSREADY:
-		log_info("smtp-out: Started TLS on session %016"PRIx64": %s",
+		log_info("%016"PRIx64" mta event=starttls ciphers=%s",
 		    s->id, ssl_to_text(s->io.ssl));
 		s->flags |= MTA_TLS;
 
@@ -1259,9 +1261,8 @@ mta_io(struct io *io, int evt)
 			(void)strlcpy(s->replybuf, line, sizeof s->replybuf);
 
 		if (s->state == MTA_QUIT) {
-			log_info("smtp-out: Closing session %016"PRIx64
-			    ": %zu message%s sent.", s->id, s->msgcount,
-			    (s->msgcount > 1) ? "s" : "");
+			log_info("%016"PRIx64" mta event=closed reason=quit messages=%zu",
+			    s->id, s->msgcount);
 			mta_free(s);
 			return;
 		}
@@ -1504,8 +1505,9 @@ mta_error(struct mta_session *s, const char *fmt, ...)
 		    " after %zu message%s sent: %s", s->id, s->msgcount,
 		    (s->msgcount > 1) ? "s" : "", error);
 	else
-		log_info("smtp-out: Error on session %016"PRIx64 ": %s",
+		log_info("%016"PRIx64" mta event=error reason=%s",
 		    s->id, error);
+
 	/*
 	 * If not connected yet, and the error is not local, just ignore it
 	 * and try to reconnect.
