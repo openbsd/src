@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.897 2016/05/20 17:28:43 rpe Exp $
+#	$OpenBSD: install.sub,v 1.898 2016/05/22 19:12:21 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -490,11 +490,11 @@ log_answers() {
 # Fetch response file for autoinstall.
 get_responsefile() {
 	local _rf _if _mac _mode _lf _hn _path
-	action=
+	AI_MODE=
 
 	[[ -f /auto_upgrade.conf ]] && _rf=/auto_upgrade.conf _mode=upgrade
 	[[ -f /auto_install.conf ]] && _rf=/auto_install.conf _mode=install
-	[[ -f $_rf ]] && cp $_rf /ai.$_mode.conf && action=$_mode && return
+	[[ -f $_rf ]] && cp $_rf /ai.$_mode.conf && AI_MODE=$_mode && return
 
 	# Select a network interface for initial dhcp request.
 	# Ask if multiple were found and system was not netbooted.
@@ -528,7 +528,7 @@ get_responsefile() {
 			_url="http://$AI_SERVER/$_path$_rf.conf?path=$HTTP_SETDIR"
 			echo "Fetching $_url"
 			if ftp -Vo "/ai.$_mode.conf" "$_url" 2>/dev/null; then
-				action=$_mode
+				AI_MODE=$_mode
 				ifconfig $_if delete down 2>/dev/null
 				return 0
 			fi
@@ -556,9 +556,9 @@ get_responsefile() {
 
 	echo "Fetching $_rf"
 	[[ -f $_rf ]] && _rf="file://$_rf"
-	ftp -Vo "/ai.$_mode.conf" "$_rf" 2>/dev/null && action=$_mode
+	ftp -Vo "/ai.$_mode.conf" "$_rf" 2>/dev/null && AI_MODE=$_mode
 	ifconfig $_if delete down 2>/dev/null
-	[[ -n $action ]]
+	[[ -n $AI_MODE ]]
 }
 
 # Search question in $RESPFILE, return answer in $resp.
@@ -2737,6 +2737,9 @@ if ! $AUTO; then
 	retrap
 fi
 
+AI_MODE=
+AI_SERVER=
+
 ROOTDISK=
 ROOTDEV=
 PACKAGE_PATH=
@@ -2824,11 +2827,11 @@ elif [[ -z $RESPFILE ]]; then
 		exit 1
 	fi
 	rm -f /ai.done
-	echo "Performing non-interactive $action..."
-	/$action -af /ai.$action.conf 2>&1 </dev/null | sed 's/^.*//;w/ai.log'
+	echo "Performing non-interactive $AI_MODE..."
+	/$AI_MODE -af /ai.$AI_MODE.conf 2>&1 </dev/null | sed 's/^.*//;w/ai.log'
 	if [[ -f /ai.done ]]; then
 		# Email ai.log to root on next boot.
-		prep_root_mail /ai.log "$(hostname) $action log"
+		prep_root_mail /ai.log "$(hostname) $AI_MODE log"
 		exec reboot
 	else
 		echo "failed; check /ai.log"
