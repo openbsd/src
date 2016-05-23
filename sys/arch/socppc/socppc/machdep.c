@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.68 2016/05/21 00:56:44 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.69 2016/05/23 18:14:47 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -544,7 +544,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		return (EPERM);
 	}
 
-	if ((error = copyin(scp, &ksc, sizeof sc)))
+	if ((error = copyin(scp, &ksc, sizeof ksc)))
 		return error;
 
 	if (ksc.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
