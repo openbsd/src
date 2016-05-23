@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.49 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.50 2016/05/23 18:28:22 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -242,7 +242,7 @@ fec_add(struct fec *fec)
 	if (fn == NULL)
 		fatal(__func__);
 
-	memcpy(&fn->fec, fec, sizeof(fn->fec));
+	fn->fec = *fec;
 	fn->local_label = NO_LABEL;
 	LIST_INIT(&fn->upstream);
 	LIST_INIT(&fn->downstream);
@@ -275,7 +275,7 @@ fec_nh_add(struct fec_node *fn, struct in_addr nexthop)
 	if (fnh == NULL)
 		fatal(__func__);
 
-	fnh->nexthop.s_addr = nexthop.s_addr;
+	fnh->nexthop = nexthop;
 	fnh->remote_label = NO_LABEL;
 	LIST_INSERT_HEAD(&fn->nexthops, fnh, entry);
 
@@ -494,7 +494,7 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 	/* LMp.13 & LMp.16: Record the mapping from this peer */
 	if (me == NULL)
 		me = lde_map_add(ln, fn, 0);
-	memcpy(&me->map, map, sizeof(*map));
+	me->map = *map;
 
 	if (msgsource == 0)
 		/* LMp.13: just return since we use liberal lbl retention */

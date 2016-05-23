@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.49 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.50 2016/05/23 18:28:22 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -446,7 +446,7 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			memcpy(&kr, imsg.data, sizeof(kr));
 
 			fec.type = FEC_TYPE_IPV4;
-			fec.u.ipv4.prefix.s_addr = kr.prefix.s_addr;
+			fec.u.ipv4.prefix = kr.prefix;
 			fec.u.ipv4.prefixlen = kr.prefixlen;
 			lde_kernel_insert(&fec, kr.nexthop,
 			    kr.flags & F_CONNECTED, NULL);
@@ -459,7 +459,7 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			memcpy(&kr, imsg.data, sizeof(kr));
 
 			fec.type = FEC_TYPE_IPV4;
-			fec.u.ipv4.prefix.s_addr = kr.prefix.s_addr;
+			fec.u.ipv4.prefix = kr.prefix;
 			fec.u.ipv4.prefixlen = kr.prefixlen;
 			lde_kernel_remove(&fec, kr.nexthop);
 			break;
@@ -564,10 +564,10 @@ lde_send_change_klabel(struct fec_node *fn, struct fec_nh *fnh)
 	switch (fn->fec.type) {
 	case FEC_TYPE_IPV4:
 		memset(&kr, 0, sizeof(kr));
-		kr.prefix.s_addr = fn->fec.u.ipv4.prefix.s_addr;
+		kr.prefix = fn->fec.u.ipv4.prefix;
 		kr.prefixlen = fn->fec.u.ipv4.prefixlen;
 		kr.local_label = fn->local_label;
-		kr.nexthop.s_addr = fnh->nexthop.s_addr;
+		kr.nexthop = fnh->nexthop;
 		kr.remote_label = fnh->remote_label;
 
 		lde_imsg_compose_parent(IMSG_KLABEL_CHANGE, 0, &kr,
@@ -588,7 +588,7 @@ lde_send_change_klabel(struct fec_node *fn, struct fec_nh *fnh)
 		memset(&kpw, 0, sizeof(kpw));
 		kpw.ifindex = pw->ifindex;
 		kpw.pw_type = fn->fec.u.pwid.type;
-		kpw.nexthop.s_addr = fnh->nexthop.s_addr;
+		kpw.nexthop = fnh->nexthop;
 		kpw.local_label = fn->local_label;
 		kpw.remote_label = fnh->remote_label;
 		kpw.flags = pw->flags;
@@ -609,10 +609,10 @@ lde_send_delete_klabel(struct fec_node *fn, struct fec_nh *fnh)
 	switch (fn->fec.type) {
 	case FEC_TYPE_IPV4:
 		memset(&kr, 0, sizeof(kr));
-		kr.prefix.s_addr = fn->fec.u.ipv4.prefix.s_addr;
+		kr.prefix = fn->fec.u.ipv4.prefix;
 		kr.prefixlen = fn->fec.u.ipv4.prefixlen;
 		kr.local_label = fn->local_label;
-		kr.nexthop.s_addr = fnh->nexthop.s_addr;
+		kr.nexthop = fnh->nexthop;
 		kr.remote_label = fnh->remote_label;
 
 		lde_imsg_compose_parent(IMSG_KLABEL_DELETE, 0, &kr,
@@ -630,7 +630,7 @@ lde_send_delete_klabel(struct fec_node *fn, struct fec_nh *fnh)
 		memset(&kpw, 0, sizeof(kpw));
 		kpw.ifindex = pw->ifindex;
 		kpw.pw_type = fn->fec.u.pwid.type;
-		kpw.nexthop.s_addr = fnh->nexthop.s_addr;
+		kpw.nexthop = fnh->nexthop;
 		kpw.local_label = fn->local_label;
 		kpw.remote_label = fnh->remote_label;
 		kpw.flags = pw->flags;
@@ -670,7 +670,7 @@ lde_map2fec(struct map *map, struct in_addr lsr_id, struct fec *fec)
 	switch (map->type) {
 	case MAP_TYPE_PREFIX:
 		fec->type = FEC_TYPE_IPV4;
-		fec->u.ipv4.prefix.s_addr = map->fec.ipv4.prefix.s_addr;
+		fec->u.ipv4.prefix = map->fec.ipv4.prefix;
 		fec->u.ipv4.prefixlen = map->fec.ipv4.prefixlen;
 		break;
 	case MAP_TYPE_PWID:
@@ -737,7 +737,7 @@ lde_send_labelmapping(struct lde_nbr *ln, struct fec_node *fn, int single)
 	me = (struct lde_map *)fec_find(&ln->sent_map, &fn->fec);
 	if (me == NULL)
 		me = lde_map_add(ln, fn, 1);
-	memcpy(&me->map, &map, sizeof(map));
+	me->map = map;
 }
 
 void
@@ -857,7 +857,7 @@ lde_nbr_new(uint32_t peerid, struct in_addr *id)
 	if ((ln = calloc(1, sizeof(*ln))) == NULL)
 		fatal(__func__);
 
-	ln->id.s_addr = id->s_addr;
+	ln->id = *id;
 	ln->peerid = peerid;
 	fec_init(&ln->recv_map);
 	fec_init(&ln->sent_map);
@@ -1109,7 +1109,7 @@ lde_address_add(struct lde_nbr *ln, struct in_addr *addr)
 	if ((address = calloc(1, sizeof(*address))) == NULL)
 		fatal(__func__);
 
-	address->addr.s_addr = addr->s_addr;
+	address->addr = *addr;
 
 	TAILQ_INSERT_TAIL(&ln->addr_list, address, entry);
 

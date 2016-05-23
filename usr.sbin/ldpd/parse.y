@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.44 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.45 2016/05/23 18:28:22 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -402,7 +402,7 @@ pseudowire	: PSEUDOWIRE STRING {
 				YYERROR;
 			LIST_INSERT_HEAD(&l2vpn->pw_list, pw, entry);
 
-			memcpy(&pwdefs, defs, sizeof(pwdefs));
+			pwdefs = *defs;
 			defs = &pwdefs;
 		} pw_block {
 			struct l2vpn	*l;
@@ -547,7 +547,7 @@ interface	: INTERFACE STRING	{
 			}
 			LIST_INSERT_HEAD(&conf->iface_list, iface, entry);
 
-			memcpy(&ifacedefs, defs, sizeof(ifacedefs));
+			ifacedefs = *defs;
 			defs = &ifacedefs;
 		} interface_block {
 			iface->hello_holdtime = defs->lhello_holdtime;
@@ -589,7 +589,7 @@ tneighbor	: TNEIGHBOR STRING	{
 			tnbr->flags |= F_TNBR_CONFIGURED;
 			LIST_INSERT_HEAD(&conf->tnbr_list, tnbr, entry);
 
-			memcpy(&tnbrdefs, defs, sizeof(tnbrdefs));
+			tnbrdefs = *defs;
 			defs = &tnbrdefs;
 		} tneighbor_block {
 			tnbr->hello_holdtime = defs->thello_holdtime;
@@ -1108,7 +1108,7 @@ parse_config(char *filename)
 	if (conf->rtr_id.s_addr == 0)
 		conf->rtr_id.s_addr = get_rtr_id();
 	if (conf->trans_addr.s_addr == 0)
-		conf->trans_addr.s_addr = conf->rtr_id.s_addr;
+		conf->trans_addr = conf->rtr_id;
 
 	return (conf);
 }
@@ -1381,7 +1381,7 @@ host(const char *s, struct in_addr *addr, struct in_addr *mask)
 			return (0);
 	}
 
-	addr->s_addr = ina.s_addr;
+	*addr = ina;
 	mask->s_addr = prefixlen2mask(bits);
 
 	return (1);

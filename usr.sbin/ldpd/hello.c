@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.37 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.38 2016/05/23 18:28:22 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -63,7 +63,7 @@ send_hello(enum hello_type type, struct iface *iface, struct tnbr *tnbr)
 		fd = global.ldp_disc_socket;
 		break;
 	case HELLO_TARGETED:
-		dst.sin_addr.s_addr = tnbr->addr.s_addr;
+		dst.sin_addr = tnbr->addr;
 		holdtime = tnbr->hello_holdtime;
 		flags = TARGETED_HELLO;
 		if ((tnbr->flags & F_TNBR_CONFIGURED) || tnbr->pw_count)
@@ -158,7 +158,7 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, struct in_addr src,
 	} else {
 		source.type = HELLO_LINK;
 		source.link.iface = iface;
-		source.link.src_addr.s_addr = src.s_addr;
+		source.link.src_addr = src;
 	}
 
 	r = tlv_decode_opt_hello_prms(buf, len, &transport_addr,
@@ -176,7 +176,7 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, struct in_addr src,
 
 	/* implicit transport address */
 	if (transport_addr.s_addr == INADDR_ANY)
-		transport_addr.s_addr = src.s_addr;
+		transport_addr = src;
 	if (bad_ip_addr(transport_addr)) {
 		log_debug("%s: lsr-id %s: invalid transport address %s",
 		    __func__, inet_ntoa(lsr_id), inet_ntoa(transport_addr));

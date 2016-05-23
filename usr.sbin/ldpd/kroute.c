@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.53 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.54 2016/05/23 18:28:22 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -621,7 +621,7 @@ kroute_insert(struct kroute *kr)
 		kp = calloc(1, sizeof(struct kroute_prefix));
 		if (kp == NULL)
 			fatal(__func__);
-		kp->prefix.s_addr = kr->prefix.s_addr;
+		kp->prefix = kr->prefix;
 		kp->prefixlen = kr->prefixlen;
 		TAILQ_INIT(&kp->priorities);
 		RB_INSERT(kroute_tree, &krt, kp);
@@ -655,7 +655,7 @@ done:
 		if (kn == NULL)
 			fatal(__func__);
 		kn->kprio = kprio;
-		memcpy(&kn->r, kr, sizeof(struct kroute));
+		kn->r = *kr;
 		TAILQ_INSERT_TAIL(&kprio->nexthops, kn, entry);
 	}
 
@@ -968,13 +968,13 @@ if_newaddr(unsigned short ifindex, struct sockaddr_in *ifa,
 	if ((ka = calloc(1, sizeof(struct kif_addr))) == NULL)
 		fatal(__func__);
 	ka->addr.ifindex = ifindex;
-	ka->addr.addr.s_addr = ifa->sin_addr.s_addr;
+	ka->addr.addr = ifa->sin_addr;
 	if (mask)
-		ka->addr.mask.s_addr = mask->sin_addr.s_addr;
+		ka->addr.mask = mask->sin_addr;
 	else
 		ka->addr.mask.s_addr = INADDR_NONE;
 	if (brd)
-		ka->addr.dstbrd.s_addr = brd->sin_addr.s_addr;
+		ka->addr.dstbrd = brd->sin_addr;
 	else
 		ka->addr.dstbrd.s_addr = INADDR_NONE;
 
@@ -1088,7 +1088,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute, uint32_t family)
 		memset(&dst, 0, sizeof(dst));
 		dst.sin_len = sizeof(dst);
 		dst.sin_family = AF_INET;
-		dst.sin_addr.s_addr = kroute->prefix.s_addr;
+		dst.sin_addr = kroute->prefix;
 		/* adjust header */
 		hdr.rtm_addrs |= RTA_DST;
 		hdr.rtm_msglen += sizeof(dst);
@@ -1100,7 +1100,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute, uint32_t family)
 	memset(&nexthop, 0, sizeof(nexthop));
 	nexthop.sin_len = sizeof(nexthop);
 	nexthop.sin_family = AF_INET;
-	nexthop.sin_addr.s_addr = kroute->nexthop.s_addr;
+	nexthop.sin_addr = kroute->nexthop;
 	/* adjust header */
 	hdr.rtm_flags |= RTF_GATEWAY;
 	hdr.rtm_addrs |= RTA_GATEWAY;
@@ -1330,8 +1330,7 @@ rtmsg_process(char *buf, size_t len)
 
 			switch (sa->sa_family) {
 			case AF_INET:
-				prefix.s_addr =
-				    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
+				prefix = ((struct sockaddr_in *)sa)->sin_addr;
 				sa_in = (struct sockaddr_in *)
 				    rti_info[RTAX_NETMASK];
 				if (sa_in != NULL) {
@@ -1364,8 +1363,8 @@ rtmsg_process(char *buf, size_t len)
 						flags |= F_CONNECTED;
 						break;
 					}
-					nexthop.s_addr = ((struct
-					    sockaddr_in *)sa)->sin_addr.s_addr;
+					nexthop = ((struct
+					    sockaddr_in *)sa)->sin_addr;
 					break;
 				case AF_LINK:
 					/*
@@ -1419,9 +1418,9 @@ rtmsg_process(char *buf, size_t len)
 				break;
 
 			memset(&kr, 0, sizeof(kr));
-			kr.prefix.s_addr = prefix.s_addr;
+			kr.prefix = prefix;
 			kr.prefixlen = prefixlen;
-			kr.nexthop.s_addr = nexthop.s_addr;
+			kr.nexthop = nexthop;
 			kr.flags = flags;
 			kr.ifindex = ifindex;
 			kr.priority = prio;
@@ -1492,7 +1491,7 @@ kmpw_set(struct kpw *kpw)
 
 	if (kif->kpw == NULL)
 		kif->kpw = malloc(sizeof(*kif->kpw));
-	memcpy(kif->kpw, kpw, sizeof(*kif->kpw));
+	*kif->kpw = *kpw;
 
 	kmpw_install(kif->k.ifname, kpw);
 }
@@ -1545,7 +1544,7 @@ kmpw_install(const char *ifname, struct kpw *kpw)
 
 	sin = (struct sockaddr_in *) &imr.imr_nexthop;
 	sin->sin_family = AF_INET;
-	sin->sin_addr.s_addr = kpw->nexthop.s_addr;
+	sin->sin_addr = kpw->nexthop;
 	sin->sin_len = sizeof(struct sockaddr_in);
 
 	imr.imr_lshim.shim_label = kpw->local_label;

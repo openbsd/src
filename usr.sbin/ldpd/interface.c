@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.36 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.37 2016/05/23 18:28:22 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -121,9 +121,9 @@ if_addr_new(struct kaddr *ka)
 	if ((if_addr = calloc(1, sizeof(*if_addr))) == NULL)
 		fatal(__func__);
 
-	if_addr->addr.s_addr = ka->addr.s_addr;
-	if_addr->mask.s_addr = ka->mask.s_addr;
-	if_addr->dstbrd.s_addr = ka->dstbrd.s_addr;
+	if_addr->addr = ka->addr;
+	if_addr->mask = ka->mask;
+	if_addr->dstbrd = ka->dstbrd;
 
 	return (if_addr);
 }
@@ -337,8 +337,8 @@ if_join_group(struct iface *iface, struct in_addr *addr)
 	    inet_ntoa(*addr));
 
 	if_addr = LIST_FIRST(&iface->addr_list);
-	mreq.imr_multiaddr.s_addr = addr->s_addr;
-	mreq.imr_interface.s_addr = if_addr->addr.s_addr;
+	mreq.imr_multiaddr = *addr;
+	mreq.imr_interface = if_addr->addr;
 
 	if (setsockopt(global.ldp_disc_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP,
 	    (void *)&mreq, sizeof(mreq)) < 0) {
@@ -362,8 +362,8 @@ if_leave_group(struct iface *iface, struct in_addr *addr)
 	if (!if_addr)
 		return (0);
 
-	mreq.imr_multiaddr.s_addr = addr->s_addr;
-	mreq.imr_interface.s_addr = if_addr->addr.s_addr;
+	mreq.imr_multiaddr = *addr;
+	mreq.imr_interface = if_addr->addr;
 
 	if (setsockopt(global.ldp_disc_socket, IPPROTO_IP, IP_DROP_MEMBERSHIP,
 	    (void *)&mreq, sizeof(mreq)) < 0) {

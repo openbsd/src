@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.14 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.15 2016/05/23 18:28:22 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -51,7 +51,7 @@ adj_new(struct nbr *nbr, struct hello_source *source, struct in_addr addr)
 		fatal(__func__);
 
 	adj->nbr = nbr;
-	memcpy(&adj->source, source, sizeof(*source));
+	adj->source = *source;
 	adj->addr = addr;
 
 	evtimer_set(&adj->inactivity_timer, adj_itimer, adj);
@@ -168,7 +168,7 @@ tnbr_new(struct ldpd_conf *xconf, struct in_addr addr)
 	if ((tnbr = calloc(1, sizeof(*tnbr))) == NULL)
 		fatal(__func__);
 
-	tnbr->addr.s_addr = addr.s_addr;
+	tnbr->addr = addr;
 	tnbr->hello_holdtime = xconf->thello_holdtime;
 	tnbr->hello_interval = xconf->thello_interval;
 
@@ -255,7 +255,7 @@ adj_to_ctl(struct adj *adj)
 {
 	static struct ctl_adj	 actl;
 
-	actl.id.s_addr = adj->nbr->id.s_addr;
+	actl.id = adj->nbr->id;
 	actl.type = adj->source.type;
 	switch (adj->source.type) {
 	case HELLO_LINK:
@@ -263,7 +263,7 @@ adj_to_ctl(struct adj *adj)
 		    sizeof(actl.ifname));
 		break;
 	case HELLO_TARGETED:
-		actl.src_addr.s_addr = adj->source.target->addr.s_addr;
+		actl.src_addr = adj->source.target->addr;
 		break;
 	}
 	actl.holdtime = adj->holdtime;

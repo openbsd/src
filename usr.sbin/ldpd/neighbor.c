@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.65 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.66 2016/05/23 18:28:22 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -233,9 +233,9 @@ nbr_new(struct in_addr id, struct in_addr addr)
 
 	LIST_INIT(&nbr->adj_list);
 	nbr->state = NBR_STA_PRESENT;
-	nbr->id.s_addr = id.s_addr;
-	nbr->laddr.s_addr = leconf->trans_addr.s_addr;
-	nbr->raddr.s_addr = addr.s_addr;
+	nbr->id = id;
+	nbr->laddr = leconf->trans_addr;
+	nbr->raddr = addr;
 	nbr->peerid = 0;
 
 	if (RB_INSERT(nbr_id_head, &nbrs_by_id, nbr) != NULL)
@@ -534,7 +534,7 @@ nbr_establish_connection(struct nbr *nbr)
 	memset(&local_sa, 0, sizeof(local_sa));
 	local_sa.sin_family = AF_INET;
 	local_sa.sin_port = htons(0);
-	local_sa.sin_addr.s_addr = nbr->laddr.s_addr;
+	local_sa.sin_addr = nbr->laddr;
 
 	if (bind(nbr->fd, (struct sockaddr *) &local_sa,
 	    sizeof(struct sockaddr_in)) == -1) {
@@ -547,7 +547,7 @@ nbr_establish_connection(struct nbr *nbr)
 	memset(&remote_sa, 0, sizeof(remote_sa));
 	remote_sa.sin_family = AF_INET;
 	remote_sa.sin_port = htons(LDP_PORT);
-	remote_sa.sin_addr.s_addr = nbr->raddr.s_addr;
+	remote_sa.sin_addr = nbr->raddr;
 
 	/*
 	 * Send an extra hello to guarantee that the remote peer has formed
@@ -640,8 +640,8 @@ nbr_to_ctl(struct nbr *nbr)
 	static struct ctl_nbr	 nctl;
 	struct timeval		 now;
 
-	memcpy(&nctl.id, &nbr->id, sizeof(nctl.id));
-	memcpy(&nctl.addr, &nbr->raddr, sizeof(nctl.addr));
+	nctl.id = nbr->id;
+	nctl.addr = nbr->raddr;
 	nctl.nbr_state = nbr->state;
 
 	gettimeofday(&now, NULL);
