@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndvar.h,v 1.37 2016/05/17 21:05:49 tedu Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.38 2016/05/23 15:48:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996,2000 Michael Shalayeff.
@@ -41,25 +41,7 @@
 #define	RND_SRC_VIDEO	7
 #define	RND_SRC_NUM	8
 
-struct rndstats {
-	quad_t rnd_total;	/* total bits of entropy generated */
-	quad_t rnd_used;	/* strong data bits read so far */
-	quad_t arc4_reads;	/* aRC4 data bytes read so far */
-	quad_t arc4_nstirs;	/* arc4 pool stirs */
-
-	quad_t rnd_enqs;	/* enqueue calls */
-	quad_t rnd_deqs;	/* dequeue calls */
-	quad_t rnd_drops;	/* queue-full drops */
-	quad_t rnd_drople;	/* queue low watermark low entropy drops */
-
-	quad_t rnd_ed[32];	/* entropy feed distribution */
-	quad_t rnd_sc[RND_SRC_NUM]; /* add* calls */
-	quad_t rnd_sb[RND_SRC_NUM]; /* add* bits */
-};
-
 #ifdef _KERNEL
-extern struct rndstats rndstats;
-
 #define	add_true_randomness(d)	enqueue_randomness(RND_SRC_TRUE,  (int)(d))
 #define	add_timer_randomness(d)	enqueue_randomness(RND_SRC_TIMER, (int)(d))
 #define	add_mouse_randomness(d)	enqueue_randomness(RND_SRC_MOUSE, (int)(d))

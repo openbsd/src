@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.213 2016/05/04 19:48:08 jca Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.214 2016/05/23 15:48:59 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -167,7 +167,6 @@ int	Aflag, aflag, nflag, qflag;
 #define	BOOTTIME	0x00000002
 #define	CHRDEV		0x00000004
 #define	BLKDEV		0x00000008
-#define	RNDSTATS	0x00000010
 #define	BADDYNAMIC	0x00000020
 #define	BIOSGEO		0x00000040
 #define	BIOSDEV		0x00000080
@@ -394,9 +393,6 @@ parse(char *string, int flags)
 			break;
 		case KERN_BOOTTIME:
 			special |= BOOTTIME;
-			break;
-		case KERN_RND:
-			special |= RNDSTATS;
 			break;
 		case KERN_HOSTID:
 		case KERN_ARND:
@@ -857,36 +853,6 @@ parse(char *string, int flags)
 				(void)printf("%u\n", *(u_int *)newval);
 			}
 		}
-		return;
-	}
-	if (special & RNDSTATS) {
-		struct rndstats *rndstats = (struct rndstats *)buf;
-		int i;
-
-		if (!nflag)
-			(void)printf("%s%s", string, equ);
-		printf("tot: %llu used: %llu read: %llu stirs: %llu"
-		    " enqs: %llu deqs: %llu drops: %llu ledrops: %llu",
-		    rndstats->rnd_total, rndstats->rnd_used,
-		    rndstats->arc4_reads, rndstats->arc4_nstirs,
-		    rndstats->rnd_enqs, rndstats->rnd_deqs,
-		    rndstats->rnd_drops, rndstats->rnd_drople);
-		printf(" ed:");
-		for (i = 0;
-		    i < sizeof(rndstats->rnd_ed)/sizeof(rndstats->rnd_ed[0]);
-		    i++)
-			printf(" %llu", (unsigned long long)rndstats->rnd_ed[i]);
-		printf(" sc:");
-		for (i = 0;
-		    i < sizeof(rndstats->rnd_sc)/sizeof(rndstats->rnd_sc[0]);
-		    i++)
-			printf(" %llu", (unsigned long long)rndstats->rnd_sc[i]);
-		printf(" sb:");
-		for (i = 0;
-		    i < sizeof(rndstats->rnd_sb)/sizeof(rndstats->rnd_sb[0]);
-		    i++)
-			printf(" %llu", (unsigned long long)rndstats->rnd_sb[i]);
-		printf("\n");
 		return;
 	}
 	if (special & BADDYNAMIC) {

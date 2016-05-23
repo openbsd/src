@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.180 2016/05/17 21:05:49 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.181 2016/05/23 15:48:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -230,7 +230,6 @@ struct rand_event {
 u_int rnd_event_idx;
 
 struct timeout rnd_timeout;
-struct rndstats rndstats;
 
 u_int32_t entropy_pool[POOLWORDS] __attribute__((section(".openbsd.randomdata")));
 u_int	entropy_add_ptr;
@@ -377,11 +376,6 @@ enqueue_randomness(u_int state, u_int val)
 	rep->re_time += ts.tv_nsec ^ (ts.tv_sec << 20);
 	rep->re_val += val;
 
-	rndstats.rnd_enqs++;
-	rndstats.rnd_ed[nbits]++;
-	rndstats.rnd_sc[state]++;
-	rndstats.rnd_sb[state] += nbits;
-
 	if (rnd_qlen() > QEVSLOW/2 && timeout_initialized(&rnd_timeout) &&
 	    !timeout_pending(&rnd_timeout))
 		timeout_add(&rnd_timeout, 1);
@@ -454,7 +448,6 @@ dequeue_randomness(void *v)
 	if (timeout_initialized(&rnd_timeout))
 		timeout_del(&rnd_timeout);
 
-	rndstats.rnd_deqs++;
 	while ((rep = rnd_get())) {
 		buf[0] = rep->re_time;
 		buf[1] = rep->re_val;
@@ -464,7 +457,6 @@ dequeue_randomness(void *v)
 		add_entropy_words(buf, 2);
 
 		mtx_enter(&entropylock);
-		rndstats.rnd_total += nbits;
 	}
 	mtx_leave(&entropylock);
 }
@@ -598,7 +590,6 @@ _rs_stir(int do_lock)
 	if (do_lock)
 		mtx_enter(&rndlock);
 	_rs_seed(buf, sizeof(buf));
-	rndstats.arc4_nstirs++;
 	if (do_lock)
 		mtx_leave(&rndlock);
 
@@ -681,7 +672,6 @@ arc4random(void)
 
 	mtx_enter(&rndlock);
 	_rs_random_u32(&ret);
-	rndstats.arc4_reads += sizeof(ret);
 	mtx_leave(&rndlock);
 	return ret;
 }
@@ -694,7 +684,6 @@ arc4random_buf(void *buf, size_t n)
 {
 	mtx_enter(&rndlock);
 	_rs_random_buf(buf, n);
-	rndstats.arc4_reads += n;
 	mtx_leave(&rndlock);
 }
 
