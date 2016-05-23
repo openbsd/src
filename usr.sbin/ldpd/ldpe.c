@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.42 2016/05/23 14:55:41 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.43 2016/05/23 14:59:50 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -82,7 +82,7 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	struct event		 ev_sigint, ev_sigterm;
 	struct sockaddr_in	 disc_addr, sess_addr;
 	pid_t			 pid;
-	int			 pfkeysock, opt;
+	int			 opt;
 
 	switch (pid = fork()) {
 	case -1:
@@ -98,11 +98,11 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	setproctitle("ldp engine");
 	ldpd_process = PROC_LDP_ENGINE;
 
-	pfkeysock = pfkey_init(&sysdep);
-
 	/* create ldpd control socket outside chroot */
 	if (control_init() == -1)
 		fatalx("control socket setup failed");
+
+	leconf->pfkeysock = pfkey_init(&sysdep);
 
 	/* create the discovery UDP socket */
 	disc_addr.sin_family = AF_INET;
@@ -243,7 +243,7 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	    iev_main->handler, iev_main);
 	event_add(&iev_main->ev, NULL);
 
-	event_set(&pfkey_ev, pfkeysock, EV_READ | EV_PERSIST,
+	event_set(&pfkey_ev, leconf->pfkeysock, EV_READ | EV_PERSIST,
 	    ldpe_dispatch_pfkey, NULL);
 	event_add(&pfkey_ev, NULL);
 
@@ -288,10 +288,11 @@ ldpe_shutdown(void)
 
 	control_cleanup();
 
+	event_del(&pfkey_ev);
 	event_del(&disc_ev);
 	event_del(&edisc_ev);
 	accept_del(leconf->ldp_session_socket);
-	event_del(&pfkey_ev);
+	close(leconf->pfkeysock);
 	close(leconf->ldp_discovery_socket);
 	close(leconf->ldp_ediscovery_socket);
 	close(leconf->ldp_session_socket);

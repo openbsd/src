@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.56 2015/09/27 17:30:38 stsp Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.57 2016/05/23 14:59:50 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -332,6 +332,7 @@ struct ldpd_conf {
 #define LDPD_OPT_VERBOSE2	0x00000002
 #define LDPD_OPT_NOACTION	0x00000004
 	time_t			uptime;
+	int			pfkeysock;
 	int			ldp_discovery_socket;
 	int			ldp_ediscovery_socket;
 	int			ldp_session_socket;
