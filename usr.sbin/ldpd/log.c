@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.16 2016/05/23 15:14:07 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.17 2016/05/23 15:26:35 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -323,7 +323,7 @@ log_map(struct map *map)
 
 	switch (map->type) {
 	case FEC_WILDCARD:
-		if (snprintf(buf, sizeof(buf), "wildcard"))
+		if (snprintf(buf, sizeof(buf), "wildcard") < 0)
 			return ("???");
 		break;
 	case FEC_PREFIX:
