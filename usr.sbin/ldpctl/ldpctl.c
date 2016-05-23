@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.25 2015/12/05 13:11:48 claudio Exp $
+/*	$OpenBSD: ldpctl.c,v 1.26 2016/05/23 17:53:11 renato Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -564,7 +564,7 @@ show_l2vpn_pw_msg(struct imsg *imsg)
 		pw = imsg->data;
 
 		printf("%-11s %-15s %-14u %-10s\n", pw->ifname,
-		    inet_ntoa(pw->nexthop), pw->pwid,
+		    inet_ntoa(pw->lsr_id), pw->pwid,
 		    (pw->status ? "UP" : "DOWN"));
 		break;
 	case IMSG_CTL_END:
@@ -587,7 +587,7 @@ show_l2vpn_binding_msg(struct imsg *imsg)
 		pw = imsg->data;
 
 		printf("Neighbor: %s - PWID: %u (%s)\n",
-		    inet_ntoa(pw->nexthop), pw->pwid,
+		    inet_ntoa(pw->lsr_id), pw->pwid,
 		    print_pw_type(pw->type));
 		printf("%-12s%-15s%-15s%-10s\n", "", "Label", "Group-ID",
 		    "MTU");
