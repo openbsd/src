@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.55 2016/05/23 15:43:11 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.56 2016/05/23 15:47:24 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -50,10 +50,8 @@ static __inline int nbr_id_compare(struct nbr *, struct nbr *);
 static __inline int nbr_pid_compare(struct nbr *, struct nbr *);
 
 RB_HEAD(nbr_id_head, nbr);
-RB_PROTOTYPE(nbr_id_head, nbr, id_tree, nbr_id_compare)
 RB_GENERATE(nbr_id_head, nbr, id_tree, nbr_id_compare)
 RB_HEAD(nbr_pid_head, nbr);
-RB_PROTOTYPE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
 RB_GENERATE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
 
 static __inline int
@@ -628,18 +626,4 @@ nbr_to_ctl(struct nbr *nbr)
 		nctl.uptime = 0;
 
 	return (&nctl);
-}
-
-void
-ldpe_nbr_ctl(struct ctl_conn *c)
-{
-	struct nbr	*nbr;
-	struct ctl_nbr	*nctl;
-
-	RB_FOREACH(nbr, nbr_pid_head, &nbrs_by_pid) {
-		nctl = nbr_to_ctl(nbr);
-		imsg_compose_event(&c->iev, IMSG_CTL_SHOW_NBR, 0, 0, -1, nctl,
-		    sizeof(struct ctl_nbr));
-	}
-	imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.44 2016/05/23 15:43:11 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.45 2016/05/23 15:47:24 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -229,38 +229,6 @@ disc_find_iface(unsigned int ifindex, struct in_addr src)
 			}
 
 	return (NULL);
-}
-
-struct tcp_conn *
-tcp_new(int fd, struct nbr *nbr)
-{
-	struct tcp_conn *tcp;
-
-	if ((tcp = calloc(1, sizeof(*tcp))) == NULL)
-		fatal(__func__);
-	if ((tcp->rbuf = calloc(1, sizeof(struct ibuf_read))) == NULL)
-		fatal(__func__);
-
-	if (nbr)
-		tcp->nbr = nbr;
-
-	tcp->fd = fd;
-	evbuf_init(&tcp->wbuf, tcp->fd, session_write, tcp);
-	event_set(&tcp->rev, tcp->fd, EV_READ | EV_PERSIST, session_read, tcp);
-	event_add(&tcp->rev, NULL);
-
-	return (tcp);
-}
-
-void
-tcp_close(struct tcp_conn *tcp)
-{
-	evbuf_clear(&tcp->wbuf);
-	event_del(&tcp->rev);
-	close(tcp->fd);
-	accept_unpause();
-	free(tcp->rbuf);
-	free(tcp);
 }
 
 void
@@ -597,4 +565,36 @@ session_get_pdu(struct ibuf_read *r, char **b)
 		r->wpos = 0;
 
 	return (dlen);
+}
+
+struct tcp_conn *
+tcp_new(int fd, struct nbr *nbr)
+{
+	struct tcp_conn *tcp;
+
+	if ((tcp = calloc(1, sizeof(*tcp))) == NULL)
+		fatal(__func__);
+	if ((tcp->rbuf = calloc(1, sizeof(struct ibuf_read))) == NULL)
+		fatal(__func__);
+
+	if (nbr)
+		tcp->nbr = nbr;
+
+	tcp->fd = fd;
+	evbuf_init(&tcp->wbuf, tcp->fd, session_write, tcp);
+	event_set(&tcp->rev, tcp->fd, EV_READ | EV_PERSIST, session_read, tcp);
+	event_add(&tcp->rev, NULL);
+
+	return (tcp);
+}
+
+void
+tcp_close(struct tcp_conn *tcp)
+{
+	evbuf_clear(&tcp->wbuf);
+	event_del(&tcp->rev);
+	close(tcp->fd);
+	accept_unpause();
+	free(tcp->rbuf);
+	free(tcp);
 }

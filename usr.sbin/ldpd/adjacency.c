@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.8 2016/05/23 15:14:07 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.9 2016/05/23 15:47:24 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -34,7 +34,6 @@
 extern struct ldpd_conf        *leconf;
 
 void	 adj_itimer(int, short, void *);
-char	*print_hello_src(struct hello_source *);
 
 void	 tnbr_hello_timer(int, short, void *);
 void	 tnbr_start_hello_timer(struct tnbr *);
@@ -46,7 +45,7 @@ adj_new(struct nbr *nbr, struct hello_source *source, struct in_addr addr)
 	struct adj	*adj;
 
 	log_debug("%s: LSR ID %s, %s", __func__, inet_ntoa(nbr->id),
-	    print_hello_src(source));
+	    log_hello_src(source));
 
 	if ((adj = calloc(1, sizeof(*adj))) == NULL)
 		fatal(__func__);
@@ -76,7 +75,7 @@ void
 adj_del(struct adj *adj)
 {
 	log_debug("%s: LSR ID %s, %s", __func__, inet_ntoa(adj->nbr->id),
-	    print_hello_src(&adj->source));
+	    log_hello_src(&adj->source));
 
 	adj_stop_itimer(adj);
 
@@ -112,25 +111,6 @@ adj_find(struct nbr *nbr, struct hello_source *source)
 	}
 
 	return (NULL);
-}
-
-char *
-print_hello_src(struct hello_source *src)
-{
-	static char buffer[64];
-
-	switch (src->type) {
-	case HELLO_LINK:
-		snprintf(buffer, sizeof(buffer), "iface %s",
-		    src->link.iface->name);
-		break;
-	case HELLO_TARGETED:
-		snprintf(buffer, sizeof(buffer), "source %s",
-		    inet_ntoa(src->target->addr));
-		break;
-	}
-
-	return (buffer);
 }
 
 /* adjacency timers */
@@ -209,6 +189,18 @@ tnbr_del(struct tnbr *tnbr)
 }
 
 struct tnbr *
+tnbr_find(struct ldpd_conf *xconf, struct in_addr addr)
+{
+	struct tnbr *tnbr;
+
+	LIST_FOREACH(tnbr, &xconf->tnbr_list, entry)
+		if (addr.s_addr == tnbr->addr.s_addr)
+			return (tnbr);
+
+	return (NULL);
+}
+
+struct tnbr *
 tnbr_check(struct tnbr *tnbr)
 {
 	if (!(tnbr->flags & (F_TNBR_CONFIGURED|F_TNBR_DYNAMIC)) &&
@@ -229,18 +221,6 @@ tnbr_init(struct ldpd_conf *xconf, struct tnbr *tnbr)
 
 	tnbr->discovery_fd = xconf->ldp_ediscovery_socket;
 	tnbr_start_hello_timer(tnbr);
-}
-
-struct tnbr *
-tnbr_find(struct ldpd_conf *xconf, struct in_addr addr)
-{
-	struct tnbr *tnbr;
-
-	LIST_FOREACH(tnbr, &xconf->tnbr_list, entry)
-		if (addr.s_addr == tnbr->addr.s_addr)
-			return (tnbr);
-
-	return (NULL);
 }
 
 /* target neighbors timers */
@@ -301,31 +281,4 @@ adj_to_ctl(struct adj *adj)
 	actl.holdtime = adj->holdtime;
 
 	return (&actl);
-}
-
-void
-ldpe_adj_ctl(struct ctl_conn *c)
-{
-	struct adj	*adj;
-	struct iface	*iface;
-	struct tnbr	*tnbr;
-	struct ctl_adj	*actl;
-
-	/* basic discovery mechanism */
-	LIST_FOREACH(iface, &leconf->iface_list, entry)
-		LIST_FOREACH(adj, &iface->adj_list, iface_entry) {
-			actl = adj_to_ctl(adj);
-			imsg_compose_event(&c->iev, IMSG_CTL_SHOW_DISCOVERY,
-			    0, 0, -1, actl, sizeof(struct ctl_adj));
-		}
-
-	/* extended discovery mechanism */
-	LIST_FOREACH(tnbr, &leconf->tnbr_list, entry)
-		if (tnbr->adj) {
-			actl = adj_to_ctl(tnbr->adj);
-			imsg_compose_event(&c->iev, IMSG_CTL_SHOW_DISCOVERY,
-			    0, 0, -1, actl, sizeof(struct ctl_adj));
-		}
-
-	imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 }

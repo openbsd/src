@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.41 2016/05/23 15:14:07 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.42 2016/05/23 15:47:24 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -926,6 +926,16 @@ lde_nbr_del(struct lde_nbr *nbr)
 	free(nbr);
 }
 
+struct lde_nbr *
+lde_nbr_find(uint32_t peerid)
+{
+	struct lde_nbr	n;
+
+	n.peerid = peerid;
+
+	return (RB_FIND(nbr_tree, &lde_nbrs, &n));
+}
+
 void
 lde_nbr_clear(void)
 {
@@ -1042,6 +1052,37 @@ lde_wdraw_del(struct lde_nbr *ln, struct lde_wdraw *lw)
 	free(lw);
 }
 
+void
+lde_change_egress_label(int was_implicit)
+{
+	struct lde_nbr	*ln;
+	struct fec	*f;
+	struct fec_node	*fn;
+	int		 count = 0;
+
+	/* explicit withdraw */
+	if (was_implicit)
+		lde_send_labelwithdraw_all(NULL, MPLS_LABEL_IMPLNULL);
+	else
+		lde_send_labelwithdraw_all(NULL, MPLS_LABEL_IPV4NULL);
+
+	/* update label of connected prefixes */
+	RB_FOREACH(ln, nbr_tree, &lde_nbrs) {
+		RB_FOREACH(f, fec_tree, &ft) {
+			fn = (struct fec_node *)f;
+			if (fn->local_label > MPLS_LABEL_RESERVED_MAX)
+				continue;
+
+			fn->local_label = egress_label(fn->fec.type);
+			lde_send_labelmapping(ln, fn, 0);
+			count++;
+		}
+		if (count > 0)
+			lde_imsg_compose_ldpe(IMSG_MAPPING_ADD_END,
+			    ln->peerid, 0, NULL, 0);
+	}
+}
+
 int
 lde_address_add(struct lde_nbr *lr, struct in_addr *addr)
 {
@@ -1062,19 +1103,6 @@ lde_address_add(struct lde_nbr *lr, struct in_addr *addr)
 	return (0);
 }
 
-struct lde_nbr_address *
-lde_address_find(struct lde_nbr *lr, struct in_addr *addr)
-{
-	struct lde_nbr_address	*address = NULL;
-
-	TAILQ_FOREACH(address, &lr->addr_list, entry) {
-		if (address->addr.s_addr == addr->s_addr)
-			return (address);
-	}
-
-	return (NULL);
-}
-
 int
 lde_address_del(struct lde_nbr *lr, struct in_addr *addr)
 {
@@ -1091,6 +1119,19 @@ lde_address_del(struct lde_nbr *lr, struct in_addr *addr)
 	log_debug("%s: deleted %s", __func__, inet_ntoa(*addr));
 
 	return (0);
+}
+
+struct lde_nbr_address *
+lde_address_find(struct lde_nbr *lr, struct in_addr *addr)
+{
+	struct lde_nbr_address	*address = NULL;
+
+	TAILQ_FOREACH(address, &lr->addr_list, entry) {
+		if (address->addr.s_addr == addr->s_addr)
+			return (address);
+	}
+
+	return (NULL);
 }
 
 void

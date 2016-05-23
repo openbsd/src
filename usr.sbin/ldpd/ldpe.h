@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.44 2016/05/23 15:43:11 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.45 2016/05/23 15:47:24 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -169,6 +169,8 @@ void		 if_init(struct ldpd_conf *, struct iface *);
 struct iface	*if_lookup(struct ldpd_conf *, u_short);
 struct if_addr	*if_addr_new(struct kaddr *);
 struct if_addr	*if_addr_lookup(struct if_addr_head *, struct kaddr *);
+void		 if_addr_add(struct kaddr *);
+void		 if_addr_del(struct kaddr *);
 
 struct ctl_iface	*if_to_ctl(struct iface *);
 
@@ -195,7 +197,6 @@ void		 tnbr_init(struct ldpd_conf *, struct tnbr *);
 struct tnbr	*tnbr_find(struct ldpd_conf *, struct in_addr);
 
 struct ctl_adj	*adj_to_ctl(struct adj *);
-void		 ldpe_adj_ctl(struct ctl_conn *);
 
 /* neighbor.c */
 struct nbr	*nbr_new(struct in_addr, struct in_addr);
@@ -226,7 +227,11 @@ struct nbr_params	*nbr_params_new(struct in_addr);
 struct nbr_params	*nbr_params_find(struct ldpd_conf *, struct in_addr);
 
 struct ctl_nbr	*nbr_to_ctl(struct nbr *);
-void		 ldpe_nbr_ctl(struct ctl_conn *);
+
+extern struct nbr_id_head	nbrs_by_id;
+RB_PROTOTYPE(nbr_id_head, nbr, id_tree, nbr_id_compare)
+extern struct nbr_pid_head	nbrs_by_pid;
+RB_PROTOTYPE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
 
 /* packet.c */
 int	 gen_ldp_hdr(struct ibuf *, u_int16_t);

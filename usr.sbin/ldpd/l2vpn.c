@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.1 2015/07/21 04:52:29 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.2 2016/05/23 15:47:24 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -159,6 +159,18 @@ l2vpn_pw_find(struct l2vpn *l2vpn, unsigned int ifindex)
 }
 
 void
+l2vpn_pw_init(struct l2vpn_pw *pw)
+{
+	struct fec	 fec;
+
+	if (pw->pwid == 0 || pw->addr.s_addr == INADDR_ANY)
+		return;
+
+	l2vpn_pw_fec(pw, &fec);
+	lde_kernel_insert(&fec, pw->addr, 0, (void *)pw);
+}
+
+void
 l2vpn_pw_del(struct l2vpn_pw *pw)
 {
 	struct fec	 fec;
@@ -169,18 +181,6 @@ l2vpn_pw_del(struct l2vpn_pw *pw)
 	l2vpn_pw_fec(pw, &fec);
 	lde_kernel_remove(&fec, pw->addr);
 	free(pw);
-}
-
-void
-l2vpn_pw_init(struct l2vpn_pw *pw)
-{
-	struct fec	 fec;
-
-	if (pw->pwid == 0 || pw->addr.s_addr == INADDR_ANY)
-		return;
-
-	l2vpn_pw_fec(pw, &fec);
-	lde_kernel_insert(&fec, pw->addr, 0, (void *)pw);
 }
 
 void

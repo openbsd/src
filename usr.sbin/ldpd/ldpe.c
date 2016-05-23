@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.46 2016/05/23 15:43:11 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.47 2016/05/23 15:47:24 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -42,9 +42,6 @@
 #include "lde.h"
 #include "control.h"
 #include "log.h"
-
-extern struct nbr_id_head	nbrs_by_id;
-RB_PROTOTYPE(nbr_id_head, nbr, id_tree, nbr_id_compare)
 
 void	 ldpe_sig_handler(int, short, void *);
 void	 ldpe_shutdown(void);
@@ -346,11 +343,8 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct iface		*iface = NULL;
-	struct if_addr		*if_addr = NULL;
 	struct kif		*kif;
-	struct kaddr		*ka;
 	int			 n, shut = 0;
-	struct nbr		*nbr;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -680,6 +674,63 @@ ldpe_router_id(void)
 }
 
 void
+ldpe_iface_ctl(struct ctl_conn *c, unsigned int idx)
+{
+	struct iface		*iface;
+	struct ctl_iface	*ictl;
+
+	LIST_FOREACH(iface, &leconf->iface_list, entry) {
+		if (idx == 0 || idx == iface->ifindex) {
+			ictl = if_to_ctl(iface);
+			imsg_compose_event(&c->iev,
+			     IMSG_CTL_SHOW_INTERFACE,
+			    0, 0, -1, ictl, sizeof(struct ctl_iface));
+		}
+	}
+}
+
+void
+ldpe_adj_ctl(struct ctl_conn *c)
+{
+	struct adj	*adj;
+	struct iface	*iface;
+	struct tnbr	*tnbr;
+	struct ctl_adj	*actl;
+
+	/* basic discovery mechanism */
+	LIST_FOREACH(iface, &leconf->iface_list, entry)
+		LIST_FOREACH(adj, &iface->adj_list, iface_entry) {
+			actl = adj_to_ctl(adj);
+			imsg_compose_event(&c->iev, IMSG_CTL_SHOW_DISCOVERY,
+			    0, 0, -1, actl, sizeof(struct ctl_adj));
+		}
+
+	/* extended discovery mechanism */
+	LIST_FOREACH(tnbr, &leconf->tnbr_list, entry)
+		if (tnbr->adj) {
+			actl = adj_to_ctl(tnbr->adj);
+			imsg_compose_event(&c->iev, IMSG_CTL_SHOW_DISCOVERY,
+			    0, 0, -1, actl, sizeof(struct ctl_adj));
+		}
+
+	imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1, NULL, 0);
+}
+
+void
+ldpe_nbr_ctl(struct ctl_conn *c)
+{
+	struct nbr	*nbr;
+	struct ctl_nbr	*nctl;
+
+	RB_FOREACH(nbr, nbr_pid_head, &nbrs_by_pid) {
+		nctl = nbr_to_ctl(nbr);
+		imsg_compose_event(&c->iev, IMSG_CTL_SHOW_NBR, 0, 0, -1, nctl,
+		    sizeof(struct ctl_nbr));
+	}
+	imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1, NULL, 0);
+}
+
+void
 mapping_list_add(struct mapping_head *mh, struct map *map)
 {
 	struct mapping_entry	*me;
@@ -700,21 +751,5 @@ mapping_list_clr(struct mapping_head *mh)
 	while ((me = TAILQ_FIRST(mh)) != NULL) {
 		TAILQ_REMOVE(mh, me, entry);
 		free(me);
-	}
-}
-
-void
-ldpe_iface_ctl(struct ctl_conn *c, unsigned int idx)
-{
-	struct iface		*iface;
-	struct ctl_iface	*ictl;
-
-	LIST_FOREACH(iface, &leconf->iface_list, entry) {
-		if (idx == 0 || idx == iface->ifindex) {
-			ictl = if_to_ctl(iface);
-			imsg_compose_event(&c->iev,
-			     IMSG_CTL_SHOW_INTERFACE,
-			    0, 0, -1, ictl, sizeof(struct ctl_iface));
-		}
 	}
 }

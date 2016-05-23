@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.17 2016/05/23 15:26:35 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.18 2016/05/23 15:47:24 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,6 +30,7 @@
 #include <unistd.h>
 
 #include "ldpd.h"
+#include "ldpe.h"
 #include "lde.h"
 #include "log.h"
 
@@ -313,6 +314,25 @@ pw_type_name(u_int16_t pw_type)
 		snprintf(buf, sizeof(buf), "[%0x]", pw_type);
 		return (buf);
 	}
+}
+
+char *
+log_hello_src(const struct hello_source *src)
+{
+	static char buffer[64];
+
+	switch (src->type) {
+	case HELLO_LINK:
+		snprintf(buffer, sizeof(buffer), "iface %s",
+		    src->link.iface->name);
+		break;
+	case HELLO_TARGETED:
+		snprintf(buffer, sizeof(buffer), "source %s",
+		    inet_ntoa(src->target->addr));
+		break;
+	}
+
+	return (buffer);
 }
 
 const char *

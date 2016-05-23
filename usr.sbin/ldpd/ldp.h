@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.19 2015/07/21 04:52:29 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.20 2016/05/23 15:47:24 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -125,15 +125,15 @@ struct ldp_msg {
 #define	UNKNOWN_FLAG		0x8000
 #define	FORWARD_FLAG		0xc000
 
-#define TARGETED_HELLO		0x8000
-#define REQUEST_TARG_HELLO	0x4000
-
 struct hello_prms_tlv {
 	u_int16_t	type;
 	u_int16_t	length;
 	u_int16_t	holdtime;
 	u_int16_t	flags;
 };
+
+#define TARGETED_HELLO		0x8000
+#define REQUEST_TARG_HELLO	0x4000
 
 struct hello_prms_opt4_tlv {
 	u_int16_t	type;

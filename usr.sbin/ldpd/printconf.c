@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.13 2016/05/23 15:43:11 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.14 2016/05/23 15:47:24 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -84,25 +84,6 @@ print_nbrp(struct nbr_params *nbrp)
 }
 
 void
-print_pw(struct l2vpn_pw *pw)
-{
-	printf("\tpseudowire %s {\n", pw->ifname);
-	if (pw->addr.s_addr != INADDR_ANY)
-		printf("\t\tneighbor %s\n", inet_ntoa(pw->addr));
-	if (pw->pwid != 0)
-		printf("\t\tpw-id %u\n", pw->pwid);
-	if (pw->flags & F_PW_STATUSTLV_CONF)
-		printf("\t\tstatus-tlv yes\n");
-	else
-		printf("\t\tstatus-tlv no\n");
-	if (pw->flags & F_PW_CONTROLWORD_CONF)
-		printf("\t\tcontrol-word yes\n");
-	else
-		printf("\t\tcontrol-word no\n");
-	printf("\t}\n");
-}
-
-void
 print_l2vpn(struct l2vpn *l2vpn)
 {
 	struct l2vpn_if	*lif;
@@ -122,6 +103,25 @@ print_l2vpn(struct l2vpn *l2vpn)
 	LIST_FOREACH(pw, &l2vpn->pw_list, entry)
 		print_pw(pw);
 	printf("}\n");
+}
+
+void
+print_pw(struct l2vpn_pw *pw)
+{
+	printf("\tpseudowire %s {\n", pw->ifname);
+	if (pw->addr.s_addr != INADDR_ANY)
+		printf("\t\tneighbor %s\n", inet_ntoa(pw->addr));
+	if (pw->pwid != 0)
+		printf("\t\tpw-id %u\n", pw->pwid);
+	if (pw->flags & F_PW_STATUSTLV_CONF)
+		printf("\t\tstatus-tlv yes\n");
+	else
+		printf("\t\tstatus-tlv no\n");
+	if (pw->flags & F_PW_CONTROLWORD_CONF)
+		printf("\t\tcontrol-word yes\n");
+	else
+		printf("\t\tcontrol-word no\n");
+	printf("\t}\n");
 }
 
 void

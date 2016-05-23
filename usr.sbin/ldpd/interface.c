@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.27 2016/05/23 15:14:07 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.28 2016/05/23 15:47:24 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -144,42 +144,61 @@ if_addr_lookup(struct if_addr_head *addr_list, struct kaddr *kaddr)
 	return (NULL);
 }
 
-/* timers */
-/* ARGSUSED */
 void
-if_hello_timer(int fd, short event, void *arg)
+if_addr_add(struct kaddr *ka)
 {
-	struct iface *iface = arg;
-	struct timeval tv;
+	struct iface		*iface;
+	struct if_addr		*if_addr;
+	struct nbr		*nbr;
 
-	send_hello(HELLO_LINK, iface, NULL);
+	if (if_addr_lookup(&global.addr_list, ka) == NULL) {
+		if_addr = if_addr_new(ka);
 
-	/* reschedule hello_timer */
-	timerclear(&tv);
-	tv.tv_sec = iface->hello_interval;
-	if (evtimer_add(&iface->hello_timer, &tv) == -1)
-		fatal(__func__);
+		LIST_INSERT_HEAD(&global.addr_list, if_addr, entry);
+		RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id) {
+			if (nbr->state != NBR_STA_OPER)
+				continue;
+
+			send_address(nbr, if_addr);
+		}
+	}
+
+	iface = if_lookup(leconf, ka->ifindex);
+	if (iface &&
+	    if_addr_lookup(&iface->addr_list, ka) == NULL) {
+		if_addr = if_addr_new(ka);
+		LIST_INSERT_HEAD(&iface->addr_list, if_addr, entry);
+		if_update(iface);
+	}
 }
 
 void
-if_start_hello_timer(struct iface *iface)
+if_addr_del(struct kaddr *ka)
 {
-	struct timeval tv;
+	struct iface		*iface;
+	struct if_addr		*if_addr;
+	struct nbr		*nbr;
 
-	send_hello(HELLO_LINK, iface, NULL);
+	iface = if_lookup(leconf, ka->ifindex);
+	if (iface) {
+		if_addr = if_addr_lookup(&iface->addr_list, ka);
+		if (if_addr) {
+			LIST_REMOVE(if_addr, entry);
+			free(if_addr);
+			if_update(iface);
+		}
+	}
 
-	timerclear(&tv);
-	tv.tv_sec = iface->hello_interval;
-	if (evtimer_add(&iface->hello_timer, &tv) == -1)
-		fatal(__func__);
-}
-
-void
-if_stop_hello_timer(struct iface *iface)
-{
-	if (evtimer_pending(&iface->hello_timer, NULL) &&
-	    evtimer_del(&iface->hello_timer) == -1)
-		fatal(__func__);
+	if_addr = if_addr_lookup(&global.addr_list, ka);
+	if (if_addr) {
+		RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id) {
+			if (nbr->state != NBR_STA_OPER)
+				continue;
+			send_address_withdraw(nbr, if_addr);
+		}
+		LIST_REMOVE(if_addr, entry);
+		free(if_addr);
+	}
 }
 
 int
@@ -248,6 +267,44 @@ if_update(struct iface *iface)
 	}
 
 	return (ret);
+}
+
+/* timers */
+/* ARGSUSED */
+void
+if_hello_timer(int fd, short event, void *arg)
+{
+	struct iface *iface = arg;
+	struct timeval tv;
+
+	send_hello(HELLO_LINK, iface, NULL);
+
+	/* reschedule hello_timer */
+	timerclear(&tv);
+	tv.tv_sec = iface->hello_interval;
+	if (evtimer_add(&iface->hello_timer, &tv) == -1)
+		fatal(__func__);
+}
+
+void
+if_start_hello_timer(struct iface *iface)
+{
+	struct timeval tv;
+
+	send_hello(HELLO_LINK, iface, NULL);
+
+	timerclear(&tv);
+	tv.tv_sec = iface->hello_interval;
+	if (evtimer_add(&iface->hello_timer, &tv) == -1)
+		fatal(__func__);
+}
+
+void
+if_stop_hello_timer(struct iface *iface)
+{
+	if (evtimer_pending(&iface->hello_timer, NULL) &&
+	    evtimer_del(&iface->hello_timer) == -1)
+		fatal(__func__);
 }
 
 struct ctl_iface *
