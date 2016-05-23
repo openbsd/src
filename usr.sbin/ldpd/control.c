@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.17 2015/12/05 13:11:48 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.18 2016/05/23 14:49:56 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -182,8 +182,8 @@ control_close(int fd)
 
 	event_del(&c->iev.ev);
 	close(c->iev.ibuf.fd);
-	free(c);
 	accept_unpause();
+	free(c);
 }
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.41 2015/07/21 04:43:28 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.42 2016/05/23 14:49:56 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -258,6 +258,7 @@ tcp_close(struct tcp_conn *tcp)
 	evbuf_clear(&tcp->wbuf);
 	event_del(&tcp->rev);
 	close(tcp->fd);
+	accept_unpause();
 	free(tcp->rbuf);
 	free(tcp);
 }
@@ -567,8 +568,6 @@ session_close(struct nbr *nbr)
 
 	nbr_stop_ktimer(nbr);
 	nbr_stop_ktimeout(nbr);
-
-	accept_unpause();
 }
 
 ssize_t
