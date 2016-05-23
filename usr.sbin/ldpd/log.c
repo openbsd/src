@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.24 2016/05/23 18:55:21 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.25 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -28,6 +28,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <netdb.h>
 
 #include "ldpd.h"
 #include "ldpe.h"
@@ -174,7 +175,91 @@ fatalx(const char *emsg)
 	fatal(emsg);
 }
 
+#define NUM_LOGS	4
+const char *
+log_sockaddr(void *vp)
+{
+	static char	 buf[NUM_LOGS][NI_MAXHOST];
+	static int	 round = 0;
+	struct sockaddr	*sa = vp;
+
+	round = (round + 1) % NUM_LOGS;
+
+	if (getnameinfo(sa, sa->sa_len, buf[round], NI_MAXHOST, NULL, 0,
+	    NI_NUMERICHOST))
+		return ("(unknown)");
+	else
+		return (buf[round]);
+}
+
+const char *
+log_in6addr(const struct in6_addr *addr)
+{
+	struct sockaddr_in6	sa_in6;
+
+	memset(&sa_in6, 0, sizeof(sa_in6));
+	sa_in6.sin6_len = sizeof(sa_in6);
+	sa_in6.sin6_family = AF_INET6;
+	sa_in6.sin6_addr = *addr;
+
+	recoverscope(&sa_in6);
+
+	return (log_sockaddr(&sa_in6));
+}
+
+const char *
+log_in6addr_scope(const struct in6_addr *addr, unsigned int ifindex)
+{
+	struct sockaddr_in6	sa_in6;
+
+	memset(&sa_in6, 0, sizeof(sa_in6));
+	sa_in6.sin6_len = sizeof(sa_in6);
+	sa_in6.sin6_family = AF_INET6;
+	sa_in6.sin6_addr = *addr;
+
+	addscope(&sa_in6, ifindex);
+
+	return (log_sockaddr(&sa_in6));
+}
+
+const char *
+log_addr(int af, const union ldpd_addr *addr)
+{
+	static char	 buf[NUM_LOGS][INET6_ADDRSTRLEN];
+	static int	 round = 0;
+
+	switch (af) {
+	case AF_INET:
+		round = (round + 1) % NUM_LOGS;
+		if (inet_ntop(AF_INET, &addr->v4, buf[round],
+		    sizeof(buf[round])) == NULL)
+			return ("???");
+		return (buf[round]);
+	case AF_INET6:
+		return (log_in6addr(&addr->v6));
+	default:
+		break;
+	}
+
+	return ("???");
+}
+
 /* names */
+const char *
+af_name(int af)
+{
+	switch (af) {
+	case AF_INET:
+		return ("ipv4");
+	case AF_INET6:
+		return ("ipv6");
+	case AF_MPLS:
+		return ("mpls");
+	default:
+		return ("UNKNOWN");
+	}
+}
+
 const char *
 socket_name(int type)
 {
@@ -309,6 +394,10 @@ notification_name(uint32_t status)
 		return ("Generic Misconfiguration Error");
 	case S_WITHDRAW_MTHD:
 		return ("Label Withdraw PW Status Method");
+	case S_TRANS_MISMTCH:
+		return ("Transport Connection Mismatch");
+	case S_DS_NONCMPLNCE:
+		return ("Dual-Stack Noncompliance");
 	default:
 		snprintf(buf, sizeof(buf), "[%08x]", status);
 		return (buf);
@@ -339,11 +428,11 @@ log_hello_src(const struct hello_source *src)
 	switch (src->type) {
 	case HELLO_LINK:
 		snprintf(buffer, sizeof(buffer), "iface %s",
-		    src->link.iface->name);
+		    src->link.ia->iface->name);
 		break;
 	case HELLO_TARGETED:
 		snprintf(buffer, sizeof(buffer), "source %s",
-		    inet_ntoa(src->target->addr));
+		    log_addr(src->target->af, &src->target->addr));
 		break;
 	}
 
@@ -354,7 +443,7 @@ const char *
 log_map(const struct map *map)
 {
 	static char	buf[64];
-	char		pstr[64];
+	int		af;
 
 	switch (map->type) {
 	case MAP_TYPE_WILDCARD:
@@ -362,9 +451,20 @@ log_map(const struct map *map)
 			return ("???");
 		break;
 	case MAP_TYPE_PREFIX:
+		switch (map->fec.prefix.af) {
+		case AF_IPV4:
+			af = AF_INET;
+			break;
+		case AF_IPV6:
+			af = AF_INET6;
+			break;
+		default:
+			return ("???");
+		}
+
 		if (snprintf(buf, sizeof(buf), "%s/%u",
-		    inet_ntop(AF_INET, &map->fec.ipv4.prefix, pstr,
-		    sizeof(pstr)), map->fec.ipv4.prefixlen) == -1)
+		    log_addr(af, &map->fec.prefix.prefix),
+		    map->fec.prefix.prefixlen) == -1)
 			return ("???");
 		break;
 	case MAP_TYPE_PWID:
@@ -384,13 +484,19 @@ const char *
 log_fec(const struct fec *fec)
 {
 	static char	buf[64];
-	char		pstr[32];
+	union ldpd_addr	addr;
 
 	switch (fec->type) {
 	case FEC_TYPE_IPV4:
-		if (snprintf(buf, sizeof(buf), "%s/%u",
-		    inet_ntop(AF_INET, &fec->u.ipv4.prefix, pstr,
-		    sizeof(pstr)), fec->u.ipv4.prefixlen) == -1)
+		addr.v4 = fec->u.ipv4.prefix;
+		if (snprintf(buf, sizeof(buf), "ipv4 %s/%u",
+		    log_addr(AF_INET, &addr), fec->u.ipv4.prefixlen) == -1)
+			return ("???");
+		break;
+	case FEC_TYPE_IPV6:
+		addr.v6 = fec->u.ipv6.prefix;
+		if (snprintf(buf, sizeof(buf), "ipv6 %s/%u",
+		    log_addr(AF_INET6, &addr), fec->u.ipv6.prefixlen) == -1)
 			return ("???");
 		break;
 	case FEC_TYPE_PWID:

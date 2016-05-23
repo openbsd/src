@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.21 2016/05/23 18:55:21 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.22 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -27,9 +27,11 @@
 #include "ldp.h"
 #include "ldpd.h"
 #include "ldpe.h"
+#include "log.h"
 
 void	print_mainconf(struct ldpd_conf *);
-void	print_iface(struct iface *);
+void	print_af(int, struct ldpd_conf *, struct ldpd_af_conf *);
+void	print_iface(struct iface *, struct iface_af *);
 void	print_tnbr(struct tnbr *);
 void	print_nbrp(struct nbr_params *);
 void	print_l2vpn(struct l2vpn *);
@@ -45,36 +47,68 @@ print_mainconf(struct ldpd_conf *conf)
 	else
 		printf("fib-update yes\n");
 
-	if (conf->flags & F_LDPD_TH_ACCEPT)
-		printf("targeted-hello-accept yes\n");
-	else
-		printf("targeted-hello-accept no\n");
+	if (conf->trans_pref == DUAL_STACK_LDPOV4)
+		printf("transport-preference ipv4\n");
+	else if (conf->trans_pref == DUAL_STACK_LDPOV6)
+		printf("transport-preference ipv6\n");
 
-	if (conf->flags & F_LDPD_EXPNULL)
-		printf("explicit-null yes\n");
+	if (conf->flags & F_LDPD_DS_CISCO_INTEROP)
+		printf("ds-cisco-interop yes\n");
 	else
-		printf("explicit-null no\n");
-
-	printf("keepalive %u\n", conf->keepalive);
-	printf("transport-address %s\n", inet_ntoa(conf->trans_addr));
+		printf("ds-cisco-interop no\n");
 }
 
 void
-print_iface(struct iface *iface)
+print_af(int af, struct ldpd_conf *conf, struct ldpd_af_conf *af_conf)
 {
-	printf("\ninterface %s {\n", iface->name);
-	printf("\tlink-hello-holdtime %u\n", iface->hello_holdtime);
-	printf("\tlink-hello-interval %u\n", iface->hello_interval);
+	struct iface		*iface;
+	struct iface_af		*ia;
+	struct tnbr		*tnbr;
+
+	printf("\naddress-family %s {\n", af_name(af));
+
+	if (af_conf->flags & F_LDPD_AF_THELLO_ACCEPT)
+		printf("\ttargeted-hello-accept yes\n");
+	else
+		printf("\ttargeted-hello-accept no\n");
+
+	if (af_conf->flags & F_LDPD_AF_EXPNULL)
+		printf("\texplicit-null yes\n");
+	else
+		printf("\texplicit-null no\n");
+
+	printf("\tkeepalive %u\n", af_conf->keepalive);
+	printf("\ttransport-address %s\n", log_addr(af, &af_conf->trans_addr));
+
+	LIST_FOREACH(iface, &conf->iface_list, entry) {
+		ia = iface_af_get(iface, af);
+		if (ia->enabled)
+			print_iface(iface, ia);
+	}
+
+	LIST_FOREACH(tnbr, &conf->tnbr_list, entry)
+		if (tnbr->af == af && tnbr->flags & F_TNBR_CONFIGURED)
+			print_tnbr(tnbr);
+
 	printf("}\n");
+}
+
+void
+print_iface(struct iface *iface, struct iface_af *ia)
+{
+	printf("\tinterface %s {\n", iface->name);
+	printf("\t\tlink-hello-holdtime %u\n", ia->hello_holdtime);
+	printf("\t\tlink-hello-interval %u\n", ia->hello_interval);
+	printf("\t}\n");
 }
 
 void
 print_tnbr(struct tnbr *tnbr)
 {
-	printf("\ntargeted-neighbor %s {\n", inet_ntoa(tnbr->addr));
-	printf("\ttargeted-hello-holdtime %u\n", tnbr->hello_holdtime);
-	printf("\ttargeted-hello-interval %u\n", tnbr->hello_interval);
-	printf("}\n");
+	printf("\n\ttargeted-neighbor %s {\n", log_addr(tnbr->af, &tnbr->addr));
+	printf("\t\ttargeted-hello-holdtime %u\n", tnbr->hello_holdtime);
+	printf("\t\ttargeted-hello-interval %u\n", tnbr->hello_interval);
+	printf("\t}\n");
 }
 
 void
@@ -119,7 +153,9 @@ void
 print_pw(struct l2vpn_pw *pw)
 {
 	printf("\tpseudowire %s {\n", pw->ifname);
-	printf("\t\tneighbor %s\n", inet_ntoa(pw->lsr_id));
+
+	printf("\t\tneighbor-id %s\n", inet_ntoa(pw->lsr_id));
+	printf("\t\tneighbor-addr %s\n", log_addr(pw->af, &pw->addr));
 	printf("\t\tpw-id %u\n", pw->pwid);
 
 	if (pw->flags & F_PW_STATUSTLV_CONF)
@@ -138,19 +174,15 @@ print_pw(struct l2vpn_pw *pw)
 void
 print_config(struct ldpd_conf *conf)
 {
-	struct iface		*iface;
-	struct tnbr		*tnbr;
 	struct nbr_params	*nbrp;
 	struct l2vpn		*l2vpn;
 
 	print_mainconf(conf);
 
-	LIST_FOREACH(iface, &conf->iface_list, entry)
-		print_iface(iface);
-
-	LIST_FOREACH(tnbr, &conf->tnbr_list, entry)
-		if (tnbr->flags & F_TNBR_CONFIGURED)
-			print_tnbr(tnbr);
+	if (conf->ipv4.flags & F_LDPD_AF_ENABLED)
+		print_af(AF_INET, conf, &conf->ipv4);
+	if (conf->ipv6.flags & F_LDPD_AF_ENABLED)
+		print_af(AF_INET6, conf, &conf->ipv6);
 
 	LIST_FOREACH(nbrp, &conf->nbrp_list, entry)
 		print_nbrp(nbrp);

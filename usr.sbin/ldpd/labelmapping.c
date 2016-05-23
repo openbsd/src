@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.42 2016/05/23 18:51:52 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.43 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -90,7 +90,7 @@ send_labelmessage(struct nbr *nbr, uint16_t type, struct mapping_head *mh)
 			break;
 		case MAP_TYPE_PREFIX:
 			msg_size += FEC_ELM_PREFIX_MIN_LEN +
-			    PREFIX_SIZE(me->map.fec.ipv4.prefixlen);
+			    PREFIX_SIZE(me->map.fec.prefix.prefixlen);
 			break;
 		case MAP_TYPE_PWID:
 			msg_size += FEC_PWID_ELM_MIN_LEN;
@@ -350,7 +350,32 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 		int imsg_type = IMSG_NONE;
 
 		me->map.flags |= flags;
-		if (me->map.type == MAP_TYPE_PWID) {
+		switch (me->map.type) {
+		case MAP_TYPE_PREFIX:
+			switch (me->map.fec.prefix.af) {
+			case AF_IPV4:
+				if (label == MPLS_LABEL_IPV6NULL) {
+					session_shutdown(nbr, S_BAD_TLV_VAL,
+					    lm.msgid, lm.type);
+					goto err;
+				}
+				if (!nbr->v4_enabled)
+					goto next;
+				break;
+			case AF_IPV6:
+				if (label == MPLS_LABEL_IPV4NULL) {
+					session_shutdown(nbr, S_BAD_TLV_VAL,
+					    lm.msgid, lm.type);
+					goto err;
+				}
+				if (!nbr->v6_enabled)
+					goto next;
+				break;
+			default:
+				fatalx("recv_labelmessage: unknown af");
+			}
+			break;
+		case MAP_TYPE_PWID:
 			if (label <= MPLS_LABEL_RESERVED_MAX) {
 				session_shutdown(nbr, S_BAD_TLV_VAL, lm.msgid,
 				    lm.type);
@@ -358,6 +383,9 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 			}
 			if (me->map.flags & F_MAP_PW_STATUS)
 				me->map.pw_status = pw_status;
+			break;
+		default:
+			break;
 		}
 		me->map.label = label;
 		if (me->map.flags & F_MAP_REQ_ID)
@@ -397,6 +425,7 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 		ldpe_imsg_compose_lde(imsg_type, nbr->peerid, 0, &me->map,
 		    sizeof(struct map));
 
+next:
 		TAILQ_REMOVE(&mh, me, entry);
 		free(me);
 	}
@@ -451,6 +480,7 @@ tlv_decode_label(struct nbr *nbr, struct ldp_msg *lm, char *buf,
 		if (*label > MPLS_LABEL_MAX ||
 		    (*label <= MPLS_LABEL_RESERVED_MAX &&
 		     *label != MPLS_LABEL_IPV4NULL &&
+		     *label != MPLS_LABEL_IPV6NULL &&
 		     *label != MPLS_LABEL_IMPLNULL)) {
 			session_shutdown(nbr, S_BAD_TLV_VAL, lm->msgid,
 			    lm->type);
@@ -509,18 +539,18 @@ gen_fec_tlv(struct ibuf *buf, struct map *map)
 		ibuf_add(buf, &map->type, sizeof(map->type));
 		break;
 	case MAP_TYPE_PREFIX:
-		len = PREFIX_SIZE(map->fec.ipv4.prefixlen);
+		len = PREFIX_SIZE(map->fec.prefix.prefixlen);
 		ft.length = htons(sizeof(map->type) + sizeof(family) +
-		    sizeof(map->fec.ipv4.prefixlen) + len);
+		    sizeof(map->fec.prefix.prefixlen) + len);
 		ibuf_add(buf, &ft, sizeof(ft));
 
 		ibuf_add(buf, &map->type, sizeof(map->type));
-		family = htons(AF_IPV4);
+		family = htons(map->fec.prefix.af);
 		ibuf_add(buf, &family, sizeof(family));
-		ibuf_add(buf, &map->fec.ipv4.prefixlen,
-		    sizeof(map->fec.ipv4.prefixlen));
+		ibuf_add(buf, &map->fec.prefix.prefixlen,
+		    sizeof(map->fec.prefix.prefixlen));
 		if (len)
-			ibuf_add(buf, &map->fec.ipv4.prefix, len);
+			ibuf_add(buf, &map->fec.prefix.prefix, len);
 		break;
 	case MAP_TYPE_PWID:
 		if (map->flags & F_MAP_PW_ID)
@@ -566,7 +596,7 @@ int
 tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *lm, char *buf,
     uint16_t len, struct map *map)
 {
-	uint16_t	family, off = 0;
+	uint16_t	off = 0;
 	uint8_t		pw_len;
 
 	map->type = *buf;
@@ -590,31 +620,33 @@ tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *lm, char *buf,
 		}
 
 		/* Address Family */
-		memcpy(&family, buf + off, sizeof(family));
-		off += sizeof(family);
-
-		if (family != htons(AF_IPV4)) {
+		memcpy(&map->fec.prefix.af, buf + off,
+		    sizeof(map->fec.prefix.af));
+		map->fec.prefix.af = ntohs(map->fec.prefix.af);
+		off += sizeof(map->fec.prefix.af);
+		if (map->fec.prefix.af != AF_IPV4 &&
+		    map->fec.prefix.af != AF_IPV6) {
 			send_notification_nbr(nbr, S_UNSUP_ADDR, lm->msgid,
 			    lm->type);
 			return (-1);
 		}
 
-		/* PreLen */
-		map->fec.ipv4.prefixlen = buf[off];
+		/* Prefix Length */
+		map->fec.prefix.prefixlen = buf[off];
 		off += sizeof(uint8_t);
-
-		if (len < off + PREFIX_SIZE(map->fec.ipv4.prefixlen)) {
+		if (len < off + PREFIX_SIZE(map->fec.prefix.prefixlen)) {
 			session_shutdown(nbr, S_BAD_TLV_LEN, lm->msgid,
 			    lm->type);
 			return (-1);
 		}
 
 		/* Prefix */
-		map->fec.ipv4.prefix.s_addr = 0;
-		memcpy(&map->fec.ipv4.prefix, buf + off,
-		    PREFIX_SIZE(map->fec.ipv4.prefixlen));
+		memset(&map->fec.prefix.prefix, 0,
+		    sizeof(map->fec.prefix.prefix));
+		memcpy(&map->fec.prefix.prefix, buf + off,
+		    PREFIX_SIZE(map->fec.prefix.prefixlen));
 
-		return (off + PREFIX_SIZE(map->fec.ipv4.prefixlen));
+		return (off + PREFIX_SIZE(map->fec.prefix.prefixlen));
 	case MAP_TYPE_PWID:
 		if (len < FEC_PWID_ELM_MIN_LEN) {
 			session_shutdown(nbr, S_BAD_TLV_LEN, lm->msgid,

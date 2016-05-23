@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.49 2016/05/23 18:55:21 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.50 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -81,33 +81,41 @@ char		*symget(const char *);
 
 void		 clear_config(struct ldpd_conf *xconf);
 uint32_t	 get_rtr_id(void);
-int		 host(const char *, struct in_addr *, struct in_addr *);
+int		 get_address(const char *, union ldpd_addr *);
+int		 get_af_address(const char *, int *, union ldpd_addr *);
 
 static struct ldpd_conf	*conf;
 static int		 errors = 0;
 
+int			 af = AF_UNSPEC;
+struct ldpd_af_conf	*af_conf = NULL;
 struct iface		*iface = NULL;
+struct iface_af		*ia = NULL;
 struct tnbr		*tnbr = NULL;
 struct nbr_params	*nbrp = NULL;
 struct l2vpn		*l2vpn = NULL;
 struct l2vpn_pw		*pw = NULL;
 
 struct config_defaults {
+	uint16_t	keepalive;
 	uint16_t	lhello_holdtime;
 	uint16_t	lhello_interval;
 	uint16_t	thello_holdtime;
 	uint16_t	thello_interval;
+	union ldpd_addr	trans_addr;
+	int		afflags;
 	uint8_t		pwflags;
 };
 
 struct config_defaults	 globaldefs;
+struct config_defaults	 afdefs;
 struct config_defaults	 ifacedefs;
 struct config_defaults	 tnbrdefs;
 struct config_defaults	 pwdefs;
 struct config_defaults	*defs;
 
 struct iface		*conf_get_if(struct kif *);
-struct tnbr		*conf_get_tnbr(struct in_addr);
+struct tnbr		*conf_get_tnbr(union ldpd_addr *);
 struct nbr_params	*conf_get_nbrp(struct in_addr);
 struct l2vpn		*conf_get_l2vpn(char *);
 struct l2vpn_if		*conf_get_l2vpn_if(struct l2vpn *, struct kif *);
@@ -126,19 +134,19 @@ typedef struct {
 %token	INTERFACE TNEIGHBOR ROUTERID FIBUPDATE EXPNULL
 %token	LHELLOHOLDTIME LHELLOINTERVAL
 %token	THELLOHOLDTIME THELLOINTERVAL
-%token	THELLOACCEPT
-%token	KEEPALIVE TRANSADDRESS
+%token	THELLOACCEPT AF IPV4 IPV6
+%token	KEEPALIVE TRANSADDRESS TRANSPREFERENCE DSCISCOINTEROP
 %token	NEIGHBOR PASSWORD
 %token	L2VPN TYPE VPLS PWTYPE MTU BRIDGE
 %token	ETHERNET ETHERNETTAGGED STATUSTLV CONTROLWORD
-%token	PSEUDOWIRE NEIGHBOR PWID
+%token	PSEUDOWIRE NEIGHBORID NEIGHBORADDR PWID
 %token	EXTTAG
 %token	YES NO
 %token	INCLUDE
 %token	ERROR
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
-%type	<v.number>	yesno l2vpn_type pw_type
+%type	<v.number>	yesno ldp_af l2vpn_type pw_type
 %type	<v.string>	string
 
 %%
@@ -148,8 +156,7 @@ grammar		: /* empty */
 		| grammar '\n'
 		| grammar conf_main '\n'
 		| grammar varset '\n'
-		| grammar interface '\n'
-		| grammar tneighbor '\n'
+		| grammar af '\n'
 		| grammar neighbor '\n'
 		| grammar l2vpn '\n'
 		| grammar error '\n'		{ file->errors++; }
@@ -187,6 +194,10 @@ yesno		: YES	{ $$ = 1; }
 		| NO	{ $$ = 0; }
 		;
 
+ldp_af		: IPV4	{ $$ = AF_INET; }
+		| IPV6	{ $$ = AF_INET6; }
+		;
+
 l2vpn_type	: VPLS	{ $$ = L2VPN_TYPE_VPLS; }
 		;
 
@@ -211,7 +222,7 @@ conf_main	: ROUTERID STRING {
 				YYERROR;
 			}
 			free($2);
-			if (bad_ip_addr(conf->rtr_id)) {
+			if (bad_addr_v4(conf->rtr_id)) {
 				yyerror("invalid router-id");
 				YYERROR;
 			}
@@ -222,17 +233,105 @@ conf_main	: ROUTERID STRING {
 			else
 				conf->flags &= ~F_LDPD_NO_FIB_UPDATE;
 		}
-		| THELLOACCEPT yesno {
-			if ($2 == 0)
-				conf->flags &= ~F_LDPD_TH_ACCEPT;
+		| TRANSPREFERENCE ldp_af {
+			conf->trans_pref = $2;
+
+			switch (conf->trans_pref) {
+			case AF_INET:
+				conf->trans_pref = DUAL_STACK_LDPOV4;
+				break;
+			case AF_INET6:
+				conf->trans_pref = DUAL_STACK_LDPOV6;
+				break;
+			default:
+				yyerror("invalid address-family");
+				YYERROR;
+			}
+		}
+		| DSCISCOINTEROP yesno {
+			if ($2 == 1)
+				conf->flags |= F_LDPD_DS_CISCO_INTEROP;
 			else
-				conf->flags |= F_LDPD_TH_ACCEPT;
+				conf->flags &= ~F_LDPD_DS_CISCO_INTEROP;
+		}
+		| af_defaults
+		| iface_defaults
+		| tnbr_defaults
+		;
+
+af		: AF ldp_af {
+			af = $2;
+			switch (af) {
+			case AF_INET:
+				af_conf = &conf->ipv4;
+				break;
+			case AF_INET6:
+				af_conf = &conf->ipv6;
+				break;
+			default:
+				yyerror("invalid address-family");
+				YYERROR;
+			}
+
+			afdefs = *defs;
+			defs = &afdefs;
+		} af_block {
+			af_conf->keepalive = defs->keepalive;
+			af_conf->thello_holdtime = defs->thello_holdtime;
+			af_conf->thello_interval = defs->thello_interval;
+			af_conf->flags = defs->afflags;
+			af_conf->flags |= F_LDPD_AF_ENABLED;
+			af_conf = NULL;
+			af = AF_UNSPEC;
+			defs = &globaldefs;
+		}
+		;
+
+af_block	: '{' optnl afopts_l '}'
+		| '{' optnl '}'
+		|
+		;
+
+afopts_l	: afopts_l afoptsl nl
+		| afoptsl optnl
+		;
+
+afoptsl		:  TRANSADDRESS STRING {
+			if (get_address($2, &af_conf->trans_addr) == -1) {
+				yyerror("error parsing transport-address");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			if (bad_addr(af, &af_conf->trans_addr)) {
+				yyerror("invalid transport-address");
+				YYERROR;
+			}
+			if (af == AF_INET6 &&
+			   IN6_IS_SCOPE_EMBED(&af_conf->trans_addr.v6)) {
+				yyerror("ipv6 transport-address can not be "
+				    "link-local");
+				YYERROR;
+			}
+		}
+		| af_defaults
+		| iface_defaults
+		| tnbr_defaults
+		| interface
+		| tneighbor
+		;
+
+af_defaults	: THELLOACCEPT yesno {
+			if ($2 == 0)
+				defs->afflags &= ~F_LDPD_AF_THELLO_ACCEPT;
+			else
+				defs->afflags |= F_LDPD_AF_THELLO_ACCEPT;
 		}
 		| EXPNULL yesno {
 			if ($2 == 0)
-				conf->flags &= ~F_LDPD_EXPNULL;
+				defs->afflags &= ~F_LDPD_AF_EXPNULL;
 			else
-				conf->flags |= F_LDPD_EXPNULL;
+				defs->afflags |= F_LDPD_AF_EXPNULL;
 		}
 		| KEEPALIVE NUMBER {
 			if ($2 < MIN_KEEPALIVE || $2 > MAX_KEEPALIVE) {
@@ -240,22 +339,8 @@ conf_main	: ROUTERID STRING {
 				    MIN_KEEPALIVE, MAX_KEEPALIVE);
 				YYERROR;
 			}
-			conf->keepalive = $2;
+			defs->keepalive = $2;
 		}
-		| TRANSADDRESS STRING {
-			if (!inet_aton($2, &conf->trans_addr)) {
-				yyerror("error parsing transport-address");
-				free($2);
-				YYERROR;
-			}
-			free($2);
-			if (bad_ip_addr(conf->trans_addr)) {
-				yyerror("invalid transport-address");
-				YYERROR;
-			}
-		}
-		| iface_defaults
-		| tnbr_defaults
 		;
 
 iface_defaults	: LHELLOHOLDTIME NUMBER {
@@ -344,21 +429,45 @@ pwopts		: PWID NUMBER {
 
 			pw->pwid = $2;
 		}
-		| NEIGHBOR STRING {
+		| NEIGHBORID STRING {
 			struct in_addr	 addr;
 
-			if (inet_aton($2, &addr) == 0) {
-				yyerror("error parsing neighbor address");
+			if (!inet_aton($2, &addr)) {
+				yyerror("error parsing neighbor-id");
 				free($2);
 				YYERROR;
 			}
 			free($2);
-			if (bad_ip_addr(addr)) {
+			if (bad_addr_v4(addr)) {
 				yyerror("invalid neighbor-id");
 				YYERROR;
 			}
 
 			pw->lsr_id = addr;
+		}
+		| NEIGHBORADDR STRING {
+			int		 family;
+			union ldpd_addr	 addr;
+
+			if (get_af_address($2, &family, &addr) == -1) {
+				yyerror("error parsing neighbor address");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			if (bad_addr(family, &addr)) {
+				yyerror("invalid neighbor address");
+				YYERROR;
+			}
+			if (family == AF_INET6 &&
+			    IN6_IS_SCOPE_EMBED(&addr.v6)) {
+				yyerror("neighbor address can not be "
+				    "link-local");
+				YYERROR;
+			}
+
+			pw->af = family;
+			pw->addr = addr;
 		}
 		| pw_defaults
 		;
@@ -395,19 +504,30 @@ pseudowire	: PSEUDOWIRE STRING {
 				YYERROR;
 			}
 			if (pw->lsr_id.s_addr == INADDR_ANY) {
-				yyerror("missing pseudowire neighbor");
+				yyerror("missing pseudowire neighbor-id");
 				YYERROR;
 			}
 			LIST_FOREACH(l, &conf->l2vpn_list, entry) {
 				LIST_FOREACH(p, &l->pw_list, entry) {
 					if (pw != p &&
 					    pw->pwid == p->pwid &&
-					    pw->lsr_id.s_addr == p->lsr_id.s_addr) {
+					    pw->af == p->af &&
+					    pw->lsr_id.s_addr ==
+					    p->lsr_id.s_addr) {
 						yyerror("pseudowire already "
 						    "configured");
 						YYERROR;
 					}
 				}
+			}
+
+			/*
+			 * If the neighbor address is not specified, use the
+			 * neighbor id.
+			 */
+			if (pw->af == AF_UNSPEC) {
+				pw->af = AF_INET;
+				pw->addr.v4 = pw->lsr_id;
 			}
 
 			pw->flags = defs->pwflags;
@@ -521,13 +641,22 @@ interface	: INTERFACE STRING	{
 			if (iface == NULL)
 				YYERROR;
 
+			ia = iface_af_get(iface, af);
+			if (ia->enabled) {
+				yyerror("interface %s already configured for "
+				    "address-family %s", kif->ifname,
+				    af_name(af));
+				YYERROR;
+			}
+			ia->enabled = 1;
+
 			ifacedefs = *defs;
 			defs = &ifacedefs;
 		} interface_block {
-			iface->hello_holdtime = defs->lhello_holdtime;
-			iface->hello_interval = defs->lhello_interval;
+			ia->hello_holdtime = defs->lhello_holdtime;
+			ia->hello_interval = defs->lhello_interval;
 			iface = NULL;
-			defs = &globaldefs;
+			defs = &afdefs;
 		}
 		;
 
@@ -541,21 +670,27 @@ interfaceopts_l	: interfaceopts_l iface_defaults nl
 		;
 
 tneighbor	: TNEIGHBOR STRING	{
-			struct in_addr	 addr;
+			union ldpd_addr	 addr;
 
-			if (inet_aton($2, &addr) == 0) {
+			if (get_address($2, &addr) == -1) {
 				yyerror("error parsing targeted-neighbor "
 				    "address");
 				free($2);
 				YYERROR;
 			}
 			free($2);
-			if (bad_ip_addr(addr)) {
+			if (bad_addr(af, &addr)) {
 				yyerror("invalid targeted-neighbor address");
 				YYERROR;
 			}
+			if (af == AF_INET6 &&
+			   IN6_IS_SCOPE_EMBED(&addr.v6)) {
+				yyerror("targeted-neighbor address can not be "
+				    "link-local");
+				YYERROR;
+			}
 
-			tnbr = conf_get_tnbr(addr);
+			tnbr = conf_get_tnbr(&addr);
 			if (tnbr == NULL)
 				YYERROR;
 
@@ -565,7 +700,7 @@ tneighbor	: TNEIGHBOR STRING	{
 			tnbr->hello_holdtime = defs->thello_holdtime;
 			tnbr->hello_interval = defs->thello_interval;
 			tnbr = NULL;
-			defs = &globaldefs;
+			defs = &afdefs;
 		}
 		;
 
@@ -582,13 +717,13 @@ neighbor	: NEIGHBOR STRING	{
 			struct in_addr	 addr;
 
 			if (inet_aton($2, &addr) == 0) {
-				yyerror("error parsing neighbor address");
+				yyerror("error parsing neighbor-id");
 				free($2);
 				YYERROR;
 			}
 			free($2);
-			if (bad_ip_addr(addr)) {
-				yyerror("invalid neighbor address");
+			if (bad_addr_v4(addr)) {
+				yyerror("invalid neighbor-id");
 				YYERROR;
 			}
 
@@ -662,20 +797,26 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{"address-family",		AF},
 		{"bridge",			BRIDGE},
 		{"control-word",		CONTROLWORD},
+		{"ds-cisco-interop",		DSCISCOINTEROP},
 		{"ethernet",			ETHERNET},
 		{"ethernet-tagged",		ETHERNETTAGGED},
 		{"explicit-null",		EXPNULL},
 		{"fib-update",			FIBUPDATE},
 		{"include",			INCLUDE},
 		{"interface",			INTERFACE},
+		{"ipv4",			IPV4},
+		{"ipv6",			IPV6},
 		{"keepalive",			KEEPALIVE},
 		{"l2vpn",			L2VPN},
 		{"link-hello-holdtime",		LHELLOHOLDTIME},
 		{"link-hello-interval",		LHELLOINTERVAL},
 		{"mtu",				MTU},
 		{"neighbor",			NEIGHBOR},
+		{"neighbor-addr",		NEIGHBORADDR},
+		{"neighbor-id",			NEIGHBORID},
 		{"no",				NO},
 		{"password",			PASSWORD},
 		{"pseudowire",			PSEUDOWIRE},
@@ -688,6 +829,7 @@ lookup(char *s)
 		{"targeted-hello-interval",	THELLOINTERVAL},
 		{"targeted-neighbor",		TNEIGHBOR},
 		{"transport-address",		TRANSADDRESS},
+		{"transport-preference",	TRANSPREFERENCE},
 		{"type",			TYPE},
 		{"vpls",			VPLS},
 		{"yes",				YES}
@@ -1020,15 +1162,14 @@ parse_config(char *filename)
 
 	if ((conf = calloc(1, sizeof(struct ldpd_conf))) == NULL)
 		fatal(__func__);
-	conf->keepalive = DEFAULT_KEEPALIVE;
+	conf->trans_pref = DUAL_STACK_LDPOV6;
 
 	defs = &globaldefs;
+	defs->keepalive = DEFAULT_KEEPALIVE;
 	defs->lhello_holdtime = LINK_DFLT_HOLDTIME;
 	defs->lhello_interval = DEFAULT_HELLO_INTERVAL;
 	defs->thello_holdtime = TARGETED_DFLT_HOLDTIME;
 	defs->thello_interval = DEFAULT_HELLO_INTERVAL;
-	conf->thello_holdtime = TARGETED_DFLT_HOLDTIME;
-	conf->thello_interval = DEFAULT_HELLO_INTERVAL;
 	defs->pwflags = F_PW_STATUSTLV_CONF|F_PW_CWORD_CONF;
 
 	if ((file = pushfile(filename,
@@ -1069,8 +1210,11 @@ parse_config(char *filename)
 
 	if (conf->rtr_id.s_addr == INADDR_ANY)
 		conf->rtr_id.s_addr = get_rtr_id();
-	if (conf->trans_addr.s_addr == 0)
-		conf->trans_addr = conf->rtr_id;
+
+	/* if the ipv4 transport-address is not set, use the router-id */
+	if ((conf->ipv4.flags & F_LDPD_AF_ENABLED) &&
+	    conf->ipv4.trans_addr.v4.s_addr == INADDR_ANY)
+		conf->ipv4.trans_addr.v4 = conf->rtr_id;
 
 	return (conf);
 }
@@ -1154,13 +1298,9 @@ conf_get_if(struct kif *kif)
 {
 	struct iface	*i;
 
-	LIST_FOREACH(i, &conf->iface_list, entry) {
-		if (i->ifindex == kif->ifindex) {
-			yyerror("interface %s already configured",
-			    kif->ifname);
-			return (NULL);
-		}
-	}
+	LIST_FOREACH(i, &conf->iface_list, entry)
+		if (i->ifindex == kif->ifindex)
+			return (i);
 
 	if (kif->if_type == IFT_LOOP ||
 	    kif->if_type == IFT_CARP ||
@@ -1176,18 +1316,18 @@ conf_get_if(struct kif *kif)
 }
 
 struct tnbr *
-conf_get_tnbr(struct in_addr addr)
+conf_get_tnbr(union ldpd_addr *addr)
 {
 	struct tnbr	*t;
 
-	t = tnbr_find(conf, addr);
+	t = tnbr_find(conf, af, addr);
 	if (t) {
 		yyerror("targeted neighbor %s already configured",
-		    inet_ntoa(addr));
+		    log_addr(af, addr));
 		return (NULL);
 	}
 
-	t = tnbr_new(conf, addr);
+	t = tnbr_new(conf, af, addr);
 	t->flags |= F_TNBR_CONFIGURED;
 	LIST_INSERT_HEAD(&conf->tnbr_list, t, entry);
 	return (t);
@@ -1343,22 +1483,36 @@ get_rtr_id(void)
 }
 
 int
-host(const char *s, struct in_addr *addr, struct in_addr *mask)
+get_address(const char *s, union ldpd_addr *addr)
 {
-	struct in_addr		 ina;
-	int			 bits = 32;
-
-	memset(&ina, 0, sizeof(struct in_addr));
-	if (strrchr(s, '/') != NULL) {
-		if ((bits = inet_net_pton(AF_INET, s, &ina, sizeof(ina))) == -1)
-			return (0);
-	} else {
-		if (inet_pton(AF_INET, s, &ina) != 1)
-			return (0);
+	switch (af) {
+	case AF_INET:
+		if (inet_pton(AF_INET, s, &addr->v4) != 1)
+			return (-1);
+		break;
+	case AF_INET6:
+		if (inet_pton(AF_INET6, s, &addr->v6) != 1)
+			return (-1);
+		break;
+	default:
+		return (-1);
 	}
 
-	*addr = ina;
-	mask->s_addr = prefixlen2mask(bits);
+	return (0);
+}
 
-	return (1);
+int
+get_af_address(const char *s, int *family, union ldpd_addr *addr)
+{
+	if (inet_pton(AF_INET, s, &addr->v4) == 1) {
+		*family = AF_INET;
+		return (0);
+	}
+
+	if (inet_pton(AF_INET6, s, &addr->v6) == 1) {
+		*family = AF_INET6;
+		return (0);
+	}
+
+	return (-1);
 }

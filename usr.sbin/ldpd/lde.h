@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.34 2016/05/23 18:46:13 renato Exp $ */
+/*	$OpenBSD: lde.h,v 1.35 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -30,6 +30,7 @@ RB_HEAD(fec_tree, fec);
 
 enum fec_type {
 	FEC_TYPE_IPV4,
+	FEC_TYPE_IPV6,
 	FEC_TYPE_PWID
 };
 
@@ -41,6 +42,10 @@ struct fec {
 			struct in_addr	prefix;
 			uint8_t		prefixlen;
 		} ipv4;
+		struct {
+			struct in6_addr	prefix;
+			uint8_t		prefixlen;
+		} ipv6;
 		struct {
 			uint16_t	type;
 			uint32_t	pwid;
@@ -74,27 +79,29 @@ struct lde_wdraw {
 /* Addresses belonging to neighbor */
 struct lde_addr {
 	TAILQ_ENTRY(lde_addr)	 entry;
-	struct in_addr		 addr;
+	int			 af;
+	union ldpd_addr		 addr;
 };
 
 /* just the info LDE needs */
 struct lde_nbr {
-	RB_ENTRY(lde_nbr)		 entry;
-	struct in_addr			 id;
-
-	struct fec_tree			 recv_req;
-	struct fec_tree			 sent_req;
-	struct fec_tree			 recv_map;
-	struct fec_tree			 sent_map;
-	struct fec_tree			 sent_wdraw;
-	TAILQ_HEAD(, lde_addr)		 addr_list;
-
-	uint32_t			 peerid;
+	RB_ENTRY(lde_nbr)	 entry;
+	uint32_t		 peerid;
+	struct in_addr		 id;
+	int			 v4_enabled;	/* announce/process v4 msgs */
+	int			 v6_enabled;	/* announce/process v6 msgs */
+	struct fec_tree		 recv_req;
+	struct fec_tree		 sent_req;
+	struct fec_tree		 recv_map;
+	struct fec_tree		 sent_map;
+	struct fec_tree		 sent_wdraw;
+	TAILQ_HEAD(, lde_addr)	 addr_list;
 };
 
 struct fec_nh {
 	LIST_ENTRY(fec_nh)	 entry;
-	struct in_addr		 nexthop;
+	int			 af;
+	union ldpd_addr		 nexthop;
 	uint32_t		 remote_label;
 };
 
@@ -125,18 +132,19 @@ void	lde_send_labelwithdraw_all(struct fec_node *, uint32_t);
 void	lde_send_labelrelease(struct lde_nbr *, struct fec_node *, uint32_t);
 void	lde_send_notification(uint32_t, uint32_t, uint32_t, uint16_t);
 struct lde_nbr	*lde_nbr_find_by_lsrid(struct in_addr);
-struct lde_nbr	*lde_nbr_find_by_addr(struct in_addr);
+struct lde_nbr	*lde_nbr_find_by_addr(int, union ldpd_addr *);
 struct lde_map *lde_map_add(struct lde_nbr *, struct fec_node *, int);
 void		lde_map_del(struct lde_nbr *, struct lde_map *, int);
 struct lde_req *lde_req_add(struct lde_nbr *, struct fec *, int);
 void		lde_req_del(struct lde_nbr *, struct lde_req *, int);
 struct lde_wdraw *lde_wdraw_add(struct lde_nbr *, struct fec_node *);
 void		  lde_wdraw_del(struct lde_nbr *, struct lde_wdraw *);
-void		lde_change_egress_label(int);
+void		lde_change_egress_label(int, int);
 
-int			 lde_address_add(struct lde_nbr *, struct in_addr *);
-struct lde_addr		*lde_address_find(struct lde_nbr *, struct in_addr *);
-int			 lde_address_del(struct lde_nbr *, struct in_addr *);
+int			 lde_address_add(struct lde_nbr *, struct lde_addr *);
+struct lde_addr		*lde_address_find(struct lde_nbr *, int,
+			    union ldpd_addr *);
+int			 lde_address_del(struct lde_nbr *, struct lde_addr *);
 
 /* lde_lib.c */
 void		 fec_init(struct fec_tree *);
@@ -149,10 +157,10 @@ void		 rt_dump(pid_t);
 void		 fec_snap(struct lde_nbr *);
 void		 fec_tree_clear(void);
 
-struct fec_nh	*fec_nh_find(struct fec_node *, struct in_addr);
+struct fec_nh	*fec_nh_find(struct fec_node *, int, union ldpd_addr *);
 uint32_t	 egress_label(enum fec_type);
-void		 lde_kernel_insert(struct fec *, struct in_addr, int, void *);
-void		 lde_kernel_remove(struct fec *, struct in_addr);
+void		 lde_kernel_insert(struct fec *, int, union ldpd_addr *, int, void *);
+void		 lde_kernel_remove(struct fec *, int, union ldpd_addr *);
 void		 lde_check_mapping(struct map *, struct lde_nbr *);
 void		 lde_check_request(struct map *, struct lde_nbr *);
 void		 lde_check_release(struct map *, struct lde_nbr *);
@@ -185,7 +193,7 @@ int		 l2vpn_pw_negotiate(struct lde_nbr *, struct fec_node *,
 		    struct map *);
 void		 l2vpn_send_pw_status(uint32_t, uint32_t, struct fec *);
 void		 l2vpn_recv_pw_status(struct lde_nbr *, struct notify_msg *);
-void		 l2vpn_sync_pws(struct in_addr);
+void		 l2vpn_sync_pws(int, union ldpd_addr *);
 void		 l2vpn_pw_ctl(pid_t);
 void		 l2vpn_binding_ctl(pid_t);
 

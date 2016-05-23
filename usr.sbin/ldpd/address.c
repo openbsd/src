@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.22 2016/05/23 18:55:21 renato Exp $ */
+/*	$OpenBSD: address.c,v 1.23 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -32,16 +32,16 @@
 #include <string.h>
 
 #include "ldpd.h"
-#include "ldp.h"
-#include "log.h"
 #include "ldpe.h"
+#include "lde.h"
+#include "log.h"
 
 extern struct ldpd_conf        *leconf;
 
-void	gen_address_list_tlv(struct ibuf *, struct if_addr *, uint16_t);
+void	gen_address_list_tlv(struct ibuf *, uint16_t, int, struct if_addr *);
 
 void
-send_address(struct nbr *nbr, struct if_addr *if_addr, int withdraw)
+send_address(struct nbr *nbr, int af, struct if_addr *if_addr, int withdraw)
 {
 	struct ibuf	*buf;
 	uint32_t	 msg_type;
@@ -55,12 +55,22 @@ send_address(struct nbr *nbr, struct if_addr *if_addr, int withdraw)
 
 	if (if_addr == NULL) {
 		LIST_FOREACH(if_addr, &global.addr_list, entry)
-			iface_count++;
+			if (if_addr->af == af)
+				iface_count++;
 	} else
 		iface_count = 1;
 
-	size = LDP_HDR_SIZE + LDP_MSG_SIZE + sizeof(struct address_list_tlv) +
-	    iface_count * sizeof(struct in_addr);
+	size = LDP_HDR_SIZE + LDP_MSG_SIZE + sizeof(struct address_list_tlv);
+	switch (af) {
+	case AF_INET:
+		size += iface_count * sizeof(struct in_addr);
+		break;
+	case AF_INET6:
+		size += iface_count * sizeof(struct in6_addr);
+		break;
+	default:
+		fatalx("send_address: unknown af");
+	}
 
 	if ((buf = ibuf_open(size)) == NULL)
 		fatal(__func__);
@@ -69,7 +79,7 @@ send_address(struct nbr *nbr, struct if_addr *if_addr, int withdraw)
 	size -= LDP_HDR_SIZE;
 	gen_msg_hdr(buf, msg_type, size);
 	size -= LDP_MSG_SIZE;
-	gen_address_list_tlv(buf, if_addr, size);
+	gen_address_list_tlv(buf, size, af, if_addr);
 
 	evbuf_enqueue(&nbr->tcp->wbuf, buf);
 
@@ -82,13 +92,9 @@ recv_address(struct nbr *nbr, char *buf, uint16_t len)
 	struct ldp_msg		addr;
 	struct address_list_tlv	alt;
 	enum imsg_type		type;
+	struct lde_addr		lde_addr;
 
 	memcpy(&addr, buf, sizeof(addr));
-	if (ntohs(addr.type) == MSG_TYPE_ADDR)
-		type = IMSG_ADDRESS_ADD;
-	else
-		type = IMSG_ADDRESS_DEL;
-
 	buf += LDP_MSG_SIZE;
 	len -= LDP_MSG_SIZE;
 
@@ -107,48 +113,104 @@ recv_address(struct nbr *nbr, char *buf, uint16_t len)
 		session_shutdown(nbr, S_UNKNOWN_TLV, addr.msgid, addr.type);
 		return (-1);
 	}
-
-	/* For now we only support IPv4 */
-	if (alt.family != htons(AF_IPV4)) {
+	switch (ntohs(alt.family)) {
+	case AF_IPV4:
+		if (!nbr->v4_enabled)
+			/* just ignore the message */
+			return (0);
+		break;
+	case AF_IPV6:
+		if (!nbr->v6_enabled)
+			/* just ignore the message */
+			return (0);
+		break;
+	default:
 		send_notification_nbr(nbr, S_UNSUP_ADDR, addr.msgid, addr.type);
 		return (-1);
 	}
 	buf += sizeof(alt);
 	len -= sizeof(alt);
 
-	while (len >= sizeof(struct in_addr)) {
-		ldpe_imsg_compose_lde(type, nbr->peerid, 0,
-		    buf, sizeof(struct in_addr));
+	if (ntohs(addr.type) == MSG_TYPE_ADDR)
+		type = IMSG_ADDRESS_ADD;
+	else
+		type = IMSG_ADDRESS_DEL;
 
-		buf += sizeof(struct in_addr);
-		len -= sizeof(struct in_addr);
-	}
+	while (len > 0) {
+		switch (ntohs(alt.family)) {
+		case AF_IPV4:
+			if (len < sizeof(struct in_addr)) {
+				session_shutdown(nbr, S_BAD_TLV_LEN, addr.msgid,
+				    addr.type);
+				return (-1);
+			}
 
-	if (len != 0) {
-		session_shutdown(nbr, S_BAD_TLV_LEN, addr.msgid, addr.type);
-		return (-1);
+			memset(&lde_addr, 0, sizeof(lde_addr));
+			lde_addr.af = AF_INET;
+			memcpy(&lde_addr.addr, buf, sizeof(struct in_addr));
+
+			buf += sizeof(struct in_addr);
+			len -= sizeof(struct in_addr);
+			break;
+		case AF_IPV6:
+			if (len < sizeof(struct in6_addr)) {
+				session_shutdown(nbr, S_BAD_TLV_LEN, addr.msgid,
+				    addr.type);
+				return (-1);
+			}
+
+			memset(&lde_addr, 0, sizeof(lde_addr));
+			lde_addr.af = AF_INET6;
+			memcpy(&lde_addr.addr, buf, sizeof(struct in6_addr));
+
+			buf += sizeof(struct in6_addr);
+			len -= sizeof(struct in6_addr);
+			break;
+		default:
+			fatalx("recv_address: unknown af");
+		}
+
+		log_debug("%s: neighbor ID %s address %s%s", __func__,
+		    inet_ntoa(nbr->id), log_addr(lde_addr.af, &lde_addr.addr),
+		    ntohs(addr.type) == MSG_TYPE_ADDR ? "" : " (withdraw)");
+
+		ldpe_imsg_compose_lde(type, nbr->peerid, 0, &lde_addr,
+		    sizeof(lde_addr));
 	}
 
 	return (0);
 }
 
 void
-gen_address_list_tlv(struct ibuf *buf, struct if_addr *if_addr, uint16_t size)
+gen_address_list_tlv(struct ibuf *buf, uint16_t size, int af,
+    struct if_addr *if_addr)
 {
 	struct address_list_tlv	 alt;
-
+	uint16_t		 addr_size;
 
 	memset(&alt, 0, sizeof(alt));
 	alt.type = TLV_TYPE_ADDRLIST;
 	alt.length = htons(size - TLV_HDR_LEN);
-	/* XXX: just ipv4 for now */
-	alt.family = htons(AF_IPV4);
+	switch (af) {
+	case AF_INET:
+		alt.family = htons(AF_IPV4);
+		addr_size = sizeof(struct in_addr);
+		break;
+	case AF_INET6:
+		alt.family = htons(AF_IPV6);
+		addr_size = sizeof(struct in6_addr);
+		break;
+	default:
+		fatalx("gen_address_list_tlv: unknown af");
+	}
 
 	ibuf_add(buf, &alt, sizeof(alt));
 
 	if (if_addr == NULL) {
-		LIST_FOREACH(if_addr, &global.addr_list, entry)
-			ibuf_add(buf, &if_addr->addr, sizeof(if_addr->addr));
+		LIST_FOREACH(if_addr, &global.addr_list, entry) {
+			if (if_addr->af == af)
+				ibuf_add(buf, &if_addr->addr, addr_size);
+		}
 	} else
-		ibuf_add(buf, &if_addr->addr, sizeof(if_addr->addr));
+		ibuf_add(buf, &if_addr->addr, addr_size);
 }

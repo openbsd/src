@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.13 2016/05/23 18:55:21 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.14 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -164,7 +164,8 @@ l2vpn_pw_init(struct l2vpn_pw *pw)
 	l2vpn_pw_reset(pw);
 
 	l2vpn_pw_fec(pw, &fec);
-	lde_kernel_insert(&fec, pw->lsr_id, 0, (void *)pw);
+	lde_kernel_insert(&fec, AF_INET, (union ldpd_addr*)&pw->lsr_id,
+	    0, (void *)pw);
 }
 
 void
@@ -173,7 +174,7 @@ l2vpn_pw_exit(struct l2vpn_pw *pw)
 	struct fec	 fec;
 
 	l2vpn_pw_fec(pw, &fec);
-	lde_kernel_remove(&fec, pw->lsr_id);
+	lde_kernel_remove(&fec, AF_INET, (union ldpd_addr*)&pw->lsr_id);
 }
 
 void
@@ -225,9 +226,21 @@ l2vpn_pw_ok(struct l2vpn_pw *pw, struct fec_nh *fnh)
 
 	/* check for a working lsp to the nexthop */
 	memset(&fec, 0, sizeof(fec));
-	fec.type = FEC_TYPE_IPV4;
-	fec.u.ipv4.prefix = pw->lsr_id;
-	fec.u.ipv4.prefixlen = 32;
+	switch (pw->af) {
+	case AF_INET:
+		fec.type = FEC_TYPE_IPV4;
+		fec.u.ipv4.prefix = pw->addr.v4;
+		fec.u.ipv4.prefixlen = 32;
+		break;
+	case AF_INET6:
+		fec.type = FEC_TYPE_IPV6;
+		fec.u.ipv6.prefix = pw->addr.v6;
+		fec.u.ipv6.prefixlen = 128;
+		break;
+	default:
+		fatalx("l2vpn_pw_ok: unknown af");
+	}
+
 	fn = (struct fec_node *)fec_find(&ft, &fec);
 	if (fn == NULL || fn->local_label == NO_LABEL)
 		return (0);
@@ -328,7 +341,7 @@ l2vpn_recv_pw_status(struct lde_nbr *ln, struct notify_msg *nm)
 	if (pw == NULL)
 		return;
 
-	fnh = fec_nh_find(fn, ln->id);
+	fnh = fec_nh_find(fn, AF_INET, (union ldpd_addr *)&ln->id);
 	if (fnh == NULL)
 		return;
 
@@ -345,7 +358,7 @@ l2vpn_recv_pw_status(struct lde_nbr *ln, struct notify_msg *nm)
 }
 
 void
-l2vpn_sync_pws(struct in_addr addr)
+l2vpn_sync_pws(int af, union ldpd_addr *addr)
 {
 	struct l2vpn		*l2vpn;
 	struct l2vpn_pw		*pw;
@@ -355,14 +368,15 @@ l2vpn_sync_pws(struct in_addr addr)
 
 	LIST_FOREACH(l2vpn, &ldeconf->l2vpn_list, entry) {
 		LIST_FOREACH(pw, &l2vpn->pw_list, entry) {
-			if (pw->lsr_id.s_addr != addr.s_addr)
+			if (af != pw->af || ldp_addrcmp(af, &pw->addr, addr))
 				continue;
 
 			l2vpn_pw_fec(pw, &fec);
 			fn = (struct fec_node *)fec_find(&ft, &fec);
 			if (fn == NULL)
 				continue;
-			fnh = fec_nh_find(fn, pw->lsr_id);
+			fnh = fec_nh_find(fn, AF_INET, (union ldpd_addr *)
+			    &pw->lsr_id);
 			if (fnh == NULL)
 				continue;
 
@@ -472,9 +486,9 @@ ldpe_l2vpn_pw_init(struct l2vpn_pw *pw)
 {
 	struct tnbr		*tnbr;
 
-	tnbr = tnbr_find(leconf, pw->lsr_id);
+	tnbr = tnbr_find(leconf, pw->af, &pw->addr);
 	if (tnbr == NULL) {
-		tnbr = tnbr_new(leconf, pw->lsr_id);
+		tnbr = tnbr_new(leconf, pw->af, &pw->addr);
 		tnbr_update(tnbr);
 		LIST_INSERT_HEAD(&leconf->tnbr_list, tnbr, entry);
 	}
@@ -487,7 +501,7 @@ ldpe_l2vpn_pw_exit(struct l2vpn_pw *pw)
 {
 	struct tnbr		*tnbr;
 
-	tnbr = tnbr_find(leconf, pw->lsr_id);
+	tnbr = tnbr_find(leconf, pw->af, &pw->addr);
 	if (tnbr) {
 		tnbr->pw_count--;
 		tnbr_check(tnbr);

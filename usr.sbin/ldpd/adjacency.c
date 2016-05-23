@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.18 2016/05/23 18:55:21 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.19 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -39,28 +39,29 @@ void	 tnbr_start_hello_timer(struct tnbr *);
 void	 tnbr_stop_hello_timer(struct tnbr *);
 
 struct adj *
-adj_new(struct nbr *nbr, struct hello_source *source, struct in_addr addr)
+adj_new(struct in_addr lsr_id, struct hello_source *source,
+    union ldpd_addr *addr)
 {
 	struct adj	*adj;
 
-	log_debug("%s: lsr-id %s, %s", __func__, inet_ntoa(nbr->id),
+	log_debug("%s: lsr-id %s, %s", __func__, inet_ntoa(lsr_id),
 	    log_hello_src(source));
 
 	if ((adj = calloc(1, sizeof(*adj))) == NULL)
 		fatal(__func__);
 
-	adj->nbr = nbr;
+	adj->lsr_id = lsr_id;
+	adj->nbr = NULL;
 	adj->source = *source;
-	adj->addr = addr;
+	adj->trans_addr = *addr;
 
 	evtimer_set(&adj->inactivity_timer, adj_itimer, adj);
 
-	LIST_INSERT_HEAD(&nbr->adj_list, adj, nbr_entry);
+	LIST_INSERT_HEAD(&global.adj_list, adj, global_entry);
 
 	switch (source->type) {
 	case HELLO_LINK:
-		LIST_INSERT_HEAD(&source->link.iface->adj_list, adj,
-		    iface_entry);
+		LIST_INSERT_HEAD(&source->link.ia->adj_list, adj, ia_entry);
 		break;
 	case HELLO_TARGETED:
 		source->target->adj = adj;
@@ -73,35 +74,38 @@ adj_new(struct nbr *nbr, struct hello_source *source, struct in_addr addr)
 void
 adj_del(struct adj *adj)
 {
-	log_debug("%s: lsr-id %s, %s", __func__, inet_ntoa(adj->nbr->id),
+	log_debug("%s: lsr-id %s, %s", __func__, inet_ntoa(adj->lsr_id),
 	    log_hello_src(&adj->source));
 
 	adj_stop_itimer(adj);
 
-	LIST_REMOVE(adj, nbr_entry);
+	LIST_REMOVE(adj, global_entry);
+	if (adj->nbr)
+		LIST_REMOVE(adj, nbr_entry);
 	if (adj->source.type == HELLO_LINK)
-		LIST_REMOVE(adj, iface_entry);
+		LIST_REMOVE(adj, ia_entry);
 
 	/* last adjacency deleted */
-	if (LIST_EMPTY(&adj->nbr->adj_list))
+	if (adj->nbr && LIST_EMPTY(&adj->nbr->adj_list))
 		nbr_del(adj->nbr);
 
 	free(adj);
 }
 
 struct adj *
-adj_find(struct nbr *nbr, struct hello_source *source)
+adj_find(struct hello_source *source)
 {
 	struct adj *adj;
 
-	LIST_FOREACH(adj, &nbr->adj_list, nbr_entry) {
+	LIST_FOREACH(adj, &global.adj_list, global_entry) {
 		if (adj->source.type != source->type)
 			continue;
 
 		switch (source->type) {
 		case HELLO_LINK:
-			if (adj->source.link.src_addr.s_addr ==
-			    source->link.src_addr.s_addr)
+			if (ldp_addrcmp(source->link.ia->af,
+			    &adj->source.link.src_addr,
+			    &source->link.src_addr) == 0)
 				return (adj);
 			break;
 		case HELLO_TARGETED:
@@ -114,6 +118,19 @@ adj_find(struct nbr *nbr, struct hello_source *source)
 	return (NULL);
 }
 
+int
+adj_get_af(struct adj *adj)
+{
+	switch (adj->source.type) {
+	case HELLO_LINK:
+		return (adj->source.link.ia->af);
+	case HELLO_TARGETED:
+		return (adj->source.target->af);
+	default:
+		fatalx("adj_get_af: unknown hello type");
+	}
+}
+
 /* adjacency timers */
 
 /* ARGSUSED */
@@ -122,7 +139,7 @@ adj_itimer(int fd, short event, void *arg)
 {
 	struct adj *adj = arg;
 
-	log_debug("%s: lsr-id %s", __func__, inet_ntoa(adj->nbr->id));
+	log_debug("%s: lsr-id %s", __func__, inet_ntoa(adj->lsr_id));
 
 	if (adj->source.type == HELLO_TARGETED) {
 		if (!(adj->source.target->flags & F_TNBR_CONFIGURED) &&
@@ -159,17 +176,18 @@ adj_stop_itimer(struct adj *adj)
 /* targeted neighbors */
 
 struct tnbr *
-tnbr_new(struct ldpd_conf *xconf, struct in_addr addr)
+tnbr_new(struct ldpd_conf *xconf, int af, union ldpd_addr *addr)
 {
 	struct tnbr		*tnbr;
 
 	if ((tnbr = calloc(1, sizeof(*tnbr))) == NULL)
 		fatal(__func__);
 
-	tnbr->addr = addr;
+	tnbr->af = af;
+	tnbr->addr = *addr;
 	tnbr->state = TNBR_STA_DOWN;
-	tnbr->hello_holdtime = xconf->thello_holdtime;
-	tnbr->hello_interval = xconf->thello_interval;
+	tnbr->hello_holdtime = (ldp_af_conf_get(xconf, af))->thello_holdtime;
+	tnbr->hello_interval = (ldp_af_conf_get(xconf, af))->thello_interval;
 
 	return (tnbr);
 }
@@ -185,12 +203,13 @@ tnbr_del(struct tnbr *tnbr)
 }
 
 struct tnbr *
-tnbr_find(struct ldpd_conf *xconf, struct in_addr addr)
+tnbr_find(struct ldpd_conf *xconf, int af, union ldpd_addr *addr)
 {
 	struct tnbr *tnbr;
 
 	LIST_FOREACH(tnbr, &xconf->tnbr_list, entry)
-		if (addr.s_addr == tnbr->addr.s_addr)
+		if (af == tnbr->af &&
+		    ldp_addrcmp(af, addr, &tnbr->addr) == 0)
 			return (tnbr);
 
 	return (NULL);
@@ -213,7 +232,7 @@ tnbr_update(struct tnbr *tnbr)
 {
 	int			 socket_ok, rtr_id_ok;
 
-	if (global.ldp_edisc_socket != -1)
+	if ((ldp_af_global_get(&global, tnbr->af))->ldp_edisc_socket != -1)
 		socket_ok = 1;
 	else
 		socket_ok = 0;
@@ -242,13 +261,14 @@ tnbr_update(struct tnbr *tnbr)
 }
 
 void
-tnbr_update_all(void)
+tnbr_update_all(int af)
 {
 	struct tnbr		*tnbr;
 
 	/* update targeted neighbors */
 	LIST_FOREACH(tnbr, &leconf->tnbr_list, entry)
-		tnbr_update(tnbr);
+		if (tnbr->af == af || af == AF_UNSPEC)
+			tnbr_update(tnbr);
 }
 
 /* target neighbors timers */
@@ -287,11 +307,12 @@ adj_to_ctl(struct adj *adj)
 {
 	static struct ctl_adj	 actl;
 
-	actl.id = adj->nbr->id;
+	actl.af = adj_get_af(adj);
+	actl.id = adj->lsr_id;
 	actl.type = adj->source.type;
 	switch (adj->source.type) {
 	case HELLO_LINK:
-		memcpy(actl.ifname, adj->source.link.iface->name,
+		memcpy(actl.ifname, adj->source.link.ia->iface->name,
 		    sizeof(actl.ifname));
 		break;
 	case HELLO_TARGETED:
@@ -299,6 +320,7 @@ adj_to_ctl(struct adj *adj)
 		break;
 	}
 	actl.holdtime = adj->holdtime;
+	actl.trans_addr = adj->trans_addr;
 
 	return (&actl);
 }

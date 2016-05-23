@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.56 2016/05/23 18:55:21 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.57 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -32,6 +32,7 @@
 #include <pwd.h>
 #include <unistd.h>
 #include <event.h>
+#include <arpa/inet.h>
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -49,9 +50,7 @@ void	 ldpe_shutdown(void);
 struct ldpd_conf	*leconf = NULL, *nconf;
 struct imsgev		*iev_main;
 struct imsgev		*iev_lde;
-struct event		 disc_ev;
-struct event		 edisc_ev;
-struct event             pfkey_ev;
+struct event		 pfkey_ev;
 struct ldpd_sysdep	 sysdep;
 
 /* ARGSUSED */
@@ -97,7 +96,12 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 		fatalx("control socket setup failed");
 
 	LIST_INIT(&global.addr_list);
+	LIST_INIT(&global.adj_list);
 	TAILQ_INIT(&global.pending_conns);
+	if (inet_pton(AF_INET, AllRouters_v4, &global.mcast_addr_v4) != 1)
+		fatal("inet_pton");
+	if (inet_pton(AF_INET6, AllRouters_v6, &global.mcast_addr_v6) != 1)
+		fatal("inet_pton");
 	global.pfkeysock = pfkey_init(&sysdep);
 
 	if ((pw = getpwnam(LDPD_USER)) == NULL)
@@ -159,9 +163,12 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	}
 
 	/* mark sockets as closed */
-	global.ldp_disc_socket = -1;
-	global.ldp_edisc_socket = -1;
-	global.ldp_session_socket = -1;
+	global.ipv4.ldp_disc_socket = -1;
+	global.ipv4.ldp_edisc_socket = -1;
+	global.ipv4.ldp_session_socket = -1;
+	global.ipv6.ldp_disc_socket = -1;
+	global.ipv6.ldp_edisc_socket = -1;
+	global.ipv6.ldp_session_socket = -1;
 
 	/* listen on ldpd control socket */
 	TAILQ_INIT(&ctl_conns);
@@ -185,6 +192,7 @@ void
 ldpe_shutdown(void)
 {
 	struct if_addr		*if_addr;
+	struct adj		*adj;
 
 	control_cleanup();
 	config_clear(leconf);
@@ -193,13 +201,16 @@ ldpe_shutdown(void)
 		event_del(&pfkey_ev);
 		close(global.pfkeysock);
 	}
-	ldpe_close_sockets();
+	ldpe_close_sockets(AF_INET);
+	ldpe_close_sockets(AF_INET6);
 
 	/* remove addresses from global list */
 	while ((if_addr = LIST_FIRST(&global.addr_list)) != NULL) {
 		LIST_REMOVE(if_addr, entry);
 		free(if_addr);
 	}
+	while ((adj = LIST_FIRST(&global.adj_list)) != NULL)
+		adj_del(adj);
 
 	/* clean up */
 	msgbuf_write(&iev_lde->ibuf.w);
@@ -244,6 +255,7 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct iface		*iface = NULL;
 	struct kif		*kif;
+	int			 af;
 	enum socket_type	*socket_type;
 	static int		 disc_socket = -1;
 	static int		 edisc_socket = -1;
@@ -282,7 +294,7 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 
 			iface->flags = kif->flags;
 			iface->linkstate = kif->link_state;
-			if_update(iface);
+			if_update(iface, AF_UNSPEC);
 			break;
 		case IMSG_NEWADDR:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
@@ -299,9 +311,11 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 			if_addr_del(imsg.data);
 			break;
 		case IMSG_CLOSE_SOCKETS:
-			ldpe_close_sockets();
-			if_update_all();
-			tnbr_update_all();
+			af = imsg.hdr.peerid;
+
+			ldpe_close_sockets(af);
+			if_update_all(af);
+			tnbr_update_all(af);
 
 			disc_socket = -1;
 			edisc_socket = -1;
@@ -328,6 +342,7 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 			}
 			break;
 		case IMSG_SETUP_SOCKETS:
+			af = imsg.hdr.peerid;
 			if (disc_socket == -1 || edisc_socket == -1 ||
 			    session_socket == -1) {
 				if (disc_socket != -1)
@@ -339,10 +354,10 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 				break;
 			}
 
-			ldpe_setup_sockets(disc_socket, edisc_socket,
+			ldpe_setup_sockets(af, disc_socket, edisc_socket,
 			    session_socket);
-			if_update_all();
-			tnbr_update_all();
+			if_update_all(af);
+			tnbr_update_all(af);
 			break;
 		case IMSG_RECONF_CONF:
 			if ((nconf = malloc(sizeof(struct ldpd_conf))) ==
@@ -361,7 +376,10 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 			memcpy(niface, imsg.data, sizeof(struct iface));
 
 			LIST_INIT(&niface->addr_list);
-			LIST_INIT(&niface->adj_list);
+			LIST_INIT(&niface->ipv4.adj_list);
+			LIST_INIT(&niface->ipv6.adj_list);
+			niface->ipv4.iface = niface;
+			niface->ipv6.iface = niface;
 
 			LIST_INSERT_HEAD(&nconf->iface_list, niface, entry);
 			break;
@@ -577,79 +595,103 @@ ldpe_dispatch_pfkey(int fd, short event, void *bula)
 }
 
 void
-ldpe_setup_sockets(int disc_socket, int edisc_socket, int session_socket)
+ldpe_setup_sockets(int af, int disc_socket, int edisc_socket, int session_socket)
 {
+	struct ldpd_af_global	*af_global;
+
+	af_global = ldp_af_global_get(&global, af);
+
 	/* discovery socket */
-	global.ldp_disc_socket = disc_socket;
-	event_set(&disc_ev, global.ldp_disc_socket,
+	af_global->ldp_disc_socket = disc_socket;
+	event_set(&af_global->disc_ev, af_global->ldp_disc_socket,
 	    EV_READ|EV_PERSIST, disc_recv_packet, NULL);
-	event_add(&disc_ev, NULL);
+	event_add(&af_global->disc_ev, NULL);
 
 	/* extended discovery socket */
-	global.ldp_edisc_socket = edisc_socket;
-	event_set(&edisc_ev, global.ldp_edisc_socket,
+	af_global->ldp_edisc_socket = edisc_socket;
+	event_set(&af_global->edisc_ev, af_global->ldp_edisc_socket,
 	    EV_READ|EV_PERSIST, disc_recv_packet, NULL);
-	event_add(&edisc_ev, NULL);
+	event_add(&af_global->edisc_ev, NULL);
 
 	/* session socket */
-	global.ldp_session_socket = session_socket;
-	accept_add(global.ldp_session_socket, session_accept, NULL);
+	af_global->ldp_session_socket = session_socket;
+	accept_add(af_global->ldp_session_socket, session_accept, NULL);
 }
 
 void
-ldpe_close_sockets(void)
+ldpe_close_sockets(int af)
 {
+	struct ldpd_af_global	*af_global;
+
+	af_global = ldp_af_global_get(&global, af);
+
 	/* discovery socket */
-	if (event_initialized(&disc_ev))
-		event_del(&disc_ev);
-	if (global.ldp_disc_socket != -1) {
-		close(global.ldp_disc_socket);
-		global.ldp_disc_socket = -1;
+	if (event_initialized(&af_global->disc_ev))
+		event_del(&af_global->disc_ev);
+	if (af_global->ldp_disc_socket != -1) {
+		close(af_global->ldp_disc_socket);
+		af_global->ldp_disc_socket = -1;
 	}
 
 	/* extended discovery socket */
-	if (event_initialized(&edisc_ev))
-		event_del(&edisc_ev);
-	if (global.ldp_edisc_socket != -1) {
-		close(global.ldp_edisc_socket);
-		global.ldp_edisc_socket = -1;
+	if (event_initialized(&af_global->edisc_ev))
+		event_del(&af_global->edisc_ev);
+	if (af_global->ldp_edisc_socket != -1) {
+		close(af_global->ldp_edisc_socket);
+		af_global->ldp_edisc_socket = -1;
 	}
 
 	/* session socket */
-	if (global.ldp_session_socket != -1) {
-		accept_del(global.ldp_session_socket);
-		close(global.ldp_session_socket);
-		global.ldp_session_socket = -1;
+	if (af_global->ldp_session_socket != -1) {
+		accept_del(af_global->ldp_session_socket);
+		close(af_global->ldp_session_socket);
+		af_global->ldp_session_socket = -1;
 	}
 }
 
 void
-ldpe_reset_nbrs(void)
+ldpe_reset_nbrs(int af)
 {
 	struct nbr		*nbr;
 
-	RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id)
-		session_shutdown(nbr, S_SHUTDOWN, 0, 0);
+	RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id) {
+		if (nbr->af == af)
+			session_shutdown(nbr, S_SHUTDOWN, 0, 0);
+	}
 }
 
 void
-ldpe_remove_dynamic_tnbrs(void)
+ldpe_reset_ds_nbrs(void)
+{
+	struct nbr		*nbr;
+
+	RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id) {
+		if (nbr->ds_tlv)
+			session_shutdown(nbr, S_SHUTDOWN, 0, 0);
+	}
+}
+
+void
+ldpe_remove_dynamic_tnbrs(int af)
 {
 	struct tnbr		*tnbr, *safe;
 
 	LIST_FOREACH_SAFE(tnbr, &leconf->tnbr_list, entry, safe) {
+		if (tnbr->af != af)
+			continue;
+
 		tnbr->flags &= ~F_TNBR_DYNAMIC;
 		tnbr_check(tnbr);
 	}
 }
 
 void
-ldpe_stop_init_backoff(void)
+ldpe_stop_init_backoff(int af)
 {
 	struct nbr		*nbr;
 
 	RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id) {
-		if (nbr_pending_idtimer(nbr)) {
+		if (nbr->af == af && nbr_pending_idtimer(nbr)) {
 			nbr_stop_idtimer(nbr);
 			nbr_establish_connection(nbr);
 		}
@@ -657,14 +699,19 @@ ldpe_stop_init_backoff(void)
 }
 
 void
-ldpe_iface_ctl(struct ctl_conn *c, unsigned int idx)
+ldpe_iface_af_ctl(struct ctl_conn *c, int af, unsigned int idx)
 {
 	struct iface		*iface;
+	struct iface_af		*ia;
 	struct ctl_iface	*ictl;
 
 	LIST_FOREACH(iface, &leconf->iface_list, entry) {
 		if (idx == 0 || idx == iface->ifindex) {
-			ictl = if_to_ctl(iface);
+			ia = iface_af_get(iface, af);
+			if (!ia->enabled)
+				continue;
+
+			ictl = if_to_ctl(ia);
 			imsg_compose_event(&c->iev,
 			     IMSG_CTL_SHOW_INTERFACE,
 			    0, 0, -1, ictl, sizeof(struct ctl_iface));
@@ -673,28 +720,35 @@ ldpe_iface_ctl(struct ctl_conn *c, unsigned int idx)
 }
 
 void
+ldpe_iface_ctl(struct ctl_conn *c, unsigned int idx)
+{
+	ldpe_iface_af_ctl(c, AF_INET, idx);
+	ldpe_iface_af_ctl(c, AF_INET6, idx);
+}
+
+void
 ldpe_adj_ctl(struct ctl_conn *c)
 {
+	struct nbr	*nbr;
 	struct adj	*adj;
-	struct iface	*iface;
-	struct tnbr	*tnbr;
 	struct ctl_adj	*actl;
 
-	/* basic discovery mechanism */
-	LIST_FOREACH(iface, &leconf->iface_list, entry)
-		LIST_FOREACH(adj, &iface->adj_list, iface_entry) {
+	RB_FOREACH(nbr, nbr_addr_head, &nbrs_by_addr) {
+		LIST_FOREACH(adj, &nbr->adj_list, nbr_entry) {
 			actl = adj_to_ctl(adj);
 			imsg_compose_event(&c->iev, IMSG_CTL_SHOW_DISCOVERY,
 			    0, 0, -1, actl, sizeof(struct ctl_adj));
 		}
+	}
+	/* show adjacencies not associated with any neighbor */
+	LIST_FOREACH(adj, &global.adj_list, global_entry) {
+		if (adj->nbr != NULL)
+			continue;
 
-	/* extended discovery mechanism */
-	LIST_FOREACH(tnbr, &leconf->tnbr_list, entry)
-		if (tnbr->adj) {
-			actl = adj_to_ctl(tnbr->adj);
-			imsg_compose_event(&c->iev, IMSG_CTL_SHOW_DISCOVERY,
-			    0, 0, -1, actl, sizeof(struct ctl_adj));
-		}
+		actl = adj_to_ctl(adj);
+		imsg_compose_event(&c->iev, IMSG_CTL_SHOW_DISCOVERY, 0, 0,
+		    -1, actl, sizeof(struct ctl_adj));
+	}
 
 	imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 }
@@ -705,7 +759,7 @@ ldpe_nbr_ctl(struct ctl_conn *c)
 	struct nbr	*nbr;
 	struct ctl_nbr	*nctl;
 
-	RB_FOREACH(nbr, nbr_pid_head, &nbrs_by_pid) {
+	RB_FOREACH(nbr, nbr_addr_head, &nbrs_by_addr) {
 		nctl = nbr_to_ctl(nbr);
 		imsg_compose_event(&c->iev, IMSG_CTL_SHOW_NBR, 0, 0, -1, nctl,
 		    sizeof(struct ctl_nbr));

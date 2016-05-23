@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.39 2016/05/23 18:33:56 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.40 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -38,42 +38,70 @@
 extern struct ldpd_conf        *leconf;
 
 int	tlv_decode_hello_prms(char *, uint16_t, uint16_t *, uint16_t *);
-int	tlv_decode_opt_hello_prms(char *, uint16_t, struct in_addr *,
-	    uint32_t *);
+int	tlv_decode_opt_hello_prms(char *, uint16_t, int *, int,
+	    union ldpd_addr *, uint32_t *, uint16_t *);
 int	gen_hello_prms_tlv(struct ibuf *buf, uint16_t, uint16_t);
 int	gen_opt4_hello_prms_tlv(struct ibuf *, uint16_t, uint32_t);
+int	gen_opt16_hello_prms_tlv(struct ibuf *, uint16_t, uint8_t *);
+int	gen_ds_hello_prms_tlv(struct ibuf *, uint32_t);
 
 int
-send_hello(enum hello_type type, struct iface *iface, struct tnbr *tnbr)
+send_hello(enum hello_type type, struct iface_af *ia, struct tnbr *tnbr)
 {
-	struct sockaddr_in	 dst;
-	struct ibuf		*buf;
+	int			 af;
+	union ldpd_addr		 dst;
 	uint16_t		 size, holdtime = 0, flags = 0;
 	int			 fd = 0;
-
-	dst.sin_port = htons(LDP_PORT);
-	dst.sin_family = AF_INET;
-	dst.sin_len = sizeof(struct sockaddr_in);
+	struct ibuf		*buf;
 
 	switch (type) {
 	case HELLO_LINK:
-		inet_aton(AllRouters, &dst.sin_addr);
-		holdtime = iface->hello_holdtime;
+		af = ia->af;
+		holdtime = ia->hello_holdtime;
 		flags = 0;
-		fd = global.ldp_disc_socket;
+		fd = (ldp_af_global_get(&global, af))->ldp_disc_socket;
+
+		/* multicast destination address */
+		switch (af) {
+		case AF_INET:
+			dst.v4 = global.mcast_addr_v4;
+			break;
+		case AF_INET6:
+			dst.v6 = global.mcast_addr_v6;
+			break;
+		default:
+			fatalx("send_hello: unknown af");
+		}
 		break;
 	case HELLO_TARGETED:
-		dst.sin_addr = tnbr->addr;
+		af = tnbr->af;
 		holdtime = tnbr->hello_holdtime;
 		flags = TARGETED_HELLO;
 		if ((tnbr->flags & F_TNBR_CONFIGURED) || tnbr->pw_count)
 			flags |= REQUEST_TARG_HELLO;
-		fd = global.ldp_edisc_socket;
+		fd = (ldp_af_global_get(&global, af))->ldp_edisc_socket;
+
+		/* unicast destination address */
+		dst = tnbr->addr;
 		break;
+	default:
+		fatalx("send_hello: unknown hello type");
 	}
 
-	size = LDP_HDR_SIZE + LDP_MSG_SIZE + sizeof(struct hello_prms_tlv) +
-	    sizeof(struct hello_prms_opt4_tlv);
+	/* calculate message size */
+	size = LDP_HDR_SIZE + LDP_MSG_SIZE + sizeof(struct hello_prms_tlv);
+	switch (af) {
+	case AF_INET:
+		size += sizeof(struct hello_prms_opt4_tlv);
+		break;
+	case AF_INET6:
+		size += sizeof(struct hello_prms_opt16_tlv);
+		break;
+	default:
+		fatalx("send_hello: unknown af");
+	}
+	if (ldp_is_dual_stack(leconf))
+		size += sizeof(struct hello_prms_opt4_tlv);
 
 	/* generate message */
 	if ((buf = ibuf_open(size)) == NULL)
@@ -83,26 +111,57 @@ send_hello(enum hello_type type, struct iface *iface, struct tnbr *tnbr)
 	size -= LDP_HDR_SIZE;
 	gen_msg_hdr(buf, MSG_TYPE_HELLO, size);
 	gen_hello_prms_tlv(buf, holdtime, flags);
-	gen_opt4_hello_prms_tlv(buf, TLV_TYPE_IPV4TRANSADDR,
-	    leconf->trans_addr.s_addr);
 
-	send_packet(fd, iface, buf->buf, buf->wpos, &dst);
+	/*
+	 * RFC 7552 - Section 6.1:
+	 * "An LSR MUST include only the transport address whose address
+	 * family is the same as that of the IP packet carrying the Hello
+	 * message".
+	 */
+	switch (af) {
+	case AF_INET:
+		gen_opt4_hello_prms_tlv(buf, TLV_TYPE_IPV4TRANSADDR,
+		    leconf->ipv4.trans_addr.v4.s_addr);
+		break;
+	case AF_INET6:
+		gen_opt16_hello_prms_tlv(buf, TLV_TYPE_IPV6TRANSADDR,
+		    leconf->ipv6.trans_addr.v6.s6_addr);
+		break;
+	default:
+		fatalx("send_hello: unknown af");
+	}
+
+   	/*
+	 * RFC 7552 - Section 6.1.1:
+	 * "A Dual-stack LSR (i.e., an LSR supporting Dual-stack LDP for a peer)
+	 * MUST include the Dual-Stack capability TLV in all of its LDP Hellos".
+	 */
+	if (ldp_is_dual_stack(leconf))
+		gen_ds_hello_prms_tlv(buf, leconf->trans_pref);
+
+	send_packet(fd, af, &dst, ia, buf->buf, buf->wpos);
 	ibuf_free(buf);
 
 	return (0);
 }
 
 void
-recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, struct in_addr src,
-    struct iface *iface, int multicast, char *buf, uint16_t len)
+recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
+    union ldpd_addr *src, struct iface *iface, int multicast, char *buf,
+    uint16_t len)
 {
-	struct adj		*adj;
+	struct adj		*adj = NULL;
 	struct nbr		*nbr;
 	uint16_t		 holdtime, flags;
-	struct in_addr		 transport_addr;
+	int			 tlvs_rcvd;
+	int			 ds_tlv;
+	union ldpd_addr		 trans_addr;
+	uint32_t		 scope_id = 0;
 	uint32_t		 conf_number;
+	uint16_t		 trans_pref;
 	int			 r;
 	struct hello_source	 source;
+	struct iface_af		*ia = NULL;
 	struct tnbr		*tnbr = NULL;
 
 	r = tlv_decode_hello_prms(buf, len, &holdtime, &flags);
@@ -133,7 +192,19 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, struct in_addr src,
 
 	memset(&source, 0, sizeof(source));
 	if (flags & TARGETED_HELLO) {
-		tnbr = tnbr_find(leconf, src);
+		/*
+	 	 * RFC 7552 - Section 5.2:
+		* "The link-local IPv6 addresses MUST NOT be used as the
+		* targeted LDP Hello packet's source or destination addresses.
+		*/
+		if (af == AF_INET6 && IN6_IS_SCOPE_EMBED(&src->v6)) {
+			log_debug("%s: lsr-id %s: targeted hello with "
+			    "link-local source address", __func__,
+			    inet_ntoa(lsr_id));
+			return;
+		}
+
+		tnbr = tnbr_find(leconf, af, src);
 
 		/* remove the dynamic tnbr if the 'R' bit was cleared */
 		if (tnbr && (tnbr->flags & F_TNBR_DYNAMIC) &&
@@ -144,10 +215,11 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, struct in_addr src,
 
 		if (!tnbr) {
 			if (!((flags & REQUEST_TARG_HELLO) &&
-			    leconf->flags & F_LDPD_TH_ACCEPT))
+			    ((ldp_af_conf_get(leconf, af))->flags &
+			    F_LDPD_AF_THELLO_ACCEPT)))
 				return;
 
-			tnbr = tnbr_new(leconf, src);
+			tnbr = tnbr_new(leconf, af, src);
 			tnbr->flags |= F_TNBR_DYNAMIC;
 			tnbr_update(tnbr);
 			LIST_INSERT_HEAD(&leconf->tnbr_list, tnbr, entry);
@@ -156,13 +228,14 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, struct in_addr src,
 		source.type = HELLO_TARGETED;
 		source.target = tnbr;
 	} else {
+		ia = iface_af_get(iface, af);
 		source.type = HELLO_LINK;
-		source.link.iface = iface;
-		source.link.src_addr = src;
+		source.link.ia = ia;
+		source.link.src_addr = *src;
 	}
 
-	r = tlv_decode_opt_hello_prms(buf, len, &transport_addr,
-	    &conf_number);
+	r = tlv_decode_opt_hello_prms(buf, len, &tlvs_rcvd, af, &trans_addr,
+	    &conf_number, &trans_pref);
 	if (r == -1) {
 		log_debug("%s: lsr-id %s: failed to decode optional params",
 		    __func__, inet_ntoa(lsr_id));
@@ -175,30 +248,118 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, struct in_addr src,
 	}
 
 	/* implicit transport address */
-	if (transport_addr.s_addr == INADDR_ANY)
-		transport_addr = src;
-	if (bad_ip_addr(transport_addr)) {
+	if (!(tlvs_rcvd & F_HELLO_TLV_RCVD_ADDR))
+		trans_addr = *src;
+	if (bad_addr(af, &trans_addr)) {
 		log_debug("%s: lsr-id %s: invalid transport address %s",
-		    __func__, inet_ntoa(lsr_id), inet_ntoa(transport_addr));
+		    __func__, inet_ntoa(lsr_id), log_addr(af, &trans_addr));
+		return;
+	}
+	if (af == AF_INET6 && IN6_IS_SCOPE_EMBED(&trans_addr.v6)) {
+		/*
+	 	 * RFC 7552 - Section 6.1:
+		 * An LSR MUST use a global unicast IPv6 address in an IPv6
+		 * Transport Address optional object of outgoing targeted
+		 * Hellos and check for the same in incoming targeted Hellos
+		 * (i.e., MUST discard the targeted Hello if it failed the
+		 * check)".
+		 */
+		if (source.type == HELLO_TARGETED)
+			return;
+		scope_id = iface->ifindex;
+	}
+
+	adj = adj_find(&source);
+	nbr = nbr_find_ldpid(lsr_id.s_addr);
+
+	/* check dual-stack tlv */
+	ds_tlv = (tlvs_rcvd & F_HELLO_TLV_RCVD_DS) ? 1 : 0;
+	if (ds_tlv && trans_pref != leconf->trans_pref) {
+		/*
+	 	 * RFC 7552 - Section 6.1.1:
+		 * "If the Dual-Stack capability TLV is present and the remote
+		 * preference does not match the local preference (or does not
+		 * get recognized), then the LSR MUST discard the Hello message
+		 * and log an error.
+		 * If an LDP session was already in place, then the LSR MUST
+		 * send a fatal Notification message with status code of
+		 * 'Transport Connection Mismatch' and reset the session".
+		 */
+		log_debug("%s: lsr-id %s: remote transport preference does not "
+		    "match the local preference", __func__, inet_ntoa(lsr_id));
+		if (nbr)
+			session_shutdown(nbr, S_TRANS_MISMTCH, lm->msgid,
+			    lm->type);
+		if (adj)
+			adj_del(adj);
 		return;
 	}
 
-	nbr = nbr_find_ldpid(lsr_id.s_addr);
-	if (!nbr) {
-		/* create new adjacency and new neighbor */
-		nbr = nbr_new(lsr_id, transport_addr);
-		adj = adj_new(nbr, &source, transport_addr);
-	} else {
-		adj = adj_find(nbr, &source);
-		if (!adj) {
-			/* create new adjacency for existing neighbor */
-			adj = adj_new(nbr, &source, transport_addr);
+	if (adj == NULL) {
+		adj = adj_new(lsr_id, &source, &trans_addr);
+		if (nbr) {
+			adj->nbr = nbr;
+			LIST_INSERT_HEAD(&nbr->adj_list, adj, nbr_entry);
+		}
+	}
 
-			if (nbr->raddr.s_addr != transport_addr.s_addr)
-				log_warnx("%s: lsr-id %s: multiple "
-				    "adjacencies advertising different "
-				    "transport addresses", __func__,
-				    inet_ntoa(lsr_id));
+	if (nbr == NULL) {
+		/*
+		 * The hello adjacency's address-family doesn't match the local
+		 * preference.
+		 */
+		if (ds_tlv &&
+		    ((trans_pref == DUAL_STACK_LDPOV4 && af != AF_INET) ||
+		    (trans_pref == DUAL_STACK_LDPOV6 && af != AF_INET6)))
+			return;
+
+		nbr = nbr_find_addr(af, &trans_addr);
+		if (nbr) {
+			log_debug("%s: transport address %s is already being "
+			    "used by lsr-id %s", __func__, log_addr(af,
+			    &trans_addr), inet_ntoa(nbr->id));
+			return;
+		}
+
+		/* create new adjacency and new neighbor */
+		nbr = nbr_new(lsr_id, af, ds_tlv, &trans_addr, scope_id);
+	} else {
+		/*
+		 * Check for noncompliant dual-stack neighbor according to
+		 * RFC 7552 section 6.1.1.
+		 */
+		if (!ds_tlv) {
+			switch (af) {
+			case AF_INET:
+				if (nbr_adj_count(nbr, AF_INET6) > 0) {
+					session_shutdown(nbr, S_DS_NONCMPLNCE,
+					    lm->msgid, lm->type);
+					return;
+				}
+				break;
+			case AF_INET6:
+				if (nbr_adj_count(nbr, AF_INET) > 0) {
+					session_shutdown(nbr, S_DS_NONCMPLNCE,
+					    lm->msgid, lm->type);
+					return;
+				}
+				break;
+			default:
+				fatalx("recv_hello: unknown af");
+			}
+		}
+
+		/*
+		 * Protection against misconfigured networks and buggy
+		 * implementations.
+		 */
+		if (af == nbr->af &&
+		    (ldp_addrcmp(af, &nbr->raddr, &trans_addr) ||
+		    nbr->raddr_scope != scope_id)) {
+			log_warnx("%s: lsr-id %s: ignoring hello packet "
+			    "advertising different transport address", __func__,
+			    inet_ntoa(lsr_id));
+			return;
 		}
 	}
 
@@ -208,7 +369,7 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, struct in_addr src,
 		if (holdtime == 0)
 			holdtime = LINK_DFLT_HOLDTIME;
 
-		adj->holdtime = min(iface->hello_holdtime, holdtime);
+		adj->holdtime = min(ia->hello_holdtime, holdtime);
 		break;
 	case HELLO_TARGETED:
 		if (holdtime == 0)
@@ -247,10 +408,34 @@ gen_opt4_hello_prms_tlv(struct ibuf *buf, uint16_t type, uint32_t value)
 
 	memset(&parms, 0, sizeof(parms));
 	parms.type = htons(type);
-	parms.length = htons(4);
+	parms.length = htons(sizeof(parms.value));
 	parms.value = value;
 
 	return (ibuf_add(buf, &parms, sizeof(parms)));
+}
+
+int
+gen_opt16_hello_prms_tlv(struct ibuf *buf, uint16_t type, uint8_t *value)
+{
+	struct hello_prms_opt16_tlv	parms;
+
+	memset(&parms, 0, sizeof(parms));
+	parms.type = htons(type);
+	parms.length = htons(sizeof(parms.value));
+	memcpy(&parms.value, value, sizeof(parms.value));
+
+	return (ibuf_add(buf, &parms, sizeof(parms)));
+}
+
+int
+gen_ds_hello_prms_tlv(struct ibuf *buf, uint32_t value)
+{
+	if (leconf->flags & F_LDPD_DS_CISCO_INTEROP)
+		value = htonl(value);
+	else
+		value = htonl(value << 28);
+
+	return (gen_opt4_hello_prms_tlv(buf, TLV_TYPE_DUALSTACK, value));
 }
 
 int
@@ -275,30 +460,78 @@ tlv_decode_hello_prms(char *buf, uint16_t len, uint16_t *holdtime,
 }
 
 int
-tlv_decode_opt_hello_prms(char *buf, uint16_t len, struct in_addr *addr,
-    uint32_t *conf_number)
+tlv_decode_opt_hello_prms(char *buf, uint16_t len, int *tlvs_rcvd, int af,
+    union ldpd_addr *addr, uint32_t *conf_number, uint16_t *trans_pref)
 {
 	struct tlv	tlv;
 	uint16_t	tlv_len;
 	int		total = 0;
 
+	*tlvs_rcvd = 0;
 	memset(addr, 0, sizeof(*addr));
 	*conf_number = 0;
+	*trans_pref = 0;
 
+	/*
+	 * RFC 7552 - Section 6.1:
+	 * "An LSR SHOULD accept the Hello message that contains both IPv4 and
+	 * IPv6 Transport Address optional objects but MUST use only the
+	 * transport address whose address family is the same as that of the
+	 * IP packet carrying the Hello message.  An LSR SHOULD accept only
+	 * the first Transport Address optional object for a given address
+	 * family in the received Hello message and ignore the rest if the
+	 * LSR receives more than one Transport Address optional object for a
+	 * given address family".
+	 */
 	while (len >= sizeof(tlv)) {
 		memcpy(&tlv, buf, sizeof(tlv));
 		tlv_len = ntohs(tlv.length);
 		switch (ntohs(tlv.type)) {
 		case TLV_TYPE_IPV4TRANSADDR:
-			if (tlv_len != sizeof(uint32_t))
+			if (tlv_len != sizeof(addr->v4))
 				return (-1);
-			memcpy(addr, buf + TLV_HDR_LEN, sizeof(uint32_t));
+			if (af != AF_INET || ldp_addrisset(AF_INET, addr))
+				break;
+			memcpy(&addr->v4, buf + TLV_HDR_LEN, sizeof(addr->v4));
+			*tlvs_rcvd |= F_HELLO_TLV_RCVD_ADDR;
+			break;
+		case TLV_TYPE_IPV6TRANSADDR:
+			if (tlv_len != sizeof(addr->v6))
+				return (-1);
+			if (af != AF_INET6 || ldp_addrisset(AF_INET6, addr))
+				break;
+			memcpy(&addr->v6, buf + TLV_HDR_LEN, sizeof(addr->v6));
+			*tlvs_rcvd |= F_HELLO_TLV_RCVD_ADDR;
 			break;
 		case TLV_TYPE_CONFIG:
 			if (tlv_len != sizeof(uint32_t))
 				return (-1);
 			memcpy(conf_number, buf + TLV_HDR_LEN,
 			    sizeof(uint32_t));
+			*tlvs_rcvd |= F_HELLO_TLV_RCVD_CONF;
+			break;
+		case TLV_TYPE_DUALSTACK:
+			if (tlv_len != sizeof(uint32_t))
+				return (-1);
+   			/*
+	 		 * RFC 7552 - Section 6.1:
+			 * "A Single-stack LSR does not need to use the
+			 * Dual-Stack capability in Hello messages and SHOULD
+			 * ignore this capability if received".
+			 */
+			if (!ldp_is_dual_stack(leconf))
+				break;
+			/* Shame on you, Cisco! */
+			if (leconf->flags & F_LDPD_DS_CISCO_INTEROP) {
+				memcpy(trans_pref, buf + TLV_HDR_LEN +
+				    sizeof(uint16_t), sizeof(uint16_t));
+				*trans_pref = ntohs(*trans_pref);
+			} else {
+				memcpy(trans_pref, buf + TLV_HDR_LEN,
+				    sizeof(uint16_t));
+				*trans_pref = ntohs(*trans_pref) >> 12;
+			}
+			*tlvs_rcvd |= F_HELLO_TLV_RCVD_DS;
 			break;
 		default:
 			/* if unknown flag set, ignore TLV */

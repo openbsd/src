@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.54 2016/05/23 18:55:21 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.55 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -42,7 +42,7 @@ static int fec_compare(struct fec *, struct fec *);
 
 void		 fec_free(void *);
 struct fec_node	*fec_add(struct fec *fec);
-struct fec_nh	*fec_nh_add(struct fec_node *, struct in_addr);
+struct fec_nh	*fec_nh_add(struct fec_node *, int, union ldpd_addr *);
 void		 fec_nh_del(struct fec_nh *);
 int		 lde_nbr_is_nexthop(struct fec_node *, struct lde_nbr *);
 
@@ -82,6 +82,18 @@ fec_compare(struct fec *a, struct fec *b)
 		if (a->u.ipv4.prefixlen < b->u.ipv4.prefixlen)
 			return (-1);
 		if (a->u.ipv4.prefixlen > b->u.ipv4.prefixlen)
+			return (1);
+		return (0);
+	case FEC_TYPE_IPV6:
+		if (memcmp(&a->u.ipv6.prefix, &b->u.ipv6.prefix,
+		    sizeof(struct in6_addr)) < 0)
+			return (-1);
+		if (memcmp(&a->u.ipv6.prefix, &b->u.ipv6.prefix,
+		    sizeof(struct in6_addr)) > 0)
+			return (1);
+		if (a->u.ipv6.prefixlen < b->u.ipv6.prefixlen)
+			return (-1);
+		if (a->u.ipv6.prefixlen > b->u.ipv6.prefixlen)
 			return (1);
 		return (0);
 	case FEC_TYPE_PWID:
@@ -147,7 +159,7 @@ lde_nbr_is_nexthop(struct fec_node *fn, struct lde_nbr *ln)
 	struct fec_nh		*fnh;
 
 	LIST_FOREACH(fnh, &fn->nexthops, entry)
-		if (lde_address_find(ln, &fnh->nexthop))
+		if (lde_address_find(ln, fnh->af, &fnh->nexthop))
 			return (1);
 
 	return (0);
@@ -163,17 +175,26 @@ rt_dump(pid_t pid)
 
 	RB_FOREACH(f, fec_tree, &ft) {
 		fn = (struct fec_node *)f;
-		if (fn->fec.type != FEC_TYPE_IPV4)
-			continue;
-
 		if (fn->local_label == NO_LABEL &&
 		    LIST_EMPTY(&fn->downstream))
 			continue;
 
-		rtctl.prefix = fn->fec.u.ipv4.prefix;
-		rtctl.prefixlen = fn->fec.u.ipv4.prefixlen;
-		rtctl.local_label = fn->local_label;
+		switch (fn->fec.type) {
+		case FEC_TYPE_IPV4:
+			rtctl.af = AF_INET;
+			rtctl.prefix.v4 = fn->fec.u.ipv4.prefix;
+			rtctl.prefixlen = fn->fec.u.ipv4.prefixlen;
+			break;
+		case FEC_TYPE_IPV6:
+			rtctl.af = AF_INET6;
+			rtctl.prefix.v6 = fn->fec.u.ipv6.prefix;
+			rtctl.prefixlen = fn->fec.u.ipv6.prefixlen;
+			break;
+		default:
+			continue;
+		}
 
+		rtctl.local_label = fn->local_label;
 		LIST_FOREACH(me, &fn->downstream, entry) {
 			rtctl.in_use = lde_nbr_is_nexthop(fn, me->nexthop);
 			rtctl.nexthop = me->nexthop->id;
@@ -257,19 +278,20 @@ fec_add(struct fec *fec)
 }
 
 struct fec_nh *
-fec_nh_find(struct fec_node *fn, struct in_addr nexthop)
+fec_nh_find(struct fec_node *fn, int af, union ldpd_addr *nexthop)
 {
 	struct fec_nh	*fnh;
 
 	LIST_FOREACH(fnh, &fn->nexthops, entry)
-		if (fnh->nexthop.s_addr == nexthop.s_addr)
+		if (fnh->af == af &&
+		    ldp_addrcmp(af, &fnh->nexthop, nexthop) == 0)
 			return (fnh);
 
 	return (NULL);
 }
 
 struct fec_nh *
-fec_nh_add(struct fec_node *fn, struct in_addr nexthop)
+fec_nh_add(struct fec_node *fn, int af, union ldpd_addr *nexthop)
 {
 	struct fec_nh	*fnh;
 
@@ -277,7 +299,8 @@ fec_nh_add(struct fec_node *fn, struct in_addr nexthop)
 	if (fnh == NULL)
 		fatal(__func__);
 
-	fnh->nexthop = nexthop;
+	fnh->af = af;
+	fnh->nexthop = *nexthop;
 	fnh->remote_label = NO_LABEL;
 	LIST_INSERT_HEAD(&fn->nexthops, fnh, entry);
 
@@ -294,12 +317,15 @@ fec_nh_del(struct fec_nh *fnh)
 uint32_t
 egress_label(enum fec_type fec_type)
 {
-	if (!(ldeconf->flags & F_LDPD_EXPNULL))
-		return (MPLS_LABEL_IMPLNULL);
-
 	switch (fec_type) {
 	case FEC_TYPE_IPV4:
+		if (!(ldeconf->ipv4.flags & F_LDPD_AF_EXPNULL))
+			return (MPLS_LABEL_IMPLNULL);
 		return (MPLS_LABEL_IPV4NULL);
+	case FEC_TYPE_IPV6:
+		if (!(ldeconf->ipv6.flags & F_LDPD_AF_EXPNULL))
+			return (MPLS_LABEL_IMPLNULL);
+		return (MPLS_LABEL_IPV6NULL);
 	default:
 		log_warnx("%s: unexpected fec type", __func__);
 	}
@@ -308,8 +334,8 @@ egress_label(enum fec_type fec_type)
 }
 
 void
-lde_kernel_insert(struct fec *fec, struct in_addr nexthop, int connected,
-    void *data)
+lde_kernel_insert(struct fec *fec, int af, union ldpd_addr *nexthop,
+    int connected, void *data)
 {
 	struct fec_node		*fn;
 	struct fec_nh		*fnh;
@@ -319,11 +345,11 @@ lde_kernel_insert(struct fec *fec, struct in_addr nexthop, int connected,
 	fn = (struct fec_node *)fec_find(&ft, fec);
 	if (fn == NULL)
 		fn = fec_add(fec);
-	if (fec_nh_find(fn, nexthop) != NULL)
+	if (fec_nh_find(fn, af, nexthop) != NULL)
 		return;
 
 	log_debug("lde add fec %s nexthop %s",
-	    log_fec(&fn->fec), inet_ntoa(nexthop));
+	    log_fec(&fn->fec), log_addr(af, nexthop));
 
 	if (fn->fec.type == FEC_TYPE_PWID)
 		fn->data = data;
@@ -339,12 +365,13 @@ lde_kernel_insert(struct fec *fec, struct in_addr nexthop, int connected,
 			lde_send_labelmapping(ln, fn, 1);
 	}
 
-	fnh = fec_nh_add(fn, nexthop);
+	fnh = fec_nh_add(fn, af, nexthop);
 	lde_send_change_klabel(fn, fnh);
 
 	switch (fn->fec.type) {
 	case FEC_TYPE_IPV4:
-		ln = lde_nbr_find_by_addr(fnh->nexthop);
+	case FEC_TYPE_IPV6:
+		ln = lde_nbr_find_by_addr(af, &fnh->nexthop);
 		break;
 	case FEC_TYPE_PWID:
 		ln = lde_nbr_find_by_lsrid(fn->fec.u.pwid.lsr_id);
@@ -364,7 +391,7 @@ lde_kernel_insert(struct fec *fec, struct in_addr nexthop, int connected,
 }
 
 void
-lde_kernel_remove(struct fec *fec, struct in_addr nexthop)
+lde_kernel_remove(struct fec *fec, int af, union ldpd_addr *nexthop)
 {
 	struct fec_node		*fn;
 	struct fec_nh		*fnh;
@@ -373,13 +400,13 @@ lde_kernel_remove(struct fec *fec, struct in_addr nexthop)
 	if (fn == NULL)
 		/* route lost */
 		return;
-	fnh = fec_nh_find(fn, nexthop);
+	fnh = fec_nh_find(fn, af, nexthop);
 	if (fnh == NULL)
 		/* route lost */
 		return;
 
 	log_debug("lde remove fec %s nexthop %s",
-	    log_fec(&fn->fec), inet_ntoa(nexthop));
+	    log_fec(&fn->fec), log_addr(af, nexthop));
 
 	lde_send_delete_klabel(fn, fnh);
 	fec_nh_del(fnh);
@@ -435,7 +462,8 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 			 * the possibility of multipath.
 			 */
 			LIST_FOREACH(fnh, &fn->nexthops, entry) {
-				if (lde_address_find(ln, &fnh->nexthop) == NULL)
+				if (lde_address_find(ln, fnh->af,
+				    &fnh->nexthop) == NULL)
 					continue;
 
 				lde_send_delete_klabel(fn, fnh);
@@ -452,7 +480,8 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 		/* LMp.15: install FEC in FIB */
 		switch (fec.type) {
 		case FEC_TYPE_IPV4:
-			if (!lde_address_find(ln, &fnh->nexthop))
+		case FEC_TYPE_IPV6:
+			if (!lde_address_find(ln, fnh->af, &fnh->nexthop))
 				continue;
 
 			fnh->remote_label = map->label;
@@ -517,7 +546,8 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 	LIST_FOREACH(fnh, &fn->nexthops, entry) {
 		switch (fec.type) {
 		case FEC_TYPE_IPV4:
-			if (!lde_address_find(ln, &fnh->nexthop))
+		case FEC_TYPE_IPV6:
+			if (!lde_address_find(ln, fnh->af, &fnh->nexthop))
 				continue;
 
 			lde_send_notification(ln->peerid, S_LOOP_DETECTED,
@@ -640,7 +670,8 @@ lde_check_withdraw(struct map *map, struct lde_nbr *ln)
 	LIST_FOREACH(fnh, &fn->nexthops, entry) {
 		switch (fec.type) {
 		case FEC_TYPE_IPV4:
-			if (!lde_address_find(ln, &fnh->nexthop))
+		case FEC_TYPE_IPV6:
+			if (!lde_address_find(ln, fnh->af, &fnh->nexthop))
 				continue;
 			break;
 		case FEC_TYPE_PWID:
@@ -683,7 +714,9 @@ lde_check_withdraw_wcard(struct map *map, struct lde_nbr *ln)
 		LIST_FOREACH(fnh, &fn->nexthops, entry) {
 			switch (f->type) {
 			case FEC_TYPE_IPV4:
-				if (!lde_address_find(ln, &fnh->nexthop))
+			case FEC_TYPE_IPV6:
+				if (!lde_address_find(ln, fnh->af,
+				    &fnh->nexthop))
 					continue;
 				break;
 			case FEC_TYPE_PWID:

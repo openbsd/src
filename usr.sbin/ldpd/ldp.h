@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.26 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.27 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -27,9 +27,11 @@
 /* misc */
 #define LDP_VERSION		1
 #define LDP_PORT		646
-#define AllRouters		"224.0.0.2"
-
 #define LDP_MAX_LEN		4096
+
+/* All Routers on this Subnet group multicast addresses */
+#define AllRouters_v4		"224.0.0.2"
+#define AllRouters_v6		"ff02::2"
 
 #define LINK_DFLT_HOLDTIME	15
 #define TARGETED_DFLT_HOLDTIME	45
@@ -93,6 +95,8 @@
 #define TLV_TYPE_PW_STATUS	0x096A
 #define TLV_TYPE_PW_IF_PARAM	0x096B
 #define TLV_TYPE_PW_GROUP_ID	0x096C
+/* RFC 7552 */
+#define TLV_TYPE_DUALSTACK	0x8701
 
 /* LDP header */
 struct ldp_hdr {
@@ -144,6 +148,18 @@ struct hello_prms_opt4_tlv {
 	uint32_t	value;
 };
 
+struct hello_prms_opt16_tlv {
+	uint16_t	type;
+	uint16_t	length;
+	uint8_t		value[16];
+};
+
+#define DUAL_STACK_LDPOV4	4
+#define DUAL_STACK_LDPOV6	6
+
+#define F_HELLO_TLV_RCVD_ADDR	0x01
+#define F_HELLO_TLV_RCVD_CONF	0x02
+#define F_HELLO_TLV_RCVD_DS	0x04
 
 #define	S_SUCCESS	0x00000000
 #define	S_BAD_LDP_ID	0x80000001
@@ -180,6 +196,9 @@ struct hello_prms_opt4_tlv {
 #define S_UNASSIGN_TAI	0x00000029
 #define S_MISCONF_ERR	0x0000002A
 #define S_WITHDRAW_MTHD	0x0000002B
+/* RFC 7552 */
+#define	S_TRANS_MISMTCH	0x80000032
+#define	S_DS_NONCMPLNCE	0x80000033
 
 struct sess_prms_tlv {
 	uint16_t	type;

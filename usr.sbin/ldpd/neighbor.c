@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.67 2016/05/23 18:55:21 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.68 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -66,12 +66,12 @@ nbr_id_compare(struct nbr *a, struct nbr *b)
 static __inline int
 nbr_addr_compare(struct nbr *a, struct nbr *b)
 {
-	if (ntohl(a->raddr.s_addr) < ntohl(b->raddr.s_addr))
+	if (a->af < b->af)
 		return (-1);
-	if (ntohl(a->raddr.s_addr) > ntohl(b->raddr.s_addr))
+	if (a->af > b->af)
 		return (1);
 
-	return (0);
+	return (ldp_addrcmp(a->af, &a->raddr, &b->raddr));
 }
 
 static __inline int
@@ -188,7 +188,10 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		nbr_act_session_operational(nbr);
 		nbr_start_ktimer(nbr);
 		nbr_start_ktimeout(nbr);
-		send_address(nbr, NULL, 0);
+		if (nbr->v4_enabled)
+			send_address(nbr, AF_INET, NULL, 0);
+		if (nbr->v6_enabled)
+			send_address(nbr, AF_INET6, NULL, 0);
 		nbr_send_labelmappings(nbr);
 		break;
 	case NBR_ACT_CONNECT_SETUP:
@@ -220,23 +223,40 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 }
 
 struct nbr *
-nbr_new(struct in_addr id, struct in_addr addr)
+nbr_new(struct in_addr id, int af, int ds_tlv, union ldpd_addr *addr,
+    uint32_t scope_id)
 {
 	struct nbr		*nbr;
 	struct nbr_params	*nbrp;
+	struct adj		*adj;
 	struct pending_conn	*pconn;
 
-	log_debug("%s: lsr-id %s", __func__, inet_ntoa(id));
+	log_debug("%s: lsr-id %s transport-address %s", __func__,
+	    inet_ntoa(id), log_addr(af, addr));
 
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
 		fatal(__func__);
 
 	LIST_INIT(&nbr->adj_list);
 	nbr->state = NBR_STA_PRESENT;
-	nbr->id = id;
-	nbr->laddr = leconf->trans_addr;
-	nbr->raddr = addr;
 	nbr->peerid = 0;
+	nbr->af = af;
+	nbr->ds_tlv = ds_tlv;
+	if (af == AF_INET || ds_tlv)
+		nbr->v4_enabled = 1;
+	if (af == AF_INET6 || ds_tlv)
+		nbr->v6_enabled = 1;
+	nbr->id = id;
+	nbr->laddr = (ldp_af_conf_get(leconf, af))->trans_addr;
+	nbr->raddr = *addr;
+	nbr->raddr_scope = scope_id;
+
+	LIST_FOREACH(adj, &global.adj_list, global_entry) {
+		if (adj->lsr_id.s_addr == nbr->id.s_addr) {
+			adj->nbr = nbr;
+			LIST_INSERT_HEAD(&nbr->adj_list, adj, nbr_entry);
+		}
+	}
 
 	if (RB_INSERT(nbr_id_head, &nbrs_by_id, nbr) != NULL)
 		fatalx("nbr_new: RB_INSERT(nbrs_by_id) failed");
@@ -258,7 +278,7 @@ nbr_new(struct in_addr id, struct in_addr addr)
 	if (nbrp && pfkey_establish(nbr, nbrp) == -1)
 		fatalx("pfkey setup failed");
 
-	pconn = pending_conn_find(nbr->raddr);
+	pconn = pending_conn_find(nbr->af, &nbr->raddr);
 	if (pconn) {
 		session_accept_nbr(nbr, pconn->fd);
 		pending_conn_del(pconn);
@@ -319,10 +339,11 @@ nbr_find_ldpid(uint32_t lsr_id)
 }
 
 struct nbr *
-nbr_find_addr(struct in_addr addr)
+nbr_find_addr(int af, union ldpd_addr *addr)
 {
 	struct nbr	n;
-	n.raddr = addr;
+	n.af = af;
+	n.raddr = *addr;
 	return (RB_FIND(nbr_addr_head, &nbrs_by_addr, &n));
 }
 
@@ -335,9 +356,22 @@ nbr_find_peerid(uint32_t peerid)
 }
 
 int
+nbr_adj_count(struct nbr *nbr, int af)
+{
+	struct adj	*adj;
+	int		 total = 0;
+
+	LIST_FOREACH(adj, &nbr->adj_list, nbr_entry)
+		if (adj_get_af(adj) == af)
+			total++;
+
+	return (total);
+}
+
+int
 nbr_session_active_role(struct nbr *nbr)
 {
-	if (ntohl(nbr->laddr.s_addr) > ntohl(nbr->raddr.s_addr))
+	if (ldp_addrcmp(nbr->af, &nbr->laddr, &nbr->raddr) > 0)
 		return (1);
 
 	return (0);
@@ -492,7 +526,7 @@ nbr_connect_cb(int fd, short event, void *arg)
 		close(nbr->fd);
 		errno = error;
 		log_debug("%s: error while connecting to %s: %s", __func__,
-		    inet_ntoa(nbr->raddr), strerror(errno));
+		    log_addr(nbr->af, &nbr->raddr), strerror(errno));
 		return;
 	}
 
@@ -502,13 +536,14 @@ nbr_connect_cb(int fd, short event, void *arg)
 int
 nbr_establish_connection(struct nbr *nbr)
 {
-	struct sockaddr_in	 local_sa;
-	struct sockaddr_in	 remote_sa;
+	struct sockaddr_storage	 local_sa;
+	struct sockaddr_storage	 remote_sa;
 	struct adj		*adj;
 	struct nbr_params	*nbrp;
 	int			 opt = 1;
 
-	nbr->fd = socket(AF_INET, SOCK_STREAM|SOCK_NONBLOCK|SOCK_CLOEXEC, 0);
+	nbr->fd = socket(nbr->af,
+	    SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
 	if (nbr->fd == -1) {
 		log_warn("%s: error while creating socket", __func__);
 		return (-1);
@@ -529,34 +564,30 @@ nbr_establish_connection(struct nbr *nbr)
 		}
 	}
 
-	memset(&local_sa, 0, sizeof(local_sa));
-	local_sa.sin_family = AF_INET;
-	local_sa.sin_port = htons(0);
-	local_sa.sin_addr = nbr->laddr;
+	memcpy(&local_sa, addr2sa(nbr->af, &nbr->laddr, 0), sizeof(local_sa));
+	memcpy(&remote_sa, addr2sa(nbr->af, &nbr->raddr, LDP_PORT),
+	    sizeof(local_sa));
+	if (nbr->af == AF_INET6 && nbr->raddr_scope)
+		addscope((struct sockaddr_in6 *)&remote_sa, nbr->raddr_scope);
 
-	if (bind(nbr->fd, (struct sockaddr *) &local_sa,
-	    sizeof(struct sockaddr_in)) == -1) {
+	if (bind(nbr->fd, (struct sockaddr *)&local_sa,
+	    local_sa.ss_len) == -1) {
 		log_warn("%s: error while binding socket to %s", __func__,
-		    inet_ntoa(local_sa.sin_addr));
+		    log_sockaddr((struct sockaddr *)&local_sa));
 		close(nbr->fd);
 		return (-1);
 	}
-
-	memset(&remote_sa, 0, sizeof(remote_sa));
-	remote_sa.sin_family = AF_INET;
-	remote_sa.sin_port = htons(LDP_PORT);
-	remote_sa.sin_addr = nbr->raddr;
 
 	/*
 	 * Send an extra hello to guarantee that the remote peer has formed
 	 * an adjacency as well.
 	 */
 	LIST_FOREACH(adj, &nbr->adj_list, nbr_entry)
-		send_hello(adj->source.type, adj->source.link.iface,
+		send_hello(adj->source.type, adj->source.link.ia,
 		    adj->source.target);
 
 	if (connect(nbr->fd, (struct sockaddr *)&remote_sa,
-	    sizeof(remote_sa)) == -1) {
+	    remote_sa.ss_len) == -1) {
 		if (errno == EINPROGRESS) {
 			event_set(&nbr->ev_connect, nbr->fd, EV_WRITE,
 			    nbr_connect_cb, nbr);
@@ -564,7 +595,7 @@ nbr_establish_connection(struct nbr *nbr)
 			return (0);
 		}
 		log_warn("%s: error while connecting to %s", __func__,
-		    inet_ntoa(nbr->raddr));
+		    log_sockaddr((struct sockaddr *)&remote_sa));
 		close(nbr->fd);
 		return (-1);
 	}
@@ -578,13 +609,19 @@ nbr_establish_connection(struct nbr *nbr)
 int
 nbr_act_session_operational(struct nbr *nbr)
 {
+	struct lde_nbr	 lde_nbr;
+
 	nbr->idtimer_cnt = 0;
 
 	/* this is necessary to avoid ipc synchronization issues */
 	nbr_update_peerid(nbr);
 
+	memset(&lde_nbr, 0, sizeof(lde_nbr));
+	lde_nbr.id = nbr->id;
+	lde_nbr.v4_enabled = nbr->v4_enabled;
+	lde_nbr.v6_enabled = nbr->v6_enabled;
 	return (ldpe_imsg_compose_lde(IMSG_NEIGHBOR_UP, nbr->peerid, 0,
-	    &nbr->id, sizeof(nbr->id)));
+	    &lde_nbr, sizeof(lde_nbr)));
 }
 
 void
@@ -621,7 +658,7 @@ nbr_params_find(struct ldpd_conf *xconf, struct in_addr lsr_id)
 }
 
 uint16_t
-nbr_get_keepalive(struct in_addr lsr_id)
+nbr_get_keepalive(int af, struct in_addr lsr_id)
 {
 	struct nbr_params	*nbrp;
 
@@ -629,7 +666,7 @@ nbr_get_keepalive(struct in_addr lsr_id)
 	if (nbrp && (nbrp->flags & F_NBRP_KEEPALIVE))
 		return (nbrp->keepalive);
 
-	return (leconf->keepalive);
+	return ((ldp_af_conf_get(leconf, af))->keepalive);
 }
 
 struct ctl_nbr *
@@ -638,8 +675,10 @@ nbr_to_ctl(struct nbr *nbr)
 	static struct ctl_nbr	 nctl;
 	struct timeval		 now;
 
+	nctl.af = nbr->af;
 	nctl.id = nbr->id;
-	nctl.addr = nbr->raddr;
+	nctl.laddr = nbr->laddr;
+	nctl.raddr = nbr->raddr;
 	nctl.nbr_state = nbr->state;
 
 	gettimeofday(&now, NULL);

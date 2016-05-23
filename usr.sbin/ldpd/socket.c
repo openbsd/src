@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.c,v 1.5 2016/05/23 18:43:28 renato Exp $ */
+/*	$OpenBSD: socket.c,v 1.6 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2016 Renato Westphal <renato@openbsd.org>
@@ -35,10 +35,11 @@ extern struct ldpd_conf		*ldpd_conf;
 extern struct ldpd_sysdep	 sysdep;
 
 int
-ldp_create_socket(enum socket_type type)
+ldp_create_socket(int af, enum socket_type type)
 {
 	int			 fd, domain, proto;
-	struct sockaddr_in	 local_sa;
+	union ldpd_addr		 addr;
+	struct sockaddr_storage	 local_sa;
 	int			 opt;
 
 	/* create socket */
@@ -55,24 +56,25 @@ ldp_create_socket(enum socket_type type)
 	default:
 		fatalx("ldp_create_socket: unknown socket type");
 	}
-	fd = socket(AF_INET, domain | SOCK_NONBLOCK | SOCK_CLOEXEC, proto);
+	fd = socket(af, domain | SOCK_NONBLOCK | SOCK_CLOEXEC, proto);
 	if (fd == -1) {
 		log_warn("%s: error creating socket", __func__);
 		return (-1);
 	}
 
 	/* bind to a local address/port */
-	memset(&local_sa, 0, sizeof(local_sa));
-	local_sa.sin_family = AF_INET;
-	local_sa.sin_len = sizeof(struct sockaddr_in);
-	local_sa.sin_port = htons(LDP_PORT);
 	switch (type) {
 	case LDP_SOCKET_DISC:
 		/* listen on all addresses */
+		memset(&addr, 0, sizeof(addr));
+		memcpy(&local_sa, addr2sa(af, &addr, LDP_PORT),
+		    sizeof(local_sa));
 		break;
 	case LDP_SOCKET_EDISC:
 	case LDP_SOCKET_SESSION:
-		local_sa.sin_addr = ldpd_conf->trans_addr;
+		addr = (ldp_af_conf_get(ldpd_conf, af))->trans_addr;
+		memcpy(&local_sa, addr2sa(af, &addr, LDP_PORT),
+		    sizeof(local_sa));
 		if (sock_set_bindany(fd, 1) == -1) {
 			close(fd);
 			return (-1);
@@ -83,33 +85,55 @@ ldp_create_socket(enum socket_type type)
 		close(fd);
 		return (-1);
 	}
-	if (bind(fd, (struct sockaddr *)&local_sa, local_sa.sin_len) == -1) {
+	if (bind(fd, (struct sockaddr *)&local_sa, local_sa.ss_len) == -1) {
 		log_warn("%s: error binding socket", __func__);
 		close(fd);
 		return (-1);
 	}
 
 	/* set options */
-	if (sock_set_ipv4_tos(fd, IPTOS_PREC_INTERNETCONTROL) == -1) {
-		close(fd);
-		return (-1);
-	}
-	if (type == LDP_SOCKET_DISC) {
-		if (sock_set_ipv4_mcast_ttl(fd,
-		    IP_DEFAULT_MULTICAST_TTL) == -1) {
+	switch (af) {
+	case AF_INET:
+		if (sock_set_ipv4_tos(fd, IPTOS_PREC_INTERNETCONTROL) == -1) {
 			close(fd);
 			return (-1);
 		}
-		if (sock_set_ipv4_mcast_loop(fd) == -1) {
+		if (type == LDP_SOCKET_DISC) {
+			if (sock_set_ipv4_mcast_ttl(fd,
+			    IP_DEFAULT_MULTICAST_TTL) == -1) {
+				close(fd);
+				return (-1);
+			}
+			if (sock_set_ipv4_mcast_loop(fd) == -1) {
+				close(fd);
+				return (-1);
+			}
+		}
+		if (type == LDP_SOCKET_DISC || type == LDP_SOCKET_EDISC) {
+			if (sock_set_ipv4_recvif(fd, 1) == -1) {
+				close(fd);
+				return (-1);
+			}
+		}
+		break;
+	case AF_INET6:
+		if (sock_set_ipv6_dscp(fd, IPTOS_PREC_INTERNETCONTROL) == -1) {
 			close(fd);
 			return (-1);
 		}
-	}
-	if (type == LDP_SOCKET_DISC || type == LDP_SOCKET_EDISC) {
-		if (sock_set_ipv4_recvif(fd, 1) == -1) {
-			close(fd);
-			return (-1);
+		if (type == LDP_SOCKET_DISC) {
+			if (sock_set_ipv6_mcast_loop(fd) == -1) {
+				close(fd);
+				return (-1);
+			}
 		}
+		if (type == LDP_SOCKET_DISC || type == LDP_SOCKET_EDISC) {
+			if (sock_set_ipv6_pktinfo(fd, 1) == -1) {
+				close(fd);
+				return (-1);
+			}
+		}
+		break;
 	}
 	switch (type) {
 	case LDP_SOCKET_DISC:
@@ -210,14 +234,12 @@ sock_set_ipv4_recvif(int fd, int enable)
 int
 sock_set_ipv4_mcast(struct iface *iface)
 {
-	struct if_addr		*if_addr;
+	in_addr_t		 addr;
 
-	if_addr = LIST_FIRST(&iface->addr_list);
-	if (!if_addr)
-		return (0);
+	addr = if_get_ipv4_addr(iface);
 
-	if (setsockopt(global.ldp_disc_socket, IPPROTO_IP, IP_MULTICAST_IF,
-	    &if_addr->addr.s_addr, sizeof(if_addr->addr.s_addr)) < 0) {
+	if (setsockopt(global.ipv4.ldp_disc_socket, IPPROTO_IP, IP_MULTICAST_IF,
+	    &addr, sizeof(addr)) < 0) {
 		log_warn("%s: error setting IP_MULTICAST_IF, interface %s",
 		    __func__, iface->name);
 		return (-1);
@@ -234,6 +256,57 @@ sock_set_ipv4_mcast_loop(int fd)
 	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP,
 	    (char *)&loop, sizeof(loop)) < 0) {
 		log_warn("%s: error setting IP_MULTICAST_LOOP", __func__);
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+sock_set_ipv6_dscp(int fd, int dscp)
+{
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_TCLASS, &dscp,
+	    sizeof(dscp)) < 0) {
+		log_warn("%s: error setting IPV6_TCLASS", __func__);
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+sock_set_ipv6_pktinfo(int fd, int enable)
+{
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &enable,
+	    sizeof(enable)) < 0) {
+		log_warn("%s: error setting IPV6_RECVPKTINFO", __func__);
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+sock_set_ipv6_mcast(struct iface *iface)
+{
+	if (setsockopt(global.ipv6.ldp_disc_socket, IPPROTO_IPV6,
+	    IPV6_MULTICAST_IF, &iface->ifindex, sizeof(iface->ifindex)) < 0) {
+		log_warn("%s: error setting IPV6_MULTICAST_IF, interface %s",
+		    __func__, iface->name);
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+sock_set_ipv6_mcast_loop(int fd)
+{
+	unsigned int	loop = 0;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
+	    (unsigned int *)&loop, sizeof(loop)) < 0) {
+		log_warn("%s: error setting IPV6_MULTICAST_LOOP", __func__);
 		return (-1);
 	}
 

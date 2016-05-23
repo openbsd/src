@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.26 2016/05/23 18:49:22 renato Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.27 2016/05/23 18:58:48 renato Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -31,7 +31,7 @@ daemon implements the Label Distribution Protocol as described in RFC 5036.
 .Sh SECTIONS
 The
 .Nm
-config file is divided into six main sections.
+config file is divided into seven main sections.
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
@@ -39,6 +39,8 @@ configuration file.
 .It Sy Global Configuration
 Global settings for
 .Xr ldpd 8 .
+.It Sy Address-Family Configuration
+Address-family specific parameters.
 .It Sy Interfaces Configuration
 Interface-specific parameters.
 .It Sy Targeted Neighbors Configuration
@@ -78,18 +80,19 @@ neighbor 10.0.1.5 {
 }
 .Ed
 .Sh GLOBAL CONFIGURATION
-All interface related settings can be configured globally and per interface.
+Several settings can be configured globally or within a more restricted scope,
+like per address-family or per interface.
 The only settings that can be set globally and not overruled are listed below.
 .Pp
 .Bl -tag -width Ds -compact
 .It Xo
-.Ic explicit-null
+.Ic ds-cisco-interop
 .Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic yes ,
-advertise explicit-null labels in place of implicit-null labels for directly
-connected prefixes.
+Cisco non-compliant format will be used to send and interpret the Dual-Stack
+capability TLV.
 The default is
 .Ic no .
 .Pp
@@ -104,13 +107,46 @@ table.
 The default is
 .Ic yes .
 .Pp
-.It Ic keepalive Ar seconds
-Set the keepalive timeout in seconds.
-The default value is 180; valid range is 1\-65535.
-.Pp
 .It Ic router-id Ar address
 Set the router ID; in combination with labelspace it forms the LSR-ID.
 If not specified, the numerically lowest IP address of the router will be used.
+.Pp
+.It Xo
+.Ic transport-preference
+.Pq Ic ipv4 Ns | Ns Ic ipv6
+.Xc
+Specify the prefered address-family for TCP transport connections.
+If two dual-stack LSRs preferences does not match, no LDP session will
+be established.
+The default is
+.Ic ipv6 .
+.El
+.Sh ADDRESS-FAMILY CONFIGURATION
+Each address-family can have several parameters configured
+individually, otherwise they are inherited.
+.Bd -literal -offset indent
+address-family ipv6 {
+	explicit-null yes
+	transport-address 2001:db8::50
+	interface em0
+}
+.Ed
+.Pp
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic explicit-null
+.Pq Ic yes Ns | Ns Ic no
+.Xc
+If set to
+.Ic yes ,
+advertise explicit-null labels in place of implicit-null labels for directly
+connected prefixes.
+The default is
+.Ic no .
+.Pp
+.It Ic keepalive Ar seconds
+Set the keepalive timeout in seconds.
+The default value is 180; valid range is 3\-65535.
 .Pp
 .It Xo
 .Ic targeted-hello-accept
@@ -125,13 +161,18 @@ The default is
 .Pp
 .It Ic transport-address Ar address
 Set the local address to be used in the TCP sessions.
-If not specified, the router-id will be used.
+For the IPv4 address-family, the router-id will be used if this option is not specified.
+For the IPv6 address-family, this option must be specified.
 .El
 .Sh INTERFACES
 Each interface can have several parameters configured individually, otherwise
 they are inherited.
 .Bd -literal -offset indent
-interface em0 {
+address-family ipv4 {
+	interface em0 {
+		link-hello-holdtime 9
+		link-hello-interval 3
+	}
 }
 .Ed
 .Pp
@@ -152,7 +193,14 @@ The default value is 5; valid range is 1\-65535.
 Each targeted neighbor can have several parameters configured individually,
 otherwise they are inherited.
 .Bd -literal -offset indent
-targeted-neighbor A.B.C.D {
+address-family ipv4 {
+	targeted-neighbor A.B.C.D {
+		targeted-hello-holdtime 90
+		targeted-hello-interval 10
+	}
+}
+address-family ipv6 {
+	targeted-neighbor 2001:db8::1
 }
 .Ed
 .Pp
@@ -178,6 +226,7 @@ Note, however, that
 uses the hello discovery mechanism to discover its neighbors.
 Without an underlying adjacency these commands have no effect.
 A neighbor is identified by its LSR-ID, not by its remote address.
+The neighbor-specific parameters apply for both LDPoIPv4 and LDPoIPv6 sessions.
 .Bd -literal -offset indent
 neighbor A.B.C.D {
 }
@@ -264,9 +313,13 @@ preferred.
 The default is
 .Ic yes .
 .Pp
-.It Ic neighbor Ar address
-Specify the endpoint of the pseudowire on the remote PE router.
+.It Ic neighbor-addr Ar address
+Specify the IPv4 or IPv6 address of the remote endpoint of the pseudowire.
 A targeted neighbor will automatically be created for this address.
+By default, the LSR-ID of the remote endpoint of the pseudowire will be used.
+.Pp
+.It Ic neighbor-id Ar address
+Specify the LSR-ID of the remote endpoint of the pseudowire.
 .Pp
 .It Ic pw-id Ar number
 Set the PW ID used to identify the pseudowire.

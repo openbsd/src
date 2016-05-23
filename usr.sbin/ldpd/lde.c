@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.53 2016/05/23 18:55:21 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.54 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -45,7 +45,7 @@ void		 lde_dispatch_imsg(int, short, void *);
 void		 lde_dispatch_parent(int, short, void *);
 
 struct lde_nbr	*lde_nbr_find(uint32_t);
-struct lde_nbr	*lde_nbr_new(uint32_t, struct in_addr *);
+struct lde_nbr	*lde_nbr_new(uint32_t, struct lde_nbr *);
 void		 lde_nbr_del(struct lde_nbr *);
 void		 lde_nbr_clear(void);
 
@@ -220,7 +220,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 	struct imsg		 imsg;
 	struct lde_nbr		*ln;
 	struct map		 map;
-	struct in_addr		 addr;
+	struct lde_addr		 lde_addr;
 	struct notify_msg	 nm;
 	ssize_t			 n;
 	int			 shut = 0, verbose;
@@ -296,9 +296,9 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 			}
 			break;
 		case IMSG_ADDRESS_ADD:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(addr))
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(lde_addr))
 				fatalx("lde_dispatch_imsg: wrong imsg len");
-			memcpy(&addr, imsg.data, sizeof(addr));
+			memcpy(&lde_addr, imsg.data, sizeof(lde_addr));
 
 			ln = lde_nbr_find(imsg.hdr.peerid);
 			if (ln == NULL) {
@@ -306,16 +306,16 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 				    __func__);
 				break;
 			}
-			if (lde_address_add(ln, &addr) < 0) {
+			if (lde_address_add(ln, &lde_addr) < 0) {
 				log_debug("%s: cannot add address %s, it "
 				    "already exists", __func__,
-				    inet_ntoa(addr));
+				    log_addr(lde_addr.af, &lde_addr.addr));
 			}
 			break;
 		case IMSG_ADDRESS_DEL:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(addr))
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(lde_addr))
 				fatalx("lde_dispatch_imsg: wrong imsg len");
-			memcpy(&addr, imsg.data, sizeof(addr));
+			memcpy(&lde_addr, imsg.data, sizeof(lde_addr));
 
 			ln = lde_nbr_find(imsg.hdr.peerid);
 			if (ln == NULL) {
@@ -323,10 +323,10 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 				    __func__);
 				break;
 			}
-			if (lde_address_del(ln, &addr) < 0) {
+			if (lde_address_del(ln, &lde_addr) < 0) {
 				log_debug("%s: cannot delete address %s, it "
 				    "does not exist", __func__,
-				    inet_ntoa(addr));
+				    log_addr(lde_addr.af, &lde_addr.addr));
 			}
 			break;
 		case IMSG_NOTIFICATION:
@@ -350,7 +350,8 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 			}
 			break;
 		case IMSG_NEIGHBOR_UP:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(addr))
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct lde_nbr))
 				fatalx("lde_dispatch_imsg: wrong imsg len");
 
 			if (lde_nbr_find(imsg.hdr.peerid))
@@ -439,18 +440,6 @@ lde_dispatch_parent(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_NETWORK_ADD:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(kr)) {
-				log_warnx("%s: wrong imsg len", __func__);
-				break;
-			}
-			memcpy(&kr, imsg.data, sizeof(kr));
-
-			fec.type = FEC_TYPE_IPV4;
-			fec.u.ipv4.prefix = kr.prefix;
-			fec.u.ipv4.prefixlen = kr.prefixlen;
-			lde_kernel_insert(&fec, kr.nexthop,
-			    kr.flags & F_CONNECTED, NULL);
-			break;
 		case IMSG_NETWORK_DEL:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(kr)) {
 				log_warnx("%s: wrong imsg len", __func__);
@@ -458,10 +447,30 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			}
 			memcpy(&kr, imsg.data, sizeof(kr));
 
-			fec.type = FEC_TYPE_IPV4;
-			fec.u.ipv4.prefix = kr.prefix;
-			fec.u.ipv4.prefixlen = kr.prefixlen;
-			lde_kernel_remove(&fec, kr.nexthop);
+			switch (kr.af) {
+			case AF_INET:
+				fec.type = FEC_TYPE_IPV4;
+				fec.u.ipv4.prefix = kr.prefix.v4;
+				fec.u.ipv4.prefixlen = kr.prefixlen;
+				break;
+			case AF_INET6:
+				fec.type = FEC_TYPE_IPV6;
+				fec.u.ipv6.prefix = kr.prefix.v6;
+				fec.u.ipv6.prefixlen = kr.prefixlen;
+				break;
+			default:
+				fatalx("lde_dispatch_parent: unknown af");
+			}
+
+			switch (imsg.hdr.type) {
+			case IMSG_NETWORK_ADD:
+				lde_kernel_insert(&fec, kr.af, &kr.nexthop,
+				    kr.flags & F_CONNECTED, NULL);
+				break;
+			case IMSG_NETWORK_DEL:
+				lde_kernel_remove(&fec, kr.af, &kr.nexthop);
+				break;
+			}
 			break;
 		case IMSG_RECONF_CONF:
 			if ((nconf = malloc(sizeof(struct ldpd_conf))) ==
@@ -480,7 +489,10 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			memcpy(niface, imsg.data, sizeof(struct iface));
 
 			LIST_INIT(&niface->addr_list);
-			LIST_INIT(&niface->adj_list);
+			LIST_INIT(&niface->ipv4.adj_list);
+			LIST_INIT(&niface->ipv6.adj_list);
+			niface->ipv4.iface = niface;
+			niface->ipv6.iface = niface;
 
 			LIST_INSERT_HEAD(&nconf->iface_list, niface, entry);
 			break;
@@ -564,18 +576,35 @@ lde_send_change_klabel(struct fec_node *fn, struct fec_nh *fnh)
 	switch (fn->fec.type) {
 	case FEC_TYPE_IPV4:
 		memset(&kr, 0, sizeof(kr));
-		kr.prefix = fn->fec.u.ipv4.prefix;
+		kr.af = AF_INET;
+		kr.prefix.v4 = fn->fec.u.ipv4.prefix;
 		kr.prefixlen = fn->fec.u.ipv4.prefixlen;
+		kr.nexthop.v4 = fnh->nexthop.v4;
 		kr.local_label = fn->local_label;
-		kr.nexthop = fnh->nexthop;
 		kr.remote_label = fnh->remote_label;
 
 		lde_imsg_compose_parent(IMSG_KLABEL_CHANGE, 0, &kr,
 		    sizeof(kr));
 
-		if (fnh->remote_label != NO_LABEL &&
-		    fn->fec.u.ipv4.prefixlen == 32)
-			l2vpn_sync_pws(fn->fec.u.ipv4.prefix);
+		if (fn->fec.u.ipv4.prefixlen == 32)
+			l2vpn_sync_pws(AF_INET, (union ldpd_addr *)
+			    &fn->fec.u.ipv4.prefix);
+		break;
+	case FEC_TYPE_IPV6:
+		memset(&kr, 0, sizeof(kr));
+		kr.af = AF_INET6;
+		kr.prefix.v6 = fn->fec.u.ipv6.prefix;
+		kr.prefixlen = fn->fec.u.ipv6.prefixlen;
+		kr.nexthop.v6 = fnh->nexthop.v6;
+		kr.local_label = fn->local_label;
+		kr.remote_label = fnh->remote_label;
+
+		lde_imsg_compose_parent(IMSG_KLABEL_CHANGE, 0, &kr,
+		    sizeof(kr));
+
+		if (fn->fec.u.ipv6.prefixlen == 128)
+			l2vpn_sync_pws(AF_INET6, (union ldpd_addr *)
+			    &fn->fec.u.ipv6.prefix);
 		break;
 	case FEC_TYPE_PWID:
 		if (fn->local_label == NO_LABEL ||
@@ -588,7 +617,8 @@ lde_send_change_klabel(struct fec_node *fn, struct fec_nh *fnh)
 		memset(&kpw, 0, sizeof(kpw));
 		kpw.ifindex = pw->ifindex;
 		kpw.pw_type = fn->fec.u.pwid.type;
-		kpw.nexthop = fnh->nexthop;
+		kpw.af = pw->af;
+		kpw.nexthop = pw->addr;
 		kpw.local_label = fn->local_label;
 		kpw.remote_label = fnh->remote_label;
 		kpw.flags = pw->flags;
@@ -609,17 +639,35 @@ lde_send_delete_klabel(struct fec_node *fn, struct fec_nh *fnh)
 	switch (fn->fec.type) {
 	case FEC_TYPE_IPV4:
 		memset(&kr, 0, sizeof(kr));
-		kr.prefix = fn->fec.u.ipv4.prefix;
+		kr.af = AF_INET;
+		kr.prefix.v4 = fn->fec.u.ipv4.prefix;
 		kr.prefixlen = fn->fec.u.ipv4.prefixlen;
+		kr.nexthop.v4 = fnh->nexthop.v4;
 		kr.local_label = fn->local_label;
-		kr.nexthop = fnh->nexthop;
 		kr.remote_label = fnh->remote_label;
 
 		lde_imsg_compose_parent(IMSG_KLABEL_DELETE, 0, &kr,
 		    sizeof(kr));
 
 		if (fn->fec.u.ipv4.prefixlen == 32)
-			l2vpn_sync_pws(fn->fec.u.ipv4.prefix);
+			l2vpn_sync_pws(AF_INET, (union ldpd_addr *)
+			    &fn->fec.u.ipv4.prefix);
+		break;
+	case FEC_TYPE_IPV6:
+		memset(&kr, 0, sizeof(kr));
+		kr.af = AF_INET6;
+		kr.prefix.v6 = fn->fec.u.ipv6.prefix;
+		kr.prefixlen = fn->fec.u.ipv6.prefixlen;
+		kr.nexthop.v6 = fnh->nexthop.v6;
+		kr.local_label = fn->local_label;
+		kr.remote_label = fnh->remote_label;
+
+		lde_imsg_compose_parent(IMSG_KLABEL_DELETE, 0, &kr,
+		    sizeof(kr));
+
+		if (fn->fec.u.ipv6.prefixlen == 128)
+			l2vpn_sync_pws(AF_INET6, (union ldpd_addr *)
+			    &fn->fec.u.ipv6.prefix);
 		break;
 	case FEC_TYPE_PWID:
 		pw = (struct l2vpn_pw *) fn->data;
@@ -630,7 +678,8 @@ lde_send_delete_klabel(struct fec_node *fn, struct fec_nh *fnh)
 		memset(&kpw, 0, sizeof(kpw));
 		kpw.ifindex = pw->ifindex;
 		kpw.pw_type = fn->fec.u.pwid.type;
-		kpw.nexthop = fnh->nexthop;
+		kpw.af = pw->af;
+		kpw.nexthop = pw->addr;
 		kpw.local_label = fn->local_label;
 		kpw.remote_label = fnh->remote_label;
 		kpw.flags = pw->flags;
@@ -649,8 +698,15 @@ lde_fec2map(struct fec *fec, struct map *map)
 	switch (fec->type) {
 	case FEC_TYPE_IPV4:
 		map->type = MAP_TYPE_PREFIX;
-		map->fec.ipv4.prefix = fec->u.ipv4.prefix;
-		map->fec.ipv4.prefixlen = fec->u.ipv4.prefixlen;
+		map->fec.prefix.af = AF_IPV4;
+		map->fec.prefix.prefix.v4 = fec->u.ipv4.prefix;
+		map->fec.prefix.prefixlen = fec->u.ipv4.prefixlen;
+		break;
+	case FEC_TYPE_IPV6:
+		map->type = MAP_TYPE_PREFIX;
+		map->fec.prefix.af = AF_IPV6;
+		map->fec.prefix.prefix.v6 = fec->u.ipv6.prefix;
+		map->fec.prefix.prefixlen = fec->u.ipv6.prefixlen;
 		break;
 	case FEC_TYPE_PWID:
 		map->type = MAP_TYPE_PWID;
@@ -669,9 +725,21 @@ lde_map2fec(struct map *map, struct in_addr lsr_id, struct fec *fec)
 
 	switch (map->type) {
 	case MAP_TYPE_PREFIX:
-		fec->type = FEC_TYPE_IPV4;
-		fec->u.ipv4.prefix = map->fec.ipv4.prefix;
-		fec->u.ipv4.prefixlen = map->fec.ipv4.prefixlen;
+		switch (map->fec.prefix.af) {
+		case AF_IPV4:
+			fec->type = FEC_TYPE_IPV4;
+			fec->u.ipv4.prefix = map->fec.prefix.prefix.v4;
+			fec->u.ipv4.prefixlen = map->fec.prefix.prefixlen;
+			break;
+		case AF_IPV6:
+			fec->type = FEC_TYPE_IPV6;
+			fec->u.ipv6.prefix = map->fec.prefix.prefix.v6;
+			fec->u.ipv6.prefixlen = map->fec.prefix.prefixlen;
+			break;
+		default:
+			fatalx("lde_map2fec: unknown af");
+			break;
+		}
 		break;
 	case MAP_TYPE_PWID:
 		fec->type = FEC_TYPE_PWID;
@@ -697,7 +765,16 @@ lde_send_labelmapping(struct lde_nbr *ln, struct fec_node *fn, int single)
 	 */
 
 	lde_fec2map(&fn->fec, &map);
-	if (fn->fec.type == FEC_TYPE_PWID) {
+	switch (fn->fec.type) {
+	case FEC_TYPE_IPV4:
+		if (!ln->v4_enabled)
+			return;
+		break;
+	case FEC_TYPE_IPV6:
+		if (!ln->v6_enabled)
+			return;
+		break;
+	case FEC_TYPE_PWID:
 		pw = (struct l2vpn_pw *) fn->data;
 		if (pw == NULL || pw->lsr_id.s_addr != ln->id.s_addr)
 			/* not the remote end of the pseudowire */
@@ -712,6 +789,7 @@ lde_send_labelmapping(struct lde_nbr *ln, struct fec_node *fn, int single)
 			/* VPLS are always up */
 			map.pw_status = PW_FORWARDING;
 		}
+		break;
 	}
 	map.label = fn->local_label;
 
@@ -750,8 +828,16 @@ lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn, uint32_t label)
 
 	if (fn) {
 		lde_fec2map(&fn->fec, &map);
-		map.label = fn->local_label;
-		if (fn->fec.type == FEC_TYPE_PWID) {
+		switch (fn->fec.type) {
+		case FEC_TYPE_IPV4:
+			if (!ln->v4_enabled)
+				return;
+			break;
+		case FEC_TYPE_IPV6:
+			if (!ln->v6_enabled)
+				return;
+			break;
+		case FEC_TYPE_PWID:
 			pw = (struct l2vpn_pw *) fn->data;
 			if (pw == NULL || pw->lsr_id.s_addr != ln->id.s_addr)
 				/* not the remote end of the pseudowire */
@@ -759,7 +845,9 @@ lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn, uint32_t label)
 
 			if (pw->flags & F_PW_CWORD)
 				map.flags |= F_MAP_PW_CWORD;
+			break;
 		}
+		map.label = fn->local_label;
 	} else {
 		memset(&map, 0, sizeof(map));
 		map.type = MAP_TYPE_WILDCARD;
@@ -807,7 +895,16 @@ lde_send_labelrelease(struct lde_nbr *ln, struct fec_node *fn, uint32_t label)
 
 	if (fn) {
 		lde_fec2map(&fn->fec, &map);
-		if (fn->fec.type == FEC_TYPE_PWID) {
+		switch (fn->fec.type) {
+		case FEC_TYPE_IPV4:
+			if (!ln->v4_enabled)
+				return;
+			break;
+		case FEC_TYPE_IPV6:
+			if (!ln->v6_enabled)
+				return;
+			break;
+		case FEC_TYPE_PWID:
 			pw = (struct l2vpn_pw *) fn->data;
 			if (pw == NULL || pw->lsr_id.s_addr != ln->id.s_addr)
 				/* not the remote end of the pseudowire */
@@ -815,6 +912,7 @@ lde_send_labelrelease(struct lde_nbr *ln, struct fec_node *fn, uint32_t label)
 
 			if (pw->flags & F_PW_CWORD)
 				map.flags |= F_MAP_PW_CWORD;
+			break;
 		}
 	} else {
 		memset(&map, 0, sizeof(map));
@@ -850,14 +948,16 @@ lde_nbr_compare(struct lde_nbr *a, struct lde_nbr *b)
 }
 
 struct lde_nbr *
-lde_nbr_new(uint32_t peerid, struct in_addr *id)
+lde_nbr_new(uint32_t peerid, struct lde_nbr *new)
 {
 	struct lde_nbr	*ln;
 
 	if ((ln = calloc(1, sizeof(*ln))) == NULL)
 		fatal(__func__);
 
-	ln->id = *id;
+	ln->id = new->id;
+	ln->v4_enabled = new->v4_enabled;
+	ln->v6_enabled = new->v6_enabled;
 	ln->peerid = peerid;
 	fec_init(&ln->recv_map);
 	fec_init(&ln->sent_map);
@@ -891,7 +991,9 @@ lde_nbr_del(struct lde_nbr *ln)
 		LIST_FOREACH(fnh, &fn->nexthops, entry) {
 			switch (f->type) {
 			case FEC_TYPE_IPV4:
-				if (!lde_address_find(ln, &fnh->nexthop))
+			case FEC_TYPE_IPV6:
+				if (!lde_address_find(ln, fnh->af,
+				    &fnh->nexthop))
 					continue;
 				break;
 			case FEC_TYPE_PWID:
@@ -946,12 +1048,12 @@ lde_nbr_find_by_lsrid(struct in_addr addr)
 }
 
 struct lde_nbr *
-lde_nbr_find_by_addr(struct in_addr addr)
+lde_nbr_find_by_addr(int af, union ldpd_addr *addr)
 {
 	struct lde_nbr		*ln;
 
 	RB_FOREACH(ln, nbr_tree, &lde_nbrs)
-		if (lde_address_find(ln, &addr) != NULL)
+		if (lde_address_find(ln, af, addr) != NULL)
 			return (ln);
 
 	return (NULL);
@@ -1074,24 +1176,43 @@ lde_wdraw_del(struct lde_nbr *ln, struct lde_wdraw *lw)
 }
 
 void
-lde_change_egress_label(int was_implicit)
+lde_change_egress_label(int af, int was_implicit)
 {
 	struct lde_nbr	*ln;
 	struct fec	*f;
 	struct fec_node	*fn;
 
-	/* explicit withdraw */
-	if (was_implicit)
-		lde_send_labelwithdraw_all(NULL, MPLS_LABEL_IMPLNULL);
-	else
-		lde_send_labelwithdraw_all(NULL, MPLS_LABEL_IPV4NULL);
-
-	/* update label of connected prefixes */
 	RB_FOREACH(ln, nbr_tree, &lde_nbrs) {
+		/* explicit withdraw */
+		if (was_implicit)
+			lde_send_labelwithdraw(ln, NULL, MPLS_LABEL_IMPLNULL);
+		else {
+			if (ln->v4_enabled)
+				lde_send_labelwithdraw(ln, NULL,
+				    MPLS_LABEL_IPV4NULL);
+			if (ln->v6_enabled)
+				lde_send_labelwithdraw(ln, NULL,
+				    MPLS_LABEL_IPV6NULL);
+		}
+
+		/* advertise new label of connected prefixes */
 		RB_FOREACH(f, fec_tree, &ft) {
 			fn = (struct fec_node *)f;
 			if (fn->local_label > MPLS_LABEL_RESERVED_MAX)
 				continue;
+
+			switch (af) {
+			case AF_INET:
+				if (fn->fec.type != FEC_TYPE_IPV4)
+					continue;
+				break;
+			case AF_INET6:
+				if (fn->fec.type != FEC_TYPE_IPV6)
+					continue;
+				break;
+			default:
+				fatalx("lde_change_egress_label: unknown af");
+			}
 
 			fn->local_label = egress_label(fn->fec.type);
 			lde_send_labelmapping(ln, fn, 0);
@@ -1103,28 +1224,27 @@ lde_change_egress_label(int was_implicit)
 }
 
 int
-lde_address_add(struct lde_nbr *ln, struct in_addr *addr)
+lde_address_add(struct lde_nbr *ln, struct lde_addr *lde_addr)
 {
 	struct lde_addr		*new;
 
-	if (lde_address_find(ln, addr) != NULL)
+	if (lde_address_find(ln, lde_addr->af, &lde_addr->addr) != NULL)
 		return (-1);
 
 	if ((new = calloc(1, sizeof(*new))) == NULL)
 		fatal(__func__);
 
-	new->addr = *addr;
+	new->af = lde_addr->af;
+	new->addr = lde_addr->addr;
 	TAILQ_INSERT_TAIL(&ln->addr_list, new, entry);
 
 	return (0);
 }
 
 int
-lde_address_del(struct lde_nbr *ln, struct in_addr *addr)
+lde_address_del(struct lde_nbr *ln, struct lde_addr *lde_addr)
 {
-	struct lde_addr		*lde_addr;
-
-	lde_addr = lde_address_find(ln, addr);
+	lde_addr = lde_address_find(ln, lde_addr->af, &lde_addr->addr);
 	if (lde_addr == NULL)
 		return (-1);
 
@@ -1135,12 +1255,13 @@ lde_address_del(struct lde_nbr *ln, struct in_addr *addr)
 }
 
 struct lde_addr *
-lde_address_find(struct lde_nbr *ln, struct in_addr *addr)
+lde_address_find(struct lde_nbr *ln, int af, union ldpd_addr *addr)
 {
 	struct lde_addr		*lde_addr;
 
 	TAILQ_FOREACH(lde_addr, &ln->addr_list, entry)
-		if (lde_addr->addr.s_addr == addr->s_addr)
+		if (lde_addr->af == af &&
+		    ldp_addrcmp(af, &lde_addr->addr, addr) == 0)
 			return (lde_addr);
 
 	return (NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.54 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.55 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -42,7 +42,7 @@
 extern struct ldpd_conf        *leconf;
 extern struct ldpd_sysdep	sysdep;
 
-struct iface	*disc_find_iface(unsigned int, struct in_addr, int);
+struct iface	*disc_find_iface(unsigned int, int, union ldpd_addr *, int);
 ssize_t		 session_get_pdu(struct ibuf_read *, char **);
 
 static int	 msgcnt = 0;
@@ -79,21 +79,40 @@ gen_msg_hdr(struct ibuf *buf, uint32_t type, uint16_t size)
 
 /* send packets */
 int
-send_packet(int fd, struct iface *iface, void *pkt, size_t len,
-    struct sockaddr_in *dst)
+send_packet(int fd, int af, union ldpd_addr *dst, struct iface_af *ia,
+    void *pkt, size_t len)
 {
-	/* set outgoing interface for multicast traffic */
-	if (iface && IN_MULTICAST(ntohl(dst->sin_addr.s_addr)))
-		if (sock_set_ipv4_mcast(iface) == -1) {
-			log_warn("%s: error setting multicast interface, %s",
-			    __func__, iface->name);
-			return (-1);
-		}
+	struct sockaddr		*sa;
 
-	if (sendto(fd, pkt, len, 0, (struct sockaddr *)dst,
-	    sizeof(*dst)) == -1) {
+	switch (af) {
+	case AF_INET:
+		if (ia && IN_MULTICAST(ntohl(dst->v4.s_addr))) {
+			/* set outgoing interface for multicast traffic */
+			if (sock_set_ipv4_mcast(ia->iface) == -1) {
+				log_debug("%s: error setting multicast "
+				    "interface, %s", __func__, ia->iface->name);
+				return (-1);
+			}
+		}
+		break;
+	case AF_INET6:
+		if (ia && IN6_IS_ADDR_MULTICAST(&dst->v6)) {
+			/* set outgoing interface for multicast traffic */
+			if (sock_set_ipv6_mcast(ia->iface) == -1) {
+				log_debug("%s: error setting multicast "
+				    "interface, %s", __func__, ia->iface->name);
+				return (-1);
+			}
+		}
+		break;
+	default:
+		fatalx("send_packet: unknown af");
+	}
+
+	sa = addr2sa(af, dst, LDP_PORT);
+	if (sendto(fd, pkt, len, 0, sa, sa->sa_len) == -1) {
 		log_warn("%s: error sending packet to %s", __func__,
-		    inet_ntoa(dst->sin_addr));
+		    log_sockaddr(sa));
 		return (-1);
 	}
 
@@ -101,20 +120,23 @@ send_packet(int fd, struct iface *iface, void *pkt, size_t len,
 }
 
 /* Discovery functions */
+#define CMSG_MAXLEN max(sizeof(struct sockaddr_dl), sizeof(struct in6_pktinfo))
 void
 disc_recv_packet(int fd, short event, void *bula)
 {
 	union {
 		struct	cmsghdr hdr;
-		char	buf[CMSG_SPACE(sizeof(struct sockaddr_dl))];
+		char	buf[CMSG_SPACE(CMSG_MAXLEN)];
 	} cmsgbuf;
-	struct sockaddr_in	 src;
 	struct msghdr		 msg;
+	struct sockaddr_storage	 from;
 	struct iovec		 iov;
 	char			*buf;
 	struct cmsghdr		*cmsg;
 	ssize_t			 r;
 	int			 multicast;
+	int			 af;
+	union ldpd_addr		 src;
 	unsigned int		 ifindex = 0;
 	struct iface		*iface;
 	uint16_t		 len;
@@ -131,8 +153,8 @@ disc_recv_packet(int fd, short event, void *bula)
 	memset(&msg, 0, sizeof(msg));
 	iov.iov_base = buf = pkt_ptr;
 	iov.iov_len = IBUF_READ_SIZE;
-	msg.msg_name = &src;
-	msg.msg_namelen = sizeof(src);
+	msg.msg_name = &from;
+	msg.msg_namelen = sizeof(from);
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 	msg.msg_control = &cmsgbuf.buf;
@@ -146,24 +168,31 @@ disc_recv_packet(int fd, short event, void *bula)
 	}
 
 	multicast = (msg.msg_flags & MSG_MCAST) ? 1 : 0;
-	if (bad_ip_addr(src.sin_addr)) {
+	sa2addr((struct sockaddr *)&from, &af, &src);
+	if (bad_addr(af, &src)) {
 		log_debug("%s: invalid source address: %s", __func__,
-		    inet_ntoa(src.sin_addr));
+		    log_addr(af, &src));
 		return;
 	}
 
 	for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
 	    cmsg = CMSG_NXTHDR(&msg, cmsg)) {
-		if (cmsg->cmsg_level == IPPROTO_IP &&
+		if (af == AF_INET && cmsg->cmsg_level == IPPROTO_IP &&
 		    cmsg->cmsg_type == IP_RECVIF) {
 			ifindex = ((struct sockaddr_dl *)
 			    CMSG_DATA(cmsg))->sdl_index;
 			break;
 		}
+		if (af == AF_INET6 && cmsg->cmsg_level == IPPROTO_IPV6 &&
+		    cmsg->cmsg_type == IPV6_PKTINFO) {
+			ifindex = ((struct in6_pktinfo *)
+			    CMSG_DATA(cmsg))->ipi6_ifindex;
+			break;
+		}
 	}
 
 	/* find a matching interface */
-	iface = disc_find_iface(ifindex, src.sin_addr, multicast);
+	iface = disc_find_iface(ifindex, af, &src, multicast);
 	if (iface == NULL)
 		return;
 
@@ -171,7 +200,7 @@ disc_recv_packet(int fd, short event, void *bula)
 	len = (uint16_t)r;
 	if (len < (LDP_HDR_SIZE + LDP_MSG_SIZE) || len > LDP_MAX_LEN) {
 		log_debug("%s: bad packet size, source %s", __func__,
-		    inet_ntoa(src.sin_addr));
+		    log_addr(af, &src));
 		return;
 	}
 
@@ -179,12 +208,12 @@ disc_recv_packet(int fd, short event, void *bula)
 	memcpy(&ldp_hdr, buf, sizeof(ldp_hdr));
 	if (ntohs(ldp_hdr.version) != LDP_VERSION) {
 		log_debug("%s: invalid LDP version %d, source %s", __func__,
-		    ntohs(ldp_hdr.version), inet_ntoa(src.sin_addr));
+		    ntohs(ldp_hdr.version), log_addr(af, &src));
 		return;
 	}
 	if (ntohs(ldp_hdr.lspace_id) != 0) {
 		log_debug("%s: invalid label space %u, source %s", __func__,
-		    ntohs(ldp_hdr.lspace_id), inet_ntoa(src.sin_addr));
+		    ntohs(ldp_hdr.lspace_id), log_addr(af, &src));
 		return;
 	}
 	/* check "PDU Length" field */
@@ -192,7 +221,7 @@ disc_recv_packet(int fd, short event, void *bula)
 	if ((pdu_len < (LDP_HDR_PDU_LEN + LDP_MSG_SIZE)) ||
 	    (pdu_len > (len - LDP_HDR_DEAD_LEN))) {
 		log_debug("%s: invalid LDP packet length %u, source %s",
-		    __func__, ntohs(ldp_hdr.length), inet_ntoa(src.sin_addr));
+		    __func__, ntohs(ldp_hdr.length), log_addr(af, &src));
 		return;
 	}
 	buf += LDP_HDR_SIZE;
@@ -211,7 +240,7 @@ disc_recv_packet(int fd, short event, void *bula)
 	msg_len = ntohs(ldp_msg.length);
 	if (msg_len < LDP_MSG_LEN || ((msg_len + LDP_MSG_DEAD_LEN) > pdu_len)) {
 		log_debug("%s: invalid LDP message length %u, source %s",
-		    __func__, ntohs(ldp_msg.length), inet_ntoa(src.sin_addr));
+		    __func__, ntohs(ldp_msg.length), log_addr(af, &src));
 		return;
 	}
 	buf += LDP_MSG_SIZE;
@@ -220,43 +249,65 @@ disc_recv_packet(int fd, short event, void *bula)
 	/* switch LDP packet type */
 	switch (ntohs(ldp_msg.type)) {
 	case MSG_TYPE_HELLO:
-		recv_hello(lsr_id, &ldp_msg, src.sin_addr, iface, multicast,
+		recv_hello(lsr_id, &ldp_msg, af, &src, iface, multicast,
 		    buf, len);
 		break;
 	default:
 		log_debug("%s: unknown LDP packet type, source %s", __func__,
-		    inet_ntoa(src.sin_addr));
+		    log_addr(af, &src));
 	}
 }
 
 struct iface *
-disc_find_iface(unsigned int ifindex, struct in_addr src,
+disc_find_iface(unsigned int ifindex, int af, union ldpd_addr *src,
     int multicast)
 {
 	struct iface	*iface;
+	struct iface_af	*ia;
 	struct if_addr	*if_addr;
+	in_addr_t	 mask;
 
 	iface = if_lookup(leconf, ifindex);
 	if (iface == NULL)
 		return (NULL);
 
-	if (!multicast)
-		return (iface);
+	/*
+	 * For unicast packets, we just need to make sure that the interface
+	 * is enabled for the given address-family.
+	 */
+	if (!multicast) {
+		ia = iface_af_get(iface, af);
+		if (ia->enabled)
+			return (iface);
+		return (NULL);
+	}
 
-	LIST_FOREACH(if_addr, &iface->addr_list, entry) {
-		switch (iface->type) {
-		case IF_TYPE_POINTOPOINT:
-			if (ifindex == iface->ifindex &&
-			    if_addr->dstbrd.s_addr == src.s_addr)
-				return (iface);
-			break;
-		default:
-			if (ifindex == iface->ifindex &&
-			    (if_addr->addr.s_addr & if_addr->mask.s_addr) ==
-			    (src.s_addr & if_addr->mask.s_addr))
-				return (iface);
-			break;
+	switch (af) {
+	case AF_INET:
+		LIST_FOREACH(if_addr, &iface->addr_list, entry) {
+			if (if_addr->af != AF_INET)
+				continue;
+
+			switch (iface->type) {
+			case IF_TYPE_POINTOPOINT:
+				if (if_addr->dstbrd.v4.s_addr == src->v4.s_addr)
+					return (iface);
+				break;
+			default:
+				mask = prefixlen2mask(if_addr->prefixlen);
+				if ((if_addr->addr.v4.s_addr & mask) ==
+				    (src->v4.s_addr & mask))
+					return (iface);
+				break;
+			}
 		}
+		break;
+	case AF_INET6:
+		if (IN6_IS_ADDR_LINKLOCAL(&src->v6))
+			return (iface);
+		break;
+	default:
+		fatalx("disc_find_iface: unknown af");
 	}
 
 	return (NULL);
@@ -265,9 +316,11 @@ disc_find_iface(unsigned int ifindex, struct in_addr src,
 void
 session_accept(int fd, short event, void *bula)
 {
-	struct sockaddr_in	 src;
+	struct sockaddr_storage	 src;
 	socklen_t		 len = sizeof(src);
 	int			 newfd;
+	int			 af;
+	union ldpd_addr		 addr;
 	struct nbr		*nbr;
 	struct pending_conn	*pconn;
 
@@ -290,12 +343,14 @@ session_accept(int fd, short event, void *bula)
 		return;
 	}
 
+	sa2addr((struct sockaddr *)&src, &af, &addr);
+
 	/*
 	 * Since we don't support label spaces, we can identify this neighbor
 	 * just by its source address. This way we don't need to wait for its
 	 * Initialization message to know who we are talking to.
 	 */
-	nbr = nbr_find_addr(src.sin_addr);
+	nbr = nbr_find_addr(af, &addr);
 	if (nbr == NULL) {
 		/*
 		 * According to RFC 5036, we would need to send a No Hello
@@ -308,11 +363,11 @@ session_accept(int fd, short event, void *bula)
 		 * message within this interval, so it's worth waiting before
 		 * taking a more drastic measure.
 		 */
-		pconn = pending_conn_find(src.sin_addr);
+		pconn = pending_conn_find(af, &addr);
 		if (pconn)
 			close(newfd);
 		else
-			pending_conn_new(newfd, src.sin_addr);
+			pending_conn_new(newfd, af, &addr);
 		return;
 	}
 	/* protection against buggy implementations */
@@ -663,7 +718,7 @@ tcp_close(struct tcp_conn *tcp)
 }
 
 struct pending_conn *
-pending_conn_new(int fd, struct in_addr addr)
+pending_conn_new(int fd, int af, union ldpd_addr *addr)
 {
 	struct pending_conn	*pconn;
 	struct timeval		 tv;
@@ -672,7 +727,8 @@ pending_conn_new(int fd, struct in_addr addr)
 		fatal(__func__);
 
 	pconn->fd = fd;
-	pconn->addr = addr;
+	pconn->af = af;
+	pconn->addr = *addr;
 	evtimer_set(&pconn->ev_timeout, pending_conn_timeout, pconn);
 	TAILQ_INSERT_TAIL(&global.pending_conns, pconn, entry);
 
@@ -696,12 +752,13 @@ pending_conn_del(struct pending_conn *pconn)
 }
 
 struct pending_conn *
-pending_conn_find(struct in_addr addr)
+pending_conn_find(int af, union ldpd_addr *addr)
 {
 	struct pending_conn	*pconn;
 
 	TAILQ_FOREACH(pconn, &global.pending_conns, entry)
-		if (addr.s_addr == pconn->addr.s_addr)
+		if (af == pconn->af &&
+		    ldp_addrcmp(af, addr, &pconn->addr) == 0)
 			return (pconn);
 
 	return (NULL);
@@ -714,7 +771,7 @@ pending_conn_timeout(int fd, short event, void *arg)
 	struct tcp_conn		*tcp;
 
 	log_debug("%s: no adjacency with remote end: %s", __func__,
-	    inet_ntoa(pconn->addr));
+	    log_addr(pconn->af, &pconn->addr));
 
 	/*
 	 * Create a write buffer detached from any neighbor to send a

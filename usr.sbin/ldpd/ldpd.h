@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.70 2016/05/23 18:55:21 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.71 2016/05/23 18:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -127,6 +127,16 @@ enum imsg_type {
 	IMSG_RECONF_END
 };
 
+union ldpd_addr {
+	struct in_addr	v4;
+	struct in6_addr	v6;
+};
+
+#define IN6_IS_SCOPE_EMBED(a)   \
+	((IN6_IS_ADDR_LINKLOCAL(a)) ||  \
+	 (IN6_IS_ADDR_MC_LINKLOCAL(a)) || \
+	 (IN6_IS_ADDR_MC_INTFACELOCAL(a)))
+
 /* interface states */
 #define	IF_STA_DOWN		0x01
 #define	IF_STA_ACTIVE		0x02
@@ -180,11 +190,12 @@ TAILQ_HEAD(mapping_head, mapping_entry);
 struct map {
 	uint8_t		type;
 	uint32_t	messageid;
-	union map_fec {
+	union {
 		struct {
-			struct in_addr	prefix;
+			uint16_t	af;
+			union ldpd_addr	prefix;
 			uint8_t		prefixlen;
-		} ipv4;
+		} prefix;
 		struct {
 			uint16_t	type;
 			uint32_t	pwid;
@@ -216,29 +227,37 @@ struct notify_msg {
 
 struct if_addr {
 	LIST_ENTRY(if_addr)	 entry;
-	struct in_addr		 addr;
-	struct in_addr		 mask;
-	struct in_addr		 dstbrd;
+	int			 af;
+	union ldpd_addr		 addr;
+	uint8_t			 prefixlen;
+	union ldpd_addr		 dstbrd;
 };
 LIST_HEAD(if_addr_head, if_addr);
 
-struct iface {
-	LIST_ENTRY(iface)	 entry;
-	struct event		 hello_timer;
-
-	char			 name[IF_NAMESIZE];
-	struct if_addr_head	 addr_list;
-	LIST_HEAD(, adj)	 adj_list;
-
-	time_t			 uptime;
-	unsigned int		 ifindex;
+struct iface_af {
+	struct iface		*iface;
+	int			 af;
+	int			 enabled;
 	int			 state;
+	LIST_HEAD(, adj)	 adj_list;
+	time_t			 uptime;
+	struct event		 hello_timer;
 	uint16_t		 hello_holdtime;
 	uint16_t		 hello_interval;
-	uint16_t		 flags;
+};
+
+struct iface {
+	LIST_ENTRY(iface)	 entry;
+	char			 name[IF_NAMESIZE];
+	unsigned int		 ifindex;
+	struct if_addr_head	 addr_list;
+	struct in6_addr		 linklocal;
 	enum iface_type		 type;
 	uint8_t			 if_type;
+	uint16_t		 flags;
 	uint8_t			 linkstate;
+	struct iface_af		 ipv4;
+	struct iface_af		 ipv6;
 };
 
 /* source of targeted hellos */
@@ -246,8 +265,8 @@ struct tnbr {
 	LIST_ENTRY(tnbr)	 entry;
 	struct event		 hello_timer;
 	struct adj		*adj;
-	struct in_addr		 addr;
-
+	int			 af;
+	union ldpd_addr		 addr;
 	int			 state;
 	uint16_t		 hello_holdtime;
 	uint16_t		 hello_interval;
@@ -289,6 +308,8 @@ struct l2vpn_pw {
 	LIST_ENTRY(l2vpn_pw)	 entry;
 	struct l2vpn		*l2vpn;
 	struct in_addr		 lsr_id;
+	int			 af;
+	union ldpd_addr		 addr;
 	uint32_t		 pwid;
 	char			 ifname[IF_NAMESIZE];
 	unsigned int		 ifindex;
@@ -335,30 +356,49 @@ enum hello_type {
 	HELLO_TARGETED
 };
 
+struct ldpd_af_conf {
+	uint16_t		 keepalive;
+	uint16_t		 thello_holdtime;
+	uint16_t		 thello_interval;
+	union ldpd_addr		 trans_addr;
+	int			 flags;
+};
+#define	F_LDPD_AF_ENABLED	0x0001
+#define	F_LDPD_AF_THELLO_ACCEPT	0x0002
+#define	F_LDPD_AF_EXPNULL	0x0004
+
 struct ldpd_conf {
 	struct in_addr		 rtr_id;
-	struct in_addr		 trans_addr;
+	struct ldpd_af_conf	 ipv4;
+	struct ldpd_af_conf	 ipv6;
 	LIST_HEAD(, iface)	 iface_list;
 	LIST_HEAD(, tnbr)	 tnbr_list;
 	LIST_HEAD(, nbr_params)	 nbrp_list;
 	LIST_HEAD(, l2vpn)	 l2vpn_list;
-	uint16_t		 keepalive;
-	uint16_t		 thello_holdtime;
-	uint16_t		 thello_interval;
+	uint16_t		 trans_pref;
 	int			 flags;
 };
 #define	F_LDPD_NO_FIB_UPDATE	0x0001
-#define	F_LDPD_TH_ACCEPT	0x0002
-#define	F_LDPD_EXPNULL		0x0004
+#define	F_LDPD_DS_CISCO_INTEROP	0x0002
+
+struct ldpd_af_global {
+	struct event		 disc_ev;
+	struct event		 edisc_ev;
+	int			 ldp_disc_socket;
+	int			 ldp_edisc_socket;
+	int			 ldp_session_socket;
+};
 
 struct ldpd_global {
 	int			 cmd_opts;
 	time_t			 uptime;
+	struct ldpd_af_global	 ipv4;
+	struct ldpd_af_global	 ipv6;
 	int			 pfkeysock;
-	int			 ldp_disc_socket;
-	int			 ldp_edisc_socket;
-	int			 ldp_session_socket;
 	struct if_addr_head	 addr_list;
+	LIST_HEAD(, adj)	 adj_list;
+	struct in_addr		 mcast_addr_v4;
+	struct in6_addr		 mcast_addr_v6;
 	TAILQ_HEAD(, pending_conn) pending_conns;
 };
 
@@ -366,20 +406,22 @@ extern struct ldpd_global global;
 
 /* kroute */
 struct kroute {
-	struct in_addr		 prefix;
-	struct in_addr		 nexthop;
+	int			 af;
+	union ldpd_addr		 prefix;
+	uint8_t			 prefixlen;
+	union ldpd_addr		 nexthop;
 	uint32_t		 local_label;
 	uint32_t		 remote_label;
-	uint16_t		 flags;
 	unsigned short		 ifindex;
-	uint8_t			 prefixlen;
 	uint8_t			 priority;
+	uint16_t		 flags;
 };
 
 struct kpw {
 	unsigned short		 ifindex;
 	int			 pw_type;
-	struct in_addr		 nexthop;
+	int			 af;
+	union ldpd_addr		 nexthop;
 	uint32_t		 local_label;
 	uint32_t		 remote_label;
 	uint8_t			 flags;
@@ -387,55 +429,62 @@ struct kpw {
 
 struct kaddr {
 	unsigned short		 ifindex;
-	struct in_addr		 addr;
-	struct in_addr		 mask;
-	struct in_addr		 dstbrd;
+	int			 af;
+	union ldpd_addr		 addr;
+	uint8_t			 prefixlen;
+	union ldpd_addr	 	 dstbrd;
 };
 
 struct kif {
 	char			 ifname[IF_NAMESIZE];
-	uint64_t		 baudrate;
-	int			 flags;
-	int			 mtu;
 	unsigned short		 ifindex;
-	uint8_t			 if_type;
+	int			 flags;
 	uint8_t			 link_state;
+	int			 mtu;
+	uint8_t			 if_type;
+	uint64_t		 baudrate;
 };
 
 /* control data structures */
 struct ctl_iface {
+	int			 af;
 	char			 name[IF_NAMESIZE];
-	time_t			 uptime;
 	unsigned int		 ifindex;
 	int			 state;
-	uint16_t		 adj_cnt;
 	uint16_t		 flags;
+	uint8_t			 linkstate;
+	enum iface_type		 type;
+	uint8_t			 if_type;
 	uint16_t		 hello_holdtime;
 	uint16_t		 hello_interval;
-	enum iface_type		 type;
-	uint8_t			 linkstate;
-	uint8_t			 if_type;
+	time_t			 uptime;
+	uint16_t		 adj_cnt;
 };
 
 struct ctl_adj {
+	int			 af;
 	struct in_addr		 id;
 	enum hello_type		 type;
 	char			 ifname[IF_NAMESIZE];
-	struct in_addr		 src_addr;
+	union ldpd_addr		 src_addr;
 	uint16_t		 holdtime;
+	union ldpd_addr		 trans_addr;
 };
 
 struct ctl_nbr {
+	int			 af;
 	struct in_addr		 id;
-	struct in_addr		 addr;
+	union ldpd_addr		 laddr;
+	union ldpd_addr		 raddr;
 	time_t			 uptime;
 	int			 nbr_state;
 };
 
 struct ctl_rt {
-	struct in_addr		 prefix;
+	int			 af;
+	union ldpd_addr		 prefix;
 	uint8_t			 prefixlen;
-	struct in_addr		 nexthop;
+	struct in_addr		 nexthop;	/* lsr-id */
 	uint32_t		 local_label;
 	uint32_t		 remote_label;
 	uint8_t			 flags;
@@ -470,13 +519,11 @@ void		 kif_clear(void);
 void		 kr_shutdown(void);
 void		 kr_fib_couple(void);
 void		 kr_fib_decouple(void);
-void		 kr_change_egress_label(int);
+void		 kr_change_egress_label(int, int);
 void		 kr_dispatch_msg(int, short, void *);
 void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *, pid_t);
 struct kif	*kif_findname(char *);
-uint8_t		 mask2prefixlen(in_addr_t);
-in_addr_t	 prefixlen2mask(uint8_t);
 int		 kmpw_set(struct kpw *);
 int		 kmpw_unset(struct kpw *);
 int		 kmpw_install(const char *, struct kpw *);
@@ -490,8 +537,25 @@ const char	*notification_name(uint32_t);
 
 /* util.c */
 uint8_t		 mask2prefixlen(in_addr_t);
+uint8_t		 mask2prefixlen6(struct sockaddr_in6 *);
 in_addr_t	 prefixlen2mask(uint8_t);
-int		 bad_ip_addr(struct in_addr);
+struct in6_addr	*prefixlen2mask6(uint8_t);
+void		 ldp_applymask(int, union ldpd_addr *,
+		    const union ldpd_addr *, int);
+int		 ldp_addrcmp(int, const union ldpd_addr *,
+		    const union ldpd_addr *);
+int		 ldp_addrisset(int, const union ldpd_addr *);
+int		 ldp_prefixcmp(int, const union ldpd_addr *,
+		    const union ldpd_addr *, uint8_t);
+int		 bad_addr_v4(struct in_addr);
+int		 bad_addr_v6(struct in6_addr *);
+int		 bad_addr(int, union ldpd_addr *);
+void		 embedscope(struct sockaddr_in6 *);
+void		 recoverscope(struct sockaddr_in6 *);
+void		 addscope(struct sockaddr_in6 *, uint32_t);
+void		 clearscope(struct in6_addr *);
+struct sockaddr	*addr2sa(int af, union ldpd_addr *, uint16_t);
+void		 sa2addr(struct sockaddr *, int *, union ldpd_addr *);
 
 /* ldpd.c */
 void	main_imsg_compose_ldpe(int, pid_t, void *, uint16_t);
@@ -506,8 +570,12 @@ void	evbuf_event_add(struct evbuf *);
 void	evbuf_init(struct evbuf *, int, void (*)(int, short, void *), void *);
 void	evbuf_clear(struct evbuf *);
 
+struct ldpd_af_conf	*ldp_af_conf_get(struct ldpd_conf *, int);
+struct ldpd_af_global	*ldp_af_global_get(struct ldpd_global *, int);
+int			 ldp_is_dual_stack(struct ldpd_conf *);
+
 /* socket.c */
-int		 ldp_create_socket(enum socket_type);
+int		 ldp_create_socket(int, enum socket_type);
 void		 sock_set_recvbuf(int);
 int		 sock_set_reuse(int, int);
 int		 sock_set_bindany(int, int);
@@ -516,6 +584,10 @@ int		 sock_set_ipv4_tos(int, int);
 int		 sock_set_ipv4_recvif(int, int);
 int		 sock_set_ipv4_mcast(struct iface *);
 int		 sock_set_ipv4_mcast_loop(int);
+int		 sock_set_ipv6_dscp(int, int);
+int		 sock_set_ipv6_pktinfo(int, int);
+int		 sock_set_ipv6_mcast(struct iface *);
+int		 sock_set_ipv6_mcast_loop(int);
 
 /* printconf.c */
 void	print_config(struct ldpd_conf *);
