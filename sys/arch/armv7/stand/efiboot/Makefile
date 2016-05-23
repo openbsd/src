@@ -1,7 +1,10 @@
-#	$OpenBSD: Makefile,v 1.4 2016/05/23 00:45:48 jsg Exp $
+#	$OpenBSD: Makefile,v 1.5 2016/05/23 02:19:46 jsg Exp $
+
+NOMAN=		#
+
+.if ${MACHINE} == "armv7"
 
 PROG=		BOOTARM.EFI
-NOMAN=		#
 OBJFMT=		binary
 INSTALL_STRIP=
 BINDIR=		/usr/mdec
@@ -67,4 +70,9 @@ ${PROG.elf}: ${OBJS}
 	@([ -h arm ] || ln -s ${.CURDIR}/../../../arm/include arm)
 .NOPATH: machine arm
 CLEANFILES+=	machine arm
+.endif
+
+.else
+NOPROG=yes
+.include <bsd.prog.mk>
 .endif

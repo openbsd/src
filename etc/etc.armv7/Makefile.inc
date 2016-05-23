@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2015/08/01 00:15:37 jsg Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2016/05/23 02:19:46 jsg Exp $
 
 ALLSOC=EXYNOS IMX OMAP SUNXI VEXPRESSA9 VEXPRESSA15
-MDEXT=		bsd.rd
+MDEXT=		bsd.rd BOOTARM.EFI
 
 .for SOC in ${ALLSOC}
 MDEXT+=		bsd.${SOC}.umg
@@ -16,6 +16,7 @@ KERNADDR_VEXPRESSA9=0x60300000
 KERNADDR_EXYNOS=0x40300000
 
 bootblocks:
+	cp ${DESTDIR}/usr/mdec/BOOTARM.EFI ${RELEASEDIR}
 
 kernels: bootblocks ${ALL_KERNELS}
 .for CONF K in ${KERNELS}
