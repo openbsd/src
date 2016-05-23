@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.52 2016/05/23 16:20:59 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.53 2016/05/23 17:00:40 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -86,7 +86,7 @@ send_packet(int fd, struct iface *iface, void *pkt, size_t len,
 {
 	/* set outgoing interface for multicast traffic */
 	if (iface && IN_MULTICAST(ntohl(dst->sin_addr.s_addr)))
-		if (if_set_mcast(iface) == -1) {
+		if (sock_set_ipv4_mcast(iface) == -1) {
 			log_warn("%s: error setting multicast interface, %s",
 			    __func__, iface->name);
 			return (-1);
