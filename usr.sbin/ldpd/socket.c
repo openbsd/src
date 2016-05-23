@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.c,v 1.2 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: socket.c,v 1.3 2016/05/23 18:25:30 renato Exp $ */
 
 /*
  * Copyright (c) 2016 Renato Westphal <renato@openbsd.org>
@@ -31,7 +31,107 @@
 #include "ldpe.h"
 #include "log.h"
 
+extern struct ldpd_conf		*leconf;
 extern struct ldpd_sysdep	 sysdep;
+
+int
+ldp_create_socket(enum socket_type type)
+{
+	int			 fd, domain, proto;
+	struct sockaddr_in	 local_sa;
+	int			 opt;
+
+	/* create socket */
+	switch (type) {
+	case LDP_SOCKET_DISC:
+	case LDP_SOCKET_EDISC:
+		domain = SOCK_DGRAM;
+		proto = IPPROTO_UDP;
+		break;
+	case LDP_SOCKET_SESSION:
+		domain = SOCK_STREAM;
+		proto = IPPROTO_TCP;
+		break;
+	default:
+		fatalx("ldp_create_socket: unknown socket type");
+	}
+	fd = socket(AF_INET, domain | SOCK_NONBLOCK | SOCK_CLOEXEC, proto);
+	if (fd == -1) {
+		log_warn("%s: error creating socket", __func__);
+		return (-1);
+	}
+
+	/* bind to a local address/port */
+	memset(&local_sa, 0, sizeof(local_sa));
+	local_sa.sin_family = AF_INET;
+	local_sa.sin_len = sizeof(struct sockaddr_in);
+	local_sa.sin_port = htons(LDP_PORT);
+	switch (type) {
+	case LDP_SOCKET_DISC:
+		/* listen on all addresses */
+		break;
+	case LDP_SOCKET_EDISC:
+	case LDP_SOCKET_SESSION:
+		local_sa.sin_addr = leconf->trans_addr;
+		break;
+	}
+	if (sock_set_reuse(fd, 1) == -1) {
+		close(fd);
+		return (-1);
+	}
+	if (bind(fd, (struct sockaddr *)&local_sa, local_sa.sin_len) == -1) {
+		log_warn("%s: error binding socket", __func__);
+		close(fd);
+		return (-1);
+	}
+
+	/* set options */
+	if (sock_set_ipv4_tos(fd, IPTOS_PREC_INTERNETCONTROL) == -1) {
+		close(fd);
+		return (-1);
+	}
+	if (type == LDP_SOCKET_DISC) {
+		if (sock_set_ipv4_mcast_ttl(fd,
+		    IP_DEFAULT_MULTICAST_TTL) == -1) {
+			close(fd);
+			return (-1);
+		}
+		if (sock_set_ipv4_mcast_loop(fd) == -1) {
+			close(fd);
+			return (-1);
+		}
+	}
+	if (type == LDP_SOCKET_DISC || type == LDP_SOCKET_EDISC) {
+		if (sock_set_ipv4_recvif(fd, 1) == -1) {
+			close(fd);
+			return (-1);
+		}
+	}
+	switch (type) {
+	case LDP_SOCKET_DISC:
+	case LDP_SOCKET_EDISC:
+		sock_set_recvbuf(fd);
+		break;
+	case LDP_SOCKET_SESSION:
+		if (listen(fd, LDP_BACKLOG) == -1)
+			log_warn("%s: error listening on socket", __func__);
+
+		opt = 1;
+		if (setsockopt(fd, IPPROTO_TCP, TCP_MD5SIG, &opt,
+		    sizeof(opt)) == -1) {
+			if (errno == ENOPROTOOPT) {	/* system w/o md5sig */
+				log_warnx("md5sig not available, disabling");
+				sysdep.no_md5sig = 1;
+			} else {
+				close(fd);
+				return (-1);
+			}
+		}
+		break;
+	}
+
+	return (fd);
+}
 
 void
 sock_set_recvbuf(int fd)

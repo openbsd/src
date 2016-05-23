@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.49 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.50 2016/05/23 18:25:30 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -77,9 +77,7 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	struct tnbr		*tnbr;
 	struct passwd		*pw;
 	struct event		 ev_sigint, ev_sigterm;
-	struct sockaddr_in	 disc_addr, sess_addr;
 	pid_t			 pid;
-	int			 opt;
 
 	switch (pid = fork()) {
 	case -1:
@@ -103,92 +101,16 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	TAILQ_INIT(&global.pending_conns);
 	global.pfkeysock = pfkey_init(&sysdep);
 
-	/* create the discovery UDP socket */
-	if ((global.ldp_disc_socket = socket(AF_INET,
-	    SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
-	    IPPROTO_UDP)) == -1)
+	/* create network sockets */
+	global.ldp_disc_socket = ldp_create_socket(LDP_SOCKET_DISC);
+	if (global.ldp_disc_socket == -1)
 		fatal("error creating discovery socket");
-
-	if (sock_set_reuse(global.ldp_disc_socket, 1) == -1)
-		fatal("sock_set_reuse");
-
-	disc_addr.sin_family = AF_INET;
-	disc_addr.sin_port = htons(LDP_PORT);
-	disc_addr.sin_addr.s_addr = INADDR_ANY;
-	if (bind(global.ldp_disc_socket, (struct sockaddr *)&disc_addr,
-	    sizeof(disc_addr)) == -1)
-		fatal("error binding discovery socket");
-
-	/* set some defaults */
-	if (sock_set_ipv4_mcast_ttl(global.ldp_disc_socket,
-	    IP_DEFAULT_MULTICAST_TTL) == -1)
-		fatal("sock_set_ipv4_mcast_ttl");
-	if (sock_set_ipv4_mcast_loop(global.ldp_disc_socket) == -1)
-		fatal("sock_set_ipv4_mcast_loop");
-	if (sock_set_ipv4_tos(global.ldp_disc_socket,
-	    IPTOS_PREC_INTERNETCONTROL) == -1)
-		fatal("sock_set_ipv4_tos");
-	if (sock_set_ipv4_recvif(global.ldp_disc_socket, 1) == -1)
-		fatal("sock_set_ipv4_recvif");
-	sock_set_recvbuf(global.ldp_disc_socket);
-
-	/* create the extended discovery UDP socket */
-	if ((global.ldp_edisc_socket = socket(AF_INET,
-	    SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
-	    IPPROTO_UDP)) == -1)
-		fatal("error creating extended discovery socket");
-
-	if (sock_set_reuse(global.ldp_edisc_socket, 1) == -1)
-		fatal("sock_set_reuse");
-
-	disc_addr.sin_family = AF_INET;
-	disc_addr.sin_port = htons(LDP_PORT);
-	disc_addr.sin_addr.s_addr = xconf->trans_addr.s_addr;
-	if (bind(global.ldp_edisc_socket, (struct sockaddr *)&disc_addr,
-	    sizeof(disc_addr)) == -1)
+	global.ldp_edisc_socket = ldp_create_socket(LDP_SOCKET_EDISC);
+	if (global.ldp_edisc_socket == -1)
 		fatal("error binding extended discovery socket");
-
-	/* set some defaults */
-	if (sock_set_ipv4_tos(global.ldp_edisc_socket,
-	    IPTOS_PREC_INTERNETCONTROL) == -1)
-		fatal("sock_set_ipv4_tos");
-	if (sock_set_ipv4_recvif(global.ldp_edisc_socket, 1) == -1)
-		fatal("sock_set_ipv4_recvif");
-	sock_set_recvbuf(global.ldp_edisc_socket);
-
-	/* create the session TCP socket */
-	if ((global.ldp_session_socket = socket(AF_INET,
-	    SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
-	    IPPROTO_TCP)) == -1)
+	global.ldp_session_socket = ldp_create_socket(LDP_SOCKET_SESSION);
+	if (global.ldp_session_socket == -1)
 		fatal("error creating session socket");
-
-	if (sock_set_reuse(global.ldp_session_socket, 1) == -1)
-		fatal("sock_set_reuse");
-
-	sess_addr.sin_family = AF_INET;
-	sess_addr.sin_port = htons(LDP_PORT);
-	sess_addr.sin_addr = xconf->trans_addr;
-	if (bind(global.ldp_session_socket, (struct sockaddr *)&sess_addr,
-	    sizeof(sess_addr)) == -1)
-		fatal("error binding session socket");
-
-	if (listen(global.ldp_session_socket, LDP_BACKLOG) == -1)
-		fatal("error in listen on session socket");
-
-	opt = 1;
-	if (setsockopt(global.ldp_session_socket, IPPROTO_TCP, TCP_MD5SIG,
-	    &opt, sizeof(opt)) == -1) {
-		if (errno == ENOPROTOOPT) {	/* system w/o md5sig */
-			log_warnx("md5sig not available, disabling");
-			sysdep.no_md5sig = 1;
-		} else
-			fatal("setsockopt TCP_MD5SIG");
-	}
-
-	/* set some defaults */
-	if (sock_set_ipv4_tos(global.ldp_session_socket,
-	    IPTOS_PREC_INTERNETCONTROL) == -1)
-		fatal("sock_set_ipv4_tos");
 
 	if ((pw = getpwnam(LDPD_USER)) == NULL)
 		fatal("getpwnam");
@@ -246,12 +168,12 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	    ldpe_dispatch_pfkey, NULL);
 	event_add(&pfkey_ev, NULL);
 
-	event_set(&disc_ev, global.ldp_disc_socket, EV_READ|EV_PERSIST,
-	    disc_recv_packet, NULL);
+	event_set(&disc_ev, global.ldp_disc_socket,
+	    EV_READ|EV_PERSIST, disc_recv_packet, NULL);
 	event_add(&disc_ev, NULL);
 
-	event_set(&edisc_ev, global.ldp_edisc_socket, EV_READ|EV_PERSIST,
-	    disc_recv_packet, NULL);
+	event_set(&edisc_ev, global.ldp_edisc_socket,
+	    EV_READ|EV_PERSIST, disc_recv_packet, NULL);
 	event_add(&edisc_ev, NULL);
 
 	accept_add(global.ldp_session_socket, session_accept, NULL);
