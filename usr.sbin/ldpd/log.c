@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.15 2015/07/21 04:52:29 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.16 2016/05/23 15:14:07 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -400,8 +400,8 @@ log_rtmsg(u_char rtm_type)
 
 	if (rtm_type > 0 &&
 	    rtm_type < sizeof(msgtypes)/sizeof(msgtypes[0]))
-		log_debug("rtmsg_process: %s", msgtypes[rtm_type]);
+		log_debug("kernel message: %s", msgtypes[rtm_type]);
 	else
-		log_debug("rtmsg_process: rtm_type %d out of range",
+		log_debug("kernel message: rtm_type %d out of range",
 		    rtm_type);
 }

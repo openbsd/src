@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.42 2016/05/23 14:49:56 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.43 2016/05/23 15:14:08 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -90,14 +90,14 @@ send_packet(int fd, struct iface *iface, void *pkt, size_t len,
 	/* set outgoing interface for multicast traffic */
 	if (iface && IN_MULTICAST(ntohl(dst->sin_addr.s_addr)))
 		if (if_set_mcast(iface) == -1) {
-			log_warn("send_packet: error setting multicast "
-			    "interface, %s", iface->name);
+			log_warn("%s: error setting multicast interface, %s",
+			    __func__, iface->name);
 			return (-1);
 		}
 
 	if (sendto(fd, pkt, len, 0, (struct sockaddr *)dst,
 	    sizeof(*dst)) == -1) {
-		log_warn("send_packet: error sending packet to %s",
+		log_warn("%s: error sending packet to %s", __func__,
 		    inet_ntoa(dst->sin_addr));
 		return (-1);
 	}
@@ -141,7 +141,7 @@ disc_recv_packet(int fd, short event, void *bula)
 
 	if ((r = recvmsg(fd, &msg, 0)) == -1) {
 		if (errno != EAGAIN && errno != EINTR)
-			log_debug("disc_recv_packet: read error: %s",
+			log_debug("%s: read error: %s", __func__,
 			    strerror(errno));
 		return;
 	}
@@ -200,7 +200,7 @@ disc_recv_packet(int fd, short event, void *bula)
 		recv_hello(iface, src.sin_addr, buf, len);
 		break;
 	default:
-		log_debug("recv_packet: unknown LDP packet type, source %s",
+		log_debug("%s: unknown LDP packet type, source %s", __func__,
 		    inet_ntoa(src.sin_addr));
 	}
 }
@@ -237,9 +237,9 @@ tcp_new(int fd, struct nbr *nbr)
 	struct tcp_conn *tcp;
 
 	if ((tcp = calloc(1, sizeof(*tcp))) == NULL)
-		fatal("tcp_new");
+		fatal(__func__);
 	if ((tcp->rbuf = calloc(1, sizeof(struct ibuf_read))) == NULL)
-		fatal("tcp_new");
+		fatal(__func__);
 
 	if (nbr)
 		tcp->nbr = nbr;
@@ -286,7 +286,7 @@ session_accept(int fd, short event, void *bula)
 			accept_pause();
 		} else if (errno != EWOULDBLOCK && errno != EINTR &&
 		    errno != ECONNABORTED)
-			log_debug("sess_recv_packet: accept error: %s",
+			log_debug("%s: accept error: %s", __func__,
 			    strerror(errno));
 		return;
 	}
@@ -327,14 +327,14 @@ session_read(int fd, short event, void *arg)
 	u_int16_t	 pdu_len;
 
 	if (event != EV_READ) {
-		log_debug("session_read: spurious event");
+		log_debug("%s: spurious event", __func__);
 		return;
 	}
 
 	if ((n = read(fd, tcp->rbuf->buf + tcp->rbuf->wpos,
 	    sizeof(tcp->rbuf->buf) - tcp->rbuf->wpos)) == -1) {
 		if (errno != EINTR && errno != EAGAIN) {
-			log_warn("session_read: read error");
+			log_warn("%s: read error", __func__);
 			if (nbr)
 				nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 			else
@@ -346,7 +346,7 @@ session_read(int fd, short event, void *arg)
 	}
 	if (n == 0) {
 		/* connection closed */
-		log_debug("session_read: connection closed by remote end");
+		log_debug("%s: connection closed by remote end", __func__);
 		if (nbr)
 			nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 		else
@@ -495,8 +495,8 @@ session_read(int fd, short event, void *arg)
 				    pdu_len, type);
 				break;
 			default:
-				log_debug("session_read: unknown LDP packet "
-				    "from nbr %s", inet_ntoa(nbr->id));
+				log_debug("%s: unknown LDP packet from nbr %s",
+				    __func__, inet_ntoa(nbr->id));
 				if (!(ntohs(ldp_msg->type) & UNKNOWN_FLAG)) {
 					session_shutdown(nbr, S_UNKNOWN_MSG,
 					    ldp_msg->msgid, ldp_msg->type);
@@ -538,7 +538,7 @@ session_write(int fd, short event, void *arg)
 				nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 		}
 	} else
-		log_debug("session_write: spurious event");
+		log_debug("%s: spurious event", __func__);
 
 	evbuf_event_add(&tcp->wbuf);
 }
@@ -547,7 +547,7 @@ void
 session_shutdown(struct nbr *nbr, u_int32_t status, u_int32_t msgid,
     u_int32_t type)
 {
-	log_debug("session_shutdown: nbr ID %s", inet_ntoa(nbr->id));
+	log_debug("%s: nbr ID %s", __func__, inet_ntoa(nbr->id));
 
 	send_notification_nbr(nbr, status, msgid, type);
 
@@ -560,7 +560,7 @@ session_shutdown(struct nbr *nbr, u_int32_t status, u_int32_t msgid,
 void
 session_close(struct nbr *nbr)
 {
-	log_debug("session_close: closing session with nbr ID %s",
+	log_debug("%s: closing session with nbr ID %s", __func__,
 	    inet_ntoa(nbr->id));
 
 	tcp_close(nbr->tcp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.7 2015/07/21 04:52:29 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.8 2016/05/23 15:14:07 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -45,11 +45,11 @@ adj_new(struct nbr *nbr, struct hello_source *source, struct in_addr addr)
 {
 	struct adj	*adj;
 
-	log_debug("adj_new: LSR ID %s, %s", inet_ntoa(nbr->id),
+	log_debug("%s: LSR ID %s, %s", __func__, inet_ntoa(nbr->id),
 	    print_hello_src(source));
 
 	if ((adj = calloc(1, sizeof(*adj))) == NULL)
-		fatal("adj_new");
+		fatal(__func__);
 
 	adj->nbr = nbr;
 	memcpy(&adj->source, source, sizeof(*source));
@@ -75,7 +75,7 @@ adj_new(struct nbr *nbr, struct hello_source *source, struct in_addr addr)
 void
 adj_del(struct adj *adj)
 {
-	log_debug("adj_del: LSR ID %s, %s", inet_ntoa(adj->nbr->id),
+	log_debug("%s: LSR ID %s, %s", __func__, inet_ntoa(adj->nbr->id),
 	    print_hello_src(&adj->source));
 
 	adj_stop_itimer(adj);
@@ -141,7 +141,7 @@ adj_itimer(int fd, short event, void *arg)
 {
 	struct adj *adj = arg;
 
-	log_debug("adj_itimer: LDP ID %s", inet_ntoa(adj->nbr->id));
+	log_debug("%s: LDP ID %s", __func__, inet_ntoa(adj->nbr->id));
 
 	switch (adj->source.type) {
 	case HELLO_LINK:
@@ -171,7 +171,7 @@ adj_start_itimer(struct adj *adj)
 	tv.tv_sec = adj->holdtime;
 
 	if (evtimer_add(&adj->inactivity_timer, &tv) == -1)
-		fatal("adj_start_itimer");
+		fatal(__func__);
 }
 
 void
@@ -179,7 +179,7 @@ adj_stop_itimer(struct adj *adj)
 {
 	if (evtimer_pending(&adj->inactivity_timer, NULL) &&
 	    evtimer_del(&adj->inactivity_timer) == -1)
-		fatal("adj_stop_itimer");
+		fatal(__func__);
 }
 
 /* targeted neighbors */
@@ -190,7 +190,7 @@ tnbr_new(struct ldpd_conf *xconf, struct in_addr addr)
 	struct tnbr		*tnbr;
 
 	if ((tnbr = calloc(1, sizeof(*tnbr))) == NULL)
-		fatal("tnbr_new");
+		fatal(__func__);
 
 	tnbr->addr.s_addr = addr.s_addr;
 	tnbr->hello_holdtime = xconf->thello_holdtime;
@@ -258,7 +258,7 @@ tnbr_hello_timer(int fd, short event, void *arg)
 	timerclear(&tv);
 	tv.tv_sec = tnbr->hello_interval;
 	if (evtimer_add(&tnbr->hello_timer, &tv) == -1)
-		fatal("tnbr_hello_timer");
+		fatal(__func__);
 }
 
 void
@@ -271,7 +271,7 @@ tnbr_start_hello_timer(struct tnbr *tnbr)
 	timerclear(&tv);
 	tv.tv_sec = tnbr->hello_interval;
 	if (evtimer_add(&tnbr->hello_timer, &tv) == -1)
-		fatal("tnbr_start_hello_timer");
+		fatal(__func__);
 }
 
 void
@@ -279,7 +279,7 @@ tnbr_stop_hello_timer(struct tnbr *tnbr)
 {
 	if (evtimer_pending(&tnbr->hello_timer, NULL) &&
 	    evtimer_del(&tnbr->hello_timer) == -1)
-		fatal("tnbr_stop_hello_timer");
+		fatal(__func__);
 }
 
 struct ctl_adj *

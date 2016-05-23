@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.40 2015/07/21 04:52:29 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.41 2016/05/23 15:14:07 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -124,7 +124,7 @@ int
 fec_remove(struct fec_tree *fh, struct fec *f)
 {
 	if (RB_REMOVE(fec_tree, fh, f) == NULL) {
-		log_warnx("fec_remove failed for %s", log_fec(f));
+		log_warnx("%s failed for %s", __func__, log_fec(f));
 		return (-1);
 	}
 	return (0);
@@ -223,10 +223,10 @@ fec_free(void *arg)
 	while ((fnh = LIST_FIRST(&fn->nexthops)))
 		fec_nh_del(fnh);
 	if (!LIST_EMPTY(&fn->downstream))
-		log_warnx("fec_free: fec %s downstream list not empty",
+		log_warnx("%s: fec %s downstream list not empty", __func__,
 		    log_fec(&fn->fec));
 	if (!LIST_EMPTY(&fn->upstream))
-		log_warnx("fec_free: fec %s upstream list not empty",
+		log_warnx("%s: fec %s upstream list not empty", __func__,
 		    log_fec(&fn->fec));
 
 	free(fn);
@@ -245,7 +245,7 @@ fec_add(struct fec *fec)
 
 	fn = calloc(1, sizeof(*fn));
 	if (fn == NULL)
-		fatal("fec_add");
+		fatal(__func__);
 
 	memcpy(&fn->fec, fec, sizeof(fn->fec));
 	fn->local_label = NO_LABEL;
@@ -278,7 +278,7 @@ fec_nh_add(struct fec_node *fn, struct in_addr nexthop)
 
 	fnh = calloc(1, sizeof(*fnh));
 	if (fnh == NULL)
-		fatal("fec_nh_add");
+		fatal(__func__);
 
 	fnh->nexthop.s_addr = nexthop.s_addr;
 	fnh->remote_label = NO_LABEL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.28 2015/07/21 04:52:29 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.29 2016/05/23 15:14:07 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -73,7 +73,7 @@ send_hello(enum hello_type type, struct iface *iface, struct tnbr *tnbr)
 	}
 
 	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
-		fatal("send_hello");
+		fatal(__func__);
 
 	size = LDP_HDR_SIZE + sizeof(struct ldp_msg) +
 	    sizeof(struct hello_prms_tlv) +
@@ -121,7 +121,7 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 
 	r = tlv_decode_hello_prms(buf, len, &holdtime, &flags);
 	if (r == -1) {
-		log_debug("recv_hello: neighbor %s: failed to decode params",
+		log_debug("%s: neighbor %s: failed to decode params", __func__,
 		    inet_ntoa(lsr_id));
 		return;
 	}
@@ -152,9 +152,8 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 		source.target = tnbr;
 	} else {
 		if (ldp.lspace_id != 0) {
-			log_debug("recv_hello: invalid label space "
-			    "ID %u, interface %s", ldp.lspace_id,
-			    iface->name);
+			log_debug("%s: invalid label space ID %u, interface %s",
+			    __func__, ldp.lspace_id, iface->name);
 			return;
 		}
 		source.type = HELLO_LINK;
@@ -168,16 +167,16 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 	r = tlv_decode_opt_hello_prms(buf, len, &transport_addr,
 	    &conf_number);
 	if (r == -1) {
-		log_debug("recv_hello: neighbor %s: failed to decode "
-		    "optional params", inet_ntoa(lsr_id));
+		log_debug("%s: neighbor %s: failed to decode optional params",
+		    __func__, inet_ntoa(lsr_id));
 		return;
 	}
 	if (transport_addr.s_addr == INADDR_ANY)
 		transport_addr.s_addr = src.s_addr;
 
 	if (r != len) {
-		log_debug("recv_hello: neighbor %s: unexpected data in message",
-		    inet_ntoa(lsr_id));
+		log_debug("%s: neighbor %s: unexpected data in message",
+		    __func__, inet_ntoa(lsr_id));
 		return;
 	}
 
@@ -193,9 +192,10 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 			adj = adj_new(nbr, &source, transport_addr);
 
 			if (nbr->addr.s_addr != transport_addr.s_addr)
-				log_warnx("recv_hello: neighbor %s: multiple "
+				log_warnx("%s: neighbor %s: multiple "
 				    "adjacencies advertising different "
-				    "transport addresses", inet_ntoa(lsr_id));
+				    "transport addresses", __func__,
+				    inet_ntoa(lsr_id));
 		}
 	}
 

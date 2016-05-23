@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.40 2015/12/05 13:11:48 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.41 2016/05/23 15:14:07 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -235,8 +235,8 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_LABEL_MAPPING_FULL:
 			nbr = lde_nbr_find(imsg.hdr.peerid);
 			if (nbr == NULL) {
-				log_debug("lde_dispatch_imsg: cannot find "
-				    "lde neighbor");
+				log_debug("%s: cannot find lde neighbor",
+				    __func__);
 				return;
 			}
 
@@ -253,8 +253,8 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 
 			nbr = lde_nbr_find(imsg.hdr.peerid);
 			if (nbr == NULL) {
-				log_debug("lde_dispatch_imsg: cannot find "
-				    "lde neighbor");
+				log_debug("%s: cannot find lde neighbor",
+				    __func__);
 				return;
 			}
 
@@ -289,14 +289,14 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 
 			nbr = lde_nbr_find(imsg.hdr.peerid);
 			if (nbr == NULL) {
-				log_debug("lde_dispatch_imsg: cannot find "
-				    "lde neighbor");
+				log_debug("%s: cannot find lde neighbor",
+				    __func__);
 				return;
 			}
 
 			if (lde_address_add(nbr, &addr) < 0) {
-				log_debug("lde_dispatch_imsg: cannot add "
-				    "address %s, it already exists",
+				log_debug("%s: cannot add address %s, it "
+				    "already exists", __func__,
 				    inet_ntoa(addr));
 			}
 
@@ -308,14 +308,14 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 
 			nbr = lde_nbr_find(imsg.hdr.peerid);
 			if (nbr == NULL) {
-				log_debug("lde_dispatch_imsg: cannot find "
-				    "lde neighbor");
+				log_debug("%s: cannot find lde neighbor",
+				    __func__);
 				return;
 			}
 
 			if (lde_address_del(nbr, &addr) < 0) {
-				log_debug("lde_dispatch_imsg: cannot delete "
-				    "address %s, it does not exists",
+				log_debug("%s: cannot delete address %s, it "
+				    "does not exists", __func__,
 				    inet_ntoa(addr));
 			}
 
@@ -327,8 +327,8 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 
 			nbr = lde_nbr_find(imsg.hdr.peerid);
 			if (nbr == NULL) {
-				log_debug("lde_dispatch_imsg: cannot find "
-				    "lde neighbor");
+				log_debug("%s: cannot find lde neighbor",
+				    __func__);
 				return;
 			}
 
@@ -377,7 +377,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 			log_verbose(verbose);
 			break;
 		default:
-			log_debug("lde_dispatch_imsg: unexpected imsg %d",
+			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
 			break;
 		}
@@ -432,8 +432,7 @@ lde_dispatch_parent(int fd, short event, void *bula)
 		switch (imsg.hdr.type) {
 		case IMSG_NETWORK_ADD:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(kr)) {
-				log_warnx("lde_dispatch_parent: "
-				    "wrong imsg len");
+				log_warnx("%s: wrong imsg len", __func__);
 				break;
 			}
 			memcpy(&kr, imsg.data, sizeof(kr));
@@ -446,8 +445,7 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			break;
 		case IMSG_NETWORK_DEL:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(kr)) {
-				log_warnx("lde_dispatch_parent: "
-				    "wrong imsg len");
+				log_warnx("%s: wrong imsg len", __func__);
 				break;
 			}
 			memcpy(&kr, imsg.data, sizeof(kr));
@@ -524,7 +522,7 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			nconf = NULL;
 			break;
 		default:
-			log_debug("lde_dispatch_parent: unexpected imsg %d",
+			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
 			break;
 		}
@@ -875,7 +873,7 @@ lde_nbr_new(u_int32_t peerid, struct in_addr *id)
 	struct lde_nbr	*nbr;
 
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
-		fatal("lde_nbr_new");
+		fatal(__func__);
 
 	nbr->id.s_addr = id->s_addr;
 	nbr->peerid = peerid;
@@ -944,7 +942,7 @@ lde_map_add(struct lde_nbr *ln, struct fec_node *fn, int sent)
 
 	me = calloc(1, sizeof(*me));
 	if (me == NULL)
-		fatal("lde_map_add");
+		fatal(__func__);
 
 	me->fec = fn->fec;
 	me->nexthop = ln;
@@ -1026,7 +1024,7 @@ lde_wdraw_add(struct lde_nbr *ln, struct fec_node *fn)
 
 	lw = calloc(1, sizeof(*lw));
 	if (lw == NULL)
-		fatal("lde_wdraw_add");
+		fatal(__func__);
 
 	lw->fec = fn->fec;
 
@@ -1053,13 +1051,13 @@ lde_address_add(struct lde_nbr *lr, struct in_addr *addr)
 		return (-1);
 
 	if ((address = calloc(1, sizeof(*address))) == NULL)
-		fatal("lde_address_add");
+		fatal(__func__);
 
 	address->addr.s_addr = addr->s_addr;
 
 	TAILQ_INSERT_TAIL(&lr->addr_list, address, entry);
 
-	log_debug("lde_address_add: added %s", inet_ntoa(*addr));
+	log_debug("%s: added %s", __func__, inet_ntoa(*addr));
 
 	return (0);
 }
@@ -1090,7 +1088,7 @@ lde_address_del(struct lde_nbr *lr, struct in_addr *addr)
 
 	free(address);
 
-	log_debug("lde_address_del: deleted %s", inet_ntoa(*addr));
+	log_debug("%s: deleted %s", __func__, inet_ntoa(*addr));
 
 	return (0);
 }

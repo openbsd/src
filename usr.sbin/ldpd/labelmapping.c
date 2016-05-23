@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.34 2015/07/21 05:02:57 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.35 2016/05/23 15:14:07 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -67,7 +67,7 @@ send_labelmessage(struct nbr *nbr, u_int16_t type, struct mapping_head *mh)
 		/* generate pdu */
 		if (first) {
 			if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
-				fatal("send_labelmapping");
+				fatal(__func__);
 
 			/* real size will be set up later */
 			gen_ldp_hdr(buf, 0);

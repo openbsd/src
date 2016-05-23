@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.17 2015/07/21 04:52:29 renato Exp $ */
+/*	$OpenBSD: address.c,v 1.18 2016/05/23 15:14:07 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -46,10 +46,10 @@ send_address(struct nbr *nbr, struct if_addr *if_addr)
 	struct ibuf	*buf;
 	u_int16_t	 size, iface_count = 0;
 
-	log_debug("send_address: neighbor ID %s", inet_ntoa(nbr->id));
+	log_debug("%s: neighbor ID %s", __func__, inet_ntoa(nbr->id));
 
 	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
-		fatal("send_address");
+		fatal(__func__);
 
 	if (if_addr == NULL)
 		LIST_FOREACH(if_addr, &leconf->addr_list, entry)
@@ -165,10 +165,10 @@ send_address_withdraw(struct nbr *nbr, struct if_addr *if_addr)
 	struct ibuf	*buf;
 	u_int16_t	 size;
 
-	log_debug("send_address_withdraw: neighbor ID %s", inet_ntoa(nbr->id));
+	log_debug("%s: neighbor ID %s", __func__, inet_ntoa(nbr->id));
 
 	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
-		fatal("send_address_withdraw");
+		fatal(__func__);
 
 	size = LDP_HDR_SIZE + sizeof(struct ldp_msg) +
 	    sizeof(struct address_list_tlv) + sizeof(struct in_addr);

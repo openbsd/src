@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.52 2015/07/21 05:02:57 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.53 2016/05/23 15:14:07 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -141,10 +141,9 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 
 	if (nbr_fsm_tbl[i].state == -1) {
 		/* event outside of the defined fsm, ignore it. */
-		log_warnx("nbr_fsm: neighbor ID %s, "
-		    "event %s not expected in state %s",
-		    inet_ntoa(nbr->id), nbr_event_names[event],
-		    nbr_state_name(old_state));
+		log_warnx("%s: neighbor ID %s, event %s not expected in "
+		    "state %s", __func__, inet_ntoa(nbr->id),
+		    nbr_event_names[event], nbr_state_name(old_state));
 		return (0);
 	}
 
@@ -152,9 +151,9 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		nbr->state = new_state;
 
 	if (old_state != nbr->state) {
-		log_debug("nbr_fsm: event %s resulted in action %s and "
+		log_debug("%s: event %s resulted in action %s and "
 		    "changing state for neighbor ID %s from %s to %s",
-		    nbr_event_names[event],
+		    __func__, nbr_event_names[event],
 		    nbr_action_names[nbr_fsm_tbl[i].action],
 		    inet_ntoa(nbr->id), nbr_state_name(old_state),
 		    nbr_state_name(nbr->state));
@@ -213,10 +212,10 @@ nbr_new(struct in_addr id, struct in_addr addr)
 	struct nbr		*nbr;
 	struct nbr_params	*nbrp;
 
-	log_debug("nbr_new: LSR ID %s", inet_ntoa(id));
+	log_debug("%s: LSR ID %s", __func__, inet_ntoa(id));
 
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
-		fatal("nbr_new");
+		fatal(__func__);
 
 	LIST_INIT(&nbr->adj_list);
 	nbr->state = NBR_STA_PRESENT;
@@ -250,7 +249,7 @@ nbr_new(struct in_addr id, struct in_addr addr)
 void
 nbr_del(struct nbr *nbr)
 {
-	log_debug("nbr_del: LSR ID %s", inet_ntoa(nbr->id));
+	log_debug("%s: LSR ID %s", __func__, inet_ntoa(nbr->id));
 
 	nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 	pfkey_remove(nbr);
@@ -329,7 +328,7 @@ nbr_ktimer(int fd, short event, void *arg)
 	timerclear(&tv);
 	tv.tv_sec = (time_t)(nbr->keepalive / KEEPALIVE_PER_PERIOD);
 	if (evtimer_add(&nbr->keepalive_timer, &tv) == -1)
-		fatal("nbr_ktimer");
+		fatal(__func__);
 }
 
 void
@@ -343,7 +342,7 @@ nbr_start_ktimer(struct nbr *nbr)
 	tv.tv_sec = (time_t)(nbr->keepalive / KEEPALIVE_PER_PERIOD);
 
 	if (evtimer_add(&nbr->keepalive_timer, &tv) == -1)
-		fatal("nbr_start_ktimer");
+		fatal(__func__);
 }
 
 void
@@ -351,7 +350,7 @@ nbr_stop_ktimer(struct nbr *nbr)
 {
 	if (evtimer_pending(&nbr->keepalive_timer, NULL) &&
 	    evtimer_del(&nbr->keepalive_timer) == -1)
-		fatal("nbr_stop_ktimer");
+		fatal(__func__);
 }
 
 /* Keepalive timeout: if the nbr hasn't sent keepalive */
@@ -361,7 +360,7 @@ nbr_ktimeout(int fd, short event, void *arg)
 {
 	struct nbr *nbr = arg;
 
-	log_debug("nbr_ktimeout: neighbor ID %s", inet_ntoa(nbr->id));
+	log_debug("%s: neighbor ID %s", __func__, inet_ntoa(nbr->id));
 
 	session_shutdown(nbr, S_KEEPALIVE_TMR, 0, 0);
 }
@@ -375,7 +374,7 @@ nbr_start_ktimeout(struct nbr *nbr)
 	tv.tv_sec = nbr->keepalive;
 
 	if (evtimer_add(&nbr->keepalive_timeout, &tv) == -1)
-		fatal("nbr_start_ktimeout");
+		fatal(__func__);
 }
 
 void
@@ -383,7 +382,7 @@ nbr_stop_ktimeout(struct nbr *nbr)
 {
 	if (evtimer_pending(&nbr->keepalive_timeout, NULL) &&
 	    evtimer_del(&nbr->keepalive_timeout) == -1)
-		fatal("nbr_stop_ktimeout");
+		fatal(__func__);
 }
 
 /* Init delay timer: timer to retry to iniziatize session */
@@ -393,7 +392,7 @@ nbr_idtimer(int fd, short event, void *arg)
 {
 	struct nbr *nbr = arg;
 
-	log_debug("nbr_idtimer: neighbor ID %s", inet_ntoa(nbr->id));
+	log_debug("%s: neighbor ID %s", __func__, inet_ntoa(nbr->id));
 
 	if (nbr_session_active_role(nbr))
 		nbr_establish_connection(nbr);
@@ -426,7 +425,7 @@ nbr_start_idtimer(struct nbr *nbr)
 	}
 
 	if (evtimer_add(&nbr->initdelay_timer, &tv) == -1)
-		fatal("nbr_start_idtimer");
+		fatal(__func__);
 }
 
 void
@@ -434,7 +433,7 @@ nbr_stop_idtimer(struct nbr *nbr)
 {
 	if (evtimer_pending(&nbr->initdelay_timer, NULL) &&
 	    evtimer_del(&nbr->initdelay_timer) == -1)
-		fatal("nbr_stop_idtimer");
+		fatal(__func__);
 }
 
 int
@@ -465,16 +464,15 @@ nbr_connect_cb(int fd, short event, void *arg)
 
 	len = sizeof(error);
 	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
-		log_warn("nbr_connect_cb getsockopt SOL_SOCKET SO_ERROR");
+		log_warn("%s: getsockopt SOL_SOCKET SO_ERROR", __func__);
 		return;
 	}
 
 	if (error) {
 		close(nbr->fd);
 		errno = error;
-		log_debug("nbr_connect_cb: error while "
-		    "connecting to %s: %s", inet_ntoa(nbr->addr),
-		    strerror(errno));
+		log_debug("%s: error while connecting to %s: %s", __func__,
+		    inet_ntoa(nbr->addr), strerror(errno));
 		return;
 	}
 
@@ -492,8 +490,7 @@ nbr_establish_connection(struct nbr *nbr)
 
 	nbr->fd = socket(AF_INET, SOCK_STREAM|SOCK_NONBLOCK|SOCK_CLOEXEC, 0);
 	if (nbr->fd == -1) {
-		log_warn("nbr_establish_connection: error while "
-		    "creating socket");
+		log_warn("%s: error while creating socket", __func__);
 		return (-1);
 	}
 
@@ -517,8 +514,8 @@ nbr_establish_connection(struct nbr *nbr)
 
 	if (bind(nbr->fd, (struct sockaddr *) &local_sa,
 	    sizeof(struct sockaddr_in)) == -1) {
-		log_warn("nbr_establish_connection: error while "
-		    "binding socket to %s", inet_ntoa(local_sa.sin_addr));
+		log_warn("%s: error while binding socket to %s", __func__,
+		    inet_ntoa(local_sa.sin_addr));
 		close(nbr->fd);
 		return (-1);
 	}
@@ -544,8 +541,8 @@ nbr_establish_connection(struct nbr *nbr)
 			event_add(&nbr->ev_connect, NULL);
 			return (0);
 		}
-		log_warn("nbr_establish_connection: error while "
-		    "connecting to %s", inet_ntoa(nbr->addr));
+		log_warn("%s: error while connecting to %s", __func__,
+		    inet_ntoa(nbr->addr));
 		close(nbr->fd);
 		return (-1);
 	}
@@ -581,7 +578,7 @@ nbr_params_new(struct in_addr addr)
 	struct nbr_params	*nbrp;
 
 	if ((nbrp = calloc(1, sizeof(*nbrp))) == NULL)
-		fatal("nbr_params_new");
+		fatal(__func__);
 
 	nbrp->addr.s_addr = addr.s_addr;
 	nbrp->auth.method = AUTH_NONE;

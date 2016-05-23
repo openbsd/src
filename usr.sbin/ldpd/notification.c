@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.18 2015/07/21 04:52:29 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.19 2016/05/23 15:14:08 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -45,11 +45,11 @@ send_notification_full(struct tcp_conn *tcp, struct notify_msg *nm)
 	u_int16_t	 size;
 
 	if (tcp->nbr)
-		log_debug("send_notification_full: nbr ID %s, status %s",
+		log_debug("%s: nbr ID %s, status %s", __func__,
 		    inet_ntoa(tcp->nbr->id), notification_name(nm->status));
 
 	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
-		fatal("send_notification");
+		fatal(__func__);
 
 	/* calculate size */
 	size = LDP_HDR_SIZE + sizeof(struct ldp_msg) + STATUS_SIZE;

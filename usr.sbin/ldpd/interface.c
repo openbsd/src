@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.26 2015/09/27 17:30:38 stsp Exp $ */
+/*	$OpenBSD: interface.c,v 1.27 2016/05/23 15:14:07 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -84,7 +84,7 @@ if_del(struct iface *iface)
 	if (iface->state == IF_STA_ACTIVE)
 		if_reset(iface);
 
-	log_debug("if_del: interface %s", iface->name);
+	log_debug("%s: interface %s", __func__, iface->name);
 
 	while ((if_addr = LIST_FIRST(&iface->addr_list)) != NULL) {
 		LIST_REMOVE(if_addr, entry);
@@ -121,7 +121,7 @@ if_addr_new(struct kaddr *kaddr)
 	struct if_addr	*if_addr;
 
 	if ((if_addr = calloc(1, sizeof(*if_addr))) == NULL)
-		fatal("if_addr_new");
+		fatal(__func__);
 
 	if_addr->addr.s_addr = kaddr->addr.s_addr;
 	if_addr->mask.s_addr = kaddr->mask.s_addr;
@@ -158,7 +158,7 @@ if_hello_timer(int fd, short event, void *arg)
 	timerclear(&tv);
 	tv.tv_sec = iface->hello_interval;
 	if (evtimer_add(&iface->hello_timer, &tv) == -1)
-		fatal("if_hello_timer");
+		fatal(__func__);
 }
 
 void
@@ -171,7 +171,7 @@ if_start_hello_timer(struct iface *iface)
 	timerclear(&tv);
 	tv.tv_sec = iface->hello_interval;
 	if (evtimer_add(&iface->hello_timer, &tv) == -1)
-		fatal("if_start_hello_timer");
+		fatal(__func__);
 }
 
 void
@@ -179,7 +179,7 @@ if_stop_hello_timer(struct iface *iface)
 {
 	if (evtimer_pending(&iface->hello_timer, NULL) &&
 	    evtimer_del(&iface->hello_timer) == -1)
-		fatal("if_stop_hello_timer");
+		fatal(__func__);
 }
 
 int
@@ -188,7 +188,7 @@ if_start(struct iface *iface)
 	struct in_addr		 addr;
 	struct timeval		 now;
 
-	log_debug("if_start: %s", iface->name);
+	log_debug("%s: %s", __func__, iface->name);
 
 	gettimeofday(&now, NULL);
 	iface->uptime = now.tv_sec;
@@ -208,7 +208,7 @@ if_reset(struct iface *iface)
 	struct in_addr		 addr;
 	struct adj		*adj;
 
-	log_debug("if_reset: %s", iface->name);
+	log_debug("%s: %s", __func__, iface->name);
 
 	while ((adj = LIST_FIRST(&iface->adj_list)) != NULL) {
 		LIST_REMOVE(adj, iface_entry);
@@ -287,8 +287,8 @@ if_set_mcast_ttl(int fd, u_int8_t ttl)
 {
 	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL,
 	    (char *)&ttl, sizeof(ttl)) < 0) {
-		log_warn("if_set_mcast_ttl: error setting "
-		    "IP_MULTICAST_TTL to %d", ttl);
+		log_warn("%s: error setting IP_MULTICAST_TTL to %d",
+		    __func__, ttl);
 		return (-1);
 	}
 
@@ -299,7 +299,7 @@ int
 if_set_tos(int fd, int tos)
 {
 	if (setsockopt(fd, IPPROTO_IP, IP_TOS, (int *)&tos, sizeof(tos)) < 0) {
-		log_warn("if_set_tos: error setting IP_TOS to 0x%x", tos);
+		log_warn("%s: error setting IP_TOS to 0x%x", __func__, tos);
 		return (-1);
 	}
 
@@ -311,7 +311,7 @@ if_set_recvif(int fd, int enable)
 {
 	if (setsockopt(fd, IPPROTO_IP, IP_RECVIF, &enable,
 	    sizeof(enable)) < 0) {
-		log_warn("if_set_recvif: error setting IP_RECVIF");
+		log_warn("%s: error setting IP_RECVIF", __func__);
 		return (-1);
 	}
 	return (0);
@@ -333,7 +333,7 @@ if_set_reuse(int fd, int enable)
 {
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable,
 	    sizeof(int)) < 0) {
-		log_warn("if_set_reuse: error setting SO_REUSEADDR");
+		log_warn("%s: error setting SO_REUSEADDR", __func__);
 		return (-1);
 	}
 
@@ -366,7 +366,7 @@ if_join_group(struct iface *iface, struct in_addr *addr)
 			break;
 	if (ifg == NULL) {
 		if ((ifg = calloc(1, sizeof(*ifg))) == NULL)
-			fatal("if_join_group");
+			fatal(__func__);
 		ifg->addr.s_addr = addr->s_addr;
 		ifg->ifindex = iface->ifindex;
 		LIST_INSERT_HEAD(&ifglist, ifg, entry);
@@ -382,8 +382,8 @@ if_join_group(struct iface *iface, struct in_addr *addr)
 
 	if (setsockopt(iface->discovery_fd, IPPROTO_IP,
 	    IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof(mreq)) < 0) {
-		log_warn("if_join_group: error IP_ADD_MEMBERSHIP, "
-		    "interface %s address %s", iface->name,
+		log_warn("%s: error IP_ADD_MEMBERSHIP, "
+		    "interface %s address %s", __func__, iface->name,
 		    inet_ntoa(*addr));
 		LIST_REMOVE(ifg, entry);
 		free(ifg);
@@ -423,9 +423,8 @@ if_leave_group(struct iface *iface, struct in_addr *addr)
 
 	if (setsockopt(iface->discovery_fd, IPPROTO_IP,
 	    IP_DROP_MEMBERSHIP, (void *)&mreq, sizeof(mreq)) < 0) {
-		log_warn("if_leave_group: error IP_DROP_MEMBERSHIP, "
-		    "interface %s address %s", iface->name,
-		    inet_ntoa(*addr));
+		log_warn("%s: error IP_DROP_MEMBERSHIP, interface %s "
+		    "address %s", __func__, iface->name, inet_ntoa(*addr));
 		return (-1);
 	}
 
@@ -441,8 +440,8 @@ if_set_mcast(struct iface *iface)
 
 	if (setsockopt(iface->discovery_fd, IPPROTO_IP, IP_MULTICAST_IF,
 	    &if_addr->addr.s_addr, sizeof(if_addr->addr.s_addr)) < 0) {
-		log_debug("if_set_mcast: error setting "
-		    "IP_MULTICAST_IF, interface %s", iface->name);
+		log_debug("%s: error setting IP_MULTICAST_IF, interface %s",
+		    __func__, iface->name);
 		return (-1);
 	}
 
@@ -456,7 +455,7 @@ if_set_mcast_loop(int fd)
 
 	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP,
 	    (char *)&loop, sizeof(loop)) < 0) {
-		log_warn("if_set_mcast_loop: error setting IP_MULTICAST_LOOP");
+		log_warn("%s: error setting IP_MULTICAST_LOOP", __func__);
 		return (-1);
 	}
 
