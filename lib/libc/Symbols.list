@@ -999,8 +999,6 @@ __b64_ntop
 __b64_pton
 __dn_comp
 __dn_skipname
-__ivaliduser
-__ivaliduser_sa
 __p_class
 __p_class_syms
 __p_type
@@ -1092,8 +1090,6 @@ inet_network
 inet_ntoa
 inet_ntop
 inet_pton
-iruserok
-iruserok_sa
 link_ntoa
 ntohl
 ntohs

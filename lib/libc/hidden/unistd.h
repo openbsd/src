@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.8 2016/05/07 19:05:22 guenther Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.9 2016/05/23 00:12:58 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -91,8 +91,6 @@ PROTO_NORMAL(getuid);
 PROTO_DEPRECATED(getusershell);
 PROTO_DEPRECATED(getwd);
 PROTO_NORMAL(initgroups);
-PROTO_DEPRECATED(iruserok);
-PROTO_NORMAL(iruserok_sa);
 PROTO_NORMAL(isatty);
 PROTO_NORMAL(issetugid);
 PROTO_NORMAL(lchown);

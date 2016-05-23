@@ -48,12 +48,11 @@
 #include <syslog.h>
 #include <unistd.h>
 
-int	__ivaliduser(FILE *, in_addr_t, const char *, const char *);
-int	__ivaliduser_sa(FILE *, struct sockaddr *, socklen_t,
+static int __ivaliduser_sa(FILE *, struct sockaddr *, socklen_t,
 	    const char *, const char *);
-PROTO_NORMAL(__ivaliduser_sa);
 static int __icheckhost(struct sockaddr *, socklen_t, const char *);
 static char *__gethostloop(struct sockaddr *, socklen_t);
+static int iruserok_sa(const void *, int, int, const char *, const char *);
 
 int
 ruserok(const char *rhost, int superuser, const char *ruser, const char *luser)
@@ -77,28 +76,6 @@ ruserok(const char *rhost, int superuser, const char *ruser, const char *luser)
 	}
 	freeaddrinfo(res);
 	return (-1);
-}
-
-/*
- * New .rhosts strategy: We are passed an ip address. We spin through
- * hosts.equiv and .rhosts looking for a match. When the .rhosts only
- * has ip addresses, we don't have to trust a nameserver.  When it
- * contains hostnames, we spin through the list of addresses the nameserver
- * gives us and look for a match.
- *
- * Returns 0 if ok, -1 if not ok.
- */
-int
-iruserok(u_int32_t raddr, int superuser, const char *ruser, const char *luser)
-{
-	struct sockaddr_in sin;
-
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
-	sin.sin_len = sizeof(struct sockaddr_in);
-	memcpy(&sin.sin_addr, &raddr, sizeof(sin.sin_addr));
-	return iruserok_sa(&sin, sizeof(struct sockaddr_in), superuser, ruser,
-		    luser);
 }
 
 int
@@ -172,27 +149,6 @@ again:
 		goto again;
 	}
 	return (-1);
-}
-DEF_WEAK(iruserok_sa);
-
-/*
- * XXX
- * Don't make static, used by lpd(8).
- *
- * Returns 0 if ok, -1 if not ok.
- */
-int
-__ivaliduser(FILE *hostf, in_addr_t raddrl, const char *luser,
-    const char *ruser)
-{
-	struct sockaddr_in sin;
-
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
-	sin.sin_len = sizeof(struct sockaddr_in);
-	memcpy(&sin.sin_addr, &raddrl, sizeof(sin.sin_addr));
-	return __ivaliduser_sa(hostf, (struct sockaddr *)&sin, sin.sin_len,
-		    luser, ruser);
 }
 
 int
@@ -335,7 +291,6 @@ __ivaliduser_sa(FILE *hostf, struct sockaddr *raddr, socklen_t salen,
 bail:
 	return (-1);
 }
-DEF_STRONG(__ivaliduser_sa);
 
 /*
  * Returns "true" if match, 0 if no match.  If we do not find any

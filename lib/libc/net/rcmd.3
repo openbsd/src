@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmd.3,v 1.32 2015/03/23 22:29:32 halex Exp $
+.\"	$OpenBSD: rcmd.3,v 1.33 2016/05/23 00:12:58 guenther Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2015 $
+.Dd $Mdocdate: May 23 2016 $
 .Dt RCMD 3
 .Os
 .Sh NAME
@@ -35,9 +35,7 @@
 .Nm rcmd_af ,
 .Nm rresvport ,
 .Nm rresvport_af ,
-.Nm iruserok ,
-.Nm ruserok ,
-.Nm iruserok_sa
+.Nm ruserok
 .Nd routines for returning a stream to a remote command
 .Sh SYNOPSIS
 .In unistd.h
@@ -50,11 +48,7 @@
 .Ft int
 .Fn rresvport_af "int *port" "int af"
 .Ft int
-.Fn iruserok "u_int32_t raddr" "int superuser" "const char *ruser" "const char *luser"
-.Ft int
 .Fn ruserok "const char *rhost" "int superuser" "const char *ruser" "const char *luser"
-.Ft int
-.Fn iruserok_sa "const void *sa" "int salen" "int superuser" "const char *ruser" "const char *luser"
 .Sh DESCRIPTION
 The
 .Fn rcmd
@@ -90,15 +84,10 @@ and
 functions return a descriptor to a socket
 with an address in the privileged port space.
 The
-.Fn iruserok
-and
 .Fn ruserok
-functions are used by servers
+function is used by servers
 to authenticate clients requesting service with
 .Fn rcmd .
-.Fn iruserok_sa
-is an address family independent variant of
-.Fn iruserok .
 .Pp
 The
 .Fn rcmd
@@ -149,7 +138,7 @@ must be
 .Fn rcmd_af
 takes address family in the last argument.
 If the last argument is
-.Dv PF_UNSPEC ,
+.Dv AF_UNSPEC ,
 interpretation of
 .Fa *ahost
 will obey the underlying address resolution like DNS.
@@ -174,11 +163,9 @@ need to be seeded with a port number; if that port
 is not available these functions will find another.
 .Pp
 The
-.Fn iruserok
-and
 .Fn ruserok
-functions take a remote host's IP address or name, respectively,
-two user names and a flag indicating whether the local user's
+function takes a remote host's name, two user names,
+and a flag indicating whether the local user's
 name is that of the superuser.
 Then, if the user is
 .Em not
@@ -198,35 +185,14 @@ Zero is returned if the machine name is listed in the
 file, or the host and remote user name are found in the
 .Pa .rhosts
 file; otherwise
-.Fn iruserok
-and
 .Fn ruserok
-return \-1.
+returns \-1.
 If the local domain (as obtained from
 .Xr gethostname 3 )
 is the same as the remote domain, only the machine name need be specified.
 .Pp
-If the IP address of the remote host is known,
-.Fn iruserok
-should be used in preference to
-.Fn ruserok ,
-as it does not require trusting the DNS server for the remote host's domain.
-.Pp
-While
-.Fn iruserok
-can handle IPv4 addresses only,
-.Fn iruserok_sa
-and
 .Fn ruserok
-can handle other address families as well, like IPv6.
-The first argument of
-.Fn iruserok_sa
-is typed as
-.Li "void *"
-to avoid dependency between
-.In unistd.h
-and
-.In sys/socket.h .
+implicitly requires trusting the DNS server for the remote host's domain.
 .Sh DIAGNOSTICS
 The
 .Fn rcmd
@@ -255,3 +221,12 @@ is overloaded to mean
 These
 functions appeared in
 .Bx 4.2 .
+.Pp
+The
+.Fn iruserok
+and
+.Fn iruserok_sa
+functions, IP address based versions of
+.Fn ruserok ,
+were removed in
+.Ox 6.0 .

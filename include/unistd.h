@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.100 2015/10/09 01:26:40 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.101 2016/05/23 00:12:58 guenther Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -500,8 +500,6 @@ int	 getresuid(uid_t *, uid_t *, uid_t *);
 pid_t	 getthrid(void);
 char	*getusershell(void);
 int	 initgroups(const char *, gid_t);
-int	 iruserok(u_int32_t, int, const char *, const char *);
-int	 iruserok_sa(const void *, int, int, const char *, const char *);
 int	 issetugid(void);
 char	*mkdtemp(char *);
 int	 mkstemps(char *, int);
