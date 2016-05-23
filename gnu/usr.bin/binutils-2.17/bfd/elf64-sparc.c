@@ -892,7 +892,7 @@ const struct elf_size_info elf64_sparc_size_info =
 #define elf_backend_can_gc_sections 1
 #define elf_backend_can_refcount 1
 #define elf_backend_want_got_plt 0
-#define elf_backend_plt_readonly 0
+#define elf_backend_plt_readonly 1
 #define elf_backend_want_plt_sym 1
 #define elf_backend_got_header_size 8
 #define elf_backend_rela_normal 1
