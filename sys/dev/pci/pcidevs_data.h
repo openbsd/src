@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1797 2016/05/21 10:07:05 reyk Exp 
+ *	OpenBSD: pcidevs,v 1.1798 2016/05/23 06:52:10 dlg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -10944,12 +10944,40 @@ static const struct pci_known_product pci_known_products[] = {
 	    "I219-V",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XL710_VF,
+	    "XL710 VF",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XL710_10G_SFP,
+	    "XL710 SFP+",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_COPPER_NF,
 	    "I210",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_SERDES_NF,
 	    "I210 SerDes",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XL710_40G_BP,
+	    "XL710 40GbE Backplane",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XL710_10G_BP,
+	    "XL710 10GbE Backplane",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XL710_2xQSFP,
+	    "XL710 QSFP+ x2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XL710_1xQSFP,
+	    "XL710 QSFP+",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XL710_10G_BASET,
+	    "XL710 10GBaseT",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_LM_2,
