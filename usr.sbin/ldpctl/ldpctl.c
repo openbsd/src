@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.28 2016/05/23 19:02:49 renato Exp $
+/*	$OpenBSD: ldpctl.c,v 1.29 2016/05/23 19:03:52 renato Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -56,6 +56,7 @@ int		 show_l2vpn_pw_msg(struct imsg *);
 int		 show_l2vpn_binding_msg(struct imsg *);
 const char	*get_media_descr(uint64_t);
 void		 print_baudrate(uint64_t);
+char		*print_label(char **, uint32_t);
 const char	*print_pw_type(uint16_t);
 
 struct imsgbuf	*ibuf;
@@ -385,7 +386,7 @@ int
 show_lib_msg(struct imsg *imsg)
 {
 	struct ctl_rt	*rt;
-	char		*dstnet, *remote;
+	char		*dstnet, *local = NULL, *remote = NULL;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_LIB:
@@ -393,26 +394,15 @@ show_lib_msg(struct imsg *imsg)
 		if (asprintf(&dstnet, "%s/%d", inet_ntoa(rt->prefix),
 		    rt->prefixlen) == -1)
 			err(1, NULL);
-		if (!rt->in_use) {
-			if (asprintf(&remote, "-") == -1)
-				err(1, NULL);
-		} else if (rt->remote_label == NO_LABEL) {
-			if (asprintf(&remote, "Untagged") == -1)
-				err(1, NULL);
-		} else if (rt->remote_label == MPLS_LABEL_IMPLNULL) {
-			if (asprintf(&remote, "Pop tag") == -1)
-				err(1, NULL);
-		} else {
-			if (asprintf(&remote, "%u", rt->remote_label) == -1)
-				err(1, NULL);
-		}
 
-		printf("%-20s %-17s %-14u %-14s %s\n", dstnet,
-		    inet_ntoa(rt->nexthop), rt->local_label, remote,
+		printf("%-20s %-17s %-14s %-14s %s\n", dstnet,
+		    inet_ntoa(rt->nexthop),
+		    print_label(&local, rt->local_label),
+		    print_label(&remote, rt->remote_label),
 		    rt->in_use ? "yes" : "no");
 		free(remote);
+		free(local);
 		free(dstnet);
-
 		break;
 	case IMSG_CTL_END:
 		printf("\n");
@@ -458,8 +448,9 @@ show_fib_head(void)
 int
 show_fib_msg(struct imsg *imsg)
 {
-	struct kroute		*k;
-	char			*p;
+	struct kroute	*k;
+	char		*p;
+	char		*local = NULL, *remote = NULL;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_KROUTE:
@@ -486,23 +477,12 @@ show_fib_msg(struct imsg *imsg)
 		else if (k->flags & F_CONNECTED)
 			printf("link#%-13u", k->ifindex);
 
-		if (k->local_label == NO_LABEL) {
-			printf("%-18s", "-");
-		} else if (k->local_label == MPLS_LABEL_IMPLNULL) {
-			printf("%-18s", "imp-null");
-		} else
-			printf("%-18u", k->local_label);
-
-		if (k->remote_label == NO_LABEL) {
-			printf("-");
-		} else if (k->remote_label == MPLS_LABEL_IMPLNULL) {
-			printf("Pop");
-		} else {
-			printf("%u", k->remote_label);
-		}
-
+		printf("%-18s", print_label(&local, k->local_label));
+		printf("%s", print_label(&local, k->remote_label));
 		printf("\n");
 
+		free(remote);
+		free(local);
 		break;
 	case IMSG_CTL_END:
 		printf("\n");
@@ -657,6 +637,27 @@ print_baudrate(uint64_t baudrate)
 		printf("%llu KBit/s", baudrate / IF_Kbps(1));
 	else
 		printf("%llu Bit/s", baudrate);
+}
+
+char *
+print_label(char **string, uint32_t label)
+{
+	if (label == NO_LABEL) {
+		if (asprintf(string, "-") == -1)
+			err(1, NULL);
+	} else if (label == MPLS_LABEL_IMPLNULL) {
+		if (asprintf(string, "imp-null") == -1)
+			err(1, NULL);
+	} else if (label == MPLS_LABEL_IPV4NULL ||
+	    label == MPLS_LABEL_IPV6NULL) {
+		if (asprintf(string, "exp-null") == -1)
+			err(1, NULL);
+	} else {
+		if (asprintf(string, "%u", label) == -1)
+			err(1, NULL);
+	}
+
+	return (*string);
 }
 
 const char *
