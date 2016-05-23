@@ -25064,6 +25064,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VL80x xHCI",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VL805_XHCI,
+	    "VL805 xHCI",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8M800_4,
 	    "K8M800 Host",
 	},
