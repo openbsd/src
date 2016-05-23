@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.16 2016/05/23 15:14:07 renato Exp $ */
+/*	$OpenBSD: init.c,v 1.17 2016/05/23 15:41:04 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -106,7 +106,8 @@ recv_init(struct nbr *nbr, char *buf, u_int16_t len)
 		return (-1);
 	}
 
-	nbr->keepalive = min(leconf->keepalive, ntohs(sess.keepalive_time));
+	nbr->keepalive = min(nbr_get_keepalive(nbr->addr),
+	    ntohs(sess.keepalive_time));
 
 	if (!nbr_pending_idtimer(nbr))
 		nbr_fsm(nbr, NBR_EVT_INIT_RCVD);
@@ -126,7 +127,7 @@ gen_init_prms_tlv(struct ibuf *buf, struct nbr *nbr, u_int16_t size)
 	parms.type = htons(TLV_TYPE_COMMONSESSION);
 	parms.length = htons(size);
 	parms.proto_version = htons(LDP_VERSION);
-	parms.keepalive_time = htons(leconf->keepalive);
+	parms.keepalive_time = htons(nbr_get_keepalive(nbr->addr));
 	parms.reserved = 0;
 	parms.pvlim = 0;
 	parms.max_pdu_len = 0;

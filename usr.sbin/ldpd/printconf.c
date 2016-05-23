@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.11 2015/07/21 04:52:29 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.12 2016/05/23 15:41:04 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -75,6 +75,8 @@ void
 print_nbrp(struct nbr_params *nbrp)
 {
 	printf("\nneighbor %s {\n", inet_ntoa(nbrp->addr));
+	if (nbrp->flags & F_NBRP_KEEPALIVE)
+		printf("\tkeepalive %u\n", nbrp->keepalive);
 	if (nbrp->auth.method == AUTH_MD5SIG)
 		printf("\tpassword XXXXXX\n");
 	printf("}\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.42 2015/07/21 05:02:57 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.43 2016/05/23 15:41:04 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -220,6 +220,7 @@ int	 nbr_pending_idtimer(struct nbr *);
 int	 nbr_pending_connect(struct nbr *);
 int	 nbr_establish_connection(struct nbr *);
 
+uint16_t		 nbr_get_keepalive(struct in_addr);
 struct nbr_params	*nbr_params_new(struct in_addr);
 struct nbr_params	*nbr_params_find(struct ldpd_conf *, struct in_addr);
 

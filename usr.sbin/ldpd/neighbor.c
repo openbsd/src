@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.53 2016/05/23 15:14:07 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.54 2016/05/23 15:41:04 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -596,6 +596,18 @@ nbr_params_find(struct ldpd_conf *xconf, struct in_addr addr)
 			return (nbrp);
 
 	return (NULL);
+}
+
+uint16_t
+nbr_get_keepalive(struct in_addr addr)
+{
+	struct nbr_params	*nbrp;
+
+	nbrp = nbr_params_find(leconf, addr);
+	if (nbrp && (nbrp->flags & F_NBRP_KEEPALIVE))
+		return (nbrp->keepalive);
+
+	return (leconf->keepalive);
 }
 
 struct ctl_nbr *

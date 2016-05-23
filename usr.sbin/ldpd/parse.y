@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.34 2016/05/23 15:32:48 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.35 2016/05/23 15:41:04 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -233,8 +233,7 @@ conf_main	: ROUTERID STRING {
 				conf->flags |= LDPD_FLAG_TH_ACCEPT;
 		}
 		| KEEPALIVE NUMBER {
-			if ($2 < MIN_KEEPALIVE ||
-			    $2 > MAX_KEEPALIVE) {
+			if ($2 < MIN_KEEPALIVE || $2 > MAX_KEEPALIVE) {
 				yyerror("keepalive out of range (%d-%d)",
 				    MIN_KEEPALIVE, MAX_KEEPALIVE);
 				YYERROR;
@@ -287,7 +286,16 @@ tnbr_defaults	: THELLOHOLDTIME NUMBER {
 		}
 		;
 
-nbr_opts	: PASSWORD STRING {
+nbr_opts	: KEEPALIVE NUMBER {
+			if ($2 < MIN_KEEPALIVE || $2 > MAX_KEEPALIVE) {
+				yyerror("keepalive out of range (%d-%d)",
+				    MIN_KEEPALIVE, MAX_KEEPALIVE);
+				YYERROR;
+			}
+			nbrp->keepalive = $2;
+			nbrp->flags |= F_NBRP_KEEPALIVE;
+		}
+		| PASSWORD STRING {
 			if (strlcpy(nbrp->auth.md5key, $2,
 			    sizeof(nbrp->auth.md5key)) >=
 			    sizeof(nbrp->auth.md5key)) {

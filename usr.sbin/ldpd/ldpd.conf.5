@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.20 2016/05/23 15:36:53 renato Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.21 2016/05/23 15:41:04 renato Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -179,6 +179,10 @@ neighbor A.B.C.D {
 .Pp
 Neighbor-specific parameters are listed below.
 .Bl -tag -width Ds
+.It Ic keepalive Ar seconds
+Set the keepalive timeout in seconds.
+Inherited from the global configuration if not given.
+The default value is 180; valid range is 1\-65535.
 .It Ic password Ar secret
 Enable TCP MD5 signatures per RFC 5036.
 .El
