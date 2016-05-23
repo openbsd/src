@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.11 2016/05/23 16:20:59 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.12 2016/05/23 16:27:16 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -80,6 +80,8 @@ adj_del(struct adj *adj)
 	adj_stop_itimer(adj);
 
 	LIST_REMOVE(adj, nbr_entry);
+	if (adj->source.type == HELLO_LINK)
+		LIST_REMOVE(adj, iface_entry);
 
 	/* last adjacency deleted */
 	if (LIST_EMPTY(&adj->nbr->adj_list))
@@ -123,20 +125,14 @@ adj_itimer(int fd, short event, void *arg)
 
 	log_debug("%s: lsr-id %s", __func__, inet_ntoa(adj->nbr->id));
 
-	switch (adj->source.type) {
-	case HELLO_LINK:
-		LIST_REMOVE(adj, iface_entry);
-		break;
-	case HELLO_TARGETED:
+	if (adj->source.type == HELLO_TARGETED) {
 		if (!(adj->source.target->flags & F_TNBR_CONFIGURED) &&
 		    adj->source.target->pw_count == 0) {
 			/* remove dynamic targeted neighbor */
-			LIST_REMOVE(adj->source.target, entry);
 			tnbr_del(adj->source.target);
 			return;
 		}
 		adj->source.target->adj = NULL;
-		break;
 	}
 
 	adj_del(adj);
@@ -185,6 +181,7 @@ tnbr_del(struct tnbr *tnbr)
 	tnbr_stop_hello_timer(tnbr);
 	if (tnbr->adj)
 		adj_del(tnbr->adj);
+	LIST_REMOVE(tnbr, entry);
 	free(tnbr);
 }
 
@@ -205,7 +202,6 @@ tnbr_check(struct tnbr *tnbr)
 {
 	if (!(tnbr->flags & (F_TNBR_CONFIGURED|F_TNBR_DYNAMIC)) &&
 	    tnbr->pw_count == 0) {
-		LIST_REMOVE(tnbr, entry);
 		tnbr_del(tnbr);
 		return (NULL);
 	}

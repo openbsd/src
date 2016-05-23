@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.32 2016/05/23 16:20:59 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.33 2016/05/23 16:27:16 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -229,10 +229,8 @@ if_reset(struct iface *iface)
 
 	log_debug("%s: %s", __func__, iface->name);
 
-	while ((adj = LIST_FIRST(&iface->adj_list)) != NULL) {
-		LIST_REMOVE(adj, iface_entry);
+	while ((adj = LIST_FIRST(&iface->adj_list)) != NULL)
 		adj_del(adj);
-	}
 
 	if_stop_hello_timer(iface);
 
