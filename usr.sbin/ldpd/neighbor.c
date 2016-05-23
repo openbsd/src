@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.59 2016/05/23 15:59:55 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.60 2016/05/23 16:16:44 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -47,10 +47,13 @@ void	nbr_send_labelmappings(struct nbr *);
 int	nbr_act_session_operational(struct nbr *);
 
 static __inline int nbr_id_compare(struct nbr *, struct nbr *);
+static __inline int nbr_addr_compare(struct nbr *, struct nbr *);
 static __inline int nbr_pid_compare(struct nbr *, struct nbr *);
 
 RB_HEAD(nbr_id_head, nbr);
 RB_GENERATE(nbr_id_head, nbr, id_tree, nbr_id_compare)
+RB_HEAD(nbr_addr_head, nbr);
+RB_GENERATE(nbr_addr_head, nbr, addr_tree, nbr_addr_compare)
 RB_HEAD(nbr_pid_head, nbr);
 RB_GENERATE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
 
@@ -61,12 +64,24 @@ nbr_id_compare(struct nbr *a, struct nbr *b)
 }
 
 static __inline int
+nbr_addr_compare(struct nbr *a, struct nbr *b)
+{
+	if (ntohl(a->raddr.s_addr) < ntohl(b->raddr.s_addr))
+		return (-1);
+	if (ntohl(a->raddr.s_addr) > ntohl(b->raddr.s_addr))
+		return (1);
+
+	return (0);
+}
+
+static __inline int
 nbr_pid_compare(struct nbr *a, struct nbr *b)
 {
 	return (a->peerid - b->peerid);
 }
 
 struct nbr_id_head nbrs_by_id = RB_INITIALIZER(&nbrs_by_id);
+struct nbr_addr_head nbrs_by_addr = RB_INITIALIZER(&nbrs_by_addr);
 struct nbr_pid_head nbrs_by_pid = RB_INITIALIZER(&nbrs_by_pid);
 
 u_int32_t	peercnt = 1;
@@ -209,6 +224,7 @@ nbr_new(struct in_addr id, struct in_addr addr)
 {
 	struct nbr		*nbr;
 	struct nbr_params	*nbrp;
+	struct pending_conn	*pconn;
 
 	log_debug("%s: LSR ID %s", __func__, inet_ntoa(id));
 
@@ -224,6 +240,8 @@ nbr_new(struct in_addr id, struct in_addr addr)
 
 	if (RB_INSERT(nbr_id_head, &nbrs_by_id, nbr) != NULL)
 		fatalx("nbr_new: RB_INSERT(nbrs_by_id) failed");
+	if (RB_INSERT(nbr_addr_head, &nbrs_by_addr, nbr) != NULL)
+		fatalx("nbr_new: RB_INSERT(nbrs_by_addr) failed");
 
 	TAILQ_INIT(&nbr->mapping_list);
 	TAILQ_INIT(&nbr->withdraw_list);
@@ -241,6 +259,12 @@ nbr_new(struct in_addr id, struct in_addr addr)
 	nbrp = nbr_params_find(leconf, nbr->raddr);
 	if (nbrp && pfkey_establish(nbr, nbrp) == -1)
 		fatalx("pfkey setup failed");
+
+	pconn = pending_conn_find(nbr->raddr);
+	if (pconn) {
+		session_accept_nbr(nbr, pconn->fd);
+		pending_conn_del(pconn);
+	}
 
 	return (nbr);
 }
@@ -268,6 +292,7 @@ nbr_del(struct nbr *nbr)
 	if (nbr->peerid)
 		RB_REMOVE(nbr_pid_head, &nbrs_by_pid, nbr);
 	RB_REMOVE(nbr_id_head, &nbrs_by_id, nbr);
+	RB_REMOVE(nbr_addr_head, &nbrs_by_addr, nbr);
 
 	free(nbr);
 }

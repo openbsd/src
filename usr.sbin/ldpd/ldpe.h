@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.45 2016/05/23 15:47:24 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.46 2016/05/23 16:16:44 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -59,7 +59,7 @@ struct tcp_conn {
 };
 
 struct nbr {
-	RB_ENTRY(nbr)		 id_tree, pid_tree;
+	RB_ENTRY(nbr)		 id_tree, addr_tree, pid_tree;
 	struct tcp_conn		*tcp;
 	LIST_HEAD(, adj)	 adj_list;	/* adjacencies */
 	struct event		 ev_connect;
@@ -94,6 +94,14 @@ struct nbr {
 		char			md5key[TCP_MD5_KEY_LEN];
 	} auth;
 };
+
+struct pending_conn {
+	TAILQ_ENTRY(pending_conn)	 entry;
+	int				 fd;
+	struct in_addr			 addr;
+	struct event			 ev_timeout;
+};
+#define PENDING_CONN_TIMEOUT	5
 
 struct mapping_entry {
 	TAILQ_ENTRY(mapping_entry)	entry;
@@ -230,6 +238,8 @@ struct ctl_nbr	*nbr_to_ctl(struct nbr *);
 
 extern struct nbr_id_head	nbrs_by_id;
 RB_PROTOTYPE(nbr_id_head, nbr, id_tree, nbr_id_compare)
+extern struct nbr_addr_head	nbrs_by_addr;
+RB_PROTOTYPE(nbr_addr_head, nbr, addr_tree, nbr_addr_compare)
 extern struct nbr_pid_head	nbrs_by_pid;
 RB_PROTOTYPE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
 

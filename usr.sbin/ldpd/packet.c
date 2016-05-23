@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.49 2016/05/23 16:08:18 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.50 2016/05/23 16:16:44 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -247,10 +247,10 @@ void
 session_accept(int fd, short event, void *bula)
 {
 	struct sockaddr_in	 src;
-	int			 newfd;
 	socklen_t		 len = sizeof(src);
-	struct nbr_params	*nbrp;
-	int			 opt;
+	int			 newfd;
+	struct nbr		*nbr;
+	struct pending_conn	*pconn;
 
 	if (!(event & EV_READ))
 		return;
@@ -271,34 +271,80 @@ session_accept(int fd, short event, void *bula)
 		return;
 	}
 
-	nbrp = nbr_params_find(leconf, src.sin_addr);
+	/*
+	 * Since we don't support label spaces, we can identify this neighbor
+	 * just by its source address. This way we don't need to wait for its
+	 * Initialization message to know who we are talking to.
+	 */
+	nbr = nbr_find_addr(src.sin_addr);
+	if (nbr == NULL) {
+		/*
+		 * According to RFC 5036, we would need to send a No Hello
+		 * Error Notification message and close this TCP connection
+		 * right now. But doing so would trigger the backoff exponential
+		 * timer in the remote peer, which would considerably slow down
+		 * the session establishment process. The trick here is to wait
+		 * five seconds before sending the Notification Message. There's
+		 * a good chance that the remote peer will send us a Hello
+		 * message within this interval, so it's worth waiting before
+		 * taking a more drastic measure.
+		 */
+		pconn = pending_conn_find(src.sin_addr);
+		if (pconn)
+			close(newfd);
+		else
+			pending_conn_new(newfd, src.sin_addr);
+		return;
+	}
+	/* protection against buggy implementations */
+	if (nbr_session_active_role(nbr)) {
+		close(newfd);
+		return;
+	}
+	if (nbr->state != NBR_STA_PRESENT) {
+		log_debug("%s: lsr-id %s: rejecting additional transport "
+		    "connection", __func__, inet_ntoa(nbr->id));
+		close(newfd);
+		return;
+	}
+
+	session_accept_nbr(nbr, newfd);
+}
+
+void
+session_accept_nbr(struct nbr *nbr, int fd)
+{
+	struct nbr_params	*nbrp;
+	int			 opt;
+	socklen_t		 len;
+
+	nbrp = nbr_params_find(leconf, nbr->raddr);
 	if (nbrp && nbrp->auth.method == AUTH_MD5SIG) {
 		if (sysdep.no_pfkey || sysdep.no_md5sig) {
 			log_warnx("md5sig configured but not available");
-			close(newfd);
+			close(fd);
 			return;
 		}
 
 		len = sizeof(opt);
-		if (getsockopt(newfd, IPPROTO_TCP, TCP_MD5SIG,
-		    &opt, &len) == -1)
+		if (getsockopt(fd, IPPROTO_TCP, TCP_MD5SIG, &opt, &len) == -1)
 			fatal("getsockopt TCP_MD5SIG");
 		if (!opt) {	/* non-md5'd connection! */
-			log_warnx(
-			    "connection attempt without md5 signature");
-			close(newfd);
+			log_warnx("connection attempt without md5 signature");
+			close(fd);
 			return;
 		}
 	}
 
-	tcp_new(newfd, NULL);
+	nbr->tcp = tcp_new(fd, nbr);
+	nbr_fsm(nbr, NBR_EVT_MATCH_ADJ);
 }
 
 void
 session_read(int fd, short event, void *arg)
 {
-	struct tcp_conn	*tcp = arg;
-	struct nbr	*nbr = tcp->nbr;
+	struct nbr	*nbr = arg;
+	struct tcp_conn	*tcp = nbr->tcp;
 	struct ldp_hdr	*ldp_hdr;
 	struct ldp_msg	*ldp_msg;
 	char		*buf, *pdu;
@@ -306,19 +352,14 @@ session_read(int fd, short event, void *arg)
 	int		 msg_size;
 	u_int16_t	 pdu_len;
 
-	if (event != EV_READ) {
-		log_debug("%s: spurious event", __func__);
+	if (event != EV_READ)
 		return;
-	}
 
 	if ((n = read(fd, tcp->rbuf->buf + tcp->rbuf->wpos,
 	    sizeof(tcp->rbuf->buf) - tcp->rbuf->wpos)) == -1) {
 		if (errno != EINTR && errno != EAGAIN) {
 			log_warn("%s: read error", __func__);
-			if (nbr)
-				nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
-			else
-				tcp_close(tcp);
+			nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 			return;
 		}
 		/* retry read */
@@ -327,10 +368,7 @@ session_read(int fd, short event, void *arg)
 	if (n == 0) {
 		/* connection closed */
 		log_debug("%s: connection closed by remote end", __func__);
-		if (nbr)
-			nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
-		else
-			tcp_close(tcp);
+		nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 		return;
 	}
 	tcp->rbuf->wpos += n;
@@ -339,13 +377,7 @@ session_read(int fd, short event, void *arg)
 		pdu = buf;
 		ldp_hdr = (struct ldp_hdr *)pdu;
 		if (ntohs(ldp_hdr->version) != LDP_VERSION) {
-			if (nbr)
-				session_shutdown(nbr, S_BAD_PROTO_VER, 0, 0);
-			else {
-				send_notification(S_BAD_PROTO_VER, tcp, 0, 0);
-				msgbuf_write(&tcp->wbuf.wbuf);
-				tcp_close(tcp);
-			}
+			session_shutdown(nbr, S_BAD_PROTO_VER, 0, 0);
 			free(buf);
 			return;
 		}
@@ -356,50 +388,23 @@ session_read(int fd, short event, void *arg)
 		 * "Prior to completion of the negotiation, the maximum
 		 * allowable length is 4096 bytes".
 		 */
-		if (nbr && nbr->state == NBR_STA_OPER)
+		if (nbr->state == NBR_STA_OPER)
 			max_pdu_len = nbr->max_pdu_len;
 		else
 			max_pdu_len = LDP_MAX_LEN;
 		if (pdu_len < (LDP_HDR_PDU_LEN + LDP_MSG_SIZE) ||
 		    pdu_len > max_pdu_len) {
-			if (nbr)
-				session_shutdown(nbr, S_BAD_PDU_LEN, 0, 0);
-			else {
-				send_notification(S_BAD_PDU_LEN, tcp, 0, 0);
-				msgbuf_write(&tcp->wbuf.wbuf);
-				tcp_close(tcp);
-			}
+			session_shutdown(nbr, S_BAD_PDU_LEN, 0, 0);
 			free(buf);
 			return;
 		}
 		pdu_len -= LDP_HDR_PDU_LEN;
 
-		if (nbr) {
-			if (ldp_hdr->lsr_id != nbr->id.s_addr ||
-			    ldp_hdr->lspace_id != 0) {
-				session_shutdown(nbr, S_BAD_LDP_ID, 0, 0);
-				free(buf);
-				return;
-			}
-		} else {
-			nbr = nbr_find_ldpid(ldp_hdr->lsr_id);
-			if (!nbr) {
-				send_notification(S_NO_HELLO, tcp, 0, 0);
-				msgbuf_write(&tcp->wbuf.wbuf);
-				tcp_close(tcp);
-				free(buf);
-				return;
-			}
-			/* handle duplicate SYNs */
-			if (nbr->tcp) {
-				tcp_close(tcp);
-				free(buf);
-				return;
-			}
-
-			nbr->tcp = tcp;
-			tcp->nbr = nbr;
-			nbr_fsm(nbr, NBR_EVT_MATCH_ADJ);
+		if (ldp_hdr->lsr_id != nbr->id.s_addr ||
+		    ldp_hdr->lspace_id != 0) {
+			session_shutdown(nbr, S_BAD_LDP_ID, 0, 0);
+			free(buf);
+			return;
 		}
 
 		pdu += LDP_HDR_SIZE;
@@ -520,15 +525,23 @@ void
 session_write(int fd, short event, void *arg)
 {
 	struct tcp_conn *tcp = arg;
-	struct nbr *nbr = tcp->nbr;
+	struct nbr	*nbr = tcp->nbr;
 
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&tcp->wbuf.wbuf) <= 0 && errno != EAGAIN) {
-			if (nbr)
-				nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
-		}
-	} else
-		log_debug("%s: spurious event", __func__);
+	if (!(event & EV_WRITE))
+		return;
+
+	if (msgbuf_write(&tcp->wbuf.wbuf) <= 0)
+		if (errno != EAGAIN && nbr)
+			nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
+
+	if (nbr == NULL && !tcp->wbuf.wbuf.queued) {
+		/*
+		 * We are done sending the notification message, now we can
+		 * close the socket.
+		 */
+		tcp_close(tcp);
+		return;
+	}
 
 	evbuf_event_add(&tcp->wbuf);
 }
@@ -537,6 +550,9 @@ void
 session_shutdown(struct nbr *nbr, u_int32_t status, u_int32_t msgid,
     u_int32_t type)
 {
+	if (nbr->tcp == NULL)
+		return;
+
 	log_debug("%s: nbr ID %s", __func__, inet_ntoa(nbr->id));
 
 	send_notification_nbr(nbr, status, msgid, type);
@@ -554,8 +570,6 @@ session_close(struct nbr *nbr)
 	    inet_ntoa(nbr->id));
 
 	tcp_close(nbr->tcp);
-	nbr->tcp = NULL;
-
 	nbr_stop_ktimer(nbr);
 	nbr_stop_ktimeout(nbr);
 }
@@ -596,16 +610,19 @@ tcp_new(int fd, struct nbr *nbr)
 
 	if ((tcp = calloc(1, sizeof(*tcp))) == NULL)
 		fatal(__func__);
-	if ((tcp->rbuf = calloc(1, sizeof(struct ibuf_read))) == NULL)
-		fatal(__func__);
-
-	if (nbr)
-		tcp->nbr = nbr;
 
 	tcp->fd = fd;
 	evbuf_init(&tcp->wbuf, tcp->fd, session_write, tcp);
-	event_set(&tcp->rev, tcp->fd, EV_READ | EV_PERSIST, session_read, tcp);
-	event_add(&tcp->rev, NULL);
+
+	if (nbr) {
+		if ((tcp->rbuf = calloc(1, sizeof(struct ibuf_read))) == NULL)
+			fatal(__func__);
+
+		event_set(&tcp->rev, tcp->fd, EV_READ | EV_PERSIST,
+		    session_read, nbr);
+		event_add(&tcp->rev, NULL);
+		tcp->nbr = nbr;
+	}
 
 	return (tcp);
 }
@@ -614,9 +631,79 @@ void
 tcp_close(struct tcp_conn *tcp)
 {
 	evbuf_clear(&tcp->wbuf);
-	event_del(&tcp->rev);
+
+	if (tcp->nbr) {
+		event_del(&tcp->rev);
+		free(tcp->rbuf);
+		tcp->nbr->tcp = NULL;
+	}
+
 	close(tcp->fd);
 	accept_unpause();
-	free(tcp->rbuf);
 	free(tcp);
+}
+
+struct pending_conn *
+pending_conn_new(int fd, struct in_addr addr)
+{
+	struct pending_conn	*pconn;
+	struct timeval		 tv;
+
+	if ((pconn = calloc(1, sizeof(*pconn))) == NULL)
+		fatal(__func__);
+
+	pconn->fd = fd;
+	pconn->addr = addr;
+	evtimer_set(&pconn->ev_timeout, pending_conn_timeout, pconn);
+	TAILQ_INSERT_TAIL(&global.pending_conns, pconn, entry);
+
+	timerclear(&tv);
+	tv.tv_sec = PENDING_CONN_TIMEOUT;
+	if (evtimer_add(&pconn->ev_timeout, &tv) == -1)
+		fatal(__func__);
+
+	return (pconn);
+}
+
+void
+pending_conn_del(struct pending_conn *pconn)
+{
+	if (evtimer_pending(&pconn->ev_timeout, NULL) &&
+	    evtimer_del(&pconn->ev_timeout) == -1)
+		fatal(__func__);
+
+	TAILQ_REMOVE(&global.pending_conns, pconn, entry);
+	free(pconn);
+}
+
+struct pending_conn *
+pending_conn_find(struct in_addr addr)
+{
+	struct pending_conn	*pconn;
+
+	TAILQ_FOREACH(pconn, &global.pending_conns, entry)
+		if (addr.s_addr == pconn->addr.s_addr)
+			return (pconn);
+
+	return (NULL);
+}
+
+void
+pending_conn_timeout(int fd, short event, void *arg)
+{
+	struct pending_conn	*pconn = arg;
+	struct tcp_conn		*tcp;
+
+	log_debug("%s: no adjacency with remote end: %s", __func__,
+	    inet_ntoa(pconn->addr));
+
+	/*
+	 * Create a write buffer detached from any neighbor to send a
+	 * notification message reliably.
+	 */
+	tcp = tcp_new(pconn->fd, NULL);
+	send_notification(S_NO_HELLO, tcp, 0, 0);
+	msgbuf_write(&tcp->wbuf.wbuf);
+
+	pending_conn_del(pconn);
 }
