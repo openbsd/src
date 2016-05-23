@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.21 2016/05/23 16:04:04 renato Exp $ */
+/*	$OpenBSD: init.c,v 1.22 2016/05/23 16:14:36 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -166,8 +166,8 @@ tlv_decode_opt_init_prms(char *buf, u_int16_t len)
 		}
 		buf += TLV_HDR_LEN + tlv_len;
 		len -= TLV_HDR_LEN + tlv_len;
-		cons += TLV_HDR_LEN + tlv_len;
+		total += TLV_HDR_LEN + tlv_len;
 	}
 
-	return (cons);
+	return (total);
 }

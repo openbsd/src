@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.14 2016/05/23 15:47:24 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.15 2016/05/23 16:14:37 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -117,7 +117,7 @@ print_pw(struct l2vpn_pw *pw)
 		printf("\t\tstatus-tlv yes\n");
 	else
 		printf("\t\tstatus-tlv no\n");
-	if (pw->flags & F_PW_CONTROLWORD_CONF)
+	if (pw->flags & F_PW_CWORD_CONF)
 		printf("\t\tcontrol-word yes\n");
 	else
 		printf("\t\tcontrol-word no\n");

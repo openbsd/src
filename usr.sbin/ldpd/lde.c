@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.43 2016/05/23 16:12:28 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.44 2016/05/23 16:14:36 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -205,7 +205,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg		 imsg;
-	struct lde_nbr		 *nbr;
+	struct lde_nbr		*ln;
 	struct map		 map;
 	struct in_addr		 addr;
 	struct notify_msg	 nm;
@@ -251,8 +251,8 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 				fatalx("invalid size of OE request");
 			memcpy(&map, imsg.data, sizeof(map));
 
-			nbr = lde_nbr_find(imsg.hdr.peerid);
-			if (nbr == NULL) {
+			ln = lde_nbr_find(imsg.hdr.peerid);
+			if (ln == NULL) {
 				log_debug("%s: cannot find lde neighbor",
 				    __func__);
 				return;
@@ -260,22 +260,22 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 
 			switch (imsg.hdr.type) {
 			case IMSG_LABEL_MAPPING:
-				lde_check_mapping(&map, nbr);
+				lde_check_mapping(&map, ln);
 				break;
 			case IMSG_LABEL_REQUEST:
-				lde_check_request(&map, nbr);
+				lde_check_request(&map, ln);
 				break;
 			case IMSG_LABEL_RELEASE:
 				if (map.type == MAP_TYPE_WILDCARD)
-					lde_check_release_wcard(&map, nbr);
+					lde_check_release_wcard(&map, ln);
 				else
-					lde_check_release(&map, nbr);
+					lde_check_release(&map, ln);
 				break;
 			case IMSG_LABEL_WITHDRAW:
 				if (map.type == MAP_TYPE_WILDCARD)
-					lde_check_withdraw_wcard(&map, nbr);
+					lde_check_withdraw_wcard(&map, ln);
 				else
-					lde_check_withdraw(&map, nbr);
+					lde_check_withdraw(&map, ln);
 				break;
 			case IMSG_LABEL_ABORT:
 				/* not necessary */
@@ -325,8 +325,8 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 				fatalx("invalid size of OE request");
 			memcpy(&nm, imsg.data, sizeof(nm));
 
-			nbr = lde_nbr_find(imsg.hdr.peerid);
-			if (nbr == NULL) {
+			ln = lde_nbr_find(imsg.hdr.peerid);
+			if (ln == NULL) {
 				log_debug("%s: cannot find lde neighbor",
 				    __func__);
 				return;
@@ -334,7 +334,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 
 			switch (nm.status) {
 			case S_PW_STATUS:
-				l2vpn_recv_pw_status(nbr, &nm);
+				l2vpn_recv_pw_status(ln, &nm);
 				break;
 			default:
 				break;
@@ -704,7 +704,7 @@ lde_send_labelmapping(struct lde_nbr *ln, struct fec_node *fn, int single)
 		pw = (struct l2vpn_pw *) fnh->data;
 		map.flags |= F_MAP_PW_IFMTU;
 		map.fec.pwid.ifmtu = pw->l2vpn->mtu;
-		if (pw->flags & F_PW_CONTROLWORD)
+		if (pw->flags & F_PW_CWORD)
 			map.flags |= F_MAP_PW_CWORD;
 		if (pw->flags & F_PW_STATUSTLV) {
 			map.flags |= F_MAP_PW_STATUS;
@@ -762,7 +762,7 @@ lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn)
 
 		if (fn->fec.type == FEC_TYPE_PWID) {
 			pw = (struct l2vpn_pw *) fnh->data;
-			if (pw->flags & F_PW_CONTROLWORD)
+			if (pw->flags & F_PW_CWORD)
 				map.flags |= F_MAP_PW_CWORD;
 		}
 	} else {
@@ -814,7 +814,7 @@ lde_send_labelrelease(struct lde_nbr *ln, struct fec_node *fn, u_int32_t label)
 
 		if (fn->fec.type == FEC_TYPE_PWID) {
 			pw = (struct l2vpn_pw *) fnh->data;
-			if (pw->flags & F_PW_CONTROLWORD)
+			if (pw->flags & F_PW_CWORD)
 				map.flags |= F_MAP_PW_CWORD;
 		}
 	} else
@@ -870,35 +870,35 @@ lde_nbr_find(u_int32_t peerid)
 struct lde_nbr *
 lde_nbr_new(u_int32_t peerid, struct in_addr *id)
 {
-	struct lde_nbr	*nbr;
+	struct lde_nbr	*ln;
 
-	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
+	if ((ln = calloc(1, sizeof(*ln))) == NULL)
 		fatal(__func__);
 
-	nbr->id.s_addr = id->s_addr;
-	nbr->peerid = peerid;
-	fec_init(&nbr->recv_map);
-	fec_init(&nbr->sent_map);
-	fec_init(&nbr->recv_req);
-	fec_init(&nbr->sent_req);
-	fec_init(&nbr->sent_wdraw);
+	ln->id.s_addr = id->s_addr;
+	ln->peerid = peerid;
+	fec_init(&ln->recv_map);
+	fec_init(&ln->sent_map);
+	fec_init(&ln->recv_req);
+	fec_init(&ln->sent_req);
+	fec_init(&ln->sent_wdraw);
 
-	TAILQ_INIT(&nbr->addr_list);
+	TAILQ_INIT(&ln->addr_list);
 
-	if (RB_INSERT(nbr_tree, &lde_nbrs, nbr) != NULL)
+	if (RB_INSERT(nbr_tree, &lde_nbrs, ln) != NULL)
 		fatalx("lde_nbr_new: RB_INSERT failed");
 
-	return (nbr);
+	return (ln);
 }
 
 void
-lde_nbr_del(struct lde_nbr *nbr)
+lde_nbr_del(struct lde_nbr *ln)
 {
 	struct fec	*f;
 	struct fec_node	*fn;
 	struct fec_nh	*fnh;
 
-	if (nbr == NULL)
+	if (ln == NULL)
 		return;
 
 	/* uninstall received mappings */
@@ -906,43 +906,43 @@ lde_nbr_del(struct lde_nbr *nbr)
 		fn = (struct fec_node *)f;
 
 		LIST_FOREACH(fnh, &fn->nexthops, entry) {
-			if (lde_address_find(nbr, &fnh->nexthop)) {
+			if (lde_address_find(ln, &fnh->nexthop)) {
 				lde_send_delete_klabel(fn, fnh);
 				fnh->remote_label = NO_LABEL;
 			}
 		}
 	}
 
-	lde_address_list_free(nbr);
+	lde_address_list_free(ln);
 
-	fec_clear(&nbr->recv_map, lde_map_free);
-	fec_clear(&nbr->sent_map, lde_map_free);
-	fec_clear(&nbr->recv_req, free);
-	fec_clear(&nbr->sent_req, free);
-	fec_clear(&nbr->sent_wdraw, free);
+	fec_clear(&ln->recv_map, lde_map_free);
+	fec_clear(&ln->sent_map, lde_map_free);
+	fec_clear(&ln->recv_req, free);
+	fec_clear(&ln->sent_req, free);
+	fec_clear(&ln->sent_wdraw, free);
 
-	RB_REMOVE(nbr_tree, &lde_nbrs, nbr);
+	RB_REMOVE(nbr_tree, &lde_nbrs, ln);
 
-	free(nbr);
+	free(ln);
 }
 
 struct lde_nbr *
 lde_nbr_find(uint32_t peerid)
 {
-	struct lde_nbr	n;
+	struct lde_nbr		 ln;
 
-	n.peerid = peerid;
+	ln.peerid = peerid;
 
-	return (RB_FIND(nbr_tree, &lde_nbrs, &n));
+	return (RB_FIND(nbr_tree, &lde_nbrs, &ln));
 }
 
 void
 lde_nbr_clear(void)
 {
-	struct lde_nbr	*nbr;
+	struct lde_nbr	*ln;
 
-	 while ((nbr = RB_ROOT(&lde_nbrs)) != NULL)
-		lde_nbr_del(nbr);
+	 while ((ln = RB_ROOT(&lde_nbrs)) != NULL)
+		lde_nbr_del(ln);
 }
 
 struct lde_map *
@@ -1084,11 +1084,11 @@ lde_change_egress_label(int was_implicit)
 }
 
 int
-lde_address_add(struct lde_nbr *lr, struct in_addr *addr)
+lde_address_add(struct lde_nbr *ln, struct in_addr *addr)
 {
-	struct lde_nbr_address	*address;
+	struct lde_addr		*address;
 
-	if (lde_address_find(lr, addr) != NULL)
+	if (lde_address_find(ln, addr) != NULL)
 		return (-1);
 
 	if ((address = calloc(1, sizeof(*address))) == NULL)
@@ -1096,7 +1096,7 @@ lde_address_add(struct lde_nbr *lr, struct in_addr *addr)
 
 	address->addr.s_addr = addr->s_addr;
 
-	TAILQ_INSERT_TAIL(&lr->addr_list, address, entry);
+	TAILQ_INSERT_TAIL(&ln->addr_list, address, entry);
 
 	log_debug("%s: added %s", __func__, inet_ntoa(*addr));
 
@@ -1104,15 +1104,15 @@ lde_address_add(struct lde_nbr *lr, struct in_addr *addr)
 }
 
 int
-lde_address_del(struct lde_nbr *lr, struct in_addr *addr)
+lde_address_del(struct lde_nbr *ln, struct in_addr *addr)
 {
-	struct lde_nbr_address	*address;
+	struct lde_addr		*address;
 
-	address = lde_address_find(lr, addr);
+	address = lde_address_find(ln, addr);
 	if (address == NULL)
 		return (-1);
 
-	TAILQ_REMOVE(&lr->addr_list, address, entry);
+	TAILQ_REMOVE(&ln->addr_list, address, entry);
 
 	free(address);
 
@@ -1121,12 +1121,12 @@ lde_address_del(struct lde_nbr *lr, struct in_addr *addr)
 	return (0);
 }
 
-struct lde_nbr_address *
-lde_address_find(struct lde_nbr *lr, struct in_addr *addr)
+struct lde_addr *
+lde_address_find(struct lde_nbr *ln, struct in_addr *addr)
 {
-	struct lde_nbr_address	*address = NULL;
+	struct lde_addr		*address = NULL;
 
-	TAILQ_FOREACH(address, &lr->addr_list, entry) {
+	TAILQ_FOREACH(address, &ln->addr_list, entry) {
 		if (address->addr.s_addr == addr->s_addr)
 			return (address);
 	}
@@ -1135,12 +1135,12 @@ lde_address_find(struct lde_nbr *lr, struct in_addr *addr)
 }
 
 void
-lde_address_list_free(struct lde_nbr *nbr)
+lde_address_list_free(struct lde_nbr *ln)
 {
-	struct lde_nbr_address	*addr;
+	struct lde_addr		*addr;
 
-	while ((addr = TAILQ_FIRST(&nbr->addr_list)) != NULL) {
-		TAILQ_REMOVE(&nbr->addr_list, addr, entry);
+	while ((addr = TAILQ_FIRST(&ln->addr_list)) != NULL) {
+		TAILQ_REMOVE(&ln->addr_list, addr, entry);
 		free(addr);
 	}
 }

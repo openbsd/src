@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.50 2016/05/23 15:38:58 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.51 2016/05/23 16:14:36 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -1515,7 +1515,7 @@ kmpw_install(const char *ifname, struct kpw *kpw)
 		return;
 	}
 
-	if (kpw->flags & F_PW_CONTROLWORD)
+	if (kpw->flags & F_PW_CWORD)
 		imr.imr_flags |= IMR_FLAG_CONTROLWORD;
 
 	sin = (struct sockaddr_in *) &imr.imr_nexthop;
