@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpctl.8,v 1.11 2016/05/23 19:01:32 renato Exp $
+.\"	$OpenBSD: ldpctl.8,v 1.12 2016/05/23 19:04:55 renato Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -50,8 +50,14 @@ Disable verbose debug logging.
 Enable verbose debug logging.
 .It Cm reload
 Reload the configuration file.
-.It Cm show fib Op Ar destination | filter
+.It Xo
+.Cm show fib
+.Op Cm family Ar family
+.Op Ar destination | filter
+.Xc
 Show the Label Forwarding Information Base.
+.Ar family ,
+if given, limit the output to the given address family.
 .Ar destination
 can be specified to show the route matching a destination IP address.
 .Ar filter
@@ -70,14 +76,34 @@ Show only static routes.
 and
 .Cm static
 may be specified together.
-.It Cm show interfaces
+.It Xo
+.Cm show interfaces
+.Op Cm family Ar family
+.Xc
 Show details for all interfaces.
-.It Cm show discovery
+.Ar family ,
+if given, limit the output to the given address family.
+.It Xo
+.Cm show discovery
+.Op Cm family Ar family
+.Xc
 Show adjacencies.
-.It Cm show neighbor
+.Ar family ,
+if given, limit the output to the given address family.
+.It Xo
+.Cm show neighbor
+.Op Cm family Ar family
+.Xc
 Show neighbors.
-.It Cm show lib
-Show the IPv4 Label Information Base.
+.Ar family ,
+if given, limit the output to the given address family.
+.It Xo
+.Cm show lib
+.Op Cm family Ar family
+.Xc
+Show the Label Information Base.
+.Ar family ,
+if given, limit the output to the given address family.
 .It Cm show l2vpn bindings
 Show the PWID Label Information Base.
 .It Cm show l2vpn pseudowires

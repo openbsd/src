@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.10 2016/05/23 19:02:49 renato Exp $ */
+/*	$OpenBSD: parser.c,v 1.11 2016/05/23 19:04:55 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <netdb.h>
 
 #include "ldpd.h"
 
@@ -37,9 +38,9 @@ enum token_type {
 	NOTOKEN,
 	ENDTOKEN,
 	KEYWORD,
+	FAMILY,
 	ADDRESS,
 	FLAG,
-	PREFIX,
 	IFNAME
 };
 
@@ -54,11 +55,15 @@ static const struct token t_main[];
 static const struct token t_fib[];
 static const struct token t_show[];
 static const struct token t_show_iface[];
+static const struct token t_show_iface_af[];
 static const struct token t_show_disc[];
-
+static const struct token t_show_disc_af[];
 static const struct token t_show_nbr[];
+static const struct token t_show_nbr_af[];
 static const struct token t_show_lib[];
+static const struct token t_show_lib_af[];
 static const struct token t_show_fib[];
+static const struct token t_show_fib_af[];
 static const struct token t_show_l2vpn[];
 static const struct token t_log[];
 
@@ -88,44 +93,74 @@ static const struct token t_show[] = {
 };
 
 static const struct token t_show_iface[] = {
-	{NOTOKEN,	"",		NONE,			NULL},
-	{ENDTOKEN,	"",		NONE,			NULL}
+	{NOTOKEN,	"",		NONE,		NULL},
+	{KEYWORD,	"family",	NONE,		t_show_iface_af},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_show_iface_af[] = {
+	{FAMILY,	"",		NONE,		t_show_iface},
+	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_show_disc[] = {
-	{NOTOKEN,	"",		NONE,			NULL},
-	{ENDTOKEN,	"",		NONE,			NULL}
+	{NOTOKEN,	"",		NONE,		NULL},
+	{KEYWORD,	"family",	NONE,		t_show_disc_af},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_show_disc_af[] = {
+	{FAMILY,	"",		NONE,		t_show_disc},
+	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_show_nbr[] = {
 	{NOTOKEN,	"",		NONE,		NULL},
+	{KEYWORD,	"family",	NONE,		t_show_nbr_af},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_show_nbr_af[] = {
+	{FAMILY,	"",		NONE,		t_show_nbr},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_show_lib[] = {
 	{NOTOKEN,	"",		NONE,		NULL},
+	{KEYWORD,	"family",	NONE,		t_show_lib_af},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
-static const struct token t_log[] = {
-	{KEYWORD,	"verbose",	LOG_VERBOSE,	NULL},
-	{KEYWORD,	"brief",	LOG_BRIEF,	NULL},
+static const struct token t_show_lib_af[] = {
+	{FAMILY,	"",		NONE,		t_show_lib},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_show_fib[] = {
-	{NOTOKEN,	"",		NONE,			NULL},
-	{KEYWORD,	"interface",	SHOW_FIB_IFACE,		t_show_iface},
-	{FLAG,		"connected",	F_CONNECTED,		t_show_fib},
-	{FLAG,		"static",	F_STATIC,		t_show_fib},
-	{ADDRESS,	"",		NONE,			NULL},
-	{ENDTOKEN,	"",		NONE,			NULL}
+	{NOTOKEN,	"",		NONE,		NULL},
+	{KEYWORD,	"family",	NONE,		t_show_fib_af},
+	{KEYWORD,	"interface",	SHOW_FIB_IFACE,	t_show_iface},
+	{FLAG,		"connected",	F_CONNECTED,	t_show_fib},
+	{FLAG,		"static",	F_STATIC,	t_show_fib},
+	{ADDRESS,	"",		NONE,		NULL},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_show_fib_af[] = {
+	{FAMILY,	"",		NONE,		t_show_fib},
+	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_show_l2vpn[] = {
 	{KEYWORD,	"bindings",	SHOW_L2VPN_BINDING,	NULL},
 	{KEYWORD,	"pseudowires",	SHOW_L2VPN_PW,		NULL},
 	{ENDTOKEN,	"",		NONE,			NULL}
+};
+
+static const struct token t_log[] = {
+	{KEYWORD,	"verbose",	LOG_VERBOSE,	NULL},
+	{KEYWORD,	"brief",	LOG_BRIEF,	NULL},
+	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token *match_token(const char *, const struct token *,
@@ -199,16 +234,24 @@ match_token(const char *word, const struct token *table,
 				res->flags |= t->value;
 			}
 			break;
-		case ADDRESS:
-			if (parse_addr(word, &res->addr)) {
+		case FAMILY:
+			if (word == NULL)
+				break;
+			if (!strcmp(word, "inet") ||
+			    !strcasecmp(word, "IPv4")) {
 				match++;
 				t = &table[i];
-				if (t->value)
-					res->action = t->value;
+				res->family = AF_INET;
+			}
+			if (!strcmp(word, "inet6") ||
+			    !strcasecmp(word, "IPv6")) {
+				match++;
+				t = &table[i];
+				res->family = AF_INET6;
 			}
 			break;
-		case PREFIX:
-			if (parse_prefix(word, &res->addr, &res->prefixlen)) {
+		case ADDRESS:
+			if (parse_addr(word, &res->family, &res->addr)) {
 				match++;
 				t = &table[i];
 				if (t->value)
@@ -260,11 +303,11 @@ show_valid_args(const struct token *table)
 		case FLAG:
 			fprintf(stderr, "  %s\n", table[i].keyword);
 			break;
+		case FAMILY:
+			fprintf(stderr, "  [ inet | inet6 | IPv4 | IPv6 ]\n");
+			break;
 		case ADDRESS:
 			fprintf(stderr, "  <address>\n");
-			break;
-		case PREFIX:
-			fprintf(stderr, "  <address>[/<len>]\n");
 			break;
 		case IFNAME:
 			fprintf(stderr, "  <interface>\n");
@@ -275,57 +318,35 @@ show_valid_args(const struct token *table)
 }
 
 int
-parse_addr(const char *word, struct in_addr *addr)
+parse_addr(const char *word, int *family, union ldpd_addr *addr)
 {
-	struct in_addr	ina;
+	struct in_addr		 ina;
+	struct addrinfo		 hints, *r;
+	struct sockaddr_in6	*sa_in6;
 
 	if (word == NULL)
 		return (0);
 
-	memset(addr, 0, sizeof(struct in_addr));
+	memset(addr, 0, sizeof(*addr));
 	memset(&ina, 0, sizeof(ina));
 
-	if (inet_pton(AF_INET, word, &ina)) {
-		addr->s_addr = ina.s_addr;
+	if (inet_net_pton(AF_INET, word, &ina, sizeof(ina)) != -1) {
+		*family = AF_INET;
+		addr->v4.s_addr = ina.s_addr;
+		return (1);
+	}
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(word, "0", &hints, &r) == 0) {
+		sa_in6 = (struct sockaddr_in6 *)r->ai_addr;
+		*family = AF_INET6;
+		addr->v6 = sa_in6->sin6_addr;
+		freeaddrinfo(r);
 		return (1);
 	}
 
 	return (0);
-}
-
-int
-parse_prefix(const char *word, struct in_addr *addr, uint8_t *prefixlen)
-{
-	struct in_addr	 ina;
-	int		 bits = 32;
-
-	if (word == NULL)
-		return (0);
-
-	memset(addr, 0, sizeof(struct in_addr));
-	memset(&ina, 0, sizeof(ina));
-
-	if (strrchr(word, '/') != NULL) {
-		if ((bits = inet_net_pton(AF_INET, word,
-		    &ina, sizeof(ina))) == -1)
-			return (0);
-		addr->s_addr = ina.s_addr & htonl(prefixlen2mask(bits));
-		*prefixlen = bits;
-		return (1);
-	} else {
-		*prefixlen = 32;
-		return (parse_addr(word, addr));
-	}
-
-	return (0);
-}
-
-/* XXX local copy from kroute.c, should go to shared file */
-in_addr_t
-prefixlen2mask(uint8_t prefixlen)
-{
-	if (prefixlen == 0)
-		return (0);
-
-	return (0xffffffff << (32 - prefixlen));
 }

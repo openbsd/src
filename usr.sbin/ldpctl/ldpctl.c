@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.29 2016/05/23 19:03:52 renato Exp $
+/*	$OpenBSD: ldpctl.c,v 1.30 2016/05/23 19:04:55 renato Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -38,18 +38,19 @@
 #include "ldp.h"
 #include "ldpd.h"
 #include "ldpe.h"
+#include "log.h"
 #include "parser.h"
 
 __dead void	 usage(void);
 const char	*fmt_timeframe_core(time_t);
 const char	*get_linkstate(uint8_t, int);
-int		 show_interface_msg(struct imsg *);
-int		 show_discovery_msg(struct imsg *);
+int		 show_interface_msg(struct imsg *, struct parse_result *);
+int		 show_discovery_msg(struct imsg *, struct parse_result *);
 uint64_t	 get_ifms_type(uint8_t);
-int		 show_lib_msg(struct imsg *);
-int		 show_nbr_msg(struct imsg *);
+int		 show_lib_msg(struct imsg *, struct parse_result *);
+int		 show_nbr_msg(struct imsg *, struct parse_result *);
 void		 show_fib_head(void);
-int		 show_fib_msg(struct imsg *);
+int		 show_fib_msg(struct imsg *, struct parse_result *);
 void		 show_interface_head(void);
 int		 show_fib_interface_msg(struct imsg *);
 int		 show_l2vpn_pw_msg(struct imsg *);
@@ -77,6 +78,7 @@ main(int argc, char *argv[])
 	struct parse_result	*res;
 	struct imsg		 imsg;
 	unsigned int		 ifidx = 0;
+	struct kroute		 kr;
 	int			 ctl_sock;
 	int			 done = 0, verbose = 0;
 	int			 n;
@@ -110,8 +112,8 @@ main(int argc, char *argv[])
 		/* not reached */
 	case SHOW:
 	case SHOW_IFACE:
-		printf("%-11s %-10s %-10s %-8s %-12s %3s\n",
-		    "Interface", "State", "Linkstate", "Uptime",
+		printf("%-4s %-11s %-6s %-10s %-8s %-12s %3s\n",
+		    "AF", "Interface", "State", "Linkstate", "Uptime",
 		    "Hello Timers", "ac");
 		if (*res->ifname) {
 			ifidx = if_nametoindex(res->ifname);
@@ -122,28 +124,33 @@ main(int argc, char *argv[])
 		    &ifidx, sizeof(ifidx));
 		break;
 	case SHOW_DISC:
-		printf("%-15s %-9s %-15s %-9s\n",
-		    "ID", "Type", "Source", "Holdtime");
+		printf("%-4s %-15s %-8s %-15s %9s\n",
+		    "AF", "ID", "Type", "Source", "Holdtime");
 		imsg_compose(ibuf, IMSG_CTL_SHOW_DISCOVERY, 0, 0, -1,
 		    NULL, 0);
 		break;
 	case SHOW_NBR:
-		printf("%-15s %-18s %-15s %-10s\n", "ID",
-		    "State", "Address", "Uptime");
+		printf("%-4s %-15s %-11s %-15s %8s\n",
+		    "AF", "ID", "State", "Remote Address", "Uptime");
 		imsg_compose(ibuf, IMSG_CTL_SHOW_NBR, 0, 0, -1, NULL, 0);
 		break;
 	case SHOW_LIB:
-		printf("%-20s %-17s %-14s %-14s %-10s\n", "Destination",
-		    "Nexthop", "Local Label", "Remote Label", "In Use");
+		printf("%-4s %-20s %-15s %-11s %-13s %6s\n", "AF",
+		    "Destination", "Nexthop", "Local Label", "Remote Label",
+		    "In Use");
 		imsg_compose(ibuf, IMSG_CTL_SHOW_LIB, 0, 0, -1, NULL, 0);
 		break;
 	case SHOW_FIB:
-		if (!res->addr.s_addr)
+		if (!ldp_addrisset(res->family, &res->addr))
 			imsg_compose(ibuf, IMSG_CTL_KROUTE, 0, 0, -1,
 			    &res->flags, sizeof(res->flags));
-		else
+		else {
+			memset(&kr, 0, sizeof(kr));
+			kr.af = res->family;
+			kr.prefix = res->addr;
 			imsg_compose(ibuf, IMSG_CTL_KROUTE_ADDR, 0, 0, -1,
-			    &res->addr, sizeof(res->addr));
+			    &kr, sizeof(kr));
+		}
 		show_fib_head();
 		break;
 	case SHOW_FIB_IFACE:
@@ -210,19 +217,19 @@ main(int argc, char *argv[])
 			switch (res->action) {
 			case SHOW:
 			case SHOW_IFACE:
-				done = show_interface_msg(&imsg);
+				done = show_interface_msg(&imsg, res);
 				break;
 			case SHOW_DISC:
-				done = show_discovery_msg(&imsg);
+				done = show_discovery_msg(&imsg, res);
 				break;
 			case SHOW_NBR:
-				done = show_nbr_msg(&imsg);
+				done = show_nbr_msg(&imsg, res);
 				break;
 			case SHOW_LIB:
-				done = show_lib_msg(&imsg);
+				done = show_lib_msg(&imsg, res);
 				break;
 			case SHOW_FIB:
-				done = show_fib_msg(&imsg);
+				done = show_fib_msg(&imsg, res);
 				break;
 			case SHOW_FIB_IFACE:
 				done = show_fib_interface_msg(&imsg);
@@ -309,18 +316,8 @@ fmt_timeframe_core(time_t t)
 	return (buf);
 }
 
-/* prototype defined in ldpd.h and shared with the kroute.c version */
-uint8_t
-mask2prefixlen(in_addr_t ina)
-{
-	if (ina == 0)
-		return (0);
-	else
-		return (33 - ffs(ntohl(ina)));
-}
-
 int
-show_interface_msg(struct imsg *imsg)
+show_interface_msg(struct imsg *imsg, struct parse_result *res)
 {
 	struct ctl_iface	*iface;
 	char			*timers;
@@ -329,16 +326,18 @@ show_interface_msg(struct imsg *imsg)
 	case IMSG_CTL_SHOW_INTERFACE:
 		iface = imsg->data;
 
+		if (res->family != AF_UNSPEC && res->family != iface->af)
+			break;
+
 		if (asprintf(&timers, "%u/%u", iface->hello_interval,
 		    iface->hello_holdtime) == -1)
 			err(1, NULL);
 
-		printf("%-11s %-10s %-10s %-8s %12s %3u\n",
-		    iface->name, if_state_name(iface->state),
-		    get_linkstate(iface->if_type, iface->linkstate),
-		    iface->uptime == 0 ? "00:00:00" :
-		    fmt_timeframe_core(iface->uptime), timers,
-		    iface->adj_cnt);
+		printf("%-4s %-11s %-6s %-10s %-8s %-12s %3u\n",
+		    af_name(iface->af), iface->name,
+		    if_state_name(iface->state), get_linkstate(iface->if_type,
+		    iface->linkstate), iface->uptime == 0 ? "00:00:00" :
+		    fmt_timeframe_core(iface->uptime), timers, iface->adj_cnt);
 		free(timers);
 		break;
 	case IMSG_CTL_END:
@@ -352,25 +351,32 @@ show_interface_msg(struct imsg *imsg)
 }
 
 int
-show_discovery_msg(struct imsg *imsg)
+show_discovery_msg(struct imsg *imsg, struct parse_result *res)
 {
-	struct ctl_adj		*adj;
+	struct ctl_adj	*adj;
+	const char	*addr;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_DISCOVERY:
 		adj = imsg->data;
 
-		printf("%-15s ", inet_ntoa(adj->id));
+		if (res->family != AF_UNSPEC && res->family != adj->af)
+			break;
+
+		printf("%-4s %-15s ", af_name(adj->af), inet_ntoa(adj->id));
 		switch(adj->type) {
 		case HELLO_LINK:
-			printf("%-9s %-15s ", "Link", adj->ifname);
+			printf("%-8s %-15s ", "Link", adj->ifname);
 			break;
 		case HELLO_TARGETED:
-			printf("%-9s %-15s ", "Targeted",
-			    inet_ntoa(adj->src_addr));
+			addr = log_addr(adj->af, &adj->src_addr);
+
+			printf("%-8s %-15s ", "Targeted", addr);
+			if (strlen(addr) > 15)
+				printf("\n%46s", " ");
 			break;
 		}
-		printf("%-9u\n", adj->holdtime);
+		printf("%9u\n", adj->holdtime);
 		break;
 	case IMSG_CTL_END:
 		printf("\n");
@@ -383,7 +389,7 @@ show_discovery_msg(struct imsg *imsg)
 }
 
 int
-show_lib_msg(struct imsg *imsg)
+show_lib_msg(struct imsg *imsg, struct parse_result *res)
 {
 	struct ctl_rt	*rt;
 	char		*dstnet, *local = NULL, *remote = NULL;
@@ -391,15 +397,22 @@ show_lib_msg(struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_LIB:
 		rt = imsg->data;
-		if (asprintf(&dstnet, "%s/%d", inet_ntoa(rt->prefix),
+
+		if (res->family != AF_UNSPEC && res->family != rt->af)
+			break;
+
+		if (asprintf(&dstnet, "%s/%d", log_addr(rt->af, &rt->prefix),
 		    rt->prefixlen) == -1)
 			err(1, NULL);
 
-		printf("%-20s %-17s %-14s %-14s %s\n", dstnet,
-		    inet_ntoa(rt->nexthop),
+		printf("%-4s %-20s", af_name(rt->af), dstnet);
+		if (strlen(dstnet) > 20)
+			printf("\n%25s", " ");
+		printf(" %-15s %-11s %-13s %6s\n", inet_ntoa(rt->nexthop),
 		    print_label(&local, rt->local_label),
 		    print_label(&remote, rt->remote_label),
 		    rt->in_use ? "yes" : "no");
+
 		free(remote);
 		free(local);
 		free(dstnet);
@@ -415,17 +428,27 @@ show_lib_msg(struct imsg *imsg)
 }
 
 int
-show_nbr_msg(struct imsg *imsg)
+show_nbr_msg(struct imsg *imsg, struct parse_result *res)
 {
 	struct ctl_nbr	*nbr;
+	const char	*addr;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NBR:
 		nbr = imsg->data;
-		printf("%-15s %-19s", inet_ntoa(nbr->id),
-		    nbr_state_name(nbr->nbr_state));
-		printf("%-15s %-15s\n", inet_ntoa(nbr->addr),
-		    nbr->uptime == 0 ? "-" : fmt_timeframe_core(nbr->uptime));
+
+		if (res->family != AF_UNSPEC && res->family != nbr->af)
+			break;
+
+		addr = log_addr(nbr->af, &nbr->raddr);
+
+		printf("%-4s %-15s %-11s %-15s",
+		    af_name(nbr->af), inet_ntoa(nbr->id),
+		    nbr_state_name(nbr->nbr_state), addr);
+		if (strlen(addr) > 15)
+			printf("\n%48s", " ");
+		printf(" %8s\n", nbr->uptime == 0 ? "-" :
+		    fmt_timeframe_core(nbr->uptime));
 		break;
 	case IMSG_CTL_END:
 		printf("\n");
@@ -446,17 +469,21 @@ show_fib_head(void)
 }
 
 int
-show_fib_msg(struct imsg *imsg)
+show_fib_msg(struct imsg *imsg, struct parse_result *res)
 {
 	struct kroute	*k;
 	char		*p;
 	char		*local = NULL, *remote = NULL;
+	const char	*nexthop;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_KROUTE:
 		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(struct kroute))
 			errx(1, "wrong imsg len");
 		k = imsg->data;
+
+		if (res->family != AF_UNSPEC && res->family != k->af)
+			break;
 
 		if (k->flags & F_CONNECTED)
 			printf("C");
@@ -466,15 +493,31 @@ show_fib_msg(struct imsg *imsg)
 			printf(" ");
 
 		printf(" %3d ", k->priority);
-		if (asprintf(&p, "%s/%u", inet_ntoa(k->prefix),
+		if (asprintf(&p, "%s/%u", log_addr(k->af, &k->prefix),
 		    k->prefixlen) == -1)
 			err(1, NULL);
 		printf("%-20s ", p);
+		if (strlen(p) > 20)
+			printf("\n%27s", " ");
 		free(p);
 
-		if (k->nexthop.s_addr)
-			printf("%-18s", inet_ntoa(k->nexthop));
-		else if (k->flags & F_CONNECTED)
+		if (ldp_addrisset(k->af, &k->nexthop)) {
+			switch (k->af) {
+			case AF_INET:
+				printf("%-18s", inet_ntoa(k->nexthop.v4));
+				break;
+			case AF_INET6:
+				nexthop = log_in6addr_scope(&k->nexthop.v6,
+				    k->ifindex);
+				printf("%-18s", nexthop);
+				if (strlen(nexthop) > 18)
+					printf("\n%45s", " ");
+				break;
+			default:
+				printf("%-18s", " ");
+				break;
+			}
+		} else if (k->flags & F_CONNECTED)
 			printf("link#%-13u", k->ifindex);
 
 		printf("%-18s", print_label(&local, k->local_label));

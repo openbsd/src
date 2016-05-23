@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 2010/05/26 16:44:32 nicm Exp $
+#	$OpenBSD: Makefile,v 1.3 2016/05/23 19:04:55 renato Exp $
 
 .PATH:		${.CURDIR}/../ldpd
 
 PROG=	ldpctl
-SRCS=	log.c ldpctl.c parser.c
+SRCS=	util.c log.c ldpctl.c parser.c
 CFLAGS+= -Wall
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+= -Wmissing-declarations
