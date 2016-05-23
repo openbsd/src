@@ -1976,7 +1976,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/kthread.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/ktrace.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/limits.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/localedef.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/lock.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/lockf.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/malloc.ph

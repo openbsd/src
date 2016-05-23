@@ -1499,7 +1499,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/kthread.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/ktrace.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/limits.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/sys/localedef.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/lock.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/lockf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/malloc.ph

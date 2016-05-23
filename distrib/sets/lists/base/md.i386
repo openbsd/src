@@ -1991,7 +1991,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/kthread.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/ktrace.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/limits.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/sys/localedef.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/lock.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/lockf.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/malloc.ph

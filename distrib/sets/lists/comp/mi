@@ -1319,7 +1319,6 @@
 ./usr/include/sys/kthread.h
 ./usr/include/sys/ktrace.h
 ./usr/include/sys/limits.h
-./usr/include/sys/localedef.h
 ./usr/include/sys/lock.h
 ./usr/include/sys/lockf.h
 ./usr/include/sys/malloc.h
