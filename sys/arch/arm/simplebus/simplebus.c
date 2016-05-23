@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.2 2016/05/16 21:26:54 kettenis Exp $ */
+/* $OpenBSD: simplebus.c,v 1.3 2016/05/23 13:57:04 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -67,11 +67,17 @@ simplebus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct simplebus_softc *sc = (struct simplebus_softc *)self;
 	struct fdt_attach_args *fa = (struct fdt_attach_args *)aux;
+	char name[32];
 	int node;
 
 	sc->sc_node = fa->fa_node;
 	sc->sc_iot = fa->fa_iot;
 	sc->sc_dmat = fa->fa_dmat;
+
+	if (OF_getprop(sc->sc_node, "name", name, sizeof(name)) > 0) {
+		name[sizeof(name) - 1] = 0;
+		printf(": \"%s\"", name);
+	}
 
 	printf("\n");
 
