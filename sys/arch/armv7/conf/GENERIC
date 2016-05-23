@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.11 2016/05/21 12:37:28 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.12 2016/05/23 00:05:35 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -264,7 +264,8 @@ owtemp*		at onewire?		# Temperature
 owctr*		at onewire?		# Counter device
 
 # Pseudo-Devices
-pseudo-device hotplug         1       # devices hot plugging
+pseudo-device	openprom
+pseudo-device	hotplug         1       # devices hot plugging
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device   wsmux           2

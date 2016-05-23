@@ -1,4 +1,4 @@
-/*	$OpenBSD: openprom.c,v 1.1 2016/05/21 21:24:36 kettenis Exp $	*/
+/*	$OpenBSD: openprom.c,v 1.2 2016/05/23 00:05:34 deraadt Exp $	*/
 /*	$NetBSD: openprom.c,v 1.4 2002/01/10 06:21:53 briggs Exp $ */
 
 /*
@@ -62,6 +62,12 @@ static	int optionsnode;		/* node ID of ROM's options */
 
 static int openpromcheckid(int, int);
 static int openpromgetstr(int, char *, char **);
+void    openpromattach(int);
+
+void
+openpromattach(int num)
+{
+}
 
 int
 openpromopen(dev_t dev, int flags, int mode, struct proc *p)

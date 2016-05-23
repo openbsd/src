@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.45 2016/05/21 21:24:36 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.46 2016/05/23 00:05:34 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -257,6 +257,7 @@ struct bdevsw bdevsw[] = {
 #include "vscsi.h"
 #include "pppx.h"
 #include "fuse.h"
+#include "openprom.h"
 
 #ifdef CONF_HAVE_GPIO
 #include "gpio.h"
@@ -353,7 +354,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),                          /* 79: removed device */
 	cdev_notdef(),                          /* 80: removed device */
 	cdev_notdef(),                          /* 81: removed device */
-	cdev_openprom_init(1,openprom),         /* 82: /dev/openprom */
+	cdev_openprom_init(NOPENPROM,openprom),	/* 82: /dev/openprom */
 	cdev_notdef(),                          /* 83: removed device */
 	cdev_notdef(),                          /* 84: removed device */
 	cdev_notdef(),                          /* 85: removed device */
