@@ -1,4 +1,4 @@
-/*	$OpenBSD: thermal.c,v 1.3 2016/05/23 04:52:50 mglocker Exp $ */
+/*	$OpenBSD: thermal.c,v 1.4 2016/05/23 11:28:57 mglocker Exp $ */
 
 /*-
  * Copyright (c) 2009-2011 Nathan Whitehorn
@@ -129,7 +129,7 @@ thermal_manage_fans(void)
 				    "shutting down!\n",
 				    sensor->sensor->name,
 				    sensor->critical_count);
-				boot(RB_POWERDOWN);
+				reboot(RB_HALT | RB_POWERDOWN | RB_TIMEBAD);
 			}
 		} else {
 			if (sensor->critical_count > 0)
