@@ -1,4 +1,4 @@
-/*	$OpenBSD: thermal.h,v 1.1 2016/05/20 21:45:04 mglocker Exp $ */
+/*	$OpenBSD: thermal.h,v 1.2 2016/05/23 04:52:50 mglocker Exp $ */
 
 /*-
  * Copyright (c) 2009-2011 Nathan Whitehorn
@@ -39,7 +39,7 @@ struct thermal_fan {
 };
 
 struct thermal_temp {
-	int target_temp, max_temp;	/* muK */
+	int64_t target_temp, max_temp;	/* muK */
 	
 	char name[32];
 	int zone;

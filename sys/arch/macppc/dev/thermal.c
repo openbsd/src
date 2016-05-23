@@ -1,4 +1,4 @@
-/*	$OpenBSD: thermal.c,v 1.2 2016/05/20 22:00:45 mglocker Exp $ */
+/*	$OpenBSD: thermal.c,v 1.3 2016/05/23 04:52:50 mglocker Exp $ */
 
 /*-
  * Copyright (c) 2009-2011 Nathan Whitehorn
@@ -101,7 +101,7 @@ thermal_manage_fans(void)
 {
 	struct thermal_sens_le *sensor;
 	struct thermal_fan_le *fan;
-	int average_excess, max_excess_zone, frac_excess;
+	int64_t average_excess, max_excess_zone, frac_excess;
 	int fan_speed;
 	int nsens, nsens_zone;
 	int temp;
@@ -115,7 +115,7 @@ thermal_manage_fans(void)
 		if (sensor->last_val > sensor->sensor->max_temp) {
 			sensor->critical_count++;
 			printf("WARNING: Current temperature (%s: %d.%d C) "
-			    "exceeds critical temperature (%d.%d C); "
+			    "exceeds critical temperature (%lld.%lld C); "
 			    "count=%d\n",
 			    sensor->sensor->name,
 			    (sensor->last_val - ZERO_C_TO_MUK)/1000000,
@@ -142,7 +142,7 @@ thermal_manage_fans(void)
 		nsens = nsens_zone = 0;
 		average_excess = max_excess_zone = 0;
 		SLIST_FOREACH(sensor, &sensors, entries) {
-			temp = imin(sensor->last_val,
+			temp = ulmin(sensor->last_val,
 			    sensor->sensor->max_temp);
 			frac_excess = (temp -
 			    sensor->sensor->target_temp)*100 /
@@ -150,7 +150,7 @@ thermal_manage_fans(void)
 			if (frac_excess < 0)
 				frac_excess = 0;
 			if (sensor->sensor->zone == fan->fan->zone) {
-				max_excess_zone = imax(max_excess_zone,
+				max_excess_zone = ulmax(max_excess_zone,
 				    frac_excess);
 				nsens_zone++;
 			}
@@ -172,7 +172,7 @@ thermal_manage_fans(void)
 		 * Scale the fan linearly in the max temperature in its
 		 * thermal zone.
 		 */
-		max_excess_zone = imin(max_excess_zone, 100);
+		max_excess_zone = ulmin(max_excess_zone, 100);
 		fan_speed = max_excess_zone * 
 		    (fan->fan->max_rpm - fan->fan->min_rpm)/100 +
 		    fan->fan->min_rpm;
