@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.48 2016/05/23 15:14:07 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.49 2016/05/23 15:16:16 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -1505,10 +1505,10 @@ kmpw_install(const char *ifname, struct kpw *kpw)
 	case PW_TYPE_ETHERNET_TAGGED:
 		imr.imr_type = IMR_TYPE_ETHERNET_TAGGED;
 		break;
-
 	default:
 		log_warn("%s: unhandled pseudowire type (%#X)", __func__,
 		    kpw->pw_type);
+		return;
 	}
 
 	if (kpw->flags & F_PW_CONTROLWORD)
