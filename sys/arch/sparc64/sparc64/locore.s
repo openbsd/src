@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.182 2016/05/10 18:39:49 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.183 2016/05/23 20:11:49 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -5338,8 +5338,8 @@ dlflush4:
  * will eventually be removed, with a hole left in its place, if things
  * work out.
  */
+	.section .rodata
 	.globl	_C_LABEL(sigcode)
-	.globl	_C_LABEL(esigcode)
 _C_LABEL(sigcode):
 	/*
 	 * XXX  the `save' and `restore' below are unnecessary: should
@@ -5435,8 +5435,19 @@ _C_LABEL(sigcoderet):
 	! sigreturn does not return unless it fails
 	mov	SYS_exit, %g1		! exit(errno)
 	t	ST_SYSCALL
+	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
 
+	.globl	_C_LABEL(sigfill)
+_C_LABEL(sigfill):
+	unimp
+_C_LABEL(esigfill):
+
+	.globl	_C_LABEL(sigfillsiz)
+_C_LABEL(sigfillsiz):
+	.word	_C_LABEL(esigfill) - _C_LABEL(sigfill)
+
+	.text
 
 /*
  * Primitives

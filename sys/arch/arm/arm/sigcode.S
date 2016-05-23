@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigcode.S,v 1.3 2016/05/10 18:39:43 deraadt Exp $	*/
+/*	$OpenBSD: sigcode.S,v 1.4 2016/05/23 20:11:49 deraadt Exp $	*/
 /*	$NetBSD: sigcode.S,v 1.6 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
@@ -41,7 +41,11 @@
  * Signal trampoline; 
  */
 
-ENTRY_NP(sigcode)
+	.section .rodata
+	.align	0
+	.globl	sigcode
+	.type	x,_ASM_TYPE_FUNCTION
+sigcode:
 /*
  * The kernel arranges for the handler to be invoked directly.  This
  * trampoline is used only to return from the signal.
@@ -63,3 +67,15 @@ _C_LABEL(sigcoderet):
 	.align	0
         .global _C_LABEL(esigcode)
 _C_LABEL(esigcode):
+
+	.globl	sigfill
+sigfill:
+	.word	0xa000f7f0		/* illegal on all cpus? */
+esigfill:
+
+	.data
+	.globl	sigfillsiz
+sigfillsiz:
+	.word	esigfill - sigfill
+
+	.text

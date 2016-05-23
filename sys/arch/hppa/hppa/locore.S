@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.194 2016/05/10 18:39:44 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.195 2016/05/23 20:11:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -3027,7 +3027,14 @@ EXIT(hw_cpu_spinup_trampoline)
 /*
  * Signal "trampoline" code. Invoked from RTE setup by sendsig().
  */
-ENTRY(sigcode,0)
+	.section .rodata
+	.align 4
+	.export	sigcode, entry
+	.label sigcode
+	.proc
+	.callinfo frame=0,calls, save_rp, save_sp
+	.entry
+sigcode:
 	bb,>=,n	arg3, 30, sigcode_call
 	dep	r0, 31, 2, arg3
 	ldw	4(arg3), r19
@@ -3052,5 +3059,16 @@ sigcoderet:
 	ldi	SYS_exit, t1
 ALTENTRY(esigcode)
 EXIT(sigcode)
+
+	.globl	sigfill
+sigfill:
+	break	0,0
+esigfill:
+	.align	4
+	.globl	sigfillsiz
+sigfillsiz:
+	.word	esigfill - sigfill
+
+	.text
 
 	.end

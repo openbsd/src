@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.78 2016/05/10 18:39:42 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.79 2016/05/23 20:11:49 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -756,20 +756,31 @@ longmode_hi:
  * Signal trampoline; copied to top of user stack.
  * gdb's backtrace logic matches against the instructions in this.
  */
-NENTRY(sigcode)
+	.section .rodata
+	.globl	_C_LABEL(sigcode)
+_C_LABEL(sigcode):
 	call	*%rax
 
 	movq	%rsp,%rdi
 	pushq	%rdi			/* fake return address */
 	movq	$SYS_sigreturn,%rax
 	syscall
-	.globl  _C_LABEL(sigcoderet)
+	.globl	_C_LABEL(sigcoderet)
 _C_LABEL(sigcoderet):
 	movq	$SYS_exit,%rax
 	syscall
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
 
+	.globl	_C_LABEL(sigfill)
+_C_LABEL(sigfill):
+	int3
+_C_LABEL(esigfill):
+	.globl	_C_LABEL(sigfillsiz)
+_C_LABEL(sigfillsiz):
+	.long	_C_LABEL(esigfill) - _C_LABEL(sigfill)
+
+	.text
 /*
  * void lgdt(struct region_descriptor *rdp);
  * Change the global descriptor table.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.177 2016/05/10 18:39:51 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.178 2016/05/23 20:11:47 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -843,6 +843,9 @@ exec_sigcode_map(struct process *pr, struct emul *e)
 	 * the way sys_mmap would map it.
 	 */
 	if (e->e_sigobject == NULL) {
+		extern int sigfillsiz;
+		extern u_char sigfill[];
+		size_t off;
 		vaddr_t va;
 		int r;
 
@@ -855,7 +858,10 @@ exec_sigcode_map(struct process *pr, struct emul *e)
 			uao_detach(e->e_sigobject);
 			return (ENOMEM);
 		}
-		memcpy((void *)va, e->e_sigcode, sz);
+
+		for (off = 0; off < round_page(sz); off += sigfillsiz)
+			memcpy((caddr_t)va + off, sigfill, sigfillsiz);
+		memcpy((caddr_t)va, e->e_sigcode, sz);
 		uvm_unmap(kernel_map, va, va + round_page(sz));
 	}
 

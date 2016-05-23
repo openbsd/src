@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.54 2016/05/10 18:39:46 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.55 2016/05/23 20:11:49 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -1206,6 +1206,7 @@ _C_LABEL(setfault):
  * On entry r1 points to a struct sigframe at bottom of current stack.
  * All other registers are unchanged.
  */
+	.section .rodata
 	.globl	_C_LABEL(sigcode),_C_LABEL(esigcode)
 	.type	_C_LABEL(sigcode),@function
 	.type	_C_LABEL(esigcode),@function
@@ -1256,6 +1257,16 @@ _C_LABEL(sigcoderet):
 	sc				/* exit(errno) */
 _C_LABEL(esigcode):
 
+	.globl  _C_LABEL(sigfill)
+_C_LABEL(sigfill):
+	.long	0		# illegal
+_C_LABEL(esigfill):
+	.align	4
+	.globl	_C_LABEL(sigfillsiz)
+_C_LABEL(sigfillsiz):
+	.long	_C_LABEL(esigfill) - _C_LABEL(sigfill)
+
+	.text
 
 #ifdef DDB
 /*

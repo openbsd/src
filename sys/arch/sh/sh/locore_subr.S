@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_subr.S,v 1.11 2016/05/10 18:39:47 deraadt Exp $	*/
+/*	$OpenBSD: locore_subr.S,v 1.12 2016/05/23 20:11:49 deraadt Exp $	*/
 /*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
 
 /*
@@ -507,6 +507,18 @@ _C_LABEL(sigcoderet):
 .globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
 	SET_ENTRY_SIZE(sigcode)
+
+	.globl	sigfill
+sigfill:
+	sleep		/* priviledged -> illegal? */
+esigfill:
+
+	.data
+	.globl	sigfillsiz
+sigfillsiz:
+	.word	esigfill - sigfill
+
+	.text
 
 /*
  * LINTSTUB: Func: void savectx(struct pcb *pcb)
