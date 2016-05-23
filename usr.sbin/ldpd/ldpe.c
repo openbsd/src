@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.47 2016/05/23 15:47:24 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.48 2016/05/23 15:51:36 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -204,6 +204,9 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
+	if (pledge("stdio cpath inet mcast", NULL) == -1)
+		fatal("pledge");
+
 	event_init();
 	accept_init();
 
@@ -267,9 +270,6 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	/* start configured targeted neighbors */
 	LIST_FOREACH(tnbr, &leconf->tnbr_list, entry)
 		tnbr_init(xconf, tnbr);
-
-	if (pledge("stdio cpath inet mcast", NULL) == -1)
-		fatal("pledge");
 
 	event_dispatch();
 
