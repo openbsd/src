@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.40 2016/05/23 18:36:55 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.41 2016/05/23 18:40:15 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -76,6 +76,8 @@ char			*conffile;
 
 pid_t			 ldpe_pid = 0;
 pid_t			 lde_pid = 0;
+
+extern struct ldpd_conf	*leconf;
 
 /* ARGSUSED */
 void
@@ -257,7 +259,7 @@ main(int argc, char *argv[])
 	event_add(&iev_lde->ev, NULL);
 
 	/* notify ldpe about existing interfaces and addresses */
-	kif_redistribute();
+	kif_redistribute(NULL);
 
 	if (kr_init(!(ldpd_conf->flags & F_LDPD_NO_FIB_UPDATE)) == -1)
 		fatalx("kr_init failed");
@@ -661,15 +663,26 @@ merge_config(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 void
 merge_global(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 {
+	struct nbr		*nbr;
+	struct nbr_params	*nbrp;
 	int			 egress_label_changed = 0;
 
 	/* change of rtr_id needs a restart */
-	conf->keepalive = xconf->keepalive;
+	if (conf->keepalive != xconf->keepalive) {
+		conf->keepalive = xconf->keepalive;
+		if (ldpd_process == PROC_LDP_ENGINE)
+			ldpe_stop_init_backoff();
+	}
+
 	conf->thello_holdtime = xconf->thello_holdtime;
 	conf->thello_interval = xconf->thello_interval;
-	conf->trans_addr = xconf->trans_addr;
 
 	/* update flags */
+	if (ldpd_process == PROC_LDP_ENGINE &&
+	    (conf->flags & F_LDPD_TH_ACCEPT) &&
+	    !(xconf->flags & F_LDPD_TH_ACCEPT))
+		ldpe_remove_dynamic_tnbrs();
+
 	if ((conf->flags & F_LDPD_EXPNULL) !=
 	    (xconf->flags & F_LDPD_EXPNULL))
 		egress_label_changed = 1;
@@ -686,6 +699,24 @@ merge_global(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 			break;
 		default:
 			break;
+		}
+	}
+
+	if (conf->trans_addr.s_addr != xconf->trans_addr.s_addr) {
+		conf->trans_addr = xconf->trans_addr;
+		if (ldpd_process == PROC_MAIN)
+			imsg_compose_event(iev_ldpe, IMSG_CLOSE_SOCKETS, 0,
+			    0, -1, NULL, 0);
+		if (ldpd_process == PROC_LDP_ENGINE) {
+			RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id) {
+				session_shutdown(nbr, S_SHUTDOWN, 0, 0);
+
+				pfkey_remove(nbr);
+				nbr->laddr = conf->trans_addr;
+				nbrp = nbr_params_find(leconf, nbr->id);
+				if (nbrp && pfkey_establish(nbr, nbrp) == -1)
+					fatalx("pfkey setup failed");
+			}
 		}
 	}
 }
@@ -710,16 +741,19 @@ merge_ifaces(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 		if ((iface = if_lookup(conf, xi->ifindex)) == NULL) {
 			LIST_REMOVE(xi, entry);
 			LIST_INSERT_HEAD(&conf->iface_list, xi, entry);
+
+			/* resend addresses to activate new interfaces */
+			if (ldpd_process == PROC_MAIN)
+				kif_redistribute(xi->name);
 			continue;
 		}
 
 		/* update existing interfaces */
 		iface->hello_holdtime = xi->hello_holdtime;
 		iface->hello_interval = xi->hello_interval;
+		LIST_REMOVE(xi, entry);
+		free(xi);
 	}
-	/* resend addresses to activate new interfaces */
-	if (ldpd_process == PROC_MAIN)
-		kif_redistribute();
 }
 
 void
@@ -747,6 +781,7 @@ merge_tnbrs(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 		if ((tnbr = tnbr_find(conf, xt->addr)) == NULL) {
 			LIST_REMOVE(xt, entry);
 			LIST_INSERT_HEAD(&conf->tnbr_list, xt, entry);
+
 			if (ldpd_process == PROC_LDP_ENGINE)
 				tnbr_update(xt);
 			continue;
@@ -757,6 +792,8 @@ merge_tnbrs(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 			tnbr->flags |= F_TNBR_CONFIGURED;
 		tnbr->hello_holdtime = xt->hello_holdtime;
 		tnbr->hello_interval = xt->hello_interval;
+		LIST_REMOVE(xt, entry);
+		free(xt);
 	}
 }
 
@@ -765,6 +802,7 @@ merge_nbrps(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 {
 	struct nbr_params	*nbrp, *ntmp, *xn;
 	struct nbr		*nbr;
+	int			 nbrp_changed;
 
 	LIST_FOREACH_SAFE(nbrp, &conf->nbrp_list, entry, ntmp) {
 		/* find deleted nbrps */
@@ -772,9 +810,7 @@ merge_nbrps(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 			if (ldpd_process == PROC_LDP_ENGINE) {
 				nbr = nbr_find_ldpid(nbrp->lsr_id.s_addr);
 				if (nbr) {
-					if (nbr->state == NBR_STA_OPER)
-						session_shutdown(nbr,
-						    S_SHUTDOWN, 0, 0);
+					session_shutdown(nbr, S_SHUTDOWN, 0, 0);
 					pfkey_remove(nbr);
 				}
 			}
@@ -791,10 +827,7 @@ merge_nbrps(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 			if (ldpd_process == PROC_LDP_ENGINE) {
 				nbr = nbr_find_ldpid(xn->lsr_id.s_addr);
 				if (nbr) {
-					if (nbr->state == NBR_STA_OPER)
-						session_shutdown(nbr,
-						    S_SHUTDOWN, 0, 0);
-					pfkey_remove(nbr);
+					session_shutdown(nbr, S_SHUTDOWN, 0, 0);
 					if (pfkey_establish(nbr, xn) == -1)
 						fatalx("pfkey setup failed");
 				}
@@ -803,25 +836,31 @@ merge_nbrps(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 		}
 
 		/* update existing nbrps */
+		if (nbrp->keepalive != xn->keepalive ||
+		    nbrp->auth.method != xn->auth.method ||
+		    strcmp(nbrp->auth.md5key, xn->auth.md5key) != 0)
+			nbrp_changed = 1;
+		else
+			nbrp_changed = 0;
+
 		nbrp->keepalive = xn->keepalive;
 		nbrp->auth.method = xn->auth.method;
 		strlcpy(nbrp->auth.md5key, xn->auth.md5key,
 		    sizeof(nbrp->auth.md5key));
 		nbrp->auth.md5key_len = xn->auth.md5key_len;
+		nbrp->flags = xn->flags;
 
 		if (ldpd_process == PROC_LDP_ENGINE) {
 			nbr = nbr_find_ldpid(nbrp->lsr_id.s_addr);
-			if (nbr &&
-			    (nbr->auth.method != nbrp->auth.method ||
-			    strcmp(nbr->auth.md5key, nbrp->auth.md5key) != 0)) {
-				if (nbr->state == NBR_STA_OPER)
-					session_shutdown(nbr, S_SHUTDOWN,
-					    0, 0);
+			if (nbr && nbrp_changed) {
+				session_shutdown(nbr, S_SHUTDOWN, 0, 0);
 				pfkey_remove(nbr);
 				if (pfkey_establish(nbr, nbrp) == -1)
 					fatalx("pfkey setup failed");
 			}
 		}
+		LIST_REMOVE(xn, entry);
+		free(xn);
 	}
 }
 
@@ -870,6 +909,8 @@ merge_l2vpns(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 
 		/* update existing l2vpns */
 		merge_l2vpn(conf, l2vpn, xl);
+		LIST_REMOVE(xl, entry);
+		free(xl);
 	}
 }
 
@@ -878,6 +919,12 @@ merge_l2vpn(struct ldpd_conf *xconf, struct l2vpn *l2vpn, struct l2vpn *xl)
 {
 	struct l2vpn_if		*lif, *ftmp, *xf;
 	struct l2vpn_pw		*pw, *ptmp, *xp;
+	struct nbr		*nbr;
+	int			 reset_nbr, reinstall_pwfec, reinstall_tnbr;
+	int			 previous_pw_type, previous_mtu;
+
+	previous_pw_type = l2vpn->pw_type;
+	previous_mtu = l2vpn->mtu;
 
 	/* merge intefaces */
 	LIST_FOREACH_SAFE(lif, &l2vpn->if_list, entry, ftmp) {
@@ -892,12 +939,12 @@ merge_l2vpn(struct ldpd_conf *xconf, struct l2vpn *l2vpn, struct l2vpn *xl)
 		if ((lif = l2vpn_if_find(l2vpn, xf->ifindex)) == NULL) {
 			LIST_REMOVE(xf, entry);
 			LIST_INSERT_HEAD(&l2vpn->if_list, xf, entry);
-			lif->l2vpn = l2vpn;
+			xf->l2vpn = l2vpn;
 			continue;
 		}
 
-		/* update existing interfaces */
-		lif->l2vpn = l2vpn;
+		LIST_REMOVE(xf, entry);
+		free(xf);
 	}
 
 	/* merge pseudowires */
@@ -924,6 +971,7 @@ merge_l2vpn(struct ldpd_conf *xconf, struct l2vpn *l2vpn, struct l2vpn *xl)
 		if ((pw = l2vpn_pw_find(l2vpn, xp->ifindex)) == NULL) {
 			LIST_REMOVE(xp, entry);
 			LIST_INSERT_HEAD(&l2vpn->pw_list, xp, entry);
+			xp->l2vpn = l2vpn;
 
 			switch (ldpd_process) {
 			case PROC_LDE_ENGINE:
@@ -938,42 +986,68 @@ merge_l2vpn(struct ldpd_conf *xconf, struct l2vpn *l2vpn, struct l2vpn *xl)
 			continue;
 		}
 
-		/* changes that require a full reset of the pseudowire */
-		if (l2vpn->pw_type != xl->pw_type ||
-		    l2vpn->mtu != xl->mtu ||
-		    pw->lsr_id.s_addr != xp->lsr_id.s_addr ||
-		    pw->pwid != xp->pwid ||
-		    ((pw->flags &
-		    (F_PW_STATUSTLV_CONF|F_PW_CWORD_CONF)) !=
-		    (xp->flags &
-		    (F_PW_STATUSTLV_CONF|F_PW_CWORD_CONF)))) {
-			LIST_REMOVE(pw, entry);
-			LIST_REMOVE(xp, entry);
-			LIST_INSERT_HEAD(&l2vpn->pw_list, xp, entry);
+		/* update existing pseudowire */
+    		if (pw->lsr_id.s_addr != xp->lsr_id.s_addr)
+			reinstall_tnbr = 1;
+		else
+			reinstall_tnbr = 0;
 
-			switch (ldpd_process) {
-			case PROC_LDE_ENGINE:
-				l2vpn_pw_exit(pw);
-				l2vpn_pw_init(xp);
-				break;
-			case PROC_LDP_ENGINE:
-		    		if (pw->lsr_id.s_addr != xp->lsr_id.s_addr) {
-					ldpe_l2vpn_pw_exit(pw);
-					ldpe_l2vpn_pw_init(xp);
-				}
-				free(pw);
-				break;
-			case PROC_MAIN:
-				free(pw);
-				break;
+		/* changes that require a session restart */
+		if ((pw->flags & (F_PW_STATUSTLV_CONF|F_PW_CWORD_CONF)) !=
+		    (xp->flags & (F_PW_STATUSTLV_CONF|F_PW_CWORD_CONF)))
+			reset_nbr = 1;
+		else
+			reset_nbr = 0;
+
+		if (l2vpn->pw_type != xl->pw_type || l2vpn->mtu != xl->mtu ||
+		    pw->pwid != xp->pwid || reinstall_tnbr || reset_nbr ||
+		    pw->lsr_id.s_addr != xp->lsr_id.s_addr)
+			reinstall_pwfec = 1;
+		else
+			reinstall_pwfec = 0;
+
+		if (ldpd_process == PROC_LDP_ENGINE) {
+			if (reinstall_tnbr)
+				ldpe_l2vpn_pw_exit(pw);
+			if (reset_nbr) {
+				nbr = nbr_find_ldpid(pw->lsr_id.s_addr);
+				if (nbr && nbr->state == NBR_STA_OPER)
+					session_shutdown(nbr, S_SHUTDOWN, 0, 0);
 			}
 		}
+		if (ldpd_process == PROC_LDE_ENGINE &&
+		    !reset_nbr && reinstall_pwfec)
+			l2vpn_pw_exit(pw);
+		pw->lsr_id = xp->lsr_id;
+		pw->pwid = xp->pwid;
+		strlcpy(pw->ifname, xp->ifname, sizeof(pw->ifname));
+		pw->ifindex = xp->ifindex;
+		if (xp->flags & F_PW_CWORD_CONF)
+			pw->flags |= F_PW_CWORD_CONF;
+		else
+			pw->flags &= ~F_PW_CWORD_CONF;
+		if (xp->flags & F_PW_STATUSTLV_CONF)
+			pw->flags |= F_PW_STATUSTLV_CONF;
+		else
+			pw->flags &= ~F_PW_STATUSTLV_CONF;
+		if (ldpd_process == PROC_LDP_ENGINE && reinstall_tnbr)
+			ldpe_l2vpn_pw_init(pw);
+		if (ldpd_process == PROC_LDE_ENGINE &&
+		    !reset_nbr && reinstall_pwfec) {
+			l2vpn->pw_type = xl->pw_type;
+			l2vpn->mtu = xl->mtu;
+			l2vpn_pw_init(pw);
+			l2vpn->pw_type = previous_pw_type;
+			l2vpn->mtu = previous_mtu;
+		}
 
-		/* update existing pseudowires */
-		pw->l2vpn = xp->l2vpn;
+		LIST_REMOVE(xp, entry);
+		free(xp);
 	}
 
+	l2vpn->pw_type = xl->pw_type;
 	l2vpn->mtu = xl->mtu;
+	strlcpy(l2vpn->br_ifname, xl->br_ifname, sizeof(l2vpn->br_ifname));
 	l2vpn->br_ifindex = xl->br_ifindex;
 }
 

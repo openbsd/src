@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.38 2016/05/23 18:33:56 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.39 2016/05/23 18:40:15 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -228,8 +228,10 @@ if_reset(struct iface *iface)
 	if_stop_hello_timer(iface);
 
 	/* try to cleanup */
-	inet_aton(AllRouters, &addr);
-	if_leave_group(iface, &addr);
+	if (global.ldp_disc_socket != -1) {
+		inet_aton(AllRouters, &addr);
+		if_leave_group(iface, &addr);
+	}
 
 	return (0);
 }

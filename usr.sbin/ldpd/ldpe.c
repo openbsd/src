@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.53 2016/05/23 18:36:55 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.54 2016/05/23 18:40:15 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -620,6 +620,30 @@ ldpe_close_sockets(void)
 		accept_del(global.ldp_session_socket);
 		close(global.ldp_session_socket);
 		global.ldp_session_socket = -1;
+	}
+}
+
+void
+ldpe_remove_dynamic_tnbrs(void)
+{
+	struct tnbr		*tnbr, *safe;
+
+	LIST_FOREACH_SAFE(tnbr, &leconf->tnbr_list, entry, safe) {
+		tnbr->flags &= ~F_TNBR_DYNAMIC;
+		tnbr_check(tnbr);
+	}
+}
+
+void
+ldpe_stop_init_backoff(void)
+{
+	struct nbr		*nbr;
+
+	RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id) {
+		if (nbr_pending_idtimer(nbr)) {
+			nbr_stop_idtimer(nbr);
+			nbr_establish_connection(nbr);
+		}
 	}
 }
 

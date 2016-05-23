@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.67 2016/05/23 18:33:56 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.68 2016/05/23 18:40:15 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -462,7 +462,7 @@ int			 cmdline_symset(char *);
 
 /* kroute.c */
 int		 kif_init(void);
-void		 kif_redistribute(void);
+void		 kif_redistribute(const char *);
 int		 kr_init(int);
 int		 kr_change(struct kroute *);
 int		 kr_delete(struct kroute *);

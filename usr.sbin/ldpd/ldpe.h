@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.48 2016/05/23 18:33:56 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.49 2016/05/23 18:40:15 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -163,6 +163,8 @@ void		 ldpe_dispatch_lde(int, short, void *);
 void		 ldpe_dispatch_pfkey(int, short, void *);
 void		 ldpe_setup_sockets(int, int, int);
 void		 ldpe_close_sockets(void);
+void		 ldpe_remove_dynamic_tnbrs(void);
+void		 ldpe_stop_init_backoff(void);
 void		 ldpe_iface_ctl(struct ctl_conn *, unsigned int);
 void		 ldpe_adj_ctl(struct ctl_conn *);
 void		 ldpe_nbr_ctl(struct ctl_conn *);
