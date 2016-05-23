@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.207 2016/05/18 20:15:14 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.208 2016/05/23 09:09:04 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -507,9 +507,8 @@ in_arpinput(struct ifnet *ifp, struct mbuf *m)
 	if (rtisvalid(rt) && ISSET(rt->rt_flags, RTF_LOCAL) &&
 	    rt->rt_ifidx == ifp->if_index && isaddr.s_addr != INADDR_ANY) {
 		inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
-		log(LOG_ERR,
-		   "duplicate IP address %s sent from ethernet address %s\n",
-		   addr, ether_sprintf(ea->arp_sha));
+		log(LOG_ERR, "duplicate IP address %s sent from ethernet "
+		    "address %s\n", addr, ether_sprintf(ea->arp_sha));
 		itaddr = isaddr;
 	} else if (rt != NULL) {
 		if (arpcache(ifp, ea, rt))
