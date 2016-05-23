@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.35 2016/05/23 15:41:04 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.36 2016/05/23 15:43:11 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -129,7 +129,7 @@ typedef struct {
 %token	LHELLOHOLDTIME LHELLOINTERVAL
 %token	THELLOHOLDTIME THELLOINTERVAL
 %token	THELLOACCEPT
-%token	KEEPALIVE
+%token	KEEPALIVE TRANSADDRESS
 %token	NEIGHBOR PASSWORD
 %token	L2VPN TYPE VPLS PWTYPE MTU BRIDGE
 %token	ETHERNET ETHERNETTAGGED STATUSTLV CONTROLWORD
@@ -239,6 +239,18 @@ conf_main	: ROUTERID STRING {
 				YYERROR;
 			}
 			conf->keepalive = $2;
+		}
+		| TRANSADDRESS STRING {
+			if (!inet_aton($2, &conf->trans_addr)) {
+				yyerror("error parsing transport-address");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			if (bad_ip_addr(conf->trans_addr)) {
+				yyerror("invalid transport-address");
+				YYERROR;
+			}
 		}
 		| iface_defaults
 		| tnbr_defaults
@@ -694,6 +706,7 @@ lookup(char *s)
 		{"targeted-hello-holdtime",	THELLOHOLDTIME},
 		{"targeted-hello-interval",	THELLOINTERVAL},
 		{"targeted-neighbor",		TNEIGHBOR},
+		{"transport-address",		TRANSADDRESS},
 		{"type",			TYPE},
 		{"vpls",			VPLS},
 		{"yes",				YES}
@@ -1080,6 +1093,8 @@ parse_config(char *filename, int opts)
 
 	if (conf->rtr_id.s_addr == 0)
 		conf->rtr_id.s_addr = get_rtr_id();
+	if (conf->trans_addr.s_addr == 0)
+		conf->trans_addr.s_addr = conf->rtr_id.s_addr;
 
 	return (conf);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.2 2016/05/23 15:01:54 renato Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.3 2016/05/23 15:43:11 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -375,12 +375,12 @@ pfkey_md5sig_establish(struct nbr *nbr, struct nbr_params *nbrp)
 	sleep(1);
 
 	if (!nbr->auth.spi_out)
-		if (pfkey_sa_add(&nbr->auth.local_addr, &nbr->addr,
+		if (pfkey_sa_add(&nbr->laddr, &nbr->raddr,
 		    nbrp->auth.md5key_len, nbrp->auth.md5key,
 		    &nbr->auth.spi_out) == -1)
 			return (-1);
 	if (!nbr->auth.spi_in)
-		if (pfkey_sa_add(&nbr->addr, &nbr->auth.local_addr,
+		if (pfkey_sa_add(&nbr->raddr, &nbr->laddr,
 		    nbrp->auth.md5key_len, nbrp->auth.md5key,
 		    &nbr->auth.spi_in) == -1)
 			return (-1);
@@ -393,16 +393,15 @@ int
 pfkey_md5sig_remove(struct nbr *nbr)
 {
 	if (nbr->auth.spi_out)
-		if (pfkey_sa_remove(&nbr->auth.local_addr, &nbr->addr,
+		if (pfkey_sa_remove(&nbr->laddr, &nbr->raddr,
 		    &nbr->auth.spi_out) == -1)
 			return (-1);
 	if (nbr->auth.spi_in)
-		if (pfkey_sa_remove(&nbr->addr, &nbr->auth.local_addr,
+		if (pfkey_sa_remove(&nbr->raddr, &nbr->laddr,
 		    &nbr->auth.spi_in) == -1)
 			return (-1);
 
 	nbr->auth.established = 0;
-	nbr->auth.local_addr.s_addr = 0;
 	nbr->auth.spi_in = 0;
 	nbr->auth.spi_out = 0;
 	nbr->auth.method = AUTH_NONE;
@@ -421,7 +420,6 @@ pfkey_establish(struct nbr *nbr, struct nbr_params *nbrp)
 	 * make sure we keep copies of everything we need to
 	 * remove SAs and flows later again.
 	 */
-	nbr->auth.local_addr.s_addr = ldpe_router_id();
 	nbr->auth.method = nbrp->auth.method;
 
 	switch (nbr->auth.method) {

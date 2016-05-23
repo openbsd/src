@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.29 2016/05/23 15:14:07 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.30 2016/05/23 15:43:11 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -86,7 +86,8 @@ send_hello(enum hello_type type, struct iface *iface, struct tnbr *tnbr)
 	gen_msg_tlv(buf, MSG_TYPE_HELLO, size);
 
 	gen_hello_prms_tlv(buf, holdtime, flags);
-	gen_opt4_hello_prms_tlv(buf, TLV_TYPE_IPV4TRANSADDR, ldpe_router_id());
+	gen_opt4_hello_prms_tlv(buf, TLV_TYPE_IPV4TRANSADDR,
+	    leconf->trans_addr.s_addr);
 
 	send_packet(fd, iface, buf->buf, buf->wpos, &dst);
 	ibuf_free(buf);
@@ -191,7 +192,7 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 			/* create new adjacency for existing neighbor */
 			adj = adj_new(nbr, &source, transport_addr);
 
-			if (nbr->addr.s_addr != transport_addr.s_addr)
+			if (nbr->raddr.s_addr != transport_addr.s_addr)
 				log_warnx("%s: neighbor %s: multiple "
 				    "adjacencies advertising different "
 				    "transport addresses", __func__,

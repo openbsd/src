@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.12 2016/05/23 15:41:04 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.13 2016/05/23 15:43:11 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -51,6 +51,7 @@ print_mainconf(struct ldpd_conf *conf)
 		printf("targeted-hello-accept no\n");
 
 	printf("keepalive %u\n", conf->keepalive);
+	printf("transport-address %s\n", inet_ntoa(conf->trans_addr));
 }
 
 void

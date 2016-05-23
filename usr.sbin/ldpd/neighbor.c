@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.54 2016/05/23 15:41:04 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.55 2016/05/23 15:43:11 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -220,7 +220,8 @@ nbr_new(struct in_addr id, struct in_addr addr)
 	LIST_INIT(&nbr->adj_list);
 	nbr->state = NBR_STA_PRESENT;
 	nbr->id.s_addr = id.s_addr;
-	nbr->addr.s_addr = addr.s_addr;
+	nbr->laddr.s_addr = leconf->trans_addr.s_addr;
+	nbr->raddr.s_addr = addr.s_addr;
 	nbr->peerid = 0;
 
 	if (RB_INSERT(nbr_id_head, &nbrs_by_id, nbr) != NULL)
@@ -239,7 +240,7 @@ nbr_new(struct in_addr id, struct in_addr addr)
 
 	/* init pfkey - remove old if any, load new ones */
 	pfkey_remove(nbr);
-	nbrp = nbr_params_find(leconf, nbr->addr);
+	nbrp = nbr_params_find(leconf, nbr->raddr);
 	if (nbrp && pfkey_establish(nbr, nbrp) == -1)
 		fatalx("pfkey setup failed");
 
@@ -307,7 +308,7 @@ nbr_find_ldpid(u_int32_t rtr_id)
 int
 nbr_session_active_role(struct nbr *nbr)
 {
-	if (ntohl(ldpe_router_id()) > ntohl(nbr->addr.s_addr))
+	if (ntohl(nbr->laddr.s_addr) > ntohl(nbr->raddr.s_addr))
 		return (1);
 
 	return (0);
@@ -472,7 +473,7 @@ nbr_connect_cb(int fd, short event, void *arg)
 		close(nbr->fd);
 		errno = error;
 		log_debug("%s: error while connecting to %s: %s", __func__,
-		    inet_ntoa(nbr->addr), strerror(errno));
+		    inet_ntoa(nbr->raddr), strerror(errno));
 		return;
 	}
 
@@ -494,7 +495,7 @@ nbr_establish_connection(struct nbr *nbr)
 		return (-1);
 	}
 
-	nbrp = nbr_params_find(leconf, nbr->addr);
+	nbrp = nbr_params_find(leconf, nbr->raddr);
 	if (nbrp && nbrp->auth.method == AUTH_MD5SIG) {
 		if (sysdep.no_pfkey || sysdep.no_md5sig) {
 			log_warnx("md5sig configured but not available");
@@ -510,7 +511,7 @@ nbr_establish_connection(struct nbr *nbr)
 	bzero(&local_sa, sizeof(local_sa));
 	local_sa.sin_family = AF_INET;
 	local_sa.sin_port = htons(0);
-	local_sa.sin_addr.s_addr = ldpe_router_id();
+	local_sa.sin_addr.s_addr = nbr->laddr.s_addr;
 
 	if (bind(nbr->fd, (struct sockaddr *) &local_sa,
 	    sizeof(struct sockaddr_in)) == -1) {
@@ -523,7 +524,7 @@ nbr_establish_connection(struct nbr *nbr)
 	bzero(&remote_sa, sizeof(remote_sa));
 	remote_sa.sin_family = AF_INET;
 	remote_sa.sin_port = htons(LDP_PORT);
-	remote_sa.sin_addr.s_addr = nbr->addr.s_addr;
+	remote_sa.sin_addr.s_addr = nbr->raddr.s_addr;
 
 	/*
 	 * Send an extra hello to guarantee that the remote peer has formed
@@ -542,7 +543,7 @@ nbr_establish_connection(struct nbr *nbr)
 			return (0);
 		}
 		log_warn("%s: error while connecting to %s", __func__,
-		    inet_ntoa(nbr->addr));
+		    inet_ntoa(nbr->raddr));
 		close(nbr->fd);
 		return (-1);
 	}
@@ -617,7 +618,7 @@ nbr_to_ctl(struct nbr *nbr)
 	struct timeval		 now;
 
 	memcpy(&nctl.id, &nbr->id, sizeof(nctl.id));
-	memcpy(&nctl.addr, &nbr->addr, sizeof(nctl.addr));
+	memcpy(&nctl.addr, &nbr->raddr, sizeof(nctl.addr));
 	nctl.nbr_state = nbr->state;
 
 	gettimeofday(&now, NULL);

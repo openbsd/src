@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.45 2016/05/23 15:20:21 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.46 2016/05/23 15:43:11 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -137,7 +137,7 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	/* create the extended discovery UDP socket */
 	disc_addr.sin_family = AF_INET;
 	disc_addr.sin_port = htons(LDP_PORT);
-	disc_addr.sin_addr.s_addr = xconf->rtr_id.s_addr;
+	disc_addr.sin_addr.s_addr = xconf->trans_addr.s_addr;
 
 	if ((xconf->ldp_ediscovery_socket = socket(AF_INET,
 	    SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC,

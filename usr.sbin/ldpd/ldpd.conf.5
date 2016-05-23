@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.21 2016/05/23 15:41:04 renato Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.22 2016/05/23 15:43:11 renato Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -110,6 +110,7 @@ The default value is 180; valid range is 1\-65535.
 .Pp
 .It Ic router-id Ar address
 Set the router ID; in combination with labelspace it forms the LSR-ID.
+If not specified, the numerically lowest IP address of the router will be used.
 .Pp
 .It Xo
 .Ic targeted-hello-accept
@@ -121,6 +122,10 @@ allow LDP sessions to be established with remote neighbors that have not been
 specifically configured.
 The default is
 .Ic no .
+.Pp
+.It Ic transport-address Ar address
+Set the local address to be used in the TCP sessions.
+If not specified, the router-id will be used.
 .El
 .Sh INTERFACES
 Each interface can have several parameters configured individually, otherwise

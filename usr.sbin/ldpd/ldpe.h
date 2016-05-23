@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.43 2016/05/23 15:41:04 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.44 2016/05/23 15:43:11 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -73,8 +73,9 @@ struct nbr {
 	struct mapping_head	 release_list;
 	struct mapping_head	 abortreq_list;
 
-	struct in_addr		 addr;
-	struct in_addr		 id;
+	struct in_addr		 laddr;		/* local address */
+	struct in_addr		 raddr;		/* remote address */
+	struct in_addr		 id;		/* lsr id */
 
 	time_t			 uptime;
 	u_int32_t		 peerid;	/* unique ID in DB */
