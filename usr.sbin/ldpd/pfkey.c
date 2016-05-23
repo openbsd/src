@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.4 2016/05/23 16:20:59 renato Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.5 2016/05/23 16:25:11 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -427,7 +427,6 @@ pfkey_establish(struct nbr *nbr, struct nbr_params *nbrp)
 		strlcpy(nbr->auth.md5key, nbrp->auth.md5key,
 		    sizeof(nbr->auth.md5key));
 		return (pfkey_md5sig_establish(nbr, nbrp));
-		break;
 	default:
 		break;
 	}
@@ -444,7 +443,6 @@ pfkey_remove(struct nbr *nbr)
 	switch (nbr->auth.method) {
 	case AUTH_MD5SIG:
 		return (pfkey_md5sig_remove(nbr));
-		break;
 	default:
 		break;
 	}

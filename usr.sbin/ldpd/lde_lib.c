@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.43 2016/05/23 16:14:36 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.44 2016/05/23 16:25:11 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -83,7 +83,6 @@ fec_compare(struct fec *a, struct fec *b)
 		if (a->u.ipv4.prefixlen > b->u.ipv4.prefixlen)
 			return (1);
 		return (0);
-		break;
 	case FEC_TYPE_PWID:
 		if (a->u.pwid.type < b->u.pwid.type)
 			return (-1);
@@ -100,7 +99,6 @@ fec_compare(struct fec *a, struct fec *b)
 		    ntohl(b->u.pwid.nexthop.s_addr))
 			return (1);
 		return (0);
-		break;
 	}
 
 	return (-1);

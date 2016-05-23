@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.24 2016/05/23 16:20:59 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.25 2016/05/23 16:25:11 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -205,7 +205,6 @@ recv_notification(struct nbr *nbr, char *buf, u_int16_t len)
 			send_notification_nbr(nbr, S_BAD_TLV_VAL,
 			    not.msgid, not.type);
 			return (-1);
-			break;
 		}
 	}
 
