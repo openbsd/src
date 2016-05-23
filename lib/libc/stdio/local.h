@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.h,v 1.24 2016/05/07 19:05:22 guenther Exp $	*/
+/*	$OpenBSD: local.h,v 1.25 2016/05/23 00:21:48 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,11 +42,9 @@
 #include "fileext.h"
 #include "thread_private.h"
 
+__BEGIN_HIDDEN_DECLS
 void	_cleanup(void);
 int	_fwalk(int (*)(FILE *));
-PROTO_NORMAL(_fwalk);
-
-__BEGIN_HIDDEN_DECLS
 int	__sflush(FILE *);
 int	__sflush_locked(FILE *);
 FILE	*__sfp(void);
