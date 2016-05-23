@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.62 2016/05/23 16:46:02 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.63 2016/05/23 16:48:06 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -151,7 +151,7 @@ enum nbr_event {
 	NBR_EVT_KEEPALIVE_RCVD,
 	NBR_EVT_PDU_RCVD,
 	NBR_EVT_PDU_SENT,
-	NBR_EVT_INIT_SENT,
+	NBR_EVT_INIT_SENT
 };
 
 /* neighbor actions */
@@ -249,7 +249,7 @@ struct tnbr {
 
 enum auth_method {
 	AUTH_NONE,
-	AUTH_MD5SIG,
+	AUTH_MD5SIG
 };
 
 /* neighbor specific parameters */
