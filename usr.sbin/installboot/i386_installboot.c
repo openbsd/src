@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.27 2016/04/28 16:48:18 krw Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.28 2016/05/23 20:48:07 kettenis Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -223,7 +223,7 @@ write_efisystem(struct disklabel *dl, char part)
 	static char *newfsfmt ="/sbin/newfs_msdos %s >/dev/null";
 	struct msdosfs_args args;
 	char cmd[60];
-	char dst[50];	/* /tmp/installboot.XXXXXXXXXX/efi/BOOT/BOOTIA32.EFI */
+	char dst[PATH_MAX];
 	char *src;
 	size_t mntlen, pathlen, srclen;
 	int rslt;
