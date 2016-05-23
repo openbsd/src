@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.19 2016/05/23 15:32:48 renato Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.20 2016/05/23 15:36:53 renato Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -83,6 +83,17 @@ The only settings that can be set globally and not overruled are listed below.
 .Pp
 .Bl -tag -width Ds -compact
 .It Xo
+.Ic explicit-null
+.Pq Ic yes Ns | Ns Ic no
+.Xc
+If set to
+.Ic yes ,
+advertise explicit-null labels in place of implicit-null labels for directly
+connected prefixes.
+The default is
+.Ic no .
+.Pp
+.It Xo
 .Ic fib-update
 .Pq Ic yes Ns | Ns Ic no
 .Xc
@@ -93,12 +104,12 @@ table.
 The default is
 .Ic yes .
 .Pp
-.It Ic router-id Ar address
-Set the router ID; in combination with labelspace it forms the LSR-ID.
-.Pp
 .It Ic keepalive Ar seconds
 Set the keepalive timeout in seconds.
 The default value is 180; valid range is 1\-65535.
+.Pp
+.It Ic router-id Ar address
+Set the router ID; in combination with labelspace it forms the LSR-ID.
 .Pp
 .It Xo
 .Ic targeted-hello-accept
@@ -193,17 +204,6 @@ l2vpn name type vpls {
 .Pp
 Layer 2 VPN specific parameters are listed below.
 .Bl -tag -width Ds
-.It Xo
-.Ic type
-.Pq Ic ethernet Ns | Ns Ic ethernet-tagged
-.Xc
-Specify the type of the configured pseudowires. The type must be the
-same at both endpoints. The default is
-.Ic ethernet .
-.Pp
-.It Ic mtu Ar number
-Set the MTU advertised in the pseudowires. Local and remote MTUs must
-match for a pseudowire to be set up. The default value is 1500.
 .Pp
 .It Ic bridge Ar interface
 Set the bridge interface the VPLS is associated with. This parameter
@@ -215,6 +215,17 @@ Configure a non pseudowire interface pertaining to the VPLS. This
 parameter is optional and is only used to send MAC address withdrawal
 messages when the specified interface is shutdown. Multiple interfaces
 can be configured.
+.Pp
+.It Ic mtu Ar number
+Set the MTU advertised in the pseudowires. Local and remote MTUs must
+match for a pseudowire to be set up. The default value is 1500.
+.It Xo
+.Ic type
+.Pq Ic ethernet Ns | Ns Ic ethernet-tagged
+.Xc
+Specify the type of the configured pseudowires. The type must be the
+same at both endpoints. The default is
+.Ic ethernet .
 .Sh PSEUDOWIRES
 Each
 .Xr mpw 4
@@ -230,6 +241,13 @@ pseudowire mpw5 {
 .Pp
 Pseudowire-specific parameters are listed below.
 .Bl -tag -width Ds
+.It Xo
+.Ic control-word
+.Pq Ic yes Ns | Ns Ic no
+.Xc
+Specify whether the use of the control word is preferred or not
+preferred. The default is
+.Ic yes .
 .Pp
 .It Ic neighbor Ar address
 Specify the endpoint of the pseudowire on the remote PE router. A targeted
@@ -243,13 +261,6 @@ same at both endpoints. Valid range is 1\-4294967295.
 .Pq Ic yes Ns | Ns Ic no
 .Xc
 Specify whether the use of the Status TLV is preferred or not
-preferred. The default is
-.Ic yes .
-.It Xo
-.Ic control-word
-.Pq Ic yes Ns | Ns Ic no
-.Xc
-Specify whether the use of the control word is preferred or not
 preferred. The default is
 .Ic yes .
 .Sh FILES
