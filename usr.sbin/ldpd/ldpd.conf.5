@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.18 2015/07/21 04:52:29 renato Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.19 2016/05/23 15:32:48 renato Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 21 2015 $
+.Dd $Mdocdate: May 23 2016 $
 .Dt LDPD.CONF 5
 .Os
 .Sh NAME
@@ -48,6 +48,16 @@ Neighbor-specific parameters.
 .It Sy Layer 2 VPNs Configuration
 Layer 2 VPNs parameters as per RFC 4447.
 .El
+.Pp
+Argument names not beginning with a letter, digit, or underscore
+must be quoted.
+.Pp
+Additional configuration files can be included with the
+.Ic include
+keyword, for example:
+.Bd -literal -offset indent
+include "/etc/ldpd.sub.conf"
+.Ed
 .Sh MACROS
 Much like
 .Xr cpp 1

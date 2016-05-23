@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.33 2016/05/23 15:30:43 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.34 2016/05/23 15:32:48 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -136,6 +136,7 @@ typedef struct {
 %token	PSEUDOWIRE NEIGHBOR PWID
 %token	EXTTAG
 %token	YES NO
+%token	INCLUDE
 %token	ERROR
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
@@ -147,6 +148,7 @@ typedef struct {
 %%
 
 grammar		: /* empty */
+		| grammar include '\n'
 		| grammar '\n'
 		| grammar conf_main '\n'
 		| grammar varset '\n'
@@ -155,6 +157,21 @@ grammar		: /* empty */
 		| grammar neighbor '\n'
 		| grammar l2vpn '\n'
 		| grammar error '\n'		{ file->errors++; }
+		;
+
+include		: INCLUDE STRING		{
+			struct file	*nfile;
+
+			if ((nfile = pushfile($2, 1)) == NULL) {
+				yyerror("failed to include file %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+
+			file = nfile;
+			lungetc('\n');
+		}
 		;
 
 string		: string STRING	{
@@ -650,6 +667,7 @@ lookup(char *s)
 		{"ethernet",			ETHERNET},
 		{"ethernet-tagged",		ETHERNETTAGGED},
 		{"fib-update",			FIBUPDATE},
+		{"include",			INCLUDE},
 		{"interface",			INTERFACE},
 		{"keepalive",			KEEPALIVE},
 		{"l2vpn",			L2VPN},
