@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.24 2015/09/14 12:21:03 guenther Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.25 2016/05/23 00:05:15 guenther Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/localedef.h>
 #include <locale.h>
 #include <limits.h>
 #include <paths.h>
@@ -40,6 +39,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "localedef.h"
 #include "rune.h"
 #include "rune_local.h"
 /*

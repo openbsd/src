@@ -1,11 +1,11 @@
-/*	$OpenBSD: _def_time.c,v 1.5 2011/10/09 06:39:53 ajacoutot Exp $ */
+/*	$OpenBSD: _def_time.c,v 1.6 2016/05/23 00:05:15 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
-#include <sys/localedef.h>
 #include <locale.h>
+#include "localedef.h"
 
 const _TimeLocale _DefaultTimeLocale =
 {

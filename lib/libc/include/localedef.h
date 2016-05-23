@@ -1,4 +1,4 @@
-/*	$OpenBSD: localedef.h,v 1.5 2015/01/14 21:17:52 deraadt Exp $	*/
+/*	$OpenBSD: localedef.h,v 1.1 2016/05/23 00:05:15 guenther Exp $	*/
 /*	$NetBSD: localedef.h,v 1.4 1996/04/09 20:55:31 cgd Exp $	*/
 
 /*
@@ -31,8 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_LOCALEDEF_H_
-#define _SYS_LOCALEDEF_H_
+#ifndef _LOCALEDEF_H_
+#define _LOCALEDEF_H_
 
 #include <sys/types.h>
 
@@ -43,9 +43,6 @@ typedef struct
 	char *yesstr;
 	char *nostr;
 } _MessagesLocale;
-
-extern const _MessagesLocale *_CurrentMessagesLocale;
-extern const _MessagesLocale  _DefaultMessagesLocale;
 
 
 typedef struct
@@ -73,9 +70,6 @@ typedef struct
 	char int_n_sign_posn;
 } _MonetaryLocale;
 
-extern const _MonetaryLocale *_CurrentMonetaryLocale;
-extern const _MonetaryLocale  _DefaultMonetaryLocale;
-
 
 typedef struct
 {
@@ -83,9 +77,6 @@ typedef struct
 	const char *thousands_sep;
 	const char *grouping;
 } _NumericLocale;
-
-extern const _NumericLocale *_CurrentNumericLocale;
-extern const _NumericLocale  _DefaultNumericLocale;
 
 
 typedef struct {
@@ -100,7 +91,16 @@ typedef struct {
 	const char *t_fmt_ampm;
 } _TimeLocale;
 
+
+__BEGIN_HIDDEN_DECLS
+extern const _MessagesLocale *_CurrentMessagesLocale;
+extern const _MessagesLocale  _DefaultMessagesLocale;
+extern const _MonetaryLocale *_CurrentMonetaryLocale;
+extern const _MonetaryLocale  _DefaultMonetaryLocale;
+extern const _NumericLocale *_CurrentNumericLocale;
+extern const _NumericLocale  _DefaultNumericLocale;
 extern const _TimeLocale *_CurrentTimeLocale;
 extern const _TimeLocale  _DefaultTimeLocale;
+__END_HIDDEN_DECLS
 
-#endif /* !_SYS_LOCALEDEF_H_ */
+#endif /* !_LOCALEDEF_H_ */

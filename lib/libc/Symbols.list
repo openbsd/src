@@ -914,20 +914,7 @@ SipHash_Init
 SipHash_Update
 
 /* locale */
-_CurrentMessagesLocale
-_CurrentMonetaryLocale
-_CurrentNumericLocale
-_CurrentRuneLocale
-_CurrentTimeLocale
-_DefaultMessagesLocale
-_DefaultMonetaryLocale
-_DefaultNumericLocale
-_DefaultRuneLocale
-_DefaultTimeLocale
 __mb_cur_max
-__mb_len_max_runtime
-__mlocale_changed
-__nlocale_changed
 btowc
 iswalnum
 iswalpha

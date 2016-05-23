@@ -1,12 +1,12 @@
-/*	$OpenBSD: _def_monetary.c,v 1.5 2014/07/14 07:22:07 pelikan Exp $ */
+/*	$OpenBSD: _def_monetary.c,v 1.6 2016/05/23 00:05:15 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
-#include <sys/localedef.h>
 #include <limits.h>
 #include <locale.h>
+#include "localedef.h"
 
 const _MonetaryLocale _DefaultMonetaryLocale =
 {

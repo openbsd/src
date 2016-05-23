@@ -1,4 +1,4 @@
-/*	$OpenBSD: strptime.c,v 1.21 2015/09/12 14:35:40 guenther Exp $ */
+/*	$OpenBSD: strptime.c,v 1.22 2016/05/23 00:05:15 guenther Exp $ */
 /*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -28,12 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/localedef.h>
 #include <ctype.h>
 #include <locale.h>
 #include <string.h>
 #include <time.h>
 
+#include "localedef.h"
 #include "private.h"
 #include "tzfile.h"
 

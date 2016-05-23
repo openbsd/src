@@ -1,11 +1,11 @@
-/*	$OpenBSD: localeconv.c,v 1.7 2015/09/14 12:21:03 guenther Exp $ */
+/*	$OpenBSD: localeconv.c,v 1.8 2016/05/23 00:05:15 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
-#include <sys/localedef.h>
 #include <locale.h>
+#include "localedef.h"
 
 /*
  * The localeconv() function constructs a struct lconv from the current
@@ -16,8 +16,8 @@
  * lconv structure are computed only when the monetary or numeric
  * locale has been changed.
  */
-int __mlocale_changed = 1;
-int __nlocale_changed = 1;
+static int __mlocale_changed = 1;
+static int __nlocale_changed = 1;
 
 /*
  * Return the current locale conversion.
