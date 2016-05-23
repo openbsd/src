@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.61 2016/05/23 16:31:27 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.62 2016/05/23 16:46:02 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -441,6 +441,7 @@ void		 kif_redistribute(void);
 int		 kr_init(int);
 int		 kr_change(struct kroute *);
 int		 kr_delete(struct kroute *);
+void		 kif_clear(void);
 void		 kr_shutdown(void);
 void		 kr_fib_couple(void);
 void		 kr_fib_decouple(void);
