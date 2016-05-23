@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.28 2016/05/23 15:47:24 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.29 2016/05/23 15:49:31 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -159,7 +159,7 @@ if_addr_add(struct kaddr *ka)
 			if (nbr->state != NBR_STA_OPER)
 				continue;
 
-			send_address(nbr, if_addr);
+			send_address(nbr, if_addr, 0);
 		}
 	}
 
@@ -194,7 +194,7 @@ if_addr_del(struct kaddr *ka)
 		RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id) {
 			if (nbr->state != NBR_STA_OPER)
 				continue;
-			send_address_withdraw(nbr, if_addr);
+			send_address(nbr, if_addr, 1);
 		}
 		LIST_REMOVE(if_addr, entry);
 		free(if_addr);

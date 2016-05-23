@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.18 2016/05/23 15:14:07 renato Exp $ */
+/*	$OpenBSD: address.c,v 1.19 2016/05/23 15:49:31 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -65,7 +65,7 @@ send_address(struct nbr *nbr, struct if_addr *if_addr)
 
 	size -= LDP_HDR_SIZE;
 
-	gen_msg_tlv(buf, MSG_TYPE_ADDR, size);
+	gen_msg_tlv(buf, msg_type, size);
 
 	size -= sizeof(struct ldp_msg);
 
