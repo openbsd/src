@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpctl.8,v 1.10 2015/07/27 18:48:04 sobrado Exp $
+.\"	$OpenBSD: ldpctl.8,v 1.11 2016/05/23 19:01:32 renato Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: May 23 2016 $
 .Dt LDPCTL 8
 .Os
 .Sh NAME
@@ -39,10 +39,10 @@ for
 The following commands are available:
 .Bl -tag -width Ds
 .It Cm fib couple
-Insert the learned routes into the Label Forwarding Information Base a.k.a.
+Insert the learned labels into the Label Forwarding Information Base a.k.a.
 the kernel routing table.
 .It Cm fib decouple
-Remove the learned routes from the Label Forwarding Information Base a.k.a.
+Remove the learned labels from the Label Forwarding Information Base a.k.a.
 the kernel routing table.
 .It Cm log brief
 Disable verbose debug logging.
