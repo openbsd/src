@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: util.c,v 1.3 2016/05/23 18:55:21 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -20,9 +20,28 @@
  */
 
 #include <sys/types.h>
+#include <string.h>
 
 #include "ldpd.h"
 #include "log.h"
+
+uint8_t
+mask2prefixlen(in_addr_t ina)
+{
+	if (ina == 0)
+		return (0);
+	else
+		return (33 - ffs(ntohl(ina)));
+}
+
+in_addr_t
+prefixlen2mask(uint8_t prefixlen)
+{
+	if (prefixlen == 0)
+		return (0);
+
+	return (htonl(0xffffffff << (32 - prefixlen)));
+}
 
 int
 bad_ip_addr(struct in_addr addr)

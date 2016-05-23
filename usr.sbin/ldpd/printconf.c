@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.20 2016/05/23 18:54:10 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.21 2016/05/23 18:55:21 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -81,10 +81,13 @@ void
 print_nbrp(struct nbr_params *nbrp)
 {
 	printf("\nneighbor %s {\n", inet_ntoa(nbrp->lsr_id));
+
 	if (nbrp->flags & F_NBRP_KEEPALIVE)
 		printf("\tkeepalive %u\n", nbrp->keepalive);
+
 	if (nbrp->auth.method == AUTH_MD5SIG)
 		printf("\tpassword XXXXXX\n");
+
 	printf("}\n");
 }
 
@@ -95,10 +98,12 @@ print_l2vpn(struct l2vpn *l2vpn)
 	struct l2vpn_pw	*pw;
 
 	printf("\nl2vpn %s type vpls {\n", l2vpn->name);
+
 	if (l2vpn->pw_type == PW_TYPE_ETHERNET)
 		printf("\tpw-type ethernet\n");
 	else
 		printf("\tpw-type ethernet-tagged\n");
+
 	printf("\tmtu %u\n", l2vpn->mtu);
 	if (l2vpn->br_ifindex != 0)
 		printf("\tbridge %s\n", l2vpn->br_ifname);
@@ -106,6 +111,7 @@ print_l2vpn(struct l2vpn *l2vpn)
 		printf("\tinterface %s\n", lif->ifname);
 	LIST_FOREACH(pw, &l2vpn->pw_list, entry)
 		print_pw(pw);
+
 	printf("}\n");
 }
 
@@ -115,14 +121,17 @@ print_pw(struct l2vpn_pw *pw)
 	printf("\tpseudowire %s {\n", pw->ifname);
 	printf("\t\tneighbor %s\n", inet_ntoa(pw->lsr_id));
 	printf("\t\tpw-id %u\n", pw->pwid);
+
 	if (pw->flags & F_PW_STATUSTLV_CONF)
 		printf("\t\tstatus-tlv yes\n");
 	else
 		printf("\t\tstatus-tlv no\n");
+
 	if (pw->flags & F_PW_CWORD_CONF)
 		printf("\t\tcontrol-word yes\n");
 	else
 		printf("\t\tcontrol-word no\n");
+
 	printf("\t}\n");
 }
 

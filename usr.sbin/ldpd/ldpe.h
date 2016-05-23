@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.50 2016/05/23 18:41:59 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.51 2016/05/23 18:55:21 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -27,8 +27,6 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <net/pfkeyv2.h>
-
-TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
 
 struct hello_source {
 	enum hello_type		 type;
@@ -166,6 +164,7 @@ void		 ldpe_close_sockets(void);
 void		 ldpe_reset_nbrs(void);
 void		 ldpe_remove_dynamic_tnbrs(void);
 void		 ldpe_stop_init_backoff(void);
+struct ctl_conn;
 void		 ldpe_iface_ctl(struct ctl_conn *, unsigned int);
 void		 ldpe_adj_ctl(struct ctl_conn *);
 void		 ldpe_nbr_ctl(struct ctl_conn *);

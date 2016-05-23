@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.69 2016/05/23 18:43:28 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.70 2016/05/23 18:55:21 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -477,10 +477,10 @@ void		 kr_ifinfo(char *, pid_t);
 struct kif	*kif_findname(char *);
 uint8_t		 mask2prefixlen(in_addr_t);
 in_addr_t	 prefixlen2mask(uint8_t);
-void		 kmpw_set(struct kpw *);
-void		 kmpw_unset(struct kpw *);
-void		 kmpw_install(const char *, struct kpw *);
-void		 kmpw_uninstall(const char *, struct kpw *);
+int		 kmpw_set(struct kpw *);
+int		 kmpw_unset(struct kpw *);
+int		 kmpw_install(const char *, struct kpw *);
+int		 kmpw_uninstall(const char *);
 
 /* log.h */
 const char	*nbr_state_name(int);
@@ -489,6 +489,8 @@ const char	*if_type_name(enum iface_type);
 const char	*notification_name(uint32_t);
 
 /* util.c */
+uint8_t		 mask2prefixlen(in_addr_t);
+in_addr_t	 prefixlen2mask(uint8_t);
 int		 bad_ip_addr(struct in_addr);
 
 /* ldpd.c */

@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.10 2016/05/23 17:43:42 renato Exp $
+#	$OpenBSD: Makefile,v 1.11 2016/05/23 18:55:21 renato Exp $
 
 PROG=	ldpd
-SRCS=	accept.c adjacency.c address.c control.c hello.c init.c interface.c \
-	keepalive.c kroute.c labelmapping.c lde.c lde_lib.c ldpd.c ldpe.c \
-	log.c neighbor.c notification.c packet.c parse.y printconf.c pfkey.c \
-	l2vpn.c socket.c util.c
+SRCS=	accept.c address.c adjacency.c control.c hello.c init.c interface.c \
+	keepalive.c kroute.c l2vpn.c labelmapping.c lde.c lde_lib.c ldpd.c \
+	ldpe.c log.c neighbor.c notification.c packet.c parse.y pfkey.c \
+	printconf.c socket.c util.c
 
 MAN=	ldpd.8 ldpd.conf.5
 

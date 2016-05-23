@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.53 2016/05/23 18:46:13 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.54 2016/05/23 18:55:21 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -264,6 +264,7 @@ fec_nh_find(struct fec_node *fn, struct in_addr nexthop)
 	LIST_FOREACH(fnh, &fn->nexthops, entry)
 		if (fnh->nexthop.s_addr == nexthop.s_addr)
 			return (fnh);
+
 	return (NULL);
 }
 
@@ -315,15 +316,14 @@ lde_kernel_insert(struct fec *fec, struct in_addr nexthop, int connected,
 	struct lde_map		*me;
 	struct lde_nbr		*ln;
 
-	log_debug("lde add fec %s nexthop %s",
-	    log_fec(fec), inet_ntoa(nexthop));
-
 	fn = (struct fec_node *)fec_find(&ft, fec);
 	if (fn == NULL)
 		fn = fec_add(fec);
-
 	if (fec_nh_find(fn, nexthop) != NULL)
 		return;
+
+	log_debug("lde add fec %s nexthop %s",
+	    log_fec(&fn->fec), inet_ntoa(nexthop));
 
 	if (fn->fec.type == FEC_TYPE_PWID)
 		fn->data = data;
@@ -369,18 +369,17 @@ lde_kernel_remove(struct fec *fec, struct in_addr nexthop)
 	struct fec_node		*fn;
 	struct fec_nh		*fnh;
 
-	log_debug("lde remove fec %s nexthop %s",
-	    log_fec(fec), inet_ntoa(nexthop));
-
 	fn = (struct fec_node *)fec_find(&ft, fec);
 	if (fn == NULL)
 		/* route lost */
 		return;
-
 	fnh = fec_nh_find(fn, nexthop);
 	if (fnh == NULL)
 		/* route lost */
 		return;
+
+	log_debug("lde remove fec %s nexthop %s",
+	    log_fec(&fn->fec), inet_ntoa(nexthop));
 
 	lde_send_delete_klabel(fn, fnh);
 	fec_nh_del(fnh);
@@ -609,9 +608,8 @@ lde_check_release_wcard(struct map *map, struct lde_nbr *ln)
 		/* LRl.6: check sent map list and remove it if available */
 		me = (struct lde_map *)fec_find(&ln->sent_map, &fn->fec);
 		if (me &&
-		    (map->label == NO_LABEL || map->label == me->map.label)) {
+		    (map->label == NO_LABEL || map->label == me->map.label))
 			lde_map_del(ln, me, 1);
-		}
 
 		/*
 		 * LRl.11 - 13 are unnecessary since we remove the label from

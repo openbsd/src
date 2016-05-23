@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.8 2016/05/23 18:33:56 renato Exp $ */
+/*	$OpenBSD: log.h,v 1.9 2016/05/23 18:55:21 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -33,9 +33,9 @@ void	fatal(const char *) __dead;
 void	fatalx(const char *) __dead;
 const char *socket_name(int);
 const char *pw_type_name(uint16_t);
-const char *log_map(struct map *);
+const char *log_map(const struct map *);
 struct fec;
-const char *log_fec(struct fec *);
+const char *log_fec(const struct fec *);
 void	log_rtmsg(unsigned char);
 struct hello_source;
 char	*log_hello_src(const struct hello_source *);

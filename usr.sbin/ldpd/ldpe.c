@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.55 2016/05/23 18:41:59 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.56 2016/05/23 18:55:21 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -274,8 +274,8 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct kif))
 				fatalx("IFSTATUS imsg with wrong len");
-
 			kif = imsg.data;
+
 			iface = if_lookup(leconf, kif->ifindex);
 			if (!iface)
 				break;

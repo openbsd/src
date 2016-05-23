@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.23 2016/05/23 18:33:56 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.24 2016/05/23 18:55:21 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -351,7 +351,7 @@ log_hello_src(const struct hello_source *src)
 }
 
 const char *
-log_map(struct map *map)
+log_map(const struct map *map)
 {
 	static char	buf[64];
 	char		pstr[64];
@@ -381,7 +381,7 @@ log_map(struct map *map)
 }
 
 const char *
-log_fec(struct fec *fec)
+log_fec(const struct fec *fec)
 {
 	static char	buf[64];
 	char		pstr[32];

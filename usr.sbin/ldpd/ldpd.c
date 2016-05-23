@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.42 2016/05/23 18:41:59 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.43 2016/05/23 18:55:21 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -53,7 +53,6 @@ int		check_child(pid_t, const char *);
 
 void	main_dispatch_ldpe(int, short, void *);
 void	main_dispatch_lde(int, short, void *);
-
 int	main_imsg_compose_both(enum imsg_type, void *, uint16_t);
 void	main_imsg_send_net_sockets(void);
 void	main_imsg_send_net_socket(enum socket_type);
@@ -210,7 +209,7 @@ main(int argc, char *argv[])
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
 	    PF_UNSPEC, pipe_parent2lde) == -1)
 		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM |SOCK_NONBLOCK | SOCK_CLOEXEC,
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
 	    PF_UNSPEC, pipe_ldpe2lde) == -1)
 		fatal("socketpair");
 
@@ -410,12 +409,11 @@ main_dispatch_ldpe(int fd, short event, void *bula)
 void
 main_dispatch_lde(int fd, short event, void *bula)
 {
-	struct imsgev  *iev = bula;
-	struct imsgbuf *ibuf = &iev->ibuf;
+	struct imsgev	*iev = bula;
+	struct imsgbuf	*ibuf = &iev->ibuf;
 	struct imsg	 imsg;
 	ssize_t		 n;
 	int		 shut = 0;
-	struct kpw	*kpw;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -456,17 +454,17 @@ main_dispatch_lde(int fd, short event, void *bula)
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
 			    sizeof(struct kpw))
 				fatalx("invalid size of IMSG_KPWLABEL_CHANGE");
-
-			kpw = imsg.data;
-			kmpw_set(kpw);
+			if (kmpw_set(imsg.data))
+				log_warn("%s: error changing pseudowire",
+				    __func__);
 			break;
 		case IMSG_KPWLABEL_DELETE:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
 			    sizeof(struct kpw))
 				fatalx("invalid size of IMSG_KPWLABEL_DELETE");
-
-			kpw = imsg.data;
-			kmpw_unset(kpw);
+			if (kmpw_unset(imsg.data))
+				log_warn("%s: error unsetting pseudowire",
+				    __func__);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
@@ -1070,6 +1068,9 @@ config_clear(struct ldpd_conf *conf)
 
 	/* merge current config with an empty config */
 	xconf = malloc(sizeof(*xconf));
+	if (xconf == NULL)
+		fatal(NULL);
+
 	*xconf = *conf;
 	LIST_INIT(&xconf->iface_list);
 	LIST_INIT(&xconf->tnbr_list);

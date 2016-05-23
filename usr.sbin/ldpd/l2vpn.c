@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.12 2016/05/23 18:36:55 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.13 2016/05/23 18:55:21 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -355,20 +355,21 @@ l2vpn_sync_pws(struct in_addr addr)
 
 	LIST_FOREACH(l2vpn, &ldeconf->l2vpn_list, entry) {
 		LIST_FOREACH(pw, &l2vpn->pw_list, entry) {
-			if (pw->lsr_id.s_addr == addr.s_addr) {
-				l2vpn_pw_fec(pw, &fec);
-				fn = (struct fec_node *)fec_find(&ft, &fec);
-				if (fn == NULL)
-					continue;
-				fnh = fec_nh_find(fn, pw->lsr_id);
-				if (fnh == NULL)
-					continue;
+			if (pw->lsr_id.s_addr != addr.s_addr)
+				continue;
 
-				if (l2vpn_pw_ok(pw, fnh))
-					lde_send_change_klabel(fn, fnh);
-				else
-					lde_send_delete_klabel(fn, fnh);
-			}
+			l2vpn_pw_fec(pw, &fec);
+			fn = (struct fec_node *)fec_find(&ft, &fec);
+			if (fn == NULL)
+				continue;
+			fnh = fec_nh_find(fn, pw->lsr_id);
+			if (fnh == NULL)
+				continue;
+
+			if (l2vpn_pw_ok(pw, fnh))
+				lde_send_change_klabel(fn, fnh);
+			else
+				lde_send_delete_klabel(fn, fnh);
 		}
 	}
 }

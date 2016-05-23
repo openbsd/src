@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.52 2016/05/23 18:46:13 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.53 2016/05/23 18:55:21 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -306,13 +306,11 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 				    __func__);
 				break;
 			}
-
 			if (lde_address_add(ln, &addr) < 0) {
 				log_debug("%s: cannot add address %s, it "
 				    "already exists", __func__,
 				    inet_ntoa(addr));
 			}
-
 			break;
 		case IMSG_ADDRESS_DEL:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(addr))
@@ -325,13 +323,11 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 				    __func__);
 				break;
 			}
-
 			if (lde_address_del(ln, &addr) < 0) {
 				log_debug("%s: cannot delete address %s, it "
 				    "does not exist", __func__,
 				    inet_ntoa(addr));
 			}
-
 			break;
 		case IMSG_NOTIFICATION:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(nm))
@@ -356,12 +352,11 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_NEIGHBOR_UP:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(addr))
 				fatalx("lde_dispatch_imsg: wrong imsg len");
-			memcpy(&addr, imsg.data, sizeof(addr));
 
 			if (lde_nbr_find(imsg.hdr.peerid))
 				fatalx("lde_dispatch_imsg: "
 				    "neighbor already exists");
-			lde_nbr_new(imsg.hdr.peerid, &addr);
+			lde_nbr_new(imsg.hdr.peerid, imsg.data);
 			break;
 		case IMSG_NEIGHBOR_DOWN:
 			lde_nbr_del(lde_nbr_find(imsg.hdr.peerid));
@@ -556,7 +551,7 @@ lde_assign_label(void)
 
 	/* XXX some checks needed */
 	label++;
-	return label;
+	return (label);
 }
 
 void
@@ -1110,19 +1105,16 @@ lde_change_egress_label(int was_implicit)
 int
 lde_address_add(struct lde_nbr *ln, struct in_addr *addr)
 {
-	struct lde_addr		*address;
+	struct lde_addr		*new;
 
 	if (lde_address_find(ln, addr) != NULL)
 		return (-1);
 
-	if ((address = calloc(1, sizeof(*address))) == NULL)
+	if ((new = calloc(1, sizeof(*new))) == NULL)
 		fatal(__func__);
 
-	address->addr = *addr;
-
-	TAILQ_INSERT_TAIL(&ln->addr_list, address, entry);
-
-	log_debug("%s: added %s", __func__, inet_ntoa(*addr));
+	new->addr = *addr;
+	TAILQ_INSERT_TAIL(&ln->addr_list, new, entry);
 
 	return (0);
 }
@@ -1130,17 +1122,14 @@ lde_address_add(struct lde_nbr *ln, struct in_addr *addr)
 int
 lde_address_del(struct lde_nbr *ln, struct in_addr *addr)
 {
-	struct lde_addr		*address;
+	struct lde_addr		*lde_addr;
 
-	address = lde_address_find(ln, addr);
-	if (address == NULL)
+	lde_addr = lde_address_find(ln, addr);
+	if (lde_addr == NULL)
 		return (-1);
 
-	TAILQ_REMOVE(&ln->addr_list, address, entry);
-
-	free(address);
-
-	log_debug("%s: deleted %s", __func__, inet_ntoa(*addr));
+	TAILQ_REMOVE(&ln->addr_list, lde_addr, entry);
+	free(lde_addr);
 
 	return (0);
 }
@@ -1148,12 +1137,11 @@ lde_address_del(struct lde_nbr *ln, struct in_addr *addr)
 struct lde_addr *
 lde_address_find(struct lde_nbr *ln, struct in_addr *addr)
 {
-	struct lde_addr		*address = NULL;
+	struct lde_addr		*lde_addr;
 
-	TAILQ_FOREACH(address, &ln->addr_list, entry) {
-		if (address->addr.s_addr == addr->s_addr)
-			return (address);
-	}
+	TAILQ_FOREACH(lde_addr, &ln->addr_list, entry)
+		if (lde_addr->addr.s_addr == addr->s_addr)
+			return (lde_addr);
 
 	return (NULL);
 }
@@ -1161,10 +1149,10 @@ lde_address_find(struct lde_nbr *ln, struct in_addr *addr)
 void
 lde_address_list_free(struct lde_nbr *ln)
 {
-	struct lde_addr		*addr;
+	struct lde_addr		*lde_addr;
 
-	while ((addr = TAILQ_FIRST(&ln->addr_list)) != NULL) {
-		TAILQ_REMOVE(&ln->addr_list, addr, entry);
-		free(addr);
+	while ((lde_addr = TAILQ_FIRST(&ln->addr_list)) != NULL) {
+		TAILQ_REMOVE(&ln->addr_list, lde_addr, entry);
+		free(lde_addr);
 	}
 }

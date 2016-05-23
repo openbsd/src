@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.48 2016/05/23 18:41:59 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.49 2016/05/23 18:55:21 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -84,7 +84,7 @@ uint32_t	 get_rtr_id(void);
 int		 host(const char *, struct in_addr *, struct in_addr *);
 
 static struct ldpd_conf	*conf;
-static int			 errors = 0;
+static int		 errors = 0;
 
 struct iface		*iface = NULL;
 struct tnbr		*tnbr = NULL;
@@ -138,9 +138,7 @@ typedef struct {
 %token	ERROR
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
-%type	<v.number>	yesno
-%type	<v.number>	l2vpn_type
-%type	<v.number>	pw_type
+%type	<v.number>	yesno l2vpn_type pw_type
 %type	<v.string>	string
 
 %%
@@ -261,9 +259,8 @@ conf_main	: ROUTERID STRING {
 		;
 
 iface_defaults	: LHELLOHOLDTIME NUMBER {
-			if ($2 < MIN_HOLDTIME ||
-			    $2 > MAX_HOLDTIME) {
-				yyerror("hello holdtime out of range (%d-%d)",
+			if ($2 < MIN_HOLDTIME || $2 > MAX_HOLDTIME) {
+				yyerror("hello-holdtime out of range (%d-%d)",
 				    MIN_HOLDTIME, MAX_HOLDTIME);
 				YYERROR;
 			}
@@ -281,13 +278,11 @@ iface_defaults	: LHELLOHOLDTIME NUMBER {
 		;
 
 tnbr_defaults	: THELLOHOLDTIME NUMBER {
-			if ($2 < MIN_HOLDTIME ||
-			    $2 > MAX_HOLDTIME) {
-				yyerror("hello holdtime out of range (%d-%d)",
+			if ($2 < MIN_HOLDTIME || $2 > MAX_HOLDTIME) {
+				yyerror("hello-holdtime out of range (%d-%d)",
 				    MIN_HOLDTIME, MAX_HOLDTIME);
 				YYERROR;
 			}
-			conf->thello_holdtime = $2;
 			defs->thello_holdtime = $2;
 		}
 		| THELLOINTERVAL NUMBER {
@@ -297,7 +292,6 @@ tnbr_defaults	: THELLOHOLDTIME NUMBER {
 				    MIN_HELLO_INTERVAL, MAX_HELLO_INTERVAL);
 				YYERROR;
 			}
-			conf->thello_interval = $2;
 			defs->thello_interval = $2;
 		}
 		;
@@ -354,8 +348,7 @@ pwopts		: PWID NUMBER {
 			struct in_addr	 addr;
 
 			if (inet_aton($2, &addr) == 0) {
-				yyerror(
-				    "error parsing neighbor address");
+				yyerror("error parsing neighbor address");
 				free($2);
 				YYERROR;
 			}
@@ -389,7 +382,6 @@ pseudowire	: PSEUDOWIRE STRING {
 			pw = conf_get_l2vpn_pw(l2vpn, kif);
 			if (pw == NULL)
 				YYERROR;
-			LIST_INSERT_HEAD(&l2vpn->pw_list, pw, entry);
 
 			pwdefs = *defs;
 			defs = &pwdefs;
@@ -403,12 +395,11 @@ pseudowire	: PSEUDOWIRE STRING {
 				YYERROR;
 			}
 			if (pw->lsr_id.s_addr == INADDR_ANY) {
-				yyerror("missing pseudowore neighbor");
+				yyerror("missing pseudowire neighbor");
 				YYERROR;
 			}
-
-			LIST_FOREACH(l, &conf->l2vpn_list, entry)
-				LIST_FOREACH(p, &l->pw_list, entry)
+			LIST_FOREACH(l, &conf->l2vpn_list, entry) {
+				LIST_FOREACH(p, &l->pw_list, entry) {
 					if (pw != p &&
 					    pw->pwid == p->pwid &&
 					    pw->lsr_id.s_addr == p->lsr_id.s_addr) {
@@ -416,10 +407,12 @@ pseudowire	: PSEUDOWIRE STRING {
 						    "configured");
 						YYERROR;
 					}
+				}
+			}
 
 			pw->flags = defs->pwflags;
-			defs = &globaldefs;
 			pw = NULL;
+			defs = &globaldefs;
 		}
 		;
 
@@ -503,7 +496,6 @@ l2vpnopts	: PWTYPE pw_type {
 			lif = conf_get_l2vpn_if(l2vpn, kif);
 			if (lif == NULL)
 				YYERROR;
-			LIST_INSERT_HEAD(&l2vpn->if_list, lif, entry);
 		}
 		| pseudowire
 		;
@@ -524,17 +516,10 @@ interface	: INTERFACE STRING	{
 				YYERROR;
 			}
 			free($2);
+
 			iface = conf_get_if(kif);
 			if (iface == NULL)
 				YYERROR;
-			if (iface->if_type == IFT_LOOP ||
-			    iface->if_type == IFT_CARP ||
-			    iface->if_type == IFT_MPLSTUNNEL) {
-				yyerror("unsupported interface type on "
-				    "interface %s", iface->name);
-				YYERROR;
-			}
-			LIST_INSERT_HEAD(&conf->iface_list, iface, entry);
 
 			ifacedefs = *defs;
 			defs = &ifacedefs;
@@ -542,7 +527,6 @@ interface	: INTERFACE STRING	{
 			iface->hello_holdtime = defs->lhello_holdtime;
 			iface->hello_interval = defs->lhello_interval;
 			iface = NULL;
-
 			defs = &globaldefs;
 		}
 		;
@@ -560,14 +544,14 @@ tneighbor	: TNEIGHBOR STRING	{
 			struct in_addr	 addr;
 
 			if (inet_aton($2, &addr) == 0) {
-				yyerror(
-				    "error parsing neighbor address");
+				yyerror("error parsing targeted-neighbor "
+				    "address");
 				free($2);
 				YYERROR;
 			}
 			free($2);
 			if (bad_ip_addr(addr)) {
-				yyerror("invalid neighbor address");
+				yyerror("invalid targeted-neighbor address");
 				YYERROR;
 			}
 
@@ -575,16 +559,12 @@ tneighbor	: TNEIGHBOR STRING	{
 			if (tnbr == NULL)
 				YYERROR;
 
-			tnbr->flags |= F_TNBR_CONFIGURED;
-			LIST_INSERT_HEAD(&conf->tnbr_list, tnbr, entry);
-
 			tnbrdefs = *defs;
 			defs = &tnbrdefs;
 		} tneighbor_block {
 			tnbr->hello_holdtime = defs->thello_holdtime;
 			tnbr->hello_interval = defs->thello_interval;
 			tnbr = NULL;
-
 			defs = &globaldefs;
 		}
 		;
@@ -602,8 +582,7 @@ neighbor	: NEIGHBOR STRING	{
 			struct in_addr	 addr;
 
 			if (inet_aton($2, &addr) == 0) {
-				yyerror(
-				    "error parsing neighbor address");
+				yyerror("error parsing neighbor address");
 				free($2);
 				YYERROR;
 			}
@@ -616,7 +595,6 @@ neighbor	: NEIGHBOR STRING	{
 			nbrp = conf_get_nbrp(addr);
 			if (nbrp == NULL)
 				YYERROR;
-			LIST_INSERT_HEAD(&conf->nbrp_list, nbrp, entry);
 		} neighbor_block {
 			nbrp = NULL;
 		}
@@ -636,7 +614,6 @@ l2vpn		: L2VPN STRING TYPE l2vpn_type {
 			if (l2vpn == NULL)
 				YYERROR;
 			l2vpn->type = $4;
-			LIST_INSERT_HEAD(&conf->l2vpn_list, l2vpn, entry);
 		} l2vpn_block {
 			l2vpn = NULL;
 		}
@@ -1045,7 +1022,6 @@ parse_config(char *filename)
 		fatal(__func__);
 	conf->keepalive = DEFAULT_KEEPALIVE;
 
-	memset(&globaldefs, 0, sizeof(globaldefs));
 	defs = &globaldefs;
 	defs->lhello_holdtime = LINK_DFLT_HOLDTIME;
 	defs->lhello_interval = DEFAULT_HELLO_INTERVAL;
@@ -1091,7 +1067,7 @@ parse_config(char *filename)
 		return (NULL);
 	}
 
-	if (conf->rtr_id.s_addr == 0)
+	if (conf->rtr_id.s_addr == INADDR_ANY)
 		conf->rtr_id.s_addr = get_rtr_id();
 	if (conf->trans_addr.s_addr == 0)
 		conf->trans_addr = conf->rtr_id;
@@ -1186,8 +1162,16 @@ conf_get_if(struct kif *kif)
 		}
 	}
 
-	i = if_new(kif);
+	if (kif->if_type == IFT_LOOP ||
+	    kif->if_type == IFT_CARP ||
+	    kif->if_type == IFT_MPLSTUNNEL) {
+		yyerror("unsupported interface type on interface %s",
+		    kif->ifname);
+		return (NULL);
+	}
 
+	i = if_new(kif);
+	LIST_INSERT_HEAD(&conf->iface_list, i, entry);
 	return (i);
 }
 
@@ -1204,7 +1188,8 @@ conf_get_tnbr(struct in_addr addr)
 	}
 
 	t = tnbr_new(conf, addr);
-
+	t->flags |= F_TNBR_CONFIGURED;
+	LIST_INSERT_HEAD(&conf->tnbr_list, t, entry);
 	return (t);
 }
 
@@ -1222,7 +1207,7 @@ conf_get_nbrp(struct in_addr lsr_id)
 	}
 
 	n = nbr_params_new(lsr_id);
-
+	LIST_INSERT_HEAD(&conf->nbrp_list, n, entry);
 	return (n);
 }
 
@@ -1237,7 +1222,7 @@ conf_get_l2vpn(char *name)
 	}
 
 	l = l2vpn_new(name);
-
+	LIST_INSERT_HEAD(&conf->l2vpn_list, l, entry);
 	return (l);
 }
 
@@ -1246,6 +1231,7 @@ conf_get_l2vpn_if(struct l2vpn *l, struct kif *kif)
 {
 	struct iface	*i;
 	struct l2vpn	*ltmp;
+	struct l2vpn_if	*f;
 
 	LIST_FOREACH(i, &conf->iface_list, entry) {
 		if (i->ifindex == kif->ifindex) {
@@ -1262,13 +1248,16 @@ conf_get_l2vpn_if(struct l2vpn *l, struct kif *kif)
 			return (NULL);
 		}
 
-	return (l2vpn_if_new(l, kif));
+	f = l2vpn_if_new(l, kif);
+	LIST_INSERT_HEAD(&l2vpn->if_list, f, entry);
+	return (f);
 }
 
 struct l2vpn_pw *
 conf_get_l2vpn_pw(struct l2vpn *l, struct kif *kif)
 {
 	struct l2vpn	*ltmp;
+	struct l2vpn_pw	*p;
 
 	LIST_FOREACH(ltmp, &conf->l2vpn_list, entry) {
 		if (l2vpn_pw_find(ltmp, kif->ifindex)) {
@@ -1278,7 +1267,9 @@ conf_get_l2vpn_pw(struct l2vpn *l, struct kif *kif)
 		}
 	}
 
-	return (l2vpn_pw_new(l, kif));
+	p = l2vpn_pw_new(l, kif);
+	LIST_INSERT_HEAD(&l2vpn->pw_list, p, entry);
+	return (p);
 }
 
 void

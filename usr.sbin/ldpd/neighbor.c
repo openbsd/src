@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.66 2016/05/23 18:28:22 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.67 2016/05/23 18:55:21 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -254,8 +254,6 @@ nbr_new(struct in_addr id, struct in_addr addr)
 	evtimer_set(&nbr->keepalive_timer, nbr_ktimer, nbr);
 	evtimer_set(&nbr->initdelay_timer, nbr_idtimer, nbr);
 
-	/* init pfkey - remove old if any, load new ones */
-	pfkey_remove(nbr);
 	nbrp = nbr_params_find(leconf, nbr->id);
 	if (nbrp && pfkey_establish(nbr, nbrp) == -1)
 		fatalx("pfkey setup failed");
@@ -485,7 +483,7 @@ nbr_connect_cb(int fd, short event, void *arg)
 	socklen_t	 len;
 
 	len = sizeof(error);
-	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
+	if (getsockopt(nbr->fd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
 		log_warn("%s: getsockopt SOL_SOCKET SO_ERROR", __func__);
 		return;
 	}

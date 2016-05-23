@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.17 2016/05/23 18:41:59 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.18 2016/05/23 18:55:21 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -34,7 +34,6 @@
 extern struct ldpd_conf        *leconf;
 
 void	 adj_itimer(int, short, void *);
-
 void	 tnbr_hello_timer(int, short, void *);
 void	 tnbr_start_hello_timer(struct tnbr *);
 void	 tnbr_stop_hello_timer(struct tnbr *);
@@ -145,7 +144,6 @@ adj_start_itimer(struct adj *adj)
 
 	timerclear(&tv);
 	tv.tv_sec = adj->holdtime;
-
 	if (evtimer_add(&adj->inactivity_timer, &tv) == -1)
 		fatal(__func__);
 }

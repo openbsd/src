@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.21 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: address.c,v 1.22 2016/05/23 18:55:21 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -84,8 +84,6 @@ recv_address(struct nbr *nbr, char *buf, uint16_t len)
 	enum imsg_type		type;
 
 	memcpy(&addr, buf, sizeof(addr));
-	log_debug("%s: lsr-id %s%s", __func__, inet_ntoa(nbr->id),
-	    ntohs(addr.type) == MSG_TYPE_ADDR ? "" : " address withdraw");
 	if (ntohs(addr.type) == MSG_TYPE_ADDR)
 		type = IMSG_ADDRESS_ADD;
 	else
@@ -94,18 +92,17 @@ recv_address(struct nbr *nbr, char *buf, uint16_t len)
 	buf += LDP_MSG_SIZE;
 	len -= LDP_MSG_SIZE;
 
+	/* Address List TLV */
 	if (len < sizeof(alt)) {
 		session_shutdown(nbr, S_BAD_MSG_LEN, addr.msgid, addr.type);
 		return (-1);
 	}
 
 	memcpy(&alt, buf, sizeof(alt));
-
 	if (ntohs(alt.length) != len - TLV_HDR_LEN) {
 		session_shutdown(nbr, S_BAD_TLV_LEN, addr.msgid, addr.type);
 		return (-1);
 	}
-
 	if (ntohs(alt.type) != TLV_TYPE_ADDRLIST) {
 		session_shutdown(nbr, S_UNKNOWN_TLV, addr.msgid, addr.type);
 		return (-1);
@@ -116,7 +113,6 @@ recv_address(struct nbr *nbr, char *buf, uint16_t len)
 		send_notification_nbr(nbr, S_UNSUP_ADDR, addr.msgid, addr.type);
 		return (-1);
 	}
-
 	buf += sizeof(alt);
 	len -= sizeof(alt);
 

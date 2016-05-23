@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.23 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: control.c,v 1.24 2016/05/23 18:55:21 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,6 +37,8 @@
 struct ctl_conn	*control_connbyfd(int);
 struct ctl_conn	*control_connbypid(pid_t);
 void		 control_close(int);
+
+struct ctl_conns	 ctl_conns;
 
 int control_fd;
 
@@ -88,7 +90,6 @@ control_init(void)
 int
 control_listen(void)
 {
-
 	if (listen(control_fd, CONTROL_BACKLOG) == -1) {
 		log_warn("%s: listen", __func__);
 		return (-1);
