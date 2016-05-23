@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.3 2016/05/23 15:43:11 renato Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.4 2016/05/23 16:20:59 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -458,7 +458,7 @@ pfkey_init(struct ldpd_sysdep *sysdep)
 	if ((fd = socket(PF_KEY, SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK,
 	    PF_KEY_V2)) == -1) {
 		if (errno == EPROTONOSUPPORT) {
-			log_warnx("PF_KEY not available, disabling ipsec");
+			log_warnx("PF_KEY not available");
 			sysdep->no_pfkey = 1;
 			return (-1);
 		} else

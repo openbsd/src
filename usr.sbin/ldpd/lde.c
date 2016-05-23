@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.44 2016/05/23 16:14:36 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.45 2016/05/23 16:20:59 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -248,7 +248,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_LABEL_WITHDRAW:
 		case IMSG_LABEL_ABORT:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(map))
-				fatalx("invalid size of OE request");
+				fatalx("lde_dispatch_imsg: wrong imsg len");
 			memcpy(&map, imsg.data, sizeof(map));
 
 			ln = lde_nbr_find(imsg.hdr.peerid);
@@ -284,7 +284,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 			break;
 		case IMSG_ADDRESS_ADD:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(addr))
-				fatalx("invalid size of OE request");
+				fatalx("lde_dispatch_imsg: wrong imsg len");
 			memcpy(&addr, imsg.data, sizeof(addr));
 
 			nbr = lde_nbr_find(imsg.hdr.peerid);
@@ -303,7 +303,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 			break;
 		case IMSG_ADDRESS_DEL:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(addr))
-				fatalx("invalid size of OE request");
+				fatalx("lde_dispatch_imsg: wrong imsg len");
 			memcpy(&addr, imsg.data, sizeof(addr));
 
 			nbr = lde_nbr_find(imsg.hdr.peerid);
@@ -315,14 +315,14 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 
 			if (lde_address_del(nbr, &addr) < 0) {
 				log_debug("%s: cannot delete address %s, it "
-				    "does not exists", __func__,
+				    "does not exist", __func__,
 				    inet_ntoa(addr));
 			}
 
 			break;
 		case IMSG_NOTIFICATION:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(nm))
-				fatalx("invalid size of OE request");
+				fatalx("lde_dispatch_imsg: wrong imsg len");
 			memcpy(&nm, imsg.data, sizeof(nm));
 
 			ln = lde_nbr_find(imsg.hdr.peerid);
@@ -342,7 +342,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 			break;
 		case IMSG_NEIGHBOR_UP:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(addr))
-				fatalx("invalid size of OE request");
+				fatalx("lde_dispatch_imsg: wrong imsg len");
 			memcpy(&addr, imsg.data, sizeof(addr));
 
 			if (lde_nbr_find(imsg.hdr.peerid))

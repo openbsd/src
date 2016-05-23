@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.51 2016/05/23 16:14:36 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.52 2016/05/23 16:20:59 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -1479,7 +1479,7 @@ kmpw_unset(struct kpw *kpw)
 
 	kif = kif_find(kpw->ifindex);
 	if (kif == NULL) {
-		log_warn("%s: failed to find mpw by index (%u)", __func__,
+		log_warnx("%s: failed to find mpw by index (%u)", __func__,
 		    kpw->ifindex);
 		return;
 	}
@@ -1510,7 +1510,7 @@ kmpw_install(const char *ifname, struct kpw *kpw)
 		imr.imr_type = IMR_TYPE_ETHERNET_TAGGED;
 		break;
 	default:
-		log_warn("%s: unhandled pseudowire type (%#X)", __func__,
+		log_warnx("%s: unhandled pseudowire type (%#X)", __func__,
 		    kpw->pw_type);
 		return;
 	}

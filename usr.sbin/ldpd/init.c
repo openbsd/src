@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.22 2016/05/23 16:14:36 renato Exp $ */
+/*	$OpenBSD: init.c,v 1.23 2016/05/23 16:20:59 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -47,7 +47,7 @@ send_init(struct nbr *nbr)
 	struct ibuf		*buf;
 	u_int16_t		 size;
 
-	log_debug("%s: neighbor ID %s", __func__, inet_ntoa(nbr->id));
+	log_debug("%s: lsr-id %s", __func__, inet_ntoa(nbr->id));
 
 	size = LDP_HDR_SIZE + LDP_MSG_SIZE + SESS_PRMS_SIZE;
 	if ((buf = ibuf_open(size)) == NULL)
@@ -69,7 +69,7 @@ recv_init(struct nbr *nbr, char *buf, u_int16_t len)
 	struct sess_prms_tlv	sess;
 	uint16_t		max_pdu_len;
 
-	log_debug("%s: neighbor ID %s", __func__, inet_ntoa(nbr->id));
+	log_debug("%s: lsr-id %s", __func__, inet_ntoa(nbr->id));
 
 	bcopy(buf, &init, sizeof(init));
 

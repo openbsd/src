@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.61 2016/05/23 16:18:51 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.62 2016/05/23 16:20:59 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -154,7 +154,7 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 
 	if (nbr_fsm_tbl[i].state == -1) {
 		/* event outside of the defined fsm, ignore it. */
-		log_warnx("%s: neighbor ID %s, event %s not expected in "
+		log_warnx("%s: lsr-id %s, event %s not expected in "
 		    "state %s", __func__, inet_ntoa(nbr->id),
 		    nbr_event_names[event], nbr_state_name(old_state));
 		return (0);
@@ -165,7 +165,7 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 
 	if (old_state != nbr->state) {
 		log_debug("%s: event %s resulted in action %s and "
-		    "changing state for neighbor ID %s from %s to %s",
+		    "changing state for lsr-id %s from %s to %s",
 		    __func__, nbr_event_names[event],
 		    nbr_action_names[nbr_fsm_tbl[i].action],
 		    inet_ntoa(nbr->id), nbr_state_name(old_state),
@@ -226,7 +226,7 @@ nbr_new(struct in_addr id, struct in_addr addr)
 	struct nbr_params	*nbrp;
 	struct pending_conn	*pconn;
 
-	log_debug("%s: LSR ID %s", __func__, inet_ntoa(id));
+	log_debug("%s: lsr-id %s", __func__, inet_ntoa(id));
 
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
 		fatal(__func__);
@@ -272,7 +272,7 @@ nbr_new(struct in_addr id, struct in_addr addr)
 void
 nbr_del(struct nbr *nbr)
 {
-	log_debug("%s: LSR ID %s", __func__, inet_ntoa(nbr->id));
+	log_debug("%s: lsr-id %s", __func__, inet_ntoa(nbr->id));
 
 	nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 	pfkey_remove(nbr);
@@ -309,7 +309,7 @@ nbr_update_peerid(struct nbr *nbr)
 	nbr->peerid = peercnt;
 
 	if (RB_INSERT(nbr_pid_head, &nbrs_by_pid, nbr) != NULL)
-		fatalx("nbr_new: RB_INSERT(nbrs_by_pid) failed");
+		fatalx("nbr_update_peerid: RB_INSERT(nbrs_by_pid) failed");
 }
 
 struct nbr *
@@ -377,7 +377,7 @@ nbr_ktimeout(int fd, short event, void *arg)
 {
 	struct nbr *nbr = arg;
 
-	log_debug("%s: neighbor ID %s", __func__, inet_ntoa(nbr->id));
+	log_debug("%s: lsr-id %s", __func__, inet_ntoa(nbr->id));
 
 	session_shutdown(nbr, S_KEEPALIVE_TMR, 0, 0);
 }
@@ -409,7 +409,7 @@ nbr_idtimer(int fd, short event, void *arg)
 {
 	struct nbr *nbr = arg;
 
-	log_debug("%s: neighbor ID %s", __func__, inet_ntoa(nbr->id));
+	log_debug("%s: lsr-id %s", __func__, inet_ntoa(nbr->id));
 
 	nbr_establish_connection(nbr);
 }

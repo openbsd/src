@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.51 2016/05/23 16:18:51 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.52 2016/05/23 16:20:59 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -553,7 +553,7 @@ session_shutdown(struct nbr *nbr, u_int32_t status, u_int32_t msgid,
 	if (nbr->tcp == NULL)
 		return;
 
-	log_debug("%s: nbr ID %s", __func__, inet_ntoa(nbr->id));
+	log_debug("%s: lsr-id %s", __func__, inet_ntoa(nbr->id));
 
 	send_notification_nbr(nbr, status, msgid, type);
 
@@ -566,7 +566,7 @@ session_shutdown(struct nbr *nbr, u_int32_t status, u_int32_t msgid,
 void
 session_close(struct nbr *nbr)
 {
-	log_debug("%s: closing session with nbr ID %s", __func__,
+	log_debug("%s: closing session with lsr-id %s", __func__,
 	    inet_ntoa(nbr->id));
 
 	tcp_close(nbr->tcp);

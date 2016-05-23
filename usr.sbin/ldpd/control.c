@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.21 2016/05/23 15:14:07 renato Exp $ */
+/*	$OpenBSD: control.c,v 1.22 2016/05/23 16:20:59 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -125,7 +125,7 @@ control_accept(int listenfd, short event, void *bula)
 			accept_pause();
 		else if (errno != EWOULDBLOCK && errno != EINTR &&
 		    errno != ECONNABORTED)
-			log_warn("%s: accept", __func__);
+			log_warn("%s: accept4", __func__);
 		return;
 	}
 
@@ -175,7 +175,7 @@ control_close(int fd)
 	struct ctl_conn	*c;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
-		log_warn("%s: fd %d: not found", __func__, fd);
+		log_warnx("%s: fd %d: not found", __func__, fd);
 		return;
 	}
 
@@ -199,7 +199,7 @@ control_dispatch_imsg(int fd, short event, void *bula)
 	int		 verbose;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
-		log_warn("%s: fd %d: not found", __func__, fd);
+		log_warnx("%s: fd %d: not found", __func__, fd);
 		return;
 	}
 

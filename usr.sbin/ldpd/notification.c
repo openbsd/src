@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.23 2016/05/23 16:16:44 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.24 2016/05/23 16:20:59 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -94,7 +94,7 @@ void
 send_notification_nbr(struct nbr *nbr, u_int32_t status, u_int32_t msgid,
     u_int32_t type)
 {
-	log_debug("%s: nbr ID %s, status %s", __func__, inet_ntoa(nbr->id),
+	log_debug("%s: lsr-id %s, status %s", __func__, inet_ntoa(nbr->id),
 	     notification_name(status));
 
 	send_notification(status, nbr->tcp, msgid, type);

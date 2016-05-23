@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.10 2016/05/23 15:57:50 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.11 2016/05/23 16:20:59 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -44,7 +44,7 @@ adj_new(struct nbr *nbr, struct hello_source *source, struct in_addr addr)
 {
 	struct adj	*adj;
 
-	log_debug("%s: LSR ID %s, %s", __func__, inet_ntoa(nbr->id),
+	log_debug("%s: lsr-id %s, %s", __func__, inet_ntoa(nbr->id),
 	    log_hello_src(source));
 
 	if ((adj = calloc(1, sizeof(*adj))) == NULL)
@@ -74,7 +74,7 @@ adj_new(struct nbr *nbr, struct hello_source *source, struct in_addr addr)
 void
 adj_del(struct adj *adj)
 {
-	log_debug("%s: LSR ID %s, %s", __func__, inet_ntoa(adj->nbr->id),
+	log_debug("%s: lsr-id %s, %s", __func__, inet_ntoa(adj->nbr->id),
 	    log_hello_src(&adj->source));
 
 	adj_stop_itimer(adj);
@@ -121,7 +121,7 @@ adj_itimer(int fd, short event, void *arg)
 {
 	struct adj *adj = arg;
 
-	log_debug("%s: LDP ID %s", __func__, inet_ntoa(adj->nbr->id));
+	log_debug("%s: lsr-id %s", __func__, inet_ntoa(adj->nbr->id));
 
 	switch (adj->source.type) {
 	case HELLO_LINK:

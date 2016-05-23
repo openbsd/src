@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.19 2016/05/23 16:12:28 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.20 2016/05/23 16:20:59 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -190,7 +190,7 @@ nbr_state_name(int state)
 	case NBR_STA_OPER:
 		return ("OPERATIONAL");
 	default:
-		return ("UNKNW");
+		return ("UNKNOWN");
 	}
 }
 
@@ -203,7 +203,7 @@ if_state_name(int state)
 	case IF_STA_ACTIVE:
 		return ("ACTIVE");
 	default:
-		return ("UNKNW");
+		return ("UNKNOWN");
 	}
 }
 

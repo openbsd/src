@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.3 2016/05/23 16:14:36 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.4 2016/05/23 16:20:59 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -46,7 +46,7 @@ l2vpn_new(const char *name)
 	struct l2vpn	*l2vpn;
 
 	if ((l2vpn = calloc(1, sizeof(*l2vpn))) == NULL)
-		err(1, "l2vpn_new: calloc");
+		fatal("l2vpn_new: calloc");
 
 	strlcpy(l2vpn->name, name, sizeof(l2vpn->name));
 
@@ -102,7 +102,7 @@ l2vpn_if_new(struct l2vpn *l2vpn, struct kif *kif)
 	struct l2vpn_if	*lif;
 
 	if ((lif = calloc(1, sizeof(*lif))) == NULL)
-		err(1, "l2vpn_if_new: calloc");
+		fatal("l2vpn_if_new: calloc");
 
 	lif->l2vpn = l2vpn;
 	strlcpy(lif->ifname, kif->ifname, sizeof(lif->ifname));
@@ -137,7 +137,7 @@ l2vpn_pw_new(struct l2vpn *l2vpn, struct kif *kif)
 	struct l2vpn_pw	*pw;
 
 	if ((pw = calloc(1, sizeof(*pw))) == NULL)
-		err(1, "l2vpn_pw_new: calloc");
+		fatal("l2vpn_pw_new: calloc");
 
 	pw->l2vpn = l2vpn;
 	strlcpy(pw->ifname, kif->ifname, sizeof(pw->ifname));
