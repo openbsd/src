@@ -997,7 +997,6 @@ res_send_async
 /* net */
 __b64_ntop
 __b64_pton
-/*__check_rhosts_file*/
 __dn_comp
 __dn_skipname
 __ivaliduser
@@ -1008,7 +1007,6 @@ __p_type
 __p_type_syms
 __putlong
 __putshort
-__rcmd_errstr
 __res_dnok
 __res_hnok
 __res_mailok

@@ -55,9 +55,6 @@ PROTO_NORMAL(__ivaliduser_sa);
 static int __icheckhost(struct sockaddr *, socklen_t, const char *);
 static char *__gethostloop(struct sockaddr *, socklen_t);
 
-int	__check_rhosts_file = 1;
-char	*__rcmd_errstr;
-
 int
 ruserok(const char *rhost, int superuser, const char *ruser, const char *luser)
 {
@@ -128,7 +125,7 @@ again:
 		}
 		(void)fclose(hostf);
 	}
-	if (first == 1 && (__check_rhosts_file || superuser)) {
+	if (first == 1) {
 		int len;
 
 		first = 0;
@@ -169,7 +166,6 @@ again:
 			cp = ".rhosts writable by other than owner";
 		/* If there were any problems, quit. */
 		if (cp) {
-			__rcmd_errstr = cp;
 			(void)fclose(hostf);
 			return (-1);
 		}
