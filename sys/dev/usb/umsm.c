@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.104 2015/09/29 08:34:28 mpi Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.105 2016/05/23 15:45:18 chris Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -115,6 +115,7 @@ struct umsm_type {
 
 static const struct umsm_type umsm_devs[] = {
 	{{ USB_VENDOR_AIRPRIME,	USB_PRODUCT_AIRPRIME_PC5220 }, 0},
+	{{ USB_VENDOR_AIRPRIME, USB_PRODUCT_AIRPRIME_AIRCARD_313U }, 0},
 
 	{{ USB_VENDOR_ANYDATA,	USB_PRODUCT_ANYDATA_A2502 }, 0},
 	{{ USB_VENDOR_ANYDATA,	USB_PRODUCT_ANYDATA_ADU_500A }, 0},
@@ -247,6 +248,7 @@ static const struct umsm_type umsm_devs[] = {
 	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_USB305}, 0},
 	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_TRUINSTALL }, DEV_TRUINSTALL},
 	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8355}, 0},
+	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AIRCARD_770S}, 0},
 
 	{{ USB_VENDOR_TCTMOBILE, USB_PRODUCT_TCTMOBILE_UMASS }, DEV_UMASS3},
 	{{ USB_VENDOR_TCTMOBILE, USB_PRODUCT_TCTMOBILE_UMASS_2 }, DEV_UMASS3},
@@ -358,8 +360,7 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
                         umsm_huawei_changemode(uaa->device);
 			printf("%s: umass only mode. need to reattach\n",
 				sc->sc_dev.dv_xname);
-		} else if ((sc->sc_flag & DEV_TRUINSTALL) &&
-			    uaa->ifaceno == 0) {
+		} else if (sc->sc_flag & DEV_TRUINSTALL) {
 			umsm_truinstall_changemode(uaa->device);
 			printf("%s: truinstall mode. need to reattach\n",
 				sc->sc_dev.dv_xname);
