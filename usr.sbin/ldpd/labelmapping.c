@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.39 2016/05/23 16:41:52 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.40 2016/05/23 16:43:57 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -62,6 +62,10 @@ send_labelmessage(struct nbr *nbr, u_int16_t type, struct mapping_head *mh)
 	struct mapping_entry	*me;
 	u_int16_t		 tlv_size, size = 0;
 	int			 first = 1;
+
+	/* nothing to send */
+	if (TAILQ_EMPTY(mh))
+		return;
 
 	while ((me = TAILQ_FIRST(mh)) != NULL) {
 		/* generate pdu */
