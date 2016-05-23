@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2016/05/23 17:00:40 renato Exp $
+#	$OpenBSD: Makefile,v 1.10 2016/05/23 17:43:42 renato Exp $
 
 PROG=	ldpd
 SRCS=	accept.c adjacency.c address.c control.c hello.c init.c interface.c \

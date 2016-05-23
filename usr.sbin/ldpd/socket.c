@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.c,v 1.1 2016/05/23 17:00:40 renato Exp $ */
+/*	$OpenBSD: socket.c,v 1.2 2016/05/23 17:43:42 renato Exp $ */
 
 /*
  * Copyright (c) 2016 Renato Westphal <renato@openbsd.org>

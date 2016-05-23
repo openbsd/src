@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.27 2016/05/23 16:54:22 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.28 2016/05/23 17:43:42 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -36,13 +36,13 @@
 #include "log.h"
 #include "ldpe.h"
 
-int	gen_status_tlv(struct ibuf *, u_int32_t, u_int32_t, u_int32_t);
+int	gen_status_tlv(struct ibuf *, uint32_t, uint32_t, uint32_t);
 
 void
 send_notification_full(struct tcp_conn *tcp, struct notify_msg *nm)
 {
 	struct ibuf	*buf;
-	u_int16_t	 size;
+	uint16_t	 size;
 
 	/* calculate size */
 	size = LDP_HDR_SIZE + LDP_MSG_SIZE + STATUS_SIZE;
@@ -54,7 +54,7 @@ send_notification_full(struct tcp_conn *tcp, struct notify_msg *nm)
 		case MAP_TYPE_PWID:
 			size += FEC_PWID_ELM_MIN_LEN;
 			if (nm->fec.flags & F_MAP_PW_ID)
-				size += sizeof(u_int32_t);
+				size += sizeof(uint32_t);
 			break;
 		}
 	}
@@ -77,12 +77,12 @@ send_notification_full(struct tcp_conn *tcp, struct notify_msg *nm)
 
 /* send a notification without optional tlvs */
 void
-send_notification(u_int32_t status, struct tcp_conn *tcp, u_int32_t msgid,
-    u_int32_t type)
+send_notification(uint32_t status, struct tcp_conn *tcp, uint32_t msgid,
+    uint32_t type)
 {
 	struct notify_msg	 nm;
 
-	bzero(&nm, sizeof(nm));
+	memset(&nm, 0, sizeof(nm));
 	nm.status = status;
 	nm.messageid = msgid;
 	nm.type = type;
@@ -91,8 +91,8 @@ send_notification(u_int32_t status, struct tcp_conn *tcp, u_int32_t msgid,
 }
 
 void
-send_notification_nbr(struct nbr *nbr, u_int32_t status, u_int32_t msgid,
-    u_int32_t type)
+send_notification_nbr(struct nbr *nbr, uint32_t status, uint32_t msgid,
+    uint32_t type)
 {
 	log_debug("%s: lsr-id %s, status %s", __func__, inet_ntoa(nbr->id),
 	     notification_name(status));
@@ -102,23 +102,22 @@ send_notification_nbr(struct nbr *nbr, u_int32_t status, u_int32_t msgid,
 }
 
 int
-recv_notification(struct nbr *nbr, char *buf, u_int16_t len)
+recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 {
 	struct ldp_msg		not;
 	struct status_tlv	st;
 	struct notify_msg	nm;
 	int			tlen;
 
-	bcopy(buf, &not, sizeof(not));
-
-	buf += sizeof(struct ldp_msg);
-	len -= sizeof(struct ldp_msg);
+	memcpy(&not, buf, sizeof(not));
+	buf += LDP_MSG_SIZE;
+	len -= LDP_MSG_SIZE;
 
 	if (len < STATUS_SIZE) {
 		session_shutdown(nbr, S_BAD_MSG_LEN, not.msgid, not.type);
 		return (-1);
 	}
-	bcopy(buf, &st, sizeof(st));
+	memcpy(&st, buf, sizeof(st));
 
 	if (ntohs(st.length) > STATUS_SIZE - TLV_HDR_LEN ||
 	    ntohs(st.length) > len - TLV_HDR_LEN) {
@@ -128,7 +127,7 @@ recv_notification(struct nbr *nbr, char *buf, u_int16_t len)
 	buf += STATUS_SIZE;
 	len -= STATUS_SIZE;
 
-	bzero(&nm, sizeof(nm));
+	memset(&nm, 0, sizeof(nm));
 	nm.status = ntohl(st.status_code);
 
 	/* Optional Parameters */
@@ -141,7 +140,7 @@ recv_notification(struct nbr *nbr, char *buf, u_int16_t len)
 			return (-1);
 		}
 
-		bcopy(buf, &tlv, sizeof(tlv));
+		memcpy(&tlv, buf, sizeof(tlv));
 		if (ntohs(tlv.length) > len - TLV_HDR_LEN) {
 			session_shutdown(nbr, S_BAD_TLV_LEN, not.msgid,
 			    not.type);
@@ -163,7 +162,7 @@ recv_notification(struct nbr *nbr, char *buf, u_int16_t len)
 				return (-1);
 			}
 
-			nm.pw_status = ntohl(*(u_int32_t *)buf);
+			nm.pw_status = ntohl(*(uint32_t *)buf);
 			nm.flags |= F_NOTIF_PW_STATUS;
 			break;
 		case TLV_TYPE_FEC:
@@ -237,12 +236,11 @@ recv_notification(struct nbr *nbr, char *buf, u_int16_t len)
 }
 
 int
-gen_status_tlv(struct ibuf *buf, u_int32_t status, u_int32_t msgid,
-    u_int32_t type)
+gen_status_tlv(struct ibuf *buf, uint32_t status, uint32_t msgid, uint32_t type)
 {
 	struct status_tlv	st;
 
-	bzero(&st, sizeof(st));
+	memset(&st, 0, sizeof(st));
 
 	st.type = htons(TLV_TYPE_STATUS);
 	st.length = htons(STATUS_TLV_LEN);

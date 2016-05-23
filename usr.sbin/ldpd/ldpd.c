@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.36 2016/05/23 16:54:22 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.37 2016/05/23 17:43:42 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -54,9 +54,14 @@ int		check_child(pid_t, const char *);
 void	main_dispatch_ldpe(int, short, void *);
 void	main_dispatch_lde(int, short, void *);
 
+int	main_imsg_compose_both(enum imsg_type, void *, uint16_t);
 int	ldp_reload(void);
-int	ldp_sendboth(enum imsg_type, void *, u_int16_t);
-void	merge_l2vpns(struct ldpd_conf *, struct l2vpn *, struct l2vpn *);
+void	merge_global(struct ldpd_conf *, struct ldpd_conf *);
+void	merge_ifaces(struct ldpd_conf *, struct ldpd_conf *);
+void	merge_tnbrs(struct ldpd_conf *, struct ldpd_conf *);
+void	merge_nbrps(struct ldpd_conf *, struct ldpd_conf *);
+void	merge_l2vpns(struct ldpd_conf *, struct ldpd_conf *);
+void	merge_l2vpn(struct ldpd_conf *, struct l2vpn *, struct l2vpn *);
 
 int	pipe_parent2ldpe[2];
 int	pipe_parent2lde[2];
@@ -119,11 +124,13 @@ usage(void)
 	exit(1);
 }
 
+struct ldpd_global global;
+
 int
 main(int argc, char *argv[])
 {
 	struct event		 ev_sigint, ev_sigterm, ev_sigchld, ev_sighup;
-	int			 ch, opts = 0;
+	int			 ch;
 	int			 debug = 0;
 
 	conffile = CONF_FILE;
@@ -146,12 +153,12 @@ main(int argc, char *argv[])
 			conffile = optarg;
 			break;
 		case 'n':
-			opts |= LDPD_OPT_NOACTION;
+			global.cmd_opts |= LDPD_OPT_NOACTION;
 			break;
 		case 'v':
-			if (opts & LDPD_OPT_VERBOSE)
-				opts |= LDPD_OPT_VERBOSE2;
-			opts |= LDPD_OPT_VERBOSE;
+			if (global.cmd_opts & LDPD_OPT_VERBOSE)
+				global.cmd_opts |= LDPD_OPT_VERBOSE2;
+			global.cmd_opts |= LDPD_OPT_VERBOSE;
 			break;
 		default:
 			usage();
@@ -163,14 +170,17 @@ main(int argc, char *argv[])
 	kif_init();
 
 	/* parse config file */
-	if ((ldpd_conf = parse_config(conffile, opts)) == NULL )
+	if ((ldpd_conf = parse_config(conffile)) == NULL ) {
+		kif_clear();
 		exit(1);
+	}
 
-	if (ldpd_conf->opts & LDPD_OPT_NOACTION) {
-		if (ldpd_conf->opts & LDPD_OPT_VERBOSE)
+	if (global.cmd_opts & LDPD_OPT_NOACTION) {
+		if (global.cmd_opts & LDPD_OPT_VERBOSE)
 			print_config(ldpd_conf);
 		else
 			fprintf(stderr, "configuration OK\n");
+		kif_clear();
 		exit(0);
 	}
 
@@ -183,7 +193,7 @@ main(int argc, char *argv[])
 		errx(1, "unknown user %s", LDPD_USER);
 
 	log_init(debug);
-	log_verbose(opts & (LDPD_OPT_VERBOSE | LDPD_OPT_VERBOSE2));
+	log_verbose(global.cmd_opts & (LDPD_OPT_VERBOSE | LDPD_OPT_VERBOSE2));
 
 	if (!debug)
 		daemon(1, 0);
@@ -466,7 +476,7 @@ main_dispatch_lde(int fd, short event, void *bula)
 }
 
 void
-main_imsg_compose_ldpe(int type, pid_t pid, void *data, u_int16_t datalen)
+main_imsg_compose_ldpe(int type, pid_t pid, void *data, uint16_t datalen)
 {
 	if (iev_ldpe == NULL)
 		return;
@@ -474,7 +484,7 @@ main_imsg_compose_ldpe(int type, pid_t pid, void *data, u_int16_t datalen)
 }
 
 void
-main_imsg_compose_lde(int type, pid_t pid, void *data, u_int16_t datalen)
+main_imsg_compose_lde(int type, pid_t pid, void *data, uint16_t datalen)
 {
 	imsg_compose_event(iev_lde, type, 0, pid, -1, data, datalen);
 }
@@ -502,8 +512,8 @@ imsg_event_add(struct imsgev *iev)
 }
 
 int
-imsg_compose_event(struct imsgev *iev, u_int16_t type,
-    u_int32_t peerid, pid_t pid, int fd, void *data, u_int16_t datalen)
+imsg_compose_event(struct imsgev *iev, uint16_t type, uint32_t peerid,
+    pid_t pid, int fd, void *data, uint16_t datalen)
 {
 	int	ret;
 
@@ -555,7 +565,7 @@ ldp_reload(void)
 	struct l2vpn_pw		*pw;
 	struct ldpd_conf	*xconf;
 
-	if ((xconf = parse_config(conffile, ldpd_conf->opts)) == NULL)
+	if ((xconf = parse_config(conffile)) == NULL)
 		return (-1);
 
 	if (main_imsg_compose_both(IMSG_RECONF_CONF, xconf,
@@ -605,33 +615,54 @@ ldp_reload(void)
 	return (0);
 }
 
-int
-ldp_sendboth(enum imsg_type type, void *buf, u_int16_t len)
-{
-	if (imsg_compose_event(iev_ldpe, type, 0, 0, -1, buf, len) == -1)
-		return (-1);
-	if (imsg_compose_event(iev_lde, type, 0, 0, -1, buf, len) == -1)
-		return (-1);
-	return (0);
-}
-
 void
 merge_config(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 {
-	struct iface		*iface, *itmp, *xi;
-	struct tnbr		*tnbr, *ttmp, *xt;
-	struct nbr_params	*nbrp, *ntmp, *xn;
-	struct l2vpn		*l2vpn, *ltmp, *xl;
-	struct nbr		*nbr;
+	merge_global(conf, xconf);
+	merge_ifaces(conf, xconf);
+	merge_tnbrs(conf, xconf);
+	merge_nbrps(conf, xconf);
+	merge_l2vpns(conf, xconf);
+	free(xconf);
+}
+
+void
+merge_global(struct ldpd_conf *conf, struct ldpd_conf *xconf)
+{
+	int			 egress_label_changed = 0;
 
 	/* change of rtr_id needs a restart */
-	conf->flags = xconf->flags;
 	conf->keepalive = xconf->keepalive;
 	conf->thello_holdtime = xconf->thello_holdtime;
 	conf->thello_interval = xconf->thello_interval;
 	conf->trans_addr.s_addr = xconf->trans_addr.s_addr;
 
-	/* merge interfaces */
+	/* update flags */
+	if ((conf->flags & F_LDPD_EXPNULL) !=
+	    (xconf->flags & F_LDPD_EXPNULL))
+		egress_label_changed = 1;
+
+	conf->flags = xconf->flags;
+
+	if (egress_label_changed) {
+		switch (ldpd_process) {
+		case PROC_LDE_ENGINE:
+			lde_change_egress_label(conf->flags & F_LDPD_EXPNULL);
+			break;
+		case PROC_MAIN:
+			kr_change_egress_label(conf->flags & F_LDPD_EXPNULL);
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+void
+merge_ifaces(struct ldpd_conf *conf, struct ldpd_conf *xconf)
+{
+	struct iface		*iface, *itmp, *xi;
+
 	LIST_FOREACH_SAFE(iface, &conf->iface_list, entry, itmp) {
 		/* find deleted interfaces */
 		if ((xi = if_lookup(xconf, iface->ifindex)) == NULL) {
@@ -648,7 +679,7 @@ merge_config(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 			LIST_REMOVE(xi, entry);
 			LIST_INSERT_HEAD(&conf->iface_list, xi, entry);
 			if (ldpd_process == PROC_LDP_ENGINE)
-				if_init(conf, xi);
+				if_init(xi);
 			continue;
 		}
 
@@ -687,7 +718,7 @@ merge_tnbrs(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 			LIST_REMOVE(xt, entry);
 			LIST_INSERT_HEAD(&conf->tnbr_list, xt, entry);
 			if (ldpd_process == PROC_LDP_ENGINE)
-				tnbr_init(conf, xt);
+				tnbr_init(xt);
 			continue;
 		}
 

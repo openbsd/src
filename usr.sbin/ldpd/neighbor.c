@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.64 2016/05/23 16:58:31 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.65 2016/05/23 17:43:42 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -84,7 +84,7 @@ struct nbr_id_head nbrs_by_id = RB_INITIALIZER(&nbrs_by_id);
 struct nbr_addr_head nbrs_by_addr = RB_INITIALIZER(&nbrs_by_addr);
 struct nbr_pid_head nbrs_by_pid = RB_INITIALIZER(&nbrs_by_pid);
 
-u_int32_t	peercnt = 1;
+uint32_t	peercnt = 1;
 
 extern struct ldpd_conf		*leconf;
 extern struct ldpd_sysdep	 sysdep;
@@ -313,19 +313,27 @@ nbr_update_peerid(struct nbr *nbr)
 }
 
 struct nbr *
-nbr_find_peerid(u_int32_t peerid)
+nbr_find_ldpid(uint32_t lsr_id)
+{
+	struct nbr	n;
+	n.id.s_addr = lsr_id;
+	return (RB_FIND(nbr_id_head, &nbrs_by_id, &n));
+}
+
+struct nbr *
+nbr_find_addr(struct in_addr addr)
+{
+	struct nbr	n;
+	n.raddr = addr;
+	return (RB_FIND(nbr_addr_head, &nbrs_by_addr, &n));
+}
+
+struct nbr *
+nbr_find_peerid(uint32_t peerid)
 {
 	struct nbr	n;
 	n.peerid = peerid;
 	return (RB_FIND(nbr_pid_head, &nbrs_by_pid, &n));
-}
-
-struct nbr *
-nbr_find_ldpid(u_int32_t rtr_id)
-{
-	struct nbr	n;
-	n.id.s_addr = rtr_id;
-	return (RB_FIND(nbr_id_head, &nbrs_by_id, &n));
 }
 
 int
@@ -523,7 +531,7 @@ nbr_establish_connection(struct nbr *nbr)
 		}
 	}
 
-	bzero(&local_sa, sizeof(local_sa));
+	memset(&local_sa, 0, sizeof(local_sa));
 	local_sa.sin_family = AF_INET;
 	local_sa.sin_port = htons(0);
 	local_sa.sin_addr.s_addr = nbr->laddr.s_addr;
@@ -536,7 +544,7 @@ nbr_establish_connection(struct nbr *nbr)
 		return (-1);
 	}
 
-	bzero(&remote_sa, sizeof(remote_sa));
+	memset(&remote_sa, 0, sizeof(remote_sa));
 	remote_sa.sin_family = AF_INET;
 	remote_sa.sin_port = htons(LDP_PORT);
 	remote_sa.sin_addr.s_addr = nbr->raddr.s_addr;

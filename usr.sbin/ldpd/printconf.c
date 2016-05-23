@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.18 2016/05/23 16:54:22 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.19 2016/05/23 17:43:42 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -40,15 +40,20 @@ print_mainconf(struct ldpd_conf *conf)
 {
 	printf("router-id %s\n\n", inet_ntoa(conf->rtr_id));
 
-	if (conf->flags & LDPD_FLAG_NO_FIB_UPDATE)
+	if (conf->flags & F_LDPD_NO_FIB_UPDATE)
 		printf("fib-update no\n");
 	else
 		printf("fib-update yes\n");
 
-	if (conf->flags & LDPD_FLAG_TH_ACCEPT)
+	if (conf->flags & F_LDPD_TH_ACCEPT)
 		printf("targeted-hello-accept yes\n");
 	else
 		printf("targeted-hello-accept no\n");
+
+	if (conf->flags & F_LDPD_EXPNULL)
+		printf("explicit-null yes\n");
+	else
+		printf("explicit-null no\n");
 
 	printf("keepalive %u\n", conf->keepalive);
 	printf("transport-address %s\n", inet_ntoa(conf->trans_addr));

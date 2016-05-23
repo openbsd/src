@@ -1,4 +1,4 @@
-/*	$OpenBSD: accept.c,v 1.4 2016/05/23 15:14:07 renato Exp $ */
+/*	$OpenBSD: accept.c,v 1.5 2016/05/23 17:43:42 renato Exp $ */
 
 /*
  * Copyright (c) 2012 Claudio Jeker <claudio@openbsd.org>

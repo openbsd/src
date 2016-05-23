@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.13 2016/05/23 16:31:27 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.14 2016/05/23 17:43:42 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -210,12 +210,12 @@ tnbr_check(struct tnbr *tnbr)
 }
 
 void
-tnbr_init(struct ldpd_conf *xconf, struct tnbr *tnbr)
+tnbr_init(struct tnbr *tnbr)
 {
 	/* set event handlers for targeted neighbor */
 	evtimer_set(&tnbr->hello_timer, tnbr_hello_timer, tnbr);
 
-	tnbr->discovery_fd = xconf->ldp_ediscovery_socket;
+	send_hello(HELLO_TARGETED, NULL, tnbr);
 	tnbr_start_hello_timer(tnbr);
 }
 
@@ -227,7 +227,6 @@ tnbr_hello_timer(int fd, short event, void *arg)
 {
 	struct tnbr	*tnbr = arg;
 
-	tnbr->discovery_fd = global.ldp_edisc_socket;
 	send_hello(HELLO_TARGETED, NULL, tnbr);
 	tnbr_start_hello_timer(tnbr);
 }

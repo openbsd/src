@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.20 2016/05/23 16:04:04 renato Exp $ */
+/*	$OpenBSD: address.c,v 1.21 2016/05/23 17:43:42 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -38,52 +38,53 @@
 
 extern struct ldpd_conf        *leconf;
 
-void	gen_address_list_tlv(struct ibuf *, struct if_addr *, u_int16_t);
+void	gen_address_list_tlv(struct ibuf *, struct if_addr *, uint16_t);
 
 void
-send_address(struct nbr *nbr, struct if_addr *if_addr)
+send_address(struct nbr *nbr, struct if_addr *if_addr, int withdraw)
 {
 	struct ibuf	*buf;
-	u_int16_t	 size, iface_count = 0;
+	uint32_t	 msg_type;
+	uint16_t	 size;
+	int		 iface_count = 0;
 
-	log_debug("%s: neighbor ID %s", __func__, inet_ntoa(nbr->id));
-
-	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
-		fatal(__func__);
-
-	if (if_addr == NULL)
-		LIST_FOREACH(if_addr, &leconf->addr_list, entry)
-			iface_count++;
+	if (!withdraw)
+		msg_type = MSG_TYPE_ADDR;
 	else
+		msg_type = MSG_TYPE_ADDRWITHDRAW;
+
+	if (if_addr == NULL) {
+		LIST_FOREACH(if_addr, &global.addr_list, entry)
+			iface_count++;
+	} else
 		iface_count = 1;
 
-	size = LDP_HDR_SIZE + sizeof(struct ldp_msg) +
-	    sizeof(struct address_list_tlv) +
+	size = LDP_HDR_SIZE + LDP_MSG_SIZE + sizeof(struct address_list_tlv) +
 	    iface_count * sizeof(struct in_addr);
 
+	if ((buf = ibuf_open(size)) == NULL)
+		fatal(__func__);
+
 	gen_ldp_hdr(buf, size);
-
 	size -= LDP_HDR_SIZE;
-
-	gen_msg_tlv(buf, msg_type, size);
-
-	size -= sizeof(struct ldp_msg);
-
+	gen_msg_hdr(buf, msg_type, size);
+	size -= LDP_MSG_SIZE;
 	gen_address_list_tlv(buf, if_addr, size);
 
 	evbuf_enqueue(&nbr->tcp->wbuf, buf);
+
 	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
 }
 
 int
-recv_address(struct nbr *nbr, char *buf, u_int16_t len)
+recv_address(struct nbr *nbr, char *buf, uint16_t len)
 {
 	struct ldp_msg		addr;
 	struct address_list_tlv	alt;
 	enum imsg_type		type;
 
-	bcopy(buf, &addr, sizeof(addr));
-	log_debug("recv_address: neighbor ID %s%s", inet_ntoa(nbr->id),
+	memcpy(&addr, buf, sizeof(addr));
+	log_debug("%s: lsr-id %s%s", __func__, inet_ntoa(nbr->id),
 	    ntohs(addr.type) == MSG_TYPE_ADDR ? "" : " address withdraw");
 	if (ntohs(addr.type) == MSG_TYPE_ADDR)
 		type = IMSG_ADDRESS_ADD;
@@ -98,7 +99,7 @@ recv_address(struct nbr *nbr, char *buf, u_int16_t len)
 		return (-1);
 	}
 
-	bcopy(buf, &alt, sizeof(alt));
+	memcpy(&alt, buf, sizeof(alt));
 
 	if (ntohs(alt.length) != len - TLV_HDR_LEN) {
 		session_shutdown(nbr, S_BAD_TLV_LEN, addr.msgid, addr.type);
@@ -136,53 +137,22 @@ recv_address(struct nbr *nbr, char *buf, u_int16_t len)
 }
 
 void
-gen_address_list_tlv(struct ibuf *buf, struct if_addr *if_addr,
-    u_int16_t size)
+gen_address_list_tlv(struct ibuf *buf, struct if_addr *if_addr, uint16_t size)
 {
 	struct address_list_tlv	 alt;
 
-	/* We want just the size of the value */
-	size -= TLV_HDR_LEN;
 
-	bzero(&alt, sizeof(alt));
+	memset(&alt, 0, sizeof(alt));
 	alt.type = TLV_TYPE_ADDRLIST;
-	alt.length = htons(size);
+	alt.length = htons(size - TLV_HDR_LEN);
 	/* XXX: just ipv4 for now */
 	alt.family = htons(AF_IPV4);
 
 	ibuf_add(buf, &alt, sizeof(alt));
 
-	if (if_addr == NULL)
-		LIST_FOREACH(if_addr, &leconf->addr_list, entry)
+	if (if_addr == NULL) {
+		LIST_FOREACH(if_addr, &global.addr_list, entry)
 			ibuf_add(buf, &if_addr->addr, sizeof(if_addr->addr));
-	else
+	} else
 		ibuf_add(buf, &if_addr->addr, sizeof(if_addr->addr));
-}
-
-void
-send_address_withdraw(struct nbr *nbr, struct if_addr *if_addr)
-{
-	struct ibuf	*buf;
-	u_int16_t	 size;
-
-	log_debug("%s: neighbor ID %s", __func__, inet_ntoa(nbr->id));
-
-	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
-		fatal(__func__);
-
-	size = LDP_HDR_SIZE + sizeof(struct ldp_msg) +
-	    sizeof(struct address_list_tlv) + sizeof(struct in_addr);
-
-	gen_ldp_hdr(buf, size);
-
-	size -= LDP_HDR_SIZE;
-
-	gen_msg_tlv(buf, MSG_TYPE_ADDRWITHDRAW, size);
-
-	size -= sizeof(struct ldp_msg);
-
-	gen_address_list_tlv(buf, if_addr, size);
-
-	evbuf_enqueue(&nbr->tcp->wbuf, buf);
-	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.21 2016/05/23 16:54:22 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.22 2016/05/23 17:43:42 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -221,7 +221,7 @@ if_type_name(enum iface_type type)
 }
 
 const char *
-notification_name(u_int32_t status)
+notification_name(uint32_t status)
 {
 	static char buf[16];
 
@@ -301,7 +301,7 @@ notification_name(u_int32_t status)
 }
 
 const char *
-pw_type_name(u_int16_t pw_type)
+pw_type_name(uint16_t pw_type)
 {
 	static char buf[64];
 
@@ -413,7 +413,7 @@ static char *msgtypes[] = {
 };
 
 void
-log_rtmsg(u_char rtm_type)
+log_rtmsg(unsigned char rtm_type)
 {
 	if (!(verbose & LDPD_OPT_VERBOSE2))
 		return;

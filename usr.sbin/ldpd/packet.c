@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.53 2016/05/23 17:00:40 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.54 2016/05/23 17:43:42 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -48,11 +48,11 @@ ssize_t		 session_get_pdu(struct ibuf_read *, char **);
 static int	 msgcnt = 0;
 
 int
-gen_ldp_hdr(struct ibuf *buf, u_int16_t size)
+gen_ldp_hdr(struct ibuf *buf, uint16_t size)
 {
 	struct ldp_hdr	ldp_hdr;
 
-	bzero(&ldp_hdr, sizeof(ldp_hdr));
+	memset(&ldp_hdr, 0, sizeof(ldp_hdr));
 	ldp_hdr.version = htons(LDP_VERSION);
 	/* exclude the 'Version' and 'PDU Length' fields from the total */
 	ldp_hdr.length = htons(size - LDP_HDR_DEAD_LEN);
@@ -63,16 +63,14 @@ gen_ldp_hdr(struct ibuf *buf, u_int16_t size)
 }
 
 int
-gen_msg_tlv(struct ibuf *buf, u_int32_t type, u_int16_t size)
+gen_msg_hdr(struct ibuf *buf, uint32_t type, uint16_t size)
 {
 	struct ldp_msg	msg;
 
-	/* We want just the size of the value */
-	size -= TLV_HDR_LEN;
-
-	bzero(&msg, sizeof(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.type = htons(type);
-	msg.length = htons(size);
+	/* exclude the 'Type' and 'Length' fields from the total */
+	msg.length = htons(size - LDP_MSG_DEAD_LEN);
 	if (type != MSG_TYPE_HELLO)
 		msg.msgid = htonl(++msgcnt);
 
@@ -107,26 +105,30 @@ void
 disc_recv_packet(int fd, short event, void *bula)
 {
 	union {
-		struct cmsghdr hdr;
+		struct	cmsghdr hdr;
 		char	buf[CMSG_SPACE(sizeof(struct sockaddr_dl))];
 	} cmsgbuf;
 	struct sockaddr_in	 src;
 	struct msghdr		 msg;
 	struct iovec		 iov;
-	struct ldp_hdr		 ldp_hdr;
-	struct ldp_msg		 ldp_msg;
-	struct iface		*iface = NULL;
 	char			*buf;
 	struct cmsghdr		*cmsg;
 	ssize_t			 r;
-	u_int16_t		 len;
+	int			 multicast;
 	unsigned int		 ifindex = 0;
+	struct iface		*iface;
+	uint16_t		 len;
+	struct ldp_hdr		 ldp_hdr;
+	uint16_t		 pdu_len;
+	struct ldp_msg		 ldp_msg;
+	uint16_t		 msg_len;
+	struct in_addr		 lsr_id;
 
 	if (event != EV_READ)
 		return;
 
 	/* setup buffer */
-	bzero(&msg, sizeof(msg));
+	memset(&msg, 0, sizeof(msg));
 	iov.iov_base = buf = pkt_ptr;
 	iov.iov_len = IBUF_READ_SIZE;
 	msg.msg_name = &src;
@@ -160,49 +162,66 @@ disc_recv_packet(int fd, short event, void *bula)
 		}
 	}
 
-	len = (u_int16_t)r;
-
 	/* find a matching interface */
-	if ((fd == leconf->ldp_discovery_socket) &&
-	    (iface = disc_find_iface(ifindex, src.sin_addr)) == NULL) {
-		log_debug("disc_recv_packet: cannot find a matching subnet "
-		    "on interface index %d for %s", ifindex,
+	iface = disc_find_iface(ifindex, src.sin_addr, multicast);
+	if (iface == NULL)
+		return;
+
+	/* check packet size */
+	len = (uint16_t)r;
+	if (len < (LDP_HDR_SIZE + LDP_MSG_SIZE) || len > LDP_MAX_LEN) {
+		log_debug("%s: bad packet size, source %s", __func__,
 		    inet_ntoa(src.sin_addr));
 		return;
 	}
 
 	/* LDP header sanity checks */
-	if (len < LDP_HDR_SIZE || len > LDP_MAX_LEN) {
-		log_debug("disc_recv_packet: bad packet size");
-		return;
-	}
-	bcopy(buf, &ldp_hdr, sizeof(ldp_hdr));
-
+	memcpy(&ldp_hdr, buf, sizeof(ldp_hdr));
 	if (ntohs(ldp_hdr.version) != LDP_VERSION) {
-		log_debug("dsc_recv_packet: invalid LDP version %d",
-		    ldp_hdr.version);
+		log_debug("%s: invalid LDP version %d, source %s", __func__,
+		    ntohs(ldp_hdr.version), inet_ntoa(src.sin_addr));
 		return;
 	}
-
-	if (ntohs(ldp_hdr.length) >
-	    len - sizeof(ldp_hdr.version) - sizeof(ldp_hdr.length)) {
-		log_debug("disc_recv_packet: invalid LDP packet length %u",
-		    ntohs(ldp_hdr.length));
+	if (ntohs(ldp_hdr.lspace_id) != 0) {
+		log_debug("%s: invalid label space %u, source %s", __func__,
+		    ntohs(ldp_hdr.lspace_id), inet_ntoa(src.sin_addr));
 		return;
 	}
-
-	if (len < LDP_HDR_SIZE + LDP_MSG_LEN) {
-		log_debug("disc_recv_packet: invalid LDP packet length %d",
-		    ntohs(ldp_hdr.length));
+	/* check "PDU Length" field */
+	pdu_len = ntohs(ldp_hdr.length);
+	if ((pdu_len < (LDP_HDR_PDU_LEN + LDP_MSG_SIZE)) ||
+	    (pdu_len > (len - LDP_HDR_DEAD_LEN))) {
+		log_debug("%s: invalid LDP packet length %u, source %s",
+		    __func__, ntohs(ldp_hdr.length), inet_ntoa(src.sin_addr));
 		return;
 	}
+	buf += LDP_HDR_SIZE;
+	len -= LDP_HDR_SIZE;
 
-	bcopy(buf + LDP_HDR_SIZE, &ldp_msg, sizeof(ldp_msg));
+	lsr_id.s_addr = ldp_hdr.lsr_id;
+
+	/*
+	 * For UDP, we process only the first message of each packet. This does
+	 * not impose any restrictions since LDP uses UDP only for sending Hello
+	 * packets.
+	 */
+	memcpy(&ldp_msg, buf, sizeof(ldp_msg));
+
+	/* check "Message Length" field */
+	msg_len = ntohs(ldp_msg.length);
+	if (msg_len < LDP_MSG_LEN || ((msg_len + LDP_MSG_DEAD_LEN) > pdu_len)) {
+		log_debug("%s: invalid LDP message length %u, source %s",
+		    __func__, ntohs(ldp_msg.length), inet_ntoa(src.sin_addr));
+		return;
+	}
+	buf += LDP_MSG_SIZE;
+	len -= LDP_MSG_SIZE;
 
 	/* switch LDP packet type */
 	switch (ntohs(ldp_msg.type)) {
 	case MSG_TYPE_HELLO:
-		recv_hello(iface, src.sin_addr, buf, len);
+		recv_hello(lsr_id, &ldp_msg, src.sin_addr, iface, multicast,
+		    buf, len);
 		break;
 	default:
 		log_debug("%s: unknown LDP packet type, source %s", __func__,
@@ -349,8 +368,8 @@ session_read(int fd, short event, void *arg)
 	struct ldp_msg	*ldp_msg;
 	char		*buf, *pdu;
 	ssize_t		 n, len;
-	int		 msg_size;
-	u_int16_t	 pdu_len;
+	uint16_t	 pdu_len, msg_len, msg_size, max_pdu_len;
+	int		 ret;
 
 	if (event != EV_READ)
 		return;
@@ -413,20 +432,20 @@ session_read(int fd, short event, void *arg)
 		if (nbr->state == NBR_STA_OPER)
 			nbr_fsm(nbr, NBR_EVT_PDU_RCVD);
 
-		while (len >= LDP_MSG_LEN) {
-			u_int16_t type;
+		while (len >= LDP_MSG_SIZE) {
+			uint16_t type;
 
 			ldp_msg = (struct ldp_msg *)pdu;
 			type = ntohs(ldp_msg->type);
-
-			pdu_len = ntohs(ldp_msg->length) + TLV_HDR_LEN;
-			if (pdu_len > len ||
-			    pdu_len < LDP_MSG_LEN - TLV_HDR_LEN) {
+			msg_len = ntohs(ldp_msg->length);
+			msg_size = msg_len + LDP_MSG_DEAD_LEN;
+			if (msg_len < LDP_MSG_LEN || msg_size > pdu_len) {
 				session_shutdown(nbr, S_BAD_TLV_LEN,
 				    ldp_msg->msgid, ldp_msg->type);
 				free(buf);
 				return;
 			}
+			pdu_len -= msg_size;
 
 			/* check for error conditions earlier */
 			switch (type) {
@@ -547,8 +566,8 @@ session_write(int fd, short event, void *arg)
 }
 
 void
-session_shutdown(struct nbr *nbr, u_int32_t status, u_int32_t msgid,
-    u_int32_t type)
+session_shutdown(struct nbr *nbr, uint32_t status, uint32_t msgid,
+    uint32_t type)
 {
 	if (nbr->tcp == NULL)
 		return;

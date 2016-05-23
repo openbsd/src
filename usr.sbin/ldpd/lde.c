@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.48 2016/05/23 16:54:22 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.49 2016/05/23 17:43:42 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -44,8 +44,8 @@ void		 lde_shutdown(void);
 void		 lde_dispatch_imsg(int, short, void *);
 void		 lde_dispatch_parent(int, short, void *);
 
-struct lde_nbr	*lde_nbr_find(u_int32_t);
-struct lde_nbr	*lde_nbr_new(u_int32_t, struct in_addr *);
+struct lde_nbr	*lde_nbr_find(uint32_t);
+struct lde_nbr	*lde_nbr_new(uint32_t, struct in_addr *);
 void		 lde_nbr_del(struct lde_nbr *);
 void		 lde_nbr_clear(void);
 
@@ -55,6 +55,14 @@ void		 lde_address_list_free(struct lde_nbr *);
 struct ldpd_conf	*ldeconf = NULL, *nconf = NULL;
 struct imsgev		*iev_ldpe;
 struct imsgev		*iev_main;
+
+static __inline int lde_nbr_compare(struct lde_nbr *, struct lde_nbr *);
+
+RB_HEAD(nbr_tree, lde_nbr);
+RB_PROTOTYPE(nbr_tree, lde_nbr, entry, lde_nbr_compare)
+RB_GENERATE(nbr_tree, lde_nbr, entry, lde_nbr_compare)
+
+struct nbr_tree lde_nbrs = RB_INITIALIZER(&lde_nbrs);
 
 /* ARGSUSED */
 void
@@ -152,7 +160,7 @@ lde(struct ldpd_conf *xconf, int pipe_parent2lde[2], int pipe_ldpe2lde[2],
 	event_add(&iev_main->ev, NULL);
 
 	gettimeofday(&now, NULL);
-	ldeconf->uptime = now.tv_sec;
+	global.uptime = now.tv_sec;
 
 	/* initialize l2vpns */
 	LIST_FOREACH(l2vpn, &ldeconf->l2vpn_list, entry)
@@ -185,14 +193,14 @@ lde_shutdown(void)
 
 /* imesg */
 int
-lde_imsg_compose_parent(int type, pid_t pid, void *data, u_int16_t datalen)
+lde_imsg_compose_parent(int type, pid_t pid, void *data, uint16_t datalen)
 {
 	return (imsg_compose_event(iev_main, type, 0, pid, -1, data, datalen));
 }
 
 int
-lde_imsg_compose_ldpe(int type, u_int32_t peerid, pid_t pid, void *data,
-    u_int16_t datalen)
+lde_imsg_compose_ldpe(int type, uint32_t peerid, pid_t pid, void *data,
+    uint16_t datalen)
 {
 	return (imsg_compose_event(iev_ldpe, type, peerid, pid,
 	     -1, data, datalen));
@@ -233,14 +241,14 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_LABEL_MAPPING_FULL:
-			nbr = lde_nbr_find(imsg.hdr.peerid);
-			if (nbr == NULL) {
+			ln = lde_nbr_find(imsg.hdr.peerid);
+			if (ln == NULL) {
 				log_debug("%s: cannot find lde neighbor",
 				    __func__);
-				return;
+				break;
 			}
 
-			fec_snap(nbr);
+			fec_snap(ln);
 			break;
 		case IMSG_LABEL_MAPPING:
 		case IMSG_LABEL_REQUEST:
@@ -255,7 +263,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 			if (ln == NULL) {
 				log_debug("%s: cannot find lde neighbor",
 				    __func__);
-				return;
+				break;
 			}
 
 			switch (imsg.hdr.type) {
@@ -287,14 +295,14 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 				fatalx("lde_dispatch_imsg: wrong imsg len");
 			memcpy(&addr, imsg.data, sizeof(addr));
 
-			nbr = lde_nbr_find(imsg.hdr.peerid);
-			if (nbr == NULL) {
+			ln = lde_nbr_find(imsg.hdr.peerid);
+			if (ln == NULL) {
 				log_debug("%s: cannot find lde neighbor",
 				    __func__);
-				return;
+				break;
 			}
 
-			if (lde_address_add(nbr, &addr) < 0) {
+			if (lde_address_add(ln, &addr) < 0) {
 				log_debug("%s: cannot add address %s, it "
 				    "already exists", __func__,
 				    inet_ntoa(addr));
@@ -306,14 +314,14 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 				fatalx("lde_dispatch_imsg: wrong imsg len");
 			memcpy(&addr, imsg.data, sizeof(addr));
 
-			nbr = lde_nbr_find(imsg.hdr.peerid);
-			if (nbr == NULL) {
+			ln = lde_nbr_find(imsg.hdr.peerid);
+			if (ln == NULL) {
 				log_debug("%s: cannot find lde neighbor",
 				    __func__);
-				return;
+				break;
 			}
 
-			if (lde_address_del(nbr, &addr) < 0) {
+			if (lde_address_del(ln, &addr) < 0) {
 				log_debug("%s: cannot delete address %s, it "
 				    "does not exist", __func__,
 				    inet_ntoa(addr));
@@ -329,7 +337,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 			if (ln == NULL) {
 				log_debug("%s: cannot find lde neighbor",
 				    __func__);
-				return;
+				break;
 			}
 
 			switch (nm.status) {
@@ -462,7 +470,6 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			memcpy(nconf, imsg.data, sizeof(struct ldpd_conf));
 
 			LIST_INIT(&nconf->iface_list);
-			LIST_INIT(&nconf->addr_list);
 			LIST_INIT(&nconf->tnbr_list);
 			LIST_INIT(&nconf->nbrp_list);
 			LIST_INIT(&nconf->l2vpn_list);
@@ -537,10 +544,10 @@ lde_dispatch_parent(int fd, short event, void *bula)
 	}
 }
 
-u_int32_t
+uint32_t
 lde_assign_label(void)
 {
-	static u_int32_t label = MPLS_LABEL_RESERVED_MAX;
+	static uint32_t label = MPLS_LABEL_RESERVED_MAX;
 
 	/* XXX some checks needed */
 	label++;
@@ -556,7 +563,7 @@ lde_send_change_klabel(struct fec_node *fn, struct fec_nh *fnh)
 
 	switch (fn->fec.type) {
 	case FEC_TYPE_IPV4:
-		bzero(&kr, sizeof(kr));
+		memset(&kr, 0, sizeof(kr));
 		kr.prefix.s_addr = fn->fec.u.ipv4.prefix.s_addr;
 		kr.prefixlen = fn->fec.u.ipv4.prefixlen;
 		kr.local_label = fn->local_label;
@@ -578,7 +585,7 @@ lde_send_change_klabel(struct fec_node *fn, struct fec_nh *fnh)
 		pw = (struct l2vpn_pw *) fn->data;
 		pw->flags |= F_PW_STATUS_UP;
 
-		bzero(&kpw, sizeof(kpw));
+		memset(&kpw, 0, sizeof(kpw));
 		kpw.ifindex = pw->ifindex;
 		kpw.pw_type = fn->fec.u.pwid.type;
 		kpw.nexthop.s_addr = fnh->nexthop.s_addr;
@@ -601,7 +608,7 @@ lde_send_delete_klabel(struct fec_node *fn, struct fec_nh *fnh)
 
 	switch (fn->fec.type) {
 	case FEC_TYPE_IPV4:
-		bzero(&kr, sizeof(kr));
+		memset(&kr, 0, sizeof(kr));
 		kr.prefix.s_addr = fn->fec.u.ipv4.prefix.s_addr;
 		kr.prefixlen = fn->fec.u.ipv4.prefixlen;
 		kr.local_label = fn->local_label;
@@ -620,7 +627,7 @@ lde_send_delete_klabel(struct fec_node *fn, struct fec_nh *fnh)
 			return;
 		pw->flags &= ~F_PW_STATUS_UP;
 
-		bzero(&kpw, sizeof(kpw));
+		memset(&kpw, 0, sizeof(kpw));
 		kpw.ifindex = pw->ifindex;
 		kpw.pw_type = fn->fec.u.pwid.type;
 		kpw.nexthop.s_addr = fnh->nexthop.s_addr;
@@ -637,7 +644,7 @@ lde_send_delete_klabel(struct fec_node *fn, struct fec_nh *fnh)
 void
 lde_fec2map(struct fec *fec, struct map *map)
 {
-	bzero(map, sizeof(*map));
+	memset(map, 0, sizeof(*map));
 
 	switch (fec->type) {
 	case FEC_TYPE_IPV4:
@@ -658,7 +665,7 @@ lde_fec2map(struct fec *fec, struct map *map)
 void
 lde_map2fec(struct map *map, struct in_addr lsr_id, struct fec *fec)
 {
-	bzero(fec, sizeof(*fec));
+	memset(fec, 0, sizeof(*fec));
 
 	switch (map->type) {
 	case MAP_TYPE_PREFIX:
@@ -689,9 +696,7 @@ lde_send_labelmapping(struct lde_nbr *ln, struct fec_node *fn, int single)
 	 * ldpd).
 	 */
 
-	bzero(&map, sizeof(map));
 	lde_fec2map(&fn->fec, &map);
-
 	if (fn->fec.type == FEC_TYPE_PWID) {
 		pw = (struct l2vpn_pw *) fn->data;
 		if (pw == NULL || pw->lsr_id.s_addr != ln->id.s_addr)
@@ -736,34 +741,29 @@ lde_send_labelmapping(struct lde_nbr *ln, struct fec_node *fn, int single)
 }
 
 void
-lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn)
+lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn, uint32_t label)
 {
 	struct lde_wdraw	*lw;
 	struct map		 map;
 	struct fec		*f;
-	struct fec_nh		*fnh = NULL;
 	struct l2vpn_pw		*pw;
 
-	if (fn->fec.type == FEC_TYPE_PWID) {
-		fnh = fec_nh_find(fn, ln->id);
-		if (fnh == NULL)
-			/* not the other end of the pseudowire */
-			return;
-	}
-
-	bzero(&map, sizeof(map));
 	if (fn) {
 		lde_fec2map(&fn->fec, &map);
 		map.label = fn->local_label;
-
 		if (fn->fec.type == FEC_TYPE_PWID) {
-			pw = (struct l2vpn_pw *) fnh->data;
+			pw = (struct l2vpn_pw *) fn->data;
+			if (pw == NULL || pw->lsr_id.s_addr != ln->id.s_addr)
+				/* not the remote end of the pseudowire */
+				return;
+
 			if (pw->flags & F_PW_CWORD)
 				map.flags |= F_MAP_PW_CWORD;
 		}
 	} else {
-		map.type = FEC_WILDCARD;
-		map.label = NO_LABEL;
+		memset(&map, 0, sizeof(map));
+		map.type = MAP_TYPE_WILDCARD;
+		map.label = label;
 	}
 
 	/* SWd.1: send label withdraw. */
@@ -791,30 +791,35 @@ lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn)
 }
 
 void
-lde_send_labelrelease(struct lde_nbr *ln, struct fec_node *fn, u_int32_t label)
+lde_send_labelwithdraw_all(struct fec_node *fn, uint32_t label)
+{
+	struct lde_nbr		*ln;
+
+	RB_FOREACH(ln, nbr_tree, &lde_nbrs)
+		lde_send_labelwithdraw(ln, fn, label);
+}
+
+void
+lde_send_labelrelease(struct lde_nbr *ln, struct fec_node *fn, uint32_t label)
 {
 	struct map		 map;
-	struct fec_nh		*fnh = NULL;
 	struct l2vpn_pw		*pw;
 
-	if (fn->fec.type == FEC_TYPE_PWID) {
-		fnh = fec_nh_find(fn, ln->id);
-		if (fnh == NULL)
-			/* not the other end of the pseudowire */
-			return;
-	}
-
-	bzero(&map, sizeof(map));
 	if (fn) {
 		lde_fec2map(&fn->fec, &map);
-
 		if (fn->fec.type == FEC_TYPE_PWID) {
-			pw = (struct l2vpn_pw *) fnh->data;
+			pw = (struct l2vpn_pw *) fn->data;
+			if (pw == NULL || pw->lsr_id.s_addr != ln->id.s_addr)
+				/* not the remote end of the pseudowire */
+				return;
+
 			if (pw->flags & F_PW_CWORD)
 				map.flags |= F_MAP_PW_CWORD;
 		}
-	} else
-		map.type = FEC_WILDCARD;
+	} else {
+		memset(&map, 0, sizeof(map));
+		map.type = MAP_TYPE_WILDCARD;
+	}
 	map.label = label;
 
 	lde_imsg_compose_ldpe(IMSG_RELEASE_ADD, ln->peerid, 0,
@@ -823,29 +828,20 @@ lde_send_labelrelease(struct lde_nbr *ln, struct fec_node *fn, u_int32_t label)
 }
 
 void
-lde_send_notification(u_int32_t peerid, u_int32_t code, u_int32_t msgid,
-    u_int32_t type)
+lde_send_notification(uint32_t peerid, uint32_t code, uint32_t msgid,
+    uint16_t type)
 {
 	struct notify_msg nm;
 
-	bzero(&nm, sizeof(nm));
-
-	/* Every field is in host byte order, to keep things clear */
+	memset(&nm, 0, sizeof(nm));
 	nm.status = code;
-	nm.messageid = ntohl(msgid);
+	/* 'msgid' and 'type' should be in network byte order */
+	nm.messageid = msgid;
 	nm.type = type;
 
 	lde_imsg_compose_ldpe(IMSG_NOTIFICATION_SEND, peerid, 0,
 	    &nm, sizeof(nm));
 }
-
-static __inline int lde_nbr_compare(struct lde_nbr *, struct lde_nbr *);
-
-RB_HEAD(nbr_tree, lde_nbr);
-RB_PROTOTYPE(nbr_tree, lde_nbr, entry, lde_nbr_compare)
-RB_GENERATE(nbr_tree, lde_nbr, entry, lde_nbr_compare)
-
-struct nbr_tree lde_nbrs = RB_INITIALIZER(&lde_nbrs);
 
 static __inline int
 lde_nbr_compare(struct lde_nbr *a, struct lde_nbr *b)
@@ -854,17 +850,7 @@ lde_nbr_compare(struct lde_nbr *a, struct lde_nbr *b)
 }
 
 struct lde_nbr *
-lde_nbr_find(u_int32_t peerid)
-{
-	struct lde_nbr	n;
-
-	n.peerid = peerid;
-
-	return (RB_FIND(nbr_tree, &lde_nbrs, &n));
-}
-
-struct lde_nbr *
-lde_nbr_new(u_int32_t peerid, struct in_addr *id)
+lde_nbr_new(uint32_t peerid, struct in_addr *id)
 {
 	struct lde_nbr	*ln;
 

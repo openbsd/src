@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.1 2016/05/23 16:08:18 renato Exp $ */
+/*	$OpenBSD: util.c,v 1.2 2016/05/23 17:43:42 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>

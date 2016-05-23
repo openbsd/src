@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.43 2016/05/23 16:54:22 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.44 2016/05/23 17:43:42 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -80,7 +80,7 @@ int		 symset(const char *, const char *, int);
 char		*symget(const char *);
 
 void		 clear_config(struct ldpd_conf *xconf);
-u_int32_t	 get_rtr_id(void);
+uint32_t	 get_rtr_id(void);
 int		 host(const char *, struct in_addr *, struct in_addr *);
 
 static struct ldpd_conf	*conf;
@@ -93,11 +93,11 @@ struct l2vpn		*l2vpn = NULL;
 struct l2vpn_pw		*pw = NULL;
 
 struct config_defaults {
-	u_int16_t	lhello_holdtime;
-	u_int16_t	lhello_interval;
-	u_int16_t	thello_holdtime;
-	u_int16_t	thello_interval;
-	u_int8_t	pwflags;
+	uint16_t	lhello_holdtime;
+	uint16_t	lhello_interval;
+	uint16_t	thello_holdtime;
+	uint16_t	thello_interval;
+	uint8_t		pwflags;
 };
 
 struct config_defaults	 globaldefs;
@@ -123,7 +123,7 @@ typedef struct {
 
 %}
 
-%token	INTERFACE TNEIGHBOR ROUTERID FIBUPDATE
+%token	INTERFACE TNEIGHBOR ROUTERID FIBUPDATE EXPNULL
 %token	LHELLOHOLDTIME LHELLOINTERVAL
 %token	THELLOHOLDTIME THELLOINTERVAL
 %token	THELLOACCEPT
@@ -197,7 +197,7 @@ pw_type		: ETHERNET		{ $$ = PW_TYPE_ETHERNET; }
 		;
 
 varset		: STRING '=' string {
-			if (conf->opts & LDPD_OPT_VERBOSE)
+			if (global.cmd_opts & LDPD_OPT_VERBOSE)
 				printf("%s = \"%s\"\n", $1, $3);
 			if (symset($1, $3, 0) == -1)
 				fatal("cannot store variable");
@@ -220,15 +220,21 @@ conf_main	: ROUTERID STRING {
 		}
 		| FIBUPDATE yesno {
 			if ($2 == 0)
-				conf->flags |= LDPD_FLAG_NO_FIB_UPDATE;
+				conf->flags |= F_LDPD_NO_FIB_UPDATE;
 			else
-				conf->flags &= ~LDPD_FLAG_NO_FIB_UPDATE;
+				conf->flags &= ~F_LDPD_NO_FIB_UPDATE;
 		}
 		| THELLOACCEPT yesno {
 			if ($2 == 0)
-				conf->flags &= ~LDPD_FLAG_TH_ACCEPT;
+				conf->flags &= ~F_LDPD_TH_ACCEPT;
 			else
-				conf->flags |= LDPD_FLAG_TH_ACCEPT;
+				conf->flags |= F_LDPD_TH_ACCEPT;
+		}
+		| EXPNULL yesno {
+			if ($2 == 0)
+				conf->flags &= ~F_LDPD_EXPNULL;
+			else
+				conf->flags |= F_LDPD_EXPNULL;
 		}
 		| KEEPALIVE NUMBER {
 			if ($2 < MIN_KEEPALIVE || $2 > MAX_KEEPALIVE) {
@@ -694,6 +700,7 @@ lookup(char *s)
 		{"control-word",		CONTROLWORD},
 		{"ethernet",			ETHERNET},
 		{"ethernet-tagged",		ETHERNETTAGGED},
+		{"explicit-null",		EXPNULL},
 		{"fib-update",			FIBUPDATE},
 		{"include",			INCLUDE},
 		{"interface",			INTERFACE},
@@ -732,10 +739,10 @@ lookup(char *s)
 
 #define MAXPUSHBACK	128
 
-u_char	*parsebuf;
-int	 parseindex;
-u_char	 pushback_buffer[MAXPUSHBACK];
-int	 pushback_index = 0;
+unsigned char	*parsebuf;
+int		 parseindex;
+unsigned char	 pushback_buffer[MAXPUSHBACK];
+int		 pushback_index = 0;
 
 int
 lgetc(int quotec)
@@ -827,10 +834,10 @@ findeol(void)
 int
 yylex(void)
 {
-	u_char	 buf[8096];
-	u_char	*p, *val;
-	int	 quotec, next, c;
-	int	 token;
+	unsigned char	 buf[8096];
+	unsigned char	*p, *val;
+	int		 quotec, next, c;
+	int		 token;
 
 top:
 	p = buf;
@@ -1041,16 +1048,15 @@ popfile(void)
 }
 
 struct ldpd_conf *
-parse_config(char *filename, int opts)
+parse_config(char *filename)
 {
 	struct sym	*sym, *next;
 
 	if ((conf = calloc(1, sizeof(struct ldpd_conf))) == NULL)
-		fatal("parse_config");
-	conf->opts = opts;
+		fatal(__func__);
 	conf->keepalive = DEFAULT_KEEPALIVE;
 
-	bzero(&globaldefs, sizeof(globaldefs));
+	memset(&globaldefs, 0, sizeof(globaldefs));
 	defs = &globaldefs;
 	defs->lhello_holdtime = LINK_DFLT_HOLDTIME;
 	defs->lhello_interval = DEFAULT_HELLO_INTERVAL;
@@ -1063,14 +1069,14 @@ parse_config(char *filename, int opts)
 	defs->pwflags |= F_PW_CWORD_CONF;
 	defs->pwflags |= F_PW_CWORD;
 
-	if ((file = pushfile(filename, !(conf->opts & LDPD_OPT_NOACTION))) == NULL) {
+	if ((file = pushfile(filename,
+	    !(global.cmd_opts & LDPD_OPT_NOACTION))) == NULL) {
 		free(conf);
 		return (NULL);
 	}
 	topfile = file;
 
 	LIST_INIT(&conf->iface_list);
-	LIST_INIT(&conf->addr_list);
 	LIST_INIT(&conf->tnbr_list);
 	LIST_INIT(&conf->nbrp_list);
 	LIST_INIT(&conf->l2vpn_list);
@@ -1082,7 +1088,7 @@ parse_config(char *filename, int opts)
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
 		next = TAILQ_NEXT(sym, entry);
-		if ((conf->opts & LDPD_OPT_VERBOSE2) && !sym->used)
+		if ((global.cmd_opts & LDPD_OPT_VERBOSE2) && !sym->used)
 			fprintf(stderr, "warning: macro '%s' not "
 			    "used\n", sym->nam);
 		if (!sym->persist) {
@@ -1179,16 +1185,6 @@ symget(const char *nam)
 			return (sym->val);
 		}
 	return (NULL);
-}
-
-int
-bad_ip_addr(struct in_addr addr)
-{
-	u_int32_t a = ntohl(addr.s_addr);
-
-	return (((a >> IN_CLASSA_NSHIFT) == 0)
-	    || ((a >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
-	    || IN_MULTICAST(a) || IN_BADCLASS(a));
 }
 
 struct iface *
@@ -1340,11 +1336,11 @@ clear_config(struct ldpd_conf *xconf)
 	free(xconf);
 }
 
-u_int32_t
+uint32_t
 get_rtr_id(void)
 {
 	struct ifaddrs		*ifap, *ifa;
-	u_int32_t		 ip = 0, cur, localnet;
+	uint32_t		 ip = 0, cur, localnet;
 
 	localnet = htonl(INADDR_LOOPBACK & IN_CLASSA_NET);
 
@@ -1376,7 +1372,7 @@ host(const char *s, struct in_addr *addr, struct in_addr *mask)
 	struct in_addr		 ina;
 	int			 bits = 32;
 
-	bzero(&ina, sizeof(struct in_addr));
+	memset(&ina, 0, sizeof(struct in_addr));
 	if (strrchr(s, '/') != NULL) {
 		if ((bits = inet_net_pton(AF_INET, s, &ina, sizeof(ina))) == -1)
 			return (0);

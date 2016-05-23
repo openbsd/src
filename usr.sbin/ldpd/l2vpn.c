@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.8 2016/05/23 16:54:22 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.9 2016/05/23 17:43:42 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -177,7 +177,7 @@ l2vpn_pw_del(struct l2vpn_pw *pw)
 void
 l2vpn_pw_fec(struct l2vpn_pw *pw, struct fec *fec)
 {
-	bzero(fec, sizeof(*fec));
+	memset(fec, 0, sizeof(*fec));
 	fec->type = FEC_TYPE_PWID;
 	fec->u.pwid.type = pw->l2vpn->pw_type;
 	fec->u.pwid.pwid = pw->pwid;
@@ -215,7 +215,7 @@ l2vpn_pw_ok(struct l2vpn_pw *pw, struct fec_nh *fnh)
 		return (0);
 
 	/* check for a working lsp to the nexthop */
-	bzero(&fec, sizeof(fec));
+	memset(&fec, 0, sizeof(fec));
 	fec.type = FEC_TYPE_IPV4;
 	fec.u.ipv4.prefix = pw->lsr_id;
 	fec.u.ipv4.prefixlen = 32;
@@ -253,25 +253,25 @@ l2vpn_pw_negotiate(struct lde_nbr *ln, struct fec_node *fn, struct map *map)
 	/* RFC4447 - Section 6.2: control word negotiation */
 	if (fec_find(&ln->sent_map, &fn->fec)) {
 		if ((map->flags & F_MAP_PW_CWORD) &&
-		    !(pw->flags & F_PW_CONTROLWORD_CONF)) {
+		    !(pw->flags & F_PW_CWORD_CONF)) {
 			/* ignore the received label mapping */
 			return (1);
 		} else if (!(map->flags & F_MAP_PW_CWORD) &&
-		    (pw->flags & F_PW_CONTROLWORD_CONF)) {
+		    (pw->flags & F_PW_CWORD_CONF)) {
 			/* TODO append a "Wrong C-bit" status code */
-			lde_send_labelwithdraw(ln, fn);
+			lde_send_labelwithdraw(ln, fn, NO_LABEL);
 
-			pw->flags &= ~F_PW_CONTROLWORD;
+			pw->flags &= ~F_PW_CWORD;
 			lde_send_labelmapping(ln, fn, 1);
 		}
 	} else if (map->flags & F_MAP_PW_CWORD) {
-		if (pw->flags & F_PW_CONTROLWORD_CONF)
-			pw->flags |= F_PW_CONTROLWORD;
+		if (pw->flags & F_PW_CWORD_CONF)
+			pw->flags |= F_PW_CWORD;
 		else
 			/* act as if no label mapping had been received */
 			return (1);
 	} else
-		pw->flags &= ~F_PW_CONTROLWORD;
+		pw->flags &= ~F_PW_CWORD;
 
 	/* RFC4447 - Section 5.4.3: pseudowire status negotiation */
 	if (fec_find(&ln->recv_map, &fn->fec) == NULL &&
@@ -282,11 +282,11 @@ l2vpn_pw_negotiate(struct lde_nbr *ln, struct fec_node *fn, struct map *map)
 }
 
 void
-l2vpn_send_pw_status(u_int32_t peerid, u_int32_t status, struct fec *fec)
+l2vpn_send_pw_status(uint32_t peerid, uint32_t status, struct fec *fec)
 {
 	struct notify_msg	 nm;
 
-	bzero(&nm, sizeof(nm));
+	memset(&nm, 0, sizeof(nm));
 	nm.status = S_PW_STATUS;
 
 	nm.pw_status = status;
@@ -375,7 +375,7 @@ l2vpn_pw_ctl(pid_t pid)
 
 	LIST_FOREACH(l2vpn, &ldeconf->l2vpn_list, entry)
 		LIST_FOREACH(pw, &l2vpn->pw_list, entry) {
-			bzero(&pwctl, sizeof(pwctl));
+			memset(&pwctl, 0, sizeof(pwctl));
 			strlcpy(pwctl.ifname, pw->ifname,
 			    sizeof(pwctl.ifname));
 			pwctl.pwid = pw->pwid;
@@ -405,17 +405,12 @@ l2vpn_binding_ctl(pid_t pid)
 		    LIST_EMPTY(&fn->downstream))
 			continue;
 
-		fnh = fec_nh_find(fn, f->u.pwid.nexthop);
-		if (fnh != NULL)
-			pw = (struct l2vpn_pw *) fnh->data;
-		else
-			pw = NULL;
-
-		bzero(&pwctl, sizeof(pwctl));
+		memset(&pwctl, 0, sizeof(pwctl));
 		pwctl.type = f->u.pwid.type;
 		pwctl.pwid = f->u.pwid.pwid;
-		pwctl.nexthop = f->u.pwid.nexthop;
+		pwctl.lsr_id = f->u.pwid.lsr_id;
 
+		pw = (struct l2vpn_pw *) fn->data;
 		if (pw) {
 			pwctl.local_label = fn->local_label;
 			pwctl.local_gid = 0;
@@ -469,9 +464,9 @@ ldpe_l2vpn_pw_init(struct l2vpn_pw *pw)
 {
 	struct tnbr		*tnbr;
 
-	tnbr = tnbr_find(leconf, pw->addr);
-	if (tnbr->discovery_fd == 0)
-		tnbr_init(leconf, tnbr);
+	tnbr = tnbr_find(leconf, pw->lsr_id);
+	if (!event_initialized(&tnbr->hello_timer))
+		tnbr_init(tnbr);
 }
 
 void

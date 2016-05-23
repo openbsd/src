@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.48 2016/05/23 16:54:22 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.49 2016/05/23 17:43:42 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -289,6 +289,22 @@ fec_nh_del(struct fec_nh *fnh)
 	free(fnh);
 }
 
+uint32_t
+egress_label(enum fec_type fec_type)
+{
+	if (!(ldeconf->flags & F_LDPD_EXPNULL))
+		return (MPLS_LABEL_IMPLNULL);
+
+	switch (fec_type) {
+	case FEC_TYPE_IPV4:
+		return (MPLS_LABEL_IPV4NULL);
+	default:
+		log_warnx("%s: unexpected fec type", __func__);
+	}
+
+	return (NO_LABEL);
+}
+
 void
 lde_kernel_insert(struct fec *fec, struct in_addr nexthop, int connected,
     void *data)
@@ -314,24 +330,22 @@ lde_kernel_insert(struct fec *fec, struct in_addr nexthop, int connected,
 	if (LIST_EMPTY(&fn->nexthops)) {
 		if (fn->local_label == NO_LABEL) {
 			if (connected)
-				fn->local_label = MPLS_LABEL_IMPLNULL;
+				fn->local_label = egress_label(fn->fec.type);
 			else
 				fn->local_label = lde_assign_label();
 		} else {
 			/* Handle local label changes */
 			if (connected &&
-			    fn->local_label != MPLS_LABEL_IMPLNULL) {
+			    fn->local_label < MPLS_LABEL_RESERVED_MAX) {
 				/* explicit withdraw of the previous label */
-				RB_FOREACH(ln, nbr_tree, &lde_nbrs)
-					lde_send_labelwithdraw(ln, fn);
-				fn->local_label = MPLS_LABEL_IMPLNULL;
+				lde_send_labelwithdraw_all(fn, NO_LABEL);
+				fn->local_label = egress_label(fn->fec.type);
 			}
 
 			if (!connected &&
-			    fn->local_label == MPLS_LABEL_IMPLNULL) {
+			    fn->local_label < MPLS_LABEL_RESERVED_MAX) {
 				/* explicit withdraw of the previous label */
-				RB_FOREACH(ln, nbr_tree, &lde_nbrs)
-					lde_send_labelwithdraw(ln, fn);
+				lde_send_labelwithdraw_all(fn, NO_LABEL);
 				fn->local_label = lde_assign_label();
 			}
 		}
@@ -370,7 +384,6 @@ lde_kernel_remove(struct fec *fec, struct in_addr nexthop)
 {
 	struct fec_node		*fn;
 	struct fec_nh		*fnh;
-	struct lde_nbr		*ln;
 
 	log_debug("lde remove fec %s nexthop %s",
 	    log_fec(fec), inet_ntoa(nexthop));
@@ -387,9 +400,11 @@ lde_kernel_remove(struct fec *fec, struct in_addr nexthop)
 
 	lde_send_delete_klabel(fn, fnh);
 	fec_nh_del(fnh);
-	if (LIST_EMPTY(&fn->nexthops))
-		RB_FOREACH(ln, nbr_tree, &lde_nbrs)
-			lde_send_labelwithdraw(ln, fn);
+	if (LIST_EMPTY(&fn->nexthops)) {
+		lde_send_labelwithdraw_all(fn, NO_LABEL);
+		if (fn->fec.type == FEC_TYPE_PWID)
+			fn->data = NULL;
+	}
 }
 
 void
