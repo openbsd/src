@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.46 2016/05/23 16:01:59 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.47 2016/05/23 16:04:04 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -54,11 +54,8 @@ gen_ldp_hdr(struct ibuf *buf, u_int16_t size)
 
 	bzero(&ldp_hdr, sizeof(ldp_hdr));
 	ldp_hdr.version = htons(LDP_VERSION);
-
-	/* We want just the size of the value */
-	size -= TLV_HDR_LEN;
-
-	ldp_hdr.length = htons(size);
+	/* exclude the 'Version' and 'PDU Length' fields from the total */
+	ldp_hdr.length = htons(size - LDP_HDR_DEAD_LEN);
 	ldp_hdr.lsr_id = leconf->rtr_id.s_addr;
 	ldp_hdr.lspace_id = 0;
 
@@ -344,11 +341,11 @@ session_read(int fd, short event, void *arg)
 		 * "Prior to completion of the negotiation, the maximum
 		 * allowable length is 4096 bytes".
 		 */
-		if (nbr->state == NBR_STA_OPER)
+		if (nbr && nbr->state == NBR_STA_OPER)
 			max_pdu_len = nbr->max_pdu_len;
 		else
 			max_pdu_len = LDP_MAX_LEN;
-		if (pdu_len < (LDP_HDR_PDU_LEN + LDP_MSG_LEN) ||
+		if (pdu_len < (LDP_HDR_PDU_LEN + LDP_MSG_SIZE) ||
 		    pdu_len > max_pdu_len) {
 			if (nbr)
 				session_shutdown(nbr, S_BAD_PDU_LEN, 0, 0);
@@ -360,6 +357,7 @@ session_read(int fd, short event, void *arg)
 			free(buf);
 			return;
 		}
+		pdu_len -= LDP_HDR_PDU_LEN;
 
 		if (nbr) {
 			if (ldp_hdr->lsr_id != nbr->id.s_addr ||
@@ -451,25 +449,25 @@ session_read(int fd, short event, void *arg)
 			/* switch LDP packet type */
 			switch (type) {
 			case MSG_TYPE_NOTIFICATION:
-				msg_size = recv_notification(nbr, pdu, pdu_len);
+				ret = recv_notification(nbr, pdu, msg_size);
 				break;
 			case MSG_TYPE_INIT:
-				msg_size = recv_init(nbr, pdu, pdu_len);
+				ret = recv_init(nbr, pdu, msg_size);
 				break;
 			case MSG_TYPE_KEEPALIVE:
-				msg_size = recv_keepalive(nbr, pdu, pdu_len);
+				ret = recv_keepalive(nbr, pdu, msg_size);
 				break;
 			case MSG_TYPE_ADDR:
 			case MSG_TYPE_ADDRWITHDRAW:
-				msg_size = recv_address(nbr, pdu, pdu_len);
+				ret = recv_address(nbr, pdu, msg_size);
 				break;
 			case MSG_TYPE_LABELMAPPING:
 			case MSG_TYPE_LABELREQUEST:
 			case MSG_TYPE_LABELWITHDRAW:
 			case MSG_TYPE_LABELRELEASE:
 			case MSG_TYPE_LABELABORTREQ:
-				msg_size = recv_labelmessage(nbr, pdu,
-				    pdu_len, type);
+				ret = recv_labelmessage(nbr, pdu, msg_size,
+				    type);
 				break;
 			default:
 				log_debug("%s: unknown LDP packet from nbr %s",
@@ -481,19 +479,19 @@ session_read(int fd, short event, void *arg)
 					return;
 				}
 				/* unknown flag is set, ignore the message */
-				msg_size = ntohs(ldp_msg->length);
+				ret = 0;
 				break;
 			}
 
-			if (msg_size == -1) {
+			if (ret == -1) {
 				/* parser failed, giving up */
 				free(buf);
 				return;
 			}
 
 			/* Analyse the next message */
-			pdu += msg_size + TLV_HDR_LEN;
-			len -= msg_size + TLV_HDR_LEN;
+			pdu += msg_size;
+			len -= msg_size;
 		}
 		free(buf);
 		if (len != 0) {
@@ -558,7 +556,7 @@ session_get_pdu(struct ibuf_read *r, char **b)
 		return (0);
 
 	memcpy(&l, r->buf, sizeof(l));
-	dlen = ntohs(l.length) + TLV_HDR_LEN;
+	dlen = ntohs(l.length) + LDP_HDR_DEAD_LEN;
 	if (dlen > av)
 		return (0);
 

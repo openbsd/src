@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.20 2016/05/23 16:01:59 renato Exp $ */
+/*	$OpenBSD: init.c,v 1.21 2016/05/23 16:04:04 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -49,19 +49,14 @@ send_init(struct nbr *nbr)
 
 	log_debug("%s: neighbor ID %s", __func__, inet_ntoa(nbr->id));
 
-	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
+	size = LDP_HDR_SIZE + LDP_MSG_SIZE + SESS_PRMS_SIZE;
+	if ((buf = ibuf_open(size)) == NULL)
 		fatal(__func__);
 
-	size = LDP_HDR_SIZE + sizeof(struct ldp_msg) + SESS_PRMS_SIZE;
-
 	gen_ldp_hdr(buf, size);
-
 	size -= LDP_HDR_SIZE;
-
-	gen_msg_tlv(buf, MSG_TYPE_INIT, size);
-
-	size -= sizeof(struct ldp_msg);
-
+	gen_msg_hdr(buf, MSG_TYPE_INIT, size);
+	size -= LDP_MSG_SIZE;
 	gen_init_prms_tlv(buf, nbr, size);
 
 	evbuf_enqueue(&nbr->tcp->wbuf, buf);
@@ -87,8 +82,7 @@ recv_init(struct nbr *nbr, char *buf, u_int16_t len)
 	}
 	bcopy(buf, &sess, sizeof(sess));
 
-	if (ntohs(sess.length) != SESS_PRMS_SIZE - TLV_HDR_LEN ||
-	    ntohs(sess.length) > len - TLV_HDR_LEN) {
+	if (ntohs(sess.length) != SESS_PRMS_SIZE - TLV_HDR_LEN) {
 		session_shutdown(nbr, S_BAD_TLV_LEN, init.msgid, init.type);
 		return (-1);
 	}
@@ -122,7 +116,7 @@ recv_init(struct nbr *nbr, char *buf, u_int16_t len)
 
 	nbr_fsm(nbr, NBR_EVT_INIT_RCVD);
 
-	return (ntohs(init.length));
+	return (0);
 }
 
 int

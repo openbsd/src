@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.31 2016/05/23 15:53:40 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.32 2016/05/23 16:04:04 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -72,19 +72,16 @@ send_hello(enum hello_type type, struct iface *iface, struct tnbr *tnbr)
 		break;
 	}
 
-	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
-		fatal(__func__);
-
-	size = LDP_HDR_SIZE + sizeof(struct ldp_msg) +
-	    sizeof(struct hello_prms_tlv) +
+	size = LDP_HDR_SIZE + LDP_MSG_SIZE + sizeof(struct hello_prms_tlv) +
 	    sizeof(struct hello_prms_opt4_tlv);
 
+	/* generate message */
+	if ((buf = ibuf_open(size)) == NULL)
+		fatal(__func__);
+
 	gen_ldp_hdr(buf, size);
-
 	size -= LDP_HDR_SIZE;
-
-	gen_msg_tlv(buf, MSG_TYPE_HELLO, size);
-
+	gen_msg_hdr(buf, MSG_TYPE_HELLO, size);
 	gen_hello_prms_tlv(buf, holdtime, flags);
 	gen_opt4_hello_prms_tlv(buf, TLV_TYPE_IPV4TRANSADDR,
 	    leconf->trans_addr.s_addr);

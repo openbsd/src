@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.21 2016/05/23 15:53:40 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.22 2016/05/23 16:04:04 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -102,8 +102,9 @@ struct ldp_hdr {
 	u_int16_t		lspace_id;
 } __packed;
 
-#define	LDP_HDR_SIZE		10
-#define	LDP_HDR_PDU_LEN		6
+#define	LDP_HDR_SIZE		10	/* actual size of the LDP header */
+#define	LDP_HDR_PDU_LEN		6	/* minimum "PDU Length" */
+#define LDP_HDR_DEAD_LEN	4
 
 /* TLV record */
 struct tlv {
@@ -120,7 +121,9 @@ struct ldp_msg {
 	/* Optional Parameters */
 } __packed;
 
-#define LDP_MSG_LEN		8
+#define LDP_MSG_SIZE		8	/* minimum size of LDP message */
+#define LDP_MSG_LEN		4	/* minimum "Message Length" */
+#define LDP_MSG_DEAD_LEN	4
 
 #define	UNKNOWN_FLAG		0x8000
 #define	FORWARD_FLAG		0xc000

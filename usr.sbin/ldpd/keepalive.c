@@ -1,4 +1,4 @@
-/*	$OpenBSD: keepalive.c,v 1.13 2016/05/23 15:14:07 renato Exp $ */
+/*	$OpenBSD: keepalive.c,v 1.14 2016/05/23 16:04:04 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -42,16 +42,13 @@ send_keepalive(struct nbr *nbr)
 	struct ibuf	*buf;
 	u_int16_t	 size;
 
-	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
+	size = LDP_HDR_SIZE + LDP_MSG_SIZE;
+	if ((buf = ibuf_open(size)) == NULL)
 		fatal(__func__);
 
-	size = LDP_HDR_SIZE + sizeof(struct ldp_msg);
-
 	gen_ldp_hdr(buf, size);
-
 	size -= LDP_HDR_SIZE;
-
-	gen_msg_tlv(buf, MSG_TYPE_KEEPALIVE, size);
+	gen_msg_hdr(buf, MSG_TYPE_KEEPALIVE, size);
 
 	evbuf_enqueue(&nbr->tcp->wbuf, buf);
 }
@@ -71,5 +68,5 @@ recv_keepalive(struct nbr *nbr, char *buf, u_int16_t len)
 	if (nbr->state != NBR_STA_OPER)
 		nbr_fsm(nbr, NBR_EVT_KEEPALIVE_RCVD);
 
-	return (ntohs(ka.length));
+	return (0);
 }
