@@ -1,4 +1,4 @@
-/*	$OpenBSD: manpath.c,v 1.17 2015/11/07 17:58:52 schwarze Exp $	*/
+/*	$OpenBSD: manpath.c,v 1.18 2016/05/23 18:59:00 millert Exp $	*/
 /*
  * Copyright (c) 2011, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -173,13 +173,12 @@ manconf_file(struct manconf *conf, const char *file)
 
 	while ((linelen = getline(&line, &linesz, stream)) != -1) {
 		cp = line;
-		ep = cp + linelen;
-		if (ep[-1] != '\n')
-			break;
-		*--ep = '\0';
+		ep = cp + linelen - 1;
+		while (ep > cp && isspace((unsigned char)*ep))
+			*ep-- = '\0';
 		while (isspace((unsigned char)*cp))
 			cp++;
-		if (*cp == '#')
+		if (cp == ep || *cp == '#')
 			continue;
 
 		for (tok = 0; tok < sizeof(toks)/sizeof(toks[0]); tok++) {
