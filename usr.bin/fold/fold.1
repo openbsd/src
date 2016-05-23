@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fold.1,v 1.17 2016/01/05 12:44:55 schwarze Exp $
+.\"	$OpenBSD: fold.1,v 1.18 2016/05/23 10:31:42 schwarze Exp $
 .\"	$NetBSD: fold.1,v 1.5 1995/09/01 01:42:42 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)fold.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 5 2016 $
+.Dd $Mdocdate: May 23 2016 $
 .Dt FOLD 1
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ or the standard input if no files are specified,
 breaking the lines to have a maximum of 80 display columns.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width 8n
 .It Fl b
 Count
 .Ar width
@@ -62,10 +62,31 @@ possible.
 .It Fl w Ar width
 Specifies a line width to use instead of the default of 80.
 .El
+.Pp
+Unless
+.Fl b
+is specified, a backspace character decrements the column position
+by one, a carriage return resets the column position to zero, and
+a tab advances the column position to the next multiple of eight.
+.Sh ENVIRONMENT
+.Bl -tag -width 8n
+.It Ev LC_CTYPE
+The character set
+.Xr locale 1 .
+It is used to decide which byte sequences form characters and what
+their display width is.
+If it is unset or set to
+.Qq C ,
+.Qq POSIX ,
+or an unsupported value, each byte except backspace, tab, newline,
+and carriage return is assumed to represent a character of display
+width 1.
+.El
 .Sh EXIT STATUS
 .Ex -std fold
 .Sh SEE ALSO
-.Xr expand 1
+.Xr expand 1 ,
+.Xr fmt 1
 .Sh STANDARDS
 The
 .Nm
@@ -100,15 +121,17 @@ rewrote the command in 1990, and
 .An J. T. Conklin
 added the missing options in 1993.
 .Sh BUGS
-If underlining (see
-.Xr ul 1 )
-is present it may be messed up by folding.
-.Pp
-.Ar width
-should be a multiple of 8 if tabs are present, or the tabs should
-be expanded using
-.Xr expand 1
-before using
-.Nm fold .
-.Pp
-Multibyte character support is missing.
+Traditional
+.Xr roff 7
+output semantics, implemented both by GNU nroff and by
+.Xr mandoc 1 ,
+only uses a single backspace for backing up the previous character,
+even for double-width characters.
+The
+.Nm
+backspace semantics required by POSIX mishandles such backspace-encoded
+sequences, breaking lines early.
+The
+.Xr fmt 1
+utility provides similar functionality and does not suffer from that
+problem, but isn't standardized by POSIX.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fold.c,v 1.17 2015/10/09 01:37:07 deraadt Exp $	*/
+/*	$OpenBSD: fold.c,v 1.18 2016/05/23 10:31:42 schwarze Exp $	*/
 /*	$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $	*/
 
 /*-
@@ -33,19 +33,22 @@
  * SUCH DAMAGE.
  */
 
+#include <ctype.h>
+#include <err.h>
+#include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <ctype.h>
-#include <err.h>
-#include <limits.h>
+#include <wchar.h>
 
 #define	DEFLINEWIDTH	80
 
 static void fold(unsigned int);
-static unsigned int new_column_position(unsigned int, int);
+static int isu8cont(unsigned char);
 static __dead void usage(void);
+
 int count_bytes = 0;
 int split_words = 0;
 
@@ -55,6 +58,8 @@ main(int argc, char *argv[])
 	int ch, lastch, newarg, prevoptind;
 	unsigned int width;
 	const char *errstr;
+
+	setlocale(LC_CTYPE, "");
 
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
@@ -110,12 +115,11 @@ main(int argc, char *argv[])
 		for (; *argv; ++argv) {
 			if (!freopen(*argv, "r", stdin))
 				err(1, "%s", *argv);
-				/* NOTREACHED */
 			else
 				fold(width);
 		}
 	}
-	exit(0);
+	return 0;
 }
 
 /*
@@ -130,100 +134,135 @@ main(int argc, char *argv[])
  * returns embedded in the input stream.
  */
 static void
-fold(unsigned int width)
+fold(unsigned int max_width)
 {
-	static char *buf = NULL;
-	static int   buf_max = 0;
-	int ch;
-	unsigned int col, indx;
+	static char	*buf = NULL;
+	static size_t	 bufsz = 2048;
+	char		*cp;	/* Current mb character. */
+	char		*np;	/* Next mb character. */
+	char		*sp;	/* To search for the last space. */
+	char		*nbuf;	/* For buffer reallocation. */
+	wchar_t		 wc;	/* Current wide character. */
+	int		 ch;	/* Last byte read. */
+	int		 len;	/* Bytes in the current mb character. */
+	unsigned int	 col;	/* Current display position. */
+	int		 width; /* Display width of wc. */
 
-	col = indx = 0;
-	while ((ch = getchar()) != EOF) {
-		if (ch == '\n') {
-			if (indx != 0)
-				fwrite(buf, 1, indx, stdout);
-			putchar('\n');
-			col = indx = 0;
-			continue;
+	if (buf == NULL && (buf = malloc(bufsz)) == NULL)
+		err(1, NULL);
+
+	np = cp = buf;
+	ch = 0;
+	col = 0;
+
+	while (ch != EOF) {  /* Loop on input characters. */
+		while ((ch = getchar()) != EOF) {  /* Loop on input bytes. */
+			if (np + 1 == buf + bufsz) {
+				nbuf = reallocarray(buf, 2, bufsz);
+				if (nbuf == NULL)
+					err(1, NULL);
+				bufsz *= 2;
+				cp = nbuf + (cp - buf);
+				np = nbuf + (np - buf);
+				buf = nbuf;
+			}
+			*np++ = ch;
+
+			/*
+			 * Read up to and including the first byte of
+			 * the next character, such that we are sure
+			 * to have a complete character in the buffer.
+			 * There is no need to read more than five bytes
+			 * ahead, since UTF-8 characters are four bytes
+			 * long at most.
+			 */
+
+			if (np - cp > 4 || (np - cp > 1 && !isu8cont(ch)))
+				break;
 		}
 
-		col = new_column_position(col, ch);
-		if (col > width) {
-			unsigned int i, last_space;
+		while (cp < np) {  /* Loop on output characters. */
 
-			if (split_words) {
-				for (i = 0, last_space = -1; i < indx; i++)
-					if(buf[i] == ' ')
-						last_space = i;
-			}
+			/* Handle end of line and backspace. */
 
-			if (split_words && last_space != -1) {
-				last_space++;
-
-				fwrite(buf, 1, last_space, stdout);
-				memmove(buf, buf+last_space, indx-last_space);
-
-				indx -= last_space;
+			if (*cp == '\n' || (*cp == '\r' && !count_bytes)) {
+				fwrite(buf, 1, ++cp - buf, stdout);
+				memmove(buf, cp, np - cp);
+				np = buf + (np - cp);
+				cp = buf;
 				col = 0;
-				for (i = 0; i < indx; i++) {
-					col = new_column_position(col, buf[i]);
+				continue;
+			}
+			if (*cp == '\b' && !count_bytes) {
+				if (col)
+					col--;
+				cp++;
+				continue;
+			}
+
+			/*
+			 * Measure display width.
+			 * Process the last byte only if
+			 * end of file was reached.
+			 */
+
+			if (np - cp > (ch != EOF)) {
+				len = 1;
+				width = 1;
+
+				if (*cp == '\t') {
+					if (count_bytes == 0)
+						width = 8 - (col & 7);
+				} else if ((len = mbtowc(&wc, cp,
+				    np - cp)) < 1)
+					len = 1;
+				else if (count_bytes)
+					width = len;
+				else if ((width = wcwidth(wc)) < 0)
+					width = 1;
+
+				col += width;
+				if (col <= max_width || cp == buf) {
+					cp += len;
+					continue;
 				}
-			} else {
-				fwrite(buf, 1, indx, stdout);
-				col = indx = 0;
 			}
-			putchar('\n');
 
-			/* calculate the column position for the next line. */
-			col = new_column_position(col, ch);
-		}
+			/* Line break required. */
 
-		if (indx + 1 > buf_max) {
-			int newmax = buf_max + 2048;
-			char *newbuf;
-
-			/* Allocate buffer in LINE_MAX increments */
-			if ((newbuf = realloc(buf, newmax)) == NULL) {
-				err(1, NULL);
-				/* NOTREACHED */
+			if (col > max_width) {
+				if (split_words) {
+					for (sp = cp; sp > buf; sp--) {
+						if (sp[-1] == ' ') {
+							cp = sp;
+							break;
+						}
+					}
+				}
+				fwrite(buf, 1, cp - buf, stdout);
+				putchar('\n');
+				memmove(buf, cp, np - cp);
+				np = buf + (np - cp);
+				cp = buf;
+				col = 0;
+				continue;
 			}
-			buf = newbuf;
-			buf_max = newmax;
+
+			/* Need more input. */
+
+			break;
 		}
-		buf[indx++] = ch;
 	}
+	fwrite(buf, 1, np - buf, stdout);
 
-	if (indx != 0)
-		fwrite(buf, 1, indx, stdout);
+	if (ferror(stdin))
+		err(1, NULL);
 }
 
-/*
- * calculate the column position 
- */
-static unsigned int
-new_column_position(unsigned int col, int ch)
+static int
+isu8cont(unsigned char c)
 {
-	if (!count_bytes) {
-		switch (ch) {
-		case '\b':
-			if (col > 0)
-				--col;
-			break;
-		case '\r':
-			col = 0;
-			break;
-		case '\t':
-			col = (col + 8) & ~7;
-			break;
-		default:
-			++col;
-			break;
-		}
-	} else {
-		++col;
-	}
-
-	return col;
+	return MB_CUR_MAX > 1 && (c & (0x80 | 0x40)) == 0x80;
 }
 
 static __dead void
