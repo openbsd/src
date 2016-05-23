@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.107 2016/05/23 09:31:28 natano Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.108 2016/05/23 20:47:49 tb Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -468,7 +468,7 @@ ffs_dirpref(struct inode *pip)
 	 * Force allocation in another cg if creating a first level dir.
 	 */
 	if (ITOV(pip)->v_flag & VROOT) {
-		prefcg = (arc4random() & INT_MAX) % fs->fs_ncg;
+		prefcg = arc4random_uniform(fs->fs_ncg);
 		mincg = prefcg;
 		minndir = fs->fs_ipg;
 		for (cg = prefcg; cg < fs->fs_ncg; cg++)
