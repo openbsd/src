@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.42 2016/05/23 16:39:47 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.43 2016/05/23 16:54:22 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -362,7 +362,7 @@ pwopts		: PWID NUMBER {
 			}
 			free($2);
 
-			pw->addr.s_addr = addr.s_addr;
+			pw->lsr_id = addr;
 
 			t = tnbr_find(conf, addr);
 			if (t == NULL) {
@@ -407,7 +407,7 @@ pseudowire	: PSEUDOWIRE STRING {
 				yyerror("missing pseudowire id");
 				YYERROR;
 			}
-			if (pw->addr.s_addr == INADDR_ANY) {
+			if (pw->lsr_id.s_addr == INADDR_ANY) {
 				yyerror("missing pseudowore neighbor");
 				YYERROR;
 			}
@@ -416,7 +416,7 @@ pseudowire	: PSEUDOWIRE STRING {
 				LIST_FOREACH(p, &l->pw_list, entry)
 					if (pw != p &&
 					    pw->pwid == p->pwid &&
-					    pw->addr.s_addr == p->addr.s_addr) {
+					    pw->lsr_id.s_addr == p->lsr_id.s_addr) {
 						yyerror("pseudowire already "
 						    "configured");
 						YYERROR;

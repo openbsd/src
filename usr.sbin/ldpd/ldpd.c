@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.35 2016/05/23 16:18:51 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.36 2016/05/23 16:54:22 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -881,7 +881,7 @@ merge_l2vpn(struct ldpd_conf *xconf, struct l2vpn *l2vpn, struct l2vpn *xl)
 		/* changes that require a full reset of the pseudowire */
 		if (l2vpn->pw_type != xl->pw_type ||
 		    l2vpn->mtu != xl->mtu ||
-		    pw->addr.s_addr != xp->addr.s_addr ||
+		    pw->lsr_id.s_addr != xp->lsr_id.s_addr ||
 		    pw->pwid != xp->pwid ||
 		    ((pw->flags &
 		    (F_PW_STATUSTLV_CONF|F_PW_CWORD_CONF)) !=
@@ -897,7 +897,7 @@ merge_l2vpn(struct ldpd_conf *xconf, struct l2vpn *l2vpn, struct l2vpn *xl)
 				l2vpn_pw_init(xp);
 				break;
 			case PROC_LDP_ENGINE:
-		    		if (pw->addr.s_addr != xp->addr.s_addr) {
+		    		if (pw->lsr_id.s_addr != xp->lsr_id.s_addr) {
 					ldpe_l2vpn_pw_exit(pw);
 					ldpe_l2vpn_pw_init(xp);
 				}

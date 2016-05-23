@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.20 2016/05/23 16:20:59 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.21 2016/05/23 16:54:22 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -382,7 +382,7 @@ log_fec(struct fec *fec)
 		if (snprintf(buf, sizeof(buf),
 		    "pwid %u (%s) - %s",
 		    fec->u.pwid.pwid, pw_type_name(fec->u.pwid.type),
-		    inet_ntoa(fec->u.pwid.nexthop)) == -1)
+		    inet_ntoa(fec->u.pwid.lsr_id)) == -1)
 			return ("???");
 		break;
 	default:

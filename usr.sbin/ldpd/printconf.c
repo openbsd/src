@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.17 2016/05/23 16:35:37 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.18 2016/05/23 16:54:22 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -109,7 +109,7 @@ void
 print_pw(struct l2vpn_pw *pw)
 {
 	printf("\tpseudowire %s {\n", pw->ifname);
-	printf("\t\tneighbor %s\n", inet_ntoa(pw->addr));
+	printf("\t\tneighbor %s\n", inet_ntoa(pw->lsr_id));
 	printf("\t\tpw-id %u\n", pw->pwid);
 	if (pw->flags & F_PW_STATUSTLV_CONF)
 		printf("\t\tstatus-tlv yes\n");

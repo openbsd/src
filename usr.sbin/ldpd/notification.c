@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.26 2016/05/23 16:29:22 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.27 2016/05/23 16:54:22 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -199,7 +199,6 @@ recv_notification(struct nbr *nbr, char *buf, u_int16_t len)
 
 		switch (nm.fec.type) {
 		case MAP_TYPE_PWID:
-		case MAP_TYPE_GENPWID:
 			break;
 		default:
 			send_notification_nbr(nbr, S_BAD_TLV_VAL,

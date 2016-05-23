@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.47 2016/05/23 16:52:16 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.48 2016/05/23 16:54:22 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -92,11 +92,11 @@ fec_compare(struct fec *a, struct fec *b)
 			return (-1);
 		if (a->u.pwid.pwid > b->u.pwid.pwid)
 			return (1);
-		if (ntohl(a->u.pwid.nexthop.s_addr) <
-		    ntohl(b->u.pwid.nexthop.s_addr))
+		if (ntohl(a->u.pwid.lsr_id.s_addr) <
+		    ntohl(b->u.pwid.lsr_id.s_addr))
 			return (-1);
-		if (ntohl(a->u.pwid.nexthop.s_addr) >
-		    ntohl(b->u.pwid.nexthop.s_addr))
+		if (ntohl(a->u.pwid.lsr_id.s_addr) >
+		    ntohl(b->u.pwid.lsr_id.s_addr))
 			return (1);
 		return (0);
 	}
@@ -308,6 +308,9 @@ lde_kernel_insert(struct fec *fec, struct in_addr nexthop, int connected,
 	if (fec_nh_find(fn, nexthop) != NULL)
 		return;
 
+	if (fn->fec.type == FEC_TYPE_PWID)
+		fn->data = data;
+
 	if (LIST_EMPTY(&fn->nexthops)) {
 		if (fn->local_label == NO_LABEL) {
 			if (connected)
@@ -339,9 +342,20 @@ lde_kernel_insert(struct fec *fec, struct in_addr nexthop, int connected,
 	}
 
 	fnh = fec_nh_add(fn, nexthop);
-	fnh->data = data;
 	lde_send_change_klabel(fn, fnh);
-	ln = lde_find_address(fnh->nexthop);
+
+	switch (fn->fec.type) {
+	case FEC_TYPE_IPV4:
+		ln = lde_nbr_find_by_addr(fnh->nexthop);
+		break;
+	case FEC_TYPE_PWID:
+		ln = lde_nbr_find_by_lsrid(fn->fec.u.pwid.lsr_id);
+		break;
+	default:
+		ln = NULL;
+		break;
+	}
+
 	if (ln) {
 		/* FEC.2  */
 		me = (struct lde_map *)fec_find(&ln->recv_map, &fn->fec);
@@ -433,28 +447,34 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 	 * support multipath
 	 */
 	LIST_FOREACH(fnh, &fn->nexthops, entry) {
-		if (lde_address_find(ln, &fnh->nexthop) == NULL)
-			continue;
-
-		msgsource = 1;
-
 		/* LMp.15: install FEC in FIB */
-		fnh->remote_label = map->label;
-		switch (map->type) {
-		case MAP_TYPE_PREFIX:
+		switch (fec.type) {
+		case FEC_TYPE_IPV4:
+			if (!lde_address_find(ln, &fnh->nexthop))
+				continue;
+
+			fnh->remote_label = map->label;
 			lde_send_change_klabel(fn, fnh);
 			break;
-		case MAP_TYPE_PWID:
-			pw = (struct l2vpn_pw *) fnh->data;
+		case FEC_TYPE_PWID:
+			pw = (struct l2vpn_pw *) fn->data;
+			if (pw == NULL)
+				continue;
+
 			pw->remote_group = map->fec.pwid.group_id;
 			if (map->flags & F_MAP_PW_IFMTU)
 				pw->remote_mtu = map->fec.pwid.ifmtu;
 			if (map->flags & F_MAP_PW_STATUS)
 				pw->remote_status = map->pw_status;
+			fnh->remote_label = map->label;
 			if (l2vpn_pw_ok(pw, fnh))
 				lde_send_change_klabel(fn, fnh);
 			break;
+		default:
+			break;
 		}
+
+		msgsource = 1;
 	}
 	/* LMp.13 & LMp.16: Record the mapping from this peer */
 	if (me == NULL)
@@ -493,10 +513,16 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 
 	/* LRq.3: is MsgSource the next hop? */
 	LIST_FOREACH(fnh, &fn->nexthops, entry) {
-		if (lde_address_find(ln, &fnh->nexthop)) {
+		switch (fec.type) {
+		case FEC_TYPE_IPV4:
+			if (!lde_address_find(ln, &fnh->nexthop))
+				continue;
+
 			lde_send_notification(ln->peerid, S_LOOP_DETECTED,
 			    map->messageid, htons(MSG_TYPE_LABELREQUEST));
 			return;
+		default:
+			break;
 		}
 	}
 
@@ -594,10 +620,11 @@ lde_check_release_wcard(struct map *map, struct lde_nbr *ln)
 void
 lde_check_withdraw(struct map *map, struct lde_nbr *ln)
 {
-	struct fec	 fec;
-	struct fec_node	*fn;
-	struct fec_nh	*fnh;
-	struct lde_map	*me;
+	struct fec		 fec;
+	struct fec_node		*fn;
+	struct fec_nh		*fnh;
+	struct lde_map		*me;
+	struct l2vpn_pw		*pw;
 
 	/* TODO group wildcard */
 	if (map->type == MAP_TYPE_PWID && !(map->flags & F_MAP_PW_ID))
@@ -610,10 +637,21 @@ lde_check_withdraw(struct map *map, struct lde_nbr *ln)
 
 	/* LWd.1: remove label from forwarding/switching use */
 	LIST_FOREACH(fnh, &fn->nexthops, entry) {
-		if (lde_address_find(ln, &fnh->nexthop)) {
-			lde_send_delete_klabel(fn, fnh);
-			fnh->remote_label = NO_LABEL;
+		switch (fec.type) {
+		case FEC_TYPE_IPV4:
+			if (!lde_address_find(ln, &fnh->nexthop))
+				continue;
+			break;
+		case FEC_TYPE_PWID:
+			pw = (struct l2vpn_pw *) fn->data;
+			if (pw == NULL)
+				continue;
+			break;
+		default:
+			break;
 		}
+		lde_send_delete_klabel(fn, fnh);
+		fnh->remote_label = NO_LABEL;
 	}
 
 	/* LWd.2: send label release */
@@ -642,10 +680,20 @@ lde_check_withdraw_wcard(struct map *map, struct lde_nbr *ln)
 
 		/* LWd.1: remove label from forwarding/switching use */
 		LIST_FOREACH(fnh, &fn->nexthops, entry) {
-			if (lde_address_find(ln, &fnh->nexthop)) {
-				lde_send_delete_klabel(fn, fnh);
-				fnh->remote_label = NO_LABEL;
+			switch (f->type) {
+			case FEC_TYPE_IPV4:
+				if (!lde_address_find(ln, &fnh->nexthop))
+					continue;
+				break;
+			case FEC_TYPE_PWID:
+				if (f->u.pwid.lsr_id.s_addr != ln->id.s_addr)
+					continue;
+				break;
+			default:
+				break;
 			}
+			lde_send_delete_klabel(fn, fnh);
+			fnh->remote_label = NO_LABEL;
 		}
 
 		/* LWd.3: check previously received label mapping */

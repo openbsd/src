@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.7 2016/05/23 16:37:42 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.8 2016/05/23 16:54:22 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -161,7 +161,7 @@ l2vpn_pw_init(struct l2vpn_pw *pw)
 	struct fec	 fec;
 
 	l2vpn_pw_fec(pw, &fec);
-	lde_kernel_insert(&fec, pw->addr, 0, (void *)pw);
+	lde_kernel_insert(&fec, pw->lsr_id, 0, (void *)pw);
 }
 
 void
@@ -170,7 +170,7 @@ l2vpn_pw_del(struct l2vpn_pw *pw)
 	struct fec	 fec;
 
 	l2vpn_pw_fec(pw, &fec);
-	lde_kernel_remove(&fec, pw->addr);
+	lde_kernel_remove(&fec, pw->lsr_id);
 	free(pw);
 }
 
@@ -181,7 +181,7 @@ l2vpn_pw_fec(struct l2vpn_pw *pw, struct fec *fec)
 	fec->type = FEC_TYPE_PWID;
 	fec->u.pwid.type = pw->l2vpn->pw_type;
 	fec->u.pwid.pwid = pw->pwid;
-	fec->u.pwid.nexthop.s_addr = pw->addr.s_addr;
+	fec->u.pwid.lsr_id = pw->lsr_id;
 }
 
 void
@@ -217,7 +217,7 @@ l2vpn_pw_ok(struct l2vpn_pw *pw, struct fec_nh *fnh)
 	/* check for a working lsp to the nexthop */
 	bzero(&fec, sizeof(fec));
 	fec.type = FEC_TYPE_IPV4;
-	fec.u.ipv4.prefix.s_addr = pw->addr.s_addr;
+	fec.u.ipv4.prefix = pw->lsr_id;
 	fec.u.ipv4.prefixlen = 32;
 	fn = (struct fec_node *)fec_find(&ft, &fec);
 	if (fn == NULL || fn->local_label == NO_LABEL)
@@ -236,19 +236,17 @@ l2vpn_pw_ok(struct l2vpn_pw *pw, struct fec_nh *fnh)
 int
 l2vpn_pw_negotiate(struct lde_nbr *ln, struct fec_node *fn, struct map *map)
 {
-	struct fec_nh		*fnh;
 	struct l2vpn_pw		*pw;
 
 	/* NOTE: thanks martini & friends for all this mess */
 
-	fnh = fec_nh_find(fn, ln->id);
-	if (fnh == NULL)
+	pw = (struct l2vpn_pw *) fn->data;
+	if (pw == NULL)
 		/*
 		 * pseudowire not configured, return and record
 		 * the mapping later
 		 */
 		return (0);
-	pw = (struct l2vpn_pw *) fnh->data;
 
 	l2vpn_pw_reset(pw);
 
@@ -319,10 +317,13 @@ l2vpn_recv_pw_status(struct lde_nbr *ln, struct notify_msg *nm)
 		/* unknown fec */
 		return;
 
+	pw = (struct l2vpn_pw *) fn->data;
+	if (pw == NULL)
+		return;
+
 	fnh = fec_nh_find(fn, ln->id);
 	if (fnh == NULL)
 		return;
-	pw = (struct l2vpn_pw *) fnh->data;
 
 	/* remote status didn't change */
 	if (pw->remote_status == nm->pw_status)
@@ -347,12 +348,12 @@ l2vpn_sync_pws(struct in_addr addr)
 
 	LIST_FOREACH(l2vpn, &ldeconf->l2vpn_list, entry) {
 		LIST_FOREACH(pw, &l2vpn->pw_list, entry) {
-			if (pw->addr.s_addr == addr.s_addr) {
+			if (pw->lsr_id.s_addr == addr.s_addr) {
 				l2vpn_pw_fec(pw, &fec);
 				fn = (struct fec_node *)fec_find(&ft, &fec);
 				if (fn == NULL)
 					continue;
-				fnh = fec_nh_find(fn, pw->addr);
+				fnh = fec_nh_find(fn, pw->lsr_id);
 				if (fnh == NULL)
 					continue;
 
@@ -378,7 +379,7 @@ l2vpn_pw_ctl(pid_t pid)
 			strlcpy(pwctl.ifname, pw->ifname,
 			    sizeof(pwctl.ifname));
 			pwctl.pwid = pw->pwid;
-			pwctl.nexthop.s_addr = pw->addr.s_addr;
+			pwctl.lsr_id = pw->lsr_id;
 			pwctl.status = pw->flags & F_PW_STATUS_UP;
 
 			lde_imsg_compose_ldpe(IMSG_CTL_SHOW_L2VPN_PW, 0,
@@ -392,7 +393,6 @@ l2vpn_binding_ctl(pid_t pid)
 	struct fec		*f;
 	struct fec_node		*fn;
 	struct lde_map		*me;
-	struct fec_nh		*fnh;
 	struct l2vpn_pw		*pw;
 	static struct ctl_pw	 pwctl;
 
@@ -424,7 +424,7 @@ l2vpn_binding_ctl(pid_t pid)
 			pwctl.local_label = NO_LABEL;
 
 		LIST_FOREACH(me, &fn->downstream, entry)
-			if (f->u.pwid.nexthop.s_addr == me->nexthop->id.s_addr)
+			if (f->u.pwid.lsr_id.s_addr == me->nexthop->id.s_addr)
 				break;
 
 		if (me) {
@@ -479,7 +479,7 @@ ldpe_l2vpn_pw_exit(struct l2vpn_pw *pw)
 {
 	struct tnbr		*tnbr;
 
-	tnbr = tnbr_find(leconf, pw->addr);
+	tnbr = tnbr_find(leconf, pw->lsr_id);
 	if (tnbr) {
 		tnbr->pw_count--;
 		tnbr_check(tnbr);
