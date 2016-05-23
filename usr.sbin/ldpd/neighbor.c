@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.60 2016/05/23 16:16:44 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.61 2016/05/23 16:18:51 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -256,7 +256,7 @@ nbr_new(struct in_addr id, struct in_addr addr)
 
 	/* init pfkey - remove old if any, load new ones */
 	pfkey_remove(nbr);
-	nbrp = nbr_params_find(leconf, nbr->raddr);
+	nbrp = nbr_params_find(leconf, nbr->id);
 	if (nbrp && pfkey_establish(nbr, nbrp) == -1)
 		fatalx("pfkey setup failed");
 
@@ -508,7 +508,7 @@ nbr_establish_connection(struct nbr *nbr)
 		return (-1);
 	}
 
-	nbrp = nbr_params_find(leconf, nbr->raddr);
+	nbrp = nbr_params_find(leconf, nbr->id);
 	if (nbrp && nbrp->auth.method == AUTH_MD5SIG) {
 		if (sysdep.no_pfkey || sysdep.no_md5sig) {
 			log_warnx("md5sig configured but not available");
@@ -587,37 +587,37 @@ nbr_send_labelmappings(struct nbr *nbr)
 }
 
 struct nbr_params *
-nbr_params_new(struct in_addr addr)
+nbr_params_new(struct in_addr lsr_id)
 {
 	struct nbr_params	*nbrp;
 
 	if ((nbrp = calloc(1, sizeof(*nbrp))) == NULL)
 		fatal(__func__);
 
-	nbrp->addr.s_addr = addr.s_addr;
+	nbrp->lsr_id = lsr_id;
 	nbrp->auth.method = AUTH_NONE;
 
 	return (nbrp);
 }
 
 struct nbr_params *
-nbr_params_find(struct ldpd_conf *xconf, struct in_addr addr)
+nbr_params_find(struct ldpd_conf *xconf, struct in_addr lsr_id)
 {
 	struct nbr_params *nbrp;
 
 	LIST_FOREACH(nbrp, &xconf->nbrp_list, entry)
-		if (nbrp->addr.s_addr == addr.s_addr)
+		if (nbrp->lsr_id.s_addr == lsr_id.s_addr)
 			return (nbrp);
 
 	return (NULL);
 }
 
 uint16_t
-nbr_get_keepalive(struct in_addr addr)
+nbr_get_keepalive(struct in_addr lsr_id)
 {
 	struct nbr_params	*nbrp;
 
-	nbrp = nbr_params_find(leconf, addr);
+	nbrp = nbr_params_find(leconf, lsr_id);
 	if (nbrp && (nbrp->flags & F_NBRP_KEEPALIVE))
 		return (nbrp->keepalive);
 

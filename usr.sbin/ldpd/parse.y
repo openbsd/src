@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.38 2016/05/23 16:14:36 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.39 2016/05/23 16:18:51 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -1217,19 +1217,19 @@ conf_get_tnbr(struct in_addr addr)
 }
 
 struct nbr_params *
-conf_get_nbrp(struct in_addr addr)
+conf_get_nbrp(struct in_addr lsr_id)
 {
 	struct nbr_params	*n;
 
 	LIST_FOREACH(n, &conf->nbrp_list, entry) {
-		if (n->addr.s_addr == addr.s_addr) {
+		if (n->lsr_id.s_addr == lsr_id.s_addr) {
 			yyerror("neighbor %s already configured",
-			    inet_ntoa(addr));
+			    inet_ntoa(lsr_id));
 			return (NULL);
 		}
 	}
 
-	n = nbr_params_new(addr);
+	n = nbr_params_new(lsr_id);
 
 	return (n);
 }
