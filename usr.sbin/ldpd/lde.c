@@ -1,6 +1,7 @@
-/*	$OpenBSD: lde.c,v 1.56 2016/05/23 19:11:42 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.57 2016/05/23 19:14:03 renato Exp $ */
 
 /*
+ * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>

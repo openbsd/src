@@ -1,6 +1,7 @@
-/*	$OpenBSD: hello.c,v 1.42 2016/05/23 19:11:42 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.43 2016/05/23 19:14:03 renato Exp $ */
 
 /*
+ * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any

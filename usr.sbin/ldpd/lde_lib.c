@@ -1,6 +1,7 @@
-/*	$OpenBSD: lde_lib.c,v 1.57 2016/05/23 19:11:42 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.58 2016/05/23 19:14:03 renato Exp $ */
 
 /*
+ * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any

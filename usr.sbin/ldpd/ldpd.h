@@ -1,6 +1,7 @@
-/*	$OpenBSD: ldpd.h,v 1.73 2016/05/23 19:11:42 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.74 2016/05/23 19:14:03 renato Exp $ */
 
 /*
+ * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>

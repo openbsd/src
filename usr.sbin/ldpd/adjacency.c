@@ -1,6 +1,7 @@
-/*	$OpenBSD: adjacency.c,v 1.21 2016/05/23 19:11:42 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.22 2016/05/23 19:14:03 renato Exp $ */
 
 /*
+ * Copyright (c) 2013, 2015 Renato Westphal <renato@openbsd.org>
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>

@@ -1,6 +1,7 @@
-/*	$OpenBSD: labelmapping.c,v 1.45 2016/05/23 19:11:42 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.46 2016/05/23 19:14:03 renato Exp $ */
 
 /*
+ * Copyright (c) 2014, 2015 Renato Westphal <renato@openbsd.org>
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
