@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.44 2016/05/23 15:14:07 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.45 2016/05/23 15:20:21 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -287,6 +287,7 @@ ldpe_shutdown(void)
 	struct if_addr		*if_addr;
 
 	control_cleanup();
+	config_clear(leconf);
 
 	event_del(&pfkey_ev);
 	event_del(&disc_ev);
@@ -302,8 +303,6 @@ ldpe_shutdown(void)
 		LIST_REMOVE(if_addr, entry);
 		free(if_addr);
 	}
-
-	config_clear(leconf);
 
 	/* clean up */
 	msgbuf_write(&iev_lde->ibuf.w);
