@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.40 2016/05/23 16:20:59 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.41 2016/05/23 16:35:37 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -401,6 +401,16 @@ pseudowire	: PSEUDOWIRE STRING {
 		} pw_block {
 			struct l2vpn	*l;
 			struct l2vpn_pw *p;
+
+			/* check for errors */
+			if (pw->pwid == 0) {
+				yyerror("missing pseudowire id");
+				YYERROR;
+			}
+			if (pw->addr.s_addr == INADDR_ANY) {
+				yyerror("missing pseudowore neighbor");
+				YYERROR;
+			}
 
 			LIST_FOREACH(l, &conf->l2vpn_list, entry)
 				LIST_FOREACH(p, &l->pw_list, entry)

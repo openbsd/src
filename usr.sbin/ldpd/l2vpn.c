@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.5 2016/05/23 16:33:32 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.6 2016/05/23 16:35:37 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -160,9 +160,6 @@ l2vpn_pw_init(struct l2vpn_pw *pw)
 {
 	struct fec	 fec;
 
-	if (pw->pwid == 0 || pw->addr.s_addr == INADDR_ANY)
-		return;
-
 	l2vpn_pw_fec(pw, &fec);
 	lde_kernel_insert(&fec, pw->addr, 0, (void *)pw);
 }
@@ -171,9 +168,6 @@ void
 l2vpn_pw_del(struct l2vpn_pw *pw)
 {
 	struct fec	 fec;
-
-	if (pw->pwid == 0 || pw->addr.s_addr == INADDR_ANY)
-		return;
 
 	l2vpn_pw_fec(pw, &fec);
 	lde_kernel_remove(&fec, pw->addr);
@@ -471,9 +465,6 @@ ldpe_l2vpn_pw_init(struct l2vpn_pw *pw)
 {
 	struct tnbr		*tnbr;
 
-	if (pw->pwid == 0 || pw->addr.s_addr == INADDR_ANY)
-		return;
-
 	tnbr = tnbr_find(leconf, pw->addr);
 	if (tnbr->discovery_fd == 0)
 		tnbr_init(leconf, tnbr);
@@ -483,9 +474,6 @@ void
 ldpe_l2vpn_pw_exit(struct l2vpn_pw *pw)
 {
 	struct tnbr		*tnbr;
-
-	if (pw->pwid == 0 || pw->addr.s_addr == INADDR_ANY)
-		return;
 
 	tnbr = tnbr_find(leconf, pw->addr);
 	if (tnbr) {
