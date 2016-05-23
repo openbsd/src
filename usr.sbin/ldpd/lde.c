@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.57 2016/05/23 19:14:03 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.58 2016/05/23 19:16:00 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -83,26 +83,16 @@ lde_sig_handler(int sig, short event, void *arg)
 
 /* label decision engine */
 pid_t
-lde(struct ldpd_conf *xconf, int pipe_parent2lde[2], int pipe_ldpe2lde[2],
-    int pipe_parent2ldpe[2])
+lde(int debug, int verbose)
 {
 	struct event		 ev_sigint, ev_sigterm;
 	struct timeval		 now;
 	struct passwd		*pw;
-	pid_t			 pid;
-	struct l2vpn		*l2vpn;
 
-	switch (pid = fork()) {
-	case -1:
-		fatal("cannot fork");
-		/* NOTREACHED */
-	case 0:
-		break;
-	default:
-		return (pid);
-	}
+	ldeconf = config_new_empty();
 
-	ldeconf = xconf;
+	log_init(debug);
+	log_verbose(verbose);
 
 	setproctitle("label decision engine");
 	ldpd_process = PROC_LDE_ENGINE;
@@ -120,7 +110,7 @@ lde(struct ldpd_conf *xconf, int pipe_parent2lde[2], int pipe_ldpe2lde[2],
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
-	if (pledge("stdio", NULL) == -1)
+	if (pledge("stdio recvfd", NULL) == -1)
 		fatal("pledge");
 
 	event_init();
@@ -133,26 +123,11 @@ lde(struct ldpd_conf *xconf, int pipe_parent2lde[2], int pipe_ldpe2lde[2],
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	/* setup pipes */
-	close(pipe_ldpe2lde[0]);
-	close(pipe_parent2lde[0]);
-	close(pipe_parent2ldpe[0]);
-	close(pipe_parent2ldpe[1]);
-
-	if ((iev_ldpe = malloc(sizeof(struct imsgev))) == NULL ||
-	    (iev_main = malloc(sizeof(struct imsgev))) == NULL)
+	/* setup pipe and event handler to the parent process */
+	if ((iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsg_init(&iev_ldpe->ibuf, pipe_ldpe2lde[1]);
-	iev_ldpe->handler = lde_dispatch_imsg;
-	imsg_init(&iev_main->ibuf, pipe_parent2lde[1]);
+	imsg_init(&iev_main->ibuf, 3);
 	iev_main->handler = lde_dispatch_parent;
-
-	/* setup event handler */
-	iev_ldpe->events = EV_READ;
-	event_set(&iev_ldpe->ev, iev_ldpe->ibuf.fd, iev_ldpe->events,
-	    iev_ldpe->handler, iev_ldpe);
-	event_add(&iev_ldpe->ev, NULL);
-
 	iev_main->events = EV_READ;
 	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
 	    iev_main->handler, iev_main);
@@ -164,10 +139,6 @@ lde(struct ldpd_conf *xconf, int pipe_parent2lde[2], int pipe_ldpe2lde[2],
 
 	gettimeofday(&now, NULL);
 	global.uptime = now.tv_sec;
-
-	/* initialize l2vpns */
-	LIST_FOREACH(l2vpn, &ldeconf->l2vpn_list, entry)
-		l2vpn_init(l2vpn);
 
 	event_dispatch();
 
@@ -471,6 +442,27 @@ lde_dispatch_parent(int fd, short event, void *bula)
 				lde_kernel_remove(&fec, kr.af, &kr.nexthop);
 				break;
 			}
+			break;
+		case IMSG_SOCKET_IPC:
+			if (iev_ldpe) {
+				log_warnx("%s: received unexpected imsg fd "
+				    "to ldpe", __func__);
+				break;
+			}
+			if ((fd = imsg.fd) == -1) {
+				log_warnx("%s: expected to receive imsg fd to "
+				    "ldpe but didn't receive any", __func__);
+				break;
+			}
+
+			if ((iev_ldpe = malloc(sizeof(struct imsgev))) == NULL)
+				fatal(NULL);
+			imsg_init(&iev_ldpe->ibuf, fd);
+			iev_ldpe->handler = lde_dispatch_imsg;
+			iev_ldpe->events = EV_READ;
+			event_set(&iev_ldpe->ev, iev_ldpe->ibuf.fd,
+			    iev_ldpe->events, iev_ldpe->handler, iev_ldpe);
+			event_add(&iev_ldpe->ev, NULL);
 			break;
 		case IMSG_RECONF_CONF:
 			if ((nconf = malloc(sizeof(struct ldpd_conf))) ==

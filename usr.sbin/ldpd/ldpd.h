@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.74 2016/05/23 19:14:03 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.75 2016/05/23 19:16:00 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -113,6 +113,7 @@ enum imsg_type {
 	IMSG_NEIGHBOR_DOWN,
 	IMSG_NETWORK_ADD,
 	IMSG_NETWORK_DEL,
+	IMSG_SOCKET_IPC,
 	IMSG_SOCKET_NET,
 	IMSG_CLOSE_SOCKETS,
 	IMSG_REQUEST_SOCKETS,
@@ -339,7 +340,7 @@ struct l2vpn {
 #define L2VPN_TYPE_VPLS		2
 
 /* ldp_conf */
-enum {
+enum ldpd_process {
 	PROC_MAIN,
 	PROC_LDP_ENGINE,
 	PROC_LDE_ENGINE
@@ -563,6 +564,7 @@ struct ldpd_af_conf	*ldp_af_conf_get(struct ldpd_conf *, int);
 struct ldpd_af_global	*ldp_af_global_get(struct ldpd_global *, int);
 int			 ldp_is_dual_stack(struct ldpd_conf *);
 void			 merge_config(struct ldpd_conf *, struct ldpd_conf *);
+struct ldpd_conf	*config_new_empty(void);
 void			 config_clear(struct ldpd_conf *);
 
 /* socket.c */

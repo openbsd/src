@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.53 2016/05/23 19:14:03 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.54 2016/05/23 19:16:00 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -1155,8 +1155,7 @@ parse_config(char *filename)
 {
 	struct sym	*sym, *next;
 
-	if ((conf = calloc(1, sizeof(struct ldpd_conf))) == NULL)
-		fatal(__func__);
+	conf = config_new_empty();
 	conf->trans_pref = DUAL_STACK_LDPOV6;
 
 	defs = &globaldefs;
@@ -1173,11 +1172,6 @@ parse_config(char *filename)
 		return (NULL);
 	}
 	topfile = file;
-
-	LIST_INIT(&conf->iface_list);
-	LIST_INIT(&conf->tnbr_list);
-	LIST_INIT(&conf->nbrp_list);
-	LIST_INIT(&conf->l2vpn_list);
 
 	yyparse();
 	errors = file->errors;

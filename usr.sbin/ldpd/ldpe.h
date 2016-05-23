@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.55 2016/05/23 19:14:03 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.56 2016/05/23 19:16:00 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -173,7 +173,7 @@ int	 tlv_decode_fec_elm(struct nbr *, struct ldp_msg *, char *,
 	    uint16_t, struct map *);
 
 /* ldpe.c */
-pid_t		 ldpe(struct ldpd_conf *, int[2], int[2], int[2]);
+pid_t		 ldpe(int, int);
 int		 ldpe_imsg_compose_parent(int, pid_t, void *,
 		    uint16_t);
 int		 ldpe_imsg_compose_lde(int, uint32_t, pid_t, void *,

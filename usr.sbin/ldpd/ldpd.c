@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.47 2016/05/23 19:14:03 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.48 2016/05/23 19:16:00 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -38,13 +38,17 @@
 static void		 main_sig_handler(int, short, void *);
 static __dead void	 usage(void);
 static void		 ldpd_shutdown(void);
+static pid_t		 start_child(enum ldpd_process, char *, int, int, int);
 static int		 check_child(pid_t, const char *);
 static void		 main_dispatch_ldpe(int, short, void *);
 static void		 main_dispatch_lde(int, short, void *);
 static int		 main_imsg_compose_both(enum imsg_type, void *,
 			    uint16_t);
+static int		 main_imsg_send_ipc_sockets(struct imsgbuf *,
+			    struct imsgbuf *);
 static void		 main_imsg_send_net_sockets(int);
 static void		 main_imsg_send_net_socket(int, enum socket_type);
+static int		 main_imsg_send_config(struct ldpd_conf *);
 static int		 ldp_reload(void);
 static void		 merge_global(struct ldpd_conf *, struct ldpd_conf *);
 static void		 merge_af(int, struct ldpd_af_conf *,
@@ -61,9 +65,6 @@ struct ldpd_global	 global;
 struct ldpd_conf	*ldpd_conf;
 
 static char		*conffile;
-static int		 pipe_parent2ldpe[2];
-static int		 pipe_parent2lde[2];
-static int		 pipe_ldpe2lde[2];
 static struct imsgev	*iev_ldpe;
 static struct imsgev	*iev_lde;
 static pid_t		 ldpe_pid;
@@ -122,8 +123,11 @@ int
 main(int argc, char *argv[])
 {
 	struct event		 ev_sigint, ev_sigterm, ev_sigchld, ev_sighup;
+	char			*saved_argv0;
 	int			 ch;
-	int			 debug = 0;
+	int			 debug = 0, lflag = 0, eflag = 0;
+	int			 pipe_parent2ldpe[2];
+	int			 pipe_parent2lde[2];
 
 	conffile = CONF_FILE;
 	ldpd_process = PROC_MAIN;
@@ -131,7 +135,11 @@ main(int argc, char *argv[])
 	log_init(1);	/* log to stderr until daemonized */
 	log_verbose(1);
 
-	while ((ch = getopt(argc, argv, "dD:f:nv")) != -1) {
+	saved_argv0 = argv[0];
+	if (saved_argv0 == NULL)
+		saved_argv0 = "ldpd";
+
+	while ((ch = getopt(argc, argv, "dD:f:nvLE")) != -1) {
 		switch (ch) {
 		case 'd':
 			debug = 1;
@@ -152,11 +160,27 @@ main(int argc, char *argv[])
 				global.cmd_opts |= LDPD_OPT_VERBOSE2;
 			global.cmd_opts |= LDPD_OPT_VERBOSE;
 			break;
+		case 'L':
+			lflag = 1;
+			break;
+		case 'E':
+			eflag = 1;
+			break;
 		default:
 			usage();
 			/* NOTREACHED */
 		}
 	}
+
+	argc -= optind;
+	argv += optind;
+	if (argc > 0 || (lflag && eflag))
+		usage();
+
+	if (lflag)
+		lde(debug, global.cmd_opts & LDPD_OPT_VERBOSE);
+	else if (eflag)
+		ldpe(debug, global.cmd_opts & LDPD_OPT_VERBOSE);
 
 	/* fetch interfaces early */
 	kif_init();
@@ -198,15 +222,12 @@ main(int argc, char *argv[])
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
 	    PF_UNSPEC, pipe_parent2lde) == -1)
 		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
-	    PF_UNSPEC, pipe_ldpe2lde) == -1)
-		fatal("socketpair");
 
 	/* start children */
-	lde_pid = lde(ldpd_conf, pipe_parent2lde, pipe_ldpe2lde,
-	    pipe_parent2ldpe);
-	ldpe_pid = ldpe(ldpd_conf, pipe_parent2ldpe, pipe_ldpe2lde,
-	    pipe_parent2lde);
+	lde_pid = start_child(PROC_LDE_ENGINE, saved_argv0,
+	    pipe_parent2lde[1], debug, global.cmd_opts & LDPD_OPT_VERBOSE);
+	ldpe_pid = start_child(PROC_LDP_ENGINE, saved_argv0,
+	    pipe_parent2ldpe[1], debug, global.cmd_opts & LDPD_OPT_VERBOSE);
 
 	event_init();
 
@@ -222,11 +243,6 @@ main(int argc, char *argv[])
 	signal(SIGPIPE, SIG_IGN);
 
 	/* setup pipes to children */
-	close(pipe_parent2ldpe[1]);
-	close(pipe_parent2lde[1]);
-	close(pipe_ldpe2lde[0]);
-	close(pipe_ldpe2lde[1]);
-
 	if ((iev_ldpe = malloc(sizeof(struct imsgev))) == NULL ||
 	    (iev_lde = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
@@ -245,6 +261,10 @@ main(int argc, char *argv[])
 	event_set(&iev_lde->ev, iev_lde->ibuf.fd, iev_lde->events,
 	    iev_lde->handler, iev_lde);
 	event_add(&iev_lde->ev, NULL);
+
+	if (main_imsg_send_ipc_sockets(&iev_ldpe->ibuf, &iev_lde->ibuf))
+		fatal("could not establish imsg links");
+	main_imsg_send_config(ldpd_conf);
 
 	/* notify ldpe about existing interfaces and addresses */
 	kif_redistribute(NULL);
@@ -293,6 +313,47 @@ ldpd_shutdown(void)
 
 	log_info("terminating");
 	exit(0);
+}
+
+static pid_t
+start_child(enum ldpd_process p, char *argv0, int fd, int debug, int verbose)
+{
+	char	*argv[5];
+	int	 argc = 0;
+	pid_t	 pid;
+
+	switch (pid = fork()) {
+	case -1:
+		fatal("cannot fork");
+	case 0:
+		break;
+	default:
+		close(fd);
+		return (pid);
+	}
+
+	if (dup2(fd, 3) == -1)
+		fatal("cannot setup imsg fd");
+
+	argv[argc++] = argv0;
+	switch (p) {
+	case PROC_MAIN:
+		fatalx("Can not start main process");
+	case PROC_LDE_ENGINE:
+		argv[argc++] = "-L";
+		break;
+	case PROC_LDP_ENGINE:
+		argv[argc++] = "-E";
+		break;
+	}
+	if (debug)
+		argv[argc++] = "-d";
+	if (verbose)
+		argv[argc++] = "-v";
+	argv[argc++] = NULL;
+
+	execvp(argv0, argv);
+	fatal("execvp");
 }
 
 static int
@@ -553,6 +614,25 @@ evbuf_clear(struct evbuf *eb)
 	eb->wbuf.fd = -1;
 }
 
+static int
+main_imsg_send_ipc_sockets(struct imsgbuf *ldpe_buf, struct imsgbuf *lde_buf)
+{
+	int pipe_ldpe2lde[2];
+
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    PF_UNSPEC, pipe_ldpe2lde) == -1)
+		return (-1);
+
+	if (imsg_compose(ldpe_buf, IMSG_SOCKET_IPC, 0, 0, pipe_ldpe2lde[0],
+	    NULL, 0) == -1)
+		return (-1);
+	if (imsg_compose(lde_buf, IMSG_SOCKET_IPC, 0, 0, pipe_ldpe2lde[1],
+	    NULL, 0) == -1)
+		return (-1);
+
+	return (0);
+}
+
 static void
 main_imsg_send_net_sockets(int af)
 {
@@ -612,7 +692,7 @@ ldp_is_dual_stack(struct ldpd_conf *xconf)
 }
 
 static int
-ldp_reload(void)
+main_imsg_send_config(struct ldpd_conf *xconf)
 {
 	struct iface		*iface;
 	struct tnbr		*tnbr;
@@ -620,10 +700,6 @@ ldp_reload(void)
 	struct l2vpn		*l2vpn;
 	struct l2vpn_if		*lif;
 	struct l2vpn_pw		*pw;
-	struct ldpd_conf	*xconf;
-
-	if ((xconf = parse_config(conffile)) == NULL)
-		return (-1);
 
 	if (main_imsg_compose_both(IMSG_RECONF_CONF, xconf,
 	    sizeof(*xconf)) == -1)
@@ -665,6 +741,20 @@ ldp_reload(void)
 	}
 
 	if (main_imsg_compose_both(IMSG_RECONF_END, NULL, 0) == -1)
+		return (-1);
+
+	return (0);
+}
+
+static int
+ldp_reload(void)
+{
+	struct ldpd_conf	*xconf;
+
+	if ((xconf = parse_config(conffile)) == NULL)
+		return (-1);
+
+	if (main_imsg_send_config(xconf) == -1)
 		return (-1);
 
 	merge_config(ldpd_conf, xconf);
@@ -1126,22 +1216,40 @@ merge_l2vpn(struct ldpd_conf *xconf, struct l2vpn *l2vpn, struct l2vpn *xl)
 	l2vpn->br_ifindex = xl->br_ifindex;
 }
 
+struct ldpd_conf *
+config_new_empty(void)
+{
+	struct ldpd_conf	*xconf;
+
+	xconf = calloc(1, sizeof(*xconf));
+	if (xconf == NULL)
+		fatal(NULL);
+
+	LIST_INIT(&xconf->iface_list);
+	LIST_INIT(&xconf->tnbr_list);
+	LIST_INIT(&xconf->nbrp_list);
+	LIST_INIT(&xconf->l2vpn_list);
+
+	return (xconf);
+}
+
 void
 config_clear(struct ldpd_conf *conf)
 {
 	struct ldpd_conf	*xconf;
 
-	/* merge current config with an empty config */
-	xconf = malloc(sizeof(*xconf));
-	if (xconf == NULL)
-		fatal(NULL);
-
-	*xconf = *conf;
-	LIST_INIT(&xconf->iface_list);
-	LIST_INIT(&xconf->tnbr_list);
-	LIST_INIT(&xconf->nbrp_list);
-	LIST_INIT(&xconf->l2vpn_list);
+	/*
+	 * Merge current config with an empty config, this will deactivate
+	 * and deallocate all the interfaces, pseudowires and so on. Before
+	 * merging, copy the router-id and other variables to avoid some
+	 * unnecessary operations, like trying to reset the neighborships.
+	 */
+	xconf = config_new_empty();
+	xconf->ipv4 = conf->ipv4;
+	xconf->ipv6 = conf->ipv6;
+	xconf->rtr_id = conf->rtr_id;
+	xconf->trans_pref = conf->trans_pref;
+	xconf->flags = conf->flags;
 	merge_config(conf, xconf);
-
 	free(conf);
 }

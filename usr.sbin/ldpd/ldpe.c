@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.60 2016/05/23 19:14:03 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.61 2016/05/23 19:16:00 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -66,24 +66,15 @@ ldpe_sig_handler(int sig, short event, void *bula)
 
 /* label distribution protocol engine */
 pid_t
-ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
-    int pipe_parent2lde[2])
+ldpe(int debug, int verbose)
 {
-	struct l2vpn		*l2vpn;
 	struct passwd		*pw;
 	struct event		 ev_sigint, ev_sigterm;
-	pid_t			 pid;
 
-	switch (pid = fork()) {
-	case -1:
-		fatal("cannot fork");
-	case 0:
-		break;
-	default:
-		return (pid);
-	}
+	leconf = config_new_empty();
 
-	leconf = xconf;
+	log_init(debug);
+	log_verbose(verbose);
 
 	setproctitle("ldp engine");
 	ldpd_process = PROC_LDP_ENGINE;
@@ -128,26 +119,11 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	/* setup pipes */
-	close(pipe_parent2ldpe[0]);
-	close(pipe_ldpe2lde[1]);
-	close(pipe_parent2lde[0]);
-	close(pipe_parent2lde[1]);
-
-	if ((iev_lde = malloc(sizeof(struct imsgev))) == NULL ||
-	    (iev_main = malloc(sizeof(struct imsgev))) == NULL)
+	/* setup pipe and event handler to the parent process */
+	if ((iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsg_init(&iev_lde->ibuf, pipe_ldpe2lde[0]);
-	iev_lde->handler = ldpe_dispatch_lde;
-	imsg_init(&iev_main->ibuf, pipe_parent2ldpe[1]);
+	imsg_init(&iev_main->ibuf, 3);
 	iev_main->handler = ldpe_dispatch_main;
-
-	/* setup event handler */
-	iev_lde->events = EV_READ;
-	event_set(&iev_lde->ev, iev_lde->ibuf.fd, iev_lde->events,
-	    iev_lde->handler, iev_lde);
-	event_add(&iev_lde->ev, NULL);
-
 	iev_main->events = EV_READ;
 	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
 	    iev_main->handler, iev_main);
@@ -173,10 +149,6 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 
 	if ((pkt_ptr = calloc(1, IBUF_READ_SIZE)) == NULL)
 		fatal(__func__);
-
-	/* create targeted neighbors for l2vpn pseudowires */
-	LIST_FOREACH(l2vpn, &leconf->l2vpn_list, entry)
-		ldpe_l2vpn_init(l2vpn);
 
 	event_dispatch();
 
@@ -307,6 +279,27 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 				fatalx("DELADDR imsg with wrong len");
 
 			if_addr_del(imsg.data);
+			break;
+		case IMSG_SOCKET_IPC:
+			if (iev_lde) {
+				log_warnx("%s: received unexpected imsg fd "
+				    "to lde", __func__);
+				break;
+			}
+			if ((fd = imsg.fd) == -1) {
+				log_warnx("%s: expected to receive imsg fd to "
+				    "lde but didn't receive any", __func__);
+				break;
+			}
+
+			if ((iev_lde = malloc(sizeof(struct imsgev))) == NULL)
+				fatal(NULL);
+			imsg_init(&iev_lde->ibuf, fd);
+			iev_lde->handler = ldpe_dispatch_lde;
+			iev_lde->events = EV_READ;
+			event_set(&iev_lde->ev, iev_lde->ibuf.fd,
+			    iev_lde->events, iev_lde->handler, iev_lde);
+			event_add(&iev_lde->ev, NULL);
 			break;
 		case IMSG_CLOSE_SOCKETS:
 			af = imsg.hdr.peerid;
