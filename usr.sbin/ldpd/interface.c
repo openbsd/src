@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.29 2016/05/23 15:49:31 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.30 2016/05/23 15:57:50 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -216,7 +216,7 @@ if_start(struct iface *iface)
 	if (if_join_group(iface, &addr))
 		return (-1);
 
-	/* hello timer needs to be started in any case */
+	send_hello(HELLO_LINK, iface, NULL);
 	if_start_hello_timer(iface);
 	return (0);
 }
@@ -274,24 +274,16 @@ if_update(struct iface *iface)
 void
 if_hello_timer(int fd, short event, void *arg)
 {
-	struct iface *iface = arg;
-	struct timeval tv;
+	struct iface		*iface = arg;
 
 	send_hello(HELLO_LINK, iface, NULL);
-
-	/* reschedule hello_timer */
-	timerclear(&tv);
-	tv.tv_sec = iface->hello_interval;
-	if (evtimer_add(&iface->hello_timer, &tv) == -1)
-		fatal(__func__);
+	if_start_hello_timer(iface);
 }
 
 void
 if_start_hello_timer(struct iface *iface)
 {
-	struct timeval tv;
-
-	send_hello(HELLO_LINK, iface, NULL);
+	struct timeval		 tv;
 
 	timerclear(&tv);
 	tv.tv_sec = iface->hello_interval;

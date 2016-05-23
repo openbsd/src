@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.9 2016/05/23 15:47:24 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.10 2016/05/23 15:57:50 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -229,24 +229,16 @@ tnbr_init(struct ldpd_conf *xconf, struct tnbr *tnbr)
 void
 tnbr_hello_timer(int fd, short event, void *arg)
 {
-	struct tnbr *tnbr = arg;
-	struct timeval tv;
+	struct tnbr	*tnbr = arg;
 
 	send_hello(HELLO_TARGETED, NULL, tnbr);
-
-	/* reschedule hello_timer */
-	timerclear(&tv);
-	tv.tv_sec = tnbr->hello_interval;
-	if (evtimer_add(&tnbr->hello_timer, &tv) == -1)
-		fatal(__func__);
+	tnbr_start_hello_timer(tnbr);
 }
 
 void
 tnbr_start_hello_timer(struct tnbr *tnbr)
 {
-	struct timeval tv;
-
-	send_hello(HELLO_TARGETED, NULL, tnbr);
+	struct timeval	 tv;
 
 	timerclear(&tv);
 	tv.tv_sec = tnbr->hello_interval;

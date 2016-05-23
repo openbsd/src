@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.57 2016/05/23 15:49:31 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.58 2016/05/23 15:57:50 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -320,26 +320,19 @@ void
 nbr_ktimer(int fd, short event, void *arg)
 {
 	struct nbr	*nbr = arg;
-	struct timeval	 tv;
 
 	send_keepalive(nbr);
-
-	timerclear(&tv);
-	tv.tv_sec = (time_t)(nbr->keepalive / KEEPALIVE_PER_PERIOD);
-	if (evtimer_add(&nbr->keepalive_timer, &tv) == -1)
-		fatal(__func__);
+	nbr_start_ktimer(nbr);
 }
 
 void
 nbr_start_ktimer(struct nbr *nbr)
 {
-	struct timeval	tv;
+	struct timeval	 tv;
 
+	/* send three keepalives per period */
 	timerclear(&tv);
-
-	/* XXX: just to be sure it will send three keepalives per period */
 	tv.tv_sec = (time_t)(nbr->keepalive / KEEPALIVE_PER_PERIOD);
-
 	if (evtimer_add(&nbr->keepalive_timer, &tv) == -1)
 		fatal(__func__);
 }
