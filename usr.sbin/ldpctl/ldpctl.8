@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpctl.8,v 1.12 2016/05/23 19:04:55 renato Exp $
+.\"	$OpenBSD: ldpctl.8,v 1.13 2016/05/23 19:06:03 renato Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -38,6 +38,13 @@ for
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
+.It Xo
+.Cm clear neighbors
+.Op Ar address
+.Xc
+Delete entries from the neighbor table.
+.Ar address
+can be used to limit the scope of the command to the given neighbor.
 .It Cm fib couple
 Insert the learned labels into the Label Forwarding Information Base a.k.a.
 the kernel routing table.

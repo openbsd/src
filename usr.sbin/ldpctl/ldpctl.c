@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.30 2016/05/23 19:04:55 renato Exp $
+/*	$OpenBSD: ldpctl.c,v 1.31 2016/05/23 19:06:03 renato Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -82,6 +82,7 @@ main(int argc, char *argv[])
 	int			 ctl_sock;
 	int			 done = 0, verbose = 0;
 	int			 n;
+	struct ctl_nbr		 nbr;
 
 	/* parse options */
 	if ((res = parse(argc - 1, argv + 1)) == NULL)
@@ -170,6 +171,14 @@ main(int argc, char *argv[])
 		imsg_compose(ibuf, IMSG_CTL_SHOW_L2VPN_BINDING, 0, 0, -1,
 		    NULL, 0);
 		break;
+	case CLEAR_NBR:
+		memset(&nbr, 0, sizeof(nbr));
+		nbr.af = res->family;
+		memcpy(&nbr.raddr, &res->addr, sizeof(nbr.raddr));
+		imsg_compose(ibuf, IMSG_CTL_CLEAR_NBR, 0, 0, -1, &nbr,
+		    sizeof(nbr));
+		done = 1;
+		break;
 	case FIB:
 		errx(1, "fib couple|decouple");
 		break;
@@ -241,6 +250,7 @@ main(int argc, char *argv[])
 				done = show_l2vpn_binding_msg(&imsg);
 				break;
 			case NONE:
+			case CLEAR_NBR:
 			case FIB:
 			case FIB_COUPLE:
 			case FIB_DECOUPLE:

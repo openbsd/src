@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.11 2016/05/23 19:04:55 renato Exp $ */
+/*	$OpenBSD: parser.c,v 1.12 2016/05/23 19:06:03 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -65,12 +65,15 @@ static const struct token t_show_lib_af[];
 static const struct token t_show_fib[];
 static const struct token t_show_fib_af[];
 static const struct token t_show_l2vpn[];
+static const struct token t_clear[];
+static const struct token t_clear_nbr[];
 static const struct token t_log[];
 
 static const struct token t_main[] = {
 	{KEYWORD,	"reload",	RELOAD,		NULL},
 	{KEYWORD,	"fib",		FIB,		t_fib},
 	{KEYWORD,	"show",		SHOW,		t_show},
+	{KEYWORD,	"clear",	CLEAR_NBR,	t_clear},
 	{KEYWORD,	"log",		NONE,		t_log},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
@@ -155,6 +158,17 @@ static const struct token t_show_l2vpn[] = {
 	{KEYWORD,	"bindings",	SHOW_L2VPN_BINDING,	NULL},
 	{KEYWORD,	"pseudowires",	SHOW_L2VPN_PW,		NULL},
 	{ENDTOKEN,	"",		NONE,			NULL}
+};
+
+static const struct token t_clear[] = {
+	{KEYWORD,	"neighbors",	CLEAR_NBR,	t_clear_nbr},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_clear_nbr[] = {
+	{NOTOKEN,	"",		NONE,		NULL},
+	{ADDRESS,	"",		NONE,		NULL},
+	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_log[] = {
