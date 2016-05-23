@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.28 2016/05/23 19:14:03 renato Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.29 2016/05/23 21:05:07 jmc Exp $
 .\"
 .\" Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -116,7 +116,7 @@ If not specified, the numerically lowest IP address of the router will be used.
 .Ic transport-preference
 .Pq Ic ipv4 Ns | Ns Ic ipv6
 .Xc
-Specify the prefered address-family for TCP transport connections.
+Specify the preferred address-family for TCP transport connections.
 If two dual-stack LSRs preferences does not match, no LDP session will
 be established.
 The default is
@@ -265,19 +265,16 @@ l2vpn name type vpls {
 .Pp
 Layer 2 VPN specific parameters are listed below.
 .Bl -tag -width Ds
-.Pp
 .It Ic bridge Ar interface
 Set the bridge interface the VPLS is associated with.
 This parameter is optional and is only used to remove MAC addresses received
 from MAC address withdrawal messages.
 Only one bridge interface can be set.
-.Pp
 .It Ic interface Ar interface
 Configure a non pseudowire interface pertaining to the VPLS.
 This parameter is optional and is only used to send MAC address withdrawal
 messages when the specified interface is shutdown.
 Multiple interfaces can be configured.
-.Pp
 .It Ic mtu Ar number
 Set the MTU advertised in the pseudowires.
 Local and remote MTUs must match for a pseudowire to be set up.
@@ -290,6 +287,7 @@ Specify the type of the configured pseudowires.
 The type must be the same at both endpoints.
 The default is
 .Ic ethernet .
+.El
 .Sh PSEUDOWIRES
 Each
 .Xr mpw 4
@@ -313,15 +311,12 @@ Specify whether the use of the control word is preferred or not
 preferred.
 The default is
 .Ic yes .
-.Pp
 .It Ic neighbor-addr Ar address
 Specify the IPv4 or IPv6 address of the remote endpoint of the pseudowire.
 A targeted neighbor will automatically be created for this address.
 By default, the LSR-ID of the remote endpoint of the pseudowire will be used.
-.Pp
 .It Ic neighbor-id Ar address
 Specify the LSR-ID of the remote endpoint of the pseudowire.
-.Pp
 .It Ic pw-id Ar number
 Set the PW ID used to identify the pseudowire.
 The PW ID must be the same at both endpoints.
@@ -334,6 +329,7 @@ Specify whether the use of the Status TLV is preferred or not
 preferred.
 The default is
 .Ic yes .
+.El
 .Sh FILES
 .Bl -tag -width "/etc/ldpd.conf" -compact
 .It Pa /etc/ldpd.conf
