@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.38 2016/05/23 16:25:11 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.39 2016/05/23 16:41:52 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -181,8 +181,9 @@ recv_labelmessage(struct nbr *nbr, char *buf, u_int16_t len, u_int16_t type)
 		    &map)) == -1)
 			goto err;
 		if (map.type == MAP_TYPE_PWID &&
-		    type == MSG_TYPE_LABELMAPPING &&
-		    !(map.flags & F_MAP_PW_ID)) {
+		    !(map.flags & F_MAP_PW_ID) &&
+		    type != MSG_TYPE_LABELWITHDRAW &&
+		    type != MSG_TYPE_LABELRELEASE) {
 			send_notification_nbr(nbr, S_MISS_MSG, lm.msgid,
 			    lm.type);
 			return (-1);
