@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.52 2016/05/23 18:44:47 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.53 2016/05/23 18:46:13 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -54,6 +54,7 @@ RB_PROTOTYPE(nbr_tree, lde_nbr, entry, lde_nbr_compare)
 extern struct ldpd_conf		*ldeconf;
 
 struct fec_tree	ft = RB_INITIALIZER(&ft);
+struct event gc_timer;
 
 /* FEC tree functions */
 void
@@ -708,4 +709,52 @@ lde_check_withdraw_wcard(struct map *map, struct lde_nbr *ln)
 			 */
 			lde_map_del(ln, me, 0);
 	}
+}
+
+/* gabage collector timer: timer to remove dead entries from the LIB */
+
+/* ARGSUSED */
+void
+lde_gc_timer(int fd, short event, void *arg)
+{
+	struct fec	*fec, *safe;
+	struct fec_node	*fn;
+	int		 count = 0;
+
+	RB_FOREACH_SAFE(fec, fec_tree, &ft, safe) {
+		fn = (struct fec_node *) fec;
+
+		if (!LIST_EMPTY(&fn->nexthops) ||
+		    !LIST_EMPTY(&fn->downstream) ||
+		    !LIST_EMPTY(&fn->upstream))
+			continue;
+
+		fec_remove(&ft, &fn->fec);
+		free(fn);
+		count++;
+	}
+
+	if (count > 0)
+		log_debug("%s: %u entries removed", __func__, count);
+
+	lde_gc_start_timer();
+}
+
+void
+lde_gc_start_timer(void)
+{
+	struct timeval	 tv;
+
+	timerclear(&tv);
+	tv.tv_sec = LDE_GC_INTERVAL;
+	if (evtimer_add(&gc_timer, &tv) == -1)
+		fatal(__func__);
+}
+
+void
+lde_gc_stop_timer(void)
+{
+	if (evtimer_pending(&gc_timer, NULL) &&
+	    evtimer_del(&gc_timer) == -1)
+		fatal(__func__);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.33 2016/05/23 18:36:55 renato Exp $ */
+/*	$OpenBSD: lde.h,v 1.34 2016/05/23 18:46:13 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -160,6 +160,12 @@ void		 lde_check_release_wcard(struct map *, struct lde_nbr *);
 void		 lde_check_withdraw(struct map *, struct lde_nbr *);
 void		 lde_check_withdraw_wcard(struct map *, struct lde_nbr *);
 void		 lde_label_list_free(struct lde_nbr *);
+void		 lde_gc_timer(int, short, void *);
+void		 lde_gc_start_timer(void);
+void		 lde_gc_stop_timer(void);
+
+#define LDE_GC_INTERVAL 300
+extern struct event gc_timer;
 
 /* l2vpn.c */
 struct l2vpn	*l2vpn_new(const char *);
