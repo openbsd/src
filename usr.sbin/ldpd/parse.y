@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.41 2016/05/23 16:35:37 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.42 2016/05/23 16:39:47 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -1311,12 +1311,12 @@ clear_config(struct ldpd_conf *xconf)
 
 	while ((i = LIST_FIRST(&xconf->iface_list)) != NULL) {
 		LIST_REMOVE(i, entry);
-		if_del(i);
+		free(i);
 	}
 
 	while ((t = LIST_FIRST(&xconf->tnbr_list)) != NULL) {
 		LIST_REMOVE(t, entry);
-		tnbr_del(t);
+		free(t);
 	}
 
 	while ((n = LIST_FIRST(&xconf->nbrp_list)) != NULL) {
