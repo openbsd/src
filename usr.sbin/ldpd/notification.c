@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.28 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.29 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -36,7 +36,7 @@
 #include "log.h"
 #include "ldpe.h"
 
-int	gen_status_tlv(struct ibuf *, uint32_t, uint32_t, uint32_t);
+static int	 gen_status_tlv(struct ibuf *, uint32_t, uint32_t, uint32_t);
 
 void
 send_notification_full(struct tcp_conn *tcp, struct notify_msg *nm)
@@ -235,7 +235,7 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 	return (0);
 }
 
-int
+static int
 gen_status_tlv(struct ibuf *buf, uint32_t status, uint32_t msgid, uint32_t type)
 {
 	struct status_tlv	st;

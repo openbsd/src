@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.41 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.42 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -39,11 +39,18 @@
 #include "log.h"
 #include "ldpe.h"
 
-extern struct ldpd_conf        *leconf;
-
-void		 if_hello_timer(int, short, void *);
-void		 if_start_hello_timer(struct iface_af *);
-void		 if_stop_hello_timer(struct iface_af *);
+static struct if_addr	*if_addr_new(struct kaddr *);
+static struct if_addr	*if_addr_lookup(struct if_addr_head *, struct kaddr *);
+static int		 if_start(struct iface *, int);
+static int		 if_reset(struct iface *, int);
+static void		 if_update_af(struct iface_af *, int);
+static void		 if_hello_timer(int, short, void *);
+static void		 if_start_hello_timer(struct iface_af *);
+static void		 if_stop_hello_timer(struct iface_af *);
+static int		 if_join_ipv4_group(struct iface *, struct in_addr *);
+static int		 if_leave_ipv4_group(struct iface *, struct in_addr *);
+static int		 if_join_ipv6_group(struct iface *, struct in6_addr *);
+static int		 if_leave_ipv6_group(struct iface *, struct in6_addr *);
 
 struct iface *
 if_new(struct kif *kif)
@@ -131,7 +138,7 @@ iface_af_get(struct iface *iface, int af)
 	}
 }
 
-struct if_addr *
+static struct if_addr *
 if_addr_new(struct kaddr *ka)
 {
 	struct if_addr	*if_addr;
@@ -147,7 +154,7 @@ if_addr_new(struct kaddr *ka)
 	return (if_addr);
 }
 
-struct if_addr *
+static struct if_addr *
 if_addr_lookup(struct if_addr_head *addr_list, struct kaddr *ka)
 {
 	struct if_addr	*if_addr;
@@ -235,7 +242,7 @@ if_addr_del(struct kaddr *ka)
 	}
 }
 
-int
+static int
 if_start(struct iface *iface, int af)
 {
 	struct iface_af		*ia;
@@ -269,7 +276,7 @@ if_start(struct iface *iface, int af)
 	return (0);
 }
 
-int
+static int
 if_reset(struct iface *iface, int af)
 {
 	struct iface_af		*ia;
@@ -301,7 +308,7 @@ if_reset(struct iface *iface, int af)
 	return (0);
 }
 
-void
+static void
 if_update_af(struct iface_af *ia, int link_ok)
 {
 	int			 addr_ok = 0, socket_ok, rtr_id_ok;
@@ -380,7 +387,7 @@ if_update_all(int af)
 
 /* timers */
 /* ARGSUSED */
-void
+static void
 if_hello_timer(int fd, short event, void *arg)
 {
 	struct iface_af		*ia = arg;
@@ -389,7 +396,7 @@ if_hello_timer(int fd, short event, void *arg)
 	if_start_hello_timer(ia);
 }
 
-void
+static void
 if_start_hello_timer(struct iface_af *ia)
 {
 	struct timeval		 tv;
@@ -400,7 +407,7 @@ if_start_hello_timer(struct iface_af *ia)
 		fatal(__func__);
 }
 
-void
+static void
 if_stop_hello_timer(struct iface_af *ia)
 {
 	if (evtimer_pending(&ia->hello_timer, NULL) &&
@@ -453,7 +460,7 @@ if_get_ipv4_addr(struct iface *iface)
 	return (INADDR_ANY);
 }
 
-int
+static int
 if_join_ipv4_group(struct iface *iface, struct in_addr *addr)
 {
 	struct ip_mreq		 mreq;
@@ -473,7 +480,7 @@ if_join_ipv4_group(struct iface *iface, struct in_addr *addr)
 	return (0);
 }
 
-int
+static int
 if_leave_ipv4_group(struct iface *iface, struct in_addr *addr)
 {
 	struct ip_mreq		 mreq;
@@ -494,7 +501,7 @@ if_leave_ipv4_group(struct iface *iface, struct in_addr *addr)
 	return (0);
 }
 
-int
+static int
 if_join_ipv6_group(struct iface *iface, struct in6_addr *addr)
 {
 	struct ipv6_mreq	 mreq;
@@ -515,7 +522,7 @@ if_join_ipv6_group(struct iface *iface, struct in6_addr *addr)
 	return (0);
 }
 
-int
+static int
 if_leave_ipv6_group(struct iface *iface, struct in6_addr *addr)
 {
 	struct ipv6_mreq	 mreq;

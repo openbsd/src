@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.19 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.20 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -31,12 +31,11 @@
 #include "control.h"
 #include "log.h"
 
-extern struct ldpd_conf        *leconf;
-
-void	 adj_itimer(int, short, void *);
-void	 tnbr_hello_timer(int, short, void *);
-void	 tnbr_start_hello_timer(struct tnbr *);
-void	 tnbr_stop_hello_timer(struct tnbr *);
+static void	 adj_itimer(int, short, void *);
+static void	 tnbr_del(struct tnbr *);
+static void	 tnbr_hello_timer(int, short, void *);
+static void	 tnbr_start_hello_timer(struct tnbr *);
+static void	 tnbr_stop_hello_timer(struct tnbr *);
 
 struct adj *
 adj_new(struct in_addr lsr_id, struct hello_source *source,
@@ -134,7 +133,7 @@ adj_get_af(struct adj *adj)
 /* adjacency timers */
 
 /* ARGSUSED */
-void
+static void
 adj_itimer(int fd, short event, void *arg)
 {
 	struct adj *adj = arg;
@@ -192,7 +191,7 @@ tnbr_new(struct ldpd_conf *xconf, int af, union ldpd_addr *addr)
 	return (tnbr);
 }
 
-void
+static void
 tnbr_del(struct tnbr *tnbr)
 {
 	tnbr_stop_hello_timer(tnbr);
@@ -274,7 +273,7 @@ tnbr_update_all(int af)
 /* target neighbors timers */
 
 /* ARGSUSED */
-void
+static void
 tnbr_hello_timer(int fd, short event, void *arg)
 {
 	struct tnbr	*tnbr = arg;
@@ -283,7 +282,7 @@ tnbr_hello_timer(int fd, short event, void *arg)
 	tnbr_start_hello_timer(tnbr);
 }
 
-void
+static void
 tnbr_start_hello_timer(struct tnbr *tnbr)
 {
 	struct timeval	 tv;
@@ -294,7 +293,7 @@ tnbr_start_hello_timer(struct tnbr *tnbr)
 		fatal(__func__);
 }
 
-void
+static void
 tnbr_stop_hello_timer(struct tnbr *tnbr)
 {
 	if (evtimer_pending(&tnbr->hello_timer, NULL) &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.57 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.58 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -44,17 +44,24 @@
 #include "control.h"
 #include "log.h"
 
-void	 ldpe_sig_handler(int, short, void *);
-void	 ldpe_shutdown(void);
+static void	 ldpe_sig_handler(int, short, void *);
+static void	 ldpe_shutdown(void);
+static void	 ldpe_dispatch_main(int, short, void *);
+static void	 ldpe_dispatch_lde(int, short, void *);
+static void	 ldpe_dispatch_pfkey(int, short, void *);
+static void	 ldpe_setup_sockets(int, int, int, int);
+static void	 ldpe_close_sockets(int);
+static void	 ldpe_iface_af_ctl(struct ctl_conn *, int, unsigned int);
 
-struct ldpd_conf	*leconf = NULL, *nconf;
-struct imsgev		*iev_main;
-struct imsgev		*iev_lde;
-struct event		 pfkey_ev;
+struct ldpd_conf	*leconf;
 struct ldpd_sysdep	 sysdep;
 
+static struct imsgev	*iev_main;
+static struct imsgev	*iev_lde;
+static struct event	 pfkey_ev;
+
 /* ARGSUSED */
-void
+static void
 ldpe_sig_handler(int sig, short event, void *bula)
 {
 	switch (sig) {
@@ -102,7 +109,7 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 		fatal("inet_pton");
 	if (inet_pton(AF_INET6, AllRouters_v6, &global.mcast_addr_v6) != 1)
 		fatal("inet_pton");
-	global.pfkeysock = pfkey_init(&sysdep);
+	global.pfkeysock = pfkey_init();
 
 	if ((pw = getpwnam(LDPD_USER)) == NULL)
 		fatal("getpwnam");
@@ -188,7 +195,7 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	return (0);
 }
 
-void
+static void
 ldpe_shutdown(void)
 {
 	struct if_addr		*if_addr;
@@ -241,9 +248,10 @@ ldpe_imsg_compose_lde(int type, uint32_t peerid, pid_t pid, void *data,
 }
 
 /* ARGSUSED */
-void
+static void
 ldpe_dispatch_main(int fd, short event, void *bula)
 {
+	static struct ldpd_conf	*nconf;
 	struct iface		*niface;
 	struct tnbr		*ntnbr;
 	struct nbr_params	*nnbrp;
@@ -450,7 +458,7 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 }
 
 /* ARGSUSED */
-void
+static void
 ldpe_dispatch_lde(int fd, short event, void *bula)
 {
 	struct imsgev		*iev = bula;
@@ -584,7 +592,7 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 }
 
 /* ARGSUSED */
-void
+static void
 ldpe_dispatch_pfkey(int fd, short event, void *bula)
 {
 	if (event & EV_READ) {
@@ -594,8 +602,9 @@ ldpe_dispatch_pfkey(int fd, short event, void *bula)
 	}
 }
 
-void
-ldpe_setup_sockets(int af, int disc_socket, int edisc_socket, int session_socket)
+static void
+ldpe_setup_sockets(int af, int disc_socket, int edisc_socket,
+    int session_socket)
 {
 	struct ldpd_af_global	*af_global;
 
@@ -618,7 +627,7 @@ ldpe_setup_sockets(int af, int disc_socket, int edisc_socket, int session_socket
 	accept_add(af_global->ldp_session_socket, session_accept, NULL);
 }
 
-void
+static void
 ldpe_close_sockets(int af)
 {
 	struct ldpd_af_global	*af_global;
@@ -698,7 +707,7 @@ ldpe_stop_init_backoff(int af)
 	}
 }
 
-void
+static void
 ldpe_iface_af_ctl(struct ctl_conn *c, int af, unsigned int idx)
 {
 	struct iface		*iface;

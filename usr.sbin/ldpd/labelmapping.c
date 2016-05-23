@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.43 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.44 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -38,11 +38,11 @@
 #include "log.h"
 #include "ldpe.h"
 
-void		gen_label_tlv(struct ibuf *, uint32_t);
-void		gen_reqid_tlv(struct ibuf *, uint32_t);
-
-int	tlv_decode_label(struct nbr *, struct ldp_msg *, char *, uint16_t,
-	    uint32_t *);
+static void	 enqueue_pdu(struct nbr *, struct ibuf *, uint16_t);
+static void	 gen_label_tlv(struct ibuf *, uint32_t);
+static int	 tlv_decode_label(struct nbr *, struct ldp_msg *, char *,
+		    uint16_t, uint32_t *);
+static void	 gen_reqid_tlv(struct ibuf *, uint32_t);
 
 static void
 enqueue_pdu(struct nbr *nbr, struct ibuf *buf, uint16_t size)
@@ -439,7 +439,7 @@ err:
 }
 
 /* Other TLV related functions */
-void
+static void
 gen_label_tlv(struct ibuf *buf, uint32_t label)
 {
 	struct label_tlv	lt;
@@ -451,7 +451,7 @@ gen_label_tlv(struct ibuf *buf, uint32_t label)
 	ibuf_add(buf, &lt, sizeof(lt));
 }
 
-int
+static int
 tlv_decode_label(struct nbr *nbr, struct ldp_msg *lm, char *buf,
     uint16_t len, uint32_t *label)
 {
@@ -498,7 +498,7 @@ tlv_decode_label(struct nbr *nbr, struct ldp_msg *lm, char *buf,
 	return (sizeof(lt));
 }
 
-void
+static void
 gen_reqid_tlv(struct ibuf *buf, uint32_t reqid)
 {
 	struct reqid_tlv	rt;

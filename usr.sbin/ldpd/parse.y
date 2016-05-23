@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.50 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.51 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -45,29 +45,15 @@
 #include "ldpe.h"
 #include "log.h"
 
-TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
-static struct file {
+struct file {
 	TAILQ_ENTRY(file)	 entry;
 	FILE			*stream;
 	char			*name;
 	int			 lineno;
 	int			 errors;
-} *file, *topfile;
-struct file	*pushfile(const char *, int);
-int		 popfile(void);
-int		 check_file_secrecy(int, const char *);
-int		 yyparse(void);
-int		 yylex(void);
-int		 yyerror(const char *, ...)
-    __attribute__((__format__ (printf, 1, 2)))
-    __attribute__((__nonnull__ (1)));
-int		 kw_cmp(const void *, const void *);
-int		 lookup(char *);
-int		 lgetc(int);
-int		 lungetc(int);
-int		 findeol(void);
+};
+TAILQ_HEAD(files, file);
 
-TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
 	TAILQ_ENTRY(sym)	 entry;
 	int			 used;
@@ -75,26 +61,7 @@ struct sym {
 	char			*nam;
 	char			*val;
 };
-
-int		 symset(const char *, const char *, int);
-char		*symget(const char *);
-
-void		 clear_config(struct ldpd_conf *xconf);
-uint32_t	 get_rtr_id(void);
-int		 get_address(const char *, union ldpd_addr *);
-int		 get_af_address(const char *, int *, union ldpd_addr *);
-
-static struct ldpd_conf	*conf;
-static int		 errors = 0;
-
-int			 af = AF_UNSPEC;
-struct ldpd_af_conf	*af_conf = NULL;
-struct iface		*iface = NULL;
-struct iface_af		*ia = NULL;
-struct tnbr		*tnbr = NULL;
-struct nbr_params	*nbrp = NULL;
-struct l2vpn		*l2vpn = NULL;
-struct l2vpn_pw		*pw = NULL;
+TAILQ_HEAD(symhead, sym);
 
 struct config_defaults {
 	uint16_t	keepalive;
@@ -107,20 +74,6 @@ struct config_defaults {
 	uint8_t		pwflags;
 };
 
-struct config_defaults	 globaldefs;
-struct config_defaults	 afdefs;
-struct config_defaults	 ifacedefs;
-struct config_defaults	 tnbrdefs;
-struct config_defaults	 pwdefs;
-struct config_defaults	*defs;
-
-struct iface		*conf_get_if(struct kif *);
-struct tnbr		*conf_get_tnbr(union ldpd_addr *);
-struct nbr_params	*conf_get_nbrp(struct in_addr);
-struct l2vpn		*conf_get_l2vpn(char *);
-struct l2vpn_if		*conf_get_l2vpn_if(struct l2vpn *, struct kif *);
-struct l2vpn_pw		*conf_get_l2vpn_pw(struct l2vpn *, struct kif *);
-
 typedef struct {
 	union {
 		int64_t		 number;
@@ -128,6 +81,61 @@ typedef struct {
 	} v;
 	int lineno;
 } YYSTYPE;
+
+#define MAXPUSHBACK	128
+
+static int		 yyerror(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)))
+    __attribute__((__nonnull__ (1)));
+static int		 kw_cmp(const void *, const void *);
+static int		 lookup(char *);
+static int		 lgetc(int);
+static int		 lungetc(int);
+static int		 findeol(void);
+static int		 yylex(void);
+static int		 check_file_secrecy(int, const char *);
+static struct file	*pushfile(const char *, int);
+static int		 popfile(void);
+static int		 yyparse(void);
+static int		 symset(const char *, const char *, int);
+static char		*symget(const char *);
+static struct iface	*conf_get_if(struct kif *);
+static struct tnbr	*conf_get_tnbr(union ldpd_addr *);
+static struct nbr_params *conf_get_nbrp(struct in_addr);
+static struct l2vpn	*conf_get_l2vpn(char *);
+static struct l2vpn_if	*conf_get_l2vpn_if(struct l2vpn *, struct kif *);
+static struct l2vpn_pw	*conf_get_l2vpn_pw(struct l2vpn *, struct kif *);
+static void		 clear_config(struct ldpd_conf *xconf);
+static uint32_t		 get_rtr_id(void);
+static int		 get_address(const char *, union ldpd_addr *);
+static int		 get_af_address(const char *, int *, union ldpd_addr *);
+
+static struct file		*file, *topfile;
+static struct files		 files = TAILQ_HEAD_INITIALIZER(files);
+static struct symhead		 symhead = TAILQ_HEAD_INITIALIZER(symhead);
+static struct ldpd_conf		*conf;
+static int			 errors;
+
+static int			 af;
+static struct ldpd_af_conf	*af_conf;
+static struct iface		*iface;
+static struct iface_af		*ia;
+static struct tnbr		*tnbr;
+static struct nbr_params	*nbrp;
+static struct l2vpn		*l2vpn;
+static struct l2vpn_pw		*pw;
+
+static struct config_defaults	 globaldefs;
+static struct config_defaults	 afdefs;
+static struct config_defaults	 ifacedefs;
+static struct config_defaults	 tnbrdefs;
+static struct config_defaults	 pwdefs;
+static struct config_defaults	*defs;
+
+static unsigned char		*parsebuf;
+static int			 parseindex;
+static unsigned char		 pushback_buffer[MAXPUSHBACK];
+static int			 pushback_index;
 
 %}
 
@@ -770,7 +778,7 @@ struct keywords {
 	int		 k_val;
 };
 
-int
+static int
 yyerror(const char *fmt, ...)
 {
 	va_list		 ap;
@@ -786,13 +794,13 @@ yyerror(const char *fmt, ...)
 	return (0);
 }
 
-int
+static int
 kw_cmp(const void *k, const void *e)
 {
 	return (strcmp(k, ((const struct keywords *)e)->k_name));
 }
 
-int
+static int
 lookup(char *s)
 {
 	/* this has to be sorted always */
@@ -845,14 +853,7 @@ lookup(char *s)
 		return (STRING);
 }
 
-#define MAXPUSHBACK	128
-
-unsigned char	*parsebuf;
-int		 parseindex;
-unsigned char	 pushback_buffer[MAXPUSHBACK];
-int		 pushback_index = 0;
-
-int
+static int
 lgetc(int quotec)
 {
 	int		c, next;
@@ -900,7 +901,7 @@ lgetc(int quotec)
 	return (c);
 }
 
-int
+static int
 lungetc(int c)
 {
 	if (c == EOF)
@@ -916,7 +917,7 @@ lungetc(int c)
 		return (EOF);
 }
 
-int
+static int
 findeol(void)
 {
 	int	c;
@@ -939,7 +940,7 @@ findeol(void)
 	return (ERROR);
 }
 
-int
+static int
 yylex(void)
 {
 	unsigned char	 buf[8096];
@@ -1088,7 +1089,7 @@ nodigits:
 	return (c);
 }
 
-int
+static int
 check_file_secrecy(int fd, const char *fname)
 {
 	struct stat	st;
@@ -1108,7 +1109,7 @@ check_file_secrecy(int fd, const char *fname)
 	return (0);
 }
 
-struct file *
+static struct file *
 pushfile(const char *name, int secret)
 {
 	struct file	*nfile;
@@ -1139,7 +1140,7 @@ pushfile(const char *name, int secret)
 	return (nfile);
 }
 
-int
+static int
 popfile(void)
 {
 	struct file	*prev;
@@ -1219,7 +1220,7 @@ parse_config(char *filename)
 	return (conf);
 }
 
-int
+static int
 symset(const char *nam, const char *val, int persist)
 {
 	struct sym	*sym;
@@ -1280,7 +1281,7 @@ cmdline_symset(char *s)
 	return (ret);
 }
 
-char *
+static char *
 symget(const char *nam)
 {
 	struct sym	*sym;
@@ -1293,7 +1294,7 @@ symget(const char *nam)
 	return (NULL);
 }
 
-struct iface *
+static struct iface *
 conf_get_if(struct kif *kif)
 {
 	struct iface	*i;
@@ -1315,7 +1316,7 @@ conf_get_if(struct kif *kif)
 	return (i);
 }
 
-struct tnbr *
+static struct tnbr *
 conf_get_tnbr(union ldpd_addr *addr)
 {
 	struct tnbr	*t;
@@ -1333,7 +1334,7 @@ conf_get_tnbr(union ldpd_addr *addr)
 	return (t);
 }
 
-struct nbr_params *
+static struct nbr_params *
 conf_get_nbrp(struct in_addr lsr_id)
 {
 	struct nbr_params	*n;
@@ -1351,7 +1352,7 @@ conf_get_nbrp(struct in_addr lsr_id)
 	return (n);
 }
 
-struct l2vpn *
+static struct l2vpn *
 conf_get_l2vpn(char *name)
 {
 	struct l2vpn	 *l;
@@ -1366,7 +1367,7 @@ conf_get_l2vpn(char *name)
 	return (l);
 }
 
-struct l2vpn_if *
+static struct l2vpn_if *
 conf_get_l2vpn_if(struct l2vpn *l, struct kif *kif)
 {
 	struct iface	*i;
@@ -1393,7 +1394,7 @@ conf_get_l2vpn_if(struct l2vpn *l, struct kif *kif)
 	return (f);
 }
 
-struct l2vpn_pw *
+static struct l2vpn_pw *
 conf_get_l2vpn_pw(struct l2vpn *l, struct kif *kif)
 {
 	struct l2vpn	*ltmp;
@@ -1412,7 +1413,7 @@ conf_get_l2vpn_pw(struct l2vpn *l, struct kif *kif)
 	return (p);
 }
 
-void
+static void
 clear_config(struct ldpd_conf *xconf)
 {
 	struct iface		*i;
@@ -1453,7 +1454,7 @@ clear_config(struct ldpd_conf *xconf)
 	free(xconf);
 }
 
-uint32_t
+static uint32_t
 get_rtr_id(void)
 {
 	struct ifaddrs		*ifap, *ifa;
@@ -1482,7 +1483,7 @@ get_rtr_id(void)
 	return (ip);
 }
 
-int
+static int
 get_address(const char *s, union ldpd_addr *addr)
 {
 	switch (af) {
@@ -1501,7 +1502,7 @@ get_address(const char *s, union ldpd_addr *addr)
 	return (0);
 }
 
-int
+static int
 get_af_address(const char *s, int *family, union ldpd_addr *addr)
 {
 	if (inet_pton(AF_INET, s, &addr->v4) == 1) {

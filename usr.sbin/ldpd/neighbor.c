@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.68 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.69 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -43,51 +43,21 @@
 #include "log.h"
 #include "lde.h"
 
-void	nbr_send_labelmappings(struct nbr *);
-int	nbr_act_session_operational(struct nbr *);
+static __inline int	 nbr_id_compare(struct nbr *, struct nbr *);
+static __inline int	 nbr_addr_compare(struct nbr *, struct nbr *);
+static __inline int	 nbr_pid_compare(struct nbr *, struct nbr *);
+static void		 nbr_update_peerid(struct nbr *);
+static void		 nbr_ktimer(int, short, void *);
+static void		 nbr_start_ktimer(struct nbr *);
+static void		 nbr_ktimeout(int, short, void *);
+static void		 nbr_start_ktimeout(struct nbr *);
+static void		 nbr_idtimer(int, short, void *);
+static int		 nbr_act_session_operational(struct nbr *);
+static void		 nbr_send_labelmappings(struct nbr *);
 
-static __inline int nbr_id_compare(struct nbr *, struct nbr *);
-static __inline int nbr_addr_compare(struct nbr *, struct nbr *);
-static __inline int nbr_pid_compare(struct nbr *, struct nbr *);
-
-RB_HEAD(nbr_id_head, nbr);
 RB_GENERATE(nbr_id_head, nbr, id_tree, nbr_id_compare)
-RB_HEAD(nbr_addr_head, nbr);
 RB_GENERATE(nbr_addr_head, nbr, addr_tree, nbr_addr_compare)
-RB_HEAD(nbr_pid_head, nbr);
 RB_GENERATE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
-
-static __inline int
-nbr_id_compare(struct nbr *a, struct nbr *b)
-{
-	return (ntohl(a->id.s_addr) - ntohl(b->id.s_addr));
-}
-
-static __inline int
-nbr_addr_compare(struct nbr *a, struct nbr *b)
-{
-	if (a->af < b->af)
-		return (-1);
-	if (a->af > b->af)
-		return (1);
-
-	return (ldp_addrcmp(a->af, &a->raddr, &b->raddr));
-}
-
-static __inline int
-nbr_pid_compare(struct nbr *a, struct nbr *b)
-{
-	return (a->peerid - b->peerid);
-}
-
-struct nbr_id_head nbrs_by_id = RB_INITIALIZER(&nbrs_by_id);
-struct nbr_addr_head nbrs_by_addr = RB_INITIALIZER(&nbrs_by_addr);
-struct nbr_pid_head nbrs_by_pid = RB_INITIALIZER(&nbrs_by_pid);
-
-uint32_t	peercnt = 1;
-
-extern struct ldpd_conf		*leconf;
-extern struct ldpd_sysdep	 sysdep;
 
 struct {
 	int		state;
@@ -135,6 +105,33 @@ const char * const nbr_action_names[] = {
 	"SEND KEEPALIVE",
 	"CLOSE SESSION"
 };
+
+struct nbr_id_head nbrs_by_id = RB_INITIALIZER(&nbrs_by_id);
+struct nbr_addr_head nbrs_by_addr = RB_INITIALIZER(&nbrs_by_addr);
+struct nbr_pid_head nbrs_by_pid = RB_INITIALIZER(&nbrs_by_pid);
+
+static __inline int
+nbr_id_compare(struct nbr *a, struct nbr *b)
+{
+	return (ntohl(a->id.s_addr) - ntohl(b->id.s_addr));
+}
+
+static __inline int
+nbr_addr_compare(struct nbr *a, struct nbr *b)
+{
+	if (a->af < b->af)
+		return (-1);
+	if (a->af > b->af)
+		return (1);
+
+	return (ldp_addrcmp(a->af, &a->raddr, &b->raddr));
+}
+
+static __inline int
+nbr_pid_compare(struct nbr *a, struct nbr *b)
+{
+	return (a->peerid - b->peerid);
+}
 
 int
 nbr_fsm(struct nbr *nbr, enum nbr_event event)
@@ -315,9 +312,11 @@ nbr_del(struct nbr *nbr)
 	free(nbr);
 }
 
-void
+static void
 nbr_update_peerid(struct nbr *nbr)
 {
+	static uint32_t	 peercnt = 1;
+
 	if (nbr->peerid)
 		RB_REMOVE(nbr_pid_head, &nbrs_by_pid, nbr);
 
@@ -381,7 +380,7 @@ nbr_session_active_role(struct nbr *nbr)
 
 /* Keepalive timer: timer to send keepalive message to neighbors */
 
-void
+static void
 nbr_ktimer(int fd, short event, void *arg)
 {
 	struct nbr	*nbr = arg;
@@ -390,7 +389,7 @@ nbr_ktimer(int fd, short event, void *arg)
 	nbr_start_ktimer(nbr);
 }
 
-void
+static void
 nbr_start_ktimer(struct nbr *nbr)
 {
 	struct timeval	 tv;
@@ -412,7 +411,7 @@ nbr_stop_ktimer(struct nbr *nbr)
 
 /* Keepalive timeout: if the nbr hasn't sent keepalive */
 
-void
+static void
 nbr_ktimeout(int fd, short event, void *arg)
 {
 	struct nbr *nbr = arg;
@@ -422,7 +421,7 @@ nbr_ktimeout(int fd, short event, void *arg)
 	session_shutdown(nbr, S_KEEPALIVE_TMR, 0, 0);
 }
 
-void
+static void
 nbr_start_ktimeout(struct nbr *nbr)
 {
 	struct timeval	tv;
@@ -444,7 +443,7 @@ nbr_stop_ktimeout(struct nbr *nbr)
 
 /* Init delay timer: timer to retry to iniziatize session */
 
-void
+static void
 nbr_idtimer(int fd, short event, void *arg)
 {
 	struct nbr *nbr = arg;
@@ -606,7 +605,7 @@ nbr_establish_connection(struct nbr *nbr)
 	return (0);
 }
 
-int
+static int
 nbr_act_session_operational(struct nbr *nbr)
 {
 	struct lde_nbr	 lde_nbr;
@@ -624,7 +623,7 @@ nbr_act_session_operational(struct nbr *nbr)
 	    &lde_nbr, sizeof(lde_nbr)));
 }
 
-void
+static void
 nbr_send_labelmappings(struct nbr *nbr)
 {
 	ldpe_imsg_compose_lde(IMSG_LABEL_MAPPING_FULL, nbr->peerid, 0,

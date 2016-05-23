@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.14 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.15 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -34,11 +34,7 @@
 #include "control.h"
 #include "log.h"
 
-RB_PROTOTYPE(fec_tree, fec, entry, fec_compare)
-extern struct fec_tree		 ft;
-
-extern struct ldpd_conf		*ldeconf;
-extern struct ldpd_conf		*leconf;
+static void	 l2vpn_pw_fec(struct l2vpn_pw *, struct fec *);
 
 struct l2vpn *
 l2vpn_new(const char *name)
@@ -177,7 +173,7 @@ l2vpn_pw_exit(struct l2vpn_pw *pw)
 	lde_kernel_remove(&fec, AF_INET, (union ldpd_addr*)&pw->lsr_id);
 }
 
-void
+static void
 l2vpn_pw_fec(struct l2vpn_pw *pw, struct fec *fec)
 {
 	memset(fec, 0, sizeof(*fec));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: accept.c,v 1.5 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: accept.c,v 1.6 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2012 Claudio Jeker <claudio@openbsd.org>
@@ -38,10 +38,10 @@ struct {
 	struct event		evt;
 } accept_queue;
 
-void	accept_arm(void);
-void	accept_unarm(void);
-void	accept_cb(int, short, void *);
-void	accept_timeout(int, short, void *);
+static void	accept_arm(void);
+static void	accept_unarm(void);
+static void	accept_cb(int, short, void *);
+static void	accept_timeout(int, short, void *);
 
 void
 accept_init(void)
@@ -105,7 +105,7 @@ accept_unpause(void)
 	}
 }
 
-void
+static void
 accept_arm(void)
 {
 	struct accept_ev	*av;
@@ -113,7 +113,7 @@ accept_arm(void)
 		event_add(&av->ev, NULL);
 }
 
-void
+static void
 accept_unarm(void)
 {
 	struct accept_ev	*av;
@@ -121,7 +121,7 @@ accept_unarm(void)
 		event_del(&av->ev);
 }
 
-void
+static void
 accept_cb(int fd, short event, void *arg)
 {
 	struct accept_ev	*av = arg;
@@ -129,7 +129,7 @@ accept_cb(int fd, short event, void *arg)
 	av->accept_cb(fd, event, av->arg);
 }
 
-void
+static void
 accept_timeout(int fd, short event, void *bula)
 {
 	log_debug(__func__);

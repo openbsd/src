@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.8 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.9 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -33,27 +33,27 @@
 #include "ldpe.h"
 #include "log.h"
 
+static int	 pfkey_send(int, uint8_t, uint8_t, uint8_t,
+		    int, union ldpd_addr *, union ldpd_addr *,
+		    uint32_t, uint8_t, int, char *, uint8_t, int, char *,
+		    uint16_t, uint16_t);
+static int	 pfkey_reply(int, uint32_t *);
+static int	 pfkey_sa_add(int, union ldpd_addr *, union ldpd_addr *,
+		    uint8_t, char *, uint32_t *);
+static int	 pfkey_sa_remove(int, union ldpd_addr *, union ldpd_addr *,
+		    uint32_t *);
+static int	 pfkey_md5sig_establish(struct nbr *, struct nbr_params *nbrp);
+static int	 pfkey_md5sig_remove(struct nbr *);
+
 #define	PFKEY2_CHUNK sizeof(uint64_t)
 #define	ROUNDUP(x) (((x) + (PFKEY2_CHUNK - 1)) & ~(PFKEY2_CHUNK - 1))
 #define	IOV_CNT	20
 
-static uint32_t	sadb_msg_seq = 0;
-static uint32_t	pid = 0; /* should pid_t but pfkey needs uint32_t */
-static int	fd;
+static uint32_t	 sadb_msg_seq;
+static uint32_t	 pid; /* should pid_t but pfkey needs uint32_t */
+static int	 fd;
 
-int	pfkey_reply(int, uint32_t *);
-int	pfkey_send(int, uint8_t, uint8_t, uint8_t,
-	    int, union ldpd_addr *, union ldpd_addr *,
-	    uint32_t, uint8_t, int, char *, uint8_t, int, char *,
-	    uint16_t, uint16_t);
-int	pfkey_sa_add(int, union ldpd_addr *, union ldpd_addr *, uint8_t, char *,
-	    uint32_t *);
-int	pfkey_sa_remove(int, union ldpd_addr *, union ldpd_addr *, uint32_t *);
-
-int	pfkey_md5sig_establish(struct nbr *, struct nbr_params *nbrp);
-int	pfkey_md5sig_remove(struct nbr *);
-
-int
+static int
 pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
     int af, union ldpd_addr *src, union ldpd_addr *dst, uint32_t spi,
     uint8_t aalg, int alen, char *akey, uint8_t ealg, int elen, char *ekey,
@@ -283,7 +283,7 @@ pfkey_read(int sd, struct sadb_msg *h)
 	return (1);
 }
 
-int
+static int
 pfkey_reply(int sd, uint32_t *spip)
 {
 	struct sadb_msg hdr, *msg;
@@ -345,7 +345,7 @@ pfkey_reply(int sd, uint32_t *spip)
 	return (0);
 }
 
-int
+static int
 pfkey_sa_add(int af, union ldpd_addr *src, union ldpd_addr *dst, uint8_t keylen,
     char *key, uint32_t *spi)
 {
@@ -362,7 +362,7 @@ pfkey_sa_add(int af, union ldpd_addr *src, union ldpd_addr *dst, uint8_t keylen,
 	return (0);
 }
 
-int
+static int
 pfkey_sa_remove(int af, union ldpd_addr *src, union ldpd_addr *dst,
     uint32_t *spi)
 {
@@ -375,7 +375,7 @@ pfkey_sa_remove(int af, union ldpd_addr *src, union ldpd_addr *dst,
 	return (0);
 }
 
-int
+static int
 pfkey_md5sig_establish(struct nbr *nbr, struct nbr_params *nbrp)
 {
 	sleep(1);
@@ -395,7 +395,7 @@ pfkey_md5sig_establish(struct nbr *nbr, struct nbr_params *nbrp)
 	return (0);
 }
 
-int
+static int
 pfkey_md5sig_remove(struct nbr *nbr)
 {
 	if (nbr->auth.spi_out)
@@ -457,13 +457,13 @@ pfkey_remove(struct nbr *nbr)
 }
 
 int
-pfkey_init(struct ldpd_sysdep *sysdep)
+pfkey_init(void)
 {
 	if ((fd = socket(PF_KEY, SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK,
 	    PF_KEY_V2)) == -1) {
 		if (errno == EPROTONOSUPPORT) {
 			log_warnx("PF_KEY not available");
-			sysdep->no_pfkey = 1;
+			sysdep.no_pfkey = 1;
 			return (-1);
 		} else
 			fatal("pfkey setup failed");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.22 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.23 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -29,15 +29,15 @@
 #include "ldpe.h"
 #include "log.h"
 
-void	print_mainconf(struct ldpd_conf *);
-void	print_af(int, struct ldpd_conf *, struct ldpd_af_conf *);
-void	print_iface(struct iface *, struct iface_af *);
-void	print_tnbr(struct tnbr *);
-void	print_nbrp(struct nbr_params *);
-void	print_l2vpn(struct l2vpn *);
-void	print_pw(struct l2vpn_pw *);
+static void	print_mainconf(struct ldpd_conf *);
+static void	print_af(int, struct ldpd_conf *, struct ldpd_af_conf *);
+static void	print_iface(struct iface *, struct iface_af *);
+static void	print_tnbr(struct tnbr *);
+static void	print_nbrp(struct nbr_params *);
+static void	print_l2vpn(struct l2vpn *);
+static void	print_pw(struct l2vpn_pw *);
 
-void
+static void
 print_mainconf(struct ldpd_conf *conf)
 {
 	printf("router-id %s\n", inet_ntoa(conf->rtr_id));
@@ -58,7 +58,7 @@ print_mainconf(struct ldpd_conf *conf)
 		printf("ds-cisco-interop no\n");
 }
 
-void
+static void
 print_af(int af, struct ldpd_conf *conf, struct ldpd_af_conf *af_conf)
 {
 	struct iface		*iface;
@@ -93,7 +93,7 @@ print_af(int af, struct ldpd_conf *conf, struct ldpd_af_conf *af_conf)
 	printf("}\n");
 }
 
-void
+static void
 print_iface(struct iface *iface, struct iface_af *ia)
 {
 	printf("\tinterface %s {\n", iface->name);
@@ -102,7 +102,7 @@ print_iface(struct iface *iface, struct iface_af *ia)
 	printf("\t}\n");
 }
 
-void
+static void
 print_tnbr(struct tnbr *tnbr)
 {
 	printf("\n\ttargeted-neighbor %s {\n", log_addr(tnbr->af, &tnbr->addr));
@@ -111,7 +111,7 @@ print_tnbr(struct tnbr *tnbr)
 	printf("\t}\n");
 }
 
-void
+static void
 print_nbrp(struct nbr_params *nbrp)
 {
 	printf("\nneighbor %s {\n", inet_ntoa(nbrp->lsr_id));
@@ -125,7 +125,7 @@ print_nbrp(struct nbr_params *nbrp)
 	printf("}\n");
 }
 
-void
+static void
 print_l2vpn(struct l2vpn *l2vpn)
 {
 	struct l2vpn_if	*lif;
@@ -149,7 +149,7 @@ print_l2vpn(struct l2vpn *l2vpn)
 	printf("}\n");
 }
 
-void
+static void
 print_pw(struct l2vpn_pw *pw)
 {
 	printf("\tpseudowire %s {\n", pw->ifname);

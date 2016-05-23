@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.71 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.72 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -402,8 +402,6 @@ struct ldpd_global {
 	TAILQ_HEAD(, pending_conn) pending_conns;
 };
 
-extern struct ldpd_global global;
-
 /* kroute */
 struct kroute {
 	int			 af;
@@ -505,35 +503,29 @@ struct ctl_pw {
 	uint32_t		 status;
 };
 
+extern struct ldpd_conf		*ldpd_conf;
+extern struct ldpd_global	 global;
+
 /* parse.y */
 struct ldpd_conf	*parse_config(char *);
 int			 cmdline_symset(char *);
 
 /* kroute.c */
 int		 kif_init(void);
-void		 kif_redistribute(const char *);
 int		 kr_init(int);
+void		 kif_redistribute(const char *);
 int		 kr_change(struct kroute *);
 int		 kr_delete(struct kroute *);
-void		 kif_clear(void);
 void		 kr_shutdown(void);
 void		 kr_fib_couple(void);
 void		 kr_fib_decouple(void);
 void		 kr_change_egress_label(int, int);
-void		 kr_dispatch_msg(int, short, void *);
 void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *, pid_t);
 struct kif	*kif_findname(char *);
+void		 kif_clear(void);
 int		 kmpw_set(struct kpw *);
 int		 kmpw_unset(struct kpw *);
-int		 kmpw_install(const char *, struct kpw *);
-int		 kmpw_uninstall(const char *);
-
-/* log.h */
-const char	*nbr_state_name(int);
-const char	*if_state_name(int);
-const char	*if_type_name(enum iface_type);
-const char	*notification_name(uint32_t);
 
 /* util.c */
 uint8_t		 mask2prefixlen(in_addr_t);
@@ -558,21 +550,20 @@ struct sockaddr	*addr2sa(int af, union ldpd_addr *, uint16_t);
 void		 sa2addr(struct sockaddr *, int *, union ldpd_addr *);
 
 /* ldpd.c */
-void	main_imsg_compose_ldpe(int, pid_t, void *, uint16_t);
-void	main_imsg_compose_lde(int, pid_t, void *, uint16_t);
-void	merge_config(struct ldpd_conf *, struct ldpd_conf *);
-void	config_clear(struct ldpd_conf *);
-int	imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t,
-	    int, void *, uint16_t);
-void	imsg_event_add(struct imsgev *);
-void	evbuf_enqueue(struct evbuf *, struct ibuf *);
-void	evbuf_event_add(struct evbuf *);
-void	evbuf_init(struct evbuf *, int, void (*)(int, short, void *), void *);
-void	evbuf_clear(struct evbuf *);
-
+void			 main_imsg_compose_ldpe(int, pid_t, void *, uint16_t);
+void			 main_imsg_compose_lde(int, pid_t, void *, uint16_t);
+void			 imsg_event_add(struct imsgev *);
+int			 imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t,
+			    int, void *, uint16_t);
+void			 evbuf_enqueue(struct evbuf *, struct ibuf *);
+void			 evbuf_event_add(struct evbuf *);
+void			 evbuf_init(struct evbuf *, int, void (*)(int, short, void *), void *);
+void			 evbuf_clear(struct evbuf *);
 struct ldpd_af_conf	*ldp_af_conf_get(struct ldpd_conf *, int);
 struct ldpd_af_global	*ldp_af_global_get(struct ldpd_global *, int);
 int			 ldp_is_dual_stack(struct ldpd_conf *);
+void			 merge_config(struct ldpd_conf *, struct ldpd_conf *);
+void			 config_clear(struct ldpd_conf *);
 
 /* socket.c */
 int		 ldp_create_socket(int, enum socket_type);

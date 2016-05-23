@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.55 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.56 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -39,13 +39,14 @@
 #include "log.h"
 #include "ldpe.h"
 
-extern struct ldpd_conf        *leconf;
-extern struct ldpd_sysdep	sysdep;
-
-struct iface	*disc_find_iface(unsigned int, int, union ldpd_addr *, int);
-ssize_t		 session_get_pdu(struct ibuf_read *, char **);
-
-static int	 msgcnt = 0;
+static struct iface		*disc_find_iface(unsigned int, int,
+				    union ldpd_addr *, int);
+static void			 session_read(int, short, void *);
+static void			 session_write(int, short, void *);
+static ssize_t			 session_get_pdu(struct ibuf_read *, char **);
+static void			 tcp_close(struct tcp_conn *);
+static struct pending_conn	*pending_conn_new(int, int, union ldpd_addr *);
+static void			 pending_conn_timeout(int, short, void *);
 
 int
 gen_ldp_hdr(struct ibuf *buf, uint16_t size)
@@ -65,6 +66,7 @@ gen_ldp_hdr(struct ibuf *buf, uint16_t size)
 int
 gen_msg_hdr(struct ibuf *buf, uint32_t type, uint16_t size)
 {
+	static int	msgcnt = 0;
 	struct ldp_msg	msg;
 
 	memset(&msg, 0, sizeof(msg));
@@ -258,7 +260,7 @@ disc_recv_packet(int fd, short event, void *bula)
 	}
 }
 
-struct iface *
+static struct iface *
 disc_find_iface(unsigned int ifindex, int af, union ldpd_addr *src,
     int multicast)
 {
@@ -414,7 +416,7 @@ session_accept_nbr(struct nbr *nbr, int fd)
 	nbr_fsm(nbr, NBR_EVT_MATCH_ADJ);
 }
 
-void
+static void
 session_read(int fd, short event, void *arg)
 {
 	struct nbr	*nbr = arg;
@@ -595,7 +597,7 @@ session_read(int fd, short event, void *arg)
 	}
 }
 
-void
+static void
 session_write(int fd, short event, void *arg)
 {
 	struct tcp_conn *tcp = arg;
@@ -648,7 +650,7 @@ session_close(struct nbr *nbr)
 	nbr_stop_ktimeout(nbr);
 }
 
-ssize_t
+static ssize_t
 session_get_pdu(struct ibuf_read *r, char **b)
 {
 	struct ldp_hdr	l;
@@ -701,7 +703,7 @@ tcp_new(int fd, struct nbr *nbr)
 	return (tcp);
 }
 
-void
+static void
 tcp_close(struct tcp_conn *tcp)
 {
 	evbuf_clear(&tcp->wbuf);
@@ -717,7 +719,7 @@ tcp_close(struct tcp_conn *tcp)
 	free(tcp);
 }
 
-struct pending_conn *
+static struct pending_conn *
 pending_conn_new(int fd, int af, union ldpd_addr *addr)
 {
 	struct pending_conn	*pconn;
@@ -764,7 +766,7 @@ pending_conn_find(int af, union ldpd_addr *addr)
 	return (NULL);
 }
 
-void
+static void
 pending_conn_timeout(int fd, short event, void *arg)
 {
 	struct pending_conn	*pconn = arg;

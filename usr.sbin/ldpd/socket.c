@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.c,v 1.6 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: socket.c,v 1.7 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2016 Renato Westphal <renato@openbsd.org>
@@ -30,9 +30,6 @@
 #include "ldpd.h"
 #include "ldpe.h"
 #include "log.h"
-
-extern struct ldpd_conf		*ldpd_conf;
-extern struct ldpd_sysdep	 sysdep;
 
 int
 ldp_create_socket(int af, enum socket_type type)

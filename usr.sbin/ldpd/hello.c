@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.40 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.41 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -35,15 +35,13 @@
 #include "log.h"
 #include "ldpe.h"
 
-extern struct ldpd_conf        *leconf;
-
-int	tlv_decode_hello_prms(char *, uint16_t, uint16_t *, uint16_t *);
-int	tlv_decode_opt_hello_prms(char *, uint16_t, int *, int,
-	    union ldpd_addr *, uint32_t *, uint16_t *);
-int	gen_hello_prms_tlv(struct ibuf *buf, uint16_t, uint16_t);
-int	gen_opt4_hello_prms_tlv(struct ibuf *, uint16_t, uint32_t);
-int	gen_opt16_hello_prms_tlv(struct ibuf *, uint16_t, uint8_t *);
-int	gen_ds_hello_prms_tlv(struct ibuf *, uint32_t);
+static int	gen_hello_prms_tlv(struct ibuf *buf, uint16_t, uint16_t);
+static int	gen_opt4_hello_prms_tlv(struct ibuf *, uint16_t, uint32_t);
+static int	gen_opt16_hello_prms_tlv(struct ibuf *, uint16_t, uint8_t *);
+static int	gen_ds_hello_prms_tlv(struct ibuf *, uint32_t);
+static int	tlv_decode_hello_prms(char *, uint16_t, uint16_t *, uint16_t *);
+static int	tlv_decode_opt_hello_prms(char *, uint16_t, int *, int,
+		    union ldpd_addr *, uint32_t *, uint16_t *);
 
 int
 send_hello(enum hello_type type, struct iface_af *ia, struct tnbr *tnbr)
@@ -387,7 +385,7 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 		nbr_establish_connection(nbr);
 }
 
-int
+static int
 gen_hello_prms_tlv(struct ibuf *buf, uint16_t holdtime, uint16_t flags)
 {
 	struct hello_prms_tlv	parms;
@@ -401,7 +399,7 @@ gen_hello_prms_tlv(struct ibuf *buf, uint16_t holdtime, uint16_t flags)
 	return (ibuf_add(buf, &parms, sizeof(parms)));
 }
 
-int
+static int
 gen_opt4_hello_prms_tlv(struct ibuf *buf, uint16_t type, uint32_t value)
 {
 	struct hello_prms_opt4_tlv	parms;
@@ -414,7 +412,7 @@ gen_opt4_hello_prms_tlv(struct ibuf *buf, uint16_t type, uint32_t value)
 	return (ibuf_add(buf, &parms, sizeof(parms)));
 }
 
-int
+static int
 gen_opt16_hello_prms_tlv(struct ibuf *buf, uint16_t type, uint8_t *value)
 {
 	struct hello_prms_opt16_tlv	parms;
@@ -427,7 +425,7 @@ gen_opt16_hello_prms_tlv(struct ibuf *buf, uint16_t type, uint8_t *value)
 	return (ibuf_add(buf, &parms, sizeof(parms)));
 }
 
-int
+static int
 gen_ds_hello_prms_tlv(struct ibuf *buf, uint32_t value)
 {
 	if (leconf->flags & F_LDPD_DS_CISCO_INTEROP)
@@ -438,7 +436,7 @@ gen_ds_hello_prms_tlv(struct ibuf *buf, uint32_t value)
 	return (gen_opt4_hello_prms_tlv(buf, TLV_TYPE_DUALSTACK, value));
 }
 
-int
+static int
 tlv_decode_hello_prms(char *buf, uint16_t len, uint16_t *holdtime,
     uint16_t *flags)
 {
@@ -459,7 +457,7 @@ tlv_decode_hello_prms(char *buf, uint16_t len, uint16_t *holdtime,
 	return (sizeof(tlv));
 }
 
-int
+static int
 tlv_decode_opt_hello_prms(char *buf, uint16_t len, int *tlvs_rcvd, int af,
     union ldpd_addr *addr, uint32_t *conf_number, uint16_t *trans_pref)
 {

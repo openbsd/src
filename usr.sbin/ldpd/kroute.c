@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.57 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.58 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -72,6 +72,8 @@ struct kroute_prefix {
 	uint8_t				 prefixlen;
 	TAILQ_HEAD(plist, kroute_priority) priorities;
 };
+RB_HEAD(kroute_tree, kroute_prefix);
+RB_PROTOTYPE(kroute_tree, kroute_prefix, entry, kroute_compare)
 
 struct kif_addr {
 	TAILQ_ENTRY(kif_addr)	 entry;
@@ -84,59 +86,59 @@ struct kif_node {
 	struct kif		 k;
 	struct kpw		*kpw;
 };
-
-void			 kr_redist_remove(struct kroute *);
-int			 kr_redist_eval(struct kroute *);
-void			 kr_redistribute(struct kroute_prefix *);
-int			 kroute_compare(struct kroute_prefix *,
-			    struct kroute_prefix *);
-
-struct kroute_prefix	*kroute_find_prefix(int, union ldpd_addr *, uint8_t);
-struct kroute_priority	*kroute_find_prio(struct kroute_prefix *, uint8_t);
-struct kroute_node	*kroute_find_gw(struct kroute_priority *,
-			    union ldpd_addr *);
-
-int			 kroute_insert(struct kroute *);
-int			 kroute_uninstall(struct kroute_node *);
-int			 kroute_remove(struct kroute *);
-void			 kroute_clear(void);
-
-int			 kif_compare(struct kif_node *, struct kif_node *);
-struct kif_node		*kif_find(unsigned short);
-struct kif_node		*kif_insert(unsigned short);
-int			 kif_remove(struct kif_node *);
-struct kif_node		*kif_update(unsigned short, int, struct if_data *,
-			    struct sockaddr_dl *, int *);
-
-struct kroute_priority	*kroute_match(int, union ldpd_addr *);
-
-uint8_t		prefixlen_classful(in_addr_t);
-void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
-void		if_change(unsigned short, int, struct if_data *,
-		    struct sockaddr_dl *);
-void		if_newaddr(unsigned short, struct sockaddr *, struct sockaddr *,
-		    struct sockaddr *);
-void		if_deladdr(unsigned short, struct sockaddr *, struct sockaddr *,
-		    struct sockaddr *);
-void		if_announce(void *);
-
-int		send_rtmsg(int, int, struct kroute *, int);
-int		send_rtmsg_v4(int, int, struct kroute *, int);
-int		send_rtmsg_v6(int, int, struct kroute *, int);
-int		dispatch_rtmsg(void);
-int		fetchtable(void);
-int		fetchifs(void);
-int		rtmsg_process(char *, size_t);
-int		rtmsg_process_route(struct rt_msghdr *,
-		    struct sockaddr *[RTAX_MAX]);
-
-RB_HEAD(kroute_tree, kroute_prefix)	krt = RB_INITIALIZER(&krt);
-RB_PROTOTYPE(kroute_tree, kroute_prefix, entry, kroute_compare)
-RB_GENERATE(kroute_tree, kroute_prefix, entry, kroute_compare)
-
-RB_HEAD(kif_tree, kif_node)		kit = RB_INITIALIZER(&kit);
+RB_HEAD(kif_tree, kif_node);
 RB_PROTOTYPE(kif_tree, kif_node, entry, kif_compare)
+
+static void		 kr_dispatch_msg(int, short, void *);
+static void		 kr_redist_remove(struct kroute *);
+static int		 kr_redist_eval(struct kroute *);
+static void		 kr_redistribute(struct kroute_prefix *);
+static __inline int	 kroute_compare(struct kroute_prefix *,
+			    struct kroute_prefix *);
+static struct kroute_prefix	*kroute_find_prefix(int, union ldpd_addr *,
+			    uint8_t);
+static struct kroute_priority	*kroute_find_prio(struct kroute_prefix *,
+			    uint8_t);
+static struct kroute_node	*kroute_find_gw(struct kroute_priority *,
+				    union ldpd_addr *);
+static int		 kroute_insert(struct kroute *);
+static int		 kroute_uninstall(struct kroute_node *);
+static int		 kroute_remove(struct kroute *);
+static void		 kroute_clear(void);
+static __inline int	 kif_compare(struct kif_node *, struct kif_node *);
+static struct kif_node	*kif_find(unsigned short);
+static struct kif_node	*kif_insert(unsigned short);
+static int		 kif_remove(struct kif_node *);
+static struct kif_node	*kif_update(unsigned short, int, struct if_data *,
+			    struct sockaddr_dl *, int *);
+static struct kroute_priority	*kroute_match(int, union ldpd_addr *);
+static uint8_t		 prefixlen_classful(in_addr_t);
+static void		 get_rtaddrs(int, struct sockaddr *,
+			    struct sockaddr **);
+static void		 if_change(unsigned short, int, struct if_data *,
+		 	   struct sockaddr_dl *);
+static void		 if_newaddr(unsigned short, struct sockaddr *,
+			    struct sockaddr *, struct sockaddr *);
+static void		 if_deladdr(unsigned short, struct sockaddr *,
+			    struct sockaddr *, struct sockaddr *);
+static void		 if_announce(void *);
+static int		 send_rtmsg(int, int, struct kroute *, int);
+static int		 send_rtmsg_v4(int fd, int, struct kroute *, int);
+static int		 send_rtmsg_v6(int fd, int, struct kroute *, int);
+static int		 fetchtable(void);
+static int		 fetchifs(void);
+static int		 dispatch_rtmsg(void);
+static int		 rtmsg_process(char *, size_t);
+static int		 rtmsg_process_route(struct rt_msghdr *,
+			    struct sockaddr *[RTAX_MAX]);
+static int		 kmpw_install(const char *, struct kpw *);
+static int		 kmpw_uninstall(const char *);
+
+RB_GENERATE(kroute_tree, kroute_prefix, entry, kroute_compare)
 RB_GENERATE(kif_tree, kif_node, entry, kif_compare)
+
+static struct kroute_tree	 krt = RB_INITIALIZER(&krt);
+static struct kif_tree		 kit = RB_INITIALIZER(&kit);
 
 int
 kif_init(void)
@@ -437,7 +439,7 @@ kr_change_egress_label(int af, int was_implicit)
 }
 
 /* ARGSUSED */
-void
+static void
 kr_dispatch_msg(int fd, short event, void *bula)
 {
 	if (dispatch_rtmsg() == -1)
@@ -508,7 +510,7 @@ kr_ifinfo(char *ifname, pid_t pid)
 	main_imsg_compose_ldpe(IMSG_CTL_END, pid, NULL, 0);
 }
 
-void
+static void
 kr_redist_remove(struct kroute *kr)
 {
 	/* was the route redistributed? */
@@ -520,7 +522,7 @@ kr_redist_remove(struct kroute *kr)
 	main_imsg_compose_lde(IMSG_NETWORK_DEL, 0, kr, sizeof(*kr));
 }
 
-int
+static int
 kr_redist_eval(struct kroute *kr)
 {
 	/* was the route redistributed? */
@@ -569,7 +571,7 @@ dont_redistribute:
 	return (0);
 }
 
-void
+static void
 kr_redistribute(struct kroute_prefix *kp)
 {
 	struct kroute_priority	*kprio;
@@ -587,7 +589,7 @@ kr_redistribute(struct kroute_prefix *kp)
 }
 
 /* rb-tree compare */
-int
+static __inline int
 kroute_compare(struct kroute_prefix *a, struct kroute_prefix *b)
 {
 	int		 addrcmp;
@@ -610,7 +612,7 @@ kroute_compare(struct kroute_prefix *a, struct kroute_prefix *b)
 }
 
 /* tree management */
-struct kroute_prefix *
+static struct kroute_prefix *
 kroute_find_prefix(int af, union ldpd_addr *prefix, uint8_t prefixlen)
 {
 	struct kroute_prefix	 s;
@@ -622,7 +624,7 @@ kroute_find_prefix(int af, union ldpd_addr *prefix, uint8_t prefixlen)
 	return (RB_FIND(kroute_tree, &krt, &s));
 }
 
-struct kroute_priority *
+static struct kroute_priority *
 kroute_find_prio(struct kroute_prefix *kp, uint8_t prio)
 {
 	struct kroute_priority	*kprio;
@@ -638,7 +640,7 @@ kroute_find_prio(struct kroute_prefix *kp, uint8_t prio)
 	return (NULL);
 }
 
-struct kroute_node *
+static struct kroute_node *
 kroute_find_gw(struct kroute_priority *kprio, union ldpd_addr *nh)
 {
 	struct kroute_node	*kn;
@@ -650,7 +652,7 @@ kroute_find_gw(struct kroute_priority *kprio, union ldpd_addr *nh)
 	return (NULL);
 }
 
-int
+static int
 kroute_insert(struct kroute *kr)
 {
 	struct kroute_prefix	*kp;
@@ -702,7 +704,7 @@ kroute_insert(struct kroute *kr)
 	return (0);
 }
 
-int
+static int
 kroute_uninstall(struct kroute_node *kn)
 {
 	/* kill MPLS LSP if one was installed */
@@ -714,7 +716,7 @@ kroute_uninstall(struct kroute_node *kn)
 	return (0);
 }
 
-int
+static int
 kroute_remove(struct kroute *kr)
 {
 	struct kroute_prefix	*kp;
@@ -760,7 +762,7 @@ notfound:
 	return (-1);
 }
 
-void
+static void
 kroute_clear(void)
 {
 	struct kroute_prefix	*kp;
@@ -783,14 +785,14 @@ kroute_clear(void)
 	}
 }
 
-int
+static __inline int
 kif_compare(struct kif_node *a, struct kif_node *b)
 {
 	return (b->k.ifindex - a->k.ifindex);
 }
 
 /* tree management */
-struct kif_node *
+static struct kif_node *
 kif_find(unsigned short ifindex)
 {
 	struct kif_node	s;
@@ -813,7 +815,7 @@ kif_findname(char *ifname)
 	return (NULL);
 }
 
-struct kif_node *
+static struct kif_node *
 kif_insert(unsigned short ifindex)
 {
 	struct kif_node	*kif;
@@ -830,7 +832,7 @@ kif_insert(unsigned short ifindex)
 	return (kif);
 }
 
-int
+static int
 kif_remove(struct kif_node *kif)
 {
 	struct kif_addr	*ka;
@@ -858,7 +860,7 @@ kif_clear(void)
 		kif_remove(kif);
 }
 
-struct kif_node *
+static struct kif_node *
 kif_update(unsigned short ifindex, int flags, struct if_data *ifd,
     struct sockaddr_dl *sdl, int *link_old)
 {
@@ -890,7 +892,7 @@ kif_update(unsigned short ifindex, int flags, struct if_data *ifd,
 	return (kif);
 }
 
-struct kroute_priority *
+static struct kroute_priority *
 kroute_match(int af, union ldpd_addr *key)
 {
 	int			 i, maxprefixlen;
@@ -926,7 +928,7 @@ kroute_match(int af, union ldpd_addr *key)
 }
 
 /* misc */
-uint8_t
+static uint8_t
 prefixlen_classful(in_addr_t ina)
 {
 	/* it hurt to write this. */
@@ -946,7 +948,7 @@ prefixlen_classful(in_addr_t ina)
 #define	ROUNDUP(a)	\
     (((a) & (sizeof(long) - 1)) ? (1 + ((a) | (sizeof(long) - 1))) : (a))
 
-void
+static void
 get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 {
 	int	i;
@@ -961,7 +963,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 	}
 }
 
-void
+static void
 if_change(unsigned short ifindex, int flags, struct if_data *ifd,
     struct sockaddr_dl *sdl)
 {
@@ -992,7 +994,7 @@ if_change(unsigned short ifindex, int flags, struct if_data *ifd,
 	}
 }
 
-void
+static void
 if_newaddr(unsigned short ifindex, struct sockaddr *ifa, struct sockaddr *mask,
     struct sockaddr *brd)
 {
@@ -1059,7 +1061,7 @@ if_newaddr(unsigned short ifindex, struct sockaddr *ifa, struct sockaddr *mask,
 	main_imsg_compose_ldpe(IMSG_NEWADDR, 0, &ka->a, sizeof(ka->a));
 }
 
-void
+static void
 if_deladdr(unsigned short ifindex, struct sockaddr *ifa, struct sockaddr *mask,
     struct sockaddr *brd)
 {
@@ -1132,7 +1134,7 @@ if_deladdr(unsigned short ifindex, struct sockaddr *ifa, struct sockaddr *mask,
 	}
 }
 
-void
+static void
 if_announce(void *msg)
 {
 	struct if_announcemsghdr	*ifan;
@@ -1156,7 +1158,7 @@ if_announce(void *msg)
 }
 
 /* rtsock */
-int
+static int
 send_rtmsg(int fd, int action, struct kroute *kr, int family)
 {
 	switch (kr->af) {
@@ -1169,7 +1171,7 @@ send_rtmsg(int fd, int action, struct kroute *kr, int family)
 	}
 }
 
-int
+static int
 send_rtmsg_v4(int fd, int action, struct kroute *kr, int family)
 {
 	struct iovec		iov[5];
@@ -1303,13 +1305,13 @@ retry:
 	return (0);
 }
 
-int
+static int
 send_rtmsg_v6(int fd, int action, struct kroute *kr, int family)
 {
 	return (0);
 }
 
-int
+static int
 fetchtable(void)
 {
 	size_t			 len;
@@ -1345,7 +1347,7 @@ fetchtable(void)
 	return (rv);
 }
 
-int
+static int
 fetchifs(void)
 {
 	size_t			 len;
@@ -1380,7 +1382,7 @@ fetchifs(void)
 	return (rv);
 }
 
-int
+static int
 dispatch_rtmsg(void)
 {
 	char			 buf[RT_BUF_SIZE];
@@ -1401,7 +1403,7 @@ dispatch_rtmsg(void)
 	return (rtmsg_process(buf, n));
 }
 
-int
+static int
 rtmsg_process(char *buf, size_t len)
 {
 	struct rt_msghdr	*rtm;
@@ -1491,7 +1493,7 @@ rtmsg_process(char *buf, size_t len)
 	return (offset);
 }
 
-int
+static int
 rtmsg_process_route(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 {
 	struct sockaddr		*sa;
@@ -1660,7 +1662,7 @@ kmpw_unset(struct kpw *kpw)
 	return (kmpw_uninstall(kif->k.ifname));
 }
 
-int
+static int
 kmpw_install(const char *ifname, struct kpw *kpw)
 {
 	struct ifreq		 ifr;
@@ -1700,7 +1702,7 @@ kmpw_install(const char *ifname, struct kpw *kpw)
 	return (0);
 }
 
-int
+static int
 kmpw_uninstall(const char *ifname)
 {
 	struct ifreq		 ifr;

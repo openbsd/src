@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.25 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: init.c,v 1.26 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -36,10 +36,8 @@
 #include "log.h"
 #include "ldpe.h"
 
-extern struct ldpd_conf        *leconf;
-
-int	gen_init_prms_tlv(struct ibuf *, struct nbr *, uint16_t);
-int	tlv_decode_opt_init_prms(char *, uint16_t);
+static int	gen_init_prms_tlv(struct ibuf *, struct nbr *, uint16_t);
+static int	tlv_decode_opt_init_prms(char *, uint16_t);
 
 void
 send_init(struct nbr *nbr)
@@ -122,7 +120,7 @@ recv_init(struct nbr *nbr, char *buf, uint16_t len)
 	return (0);
 }
 
-int
+static int
 gen_init_prms_tlv(struct ibuf *buf, struct nbr *nbr, uint16_t size)
 {
 	struct sess_prms_tlv	parms;
@@ -141,7 +139,7 @@ gen_init_prms_tlv(struct ibuf *buf, struct nbr *nbr, uint16_t size)
 	return (ibuf_add(buf, &parms, SESS_PRMS_SIZE));
 }
 
-int
+static int
 tlv_decode_opt_init_prms(char *buf, uint16_t len)
 {
 	struct tlv	tlv;

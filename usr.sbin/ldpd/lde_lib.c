@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.55 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.56 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -38,23 +38,18 @@
 #include "log.h"
 #include "lde.h"
 
-static int fec_compare(struct fec *, struct fec *);
-
-void		 fec_free(void *);
-struct fec_node	*fec_add(struct fec *fec);
-struct fec_nh	*fec_nh_add(struct fec_node *, int, union ldpd_addr *);
-void		 fec_nh_del(struct fec_nh *);
-int		 lde_nbr_is_nexthop(struct fec_node *, struct lde_nbr *);
+static __inline int	 fec_compare(struct fec *, struct fec *);
+static int		 lde_nbr_is_nexthop(struct fec_node *,
+			    struct lde_nbr *);
+static void		 fec_free(void *);
+static struct fec_node	*fec_add(struct fec *fec);
+static struct fec_nh	*fec_nh_add(struct fec_node *, int, union ldpd_addr *);
+static void		 fec_nh_del(struct fec_nh *);
 
 RB_GENERATE(fec_tree, fec, entry, fec_compare)
 
-extern struct nbr_tree	lde_nbrs;
-RB_PROTOTYPE(nbr_tree, lde_nbr, entry, lde_nbr_compare)
-
-extern struct ldpd_conf		*ldeconf;
-
-struct fec_tree	ft = RB_INITIALIZER(&ft);
-struct event gc_timer;
+struct fec_tree		 ft = RB_INITIALIZER(&ft);
+struct event		 gc_timer;
 
 /* FEC tree functions */
 void
@@ -63,7 +58,7 @@ fec_init(struct fec_tree *fh)
 	RB_INIT(fh);
 }
 
-static int
+static __inline int
 fec_compare(struct fec *a, struct fec *b)
 {
 	if (a->type < b->type)
@@ -153,7 +148,7 @@ fec_clear(struct fec_tree *fh, void (*free_cb)(void *))
 }
 
 /* routing table functions */
-int
+static int
 lde_nbr_is_nexthop(struct fec_node *fn, struct lde_nbr *ln)
 {
 	struct fec_nh		*fnh;
@@ -231,7 +226,7 @@ fec_snap(struct lde_nbr *ln)
 	lde_imsg_compose_ldpe(IMSG_MAPPING_ADD_END, ln->peerid, 0, NULL, 0);
 }
 
-void
+static void
 fec_free(void *arg)
 {
 	struct fec_node	*fn = arg;
@@ -255,7 +250,7 @@ fec_tree_clear(void)
 	fec_clear(&ft, fec_free);
 }
 
-struct fec_node *
+static struct fec_node *
 fec_add(struct fec *fec)
 {
 	struct fec_node	*fn;
@@ -290,7 +285,7 @@ fec_nh_find(struct fec_node *fn, int af, union ldpd_addr *nexthop)
 	return (NULL);
 }
 
-struct fec_nh *
+static struct fec_nh *
 fec_nh_add(struct fec_node *fn, int af, union ldpd_addr *nexthop)
 {
 	struct fec_nh	*fnh;
@@ -307,7 +302,7 @@ fec_nh_add(struct fec_node *fn, int af, union ldpd_addr *nexthop)
 	return (fnh);
 }
 
-void
+static void
 fec_nh_del(struct fec_nh *fnh)
 {
 	LIST_REMOVE(fnh, entry);

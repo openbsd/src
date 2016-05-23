@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.44 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.45 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -46,42 +46,42 @@
 #include "log.h"
 #include "lde.h"
 
-void		main_sig_handler(int, short, void *);
-__dead void	usage(void);
-void		ldpd_shutdown(void);
-int		check_child(pid_t, const char *);
+static void		 main_sig_handler(int, short, void *);
+static __dead void	 usage(void);
+static void		 ldpd_shutdown(void);
+static int		 check_child(pid_t, const char *);
+static void		 main_dispatch_ldpe(int, short, void *);
+static void		 main_dispatch_lde(int, short, void *);
+static int		 main_imsg_compose_both(enum imsg_type, void *,
+			    uint16_t);
+static void		 main_imsg_send_net_sockets(int);
+static void		 main_imsg_send_net_socket(int, enum socket_type);
+static int		 ldp_reload(void);
+static void		 merge_global(struct ldpd_conf *, struct ldpd_conf *);
+static void		 merge_af(int, struct ldpd_af_conf *,
+			    struct ldpd_af_conf *);
+static void		 merge_ifaces(struct ldpd_conf *, struct ldpd_conf *);
+static void		 merge_iface_af(struct iface_af *, struct iface_af *);
+static void		 merge_tnbrs(struct ldpd_conf *, struct ldpd_conf *);
+static void		 merge_nbrps(struct ldpd_conf *, struct ldpd_conf *);
+static void		 merge_l2vpns(struct ldpd_conf *, struct ldpd_conf *);
+static void		 merge_l2vpn(struct ldpd_conf *, struct l2vpn *,
+			    struct l2vpn *);
 
-void	main_dispatch_ldpe(int, short, void *);
-void	main_dispatch_lde(int, short, void *);
-int	main_imsg_compose_both(enum imsg_type, void *, uint16_t);
-void	main_imsg_send_net_sockets(int);
-void	main_imsg_send_net_socket(int, enum socket_type);
-int	ldp_reload(void);
-void	merge_global(struct ldpd_conf *, struct ldpd_conf *);
-void	merge_af(int, struct ldpd_af_conf *, struct ldpd_af_conf *);
-void	merge_ifaces(struct ldpd_conf *, struct ldpd_conf *);
-void	merge_iface_af(struct iface_af *, struct iface_af *);
-void	merge_tnbrs(struct ldpd_conf *, struct ldpd_conf *);
-void	merge_nbrps(struct ldpd_conf *, struct ldpd_conf *);
-void	merge_l2vpns(struct ldpd_conf *, struct ldpd_conf *);
-void	merge_l2vpn(struct ldpd_conf *, struct l2vpn *, struct l2vpn *);
+struct ldpd_global	 global;
+struct ldpd_conf	*ldpd_conf;
 
-int	pipe_parent2ldpe[2];
-int	pipe_parent2lde[2];
-int	pipe_ldpe2lde[2];
-
-struct ldpd_conf	*ldpd_conf = NULL;
-struct imsgev		*iev_ldpe;
-struct imsgev		*iev_lde;
-char			*conffile;
-
-pid_t			 ldpe_pid = 0;
-pid_t			 lde_pid = 0;
-
-extern struct ldpd_conf	*leconf;
+static char		*conffile;
+static int		 pipe_parent2ldpe[2];
+static int		 pipe_parent2lde[2];
+static int		 pipe_ldpe2lde[2];
+static struct imsgev	*iev_ldpe;
+static struct imsgev	*iev_lde;
+static pid_t		 ldpe_pid;
+static pid_t		 lde_pid;
 
 /* ARGSUSED */
-void
+static void
 main_sig_handler(int sig, short event, void *arg)
 {
 	/*
@@ -119,7 +119,7 @@ main_sig_handler(int sig, short event, void *arg)
 	}
 }
 
-__dead void
+static __dead void
 usage(void)
 {
 	extern char *__progname;
@@ -128,8 +128,6 @@ usage(void)
 	    __progname);
 	exit(1);
 }
-
-struct ldpd_global global;
 
 int
 main(int argc, char *argv[])
@@ -278,7 +276,7 @@ main(int argc, char *argv[])
 	return (0);
 }
 
-void
+static void
 ldpd_shutdown(void)
 {
 	pid_t		 pid;
@@ -308,7 +306,7 @@ ldpd_shutdown(void)
 	exit(0);
 }
 
-int
+static int
 check_child(pid_t pid, const char *pname)
 {
 	int	status;
@@ -330,7 +328,7 @@ check_child(pid_t pid, const char *pname)
 
 /* imsg handling */
 /* ARGSUSED */
-void
+static void
 main_dispatch_ldpe(int fd, short event, void *bula)
 {
 	struct imsgev		*iev = bula;
@@ -411,7 +409,7 @@ main_dispatch_ldpe(int fd, short event, void *bula)
 }
 
 /* ARGSUSED */
-void
+static void
 main_dispatch_lde(int fd, short event, void *bula)
 {
 	struct imsgev	*iev = bula;
@@ -501,7 +499,7 @@ main_imsg_compose_lde(int type, pid_t pid, void *data, uint16_t datalen)
 	imsg_compose_event(iev_lde, type, 0, pid, -1, data, datalen);
 }
 
-int
+static int
 main_imsg_compose_both(enum imsg_type type, void *buf, uint16_t len)
 {
 	if (imsg_compose_event(iev_ldpe, type, 0, 0, -1, buf, len) == -1)
@@ -566,7 +564,7 @@ evbuf_clear(struct evbuf *eb)
 	eb->wbuf.fd = -1;
 }
 
-void
+static void
 main_imsg_send_net_sockets(int af)
 {
 	main_imsg_send_net_socket(af, LDP_SOCKET_DISC);
@@ -575,7 +573,7 @@ main_imsg_send_net_sockets(int af)
 	imsg_compose_event(iev_ldpe, IMSG_SETUP_SOCKETS, af, 0, -1, NULL, 0);
 }
 
-void
+static void
 main_imsg_send_net_socket(int af, enum socket_type type)
 {
 	int			 fd;
@@ -624,7 +622,7 @@ ldp_is_dual_stack(struct ldpd_conf *xconf)
 	    (xconf->ipv6.flags & F_LDPD_AF_ENABLED));
 }
 
-int
+static int
 ldp_reload(void)
 {
 	struct iface		*iface;
@@ -698,7 +696,7 @@ merge_config(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 	free(xconf);
 }
 
-void
+static void
 merge_global(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 {
 	/* change of router-id requires resetting all neighborships */
@@ -730,7 +728,7 @@ merge_global(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 	conf->flags = xconf->flags;
 }
 
-void
+static void
 merge_af(int af, struct ldpd_af_conf *af_conf, struct ldpd_af_conf *xa)
 {
 	struct nbr		*nbr;
@@ -794,7 +792,7 @@ merge_af(int af, struct ldpd_af_conf *af_conf, struct ldpd_af_conf *xa)
 	}
 }
 
-void
+static void
 merge_ifaces(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 {
 	struct iface		*iface, *itmp, *xi;
@@ -829,7 +827,7 @@ merge_ifaces(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 	}
 }
 
-void
+static void
 merge_iface_af(struct iface_af *ia, struct iface_af *xi)
 {
 	if (ia->enabled != xi->enabled) {
@@ -841,7 +839,7 @@ merge_iface_af(struct iface_af *ia, struct iface_af *xi)
 	ia->hello_interval = xi->hello_interval;
 }
 
-void
+static void
 merge_tnbrs(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 {
 	struct tnbr		*tnbr, *ttmp, *xt;
@@ -882,7 +880,7 @@ merge_tnbrs(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 	}
 }
 
-void
+static void
 merge_nbrps(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 {
 	struct nbr_params	*nbrp, *ntmp, *xn;
@@ -949,7 +947,7 @@ merge_nbrps(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 	}
 }
 
-void
+static void
 merge_l2vpns(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 {
 	struct l2vpn		*l2vpn, *ltmp, *xl;
@@ -999,7 +997,7 @@ merge_l2vpns(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 	}
 }
 
-void
+static void
 merge_l2vpn(struct ldpd_conf *xconf, struct l2vpn *l2vpn, struct l2vpn *xl)
 {
 	struct l2vpn_if		*lif, *ftmp, *xf;

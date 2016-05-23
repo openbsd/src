@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.10 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: log.h,v 1.11 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,30 +23,32 @@
 
 struct in6_addr;
 union ldpd_addr;
-
-void	log_init(int);
-void	log_verbose(int);
-void	logit(int, const char *, ...);
-void	vlog(int, const char *, va_list);
-void	log_warn(const char *, ...);
-void	log_warnx(const char *, ...);
-void	log_info(const char *, ...);
-void	log_debug(const char *, ...);
-void	fatal(const char *) __dead;
-void	fatalx(const char *) __dead;
-const char *af_name(int);
-const char *socket_name(int);
-const char *pw_type_name(uint16_t);
-const char *log_map(const struct map *);
-struct fec;
-const char *log_fec(const struct fec *);
-void	log_rtmsg(unsigned char);
 struct hello_source;
-char	*log_hello_src(const struct hello_source *);
+struct fec;
 
+void		 log_init(int);
+void		 log_verbose(int);
+void		 logit(int, const char *, ...);
+void		 log_warn(const char *, ...);
+void		 log_warnx(const char *, ...);
+void		 log_info(const char *, ...);
+void		 log_debug(const char *, ...);
+void		 fatal(const char *) __dead;
+void		 fatalx(const char *) __dead;
+const char	*log_sockaddr(void *);
 const char	*log_in6addr(const struct in6_addr *);
 const char	*log_in6addr_scope(const struct in6_addr *, unsigned int);
-const char	*log_sockaddr(void *);
 const char	*log_addr(int, const union ldpd_addr *);
+const char	*af_name(int);
+const char	*socket_name(int);
+const char	*nbr_state_name(int);
+const char	*if_state_name(int);
+const char	*if_type_name(enum iface_type);
+const char	*notification_name(uint32_t);
+const char	*pw_type_name(uint16_t);
+char		*log_hello_src(const struct hello_source *);
+const char	*log_map(const struct map *);
+const char	*log_fec(const struct fec *);
+void		 log_rtmsg(unsigned char);
 
 #endif /* _LOG_H_ */

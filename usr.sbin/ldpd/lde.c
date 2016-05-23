@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.54 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.55 2016/05/23 19:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -39,33 +39,32 @@
 #include "log.h"
 #include "lde.h"
 
-void		 lde_sig_handler(int sig, short, void *);
-void		 lde_shutdown(void);
-void		 lde_dispatch_imsg(int, short, void *);
-void		 lde_dispatch_parent(int, short, void *);
+static void		 lde_sig_handler(int sig, short, void *);
+static void		 lde_shutdown(void);
+static int		 lde_imsg_compose_parent(int, pid_t, void *, uint16_t);
+static void		 lde_dispatch_imsg(int, short, void *);
+static void		 lde_dispatch_parent(int, short, void *);
+static __inline		 int lde_nbr_compare(struct lde_nbr *,
+			    struct lde_nbr *);
+static struct lde_nbr	*lde_nbr_new(uint32_t, struct lde_nbr *);
+static void		 lde_nbr_del(struct lde_nbr *);
+static struct lde_nbr	*lde_nbr_find(uint32_t);
+static void		 lde_nbr_clear(void);
+static void		 lde_map_free(void *);
+static int		 lde_address_add(struct lde_nbr *, struct lde_addr *);
+static int		 lde_address_del(struct lde_nbr *, struct lde_addr *);
+static void		 lde_address_list_free(struct lde_nbr *);
 
-struct lde_nbr	*lde_nbr_find(uint32_t);
-struct lde_nbr	*lde_nbr_new(uint32_t, struct lde_nbr *);
-void		 lde_nbr_del(struct lde_nbr *);
-void		 lde_nbr_clear(void);
-
-void		 lde_map_free(void *);
-void		 lde_address_list_free(struct lde_nbr *);
-
-struct ldpd_conf	*ldeconf = NULL, *nconf = NULL;
-struct imsgev		*iev_ldpe;
-struct imsgev		*iev_main;
-
-static __inline int lde_nbr_compare(struct lde_nbr *, struct lde_nbr *);
-
-RB_HEAD(nbr_tree, lde_nbr);
-RB_PROTOTYPE(nbr_tree, lde_nbr, entry, lde_nbr_compare)
 RB_GENERATE(nbr_tree, lde_nbr, entry, lde_nbr_compare)
 
-struct nbr_tree lde_nbrs = RB_INITIALIZER(&lde_nbrs);
+struct ldpd_conf	*ldeconf;
+struct nbr_tree		 lde_nbrs = RB_INITIALIZER(&lde_nbrs);
+
+static struct imsgev	*iev_ldpe;
+static struct imsgev	*iev_main;
 
 /* ARGSUSED */
-void
+static void
 lde_sig_handler(int sig, short event, void *arg)
 {
 	/*
@@ -178,7 +177,7 @@ lde(struct ldpd_conf *xconf, int pipe_parent2lde[2], int pipe_ldpe2lde[2],
 	return (0);
 }
 
-void
+static void
 lde_shutdown(void)
 {
 	lde_gc_stop_timer();
@@ -197,7 +196,7 @@ lde_shutdown(void)
 }
 
 /* imesg */
-int
+static int
 lde_imsg_compose_parent(int type, pid_t pid, void *data, uint16_t datalen)
 {
 	return (imsg_compose_event(iev_main, type, 0, pid, -1, data, datalen));
@@ -212,7 +211,7 @@ lde_imsg_compose_ldpe(int type, uint32_t peerid, pid_t pid, void *data,
 }
 
 /* ARGSUSED */
-void
+static void
 lde_dispatch_imsg(int fd, short event, void *bula)
 {
 	struct imsgev		*iev = bula;
@@ -402,9 +401,10 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 }
 
 /* ARGSUSED */
-void
+static void
 lde_dispatch_parent(int fd, short event, void *bula)
 {
+	static struct ldpd_conf	*nconf;
 	struct iface		*niface;
 	struct tnbr		*ntnbr;
 	struct nbr_params	*nnbrp;
@@ -947,7 +947,7 @@ lde_nbr_compare(struct lde_nbr *a, struct lde_nbr *b)
 	return (a->peerid - b->peerid);
 }
 
-struct lde_nbr *
+static struct lde_nbr *
 lde_nbr_new(uint32_t peerid, struct lde_nbr *new)
 {
 	struct lde_nbr	*ln;
@@ -973,7 +973,7 @@ lde_nbr_new(uint32_t peerid, struct lde_nbr *new)
 	return (ln);
 }
 
-void
+static void
 lde_nbr_del(struct lde_nbr *ln)
 {
 	struct fec		*f;
@@ -1025,7 +1025,7 @@ lde_nbr_del(struct lde_nbr *ln)
 	free(ln);
 }
 
-struct lde_nbr *
+static struct lde_nbr *
 lde_nbr_find(uint32_t peerid)
 {
 	struct lde_nbr		 ln;
@@ -1059,7 +1059,7 @@ lde_nbr_find_by_addr(int af, union ldpd_addr *addr)
 	return (NULL);
 }
 
-void
+static void
 lde_nbr_clear(void)
 {
 	struct lde_nbr	*ln;
@@ -1107,7 +1107,7 @@ lde_map_del(struct lde_nbr *ln, struct lde_map *me, int sent)
 	lde_map_free(me);
 }
 
-void
+static void
 lde_map_free(void *ptr)
 {
 	struct lde_map	*map = ptr;
@@ -1223,7 +1223,7 @@ lde_change_egress_label(int af, int was_implicit)
 	}
 }
 
-int
+static int
 lde_address_add(struct lde_nbr *ln, struct lde_addr *lde_addr)
 {
 	struct lde_addr		*new;
@@ -1241,7 +1241,7 @@ lde_address_add(struct lde_nbr *ln, struct lde_addr *lde_addr)
 	return (0);
 }
 
-int
+static int
 lde_address_del(struct lde_nbr *ln, struct lde_addr *lde_addr)
 {
 	lde_addr = lde_address_find(ln, lde_addr->af, &lde_addr->addr);
@@ -1267,7 +1267,7 @@ lde_address_find(struct lde_nbr *ln, int af, union ldpd_addr *addr)
 	return (NULL);
 }
 
-void
+static void
 lde_address_list_free(struct lde_nbr *ln)
 {
 	struct lde_addr		*lde_addr;
