@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.49 2016/05/23 15:16:16 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.50 2016/05/23 15:38:58 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -1285,6 +1285,10 @@ rtmsg_process(char *buf, size_t len)
 				continue;
 
 			if (rtm->rtm_tableid != 0)
+				continue;
+
+			if (rtm->rtm_type == RTM_GET &&
+			    rtm->rtm_pid != kr_state.pid)
 				continue;
 
 			if ((sa = rti_info[RTAX_DST]) == NULL)
