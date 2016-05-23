@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.38 2016/05/23 18:28:22 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.39 2016/05/23 18:33:56 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -149,7 +149,7 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, struct in_addr src,
 
 			tnbr = tnbr_new(leconf, src);
 			tnbr->flags |= F_TNBR_DYNAMIC;
-			tnbr_init(tnbr);
+			tnbr_update(tnbr);
 			LIST_INSERT_HEAD(&leconf->tnbr_list, tnbr, entry);
 		}
 

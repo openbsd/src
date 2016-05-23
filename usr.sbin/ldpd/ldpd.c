@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.38 2016/05/23 18:28:22 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.39 2016/05/23 18:33:56 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -55,6 +55,8 @@ void	main_dispatch_ldpe(int, short, void *);
 void	main_dispatch_lde(int, short, void *);
 
 int	main_imsg_compose_both(enum imsg_type, void *, uint16_t);
+void	main_imsg_send_net_sockets(void);
+void	main_imsg_send_net_socket(enum socket_type);
 int	ldp_reload(void);
 void	merge_global(struct ldpd_conf *, struct ldpd_conf *);
 void	merge_ifaces(struct ldpd_conf *, struct ldpd_conf *);
@@ -260,6 +262,8 @@ main(int argc, char *argv[])
 	if (kr_init(!(ldpd_conf->flags & F_LDPD_NO_FIB_UPDATE)) == -1)
 		fatalx("kr_init failed");
 
+	main_imsg_send_net_sockets();
+
 	/* remove unneded stuff from config */
 		/* ... */
 
@@ -352,6 +356,9 @@ main_dispatch_ldpe(int fd, short event, void *bula)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_REQUEST_SOCKETS:
+			main_imsg_send_net_sockets();
+			break;
 		case IMSG_CTL_RELOAD:
 			if (ldp_reload() == -1)
 				log_warnx("configuration reload failed");
@@ -554,6 +561,31 @@ evbuf_clear(struct evbuf *eb)
 	eb->wbuf.fd = -1;
 }
 
+void
+main_imsg_send_net_sockets(void)
+{
+	main_imsg_send_net_socket(LDP_SOCKET_DISC);
+	main_imsg_send_net_socket(LDP_SOCKET_EDISC);
+	main_imsg_send_net_socket(LDP_SOCKET_SESSION);
+	main_imsg_compose_ldpe(IMSG_SETUP_SOCKETS, 0, NULL, 0);
+}
+
+void
+main_imsg_send_net_socket(enum socket_type type)
+{
+	int			 fd;
+
+	fd = ldp_create_socket(type);
+	if (fd == -1) {
+		log_warnx("%s: failed to create %s socket", __func__,
+		    socket_name(type));
+		return;
+	}
+
+	imsg_compose_event(iev_ldpe, IMSG_SOCKET_NET, 0, 0, fd, &type,
+	    sizeof(type));
+}
+
 int
 ldp_reload(void)
 {
@@ -678,8 +710,6 @@ merge_ifaces(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 		if ((iface = if_lookup(conf, xi->ifindex)) == NULL) {
 			LIST_REMOVE(xi, entry);
 			LIST_INSERT_HEAD(&conf->iface_list, xi, entry);
-			if (ldpd_process == PROC_LDP_ENGINE)
-				if_init(xi);
 			continue;
 		}
 
@@ -718,7 +748,7 @@ merge_tnbrs(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 			LIST_REMOVE(xt, entry);
 			LIST_INSERT_HEAD(&conf->tnbr_list, xt, entry);
 			if (ldpd_process == PROC_LDP_ENGINE)
-				tnbr_init(xt);
+				tnbr_update(xt);
 			continue;
 		}
 

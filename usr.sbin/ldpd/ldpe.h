@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.47 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.48 2016/05/23 18:33:56 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -155,12 +155,14 @@ int	 tlv_decode_fec_elm(struct nbr *, struct ldp_msg *, char *,
 
 /* ldpe.c */
 pid_t		 ldpe(struct ldpd_conf *, int[2], int[2], int[2]);
+int		 ldpe_imsg_compose_parent(int, pid_t, void *, uint16_t);
+int		 ldpe_imsg_compose_lde(int, uint32_t, pid_t, void *,
+		    uint16_t);
 void		 ldpe_dispatch_main(int, short, void *);
 void		 ldpe_dispatch_lde(int, short, void *);
 void		 ldpe_dispatch_pfkey(int, short, void *);
-int		 ldpe_imsg_compose_parent(int, pid_t, void *, uint16_t);
-int		 ldpe_imsg_compose_lde(int, uint32_t, pid_t, void *,
-		     uint16_t);
+void		 ldpe_setup_sockets(int, int, int);
+void		 ldpe_close_sockets(void);
 void		 ldpe_iface_ctl(struct ctl_conn *, unsigned int);
 void		 ldpe_adj_ctl(struct ctl_conn *);
 void		 ldpe_nbr_ctl(struct ctl_conn *);
@@ -171,10 +173,10 @@ void		 mapping_list_clr(struct mapping_head *);
 int		 if_start(struct iface *);
 int		 if_reset(struct iface *);
 int		 if_update(struct iface *);
+void		 if_update_all(void);
 
 struct iface	*if_new(struct kif *);
 void		 if_del(struct iface *);
-void		 if_init(struct iface *);
 struct iface	*if_lookup(struct ldpd_conf *, unsigned short);
 struct if_addr	*if_addr_new(struct kaddr *);
 struct if_addr	*if_addr_lookup(struct if_addr_head *, struct kaddr *);
@@ -194,9 +196,10 @@ void		 adj_start_itimer(struct adj *);
 void		 adj_stop_itimer(struct adj *);
 struct tnbr	*tnbr_new(struct ldpd_conf *, struct in_addr);
 void		 tnbr_del(struct tnbr *);
-struct tnbr	*tnbr_check(struct tnbr *);
-void		 tnbr_init(struct tnbr *);
 struct tnbr	*tnbr_find(struct ldpd_conf *, struct in_addr);
+struct tnbr	*tnbr_check(struct tnbr *);
+void		 tnbr_update(struct tnbr *);
+void		 tnbr_update_all(void);
 
 struct ctl_adj	*adj_to_ctl(struct adj *);
 

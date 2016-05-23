@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.50 2016/05/23 18:25:30 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.51 2016/05/23 18:33:56 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -73,8 +73,6 @@ pid_t
 ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
     int pipe_parent2lde[2])
 {
-	struct iface		*iface;
-	struct tnbr		*tnbr;
 	struct passwd		*pw;
 	struct event		 ev_sigint, ev_sigterm;
 	pid_t			 pid;
@@ -101,17 +99,6 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	TAILQ_INIT(&global.pending_conns);
 	global.pfkeysock = pfkey_init(&sysdep);
 
-	/* create network sockets */
-	global.ldp_disc_socket = ldp_create_socket(LDP_SOCKET_DISC);
-	if (global.ldp_disc_socket == -1)
-		fatal("error creating discovery socket");
-	global.ldp_edisc_socket = ldp_create_socket(LDP_SOCKET_EDISC);
-	if (global.ldp_edisc_socket == -1)
-		fatal("error binding extended discovery socket");
-	global.ldp_session_socket = ldp_create_socket(LDP_SOCKET_SESSION);
-	if (global.ldp_session_socket == -1)
-		fatal("error creating session socket");
-
 	if ((pw = getpwnam(LDPD_USER)) == NULL)
 		fatal("getpwnam");
 
@@ -125,7 +112,7 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
-	if (pledge("stdio cpath inet mcast", NULL) == -1)
+	if (pledge("stdio cpath inet mcast recvfd", NULL) == -1)
 		fatal("pledge");
 
 	event_init();
@@ -168,29 +155,17 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	    ldpe_dispatch_pfkey, NULL);
 	event_add(&pfkey_ev, NULL);
 
-	event_set(&disc_ev, global.ldp_disc_socket,
-	    EV_READ|EV_PERSIST, disc_recv_packet, NULL);
-	event_add(&disc_ev, NULL);
+	/* mark sockets as closed */
+	global.ldp_disc_socket = -1;
+	global.ldp_edisc_socket = -1;
+	global.ldp_session_socket = -1;
 
-	event_set(&edisc_ev, global.ldp_edisc_socket,
-	    EV_READ|EV_PERSIST, disc_recv_packet, NULL);
-	event_add(&edisc_ev, NULL);
-
-	accept_add(global.ldp_session_socket, session_accept, NULL);
 	/* listen on ldpd control socket */
 	TAILQ_INIT(&ctl_conns);
 	control_listen();
 
 	if ((pkt_ptr = calloc(1, IBUF_READ_SIZE)) == NULL)
 		fatal(__func__);
-
-	/* initialize interfaces */
-	LIST_FOREACH(iface, &leconf->iface_list, entry)
-		if_init(iface);
-
-	/* start configured targeted neighbors */
-	LIST_FOREACH(tnbr, &leconf->tnbr_list, entry)
-		tnbr_init(tnbr);
 
 	event_dispatch();
 
@@ -208,13 +183,9 @@ ldpe_shutdown(void)
 	config_clear(leconf);
 
 	event_del(&pfkey_ev);
-	event_del(&disc_ev);
-	event_del(&edisc_ev);
-	accept_del(global.ldp_session_socket);
 	close(global.pfkeysock);
-	close(global.ldp_disc_socket);
-	close(global.ldp_edisc_socket);
-	close(global.ldp_session_socket);
+
+	ldpe_close_sockets();
 
 	/* remove addresses from global list */
 	while ((if_addr = LIST_FIRST(&global.addr_list)) != NULL) {
@@ -265,6 +236,10 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct iface		*iface = NULL;
 	struct kif		*kif;
+	enum socket_type	*socket_type;
+	static int		 disc_socket = -1;
+	static int		 edisc_socket = -1;
+	static int		 session_socket = -1;
 	int			 n, shut = 0;
 
 	if (event & EV_READ) {
@@ -314,6 +289,52 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 				fatalx("DELADDR imsg with wrong len");
 
 			if_addr_del(imsg.data);
+			break;
+		case IMSG_CLOSE_SOCKETS:
+			ldpe_close_sockets();
+			if_update_all();
+			tnbr_update_all();
+
+			disc_socket = -1;
+			edisc_socket = -1;
+			session_socket = -1;
+			ldpe_imsg_compose_parent(IMSG_REQUEST_SOCKETS, 0,
+			    NULL, 0);
+			break;
+		case IMSG_SOCKET_NET:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(enum socket_type))
+				fatalx("SOCKET_NET imsg with wrong len");
+			socket_type = imsg.data;
+
+			switch (*socket_type) {
+			case LDP_SOCKET_DISC:
+				disc_socket = imsg.fd;
+				break;
+			case LDP_SOCKET_EDISC:
+				edisc_socket = imsg.fd;
+				break;
+			case LDP_SOCKET_SESSION:
+				session_socket = imsg.fd;
+				break;
+			}
+			break;
+		case IMSG_SETUP_SOCKETS:
+			if (disc_socket == -1 || edisc_socket == -1 ||
+			    session_socket == -1) {
+				if (disc_socket != -1)
+					close(disc_socket);
+				if (edisc_socket != -1)
+					close(edisc_socket);
+				if (session_socket != -1)
+					close(session_socket);
+				break;
+			}
+
+			ldpe_setup_sockets(disc_socket, edisc_socket,
+			    session_socket);
+			if_update_all();
+			tnbr_update_all();
 			break;
 		case IMSG_RECONF_CONF:
 			if ((nconf = malloc(sizeof(struct ldpd_conf))) ==
@@ -544,6 +565,53 @@ ldpe_dispatch_pfkey(int fd, short event, void *bula)
 		if (pfkey_read(fd, NULL) == -1) {
 			fatal("pfkey_read failed, exiting...");
 		}
+	}
+}
+
+void
+ldpe_setup_sockets(int disc_socket, int edisc_socket, int session_socket)
+{
+	/* discovery socket */
+	global.ldp_disc_socket = disc_socket;
+	event_set(&disc_ev, global.ldp_disc_socket,
+	    EV_READ|EV_PERSIST, disc_recv_packet, NULL);
+	event_add(&disc_ev, NULL);
+
+	/* extended discovery socket */
+	global.ldp_edisc_socket = edisc_socket;
+	event_set(&edisc_ev, global.ldp_edisc_socket,
+	    EV_READ|EV_PERSIST, disc_recv_packet, NULL);
+	event_add(&edisc_ev, NULL);
+
+	/* session socket */
+	global.ldp_session_socket = session_socket;
+	accept_add(global.ldp_session_socket, session_accept, NULL);
+}
+
+void
+ldpe_close_sockets(void)
+{
+	/* discovery socket */
+	if (event_initialized(&disc_ev))
+		event_del(&disc_ev);
+	if (global.ldp_disc_socket != -1) {
+		close(global.ldp_disc_socket);
+		global.ldp_disc_socket = -1;
+	}
+
+	/* extended discovery socket */
+	if (event_initialized(&edisc_ev))
+		event_del(&edisc_ev);
+	if (global.ldp_edisc_socket != -1) {
+		close(global.ldp_edisc_socket);
+		global.ldp_edisc_socket = -1;
+	}
+
+	/* session socket */
+	if (global.ldp_session_socket != -1) {
+		accept_del(global.ldp_session_socket);
+		close(global.ldp_session_socket);
+		global.ldp_session_socket = -1;
 	}
 }
 

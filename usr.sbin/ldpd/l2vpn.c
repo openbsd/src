@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.10 2016/05/23 18:31:12 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.11 2016/05/23 18:33:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -473,7 +473,7 @@ ldpe_l2vpn_pw_init(struct l2vpn_pw *pw)
 
 	tnbr = tnbr_find(leconf, pw->lsr_id);
 	if (!event_initialized(&tnbr->hello_timer))
-		tnbr_init(tnbr);
+		tnbr_update(tnbr);
 }
 
 void

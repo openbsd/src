@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.15 2016/05/23 18:28:22 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.16 2016/05/23 18:33:56 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -169,6 +169,7 @@ tnbr_new(struct ldpd_conf *xconf, struct in_addr addr)
 		fatal(__func__);
 
 	tnbr->addr = addr;
+	tnbr->state = TNBR_STA_DOWN;
 	tnbr->hello_holdtime = xconf->thello_holdtime;
 	tnbr->hello_interval = xconf->thello_interval;
 
@@ -210,13 +211,41 @@ tnbr_check(struct tnbr *tnbr)
 }
 
 void
-tnbr_init(struct tnbr *tnbr)
+tnbr_update(struct tnbr *tnbr)
 {
-	/* set event handlers for targeted neighbor */
-	evtimer_set(&tnbr->hello_timer, tnbr_hello_timer, tnbr);
+	int			 socket_ok;
 
-	send_hello(HELLO_TARGETED, NULL, tnbr);
-	tnbr_start_hello_timer(tnbr);
+	if (global.ldp_edisc_socket != -1)
+		socket_ok = 1;
+	else
+		socket_ok = 0;
+
+	if (tnbr->state == TNBR_STA_DOWN) {
+		if (!socket_ok)
+			return;
+
+		tnbr->state = TNBR_STA_ACTIVE;
+		send_hello(HELLO_TARGETED, NULL, tnbr);
+
+		evtimer_set(&tnbr->hello_timer, tnbr_hello_timer, tnbr);
+		tnbr_start_hello_timer(tnbr);
+	} else if (tnbr->state == TNBR_STA_ACTIVE) {
+		if (socket_ok)
+			return;
+
+		tnbr->state = TNBR_STA_DOWN;
+		tnbr_stop_hello_timer(tnbr);
+	}
+}
+
+void
+tnbr_update_all(void)
+{
+	struct tnbr		*tnbr;
+
+	/* update targeted neighbors */
+	LIST_FOREACH(tnbr, &leconf->tnbr_list, entry)
+		tnbr_update(tnbr);
 }
 
 /* target neighbors timers */

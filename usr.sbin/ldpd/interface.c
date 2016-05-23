@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.37 2016/05/23 18:28:22 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.38 2016/05/23 18:33:56 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -92,13 +92,6 @@ if_del(struct iface *iface)
 	}
 
 	free(iface);
-}
-
-void
-if_init(struct iface *iface)
-{
-	/* set event handlers for interface */
-	evtimer_set(&iface->hello_timer, if_hello_timer, iface);
 }
 
 struct iface *
@@ -215,6 +208,8 @@ if_start(struct iface *iface)
 		return (-1);
 
 	send_hello(HELLO_LINK, iface, NULL);
+
+	evtimer_set(&iface->hello_timer, if_hello_timer, iface);
 	if_start_hello_timer(iface);
 	return (0);
 }
@@ -242,20 +237,28 @@ if_reset(struct iface *iface)
 int
 if_update(struct iface *iface)
 {
-	int ret;
+	int			 link_ok, addr_ok = 0, socket_ok;
+	int			 ret;
+
+	link_ok = (iface->flags & IFF_UP) &&
+	    LINK_STATE_IS_UP(iface->linkstate);
+
+	addr_ok = !LIST_EMPTY(&iface->addr_list);
+
+	if (global.ldp_disc_socket != -1)
+		socket_ok = 1;
+	else
+		socket_ok = 0;
 
 	if (iface->state == IF_STA_DOWN) {
-		if (!(iface->flags & IFF_UP) ||
-		    !LINK_STATE_IS_UP(iface->linkstate) ||
-		    LIST_EMPTY(&iface->addr_list))
+		if (!link_ok || !addr_ok || !socket_ok)
 			return (0);
+
 
 		iface->state = IF_STA_ACTIVE;
 		ret = if_start(iface);
 	} else {
-		if ((iface->flags & IFF_UP) &&
-		    LINK_STATE_IS_UP(iface->linkstate) &&
-		    !LIST_EMPTY(&iface->addr_list))
+		if (link_ok && addr_ok && socket_ok)
 			return (0);
 
 		iface->state = IF_STA_DOWN;
@@ -263,6 +266,15 @@ if_update(struct iface *iface)
 	}
 
 	return (ret);
+}
+
+void
+if_update_all(void)
+{
+	struct iface		*iface;
+
+	LIST_FOREACH(iface, &leconf->iface_list, entry)
+		if_update(iface);
 }
 
 /* timers */

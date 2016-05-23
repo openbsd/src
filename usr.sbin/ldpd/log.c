@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.22 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.23 2016/05/23 18:33:56 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -175,6 +175,21 @@ fatalx(const char *emsg)
 }
 
 /* names */
+const char *
+socket_name(int type)
+{
+	switch (type) {
+	case LDP_SOCKET_DISC:
+		return ("discovery");
+	case LDP_SOCKET_EDISC:
+		return ("extended discovery");
+	case LDP_SOCKET_SESSION:
+		return ("session");
+	default:
+		return ("UNKNOWN");
+	}
+}
+
 const char *
 nbr_state_name(int state)
 {
