@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.32 2016/05/23 15:47:24 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.33 2016/05/23 15:55:45 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -658,8 +658,13 @@ merge_config(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 	/* resend addresses to activate new interfaces */
 	if (ldpd_process == PROC_MAIN)
 		kif_redistribute();
+}
 
-	/* merge tnbrs */
+void
+merge_tnbrs(struct ldpd_conf *conf, struct ldpd_conf *xconf)
+{
+	struct tnbr		*tnbr, *ttmp, *xt;
+
 	LIST_FOREACH_SAFE(tnbr, &conf->tnbr_list, entry, ttmp) {
 		if (!(tnbr->flags & F_TNBR_CONFIGURED))
 			continue;
@@ -691,8 +696,14 @@ merge_config(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 		tnbr->hello_holdtime = xt->hello_holdtime;
 		tnbr->hello_interval = xt->hello_interval;
 	}
+}
 
-	/* merge neighbor parameters */
+void
+merge_nbrps(struct ldpd_conf *conf, struct ldpd_conf *xconf)
+{
+	struct nbr_params	*nbrp, *ntmp, *xn;
+	struct nbr		*nbr;
+
 	LIST_FOREACH_SAFE(nbrp, &conf->nbrp_list, entry, ntmp) {
 		/* find deleted nbrps */
 		if ((xn = nbr_params_find(xconf, nbrp->addr)) == NULL) {
@@ -750,8 +761,13 @@ merge_config(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 			}
 		}
 	}
+}
 
-	/* merge l2vpns */
+void
+merge_l2vpns(struct ldpd_conf *conf, struct ldpd_conf *xconf)
+{
+	struct l2vpn		*l2vpn, *ltmp, *xl;
+
 	LIST_FOREACH_SAFE(l2vpn, &conf->l2vpn_list, entry, ltmp) {
 		/* find deleted l2vpns */
 		if ((xl = l2vpn_find(xconf, l2vpn->name)) == NULL) {
@@ -791,14 +807,12 @@ merge_config(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 		}
 
 		/* update existing l2vpns */
-		merge_l2vpns(conf, l2vpn, xl);
+		merge_l2vpn(conf, l2vpn, xl);
 	}
-
-	free(xconf);
 }
 
 void
-merge_l2vpns(struct ldpd_conf *xconf, struct l2vpn *l2vpn, struct l2vpn *xl)
+merge_l2vpn(struct ldpd_conf *xconf, struct l2vpn *l2vpn, struct l2vpn *xl)
 {
 	struct l2vpn_if		*lif, *ftmp, *xf;
 	struct l2vpn_pw		*pw, *ptmp, *xp;
