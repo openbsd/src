@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.73 2016/03/30 06:38:41 jmc Exp $
+#	$OpenBSD: Makefile.inc,v 1.74 2016/05/23 00:18:56 guenther Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -18,7 +18,7 @@ SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
         nlist.c nftw.c opendir.c pause.c popen.c posix_spawn.c psignal.c \
         pw_dup.c pwcache.c raise.c readdir.c readdir_r.c readpassphrase.c \
         rewinddir.c scandir.c seekdir.c setdomainname.c sethostname.c \
-        setprogname.c setjmperr.c setmode.c setproctitle.c shm_open.c \
+        setprogname.c setmode.c setproctitle.c shm_open.c \
         siginterrupt.c siglist.c signal.c signame.c \
         sigsetops.c sleep.c statvfs.c strtofflags.c sysconf.c \
         syslog.c syslog_r.c telldir.c time.c times.c \

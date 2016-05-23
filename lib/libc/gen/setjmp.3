@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setjmp.3,v 1.24 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: setjmp.3,v 1.25 2016/05/23 00:18:56 guenther Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: May 23 2016 $
 .Dt SETJMP 3
 .Os
 .Sh NAME
@@ -40,8 +40,7 @@
 .Nm setjmp ,
 .Nm longjmp ,
 .Nm _setjmp ,
-.Nm _longjmp ,
-.Nm longjmperror
+.Nm _longjmp
 .Nd non-local jumps
 .Sh SYNOPSIS
 .In setjmp.h
@@ -57,8 +56,6 @@
 .Fn _setjmp "jmp_buf env"
 .Ft void
 .Fn _longjmp "jmp_buf env" "int val"
-.Ft void
-.Fn longjmperror void
 .Sh DESCRIPTION
 The
 .Fn sigsetjmp ,
@@ -127,7 +124,7 @@ The
 function pairs save and restore the signal mask while the
 .Fn _setjmp Ns / Ns Fn _longjmp
 function pairs save and restore only the register set and the stack (see
-.Xr sigmask 3 ) .
+.Xr sigprocmask 2 ) .
 .Pp
 The
 .Fn sigsetjmp Ns / Ns Fn siglongjmp
@@ -157,30 +154,8 @@ is called with a zero-value
 The
 .Fn sigsetjmp Ns / Ns Fn siglongjmp
 interfaces are preferred for maximum portability.
-.Sh ERRORS
-If the contents of the
-.Fa env
-are corrupted or correspond to an environment that has already returned,
-the
-.Fn longjmp
-routine calls the routine
-.Xr longjmperror 3 .
-If
-.Fn longjmperror
-returns, the program is aborted (see
-.Xr abort 3 ) .
-The default version of
-.Fn longjmperror
-prints the message
-.Dq Li longjmp botch
-to standard error and returns.
-User programs wishing to exit more gracefully should write their own
-versions of
-.Fn longjmperror .
 .Sh SEE ALSO
-.Xr sigaction 2 ,
-.Xr sigaltstack 2 ,
-.Xr signal 3
+.Xr sigprocmask 2
 .Sh STANDARDS
 The
 .Fn setjmp

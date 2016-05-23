@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.h,v 1.6 2012/09/26 00:09:48 brad Exp $	*/
+/*	$OpenBSD: setjmp.h,v 1.7 2016/05/23 00:18:56 guenther Exp $	*/
 /*	$NetBSD: setjmp.h,v 1.11 1994/12/20 10:35:44 cgd Exp $	*/
 
 /*-
@@ -61,7 +61,6 @@ __dead void	siglongjmp(sigjmp_buf, int);
 #if __BSD_VISIBLE || __XPG_VISIBLE
 __returns_twice int	_setjmp(jmp_buf);
 __dead void	_longjmp(jmp_buf, int);
-void	longjmperror(void);
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE */
 __END_DECLS
 

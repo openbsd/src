@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.3 2015/09/13 07:36:58 guenther Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.4 2016/05/23 00:18:57 guenther Exp $	*/
 /*	$NetBSD: setjmp.S,v 1.5 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*
@@ -130,6 +130,5 @@ ENTRY(longjmp)
 
 	/* validation failed, die die die. */
 botch:
-	bl	PIC_SYM(_C_LABEL(longjmperror), PLT)
-	bl	PIC_SYM(_C_LABEL(abort), PLT)
+	bl	PIC_SYM(_libc_abort, PLT)
 	b	. - 8		/* Cannot get here */

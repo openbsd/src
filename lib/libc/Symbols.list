@@ -676,7 +676,6 @@ login_getcaptime
 login_getclass
 login_getstyle
 longjmp
-longjmperror
 modf
 nftw
 nice
