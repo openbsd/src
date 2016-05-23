@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.303 2016/05/21 14:00:27 jsing Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.304 2016/05/23 15:59:19 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -415,9 +415,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &sominconn));
 	case KERN_USERMOUNT:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &usermount));
-	case KERN_RND:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &rndstats,
-		    sizeof(rndstats)));
 	case KERN_ARND: {
 		char buf[512];
 
