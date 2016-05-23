@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.50 2016/05/23 18:28:22 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.51 2016/05/23 18:31:12 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -876,9 +876,10 @@ lde_nbr_new(uint32_t peerid, struct in_addr *id)
 void
 lde_nbr_del(struct lde_nbr *ln)
 {
-	struct fec	*f;
-	struct fec_node	*fn;
-	struct fec_nh	*fnh;
+	struct fec		*f;
+	struct fec_node		*fn;
+	struct fec_nh		*fnh;
+	struct l2vpn_pw		*pw;
 
 	if (ln == NULL)
 		return;
@@ -896,6 +897,9 @@ lde_nbr_del(struct lde_nbr *ln)
 			case FEC_TYPE_PWID:
 				if (f->u.pwid.lsr_id.s_addr != ln->id.s_addr)
 					continue;
+				pw = (struct l2vpn_pw *) fn->data;
+				if (pw)
+					l2vpn_pw_reset(pw);
 				break;
 			default:
 				break;

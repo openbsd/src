@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.9 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.10 2016/05/23 18:31:12 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -160,6 +160,8 @@ l2vpn_pw_init(struct l2vpn_pw *pw)
 {
 	struct fec	 fec;
 
+	l2vpn_pw_reset(pw);
+
 	l2vpn_pw_fec(pw, &fec);
 	lde_kernel_insert(&fec, pw->lsr_id, 0, (void *)pw);
 }
@@ -189,9 +191,16 @@ l2vpn_pw_reset(struct l2vpn_pw *pw)
 {
 	pw->remote_group = 0;
 	pw->remote_mtu = 0;
-	if (!(pw->flags & F_PW_CWORD_CONF))
+	pw->remote_status = 0;
+
+	if (pw->flags & F_PW_CWORD_CONF)
+		pw->flags |= F_PW_CWORD;
+	else
 		pw->flags &= ~F_PW_CWORD;
-	if (!(pw->flags & F_PW_STATUSTLV_CONF))
+
+	if (pw->flags & F_PW_STATUSTLV_CONF)
+		pw->flags |= F_PW_STATUSTLV;
+	else
 		pw->flags &= ~F_PW_STATUSTLV;
 }
 
@@ -247,8 +256,6 @@ l2vpn_pw_negotiate(struct lde_nbr *ln, struct fec_node *fn, struct map *map)
 		 * the mapping later
 		 */
 		return (0);
-
-	l2vpn_pw_reset(pw);
 
 	/* RFC4447 - Section 6.2: control word negotiation */
 	if (fec_find(&ln->sent_map, &fn->fec)) {
