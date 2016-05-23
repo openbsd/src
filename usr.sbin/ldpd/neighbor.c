@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.62 2016/05/23 16:20:59 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.63 2016/05/23 16:23:06 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -277,7 +277,7 @@ nbr_del(struct nbr *nbr)
 	nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 	pfkey_remove(nbr);
 
-	if (event_pending(&nbr->ev_connect, EV_WRITE, NULL))
+	if (nbr_pending_connect(nbr))
 		event_del(&nbr->ev_connect);
 	nbr_stop_ktimer(nbr);
 	nbr_stop_ktimeout(nbr);
