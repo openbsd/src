@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.26 2016/05/23 17:53:11 renato Exp $
+/*	$OpenBSD: ldpctl.c,v 1.27 2016/05/23 19:01:08 renato Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -55,8 +55,8 @@ int		 show_fib_interface_msg(struct imsg *);
 int		 show_l2vpn_pw_msg(struct imsg *);
 int		 show_l2vpn_binding_msg(struct imsg *);
 const char	*get_media_descr(uint64_t);
-void		 print_baudrate(u_int64_t);
-const char	*print_pw_type(u_int16_t);
+void		 print_baudrate(uint64_t);
+const char	*print_pw_type(uint16_t);
 
 struct imsgbuf	*ibuf;
 
@@ -309,7 +309,7 @@ fmt_timeframe_core(time_t t)
 }
 
 /* prototype defined in ldpd.h and shared with the kroute.c version */
-u_int8_t
+uint8_t
 mask2prefixlen(in_addr_t ina)
 {
 	if (ina == 0)
@@ -647,7 +647,7 @@ get_linkstate(uint8_t if_type, int link_state)
 }
 
 void
-print_baudrate(u_int64_t baudrate)
+print_baudrate(uint64_t baudrate)
 {
 	if (baudrate > IF_Gbps(1))
 		printf("%llu GBit/s", baudrate / IF_Gbps(1));
@@ -660,7 +660,7 @@ print_baudrate(u_int64_t baudrate)
 }
 
 const char *
-print_pw_type(u_int16_t pw_type)
+print_pw_type(uint16_t pw_type)
 {
 	static char buf[64];
 

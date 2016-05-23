@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.8 2015/07/21 05:44:50 renato Exp $ */
+/*	$OpenBSD: parser.c,v 1.9 2016/05/23 19:01:08 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -169,7 +169,7 @@ static const struct token *
 match_token(const char *word, const struct token *table,
     struct parse_result *res)
 {
-	u_int			 i, match;
+	uint			 i, match;
 	const struct token	*t = NULL;
 
 	match = 0;
@@ -294,7 +294,7 @@ parse_addr(const char *word, struct in_addr *addr)
 }
 
 int
-parse_prefix(const char *word, struct in_addr *addr, u_int8_t *prefixlen)
+parse_prefix(const char *word, struct in_addr *addr, uint8_t *prefixlen)
 {
 	struct in_addr	 ina;
 	int		 bits = 32;
@@ -322,7 +322,7 @@ parse_prefix(const char *word, struct in_addr *addr, u_int8_t *prefixlen)
 
 /* XXX local copy from kroute.c, should go to shared file */
 in_addr_t
-prefixlen2mask(u_int8_t prefixlen)
+prefixlen2mask(uint8_t prefixlen)
 {
 	if (prefixlen == 0)
 		return (0);
