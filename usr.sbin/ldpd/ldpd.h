@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.68 2016/05/23 18:40:15 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.69 2016/05/23 18:43:28 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -508,6 +508,7 @@ void	evbuf_clear(struct evbuf *);
 int		 ldp_create_socket(enum socket_type);
 void		 sock_set_recvbuf(int);
 int		 sock_set_reuse(int, int);
+int		 sock_set_bindany(int, int);
 int		 sock_set_ipv4_mcast_ttl(int, uint8_t);
 int		 sock_set_ipv4_tos(int, int);
 int		 sock_set_ipv4_recvif(int, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.c,v 1.4 2016/05/23 18:33:56 renato Exp $ */
+/*	$OpenBSD: socket.c,v 1.5 2016/05/23 18:43:28 renato Exp $ */
 
 /*
  * Copyright (c) 2016 Renato Westphal <renato@openbsd.org>
@@ -73,6 +73,10 @@ ldp_create_socket(enum socket_type type)
 	case LDP_SOCKET_EDISC:
 	case LDP_SOCKET_SESSION:
 		local_sa.sin_addr = ldpd_conf->trans_addr;
+		if (sock_set_bindany(fd, 1) == -1) {
+			close(fd);
+			return (-1);
+		}
 		break;
 	}
 	if (sock_set_reuse(fd, 1) == -1) {
@@ -150,6 +154,18 @@ sock_set_reuse(int fd, int enable)
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable,
 	    sizeof(int)) < 0) {
 		log_warn("%s: error setting SO_REUSEADDR", __func__);
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+sock_set_bindany(int fd, int enable)
+{
+	if (setsockopt(fd, SOL_SOCKET, SO_BINDANY, &enable,
+	    sizeof(int)) < 0) {
+		log_warn("%s: error setting SO_BINDANY", __func__);
 		return (-1);
 	}
 
