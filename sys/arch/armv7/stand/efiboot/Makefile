@@ -1,8 +1,10 @@
-#	$OpenBSD: Makefile,v 1.3 2016/05/17 22:41:20 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.4 2016/05/23 00:45:48 jsg Exp $
 
 PROG=		BOOTARM.EFI
 NOMAN=		#
 OBJFMT=		binary
+INSTALL_STRIP=
+BINDIR=		/usr/mdec
 SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c fdt.c
 
 S=		${.CURDIR}/../../../..
