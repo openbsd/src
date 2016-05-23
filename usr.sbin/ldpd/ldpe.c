@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.52 2016/05/23 18:35:10 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.53 2016/05/23 18:36:55 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -73,6 +73,7 @@ pid_t
 ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
     int pipe_parent2lde[2])
 {
+	struct l2vpn		*l2vpn;
 	struct passwd		*pw;
 	struct event		 ev_sigint, ev_sigterm;
 	pid_t			 pid;
@@ -168,6 +169,10 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 
 	if ((pkt_ptr = calloc(1, IBUF_READ_SIZE)) == NULL)
 		fatal(__func__);
+
+	/* create targeted neighbors for l2vpn pseudowires */
+	LIST_FOREACH(l2vpn, &leconf->l2vpn_list, entry)
+		ldpe_l2vpn_init(l2vpn);
 
 	event_dispatch();
 

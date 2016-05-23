@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.39 2016/05/23 18:33:56 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.40 2016/05/23 18:36:55 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -904,20 +904,19 @@ merge_l2vpn(struct ldpd_conf *xconf, struct l2vpn *l2vpn, struct l2vpn *xl)
 	LIST_FOREACH_SAFE(pw, &l2vpn->pw_list, entry, ptmp) {
 		/* find deleted pseudowires */
 		if ((xp = l2vpn_pw_find(xl, pw->ifindex)) == NULL) {
-			LIST_REMOVE(pw, entry);
-
 			switch (ldpd_process) {
 			case PROC_LDE_ENGINE:
-				l2vpn_pw_del(pw);
+				l2vpn_pw_exit(pw);
 				break;
 			case PROC_LDP_ENGINE:
 				ldpe_l2vpn_pw_exit(pw);
-				free(pw);
 				break;
 			case PROC_MAIN:
-				free(pw);
 				break;
 			}
+
+			LIST_REMOVE(pw, entry);
+			free(pw);
 		}
 	}
 	LIST_FOREACH_SAFE(xp, &xl->pw_list, entry, ptmp) {
@@ -954,7 +953,7 @@ merge_l2vpn(struct ldpd_conf *xconf, struct l2vpn *l2vpn, struct l2vpn *xl)
 
 			switch (ldpd_process) {
 			case PROC_LDE_ENGINE:
-				l2vpn_pw_del(pw);
+				l2vpn_pw_exit(pw);
 				l2vpn_pw_init(xp);
 				break;
 			case PROC_LDP_ENGINE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.11 2016/05/23 18:33:56 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.12 2016/05/23 18:36:55 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -83,8 +83,9 @@ l2vpn_del(struct l2vpn *l2vpn)
 		free(lif);
 	}
 	while ((pw = LIST_FIRST(&l2vpn->pw_list)) != NULL) {
+		l2vpn_pw_exit(pw);
 		LIST_REMOVE(pw, entry);
-		l2vpn_pw_del(pw);
+		free(pw);
 	}
 
 	free(l2vpn);
@@ -167,13 +168,12 @@ l2vpn_pw_init(struct l2vpn_pw *pw)
 }
 
 void
-l2vpn_pw_del(struct l2vpn_pw *pw)
+l2vpn_pw_exit(struct l2vpn_pw *pw)
 {
 	struct fec	 fec;
 
 	l2vpn_pw_fec(pw, &fec);
 	lde_kernel_remove(&fec, pw->lsr_id);
-	free(pw);
 }
 
 void
@@ -472,8 +472,13 @@ ldpe_l2vpn_pw_init(struct l2vpn_pw *pw)
 	struct tnbr		*tnbr;
 
 	tnbr = tnbr_find(leconf, pw->lsr_id);
-	if (!event_initialized(&tnbr->hello_timer))
+	if (tnbr == NULL) {
+		tnbr = tnbr_new(leconf, pw->lsr_id);
 		tnbr_update(tnbr);
+		LIST_INSERT_HEAD(&leconf->tnbr_list, tnbr, entry);
+	}
+
+	tnbr->pw_count++;
 }
 
 void

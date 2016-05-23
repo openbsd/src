@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.46 2016/05/23 18:31:12 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.47 2016/05/23 18:36:55 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -352,7 +352,6 @@ pwopts		: PWID NUMBER {
 		}
 		| NEIGHBOR STRING {
 			struct in_addr	 addr;
-			struct tnbr	*t;
 
 			if (inet_aton($2, &addr) == 0) {
 				yyerror(
@@ -361,16 +360,12 @@ pwopts		: PWID NUMBER {
 				YYERROR;
 			}
 			free($2);
-
-			pw->lsr_id = addr;
-
-			t = tnbr_find(conf, addr);
-			if (t == NULL) {
-				t = tnbr_new(conf, addr);
-				LIST_INSERT_HEAD(&conf->tnbr_list, t, entry);
+			if (bad_ip_addr(addr)) {
+				yyerror("invalid neighbor-id");
+				YYERROR;
 			}
 
-			t->pw_count++;
+			pw->lsr_id = addr;
 		}
 		| pw_defaults
 		;
@@ -1202,7 +1197,7 @@ conf_get_tnbr(struct in_addr addr)
 	struct tnbr	*t;
 
 	t = tnbr_find(conf, addr);
-	if (t && (t->flags & F_TNBR_CONFIGURED)) {
+	if (t) {
 		yyerror("targeted neighbor %s already configured",
 		    inet_ntoa(addr));
 		return (NULL);
