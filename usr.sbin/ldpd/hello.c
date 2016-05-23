@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.32 2016/05/23 16:04:04 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.33 2016/05/23 16:08:18 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -128,6 +128,20 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 		    __func__, inet_ntoa(lsr_id), holdtime);
 		return;
 	}
+	buf += r;
+	len -= r;
+
+	/* safety checks */
+	if (multicast && (flags & TARGETED_HELLO)) {
+		log_debug("%s: neighbor %s: multicast targeted hello", __func__,
+		    inet_ntoa(lsr_id));
+		return;
+	}
+	if (!multicast && !((flags & TARGETED_HELLO))) {
+		log_debug("%s: neighbor %s: unicast link hello", __func__,
+		    inet_ntoa(lsr_id));
+		return;
+	}
 
 	bzero(&source, sizeof(source));
 	if (flags & TARGETED_HELLO) {
@@ -154,18 +168,10 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 		source.type = HELLO_TARGETED;
 		source.target = tnbr;
 	} else {
-		if (ldp.lspace_id != 0) {
-			log_debug("%s: invalid label space ID %u, interface %s",
-			    __func__, ldp.lspace_id, iface->name);
-			return;
-		}
 		source.type = HELLO_LINK;
 		source.link.iface = iface;
 		source.link.src_addr.s_addr = src.s_addr;
 	}
-
-	buf += r;
-	len -= r;
 
 	r = tlv_decode_opt_hello_prms(buf, len, &transport_addr,
 	    &conf_number);
@@ -174,16 +180,22 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 		    __func__, inet_ntoa(lsr_id));
 		return;
 	}
-	if (transport_addr.s_addr == INADDR_ANY)
-		transport_addr.s_addr = src.s_addr;
-
 	if (r != len) {
 		log_debug("%s: neighbor %s: unexpected data in message",
 		    __func__, inet_ntoa(lsr_id));
 		return;
 	}
 
-	nbr = nbr_find_ldpid(ldp.lsr_id);
+	/* implicit transport address */
+	if (transport_addr.s_addr == INADDR_ANY)
+		transport_addr.s_addr = src.s_addr;
+	if (bad_ip_addr(transport_addr)) {
+		log_debug("%s: neighbor %s: invalid transport address %s",
+		    __func__, inet_ntoa(lsr_id), inet_ntoa(transport_addr));
+		return;
+	}
+
+	nbr = nbr_find_ldpid(lsr_id.s_addr);
 	if (!nbr) {
 		/* create new adjacency and new neighbor */
 		nbr = nbr_new(lsr_id, transport_addr);
@@ -216,7 +228,6 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 
 		adj->holdtime = min(tnbr->hello_holdtime, holdtime);
 	}
-
 	if (adj->holdtime != INFINITE_HOLDTIME)
 		adj_start_itimer(adj);
 	else
@@ -264,10 +275,9 @@ tlv_decode_hello_prms(char *buf, u_int16_t len, u_int16_t *holdtime,
 		return (-1);
 	bcopy(buf, &tlv, sizeof(tlv));
 
-	if (ntohs(tlv.length) != sizeof(tlv) - TLV_HDR_LEN)
-		return (-1);
-
 	if (tlv.type != htons(TLV_TYPE_COMMONHELLO))
+		return (-1);
+	if (ntohs(tlv.length) != sizeof(tlv) - TLV_HDR_LEN)
 		return (-1);
 
 	*holdtime = ntohs(tlv.holdtime);

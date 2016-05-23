@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.57 2016/05/23 14:59:50 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.58 2016/05/23 16:08:18 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -463,6 +463,9 @@ const char	*nbr_state_name(int);
 const char	*if_state_name(int);
 const char	*if_type_name(enum iface_type);
 const char	*notification_name(u_int32_t);
+
+/* util.c */
+int		 bad_ip_addr(struct in_addr);
 
 /* ldpd.c */
 void	main_imsg_compose_ldpe(int, pid_t, void *, u_int16_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.36 2016/05/23 15:43:11 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.37 2016/05/23 16:08:18 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -105,8 +105,6 @@ struct config_defaults	 ifacedefs;
 struct config_defaults	 tnbrdefs;
 struct config_defaults	 pwdefs;
 struct config_defaults	*defs;
-
-int			 bad_ip_addr(struct in_addr);
 
 struct iface		*conf_get_if(struct kif *);
 struct tnbr		*conf_get_tnbr(struct in_addr);

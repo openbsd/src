@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.48 2016/05/23 16:06:08 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.49 2016/05/23 16:08:18 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -42,7 +42,7 @@
 extern struct ldpd_conf        *leconf;
 extern struct ldpd_sysdep	sysdep;
 
-struct iface	*disc_find_iface(unsigned int, struct in_addr);
+struct iface	*disc_find_iface(unsigned int, struct in_addr, int);
 ssize_t		 session_get_pdu(struct ibuf_read *, char **);
 
 static int	 msgcnt = 0;
@@ -142,6 +142,14 @@ disc_recv_packet(int fd, short event, void *bula)
 			    strerror(errno));
 		return;
 	}
+
+	multicast = (msg.msg_flags & MSG_MCAST) ? 1 : 0;
+	if (bad_ip_addr(src.sin_addr)) {
+		log_debug("%s: invalid source address: %s", __func__,
+		    inet_ntoa(src.sin_addr));
+		return;
+	}
+
 	for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
 	    cmsg = CMSG_NXTHDR(&msg, cmsg)) {
 		if (cmsg->cmsg_level == IPPROTO_IP &&
@@ -203,27 +211,34 @@ disc_recv_packet(int fd, short event, void *bula)
 }
 
 struct iface *
-disc_find_iface(unsigned int ifindex, struct in_addr src)
+disc_find_iface(unsigned int ifindex, struct in_addr src,
+    int multicast)
 {
 	struct iface	*iface;
 	struct if_addr	*if_addr;
 
-	LIST_FOREACH(iface, &leconf->iface_list, entry)
-		LIST_FOREACH(if_addr, &iface->addr_list, entry)
-			switch (iface->type) {
-			case IF_TYPE_POINTOPOINT:
-				if (ifindex == iface->ifindex &&
-				    if_addr->dstbrd.s_addr == src.s_addr)
-					return (iface);
-				break;
-			default:
-				if (ifindex == iface->ifindex &&
-				    (if_addr->addr.s_addr &
-					if_addr->mask.s_addr) ==
-				    (src.s_addr & if_addr->mask.s_addr))
-					return (iface);
-				break;
-			}
+	iface = if_lookup(leconf, ifindex);
+	if (iface == NULL)
+		return (NULL);
+
+	if (!multicast)
+		return (iface);
+
+	LIST_FOREACH(if_addr, &iface->addr_list, entry) {
+		switch (iface->type) {
+		case IF_TYPE_POINTOPOINT:
+			if (ifindex == iface->ifindex &&
+			    if_addr->dstbrd.s_addr == src.s_addr)
+				return (iface);
+			break;
+		default:
+			if (ifindex == iface->ifindex &&
+			    (if_addr->addr.s_addr & if_addr->mask.s_addr) ==
+			    (src.s_addr & if_addr->mask.s_addr))
+				return (iface);
+			break;
+		}
+	}
 
 	return (NULL);
 }
