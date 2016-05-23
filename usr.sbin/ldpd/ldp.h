@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.20 2016/05/23 15:47:24 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.21 2016/05/23 15:53:40 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -33,12 +33,12 @@
 
 #define LINK_DFLT_HOLDTIME	15
 #define TARGETED_DFLT_HOLDTIME	45
-#define MIN_HOLDTIME		1
+#define MIN_HOLDTIME		3
 #define MAX_HOLDTIME		0xffff
 #define	INFINITE_HOLDTIME	0xffff
 
 #define DEFAULT_KEEPALIVE	180
-#define MIN_KEEPALIVE		1
+#define MIN_KEEPALIVE		3
 #define MAX_KEEPALIVE		0xffff
 #define KEEPALIVE_PER_PERIOD	3
 

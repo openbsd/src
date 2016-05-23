@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.30 2016/05/23 15:43:11 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.31 2016/05/23 15:53:40 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -124,6 +124,11 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 	if (r == -1) {
 		log_debug("%s: neighbor %s: failed to decode params", __func__,
 		    inet_ntoa(lsr_id));
+		return;
+	}
+	if (holdtime != 0 && holdtime < MIN_HOLDTIME) {
+		log_debug("%s: neighbor %s: invalid hello holdtime (%u)",
+		    __func__, inet_ntoa(lsr_id), holdtime);
 		return;
 	}
 
