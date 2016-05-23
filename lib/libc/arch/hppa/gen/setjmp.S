@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.9 2015/09/13 07:36:58 guenther Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.10 2016/05/23 00:24:50 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,10 +33,12 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
-#define _LOCORE
-#include <machine/frame.h>
-#undef _LOCORE
+#include "SYS.h"
+
+	.section	.openbsd.randomdata,"aw",@progbits
+	.align	8
+.L__jmpxor
+	.zero	4*2		; (r2/rp, r30/sp)
 
 /*
  * C library -- setjmp, longjmp
@@ -51,42 +53,41 @@
 
 ENTRY(sigsetjmp, 64)
 	sub,<>	%r0, %arg1, %r0
-	b,n	_setjmp
-	nop
-
-	stw	%arg1, 44(%arg0)	; last of reserved words
+	b	.L_setjmp$dosaves
+	 stw	%arg1, 44(%arg0)	; last of reserved words
 
 ALTENTRY(setjmp)
-	stw	%rp, HPPA_FRAME_CRP(%sp)
-	stw	%arg0, HPPA_FRAME_ARG(0)(%sp)
+	copy	%arg0, %arg2		; save jmpbuf in %arg2
 
-	copy	%r3, %r1
-	copy	%sp, %r3
-	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
+	ldi	1, %arg0		; how = SIG_BLOCK
+	copy	%r0, %arg1		; set = empty
+	stw	%rp, HPPA_FRAME_ERP(%sr0,%sp)
+	ldil	L%SYSCALLGATE, %r1
+	ble	4(%sr7, %r1)
+	 ldi	SYS_sigprocmask, %t1
+	ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp
 
-	bl	_libc_sigblock, %rp
-	copy	%r0, %arg0
-
-	ldo	HPPA_FRAME_SIZE(%r3), %sp
-	ldw,mb	-HPPA_FRAME_SIZE(%sp),%r3
-	ldw	HPPA_FRAME_CRP(%sp), %rp
-	ldw	HPPA_FRAME_ARG(0)(%sp), %arg0
-
-	stw	%r0, 0(%arg0)		; no onstack
-	b	_setjmp$dosaves
+	copy	%arg2, %arg0		; restore jmpbuf to %arg0
 	stw	%ret0, 4(%arg0)		; mask
 
 ALTENTRY(_setjmp)
-	/* A sigcontext is at the beginning of our jmp_buf. */
-	stw	%r0, 0(%arg0)		; no onstack
-	stw	%r0, 4(%arg0)		; mask
-_setjmp$dosaves
-	stw	%r0, 8(%arg0)		; set sc.sc_ps
-	stw	%sp, 12(%arg0)		; sc.sc_sp = %sp
-	stw	%r0, 16(%arg0)		; sc.sc_fp
-	ldo	4(%rp), %r1
-	stw	%rp, 20(%arg0)		; sc.sc_pcoqh = %rp
-	stw	%r1, 24(%arg0)		; sc.sc_pcoqt = %rp + 4
+.L_setjmp$dosaves
+#ifdef __PIC__
+	addil	LT%.L__jmpxor, %r19
+	ldw	RT%.L__jmpxor(%r1), %t2
+#else
+	ldil	L%.L__jmpxor, %t1
+	ldo	R%.L__jmpxor(%t1), %t2
+#endif
+	ldw	0(%t2), %t1		; xor for r2/rp
+	ldw	4(%t2), %t2		; xor for r30/sp, overwrite address
+
+	xor	%sp, %t2, %t2
+	stw	%t2, 12(%arg0)		; sc.sc_sp = %sp
+	xor	%rp, %t1, %t1
+	stw	%t1, 20(%arg0)		; sc.sc_pcoqh = %rp
+	copy	%r0, %t1
+	copy	%r0, %t2
 
 	/* We store all callee-saved registers after the sigcontext. */
 	ldo	48(%arg0), %r1		; offset to after sc
@@ -109,53 +110,34 @@ _setjmp$dosaves
 
 	/* Return 0. */
 	bv	%r0(%rp)
-	copy	%r0, %ret0
-EXIT(_setjmp)
+	 copy	%r0, %ret0
+EXIT(sigsetjmp)
+	.size _setjmp, . - _setjmp
+	.size setjmp, . - setjmp
 
 ENTRY(siglongjmp,64)
-	/* XXX have to dup this from below */
-	ldw	16(%arg0), %r1		/* botch if it's a real signal frame */
-	add,=	%r0, %r1, %r0
-	bl,n	longjmperror, %rp
-	nop
-
 	ldw	44(%arg0), %arg2
 	sub,<>	%r0, %arg2, %r0
-	b	_longjmp
-	nop
+	b	.L_longjmp$restores
+	 nop
 
 ALTENTRY(longjmp)
-	/* XXX have to dup this from below */
-	ldw	16(%arg0), %r1		/* botch if it's a real signal frame */
-	add,=	%r0, %r1, %r0
-	bl,n	longjmperror, %rp
-	nop
+	copy	%arg1, %arg3		; save val in %arg3
+	copy	%arg0, %arg2		; save jmpbuf in %arg2
 
-	stw	%rp, HPPA_FRAME_CRP(%sp)
-	stw	%arg0, HPPA_FRAME_ARG(0)(%sp)
-	stw	%arg1, HPPA_FRAME_ARG(1)(%sp)
+	ldw	4(%arg0), %arg1		; set from jumpbuf
+	ldi	3, %arg0		; how = SIG_SETMASK
+	stw	%rp, HPPA_FRAME_ERP(%sr0,%sp)
+	ldil	L%SYSCALLGATE, %r1
+	ble	4(%sr7, %r1)
+	 ldi	SYS_sigprocmask, %t1
+	ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp
 
-	copy	%r3, %r1
-	copy	%sp, %r3
-	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
-
-	bl	_libc_sigsetmask, %rp
-	ldw	4(%arg0), %arg0
-
-	ldo	HPPA_FRAME_SIZE(%r3), %sp
-	ldw,mb	-HPPA_FRAME_SIZE(%sp),%r3
-	ldw	HPPA_FRAME_CRP(%sp), %rp
-	ldw	HPPA_FRAME_ARG(0)(%sp), %arg0
-	b	_longjmp$restores
-	ldw	HPPA_FRAME_ARG(1)(%sp), %arg1
+	copy	%arg2, %arg0		; restore jmpbuf to %arg0
+	copy	%arg3, %arg1		; restore val to %arg1
 
 ALTENTRY(_longjmp)
-	ldw	16(%arg0), %r1		/* botch if it's a real signal frame */
-	add,=	%r0, %r1, %r0
-	bl,n	longjmperror, %rp
-	nop
-
-_longjmp$restores
+.L_longjmp$restores
 	/* restore callee-saved registers */
 	ldo	48(%arg0), %r1
 	ldwm	4(%r1), %r3
@@ -176,12 +158,28 @@ _longjmp$restores
 	ldwm	4(%r1), %r18
 
 	/* restore the rest */
-	ldw	12(%arg0), %sp
-	ldw	20(%arg0), %rp		/* check the priv level */
+#ifdef __PIC__
+	addil	LT%.L__jmpxor, %r19
+	ldw	RT%.L__jmpxor(%r1), %t2
+#else
+	ldil	L%.L__jmpxor, t1
+	ldo	R%.L__jmpxor(t1), t2
+#endif
+	ldw	0(t2), t1		; xor for r2/rp
+	ldw	4(t2), t2		; xor for r30/sp, overwrite address
+
+	ldw	12(%arg0), %r1
+	xor	%r1, %t2, %sp
+	ldw	20(%arg0), %r1
+	xor	%r1, %t1, %rp
+	copy	%r0, %t1		; overwrite the cookies
+	copy	%r0, %t2
 	sub,<>	%arg1, %r0, %r0
 	ldo	1(%arg1), %arg1
 	bv	%r0(%rp)
-	copy	%arg1, %ret0
-EXIT(_longjmp)
+	 copy	%arg1, %ret0
+EXIT(siglongjmp)
+	.size _longjmp, . - _longjmp
+	.size longjmp, . - longjmp
 
 	.end
