@@ -31,6 +31,7 @@
 ./usr/include/arm/lock.h
 ./usr/include/arm/machdep.h
 ./usr/include/arm/mutex.h
+./usr/include/arm/openpromio.h
 ./usr/include/arm/param.h
 ./usr/include/arm/pcb.h
 ./usr/include/arm/pci_machdep.h
@@ -84,6 +85,7 @@
 ./usr/include/armv7/machine_reg.h
 ./usr/include/armv7/math.h
 ./usr/include/armv7/mutex.h
+./usr/include/armv7/openpromio.h
 ./usr/include/armv7/param.h
 ./usr/include/armv7/pcb.h
 ./usr/include/armv7/pio.h

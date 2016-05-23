@@ -475,6 +475,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/lock.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/machdep.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/mutex.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/arm/openpromio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/param.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/pcb.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/pci_machdep.ph

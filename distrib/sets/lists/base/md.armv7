@@ -472,6 +472,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/lock.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/machdep.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/mutex.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/arm/openpromio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/param.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/pcb.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/pci_machdep.ph
@@ -525,6 +526,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/machine_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/math.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/mutex.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/armv7/openpromio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/param.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/pcb.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/pio.ph
@@ -2123,6 +2125,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zlib.ph
 ./usr/local/libdata/perl5/site_perl/arm-openbsd
+./usr/mdec/BOOTARM.EFI
+./usr/sbin/eeprom
 ./usr/sbin/gpioctl
 ./usr/sbin/hotplugd
 ./usr/sbin/mkuboot
