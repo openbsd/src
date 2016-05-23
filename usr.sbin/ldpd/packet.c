@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.47 2016/05/23 16:04:04 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.48 2016/05/23 16:06:08 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -428,7 +428,6 @@ session_read(int fd, short event, void *arg)
 					return;
 				}
 				break;
-			case MSG_TYPE_NOTIFICATION:
 			case MSG_TYPE_ADDR:
 			case MSG_TYPE_ADDRWITHDRAW:
 			case MSG_TYPE_LABELMAPPING:
@@ -436,13 +435,14 @@ session_read(int fd, short event, void *arg)
 			case MSG_TYPE_LABELWITHDRAW:
 			case MSG_TYPE_LABELRELEASE:
 			case MSG_TYPE_LABELABORTREQ:
-			default:
 				if (nbr->state != NBR_STA_OPER) {
 					session_shutdown(nbr, S_SHUTDOWN,
 					    ldp_msg->msgid, ldp_msg->type);
 					free(buf);
 					return;
 				}
+				break;
+			default:
 				break;
 			}
 
