@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.18 2016/05/23 15:43:11 renato Exp $ */
+/*	$OpenBSD: init.c,v 1.19 2016/05/23 15:59:55 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -109,8 +109,7 @@ recv_init(struct nbr *nbr, char *buf, u_int16_t len)
 	nbr->keepalive = min(nbr_get_keepalive(nbr->raddr),
 	    ntohs(sess.keepalive_time));
 
-	if (!nbr_pending_idtimer(nbr))
-		nbr_fsm(nbr, NBR_EVT_INIT_RCVD);
+	nbr_fsm(nbr, NBR_EVT_INIT_RCVD);
 
 	return (ntohs(init.length));
 }

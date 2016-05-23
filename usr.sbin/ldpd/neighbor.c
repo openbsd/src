@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.58 2016/05/23 15:57:50 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.59 2016/05/23 15:59:55 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -386,10 +386,7 @@ nbr_idtimer(int fd, short event, void *arg)
 
 	log_debug("%s: neighbor ID %s", __func__, inet_ntoa(nbr->id));
 
-	if (nbr_session_active_role(nbr))
-		nbr_establish_connection(nbr);
-	else if (nbr->state == NBR_STA_INITIAL)
-		nbr_fsm(nbr, NBR_EVT_INIT_RCVD);
+	nbr_establish_connection(nbr);
 }
 
 void
