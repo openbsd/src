@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.86 2016/04/07 11:13:01 mpi Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.87 2016/05/23 09:31:28 natano Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -93,7 +93,6 @@ struct vops ffs_vops = {
 	.vop_islocked	= ufs_islocked,
 	.vop_pathconf	= ufs_pathconf,
 	.vop_advlock	= ufs_advlock,
-	.vop_reallocblks = ffs_reallocblks,
 	.vop_bwrite	= vop_generic_bwrite
 };
 

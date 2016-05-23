@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.102 2016/03/10 06:52:37 dlg Exp $	*/
+/*	$OpenBSD: buf.h,v 1.103 2016/05/23 09:31:28 natano Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -227,20 +227,6 @@ struct bufcache {
     "\014INVAL\015NOCACHE\016PHYS\017RAW\020READ" \
     "\021WANTED\022WRITEINPROG\023XXX(FORMAT)\024DEFERRED" \
     "\025SCANNED\026DAEMON\027RELEASED\030WARM\031COLD\032BC\033DMA"
-
-/*
- * This structure describes a clustered I/O.  It is stored in the b_saveaddr
- * field of the buffer on which I/O is done.  At I/O completion, cluster
- * callback uses the structure to parcel I/O's to individual buffers, and
- * then free's this structure.
- */
-struct cluster_save {
-	long	bs_bcount;		/* Saved b_bcount. */
-	long	bs_bufsize;		/* Saved b_bufsize. */
-	void	*bs_saveaddr;		/* Saved b_addr. */
-	int	bs_nchildren;		/* Number of associated buffers. */
-	struct buf **bs_children;	/* List of associated buffers. */
-};
 
 /*
  * Zero out the buffer's data area.

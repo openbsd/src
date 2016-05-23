@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.134 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.135 2016/05/23 09:31:28 natano Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -276,7 +276,6 @@ struct vops {
 	int	(*vop_read)(void *);
 	int	(*vop_readdir)(void *);
 	int	(*vop_readlink)(void *);
-	int	(*vop_reallocblks)(void *);
 	int	(*vop_reclaim)(void *);
 	int	(*vop_remove)(void *);
 	int	(*vop_rename)(void *);
@@ -549,12 +548,6 @@ struct vop_advlock_args {
 	int a_flags;
 };
 int VOP_ADVLOCK(struct vnode *, void *, int, struct flock *, int);
-
-struct vop_reallocblks_args {
-	struct vnode *a_vp;
-	struct cluster_save *a_buflist;
-};
-int VOP_REALLOCBLKS(struct vnode *, struct cluster_save *);
 
 /* Special cases: */
 struct vop_strategy_args {

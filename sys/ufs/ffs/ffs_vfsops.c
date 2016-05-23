@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.157 2016/05/22 20:27:04 bluhm Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.158 2016/05/23 09:31:28 natano Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1541,7 +1541,6 @@ int
 ffs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
-	extern int doreallocblks, doasyncfree;
 #ifdef FFS_SOFTUPDATES
 	extern int max_softdeps, tickdelay, stat_worklist_push;
 	extern int stat_blk_limit_push, stat_ino_limit_push, stat_blk_limit_hit;
@@ -1556,12 +1555,9 @@ ffs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	switch (name[0]) {
 	case FFS_CLUSTERREAD:
 	case FFS_CLUSTERWRITE:
-		return (EOPNOTSUPP);
 	case FFS_REALLOCBLKS:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &doreallocblks));
 	case FFS_ASYNCFREE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &doasyncfree));
+		return (EOPNOTSUPP);
 #ifdef FFS_SOFTUPDATES
 	case FFS_MAX_SOFTDEPS:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &max_softdeps));

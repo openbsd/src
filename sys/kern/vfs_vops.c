@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.15 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.16 2016/05/23 09:31:28 natano Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -609,21 +609,6 @@ VOP_ADVLOCK(struct vnode *vp, void *id, int op, struct flock *fl, int flags)
 		return (EOPNOTSUPP);
 
 	return ((vp->v_op->vop_advlock)(&a));
-}
-
-int
-VOP_REALLOCBLKS(struct vnode *vp, struct cluster_save *buflist)
-{
-	struct vop_reallocblks_args a;
-	a.a_vp = vp;
-	a.a_buflist = buflist;
-
-	ASSERT_VP_ISLOCKED(vp);
-
-	if (vp->v_op->vop_reallocblks == NULL)
-		return (EOPNOTSUPP);
-
-	return ((vp->v_op->vop_reallocblks)(&a));
 }
 
 int

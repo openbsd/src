@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.194 2016/05/19 11:34:40 jca Exp $
+.\"	$OpenBSD: sysctl.8,v 1.195 2016/05/23 09:31:28 natano Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: May 19 2016 $
+.Dd $Mdocdate: May 23 2016 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -334,11 +334,6 @@ and a few require a kernel compiled with non-standard
 .It net.pipex.outq.drops=0 Ta integer Ta no
 .It debug.syncprt Ta integer Ta yes
 .It debug.busyprt Ta integer Ta yes
-.It debug.doclusterread Ta integer Ta yes
-.It debug.doclusterwrite Ta integer Ta yes
-.It debug.doreallocblks Ta integer Ta yes
-.It debug.doasyncfree Ta integer Ta yes
-.It debug.prtrealloc Ta integer Ta yes
 .It hw.machine Ta string Ta no
 .It hw.model Ta string Ta no
 .It hw.ncpu Ta integer Ta no
@@ -384,10 +379,6 @@ and a few require a kernel compiled with non-standard
 .It ddb.log Ta integer Ta yes
 .It ddb.trigger Ta integer Ta yes
 .It vfs.mounts.* Ta struct Ta no
-.It vfs.ffs.doclusterread Ta integer Ta yes
-.It vfs.ffs.doclusterwrite Ta integer Ta yes
-.It vfs.ffs.doreallocblks Ta integer Ta yes
-.It vfs.ffs.doasyncfree Ta integer Ta yes
 .It vfs.ffs.max_softdeps Ta integer Ta yes
 .It vfs.ffs.sd_tickdelay Ta integer Ta yes
 .It vfs.ffs.sd_worklist_push Ta integer Ta no

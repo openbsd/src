@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.41 2016/01/12 11:41:00 mpi Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.42 2016/05/23 09:31:28 natano Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*
@@ -57,8 +57,8 @@
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
-	{ "doreallocblks", CTLTYPE_INT }, \
-	{ "doasyncfree", CTLTYPE_INT }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
 	{ "max_softdeps", CTLTYPE_INT }, \
 	{ "sd_tickdelay", CTLTYPE_INT }, \
 	{ "sd_worklist_push", CTLTYPE_INT }, \
@@ -103,7 +103,6 @@ int ffs_alloc(struct inode *, daddr_t, daddr_t , int, struct ucred *,
 		   daddr_t *);
 int ffs_realloccg(struct inode *, daddr_t, daddr_t, int, int ,
 		       struct ucred *, struct buf **, daddr_t *);
-int ffs_reallocblks(void *);
 int ffs_inode_alloc(struct inode *, mode_t, struct ucred *, struct vnode **);
 int ffs_inode_free(struct inode *, ufsino_t, mode_t);
 int ffs_freefile(struct inode *, ufsino_t, mode_t);
