@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.60 2016/05/23 16:14:36 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.61 2016/05/23 16:31:27 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -223,7 +223,6 @@ struct iface {
 
 	time_t			 uptime;
 	unsigned int		 ifindex;
-	int			 discovery_fd;
 	int			 state;
 	u_int16_t		 hello_holdtime;
 	u_int16_t		 hello_interval;
@@ -237,7 +236,6 @@ struct iface {
 struct tnbr {
 	LIST_ENTRY(tnbr)	 entry;
 	struct event		 hello_timer;
-	int			 discovery_fd;
 	struct adj		*adj;
 	struct in_addr		 addr;
 

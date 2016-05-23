@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.33 2016/05/23 16:27:16 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.34 2016/05/23 16:31:27 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -485,7 +485,7 @@ if_set_mcast(struct iface *iface)
 
 	if_addr = LIST_FIRST(&iface->addr_list);
 
-	if (setsockopt(iface->discovery_fd, IPPROTO_IP, IP_MULTICAST_IF,
+	if (setsockopt(global.ldp_disc_socket, IPPROTO_IP, IP_MULTICAST_IF,
 	    &if_addr->addr.s_addr, sizeof(if_addr->addr.s_addr)) < 0) {
 		log_debug("%s: error setting IP_MULTICAST_IF, interface %s",
 		    __func__, iface->name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.12 2016/05/23 16:27:16 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.13 2016/05/23 16:31:27 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -227,6 +227,7 @@ tnbr_hello_timer(int fd, short event, void *arg)
 {
 	struct tnbr	*tnbr = arg;
 
+	tnbr->discovery_fd = global.ldp_edisc_socket;
 	send_hello(HELLO_TARGETED, NULL, tnbr);
 	tnbr_start_hello_timer(tnbr);
 }
