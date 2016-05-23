@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.19 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.20 2016/05/23 18:54:10 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -38,7 +38,7 @@ void	print_pw(struct l2vpn_pw *);
 void
 print_mainconf(struct ldpd_conf *conf)
 {
-	printf("router-id %s\n\n", inet_ntoa(conf->rtr_id));
+	printf("router-id %s\n", inet_ntoa(conf->rtr_id));
 
 	if (conf->flags & F_LDPD_NO_FIB_UPDATE)
 		printf("fib-update no\n");
@@ -94,13 +94,12 @@ print_l2vpn(struct l2vpn *l2vpn)
 	struct l2vpn_if	*lif;
 	struct l2vpn_pw	*pw;
 
-	printf("l2vpn %s type vpls {\n", l2vpn->name);
+	printf("\nl2vpn %s type vpls {\n", l2vpn->name);
 	if (l2vpn->pw_type == PW_TYPE_ETHERNET)
 		printf("\tpw-type ethernet\n");
 	else
 		printf("\tpw-type ethernet-tagged\n");
 	printf("\tmtu %u\n", l2vpn->mtu);
-	printf("\n");
 	if (l2vpn->br_ifindex != 0)
 		printf("\tbridge %s\n", l2vpn->br_ifname);
 	LIST_FOREACH(lif, &l2vpn->if_list, entry)
@@ -136,18 +135,17 @@ print_config(struct ldpd_conf *conf)
 	struct l2vpn		*l2vpn;
 
 	print_mainconf(conf);
-	printf("\n");
 
 	LIST_FOREACH(iface, &conf->iface_list, entry)
 		print_iface(iface);
-	printf("\n");
+
 	LIST_FOREACH(tnbr, &conf->tnbr_list, entry)
 		if (tnbr->flags & F_TNBR_CONFIGURED)
 			print_tnbr(tnbr);
-	printf("\n");
+
 	LIST_FOREACH(nbrp, &conf->nbrp_list, entry)
 		print_nbrp(nbrp);
-	printf("\n");
+
 	LIST_FOREACH(l2vpn, &conf->l2vpn_list, entry)
 		print_l2vpn(l2vpn);
 }
