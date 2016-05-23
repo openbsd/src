@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.25 2016/05/23 17:43:42 renato Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.26 2016/05/23 18:49:22 renato Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -196,7 +196,8 @@ Enable TCP MD5 signatures per RFC 5036.
 .Xr ldpd 8
 implements the signaling of pseudowires which can be used to
 implement either the VPWS solution (also known as PWE3) or the VPLS
-solution. Currently only the VPLS solution is supported.
+solution.
+Currently only the VPLS solution is supported.
 .Bd -literal -offset indent
 l2vpn name type vpls {
         bridge bridge0
@@ -216,32 +217,35 @@ Layer 2 VPN specific parameters are listed below.
 .Bl -tag -width Ds
 .Pp
 .It Ic bridge Ar interface
-Set the bridge interface the VPLS is associated with. This parameter
-is optional and is only used to remove MAC addresses received from MAC
-address withdrawal messages. Only one bridge interface can be set.
+Set the bridge interface the VPLS is associated with.
+This parameter is optional and is only used to remove MAC addresses received
+from MAC address withdrawal messages.
+Only one bridge interface can be set.
 .Pp
 .It Ic interface Ar interface
-Configure a non pseudowire interface pertaining to the VPLS. This
-parameter is optional and is only used to send MAC address withdrawal
-messages when the specified interface is shutdown. Multiple interfaces
-can be configured.
+Configure a non pseudowire interface pertaining to the VPLS.
+This parameter is optional and is only used to send MAC address withdrawal
+messages when the specified interface is shutdown.
+Multiple interfaces can be configured.
 .Pp
 .It Ic mtu Ar number
-Set the MTU advertised in the pseudowires. Local and remote MTUs must
-match for a pseudowire to be set up. The default value is 1500.
+Set the MTU advertised in the pseudowires.
+Local and remote MTUs must match for a pseudowire to be set up.
+The default value is 1500.
 .It Xo
 .Ic type
 .Pq Ic ethernet Ns | Ns Ic ethernet-tagged
 .Xc
-Specify the type of the configured pseudowires. The type must be the
-same at both endpoints. The default is
+Specify the type of the configured pseudowires.
+The type must be the same at both endpoints.
+The default is
 .Ic ethernet .
 .Sh PSEUDOWIRES
 Each
 .Xr mpw 4
 pseudowire interface can have several parameters configured individually,
-otherwise they are inherited. A pseudowire interface is specified by
-its name.
+otherwise they are inherited.
+A pseudowire interface is specified by its name.
 .Bd -literal -offset indent
 pseudowire mpw5 {
 	pw-id 5000
@@ -256,22 +260,25 @@ Pseudowire-specific parameters are listed below.
 .Pq Ic yes Ns | Ns Ic no
 .Xc
 Specify whether the use of the control word is preferred or not
-preferred. The default is
+preferred.
+The default is
 .Ic yes .
 .Pp
 .It Ic neighbor Ar address
-Specify the endpoint of the pseudowire on the remote PE router. A targeted
-neighbor will automatically be created for this address.
+Specify the endpoint of the pseudowire on the remote PE router.
+A targeted neighbor will automatically be created for this address.
 .Pp
 .It Ic pw-id Ar number
-Set the PW ID used to identify the pseudowire. The PW ID must be the
-same at both endpoints. Valid range is 1\-4294967295.
+Set the PW ID used to identify the pseudowire.
+The PW ID must be the same at both endpoints.
+Valid range is 1\-4294967295.
 .It Xo
 .Ic status-tlv
 .Pq Ic yes Ns | Ns Ic no
 .Xc
 Specify whether the use of the Status TLV is preferred or not
-preferred. The default is
+preferred.
+The default is
 .Ic yes .
 .Sh FILES
 .Bl -tag -width "/etc/ldpd.conf" -compact
