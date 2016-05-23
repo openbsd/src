@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.70 2016/05/18 18:28:58 patrick Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.71 2016/05/23 11:31:12 mpi Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -233,7 +233,6 @@ void usbd_dump_pipe(struct usbd_pipe *);
 
 /* Routines from usb_subr.c */
 int		usbctlprint(void *, const char *);
-void		usbd_get_device_strings(struct usbd_device *);
 void		usb_delay_ms(struct usbd_bus *, u_int);
 usbd_status	usbd_port_disown_to_1_1(struct usbd_device *, int);
 int		usbd_reset_port(struct usbd_device *, int);
