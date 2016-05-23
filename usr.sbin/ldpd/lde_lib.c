@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.41 2016/05/23 15:14:07 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.42 2016/05/23 16:12:28 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -407,7 +407,7 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 		lde_req_del(ln, lre, 1);
 
 	/* RFC 4447 control word and status tlv negotiation */
-	if (map->type == FEC_PWID && l2vpn_pw_negotiate(ln, fn, map))
+	if (map->type == MAP_TYPE_PWID && l2vpn_pw_negotiate(ln, fn, map))
 		return;
 
 	/*
@@ -446,10 +446,10 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 		/* LMp.15: install FEC in FIB */
 		fnh->remote_label = map->label;
 		switch (map->type) {
-		case FEC_PREFIX:
+		case MAP_TYPE_PREFIX:
 			lde_send_change_klabel(fn, fnh);
 			break;
-		case FEC_PWID:
+		case MAP_TYPE_PWID:
 			pw = (struct l2vpn_pw *) fnh->data;
 			pw->remote_group = map->fec.pwid.group_id;
 			if (map->flags & F_MAP_PW_IFMTU)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.42 2016/05/23 15:47:24 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.43 2016/05/23 16:12:28 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -266,13 +266,13 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 				lde_check_request(&map, nbr);
 				break;
 			case IMSG_LABEL_RELEASE:
-				if (map.type == FEC_WILDCARD)
+				if (map.type == MAP_TYPE_WILDCARD)
 					lde_check_release_wcard(&map, nbr);
 				else
 					lde_check_release(&map, nbr);
 				break;
 			case IMSG_LABEL_WITHDRAW:
-				if (map.type == FEC_WILDCARD)
+				if (map.type == MAP_TYPE_WILDCARD)
 					lde_check_withdraw_wcard(&map, nbr);
 				else
 					lde_check_withdraw(&map, nbr);
@@ -643,12 +643,12 @@ lde_fec2map(struct fec *fec, struct map *map)
 
 	switch (fec->type) {
 	case FEC_TYPE_IPV4:
-		map->type = FEC_PREFIX;
+		map->type = MAP_TYPE_PREFIX;
 		map->fec.ipv4.prefix = fec->u.ipv4.prefix;
 		map->fec.ipv4.prefixlen = fec->u.ipv4.prefixlen;
 		break;
 	case FEC_TYPE_PWID:
-		map->type = FEC_PWID;
+		map->type = MAP_TYPE_PWID;
 		map->fec.pwid.type = fec->u.pwid.type;
 		map->fec.pwid.group_id = 0;
 		map->flags |= F_MAP_PW_ID;
@@ -663,12 +663,12 @@ lde_map2fec(struct map *map, struct in_addr nbrid, struct fec *fec)
 	bzero(fec, sizeof(*fec));
 
 	switch (map->type) {
-	case FEC_PREFIX:
+	case MAP_TYPE_PREFIX:
 		fec->type = FEC_TYPE_IPV4;
 		fec->u.ipv4.prefix.s_addr = map->fec.ipv4.prefix.s_addr;
 		fec->u.ipv4.prefixlen = map->fec.ipv4.prefixlen;
 		break;
-	case FEC_PWID:
+	case MAP_TYPE_PWID:
 		fec->type = FEC_TYPE_PWID;
 		fec->u.pwid.type = map->fec.pwid.type;
 		fec->u.pwid.pwid = map->fec.pwid.pwid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.18 2016/05/23 15:47:24 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.19 2016/05/23 16:12:28 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -342,17 +342,17 @@ log_map(struct map *map)
 	char		pstr[64];
 
 	switch (map->type) {
-	case FEC_WILDCARD:
+	case MAP_TYPE_WILDCARD:
 		if (snprintf(buf, sizeof(buf), "wildcard") < 0)
 			return ("???");
 		break;
-	case FEC_PREFIX:
+	case MAP_TYPE_PREFIX:
 		if (snprintf(buf, sizeof(buf), "%s/%u",
 		    inet_ntop(AF_INET, &map->fec.ipv4.prefix, pstr,
 		    sizeof(pstr)), map->fec.ipv4.prefixlen) == -1)
 			return ("???");
 		break;
-	case FEC_PWID:
+	case MAP_TYPE_PWID:
 		if (snprintf(buf, sizeof(buf), "pwid %u (%s)",
 		    map->fec.pwid.pwid,
 		    pw_type_name(map->fec.pwid.type)) == -1)

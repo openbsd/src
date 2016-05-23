@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.36 2016/05/23 16:04:04 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.37 2016/05/23 16:12:28 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -180,7 +180,7 @@ recv_labelmessage(struct nbr *nbr, char *buf, u_int16_t len, u_int16_t type)
 		if ((tlen = tlv_decode_fec_elm(nbr, &lm, buf, feclen,
 		    &map)) == -1)
 			goto err;
-		if (map.type == FEC_PWID &&
+		if (map.type == MAP_TYPE_PWID &&
 		    type == MSG_TYPE_LABELMAPPING &&
 		    !(map.flags & F_MAP_PW_ID)) {
 			send_notification_nbr(nbr, S_MISS_MSG, lm.msgid,
@@ -192,7 +192,7 @@ recv_labelmessage(struct nbr *nbr, char *buf, u_int16_t len, u_int16_t type)
 		 * The Wildcard FEC Element can be used only in the
 		 * Label Withdraw and Label Release messages.
 		 */
-		if (map.type == FEC_WILDCARD) {
+		if (map.type == MAP_TYPE_WILDCARD) {
 			switch (type) {
 			case MSG_TYPE_LABELMAPPING:
 			case MSG_TYPE_LABELREQUEST:
@@ -510,7 +510,7 @@ gen_fec_tlv(struct ibuf *buf, struct map *map)
 		if (len)
 			ibuf_add(buf, &map->fec.ipv4.prefix, len);
 		break;
-	case FEC_PWID:
+	case MAP_TYPE_PWID:
 		if (map->flags & F_MAP_PW_ID)
 			pw_len += sizeof(u_int32_t);
 		if (map->flags & F_MAP_PW_IFMTU)
@@ -561,7 +561,7 @@ tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *lm, char *buf,
 	off += sizeof(u_int8_t);
 
 	switch (map->type) {
-	case FEC_WILDCARD:
+	case MAP_TYPE_WILDCARD:
 		if (len == FEC_ELM_WCARD_LEN)
 			return (off);
 		else {
@@ -570,7 +570,7 @@ tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *lm, char *buf,
 			return (-1);
 		}
 		break;
-	case FEC_PREFIX:
+	case MAP_TYPE_PREFIX:
 		if (len < FEC_ELM_PREFIX_MIN_LEN) {
 			session_shutdown(nbr, S_BAD_TLV_LEN, lm->msgid,
 			    lm->type);
@@ -604,7 +604,7 @@ tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *lm, char *buf,
 
 		return (off + PREFIX_SIZE(map->fec.ipv4.prefixlen));
 		break;
-	case FEC_PWID:
+	case MAP_TYPE_PWID:
 		if (len < FEC_PWID_ELM_MIN_LEN) {
 			session_shutdown(nbr, S_BAD_TLV_LEN, lm->msgid,
 			    lm->type);
