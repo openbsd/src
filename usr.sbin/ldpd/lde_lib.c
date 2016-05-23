@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.51 2016/05/23 18:32:24 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.52 2016/05/23 18:44:47 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -327,28 +327,11 @@ lde_kernel_insert(struct fec *fec, struct in_addr nexthop, int connected,
 	if (fn->fec.type == FEC_TYPE_PWID)
 		fn->data = data;
 
-	if (LIST_EMPTY(&fn->nexthops)) {
-		if (fn->local_label == NO_LABEL) {
-			if (connected)
-				fn->local_label = egress_label(fn->fec.type);
-			else
-				fn->local_label = lde_assign_label();
-		} else {
-			/* Handle local label changes */
-			if (connected &&
-			    fn->local_label < MPLS_LABEL_RESERVED_MAX) {
-				/* explicit withdraw of the previous label */
-				lde_send_labelwithdraw_all(fn, NO_LABEL);
-				fn->local_label = egress_label(fn->fec.type);
-			}
-
-			if (!connected &&
-			    fn->local_label < MPLS_LABEL_RESERVED_MAX) {
-				/* explicit withdraw of the previous label */
-				lde_send_labelwithdraw_all(fn, NO_LABEL);
-				fn->local_label = lde_assign_label();
-			}
-		}
+	if (fn->local_label == NO_LABEL) {
+		if (connected)
+			fn->local_label = egress_label(fn->fec.type);
+		else
+			fn->local_label = lde_assign_label();
 
 		/* FEC.1: perform lsr label distribution procedure */
 		RB_FOREACH(ln, nbr_tree, &lde_nbrs)
@@ -402,6 +385,7 @@ lde_kernel_remove(struct fec *fec, struct in_addr nexthop)
 	fec_nh_del(fnh);
 	if (LIST_EMPTY(&fn->nexthops)) {
 		lde_send_labelwithdraw_all(fn, NO_LABEL);
+		fn->local_label = NO_LABEL;
 		if (fn->fec.type == FEC_TYPE_PWID)
 			fn->data = NULL;
 	}
