@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.19 2016/05/23 15:59:55 renato Exp $ */
+/*	$OpenBSD: init.c,v 1.20 2016/05/23 16:01:59 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -72,6 +72,7 @@ recv_init(struct nbr *nbr, char *buf, u_int16_t len)
 {
 	struct ldp_msg		init;
 	struct sess_prms_tlv	sess;
+	uint16_t		max_pdu_len;
 
 	log_debug("%s: neighbor ID %s", __func__, inet_ntoa(nbr->id));
 
@@ -108,6 +109,16 @@ recv_init(struct nbr *nbr, char *buf, u_int16_t len)
 
 	nbr->keepalive = min(nbr_get_keepalive(nbr->raddr),
 	    ntohs(sess.keepalive_time));
+
+	max_pdu_len = ntohs(sess.max_pdu_len);
+	/*
+	 * RFC 5036 - Section 3.5.3:
+	 * "A value of 255 or less specifies the default maximum length of
+	 * 4096 octets".
+	 */
+	if (max_pdu_len <= 255)
+		max_pdu_len = LDP_MAX_LEN;
+	nbr->max_pdu_len = min(max_pdu_len, LDP_MAX_LEN);
 
 	nbr_fsm(nbr, NBR_EVT_INIT_RCVD);
 
