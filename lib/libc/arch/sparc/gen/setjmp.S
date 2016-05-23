@@ -1,4 +1,4 @@
-/* $OpenBSD: setjmp.S,v 1.8 2016/05/23 08:57:20 guenther Exp $ */
+/* $OpenBSD: setjmp.S,v 1.9 2016/05/23 09:42:09 guenther Exp $ */
 /*
  *
  * Copyright (c) 1992, 1993
@@ -57,8 +57,8 @@ ENTRY(setjmp)
 	t	ST_SYSCALL
 	st	%o0, [%o3 + 8]
 
-	st	%sp, [%o0 + 0]		/* store caller's stack pointer */
-	st	%o7, [%o0 + 4]		/* ... and return pc */
+	st	%sp, [%o3 + 0]		/* store caller's stack pointer */
+	st	%o7, [%o3 + 4]		/* ... and return pc */
 	retl
 	 clr	%o0			/* return 0 */
 
@@ -78,6 +78,6 @@ ENTRY(longjmp)
 	be,a	0f
 	 mov	1, %i1
 0:
-	mov	%i1, %o0
+	mov	%i1, %i0
 	ret
 	 restore
