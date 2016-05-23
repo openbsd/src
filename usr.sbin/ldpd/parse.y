@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.51 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.52 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -22,27 +22,20 @@
  */
 
 %{
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <err.h>
-#include <errno.h>
 #include <unistd.h>
 #include <ifaddrs.h>
 #include <net/if_types.h>
 #include <limits.h>
-#include <stdarg.h>
 #include <stdio.h>
-#include <string.h>
 #include <syslog.h>
 
-#include "ldp.h"
 #include "ldpd.h"
-#include "lde.h"
 #include "ldpe.h"
+#include "lde.h"
 #include "log.h"
 
 struct file {

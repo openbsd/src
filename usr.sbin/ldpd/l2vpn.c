@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.15 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.16 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -20,18 +20,13 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-
-#include <err.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "ldpd.h"
-#include "lde.h"
 #include "ldpe.h"
-#include "control.h"
+#include "lde.h"
 #include "log.h"
 
 static void	 l2vpn_pw_fec(struct l2vpn_pw *, struct fec *);

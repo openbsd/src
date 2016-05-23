@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.27 2016/05/23 18:58:48 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.28 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -22,7 +22,7 @@
 #ifndef _LDP_H_
 #define _LDP_H_
 
-#include <netinet/in.h>
+#include <sys/types.h>
 
 /* misc */
 #define LDP_VERSION		1

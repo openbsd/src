@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.45 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.46 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -19,17 +19,7 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/queue.h>
-#include <sys/time.h>
-#include <sys/stat.h>
 #include <sys/wait.h>
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netmpls/mpls.h>
-
-#include <event.h>
 #include <err.h>
 #include <errno.h>
 #include <pwd.h>
@@ -40,11 +30,9 @@
 #include <unistd.h>
 
 #include "ldpd.h"
-#include "ldp.h"
 #include "ldpe.h"
-#include "control.h"
-#include "log.h"
 #include "lde.h"
+#include "log.h"
 
 static void		 main_sig_handler(int, short, void *);
 static __dead void	 usage(void);

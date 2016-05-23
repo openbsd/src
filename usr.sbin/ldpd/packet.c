@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.56 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.57 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -18,26 +18,18 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/uio.h>
-
 #include <netinet/in.h>
-#include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <net/if_dl.h>
-#include <fcntl.h>
 #include <unistd.h>
-
 #include <errno.h>
-#include <event.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "ldpd.h"
-#include "ldp.h"
-#include "log.h"
 #include "ldpe.h"
+#include "log.h"
 
 static struct iface		*disc_find_iface(unsigned int, int,
 				    union ldpd_addr *, int);

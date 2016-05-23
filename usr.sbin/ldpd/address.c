@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.24 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: address.c,v 1.25 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -17,18 +17,7 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/uio.h>
-
-#include <netinet/in.h>
-#include <netinet/ip.h>
 #include <arpa/inet.h>
-#include <net/if_dl.h>
-#include <unistd.h>
-
-#include <errno.h>
-#include <event.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "ldpd.h"

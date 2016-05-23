@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.58 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.59 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -22,19 +22,11 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
-#include <sys/tree.h>
-#include <sys/uio.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_types.h>
 #include <net/route.h>
 #include <netmpls/mpls.h>
-#include <err.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

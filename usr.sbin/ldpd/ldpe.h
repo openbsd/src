@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.53 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.54 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -19,14 +19,15 @@
 #ifndef _LDPE_H_
 #define _LDPE_H_
 
+#include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/tree.h>
+#include <net/pfkeyv2.h>
+
+#include "ldpd.h"
+
 #define min(x,y) ((x) <= (y) ? (x) : (y))
 #define max(x,y) ((x) > (y) ? (x) : (y))
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <net/pfkeyv2.h>
 
 struct hello_source {
 	enum hello_type		 type;

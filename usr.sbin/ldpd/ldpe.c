@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.58 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.59 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -19,25 +19,14 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/queue.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <net/if_types.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
-#include <fcntl.h>
 #include <pwd.h>
 #include <unistd.h>
-#include <event.h>
 #include <arpa/inet.h>
-#include <err.h>
 #include <errno.h>
-#include <stdio.h>
 
-#include "ldp.h"
 #include "ldpd.h"
 #include "ldpe.h"
 #include "lde.h"

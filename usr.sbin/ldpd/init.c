@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.26 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: init.c,v 1.27 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -17,24 +17,12 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/uio.h>
-
-#include <netinet/in.h>
-#include <netinet/ip.h>
 #include <arpa/inet.h>
-#include <net/if_dl.h>
-#include <unistd.h>
-
-#include <errno.h>
-#include <event.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "ldpd.h"
-#include "ldp.h"
-#include "log.h"
 #include "ldpe.h"
+#include "log.h"
 
 static int	gen_init_prms_tlv(struct ibuf *, struct nbr *, uint16_t);
 static int	tlv_decode_opt_init_prms(char *, uint16_t);

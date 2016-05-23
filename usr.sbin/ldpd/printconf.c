@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.23 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.24 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -16,15 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/queue.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-
 #include <stdio.h>
 
-#include "ldp.h"
 #include "ldpd.h"
 #include "ldpe.h"
 #include "log.h"

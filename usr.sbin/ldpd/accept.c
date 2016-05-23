@@ -1,4 +1,4 @@
-/*	$OpenBSD: accept.c,v 1.6 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: accept.c,v 1.7 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2012 Claudio Jeker <claudio@openbsd.org>
@@ -16,9 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/queue.h>
-#include <sys/time.h>
-#include <event.h>
+#include <sys/types.h>
 #include <stdlib.h>
 
 #include "ldpd.h"

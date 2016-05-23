@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.25 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: control.c,v 1.26 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -18,16 +18,13 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/socket.h>
 #include <sys/un.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "ldpd.h"
-#include "ldp.h"
 #include "ldpe.h"
 #include "log.h"
 #include "control.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.42 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.43 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -18,26 +18,14 @@
  */
 
 #include <sys/types.h>
-#include <sys/ioctl.h>
 #include <sys/time.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <net/if.h>
-#include <net/if_types.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <err.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <event.h>
 
 #include "ldpd.h"
-#include "ldp.h"
-#include "log.h"
 #include "ldpe.h"
+#include "log.h"
 
 static struct if_addr	*if_addr_new(struct kaddr *);
 static struct if_addr	*if_addr_lookup(struct if_addr_head *, struct kaddr *);

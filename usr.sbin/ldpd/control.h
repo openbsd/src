@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.h,v 1.7 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: control.h,v 1.8 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -19,9 +19,8 @@
 #ifndef _CONTROL_H_
 #define	_CONTROL_H_
 
+#include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/time.h>
-#include <event.h>
 
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	entry;

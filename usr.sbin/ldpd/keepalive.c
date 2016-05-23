@@ -1,4 +1,4 @@
-/*	$OpenBSD: keepalive.c,v 1.15 2016/05/23 17:43:42 renato Exp $ */
+/*	$OpenBSD: keepalive.c,v 1.16 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -17,24 +17,11 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/uio.h>
-
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <arpa/inet.h>
-#include <net/if_dl.h>
-#include <unistd.h>
-
-#include <errno.h>
-#include <event.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "ldpd.h"
-#include "ldp.h"
-#include "log.h"
 #include "ldpe.h"
+#include "log.h"
 
 void
 send_keepalive(struct nbr *nbr)

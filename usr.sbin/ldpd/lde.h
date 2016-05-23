@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.36 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: lde.h,v 1.37 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -20,11 +20,8 @@
 #define _LDE_H_
 
 #include <sys/types.h>
-#include <sys/time.h>
-#include <sys/tree.h>
 #include <sys/queue.h>
-#include <event.h>
-#include <limits.h>
+#include <sys/tree.h>
 
 enum fec_type {
 	FEC_TYPE_IPV4,

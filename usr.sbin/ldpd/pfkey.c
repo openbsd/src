@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.9 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.10 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -18,13 +18,7 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/uio.h>
-#include <net/pfkeyv2.h>
-#include <netinet/ip_ipsp.h>
-#include <ctype.h>
 #include <errno.h>
-#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

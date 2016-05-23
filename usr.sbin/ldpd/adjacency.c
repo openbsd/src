@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.20 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.21 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -19,16 +19,12 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
-
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "ldpd.h"
 #include "ldpe.h"
-#include "control.h"
 #include "log.h"
 
 static void	 adj_itimer(int, short, void *);

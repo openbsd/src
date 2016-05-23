@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.72 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.73 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -21,16 +21,15 @@
 #ifndef _LDPD_H_
 #define _LDPD_H_
 
-#include <sys/queue.h>
+#include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/time.h>
+#include <sys/queue.h>
 #include <sys/tree.h>
-#include <md5.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <event.h>
-
 #include <imsg.h>
+
 #include "ldp.h"
 
 #define CONF_FILE		"/etc/ldpd.conf"

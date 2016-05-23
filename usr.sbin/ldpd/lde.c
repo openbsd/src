@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.55 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.56 2016/05/23 19:11:42 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -19,19 +19,18 @@
  */
 
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/socket.h>
-#include <sys/queue.h>
 #include <netinet/in.h>
 #include <netmpls/mpls.h>
 #include <arpa/inet.h>
-#include <err.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
 #include <pwd.h>
 #include <unistd.h>
-#include <event.h>
+#include <limits.h>
 
 #include "ldp.h"
 #include "ldpd.h"
