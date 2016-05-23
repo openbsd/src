@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.54 2016/05/23 18:40:15 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.55 2016/05/23 18:41:59 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -621,6 +621,15 @@ ldpe_close_sockets(void)
 		close(global.ldp_session_socket);
 		global.ldp_session_socket = -1;
 	}
+}
+
+void
+ldpe_reset_nbrs(void)
+{
+	struct nbr		*nbr;
+
+	RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id)
+		session_shutdown(nbr, S_SHUTDOWN, 0, 0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.16 2016/05/23 18:33:56 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.17 2016/05/23 18:41:59 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -213,15 +213,20 @@ tnbr_check(struct tnbr *tnbr)
 void
 tnbr_update(struct tnbr *tnbr)
 {
-	int			 socket_ok;
+	int			 socket_ok, rtr_id_ok;
 
 	if (global.ldp_edisc_socket != -1)
 		socket_ok = 1;
 	else
 		socket_ok = 0;
 
+	if (leconf->rtr_id.s_addr != INADDR_ANY)
+		rtr_id_ok = 1;
+	else
+		rtr_id_ok = 0;
+
 	if (tnbr->state == TNBR_STA_DOWN) {
-		if (!socket_ok)
+		if (!socket_ok || !rtr_id_ok)
 			return;
 
 		tnbr->state = TNBR_STA_ACTIVE;
@@ -230,7 +235,7 @@ tnbr_update(struct tnbr *tnbr)
 		evtimer_set(&tnbr->hello_timer, tnbr_hello_timer, tnbr);
 		tnbr_start_hello_timer(tnbr);
 	} else if (tnbr->state == TNBR_STA_ACTIVE) {
-		if (socket_ok)
+		if (socket_ok && rtr_id_ok)
 			return;
 
 		tnbr->state = TNBR_STA_DOWN;

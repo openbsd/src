@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.39 2016/05/23 18:40:15 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.40 2016/05/23 18:41:59 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -239,7 +239,7 @@ if_reset(struct iface *iface)
 int
 if_update(struct iface *iface)
 {
-	int			 link_ok, addr_ok = 0, socket_ok;
+	int			 link_ok, addr_ok = 0, socket_ok, rtr_id_ok;
 	int			 ret;
 
 	link_ok = (iface->flags & IFF_UP) &&
@@ -252,15 +252,20 @@ if_update(struct iface *iface)
 	else
 		socket_ok = 0;
 
+	if (leconf->rtr_id.s_addr != INADDR_ANY)
+		rtr_id_ok = 1;
+	else
+		rtr_id_ok = 0;
+
 	if (iface->state == IF_STA_DOWN) {
-		if (!link_ok || !addr_ok || !socket_ok)
+		if (!link_ok || !addr_ok || !socket_ok || !rtr_id_ok)
 			return (0);
 
 
 		iface->state = IF_STA_ACTIVE;
 		ret = if_start(iface);
 	} else {
-		if (link_ok && addr_ok && socket_ok)
+		if (link_ok && addr_ok && socket_ok && rtr_id_ok)
 			return (0);
 
 		iface->state = IF_STA_DOWN;
