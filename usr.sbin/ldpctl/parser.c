@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.9 2016/05/23 19:01:08 renato Exp $ */
+/*	$OpenBSD: parser.c,v 1.10 2016/05/23 19:02:49 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -139,7 +139,7 @@ parse(int argc, char *argv[])
 	const struct token	*table = t_main;
 	const struct token	*match;
 
-	bzero(&res, sizeof(res));
+	memset(&res, 0, sizeof(res));
 
 	while (argc >= 0) {
 		if ((match = match_token(argv[0], table, &res)) == NULL) {
@@ -282,8 +282,8 @@ parse_addr(const char *word, struct in_addr *addr)
 	if (word == NULL)
 		return (0);
 
-	bzero(addr, sizeof(struct in_addr));
-	bzero(&ina, sizeof(ina));
+	memset(addr, 0, sizeof(struct in_addr));
+	memset(&ina, 0, sizeof(ina));
 
 	if (inet_pton(AF_INET, word, &ina)) {
 		addr->s_addr = ina.s_addr;
@@ -302,8 +302,8 @@ parse_prefix(const char *word, struct in_addr *addr, uint8_t *prefixlen)
 	if (word == NULL)
 		return (0);
 
-	bzero(addr, sizeof(struct in_addr));
-	bzero(&ina, sizeof(ina));
+	memset(addr, 0, sizeof(struct in_addr));
+	memset(&ina, 0, sizeof(ina));
 
 	if (strrchr(word, '/') != NULL) {
 		if ((bits = inet_net_pton(AF_INET, word,

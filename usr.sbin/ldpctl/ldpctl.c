@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.27 2016/05/23 19:01:08 renato Exp $
+/*	$OpenBSD: ldpctl.c,v 1.28 2016/05/23 19:02:49 renato Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 	if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
 
-	bzero(&sun, sizeof(sun));
+	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	strlcpy(sun.sun_path, LDPD_SOCKET, sizeof(sun.sun_path));
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
