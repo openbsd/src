@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.46 2016/05/23 16:43:57 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.47 2016/05/23 16:52:16 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -530,7 +530,7 @@ lde_check_release(struct map *map, struct lde_nbr *ln)
 	struct lde_map		*me;
 
 	/* TODO group wildcard */
-	if (!(map->flags & F_MAP_PW_ID))
+	if (map->type == MAP_TYPE_PWID && !(map->flags & F_MAP_PW_ID))
 		return;
 
 	lde_map2fec(map, ln->id, &fec);
@@ -600,7 +600,7 @@ lde_check_withdraw(struct map *map, struct lde_nbr *ln)
 	struct lde_map	*me;
 
 	/* TODO group wildcard */
-	if (!(map->flags & F_MAP_PW_ID))
+	if (map->type == MAP_TYPE_PWID && !(map->flags & F_MAP_PW_ID))
 		return;
 
 	lde_map2fec(map, ln->id, &fec);
