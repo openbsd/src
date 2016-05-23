@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.150 2016/05/03 13:40:50 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.151 2016/05/23 20:03:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -423,10 +423,9 @@ void
 window_copy_previous_paragraph(struct window_pane *wp)
 {
 	struct window_copy_mode_data	*data = wp->modedata;
-	u_int				 ox, oy;
+	u_int				 oy;
 
 	oy = screen_hsize(data->backing) + data->cy - data->oy;
-	ox = window_copy_find_length(wp, oy);
 
 	while (oy > 0 && window_copy_find_length(wp, oy) == 0)
 		oy--;
