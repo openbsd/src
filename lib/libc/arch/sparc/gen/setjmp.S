@@ -1,4 +1,4 @@
-/* $OpenBSD: setjmp.S,v 1.7 2016/05/09 14:39:47 kettenis Exp $ */
+/* $OpenBSD: setjmp.S,v 1.8 2016/05/23 08:57:20 guenther Exp $ */
 /*
  *
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  * The previous signal state is restored.
  */
 
-#include "DEFS.h"
+#include "SYS.h"
 #include <machine/trap.h>	/* T_FLUSHWIN */
 #define	CCFSZ	96		/* from locore.S */
 
