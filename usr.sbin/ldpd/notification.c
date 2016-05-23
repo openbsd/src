@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.25 2016/05/23 16:25:11 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.26 2016/05/23 16:29:22 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -249,8 +249,9 @@ gen_status_tlv(struct ibuf *buf, u_int32_t status, u_int32_t msgid,
 	st.length = htons(STATUS_TLV_LEN);
 	st.status_code = htonl(status);
 
-	st.msg_id = htonl(msgid);
-	st.msg_type = htonl(type);
+	/* for convenience, msgid and type are already in network byte order */
+	st.msg_id = msgid;
+	st.msg_type = type;
 
 	return (ibuf_add(buf, &st, STATUS_SIZE));
 }
