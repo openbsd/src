@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.71 2016/05/23 19:14:03 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.72 2016/05/23 19:20:55 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -677,4 +677,20 @@ nbr_to_ctl(struct nbr *nbr)
 		nctl.uptime = 0;
 
 	return (&nctl);
+}
+
+void
+nbr_clear_ctl(struct ctl_nbr *nctl)
+{
+	struct nbr		*nbr;
+
+	RB_FOREACH(nbr, nbr_addr_head, &nbrs_by_addr) {
+		if (ldp_addrisset(nctl->af, &nctl->raddr) &&
+		    ldp_addrcmp(nctl->af, &nctl->raddr, &nbr->raddr))
+			continue;
+
+		log_debug("%s: neighbor %s manually cleared", __func__,
+		    log_addr(nbr->af, &nbr->raddr));
+		session_shutdown(nbr, S_SHUTDOWN, 0, 0);
+	}
 }

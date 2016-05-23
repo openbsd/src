@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.75 2016/05/23 19:16:00 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.76 2016/05/23 19:20:55 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -77,6 +77,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_LIB,
 	IMSG_CTL_SHOW_L2VPN_PW,
 	IMSG_CTL_SHOW_L2VPN_BINDING,
+	IMSG_CTL_CLEAR_NBR,
 	IMSG_CTL_FIB_COUPLE,
 	IMSG_CTL_FIB_DECOUPLE,
 	IMSG_CTL_KROUTE,

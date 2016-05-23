@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.56 2016/05/23 19:16:00 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.57 2016/05/23 19:20:55 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -237,6 +237,7 @@ struct nbr_params	*nbr_params_new(struct in_addr);
 struct nbr_params	*nbr_params_find(struct ldpd_conf *, struct in_addr);
 uint16_t		 nbr_get_keepalive(int, struct in_addr);
 struct ctl_nbr		*nbr_to_ctl(struct nbr *);
+void			 nbr_clear_ctl(struct ctl_nbr *);
 
 /* packet.c */
 int			 gen_ldp_hdr(struct ibuf *, uint16_t);
