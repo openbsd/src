@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.24 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.25 2016/05/23 15:22:44 tedu Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -465,6 +465,8 @@ struct cfdriver nep_cd = {
 	NULL, "nep", DV_DULL
 };
 
+static u_int	nep_mextfree_idx;
+
 int	nep_pci_enaddr(struct nep_softc *, struct pci_attach_args *);
 
 uint64_t nep_read(struct nep_softc *, uint32_t);
@@ -540,6 +542,9 @@ nep_attach(struct device *parent, struct device *self, void *aux)
 	struct mii_data *mii = &sc->sc_mii;
 	pcireg_t memtype;
 	uint64_t val;
+
+	if (nep_mextfree_idx == 0)
+		nep_mextfree_idx = mextfree_register(nep_extfree);
 
 	sc->sc_dmat = pa->pa_dmat;
 
@@ -1024,7 +1029,7 @@ nep_rx_proc(struct nep_softc *sc)
 			ifp->if_ierrors++;
 		} else {
 			MEXTADD(m, block + off, PAGE_SIZE, M_EXTWR,
-			    nep_extfree, block);
+			    nep_mextfree_idx, block);
 			m->m_pkthdr.len = m->m_len = len;
 			m->m_data += ETHER_ALIGN;
 

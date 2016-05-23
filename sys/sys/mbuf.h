@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.213 2016/04/27 12:27:03 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.214 2016/05/23 15:22:44 tedu Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -136,8 +136,8 @@ struct	pkthdr {
 struct mbuf_ext {
 	caddr_t	ext_buf;		/* start of buffer */
 					/* free routine if not the usual */
-	void	(*ext_free)(caddr_t, u_int, void *);
 	void	*ext_arg;
+	u_int	ext_free_fn;
 	u_int	ext_size;		/* size of buffer, for ext_free */
 	struct mbuf *ext_nextref;
 	struct mbuf *ext_prevref;
@@ -296,17 +296,20 @@ struct mbuf {
  * MCLGET allocates and adds an mbuf cluster to a normal mbuf;
  * the flag M_EXT is set upon success.
  */
-#define	MEXTADD(m, buf, size, mflags, free, arg) do {			\
+#define	MEXTADD(m, buf, size, mflags, freefn, arg) do {			\
 	(m)->m_data = (m)->m_ext.ext_buf = (caddr_t)(buf);		\
 	(m)->m_flags |= M_EXT | (mflags & M_EXTWR);			\
 	(m)->m_ext.ext_size = (size);					\
-	(m)->m_ext.ext_free = (free);					\
+	(m)->m_ext.ext_free_fn = (freefn);					\
 	(m)->m_ext.ext_arg = (arg);					\
 	MCLINITREFERENCE(m);						\
 } while (/* CONSTCOND */ 0)
 
 #define MCLGET(m, how) (void) m_clget((m), (how), MCLBYTES)
 #define MCLGETI(m, how, ifp, l) m_clget((m), (how), (l))
+
+u_int mextfree_register(void (*)(caddr_t, u_int, void *));
+#define	MEXTFREE_POOL 0
 
 /*
  * Move just m_pkthdr from from to to,

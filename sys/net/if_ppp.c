@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.98 2016/04/13 11:41:15 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.99 2016/05/23 15:22:44 tedu Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -1568,7 +1568,7 @@ ppp_pkt_mbuf(struct ppp_pkt *pkt0)
 			goto fail;
 
 		MEXTADD(m, pkt, sizeof(*pkt), M_EXTWR,
-		    m_extfree_pool, &ppp_pkts);
+		    MEXTFREE_POOL, &ppp_pkts);
 		m->m_data += sizeof(pkt->p_hdr);
 		m->m_len = PKT_LEN(pkt);
 

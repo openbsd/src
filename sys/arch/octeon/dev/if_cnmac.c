@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.45 2016/05/21 11:04:38 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.46 2016/05/23 15:22:45 tedu Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -138,8 +138,6 @@ void	octeon_eth_send_queue_del(struct octeon_eth_softc *,
 	    struct mbuf **, uint64_t **);
 int	octeon_eth_buf_free_work(struct octeon_eth_softc *,
 	    uint64_t *, uint64_t);
-void	octeon_eth_buf_ext_free_m(caddr_t, u_int, void *);
-void	octeon_eth_buf_ext_free_ext(caddr_t, u_int, void *);
 
 int	octeon_eth_ioctl(struct ifnet *, u_long, caddr_t);
 void	octeon_eth_watchdog(struct ifnet *);
@@ -212,6 +210,8 @@ struct cn30xxfpa_buf	*octeon_eth_pools[8/* XXX */];
 uint64_t octeon_eth_mac_addr = 0;
 uint32_t octeon_eth_mac_addr_offset = 0;
 
+static u_int octeon_ext_free_idx;
+
 void
 octeon_eth_buf_init(struct octeon_eth_softc *sc)
 {
@@ -252,6 +252,10 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	struct cn30xxgmx_attach_args *ga = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	uint8_t enaddr[ETHER_ADDR_LEN];
+
+	if (octeon_ext_free_idx == 0)
+		octeon_ext_free_idx =
+		    mextfree_register(octeon_eth_buf_ext_free);
 
 	sc->sc_regt = ga->ga_regt;
 	sc->sc_dmat = ga->ga_dmat;
@@ -616,7 +620,7 @@ octeon_eth_send_queue_add(struct octeon_eth_softc *sc, struct mbuf *m,
 	m->m_pkthdr.ph_cookie = gbuf;
 	ml_enqueue(&sc->sc_sendq, m);
 
-	if (m->m_ext.ext_free != NULL)
+	if (m->m_ext.ext_free_fn != 0)
 		sc->sc_ext_callback_cnt++;
 }
 
@@ -631,7 +635,7 @@ octeon_eth_send_queue_del(struct octeon_eth_softc *sc, struct mbuf **rm,
 	*rm = m;
 	*rgbuf = m->m_pkthdr.ph_cookie;
 
-	if (m->m_ext.ext_free != NULL) {
+	if (m->m_ext.ext_free_fn != 0) {
 		sc->sc_ext_callback_cnt--;
 		OCTEON_ETH_KASSERT(sc->sc_ext_callback_cnt >= 0);
 	}
@@ -1158,7 +1162,7 @@ octeon_eth_recv_mbuf(struct octeon_eth_softc *sc, uint64_t *work,
 
 	ext_size = OCTEON_POOL_SIZE_PKT;
 	ext_buf = addr & ~(ext_size - 1);
-	MEXTADD(m, ext_buf, ext_size, 0, octeon_eth_buf_ext_free, NULL);
+	MEXTADD(m, ext_buf, ext_size, 0, octeon_ext_free_idx, NULL);
 
 	m->m_data = (void *)addr;
 	m->m_len = m->m_pkthdr.len = (word1 & PIP_WQE_WORD1_LEN) >> 48;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.224 2016/04/15 05:05:21 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.225 2016/05/23 15:22:44 tedu Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -130,6 +130,8 @@ struct mbuf *m_copym0(struct mbuf *, int, int, int, int);
 void	nmbclust_update(void);
 void	m_zero(struct mbuf *);
 
+static void (*mextfree_fns[4])(caddr_t, u_int, void *);
+static u_int num_extfree_fns;
 
 const char *mclpool_warnmsg =
     "WARNING: mclpools limit reached; increase kern.maxclusters";
@@ -167,6 +169,9 @@ mbinit(void)
 		pool_set_constraints(&mclpools[i], &kp_dma_contig);
 		pool_setlowat(&mclpools[i], mcllowat);
 	}
+
+	(void)mextfree_register(m_extfree_pool);
+	KASSERT(num_extfree_fns == 1);
 
 	nmbclust_update();
 }
@@ -331,7 +336,7 @@ m_clget(struct mbuf *m, int how, u_int pktlen)
 		return (NULL);
 	}
 
-	MEXTADD(m, buf, pp->pr_size, M_EXTWR, m_extfree_pool, pp);
+	MEXTADD(m, buf, pp->pr_size, M_EXTWR, MEXTFREE_POOL, pp);
 	return (m);
 }
 
@@ -414,11 +419,25 @@ m_extunref(struct mbuf *m)
 	return (refs);
 }
 
+/*
+ * Returns a number for use with MEXTADD.
+ * Should only be called once per function.
+ * Drivers can be assured that the index will be non zero.
+ */
+u_int
+mextfree_register(void (*fn)(caddr_t, u_int, void *))
+{
+	KASSERT(num_extfree_fns < nitems(mextfree_fns));
+	mextfree_fns[num_extfree_fns] = fn;
+	return num_extfree_fns++;
+}
+
 void
 m_extfree(struct mbuf *m)
 {
 	if (m_extunref(m) == 0) {
-		(*(m->m_ext.ext_free))(m->m_ext.ext_buf,
+		KASSERT(m->m_ext.ext_free_fn < num_extfree_fns);
+		mextfree_fns[m->m_ext.ext_free_fn](m->m_ext.ext_buf,
 		    m->m_ext.ext_size, m->m_ext.ext_arg);
 	}
 
@@ -1317,8 +1336,8 @@ m_print(void *v,
 	if (m->m_flags & M_EXT) {
 		(*pr)("m_ext.ext_buf: %p\tm_ext.ext_size: %u\n",
 		    m->m_ext.ext_buf, m->m_ext.ext_size);
-		(*pr)("m_ext.ext_free: %p\tm_ext.ext_arg: %p\n",
-		    m->m_ext.ext_free, m->m_ext.ext_arg);
+		(*pr)("m_ext.ext_free_fn: %u\tm_ext.ext_arg: %p\n",
+		    m->m_ext.ext_free_fn, m->m_ext.ext_arg);
 		(*pr)("m_ext.ext_nextref: %p\tm_ext.ext_prevref: %p\n",
 		    m->m_ext.ext_nextref, m->m_ext.ext_prevref);
 

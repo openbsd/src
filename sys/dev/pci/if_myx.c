@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.94 2016/04/13 11:36:00 mpi Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.95 2016/05/23 15:22:44 tedu Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1931,7 +1931,7 @@ myx_mcl_big(void)
 		return (NULL);
 	}
 
-	MEXTADD(m, mcl, MYX_RXBIG_SIZE, M_EXTWR, m_extfree_pool, myx_mcl_pool);
+	MEXTADD(m, mcl, MYX_RXBIG_SIZE, M_EXTWR, MEXTFREE_POOL, myx_mcl_pool);
 	m->m_len = m->m_pkthdr.len = MYX_RXBIG_SIZE;
 
 	return (m);
