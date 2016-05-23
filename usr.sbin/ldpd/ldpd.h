@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.58 2016/05/23 16:08:18 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.59 2016/05/23 16:10:23 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -64,7 +64,6 @@ struct imsgev {
 	struct imsgbuf		 ibuf;
 	void			(*handler)(int, short, void *);
 	struct event		 ev;
-	void			*data;
 	short			 events;
 };
 
