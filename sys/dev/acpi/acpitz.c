@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.50 2016/04/26 09:42:57 semarie Exp $ */
+/* $OpenBSD: acpitz.c,v 1.51 2016/05/24 04:37:39 semarie Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -287,6 +287,12 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 			    name, x);
 			aml_freevalue(&res1);
 			x++;
+
+			/*
+			 * This fan lacks the right method to operate:
+			 * disabling active cooling trip points.
+			 */
+			sc->sc_ac[i] = -1;
 			continue;
 		}
 		if (res1.type != AML_OBJTYPE_PACKAGE) {
