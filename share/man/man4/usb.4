@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.173 2016/02/02 17:06:31 visa Exp $
+.\"	$OpenBSD: usb.4,v 1.174 2016/05/24 05:47:16 mpi Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 2 2016 $
+.Dd $Mdocdate: May 24 2016 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -411,11 +411,6 @@ The following
 .Xr ioctl 2
 commands are supported on the controller device:
 .Bl -tag -width xxxxxx
-.\" .It Dv USB_DISCOVER
-.\" This command will cause a complete bus discovery to be initiated.
-.\" If any devices attached or detached from the bus they will be
-.\" processed during this command.
-.\" This is the only way that new devices are found on the bus.
 .It Dv USB_DEVICEINFO (struct usb_device_info *)
 This command can be used to retrieve some information about a device
 on the bus.

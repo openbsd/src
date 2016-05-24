@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ugen.4,v 1.16 2015/02/16 16:38:54 naddy Exp $
+.\"	$OpenBSD: ugen.4,v 1.17 2016/05/24 05:47:16 mpi Exp $
 .\"	$NetBSD: ugen.4,v 1.7 1999/07/30 01:32:05 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 16 2015 $
+.Dd $Mdocdate: May 24 2016 $
 .Dt UGEN 4
 .Os
 .Sh NAME
@@ -215,17 +215,6 @@ The proper size can be determined by first issuing a
 and inspecting the
 .Fa wTotalLength
 field.
-.Pp
-.It Dv USB_GET_STRING_DESC (struct usb_string_desc)
-Get a string descriptor for the given language id and
-string index.
-.Bd -literal
-struct usb_string_desc {
-	int	usd_string_index;
-	int	usd_language_id;
-	usb_string_descriptor_t usd_desc;
-};
-.Ed
 .Pp
 .It Dv USB_DO_REQUEST
 Send a USB request to the device on the control endpoint.
