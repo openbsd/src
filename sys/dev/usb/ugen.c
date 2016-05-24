@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.93 2016/03/17 21:36:48 krw Exp $ */
+/*	$OpenBSD: ugen.c,v 1.94 2016/05/24 05:35:01 mpi Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -953,7 +953,6 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd, caddr_t addr,
 	struct usb_endpoint_desc *ed;
 	usb_endpoint_descriptor_t *edesc;
 	struct usb_alt_interface *ai;
-	struct usb_string_desc *si;
 	u_int8_t conf, alt;
 
 	DPRINTFN(5, ("ugenioctl: cmd=%08lx\n", cmd));
@@ -1130,16 +1129,6 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd, caddr_t addr,
 		error = uiomove((void *)cdesc, len, &uio);
 		free(cdesc, M_TEMP, 0);
 		return (error);
-	}
-	case USB_GET_STRING_DESC:
-	{
-		int len;
-		si = (struct usb_string_desc *)addr;
-		err = usbd_get_string_desc(sc->sc_udev, si->usd_string_index,
-			si->usd_language_id, &si->usd_desc, &len);
-		if (err)
-			return (EINVAL);
-		break;
 	}
 	case USB_DO_REQUEST:
 	{

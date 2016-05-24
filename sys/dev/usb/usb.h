@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.54 2016/02/28 17:57:50 stefan Exp $ */
+/*	$OpenBSD: usb.h,v 1.55 2016/05/24 05:35:01 mpi Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -752,7 +752,6 @@ struct usb_device_stats {
 /* USB controller */
 #define USB_REQUEST		_IOWR('U', 1, struct usb_ctl_request)
 #define USB_SETDEBUG		_IOW ('U', 2, unsigned int)
-#define USB_DISCOVER		_IO  ('U', 3)
 #define USB_DEVICEINFO		_IOWR('U', 4, struct usb_device_info)
 #define USB_DEVICESTATS		_IOR ('U', 5, struct usb_device_stats)
 #define USB_DEVICE_GET_CDESC	_IOWR('U', 6, struct usb_device_cdesc)
@@ -776,14 +775,9 @@ struct usb_device_stats {
 #define USB_GET_INTERFACE_DESC	_IOWR('U', 107, struct usb_interface_desc)
 #define USB_GET_ENDPOINT_DESC	_IOWR('U', 108, struct usb_endpoint_desc)
 #define USB_GET_FULL_DESC	_IOWR('U', 109, struct usb_full_desc)
-#define USB_GET_STRING_DESC	_IOWR('U', 110, struct usb_string_desc)
 #define USB_DO_REQUEST		_IOWR('U', 111, struct usb_ctl_request)
 #define USB_GET_DEVICEINFO	_IOR ('U', 112, struct usb_device_info)
 #define USB_SET_SHORT_XFER	_IOW ('U', 113, int)
 #define USB_SET_TIMEOUT		_IOW ('U', 114, int)
-
-/* Modem device */
-#define USB_GET_CM_OVER_DATA	_IOR ('U', 130, int)
-#define USB_SET_CM_OVER_DATA	_IOW ('U', 131, int)
 
 #endif /* _USB_H_ */

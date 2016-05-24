@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.65 2016/03/03 18:13:24 stefan Exp $ */
+/*	$OpenBSD: uhid.c,v 1.66 2016/05/24 05:35:01 mpi Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -357,8 +357,7 @@ int
 uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 	      int flag, struct proc *p)
 {
-	usbd_status err;
-	int rc, size;
+	int rc;
 
 	DPRINTFN(2, ("uhidioctl: cmd=%lx\n", cmd));
 
@@ -392,17 +391,6 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 		usbd_fill_deviceinfo(sc->sc_hdev.sc_udev,
 				     (struct usb_device_info *)addr, 1);
 		break;
-
-        case USB_GET_STRING_DESC:
-	    {
-		struct usb_string_desc *si = (struct usb_string_desc *)addr;
-		err = usbd_get_string_desc(sc->sc_hdev.sc_udev,
-			si->usd_string_index,
-			si->usd_language_id, &si->usd_desc, &size);
-		if (err)
-			return (EINVAL);
-		break;
-	    }
 
 	case USB_GET_REPORT_DESC:
 	case USB_GET_REPORT:

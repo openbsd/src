@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.59 2015/03/14 03:38:50 jsg Exp $ */
+/*	$OpenBSD: umodem.c,v 1.60 2016/05/24 05:35:01 mpi Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/file.h>
@@ -121,7 +120,6 @@ void	umodem_rts(struct umodem_softc *, int);
 void	umodem_break(struct umodem_softc *, int);
 void	umodem_set_line_state(struct umodem_softc *);
 int	umodem_param(void *, int, struct termios *);
-int	umodem_ioctl(void *, int, u_long, caddr_t, int, struct proc *);
 int	umodem_open(void *, int portno);
 void	umodem_close(void *, int portno);
 void	umodem_intr(struct usbd_xfer *, void *, usbd_status);
@@ -130,7 +128,7 @@ struct ucom_methods umodem_methods = {
 	umodem_get_status,
 	umodem_set,
 	umodem_param,
-	umodem_ioctl,
+	NULL,
 	umodem_open,
 	umodem_close,
 	NULL,
@@ -562,38 +560,6 @@ umodem_param(void *addr, int portno, struct termios *t)
 		return (1);
 	}
 	return (0);
-}
-
-int
-umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
-	     struct proc *p)
-{
-	struct umodem_softc *sc = addr;
-	int error = 0;
-
-	if (usbd_is_dying(sc->sc_udev))
-		return (EIO);
-
-	DPRINTF(("umodem_ioctl: cmd=0x%08lx\n", cmd));
-
-	switch (cmd) {
-	case USB_GET_CM_OVER_DATA:
-		*(int *)data = sc->sc_cm_over_data;
-		break;
-
-	case USB_SET_CM_OVER_DATA:
-		if (*(int *)data != sc->sc_cm_over_data) {
-			/* XXX change it */
-		}
-		break;
-
-	default:
-		DPRINTF(("umodem_ioctl: unknown\n"));
-		error = ENOTTY;
-		break;
-	}
-
-	return (error);
 }
 
 void

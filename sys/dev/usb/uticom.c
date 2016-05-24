@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.29 2016/01/08 15:54:14 jcs Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.30 2016/05/24 05:35:01 mpi Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -147,9 +147,6 @@ static	void uticom_dtr(struct uticom_softc *, int);
 static	void uticom_rts(struct uticom_softc *, int);
 static	void uticom_break(struct uticom_softc *, int);
 static	void uticom_get_status(void *, int, u_char *, u_char *);
-#if 0 /* TODO */
-static	int  uticom_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr);
-#endif
 static	int  uticom_param(void *, int, struct termios *);
 static	int  uticom_open(void *, int);
 static	void uticom_close(void *, int);
@@ -163,7 +160,7 @@ struct ucom_methods uticom_methods = {
 	uticom_get_status,
 	uticom_set,
 	uticom_param,
-	NULL, /* uticom_ioctl, TODO */
+	NULL,
 	uticom_open,
 	uticom_close,
 	NULL,
@@ -841,37 +838,6 @@ uticom_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 #endif
 	return;
 }
-
-#if 0 /* TODO */
-static int
-uticom_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
-    usb_proc_ptr p)
-{
-	struct uticom_softc *sc = addr;
-	int error = 0;
-
-	if (usbd_is_dying(sc->sc_udev))
-		return (EIO);
-
-	DPRINTF(("uticom_ioctl: cmd = 0x%08lx\n", cmd));
-
-	switch (cmd) {
-	case TIOCNOTTY:
-	case TIOCMGET:
-	case TIOCMSET:
-	case USB_GET_CM_OVER_DATA:
-	case USB_SET_CM_OVER_DATA:
-		break;
-
-	default:
-		DPRINTF(("uticom_ioctl: unknown\n"));
-		error = ENOTTY;
-		break;
-	}
-
-	return (error);
-}
-#endif
 
 static int
 uticom_download_fw(struct uticom_softc *sc, int pipeno,
