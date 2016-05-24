@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpko.c,v 1.4 2014/08/11 18:29:56 miod Exp $	*/
+/*	$OpenBSD: cn30xxpko.c,v 1.5 2016/05/24 14:06:39 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -160,7 +160,7 @@ cn30xxpko_port_config(struct cn30xxpko_softc *sc)
 
 	KASSERT(sc->sc_port < 32);
 
-	buf_ptr = cn30xxfpa_load(FPA_COMMAND_BUFFER_POOL);
+	buf_ptr = cn30xxfpa_load(OCTEON_POOL_NO_CMD);
 	if (buf_ptr == 0)
 		return 1;
 

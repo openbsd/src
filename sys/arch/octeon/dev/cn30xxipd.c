@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxipd.c,v 1.7 2016/01/22 01:18:44 jsg Exp $	*/
+/*	$OpenBSD: cn30xxipd.c,v 1.8 2016/05/24 14:06:39 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -126,7 +126,7 @@ cn30xxipd_config(struct cn30xxipd_softc *sc)
 	/* XXX */
 
 	packet_mbuff_size = 0;
-	SET(packet_mbuff_size, (FPA_RECV_PKT_POOL_SIZE / 8) &
+	SET(packet_mbuff_size, (OCTEON_POOL_SIZE_PKT / 8) &
 	    IPD_PACKET_MBUFF_SIZE_MB_SIZE);
 	_IPD_WR8(sc, IPD_PACKET_MBUFF_SIZE_OFFSET, packet_mbuff_size);
 
@@ -140,7 +140,7 @@ cn30xxipd_config(struct cn30xxipd_softc *sc)
 	_IPD_WR8(sc, IPD_2ND_NEXT_PTR_BACK_OFFSET, second_next_ptr_back);
 
 	sqe_fpa_queue = 0;
-	SET(sqe_fpa_queue, FPA_WQE_POOL & IPD_WQE_FPA_QUEUE_WQE_QUE);
+	SET(sqe_fpa_queue, OCTEON_POOL_NO_WQE & IPD_WQE_FPA_QUEUE_WQE_QUE);
 	_IPD_WR8(sc, IPD_WQE_FPA_QUEUE_OFFSET, sqe_fpa_queue);
 
 	ctl_status = _IPD_RD8(sc, IPD_CTL_STATUS_OFFSET);

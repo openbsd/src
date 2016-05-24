@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.48 2016/05/24 12:56:14 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.49 2016/05/24 14:06:39 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -756,7 +756,7 @@ octeon_eth_send_makecmd_w1(int size, paddr_t addr)
 {
 	return cn30xxpko_cmd_word1(
 		0, 0,				/* i, back */
-		FPA_GATHER_BUFFER_POOL,		/* pool */
+		OCTEON_POOL_NO_SG,		/* pool */
 		size, addr);			/* size, addr */
 }
 

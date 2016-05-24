@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfpavar.h,v 1.3 2013/06/01 22:20:35 jasper Exp $	*/
+/*	$OpenBSD: cn30xxfpavar.h,v 1.4 2016/05/24 14:06:39 visa Exp $	*/
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
  * All rights reserved.
@@ -55,36 +55,6 @@ void	cn30xxfpa_dump(void);
 #endif
 
 #define CACHE_LINE_SIZE (128)
-
-/* Pool sizes in bytes, must be multiple of a cache line */
-#define FPA_POOL_0_SIZE (16 * CACHE_LINE_SIZE)
-#define FPA_POOL_1_SIZE (1 * CACHE_LINE_SIZE)
-#define FPA_POOL_2_SIZE (8 * CACHE_LINE_SIZE)
-#define FPA_POOL_3_SIZE (4 * CACHE_LINE_SIZE)
-
-#define FPA_POOL_4_SIZE (16 * CACHE_LINE_SIZE)
-#define FPA_POOL_5_SIZE (16 * CACHE_LINE_SIZE)
-#define FPA_POOL_6_SIZE (16 * CACHE_LINE_SIZE)
-#define FPA_POOL_7_SIZE (16 * CACHE_LINE_SIZE)
-
-/* Pools in use */
-#define FPA_RECV_PKT_POOL		(0)	/* Recieve Packet buffers */
-#define FPA_RECV_PKT_POOL_SIZE		FPA_POOL_0_SIZE
-#define FPA_RECV_PKT_POOL_LINE		16
-#define FPA_WQE_POOL			(1)	/* Work queue entrys */
-#define FPA_WQE_POOL_SIZE		FPA_POOL_1_SIZE
-#define FPA_WQE_POOL_LINE		1
-#define FPA_COMMAND_BUFFER_POOL		(2)	/* PKO queue command buffers */
-#define FPA_COMMAND_BUFFER_POOL_SIZE	FPA_POOL_2_SIZE
-#define FPA_COMMAND_BUFFER_POOL_LINE	8
-#define FPA_GATHER_BUFFER_POOL		(3)	/* PKO gather list buffers */
-#define FPA_GATHER_BUFFER_POOL_SIZE	FPA_POOL_3_SIZE
-#define FPA_GATHER_BUFFER_POOL_LINE	4
-
-#ifndef FPA_OUTPUT_BUFFER_POOL
-#define FPA_OUTPUT_BUFFER_POOL		FPA_COMMAND_BUFFER_POOL
-#define FPA_OUTPUT_BUFFER_POOL_SIZE	FPA_COMMAND_BUFFER_POOL_SIZE
-#endif
 
 /*
  * operations
