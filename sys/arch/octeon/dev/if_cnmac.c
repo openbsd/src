@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.47 2016/05/24 12:50:14 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.48 2016/05/24 12:56:14 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -788,7 +788,7 @@ octeon_eth_send_makecmd_gbuf(struct octeon_eth_softc *sc, struct mbuf *m0,
 			continue;
 
 		if (segs >= OCTEON_POOL_SIZE_SG / sizeof(uint64_t))
-			return 1;
+			goto defrag;
 		gbuf[segs] = octeon_eth_send_makecmd_w1(m->m_len,
 		    KVTOPHYS(m->m_data));
 		segs++;
@@ -796,6 +796,13 @@ octeon_eth_send_makecmd_gbuf(struct octeon_eth_softc *sc, struct mbuf *m0,
 
 	*rsegs = segs;
 
+	return 0;
+
+defrag:
+	if (m_defrag(m0, M_DONTWAIT) != 0)
+		return 1;
+	gbuf[0] = octeon_eth_send_makecmd_w1(m0->m_len, KVTOPHYS(m0->m_data));
+	*rsegs = 1;
 	return 0;
 }
 
