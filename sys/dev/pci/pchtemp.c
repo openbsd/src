@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchtemp.c,v 1.3 2016/02/06 12:50:26 kettenis Exp $	*/
+/*	$OpenBSD: pchtemp.c,v 1.4 2016/05/24 07:59:24 reyk Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -62,6 +62,7 @@ const struct pci_matchid pchtemp_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C610_THERM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_THERM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_THERM },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_LP_THERM },
 };
 
 int
