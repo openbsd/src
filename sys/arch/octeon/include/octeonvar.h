@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.25 2016/03/21 14:20:57 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.26 2016/05/24 13:11:02 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -99,7 +99,7 @@ struct octeon_config {
 #define	OCTEON_POOL_SIZE_PKT	2048	/* 128 x 16 */
 #define	OCTEON_POOL_SIZE_WQE	128	/* 128 x 1 */
 #define	OCTEON_POOL_SIZE_CMD	1024	/* 128 x 8 */
-#define	OCTEON_POOL_SIZE_SG	512	/* 128 x 4 */
+#define	OCTEON_POOL_SIZE_SG	128	/* 128 x 1 */
 #define	OCTEON_POOL_SIZE_XXX_4	0
 #define	OCTEON_POOL_SIZE_XXX_5	0
 #define	OCTEON_POOL_SIZE_XXX_6	0
@@ -108,7 +108,7 @@ struct octeon_config {
 #define	OCTEON_POOL_NELEMS_PKT		4096
 #define	OCTEON_POOL_NELEMS_WQE		4096
 #define	OCTEON_POOL_NELEMS_CMD		32
-#define	OCTEON_POOL_NELEMS_SG		1024
+#define	OCTEON_POOL_NELEMS_SG		4096
 #define	OCTEON_POOL_NELEMS_XXX_4	0
 #define	OCTEON_POOL_NELEMS_XXX_5	0
 #define	OCTEON_POOL_NELEMS_XXX_6	0
