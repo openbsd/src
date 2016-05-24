@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2016/05/10 11:53:54 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.26 2016/05/24 18:06:30 schwarze Exp $
 #	$NetBSD: Makefile,v 1.41 2010/02/03 15:34:43 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
@@ -22,7 +22,7 @@ CLEANFILES+=help.h.tmp vi.h.tmp tc1.o tc1 .depend
 CFLAGS+=-Wall
 CPPFLAGS+=-I. -I${LIBEDITDIR}
 CPPFLAGS+=-I. -I${.CURDIR}
-#CPPFLAGS+=-DDEBUG_TTY -DDEBUG_KEY -DDEBUG_READ -DDEBUG -DDEBUG_REFRESH
+#CPPFLAGS+=-DDEBUG_TTY -DDEBUG_KEY -DDEBUG -DDEBUG_REFRESH
 #CPPFLAGS+=-DDEBUG_PASTE -DDEBUG_EDIT
 
 AHDR=vi.h emacs.h common.h
