@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.36 2015/12/21 21:49:03 sf Exp $	*/
+/*	$OpenBSD: tty.h,v 1.37 2016/05/24 16:09:07 deraadt Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -47,8 +47,8 @@
 #define KERN_TTY_TKRAWCC	3	/* quad: input chars, raw mode */
 #define KERN_TTY_TKCANCC	4	/* quad: input char, cooked mode */
 #define KERN_TTY_INFO		5	/* struct: tty stats */
-#define KERN_TTY_MAXPTYS	6	/* int: max ptys */
-#define KERN_TTY_NPTYS		7	/* int: number of allocated ptys */
+/* was KERN_TTY_MAXPTYS		6 */
+/* was KERN_TTY_NPTYS		7 */
 #define KERN_TTY_MAXID		8
 
 #define CTL_KERN_TTY_NAMES { \
@@ -58,8 +58,8 @@
 	{ "tk_rawcc", CTLTYPE_QUAD }, \
 	{ "tk_cancc", CTLTYPE_QUAD }, \
 	{ "ttyinfo", CTLTYPE_STRUCT }, \
-	{ "maxptys", CTLTYPE_INT }, \
-	{ "nptys", CTLTYPE_INT }, \
+	{ "gap", 0 }, \
+	{ "gap", 0 }, \
 }
 
 /* ptmget, for /dev/ptm pty getting ioctl PTMGET */

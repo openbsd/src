@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.77 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.78 2016/05/24 16:09:07 deraadt Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -911,34 +911,10 @@ int
 sysctl_pty(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	int error, oldmax;
-
 	if (namelen != 1)
 		return (ENOTDIR);
 
 	switch (name[0]) {
-	case KERN_TTY_MAXPTYS:
-		if (!newp)
-			return (sysctl_rdint(oldp, oldlenp, newp, maxptys));
-		rw_enter_write(&pt_softc_lock);
-		oldmax = maxptys;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &maxptys);
-		/*
-		 * We can't set the max lower than the current active
-		 * value or to a value bigger than NPTY_MAX.
-		 */
-		if (error == 0 && (maxptys > NPTY_MAX || maxptys < npty)) {
-			maxptys = oldmax;
-			error = ERANGE;
-		}
-		rw_exit_write(&pt_softc_lock);
-		return (error);
-	case KERN_TTY_NPTYS:
-		return (sysctl_rdint(oldp, oldlenp, newp, npty));
-#ifdef notyet
-	case KERN_TTY_GID:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &tty_gid));
-#endif
 	default:
 		return (EOPNOTSUPP);
 	}
