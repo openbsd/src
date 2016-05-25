@@ -1,5 +1,5 @@
-/*	$OpenBSD: keymacro.c,v 1.15 2016/05/06 13:12:52 schwarze Exp $	*/
-/*	$NetBSD: keymacro.c,v 1.21 2016/04/18 17:01:19 christos Exp $	*/
+/*	$OpenBSD: keymacro.c,v 1.16 2016/05/25 09:23:49 schwarze Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.23 2016/05/24 15:00:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -166,6 +166,7 @@ keymacro_reset(EditLine *el)
  *      complete match is found or a mismatch occurs. Returns the
  *      type of the match found (XK_STR or XK_CMD).
  *      Returns NULL in val.str and XK_STR for no match.
+ *      Returns XK_NOD for end of file or read error.
  *      The last character read is returned in *ch.
  */
 protected int
@@ -280,11 +281,8 @@ node_trav(EditLine *el, keymacro_node_t *ptr, wchar_t *ch,
 		/* match found */
 		if (ptr->next) {
 			/* key not complete so get next char */
-			if (el_wgetc(el, ch) != 1) {/* if EOF or error */
-				val->cmd = ED_END_OF_FILE;
-				return XK_CMD;
-				/* PWP: Pretend we just read an end-of-file */
-			}
+			if (el_wgetc(el, ch) != 1)
+				return XK_NOD;
 			return node_trav(el, ptr->next, ch, val);
 		} else {
 			*val = ptr->val;

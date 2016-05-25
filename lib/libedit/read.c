@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.42 2016/05/24 18:06:30 schwarze Exp $	*/
+/*	$OpenBSD: read.c,v 1.43 2016/05/25 09:23:49 schwarze Exp $	*/
 /*	$NetBSD: read.c,v 1.97 2016/05/22 19:44:26 christos Exp $	*/
 
 /*-
@@ -62,6 +62,7 @@ struct macros {
 struct el_read_t {
 	struct macros	 macros;
 	el_rfunc_t	 read_char;	/* Function to read a character. */
+	int		 read_errno;
 };
 
 static int	read__fixio(int, int);
@@ -223,12 +224,9 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, wchar_t *ch)
 	el_action_t cmd;
 	int num;
 
-	el->el_errno = 0;
 	do {
-		if ((num = el_wgetc(el, ch)) != 1) {/* if EOF or error */
-			el->el_errno = num == 0 ? 0 : errno;
+		if ((num = el_wgetc(el, ch)) != 1)
 			return -1;
-		}
 
 #ifdef	KANJI
 		if ((*ch & meta)) {
@@ -255,6 +253,8 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, wchar_t *ch)
 			case XK_STR:
 				el_wpush(el, val.str);
 				break;
+			case XK_NOD:
+				return -1;
 			default:
 				EL_ABORT((el->el_errfile, "Bad XK_ type \n"));
 				break;
@@ -407,8 +407,15 @@ el_wgetc(EditLine *el, wchar_t *cp)
 		return 0;
 
 	num_read = (*el->el_read->read_char)(el, cp);
+
+	/*
+	 * Remember the original reason of a read failure
+	 * such that el_wgets() can restore it after doing
+	 * various cleanup operation that might change errno.
+	 */
 	if (num_read < 0)
-		el->el_errno = errno;
+		el->el_read->read_errno = errno;
+
 	return num_read;
 }
 
@@ -456,6 +463,7 @@ el_wgets(EditLine *el, int *nread)
 	if (nread == NULL)
 		nread = &nrb;
 	*nread = 0;
+	el->el_read->read_errno = 0;
 
 	if (el->el_flags & NO_TTY) {
 		size_t idx;
@@ -476,12 +484,8 @@ el_wgets(EditLine *el, int *nread)
 			if (cp[-1] == '\r' || cp[-1] == '\n')
 				break;
 		}
-		if (num == -1) {
-			if (errno == EINTR)
-				cp = el->el_line.buffer;
-			el->el_errno = errno;
-		}
-
+		if (num == -1 && errno == EINTR)
+			cp = el->el_line.buffer;
 		goto noedit;
 	}
 
@@ -530,13 +534,8 @@ el_wgets(EditLine *el, int *nread)
 			if (crlf)
 				break;
 		}
-
-		if (num == -1) {
-			if (errno == EINTR)
-				cp = el->el_line.buffer;
-			el->el_errno = errno;
-		}
-
+		if (num == -1 && errno == EINTR)
+			cp = el->el_line.buffer;
 		goto noedit;
 	}
 
@@ -544,12 +543,6 @@ el_wgets(EditLine *el, int *nread)
 		/* if EOF or error */
 		if (read_getcmd(el, &cmdnum, &ch) == -1)
 			break;
-		if (el->el_errno == EINTR) {
-			el->el_line.buffer[0] = '\0';
-			el->el_line.lastchar =
-			    el->el_line.cursor = el->el_line.buffer;
-			break;
-		}
 		if ((int)cmdnum >= el->el_map.nfunc) /* BUG CHECK command */
 			continue;	/* try again */
 		/* now do the real command */
@@ -650,7 +643,8 @@ done:
 	if (*nread == 0) {
 		if (num == -1) {
 			*nread = -1;
-			errno = el->el_errno;
+			if (el->el_read->read_errno)
+				errno = el->el_read->read_errno;
 		}
 		return NULL;
 	} else
