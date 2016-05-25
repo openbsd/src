@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.60 2016/04/16 18:39:30 stefan Exp $ */
+/*	$OpenBSD: procmap.c,v 1.61 2016/05/25 15:45:53 stefan Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -46,6 +46,7 @@ typedef int boolean_t;
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
 #include <uvm/uvm_amap.h>
+#include <uvm/uvm_vnode.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -122,6 +123,7 @@ struct kbit {
 		struct vmspace vmspace;
 		struct vm_map vm_map;
 		struct vm_map_entry vm_map_entry;
+		struct uvm_vnode uvm_vnode;
 		struct vnode vnode;
 		struct uvm_object uvm_object;
 		struct mount mount;
@@ -579,7 +581,7 @@ size_t
 dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
     struct vm_map_entry *vme, struct sum *sum)
 {
-	struct kbit kbit[4], *uvm_obj, *vp, *vfs, *amap;
+	struct kbit kbit[5], *uvm_obj, *vp, *vfs, *amap, *uvn;
 	ino_t inode = 0;
 	dev_t dev = 0;
 	size_t sz = 0;
@@ -589,10 +591,12 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 	vp = &kbit[1];
 	vfs = &kbit[2];
 	amap = &kbit[3];
+	uvn = &kbit[4];
 
 	A(uvm_obj) = 0;
 	A(vp) = 0;
 	A(vfs) = 0;
+	A(uvn) = 0;
 
 	if (debug & PRINT_VM_MAP_ENTRY) {
 		printf("%s = {", "vm_map_entry");
@@ -628,7 +632,11 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		KDEREF(kd, uvm_obj);
 		if (UVM_ET_ISOBJ(vme) &&
 		    UVM_OBJ_IS_VNODE(D(uvm_obj, uvm_object))) {
-			P(vp) = P(uvm_obj);
+			P(uvn) = P(uvm_obj);
+			S(uvn) = sizeof(struct uvm_vnode);
+			KDEREF(kd, uvn);
+
+			P(vp) = D(uvn, uvm_vnode)->u_vnode;
 			S(vp) = sizeof(struct vnode);
 			KDEREF(kd, vp);
 		}
