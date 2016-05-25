@@ -1,5 +1,5 @@
-/*	$OpenBSD: read.c,v 1.43 2016/05/25 09:23:49 schwarze Exp $	*/
-/*	$NetBSD: read.c,v 1.97 2016/05/22 19:44:26 christos Exp $	*/
+/*	$OpenBSD: read.c,v 1.44 2016/05/25 09:36:21 schwarze Exp $	*/
+/*	$NetBSD: read.c,v 1.100 2016/05/24 19:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -260,8 +260,6 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, wchar_t *ch)
 				break;
 			}
 		}
-		if (el->el_map.alt == NULL)
-			el->el_map.current = el->el_map.key;
 	} while (cmd == ED_SEQUENCE_LEAD_IN);
 	*cmdnum = cmd;
 	return 0;
