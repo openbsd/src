@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.20 2016/05/17 22:03:18 schwarze Exp $	*/
+/*	$OpenBSD: engine.c,v 1.21 2016/05/25 20:48:22 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -522,12 +522,9 @@ backref(struct match *m, char *start, char *stop, sopno startst, sopno stopst,
 				return(NULL);
 			break;
 		case OBOW:
-			if (( (sp == m->beginp && !(m->eflags&REG_NOTBOL)) ||
-					(sp < m->endp && *(sp-1) == '\n' &&
-						(m->g->cflags&REG_NEWLINE)) ||
-					(sp > m->beginp &&
-							!ISWORD(*(sp-1))) ) &&
-					(sp < m->endp && ISWORD(*sp)) )
+			if (sp < m->endp && ISWORD(*sp) &&
+			    ((sp == m->beginp && !(m->eflags&REG_NOTBOL)) ||
+			     (sp > m->offp && !ISWORD(*(sp-1)))))
 				{ /* yes */ }
 			else
 				return(NULL);
