@@ -42,7 +42,7 @@ main()
 	if (setlocale(LC_CTYPE, "") == NULL)
 		err(1, "setlocale");
 
-	el.el_errno = ENOMSG;
+	el.el_read->read_errno = ENOMSG;
 	el.el_flags = CHARSET_IS_UTF8;
 	el.el_infd = STDIN_FILENO;
 	el.el_state.metanext = 0;
@@ -86,8 +86,8 @@ main()
 			printf("ret(%d)", irc);
 			break;
 		}
-		if (el.el_errno != 0)
-			printf(" el_errno=%d", el.el_errno);
+		if (el.el_read->read_errno != 0)
+			printf(" read_errno=%d", el.el_read->read_errno);
 		if (ma->level > -1)
 			printf(" macro[%d]=%ls(%d)", ma->level,
 			    *ma->macro, ma->offset);

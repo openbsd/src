@@ -113,9 +113,7 @@ main()
 	if (el_wgetc(&el, &ch) == 0)
 		errx(1, "el_wgetc i");
 	irc = keymacro_get(&el, &ch, &val);
-	if (irc != XK_CMD)
-		errx(1, "eof %d != XK_CMD", irc);
-	if (val.cmd != ED_END_OF_FILE)
-		errx(1, "ad %u != ED_END_OF_FILE", val.cmd);
+	if (irc != XK_NOD)
+		errx(1, "eof %d != XK_NOD", irc);
 	return 0;
 }
