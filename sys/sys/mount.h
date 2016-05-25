@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.124 2016/05/21 18:11:36 natano Exp $	*/
+/*	$OpenBSD: mount.h,v 1.125 2016/05/25 13:31:44 deraadt Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -377,7 +377,6 @@ struct mount {
 #define	MNT_EXPORTED	0x00000100	/* file system is exported */
 #define	MNT_DEFEXPORTED	0x00000200	/* exported to the world */
 #define	MNT_EXPORTANON	0x00000400	/* use anon uid mapping for everyone */
-#define	MNT_EXKERB	0x00000800	/* exported with Kerberos uid mapping */
 
 /*
  * Flags set by internal operations.
