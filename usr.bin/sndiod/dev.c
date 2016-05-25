@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.25 2016/03/23 06:16:35 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.26 2016/05/25 05:34:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1005,7 +1005,7 @@ dev_new(char *path, struct aparams *par,
 		d->slot[i].vol = MIDI_MAXCTL;
 		d->slot[i].tstate = MMC_OFF;
 		d->slot[i].serial = d->serial++;
-		d->slot[i].name[0] = '\0';
+		strlcpy(d->slot[i].name, "prog", SLOT_NAMEMAX);
 	}
 	d->slot_list = NULL;
 	d->master = MIDI_MAXCTL;
