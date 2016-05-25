@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.84 2016/01/14 16:17:40 markus Exp $
+#	$OpenBSD: Makefile,v 1.85 2016/05/25 23:48:45 schwarze Exp $
 
 .PATH:		${.CURDIR}/..
 .include "${.CURDIR}/../Makefile.inc"
@@ -28,7 +28,7 @@ SRCS=	${LIB_SRCS} \
 	cleanup.c compat.c crc32.c deattack.c fatal.c \
 	hostfile.c log.c match.c nchan.c packet.c opacket.c readpass.c \
 	ttymodes.c xmalloc.c atomicio.c \
-	key.c dispatch.c kex.c mac.c uidswap.c uuencode.c misc.c \
+	key.c dispatch.c kex.c mac.c uidswap.c uuencode.c misc.c utf8.c \
 	msg.c progressmeter.c dns.c \
 	monitor_fdpass.c addrmatch.c \
 	smult_curve25519_ref.c \
