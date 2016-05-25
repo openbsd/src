@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.62 2016/05/21 18:11:36 natano Exp $	*/
+/*	$OpenBSD: mount.c,v 1.63 2016/05/25 13:56:37 deraadt Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -80,7 +80,6 @@ static struct opt {
 } optnames[] = {
 	{ MNT_ASYNC,		0,	"asynchronous",		"async" },
 	{ MNT_DEFEXPORTED,	1,	"exported to the world", "" },
-	{ MNT_EXKERB,		1,	"kerberos uid mapping",	"" },
 	{ MNT_EXPORTED,		0,	"NFS exported",		"" },
 	{ MNT_EXPORTANON,	1,	"anon uid mapping",	"" },
 	{ MNT_EXRDONLY,		1,	"exported read-only",	"" },
