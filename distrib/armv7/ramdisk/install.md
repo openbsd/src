@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.30 2016/05/22 08:01:04 jsg Exp $
+#	$OpenBSD: install.md,v 1.31 2016/05/25 00:20:09 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,26 +81,11 @@ md_installboot() {
 
 	mount ${mount_args} /dev/${_disk}i /mnt/mnt
 
-        if [[ -f /mnt/bsd.${MDPLAT}.umg ]]; then
-                mv /mnt/bsd.${MDPLAT}.umg /mnt/mnt/bsd.umg
-        fi
-        if [[ -f /mnt/bsd.rd.${MDPLAT}.umg ]]; then
-                mv /mnt/bsd.rd.${MDPLAT}.umg /mnt/mnt/bsdrd.umg
-        fi
-
 	# extracted on all machines, so make snap works.
 	tar -C /mnt/ -xf /usr/mdec/u-boots.tgz 
 
-	cat > /tmp/boot.cmd<<__EOT
-setenv bootargs sd0a:/bsd ;
-mmc rescan ;
-usb start ;
-run findfdt ;
-load mmc \${mmcdev}:1 \${loadaddr} bsd.umg ;
-load mmc \${mmcdev}:1 \${fdt_addr_r} \${fdtfile} ;
-bootm \${loadaddr} - \${fdt_addr_r} ;
-__EOT
-	mkuboot -t script -a arm -o linux /tmp/boot.cmd /mnt/mnt/boot.scr
+	mkdir -p /mnt/mnt/efi/boot
+	cp /mnt/usr/mdec/BOOTARM.EFI /mnt/mnt/efi/boot/bootarm.efi
 
 	if [[ ${MDPLAT} == "OMAP" ]]; then
 
@@ -122,7 +107,21 @@ __EOT
 			dd if=/mnt/usr/mdec/cubox/u-boot.img \
 			    of=/dev/${_disk}c bs=1024 seek=69 >/dev/null
 		elif [[ -n $NITROGEN ]]; then
-			mv /mnt/mnt/boot.scr /mnt/mnt/6x_bootscript
+			if [[ -f /mnt/bsd.${MDPLAT}.umg ]]; then
+				mv /mnt/bsd.${MDPLAT}.umg /mnt/mnt/bsd.umg
+			fi
+			if [[ -f /mnt/bsd.rd.${MDPLAT}.umg ]]; then
+				mv /mnt/bsd.rd.${MDPLAT}.umg /mnt/mnt/bsdrd.umg
+			fi
+
+			cat > /tmp/boot.cmd<<__EOT
+setenv bootargs sd0a:/bsd ;
+mmc rescan ;
+load mmc 0:1 \${loadaddr} bsd.umg ;
+bootm \${loadaddr}
+__EOT
+			mkuboot -t script -a arm -o linux /tmp/boot.cmd \
+			    /mnt/mnt/6x_bootscript
 		elif [[ -n $WANDBOARD ]]; then
 			cp /mnt/usr/mdec/wandboard/*.dtb /mnt/mnt/
 			dd if=/mnt/usr/mdec/wandboard/SPL \
