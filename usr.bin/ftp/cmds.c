@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.76 2016/03/17 19:40:43 krw Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.77 2016/05/25 15:36:01 krw Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -1643,9 +1643,7 @@ void
 newer(int argc, char *argv[])
 {
 
-	if (getit(argc, argv, -1, "w"))
-		fprintf(ttyout, "Local file \"%s\" is newer than remote file \"%s\".\n",
-			argv[2], argv[1]);
+	(void)getit(argc, argv, -1, "w");
 }
 
 /*

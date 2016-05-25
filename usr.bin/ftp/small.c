@@ -1,4 +1,4 @@
-/*	$OpenBSD: small.c,v 1.5 2015/10/18 03:04:11 mmcc Exp $	*/
+/*	$OpenBSD: small.c,v 1.6 2016/05/25 15:36:01 krw Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -275,6 +275,10 @@ usage:
 					goto freegetit;
 				if (stbuf.st_mtime >= mtime) {
 					rval = 1;
+					fprintf(ttyout,
+						"Local file \"%s\" is newer "\
+						"than remote file \"%s\".\n",
+						argv[2], argv[1]);
 					goto freegetit;
 				}
 			}
