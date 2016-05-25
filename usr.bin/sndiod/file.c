@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.20 2016/01/18 11:41:13 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.21 2016/05/25 05:37:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -318,8 +318,6 @@ file_poll(void)
 	long long delta_nsec;
 	int nfds, res, timo;
 
-	log_flush();
-
 	/*
 	 * cleanup zombies
 	 */
@@ -355,8 +353,6 @@ file_poll(void)
 		log_puts("poll:");
 		pfd = pfds;
 		for (f = file_list; f != NULL; f = f->next) {
-			if (f->nfds == 0)
-				continue;
 			log_puts(" ");
 			log_puts(f->ops->name);
 			log_puts(":");
@@ -396,6 +392,7 @@ file_poll(void)
 			timo = TIMER_MSEC;
 	} else
 		timo = -1;
+	log_flush();
 	res = poll(pfds, nfds, timo);
 	if (res < 0) {
 		if (errno != EINTR) {
