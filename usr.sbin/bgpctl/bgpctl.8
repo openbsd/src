@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.67 2015/10/25 13:08:29 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.68 2016/05/25 11:50:05 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 25 2015 $
+.Dd $Mdocdate: May 25 2016 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -364,7 +364,24 @@ Multiple options can be used at the same time and the
 filter can be combined with other filters.
 .It Cm show summary
 Show a list of all neighbors, including information about the session state
-and message counters.
+and message counters:
+.Pp
+.Bl -tag -width xxxxxxxxxxxxxx -compact
+.It Neighbor
+Description of the neighbor.
+.It AS
+Autonomous system number.
+.It MsgRcvd
+Number of messages received from the neighbor.
+.It MsgSent
+Number of messages sent to the neighbor.
+.It OutQ
+Number of outgoing messages queued.
+.It Up/Down
+Number of days and hours that the session has been up.
+.It State/PrfRcvd
+State of the session / Number of routes received. The session is up if there is no information for the State column (Established is not displayed).
+.El
 .It Cm show summary terse
 Show a list of all neighbors, including information about the session state,
 in a terse format.
