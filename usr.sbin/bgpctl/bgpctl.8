@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.68 2016/05/25 11:50:05 henning Exp $
+.\" $OpenBSD: bgpctl.8,v 1.69 2016/05/25 14:15:59 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -380,7 +380,9 @@ Number of outgoing messages queued.
 .It Up/Down
 Number of days and hours that the session has been up.
 .It State/PrfRcvd
-State of the session / Number of routes received. The session is up if there is no information for the State column (Established is not displayed).
+State of the session / Number of routes received.
+The session is up if there is no information for the State column
+(Established is not displayed).
 .El
 .It Cm show summary terse
 Show a list of all neighbors, including information about the session state,
