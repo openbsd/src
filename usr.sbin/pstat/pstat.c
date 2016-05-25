@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.103 2016/04/25 19:19:34 tedu Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.104 2016/05/25 13:32:29 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -721,11 +721,6 @@ mount_print(struct mount *mp)
 		if (flags & MNT_EXPORTANON) {
 			(void)printf("%sexportanon", comma);
 			flags &= ~MNT_EXPORTANON;
-			comma = ",";
-		}
-		if (flags & MNT_EXKERB) {
-			(void)printf("%sexkerb", comma);
-			flags &= ~MNT_EXKERB;
 			comma = ",";
 		}
 		if (flags & MNT_LOCAL) {
