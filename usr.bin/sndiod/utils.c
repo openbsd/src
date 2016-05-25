@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.2 2016/01/08 16:17:31 ratchov Exp $	*/
+/*	$OpenBSD: utils.c,v 1.3 2016/05/25 05:39:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2003-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -163,6 +163,12 @@ xmalloc(size_t size)
 void
 xfree(void *p)
 {
+#ifdef DEBUG
+	if (p == NULL) {
+		log_puts("xfree with NULL arg\n");
+		panic();
+	}
+#endif
 	free(p);
 }
 
