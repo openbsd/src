@@ -21,9 +21,7 @@ FS?=		msdos
 PART_ID?=C
 
 NEWFS_ARGS_msdos=-F 16 -L boot
-NEWFS_ARGS_ext2fs=-v boot
 MOUNT_ARGS_msdos=-o-l
-MOUNT_ARGS_ext2fs=
 
 cleandir: clean
 clean:
@@ -67,16 +65,8 @@ rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
 	vnconfig -c ${VND} ${IMAGE}
 	fdisk -c 2 -h 255 -s 63 -yi ${VND} >/dev/null
-.if ${PLATFORM} == "SUNXI"
-	echo "u\ne 0\n${PART_ID}\ny\n0\n99\n1\n1\n254\n63\nf 0\nw\nq\n" \
-	    | fdisk -c 2 -h 255 -s 63 -e ${VND} >/dev/null
-.elif ${BOARD} == "cubox" || ${BOARD} == "wandboard"
 	echo "u\ne 3\n0\ne 0\n${PART_ID}\ny\n0\n32\n33\n1\n254\n63\n63\nf 0\nw\nq" \
 	    | fdisk -c 2 -h 255 -s 63 -e ${VND} >/dev/null
-.else
-	echo "u\ne 0\n${PART_ID}\ny\n0\n1\n1\n1\n254\n63\nf 0\nw\nq\n" \
-	    | fdisk -c 2 -h 255 -s 63 -e ${VND} >/dev/null
-.endif
 	newfs_${FS} ${NEWFS_ARGS_${FS}} ${VND_RIDEV} >/dev/null
 	mount ${MOUNT_ARGS_${FS}} ${VND_IDEV} ${MOUNT_POINT}
 

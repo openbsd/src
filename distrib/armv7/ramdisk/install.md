@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.31 2016/05/25 00:20:09 jsg Exp $
+#	$OpenBSD: install.md,v 1.32 2016/05/26 00:34:50 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,9 +60,7 @@ SANESETS="bsd"
 DEFAULTSETS="bsd bsd.rd ${MDSETS}"
 
 NEWFSARGS_msdos="-F 16 -L boot"
-NEWFSARGS_ext2fs="-v boot"
 MOUNT_ARGS_msdos="-o-l"
-MOUNT_ARGS_ext2fs=
 
 md_installboot() {
 	local _disk=$1
@@ -74,10 +72,6 @@ md_installboot() {
 	CUBOX=$(scan_dmesg '/^imx0 at mainbus0: \(SolidRun.*\)/s//CUBOX/p')
 	NITROGEN=$(scan_dmesg '/^imx0 at mainbus0: \(Freescale i.MX6 SABRE Lite.*\)/s//NITROGEN/p')
 	WANDBOARD=$(scan_dmesg '/^imx0 at mainbus0: \(Wandboard i.MX6.*\)/s//WANDBOARD/p')
-
-	if [[ ${MDPLAT} == "IMX" && ! -n $WANDBOARD ]]; then
-		mount_args=${MOUNT_ARGS_ext2fs}
-	fi
 
 	mount ${mount_args} /dev/${_disk}i /mnt/mnt
 
@@ -139,25 +133,11 @@ md_prep_fdisk() {
 	local _disk=$1 _d
 
 	local bootparttype="C"
-	local bootsectorstart="64"
+	local bootsectorstart="2048"
 	local bootsectorsize="32768"
-	local bootsectorend
+	local bootsectorend=$(($bootsectorstart + $bootsectorsize))
 	local bootfstype="msdos"
 	local newfs_args=${NEWFSARGS_msdos}
-
-	CUBOX=$(scan_dmesg '/^imx0 at mainbus0: \(SolidRun.*\)/s//CUBOX/p')
-	WANDBOARD=$(scan_dmesg '/^imx0 at mainbus0: \(Wandboard i.MX6.*\)/s//WANDBOARD/p')
-
-	# imx needs an ext2fs filesystem
-	if [[ ${MDPLAT} == "IMX" && ! -n $WANDBOARD ]]; then
-		bootparttype="83"
-		bootfstype="ext2fs"
-		newfs_args=${NEWFSARGS_ext2fs}
-	fi
-	if [[ -n $CUBOX || -n $WANDBOARD ]]; then
-		bootsectorstart="2048"
-	fi
-	bootsectorend=$(($bootsectorstart + $bootsectorsize))
 
 	while :; do
 		_d=whole
