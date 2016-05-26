@@ -1,4 +1,4 @@
-#	$OpenBSD: tests,v 1.6 2014/09/21 05:06:23 doug Exp $
+#	$OpenBSD: tests,v 1.7 2016/05/26 13:38:22 schwarze Exp $
 #	$NetBSD: tests,v 1.5 1995/04/20 22:40:00 cgd Exp $
 
 # regular expression test set
@@ -63,6 +63,7 @@ a\(\)b		b	ab	ab
 
 # anchoring and REG_NEWLINE
 ^abc$		&	abc	abc
+^b		&	abc
 a^b		-	a^b
 a^b		b	a^b	a^b
 a$b		-	a$b
@@ -77,7 +78,10 @@ $^		-	""	@
 $$		-	""	@
 b$		&	abNc
 b$		&n	abNc	b
-^b$		&	aNbNc
+^b		&	aNbNc
+b$		&	aNbNc
+^a		&n	aNb	a
+^b		&n	abc
 ^b$		&n	aNbNc	b
 ^$		&n	aNNb	@Nb
 ^$		n	abc
@@ -86,12 +90,15 @@ $^		n	aNNb	@Nb
 \($\)\(^\)	bn	aNNb	@Nb
 ^^		n^	aNNb	@Nb
 $$		n	aNNb	@NN
-^a		^	a
-a$		$	a
-^a		^n	aNb
-^b		^n	aNb	b
-a$		$n	bNa
-b$		$n	bNa	b
+^a		&^	a
+a$		&$	a
+^b		&^	abc
+^b		&^	aNb
+^a		&^n	aNb
+^b		&^n	abc
+^b		&^n	aNb	b
+a$		&$n	bNa
+b$		&$n	bNa	b
 a*(^b$)c*	-	b	b
 a*\(^b$\)c*	b	b	b
 
@@ -452,7 +459,18 @@ a(b+|((c)*))+d	-	abd	abd	@d,@d,-
 a(b+|((c)*))+d	-	abcd	abcd	@d,@d,-
 
 # check out the STARTEND option
-[abc]		&#	a(b)c	b
+^[abc]		&#	a(b)c	b
+^[abc]		&#	a(xb)c
+^[abc]		&#	aN(b)c	b
+^[abc]		&n#	a(b)c	b
+^[abc]		&n#	a(xb)c
+^[abc]		&n#	aN(b)c	b
+^[abc]		&^#	a(b)c
+^[abc]		&^#	a(xb)c
+^[abc]		&^#	aN(b)c
+^[abc]		&n^#	a(b)c
+^[abc]		&n^#	a(xb)c
+^[abc]		&n^#	aN(b)c	b
 [abc]		&#	a(d)c
 [abc]		&#	a(bc)d	b
 [abc]		&#	a(dc)d	c
@@ -484,6 +502,64 @@ a.*		&#	(aZb)c	aZb
 \<a		&	ba
 [[:<:]]a	&	-a	a
 \<a		&	-a	a
+[[:<:]]a	&	Na	a
+\<a		&	Na	a
+[[:<:]]a	&n	a	a
+\<a		&n	a	a
+[[:<:]]a	&n	ba
+\<a		&n	ba
+[[:<:]]a	&n	-a	a
+\<a		&n	-a	a
+[[:<:]]a	&n	Na	a
+\<a		&n	Na	a
+[[:<:]]a	&^	a
+\<a		&^	a
+[[:<:]]a	&^	ba
+\<a		&^	ba
+[[:<:]]a	&^	-a	a
+\<a		&^	-a	a
+[[:<:]]a	&^	Na	a
+\<a		&^	Na	a
+[[:<:]]a	&n^	a
+\<a		&n^	a
+[[:<:]]a	&n^	ba
+\<a		&n^	ba
+[[:<:]]a	&n^	-a	a
+\<a		&n^	-a	a
+[[:<:]]a	&n^	Na	a
+\<a		&n^	Na	a
+[[:<:]]b	&#	a(b)c	b
+\<b		&#	a(b)c	b
+[[:<:]]b	&#	a(xb)c
+\<b		&#	a(xb)c
+[[:<:]]b	&#	-(b)c	b
+\<b		&#	-(b)c	b
+[[:<:]]b	&#	aN(b)c	b
+\<b		&#	aN(b)c	b
+[[:<:]]b	&n#	a(b)c	b
+\<b		&n#	a(b)c	b
+[[:<:]]b	&n#	a(xb)c
+\<b		&n#	a(xb)c
+[[:<:]]b	&n#	-(b)c	b
+\<b		&n#	-(b)c	b
+[[:<:]]b	&n#	aN(b)c	b
+\<b		&n#	aN(b)c	b
+[[:<:]]b	&^#	a(b)c
+\<b		&^#	a(b)c
+[[:<:]]b	&^#	a(xb)c
+\<b		&^#	a(xb)c
+[[:<:]]b	&^#	-(b)c	b
+\<b		&^#	-(b)c	b
+[[:<:]]b	&^#	aN(b)c	b
+\<b		&^#	aN(b)c	b
+[[:<:]]b	&n^#	a(b)c
+\<b		&n^#	a(b)c
+[[:<:]]b	&n^#	a(xb)c
+\<b		&n^#	a(xb)c
+[[:<:]]b	&n^#	-(b)c	b
+\<b		&n^#	-(b)c	b
+[[:<:]]b	&n^#	aN(b)c	b
+\<b		&n^#	aN(b)c	b
 a[[:>:]]	&	a	a
 a\>		&	a	a
 a[[:>:]]	&	ab
