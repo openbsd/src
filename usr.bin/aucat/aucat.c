@@ -423,38 +423,36 @@ slot_del(struct slot *s)
 	free(s);
 }
 
-static int
-play_filt_resamp(struct slot *s, void *res_in, void *out, int todo)
+static void
+play_filt_resamp(struct slot *s, void *res_in, void *out, int *icnt, int *ocnt)
 {
 	int i, offs, vol, nch;
 	void *in;
 
 	if (s->resampbuf) {
-		todo = resamp_do(&s->resamp,
-		    res_in, s->resampbuf, todo);
+		resamp_do(&s->resamp, res_in, s->resampbuf, icnt, ocnt);
 		in = s->resampbuf;
 	} else
 		in = res_in;
 
 	nch = s->cmap.nch;
 	vol = s->vol / s->join; /* XXX */
-	cmap_add(&s->cmap, in, out, vol, todo);
+	cmap_add(&s->cmap, in, out, vol, *ocnt);
 
 	offs = 0;
 	for (i = s->join - 1; i > 0; i--) {
 		offs += nch;
-		cmap_add(&s->cmap, (adata_t *)in + offs, out, vol, todo);
+		cmap_add(&s->cmap, (adata_t *)in + offs, out, vol, *ocnt);
 	}
 	offs = 0;
 	for (i = s->expand - 1; i > 0; i--) {
 		offs += nch;
-		cmap_add(&s->cmap, in, (adata_t *)out + offs, vol, todo);
+		cmap_add(&s->cmap, in, (adata_t *)out + offs, vol, *ocnt);
 	}
-	return todo;
 }
 
-static int
-play_filt_dec(struct slot *s, void *in, void *out, int todo)
+static void
+play_filt_dec(struct slot *s, void *in, void *out, int *icnt, int *ocnt)
 {
 	void *tmp;
 
@@ -462,20 +460,21 @@ play_filt_dec(struct slot *s, void *in, void *out, int todo)
 	if (tmp) {
 		switch (s->afile.fmt) {
 		case AFILE_FMT_PCM:
-			dec_do(&s->conv, in, tmp, todo);
+			dec_do(&s->conv, in, tmp, *icnt);
 			break;
 		case AFILE_FMT_ULAW:
-			dec_do_ulaw(&s->conv, in, tmp, todo, 0);
+			dec_do_ulaw(&s->conv, in, tmp, *icnt, 0);
 			break;
 		case AFILE_FMT_ALAW:
-			dec_do_ulaw(&s->conv, in, tmp, todo, 1);
+			dec_do_ulaw(&s->conv, in, tmp, *icnt, 1);
 			break;
 		case AFILE_FMT_FLOAT:
-			dec_do_float(&s->conv, in, tmp, todo);
+			dec_do_float(&s->conv, in, tmp, *icnt);
 			break;
 		}
-	}
-	return play_filt_resamp(s, tmp ? tmp : in, out, todo);
+	} else
+		tmp = in;
+	play_filt_resamp(s, tmp, out, icnt, ocnt);
 }
 
 /*
@@ -487,25 +486,26 @@ static int
 slot_mix_badd(struct slot *s, adata_t *odata)
 {
 	adata_t *idata;
-	int icount, todo, done;
+	int len, icnt, ocnt;
 
-	idata = (adata_t *)abuf_rgetblk(&s->buf, &icount);
-	todo = icount / s->bpf;
-	if (todo > s->round)
-		todo = s->round;
+	idata = (adata_t *)abuf_rgetblk(&s->buf, &len);
+	icnt = len / s->bpf;
+	if (icnt > s->round)
+		icnt = s->round;
 #ifdef DEBUG
-	if (todo == 0) {
+	if (icnt == 0) {
 		log_puts("slot_mix_badd: not enough data\n");
 		panic();
 	}
 #endif
-	done = play_filt_dec(s, idata, odata, todo);
-	abuf_rdiscard(&s->buf, todo * s->bpf);
-	return done;
+	ocnt = dev_round;
+	play_filt_dec(s, idata, odata, &icnt, &ocnt);
+	abuf_rdiscard(&s->buf, icnt * s->bpf);
+	return ocnt;
 }
 
-static int
-rec_filt_resamp(struct slot *s, void *in, void *res_out, int todo)
+static void
+rec_filt_resamp(struct slot *s, void *in, void *res_out, int *icnt, int *ocnt)
 {
 	int i, vol, offs, nch;
 	void *out = res_out;
@@ -514,35 +514,33 @@ rec_filt_resamp(struct slot *s, void *in, void *res_out, int todo)
 
 	nch = s->cmap.nch;
 	vol = ADATA_UNIT / s->join;
-	cmap_copy(&s->cmap, in, out, vol, todo);
+	cmap_copy(&s->cmap, in, out, vol, *icnt);
 
 	offs = 0;
 	for (i = s->join - 1; i > 0; i--) {
 		offs += nch;
-		cmap_add(&s->cmap, (adata_t *)in + offs, out, vol, todo);
+		cmap_add(&s->cmap, (adata_t *)in + offs, out, vol, *icnt);
 	}
 	offs = 0;
 	for (i = s->expand - 1; i > 0; i--) {
 		offs += nch;
-		cmap_copy(&s->cmap, in, (adata_t *)out + offs, vol, todo);
+		cmap_copy(&s->cmap, in, (adata_t *)out + offs, vol, *icnt);
 	}
-	if (s->resampbuf) {
-		todo = resamp_do(&s->resamp,
-		    s->resampbuf, res_out, todo);
-	}
-	return todo;
+	if (s->resampbuf)
+		resamp_do(&s->resamp, s->resampbuf, res_out, icnt, ocnt);
+	else
+		*ocnt = *icnt;
 }
 
-static int
-rec_filt_enc(struct slot *s, void *in, void *out, int todo)
+static void
+rec_filt_enc(struct slot *s, void *in, void *out, int *icnt, int *ocnt)
 {
 	void *tmp;
 
 	tmp = s->convbuf;
-	todo = rec_filt_resamp(s, in, tmp ? tmp : out, todo);
+	rec_filt_resamp(s, in, tmp ? tmp : out, icnt, ocnt);
 	if (tmp)
-		enc_do(&s->conv, tmp, out, todo);
-	return todo;
+		enc_do(&s->conv, tmp, out, *ocnt);
 }
 
 /*
@@ -553,17 +551,19 @@ static void
 slot_sub_bcopy(struct slot *s, adata_t *idata, int todo)
 {
 	adata_t *odata;
-	int ocount;
+	int len, icnt, ocnt;
 
-	odata = (adata_t *)abuf_wgetblk(&s->buf, &ocount);
+	odata = (adata_t *)abuf_wgetblk(&s->buf, &len);
 #ifdef DEBUG
-	if (ocount < s->round * s->bpf) {
+	if (len < s->round * s->bpf) {
 		log_puts("slot_sub_bcopy: not enough space\n");
 		panic();
 	}
 #endif
-	ocount = rec_filt_enc(s, idata, odata, todo);
-	abuf_wcommit(&s->buf, ocount * s->bpf);
+	icnt = todo;
+	ocnt = len / s->bpf;
+	rec_filt_enc(s, idata, odata, &icnt, &ocnt);
+	abuf_wcommit(&s->buf, ocnt * s->bpf);
 }
 
 static int

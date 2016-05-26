@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.3 2016/01/10 11:06:44 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.4 2016/05/26 06:17:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -270,8 +270,8 @@ aparams_native(struct aparams *par)
 /*
  * resample the given number of frames
  */
-int
-resamp_do(struct resamp *p, adata_t *in, adata_t *out, int todo)
+void
+resamp_do(struct resamp *p, adata_t *in, adata_t *out, int *icnt, int *ocnt)
 {
 	unsigned int nch;
 	adata_t *idata;
@@ -298,8 +298,8 @@ resamp_do(struct resamp *p, adata_t *in, adata_t *out, int todo)
 	ctxbuf = p->ctx;
 	ctx_start = p->ctx_start;
 	nch = p->nch;
-	ifr = todo;
-	ofr = oblksz;
+	ifr = *icnt;
+	ofr = *ocnt;
 
 	/*
 	 * Start conversion.
@@ -307,9 +307,11 @@ resamp_do(struct resamp *p, adata_t *in, adata_t *out, int todo)
 #ifdef DEBUG
 	if (log_level >= 4) {
 		log_puts("resamp: copying ");
-		log_puti(todo);
+		log_puti(ifr);
 		log_puts(" frames, diff = ");
 		log_putu(diff);
+		log_puts(", max = ");
+		log_putu(ofr);
 		log_puts("\n");
 	}
 #endif
@@ -359,7 +361,8 @@ resamp_do(struct resamp *p, adata_t *in, adata_t *out, int todo)
 	}
 	p->diff = diff;
 	p->ctx_start = ctx_start;
-	return oblksz - ofr;
+	*icnt -= ifr;
+	*ocnt -= ofr;
 }
 
 /*
