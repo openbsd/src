@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.7 2010/06/16 23:33:38 todd Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 2016/05/26 16:29:51 deraadt Exp $
 
 M=${.CURDIR:C/^.*\/etc\.([^\/]*)$/\1/}
 
@@ -61,7 +61,7 @@ ${DOCDIR}/MAKEDEV.8: ${MAKEDEVDOC}
 		mdiffout1 > mdiffout2; \
 	    if [ -s mdiffout2 ]; then \
 		echo "    m4 -I.. -I. ../MAKEDEV.man > ${DOCDIR}/MAKEDEV.8"; \
-	    	cp MAKEDEV.mtmp ${DOCDIR}/MAKEDEV.8 || true; \
+		cp MAKEDEV.mtmp ${DOCDIR}/MAKEDEV.8 || true; \
 		${NOCLEAN} rm MAKEDEV.mtmp; \
 	    fi; \
 	    ${NOCLEAN} rm -f mdiffout1 mdiffout2; \

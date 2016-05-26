@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.424 2016/05/14 14:44:35 ajacoutot Exp $
+#	$OpenBSD: Makefile,v 1.425 2016/05/26 16:29:51 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -47,7 +47,7 @@ EXAMPLES=chio.conf dhclient.conf dhcpd.conf exports \
 EXAMPLES_600=bgpd.conf dvmrpd.conf eigrpd.conf hostapd.conf iked.conf \
 	ipsec.conf ldapd.conf ldpd.conf ospf6d.conf ospfd.conf pf.conf \
 	radiusd.conf rc.local rc.securelevel rc.shutdown relayd.conf \
-	ripd.conf sasyncd.conf snmpd.conf vm.conf ypldap.conf 
+	ripd.conf sasyncd.conf snmpd.conf vm.conf ypldap.conf
 
 # -r-xr-xr-x
 RCDAEMONS=amd apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd eigrpd ftpd \
@@ -213,7 +213,7 @@ distribution-etc-root-var: distrib-dirs
 		xargs sha256 -h ${DESTDIR}/var/sysmerge/etcsum || true
 	cd ${DESTDIR}/ && \
 		sort ${.CURDIR}/../distrib/sets/lists/etc/{mi,md.${MACHINE}} | \
-	    	pax -w -d | gzip -9 > ${DESTDIR}/var/sysmerge/etc.tgz
+		pax -w -d | gzip -9 > ${DESTDIR}/var/sysmerge/etc.tgz
 
 distribution:
 	exec ${SUDO} ${MAKE} distribution-etc-root-var

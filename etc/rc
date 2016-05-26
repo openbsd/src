@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.481 2016/05/26 14:59:48 rpe Exp $
+#	$OpenBSD: rc,v 1.482 2016/05/26 16:29:51 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -210,7 +210,7 @@ reorder_libs() {
 	if $_remount; then
 		mount -u -r $_dkdev
 	fi
-	
+
 	echo ' done.'
 }
 
@@ -311,7 +311,7 @@ if [[ $1 == shutdown ]]; then
 	exit 0
 fi
 
-# Add swap block-devices. 
+# Add swap block-devices.
 swapctl -A -t blk
 
 if [[ -e /fastboot ]]; then
