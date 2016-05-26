@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.55 2016/05/22 22:52:01 guenther Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.56 2016/05/26 13:37:26 stefan Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,6 +108,56 @@ static int	proc_verify(kvm_t *, const struct kinfo_proc *);
 static void	ps_str_a(struct ps_strings *, u_long *, int *);
 static void	ps_str_e(struct ps_strings *, u_long *, int *);
 
+static struct vm_anon *
+_kvm_findanon(kvm_t *kd, struct vm_amap *amapp, int slot)
+{
+	u_long addr;
+	int bucket;
+	struct vm_amap amap;
+	struct vm_amap_chunk chunk, *chunkp;
+	struct vm_anon *anonp;
+
+	addr = (u_long)amapp;
+	if (KREAD(kd, addr, &amap))
+		return (NULL);
+
+	/* sanity-check slot number */
+	if (slot > amap.am_nslot)
+		return (NULL);
+
+	if (UVM_AMAP_SMALL(&amap))
+		chunkp = &amapp->am_small;
+	else {
+		bucket = UVM_AMAP_BUCKET(&amap, slot);
+		addr = (u_long)(amap.am_buckets + bucket);
+		if (KREAD(kd, addr, &chunkp))
+			return (NULL);
+
+		while (chunkp != NULL) {
+			addr = (u_long)chunkp;
+			if (KREAD(kd, addr, &chunk))
+				return (NULL);
+
+			if (UVM_AMAP_BUCKET(&amap, chunk.ac_baseslot) !=
+			    bucket)
+				return (NULL);
+			if (slot >= chunk.ac_baseslot &&
+			    slot < chunk.ac_baseslot + chunk.ac_nslot)
+				break;
+
+			chunkp = TAILQ_NEXT(&chunk, ac_list);
+		}
+		if (chunkp == NULL)
+			return (NULL);
+	}
+
+	addr = (u_long)&chunkp->ac_anon[UVM_AMAP_SLOTIDX(slot)];
+	if (KREAD(kd, addr, &anonp))
+		return (NULL);
+
+	return (anonp);
+}
+
 static char *
 _kvm_ureadm(kvm_t *kd, const struct kinfo_proc *p, u_long va, u_long *cnt)
 {
@@ -115,7 +165,6 @@ _kvm_ureadm(kvm_t *kd, const struct kinfo_proc *p, u_long va, u_long *cnt)
 	struct vmspace vm;
 	struct vm_anon *anonp, anon;
 	struct vm_map_entry vme;
-	struct vm_amap amap;
 	struct vm_page pg;
 
 	if (kd->swapspc == 0) {
@@ -153,18 +202,11 @@ _kvm_ureadm(kvm_t *kd, const struct kinfo_proc *p, u_long va, u_long *cnt)
 	if (vme.aref.ar_amap == NULL)
 		return (NULL);
 
-	addr = (u_long)vme.aref.ar_amap;
-	if (KREAD(kd, addr, &amap))
-		return (NULL);
-
 	offset = va - vme.start;
 	slot = offset / kd->nbpg + vme.aref.ar_pageoff;
-	/* sanity-check slot number */
-	if (slot > amap.am_nslot)
-		return (NULL);
 
-	addr = (u_long)amap.am_anon + (offset / kd->nbpg) * sizeof(anonp);
-	if (KREAD(kd, addr, &anonp))
+	anonp = _kvm_findanon(kd, vme.aref.ar_amap, slot);
+	if (anonp == NULL)
 		return (NULL);
 
 	addr = (u_long)anonp;
