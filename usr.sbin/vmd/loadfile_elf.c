@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.14 2016/04/07 07:02:57 mlarkin Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.15 2016/05/26 17:10:15 stefan Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ static void push_gdt(void);
 static size_t mread(int, paddr_t, size_t);
 static void marc4random_buf(paddr_t, int);
 static void mbzero(paddr_t, int);
-static void mbcopy(char *, char *, int);
+static void mbcopy(void *, paddr_t, int);
 
 extern char *__progname;
 extern int vm_id;
@@ -593,22 +593,20 @@ mbzero(paddr_t addr, int sz)
 /*
  * mbcopy
  *
- * copies 'sz' bytes from guest paddr 'src' to guest paddr 'dst'.
+ * copies 'sz' bytes from buffer 'src' to guest paddr 'dst'.
  *
  * Parameters:
- *  src: source guest paddr_t to copy from
+ *  src: source buffer to copy from
  *  dst: destination guest paddr_t to copy to
  *  sz: number of bytes to copy
  *
  * Return values:
  *  nothing
- *
- * XXX - unimplemented. this is used when loading symbols.
  */
 static void
-mbcopy(char *src, char *dst, int sz)
+mbcopy(void *src, paddr_t dst, int sz)
 {
-	log_warnx("warning: bcopy during ELF kernel load not supported");
+	write_mem(dst, src, sz);
 }
 
 /*
@@ -805,7 +803,7 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
 			}
 		}
 		if (flags & LOAD_SYM) {
-			mbcopy((char *)shp, (char *)shpp, sz);
+			mbcopy(shp, shpp, sz);
 		}
 		free(shstr);
 		free(shp);
@@ -820,7 +818,7 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
 		elf->e_shoff = sizeof(Elf64_Ehdr);
 		elf->e_phentsize = 0;
 		elf->e_phnum = 0;
-		mbcopy((char *)elf, (char *)elfp, sizeof(*elf));
+		mbcopy(elf, elfp, sizeof(*elf));
 	}
 
 	marks[MARK_START] = LOADADDR(minp);
@@ -1026,7 +1024,7 @@ elf32_exec(int fd, Elf32_Ehdr *elf, u_long *marks, int flags)
 			}
 		}
 		if (flags & LOAD_SYM) {
-			mbcopy((void *)shp, (void *)shpp, sz);
+			mbcopy(shp, shpp, sz);
 		}
 		free(shstr);
 		free(shp);
@@ -1041,7 +1039,7 @@ elf32_exec(int fd, Elf32_Ehdr *elf, u_long *marks, int flags)
 		elf->e_shoff = sizeof(Elf32_Ehdr);
 		elf->e_phentsize = 0;
 		elf->e_phnum = 0;
-		mbcopy((void *)elf, (void *)elfp, sizeof(*elf));
+		mbcopy(elf, elfp, sizeof(*elf));
 	}
 
 	marks[MARK_START] = LOADADDR(minp);
