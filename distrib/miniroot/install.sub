@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.898 2016/05/22 19:12:21 rpe Exp $
+#	$OpenBSD: install.sub,v 1.899 2016/05/26 15:27:09 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1488,7 +1488,7 @@ install_http() {
 	install_files "$_url_base" "$_file_list"
 
 	# Remember where we installed from, to tell the cgi server.
-	INSTALL=$_url_base
+	INSTALL_URL=$_url_base
 
 	# Bake a package path only if we installed from a mirror.
 	PACKAGE_PATH=
@@ -2195,20 +2195,20 @@ install_sets() {
 		[cC]*)	if [[ -n $_cddevs ]]; then
 				set -- $_cddevs
 				[[ $resp == [cC]?([dD]) ]] && resp=$1
-				install_cdrom $resp && METHOD=$resp
+				install_cdrom $resp && INSTALL_METHOD=$resp
 			fi
 			;;
-		[dD]*)	install_disk && METHOD=disk
+		[dD]*)	install_disk && INSTALL_METHOD=disk
 			;;
-		[hH]*)	isin http $_locs && install_http && METHOD=http
+		[hH]*)	isin http $_locs && install_http && INSTALL_METHOD=http
 			;;
-		[nN]*)	isin nfs $_locs && install_nfs && METHOD=nfs
+		[nN]*)	isin nfs $_locs && install_nfs && INSTALL_METHOD=nfs
 			;;
 		*)	$AUTO && echo "'$resp' is not a valid choice." && exit 1
 			;;
 		esac
 
-		[[ -n $METHOD ]] && _d=$METHOD
+		[[ -n $INSTALL_METHOD ]] && _d=$INSTALL_METHOD
 		sane_install quiet || $AUTO && _d=done
 	done
 }
@@ -2502,9 +2502,9 @@ do_install(){
 	# If we managed to talk to the cgi server before, tell it what
 	# location we used... so it can perform magic next time.
 	if [[ -s $HTTP_LIST ]]; then
-		_i=${INSTALL:+install=$INSTALL&}
+		_i=${INSTALL_URL:+install=$INSTALL_URL&}
 		_i=$_i${TZ:+TZ=$TZ&}
-		_i=$_i${METHOD:+method=$METHOD}
+		_i=$_i${INSTALL_METHOD:+method=$INSTALL_METHOD}
 		_i=${_i%&}
 		[[ -n $_i ]] && ftp -Vao - \
 			"http://129.128.5.191/cgi-bin/ftpinstall.cgi?$_i" >/dev/null 2>&1 &
@@ -2749,8 +2749,8 @@ CGI_INFO=/tmp/cgiinfo
 CGI_TZ=
 CGI_TIME=
 CGI_METHOD=
-INSTALL=
-METHOD=
+INSTALL_URL=
+INSTALL_METHOD=
 HTTP_DIR=
 HTTP_SEC=/tmp/httpsec
 HTTP_LIST=/tmp/httplist
