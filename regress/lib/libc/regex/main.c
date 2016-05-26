@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 2016/05/26 13:33:53 schwarze Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 2016/05/26 14:17:58 schwarze Exp $	*/
 /*	$NetBSD: main.c,v 1.2 1995/04/20 22:39:51 cgd Exp $	*/
 
 #include <stdio.h>
@@ -454,7 +454,6 @@ char *should;
 	}
 
 	len = (int)(sub.rm_eo - sub.rm_so);
-	shlen = (int)strlen(should);
 	p = str + sub.rm_so;
 
 	/* check for not supposed to match */
@@ -464,6 +463,7 @@ char *should;
 	}
 
 	/* check for wrong match */
+	shlen = (int)strlen(should);
 	if (len != shlen || strncmp(p, should, (size_t)shlen) != 0) {
 		snprintf(grump, sizeof grump, "matched `%.*s' instead", len, p);
 		return(grump);
