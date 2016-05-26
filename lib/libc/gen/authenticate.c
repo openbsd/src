@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.25 2015/11/24 22:03:33 millert Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.26 2016/05/26 15:51:37 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -282,8 +282,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 	    pwd->pw_dir[0]) {
 		struct stat sb;
 
-		if (stat(pwd->pw_dir, &sb) < 0 ||
-		    (sb.st_mode & 0170000) != S_IFDIR ||
+		if (stat(pwd->pw_dir, &sb) < 0 || !S_ISDIR(sb.st_mode) ||
 		    (pwd->pw_uid && sb.st_uid == pwd->pw_uid &&
 		    (sb.st_mode & S_IXUSR) == 0)) {
 			auth_setstate(as, (auth_getstate(as) & ~AUTH_ALLOW));
