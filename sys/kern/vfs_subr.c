@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.246 2016/04/26 18:23:07 natano Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.247 2016/05/26 16:03:29 natano Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -84,7 +84,6 @@ int	vttoif_tab[9] = {
 	S_IFSOCK, S_IFIFO, S_IFMT,
 };
 
-int doforce = 1;		/* 1 => permit forcible unmounting */
 int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
 int suid_clear = 1;		/* 1 => clear SUID / SGID on owner change */
 

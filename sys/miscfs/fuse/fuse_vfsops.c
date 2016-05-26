@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.21 2016/04/26 18:37:02 natano Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.22 2016/05/26 16:03:29 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -135,19 +135,13 @@ fusefs_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
 	struct fusefs_mnt *fmp;
 	struct fusebuf *fbuf;
-	extern int doforce;
 	int flags = 0;
 	int error;
 
 	fmp = VFSTOFUSEFS(mp);
 
-	if (mntflags & MNT_FORCE) {
-		/* fusefs can never be rootfs so don't check for it */
-		if (!doforce)
-			return (EINVAL);
-
+	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	}
 
 	if ((error = vflush(mp, NULLVP, flags)))
 		return (error);
