@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.480 2016/05/22 15:16:47 rpe Exp $
+#	$OpenBSD: rc,v 1.481 2016/05/26 14:59:48 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -158,10 +158,20 @@ make_keys() {
 	ssh-keygen -A
 }
 
-rebuildlibs() {
-	local _l _liba _libas _tmpdir
+reorder_libs() {
+	local _l _liba _libas _tmpdir _remount=false
+	local _dkdev=/dev/$(stat -L -f '%Sd' /usr/lib)
+	local _mp=$(mount | grep "^$_dkdev")
 
-	# Only choose newest
+	echo -n 'reordering libraries:'
+
+	# Skip if /usr/lib is on a nfs mounted filesystem.
+	if [[ $_mp == *' type nfs '* ]]; then
+		echo ' skipped.'
+		return
+	fi
+
+	# Only choose the latest version of the libraries.
 	for _liba in /usr/lib/libc.so.*.a; do
 		_liba=$(ls ${_liba%%.[0-9]*}*.a | sort -V | tail -1)
 		for _l in $_libas; do
@@ -169,6 +179,16 @@ rebuildlibs() {
 		done
 		_libas="$_libas $_liba"
 	done
+
+	# Remount read-write, if /usr/lib is on a read-only ffs filesystem.
+	if [[ $_mp == *' type ffs '*'read-only'* ]]; then
+		if mount -u -w $_dkdev; then
+			_remount=true
+		else
+			echo ' failed.'
+			return
+		fi
+	fi
 
 	for _liba in $_libas; do
 		_tmpdir=$(mktemp -dq /tmp/_librebuild.XXXXXXXXXXXX) || return
@@ -185,6 +205,13 @@ rebuildlibs() {
 		)
 		rm -rf /tmp/_librebuild.${_tmpdir#*.}
 	done
+
+	# Restore previous mount state if it was changed.
+	if $_remount; then
+		mount -u -r $_dkdev
+	fi
+	
+	echo ' done.'
 }
 
 run_upgrade_script() {
@@ -378,9 +405,7 @@ mount -s /var >/dev/null 2>&1
 
 random_seed
 
-echo -n 'reordering libraries:'
-rebuildlibs
-echo ' done.'
+reorder_libs
 
 # Clean up left-over files.
 rm -f /etc/nologin /var/spool/lock/LCK.* /var/spool/uucp/STST/*
