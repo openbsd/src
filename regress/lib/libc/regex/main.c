@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 2007/09/12 19:32:35 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 2016/05/26 13:33:53 schwarze Exp $	*/
 /*	$NetBSD: main.c,v 1.2 1995/04/20 22:39:51 cgd Exp $	*/
 
 #include <stdio.h>
@@ -260,6 +260,9 @@ int opts;			/* may not match f1 */
 			fprintf(stderr, "%d: bad STARTEND syntax\n", line);
 		subs[0].rm_so = strchr(f2, '(') - f2 + 1;
 		subs[0].rm_eo = strchr(f2, ')') - f2;
+		/* the preceding character is relevant with REG_NOTBOL */
+		f2copy[subs[0].rm_so - 1] = subs[0].rm_so > 1 ?
+		    f2copy[subs[0].rm_so - 2] : 'X';
 	}
 	err = regexec(&re, f2copy, NSUBS, subs, options('e', f1));
 
