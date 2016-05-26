@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.16 2015/09/21 10:40:16 sobrado Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.17 2016/05/26 11:47:13 mikeb Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 21 2015 $
+.Dd $Mdocdate: May 26 2016 $
 .Dt NPPPD.CONF 5
 .Os
 .Sh NAME
@@ -107,6 +107,7 @@ This option is for L2TP only.
 Specify the maximum time that
 .Xr npppd 8
 waits for L2TP hello responses, in seconds.
+The default value is 30.
 This option is for L2TP only.
 .It Ic l2tp-accept-dialin Ar yes | no
 If
@@ -114,7 +115,8 @@ If
 is specified,
 .Xr npppd 8
 accepts Proxy-LCP and Proxy-Authentication AVPs from LAC
-to do `compulsory tunneling mode'.
+to do
+.Dq compulsory tunneling mode .
 The default is
 .Dq no .
 This option is for L2TP only.
@@ -319,12 +321,11 @@ Stateful mode key changes.
 Stateless mode key changes.
 .El
 .It Ic idle-timeout Ar number
-Specify the timeout value for the idle timer, in seconds.
-The idle timer disconnects the link if the link is idle for the time
-specified by this value.
-The link is treated as idle if no data packets are sent or received.
-0 means disable the idle timer.
-The default value is 0.
+Specify the value for the idle timer, in seconds.
+The link is disconnected if there are no data packets sent or received
+for more than the amount of the
+.Ar idle-timeout .
+The default is 0, which disables the idle timer.
 .It Ic tcp-mss-adjust Ar yes | no
 If
 .Dq yes
@@ -567,14 +568,14 @@ Specify whether
 .Xr npppd 8
 removes the NT domain prefix,
 such as '\e\eNTDOMAIN\e',
-from the username before requesting the authentication server.
+from the username before contacting the authentication server.
 The default is
 .Dq no .
 .It Ic strip-atmark-realm Ar yes | no
 Specify whether
 .Xr npppd 8
-removes the realm part that begins '@' (atmark)
-from the username before requesting the authentication server.
+removes the realm part that begins with an at sign ('@')
+from the username before contacting the authentication server.
 The default is
 .Dq no .
 .It Ic users-file Ar string
