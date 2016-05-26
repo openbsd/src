@@ -1,4 +1,4 @@
-#	$OpenBSD: tests,v 1.7 2016/05/26 13:38:22 schwarze Exp $
+#	$OpenBSD: tests,v 1.8 2016/05/26 14:23:55 schwarze Exp $
 #	$NetBSD: tests,v 1.5 1995/04/20 22:40:00 cgd Exp $
 
 # regular expression test set
@@ -200,6 +200,9 @@ foo\(.*\)bar\1	b	foobar	foobar	""
 \(\(.\)b\)*\1	b	abbbbbba	abbbbb	bb,b
 \(\(.\)b\)*\1	b	abbbbbbbbbbbbbba	abbbbbbbbbbbbb	bb,b
 \(\(.\)b\)*\1	b	abbbbbbbbbbbbbbba	abbbbbbbbbbbbbbb	bb,b
+# these used to segfault, buffer underflow in engine.c, backref()
+\(^a\)*\(b.\)\2	b^	sbxbxe	bxbx	-,bx
+\([[:<:]]a\)*\(b.\)\2	b^	sbxbxe	bxbx	-,bx
 
 # ordinary repetitions
 ab*c		&	abc	abc
