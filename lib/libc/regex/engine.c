@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.22 2016/05/25 21:01:11 schwarze Exp $	*/
+/*	$OpenBSD: engine.c,v 1.23 2016/05/26 05:46:44 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -671,11 +671,16 @@ fast(struct match *m, char *start, char *stop, sopno startst, sopno stopst)
 	states fresh = m->fresh;
 	states tmp = m->tmp;
 	char *p = start;
-	int c = (start == m->beginp) ? OUT : *(start-1);
+	int c;
 	int lastc;	/* previous c */
 	int flagch;
 	int i;
 	char *coldp;	/* last p after which no match was underway */
+
+	if (start == m->offp || (start == m->beginp && !(m->eflags&REG_NOTBOL)))
+		c = OUT;
+	else
+		c = *(start-1);
 
 	CLEAR(st);
 	SET1(st, startst);
@@ -754,11 +759,16 @@ slow(struct match *m, char *start, char *stop, sopno startst, sopno stopst)
 	states empty = m->empty;
 	states tmp = m->tmp;
 	char *p = start;
-	int c = (start == m->beginp) ? OUT : *(start-1);
+	int c;
 	int lastc;	/* previous c */
 	int flagch;
 	int i;
 	char *matchp;	/* last p at which a match ended */
+
+	if (start == m->offp || (start == m->beginp && !(m->eflags&REG_NOTBOL)))
+		c = OUT;
+	else
+		c = *(start-1);
 
 	AT("slow", start, stop, startst, stopst);
 	CLEAR(st);

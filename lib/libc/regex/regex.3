@@ -1,4 +1,4 @@
-.\"	$OpenBSD: regex.3,v 1.26 2015/11/10 23:48:18 jmc Exp $
+.\"	$OpenBSD: regex.3,v 1.27 2016/05/26 05:46:44 martijn Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)regex.3	8.4 (Berkeley) 3/20/94
 .\"
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: May 26 2016 $
 .Dt REGEXEC 3
 .Os
 .Sh NAME
@@ -225,11 +225,16 @@ argument is the bitwise
 of zero or more of the following values:
 .Bl -tag -width XREG_STARTENDX
 .It Dv REG_NOTBOL
-The first character of
-the string
-is not the beginning of a line, so the
-.Ql ^
-anchor should not match before it.
+The first character of the string is treated as the continuation
+of a line.
+This means that the anchors
+.Ql ^ ,
+.Ql [[:<:]] ,
+and
+.Ql \e<
+do not match before it; but see
+.Dv REG_STARTEND
+below.
 This does not affect the behavior of newlines under
 .Dv REG_NEWLINE .
 .It Dv REG_NOTEOL
@@ -237,15 +242,16 @@ The NUL terminating
 the string
 does not end a line, so the
 .Ql $
-anchor should not match before it.
+anchor does not match before it.
 This does not affect the behavior of newlines under
 .Dv REG_NEWLINE .
 .It Dv REG_STARTEND
 The string is considered to start at
-\fIstring\fR\ + \fIpmatch\fR[0].\fIrm_so\fR
-and to have a terminating NUL located at
-\fIstring\fR\ + \fIpmatch\fR[0].\fIrm_eo\fR
-(there need not actually be a NUL at that location),
+.Fa string No +
+.Fa pmatch Ns [0]. Ns Fa rm_so
+and to end before the byte located at
+.Fa string No +
+.Fa pmatch Ns [0]. Ns Fa rm_eo ,
 regardless of the value of
 .Fa nmatch .
 See below for the definition of
@@ -257,11 +263,37 @@ compatible with but not specified by
 .St -p1003.2 ,
 and should be used with
 caution in software intended to be portable to other systems.
-Note that a non-zero \fIrm_so\fR does not imply
-.Dv REG_NOTBOL ;
-.Dv REG_STARTEND
-affects only the location of the string,
-not how it is matched.
+.Pp
+Without
+.Dv REG_NOTBOL ,
+the position
+.Fa rm_so
+is considered the beginning of a line, such that
+.Ql ^
+matches before it, and the beginning of a word if there is a word
+character at this position, such that
+.Ql [[:<:]]
+and
+.Ql \e<
+match before it.
+.Pp
+With
+.Dv REG_NOTBOL ,
+the character at position
+.Fa rm_so
+is treated as the continuation of a line, and if
+.Fa rm_so
+is greater than 0, the preceding character is taken into consideration.
+If the preceding character is a newline and the regular expression was compiled
+with
+.Dv REG_NEWLINE ,
+.Ql ^
+matches before the string; if the preceding character is not a word character
+but the string starts with a word character,
+.Ql [[:<:]]
+and
+.Ql \e<
+match before the string.
 .El
 .Pp
 See
