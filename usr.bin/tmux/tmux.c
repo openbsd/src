@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.169 2016/05/04 21:29:47 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.170 2016/05/27 17:05:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -53,7 +53,7 @@ usage(void)
 	fprintf(stderr,
 	    "usage: %s [-2Cluv] [-c shell-command] [-f file] [-L socket-name]\n"
 	    "            [-S socket-path] [command [flags]]\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
 
@@ -95,7 +95,7 @@ areshell(const char *shell)
 		ptr++;
 	else
 		ptr = shell;
-	progname = __progname;
+	progname = getprogname();
 	if (*progname == '-')
 		progname++;
 	if (strcmp(ptr, progname) == 0)
