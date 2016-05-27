@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.60 2016/05/09 13:48:57 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.61 2016/05/27 11:25:57 sthen Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 9 2016 $
+.Dd $Mdocdate: May 27 2016 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -421,7 +421,7 @@ can only succeed after the handshake is complete.
 .Fn tls_peer_cert_contains_name
 checks if the peer of a TLS
 .Ar ctx
-has povided a certificate that contains a
+has provided a certificate that contains a
 SAN or CN that matches
 .Ar name .
 .Fn tls_peer_cert_contains_name
