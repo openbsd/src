@@ -975,9 +975,11 @@ slot_list_iodo(void)
 	for (s = slot_list; s != NULL; s = s->next) {
 		if (s->pstate != SLOT_RUN)
 			continue;
-		if ((s->mode & SIO_PLAY) && (s->buf.used == 0))
+		if ((s->mode & SIO_PLAY) &&
+		    (s->buf.used < s->round * s->bpf))
 			slot_fill(s);
-		if ((s->mode & SIO_REC) && (s->buf.used == s->buf.len))
+		if ((s->mode & SIO_REC) &&
+		    (s->buf.len - s->buf.used < s->round * s->bpf))
 			slot_flush(s);
 	}
 }
