@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.17 2016/05/27 14:27:22 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.18 2016/05/27 14:38:40 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -306,7 +306,7 @@ tls_config_set_dheparams(struct tls_config *config, const char *params)
 	else if (strcasecmp(params, "legacy") == 0)
 		keylen = 1024;
 	else {
-		tls_set_config_errorx(config, "invalid dhe param '%s'", params);
+		tls_config_set_errorx(config, "invalid dhe param '%s'", params);
 		return (-1);
 	}
 
@@ -325,7 +325,7 @@ tls_config_set_ecdhecurve(struct tls_config *config, const char *name)
 	else if (strcasecmp(name, "auto") == 0)
 		nid = -1;
 	else if ((nid = OBJ_txt2nid(name)) == NID_undef) {
-		tls_set_config_errorx(config, "invalid ecdhe curve '%s'", name);
+		tls_config_set_errorx(config, "invalid ecdhe curve '%s'", name);
 		return (-1);
 	}
 
