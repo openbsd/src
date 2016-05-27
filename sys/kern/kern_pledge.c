@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.166 2016/05/15 05:04:28 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.167 2016/05/27 16:33:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -295,7 +295,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_readlinkat] = PLEDGE_RPATH | PLEDGE_WPATH,
 	[SYS_lstat] = PLEDGE_RPATH | PLEDGE_WPATH | PLEDGE_TMPPATH,
 	[SYS_truncate] = PLEDGE_WPATH,
-	[SYS_rename] = PLEDGE_CPATH,
+	[SYS_rename] = PLEDGE_RPATH | PLEDGE_CPATH,
 	[SYS_rmdir] = PLEDGE_CPATH,
 	[SYS_renameat] = PLEDGE_CPATH,
 	[SYS_link] = PLEDGE_CPATH,
