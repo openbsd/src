@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.107 2016/05/06 22:06:09 jca Exp $	*/
+/*	$OpenBSD: main.c,v 1.108 2016/05/27 15:16:16 jsing Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -194,6 +194,8 @@ main(volatile int argc, char *argv[])
 
 #ifndef SMALL
 	cookiefile = getenv("http_cookies");
+	if (tls_init() != 0)
+		errx(1, "tls init failed");
 	if (tls_config == NULL) {
 		tls_config = tls_config_new();
 		if (tls_config == NULL)
