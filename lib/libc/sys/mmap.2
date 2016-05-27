@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.51 2014/07/10 19:00:23 matthew Exp $
+.\"	$OpenBSD: mmap.2,v 1.52 2016/05/27 19:45:04 deraadt Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mmap.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 10 2014 $
+.Dd $Mdocdate: May 27 2016 $
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -273,6 +273,16 @@ was specified and the
 parameter wasn't available.
 .Dv MAP_ANON
 was specified and insufficient memory was available.
+.It Bq Er ENOTSUP
+The accesses requested in the
+.Ar prot
+argument are not allowed.
+In particular,
+.Dv PROT_WRITE | PROT_EXEC
+mappings are not permitted in most binaries (see
+.Dv kern.wxabort
+in sysctl 3
+for more information).
 .El
 .Sh SEE ALSO
 .Xr madvise 2 ,

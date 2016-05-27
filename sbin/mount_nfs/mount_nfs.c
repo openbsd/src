@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.52 2015/01/16 06:39:59 deraadt Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.53 2016/05/27 19:45:04 deraadt Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -85,6 +85,7 @@
 
 const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
+	MOPT_WXALLOWED,
 	MOPT_FORCE,
 	MOPT_UPDATE,
 	MOPT_SYNC,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.304 2016/05/23 15:59:19 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.305 2016/05/27 19:45:04 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -278,6 +278,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	extern int usermount, nosuidcoredump;
 	extern int maxlocksperuid;
 	extern int pool_debug;
+	extern int uvm_wxabort;
 
 	/* all sysctl names at this level are terminal except a ton of them */
 	if (namelen != 1) {
@@ -590,6 +591,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		}
 		return(0);
 	}
+	case KERN_WXABORT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &uvm_wxabort));
 	case KERN_CONSDEV:
 		if (cn_tab != NULL)
 			dev = cn_tab->cn_dev;

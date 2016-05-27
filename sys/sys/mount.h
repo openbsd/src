@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.125 2016/05/25 13:31:44 deraadt Exp $	*/
+/*	$OpenBSD: mount.h,v 1.126 2016/05/27 19:45:04 deraadt Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -369,6 +369,7 @@ struct mount {
 #define	MNT_NOSUID	0x00000008	/* don't honor setuid bits on fs */
 #define	MNT_NODEV	0x00000010	/* don't interpret special files */
 #define	MNT_ASYNC	0x00000040	/* file system written asynchronously */
+#define	MNT_WXALLOWED	0x00000800	/* filesystem allows W|X mappings */
 
 /*
  * exported mount flags.

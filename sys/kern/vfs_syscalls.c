@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.254 2016/05/15 05:04:28 semarie Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.255 2016/05/27 19:45:04 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -252,10 +252,10 @@ update:
 		mp->mnt_flag |= MNT_RDONLY;
 	else if (mp->mnt_flag & MNT_RDONLY)
 		mp->mnt_flag |= MNT_WANTRDWR;
-	mp->mnt_flag &=~ (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
+	mp->mnt_flag &=~ (MNT_NOSUID | MNT_NOEXEC | MNT_WXALLOWED | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_ASYNC | MNT_SOFTDEP | MNT_NOATIME |
 	    MNT_FORCE);
-	mp->mnt_flag |= flags & (MNT_NOSUID | MNT_NOEXEC |
+	mp->mnt_flag |= flags & (MNT_NOSUID | MNT_NOEXEC | MNT_WXALLOWED |
 	    MNT_NODEV | MNT_SYNCHRONOUS | MNT_ASYNC | MNT_SOFTDEP |
 	    MNT_NOATIME | MNT_FORCE);
 	/*

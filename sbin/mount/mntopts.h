@@ -1,4 +1,4 @@
-/*	$OpenBSD: mntopts.h,v 1.16 2014/07/13 12:01:30 claudio Exp $	*/
+/*	$OpenBSD: mntopts.h,v 1.17 2016/05/27 19:45:04 deraadt Exp $	*/
 /*	$NetBSD: mntopts.h,v 1.3 1995/03/18 14:56:59 cgd Exp $	*/
 
 /*-
@@ -58,6 +58,7 @@ union mntval {
 #define MOPT_NODEV	{ "dev",	MNT_NODEV, MFLAG_INVERSE | MFLAG_SET }
 #define MOPT_NOEXEC	{ "exec",	MNT_NOEXEC, MFLAG_INVERSE | MFLAG_SET }
 #define MOPT_NOSUID	{ "suid",	MNT_NOSUID, MFLAG_INVERSE | MFLAG_SET }
+#define MOPT_WXALLOWED	{ "wxallowed",	MNT_WXALLOWED, MFLAG_SET }
 #define MOPT_RDONLY	{ "rdonly",	MNT_RDONLY, MFLAG_SET }
 #define MOPT_SYNC	{ "sync",	MNT_SYNCHRONOUS, MFLAG_SET }
 #define MOPT_USERQUOTA	{ "userquota",	0, MFLAG_SET | MFLAG_STRVAL \

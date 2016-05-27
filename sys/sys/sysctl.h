@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.162 2016/05/23 15:48:57 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.163 2016/05/27 19:45:04 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ struct ctlname {
 #define	KERN_CPTIME2		71	/* array: cp_time2 */
 #define	KERN_CACHEPCT		72	/* buffer cache % of physmem */
 #define	KERN_FILE		73	/* struct: file entries */
-/* was KERN_RTHREADS	74	*/
+#define	KERN_WXABORT		74	/* int: w^x sigabrt & core */
 #define	KERN_CONSDEV		75	/* dev_t: console terminal device */
 #define	KERN_NETLIVELOCKS	76	/* int: number of network livelocks */
 #define	KERN_POOL_DEBUG		77	/* int: enable pool_debug */
@@ -261,7 +261,7 @@ struct ctlname {
  	{ "cp_time2", CTLTYPE_STRUCT }, \
 	{ "bufcachepercent", CTLTYPE_INT }, \
 	{ "file", CTLTYPE_STRUCT }, \
-	{ "gap", 0 }, \
+	{ "wxabort", CTLTYPE_INT }, \
 	{ "consdev", CTLTYPE_STRUCT }, \
 	{ "netlivelocks", CTLTYPE_INT }, \
 	{ "pool_debug", CTLTYPE_INT }, \

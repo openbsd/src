@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.77 2014/09/08 04:40:30 doug Exp $
+.\"	$OpenBSD: mount.8,v 1.78 2016/05/27 19:45:04 deraadt Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mount.8	8.7 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: May 27 2016 $
 .Dt MOUNT 8
 .Os
 .Sh NAME
@@ -234,6 +234,17 @@ are mutually exclusive.
 .It sync
 Regular data I/O to the file system should be done synchronously.
 By default, only metadata is read/written synchronously.
+.It wxallowed
+Processes that ask for memory to be made writeable plus executable
+using the
+.Xr mmap 2
+and
+.Xr mprotect 2
+system calls are killed by default.
+This option allows those processes to continue operation.
+The option is typically used on the
+.Pa /usr/local
+filesystem.
 .It update
 The same as
 .Fl u ;

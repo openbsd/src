@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.125 2016/05/11 21:52:51 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.126 2016/05/27 19:45:04 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
 #include <sys/vnode.h>
 #include <sys/conf.h>
 #include <sys/signalvar.h>
+#include <sys/syslog.h>
 #include <sys/stat.h>
 #include <sys/specdev.h>
 #include <sys/stdint.h>
@@ -305,6 +306,38 @@ sys_mincore(struct proc *p, void *v, register_t *retval)
 	return (error);
 }
 
+int	uvm_wxabort;
+
+/*
+ * W^X violations are only allowed on permitted filesystems.
+ */
+static inline int
+uvm_wxcheck(struct proc *p)
+{
+#if (defined(__mips64__) || defined(__hppa))
+	/* XXX got/plt repairs still needed */
+	return 0;
+#endif
+	int mpwx = (p->p_p->ps_textvp->v_mount &&
+	    (p->p_p->ps_textvp->v_mount->mnt_flag & MNT_WXALLOWED));
+
+	if (!mpwx) {
+		struct sigaction sa;
+
+		log(LOG_NOTICE, "%s(%d): mmap W^X violation\n",
+		    p->p_comm, p->p_pid);
+		if (uvm_wxabort) {
+			/* Send uncatchable SIGABRT for coredump */
+			memset(&sa, 0, sizeof sa);
+			sa.sa_handler = SIG_DFL;
+			setsigvec(p, SIGABRT, &sa);
+			psignal(p, SIGABRT);
+		}
+		return (ENOTSUP);
+	}
+	return (0);
+}
+
 /*
  * sys_mmap: mmap system call.
  *
@@ -351,6 +384,10 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 	 */
 	if ((prot & PROT_MASK) != prot)
 		return (EINVAL);
+	if ((prot & (PROT_WRITE | PROT_EXEC)) == (PROT_WRITE | PROT_EXEC) &&
+	    (error = uvm_wxcheck(p)))
+		return (error);
+
 	if ((flags & MAP_FLAGMASK) != flags)
 		return (EINVAL);
 	if (flags & MAP_OLDCOPY)
@@ -664,6 +701,9 @@ sys_mprotect(struct proc *p, void *v, register_t *retval)
 	
 	if ((prot & PROT_MASK) != prot)
 		return (EINVAL);
+	if ((prot & (PROT_WRITE | PROT_EXEC)) == (PROT_WRITE | PROT_EXEC) &&
+	    (error = uvm_wxcheck(p)))
+		return (error);
 
 	error = pledge_protexec(p, prot);
 	if (error)

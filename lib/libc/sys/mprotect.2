@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mprotect.2,v 1.19 2014/07/02 22:22:35 matthew Exp $
+.\"	$OpenBSD: mprotect.2,v 1.20 2016/05/27 19:45:04 deraadt Exp $
 .\"	$NetBSD: mprotect.2,v 1.6 1995/10/12 15:41:08 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mprotect.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: July 2 2014 $
+.Dd $Mdocdate: May 27 2016 $
 .Dt MPROTECT 2
 .Os
 .Sh NAME
@@ -96,6 +96,16 @@ The process has locked future pages with
 .Fn mlockall MCL_FUTURE ,
 a page being protected is not currently accessible,
 and making it accessible and locked would exceed process or system limits.
+.It Bq Er ENOTSUP
+The accesses requested in the
+.Ar prot
+argument are not allowed.
+In particular,
+.Dv PROT_WRITE | PROT_EXEC
+mappings are not permitted in most binaries (see
+.Dv kern.wxabort
+in sysctl 3
+for more information).
 .It Bq Er EINVAL
 The
 .Fa prot
