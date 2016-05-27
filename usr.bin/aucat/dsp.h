@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.h,v 1.2 2016/05/26 06:17:31 ratchov Exp $	*/
+/*	$OpenBSD: dsp.h,v 1.3 2016/05/27 15:38:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -147,7 +147,9 @@ int aparams_strtoenc(struct aparams *, char *);
 int aparams_enctostr(struct aparams *, char *);
 int aparams_native(struct aparams *);
 
-void resamp_do(struct resamp *, adata_t *, adata_t *, int *, int *);
+int resamp_ocnt(struct resamp *, int);
+int resamp_icnt(struct resamp *, int);
+void resamp_do(struct resamp *, adata_t *, adata_t *, int, int);
 void resamp_init(struct resamp *, unsigned int, unsigned int, int);
 void enc_do(struct conv *, unsigned char *, unsigned char *, int);
 void enc_sil_do(struct conv *, unsigned char *, int);
