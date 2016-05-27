@@ -310,7 +310,7 @@ slot_init(struct slot *s)
 			    xmalloc(s->round * slot_nch * sizeof(adata_t));
 		}
 		if (s->afile.rate != dev_rate) {
-			resamp_init(&s->resamp, s->round, dev_round,
+			resamp_init(&s->resamp, s->afile.rate, dev_rate,
 			    slot_nch);
 			s->resampbuf =
 			    xmalloc(dev_round * slot_nch * sizeof(adata_t));
@@ -329,7 +329,7 @@ slot_init(struct slot *s)
 		    s->cmin, s->cmax,
 		    s->cmin, s->cmax);
 		if (s->afile.rate != dev_rate) {
-			resamp_init(&s->resamp, dev_round, s->round,
+			resamp_init(&s->resamp, dev_rate, s->afile.rate,
 			    slot_nch);
 			s->resampbuf =
 			    xmalloc(dev_round * slot_nch * sizeof(adata_t));

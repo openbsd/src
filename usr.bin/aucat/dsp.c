@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.5 2016/05/27 15:38:27 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.6 2016/05/27 16:18:59 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -405,6 +405,19 @@ resamp_do(struct resamp *p, adata_t *in, adata_t *out, int icnt, int ocnt)
 #endif
 }
 
+static unsigned int
+uint_gcd(unsigned int a, unsigned int b)
+{
+	unsigned int r;
+
+	while (b > 0) {
+		r = a % b;
+		a = b;
+		b = r;
+	}
+	return a;
+}
+
 /*
  * initialize resampler with ibufsz/obufsz factor and "nch" channels
  */
@@ -412,7 +425,22 @@ void
 resamp_init(struct resamp *p, unsigned int iblksz,
     unsigned int oblksz, int nch)
 {
-	unsigned int i;
+	unsigned int i, g;
+
+	/*
+	 * reduice iblksz/oblksz fraction
+	 */
+	g = uint_gcd(iblksz, oblksz);
+	iblksz /= g;
+	oblksz /= g;
+
+	/*
+	 * ensure weired rates dont cause integer overflows
+	 */
+	while (iblksz > ADATA_UNIT || oblksz > ADATA_UNIT) {
+		iblksz >>= 1;
+		oblksz >>= 1;
+	}
 
 	p->iblksz = iblksz;
 	p->oblksz = oblksz;
