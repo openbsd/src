@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.9 2015/08/30 10:19:49 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.10 2016/05/27 16:32:39 deraadt Exp $	*/
 /*	$NetBSD: asm.h,v 1.15 2000/08/02 22:24:39 eeh Exp $ */
 
 /*
@@ -52,15 +52,7 @@
 #endif
 #include <machine/frame.h>
 
-#ifdef __ELF__
 #define	_C_LABEL(name)		name
-#else
-#ifdef __STDC__
-#define _C_LABEL(name)		_ ## name
-#else
-#define _C_LABEL(name)		_/**/name
-#endif
-#endif
 #define	_ASM_LABEL(name)	name
 
 #ifdef __PIC__
@@ -116,19 +108,16 @@
 
 #define RCSID(name)		.asciz name
 
-#ifdef __ELF__
 #define	STRONG_ALIAS(alias,sym)						\
 	.global alias;							\
 	alias = sym
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
-#endif
 
 /*
  * WARN_REFERENCES: create a warning if the specified symbol is referenced.
  */
-#ifdef __ELF__
 #ifdef __STDC__
 #define	WARN_REFERENCES(_sym,_msg)				\
 	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
@@ -136,18 +125,5 @@
 #define	WARN_REFERENCES(_sym,_msg)				\
 	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
 #endif /* __STDC__ */
-#else
-#ifdef __STDC__
-#define	__STRING(x)			#x
-#define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg ## ,30,0,0,0 ;					\
-	.stabs __STRING(_ ## sym) ## ,1,0,0,0
-#else
-#define	__STRING(x)			"x"
-#define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg,30,0,0,0 ;						\
-	.stabs __STRING(_/**/sym),1,0,0,0
-#endif /* __STDC__ */
-#endif /* __ELF__ */
 
 #endif /* _MACHINE_ASM_H_ */

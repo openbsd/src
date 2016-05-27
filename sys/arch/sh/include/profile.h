@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.2 2013/03/02 22:42:48 miod Exp $	*/
+/*	$OpenBSD: profile.h,v 1.3 2016/05/27 16:32:38 deraadt Exp $	*/
 /*	$NetBSD: profile.h,v 1.5 2006/10/26 23:54:28 uwe Exp $	*/
 
 /*-
@@ -27,11 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(__ELF__)
 #define	_MCOUNT_DECL static void _mcount
-#else
-#define	_MCOUNT_DECL static void mcount
-#endif
 
 #define	MCOUNT __asm ("				\n\
 	.text					\n\

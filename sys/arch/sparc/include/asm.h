@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.8 2015/08/30 10:19:49 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.9 2016/05/27 16:32:39 deraadt Exp $	*/
 /*	$NetBSD: asm.h,v 1.5 1997/07/16 15:16:43 christos Exp $ */
 
 /*
@@ -41,38 +41,26 @@
 #ifndef _MACHINE_ASM_H_
 #define _MACHINE_ASM_H_
 
-#ifdef __ELF__
 #define _C_LABEL(name)		name
-#else
-#ifdef __STDC__
-#define _C_LABEL(name)		_ ## name
-#else
-#define _C_LABEL(name)		_/**/name
-#endif
-#endif
 #define	_ASM_LABEL(name)	name
 
 /*
  * STRONG_ALIAS, WEAK_ALIAS
  *	Create a strong or weak alias.
  */
-#ifdef __ELF__
 #define STRONG_ALIAS(alias,sym)		\
 	.global alias;			\
 	alias = sym
 #define WEAK_ALIAS(alias,sym)		\
 	.weak alias;			\
 	alias = sym
-#endif
 
 /*
  * WARN_REFERENCES: create a warning if the specified symbol is referenced
  * (ELF only).
  */
-#ifdef __ELF__
 #define WARN_REFERENCES(_sym,_msg)	\
 	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
-#endif /* __ELF__ */
 
 
 #ifdef __PIC__

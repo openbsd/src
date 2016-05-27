@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.14 2013/05/17 22:28:21 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.15 2016/05/27 16:32:38 deraadt Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,25 +30,11 @@
 #ifndef _M88K_ASM_H_
 #define _M88K_ASM_H_
 
-#ifdef	__ELF__
 #define	_C_LABEL(name)		name
-#else
-#ifdef __STDC__
-#define	_C_LABEL(name)		_ ## name
-#else
-#define	_C_LABEL(name)		_/**/name
-#endif
-#endif
-
 #define	_ASM_LABEL(name)	name
 
-#ifdef __ELF__
 #define	_ENTRY(name) \
 	.text; .align 3; .globl name; .type name,@function; name:
-#else
-#define	_ENTRY(name) \
-	.text; .align 8; .globl name; name:
-#endif
 
 #define	ENTRY(name)		_ENTRY(_C_LABEL(name))
 #define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name))
@@ -74,21 +60,12 @@
 #define	ASBSS(name, size) \
 	.comm	_ASM_LABEL(name), size
 
-#ifdef	__ELF__
 #define	STRONG_ALIAS(alias,sym)						\
 	.global alias;							\
 	alias = sym
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
-#else
-#define	STRONG_ALIAS(alias,sym)						\
-	.global _##alias;						\
-	_##alias = _##sym
-#define	WEAK_ALIAS(alias,sym)						\
-	.weak _##alias;							\
-	_##alias = _##sym
-#endif
 
 #ifdef _KERNEL
 

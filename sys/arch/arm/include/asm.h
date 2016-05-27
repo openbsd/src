@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.5 2015/08/30 10:19:49 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.6 2016/05/27 16:32:38 deraadt Exp $	*/
 /*	$NetBSD: asm.h,v 1.4 2001/07/16 05:43:32 matt Exp $	*/
 
 /*
@@ -38,15 +38,7 @@
 #ifndef _ARM_ASM_H_
 #define _ARM_ASM_H_
 
-#ifdef __ELF__
-# define _C_LABEL(x)	x
-#else
-# ifdef __STDC__
-#  define _C_LABEL(x)	_ ## x
-# else
-#  define _C_LABEL(x)	_/**/x
-# endif
-#endif
+#define _C_LABEL(x)	x
 #define	_ASM_LABEL(x)	x
 
 #ifdef __STDC__
@@ -73,13 +65,8 @@
 	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; x:
 
 #ifdef GPROF
-# ifdef __ELF__
-#  define _PROF_PROLOGUE	\
+# define _PROF_PROLOGUE	\
 	mov ip, lr; bl __mcount
-# else
-#  define _PROF_PROLOGUE	\
-	mov ip,lr; bl mcount
-# endif
 #else
 # define _PROF_PROLOGUE
 #endif
@@ -92,7 +79,7 @@
 
 #define	ASMSTR		.asciz
 
-#if defined(__ELF__) && defined(__PIC__)
+#if defined(__PIC__)
 #ifdef __STDC__
 #define	PIC_SYM(x,y)	x ## ( ## y ## )
 #else
@@ -102,29 +89,19 @@
 #define	PIC_SYM(x,y)	x
 #endif
 
-#ifdef __ELF__
 #define RCSID(x)	.section ".ident"; .asciz x
-#else
-#define RCSID(x)	.text; .asciz x
-#endif
 
-#ifdef __ELF__
 #define	STRONG_ALIAS(alias,sym)						\
 	.global alias;							\
 	alias = sym
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
-#endif
 
 #ifdef __STDC__
 #define	WARN_REFERENCES(sym,msg)					\
 	.stabs msg ## ,30,0,0,0 ;					\
 	.stabs __STRING(_C_LABEL(sym)) ## ,1,0,0,0
-#elif defined(__ELF__)
-#define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg,30,0,0,0 ;						\
-	.stabs __STRING(sym),1,0,0,0
 #else
 #define	WARN_REFERENCES(sym,msg)					\
 	.stabs msg,30,0,0,0 ;						\

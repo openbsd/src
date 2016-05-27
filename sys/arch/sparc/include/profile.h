@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.9 2012/08/22 17:19:35 pascal Exp $	*/
+/*	$OpenBSD: profile.h,v 1.10 2016/05/27 16:32:39 deraadt Exp $	*/
 /*	$NetBSD: profile.h,v 1.8 1997/02/01 20:56:40 mrg Exp $ */
 
 /*
@@ -45,13 +45,8 @@
  * Can't use _C_LABEL here.
  */
 
-#ifdef __ELF__
 #define _MCOUNT_SYM "__mcount"
 #define _MCOUNT_ENTRY "_mcount"
-#else
-#define _MCOUNT_SYM "___mcount"
-#define _MCOUNT_ENTRY "mcount"
-#endif
 
 #ifdef __PIC__
 /* Inline expansion of PICCY_SET() (see <machine/asm.h>). */

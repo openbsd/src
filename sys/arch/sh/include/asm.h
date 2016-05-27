@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.4 2013/03/28 17:41:04 martynas Exp $	*/
+/*	$OpenBSD: asm.h,v 1.5 2016/05/27 16:32:38 deraadt Exp $	*/
 /*	$NetBSD: asm.h,v 1.25 2006/01/20 22:02:40 christos Exp $	*/
 
 /*-
@@ -38,15 +38,7 @@
 #ifndef _SH_ASM_H_
 #define	_SH_ASM_H_
 
-#ifdef __ELF__
-# define _C_LABEL(x)	x
-#else
-#ifdef __STDC__
-# define _C_LABEL(x)	_ ## x
-#else
-# define _C_LABEL(x)	_/**/x
-#endif
-#endif
+#define _C_LABEL(x)	x
 #define	_ASM_LABEL(x)	x
 
 #ifdef __STDC__
@@ -62,20 +54,12 @@
 # define _ALIGN_TEXT .align 2
 #endif
 
-#ifdef __ELF__
 #define	_ENTRY(x)							\
 	.text								;\
 	_ALIGN_TEXT							;\
 	.globl x							;\
 	.type x,@function						;\
 	x:
-#else /* !__ELF__ */
-#define	_ENTRY(x)							\
-	.text								;\
-	_ALIGN_TEXT							;\
-	.globl x							;\
-	x:
-#endif /* !__ELF__ */
 
 #ifdef GPROF
 #define	_PROF_PROLOGUE				  \
@@ -100,17 +84,10 @@
 #define SET_ASENTRY_SIZE(y) \
 	.size	_ASM_LABEL(y), . - _ASM_LABEL(y)
 
-#ifdef __ELF__
 #define	ALTENTRY(name)				 \
 	.globl _C_LABEL(name)			;\
 	.type _C_LABEL(name),@function		;\
 	_C_LABEL(name):
-#else
-#define	ALTENTRY(name)				 \
-	.globl _C_LABEL(name)			;\
-	_C_LABEL(name):
-#endif
-
 
 /*
  * Hide the gory details of PIC calls vs. normal calls.  Use as in the
@@ -205,14 +182,12 @@
 
 #define	ASMSTR		.asciz
 
-#ifdef __ELF__
 #define	STRONG_ALIAS(alias,sym)						\
 	.global _C_LABEL(alias);					\
 	_C_LABEL(alias) = _C_LABEL(sym)
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak _C_LABEL(alias);						\
 	_C_LABEL(alias) = _C_LABEL(sym)
-#endif
 
 #define	WARN_REFERENCES(_sym,_msg)				\
 	.section .gnu.warning._sym; .ascii _msg; .previous
