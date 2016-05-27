@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.16 2016/04/28 17:05:59 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.17 2016/05/27 14:27:22 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -167,6 +167,7 @@ tls_config_free(struct tls_config *config)
 	free(config->error.msg);
 
 	free((char *)config->ca_file);
+	free((char *)config->ca_mem);
 	free((char *)config->ca_path);
 	free((char *)config->ciphers);
 
