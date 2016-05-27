@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.483 2016/05/27 16:49:08 rpe Exp $
+#	$OpenBSD: rc,v 1.484 2016/05/27 17:03:45 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -164,13 +164,10 @@ reorder_libs() {
 	local _dkdev=/dev/$(stat -L -f '%Sd' /usr/lib)
 	local _mp=$(mount | grep "^$_dkdev")
 
-	echo -n 'reordering libraries:'
-
 	# Skip if /usr/lib is on a nfs mounted filesystem.
-	if [[ $_mp == *' type nfs '* ]]; then
-		echo ' skipped.'
-		return
-	fi
+	[[ $_mp == *' type nfs '* ]] && return
+
+	echo -n 'reordering libraries:'
 
 	# Only choose the latest version of the libraries.
 	for _liba in /usr/lib/libc.so.*.a; do
