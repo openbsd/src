@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.10 2014/03/29 18:09:28 guenther Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.11 2016/05/27 05:37:51 beck Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -141,13 +141,21 @@ void
 com_init(struct consdev *cn)
 {
 	int port = (com_addr == -1) ? comports[minor(cn->cn_dev)] : com_addr;
+	time_t tt = getsecs() + 1;
+	u_long i = 1;
 
 	outb(port + com_ier, 0);
 	if (com_speed == -1)
 		comspeed(cn->cn_dev, 9600); /* default speed is 9600 baud */
 	outb(port + com_mcr, MCR_DTR | MCR_RTS);
+	outb(port + com_ier, 0);
 	outb(port + com_fifo, FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
 	    FIFO_TRIGGER_1);
+	(void) inb(port + com_iir);
+
+	/* A few ms delay for the chip, using the getsecs() API */
+	while (!(i++ % 1000) && getsecs() < tt)
+		;
 
 	/* drain the input buffer */
 	while (inb(port + com_lsr) & LSR_RXRDY)
