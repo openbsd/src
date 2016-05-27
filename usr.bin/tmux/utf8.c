@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.32 2016/04/29 09:11:19 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.33 2016/05/27 22:57:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -32,16 +32,10 @@ static int	utf8_width(wchar_t);
 void
 utf8_set(struct utf8_data *ud, u_char ch)
 {
-	u_int	i;
+	static const struct utf8_data empty = { { 0 }, 1, 1, 1 };
 
+	memcpy(ud, &empty, sizeof *ud);
 	*ud->data = ch;
-	ud->have = 1;
-	ud->size = 1;
-
-	ud->width = 1;
-
-	for (i = ud->size; i < sizeof ud->data; i++)
-		ud->data[i] = '\0';
 }
 
 /* Copy UTF-8 character. */
