@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.899 2016/05/26 15:27:09 rpe Exp $
+#	$OpenBSD: install.sub,v 1.900 2016/05/27 20:17:39 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2475,6 +2475,11 @@ do_install(){
 	
 	# Ask the user for locations, and install whatever sets the user selected.
 	install_sets
+
+	# Set 'wxallowed' mount option for the filesystem /usr/local resides on.
+	_mp=$(df /mnt/usr/local | sed '$!d')
+	_mp=${_mp##*/mnt}
+	sed -i "s#\(${_mp:-/} ffs rw\)#\1,wxallowed#" /tmp/fstab
 	
 	# If we did not succeed at setting TZ yet, we try again
 	# using the timezone names extracted from the base set.
