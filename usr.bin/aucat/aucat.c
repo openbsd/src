@@ -157,14 +157,13 @@ slot_log(struct slot *s)
 static void
 slot_flush(struct slot *s)
 {
-	int todo, count, n;
+	int count, n;
 	unsigned char *data;
 
-	todo = s->buf.used;
-	while (todo > 0) {
+	for (;;) {
 		data = abuf_rgetblk(&s->buf, &count);
-		if (count > todo)
-			count = todo;
+		if (count == 0)
+			break;
 		n = afile_write(&s->afile, data, count);
 		if (n == 0) {
 			slot_log(s);
@@ -173,21 +172,19 @@ slot_flush(struct slot *s)
 			return;
 		}
 		abuf_rdiscard(&s->buf, n);
-		todo -= n;
 	}
 }
 
 static void
 slot_fill(struct slot *s)
 {
-	int todo, count, n;
+	int count, n;
 	unsigned char *data;
 
-	todo = s->buf.len;
-	while (todo > 0) {
+	for (;;) {
 		data = abuf_wgetblk(&s->buf, &count);
-		if (count > todo)
-			count = todo;
+		if (count == 0)
+			break;
 		n = afile_read(&s->afile, data, count);
 		if (n == 0) {
 #ifdef DEBUG
@@ -200,7 +197,6 @@ slot_fill(struct slot *s)
 			break;
 		}
 		abuf_wcommit(&s->buf, n);
-		todo -= n;
 	}
 }
 
