@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.17 2016/05/02 18:24:25 martijn Exp $	*/
+/*	$OpenBSD: key.c,v 1.18 2016/05/27 09:18:11 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -128,12 +128,12 @@ v_key_init(SCR *sp)
 	for (gp->max_special = 0, kp = keylist, cnt = nkeylist; cnt--; ++kp) {
 		if (gp->max_special < kp->value)
 			gp->max_special = kp->value;
-		if ((unsigned char) kp->ch <= MAX_FAST_KEY)
-			gp->special_key[(unsigned char) kp->ch] = kp->value;
+		if (kp->ch <= MAX_FAST_KEY)
+			gp->special_key[kp->ch] = kp->value;
 	}
 
 	/* Find a non-printable character to use as a message separator. */
-	for (ch = 1; ch <= MAX_CHAR; ++ch)
+	for (ch = 1; ch <= MAX_CHAR_T; ++ch)
 		if (!isprint(ch)) {
 			gp->noprint = ch;
 			break;
@@ -157,7 +157,7 @@ static void
 v_keyval(SCR *sp, int val, scr_keyval_t name)
 {
 	KEYLIST *kp;
-	unsigned char ch;
+	CHAR_T ch;
 	int dne;
 
 	/* Get the key's value from the screen. */
@@ -190,8 +190,7 @@ v_keyval(SCR *sp, int val, scr_keyval_t name)
 void
 v_key_ilookup(SCR *sp)
 {
-	char *p, *t;
-	unsigned char ch;
+	CHAR_T ch, *p, *t;
 	GS *gp;
 	size_t len;
 
@@ -206,10 +205,10 @@ v_key_ilookup(SCR *sp)
  *	Return the length of the string that will display the key.
  *	This routine is the backup for the KEY_LEN() macro.
  *
- * PUBLIC: size_t v_key_len(SCR *, char);
+ * PUBLIC: size_t v_key_len(SCR *, CHAR_T);
  */
 size_t
-v_key_len(SCR *sp, char ch)
+v_key_len(SCR *sp, CHAR_T ch)
 {
 	(void)v_key_name(sp, ch);
 	return (sp->clen);
@@ -220,14 +219,14 @@ v_key_len(SCR *sp, char ch)
  *	Return the string that will display the key.  This routine
  *	is the backup for the KEY_NAME() macro.
  *
- * PUBLIC: char *v_key_name(SCR *, char);
+ * PUBLIC: CHAR_T *v_key_name(SCR *, CHAR_T);
  */
-char *
-v_key_name(SCR *sp, char ch)
+CHAR_T *
+v_key_name(SCR *sp, CHAR_T ch)
 {
-	static const char hexdigit[] = "0123456789abcdef";
-	static const char octdigit[] = "01234567";
-	char *chp, mask;
+	static const CHAR_T hexdigit[] = "0123456789abcdef";
+	static const CHAR_T octdigit[] = "01234567";
+	CHAR_T *chp, mask;
 	size_t len;
 	int cnt, shift;
 
@@ -253,7 +252,7 @@ v_key_name(SCR *sp, char ch)
 	 * told that this is a reasonable assumption...
 	 *
 	 * XXX
-	 * This code will only work with chars that are multiples of 8-bit
+	 * This code will only work with CHAR_T's that are multiples of 8-bit
 	 * bytes.
 	 *
 	 * XXX
@@ -270,7 +269,7 @@ nopr:	if (iscntrl(ch) && (ch < 0x20 || ch == 0x7f)) {
 		sp->cname[1] = ch == 0x7f ? '?' : '@' + ch;
 		len = 2;
 	} else if (O_ISSET(sp, O_OCTAL)) {
-#define	BITS	(sizeof(char) * 8)
+#define	BITS	(sizeof(CHAR_T) * 8)
 #define	SHIFT	(BITS - BITS % 3)
 #define	TOPMASK	(BITS % 3 == 2 ? 3 : 1) << (BITS - BITS % 3)
 		sp->cname[0] = '\\';
@@ -282,8 +281,8 @@ nopr:	if (iscntrl(ch) && (ch < 0x20 || ch == 0x7f)) {
 	} else {
 		sp->cname[0] = '\\';
 		sp->cname[1] = 'x';
-		for (len = 2, chp = &ch,
-		    cnt = sizeof(char); cnt-- > 0; ++chp) {
+		for (len = 2, chp = (u_int8_t *)&ch,
+		    cnt = sizeof(CHAR_T); cnt-- > 0; ++chp) {
 			sp->cname[len++] = hexdigit[(*chp & 0xf0) >> 4];
 			sp->cname[len++] = hexdigit[*chp & 0x0f];
 		}
@@ -297,10 +296,10 @@ done:	sp->cname[sp->clen = len] = '\0';
  *	Fill in the value for a key.  This routine is the backup
  *	for the KEY_VAL() macro.
  *
- * PUBLIC: int v_key_val(SCR *, char);
+ * PUBLIC: int v_key_val(SCR *, CHAR_T);
  */
 int
-v_key_val(SCR *sp, char ch)
+v_key_val(SCR *sp, CHAR_T ch)
 {
 	KEYLIST k, *kp;
 
@@ -319,10 +318,10 @@ v_key_val(SCR *sp, char ch)
  * an associated flag value, which indicates if it has already been quoted,
  * and if it is the result of a mapping or an abbreviation.
  *
- * PUBLIC: int v_event_push(SCR *, EVENT *, char *, size_t, u_int);
+ * PUBLIC: int v_event_push(SCR *, EVENT *, CHAR_T *, size_t, u_int);
  */
 int
-v_event_push(SCR *sp, EVENT *p_evp, char *p_s, size_t nitems, u_int flags)
+v_event_push(SCR *sp, EVENT *p_evp, CHAR_T *p_s, size_t nitems, u_int flags)
 {
 	EVENT *evp;
 	GS *gp;
@@ -373,7 +372,7 @@ copy:	gp->i_cnt += nitems;
 static int
 v_event_append(SCR *sp, EVENT *argp)
 {
-	char *s;			/* Characters. */
+	CHAR_T *s;			/* Characters. */
 	EVENT *evp;
 	GS *gp;
 	size_t nevents;			/* Number of events. */
@@ -596,8 +595,7 @@ newmap:	evp = &gp->i_event[gp->i_next];
 	 */
 	if (istimeout || F_ISSET(&evp->e_ch, CH_NOMAP) ||
 	    !LF_ISSET(EC_MAPCOMMAND | EC_MAPINPUT) ||
-	    ((unsigned char) evp->e_c < MAX_BIT_SEQ && !bit_test(gp->seqb,
-	    evp->e_c)))
+	    (evp->e_c < MAX_BIT_SEQ && !bit_test(gp->seqb, evp->e_c)))
 		goto nomap;
 
 	/* Search the map. */

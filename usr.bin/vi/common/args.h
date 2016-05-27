@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.h,v 1.4 2016/05/02 18:24:25 martijn Exp $	*/
+/*	$OpenBSD: args.h,v 1.5 2016/05/27 09:18:11 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -22,7 +22,7 @@
  * is found.
  */
 typedef struct _args {
-	char	*bp;		/* Argument. */
+	CHAR_T	*bp;		/* Argument. */
 	size_t	 blen;		/* Buffer length. */
 	size_t	 len;		/* Argument length. */
 

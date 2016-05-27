@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_split.c,v 1.15 2016/05/02 18:24:25 martijn Exp $	*/
+/*	$OpenBSD: vs_split.c,v 1.16 2016/05/27 09:18:12 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -278,10 +278,10 @@ vs_discard(SCR *sp, SCR **spp)
  * vs_fg --
  *	Background the current screen, and foreground a new one.
  *
- * PUBLIC: int vs_fg(SCR *, SCR **, char *, int);
+ * PUBLIC: int vs_fg(SCR *, SCR **, CHAR_T *, int);
  */
 int
-vs_fg(SCR *sp, SCR **nspp, char *name, int newscreen)
+vs_fg(SCR *sp, SCR **nspp, CHAR_T *name, int newscreen)
 {
 	GS *gp;
 	SCR *nsp;

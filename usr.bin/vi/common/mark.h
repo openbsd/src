@@ -1,4 +1,4 @@
-/*	$OpenBSD: mark.h,v 1.4 2016/05/02 18:24:25 martijn Exp $	*/
+/*	$OpenBSD: mark.h,v 1.5 2016/05/27 09:18:11 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -33,7 +33,7 @@ struct _lmark {
 	LIST_ENTRY(_lmark) q;		/* Linked list of marks. */
 	recno_t	 lno;			/* Line number. */
 	size_t	 cno;			/* Column number. */
-	char	 name;			/* Mark name. */
+	CHAR_T	 name;			/* Mark name. */
 
 #define	MARK_DELETED	0x01		/* Mark was deleted. */
 #define	MARK_USERSET	0x02		/* User set this mark. */

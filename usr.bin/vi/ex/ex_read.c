@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_read.c,v 1.12 2016/05/02 18:24:25 martijn Exp $	*/
+/*	$OpenBSD: ex_read.c,v 1.13 2016/05/27 09:18:12 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ ex_read(SCR *sp, EXCMD *cmdp)
 {
 	enum { R_ARG, R_EXPANDARG, R_FILTER } which;
 	struct stat sb;
-	char *arg, *name;
+	CHAR_T *arg, *name;
 	EX_PRIVATE *exp;
 	FILE *fp;
 	FREF *frp;

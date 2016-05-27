@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi_extern.h,v 1.10 2016/05/02 18:24:25 martijn Exp $	*/
+/*	$OpenBSD: vi_extern.h,v 1.11 2016/05/27 09:18:12 martijn Exp $	*/
 
 int cs_init(SCR *, VCS *);
 int cs_next(SCR *, VCS *);
@@ -83,9 +83,9 @@ int v_sectionb(SCR *, VICMD *);
 int v_sentencef(SCR *, VICMD *);
 int v_sentenceb(SCR *, VICMD *);
 int v_status(SCR *, VICMD *);
-int v_tcmd(SCR *, VICMD *, char, u_int);
+int v_tcmd(SCR *, VICMD *, CHAR_T, u_int);
 int v_txt(SCR *, VICMD *, MARK *,
-   const char *, size_t, char, recno_t, u_long, u_int32_t);
+   const char *, size_t, CHAR_T, recno_t, u_long, u_int32_t);
 int v_txt_auto(SCR *, recno_t, TEXT *, size_t, TEXT *);
 int v_ulcase(SCR *, VICMD *);
 int v_mulcase(SCR *, VICMD *);
@@ -138,7 +138,7 @@ int vs_sm_position(SCR *, MARK *, u_long, pos_t);
 recno_t vs_sm_nlines(SCR *, SMAP *, recno_t, size_t);
 int vs_split(SCR *, SCR *, int);
 int vs_discard(SCR *, SCR **);
-int vs_fg(SCR *, SCR **, char *, int);
+int vs_fg(SCR *, SCR **, CHAR_T *, int);
 int vs_bg(SCR *);
 int vs_swap(SCR *, SCR **, char *);
 int vs_resize(SCR *, long, adj_t);

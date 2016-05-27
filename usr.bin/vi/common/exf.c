@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.42 2016/05/02 18:24:25 martijn Exp $	*/
+/*	$OpenBSD: exf.c,v 1.43 2016/05/27 09:18:11 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -54,10 +54,10 @@ static int	file_spath(SCR *, FREF *, struct stat *, int *);
  * vi now remembers the last location in any file that it has ever edited,
  * not just the previously edited file.
  *
- * PUBLIC: FREF *file_add(SCR *, char *);
+ * PUBLIC: FREF *file_add(SCR *, CHAR_T *);
  */
 FREF *
-file_add(SCR *sp, char *name)
+file_add(SCR *sp, CHAR_T *name)
 {
 	GS *gp;
 	FREF *frp, *tfrp;
@@ -446,7 +446,7 @@ oerr:	if (F_ISSET(ep, F_RCV_ON))
 static int
 file_spath(SCR *sp, FREF *frp, struct stat *sbp, int *existsp)
 {
-	char savech;
+	CHAR_T savech;
 	size_t len;
 	int found;
 	char *name, *p, *t, path[PATH_MAX];

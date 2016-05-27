@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_at.c,v 1.13 2016/05/02 18:24:25 martijn Exp $	*/
+/*	$OpenBSD: ex_at.c,v 1.14 2016/05/27 09:18:12 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -35,7 +35,7 @@ int
 ex_at(SCR *sp, EXCMD *cmdp)
 {
 	CB *cbp;
-	char name;
+	CHAR_T name;
 	EXCMD *ecp;
 	RANGE *rp;
 	TEXT *tp;

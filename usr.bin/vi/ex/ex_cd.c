@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cd.c,v 1.14 2016/05/02 20:51:35 martijn Exp $	*/
+/*	$OpenBSD: ex_cd.c,v 1.15 2016/05/27 09:18:12 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -35,7 +35,7 @@ ex_cd(SCR *sp, EXCMD *cmdp)
 {
 	struct passwd *pw;
 	ARGS *ap;
-	char savech;
+	CHAR_T savech;
 	char *dir, *p, *t;
 	char buf[PATH_MAX * 2];
 

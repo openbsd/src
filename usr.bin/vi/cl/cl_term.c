@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_term.c,v 1.24 2016/05/02 18:24:25 martijn Exp $	*/
+/*	$OpenBSD: cl_term.c,v 1.25 2016/05/27 09:18:11 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -30,7 +30,7 @@
 #include "../common/common.h"
 #include "cl.h"
 
-static int cl_pfmap(SCR *, seq_t, char *, size_t, char *, size_t);
+static int cl_pfmap(SCR *, seq_t, CHAR_T *, size_t, CHAR_T *, size_t);
 
 /*
  * XXX
@@ -152,10 +152,10 @@ cl_term_end(GS *gp)
  * cl_fmap --
  *	Map a function key.
  *
- * PUBLIC: int cl_fmap(SCR *, seq_t, char *, size_t, char *, size_t);
+ * PUBLIC: int cl_fmap(SCR *, seq_t, CHAR_T *, size_t, CHAR_T *, size_t);
  */
 int
-cl_fmap(SCR *sp, seq_t stype, char *from, size_t flen, char *to,
+cl_fmap(SCR *sp, seq_t stype, CHAR_T *from, size_t flen, CHAR_T *to,
     size_t tlen)
 {
 	/* Ignore until the screen is running, do the real work then. */
@@ -172,7 +172,7 @@ cl_fmap(SCR *sp, seq_t stype, char *from, size_t flen, char *to,
  *	Map a function key (private version).
  */
 static int
-cl_pfmap(SCR *sp, seq_t stype, char *from, size_t flen, char *to,
+cl_pfmap(SCR *sp, seq_t stype, CHAR_T *from, size_t flen, CHAR_T *to,
     size_t tlen)
 {
 	size_t nlen;

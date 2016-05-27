@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.15 2016/05/02 18:24:25 martijn Exp $	*/
+/*	$OpenBSD: cut.c,v 1.16 2016/05/27 09:18:11 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -59,13 +59,13 @@ static void	cb_rotate(SCR *);
  * replacing the contents.  Hopefully it's not worth getting right, and here
  * we just treat the numeric buffers like any other named buffer.
  *
- * PUBLIC: int cut(SCR *, char *, MARK *, MARK *, int);
+ * PUBLIC: int cut(SCR *, CHAR_T *, MARK *, MARK *, int);
  */
 int
-cut(SCR *sp, char *namep, MARK *fm, MARK *tm, int flags)
+cut(SCR *sp, CHAR_T *namep, MARK *fm, MARK *tm, int flags)
 {
 	CB *cbp;
-	char name = '1';	/* default numeric buffer */
+	CHAR_T name = '1';	/* default numeric buffer */
 	recno_t lno;
 	int append, copy_one, copy_def;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_put.c,v 1.7 2016/05/02 18:24:25 martijn Exp $	*/
+/*	$OpenBSD: v_put.c,v 1.8 2016/05/27 09:18:12 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -104,7 +104,7 @@ v_put(SCR *sp, VICMD *vp)
 static void
 inc_buf(SCR *sp, VICMD *vp)
 {
-	char v;
+	CHAR_T v;
 
 	switch (vp->buffer) {
 	case '1':

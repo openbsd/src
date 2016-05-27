@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_msg.c,v 1.17 2016/05/02 18:24:25 martijn Exp $	*/
+/*	$OpenBSD: vs_msg.c,v 1.18 2016/05/27 09:18:12 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -393,12 +393,13 @@ ret:	(void)gp->scr_move(sp, oldy, oldx);
 static void
 vs_output(SCR *sp, mtype_t mtype, const char *line, int llen)
 {
+	CHAR_T *kp;
 	GS *gp;
 	VI_PRIVATE *vip;
 	size_t chlen, notused;
 	int ch, len, tlen;
 	const char *p, *t;
-	char *kp, *cbp, *ecbp, cbuf[128];
+	char *cbp, *ecbp, cbuf[128];
 
 	gp = sp->gp;
 	vip = VIP(sp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_at.c,v 1.10 2016/05/02 18:24:25 martijn Exp $	*/
+/*	$OpenBSD: v_at.c,v 1.11 2016/05/27 09:18:12 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -33,7 +33,7 @@ int
 v_at(SCR *sp, VICMD *vp)
 {
 	CB *cbp;
-	char name;
+	CHAR_T name;
 	TEXT *tp;
 	size_t len;
 	char nbuf[20];

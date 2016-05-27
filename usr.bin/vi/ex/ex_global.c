@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_global.c,v 1.16 2016/05/02 18:24:25 martijn Exp $	*/
+/*	$OpenBSD: ex_global.c,v 1.17 2016/05/27 09:18:12 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -61,7 +61,7 @@ ex_v(SCR *sp, EXCMD *cmdp)
 static int
 ex_g_setup(SCR *sp, EXCMD *cmdp, enum which cmd)
 {
-	char *ptrn, *p, *t;
+	CHAR_T *ptrn, *p, *t;
 	EXCMD *ecp;
 	MARK abs_mark;
 	RANGE *rp;
