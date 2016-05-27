@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.28 2016/04/28 17:05:59 jsing Exp $ */
+/* $OpenBSD: tls.h,v 1.29 2016/05/27 14:21:24 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -107,17 +107,17 @@ ssize_t tls_read(struct tls *_ctx, void *_buf, size_t _buflen);
 ssize_t tls_write(struct tls *_ctx, const void *_buf, size_t _buflen);
 int tls_close(struct tls *_ctx);
 
-int tls_peer_cert_provided(struct tls *ctx);
-int tls_peer_cert_contains_name(struct tls *ctx, const char *name);
+int tls_peer_cert_provided(struct tls *_ctx);
+int tls_peer_cert_contains_name(struct tls *_ctx, const char *_name);
 
-const char * tls_peer_cert_hash(struct tls *_ctx);
-const char * tls_peer_cert_issuer(struct tls *ctx);
-const char * tls_peer_cert_subject(struct tls *ctx);
-time_t	tls_peer_cert_notbefore(struct tls *ctx);
-time_t	tls_peer_cert_notafter(struct tls *ctx);
+const char *tls_peer_cert_hash(struct tls *_ctx);
+const char *tls_peer_cert_issuer(struct tls *_ctx);
+const char *tls_peer_cert_subject(struct tls *_ctx);
+time_t	tls_peer_cert_notbefore(struct tls *_ctx);
+time_t	tls_peer_cert_notafter(struct tls *_ctx);
 
-const char * tls_conn_version(struct tls *ctx);
-const char * tls_conn_cipher(struct tls *ctx);
+const char *tls_conn_version(struct tls *_ctx);
+const char *tls_conn_cipher(struct tls *_ctx);
 
 uint8_t *tls_load_file(const char *_file, size_t *_len, char *_password);
 
