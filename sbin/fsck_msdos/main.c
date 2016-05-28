@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2015/11/23 19:19:30 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2016/05/28 18:00:42 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/10/17 20:29:53 cgd Exp $	*/
 
 /*
@@ -56,9 +56,6 @@ int
 main(int argc, char *argv[])
 {
 	int ch;
-
-	if (pledge("stdio rpath wpath disklabel", NULL) == -1)
-		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "pynf")) != -1) {
 		switch (ch) {
