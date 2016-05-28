@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.84 2016/05/28 08:34:17 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.85 2016/05/28 18:30:01 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7659,6 +7659,8 @@ typedef void *iwm_match_t;
 static const struct pci_matchid iwm_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3160_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3160_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3165_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3165_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7260_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7260_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7265_1 },
@@ -7822,6 +7824,13 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_INTEL_WL_3160_2:
 		sc->sc_fwname = "iwm-3160-16";
 		sc->host_interrupt_operation_mode = 1;
+		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
+		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
+		break;
+	case PCI_PRODUCT_INTEL_WL_3165_1:
+	case PCI_PRODUCT_INTEL_WL_3165_2:
+		sc->sc_fwname = "iwm-7265-16";
+		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
 		break;
