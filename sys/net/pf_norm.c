@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.184 2016/05/24 05:02:34 mpi Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.185 2016/05/28 12:04:33 sthen Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -687,7 +687,6 @@ pf_refragment6(struct mbuf **m0, struct m_tag *mtag, struct sockaddr_in6 *dst,
 {
 	struct mbuf		*m = *m0, *t;
 	struct pf_fragment_tag	*ftag = (struct pf_fragment_tag *)(mtag + 1);
-	struct rtentry		*rt = NULL;
 	u_int32_t		 mtu;
 	u_int16_t		 hdrlen, extoff, maxlen;
 	u_int8_t		 proto;
@@ -743,16 +742,6 @@ pf_refragment6(struct mbuf **m0, struct m_tag *mtag, struct sockaddr_in6 *dst,
 		DPFPRINTF(LOG_NOTICE, "refragment error %d", error);
 		action = PF_DROP;
 	}
-
-	if (ifp == NULL) {
-		rt = rtalloc(sin6tosa(dst), RT_RESOLVE,
-		    m->m_pkthdr.ph_rtableid);
-		if (rt == NULL) {
-			ip6stat.ip6s_noroute++;
-			error = -1;
-		}
-	}
-
 	for (t = m; m; m = t) {
 		t = m->m_nextpkt;
 		m->m_nextpkt = NULL;
@@ -761,7 +750,7 @@ pf_refragment6(struct mbuf **m0, struct m_tag *mtag, struct sockaddr_in6 *dst,
 			if (ifp == NULL) {
 				ip6_forward(m, 0);
 			} else if ((u_long)m->m_pkthdr.len <= ifp->if_mtu) {
-				nd6_output(ifp, m, dst, rt);
+				nd6_output(ifp, m, dst, NULL);
 			} else {
 				icmp6_error(m, ICMP6_PACKET_TOO_BIG, 0,
 				    ifp->if_mtu);
@@ -770,7 +759,6 @@ pf_refragment6(struct mbuf **m0, struct m_tag *mtag, struct sockaddr_in6 *dst,
 			m_freem(m);
 		}
 	}
-	rtfree(rt);
 
 	return (action);
 }
