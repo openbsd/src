@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.12 2016/05/25 13:35:12 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.13 2016/05/28 08:13:16 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -1029,6 +1029,16 @@ struct iwm_tlv_ucode_header {
 #define IWM_DEVICE_SET_NMI_REG		0x00a01c30
 #define IWM_DEVICE_SET_NMI_VAL_HW	0x01
 #define IWM_DEVICE_SET_NMI_VAL_DRV	0x80
+#define IWM_DEVICE_SET_NMI_8000_REG	0x00a01c24
+#define IWM_DEVICE_SET_NMI_8000_VAL	0x1000000
+
+/*
+ * Device reset for family 8000
+ * write to bit 24 in order to reset the CPU
+*/
+#define IWM_RELEASE_CPU_RESET		0x300c
+#define IWM_RELEASE_CPU_RESET_BIT	0x1000000
+
 
 /*****************************************************************************
  *                        7000/3000 series SHR DTS addresses                 *
@@ -1712,6 +1722,13 @@ enum {
 	IWM_PHY_CONTEXT_CMD = 0x8,
 	IWM_DBG_CFG = 0x9,
 
+	/* UMAC scan commands */
+	IWM_SCAN_ITERATION_COMPLETE_UMAC = 0xb5,
+	IWM_SCAN_CFG_CMD = 0xc,
+	IWM_SCAN_REQ_UMAC = 0xd,
+	IWM_SCAN_ABORT_UMAC = 0xe,
+	IWM_SCAN_COMPLETE_UMAC = 0xf,
+
 	/* station table */
 	IWM_ADD_STA_KEY = 0x17,
 	IWM_ADD_STA = 0x18,
@@ -1990,6 +2007,10 @@ enum {
 	IWM_NVM_SECTION_TYPE_CALIBRATION,
 	IWM_NVM_SECTION_TYPE_PRODUCTION,
 	IWM_NVM_SECTION_TYPE_POST_FCS_CALIB,
+	/* 7, 8, 9 unknown */
+	IWM_NVM_SECTION_TYPE_HW_8000 = 10,
+	IWM_NVM_SECTION_TYPE_MAC_OVERRIDE,
+	IWM_NVM_SECTION_TYPE_PHY_SKU,
 	IWM_NVM_NUM_OF_SECTIONS,
 };
 
@@ -5397,6 +5418,329 @@ struct iwm_sched_scan_results {
 	uint16_t ssid_bitmap;
 	uint8_t client_bitmap;
 	uint8_t reserved;
+};
+
+/* UMAC Scan API */
+
+/* The maximum of either of these cannot exceed 8, because we use an
+ * 8-bit mask (see IWM_MVM_SCAN_MASK).
+ */
+#define IWM_MVM_MAX_UMAC_SCANS 8
+#define IWM_MVM_MAX_LMAC_SCANS 1
+
+enum iwm_scan_config_flags {
+	IWM_SCAN_CONFIG_FLAG_ACTIVATE			= (1 << 0),
+	IWM_SCAN_CONFIG_FLAG_DEACTIVATE			= (1 << 1),
+	IWM_SCAN_CONFIG_FLAG_FORBID_CHUB_REQS		= (1 << 2),
+	IWM_SCAN_CONFIG_FLAG_ALLOW_CHUB_REQS		= (1 << 3),
+	IWM_SCAN_CONFIG_FLAG_SET_TX_CHAINS		= (1 << 8),
+	IWM_SCAN_CONFIG_FLAG_SET_RX_CHAINS		= (1 << 9),
+	IWM_SCAN_CONFIG_FLAG_SET_AUX_STA_ID		= (1 << 10),
+	IWM_SCAN_CONFIG_FLAG_SET_ALL_TIMES		= (1 << 11),
+	IWM_SCAN_CONFIG_FLAG_SET_EFFECTIVE_TIMES	= (1 << 12),
+	IWM_SCAN_CONFIG_FLAG_SET_CHANNEL_FLAGS		= (1 << 13),
+	IWM_SCAN_CONFIG_FLAG_SET_LEGACY_RATES		= (1 << 14),
+	IWM_SCAN_CONFIG_FLAG_SET_MAC_ADDR		= (1 << 15),
+	IWM_SCAN_CONFIG_FLAG_SET_FRAGMENTED		= (1 << 16),
+	IWM_SCAN_CONFIG_FLAG_CLEAR_FRAGMENTED		= (1 << 17),
+	IWM_SCAN_CONFIG_FLAG_SET_CAM_MODE		= (1 << 18),
+	IWM_SCAN_CONFIG_FLAG_CLEAR_CAM_MODE		= (1 << 19),
+	IWM_SCAN_CONFIG_FLAG_SET_PROMISC_MODE		= (1 << 20),
+	IWM_SCAN_CONFIG_FLAG_CLEAR_PROMISC_MODE		= (1 << 21),
+
+	/* Bits 26-31 are for num of channels in channel_array */
+#define IWM_SCAN_CONFIG_N_CHANNELS(n) ((n) << 26)
+};
+
+enum iwm_scan_config_rates {
+	/* OFDM basic rates */
+	IWM_SCAN_CONFIG_RATE_6M		= (1 << 0),
+	IWM_SCAN_CONFIG_RATE_9M		= (1 << 1),
+	IWM_SCAN_CONFIG_RATE_12M	= (1 << 2),
+	IWM_SCAN_CONFIG_RATE_18M	= (1 << 3),
+	IWM_SCAN_CONFIG_RATE_24M	= (1 << 4),
+	IWM_SCAN_CONFIG_RATE_36M	= (1 << 5),
+	IWM_SCAN_CONFIG_RATE_48M	= (1 << 6),
+	IWM_SCAN_CONFIG_RATE_54M	= (1 << 7),
+	/* CCK basic rates */
+	IWM_SCAN_CONFIG_RATE_1M		= (1 << 8),
+	IWM_SCAN_CONFIG_RATE_2M		= (1 << 9),
+	IWM_SCAN_CONFIG_RATE_5M		= (1 << 10),
+	IWM_SCAN_CONFIG_RATE_11M	= (1 << 11),
+
+	/* Bits 16-27 are for supported rates */
+#define IWM_SCAN_CONFIG_SUPPORTED_RATE(rate)	((rate) << 16)
+};
+
+enum iwm_channel_flags {
+	IWM_CHANNEL_FLAG_EBS				= (1 << 0),
+	IWM_CHANNEL_FLAG_ACCURATE_EBS			= (1 << 1),
+	IWM_CHANNEL_FLAG_EBS_ADD			= (1 << 2),
+	IWM_CHANNEL_FLAG_PRE_SCAN_PASSIVE2ACTIVE	= (1 << 3),
+};
+
+/**
+ * struct iwm_scan_config
+ * @flags:			enum scan_config_flags
+ * @tx_chains:			valid_tx antenna - ANT_* definitions
+ * @rx_chains:			valid_rx antenna - ANT_* definitions
+ * @legacy_rates:		default legacy rates - enum scan_config_rates
+ * @out_of_channel_time:	default max out of serving channel time
+ * @suspend_time:		default max suspend time
+ * @dwell_active:		default dwell time for active scan
+ * @dwell_passive:		default dwell time for passive scan
+ * @dwell_fragmented:		default dwell time for fragmented scan
+ * @dwell_extended:		default dwell time for channels 1, 6 and 11
+ * @mac_addr:			default mac address to be used in probes
+ * @bcast_sta_id:		the index of the station in the fw
+ * @channel_flags:		default channel flags - enum iwm_channel_flags
+ *				scan_config_channel_flag
+ * @channel_array:		default supported channels
+ */
+struct iwm_scan_config {
+	uint32_t flags;
+	uint32_t tx_chains;
+	uint32_t rx_chains;
+	uint32_t legacy_rates;
+	uint32_t out_of_channel_time;
+	uint32_t suspend_time;
+	uint8_t dwell_active;
+	uint8_t dwell_passive;
+	uint8_t dwell_fragmented;
+	uint8_t dwell_extended;
+	uint8_t mac_addr[ETHER_ADDR_LEN];
+	uint8_t bcast_sta_id;
+	uint8_t channel_flags;
+	uint8_t channel_array[];
+} __packed; /* SCAN_CONFIG_DB_CMD_API_S */
+
+/**
+ * iwm_umac_scan_flags
+ *@IWM_UMAC_SCAN_FLAG_PREEMPTIVE: scan process triggered by this scan request
+ *	can be preempted by other scan requests with higher priority.
+ *	The low priority scan will be resumed when the higher proirity scan is
+ *	completed.
+ *@IWM_UMAC_SCAN_FLAG_START_NOTIF: notification will be sent to the driver
+ *	when scan starts.
+ */
+enum iwm_umac_scan_flags {
+	IWM_UMAC_SCAN_FLAG_PREEMPTIVE		= (1 << 0),
+	IWM_UMAC_SCAN_FLAG_START_NOTIF		= (1 << 1),
+};
+
+enum iwm_umac_scan_uid_offsets {
+	IWM_UMAC_SCAN_UID_TYPE_OFFSET		= 0,
+	IWM_UMAC_SCAN_UID_SEQ_OFFSET		= 8,
+};
+
+enum iwm_umac_scan_general_flags {
+	IWM_UMAC_SCAN_GEN_FLAGS_PERIODIC	= (1 << 0),
+	IWM_UMAC_SCAN_GEN_FLAGS_OVER_BT		= (1 << 1),
+	IWM_UMAC_SCAN_GEN_FLAGS_PASS_ALL	= (1 << 2),
+	IWM_UMAC_SCAN_GEN_FLAGS_PASSIVE		= (1 << 3),
+	IWM_UMAC_SCAN_GEN_FLAGS_PRE_CONNECT	= (1 << 4),
+	IWM_UMAC_SCAN_GEN_FLAGS_ITER_COMPLETE	= (1 << 5),
+	IWM_UMAC_SCAN_GEN_FLAGS_MULTIPLE_SSID	= (1 << 6),
+	IWM_UMAC_SCAN_GEN_FLAGS_FRAGMENTED	= (1 << 7),
+	IWM_UMAC_SCAN_GEN_FLAGS_RRM_ENABLED	= (1 << 8),
+	IWM_UMAC_SCAN_GEN_FLAGS_MATCH		= (1 << 9),
+	IWM_UMAC_SCAN_GEN_FLAGS_EXTENDED_DWELL	= (1 << 10),
+};
+
+/**
+ * struct iwm_scan_channel_cfg_umac
+ * @flags:		bitmap - 0-19:	directed scan to i'th ssid.
+ * @channel_num:	channel number 1-13 etc.
+ * @iter_count:		repetition count for the channel.
+ * @iter_interval:	interval between two scan iterations on one channel.
+ */
+struct iwm_scan_channel_cfg_umac {
+	uint32_t flags;
+	uint8_t channel_num;
+	uint8_t iter_count;
+	uint16_t iter_interval;
+} __packed; /* SCAN_CHANNEL_CFG_S_VER2 */
+
+/**
+ * struct iwm_scan_umac_schedule
+ * @interval: interval in seconds between scan iterations
+ * @iter_count: num of scan iterations for schedule plan, 0xff for infinite loop
+ * @reserved: for alignment and future use
+ */
+struct iwm_scan_umac_schedule {
+	uint16_t interval;
+	uint8_t iter_count;
+	uint8_t reserved;
+} __packed; /* SCAN_SCHED_PARAM_API_S_VER_1 */
+
+/**
+ * struct iwm_scan_req_umac_tail - the rest of the UMAC scan request command
+ *      parameters following channels configuration array.
+ * @schedule: two scheduling plans.
+ * @delay: delay in TUs before starting the first scan iteration
+ * @reserved: for future use and alignment
+ * @preq: probe request with IEs blocks
+ * @direct_scan: list of SSIDs for directed active scan
+ */
+struct iwm_scan_req_umac_tail {
+	/* SCAN_PERIODIC_PARAMS_API_S_VER_1 */
+	struct iwm_scan_umac_schedule schedule[IWM_MAX_SCHED_SCAN_PLANS];
+	uint16_t delay;
+	uint16_t reserved;
+	/* SCAN_PROBE_PARAMS_API_S_VER_1 */
+	struct iwm_scan_probe_req preq;
+	struct iwm_ssid_ie direct_scan[IWM_PROBE_OPTION_MAX];
+} __packed;
+
+/**
+ * struct iwm_scan_req_umac
+ * @flags: &enum iwm_umac_scan_flags
+ * @uid: scan id, &enum iwm_umac_scan_uid_offsets
+ * @ooc_priority: out of channel priority - &enum iwm_scan_priority
+ * @general_flags: &enum iwm_umac_scan_general_flags
+ * @extended_dwell: dwell time for channels 1, 6 and 11
+ * @active_dwell: dwell time for active scan
+ * @passive_dwell: dwell time for passive scan
+ * @fragmented_dwell: dwell time for fragmented passive scan
+ * @max_out_time: max out of serving channel time
+ * @suspend_time: max suspend time
+ * @scan_priority: scan internal prioritization &enum iwm_scan_priority
+ * @channel_flags: &enum iwm_scan_channel_flags
+ * @n_channels: num of channels in scan request
+ * @reserved: for future use and alignment
+ * @data: &struct iwm_scan_channel_cfg_umac and
+ *	&struct iwm_scan_req_umac_tail
+ */
+struct iwm_scan_req_umac {
+	uint32_t flags;
+	uint32_t uid;
+	uint32_t ooc_priority;
+	/* SCAN_GENERAL_PARAMS_API_S_VER_1 */
+	uint32_t general_flags;
+	uint8_t extended_dwell;
+	uint8_t active_dwell;
+	uint8_t passive_dwell;
+	uint8_t fragmented_dwell;
+	uint32_t max_out_time;
+	uint32_t suspend_time;
+	uint32_t scan_priority;
+	/* SCAN_CHANNEL_PARAMS_API_S_VER_1 */
+	uint8_t channel_flags;
+	uint8_t n_channels;
+	uint16_t reserved;
+	uint8_t data[];
+} __packed; /* SCAN_REQUEST_CMD_UMAC_API_S_VER_1 */
+
+/**
+ * struct iwm_umac_scan_abort
+ * @uid: scan id, &enum iwm_umac_scan_uid_offsets
+ * @flags: reserved
+ */
+struct iwm_umac_scan_abort {
+	uint32_t uid;
+	uint32_t flags;
+} __packed; /* SCAN_ABORT_CMD_UMAC_API_S_VER_1 */
+
+/**
+ * struct iwm_umac_scan_complete
+ * @uid: scan id, &enum iwm_umac_scan_uid_offsets
+ * @last_schedule: last scheduling line
+ * @last_iter:	last scan iteration number
+ * @scan status: &enum iwm_scan_offload_complete_status
+ * @ebs_status: &enum iwm_scan_ebs_status
+ * @time_from_last_iter: time elapsed from last iteration
+ * @reserved: for future use
+ */
+struct iwm_umac_scan_complete {
+	uint32_t uid;
+	uint8_t last_schedule;
+	uint8_t last_iter;
+	uint8_t status;
+	uint8_t ebs_status;
+	uint32_t time_from_last_iter;
+	uint32_t reserved;
+} __packed; /* SCAN_COMPLETE_NTF_UMAC_API_S_VER_1 */
+
+#define IWM_SCAN_OFFLOAD_MATCHING_CHANNELS_LEN 5
+/**
+ * struct iwm_scan_offload_profile_match - match information
+ * @bssid: matched bssid
+ * @channel: channel where the match occurred
+ * @energy:
+ * @matching_feature:
+ * @matching_channels: bitmap of channels that matched, referencing
+ *	the channels passed in tue scan offload request
+ */
+struct iwm_scan_offload_profile_match {
+	uint8_t bssid[ETHER_ADDR_LEN];
+	uint16_t reserved;
+	uint8_t channel;
+	uint8_t energy;
+	uint8_t matching_feature;
+	uint8_t matching_channels[IWM_SCAN_OFFLOAD_MATCHING_CHANNELS_LEN];
+} __packed; /* SCAN_OFFLOAD_PROFILE_MATCH_RESULTS_S_VER_1 */
+
+/**
+ * struct iwm_scan_offload_profiles_query - match results query response
+ * @matched_profiles: bitmap of matched profiles, referencing the
+ *	matches passed in the scan offload request
+ * @last_scan_age: age of the last offloaded scan
+ * @n_scans_done: number of offloaded scans done
+ * @gp2_d0u: GP2 when D0U occurred
+ * @gp2_invoked: GP2 when scan offload was invoked
+ * @resume_while_scanning: not used
+ * @self_recovery: obsolete
+ * @reserved: reserved
+ * @matches: array of match information, one for each match
+ */
+struct iwm_scan_offload_profiles_query {
+	uint32_t matched_profiles;
+	uint32_t last_scan_age;
+	uint32_t n_scans_done;
+	uint32_t gp2_d0u;
+	uint32_t gp2_invoked;
+	uint8_t resume_while_scanning;
+	uint8_t self_recovery;
+	uint16_t reserved;
+	struct iwm_scan_offload_profile_match matches[IWM_SCAN_MAX_PROFILES];
+} __packed; /* SCAN_OFFLOAD_PROFILES_QUERY_RSP_S_VER_2 */
+
+/**
+ * struct iwm_umac_scan_iter_complete_notif - notifies end of scanning iteration
+ * @uid: scan id, &enum iwm_umac_scan_uid_offsets
+ * @scanned_channels: number of channels scanned and number of valid elements in
+ *	results array
+ * @status: one of SCAN_COMP_STATUS_*
+ * @bt_status: BT on/off status
+ * @last_channel: last channel that was scanned
+ * @tsf_low: TSF timer (lower half) in usecs
+ * @tsf_high: TSF timer (higher half) in usecs
+ * @results: array of scan results, only "scanned_channels" of them are valid
+ */
+struct iwm_umac_scan_iter_complete_notif {
+	uint32_t uid;
+	uint8_t scanned_channels;
+	uint8_t status;
+	uint8_t bt_status;
+	uint8_t last_channel;
+	uint32_t tsf_low;
+	uint32_t tsf_high;
+	struct iwm_scan_results_notif results[];
+} __packed; /* SCAN_ITER_COMPLETE_NTF_UMAC_API_S_VER_1 */
+
+/* Please keep this enum *SORTED* by hex value.
+ * Needed for binary search, otherwise a warning will be triggered.
+ */
+enum iwm_scan_subcmd_ids {
+	IWM_GSCAN_START_CMD = 0x0,
+	IWM_GSCAN_STOP_CMD = 0x1,
+	IWM_GSCAN_SET_HOTLIST_CMD = 0x2,
+	IWM_GSCAN_RESET_HOTLIST_CMD = 0x3,
+	IWM_GSCAN_SET_SIGNIFICANT_CHANGE_CMD = 0x4,
+	IWM_GSCAN_RESET_SIGNIFICANT_CHANGE_CMD = 0x5,
+	IWM_GSCAN_SIGNIFICANT_CHANGE_EVENT = 0xFD,
+	IWM_GSCAN_HOTLIST_CHANGE_EVENT = 0xFE,
+	IWM_GSCAN_RESULTS_AVAILABLE_EVENT = 0xFF,
 };
 
 /* STA API */

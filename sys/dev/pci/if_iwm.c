@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.82 2016/05/25 13:35:12 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.83 2016/05/28 08:13:16 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -168,6 +168,16 @@ const uint8_t iwm_nvm_channels[] = {
 	100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144,
 	149, 153, 157, 161, 165
 };
+
+const uint8_t iwm_nvm_channels_8000[] = {
+	/* 2.4 GHz */
+	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+	/* 5 GHz */
+	36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92,
+	96, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144,
+	149, 153, 157, 161, 165, 169, 173, 177, 181
+};
+
 #define IWM_NUM_2GHZ_CHANNELS	14
 
 const struct iwm_rate {
@@ -319,6 +329,8 @@ int	iwm_parse_nvm_data(struct iwm_softc *, const uint16_t *,
 				const uint16_t *, const uint16_t *,
 				const uint16_t *, const uint16_t *,
 				const uint16_t *);
+void	iwm_set_hw_address_8000(struct iwm_softc *, struct iwm_nvm_data *,
+				const uint16_t *, const uint16_t *);
 int	iwm_parse_nvm_sections(struct iwm_softc *, struct iwm_nvm_section *);
 int	iwm_nvm_init(struct iwm_softc *);
 int	iwm_firmware_load_sect(struct iwm_softc *, uint32_t, const uint8_t *,
@@ -326,6 +338,9 @@ int	iwm_firmware_load_sect(struct iwm_softc *, uint32_t, const uint8_t *,
 int	iwm_firmware_load_chunk(struct iwm_softc *, uint32_t, const uint8_t *,
 				uint32_t);
 int	iwm_load_firmware_7000(struct iwm_softc *, enum iwm_ucode_type);
+int	iwm_load_cpu_sections_8000(struct iwm_softc *, struct iwm_fw_sects *,
+					int , int *);
+int	iwm_load_firmware_8000(struct iwm_softc *, enum iwm_ucode_type);
 int	iwm_load_firmware(struct iwm_softc *, enum iwm_ucode_type);
 int	iwm_start_fw(struct iwm_softc *, enum iwm_ucode_type);
 int	iwm_send_tx_ant_cfg(struct iwm_softc *, uint8_t);
@@ -408,6 +423,8 @@ uint8_t	iwm_mvm_lmac_scan_fill_channels(struct iwm_softc *,
 				struct iwm_scan_channel_cfg_lmac *, int);
 int	iwm_mvm_fill_probe_req(struct iwm_softc *, struct iwm_scan_probe_req *);
 int	iwm_mvm_lmac_scan(struct iwm_softc *);
+int	iwm_mvm_config_umac_scan(struct iwm_softc *);
+int	iwm_mvm_umac_scan(struct iwm_softc *);
 void	iwm_mvm_ack_rates(struct iwm_softc *, struct iwm_node *, int *, int *);
 void	iwm_mvm_mac_ctxt_cmd_common(struct iwm_softc *, struct iwm_node *,
 					struct iwm_mac_ctx_cmd *, uint32_t);
@@ -445,6 +462,7 @@ int	iwm_ioctl(struct ifnet *, u_long, caddr_t);
 #ifdef IWM_DEBUG
 const char *iwm_desc_lookup(uint32_t);
 void	iwm_nic_error(struct iwm_softc *);
+void	iwm_nic_umac_error(struct iwm_softc *);
 #endif
 void	iwm_notif_intr(struct iwm_softc *);
 int	iwm_intr(void *);
@@ -670,18 +688,19 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 			    tlv_data, tlv_len)) != 0)
 				goto parse_out;
 			break;
-		case IWM_UCODE_TLV_NUM_OF_CPU:
+		case IWM_UCODE_TLV_NUM_OF_CPU: {
+			uint32_t num_cpu;
 			if (tlv_len != sizeof(uint32_t)) {
 				error = EINVAL;
 				goto parse_out;
 			}
-			if (le32toh(*(uint32_t*)tlv_data) != 1) {
-				DPRINTF(("%s: driver supports "
-				    "only TLV_NUM_OF_CPU == 1", DEVNAME(sc)));
+			num_cpu = le32toh(*(uint32_t *)tlv_data);
+			if (num_cpu < 1 || num_cpu > 2) {
 				error = EINVAL;
 				goto parse_out;
 			}
 			break;
+		}
 		case IWM_UCODE_TLV_SEC_RT:
 			if ((error = iwm_firmware_store_section(sc,
 			    IWM_UCODE_TYPE_REGULAR, tlv_data, tlv_len)) != 0)
@@ -912,6 +931,9 @@ iwm_nic_lock(struct iwm_softc *sc)
 	IWM_SETBITS(sc, IWM_CSR_GP_CNTRL,
 	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
 
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000)
+		DELAY(2);
+
 	if (iwm_poll_bit(sc, IWM_CSR_GP_CNTRL,
 	    IWM_CSR_GP_CNTRL_REG_VAL_MAC_ACCESS_EN,
 	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY
@@ -919,6 +941,7 @@ iwm_nic_lock(struct iwm_softc *sc)
 	    	rv = 1;
 	} else {
 		/* jolt */
+		DPRINTF(("%s: resetting device via NMI\n", __func__));
 		IWM_WRITE(sc, IWM_CSR_RESET, IWM_CSR_RESET_REG_FLAG_FORCE_NMI);
 	}
 
@@ -1469,8 +1492,9 @@ iwm_apm_init(struct iwm_softc *sc)
 	DPRINTF(("iwm apm start\n"));
 
 	/* Disable L0S exit timer (platform NMI Work/Around) */
-	IWM_SETBITS(sc, IWM_CSR_GIO_CHICKEN_BITS,
-	    IWM_CSR_GIO_CHICKEN_BITS_REG_BIT_DIS_L0S_EXIT_TIMER);
+	if (sc->sc_device_family != IWM_DEVICE_FAMILY_8000)
+		IWM_SETBITS(sc, IWM_CSR_GIO_CHICKEN_BITS,
+		    IWM_CSR_GIO_CHICKEN_BITS_REG_BIT_DIS_L0S_EXIT_TIMER);
 
 	/*
 	 * Disable L0s without affecting L1;
@@ -1491,7 +1515,7 @@ iwm_apm_init(struct iwm_softc *sc)
 
 	iwm_apm_config(sc);
 
-#if 0 /* not for 7k */
+#if 0 /* not for 7k/8k */
 	/* Configure analog phase-lock-loop before activating to D0A */
 	if (trans->cfg->base_params->pll_cfg_val)
 		IWM_SETBITS(trans, IWM_CSR_ANA_PLL_CFG,
@@ -1547,18 +1571,19 @@ iwm_apm_init(struct iwm_softc *sc)
 	 * do not disable clocks.  This preserves any hardware bits already
 	 * set by default in "CLK_CTRL_REG" after reset.
 	 */
-	iwm_write_prph(sc, IWM_APMG_CLK_EN_REG, IWM_APMG_CLK_VAL_DMA_CLK_RQT);
-	//kpause("iwmapm", 0, mstohz(20), NULL);
-	DELAY(20);
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000) {
+		iwm_write_prph(sc, IWM_APMG_CLK_EN_REG,
+		    IWM_APMG_CLK_VAL_DMA_CLK_RQT);
+		DELAY(20);
 
-	/* Disable L1-Active */
-	iwm_set_bits_prph(sc, IWM_APMG_PCIDEV_STT_REG,
-	    IWM_APMG_PCIDEV_STT_VAL_L1_ACT_DIS);
+		/* Disable L1-Active */
+		iwm_set_bits_prph(sc, IWM_APMG_PCIDEV_STT_REG,
+		    IWM_APMG_PCIDEV_STT_VAL_L1_ACT_DIS);
 
-	/* Clear the interrupt in APMG if the NIC is in RFKILL */
-	iwm_write_prph(sc, IWM_APMG_RTC_INT_STT_REG,
-	    IWM_APMG_RTC_INT_STT_RFKILL);
-
+		/* Clear the interrupt in APMG if the NIC is in RFKILL */
+		iwm_write_prph(sc, IWM_APMG_RTC_INT_STT_REG,
+		    IWM_APMG_RTC_INT_STT_RFKILL);
+	}
  out:
 	if (error)
 		printf("%s: apm init error %d\n", DEVNAME(sc), error);
@@ -1711,9 +1736,10 @@ iwm_mvm_nic_config(struct iwm_softc *sc)
 	 * (PCIe power is lost before PERST# is asserted), causing ME FW
 	 * to lose ownership and not being able to obtain it back.
 	 */
-	iwm_set_bits_mask_prph(sc, IWM_APMG_PS_CTRL_REG,
-	    IWM_APMG_PS_CTRL_EARLY_PWR_OFF_RESET_DIS,
-	    ~IWM_APMG_PS_CTRL_EARLY_PWR_OFF_RESET_DIS);
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000)
+		iwm_set_bits_mask_prph(sc, IWM_APMG_PS_CTRL_REG,
+		    IWM_APMG_PS_CTRL_EARLY_PWR_OFF_RESET_DIS,
+		    ~IWM_APMG_PS_CTRL_EARLY_PWR_OFF_RESET_DIS);
 }
 
 int
@@ -1809,7 +1835,8 @@ iwm_nic_init(struct iwm_softc *sc)
 	int error;
 
 	iwm_apm_init(sc);
-	iwm_set_pwr(sc);
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000)
+		iwm_set_pwr(sc);
 
 	iwm_mvm_nic_config(sc);
 
@@ -1960,8 +1987,9 @@ iwm_post_alive(struct iwm_softc *sc)
 	    IWM_FH_TX_CHICKEN_BITS_SCD_AUTO_RETRY_EN);
 
 	/* Enable L1-Active */
-	iwm_clear_bits_prph(sc, IWM_APMG_PCIDEV_STT_REG,
-	    IWM_APMG_PCIDEV_STT_VAL_L1_ACT_DIS);
+	if (sc->sc_device_family != IWM_DEVICE_FAMILY_8000)
+		iwm_clear_bits_prph(sc, IWM_APMG_PCIDEV_STT_REG,
+		    IWM_APMG_PCIDEV_STT_VAL_L1_ACT_DIS);
 
  out:
  	iwm_nic_unlock(sc);
@@ -2370,6 +2398,9 @@ const int nvm_to_read[] = {
 	IWM_NVM_SECTION_TYPE_REGULATORY,
 	IWM_NVM_SECTION_TYPE_CALIBRATION,
 	IWM_NVM_SECTION_TYPE_PRODUCTION,
+	IWM_NVM_SECTION_TYPE_HW_8000,
+	IWM_NVM_SECTION_TYPE_MAC_OVERRIDE,
+	IWM_NVM_SECTION_TYPE_PHY_SKU,
 };
 
 /* Default NVM size to read */
@@ -2545,6 +2576,32 @@ enum iwm_nvm_offsets {
 	IWM_XTAL_CALIB = 0x316 - IWM_NVM_CALIB_SECTION
 };
 
+enum iwm_8000_nvm_offsets {
+	/* NVM HW-Section offset (in words) definitions */
+	IWM_HW_ADDR0_WFPM_8000 = 0x12,
+	IWM_HW_ADDR1_WFPM_8000 = 0x16,
+	IWM_HW_ADDR0_PCIE_8000 = 0x8A,
+	IWM_HW_ADDR1_PCIE_8000 = 0x8E,
+	IWM_MAC_ADDRESS_OVERRIDE_8000 = 1,
+
+	/* NVM SW-Section offset (in words) definitions */
+	IWM_NVM_SW_SECTION_8000 = 0x1C0,
+	IWM_NVM_VERSION_8000 = 0,
+	IWM_RADIO_CFG_8000 = 0,
+	IWM_SKU_8000 = 2,
+	IWM_N_HW_ADDRS_8000 = 3,
+
+	/* NVM REGULATORY -Section offset (in words) definitions */
+	IWM_NVM_CHANNELS_8000 = 0,
+	IWM_NVM_LAR_OFFSET_8000_OLD = 0x4C7,
+	IWM_NVM_LAR_OFFSET_8000 = 0x507,
+	IWM_NVM_LAR_ENABLED_8000 = 0x7,
+
+	/* NVM calibration section offset (in words) definitions */
+	IWM_NVM_CALIB_SECTION_8000 = 0x2B8,
+	IWM_XTAL_CALIB_8000 = 0x316 - IWM_NVM_CALIB_SECTION_8000
+};
+
 /* SKU Capabilities (actual values from NVM definition) */
 enum nvm_sku_bits {
 	IWM_NVM_SKU_CAP_BAND_24GHZ	= (1 << 0),
@@ -2561,6 +2618,13 @@ enum nvm_sku_bits {
 #define IWM_NVM_RF_CFG_PNUM_MSK(x)   ((x >> 6)  & 0x3) /* bits 6-7   */
 #define IWM_NVM_RF_CFG_TX_ANT_MSK(x) ((x >> 8)  & 0xF) /* bits 8-11  */
 #define IWM_NVM_RF_CFG_RX_ANT_MSK(x) ((x >> 12) & 0xF) /* bits 12-15 */
+
+#define IWM_NVM_RF_CFG_PNUM_MSK_8000(x)		(x & 0xF)
+#define IWM_NVM_RF_CFG_DASH_MSK_8000(x)		((x >> 4) & 0xF)
+#define IWM_NVM_RF_CFG_STEP_MSK_8000(x)		((x >> 8) & 0xF)
+#define IWM_NVM_RF_CFG_TYPE_MSK_8000(x)		((x >> 12) & 0xFFF)
+#define IWM_NVM_RF_CFG_TX_ANT_MSK_8000(x)	((x >> 24) & 0xF)
+#define IWM_NVM_RF_CFG_RX_ANT_MSK_8000(x)	((x >> 28) & 0xF)
 
 #define DEFAULT_MAX_TX_POWER 16
 
@@ -2800,6 +2864,66 @@ iwm_ampdu_rx_stop(struct ieee80211com *ic, struct ieee80211_node *ni,
 	task_add(systq, &sc->ba_task);
 }
 
+void
+iwm_set_hw_address_8000(struct iwm_softc *sc, struct iwm_nvm_data *data,
+	const uint16_t *mac_override, const uint16_t *nvm_hw)
+{
+	const uint8_t *hw_addr;
+
+	if (mac_override) {
+		static const uint8_t reserved_mac[] = {
+			0x02, 0xcc, 0xaa, 0xff, 0xee, 0x00
+		};
+
+		hw_addr = (const uint8_t *)(mac_override +
+				 IWM_MAC_ADDRESS_OVERRIDE_8000);
+
+		/*
+		 * Store the MAC address from MAO section.
+		 * No byte swapping is required in MAO section
+		 */
+		memcpy(data->hw_addr, hw_addr, ETHER_ADDR_LEN);
+
+		/*
+		 * Force the use of the OTP MAC address in case of reserved MAC
+		 * address in the NVM, or if address is given but invalid.
+		 */
+		if (memcmp(reserved_mac, hw_addr, ETHER_ADDR_LEN) != 0 &&
+		    (memcmp(etherbroadcastaddr, data->hw_addr,
+		    sizeof(etherbroadcastaddr)) != 0) &&
+		    (memcmp(etheranyaddr, data->hw_addr,
+		    sizeof(etheranyaddr)) != 0) &&
+		    !ETHER_IS_MULTICAST(data->hw_addr))
+			return;
+
+		DPRINTF(("%s: mac address from nvm override section invalid\n",
+		    DEVNAME(sc)));
+	}
+
+	if (nvm_hw) {
+		/* read the mac address from WFMP registers */
+		uint32_t mac_addr0 =
+		    htole32(iwm_read_prph(sc, IWM_WFMP_MAC_ADDR_0));
+		uint32_t mac_addr1 =
+		    htole32(iwm_read_prph(sc, IWM_WFMP_MAC_ADDR_1));
+
+		hw_addr = (const uint8_t *)&mac_addr0;
+		data->hw_addr[0] = hw_addr[3];
+		data->hw_addr[1] = hw_addr[2];
+		data->hw_addr[2] = hw_addr[1];
+		data->hw_addr[3] = hw_addr[0];
+
+		hw_addr = (const uint8_t *)&mac_addr1;
+		data->hw_addr[4] = hw_addr[1];
+		data->hw_addr[5] = hw_addr[0];
+
+		return;
+	}
+
+	printf("%s: mac address not found\n", DEVNAME(sc));
+	memset(data->hw_addr, 0, sizeof(data->hw_addr));
+}
+
 int
 iwm_parse_nvm_data(struct iwm_softc *sc,
 	const uint16_t *nvm_hw, const uint16_t *nvm_sw,
@@ -2808,20 +2932,33 @@ iwm_parse_nvm_data(struct iwm_softc *sc,
 {
 	struct iwm_nvm_data *data = &sc->sc_nvm;
 	uint8_t hw_addr[ETHER_ADDR_LEN];
-	uint16_t radio_cfg;
 	uint32_t sku;
 
 	data->nvm_version = le16_to_cpup(nvm_sw + IWM_NVM_VERSION);
 
-	radio_cfg = le16_to_cpup(nvm_sw + IWM_RADIO_CFG);
-	data->radio_cfg_type = IWM_NVM_RF_CFG_TYPE_MSK(radio_cfg);
-	data->radio_cfg_step = IWM_NVM_RF_CFG_STEP_MSK(radio_cfg);
-	data->radio_cfg_dash = IWM_NVM_RF_CFG_DASH_MSK(radio_cfg);
-	data->radio_cfg_pnum = IWM_NVM_RF_CFG_PNUM_MSK(radio_cfg);
-	data->valid_tx_ant = IWM_NVM_RF_CFG_TX_ANT_MSK(radio_cfg);
-	data->valid_rx_ant = IWM_NVM_RF_CFG_RX_ANT_MSK(radio_cfg);
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000) {
+		uint16_t radio_cfg = le16_to_cpup(nvm_sw + IWM_RADIO_CFG);
+		data->radio_cfg_type = IWM_NVM_RF_CFG_TYPE_MSK(radio_cfg);
+		data->radio_cfg_step = IWM_NVM_RF_CFG_STEP_MSK(radio_cfg);
+		data->radio_cfg_dash = IWM_NVM_RF_CFG_DASH_MSK(radio_cfg);
+		data->radio_cfg_pnum = IWM_NVM_RF_CFG_PNUM_MSK(radio_cfg);
+		data->valid_tx_ant = IWM_NVM_RF_CFG_TX_ANT_MSK(radio_cfg);
+		data->valid_rx_ant = IWM_NVM_RF_CFG_RX_ANT_MSK(radio_cfg);
 
-	sku = le16_to_cpup(nvm_sw + IWM_SKU);
+		sku = le16_to_cpup(nvm_sw + IWM_SKU);
+	} else {
+		uint32_t radio_cfg =
+		    le32_to_cpup((uint32_t *)(phy_sku + IWM_RADIO_CFG_8000));
+		data->radio_cfg_type = IWM_NVM_RF_CFG_TYPE_MSK_8000(radio_cfg);
+		data->radio_cfg_step = IWM_NVM_RF_CFG_STEP_MSK_8000(radio_cfg);
+		data->radio_cfg_dash = IWM_NVM_RF_CFG_DASH_MSK_8000(radio_cfg);
+		data->radio_cfg_pnum = IWM_NVM_RF_CFG_PNUM_MSK_8000(radio_cfg);
+		data->valid_tx_ant = IWM_NVM_RF_CFG_TX_ANT_MSK_8000(radio_cfg);
+		data->valid_rx_ant = IWM_NVM_RF_CFG_RX_ANT_MSK_8000(radio_cfg);
+
+		sku = le32_to_cpup((uint32_t *)(phy_sku + IWM_SKU_8000));
+	}
+
 	data->sku_cap_band_24GHz_enable = sku & IWM_NVM_SKU_CAP_BAND_24GHZ;
 	data->sku_cap_band_52GHz_enable = sku & IWM_NVM_SKU_CAP_BAND_52GHZ;
 	data->sku_cap_11n_enable = sku & IWM_NVM_SKU_CAP_11N_ENABLE;
@@ -2837,16 +2974,23 @@ iwm_parse_nvm_data(struct iwm_softc *sc,
 	data->n_hw_addrs = le16_to_cpup(nvm_sw + IWM_N_HW_ADDRS);
 
 	/* The byte order is little endian 16 bit, meaning 214365 */
-	memcpy(hw_addr, nvm_hw + IWM_HW_ADDR, ETHER_ADDR_LEN);
-	data->hw_addr[0] = hw_addr[1];
-	data->hw_addr[1] = hw_addr[0];
-	data->hw_addr[2] = hw_addr[3];
-	data->hw_addr[3] = hw_addr[2];
-	data->hw_addr[4] = hw_addr[5];
-	data->hw_addr[5] = hw_addr[4];
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000) {
+		memcpy(hw_addr, nvm_hw + IWM_HW_ADDR, ETHER_ADDR_LEN);
+		data->hw_addr[0] = hw_addr[1];
+		data->hw_addr[1] = hw_addr[0];
+		data->hw_addr[2] = hw_addr[3];
+		data->hw_addr[3] = hw_addr[2];
+		data->hw_addr[4] = hw_addr[5];
+		data->hw_addr[5] = hw_addr[4];
+	} else
+		iwm_set_hw_address_8000(sc, data, mac_override, nvm_hw);
 
-	iwm_init_channel_map(sc, &nvm_sw[IWM_NVM_CHANNELS],
-	    iwm_nvm_channels, nitems(iwm_nvm_channels));
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000)
+		iwm_init_channel_map(sc, &nvm_sw[IWM_NVM_CHANNELS],
+		    iwm_nvm_channels, nitems(iwm_nvm_channels));
+	else
+		iwm_init_channel_map(sc, &regulatory[IWM_NVM_CHANNELS_8000],
+		    iwm_nvm_channels_8000, nitems(iwm_nvm_channels_8000));
 
 	data->calib_version = 255;   /* TODO:
 					this value will prevent some checks from
@@ -2864,14 +3008,51 @@ iwm_parse_nvm_sections(struct iwm_softc *sc, struct iwm_nvm_section *sections)
 	const uint16_t *regulatory = NULL;
 
 	/* Checking for required sections */
-	if (!sections[IWM_NVM_SECTION_TYPE_SW].data ||
-	    !sections[IWM_NVM_SECTION_TYPE_HW].data) {
-		DPRINTF(("%s: Can't parse empty OTP/NVM sections\n",
-		    DEVNAME(sc)));
-		return ENOENT;
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000) {
+		if (!sections[IWM_NVM_SECTION_TYPE_SW].data ||
+		    !sections[IWM_NVM_SECTION_TYPE_HW].data) {
+			DPRINTF(("%s: Can't parse empty OTP/NVM sections\n",
+			    DEVNAME(sc)));
+			return ENOENT;
+		}
+
+		hw = (const uint16_t *) sections[IWM_NVM_SECTION_TYPE_HW].data;
+	} else if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000) {
+		/* SW and REGULATORY sections are mandatory */
+		if (!sections[IWM_NVM_SECTION_TYPE_SW].data ||
+		    !sections[IWM_NVM_SECTION_TYPE_REGULATORY].data) {
+			DPRINTF(("%s: Can't parse empty OTP/NVM sections\n",
+			    DEVNAME(sc)));
+			return ENOENT;
+		}
+		/* MAC_OVERRIDE or at least HW section must exist */
+		if (!sections[IWM_NVM_SECTION_TYPE_HW_8000].data &&
+		    !sections[IWM_NVM_SECTION_TYPE_MAC_OVERRIDE].data) {
+			DPRINTF(("%s: Can't parse mac_address, empty "
+			    "sections\n", DEVNAME(sc)));
+			return ENOENT;
+		}
+
+		/* PHY_SKU section is mandatory in B0 */
+		if (!sections[IWM_NVM_SECTION_TYPE_PHY_SKU].data) {
+			DPRINTF(("%s: Can't parse phy_sku in B0, empty "
+			    "sections\n", DEVNAME(sc)));
+			return ENOENT;
+		}
+
+		regulatory = (const uint16_t *)
+		    sections[IWM_NVM_SECTION_TYPE_REGULATORY].data;
+		hw = (const uint16_t *)
+		    sections[IWM_NVM_SECTION_TYPE_HW_8000].data;
+		mac_override =
+			(const uint16_t *)
+			sections[IWM_NVM_SECTION_TYPE_MAC_OVERRIDE].data;
+		phy_sku = (const uint16_t *)
+		    sections[IWM_NVM_SECTION_TYPE_PHY_SKU].data;
+	} else {
+		panic("unknown device family %d\n", sc->sc_device_family);
 	}
 
-	hw = (const uint16_t *) sections[IWM_NVM_SECTION_TYPE_HW].data;
 	sw = (const uint16_t *)sections[IWM_NVM_SECTION_TYPE_SW].data;
 	calib = (const uint16_t *)
 	    sections[IWM_NVM_SECTION_TYPE_CALIBRATION].data;
@@ -3046,11 +3227,116 @@ iwm_load_firmware_7000(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 }
 
 int
+iwm_load_cpu_sections_8000(struct iwm_softc *sc, struct iwm_fw_sects *fws,
+    int cpu, int *first_ucode_section)
+{
+	int shift_param;
+	int i, error = 0, sec_num = 0x1;
+	uint32_t val, last_read_idx = 0;
+	void *data;
+	uint32_t dlen;
+	uint32_t offset;
+
+	if (cpu == 1) {
+		shift_param = 0;
+		*first_ucode_section = 0;
+	} else {
+		shift_param = 16;
+		(*first_ucode_section)++;
+	}
+
+	for (i = *first_ucode_section; i < IWM_UCODE_SECT_MAX; i++) {
+		last_read_idx = i;
+		data = fws->fw_sect[i].fws_data;
+		dlen = fws->fw_sect[i].fws_len;
+		offset = fws->fw_sect[i].fws_devoff;
+
+		/*
+		 * CPU1_CPU2_SEPARATOR_SECTION delimiter - separate between
+		 * CPU1 to CPU2.
+		 * PAGING_SEPARATOR_SECTION delimiter - separate between
+		 * CPU2 non paged to CPU2 paging sec.
+		 */
+		if (!data || offset == IWM_CPU1_CPU2_SEPARATOR_SECTION ||
+		    offset == IWM_PAGING_SEPARATOR_SECTION)
+			break;
+
+		DPRINTFN(4, ("LOAD FIRMWARE chunk %d offset 0x%x len %d "
+		    "for cpu %d\n", i, offset, dlen, cpu));
+
+		if (dlen > sc->sc_fwdmasegsz) {
+			DPRINTF(("chunk %d too large (%d bytes)\n", i, dlen));
+			error = EFBIG;
+		} else
+			error = iwm_firmware_load_sect(sc, offset, data, dlen);
+		if (error) {
+			printf("%s: could not load firmware chunk %d "
+			    "(error %d)\n", DEVNAME(sc), i, error);
+			return error;
+		}
+
+		/* Notify the ucode of the loaded section number and status */
+		if (iwm_nic_lock(sc)) {
+			val = IWM_READ(sc, IWM_FH_UCODE_LOAD_STATUS);
+			val = val | (sec_num << shift_param);
+			IWM_WRITE(sc, IWM_FH_UCODE_LOAD_STATUS, val);
+			sec_num = (sec_num << 1) | 0x1;
+			iwm_nic_unlock(sc);
+
+			/*
+			 * The firmware won't load correctly without this delay.
+			 */
+			DELAY(8000);
+		}
+	}
+
+	*first_ucode_section = last_read_idx;
+
+	if (iwm_nic_lock(sc)) {
+		if (cpu == 1)
+			IWM_WRITE(sc, IWM_FH_UCODE_LOAD_STATUS, 0xFFFF);
+		else
+			IWM_WRITE(sc, IWM_FH_UCODE_LOAD_STATUS, 0xFFFFFFFF);
+		iwm_nic_unlock(sc);
+	}
+
+	return 0;
+}
+
+int
+iwm_load_firmware_8000(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
+{
+	struct iwm_fw_sects *fws;
+	int error = 0;
+	int first_ucode_section;
+
+	DPRINTF(("%s: loading ucode type %d\n", DEVNAME(sc), ucode_type));
+
+	fws = &sc->sc_fw.fw_sects[ucode_type];
+
+	/* configure the ucode to be ready to get the secured image */
+	/* release CPU reset */
+	iwm_write_prph(sc, IWM_RELEASE_CPU_RESET, IWM_RELEASE_CPU_RESET_BIT);
+
+	/* load to FW the binary Secured sections of CPU1 */
+	error = iwm_load_cpu_sections_8000(sc, fws, 1, &first_ucode_section);
+	if (error)
+		return error;
+
+	/* load to FW the binary sections of CPU2 */
+	return iwm_load_cpu_sections_8000(sc, fws, 2, &first_ucode_section);
+}
+
+int
 iwm_load_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 {
 	int error, w;
 
-	error = iwm_load_firmware_7000(sc, ucode_type);
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000)
+		error = iwm_load_firmware_8000(sc, ucode_type);
+	else
+		error = iwm_load_firmware_7000(sc, ucode_type);
+
 	if (error)
 		return error;
 
@@ -3060,6 +3346,12 @@ iwm_load_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	}
 	if (error || !sc->sc_uc.uc_ok) {
 		printf("%s: could not load firmware\n", DEVNAME(sc));
+		if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000) {
+			DPRINTF(("%s: cpu1 status: 0x%x\n", DEVNAME(sc),
+			    iwm_read_prph(sc, IWM_SB_CPU_1_STATUS)));
+			DPRINTF(("%s: cpu2 status: 0x%x\n", DEVNAME(sc),
+			    iwm_read_prph(sc, IWM_SB_CPU_2_STATUS)));
+		}
 	}
 
 	/*
@@ -4864,6 +5156,35 @@ iwm_mvm_lmac_scan_fill_channels(struct iwm_softc *sc,
 	return nchan;
 }
 
+uint8_t
+iwm_mvm_umac_scan_fill_channels(struct iwm_softc *sc,
+	struct iwm_scan_channel_cfg_umac *chan, int n_ssids)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_channel *c;
+	uint8_t nchan;
+
+	for (nchan = 0, c = &ic->ic_channels[1];
+	    c <= &ic->ic_channels[IEEE80211_CHAN_MAX] &&
+	    nchan < sc->sc_capa_n_scan_channels;
+	    c++) {
+		if (c->ic_flags == 0)
+			continue;
+
+		chan->channel_num = ieee80211_mhz2ieee(c->ic_freq, 0);
+		chan->iter_count = 1;
+		chan->iter_interval = htole16(0);
+#if 0 /* makes scanning while associated less useful */
+		if (n_ssids != 0)
+			chan->flags = htole32(1 << 0); /* select SSID 0 */
+#endif
+		chan++;
+		nchan++;
+	}
+
+	return nchan;
+}
+
 int
 iwm_mvm_fill_probe_req(struct iwm_softc *sc, struct iwm_scan_probe_req *preq)
 {
@@ -5059,6 +5380,172 @@ iwm_mvm_lmac_scan(struct iwm_softc *sc)
 	/* Disable EBS. */
 	req->channel_opt[0].non_ebs_ratio = 1;
 	req->channel_opt[1].non_ebs_ratio = 1;
+
+	ret = iwm_send_cmd(sc, &hcmd);
+	if (!ret)
+		DPRINTF(("Scan request was sent successfully\n"));
+	free(req, M_DEVBUF, req_len);
+	return ret;
+}
+
+int
+iwm_mvm_config_umac_scan(struct iwm_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwm_scan_config *scan_config;
+	int ret, nchan;
+	size_t cmd_size;
+	struct ieee80211_channel *c;
+	struct iwm_host_cmd hcmd = {
+		.id = iwm_cmd_id(IWM_SCAN_CFG_CMD, IWM_ALWAYS_LONG_GROUP, 0),
+		.flags = IWM_CMD_SYNC,
+	};
+	static const uint32_t rates = (IWM_SCAN_CONFIG_RATE_1M |
+	    IWM_SCAN_CONFIG_RATE_2M | IWM_SCAN_CONFIG_RATE_5M |
+	    IWM_SCAN_CONFIG_RATE_11M | IWM_SCAN_CONFIG_RATE_6M |
+	    IWM_SCAN_CONFIG_RATE_9M | IWM_SCAN_CONFIG_RATE_12M |
+	    IWM_SCAN_CONFIG_RATE_18M | IWM_SCAN_CONFIG_RATE_24M |
+	    IWM_SCAN_CONFIG_RATE_36M | IWM_SCAN_CONFIG_RATE_48M |
+	    IWM_SCAN_CONFIG_RATE_54M);
+
+	cmd_size = sizeof(*scan_config) + sc->sc_capa_n_scan_channels;
+
+	scan_config = malloc(cmd_size, M_DEVBUF, M_WAIT | M_CANFAIL | M_ZERO);
+	if (scan_config == NULL)
+		return ENOMEM;
+
+	scan_config->tx_chains = htole32(iwm_fw_valid_tx_ant(sc));
+	scan_config->rx_chains = htole32(iwm_fw_valid_rx_ant(sc));
+	scan_config->legacy_rates = htole32(rates |
+	    IWM_SCAN_CONFIG_SUPPORTED_RATE(rates));
+
+	/* These timings correspond to iwlwifi's UNASSOC scan. */
+	scan_config->dwell_active = 10;
+	scan_config->dwell_passive = 110;
+	scan_config->dwell_fragmented = 44;
+	scan_config->dwell_extended = 90;
+	scan_config->out_of_channel_time = htole32(0);
+	scan_config->suspend_time = htole32(0);
+
+	IEEE80211_ADDR_COPY(scan_config->mac_addr, sc->sc_ic.ic_myaddr);
+
+	scan_config->bcast_sta_id = sc->sc_aux_sta.sta_id;
+	scan_config->channel_flags = IWM_CHANNEL_FLAG_EBS |
+	    IWM_CHANNEL_FLAG_ACCURATE_EBS | IWM_CHANNEL_FLAG_EBS_ADD |
+	    IWM_CHANNEL_FLAG_PRE_SCAN_PASSIVE2ACTIVE;
+
+	for (c = &ic->ic_channels[1], nchan = 0;
+	    c <= &ic->ic_channels[IEEE80211_CHAN_MAX] &&
+	    nchan < sc->sc_capa_n_scan_channels; c++) {
+		if (c->ic_flags == 0)
+			continue;
+		scan_config->channel_array[nchan++] =
+		    ieee80211_mhz2ieee(c->ic_freq, 0);
+	}
+
+	scan_config->flags = htole32(IWM_SCAN_CONFIG_FLAG_ACTIVATE |
+	    IWM_SCAN_CONFIG_FLAG_ALLOW_CHUB_REQS |
+	    IWM_SCAN_CONFIG_FLAG_SET_TX_CHAINS |
+	    IWM_SCAN_CONFIG_FLAG_SET_RX_CHAINS |
+	    IWM_SCAN_CONFIG_FLAG_SET_AUX_STA_ID |
+	    IWM_SCAN_CONFIG_FLAG_SET_ALL_TIMES |
+	    IWM_SCAN_CONFIG_FLAG_SET_LEGACY_RATES |
+	    IWM_SCAN_CONFIG_FLAG_SET_MAC_ADDR |
+	    IWM_SCAN_CONFIG_FLAG_SET_CHANNEL_FLAGS|
+	    IWM_SCAN_CONFIG_N_CHANNELS(nchan) |
+	    IWM_SCAN_CONFIG_FLAG_CLEAR_FRAGMENTED);
+
+	hcmd.data[0] = scan_config;
+	hcmd.len[0] = cmd_size;
+
+	DPRINTF(("Sending UMAC scan config\n"));
+
+	ret = iwm_send_cmd(sc, &hcmd);
+	if (!ret)
+		DPRINTF(("UMAC scan config was sent successfully\n"));
+
+	free(scan_config, M_DEVBUF, cmd_size);
+	return ret;
+}
+
+int
+iwm_mvm_umac_scan(struct iwm_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwm_host_cmd hcmd = {
+		.id = iwm_cmd_id(IWM_SCAN_REQ_UMAC, IWM_ALWAYS_LONG_GROUP, 0),
+		.len = { 0, },
+		.data = { NULL, },
+		.flags = IWM_CMD_SYNC,
+	};
+	struct iwm_scan_req_umac *req;
+	struct iwm_scan_req_umac_tail *tail;
+	size_t req_len;
+	int ret;
+
+	req_len = sizeof(struct iwm_scan_req_umac) +
+	    (sizeof(struct iwm_scan_channel_cfg_umac) *
+	    sc->sc_capa_n_scan_channels) +
+	    sizeof(struct iwm_scan_req_umac_tail);
+	if (req_len > IWM_MAX_CMD_PAYLOAD_SIZE)
+		return ENOMEM;
+	req = malloc(req_len, M_DEVBUF, M_WAIT | M_CANFAIL | M_ZERO);
+	if (req == NULL)
+		return ENOMEM;
+
+	hcmd.len[0] = (uint16_t)req_len;
+	hcmd.data[0] = (void *)req;
+
+	DPRINTF(("Handling ieee80211 scan request\n"));
+
+	/* These timings correspond to iwlwifi's UNASSOC scan. */
+	req->active_dwell = 10;
+	req->passive_dwell = 110;
+	req->fragmented_dwell = 44;
+	req->extended_dwell = 90;
+	req->max_out_time = 0;
+	req->suspend_time = 0;
+
+	req->scan_priority = htole32(IWM_SCAN_PRIORITY_HIGH);
+	req->ooc_priority = htole32(IWM_SCAN_PRIORITY_HIGH);
+
+	req->n_channels = iwm_mvm_umac_scan_fill_channels(sc,
+	    (struct iwm_scan_channel_cfg_umac *)req->data,
+	    ic->ic_des_esslen != 0);
+
+	req->general_flags = htole32(IWM_UMAC_SCAN_GEN_FLAGS_PASS_ALL |
+	    IWM_UMAC_SCAN_GEN_FLAGS_ITER_COMPLETE |
+	    IWM_UMAC_SCAN_GEN_FLAGS_EXTENDED_DWELL);
+
+	tail = (void *)&req->data +
+		sizeof(struct iwm_scan_channel_cfg_umac) *
+			sc->sc_capa_n_scan_channels;
+
+	/* Check if we're doing an active directed scan. */
+	if (ic->ic_des_esslen != 0) {
+		tail->direct_scan[0].id = IEEE80211_ELEMID_SSID;
+		tail->direct_scan[0].len = ic->ic_des_esslen;
+		memcpy(tail->direct_scan[0].ssid, ic->ic_des_essid,
+		    ic->ic_des_esslen);
+		req->general_flags |=
+		    htole32(IWM_UMAC_SCAN_GEN_FLAGS_PRE_CONNECT);
+	} else
+		req->general_flags |= htole32(IWM_UMAC_SCAN_GEN_FLAGS_PASSIVE);
+
+	if (isset(sc->sc_enabled_capa, 
+	    IWM_UCODE_TLV_CAPA_DS_PARAM_SET_IE_SUPPORT))
+		req->general_flags |=
+		    htole32(IWM_UMAC_SCAN_GEN_FLAGS_RRM_ENABLED);
+
+	ret = iwm_mvm_fill_probe_req(sc, &tail->preq);
+	if (ret) {
+		free(req, M_DEVBUF, req_len);
+		return ret;
+	}
+
+	/* Specify the scan plan: We'll do one iteration. */
+	tail->schedule[0].interval = 0;
+	tail->schedule[0].iter_count = 1;
 
 	ret = iwm_send_cmd(sc, &hcmd);
 	if (!ret)
@@ -5803,7 +6290,10 @@ iwm_newstate_task(void *psc)
 		if (ic->ic_state == nstate &&
 		    (sc->sc_flags & IWM_FLAG_SCANNING))
 			return;
-		error = iwm_mvm_lmac_scan(sc);
+		if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_UMAC_SCAN))
+			error = iwm_mvm_umac_scan(sc);
+		else
+			error = iwm_mvm_lmac_scan(sc);
 		if (error != 0) {
 			printf("%s: could not initiate scan\n", DEVNAME(sc));
 			return;
@@ -5996,6 +6486,9 @@ iwm_mvm_sf_config(struct iwm_softc *sc, enum iwm_sf_state new_state)
 	};
 	int ret = 0;
 
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000)
+		sf_cmd.state |= htole32(IWM_SF_CFG_DUMMY_NOTIF_OFF);
+
 	switch (new_state) {
 	case IWM_SF_UNINIT:
 	case IWM_SF_INIT_OFF:
@@ -6170,7 +6663,8 @@ iwm_init_hw(struct iwm_softc *sc)
 	}
 
 	/* Initialize tx backoffs to the minimum. */
-	iwm_mvm_tt_tx_backoff(sc, 0);
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000)
+		iwm_mvm_tt_tx_backoff(sc, 0);
 
 	error = iwm_mvm_power_update_device(sc);
 	if (error)
@@ -6178,6 +6672,11 @@ iwm_init_hw(struct iwm_softc *sc)
 
 	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_LAR_SUPPORT)) {
 		if ((error = iwm_send_update_mcc_cmd(sc, "ZZ")) != 0)
+			goto error;
+	}
+
+	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_UMAC_SCAN)) {
+		if ((error = iwm_mvm_config_umac_scan(sc)) != 0)
 			goto error;
 	}
 
@@ -6512,10 +7011,80 @@ struct iwm_error_event_table {
 	uint32_t u_timestamp;	/* indicate when the date and time of the
 				 * compilation */
 	uint32_t flow_handler;	/* FH read/write pointers, RX credit */
+} __packed /* LOG_ERROR_TABLE_API_S_VER_3 */;
+
+/*
+ * UMAC error struct - relevant starting from family 8000 chip.
+ * Note: This structure is read from the device with IO accesses,
+ * and the reading already does the endian conversion. As it is
+ * read with u32-sized accesses, any members with a different size
+ * need to be ordered correctly though!
+ */
+struct iwm_umac_error_event_table {
+	uint32_t valid;		/* (nonzero) valid, (0) log is empty */
+	uint32_t error_id;	/* type of error */
+	uint32_t blink1;	/* branch link */
+	uint32_t blink2;	/* branch link */
+	uint32_t ilink1;	/* interrupt link */
+	uint32_t ilink2;	/* interrupt link */
+	uint32_t data1;		/* error-specific data */
+	uint32_t data2;		/* error-specific data */
+	uint32_t data3;		/* error-specific data */
+	uint32_t umac_major;
+	uint32_t umac_minor;
+	uint32_t frame_pointer;	/* core register 27*/
+	uint32_t stack_pointer;	/* core register 28 */
+	uint32_t cmd_header;	/* latest host cmd sent to UMAC */
+	uint32_t nic_isr_pref;	/* ISR status register */
 } __packed;
 
 #define ERROR_START_OFFSET  (1 * sizeof(uint32_t))
 #define ERROR_ELEM_SIZE     (7 * sizeof(uint32_t))
+
+void
+iwm_nic_umac_error(struct iwm_softc *sc)
+{
+	struct iwm_umac_error_event_table table;
+	uint32_t base;
+
+	base = sc->sc_uc.uc_umac_error_event_table;
+
+	if (base < 0x800000) {
+		printf("%s: Invalid error log pointer 0x%08x\n",
+		    DEVNAME(sc), base);
+		return;
+	}
+
+	if (iwm_read_mem(sc, base, &table, sizeof(table)/sizeof(uint32_t))) {
+		printf("%s: reading errlog failed\n", DEVNAME(sc));
+		return;
+	}
+
+	if (ERROR_START_OFFSET <= table.valid * ERROR_ELEM_SIZE) {
+		printf("%s: Start UMAC Error Log Dump:\n", DEVNAME(sc));
+		printf("%s: Status: 0x%x, count: %d\n", DEVNAME(sc),
+			sc->sc_flags, table.valid);
+	}
+
+	printf("%s: 0x%08X | %s\n", DEVNAME(sc), table.error_id,
+		iwm_desc_lookup(table.error_id));
+	printf("%s: 0x%08X | umac branchlink1\n", DEVNAME(sc), table.blink1);
+	printf("%s: 0x%08X | umac branchlink2\n", DEVNAME(sc), table.blink2);
+	printf("%s: 0x%08X | umac interruptlink1\n", DEVNAME(sc), table.ilink1);
+	printf("%s: 0x%08X | umac interruptlink2\n", DEVNAME(sc), table.ilink2);
+	printf("%s: 0x%08X | umac data1\n", DEVNAME(sc), table.data1);
+	printf("%s: 0x%08X | umac data2\n", DEVNAME(sc), table.data2);
+	printf("%s: 0x%08X | umac data3\n", DEVNAME(sc), table.data3);
+	printf("%s: 0x%08X | umac major\n", DEVNAME(sc), table.umac_major);
+	printf("%s: 0x%08X | umac minor\n", DEVNAME(sc), table.umac_minor);
+	printf("%s: 0x%08X | frame pointer\n", DEVNAME(sc),
+	    table.frame_pointer);
+	printf("%s: 0x%08X | stack pointer\n", DEVNAME(sc),
+	    table.stack_pointer);
+	printf("%s: 0x%08X | last host cmd\n", DEVNAME(sc), table.cmd_header);
+	printf("%s: 0x%08X | isr status reg\n", DEVNAME(sc),
+	    table.nic_isr_pref);
+}
 
 struct {
 	const char *name;
@@ -6629,6 +7198,9 @@ iwm_nic_error(struct iwm_softc *sc)
 	printf("%s: %08X | lmpm_pmg_sel\n", DEVNAME(sc), table.lmpm_pmg_sel);
 	printf("%s: %08X | timestamp\n", DEVNAME(sc), table.u_timestamp);
 	printf("%s: %08X | flow_handler\n", DEVNAME(sc), table.flow_handler);
+
+	if (sc->sc_uc.uc_umac_error_event_table)
+		iwm_nic_umac_error(sc);
 }
 #endif
 
@@ -6733,6 +7305,8 @@ iwm_notif_intr(struct iwm_softc *sc)
 				sc->sc_uc.uc_log_event_table
 				    = le32toh(resp2->log_event_table_ptr);
 				sc->sched_base = le32toh(resp2->scd_base_ptr);
+				sc->sc_uc.uc_umac_error_event_table
+				    = le32toh(resp2->error_info_addr);
 				if (resp2->status == IWM_ALIVE_STATUS_OK)
 					sc->sc_uc.uc_ok = 1;
 				else
@@ -6746,6 +7320,8 @@ iwm_notif_intr(struct iwm_softc *sc)
 				sc->sc_uc.uc_log_event_table
 				    = le32toh(resp3->log_event_table_ptr);
 				sc->sched_base = le32toh(resp3->scd_base_ptr);
+				sc->sc_uc.uc_umac_error_event_table
+				    = le32toh(resp3->error_info_addr);
 				if (resp3->status == IWM_ALIVE_STATUS_OK)
 					sc->sc_uc.uc_ok = 1;
 				else
@@ -6806,6 +7382,8 @@ iwm_notif_intr(struct iwm_softc *sc)
 		case IWM_BINDING_CONTEXT_CMD:
 		case IWM_TIME_EVENT_CMD:
 		case IWM_SCAN_REQUEST_CMD:
+		case IWM_WIDE_ID(IWM_ALWAYS_LONG_GROUP, IWM_SCAN_CFG_CMD):
+		case IWM_WIDE_ID(IWM_ALWAYS_LONG_GROUP, IWM_SCAN_REQ_UMAC):
 		case IWM_SCAN_OFFLOAD_REQUEST_CMD:
 		case IWM_REPLY_BEACON_FILTERING_CMD:
 		case IWM_MAC_PM_POWER_TABLE:
@@ -6843,6 +7421,27 @@ iwm_notif_intr(struct iwm_softc *sc)
 
 			task_add(sc->sc_eswq, &sc->sc_eswk);
 			break; }
+
+		case IWM_SCAN_COMPLETE_UMAC: {
+			struct iwm_umac_scan_complete *notif;
+			SYNC_RESP_STRUCT(notif, pkt);
+
+			DPRINTF(("UMAC scan complete, status=0x%x\n",
+			    notif->status));
+			task_add(sc->sc_eswq, &sc->sc_eswk);
+			break;
+		}
+
+		case IWM_SCAN_ITERATION_COMPLETE_UMAC: {
+			struct iwm_umac_scan_iter_complete_notif *notif;
+			SYNC_RESP_STRUCT(notif, pkt);
+
+			DPRINTF(("UMAC scan iteration complete, status=0x%x, "
+			"%d channels scanned\n",
+			    notif->status, notif->scanned_channels));
+			task_add(sc->sc_eswq, &sc->sc_eswk);
+			break;
+		}
 
 		case IWM_REPLY_ERROR: {
 			struct iwm_error_resp *resp;
@@ -7073,6 +7672,8 @@ static const struct pci_matchid iwm_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7260_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7265_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7265_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_8260_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_8260_2 },
 };
 
 int
@@ -7224,36 +7825,95 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_wantresp = IWM_CMD_RESP_IDLE;
 
+	sc->sc_hw_rev = IWM_READ(sc, IWM_CSR_HW_REV);
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_INTEL_WL_3160_1:
 	case PCI_PRODUCT_INTEL_WL_3160_2:
 		sc->sc_fwname = "iwm-3160-16";
 		sc->host_interrupt_operation_mode = 1;
+		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
+		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
 		break;
 	case PCI_PRODUCT_INTEL_WL_7260_1:
 	case PCI_PRODUCT_INTEL_WL_7260_2:
 		sc->sc_fwname = "iwm-7260-16";
 		sc->host_interrupt_operation_mode = 1;
+		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
+		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
 		break;
 	case PCI_PRODUCT_INTEL_WL_7265_1:
 	case PCI_PRODUCT_INTEL_WL_7265_2:
 		sc->sc_fwname = "iwm-7265-16";
 		sc->host_interrupt_operation_mode = 0;
+		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
+		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
+		break;
+	case PCI_PRODUCT_INTEL_WL_8260_1:
+	case PCI_PRODUCT_INTEL_WL_8260_2:
+		sc->sc_fwname = "iwm-8000C-16";
+		sc->host_interrupt_operation_mode = 0;
+		sc->sc_device_family = IWM_DEVICE_FAMILY_8000;
+		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ_8000;
 		break;
 	default:
 		printf("%s: unknown adapter type\n", DEVNAME(sc));
 		return;
 	}
-	sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
 
 	/*
 	 * We now start fiddling with the hardware
 	 */
 
-	sc->sc_hw_rev = IWM_READ(sc, IWM_CSR_HW_REV);
+	/*
+	 * In the 8000 HW family the format of the 4 bytes of CSR_HW_REV have
+	 * changed, and now the revision step also includes bit 0-1 (no more
+	 * "dash" value). To keep hw_rev backwards compatible - we'll store it
+	 * in the old format.
+	 */
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000)
+		sc->sc_hw_rev = (sc->sc_hw_rev & 0xfff0) |
+				(IWM_CSR_HW_REV_STEP(sc->sc_hw_rev << 2) << 2);
+		
 	if (iwm_prepare_card_hw(sc) != 0) {
 		printf("%s: could not initialize hardware\n", DEVNAME(sc));
 		return;
+	}
+
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000) {
+		int ret;
+		uint32_t hw_step;
+
+		/*
+		 * In order to recognize C step the driver should read the
+		 * chip version id located at the AUX bus MISC address.
+		 */
+		IWM_SETBITS(sc, IWM_CSR_GP_CNTRL,
+			    IWM_CSR_GP_CNTRL_REG_FLAG_INIT_DONE);
+		DELAY(2);
+
+		ret = iwm_poll_bit(sc, IWM_CSR_GP_CNTRL,
+				   IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY,
+				   IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY,
+				   25000);
+		if (ret < 0) {
+			printf("%s: Failed to wake up the nic\n", DEVNAME(sc));
+			return;
+		}
+
+		if (iwm_nic_lock(sc)) {
+			hw_step = iwm_read_prph(sc, IWM_WFPM_CTRL_REG);
+			hw_step |= IWM_ENABLE_WFPM;
+			iwm_write_prph(sc, IWM_WFPM_CTRL_REG, hw_step);
+			hw_step = iwm_read_prph(sc, IWM_AUX_MISC_REG);
+			hw_step = (hw_step >> IWM_HW_STEP_LOCATION_BITS) & 0xF;
+			if (hw_step == 0x3)
+				sc->sc_hw_rev = (sc->sc_hw_rev & 0xFFFFFFF3) |
+						(IWM_SILICON_C_STEP << 2);
+			iwm_nic_unlock(sc);
+		} else {
+			printf("%s: Failed to lock the nic\n", DEVNAME(sc));
+			return;
+		}
 	}
 
 	/* Allocate DMA memory for firmware transfers. */
