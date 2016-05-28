@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.32 2016/02/19 21:30:06 naddy Exp $	*/
+/*	$OpenBSD: conf.c,v 1.33 2016/05/28 15:53:39 sthen Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -45,7 +45,7 @@
 #include "pxeboot.h"
 #include "pxe_net.h"
 
-const char version[] = "3.25";
+const char version[] = "3.26";
 int	debug = 1;
 
 void (*sa_cleanup)(void) = pxe_shutdown;
