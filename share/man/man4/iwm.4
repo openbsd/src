@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.16 2016/01/15 18:50:13 tj Exp $
+.\" $OpenBSD: iwm.4,v 1.17 2016/05/28 08:22:16 stsp Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,12 +15,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 15 2016 $
+.Dd $Mdocdate: May 28 2016 $
 .Dt IWM 4
 .Os
 .Sh NAME
 .Nm iwm
-.Nd Intel 7200 IEEE 802.11a/ac/b/g/n wireless network devices
+.Nd Intel 7000/8000 IEEE 802.11a/ac/b/g/n wireless network devices
 .Sh SYNOPSIS
 .Cd "iwm* at pci?"
 .Sh DESCRIPTION
@@ -28,7 +28,7 @@ The
 .Nm
 driver provides support for
 .Tn Intel
-Wireless 7260, 7265, and 3160 PCIe Mini Card network adapters.
+Wireless 7260, 7265, 3160, and 8260 PCIe Mini Card network adapters.
 .Pp
 These are the modes the
 .Nm
@@ -70,9 +70,10 @@ The driver needs one of the following firmware files,
 which are loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Pa /etc/firmware/iwm-3160-9
-.It Pa /etc/firmware/iwm-7260-9
-.It Pa /etc/firmware/iwm-7265-9
+.It Pa /etc/firmware/iwm-3160-16
+.It Pa /etc/firmware/iwm-7260-16
+.It Pa /etc/firmware/iwm-7265-16
+.It Pa /etc/firmware/iwm-8000C-16
 .El
 .Pp
 These firmware files are not free because Intel refuses to grant
