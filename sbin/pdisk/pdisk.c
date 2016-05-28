@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.86 2016/04/27 07:29:08 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.87 2016/05/28 22:26:13 tb Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -77,22 +77,15 @@ main(int argc, char **argv)
 	int c, fd, oflags;
 
 	oflags = O_RDWR;
-	if (pledge("stdio rpath wpath disklabel", NULL) == -1)
-		err(1, "pledge");
-
 	while ((c = getopt(argc, argv, "lr")) != -1) {
 		switch (c) {
 		case 'l':
 			lflag = 1;
 			oflags = O_RDONLY;
-			if (pledge("stdio rpath disklabel", NULL) == -1)
-				err(1, "pledge");
 			break;
 		case 'r':
 			rflag = 1;
 			oflags = O_RDONLY;
-			if (pledge("stdio rpath disklabel", NULL) == -1)
-				err(1, "pledge");
 			break;
 		default:
 			usage();
@@ -109,9 +102,6 @@ main(int argc, char **argv)
 	fd = opendev(*argv, oflags, OPENDEV_PART, NULL);
 	if (fd == -1)
 		err(1, "can't open file '%s'", *argv);
-
-	if (pledge("stdio disklabel", NULL) == -1)
-		err(1, "pledge");
 
 	if (fstat(fd, &st) == -1)
 		err(1, "can't fstat %s", *argv);
