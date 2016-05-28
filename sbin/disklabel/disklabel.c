@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.215 2016/05/28 15:46:43 beck Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.216 2016/05/28 16:00:19 beck Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -191,6 +191,8 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	if (argv[0] == NULL)
+		usage();
 	dkname = argv[0];
 	f = opendev(dkname, (op == READ ? O_RDONLY : O_RDWR), OPENDEV_PART,
 	    &specname);
