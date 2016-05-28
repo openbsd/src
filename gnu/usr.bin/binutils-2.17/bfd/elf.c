@@ -1086,6 +1086,7 @@ get_segment_type (unsigned int p_type)
     case PT_GNU_STACK: pt = "STACK"; break;
     case PT_GNU_RELRO: pt = "RELRO"; break;
     case PT_OPENBSD_RANDOMIZE: pt = "OPENBSD_RANDOMIZE"; break;
+    case PT_OPENBSD_WXNEEDED: pt = "OPENBSD_WXNEEDED"; break;
     default: pt = NULL; break;
     }
   return pt;
@@ -2611,6 +2612,10 @@ bfd_section_from_phdr (bfd *abfd, Elf_Internal_Phdr *hdr, int index)
       return _bfd_elf_make_section_from_phdr (abfd, hdr, index,
 					      "openbsd_randomize");
 
+    case PT_OPENBSD_WXNEEDED:
+      return _bfd_elf_make_section_from_phdr (abfd, hdr, index,
+					      "openbsd_wxneeded");
+
     default:
       /* Check for any processor-specific program segment types.  */
       bed = get_elf_backend_data (abfd);
@@ -3924,6 +3929,21 @@ map_sections_to_segments (bfd *abfd)
       m->next = NULL;
       m->p_type = PT_GNU_STACK;
       m->p_flags = elf_tdata (abfd)->stack_flags;
+      m->p_flags_valid = 1;
+
+      *pm = m;
+      pm = &m->next;
+    }
+
+  if (elf_tdata (abfd)->wxneeded)
+    {
+      amt = sizeof (struct elf_segment_map);
+      m = bfd_zalloc (abfd, amt);
+      if (m == NULL)
+	goto error_return;
+      m->next = NULL;
+      m->p_type = PT_OPENBSD_WXNEEDED;
+      m->p_flags = 1;
       m->p_flags_valid = 1;
 
       *pm = m;

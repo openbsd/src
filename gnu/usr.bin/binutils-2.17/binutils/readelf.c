@@ -2387,6 +2387,8 @@ get_segment_type (unsigned long p_type)
     case PT_GNU_RELRO:  return "GNU_RELRO";
     case PT_OPENBSD_RANDOMIZE:
 			return "OPENBSD_RANDOMIZE";
+    case PT_OPENBSD_WXNEEDED:
+			return "OPENBSD_WXNEEDED";
 
     default:
       if ((p_type >= PT_LOPROC) && (p_type <= PT_HIPROC))

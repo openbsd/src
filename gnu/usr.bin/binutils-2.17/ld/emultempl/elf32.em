@@ -2191,6 +2191,8 @@ cat >>e${EMULATION_NAME}.c <<EOF
 	link_info.relro = TRUE;
       else if (strcmp (optarg, "norelro") == 0)
 	link_info.relro = FALSE;
+      else if (strcmp (optarg, "wxneeded") == 0)
+	link_info.wxneeded = TRUE;
       /* What about the other Solaris -z options? FIXME.  */
       break;
 EOF

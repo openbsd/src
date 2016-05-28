@@ -306,6 +306,7 @@
 #define PT_GNU_RELRO	(PT_LOOS + 0x474e552) /* Read-only after relocation */
 
 #define PT_OPENBSD_RANDOMIZE	0x65a3dbe6 /* Fill with random data. */
+#define PT_OPENBSD_WXNEEDED	0x65a3dbe7 /* Program does W^X violations */
 
 /* Program segment permissions, in program header p_flags field.  */
 

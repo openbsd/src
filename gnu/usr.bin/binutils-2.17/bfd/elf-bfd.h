@@ -1337,6 +1337,9 @@ struct elf_obj_tdata
   /* Should the PT_GNU_RELRO segment be emitted?  */
   bfd_boolean relro;
 
+  /* TRUE if output program should be marked to request W^X permission */
+  bfd_boolean wxneeded;
+
   /* Symbol version definitions in external objects.  */
   Elf_Internal_Verdef *verdef;
 
