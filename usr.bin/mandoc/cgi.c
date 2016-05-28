@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.70 2016/04/29 10:45:06 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.71 2016/05/28 13:40:44 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@usta.de>
@@ -383,8 +383,7 @@ resp_searchform(const struct req *req, enum focus focus)
 
 	/* Write query input box. */
 
-	printf(	"<table><tr><td>\n"
-		"<input type=\"text\" name=\"query\" value=\"");
+	printf("<input type=\"text\" name=\"query\" value=\"");
 	if (req->q.query != NULL)
 		html_print(req->q.query);
 	printf( "\" size=\"40\"");
@@ -392,24 +391,16 @@ resp_searchform(const struct req *req, enum focus focus)
 		printf(" autofocus");
 	puts(">");
 
-	/* Write submission and reset buttons. */
+	/* Write submission buttons. */
 
-	printf(	"<input type=\"submit\" value=\"Submit\">\n"
-		"<input type=\"reset\" value=\"Reset\">\n");
-
-	/* Write show radio button */
-
-	printf(	"</td><td>\n"
-		"<input type=\"radio\" ");
-	if (req->q.equal)
-		printf("checked=\"checked\" ");
-	printf(	"name=\"apropos\" id=\"show\" value=\"0\">\n"
-		"<label for=\"show\">Show named manual page</label>\n");
+	printf(	"<button type=\"submit\" name=\"apropos\" value=\"0\">"
+		"man</button>\n"
+		"<button type=\"submit\" name=\"apropos\" value=\"1\">"
+		"apropos</button>\n<br/>\n");
 
 	/* Write section selector. */
 
-	puts(	"</td></tr><tr><td>\n"
-		"<select name=\"sec\">");
+	puts("<select name=\"sec\">");
 	for (i = 0; i < sec_MAX; i++) {
 		printf("<option value=\"%s\"", sec_numbers[i]);
 		if (NULL != req->q.sec &&
@@ -452,17 +443,7 @@ resp_searchform(const struct req *req, enum focus focus)
 		puts("</select>");
 	}
 
-	/* Write search radio button */
-
-	printf(	"</td><td>\n"
-		"<input type=\"radio\" ");
-	if (0 == req->q.equal)
-		printf("checked=\"checked\" ");
-	printf(	"name=\"apropos\" id=\"search\" value=\"1\">\n"
-		"<label for=\"search\">Search with apropos query</label>\n");
-
-	puts("</td></tr></table>\n"
-	     "</fieldset>\n"
+	puts("</fieldset>\n"
 	     "</form>\n"
 	     "</div>");
 	puts("<!-- End search form. //-->");
