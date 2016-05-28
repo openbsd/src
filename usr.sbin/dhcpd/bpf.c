@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.13 2016/02/06 23:50:10 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.14 2016/05/28 07:00:18 natano Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -63,8 +63,6 @@
 #include "tree.h"
 #include "dhcpd.h"
 
-#define BPF_FORMAT "/dev/bpf%d"
-
 ssize_t send_packet	 (struct interface_info *, struct dhcp_packet *,
     size_t, struct in_addr, struct sockaddr_in *, struct hardware *);
 
@@ -76,26 +74,15 @@ ssize_t send_packet	 (struct interface_info *, struct dhcp_packet *,
 int
 if_register_bpf(struct interface_info *info)
 {
-	char filename[50];
-	int sock, b;
+	int sock;
 
-	/* Open a BPF device */
-	for (b = 0; 1; b++) {
-		snprintf(filename, sizeof(filename), BPF_FORMAT, b);
-		sock = open(filename, O_RDWR, 0);
-		if (sock == -1) {
-			if (errno == EBUSY)
-				continue;
-			else
-				error("Can't find free bpf: %m");
-		} else
-			break;
-	}
+	if ((sock = open("/dev/bpf0", O_RDWR)) == -1)
+		error("Can't open bpf device: %m");
 
 	/* Set the BPF device to point at this interface. */
 	if (ioctl(sock, BIOCSETIF, info->ifp) == -1)
-		error("Can't attach interface %s to bpf device %s: %m",
-		    info->name, filename);
+		error("Can't attach interface %s to bpf device: %m",
+		    info->name);
 
 	info->send_packet = send_packet;
 	return (sock);

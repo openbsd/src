@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.5 2004/05/01 00:39:22 deraadt Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.6 2016/05/28 07:00:18 natano Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1995/08/21 17:05:15 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
  * Author: Jeff Forys, University of Utah CSS
  */
 
-#define	_PATH_BPF		"/dev/bpf%d"
 #define	_PATH_RBOOTDCONF	"/etc/rbootd.conf"
 #define	_PATH_RBOOTDDBG		"/tmp/rbootd.dbg"
 #define	_PATH_RBOOTDDIR		"/usr/mdec/rbootd"

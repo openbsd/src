@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rbootd.8,v 1.15 2015/10/28 10:02:59 jmc Exp $
+.\"	$OpenBSD: rbootd.8,v 1.16 2016/05/28 07:00:18 natano Exp $
 .\"	$NetBSD: rbootd.8,v 1.3 1995/08/21 17:05:16 thorpej Exp $
 .\"
 .\" Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -41,7 +41,7 @@
 .\" Utah Hdr: rbootd.man 3.1 92/07/06
 .\" Author: Jeff Forys, University of Utah CSS
 .\"
-.Dd $Mdocdate: October 28 2015 $
+.Dd $Mdocdate: May 28 2016 $
 .Dt RBOOTD 8
 .Os
 .Sh NAME
@@ -135,7 +135,7 @@ Turn off debugging, do nothing if already off.
 .El
 .Sh FILES
 .Bl -tag -width /usr/libexec/rbootd -compact
-.It Pa /dev/bpf#
+.It Pa /dev/bpf0
 packet-filter device
 .It Pa /etc/rbootd.conf
 configuration file

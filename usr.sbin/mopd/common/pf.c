@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.15 2009/10/27 23:59:52 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.16 2016/05/28 07:00:18 natano Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -79,8 +79,6 @@ int
 pfInit(char *interface, int mode, u_short protocol, int typ)
 {
 	int		fd;
-	int		n = 0;
-	char		device[sizeof "/dev/bpf000"];
 	struct ifreq	ifr;
 	u_int		dlt;
 	int		immediate;
@@ -100,13 +98,7 @@ pfInit(char *interface, int mode, u_short protocol, int typ)
 		insns
 	};
 
-	/* Go through all the minors and find one that isn't in use. */
-	do {
-		snprintf(device, sizeof device, "/dev/bpf%d", n++);
-		fd = open(device, mode);
-	} while (fd < 0 && errno == EBUSY);
-
-	if (fd < 0) {
+	if ((fd = open("/dev/bpf0", mode)) == -1) {
 		syslog(LOG_ERR,"pfInit: open bpf %m");
 		return (-1);
 	}
@@ -129,7 +121,7 @@ pfInit(char *interface, int mode, u_short protocol, int typ)
 		return (-1);
 	}
 	if (dlt != DLT_EN10MB) {
-		syslog(LOG_ERR,"pfInit: %s is not ethernet", device);
+		syslog(LOG_ERR,"pfInit: %s is not ethernet", interface);
 		return (-1);
 	}
 	if (promisc)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.24 2016/04/16 22:23:01 natano Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.25 2016/05/28 07:00:18 natano Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -61,7 +61,6 @@
 #include <limits.h>
 #include <ifaddrs.h>
 #include "defs.h"
-#include "pathnames.h"
 
 static int BpfFd = -1;
 static unsigned int BpfLen = 0;
@@ -83,19 +82,10 @@ int
 BpfOpen(void)
 {
 	struct ifreq ifr;
-	char bpfdev[32];
-	int n = 0;
+	int n;
 
-	/*
-	 *  Open the first available BPF device.
-	 */
-	do {
-		(void) snprintf(bpfdev, sizeof bpfdev, _PATH_BPF, n++);
-		BpfFd = open(bpfdev, O_RDWR);
-	} while (BpfFd < 0 && (errno == EBUSY || errno == EPERM));
-
-	if (BpfFd < 0) {
-		syslog(LOG_ERR, "bpf: no available devices: %m");
+	if ((BpfFd = open("/dev/bpf0", O_RDWR)) == -1) {
+		syslog(LOG_ERR, "bpf: can't open device: %m");
 		DoExit();
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.67 2015/11/19 19:31:20 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.68 2016/05/28 07:00:18 natano Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -226,25 +226,6 @@ usage(void)
 	exit(1);
 }
 
-static int
-bpf_open(void)
-{
-	int	fd, n = 0;
-	char    device[sizeof "/dev/bpf0000000000"];
-
-	/* Go through all the minors and find one that isn't in use. */
-	do {
-		(void) snprintf(device, sizeof device, "/dev/bpf%d", n++);
-		fd = open(device, O_RDWR);
-	} while (fd < 0 && errno == EBUSY);
-
-	if (fd < 0) {
-		error(FATAL, "%s: %s", device, strerror(errno));
-		/* NOTREACHED */
-	}
-	return fd;
-}
-
 static struct bpf_insn insns[] = {
 	BPF_STMT(BPF_LD | BPF_H | BPF_ABS, 12),
 	BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, ETHERTYPE_REVARP, 0, 3),
@@ -271,7 +252,8 @@ rarp_open(char *device)
 	struct ifreq ifr;
 	u_int   dlt;
 
-	fd = bpf_open();
+	if ((fd = open("/dev/bpf0", O_RDWR)) == -1)
+		error(FATAL, "/dev/bpf0: %s", strerror(errno));
 
 	/* Set immediate mode so packets are processed as they arrive. */
 	immediate = 1;

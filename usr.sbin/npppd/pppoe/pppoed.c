@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.19 2015/12/17 08:09:20 tb Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.20 2016/05/28 07:00:18 natano Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.19 2015/12/17 08:09:20 tb Exp $
+ * $Id: pppoed.c,v 1.20 2016/05/28 07:00:18 natano Exp $
  */
 #include <sys/param.h>	/* ALIGN */
 #include <sys/types.h>
@@ -202,9 +202,7 @@ pppoed_reload_listeners(pppoed *_this)
 static int
 pppoed_listener_start(pppoed_listener *_this, int restart)
 {
-	int i;
 	int log_level;
-	char buf[BUFSIZ];
 	struct ifreq ifreq;
 	int ival;
 	int found;
@@ -275,17 +273,8 @@ pppoed_listener_start(pppoed_listener *_this, int restart)
 		goto fail;
 	}
 
-	/* Open /dev/bpfXX */
-	/* FIXME: /dev/bpf of NetBSD3.0 can simultaneity open */
-	for (i = 0; i < 256; i++) {
-		snprintf(buf, sizeof(buf), "/dev/bpf%d", i);
-		if ((_this->bpf = priv_open(buf, O_RDWR)) >= 0) {
-			break;
-		} else if (errno == ENXIO || errno == ENOENT)
-			break;	/* no more entries */
-	}
-	if (_this->bpf < 0) {
-		pppoed_log(_pppoed, log_level, "Cannot open bpf");
+	if ((_this->bpf = priv_open("/dev/bpf0", O_RDWR)) == -1) {
+		pppoed_log(_pppoed, log_level, "Cannot open bpf: %m");
 		goto fail;
 	}
 
@@ -327,9 +316,9 @@ pppoed_listener_start(pppoed_listener *_this, int restart)
 	    pppoed_io_event, _this);
 	event_add(&_this->ev_bpf, NULL);
 
-	pppoed_log(_pppoed, LOG_INFO, "Listening on %s (PPPoE) [%s] using=%s "
+	pppoed_log(_pppoed, LOG_INFO, "Listening on %s (PPPoE) [%s] "
 	    "address=%02x:%02x:%02x:%02x:%02x:%02x", _this->listen_ifname,
-	    _this->tun_name, buf, _this->ether_addr[0], _this->ether_addr[1],
+	    _this->tun_name, _this->ether_addr[0], _this->ether_addr[1],
 	    _this->ether_addr[2], _this->ether_addr[3], _this->ether_addr[4],
 	    _this->ether_addr[5]);
 

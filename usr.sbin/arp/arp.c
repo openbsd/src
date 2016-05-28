@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.74 2016/03/23 08:28:31 mpi Exp $ */
+/*	$OpenBSD: arp.c,v 1.75 2016/05/28 07:00:18 natano Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -808,12 +808,7 @@ sec2str(time_t total)
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BPF_PATH_FORMAT
-#define BPF_PATH_FORMAT "/dev/bpf%u"
-#endif
-
 int	do_wakeup(const char *, const char *, int);
-int	get_bpf(void);
 int	bind_if_to_bpf(const char *, int);
 int	get_ether(const char *, struct ether_addr *);
 int	send_frame(int, const struct ether_addr *);
@@ -825,9 +820,8 @@ wake(const char *ether_addr, const char *iface)
 	char			*pname = NULL;
 	int			 bpf;
 
-	bpf = get_bpf();
-	if (bpf == -1)
-		errx(1, "Failed to bind to bpf.");
+	if ((bpf = open("/dev/bpf0", O_RDWR)) == -1)
+		err(1, "Failed to bind to bpf");
 
 	if (iface == NULL) {
 		if (getifaddrs(&ifa) == -1)
@@ -873,25 +867,6 @@ do_wakeup(const char *eaddr, const char *iface, int bpf)
 	if (send_frame(bpf, &macaddr) != 0)
 		errx(1, "Failed to send WoL frame on %s", iface);
 	return 0;
-}
-
-int
-get_bpf(void)
-{
-	char path[PATH_MAX];
-	int i, fd;
-
-	for (i = 0; ; i++) {
-		if (snprintf(path, sizeof(path), BPF_PATH_FORMAT, i) == -1)
-			return -1;
-		fd = open(path, O_RDWR);
-		if (fd != -1)
-			return fd;
-		if (errno == EBUSY)
-			continue;
-		break;
-	}
-	return -1;
 }
 
 int
