@@ -53,8 +53,7 @@ do_files:
 	cp /usr/mdec/${BOARD}/*.dtb ${MOUNT_POINT}/
 .endif
 .if ${BOARD} == "nitrogen"
-	${MKUBOOT} -t script -a arm -o linux \
-	    ${.CURDIR}/../boot.cmd ${MOUNT_POINT}/6x_bootscript
+	cp /usr/mdec/${BOARD}/*.dtb ${MOUNT_POINT}/
 .endif
 .if ${BOARD} == "cubox" || ${BOARD} == "wandboard"
 	cp /usr/mdec/${BOARD}/*.dtb ${MOUNT_POINT}/

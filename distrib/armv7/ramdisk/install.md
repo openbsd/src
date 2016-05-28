@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.32 2016/05/26 00:34:50 jsg Exp $
+#	$OpenBSD: install.md,v 1.33 2016/05/28 10:10:36 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -101,21 +101,7 @@ md_installboot() {
 			dd if=/mnt/usr/mdec/cubox/u-boot.img \
 			    of=/dev/${_disk}c bs=1024 seek=69 >/dev/null
 		elif [[ -n $NITROGEN ]]; then
-			if [[ -f /mnt/bsd.${MDPLAT}.umg ]]; then
-				mv /mnt/bsd.${MDPLAT}.umg /mnt/mnt/bsd.umg
-			fi
-			if [[ -f /mnt/bsd.rd.${MDPLAT}.umg ]]; then
-				mv /mnt/bsd.rd.${MDPLAT}.umg /mnt/mnt/bsdrd.umg
-			fi
-
-			cat > /tmp/boot.cmd<<__EOT
-setenv bootargs sd0a:/bsd ;
-mmc rescan ;
-load mmc 0:1 \${loadaddr} bsd.umg ;
-bootm \${loadaddr}
-__EOT
-			mkuboot -t script -a arm -o linux /tmp/boot.cmd \
-			    /mnt/mnt/6x_bootscript
+			cp /mnt/usr/mdec/nitrogen/*.dtb /mnt/mnt/
 		elif [[ -n $WANDBOARD ]]; then
 			cp /mnt/usr/mdec/wandboard/*.dtb /mnt/mnt/
 			dd if=/mnt/usr/mdec/wandboard/SPL \
