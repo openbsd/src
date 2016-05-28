@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.217 2016/05/28 16:46:44 beck Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.218 2016/05/28 23:38:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -198,7 +198,6 @@ main(int argc, char *argv[])
 	    &specname);
 	if (f < 0)
 		err(4, "%s", specname);
-	readlabel(f);
 
 	if (op == EDIT || op == EDITOR || aflag) {
 		if (pledge("stdio rpath wpath cpath disklabel proc exec", NULL) == -1)
@@ -222,16 +221,19 @@ main(int argc, char *argv[])
 	case EDIT:
 		if (argc != 1)
 			usage();
+		readlabel(f);
 		error = edit(&lab, f);
 		break;
 	case EDITOR:
 		if (argc != 1)
 			usage();
+		readlabel(f);
 		error = editor(f);
 		break;
 	case READ:
 		if (argc != 1)
 			usage();
+		readlabel(f);
 
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
@@ -245,6 +247,7 @@ main(int argc, char *argv[])
 	case RESTORE:
 		if (argc < 2 || argc > 3)
 			usage();
+		readlabel(f);
 		if (!(t = fopen(argv[1], "r")))
 			err(4, "%s", argv[1]);
 		error = getasciilabel(t, &lab);
@@ -260,7 +263,9 @@ main(int argc, char *argv[])
 		fclose(t);
 		break;
 	case WRITE:
-		if (!(dflag || aflag) && (argc < 2 || argc > 3))
+		if (dflag || aflag) {
+			readlabel(f);
+		} else if (argc < 2 || argc > 3)
 			usage();
 		else
 			makelabel(argv[1], argc == 3 ? argv[2] : NULL, &lab);
