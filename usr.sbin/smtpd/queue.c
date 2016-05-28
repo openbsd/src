@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.177 2016/04/29 08:55:08 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.178 2016/05/28 21:21:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -665,25 +665,14 @@ queue_shutdown(void)
 	_exit(0);
 }
 
-pid_t
+int
 queue(void)
 {
-	pid_t		 pid;
 	struct passwd	*pw;
 	struct timeval	 tv;
 	struct event	 ev_qload;
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
-
-	switch (pid = fork()) {
-	case -1:
-		fatal("queue: cannot fork");
-	case 0:
-		post_fork(PROC_QUEUE);
-		break;
-	default:
-		return (pid);
-	}
 
 	purge_config(PURGE_EVERYTHING);
 

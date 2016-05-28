@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.51 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.52 2016/05/28 21:21:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -434,10 +434,9 @@ scheduler_reset_events(void)
 	evtimer_add(&ev, &tv);
 }
 
-pid_t
+int
 scheduler(void)
 {
-	pid_t		 pid;
 	struct passwd	*pw;
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
@@ -446,16 +445,6 @@ scheduler(void)
 	if (backend == NULL)
 		errx(1, "cannot find scheduler backend \"%s\"",
 		    backend_scheduler);
-
-	switch (pid = fork()) {
-	case -1:
-		fatal("scheduler: cannot fork");
-	case 0:
-		post_fork(PROC_SCHEDULER);
-		break;
-	default:
-		return (pid);
-	}
 
 	purge_config(PURGE_EVERYTHING);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.21 2016/02/02 21:18:04 gilles Exp $	*/
+/*	$OpenBSD: ca.c,v 1.22 2016/05/28 21:21:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -83,23 +83,12 @@ ca_sig_handler(int sig, short event, void *p)
 	}
 }
 
-pid_t
+int
 ca(void)
 {
-	pid_t		 pid;
 	struct passwd	*pw;
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
-
-	switch (pid = fork()) {
-	case -1:
-		fatal("ca: cannot fork");
-	case 0:
-		post_fork(PROC_CA);
-		break;
-	default:
-		return (pid);
-	}
 
 	purge_config(PURGE_LISTENERS|PURGE_TABLES|PURGE_RULES);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.192 2016/01/22 13:10:41 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.193 2016/05/28 21:21:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -404,24 +404,13 @@ lka_shutdown(void)
 	_exit(0);
 }
 
-pid_t
+int
 lka(void)
 {
-	pid_t		 pid;
 	struct passwd	*pw;
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
 	struct event	 ev_sigchld;
-
-	switch (pid = fork()) {
-	case -1:
-		fatal("lka: cannot fork");
-	case 0:
-		post_fork(PROC_LKA);
-		break;
-	default:
-		return (pid);
-	}
 
 	purge_config(PURGE_LISTENERS);
 

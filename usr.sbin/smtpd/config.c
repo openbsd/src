@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.34 2016/03/25 15:06:58 krw Exp $	*/
+/*	$OpenBSD: config.c,v 1.35 2016/05/28 21:21:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -37,8 +37,6 @@
 #include "ssl.h"
 
 extern int profiling;
-
-static int pipes[PROC_COUNT][PROC_COUNT];
 
 void
 purge_config(uint8_t what)
@@ -106,23 +104,6 @@ purge_config(uint8_t what)
 }
 
 void
-init_pipes(void)
-{
-	int	 i, j, sockpair[2];
-
-	for (i = 0; i < PROC_COUNT; i++)
-		for (j = i + 1; j < PROC_COUNT; j++) {
-			if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
-				sockpair) == -1)
-				fatal("socketpair");
-			pipes[i][j] = sockpair[0];
-			pipes[j][i] = sockpair[1];
-			io_set_nonblocking(pipes[i][j]);
-			io_set_nonblocking(pipes[j][i]);
-		}
-}
-
-void
 config_process(enum smtp_proc_type proc)
 {
 	struct rlimit rl;
@@ -145,31 +126,24 @@ config_peer(enum smtp_proc_type proc)
 	if (proc == smtpd_process)
 		fatal("config_peers: cannot peer with oneself");
 
-	p = xcalloc(1, sizeof *p, "config_peer");
-	p->proc = proc;
-	p->name = xstrdup(proc_name(proc), "config_peer");
-	p->handler = imsg_dispatch;
-
-	mproc_init(p, pipes[smtpd_process][proc]);
-	mproc_enable(p);
-	pipes[smtpd_process][proc] = -1;
-
 	if (proc == PROC_CONTROL)
-		p_control = p;
+		p = p_control;
 	else if (proc == PROC_LKA)
-		p_lka = p;
+		p = p_lka;
 	else if (proc == PROC_PARENT)
-		p_parent = p;
+		p = p_parent;
 	else if (proc == PROC_QUEUE)
-		p_queue = p;
+		p = p_queue;
 	else if (proc == PROC_SCHEDULER)
-		p_scheduler = p;
+		p = p_scheduler;
 	else if (proc == PROC_PONY)
-		p_pony = p;
+		p = p_pony;
 	else if (proc == PROC_CA)
-		p_ca = p;
+		p = p_ca;
 	else
 		fatalx("bad peer");
+
+	mproc_enable(p);
 }
 
 static void process_stat_event(int, short, void *);
@@ -179,16 +153,6 @@ config_done(void)
 {
 	static struct event	ev;
 	struct timeval		tv;
-	unsigned int		i, j;
-
-	for (i = 0; i < PROC_COUNT; i++) {
-		for (j = 0; j < PROC_COUNT; j++) {
-			if (i == j || pipes[i][j] == -1)
-				continue;
-			close(pipes[i][j]);
-			pipes[i][j] = -1;
-		}
-	}
 
 	if (smtpd_process == PROC_CONTROL)
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pony.c,v 1.12 2016/01/01 12:37:14 jung Exp $	*/
+/*	$OpenBSD: pony.c,v 1.13 2016/05/28 21:21:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -151,23 +151,12 @@ pony_shutdown(void)
 	_exit(0);
 }
 
-pid_t
+int
 pony(void)
 {
-	pid_t		 pid;
 	struct passwd	*pw;
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
-
-	switch (pid = fork()) {
-	case -1:
-		fatal("pony: cannot fork");
-	case 0:
-		post_fork(PROC_PONY);
-		break;
-	default:
-		return (pid);
-	}
 
 	mda_postfork();
 	mta_postfork();
