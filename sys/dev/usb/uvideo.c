@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.187 2016/05/26 04:47:08 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.188 2016/05/28 06:26:49 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1817,19 +1817,17 @@ uvideo_vs_open(struct uvideo_softc *sc)
 		return (error);
 	}
 
-	ed = usbd_interface2endpoint_descriptor(sc->sc_vs_cur->ifaceh, 0);
+	/* double check if we can access the selected endpoint descriptor */
+	ed = usbd_get_endpoint_descriptor(sc->sc_vs_cur->ifaceh,
+	    sc->sc_vs_cur->endpoint);
 	if (ed == NULL) {
 		printf("%s: no endpoint descriptor for VS iface\n",
 		    DEVNAME(sc));
 		return (USBD_INVAL);
 	}
-	DPRINTF(1, "%s: open pipe for ", DEVNAME(sc));
-	DPRINTF(1, "bEndpointAddress=0x%02x (0x%02x), wMaxPacketSize=%d (%d)\n",
-	    ed->bEndpointAddress,
-	    sc->sc_vs_cur->endpoint,
-	    UGETW(ed->wMaxPacketSize),
-	    sc->sc_vs_cur->psize);
 
+	DPRINTF(1, "%s: open pipe for bEndpointAddress=0x%02x",
+	    DEVNAME(sc), sc->sc_vs_cur->endpoint);
 	error = usbd_open_pipe(
 	    sc->sc_vs_cur->ifaceh,
 	    sc->sc_vs_cur->endpoint,
