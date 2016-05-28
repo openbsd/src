@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcmdsh.c,v 1.18 2015/11/24 22:03:33 millert Exp $	*/ 
+/*	$OpenBSD: rcmdsh.c,v 1.19 2016/05/28 15:46:00 millert Exp $	*/ 
 
 /*
  * Copyright (c) 2001, MagniComp
@@ -38,6 +38,7 @@
 #include      <sys/wait.h>
 #include      <signal.h>
 #include      <errno.h>
+#include      <limits.h>
 #include      <netdb.h>
 #include      <stdio.h>
 #include      <stdlib.h>
@@ -55,7 +56,8 @@ int
 rcmdsh(char **ahost, int rport, const char *locuser, const char *remuser,
     const char *cmd, char *rshprog)
 {
-	struct hostent *hp;
+	static char hbuf[HOST_NAME_MAX+1];
+	struct addrinfo hint, *res;
 	int sp[2];
 	pid_t cpid;
 	char *p, pwbuf[_PW_BUF_LEN];
@@ -74,9 +76,16 @@ rcmdsh(char **ahost, int rport, const char *locuser, const char *remuser,
 
 	/* Validate remote hostname. */
 	if (strcmp(*ahost, "localhost") != 0) {
-		if ((hp = gethostbyname2(*ahost, AF_INET)) ||
-		    (hp = gethostbyname2(*ahost, AF_INET6)))
-			*ahost = hp->h_name;
+		memset(&hint, 0, sizeof(hint));
+		hint.ai_family = PF_UNSPEC;
+		hint.ai_flags = AI_CANONNAME;
+		if (getaddrinfo(*ahost, NULL, &hint, &res) == 0) {
+			if (res->ai_canonname) {
+				strlcpy(hbuf, res->ai_canonname, sizeof(hbuf));
+				*ahost = hbuf;
+			}
+			freeaddrinfo(res);
+		}
 	}
 
 	/* Get a socketpair we'll use for stdin and stdout. */
