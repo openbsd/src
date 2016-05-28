@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.128 2016/05/21 14:19:03 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.129 2016/05/28 00:10:36 tedu Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -795,7 +795,7 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 		sr_error(sc, "cannot open key disk %s", devname);
 		goto done;
 	}
-	if (VOP_OPEN(vn, FREAD | FWRITE, NOCRED, curproc)) {
+	if (VOP_OPEN(vn, FREAD, NOCRED, curproc)) {
 		DNPRINTF(SR_D_META,"%s: sr_crypto_read_key_disk cannot "
 		    "open %s\n", DEVNAME(sc), devname);
 		vput(vn);
