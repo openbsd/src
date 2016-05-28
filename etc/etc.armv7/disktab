@@ -1,4 +1,4 @@
-# $OpenBSD: disktab,v 1.5 2016/05/21 07:19:24 jsg Exp $
+# $OpenBSD: disktab,v 1.6 2016/05/28 10:00:55 jsg Exp $
 
 # Leave nc=16; adjust size using: ns
 rdroot|ramdiskroot|RAM-disk root FS image:\
@@ -6,21 +6,6 @@ rdroot|ramdiskroot|RAM-disk root FS image:\
 	:ta=4.2BSD:oa#0:pa#15360:fa#512:ba#4096:\
 	:ob#0:pb#0:oc#0:pc#15360:
 
-
-rdroot2.5M|ramdiskroot2.5M|RAM-disk root FS image:\
-	:dt=rdroot:se#512:nc#16:nt#2:ns#160:\
-	:oa#0:pa#5120:ta=4.2BSD:fa#512:ba#4096:\
-	:ob#0:pb#0:tb=swap:\
-	:oc#0:pc#5120:
-
-# pseudo-geometry taken from rd794
 miniroot:\
-	:dt=rdroot:ns#16:nt#7:nc#968:\
-	:pa#10240:ba#8192:fa#1024:
-
-floppy|floppy3|3in|3.5in High Density Floppy:\
-	:dt=floppy:se#512:nt#2:ns#18:nc#80:\
-	:pa#2880:oa#0:ba#4096:fa#512:\
-	:pb#2880:ob#0:\
-	:pc#2880:oc#0:
-
+	:dt=rdroot:se#512:nc#9:nt#16:ns#256:\
+	:oc#0:pc#36864:

@@ -15,12 +15,16 @@ VND_CRDEV=	/dev/r${VND}c
 VND_RIDEV=	/dev/r${VND}i
 PID!=		echo $$$$
 
+DISKTYPE=	miniroot
 NBLKS=		36864
+MSDOSSTART=	2048
+MSDOSSIZE=	4096
+FFSSTART!=	expr ${MSDOSSTART} + ${MSDOSSIZE}
 
 FS?=		msdos
 PART_ID?=C
 
-NEWFS_ARGS_msdos=-F 16 -L boot
+NEWFS_ARGS_msdos=-L boot
 MOUNT_ARGS_msdos=-o-l
 
 cleandir: clean
@@ -39,15 +43,18 @@ ${IMAGE}: rd_setup do_files rd_teardown
 .endif
 
 do_files:
-	${MKUBOOT} -t script -a arm -o linux \
-	    ${.CURDIR}/../boot.cmd ${MOUNT_POINT}/boot.scr
+	cp ${.OBJDIR}/../../ramdisk/bsd.rd ${MOUNT_POINT}/bsd.rd
+	ln ${MOUNT_POINT}/bsd.rd ${MOUNT_POINT}/bsd
+	-umount ${MOUNT_POINT}
+	mount ${MOUNT_ARGS_msdos} ${VND_IDEV} ${MOUNT_POINT}
 .if ${PLATFORM} == "OMAP"
 	cp /usr/mdec/${BOARD}/MLO ${MOUNT_POINT}/MLO
 	cp /usr/mdec/${BOARD}/u-boot.* ${MOUNT_POINT}/
 	cp /usr/mdec/${BOARD}/*.dtb ${MOUNT_POINT}/
 .endif
 .if ${BOARD} == "nitrogen"
-	mv ${MOUNT_POINT}/boot.scr ${MOUNT_POINT}/6x_bootscript
+	${MKUBOOT} -t script -a arm -o linux \
+	    ${.CURDIR}/../boot.cmd ${MOUNT_POINT}/6x_bootscript
 .endif
 .if ${BOARD} == "cubox" || ${BOARD} == "wandboard"
 	cp /usr/mdec/${BOARD}/*.dtb ${MOUNT_POINT}/
@@ -59,16 +66,19 @@ do_files:
 	dd if=/usr/mdec/${BOARD}/u-boot-sunxi-with-spl.bin \
 	    of=${VND_CDEV} bs=1024 seek=8
 .endif
-	cp ${.OBJDIR}/../../ramdisk/bsd.rd.${PLATFORM}.umg ${MOUNT_POINT}/bsd.umg
+	mkdir -p ${MOUNT_POINT}/efi/boot
+	cp /usr/mdec/BOOTARM.EFI ${MOUNT_POINT}/efi/boot/bootarm.efi
 
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
-	vnconfig -c ${VND} ${IMAGE}
-	fdisk -c 2 -h 255 -s 63 -yi ${VND} >/dev/null
-	echo "u\ne 3\n0\ne 0\n${PART_ID}\ny\n0\n32\n33\n1\n254\n63\n63\nf 0\nw\nq" \
-	    | fdisk -c 2 -h 255 -s 63 -e ${VND} >/dev/null
-	newfs_${FS} ${NEWFS_ARGS_${FS}} ${VND_RIDEV} >/dev/null
-	mount ${MOUNT_ARGS_${FS}} ${VND_IDEV} ${MOUNT_POINT}
+	vnconfig -v -c -t ${DISKTYPE} ${VND} ${IMAGE}
+	echo 'u\ne 0\n${PART_ID}\nn\n${MSDOSSTART}\n${MSDOSSIZE}\ne 3\nA6\nn\n${FFSSTART}\n*\nw\nq\n' \
+	    | fdisk -e ${VND} >/dev/null
+	echo 'a a\n\n\n\nw\nq\n' | disklabel -E ${VND} >/dev/null
+	newfs -t msdos ${NEWFS_ARGS_msdos} ${VND_RIDEV}
+	newfs -m 0 -o space -i 4096 ${VND_RDEV}
+	fsck ${VND_RDEV}
+	mount ${VND_DEV} ${MOUNT_POINT}
 
 rd_teardown:
 	@df -i ${MOUNT_POINT}
