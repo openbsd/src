@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.32 2015/10/15 02:35:04 tedu Exp $	*/
+/*	$OpenBSD: lock.c,v 1.33 2016/05/28 16:11:10 tedu Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 		backoff = (int)login_getcapnum(lc, "login-backoff", 3, 3);
 	}
 
-	while ((ch = getopt(argc, argv, "a:npt:")) != -1)
+	while ((ch = getopt(argc, argv, "a:npt:")) != -1) {
 		switch (ch) {
 		case 'a':
 			if (lc) {
@@ -134,6 +134,7 @@ main(int argc, char *argv[])
 			    "usage: %s [-np] [-a style] [-t timeout]\n",
 			    __progname);
 			exit(1);
+		}
 	}
 	timeout.tv_sec = sectimeout * 60;
 
