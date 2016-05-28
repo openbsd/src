@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2015/11/01 21:30:00 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.19 2016/05/28 19:54:26 sthen Exp $
 
 # The following ports must be installed:
 #
@@ -6,7 +6,7 @@
 # py-libdnet          python interface to libdnet
 # scapy               powerful interactive packet manipulation in python
 
-# Check wether all required python packages are installed.  If some
+# Check whether all required python packages are installed.  If some
 # are missing print a warning and skip the tests, but do not fail.
 PYTHON_IMPORT != python2.7 -c 'from scapy.all import *' 2>&1 || true
 .if ! empty(PYTHON_IMPORT)
@@ -31,11 +31,11 @@ regress:
 #     out    in  out    in  out    in   rtt    in        in
 
 # Configure Addresses on the machines, there must be routes for the
-# networks.  Adapt interface and addresse variables to your local
+# networks.  Adapt interface and address variables to your local
 # setup.  To control the remote machine you need a hostname for
 # ssh to log in.
 # You must have an anchor "regress" for the divert rules in the pf.conf
-# of the PF machine.  The kernel of the PF machine gets testet.
+# of the PF machine.  The kernel of the PF machine gets tested.
 #
 # Run make check-setup to see if you got the setup correct.
 
@@ -68,10 +68,10 @@ RTT_IN6 ?=	fdd7:e83e:66bc:217:5054:ff:fe12:3452
 
 .if empty (PF_SSH) || empty (RT_SSH) || empty (ECO_SSH)
 regress:
-	@echo this tests needs three remote machines to operate on
+	@echo this test needs three remote machines to operate on
 	@echo PF_SSH RT_SSH ECO_SSH are empty
 	@echo fill out these variables for additional tests, then
-	@echo check wether your test machines are set up properly
+	@echo check whether your test machines are set up properly
 .endif
 
 .MAIN: all
@@ -186,7 +186,7 @@ run-regress-ping6-mtu: addr.py stamp-pfctl
 	${SUDO} ${PYTHON}ping6_mtu_1300.py ${${ip}6}
 .endfor
 
-# Send packet to big to get to destination.
+# Send packet too big to get to destination.
 # Check that checksum of the quoted original packet in ICMP is correct.
 
 # Currently these test fail as pf does not fix the checksum of
@@ -317,7 +317,7 @@ CLEANFILES +=		addr.py *.pyc *.log stamp-*
 
 .PHONY: check-setup
 
-# Check wether the address, route and remote setup is correct
+# Check whether the address, route and remote setup are correct
 check-setup:
 	@echo '\n======== $@ SRC ========'
 .for ip in SRC_OUT
