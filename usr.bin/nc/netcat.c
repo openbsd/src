@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.151 2016/05/28 19:39:16 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.152 2016/05/28 20:14:58 beck Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -323,7 +323,13 @@ main(int argc, char *argv[])
 		if (pledge("stdio rpath wpath cpath tmppath unix", NULL) == -1)
 			err(1, "pledge");
 	} else if (Fflag) {
-		if (pledge("stdio inet dns sendfd", NULL) == -1)
+		if (Pflag) {
+			if (pledge("stdio inet dns sendfd tty", NULL) == -1)
+				err(1, "pledge");
+		} else if (pledge("stdio inet dns sendfd", NULL) == -1)
+			err(1, "pledge");
+	} else if (Pflag) {
+		if (pledge("stdio inet dns tty", NULL) == -1)
 			err(1, "pledge");
 	} else if (usetls) {
 		if (pledge("stdio rpath inet dns", NULL) == -1)
@@ -434,7 +440,10 @@ main(int argc, char *argv[])
 		if (Kflag && (privkey = tls_load_file(Kflag, &privkeylen, NULL)) == NULL)
 			errx(1, "unable to load TLS key file %s", Kflag);
 
-		if (pledge("stdio inet dns", NULL) == -1)
+		if (Pflag) {
+			if (pledge("stdio inet dns tty", NULL) == -1)
+				err(1, "pledge");
+		} else if (pledge("stdio inet dns", NULL) == -1)
 			err(1, "pledge");
 
 		if (tls_init() == -1)
