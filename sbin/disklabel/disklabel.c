@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.218 2016/05/28 23:38:30 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.219 2016/05/29 17:02:21 tb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -174,7 +174,7 @@ main(int argc, char *argv[])
 			if (strchr("bckmgtBCKMGT", optarg[0]) == NULL ||
 			    optarg[1] != '\0') {
 				fprintf(stderr, "Valid units are bckmgt\n");
-				exit(1);
+				return 1;
 			}
 			print_unit = tolower((unsigned char)optarg[0]);
 			break;
@@ -191,6 +191,13 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	if (op == UNSPEC)
+		op = READ;
+
+	if (argc < 1 || (fstabfile && !(op == EDITOR || op == RESTORE ||
+		    aflag)))
+		usage();
+
 	if (argv[0] == NULL)
 		usage();
 	dkname = argv[0];
@@ -198,6 +205,13 @@ main(int argc, char *argv[])
 	    &specname);
 	if (f < 0)
 		err(4, "%s", specname);
+
+	if (op != WRITE || aflag || dflag)
+		readlabel(f);
+	else if (argc == 2 || argc == 3)
+		makelabel(argv[1], argc == 3 ? argv[2] : NULL, &lab);
+	else
+		usage();
 
 	if (op == EDIT || op == EDITOR || aflag) {
 		if (pledge("stdio rpath wpath cpath disklabel proc exec", NULL) == -1)
@@ -207,13 +221,6 @@ main(int argc, char *argv[])
 			err(1, "pledge");
 	}
 
-	if (op == UNSPEC)
-		op = READ;
-
-	if (argc < 1 || (fstabfile && !(op == EDITOR || op == RESTORE ||
-		    aflag)))
-		usage();
-
 	if (autotable != NULL)
 		parse_autotable(autotable);
 
@@ -221,19 +228,16 @@ main(int argc, char *argv[])
 	case EDIT:
 		if (argc != 1)
 			usage();
-		readlabel(f);
 		error = edit(&lab, f);
 		break;
 	case EDITOR:
 		if (argc != 1)
 			usage();
-		readlabel(f);
 		error = editor(f);
 		break;
 	case READ:
 		if (argc != 1)
 			usage();
-		readlabel(f);
 
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
@@ -247,7 +251,6 @@ main(int argc, char *argv[])
 	case RESTORE:
 		if (argc < 2 || argc > 3)
 			usage();
-		readlabel(f);
 		if (!(t = fopen(argv[1], "r")))
 			err(4, "%s", argv[1]);
 		error = getasciilabel(t, &lab);
@@ -263,12 +266,6 @@ main(int argc, char *argv[])
 		fclose(t);
 		break;
 	case WRITE:
-		if (dflag || aflag) {
-			readlabel(f);
-		} else if (argc < 2 || argc > 3)
-			usage();
-		else
-			makelabel(argv[1], argc == 3 ? argv[2] : NULL, &lab);
 		error = checklabel(&lab);
 		if (error == 0)
 			error = writelabel(f, &lab);
@@ -276,7 +273,7 @@ main(int argc, char *argv[])
 	default:
 		break;
 	}
-	exit(error);
+	return error;
 }
 
 /*
