@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsetjmp.S,v 1.6 2016/05/12 15:46:03 deraadt Exp $	*/
+/*	$OpenBSD: sigsetjmp.S,v 1.7 2016/05/29 22:39:21 guenther Exp $	*/
 /*	$NetBSD: __setjmp14.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
  */
 
 
-#include <machine/asm.h>
+#include "SYS.h"
 #include <machine/setjmp.h>
 
 	.hidden __jmpxor
@@ -57,10 +57,12 @@ ENTRY(sigsetjmp)
 	testl   %esi,%esi
 	jz      2f
 
-	pushq	%rdi
-	xorq	%rdi,%rdi
-	call	_C_LABEL(_libc_sigblock)
-	popq	%rdi
+	movq	%rdi,%r8		/* save jmpbuf addr */
+	movl	$1,%edi			/* how = SIG_BLOCK */
+	xorl	%esi,%esi		/* set = empty */
+	movl	$SYS_sigprocmask,%eax
+	syscall
+	movq	%r8,%rdi		/* restore jmpbuf addr */
 	movq	%rax,(_JB_SIGMASK * 8)(%rdi)
 
 2:	movq	(%rsp),%r11
@@ -87,13 +89,15 @@ END(sigsetjmp)
 
 ENTRY(siglongjmp)
 	movq	%rdi,%r12
-	pushq   %rsi
+	movl	%esi,%r8d
 	cmpl    $0, (_JB_SIGFLAG * 8)(%rdi)
 	jz      2f
 
-	movq	(_JB_SIGMASK * 8)(%rdi),%rdi
-	call	_C_LABEL(_libc_sigsetmask)
-2:	popq	%rax
+	movq	(_JB_SIGMASK * 8)(%rdi),%rsi	/* get set from sc_mask */
+	movl	$3,%edi				/* how = SIG_SETMASK */
+	movl	$SYS_sigprocmask,%eax
+	syscall
+2:	movl	%r8d,%eax
 
 	leaq	 __jmpxor(%rip),%rcx
 	movq	(_JB_RBX * 8)(%r12),%rbx
