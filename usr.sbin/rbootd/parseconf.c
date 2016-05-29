@@ -1,4 +1,4 @@
-/*	$OpenBSD: parseconf.c,v 1.12 2015/01/16 06:40:19 deraadt Exp $	*/
+/*	$OpenBSD: parseconf.c,v 1.13 2016/05/29 02:19:02 guenther Exp $	*/
 /*	$NetBSD: parseconf.c,v 1.4 1995/10/06 05:12:16 thorpej Exp $	*/
 
 /*
@@ -47,8 +47,6 @@
 
 #include <ctype.h>
 #include <dirent.h>
-#include <fcntl.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -76,7 +74,6 @@ ParseConfig(void)
 {
 	char line[C_LINELEN], *cp, *bcp;
 	int i, j, linecnt = 0;
-	sigset_t mask, omask;
 	u_int8_t *addr;
 	CLIENT *client;
 	FILE *fp;
@@ -91,17 +88,6 @@ ParseConfig(void)
 		    ConfigFile);
 		return(0);
 	}
-
-	/*
-	 *  We've got to block SIGHUP to prevent reconfiguration while
-	 *  dealing with the linked list of Clients.  This can be done
-	 *  when actually linking the new client into the list, but
-	 *  this could have unexpected results if the server was HUP'd
-	 *  whilst reconfiguring.  Hence, it is done here.
-	 */
-	sigemptyset(&mask);
-	sigaddset(&mask, SIGHUP);
-	sigprocmask(SIG_BLOCK, &mask, &omask);
 
 	/*
 	 *  GETSTR positions `bcp' at the start of the current token,
@@ -206,7 +192,6 @@ ParseConfig(void)
 	}
 
 	(void) fclose(fp);				/* close config file */
-	sigprocmask(SIG_SETMASK, &omask, NULL);		/* reset signal mask */
 	return(1);					/* return success */
 }
 

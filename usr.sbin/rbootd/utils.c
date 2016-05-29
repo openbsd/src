@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.14 2015/08/20 22:39:29 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.15 2016/05/29 02:19:02 guenther Exp $	*/
 /*	$NetBSD: utils.c,v 1.5.2.1 1995/11/14 08:45:46 thorpej Exp $	*/
 
 /*
@@ -43,8 +43,6 @@
  * Author: Jeff Forys, University of Utah CSS
  */
 
-#include <fcntl.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -75,20 +73,9 @@ DispPkt(RMPCONN *rconn, int direct)
 	    "\t\tRetCode:%u Offset:%x SessID:%x\n";
 	struct tm *tmp;
 	struct rmp_packet *rmp;
-	int i, omask;
+	int i;
 	u_int32_t t;
 	time_t tim;
-
-	/*
-	 *  Since we will be working with RmpConns as well as DbgFp, we
-	 *  must block signals that can affect either.
-	 */
-	omask = sigblock(sigmask(SIGHUP)|sigmask(SIGUSR1)|sigmask(SIGUSR2));
-
-	if (DbgFp == NULL) {			/* sanity */
-		(void) sigsetmask(omask);
-		return;
-	}
 
 	/* display direction packet is going using '>>>' or '<<<' */
 	fputs((direct==DIR_RCVD)?"<<< ":(direct==DIR_SENT)?">>> ":"", DbgFp);
@@ -173,8 +160,6 @@ DispPkt(RMPCONN *rconn, int direct)
 	}
 	(void) fputc('\n', DbgFp);
 	(void) fflush(DbgFp);
-
-	(void) sigsetmask(omask);		/* reset old signal mask */
 }
 
 
