@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.l,v 1.3 2012/12/05 23:20:25 deraadt Exp $	*/
+/*	$OpenBSD: lex.l,v 1.4 2016/05/29 01:02:21 millert Exp $	*/
 /*	$NetBSD: lex.l,v 1.13 2003/10/27 00:12:43 lukem Exp $	*/
 
 %{
@@ -114,7 +114,7 @@ SWIDTH1				{ yylval.i = _RUNETYPE_SW1; return(LIST); }
 SWIDTH2				{ yylval.i = _RUNETYPE_SW2; return(LIST); }
 SWIDTH3				{ yylval.i = _RUNETYPE_SW3; return(LIST); }
 
-VARIABLE[\t ]			{ static char vbuf[1024];
+VARIABLE[\t ]+			{ static char vbuf[1024];
 				  char *v = vbuf;
 				  while ((*v = input()) && *v != '\n')
 					++v;
