@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.10 2016/05/23 00:24:50 guenther Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.11 2016/05/29 07:59:36 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 #include "SYS.h"
 
 	.section	.openbsd.randomdata,"aw",@progbits
-	.align	8
+	.align	4
 .L__jmpxor
 	.zero	4*2		; (r2/rp, r30/sp)
 

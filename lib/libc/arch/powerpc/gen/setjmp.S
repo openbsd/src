@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.12 2016/05/29 06:16:52 guenther Exp $ */
+/*	$OpenBSD: setjmp.S,v 1.13 2016/05/29 07:59:36 guenther Exp $ */
 /*
  * Copyright (c) 1996 Dale Rahn. All rights reserved.
  *
@@ -55,7 +55,7 @@
 #define JMP_sig	0x60
 
 	.section	.openbsd.randomdata,"aw",@progbits
-	.balign	8
+	.balign	4
 	.globl	__jmpxor
 	.hidden	__jmpxor
 __jmpxor:
