@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socketpair.2,v 1.19 2016/03/19 22:10:49 guenther Exp $
+.\"	$OpenBSD: socketpair.2,v 1.20 2016/05/29 06:01:24 guenther Exp $
 .\"	$NetBSD: socketpair.2,v 1.5 1995/02/27 12:38:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socketpair.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: March 19 2016 $
+.Dd $Mdocdate: May 29 2016 $
 .Dt SOCKETPAIR 2
 .Os
 .Sh NAME
@@ -124,7 +124,7 @@ This call is currently implemented only for the LOCAL domain.
 Many operating systems only accept a
 .Fa protocol
 of
-.Dv PF_UNSPEC ,
+.Dv AF_UNSPEC ,
 so that should be used instead of
-.Dv PF_LOCAL
+.Dv AF_LOCAL
 for maximal portability.

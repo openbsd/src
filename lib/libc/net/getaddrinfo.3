@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.57 2015/02/16 18:26:56 jca Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.58 2016/05/29 06:01:24 guenther Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2015 $
+.Dd $Mdocdate: May 29 2016 $
 .Dt GETADDRINFO 3
 .Os
 .Sh NAME
@@ -74,7 +74,7 @@ as defined by
 .Bd -literal
 struct addrinfo {
 	int ai_flags;		/* input flags */
-	int ai_family;		/* protocol family for socket */
+	int ai_family;		/* address family for socket */
 	int ai_socktype;	/* socket type */
 	int ai_protocol;	/* protocol for socket */
 	socklen_t ai_addrlen;	/* length of socket-address */
@@ -90,12 +90,12 @@ The caller can supply the following structure elements in
 .Fa hints :
 .Bl -tag -width "ai_socktypeXX"
 .It Fa ai_family
-The protocol family that should be used.
+The address family that should be used.
 When
 .Fa ai_family
 is set to
-.Dv PF_UNSPEC ,
-it means the caller will accept any protocol family supported by the
+.Dv AF_UNSPEC ,
+it means the caller will accept any address family supported by the
 operating system.
 .It Fa ai_socktype
 Denotes the type of socket that is wanted:
@@ -229,7 +229,7 @@ behaves as if the caller provided a
 with
 .Fa ai_family
 set to
-.Dv PF_UNSPEC ,
+.Dv AF_UNSPEC ,
 .Fa ai_flags
 set to
 .Dv AI_ADDRCONFIG ,
@@ -351,7 +351,7 @@ int s;
 const char *cause = NULL;
 
 memset(&hints, 0, sizeof(hints));
-hints.ai_family = PF_UNSPEC;
+hints.ai_family = AF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
 error = getaddrinfo("www.kame.net", "www", &hints, &res0);
 if (error)
@@ -393,7 +393,7 @@ int nsock;
 const char *cause = NULL;
 
 memset(&hints, 0, sizeof(hints));
-hints.ai_family = PF_UNSPEC;
+hints.ai_family = AF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
 hints.ai_flags = AI_PASSIVE;
 error = getaddrinfo(NULL, "www", &hints, &res0);
