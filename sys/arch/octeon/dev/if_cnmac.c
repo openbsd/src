@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.49 2016/05/24 14:06:39 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.50 2016/05/29 11:10:25 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -70,7 +70,6 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <octeon/dev/cn30xxasxreg.h>
 #include <octeon/dev/cn30xxciureg.h>
 #include <octeon/dev/cn30xxnpireg.h>
 #include <octeon/dev/cn30xxgmxreg.h>
@@ -87,7 +86,6 @@
 #include <octeon/dev/cn30xxipdvar.h>
 #include <octeon/dev/cn30xxpipvar.h>
 #include <octeon/dev/cn30xxpkovar.h>
-#include <octeon/dev/cn30xxasxvar.h>
 #include <octeon/dev/cn30xxsmivar.h>
 #include <octeon/dev/iobusvar.h>
 #include <octeon/dev/if_cnmacvar.h>
@@ -115,7 +113,6 @@ void	octeon_eth_attach(struct device *, struct device *, void *);
 void	octeon_eth_pip_init(struct octeon_eth_softc *);
 void	octeon_eth_ipd_init(struct octeon_eth_softc *);
 void	octeon_eth_pko_init(struct octeon_eth_softc *);
-void	octeon_eth_asx_init(struct octeon_eth_softc *);
 void	octeon_eth_smi_init(struct octeon_eth_softc *);
 
 void	octeon_eth_board_mac_addr(uint8_t *);
@@ -297,11 +294,9 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	octeon_eth_pip_init(sc);
 	octeon_eth_ipd_init(sc);
 	octeon_eth_pko_init(sc);
-	octeon_eth_asx_init(sc);
 	octeon_eth_smi_init(sc);
 
 	sc->sc_gmx_port->sc_ipd = sc->sc_ipd;
-	sc->sc_gmx_port->sc_port_asx = sc->sc_asx;
 	sc->sc_gmx_port->sc_port_mii = &sc->sc_mii;
 	sc->sc_gmx_port->sc_port_ac = &sc->sc_arpcom;
 
@@ -386,17 +381,6 @@ octeon_eth_pko_init(struct octeon_eth_softc *sc)
 	pko_aa.aa_cmd_buf_pool = OCTEON_POOL_NO_CMD;
 	pko_aa.aa_cmd_buf_size = OCTEON_POOL_NWORDS_CMD;
 	cn30xxpko_init(&pko_aa, &sc->sc_pko);
-}
-
-/* XXX */
-void
-octeon_eth_asx_init(struct octeon_eth_softc *sc)
-{
-	struct cn30xxasx_attach_args asx_aa;
-
-	asx_aa.aa_port = sc->sc_port;
-	asx_aa.aa_regt = sc->sc_regt;
-	cn30xxasx_init(&asx_aa, &sc->sc_asx);
 }
 
 void

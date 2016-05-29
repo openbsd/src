@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.21 2016/05/29 11:00:24 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.22 2016/05/29 11:10:25 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -218,6 +218,22 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 		    GMX0_BASE_PORT_SIZE, 0, &port_sc->sc_port_regh);
 		if (status != 0)
 			panic(": can't map port register");
+
+		switch (port_sc->sc_port_type) {
+		case GMX_MII_PORT:
+		case GMX_GMII_PORT:
+		case GMX_RGMII_PORT: {
+			struct cn30xxasx_attach_args asx_aa;
+
+			asx_aa.aa_port = i;
+			asx_aa.aa_regt = aa->aa_bust;
+			cn30xxasx_init(&asx_aa, &port_sc->sc_port_asx);
+			break;
+		}
+		default:
+			/* nothing */
+			break;
+		}
 
 		(void)memset(&gmx_aa, 0, sizeof(gmx_aa));
 		gmx_aa.ga_regt = aa->aa_bust;

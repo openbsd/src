@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmacvar.h,v 1.10 2016/05/21 11:04:38 visa Exp $	*/
+/*	$OpenBSD: if_cnmacvar.h,v 1.11 2016/05/29 11:10:25 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -57,7 +57,6 @@ struct octeon_eth_softc {
 	struct cn30xxpip_softc	*sc_pip;
 	struct cn30xxipd_softc	*sc_ipd;
 	struct cn30xxpko_softc	*sc_pko;
-	struct cn30xxasx_softc	*sc_asx;
 	struct cn30xxsmi_softc	*sc_smi;
 	struct cn30xxgmx_softc	*sc_gmx;
 	struct cn30xxgmx_port_softc
