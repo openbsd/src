@@ -1,10 +1,9 @@
-dnl	$OpenBSD: prep,v 1.7 2015/06/02 01:48:25 jsg Exp $
+dnl	$OpenBSD: prep,v 1.8 2016/05/29 13:50:13 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
 OpenBSD can be installed onto a disk by copying the miniroot for your
-board "miniroot-board-{:--:}OSrev.fs" image to an SD card or by booting
-the ramdisk kernel over the network using a TFTP server.
+board "miniroot-board-{:--:}OSrev.fs" image to an SD card.
 
 Booting from an SD card:
 
@@ -25,28 +24,3 @@ Booting from an SD card:
   In order to make it boot from the micro SD card, you will need to hold down
   the small button located by the SD card slot while powering on the board.
   Once you have done this the board will boot from the SD card as the default.
-
-Booting over the network:
-
-  To interrupt the U-Boot boot process press a key after the banner is
-  displayed on the serial console.
-
-  Then the U-Boot image of the ramdisk kernel can be loaded via TFTP.
-
-  Configure the local IP address via DHCP:
-
-      U-Boot# setenv autoload no
-      U-Boot# dhcp
-
-  Or with a static address:
-
-      U-Boot# setenv ipaddr 192.168.1.2
-
-  Set the IP address of the TFTP server:
-
-      U-Boot# setenv serverip 192.168.1.1
-
-  To load an OMAP ramdisk image via TFTP:
-
-      U-Boot# tftpboot bsd.rd.OMAP.umg
-      U-Boot# bootm
