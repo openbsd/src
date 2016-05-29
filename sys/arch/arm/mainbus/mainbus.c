@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.9 2016/05/18 22:55:23 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.10 2016/05/29 11:03:34 jsg Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -19,6 +19,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -75,12 +76,14 @@ mainbus_match(struct device *parent, void *cfdata, void *aux)
 	return (1);
 }
 
+extern char *hw_prod;
+
 void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	char buffer[128];
-	int node;
+	int node, len;
 
 	if ((node = OF_peer(0)) == 0) {
 		printf(": no device tree\n");
@@ -94,9 +97,12 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	sc->sc_dmat = &mainbus_dma_tag;
 
-	if (OF_getprop(node, "model", buffer, sizeof(buffer)))
+	if ((len = OF_getprop(node, "model", buffer, sizeof(buffer))) > 0) {
 		printf(": %s\n", buffer);
-	else
+		hw_prod = malloc(len, M_DEVBUF, M_NOWAIT);
+		if (hw_prod)
+			strlcpy(hw_prod, buffer, len);
+	} else
 		printf(": unknown model\n");
 
 	/* Attach CPU first. */
