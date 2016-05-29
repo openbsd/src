@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.33 2016/05/28 10:10:36 jsg Exp $
+#	$OpenBSD: install.md,v 1.34 2016/05/29 07:38:01 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -32,32 +32,8 @@
 # machine dependent section of installation/upgrade script.
 #
 
-# This code runs when the script is initally sourced to set up 
-# MDSETS, SANESETS and DEFAULTSETS 
-
-if dmesg | grep -q '^omap0 at mainbus0:'; then
-        MDPLAT=OMAP
-fi
-
-if dmesg | grep -q '^imx0 at mainbus0:'; then
-        MDPLAT=IMX
-fi
-
-if dmesg | grep -q '^sunxi0 at mainbus0:'; then
-	MDPLAT=SUNXI
-fi
-
-if dmesg | grep -q '^vexpress0 at mainbus0:'; then
-	if dmesg | grep -q '^cpu0 at mainbus0: ARM Cortex A9 '; then
-		MDPLAT=VEXPRESSA9
-	else
-		MDPLAT=VEXPRESSA15
-	fi
-fi
-
-MDSETS="bsd.${MDPLAT}.umg bsd.rd.${MDPLAT}.umg"
 SANESETS="bsd"
-DEFAULTSETS="bsd bsd.rd ${MDSETS}"
+DEFAULTSETS="bsd bsd.rd"
 
 NEWFSARGS_msdos="-F 16 -L boot"
 MOUNT_ARGS_msdos="-o-l"
@@ -72,6 +48,7 @@ md_installboot() {
 	CUBOX=$(scan_dmesg '/^imx0 at mainbus0: \(SolidRun.*\)/s//CUBOX/p')
 	NITROGEN=$(scan_dmesg '/^imx0 at mainbus0: \(Freescale i.MX6 SABRE Lite.*\)/s//NITROGEN/p')
 	WANDBOARD=$(scan_dmesg '/^imx0 at mainbus0: \(Wandboard i.MX6.*\)/s//WANDBOARD/p')
+	CUBIE=$(scan_dmesg '/^mainbus0 at root: Cubietech \(Cubieboard\)/s//CUBIEBOARD/p')
 
 	mount ${mount_args} /dev/${_disk}i /mnt/mnt
 
@@ -81,35 +58,30 @@ md_installboot() {
 	mkdir -p /mnt/mnt/efi/boot
 	cp /mnt/usr/mdec/BOOTARM.EFI /mnt/mnt/efi/boot/bootarm.efi
 
-	if [[ ${MDPLAT} == "OMAP" ]]; then
-
-		if [[ -n $BEAGLE ]]; then
-			cp /mnt/usr/mdec/beagle/{MLO,u-boot.img} /mnt/mnt/
-			cp /mnt/usr/mdec/beagle/*.dtb /mnt/mnt/
-		elif [[ -n $BEAGLEBONE ]]; then
-			cp /mnt/usr/mdec/am335x/{MLO,u-boot.img} /mnt/mnt/
-			cp /mnt/usr/mdec/am335x/*.dtb /mnt/mnt/
-		elif [[ -n $PANDA ]]; then
-			cp /mnt/usr/mdec/panda/{MLO,u-boot.img} /mnt/mnt/
-			cp /mnt/usr/mdec/panda/*.dtb /mnt/mnt/
-		fi
-	elif [[ ${MDPLAT} == "IMX" ]]; then
-		if [[ -n $CUBOX ]]; then
-			cp /mnt/usr/mdec/cubox/*.dtb /mnt/mnt/
-			dd if=/mnt/usr/mdec/cubox/SPL \
-			    of=/dev/${_disk}c bs=1024 seek=1 >/dev/null
-			dd if=/mnt/usr/mdec/cubox/u-boot.img \
-			    of=/dev/${_disk}c bs=1024 seek=69 >/dev/null
-		elif [[ -n $NITROGEN ]]; then
-			cp /mnt/usr/mdec/nitrogen/*.dtb /mnt/mnt/
-		elif [[ -n $WANDBOARD ]]; then
-			cp /mnt/usr/mdec/wandboard/*.dtb /mnt/mnt/
-			dd if=/mnt/usr/mdec/wandboard/SPL \
-			    of=/dev/${_disk}c bs=1024 seek=1 >/dev/null
-			dd if=/mnt/usr/mdec/wandboard/u-boot.img \
-			    of=/dev/${_disk}c bs=1024 seek=69 >/dev/null
-		fi
-	elif [[ ${MDPLAT} == "SUNXI" ]]; then
+	if [[ -n $BEAGLE ]]; then
+		cp /mnt/usr/mdec/beagle/{MLO,u-boot.img} /mnt/mnt/
+		cp /mnt/usr/mdec/beagle/*.dtb /mnt/mnt/
+	elif [[ -n $BEAGLEBONE ]]; then
+		cp /mnt/usr/mdec/am335x/{MLO,u-boot.img} /mnt/mnt/
+		cp /mnt/usr/mdec/am335x/*.dtb /mnt/mnt/
+	elif [[ -n $PANDA ]]; then
+		cp /mnt/usr/mdec/panda/{MLO,u-boot.img} /mnt/mnt/
+		cp /mnt/usr/mdec/panda/*.dtb /mnt/mnt/
+	elif [[ -n $CUBOX ]]; then
+		cp /mnt/usr/mdec/cubox/*.dtb /mnt/mnt/
+		dd if=/mnt/usr/mdec/cubox/SPL \
+		    of=/dev/${_disk}c bs=1024 seek=1 >/dev/null
+		dd if=/mnt/usr/mdec/cubox/u-boot.img \
+		    of=/dev/${_disk}c bs=1024 seek=69 >/dev/null
+	elif [[ -n $NITROGEN ]]; then
+		cp /mnt/usr/mdec/nitrogen/*.dtb /mnt/mnt/
+	elif [[ -n $WANDBOARD ]]; then
+		cp /mnt/usr/mdec/wandboard/*.dtb /mnt/mnt/
+		dd if=/mnt/usr/mdec/wandboard/SPL \
+		    of=/dev/${_disk}c bs=1024 seek=1 >/dev/null
+		dd if=/mnt/usr/mdec/wandboard/u-boot.img \
+		    of=/dev/${_disk}c bs=1024 seek=69 >/dev/null
+	elif [[ -n $CUBIE ]]; then
 		cp /mnt/usr/mdec/cubie/u-boot-sunxi-with-spl.bin /mnt/mnt/
 		cp /mnt/usr/mdec/cubie/*.dtb /mnt/mnt/
 	fi

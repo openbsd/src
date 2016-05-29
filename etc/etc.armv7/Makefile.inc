@@ -1,33 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.13 2016/05/23 02:19:46 jsg Exp $
-
-ALLSOC=EXYNOS IMX OMAP SUNXI VEXPRESSA9 VEXPRESSA15
-MDEXT=		bsd.rd BOOTARM.EFI
-
-.for SOC in ${ALLSOC}
-MDEXT+=		bsd.${SOC}.umg
-MDEXT+=		bsd.rd.${SOC}.umg
-.endfor
-
-KERNADDR_OMAP=0x80300000
-KERNADDR_IMX=0x10300000
-KERNADDR_SUNXI=0x40300000
-KERNADDR_VEXPRESSA15=0x80300000
-KERNADDR_VEXPRESSA9=0x60300000
-KERNADDR_EXYNOS=0x40300000
+#	$OpenBSD: Makefile.inc,v 1.14 2016/05/29 07:38:01 jsg Exp $
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/BOOTARM.EFI ${RELEASEDIR}
 
-kernels: bootblocks ${ALL_KERNELS}
-.for CONF K in ${KERNELS}
-	cp ../sys/arch/${MACHINE}/compile/${CONF}/bsd ${RELEASEDIR}/$K
-.for SOC in ${ALLSOC}
-	mkuboot -a arm -o linux -e ${KERNADDR_${SOC}} -l ${KERNADDR_${SOC}} \
-	    ${RELEASEDIR}/$K ${RELEASEDIR}/$K.${SOC}.umg
-.endfor
-.endfor
-
-MDEXT+=	miniroot-am335x-${OSrev}.fs miniroot-beagle-${OSrev}.fs \
+MDEXT=	bsd.rd BOOTARM.EFI \
+	miniroot-am335x-${OSrev}.fs miniroot-beagle-${OSrev}.fs \
 	miniroot-cubie-${OSrev}.fs miniroot-cubox-${OSrev}.fs \
 	miniroot-nitrogen-${OSrev}.fs miniroot-panda-${OSrev}.fs \
 	miniroot-wandboard-${OSrev}.fs
