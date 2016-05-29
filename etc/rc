@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.484 2016/05/27 17:03:45 rpe Exp $
+#	$OpenBSD: rc,v 1.485 2016/05/29 15:36:06 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -160,7 +160,7 @@ make_keys() {
 
 # Re-link libraries, placing the objects in a random order.
 reorder_libs() {
-	local _l _liba _libas _tmpdir _remount=false
+	local _l _liba _libas _tmpdir _remount=false _error=false
 	local _dkdev=/dev/$(stat -L -f '%Sd' /usr/lib)
 	local _mp=$(mount | grep "^$_dkdev")
 
@@ -189,8 +189,7 @@ reorder_libs() {
 	fi
 
 	for _liba in $_libas; do
-		_tmpdir=$(mktemp -dq /tmp/_librebuild.XXXXXXXXXXXX) || return
-		(
+		_tmpdir=$(mktemp -dq /tmp/_librebuild.XXXXXXXXXXXX) && (
 			set -o errexit
 			_lib=${_liba#/usr/lib/}
 			_lib=${_lib%.a}
@@ -200,16 +199,21 @@ reorder_libs() {
 			[[ -s $_lib ]] && file $_lib | fgrep -q 'shared object'
 			LD_BIND_NOW=1 LD_LIBRARY_PATH=$_tmpdir awk 'BEGIN {exit 0}'
 			install -F -S -o root -g bin -m 0444 $_lib /usr/lib/$_lib
-		)
-		rm -rf /tmp/_librebuild.${_tmpdir#*.}
+		) || { _error=true; break; }
 	done
+
+	rm -rf /tmp/_librebuild.*
 
 	# Restore previous mount state if it was changed.
 	if $_remount; then
-		mount -u -r $_dkdev
+		mount -u -r $_dkdev || _error=true
 	fi
 
-	echo ' done.'
+	if $_error; then
+		echo ' failed.'
+	else
+		echo ' done.'
+	fi
 }
 
 # Run rc.* script and email output to root.
