@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.57 2016/03/24 06:05:43 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.58 2016/05/29 00:48:05 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -427,6 +427,7 @@ typedef struct {
 #define PT_HIPROC	0x7fffffff	/*  specific segment types */
 
 #define PT_OPENBSD_RANDOMIZE	0x65a3dbe6	/* fill with random data */
+#define PT_OPENBSD_WXNEEDED	0x65a3dbe7	/* program performs W^X violations */
 #define PT_OPENBSD_BOOTDATA	0x65a41be6	/* section for boot arguments */
 
 /* Segment flags - p_flags */
