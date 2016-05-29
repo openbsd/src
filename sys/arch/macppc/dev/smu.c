@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.32 2016/05/20 21:56:00 mglocker Exp $	*/
+/*	$OpenBSD: smu.c,v 1.33 2016/05/29 11:00:37 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -80,6 +80,8 @@ struct smu_softc {
 	bus_space_handle_t sc_gpioh;
 	bus_space_handle_t sc_buffh;
 
+	uint8_t		sc_firmware_old;
+
 	struct smu_fan	sc_fans[SMU_MAXFANS];
 	int		sc_num_fans;
 
@@ -153,6 +155,7 @@ int	smu_do_cmd(struct smu_softc *, int);
 int	smu_time_read(time_t *);
 int	smu_time_write(time_t);
 int	smu_get_datablock(struct smu_softc *sc, u_int8_t, u_int8_t *, size_t);
+void	smu_firmware_probe(struct smu_softc *, struct smu_fan *);
 int	smu_fan_set_rpm(struct smu_softc *, struct smu_fan *, u_int16_t);
 int	smu_fan_set_pwm(struct smu_softc *, struct smu_fan *, u_int16_t);
 int	smu_fan_read_rpm(struct smu_softc *, struct smu_fan *, u_int16_t *);
@@ -392,6 +395,9 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 		printf(": no fans\n");
 		return;
 	}
+
+	/* Probe the smu firmware version */
+	smu_firmware_probe(sc, &sc->sc_fans[0]);
 
 #ifndef SMALL_KERNEL
 	/* Sensors */
@@ -634,6 +640,26 @@ smu_get_datablock(struct smu_softc *sc, u_int8_t id, u_int8_t *buf, size_t len)
 	return (0);
 }
 
+void
+smu_firmware_probe(struct smu_softc *sc, struct smu_fan *fan)
+{
+	struct smu_cmd *cmd = (struct smu_cmd *)sc->sc_cmd;
+	int error;
+
+	/*
+	 * Find out if the smu runs an old or new firmware version
+	 * by sending a new firmware command to read the fan speed.
+	 * If it fails we assume to have an old firmware version.
+	 */
+	cmd->cmd = SMU_FAN;
+	cmd->len = 2;
+	cmd->data[0] = 0x31;
+	cmd->data[1] = fan->reg;
+	error = smu_do_cmd(sc, 800);
+	if (error)
+		sc->sc_firmware_old = 1;
+}
+
 int
 smu_fan_set_rpm(struct smu_softc *sc, struct smu_fan *fan, u_int16_t rpm)
 {
@@ -645,12 +671,21 @@ smu_fan_set_rpm(struct smu_softc *sc, struct smu_fan *fan, u_int16_t rpm)
 	 * the PowerMac8,1.  We simply store the value at both
 	 * locations.
 	 */
-	cmd->cmd = SMU_FAN;
-	cmd->len = 14;
-	cmd->data[0] = 0x00;	/* fan-rpm-control */
-	cmd->data[1] = 0x01 << fan->reg;
-	cmd->data[2] = cmd->data[2 + fan->reg * 2] = (rpm >> 8) & 0xff;
-	cmd->data[3] = cmd->data[3 + fan->reg * 2] = (rpm & 0xff);
+	if (sc->sc_firmware_old) {
+		cmd->cmd = SMU_FAN;
+		cmd->len = 14;
+		cmd->data[0] = 0x00;	/* fan-rpm-control */
+		cmd->data[1] = 0x01 << fan->reg;
+		cmd->data[2] = cmd->data[2 + fan->reg * 2] = (rpm >> 8) & 0xff;
+		cmd->data[3] = cmd->data[3 + fan->reg * 2] = (rpm & 0xff);
+	} else {
+		cmd->cmd = SMU_FAN;
+		cmd->len = 4;
+		cmd->data[0] = 0x30;
+		cmd->data[1] = fan->reg;
+		cmd->data[2] = (rpm >> 8) & 0xff;
+		cmd->data[3] = rpm & 0xff;
+	}
 	return smu_do_cmd(sc, 800);
 }
 
@@ -659,12 +694,21 @@ smu_fan_set_pwm(struct smu_softc *sc, struct smu_fan *fan, u_int16_t pwm)
 {
 	struct smu_cmd *cmd = (struct smu_cmd *)sc->sc_cmd;
 
-	cmd->cmd = SMU_FAN;
-	cmd->len = 14;
-	cmd->data[0] = 0x10;	/* fan-pwm-control */
-	cmd->data[1] = 0x01 << fan->reg;
-	cmd->data[2] = cmd->data[2 + fan->reg * 2] = (pwm >> 8) & 0xff;
-	cmd->data[3] = cmd->data[3 + fan->reg * 2] = (pwm & 0xff);
+	if (sc->sc_firmware_old) {
+		cmd->cmd = SMU_FAN;
+		cmd->len = 14;
+		cmd->data[0] = 0x10;	/* fan-pwm-control */
+		cmd->data[1] = 0x01 << fan->reg;
+		cmd->data[2] = cmd->data[2 + fan->reg * 2] = (pwm >> 8) & 0xff;
+		cmd->data[3] = cmd->data[3 + fan->reg * 2] = (pwm & 0xff);
+	} else {
+		cmd->cmd = SMU_FAN;
+		cmd->len = 4;
+		cmd->data[0] = 0x30;
+		cmd->data[1] = fan->reg;
+		cmd->data[2] = (pwm >> 8) & 0xff;
+		cmd->data[3] = pwm & 0xff;
+	}
 	return smu_do_cmd(sc, 800);
 }
 
@@ -674,13 +718,25 @@ smu_fan_read_rpm(struct smu_softc *sc, struct smu_fan *fan, u_int16_t *rpm)
 	struct smu_cmd *cmd = (struct smu_cmd *)sc->sc_cmd;
 	int error;
 
-	cmd->cmd = SMU_FAN;
-	cmd->len = 1;
-	cmd->data[0] = 0x01;	/* fan-rpm-control */
-	error = smu_do_cmd(sc, 800);
-	if (error)
-		return (error);
-	*rpm = (cmd->data[fan->reg * 2 + 1] << 8) | cmd->data[fan->reg * 2 + 2];
+	if (sc->sc_firmware_old) {
+		cmd->cmd = SMU_FAN;
+		cmd->len = 1;
+		cmd->data[0] = 0x01;	/* fan-rpm-control */
+		error = smu_do_cmd(sc, 800);
+		if (error)
+			return (error);
+		*rpm = (cmd->data[fan->reg * 2 + 1] << 8) |
+		        cmd->data[fan->reg * 2 + 2];
+	} else {
+		cmd->cmd = SMU_FAN;
+		cmd->len = 2;
+		cmd->data[0] = 0x31;
+		cmd->data[1] = fan->reg;
+		error = smu_do_cmd(sc, 800);
+		if (error)
+			return (error);
+		*rpm = (cmd->data[0] << 8) | cmd->data[1];
+	}
 
 	return (0);
 }
@@ -692,24 +748,43 @@ smu_fan_read_pwm(struct smu_softc *sc, struct smu_fan *fan, u_int16_t *pwm,
 	struct smu_cmd *cmd = (struct smu_cmd *)sc->sc_cmd;
 	int error;
 
-	/* read PWM value */
-	cmd->cmd = SMU_FAN;
-	cmd->len = 14;
-	cmd->data[0] = 0x12;
-	cmd->data[1] = 0x01 << fan->reg;
-	error = smu_do_cmd(sc, 800);
-	if (error)
-		return (error);
-	*pwm = cmd->data[fan->reg * 2 + 2];
+	if (sc->sc_firmware_old) {
+		/* read PWM value */
+		cmd->cmd = SMU_FAN;
+		cmd->len = 14;
+		cmd->data[0] = 0x12;
+		cmd->data[1] = 0x01 << fan->reg;
+		error = smu_do_cmd(sc, 800);
+		if (error)
+			return (error);
+		*pwm = cmd->data[fan->reg * 2 + 2];
 
-	/* read RPM value */
-	cmd->cmd = SMU_FAN;
-	cmd->len = 1;
-	cmd->data[0] = 0x11;
-	error = smu_do_cmd(sc, 800);
-	if (error)
-		return (error);
-	*rpm = (cmd->data[fan->reg * 2 + 1] << 8) | cmd->data[fan->reg * 2 + 2];
+		/* read RPM value */
+		cmd->cmd = SMU_FAN;
+		cmd->len = 1;
+		cmd->data[0] = 0x11;
+		error = smu_do_cmd(sc, 800);
+		if (error)
+			return (error);
+		*rpm = (cmd->data[fan->reg * 2 + 1] << 8) |
+		        cmd->data[fan->reg * 2 + 2];
+	} else {
+		cmd->cmd = SMU_FAN;
+		cmd->len = 2;
+		cmd->data[0] = 0x31;
+		cmd->data[1] = fan->reg;
+		error = smu_do_cmd(sc, 800);
+		if (error)
+			return (error);
+		*rpm = (cmd->data[0] << 8) | cmd->data[1];
+
+		/* XXX
+		 * We don't know currently if there is a pwm read command
+		 * for the new firmware as well.  Therefore lets calculate
+		 * the pwm value for now based on the rpm.
+		 */
+		*pwm = *rpm * 100 / fan->max_rpm;
+	}
 
 	return (0);
 }
