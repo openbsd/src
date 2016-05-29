@@ -1,4 +1,4 @@
-/*	$OpenBSD: hcreate.c,v 1.6 2015/09/10 18:13:46 guenther Exp $	*/
+/*	$OpenBSD: hcreate.c,v 1.7 2016/05/29 20:47:49 guenther Exp $	*/
 /*	$NetBSD: hcreate.c,v 1.5 2004/04/23 02:48:12 simonb Exp $	*/
 
 /*
@@ -55,6 +55,8 @@
 #include <string.h>
 #include <sys/queue.h>
 
+#include <db.h>		/* for __default_hash */
+
 #ifndef _DIAGASSERT
 #define _DIAGASSERT(x)
 #endif
@@ -78,9 +80,6 @@ SLIST_HEAD(internal_head, internal_entry);
  */
 #define	MAX_BUCKETS_LG2	(sizeof (size_t) * 8 - 1 - 5)
 #define	MAX_BUCKETS	((size_t)1 << MAX_BUCKETS_LG2)
-
-/* Default hash function, from db/hash/hash_func.c */
-extern u_int32_t (*__default_hash)(const void *, size_t);
 
 static struct internal_head *htable;
 static size_t htablesize;
@@ -164,7 +163,7 @@ hsearch(ENTRY item, ACTION action)
 	_DIAGASSERT(action == ENTER || action == FIND);
 
 	len = strlen(item.key);
-	hashval = (*__default_hash)(item.key, len);
+	hashval = __default_hash(item.key, len);
 
 	head = &htable[hashval & (htablesize - 1)];
 	ie = SLIST_FIRST(head);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.8 2015/08/27 04:37:09 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.9 2016/05/29 20:47:49 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -55,9 +55,6 @@ u_int32_t	 __log2(u_int32_t);
 int	 __put_page(HTAB *, char *, u_int32_t, int, int);
 void	 __reclaim_buf(HTAB *, BUFHEAD *);
 int	 __split_page(HTAB *, u_int32_t, u_int32_t);
-
-/* Default hash routine. */
-extern u_int32_t (*__default_hash)(const void *, size_t);
 
 #ifdef HASH_STATISTICS
 extern int hash_accesses, hash_collisions, hash_expansions, hash_overflows;
