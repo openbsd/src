@@ -71,7 +71,7 @@ do_files:
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
 	vnconfig -v -c -t ${DISKTYPE} ${VND} ${IMAGE}
-	echo 'u\ne 0\n${PART_ID}\nn\n${MSDOSSTART}\n${MSDOSSIZE}\ne 3\nA6\nn\n${FFSSTART}\n*\nw\nq\n' \
+	echo 'u\ne 0\n${PART_ID}\nn\n${MSDOSSTART}\n${MSDOSSIZE}\ne 3\nA6\nn\n${FFSSTART}\n*\nf 0\nw\nq\n' \
 	    | fdisk -e ${VND} >/dev/null
 	echo 'a a\n\n\n\nw\nq\n' | disklabel -E ${VND} >/dev/null
 	newfs -t msdos ${NEWFS_ARGS_msdos} ${VND_RIDEV}
