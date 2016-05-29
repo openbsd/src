@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.20 2015/07/19 23:46:50 jasper Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.21 2016/05/29 11:00:24 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -79,9 +79,6 @@ struct cn30xxgmx_port_ops {
 	int	(*port_ops_enable)(struct cn30xxgmx_port_softc *, int);
 	int	(*port_ops_speed)(struct cn30xxgmx_port_softc *);
 	int	(*port_ops_timing)(struct cn30xxgmx_port_softc *);
-	int	(*port_ops_set_mac_addr)(struct cn30xxgmx_port_softc *,
-		    uint8_t *, uint64_t);
-	int	(*port_ops_set_filter)(struct cn30xxgmx_port_softc *);
 };
 
 int	cn30xxgmx_match(struct device *, void *, void *);
@@ -98,9 +95,6 @@ int	cn30xxgmx_rgmii_speed_newlink(struct cn30xxgmx_port_softc *,
 	    uint64_t *);
 int	cn30xxgmx_rgmii_speed_speed(struct cn30xxgmx_port_softc *);
 int	cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *);
-int	cn30xxgmx_rgmii_set_mac_addr(struct cn30xxgmx_port_softc *,
-	    uint8_t *, uint64_t);
-int	cn30xxgmx_rgmii_set_filter(struct cn30xxgmx_port_softc *);
 int	cn30xxgmx_tx_ovr_bp_enable(struct cn30xxgmx_port_softc *, int);
 int	cn30xxgmx_rx_pause_enable(struct cn30xxgmx_port_softc *, int);
 
@@ -125,16 +119,12 @@ struct cn30xxgmx_port_ops cn30xxgmx_port_ops_gmii = {
 	.port_ops_enable = cn30xxgmx_rgmii_enable,
 	.port_ops_speed = cn30xxgmx_rgmii_speed,
 	.port_ops_timing = cn30xxgmx_rgmii_timing,
-	.port_ops_set_mac_addr = cn30xxgmx_rgmii_set_mac_addr,
-	.port_ops_set_filter = cn30xxgmx_rgmii_set_filter
 };
 
 struct cn30xxgmx_port_ops cn30xxgmx_port_ops_rgmii = {
 	.port_ops_enable = cn30xxgmx_rgmii_enable,
 	.port_ops_speed = cn30xxgmx_rgmii_speed,
 	.port_ops_timing = cn30xxgmx_rgmii_timing,
-	.port_ops_set_mac_addr = cn30xxgmx_rgmii_set_mac_addr,
-	.port_ops_set_filter = cn30xxgmx_rgmii_set_filter
 };
 
 struct cn30xxgmx_port_ops cn30xxgmx_port_ops_spi42 = {
@@ -556,17 +546,121 @@ cn30xxgmx_tx_thresh(struct cn30xxgmx_port_softc *sc, int cnt)
 int
 cn30xxgmx_set_mac_addr(struct cn30xxgmx_port_softc *sc, uint8_t *addr)
 {
-	uint64_t mac = 0;
+	uint64_t mac;
+	int i;
 
 	ADDR2UINT64(mac, addr);
-	(*sc->sc_port_ops->port_ops_set_mac_addr)(sc, addr, mac);
+
+	cn30xxgmx_link_enable(sc, 0);
+
+	sc->sc_mac = mac;
+	_GMX_PORT_WR8(sc, GMX0_SMAC0, mac);
+	for (i = 0; i < 6; i++)
+		_GMX_PORT_WR8(sc, cn30xxgmx_rx_adr_cam_regs[i], addr[i]);
+
+	cn30xxgmx_link_enable(sc, 1);
+
 	return 0;
 }
+
+#define	OCTEON_ETH_USE_GMX_CAM
 
 int
 cn30xxgmx_set_filter(struct cn30xxgmx_port_softc *sc)
 {
-	(*sc->sc_port_ops->port_ops_set_filter)(sc);
+	struct ifnet *ifp = &sc->sc_port_ac->ac_if;
+	struct arpcom *ac = sc->sc_port_ac;
+#ifdef OCTEON_ETH_USE_GMX_CAM
+	struct ether_multi *enm;
+	struct ether_multistep step;
+#endif
+	uint64_t cam_en = 0x01ULL;
+	uint64_t ctl = 0;
+	int multi = 0;
+
+	cn30xxgmx_link_enable(sc, 0);
+
+	SET(ctl, RXN_ADR_CTL_CAM_MODE);
+	CLR(ctl, RXN_ADR_CTL_MCST_ACCEPT | RXN_ADR_CTL_MCST_AFCAM |
+	    RXN_ADR_CTL_MCST_REJECT);
+	CLR(ifp->if_flags, IFF_ALLMULTI);
+
+	/*
+	 * Always accept broadcast frames.
+	 */
+	SET(ctl, RXN_ADR_CTL_BCST);
+
+	if (ISSET(ifp->if_flags, IFF_PROMISC)) {
+		SET(ifp->if_flags, IFF_ALLMULTI);
+		CLR(ctl, RXN_ADR_CTL_CAM_MODE);
+		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
+		cam_en = 0x00ULL;
+	} else if (ac->ac_multirangecnt > 0 || ac->ac_multicnt > 7) {
+		SET(ifp->if_flags, IFF_ALLMULTI);
+		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
+	} else {
+#ifdef OCTEON_ETH_USE_GMX_CAM
+		/*
+		 * Note first entry is self MAC address; other 7 entires are
+		 * available for multicast addresses.
+		 */
+		ETHER_FIRST_MULTI(step, sc->sc_port_ac, enm);
+		while (enm != NULL) {
+			int i;
+
+			dprintf("%d: %02x:%02x:%02x:%02x:%02x:%02x\n"
+			    multi + 1,
+			    enm->enm_addrlo[0], enm->enm_addrlo[1],
+			    enm->enm_addrlo[2], enm->enm_addrlo[3],
+			    enm->enm_addrlo[4], enm->enm_addrlo[5]);
+			multi++;
+
+			SET(cam_en, 1ULL << multi); /* XXX */
+
+			for (i = 0; i < 6; i++) {
+				uint64_t tmp;
+
+				/* XXX */
+				tmp = _GMX_PORT_RD8(sc,
+				    cn30xxgmx_rx_adr_cam_regs[i]);
+				CLR(tmp, 0xffULL << (8 * multi));
+				SET(tmp, (uint64_t)enm->enm_addrlo[i] <<
+				    (8 * multi));
+				_GMX_PORT_WR8(sc, cn30xxgmx_rx_adr_cam_regs[i],
+				    tmp);
+			}
+
+			for (i = 0; i < 6; i++)
+				dprintf("cam%d = %016llx\n", i,
+				    _GMX_PORT_RD8(sc,
+				    cn30xxgmx_rx_adr_cam_regs[i]));
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
+
+		if (multi)
+			SET(ctl, RXN_ADR_CTL_MCST_AFCAM);
+		else
+			SET(ctl, RXN_ADR_CTL_MCST_REJECT);
+
+		OCTEON_ETH_KASSERT(enm == NULL);
+#else
+		/*
+		 * XXX
+		 * Never use DMAC filter for multicast addresses, but register
+		 * only single entry for self address.  FreeBSD code do so.
+		 */
+		SET(ifp->if_flags, IFF_ALLMULTI);
+		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
+#endif
+	}
+
+	dprintf("ctl = %llx, cam_en = %llx\n", ctl, cam_en);
+	_GMX_PORT_WR8(sc, GMX0_RX0_ADR_CTL, ctl);
+	_GMX_PORT_WR8(sc, GMX0_RX0_ADR_CAM_EN, cam_en);
+
+	cn30xxgmx_link_enable(sc, 1);
+
 	return 0;
 }
 
@@ -989,120 +1083,6 @@ cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *sc)
 	}
 
 	cn30xxasx_clk_set(sc->sc_port_asx, clk_tx_setting, clk_rx_setting);
-
-	return 0;
-}
-
-int
-cn30xxgmx_rgmii_set_mac_addr(struct cn30xxgmx_port_softc *sc, uint8_t *addr,
-    uint64_t mac)
-{
-	int i;
-
-	cn30xxgmx_link_enable(sc, 0);
-
-	sc->sc_mac = mac;
-	_GMX_PORT_WR8(sc, GMX0_SMAC0, mac);
-	for (i = 0; i < 6; i++)
-		_GMX_PORT_WR8(sc, cn30xxgmx_rx_adr_cam_regs[i], addr[i]);
-
-	cn30xxgmx_link_enable(sc, 1);
-
-	return 0;
-}
-
-#define	OCTEON_ETH_USE_GMX_CAM
-
-int
-cn30xxgmx_rgmii_set_filter(struct cn30xxgmx_port_softc *sc)
-{
-	struct ifnet *ifp = &sc->sc_port_ac->ac_if;
-	struct arpcom *ac = sc->sc_port_ac;
-#ifdef OCTEON_ETH_USE_GMX_CAM
-	struct ether_multi *enm;
-	struct ether_multistep step;
-#endif
-	uint64_t cam_en = 0x01ULL;
-	uint64_t ctl = 0;
-	int multi = 0;
-
-	cn30xxgmx_link_enable(sc, 0);
-
-	SET(ctl, RXN_ADR_CTL_CAM_MODE);
-	CLR(ctl, RXN_ADR_CTL_MCST_ACCEPT | RXN_ADR_CTL_MCST_AFCAM | RXN_ADR_CTL_MCST_REJECT);
-	CLR(ifp->if_flags, IFF_ALLMULTI);
-
-	/*
-	 * Always accept broadcast frames.
-	 */
-	SET(ctl, RXN_ADR_CTL_BCST);
-
-	if (ISSET(ifp->if_flags, IFF_PROMISC)) {
-		SET(ifp->if_flags, IFF_ALLMULTI);
-		CLR(ctl, RXN_ADR_CTL_CAM_MODE);
-		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
-		cam_en = 0x00ULL;
-	} else if (ac->ac_multirangecnt > 0 || ac->ac_multicnt > 7) {
-		SET(ifp->if_flags, IFF_ALLMULTI);
-		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
-	} else {
-#ifdef OCTEON_ETH_USE_GMX_CAM
-		/*
-		 * Note first entry is self MAC address; other 7 entires are available
-		 * for multicast addresses.
-		 */
-		ETHER_FIRST_MULTI(step, sc->sc_port_ac, enm);
-		while (enm != NULL) {
-			int i;
-
-			dprintf("%d: %02x:%02x:%02x:%02x:%02x:%02x\n"
-			    multi + 1,
-			    enm->enm_addrlo[0], enm->enm_addrlo[1],
-			    enm->enm_addrlo[2], enm->enm_addrlo[3],
-			    enm->enm_addrlo[4], enm->enm_addrlo[5]);
-			multi++;
-
-			SET(cam_en, 1ULL << multi); /* XXX */
-
-			for (i = 0; i < 6; i++) {
-				uint64_t tmp;
-
-				/* XXX */
-				tmp = _GMX_PORT_RD8(sc, cn30xxgmx_rx_adr_cam_regs[i]);
-				CLR(tmp, 0xffULL << (8 * multi));
-				SET(tmp, (uint64_t)enm->enm_addrlo[i] << (8 * multi));
-				_GMX_PORT_WR8(sc, cn30xxgmx_rx_adr_cam_regs[i], tmp);
-			}
-
-			for (i = 0; i < 6; i++)
-				dprintf("cam%d = %016llx\n", i,
-				    _GMX_PORT_RD8(sc, cn30xxgmx_rx_adr_cam_regs[i]));
-
-			ETHER_NEXT_MULTI(step, enm);
-		}
-
-		if (multi)
-			SET(ctl, RXN_ADR_CTL_MCST_AFCAM);
-		else
-			SET(ctl, RXN_ADR_CTL_MCST_REJECT);
-
-		OCTEON_ETH_KASSERT(enm == NULL);
-#else
-		/*
-		 * XXX
-		 * Never use DMAC filter for multicast addresses, but register only
-		 * single entry for self address.  FreeBSD code do so.
-		 */
-		SET(ifp->if_flags, IFF_ALLMULTI);
-		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
-#endif
-	}
-
-	dprintf("ctl = %llx, cam_en = %llx\n", ctl, cam_en);
-	_GMX_PORT_WR8(sc, GMX0_RX0_ADR_CTL, ctl);
-	_GMX_PORT_WR8(sc, GMX0_RX0_ADR_CAM_EN, cam_en);
-
-	cn30xxgmx_link_enable(sc, 1);
 
 	return 0;
 }
