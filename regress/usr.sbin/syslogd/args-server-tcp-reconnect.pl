@@ -18,15 +18,15 @@ our %args = (
     client => {
 	func => sub { write_between2logs(shift, sub {
 	    my $self = shift;
-	    ${$self->{syslogd}}->loggrep("Connection refused", 5)
-		or die "no connection refused in syslogd.log";
+	    ${$self->{syslogd}}->loggrep($errors, 5)
+		or die "no $errors in syslogd.log";
 	})},
     },
     syslogd => {
 	loghost => '@tcp://127.0.0.1:$connectport',
 	loggrep => {
 	    qr/Logging to FORWTCP \@tcp:\/\/127.0.0.1:\d+/ => '>=6',
-	    qr/syslogd: connect .*: $errors/ => '>=2',
+	    qr/syslogd: (connect .*|.*connection error): $errors/ => '>=2',
 	    get_between2loggrep(),
 	},
     },
@@ -42,21 +42,21 @@ our %args = (
 	    $self->close();
 	    shutdown(\*STDOUT, 1)
 		or die "shutdown write failed: $!";
-	    ${$self->{syslogd}}->loggrep("Connection refused", 5)
-		or die "no connection refused in syslogd.log";
+	    ${$self->{syslogd}}->loggrep($errors, 5)
+		or die "no $errors in syslogd.log";
 	    $self->listen();
 	    $self->{redo}++;
 	})},
 	loggrep => {
 	    qr/Accepted/ => 2,
 	    qr/syslogd: loghost .* connection close/ => 1,
-	    qr/syslogd: connect .*: $errors/ => 1,
+	    qr/syslogd: (connect .*|.*connection error): $errors/ => 1,
 	    get_between2loggrep(),
 	},
     },
     file => {
 	loggrep => {
-	    qr/syslogd: connect .*: $errors/ => '>=1',
+	    qr/syslogd: (connect .*|.*connection error): $errors/ => '>=1',
 	    get_between2loggrep(),
 	},
     },
