@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.201 2016/04/30 18:59:02 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.202 2016/05/30 09:26:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1345,7 +1345,7 @@ tty_cursor(struct tty *tty, u_int cx, u_int cy)
 		 */
 
 		/* To left edge. */
-		if (cx == 0)	{
+		if (cx == 0) {
 			tty_putc(tty, '\r');
 			goto out;
 		}
@@ -1373,6 +1373,11 @@ tty_cursor(struct tty *tty, u_int cx, u_int cy)
 			tty_putcode1(tty, TTYC_HPA, cx);
 			goto out;
 		} else if (change > 0 && tty_term_has(term, TTYC_CUB)) {
+			if (change == 2 && tty_term_has(term, TTYC_CUB1)) {
+				tty_putcode(tty, TTYC_CUB1);
+				tty_putcode(tty, TTYC_CUB1);
+				goto out;
+			}
 			tty_putcode1(tty, TTYC_CUB, change);
 			goto out;
 		} else if (change < 0 && tty_term_has(term, TTYC_CUF)) {
