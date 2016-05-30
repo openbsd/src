@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.98 2016/05/03 08:30:15 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.99 2016/05/30 17:52:26 tedu Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -879,28 +879,26 @@ rdrand(void *v)
 	union {
 		uint64_t u64;
 		uint32_t u32[2];
-	} r;
+	} r, t;
 	uint8_t valid;
-	int i;
 
-	if (has_rdrand == 0 && has_rdseed == 0)
-		return;
-	for (i = 0; i < 2; i++) {
-		if (has_rdseed)
-			__asm volatile(
-			    "rdseed	%0\n\t"
-			    "setc	%1\n"
-			    : "=r" (r.u64), "=qm" (valid) );
-		if (has_rdseed == 0 || valid == 0)
-			__asm volatile(
-			    "rdrand	%0\n\t"
-			    "setc	%1\n"
-			    : "=r" (r.u64), "=qm" (valid) );
-		if (valid) {
-			add_true_randomness(r.u32[0]);
-			add_true_randomness(r.u32[1]);
-		}
-	}
+	if (has_rdseed)
+		__asm volatile(
+		    "rdseed	%0\n\t"
+		    "setc	%1\n"
+		    : "=r" (r.u64), "=qm" (valid) );
+	if (has_rdrand && (has_rdseed == 0 || valid == 0))
+		__asm volatile(
+		    "rdrand	%0\n\t"
+		    "setc	%1\n"
+		    : "=r" (r.u64), "=qm" (valid) );
+
+	t.u64 = rdtsc();
+
+	if (valid)
+		t.u64 ^= r.u64;
+	add_true_randomness(t.u32[0]);
+	add_true_randomness(t.u32[1]);
 
 	if (tmo)
 		timeout_add_msec(tmo, 10);

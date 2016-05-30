@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.45 2015/12/27 04:31:34 jsg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.46 2016/05/30 17:52:26 tedu Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -139,10 +139,8 @@ cpu_configure(void)
 		timeout_set(&viac3_rnd_tmo, viac3_rnd, &viac3_rnd_tmo);
 		viac3_rnd(&viac3_rnd_tmo);
 	}
-	if (has_rdrand || has_rdseed) {
-		timeout_set(&rdrand_tmo, rdrand, &rdrand_tmo);
-		rdrand(&rdrand_tmo);
-	}
+	timeout_set(&rdrand_tmo, rdrand, &rdrand_tmo);
+	rdrand(&rdrand_tmo);
 #ifdef CRYPTO
 	/*
 	 * Also, if the chip has crypto available, enable it.
