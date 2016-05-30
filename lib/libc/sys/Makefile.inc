@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.144 2016/05/19 05:31:22 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.145 2016/05/30 21:35:08 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -40,7 +40,7 @@ SRCS+=	${CANCEL:%=w_%.c} w_pread.c w_preadv.c w_pwrite.c w_pwritev.c
 
 # modules with default implementations on all architectures, unless overridden
 # below:
-ASM=	__getcwd.o __semctl.o __syscall.o __thrsigdivert.o \
+ASM=	__semctl.o __syscall.o __thrsigdivert.o \
 	access.o acct.o adjfreq.o adjtime.o \
 	bind.o chdir.o chflags.o chflagsat.o chmod.o chown.o chroot.o \
 	clock_getres.o clock_gettime.o clock_settime.o \
@@ -112,7 +112,7 @@ PPSEUDO_NOERR=${PSEUDO_NOERR:.o=.po}
 SPSEUDO_NOERR=${PSEUDO_NOERR:.o=.so}
 DPSEUDO_NOERR=${PSEUDO_NOERR:.o=.do}
 
-HIDDEN= fork.o sigaction.o _ptrace.o ${CANCEL:=.o}
+HIDDEN= ___getcwd.o fork.o sigaction.o _ptrace.o ${CANCEL:=.o}
 GHIDDEN=${HIDDEN:.o=.go}
 PHIDDEN=${HIDDEN:.o=.po}
 SHIDDEN=${HIDDEN:.o=.so}
