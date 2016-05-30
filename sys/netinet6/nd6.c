@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.179 2016/05/17 08:29:14 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.180 2016/05/30 23:37:37 dlg Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -312,17 +312,10 @@ nd6_llinfo_settimer(struct llinfo_nd6 *ln, long tick)
 
 	if (tick < 0) {
 		ln->ln_expire = 0;
-		ln->ln_ntick = 0;
 		timeout_del(&ln->ln_timer_ch);
 	} else {
 		ln->ln_expire = time_second + tick / hz;
-		if (tick > INT_MAX) {
-			ln->ln_ntick = tick - INT_MAX;
-			timeout_add(&ln->ln_timer_ch, INT_MAX);
-		} else {
-			ln->ln_ntick = 0;
-			timeout_add(&ln->ln_timer_ch, tick);
-		}
+		timeout_add(&ln->ln_timer_ch, tick);
 	}
 
 	splx(s);
@@ -341,18 +334,6 @@ nd6_llinfo_timer(void *arg)
 	s = splsoftnet();
 
 	ln = (struct llinfo_nd6 *)arg;
-
-	if (ln->ln_ntick > 0) {
-		if (ln->ln_ntick > INT_MAX) {
-			ln->ln_ntick -= INT_MAX;
-			nd6_llinfo_settimer(ln, INT_MAX);
-		} else {
-			ln->ln_ntick = 0;
-			nd6_llinfo_settimer(ln, ln->ln_ntick);
-		}
-		splx(s);
-		return;
-	}
 
 	if ((rt = ln->ln_rt) == NULL)
 		panic("ln->ln_rt == NULL");

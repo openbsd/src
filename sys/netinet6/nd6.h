@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.58 2016/03/30 10:13:14 mpi Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.59 2016/05/30 23:37:37 dlg Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -150,7 +150,6 @@ struct	llinfo_nd6 {
 	short	ln_state;	/* reachability state */
 	short	ln_router;	/* 2^0: ND6 router bit */
 
-	long	ln_ntick;
 	struct	timeout ln_timer_ch;
 };
 
