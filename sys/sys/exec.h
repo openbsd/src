@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.32 2016/05/30 21:22:45 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.33 2016/05/30 21:25:48 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -142,7 +142,6 @@ struct exec_package {
 #define	EXEC_HASARGL	0x0004		/* has fake args vector */
 #define	EXEC_SKIPARG	0x0008		/* don't copy user-supplied argv[0] */
 #define	EXEC_DESTR	0x0010		/* destructive ops performed */
-#define	EXEC_WXNEEDED	0x0020		/* executable will violate W^X */
 
 #ifdef _KERNEL
 /*

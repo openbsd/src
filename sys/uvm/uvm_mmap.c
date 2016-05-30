@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.127 2016/05/30 21:22:46 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.128 2016/05/30 21:25:48 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -312,32 +312,30 @@ int	uvm_wxabort;
  * W^X violations are only allowed on permitted filesystems.
  */
 static inline int
-uvm_wxcheck(struct proc *p, char *call)
+uvm_wxcheck(struct proc *p)
 {
 #if (defined(__mips64__) || defined(__hppa))
 	/* XXX got/plt repairs still needed */
 	return 0;
 #endif
-	int wxallowed = (p->p_p->ps_textvp->v_mount &&
+	int mpwx = (p->p_p->ps_textvp->v_mount &&
 	    (p->p_p->ps_textvp->v_mount->mnt_flag & MNT_WXALLOWED));
 
-	if (wxallowed && (p->p_p->ps_flags & PS_WXNEEDED))
-		return (0);
-
-	/* Report W^X failures, and potentially SIGABRT */
-	if (p->p_p->ps_wxcounter++ == 0)
-		log(LOG_NOTICE, "%s(%d): %s W^X violation\n",
-		    p->p_comm, p->p_pid, call);
-	if (uvm_wxabort) {
+	if (!mpwx) {
 		struct sigaction sa;
 
-		/* Send uncatchable SIGABRT for coredump */
-		memset(&sa, 0, sizeof sa);
-		sa.sa_handler = SIG_DFL;
-		setsigvec(p, SIGABRT, &sa);
-		psignal(p, SIGABRT);
+		log(LOG_NOTICE, "%s(%d): mmap W^X violation\n",
+		    p->p_comm, p->p_pid);
+		if (uvm_wxabort) {
+			/* Send uncatchable SIGABRT for coredump */
+			memset(&sa, 0, sizeof sa);
+			sa.sa_handler = SIG_DFL;
+			setsigvec(p, SIGABRT, &sa);
+			psignal(p, SIGABRT);
+		}
+		return (ENOTSUP);
 	}
-	return (0);		/* ENOTSUP later */
+	return (0);
 }
 
 /*
@@ -387,7 +385,7 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 	if ((prot & PROT_MASK) != prot)
 		return (EINVAL);
 	if ((prot & (PROT_WRITE | PROT_EXEC)) == (PROT_WRITE | PROT_EXEC) &&
-	    (error = uvm_wxcheck(p, "mmap")))
+	    (error = uvm_wxcheck(p)))
 		return (error);
 
 	if ((flags & MAP_FLAGMASK) != flags)
@@ -704,7 +702,7 @@ sys_mprotect(struct proc *p, void *v, register_t *retval)
 	if ((prot & PROT_MASK) != prot)
 		return (EINVAL);
 	if ((prot & (PROT_WRITE | PROT_EXEC)) == (PROT_WRITE | PROT_EXEC) &&
-	    (error = uvm_wxcheck(p, "mprotect")))
+	    (error = uvm_wxcheck(p)))
 		return (error);
 
 	error = pledge_protexec(p, prot);
