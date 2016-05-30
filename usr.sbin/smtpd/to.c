@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.27 2016/05/22 11:15:31 gilles Exp $	*/
+/*	$OpenBSD: to.c,v 1.28 2016/05/30 12:33:44 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -279,42 +279,20 @@ text_to_netaddr(struct netaddr *netaddr, const char *s)
 	if (strncasecmp("IPv6:", s, 5) == 0)
 		s += 5;
 
-	if (strchr(s, '/') != NULL) {
-		/* dealing with netmask */
-		bits = inet_net_pton(AF_INET, s, &ssin.sin_addr,
-		    sizeof(struct in_addr));
-		if (bits != -1) {
-			ssin.sin_family = AF_INET;
-			memcpy(&ss, &ssin, sizeof(ssin));
-			ss.ss_len = sizeof(struct sockaddr_in);
-		}
-		else {
-			bits = inet_net_pton(AF_INET6, s, &ssin6.sin6_addr,
-			    sizeof(struct in6_addr));
-			if (bits == -1) {
-				log_warn("warn: inet_net_pton");
-				return 0;
-			}
-			ssin6.sin6_family = AF_INET6;
-			memcpy(&ss, &ssin6, sizeof(ssin6));
-			ss.ss_len = sizeof(struct sockaddr_in6);
-		}
-	}
-	else {
-		/* IP address ? */
-		if (inet_pton(AF_INET, s, &ssin.sin_addr) == 1) {
-			ssin.sin_family = AF_INET;
-			bits = 32;
-			memcpy(&ss, &ssin, sizeof(ssin));
-			ss.ss_len = sizeof(struct sockaddr_in);
-		}
-		else if (inet_pton(AF_INET6, s, &ssin6.sin6_addr) == 1) {
-			ssin6.sin6_family = AF_INET6;
-			bits = 128;
-			memcpy(&ss, &ssin6, sizeof(ssin6));
-			ss.ss_len = sizeof(struct sockaddr_in6);
-		}
-		else return 0;
+	bits = inet_net_pton(AF_INET, s, &ssin.sin_addr,
+	    sizeof(struct in_addr));
+	if (bits != -1) {
+		ssin.sin_family = AF_INET;
+		memcpy(&ss, &ssin, sizeof(ssin));
+		ss.ss_len = sizeof(struct sockaddr_in);
+	} else {
+		bits = inet_net_pton(AF_INET6, s, &ssin6.sin6_addr,
+		    sizeof(struct in6_addr));
+		if (bits == -1)
+			return 0;
+		ssin6.sin6_family = AF_INET6;
+		memcpy(&ss, &ssin6, sizeof(ssin6));
+		ss.ss_len = sizeof(struct sockaddr_in6);
 	}
 
 	netaddr->ss   = ss;
