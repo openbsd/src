@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.55 2016/04/18 14:38:08 mikeb Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.56 2016/05/30 23:30:11 sthen Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -1011,6 +1011,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
 	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);	/* header len + payload len */
 	if (m0 == NULL)
 		return (ENOBUFS);
+	m0->m_pkthdr.pf.prio = SPPP_CTL_PRIO;
 
 	/* fill in pkt */
 	p = mtod(m0, u_int8_t *);
@@ -1237,6 +1238,7 @@ pppoe_send_padr(struct pppoe_softc *sc)
 	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);
 	if (m0 == NULL)
 		return (ENOBUFS);
+	m0->m_pkthdr.pf.prio = SPPP_CTL_PRIO;
 
 	p = mtod(m0, u_int8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADR, 0, len);
@@ -1300,6 +1302,7 @@ pppoe_send_padt(unsigned int ifidx, u_int session, const u_int8_t *dest)
 		if_put(eth_if);
 		return (ENOBUFS);
 	}
+	m0->m_pkthdr.pf.prio = SPPP_CTL_PRIO;
 
 	p = mtod(m0, u_int8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADT, session, 0);
