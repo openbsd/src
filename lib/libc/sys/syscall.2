@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syscall.2,v 1.12 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: syscall.2,v 1.13 2016/05/30 06:48:21 guenther Exp $
 .\"	$NetBSD: syscall.2,v 1.4 1995/02/27 12:38:53 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)syscall.2	8.1 (Berkeley) 6/16/93
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: May 30 2016 $
 .Dt SYSCALL 2
 .Os
 .Sh NAME
@@ -83,6 +83,8 @@ The
 function first appeared in
 .Bx 3 .
 .Sh BUGS
-There is no way to simulate system calls that have multiple return values
-such as
-.Xr pipe 2 .
+This would all be easier if the layout of structures with long long
+members matched how long long arguments were aligned on the stack
+for syscall arguments.
+They don't match for some ILP32 archs so explicit padding is necessary
+for consistent handling.
