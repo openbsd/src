@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.161 2015/12/10 21:00:51 naddy Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.162 2016/05/30 23:38:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1104,7 +1104,7 @@ ubsec_process(struct cryptop *crp)
 				q->q_dst_m = q->q_src_m;
 				q->q_dst_map = q->q_src_map;
 			} else {
-				q->q_dst_m = m_copym2(q->q_src_m, 0, M_COPYALL,
+				q->q_dst_m = m_dup_pkt(q->q_src_m, 0,
 				    M_NOWAIT);
 				if (q->q_dst_m == NULL) {
  					err = ENOMEM;
