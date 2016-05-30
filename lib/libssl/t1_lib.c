@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.86 2016/03/10 23:21:46 mmcc Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.87 2016/05/30 13:42:54 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2199,7 +2199,7 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 		return -1;
 	}
 	EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen);
-	if (EVP_DecryptFinal(&ctx, sdec + slen, &mlen) <= 0) {
+	if (EVP_DecryptFinal_ex(&ctx, sdec + slen, &mlen) <= 0) {
 		free(sdec);
 		EVP_CIPHER_CTX_cleanup(&ctx);
 		return 2;

@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.30 2016/05/04 15:05:13 tedu Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.31 2016/05/30 13:42:54 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -264,9 +264,9 @@ int
 EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
 	if (ctx->encrypt)
-		return EVP_EncryptFinal(ctx, out, outl);
+		return EVP_EncryptFinal_ex(ctx, out, outl);
 	else
-		return EVP_DecryptFinal(ctx, out, outl);
+		return EVP_DecryptFinal_ex(ctx, out, outl);
 }
 
 int
@@ -371,6 +371,7 @@ EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	int ret;
 
 	ret = EVP_EncryptFinal_ex(ctx, out, outl);
+	(void) EVP_CIPHER_CTX_cleanup(ctx);
 	return ret;
 }
 
@@ -484,6 +485,7 @@ EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	int ret;
 
 	ret = EVP_DecryptFinal_ex(ctx, out, outl);
+	(void) EVP_CIPHER_CTX_cleanup(ctx);
 	return ret;
 }
 
@@ -571,7 +573,7 @@ EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 		 * functional reference we held for this reason. */
 		ENGINE_finish(c->engine);
 #endif
-	memset(c, 0, sizeof(EVP_CIPHER_CTX));
+	explicit_bzero(c, sizeof(EVP_CIPHER_CTX));
 	return 1;
 }
 
