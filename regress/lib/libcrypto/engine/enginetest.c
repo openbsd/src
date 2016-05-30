@@ -208,11 +208,11 @@ int main(int argc, char *argv[])
 			printf("\nAdding stopped at %i, (%s,%s)\n",
 				loop, ENGINE_get_id(block[loop]),
 				ENGINE_get_name(block[loop]));
-			goto cleanup_loop;
-		} else
-			printf("."); fflush(stdout);
+			break;
+		}
+		printf(".");
+		fflush(stdout);
 	}
-cleanup_loop:
 	printf("\nAbout to empty the engine-type list\n");
 	while ((ptr = ENGINE_get_first()) != NULL) {
 		if (!ENGINE_remove(ptr)) {
