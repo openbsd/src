@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.6 2016/05/23 00:18:57 guenther Exp $ */
+/*	$OpenBSD: _setjmp.S,v 1.7 2016/05/30 02:06:02 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -33,6 +33,8 @@
 #include <machine/regnum.h>
 #include <machine/signal.h>
 
+	.globl	__jmpxor
+
 /*
  * _setjmp, _longjmp (not restoring signal state)
  *
@@ -48,11 +50,7 @@ LEAF(_setjmp, FRAMESZ)
 	PTR_SUBU sp, FRAMESZ
 	SETUP_GP64(GPOFF, _setjmp)
 	.set	noreorder
-#if defined(__mips64)
-	dli	v0, 0xACEDBADE			# sigcontext magic number
-#else
-	li	v0, 0xACEDBADE			# sigcontext magic number
-#endif
+	LI	v0, 0xACEDBADE			# sigcontext magic number
 	REG_S	v0, SC_REGS+ZERO*REGSZ(a0)
 	REG_S	s0, SC_REGS+S0*REGSZ(a0)
 	REG_S	s1, SC_REGS+S1*REGSZ(a0)
@@ -63,12 +61,19 @@ LEAF(_setjmp, FRAMESZ)
 	REG_S	s6, SC_REGS+S6*REGSZ(a0)
 	REG_S	s7, SC_REGS+S7*REGSZ(a0)
 	REG_S	s8, SC_REGS+S8*REGSZ(a0)
-	REG_L	v0, GPOFF(sp)
+	LA	t0, __jmpxor			# load cookie addr
+	REG_L	v0, 0(t0)			# load gp cookie
+	REG_L	v1, GPOFF(sp)
+	xor	v0, v0, v1
 	REG_S	v0, SC_REGS+GP*REGSZ(a0)
-	PTR_ADDU v0, sp, FRAMESZ
+	REG_L	v0, REGSZ(t0)			# load sp cookie over gp cookie
+	PTR_ADDU v1, sp, FRAMESZ
+	xor	v0, v0, v1
 	REG_S	v0, SC_REGS+SP*REGSZ(a0)
-	REG_S	ra, SC_PC(a0)
-	cfc1	v0, $31
+	REG_L	t0, 2*REGSZ(t0)			# load ra cookie over addr
+	xor	t0, ra, t0
+	REG_S	t0, SC_PC(a0)
+	cfc1	t0, $31				# overwrite ra cookie
 #if _MIPS_FPSET == 32
 	sdc1	$f20, SC_FPREGS+((F20-F0)*REGSZ)(a0)
 	sdc1	$f21, SC_FPREGS+((F21-F0)*REGSZ)(a0)
@@ -96,7 +101,7 @@ LEAF(_setjmp, FRAMESZ)
 	swc1	$f30, SC_FPREGS+((F30-F0)*REGSZ)(a0)
 	swc1	$f31, SC_FPREGS+((F31-F0)*REGSZ)(a0)
 #endif
-	REG_S	v0, SC_FPREGS+((FSR-F0)*REGSZ)(a0)
+	REG_S	t0, SC_FPREGS+((FSR-F0)*REGSZ)(a0)
 	RESTORE_GP64
 	PTR_ADDU sp, FRAMESZ
 	j	ra
@@ -109,8 +114,10 @@ LEAF(_longjmp, FRAMESZ)
 	.set    noreorder
 	REG_L	v0, SC_REGS+ZERO*REGSZ(a0)
 	bne	v0, 0xACEDBADE, botch		# jump if error
+	LA	v0, __jmpxor			# load cookie addr
+	REG_L	v1, 2*REGSZ(v0)			# load ra cookie
 	REG_L	ra, SC_PC(a0)
-	REG_L	v0, SC_FPREGS+((FSR-F0)*REGSZ)(a0)
+	xor	ra, ra, v1
 	REG_L	s0, SC_REGS+S0*REGSZ(a0)
 	REG_L	s1, SC_REGS+S1*REGSZ(a0)
 	REG_L	s2, SC_REGS+S2*REGSZ(a0)
@@ -120,9 +127,14 @@ LEAF(_longjmp, FRAMESZ)
 	REG_L	s6, SC_REGS+S6*REGSZ(a0)
 	REG_L	s7, SC_REGS+S7*REGSZ(a0)
 	REG_L	s8, SC_REGS+S8*REGSZ(a0)
+	REG_L	v1, 0(v0)			# load gp cookie over ra cookie
 	REG_L	gp, SC_REGS+GP*REGSZ(a0)
+	xor	gp, gp, v1
+	REG_L	v1, REGSZ(v0)			# load sp cookie over gp cookie
 	REG_L	sp, SC_REGS+SP*REGSZ(a0)
-	ctc1	v0, $31
+	xor	sp, sp, v1
+	REG_L	v1, SC_FPREGS+((FSR-F0)*REGSZ)(a0)	# overwrite sp cookie
+	ctc1	v1, $31
 #if _MIPS_FPSET == 32
 	ldc1	$f20, SC_FPREGS+((F20-F0)*REGSZ)(a0)
 	ldc1	$f21, SC_FPREGS+((F21-F0)*REGSZ)(a0)
