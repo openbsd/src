@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.222 2016/05/30 21:25:48 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.223 2016/05/30 21:31:27 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -190,6 +190,8 @@ struct process {
 	struct	rusage ps_cru;		/* sum of stats for reaped children */
 	struct	itimerval ps_timer[3];	/* timers, indexed by ITIMER_* */
 
+	u_int64_t ps_wxcounter;
+
 /* End area that is zeroed on creation. */
 #define	ps_endzero	ps_startcopy
 
@@ -259,6 +261,7 @@ struct process {
 #define	PS_ZOMBIE	0x00040000	/* Dead and ready to be waited for */
 #define	PS_NOBROADCASTKILL 0x00080000	/* Process excluded from kill -1. */
 #define	PS_PLEDGE	0x00100000	/* Has called pledge(2) */
+#define	PS_WXNEEDED	0x00200000	/* Process may violate W^X */
 
 #define	PS_BITS \
     ("\20" "\01CONTROLT" "\02EXEC" "\03INEXEC" "\04EXITING" "\05SUGID" \
