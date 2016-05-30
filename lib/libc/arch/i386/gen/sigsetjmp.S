@@ -1,4 +1,4 @@
-/* $OpenBSD: sigsetjmp.S,v 1.9 2015/09/13 07:36:58 guenther Exp $ */
+/* $OpenBSD: sigsetjmp.S,v 1.10 2016/05/30 02:11:21 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +31,9 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
+
+	.global	__jmpxor
 
 ENTRY(sigsetjmp)
 	movl	4(%esp),%ecx
@@ -40,53 +42,66 @@ ENTRY(sigsetjmp)
 	testl	%eax,%eax
 	jz	1f
 
-	PIC_PROLOGUE
-	pushl	$0
-#ifdef __PIC__
-	call	PIC_PLT(_C_LABEL(_libc_sigblock))
-#else
-	call	_C_LABEL(_libc_sigblock)
-#endif
-	addl	$4,%esp
-	PIC_EPILOGUE
-
-	movl	4(%esp),%ecx
+	pushl	$0			/* mask = empty */
+	pushl	$1			/* how = SIG_BLOCK */
+	subl	$4,%esp
+	movl	$(SYS_sigprocmask),%eax
+	int	$0x80			/* leave oset in %eax */
+	addl	$12,%esp
 	movl	%eax,24(%ecx)
-1:	movl	0(%esp),%edx
-	movl	%edx, 0(%ecx)
+
+1:	call	2f
+2:	popl	%edx
+	addl	$__jmpxor-2b,%edx	# load cookie address
+
 	movl	%ebx, 4(%ecx)
-	movl	%esp, 8(%ecx)
-	movl	%ebp,12(%ecx)
+	movl	%esp,   %eax
+	xorl	8(%edx),%eax		# use esp cookie
+	movl	%eax, 8(%ecx)
+	movl	%ebp,   %eax
+	xorl	0(%edx),%eax		# use ebp cookie
+	movl	%eax,12(%ecx)
 	movl	%esi,16(%ecx)
 	movl	%edi,20(%ecx)
+	movl	4(%edx),%edx		# load eip cookie over cookie address
+	xorl	0(%esp),%edx
+	movl	%edx, 0(%ecx)
 	xorl	%eax,%eax
 	ret
+END(sigsetjmp)
 
 ENTRY(siglongjmp)
 	movl	4(%esp),%edx
 	cmpl	$0,28(%edx)
 	jz	1f
 
-	PIC_PROLOGUE
-	pushl	24(%edx)
-#ifdef __PIC__
-	call	PIC_PLT(_C_LABEL(_libc_sigsetmask))
-#else
-	call	_C_LABEL(_libc_sigsetmask)
-#endif
-	addl	$4,%esp
-	PIC_EPILOGUE
+	pushl	24(%edx)		/* mask from sc_mask */
+	pushl	$3			/* how = SIG_SETMASK */
+	subl	$4,%esp
+	movl	$(SYS_sigprocmask),%eax
+	int	$0x80
+	addl	$12,%esp
 
-1:	movl	4(%esp),%edx
-	movl	8(%esp),%eax
-	movl	0(%edx),%ecx
-	movl	4(%edx),%ebx
-	movl	8(%edx),%esp
+1:	call	2f
+2:	popl	%ecx
+	addl	$__jmpxor-2b,%ecx	# load cookie address
+
+	movl	 4(%esp),%edx		# reload in case sigprocmask failed
+	movl	 8(%esp),%eax
+	movl	 4(%edx),%ebx
+	movl	 8(%edx),%esi		# load xor'ed esp into safe register
+	xorl	 8(%ecx),%esi		# use esp cookie
+	movl	   %esi, %esp		# un-xor'ed esp is safe to use
 	movl	12(%edx),%ebp
+	xorl	 0(%ecx),%ebp		# use ebp cookie
 	movl	16(%edx),%esi
 	movl	20(%edx),%edi
+
+	movl	 4(%ecx),%ecx		# load eip cookie over cookie address
+	xorl	 0(%edx),%ecx
 	testl	%eax,%eax
 	jnz	2f
 	incl	%eax
 2:	movl	%ecx,0(%esp)
 	ret
+END(siglongjmp)

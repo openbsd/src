@@ -1,4 +1,4 @@
-/* $OpenBSD: _setjmp.S,v 1.5 2005/08/07 11:30:38 espie Exp $ */
+/* $OpenBSD: _setjmp.S,v 1.6 2016/05/30 02:11:21 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,6 +33,8 @@
 
 #include <machine/asm.h>
 
+	.global	__jmpxor
+
 /*
  * C library -- _setjmp, _longjmp
  *
@@ -44,28 +46,45 @@
  */
 
 ENTRY(_setjmp)
+	call	1f
+1:	popl	%ecx
+	addl	$__jmpxor-1b,%ecx	# load cookie address
 	movl	4(%esp),%eax
 	movl	0(%esp),%edx
-	movl	%edx, 0(%eax)		/* rta */
+	xorl	0(%ecx),%edx		# use eip cookie
+	movl	%edx, 0(%eax)
 	movl	%ebx, 4(%eax)
-	movl	%esp, 8(%eax)
-	movl	%ebp,12(%eax)
+	movl	%esp,   %edx
+	xorl	4(%ecx),%edx		# use esp cookie
+	movl	%edx, 8(%eax)
+	movl	8(%ecx),%ecx		# load ebp cookie over cookie address
+	xorl	%ebp,   %ecx
+	movl	%ecx,12(%eax)
 	movl	%esi,16(%eax)
 	movl	%edi,20(%eax)
 	xorl	%eax,%eax
 	ret
+END(_setjmp)
 
 ENTRY(_longjmp)
-	movl	4(%esp),%edx
-	movl	8(%esp),%eax
-	movl	0(%edx),%ecx
-	movl	4(%edx),%ebx
-	movl	8(%edx),%esp
+	call	1f
+1:	popl	%ecx
+	addl	$__jmpxor-1b,%ecx	# load cookie address
+	movl	 4(%esp),%edx
+	movl	 8(%esp),%eax
+	movl	 4(%edx),%ebx
+	movl	 8(%edx),%esi		# load xor'ed esp into safe register
+	xorl	 4(%ecx),%esi		# use esp cookie
+	movl	   %esi, %esp		# un-xor'ed esp is safe to use
 	movl	12(%edx),%ebp
+	xorl	 8(%ecx),%ebp		# use ebp cookie
 	movl	16(%edx),%esi
 	movl	20(%edx),%edi
+	movl	 0(%ecx),%ecx		# load eip cookie over cookie address
+	xorl	 0(%edx),%ecx		# overwrite eip cookie
 	testl	%eax,%eax
 	jnz	1f
 	incl	%eax
 1:	movl	%ecx,0(%esp)
 	ret
+END(_longjmp)
