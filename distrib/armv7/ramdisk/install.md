@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.35 2016/05/29 15:10:05 jsg Exp $
+#	$OpenBSD: install.md,v 1.36 2016/05/30 18:57:04 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,22 +39,22 @@ NEWFSARGS_msdos="-F 16 -L boot"
 MOUNT_ARGS_msdos="-o-l"
 
 md_installboot() {
-	local _disk=$1
+	local _disk=/dev/$1 _mdec _plat
 
 	# Identify ARMv7 platform based on dmesg.
 	case $(scan_dmesg 's/^mainbus0 at root: \(.*\)$/\1/p') in
 	*AM335x*)			_plat=am335x;;
-	*"OMAP3 BeagleBoard"*)		_plat=beagle;;
+	*'OMAP3 BeagleBoard'*)		_plat=beagle;;
 	*OMAP4*)			_plat=panda;;
 	*Cubieboard*)			_plat=cubie;;
 	*Cubox-i*|*HummingBoard*)	_plat=cubox;;
 	*Wandboard*)			_plat=wandboard;;
-	*Nitrogen6*|*"SABRE Lite"*)	_plat=nitrogen;;
+	*Nitrogen6*|*'SABRE Lite'*)	_plat=nitrogen;;
 	*)				;; # XXX: Handle unknown platform?
 	esac
 
 	# Mount MSDOS partition, extract U-Boot and copy UEFI boot program
-	mount ${MOUNT_ARGS_msdos} /dev/${_disk}i /mnt/mnt
+	mount ${MOUNT_ARGS_msdos} ${_disk}i /mnt/mnt
 	tar -C /mnt/ -xf /usr/mdec/u-boots.tgz 
 	mkdir -p /mnt/mnt/efi/boot
 	cp /mnt/usr/mdec/BOOTARM.EFI /mnt/mnt/efi/boot/bootarm.efi
