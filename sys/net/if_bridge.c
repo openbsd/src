@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.278 2016/04/12 06:20:30 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.279 2016/05/30 12:56:16 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1062,6 +1062,18 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 	sc = ifl->bridge_sc;
 	if ((sc->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		goto reenqueue;
+
+#if NVLAN > 0
+	/*
+	 * If the underlying interface removed the VLAN header itself,
+	 * add it back.
+	 */
+	if (ISSET(m->m_flags, M_VLANTAG)) {
+		m = vlan_inject(m, ETHERTYPE_VLAN, m->m_pkthdr.ether_vtag);
+		if (m == NULL)
+			return;
+	}
+#endif
 
 #if NBPFILTER > 0
 	if (sc->sc_if.if_bpf)
