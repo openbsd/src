@@ -3,7 +3,7 @@
  * DONT EDIT THIS FILE
  */
 
-/*	$OpenBSD: cn30xxpipreg.h,v 1.4 2016/05/19 15:42:03 visa Exp $	*/
+/*	$OpenBSD: cn30xxpipreg.h,v 1.5 2016/05/30 15:41:28 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -570,6 +570,7 @@
 /* WORD 3 */
 #define PIP_WQE_WORD3_63			0x8000000000000000ULL
 #define PIP_WQE_WORD3_BACK			0x7800000000000000ULL
+#define   PIP_WQE_WORD3_BACK_SHIFT		59
 #define PIP_WQE_WORD3_58_56			0x0700000000000000ULL
 #define PIP_WQE_WORD3_SIZE			0x00ffff0000000000ULL
 #define PIP_WQE_WORD3_ADDR			0x000000ffffffffffULL

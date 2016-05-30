@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.26 2016/05/24 13:11:02 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.27 2016/05/30 15:41:28 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ struct octeon_config {
 #define	OCTEON_POOL_NO_XXX_6	6
 #define	OCTEON_POOL_NO_DUMP	7	/* FPA debug dump */
 
-#define	OCTEON_POOL_SIZE_PKT	2048	/* 128 x 16 */
+#define	OCTEON_POOL_SIZE_PKT	1920	/* 128 x 15 */
 #define	OCTEON_POOL_SIZE_WQE	128	/* 128 x 1 */
 #define	OCTEON_POOL_SIZE_CMD	1024	/* 128 x 8 */
 #define	OCTEON_POOL_SIZE_SG	128	/* 128 x 1 */
