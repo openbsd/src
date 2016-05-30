@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.178 2016/05/23 20:11:47 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.179 2016/05/30 21:22:45 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -706,6 +706,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	p->p_descfd = 255;
 	if ((pack.ep_flags & EXEC_HASFD) && pack.ep_fd < 255)
 		p->p_descfd = pack.ep_fd;
+
+	if (pack.ep_flags & EXEC_WXNEEDED)
+		p->p_p->ps_flags |= PS_WXNEEDED;
 
 	/*
 	 * Call exec hook. Emulation code may NOT store reference to anything
