@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.159 2016/04/29 15:00:48 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.160 2016/05/30 09:50:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -291,7 +291,7 @@ window_create1(u_int sx, u_int sy)
 
 	w = xcalloc(1, sizeof *w);
 	w->name = NULL;
-	w->flags = 0;
+	w->flags = WINDOW_STYLECHANGED;
 
 	TAILQ_INIT(&w->panes);
 	w->active = NULL;
