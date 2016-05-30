@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_prot.h,v 1.9 2015/09/28 20:49:24 deraadt Exp $	*/
+/*	$OpenBSD: yp_prot.h,v 1.10 2016/05/30 02:53:29 guenther Exp $	*/
 /*	$NetBSD: yp_prot.h,v 1.6 1995/07/14 21:10:58 christos Exp $	*/
 
 /*
@@ -188,29 +188,6 @@ struct ypresp_maplist {
 #define YP_YPERR	((unsigned long)-6)	/* YP server error */
 #define YP_BADARGS	((unsigned long)-7)	/* request arguments bad */
 #define YP_VERS		((unsigned long)-8)	/* YP server version mismatch */
-
-/*
- * Sun's header file says:
- * "Domain binding data structure, used by ypclnt package and ypserv modules.
- * Users of the ypclnt package (or of this protocol) don't HAVE to know about
- * it, but it must be available to users because _yp_dobind is a public
- * interface."
- *
- * This is totally bogus! Nowhere else does Sun state that _yp_dobind() is
- * a public interface, and I don't know any reason anyone would want to call
- * it. But, just in case anyone does actually expect it to be available..
- * we provide this.. exactly as Sun wants it.
- */
-struct dom_binding {
-	struct dom_binding *dom_pnext;
-	char dom_domain[YPMAXDOMAIN + 1];
-	struct sockaddr_in dom_server_addr;
-	unsigned short dom_server_port;
-	int dom_socket;
-	CLIENT *dom_client;
-	unsigned short dom_local_port;
-	long dom_vers;
-};
 
 /*
  * YPBIND PROTOCOL:

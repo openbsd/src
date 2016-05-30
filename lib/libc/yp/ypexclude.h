@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypexclude.h,v 1.1 2009/06/03 16:02:44 schwarze Exp $ */
+/*	$OpenBSD: ypexclude.h,v 1.2 2016/05/30 02:53:29 guenther Exp $ */
 /*
  * Copyright (c) 1995, 1996, Jason Downs.  All rights reserved.
  *
@@ -36,6 +36,8 @@ struct _ypexclude {
 	struct _ypexclude *next;
 };
 
+__BEGIN_HIDDEN_DECLS
 int __ypexclude_add(struct _ypexclude **, const char *);
 int __ypexclude_is(struct _ypexclude **, const char *);
 void __ypexclude_free(struct _ypexclude **);
+__END_HIDDEN_DECLS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypclnt.h,v 1.1 2015/09/13 20:57:28 guenther Exp $	*/
+/*	$OpenBSD: ypclnt.h,v 1.2 2016/05/30 02:53:29 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -20,7 +20,11 @@
 
 #include_next <rpcsvc/ypclnt.h>
 
-PROTO_NORMAL(_yp_dobind);
+__BEGIN_HIDDEN_DECLS
+struct dom_binding;
+int	_yp_dobind(const char *, struct dom_binding **);
+__END_HIDDEN_DECLS
+
 PROTO_DEPRECATED(yp_all);
 PROTO_NORMAL(yp_bind);
 PROTO_NORMAL(yp_first);

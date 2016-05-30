@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_bind.c,v 1.27 2016/05/29 22:42:24 guenther Exp $ */
+/*	$OpenBSD: yp_bind.c,v 1.28 2016/05/30 02:53:29 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -248,7 +248,6 @@ gotdata:
 		*ypdb = ysd;
 	return 0;
 }
-DEF_WEAK(_yp_dobind);
 
 void
 _yp_unbind(struct dom_binding *ypb)

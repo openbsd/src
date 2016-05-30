@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypclnt.h,v 1.9 2004/01/22 21:48:02 espie Exp $	*/
+/*	$OpenBSD: ypclnt.h,v 1.10 2016/05/30 02:53:29 guenther Exp $	*/
 /*	$NetBSD: ypclnt.h,v 1.7 1995/07/14 21:11:10 christos Exp $	*/
 
 /*
@@ -63,8 +63,6 @@ struct ypall_callback {
 
 __BEGIN_DECLS
 int	yp_bind(const char *);
-struct dom_binding;
-int	_yp_dobind(const char *, struct dom_binding **);
 void	yp_unbind(const char *);
 int	yp_get_default_domain(char **);
 int	yp_match(const char *, const char *, const char *, int , char **,
