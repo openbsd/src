@@ -1,4 +1,4 @@
-/* $OpenBSD: brk.S,v 1.13 2016/05/15 00:15:10 guenther Exp $ */
+/* $OpenBSD: brk.S,v 1.14 2016/05/30 05:18:52 guenther Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -28,7 +28,7 @@
 #include "SYS.h"
 
 	.extern __curbrk
-	.extern _C_LABEL(end)
+	.extern _C_LABEL(_end)
 
 	.weak	brk
 
@@ -36,8 +36,8 @@ PSEUDO_PREFIX(,brk,break)
 	
 	/* check >= _end, if not make the call for _end */
 #ifndef __PIC__
-	addis 5,0,_C_LABEL(end)@h
-	ori  5,5,_C_LABEL(end)@l		/* # 5 = &_end */
+	addis 5,0,_C_LABEL(_end)@h
+	ori  5,5,_C_LABEL(_end)@l		/* # 5 = &_end */
 #else
 	mflr	10
 	bcl	20, 31, 1f
@@ -45,7 +45,7 @@ PSEUDO_PREFIX(,brk,break)
 	addis	9, 9, _GLOBAL_OFFSET_TABLE_-1b@ha
 	addi	9, 9, _GLOBAL_OFFSET_TABLE_-1b@l
 	mtlr	10
-	lwz	5,_C_LABEL(end)@got(9)
+	lwz	5,_C_LABEL(_end)@got(9)
 #endif
 	cmplw	3,5
 	bge+	.L_brk_call

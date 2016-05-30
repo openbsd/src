@@ -4,7 +4,6 @@ ___dtors
 ___dtors_end
 __floatundidf
 __mcount
-end
 fabsl
 frexpl
 ldexpl

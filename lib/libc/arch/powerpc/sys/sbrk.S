@@ -1,4 +1,4 @@
-/* $OpenBSD: sbrk.S,v 1.12 2016/05/15 00:15:10 guenther Exp $ */
+/* $OpenBSD: sbrk.S,v 1.13 2016/05/30 05:18:52 guenther Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -32,7 +32,7 @@
 	.globl __curbrk
 	.hidden __curbrk
 __curbrk:
-	.long _C_LABEL(end)
+	.long _C_LABEL(_end)
 	END(__curbrk)
 	.type	__curbrk,@object
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.17 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: brk.S,v 1.18 2016/05/30 05:18:52 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -29,12 +29,12 @@
 #include "SYS.h"
 
 	.import	__curbrk, data
-	.import	end, data
+	.import	_end, data
 
 	.data
 	.export	__minbrk, data
 __minbrk
-	.long	end
+	.long	_end
 
 	.weak	brk
 

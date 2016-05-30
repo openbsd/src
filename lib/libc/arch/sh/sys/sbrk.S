@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.5 2016/05/18 20:21:13 guenther Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.6 2016/05/30 05:18:52 guenther Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.9 2006/01/06 03:58:31 uwe Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 
 #include "SYS.h"
 
-	.globl	_C_LABEL(end)
+	.globl	_C_LABEL(_end)
 	.globl	__curbrk
 	.hidden	__curbrk
 
@@ -45,7 +45,7 @@
 
 	.data
 __curbrk:
-	.long	_C_LABEL(end)
+	.long	_C_LABEL(_end)
 	.size	__curbrk, . - __curbrk
 	.type	__curbrk,@object
 

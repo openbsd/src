@@ -9,6 +9,5 @@ _ftext
 _gp
 _mcount
 cacheflush
-end
 get_fpc_csr
 set_fpc_csr
