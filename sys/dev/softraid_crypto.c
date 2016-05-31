@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.129 2016/05/28 00:10:36 tedu Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.130 2016/05/31 15:11:26 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -295,7 +295,7 @@ sr_crypto_prepare(struct sr_workunit *wu, int encrypt)
 	crwu->cr_crp->crp_opaque = crwu;
 	crwu->cr_crp->crp_ilen = xs->datalen;
 	crwu->cr_crp->crp_alloctype = M_DEVBUF;
-	crwu->cr_crp->crp_flags = CRYPTO_F_IOV;
+	crwu->cr_crp->crp_flags = CRYPTO_F_IOV | CRYPTO_F_NOQUEUE;
 	crwu->cr_crp->crp_buf = &crwu->cr_uio;
 	for (i = 0, crd = crwu->cr_crp->crp_desc; crd;
 	    i++, blkno++, crd = crd->crd_next) {
@@ -1097,7 +1097,7 @@ sr_crypto_rw(struct sr_workunit *wu)
 	if (wu->swu_xs->flags & SCSI_DATA_OUT) {
 		crwu = sr_crypto_prepare(wu, 1);
 		crwu->cr_crp->crp_callback = sr_crypto_write;
-		rv = crypto_invoke(crwu->cr_crp);
+		rv = crypto_dispatch(crwu->cr_crp);
 		if (rv == 0)
 			rv = crwu->cr_crp->crp_etype;
 	} else
@@ -1173,9 +1173,9 @@ sr_crypto_done(struct sr_workunit *wu)
 	if (ISSET(xs->flags, SCSI_DATA_IN) && xs->error == XS_NOERROR) {
 		crwu = sr_crypto_prepare(wu, 0);
 		crwu->cr_crp->crp_callback = sr_crypto_read;
-		DNPRINTF(SR_D_INTR, "%s: sr_crypto_done: crypto_invoke %p\n",
+		DNPRINTF(SR_D_INTR, "%s: sr_crypto_done: crypto_dispatch %p\n",
 		    DEVNAME(wu->swu_dis->sd_sc), crwu->cr_crp);
-		crypto_invoke(crwu->cr_crp);
+		crypto_dispatch(crwu->cr_crp);
 		return;
 	}
 
