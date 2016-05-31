@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.973 2016/05/28 12:04:33 sthen Exp $ */
+/*	$OpenBSD: pf.c,v 1.974 2016/05/31 07:35:36 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5665,11 +5665,13 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 {
 	struct mbuf		*m0;
 	struct sockaddr_in6	*dst, sin6;
+	struct rtentry		*rt = NULL;
 	struct ip6_hdr		*ip6;
 	struct ifnet		*ifp = NULL;
 	struct pf_addr		 naddr;
 	struct pf_src_node	*sns[PF_SN_MAX];
 	struct m_tag		*mtag;
+	unsigned int		 rtableid;
 
 	if (m == NULL || *m == NULL || r == NULL ||
 	    (dir != PF_IN && dir != PF_OUT) || oifp == NULL)
@@ -5702,6 +5704,7 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	dst->sin6_family = AF_INET6;
 	dst->sin6_len = sizeof(*dst);
 	dst->sin6_addr = ip6->ip6_dst;
+	rtableid = m0->m_pkthdr.ph_rtableid;
 
 	if (!r->rt) {
 		m0->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
@@ -5754,7 +5757,13 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	if ((mtag = m_tag_find(m0, PACKET_TAG_PF_REASSEMBLED, NULL))) {
 		(void) pf_refragment6(&m0, mtag, dst, ifp);
 	} else if ((u_long)m0->m_pkthdr.len <= ifp->if_mtu) {
-		nd6_output(ifp, m0, dst, NULL);
+		rt = rtalloc(sin6tosa(dst), RT_RESOLVE, rtableid);
+		if (rt == NULL) {
+			ip6stat.ip6s_noroute++;
+			goto bad;
+		}
+		nd6_output(ifp, m0, dst, rt);
+		rtfree(rt);
 	} else {
 		icmp6_error(m0, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
 	}
