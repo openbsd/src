@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.170 2016/05/17 08:12:06 mpi Exp $
+;	$OpenBSD: syscalls.master,v 1.171 2016/05/31 22:06:29 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -105,7 +105,7 @@
 34	STD		{ int sys_chflags(const char *path, u_int flags); }
 35	STD		{ int sys_fchflags(int fd, u_int flags); }
 36	STD		{ void sys_sync(void); }
-37	STD		{ int sys_o58_kill(int pid, int signum); }
+37	OBSOL		o58_kill
 38	STD		{ int sys_stat(const char *path, struct stat *ub); }
 39	STD		{ pid_t sys_getppid(void); }
 40	STD		{ int sys_lstat(const char *path, struct stat *ub); }
