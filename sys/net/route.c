@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.300 2016/05/02 22:15:49 jmatthew Exp $	*/
+/*	$OpenBSD: route.c,v 1.301 2016/05/31 07:29:34 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1091,6 +1091,10 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		 * it to (re)order routes.
 		 */
 		if ((error = rt_setgate(rt, info->rti_info[RTAX_GATEWAY]))) {
+			ifafree(ifa);
+			rtfree(rt->rt_parent);
+			rtfree(rt->rt_gwroute);
+			free(rt->rt_gateway, M_RTABLE, 0);
 			free(ndst, M_RTABLE, dlen);
 			pool_put(&rtentry_pool, rt);
 			return (error);
@@ -1118,12 +1122,9 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		}
 		if (error != 0) {
 			ifafree(ifa);
-			if ((rt->rt_flags & RTF_CLONED) != 0 && rt->rt_parent)
-				rtfree(rt->rt_parent);
-			if (rt->rt_gwroute)
-				rtfree(rt->rt_gwroute);
-			if (rt->rt_gateway)
-				free(rt->rt_gateway, M_RTABLE, 0);
+			rtfree(rt->rt_parent);
+			rtfree(rt->rt_gwroute);
+			free(rt->rt_gateway, M_RTABLE, 0);
 			free(ndst, M_RTABLE, dlen);
 			pool_put(&rtentry_pool, rt);
 			return (EEXIST);
@@ -1163,10 +1164,8 @@ rt_setgate(struct rtentry *rt, struct sockaddr *gate)
 	}
 	memmove(rt->rt_gateway, gate, glen);
 
-	if (rt->rt_gwroute != NULL) {
-		rtfree(rt->rt_gwroute);
-		rt->rt_gwroute = NULL;
-	}
+	rtfree(rt->rt_gwroute);
+	rt->rt_gwroute = NULL;
 
 	return (0);
 }
