@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.301 2016/05/31 07:29:34 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.302 2016/05/31 07:42:39 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1783,11 +1783,11 @@ rt_if_linkstate_change(struct rtentry *rt, void *arg, u_int id)
 	} else {
 		if (rt->rt_flags & RTF_UP) {
 			/*
-			 * Remove cloned routes (mainly arp) to
-			 * down interfaces so we have a chance to
-			 * clone a new route from a better source.
+			 * Remove redirected and cloned routes (mainly ARP)
+			 * from down interfaces so we have a chance to get
+			 * new routes from a better source.
 			 */
-			if (rt->rt_flags & RTF_CLONED) {
+			if (ISSET(rt->rt_flags, RTF_CLONED|RTF_DYNAMIC)) {
 				rtdeletemsg(rt, ifp, id);
 				return (EAGAIN);
 			}
