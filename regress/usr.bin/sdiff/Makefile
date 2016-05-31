@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2006/03/05 07:13:11 otto Exp $
+#	$OpenBSD: Makefile,v 1.3 2016/05/31 17:28:14 okan Exp $
 
 SDIFF?=sdiff
 REGRESS_TARGETS=test-lflag test-sflag test-wflag \
@@ -49,7 +49,7 @@ test-sflag: file1 file2 sflag.out
 	${SDIFF} -s ${.CURDIR}/file1 ${.CURDIR}/file2 | diff -u ${.CURDIR}/sflag.out -
 
 test-wflag: file1 file2 wflag.out
-	${SDIFF} -w 125 ${.CURDIR}/file1 ${.CURDIR}/file2 | diff -u ${.CURDIR}/wflag.out -
+	${SDIFF} -w 40 ${.CURDIR}/file1 ${.CURDIR}/file2 | diff -u ${.CURDIR}/wflag.out -
 
 test-tabs: tabs1 tabs2 tabs.out
 	${SDIFF} ${.CURDIR}/tabs1 ${.CURDIR}/tabs2 | diff -u ${.CURDIR}/tabs.out -
@@ -134,10 +134,8 @@ test-stdin:
 test-stdin2:
 	echo stdin | ${SDIFF} /dev/stdin /dev/null | fgrep -q stdin
 
-test-short: short.out
-	echo "r\nl\nr\nl" | ${SDIFF} -o merge.out ${.CURDIR}/file1 ${.CURDIR}/file2 \
-	    >/dev/null || true
-	diff -u ${.CURDIR}/short.out merge.out
+test-short: short.in short.out
+	diff -u ${.CURDIR}/short.out ${.CURDIR}/short.in
 
 clean:
 	rm -f merge.out
