@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.45 2016/04/28 14:20:11 jsing Exp $	*/
+/*	$OpenBSD: config.c,v 1.46 2016/05/31 15:28:08 jsing Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -582,7 +582,7 @@ config_gettls(struct httpd *env, struct imsg *imsg)
 
 	DPRINTF("%s: %s %d TLS configuration \"%s[%u]\"", __func__,
 	    ps->ps_title[privsep_process], ps->ps_instance,
-	    srv_conf->name, srv->srv_conf.id);
+	    srv_conf->name, srv_conf->id);
 
 	if (tls_conf.tls_cert_len != 0) {
 		srv_conf->tls_cert_len = tls_conf.tls_cert_len;
