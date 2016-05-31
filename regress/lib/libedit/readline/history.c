@@ -28,17 +28,17 @@
 int
 test_movement_direction(void)
 {
-	HIST_ENTRY	*entry;
+	HIST_ENTRY	*he;
 	int		 ok = 1;
-  
+
 	using_history();
 	add_history("111");
 	add_history("222");
 
 	/* Move to the oldest entry. */
 	while (previous_history() != NULL);
-	entry = current_history();
-	if (entry == NULL || strcmp(entry->line, "111") != 0)
+	he = current_history();
+	if (he == NULL || strcmp(he->line, "111") != 0)
 		ok = 0;
 
 	/*
@@ -46,12 +46,12 @@ test_movement_direction(void)
 	 * This moves past the newest entry.
 	 */
 	while (next_history() != NULL);
-	entry = current_history();
-	if (entry != NULL)
+	he = current_history();
+	if (he != NULL)
 		ok = 0;
 
 	clear_history();
-	return ok; 
+	return ok;
 }
 
 
@@ -76,10 +76,11 @@ test_where(void)
 	history_set_pos(1);
 	if (where_history() != 1)
 		ok = 0;
-  
+
 	clear_history();
-	return ok; 
+	return ok;
 }
+
 
 /* Fails if set_pos returns 0 for success and -1 for failure. */
 int
@@ -87,7 +88,7 @@ test_set_pos_return_values(void)
 {
 	int		 ok = 1;
 	int		 ret;
-  
+
 	using_history();
 	add_history("111");
 	add_history("222");
@@ -102,39 +103,39 @@ test_set_pos_return_values(void)
 	 * Note that we do not use the index 0 here, since that
 	 * actually fails for some versions of libedit.
 	 */
-	ret = history_set_pos(1); 
+	ret = history_set_pos(1);
 	if (ret != 1)
 		ok = 0;
 
 	clear_history();
-	return ok; 
-}  
+	return ok;
+}
 
 
 /* Fails if the index is one-based. */
 int
 test_set_pos_index(void)
 {
-	HIST_ENTRY	*entry;
+	HIST_ENTRY	*he;
 	int		 ok = 1;
-  
+
 	using_history();
 	add_history("111");
 	add_history("222");
 
 	/* Do not test return value here since that might be broken, too. */
 	history_set_pos(0);
-	entry = current_history();
-	if (entry == NULL || strcmp(entry->line, "111") != 0)
+	he = current_history();
+	if (he == NULL || strcmp(he->line, "111") != 0)
 		ok = 0;
- 
+
 	history_set_pos(1);
-	entry = current_history();
-	if (entry == NULL || strcmp(entry->line, "222") != 0)
+	he = current_history();
+	if (he == NULL || strcmp(he->line, "222") != 0)
 		ok = 0;
 
 	clear_history();
-	return ok; 
+	return ok;
 }
 
 
@@ -142,9 +143,9 @@ test_set_pos_index(void)
 int
 test_remove(void)
 {
-	HIST_ENTRY	*entry;
+	HIST_ENTRY	*he;
 	int		 ok = 1;
-  
+
 	using_history();
 	add_history("111");
 	add_history("222");
@@ -152,26 +153,26 @@ test_remove(void)
 
 	/* Remove the second item "222"; the index is zero-based. */
 	remove_history(1);
-  
+
 	/*
 	 * Try to get the new second element using history_get.
 	 * The argument of get is based on history_base.
 	 */
-	entry = history_get(history_base + 1);
-	if (entry == NULL || strcmp(entry->line, "333") != 0)
+	he = history_get(history_base + 1);
+	if (he == NULL || strcmp(he->line, "333") != 0)
 		ok = 0;
-  
+
 	/*
 	 * Try to get the second element using set_pos/current.
 	 * The index is zero-based.
 	 */
 	history_set_pos(1);
-	entry = current_history();
-	if (entry == NULL || strcmp(entry->line, "333") != 0)
+	he = current_history();
+	if (he == NULL || strcmp(he->line, "333") != 0)
 		ok = 0;
 
 	clear_history();
-	return ok; 
+	return ok;
 }
 
 
@@ -180,7 +181,7 @@ int
 test_stifle_size(void)
 {
 	int		 ok = 1;
-  
+
 	using_history();
 	unstifle_history();
 	add_history("111");
@@ -191,10 +192,10 @@ test_stifle_size(void)
 	stifle_history(2);
 	if (history_length != 2)
 		ok = 0;
- 
+
 	unstifle_history();
 	clear_history();
-	return ok; 
+	return ok;
 }
 
 
@@ -203,7 +204,7 @@ int
 test_stifle_base(void)
 {
 	int		 ok = 1;
-  
+
 	using_history();
 	stifle_history(2);
 
@@ -218,7 +219,7 @@ test_stifle_base(void)
 
 	unstifle_history();
 	clear_history();
-	return ok; 
+	return ok;
 }
 
 
