@@ -150,6 +150,7 @@ test_remove(void)
 	add_history("111");
 	add_history("222");
 	add_history("333");
+	add_history("444");
 
 	/* Remove the second item "222"; the index is zero-based. */
 	remove_history(1);
@@ -169,6 +170,12 @@ test_remove(void)
 	history_set_pos(1);
 	he = current_history();
 	if (he == NULL || strcmp(he->line, "333") != 0)
+		ok = 0;
+
+	/* Remove the new second item "333". */
+	remove_history(1);
+	he = history_get(history_base + 1);
+	if (he == NULL || strcmp(he->line, "444") != 0)
 		ok = 0;
 
 	clear_history();
