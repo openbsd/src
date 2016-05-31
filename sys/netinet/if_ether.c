@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.209 2016/05/23 09:23:43 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.210 2016/05/31 07:50:34 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -281,9 +281,8 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	struct llinfo_arp *la = NULL;
 	struct sockaddr_dl *sdl;
 	struct rtentry *rt = NULL;
-	struct mbuf *mh;
 	char addr[INET_ADDRSTRLEN];
-	int error, created = 0;
+	int error;
 
 	if (m->m_flags & M_BCAST) {	/* broadcast */
 		memcpy(desten, etherbroadcastaddr, sizeof(etherbroadcastaddr));
@@ -294,41 +293,20 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		return (0);
 	}
 
-	if (rt0 != NULL) {
-		error = rt_checkgate(rt0, &rt);
-		if (error) {
-			m_freem(m);
-			return (error);
-		}
-
-		if ((rt->rt_flags & RTF_LLINFO) == 0) {
-			log(LOG_DEBUG, "%s: %s: route contains no arp"
-			    " information\n", __func__, inet_ntop(AF_INET,
-				&satosin(rt_key(rt))->sin_addr, addr,
-				sizeof(addr)));
-			m_freem(m);
-			return (EINVAL);
-		}
-
-		la = (struct llinfo_arp *)rt->rt_llinfo;
-		if (la == NULL)
-			log(LOG_DEBUG, "%s: %s: route without link "
-			    "local address\n", __func__, inet_ntop(AF_INET,
-				&satosin(dst)->sin_addr, addr, sizeof(addr)));
-	} else {
-		rt = arplookup(&satosin(dst)->sin_addr, 1, 0, ifp->if_rdomain);
-		if (rt != NULL) {
-		    	created = 1;
-			la = ((struct llinfo_arp *)rt->rt_llinfo);
-		}
-		if (la == NULL)
-			log(LOG_DEBUG, "%s: %s: can't allocate llinfo\n",
-			    __func__,
-			    inet_ntop(AF_INET, &satosin(dst)->sin_addr,
-				addr, sizeof(addr)));
+	error = rt_checkgate(rt0, &rt);
+	if (error) {
+		m_freem(m);
+		return (error);
 	}
-	if (la == NULL || rt == NULL)
-		goto bad;
+
+	if (!ISSET(rt->rt_flags, RTF_LLINFO)) {
+		log(LOG_DEBUG, "%s: %s: route contains no arp information\n",
+		    __func__, inet_ntop(AF_INET, &satosin(rt_key(rt))->sin_addr,
+		    addr, sizeof(addr)));
+		m_freem(m);
+		return (EINVAL);
+	}
+
 	sdl = satosdl(rt->rt_gateway);
 	if (sdl->sdl_alen > 0 && sdl->sdl_alen != ETHER_ADDR_LEN) {
 		log(LOG_DEBUG, "%s: %s: incorrect arp information\n", __func__,
@@ -336,6 +314,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 			addr, sizeof(addr)));
 		goto bad;
 	}
+
 	/*
 	 * Check the address family and length is valid, the address
 	 * is resolved; otherwise, try to resolve.
@@ -343,10 +322,9 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	if ((rt->rt_expire == 0 || rt->rt_expire > time_second) &&
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
 		memcpy(desten, LLADDR(sdl), sdl->sdl_alen);
-		if (created)
-			rtfree(rt);
 		return (0);
 	}
+
 	if (ifp->if_flags & IFF_NOARP)
 		goto bad;
 
@@ -355,7 +333,11 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	 * response yet. Insert mbuf in hold queue if below limit
 	 * if above the limit free the queue without queuing the new packet.
 	 */
+	la = (struct llinfo_arp *)rt->rt_llinfo;
+	KASSERT(la != NULL);
 	if (la_hold_total < LA_HOLD_TOTAL && la_hold_total < nmbclust / 64) {
+		struct mbuf *mh;
+
 		if (ml_len(&la->la_ml) >= LA_HOLD_QUEUE) {
 			mh = ml_dequeue(&la->la_ml);
 			la_hold_total--;
@@ -396,14 +378,11 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 			}
 		}
 	}
-	if (created)
-		rtfree(rt);
+
 	return (EAGAIN);
 
 bad:
 	m_freem(m);
-	if (created)
-		rtfree(rt);
 	return (EINVAL);
 }
 
