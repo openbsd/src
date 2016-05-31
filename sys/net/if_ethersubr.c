@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.236 2016/05/18 20:15:14 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.237 2016/05/31 07:48:19 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -193,7 +193,11 @@ ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct mbuf *mcopy = NULL;
 	struct ether_header *eh;
 	struct arpcom *ac = (struct arpcom *)ifp;
+	sa_family_t af = dst->sa_family;
 	int error = 0;
+
+	KASSERT(rt != NULL || ISSET(m->m_flags, M_MCAST|M_BCAST) ||
+		af == AF_UNSPEC || af == pseudo_AF_HDRCMPLT);
 
 #ifdef DIAGNOSTIC
 	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.ph_rtableid)) {
@@ -208,7 +212,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
 
-	switch (dst->sa_family) {
+	switch (af) {
 	case AF_INET:
 		error = arpresolve(ifp, rt, m, dst, edst);
 		if (error)
