@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.322 2016/05/04 13:22:51 vgross Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.323 2016/05/31 07:33:22 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -185,14 +185,17 @@ reroute:
 	if ((IN_MULTICAST(ip->ip_dst.s_addr) ||
 	    (ip->ip_dst.s_addr == INADDR_BROADCAST)) &&
 	    imo != NULL && (ifp = if_get(imo->imo_ifidx)) != NULL) {
-		struct in_ifaddr *ia;
 
 		mtu = ifp->if_mtu;
-		KERNEL_LOCK();
-		IFP_TO_IA(ifp, ia);
-		if (ip->ip_src.s_addr == INADDR_ANY && ia)
-			ip->ip_src = ia->ia_addr.sin_addr;
-		KERNEL_UNLOCK();
+		if (ip->ip_src.s_addr == INADDR_ANY) {
+			struct in_ifaddr *ia;
+
+			KERNEL_LOCK();
+			IFP_TO_IA(ifp, ia);
+			if (ia != NULL)
+				ip->ip_src = ia->ia_addr.sin_addr;
+			KERNEL_UNLOCK();
+		}
 	} else {
 		struct in_ifaddr *ia;
 
