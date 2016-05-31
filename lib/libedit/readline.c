@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.c,v 1.26 2016/05/10 11:07:53 schwarze Exp $	*/
+/*	$OpenBSD: readline.c,v 1.27 2016/05/31 16:12:00 schwarze Exp $	*/
 /*	$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
@@ -1149,7 +1149,7 @@ stifle_history(int max)
 		if (max < len)
 			history_base += len - max;
 		for (i = 0; i < len - max; i++) {
-			he = remove_history(i);
+			he = remove_history(0);
 			free(he->data);
 			free((void *)he->line);
 			free(he);
