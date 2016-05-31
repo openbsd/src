@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.25 2016/04/12 16:26:54 krw Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.26 2016/05/31 15:19:12 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
@@ -765,7 +765,7 @@ sr_raid5_xor(void *a, void *b, int len)
 void
 sr_raid5_rebuild(struct sr_discipline *sd)
 {
-	int64_t strip_no, strip_size, strip_bits, i, psz, rb, restart;
+	int64_t strip_no, strip_size, strip_bits, i, restart;
 	int64_t chunk_count, chunk_strips, chunk_lba, chunk_size, row_size;
 	struct sr_workunit *wu_r, *wu_w;
 	int s, slept, percent = 0, old_percent = -1;
@@ -802,12 +802,7 @@ sr_raid5_rebuild(struct sr_discipline *sd)
 		restart = 0;
 	}
 	if (restart != 0) {
-		psz = sd->sd_meta->ssdi.ssd_size;
-		rb = sd->sd_meta->ssd_rebuild;
-		if (rb > 0)
-			percent = 100 - ((psz * 100 - rb * 100) / psz) - 1;
-		else
-			percent = 0;
+		percent = sr_rebuild_percent(sd);
 		printf("%s: resuming rebuild on %s at %d%%\n",
 		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, percent);
 	}
@@ -867,12 +862,7 @@ sr_raid5_rebuild(struct sr_discipline *sd)
 
 		sd->sd_meta->ssd_rebuild = chunk_lba * chunk_count;
 
-		psz = sd->sd_meta->ssdi.ssd_size;
-		rb = sd->sd_meta->ssd_rebuild;
-		if (rb > 0)
-			percent = 100 - ((psz * 100 - rb * 100) / psz) - 1;
-		else
-			percent = 0;
+		percent = sr_rebuild_percent(sd);
 		if (percent != old_percent && strip_no != chunk_strips - 1) {
 			if (sr_meta_save(sd, SR_META_DIRTY))
 				printf("%s: could not save metadata to %s\n",

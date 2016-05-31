@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.375 2016/04/29 14:01:37 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.376 2016/05/31 15:19:12 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2600,7 +2600,6 @@ sr_ioctl_vol(struct sr_softc *sc, struct bioc_vol *bv)
 	int			vol = -1, rv = EINVAL;
 	struct sr_discipline	*sd;
 	struct sr_chunk		*hotspare;
-	int64_t			rb, sz;
 
 	TAILQ_FOREACH(sd, &sc->sc_dis_list, sd_link) {
 		vol++;
@@ -2617,16 +2616,8 @@ sr_ioctl_vol(struct sr_softc *sc, struct bioc_vol *bv)
 		    sd->mds.mdd_crypto.key_disk != NULL)
 			bv->bv_nodisk++;
 #endif
+		bv->bv_percent = sr_rebuild_percent(sd);
 
-		if (bv->bv_status == BIOC_SVREBUILD) {
-			sz = sd->sd_meta->ssdi.ssd_size;
-			rb = sd->sd_meta->ssd_rebuild;
-			if (rb > 0)
-				bv->bv_percent = 100 -
-				    ((sz * 100 - rb * 100) / sz) - 1;
-			else
-				bv->bv_percent = 0;
-		}
 		strlcpy(bv->bv_dev, sd->sd_meta->ssd_devname,
 		    sizeof(bv->bv_dev));
 		strlcpy(bv->bv_vendor, sd->sd_meta->ssdi.ssd_vendor,
@@ -3267,6 +3258,20 @@ done:
 	}
 
 	return (rv);
+}
+
+int
+sr_rebuild_percent(struct sr_discipline *sd)
+{
+	daddr_t			rb, sz;
+
+	sz = sd->sd_meta->ssdi.ssd_size;
+	rb = sd->sd_meta->ssd_rebuild;
+
+	if (rb > 0)
+		return (100 - ((sz * 100 - rb * 100) / sz) - 1);
+
+	return (0);
 }
 
 void
@@ -4637,9 +4642,8 @@ void
 sr_rebuild(struct sr_discipline *sd)
 {
 	struct sr_softc		*sc = sd->sd_sc;
-	u_int64_t		sz, psz, whole_blk, partial_blk, blk, restart;
+	u_int64_t		sz, whole_blk, partial_blk, blk, restart;
 	daddr_t			lba;
-	int64_t			rb;
 	struct sr_workunit	*wu_r, *wu_w;
 	struct scsi_xfer	xs_r, xs_w;
 	struct scsi_rw_16	*cr, *cw;
@@ -4665,12 +4669,7 @@ sr_rebuild(struct sr_discipline *sd)
 		 * replaced).  We need to check the uuid of the chunk that is
 		 * being rebuilt to assert this.
 		 */
-		psz = sd->sd_meta->ssdi.ssd_size;
-		rb = sd->sd_meta->ssd_rebuild;
-		if (rb > 0)
-			percent = 100 - ((psz * 100 - rb * 100) / psz) - 1;
-		else
-			percent = 0;
+		percent = sr_rebuild_percent(sd);
 		printf("%s: resuming rebuild on %s at %d%%\n",
 		    DEVNAME(sc), sd->sd_meta->ssd_devname, percent);
 	}
@@ -4768,12 +4767,7 @@ sr_rebuild(struct sr_discipline *sd)
 
 		/* XXX - this should be based on size, not percentage. */
 		/* save metadata every percent */
-		psz = sd->sd_meta->ssdi.ssd_size;
-		rb = sd->sd_meta->ssd_rebuild;
-		if (rb > 0)
-			percent = 100 - ((psz * 100 - rb * 100) / psz) - 1;
-		else
-			percent = 0;
+		percent = sr_rebuild_percent(sd);
 		if (percent != old_percent && blk != whole_blk) {
 			if (sr_meta_save(sd, SR_META_DIRTY))
 				printf("%s: could not save metadata to %s\n",
