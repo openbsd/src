@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.196 2016/03/29 08:46:08 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.197 2016/05/31 22:14:43 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -557,63 +557,6 @@ sys_sigaltstack(struct proc *p, void *v, register_t *retval)
 		return (ENOMEM);
 	p->p_sigstk = ss;
 	return (0);
-}
-
-int
-sys_o58_kill(struct proc *cp, void *v, register_t *retval)
-{
-	struct sys_o58_kill_args /* {
-		syscallarg(int) pid;
-		syscallarg(int) signum;
-	} */ *uap = v;
-	struct proc *p;
-	int pid = SCARG(uap, pid);
-	int signum = SCARG(uap, signum);
-	int error;
-
-	if (pid <= THREAD_PID_OFFSET && (error = pledge_kill(cp, pid)) != 0)
-		return (error);
-	if (((u_int)signum) >= NSIG)
-		return (EINVAL);
-	if (pid > 0) {
-		enum signal_type type = SPROCESS;
-
-		/*
-		 * If the target pid is > THREAD_PID_OFFSET then this
-		 * must be a kill of another thread in the same process.
-		 * Otherwise, this is a process kill and the target must
-		 * be a main thread.
-		 */
-		if (pid > THREAD_PID_OFFSET) {
-			if ((p = pfind(pid - THREAD_PID_OFFSET)) == NULL)
-				return (ESRCH);
-			if (p->p_p != cp->p_p)
-				return (ESRCH);
-			type = STHREAD;
-		} else {
-			/* XXX use prfind() */
-			if ((p = pfind(pid)) == NULL)
-				return (ESRCH);
-			if (p->p_flag & P_THREAD)
-				return (ESRCH);
-			if (!cansignal(cp, p->p_p, signum))
-				return (EPERM);
-		}
-
-		/* kill single process or thread */
-		if (signum)
-			ptsignal(p, signum, type);
-		return (0);
-	}
-	switch (pid) {
-	case -1:		/* broadcast signal */
-		return (killpg1(cp, signum, 0, 1));
-	case 0:			/* signal own process group */
-		return (killpg1(cp, signum, 0, 0));
-	default:		/* negative explicit process group */
-		return (killpg1(cp, signum, -pid, 0));
-	}
-	/* NOTREACHED */
 }
 
 int
