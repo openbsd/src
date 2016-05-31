@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2016/05/11 21:52:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2016/05/31 18:35:58 kettenis Exp $
 
 PROG=		installboot
 SRCS=		installboot.c util.c
@@ -26,7 +26,7 @@ SRCS += stubs.c
 .endif
 
 .if ${MACHINE} == "armv7"
-SRCS += stubs.c
+SRCS += armv7_installboot.c
 .endif
 
 .if ${MACHINE} == "hppa"

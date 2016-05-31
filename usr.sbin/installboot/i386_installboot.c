@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.28 2016/05/23 20:48:07 kettenis Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.29 2016/05/31 18:35:58 kettenis Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -255,7 +255,7 @@ write_efisystem(struct disklabel *dl, char part)
 		/* Try fsck'ing it. */
 		rslt = snprintf(cmd, sizeof(cmd), fsckfmt, args.fspec);
 		if (rslt >= sizeof(cmd)) {
-			warnx("can't build for fsck command");
+			warnx("can't build fsck command");
 			rslt = -1;
 			goto rmdir;
 		}
