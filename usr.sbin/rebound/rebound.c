@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.62 2016/05/13 00:19:02 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.63 2016/05/31 16:50:11 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -456,12 +456,15 @@ launch(FILE *conf, int ud, int ld, int kq)
 		logerr("chdir failed (%d)", errno);
 
 	setproctitle("worker");
-	EV_SET(&kev[0], parent, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
-	kevent(kq, kev, 1, NULL, 0, NULL);
 	if (setgroups(1, &pwd->pw_gid) ||
 	    setresgid(pwd->pw_gid, pwd->pw_gid, pwd->pw_gid) ||
 	    setresuid(pwd->pw_uid, pwd->pw_uid, pwd->pw_uid))
 		logerr("failed to privdrop");
+
+	/* would need pledge(proc) to do this below */
+	EV_SET(&kev[0], parent, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
+	if (kevent(kq, kev, 1, NULL, 0, NULL) == -1)
+		logerr("kevent1: %d", errno);
 
 	if (pledge("stdio inet", NULL) == -1)
 		logerr("pledge failed");
@@ -475,7 +478,8 @@ launch(FILE *conf, int ud, int ld, int kq)
 	EV_SET(&kev[1], ld, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	EV_SET(&kev[2], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 	EV_SET(&kev[3], SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
-	kevent(kq, kev, 4, NULL, 0, NULL);
+	if (kevent(kq, kev, 4, NULL, 0, NULL) == -1)
+		logerr("kevent4: %d", errno);
 	logmsg(LOG_INFO, "worker process going to work");
 	while (1) {
 		r = kevent(kq, NULL, 0, kev, 4, timeout);
