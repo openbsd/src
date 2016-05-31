@@ -795,25 +795,35 @@ dev_mmcstop(void)
  * relocate all slots simultaneously
  */
 static void
-dev_mmcloc(unsigned int mmc)
+dev_mmcloc(int hr, int min, int sec, int fr, int cent, int fps)
 {
 	long long pos;
 
-	pos = mmc * dev_rate / MTC_SEC;
+	pos = dev_rate * hr * 3600 +
+	    dev_rate * min * 60 +
+	    dev_rate * sec +
+	    dev_rate * fr / fps +
+	    dev_rate * cent / (100 * fps);
 	if (dev_pos == pos)
 		return;
 	dev_pos = pos;
 	if (log_level >= 2) {
 		log_puts("relocated to ");
-		log_putu((mmc / (MTC_SEC * 3600)) % 24);
+		log_putu(hr);
 		log_puts(":");
-		log_putu((mmc / (MTC_SEC * 60)) % 60);
+		log_putu(min);
 		log_puts(":");
-		log_putu((mmc / (MTC_SEC)) % 60);
+		log_putu(sec);
 		log_puts(".");
-		log_putu((mmc / (MTC_SEC / 100)) % 100);
+		log_putu(fr);
 		log_puts(".");
-		log_putu((mmc / (MTC_SEC / 100)) % 100);
+		log_putu(cent);
+		log_puts(" at ");
+		log_putu(fps);
+		log_puts("fps\n");
+
+		log_puts("pos: ");
+		log_putu(pos);
 		log_puts("\n");
 	}
 	if (dev_pstate == DEV_START) {
@@ -877,11 +887,12 @@ dev_imsg(unsigned char *msg, unsigned int len)
 			dev_mmcstop();
 			return;
 		}
-		dev_mmcloc((x->u.loc.hr & 0x1f) * 3600 * MTC_SEC +
-		    x->u.loc.min * 60 * MTC_SEC +
-		    x->u.loc.sec * MTC_SEC +
-		    x->u.loc.fr * (MTC_SEC / fps) +
-		    x->u.loc.cent * (MTC_SEC / 100 / fps));
+		dev_mmcloc(x->u.loc.hr & 0x1f,
+		    x->u.loc.min,
+		    x->u.loc.sec,
+		    x->u.loc.fr,
+		    x->u.loc.cent,
+		    fps);
 		break;
 	}
 }

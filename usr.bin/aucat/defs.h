@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.1 2015/01/21 08:43:55 ratchov Exp $	*/
+/*	$OpenBSD: defs.h,v 1.2 2016/05/31 17:28:10 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -16,11 +16,6 @@
  */
 #ifndef DEFS_H
 #define DEFS_H
-
-/*
- * units used for MTC clock.
- */
-#define MTC_SEC			2400	/* 1 second is 2400 ticks */
 
 /*
  * limits
