@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2014/01/30 14:30:46 aoyama Exp $
+#	$OpenBSD: Makefile,v 1.12 2016/05/31 18:37:04 tedu Exp $
 
 S=	${.CURDIR}/../..
 KFILE=	GENERIC
@@ -25,7 +25,7 @@ tags::
 	eval "_mach=\"`make -V _mach -f $${TDIR}/Makefile`\"" && \
 	eval "_machdir=\$S/arch/$${_mach}" && \
 	eval "_archdir=\$S/arch/$${_arch}" && \
-	eval "HFILES=\"`find $S \( -path $S/'arch' -o -path $S/stand -o -path $S/lib/libsa -o -path $S'/lib/libkern/arch' \) -prune -o -name '*.h'; find $${_machdir} $${_archdir} $S/lib/libkern/arch/$${_mach} \( -name boot -o -name stand \) -prune -o -name '*.h'`\"" && \
+	eval "HFILES=\"`find $S \( -path $S/arch -o -path $S/stand -o -path $S/lib/libsa -o -path $S/lib/libkern/arch \) -prune -o -name '*.h'; find $${_machdir} $${_archdir} $S/lib/libkern/arch/$${_arch} \( -name boot -o -name stand \) -prune -o -name '*.h'`\"" && \
 	eval "SFILES=\"`make -V SFILES -f $${TDIR}/Makefile`\"" && \
 	eval "CFILES=\"`make -V CFILES -f $${TDIR}/Makefile`\"" && \
 	eval "AFILES=\"`make -V AFILES -f $${TDIR}/Makefile`\"" && \
