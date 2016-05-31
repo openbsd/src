@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.44 2016/05/19 09:40:30 bluhm Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.45 2016/05/31 22:12:26 deraadt Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -346,21 +346,6 @@ logioctl(dev_t dev, u_long com, caddr_t data, int flag, struct proc *p)
 		return (ENOTTY);
 	}
 	return (0);
-}
-
-int
-sys_osendsyslog(struct proc *p, void *v, register_t *retval)
-{
-	struct sys_osendsyslog_args /* {
-		syscallarg(const void *) buf;
-		syscallarg(size_t) nbyte;
-	} */ *uap = v;
-	struct sys_sendsyslog_args oap;
-
-	SCARG(&oap, buf) = SCARG(uap, buf);
-	SCARG(&oap, nbyte) = SCARG(uap, nbyte);
-	SCARG(&oap, flags) = 0;
-	return sys_sendsyslog(p, &oap, retval);
 }
 
 int
