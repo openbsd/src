@@ -3106,7 +3106,7 @@ assign_section_numbers (bfd *abfd, struct bfd_link_info *link_info)
 			 s, s->owner);
 		      /* Point to the kept section if it has the same
 			 size as the discarded one.  */
-		      kept = _bfd_elf_check_kept_section (s);
+		      kept = _bfd_elf_check_kept_section (s, link_info);
 		      if (kept == NULL)
 			{
 			  bfd_set_error (bfd_error_bad_value);
@@ -8694,7 +8694,8 @@ elf_sym_name_compare (const void *arg1, const void *arg2)
    symbols.  */
 
 bfd_boolean
-bfd_elf_match_symbols_in_sections (asection *sec1, asection *sec2)
+bfd_elf_match_symbols_in_sections (asection *sec1, asection *sec2,
+				   struct bfd_link_info *info)
 {
   bfd *bfd1, *bfd2;
   const struct elf_backend_data *bed1, *bed2;
@@ -8752,21 +8753,37 @@ bfd_elf_match_symbols_in_sections (asection *sec1, asection *sec2)
   if (symcount1 == 0 || symcount2 == 0)
     return FALSE;
 
-  isymbuf1 = bfd_elf_get_elf_syms (bfd1, hdr1, symcount1, 0,
-				   NULL, NULL, NULL);
-  isymbuf2 = bfd_elf_get_elf_syms (bfd2, hdr2, symcount2, 0,
-				   NULL, NULL, NULL);
-
   result = FALSE;
-  if (isymbuf1 == NULL || isymbuf2 == NULL)
-    goto done;
+  isymbuf1 = elf_tdata (bfd1)->symbuf;
+  isymbuf2 = elf_tdata (bfd2)->symbuf;
 
-  /* Sort symbols by binding and section. Global definitions are at
-     the beginning.  */
-  qsort (isymbuf1, symcount1, sizeof (Elf_Internal_Sym),
-	 elf_sort_elf_symbol);
-  qsort (isymbuf2, symcount2, sizeof (Elf_Internal_Sym),
-	 elf_sort_elf_symbol);
+  if (isymbuf1 == NULL)
+    {
+      isymbuf1 = bfd_elf_get_elf_syms (bfd1, hdr1, symcount1, 0,
+				       NULL, NULL, NULL);
+      if (isymbuf1 == NULL)
+	goto done;
+      /* Sort symbols by binding and section. Global definitions are at
+	 the beginning.  */
+      qsort (isymbuf1, symcount1, sizeof (Elf_Internal_Sym),
+	     elf_sort_elf_symbol);
+      if (!info->reduce_memory_overheads)
+	elf_tdata (bfd1)->symbuf = isymbuf1;
+    }
+
+  if (isymbuf2 == NULL)
+    {
+      isymbuf2 = bfd_elf_get_elf_syms (bfd2, hdr2, symcount2, 0,
+				       NULL, NULL, NULL);
+      if (isymbuf2 == NULL)
+	goto done;
+      /* Sort symbols by binding and section. Global definitions are at
+	 the beginning.  */
+      qsort (isymbuf2, symcount2, sizeof (Elf_Internal_Sym),
+	     elf_sort_elf_symbol);
+      if (!info->reduce_memory_overheads)
+	elf_tdata (bfd2)->symbuf = isymbuf2;
+    }
 
   /* Count definitions in the section.  */
   count1 = 0;
@@ -8850,10 +8867,13 @@ done:
     free (symtable1);
   if (symtable2)
     free (symtable2);
-  if (isymbuf1)
-    free (isymbuf1);
-  if (isymbuf2)
-    free (isymbuf2);
+  if (info->reduce_memory_overheads)
+    {
+      if (isymbuf1)
+	free (isymbuf1);
+      if (isymbuf2)
+	free (isymbuf2);
+    }
 
   return result;
 }

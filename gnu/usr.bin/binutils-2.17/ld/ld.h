@@ -200,11 +200,6 @@ typedef struct {
      behaviour of the linker.  The new default behaviour is to reject such
      input files.  */
   bfd_boolean accept_unknown_input_arch;
-
-  /* If TRUE reduce memory overheads, at the expense of speed.
-     This will cause map file generation to use an O(N^2) algorithm.  */
-  bfd_boolean reduce_memory_overheads;
-
 } args_type;
 
 extern args_type command_line;

@@ -2877,14 +2877,15 @@ FUNCTION
 	bfd_section_already_linked
 
 SYNOPSIS
-        void bfd_section_already_linked (bfd *abfd, asection *sec);
+        void bfd_section_already_linked (bfd *abfd, asection *sec,
+					 struct bfd_link_info *info);
 
 DESCRIPTION
 	Check if @var{sec} has been already linked during a reloceatable
 	or final link.
 
-.#define bfd_section_already_linked(abfd, sec) \
-.       BFD_SEND (abfd, _section_already_linked, (abfd, sec))
+.#define bfd_section_already_linked(abfd, sec, info) \
+.       BFD_SEND (abfd, _section_already_linked, (abfd, sec, info))
 .
 
 */
@@ -2970,7 +2971,8 @@ bfd_section_already_linked_table_free (void)
 /* This is used on non-ELF inputs.  */
 
 void
-_bfd_generic_section_already_linked (bfd *abfd, asection *sec)
+_bfd_generic_section_already_linked (bfd *abfd, asection *sec,
+				     struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
   flagword flags;
   const char *name;

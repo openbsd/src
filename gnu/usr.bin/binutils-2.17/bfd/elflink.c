@@ -6767,14 +6767,15 @@ _bfd_elf_default_action_discarded (asection *sec)
 /* Find a match between a section and a member of a section group.  */
 
 static asection *
-match_group_member (asection *sec, asection *group)
+match_group_member (asection *sec, asection *group,
+		    struct bfd_link_info *info)
 {
   asection *first = elf_next_in_group (group);
   asection *s = first;
 
   while (s != NULL)
     {
-      if (bfd_elf_match_symbols_in_sections (s, sec))
+      if (bfd_elf_match_symbols_in_sections (s, sec, info))
 	return s;
 
       s = elf_next_in_group (s);
@@ -6790,7 +6791,7 @@ match_group_member (asection *sec, asection *group)
    NULL. */
 
 asection *
-_bfd_elf_check_kept_section (asection *sec)
+_bfd_elf_check_kept_section (asection *sec, struct bfd_link_info *info)
 {
   asection *kept;
 
@@ -6798,7 +6799,7 @@ _bfd_elf_check_kept_section (asection *sec)
   if (kept != NULL)
     {
       if (elf_sec_group (sec) != NULL)
-	kept = match_group_member (sec, kept);
+	kept = match_group_member (sec, kept, info);
       if (kept != NULL && sec->size != kept->size)
 	kept = NULL;
     }
@@ -7151,7 +7152,8 @@ elf_link_input_bfd (struct elf_final_link_info *finfo, bfd *input_bfd)
 			{
 			  asection *kept;
 
-			  kept = _bfd_elf_check_kept_section (sec);
+			  kept = _bfd_elf_check_kept_section (sec,
+							      finfo->info);
 			  if (kept != NULL)
 			    {
 			      *ps = kept;
@@ -8279,6 +8281,14 @@ bfd_elf_final_link (bfd *abfd, struct bfd_link_info *info)
 		goto error_return;
 	    }
 	}
+    }
+
+  /* Free symbol buffer if needed.  */
+  if (!info->reduce_memory_overheads)
+    {
+      for (sub = info->input_bfds; sub != NULL; sub = sub->link_next)
+	if (elf_tdata (sub)->symbuf)
+	  free (elf_tdata (sub)->symbuf);
     }
 
   /* Output any global symbols that got converted to local in a
@@ -9725,7 +9735,8 @@ bfd_elf_discard_info (bfd *output_bfd, struct bfd_link_info *info)
 }
 
 void
-_bfd_elf_section_already_linked (bfd *abfd, struct bfd_section * sec)
+_bfd_elf_section_already_linked (bfd *abfd, struct bfd_section *sec,
+				 struct bfd_link_info *info)
 {
   flagword flags;
   const char *name, *p;
@@ -9891,7 +9902,8 @@ _bfd_elf_section_already_linked (bfd *abfd, struct bfd_section * sec)
 	if ((l->sec->flags & SEC_GROUP) == 0
 	    && bfd_coff_get_comdat_section (l->sec->owner, l->sec) == NULL
 	    && bfd_elf_match_symbols_in_sections (l->sec,
-						  elf_next_in_group (sec)))
+						  elf_next_in_group (sec),
+						  info))
 	  {
 	    elf_next_in_group (sec)->output_section = bfd_abs_section_ptr;
 	    elf_next_in_group (sec)->kept_section = l->sec;
@@ -9912,7 +9924,7 @@ _bfd_elf_section_already_linked (bfd *abfd, struct bfd_section * sec)
 
 	  if (first != NULL
 	      && elf_next_in_group (first) == first
-	      && bfd_elf_match_symbols_in_sections (first, sec))
+	      && bfd_elf_match_symbols_in_sections (first, sec, info))
 	    {
 	      sec->output_section = bfd_abs_section_ptr;
 	      sec->kept_section = l->sec;

@@ -1670,7 +1670,7 @@ lang_map (void)
 
   fprintf (config.map_file, _("\nLinker script and memory map\n\n"));
 
-  if (! command_line.reduce_memory_overheads)
+  if (! link_info.reduce_memory_overheads)
     {
       obstack_begin (&map_obstack, 1000);
       for (p = link_info.input_bfds; p != (bfd *) NULL; p = p->link_next)
@@ -1746,7 +1746,7 @@ init_os (lang_output_section_statement_type *s, asection *isec)
     }
   s->bfd_section->output_section = s->bfd_section;
   s->bfd_section->output_offset = 0;
-  if (!command_line.reduce_memory_overheads)
+  if (!link_info.reduce_memory_overheads)
     {
       fat_section_userdata_type *new
 	= stat_alloc (sizeof (fat_section_userdata_type));
@@ -1840,7 +1840,7 @@ section_already_linked (bfd *abfd, asection *sec, void *data)
     }
 
   if (!(abfd->flags & DYNAMIC))
-    bfd_section_already_linked (abfd, sec);
+    bfd_section_already_linked (abfd, sec, &link_info);
 }
 
 /* The wild routines.
@@ -3564,7 +3564,7 @@ print_input_section (asection *i)
 
       if (i->output_section != NULL && i->output_section->owner == output_bfd)
 	{
-	  if (command_line.reduce_memory_overheads)
+	  if (link_info.reduce_memory_overheads)
 	    bfd_link_hash_traverse (link_info.hash, print_one_symbol, i);
 	  else
 	    print_all_symbols (i);

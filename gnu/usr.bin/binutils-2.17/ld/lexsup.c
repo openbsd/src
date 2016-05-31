@@ -1350,7 +1350,7 @@ parse_args (unsigned argc, char **argv)
 	  break;
 
 	case OPTION_REDUCE_MEMORY_OVERHEADS:
-	  command_line.reduce_memory_overheads = TRUE;
+	  link_info.reduce_memory_overheads = TRUE;
 	  if (config.hash_table_size == 0)
 	    config.hash_table_size = 1021;
 	  break;

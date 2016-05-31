@@ -481,7 +481,8 @@ BFD_JUMP_TABLE macros.
 .
 .  {* Check if SEC has been already linked during a reloceatable or
 .     final link.  *}
-.  void (*_section_already_linked) (bfd *, struct bfd_section *);
+.  void (*_section_already_linked) (bfd *, struct bfd_section *,
+.				    struct bfd_link_info *);
 .
 .  {* Routines to handle dynamic symbols and relocs.  *}
 .#define BFD_JUMP_TABLE_DYNAMIC(NAME) \
