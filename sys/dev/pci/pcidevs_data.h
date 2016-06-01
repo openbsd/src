@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1800 2016/05/25 14:41:02 stsp Exp 
+ *	OpenBSD: pcidevs,v 1.1801 2016/06/01 01:15:05 dlg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -9244,8 +9244,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "i960 RN",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SSDDCP3x00,
-	    "SSD DC P3700/P3600/P3500",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_NVME,
+	    "NVMe",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_D_ULT_GT1,
