@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.95 2015/12/07 12:46:37 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.96 2016/06/01 11:16:41 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -449,9 +449,13 @@ struct iked_sa {
 
 	struct iked_addr		*sa_addrpool;	/* address from pool */
 	RB_ENTRY(iked_sa)		 sa_addrpool_entry;	/* pool entries */
+
+	struct iked_addr		*sa_addrpool6;	/* address from pool */
+	RB_ENTRY(iked_sa)		 sa_addrpool6_entry;	/* pool entries */
 };
 RB_HEAD(iked_sas, iked_sa);
 RB_HEAD(iked_addrpool, iked_sa);
+RB_HEAD(iked_addrpool6, iked_sa);
 
 struct iked_message {
 	struct ibuf		*msg_data;
@@ -599,6 +603,7 @@ struct iked {
 	char				*sc_ocsp_url;
 
 	struct iked_addrpool		 sc_addrpool;
+	struct iked_addrpool6		 sc_addrpool6;
 };
 
 struct iked_socket {
@@ -691,6 +696,7 @@ struct iked_user *
 	 user_lookup(struct iked *, const char *);
 RB_PROTOTYPE(iked_sas, iked_sa, sa_entry, sa_cmp);
 RB_PROTOTYPE(iked_addrpool, iked_sa, sa_addrpool_entry, sa_addrpool_cmp);
+RB_PROTOTYPE(iked_addrpool6, iked_sa, sa_addrpool6_entry, sa_addrpool6_cmp);
 RB_PROTOTYPE(iked_users, iked_user, user_entry, user_cmp);
 RB_PROTOTYPE(iked_activesas, iked_childsa, csa_node, childsa_cmp);
 RB_PROTOTYPE(iked_flows, iked_flow, flow_node, flow_cmp);
