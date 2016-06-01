@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.256 2016/04/24 17:30:31 matthieu Exp $g
+#	$OpenBSD: GENERIC,v 1.257 2016/06/01 09:48:20 mglocker Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -301,6 +301,10 @@ onewire* at uow?
 # USB Video
 uvideo* at uhub?
 video*  at uvideo?
+
+utvfu*	at uhub?		# Fushicai Audio-Video Grabber
+video*	at utvfu?
+audio*	at utvfu?
 
 udl*		at uhub?
 wsdisplay*	at udl?

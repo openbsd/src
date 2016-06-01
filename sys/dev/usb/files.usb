@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.126 2016/01/08 15:54:13 jcs Exp $
+#	$OpenBSD: files.usb,v 1.127 2016/06/01 09:48:20 mglocker Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -34,6 +34,11 @@ file	dev/usb/uaudio.c		uaudio
 device	uvideo: video, firmload
 attach	uvideo at uhub
 file	dev/usb/uvideo.c		uvideo
+
+# USBTV007 devices
+device	utvfu: video, audio
+attach	utvfu at uhub
+file	dev/usb/utvfu.c			utvfu
 
 device	udl: wsemuldisplaydev, rasops16, edid
 attach	udl at uhub

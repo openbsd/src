@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.147 2016/05/11 16:16:58 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.148 2016/06/01 09:48:20 mglocker Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1344,6 +1344,14 @@ audio_detach(struct device *self, int flags)
 	return 0;
 }
 
+int
+audio_submatch(struct device *parent, void *match, void *aux)
+{
+        struct cfdata *cf = match;
+
+	return (cf->cf_driver == &audio_cd);
+}
+
 struct device *
 audio_attach_mi(struct audio_hw_if *ops, void *arg, struct device *dev)
 {
@@ -1357,7 +1365,7 @@ audio_attach_mi(struct audio_hw_if *ops, void *arg, struct device *dev)
 	 * attach this driver to the caller (hardware driver), this
 	 * checks the kernel config and possibly calls audio_attach()
 	 */
-	return config_found(dev, &aa, audioprint);
+	return config_found_sm(dev, &aa, audioprint, audio_submatch);
 }
 
 int

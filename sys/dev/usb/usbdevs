@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.665 2016/06/01 00:21:43 chris Exp $
+$OpenBSD: usbdevs,v 1.666 2016/06/01 09:48:20 mglocker Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -591,6 +591,7 @@ vendor SILABS5		0x1ba4	Silicon Labs
 vendor CORSAIR		0x1b1c	Corsair
 vendor MATRIXORB	0x1b3d	Matrix Orbital
 vendor TORADEX		0x1b67	Toradex inc.
+vendor FUSHICAI		0x1b71	Fushicai
 vendor OVISLINK		0x1b75	OvisLink
 vendor TML		0x1b91	The Mobility Lab
 vendor TCTMOBILE	0x1bbb  TCT Mobile
@@ -1996,6 +1997,9 @@ product FUJITSUCOMP VIRTETH	0xa4a2	Virtual Eth Device
 
 /* Fujitsu Siemens Computers products */
 product FSC E5400		0x1009	PrismGT USB 2.0 WLAN
+
+/* Fushicai */
+product FUSHICAI USBTV007	0x3002	Fushicai Audio-Video Grabber
 
 /* G.Mate */
 product	GMATE YP3X00		0x1001	YP3X00 PDA

@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.38 2016/02/08 17:21:10 stefan Exp $	*/
+/*	$OpenBSD: video.c,v 1.39 2016/06/01 09:48:20 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -392,6 +392,14 @@ videommap(dev_t dev, off_t off, int prot)
 	return (pa);
 }
 
+int
+video_submatch(struct device *parent, void *match, void *aux)
+{
+        struct cfdata *cf = match;
+
+	return (cf->cf_driver == &video_cd);
+}
+
 /*
  * Called from hardware driver. This is where the MI video driver gets
  * probed/attached to the hardware driver
@@ -403,7 +411,7 @@ video_attach_mi(struct video_hw_if *rhwp, void *hdlp, struct device *dev)
 
 	arg.hwif = rhwp;
 	arg.hdl = hdlp;
-	return (config_found(dev, &arg, videoprint));
+	return (config_found_sm(dev, &arg, videoprint, video_submatch));
 }
 
 void
