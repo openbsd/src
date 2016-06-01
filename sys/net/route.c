@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.302 2016/05/31 07:42:39 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.303 2016/06/01 06:40:27 dlg Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ rtisvalid(struct rtentry *rt)
 	if ((rt->rt_flags & RTF_UP) == 0)
 		return (0);
 
-	/* Routes attached to stall ifas should be freed. */
+	/* Routes attached to stale ifas should be freed. */
 	if (rt->rt_ifa == NULL || rt->rt_ifa->ifa_ifp == NULL)
 		return (0);
 
