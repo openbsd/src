@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.28 2014/12/17 06:58:10 guenther Exp $	*/
+/*	$OpenBSD: mman.h,v 1.29 2016/06/01 04:53:54 guenther Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -61,20 +61,6 @@
 #define	__MAP_NOFAULT	0x2000
 
 #define	MAP_FLAGMASK	0x3ff7
-
-#ifdef _KERNEL
-/*
- * Backwards compat for OpenBSD 5.5.
- * TODO: Remove after OpenBSD 5.7 release.
- */
-#define	MAP_OLDCOPY		0x0004	/* alias for MAP_PRIVATE */
-#define	MAP_OLDRENAME		0x0020
-#define	MAP_OLDNORESERVE	0x0040
-#define	MAP_OLDINHERIT		0x0080
-#define	MAP_OLDNOEXTEND		0x0100
-#define	MAP_OLDHASSEMAPHORE	0x0200
-#define	MAP_OLDTRYFIXED		0x0400
-#endif
 
 #ifndef _KERNEL
 /*

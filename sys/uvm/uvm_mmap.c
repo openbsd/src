@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.129 2016/05/30 21:31:30 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.130 2016/06/01 04:53:54 guenther Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -381,8 +381,7 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 	pos = SCARG(uap, pos);
 
 	/*
-	 * Fixup the old deprecated MAP_COPY into MAP_PRIVATE, and
-	 * validate the flags.
+	 * Validate the flags.
 	 */
 	if ((prot & PROT_MASK) != prot)
 		return (EINVAL);
@@ -392,8 +391,6 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 
 	if ((flags & MAP_FLAGMASK) != flags)
 		return (EINVAL);
-	if (flags & MAP_OLDCOPY)
-		flags = (flags & MAP_OLDCOPY) | MAP_PRIVATE;
 	if ((flags & (MAP_SHARED|MAP_PRIVATE)) == (MAP_SHARED|MAP_PRIVATE))
 		return (EINVAL);
 	if ((flags & (MAP_FIXED|__MAP_NOREPLACE)) == __MAP_NOREPLACE)
