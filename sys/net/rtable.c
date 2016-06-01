@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.42 2016/05/18 03:46:03 dlg Exp $ */
+/*	$OpenBSD: rtable.c,v 1.43 2016/06/01 06:19:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -703,8 +703,6 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	an = art_get(dst, plen);
 	if (an == NULL)
 		return (ENOBUFS);
-
-	SRPL_INIT(&an->an_rtlist);
 
 	prev = art_insert(ar, an, addr, plen);
 	if (prev == NULL) {
