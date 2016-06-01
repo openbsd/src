@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.128 2015/10/22 15:55:18 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.129 2016/06/01 10:52:28 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -5156,7 +5156,7 @@ ikev2_cp_fixaddr(struct iked_sa *sa, struct iked_addr *addr,
 		break;
 	case AF_INET6:
 		in6 = (struct sockaddr_in6 *)&addr->addr;
-		if (IN6_IS_ADDR_UNSPECIFIED(&in6->sin6_addr))
+		if (!IN6_IS_ADDR_UNSPECIFIED(&in6->sin6_addr))
 			return (-1);
 		break;
 	}
