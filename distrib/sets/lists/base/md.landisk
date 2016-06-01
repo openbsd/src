@@ -1192,6 +1192,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/usbfvar.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/usbhid.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/uslhcomreg.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/utvfu.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/uvideo.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/xhcireg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/xhcivar.ph
