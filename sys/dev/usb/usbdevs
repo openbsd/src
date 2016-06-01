@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.664 2016/05/20 02:04:24 chris Exp $
+$OpenBSD: usbdevs,v 1.665 2016/06/01 00:21:43 chris Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3833,6 +3833,7 @@ product SIERRA AC885U		0x6880	885U
 product SIERRA C01SW		0x6890	C01SW
 product SIERRA USB305		0x68a3	USB305
 product SIERRA MC8355		0x9013	MC8355
+product SIERRA AIRCARD_340U	0x9051	Aircard 340U
 product SIERRA AIRCARD_770S	0x9053	Aircard 770S
 
 /* Sigmatel products */
