@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.188 2016/03/30 10:13:14 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.189 2016/06/01 12:06:49 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1290,9 +1290,6 @@ sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 		rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
 		/* Do not account the routing table's reference. */
 		rtm->rtm_rmx.rmx_refcnt = rt->rt_refcnt - 1;
-#ifdef ART
-		rtm->rtm_rmx.rmx_refcnt--;
-#endif
 		rtm->rtm_index = rt->rt_ifidx;
 		rtm->rtm_addrs = info.rti_addrs;
 		rtm->rtm_tableid = id;
