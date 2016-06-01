@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_srp.c,v 1.9 2016/05/18 03:58:13 dlg Exp $ */
+/*	$OpenBSD: kern_srp.c,v 1.10 2016/06/01 03:34:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -47,13 +47,10 @@ srp_init(struct srp *srp)
 	srp->ref = NULL;
 }
 
-void
-srp_update_locked(struct srp_gc *srp_gc, struct srp *srp, void *nv)
+void *
+srp_swap_locked(struct srp *srp, void *nv)
 {
 	void *ov;
-
-	if (nv != NULL)
-		refcnt_take(&srp_gc->srp_gc_refcnt);
 
 	/*
 	 * this doesn't have to be as careful as the caller has already
@@ -63,8 +60,20 @@ srp_update_locked(struct srp_gc *srp_gc, struct srp *srp, void *nv)
 
 	ov = srp->ref;
 	srp->ref = nv;
-	if (ov != NULL)
-		srp_v_gc_start(srp_gc, srp, ov);
+
+	return (ov);
+}
+
+void
+srp_update_locked(struct srp_gc *srp_gc, struct srp *srp, void *v)
+{
+	if (v != NULL)
+		refcnt_take(&srp_gc->srp_gc_refcnt);
+
+	v = srp_swap_locked(srp, v);
+
+	if (v != NULL)
+		srp_v_gc_start(srp_gc, srp, v);
 }
 
 void *
@@ -174,13 +183,19 @@ srp_v_gc(void *x)
 	pool_put(&srp_gc_ctx_pool, ctx);
 }
 
+void *
+srp_swap(struct srp *srp, void *v)
+{
+	return (atomic_swap_ptr(&srp->ref, v));
+}
+
 void
 srp_update(struct srp_gc *srp_gc, struct srp *srp, void *v)
 {
 	if (v != NULL)
 		refcnt_take(&srp_gc->srp_gc_refcnt);
 
-	v = atomic_swap_ptr(&srp->ref, v);
+	v = srp_swap(srp, v);
 	if (v != NULL)
 		srp_v_gc_start(srp_gc, srp, v);
 }
@@ -237,6 +252,33 @@ void
 srp_leave(struct srp_ref *sr)
 {
 	sr->hz->sh_p = NULL;
+}
+
+static inline int
+srp_referenced(void *v)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+	u_int i;
+	struct srp_hazard *hzrd;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		for (i = 0; i < nitems(ci->ci_srp_hazards); i++) {
+			hzrd = &ci->ci_srp_hazards[i];
+
+			if (hzrd->sh_p != NULL && hzrd->sh_v == v)
+				return (1);
+		}
+	}
+
+	return (0);
+}
+
+void
+srp_finalize(void *v, const char *wmesg)
+{
+	while (srp_referenced(v))
+		tsleep(v, PWAIT, wmesg, 1);
 }
 
 #else /* MULTIPROCESSOR */

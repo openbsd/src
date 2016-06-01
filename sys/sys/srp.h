@@ -1,4 +1,4 @@
-/*	$OpenBSD: srp.h,v 1.9 2016/05/18 03:58:13 dlg Exp $ */
+/*	$OpenBSD: srp.h,v 1.10 2016/06/01 03:34:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -55,6 +55,7 @@ struct srp_gc {
 
 void		 srp_startup(void);
 void		 srp_gc_init(struct srp_gc *, void (*)(void *, void *), void *);
+void		*srp_swap_locked(struct srp *, void *);
 void		 srp_update_locked(struct srp_gc *, struct srp *, void *);
 void		*srp_get_locked(struct srp *);
 void		 srp_gc_finalize(struct srp_gc *);
@@ -62,12 +63,16 @@ void		 srp_gc_finalize(struct srp_gc *);
 void		 srp_init(struct srp *);
 
 #ifdef MULTIPROCESSOR
+void		*srp_swap(struct srp *, void *);
 void		 srp_update(struct srp_gc *, struct srp *, void *);
+void		 srp_finalize(void *, const char *);
 void		*srp_enter(struct srp_ref *, struct srp *);
 void		*srp_follow(struct srp_ref *, struct srp *);
 void		 srp_leave(struct srp_ref *);
 #else /* MULTIPROCESSOR */
+#define srp_swap(_srp, _v)		srp_swap_locked((_srp), (_v))
 #define srp_update(_gc, _srp, _v)	srp_update_locked((_gc), (_srp), (_v))
+#define srp_finalize(_v, _wchan)	((void)0)
 #define srp_enter(_sr, _srp)		((_srp)->ref)
 #define srp_follow(_sr, _srp)		((_srp)->ref)
 #define srp_leave(_sr)			do { } while (0)
