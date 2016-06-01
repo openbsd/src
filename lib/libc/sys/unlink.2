@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unlink.2,v 1.26 2015/01/19 15:54:12 millert Exp $
+.\"	$OpenBSD: unlink.2,v 1.27 2016/06/01 23:00:40 millert Exp $
 .\"	$NetBSD: unlink.2,v 1.7 1995/02/27 12:39:13 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)unlink.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 19 2015 $
+.Dd $Mdocdate: June 1 2016 $
 .Dt UNLINK 2
 .Os
 .Sh NAME
@@ -181,6 +181,15 @@ The value of the
 .Fa flag
 argument was neither zero nor
 .Dv AT_REMOVEDIR .
+.It Bq Er EINVAL
+The value of the
+.Fa flag
+argument was
+.Dv AT_REMOVEDIR
+and the last element of
+.Ar path
+consists of
+.Ql \&. .
 .It Bq Er EBADF
 The
 .Fa path
