@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.102 2016/03/29 11:57:51 chl Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.103 2016/06/01 23:45:19 dlg Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -729,11 +729,11 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			ln->ln_byhint = 0;
 			if (!ND6_LLINFO_PERMANENT(ln)) {
 				nd6_llinfo_settimer(ln,
-				    (long)ND_IFINFO(ifp)->reachable * hz);
+				    ND_IFINFO(ifp)->reachable);
 			}
 		} else {
 			ln->ln_state = ND6_LLINFO_STALE;
-			nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
+			nd6_llinfo_settimer(ln, nd6_gctimer);
 		}
 		if ((ln->ln_router = is_router) != 0) {
 			/*
@@ -789,7 +789,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 */
 			if (ln->ln_state == ND6_LLINFO_REACHABLE) {
 				ln->ln_state = ND6_LLINFO_STALE;
-				nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
+				nd6_llinfo_settimer(ln, nd6_gctimer);
 			}
 			goto freeit;
 		} else if (is_override				   /* (2a) */
@@ -820,13 +820,12 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 				ln->ln_byhint = 0;
 				if (!ND6_LLINFO_PERMANENT(ln)) {
 					nd6_llinfo_settimer(ln,
-					    (long)ND_IFINFO(ifp)->reachable * hz);
+					    ND_IFINFO(ifp)->reachable);
 				}
 			} else {
 				if (lladdr && llchange) {
 					ln->ln_state = ND6_LLINFO_STALE;
-					nd6_llinfo_settimer(ln,
-					    (long)nd6_gctimer * hz);
+					nd6_llinfo_settimer(ln, nd6_gctimer);
 				}
 			}
 		}
