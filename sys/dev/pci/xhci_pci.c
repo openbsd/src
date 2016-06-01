@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_pci.c,v 1.7 2015/11/02 14:53:10 mpi Exp $ */
+/*	$OpenBSD: xhci_pci.c,v 1.8 2016/06/01 06:19:59 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -258,8 +258,9 @@ xhci_pci_takecontroller(struct xhci_pci_softc *psc, int silent)
 	eec = -1;
 
 	/* Synchronise with the BIOS if it owns the controller. */
-	for (xecp = XHCI_HCC_XECP(cparams) << 2; xecp != 0;
-	    xecp = XHCI_XECP_NEXT(eec) << 2) {
+	for (xecp = XHCI_HCC_XECP(cparams) << 2;
+	    xecp != 0 && XHCI_XECP_NEXT(eec);
+	    xecp += XHCI_XECP_NEXT(eec) << 2) {
 		eec = XREAD4(&psc->sc, xecp);
 		if (XHCI_XECP_ID(eec) != XHCI_ID_USB_LEGACY)
 			continue;
