@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.255 2016/05/27 19:45:04 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.256 2016/06/01 22:54:45 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1496,7 +1496,7 @@ dounlinkat(struct proc *p, int fd, const char *path, int flag)
 		 * No rmdir "." please.
 		 */
 		if (nd.ni_dvp == vp) {
-			error = EBUSY;
+			error = EINVAL;
 			goto out;
 		}
 	}
