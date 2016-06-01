@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.88 2016/05/19 11:34:39 jca Exp $	*/
+/*	$OpenBSD: in6.h,v 1.89 2016/06/01 11:11:44 jca Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -576,7 +576,6 @@ ifatoia6(struct ifaddr *ifa)
 #define IPV6CTL_AUTO_FLOWLABEL	17
 #define IPV6CTL_DEFMCASTHLIM	18
 #define IPV6CTL_USE_DEPRECATED	21	/* use deprecated addr (RFC2462 5.5.4) */
-#define IPV6CTL_RR_PRUNE	22	/* walk timer for router renumbering */
 /* 24 to 40: reserved */
 #define IPV6CTL_MAXFRAGS	41	/* max fragments */
 #define IPV6CTL_MFORWARDING	42
@@ -619,7 +618,7 @@ ifatoia6(struct ifaddr *ifa)
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "use_deprecated", CTLTYPE_INT }, \
-	{ "rr_prune", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
@@ -676,7 +675,7 @@ ifatoia6(struct ifaddr *ifa)
 	NULL, \
 	NULL, \
 	&ip6_use_deprecated, \
-	&ip6_rr_prune, \
+	NULL, \
 	NULL, \
 	NULL, \
 	NULL, \

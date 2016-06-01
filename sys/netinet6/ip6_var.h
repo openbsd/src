@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.59 2016/05/19 11:34:40 jca Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.60 2016/06/01 11:11:44 jca Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -219,8 +219,6 @@ extern int	ip6_mforwarding;	/* act as multicast router? */
 extern int	ip6_multipath;		/* use multipath routes */
 extern int	ip6_sendredirect;	/* send ICMPv6 redirect? */
 extern int	ip6_use_deprecated;	/* allow deprecated addr as source */
-extern int	ip6_rr_prune;		/* router renumbering prefix
-					 * walk list every 5 sec.    */
 extern int	ip6_mcast_pmtu;		/* path MTU discovery for multicast */
 extern int	ip6_neighborgcthresh; /* Threshold # of NDP entries for GC */
 extern int	ip6_maxifprefixes; /* Max acceptable prefixes via RA per IF */
