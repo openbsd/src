@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.25 2016/03/18 05:38:10 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.26 2016/06/01 11:40:00 mglocker Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -112,6 +112,9 @@ uaudio* 	at uhub?	# USB Audio
 audio*		at uaudio?
 uvideo*		at uhub?	# USB Video
 video*		at uvideo?
+utvfu*		at uhub?	# Fushicai Audio-Video Grabber
+video*		at utvfu?
+audio*		at utvfu?
 ulpt*		at uhub?	# USB Printers
 umass*		at uhub?	# USB Mass Storage devices
 ugen*		at uhub?	# USB Generic driver

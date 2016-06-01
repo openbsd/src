@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.12 2016/05/23 00:05:35 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.13 2016/06/01 11:39:59 mglocker Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -235,6 +235,9 @@ uoakv*	at uhidev?		# Toradex OAK 10V sensor
 onewire* at uow?
 uvideo*	at uhub?		# USB Video
 video*	at uvideo?
+utvfu*	at uhub?		# Fushicai Audio-Video Grabber
+video*	at utvfu?
+audio*	at utvfu?
 udl*	at uhub?		# DisplayLink USB displays
 wsdisplay* at udl?
 

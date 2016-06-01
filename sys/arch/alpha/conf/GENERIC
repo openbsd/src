@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.256 2016/04/24 17:30:31 matthieu Exp $
+#	$OpenBSD: GENERIC,v 1.257 2016/06/01 11:39:59 mglocker Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -133,6 +133,10 @@ utwitch* at uhidev?			# yurex BBU sensor
 # USB Video
 uvideo* at uhub?
 video*  at uvideo?
+
+utvfu*	at uhub?			# Fushicai Audio-Video Grabber
+video*	at utvfu?
+audio*	at utvfu?
 
 # EV6 Tsunami Core Logic
 tsc*	at	mainbus0

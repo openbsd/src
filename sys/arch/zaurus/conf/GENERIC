@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.101 2016/04/24 17:30:31 matthieu Exp $
+#	$OpenBSD: GENERIC,v 1.102 2016/06/01 11:40:00 mglocker Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -211,6 +211,10 @@ sdmmc*		at pxammc?		# SD/MMC bus
 # USB Video
 uvideo* at uhub?
 video*  at uvideo?
+
+utvfu*	at uhub?			# Fushicai Audio-Video Grabber
+video*	at utvfu?
+audio*	at utvfu?
 
 # 1-Wire devices
 option ONEWIREVERBOSE
