@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.conf.5,v 1.15 2015/09/14 20:06:59 schwarze Exp $
+.\"	$OpenBSD: spamd.conf.5,v 1.16 2016/06/01 21:57:03 sthen Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" Copyright (c) 2003 Bob Beck
@@ -24,7 +24,7 @@
 .\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: June 1 2016 $
 .Dt SPAMD.CONF 5
 .Os
 .Sh NAME
@@ -53,14 +53,14 @@ follows the syntax of configuration databases as documented in
 Here is an example:
 .Bd -literal -offset indent
 all:\e
-	:spews1:override:myblack:
+	:nixspam:override:myblack:
 
-spews1:\e
+nixspam:\e
 	:black:\e
-	:msg="SPAM. Your address \&%A is in the spews\e
-	level 1 database\ensee http://www.spews.org/ask.cgi?x=\&%A\en":\e
+	:msg="Your address %A is in the nixspam list\n\
+	See http://www.heise.de/ix/nixspam/dnsbl_en/ for details":\
 	:method=http:\e
-	:file=www.spews.org/spews_list_level1.txt:
+	:file=www.openbsd.org/spamd/nixspam.gz
 
 override:\e
 	:white:\e
@@ -90,13 +90,13 @@ The addresses in such a list are removed from the preceding blacklist.
 In the above example,
 if an address was present in all three lists,
 blacklists
-.Ar spews1
+.Ar nixspam
 and
 .Ar myblack ,
 as well as the exceptions list
 .Ar override ,
 the address would be removed from list
-.Ar spews1
+.Ar nixspam
 by the subsequent
 .Ar override
 list.
@@ -111,7 +111,7 @@ the following configuration
 would be used instead:
 .Bd -literal -offset indent
 all:\e
-	:spews1:override:myblack:override:
+	:nixspam:override:myblack:override:
 .Ed
 .Pp
 The source of the addresses for lists is
