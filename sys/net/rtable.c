@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.44 2016/06/01 06:31:52 dlg Exp $ */
+/*	$OpenBSD: rtable.c,v 1.45 2016/06/01 09:46:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -666,6 +666,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	struct art_node			*an, *prev;
 	uint8_t				*addr;
 	int				 plen;
+	unsigned int			 rt_flags;
 
 	KERNEL_ASSERT_LOCKED();
 
@@ -704,16 +705,23 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	if (an == NULL)
 		return (ENOBUFS);
 
-	prev = art_insert(ar, an, addr, plen);
-	if (prev == NULL) {
-		art_put(an);
-		return (ESRCH);
-	}
+	/* prepare for immediate operation if insert succeeds */
+	rt_flags = rt->rt_flags;
+	rt->rt_flags &= ~RTF_MPATH;
+	rt->rt_dest = dst;
+	rt->rt_plen = plen;
+	SRPL_INSERT_HEAD_LOCKED(&rt_rc, &an->an_rtlist, rt, rt_next);
 
-	if (prev == an) {
-		rt->rt_flags &= ~RTF_MPATH;
-	} else {
+	prev = art_insert(ar, an, addr, plen);
+	if (prev != an) {
+		SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist, rt, rtentry,
+		    rt_next);
+		rt->rt_flags = rt_flags;
 		art_put(an);
+ 
+		if (prev == NULL)
+			return ESRCH;
+
 #ifndef SMALL_KERNEL
 		an = prev;
 
@@ -738,20 +746,15 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 				}
 			}
 		}
+
+		SRPL_INSERT_HEAD_LOCKED(&rt_rc, &an->an_rtlist, rt, rt_next);
+
+		/* Put newly inserted entry at the right place. */
+		rtable_mpath_reprio(rtableid, dst, mask, rt->rt_priority, rt);
 #else
 		return (EEXIST);
 #endif /* SMALL_KERNEL */
 	}
-
-	rt->rt_dest = dst;
-	rt->rt_plen = plen;
-	rtref(rt);
-	SRPL_INSERT_HEAD_LOCKED(&rt_rc, &an->an_rtlist, rt, rt_next);
-
-#ifndef SMALL_KERNEL
-	/* Put newly inserted entry at the right place. */
-	rtable_mpath_reprio(rtableid, dst, mask, rt->rt_priority, rt);
-#endif /* SMALL_KERNEL */
 
 	return (0);
 }
@@ -796,7 +799,6 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 		KASSERT(rt->rt_refcnt >= 2);
 		SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist, rt, rtentry,
 		    rt_next);
-		rtfree(rt);
 
 		mrt = SRPL_FIRST_LOCKED(&an->an_rtlist);
 		an->an_dst = mrt->rt_dest;
@@ -811,7 +813,6 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 
 	KASSERT(rt->rt_refcnt >= 2);
 	SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist, rt, rtentry, rt_next);
-	rtfree(rt);
 
 	art_put(an);
 	return (0);
