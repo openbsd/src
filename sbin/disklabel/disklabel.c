@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.219 2016/05/29 17:02:21 tb Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.220 2016/06/01 16:51:54 tb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -206,6 +206,9 @@ main(int argc, char *argv[])
 	if (f < 0)
 		err(4, "%s", specname);
 
+	if (autotable != NULL)
+		parse_autotable(autotable);
+
 	if (op != WRITE || aflag || dflag)
 		readlabel(f);
 	else if (argc == 2 || argc == 3)
@@ -220,9 +223,6 @@ main(int argc, char *argv[])
 		if (pledge("stdio rpath wpath disklabel", NULL) == -1)
 			err(1, "pledge");
 	}
-
-	if (autotable != NULL)
-		parse_autotable(autotable);
 
 	switch (op) {
 	case EDIT:
