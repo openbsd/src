@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.45 2016/02/07 09:31:14 stefan Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.46 2016/06/01 15:44:07 natano Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -1055,14 +1055,20 @@ ntfs_ntlookupfile(struct ntfsmount *ntmp, struct vnode *vp,
 		}
 	} while (1);
 
-	/* perform full scan if no entry was found */
-	if (!fullscan && error == ENOENT) {
-		fullscan = 1;
-		cn = 0;		/* need zero, used by lookup_ctx */
+	if (error == ENOENT) {
+		/* perform full scan if no entry was found */
+		if (!fullscan) {
+			fullscan = 1;
+			cn = 0;		/* need zero, used by lookup_ctx */
 
-		DDPRINTF("ntfs_ntlookupfile: fullscan performed for: %.*s\n",
-		    (unsigned int)fnamelen, fname);
-		goto loop;
+			DDPRINTF("ntfs_ntlookupfile: fullscan performed for: %.*s\n",
+			    (unsigned int)fnamelen, fname);
+			goto loop;
+		}
+
+		if ((cnp->cn_flags & ISLASTCN) &&
+		    (cnp->cn_nameiop == CREATE || cnp->cn_nameiop == RENAME))
+			error = EJUSTRETURN;
 	}
 
 	DPRINTF("finish\n");
