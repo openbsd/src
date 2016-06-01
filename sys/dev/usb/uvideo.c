@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.188 2016/05/28 06:26:49 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.189 2016/06/01 12:58:59 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -78,7 +78,6 @@ struct uvideo_softc {
 	size_t					 sc_mmap_buffer_size;
 	q_mmap					 sc_mmap_q;
 	int					 sc_mmap_count;
-	int					 sc_mmap_cur;
 	int					 sc_mmap_flag;
 
 	struct vnode				*sc_vp;
@@ -590,7 +589,6 @@ uvideo_attach_hook(struct device *self)
 
 	/* init mmap queue */
 	SIMPLEQ_INIT(&sc->sc_mmap_q);
-	sc->sc_mmap_cur = -1;
 	sc->sc_mmap_count = 0;
 
 	DPRINTF(1, "uvideo_attach: doing video_attach_mi\n");
@@ -1693,7 +1691,6 @@ uvideo_vs_free_frame(struct uvideo_softc *sc)
 	while (!SIMPLEQ_EMPTY(&sc->sc_mmap_q))
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_mmap_q, q_frames);
 
-	sc->sc_mmap_cur = -1;
 	sc->sc_mmap_count = 0;
 }
 
@@ -2206,42 +2203,35 @@ uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
 int
 uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len)
 {
-	if (sc->sc_mmap_cur < 0 || sc->sc_mmap_count == 0 ||
-	    sc->sc_mmap_buffer == NULL)
+	int i;
+
+	if (sc->sc_mmap_count == 0 || sc->sc_mmap_buffer == NULL)
 		panic("%s: mmap buffers not allocated", __func__);
 
 	/* find a buffer which is ready for queueing */
-	while (sc->sc_mmap_cur < sc->sc_mmap_count) {
-		if (sc->sc_mmap[sc->sc_mmap_cur].v4l2_buf.flags &
-		    V4L2_BUF_FLAG_QUEUED)
+	for (i = 0; i < sc->sc_mmap_count; i++) {
+		if (sc->sc_mmap[i].v4l2_buf.flags & V4L2_BUF_FLAG_QUEUED)
 			break;
-		/* not ready for queueing, try next */
-		sc->sc_mmap_cur++;
 	}
-	if (sc->sc_mmap_cur == sc->sc_mmap_count) {
+	if (i == sc->sc_mmap_count) {
 		DPRINTF(1, "%s: %s: mmap queue is full!",
 		    DEVNAME(sc), __func__);
 		return ENOMEM;
 	}
 
 	/* copy frame to mmap buffer and report length */
-	bcopy(buf, sc->sc_mmap[sc->sc_mmap_cur].buf, len);
-	sc->sc_mmap[sc->sc_mmap_cur].v4l2_buf.bytesused = len;
+	bcopy(buf, sc->sc_mmap[i].buf, len);
+	sc->sc_mmap[i].v4l2_buf.bytesused = len;
 
 	/* timestamp it */
-	getmicrotime(&sc->sc_mmap[sc->sc_mmap_cur].v4l2_buf.timestamp);
+	getmicrotime(&sc->sc_mmap[i].v4l2_buf.timestamp);
 
 	/* queue it */
-	SIMPLEQ_INSERT_TAIL(&sc->sc_mmap_q, &sc->sc_mmap[sc->sc_mmap_cur],
-	    q_frames);
+	sc->sc_mmap[i].v4l2_buf.flags |= V4L2_BUF_FLAG_DONE;
+	sc->sc_mmap[i].v4l2_buf.flags &= ~V4L2_BUF_FLAG_QUEUED;
+	SIMPLEQ_INSERT_TAIL(&sc->sc_mmap_q, &sc->sc_mmap[i], q_frames);
 	DPRINTF(2, "%s: %s: frame queued on index %d\n",
-	    DEVNAME(sc), __func__, sc->sc_mmap_cur);
-
-	/* point to next mmap buffer */
-	sc->sc_mmap_cur++;
-	if (sc->sc_mmap_cur == sc->sc_mmap_count)
-		/* we reached the end of the mmap buffer, start over */
-		sc->sc_mmap_cur = 0;
+	    DEVNAME(sc), __func__, i);
 
 	wakeup(sc);
 
@@ -3210,9 +3200,6 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 	/* tell how many buffers we have really allocated */
 	rb->count = sc->sc_mmap_count;
 
-	/* start with the first buffer */
-	sc->sc_mmap_cur = 0;
-
 	return (0);
 }
 
@@ -3249,7 +3236,6 @@ uvideo_qbuf(void *v, struct v4l2_buffer *qb)
 		return (EINVAL);
 
 	sc->sc_mmap[qb->index].v4l2_buf.flags &= ~V4L2_BUF_FLAG_DONE;
-	sc->sc_mmap[qb->index].v4l2_buf.flags |= V4L2_BUF_FLAG_MAPPED;
 	sc->sc_mmap[qb->index].v4l2_buf.flags |= V4L2_BUF_FLAG_QUEUED;
 
 	DPRINTF(2, "%s: %s: buffer on index %d ready for queueing\n",
@@ -3282,7 +3268,8 @@ uvideo_dqbuf(void *v, struct v4l2_buffer *dqb)
 
 	bcopy(&mmap->v4l2_buf, dqb, sizeof(struct v4l2_buffer));
 
-	mmap->v4l2_buf.flags |= V4L2_BUF_FLAG_MAPPED | V4L2_BUF_FLAG_DONE;
+	mmap->v4l2_buf.flags &= ~V4L2_BUF_FLAG_DONE;
+	mmap->v4l2_buf.flags &= ~V4L2_BUF_FLAG_QUEUED;
 
 	DPRINTF(2, "%s: %s: frame dequeued from index %d\n",
 	    DEVNAME(sc), __func__, mmap->v4l2_buf.index);
