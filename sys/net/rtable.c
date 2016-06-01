@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.43 2016/06/01 06:19:06 dlg Exp $ */
+/*	$OpenBSD: rtable.c,v 1.44 2016/06/01 06:31:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -897,6 +897,7 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 
 	KERNEL_ASSERT_LOCKED();
 
+	rtref(rt); /* keep rt alive in between remove and add */
 	SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist, rt, rtentry, rt_next);
 	rt->rt_priority = prio;
 
@@ -929,6 +930,7 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 	} else {
 		SRPL_INSERT_HEAD_LOCKED(&rt_rc, &an->an_rtlist, rt, rt_next);
 	}
+	rtfree(rt);
 
 	return (0);
 }
