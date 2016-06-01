@@ -82,6 +82,32 @@ test_where(void)
 }
 
 
+/*
+ * Fails if the argument of history_get()
+ * does not refer to the zero-based index + history_base.
+ */
+int
+test_get(void)
+{
+	HIST_ENTRY	*he;
+	int		 ok = 1;
+
+	using_history();
+	add_history("111");
+	add_history("222");
+	add_history("333");
+	add_history("444");
+
+	/* Try to retrieve second element. */
+	he = history_get(history_base + 1);
+	if (he == NULL || he->line == NULL || strcmp(he->line, "222") != 0)
+		ok = 0;
+
+	clear_history();
+	return ok;
+}
+
+
 /* Fails if set_pos returns 0 for success and -1 for failure. */
 int
 test_set_pos_return_values(void)
@@ -241,6 +267,10 @@ main(void)
 	}
 	if (!test_where()) {
 		warnx("where returns the wrong history number.");
+		fail++;
+	}
+	if (!test_get()) {
+		warnx("retrieving elements with history_get failed.");
 		fail++;
 	}
 	if (!test_set_pos_return_values()) {
