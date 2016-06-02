@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.15 2016/06/01 06:19:06 dlg Exp $ */
+/*	$OpenBSD: art.c,v 1.16 2016/06/02 00:34:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -490,10 +490,6 @@ art_table_delete(struct art_root *ar, struct art_table *at, int i,
 	KASSERT(prev == node);
 #endif
 
-	/* We are removing an entry from this table. */
-	if (art_table_free(ar, at))
-		return (node);
-
 	/* Get the next most specific route for the index `i'. */
 	if ((i >> 1) > 1)
 		next = at->at_heap[i >> 1].node;
@@ -511,6 +507,9 @@ art_table_delete(struct art_root *ar, struct art_table *at, int i,
 		SUBTABLE(at->at_heap[i])->at_default = next;
 	else
 		at->at_heap[i].node = next;
+
+	/* We have removed an entry from this table. */
+	art_table_free(ar, at);
 
 	return (node);
 }
