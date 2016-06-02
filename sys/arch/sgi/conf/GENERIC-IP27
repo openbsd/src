@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP27,v 1.62 2016/01/08 09:48:42 mpi Exp $
+#	$OpenBSD: GENERIC-IP27,v 1.63 2016/06/02 09:53:10 mglocker Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 #
@@ -159,6 +159,10 @@ utwitch*	at uhidev?	# YUREX BBU sensor
 # USB Video
 uvideo*		at uhub?
 video*		at uvideo?
+
+utvfu*		at uhub?	# Fushicai Audio-Video Grabber
+video*		at utvfu?
+audio*		at utvfu?
 
 udl*		at uhub?
 wsdisplay*	at udl?
