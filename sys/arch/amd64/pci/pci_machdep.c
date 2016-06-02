@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.64 2016/05/14 20:22:41 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.65 2016/06/02 21:01:51 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -456,7 +456,7 @@ msix_addroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
 	table = pci_conf_read(pc, tag, off + PCI_MSIX_TABLE);
 	bir = (table & PCI_MSIX_TABLE_BIR);
 	offset = (table & PCI_MSIX_TABLE_OFF);
-	tblsz = (reg & PCI_MSIX_MC_TBLSZ) + 1;
+	tblsz = PCI_MSIX_MC_TBLSZ(reg) + 1;
 
 	bir = PCI_MAPREG_START + bir * 4;
 	if (pci_mem_find(pc, tag, bir, &base, NULL, NULL) ||
@@ -496,7 +496,7 @@ msix_delroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
 	table = pci_conf_read(pc, tag, off + PCI_MSIX_TABLE);
 	bir = (table & PCI_MSIX_TABLE_BIR);
 	offset = (table & PCI_MSIX_TABLE_OFF);
-	tblsz = (reg & PCI_MSIX_MC_TBLSZ) + 1;
+	tblsz = PCI_MSIX_MC_TBLSZ(reg) + 1;
 
 	bir = PCI_MAPREG_START + bir * 4;
 	if (pci_mem_find(pc, tag, bir, &base, NULL, NULL) ||
@@ -520,10 +520,10 @@ pci_intr_map_msix(struct pci_attach_args *pa, int vec, pci_intr_handle_t *ihp)
 	KASSERT(PCI_MSIX_VEC(vec) == vec);
 
 	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 || mp_busses == NULL ||
-	    pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, NULL) == 0)
+	    pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, &reg) == 0)
 		return 1;
 
-	if (vec > (reg & PCI_MSIX_MC_TBLSZ))
+	if (vec > PCI_MSIX_MC_TBLSZ(reg))
 		return 1;
 
 	ihp->tag = PCI_MSIX_PIN(tag, vec);
