@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_installboot.c,v 1.1 2016/05/31 18:35:58 kettenis Exp $	*/
+/*	$OpenBSD: armv7_installboot.c,v 1.2 2016/06/02 06:21:10 jsg Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -54,7 +54,7 @@
 #include "installboot.h"
 
 static void	write_efisystem(struct disklabel *, char);
-static int	findmbrlinux(int, struct disklabel *);
+static int	findmbrfat(int, struct disklabel *);
 
 void
 md_init(void)
@@ -82,7 +82,7 @@ md_installboot(int devfd, char *dev)
 	if (dl.d_type == 0)
 		warnx("disklabel type unknown");
 
-	part = findmbrlinux(devfd, &dl);
+	part = findmbrfat(devfd, &dl);
 	if (part != -1) {
 		write_efisystem(&dl, (char)part);
 		return;
@@ -226,7 +226,7 @@ rmdir:
 }
 
 int
-findmbrlinux(int devfd, struct disklabel *dl)
+findmbrfat(int devfd, struct disklabel *dl)
 {
 	struct dos_partition	 dp[NDOSPART];
 	ssize_t			 len;
