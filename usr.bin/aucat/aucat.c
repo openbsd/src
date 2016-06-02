@@ -821,10 +821,6 @@ dev_mmcloc(int hr, int min, int sec, int fr, int cent, int fps)
 		log_puts(" at ");
 		log_putu(fps);
 		log_puts("fps\n");
-
-		log_puts("pos: ");
-		log_putu(pos);
-		log_puts("\n");
 	}
 	if (dev_pstate == DEV_START) {
 		dev_mmcstop();
