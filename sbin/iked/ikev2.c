@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.130 2016/06/01 11:16:41 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.131 2016/06/02 07:14:26 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -5044,7 +5044,7 @@ ikev2_cp_setaddr(struct iked *env, struct iked_sa *sa, sa_family_t family)
 	struct sockaddr_in6	*in6 = NULL, *cfg6 = NULL;
 	struct iked_sa		 key;
 	struct iked_addr	 addr;
-	uint32_t		 mask, host, lower, upper, start;
+	uint32_t		 mask, host, lower, upper, start, nhost;
 	size_t			 i;
 
 	switch (family) {
@@ -5092,15 +5092,13 @@ ikev2_cp_setaddr(struct iked *env, struct iked_sa *sa, sa_family_t family)
 		return (-1);
 	}
 
-	/* truncate prefixlen in the v6 case */
-	mask = prefixlen2mask(ikecfg->cfg.address.addr_mask);
-
 	switch (addr.addr_af) {
 	case AF_INET:
 		cfg4 = (struct sockaddr_in *)&ikecfg->cfg.address.addr;
 		in4 = (struct sockaddr_in *)&addr.addr;
 		in4->sin_family = AF_INET;
 		in4->sin_len = sizeof(*in4);
+		mask = prefixlen2mask(ikecfg->cfg.address.addr_mask);
 		lower = ntohl(cfg4->sin_addr.s_addr & ~mask);
 		key.sa_addrpool = &addr;
 		break;
@@ -5109,7 +5107,12 @@ ikev2_cp_setaddr(struct iked *env, struct iked_sa *sa, sa_family_t family)
 		in6 = (struct sockaddr_in6 *)&addr.addr;
 		in6->sin6_family = AF_INET6;
 		in6->sin6_len = sizeof(*in6);
-		lower = cfg6->sin6_addr.s6_addr[3];
+		/* truncate prefixlen to get a 32-bit space */
+		mask = (ikecfg->cfg.address.addr_mask >= 96)
+		    ? prefixlen2mask(ikecfg->cfg.address.addr_mask - 96)
+		    : prefixlen2mask(0);
+		memcpy(&lower, &cfg6->sin6_addr.s6_addr[12], sizeof(uint32_t));
+		lower = ntohl(lower & ~mask);
 		key.sa_addrpool6 = &addr;
 		break;
 	default:
@@ -5133,7 +5136,9 @@ ikev2_cp_setaddr(struct iked *env, struct iked_sa *sa, sa_family_t family)
 			break;
 		case AF_INET6:
 			memcpy(in6, cfg6, sizeof(*in6));
-			in6->sin6_addr.s6_addr[3] = htonl(host);
+			nhost = htonl(host);
+			memcpy(&in6->sin6_addr.s6_addr[12], &nhost,
+			    sizeof(uint32_t));
 			break;
 		}
 		if ((addr.addr_af == AF_INET &&
