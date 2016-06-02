@@ -1390,7 +1390,7 @@ main(int argc, char **argv)
 		}
 		if (mode != (SIO_PLAY | SIO_REC)) {
 			log_puts("both -i and -o required\n");
-			return 0;
+			return 1;
 		}
 		if (!offline())
 			return 1;
