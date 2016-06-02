@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.16 2016/06/02 00:34:13 dlg Exp $ */
+/*	$OpenBSD: art.c,v 1.17 2016/06/02 00:39:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -89,11 +89,18 @@ void
 art_init(void)
 {
 	pool_init(&an_pool, sizeof(struct art_node), 0, 0, 0, "art_node", NULL);
+	pool_setipl(&an_pool, IPL_SOFTNET);
+
 	pool_init(&at_pool, sizeof(struct art_table), 0, 0, 0, "art_table",
 	    NULL);
+	pool_setipl(&at_pool, IPL_SOFTNET);
+
 	pool_init(&at_heap_4_pool, AT_HEAPSIZE(4), 0, 0, 0, "art_heap4", NULL);
+	pool_setipl(&at_heap_4_pool, IPL_SOFTNET);
+
 	pool_init(&at_heap_8_pool, AT_HEAPSIZE(8), 0, 0, 0, "art_heap8",
 	    &pool_allocator_single);
+	pool_setipl(&at_heap_8_pool, IPL_SOFTNET);
 }
 
 /*
