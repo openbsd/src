@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.130 2016/06/01 04:53:54 guenther Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.131 2016/06/02 17:05:58 schwarze Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -526,8 +526,9 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 		}
 		if ((flags & MAP_ANON) != 0 ||
 		    ((flags & MAP_PRIVATE) != 0 && (prot & PROT_WRITE) != 0)) {
-			if (size >
-			    (p->p_rlimit[RLIMIT_DATA].rlim_cur - ptoa(p->p_vmspace->vm_dused))) {
+			if (p->p_rlimit[RLIMIT_DATA].rlim_cur < size ||
+			    p->p_rlimit[RLIMIT_DATA].rlim_cur - size <
+			    ptoa(p->p_vmspace->vm_dused)) {
 				error = ENOMEM;
 				goto out;
 			}
@@ -545,8 +546,9 @@ is_anon:	/* label for SunOS style /dev/zero */
 
 		if ((flags & MAP_ANON) != 0 ||
 		    ((flags & MAP_PRIVATE) != 0 && (prot & PROT_WRITE) != 0)) {
-			if (size >
-			    (p->p_rlimit[RLIMIT_DATA].rlim_cur - ptoa(p->p_vmspace->vm_dused))) {
+			if (p->p_rlimit[RLIMIT_DATA].rlim_cur < size ||
+			    p->p_rlimit[RLIMIT_DATA].rlim_cur - size <
+			    ptoa(p->p_vmspace->vm_dused)) {
 				return ENOMEM;
 			}
 		}
