@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.36 2016/05/30 18:57:04 rpe Exp $
+#	$OpenBSD: install.md,v 1.37 2016/06/03 23:50:21 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -125,12 +125,13 @@ __EOT
 			cat <<__EOT
 
 You will now create one MBR partition to contain your OpenBSD data
-and one MBR partition on which kernels are located which are loaded
-by U-Boot. Neither partition will overlap any other partition.
+and one MBR partition on which the OpenBSD boot program is located.
+Neither partition will overlap any other partition.
 
 The OpenBSD MBR partition will have an id of 'A6' and the boot MBR
-partition will have an id of '${bootparttype}' (${bootfstype}). The boot partition will be
-at least 16MB and be the first 'MSDOS' partition on the disk.
+partition will have an id of '${bootparttype}' (${bootfstype}).
+The boot partition will be at least 16MB and be the first 'MSDOS'
+partition on the disk.
 
 $(fdisk ${_disk})
 __EOT
