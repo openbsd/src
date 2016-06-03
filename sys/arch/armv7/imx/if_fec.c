@@ -1,4 +1,4 @@
-/* $OpenBSD: imxenet.c,v 1.22 2016/05/19 09:54:18 jsg Exp $ */
+/* $OpenBSD: if_fec.c,v 1.1 2016/06/03 01:36:46 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -43,7 +43,6 @@
 #include <dev/mii/miivar.h>
 
 #include <armv7/armv7/armv7var.h>
-#include <armv7/imx/imxenet.h>
 #include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxgpiovar.h>
 #include <armv7/imx/imxocotpvar.h>
@@ -156,67 +155,133 @@
 #define HCLR4(sc, reg, bits)						\
 	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
 
-struct imxenet_softc {
-	struct device			sc_dev;
-	struct arpcom			sc_ac;
-	struct mii_data			sc_mii;
-	int				sc_phyno;
-	bus_space_tag_t			sc_iot;
-	bus_space_handle_t		sc_ioh;
-	void				*sc_ih; /* Interrupt handler */
-	bus_dma_tag_t			sc_dma_tag;
-	uint32_t			intr_status;	/* soft interrupt status */
-	struct imxenet_dma_alloc	txdma;		/* bus_dma glue for tx desc */
-	struct imxenet_buf_desc		*tx_desc_base;
-	struct imxenet_dma_alloc	rxdma;		/* bus_dma glue for rx desc */
-	struct imxenet_buf_desc		*rx_desc_base;
-	struct imxenet_dma_alloc	tbdma;		/* bus_dma glue for packets */
-	struct imxenet_buffer		*tx_buffer_base;
-	struct imxenet_dma_alloc	rbdma;		/* bus_dma glue for packets */
-	struct imxenet_buffer		*rx_buffer_base;
-	int				cur_tx;
-	int				cur_rx;
+/* what should we use? */
+#define ENET_MAX_TXD		32
+#define ENET_MAX_RXD		32
+
+#define ENET_MAX_PKT_SIZE	1536
+
+#define ENET_ROUNDUP(size, unit) (((size) + (unit) - 1) & ~((unit) - 1))
+
+/* buffer descriptor status bits */
+#define ENET_RXD_EMPTY		(1 << 15)
+#define ENET_RXD_WRAP		(1 << 13)
+#define ENET_RXD_LAST		(1 << 11)
+#define ENET_RXD_MISS		(1 << 8)
+#define ENET_RXD_BC		(1 << 7)
+#define ENET_RXD_MC		(1 << 6)
+#define ENET_RXD_LG		(1 << 5)
+#define ENET_RXD_NO		(1 << 4)
+#define ENET_RXD_CR		(1 << 2)
+#define ENET_RXD_OV		(1 << 1)
+#define ENET_RXD_TR		(1 << 0)
+
+#define ENET_TXD_READY		(1 << 15)
+#define ENET_TXD_WRAP		(1 << 13)
+#define ENET_TXD_LAST		(1 << 11)
+#define ENET_TXD_TC		(1 << 10)
+#define ENET_TXD_ABC		(1 << 9)
+#define ENET_TXD_STATUS_MASK	0x3ff
+
+#ifdef ENET_ENHANCED_BD
+/* enhanced */
+#define ENET_RXD_INT		(1 << 23)
+
+#define ENET_TXD_INT		(1 << 30)
+#endif
+
+/*
+ * Bus dma allocation structure used by
+ * fec_dma_malloc and fec_dma_free.
+ */
+struct fec_dma_alloc {
+	bus_addr_t		dma_paddr;
+	caddr_t			dma_vaddr;
+	bus_dma_tag_t		dma_tag;
+	bus_dmamap_t		dma_map;
+	bus_dma_segment_t	dma_seg;
+	bus_size_t		dma_size;
+	int			dma_nseg;
 };
 
-struct imxenet_softc *imxenet_sc;
-
-void imxenet_attach(struct device *, struct device *, void *);
-int imxenet_enaddr_valid(u_char *);
-void imxenet_enaddr(struct imxenet_softc *);
-void imxenet_chip_init(struct imxenet_softc *);
-int imxenet_ioctl(struct ifnet *, u_long, caddr_t);
-void imxenet_start(struct ifnet *);
-int imxenet_encap(struct imxenet_softc *, struct mbuf *);
-void imxenet_init_txd(struct imxenet_softc *);
-void imxenet_init_rxd(struct imxenet_softc *);
-void imxenet_init(struct imxenet_softc *);
-void imxenet_stop(struct imxenet_softc *);
-void imxenet_iff(struct imxenet_softc *);
-struct mbuf * imxenet_newbuf(void);
-int imxenet_intr(void *);
-void imxenet_recv(struct imxenet_softc *);
-int imxenet_wait_intr(struct imxenet_softc *, int, int);
-int imxenet_miibus_readreg(struct device *, int, int);
-void imxenet_miibus_writereg(struct device *, int, int, int);
-void imxenet_miibus_statchg(struct device *);
-int imxenet_ifmedia_upd(struct ifnet *);
-void imxenet_ifmedia_sts(struct ifnet *, struct ifmediareq *);
-int imxenet_dma_malloc(struct imxenet_softc *, bus_size_t, struct imxenet_dma_alloc *);
-void imxenet_dma_free(struct imxenet_softc *, struct imxenet_dma_alloc *);
-
-struct cfattach imxenet_ca = {
-	sizeof (struct imxenet_softc), NULL, imxenet_attach
+struct fec_buf_desc {
+	uint16_t data_length;		/* payload's length in bytes */
+	uint16_t status;		/* BD's status (see datasheet) */
+	uint32_t data_pointer;		/* payload's buffer address */
+#ifdef ENET_ENHANCED_BD
+	uint32_t enhanced_status;	/* enhanced status with IEEE 1588 */
+	uint32_t reserved0;		/* reserved */
+	uint32_t update_done;		/* buffer descriptor update done */
+	uint32_t timestamp;		/* IEEE 1588 timestamp */
+	uint32_t reserved1[2];		/* reserved */
+#endif
 };
 
-struct cfdriver imxenet_cd = {
-	NULL, "imxenet", DV_IFNET
+struct fec_buffer {
+	uint8_t data[ENET_MAX_PKT_SIZE];
+};
+
+struct fec_softc {
+	struct device		sc_dev;
+	struct arpcom		sc_ac;
+	struct mii_data		sc_mii;
+	int			sc_phyno;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+	void			*sc_ih; /* Interrupt handler */
+	bus_dma_tag_t		sc_dma_tag;
+	uint32_t		intr_status;	/* soft interrupt status */
+	struct fec_dma_alloc	txdma;		/* bus_dma glue for tx desc */
+	struct fec_buf_desc	*tx_desc_base;
+	struct fec_dma_alloc	rxdma;		/* bus_dma glue for rx desc */
+	struct fec_buf_desc	*rx_desc_base;
+	struct fec_dma_alloc	tbdma;		/* bus_dma glue for packets */
+	struct fec_buffer	*tx_buffer_base;
+	struct fec_dma_alloc	rbdma;		/* bus_dma glue for packets */
+	struct fec_buffer	*rx_buffer_base;
+	int			cur_tx;
+	int			cur_rx;
+};
+
+struct fec_softc *fec_sc;
+
+void fec_attach(struct device *, struct device *, void *);
+int fec_enaddr_valid(u_char *);
+void fec_enaddr(struct fec_softc *);
+void fec_chip_init(struct fec_softc *);
+int fec_ioctl(struct ifnet *, u_long, caddr_t);
+void fec_start(struct ifnet *);
+int fec_encap(struct fec_softc *, struct mbuf *);
+void fec_init_txd(struct fec_softc *);
+void fec_init_rxd(struct fec_softc *);
+void fec_init(struct fec_softc *);
+void fec_stop(struct fec_softc *);
+void fec_iff(struct fec_softc *);
+struct mbuf * fec_newbuf(void);
+int fec_intr(void *);
+void fec_recv(struct fec_softc *);
+int fec_wait_intr(struct fec_softc *, int, int);
+int fec_miibus_readreg(struct device *, int, int);
+void fec_miibus_writereg(struct device *, int, int, int);
+void fec_miibus_statchg(struct device *);
+int fec_ifmedia_upd(struct ifnet *);
+void fec_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+int fec_dma_malloc(struct fec_softc *, bus_size_t, struct fec_dma_alloc *);
+void fec_dma_free(struct fec_softc *, struct fec_dma_alloc *);
+
+struct cfattach fec_ca = {
+	sizeof (struct fec_softc), NULL, fec_attach
+};
+
+struct cfdriver fec_cd = {
+	NULL, "fec", DV_IFNET
 };
 
 void
-imxenet_attach(struct device *parent, struct device *self, void *args)
+fec_attach(struct device *parent, struct device *self, void *args)
 {
 	struct armv7_attach_args *aa = args;
-	struct imxenet_softc *sc = (struct imxenet_softc *) self;
+	struct fec_softc *sc = (struct fec_softc *) self;
 	struct mii_data *mii;
 	struct ifnet *ifp;
 	int tsize, rsize, tbsize, rbsize, s;
@@ -224,7 +289,7 @@ imxenet_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_iot = aa->aa_iot;
 	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
 	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
-		panic("imxenet_attach: bus_space_map failed!");
+		panic("fec_attach: bus_space_map failed!");
 
 	sc->sc_dma_tag = aa->aa_dmat;
 
@@ -284,7 +349,7 @@ imxenet_attach(struct device *parent, struct device *self, void *args)
 	printf("\n");
 
 	/* Figure out the hardware address. Must happen before reset. */
-	imxenet_enaddr(sc);
+	fec_enaddr(sc);
 
 	/* reset the controller */
 	HSET4(sc, ENET_ECR, ENET_ECR_RESET);
@@ -294,47 +359,47 @@ imxenet_attach(struct device *parent, struct device *self, void *args)
 	HWRITE4(sc, ENET_EIR, 0xffffffff);
 
 	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_NET,
-	    imxenet_intr, sc, sc->sc_dev.dv_xname);
+	    fec_intr, sc, sc->sc_dev.dv_xname);
 
-	tsize = ENET_MAX_TXD * sizeof(struct imxenet_buf_desc);
+	tsize = ENET_MAX_TXD * sizeof(struct fec_buf_desc);
 	tsize = ENET_ROUNDUP(tsize, PAGE_SIZE);
 
-	if (imxenet_dma_malloc(sc, tsize, &sc->txdma)) {
+	if (fec_dma_malloc(sc, tsize, &sc->txdma)) {
 		printf("%s: Unable to allocate tx_desc memory\n",
 		    sc->sc_dev.dv_xname);
 		goto bad;
 	}
-	sc->tx_desc_base = (struct imxenet_buf_desc *)sc->txdma.dma_vaddr;
+	sc->tx_desc_base = (struct fec_buf_desc *)sc->txdma.dma_vaddr;
 
-	rsize = ENET_MAX_RXD * sizeof(struct imxenet_buf_desc);
+	rsize = ENET_MAX_RXD * sizeof(struct fec_buf_desc);
 	rsize = ENET_ROUNDUP(rsize, PAGE_SIZE);
 
-	if (imxenet_dma_malloc(sc, rsize, &sc->rxdma)) {
+	if (fec_dma_malloc(sc, rsize, &sc->rxdma)) {
 		printf("%s: Unable to allocate rx_desc memory\n",
 		    sc->sc_dev.dv_xname);
 		goto txdma;
 	}
-	sc->rx_desc_base = (struct imxenet_buf_desc *)sc->rxdma.dma_vaddr;
+	sc->rx_desc_base = (struct fec_buf_desc *)sc->rxdma.dma_vaddr;
 
 	tbsize = ENET_MAX_TXD * ENET_MAX_PKT_SIZE;
 	tbsize = ENET_ROUNDUP(tbsize, PAGE_SIZE);
 
-	if (imxenet_dma_malloc(sc, tbsize, &sc->tbdma)) {
+	if (fec_dma_malloc(sc, tbsize, &sc->tbdma)) {
 		printf("%s: Unable to allocate tx_buffer memory\n",
 		    sc->sc_dev.dv_xname);
 		goto rxdma;
 	}
-	sc->tx_buffer_base = (struct imxenet_buffer *)sc->tbdma.dma_vaddr;
+	sc->tx_buffer_base = (struct fec_buffer *)sc->tbdma.dma_vaddr;
 
 	rbsize = ENET_MAX_RXD * ENET_MAX_PKT_SIZE;
 	rbsize = ENET_ROUNDUP(rbsize, PAGE_SIZE);
 
-	if (imxenet_dma_malloc(sc, rbsize, &sc->rbdma)) {
+	if (fec_dma_malloc(sc, rbsize, &sc->rbdma)) {
 		printf("%s: Unable to allocate rx_buffer memory\n",
 		    sc->sc_dev.dv_xname);
 		goto tbdma;
 	}
-	sc->rx_buffer_base = (struct imxenet_buffer *)sc->rbdma.dma_vaddr;
+	sc->rx_buffer_base = (struct fec_buffer *)sc->rbdma.dma_vaddr;
 
 	sc->cur_tx = 0;
 	sc->cur_rx = 0;
@@ -345,25 +410,25 @@ imxenet_attach(struct device *parent, struct device *self, void *args)
 	ifp->if_softc = sc;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_ioctl = imxenet_ioctl;
-	ifp->if_start = imxenet_start;
+	ifp->if_ioctl = fec_ioctl;
+	ifp->if_start = fec_start;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	printf("%s: address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	/* initialize the chip */
-	imxenet_chip_init(sc);
+	fec_chip_init(sc);
 
 	/* Initialize MII/media info. */
 	mii = &sc->sc_mii;
 	mii->mii_ifp = ifp;
-	mii->mii_readreg = imxenet_miibus_readreg;
-	mii->mii_writereg = imxenet_miibus_writereg;
-	mii->mii_statchg = imxenet_miibus_statchg;
+	mii->mii_readreg = fec_miibus_readreg;
+	mii->mii_writereg = fec_miibus_writereg;
+	mii->mii_statchg = fec_miibus_statchg;
 	mii->mii_flags = MIIF_AUTOTSLEEP;
 
-	ifmedia_init(&mii->mii_media, 0, imxenet_ifmedia_upd, imxenet_ifmedia_sts);
+	ifmedia_init(&mii->mii_media, 0, fec_ifmedia_upd, fec_ifmedia_sts);
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
@@ -376,22 +441,22 @@ imxenet_attach(struct device *parent, struct device *self, void *args)
 	ether_ifattach(ifp);
 	splx(s);
 
-	imxenet_sc = sc;
+	fec_sc = sc;
 	return;
 
 tbdma:
-	imxenet_dma_free(sc, &sc->tbdma);
+	fec_dma_free(sc, &sc->tbdma);
 rxdma:
-	imxenet_dma_free(sc, &sc->rxdma);
+	fec_dma_free(sc, &sc->rxdma);
 txdma:
-	imxenet_dma_free(sc, &sc->txdma);
+	fec_dma_free(sc, &sc->txdma);
 bad:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, aa->aa_dev->mem[0].size);
 }
 
 /* Try to determine a valid hardware address */
 void
-imxenet_enaddr(struct imxenet_softc *sc)
+fec_enaddr(struct fec_softc *sc)
 {
 	u_int32_t tmp;
 	u_char enaddr[6];
@@ -402,7 +467,7 @@ imxenet_enaddr(struct imxenet_softc *sc)
 	/* Try to get an address from COTP */
 	memset(enaddr, 0xff, ETHER_ADDR_LEN);
 	imxocotp_get_ethernet_address(enaddr);
-	if (imxenet_enaddr_valid(enaddr)) {
+	if (fec_enaddr_valid(enaddr)) {
 		memcpy(sc->sc_ac.ac_enaddr, enaddr, ETHER_ADDR_LEN);
 		return;
 	}
@@ -416,7 +481,7 @@ imxenet_enaddr(struct imxenet_softc *sc)
 	tmp = HREAD4(sc, ENET_PAUR);
 	sc->sc_ac.ac_enaddr[4] = (tmp >> 24) & 0xff;
 	sc->sc_ac.ac_enaddr[5] = (tmp >> 16) & 0xff;
-	if (imxenet_enaddr_valid(sc->sc_ac.ac_enaddr))
+	if (fec_enaddr_valid(sc->sc_ac.ac_enaddr))
 		return;
 
 	/* No usable address found, use a random one */
@@ -426,7 +491,7 @@ imxenet_enaddr(struct imxenet_softc *sc)
 }
 
 int
-imxenet_enaddr_valid(u_char addr[6])
+fec_enaddr_valid(u_char addr[6])
 {
 	/* Multicast */
 	if (ETHER_IS_MULTICAST(addr))
@@ -442,7 +507,7 @@ imxenet_enaddr_valid(u_char addr[6])
 }
 
 void
-imxenet_chip_init(struct imxenet_softc *sc)
+fec_chip_init(struct fec_softc *sc)
 {
 	struct device *dev = (struct device *) sc;
 	int phy = 0;
@@ -481,64 +546,64 @@ imxenet_chip_init(struct imxenet_softc *sc)
 	{
 	case BOARD_ID_IMX6_UDOO:	/* Micrel KSZ9031 */
 		/* prefer master mode */
-		imxenet_miibus_writereg(dev, phy, 0x9, 0x1c00);
+		fec_miibus_writereg(dev, phy, 0x9, 0x1c00);
 
 		/* control data pad skew */
-		imxenet_miibus_writereg(dev, phy, 0x0d, 0x0002);
-		imxenet_miibus_writereg(dev, phy, 0x0e, 0x0004);
-		imxenet_miibus_writereg(dev, phy, 0x0d, 0x4002);
-		imxenet_miibus_writereg(dev, phy, 0x0e, 0x0000);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x0002);
+		fec_miibus_writereg(dev, phy, 0x0e, 0x0004);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x4002);
+		fec_miibus_writereg(dev, phy, 0x0e, 0x0000);
 
 		/* rx data pad skew */
-		imxenet_miibus_writereg(dev, phy, 0x0d, 0x0002);
-		imxenet_miibus_writereg(dev, phy, 0x0e, 0x0005);
-		imxenet_miibus_writereg(dev, phy, 0x0d, 0x4002);
-		imxenet_miibus_writereg(dev, phy, 0x0e, 0x0000);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x0002);
+		fec_miibus_writereg(dev, phy, 0x0e, 0x0005);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x4002);
+		fec_miibus_writereg(dev, phy, 0x0e, 0x0000);
 
 		/* tx data pad skew */
-		imxenet_miibus_writereg(dev, phy, 0x0d, 0x0002);
-		imxenet_miibus_writereg(dev, phy, 0x0e, 0x0006);
-		imxenet_miibus_writereg(dev, phy, 0x0d, 0x4002);
-		imxenet_miibus_writereg(dev, phy, 0x0e, 0x0000);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x0002);
+		fec_miibus_writereg(dev, phy, 0x0e, 0x0006);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x4002);
+		fec_miibus_writereg(dev, phy, 0x0e, 0x0000);
 
 		/* gtx and rx data pad skew */
-		imxenet_miibus_writereg(dev, phy, 0x0d, 0x0002);
-		imxenet_miibus_writereg(dev, phy, 0x0e, 0x0008);
-		imxenet_miibus_writereg(dev, phy, 0x0d, 0x4002);
-		imxenet_miibus_writereg(dev, phy, 0x0e, 0x03ff);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x0002);
+		fec_miibus_writereg(dev, phy, 0x0e, 0x0008);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x4002);
+		fec_miibus_writereg(dev, phy, 0x0e, 0x03ff);
 		break;
 	case BOARD_ID_IMX6_SABRELITE:	/* Micrel KSZ9021 */
 		/* prefer master mode */
-		imxenet_miibus_writereg(dev, phy, 0x9, 0x1f00);
+		fec_miibus_writereg(dev, phy, 0x9, 0x1f00);
 
 		/* min rx data delay */
-		imxenet_miibus_writereg(dev, phy, 0x0b, 0x8105);
-		imxenet_miibus_writereg(dev, phy, 0x0c, 0x0000);
+		fec_miibus_writereg(dev, phy, 0x0b, 0x8105);
+		fec_miibus_writereg(dev, phy, 0x0c, 0x0000);
 
 		/* min tx data delay */
-		imxenet_miibus_writereg(dev, phy, 0x0b, 0x8106);
-		imxenet_miibus_writereg(dev, phy, 0x0c, 0x0000);
+		fec_miibus_writereg(dev, phy, 0x0b, 0x8106);
+		fec_miibus_writereg(dev, phy, 0x0c, 0x0000);
 
 		/* max rx/tx clock delay, min rx/tx control delay */
-		imxenet_miibus_writereg(dev, phy, 0x0b, 0x8104);
-		imxenet_miibus_writereg(dev, phy, 0x0c, 0xf0f0);
-		imxenet_miibus_writereg(dev, phy, 0x0b, 0x104);
+		fec_miibus_writereg(dev, phy, 0x0b, 0x8104);
+		fec_miibus_writereg(dev, phy, 0x0c, 0xf0f0);
+		fec_miibus_writereg(dev, phy, 0x0b, 0x104);
 
 		/* enable all interrupts */
-		imxenet_miibus_writereg(dev, phy, 0x1b, 0xff00);
+		fec_miibus_writereg(dev, phy, 0x1b, 0xff00);
 		break;
 	case BOARD_ID_IMX6_NOVENA:	/* Micrel KSZ9021 */
 		/* TXEN_SKEW_PS/TXC_SKEW_PS/RXDV_SKEW_PS/RXC_SKEW_PS */
-		imxenet_miibus_writereg(dev, phy, 0x0b, 0x8104);
-		imxenet_miibus_writereg(dev, phy, 0x0c, 0xf0f0);
+		fec_miibus_writereg(dev, phy, 0x0b, 0x8104);
+		fec_miibus_writereg(dev, phy, 0x0c, 0xf0f0);
 
 		/* RXD0_SKEW_PS/RXD1_SKEW_PS/RXD2_SKEW_PS/RXD3_SKEW_PS */
-		imxenet_miibus_writereg(dev, phy, 0x0b, 0x8105);
-		imxenet_miibus_writereg(dev, phy, 0x0c, 0x0000);
+		fec_miibus_writereg(dev, phy, 0x0b, 0x8105);
+		fec_miibus_writereg(dev, phy, 0x0c, 0x0000);
 
 		/* TXD0_SKEW_PS/TXD1_SKEW_PS/TXD2_SKEW_PS/TXD3_SKEW_PS */
-		imxenet_miibus_writereg(dev, phy, 0x0b, 0x8106);
-		imxenet_miibus_writereg(dev, phy, 0x0c, 0xffff);
+		fec_miibus_writereg(dev, phy, 0x0b, 0x8106);
+		fec_miibus_writereg(dev, phy, 0x0c, 0xffff);
 		break;
 	case BOARD_ID_IMX6_CUBOXI:		/* AR8035 */
 	case BOARD_ID_IMX6_HUMMINGBOARD:	/* AR8035 */
@@ -546,39 +611,39 @@ imxenet_chip_init(struct imxenet_softc *sc)
 	case BOARD_ID_IMX6_UTILITE:
 	case BOARD_ID_IMX6_WANDBOARD:		/* AR8031 */
 		/* disable SmartEEE */
-		imxenet_miibus_writereg(dev, phy, 0x0d, 0x0003);
-		imxenet_miibus_writereg(dev, phy, 0x0e, 0x805d);
-		imxenet_miibus_writereg(dev, phy, 0x0d, 0x4003);
-		reg = imxenet_miibus_readreg(dev, phy, 0x0e);
-		imxenet_miibus_writereg(dev, phy, 0x0e, reg & ~0x0100);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x0003);
+		fec_miibus_writereg(dev, phy, 0x0e, 0x805d);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x4003);
+		reg = fec_miibus_readreg(dev, phy, 0x0e);
+		fec_miibus_writereg(dev, phy, 0x0e, reg & ~0x0100);
 
 		/* enable 125MHz clk output for AR8031 */
-		imxenet_miibus_writereg(dev, phy, 0x0d, 0x0007);
-		imxenet_miibus_writereg(dev, phy, 0x0e, 0x8016);
-		imxenet_miibus_writereg(dev, phy, 0x0d, 0x4007);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x0007);
+		fec_miibus_writereg(dev, phy, 0x0e, 0x8016);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x4007);
 
-		reg = imxenet_miibus_readreg(dev, phy, 0x0e) & 0xffe3;
-		imxenet_miibus_writereg(dev, phy, 0x0e, reg | 0x18);
+		reg = fec_miibus_readreg(dev, phy, 0x0e) & 0xffe3;
+		fec_miibus_writereg(dev, phy, 0x0e, reg | 0x18);
 
 		/* tx clock delay */
-		imxenet_miibus_writereg(dev, phy, 0x1d, 0x0005);
-		reg = imxenet_miibus_readreg(dev, phy, 0x1e);
-		imxenet_miibus_writereg(dev, phy, 0x1e, reg | 0x0100);
+		fec_miibus_writereg(dev, phy, 0x1d, 0x0005);
+		reg = fec_miibus_readreg(dev, phy, 0x1e);
+		fec_miibus_writereg(dev, phy, 0x1e, reg | 0x0100);
 
 		/* phy power */
-		reg = imxenet_miibus_readreg(dev, phy, 0x00);
+		reg = fec_miibus_readreg(dev, phy, 0x00);
 		if (reg & 0x0800)
-			imxenet_miibus_writereg(dev, phy, 0x00, reg & ~0x0800);
+			fec_miibus_writereg(dev, phy, 0x00, reg & ~0x0800);
 		break;
 	}
 }
 
 void
-imxenet_init_rxd(struct imxenet_softc *sc)
+fec_init_rxd(struct fec_softc *sc)
 {
 	int i;
 
-	memset(sc->rx_desc_base, 0, ENET_MAX_RXD * sizeof(struct imxenet_buf_desc));
+	memset(sc->rx_desc_base, 0, ENET_MAX_RXD * sizeof(struct fec_buf_desc));
 
 	for (i = 0; i < ENET_MAX_RXD; i++)
 	{
@@ -593,11 +658,11 @@ imxenet_init_rxd(struct imxenet_softc *sc)
 }
 
 void
-imxenet_init_txd(struct imxenet_softc *sc)
+fec_init_txd(struct fec_softc *sc)
 {
 	int i;
 
-	memset(sc->tx_desc_base, 0, ENET_MAX_TXD * sizeof(struct imxenet_buf_desc));
+	memset(sc->tx_desc_base, 0, ENET_MAX_TXD * sizeof(struct fec_buf_desc));
 
 	for (i = 0; i < ENET_MAX_TXD; i++)
 	{
@@ -608,7 +673,7 @@ imxenet_init_txd(struct imxenet_softc *sc)
 }
 
 void
-imxenet_init(struct imxenet_softc *sc)
+fec_init(struct fec_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	int speed = 0;
@@ -638,8 +703,8 @@ imxenet_init(struct imxenet_softc *sc)
 	HWRITE4(sc, ENET_RDSR, sc->rxdma.dma_paddr);
 
 	/* init descriptor */
-	imxenet_init_txd(sc);
-	imxenet_init_rxd(sc);
+	fec_init_txd(sc);
+	fec_init_rxd(sc);
 
 	/* set it to full-duplex */
 	HWRITE4(sc, ENET_TCR, ENET_TCR_FDEN);
@@ -684,7 +749,7 @@ imxenet_init(struct imxenet_softc *sc)
 	HWRITE4(sc, ENET_RDAR, ENET_RDAR_RDAR);
 
 	/* program promiscuous mode and multicast filters */
-	imxenet_iff(sc);
+	fec_iff(sc);
 
 	/* Indicate we are up and running. */
 	ifp->if_flags |= IFF_RUNNING;
@@ -694,11 +759,11 @@ imxenet_init(struct imxenet_softc *sc)
 	HWRITE4(sc, ENET_EIMR, ENET_EIR_TXF | ENET_EIR_RXF);
 	HWRITE4(sc, ENET_EIMR, 0xffffffff);
 
-	imxenet_start(ifp);
+	fec_start(ifp);
 }
 
 void
-imxenet_stop(struct imxenet_softc *sc)
+fec_stop(struct fec_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
@@ -715,7 +780,7 @@ imxenet_stop(struct imxenet_softc *sc)
 }
 
 void
-imxenet_iff(struct imxenet_softc *sc)
+fec_iff(struct fec_softc *sc)
 {
 	struct arpcom *ac = &sc->sc_ac;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
@@ -751,9 +816,9 @@ imxenet_iff(struct imxenet_softc *sc)
 }
 
 int
-imxenet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+fec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct imxenet_softc *sc = ifp->if_softc;
+	struct fec_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -763,7 +828,7 @@ imxenet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
-			imxenet_init(sc);
+			fec_init(sc);
 		break;
 
 	case SIOCSIFFLAGS:
@@ -771,10 +836,10 @@ imxenet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				error = ENETRESET;
 			else
-				imxenet_init(sc);
+				fec_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				imxenet_stop(sc);
+				fec_stop(sc);
 		}
 		break;
 
@@ -789,7 +854,7 @@ imxenet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			imxenet_iff(sc);
+			fec_iff(sc);
 		error = 0;
 	}
 
@@ -798,9 +863,9 @@ imxenet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 void
-imxenet_start(struct ifnet *ifp)
+fec_start(struct ifnet *ifp)
 {
-	struct imxenet_softc *sc = ifp->if_softc;
+	struct fec_softc *sc = ifp->if_softc;
 	struct mbuf *m_head = NULL;
 
 	if (ifq_is_oactive(&ifp->if_snd) || !(ifp->if_flags & IFF_RUNNING))
@@ -811,7 +876,7 @@ imxenet_start(struct ifnet *ifp)
 		if (m_head == NULL)
 			break;
 
-		if (imxenet_encap(sc, m_head)) {
+		if (fec_encap(sc, m_head)) {
 			ifq_deq_rollback(&ifp->if_snd, m_head);
 			ifq_set_oactive(&ifp->if_snd);
 			break;
@@ -831,15 +896,15 @@ imxenet_start(struct ifnet *ifp)
 }
 
 int
-imxenet_encap(struct imxenet_softc *sc, struct mbuf *m)
+fec_encap(struct fec_softc *sc, struct mbuf *m)
 {
 	if (sc->tx_desc_base[sc->cur_tx].status & ENET_TXD_READY) {
-		printf("imxenet: tx queue full!\n");
+		printf("fec: tx queue full!\n");
 		return EIO;
 	}
 
 	if (m->m_pkthdr.len > ENET_MAX_PKT_SIZE) {
-		printf("imxenet: packet too big\n");
+		printf("fec: packet too big\n");
 		return EIO;
 	}
 
@@ -861,8 +926,8 @@ imxenet_encap(struct imxenet_softc *sc, struct mbuf *m)
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map,
-	    sizeof(struct imxenet_buf_desc) * sc->cur_tx,
-	    sizeof(struct imxenet_buf_desc),
+	    sizeof(struct fec_buf_desc) * sc->cur_tx,
+	    sizeof(struct fec_buf_desc),
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 
@@ -878,7 +943,7 @@ imxenet_encap(struct imxenet_softc *sc, struct mbuf *m)
 }
 
 struct mbuf *
-imxenet_newbuf(void)
+fec_newbuf(void)
 {
 	struct mbuf *m;
 
@@ -899,9 +964,9 @@ imxenet_newbuf(void)
  * Established by attachment driver at interrupt priority IPL_NET.
  */
 int
-imxenet_intr(void *arg)
+fec_intr(void *arg)
 {
-	struct imxenet_softc *sc = arg;
+	struct fec_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	u_int32_t status;
 
@@ -925,18 +990,18 @@ imxenet_intr(void *arg)
 	 */
 	if (ISSET(status, ENET_EIR_RXF)) {
 		if (ifp->if_flags & IFF_RUNNING)
-			imxenet_recv(sc);
+			fec_recv(sc);
 	}
 
 	/* Try to transmit. */
 	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
-		imxenet_start(ifp);
+		fec_start(ifp);
 
 	return 1;
 }
 
 void
-imxenet_recv(struct imxenet_softc *sc)
+fec_recv(struct fec_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
@@ -952,7 +1017,7 @@ imxenet_recv(struct imxenet_softc *sc)
 	while (!(sc->rx_desc_base[sc->cur_rx].status & ENET_RXD_EMPTY))
 	{
 		struct mbuf *m;
-		m = imxenet_newbuf();
+		m = fec_newbuf();
 
 		if (m == NULL) {
 			ifp->if_ierrors++;
@@ -973,8 +1038,8 @@ imxenet_recv(struct imxenet_softc *sc)
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map,
-		    sizeof(struct imxenet_buf_desc) * sc->cur_rx,
-		    sizeof(struct imxenet_buf_desc),
+		    sizeof(struct fec_buf_desc) * sc->cur_rx,
+		    sizeof(struct fec_buf_desc),
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		if (sc->rx_desc_base[sc->cur_rx].status & ENET_RXD_WRAP)
@@ -993,7 +1058,7 @@ done:
 }
 
 int
-imxenet_wait_intr(struct imxenet_softc *sc, int mask, int timo)
+fec_wait_intr(struct fec_softc *sc, int mask, int timo)
 {
 	int status;
 	int s;
@@ -1020,10 +1085,10 @@ imxenet_wait_intr(struct imxenet_softc *sc, int mask, int timo)
  * so we just read the interrupt status registers.
  */
 int
-imxenet_miibus_readreg(struct device *dev, int phy, int reg)
+fec_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	int r = 0;
-	struct imxenet_softc *sc = (struct imxenet_softc *)dev;
+	struct fec_softc *sc = (struct fec_softc *)dev;
 
 	HSET4(sc, ENET_EIR, ENET_EIR_MII);
 
@@ -1039,9 +1104,9 @@ imxenet_miibus_readreg(struct device *dev, int phy, int reg)
 }
 
 void
-imxenet_miibus_writereg(struct device *dev, int phy, int reg, int val)
+fec_miibus_writereg(struct device *dev, int phy, int reg, int val)
 {
-	struct imxenet_softc *sc = (struct imxenet_softc *)dev;
+	struct fec_softc *sc = (struct fec_softc *)dev;
 
 	HSET4(sc, ENET_EIR, ENET_EIR_MII);
 
@@ -1056,9 +1121,9 @@ imxenet_miibus_writereg(struct device *dev, int phy, int reg, int val)
 }
 
 void
-imxenet_miibus_statchg(struct device *dev)
+fec_miibus_statchg(struct device *dev)
 {
-	struct imxenet_softc *sc = (struct imxenet_softc *)dev;
+	struct fec_softc *sc = (struct fec_softc *)dev;
 	int ecr;
 
 	ecr = HREAD4(sc, ENET_ECR);
@@ -1075,9 +1140,9 @@ imxenet_miibus_statchg(struct device *dev)
 }
 
 int
-imxenet_ifmedia_upd(struct ifnet *ifp)
+fec_ifmedia_upd(struct ifnet *ifp)
 {
-	struct imxenet_softc *sc = ifp->if_softc;
+	struct fec_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
 	int err;
 	if (mii->mii_instance) {
@@ -1091,9 +1156,9 @@ imxenet_ifmedia_upd(struct ifnet *ifp)
 }
 
 void
-imxenet_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
+fec_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-	struct imxenet_softc *sc = ifp->if_softc;
+	struct fec_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
 
 	mii_pollstat(mii);
@@ -1106,8 +1171,8 @@ imxenet_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
  * Manage DMA'able memory.
  */
 int
-imxenet_dma_malloc(struct imxenet_softc *sc, bus_size_t size,
-    struct imxenet_dma_alloc *dma)
+fec_dma_malloc(struct fec_softc *sc, bus_size_t size,
+    struct fec_dma_alloc *dma)
 {
 	int r;
 
@@ -1115,7 +1180,7 @@ imxenet_dma_malloc(struct imxenet_softc *sc, bus_size_t size,
 	r = bus_dmamem_alloc(dma->dma_tag, size, ENET_ALIGNMENT, 0, &dma->dma_seg,
 	    1, &dma->dma_nseg, BUS_DMA_NOWAIT);
 	if (r != 0) {
-		printf("%s: imxenet_dma_malloc: bus_dmammem_alloc failed; "
+		printf("%s: fec_dma_malloc: bus_dmammem_alloc failed; "
 			"size %lu, error %d\n", sc->sc_dev.dv_xname,
 			(unsigned long)size, r);
 		goto fail_0;
@@ -1124,7 +1189,7 @@ imxenet_dma_malloc(struct imxenet_softc *sc, bus_size_t size,
 	r = bus_dmamem_map(dma->dma_tag, &dma->dma_seg, dma->dma_nseg, size,
 	    &dma->dma_vaddr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (r != 0) {
-		printf("%s: imxenet_dma_malloc: bus_dmammem_map failed; "
+		printf("%s: fec_dma_malloc: bus_dmammem_map failed; "
 			"size %lu, error %d\n", sc->sc_dev.dv_xname,
 			(unsigned long)size, r);
 		goto fail_1;
@@ -1133,7 +1198,7 @@ imxenet_dma_malloc(struct imxenet_softc *sc, bus_size_t size,
 	r = bus_dmamap_create(dma->dma_tag, size, 1,
 	    size, 0, BUS_DMA_NOWAIT, &dma->dma_map);
 	if (r != 0) {
-		printf("%s: imxenet_dma_malloc: bus_dmamap_create failed; "
+		printf("%s: fec_dma_malloc: bus_dmamap_create failed; "
 			"error %u\n", sc->sc_dev.dv_xname, r);
 		goto fail_2;
 	}
@@ -1142,7 +1207,7 @@ imxenet_dma_malloc(struct imxenet_softc *sc, bus_size_t size,
 			    dma->dma_vaddr, size, NULL,
 			    BUS_DMA_NOWAIT);
 	if (r != 0) {
-		printf("%s: imxenet_dma_malloc: bus_dmamap_load failed; "
+		printf("%s: fec_dma_malloc: bus_dmamap_load failed; "
 			"error %u\n", sc->sc_dev.dv_xname, r);
 		goto fail_3;
 	}
@@ -1165,7 +1230,7 @@ fail_0:
 }
 
 void
-imxenet_dma_free(struct imxenet_softc *sc, struct imxenet_dma_alloc *dma)
+fec_dma_free(struct fec_softc *sc, struct fec_dma_alloc *dma)
 {
 	if (dma->dma_tag == NULL)
 		return;

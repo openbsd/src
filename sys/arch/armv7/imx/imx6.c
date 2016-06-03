@@ -1,4 +1,4 @@
-/* $OpenBSD: imx6.c,v 1.3 2015/05/30 08:09:19 jsg Exp $ */
+/* $OpenBSD: imx6.c,v 1.4 2016/06/03 01:36:46 jsg Exp $ */
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
  * Copyright (c) 2012 Patrick Wildt <patrick@blueri.se>
@@ -333,7 +333,7 @@ struct armv7_dev imx6_devs[] = {
 	/*
 	 * Ethernet
 	 */
-	{ .name = "imxenet",
+	{ .name = "fec",
 	  .unit = 0,
 	  .mem = { { ENET_ADDR, ENET_SIZE } },
 	  .irq = { ENET_IRQ0, ENET_IRQ1 }
