@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.187 2015/12/05 13:17:05 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.188 2016/06/03 17:36:37 benno Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1788,7 +1788,7 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		/* filter by AS */
 		if (req->as.type != AS_NONE &&
 		   !aspath_match(mre->aspath, mre->aspath_len,
-		   req->as.type, req->as.as))
+		   &req->as, req->as.as))
 			continue;
 
 		if (req->flags & F_CTL_DETAIL) {
@@ -1853,7 +1853,7 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		/* filter by AS */
 		if (req->as.type != AS_NONE &&
 		   !aspath_match(mre->aspath, mre->aspath_len,
-		   req->as.type, req->as.as))
+		   &req->as, req->as.as))
 			continue;
 
 		bzero(&net, sizeof(net));

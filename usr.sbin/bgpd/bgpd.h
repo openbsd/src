@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.292 2015/11/06 16:23:26 phessler Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.293 2016/06/03 17:36:37 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -625,6 +625,9 @@ struct filter_as {
 	u_int32_t	as;
 	u_int16_t	flags;
 	enum as_spec	type;
+	u_int8_t	op;
+	u_int32_t	as_min;
+	u_int32_t	as_max;
 };
 
 struct filter_aslen {
@@ -659,7 +662,6 @@ struct filter_extcommunity {
 		u_int64_t	ext_opaq;	/* only 48 bits */
 	}		data;
 };
-
 
 struct ctl_show_rib_request {
 	char			rib[PEER_DESCR_LEN];
@@ -1051,7 +1053,8 @@ const char	*log_ext_subtype(u_int8_t);
 int		 aspath_snprint(char *, size_t, void *, u_int16_t);
 int		 aspath_asprint(char **, void *, u_int16_t);
 size_t		 aspath_strlen(void *, u_int16_t);
-int		 aspath_match(void *, u_int16_t, enum as_spec, u_int32_t);
+int		 aspath_match(void *, u_int16_t, struct filter_as *, u_int32_t);
+int		 as_compare(u_int8_t, u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 u_int32_t	 aspath_extract(const void *, int);
 int		 prefix_compare(const struct bgpd_addr *,
 		    const struct bgpd_addr *, int);

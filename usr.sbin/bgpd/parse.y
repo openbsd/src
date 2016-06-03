@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.286 2015/10/27 18:19:33 mmcc Exp $ */
+/*	$OpenBSD: parse.y,v 1.287 2016/06/03 17:36:37 benno Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -196,7 +196,7 @@ typedef struct {
 %token	NE LE GE XRANGE LONGER
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
-%type	<v.number>		asnumber as4number optnumber
+%type	<v.number>		asnumber as4number as4number_any optnumber
 %type	<v.number>		espah family restart origincode nettype
 %type	<v.number>		yesno inout restricted
 %type	<v.string>		string filter_rib
@@ -211,7 +211,7 @@ typedef struct {
 %type	<v.filter_set>		filter_set_opt
 %type	<v.filter_set_head>	filter_set filter_set_l
 %type	<v.filter_prefix>	filter_prefix filter_prefix_l filter_prefix_h
-%type	<v.u8>			unaryop binaryop filter_as_type
+%type	<v.u8>			unaryop equalityop binaryop filter_as_type
 %type	<v.encspec>		encspec
 %%
 
@@ -276,6 +276,38 @@ as4number	: STRING			{
 				    AS_TRANS);
 				YYERROR;
 			}
+			$$ = $1;
+		}
+		;
+
+as4number_any	: STRING			{
+			const char	*errstr;
+			char		*dot;
+			u_int32_t	 uvalh = 0, uval;
+
+			if ((dot = strchr($1,'.')) != NULL) {
+				*dot++ = '\0';
+				uvalh = strtonum($1, 0, USHRT_MAX, &errstr);
+				if (errstr) {
+					yyerror("number %s is %s", $1, errstr);
+					free($1);
+					YYERROR;
+				}
+				uval = strtonum(dot, 0, USHRT_MAX, &errstr);
+				if (errstr) {
+					yyerror("number %s is %s", dot, errstr);
+					free($1);
+					YYERROR;
+				}
+				free($1);
+			} else {
+				yyerror("AS %s is bad", $1);
+				free($1);
+				YYERROR;
+			}
+			$$ = uval | (uvalh << 16);
+		}
+		| asnumber {
 			$$ = $1;
 		}
 		;
@@ -1616,17 +1648,37 @@ filter_as_l	: filter_as
 		}
 		;
 
-filter_as	: as4number		{
+filter_as	: as4number_any		{
 			if (($$ = calloc(1, sizeof(struct filter_as_l))) ==
 			    NULL)
 				fatal(NULL);
 			$$->a.as = $1;
+			$$->a.op = OP_EQ;
 		}
 		| NEIGHBORAS		{
 			if (($$ = calloc(1, sizeof(struct filter_as_l))) ==
 			    NULL)
 				fatal(NULL);
 			$$->a.flags = AS_FLAG_NEIGHBORAS;
+		}
+		| equalityop as4number_any	{
+			if (($$ = calloc(1, sizeof(struct filter_as_l))) ==
+			    NULL)
+				fatal(NULL);
+			$$->a.op = $1;
+			$$->a.as = $2;
+		}
+		| as4number_any binaryop as4number_any {
+			if (($$ = calloc(1, sizeof(struct filter_as_l))) ==
+			    NULL)
+				fatal(NULL);
+			if ($1 >= $3) {
+				yyerror("start AS is bigger than end");
+				YYERROR;
+			}
+			$$->a.op = $2;
+			$$->a.as_min = $1;
+			$$->a.as_max = $3;
 		}
 		;
 
@@ -2103,6 +2155,10 @@ unaryop		: '='		{ $$ = OP_EQ; }
 		| '<'		{ $$ = OP_LT; }
 		| GE		{ $$ = OP_GE; }
 		| '>'		{ $$ = OP_GT; }
+		;
+
+equalityop	: '='		{ $$ = OP_EQ; }
+		| NE		{ $$ = OP_NE; }
 		;
 
 binaryop	: '-'		{ $$ = OP_RANGE; }

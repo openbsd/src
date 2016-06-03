@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.20 2015/10/24 08:00:42 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.21 2016/06/03 17:36:37 benno Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -307,14 +307,15 @@ aspath_strlen(void *data, u_int16_t len)
 
 /* we need to be able to search more than one as */
 int
-aspath_match(void *data, u_int16_t len, enum as_spec type, u_int32_t as)
+aspath_match(void *data, u_int16_t len, struct filter_as *f, u_int32_t match)
 {
 	u_int8_t	*seg;
 	int		 final;
 	u_int16_t	 seg_size;
 	u_int8_t	 i, seg_len;
+	u_int32_t	 as;
 
-	if (type == AS_EMPTY) {
+	if (f->type == AS_EMPTY) {
 		if (len == 0)
 			return (1);
 		else
@@ -329,38 +330,52 @@ aspath_match(void *data, u_int16_t len, enum as_spec type, u_int32_t as)
 		final = (len == seg_size);
 
 		/* just check the first (leftmost) AS */
-		if (type == AS_PEER) {
-			if (as == aspath_extract(seg, 0))
+		if (f->type == AS_PEER) {
+			as = aspath_extract(seg, 0);
+			if (as_compare(f->op, as, match, f->as_min, f->as_max))
 				return (1);
 			else
 				return (0);
 		}
 		/* just check the final (rightmost) AS */
-		if (type == AS_SOURCE) {
+		if (f->type == AS_SOURCE) {
 			/* not yet in the final segment */
 			if (!final)
 				continue;
-
-			if (as == aspath_extract(seg, seg_len - 1))
+			as = aspath_extract(seg, seg_len - 1);
+			if (as_compare(f->op, as, match, f->as_min, f->as_max))
 				return (1);
 			else
 				return (0);
 		}
-
 		/* AS_TRANSIT or AS_ALL */
 		for (i = 0; i < seg_len; i++) {
-			if (as == aspath_extract(seg, i)) {
-				/*
-				 * the source (rightmost) AS is excluded from
-				 * AS_TRANSIT matches.
-				 */
-				if (final && i == seg_len - 1 &&
-				    type == AS_TRANSIT)
-					return (0);
+			/*
+			 * the source (rightmost) AS is excluded from
+			 * AS_TRANSIT matches.
+			 */
+			if (final && i == seg_len - 1 && f->type == AS_TRANSIT)
+				return (0);
+			as = aspath_extract(seg, i);
+			if (as_compare(f->op, as, match, f->as_min, f->as_max))
 				return (1);
-			}
 		}
 	}
+	return (0);
+}
+
+int
+as_compare(u_int8_t op, u_int32_t as, u_int32_t match, u_int32_t as_min,
+    u_int32_t as_max)
+{
+	if ((op == OP_NONE || op == OP_EQ) && as == match)
+		return (1);
+	else if (op == OP_NE && as != match)
+		return (1);
+	else if (op == OP_RANGE && as >= as_min && as <= as_max)
+		return (1);
+	else if (op == OP_XRANGE && as > as_min && as < as_max)
+		return (1);
 	return (0);
 }
 

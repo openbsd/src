@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.140 2016/01/07 18:41:41 florian Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.141 2016/06/03 17:36:37 benno Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 7 2016 $
+.Dd $Mdocdate: June 3 2016 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1027,7 +1027,10 @@ If a parameter is specified, the rule only applies to packets with
 matching attributes.
 .Pp
 .Bl -tag -width Ds -compact
-.It Ar as-type as-number
+.It Xo
+.Ar as-type Op Ar operator
+.Ar as-number
+.Xc
 This rule applies only to
 .Em UPDATES
 where the
@@ -1038,13 +1041,7 @@ The
 is matched against a part of the
 .Em AS path
 specified by the
-.Ar as-type .
-.Ar as-number
-may be set to
-.Ic neighbor-as ,
-which is expanded to the current neighbor remote AS number.
-.Ar as-type
-is one of the following operators:
+.Ar as-type :
 .Pp
 .Bl -tag -width transmit-as -compact
 .It Ic AS
@@ -1056,6 +1053,29 @@ is one of the following operators:
 .It Ic transit-as
 (all but the rightmost AS number)
 .El
+.Pp
+.Ar as-number
+is an AS number as explained above under
+.Sx GLOBAL CONFIGURATION .
+It may be set to
+.Ic neighbor-as ,
+which is expanded to the current neighbor remote AS number.
+.Pp
+The
+.Ar operator
+can be unspecified (this case is identical to the equality operator), or one of the numerical operators
+.Bd -literal -offset indent
+=	(equal)
+!=	(unequal)
+-	(range including boundaries)
+><	(except range)
+.Ed
+.Pp
+>< and -
+are binary operators (they take two arguments), with these,
+.Ar as-number
+cannot be set to
+.Ic neighbor-as .
 .Pp
 Multiple
 .Ar as-number
