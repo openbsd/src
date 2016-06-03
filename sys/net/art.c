@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.17 2016/06/02 00:39:22 dlg Exp $ */
+/*	$OpenBSD: art.c,v 1.18 2016/06/03 03:59:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -31,6 +31,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/task.h>
 #include <sys/socket.h>
 #endif
 
@@ -82,8 +83,19 @@ void			 art_table_ref(struct art_root *, struct art_table *);
 int			 art_table_free(struct art_root *, struct art_table *);
 int			 art_table_walk(struct art_root *, struct art_table *,
 			     int (*f)(struct art_node *, void *), void *);
+void			 art_table_gc(void *);
+void			 art_gc(void *);
 
 struct pool		an_pool, at_pool, at_heap_4_pool, at_heap_8_pool;
+
+struct art_table	*art_table_gc_list = NULL;
+struct mutex		 art_table_gc_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
+struct task		 art_table_gc_task =
+			     TASK_INITIALIZER(art_table_gc, NULL);
+
+struct art_node		*art_node_gc_list = NULL;
+struct mutex		 art_node_gc_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
+struct task		 art_node_gc_task = TASK_INITIALIZER(art_gc, NULL);
 
 void
 art_init(void)
@@ -715,20 +727,44 @@ art_table_put(struct art_root *ar, struct art_table *at)
 		ar->ar_root = NULL;
 	}
 
-	switch (AT_HEAPSIZE(at->at_bits)) {
-	case AT_HEAPSIZE(4):
-		pool_put(&at_heap_4_pool, at->at_heap);
-		break;
-	case AT_HEAPSIZE(8):
-		pool_put(&at_heap_8_pool, at->at_heap);
-		break;
-	default:
-		panic("incorrect stride length %u", at->at_bits);
-	}
+	mtx_enter(&art_table_gc_mtx);
+	at->at_parent = art_table_gc_list;
+	art_table_gc_list = at;
+	mtx_leave(&art_table_gc_mtx);
 
-	pool_put(&at_pool, at);
+	task_add(systqmp, &art_table_gc_task);
 
 	return (parent);
+}
+
+void
+art_table_gc(void *null)
+{
+	struct art_table *at, *next;
+
+	mtx_enter(&art_table_gc_mtx);
+	at = art_table_gc_list;
+	art_table_gc_list = NULL;
+	mtx_leave(&art_table_gc_mtx);
+
+	while (at != NULL) {
+		next = at->at_parent;
+
+		switch (AT_HEAPSIZE(at->at_bits)) {
+		case AT_HEAPSIZE(4):
+			pool_put(&at_heap_4_pool, at->at_heap);
+			break;
+		case AT_HEAPSIZE(8):
+			pool_put(&at_heap_8_pool, at->at_heap);
+			break;
+		default:
+			panic("incorrect stride length %u", at->at_bits);
+		}
+
+		pool_put(&at_pool, at);
+
+		at = next;
+	}
 }
 
 /*
@@ -817,5 +853,31 @@ art_get(struct sockaddr *dst, uint8_t plen)
 void
 art_put(struct art_node *an)
 {
-	pool_put(&an_pool, an);
+	KASSERT(SRPL_EMPTY_LOCKED(&an->an_rtlist));
+
+	mtx_enter(&art_node_gc_mtx);
+	an->an_gc = art_node_gc_list;
+	art_node_gc_list = an;
+	mtx_leave(&art_node_gc_mtx);
+
+	task_add(systqmp, &art_node_gc_task);
+}
+
+void
+art_gc(void *null)
+{
+	struct art_node		*an, *next;
+
+	mtx_enter(&art_node_gc_mtx);
+	an = art_node_gc_list;
+	art_node_gc_list = NULL;
+	mtx_leave(&art_node_gc_mtx);
+
+	while (an != NULL) {
+		next = an->an_gc;
+
+		pool_put(&an_pool, an);
+
+		an = next;
+	}
 }

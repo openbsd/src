@@ -1,4 +1,4 @@
-/* $OpenBSD: art.h,v 1.12 2016/04/13 08:04:14 mpi Exp $ */
+/* $OpenBSD: art.h,v 1.13 2016/06/03 03:59:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -44,9 +44,14 @@ struct rtentry;
  */
 struct art_node {
 	SRPL_HEAD(, rtentry)	 an_rtlist;	/* Route related to this node */
-	struct sockaddr		*an_dst;	/* Destination address (key) */
+	union {
+		struct sockaddr	*an__dst;	/* Destination address (key) */
+		struct art_node	*an__gc;	/* Entry on GC list */
+	}			 an_pointer;
 	uint8_t			 an_plen;	/* Prefix length */
 };
+#define an_dst	an_pointer.an__dst
+#define an_gc	an_pointer.an__gc
 
 void		 art_init(void);
 struct art_root	*art_alloc(unsigned int, unsigned int, unsigned int);
