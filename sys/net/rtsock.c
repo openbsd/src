@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.189 2016/06/01 12:06:49 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.190 2016/06/03 02:56:59 dlg Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -931,22 +931,40 @@ route_arp_conflict(struct rt_addrinfo *info, unsigned int tableid)
 }
 
 void
-rt_setmetrics(u_long which, struct rt_metrics *in, struct rt_kmetrics *out)
+rt_setmetrics(u_long which, const struct rt_metrics *in,
+    struct rt_kmetrics *out)
 {
+	int64_t expire;
+
 	if (which & RTV_MTU)
 		out->rmx_mtu = in->rmx_mtu;
-	if (which & RTV_EXPIRE)
-		out->rmx_expire = in->rmx_expire;
+	if (which & RTV_EXPIRE) {
+		expire = in->rmx_expire;
+		if (expire != 0) {
+			expire -= time_second;
+			expire += time_uptime;
+		}
+
+		out->rmx_expire = expire;
+	}
 	/* RTV_PRIORITY handled before */
 }
 
 void
-rt_getmetrics(struct rt_kmetrics *in, struct rt_metrics *out)
+rt_getmetrics(const struct rt_kmetrics *in, struct rt_metrics *out)
 {
+	int64_t expire;
+
+	expire = in->rmx_expire;
+	if (expire != 0) {
+		expire -= time_uptime;
+		expire += time_second;
+	}
+
 	bzero(out, sizeof(*out));
 	out->rmx_locks = in->rmx_locks;
 	out->rmx_mtu = in->rmx_mtu;
-	out->rmx_expire = in->rmx_expire;
+	out->rmx_expire = expire;
 	out->rmx_pksent = in->rmx_pksent;
 }
 

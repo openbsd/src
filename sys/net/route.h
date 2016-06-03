@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.135 2016/04/27 14:47:27 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.136 2016/06/03 02:56:59 dlg Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -364,8 +364,8 @@ void	 rt_sendaddrmsg(struct rtentry *, int);
 void	 rt_missmsg(int, struct rt_addrinfo *, int, uint8_t, u_int, int, u_int);
 int	 rt_setgate(struct rtentry *, struct sockaddr *);
 int	 rt_checkgate(struct rtentry *, struct rtentry **);
-void	 rt_setmetrics(u_long, struct rt_metrics *, struct rt_kmetrics *);
-void	 rt_getmetrics(struct rt_kmetrics *, struct rt_metrics *);
+void	 rt_setmetrics(u_long, const struct rt_metrics *, struct rt_kmetrics *);
+void	 rt_getmetrics(const struct rt_kmetrics *, struct rt_metrics *);
 
 int			 rt_timer_add(struct rtentry *,
 		             void(*)(struct rtentry *, struct rttimer *),

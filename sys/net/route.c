@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.303 2016/06/01 06:40:27 dlg Exp $	*/
+/*	$OpenBSD: route.c,v 1.304 2016/06/03 02:56:59 dlg Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1186,7 +1186,7 @@ rt_checkgate(struct rtentry *rt, struct rtentry **rtp)
 	}
 
 	if (rt->rt_flags & RTF_REJECT)
-		if (rt->rt_expire == 0 || time_second < rt->rt_expire)
+		if (rt->rt_expire == 0 || time_uptime < rt->rt_expire)
 			return (rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 
 	*rtp = rt;
@@ -1541,7 +1541,7 @@ rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *,
 	long		 current_time;
 
 	current_time = time_uptime;
-	rt->rt_rmx.rmx_expire = time_second + queue->rtq_timeout;
+	rt->rt_rmx.rmx_expire = time_uptime + queue->rtq_timeout;
 
 	/*
 	 * If there's already a timer with this action, destroy it before
