@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.213 2016/05/08 16:29:57 stefan Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.214 2016/06/03 06:47:51 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -4573,7 +4573,7 @@ uvm_map_kmem_grow(struct vm_map *map, struct uvm_map_deadq *dead,
 #ifdef PMAP_GROWKERNEL
 	uvm_maxkaddr = pmap_growkernel(end);
 #else
-	uvm_maxkaddr = end;
+	uvm_maxkaddr = MAX(uvm_maxkaddr, end);
 #endif
 
 	/* Rebuild free list. */
