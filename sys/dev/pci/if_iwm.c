@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.85 2016/05/28 18:30:01 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.86 2016/06/03 16:16:25 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5993,6 +5993,11 @@ iwm_assoc(struct iwm_softc *sc)
 	}
 
 	in->in_assoc = 1;
+
+	if ((error = iwm_mvm_mac_ctxt_changed(sc, in)) != 0) {
+		printf("%s: failed to update MAC\n", DEVNAME(sc));
+		return error;
+	}
 
 	return 0;
 }
