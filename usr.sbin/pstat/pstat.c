@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.105 2016/05/27 19:45:04 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.106 2016/06/03 20:38:48 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -1154,6 +1154,6 @@ void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: "
-	    "pstat [-fknsTtv] [-d format] [-M core] [-N system] [symbols]\n");
+	    "pstat [-fknsTtv] [-M core] [-N system] [-d format symbol ...]\n");
 	exit(1);
 }
