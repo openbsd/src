@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.55 2015/12/06 16:57:45 deraadt Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.56 2016/06/03 23:22:20 tedu Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -427,7 +427,7 @@ ar_drain(void)
 	 * keep reading until pipe is drained
 	 */
 	while ((res = read(arfd, drbuf, sizeof(drbuf))) > 0)
-		;
+		continue;
 	lstrval = res;
 }
 
@@ -1038,7 +1038,7 @@ get_phys(void)
 	 * (this is a bit paranoid, but should be safe to do).
 	 */
 	while ((res = read(arfd, scbuf, sizeof(scbuf))) > 0)
-		;
+		continue;
 	if (res < 0) {
 		syswarn(1, errno, "Unable to locate tape filemark.");
 		return(-1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmdir.c,v 1.11 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: rmdir.c,v 1.12 2016/06/03 23:22:20 tedu Exp $	*/
 /*	$NetBSD: rmdir.c,v 1.13 1995/03/21 09:08:31 cgd Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 		/* Delete trailing slashes, per POSIX. */
 		p = *argv + strlen(*argv);
 		while (--p > *argv && *p == '/')
-			;
+			continue;
 		*++p = '\0';
 
 		if (rmdir(*argv) < 0) {
@@ -96,7 +96,7 @@ rm_path(char *path)
 	while ((p = strrchr(path, '/')) != NULL) {
 		/* Delete trailing slashes. */
 		while (--p > path && *p == '/')
-			;
+			continue;
 		*++p = '\0';
 
 		if (rmdir(path) < 0) {
