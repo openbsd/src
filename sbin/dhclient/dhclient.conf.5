@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.31 2013/11/11 15:39:20 krw Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.32 2016/06/03 02:38:37 tedu Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: November 11 2013 $
+.Dd $Mdocdate: June 3 2016 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -139,7 +139,7 @@ The value of
 is also used to control how long a client will attempt unicast renewal
 requests before falling back to using broadcast requests.
 .Pp
-By default, the reboot timeout is ten seconds.
+By default, the reboot timeout is one second.
 .It Ic backoff-cutoff Ar time ;
 The client uses an exponential backoff algorithm with some randomness,
 so that if many clients try to configure themselves at the same time,
