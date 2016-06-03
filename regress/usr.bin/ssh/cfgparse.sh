@@ -1,7 +1,7 @@
-#	$OpenBSD: cfgparse.sh,v 1.5 2015/05/29 03:05:13 djm Exp $
+#	$OpenBSD: cfgparse.sh,v 1.6 2016/06/03 03:47:59 dtucker Exp $
 #	Placed in the Public Domain.
 
-tid="config parse"
+tid="sshd config parse"
 
 # We need to use the keys generated for the regression test because sshd -T
 # will fail if we're not running with SUDO (no permissions for real keys) or
