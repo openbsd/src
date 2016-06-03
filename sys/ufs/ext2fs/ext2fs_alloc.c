@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.35 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.36 2016/06/03 18:00:10 natano Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -365,8 +365,6 @@ ext2fs_alloccg(struct inode *ip, int cg, u_int32_t bpref, int size)
 	}
 
 	bno = ext2fs_mapsearch(fs, bbp, bpref);
-	if (bno < 0)
-		return (0);
  gotit:
 #ifdef DIAGNOSTIC
 	if (isset(bbp, bno)) {
