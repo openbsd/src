@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.87 2016/04/15 02:55:53 djm Exp $
+#	$OpenBSD: Makefile,v 1.88 2016/06/03 04:10:41 dtucker Exp $
 
 .ifndef SKIP_UNIT
 SUBDIR=		unittests
@@ -47,6 +47,7 @@ LTESTS= 	connect \
 		multiplex \
 		reexec \
 		brokenkeys \
+		sshcfgparse \
 		cfgparse \
 		cfgmatch \
 		addrmatch \
