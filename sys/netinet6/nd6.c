@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.182 2016/06/01 23:45:19 dlg Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.183 2016/06/03 02:08:15 dlg Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -314,7 +314,7 @@ nd6_llinfo_settimer(struct llinfo_nd6 *ln, int secs)
 		ln->ln_expire = 0;
 		timeout_del(&ln->ln_timer_ch);
 	} else {
-		ln->ln_expire = time_second + secs;
+		ln->ln_expire = time_uptime + secs;
 		timeout_add_sec(&ln->ln_timer_ch, secs);
 	}
 
@@ -1177,6 +1177,7 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 	{
 		struct llinfo_nd6 *ln;
 		struct in6_addr nb_addr = nbi->addr; /* make local for safety */
+		time_t expire;
 
 		/*
 		 * XXX: KAME specific hack for scoped addresses
@@ -1199,10 +1200,16 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 			splx(s);
 			break;
 		}
+		expire = ln->ln_expire;
+		if (expire != 0) {
+			expire -= time_uptime;
+			expire += time_second;
+		}
+
 		nbi->state = ln->ln_state;
 		nbi->asked = ln->ln_asked;
 		nbi->isrouter = ln->ln_router;
-		nbi->expire = ln->ln_expire;
+		nbi->expire = expire;
 		rtfree(rt);
 		splx(s);
 
