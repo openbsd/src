@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.131 2016/06/02 17:05:58 schwarze Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.132 2016/06/04 16:43:43 sthen Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -328,7 +328,7 @@ uvm_wxcheck(struct proc *p, char *call)
 	if (p->p_p->ps_wxcounter++ == 0)
 		log(LOG_NOTICE, "%s(%d): %s W^X violation\n",
 		    p->p_comm, p->p_pid, call);
-	if (uvm_wxabort) {
+	if (!wxallowed || uvm_wxabort) {
 		struct sigaction sa;
 
 		/* Send uncatchable SIGABRT for coredump */
