@@ -1,4 +1,4 @@
-/*	$OpenBSD: imx_machdep.c,v 1.17 2016/05/19 09:54:18 jsg Exp $	*/
+/*	$OpenBSD: imx_machdep.c,v 1.18 2016/06/04 18:09:16 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -34,7 +34,6 @@
 #include <armv7/armv7/armv7_machdep.h>
 
 extern void imxdog_reset(void);
-extern char *imx_board_name(void);
 extern struct board_dev *imx_board_devs(void);
 extern void imx_board_init(void);
 extern int comcnspeed;
@@ -97,12 +96,6 @@ imx_platform_powerdown(void)
 
 }
 
-const char *
-imx_platform_board_name(void)
-{
-	return (imx_board_name());
-}
-
 void
 imx_platform_disable_l2_if_needed(void)
 {
@@ -116,8 +109,6 @@ imx_platform_board_init(void)
 }
 
 struct armv7_platform imx_platform = {
-	.boot_name = "OpenBSD/imx",
-	.board_name = imx_platform_board_name,
 	.board_init = imx_platform_board_init,
 	.smc_write = imx_platform_smc_write,
 	.init_cons = imx_platform_init_cons,

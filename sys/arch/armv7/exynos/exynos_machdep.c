@@ -1,4 +1,4 @@
-/*	$OpenBSD: exynos_machdep.c,v 1.7 2016/05/20 01:42:56 jsg Exp $	*/
+/*	$OpenBSD: exynos_machdep.c,v 1.8 2016/06/04 18:09:16 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -35,7 +35,6 @@
 #include <armv7/armv7/armv7_machdep.h>
 
 extern void exdog_reset(void);
-extern char *exynos_board_name(void);
 extern struct board_dev *exynos_board_devs(void);
 extern void exynos_board_init(void);
 extern int comcnspeed;
@@ -103,12 +102,6 @@ exynos_platform_powerdown(void)
 
 }
 
-const char *
-exynos_platform_board_name(void)
-{
-	return (exynos_board_name());
-}
-
 static void
 exynos_platform_disable_l2_if_needed(void)
 {
@@ -122,8 +115,6 @@ exynos_platform_board_init(void)
 }
 
 struct armv7_platform exynos_platform = {
-	.boot_name = "OpenBSD/exynos",
-	.board_name = exynos_platform_board_name,
 	.board_init = exynos_platform_board_init,
 	.smc_write = exynos_platform_smc_write,
 	.init_cons = exynos_platform_init_cons,

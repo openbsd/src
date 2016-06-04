@@ -1,4 +1,4 @@
-/*	$OpenBSD: vexpress_machdep.c,v 1.2 2016/05/20 01:42:56 jsg Exp $	*/
+/*	$OpenBSD: vexpress_machdep.c,v 1.3 2016/06/04 18:09:16 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -35,7 +35,6 @@
 
 extern void sysconf_reboot(void);
 extern void sysconf_shutdown(void);
-extern char *vexpress_board_name(void);
 extern struct board_dev *vexpress_board_devs(void);
 extern void vexpress_board_init(void);
 extern int vexpress_legacy_map(void);
@@ -85,12 +84,6 @@ vexpress_platform_powerdown(void)
 	sysconf_shutdown();
 }
 
-const char *
-vexpress_platform_board_name(void)
-{
-	return (vexpress_board_name());
-}
-
 void
 vexpress_platform_disable_l2_if_needed(void)
 {
@@ -104,8 +97,6 @@ vexpress_platform_board_init(void)
 }
 
 struct armv7_platform vexpress_platform = {
-	.boot_name = "OpenBSD/vexpress",
-	.board_name = vexpress_platform_board_name,
 	.board_init = vexpress_platform_board_init,
 	.smc_write = vexpress_platform_smc_write,
 	.init_cons = vexpress_platform_init_cons,

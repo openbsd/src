@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.h,v 1.6 2016/05/18 22:55:23 kettenis Exp $	*/
+/*	$OpenBSD: armv7_machdep.h,v 1.7 2016/06/04 18:09:16 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -24,13 +24,9 @@ void platform_watchdog_reset(void);
 void platform_init_cons(void);
 void platform_init_mainbus(struct device *);
 void platform_disable_l2_if_needed(void);
-const char *platform_boot_name(void);
-const char *platform_board_name(void);
 struct board_dev *platform_board_devs();
 
 struct armv7_platform {
-	const char *boot_name;
-	const char *(*board_name)(void);
 	struct board_dev *devs;
 	void (*board_init)(void);
 	void (*smc_write)(bus_space_tag_t, bus_space_handle_t, bus_size_t,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: platform.c,v 1.5 2016/05/18 22:55:23 kettenis Exp $	*/
+/*	$OpenBSD: platform.c,v 1.6 2016/06/04 18:09:16 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -72,12 +72,6 @@ platform_init(void)
 	platform->board_init();
 }
 
-const char *
-platform_boot_name(void)
-{
-	return platform->boot_name;
-}
-
 void
 platform_smc_write(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
     uint32_t op, uint32_t val)
@@ -108,12 +102,6 @@ void
 platform_powerdown(void)
 {
 	platform->powerdown();
-}
-
-const char *
-platform_board_name(void)
-{
-	return (platform->board_name());
 }
 
 void

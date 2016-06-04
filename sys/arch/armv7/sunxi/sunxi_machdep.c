@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunxi_machdep.c,v 1.9 2016/05/20 01:42:56 jsg Exp $	*/
+/*	$OpenBSD: sunxi_machdep.c,v 1.10 2016/06/04 18:09:16 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -34,7 +34,6 @@
 
 extern int sxiuartcnattach(bus_space_tag_t, bus_addr_t, int, long, tcflag_t);
 extern void sxidog_reset(void);
-extern char *sunxi_board_name(void);
 extern struct board_dev *sunxi_board_devs(void);
 extern void sunxi_board_init(void);
 extern int comcnspeed;
@@ -86,12 +85,6 @@ sunxi_platform_powerdown(void)
 
 }
 
-const char *
-sunxi_platform_board_name(void)
-{
-	return (sunxi_board_name());
-}
-
 void
 sunxi_platform_disable_l2_if_needed(void)
 {
@@ -105,8 +98,6 @@ sunxi_platform_board_init(void)
 }
 
 struct armv7_platform sunxi_platform = {
-	.boot_name = "OpenBSD/sunxi",
-	.board_name = sunxi_platform_board_name,
 	.board_init = sunxi_platform_board_init,
 	.smc_write = sunxi_platform_smc_write,
 	.init_cons = sunxi_platform_init_cons,

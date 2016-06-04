@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7.c,v 1.13 2016/05/01 21:07:40 patrick Exp $ */
+/* $OpenBSD: armv7.c,v 1.14 2016/06/04 18:09:16 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -97,20 +97,8 @@ armv7_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct armv7_softc *sc = (struct armv7_softc *)self;
 	struct board_dev *bd;
-	int len;
-	const char *name = platform_board_name();
 
-	if (hw_prod == NULL && name != NULL) {
-		len = strlen(name) + 1;
-		hw_prod = malloc(len, M_DEVBUF, M_NOWAIT);
-		if (hw_prod)
-			strlcpy(hw_prod, name, len);
-	}
-
-	if (name != NULL)
-		printf(": %s\n", name);
-	else
-		printf(": UNKNOWN BOARD %u\n", board_id);
+	printf("\n");
 
 	sc->sc_board_devs = platform_board_devs();
 

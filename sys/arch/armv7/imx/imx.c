@@ -1,4 +1,4 @@
-/* $OpenBSD: imx.c,v 1.14 2016/06/03 01:36:46 jsg Exp $ */
+/* $OpenBSD: imx.c,v 1.15 2016/06/04 18:09:16 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -186,53 +186,45 @@ struct board_dev wandboard_devs[] = {
 struct armv7_board imx_boards[] = {
 	{
 		BOARD_ID_IMX6_CUBOXI,
-		"SolidRun CuBox-i",
 		hummingboard_devs,
 		imx6_init,
 	},
 	{
 		BOARD_ID_IMX6_HUMMINGBOARD,
-		"SolidRun HummingBoard",
 		hummingboard_devs,
 		imx6_init,
 	},
 	{
 		BOARD_ID_IMX6_SABRELITE,
-		"Freescale i.MX6 SABRE Lite",
 		sabrelite_devs,
 		imx6_init,
 	},
 	{
 		BOARD_ID_IMX6_SABRESD,
-		"Freescale i.MX6 SABRE SD",
 		sabresd_devs,
 		imx6_init,
 	},
 	{
 		BOARD_ID_IMX6_UDOO,
-		"Udoo i.MX6",
 		udoo_devs,
 		imx6_init,
 	},
 	{
 		BOARD_ID_IMX6_UTILITE,
-		"CompuLab Utilite",
 		utilite_devs,
 		imx6_init,
 	},
 	{
 		BOARD_ID_IMX6_NOVENA,
-		"Kosagi Novena",
 		novena_devs,
 		imx6_init,
 	},
 	{
 		BOARD_ID_IMX6_WANDBOARD,
-		"Wandboard i.MX6",
 		wandboard_devs,
 		imx6_init,
 	},
-	{ 0, NULL, NULL, NULL },
+	{ 0, NULL, NULL },
 };
 
 struct board_dev *
@@ -240,7 +232,7 @@ imx_board_devs(void)
 {
 	int i;
 
-	for (i = 0; imx_boards[i].name != NULL; i++) {
+	for (i = 0; imx_boards[i].board_id != 0; i++) {
 		if (imx_boards[i].board_id == board_id)
 			return (imx_boards[i].devs);
 	}
@@ -252,24 +244,12 @@ imx_board_init(void)
 {
 	int i;
 
-	for (i = 0; imx_boards[i].name != NULL; i++) {
+	for (i = 0; imx_boards[i].board_id != 0; i++) {
 		if (imx_boards[i].board_id == board_id) {
 			imx_boards[i].init();
 			break;
 		}
 	}
-}
-
-const char *
-imx_board_name(void)
-{
-	int i;
-
-	for (i = 0; imx_boards[i].name != NULL; i++) {
-		if (imx_boards[i].board_id == board_id)
-			return (imx_boards[i].name);
-	}
-	return (NULL);
 }
 
 int

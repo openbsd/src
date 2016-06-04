@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7var.h,v 1.11 2016/05/19 09:54:18 jsg Exp $ */
+/* $OpenBSD: armv7var.h,v 1.12 2016/06/04 18:09:16 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -27,7 +27,6 @@ struct board_dev {
 
 struct armv7_board {
 	uint32_t		board_id;
-	const char		*name;
 	struct board_dev	*devs;
 	void			(*init)(void);
 };

@@ -1,4 +1,4 @@
-/* $OpenBSD: omap.c,v 1.9 2016/05/02 15:27:24 patrick Exp $ */
+/* $OpenBSD: omap.c,v 1.10 2016/06/04 18:09:16 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -111,29 +111,25 @@ struct board_dev pandaboard_devs[] = {
 struct armv7_board omap_boards[] = {
 	{
 		BOARD_ID_OMAP3_BEAGLE,
-		"TI OMAP3 BeagleBoard",
 		beagleboard_devs,
 		omap3_init,
 	},
 	{
 		BOARD_ID_AM335X_BEAGLEBONE,
-		"TI AM335x BeagleBone",
 		beaglebone_devs,
 		am335x_init,
 	},
 	{
 		BOARD_ID_OMAP3_OVERO,
-		"Gumstix OMAP3 Overo",
 		overo_devs,
 		omap3_init,
 	},
 	{
 		BOARD_ID_OMAP4_PANDA,
-		"TI OMAP4 PandaBoard",
 		pandaboard_devs,
 		omap4_init,
 	},
-	{ 0, NULL, NULL, NULL },
+	{ 0, NULL, NULL },
 };
 
 struct board_dev *
@@ -141,7 +137,7 @@ omap_board_devs(void)
 {
 	int i;
 
-	for (i = 0; omap_boards[i].name != NULL; i++) {
+	for (i = 0; omap_boards[i].board_id != 0; i++) {
 		if (omap_boards[i].board_id == board_id)
 			return (omap_boards[i].devs);
 	}
@@ -153,24 +149,12 @@ omap_board_init(void)
 {
 	int i;
 
-	for (i = 0; omap_boards[i].name != NULL; i++) {
+	for (i = 0; omap_boards[i].board_id != 0; i++) {
 		if (omap_boards[i].board_id == board_id) {
 			omap_boards[i].init();
 			break;
 		}
 	}
-}
-
-const char *
-omap_board_name(void)
-{
-	int i;
-
-	for (i = 0; omap_boards[i].name != NULL; i++) {
-		if (omap_boards[i].board_id == board_id)
-			return (omap_boards[i].name);
-	}
-	return (NULL);
 }
 
 int

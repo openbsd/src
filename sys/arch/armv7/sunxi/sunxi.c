@@ -1,4 +1,4 @@
-/* $OpenBSD: sunxi.c,v 1.9 2016/05/02 15:27:24 patrick Exp $ */
+/* $OpenBSD: sunxi.c,v 1.10 2016/06/04 18:09:16 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -92,17 +92,15 @@ struct board_dev sun7i_devs[] = {
 struct armv7_board sunxi_boards[] = {
 	{
 		BOARD_ID_SUN4I_A10,
-		"Allwinner A1x",
 		sun4i_devs,
 		sxia1x_init,
 	},
 	{
 		BOARD_ID_SUN7I_A20,
-		"Allwinner A20",
 		sun7i_devs,
 		sxia20_init,
 	},
-	{ 0, NULL, NULL, NULL },
+	{ 0, NULL, NULL },
 };
 
 struct board_dev *
@@ -110,7 +108,7 @@ sunxi_board_devs(void)
 {
 	int i;
 
-	for (i = 0; sunxi_boards[i].name != NULL; i++) {
+	for (i = 0; sunxi_boards[i].board_id != 0; i++) {
 		if (sunxi_boards[i].board_id == board_id)
 			return (sunxi_boards[i].devs);
 	}
@@ -123,7 +121,7 @@ sunxi_board_init(void)
 	bus_space_handle_t ioh;
 	int i, match = 0;
 
-	for (i = 0; sunxi_boards[i].name != NULL; i++) {
+	for (i = 0; sunxi_boards[i].board_id != 0; i++) {
 		if (sunxi_boards[i].board_id == board_id) {
 			sunxi_boards[i].init();
 			match = 1;
@@ -139,18 +137,6 @@ sunxi_board_init(void)
 		bus_space_write_4(&armv7_bs_tag, ioh, 4,
 		    bus_space_read_4(&armv7_bs_tag, ioh, 4) | (5 << 2));
 	}
-}
-
-const char *
-sunxi_board_name(void)
-{
-	int i;
-
-	for (i = 0; sunxi_boards[i].name != NULL; i++) {
-		if (sunxi_boards[i].board_id == board_id)
-			return (sunxi_boards[i].name);
-	}
-	return (NULL);
 }
 
 int

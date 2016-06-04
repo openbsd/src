@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.27 2016/05/20 11:21:08 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.28 2016/06/04 18:09:16 jsg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -483,7 +483,7 @@ initarm(void *arg0, void *arg1, void *arg2)
 	consinit();
 
 	/* Talk to the user */
-	printf("\n%s booting ...\n", platform_boot_name());
+	printf("\nOpenBSD/armv7 booting ...\n");
 
 	printf("arg0 %p arg1 %p arg2 %p\n", arg0, arg1, arg2);
 
