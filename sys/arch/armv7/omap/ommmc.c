@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.21 2016/05/20 23:07:05 jsg Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.22 2016/06/05 07:56:07 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -507,6 +507,10 @@ ommmc_host_reset(sdmmc_chipset_handle_t sch)
 
 	HWRITE4(sc, MMCHS_IE, imask);
 	HWRITE4(sc, MMCHS_ISE, imask);
+
+	/* Switch back to 1-bit bus. */
+	HCLR4(sc, MMCHS_CON, MMCHS_CON_DW8);
+	HCLR4(sc, MMCHS_HCTL, MMCHS_HCTL_DTW);
 
 	splx(s);
 	return (0);
