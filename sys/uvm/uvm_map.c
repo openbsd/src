@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.214 2016/06/03 06:47:51 kettenis Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.215 2016/06/05 08:35:57 stefan Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -180,8 +180,12 @@ int			 uvm_mapent_bias(struct vm_map*, struct vm_map_entry*);
  * uvm_vmspace_fork helper functions.
  */
 struct vm_map_entry	*uvm_mapent_clone(struct vm_map*, vaddr_t, vsize_t,
-			    vsize_t, struct vm_map_entry*,
-			    struct uvm_map_deadq*, int, int);
+			    vsize_t, vm_prot_t, vm_prot_t,
+			    struct vm_map_entry*, struct uvm_map_deadq*, int,
+			    int);
+struct vm_map_entry	*uvm_mapent_share(struct vm_map*, vaddr_t, vsize_t,
+			    vsize_t, vm_prot_t, vm_prot_t, struct vm_map*,
+			    struct vm_map_entry*, struct uvm_map_deadq*);
 struct vm_map_entry	*uvm_mapent_forkshared(struct vmspace*, struct vm_map*,
 			    struct vm_map*, struct vm_map_entry*,
 			    struct uvm_map_deadq*);
@@ -3344,6 +3348,98 @@ uvmspace_free(struct vmspace *vm)
 }
 
 /*
+ * uvm_share: Map the address range [srcaddr, srcaddr + sz) in
+ * srcmap to the address range [dstaddr, dstaddr + sz) in
+ * dstmap.
+ *
+ * The whole address range in srcmap must be backed by an object
+ * (no holes).
+ *
+ * If successful, the address ranges share memory and the destination
+ * address range uses the protection flags in prot.
+ *
+ * This routine assumes that sz is a multiple of PAGE_SIZE and
+ * that dstaddr and srcaddr are page-aligned.
+ */
+int
+uvm_share(struct vm_map *dstmap, vaddr_t dstaddr, vm_prot_t prot,
+    struct vm_map *srcmap, vaddr_t srcaddr, vsize_t sz)
+{
+	int ret = 0;
+	vaddr_t unmap_end;
+	vaddr_t dstva;
+	vsize_t off, len, n = sz;
+	struct vm_map_entry *first = NULL, *last = NULL;
+	struct vm_map_entry *src_entry, *psrc_entry = NULL;
+	struct uvm_map_deadq dead;
+
+	if (srcaddr >= srcmap->max_offset || sz > srcmap->max_offset - srcaddr)
+		return EINVAL;
+
+	TAILQ_INIT(&dead);
+	vm_map_lock(dstmap);
+	vm_map_lock_read(srcmap);
+
+	if (!uvm_map_isavail(dstmap, NULL, &first, &last, dstaddr, sz)) {
+		ret = ENOMEM;
+		goto exit_unlock;
+	}
+	if (!uvm_map_lookup_entry(srcmap, srcaddr, &src_entry)) {
+		ret = EINVAL;
+		goto exit_unlock;
+	}
+
+	unmap_end = dstaddr;
+	for (; src_entry != NULL;
+	    psrc_entry = src_entry,
+	    src_entry = RB_NEXT(uvm_map_addr, &srcmap->addr, src_entry)) {
+		/* hole in address space, bail out */
+		if (psrc_entry != NULL && psrc_entry->end != src_entry->start)
+			break;
+		if (src_entry->start >= srcaddr + sz)
+			break;
+
+		if (UVM_ET_ISSUBMAP(src_entry))
+			panic("uvm_share: encountered a submap (illegal)");
+		if (!UVM_ET_ISCOPYONWRITE(src_entry) &&
+		    UVM_ET_ISNEEDSCOPY(src_entry))
+			panic("uvm_share: non-copy_on_write map entries "
+			    "marked needs_copy (illegal)");
+
+		dstva = dstaddr;
+		if (src_entry->start > srcaddr) {
+			dstva += src_entry->start - srcaddr;
+			off = 0;
+		} else
+			off = srcaddr - src_entry->start;
+
+		if (n < src_entry->end - src_entry->start)
+			len = n;
+		else
+			len = src_entry->end - src_entry->start;
+		n -= len;
+
+		if (uvm_mapent_share(dstmap, dstva, len, off, prot, prot,
+		    srcmap, src_entry, &dead) == NULL)
+			break;
+
+		unmap_end = dstva + len;
+		if (n == 0)
+			goto exit_unlock;
+	}
+
+	ret = EINVAL;
+	uvm_unmap_remove(dstmap, dstaddr, unmap_end, &dead, FALSE, TRUE);
+
+exit_unlock:
+	vm_map_unlock_read(srcmap);
+	vm_map_unlock(dstmap);
+	uvm_unmap_detach(&dead, 0);
+
+	return ret;
+}
+
+/*
  * Clone map entry into other map.
  *
  * Mapping will be placed at dstaddr, for the same length.
@@ -3352,7 +3448,8 @@ uvmspace_free(struct vmspace *vm)
  */
 struct vm_map_entry *
 uvm_mapent_clone(struct vm_map *dstmap, vaddr_t dstaddr, vsize_t dstlen,
-    vsize_t off, struct vm_map_entry *old_entry, struct uvm_map_deadq *dead,
+    vsize_t off, vm_prot_t prot, vm_prot_t maxprot,
+    struct vm_map_entry *old_entry, struct uvm_map_deadq *dead,
     int mapent_flags, int amap_share_flags)
 {
 	struct vm_map_entry *new_entry, *first, *last;
@@ -3374,8 +3471,8 @@ uvm_mapent_clone(struct vm_map *dstmap, vaddr_t dstaddr, vsize_t dstlen,
 	new_entry->offset = old_entry->offset;
 	new_entry->aref = old_entry->aref;
 	new_entry->etype |= old_entry->etype & ~UVM_ET_FREEMAPPED;
-	new_entry->protection = old_entry->protection;
-	new_entry->max_protection = old_entry->max_protection;
+	new_entry->protection = prot;
+	new_entry->max_protection = maxprot;
 	new_entry->inheritance = old_entry->inheritance;
 	new_entry->advice = old_entry->advice;
 
@@ -3397,6 +3494,34 @@ uvm_mapent_clone(struct vm_map *dstmap, vaddr_t dstaddr, vsize_t dstlen,
 	return new_entry;
 }
 
+struct vm_map_entry *
+uvm_mapent_share(struct vm_map *dstmap, vaddr_t dstaddr, vsize_t dstlen,
+    vsize_t off, vm_prot_t prot, vm_prot_t maxprot, struct vm_map *old_map,
+    struct vm_map_entry *old_entry, struct uvm_map_deadq *dead)
+{
+	/*
+	 * If old_entry refers to a copy-on-write region that has not yet been
+	 * written to (needs_copy flag is set), then we need to allocate a new
+	 * amap for old_entry.
+	 *
+	 * If we do not do this, and the process owning old_entry does a copy-on
+	 * write later, old_entry and new_entry will refer to different memory
+	 * regions, and the memory between the processes is no longer shared.
+	 *
+	 * [in other words, we need to clear needs_copy]
+	 */
+
+	if (UVM_ET_ISNEEDSCOPY(old_entry)) {
+		/* get our own amap, clears needs_copy */
+		amap_copy(old_map, old_entry, M_WAITOK, FALSE,
+		    0, 0);
+		/* XXXCDC: WAITOK??? */
+	}
+
+	return uvm_mapent_clone(dstmap, dstaddr, dstlen, off,
+	    prot, maxprot, old_entry, dead, 0, AMAP_SHARED);
+}
+
 /*
  * share the mapping: this means we want the old and
  * new entries to share amaps and backing objects.
@@ -3408,23 +3533,9 @@ uvm_mapent_forkshared(struct vmspace *new_vm, struct vm_map *new_map,
 {
 	struct vm_map_entry *new_entry;
 
-	/*
-	 * if the old_entry needs a new amap (due to prev fork)
-	 * then we need to allocate it now so that we have
-	 * something we own to share with the new_entry.   [in
-	 * other words, we need to clear needs_copy]
-	 */
-
-	if (UVM_ET_ISNEEDSCOPY(old_entry)) {
-		/* get our own amap, clears needs_copy */
-		amap_copy(old_map, old_entry, M_WAITOK, FALSE,
-		    0, 0); 
-		/* XXXCDC: WAITOK??? */
-	}
-
-	new_entry = uvm_mapent_clone(new_map, old_entry->start,
-	    old_entry->end - old_entry->start, 0, old_entry,
-	    dead, 0, AMAP_SHARED);
+	new_entry = uvm_mapent_share(new_map, old_entry->start,
+	    old_entry->end - old_entry->start, 0, old_entry->protection,
+	    old_entry->max_protection, old_map, old_entry, dead);
 
 	/* 
 	 * pmap_copy the mappings: this routine is optional
@@ -3454,8 +3565,8 @@ uvm_mapent_forkcopy(struct vmspace *new_vm, struct vm_map *new_map,
 	boolean_t		 protect_child;
 
 	new_entry = uvm_mapent_clone(new_map, old_entry->start,
-	    old_entry->end - old_entry->start, 0, old_entry,
-	    dead, 0, 0);
+	    old_entry->end - old_entry->start, 0, old_entry->protection,
+	    old_entry->max_protection, old_entry, dead, 0, 0);
 
 	new_entry->etype |=
 	    (UVM_ET_COPYONWRITE|UVM_ET_NEEDSCOPY);
@@ -3595,8 +3706,8 @@ uvm_mapent_forkzero(struct vmspace *new_vm, struct vm_map *new_map,
 	struct vm_map_entry *new_entry;
 
 	new_entry = uvm_mapent_clone(new_map, old_entry->start,
-	    old_entry->end - old_entry->start, 0, old_entry,
-	    dead, 0, 0);
+	    old_entry->end - old_entry->start, 0, old_entry->protection,
+	    old_entry->max_protection, old_entry, dead, 0, 0);
 
 	new_entry->etype |=
 	    (UVM_ET_COPYONWRITE|UVM_ET_NEEDSCOPY);
@@ -4096,6 +4207,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 		newentry = uvm_mapent_clone(kernel_map,
 		    cp_start - start + dstaddr, cp_len, cp_off,
+		    entry->protection, entry->max_protection,
 		    entry, &dead, flags, AMAP_SHARED | AMAP_REFALL);
 		if (newentry == NULL) {
 			error = ENOMEM;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.138 2016/04/04 16:34:16 stefan Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.139 2016/06/05 08:35:57 stefan Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -428,6 +428,8 @@ void			uvmspace_exec(struct proc *, vaddr_t, vaddr_t);
 struct vmspace		*uvmspace_fork(struct process *);
 void			uvmspace_free(struct vmspace *);
 struct vmspace		*uvmspace_share(struct process *);
+int			uvm_share(vm_map_t, vaddr_t, vm_prot_t,
+			    vm_map_t, vaddr_t, vsize_t);
 void			uvm_meter(void);
 int			uvm_sysctl(int *, u_int, void *, size_t *, 
 			    void *, size_t, struct proc *);
