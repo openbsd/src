@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.159 2016/05/07 19:05:23 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.160 2016/06/05 19:43:58 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -598,7 +598,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 #ifdef __mips__
 		if (dynp->d_tag == DT_DEBUG)
 			_dl_mprotect(map_link, sizeof(*map_link),
-			    PROT_READ|PROT_WRITE|PROT_EXEC);
+			    PROT_READ|PROT_WRITE);
 #endif
 		*map_link = _dl_debug_map;
 #ifdef __mips__
