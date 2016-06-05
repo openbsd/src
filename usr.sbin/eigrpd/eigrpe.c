@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.23 2016/06/05 03:36:41 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.24 2016/06/05 17:07:41 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -272,13 +272,6 @@ eigrpe_dispatch_main(int fd, short event, void *bula)
 			if (iface == NULL)
 				break;
 
-			if (ka->af == AF_INET6 &&
-			    IN6_IS_ADDR_LINKLOCAL(&ka->addr.v6)) {
-				iface->linklocal = ka->addr.v6;
-				if_update(iface, AF_INET6);
-				break;
-			}
-
 			if_addr_new(iface, ka);
 			break;
 		case IMSG_DELADDR:
@@ -290,15 +283,6 @@ eigrpe_dispatch_main(int fd, short event, void *bula)
 			iface = if_lookup(econf, ka->ifindex);
 			if (iface == NULL)
 				break;
-
-			if (ka->af == AF_INET6 &&
-			    IN6_ARE_ADDR_EQUAL(&iface->linklocal,
-			    &ka->addr.v6)) {
-				memset(&iface->linklocal, 0,
-				    sizeof(iface->linklocal));
-				if_update(iface, AF_INET6);
-				break;
-			}
 
 			if_addr_del(iface, ka);
 			break;

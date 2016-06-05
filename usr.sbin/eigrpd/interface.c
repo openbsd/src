@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.18 2016/06/05 17:04:13 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.19 2016/06/05 17:07:41 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -140,24 +140,29 @@ if_addr_new(struct iface *iface, struct kaddr *ka)
 	struct if_addr		*if_addr;
 	struct eigrp_iface	*ei;
 
+	if (ka->af == AF_INET6 && IN6_IS_ADDR_LINKLOCAL(&ka->addr.v6)) {
+		iface->linklocal = ka->addr.v6;
+		if_update(iface, AF_INET6);
+		return;
+	}
+
 	if (if_addr_lookup(&iface->addr_list, ka) != NULL)
 		return;
 
 	if ((if_addr = calloc(1, sizeof(*if_addr))) == NULL)
 		fatal("if_addr_new: calloc");
-
 	if_addr->af = ka->af;
 	if_addr->addr = ka->addr;
 	if_addr->prefixlen = ka->prefixlen;
 	if_addr->dstbrd = ka->dstbrd;
-
 	TAILQ_INSERT_TAIL(&iface->addr_list, if_addr, entry);
 
 	TAILQ_FOREACH(ei, &iface->ei_list, i_entry)
 		if (ei->state == IF_STA_ACTIVE && ei->eigrp->af == if_addr->af)
 			eigrpe_orig_local_route(ei, if_addr, 0);
 
-	if_update(iface, if_addr->af);
+	if (if_addr->af == AF_INET)
+		if_update(iface, AF_INET);
 }
 
 void
@@ -165,6 +170,14 @@ if_addr_del(struct iface *iface, struct kaddr *ka)
 {
 	struct if_addr		*if_addr;
 	struct eigrp_iface	*ei;
+	int			 af = ka->af;
+
+	if (ka->af == AF_INET6 &&
+	    IN6_ARE_ADDR_EQUAL(&iface->linklocal, &ka->addr.v6)) {
+		memset(&iface->linklocal, 0, sizeof(iface->linklocal));
+		if_update(iface, AF_INET6);
+		return;
+	}
 
 	if_addr = if_addr_lookup(&iface->addr_list, ka);
 	if (if_addr == NULL)
@@ -175,8 +188,10 @@ if_addr_del(struct iface *iface, struct kaddr *ka)
 			eigrpe_orig_local_route(ei, if_addr, 1);
 
 	TAILQ_REMOVE(&iface->addr_list, if_addr, entry);
-	if_update(iface, if_addr->af);
 	free(if_addr);
+
+	if (af == AF_INET)
+		if_update(iface, AF_INET);
 }
 
 struct if_addr *
