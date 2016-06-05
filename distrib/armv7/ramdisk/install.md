@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.37 2016/06/03 23:50:21 jsg Exp $
+#	$OpenBSD: install.md,v 1.38 2016/06/05 15:12:56 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,11 +55,10 @@ md_installboot() {
 
 	# Mount MSDOS partition, extract U-Boot and copy UEFI boot program
 	mount ${MOUNT_ARGS_msdos} ${_disk}i /mnt/mnt
-	tar -C /mnt/ -xf /usr/mdec/u-boots.tgz 
 	mkdir -p /mnt/mnt/efi/boot
 	cp /mnt/usr/mdec/BOOTARM.EFI /mnt/mnt/efi/boot/bootarm.efi
 
-	_mdec=/mnt/usr/mdec/$_plat
+	_mdec=/usr/mdec/$_plat
 
 	case $_plat in
 	am335x|beagle|panda)

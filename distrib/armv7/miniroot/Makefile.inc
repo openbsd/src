@@ -27,6 +27,9 @@ PART_ID?=C
 NEWFS_ARGS_msdos=-L boot
 MOUNT_ARGS_msdos=-o-l
 
+PDTB=		/usr/local/share/dtb/arm
+PUBOOT=		/usr/local/share/u-boot
+
 cleandir: clean
 clean:
 	rm -f ${IMAGE}
@@ -47,22 +50,18 @@ do_files:
 	ln ${MOUNT_POINT}/bsd.rd ${MOUNT_POINT}/bsd
 	-umount ${MOUNT_POINT}
 	mount ${MOUNT_ARGS_msdos} ${VND_IDEV} ${MOUNT_POINT}
+.for DTB in ${DTBS}
+	cp ${PDTB}/${DTB} ${MOUNT_POINT}/
+.endfor
 .if ${PLATFORM} == "OMAP"
-	cp /usr/mdec/${BOARD}/MLO ${MOUNT_POINT}/MLO
-	cp /usr/mdec/${BOARD}/u-boot.* ${MOUNT_POINT}/
-	cp /usr/mdec/${BOARD}/*.dtb ${MOUNT_POINT}/
-.endif
-.if ${BOARD} == "nitrogen"
-	cp /usr/mdec/${BOARD}/*.dtb ${MOUNT_POINT}/
+	cp ${PUBOOT}/${UBOOT}/{MLO,u-boot.img} ${MOUNT_POINT}/
 .endif
 .if ${BOARD} == "cubox" || ${BOARD} == "wandboard"
-	cp /usr/mdec/${BOARD}/*.dtb ${MOUNT_POINT}/
-	dd if=/usr/mdec/${BOARD}/SPL of=${VND_CDEV} bs=1024 seek=1
-	dd if=/usr/mdec/${BOARD}/u-boot.img of=${VND_CDEV} bs=1024 seek=69
+	dd if=${PUBOOT}/${UBOOT}/SPL of=${VND_CDEV} bs=1024 seek=1
+	dd if=${PUBOOT}/${UBOOT}/u-boot.img of=${VND_CDEV} bs=1024 seek=69
 .endif
 .if ${PLATFORM} == "SUNXI"
-	cp /usr/mdec/${BOARD}/*.dtb ${MOUNT_POINT}/
-	dd if=/usr/mdec/${BOARD}/u-boot-sunxi-with-spl.bin \
+	dd if=${PUBOOT}/${UBOOT}/u-boot-sunxi-with-spl.bin \
 	    of=${VND_CDEV} bs=1024 seek=8
 .endif
 	mkdir -p ${MOUNT_POINT}/efi/boot

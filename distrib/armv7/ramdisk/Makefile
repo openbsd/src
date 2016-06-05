@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2016/05/29 07:38:01 jsg Exp $
+#	$OpenBSD: Makefile,v 1.14 2016/06/05 15:12:56 jsg Exp $
 
 REV=	${OSrev}
 
@@ -25,6 +25,15 @@ DISKTYPE=       rdroot
 NBLKS=		15360
 # minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -m 0 -o space -i 4096
+
+DIRS=\
+	am335x \
+	beagle \
+	cubie \
+	cubox \
+	nitrogen \
+	panda \
+	wandboard
 
 .ifndef DESTDIR
 all ${IMAGE}:
@@ -84,6 +93,9 @@ ${CRUNCHCONF}: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
 
 do_files:
+.for DIR in ${DIRS}
+	mkdir -p ${MOUNT_POINT}/usr/mdec/${DIR}
+.endfor
 	cat ${MTREE} | mtree -de -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    REV=${REV} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.20 2016/04/29 11:19:33 patrick Exp $
+#	$OpenBSD: list,v 1.21 2016/06/05 15:12:56 jsg Exp $
 
 SRCDIRS distrib/special
 
@@ -113,6 +113,51 @@ SPECIAL	chmod 755 install.sub
 SYMLINK	install.sub				autoinstall
 SYMLINK	install.sub				install
 SYMLINK	install.sub				upgrade
-SPECIAL	tar cvf usr/mdec/u-boots.tgz /usr/mdec/
+
+# u-boot and dtbs
+COPY	/usr/local/share/u-boot/am335x_boneblack/MLO	/usr/mdec/am335x/MLO
+COPY	/usr/local/share/u-boot/am335x_boneblack/u-boot.img	/usr/mdec/am335x/u-boot.img
+COPY	/usr/local/share/dtb/arm/am335x-bone.dtb	/usr/mdec/am335x/am335x-bone.dtb
+COPY	/usr/local/share/dtb/arm/am335x-boneblack.dtb	/usr/mdec/am335x/am335x-boneblack.dtb
+COPY	/usr/local/share/dtb/arm/am335x-bonegreen.dtb	/usr/mdec/am335x/am335x-bonegreen.dtb
+COPY	/usr/local/share/dtb/arm/am335x-evm.dtb		/usr/mdec/am335x/am335x-evm.dtb
+COPY	/usr/local/share/dtb/arm/am335x-evmsk.dtb	/usr/mdec/am335x/am335x-evmsk.dtb
+
+COPY	/usr/local/share/u-boot/omap3_beagle/MLO	/usr/mdec/beagle/MLO
+COPY	/usr/local/share/u-boot/omap3_beagle/u-boot.img	/usr/mdec/beagle/u-boot.img
+COPY	/usr/local/share/dtb/arm/omap3-beagle-xm-ab.dtb	/usr/mdec/beagle/omap3-beagle-xm-ab.dtb
+COPY	/usr/local/share/dtb/arm/omap3-beagle-xm.dtb	/usr/mdec/beagle/omap3-beagle-xm.dtb
+COPY	/usr/local/share/dtb/arm/omap3-beagle.dtb	/usr/mdec/beagle/omap3-beagle.dtb
+
+COPY	/usr/local/share/u-boot/Cubieboard/u-boot-sunxi-with-spl.bin	/usr/mdec/cubie/u-boot-sunxi-with-spl.bin
+COPY	/usr/local/share/dtb/arm/sun4i-a10-cubieboard.dtb	/usr/mdec/cubie/sun4i-a10-cubieboard.dtb
+
+COPY	/usr/local/share/u-boot/omap4_panda/MLO		/usr/mdec/panda/MLO
+COPY	/usr/local/share/u-boot/omap4_panda/u-boot.img	/usr/mdec/panda/u-boot.img
+COPY	/usr/local/share/dtb/arm/omap4-duovero-parlor.dtb	/usr/mdec/panda/omap4-duovero-parlor.dtb
+COPY	/usr/local/share/dtb/arm/omap4-panda-a4.dtb	/usr/mdec/panda/omap4-panda-a4.dtb
+COPY	/usr/local/share/dtb/arm/omap4-panda-es.dtb	/usr/mdec/panda/omap4-panda-es.dtb
+COPY	/usr/local/share/dtb/arm/omap4-panda.dtb	/usr/mdec/panda/omap4-panda.dtb
+COPY	/usr/local/share/dtb/arm/omap4-sdp.dtb		/usr/mdec/panda/omap4-sdp.dtb
+
+COPY	/usr/local/share/u-boot/mx6cuboxi/SPL		/usr/mdec/cubox/SPL
+COPY	/usr/local/share/u-boot/mx6cuboxi/u-boot.img	/usr/mdec/cubox/u-boot.img
+COPY	/usr/local/share/dtb/arm/imx6dl-cubox-i.dtb	/usr/mdec/cubox/imx6dl-cubox-i.dtb
+COPY	/usr/local/share/dtb/arm/imx6dl-hummingboard.dtb	/usr/mdec/cubox/imx6dl-hummingboard.dtb
+COPY	/usr/local/share/dtb/arm/imx6q-cubox-i.dtb	/usr/mdec/cubox/imx6q-cubox-i.dtb
+COPY	/usr/local/share/dtb/arm/imx6q-hummingboard.dtb	/usr/mdec/cubox/imx6q-hummingboard.dtb
+
+COPY	/usr/local/share/dtb/arm/imx6dl-nitrogen6x.dtb	/usr/mdec/nitrogen/imx6dl-nitrogen6x.dtb
+COPY	/usr/local/share/dtb/arm/imx6dl-sabrelite.dtb	/usr/mdec/nitrogen/imx6dl-sabrelite.dtb
+COPY	/usr/local/share/dtb/arm/imx6q-nitrogen6_max.dtb	/usr/mdec/nitrogen/imx6q-nitrogen6_max.dtb
+COPY	/usr/local/share/dtb/arm/imx6q-nitrogen6x.dtb	/usr/mdec/nitrogen/imx6q-nitrogen6x.dtb
+COPY	/usr/local/share/dtb/arm/imx6q-sabrelite.dtb	/usr/mdec/nitrogen/imx6q-sabrelite.dtb
+
+COPY	/usr/local/share/u-boot/wandboard/SPL		/usr/mdec/wandboard/SPL
+COPY	/usr/local/share/u-boot/wandboard/u-boot.img	/usr/mdec/wandboard/u-boot.img
+COPY	/usr/local/share/dtb/arm/imx6dl-wandboard-revb1.dtb	/usr/mdec/wandboard/imx6dl-wandboard-revb1.dtb
+COPY	/usr/local/share/dtb/arm/imx6dl-wandboard.dtb	/usr/mdec/wandboard/imx6dl-wandboard.dtb
+COPY	/usr/local/share/dtb/arm/imx6q-wandboard-revb1.dtb	/usr/mdec/wandboard/imx6q-wandboard-revb1.dtb
+COPY	/usr/local/share/dtb/arm/imx6q-wandboard.dtb	/usr/mdec/wandboard/imx6q-wandboard.dtb
 
 TZ
