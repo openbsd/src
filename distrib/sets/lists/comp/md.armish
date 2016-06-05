@@ -50,6 +50,7 @@
 ./usr/include/arm/stdarg.h
 ./usr/include/arm/swi.h
 ./usr/include/arm/sysarch.h
+./usr/include/arm/sysreg.h
 ./usr/include/arm/tcb.h
 ./usr/include/arm/trap.h
 ./usr/include/arm/undefined.h
