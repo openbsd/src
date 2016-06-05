@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwnvar.h,v 1.5 2016/03/21 12:00:32 stsp Exp $	*/
+/*	$OpenBSD: rtwnvar.h,v 1.6 2016/06/05 20:11:41 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -28,7 +28,11 @@ struct rtwn_ops {
 	void		(*write_2)(void *, uint16_t, uint16_t);
 	void		(*write_4)(void *, uint16_t, uint32_t);
 	int		(*tx)(void *, struct mbuf *, struct ieee80211_node *);
+	int		(*power_on)(void *);
 	int		(*dma_init)(void *);
+	int		(*load_firmware)(void *, u_char **fw, size_t *);
+	void		(*mac_init)(void *);
+	void		(*bb_init)(void *);
 	void		(*enable_intr)(void *);
 	void		(*disable_intr)(void *);
 	void		(*stop)(void *);
@@ -50,8 +54,9 @@ struct rtwn_softc {
 	struct task			init_task;
 	int				ac2idx[EDCA_NUM_AC];
 	uint32_t			sc_flags;
-#define RTWN_FLAG_CCK_HIPWR	0x01
-#define RTWN_FLAG_BUSY		0x02
+#define RTWN_FLAG_CCK_HIPWR		0x01
+#define RTWN_FLAG_BUSY			0x02
+#define RTWN_FLAG_FORCE_RAID_11B	0x04
 
 	uint32_t		chip;
 #define RTWN_CHIP_92C		0x01
@@ -74,6 +79,12 @@ struct rtwn_softc {
 	int				sc_tx_timer;
 	int				fwcur;
 	struct r92c_rom			rom;
+
+	uint8_t				r88e_rom[512];
+	uint8_t				cck_tx_pwr[6];
+	uint8_t				ht40_tx_pwr[5];
+	int8_t				bw20_tx_pwr_diff;
+	int8_t				ofdm_tx_pwr_diff;
 
 	uint32_t			rf_chnlbw[R92C_MAX_CHAINS];
 };
