@@ -149,7 +149,6 @@ help(void) {
 "                 -i                  (IP6.INT reverse IPv6 lookups)\n"
 "                 -f filename         (batch mode)\n"
 "                 -b address[#port]   (bind to source address/port)\n"
-"                 -p port             (specify port number)\n"
 "                 -q name             (specify query name)\n"
 "                 -t type             (specify query type)\n"
 "                 -c class            (specify query class)\n"
@@ -1192,8 +1191,10 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 		strlcpy(keyfile, value, sizeof(keyfile));
 		return (value_from_next);
 	case 'p':
-		fprintf(stderr, ";; Warning, -p option ignored\n");
-		/* port = (in_port_t) parse_uint(value, "port number", MAXPORT); */
+		if (parse_uint(value, "port number", MAXPORT) != 53) {
+			fprintf(stderr, ";; Error, only port 53 supported\n");
+			exit(1);
+		}
 		return (value_from_next);
 	case 'q':
 		if (!config_only) {
