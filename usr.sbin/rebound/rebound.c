@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.63 2016/05/31 16:50:11 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.64 2016/06/05 22:41:41 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -215,8 +215,8 @@ servfail(int ud, uint16_t id, struct sockaddr *fromaddr, socklen_t fromlen)
 	sendto(ud, &pkt, sizeof(pkt), 0, fromaddr, fromlen);
 }
 
-static int
-newrequest(int ud, struct request **reqp, struct sockaddr *remoteaddr)
+static struct request *
+newrequest(int ud, struct sockaddr *remoteaddr)
 {
 	struct sockaddr from;
 	socklen_t fromlen;
@@ -226,24 +226,22 @@ newrequest(int ud, struct request **reqp, struct sockaddr *remoteaddr)
 	struct dnscache *hit;
 	size_t r;
 
-	*reqp = NULL;
-
 	dnsreq = (struct dnspacket *)buf;
 
 	fromlen = sizeof(from);
 	r = recvfrom(ud, buf, sizeof(buf), 0, &from, &fromlen);
 	if (r == 0 || r == -1 || r < sizeof(struct dnspacket))
-		return -1;
+		return NULL;
 
 	conntotal += 1;
 	if ((hit = cachelookup(dnsreq, r))) {
 		hit->resp->id = dnsreq->id;
 		sendto(ud, hit->resp, hit->resplen, 0, &from, fromlen);
-		return 0;
+		return NULL;
 	}
 
 	if (!(req = calloc(1, sizeof(*req))))
-		return -1;
+		return NULL;
 
 	conncount += 1;
 	req->ts = now;
@@ -290,12 +288,11 @@ newrequest(int ud, struct request **reqp, struct sockaddr *remoteaddr)
 		goto fail;
 	}
 
-	*reqp = req;
-	return 0;
+	return req;
 
 fail:
 	freerequest(req);
-	return -1;
+	return NULL;
 }
 
 static void
@@ -358,24 +355,26 @@ static struct request *
 newtcprequest(int ld, struct sockaddr *remoteaddr)
 {
 	struct request *req;
+	int client;
 
-	if (!(req = calloc(1, sizeof(*req))))
+	client = accept(ld, NULL, 0);
+	if (client == -1) {
+		if (errno == ENFILE || errno == EMFILE)
+			stopaccepting = 1;
 		return NULL;
+	}
+
+	if (!(req = calloc(1, sizeof(*req)))) {
+		close(client);
+		return NULL;
+	}
 
 	conntotal += 1;
 	conncount += 2;
 	req->ts = now;
 	req->ts.tv_sec += 30;
 	req->tcp = 1;
-
-	req->s = -1;
-	req->fromlen = sizeof(req->from);
-	req->client = accept(ld, &req->from, &req->fromlen);
-	if (req->client == -1) {
-		if (errno == ENFILE || errno == EMFILE)
-			stopaccepting = 1;
-		goto fail;
-	}
+	req->client = client;
 
 	req->s = socket(remoteaddr->sa_family, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (req->s == -1)
@@ -523,25 +522,19 @@ launch(FILE *conf, int ud, int ld, int kq)
 			} else if (kev[i].filter != EVFILT_READ) {
 				logerr("don't know what happened");
 			} else if (kev[i].ident == ud) {
-				while (newrequest(ud, &req,
-				    (struct sockaddr *)&remoteaddr) == 0) {
-					if (!req)
-						continue;
+				if ((req = newrequest(ud,
+				    (struct sockaddr *)&remoteaddr))) {
 					EV_SET(&ch[0], req->s, EVFILT_READ,
 					    EV_ADD, 0, 0, req);
 					kevent(kq, ch, 1, NULL, 0, NULL);
-					if (conncount > connmax)
-						break;
 				}
 			} else if (kev[i].ident == ld) {
-				while ((req = newtcprequest(ld,
+				if ((req = newtcprequest(ld,
 				    (struct sockaddr *)&remoteaddr))) {
 					EV_SET(&ch[0], req->s,
 					    req->tcp == 1 ? EVFILT_WRITE :
 					    EVFILT_READ, EV_ADD, 0, 0, req);
 					kevent(kq, ch, 1, NULL, 0, NULL);
-					if (conncount > connmax)
-						break;
 				}
 			} else {
 				req = kev[i].udata;
@@ -662,13 +655,13 @@ main(int argc, char **argv)
 	bindaddr.sin_port = htons(53);
 	inet_aton("127.0.0.1", &bindaddr.sin_addr);
 
-	ud = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0);
+	ud = socket(AF_INET, SOCK_DGRAM, 0);
 	if (ud == -1)
 		logerr("socket: %s", strerror(errno));
 	if (bind(ud, (struct sockaddr *)&bindaddr, sizeof(bindaddr)) == -1)
 		logerr("bind: %s", strerror(errno));
 
-	ld = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+	ld = socket(AF_INET, SOCK_STREAM, 0);
 	if (ld == -1)
 		logerr("socket: %s", strerror(errno));
 	one = 1;
