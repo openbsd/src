@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.39 2016/06/05 15:23:22 jsg Exp $
+#	$OpenBSD: install.md,v 1.40 2016/06/05 15:35:38 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,7 +75,9 @@ md_installboot() {
 		cp $_mdec/*.dtb /mnt/mnt/
 		;;
 	cubie)
-		cp $_mdec/{u-boot-sunxi-with-spl.bin,*.dtb} /mnt/mnt/
+		cp $_mdec/*.dtb /mnt/mnt/
+		dd if=$_mdec/u-boot-sunxi-with-spl.bin of=${_disk}c \
+		    bs=1024 seek=8 >/dev/null 2>&1
 		;;
 	esac
 }
