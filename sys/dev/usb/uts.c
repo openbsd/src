@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.37 2016/02/10 05:49:50 guenther Exp $ */
+/*	$OpenBSD: uts.c,v 1.38 2016/06/05 20:15:54 bru Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -476,9 +476,7 @@ uts_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 	DPRINTF(("%s: tp.down = %d, tp.z = %d, tp.x = %d, tp.y = %d\n",
 	    sc->sc_dev.dv_xname, tp.down, tp.z, tp.x, tp.y));
 
-	wsmouse_input(sc->sc_wsmousedev, tp.down, tp.x, tp.y, tp.z, 0,
-	    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
-	    WSMOUSE_INPUT_ABSOLUTE_Z);
+	WSMOUSE_TOUCH(sc->sc_wsmousedev, tp.down, tp.x, tp.y, tp.z, 0);
 	sc->sc_oldy = tp.y;
 	sc->sc_oldx = tp.x;
 

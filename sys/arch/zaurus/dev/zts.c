@@ -1,4 +1,4 @@
-/* $OpenBSD: zts.c,v 1.16 2014/03/29 18:09:30 guenther Exp $ */
+/* $OpenBSD: zts.c,v 1.17 2016/06/05 20:15:54 bru Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -544,10 +544,9 @@ zts_irq(void *v)
 		DPRINTF(("%s: tp.z = %d, tp.x = %d, tp.y = %d\n",
 		    sc->sc_dev.dv_xname, tp.z, tp.x, tp.y));
 
-		wsmouse_input(sc->sc_wsmousedev, down, tp.x, tp.y,
-		    0 /* z */, 0 /* w */,
-		    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
-		    WSMOUSE_INPUT_ABSOLUTE_Z);
+		wsmouse_buttons(sc->sc_wsmousedev, down);
+		wsmouse_position(sc->sc_wsmousedev, tp.x, tp.y);
+		wsmouse_input_sync(sc->sc_wsmousedev);
 		sc->sc_buttons = down;
 		sc->sc_oldx = tp.x;
 		sc->sc_oldy = tp.y;

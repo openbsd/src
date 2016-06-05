@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilms.c,v 1.5 2007/04/10 22:37:17 miod Exp $	*/
+/*	$OpenBSD: hilms.c,v 1.6 2016/06/05 20:15:54 bru Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -219,7 +219,7 @@ void
 hilms_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 {
 	struct hilms_softc *sc = (struct hilms_softc *)dev;
-	int type, flags;
+	int type;
 	int dx, dy, dz, button;
 #ifdef DIAGNOSTIC
 	int minlen;
@@ -256,9 +256,6 @@ hilms_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 	 */
 
 	if (type & HIL_MOUSEMOTION) {
-		flags = sc->sc_features & HIL_ABSOLUTE ?
-		    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
-		    WSMOUSE_INPUT_ABSOLUTE_Z : WSMOUSE_INPUT_DELTA;
 		if (sc->sc_features & HIL_16_BITS) {
 			dx = *buf++;
 			dx |= (*buf++) << 8;
@@ -302,8 +299,7 @@ hilms_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 		if ((sc->sc_features & HIL_ABSOLUTE) == 0 &&
 		    sc->sc_buttons == 0)
 			dy = -dy;
-	} else
-		dx = dy = dz = flags = 0;
+	}
 
 	if (type & HIL_MOUSEBUTTON) {
 		button = *buf;
@@ -332,7 +328,18 @@ hilms_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 		/* buf++; */
 	}
 	
-	if (sc->sc_wsmousedev != NULL)
-		wsmouse_input(sc->sc_wsmousedev,
-		    sc->sc_buttonstate, dx, dy, dz, 0, flags);
+	if (sc->sc_wsmousedev == NULL)
+		return;
+
+	wsmouse_buttons(sc->sc_wsmousedev, sc->sc_buttonstate);
+	if (type & HIL_MOUSEMOTION) {
+		if ((sc->sc_features & HIL_ABSOLUTE) == 0) {
+			wsmouse_motion(sc->sc_wsmousedev, dx, dy, dz, 0);
+		} else {
+			wsmouse_position(sc->sc_wsmousedev, dx, dy);
+			if (sc->sc_axes > 2)
+				wsmouse_touch(sc->sc_wsmousedev, dz, 0);
+		}
+	}
+	wsmouse_input_sync(sc->sc_wsmousedev);
 }
