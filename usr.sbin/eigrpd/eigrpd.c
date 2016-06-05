@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.15 2016/06/05 03:36:41 renato Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.16 2016/06/05 17:19:18 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -265,10 +265,6 @@ main(int argc, char *argv[])
 	imsg_init(&iev_rde->ibuf, pipe_parent2rde[0]);
 	iev_rde->handler = main_dispatch_rde;
 
-	if (main_imsg_send_ipc_sockets(&iev_eigrpe->ibuf, &iev_rde->ibuf))
-		fatal("could not establish imsg links");
-	main_imsg_send_config(eigrpd_conf);
-
 	/* setup event handler */
 	iev_eigrpe->events = EV_READ;
 	event_set(&iev_eigrpe->ev, iev_eigrpe->ibuf.fd, iev_eigrpe->events,
@@ -279,6 +275,10 @@ main(int argc, char *argv[])
 	event_set(&iev_rde->ev, iev_rde->ibuf.fd, iev_rde->events,
 	    iev_rde->handler, iev_rde);
 	event_add(&iev_rde->ev, NULL);
+
+	if (main_imsg_send_ipc_sockets(&iev_eigrpe->ibuf, &iev_rde->ibuf))
+		fatal("could not establish imsg links");
+	main_imsg_send_config(eigrpd_conf);
 
 	/* notify eigrpe about existing interfaces and addresses */
 	kif_redistribute();
