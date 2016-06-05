@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.38 2016/06/05 15:12:56 jsg Exp $
+#	$OpenBSD: install.md,v 1.39 2016/06/05 15:23:22 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -66,8 +66,10 @@ md_installboot() {
 		;;
 	cubox|wandboard)
 		cp $_mdec/*.dtb /mnt/mnt/
-		dd if=$_mdec/SPL of=${_disk}c bs=1024 seek=1 >/dev/null
-		dd if=$_mdec/u-boot.img of=${_disk}c bs=1024 seek=69 >/dev/null
+		dd if=$_mdec/SPL of=${_disk}c bs=1024 seek=1 \
+		    >/dev/null 2>&1
+		dd if=$_mdec/u-boot.img of=${_disk}c bs=1024 seek=69 \
+		    >/dev/null 2>&1
 		;;
 	nitrogen)
 		cp $_mdec/*.dtb /mnt/mnt/
