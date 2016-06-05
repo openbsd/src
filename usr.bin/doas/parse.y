@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.15 2016/04/27 02:35:55 gsoares Exp $ */
+/* $OpenBSD: parse.y,v 1.16 2016/06/05 00:46:34 djm Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -35,6 +35,7 @@ typedef struct {
 			const char *cmd;
 			const char **cmdargs;
 			const char **envlist;
+			const char **setenvlist;
 		};
 		const char *str;
 	};
@@ -56,7 +57,7 @@ int yyparse(void);
 %}
 
 %token TPERMIT TDENY TAS TCMD TARGS
-%token TNOPASS TKEEPENV
+%token TNOPASS TKEEPENV TSETENV
 %token TSTRING
 
 %%
@@ -75,6 +76,7 @@ rule:		action ident target cmd {
 			r->action = $1.action;
 			r->options = $1.options;
 			r->envlist = $1.envlist;
+			r->setenvlist = $1.setenvlist;
 			r->ident = $2.str;
 			r->target = $3.str;
 			r->cmd = $4.cmd;
@@ -95,6 +97,7 @@ action:		TPERMIT options {
 			$$.action = PERMIT;
 			$$.options = $2.options;
 			$$.envlist = $2.envlist;
+			$$.setenvlist = $2.setenvlist;
 		} | TDENY {
 			$$.action = DENY;
 		} ;
@@ -110,7 +113,16 @@ options:	/* none */
 				} else
 					$$.envlist = $2.envlist;
 			}
+			$$.setenvlist = $1.setenvlist;
+			if ($2.setenvlist) {
+				if ($$.setenvlist) {
+					yyerror("can't have two setenv sections");
+					YYERROR;
+				} else
+					$$.setenvlist = $2.setenvlist;
+			}
 		} ;
+
 option:		TNOPASS {
 			$$.options = NOPASS;
 		} | TKEEPENV {
@@ -118,6 +130,9 @@ option:		TNOPASS {
 		} | TKEEPENV '{' envlist '}' {
 			$$.options = KEEPENV;
 			$$.envlist = $3.envlist;
+		} | TSETENV '{' setenvlist '}' {
+			$$.options = SETENV;
+			$$.setenvlist = $3.setenvlist;
 		} ;
 
 envlist:	/* empty */ {
@@ -130,6 +145,28 @@ envlist:	/* empty */ {
 				errx(1, "can't allocate envlist");
 			$$.envlist[nenv] = $2.str;
 			$$.envlist[nenv + 1] = NULL;
+		}
+
+setenvlist:	/* empty */ {
+			if (!($$.setenvlist = calloc(1, sizeof(char *))))
+				errx(1, "can't allocate setenvlist");
+		} | setenvlist TSTRING '=' TSTRING {
+			int nenv = arraylen($1.setenvlist);
+			char *cp = NULL;
+
+			if (*$2.str == '\0' || strchr($2.str, '=') != NULL) {
+				yyerror("invalid setenv expression");
+				YYERROR;
+			}
+			if (!($$.setenvlist = reallocarray($1.setenvlist,
+			    nenv + 2, sizeof(char *))))
+				errx(1, "can't allocate envlist");
+			$$.setenvlist[nenv] = NULL;
+			if (asprintf(&cp, "%s=%s", $2.str, $4.str) <= 0 ||
+			    cp == NULL)
+				errx(1,"asprintf failed");
+			$$.setenvlist[nenv] = cp;
+			$$.setenvlist[nenv + 1] = NULL;
 		}
 
 
@@ -195,6 +232,7 @@ struct keyword {
 	{ "args", TARGS },
 	{ "nopass", TNOPASS },
 	{ "keepenv", TKEEPENV },
+	{ "setenv", TSETENV },
 };
 
 int
@@ -219,6 +257,7 @@ repeat:
 			/* FALLTHROUGH */
 		case '{':
 		case '}':
+		case '=':
 			return c;
 		case '#':
 			/* skip comments; NUL is allowed; no continuation */
@@ -271,6 +310,7 @@ repeat:
 		case '#':
 		case ' ':
 		case '\t':
+		case '=':
 			if (!escape && !quotes)
 				goto eow;
 			break;

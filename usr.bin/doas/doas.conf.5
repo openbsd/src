@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.18 2016/01/02 08:34:47 jmc Exp $
+.\" $OpenBSD: doas.conf.5,v 1.19 2016/06/05 00:46:34 djm Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: January 2 2016 $
+.Dd $Mdocdate: June 5 2016 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -62,6 +62,17 @@ and
 .It Ic keepenv { Oo Ar variable ... Oc Ic }
 In addition to the variables mentioned above, keep the space-separated
 specified variables.
+.It Ic setenv { Oo Ar variable=value ... Oc Ic }
+Sets one or more environment variables to the specified values.
+If the first character of
+.Ar value
+is a
+.Ql $
+then the value to be set is taken from the existing enviornment
+variable of the same name.
+.Cm setenv
+directives override environment variables copied via
+.Cm keepenv .
 .El
 .It Ar identity
 The username to match.
@@ -130,6 +141,7 @@ permit nopass keepenv { \e
 permit nopass keepenv { ENV PS1 SSH_AUTH_SOCK } :wheel
 permit nopass tedu as root cmd /usr/sbin/procmap
 permit nopass keepenv root as root
+permit nopass setenv { PS1=$DOAS_PS1 } :staff
 .Ed
 .Sh SEE ALSO
 .Xr doas 1
