@@ -1,4 +1,4 @@
-/*	$OpenBSD: ams.c,v 1.6 2011/06/15 21:32:05 miod Exp $	*/
+/*	$OpenBSD: ams.c,v 1.7 2016/06/05 20:02:36 bru Exp $	*/
 /*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
@@ -501,8 +501,7 @@ ms_processevent(adb_event_t *event, struct ams_softc *sc)
 	    ((event->bytes[0] & 0x40) ? 64 : 0);
 
 	if (sc->sc_wsmousedev)
-		wsmouse_input(sc->sc_wsmousedev, buttons, dx, -dy, 0, 0,
-		    WSMOUSE_INPUT_DELTA);
+		WSMOUSE_INPUT(sc->sc_wsmousedev, buttons, dx, -dy, 0, 0);
 }
 
 int

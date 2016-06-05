@@ -1,4 +1,4 @@
-/* $OpenBSD: mms.c,v 1.19 2007/04/10 22:37:17 miod Exp $ */
+/* $OpenBSD: mms.c,v 1.20 2016/06/05 20:02:36 bru Exp $ */
 /*	$NetBSD: mms.c,v 1.35 2000/01/08 02:57:25 takemura Exp $	*/
 
 /*-
@@ -229,8 +229,7 @@ mmsintr(void *arg)
 	changed = status & 0x38;
 
 	if (dx || dy || changed)
-		wsmouse_input(sc->sc_wsmousedev,
-			      buttons, dx, dy, 0, 0, WSMOUSE_INPUT_DELTA);
+		WSMOUSE_INPUT(sc->sc_wsmousedev, buttons, dx, dy, 0, 0);
 
 	return -1;
 }

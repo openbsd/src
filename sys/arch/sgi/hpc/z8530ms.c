@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530ms.c,v 1.1 2012/04/17 22:06:33 miod Exp $	*/
+/*	$OpenBSD: z8530ms.c,v 1.2 2016/06/05 20:02:36 bru Exp $	*/
 /*	$NetBSD: zs_ms.c,v 1.7 2008/03/29 19:15:35 tsutsui Exp $	*/
 
 /*
@@ -296,7 +296,7 @@ zsms_wsmouse_input(struct zsms_softc *sc)
 	x = (int)sc->packet[ZSMS_PACKET_X1] + (int)sc->packet[ZSMS_PACKET_X2];
 	y = (int)sc->packet[ZSMS_PACKET_Y1] + (int)sc->packet[ZSMS_PACKET_Y2];
 
-	wsmouse_input(sc->wsmousedev, btns, x, y, 0, 0, WSMOUSE_INPUT_DELTA);
+	WSMOUSE_INPUT(sc->wsmousedev, btns, x, y, 0, 0);
 }
 
 int

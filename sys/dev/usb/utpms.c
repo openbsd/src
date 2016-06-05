@@ -1,4 +1,4 @@
-/*	$OpenBSD: utpms.c,v 1.6 2015/12/04 16:22:27 kettenis Exp $	*/
+/*	$OpenBSD: utpms.c,v 1.7 2016/06/05 20:02:36 bru Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -468,8 +468,7 @@ utpms_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 	if ((dx != 0 || dy != 0 || dz != 0 || buttons != sc->sc_buttons) &&
 	    sc->sc_wsmousedev != NULL) {
 		s = spltty();
-		wsmouse_input(sc->sc_wsmousedev, buttons, dx, -dy, dz, 0,
-		    WSMOUSE_INPUT_DELTA);
+		WSMOUSE_INPUT(sc->sc_wsmousedev, buttons, dx, -dy, dz, 0);
 		splx(s);
 	}
 	sc->sc_buttons = buttons;
