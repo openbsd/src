@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.22 2016/05/12 00:18:27 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.23 2016/06/05 03:36:41 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -66,24 +66,18 @@ eigrpe_sig_handler(int sig, short event, void *bula)
 
 /* eigrp engine */
 pid_t
-eigrpe(struct eigrpd_conf *xconf, int pipe_parent2eigrpe[2],
-    int pipe_eigrpe2rde[2], int pipe_parent2rde[2])
+eigrpe(int debug, int verbose, char *sockname)
 {
 	struct passwd		*pw;
 	struct event		 ev_sigint, ev_sigterm;
-	pid_t			 pid;
-	struct iface		*iface;
 
-	switch (pid = fork()) {
-	case -1:
-		fatal("cannot fork");
-	case 0:
-		break;
-	default:
-		return (pid);
-	}
+	econf = config_new_empty();
+
+	log_init(debug);
+	log_verbose(verbose);
 
 	/* create eigrpd control socket outside chroot */
+	global.csock = sockname;
 	if (control_init(global.csock) == -1)
 		fatalx("control socket setup failed");
 
@@ -118,8 +112,6 @@ eigrpe(struct eigrpd_conf *xconf, int pipe_parent2eigrpe[2],
 		fatal("if_set_ipv6_dscp");
 	if_set_sockbuf(global.eigrp_socket_v6);
 
-	econf = xconf;
-
 	if ((pw = getpwnam(EIGRPD_USER)) == NULL)
 		fatal("getpwnam");
 
@@ -146,26 +138,11 @@ eigrpe(struct eigrpd_conf *xconf, int pipe_parent2eigrpe[2],
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	/* setup pipes */
-	close(pipe_parent2eigrpe[0]);
-	close(pipe_eigrpe2rde[1]);
-	close(pipe_parent2rde[0]);
-	close(pipe_parent2rde[1]);
-
-	if ((iev_rde = malloc(sizeof(struct imsgev))) == NULL ||
-	    (iev_main = malloc(sizeof(struct imsgev))) == NULL)
+	/* setup pipe and event handler to the parent process */
+	if ((iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsg_init(&iev_rde->ibuf, pipe_eigrpe2rde[0]);
-	iev_rde->handler = eigrpe_dispatch_rde;
-	imsg_init(&iev_main->ibuf, pipe_parent2eigrpe[1]);
+	imsg_init(&iev_main->ibuf, 3);
 	iev_main->handler = eigrpe_dispatch_main;
-
-	/* setup event handler */
-	iev_rde->events = EV_READ;
-	event_set(&iev_rde->ev, iev_rde->ibuf.fd, iev_rde->events,
-	    iev_rde->handler, iev_rde);
-	event_add(&iev_rde->ev, NULL);
-
 	iev_main->events = EV_READ;
 	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
 	    iev_main->handler, iev_main);
@@ -186,11 +163,7 @@ eigrpe(struct eigrpd_conf *xconf, int pipe_parent2eigrpe[2],
 	if ((pkt_ptr = calloc(1, READ_BUF_SIZE)) == NULL)
 		fatal("eigrpe");
 
-	/* initialize interfaces */
-	TAILQ_FOREACH(iface, &econf->iface_list, entry)
-		if_init(xconf, iface);
-
-	if (pledge("stdio cpath inet mcast", NULL) == -1)
+	if (pledge("stdio cpath inet mcast recvfd", NULL) == -1)
 		fatal("pledge");
 
 	event_dispatch();
@@ -328,6 +301,28 @@ eigrpe_dispatch_main(int fd, short event, void *bula)
 			}
 
 			if_addr_del(iface, ka);
+			break;
+		case IMSG_SOCKET_IPC:
+			if (iev_rde) {
+				log_warnx("%s: received unexpected imsg fd "
+				    "to rde", __func__);
+				break;
+			}
+			if ((fd = imsg.fd) == -1) {
+				log_warnx("%s: expected to receive imsg fd to "
+				    "rde but didn't receive any", __func__);
+				break;
+			}
+
+			iev_rde = malloc(sizeof(struct imsgev));
+			if (iev_rde == NULL)
+				fatal(NULL);
+			imsg_init(&iev_rde->ibuf, fd);
+			iev_rde->handler = eigrpe_dispatch_rde;
+			iev_rde->events = EV_READ;
+			event_set(&iev_rde->ev, iev_rde->ibuf.fd,
+			    iev_rde->events, iev_rde->handler, iev_rde);
+			event_add(&iev_rde->ev, NULL);
 			break;
 		case IMSG_RECONF_CONF:
 			if ((nconf = malloc(sizeof(struct eigrpd_conf))) ==

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.14 2016/04/15 13:34:08 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.15 2016/06/05 03:36:41 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -112,6 +112,7 @@ enum imsg_type {
 	IMSG_SEND_SIAREPLY_END,
 	IMSG_SEND_MUPDATE_END,
 	IMSG_SEND_MQUERY_END,
+	IMSG_SOCKET_IPC,
 	IMSG_RECONF_CONF,
 	IMSG_RECONF_IFACE,
 	IMSG_RECONF_INSTANCE,
@@ -302,7 +303,7 @@ struct eigrp {
 };
 
 /* eigrp_conf */
-enum {
+enum eigrpd_process {
 	PROC_MAIN,
 	PROC_EIGRP_ENGINE,
 	PROC_RDE_ENGINE
@@ -483,6 +484,7 @@ void		 clearscope(struct in6_addr *);
 void		 main_imsg_compose_eigrpe(int, pid_t, void *, uint16_t);
 void		 main_imsg_compose_rde(int, pid_t, void *, uint16_t);
 void		 merge_config(struct eigrpd_conf *, struct eigrpd_conf *);
+struct eigrpd_conf *config_new_empty(void);
 void		 config_clear(struct eigrpd_conf *);
 void		 imsg_event_add(struct imsgev *);
 int		 imsg_compose_event(struct imsgev *, uint16_t, uint32_t,

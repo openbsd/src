@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.16 2016/05/12 00:15:24 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.17 2016/06/05 03:36:41 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -70,26 +70,16 @@ rde_sig_handler(int sig, short event, void *arg)
 
 /* route decision engine */
 pid_t
-rde(struct eigrpd_conf *xconf, int pipe_parent2rde[2], int pipe_eigrpe2rde[2],
-    int pipe_parent2eigrpe[2])
+rde(int debug, int verbose)
 {
 	struct event		 ev_sigint, ev_sigterm;
 	struct timeval		 now;
 	struct passwd		*pw;
-	pid_t			 pid;
-	struct eigrp		*eigrp;
 
-	switch (pid = fork()) {
-	case -1:
-		fatal("cannot fork");
-		/* NOTREACHED */
-	case 0:
-		break;
-	default:
-		return (pid);
-	}
+	rdeconf = config_new_empty();
 
-	rdeconf = xconf;
+	log_init(debug);
+	log_verbose(verbose);
 
 	if ((pw = getpwnam(EIGRPD_USER)) == NULL)
 		fatal("getpwnam");
@@ -107,7 +97,7 @@ rde(struct eigrpd_conf *xconf, int pipe_parent2rde[2], int pipe_eigrpe2rde[2],
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
-	if (pledge("stdio", NULL) == -1)
+	if (pledge("stdio recvfd", NULL) == -1)
 		fatal("pledge");
 
 	event_init();
@@ -120,26 +110,11 @@ rde(struct eigrpd_conf *xconf, int pipe_parent2rde[2], int pipe_eigrpe2rde[2],
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	/* setup pipes */
-	close(pipe_eigrpe2rde[0]);
-	close(pipe_parent2rde[0]);
-	close(pipe_parent2eigrpe[0]);
-	close(pipe_parent2eigrpe[1]);
-
-	if ((iev_eigrpe = malloc(sizeof(struct imsgev))) == NULL ||
-	    (iev_main = malloc(sizeof(struct imsgev))) == NULL)
+	/* setup pipe and event handler to the parent process */
+	if ((iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsg_init(&iev_eigrpe->ibuf, pipe_eigrpe2rde[1]);
-	iev_eigrpe->handler = rde_dispatch_imsg;
-	imsg_init(&iev_main->ibuf, pipe_parent2rde[1]);
+	imsg_init(&iev_main->ibuf, 3);
 	iev_main->handler = rde_dispatch_parent;
-
-	/* setup event handler */
-	iev_eigrpe->events = EV_READ;
-	event_set(&iev_eigrpe->ev, iev_eigrpe->ibuf.fd, iev_eigrpe->events,
-	    iev_eigrpe->handler, iev_eigrpe);
-	event_add(&iev_eigrpe->ev, NULL);
-
 	iev_main->events = EV_READ;
 	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
 	    iev_main->handler, iev_main);
@@ -147,9 +122,6 @@ rde(struct eigrpd_conf *xconf, int pipe_parent2rde[2], int pipe_eigrpe2rde[2],
 
 	gettimeofday(&now, NULL);
 	global.uptime = now.tv_sec;
-
-	TAILQ_FOREACH(eigrp, &rdeconf->instances, entry)
-		rde_instance_init(eigrp);
 
 	event_dispatch();
 
@@ -376,6 +348,29 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			    sizeof(struct kroute))
 				fatalx("IMSG_NETWORK_DEL imsg with wrong len");
 			rt_redist_set(imsg.data, 1);
+			break;
+		case IMSG_SOCKET_IPC:
+			if (iev_eigrpe) {
+				log_warnx("%s: received unexpected imsg fd "
+				    "to eigrpe", __func__);
+				break;
+			}
+			if ((fd = imsg.fd) == -1) {
+				log_warnx("%s: expected to receive imsg fd to "
+				    "eigrpe but didn't receive any", __func__);
+				break;
+			}
+
+			iev_eigrpe = malloc(sizeof(struct imsgev));
+			if (iev_eigrpe == NULL)
+				fatal(NULL);
+			imsg_init(&iev_eigrpe->ibuf, fd);
+			iev_eigrpe->handler = rde_dispatch_imsg;
+			iev_eigrpe->events = EV_READ;
+			event_set(&iev_eigrpe->ev, iev_eigrpe->ibuf.fd,
+			    iev_eigrpe->events, iev_eigrpe->handler,
+			    iev_eigrpe);
+			event_add(&iev_eigrpe->ev, NULL);
 			break;
 		case IMSG_RECONF_CONF:
 			if ((nconf = malloc(sizeof(struct eigrpd_conf))) ==

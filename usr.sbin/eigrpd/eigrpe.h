@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.h,v 1.10 2016/04/15 13:10:56 renato Exp $ */
+/*	$OpenBSD: eigrpe.h,v 1.11 2016/06/05 03:36:41 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -70,7 +70,7 @@ struct nbr {
 #define PREFIX_SIZE6(x)	((x == 128) ? 16 : ((x / 8) + 1))
 
 /* eigrpe.c */
-pid_t		 eigrpe(struct eigrpd_conf *, int[2], int[2], int[2]);
+pid_t		 eigrpe(int, int, char *);
 void		 eigrpe_dispatch_main(int, short, void *);
 void		 eigrpe_dispatch_rde(int, short, void *);
 int		 eigrpe_imsg_compose_parent(int, pid_t, void *, uint16_t);

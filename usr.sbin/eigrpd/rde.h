@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.8 2016/04/15 13:34:08 renato Exp $ */
+/*	$OpenBSD: rde.h,v 1.9 2016/06/05 03:36:41 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -122,7 +122,7 @@ enum dual_event {
 };
 
 /* rde.c */
-pid_t		 rde(struct eigrpd_conf *, int [2], int [2], int [2]);
+pid_t		 rde(int, int);
 int		 rde_imsg_compose_parent(int, pid_t, void *, uint16_t);
 int		 rde_imsg_compose_eigrpe(int, uint32_t, pid_t, void *,
 		    uint16_t);
