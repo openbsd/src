@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.72 2016/01/19 18:22:53 mmcc Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.73 2016/06/06 17:22:59 millert Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -1076,7 +1076,7 @@ error:
 	goto finish;
 
 overflow:
-	errno = ENOMEM;
+	errno = EOVERFLOW;
 	ret = -1;
 
 finish:
@@ -1474,7 +1474,7 @@ done:
 	goto finish;
 
 overflow:
-	errno = ENOMEM;
+	errno = EOVERFLOW;
 	ret = -1;
 
 finish:
