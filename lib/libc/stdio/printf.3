@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.74 2015/10/13 12:25:04 millert Exp $
+.\"	$OpenBSD: printf.3,v 1.75 2016/06/06 17:23:28 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: October 13 2015 $
+.Dd $Mdocdate: June 6 2016 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -739,6 +739,21 @@ newfmt(const char *fmt, ...)
 	return (p);
 }
 .Ed
+.Sh ERRORS
+In addition to the errors documented for the
+.Xr write 2
+system call, the
+.Fn printf
+family of functions may fail if:
+.Bl -tag -width Er
+.It Bq Er EILSEQ
+An invalid wide character code was encountered.
+.It Bq Er ENOMEM
+Insufficient storage space is available.
+.It Bq Er EOVERFLOW
+The return value would be too large to be represented by an
+.Vt int .
+.El
 .Sh SEE ALSO
 .Xr printf 1 ,
 .Xr scanf 3
