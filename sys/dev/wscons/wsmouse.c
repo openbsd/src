@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.29 2016/03/30 23:34:12 bru Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.30 2016/06/06 22:32:47 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -72,6 +72,22 @@
  */
 
 /*
+ * Copyright (c) 2015, 2016 Ulf Brosziewski
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
  * Mouse driver.
  */
 
@@ -112,27 +128,11 @@ extern int wsmuxdebug;
 #define	DPRINTFN(n,x)
 #endif
 
-#define	INVALID_X	INT_MAX
-#define	INVALID_Y	INT_MAX
-#define	INVALID_Z	INT_MAX
-#define	INVALID_W	INT_MAX
-
 struct wsmouse_softc {
 	struct wsevsrc	sc_base;
 
 	const struct wsmouse_accessops *sc_accessops;
 	void		*sc_accesscookie;
-
-	u_int		sc_mb;		/* mouse button state */
-	u_int		sc_ub;		/* user button state */
-	int		sc_dx;		/* delta-x */
-	int		sc_dy;		/* delta-y */
-	int		sc_dz;		/* delta-z */
-	int		sc_dw;		/* delta-w */
-	int		sc_x;		/* absolute-x */
-	int		sc_y;		/* absolute-y */
-	int		sc_z;		/* absolute-z */
-	int		sc_w;		/* absolute-w */
 
 	struct wsmouseinput input;
 
@@ -290,200 +290,6 @@ wsmouse_detach(struct device *self, int flags)
 	return (0);
 }
 
-void
-wsmouse_input(struct device *wsmousedev, u_int btns, /* 0 is up */
-    int x, int y, int z, int w, u_int flags)
-{
-	struct wsmouse_softc *sc = (struct wsmouse_softc *)wsmousedev;
-	struct wscons_event *ev;
-	struct wseventvar *evar;
-	int mb, ub, d, get, put, any;
-
-	add_mouse_randomness(x ^ y ^ z ^ w ^ btns);
-
-	/*
-	 * Discard input if not ready.
-	 */
-	evar = sc->sc_base.me_evp;
-	if (evar == NULL)
-		return;
-
-#ifdef DIAGNOSTIC
-	if (evar->q == NULL) {
-		printf("wsmouse_input: evar->q=NULL\n");
-		return;
-	}
-#endif
-
-#if NWSMUX > 0
-	DPRINTFN(5,("wsmouse_input: %s mux=%p, evar=%p\n",
-		    sc->sc_base.me_dv.dv_xname, sc->sc_base.me_parent, evar));
-#endif
-
-	sc->sc_mb = btns;
-	if (!(flags & WSMOUSE_INPUT_ABSOLUTE_X))
-		sc->sc_dx += x;
-	if (!(flags & WSMOUSE_INPUT_ABSOLUTE_Y))
-		sc->sc_dy += y;
-	if (!(flags & WSMOUSE_INPUT_ABSOLUTE_Z))
-		sc->sc_dz += z;
-	if (!(flags & WSMOUSE_INPUT_ABSOLUTE_W))
-		sc->sc_dw += w;
-
-	/*
-	 * We have at least one event (mouse button, delta-X, or
-	 * delta-Y; possibly all three, and possibly three separate
-	 * button events).  Deliver these events until we are out
-	 * of changes or out of room.  As events get delivered,
-	 * mark them `unchanged'.
-	 */
-	ub = sc->sc_ub;
-	any = 0;
-	get = evar->get;
-	put = evar->put;
-	ev = &evar->q[put];
-
-	/* NEXT prepares to put the next event, backing off if necessary */
-#define	NEXT								\
-	if ((++put) % WSEVENT_QSIZE == get) {				\
-		put--;							\
-		goto out;						\
-	}
-	/* ADVANCE completes the `put' of the event */
-#define	ADVANCE								\
-	ev++;								\
-	if (put >= WSEVENT_QSIZE) {					\
-		put = 0;						\
-		ev = &evar->q[0];				\
-	}								\
-	any = 1
-	/* TIMESTAMP sets `time' field of the event to the current time */
-#define TIMESTAMP							\
-	do {								\
-		getnanotime(&ev->time);					\
-	} while (0)
-
-	if (flags & WSMOUSE_INPUT_ABSOLUTE_X) {
-		if (sc->sc_x != x) {
-			NEXT;
-			ev->type = WSCONS_EVENT_MOUSE_ABSOLUTE_X;
-			ev->value = x;
-			TIMESTAMP;
-			ADVANCE;
-			sc->sc_x = x;
-		}
-	} else {
-		if (sc->sc_dx) {
-			NEXT;
-			ev->type = WSCONS_EVENT_MOUSE_DELTA_X;
-			ev->value = sc->sc_dx;
-			TIMESTAMP;
-			ADVANCE;
-			sc->sc_dx = 0;
-		}
-	}
-	if (flags & WSMOUSE_INPUT_ABSOLUTE_Y) {
-		if (sc->sc_y != y) {
-			NEXT;
-			ev->type = WSCONS_EVENT_MOUSE_ABSOLUTE_Y;
-			ev->value = y;
-			TIMESTAMP;
-			ADVANCE;
-			sc->sc_y = y;
-		}
-	} else {
-		if (sc->sc_dy) {
-			NEXT;
-			ev->type = WSCONS_EVENT_MOUSE_DELTA_Y;
-			ev->value = sc->sc_dy;
-			TIMESTAMP;
-			ADVANCE;
-			sc->sc_dy = 0;
-		}
-	}
-	if (flags & WSMOUSE_INPUT_ABSOLUTE_Z) {
-		if (sc->sc_z != z) {
-			NEXT;
-			ev->type = WSCONS_EVENT_MOUSE_ABSOLUTE_Z;
-			ev->value = z;
-			TIMESTAMP;
-			ADVANCE;
-			sc->sc_z = z;
-		}
-	} else {
-		if (sc->sc_dz) {
-			NEXT;
-			ev->type = WSCONS_EVENT_MOUSE_DELTA_Z;
-			ev->value = sc->sc_dz;
-			TIMESTAMP;
-			ADVANCE;
-			sc->sc_dz = 0;
-		}
-	}
-	if (flags & WSMOUSE_INPUT_ABSOLUTE_W) {
-		if (sc->sc_w != w) {
-			NEXT;
-			ev->type = WSCONS_EVENT_MOUSE_ABSOLUTE_W;
-			ev->value = w;
-			TIMESTAMP;
-			ADVANCE;
-			sc->sc_w = w;
-		}
-	} else {
-		if (sc->sc_dw) {
-			NEXT;
-			ev->type = WSCONS_EVENT_MOUSE_DELTA_W;
-			ev->value = sc->sc_dw;
-			TIMESTAMP;
-			ADVANCE;
-			sc->sc_dw = 0;
-		}
-	}
-
-	mb = sc->sc_mb;
-	while ((d = mb ^ ub) != 0) {
-		/*
-		 * Mouse button change.  Find the first change and drop
-		 * it into the event queue.
-		 */
-		NEXT;
-		ev->value = ffs(d) - 1;
-
-		KASSERT(ev->value >= 0);
-
-		d = 1 << ev->value;
-		ev->type =
-		    (mb & d) ? WSCONS_EVENT_MOUSE_DOWN : WSCONS_EVENT_MOUSE_UP;
-		TIMESTAMP;
-		ADVANCE;
-		ub ^= d;
-	}
-
-	NEXT;
-	ev->type = WSCONS_EVENT_SYNC;
-	ev->value = 0;
-	TIMESTAMP;
-	ADVANCE;
-
-#undef	TIMESTAMP
-#undef	ADVANCE
-#undef	NEXT
-
-out:
-	if (any) {
-		sc->sc_ub = ub;
-		evar->put = put;
-		WSEVENT_WAKEUP(evar);
-#ifdef HAVE_BURNER_SUPPORT
-		/* wsdisplay_burn(sc->sc_displaydv, WSDISPLAY_BURN_MOUSE); */
-#endif
-#if NWSMUX > 0
-		DPRINTFN(5,("wsmouse_input: %s wakeup evar=%p\n",
-			    sc->sc_base.me_dv.dv_xname, evar));
-#endif
-	}
-}
-
 int
 wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 {
@@ -572,10 +378,6 @@ int
 wsmousedoopen(struct wsmouse_softc *sc, struct wseventvar *evp)
 {
 	sc->sc_base.me_evp = evp;
-	sc->sc_x = INVALID_X;
-	sc->sc_y = INVALID_Y;
-	sc->sc_z = INVALID_Z;
-	sc->sc_w = INVALID_W;
 
 	/* enable the device, and punt if that's not possible */
 	return (*sc->sc_accessops->enable)(sc->sc_accesscookie);
@@ -742,7 +544,6 @@ wsmouse_add_mux(int unit, struct wsmux_softc *muxsc)
 	return (wsmux_attach_sc(muxsc, &sc->sc_base));
 }
 #endif	/* NWSMUX > 0 */
-
 
 void
 wsmouse_buttons(struct device *sc, u_int buttons)

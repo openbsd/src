@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmousevar.h,v 1.10 2016/05/30 12:38:34 mpi Exp $ */
+/* $OpenBSD: wsmousevar.h,v 1.11 2016/06/06 22:32:47 bru Exp $ */
 /* $NetBSD: wsmousevar.h,v 1.4 2000/01/08 02:57:24 takemura Exp $ */
 
 /*
@@ -79,18 +79,6 @@ struct wsmousedev_attach_args {
  * Autoconfiguration helper functions.
  */
 int	wsmousedevprint(void *, const char *);
-
-/*
- * Callbacks from the mouse driver to the wsmouse interface driver.
- */
-#define WSMOUSE_INPUT_DELTA		0
-#define WSMOUSE_INPUT_ABSOLUTE_X	(1<<0)
-#define WSMOUSE_INPUT_ABSOLUTE_Y	(1<<1)
-#define WSMOUSE_INPUT_ABSOLUTE_Z	(1<<2)
-#define WSMOUSE_INPUT_ABSOLUTE_W	(1<<3)
-
-void	wsmouse_input(struct device *kbddev, u_int btns,
-			   int x, int y, int z, int w, u_int flags);
 
 
 /* Process standard mouse input. */
