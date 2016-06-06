@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.72 2015/05/25 07:20:31 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.73 2016/06/06 13:58:55 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -167,11 +167,24 @@ sub handle_options
 			$state->{subst}->add($o, 1);
 		}
 	};
+	my $i;
+	$state->{opt}{i} //= sub {
+		$i++;
+	};
 	$state->{no_exports} = 1;
 	$state->SUPER::handle_options($opt_string.'aciInqsB:F:', @usage);
 
 	if ($state->opt('s')) {
 		$state->{not} = 1;
+	}
+	if ($state->opt('I')) {
+		$i = 0;
+	} elsif (!defined $i) {
+		$i = -t STDIN;
+	}
+	if ($i) {
+		require OpenBSD::Interactive;
+		$state->{interactive} = OpenBSD::Interactive->new($state, $i);
 	}
 	# XXX RequiredBy
 	$main::not = $state->{not};
