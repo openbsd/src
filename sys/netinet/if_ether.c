@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.212 2016/06/06 07:01:37 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.213 2016/06/06 07:07:11 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -84,6 +84,7 @@ struct rtentry *arplookup(struct in_addr *, int, int, unsigned int);
 void in_arpinput(struct ifnet *, struct mbuf *);
 void in_revarpinput(struct ifnet *, struct mbuf *);
 int arpcache(struct ifnet *, struct ether_arp *, struct rtentry *);
+void arpreply(struct ifnet *, struct mbuf *, struct in_addr *, uint8_t *);
 
 LIST_HEAD(, llinfo_arp) arp_list;
 struct	pool arp_pool;		/* pool for llinfo_arp structures */
@@ -255,6 +256,33 @@ arprequest(struct ifnet *ifp, u_int32_t *sip, u_int32_t *tip, u_int8_t *enaddr)
 	ifp->if_output(ifp, m, &sa, NULL);
 }
 
+void
+arpreply(struct ifnet *ifp, struct mbuf *m, struct in_addr *sip, uint8_t *eaddr)
+{
+	struct ether_header *eh;
+	struct ether_arp *ea;
+	struct sockaddr sa;
+
+	ea = mtod(m, struct ether_arp *);
+	ea->arp_op = htons(ARPOP_REPLY);
+	ea->arp_pro = htons(ETHERTYPE_IP); /* let's be sure! */
+
+	/* We're replying to a request. */
+	memcpy(ea->arp_tha, ea->arp_sha, sizeof(ea->arp_sha));
+	memcpy(ea->arp_tpa, ea->arp_spa, sizeof(ea->arp_spa));
+
+	memcpy(ea->arp_sha, eaddr, sizeof(ea->arp_sha));
+	memcpy(ea->arp_spa, sip, sizeof(ea->arp_spa));
+
+	eh = (struct ether_header *)sa.sa_data;
+	memcpy(eh->ether_dhost, ea->arp_tha, sizeof(eh->ether_dhost));
+	memcpy(eh->ether_shost, eaddr, sizeof(eh->ether_shost));
+	eh->ether_type = htons(ETHERTYPE_ARP);
+	sa.sa_family = pseudo_AF_HDRCMPLT;
+	sa.sa_len = sizeof(sa);
+	ifp->if_output(ifp, m, &sa, NULL);
+}
+
 /*
  * Resolve an IP address into an ethernet address.  If success,
  * desten is filled in.  If there is no entry in arptab,
@@ -421,12 +449,9 @@ void
 in_arpinput(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ether_arp *ea;
-	struct ether_header *eh;
 	struct rtentry *rt = NULL;
-	struct sockaddr sa;
 	struct sockaddr_in sin;
 	struct in_addr isaddr, itaddr;
-	uint8_t enaddr[ETHER_ADDR_LEN];
 	char addr[INET_ADDRSTRLEN];
 	int op, target = 0;
 	unsigned int rdomain;
@@ -452,8 +477,7 @@ in_arpinput(struct ifnet *ifp, struct mbuf *m)
 		goto out;
 	}
 
-	memcpy(enaddr, LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
-	if (!memcmp(ea->arp_sha, enaddr, sizeof(ea->arp_sha)))
+	if (!memcmp(ea->arp_sha, LLADDR(ifp->if_sadl), sizeof(ea->arp_sha)))
 		goto out;	/* it's from me, ignore it. */
 
 	/* Check target against our interface addresses. */
@@ -486,42 +510,27 @@ in_arpinput(struct ifnet *ifp, struct mbuf *m)
 			goto out;
 	}
 
-	if (op != ARPOP_REQUEST)
-		goto out;
+	if (op == ARPOP_REQUEST) {
+		uint8_t *eaddr;
 
-	rtfree(rt);
-	if (target) {
-		/* We are the target and already have all info for the reply */
-		memcpy(ea->arp_tha, ea->arp_sha, sizeof(ea->arp_sha));
-		memcpy(ea->arp_sha, LLADDR(ifp->if_sadl), sizeof(ea->arp_sha));
-	} else {
-		struct sockaddr_dl *sdl;
-
-		rt = arplookup(&itaddr, 0, SIN_PROXY, rdomain);
-		if (rt == NULL)
-			goto out;
-		/* protect from possible duplicates only owner should respond */
-		if (rt->rt_ifidx != ifp->if_index)
-			goto out;
-		memcpy(ea->arp_tha, ea->arp_sha, sizeof(ea->arp_sha));
-		sdl = satosdl(rt->rt_gateway);
-		memcpy(ea->arp_sha, LLADDR(sdl), sizeof(ea->arp_sha));
+		if (target) {
+			/* We already have all info for the reply */
+			eaddr = LLADDR(ifp->if_sadl);
+		} else {
+			rtfree(rt);
+			rt = arplookup(&itaddr, 0, SIN_PROXY, rdomain);
+			/*
+			 * Protect from possible duplicates, only owner
+			 * should respond
+			 */
+			if ((rt == NULL) || (rt->rt_ifidx != ifp->if_index))
+				goto out;
+			eaddr = LLADDR(satosdl(rt->rt_gateway));
+		}
+		arpreply(ifp, m, &itaddr, eaddr);
 		rtfree(rt);
+		return;
 	}
-
-	memcpy(ea->arp_tpa, ea->arp_spa, sizeof(ea->arp_spa));
-	memcpy(ea->arp_spa, &itaddr, sizeof(ea->arp_spa));
-	ea->arp_op = htons(ARPOP_REPLY);
-	ea->arp_pro = htons(ETHERTYPE_IP); /* let's be sure! */
-	eh = (struct ether_header *)sa.sa_data;
-	memcpy(eh->ether_dhost, ea->arp_tha, sizeof(eh->ether_dhost));
-	memcpy(eh->ether_shost, enaddr, sizeof(eh->ether_shost));
-
-	eh->ether_type = htons(ETHERTYPE_ARP);
-	sa.sa_family = pseudo_AF_HDRCMPLT;
-	sa.sa_len = sizeof(sa);
-	ifp->if_output(ifp, m, &sa, NULL);
-	return;
 
 out:
 	rtfree(rt);
