@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.8,v 1.63 2016/02/08 19:29:58 jmc Exp $
+.\"	$OpenBSD: ssl.8,v 1.64 2016/06/06 15:26:04 sthen Exp $
 .\"
 .\" Copyright (c) 1999 Theo de Raadt, Bob Beck
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 8 2016 $
+.Dd $Mdocdate: June 6 2016 $
 .Dt SSL 8
 .Os
 .Sh NAME
@@ -112,38 +112,6 @@ you can switch to using the new certificate by replacing the self-signed
 with the certificate signed by your Certificate Authority, and then
 restarting
 .Xr httpd 8 .
-.Sh GENERATING DSA SERVER CERTIFICATES
-Generating a DSA certificate involves several steps.
-First, generate parameters for DSA keys.
-The following command will generate 1024-bit keys:
-.Bd -literal -offset indent
-# openssl dsaparam 1024 -out dsa1024.pem
-.Ed
-.Pp
-Once you have the DSA parameters generated, you can generate a
-CSR and unencrypted private key using the command:
-.Bd -literal -offset indent
-# openssl req -nodes -newkey dsa:dsa1024.pem \e
-  -out /etc/ssl/dsacert.csr -keyout /etc/ssl/private/dsakey.pem
-.Ed
-.Pp
-To generate an encrypted private key, you would use:
-.Bd -literal -offset indent
-# openssl req -newkey dsa:dsa1024.pem \e
-  -out /etc/ssl/dsacert.csr -keyout /etc/ssl/private/dsakey.pem
-.Ed
-.Pp
-This
-.Pa server.csr
-file can then be given to a CA who will sign the key.
-.Pp
-You can also sign the key yourself, using the command:
-.Bd -literal -offset indent
-# openssl x509 -sha256 -req -days 365 \e
-  -in /etc/ssl/private/dsacert.csr \e
-  -signkey /etc/ssl/private/dsacert.key \e
-  -out /etc/ssl/dsacert.crt
-.Ed
 .Sh GENERATING ECDSA SERVER CERTIFICATES
 First, generate parameters for ECDSA keys.
 The following command will use a NIST/SECG curve over a 384-bit
