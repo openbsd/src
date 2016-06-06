@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.79 2016/05/23 20:11:49 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.80 2016/06/06 06:02:02 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -153,7 +153,7 @@
 	.data
 
 #if NLAPIC > 0 
-	.align  NBPG
+	.align  NBPG, 0xcc
 	.globl _C_LABEL(local_apic), _C_LABEL(lapic_id), _C_LABEL(lapic_tpr)
 _C_LABEL(local_apic):
 	.space  LAPIC_ID
@@ -224,7 +224,7 @@ _C_LABEL(pg_nx):	.quad	0	# NX PTE bit (if CPU supports)
 gdt64:
 	.word	gdt64_end-gdt64_start-1
 	.quad	_RELOC(gdt64_start)
-.align 64
+.align 64, 0xcc
 
 gdt64_start:
 	.quad 0x0000000000000000	/* always empty */
@@ -1177,7 +1177,7 @@ ENTRY(pagezero)
 	ret
 
 	.section .codepatch,"a"
-	.align  8
+	.align  8, 0xcc
 	.globl _C_LABEL(codepatch_begin)
 _C_LABEL(codepatch_begin):
 	.previous
@@ -1190,8 +1190,8 @@ _C_LABEL(codepatch_end):
 #if NXEN > 0
 	/* Hypercall page needs to be page aligned */
 	.text
-	.align	NBPG
+	.align	NBPG, 0xcc
 	.globl	_C_LABEL(xen_hypercall_page)
 _C_LABEL(xen_hypercall_page):
-	.skip	0x1000, 0xcc	/* Fill with int3 */
+	.skip	0x1000, 0xcc
 #endif /* NXEN > 0 */
