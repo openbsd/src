@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.11 2016/01/27 09:04:19 reyk Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.12 2016/06/06 17:17:54 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -35,6 +35,7 @@
 #include <machine/specialreg.h>
 #include <machine/cpu.h>
 #include <machine/conf.h>
+#include <machine/bus.h>
 #ifdef __amd64__
 #include <machine/vmmvar.h>
 #endif
@@ -93,6 +94,24 @@ struct pvbus_type {
 #ifdef __amd64__
 	{ VMM_HV_SIGNATURE,	"OpenBSD" },
 #endif
+};
+
+struct bus_dma_tag pvbus_dma_tag = {
+	NULL,
+	_bus_dmamap_create,
+	_bus_dmamap_destroy,
+	_bus_dmamap_load,
+	_bus_dmamap_load_mbuf,
+	_bus_dmamap_load_uio,
+	_bus_dmamap_load_raw,
+	_bus_dmamap_unload,
+	_bus_dmamap_sync,
+	_bus_dmamem_alloc,
+	_bus_dmamem_alloc_range,
+	_bus_dmamem_free,
+	_bus_dmamem_map,
+	_bus_dmamem_unmap,
+	_bus_dmamem_mmap,
 };
 
 struct pvbus_hv pvbus_hv[PVBUS_MAX];
@@ -212,6 +231,7 @@ pvbus_search(struct device *parent, void *arg, void *aux)
 
 	pva.pva_busname = cf->cf_driver->cd_name;
 	pva.pva_hv = sc->pvbus_hv;
+	pva.pva_dmat = &pvbus_dma_tag;
 
 	if (cf->cf_attach->ca_match(parent, cf, &pva) > 0)
 		config_attach(parent, cf, &pva, pvbus_print);
