@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.48 2016/05/23 19:16:00 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.49 2016/06/06 15:30:59 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -860,12 +860,13 @@ merge_af(int af, struct ldpd_af_conf *af_conf, struct ldpd_af_conf *xa)
 					continue;
 
 				session_shutdown(nbr, S_SHUTDOWN, 0, 0);
-
 				pfkey_remove(nbr);
 				nbr->laddr = af_conf->trans_addr;
 				nbrp = nbr_params_find(leconf, nbr->id);
 				if (nbrp && pfkey_establish(nbr, nbrp) == -1)
 					fatalx("pfkey setup failed");
+				if (nbr_session_active_role(nbr))
+					nbr_establish_connection(nbr);
 			}
 		}
 	}
@@ -974,6 +975,8 @@ merge_nbrps(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 				if (nbr) {
 					session_shutdown(nbr, S_SHUTDOWN, 0, 0);
 					pfkey_remove(nbr);
+					if (nbr_session_active_role(nbr))
+						nbr_establish_connection(nbr);
 				}
 			}
 			LIST_REMOVE(nbrp, entry);
@@ -992,6 +995,8 @@ merge_nbrps(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 					session_shutdown(nbr, S_SHUTDOWN, 0, 0);
 					if (pfkey_establish(nbr, xn) == -1)
 						fatalx("pfkey setup failed");
+					if (nbr_session_active_role(nbr))
+						nbr_establish_connection(nbr);
 				}
 			}
 			continue;
@@ -1019,6 +1024,8 @@ merge_nbrps(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 				pfkey_remove(nbr);
 				if (pfkey_establish(nbr, nbrp) == -1)
 					fatalx("pfkey setup failed");
+				if (nbr_session_active_role(nbr))
+					nbr_establish_connection(nbr);
 			}
 		}
 		LIST_REMOVE(xn, entry);
