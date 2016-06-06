@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.61 2016/05/23 19:16:00 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.62 2016/06/06 16:42:41 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -311,7 +311,7 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 			disc_socket = -1;
 			edisc_socket = -1;
 			session_socket = -1;
-			ldpe_imsg_compose_parent(IMSG_REQUEST_SOCKETS, 0,
+			ldpe_imsg_compose_parent(IMSG_REQUEST_SOCKETS, af,
 			    NULL, 0);
 			break;
 		case IMSG_SOCKET_NET:

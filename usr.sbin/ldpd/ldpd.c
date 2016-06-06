@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.49 2016/06/06 15:30:59 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.50 2016/06/06 16:42:41 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -410,7 +410,7 @@ main_dispatch_ldpe(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_REQUEST_SOCKETS:
-			af = imsg.hdr.peerid;
+			af = imsg.hdr.pid;
 			main_imsg_send_net_sockets(af);
 			break;
 		case IMSG_CTL_RELOAD:
