@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_tmpfs.c,v 1.5 2015/01/16 06:39:59 deraadt Exp $	*/
+/*	$OpenBSD: mount_tmpfs.c,v 1.6 2016/06/06 17:09:03 espie Exp $	*/
 /*	$NetBSD: mount_tmpfs.c,v 1.24 2008/08/05 20:57:45 pooka Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
+	MOPT_WXALLOWED,
 	MOPT_UPDATE,
 	{ NULL },
 };
