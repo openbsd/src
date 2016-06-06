@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.89 2016/05/30 09:32:24 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.90 2016/06/06 07:28:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -989,8 +989,19 @@ screen_write_cell(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 	if (skip)
 		skip = (memcmp(&now_gc, gc, sizeof now_gc) == 0);
 
-	/* Set the cell. */
-	if (!skip)
+	/* Update the selection the flag and set the cell. */
+	selected = screen_check_selection(s, s->cx, s->cy);
+	if (selected && ~gc->flags & GRID_FLAG_SELECTED) {
+		skip = 0;
+		memcpy(&tmp_gc, gc, sizeof tmp_gc);
+		tmp_gc.flags |= GRID_FLAG_SELECTED;
+		grid_view_set_cell(gd, s->cx, s->cy, &tmp_gc);
+	} else if (!selected && gc->flags & GRID_FLAG_SELECTED) {
+		skip = 0;
+		memcpy(&tmp_gc, gc, sizeof tmp_gc);
+		tmp_gc.flags &= ~GRID_FLAG_SELECTED;
+		grid_view_set_cell(gd, s->cx, s->cy, &tmp_gc);
+	} else if (!skip)
 		grid_view_set_cell(gd, s->cx, s->cy, gc);
 
 	/*
@@ -1008,11 +1019,6 @@ screen_write_cell(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 		ttyctx.num = width;
 		tty_write(tty_cmd_insertcharacter, &ttyctx);
 	}
-
-	/* Check if this is selected. */
-	selected = screen_check_selection(s, s->cx - width, s->cy);
-	if (selected)
-		skip = 0;
 
 	/* Save last cell if it will be needed. */
 	if (!skip && ctx->wp != NULL && ttyctx.ocx > ctx->wp->sx - width)
