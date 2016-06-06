@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.211 2016/06/03 02:56:59 dlg Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.212 2016/06/06 07:01:37 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -467,7 +467,7 @@ in_arpinput(struct ifnet *ifp, struct mbuf *m)
 
 #if NCARP > 0
 	if (target && op == ARPOP_REQUEST && ifp->if_type == IFT_CARP &&
-	    !carp_iamatch(ifp, enaddr))
+	    !carp_iamatch(ifp))
 		goto out;
 #endif
 

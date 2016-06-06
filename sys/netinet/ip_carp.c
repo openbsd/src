@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.290 2016/05/30 12:56:16 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.291 2016/06/06 07:01:37 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1321,7 +1321,7 @@ carp_update_lsmask(struct carp_softc *sc)
 }
 
 int
-carp_iamatch(struct ifnet *ifp, uint8_t *enaddr)
+carp_iamatch(struct ifnet *ifp)
 {
 	struct carp_softc *sc = ifp->if_softc;
 	struct carp_vhost_entry *vhe;
@@ -1329,14 +1329,8 @@ carp_iamatch(struct ifnet *ifp, uint8_t *enaddr)
 	int match = 0;
 
 	vhe = SRPL_ENTER(&sr, &sc->carp_vhosts); /* head */
-	if (vhe->state == MASTER) {
-		if (sc->sc_balancing == CARP_BAL_IPSTEALTH ||
-		    sc->sc_balancing == CARP_BAL_IP) {
-		    	struct arpcom *ac = (struct arpcom *)sc->sc_carpdev;
-			memcpy(enaddr, ac->ac_enaddr, ETHER_ADDR_LEN);
-		}
+	if (vhe->state == MASTER)
 		match = 1;
-	}
 	SRPL_LEAVE(&sr);
 
 	return (match);
