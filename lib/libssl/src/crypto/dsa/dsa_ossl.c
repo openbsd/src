@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.24 2016/06/06 10:00:04 beck Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.25 2016/06/06 23:37:37 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -282,7 +282,7 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	}
 
 	if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0) {
-		BN_set_flags(&k, BN_FLG_CONSTTIME);
+		BN_set_flags(K, BN_FLG_CONSTTIME);
 	}
 
 	DSA_BN_MOD_EXP(goto err, dsa, r, dsa->g, K, dsa->p, ctx,
