@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.183 2016/06/03 02:08:15 dlg Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.184 2016/06/06 10:16:23 sthen Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1500,14 +1500,14 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 	if (IN6_IS_ADDR_MULTICAST(&dst->sin6_addr))
 		goto sendpkt;
 
+	if (nd6_need_cache(ifp) == 0)
+		goto sendpkt;
+
 	error = rt_checkgate(rt0, &rt);
 	if (error) {
 		m_freem(m);
 		return (error);
 	}
-
-	if (nd6_need_cache(ifp) == 0)
-		goto sendpkt;
 
 	/*
 	 * Address resolution or Neighbor Unreachability Detection
