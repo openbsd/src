@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.293 2016/06/03 17:36:37 benno Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.294 2016/06/06 15:59:10 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -989,16 +989,26 @@ struct in6_addr	*prefixlen2mask6(u_int8_t prefixlen);
 /* log.c */
 void		 log_init(int);
 void		 log_verbose(int);
-void		 logit(int, const char *, ...);
-void		 vlog(int, const char *, va_list);
-void		 log_peer_warn(const struct peer_config *, const char *, ...);
-void		 log_peer_warnx(const struct peer_config *, const char *, ...);
-void		 log_warn(const char *, ...);
-void		 log_warnx(const char *, ...);
-void		 log_info(const char *, ...);
-void		 log_debug(const char *, ...);
-void		 fatal(const char *, ...) __dead;
-void		 fatalx(const char *) __dead;
+void		 logit(int, const char *, ...)
+			__attribute__((__format__ (printf, 2, 3)));
+void		 vlog(int, const char *, va_list)
+			__attribute__((__format__ (printf, 2, 0)));
+void		 log_peer_warn(const struct peer_config *, const char *, ...)
+			__attribute__((__format__ (printf, 2, 3)));
+void		 log_peer_warnx(const struct peer_config *, const char *, ...)
+			__attribute__((__format__ (printf, 2, 3)));
+void		 log_warn(const char *, ...)
+			__attribute__((__format__ (printf, 1, 2)));
+void		 log_warnx(const char *, ...)
+			__attribute__((__format__ (printf, 1, 2)));
+void		 log_info(const char *, ...)
+			__attribute__((__format__ (printf, 1, 2)));
+void		 log_debug(const char *, ...)
+			__attribute__((__format__ (printf, 1, 2)));
+void		 fatal(const char *, ...) __dead
+			__attribute__((__format__ (printf, 1, 2)));
+void		 fatalx(const char *) __dead
+			__attribute__((__format__ (printf, 1, 0)));
 
 /* mrt.c */
 void		 mrt_clear_seq(void);
