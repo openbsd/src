@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.68 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.69 2016/06/06 07:24:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -136,7 +136,7 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 		cause = xstrdup("pane too small");
 		goto error;
 	}
-	new_wp = window_add_pane(w, hlimit);
+	new_wp = window_add_pane(w, wp, hlimit);
 	layout_assign_pane(lc, new_wp);
 
 	path = NULL;

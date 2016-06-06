@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.632 2016/05/30 09:50:20 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.633 2016/06/06 07:24:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2130,7 +2130,8 @@ int		 window_has_pane(struct window *, struct window_pane *);
 int		 window_set_active_pane(struct window *, struct window_pane *);
 void		 window_redraw_active_switch(struct window *,
 		     struct window_pane *);
-struct window_pane *window_add_pane(struct window *, u_int);
+struct window_pane *window_add_pane(struct window *, struct window_pane *,
+		     u_int);
 void		 window_resize(struct window *, u_int, u_int);
 int		 window_zoom(struct window_pane *);
 int		 window_unzoom(struct window *);

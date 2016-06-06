@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.160 2016/05/30 09:50:21 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.161 2016/06/06 07:24:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -323,7 +323,7 @@ window_create(const char *name, int argc, char **argv, const char *path,
 	struct window_pane	*wp;
 
 	w = window_create1(sx, sy);
-	wp = window_add_pane(w, hlimit);
+	wp = window_add_pane(w, NULL, hlimit);
 	layout_init(w, wp);
 
 	if (window_pane_spawn(wp, argc, argv, path, shell, cwd, env, tio,
@@ -553,15 +553,19 @@ window_unzoom(struct window *w)
 }
 
 struct window_pane *
-window_add_pane(struct window *w, u_int hlimit)
+window_add_pane(struct window *w, struct window_pane *after, u_int hlimit)
 {
 	struct window_pane	*wp;
 
 	wp = window_pane_create(w, w->sx, w->sy, hlimit);
 	if (TAILQ_EMPTY(&w->panes))
 		TAILQ_INSERT_HEAD(&w->panes, wp, entry);
-	else
-		TAILQ_INSERT_AFTER(&w->panes, w->active, wp, entry);
+	else {
+		if (after == NULL)
+			TAILQ_INSERT_AFTER(&w->panes, w->active, wp, entry);
+		else
+			TAILQ_INSERT_AFTER(&w->panes, after, wp, entry);
+	}
 	return (wp);
 }
 
