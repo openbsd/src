@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.65 2015/12/05 13:12:41 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.66 2016/06/06 15:57:44 benno Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -356,7 +356,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				}
 			}
 			if (l != 0)
-				log_warnx("rde_dispatch_imsg: peerid %lu, "
+				log_warnx("rde_dispatch_imsg: peerid %u, "
 				    "trailing garbage in Database Description "
 				    "packet", imsg.hdr.peerid);
 
@@ -387,7 +387,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				    ntohs(v->lsa->hdr.len));
 			}
 			if (l != 0)
-				log_warnx("rde_dispatch_imsg: peerid %lu, "
+				log_warnx("rde_dispatch_imsg: peerid %u, "
 				    "trailing garbage in LS Request "
 				    "packet", imsg.hdr.peerid);
 			break;
