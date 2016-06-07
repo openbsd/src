@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.50 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.51 2016/06/07 06:12:37 deraadt Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ fifo_poll(void *v)
 			revents |= events & (POLLIN | POLLRDNORM);
 	}
 	/* NOTE: POLLHUP and POLLOUT/POLLWRNORM are mutually exclusive */
-	if ((rso->so_state & SS_ISDISCONNECTED) && !(ap->a_events & POLLNOHUP)) {
+	if ((rso->so_state & SS_ISDISCONNECTED) && !(ap->a_events & POLL_NOHUP)) {
 		revents |= POLLHUP;
 	} else if (events & (POLLOUT | POLLWRNORM)) {
 		if (sowriteable(wso))
@@ -316,7 +316,7 @@ fifo_poll(void *v)
 	}
 	if (revents == 0) {
 		/* We want to return POLLHUP even if no valid events set. */
-		if (events == 0 && !(ap->a_events & POLLNOHUP))
+		if (events == 0 && !(ap->a_events & POLL_NOHUP))
 			events = POLLIN;
 		if (events & (POLLIN | POLLRDNORM)) {
 			selrecord(ap->a_p, &rso->so_rcv.sb_sel);

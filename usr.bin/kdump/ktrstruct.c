@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.20 2016/06/07 01:34:39 tedu Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.21 2016/06/07 06:12:37 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -430,6 +430,27 @@ ktrevent(const char *data, int count)
 }
 
 static void
+ktrpollfd(const char *data, int count)
+{
+	struct pollfd pfd;
+	int i;
+
+	printf("struct pollfd");
+	if (count > 1)
+		printf(" [%d]", count);
+	for (i = 0; i < count; i++) {
+		memcpy(&pfd, data, sizeof(pfd));
+		data += sizeof(pfd);
+		printf(" { fd=%d, events=", pfd.fd);
+		pollfdeventname(pfd.events);
+		printf(", revents=");
+		pollfdeventname(pfd.revents);
+		printf(" }");
+	}
+	printf("\n");
+}
+
+static void
 ktrcmsghdr(char *data, socklen_t len)
 {
 	struct msghdr msg;
@@ -594,6 +615,10 @@ ktrstruct(char *buf, size_t buflen)
 		if (datalen % sizeof(struct kevent))
 			goto invalid;
 		ktrevent(data, datalen / sizeof(struct kevent));
+	} else if (strcmp(name, "pollfd") == 0) {
+		if (datalen % sizeof(struct pollfd))
+			goto invalid;
+		ktrpollfd(data, datalen / sizeof(struct pollfd));
 	} else if (strcmp(name, "cmsghdr") == 0) {
 		char *cmsg;
 

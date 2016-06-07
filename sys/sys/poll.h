@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.h,v 1.14 2015/05/10 22:35:38 millert Exp $ */
+/*	$OpenBSD: poll.h,v 1.15 2016/06/07 06:12:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt
@@ -48,7 +48,7 @@ typedef unsigned int	nfds_t;
 #define	POLLRDBAND	0x0080
 #define	POLLWRBAND	0x0100
 #ifdef _KERNEL
-#define	POLLNOHUP	0x1000		/* internal use only */
+#define	POLL_NOHUP	0x1000		/* internal use only */
 #endif
 
 #define INFTIM		(-1)

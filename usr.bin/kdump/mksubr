@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.30 2016/03/22 16:45:07 guenther Exp $
+# $OpenBSD: mksubr,v 1.31 2016/06/07 06:12:37 deraadt Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -359,6 +359,7 @@ auto_switch_type "sockoptname" "SO_[A-Z]+[[:space:]]+0x[0-9]+" "sys/socket.h"
 auto_orz_type "ktracefacname" "KTRFAC_[^M][[:alnum:]_]+" "sys/ktrace.h"
 auto_switch_type "itimername" "ITIMER_[[:alnum:]_]+" "sys/time.h"
 auto_switch_type "evfiltername" "EVFILT_[[:alnum:]_]+[[:space:]]+[(]" "sys/event.h"
+auto_orz_type "pollfdeventname" "POLL[^_][[:alnum:]_]+[[:space:]]+0x" "sys/poll.h"
 # exclude EV_{SYSFLAGS,FLAG1}
 auto_orz_type "evflagsname" "EV_[^S][A-Z]+[[:space:]]+0x" "sys/event.h"
 auto_orz_type "syslogflagname" "LOG_[A-Z]+[[:space:]]+0x0*[1248]0*[[:space:]]" "sys/syslog.h"
