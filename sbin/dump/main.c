@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.57 2015/08/20 22:02:20 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.58 2016/06/07 01:29:38 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -769,7 +769,7 @@ obsolete(int *argcp, char **argvp[])
 
 	/* Copy remaining arguments. */
 	while ((*nargv++ = *argv++))
-		;
+		continue;
 
 	/* Update argument count. */
 	*argcp = nargv - *argvp - 1;

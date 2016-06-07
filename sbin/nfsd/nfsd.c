@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.35 2015/01/16 06:40:00 deraadt Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.36 2016/06/07 01:29:38 tedu Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -342,6 +342,6 @@ reapchild(int signo)
 	int save_errno = errno;
 
 	while (wait3(NULL, WNOHANG, NULL) > 0)
-		;
+		continue;
 	errno = save_errno;
 }

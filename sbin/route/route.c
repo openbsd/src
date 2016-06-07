@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.182 2015/12/03 08:00:49 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.183 2016/06/07 01:29:38 tedu Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -763,7 +763,7 @@ inet_makenetandmask(u_int32_t net, struct sockaddr_in *sin, int bits)
 	sin->sin_family = 0;
 	cp = (char *)(&sin->sin_addr + 1);
 	while (*--cp == '\0' && cp > (char *)sin)
-		;
+		continue;
 	sin->sin_len = 1 + cp - (char *)sin;
 }
 
