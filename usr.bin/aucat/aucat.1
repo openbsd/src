@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.112 2016/01/07 07:41:01 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.113 2016/06/07 06:26:24 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 7 2016 $
+.Dd $Mdocdate: June 7 2016 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -27,10 +27,12 @@
 .Op Fl c Ar min : Ns Ar max
 .Op Fl e Ar enc
 .Op Fl f Ar device
+.Op Fl g Ar position
 .Op Fl h Ar fmt
 .Op Fl i Ar file
 .Op Fl j Ar flag
 .Op Fl o Ar file
+.Op Fl p Ar position
 .Op Fl q Ar port
 .Op Fl r Ar rate
 .Op Fl v Ar volume
@@ -117,6 +119,11 @@ audio device.
 Device mode and parameters are determined from audio files.
 Default is
 .Pa default .
+.It Fl g Ar position
+Go to the given time position and start playback or recording there.
+This option is equivalent to an incoming MMC relocate message
+with the same position.
+The position is expressed as the number of samples (at device sample rate).
 .It Fl h Ar fmt
 Audio file type.
 The following file types are supported:
@@ -169,6 +176,11 @@ Record into this audio file.
 If the option argument is
 .Sq -
 then standard output will be used.
+.It Fl p Ar position
+Time offset where the beginning of the file belongs.
+The first sample of the file will be played or recorded when the device
+reaches the given postion.
+The position is expressed as the number of samples (at device sample rate).
 .It Fl q Ar port
 Control audio device properties through this MIDI port.
 This includes per-stream volumes and the ability to
