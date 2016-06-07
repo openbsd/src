@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.16 2016/06/05 00:46:34 djm Exp $ */
+/* $OpenBSD: parse.y,v 1.17 2016/06/07 14:11:16 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -35,7 +35,6 @@ typedef struct {
 			const char *cmd;
 			const char **cmdargs;
 			const char **envlist;
-			const char **setenvlist;
 		};
 		const char *str;
 	};
@@ -57,7 +56,7 @@ int yyparse(void);
 %}
 
 %token TPERMIT TDENY TAS TCMD TARGS
-%token TNOPASS TKEEPENV TSETENV
+%token TNOPASS TKEEPENV
 %token TSTRING
 
 %%
@@ -76,7 +75,6 @@ rule:		action ident target cmd {
 			r->action = $1.action;
 			r->options = $1.options;
 			r->envlist = $1.envlist;
-			r->setenvlist = $1.setenvlist;
 			r->ident = $2.str;
 			r->target = $3.str;
 			r->cmd = $4.cmd;
@@ -97,7 +95,6 @@ action:		TPERMIT options {
 			$$.action = PERMIT;
 			$$.options = $2.options;
 			$$.envlist = $2.envlist;
-			$$.setenvlist = $2.setenvlist;
 		} | TDENY {
 			$$.action = DENY;
 		} ;
@@ -113,14 +110,6 @@ options:	/* none */
 				} else
 					$$.envlist = $2.envlist;
 			}
-			$$.setenvlist = $1.setenvlist;
-			if ($2.setenvlist) {
-				if ($$.setenvlist) {
-					yyerror("can't have two setenv sections");
-					YYERROR;
-				} else
-					$$.setenvlist = $2.setenvlist;
-			}
 		} ;
 
 option:		TNOPASS {
@@ -130,9 +119,6 @@ option:		TNOPASS {
 		} | TKEEPENV '{' envlist '}' {
 			$$.options = KEEPENV;
 			$$.envlist = $3.envlist;
-		} | TSETENV '{' setenvlist '}' {
-			$$.options = SETENV;
-			$$.setenvlist = $3.setenvlist;
 		} ;
 
 envlist:	/* empty */ {
@@ -145,30 +131,24 @@ envlist:	/* empty */ {
 				errx(1, "can't allocate envlist");
 			$$.envlist[nenv] = $2.str;
 			$$.envlist[nenv + 1] = NULL;
-		}
-
-setenvlist:	/* empty */ {
-			if (!($$.setenvlist = calloc(1, sizeof(char *))))
-				errx(1, "can't allocate setenvlist");
-		} | setenvlist TSTRING '=' TSTRING {
-			int nenv = arraylen($1.setenvlist);
+		} | envlist TSTRING '=' TSTRING {
+			int nenv = arraylen($1.envlist);
 			char *cp = NULL;
 
 			if (*$2.str == '\0' || strchr($2.str, '=') != NULL) {
 				yyerror("invalid setenv expression");
 				YYERROR;
 			}
-			if (!($$.setenvlist = reallocarray($1.setenvlist,
+			if (!($$.envlist = reallocarray($1.envlist,
 			    nenv + 2, sizeof(char *))))
 				errx(1, "can't allocate envlist");
-			$$.setenvlist[nenv] = NULL;
+			$$.envlist[nenv] = NULL;
 			if (asprintf(&cp, "%s=%s", $2.str, $4.str) <= 0 ||
 			    cp == NULL)
 				errx(1,"asprintf failed");
-			$$.setenvlist[nenv] = cp;
-			$$.setenvlist[nenv + 1] = NULL;
+			$$.envlist[nenv] = cp;
+			$$.envlist[nenv + 1] = NULL;
 		}
-
 
 ident:		TSTRING {
 			$$.str = $1.str;
@@ -232,7 +212,6 @@ struct keyword {
 	{ "args", TARGS },
 	{ "nopass", TNOPASS },
 	{ "keepenv", TKEEPENV },
-	{ "setenv", TSETENV },
 };
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.53 2016/06/05 00:46:34 djm Exp $ */
+/* $OpenBSD: doas.c,v 1.54 2016/06/07 14:11:16 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -193,6 +193,8 @@ copyenvhelper(const char **oldenvp, const char **safeset, int nsafe,
 
 	for (i = 0; i < nsafe; i++) {
 		const char **oe = oldenvp;
+		if (strchr(safeset[i], '='))
+			continue;
 		while (*oe) {
 			size_t len = strlen(safeset[i]);
 			if (strncmp(*oe, safeset[i], len) == 0 &&
@@ -297,7 +299,7 @@ findenv(const char **envp, const char *name, size_t namelen)
 	return -1;
 }
 
-/* merge rule->setenvlist into environment list; frees oldenvp */
+/* merge rule->envlist into environment list; frees oldenvp */
 static char **
 dosetenv(char **oldenvp, struct rule *rule)
 {
@@ -308,16 +310,16 @@ dosetenv(char **oldenvp, struct rule *rule)
 	if (!(rule->options & SETENV))
 		return oldenvp;
 
-	nset = arraylen(rule->setenvlist);
+	nset = arraylen(rule->envlist);
 	nold = arraylen((const char**)oldenvp);
 
 	/* insert new variables */
 	n = 0;
 	envp = NULL;
 	for (i = 0; i < nset; i++) {
-		if ((cp = strchr(rule->setenvlist[i], '=')) == NULL)
-			errx(1, "invalid setenv"); /* shouldn't happen */
-		if (cp[1] == '\0' || cp - rule->setenvlist[i] > INT_MAX)
+		if ((cp = strchr(rule->envlist[i], '=')) == NULL)
+			continue;
+		if (cp[1] == '\0' || cp - rule->envlist[i] > INT_MAX)
 			continue; /* skip variables with empty values */
 		if ((envp = reallocarray(envp, n + 2, sizeof(*envp))) == NULL)
 			errx(1, "reallocarray failed");
@@ -326,13 +328,13 @@ dosetenv(char **oldenvp, struct rule *rule)
 			if ((cp2 = getenv(cp + 2)) == NULL)
 				continue; /* not found; skip */
 			if (asprintf(&(envp[n++]), "%.*s=%s",
-			    (int)(cp - rule->setenvlist[i]),
-			    rule->setenvlist[i], cp2) == -1)
+			    (int)(cp - rule->envlist[i]),
+			    rule->envlist[i], cp2) == -1)
 				errx(1, "asprintf failed");
 			continue;
 		} else {
 			/* plain setenv */
-			if ((envp[n++] = strdup(rule->setenvlist[i])) == NULL)
+			if ((envp[n++] = strdup(rule->envlist[i])) == NULL)
 				errx(1, "strdup failed");
 		}
 	}
@@ -340,7 +342,7 @@ dosetenv(char **oldenvp, struct rule *rule)
 	for (i = 0; i < nold; i++) {
 		if ((cp = strchr(oldenvp[i], '=')) == NULL)
 			errx(1, "invalid env"); /* shouldn't happen */
-		found = findenv(rule->setenvlist, oldenvp[i], cp - oldenvp[i]);
+		found = findenv(rule->envlist, oldenvp[i], cp - oldenvp[i]);
 		if (found != -1)
 			free(oldenvp[i]); /* discard */
 		else {
