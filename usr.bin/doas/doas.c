@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.54 2016/06/07 14:11:16 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.55 2016/06/07 16:49:23 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -193,8 +193,6 @@ copyenvhelper(const char **oldenvp, const char **safeset, int nsafe,
 
 	for (i = 0; i < nsafe; i++) {
 		const char **oe = oldenvp;
-		if (strchr(safeset[i], '='))
-			continue;
 		while (*oe) {
 			size_t len = strlen(safeset[i]);
 			if (strncmp(*oe, safeset[i], len) == 0 &&
@@ -280,81 +278,6 @@ copyenv(const char **oldenvp, struct rule *rule)
 	ei = copyenvhelper(oldenvp, rule->envlist, nextras, envp, ei);
 	envp[ei] = NULL;
 
-	return envp;
-}
-
-/* find index of 'name' in environment envp */
-static int
-findenv(const char **envp, const char *name, size_t namelen)
-{
-	int i;
-
-	for (i = 0 ; envp[i] != NULL; i++) {
-		if (strlen(envp[i]) < namelen + 1)
-			continue;
-		if (strncmp(envp[i], name, namelen) == 0 &&
-		    envp[i][namelen] == '=')
-			return i;
-	}
-	return -1;
-}
-
-/* merge rule->envlist into environment list; frees oldenvp */
-static char **
-dosetenv(char **oldenvp, struct rule *rule)
-{
-	size_t n, i, nset, nold;
-	char **envp, *cp, *cp2;
-	int found;
-
-	if (!(rule->options & SETENV))
-		return oldenvp;
-
-	nset = arraylen(rule->envlist);
-	nold = arraylen((const char**)oldenvp);
-
-	/* insert new variables */
-	n = 0;
-	envp = NULL;
-	for (i = 0; i < nset; i++) {
-		if ((cp = strchr(rule->envlist[i], '=')) == NULL)
-			continue;
-		if (cp[1] == '\0' || cp - rule->envlist[i] > INT_MAX)
-			continue; /* skip variables with empty values */
-		if ((envp = reallocarray(envp, n + 2, sizeof(*envp))) == NULL)
-			errx(1, "reallocarray failed");
-		if (cp[1] == '$') {
-			/* FOO=$BAR: lookup and copy */
-			if ((cp2 = getenv(cp + 2)) == NULL)
-				continue; /* not found; skip */
-			if (asprintf(&(envp[n++]), "%.*s=%s",
-			    (int)(cp - rule->envlist[i]),
-			    rule->envlist[i], cp2) == -1)
-				errx(1, "asprintf failed");
-			continue;
-		} else {
-			/* plain setenv */
-			if ((envp[n++] = strdup(rule->envlist[i])) == NULL)
-				errx(1, "strdup failed");
-		}
-	}
-	/* move old variables, dropping ones already set */
-	for (i = 0; i < nold; i++) {
-		if ((cp = strchr(oldenvp[i], '=')) == NULL)
-			errx(1, "invalid env"); /* shouldn't happen */
-		found = findenv(rule->envlist, oldenvp[i], cp - oldenvp[i]);
-		if (found != -1)
-			free(oldenvp[i]); /* discard */
-		else {
-			if ((envp = reallocarray(envp, n + 2,
-			    sizeof(*envp))) == NULL)
-				errx(1, "reallocarray failed");
-			envp[n++] = oldenvp[i]; /* move */
-		}
-	}
-	free(oldenvp);
-	if (n > 0)
-		envp[n] = NULL;
 	return envp;
 }
 
@@ -549,8 +472,6 @@ main(int argc, char **argv, char **envp)
 	    myname, cmdline, pw->pw_name, cwd);
 
 	envp = copyenv((const char **)envp, rule);
-
-	envp = dosetenv(envp, rule);
 
 	if (rule->cmd) {
 		if (setenv("PATH", safepath, 1) == -1)

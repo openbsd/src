@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.21 2016/06/07 14:11:16 tedu Exp $
+.\" $OpenBSD: doas.conf.5,v 1.22 2016/06/07 16:49:23 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -59,16 +59,9 @@ The default is to reset the environment, except for the variables
 .Ev USER
 and
 .Ev USERNAME .
-.It Ic keepenv { Oo Ar variable ... Oc Ic Oo Ar variable=value ... Oc Ic }
+.It Ic keepenv { Oo Ar variable ... Oc Ic }
 In addition to the variables mentioned above, keep the space-separated
 specified variables.
-Variables may also be set using the latter syntax.
-If the first character of
-.Ar value
-is a
-.Ql $
-then the value to be set is taken from the existing environment
-variable of the same name.
 .El
 .It Ar identity
 The username to match.
@@ -134,7 +127,7 @@ permit nopass keepenv { \e
         MULTI_PACKAGES NOMAN OKAY_FILES OWNER PKG_DBDIR \e
         PKG_DESTDIR PKG_TMPDIR PORTSDIR RELEASEDIR SHARED_ONLY \e
         SUBPACKAGE WRKOBJDIR SUDO_PORT_V1 } :wsrc
-permit nopass keepenv { ENV PS1=$DOAS_PS1 SSH_AUTH_SOCK } :wheel
+permit nopass keepenv { ENV PS1 SSH_AUTH_SOCK } :wheel
 permit nopass tedu as root cmd /usr/sbin/procmap
 permit nopass keepenv root as root
 .Ed

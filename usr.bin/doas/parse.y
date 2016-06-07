@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.17 2016/06/07 14:11:16 tedu Exp $ */
+/* $OpenBSD: parse.y,v 1.18 2016/06/07 16:49:23 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -111,7 +111,6 @@ options:	/* none */
 					$$.envlist = $2.envlist;
 			}
 		} ;
-
 option:		TNOPASS {
 			$$.options = NOPASS;
 		} | TKEEPENV {
@@ -131,24 +130,8 @@ envlist:	/* empty */ {
 				errx(1, "can't allocate envlist");
 			$$.envlist[nenv] = $2.str;
 			$$.envlist[nenv + 1] = NULL;
-		} | envlist TSTRING '=' TSTRING {
-			int nenv = arraylen($1.envlist);
-			char *cp = NULL;
-
-			if (*$2.str == '\0' || strchr($2.str, '=') != NULL) {
-				yyerror("invalid setenv expression");
-				YYERROR;
-			}
-			if (!($$.envlist = reallocarray($1.envlist,
-			    nenv + 2, sizeof(char *))))
-				errx(1, "can't allocate envlist");
-			$$.envlist[nenv] = NULL;
-			if (asprintf(&cp, "%s=%s", $2.str, $4.str) <= 0 ||
-			    cp == NULL)
-				errx(1,"asprintf failed");
-			$$.envlist[nenv] = cp;
-			$$.envlist[nenv + 1] = NULL;
 		}
+
 
 ident:		TSTRING {
 			$$.str = $1.str;
@@ -236,7 +219,6 @@ repeat:
 			/* FALLTHROUGH */
 		case '{':
 		case '}':
-		case '=':
 			return c;
 		case '#':
 			/* skip comments; NUL is allowed; no continuation */
@@ -289,7 +271,6 @@ repeat:
 		case '#':
 		case ' ':
 		case '\t':
-		case '=':
 			if (!escape && !quotes)
 				goto eow;
 			break;

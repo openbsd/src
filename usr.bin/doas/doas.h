@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.h,v 1.5 2016/06/05 00:46:34 djm Exp $ */
+/* $OpenBSD: doas.h,v 1.6 2016/06/07 16:49:23 tedu Exp $ */
 
 struct rule {
 	int action;
@@ -8,7 +8,6 @@ struct rule {
 	const char *cmd;
 	const char **cmdargs;
 	const char **envlist;
-	const char **setenvlist;
 };
 
 extern struct rule **rules;
@@ -22,4 +21,3 @@ size_t arraylen(const char **);
 
 #define NOPASS		0x1
 #define KEEPENV		0x2
-#define SETENV		0x4
