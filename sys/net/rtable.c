@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.45 2016/06/01 09:46:19 dlg Exp $ */
+/*	$OpenBSD: rtable.c,v 1.46 2016/06/07 01:31:54 tedu Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -468,7 +468,7 @@ rtable_walk(unsigned int rtableid, sa_family_t af,
 		return (EAFNOSUPPORT);
 
 	while ((error = rn_walktree(rnh, f, arg)) == EAGAIN)
-		;	/* nothing */
+		continue;
 
 	return (error);
 }
@@ -861,7 +861,7 @@ rtable_walk(unsigned int rtableid, sa_family_t af,
 	rwc.rwc_rid = rtableid;
 
 	while ((error = art_walk(ar, rtable_walk_helper, &rwc)) == EAGAIN)
-		; /* nothing */
+		continue;
 
 	return (error);
 }

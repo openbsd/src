@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.174 2016/03/17 03:57:51 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.175 2016/06/07 01:31:54 tedu Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -908,7 +908,7 @@ geteblk(int size)
 	struct buf *bp;
 
 	while ((bp = buf_get(NULL, 0, size)) == NULL)
-		;
+		continue;
 
 	return (bp);
 }
@@ -1319,7 +1319,7 @@ bufcache_adjust(void)
 		    &cleancache[i].warmbufpages) ||
 		    chillbufs(&cleancache[i], &cleancache[i].hotqueue,
 		    &cleancache[i].hotbufpages))
-			;
+			continue;
 	}
 }
 

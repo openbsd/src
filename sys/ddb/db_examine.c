@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.21 2016/04/19 12:23:25 mpi Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.22 2016/06/07 01:31:54 tedu Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -277,7 +277,7 @@ db_strlcpy(char *dst, const char *src, size_t siz)
 		if (siz != 0)
 			*d = '\0';		/* NUL-terminate dst */
 		while (*s++)
-			;
+			continue;
 	}
 
 	return(s - src - 1);	/* count does not include NUL */

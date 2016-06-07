@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.96 2016/03/27 12:45:47 mpi Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.97 2016/06/07 01:31:54 tedu Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -640,7 +640,7 @@ kcs_wait(struct ipmi_softc *sc, u_int8_t mask, u_int8_t value, const char *lbl)
 	if ((v & KCS_STATE_MASK) == KCS_ERROR_STATE) {
 		bmc_write(sc, _KCS_COMMAND_REGISTER, KCS_GET_STATUS);
 		while (bmc_read(sc, _KCS_STATUS_REGISTER) & KCS_IBF)
-			;
+			continue;
 		printf("%s: error code: %x\n", DEVNAME(sc),
 		    bmc_read(sc, _KCS_DATAIN_REGISTER));
 	}

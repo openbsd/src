@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.974 2016/05/31 07:35:36 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.975 2016/06/07 01:31:54 tedu Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3867,7 +3867,7 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state_peer *src,
 		if (dst->seqdiff && !src->seqdiff) {
 			/* use random iss for the TCP server */
 			while ((src->seqdiff = arc4random() - seq) == 0)
-				;
+				continue;
 			ack = ntohl(th->th_ack) - dst->seqdiff;
 			pf_change_a(pd, &th->th_seq, htonl(seq + src->seqdiff));
 			pf_change_a(pd, &th->th_ack, htonl(ack));
