@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srp_enter.9,v 1.11 2016/05/18 03:58:13 dlg Exp $
+.\"	$OpenBSD: srp_enter.9,v 1.12 2016/06/07 11:59:31 dlg Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 18 2016 $
+.Dd $Mdocdate: June 7 2016 $
 .Dt SRP_ENTER 9
 .Os
 .Sh NAME
@@ -22,10 +22,13 @@
 .Nm srp_gc_init ,
 .Nm srp_update ,
 .Nm srp_update_locked ,
+.Nm srp_swap ,
+.Nm srp_swap_locked ,
 .Nm srp_enter ,
 .Nm srp_follow ,
 .Nm srp_leave ,
 .Nm srp_get_locked ,
+.Nm srp_finalize ,
 .Nm srp_gc_finalize ,
 .Nm SRP_INITIALIZER ,
 .Nm SRP_GC_INITIALIZER
@@ -40,6 +43,10 @@
 .Fa "void (*dtor)(void *, void *)"
 .Fa "void *ctx"
 .Fc
+.Ft void *
+.Fn srp_swap "struct srp *p" "void *v"
+.Ft void *
+.Fn srp_swap_locked "struct srp *p" "void *v"
 .Ft void
 .Fn srp_update "struct srp_gc *gc" "struct srp *p" "void *v"
 .Ft void
@@ -52,6 +59,8 @@
 .Fn srp_leave "struct srp_ref *sr"
 .Ft void *
 .Fn srp_get_locked "struct srp *p"
+.Ft void
+.Fn srp_finalize "void *v"
 .Ft void
 .Fn srp_gc_finalize "struct srp_gc *gc"
 .Fn SRP_INITIALIZER
@@ -110,6 +119,23 @@ and
 .Fn srp_update_locked
 may sleep.
 .Pp
+.Fn srp_swap
+and
+.Fn srp_swap_locked
+replace the data referenced by the srp struct
+.Fa p
+with the data referenced by
+.Fa v .
+When clearing or replacing the last reference to a data structure,
+.Fn srp_finalize
+must be used to ensure that the data is longer in use via any srp structures.
+.Fn srp_swap
+uses atomic CPU operations to change the reference.
+.Fn srp_update_locked
+may be used if modifications to
+.Fa p
+are already serialised by the caller.
+.Pp
 .Fn srp_enter
 returns a pointer to a data structure referenced by the srp struct
 .Fa p
@@ -137,6 +163,11 @@ provides access to the data referenced by the srp
 .Fa p
 if the caller has excluded updates to
 .Fa p .
+.Pp
+.Fn srp_finalize
+sleeps until there are no longer any references to
+.Fa v
+via any srp structure in the system.
 .Pp
 .Fn srp_gc_finalize
 sleeps until all references to data by srp structures using the
@@ -166,15 +197,24 @@ as the first argument and the pointer to the data as the second argument.
 .Fn srp_update_locked ,
 .Fn srp_get_locked ,
 and
+.Fn srp_finalize
 .Fn srp_gc_finalize
 can be called during autoconf, or from process context.
 .Pp
+.Fn srp_swap ,
+.Fn srp_swap_locked ,
 .Fn srp_enter ,
 .Fn srp_follow ,
 and
 .Fn srp_leave
 can be called during autoconf, from process context, or from interrupt context.
 .Sh RETURN VALUES
+.Fn srp_swap
+and
+.Fn srp_swap_locked
+return a pointer to the previous value referenced by the srp structure
+.Fa p .
+.Pp
 .Fn srp_enter ,
 .Fn srp_follow ,
 and
