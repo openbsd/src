@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.62 2016/04/27 15:25:36 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.63 2016/06/07 16:19:06 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -127,9 +127,9 @@ int vcpu_run_svm(struct vcpu *, uint8_t);
 void vcpu_deinit(struct vcpu *);
 void vcpu_deinit_vmx(struct vcpu *);
 void vcpu_deinit_svm(struct vcpu *);
-int vm_impl_init(struct vm *);
-int vm_impl_init_vmx(struct vm *);
-int vm_impl_init_svm(struct vm *);
+int vm_impl_init(struct vm *, struct proc *);
+int vm_impl_init_vmx(struct vm *, struct proc *);
+int vm_impl_init_svm(struct vm *, struct proc *);
 void vm_impl_deinit(struct vm *);
 void vm_impl_deinit_vmx(struct vm *);
 void vm_impl_deinit_svm(struct vm *);
@@ -983,13 +983,24 @@ vm_create_check_mem_ranges(struct vm_create_params *vcp)
 		vmr = &vcp->vcp_memranges[i];
 
 		/* Only page-aligned addresses and sizes are permitted */
-		if ((vmr->vmr_gpa & PAGE_MASK) ||
+		if ((vmr->vmr_gpa & PAGE_MASK) || (vmr->vmr_va & PAGE_MASK) ||
 		    (vmr->vmr_size & PAGE_MASK) || vmr->vmr_size == 0)
 			return (0);
 
 		/* Make sure that VMM_MAX_VM_MEM_SIZE is not exceeded */
 		if (vmr->vmr_gpa >= maxgpa ||
 		    vmr->vmr_size > maxgpa - vmr->vmr_gpa)
+			return (0);
+
+		/*
+		 * Make sure that all virtual addresses are within the address
+		 * space of the process and that they do not wrap around.
+		 * Calling uvm_share() when creating the VM will take care of
+		 * further checks.
+		 */
+		if (vmr->vmr_va < VM_MIN_ADDRESS ||
+		    vmr->vmr_va >= VM_MAXUSER_ADDRESS ||
+		    vmr->vmr_size >= VM_MAXUSER_ADDRESS - vmr->vmr_va)
 			return (0);
 
 		/* Specifying ranges within the PCI MMIO space is forbidden */
@@ -1057,7 +1068,7 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 	vm->vm_memory_size = memsize;
 	strncpy(vm->vm_name, vcp->vcp_name, VMM_MAX_NAME_LEN);
 
-	if (vm_impl_init(vm)) {
+	if (vm_impl_init(vm, p)) {
 		printf("failed to init arch-specific features for vm 0x%p\n",
 		    vm);
 		vm_teardown(vm);
@@ -1111,11 +1122,10 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
  * Intel VMX specific VM initialization routine
  */
 int
-vm_impl_init_vmx(struct vm *vm)
+vm_impl_init_vmx(struct vm *vm, struct proc *p)
 {
 	int i, ret;
 	vaddr_t mingpa, maxgpa;
-	vaddr_t startp;
 	struct pmap *pmap;
 	struct vm_mem_range *vmr;
 
@@ -1151,15 +1161,11 @@ vm_impl_init_vmx(struct vm *vm)
 	DPRINTF("vm_impl_init_vmx: created vm_map @ %p\n", vm->vm_map);
 	for (i = 0; i < vm->vm_nmemranges; i++) {
 		vmr = &vm->vm_memranges[i];
-		startp = vmr->vmr_gpa;
-		ret = uvm_mapanon(vm->vm_map, &startp, vmr->vmr_size, 0,
-		    UVM_MAPFLAG(PROT_READ | PROT_WRITE | PROT_EXEC,
+		ret = uvm_share(vm->vm_map, vmr->vmr_gpa,
 		    PROT_READ | PROT_WRITE | PROT_EXEC,
-		    MAP_INHERIT_NONE,
-		    MADV_NORMAL,
-		    UVM_FLAG_FIXED | UVM_FLAG_COPYONW));
+		    &p->p_vmspace->vm_map, vmr->vmr_va, vmr->vmr_size);
 		if (ret) {
-			printf("vm_impl_init_vmx: uvm_mapanon failed (%d)\n",
+			printf("vm_impl_init_vmx: uvm_share failed (%d)\n",
 			    ret);
 			/* uvm_map_deallocate calls pmap_destroy for us */
 			uvm_map_deallocate(vm->vm_map);
@@ -1187,7 +1193,7 @@ vm_impl_init_vmx(struct vm *vm)
  * AMD SVM specific VM initialization routine
  */
 int
-vm_impl_init_svm(struct vm *vm)
+vm_impl_init_svm(struct vm *vm, struct proc *p)
 {
 	/* XXX removed due to rot */
 	return (-1);
@@ -1199,14 +1205,14 @@ vm_impl_init_svm(struct vm *vm)
  * Calls the architecture-specific VM init routine
  */
 int
-vm_impl_init(struct vm *vm)
+vm_impl_init(struct vm *vm, struct proc *p)
 {
 	if (vmm_softc->mode == VMM_MODE_VMX ||
 	    vmm_softc->mode == VMM_MODE_EPT)
-		return vm_impl_init_vmx(vm);
+		return vm_impl_init_vmx(vm, p);
 	else if	(vmm_softc->mode == VMM_MODE_SVM ||
 		 vmm_softc->mode == VMM_MODE_RVI)
-		return vm_impl_init_svm(vm);
+		return vm_impl_init_svm(vm, p);
 	else
 		panic("unknown vmm mode\n");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.26 2016/04/07 05:51:26 guenther Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.27 2016/06/07 16:19:06 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/uio.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/mman.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/i8253reg.h>
@@ -111,6 +112,7 @@ void *vcpu_run_loop(void *);
 int vcpu_exit(struct vm_run_params *);
 int vcpu_reset(uint32_t, uint32_t, struct vcpu_init_state *);
 void create_memory_map(struct vm_create_params *);
+int alloc_guest_mem(struct vm_create_params *);
 int vmm_create_vm(struct vm_create_params *);
 void init_emulated_hw(struct vm_create_params *, int *, int *);
 void vcpu_exit_inout(struct vm_run_params *);
@@ -465,6 +467,12 @@ start_vm(struct imsg *imsg, uint32_t *id)
 		log_procinit(vcp->vcp_name);
 
 		create_memory_map(vcp);
+		ret = alloc_guest_mem(vcp);
+		if (ret) {
+			errno = ret;
+			fatal("could not allocate guest memory - exiting");
+		}
+
 		ret = vmm_create_vm(vcp);
 		current_vm = vm;
 
@@ -647,20 +655,20 @@ start_client_vmd(void)
 void
 create_memory_map(struct vm_create_params *vcp)
 {
-	size_t mem_mb;
-	uint64_t mem_bytes, len;
+	size_t len, mem_bytes, mem_mb;
 
 	mem_mb = vcp->vcp_memranges[0].vmr_size;
 	vcp->vcp_nmemranges = 0;
 	if (mem_mb < 1 || mem_mb > VMM_MAX_VM_MEM_SIZE)
 		return;
 
-	mem_bytes = (uint64_t)mem_mb * 1024 * 1024;
+	mem_bytes = mem_mb * 1024 * 1024;
 
 	/* First memory region: 0 - LOWMEM_KB (DOS low mem) */
+	len = LOWMEM_KB * 1024;
 	vcp->vcp_memranges[0].vmr_gpa = 0x0;
-	vcp->vcp_memranges[0].vmr_size = LOWMEM_KB * 1024;
-	mem_bytes -= LOWMEM_KB * 1024;
+	vcp->vcp_memranges[0].vmr_size = len;
+	mem_bytes -= len;
 
 	/*
 	 * Second memory region: LOWMEM_KB - 1MB.
@@ -693,6 +701,55 @@ create_memory_map(struct vm_create_params *vcp)
 		vcp->vcp_nmemranges = 4;
 	} else
 		vcp->vcp_nmemranges = 3;
+}
+
+/*
+ * alloc_guest_mem
+ *
+ * Allocates memory for the guest.
+ * Instead of doing a single allocation with one mmap(), we allocate memory
+ * separately for every range for the following reasons:
+ * - ASLR for the individual ranges
+ * - to reduce memory consumption in the UVM subsystem: if vmm(4) had to
+ *   map the single mmap'd userspace memory to the individual guest physical
+ *   memory ranges, the underlying amap of the single mmap'd range would have
+ *   to allocate per-page reference counters. The reason is that the
+ *   individual guest physical ranges would reference the single mmap'd region
+ *   only partially. However, if every guest physical range has its own
+ *   corresponding mmap'd userspace allocation, there are no partial
+ *   references: every guest physical range fully references an mmap'd
+ *   range => no per-page reference counters have to be allocated.
+ *
+ * Return values:
+ *  0: success
+ *  !0: failure - errno indicating the source of the failure
+ */
+int
+alloc_guest_mem(struct vm_create_params *vcp)
+{
+	void *p;
+	int ret;
+	size_t i, j;
+	struct vm_mem_range *vmr;
+
+	for (i = 0; i < vcp->vcp_nmemranges; i++) {
+		vmr = &vcp->vcp_memranges[i];
+		p = mmap(NULL, vmr->vmr_size, PROT_READ | PROT_WRITE,
+		    MAP_PRIVATE | MAP_ANON, -1, 0);
+		if (p == MAP_FAILED) {
+			ret = errno;
+			for (j = 0; j < i; j++) {
+				vmr = &vcp->vcp_memranges[j];
+				munmap((void *)vmr->vmr_va, vmr->vmr_size);
+			}
+
+			return (ret);
+		}
+
+		vmr->vmr_va = (vaddr_t)p;
+	}
+
+	return (0);
 }
 
 /*
