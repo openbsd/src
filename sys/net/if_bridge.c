@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.279 2016/05/30 12:56:16 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.280 2016/06/07 08:32:13 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1129,7 +1129,7 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 		} else
 #endif /* NGIF */
 		bridge_ifinput(ifp, mc);
-		
+
 		bridgeintr_frame(sc, ifp, m);
 		return;
 	}
@@ -1225,14 +1225,15 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 		if (bridge_filterrule(&p->bif_brlout, eh, m) == BRL_ACTION_BLOCK)
 			continue;
 
-		bridge_localbroadcast(sc, dst_if, eh, m);
-
 		/*
 		 * Don't retransmit out of the same interface where
 		 * the packet was received from.
 		 */
 		if (dst_if->if_index == ifp->if_index)
 			continue;
+
+		bridge_localbroadcast(sc, dst_if, eh, m);
+
 #if NMPW > 0
 		/*
 		 * Split horizon: avoid broadcasting messages from wire to
