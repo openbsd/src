@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.45 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: fd.c,v 1.46 2016/06/07 06:37:33 dlg Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -542,7 +542,6 @@ fdcattach(fdc, pri)
 		return (-1);
 	}
 
-	printf(" softpri %d", PIL_FDSOFT);
 	if (fdc->sc_flags & FDC_NOEJECT)
 		printf(": manual eject");
 	printf("\n");

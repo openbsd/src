@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.29 2016/03/07 13:21:51 naddy Exp $	*/
+/*	$OpenBSD: psl.h,v 1.30 2016/06/07 06:37:33 dlg Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -46,8 +46,6 @@
 
 /* Interesting spl()s */
 #define PIL_SCSI	3
-#define PIL_FDSOFT	4
-#define PIL_AUSOFT	4
 #define PIL_BIO		5
 #define PIL_VIDEO	5
 #define PIL_TTY		6
@@ -402,12 +400,6 @@ SPLHOLD(splsoftint, 1)
 #define	splsoftclock	splsoftint
 #define	splsoftnet	splsoftint
 
-/* audio software interrupts are at software level 4 */
-SPLHOLD(splausoft, PIL_AUSOFT)
-
-/* floppy software interrupts are at software level 4 too */
-SPLHOLD(splfdsoft, PIL_FDSOFT)
-
 /* Block devices */
 SPLHOLD(splbio, PIL_BIO)
 
@@ -447,8 +439,6 @@ SPLHOLD(splhigh, PIL_HIGH)
 
 #define	spl0()		spl0X(__FILE__, __LINE__)
 #define	splsoftint()	splsoftintX(__FILE__, __LINE__)
-#define	splausoft()	splausoftX(__FILE__, __LINE__)
-#define	splfdsoft()	splfdsoftX(__FILE__, __LINE__)
 #define	splbio()	splbioX(__FILE__, __LINE__)
 #define	splnet()	splnetX(__FILE__, __LINE__)
 #define	spltty()	splttyX(__FILE__, __LINE__)
