@@ -1,4 +1,4 @@
-/* 	$OpenBSD: kern_compat.h,v 1.3 2015/12/04 12:30:57 mpi Exp $ */
+/* 	$OpenBSD: kern_compat.h,v 1.4 2016/06/07 07:57:59 mpi Exp $ */
 
 #ifndef _KERN_COMPAT_H_
 #define _KERN_COMPAT_H_
@@ -6,6 +6,8 @@
 #include <sys/socket.h>
 #include <sys/domain.h>
 #include <sys/queue.h>
+#include <sys/mutex.h>
+#include <sys/task.h>
 #include <arpa/inet.h>
 
 #include <assert.h>
@@ -38,6 +40,7 @@ struct pool {
 };
 
 #define	pool_init(a, b, c, d, e, f, g)	do { (a)->pr_size = (b); } while (0)
+#define pool_setipl(pp, ipl)		/* nothing */
 #define pool_get(pp, flags)		malloc((pp)->pr_size, 0, 0)
 #define	pool_put(pp, rp)		free((rp), 0, 0)
 
@@ -50,9 +53,16 @@ struct pool {
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-#define rtref(_rt)	((_rt)->rt_refcnt++)
-#define rtfree(_rt)	(assert(--(_rt)->rt_refcnt >= 0))
+#define rtref(_rt)		((_rt)->rt_refcnt++)
+#define rtfree(_rt)		(assert(--(_rt)->rt_refcnt >= 0))
+
+#define mtx_enter(_mtx)		/* nothing */
+#define mtx_leave(_mtx)		/* nothing */
+
+#define task_add(_tq, _t)	((_t)->t_func((_t)->t_arg))
 
 extern struct domain *domains[];
+
+#define IPL_SOFTNET	0
 
 #endif /* _KERN_COMPAT_H_ */
