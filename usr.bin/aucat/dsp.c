@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.6 2016/05/27 16:18:59 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.7 2016/06/07 06:11:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -268,35 +268,50 @@ aparams_native(struct aparams *par)
 }
 
 /*
- * return the number of output frames resamp_do() would produce with
- * the given number of input frames
+ * return the number of input and output frame that would
+ * be consumed
  */
-int
-resamp_ocnt(struct resamp *p, int icnt)
+void
+resamp_getcnt(struct resamp *p, int *icnt, int *ocnt)
 {
-	return ((long long)p->oblksz * icnt + p->diff) / p->iblksz;
-}
+	int diff, ifr, ofr;
 
-/*
- * return the number of input frames resamp_do() needs in order to
- * produce the given number of output frames
- */
-int
-resamp_icnt(struct resamp *p, int ocnt)
-{
-	return ((long long)p->iblksz * ocnt - p->diff +
-	    p->oblksz - 1) / p->oblksz;
+	diff = p->diff;
+	ifr = *icnt;
+	ofr = *ocnt;
+
+	for (;;) {
+		if (diff < 0) {
+			if (ifr == 0)
+				break;
+			diff += p->oblksz;
+			ifr--;
+		} else if (diff > 0) {
+			if (ofr == 0)
+				break;
+			diff -= p->iblksz;
+			ofr--;
+		} else {
+			if (ifr == 0 || ofr == 0)
+				break;
+			diff -= p->iblksz;
+			diff += p->oblksz;
+			ifr--;
+			ofr--;
+		}
+	}
+	*icnt -= ifr;
+	*ocnt -= ofr;
 }
 
 /*
  * Resample the given number of frames. The number of output frames
- * must match the coresponding number the input frames. Either
- * use:
+ * must match the coresponding number the input frames. Either always
+ * use icnt and ocnt such that:
  *
- *	 icnt * orate = ocnt * irate
+ *	 icnt * oblksz = ocnt * iblksz
  *
- * or use resamp_icnt() or resamp_ocnt() to calculate the proper
- * numbers.
+ * or use resamp_getcnt() to calculate the proper numbers.
  */
 void
 resamp_do(struct resamp *p, adata_t *in, adata_t *out, int icnt, int ocnt)
