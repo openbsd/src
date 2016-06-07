@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.179 2015/12/29 04:46:28 mmcc Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.180 2016/06/07 06:23:19 dlg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -3489,6 +3489,7 @@ void
 pmap_init()
 {
 	pool_init(&pvpool, sizeof(struct pvlist), 0, 0, 0, "pvpl", NULL);
+	pool_setipl(&pvpool, IPL_VM);
 
 #if defined(SUN4M)
         if (CPU_ISSUN4M) {
@@ -3502,10 +3503,12 @@ pmap_init()
                 n = SRMMU_L1SIZE * sizeof(int);
                 pool_init(&L1_pool, n, n, 0, 0, "L1 pagetable",
 		    &pgt_allocator);
+		pool_setipl(&L1_pool, IPL_VM);
 
                 n = SRMMU_L2SIZE * sizeof(int);
                 pool_init(&L23_pool, n, n, 0, 0, "L2/L3 pagetable",
                     &pgt_allocator);
+		pool_setipl(&L23_pool, IPL_VM);
         }
 #endif
 }

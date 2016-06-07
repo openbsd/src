@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.189 2016/03/15 03:17:51 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.190 2016/06/07 06:23:19 dlg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1026,8 +1026,9 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * initialize the pmap pool.
 	 */
 
-	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 32, 0, PR_WAITOK,
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 32, 0, 0,
 	    "pmappl", NULL);
+	pool_setipl(&pmap_pmap_pool, IPL_NONE);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
 	    &pmap_pv_page_allocator);
 	pool_setipl(&pmap_pv_pool, IPL_VM);

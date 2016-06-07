@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.82 2016/02/22 07:13:46 landry Exp $ */
+/* $OpenBSD: pmap.c,v 1.83 2016/06/07 06:23:19 dlg Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -838,12 +838,15 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * Initialize the pmap pools and list.
 	 */
 	pmap_ncpuids = ncpuids;
-	pool_init(&pmap_pmap_pool, PMAP_SIZEOF(pmap_ncpuids), 0, 0, 0, "pmappl",
-	    &pool_allocator_single);
+	pool_init(&pmap_pmap_pool, PMAP_SIZEOF(pmap_ncpuids), 0, 0, 0,
+	    "pmappl", &pool_allocator_single);
+	pool_setipl(&pmap_pmap_pool, IPL_NONE);
 	pool_init(&pmap_l1pt_pool, PAGE_SIZE, 0, 0, 0, "l1ptpl",
 	    &pmap_l1pt_allocator);
+	pool_setipl(&pmap_l1pt_pool, IPL_VM);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
 	    &pmap_pv_page_allocator);
+	pool_setipl(&pmap_pv_pool, IPL_VM);
 
 	TAILQ_INIT(&pmap_all_pmaps);
 

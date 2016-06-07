@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.163 2015/10/08 10:20:14 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.164 2016/06/07 06:23:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -2142,13 +2142,17 @@ pmap_real_memory(paddr_t *start, vsize_t *size)
 void
 pmap_init()
 {
-	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmap", NULL);
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0,
+	    "pmap", NULL);
+	pool_setipl(&pmap_pmap_pool, IPL_NONE);
 	pool_setlowat(&pmap_pmap_pool, 2);
 	pool_init(&pmap_vp_pool, sizeof(struct pmapvp), 0, 0, 0, "vp",
 	    &pool_allocator_single);
+	pool_setipl(&pmap_vp_pool, IPL_VM);
 	pool_setlowat(&pmap_vp_pool, 10);
 	pool_init(&pmap_pted_pool, sizeof(struct pte_desc), 0, 0, 0, "pted",
 	    NULL);
+	pool_setipl(&pmap_pted_pool, IPL_VM);
 	pool_setlowat(&pmap_pted_pool, 20);
 
 	PMAP_HASH_LOCK_INIT();

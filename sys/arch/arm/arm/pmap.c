@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.63 2016/03/22 23:35:01 patrick Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.64 2016/06/07 06:23:19 dlg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -3729,26 +3729,30 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	/*
 	 * Initialize the pmap pool and cache
 	 */
-	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_single);
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0,
+	    "pmappl", &pool_allocator_single);
+	pool_setipl(&pmap_pmap_pool, IPL_NONE);
 
 	/*
 	 * Initialize the pv pool.
 	 */
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvepl",
 	    &pmap_bootstrap_pv_allocator);
+	pool_setipl(&pmap_pv_pool, IPL_VM);
 
 	/*
 	 * Initialize the L2 dtable pool and cache.
 	 */
 	pool_init(&pmap_l2dtable_pool, sizeof(struct l2_dtable), 0, 0, 0,
 	    "l2dtblpl", NULL);
+	pool_setipl(&pmap_l2dtable_pool, IPL_VM);
 
 	/*
 	 * Initialise the L2 descriptor table pool and cache
 	 */
 	pool_init(&pmap_l2ptp_pool, L2_TABLE_SIZE_REAL, L2_TABLE_SIZE_REAL, 0,
 	    0, "l2ptppl", &pool_allocator_single);
+	pool_setipl(&pmap_l2ptp_pool, IPL_VM);
 
 	cpu_dcache_wbinv_all();
 }
