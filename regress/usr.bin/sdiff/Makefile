@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2016/05/31 17:28:14 okan Exp $
+#	$OpenBSD: Makefile,v 1.4 2016/06/07 19:34:05 okan Exp $
 
 SDIFF?=sdiff
 REGRESS_TARGETS=test-lflag test-sflag test-wflag \
@@ -51,8 +51,8 @@ test-sflag: file1 file2 sflag.out
 test-wflag: file1 file2 wflag.out
 	${SDIFF} -w 40 ${.CURDIR}/file1 ${.CURDIR}/file2 | diff -u ${.CURDIR}/wflag.out -
 
-test-tabs: tabs1 tabs2 tabs.out
-	${SDIFF} ${.CURDIR}/tabs1 ${.CURDIR}/tabs2 | diff -u ${.CURDIR}/tabs.out -
+test-tabs: tabs.in tabs.out
+	${SDIFF} ${.CURDIR}/tabs.in ${.CURDIR}/tabs.in | diff -u ${.CURDIR}/tabs.out -
 
 test-tabends: tabends tabends.out
 	${SDIFF} -w30 ${.CURDIR}/tabends /dev/null | diff -u ${.CURDIR}/tabends.out -
