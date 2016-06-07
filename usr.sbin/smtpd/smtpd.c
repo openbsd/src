@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.277 2016/05/28 21:21:20 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.278 2016/06/07 06:52:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -789,8 +789,11 @@ start_child(int save_argc, char **save_argv, char *rexec)
 	if (save_argc >= SMTPD_MAXARG - 2)
 		fatalx("too many arguments");
 
-	if (socketpair(AF_UNIX, SOCK_STREAM|SOCK_NONBLOCK, PF_UNSPEC, sp) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) == -1)
 		fatal("socketpair");
+
+	io_set_nonblocking(sp[0]);
+	io_set_nonblocking(sp[1]);
 
 	switch (pid = fork()) {
 	case -1:
@@ -830,8 +833,11 @@ setup_peers(struct mproc *a, struct mproc *b)
 {
 	int sp[2];
 
-	if (socketpair(AF_UNIX, SOCK_STREAM|SOCK_NONBLOCK, PF_UNSPEC, sp) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) == -1)
 		fatal("socketpair");
+
+	io_set_nonblocking(sp[0]);
+	io_set_nonblocking(sp[1]);
 
 	if (imsg_compose(&a->imsgbuf, IMSG_SETUP_PEER, b->proc, b->pid, sp[0],
 	    NULL, 0) == -1)
