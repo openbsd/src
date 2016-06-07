@@ -1,4 +1,4 @@
-/*	$OpenBSD: srp.h,v 1.10 2016/06/01 03:34:32 dlg Exp $ */
+/*	$OpenBSD: srp.h,v 1.11 2016/06/07 07:53:33 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -31,6 +31,8 @@ struct srp {
 	void			*ref;
 };
 
+#define SRP_INITIALIZER() { NULL }
+
 struct srp_hazard {
 	struct srp		*sh_p;
 	void			*sh_v;
@@ -41,17 +43,32 @@ struct srp_ref {
 } __upunused;
 
 #define SRP_HAZARD_NUM 16
-	
+
 struct srp_gc {
 	void			(*srp_gc_dtor)(void *, void *);
 	void			*srp_gc_cookie;
 	struct refcnt		srp_gc_refcnt;
 };
 
-#ifdef _KERNEL
-
-#define SRP_INITIALIZER() { NULL }
 #define SRP_GC_INITIALIZER(_d, _c) { (_d), (_c), REFCNT_INITIALIZER() }
+
+/*
+ * singly linked list built by following srps
+ */
+
+struct srpl_rc {
+	void			(*srpl_ref)(void *, void *);
+	struct srp_gc		srpl_gc;
+};
+#define srpl_cookie		srpl_gc.srp_gc_cookie
+
+#define SRPL_RC_INITIALIZER(_r, _u, _c) { _r, SRP_GC_INITIALIZER(_u, _c) }
+
+struct srpl {
+	struct srp		sl_head;
+};
+
+#ifdef _KERNEL
 
 void		 srp_startup(void);
 void		 srp_gc_init(struct srp_gc *, void (*)(void *, void *), void *);
@@ -78,28 +95,9 @@ void		 srp_leave(struct srp_ref *);
 #define srp_leave(_sr)			do { } while (0)
 #endif /* MULTIPROCESSOR */
 
-#endif /* _KERNEL */
-
-/*
- * singly linked list built by following srps
- */
-
-struct srpl_rc {
-	void			(*srpl_ref)(void *, void *);
-	struct srp_gc		srpl_gc;
-};
-#define srpl_cookie		srpl_gc.srp_gc_cookie
-
-struct srpl {
-	struct srp		sl_head;
-};
-
-#ifdef _KERNEL
 
 void		srpl_rc_init(struct srpl_rc *, void (*)(void *, void *),
 		    void (*)(void *, void *), void *);
-
-#define SRPL_RC_INITIALIZER(_r, _u, _c) { _r, SRP_GC_INITIALIZER(_u, _c) }
 
 #define SRPL_INIT(_sl)			srp_init(&(_sl)->sl_head)
 
