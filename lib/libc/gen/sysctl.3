@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.260 2016/06/01 11:11:44 jca Exp $
+.\"	$OpenBSD: sysctl.3,v 1.261 2016/06/07 05:52:49 tim Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 1 2016 $
+.Dd $Mdocdate: June 7 2016 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -1200,6 +1200,7 @@ The currently defined protocols and names are:
 .It tcp Ta stats Ta structure Ta no
 .It tcp Ta synbucketlimit Ta integer Ta yes
 .It tcp Ta syncachelimit Ta integer Ta yes
+.It tcp Ta synuselimit Ta integer Ta yes
 .It udp Ta baddynamic Ta array Ta yes
 .It udp Ta checksum Ta integer Ta yes
 .It udp Ta recvspace Ta integer Ta yes
@@ -1614,6 +1615,9 @@ Returns the TCP statistics in a struct tcpstat.
 The maximum number of entries allowed per hash bucket in the TCP SYN cache.
 .It Li tcp.syncachelimit
 The maximum number of entries allowed in the TCP SYN cache.
+.It Li tcp.synuselimit
+The minimum number of times the hash function for the TCP SYN cache is used
+before it is reseeded.
 .It Li udp.baddynamic
 Analogous to
 .Li tcp.baddynamic
