@@ -2019,7 +2019,7 @@
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Term
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Term/ReadKey
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Term/ReadKey/ReadKey.so
-./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Term/ReadKey/autosplit.ix.
+./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Term/ReadKey/autosplit.ix
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Tie
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Tie/Hash
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/auto/Tie/Hash/NamedCapture
@@ -2068,4 +2068,4 @@
 ./usr/sbin/fdformat
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz
-/etc/examples/wsconsctl.conf
+./etc/examples/wsconsctl.conf
