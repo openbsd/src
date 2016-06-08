@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.62 2016/06/06 16:42:41 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.63 2016/06/08 23:30:07 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -230,6 +230,8 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 	static int		 disc_socket = -1;
 	static int		 edisc_socket = -1;
 	static int		 session_socket = -1;
+	struct nbr		*nbr;
+	struct nbr_params	*nbrp;
 	int			 n, shut = 0;
 
 	if (event & EV_READ) {
@@ -304,6 +306,12 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 		case IMSG_CLOSE_SOCKETS:
 			af = imsg.hdr.peerid;
 
+			RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id) {
+				if (nbr->af != af)
+					continue;
+				session_shutdown(nbr, S_SHUTDOWN, 0, 0);
+				pfkey_remove(nbr);
+			}
 			ldpe_close_sockets(af);
 			if_update_all(af);
 			tnbr_update_all(af);
@@ -349,6 +357,17 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 			    session_socket);
 			if_update_all(af);
 			tnbr_update_all(af);
+			RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id) {
+				if (nbr->af != af)
+					continue;
+				nbr->laddr = (ldp_af_conf_get(leconf,
+				    af))->trans_addr;
+				nbrp = nbr_params_find(leconf, nbr->id);
+				if (nbrp && pfkey_establish(nbr, nbrp) == -1)
+					fatalx("pfkey setup failed");
+				if (nbr_session_active_role(nbr))
+					nbr_establish_connection(nbr);
+			}
 			break;
 		case IMSG_RECONF_CONF:
 			if ((nconf = malloc(sizeof(struct ldpd_conf))) ==

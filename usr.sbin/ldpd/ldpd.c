@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.50 2016/06/06 16:42:41 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.51 2016/06/08 23:30:07 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -810,8 +810,6 @@ merge_global(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 static void
 merge_af(int af, struct ldpd_af_conf *af_conf, struct ldpd_af_conf *xa)
 {
-	struct nbr		*nbr;
-	struct nbr_params	*nbrp;
 	int			 egress_label_changed = 0;
 
 	if (af_conf->keepalive != xa->keepalive) {
@@ -854,21 +852,6 @@ merge_af(int af, struct ldpd_af_conf *af_conf, struct ldpd_af_conf *xa)
 		if (ldpd_process == PROC_MAIN)
 			imsg_compose_event(iev_ldpe, IMSG_CLOSE_SOCKETS, af,
 			    0, -1, NULL, 0);
-		if (ldpd_process == PROC_LDP_ENGINE) {
-			RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id) {
-				if (nbr->af != af)
-					continue;
-
-				session_shutdown(nbr, S_SHUTDOWN, 0, 0);
-				pfkey_remove(nbr);
-				nbr->laddr = af_conf->trans_addr;
-				nbrp = nbr_params_find(leconf, nbr->id);
-				if (nbrp && pfkey_establish(nbr, nbrp) == -1)
-					fatalx("pfkey setup failed");
-				if (nbr_session_active_role(nbr))
-					nbr_establish_connection(nbr);
-			}
-		}
 	}
 }
 
