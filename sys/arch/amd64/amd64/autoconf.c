@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.46 2016/05/30 17:52:26 tedu Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.47 2016/06/08 17:24:44 tedu Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -225,6 +225,5 @@ struct nam2blk nam2blk[] = {
 	{ "cd",		6 },
 	{ "vnd",	14 },
 	{ "rd",		17 },
-	{ "raid",	19 },
 	{ NULL,		-1 }
 };
