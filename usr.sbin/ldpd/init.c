@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.27 2016/05/23 19:11:42 renato Exp $ */
+/*	$OpenBSD: init.c,v 1.28 2016/06/08 21:28:09 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -70,14 +70,17 @@ recv_init(struct nbr *nbr, char *buf, uint16_t len)
 		session_shutdown(nbr, S_KEEPALIVE_BAD, init.msgid, init.type);
 		return (-1);
 	}
-
 	if (ntohs(sess.length) != SESS_PRMS_SIZE - TLV_HDR_LEN) {
 		session_shutdown(nbr, S_BAD_TLV_LEN, init.msgid, init.type);
 		return (-1);
 	}
-
 	if (ntohs(sess.proto_version) != LDP_VERSION) {
 		session_shutdown(nbr, S_BAD_PROTO_VER, init.msgid, init.type);
+		return (-1);
+	}
+	if (sess.lsr_id != leconf->rtr_id.s_addr ||
+	    ntohs(sess.lspace_id) != 0) {
+		session_shutdown(nbr, S_NO_HELLO, init.msgid, init.type);
 		return (-1);
 	}
 
