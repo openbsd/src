@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.75 2016/05/07 19:05:23 guenther Exp $ */
+/*	$OpenBSD: library.c,v 1.76 2016/06/08 11:58:59 kettenis Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -215,11 +215,22 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 			char *start = (char *)(TRUNC_PG(phdp->p_vaddr)) + loff;
 			Elf_Addr off = (phdp->p_vaddr & align);
 			Elf_Addr size = off + phdp->p_filesz;
+			int flags = PFLAGS(phdp->p_flags);
 			void *res;
 
+			/*
+			 * Initially map W|X segments without X
+			 * permission.  After we're done with the
+			 * initial relocation processing, we will make
+			 * these segments read-only and add back the X
+			 * permission.  This way we maintain W^X at
+			 * all times.
+			 */
+			if ((flags & PROT_WRITE) && (flags & PROT_EXEC))
+				flags &= ~PROT_EXEC;
+
 			if (size != 0) {
-				res = _dl_mmap(start, ROUND_PG(size),
-				    PFLAGS(phdp->p_flags),
+				res = _dl_mmap(start, ROUND_PG(size), flags,
 				    MAP_FIXED|MAP_PRIVATE, libfile,
 				    TRUNC_PG(phdp->p_offset));
 			} else
@@ -252,8 +263,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 				start = start + ROUND_PG(size);
 				size = ROUND_PG(off + phdp->p_memsz) -
 				    ROUND_PG(size);
-				res = _dl_mmap(start, size,
-				    PFLAGS(phdp->p_flags),
+				res = _dl_mmap(start, size, flags,
 				    MAP_FIXED|MAP_PRIVATE|MAP_ANON, -1, 0);
 				if (_dl_mmap_error(res)) {
 					_dl_printf("%s: rtld mmap failed mapping %s.\n",

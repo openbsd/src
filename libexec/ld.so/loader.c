@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.160 2016/06/05 19:43:58 kettenis Exp $ */
+/*	$OpenBSD: loader.c,v 1.161 2016/06/08 11:58:59 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -637,6 +637,7 @@ int
 _dl_rtld(elf_object_t *object)
 {
 	size_t sz;
+	struct load_list *llist;
 	int fails = 0;
 
 	if (object->next)
@@ -674,6 +675,16 @@ _dl_rtld(elf_object_t *object)
 	prebind_symcache(object, SYM_PLT);
 	fails += _dl_md_reloc_got(object, !(_dl_bindnow ||
 	    object->obj_flags & DF_1_NOW));
+
+	/*
+	 * Look for W|X segments and make them read-only.
+	 */
+	for (llist = object->load_list; llist != NULL; llist = llist->next) {
+		if ((llist->prot & PROT_WRITE) && (llist->prot & PROT_EXEC)) {
+			_dl_mprotect(llist->start, llist->size,
+			    llist->prot & ~PROT_WRITE);
+		}
+	}
 
 	if (_dl_symcache != NULL) {
 		if (sz != 0)
