@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitoshiba.c,v 1.4 2015/03/14 03:38:46 jsg Exp $ */
+/* $OpenBSD: acpitoshiba.c,v 1.5 2016/06/08 13:34:30 giovanni Exp $ */
 /*-
  * Copyright (c) 2003 Hiroyuki Aizu <aizu@navi.org>
  * All rights reserved.
@@ -118,6 +118,13 @@ struct cfdriver acpitoshiba_cd = {
 	NULL, "acpitoshiba", DV_DULL
 };
 
+const char *acpitoshiba_hids[] = {
+	ACPI_DEV_TOSHIBA_LIBRETTO,
+	ACPI_DEV_TOSHIBA_DYNABOOK,
+	ACPI_DEV_TOSHIBA_SPA40,
+	0
+};
+
 int
 get_param_brightness(struct wsdisplay_param *dp)
 {
@@ -233,6 +240,9 @@ toshiba_match(struct device *parent, void *match, void *aux)
 {
       struct acpi_attach_args *aa = aux;
       struct cfdata	      *cf = match;
+
+        if (acpi_matchhids(aa, acpitoshiba_hids, cf->cf_driver->cd_name))
+                return (1);
 
 	if ( aa->aaa_name == NULL ||
 	   strcmp(aa->aaa_name, cf->cf_driver->cd_name) != 0 ||
