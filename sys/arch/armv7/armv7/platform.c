@@ -1,4 +1,4 @@
-/*	$OpenBSD: platform.c,v 1.6 2016/06/04 18:09:16 jsg Exp $	*/
+/*	$OpenBSD: platform.c,v 1.7 2016/06/08 15:27:05 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -32,6 +32,12 @@
 #include "vexpress.h"
 
 static struct armv7_platform *platform;
+
+void	exuart_init_cons(void);
+void	imxuart_init_cons(void);
+void	omapuart_init_cons(void);
+void	sxiuart_init_cons(void);
+void	pl011_init_cons(void);
 
 struct armv7_platform *imx_platform_match(void);
 struct armv7_platform *omap_platform_match(void);
@@ -82,7 +88,15 @@ platform_smc_write(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
 void
 platform_init_cons(void)
 {
-	platform->init_cons();
+	if (platform && platform->init_cons) {
+		platform->init_cons();
+		return;
+	}
+	exuart_init_cons();
+	imxuart_init_cons();
+	omapuart_init_cons();
+	sxiuart_init_cons();
+	pl011_init_cons();
 }
 
 void

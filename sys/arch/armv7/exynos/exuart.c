@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.3 2016/04/24 00:57:23 patrick Exp $ */
+/* $OpenBSD: exuart.c,v 1.4 2016/06/08 15:27:05 jsg Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -31,19 +31,19 @@
 
 #include <dev/cons.h>
 
-
 #ifdef DDB
 #include <ddb/db_var.h>
 #endif
 
 #include <machine/bus.h>
-#if NFDT > 0
-#include <machine/fdt.h>
-#endif
+#include <arm/armv7/armv7var.h>
 #include <armv7/exynos/exuartreg.h>
 #include <armv7/exynos/exuartvar.h>
 #include <armv7/armv7/armv7var.h>
+#include <armv7/armv7/armv7_machdep.h>
 #include <armv7/exynos/exclockvar.h>
+
+#include <dev/ofw/fdt.h>
 
 #define DEVUNIT(x)      (minor(x) & 0x7f)
 #define DEVCUA(x)       (minor(x) & 0x80)
@@ -110,6 +110,8 @@ struct exuart_softc *exuart_sc(dev_t dev);
 
 int exuart_intr(void *);
 
+extern int comcnspeed;
+extern int comcnmode;
 
 /* XXX - we imitate 'com' serial ports and take over their entry points */
 /* XXX: These belong elsewhere */
@@ -131,6 +133,20 @@ bus_space_handle_t exuartconsioh;
 bus_addr_t	exuartconsaddr;
 tcflag_t	exuartconscflag = TTYDEF_CFLAG;
 int		exuartdefaultrate = B115200;
+
+void
+exuart_init_cons(void)
+{
+	struct fdt_memory mem;
+	void *node;
+
+	if ((node = fdt_find_cons("samsung,exynos4210-uart")) == NULL)
+		return;
+	if (fdt_get_memory_address(node, 0, &mem))
+		return;
+
+	exuartcnattach(&armv7_bs_tag, mem.addr, comcnspeed, comcnmode);
+}
 
 int
 exuartprobe(struct device *parent, void *self, void *aux)

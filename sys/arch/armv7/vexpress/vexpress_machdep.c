@@ -1,4 +1,4 @@
-/*	$OpenBSD: vexpress_machdep.c,v 1.3 2016/06/04 18:09:16 jsg Exp $	*/
+/*	$OpenBSD: vexpress_machdep.c,v 1.4 2016/06/08 15:27:05 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -38,31 +38,12 @@ extern void sysconf_shutdown(void);
 extern struct board_dev *vexpress_board_devs(void);
 extern void vexpress_board_init(void);
 extern int vexpress_legacy_map(void);
-extern int comcnspeed;
-extern int comcnmode;
 
 void
 vexpress_platform_smc_write(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
     uint32_t op, uint32_t val)
 {
 	bus_space_write_4(iot, ioh, off, val);
-}
-
-void
-vexpress_platform_init_cons(void)
-{
-	paddr_t paddr;
-
-	switch (board_id) {
-	default:
-	case BOARD_ID_VEXPRESS:
-		if (vexpress_legacy_map())
-			paddr = 0x10009000;
-		else
-			paddr = 0x1c090000;
-		break;
-	}
-	pl011cnattach(&armv7_bs_tag, paddr, comcnspeed, comcnmode);
 }
 
 void
@@ -99,7 +80,6 @@ vexpress_platform_board_init(void)
 struct armv7_platform vexpress_platform = {
 	.board_init = vexpress_platform_board_init,
 	.smc_write = vexpress_platform_smc_write,
-	.init_cons = vexpress_platform_init_cons,
 	.watchdog_reset = vexpress_platform_watchdog_reset,
 	.powerdown = vexpress_platform_powerdown,
 	.disable_l2_if_needed = vexpress_platform_disable_l2_if_needed,

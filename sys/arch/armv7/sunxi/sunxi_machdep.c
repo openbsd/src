@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunxi_machdep.c,v 1.10 2016/06/04 18:09:16 jsg Exp $	*/
+/*	$OpenBSD: sunxi_machdep.c,v 1.11 2016/06/08 15:27:05 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -36,34 +36,12 @@ extern int sxiuartcnattach(bus_space_tag_t, bus_addr_t, int, long, tcflag_t);
 extern void sxidog_reset(void);
 extern struct board_dev *sunxi_board_devs(void);
 extern void sunxi_board_init(void);
-extern int comcnspeed;
-extern int comcnmode;
 
 void
 sunxi_platform_smc_write(bus_space_tag_t iot, bus_space_handle_t ioh,
     bus_size_t off, uint32_t op, uint32_t val)
 {
 
-}
-
-void
-sunxi_platform_init_cons(void)
-{
-	paddr_t paddr;
-
-	switch (board_id) {
-	case BOARD_ID_SUN4I_A10:
-	case BOARD_ID_SUN7I_A20:
-		paddr = 0x01c28000;	/* UART0 */
-		break;
-	default:
-		sxiuartcnattach(&armv7_a4x_bs_tag, paddr, comcnspeed,
-		    24000000, comcnmode);
-		panic("board type %x unknown", board_id);
-	}
-
-	sxiuartcnattach(&armv7_a4x_bs_tag, paddr, comcnspeed, 24000000,
-	    comcnmode);
 }
 
 void
@@ -100,7 +78,6 @@ sunxi_platform_board_init(void)
 struct armv7_platform sunxi_platform = {
 	.board_init = sunxi_platform_board_init,
 	.smc_write = sunxi_platform_smc_write,
-	.init_cons = sunxi_platform_init_cons,
 	.watchdog_reset = sunxi_platform_watchdog_reset,
 	.powerdown = sunxi_platform_powerdown,
 	.disable_l2_if_needed = sunxi_platform_disable_l2_if_needed,

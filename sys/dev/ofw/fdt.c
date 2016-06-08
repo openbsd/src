@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.10 2016/05/21 21:24:36 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.11 2016/06/08 15:27:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -570,6 +570,23 @@ fdt_get_memory_address(void *node, int idx, struct fdt_memory *mem)
 	return fdt_translate_memory_address(parent, mem);
 }
 
+int
+fdt_is_compatible(void *node, const char *name)
+{
+	char *data;
+	int len;
+
+	len = fdt_node_property(node, "compatible", &data);
+	while (len > 0) {
+		if (strcmp(data, name) == 0)
+			return 1;
+		len -= strlen(data) + 1;
+		data += strlen(data) + 1;
+	}
+
+	return 0;
+}
+
 #ifdef DEBUG
 /*
  * Debug methods for printing whole tree, particular odes and properies
@@ -798,17 +815,6 @@ int
 OF_is_compatible(int handle, const char *name)
 {
 	void *node = (char *)tree.header + handle;
-	char *data;
-	int len;
-
-	len = fdt_node_property(node, "compatible", &data);
-	while (len > 0) {
-		if (strcmp(data, name) == 0)
-			return 1;
-		len -= strlen(data) + 1;
-		data += strlen(data) + 1;
-	}
-
-	return 0;
+	return (fdt_is_compatible(node, name));
 }
 

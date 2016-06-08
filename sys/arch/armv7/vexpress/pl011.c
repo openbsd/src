@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl011.c,v 1.2 2016/04/24 00:57:23 patrick Exp $	*/
+/*	$OpenBSD: pl011.c,v 1.3 2016/06/08 15:27:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -42,9 +42,13 @@
 #if NFDT > 0
 #include <machine/fdt.h>
 #endif
+#include <arm/armv7/armv7var.h>
 #include <armv7/vexpress/pl011reg.h>
 #include <armv7/vexpress/pl011var.h>
 #include <armv7/armv7/armv7var.h>
+#include <armv7/armv7/armv7_machdep.h>
+
+#include <dev/ofw/fdt.h>
 
 #define DEVUNIT(x)      (minor(x) & 0x7f)
 #define DEVCUA(x)       (minor(x) & 0x80)
@@ -112,6 +116,8 @@ struct pl011_softc *pl011_sc(dev_t dev);
 
 int pl011_intr(void *);
 
+extern int comcnspeed;
+extern int comcnmode;
 
 /* XXX - we imitate 'com' serial ports and take over their entry points */
 /* XXX: These belong elsewhere */
@@ -130,6 +136,20 @@ bus_space_handle_t pl011consioh;
 bus_addr_t	pl011consaddr;
 tcflag_t	pl011conscflag = TTYDEF_CFLAG;
 int		pl011defaultrate = B38400;
+
+void
+pl011_init_cons(void)
+{
+	struct fdt_memory mem;
+	void *node;
+
+	if ((node = fdt_find_cons("arm,pl011")) == NULL)
+		return;
+	if (fdt_get_memory_address(node, 0, &mem))
+		return;
+
+	pl011cnattach(&armv7_bs_tag, mem.addr, comcnspeed, comcnmode);
+}
 
 int
 pl011probe(struct device *parent, void *self, void *aux)

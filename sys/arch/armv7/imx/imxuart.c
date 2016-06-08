@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.4 2016/05/18 06:49:28 kettenis Exp $ */
+/* $OpenBSD: imxuart.c,v 1.5 2016/06/08 15:27:05 jsg Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -37,10 +37,14 @@
 #endif
 
 #include <machine/bus.h>
+#include <arm/armv7/armv7var.h>
 #include <armv7/imx/imxuartreg.h>
 #include <armv7/imx/imxuartvar.h>
 #include <armv7/armv7/armv7var.h>
+#include <armv7/armv7/armv7_machdep.h>
 #include <armv7/imx/imxccmvar.h>
+
+#include <dev/ofw/fdt.h>
 
 #define DEVUNIT(x)      (minor(x) & 0x7f)
 #define DEVCUA(x)       (minor(x) & 0x80)
@@ -104,6 +108,8 @@ struct imxuart_softc *imxuart_sc(dev_t dev);
 
 int imxuart_intr(void *);
 
+extern int comcnspeed;
+extern int comcnmode;
 
 /* XXX - we imitate 'com' serial ports and take over their entry points */
 /* XXX: These belong elsewhere */
@@ -125,6 +131,20 @@ int		imxuartdefaultrate = B115200;
 
 struct cdevsw imxuartdev =
 	cdev_tty_init(3/*XXX NIMXUART */ ,imxuart);		/* 12: serial port */
+
+void
+imxuart_init_cons(void)
+{
+	struct fdt_memory mem;
+	void *node;
+
+	if ((node = fdt_find_cons("fsl,imx21-uart")) == NULL)
+		return;
+	if (fdt_get_memory_address(node, 0, &mem))
+		return;
+
+	imxuartcnattach(&armv7_bs_tag, mem.addr, comcnspeed, comcnmode);
+}
 
 void
 imxuartattach(struct device *parent, struct device *self, void *args)

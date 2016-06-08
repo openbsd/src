@@ -1,4 +1,4 @@
-/*	$OpenBSD: imx_machdep.c,v 1.18 2016/06/04 18:09:16 jsg Exp $	*/
+/*	$OpenBSD: imx_machdep.c,v 1.19 2016/06/08 15:27:05 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -36,45 +36,12 @@
 extern void imxdog_reset(void);
 extern struct board_dev *imx_board_devs(void);
 extern void imx_board_init(void);
-extern int comcnspeed;
-extern int comcnmode;
 
 void
 imx_platform_smc_write(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
     uint32_t op, uint32_t val)
 {
 	bus_space_write_4(iot, ioh, off, val);
-}
-
-void
-imx_platform_init_cons(void)
-{
-	paddr_t paddr;
-
-	switch (board_id) {
-	/* UART1 */
-	case BOARD_ID_IMX6_CUBOXI:
-	case BOARD_ID_IMX6_HUMMINGBOARD:
-	case BOARD_ID_IMX6_SABRESD:
-	case BOARD_ID_IMX6_WANDBOARD:
-		paddr = 0x02020000;
-		break;
-	/* UART2 */
-	case BOARD_ID_IMX6_SABRELITE:
-	case BOARD_ID_IMX6_UDOO:
-	case BOARD_ID_IMX6_NOVENA:
-		paddr = 0x021e8000;
-		break;
-	/* UART4 */
-	case BOARD_ID_IMX6_UTILITE:
-		paddr = 0x021f0000;
-		break;
-	default:
-		printf("board type %x unknown", board_id);
-		return;
-		/* XXX - HELP */
-	}
-	imxuartcnattach(&armv7_bs_tag, paddr, comcnspeed, comcnmode);
 }
 
 void
@@ -111,7 +78,6 @@ imx_platform_board_init(void)
 struct armv7_platform imx_platform = {
 	.board_init = imx_platform_board_init,
 	.smc_write = imx_platform_smc_write,
-	.init_cons = imx_platform_init_cons,
 	.watchdog_reset = imx_platform_watchdog_reset,
 	.powerdown = imx_platform_powerdown,
 	.disable_l2_if_needed = imx_platform_disable_l2_if_needed,

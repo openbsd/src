@@ -1,4 +1,4 @@
-/* $OpenBSD: omap_com.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
+/* $OpenBSD: omap_com.c,v 1.3 2016/06/08 15:27:05 jsg Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -49,6 +49,9 @@
 #include <arch/arm/armv7/armv7var.h>
 
 #include <armv7/armv7/armv7var.h>
+#include <armv7/armv7/armv7_machdep.h>
+
+#include <dev/ofw/fdt.h>
 
 #define com_isr 8
 #define ISR_RECV	(ISR_RXPL | ISR_XMODE | ISR_RCVEIR)
@@ -56,10 +59,29 @@
 void	omapuart_attach(struct device *, struct device *, void *);
 int	omapuart_activate(struct device *, int);
 
+extern int comcnspeed;
+extern int comcnmode;
+
 struct cfattach com_omap_ca = {
 	sizeof (struct com_softc), NULL, omapuart_attach, NULL,
 	omapuart_activate
 };
+
+void
+omapuart_init_cons(void)
+{
+	struct fdt_memory mem;
+	void *node;
+
+	if ((node = fdt_find_cons("ti,omap3-uart")) == NULL)
+		return;
+	if (fdt_get_memory_address(node, 0, &mem))
+		return;
+
+	comcnattach(&armv7_a4x_bs_tag, mem.addr, comcnspeed, 48000000,
+	    comcnmode);
+	comdefaultrate = comcnspeed;
+}
 
 void
 omapuart_attach(struct device *parent, struct device *self, void *aux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.28 2016/06/04 18:09:16 jsg Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.29 2016/06/08 15:27:05 jsg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -898,6 +898,42 @@ process_kernel_args(char *args)
 		}
 		boothowto |= fl;
 	}
+}
+
+void *
+fdt_find_cons(const char *name)
+{
+	char *alias = "serial0";
+	char *stdout = NULL;
+	void *node;
+
+	/* First check if "stdout-path" is set. */
+	node = fdt_find_node("/chosen");
+	if (node) {
+		if (fdt_node_property(node, "stdout-path", &stdout)) {
+			if (stdout[0] != '/') {
+				/* It's an alias. */
+				alias = stdout;
+				stdout = NULL;
+			}
+		}
+	}
+
+	/* Perform alias lookup if necessary. */
+	if (stdout == NULL) {
+		node = fdt_find_node("/aliases");
+		if (node)
+			fdt_node_property(node, alias, &stdout);
+	}
+
+	/* Lookup the physical address of the interface. */
+	if (stdout) {
+		node = fdt_find_node(stdout);
+		if (node && fdt_is_compatible(node, name))
+			return (node);
+	}
+
+	return (NULL);
 }
 
 void
