@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.45 2016/05/31 22:12:26 deraadt Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.46 2016/06/08 11:11:47 bluhm Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -140,10 +140,13 @@ initconsbuf(void)
 void
 msgbuf_putchar(struct msgbuf *mbp, const char c)
 {
+	int s;
+
 	if (mbp->msg_magic != MSG_MAGIC)
 		/* Nothing we can do */
 		return;
 
+	s = splhigh();
 	mbp->msg_bufc[mbp->msg_bufx++] = c;
 	mbp->msg_bufl = lmin(mbp->msg_bufl+1, mbp->msg_bufs);
 	if (mbp->msg_bufx < 0 || mbp->msg_bufx >= mbp->msg_bufs)
@@ -153,6 +156,7 @@ msgbuf_putchar(struct msgbuf *mbp, const char c)
 		if (++mbp->msg_bufr >= mbp->msg_bufs)
 			mbp->msg_bufr = 0;
 	}
+	splx(s);
 }
 
 int
@@ -181,24 +185,20 @@ logread(dev_t dev, struct uio *uio, int flag)
 {
 	struct msgbuf *mbp = msgbufp;
 	size_t l;
-	int s;
-	int error = 0;
+	int s, error = 0;
 
 	s = splhigh();
 	while (mbp->msg_bufr == mbp->msg_bufx) {
 		if (flag & IO_NDELAY) {
-			splx(s);
-			return (EWOULDBLOCK);
+			error = EWOULDBLOCK;
+			goto out;
 		}
 		logsoftc.sc_state |= LOG_RDWAIT;
 		error = tsleep(mbp, LOG_RDPRI | PCATCH,
 			       "klog", 0);
-		if (error) {
-			splx(s);
-			return (error);
-		}
+		if (error)
+			goto out;
 	}
-	splx(s);
 	logsoftc.sc_state &= ~LOG_RDWAIT;
 
 	while (uio->uio_resid > 0) {
@@ -216,15 +216,17 @@ logread(dev_t dev, struct uio *uio, int flag)
 		if (mbp->msg_bufr < 0 || mbp->msg_bufr >= mbp->msg_bufs)
 			mbp->msg_bufr = 0;
 	}
+ out:
+	splx(s);
 	return (error);
 }
 
 int
 logpoll(dev_t dev, int events, struct proc *p)
 {
-	int revents = 0;
-	int s = splhigh();
+	int s, revents = 0;
 
+	s = splhigh();
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (msgbufp->msg_bufr != msgbufp->msg_bufx)
 			revents |= events & (POLLIN | POLLRDNORM);
@@ -262,8 +264,9 @@ logkqfilter(dev_t dev, struct knote *kn)
 void
 filt_logrdetach(struct knote *kn)
 {
-	int s = splhigh();
+	int s;
 
+	s = splhigh();
 	SLIST_REMOVE(&logsoftc.sc_selp.si_note, kn, knote, kn_selnext);
 	splx(s);
 }
@@ -272,10 +275,13 @@ int
 filt_logread(struct knote *kn, long hint)
 {
 	struct  msgbuf *p = (struct  msgbuf *)kn->kn_hook;
+	int s, event = 0;
 
+	s = splhigh();
 	kn->kn_data = (int)(p->msg_bufx - p->msg_bufr);
-
-	return (p->msg_bufx != p->msg_bufr);
+	event = (p->msg_bufx != p->msg_bufr);
+	splx(s);
+	return (event);
 }
 
 void
