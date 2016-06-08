@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.184 2016/06/06 10:16:23 sthen Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.185 2016/06/08 12:57:58 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1492,16 +1492,22 @@ int
 nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
     struct rtentry *rt0)
 {
-	struct mbuf *m = m0;
-	struct rtentry *rt = rt0;
+	return (ifp->if_output(ifp, m0, sin6tosa(dst), rt0));
+}
+
+int
+nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
+    struct sockaddr *dst, u_char *desten)
+{
+	struct sockaddr_dl *sdl;
+	struct rtentry *rt;
 	struct llinfo_nd6 *ln = NULL;
-	int error = 0;
+	int error;
 
-	if (IN6_IS_ADDR_MULTICAST(&dst->sin6_addr))
-		goto sendpkt;
-
-	if (nd6_need_cache(ifp) == 0)
-		goto sendpkt;
+	if (m->m_flags & M_MCAST) {
+		ETHER_MAP_IPV6_MULTICAST(&satosin6(dst)->sin6_addr, desten);
+		return (0);
+	}
 
 	error = rt_checkgate(rt0, &rt);
 	if (error) {
@@ -1520,6 +1526,12 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 		log(LOG_DEBUG, "%s: %s: route contains no ND information\n",
 		    __func__, inet_ntop(AF_INET6,
 		    &satosin6(rt_key(rt))->sin6_addr, addr, sizeof(addr)));
+		m_freem(m);
+		return (EINVAL);
+	}
+
+	if (rt->rt_gateway->sa_family != AF_LINK) {
+		printf("%s: something odd happens\n", __func__);
 		m_freem(m);
 		return (EINVAL);
 	}
@@ -1553,8 +1565,21 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 	 * (i.e. its link-layer address is already resolved), just
 	 * send the packet.
 	 */
-	if (ln->ln_state > ND6_LLINFO_INCOMPLETE)
-		goto sendpkt;
+	if (ln->ln_state > ND6_LLINFO_INCOMPLETE) {
+		sdl = satosdl(rt->rt_gateway);
+		if (sdl->sdl_alen != ETHER_ADDR_LEN) {
+			char addr[INET6_ADDRSTRLEN];
+			log(LOG_DEBUG, "%s: %s: incorrect nd6 information\n",
+			    __func__,
+			    inet_ntop(AF_INET6, &satosin6(dst)->sin6_addr,
+				addr, sizeof(addr)));
+			m_freem(m);
+			return (EINVAL);
+		}
+
+		bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
+		return (0);
+	}
 
 	/*
 	 * There is a neighbor cache entry, but no ethernet address
@@ -1565,6 +1590,7 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 		ln->ln_state = ND6_LLINFO_INCOMPLETE;
 	m_freem(ln->ln_hold);
 	ln->ln_hold = m;
+
 	/*
 	 * If there has been no NS for the neighbor after entering the
 	 * INCOMPLETE state, send the first solicitation.
@@ -1572,13 +1598,9 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 	if (!ND6_LLINFO_PERMANENT(ln) && ln->ln_asked == 0) {
 		ln->ln_asked++;
 		nd6_llinfo_settimer(ln, ND_IFINFO(ifp)->retrans / 1000);
-		nd6_ns_output(ifp, NULL, &dst->sin6_addr, ln, 0);
+		nd6_ns_output(ifp, NULL, &satosin6(dst)->sin6_addr, ln, 0);
 	}
-	return (0);
-
-  sendpkt:
-	error = ifp->if_output(ifp, m, sin6tosa(dst), rt);
-	return (error);
+	return (EAGAIN);
 }
 
 int
@@ -1596,53 +1618,6 @@ nd6_need_cache(struct ifnet *ifp)
 	default:
 		return (0);
 	}
-}
-
-int
-nd6_storelladdr(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
-    struct sockaddr *dst, u_char *desten)
-{
-	struct sockaddr_dl *sdl;
-	struct rtentry *rt;
-	int error;
-
-	if (m->m_flags & M_MCAST) {
-		switch (ifp->if_type) {
-		case IFT_ETHER:
-		case IFT_CARP:
-			ETHER_MAP_IPV6_MULTICAST(&satosin6(dst)->sin6_addr,
-						 desten);
-			return (0);
-			break;
-		default:
-			m_freem(m);
-			return (EINVAL);
-		}
-	}
-
-	error = rt_checkgate(rt0, &rt);
-	if (error) {
-		m_freem(m);
-		return (error);
-	}
-
-	if (rt->rt_gateway->sa_family != AF_LINK) {
-		printf("%s: something odd happens\n", __func__);
-		m_freem(m);
-		return (EINVAL);
-	}
-	sdl = satosdl(rt->rt_gateway);
-	if (sdl->sdl_alen != ETHER_ADDR_LEN) {
-		char addr[INET6_ADDRSTRLEN];
-		log(LOG_DEBUG, "%s: %s: incorrect nd6 information\n", __func__,
-		    inet_ntop(AF_INET6, &satosin6(dst)->sin6_addr,
-			addr, sizeof(addr)));
-		m_freem(m);
-		return (EINVAL);
-	}
-
-	bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
-	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.237 2016/05/31 07:48:19 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.238 2016/06/08 12:57:58 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -225,9 +225,9 @@ ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		break;
 #ifdef INET6
 	case AF_INET6:
-		error = nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst);
+		error = nd6_resolve(ifp, rt, m, dst, edst);
 		if (error)
-			return (error);
+			return (error == EAGAIN ? 0 : error);
 		etype = htons(ETHERTYPE_IPV6);
 		break;
 #endif
