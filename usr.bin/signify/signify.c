@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.105 2015/12/04 11:05:22 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.106 2016/06/08 04:16:06 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -70,8 +70,6 @@ struct sig {
 	uint8_t sig[SIGBYTES];
 };
 
-extern char *__progname;
-
 static void __dead
 usage(const char *error)
 {
@@ -84,7 +82,7 @@ usage(const char *error)
 	    "\t%1$s -S [-e] [-x sigfile] -s seckey -m message\n"
 #endif
 	    "\t%1$s -V [-eq] [-x sigfile] -p pubkey -m message\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
 
