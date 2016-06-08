@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.133 2016/06/08 15:37:20 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.134 2016/06/08 15:38:28 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -314,14 +314,15 @@ int	uvm_wxabort;
 static inline int
 uvm_wxcheck(struct proc *p, char *call)
 {
-	int wxallowed = (p->p_p->ps_textvp->v_mount &&
-	    (p->p_p->ps_textvp->v_mount->mnt_flag & MNT_WXALLOWED));
+	struct process *pr = p->p_p;
+	int wxallowed = (pr->ps_textvp->v_mount &&
+	    (pr->ps_textvp->v_mount->mnt_flag & MNT_WXALLOWED));
 
-	if (wxallowed && (p->p_p->ps_flags & PS_WXNEEDED))
+	if (wxallowed && (pr->ps_flags & PS_WXNEEDED))
 		return (0);
 
 	/* Report W^X failures, and potentially SIGABRT */
-	if (p->p_p->ps_wxcounter++ == 0)
+	if (pr->ps_wxcounter++ == 0)
 		log(LOG_NOTICE, "%s(%d): %s W^X violation\n",
 		    p->p_comm, p->p_pid, call);
 	if (!wxallowed || uvm_wxabort) {
