@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.99 2016/05/30 17:52:26 tedu Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.100 2016/06/08 01:00:18 tedu Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -880,7 +880,7 @@ rdrand(void *v)
 		uint64_t u64;
 		uint32_t u32[2];
 	} r, t;
-	uint8_t valid;
+	uint8_t valid = 0;
 
 	if (has_rdseed)
 		__asm volatile(
