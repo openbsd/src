@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.124 2016/05/30 21:31:29 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.125 2016/06/08 12:07:52 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -236,9 +236,16 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	}
 	bdiff = ph->p_vaddr - trunc_page(ph->p_vaddr);
 
+	/*
+	 * Enforce W^X and map W|X segments without X permission
+	 * initially.  The dynamic linker will make these read-only
+	 * and add back X permission after relocation processing.
+	 * Static executables with W|X segments will probably crash.
+	 */
 	*prot |= (ph->p_flags & PF_R) ? PROT_READ : 0;
 	*prot |= (ph->p_flags & PF_W) ? PROT_WRITE : 0;
-	*prot |= (ph->p_flags & PF_X) ? PROT_EXEC : 0;
+	if ((ph->p_flags & PF_W) == 0)
+		*prot |= (ph->p_flags & PF_X) ? PROT_EXEC : 0;
 
 	msize = ph->p_memsz + diff;
 	offset = ph->p_offset - bdiff;
