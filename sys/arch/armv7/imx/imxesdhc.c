@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.20 2016/05/19 09:54:18 jsg Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.21 2016/06/09 15:38:30 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -27,6 +27,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcvar.h>
@@ -34,6 +35,8 @@
 #include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxgpiovar.h>
+
+#include <dev/ofw/openfirm.h>
 
 /* registers */
 #define SDHC_DS_ADDR			0x00
@@ -164,9 +167,8 @@ struct sdhc_adma2_descriptor32 {
 } __packed;
 
 
-void imxesdhc_attach(struct device *parent, struct device *self, void *args);
-
-#include <machine/bus.h>
+int	imxesdhc_match(struct device *, void *, void *);
+void	imxesdhc_attach(struct device *, struct device *, void *);
 
 struct imxesdhc_softc {
 	struct device sc_dev;
@@ -270,30 +272,39 @@ struct cfdriver imxesdhc_cd = {
 };
 
 struct cfattach imxesdhc_ca = {
-	sizeof(struct imxesdhc_softc), NULL, imxesdhc_attach
+	sizeof(struct imxesdhc_softc), imxesdhc_match, imxesdhc_attach
 };
 
-void
-imxesdhc_attach(struct device *parent, struct device *self, void *args)
+int
+imxesdhc_match(struct device *parent, void *match, void *aux)
 {
-	struct imxesdhc_softc		*sc = (struct imxesdhc_softc *) self;
-	struct armv7_attach_args	*aa = args;
-	struct sdmmcbus_attach_args	 saa;
-	int				 error = 1;
-	uint32_t			 caps;
+	struct fdt_attach_args *faa = aux;
 
-	sc->unit = aa->aa_dev->unit;
-	sc->sc_dmat = aa->aa_dmat;
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
+	return OF_is_compatible(faa->fa_node, "fsl,imx6q-usdhc");
+}
+
+void
+imxesdhc_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct imxesdhc_softc *sc = (struct imxesdhc_softc *) self;
+	struct fdt_attach_args *faa = aux;
+	struct sdmmcbus_attach_args saa;
+	int error = 1;
+	uint32_t caps;
+
+	if (faa->fa_nreg < 2 || faa->fa_nintr < 3)
+		return;
+
+	sc->unit = (faa->fa_reg[0] & 0xc000) >> 14;
+	sc->sc_dmat = faa->fa_dmat;
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
+	    faa->fa_reg[1], 0, &sc->sc_ioh))
 		panic("imxesdhc_attach: bus_space_map failed!");
 
 	printf("\n");
 
-	/* XXX DMA channels? */
-
-	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_SDMMC,
+	sc->sc_ih = arm_intr_establish(faa->fa_intr[1], IPL_SDMMC,
 	   imxesdhc_intr, sc, sc->sc_dev.dv_xname);
 
 	/*
@@ -312,7 +323,7 @@ imxesdhc_attach(struct device *parent, struct device *self, void *args)
 	/*
 	 * Determine the base clock frequency. (2.2.24)
 	 */
-	sc->clkbase = imxccm_get_usdhx(aa->aa_dev->unit + 1);
+	sc->clkbase = imxccm_get_usdhx(sc->unit + 1);
 
 	printf("%s: %d MHz base clock\n", DEVNAME(sc), sc->clkbase / 1000);
 
