@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.153 2015/12/08 13:36:05 tedu Exp $
+.\"	$OpenBSD: afterboot.8,v 1.154 2016/06/09 09:33:17 stsp Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 8 2015 $
+.Dd $Mdocdate: June 9 2016 $
 .Dt AFTERBOOT 8
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -160,7 +160,7 @@ Correct by editing
 (where
 .Ar interface
 is the interface name, e.g.,
-.Dq le0 )
+.Dq em0 )
 and then using
 .Xr ifconfig 8
 to manually configure it
@@ -180,9 +180,9 @@ lo0: flags=8009<UP,LOOPBACK,MULTICAST> mtu 32972
 .Pp
 an Ethernet interface something like:
 .Bd -literal -offset indent
-le0: flags=9863<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST>
+em0: flags=9863<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST>
 	inet 192.168.4.52 netmask 0xffffff00 broadcast 192.168.4.255
-	inet6 fe80::5ef0:f0f0%le0 prefixlen 64 scopeid 0x1
+	inet6 fe80::5ef0:f0f0%em0 prefixlen 64 scopeid 0x1
 .Ed
 .Pp
 and a PPP interface something like:
@@ -208,12 +208,12 @@ Routing tables
 
 Internet:
 Destination    Gateway           Flags  Refs     Use  Mtu  Interface
-default        192.168.4.254     UGS      0 11098028    -  le0
+default        192.168.4.254     UGS      0 11098028    -  em0
 127            127.0.0.1         UGRS     0        0    -  lo0
 127.0.0.1      127.0.0.1         UH       3       24    -  lo0
-192.168.4      link#1            UC       0        0    -  le0
-192.168.4.52   8:0:20:73:b8:4a   UHL      1     6707    -  le0
-192.168.4.254  0:60:3e:99:67:ea  UHL      1        0    -  le0
+192.168.4      link#1            UC       0        0    -  em0
+192.168.4.52   8:0:20:73:b8:4a   UHL      1     6707    -  em0
+192.168.4.254  0:60:3e:99:67:ea  UHL      1        0    -  em0
 
 Internet6:
 Destination        Gateway       Flags  Refs  Use     Mtu  Interface
@@ -222,10 +222,10 @@ Destination        Gateway       Flags  Refs  Use     Mtu  Interface
 ::ffff:0.0.0.0/96  ::1           UGRS     0     0   32972  lo0
 fc80::/10          ::1           UGRS     0     0   32972  lo0
 fe80::/10          ::1           UGRS     0     0   32972  lo0
-fe80::%le0/64      link#1        UC       0     0    1500  le0
+fe80::%em0/64      link#1        UC       0     0    1500  em0
 fe80::%lo0/64      fe80::1%lo0   U        0     0   32972  lo0
 ff01::/32          ::1           U        0     0   32972  lo0
-ff02::%le0/32      link#1        UC       0     0    1500  le0
+ff02::%em0/32      link#1        UC       0     0    1500  em0
 ff02::%lo0/32      fe80::1%lo0   UC       0     0   32972  lo0
 .Ed
 .Pp
