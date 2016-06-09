@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.3 2016/05/23 13:57:04 kettenis Exp $ */
+/* $OpenBSD: simplebus.c,v 1.4 2016/06/09 12:32:42 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -19,6 +19,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -99,6 +100,7 @@ simplebus_attach_node(struct device *self, int node)
 	struct simplebus_softc	*sc = (struct simplebus_softc *)self;
 	struct fdt_attach_args	 fa;
 	char			 buffer[128];
+	int			 len, i;
 
 	if (!OF_getprop(node, "compatible", buffer, sizeof(buffer)))
 		return;
@@ -113,7 +115,30 @@ simplebus_attach_node(struct device *self, int node)
 	fa.fa_iot = sc->sc_iot;
 	fa.fa_dmat = sc->sc_dmat;
 
+	len = OF_getproplen(node, "reg");
+	if (len > 0 && (len % sizeof(uint32_t)) == 0) {
+		fa.fa_reg = malloc(len, M_DEVBUF, M_WAITOK);
+		fa.fa_nreg = len / sizeof(uint32_t);
+
+		OF_getprop(node, "reg", fa.fa_reg, len);
+		for (i = 0; i < fa.fa_nreg; i++)
+			fa.fa_reg[i] = bemtoh32(&fa.fa_reg[i]);
+	}
+
+	len = OF_getproplen(node, "interrupts");
+	if (len > 0 && (len % sizeof(uint32_t)) == 0) {
+		fa.fa_intr = malloc(len, M_DEVBUF, M_WAITOK);
+		fa.fa_nintr = len / sizeof(uint32_t);
+
+		OF_getprop(node, "interrupts", fa.fa_intr, len);
+		for (i = 0; i < fa.fa_nintr; i++)
+			fa.fa_intr[i] = bemtoh32(&fa.fa_intr[i]);
+	}
+
 	/* TODO: attach the device's clocks first? */
 
 	config_found(self, &fa, NULL);
+
+	free(fa.fa_reg, M_DEVBUF, fa.fa_nreg * sizeof(uint32_t));
+	free(fa.fa_intr, M_DEVBUF, fa.fa_nintr * sizeof(uint32_t));
 }
