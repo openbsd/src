@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.6 2016/05/21 12:37:28 kettenis Exp $ */
+/* $OpenBSD: imxiic.c,v 1.7 2016/06/09 12:35:46 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -114,17 +114,16 @@ imxiic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct imxiic_softc *sc = (struct imxiic_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	uint32_t reg[2];
 
-	if (OF_getprop(faa->fa_node, "reg", &reg, sizeof(reg)) != sizeof(reg))
+	if (faa->fa_nreg < 2)
 		return;
 
 	sc->sc_iot = faa->fa_iot;
-	sc->sc_ios = bemtoh32(&reg[1]);
+	sc->sc_ios = faa->fa_reg[1];
 	sc->sc_node = faa->fa_node;
-	sc->unit = (bemtoh32(&reg[0]) & 0xc000) >> 14;
-	if (bus_space_map(sc->sc_iot, bemtoh32(&reg[0]),
-	    bemtoh32(&reg[1]), 0, &sc->sc_ioh))
+	sc->unit = (faa->fa_reg[0] & 0xc000) >> 14;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
+	    faa->fa_reg[1], 0, &sc->sc_ioh))
 		panic("imxiic_attach: bus_space_map failed!");
 
 #if 0
