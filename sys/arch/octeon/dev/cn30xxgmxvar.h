@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmxvar.h,v 1.5 2015/09/14 11:18:49 stsp Exp $	*/
+/*	$OpenBSD: cn30xxgmxvar.h,v 1.6 2016/06/09 15:29:22 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -40,7 +40,8 @@
 #define GMX_MII_PORT	1
 #define GMX_GMII_PORT	2
 #define GMX_RGMII_PORT	3
-#define GMX_SPI42_PORT	4
+#define GMX_SGMII_PORT	4
+#define GMX_SPI42_PORT	5
 
 #define GMX_FRM_MAX_SIZ	0x600
 
@@ -63,6 +64,7 @@ struct cn30xxgmx_port_softc {
 	struct cn30xxgmx_port_ops
 				*sc_port_ops;
 	struct cn30xxasx_softc	*sc_port_asx;
+	bus_space_handle_t	 sc_port_pcs_regh;
 	struct cn30xxipd_softc	*sc_ipd;
 	uint64_t		sc_port_flowflags;
 };
@@ -130,11 +132,11 @@ uint64_t	cn30xxgmx_get_rx_int_reg(struct cn30xxgmx_port_softc *sc);
 uint64_t	cn30xxgmx_get_tx_int_reg(struct cn30xxgmx_port_softc *sc);
 static inline int	cn30xxgmx_link_status(struct cn30xxgmx_port_softc *);
 
-/* XXX RGMII specific */
 static inline int
 cn30xxgmx_link_status(struct cn30xxgmx_port_softc *sc)
 {
-	return (sc->sc_link & RXN_RX_INBND_STATUS) ? 1 : 0;
+	return ((sc->sc_port_mii->mii_media_status & (IFM_AVALID | IFM_ACTIVE))
+	    == (IFM_AVALID | IFM_ACTIVE));
 }
 
 #endif

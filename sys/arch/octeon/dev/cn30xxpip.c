@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpip.c,v 1.5 2016/05/19 15:42:02 visa Exp $	*/
+/*	$OpenBSD: cn30xxpip.c,v 1.6 2016/06/09 15:29:22 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -37,6 +37,7 @@
 
 #include <machine/octeonvar.h>
 
+#include <octeon/dev/cn30xxgmxreg.h>
 #include <octeon/dev/cn30xxpipreg.h>
 #include <octeon/dev/cn30xxpipvar.h>
 
@@ -223,7 +224,7 @@ cn30xxpip_stats(struct cn30xxpip_softc *sc, struct ifnet *ifp, int gmx_port)
 		panic("%s: invalid argument. sc=%p, ifp=%p\n", __func__,
 			sc, ifp);
 
-	if (gmx_port < 0 || gmx_port > 2) {
+	if (gmx_port < 0 || gmx_port >= GMX_PORT_NUNITS) {
 		printf("%s: invalid gmx_port %d\n", __func__, gmx_port);
 		return;
 	}

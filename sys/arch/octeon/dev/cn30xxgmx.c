@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.22 2016/05/29 11:10:25 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.23 2016/06/09 15:29:22 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -75,6 +75,13 @@
 #define	_GMX_PORT_WR8(sc, off, v) \
 	bus_space_write_8((sc)->sc_port_gmx->sc_regt, (sc)->sc_port_regh, (off), (v))
 
+#define PCS_READ_8(sc, reg) \
+	bus_space_read_8((sc)->sc_port_gmx->sc_regt, (sc)->sc_port_pcs_regh, \
+	    (reg))
+#define PCS_WRITE_8(sc, reg, val) \
+	bus_space_write_8((sc)->sc_port_gmx->sc_regt, (sc)->sc_port_pcs_regh, \
+	    (reg), (val))
+
 struct cn30xxgmx_port_ops {
 	int	(*port_ops_enable)(struct cn30xxgmx_port_softc *, int);
 	int	(*port_ops_speed)(struct cn30xxgmx_port_softc *);
@@ -95,6 +102,9 @@ int	cn30xxgmx_rgmii_speed_newlink(struct cn30xxgmx_port_softc *,
 	    uint64_t *);
 int	cn30xxgmx_rgmii_speed_speed(struct cn30xxgmx_port_softc *);
 int	cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *);
+int	cn30xxgmx_sgmii_enable(struct cn30xxgmx_port_softc *, int);
+int	cn30xxgmx_sgmii_speed(struct cn30xxgmx_port_softc *);
+int	cn30xxgmx_sgmii_timing(struct cn30xxgmx_port_softc *);
 int	cn30xxgmx_tx_ovr_bp_enable(struct cn30xxgmx_port_softc *, int);
 int	cn30xxgmx_rx_pause_enable(struct cn30xxgmx_port_softc *, int);
 
@@ -127,6 +137,12 @@ struct cn30xxgmx_port_ops cn30xxgmx_port_ops_rgmii = {
 	.port_ops_timing = cn30xxgmx_rgmii_timing,
 };
 
+struct cn30xxgmx_port_ops cn30xxgmx_port_ops_sgmii = {
+	.port_ops_enable = cn30xxgmx_sgmii_enable,
+	.port_ops_speed = cn30xxgmx_sgmii_speed,
+	.port_ops_timing = cn30xxgmx_sgmii_timing,
+};
+
 struct cn30xxgmx_port_ops cn30xxgmx_port_ops_spi42 = {
 	/* XXX not implemented */
 };
@@ -135,13 +151,14 @@ struct cn30xxgmx_port_ops *cn30xxgmx_port_ops[] = {
 	[GMX_MII_PORT] = &cn30xxgmx_port_ops_mii,
 	[GMX_GMII_PORT] = &cn30xxgmx_port_ops_gmii,
 	[GMX_RGMII_PORT] = &cn30xxgmx_port_ops_rgmii,
+	[GMX_SGMII_PORT] = &cn30xxgmx_port_ops_sgmii,
 	[GMX_SPI42_PORT] = &cn30xxgmx_port_ops_spi42
 };
 
 #ifdef OCTEON_ETH_DEBUG
 void	*cn30xxgmx_intr_drop_ih;
 
-struct cn30xxgmx_port_softc *__cn30xxgmx_port_softc[3/* XXX */];
+struct cn30xxgmx_port_softc *__cn30xxgmx_port_softc[GMX_PORT_NUNITS];
 #endif
 
 struct cfattach cn30xxgmx_ca = {sizeof(struct cn30xxgmx_softc),
@@ -176,6 +193,14 @@ cn30xxgmx_port_phy_addr(int port)
 			return -1;
 		return 7 - port;
 
+	case BOARD_TYPE_UBIQUITI_E200:
+		if (port >= 0 && port < 4)
+			/* XXX RJ45/SFP combos use the second MDIO. */
+			return port + 4;  /* GMX0: eth[4-7] */
+		else if (port >= 16 && port < 20)
+			return port - 16; /* GMX1: eth[0-3] */
+		return -1;
+
 	default:
 		if (port >= nitems(octeon_eth_phy_table))
 			return -1;
@@ -198,7 +223,7 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_regt = aa->aa_bust; /* XXX why there are iot? */
 
 	status = bus_space_map(sc->sc_regt, aa->aa_addr,
-	    GMX0_BASE_IF_SIZE, 0, &sc->sc_regh);
+	    GMX0_BASE_IF_SIZE(sc->sc_nports), 0, &sc->sc_regh);
 	if (status != 0)
 		panic(": can't map register");
 
@@ -230,6 +255,12 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 			cn30xxasx_init(&asx_aa, &port_sc->sc_port_asx);
 			break;
 		}
+		case GMX_SGMII_PORT:
+			if (bus_space_map(sc->sc_regt,
+			    PCS_BASE(sc->sc_unitno, i), PCS_SIZE, 0,
+			    &port_sc->sc_port_pcs_regh))
+				panic("could not map PCS registers");
+			break;
 		default:
 			/* nothing */
 			break;
@@ -271,7 +302,8 @@ cn30xxgmx_print(void *aux, const char *pnp)
 	static const char *types[] = {
 		[GMX_MII_PORT] = "MII",
 		[GMX_GMII_PORT] = "GMII",
-		[GMX_RGMII_PORT] = "RGMII"
+		[GMX_RGMII_PORT] = "RGMII",
+		[GMX_SGMII_PORT] = "SGMII"
 	};
 
 #if DEBUG
@@ -297,7 +329,7 @@ cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 {
 	int result = 0;
 	uint64_t inf_mode;
-	int id;
+	int i, id;
 
 	inf_mode = bus_space_read_8(sc->sc_regt, sc->sc_regh, GMX0_INF_MODE);
 	if ((inf_mode & INF_MODE_EN) == 0) {
@@ -360,6 +392,28 @@ cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 			if (sc->sc_nports == 3)
 				sc->sc_nports = 2;
 		break;
+	case OCTEON_MODEL_FAMILY_CN61XX: {
+		uint64_t qlm_cfg;
+
+		if (sc->sc_unitno == 0)
+			qlm_cfg = octeon_xkphys_read_8(MIO_QLM_CFG(2));
+		else
+			qlm_cfg = octeon_xkphys_read_8(MIO_QLM_CFG(0));
+		if ((qlm_cfg & MIO_QLM_CFG_CFG) == 2) {
+			sc->sc_nports = 4;
+			for (i = 0; i < sc->sc_nports; i++)
+				sc->sc_port_types[i] = GMX_SGMII_PORT;
+		} else if ((qlm_cfg & MIO_QLM_CFG_CFG) == 3) {
+			printf("XAUI interface is not supported\n");
+			sc->sc_nports = 0;
+			result = 1;
+		} else {
+			/* The interface is disabled. */
+			sc->sc_nports = 0;
+			result = 1;
+		}
+		break;
+	}
 	case OCTEON_MODEL_FAMILY_CN38XX:
 	case OCTEON_MODEL_FAMILY_CN56XX:
 	case OCTEON_MODEL_FAMILY_CN58XX:
@@ -1099,6 +1153,149 @@ cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *sc)
 	}
 
 	cn30xxasx_clk_set(sc->sc_port_asx, clk_tx_setting, clk_rx_setting);
+
+	return 0;
+}
+
+int
+cn30xxgmx_sgmii_enable(struct cn30xxgmx_port_softc *sc, int enable)
+{
+	uint64_t ctl_reg, status, timer_count;
+	uint64_t cpu_freq = octeon_boot_info->eclock / 1000000;
+	int done;
+	int i;
+
+	if (!enable)
+		return 0;
+
+	/* Set link timer interval to 1.6ms. */
+	timer_count = PCS_READ_8(sc, PCS_LINK_TIMER_COUNT);
+	CLR(timer_count, PCS_LINK_TIMER_COUNT_MASK);
+	SET(timer_count, ((1600 * cpu_freq) >> 10) & PCS_LINK_TIMER_COUNT_MASK);
+	PCS_WRITE_8(sc, PCS_LINK_TIMER_COUNT, timer_count);
+
+	/* Reset the PCS. */
+	ctl_reg = PCS_READ_8(sc, PCS_MR_CONTROL);
+	SET(ctl_reg, PCS_MR_CONTROL_RESET);
+	PCS_WRITE_8(sc, PCS_MR_CONTROL, ctl_reg);
+
+	/* Wait for the reset to complete. */
+	done = 0;
+	for (i = 0; i < 1000000; i++) {
+		ctl_reg = PCS_READ_8(sc, PCS_MR_CONTROL);
+		if (!ISSET(ctl_reg, PCS_MR_CONTROL_RESET)) {
+			done = 1;
+			break;
+		}
+	}
+	if (!done) {
+		printf("SGMII reset timeout on port %d\n", sc->sc_port_no);
+		return 1;
+	}
+
+	/* Start a new SGMII autonegotiation. */
+	SET(ctl_reg, PCS_MR_CONTROL_AN_EN);
+	SET(ctl_reg, PCS_MR_CONTROL_RST_AN);
+	CLR(ctl_reg, PCS_MR_CONTROL_PWR_DN);
+	PCS_WRITE_8(sc, PCS_MR_CONTROL, ctl_reg);
+
+	/* Wait for the SGMII autonegotiation to complete. */
+	done = 0;
+	for (i = 0; i < 1000000; i++) {
+		status = PCS_READ_8(sc, PCS_MR_STATUS);
+		if (ISSET(status, PCS_MR_STATUS_AN_CPT)) {
+			done = 1;
+			break;
+		}
+	}
+	if (!done) {
+		printf("SGMII autonegotiation timeout on port %d\n",
+		    sc->sc_port_no);
+		return 1;
+	}
+
+	return 0;
+}
+
+int
+cn30xxgmx_sgmii_speed(struct cn30xxgmx_port_softc *sc)
+{
+	uint64_t misc_ctl, prt_cfg;
+	int tx_burst, tx_slot;
+
+	cn30xxgmx_link_enable(sc, 0);
+
+	prt_cfg = _GMX_PORT_RD8(sc, GMX0_PRT0_CFG);
+
+	if (ISSET(sc->sc_port_mii->mii_media_active, IFM_FDX))
+		SET(prt_cfg, PRTN_CFG_DUPLEX);
+	else
+		CLR(prt_cfg, PRTN_CFG_DUPLEX);
+
+	misc_ctl = PCS_READ_8(sc, PCS_MISC_CTL);
+	CLR(misc_ctl, PCS_MISC_CTL_SAMP_PT);
+
+	/* Disable the GMX port if the link is down. */
+	if (cn30xxgmx_link_status(sc))
+		CLR(misc_ctl, PCS_MISC_CTL_GMXENO);
+	else
+		SET(misc_ctl, PCS_MISC_CTL_GMXENO);
+
+	switch (sc->sc_port_ac->ac_if.if_baudrate) {
+	case IF_Mbps(10):
+		tx_slot = 0x40;
+		tx_burst = 0;
+		CLR(prt_cfg, PRTN_CFG_SPEED);
+		SET(prt_cfg, PRTN_CFG_SPEED_MSB);
+		CLR(prt_cfg, PRTN_CFG_SLOTTIME);
+		misc_ctl |= 25 & PCS_MISC_CTL_SAMP_PT;
+		break;
+	case IF_Mbps(100):
+		tx_slot = 0x40;
+		tx_burst = 0;
+		CLR(prt_cfg, PRTN_CFG_SPEED);
+		CLR(prt_cfg, PRTN_CFG_SPEED_MSB);
+		CLR(prt_cfg, PRTN_CFG_SLOTTIME);
+		misc_ctl |= 5 & PCS_MISC_CTL_SAMP_PT;
+		break;
+	case IF_Gbps(1):
+		tx_slot = 0x200;
+		tx_burst = 0x2000;
+		SET(prt_cfg, PRTN_CFG_SPEED);
+		CLR(prt_cfg, PRTN_CFG_SPEED_MSB);
+		SET(prt_cfg, PRTN_CFG_SLOTTIME);
+		misc_ctl |= 1 & PCS_MISC_CTL_SAMP_PT;
+		break;
+	default:
+		break;
+	}
+
+	PCS_WRITE_8(sc, PCS_MISC_CTL, misc_ctl);
+
+	_GMX_PORT_WR8(sc, GMX0_TX0_SLOT, tx_slot);
+	_GMX_PORT_WR8(sc, GMX0_TX0_BURST, tx_burst);
+	_GMX_PORT_WR8(sc, GMX0_PRT0_CFG, prt_cfg);
+
+	cn30xxgmx_link_enable(sc, 1);
+
+	return 0;
+}
+
+int
+cn30xxgmx_sgmii_timing(struct cn30xxgmx_port_softc *sc)
+{
+	uint64_t rx_frm_ctl;
+
+	cn30xxgmx_tx_thresh(sc, 32);
+
+	rx_frm_ctl =
+	    RXN_FRM_CTL_PRE_FREE |
+	    RXN_FRM_CTL_CTL_SMAC |
+	    RXN_FRM_CTL_CTL_MCST |
+	    RXN_FRM_CTL_CTL_DRP |
+	    RXN_FRM_CTL_PRE_STRP |
+	    RXN_FRM_CTL_PRE_CHK;
+	cn30xxgmx_rx_frm_ctl_enable(sc, rx_frm_ctl);
 
 	return 0;
 }
