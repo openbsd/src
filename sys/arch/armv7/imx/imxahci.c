@@ -1,4 +1,4 @@
-/* $OpenBSD: imxahci.c,v 1.3 2014/04/14 04:42:22 dlg Exp $ */
+/* $OpenBSD: imxahci.c,v 1.4 2016/06/09 12:39:17 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -24,6 +24,7 @@
 #include <sys/queue.h>
 
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
 #include <dev/ic/ahcireg.h>
 #include <dev/ic/ahcivar.h>
@@ -31,6 +32,8 @@
 #include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxiomuxcvar.h>
+
+#include <dev/ofw/openfirm.h>
 
 /* registers */
 #define SATA_CAP		0x000
@@ -72,6 +75,7 @@
 #define SATA_GHC_HR		(1 << 0)
 #define SATA_P0PHYCR_TEST_PDDQ	(1 << 20)
 
+int	imxahci_match(struct device *, void *, void *);
 void	imxahci_attach(struct device *, struct device *, void *);
 int	imxahci_detach(struct device *, int);
 int	imxahci_activate(struct device *, int);
@@ -84,7 +88,7 @@ struct imxahci_softc {
 
 struct cfattach imxahci_ca = {
 	sizeof(struct imxahci_softc),
-	NULL,
+	imxahci_match,
 	imxahci_attach,
 	imxahci_detach,
 	imxahci_activate
@@ -94,23 +98,34 @@ struct cfdriver imxahci_cd = {
 	NULL, "ahci", DV_DULL
 };
 
-void
-imxahci_attach(struct device *parent, struct device *self, void *args)
+int
+imxahci_match(struct device *parent, void *match, void *aux)
 {
-	struct armv7_attach_args *aa = args;
+	struct fdt_attach_args *faa = aux;
+
+	return OF_is_compatible(faa->fa_node, "fsl,imx6q-ahci");
+}
+
+void
+imxahci_attach(struct device *parent, struct device *self, void *aux)
+{
 	struct imxahci_softc *imxsc = (struct imxahci_softc *) self;
 	struct ahci_softc *sc = &imxsc->sc;
+	struct fdt_attach_args *faa = aux;
 	uint32_t timeout = 0x100000;
 
-	sc->sc_iot = aa->aa_iot;
-	sc->sc_ios = aa->aa_dev->mem[0].size;
-	sc->sc_dmat = aa->aa_dmat;
+	if (faa->fa_nreg < 2 || faa->fa_nintr < 3)
+		return;
 
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
+	sc->sc_iot = faa->fa_iot;
+	sc->sc_ios = faa->fa_reg[1];
+	sc->sc_dmat = faa->fa_dmat;
+
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
+	    faa->fa_reg[1], 0, &sc->sc_ioh))
 		panic("imxahci_attach: bus_space_map failed!");
 
-	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_BIO,
+	sc->sc_ih = arm_intr_establish(faa->fa_intr[1], IPL_BIO,
 	    ahci_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");
@@ -140,6 +155,8 @@ imxahci_attach(struct device *parent, struct device *self, void *args)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SATA_TIMER1MS, imxccm_get_ahbclk());
 
 	while (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, SATA_P0SSTS) & 0xF) && timeout--);
+
+	printf(":");
 
 	if (ahci_attach(sc) != 0) {
 		/* error printed by ahci_attach */

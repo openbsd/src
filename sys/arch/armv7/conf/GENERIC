@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.14 2016/06/03 01:36:46 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.15 2016/06/09 12:39:17 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -51,7 +51,7 @@ imxiic*		at fdt?			# i2c
 iic*		at imxiic?
 imxesdhc*	at imx?			# SDHC controller
 sdmmc*		at imxesdhc?		# SD/MMC bus
-ahci*		at imx?			# AHCI/SATA
+ahci*		at fdt?			# AHCI/SATA
 ehci*		at imx?			# EHCI (shim)
 usb*		at ehci?
 
