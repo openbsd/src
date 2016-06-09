@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.57 2016/05/23 19:20:55 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.58 2016/06/09 17:26:32 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -204,7 +204,7 @@ in_addr_t	 if_get_ipv4_addr(struct iface *);
 /* adjacency.c */
 struct adj	*adj_new(struct in_addr, struct hello_source *,
 		    union ldpd_addr *);
-void		 adj_del(struct adj *);
+void		 adj_del(struct adj *, int, uint32_t);
 struct adj	*adj_find(struct hello_source *);
 int		 adj_get_af(struct adj *adj);
 void		 adj_start_itimer(struct adj *);

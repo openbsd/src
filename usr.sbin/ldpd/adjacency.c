@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.22 2016/05/23 19:14:03 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.23 2016/06/09 17:26:32 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2015 Renato Westphal <renato@openbsd.org>
@@ -68,7 +68,7 @@ adj_new(struct in_addr lsr_id, struct hello_source *source,
 }
 
 void
-adj_del(struct adj *adj)
+adj_del(struct adj *adj, int send_notif, uint32_t notif_status)
 {
 	log_debug("%s: lsr-id %s, %s", __func__, inet_ntoa(adj->lsr_id),
 	    log_hello_src(&adj->source));
@@ -82,8 +82,11 @@ adj_del(struct adj *adj)
 		LIST_REMOVE(adj, ia_entry);
 
 	/* last adjacency deleted */
-	if (adj->nbr && LIST_EMPTY(&adj->nbr->adj_list))
+	if (adj->nbr && LIST_EMPTY(&adj->nbr->adj_list)) {
+		if (send_notif)
+			session_shutdown(adj->nbr, notif_status, 0, 0);
 		nbr_del(adj->nbr);
+	}
 
 	free(adj);
 }
@@ -147,7 +150,7 @@ adj_itimer(int fd, short event, void *arg)
 		adj->source.target->adj = NULL;
 	}
 
-	adj_del(adj);
+	adj_del(adj, 1, S_HOLDTIME_EXP);
 }
 
 void
@@ -193,7 +196,7 @@ tnbr_del(struct tnbr *tnbr)
 {
 	tnbr_stop_hello_timer(tnbr);
 	if (tnbr->adj)
-		adj_del(tnbr->adj);
+		adj_del(tnbr->adj, 1, S_SHUTDOWN);
 	LIST_REMOVE(tnbr, entry);
 	free(tnbr);
 }
