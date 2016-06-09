@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.60 2016/06/09 17:41:52 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.61 2016/06/09 17:57:55 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -66,8 +66,7 @@ gen_msg_hdr(struct ibuf *buf, uint32_t type, uint16_t size)
 	msg.type = htons(type);
 	/* exclude the 'Type' and 'Length' fields from the total */
 	msg.length = htons(size - LDP_MSG_DEAD_LEN);
-	if (type != MSG_TYPE_HELLO)
-		msg.msgid = htonl(++msgcnt);
+	msg.msgid = htonl(++msgcnt);
 
 	return (ibuf_add(buf, &msg, sizeof(msg)));
 }
