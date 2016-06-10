@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.16 2016/01/04 17:33:24 mestre Exp $	*/
+/*	$OpenBSD: screen.c,v 1.17 2016/06/10 15:37:09 tb Exp $	*/
 /*	$NetBSD: screen.c,v 1.4 1995/04/29 01:11:36 mycroft Exp $	*/
 
 /*-
@@ -389,7 +389,6 @@ scr_update(void)
 
 	/* draw preview of next pattern */
 	if (showpreview && (nextshape != lastshape)) {
-		int i;
 		static int r=5, c=2;
 		int tr, tc, t;
 
