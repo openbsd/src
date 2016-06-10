@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.37 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.38 2016/06/10 11:46:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -146,7 +146,7 @@ screen_resize_x(struct screen *s, u_int sx)
 	/*
 	 * Treat resizing horizontally simply: just ensure the cursor is
 	 * on-screen and change the size. Don't bother to truncate any lines -
-	 * then the data should be accessible if the size is then incrased.
+	 * then the data should be accessible if the size is then increased.
 	 *
 	 * The only potential wrinkle is if UTF-8 double-width characters are
 	 * left in the last column, but UTF-8 terminals should deal with this
