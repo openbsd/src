@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.12 2016/06/03 01:36:46 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.13 2016/06/10 02:51:02 jsg Exp $
 
 machine		armv7 arm
 
@@ -48,9 +48,9 @@ fec*		at imx?			# Ethernet
 imxuart*	at imx?			# onboard uarts
 imxiic*		at fdt?			# i2c
 iic*		at imxiic?
-imxesdhc*	at imx?			# SDHC controller
+imxesdhc*	at fdt?			# SDHC controller
 sdmmc*		at imxesdhc?		# SD/MMC bus
-ahci*		at imx?			# AHCI/SATA
+ahci*		at fdt?			# AHCI/SATA
 ehci*		at imx?			# EHCI (shim)
 usb*		at ehci?
 
