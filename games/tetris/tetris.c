@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.30 2016/03/07 12:07:57 mestre Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.31 2016/06/10 13:07:07 tb Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -105,6 +105,7 @@ elide(void)
 				tsleep();
 				while (--base != 0)
 					board[base + B_COLS] = board[base];
+				memset(&board[1], 0, B_COLS - 2);
 				scr_update();
 				tsleep();
 				break;
