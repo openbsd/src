@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.27 2016/06/07 16:19:06 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.28 2016/06/10 16:33:15 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -130,6 +130,9 @@ void vcpu_process_com_scr(union vm_exit *);
 
 int vmm_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 void vmm_run(struct privsep *, struct privsep_proc *, void *);
+
+static struct vm_mem_range *find_gpa_range(struct vm_create_params *, paddr_t,
+    size_t);
 
 int con_fd;
 struct vmd_vm *current_vm;
@@ -1583,51 +1586,108 @@ vcpu_exit(struct vm_run_params *vrp)
 }
 
 /*
+ * find_gpa_range
+ *
+ * Search for a contiguous guest physical mem range.
+ *
+ * Parameters:
+ *  vcp: VM create parameters that contain the memory map to search in
+ *  gpa: the starting guest physical address
+ *  len: the length of the memory range
+ *
+ * Return values:
+ *  NULL: on failure if there is no memory range as described by the parameters
+ *  Pointer to vm_mem_range that contains the start of the range otherwise.
+ */
+static struct vm_mem_range *
+find_gpa_range(struct vm_create_params *vcp, paddr_t gpa, size_t len)
+{
+	size_t i, n;
+	struct vm_mem_range *vmr;
+
+	/* Find the first vm_mem_range that contains gpa */
+	for (i = 0; i < vcp->vcp_nmemranges; i++) {
+		vmr = &vcp->vcp_memranges[i];
+		if (vmr->vmr_gpa + vmr->vmr_size >= gpa)
+			break;
+	}
+
+	/* No range found. */
+	if (i == vcp->vcp_nmemranges)
+		return (NULL);
+
+	/*
+	 * vmr may cover the range [gpa, gpa + len) only partly. Make
+	 * sure that the following vm_mem_ranges are contiguous and
+	 * cover the rest.
+	 */
+	n = vmr->vmr_size - (gpa - vmr->vmr_gpa);
+	if (len < n)
+		len = 0;
+	else
+		len -= n;
+	gpa = vmr->vmr_gpa + vmr->vmr_size;
+	for (i = i + 1; len != 0 && i < vcp->vcp_nmemranges; i++) {
+		vmr = &vcp->vcp_memranges[i];
+		if (gpa != vmr->vmr_gpa)
+			return (NULL);
+		if (len <= vmr->vmr_size)
+			len = 0;
+		else
+			len -= vmr->vmr_size;
+
+		gpa = vmr->vmr_gpa + vmr->vmr_size;
+	}
+
+	if (len != 0)
+		return (NULL);
+
+	return (vmr);
+}
+
+/*
  * write_mem
  *
  * Pushes data from 'buf' into the guest VM's memory at paddr 'dst'.
  *
  * Parameters:
  *  dst: the destination paddr_t in the guest VM to push into.
- *      If there is no guest paddr mapping at 'dst', a new page will be
- *      faulted in by the VMM (provided 'dst' represents a valid paddr
- *      in the guest's address space)
  *  buf: data to push
  *  len: size of 'buf'
  *
  * Return values:
- *  various return values from ioctl(VMM_IOC_WRITEPAGE), or 0 if no error
- *      occurred.
+ *  0: success
+ *  EINVAL: if the guest physical memory range [dst, dst + len) does not
+ *      exist in the guest.
  */
 int
 write_mem(paddr_t dst, void *buf, size_t len)
 {
-	char *p = buf;
-	size_t n, left;
-	paddr_t gpa;
-	struct vm_writepage_params vwp;
+	char *from = buf, *to;
+	size_t n, off;
+	struct vm_mem_range *vmr;
 
-	left = len;
-	for (gpa = dst; gpa < dst + len;
-	    gpa = (gpa & ~PAGE_MASK) + PAGE_SIZE) {
-		n = left;
-		if (n > PAGE_SIZE)
-			n = PAGE_SIZE;
-		if (n > (PAGE_SIZE - (gpa & PAGE_MASK)))
-			n = PAGE_SIZE - (gpa & PAGE_MASK);
+	vmr = find_gpa_range(&current_vm->vm_params, dst, len);
+	if (vmr == NULL) {
+		errno = EINVAL;
+		log_warn("writepage ioctl failed: "
+		    "invalid memory range dst = 0x%lx, len = 0x%zx", dst, len);
+		return (EINVAL);
+	}
 
-		vwp.vwp_paddr = (paddr_t)gpa;
-		vwp.vwp_data = p;
-		vwp.vwp_vm_id = current_vm->vm_params.vcp_id;
-		vwp.vwp_len = n;
-		if (ioctl(env->vmd_fd, VMM_IOC_WRITEPAGE, &vwp) < 0) {
-			log_warn("writepage ioctl failed @ 0x%lx: "
-			    "dst = 0x%lx, len = 0x%zx", gpa, dst, len);
-			return (errno);
-		}
+	off = dst - vmr->vmr_gpa;
+	while (len != 0) {
+		n = vmr->vmr_size - off;
+		if (len < n)
+			n = len;
 
-		left -= n;
-		p += n;
+		to = (char *)vmr->vmr_va + off;
+		memcpy(to, from, n);
+
+		from += n;
+		len -= n;
+		off = 0;
+		vmr++;
 	}
 
 	return (0);
@@ -1644,38 +1704,38 @@ write_mem(paddr_t dst, void *buf, size_t len)
  *  len: size of 'buf'
  *
  * Return values:
- *  various return values from ioctl(VMM_IOC_READPAGE), or 0 if no error
- *      occurred.
+ *  0: success
+ *  EINVAL: if the guest physical memory range [dst, dst + len) does not
+ *      exist in the guest.
  */
 int
 read_mem(paddr_t src, void *buf, size_t len)
 {
-	char *p = buf;
-	size_t n, left;
-	paddr_t gpa;
-	struct vm_readpage_params vrp;
+	char *from, *to = buf;
+	size_t n, off;
+	struct vm_mem_range *vmr;
 
-	left = len;
-	for (gpa = src; gpa < src + len;
-	    gpa = (gpa & ~PAGE_MASK) + PAGE_SIZE) {
-		n = left;
-		if (n > PAGE_SIZE)
-			n = PAGE_SIZE;
-		if (n > (PAGE_SIZE - (gpa & PAGE_MASK)))
-			n = PAGE_SIZE - (gpa & PAGE_MASK);
+	vmr = find_gpa_range(&current_vm->vm_params, src, len);
+	if (vmr == NULL) {
+		errno = EINVAL;
+		log_warn("readpage ioctl failed: "
+		    "invalid memory range src = 0x%lx, len = 0x%zx", src, len);
+		return (EINVAL);
+	}
 
-		vrp.vrp_paddr = (paddr_t)gpa;
-		vrp.vrp_data = p;
-		vrp.vrp_vm_id = current_vm->vm_params.vcp_id;
-		vrp.vrp_len = n;
-		if (ioctl(env->vmd_fd, VMM_IOC_READPAGE, &vrp) < 0) {
-			log_warn("readpage ioctl failed @ 0x%lx: "
-			    "src = 0x%lx, len = 0x%zx", gpa, src, len);
-			return (errno);
-		}
+	off = src - vmr->vmr_gpa;
+	while (len != 0) {
+		n = vmr->vmr_size - off;
+		if (len < n)
+			n = len;
 
-		left -= n;
-		p += n;
+		from = (char *)vmr->vmr_va + off;
+		memcpy(to, from, n);
+
+		to += n;
+		len -= n;
+		off = 0;
+		vmr++;
 	}
 
 	return (0);
