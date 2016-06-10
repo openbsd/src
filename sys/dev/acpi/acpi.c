@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.311 2016/05/08 10:09:25 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.312 2016/06/10 20:03:46 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1033,7 +1033,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * ACPI is enabled now -- attach timer
 	 */
-	if (!sc->sc_hw_reduced) {
+	if (!sc->sc_hw_reduced &&
+	    (sc->sc_fadt->pm_tmr_blk || sc->sc_fadt->x_pm_tmr_blk.address)) {
 		struct acpi_attach_args aaa;
 
 		memset(&aaa, 0, sizeof(aaa));
