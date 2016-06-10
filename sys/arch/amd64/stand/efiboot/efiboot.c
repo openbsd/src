@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.12 2016/05/15 22:48:02 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.13 2016/06/10 18:36:06 jcs Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -466,7 +466,7 @@ efi_cons_getshifts(dev_t dev)
 	return (0);
 }
 
-/* XXX: serial console is not supporte yet */
+/* XXX: serial console is not supported yet */
 int comspeed = 9600;
 int com_addr = -1;
 int com_speed = -1;
@@ -477,7 +477,7 @@ int com_speed = -1;
 /*
  * ACPI GUID is confusing in UEFI spec.
  * {EFI_,}_ACPI_20_TABLE_GUID or EFI_ACPI_TABLE_GUID means
- * ACPI 2.0 or abobe.
+ * ACPI 2.0 or above.
  */
 static EFI_GUID acpi_guid = ACPI_20_TABLE_GUID;
 static EFI_GUID smbios_guid = SMBIOS_TABLE_GUID;

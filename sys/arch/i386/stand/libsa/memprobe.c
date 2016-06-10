@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.56 2015/10/08 14:46:05 tedu Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.57 2016/06/10 18:36:06 jcs Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -286,7 +286,7 @@ memprobe(void)
 			 * Compute compatibility values:
 			 * cnvmem -- is the upper boundary of conventional
 			 *	memory (below IOM_BEGIN (=640k))
-			 * extmem -- is the size of the contignous extended
+			 * extmem -- is the size of the contiguous extended
 			 *	memory segment starting at 1M
 			 *
 			 * We ignore "good" memory in the 640K-1M hole.
@@ -338,7 +338,7 @@ mem_limit(long long ml)
 		if (p->type != BIOS_MAP_FREE)
 			continue;
 
-		/* Wholy above limit, nuke it */
+		/* Wholly above limit, nuke it */
 		if ((sp >= ml) && (ep >= ml)) {
 			bcopy (p + 1, p, (char *)bios_memmap +
 			       sizeof(bios_memmap) - (char *)p);

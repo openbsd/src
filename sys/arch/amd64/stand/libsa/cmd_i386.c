@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.9 2015/11/08 00:42:39 yasuoka Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.10 2016/06/10 18:36:06 jcs Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -183,7 +183,7 @@ Xmemory(void)
 					p++;
 			}
 
-			/* Handle (possibly non-existant) address part */
+			/* Handle (possibly non-existent) address part */
 			switch (*p) {
 				case '@':
 					addr = strtoll(p + 1, NULL, 0);

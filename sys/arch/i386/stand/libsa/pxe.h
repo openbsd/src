@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxe.h,v 1.6 2011/03/02 07:15:45 jasper Exp $ */
+/*	$OpenBSD: pxe.h,v 1.7 2016/06/10 18:36:06 jcs Exp $ */
 /*	$NetBSD: pxe.h,v 1.1 2002/02/16 03:37:40 thorpej Exp $	*/
 
 /*
@@ -346,7 +346,7 @@ typedef struct {
 #	define PXENV_UNDI_ISR_OUT_NOT_OUTS	1
 
 	/*
-	 * one of these will bre returnd for PXEND_UNDI_ISR_IN_PROCESS
+	 * one of these will be returned for PXEND_UNDI_ISR_IN_PROCESS
 	 * and PXENV_UNDI_ISR_IN_GET_NEXT
 	 */
 #	define PXENV_UNDI_ISR_OUT_DONE		0
