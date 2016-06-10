@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.63 2016/06/07 16:19:06 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.64 2016/06/10 16:37:16 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -111,8 +111,6 @@ int vm_create(struct vm_create_params *, struct proc *);
 int vm_run(struct vm_run_params *);
 int vm_terminate(struct vm_terminate_params *);
 int vm_get_info(struct vm_info_params *);
-int vm_writepage(struct vm_writepage_params *);
-int vm_readpage(struct vm_readpage_params *);
 int vm_resetcpu(struct vm_resetcpu_params *);
 int vm_intr_pending(struct vm_intr_params *);
 int vcpu_reset_regs(struct vcpu *, struct vcpu_init_state *);
@@ -372,12 +370,6 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case VMM_IOC_TERM:
 		ret = vm_terminate((struct vm_terminate_params *)data);
 		break;
-	case VMM_IOC_WRITEPAGE:
-		ret = vm_writepage((struct vm_writepage_params *)data);
-		break;
-	case VMM_IOC_READPAGE:
-		ret = vm_readpage((struct vm_readpage_params *)data);
-		break;
 	case VMM_IOC_RESETCPU:
 		ret = vm_resetcpu((struct vm_resetcpu_params *)data);
 		break;
@@ -411,8 +403,6 @@ pledge_ioctl_vmm(struct proc *p, long com)
 	case VMM_IOC_TERM:
 		/* XXX VM processes should only terminate themselves */
 	case VMM_IOC_RUN:
-	case VMM_IOC_WRITEPAGE:
-	case VMM_IOC_READPAGE:
 	case VMM_IOC_RESETCPU:
 		return (0);
 	}
@@ -429,89 +419,6 @@ int
 vmmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	return 0;
-}
-
-/*
- * vm_readpage
- *
- * Reads a region (PAGE_SIZE max) of guest physical memory using the parameters
- * defined in 'vrp'.
- *
- * Returns 0 if successful, or various error codes on failure:
- *  ENOENT if the VM id contained in 'vrp' refers to an unknown VM
- *  EINVAL if the memory region described by vrp is not regular memory
- *  EFAULT if the memory region described by vrp has not yet been faulted in
- *      by the guest
- */
-int
-vm_readpage(struct vm_readpage_params *vrp)
-{
-	struct vm *vm;
-	paddr_t host_pa;
-	void *kva;
-	vaddr_t vr_page;
-
-	/* Find the desired VM */
-	rw_enter_read(&vmm_softc->vm_lock);
-	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
-		if (vm->vm_id == vrp->vrp_vm_id)
-			break;
-	}
-
-	/* Not found? exit. */
-	if (vm == NULL) {
-		rw_exit_read(&vmm_softc->vm_lock);
-		return (ENOENT);
-	}
-
-	/* Check that the data to be read is within a page */
-	if (vrp->vrp_len > (PAGE_SIZE - (vrp->vrp_paddr & PAGE_MASK))) {
-		rw_exit_read(&vmm_softc->vm_lock);
-		return (EINVAL);
-	}
-
-	/* Calculate page containing vrp->vrp_paddr */
-	vr_page = vrp->vrp_paddr & ~PAGE_MASK;
-
-	/* If not regular memory, exit. */
-	if (vmm_get_guest_memtype(vm, vr_page) != VMM_MEM_TYPE_REGULAR) {
-		rw_exit_read(&vmm_softc->vm_lock);
-		return (EINVAL);
-	}
-
-	/* Find the phys page where this guest page exists in real memory */
-	if (!pmap_extract(vm->vm_map->pmap, vr_page, &host_pa)) {
-		rw_exit_read(&vmm_softc->vm_lock);
-		return (EFAULT);
-	}
-
-	/* Allocate temporary KVA for the guest page */
-	kva = km_alloc(PAGE_SIZE, &kv_any, &kp_none, &kd_nowait);
-	if (!kva) {
-		DPRINTF("vm_readpage: can't alloc kva\n");
-		rw_exit_read(&vmm_softc->vm_lock);
-		return (EFAULT);
-	}
-
-	/* Enter the mapping in the kernel pmap and copyout */
-	pmap_kenter_pa((vaddr_t)kva, host_pa, PROT_READ);
-
-	if (copyout(kva + ((vaddr_t)vrp->vrp_paddr & PAGE_MASK),
-	    vrp->vrp_data, vrp->vrp_len) == EFAULT) {
-		DPRINTF("vm_readpage: can't copyout\n");
-		pmap_kremove((vaddr_t)kva, PAGE_SIZE);
-		km_free(kva, PAGE_SIZE, &kv_any, &kp_none);
-		rw_exit_read(&vmm_softc->vm_lock);
-		return (EFAULT);
-	}
-
-	/* Cleanup and exit */
-	pmap_kremove((vaddr_t)kva, PAGE_SIZE);
-	km_free(kva, PAGE_SIZE, &kv_any, &kp_none);
-
-	rw_exit_read(&vmm_softc->vm_lock);
-
-	return (0);
 }
 
 /*
@@ -647,112 +554,6 @@ vm_intr_pending(struct vm_intr_params *vip)
 		x86_send_ipi(vcpu->vc_last_pcpu, X86_IPI_NOP);
 	}
 #endif /* MULTIPROCESSOR */
-
-	return (0);
-}
-
-/*
- * vm_writepage
- *
- * Writes a region (PAGE_SIZE max) of guest physical memory using the parameters
- * defined in 'vrp'.
- *
- * Returns 0 if successful, or various error codes on failure:
- *  ENOENT if the VM id contained in 'vrp' refers to an unknown VM
- *  EINVAL if the memory region described by vrp is not regular memory
- *  EFAULT if the source data in vrp contains an invalid address
- *  ENOMEM if a memory allocation error occurs
- */
-int
-vm_writepage(struct vm_writepage_params *vwp)
-{
-	char *pagedata;
-	struct vm *vm;
-	paddr_t host_pa;
-	void *kva;
-	int ret;
-	vaddr_t vw_page, dst;
-
-	/* Find the desired VM */
-	rw_enter_read(&vmm_softc->vm_lock);
-	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
-		if (vm->vm_id == vwp->vwp_vm_id)
-			break;
-	}
-
-	/* Not found? exit. */
-	if (vm == NULL) {
-		rw_exit_read(&vmm_softc->vm_lock);
-		return (ENOENT);
-	}
-
-	/* Check that the data to be written is within a page */
-	if (vwp->vwp_len > (PAGE_SIZE - (vwp->vwp_paddr & PAGE_MASK))) {
-		rw_exit_read(&vmm_softc->vm_lock);
-		return (EINVAL);
-	}
-
-	/* Calculate page containing vwp->vwp_paddr */
-	vw_page = vwp->vwp_paddr & ~PAGE_MASK;
-
-	/* If not regular memory, exit. */
-	if (vmm_get_guest_memtype(vm, vw_page) != VMM_MEM_TYPE_REGULAR) {
-		rw_exit_read(&vmm_softc->vm_lock);
-		return (EINVAL);
-	}
-
-	/* Allocate temporary region to copyin into */
-	pagedata = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (pagedata == NULL) {
-		rw_exit_read(&vmm_softc->vm_lock);
-		return (ENOMEM);
-	}
-
-	/* Copy supplied data to kernel */
-	if (copyin(vwp->vwp_data, pagedata, vwp->vwp_len) == EFAULT) {
-		free(pagedata, M_DEVBUF, PAGE_SIZE);
-		rw_exit_read(&vmm_softc->vm_lock);
-		return (EFAULT);
-	}
-
-	/* Find the phys page where this guest page exists in real memory */
-	if (!pmap_extract(vm->vm_map->pmap, vw_page, &host_pa)) {
-		/* page not present */
-		ret = uvm_fault(vm->vm_map, vw_page,
-		    VM_FAULT_INVALID, PROT_READ | PROT_WRITE | PROT_EXEC);
-		if (ret) {
-			free(pagedata, M_DEVBUF, PAGE_SIZE);
-			rw_exit_read(&vmm_softc->vm_lock);
-			return (EFAULT);
-		}
-
-		if (!pmap_extract(vm->vm_map->pmap, vw_page, &host_pa)) {
-			panic("vm_writepage: still not mapped GPA 0x%llx\n",
-			    (uint64_t)vwp->vwp_paddr);
-		}
-	}
-
-	/* Allocate kva for guest page */
-	kva = km_alloc(PAGE_SIZE, &kv_any, &kp_none, &kd_nowait);
-	if (kva == NULL) {
-		DPRINTF("vm_writepage: can't alloc kva\n");
-		free(pagedata, M_DEVBUF, PAGE_SIZE);
-		rw_exit_read(&vmm_softc->vm_lock);
-		return (ENOMEM);
-	}
-
-	/* Enter mapping and copy data */
-	pmap_kenter_pa((vaddr_t)kva, host_pa, PROT_READ | PROT_WRITE);
-	dst = (vaddr_t)kva + ((vaddr_t)vwp->vwp_paddr & PAGE_MASK);
-	memcpy((void *)dst, pagedata, vwp->vwp_len);
-
-	/* Cleanup */
-	pmap_kremove((vaddr_t)kva, PAGE_SIZE);
-	km_free(kva, PAGE_SIZE, &kv_any, &kp_none);
-
-	free(pagedata, M_DEVBUF, PAGE_SIZE);
-
-	rw_exit_read(&vmm_softc->vm_lock);
 
 	return (0);
 }

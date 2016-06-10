@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.14 2016/06/07 16:19:06 stefan Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.15 2016/06/10 16:37:16 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -238,24 +238,6 @@ struct vm_terminate_params {
 	uint32_t		vtp_vm_id;
 };
 
-struct vm_writepage_params {
-	/* Input parameters to VMM_IOC_WRITEPAGE */
-	uint32_t		vwp_vm_id; /* VM ID */
-	paddr_t			vwp_paddr; /* Phys Addr */
-	char			*vwp_data; /* Page Data */
-	uint32_t		vwp_len;   /* Length */
-};
-
-struct vm_readpage_params {
-	/* Input parameters to VMM_IOC_READPAGE */
-	uint32_t		vrp_vm_id; /* VM ID */
-	paddr_t			vrp_paddr; /* Phys Addr */
-	uint32_t		vrp_len;   /* Length */
-
-	/* Output parameters from VMM_IOC_READPAGE */
-	char			*vrp_data; /* Page Data */
-};
-
 struct vm_resetcpu_params {
 	/* Input parameters to VMM_IOC_RESETCPU */
 	uint32_t		vrp_vm_id;
@@ -275,10 +257,8 @@ struct vm_intr_params {
 #define VMM_IOC_RUN _IOWR('V', 2, struct vm_run_params) /* Run VCPU */
 #define VMM_IOC_INFO _IOWR('V', 3, struct vm_info_params) /* Get VM Info */
 #define VMM_IOC_TERM _IOW('V', 4, struct vm_terminate_params) /* Terminate VM */
-#define VMM_IOC_WRITEPAGE _IOW('V', 5, struct vm_writepage_params) /* Wr Pg */
-#define VMM_IOC_READPAGE _IOW('V', 6, struct vm_readpage_params) /* Rd Pg */
-#define VMM_IOC_RESETCPU _IOW('V', 7, struct vm_resetcpu_params) /* Reset */
-#define VMM_IOC_INTR _IOW('V', 8, struct vm_intr_params) /* Intr pending */
+#define VMM_IOC_RESETCPU _IOW('V', 5, struct vm_resetcpu_params) /* Reset */
+#define VMM_IOC_INTR _IOW('V', 6, struct vm_intr_params) /* Intr pending */
 
 #ifdef _KERNEL
 
