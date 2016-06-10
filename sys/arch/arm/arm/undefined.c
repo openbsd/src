@@ -1,4 +1,4 @@
-/*	$OpenBSD: undefined.c,v 1.7 2016/01/31 00:14:50 jsg Exp $	*/
+/*	$OpenBSD: undefined.c,v 1.8 2016/06/10 06:32:36 jsg Exp $	*/
 /*	$NetBSD: undefined.c,v 1.22 2003/11/29 22:21:29 bjh21 Exp $	*/
 
 /*
@@ -192,7 +192,7 @@ undefinedinstruction(trapframe_t *frame)
 
 	/*
 	 * According to the datasheets you only need to look at bit 27 of the
-	 * instruction to tell the difference between and undefined
+	 * instruction to tell the difference between an undefined
 	 * instruction and a coprocessor instruction following an undefined
 	 * instruction trap.
 	 */
