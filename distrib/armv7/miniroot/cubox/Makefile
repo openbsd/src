@@ -1,7 +1,7 @@
 BOARD=	cubox
 PLATFORM=IMX
 UBOOT=	mx6cuboxi
-DTB=\
+DTBS=\
 	imx6dl-cubox-i.dtb \
 	imx6dl-hummingboard.dtb \
 	imx6q-cubox-i.dtb \
