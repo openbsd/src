@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.55 2016/05/22 19:19:21 jung Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.56 2016/06/10 12:09:48 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -744,7 +744,7 @@ escape_html(const char* src)
 {
 	char		*dp, *dst;
 
-	/* We need 5 times the memory if every letter is "<" or ">". */
+	/* We need 5 times the memory if every letter is "&" */
 	if ((dst = calloc(5, strlen(src) + 1)) == NULL)
 		return NULL;
 
