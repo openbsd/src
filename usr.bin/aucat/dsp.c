@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.8 2016/06/08 04:36:48 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.9 2016/06/10 06:42:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -268,40 +268,22 @@ aparams_native(struct aparams *par)
 }
 
 /*
- * return the number of input and output frame that would
- * be consumed
+ * Return the number of input and output frame that would be consumed
+ * by resamp_do(p, *icnt, *ocnt).
  */
 void
 resamp_getcnt(struct resamp *p, int *icnt, int *ocnt)
 {
-	int diff, ifr, ofr;
+	long long idiff, odiff;
+	int cdiff;
 
-	diff = p->diff;
-	ifr = *icnt;
-	ofr = *ocnt;
-
-	for (;;) {
-		if (diff < 0) {
-			if (ifr == 0)
-				break;
-			diff += p->oblksz;
-			ifr--;
-		} else if (diff > 0) {
-			if (ofr == 0)
-				break;
-			diff -= p->iblksz;
-			ofr--;
-		} else {
-			if (ifr == 0 || ofr == 0)
-				break;
-			diff -= p->iblksz;
-			diff += p->oblksz;
-			ifr--;
-			ofr--;
-		}
-	}
-	*icnt -= ifr;
-	*ocnt -= ofr;
+	cdiff = p->oblksz - p->diff;
+	idiff = (long long)*icnt * p->oblksz;
+	odiff = (long long)*ocnt * p->iblksz;
+	if (odiff - idiff >= cdiff)
+		*ocnt = (idiff + cdiff + p->iblksz - 1) / p->iblksz;
+	else
+		*icnt = (odiff + p->diff) / p->oblksz;
 }
 
 /*
@@ -359,7 +341,7 @@ resamp_do(struct resamp *p, adata_t *in, adata_t *out, int icnt, int ocnt)
 	}
 #endif
 	for (;;) {
-		if (diff < 0) {
+		if (diff >= oblksz) {
 			if (ifr == 0)
 				break;
 			ctx_start ^= 1;
@@ -368,37 +350,19 @@ resamp_do(struct resamp *p, adata_t *in, adata_t *out, int icnt, int ocnt)
 				*ctx = *idata++;
 				ctx += RESAMP_NCTX;
 			}
-			diff += oblksz;
+			diff -= oblksz;
 			ifr--;
-		} else if (diff > 0) {
+		} else {
 			if (ofr == 0)
 				break;
 			ctx = ctxbuf;
 			for (c = nch; c > 0; c--) {
-				s = ctx[ctx_start];
-				ds = ctx[ctx_start ^ 1] - s;
+				s = ctx[ctx_start ^ 1];
+				ds = ctx[ctx_start] - s;
 				ctx += RESAMP_NCTX;
 				*odata++ = s + ADATA_MULDIV(ds, diff, oblksz);
 			}
-			diff -= iblksz;
-			ofr--;
-		} else {
-			if (ifr == 0 || ofr == 0)
-				break;
-			ctx = ctxbuf + ctx_start;
-			for (c = nch; c > 0; c--) {
-				*odata++ = *ctx;
-				ctx += RESAMP_NCTX;
-			}
-			ctx_start ^= 1;
-			ctx = ctxbuf + ctx_start;
-			for (c = nch; c > 0; c--) {
-				*ctx = *idata++;
-				ctx += RESAMP_NCTX;
-			}
-			diff -= iblksz;
-			diff += oblksz;
-			ifr--;
+			diff += iblksz;
 			ofr--;
 		}
 	}
