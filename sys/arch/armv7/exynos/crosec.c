@@ -1,4 +1,4 @@
-/* $OpenBSD: crosec.c,v 1.1 2015/01/26 02:48:24 bmercer Exp $ */
+/* $OpenBSD: crosec.c,v 1.2 2016/06/10 06:42:53 jsg Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -222,7 +222,7 @@ cros_ec_command_inptr(struct cros_ec_softc *sc, uint8_t cmd,
 			int ret;
 
 			delay(50000);
-			cros_ec_send_command(sc, EC_CMD_GET_COMMS_STATUS, 0,
+			ret = cros_ec_send_command(sc, EC_CMD_GET_COMMS_STATUS, 0,
 					NULL, 0,
 					(uint8_t **)&resp, sizeof(*resp));
 			if (ret < 0)
