@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.71 2016/04/15 05:05:21 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.72 2016/06/10 20:33:29 vgross Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -131,6 +131,7 @@ struct ifnet {				/* and the entries */
 	char	if_description[IFDESCRSIZE]; /* interface description */
 	u_short	if_rtlabelid;		/* next route label */
 	u_int8_t if_priority;
+	u_int8_t if_llprio;		/* link layer priority */
 	struct	timeout *if_slowtimo;	/* watchdog timeout */
 	struct	task *if_watchdogtask;	/* watchdog task */
 	struct	task *if_linkstatetask; /* task to do route updates */

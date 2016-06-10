@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.213 2016/06/06 07:07:11 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.214 2016/06/10 20:33:29 vgross Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -235,6 +235,7 @@ arprequest(struct ifnet *ifp, u_int32_t *sip, u_int32_t *tip, u_int8_t *enaddr)
 	m->m_len = sizeof(*ea);
 	m->m_pkthdr.len = sizeof(*ea);
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+	m->m_pkthdr.pf.prio = ifp->if_llprio;
 	MH_ALIGN(m, sizeof(*ea));
 	ea = mtod(m, struct ether_arp *);
 	eh = (struct ether_header *)sa.sa_data;
@@ -832,6 +833,7 @@ revarprequest(struct ifnet *ifp)
 		return;
 	m->m_len = sizeof(*ea);
 	m->m_pkthdr.len = sizeof(*ea);
+	m->m_pkthdr.pf.prio = ifp->if_llprio;
 	MH_ALIGN(m, sizeof(*ea));
 	ea = mtod(m, struct ether_arp *);
 	eh = (struct ether_header *)sa.sa_data;

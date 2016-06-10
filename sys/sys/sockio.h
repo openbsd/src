@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.64 2016/05/31 22:35:02 tedu Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.65 2016/06/10 20:33:29 vgross Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -201,6 +201,9 @@
 #define SIOCSIFPARENT	_IOW('i', 178, struct if_parent) /* set parent if */
 #define SIOCGIFPARENT	_IOWR('i', 179, struct if_parent) /* get parent if */
 #define SIOCDIFPARENT	_IOW('i', 180, struct ifreq)	/* del parent if */
+
+#define	SIOCSIFLLPRIO	_IOW('i', 181, struct ifreq)	/* set ifnet llprio */
+#define	SIOCGIFLLPRIO	_IOWR('i', 182, struct ifreq)	/* get ifnet llprio */
 
 #define	SIOCSVH		_IOWR('i', 245, struct ifreq)	/* set carp param */
 #define	SIOCGVH		_IOWR('i', 246, struct ifreq)	/* get carp param */

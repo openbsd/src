@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.433 2016/05/18 03:46:03 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.434 2016/06/10 20:33:29 vgross Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -536,6 +536,7 @@ if_attach_common(struct ifnet *ifp)
 	    M_TEMP, M_WAITOK|M_ZERO);
 	ifp->if_linkstatetask = malloc(sizeof(*ifp->if_linkstatetask),
 	    M_TEMP, M_WAITOK|M_ZERO);
+	ifp->if_llprio = IFQ_DEFPRIO;
 
 	SRPL_INIT(&ifp->if_inputs);
 }
@@ -1986,6 +1987,18 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		}
 
 		ifnewlladdr(ifp);
+		break;
+
+	case SIOCGIFLLPRIO:
+		ifr->ifr_llprio = ifp->if_llprio;
+		break;
+
+	case SIOCSIFLLPRIO:
+		if ((error = suser(p, 0)))
+			return (error);
+		if (ifr->ifr_llprio > UCHAR_MAX)
+			return (EINVAL);
+		ifp->if_llprio = ifr->ifr_llprio;
 		break;
 
 	default:

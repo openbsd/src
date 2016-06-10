@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.322 2016/05/03 17:52:33 jca Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.323 2016/06/10 20:33:29 vgross Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -135,6 +135,7 @@ char	name[IFNAMSIZ];
 int	flags, xflags, setaddr, setipdst, doalias;
 u_long	metric, mtu;
 int	rdomainid;
+int	llprio;
 int	clearaddr, s;
 int	newaddr = 0;
 int	af = AF_INET;
@@ -157,6 +158,7 @@ void	addaf(const char *, int);
 void	removeaf(const char *, int);
 void	setifbroadaddr(const char *, int);
 void	setifmtu(const char *, int);
+void	setifllprio(const char *, int);
 void	setifnwid(const char *, int);
 void	setifbssid(const char *, int);
 void	setifnwkey(const char *, int);
@@ -521,6 +523,7 @@ const struct	cmd {
 	{ "instance",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ "inst",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ "lladdr",	NEXTARG,	0,		setiflladdr },
+	{ "llprio",	NEXTARG,	0,		setifllprio },
 	{ NULL, /*src*/	0,		0,		setifaddr },
 	{ NULL, /*dst*/	0,		0,		setifdstaddr },
 	{ NULL, /*illegal*/0,		0,		NULL },
@@ -854,6 +857,11 @@ getinfo(struct ifreq *ifr, int create)
 	else
 		rdomainid = ifr->ifr_rdomainid;
 #endif
+	if (ioctl(s, SIOCGIFLLPRIO, (caddr_t)ifr) < 0)
+		llprio = 0;
+	else
+		llprio = ifr->ifr_llprio;
+
 	return (0);
 }
 
@@ -1407,6 +1415,21 @@ setifmtu(const char *val, int d)
 		errx(1, "mtu %s: %s", val, errmsg);
 	if (ioctl(s, SIOCSIFMTU, (caddr_t)&ifr) < 0)
 		warn("SIOCSIFMTU");
+}
+
+/* ARGSUSED */
+void
+setifllprio(const char *val, int d)
+{
+	const char *errmsg = NULL;
+
+	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+
+	ifr.ifr_mtu = strtonum(val, 0, UCHAR_MAX, &errmsg);
+	if (errmsg)
+		errx(1, "mtu %s: %s", val, errmsg);
+	if (ioctl(s, SIOCSIFLLPRIO, (caddr_t)&ifr) < 0)
+		warn("SIOCSIFLLPRIO");
 }
 
 /* ARGSUSED */
@@ -2885,6 +2908,8 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 #endif
 	uint64_t *media_list;
 	int i;
+	char sep;
+
 
 	printf("%s: ", name);
 	printb("flags", flags | (xflags << 16), IFFBITS);
@@ -2904,6 +2929,7 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 		(void)printf("\tlladdr %s\n", ether_ntoa(
 		    (struct ether_addr *)LLADDR(sdl)));
 
+	sep = '\t';
 #ifndef SMALL
 	(void) memset(&ifrdesc, 0, sizeof(ifrdesc));
 	(void) strlcpy(ifrdesc.ifr_name, name, sizeof(ifrdesc.ifr_name));
@@ -2912,14 +2938,18 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	    strlen(ifrdesc.ifr_data))
 		printf("\tdescription: %s\n", ifrdesc.ifr_data);
 
-	if (sdl != NULL)
-		printf("\tindex %u", sdl->sdl_index);
-	if (!is_bridge(name) && ioctl(s, SIOCGIFPRIORITY, &ifrdesc) == 0) {
-		printf("%cpriority %d\n", (sdl != NULL) ? ' ' : '\t',
-		    ifrdesc.ifr_metric);
-	} else if (sdl != NULL) {
-		putchar('\n');
+	if (sdl != NULL) {
+		printf("%cindex %u", sep, sdl->sdl_index);
+		sep = ' ';
 	}
+	if (!is_bridge(name) && ioctl(s, SIOCGIFPRIORITY, &ifrdesc) == 0) {
+		printf("%cpriority %d", sep, ifrdesc.ifr_metric);
+		sep = ' ';
+	}
+#endif
+	printf("%cllprio %d\n", sep, llprio);
+
+#ifndef SMALL
 	(void) memset(&ikardesc, 0, sizeof(ikardesc));
 	(void) strlcpy(ikardesc.ikar_name, name, sizeof(ikardesc.ikar_name));
 	if (ioctl(s, SIOCGETKALIVE, &ikardesc) == 0 &&

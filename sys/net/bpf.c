@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.141 2016/05/18 03:46:03 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.142 2016/06/10 20:33:29 vgross Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -561,6 +561,7 @@ bpfwrite(dev_t dev, struct uio *uio, int ioflag)
 	}
 
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+	m->m_pkthdr.pf.prio = ifp->if_llprio;
 
 	if (d->bd_hdrcmplt && dst.ss_family == AF_UNSPEC)
 		dst.ss_family = pseudo_AF_HDRCMPLT;

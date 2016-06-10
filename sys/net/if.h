@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.176 2016/03/02 00:00:16 dlg Exp $	*/
+/*	$OpenBSD: if.h,v 1.177 2016/06/10 20:33:29 vgross Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -378,6 +378,7 @@ struct	ifreq {
 #define ifr_ttl		ifr_ifru.ifru_metric	/* tunnel TTL (overload) */
 #define	ifr_data	ifr_ifru.ifru_data	/* for use by interface */
 #define ifr_index	ifr_ifru.ifru_index	/* interface index */
+#define ifr_llprio	ifr_ifru.ifru_metric	/* link layer priority */
 };
 
 struct ifaliasreq {
