@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.58 2016/05/23 19:14:03 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.59 2016/06/11 02:03:36 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -552,7 +552,7 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 	/* LRq.8: record label request */
 	lre = lde_req_add(ln, &fn->fec, 0);
 	if (lre != NULL)
-		lre->msgid = map->messageid;
+		lre->msgid = ntohl(map->messageid);
 
 	/* LRq.9: perform LSR label distribution */
 	lde_send_labelmapping(ln, fn, 1);
