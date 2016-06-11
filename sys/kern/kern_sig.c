@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.197 2016/05/31 22:14:43 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.198 2016/06/11 21:41:50 tedu Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1679,6 +1679,8 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 			    ts.tv_nsec / (tick * 1000);
 			if (to_ticks > INT_MAX)
 				to_ticks = INT_MAX;
+			if (to_ticks == 0 && ts.tv_nsec)
+				to_ticks = 1;
 		}
 	}
 
@@ -1705,6 +1707,9 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 		/* per-POSIX, delay this error until after the above */
 		if (timeinvalid)
 			error = EINVAL;
+
+		if (SCARG(uap, timeout) != NULL && to_ticks == 0)
+			error = EAGAIN;
 
 		if (error != 0)
 			break;
