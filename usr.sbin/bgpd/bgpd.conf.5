@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.142 2016/06/03 20:58:13 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.143 2016/06/11 11:43:02 tobias Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2016 $
+.Dd $Mdocdate: June 11 2016 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1388,7 +1388,7 @@ Communities are encoded as
 .Ar as-number : Ns Ar local .
 Four-octet encoding is used if the
 .Ar as-number
-is bigger then 65535 or if the AS_DOT encoding is used.
+is bigger than 65535 or if the AS_DOT encoding is used.
 IPv4 Address Specific Extended Communities are encoded as
 .Ar IP : Ns Ar local .
 Opaque Extended Communities are encoded with a single numeric value.
