@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.25 2016/06/11 05:04:03 tedu Exp $
+.\" $OpenBSD: doas.conf.5,v 1.26 2016/06/11 17:17:10 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -80,8 +80,7 @@ If a relative path is specified, only a restricted
 will be searched.
 .It Ic args ...
 Arguments to command.
-If specified, the command arguments provided by the user
-need to match those specified.
+The command arguments provided by the user need to match those specified.
 The keyword
 .Ic args
 alone means that command must be run without any arguments.
