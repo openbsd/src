@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.23 2016/06/11 04:52:49 tedu Exp $
+.\" $OpenBSD: doas.conf.5,v 1.24 2016/06/11 04:56:16 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -88,6 +88,7 @@ alone means that command should be run without any arguments.
 .El
 .Pp
 The last matching rule determines the action taken.
+If no rule matches, the action is denied.
 .Pp
 Comments can be put anywhere in the file using a hash mark
 .Pq Sq # ,
