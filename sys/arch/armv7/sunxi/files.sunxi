@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sunxi,v 1.5 2016/06/11 06:42:16 jsg Exp $
+#	$OpenBSD: files.sunxi,v 1.6 2016/06/11 07:07:59 jsg Exp $
 
 define	sunxi {}
 device	sunxi: sunxi
@@ -42,7 +42,7 @@ attach	ehci at sunxi with sxiehci
 file	arch/armv7/sunxi/sxiehci.c		sxiehci
 
 device	sxiuart
-attach	sxiuart at sunxi
+attach	sxiuart at fdt
 file	arch/armv7/sunxi/sxiuart.c		sxiuart
 
 device	sxie: ether, ifnet, mii, ifmedia

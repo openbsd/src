@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.17 2016/06/11 06:42:16 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.18 2016/06/11 07:07:59 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -91,7 +91,7 @@ sxiccmu*	at sunxi?		# Clock Control Module/Unit
 sxitimer*	at sunxi?
 sxidog*		at sunxi?		# watchdog timer
 sxirtc*		at sunxi?		# Real Time Clock
-sxiuart*	at sunxi?		# onboard UARTs
+sxiuart*	at fdt?			# onboard UARTs
 sxie*		at fdt?
 ahci*		at sunxi?		# AHCI/SATA (shim)
 ehci*		at sunxi?		# EHCI (shim)

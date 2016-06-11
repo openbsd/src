@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiuart.c,v 1.5 2016/06/08 15:27:05 jsg Exp $	*/
+/*	$OpenBSD: sxiuart.c,v 1.6 2016/06/11 07:07:59 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  * Copyright (c) 2013 Artturi Alm
@@ -37,6 +37,7 @@
 #endif
 
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
 #include <arm/armv7/armv7var.h>
 #include <armv7/armv7/armv7var.h>
@@ -45,6 +46,7 @@
 #include <armv7/sunxi/sunxireg.h>
 
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/openfirm.h>
 
 #define DEVUNIT(x)      (minor(x) & 0x7f)
 #define DEVCUA(x)       (minor(x) & 0x80)
@@ -91,7 +93,8 @@ struct sxiuart_softc {
 
 
 int	sxiuartprobe(struct device *, void *, void *);
-void	sxiuartattach(struct device *, struct device *, void *);
+int	sxiuart_match(struct device *, void *, void *);
+void	sxiuart_attach(struct device *, struct device *, void *);
 
 void sxiuartcnprobe(struct consdev *);
 void sxiuartcninit(struct consdev *);
@@ -117,7 +120,7 @@ struct sxiuart_softc *sxiuart_sc(dev_t);
 cdev_decl(sxiuart);
 
 struct cfattach sxiuart_ca = {
-	sizeof(struct sxiuart_softc), NULL, sxiuartattach
+	sizeof(struct sxiuart_softc), sxiuart_match, sxiuart_attach
 };
 
 struct cfdriver sxiuart_cd = {
@@ -155,22 +158,33 @@ sxiuart_init_cons(void)
 	    comcnmode);
 }
 
-void
-sxiuartattach(struct device *parent, struct device *self, void *args)
+int
+sxiuart_match(struct device *parent, void *match, void *aux)
 {
-	struct armv7_attach_args *aa = args;
+	struct fdt_attach_args *faa = aux;
+
+	return OF_is_compatible(faa->fa_node, "snps,dw-apb-uart");
+}
+
+void
+sxiuart_attach(struct device *parent, struct device *self, void *aux)
+{
 	struct sxiuart_softc *sc = (struct sxiuart_softc *) self;
+	struct fdt_attach_args *faa = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int s;
 
-	sc->sc_iot = iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
+	if (faa->fa_nreg < 2 || faa->fa_nintr != 1)
+		return;
+
+	sc->sc_iot = iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
+	    faa->fa_reg[1], 0, &sc->sc_ioh))
 		panic("sxiuartattach: bus_space_map failed!");
 	ioh = sc->sc_ioh;
 
-	if (aa->aa_dev->mem[0].addr == sxiuartconsaddr) {
+	if (faa->fa_reg[0] == sxiuartconsaddr) {
 		cn_tab->cn_dev = makedev(12 /* XXX */, 0);
 		cdevsw[12] = sxiuartdev;		/* KLUDGE */
 
@@ -206,7 +220,7 @@ sxiuartattach(struct device *parent, struct device *self, void *args)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SXIUART_MCR, sc->sc_mcr);
 	splx(s);
 
-	arm_intr_establish(aa->aa_dev->irq[0], IPL_TTY,
+	arm_intr_establish(faa->fa_intr[0], IPL_TTY,
 	    sxiuart_intr, sc, sc->sc_dev.dv_xname);
 
 	printf("\n");
