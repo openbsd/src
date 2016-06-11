@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.24 2016/06/11 04:56:16 tedu Exp $
+.\" $OpenBSD: doas.conf.5,v 1.25 2016/06/11 05:04:03 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -75,16 +75,16 @@ The default is all users.
 The command the user is allowed or denied to run.
 The default is all commands.
 Be advised that it is best to specify absolute paths.
-If a cmd is specified, only a restricted
+If a relative path is specified, only a restricted
 .Ev PATH
 will be searched.
 .It Ic args ...
 Arguments to command.
 If specified, the command arguments provided by the user
-need to match for the command to be successful.
-Specifying
+need to match those specified.
+The keyword
 .Ic args
-alone means that command should be run without any arguments.
+alone means that command must be run without any arguments.
 .El
 .Pp
 The last matching rule determines the action taken.
