@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.181 2016/05/30 21:31:29 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.182 2016/06/11 21:00:11 kettenis Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -257,7 +257,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	struct vmspace *vm = pr->ps_vmspace;
 	char **tmpfap;
 	extern struct emul emul_native;
-	char *pathbuf = NULL;
 	struct vnode *otvp;
 
 	/* get other threads to stop */
@@ -270,21 +269,13 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 */
 	atomic_setbits_int(&pr->ps_flags, PS_INEXEC);
 
-	if (pathbuf != NULL) {
-		NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_SYSSPACE, pathbuf, p);
-	} else {
-		NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE,
-		    SCARG(uap, path), p);
-	}
+	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	nid.ni_pledge = PLEDGE_EXEC;
 
 	/*
 	 * initialize the fields of the exec package.
 	 */
-	if (pathbuf != NULL)
-		pack.ep_name = pathbuf;
-	else
-		pack.ep_name = (char *)SCARG(uap, path);
+	pack.ep_name = (char *)SCARG(uap, path);
 	pack.ep_hdr = malloc(exec_maxhdrsz, M_EXEC, M_WAITOK);
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
@@ -723,9 +714,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);
 	single_thread_clear(p, P_SUSPSIG);
 
-	if (pathbuf != NULL)
-		pool_put(&namei_pool, pathbuf);
-
 	return (0);
 
 bad:
@@ -752,9 +740,6 @@ freehdr:
 	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);
 	single_thread_clear(p, P_SUSPSIG);
 
-	if (pathbuf != NULL)
-		pool_put(&namei_pool, pathbuf);
-
 	return (error);
 
 exec_abort:
@@ -775,8 +760,6 @@ exec_abort:
 
 free_pack_abort:
 	free(pack.ep_hdr, M_EXEC, pack.ep_hdrlen);
-	if (pathbuf != NULL)
-		pool_put(&namei_pool, pathbuf);
 	exit1(p, W_EXITCODE(0, SIGABRT), EXIT_NORMAL);
 
 	/* NOTREACHED */
