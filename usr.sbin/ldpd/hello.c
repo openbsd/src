@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.46 2016/06/11 01:55:35 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.47 2016/06/11 02:06:46 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -158,15 +158,12 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 		    inet_ntoa(lsr_id));
 		return;
 	}
+	/* safety checks */
 	if (holdtime != 0 && holdtime < MIN_HOLDTIME) {
 		log_debug("%s: lsr-id %s: invalid hello holdtime (%u)",
 		    __func__, inet_ntoa(lsr_id), holdtime);
 		return;
 	}
-	buf += r;
-	len -= r;
-
-	/* safety checks */
 	if (multicast && (flags & TARGETED_HELLO)) {
 		log_debug("%s: lsr-id %s: multicast targeted hello", __func__,
 		    inet_ntoa(lsr_id));
@@ -176,6 +173,43 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 		log_debug("%s: lsr-id %s: unicast link hello", __func__,
 		    inet_ntoa(lsr_id));
 		return;
+	}
+	buf += r;
+	len -= r;
+
+	r = tlv_decode_opt_hello_prms(buf, len, &tlvs_rcvd, af, &trans_addr,
+	    &conf_number, &trans_pref);
+	if (r == -1) {
+		log_debug("%s: lsr-id %s: failed to decode optional params",
+		    __func__, inet_ntoa(lsr_id));
+		return;
+	}
+	if (r != len) {
+		log_debug("%s: lsr-id %s: unexpected data in message",
+		    __func__, inet_ntoa(lsr_id));
+		return;
+	}
+
+	/* implicit transport address */
+	if (!(tlvs_rcvd & F_HELLO_TLV_RCVD_ADDR))
+		trans_addr = *src;
+	if (bad_addr(af, &trans_addr)) {
+		log_debug("%s: lsr-id %s: invalid transport address %s",
+		    __func__, inet_ntoa(lsr_id), log_addr(af, &trans_addr));
+		return;
+	}
+	if (af == AF_INET6 && IN6_IS_SCOPE_EMBED(&trans_addr.v6)) {
+		/*
+	 	 * RFC 7552 - Section 6.1:
+		 * An LSR MUST use a global unicast IPv6 address in an IPv6
+		 * Transport Address optional object of outgoing targeted
+		 * Hellos and check for the same in incoming targeted Hellos
+		 * (i.e., MUST discard the targeted Hello if it failed the
+		 * check)".
+		 */
+		if (flags & TARGETED_HELLO)
+			return;
+		scope_id = iface->ifindex;
 	}
 
 	memset(&source, 0, sizeof(source));
@@ -220,41 +254,6 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 		source.type = HELLO_LINK;
 		source.link.ia = ia;
 		source.link.src_addr = *src;
-	}
-
-	r = tlv_decode_opt_hello_prms(buf, len, &tlvs_rcvd, af, &trans_addr,
-	    &conf_number, &trans_pref);
-	if (r == -1) {
-		log_debug("%s: lsr-id %s: failed to decode optional params",
-		    __func__, inet_ntoa(lsr_id));
-		return;
-	}
-	if (r != len) {
-		log_debug("%s: lsr-id %s: unexpected data in message",
-		    __func__, inet_ntoa(lsr_id));
-		return;
-	}
-
-	/* implicit transport address */
-	if (!(tlvs_rcvd & F_HELLO_TLV_RCVD_ADDR))
-		trans_addr = *src;
-	if (bad_addr(af, &trans_addr)) {
-		log_debug("%s: lsr-id %s: invalid transport address %s",
-		    __func__, inet_ntoa(lsr_id), log_addr(af, &trans_addr));
-		return;
-	}
-	if (af == AF_INET6 && IN6_IS_SCOPE_EMBED(&trans_addr.v6)) {
-		/*
-	 	 * RFC 7552 - Section 6.1:
-		 * An LSR MUST use a global unicast IPv6 address in an IPv6
-		 * Transport Address optional object of outgoing targeted
-		 * Hellos and check for the same in incoming targeted Hellos
-		 * (i.e., MUST discard the targeted Hello if it failed the
-		 * check)".
-		 */
-		if (source.type == HELLO_TARGETED)
-			return;
-		scope_id = iface->ifindex;
 	}
 
 	adj = adj_find(&source);
