@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.46 2016/05/23 19:14:03 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.47 2016/06/11 01:44:02 renato Exp $ */
 
 /*
  * Copyright (c) 2014, 2015 Renato Westphal <renato@openbsd.org>
@@ -241,11 +241,6 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 		}
 
 		memcpy(&tlv, buf, sizeof(tlv));
-		if (ntohs(tlv.length) != len - TLV_HDR_LEN) {
-			session_shutdown(nbr, S_BAD_TLV_LEN, lm.msgid,
-			    lm.type);
-			goto err;
-		}
 		buf += TLV_HDR_LEN;
 		len -= TLV_HDR_LEN;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.31 2016/06/08 22:00:12 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.32 2016/06/11 01:44:02 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -130,11 +130,6 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 		}
 
 		memcpy(&tlv, buf, sizeof(tlv));
-		if (ntohs(tlv.length) > len - TLV_HDR_LEN) {
-			session_shutdown(nbr, S_BAD_TLV_LEN, not.msgid,
-			    not.type);
-			return (-1);
-		}
 		buf += TLV_HDR_LEN;
 		len -= TLV_HDR_LEN;
 
