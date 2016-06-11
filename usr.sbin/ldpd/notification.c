@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.32 2016/06/11 01:44:02 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.33 2016/06/11 01:46:36 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -67,7 +67,7 @@ send_notification_full(struct tcp_conn *tcp, struct notify_msg *nm)
 /* send a notification without optional tlvs */
 void
 send_notification(uint32_t status, struct tcp_conn *tcp, uint32_t msgid,
-    uint32_t type)
+    uint16_t type)
 {
 	struct notify_msg	 nm;
 
@@ -81,7 +81,7 @@ send_notification(uint32_t status, struct tcp_conn *tcp, uint32_t msgid,
 
 void
 send_notification_nbr(struct nbr *nbr, uint32_t status, uint32_t msgid,
-    uint32_t type)
+    uint16_t type)
 {
 	log_debug("%s: lsr-id %s, status %s", __func__, inet_ntoa(nbr->id),
 	     notification_name(status));
