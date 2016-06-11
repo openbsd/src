@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.34 2016/06/11 01:52:33 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.35 2016/06/11 01:55:35 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -122,6 +122,7 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 	/* Optional Parameters */
 	while (len > 0) {
 		struct tlv 	tlv;
+		uint16_t	tlv_len;
 
 		if (len < sizeof(tlv)) {
 			session_shutdown(nbr, S_BAD_TLV_LEN, not.msgid,
@@ -129,9 +130,10 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 			return (-1);
 		}
 
-		memcpy(&tlv, buf, sizeof(tlv));
+		memcpy(&tlv, buf, TLV_HDR_LEN);
 		buf += TLV_HDR_LEN;
 		len -= TLV_HDR_LEN;
+		tlv_len = ntohs(tlv.length);
 
 		switch (ntohs(tlv.type)) {
 		case TLV_TYPE_EXTSTATUS:
@@ -140,7 +142,7 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 			/* TODO is there any use for this? */
 			break;
 		case TLV_TYPE_PW_STATUS:
-			if (ntohs(tlv.length) != 4) {
+			if (tlv_len != 4) {
 				session_shutdown(nbr, S_BAD_TLV_LEN,
 				    not.msgid, not.type);
 				return (-1);
@@ -151,10 +153,10 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 			break;
 		case TLV_TYPE_FEC:
 			if ((tlen = tlv_decode_fec_elm(nbr, &not, buf,
-			    ntohs(tlv.length), &nm.fec)) == -1)
+			    tlv_len, &nm.fec)) == -1)
 				return (-1);
 			/* allow only one fec element */
-			if (tlen != ntohs(tlv.length)) {
+			if (tlen != tlv_len) {
 				session_shutdown(nbr, S_BAD_TLV_VAL,
 				    not.msgid, not.type);
 				return (-1);
@@ -169,8 +171,8 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 			/* ignore unknown tlv */
 			break;
 		}
-		buf += ntohs(tlv.length);
-		len -= ntohs(tlv.length);
+		buf += tlv_len;
+		len -= tlv_len;
 	}
 
 	if (nm.status == S_PW_STATUS) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.28 2016/06/08 21:28:09 renato Exp $ */
+/*	$OpenBSD: init.c,v 1.29 2016/06/11 01:55:35 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -54,6 +54,7 @@ recv_init(struct nbr *nbr, char *buf, uint16_t len)
 	struct ldp_msg		init;
 	struct sess_prms_tlv	sess;
 	uint16_t		max_pdu_len;
+	int			r;
 
 	log_debug("%s: lsr-id %s", __func__, inet_ntoa(nbr->id));
 
@@ -88,7 +89,8 @@ recv_init(struct nbr *nbr, char *buf, uint16_t len)
 	len -= SESS_PRMS_SIZE;
 
 	/* just ignore all optional TLVs for now */
-	if (tlv_decode_opt_init_prms(buf, len) == -1) {
+	r = tlv_decode_opt_init_prms(buf, len);
+	if (r == -1 || r != len) {
 		session_shutdown(nbr, S_BAD_TLV_VAL, init.msgid, init.type);
 		return (-1);
 	}
@@ -138,8 +140,12 @@ tlv_decode_opt_init_prms(char *buf, uint16_t len)
 	int		total = 0;
 
 	 while (len >= sizeof(tlv)) {
-		memcpy(&tlv, buf, sizeof(tlv));
+		memcpy(&tlv, buf, TLV_HDR_LEN);
+		buf += TLV_HDR_LEN;
+		len -= TLV_HDR_LEN;
+		total += TLV_HDR_LEN;
 		tlv_len = ntohs(tlv.length);
+
 		switch (ntohs(tlv.type)) {
 		case TLV_TYPE_ATMSESSIONPAR:
 			log_warnx("ATM session parameter present");
@@ -153,9 +159,9 @@ tlv_decode_opt_init_prms(char *buf, uint16_t len)
 				return (-1);
 			break;
 		}
-		buf += TLV_HDR_LEN + tlv_len;
-		len -= TLV_HDR_LEN + tlv_len;
-		total += TLV_HDR_LEN + tlv_len;
+		buf += tlv_len;
+		len -= tlv_len;
+		total += tlv_len;
 	}
 
 	return (total);

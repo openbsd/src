@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.45 2016/06/09 17:26:32 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.46 2016/06/11 01:55:35 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -472,8 +472,12 @@ tlv_decode_opt_hello_prms(char *buf, uint16_t len, int *tlvs_rcvd, int af,
 	 * given address family".
 	 */
 	while (len >= sizeof(tlv)) {
-		memcpy(&tlv, buf, sizeof(tlv));
+		memcpy(&tlv, buf, TLV_HDR_LEN);
+		buf += TLV_HDR_LEN;
+		len -= TLV_HDR_LEN;
+		total += TLV_HDR_LEN;
 		tlv_len = ntohs(tlv.length);
+
 		switch (ntohs(tlv.type)) {
 		case TLV_TYPE_IPV4TRANSADDR:
 			if (tlv_len != sizeof(addr->v4))
@@ -482,7 +486,7 @@ tlv_decode_opt_hello_prms(char *buf, uint16_t len, int *tlvs_rcvd, int af,
 				return (-1);
 			if (*tlvs_rcvd & F_HELLO_TLV_RCVD_ADDR)
 				break;
-			memcpy(&addr->v4, buf + TLV_HDR_LEN, sizeof(addr->v4));
+			memcpy(&addr->v4, buf, sizeof(addr->v4));
 			*tlvs_rcvd |= F_HELLO_TLV_RCVD_ADDR;
 			break;
 		case TLV_TYPE_IPV6TRANSADDR:
@@ -492,14 +496,13 @@ tlv_decode_opt_hello_prms(char *buf, uint16_t len, int *tlvs_rcvd, int af,
 				return (-1);
 			if (*tlvs_rcvd & F_HELLO_TLV_RCVD_ADDR)
 				break;
-			memcpy(&addr->v6, buf + TLV_HDR_LEN, sizeof(addr->v6));
+			memcpy(&addr->v6, buf, sizeof(addr->v6));
 			*tlvs_rcvd |= F_HELLO_TLV_RCVD_ADDR;
 			break;
 		case TLV_TYPE_CONFIG:
 			if (tlv_len != sizeof(uint32_t))
 				return (-1);
-			memcpy(conf_number, buf + TLV_HDR_LEN,
-			    sizeof(uint32_t));
+			memcpy(conf_number, buf, sizeof(uint32_t));
 			*tlvs_rcvd |= F_HELLO_TLV_RCVD_CONF;
 			break;
 		case TLV_TYPE_DUALSTACK:
@@ -515,12 +518,11 @@ tlv_decode_opt_hello_prms(char *buf, uint16_t len, int *tlvs_rcvd, int af,
 				break;
 			/* Shame on you, Cisco! */
 			if (leconf->flags & F_LDPD_DS_CISCO_INTEROP) {
-				memcpy(trans_pref, buf + TLV_HDR_LEN +
-				    sizeof(uint16_t), sizeof(uint16_t));
+				memcpy(trans_pref, buf + sizeof(uint16_t),
+				    sizeof(uint16_t));
 				*trans_pref = ntohs(*trans_pref);
 			} else {
-				memcpy(trans_pref, buf + TLV_HDR_LEN,
-				    sizeof(uint16_t));
+				memcpy(trans_pref, buf , sizeof(uint16_t));
 				*trans_pref = ntohs(*trans_pref) >> 12;
 			}
 			*tlvs_rcvd |= F_HELLO_TLV_RCVD_DS;
@@ -531,9 +533,9 @@ tlv_decode_opt_hello_prms(char *buf, uint16_t len, int *tlvs_rcvd, int af,
 				return (-1);
 			break;
 		}
-		buf += TLV_HDR_LEN + tlv_len;
-		len -= TLV_HDR_LEN + tlv_len;
-		total += TLV_HDR_LEN + tlv_len;
+		buf += tlv_len;
+		len -= tlv_len;
+		total += tlv_len;
 	}
 
 	return (total);
