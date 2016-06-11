@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.47 2016/06/11 01:44:02 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.48 2016/06/11 01:52:33 renato Exp $ */
 
 /*
  * Copyright (c) 2014, 2015 Renato Westphal <renato@openbsd.org>
@@ -244,7 +244,7 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 		buf += TLV_HDR_LEN;
 		len -= TLV_HDR_LEN;
 
-		switch (ntohs(tlv.type) & ~UNKNOWN_FLAG) {
+		switch (ntohs(tlv.type)) {
 		case TLV_TYPE_LABELREQUEST:
 			switch (type) {
 			case MSG_TYPE_LABELMAPPING:

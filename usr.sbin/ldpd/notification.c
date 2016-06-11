@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.33 2016/06/11 01:46:36 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.34 2016/06/11 01:52:33 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -133,7 +133,7 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 		buf += TLV_HDR_LEN;
 		len -= TLV_HDR_LEN;
 
-		switch (ntohs(tlv.type) & ~UNKNOWN_FLAG) {
+		switch (ntohs(tlv.type)) {
 		case TLV_TYPE_EXTSTATUS:
 		case TLV_TYPE_RETURNEDPDU:
 		case TLV_TYPE_RETURNEDMSG:
