@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.22 2016/06/07 16:49:23 tedu Exp $
+.\" $OpenBSD: doas.conf.5,v 1.23 2016/06/11 04:52:49 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: June 7 2016 $
+.Dd $Mdocdate: June 11 2016 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -74,7 +74,7 @@ The default is all users.
 .It Ic cmd Ar command
 The command the user is allowed or denied to run.
 The default is all commands.
-Be advised that it's best to specify absolute paths.
+Be advised that it is best to specify absolute paths.
 If a cmd is specified, only a restricted
 .Ev PATH
 will be searched.
@@ -106,7 +106,7 @@ escapes the next character, including new line characters, outside comments;
 as a result, comments may not be extended over multiple lines.
 .It
 If quotes or backslashes are used in a word,
-it isn't considered a keyword.
+it is not considered a keyword.
 .El
 .Sh EXAMPLES
 The following example permits users in group wsrc to build ports,
