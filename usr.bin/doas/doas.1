@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.1,v 1.15 2015/12/08 13:39:40 sthen Exp $
+.\" $OpenBSD: doas.1,v 1.16 2016/06/11 04:38:21 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: December 8 2015 $
+.Dd $Mdocdate: June 11 2016 $
 .Dt DOAS 1
 .Os
 .Sh NAME
@@ -42,18 +42,13 @@ is specified.
 The options are as follows:
 .Bl -tag -width tenletters
 .It Fl a Ar style
-The
-.Fl a
-(authentication style) option causes
-.Nm
-to use the specified authentication style when validating the user,
+Use the specified authentication style when validating the user,
 as allowed by
 .Pa /etc/login.conf .
-The system administrator may specify a list of doas-specific
-authentication methods by adding an
+A list of doas-specific authentication methods may be configured by adding an
 .Sq auth-doas
 entry in
-.Pa /etc/login.conf .
+.Xr login.conf 5 .
 .It Fl C Ar config
 Parse and check the configuration file
 .Ar config ,
@@ -71,7 +66,7 @@ or
 .Sq deny
 will be printed on standard output, depending on command
 matching results.
-In either case, no command is executed.
+No command is executed.
 .It Fl n
 Non interactive mode, fail if
 .Nm
