@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.14 2016/04/13 11:34:00 mpi Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.15 2016/06/11 06:42:16 jsg Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -30,6 +30,7 @@
 #include <sys/mbuf.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
 #include "bpfilter.h"
 
@@ -49,6 +50,8 @@
 #include <armv7/sunxi/sunxireg.h>
 #include <armv7/sunxi/sxiccmuvar.h>
 #include <armv7/sunxi/sxipiovar.h>
+
+#include <dev/ofw/openfirm.h>
 
 /* configuration registers */
 #define	SXIE_CR			0x0000
@@ -164,6 +167,7 @@ struct sxie_softc {
 
 struct sxie_softc *sxie_sc;
 
+int	sxie_match(struct device *, void *, void *);
 void	sxie_attach(struct device *, struct device *, void *);
 void	sxie_setup_interface(struct sxie_softc *, struct device *);
 void	sxie_socware_init(struct sxie_softc *);
@@ -184,26 +188,37 @@ int	sxie_ifm_change(struct ifnet *);
 void	sxie_ifm_status(struct ifnet *, struct ifmediareq *);
 
 struct cfattach sxie_ca = {
-	sizeof (struct sxie_softc), NULL, sxie_attach
+	sizeof (struct sxie_softc), sxie_match, sxie_attach
 };
 
 struct cfdriver sxie_cd = {
 	NULL, "sxie", DV_IFNET
 };
 
-void
-sxie_attach(struct device *parent, struct device *self, void *args)
+int
+sxie_match(struct device *parent, void *match, void *aux)
 {
-	struct armv7_attach_args *aa = args;
+	struct fdt_attach_args *faa = aux;
+
+	return OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-emac");
+}
+
+void
+sxie_attach(struct device *parent, struct device *self, void *aux)
+{
 	struct sxie_softc *sc = (struct sxie_softc *) self;
+	struct fdt_attach_args *faa = aux;
 	struct mii_data *mii;
 	struct ifnet *ifp;
 	int s;
 
-	sc->sc_iot = aa->aa_iot;
+	if (faa->fa_nreg < 2 || faa->fa_nintr != 1)
+		return;
 
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
+	sc->sc_iot = faa->fa_iot;
+
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
+	    faa->fa_reg[1], 0, &sc->sc_ioh))
 		panic("sxie_attach: bus_space_map ioh failed!");
 
 	if (bus_space_map(sc->sc_iot, SID_ADDR, SID_SIZE, 0, &sc->sc_sid_ioh))
@@ -212,7 +227,7 @@ sxie_attach(struct device *parent, struct device *self, void *args)
 	sxie_socware_init(sc);
 	sc->txf_inuse = 0;
 
-	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_NET,
+	sc->sc_ih = arm_intr_establish(faa->fa_intr[0], IPL_NET,
 	    sxie_intr, sc, sc->sc_dev.dv_xname);
 
 	s = splnet();
