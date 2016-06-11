@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.18 2016/06/11 07:07:59 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.19 2016/06/11 14:26:18 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -46,7 +46,7 @@ imxdog*		at imx?			# watchdog timer
 imxocotp*	at imx?			# on-chip otp controller
 imxgpio*	at imx?			# user-visible GPIO pins?
 fec*		at imx?			# Ethernet
-imxuart*	at imx?			# onboard uarts
+imxuart*	at fdt?			# onboard uarts
 imxiic*		at fdt?			# i2c
 iic*		at imxiic?
 imxesdhc*	at fdt?			# SDHC controller

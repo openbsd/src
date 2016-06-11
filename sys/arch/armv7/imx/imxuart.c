@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.5 2016/06/08 15:27:05 jsg Exp $ */
+/* $OpenBSD: imxuart.c,v 1.6 2016/06/11 14:26:18 jsg Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -37,6 +37,7 @@
 #endif
 
 #include <machine/bus.h>
+#include <machine/fdt.h>
 #include <arm/armv7/armv7var.h>
 #include <armv7/imx/imxuartreg.h>
 #include <armv7/imx/imxuartvar.h>
@@ -45,6 +46,7 @@
 #include <armv7/imx/imxccmvar.h>
 
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/openfirm.h>
 
 #define DEVUNIT(x)      (minor(x) & 0x7f)
 #define DEVCUA(x)       (minor(x) & 0x80)
@@ -87,8 +89,8 @@ struct imxuart_softc {
 	u_int16_t		sc_ibufs[2][IMXUART_IBUFSIZE];
 };
 
-
-void    imxuartattach(struct device *parent, struct device *self, void *aux);
+int	 imxuart_match(struct device *, void *, void *);
+void	 imxuart_attach(struct device *, struct device *, void *);
 
 void imxuartcnprobe(struct consdev *cp);
 void imxuartcnprobe(struct consdev *cp);
@@ -120,7 +122,7 @@ struct cfdriver imxuart_cd = {
 };
 
 struct cfattach imxuart_ca = {
-	sizeof(struct imxuart_softc), NULL, imxuartattach
+	sizeof(struct imxuart_softc), imxuart_match, imxuart_attach
 };
 
 bus_space_tag_t	imxuartconsiot;
@@ -146,22 +148,33 @@ imxuart_init_cons(void)
 	imxuartcnattach(&armv7_bs_tag, mem.addr, comcnspeed, comcnmode);
 }
 
-void
-imxuartattach(struct device *parent, struct device *self, void *args)
+int
+imxuart_match(struct device *parent, void *match, void *aux)
 {
-	struct armv7_attach_args *aa = args;
-	struct imxuart_softc *sc = (struct imxuart_softc *) self;
+	struct fdt_attach_args *faa = aux;
 
-	sc->sc_irq = arm_intr_establish(aa->aa_dev->irq[0], IPL_TTY,
+	return OF_is_compatible(faa->fa_node, "fsl,imx21-uart");
+}
+
+void
+imxuart_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct imxuart_softc *sc = (struct imxuart_softc *) self;
+	struct fdt_attach_args *faa = aux;
+
+	if (faa->fa_nreg < 2 || faa->fa_nintr < 3)
+		return;
+
+	sc->sc_irq = arm_intr_establish(faa->fa_intr[1], IPL_TTY,
 	    imxuart_intr, sc, sc->sc_dev.dv_xname);
 
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
+	    faa->fa_reg[1], 0, &sc->sc_ioh))
 		panic("imxuartattach: bus_space_map failed!");
 
-	if (aa->aa_dev->mem[0].addr == imxuartconsaddr)
-		printf(" console");
+	if (faa->fa_reg[0] == imxuartconsaddr)
+		printf(": console");
 
 	timeout_set(&sc->sc_diag_tmo, imxuart_diag, sc);
 	timeout_set(&sc->sc_dtr_tmo, imxuart_raisedtr, sc);
