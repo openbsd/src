@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.29 2016/06/08 15:27:05 jsg Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.30 2016/06/12 01:01:12 jsg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -904,13 +904,21 @@ void *
 fdt_find_cons(const char *name)
 {
 	char *alias = "serial0";
+	char buf[128];
 	char *stdout = NULL;
+	char *p;
 	void *node;
 
 	/* First check if "stdout-path" is set. */
 	node = fdt_find_node("/chosen");
 	if (node) {
 		if (fdt_node_property(node, "stdout-path", &stdout)) {
+			if (strchr(stdout, ':') != NULL) {
+				strlcpy(buf, stdout, sizeof(buf));
+				if ((p = strchr(buf, ':')) != NULL)
+					*p = '\0';
+				stdout = buf;
+			}
 			if (stdout[0] != '/') {
 				/* It's an alias. */
 				alias = stdout;
