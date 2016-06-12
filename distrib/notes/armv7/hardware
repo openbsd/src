@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.6 2016/06/12 13:46:54 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.7 2016/06/12 13:49:37 jsg Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
     BeagleBoard, BeagleBoard xM
@@ -11,7 +11,7 @@ The following machines are targeted by OpenBSD/MACHINE:
 	Supported on-board devices:
 	  standard serial port (com)
 	  watchdog controller (omdog)
-	  ethernet controller (cpsw)
+	  Ethernet controller (cpsw)
 	  GPIO controller (omgpio)
 
     PandaBoard (ES)
@@ -25,7 +25,7 @@ The following machines are targeted by OpenBSD/MACHINE:
     	Supported on-board devices:
 	 standard serial port (com)
 	 watchdog controller (sxidog)
-	 ethernet controller (sxie)
+	 Ethernet controller (sxie)
 	 USB controller (ehci)
 	 AHCI controller (ahci)
 	 GPIO controller (sxipio)
@@ -35,7 +35,7 @@ The following machines are targeted by OpenBSD/MACHINE:
 	 standard serial port (com)
 	 USB controller (ehci)
 	 watchdog controller (imxdog)
-	 ethernet controller (fec)
+	 Ethernet controller (fec)
 	 GPIO controller (imxgpio)
 	 OTP controller (imxocotp)
 	 AHCI controller (ahci)
