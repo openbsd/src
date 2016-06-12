@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.11 2016/05/16 21:12:17 kettenis Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.12 2016/06/12 12:55:42 kettenis Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1996/09/30 16:35:10 ws Exp $	*/
 
 /*
@@ -48,6 +48,8 @@ int OF_parent(int phandle);
 int OF_instance_to_package(int ihandle);
 int OF_getproplen(int handle, char *prop);
 int OF_getprop(int handle, char *prop, void *buf, int buflen);
+uint32_t OF_getpropint(int handle, char *, uint32_t);
+int OF_getpropintarray(int, char *, uint32_t *, int);
 int OF_setprop(int, char *, const void *, int);
 int OF_nextprop(int, char *, void *);
 int OF_finddevice(char *name);

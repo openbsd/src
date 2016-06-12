@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.11 2016/06/08 15:27:05 jsg Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.12 2016/06/12 12:55:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -790,6 +790,35 @@ OF_getprop(int handle, char *prop, void *buf, int buflen)
 
 	if (len > 0)
 		memcpy(buf, data, min(len, buflen));
+	return len;
+}
+
+uint32_t
+OF_getpropint(int handle, char *prop, uint32_t defval)
+{
+	uint32_t val;
+	int len;
+	
+	len = OF_getprop(handle, prop, &val, sizeof(val));
+	if (len != sizeof(val))
+		return defval;
+
+	return betoh32(val);
+}
+
+int
+OF_getpropintarray(int handle, char *prop, uint32_t *buf, int buflen)
+{
+	int len;
+	int i;
+
+	len = OF_getprop(handle, prop, buf, buflen);
+	if (len <0 || (len % sizeof(uint32_t)))
+		return -1;
+
+	for (i = 0; i < len / sizeof(uint32_t); i++)
+		buf[i] = betoh32(buf[i]);
+
 	return len;
 }
 
