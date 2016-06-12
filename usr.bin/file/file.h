@@ -1,4 +1,4 @@
-/* $OpenBSD: file.h,v 1.29 2015/04/27 13:52:17 nicm Exp $ */
+/* $OpenBSD: file.h,v 1.30 2016/06/12 21:10:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -24,9 +24,6 @@
 
 /* User to drop privileges to in child process. */
 #define FILE_USER "_file"
-
-/* sandbox.c */
-int		 sandbox_fork(const char *);
 
 /* text.c */
 const char	*text_get_type(const void *, size_t);
