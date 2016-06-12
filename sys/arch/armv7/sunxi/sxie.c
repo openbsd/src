@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.15 2016/06/11 06:42:16 jsg Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.16 2016/06/12 06:58:39 jsg Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -210,10 +210,15 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	struct mii_data *mii;
 	struct ifnet *ifp;
-	int s;
+	int s, irq;
 
-	if (faa->fa_nreg < 2 || faa->fa_nintr != 1)
+	if (faa->fa_nreg != 2 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
 		return;
+
+	if (faa->fa_nintr == 1)
+		irq = faa->fa_intr[0];
+	else
+		irq = faa->fa_intr[1];
 
 	sc->sc_iot = faa->fa_iot;
 
@@ -227,7 +232,7 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 	sxie_socware_init(sc);
 	sc->txf_inuse = 0;
 
-	sc->sc_ih = arm_intr_establish(faa->fa_intr[0], IPL_NET,
+	sc->sc_ih = arm_intr_establish(irq, IPL_NET,
 	    sxie_intr, sc, sc->sc_dev.dv_xname);
 
 	s = splnet();

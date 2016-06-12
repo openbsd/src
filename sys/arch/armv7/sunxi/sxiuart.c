@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiuart.c,v 1.6 2016/06/11 07:07:59 jsg Exp $	*/
+/*	$OpenBSD: sxiuart.c,v 1.7 2016/06/12 06:58:39 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  * Copyright (c) 2013 Artturi Alm
@@ -173,10 +173,15 @@ sxiuart_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	int s;
+	int s, irq;
 
-	if (faa->fa_nreg < 2 || faa->fa_nintr != 1)
+	if (faa->fa_nreg != 2 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
 		return;
+
+	if (faa->fa_nintr == 1)
+		irq = faa->fa_intr[0];
+	else
+		irq = faa->fa_intr[1];
 
 	sc->sc_iot = iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
@@ -220,7 +225,7 @@ sxiuart_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SXIUART_MCR, sc->sc_mcr);
 	splx(s);
 
-	arm_intr_establish(faa->fa_intr[0], IPL_TTY,
+	arm_intr_establish(irq, IPL_TTY,
 	    sxiuart_intr, sc, sc->sc_dev.dv_xname);
 
 	printf("\n");
