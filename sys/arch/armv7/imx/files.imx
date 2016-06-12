@@ -1,4 +1,4 @@
-#	$OpenBSD: files.imx,v 1.9 2016/06/11 14:26:18 jsg Exp $
+#	$OpenBSD: files.imx,v 1.10 2016/06/12 13:02:06 kettenis Exp $
 
 define imx {}
 device imx: imx
@@ -37,7 +37,7 @@ attach	imxiic at fdt
 file	arch/armv7/imx/imxiic.c		imxiic
 
 device fec: ether, ifnet, mii, ifmedia
-attach fec at imx
+attach fec at fdt
 file	arch/armv7/imx/if_fec.c		fec
 
 attach ehci at imx with imxehci

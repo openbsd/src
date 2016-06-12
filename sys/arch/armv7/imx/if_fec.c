@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.1 2016/06/03 01:36:46 jsg Exp $ */
+/* $OpenBSD: if_fec.c,v 1.2 2016/06/12 13:02:06 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -27,6 +27,7 @@
 #include <sys/mbuf.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
 #include "bpfilter.h"
 
@@ -46,6 +47,8 @@
 #include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxgpiovar.h>
 #include <armv7/imx/imxocotpvar.h>
+
+#include <dev/ofw/openfirm.h>
 
 /* configuration registers */
 #define ENET_EIR		0x004
@@ -245,6 +248,7 @@ struct fec_softc {
 
 struct fec_softc *fec_sc;
 
+int fec_match(struct device *, void *, void *);
 void fec_attach(struct device *, struct device *, void *);
 int fec_enaddr_valid(u_char *);
 void fec_enaddr(struct fec_softc *);
@@ -270,28 +274,44 @@ int fec_dma_malloc(struct fec_softc *, bus_size_t, struct fec_dma_alloc *);
 void fec_dma_free(struct fec_softc *, struct fec_dma_alloc *);
 
 struct cfattach fec_ca = {
-	sizeof (struct fec_softc), NULL, fec_attach
+	sizeof (struct fec_softc), fec_match, fec_attach
 };
 
 struct cfdriver fec_cd = {
 	NULL, "fec", DV_IFNET
 };
 
-void
-fec_attach(struct device *parent, struct device *self, void *args)
+int
+fec_match(struct device *parent, void *match, void *aux)
 {
-	struct armv7_attach_args *aa = args;
+	struct fdt_attach_args *faa = aux;
+
+	return OF_is_compatible(faa->fa_node, "fsl,imx6q-fec");
+}
+
+void
+fec_attach(struct device *parent, struct device *self, void *aux)
+{
 	struct fec_softc *sc = (struct fec_softc *) self;
+	struct fdt_attach_args *faa = aux;
 	struct mii_data *mii;
 	struct ifnet *ifp;
 	int tsize, rsize, tbsize, rbsize, s;
+	uint32_t intr[8];
 
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
+	if (faa->fa_nreg < 2)
+		return;
+
+	if (OF_getpropintarray(faa->fa_node, "interrupts-extended",
+	    intr, sizeof(intr)) < sizeof(intr))
+		return;
+
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
+	    faa->fa_reg[1], 0, &sc->sc_ioh))
 		panic("fec_attach: bus_space_map failed!");
 
-	sc->sc_dma_tag = aa->aa_dmat;
+	sc->sc_dma_tag = faa->fa_dmat;
 
 	/* power it up */
 	imxccm_enable_enet();
@@ -358,7 +378,7 @@ fec_attach(struct device *parent, struct device *self, void *args)
 	HWRITE4(sc, ENET_EIMR, 0);
 	HWRITE4(sc, ENET_EIR, 0xffffffff);
 
-	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_NET,
+	sc->sc_ih = arm_intr_establish(intr[2], IPL_NET,
 	    fec_intr, sc, sc->sc_dev.dv_xname);
 
 	tsize = ENET_MAX_TXD * sizeof(struct fec_buf_desc);
@@ -451,7 +471,7 @@ rxdma:
 txdma:
 	fec_dma_free(sc, &sc->txdma);
 bad:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, aa->aa_dev->mem[0].size);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[1]);
 }
 
 /* Try to determine a valid hardware address */
