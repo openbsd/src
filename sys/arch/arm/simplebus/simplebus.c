@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.4 2016/06/09 12:32:42 kettenis Exp $ */
+/* $OpenBSD: simplebus.c,v 1.5 2016/06/12 13:10:06 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -100,7 +100,7 @@ simplebus_attach_node(struct device *self, int node)
 	struct simplebus_softc	*sc = (struct simplebus_softc *)self;
 	struct fdt_attach_args	 fa;
 	char			 buffer[128];
-	int			 len, i;
+	int			 len;
 
 	if (!OF_getprop(node, "compatible", buffer, sizeof(buffer)))
 		return;
@@ -120,9 +120,7 @@ simplebus_attach_node(struct device *self, int node)
 		fa.fa_reg = malloc(len, M_DEVBUF, M_WAITOK);
 		fa.fa_nreg = len / sizeof(uint32_t);
 
-		OF_getprop(node, "reg", fa.fa_reg, len);
-		for (i = 0; i < fa.fa_nreg; i++)
-			fa.fa_reg[i] = bemtoh32(&fa.fa_reg[i]);
+		OF_getpropintarray(node, "reg", fa.fa_reg, len);
 	}
 
 	len = OF_getproplen(node, "interrupts");
@@ -130,9 +128,7 @@ simplebus_attach_node(struct device *self, int node)
 		fa.fa_intr = malloc(len, M_DEVBUF, M_WAITOK);
 		fa.fa_nintr = len / sizeof(uint32_t);
 
-		OF_getprop(node, "interrupts", fa.fa_intr, len);
-		for (i = 0; i < fa.fa_nintr; i++)
-			fa.fa_intr[i] = bemtoh32(&fa.fa_intr[i]);
+		OF_getpropintarray(node, "interrupts", fa.fa_intr, len);
 	}
 
 	/* TODO: attach the device's clocks first? */
