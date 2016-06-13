@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.12 2010/12/21 14:56:24 claudio Exp $	*/
+/*	$OpenBSD: intr.h,v 1.13 2016/06/13 23:51:59 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
 #ifndef _LOCORE
 int	getipl(void);
 int	setipl(int level);
-int	raiseipl(int level);
+int	splraise(int);
 int	spl0(void);
 
 /* SPL asserts */
@@ -92,15 +92,15 @@ void splassert_check(int, const char *);
 
 #endif /* _LOCORE */
 
-#define splsoftclock()		raiseipl(IPL_SOFTINT)
-#define splsoftnet()		raiseipl(IPL_SOFTINT)
-#define splbio()		raiseipl(IPL_BIO)
-#define splnet()		raiseipl(IPL_NET)
-#define spltty()		raiseipl(IPL_TTY)
-#define splclock()		raiseipl(IPL_CLOCK)
-#define splstatclock()		raiseipl(IPL_STATCLOCK)
-#define	splsched()		raiseipl(IPL_SCHED)
-#define splvm()			raiseipl(IPL_VM)
+#define splsoftclock()		splraise(IPL_SOFTINT)
+#define splsoftnet()		splraise(IPL_SOFTINT)
+#define splbio()		splraise(IPL_BIO)
+#define splnet()		splraise(IPL_NET)
+#define spltty()		splraise(IPL_TTY)
+#define splclock()		splraise(IPL_CLOCK)
+#define splstatclock()		splraise(IPL_STATCLOCK)
+#define	splsched()		splraise(IPL_SCHED)
+#define splvm()			splraise(IPL_VM)
 #define splhigh()		setipl(IPL_HIGH)
 
 #define	spllock()		splhigh()

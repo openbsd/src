@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.118 2015/10/21 07:59:18 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.119 2016/06/13 23:51:58 dlg Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1261,7 +1261,7 @@ setipl(int level)
 }
 
 int
-raiseipl(int level)
+splraise(int level)
 {
 	u_int curspl, psr;
 #ifdef MULTIPROCESSOR

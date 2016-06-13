@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.5 2015/03/03 23:50:36 aoyama Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.6 2016/06/13 23:51:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -252,7 +252,7 @@ cbus_isrdispatch(int intlevel)
 		return;
 	}
 
-	s = raiseipl(ci->isr_ipl);	/* splraise() */
+	s = splraise(ci->isr_ipl);
 	rc = ci->isr_func(ci->isr_arg);
 	splx(s);
 
