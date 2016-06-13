@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.151 2016/06/12 21:42:47 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.152 2016/06/13 21:24:43 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1199,7 +1199,7 @@ somove(struct socket *so, int wait)
 		goto release;
 	}
 	if (sosp->so_error && sosp->so_error != ETIMEDOUT &&
-	    sosp->so_error != EFBIG) {
+	    sosp->so_error != EFBIG && sosp->so_error != ELOOP) {
 		error = sosp->so_error;
 		goto release;
 	}
@@ -1255,6 +1255,15 @@ somove(struct socket *so, int wait)
 			(so->so_proto->pr_usrreq)(so, PRU_RCVD, NULL,
 			    NULL, NULL, NULL);
 		goto nextpkt;
+	}
+
+	/*
+	 * By splicing sockets connected to localhost, userland might create a
+	 * loop.  Dissolve splicing with error if loop is detected by counter.
+	 */
+	if ((m->m_flags & M_PKTHDR) && m->m_pkthdr.ph_loopcnt++ >= M_MAXLOOP) {
+		error = ELOOP;
+		goto release;
 	}
 
 	if (so->so_proto->pr_flags & PR_ATOMIC) {

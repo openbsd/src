@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sosplice.9,v 1.7 2013/07/17 20:21:55 schwarze Exp $
+.\"	$OpenBSD: sosplice.9,v 1.8 2016/06/13 21:24:43 bluhm Exp $
 .\"
 .\" Copyright (c) 2011-2013 Alexander Bluhm <bluhm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: June 13 2016 $
 .Dt SOSPLICE 9
 .Os
 .Sh NAME
@@ -105,7 +105,7 @@ It must be called at
 .Xr splsoftnet 9
 and
 .Fa so
-must be a spliced drain socket.
+must be a spliced source socket.
 It may be necessary to split an mbuf to handle out-of-band data
 inline or when the maximum splice length has been reached.
 If
@@ -138,6 +138,8 @@ The data length to move is limited by the optional maximum splice
 length and the space in the drain's send socket buffer.
 Up to this amount of data is taken out of the source's receive
 socket buffer.
+To avoid splicing loops created by userland, the number of times
+an mbuf may be moved between sockets is limited to 128.
 .Pp
 For atomic protocols, either one complete packet is taken out, or
 nothing is taken at all if:

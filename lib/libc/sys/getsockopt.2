@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.49 2015/09/04 19:12:31 bluhm Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.50 2016/06/13 21:24:43 bluhm Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: September 4 2015 $
+.Dd $Mdocdate: June 13 2016 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -409,6 +409,10 @@ When one of the sockets gets closed, splicing ends.
 The error status can be examined with
 .Dv SO_ERROR
 at the source socket.
+The
+.Er ELOOP
+error is set if userland created a loop by splicing sockets connected
+to localhost.
 The
 .Er ETIMEDOUT
 error is set if there was no data transferred between two sockets
