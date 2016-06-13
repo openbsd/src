@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.45 2015/09/13 20:37:28 kettenis Exp $ */
+/* $OpenBSD: intr.h,v 1.46 2016/06/13 01:26:14 dlg Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -169,23 +169,23 @@ void splassert_check(int, const char *);
     ((s) == ALPHA_PSL_IPL_0 ? spl0() : alpha_pal_swpipl(s))
 
 /* IPL-raising functions/macros */
-int _splraise(int);
+int splraise(int);
 
-#define splsoft()		_splraise(IPL_SOFTINT)
+#define splsoft()		splraise(IPL_SOFTINT)
 #define splsoftserial()		splsoft()
 #define splsoftclock()		splsoft()
 #define splsoftnet()		splsoft()
-#define splnet()		_splraise(IPL_NET)
-#define splbio()		_splraise(IPL_BIO)
-#define spltty()		_splraise(IPL_TTY)
-#define splserial()		_splraise(IPL_SERIAL)
-#define splaudio()		_splraise(IPL_AUDIO)
-#define splvm()			_splraise(IPL_VM)
-#define splclock()		_splraise(IPL_CLOCK)
-#define splstatclock()		_splraise(IPL_CLOCK)
-#define splsched()		_splraise(IPL_SCHED)
-#define splipi()		_splraise(IPL_IPI)
-#define splhigh()		_splraise(IPL_HIGH)
+#define splnet()		splraise(IPL_NET)
+#define splbio()		splraise(IPL_BIO)
+#define spltty()		splraise(IPL_TTY)
+#define splserial()		splraise(IPL_SERIAL)
+#define splaudio()		splraise(IPL_AUDIO)
+#define splvm()			splraise(IPL_VM)
+#define splclock()		splraise(IPL_CLOCK)
+#define splstatclock()		splraise(IPL_CLOCK)
+#define splsched()		splraise(IPL_SCHED)
+#define splipi()		splraise(IPL_IPI)
+#define splhigh()		splraise(IPL_HIGH)
 
 #define spllock()		splhigh()
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.15 2015/09/21 05:38:58 guenther Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.16 2016/06/13 01:26:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -58,7 +58,7 @@ mtx_enter_try(struct mutex *mtx)
 	int s;
 
 	if (mtx->mtx_wantipl != IPL_NONE)
-		s = _splraise(mtx->mtx_wantipl);
+		s = splraise(mtx->mtx_wantipl);
 
 	owner = atomic_cas_ptr(&mtx->mtx_owner, NULL, ci);
 #ifdef DIAGNOSTIC
@@ -91,7 +91,7 @@ mtx_enter(struct mutex *mtx)
 		panic("mtx %p: locking against myself", mtx);
 #endif
 	if (mtx->mtx_wantipl != IPL_NONE)
-		mtx->mtx_oldipl = _splraise(mtx->mtx_wantipl);
+		mtx->mtx_oldipl = splraise(mtx->mtx_wantipl);
 
 	mtx->mtx_owner = ci;
 
