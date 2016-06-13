@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.169 2016/04/29 14:40:36 beck Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.170 2016/06/13 19:00:22 tedu Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2562,7 +2562,7 @@ nfs_lookitup(struct vnode *dvp, char *name, int len, struct ucred *cred,
 	struct vnode *newvp = NULL;
 	struct nfsnode *np, *dnp = VTONFS(dvp);
 	caddr_t cp2;
-	int error = 0, fhlen, attrflag;
+	int error = 0, fhlen, attrflag = 0;
 	nfsfh_t *nfhp;
 
 	info.nmi_v3 = NFS_ISV3(dvp);
