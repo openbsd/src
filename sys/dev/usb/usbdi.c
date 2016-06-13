@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.83 2015/07/10 15:47:48 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.84 2016/06/13 11:04:44 mglocker Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -80,7 +80,7 @@ usbd_ref_incr(struct usbd_device *dev)
 void
 usbd_ref_decr(struct usbd_device *dev)
 {
-	if (--dev->ref_cnt == 0 && dev->dying)
+	if (--dev->ref_cnt == 0)
 		wakeup(&dev->ref_cnt);
 }
 
