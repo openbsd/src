@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.72 2016/05/23 19:20:55 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.73 2016/06/13 20:19:40 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -41,6 +41,8 @@ static void		 nbr_ktimer(int, short, void *);
 static void		 nbr_start_ktimer(struct nbr *);
 static void		 nbr_ktimeout(int, short, void *);
 static void		 nbr_start_ktimeout(struct nbr *);
+static void		 nbr_itimeout(int, short, void *);
+static void		 nbr_start_itimeout(struct nbr *);
 static void		 nbr_idtimer(int, short, void *);
 static int		 nbr_act_session_operational(struct nbr *);
 static void		 nbr_send_labelmappings(struct nbr *);
@@ -164,6 +166,11 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		}
 	}
 
+	if (nbr->state == NBR_STA_OPER || nbr->state == NBR_STA_PRESENT)
+		nbr_stop_itimeout(nbr);
+	else
+		nbr_start_itimeout(nbr);
+
 	switch (nbr_fsm_tbl[i].action) {
 	case NBR_ACT_RST_KTIMEOUT:
 		nbr_start_ktimeout(nbr);
@@ -259,6 +266,7 @@ nbr_new(struct in_addr id, int af, int ds_tlv, union ldpd_addr *addr,
 	/* set event structures */
 	evtimer_set(&nbr->keepalive_timeout, nbr_ktimeout, nbr);
 	evtimer_set(&nbr->keepalive_timer, nbr_ktimer, nbr);
+	evtimer_set(&nbr->init_timeout, nbr_itimeout, nbr);
 	evtimer_set(&nbr->initdelay_timer, nbr_idtimer, nbr);
 
 	nbrp = nbr_params_find(leconf, nbr->id);
@@ -286,6 +294,7 @@ nbr_del(struct nbr *nbr)
 		event_del(&nbr->ev_connect);
 	nbr_stop_ktimer(nbr);
 	nbr_stop_ktimeout(nbr);
+	nbr_stop_itimeout(nbr);
 	nbr_stop_idtimer(nbr);
 
 	mapping_list_clr(&nbr->mapping_list);
@@ -428,6 +437,37 @@ nbr_stop_ktimeout(struct nbr *nbr)
 {
 	if (evtimer_pending(&nbr->keepalive_timeout, NULL) &&
 	    evtimer_del(&nbr->keepalive_timeout) == -1)
+		fatal(__func__);
+}
+
+/* Session initialization timeout: if nbr got stuck in the initialization FSM */
+
+static void
+nbr_itimeout(int fd, short event, void *arg)
+{
+	struct nbr *nbr = arg;
+
+	log_debug("%s: lsr-id %s", __func__, inet_ntoa(nbr->id));
+
+	nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
+}
+
+static void
+nbr_start_itimeout(struct nbr *nbr)
+{
+	struct timeval	 tv;
+
+	timerclear(&tv);
+	tv.tv_sec = DEFAULT_KEEPALIVE;
+	if (evtimer_add(&nbr->init_timeout, &tv) == -1)
+		fatal(__func__);
+}
+
+void
+nbr_stop_itimeout(struct nbr *nbr)
+{
+	if (evtimer_pending(&nbr->init_timeout, NULL) &&
+	    evtimer_del(&nbr->init_timeout) == -1)
 		fatal(__func__);
 }
 
