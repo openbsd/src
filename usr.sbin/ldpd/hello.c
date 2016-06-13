@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.47 2016/06/11 02:06:46 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.48 2016/06/13 20:13:34 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -139,7 +139,7 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
     uint16_t len)
 {
 	struct adj		*adj = NULL;
-	struct nbr		*nbr;
+	struct nbr		*nbr, *nbrt;
 	uint16_t		 holdtime, flags;
 	int			 tlvs_rcvd;
 	int			 ds_tlv;
@@ -201,14 +201,18 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 	if (af == AF_INET6 && IN6_IS_SCOPE_EMBED(&trans_addr.v6)) {
 		/*
 	 	 * RFC 7552 - Section 6.1:
-		 * An LSR MUST use a global unicast IPv6 address in an IPv6
+		 * "An LSR MUST use a global unicast IPv6 address in an IPv6
 		 * Transport Address optional object of outgoing targeted
 		 * Hellos and check for the same in incoming targeted Hellos
 		 * (i.e., MUST discard the targeted Hello if it failed the
 		 * check)".
 		 */
-		if (flags & TARGETED_HELLO)
+		if (flags & TARGETED_HELLO) {
+			log_debug("%s: lsr-id %s: invalid targeted hello "
+			    "transport address %s", __func__, inet_ntoa(lsr_id),
+			     log_addr(af, &trans_addr));
 			return;
+		}
 		scope_id = iface->ifindex;
 	}
 
@@ -282,6 +286,55 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 		return;
 	}
 
+	/*
+	 * Check for noncompliant dual-stack neighbor according to
+	 * RFC 7552 section 6.1.1.
+	 */
+	if (nbr && !ds_tlv) {
+		switch (af) {
+		case AF_INET:
+			if (nbr_adj_count(nbr, AF_INET6) > 0) {
+				session_shutdown(nbr, S_DS_NONCMPLNCE,
+				    lm->msgid, lm->type);
+				return;
+			}
+			break;
+		case AF_INET6:
+			if (nbr_adj_count(nbr, AF_INET) > 0) {
+				session_shutdown(nbr, S_DS_NONCMPLNCE,
+				    lm->msgid, lm->type);
+				return;
+			}
+			break;
+		default:
+			fatalx("recv_hello: unknown af");
+		}
+	}
+
+	/*
+	 * Protections against misconfigured networks and buggy implementations.
+	 */
+	if (nbr && nbr->af == af &&
+	    (ldp_addrcmp(af, &nbr->raddr, &trans_addr) ||
+	    nbr->raddr_scope != scope_id)) {
+		log_warnx("%s: lsr-id %s: hello packet advertising a different "
+		    "transport address", __func__, inet_ntoa(lsr_id));
+		if (adj)
+			adj_del(adj, 0, 0);
+		return;
+	}
+	if (nbr == NULL) {
+		nbrt = nbr_find_addr(af, &trans_addr);
+		if (nbrt) {
+			log_debug("%s: transport address %s is already being "
+			    "used by lsr-id %s", __func__, log_addr(af,
+			    &trans_addr), inet_ntoa(nbrt->id));
+			if (adj)
+				adj_del(adj, 0, 0);
+			return;
+		}
+	}
+
 	if (adj == NULL) {
 		adj = adj_new(lsr_id, &source, &trans_addr);
 		if (nbr) {
@@ -290,65 +343,15 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 		}
 	}
 
-	if (nbr == NULL) {
-		/*
-		 * The hello adjacency's address-family doesn't match the local
-		 * preference.
-		 */
-		if (ds_tlv &&
-		    ((trans_pref == DUAL_STACK_LDPOV4 && af != AF_INET) ||
-		    (trans_pref == DUAL_STACK_LDPOV6 && af != AF_INET6)))
-			return;
-
-		nbr = nbr_find_addr(af, &trans_addr);
-		if (nbr) {
-			log_debug("%s: transport address %s is already being "
-			    "used by lsr-id %s", __func__, log_addr(af,
-			    &trans_addr), inet_ntoa(nbr->id));
-			return;
-		}
-
-		/* create new adjacency and new neighbor */
+	/*
+	 * If the hello adjacency's address-family doesn't match the local
+	 * preference, then an adjacency is still created but we don't attempt
+	 * to start an LDP session.
+	 */
+	if (nbr == NULL && (!ds_tlv ||
+	    ((trans_pref == DUAL_STACK_LDPOV4 && af != AF_INET) ||
+	    (trans_pref == DUAL_STACK_LDPOV6 && af != AF_INET6))))
 		nbr = nbr_new(lsr_id, af, ds_tlv, &trans_addr, scope_id);
-	} else {
-		/*
-		 * Check for noncompliant dual-stack neighbor according to
-		 * RFC 7552 section 6.1.1.
-		 */
-		if (!ds_tlv) {
-			switch (af) {
-			case AF_INET:
-				if (nbr_adj_count(nbr, AF_INET6) > 0) {
-					session_shutdown(nbr, S_DS_NONCMPLNCE,
-					    lm->msgid, lm->type);
-					return;
-				}
-				break;
-			case AF_INET6:
-				if (nbr_adj_count(nbr, AF_INET) > 0) {
-					session_shutdown(nbr, S_DS_NONCMPLNCE,
-					    lm->msgid, lm->type);
-					return;
-				}
-				break;
-			default:
-				fatalx("recv_hello: unknown af");
-			}
-		}
-
-		/*
-		 * Protection against misconfigured networks and buggy
-		 * implementations.
-		 */
-		if (af == nbr->af &&
-		    (ldp_addrcmp(af, &nbr->raddr, &trans_addr) ||
-		    nbr->raddr_scope != scope_id)) {
-			log_warnx("%s: lsr-id %s: ignoring hello packet "
-			    "advertising different transport address", __func__,
-			    inet_ntoa(lsr_id));
-			return;
-		}
-	}
 
 	/* always update the holdtime to properly handle runtime changes */
 	switch (source.type) {
@@ -369,8 +372,8 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 	else
 		adj_stop_itimer(adj);
 
-	if (nbr->state == NBR_STA_PRESENT && nbr_session_active_role(nbr) &&
-	    !nbr_pending_connect(nbr) && !nbr_pending_idtimer(nbr))
+	if (nbr && nbr->state == NBR_STA_PRESENT && !nbr_pending_idtimer(nbr) &&
+	    nbr_session_active_role(nbr) && !nbr_pending_connect(nbr))
 		nbr_establish_connection(nbr);
 }
 

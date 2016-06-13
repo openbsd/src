@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.23 2016/06/09 17:26:32 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.24 2016/06/13 20:13:34 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2015 Renato Westphal <renato@openbsd.org>
@@ -70,6 +70,9 @@ adj_new(struct in_addr lsr_id, struct hello_source *source,
 void
 adj_del(struct adj *adj, int send_notif, uint32_t notif_status)
 {
+	struct nbr	*nbr = adj->nbr;
+	struct adj	*atmp;
+
 	log_debug("%s: lsr-id %s, %s", __func__, inet_ntoa(adj->lsr_id),
 	    log_hello_src(&adj->source));
 
@@ -80,15 +83,24 @@ adj_del(struct adj *adj, int send_notif, uint32_t notif_status)
 		LIST_REMOVE(adj, nbr_entry);
 	if (adj->source.type == HELLO_LINK)
 		LIST_REMOVE(adj, ia_entry);
+	free(adj);
 
 	/* last adjacency deleted */
-	if (adj->nbr && LIST_EMPTY(&adj->nbr->adj_list)) {
+	if (nbr && LIST_EMPTY(&nbr->adj_list)) {
 		if (send_notif)
-			session_shutdown(adj->nbr, notif_status, 0, 0);
-		nbr_del(adj->nbr);
+			session_shutdown(nbr, notif_status, 0, 0);
+		nbr_del(nbr);
+		nbr = NULL;
 	}
 
-	free(adj);
+	/*
+	 * If the neighbor still exists but none of its remaining adjacencies
+	 * are from the preferred address-family, then delete it.
+	 */
+	if (nbr && nbr_adj_count(nbr, nbr->af) == 0) {
+		LIST_FOREACH_SAFE(adj, &nbr->adj_list, nbr_entry, atmp)
+			adj_del(adj, 0, 0);
+	}
 }
 
 struct adj *
