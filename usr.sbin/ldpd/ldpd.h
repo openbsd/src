@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.76 2016/05/23 19:20:55 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.77 2016/06/13 23:01:37 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -396,6 +396,7 @@ struct ldpd_global {
 	time_t			 uptime;
 	struct ldpd_af_global	 ipv4;
 	struct ldpd_af_global	 ipv6;
+	uint32_t		 conf_seqnum;
 	int			 pfkeysock;
 	struct if_addr_head	 addr_list;
 	LIST_HEAD(, adj)	 adj_list;

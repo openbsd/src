@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.48 2016/06/13 20:13:34 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.49 2016/06/13 23:01:37 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -88,6 +88,7 @@ send_hello(enum hello_type type, struct iface_af *ia, struct tnbr *tnbr)
 	default:
 		fatalx("send_hello: unknown af");
 	}
+	size += sizeof(struct hello_prms_opt4_tlv);
 	if (ldp_is_dual_stack(leconf))
 		size += sizeof(struct hello_prms_opt4_tlv);
 
@@ -119,6 +120,9 @@ send_hello(enum hello_type type, struct iface_af *ia, struct tnbr *tnbr)
 		fatalx("send_hello: unknown af");
 	}
 
+	gen_opt4_hello_prms_tlv(buf, TLV_TYPE_CONFIG,
+	    htonl(global.conf_seqnum));
+
    	/*
 	 * RFC 7552 - Section 6.1.1:
 	 * "A Dual-stack LSR (i.e., an LSR supporting Dual-stack LDP for a peer)
@@ -145,7 +149,7 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 	int			 ds_tlv;
 	union ldpd_addr		 trans_addr;
 	uint32_t		 scope_id = 0;
-	uint32_t		 conf_number;
+	uint32_t		 conf_seqnum;
 	uint16_t		 trans_pref;
 	int			 r;
 	struct hello_source	 source;
@@ -178,7 +182,7 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 	len -= r;
 
 	r = tlv_decode_opt_hello_prms(buf, len, &tlvs_rcvd, af, &trans_addr,
-	    &conf_number, &trans_pref);
+	    &conf_seqnum, &trans_pref);
 	if (r == -1) {
 		log_debug("%s: lsr-id %s: failed to decode optional params",
 		    __func__, inet_ntoa(lsr_id));
@@ -352,6 +356,14 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 	    ((trans_pref == DUAL_STACK_LDPOV4 && af != AF_INET) ||
 	    (trans_pref == DUAL_STACK_LDPOV6 && af != AF_INET6))))
 		nbr = nbr_new(lsr_id, af, ds_tlv, &trans_addr, scope_id);
+
+	/* update neighbor's configuration sequence number */
+	if (nbr && (tlvs_rcvd & F_HELLO_TLV_RCVD_CONF)) {
+		if (conf_seqnum > nbr->conf_seqnum &&
+		    nbr_pending_idtimer(nbr))
+			nbr_stop_idtimer(nbr);
+		nbr->conf_seqnum = conf_seqnum;
+	}
 
 	/* always update the holdtime to properly handle runtime changes */
 	switch (source.type) {

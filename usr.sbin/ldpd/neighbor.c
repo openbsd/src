@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.73 2016/06/13 20:19:40 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.74 2016/06/13 23:01:37 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -244,6 +244,7 @@ nbr_new(struct in_addr id, int af, int ds_tlv, union ldpd_addr *addr,
 	nbr->laddr = (ldp_af_conf_get(leconf, af))->trans_addr;
 	nbr->raddr = *addr;
 	nbr->raddr_scope = scope_id;
+	nbr->conf_seqnum = 0;
 
 	LIST_FOREACH(adj, &global.adj_list, global_entry) {
 		if (adj->lsr_id.s_addr == nbr->id.s_addr) {

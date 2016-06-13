@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.60 2016/06/13 20:19:40 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.61 2016/06/13 23:01:37 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -89,6 +89,7 @@ struct nbr {
 	time_t			 uptime;
 	int			 fd;
 	int			 state;
+	uint32_t		 conf_seqnum;
 	int			 idtimer_cnt;
 	uint16_t		 keepalive;
 	uint16_t		 max_pdu_len;
