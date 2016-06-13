@@ -1,4 +1,4 @@
-/* $OpenBSD: imxdog.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
+/* $OpenBSD: imxdog.c,v 1.3 2016/06/13 23:43:58 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -23,8 +23,13 @@
 #include <sys/evcount.h>
 #include <sys/socket.h>
 #include <sys/timeout.h>
+
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/fdt.h>
+
+#include <dev/ofw/openfirm.h>
+
 #include <armv7/armv7/armv7var.h>
 
 /* registers */
@@ -42,26 +47,38 @@ struct imxdog_softc {
 
 struct imxdog_softc *imxdog_sc;
 
-void imxdog_attach(struct device *parent, struct device *self, void *args);
-void imxdog_reset(void);
+int	imxdog_match(struct device *, void *, void *);
+void	imxdog_attach(struct device *, struct device *, void *);
+void	imxdog_reset(void);
 
 struct cfattach	imxdog_ca = {
-	sizeof (struct imxdog_softc), NULL, imxdog_attach
+	sizeof (struct imxdog_softc), imxdog_match, imxdog_attach
 };
 
 struct cfdriver imxdog_cd = {
 	NULL, "imxdog", DV_DULL
 };
 
-void
-imxdog_attach(struct device *parent, struct device *self, void *args)
+int
+imxdog_match(struct device *parent, void *match, void *aux)
 {
-	struct armv7_attach_args *aa = args;
+	struct fdt_attach_args *faa = aux;
+
+	return OF_is_compatible(faa->fa_node, "fsl,imx21-wdt");
+}
+
+void
+imxdog_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
 	struct imxdog_softc *sc = (struct imxdog_softc *) self;
 
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
+	if (faa->fa_nreg < 2)
+		return;
+
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
+	    faa->fa_reg[1], 0, &sc->sc_ioh))
 		panic("imxdog_attach: bus_space_map failed!");
 
 	printf("\n");
