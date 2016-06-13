@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.57 2016/03/20 02:29:51 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.58 2016/06/13 04:59:56 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -574,7 +574,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	/* mprotect the GOT */
 	got_addr = _dl_protect_segment(object, 0, "__got_start", "__got_end",
 	    PROT_READ|prot_exec);
-	if (got_addr != NULL)
+	if (prot_exec != 0 && got_addr != NULL)
 		_dl_syncicache(got_addr, 4);
 
 	/* mprotect the PLT */
