@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.4 2016/06/13 19:45:07 mglocker Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.5 2016/06/13 19:50:07 mglocker Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -875,12 +875,14 @@ int
 utvfu_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
-	struct usb_descriptor const *ud;
+	const struct usb_descriptor *ud;
 	struct usbd_desc_iter iter;
 	struct usb_interface_descriptor *uid = NULL;
+	const struct usb_endpoint_descriptor *ued = NULL;
 	usb_device_descriptor_t *dd;
 	int ret = UMATCH_NONE;
 	int nep, nalt;
+	uint16_t psize = 0;
 
 	if (uaa->iface == NULL)
 		return ret;
@@ -896,6 +898,8 @@ utvfu_match(struct device *parent, void *match, void *aux)
 	 * setting 1 has four endpoints.
 	 *
 	 * Comment says "Checks that the device is what we think it is."
+	 *
+	 * Adding check that wMaxPacketSize for the video endpoint is > 0.
 	 */
 	nep = nalt = 0;
 	usbd_desc_iter_init(uaa->device, &iter);
@@ -909,15 +913,19 @@ utvfu_match(struct device *parent, void *match, void *aux)
 				nalt++;
 			break;
 		case UDESC_ENDPOINT:
-			if (uid->bAlternateSetting == 1)
+			if (uid->bAlternateSetting == 1) {
+				ued = (void *)ud;
+				if (ued->bEndpointAddress == UTVFU_VIDEO_ENDP)
+					psize = UGETW(ued->wMaxPacketSize);
 				nep++;
+			}
 			break;
 		}
 		if (uid != NULL && uid->bInterfaceNumber > 0)
 			break;
 	}
 
-	if (nalt != 2 || nep != 4)
+	if (nalt != 2 || nep != 4 || psize == 0)
 		ret = UMATCH_NONE;
 
 	return (ret);
