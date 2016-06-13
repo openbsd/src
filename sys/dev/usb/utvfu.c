@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.5 2016/06/13 19:50:07 mglocker Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.6 2016/06/13 19:52:21 mglocker Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -102,8 +102,6 @@ utvfu_set_regs(struct utvfu_softc *sc, const uint16_t regs[][2], int size)
 	usbd_status error;
 	usb_device_request_t req;
 
-	DPRINTF(1, "%s: %s: size=%d enter\n", DEVNAME(sc), __func__, size);
-
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = UTVFU_REQUEST_REG;
 	USETW(req.wLength, 0);
@@ -119,8 +117,6 @@ utvfu_set_regs(struct utvfu_softc *sc, const uint16_t regs[][2], int size)
 			return (EINVAL);
 		}
 	}
-
-	DPRINTF(1, "%s: %s: exit OK\n", DEVNAME(sc), __func__);
 
 	return (0);
 }
@@ -1011,31 +1007,34 @@ utvfu_parse_desc(struct utvfu_softc *sc)
 		if (uid->bAlternateSetting == 1)
 			break;
 	}
-	if (uid == NULL || uid->bInterfaceNumber != 0 ||
-	    uid->bAlternateSetting != 1)
-		goto bad;
 
-	/* now looking for endpoint with maximum bandwidth */
+	/* this should not fail as it was ensured during match */
+	if (uid == NULL || uid->bInterfaceNumber != 0 ||
+	    uid->bAlternateSetting != 1) {
+		printf("%s: no valid alternate interface found!\n",
+		    DEVNAME(sc));
+		return (USBD_INVAL);
+	}
+
+	/* bInterfaceNumber = 0 */
+	sc->sc_uifaceh = &sc->sc_udev->ifaces[0];
+
+	/* looking for video endpoint to on alternate setting 1 */
 	while ((ud = usbd_desc_iter_next(&iter)) != NULL) {
 		if (ud->bDescriptorType != UDESC_ENDPOINT)
 			break;
 
 		ued = (void *)ud;
+		if (ued->bEndpointAddress != UTVFU_VIDEO_ENDP)
+			continue;
+
 		psize = UGETW(ued->wMaxPacketSize);
 		psize = UE_GET_SIZE(psize) * (1 + UE_GET_TRANS(psize));
-		if (psize > sc->sc_iface.psize) {
-			/* bInterfaceNumber = 0 */
-			sc->sc_uifaceh = &sc->sc_udev->ifaces[0];
-			sc->sc_iface.endpoint = ued->bEndpointAddress;
-			sc->sc_iface.psize = psize;
-		}
+		sc->sc_iface.psize = psize;
+		break;
 	}
 
-	if (sc->sc_uifaceh != NULL)
-		return (USBD_NORMAL_COMPLETION);
-bad:
-	printf("%s: no valid alternate interface found!\n", DEVNAME(sc));
-	return (USBD_INVAL);
+	return (USBD_NORMAL_COMPLETION);
 }
 
 int
@@ -1091,8 +1090,7 @@ utvfu_as_open(struct utvfu_softc *sc)
 		return (USBD_INVAL);
 	}
 
-	ed = usbd_get_endpoint_descriptor(sc->sc_uifaceh,
-	    UTVFU_AUDIO_ENDP);
+	ed = usbd_get_endpoint_descriptor(sc->sc_uifaceh, UTVFU_AUDIO_ENDP);
 	if (ed == NULL) {
 		printf("%s: no endpoint descriptor for AS iface\n",
 		    DEVNAME(sc));
@@ -1104,7 +1102,8 @@ utvfu_as_open(struct utvfu_softc *sc)
 	    UE_GET_ADDR(ed->bEndpointAddress),
 	    UTVFU_AUDIO_ENDP,
 	    UGETW(ed->wMaxPacketSize),
-	    sc->sc_iface.psize);
+	    UE_GET_SIZE(UGETW(ed->wMaxPacketSize))
+	    * (1 + UE_GET_TRANS(UGETW(ed->wMaxPacketSize))));
 
 	error = usbd_open_pipe(
 	    sc->sc_uifaceh,
@@ -1133,8 +1132,7 @@ utvfu_vs_open(struct utvfu_softc *sc)
 		return (USBD_INVAL);
 	}
 
-	ed = usbd_get_endpoint_descriptor(sc->sc_uifaceh,
-	    sc->sc_iface.endpoint);
+	ed = usbd_get_endpoint_descriptor(sc->sc_uifaceh, UTVFU_VIDEO_ENDP);
 	if (ed == NULL) {
 		printf("%s: no endpoint descriptor for VS iface\n",
 		    DEVNAME(sc));
@@ -1144,13 +1142,13 @@ utvfu_vs_open(struct utvfu_softc *sc)
 	DPRINTF(1, "bEndpointAddress=0x%02x (0x%02x), wMaxPacketSize="
 	    "0x%04x (%d)\n",
 	    UE_GET_ADDR(ed->bEndpointAddress),
-	    sc->sc_iface.endpoint,
+	    UTVFU_VIDEO_ENDP,
 	    UGETW(ed->wMaxPacketSize),
 	    sc->sc_iface.psize);
 
 	error = usbd_open_pipe(
 	    sc->sc_uifaceh,
-	    sc->sc_iface.endpoint,
+	    UTVFU_VIDEO_ENDP,
 	    USBD_EXCLUSIVE_USE,
 	    &sc->sc_iface.pipeh);
 	if (error != USBD_NORMAL_COMPLETION) {
@@ -1639,6 +1637,8 @@ utvfu_vs_free_isoc(struct utvfu_softc *sc)
 void
 utvfu_as_free_bulk(struct utvfu_softc *sc)
 {
+	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
+
 	if (sc->sc_audio.iface.xfer != NULL) {
 		usbd_free_xfer(sc->sc_audio.iface.xfer);
 		sc->sc_audio.iface.xfer = NULL;

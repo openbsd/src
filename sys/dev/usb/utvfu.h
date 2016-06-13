@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.h,v 1.2 2016/06/13 19:45:07 mglocker Exp $ */
+/*	$OpenBSD: utvfu.h,v 1.3 2016/06/13 19:52:21 mglocker Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * All rights reserved.
@@ -113,14 +113,12 @@ struct utvfu_isoc_xfer {
 
 struct utvfu_vs_iface {
 	struct usbd_pipe	*pipeh;
-	int			endpoint;
 	uint32_t		psize;
 	struct utvfu_isoc_xfer	ixfer[UTVFU_ISOC_TRANSFERS];
 };
 
 struct utvfu_as_iface {
 	struct usbd_pipe	*pipeh;
-	int			endpoint;
 	struct usbd_xfer	*xfer;
 };
 
