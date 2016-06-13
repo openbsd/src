@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.21 2016/06/09 15:38:30 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.22 2016/06/13 12:24:05 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -176,6 +176,7 @@ struct imxesdhc_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
 	void			*sc_ih; /* Interrupt handler */
+	int			sc_node;
 	u_int sc_flags;
 
 	int unit;			/* unit id */
@@ -291,11 +292,13 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 	struct sdmmcbus_attach_args saa;
 	int error = 1;
 	uint32_t caps;
+	uint32_t width;
 
 	if (faa->fa_nreg < 2 || faa->fa_nintr < 3)
 		return;
 
 	sc->unit = (faa->fa_reg[0] & 0xc000) >> 14;
+	sc->sc_node = faa->fa_node;
 	sc->sc_dmat = faa->fa_dmat;
 	sc->sc_iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
@@ -412,13 +415,18 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 	saa.saa_busname = "sdmmc";
 	saa.sct = &imxesdhc_functions;
 	saa.sch = sc;
-	saa.caps = SMC_CAPS_4BIT_MODE;
 	saa.dmat = sc->sc_dmat;
 	if (ISSET(sc->flags, SHF_USE_DMA))
 		saa.caps |= SMC_CAPS_DMA;
 	
 	if (caps & SDHC_HOST_CTRL_CAP_HSS)
 		saa.caps |= SMC_CAPS_MMC_HIGHSPEED;
+
+	width = OF_getpropint(sc->sc_node, "bus-width", 1);
+	if (width >= 8)
+		saa.caps |= SMC_CAPS_8BIT_MODE;
+	if (width >= 4)
+		saa.caps |= SMC_CAPS_4BIT_MODE;
 
 	sc->sdmmc = config_found(&sc->sc_dev, &saa, NULL);
 	if (sc->sdmmc == NULL) {
