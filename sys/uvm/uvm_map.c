@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.215 2016/06/05 08:35:57 stefan Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.216 2016/06/13 17:14:09 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1357,7 +1357,10 @@ unlock:
 	 * uvm_map_mkentry may also create dead entries, when it attempts to
 	 * destroy free-space entries.
 	 */
-	uvm_unmap_detach(&dead, 0);
+	if (map->flags & VM_MAP_INTRSAFE)
+		uvm_unmap_detach_intrsafe(&dead);
+	else
+		uvm_unmap_detach(&dead, 0);
 out:
 	if (new)
 		uvm_mapent_free(new);
