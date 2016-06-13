@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.127 2016/04/18 06:43:51 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.128 2016/06/13 10:34:40 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -83,9 +83,8 @@
 
 
 void in_socktrim(struct sockaddr_in *);
-void in_len2mask(struct in_addr *, int);
-int in_lifaddr_ioctl(struct socket *, u_long, caddr_t,
-	struct ifnet *);
+int in_lifaddr_ioctl(u_long, caddr_t, struct ifnet *, int);
+int in_ioctl(u_long, caddr_t, struct ifnet *, int);
 
 void in_purgeaddr(struct ifaddr *);
 int in_addhost(struct in_ifaddr *, struct sockaddr_in *);
@@ -172,14 +171,11 @@ in_len2mask(struct in_addr *mask, int len)
 int
 in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 {
-	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa;
-	struct in_ifaddr *ia = NULL;
-	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
-	struct sockaddr_in oldaddr;
-	int error;
-	int newifaddr;
-	int s;
+	int privileged;
+
+	privileged = 0;
+	if ((so->so_state & SS_PRIV) != 0)
+		privileged++;
 
 	switch (cmd) {
 #ifdef MROUTING
@@ -189,17 +185,32 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 #endif /* MROUTING */
 	case SIOCALIFADDR:
 	case SIOCDLIFADDR:
-		if ((so->so_state & SS_PRIV) == 0)
+		if (!privileged)
 			return (EPERM);
 		/* FALLTHROUGH */
 	case SIOCGLIFADDR:
 		if (ifp == NULL)
 			return (EINVAL);
-		return in_lifaddr_ioctl(so, cmd, data, ifp);
+		return in_lifaddr_ioctl(cmd, data, ifp, privileged);
 	default:
 		if (ifp == NULL)
 			return (EOPNOTSUPP);
 	}
+
+	return (in_ioctl(cmd, data, ifp, privileged));
+}
+
+int
+in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
+{
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifaddr *ifa;
+	struct in_ifaddr *ia = NULL;
+	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
+	struct sockaddr_in oldaddr;
+	int error;
+	int newifaddr;
+	int s;
 
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
@@ -225,7 +236,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 			return (EADDRNOTAVAIL);
 		/* FALLTHROUGH */
 	case SIOCSIFADDR:
-		if ((so->so_state & SS_PRIV) == 0)
+		if (!privileged)
 			return (EPERM);
 
 		if (ia == NULL) {
@@ -250,7 +261,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 	case SIOCSIFNETMASK:
 	case SIOCSIFDSTADDR:
 	case SIOCSIFBRDADDR:
-		if ((so->so_state & SS_PRIV) == 0)
+		if (!privileged)
 			return (EPERM);
 		/* FALLTHROUGH */
 
@@ -410,8 +421,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
  *	other values may be returned from in_ioctl()
  */
 int
-in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
-    struct ifnet *ifp)
+in_lifaddr_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 {
 	struct if_laddrreq *iflr = (struct if_laddrreq *)data;
 	struct ifaddr *ifa;
@@ -481,7 +491,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 		ifra.ifra_mask.sin_len = sizeof(struct sockaddr_in);
 		in_len2mask(&ifra.ifra_mask.sin_addr, iflr->prefixlen);
 
-		return in_control(so, SIOCAIFADDR, (caddr_t)&ifra, ifp);
+		return in_ioctl(SIOCAIFADDR, (caddr_t)&ifra, ifp, privileged);
 	    }
 	case SIOCGLIFADDR:
 	case SIOCDLIFADDR:
@@ -566,7 +576,8 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 			memcpy(&ifra.ifra_dstaddr, &ia->ia_sockmask,
 			    ia->ia_sockmask.sin_len);
 
-			return in_control(so, SIOCDIFADDR, (caddr_t)&ifra, ifp);
+			return in_ioctl(SIOCDIFADDR, (caddr_t)&ifra, ifp,
+			    privileged);
 		}
 	    }
 	}
