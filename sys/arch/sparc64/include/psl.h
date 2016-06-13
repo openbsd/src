@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.30 2016/06/07 06:37:33 dlg Exp $	*/
+/*	$OpenBSD: psl.h,v 1.31 2016/06/13 01:08:13 dlg Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -317,156 +317,39 @@ stxa_sync(u_int64_t va, u_int64_t asi, u_int64_t val)
 	intr_restore(s);
 }
 
-/*
- * GCC pseudo-functions for manipulating PIL
- */
-
-#ifdef SPLDEBUG
-void prom_printf(const char *fmt, ...);
-extern int printspl;
-#define SPLPRINT(x)	if(printspl) { int i=10000000; prom_printf x ; while(i--); }
-#define	SPL(name, newpil)						\
-extern __inline int name##X(const char *, int);				\
-extern __inline int name##X(const char *file, int line)			\
-{									\
-	u_int64_t oldpil = sparc_rdpr(pil);				\
-	SPLPRINT(("{%s:%d %d=>%d}", file, line, oldpil, newpil));	\
-	sparc_wrpr(pil, newpil, 0);					\
-	return (oldpil);						\
-}
-/* A non-priority-decreasing version of SPL */
-#define	SPLHOLD(name, newpil) \
-extern __inline int name##X(const char *, int);				\
-extern __inline int name##X(const char * file, int line)		\
-{									\
-	int oldpil = sparc_rdpr(pil);					\
-	if (__predict_false((u_int64_t)newpil <= oldpil))		\
-		return (oldpil);					\
-	SPLPRINT(("{%s:%d %d->!d}", file, line, oldpil, newpil));	\
-	sparc_wrpr(pil, newpil, 0);					\
-	return (oldpil);						\
-}
-
-#else
-#define SPLPRINT(x)	
-#define	SPL(name, newpil)						\
-extern __inline int name(void);						\
-extern __inline int name()						\
-{									\
-	int oldpil;							\
-	__asm volatile("    rdpr %%pil, %0		\n"		\
-			 "    wrpr %%g0, %1, %%pil	\n"		\
-	    : "=&r" (oldpil)						\
-	    : "n" (newpil)						\
-	    : "%g0");							\
-	__asm volatile("" : : : "memory");				\
-	return (oldpil);						\
-}
-/* A non-priority-decreasing version of SPL */
-#define	SPLHOLD(name, newpil)						\
-extern __inline int name(void);						\
-extern __inline int name()						\
-{									\
-	int oldpil;							\
-									\
-	if (newpil <= 1) {						\
-		__asm volatile("    rdpr	%%pil, %0	\n"	\
-				 "    brnz,pn	%0, 1f		\n"	\
-				 "     nop			\n"	\
-				 "    wrpr	%%g0, %1, %%pil	\n"	\
-				 "1:				\n"	\
-	    : "=&r" (oldpil)						\
-	    : "I" (newpil)						\
-	    : "%g0");							\
-	} else {							\
-		__asm volatile("    rdpr	%%pil, %0	\n"	\
-				 "    cmp	%0, %1 - 1	\n"	\
-				 "    bgu,pn	%%xcc, 1f	\n"	\
-				 "     nop			\n"	\
-				 "    wrpr	%%g0, %1, %%pil	\n"	\
-				 "1:				\n"	\
-	    : "=&r" (oldpil)						\
-	    : "I" (newpil)						\
-	    : "cc");							\
-	}								\
-	__asm volatile("" : : : "memory");				\
-	return (oldpil);						\
-}
-#endif
-
-SPL(spl0, 0)
-
-SPLHOLD(splsoftint, 1)
-#define	splsoftclock	splsoftint
-#define	splsoftnet	splsoftint
-
-/* Block devices */
-SPLHOLD(splbio, PIL_BIO)
-
-/* network hardware interrupts are at level 6 */
-SPLHOLD(splnet, PIL_NET)
-
-/* tty input runs at software level 6 */
-SPLHOLD(spltty, PIL_TTY)
-
-/*
- * Memory allocation (must be as high as highest network, tty, or disk device)
- */
-SPLHOLD(splvm, PIL_VM)
-
-SPLHOLD(splclock, PIL_CLOCK)
-
-/* fd hardware interrupts are at level 11 */
-SPLHOLD(splfd, PIL_FD)
-
-/* zs hardware interrupts are at level 12 */
-SPLHOLD(splzs, PIL_SER)
-SPLHOLD(splserial, PIL_SER)
-
-/* audio hardware interrupts are at level 13 */
-SPLHOLD(splaudio, PIL_AUD)
-
-/* second sparc timer interrupts at level 14 */
-SPLHOLD(splstatclock, PIL_STATCLOCK)
-
-SPLHOLD(splsched, PIL_SCHED)
-SPLHOLD(spllock, PIL_LOCK)
-
-SPLHOLD(splhigh, PIL_HIGH)
-
-/* splx does not have a return value */
-#ifdef SPLDEBUG
-
-#define	spl0()		spl0X(__FILE__, __LINE__)
-#define	splsoftint()	splsoftintX(__FILE__, __LINE__)
-#define	splbio()	splbioX(__FILE__, __LINE__)
-#define	splnet()	splnetX(__FILE__, __LINE__)
-#define	spltty()	splttyX(__FILE__, __LINE__)
-#define	splvm()		splvmX(__FILE__, __LINE__)
-#define	splclock()	splclockX(__FILE__, __LINE__)
-#define	splfd()		splfdX(__FILE__, __LINE__)
-#define	splzs()		splzsX(__FILE__, __LINE__)
-#define	splserial()	splzerialX(__FILE__, __LINE__)
-#define	splaudio()	splaudioX(__FILE__, __LINE__)
-#define	splstatclock()	splstatclockX(__FILE__, __LINE__)
-#define	splsched()	splschedX(__FILE__, __LINE__)
-#define	spllock()	spllockX(__FILE__, __LINE__)
-#define	splhigh()	splhighX(__FILE__, __LINE__)
-#define splx(x)		splxX((x),__FILE__, __LINE__)
-
-extern __inline void splxX(u_int64_t, const char *, int);
-extern __inline void
-splxX(u_int64_t newpil, const char *file, int line)
-#else
-extern __inline void splx(int newpil)
-#endif
+static inline int
+_spl(int newipl)
 {
-#ifdef SPLDEBUG
-	u_int64_t oldpil = sparc_rdpr(pil);
-	SPLPRINT(("{%d->%d}", oldpil, newpil));
-#endif
+	int oldpil;
+
+	__asm volatile(	"    rdpr %%pil, %0		\n"
+			"    wrpr %%g0, %1, %%pil	\n"
+	    : "=&r" (oldpil)
+	    : "I" (newipl)
+	    : "%g0");
+	__asm volatile("" : : : "memory");
+
+	return (oldpil);
+}
+
+/* A non-priority-decreasing version of SPL */
+static inline int
+_splraise(int newpil)
+{
+	int oldpil;
+
+	oldpil = sparc_rdpr(pil);
+	if (newpil > oldpil)
+		sparc_wrpr(pil, newpil, 0);
+        return (oldpil);
+}
+
+static inline void
+_splx(int newpil)
+{
 	sparc_wrpr(pil, newpil, 0);
 }
+
 #endif /* KERNEL && !_LOCORE */
 
 #endif /* _SPARC64_PSL_ */

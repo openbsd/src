@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.54 2015/09/27 11:29:20 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.55 2016/06/13 01:08:13 dlg Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -311,6 +311,12 @@ intr_establish(int level, struct intrhand *ih)
 #endif
 
 	splx(s);
+}
+
+int
+splraise(int ipl)
+{
+	return (_splraise(ipl));
 }
 
 void

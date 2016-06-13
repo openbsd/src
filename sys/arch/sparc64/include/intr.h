@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.18 2015/09/27 11:29:20 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.19 2016/06/13 01:08:13 dlg Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
@@ -83,8 +83,29 @@ void    intr_establish(int, struct intrhand *);
 #define	IPL_STATCLOCK	PIL_STATCLOCK	/* statclock */
 #define	IPL_HIGH	PIL_HIGH	/* everything */
 
+#define spl0()		_spl(IPL_NONE)
+#define splsoftint()	_splraise(IPL_SOFTINT)
+#define splsoftclock()	_splraise(IPL_SOFTCLOCK)
+#define splsoftnet()	_splraise(IPL_SOFTNET)
+#define splbio()	_splraise(IPL_BIO)
+#define splnet()	_splraise(IPL_NET)
+#define splsofttty()	_splraise(IPL_SOFTTTY)
+#define spltty()	_splraise(IPL_TTY)
+#define splvm()		_splraise(IPL_VM)
+#define splaudio()	_splraise(IPL_AUDIO)
+#define splclock()	_splraise(IPL_CLOCK)
+#define splserial()	_splraise(IPL_SERIAL)
+#define splsched()	_splraise(IPL_SCHED)
+#define spllock()	_splraise(IPL_LOCK)
+#define splstatclock()	_splraise(IPL_STATCLOCK)
+#define splhigh()	_splraise(IPL_HIGH)
+#define splx(_oldipl)	_splx(_oldipl)
+
+#define splzs()		splserial()
+
 #define	IPL_MPSAFE	0x100
 
+int	 splraise(int);
 void	 intr_barrier(void *);
 
 void	*softintr_establish(int, void (*)(void *), void *);
