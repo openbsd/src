@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.3 2016/06/02 17:39:37 mglocker Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.4 2016/06/13 19:45:07 mglocker Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -456,9 +456,11 @@ int
 utvfu_start_capture(struct utvfu_softc *sc)
 {
 	usbd_status error;
+	int restart_au;
 
 	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
 
+	restart_au = ISSET(sc->sc_flags, UTVFU_FLAG_AS_RUNNING);
 	utvfu_audio_stop(sc);
 
 	/* default video stream interface */
@@ -474,7 +476,8 @@ utvfu_start_capture(struct utvfu_softc *sc)
 	if (error != USBD_NORMAL_COMPLETION)
 		return (EINVAL);
 
-	utvfu_audio_start(sc);
+	if (restart_au)
+		utvfu_audio_start(sc);
 
 	return (0);
 }
@@ -790,10 +793,6 @@ int		utvfu_audio_trigger_input(void *, void *, void *, int,
 void		utvfu_audio_get_default_params(void *, int,
 		    struct audio_params *);
 
-#define	UTVFU_AUDIO_HAS_CLIENT(sc)	((sc)->sc_flags & UTVFU_FLAG_AUDIO_CLI)
-#define	UTVFU_VIDEO_HAS_CLIENT(sc)	((sc)->sc_flags & UTVFU_FLAG_VIDEO_CLI)
-
-
 struct cfdriver utvfu_cd = {
 	NULL, "utvfu", DV_DULL
 };
@@ -974,9 +973,10 @@ utvfu_detach(struct device *self, int flags)
 	if (sc->sc_audiodev != NULL)
 		rv += config_detach(sc->sc_audiodev, flags);
 
-	sc->sc_flags = 0;
 	utvfu_as_free(sc);
 	utvfu_vs_free(sc);
+
+	sc->sc_flags = 0;
 
 	return (rv);
 }
@@ -1042,7 +1042,7 @@ utvfu_open(void *addr, int flags, int *size, uint8_t *buffer,
 	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
-	if ((rv = utvfu_vs_init(sc)) != 0 || (rv = utvfu_as_init(sc)) != 0)
+	if ((rv = utvfu_vs_init(sc)) != 0)
 		return (rv);
 
 	/* pointers to upper video layer */
@@ -1051,7 +1051,6 @@ utvfu_open(void *addr, int flags, int *size, uint8_t *buffer,
 	sc->sc_uplayer_fbuffer = buffer;
 	sc->sc_uplayer_intr = intr;
 
-	sc->sc_flags |= UTVFU_FLAG_VIDEO_CLI;
 	sc->sc_flags &= ~UTVFU_FLAG_MMAP;
 
 	return (0);
@@ -1066,10 +1065,6 @@ utvfu_close(void *addr)
 
 	/* free & clean up video stream */
 	utvfu_vs_free(sc);
-	sc->sc_flags &= ~UTVFU_FLAG_VIDEO_CLI;
-
-	if (!UTVFU_AUDIO_HAS_CLIENT(sc))
-		utvfu_as_free(sc);
 
 	return (0);
 }
@@ -1161,8 +1156,15 @@ utvfu_vs_open(struct utvfu_softc *sc)
 void
 utvfu_as_close(struct utvfu_softc *sc)
 {
+	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
+
+	CLR(sc->sc_flags, UTVFU_FLAG_AS_RUNNING);
+
 	if (sc->sc_audio.iface.pipeh != NULL) {
 		usbd_abort_pipe(sc->sc_audio.iface.pipeh);
+
+		tsleep(&sc->sc_flags, 0, "audioclose", hz/2+1);
+
 		usbd_close_pipe(sc->sc_audio.iface.pipeh);
 		sc->sc_audio.iface.pipeh = NULL;
 	}
@@ -1205,15 +1207,15 @@ utvfu_as_start_bulk(struct utvfu_softc *sc)
 {
 	int error;
 
-	if (sc->sc_as_running == 1)
+	if (ISSET(sc->sc_flags, UTVFU_FLAG_AS_RUNNING))
 		return (0);
 	if (sc->sc_audio.iface.pipeh == NULL)
 		return (ENXIO);
 
-	sc->sc_as_running = 1;
+	SET(sc->sc_flags, UTVFU_FLAG_AS_RUNNING);
 	error = kthread_create(utvfu_as_bulk_thread, sc, NULL, DEVNAME(sc));
 	if (error) {
-		sc->sc_as_running = 0;
+		CLR(sc->sc_flags, UTVFU_FLAG_AS_RUNNING);
 		printf("%s: can't create kernel thread!", DEVNAME(sc));
 	}
 
@@ -1228,8 +1230,10 @@ utvfu_as_bulk_thread(void *arg)
 	usbd_status error;
 	uint32_t actlen;
 
+	DPRINTF(1, "%s %s\n", DEVNAME(sc), __func__);
+
 	iface = &sc->sc_audio.iface;
-	while (sc->sc_as_running) {
+	while (ISSET(sc->sc_flags, UTVFU_FLAG_AS_RUNNING)) {
 		usbd_setup_xfer(
 		    iface->xfer,
 		    iface->pipeh,
@@ -1240,6 +1244,7 @@ utvfu_as_bulk_thread(void *arg)
 		    0,
 		    NULL);
 		error = usbd_transfer(iface->xfer);
+
 		if (error != USBD_NORMAL_COMPLETION) {
 			DPRINTF(1, "%s: error in bulk xfer: %s!\n",
 			    DEVNAME(sc), usbd_errstr(error));
@@ -1250,14 +1255,13 @@ utvfu_as_bulk_thread(void *arg)
 		    NULL);
 		DPRINTF(2, "%s: *** buffer len = %d\n", DEVNAME(sc), actlen);
 
-		if (UTVFU_AUDIO_HAS_CLIENT(sc)) {
-			rw_enter_read(&sc->sc_audio.rwlock);
-			utvfu_audio_decode(sc, actlen);
-			rw_exit_read(&sc->sc_audio.rwlock);
-		}
+		rw_enter_read(&sc->sc_audio.rwlock);
+		utvfu_audio_decode(sc, actlen);
+		rw_exit_read(&sc->sc_audio.rwlock);
 	}
 
-	sc->sc_as_running = 0;
+	CLR(sc->sc_flags, UTVFU_FLAG_AS_RUNNING);
+	wakeup(&sc->sc_flags);
 
 	DPRINTF(1, "%s %s: exiting\n", DEVNAME(sc), __func__);
 
@@ -1451,8 +1455,6 @@ utvfu_start_read(void *v)
 void
 utvfu_audio_clear_client(struct utvfu_softc *sc)
 {
-	sc->sc_flags &= ~UTVFU_FLAG_AUDIO_CLI;
-
 	rw_enter_write(&sc->sc_audio.rwlock);
 
 	sc->sc_audio.intr = NULL;
@@ -1855,7 +1857,7 @@ utvfu_audio_open(void *v, int flags)
 	if ((flags & FWRITE))
 		return (ENXIO);
 
-	if (UTVFU_AUDIO_HAS_CLIENT(sc))
+	if (ISSET(sc->sc_flags, UTVFU_FLAG_AS_RUNNING))
 		return (EBUSY);
 
 	return utvfu_as_init(sc);
@@ -1866,10 +1868,9 @@ utvfu_audio_close(void *v)
 {
 	struct utvfu_softc *sc = v;
 
-	/* Leave the audio thread running if video is streaming */
-	if (!UTVFU_VIDEO_HAS_CLIENT(sc))
-		utvfu_as_free(sc);
+	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
 
+	utvfu_audio_stop(sc);
 	utvfu_audio_clear_client(sc);
 }
 
@@ -1937,9 +1938,7 @@ utvfu_audio_halt_in(void *v)
 
 	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
 
-	if (!UTVFU_VIDEO_HAS_CLIENT(sc))
-		utvfu_audio_stop(sc);
-
+	utvfu_audio_stop(sc);
 	utvfu_audio_clear_client(sc);
 
 	return (0);
@@ -2069,8 +2068,6 @@ utvfu_audio_trigger_input(void *v, void *start, void *end, int blksize,
 
 	rw_exit_write(&sc->sc_audio.rwlock);
 
-	sc->sc_flags |= UTVFU_FLAG_AUDIO_CLI;
-
 	DPRINTF(1, "%s %s: start=%p end=%p diff=%lu blksize=%d\n",
 	    DEVNAME(sc), __func__, start, end,
 	    ((u_char *)end - (u_char *)start), blksize);
@@ -2081,11 +2078,15 @@ utvfu_audio_trigger_input(void *v, void *start, void *end, int blksize,
 int
 utvfu_audio_start(struct utvfu_softc *sc)
 {
-	if (sc->sc_as_running == 1)
+	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
+
+	if (ISSET(sc->sc_flags, UTVFU_FLAG_AS_RUNNING))
 		return (0);
 
 	utvfu_audio_start_chip(sc);
 
+	if (utvfu_as_init(sc) != 0)
+		return (ENOMEM);
 	if (sc->sc_audio.iface.pipeh == NULL) {
 		if (utvfu_as_open(sc) != USBD_NORMAL_COMPLETION)
 			return (ENOMEM);
@@ -2097,9 +2098,10 @@ utvfu_audio_start(struct utvfu_softc *sc)
 int
 utvfu_audio_stop(struct utvfu_softc *sc)
 {
-	if (sc->sc_as_running == 1) {
-		utvfu_audio_stop_chip(sc);
-		utvfu_as_close(sc);
-	}
+	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
+
+	utvfu_audio_stop_chip(sc);
+	utvfu_as_free(sc);
+
 	return (0);
 }

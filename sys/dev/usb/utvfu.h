@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.h,v 1.1 2016/06/01 09:48:20 mglocker Exp $ */
+/*	$OpenBSD: utvfu.h,v 1.2 2016/06/13 19:45:07 mglocker Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * All rights reserved.
@@ -145,10 +145,9 @@ struct utvfu_softc {
 	struct device		*sc_audiodev;
 	struct device		*sc_videodev;
 
-#define UTVFU_FLAG_MMAP		0x01
-#define UTVFU_FLAG_AUDIO_CLI	0x02
-#define UTVFU_FLAG_VIDEO_CLI	0x04
 	int			sc_flags;
+#define UTVFU_FLAG_MMAP		0x01
+#define UTVFU_FLAG_AS_RUNNING	0x02
 
 	int			sc_normi;
 	int			sc_nchunks;
@@ -159,7 +158,6 @@ struct utvfu_softc {
 	struct utvfu_vs_iface	sc_iface;
 	struct utvfu_frame_buf	sc_fb;
 
-	int			sc_as_running;
 	struct utvfu_audio_chan	sc_audio;
 
 	/* mmap */
