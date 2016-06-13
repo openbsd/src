@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.73 2016/01/09 04:14:42 jcs Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.74 2016/06/13 10:15:03 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -96,8 +96,7 @@ void uhidev_attach(struct device *, struct device *, void *);
 int uhidev_detach(struct device *, int);
 int uhidev_activate(struct device *, int);
 
-void uhidev_get_report_async_cb(struct usbd_xfer *xfer, void *priv,
-    usbd_status status);
+void uhidev_get_report_async_cb(struct usbd_xfer *, void *, usbd_status);
 
 struct cfdriver uhidev_cd = {
 	NULL, "uhidev", DV_DULL
@@ -754,17 +753,19 @@ uhidev_get_report_async_cb(struct usbd_xfer *xfer, void *priv, usbd_status err)
 	char *buf;
 	int len = -1;
 
-	if (err == USBD_NORMAL_COMPLETION || err == USBD_SHORT_XFER) {
-		len = xfer->actlen;
-		buf = KERNADDR(&xfer->dmabuf, 0);
-		if (info->id > 0) {
-			len--;
-			memcpy(info->data, buf + 1, len);
-		} else {
-			memcpy(info->data, buf, len);
+	if (!usbd_is_dying(xfer->pipe->device)) {
+		if (err == USBD_NORMAL_COMPLETION || err == USBD_SHORT_XFER) {
+			len = xfer->actlen;
+			buf = KERNADDR(&xfer->dmabuf, 0);
+			if (info->id > 0) {
+				len--;
+				memcpy(info->data, buf + 1, len);
+			} else {
+				memcpy(info->data, buf, len);
+			}
 		}
+		info->callback(info->priv, info->id, info->data, len);
 	}
-	info->callback(info->priv, info->id, info->data, len);
 	free(info, M_TEMP, sizeof(*info));
 	usbd_free_xfer(xfer);
 }
