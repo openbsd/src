@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.220 2016/06/01 16:51:54 tb Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.221 2016/06/13 09:54:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -218,6 +218,9 @@ main(int argc, char *argv[])
 
 	if (op == EDIT || op == EDITOR || aflag) {
 		if (pledge("stdio rpath wpath cpath disklabel proc exec", NULL) == -1)
+			err(1, "pledge");
+	} else if (fstabfile) {
+		if (pledge("stdio rpath wpath cpath disklabel", NULL) == -1)
 			err(1, "pledge");
 	} else {
 		if (pledge("stdio rpath wpath disklabel", NULL) == -1)
