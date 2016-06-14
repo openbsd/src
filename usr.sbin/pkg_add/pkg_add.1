@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.136 2016/06/14 13:02:35 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.137 2016/06/14 15:41:31 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -70,7 +70,7 @@ option
 .Pp
 In a hurry, a new package can be installed using
 .Sq Nm Fl U Ar package ,
-which updates dependencies and then installs the new 
+which updates dependencies and then installs the new
 .Ar package .
 .Pp
 Details of packing-list internals are documented in
@@ -171,9 +171,9 @@ options
 .Pp
 For instance
 .Sq Nm Ar screen
-is ambiguous as it matches 
+is ambiguous as it matches
 .Ar screen-4.03p6
-and 
+and
 .Ar screen-4.03p6-shm .
 .Pp
 To avoid ambiguities,
@@ -187,6 +187,23 @@ For instance, the previous ambiguity could be resolved by using
 or
 .Sq Nm Ar screen--shm
 (matches only the shm flavor).
+.Pp
+There is also an ambiguity related to ports with multiple branches.
+For instance
+.Sq Nm Ar python
+is ambiguous, as there are several versions of python in the ports tree.
+So is
+.Sq Nm Ar postfix .
+The special form
+.Sq Ar pkgname Ns % Ns Ar branch
+can be used to restrict matches to a branch matching the
+.Xr pkgpath 7 .
+.Pp
+The above ambiguities can be resolved using
+.Sq Nm Ar postfix Ns % Ns Ar stable
+and
+.Sq Nm Ar python Ns % Ns Ar 3.4 ,
+respectively.
 .Pp
 All paths recognize special sequences
 .Sq %a ,
@@ -202,7 +219,7 @@ The following examples are valid:
 .Bd -literal -offset indent
 pkg_add -v http://ftp.openbsd.org/%m/rsync--
 pkg_add -v http://ftp.openbsd.org/%m/m4
-pkg_add -v scp://login@host/usr/ports/packages/%a/all/tcl-8.5.18.tgz
+pkg_add -v scp://login@host/usr/ports/packages/%a/all/tcl%8.5
 .Ed
 .Pp
 If the environment variable

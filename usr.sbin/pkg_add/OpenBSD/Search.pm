@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.28 2014/01/31 10:30:48 espie Exp $
+# $OpenBSD: Search.pm,v 1.29 2016/06/14 15:41:31 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -91,8 +91,17 @@ our @ISA=(qw(OpenBSD::Search));
 sub new
 {
 	my ($class, $stem) = @_;
+	if ($stem =~ m/^(.*)\%(.*)/) {
+		return ($class->_new($1), 
+		    OpenBSD::Search::FilterLocation->match_partialpath($2));
+	} else {
+		return $class->_new($stem);
+	}
+}
 
-	my $flavors;
+sub _new
+{
+	my ($class, $stem) = @_;
 
 	if ($stem =~ m/^(.*)\-\-(.*)/) {
 		# XXX
@@ -249,6 +258,33 @@ sub {
 	my $largest = [];
 	push @$largest, map {@$_} values %$h;
 	return $largest;
+}
+	);
+}
+
+sub match_partialpath
+{
+	my ($class, $subdir) = @_;
+	return $class->new(
+sub {
+	my $l = shift;
+	if (@$l == 0) {
+		return $l;
+	}
+	my @l2 = ();
+	for my $loc (@$l) {
+		if (!$loc) {
+			next;
+		}
+		my $p2 = $loc->update_info;
+		if (!$p2) {
+			next;
+		}
+		if ($p2->pkgpath->partial_match($subdir)) {
+			push(@l2, $loc);
+		}
+	}
+	return \@l2;
 }
 	);
 }

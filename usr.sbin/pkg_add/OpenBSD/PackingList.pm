@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.135 2014/10/13 12:44:16 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.136 2016/06/14 15:41:31 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -59,6 +59,15 @@ sub match
 		if ($i->match($f)) {
 			return 1;
 		}
+	}
+	return 0;
+}
+
+sub partial_match
+{
+	my ($h, $subdir) = @_;
+	for my $dir (keys %$h) {
+		return 1 if $dir =~ m/\b\Q$subdir\E\b/;
 	}
 	return 0;
 }
