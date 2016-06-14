@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.191 2016/06/14 09:44:41 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.192 2016/06/14 09:48:52 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1186,9 +1186,8 @@ rt_ifmsg(struct ifnet *ifp)
  * copies of it.
  */
 void
-rt_sendaddrmsg(struct rtentry *rt, int cmd)
+rt_sendaddrmsg(struct rtentry *rt, int cmd, struct ifaddr *ifa)
 {
-	struct ifaddr		*ifa = rt->rt_ifa;
 	struct ifnet		*ifp = ifa->ifa_ifp;
 	struct mbuf		*m = NULL;
 	struct rt_addrinfo	 info;

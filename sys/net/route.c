@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.308 2016/06/14 09:44:41 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.309 2016/06/14 09:48:52 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1279,7 +1279,7 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 		 * userland that a new address has been added.
 		 */
 		if (flags & RTF_LOCAL)
-			rt_sendaddrmsg(rt, RTM_NEWADDR);
+			rt_sendaddrmsg(rt, RTM_NEWADDR, ifa);
 		rt_sendmsg(rt, RTM_ADD, rtableid);
 		rtfree(rt);
 	}
@@ -1335,7 +1335,7 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	if (error == 0) {
 		rt_sendmsg(rt, RTM_DELETE, rtableid);
 		if (flags & RTF_LOCAL)
-			rt_sendaddrmsg(rt, RTM_DELADDR);
+			rt_sendaddrmsg(rt, RTM_DELADDR, ifa);
 		rtfree(rt);
 	}
 	if (m != NULL)
