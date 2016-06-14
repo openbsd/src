@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.214 2016/06/10 20:33:29 vgross Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.215 2016/06/14 09:44:41 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -389,7 +389,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 			rt->rt_expire = time_uptime;
 			if (la->la_asked++ < arp_maxtries)
 				arprequest(ifp,
-				    &satosin(rt->rt_ifa->ifa_addr)->sin_addr.s_addr,
+				    &satosin(rt->rt_addr)->sin_addr.s_addr,
 				    &satosin(dst)->sin_addr.s_addr,
 				    ac->ac_enaddr);
 			else {

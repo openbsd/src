@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.307 2016/06/08 13:26:06 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.308 2016/06/14 09:44:41 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -139,6 +139,8 @@
 #include <net/if_enc.h>
 #endif
 
+#define ROUNDUP(a) (a>0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+
 /* Give some jitter to hash, to avoid synchronization between routers. */
 static uint32_t		rt_hashjitter;
 
@@ -151,6 +153,7 @@ struct pool		rtentry_pool;	/* pool for rtentry structures */
 struct pool		rttimer_pool;	/* pool for rttimer structures */
 
 void	rt_timer_init(void);
+int	rt_setaddr(struct rtentry *, struct sockaddr *);
 int	rtflushclone1(struct rtentry *, void *, u_int);
 void	rtflushclone(unsigned int, struct rtentry *);
 int	rt_if_remove_rtdelete(struct rtentry *, void *, u_int);
@@ -434,7 +437,6 @@ rtref(struct rtentry *rt)
 void
 rtfree(struct rtentry *rt)
 {
-	struct ifaddr	*ifa;
 	int		 refcnt;
 
 	if (rt == NULL)
@@ -452,16 +454,14 @@ rtfree(struct rtentry *rt)
 
 		KERNEL_LOCK();
 		rt_timer_remove_all(rt);
-		ifa = rt->rt_ifa;
-		if (ifa)
-			ifafree(ifa);
+		ifafree(rt->rt_ifa);
 		rtlabel_unref(rt->rt_labelid);
 #ifdef MPLS
 		if (rt->rt_flags & RTF_MPLS)
 			free(rt->rt_llinfo, M_TEMP, sizeof(struct rt_mpls));
 #endif
-		if (rt->rt_gateway)
-			free(rt->rt_gateway, M_RTABLE, 0);
+		free(rt->rt_addr, M_RTABLE, ROUNDUP(rt->rt_addr->sa_len));
+		free(rt->rt_gateway, M_RTABLE, ROUNDUP(rt->rt_gateway->sa_len));
 		free(rt_key(rt), M_RTABLE, rt_key(rt)->sa_len);
 		KERNEL_UNLOCK();
 
@@ -486,7 +486,7 @@ rt_sendmsg(struct rtentry *rt, int cmd, u_int rtableid)
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp != NULL) {
 		info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
-		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
+		info.rti_info[RTAX_IFA] = rt->rt_addr;
 	}
 
 	rt_missmsg(cmd, &info, rt->rt_flags, rt->rt_priority, rt->rt_ifidx, 0,
@@ -767,8 +767,6 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
 	return (ifa);
 }
 
-#define ROUNDUP(a) (a>0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-
 int
 rt_getifa(struct rt_addrinfo *info, u_int rtid)
 {
@@ -958,7 +956,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			 * will get the new address and interface later.
 			 */
 			info->rti_ifa = NULL;
-			info->rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
+			info->rti_info[RTAX_IFA] = rt->rt_addr;
 		}
 
 		info->rti_flags = rt->rt_flags | (RTF_CLONED|RTF_HOST);
@@ -1090,10 +1088,12 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		 * the routing table because the radix MPATH code use
 		 * it to (re)order routes.
 		 */
-		if ((error = rt_setgate(rt, info->rti_info[RTAX_GATEWAY]))) {
+		if ((error = rt_setaddr(rt, ifa->ifa_addr)) ||
+		    (error = rt_setgate(rt, info->rti_info[RTAX_GATEWAY]))) {
 			ifafree(ifa);
 			rtfree(rt->rt_parent);
 			rtfree(rt->rt_gwroute);
+			free(rt->rt_addr, M_RTABLE, 0);
 			free(rt->rt_gateway, M_RTABLE, 0);
 			free(ndst, M_RTABLE, dlen);
 			pool_put(&rtentry_pool, rt);
@@ -1124,6 +1124,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			ifafree(ifa);
 			rtfree(rt->rt_parent);
 			rtfree(rt->rt_gwroute);
+			free(rt->rt_addr, M_RTABLE, 0);
 			free(rt->rt_gateway, M_RTABLE, 0);
 			free(ndst, M_RTABLE, dlen);
 			pool_put(&rtentry_pool, rt);
@@ -1145,6 +1146,24 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			rtfree(rt);
 		break;
 	}
+
+	return (0);
+}
+
+int
+rt_setaddr(struct rtentry *rt, struct sockaddr *addr)
+{
+	int alen = ROUNDUP(addr->sa_len);
+	struct sockaddr *sa;
+
+	KASSERT(rt->rt_addr == NULL);
+
+	sa = malloc(alen, M_RTABLE, M_NOWAIT);
+	if (sa == NULL)
+		return (ENOBUFS);
+
+	memmove(sa, addr, alen);
+	rt->rt_addr = sa;
 
 	return (0);
 }
