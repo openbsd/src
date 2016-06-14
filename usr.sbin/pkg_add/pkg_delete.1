@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.51 2015/10/07 17:52:38 jmc Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.52 2016/06/14 17:09:25 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: October 7 2015 $
+.Dd $Mdocdate: June 14 2016 $
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -48,6 +48,19 @@ see
 .Xr packages-specs 7
 .Pc
 can be omitted, unless the resulting specification is ambiguous.
+.Pp
+Otherwise,
+.Ar pkg-name
+in
+.Nm
+may use the same convenient shortcuts as
+.Xr pkg_add 1 :
+.Sq Nm Ar autoconf Ns % Ns Ar 2.13
+will delete
+.Ar autoconf
+from the
+.Ar 2.13
+branch.
 .Pp
 .Nm
 will
