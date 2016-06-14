@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.45 2016/03/20 07:56:08 uebayasi Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.46 2016/06/14 15:58:03 bluhm Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -207,6 +207,8 @@ timeout_add_tv(struct timeout *to, const struct timeval *tv)
 	to_ticks = (long long)hz * tv->tv_sec + tv->tv_usec / tick;
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
+	if (to_ticks == 0 && tv->tv_usec > 0)
+		to_ticks = 1;
 
 	return (timeout_add(to, (int)to_ticks));
 }
@@ -219,6 +221,8 @@ timeout_add_ts(struct timeout *to, const struct timespec *ts)
 	to_ticks = (long long)hz * ts->tv_sec + ts->tv_nsec / (tick * 1000);
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
+	if (to_ticks == 0 && ts->tv_nsec > 0)
+		to_ticks = 1;
 
 	return (timeout_add(to, (int)to_ticks));
 }
@@ -232,6 +236,8 @@ timeout_add_bt(struct timeout *to, const struct bintime *bt)
 	    (uint32_t)(bt->frac >> 32)) >> 32) / tick;
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
+	if (to_ticks == 0 && bt->frac > 0)
+		to_ticks = 1;
 
 	return (timeout_add(to, (int)to_ticks));
 }
@@ -256,6 +262,8 @@ timeout_add_msec(struct timeout *to, int msecs)
 	to_ticks = (long long)msecs * 1000 / tick;
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
+	if (to_ticks == 0 && msecs > 0)
+		to_ticks = 1;
 
 	return (timeout_add(to, (int)to_ticks));
 }
@@ -265,6 +273,9 @@ timeout_add_usec(struct timeout *to, int usecs)
 {
 	int to_ticks = usecs / tick;
 
+	if (to_ticks == 0 && usecs > 0)
+		to_ticks = 1;
+
 	return (timeout_add(to, to_ticks));
 }
 
@@ -272,6 +283,9 @@ int
 timeout_add_nsec(struct timeout *to, int nsecs)
 {
 	int to_ticks = nsecs / (tick * 1000);
+
+	if (to_ticks == 0 && nsecs > 0)
+		to_ticks = 1;
 
 	return (timeout_add(to, to_ticks));
 }
