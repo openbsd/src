@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.56 2016/05/30 23:30:11 sthen Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.57 2016/06/14 20:44:43 sthen Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -163,7 +163,7 @@ static void pppoe_timeout(void *);
 /* sending actual protocol control packets */
 static int pppoe_send_padi(struct pppoe_softc *);
 static int pppoe_send_padr(struct pppoe_softc *);
-static int pppoe_send_padt(unsigned int, u_int, const u_int8_t *);
+static int pppoe_send_padt(unsigned int, u_int, const u_int8_t *, u_int8_t);
 
 /* raw output */
 static int pppoe_output(struct pppoe_softc *, struct mbuf *);
@@ -696,7 +696,7 @@ pppoe_data_input(struct mbuf *m)
 #ifdef PPPOE_TERM_UNKNOWN_SESSIONS
 		printf("pppoe (data): input for unknown session 0x%x, sending PADT\n",
 		    session);
-		pppoe_send_padt(m->m_pkthdr.ph_ifidx, session, shost);
+		pppoe_send_padt(m->m_pkthdr.ph_ifidx, session, shost, 0);
 #endif
 		goto drop;
 	}
@@ -1011,7 +1011,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
 	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);	/* header len + payload len */
 	if (m0 == NULL)
 		return (ENOBUFS);
-	m0->m_pkthdr.pf.prio = SPPP_CTL_PRIO;
+	m0->m_pkthdr.pf.prio = sc->sc_sppp.pp_if.if_llprio;
 
 	/* fill in pkt */
 	p = mtod(m0, u_int8_t *);
@@ -1170,7 +1170,8 @@ pppoe_disconnect(struct pppoe_softc *sc)
 		PPPOEDEBUG(("%s: disconnecting\n",
 		    sc->sc_sppp.pp_if.if_xname));
 		err = pppoe_send_padt(sc->sc_eth_ifidx,
-		    sc->sc_session, (const u_int8_t *)&sc->sc_dest);
+		    sc->sc_session, (const u_int8_t *)&sc->sc_dest,
+		    sc->sc_sppp.pp_if.if_llprio);
 	}
 
 	/* cleanup softc */
@@ -1238,7 +1239,7 @@ pppoe_send_padr(struct pppoe_softc *sc)
 	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);
 	if (m0 == NULL)
 		return (ENOBUFS);
-	m0->m_pkthdr.pf.prio = SPPP_CTL_PRIO;
+	m0->m_pkthdr.pf.prio = sc->sc_sppp.pp_if.if_llprio;
 
 	p = mtod(m0, u_int8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADR, 0, len);
@@ -1285,7 +1286,7 @@ pppoe_send_padr(struct pppoe_softc *sc)
 
 /* Send a PADT packet. */
 static int
-pppoe_send_padt(unsigned int ifidx, u_int session, const u_int8_t *dest)
+pppoe_send_padt(unsigned int ifidx, u_int session, const u_int8_t *dest, u_int8_t prio)
 {
 	struct ether_header *eh;
 	struct sockaddr dst;
@@ -1302,7 +1303,7 @@ pppoe_send_padt(unsigned int ifidx, u_int session, const u_int8_t *dest)
 		if_put(eth_if);
 		return (ENOBUFS);
 	}
-	m0->m_pkthdr.pf.prio = SPPP_CTL_PRIO;
+	m0->m_pkthdr.pf.prio = prio;
 
 	p = mtod(m0, u_int8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADT, session, 0);

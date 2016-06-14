@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sppp.h,v 1.24 2016/05/30 23:30:11 sthen Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.25 2016/06/14 20:44:43 sthen Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
@@ -56,7 +56,6 @@ enum ppp_phase {
 
 #define AUTHMAXLEN	256	/* including terminating '\0' */
 #define AUTHCHALEN	16	/* length of the challenge we send */
-#define SPPP_CTL_PRIO	7	/* priority to use for control packets */
 
 /*
  * Definitions to pass struct sppp data down into the kernel using the
