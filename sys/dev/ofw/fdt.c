@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.12 2016/06/12 12:55:42 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.13 2016/06/14 10:03:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -171,12 +171,12 @@ fdt_node_property(void *node, char *name, char **out)
 	char *tmp;
 	
 	if (!tree_inited)
-		return 0;
+		return -1;
 
 	ptr = (u_int32_t *)node;
 
 	if (betoh32(*ptr) != FDT_NODE_BEGIN)
-		return 0;
+		return -1;
 
 	ptr = skip_node_name(ptr + 1);
 
@@ -189,7 +189,7 @@ fdt_node_property(void *node, char *name, char **out)
 		}
 		ptr = skip_property(ptr);
 	}
-	return 0;
+	return -1;
 }
 
 /*
@@ -750,7 +750,7 @@ OF_getproplen(int handle, char *prop)
 	 * flattened device tree specification, so we synthesize one
 	 * from the unit name of the node if it is missing.
 	 */
-	if (len == 0 && strcmp(prop, "name") == 0) {
+	if (len < 0 && strcmp(prop, "name") == 0) {
 		name = fdt_node_name(node);
 		data = strchr(name, '@');
 		if (data)
@@ -777,7 +777,7 @@ OF_getprop(int handle, char *prop, void *buf, int buflen)
 	 * flattened device tree specification, so we synthesize one
 	 * from the unit name of the node if it is missing.
 	 */
-	if (len == 0 && strcmp(prop, "name") == 0) {
+	if (len < 0 && strcmp(prop, "name") == 0) {
 		data = fdt_node_name(node);
 		if (data) {
 			len = strlcpy(buf, data, buflen);
@@ -813,7 +813,7 @@ OF_getpropintarray(int handle, char *prop, uint32_t *buf, int buflen)
 	int i;
 
 	len = OF_getprop(handle, prop, buf, buflen);
-	if (len <0 || (len % sizeof(uint32_t)))
+	if (len < 0 || (len % sizeof(uint32_t)))
 		return -1;
 
 	for (i = 0; i < len / sizeof(uint32_t); i++)

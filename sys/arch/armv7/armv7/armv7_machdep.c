@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.30 2016/06/12 01:01:12 jsg Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.31 2016/06/14 10:03:51 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -912,7 +912,7 @@ fdt_find_cons(const char *name)
 	/* First check if "stdout-path" is set. */
 	node = fdt_find_node("/chosen");
 	if (node) {
-		if (fdt_node_property(node, "stdout-path", &stdout)) {
+		if (fdt_node_property(node, "stdout-path", &stdout) > 0) {
 			if (strchr(stdout, ':') != NULL) {
 				strlcpy(buf, stdout, sizeof(buf));
 				if ((p = strchr(buf, ':')) != NULL)
