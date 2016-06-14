@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.22 2016/06/13 12:24:05 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.23 2016/06/14 14:41:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -194,7 +194,6 @@ struct imxesdhc_softc {
 	bus_dma_segment_t adma_segs[1];
 	caddr_t adma2;
 };
-
 
 /* Host controller functions called by the attachment driver. */
 int	imxesdhc_host_found(struct imxesdhc_softc *, bus_space_tag_t,
@@ -544,6 +543,9 @@ imxesdhc_card_detect(sdmmc_chipset_handle_t sch)
 	struct imxesdhc_softc *sc = sch;
 	int gpio;
 
+	if (OF_getproplen(sc->sc_node, "non-removable") == 0)
+		return 1;
+
 	switch (board_id)
 	{
 	case BOARD_ID_IMX6_CUBOXI:
@@ -578,20 +580,11 @@ imxesdhc_card_detect(sdmmc_chipset_handle_t sch)
 			case 2:
 				gpio = 1*32 + 0;
 				break;
-			case 3:
-				return 1;
 			default:
 				return 0;
 		}
 		imxgpio_set_dir(gpio, IMXGPIO_DIR_IN);
 		return imxgpio_get_bit(gpio) ? 0 : 1;
-	case BOARD_ID_IMX6_UDOO:
-		switch (sc->unit) {
-			case 2:
-				return 1;
-			default:
-				return 0;
-		}
 	case BOARD_ID_IMX6_UTILITE:
 		switch (sc->unit) {
 			case 2:
@@ -607,9 +600,6 @@ imxesdhc_card_detect(sdmmc_chipset_handle_t sch)
 			case 1:
 				gpio = 0*32 + 4;
 				break;
-			/* no card detect */
-			case 2:
-				return 1;
 			default:
 				return 0;
 		}
