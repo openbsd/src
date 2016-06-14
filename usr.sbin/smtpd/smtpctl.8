@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.56 2016/06/02 18:19:54 jung Exp $
+.\" $OpenBSD: smtpctl.8,v 1.57 2016/06/14 22:40:48 millert Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 2 2016 $
+.Dd $Mdocdate: June 14 2016 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -237,7 +237,7 @@ The route is currently disabled.
 The route is new.
 No SMTP session has been established yet.
 .It Q
-The route as a timeout registered to lower its penalty level and possibly
+The route has a timeout registered to lower its penalty level and possibly
 reactivate or discard it.
 .El
 .It Cm show stats
