@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.13 2016/06/14 10:03:51 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.14 2016/06/14 14:35:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -782,8 +782,10 @@ OF_getprop(int handle, char *prop, void *buf, int buflen)
 		if (data) {
 			len = strlcpy(buf, data, buflen);
 			data = strchr(buf, '@');
-			if (data)
+			if (data) {
 				*data = 0;
+				len = data - (char *)buf;
+			}
 			return len + 1;
 		}
 	}
