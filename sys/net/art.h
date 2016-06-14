@@ -1,4 +1,4 @@
-/* $OpenBSD: art.h,v 1.13 2016/06/03 03:59:43 dlg Exp $ */
+/* $OpenBSD: art.h,v 1.14 2016/06/14 04:42:02 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -25,7 +25,7 @@
  * Root of the ART tables, equivalent to the radix head.
  */
 struct art_root {
-	struct art_table	*ar_root;	/* First table */
+	struct srp		 ar_root;	/* First table */
 	uint8_t			 ar_bits[ART_MAXLVL];	/* Per level stride */
 	uint8_t			 ar_nlvl;	/* Number of levels */
 	uint8_t			 ar_alen;	/* Address length in bits */
@@ -59,8 +59,9 @@ struct art_node *art_insert(struct art_root *, struct art_node *, uint8_t *,
 		     int);
 struct art_node *art_delete(struct art_root *, struct art_node *, uint8_t *,
 		     int);
-struct art_node	*art_match(struct art_root *, uint8_t *);
-struct art_node *art_lookup(struct art_root *, uint8_t *, int);
+struct art_node	*art_match(struct art_root *, uint8_t *, struct srp_ref *);
+struct art_node *art_lookup(struct art_root *, uint8_t *, int,
+		     struct srp_ref *);
 int		 art_walk(struct art_root *,
 		     int (*)(struct art_node *, void *), void *);
 

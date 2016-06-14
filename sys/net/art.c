@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.18 2016/06/03 03:59:43 dlg Exp $ */
+/*	$OpenBSD: art.c,v 1.19 2016/06/14 04:42:02 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -37,8 +37,8 @@
 
 #include <net/art.h>
 
-#define ISLEAF(e)	(((unsigned long)(e).node & 1) == 0)
-#define SUBTABLE(e)	(((struct art_table *)((unsigned long)(e).child & ~1)))
+#define ISLEAF(e)	(((unsigned long)(e) & 1) == 0)
+#define SUBTABLE(e)	((struct art_table *)((unsigned long)(e) & ~1))
 #define ASNODE(t)	((struct art_node *)((unsigned long)(t) | 1))
 
 /*
@@ -58,8 +58,7 @@ struct art_table {
 	 * is a route counter.
 	 */
 	union {
-		struct art_node		*node;
-		struct art_table	*child;
+		struct srp		 node;
 		unsigned long		 count;
 	} *at_heap;				/* Array of 2^(slen+1) items */
 };
@@ -249,41 +248,60 @@ art_findex(struct art_table *at, uint8_t *addr)
  * Return the best existing match for a destination.
  */
 struct art_node *
-art_match(struct art_root *ar, uint8_t *addr)
+art_match(struct art_root *ar, uint8_t *addr, struct srp_ref *nsr)
 {
+	struct srp_ref		dsr, ndsr;
+	void			*entry;
 	struct art_table	*at;
-	struct art_node		*dflt = NULL;
-	int			 j;
+	struct art_node		*dflt, *ndflt;
+	int			j;
 
-	at = ar->ar_root;
+	entry = srp_enter(nsr, &ar->ar_root);
+	at = entry;
+
 	if (at == NULL)
-		return (NULL);
+		goto done;
+
+	/*
+	 * Remember the default route of each table we visit in case
+	 * we do not find a better matching route.
+	 */
+	dflt = srp_enter(&dsr, &at->at_default);
 
 	/*
 	 * Iterate until we find a leaf.
 	 */
 	while (1) {
-		/*
-		 * Rember the default route of this table in case
-		 * we do not find a better matching route.
-		 */
-		if (at->at_default != NULL)
-			dflt = at->at_default;
-
 		/* Do a single level route lookup. */
 		j = art_findex(at, addr);
+		entry = srp_follow(nsr, &at->at_heap[j].node);
 
-		/* If this is a leaf we're done. */
-		if (ISLEAF(at->at_heap[j]))
+		/* If this is a leaf (NULL is a leaf) we're done. */
+		if (ISLEAF(entry))
 			break;
 
-		at = SUBTABLE(at->at_heap[j]);
+		at = SUBTABLE(entry);
+
+		ndflt = srp_enter(&ndsr, &at->at_default);
+		if (ndflt != NULL) {
+			srp_leave(&dsr);
+			dsr = ndsr;
+			dflt = ndflt;
+		} else
+			srp_leave(&ndsr);
 	}
 
-	if (at->at_heap[j].node != NULL)
-		return (at->at_heap[j].node);
+	if (entry == NULL) {
+		srp_leave(nsr);
+		*nsr = dsr;
+		KASSERT(ISLEAF(dflt));
+		return (dflt);
+	}
 
-	return (dflt);
+	srp_leave(&dsr);
+done:
+	KASSERT(ISLEAF(entry));
+	return (entry);
 }
 
 /*
@@ -293,21 +311,25 @@ art_match(struct art_root *ar, uint8_t *addr)
  * it does not exist.
  */
 struct art_node *
-art_lookup(struct art_root *ar, uint8_t *addr, int plen)
+art_lookup(struct art_root *ar, uint8_t *addr, int plen, struct srp_ref *nsr)
 {
+	void			*entry;
 	struct art_table	*at;
-	struct art_node		*an;
 	int			 i, j;
 
 	KASSERT(plen >= 0 && plen <= ar->ar_alen);
 
-	at = ar->ar_root;
+	entry = srp_enter(nsr, &ar->ar_root);
+	at = entry;
+
 	if (at == NULL)
-		return (NULL);
+		goto done;
 
 	/* Default route */
-	if (plen == 0)
-		return (at->at_default);
+	if (plen == 0) {
+		entry = srp_follow(nsr, &at->at_default);
+		goto done;
+	}
 
 	/*
 	 * If the prefix length is smaller than the sum of
@@ -317,24 +339,26 @@ art_lookup(struct art_root *ar, uint8_t *addr, int plen)
 	while (plen > (at->at_offset + at->at_bits)) {
 		/* Do a single level route lookup. */
 		j = art_findex(at, addr);
+		entry = srp_follow(nsr, &at->at_heap[j].node);
 
-		/* A leaf is a match, but not a perfect one. */
-		if (ISLEAF(at->at_heap[j]))
+		/* A leaf is a match, but not a perfect one, or NULL */
+		if (ISLEAF(entry))
 			return (NULL);
 
-		at = SUBTABLE(at->at_heap[j]);
+		at = SUBTABLE(entry);
 	}
 
 	i = art_bindex(at, addr, plen);
 	if (i == -1)
 		return (NULL);
 
-	if (!ISLEAF(at->at_heap[i]))
-		an = SUBTABLE(at->at_heap[i])->at_default;
-	else
-		an = at->at_heap[i].node;
+	entry = srp_follow(nsr, &at->at_heap[i].node);
+	if (!ISLEAF(entry))
+		entry = srp_follow(nsr, &SUBTABLE(entry)->at_default);
 
-	return (an);
+done:
+	KASSERT(ISLEAF(entry));
+	return (entry);
 }
 
 
@@ -347,27 +371,30 @@ art_lookup(struct art_root *ar, uint8_t *addr, int plen)
 struct art_node *
 art_insert(struct art_root *ar, struct art_node *an, uint8_t *addr, int plen)
 {
-	struct art_table	*at;
+	struct art_table	*at, *child;
+	struct art_node		*node;
 	int			 i, j;
 
+	KERNEL_ASSERT_LOCKED();
 	KASSERT(plen >= 0 && plen <= ar->ar_alen);
 
-	at = ar->ar_root;
+	at = srp_get_locked(&ar->ar_root);
 	if (at == NULL) {
 		at = art_table_get(ar, NULL, -1);
 		if (at == NULL)
 			return (NULL);
 
-		ar->ar_root = at;
+		srp_swap_locked(&ar->ar_root, at);
 	}
 
 	/* Default route */
 	if (plen == 0) {
-		if (at->at_default != NULL)
-			return (at->at_default);
+		node = srp_get_locked(&at->at_default);
+		if (node != NULL)
+			return (node);
 
 		art_table_ref(ar, at);
-		at->at_default = an;
+		srp_swap_locked(&at->at_default, an);
 		return (an);
 	}
 
@@ -379,6 +406,7 @@ art_insert(struct art_root *ar, struct art_node *an, uint8_t *addr, int plen)
 	while (plen > (at->at_offset + at->at_bits)) {
 		/* Do a single level route lookup. */
 		j = art_findex(at, addr);
+		node = srp_get_locked(&at->at_heap[j].node);
 
 		/*
 		 * If the node corresponding to the fringe index is
@@ -386,18 +414,16 @@ art_insert(struct art_root *ar, struct art_node *an, uint8_t *addr, int plen)
 		 * entry of this node will then become the default
 		 * route of the subtable.
 		 */
-		if (ISLEAF(at->at_heap[j])) {
-			struct art_table  *child;
-
+		if (ISLEAF(node)) {
 			child = art_table_get(ar, at, j);
 			if (child == NULL)
 				return (NULL);
 
 			art_table_ref(ar, at);
-			at->at_heap[j].node = ASNODE(child);
-		}
-
-		at = SUBTABLE(at->at_heap[j]);
+			srp_swap_locked(&at->at_heap[j].node, ASNODE(child));
+			at = child;
+		} else
+			at = SUBTABLE(node);
 	}
 
 	i = art_bindex(at, addr, plen);
@@ -414,12 +440,13 @@ struct art_node *
 art_table_insert(struct art_root *ar, struct art_table *at, int i,
     struct art_node *an)
 {
-	struct art_node	*prev;
+	struct art_node	*prev, *node;
 
-	if (!ISLEAF(at->at_heap[i]))
-		prev = SUBTABLE(at->at_heap[i])->at_default;
+	node = srp_get_locked(&at->at_heap[i].node);
+	if (!ISLEAF(node))
+		prev = srp_get_locked(&SUBTABLE(node)->at_default);
 	else
-		prev = at->at_heap[i].node;
+		prev = node;
 
 	if (art_check_duplicate(ar, prev, an))
 		return (prev);
@@ -433,10 +460,10 @@ art_table_insert(struct art_root *ar, struct art_table *at, int i,
 	 */
 	if (i < at->at_minfringe)
 		art_allot(at, i, prev, an);
-	else if (!ISLEAF(at->at_heap[i]))
-		SUBTABLE(at->at_heap[i])->at_default = an;
+	else if (!ISLEAF(node))
+		srp_swap_locked(&SUBTABLE(node)->at_default, an);
 	else
-		at->at_heap[i].node = an;
+		srp_swap_locked(&at->at_heap[i].node, an);
 
 	return (an);
 }
@@ -449,21 +476,22 @@ struct art_node *
 art_delete(struct art_root *ar, struct art_node *an, uint8_t *addr, int plen)
 {
 	struct art_table	*at;
-	struct art_node		*dflt;
+	struct art_node		*node;
 	int			 i, j;
 
+	KERNEL_ASSERT_LOCKED();
 	KASSERT(plen >= 0 && plen <= ar->ar_alen);
 
-	at = ar->ar_root;
+	at = srp_get_locked(&ar->ar_root);
 	if (at == NULL)
 		return (NULL);
 
 	/* Default route */
 	if (plen == 0) {
-		dflt = at->at_default;
-		at->at_default = NULL;
+		node = srp_get_locked(&at->at_default);
+		srp_swap_locked(&at->at_default, NULL);
 		art_table_free(ar, at);
-		return (dflt);
+		return (node);
 	}
 
 	/*
@@ -474,12 +502,13 @@ art_delete(struct art_root *ar, struct art_node *an, uint8_t *addr, int plen)
 	while (plen > (at->at_offset + at->at_bits)) {
 		/* Do a single level route lookup. */
 		j = art_findex(at, addr);
+		node = srp_get_locked(&at->at_heap[j].node);
 
 		/* If this is a leaf, there is no route to delete. */
-		if (ISLEAF(at->at_heap[j]))
+		if (ISLEAF(node))
 			return (NULL);
 
-		at = SUBTABLE(at->at_heap[j]);
+		at = SUBTABLE(node);
 	}
 
 	i = art_bindex(at, addr, plen);
@@ -494,24 +523,27 @@ art_delete(struct art_root *ar, struct art_node *an, uint8_t *addr, int plen)
  */
 struct art_node *
 art_table_delete(struct art_root *ar, struct art_table *at, int i,
-    struct art_node *node)
+    struct art_node *an)
 {
-	struct art_node		*next;
+	struct art_node		*next, *node;
 
 #ifdef DIAGNOSTIC
 	struct art_node		*prev;
+#endif
 
-	if (!ISLEAF(at->at_heap[i]))
-		prev = SUBTABLE(at->at_heap[i])->at_default;
+	node = srp_get_locked(&at->at_heap[i].node);
+#ifdef DIAGNOSTIC
+	if (!ISLEAF(node))
+		prev = srp_get_locked(&SUBTABLE(node)->at_default);
 	else
-		prev = at->at_heap[i].node;
+		prev = node;
 
-	KASSERT(prev == node);
+	KASSERT(prev == an);
 #endif
 
 	/* Get the next most specific route for the index `i'. */
 	if ((i >> 1) > 1)
-		next = at->at_heap[i >> 1].node;
+		next = srp_get_locked(&at->at_heap[i >> 1].node);
 	else
 		next = NULL;
 
@@ -521,16 +553,16 @@ art_table_delete(struct art_root *ar, struct art_table *at, int i,
 	 * route pointer to all the corresponding fringe indices.
 	 */
 	if (i < at->at_minfringe)
-		art_allot(at, i, node, next);
-	else if (!ISLEAF(at->at_heap[i]))
-		SUBTABLE(at->at_heap[i])->at_default = next;
+		art_allot(at, i, an, next);
+	else if (!ISLEAF(node))
+		srp_swap_locked(&SUBTABLE(node)->at_default, next);
 	else
-		at->at_heap[i].node = next;
+		srp_swap_locked(&at->at_heap[i].node, next);
 
 	/* We have removed an entry from this table. */
 	art_table_free(ar, at);
 
-	return (node);
+	return (an);
 }
 
 void
@@ -539,17 +571,26 @@ art_table_ref(struct art_root *ar, struct art_table *at)
 	at->at_refcnt++;
 }
 
+static inline int
+art_table_rele(struct art_table *at)
+{
+	if (at == NULL)
+		return (0);
+
+	return (--at->at_refcnt == 0);
+}
+
 int
 art_table_free(struct art_root *ar, struct art_table *at)
 {
-	if (--at->at_refcnt == 0) {
+	if (art_table_rele(at)) {
 		/*
 		 * Garbage collect this table and all its parents
 		 * that are empty.
 		 */
 		do {
 			at = art_table_put(ar, at);
-		} while (at != NULL && --at->at_refcnt == 0);
+		} while (art_table_rele(at));
 
 		return (1);
 	}
@@ -564,9 +605,12 @@ int
 art_walk(struct art_root *ar, int (*f)(struct art_node *, void *), void *arg)
 {
 	struct art_table	*at;
+	struct art_node		*node;
 	int			 error;
 
-	at = ar->ar_root;
+	KERNEL_ASSERT_LOCKED();
+
+	at = srp_get_locked(&ar->ar_root);
 	if (at == NULL)
 		return (0);
 
@@ -574,8 +618,9 @@ art_walk(struct art_root *ar, int (*f)(struct art_node *, void *), void *arg)
 	 * The default route should be processed here because the root
 	 * table does not have a parent.
 	 */
-	if (at->at_default != NULL) {
-		error = (*f)(at->at_default, arg);
+	node = srp_get_locked(&at->at_default);
+	if (node != NULL) {
+		error = (*f)(node, arg);
 		if (error)
 			return (error);
 	}
@@ -588,6 +633,7 @@ art_table_walk(struct art_root *ar, struct art_table *at,
     int (*f)(struct art_node *, void *), void *arg)
 {
 	struct art_node		*next, *an = NULL;
+	struct art_node		*node;
 	int			 i, j, error = 0;
 	uint32_t		 maxfringe = (at->at_minfringe << 1);
 
@@ -604,8 +650,8 @@ art_table_walk(struct art_root *ar, struct art_table *at,
 		 * be processed more than once.
 		 */
 		for (i = max(j, 2); i < at->at_minfringe; i <<= 1) {
-			next = at->at_heap[i >> 1].node;
-			an = at->at_heap[i].node;
+			next = srp_get_locked(&at->at_heap[i >> 1].node);
+			an = srp_get_locked(&at->at_heap[i].node);
 			if ((an != NULL) && (an != next)) {
 				error = (*f)(an, arg);
 				if (error)
@@ -618,21 +664,23 @@ art_table_walk(struct art_root *ar, struct art_table *at,
 	 * Iterate fringe nodes.
 	 */
 	for (i = at->at_minfringe; i < maxfringe; i++) {
-		next = at->at_heap[i >> 1].node;
-		if (!ISLEAF(at->at_heap[i]))
-			an = SUBTABLE(at->at_heap[i])->at_default;
+		next = srp_get_locked(&at->at_heap[i >> 1].node);
+		node = srp_get_locked(&at->at_heap[i].node);
+		if (!ISLEAF(node))
+			an = srp_get_locked(&SUBTABLE(node)->at_default);
 		else
-			an = at->at_heap[i].node;
+			an = node;
+
 		if ((an != NULL) && (an != next)) {
 			error = (*f)(an, arg);
 			if (error)
 				goto out;
 		}
 
-		if (ISLEAF(at->at_heap[i]))
+		if (ISLEAF(node))
 			continue;
 
-		error = art_table_walk(ar, SUBTABLE(at->at_heap[i]), f, arg);
+		error = art_table_walk(ar, SUBTABLE(node), f, arg);
 		if (error)
 			break;
 	}
@@ -652,6 +700,7 @@ struct art_table *
 art_table_get(struct art_root *ar, struct art_table *parent, int j)
 {
 	struct art_table	*at;
+	struct art_node		*node;
 	void			*at_heap;
 	uint32_t		 lvl;
 
@@ -694,7 +743,9 @@ art_table_get(struct art_root *ar, struct art_table *parent, int j)
 	at->at_refcnt = 0;
 
 	if (parent != NULL) {
-		at->at_default = parent->at_heap[j].node;
+		node = srp_get_locked(&parent->at_heap[j].node);
+		/* node isn't being deleted, no srp_finalize needed */
+		srp_swap_locked(&at->at_default, node);
 		at->at_offset = (parent->at_offset + parent->at_bits);
 	}
 
@@ -711,20 +762,24 @@ struct art_table *
 art_table_put(struct art_root *ar, struct art_table *at)
 {
 	struct art_table	*parent = at->at_parent;
-	uint32_t		 lvl = at->at_level;
+	struct art_node		*node;
 	uint32_t		 j = at->at_index;
 
+	KASSERT(at->at_refcnt == 0);
 	KASSERT(j != 0 && j != 1);
-	KASSERT(parent != NULL || j == -1);
 
 	if (parent != NULL) {
-		KASSERT(lvl == parent->at_level + 1);
+		KASSERT(j != -1);
+		KASSERT(at->at_level == parent->at_level + 1);
 		KASSERT(parent->at_refcnt >= 1);
 
 		/* Give the route back to its parent. */
-		parent->at_heap[j].node = at->at_default;
+		node = srp_get_locked(&at->at_default);
+		srp_swap_locked(&parent->at_heap[j].node, node);
 	} else {
-		ar->ar_root = NULL;
+		KASSERT(j == -1);
+		KASSERT(at->at_level == 0);
+		srp_swap_locked(&ar->ar_root, NULL);
 	}
 
 	mtx_enter(&art_table_gc_mtx);
@@ -749,6 +804,11 @@ art_table_gc(void *null)
 
 	while (at != NULL) {
 		next = at->at_parent;
+
+		if (at->at_level == 0)
+			srp_finalize(at, "arttfini");
+		else
+			srp_finalize(ASNODE(at), "arttfini");
 
 		switch (AT_HEAPSIZE(at->at_bits)) {
 		case AT_HEAPSIZE(4):
@@ -794,7 +854,8 @@ void
 art_allot(struct art_table *at, int i, struct art_node *old,
     struct art_node *new)
 {
-	int			k = i;
+	struct art_node		*node, *dflt;
+	int			 k = i;
 
 	KASSERT(i < at->at_minfringe);
 
@@ -805,12 +866,15 @@ again:
 
 	/* Change fringe nodes. */
 	while (1) {
-		if (!ISLEAF(at->at_heap[k])) {
-			if (SUBTABLE(at->at_heap[k])->at_default == old) {
-				SUBTABLE(at->at_heap[k])->at_default = new;
+		node = srp_get_locked(&at->at_heap[k].node);
+		if (!ISLEAF(node)) {
+			dflt = srp_get_locked(&SUBTABLE(node)->at_default);
+			if (dflt == old) {
+				srp_swap_locked(&SUBTABLE(node)->at_default,
+				    new);
 			}
-		} else if (at->at_heap[k].node == old) {
-			at->at_heap[k].node = new;
+		} else if (node == old) {
+			srp_swap_locked(&at->at_heap[k].node, new);
 		}
 		if (k % 2)
 			goto moveup;
@@ -818,7 +882,8 @@ again:
 	}
 
 nonfringe:
-	if (at->at_heap[k].node == old)
+	node = srp_get_locked(&at->at_heap[k].node);
+	if (node == old)
 		goto again;
 moveon:
 	if (k % 2)
@@ -827,7 +892,7 @@ moveon:
 	goto nonfringe;
 moveup:
 	k >>= 1;
-	at->at_heap[k].node = new;
+	srp_swap_locked(&at->at_heap[k].node, new);
 
 	/* Change non-fringe node. */
 	if (k != i)
@@ -875,6 +940,8 @@ art_gc(void *null)
 
 	while (an != NULL) {
 		next = an->an_gc;
+
+		srp_finalize(an, "artnfini");
 
 		pool_put(&an_pool, an);
 

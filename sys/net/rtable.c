@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.46 2016/06/07 01:31:54 tedu Exp $ */
+/*	$OpenBSD: rtable.c,v 1.47 2016/06/14 04:42:02 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -535,8 +535,8 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 {
 	struct art_root			*ar;
 	struct art_node			*an;
-	struct rtentry			*rt;
-	struct srp_ref			 sr;
+	struct rtentry			*rt = NULL;
+	struct srp_ref			 sr, nsr;
 	uint8_t				*addr;
 	int				 plen;
 
@@ -548,19 +548,20 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 
 	/* No need for a perfect match. */
 	if (mask == NULL) {
-		an = art_match(ar, addr);
+		an = art_match(ar, addr, &nsr);
 		if (an == NULL)
-			return (NULL);
+			goto out;
 	} else {
 		plen = rtable_satoplen(dst->sa_family, mask);
 		if (plen == -1)
 			return (NULL);
 
-		an = art_lookup(ar, addr, plen);
+		an = art_lookup(ar, addr, plen, &nsr);
+
 		/* Make sure we've got a perfect match. */
 		if (an == NULL || an->an_plen != plen ||
 		    memcmp(an->an_dst, dst, dst->sa_len))
-			return (NULL);
+			goto out;
 	}
 
 #ifdef SMALL_KERNEL
@@ -578,14 +579,13 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 		    memcmp(rt->rt_gateway, gateway, gateway->sa_len) == 0)
 			break;
 	}
-	if (rt == NULL) {
-		SRPL_LEAVE(&sr);
-		return (NULL);
-	}
 #endif /* SMALL_KERNEL */
+	if (rt != NULL)
+		rtref(rt);
 
-	rtref(rt);
 	SRPL_LEAVE(&sr);
+out:
+	srp_leave(&nsr);
 
 	return (rt);
 }
@@ -596,7 +596,7 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 	struct art_root			*ar;
 	struct art_node			*an;
 	struct rtentry			*rt = NULL;
-	struct srp_ref			 sr;
+	struct srp_ref			 sr, nsr;
 	uint8_t				*addr;
 #ifndef SMALL_KERNEL
 	int				 hash;
@@ -608,8 +608,7 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 
 	addr = satoaddr(ar, dst);
 
-	KERNEL_LOCK();
-	an = art_match(ar, addr);
+	an = art_match(ar, addr, &nsr);
 	if (an == NULL)
 		goto out;
 
@@ -634,6 +633,16 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 
 		threshold = (0xffff / npaths) + 1;
 
+		/*
+		 * we have no protection against concurrent modification of the
+		 * route list attached to the node, so we won't necessarily
+		 * have the same number of routes.  for most modifications,
+		 * we'll pick a route that we wouldn't have if we only saw the
+		 * list before or after the change.  if we were going to use
+		 * the last available route, but it got removed, we'll hit
+		 * the end of the list and then pick the first route.
+		 */
+
 		mrt = SRPL_ENTER(&sr, &an->an_rtlist);
 		while (hash > threshold && mrt != NULL) {
 			if (mrt->rt_priority == rt->rt_priority)
@@ -650,7 +659,7 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 	}
 #endif /* SMALL_KERNEL */
 out:
-	KERNEL_UNLOCK();
+	srp_leave(&nsr);
 	return (rt);
 }
 
@@ -661,12 +670,14 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 {
 #ifndef SMALL_KERNEL
 	struct rtentry			*mrt;
+	struct srp_ref			 sr;
 #endif /* SMALL_KERNEL */
 	struct art_root			*ar;
 	struct art_node			*an, *prev;
 	uint8_t				*addr;
 	int				 plen;
 	unsigned int			 rt_flags;
+	int				 error = 0;
 
 	KERNEL_ASSERT_LOCKED();
 
@@ -679,12 +690,15 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	if (plen == -1)
 		return (EINVAL);
 
+	rtref(rt); /* guarantee rtfree won't do anything during insert */
+
 #ifndef SMALL_KERNEL
 	/* Do not permit exactly the same dst/mask/gw pair. */
-	an = art_lookup(ar, addr, plen);
+	an = art_lookup(ar, addr, plen, &sr);
+	srp_leave(&sr); /* an can't go away while we have the lock */
 	if (an != NULL && an->an_plen == plen &&
 	    !memcmp(an->an_dst, dst, dst->sa_len)) {
-	    	struct rtentry	*mrt;
+		struct rtentry  *mrt;
 		int		 mpathok = ISSET(rt->rt_flags, RTF_MPATH);
 
 		SRPL_FOREACH_LOCKED(mrt, &an->an_rtlist, rt_next) {
@@ -695,15 +709,18 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 			if (!mpathok ||
 			    (mrt->rt_gateway->sa_len == gateway->sa_len &&
 			    !memcmp(mrt->rt_gateway, gateway, gateway->sa_len))){
-			    	return (EEXIST);
+				error = EEXIST;
+				goto leave;
 			}
 		}
 	}
 #endif /* SMALL_KERNEL */
 
 	an = art_get(dst, plen);
-	if (an == NULL)
-		return (ENOBUFS);
+	if (an == NULL) {
+		error = ENOBUFS;
+		goto leave;
+	}
 
 	/* prepare for immediate operation if insert succeeds */
 	rt_flags = rt->rt_flags;
@@ -718,9 +735,11 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 		    rt_next);
 		rt->rt_flags = rt_flags;
 		art_put(an);
- 
-		if (prev == NULL)
-			return ESRCH;
+
+		if (prev == NULL) {
+			error = ESRCH;
+			goto leave;
+		}
 
 #ifndef SMALL_KERNEL
 		an = prev;
@@ -752,11 +771,12 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 		/* Put newly inserted entry at the right place. */
 		rtable_mpath_reprio(rtableid, dst, mask, rt->rt_priority, rt);
 #else
-		return (EEXIST);
+		error = EEXIST;
 #endif /* SMALL_KERNEL */
 	}
-
-	return (0);
+leave:
+	rtfree(rt);
+	return (error);
 }
 
 int
@@ -765,14 +785,13 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 {
 	struct art_root			*ar;
 	struct art_node			*an;
+	struct srp_ref			 sr;
 	uint8_t				*addr;
 	int				 plen;
 #ifndef SMALL_KERNEL
 	struct rtentry			*mrt;
 	int				 npaths = 0;
 #endif /* SMALL_KERNEL */
-
-	KERNEL_ASSERT_LOCKED();
 
 	ar = rtable_get(rtableid, dst->sa_family);
 	if (ar == NULL)
@@ -781,7 +800,11 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	addr = satoaddr(ar, dst);
 	plen = rtable_satoplen(dst->sa_family, mask);
 
-	an = art_lookup(ar, addr, plen);
+	KERNEL_ASSERT_LOCKED();
+
+	an = art_lookup(ar, addr, plen, &sr);
+	srp_leave(&sr); /* an can't go away while we have the lock */
+
 	/* Make sure we've got a perfect match. */
 	if (an == NULL || an->an_plen != plen ||
 	    memcmp(an->an_dst, dst, dst->sa_len))
@@ -796,7 +819,7 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 		npaths++;
 
 	if (npaths > 1) {
-		KASSERT(rt->rt_refcnt >= 2);
+		KASSERT(rt->rt_refcnt >= 1);
 		SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist, rt, rtentry,
 		    rt_next);
 
@@ -811,7 +834,7 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	if (art_delete(ar, an, addr, plen) == NULL)
 		return (ESRCH);
 
-	KASSERT(rt->rt_refcnt >= 2);
+	KASSERT(rt->rt_refcnt >= 1);
 	SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist, rt, rtentry, rt_next);
 
 	art_put(an);
@@ -879,6 +902,7 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 {
 	struct art_root			*ar;
 	struct art_node			*an;
+	struct srp_ref			 sr;
 	uint8_t				*addr;
 	int				 plen;
 	struct rtentry			*mrt, *prt = NULL;
@@ -890,13 +914,15 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 	addr = satoaddr(ar, dst);
 	plen = rtable_satoplen(dst->sa_family, mask);
 
-	an = art_lookup(ar, addr, plen);
+	KERNEL_ASSERT_LOCKED();
+
+	an = art_lookup(ar, addr, plen, &sr);
+	srp_leave(&sr); /* an can't go away while we have the lock */
+
 	/* Make sure we've got a perfect match. */
 	if (an == NULL || an->an_plen != plen ||
 	    memcmp(an->an_dst, dst, dst->sa_len))
 		return (ESRCH);
-
-	KERNEL_ASSERT_LOCKED();
 
 	rtref(rt); /* keep rt alive in between remove and add */
 	SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist, rt, rtentry, rt_next);
