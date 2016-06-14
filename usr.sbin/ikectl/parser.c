@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.15 2015/11/02 10:27:44 jsg Exp $	*/
+/*	$OpenBSD: parser.c,v 1.16 2016/06/14 13:45:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -67,7 +67,6 @@ static const struct token t_ca_ex_pass[];
 static const struct token t_ca_modifiers[];
 static const struct token t_ca_cert[];
 static const struct token t_ca_cert_extusage[];
-static const struct token t_ca_cert_ex_peer[];
 static const struct token t_ca_cert_modifiers[];
 static const struct token t_ca_key[];
 static const struct token t_ca_key_modifiers[];
