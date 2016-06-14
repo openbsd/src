@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.11 2013/05/17 19:38:52 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.12 2016/06/14 12:48:49 dlg Exp $	*/
 /*	$NetBSD: intr.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -47,17 +47,18 @@
 
 #define	IPL_MPSAFE	0	/* no "mpsafe" interrupts */
 
-#define	splsoftclock()		_cpu_intr_raise(IPL_SOFTCLOCK << 4)
-#define	splsoftnet()		_cpu_intr_raise(IPL_SOFTNET << 4)
-#define	splsoftserial()		_cpu_intr_raise(IPL_SOFTSERIAL << 4)
-#define	splbio()		_cpu_intr_raise(IPL_BIO << 4)
-#define	splnet()		_cpu_intr_raise(IPL_NET << 4)
-#define	spltty()		_cpu_intr_raise(IPL_TTY << 4)
-#define	splvm()			_cpu_intr_raise(IPL_VM << 4)
-#define	splaudio()		_cpu_intr_raise(IPL_AUDIO << 4)
-#define	splclock()		_cpu_intr_raise(IPL_CLOCK << 4)
+#define	splraise(_ipl)		_cpu_intr_raise((_ipl) << 4)
+#define	splsoftclock()		splraise(IPL_SOFTCLOCK)
+#define	splsoftnet()		splraise(IPL_SOFTNET)
+#define	splsoftserial()		splraise(IPL_SOFTSERIAL)
+#define	splbio()		splraise(IPL_BIO)
+#define	splnet()		splraise(IPL_NET)
+#define	spltty()		splraise(IPL_TTY)
+#define	splvm()			splraise(IPL_VM)
+#define	splaudio()		splraise(IPL_AUDIO)
+#define	splclock()		splraise(IPL_CLOCK)
 #define	splstatclock()		splclock()
-#define	splsched()		_cpu_intr_raise(IPL_SCHED << 4)
+#define	splsched()		splraise(IPL_SCHED)
 #define	splhigh()		_cpu_intr_suspend()
 #define	spllock()		splhigh()
 
