@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.268 2016/06/10 20:33:29 vgross Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.269 2016/06/14 20:46:26 sthen Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: June 10 2016 $
+.Dd $Mdocdate: June 14 2016 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -330,7 +330,8 @@ be chosen randomly.
 .It Cm llprio Ar prio
 Set the priority for link layer communications
 .Pf ( Xr arp 4 ,
-.Xr bpf 4 ) .
+.Xr bpf 4 ,
+.Xr pppoe 4 ) .
 .It Cm media Op Ar type
 Set the media type of the interface to
 .Ar type .
