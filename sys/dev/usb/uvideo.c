@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.189 2016/06/01 12:58:59 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.190 2016/06/14 04:54:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1823,7 +1823,7 @@ uvideo_vs_open(struct uvideo_softc *sc)
 		return (USBD_INVAL);
 	}
 
-	DPRINTF(1, "%s: open pipe for bEndpointAddress=0x%02x",
+	DPRINTF(1, "%s: open pipe for bEndpointAddress=0x%02x\n",
 	    DEVNAME(sc), sc->sc_vs_cur->endpoint);
 	error = usbd_open_pipe(
 	    sc->sc_vs_cur->ifaceh,
