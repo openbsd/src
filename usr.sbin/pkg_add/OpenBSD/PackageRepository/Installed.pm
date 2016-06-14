@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.33 2015/06/25 13:33:25 sthen Exp $
+# $OpenBSD: Installed.pm,v 1.34 2016/06/14 20:49:03 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -61,7 +61,7 @@ sub parse_url
 		$$r = '';
 	}
 
-	$path =~ s/\%[vacm]/$class->expand_locations($&, $state)/ge;
+	$path =~ s/\%[vacm]\b/$class->expand_locations($&, $state)/ge;
 	$path .= '/' unless $path =~ m/\/$/;
 	bless { path => $path, state => $state }, $class;
 }
