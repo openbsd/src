@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.137 2016/06/14 15:41:31 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.138 2016/06/14 17:06:23 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -159,9 +159,11 @@ also understands
 .Sq stems ,
 that is, package names without any version specification.
 For instance, with
-.Li pkg_add kdelibs ,
+.Sq Nm Ar kdelibs ,
 .Nm
-will look in the current directory (or the PKG_PATH) for a kdelibs package.
+will look in the current directory (or the PKG_PATH) for a
+.Ar kdelibs
+package.
 .Pp
 .Nm
 may ask questions in interactive mode, or error out otherwise.
@@ -293,10 +295,6 @@ and tie the entries together to avoid extracting files needlessly.
 disables that behavior.
 .It Ar downgrade
 don't filter out package versions older than what's currently installed.
-.It Ar FW_UPDATE
-set by
-.Xr fw_update 1
-to separate firmware from normal packages.
 .It Ar installed
 in update mode, reinstall an existing package with the same update signature.
 .It Ar libdepends
