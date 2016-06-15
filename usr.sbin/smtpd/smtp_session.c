@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.274 2016/06/15 19:56:07 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.275 2016/06/15 21:52:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1150,9 +1150,12 @@ smtp_filter_response(uint64_t id, int query, int status, uint32_t code,
 		if (status != FILTER_OK) {
 			tree_pop(&wait_filter_data, s->id);
 			smtp_filter_rollback(s);
+			smtp_queue_rollback(s);
 			code = code ? code : 530;
 			line = line ? line : "Message rejected";
 			smtp_reply(s, "%d %s", code, line);
+			smtp_message_reset(s, 0);
+			smtp_enter_state(s, STATE_HELO);
 			io_reload(&s->io);
 			return;
 		}
