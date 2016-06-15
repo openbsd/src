@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.211 2016/06/15 15:16:47 vgross Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.212 2016/06/15 16:06:35 vgross Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -934,7 +934,7 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 				goto release;
 			}
 #ifdef IPSEC
-			if ((inp->inp_flags & INP_IPSECFLOWINFO) != 0) &&
+			if ((inp->inp_flags & INP_IPSECFLOWINFO) != 0 &&
 			    cm->cmsg_len == CMSG_LEN(sizeof(ipsecflowinfo)) &&
 			    cm->cmsg_level == IPPROTO_IP &&
 			    cm->cmsg_type == IP_IPSECFLOWINFO) {
