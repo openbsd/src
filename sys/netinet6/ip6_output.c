@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.208 2016/06/15 11:49:34 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.209 2016/06/15 13:49:43 florian Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2882,21 +2882,21 @@ ip6_output_ipsec_lookup(struct mbuf *m, int *error, struct inpcb *inp)
 	tdb = ipsp_spd_lookup(m, AF_INET6, sizeof(struct ip6_hdr),
 	    error, IPSP_DIRECTION_OUT, NULL, inp, 0);
 
-	if (tdb != NULL) {
-		/* Loop detection */
-		for (mtag = m_tag_first(m); mtag != NULL;
-		    mtag = m_tag_next(m, mtag)) {
-			if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE)
-				continue;
-			tdbi = (struct tdb_ident *)(mtag + 1);
-			if (tdbi->spi == tdb->tdb_spi &&
-			    tdbi->proto == tdb->tdb_sproto &&
-			    tdbi->rdomain == tdb->tdb_rdomain &&
-			    !bcmp(&tdbi->dst, &tdb->tdb_dst,
-			    sizeof(union sockaddr_union)))
-				tdb = NULL;
+	if (tdb == NULL)
+		return NULL;
+	/* Loop detection */
+	for (mtag = m_tag_first(m); mtag != NULL; mtag = m_tag_next(m, mtag)) {
+		if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE)
+			continue;
+		tdbi = (struct tdb_ident *)(mtag + 1);
+		if (tdbi->spi == tdb->tdb_spi &&
+		    tdbi->proto == tdb->tdb_sproto &&
+		    tdbi->rdomain == tdb->tdb_rdomain &&
+		    !memcmp(&tdbi->dst, &tdb->tdb_dst,
+		    sizeof(union sockaddr_union))) {
+			/* no IPsec needed */
+			return NULL;
 		}
-		/* We need to do IPsec */
 	}
 	return tdb;
 }
