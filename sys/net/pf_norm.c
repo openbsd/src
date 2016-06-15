@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.186 2016/05/31 07:35:36 mpi Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.187 2016/06/15 11:36:06 mikeb Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -963,8 +963,7 @@ pf_normalize_tcp_init(struct pf_pdesc *pd, struct pf_state_peer *src)
 				if (opt[1] >= TCPOLEN_TIMESTAMP) {
 					src->scrub->pfss_flags |=
 					    PFSS_TIMESTAMP;
-					src->scrub->pfss_ts_mod =
-					    htonl(arc4random());
+					src->scrub->pfss_ts_mod = arc4random();
 
 					/* note PFSS_PAWS not set yet */
 					memcpy(&tsval, &opt[2],

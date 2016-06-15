@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.52 2015/11/24 13:37:16 mpi Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.53 2016/06/15 11:36:06 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -415,28 +415,24 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		} else if (init_addr != NULL && PF_AZERO(init_addr, af)) {
 			switch (af) {
 			case AF_INET:
-				rpool->counter.addr32[0] = htonl(arc4random());
+				rpool->counter.addr32[0] = arc4random();
 				break;
 #ifdef INET6
 			case AF_INET6:
 				if (rmask->addr32[3] != 0xffffffff)
-					rpool->counter.addr32[3] =
-					    htonl(arc4random());
+					rpool->counter.addr32[3] = arc4random();
 				else
 					break;
 				if (rmask->addr32[2] != 0xffffffff)
-					rpool->counter.addr32[2] =
-					    htonl(arc4random());
+					rpool->counter.addr32[2] = arc4random();
 				else
 					break;
 				if (rmask->addr32[1] != 0xffffffff)
-					rpool->counter.addr32[1] =
-					    htonl(arc4random());
+					rpool->counter.addr32[1] = arc4random();
 				else
 					break;
 				if (rmask->addr32[0] != 0xffffffff)
-					rpool->counter.addr32[0] =
-					    htonl(arc4random());
+					rpool->counter.addr32[0] = arc4random();
 				break;
 #endif /* INET6 */
 			default:
