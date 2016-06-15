@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.210 2016/03/23 15:50:36 vgross Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.211 2016/06/15 15:16:47 vgross Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -906,6 +906,47 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 		goto release;
 	}
 
+	if (control) {
+		u_int clen;
+		struct cmsghdr *cm;
+		caddr_t cmsgs;
+
+		/*
+		 * XXX: Currently, we assume all the optional information is
+		 * stored in a single mbuf.
+		 */
+		if (control->m_next) {
+			error = EINVAL;
+			goto release;
+		}
+
+		clen = control->m_len;
+		cmsgs = mtod(control, caddr_t);
+		do {
+			if (clen < CMSG_LEN(0)) {
+				error = EINVAL;
+				goto release;
+			}
+			cm = (struct cmsghdr *)cmsgs;
+			if (cm->cmsg_len < CMSG_LEN(0) ||
+			    CMSG_ALIGN(cm->cmsg_len) > clen) {
+				error = EINVAL;
+				goto release;
+			}
+#ifdef IPSEC
+			if ((inp->inp_flags & INP_IPSECFLOWINFO) != 0) &&
+			    cm->cmsg_len == CMSG_LEN(sizeof(ipsecflowinfo)) &&
+			    cm->cmsg_level == IPPROTO_IP &&
+			    cm->cmsg_type == IP_IPSECFLOWINFO) {
+				ipsecflowinfo = *(u_int32_t *)CMSG_DATA(cm);
+				break;
+			}
+#endif
+			clen -= CMSG_ALIGN(cm->cmsg_len);
+			cmsgs += CMSG_ALIGN(cm->cmsg_len);
+		} while (clen);
+	}
+
 	if (addr) {
 		sin = mtod(addr, struct sockaddr_in *);
 
@@ -947,45 +988,6 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 		laddr = &inp->inp_laddr;
 	}
 
-#ifdef IPSEC
-	if (control && (inp->inp_flags & INP_IPSECFLOWINFO) != 0) {
-		u_int clen;
-		struct cmsghdr *cm;
-		caddr_t cmsgs;
-
-		/*
-		 * XXX: Currently, we assume all the optional information is stored
-		 * in a single mbuf.
-		 */
-		if (control->m_next) {
-			error = EINVAL;
-			goto release;
-		}
-
-		clen = control->m_len;
-		cmsgs = mtod(control, caddr_t);
-		do {
-			if (clen < CMSG_LEN(0)) {
-				error = EINVAL;
-				goto release;
-			}
-			cm = (struct cmsghdr *)cmsgs;
-			if (cm->cmsg_len < CMSG_LEN(0) ||
-			    CMSG_ALIGN(cm->cmsg_len) > clen) {
-				error = EINVAL;
-				goto release;
-			}
-			if (cm->cmsg_len == CMSG_LEN(sizeof(ipsecflowinfo)) &&
-			    cm->cmsg_level == IPPROTO_IP &&
-			    cm->cmsg_type == IP_IPSECFLOWINFO) {
-				ipsecflowinfo = *(u_int32_t *)CMSG_DATA(cm);
-				break;
-			}
-			clen -= CMSG_ALIGN(cm->cmsg_len);
-			cmsgs += CMSG_ALIGN(cm->cmsg_len);
-		} while (clen);
-	}
-#endif
 	/*
 	 * Calculate data length and get a mbuf
 	 * for UDP and IP headers.
