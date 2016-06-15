@@ -1,4 +1,4 @@
-/*	$OpenBSD: limit.c,v 1.4 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: limit.c,v 1.5 2016/06/15 19:59:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -39,7 +39,7 @@ limit_mta_set_defaults(struct mta_limits *limits)
 {
 	limits->maxconn_per_host = 10;
 	limits->maxconn_per_route = 5;
-	limits->maxconn_per_source = 50;
+	limits->maxconn_per_source = 100;
 	limits->maxconn_per_connector = 20;
 	limits->maxconn_per_relay = 100;
 	limits->maxconn_per_domain = 100;
@@ -54,7 +54,7 @@ limit_mta_set_defaults(struct mta_limits *limits)
 	limits->discdelay_route = 3;
 
 	limits->max_mail_per_session = 100;
-	limits->sessdelay_transaction = 1;
+	limits->sessdelay_transaction = 0;
 	limits->sessdelay_keepalive = 10;
 
 	limits->max_failures_per_session = 25;
