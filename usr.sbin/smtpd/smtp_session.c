@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.273 2016/06/08 06:52:56 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.274 2016/06/15 19:56:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1204,7 +1204,7 @@ smtp_filter_fd(uint64_t id, int fd)
 	if (s->flags & SF_SECURE) {
 		x = SSL_get_peer_certificate(s->io.ssl);
 		iobuf_fqueue(&s->obuf,
-		    "\n\tTLS version=%s cipher=%s bits=%d verify=%s",
+		    " (%s:%s:%d:%s)",
 		    SSL_get_version(s->io.ssl),
 		    SSL_get_cipher_name(s->io.ssl),
 		    SSL_get_cipher_bits(s->io.ssl, NULL),
