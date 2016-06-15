@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.190 2016/06/14 04:54:33 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.191 2016/06/15 11:40:56 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -123,7 +123,6 @@ int		uvideo_match(struct device *, void *, void *);
 void		uvideo_attach(struct device *, struct device *, void *);
 void		uvideo_attach_hook(struct device *);
 int		uvideo_detach(struct device *, int);
-int		uvideo_activate(struct device *, int);
 
 usbd_status	uvideo_vc_parse_desc(struct uvideo_softc *);
 usbd_status	uvideo_vc_parse_desc_header(struct uvideo_softc *,
@@ -265,11 +264,7 @@ struct cfdriver uvideo_cd = {
 };
 
 const struct cfattach uvideo_ca = {
-	sizeof(struct uvideo_softc),
-	uvideo_match,
-	uvideo_attach,
-	uvideo_detach,
-	uvideo_activate,
+	sizeof(struct uvideo_softc), uvideo_match, uvideo_attach, uvideo_detach
 };
 
 struct video_hw_if uvideo_hw_if = {
@@ -608,25 +603,6 @@ uvideo_detach(struct device *self, int flags)
 
 	if (sc->sc_videodev != NULL)
 		rv = config_detach(sc->sc_videodev, flags);
-
-	return (rv);
-}
-
-int
-uvideo_activate(struct device *self, int act)
-{
-	struct uvideo_softc *sc = (struct uvideo_softc *) self;
-	int rv = 0;
-
-	DPRINTF(1, "uvideo_activate: sc=%p\n", sc);
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		if (sc->sc_videodev != NULL)
-			config_deactivate(sc->sc_videodev);
-		usbd_deactivate(sc->sc_udev);
-		break;
-	}
 
 	return (rv);
 }
