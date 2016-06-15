@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.35 2016/05/15 10:29:01 espie Exp $
+# $OpenBSD: Term.pm,v 1.36 2016/06/15 15:31:09 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -85,6 +85,12 @@ our @ISA = qw(OpenBSD::ProgressMeter::Real);
 use POSIX;
 use Term::Cap;
 use Term::ReadKey;
+
+sub forked
+{
+	my $self = shift;
+	$self->{lastdisplay} = ' 'x($self->{width}-1);
+}
 
 sub init
 {
