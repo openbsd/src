@@ -1,0 +1,81 @@
+.\"	$OpenBSD: umb.4,v 1.1 2016/06/15 19:39:34 gerhard Exp $
+.\"
+.\" Copyright (c) 2016 genua mbH
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: June 15 2016 $
+.Dt UMB 4
+.Os
+.Sh NAME
+.Nm umb
+.Nd USB Mobile Broadband Interface Model (MBIM)
+.Sh SYNOPSIS
+.Cd "umb*  at uhub?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for USB MBIM devices.
+Those devices establish connections via celluar networks such as
+GPRS, UMTS, and LTE.
+.Pp
+The
+.Nm
+device appears as a regular point-to-point network interface,
+transporting raw IP frames.
+.Pp
+Required configuration parameters like PIN and APN have to be set
+via
+.Xr ifconfig 8 .
+Once the SIM card has been unlocked with the correct PIN, it
+will remain in this state until the device is power-cycled.
+In case the device is connected to an "always-on" USB port,
+it is possible to connect to a provider without entering the
+PIN again even afer a reboot of the system.
+.Pp
+If a default gateway route is configured for the
+.Nm
+network interface, the driver will modify the destination IP address
+dynamically, according to the information sent by the network provider.
+.Sh HARDWARE
+The following devices are known to be supported by the
+.Nm
+driver:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Tn Sierra Wireless EM8805
+.It Tn Sierra Wireless MC8305
+.El
+.Pp
+There are probably a lot more devices that also work flawlessly.
+If some devices fail to provide a confirming MBIM implementation,
+their vendor and product IDs should be added to the driver's blacklist
+manually.
+Since most devices offer multiple interfaces, blacklisted ones will
+probably be attached by some other driver, such as
+.Xr umsm 4 .
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr usb 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8 ,
+.Xr route 8
+.Rs
+.%T "Universal Serial Bus Communications Class Subclass Specification for Mobile Broadband Interface Model"
+.%U http://www.usb.org/developers/docs/devclass_docs/MBIM10Errata1_073013.zip
+.Re
+.Sh CAVEATS
+The
+.Nm
+driver currently does not support IPv6 addresses.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_types.h,v 1.20 2016/03/07 19:33:26 mmcc Exp $	*/
+/*	$OpenBSD: if_types.h,v 1.21 2016/06/15 19:39:34 gerhard Exp $	*/
 /*	$NetBSD: if_types.h,v 1.17 2000/10/26 06:51:31 onoe Exp $	*/
 
 /*
@@ -268,5 +268,6 @@
 #define	IFT_CARP	0xf7		/* Common Address Redundancy Protocol */
 #define IFT_BLUETOOTH	0xf8		/* Bluetooth */
 #define IFT_PFLOW	0xf9		/* pflow */
+#define IFT_MBIM	0xfa		/* Mobile Broadband Interface Model */
 
 #endif /* _NET_IF_TYPES_H_ */

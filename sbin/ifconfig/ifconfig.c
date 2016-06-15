@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.323 2016/06/10 20:33:29 vgross Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.324 2016/06/15 19:39:33 gerhard Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -107,6 +107,10 @@
 #include <ifaddrs.h>
 
 #include "brconfig.h"
+#ifndef SMALL
+#include <dev/usb/mbim.h>
+#include <dev/usb/if_umb.h>
+#endif /* SMALL */
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
@@ -146,6 +150,7 @@ int	showmediaflag;
 int	showcapsflag;
 int	shownet80211chans;
 int	shownet80211nodes;
+int	showclasses;
 
 void	notealias(const char *, int);
 void	setifaddr(const char *, int);
@@ -277,6 +282,18 @@ void	unsetifdesc(const char *, int);
 void	printifhwfeatures(const char *, int);
 void	setpair(const char *, int);
 void	unsetpair(const char *, int);
+void	umb_status(void);
+void	umb_printclasses(char *, int);
+int	umb_parse_classes(const char *);
+void	umb_setpin(const char *, int);
+void	umb_chgpin(const char *, const char *);
+void	umb_puk(const char *, const char *);
+void	umb_pinop(int, int, const char *, const char *);
+void	umb_apn(const char *, int);
+void	umb_setclass(const char *, int);
+void	umb_roaming(const char *, int);
+void	utf16_to_char(uint16_t *, int, char *, size_t);
+int	char_to_utf16(const char *, uint16_t *, size_t);
 #else
 void	setignore(const char *, int);
 #endif
@@ -488,6 +505,15 @@ const struct	cmd {
 	{ "-descr",	1,		0,		unsetifdesc },
 	{ "wol",	IFXF_WOL,	0,		setifxflags },
 	{ "-wol",	-IFXF_WOL,	0,		setifxflags },
+	{ "pin",	NEXTARG,	0,		umb_setpin },
+	{ "chgpin",	NEXTARG2,	0,		NULL, umb_chgpin },
+	{ "puk",	NEXTARG2,	0,		NULL, umb_puk },
+	{ "apn",	NEXTARG,	0,		umb_apn },
+	{ "-apn",	-1,		0,		umb_apn },
+	{ "class",	NEXTARG0,	0,		umb_setclass },
+	{ "-class",	-1,		0,		umb_setclass },
+	{ "roaming",	1,		0,		umb_roaming },
+	{ "-roaming",	0,		0,		umb_roaming },
 	{ "patch",	NEXTARG,	0,		setpair },
 	{ "-patch",	1,		0,		unsetpair },
 #else /* SMALL */
@@ -2972,6 +2998,7 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	mpe_status();
 	mpw_status();
 	pflow_status();
+	umb_status();
 #endif
 	trunk_status();
 	getifgroups();
@@ -4905,6 +4932,403 @@ setifpriority(const char *id, int param)
 	if (ioctl(s, SIOCSIFPRIORITY, (caddr_t)&ifr) < 0)
 		warn("SIOCSIFPRIORITY");
 }
+
+
+const struct umb_valdescr umb_regstate[] = MBIM_REGSTATE_DESCRIPTIONS;
+const struct umb_valdescr umb_dataclass[] = MBIM_DATACLASS_DESCRIPTIONS;
+const struct umb_valdescr umb_simstate[] = MBIM_SIMSTATE_DESCRIPTIONS;
+const struct umb_valdescr umb_istate[] = UMB_INTERNAL_STATE_DESCRIPTIONS;
+const struct umb_valdescr umb_pktstate[] = MBIM_PKTSRV_STATE_DESCRIPTIONS;
+const struct umb_valdescr umb_actstate[] = MBIM_ACTIVATION_STATE_DESCRIPTIONS;
+
+const struct umb_valdescr umb_classalias[] = {
+	{ MBIM_DATACLASS_GPRS | MBIM_DATACLASS_EDGE, "2g" },
+	{ MBIM_DATACLASS_UMTS | MBIM_DATACLASS_HSDPA | MBIM_DATACLASS_HSUPA,
+	    "3g" },
+	{ MBIM_DATACLASS_LTE, "4g" },
+	{ 0, NULL }
+};
+
+int
+umb_descr2val(const struct umb_valdescr *vdp, char *str)
+{
+	while (vdp->descr != NULL) {
+		if (!strcasecmp(vdp->descr, str))
+			return vdp->val;
+		vdp++;
+	}
+	return 0;
+}
+
+void
+umb_status(void)
+{
+	struct umb_info mi;
+	char	 provider[UMB_PROVIDERNAME_MAXLEN+1];
+	char	 roamingtxt[UMB_ROAMINGTEXT_MAXLEN+1];
+	char	 devid[UMB_DEVID_MAXLEN+1];
+	char	 fwinfo[UMB_FWINFO_MAXLEN+1];
+	char	 hwinfo[UMB_HWINFO_MAXLEN+1];
+	char	 sid[UMB_SUBSCRIBERID_MAXLEN+1];
+	char	 iccid[UMB_ICCID_MAXLEN+1];
+	char	 apn[UMB_APN_MAXLEN+1];
+	char	 pn[UMB_PHONENR_MAXLEN+1];
+	int	 i, n;
+
+	memset((char *)&mi, 0, sizeof(mi));
+	ifr.ifr_data = (caddr_t)&mi;
+	if (ioctl(s, SIOCGUMBINFO, (caddr_t)&ifr) == -1)
+		return;
+
+	if (mi.nwerror) {
+		/* 3GPP 24.008 Cause Code */
+		printf("\terror: ");
+		switch (mi.nwerror) {
+		case 2:
+			printf("SIM not activated");
+			break;
+		case 4:
+			printf("Roaming not supported");
+			break;
+		case 6:
+			printf("SIM reported stolen");
+			break;
+		case 7:
+			printf("No GPRS subscription");
+			break;
+		case 8:
+			printf("GPRS and non-GPRS services not allowed");
+			break;
+		case 11:
+			printf("Subscription expired");
+			break;
+		case 12:
+			printf("Subscription does not cover current location");
+			break;
+		case 13:
+			printf("No roaming in this location");
+			break;
+		case 14:
+			printf("GPRS not supported");
+			break;
+		case 15:
+			printf("No subscription for the service");
+			break;
+		case 17:
+			printf("Registration failed");
+			break;
+		case 22:
+			printf("Network congestion");
+			break;
+		default:
+			printf("Error code %d", mi.nwerror);
+			break;
+		}
+		printf("\n");
+	}
+
+	printf("\troaming %s registration %s",
+	    mi.enable_roaming ? "enabled" : "disabled",
+	    umb_val2descr(umb_regstate, mi.regstate));
+	utf16_to_char(mi.roamingtxt, UMB_ROAMINGTEXT_MAXLEN,
+	    roamingtxt, sizeof (roamingtxt));
+	if (roamingtxt[0])
+		printf(" [%s]", roamingtxt);
+	printf("\n");
+
+	if (showclasses)
+		umb_printclasses("available classes", mi.supportedclasses);
+	printf("\tstate %s cell-class %s",
+	    umb_val2descr(umb_istate, mi.state),
+	    umb_val2descr(umb_dataclass, mi.highestclass));
+	if (mi.rssi != UMB_VALUE_UNKNOWN && mi.rssi != 0)
+		printf(" rssi %ddBm", mi.rssi);
+	if (mi.uplink_speed != 0 || mi.downlink_speed != 0) {
+		char s[2][FMT_SCALED_STRSIZE];
+		if (fmt_scaled(mi.uplink_speed, s[0]) != 0)
+			snprintf(s[0], sizeof (s[0]), "%llu", mi.uplink_speed);
+		if (fmt_scaled(mi.downlink_speed, s[1]) != 0)
+			snprintf(s[1], sizeof (s[1]), "%llu", mi.downlink_speed);
+		printf(" speed %sps up %sps down", s[0], s[1]);
+	}
+	printf("\n");
+
+	printf("\tSIM %s PIN ", umb_val2descr(umb_simstate, mi.sim_state));
+	switch (mi.pin_state) {
+	case UMB_PIN_REQUIRED:
+		printf("required");
+		break;
+	case UMB_PIN_UNLOCKED:
+		printf("valid");
+		break;
+	case UMB_PUK_REQUIRED:
+		printf("locked (PUK required)");
+		break;
+	default:
+		printf("unknown state (%d)", mi.pin_state);
+		break;
+	}
+	if (mi.pin_attempts_left != UMB_VALUE_UNKNOWN)
+		printf(" (%d attempts left)", mi.pin_attempts_left);
+	printf("\n");
+
+	utf16_to_char(mi.sid, UMB_SUBSCRIBERID_MAXLEN, sid, sizeof (sid));
+	utf16_to_char(mi.iccid, UMB_ICCID_MAXLEN, iccid, sizeof (iccid));
+	utf16_to_char(mi.provider, UMB_PROVIDERNAME_MAXLEN,
+	    provider, sizeof (provider));
+	if (sid[0] || iccid[0] || provider[0]) {
+		printf("\t");
+		n = 0;
+		if (sid[0])
+			printf("%ssubscriber-id %s", n++ ? " " : "", sid);
+		if (iccid[0])
+			printf("%sICC-id %s", n++ ? " " : "", iccid);
+		if (provider[0])
+			printf("%sprovider %s", n ? " " : "", provider);
+		printf("\n");
+	}
+
+	utf16_to_char(mi.hwinfo, UMB_HWINFO_MAXLEN, hwinfo, sizeof (hwinfo));
+	utf16_to_char(mi.devid, UMB_DEVID_MAXLEN, devid, sizeof (devid));
+	utf16_to_char(mi.fwinfo, UMB_FWINFO_MAXLEN, fwinfo, sizeof (fwinfo));
+	if (hwinfo[0] || devid[0] || fwinfo[0]) {
+		printf("\t");
+		n = 0;
+		if (hwinfo[0])
+			printf("%sdevice %s", n++ ? " " : "", hwinfo);
+		if (devid[0]) {
+			printf("%s", n++ ? " " : "");
+			switch (mi.cellclass) {
+			case MBIM_CELLCLASS_GSM:
+				printf("IMEI");
+				break;
+			case MBIM_CELLCLASS_CDMA:
+				n = strlen(devid);
+				if (n == 8 || n == 11) {
+					printf("ESN");
+					break;
+				} else if (n == 14 || n == 18) {
+					printf("MEID");
+					break;
+				}
+				/*FALLTHROUGH*/
+			default:
+				printf("ID");
+				break;
+			}
+			printf(" %s", devid);
+		}
+		if (fwinfo[0])
+			printf("%sfirmware %s", n++ ? " " : "", fwinfo);
+		printf("\n");
+	}
+
+	utf16_to_char(mi.pn, UMB_PHONENR_MAXLEN, pn, sizeof (pn));
+	utf16_to_char(mi.apn, UMB_APN_MAXLEN, apn, sizeof (apn));
+	if (pn[0] || apn[0]) {
+		printf("\t");
+		n = 0;
+		if (pn[0])
+			printf("%sphone# +%s", n++ ? " " : "", pn);
+		if (apn[0])
+			printf("%sAPN %s", n++ ? " " : "", apn);
+		printf("\n");
+	}
+
+	for (i = 0, n = 0; i < UMB_MAX_DNSSRV; i++) {
+		if (mi.ipv4dns[i] == INADDR_ANY)
+			break;
+		printf("%s %s", n++ ? "" : "\tdns",
+		    inet_ntoa(*(struct in_addr *)&mi.ipv4dns[i]));
+	}
+	if (n)
+		printf("\n");
+}
+
+void
+umb_printclasses(char *tag, int c)
+{
+	int	 i;
+	char	*sep = "";
+
+	printf("\t%s: ", tag);
+	i = 0;
+	while (umb_dataclass[i].descr) {
+		if (umb_dataclass[i].val & c) {
+			printf("%s%s", sep, umb_dataclass[i].descr);
+			sep = ",";
+		}
+		i++;
+	}
+	printf("\n");
+}
+
+int
+umb_parse_classes(const char *spec)
+{
+	char	*optlist, *str;
+	int	 c = 0, v;
+
+	if ((optlist = strdup(spec)) == NULL)
+		err(1, "strdup");
+	str = strtok(optlist, ",");
+	while (str != NULL) {
+		if ((v = umb_descr2val(umb_dataclass, str)) != 0 ||
+		    (v = umb_descr2val(umb_classalias, str)) != 0)
+			c |= v;
+		str = strtok(NULL, ",");
+	}
+	free(optlist);
+	return c;
+}
+
+void
+umb_setpin(const char *pin, int d)
+{
+	umb_pinop(MBIM_PIN_OP_ENTER, 0, pin, NULL);
+}
+
+void
+umb_chgpin(const char *pin, const char *newpin)
+{
+	umb_pinop(MBIM_PIN_OP_CHANGE, 0, pin, newpin);
+}
+
+void
+umb_puk(const char *pin, const char *newpin)
+{
+	umb_pinop(MBIM_PIN_OP_ENTER, 1, pin, newpin);
+}
+
+void
+umb_pinop(int op, int is_puk, const char *pin, const char *newpin)
+{
+	struct umb_parameter mp;
+
+	memset(&mp, 0, sizeof (mp));
+	ifr.ifr_data = (caddr_t)&mp;
+	if (ioctl(s, SIOCGUMBPARAM, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGUMBPARAM");
+
+	mp.op = op;
+	mp.is_puk = is_puk;
+	if ((mp.pinlen = char_to_utf16(pin, (uint16_t *)mp.pin,
+	    sizeof (mp.pin))) == -1)
+		errx(1, "PIN too long");
+
+	if (newpin) {
+		if ((mp.newpinlen = char_to_utf16(newpin, (uint16_t *)mp.newpin,
+		    sizeof (mp.newpin))) == -1)
+		errx(1, "new PIN too long");
+	}
+
+	if (ioctl(s, SIOCSUMBPARAM, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSUMBPARAM");
+}
+
+void
+umb_apn(const char *apn, int d)
+{
+	struct umb_parameter mp;
+
+	memset(&mp, 0, sizeof (mp));
+	ifr.ifr_data = (caddr_t)&mp;
+	if (ioctl(s, SIOCGUMBPARAM, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGUMBPARAM");
+
+	if (d != 0)
+		memset(mp.apn, 0, sizeof (mp.apn));
+	else if ((mp.apnlen = char_to_utf16(apn, mp.apn,
+	    sizeof (mp.apn))) == -1)
+		errx(1, "APN too long");
+
+	if (ioctl(s, SIOCSUMBPARAM, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSUMBPARAM");
+}
+
+void
+umb_setclass(const char *val, int d)
+{
+	struct umb_parameter mp;
+
+	if (val == NULL) {
+		if (showclasses)
+			usage(1);
+		showclasses = 1;
+		return;
+	}
+
+	memset(&mp, 0, sizeof (mp));
+	ifr.ifr_data = (caddr_t)&mp;
+	if (ioctl(s, SIOCGUMBPARAM, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGUMBPARAM");
+	if (d != -1)
+		mp.preferredclasses = umb_parse_classes(val);
+	else
+		mp.preferredclasses = MBIM_DATACLASS_NONE;
+	if (ioctl(s, SIOCSUMBPARAM, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSUMBPARAM");
+}
+
+void
+umb_roaming(const char *val, int d)
+{
+	struct umb_parameter mp;
+
+	memset(&mp, 0, sizeof (mp));
+	ifr.ifr_data = (caddr_t)&mp;
+	if (ioctl(s, SIOCGUMBPARAM, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGUMBPARAM");
+	mp.roaming = d;
+	if (ioctl(s, SIOCSUMBPARAM, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSUMBPARAM");
+}
+
+void
+utf16_to_char(uint16_t *in, int inlen, char *out, size_t outlen)
+{
+	uint16_t c;
+
+	while (outlen > 0) {
+		c = inlen > 0 ? letoh16(*in) : 0;
+		if (c == 0 || --outlen == 0) {
+			/* always NUL terminate result */
+done:
+			*out = '\0';
+			break;
+		}
+		*out++ = isascii(c) ? (char)c : '?';
+		in++;
+		inlen -= sizeof (*in);
+	}
+}
+
+int
+char_to_utf16(const char *in, uint16_t *out, size_t outlen)
+{
+	int	 n = 0;
+	uint16_t c;
+
+	for (;;) {
+		c = *in++;
+
+		if (c == '\0') {
+			/*
+			 * NUL termination is not required, but zero out the
+			 * residual buffer
+			 */
+			memset(out, 0, outlen);
+			return n;
+		}
+		if (outlen < sizeof (*out))
+			return -1;
+
+		*out++ = htole16(c);
+		n += sizeof (*out);
+		outlen -= sizeof (*out);
+	}
+}
+
 #endif
 
 #define SIN(x) ((struct sockaddr_in *) &(x))

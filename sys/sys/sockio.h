@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.65 2016/06/10 20:33:29 vgross Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.66 2016/06/15 19:39:34 gerhard Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -204,6 +204,10 @@
 
 #define	SIOCSIFLLPRIO	_IOW('i', 181, struct ifreq)	/* set ifnet llprio */
 #define	SIOCGIFLLPRIO	_IOWR('i', 182, struct ifreq)	/* get ifnet llprio */
+
+#define	SIOCGUMBINFO	_IOWR('i', 190, struct ifreq)	/* get MBIM info */
+#define	SIOCSUMBPARAM	 _IOW('i', 191, struct ifreq)	/* set MBIM param */
+#define	SIOCGUMBPARAM	_IOWR('i', 192, struct ifreq)	/* get MBIM param */
 
 #define	SIOCSVH		_IOWR('i', 245, struct ifreq)	/* set carp param */
 #define	SIOCGVH		_IOWR('i', 246, struct ifreq)	/* get carp param */

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.176 2016/06/04 20:54:13 jmc Exp $
+.\"	$OpenBSD: usb.4,v 1.177 2016/06/15 19:39:34 gerhard Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 4 2016 $
+.Dd $Mdocdate: June 15 2016 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -278,6 +278,11 @@ Apple touchpad mouse
 USBRH temperature and humidity sensor
 .It Xr utwitch 4
 YUREX USB twitch/jiggle of knee sensor
+.El
+.Ss WAN network devices
+.Bl -tag -width 12n -offset ind -compact
+.It Xr umb 4
+USB Mobile Broadband Interface Model (MBIM)
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width 12n -offset ind -compact
