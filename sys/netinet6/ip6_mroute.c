@@ -1429,10 +1429,6 @@ phyint_send6(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 		dst6->sin6_len = sizeof(struct sockaddr_in6);
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_addr = ip6->ip6_dst;
-		/*
-		 * We just call if_output instead of nd6_output here, since
-		 * we need no ND for a multicast forwarded packet...right?
-		 */
 		error = ifp->if_output(ifp, mb_copy, sin6tosa(&ro.ro_dst),
 		    NULL);
 	} else {

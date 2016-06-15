@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.185 2016/06/08 12:57:58 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.186 2016/06/15 11:49:34 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1352,7 +1352,7 @@ fail:
 
 		if (ln->ln_state == ND6_LLINFO_STALE) {
 			/*
-			 * XXX: since nd6_output() below will cause
+			 * Since nd6_resolve() in ifp->if_output() will cause
 			 * state transition to DELAY and reset the timer,
 			 * we must set the timer now, although it is actually
 			 * meaningless.
@@ -1366,7 +1366,7 @@ fail:
 				 * we assume ifp is not a p2p here, so just
 				 * set the 2nd argument as the 1st one.
 				 */
-				nd6_output(ifp, n, satosin6(rt_key(rt)), rt);
+				ifp->if_output(ifp, n, rt_key(rt), rt);
 				if (ln->ln_hold == n) {
 					/* n is back in ln_hold. Discard. */
 					m_freem(ln->ln_hold);
@@ -1486,13 +1486,6 @@ nd6_slowtimo(void *ignored_arg)
 		}
 	}
 	splx(s);
-}
-
-int
-nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
-    struct rtentry *rt0)
-{
-	return (ifp->if_output(ifp, m0, sin6tosa(dst), rt0));
 }
 
 int

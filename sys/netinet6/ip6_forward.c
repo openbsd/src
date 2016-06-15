@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.90 2016/05/02 09:30:47 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.91 2016/06/15 11:49:34 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -332,7 +332,7 @@ reroute:
 		goto out;
 	}
 
-	error = nd6_output(ifp, m, dst, rt);
+	error = ifp->if_output(ifp, m, sin6tosa(dst), rt);
 	if (error) {
 		ip6stat.ip6s_cantforward++;
 	} else {

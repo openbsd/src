@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.207 2016/05/19 11:34:40 jca Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.208 2016/06/15 11:49:34 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -692,7 +692,7 @@ reroute:
 	 * transmit packet without fragmentation
 	 */
 	if (dontfrag || (!alwaysfrag && tlen <= mtu)) {	/* case 1-a and 2-a */
-		error = nd6_output(ifp, m, dst, ro->ro_rt);
+		error = ifp->if_output(ifp, m, sin6tosa(dst), ro->ro_rt);
 		goto done;
 	}
 
@@ -767,7 +767,8 @@ reroute:
 		m->m_nextpkt = 0;
 		if (error == 0) {
 			ip6stat.ip6s_ofragments++;
-			error = nd6_output(ifp, m, dst, ro->ro_rt);
+			error = ifp->if_output(ifp, m, sin6tosa(dst),
+			    ro->ro_rt);
 		} else
 			m_freem(m);
 	}

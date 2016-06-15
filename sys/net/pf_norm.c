@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.187 2016/06/15 11:36:06 mikeb Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.188 2016/06/15 11:49:34 mpi Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -761,7 +761,7 @@ pf_refragment6(struct mbuf **m0, struct m_tag *mtag, struct sockaddr_in6 *dst,
 			if (ifp == NULL) {
 				ip6_forward(m, 0);
 			} else if ((u_long)m->m_pkthdr.len <= ifp->if_mtu) {
-				nd6_output(ifp, m, dst, rt);
+				ifp->if_output(ifp, m, sin6tosa(dst), rt);
 			} else {
 				icmp6_error(m, ICMP6_PACKET_TOO_BIG, 0,
 				    ifp->if_mtu);

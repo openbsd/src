@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.103 2016/06/01 23:45:19 dlg Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.104 2016/06/15 11:49:35 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -875,7 +875,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		 * we assume ifp is not a loopback here, so just set the 2nd
 		 * argument as the 1st one.
 		 */
-		nd6_output(ifp, n, satosin6(rt_key(rt)), rt);
+		ifp->if_output(ifp, n, rt_key(rt), rt);
 		if (ln->ln_hold == n) {
 			/* n is back in ln_hold. Discard. */
 			m_freem(ln->ln_hold);
