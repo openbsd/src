@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.9,v 1.10 2015/09/12 15:02:28 lteo Exp $
+.\"	$OpenBSD: ktrace.9,v 1.11 2016/06/15 15:31:27 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Michael Shalayeff
 .\"
@@ -23,11 +23,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 12 2015 $
+.Dd $Mdocdate: June 15 2016 $
 .Dt KTRACE 9
 .Os
 .Sh NAME
-.Nm ktremul ,
 .Nm ktrgenio ,
 .Nm ktrnamei ,
 .Nm ktrpsig ,
@@ -40,8 +39,6 @@
 .In sys/proc.h
 .In sys/ktrace.h
 .Fn KTRPOINT "struct proc *p" "int type"
-.Ft void
-.Fn ktremul "struct proc *p" "char *emul"
 .Ft void
 .Fn ktrgenio "struct proc *p" "int fd" "enum uio_rw rw" "struct iovec *iov" "int len" "int error"
 .Ft void
@@ -70,12 +67,6 @@ Possible values for the
 .Fa type
 argument are a mask of the KTRFAC_ values described in
 .Xr ktrace 2 .
-.Pp
-.Fn ktremul
-should be called every time emulation for the execution environment
-is changed and thus the name of which is given in the
-.Fa name
-argument.
 .Pp
 .Fn ktrgenio
 should be called for each generic input/output transaction that is
