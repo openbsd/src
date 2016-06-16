@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.162 2016/06/15 09:13:46 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.163 2016/06/16 10:55:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
 #include <util.h>
 
