@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2015/07/16 20:44:21 tedu Exp $
+#	$OpenBSD: Makefile,v 1.2 2016/06/16 17:40:30 tedu Exp $
 
-SRCS=	parse.y doas.c
+SRCS=	parse.y doas.c env.c
 
 PROG=	doas
 MAN=	doas.1 doas.conf.5

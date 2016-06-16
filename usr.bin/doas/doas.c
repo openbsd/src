@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.55 2016/06/07 16:49:23 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.56 2016/06/16 17:40:30 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -182,105 +182,6 @@ parseconfig(const char *filename, int checkperms)
 		exit(1);
 }
 
-/*
- * Copy the environment variables in safeset from oldenvp to envp.
- */
-static int
-copyenvhelper(const char **oldenvp, const char **safeset, int nsafe,
-    char **envp, int ei)
-{
-	int i;
-
-	for (i = 0; i < nsafe; i++) {
-		const char **oe = oldenvp;
-		while (*oe) {
-			size_t len = strlen(safeset[i]);
-			if (strncmp(*oe, safeset[i], len) == 0 &&
-			    (*oe)[len] == '=') {
-				if (!(envp[ei++] = strdup(*oe)))
-					err(1, "strdup");
-				break;
-			}
-			oe++;
-		}
-	}
-	return ei;
-}
-
-static char **
-copyenv(const char **oldenvp, struct rule *rule)
-{
-	const char *safeset[] = {
-		"DISPLAY", "HOME", "LOGNAME", "MAIL",
-		"PATH", "TERM", "USER", "USERNAME",
-		NULL
-	};
-	const char *badset[] = {
-		"ENV",
-		NULL
-	};
-	char **envp;
-	const char **extra;
-	int ei;
-	int nsafe, nbad;
-	int nextras = 0;
-
-	/* if there was no envvar whitelist, pass all except badset ones */
-	nbad = arraylen(badset);
-	if ((rule->options & KEEPENV) && !rule->envlist) {
-		size_t iold, inew;
-		size_t oldlen = arraylen(oldenvp);
-		envp = reallocarray(NULL, oldlen + 1, sizeof(char *));
-		if (!envp)
-			err(1, "reallocarray");
-		for (inew = iold = 0; iold < oldlen; iold++) {
-			size_t ibad;
-			for (ibad = 0; ibad < nbad; ibad++) {
-				size_t len = strlen(badset[ibad]);
-				if (strncmp(oldenvp[iold], badset[ibad], len) == 0 &&
-				    oldenvp[iold][len] == '=') {
-					break;
-				}
-			}
-			if (ibad == nbad) {
-				if (!(envp[inew] = strdup(oldenvp[iold])))
-					err(1, "strdup");
-				inew++;
-			}
-		}
-		envp[inew] = NULL;
-		return envp;
-	}
-
-	nsafe = arraylen(safeset);
-	if ((extra = rule->envlist)) {
-		size_t isafe;
-		nextras = arraylen(extra);
-		for (isafe = 0; isafe < nsafe; isafe++) {
-			size_t iextras;
-			for (iextras = 0; iextras < nextras; iextras++) {
-				if (strcmp(extra[iextras], safeset[isafe]) == 0) {
-					nextras--;
-					extra[iextras] = extra[nextras];
-					extra[nextras] = NULL;
-					iextras--;
-				}
-			}
-		}
-	}
-
-	envp = reallocarray(NULL, nsafe + nextras + 1, sizeof(char *));
-	if (!envp)
-		err(1, "can't allocate new environment");
-
-	ei = 0;
-	ei = copyenvhelper(oldenvp, safeset, nsafe, envp, ei);
-	ei = copyenvhelper(oldenvp, rule->envlist, nextras, envp, ei);
-	envp[ei] = NULL;
-
-	return envp;
-}
-
 static void __dead
 checkconfig(const char *confpath, int argc, char **argv,
     uid_t uid, gid_t *groups, int ngroups, uid_t target)
@@ -311,6 +212,7 @@ main(int argc, char **argv, char **envp)
 	char *shargv[] = { NULL, NULL };
 	char *sh;
 	const char *cmd;
+	struct env *env;
 	char cmdline[LINE_MAX];
 	char myname[_PW_NAME_LEN + 1];
 	struct passwd *pw;
@@ -471,7 +373,9 @@ main(int argc, char **argv, char **envp)
 	syslog(LOG_AUTHPRIV | LOG_INFO, "%s ran command %s as %s from %s",
 	    myname, cmdline, pw->pw_name, cwd);
 
-	envp = copyenv((const char **)envp, rule);
+	env = createenv(envp);
+	env = filterenv(env, rule);
+	envp = flattenenv(env);
 
 	if (rule->cmd) {
 		if (setenv("PATH", safepath, 1) == -1)
