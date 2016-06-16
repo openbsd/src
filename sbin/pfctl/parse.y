@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.649 2015/09/01 19:12:25 sashan Exp $	*/
+/*	$OpenBSD: parse.y,v 1.650 2016/06/16 15:46:20 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -729,6 +729,7 @@ pfa_anchorlist	: /* empty */
 		| pfa_anchorlist '\n'
 		| pfa_anchorlist pfrule '\n'
 		| pfa_anchorlist anchorrule '\n'
+		| pfa_anchorlist include '\n'
 		;
 
 pfa_anchor	: '{'
