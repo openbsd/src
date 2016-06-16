@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshbuf-getput-basic.c,v 1.5 2015/10/20 23:24:25 mmcc Exp $	*/
+/*	$OpenBSD: sshbuf-getput-basic.c,v 1.6 2016/06/16 11:00:17 dtucker Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -16,6 +16,8 @@
  */
 
 #include <sys/types.h>
+
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
