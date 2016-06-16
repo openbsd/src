@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.108 2016/03/07 13:47:53 stsp Exp $
+.\" $OpenBSD: ral.4,v 1.109 2016/06/16 17:25:32 martijn Exp $
 .\"
 .\" Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 7 2016 $
+.Dd $Mdocdate: June 16 2016 $
 .Dt RAL 4
 .Os
 .Sh NAME
 .Nm ral
-.Nd Ralink Technology IEEE 802.11a/b/g/n wireless network device
+.Nd Ralink Technology/MediaTek IEEE 802.11a/b/g/n wireless network device
 .Sh SYNOPSIS
 .Cd "ral* at cardbus?"
 .Cd "ral* at pci?"
@@ -302,9 +302,6 @@ inet 192.168.1.1 255.255.255.0
 .Xr hostname.if 5 ,
 .Xr hostapd 8 ,
 .Xr ifconfig 8
-.Pp
-Ralink Technology:
-.Lk http://www.ralinktech.com/
 .Sh HISTORY
 The
 .Nm
