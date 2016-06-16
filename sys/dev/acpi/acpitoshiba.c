@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitoshiba.c,v 1.5 2016/06/08 13:34:30 giovanni Exp $ */
+/* $OpenBSD: acpitoshiba.c,v 1.6 2016/06/16 10:39:36 giovanni Exp $ */
 /*-
  * Copyright (c) 2003 Hiroyuki Aizu <aizu@navi.org>
  * All rights reserved.
@@ -78,6 +78,8 @@
 #define	HCI_SUCCESS			0
 
 /* Toshiba fn_keys events */
+#define	FN_KEY_SUSPEND			0x01BD
+#define	FN_KEY_HIBERNATE		0x01BE
 #define	FN_KEY_VIDEO_OUTPUT		0x01BF
 #define	FN_KEY_BRIGHTNESS_DOWN		0x01C0
 #define	FN_KEY_BRIGHTNESS_UP		0x01C1
@@ -393,6 +395,24 @@ toshiba_hotkey(struct aml_node *node, int notify, void *arg)
 	case FN_KEY_BRIGHTNESS_DOWN:
 		/* Decrease brightness */
 		ret = toshiba_fn_key_brightness_down(sc);
+		break;
+	case FN_KEY_SUSPEND:
+#ifndef SMALL_KERNEL
+		if (acpi_record_event(sc->sc_acpi, APM_USER_SUSPEND_REQ)) {
+			acpi_addtask(sc->sc_acpi, acpi_sleep_task,
+			    sc->sc_acpi, ACPI_STATE_S3);
+			ret = HCI_SUCCESS;
+		}
+#endif
+		break;
+	case FN_KEY_HIBERNATE:
+#if defined(HIBERNATE) && !defined(SMALL_KERNEL)
+		if (acpi_record_event(sc->sc_acpi, APM_USER_HIBERNATE_REQ)) {
+			acpi_addtask(sc->sc_acpi, acpi_sleep_task,
+			    sc->sc_acpi, ACPI_STATE_S4);
+			ret = HCI_SUCCESS;
+		}
+#endif
 		break;
 	case FN_KEY_VIDEO_OUTPUT:
 		/* Cycle through video outputs. */
