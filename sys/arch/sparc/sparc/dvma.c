@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvma.c,v 1.2 2015/05/19 20:42:11 miod Exp $	*/
+/*	$OpenBSD: dvma.c,v 1.3 2016/06/16 22:05:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -102,9 +102,9 @@ dvma_malloc_space(size_t len, void *kaddr, int flags, int space)
 	int s;
 
 	len = round_page(len);
-	/* XXX - verify if maybe uvm_km_valloc from kernel_map would be ok. */
+	/* XXX - verify if maybe &kv_any would be ok. */
 	s = splvm();
-	kva = uvm_km_valloc(kmem_map, len);
+	kva = (vaddr_t)km_alloc(len, &kv_intrsafe, &kp_none, &kd_nowait);
 	splx(s);
 	if (kva == 0)
 		return (NULL);
@@ -147,7 +147,7 @@ dropit:
 		uvm_pagefree(PHYS_TO_VM_PAGE(pa));
 	}
 
-	uvm_km_free(kmem_map, kva, len);
+	km_free((void *)kva, len, &kv_intrsafe, &kp_none);
 
 	return NULL;
 }
@@ -171,7 +171,7 @@ dvma_free(caddr_t dva, size_t len, void	*kaddr)
 		uvm_pagefree(PHYS_TO_VM_PAGE(pa));
 	}
 
-	uvm_km_free(kmem_map, kva, len);
+	km_free((void *)kva, len, &kv_intrsafe, &kp_none);
 }
 
 u_long dvma_cachealign = 0;
