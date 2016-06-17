@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.191 2016/06/15 11:40:56 mpi Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.192 2016/06/17 07:59:16 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1835,7 +1835,7 @@ uvideo_vs_close(struct uvideo_softc *sc)
 {
 	if (sc->sc_vs_cur->bulk_running == 1) {
 		sc->sc_vs_cur->bulk_running = 0;
-		(void)tsleep(&sc->sc_vs_cur->bulk_running, 0, "vid_close", 0);
+		usbd_ref_wait(sc->sc_udev);
 	}
 
 	if (sc->sc_vs_cur->pipeh) {
@@ -1910,6 +1910,7 @@ uvideo_vs_start_bulk_thread(void *arg)
 	usbd_status error;
 	int size;
 
+	usbd_ref_incr(sc->sc_udev);
 	while (sc->sc_vs_cur->bulk_running) {
 		size = UGETDW(sc->sc_desc_probe.dwMaxPayloadTransferSize);
 
@@ -1934,7 +1935,7 @@ uvideo_vs_start_bulk_thread(void *arg)
 		(void)sc->sc_decode_stream_header(sc,
 		    sc->sc_vs_cur->bxfer.buf, size);
 	}
-	wakeup(&sc->sc_vs_cur->bulk_running);
+	usbd_ref_decr(sc->sc_udev);
 
 	kthread_exit(0);
 }

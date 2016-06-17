@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.6 2016/06/13 19:52:21 mglocker Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.7 2016/06/17 07:59:16 mglocker Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -1169,7 +1169,7 @@ utvfu_as_close(struct utvfu_softc *sc)
 	if (sc->sc_audio.iface.pipeh != NULL) {
 		usbd_abort_pipe(sc->sc_audio.iface.pipeh);
 
-		tsleep(&sc->sc_flags, 0, "audioclose", hz/2+1);
+		usbd_ref_wait(sc->sc_udev);
 
 		usbd_close_pipe(sc->sc_audio.iface.pipeh);
 		sc->sc_audio.iface.pipeh = NULL;
@@ -1239,6 +1239,7 @@ utvfu_as_bulk_thread(void *arg)
 	DPRINTF(1, "%s %s\n", DEVNAME(sc), __func__);
 
 	iface = &sc->sc_audio.iface;
+	usbd_ref_incr(sc->sc_udev);
 	while (ISSET(sc->sc_flags, UTVFU_FLAG_AS_RUNNING)) {
 		usbd_setup_xfer(
 		    iface->xfer,
@@ -1267,7 +1268,7 @@ utvfu_as_bulk_thread(void *arg)
 	}
 
 	CLR(sc->sc_flags, UTVFU_FLAG_AS_RUNNING);
-	wakeup(&sc->sc_flags);
+	usbd_ref_decr(sc->sc_udev);
 
 	DPRINTF(1, "%s %s: exiting\n", DEVNAME(sc), __func__);
 
