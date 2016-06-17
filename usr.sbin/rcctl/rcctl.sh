@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.95 2016/04/26 18:39:29 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.96 2016/06/17 11:24:58 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -141,7 +141,7 @@ svc_is_avail()
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	[ -x "/etc/rc.d/${_svc}" ] && return 0
+	[ -x "/etc/rc.d/${_svc}" ] && return
 	svc_is_special ${_svc}
 }
 
