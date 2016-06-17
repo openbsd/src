@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.80 2015/08/21 16:04:35 visa Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.81 2016/06/17 10:48:25 dlg Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -799,9 +799,11 @@ uao_init(void)
 	 */
 	pool_init(&uao_swhash_elt_pool, sizeof(struct uao_swhash_elt),
 	    0, 0, PR_WAITOK, "uaoeltpl", NULL);
+	pool_setipl(&uao_swhash_elt_pool, IPL_NONE);
 
 	pool_init(&uvm_aobj_pool, sizeof(struct uvm_aobj), 0, 0, PR_WAITOK,
 	    "aobjpl", NULL);
+	pool_setipl(&uvm_aobj_pool, IPL_NONE);
 }
 
 /*

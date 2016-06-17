@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.71 2016/05/26 13:37:26 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.72 2016/06/17 10:48:25 dlg Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -227,6 +227,7 @@ amap_init(void)
 	/* Initialize the vm_amap pool. */
 	pool_init(&uvm_amap_pool, sizeof(struct vm_amap), 0, 0, PR_WAITOK,
 	    "amappl", NULL);
+	pool_setipl(&uvm_amap_pool, IPL_NONE);
 	pool_sethiwat(&uvm_amap_pool, 4096);
 
 	/* initialize small amap pools */
@@ -237,12 +238,14 @@ amap_init(void)
 		    (i + 1) * sizeof(struct vm_anon *);
 		pool_init(&uvm_small_amap_pool[i], size, 0, 0, 0,
 		    amap_small_pool_names[i], NULL);
+		pool_setipl(&uvm_small_amap_pool[i], IPL_NONE);
 	}
 
 	pool_init(&uvm_amap_chunk_pool,
 	    sizeof(struct vm_amap_chunk) +
 	    UVM_AMAP_CHUNK * sizeof(struct vm_anon *), 0, 0, 0,
 	    "amapchunkpl", NULL);
+	pool_setipl(&uvm_amap_chunk_pool, IPL_NONE);
 	pool_sethiwat(&uvm_amap_chunk_pool, 4096);
 }
 
