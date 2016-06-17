@@ -729,12 +729,14 @@
 ./usr/include/dev/usb/if_uathreg.h
 ./usr/include/dev/usb/if_uathvar.h
 ./usr/include/dev/usb/if_udavreg.h
+./usr/include/dev/usb/if_umb.h
 ./usr/include/dev/usb/if_upgtvar.h
 ./usr/include/dev/usb/if_urlreg.h
 ./usr/include/dev/usb/if_urndisreg.h
 ./usr/include/dev/usb/if_urtwreg.h
 ./usr/include/dev/usb/if_wi_usb.h
 ./usr/include/dev/usb/if_zydreg.h
+./usr/include/dev/usb/mbim.h
 ./usr/include/dev/usb/ohcireg.h
 ./usr/include/dev/usb/ohcivar.h
 ./usr/include/dev/usb/uaudioreg.h
