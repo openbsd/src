@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.275 2016/06/15 21:52:47 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.276 2016/06/17 18:56:51 otto Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -675,7 +675,7 @@ smtp_session(struct listener *listener, int sock,
 	rfc2822_body_callback(&s->rfc2822_parser,
 	    dataline_callback, s);
 
-	if (hostname || listener->local) {
+	if (hostname || listener->local || listener->port == 587) {
 		rfc2822_missing_header_callback(&s->rfc2822_parser, "date",
 		    header_missing_callback, s);
 		rfc2822_missing_header_callback(&s->rfc2822_parser, "message-id",
