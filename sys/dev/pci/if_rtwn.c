@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.21 2016/06/05 20:11:41 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.22 2016/06/17 10:53:55 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -195,11 +195,6 @@ extern int rtwn_debug;
 #define	RTWN_PCI_IOBA		0x10	/* i/o mapped base */
 #define	RTWN_PCI_MMBA		0x18	/* memory mapped base */
 
-#define RTWN_INT_ENABLE	(R92C_IMR_ROK | R92C_IMR_VODOK | R92C_IMR_VIDOK | \
-			R92C_IMR_BEDOK | R92C_IMR_BKDOK | R92C_IMR_MGNTDOK | \
-			R92C_IMR_HIGHDOK | R92C_IMR_BDOK | R92C_IMR_RDU | \
-			R92C_IMR_RXFOVW)
-
 static const struct pci_matchid rtwn_pci_devices[] = {
 	{ PCI_VENDOR_REALTEK,	PCI_PRODUCT_REALTEK_RT8188 }
 };
@@ -226,6 +221,8 @@ void		rtwn_rx_frame(struct rtwn_pci_softc *,
 		    struct r92c_rx_desc_pci *, struct rtwn_rx_data *, int);
 int		rtwn_tx(void *, struct mbuf *, struct ieee80211_node *);
 void		rtwn_tx_done(struct rtwn_pci_softc *, int);
+int		rtwn_alloc_buffers(void *);
+int		rtwn_pci_init(void *);
 void		rtwn_pci_stop(void *);
 int		rtwn_intr(void *);
 int		rtwn_is_oactive(void *);
@@ -233,17 +230,17 @@ int		rtwn_power_on(void *);
 int		rtwn_llt_write(struct rtwn_pci_softc *, uint32_t, uint32_t);
 int		rtwn_llt_init(struct rtwn_pci_softc *);
 int		rtwn_dma_init(void *);
+int		rtwn_fw_loadpage(void *, int, uint8_t *, int);
 int		rtwn_pci_load_firmware(void *, u_char **, size_t *);
 void		rtwn_mac_init(void *);
 void		rtwn_bb_init(void *);
-void		rtwn_enable_intr(void *);
-void		rtwn_disable_intr(void *);
 void		rtwn_calib_to(void *);
 void		rtwn_next_calib(void *);
 void		rtwn_cancel_calib(void *);
 void		rtwn_scan_to(void *);
 void		rtwn_pci_next_scan(void *);
 void		rtwn_cancel_scan(void *);
+void		rtwn_wait_async(void *);
 
 /* Aliases. */
 #define	rtwn_bb_write	rtwn_pci_write_4
@@ -352,18 +349,20 @@ rtwn_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sc.sc_ops.power_on = rtwn_power_on;
 	sc->sc_sc.sc_ops.dma_init = rtwn_dma_init;
 	sc->sc_sc.sc_ops.load_firmware = rtwn_pci_load_firmware;
+	sc->sc_sc.sc_ops.fw_loadpage = rtwn_fw_loadpage;
 	sc->sc_sc.sc_ops.mac_init = rtwn_mac_init;
 	sc->sc_sc.sc_ops.bb_init = rtwn_bb_init;
-	sc->sc_sc.sc_ops.enable_intr = rtwn_enable_intr;
-	sc->sc_sc.sc_ops.disable_intr = rtwn_disable_intr;
+	sc->sc_sc.sc_ops.alloc_buffers = rtwn_alloc_buffers;
+	sc->sc_sc.sc_ops.init = rtwn_pci_init;
 	sc->sc_sc.sc_ops.stop = rtwn_pci_stop;
 	sc->sc_sc.sc_ops.is_oactive = rtwn_is_oactive;
 	sc->sc_sc.sc_ops.next_calib = rtwn_next_calib;
 	sc->sc_sc.sc_ops.cancel_calib = rtwn_cancel_calib;
 	sc->sc_sc.sc_ops.next_scan = rtwn_pci_next_scan;
 	sc->sc_sc.sc_ops.cancel_scan = rtwn_cancel_scan;
-
-	error = rtwn_attach(&sc->sc_dev, &sc->sc_sc, RTWN_CHIP_88C);
+	sc->sc_sc.sc_ops.wait_async = rtwn_wait_async;
+	error = rtwn_attach(&sc->sc_dev, &sc->sc_sc,
+	    RTWN_CHIP_88C | RTWN_CHIP_PCI);
 	if (error != 0) {
 		rtwn_free_rx_list(sc);
 		for (i = 0; i < RTWN_NTXQUEUES; i++)
@@ -1134,15 +1133,60 @@ rtwn_tx_done(struct rtwn_pci_softc *sc, int qid)
 	}
 }
 
+int
+rtwn_alloc_buffers(void *cookie)
+{
+	/* Tx/Rx buffers were already allocated in rtwn_pci_attach() */
+	return (0);
+}
+
+int
+rtwn_pci_init(void *cookie)
+{
+	/* nothing to do */
+	return (0);
+}
+
 void
 rtwn_pci_stop(void *cookie)
 {
 	struct rtwn_pci_softc *sc = cookie;
-	int i;
+	uint16_t reg;
+	int i, s;
+
+	s = splnet();
+
+	/* Disable interrupts. */
+	rtwn_pci_write_4(sc, R92C_HIMR, 0x00000000);
+
+	/* Stop hardware. */
+	rtwn_pci_write_1(sc, R92C_TXPAUSE, 0xff);
+	rtwn_pci_write_1(sc, R92C_RF_CTRL, 0x00);
+	reg = rtwn_pci_read_1(sc, R92C_SYS_FUNC_EN);
+	reg |= R92C_SYS_FUNC_EN_BB_GLB_RST;
+	rtwn_pci_write_1(sc, R92C_SYS_FUNC_EN, reg);
+	reg &= ~R92C_SYS_FUNC_EN_BB_GLB_RST;
+	rtwn_pci_write_1(sc, R92C_SYS_FUNC_EN, reg);
+	reg = rtwn_pci_read_2(sc, R92C_CR);
+	reg &= ~(R92C_CR_HCI_TXDMA_EN | R92C_CR_HCI_RXDMA_EN |
+	    R92C_CR_TXDMA_EN | R92C_CR_RXDMA_EN | R92C_CR_PROTOCOL_EN |
+	    R92C_CR_SCHEDULE_EN | R92C_CR_MACTXEN | R92C_CR_MACRXEN |
+	    R92C_CR_ENSEC);
+	rtwn_pci_write_2(sc, R92C_CR, reg);
+	if (rtwn_pci_read_1(sc, R92C_MCUFWDL) & R92C_MCUFWDL_RAM_DL_SEL)
+		rtwn_fw_reset(&sc->sc_sc);
+	/* TODO: linux does additional btcoex stuff here */
+	rtwn_pci_write_2(sc, R92C_AFE_PLL_CTRL, 0x80); /* linux magic number */
+	rtwn_pci_write_1(sc, R92C_SPS0_CTRL, 0x23); /* ditto */
+	rtwn_pci_write_1(sc, R92C_AFE_XTAL_CTRL, 0x0e); /* differs in btcoex */
+	rtwn_pci_write_1(sc, R92C_RSV_CTRL, 0x0e);
+	rtwn_pci_write_1(sc, R92C_APS_FSMCO, R92C_APS_FSMCO_PDN_EN);
 
 	for (i = 0; i < RTWN_NTXQUEUES; i++)
 		rtwn_reset_tx_list(sc, i);
 	rtwn_reset_rx_list(sc);
+
+	splx(s);
 }
 
 int
@@ -1456,6 +1500,36 @@ rtwn_dma_init(void *cookie)
 }
 
 int
+rtwn_fw_loadpage(void *cookie, int page, uint8_t *buf, int len)
+{
+	struct rtwn_pci_softc *sc = cookie;
+	uint32_t reg;
+	int off, mlen, error = 0, i;
+
+	reg = rtwn_pci_read_4(sc, R92C_MCUFWDL);
+	reg = RW(reg, R92C_MCUFWDL_PAGE, page);
+	rtwn_pci_write_4(sc, R92C_MCUFWDL, reg);
+
+	DELAY(5);
+
+	off = R92C_FW_START_ADDR;
+	while (len > 0) {
+		if (len > 196)
+			mlen = 196;
+		else if (len > 4)
+			mlen = 4;
+		else
+			mlen = 1;
+		for (i = 0; i < mlen; i++)
+			rtwn_pci_write_1(sc, off++, buf[i]);
+		buf += mlen;
+		len -= mlen;
+	}
+
+	return (error);
+}
+
+int
 rtwn_pci_load_firmware(void *cookie, u_char **fw, size_t *len)
 {
 	struct rtwn_pci_softc *sc = cookie;
@@ -1578,28 +1652,6 @@ rtwn_bb_init(void *cookie)
 }
 
 void
-rtwn_enable_intr(void *cookie)
-{
-	struct rtwn_pci_softc *sc = cookie;
-
-	/* CLear pending interrupts. */
-	rtwn_pci_write_4(sc, R92C_HISR, 0xffffffff);
-
-	/* Enable interrupts. */
-	rtwn_pci_write_4(sc, R92C_HIMR, RTWN_INT_ENABLE);
-}
-
-void
-rtwn_disable_intr(void *cookie)
-{
-	struct rtwn_pci_softc *sc = cookie;
-
-	/* Disable interrupts. */
-	rtwn_pci_write_4(sc, R92C_HISR, 0x00000000);
-	rtwn_pci_write_4(sc, R92C_HIMR, 0x00000000);
-}
-
-void
 rtwn_calib_to(void *arg)
 {
 	struct rtwn_pci_softc *sc = arg;
@@ -1647,4 +1699,10 @@ rtwn_cancel_scan(void *cookie)
 
 	if (timeout_initialized(&sc->scan_to))
 		timeout_del(&sc->scan_to);
+}
+
+void
+rtwn_wait_async(void *cookie)
+{
+	/* nothing to do */
 }
