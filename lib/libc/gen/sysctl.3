@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.262 2016/06/18 10:36:13 vgross Exp $
+.\"	$OpenBSD: sysctl.3,v 1.263 2016/06/18 22:19:13 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1194,6 +1194,7 @@ The currently defined protocols and names are:
 .It tcp Ta reasslimit Ta integer Ta yes
 .It tcp Ta rfc1323 Ta integer Ta yes
 .It tcp Ta rfc3390 Ta integer Ta yes
+.It tcp Ta rootonly Ta array Ta yes
 .It tcp Ta rstppslimit Ta integer Ta yes
 .It tcp Ta sack Ta integer Ta yes
 .It tcp Ta slowhz Ta integer Ta no
@@ -1201,13 +1202,12 @@ The currently defined protocols and names are:
 .It tcp Ta synbucketlimit Ta integer Ta yes
 .It tcp Ta syncachelimit Ta integer Ta yes
 .It tcp Ta synuselimit Ta integer Ta yes
-.It tcp Ta rootonly Ta array Ta yes
 .It udp Ta baddynamic Ta array Ta yes
 .It udp Ta checksum Ta integer Ta yes
 .It udp Ta recvspace Ta integer Ta yes
+.It udp Ta rootonly Ta array Ta yes
 .It udp Ta sendspace Ta integer Ta yes
 .It udp Ta stats Ta structure Ta no
-.It udp Ta rootonly Ta array Ta yes
 .El
 .Pp
 The variables are as follows:
@@ -1598,6 +1598,15 @@ Returns 2 if the
 .Tn TCP
 Initial Window is increased to 10 * MSS or 14600 bytes, as specified in
 draft-ietf-tcpm-initcwnd.
+.It Li tcp.rootonly
+An array of
+.Li in_port_t
+is returned specifying the bitmask of
+.Tn TCP
+ports that can only be bound by processes with root euid.
+When running with a
+.Xr securelevel 7
+greater than 0, this variable may not be changed.
 .It Li tcp.rstppslimit
 This variable specifies the maximum number of outgoing TCP RST packets
 per second.
@@ -1620,15 +1629,6 @@ The maximum number of entries allowed in the TCP SYN cache.
 .It Li tcp.synuselimit
 The minimum number of times the hash function for the TCP SYN cache is used
 before it is reseeded.
-.It Li tcp.rootonly
-An array of
-.Li in_port_t
-is returned specifying the bitmask of
-.Tn TCP
-ports that can only be bound by processes with root euid.
-When running with a
-.Xr securelevel 7
-greater than 0, this variable may not be changed.
 .It Li udp.baddynamic
 Analogous to
 .Li tcp.baddynamic
@@ -1646,18 +1646,18 @@ checksums is strongly discouraged.
 Returns the default
 .Tn UDP
 receive buffer size.
-.It Li udp.sendspace
-Returns the default
-.Tn UDP
-send buffer size.
-.It Li udp.stats
-Returns the UDP statistics in a struct udpstat.
 .It Li udp.rootonly
 Analogous to
 .Li tcp.rootonly
 but for
 .Tn UDP
 sockets.
+.It Li udp.sendspace
+Returns the default
+.Tn UDP
+send buffer size.
+.It Li udp.stats
+Returns the UDP statistics in a struct udpstat.
 .El
 .It Dv PF_INET6
 Get or set various global information about IPv6
