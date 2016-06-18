@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.50 2016/06/11 02:01:46 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.51 2016/06/18 01:29:05 renato Exp $ */
 
 /*
  * Copyright (c) 2014, 2015 Renato Westphal <renato@openbsd.org>
@@ -265,10 +265,6 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 				/* ignore */
 				break;
 			}
-			break;
-		case TLV_TYPE_HOPCOUNT:
-		case TLV_TYPE_PATHVECTOR:
-			/* TODO just ignore for now */
 			break;
 		case TLV_TYPE_GENERICLABEL:
 			switch (type) {
