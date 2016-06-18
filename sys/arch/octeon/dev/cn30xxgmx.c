@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.23 2016/06/09 15:29:22 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.24 2016/06/18 15:59:34 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1259,14 +1259,13 @@ cn30xxgmx_sgmii_speed(struct cn30xxgmx_port_softc *sc)
 		misc_ctl |= 5 & PCS_MISC_CTL_SAMP_PT;
 		break;
 	case IF_Gbps(1):
+	default:
 		tx_slot = 0x200;
 		tx_burst = 0x2000;
 		SET(prt_cfg, PRTN_CFG_SPEED);
 		CLR(prt_cfg, PRTN_CFG_SPEED_MSB);
 		SET(prt_cfg, PRTN_CFG_SLOTTIME);
 		misc_ctl |= 1 & PCS_MISC_CTL_SAMP_PT;
-		break;
-	default:
 		break;
 	}
 
