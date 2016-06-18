@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.21 2016/03/20 02:29:51 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.22 2016/06/18 02:40:46 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -68,12 +68,12 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	 * object so we can do relocations in the .rodata section.
 	 * After relocation restore protection.
 	 */
-	load_list = object->load_list;
-	while (load_list != NULL) {
-		if ((load_list->prot & PROT_WRITE) == 0)
-			_dl_mprotect(load_list->start, load_list->size,
-			    load_list->prot|PROT_WRITE);
-		load_list = load_list->next;
+	if (object->dyn.textrel) {
+		for (load_list = object->load_list; load_list != NULL; load_list = load_list->next) {
+			if ((load_list->prot & PROT_WRITE) == 0)
+				_dl_mprotect(load_list->start, load_list->size,
+				    PROT_READ | PROT_WRITE);
+		}
 	}
 
 	DL_DEB(("relocating %d\n", numrel));
@@ -147,12 +147,12 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		}
 	}
 	DL_DEB(("done %d fails\n", fails));
-	load_list = object->load_list;
-	while (load_list != NULL) {
-		if ((load_list->prot & PROT_WRITE) == 0)
-			_dl_mprotect(load_list->start, load_list->size,
-			    load_list->prot);
-		load_list = load_list->next;
+	if (object->dyn.textrel) {
+		for (load_list = object->load_list; load_list != NULL; load_list = load_list->next) {
+			if ((load_list->prot & PROT_WRITE) == 0)
+				_dl_mprotect(load_list->start, load_list->size,
+				    load_list->prot);
+		}
 	}
 	return(fails);
 }
