@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioio.h,v 1.24 2016/03/16 06:46:39 ratchov Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.25 2016/06/18 07:59:30 ratchov Exp $	*/
 /*	$NetBSD: audioio.h,v 1.24 1998/08/13 06:28:41 mrg Exp $	*/
 
 /*
@@ -56,6 +56,16 @@ struct audio_swpar {
 	unsigned int nblks;		/* number of blocks in play buffer */
 	unsigned int round;		/* common frames per block */
 	unsigned int _spare[6];
+};
+
+/*
+ * argument to AUDIO_GETSTATUS
+ */
+struct audio_status {
+	int mode;
+	int pause;
+	int active;
+	int _spare[5];
 };
 
 /*
@@ -173,6 +183,7 @@ typedef struct audio_encoding {
 #define AUDIO_SETPAR	_IOWR('A', 37, struct audio_swpar)
 #define AUDIO_START	_IO('A', 38)
 #define AUDIO_STOP	_IO('A', 39)
+#define AUDIO_GETSTATUS	_IOR('A', 40, struct audio_status)
 #define  AUDIO_PROP_FULLDUPLEX	0x01
 #define  AUDIO_PROP_MMAP	0x02
 #define  AUDIO_PROP_INDEPENDENT	0x04
