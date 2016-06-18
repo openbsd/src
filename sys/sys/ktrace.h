@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.30 2016/06/07 06:12:37 deraadt Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.31 2016/06/18 17:39:44 guenther Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -57,12 +57,6 @@ struct ktr_header {
 	char	ktr_comm[MAXCOMLEN+1];	/* command name */
 	size_t	ktr_len;		/* length of buf */
 };
-
-/*
- * Test for kernel trace point
- */
-#define KTRPOINT(p, type)	\
-	((p)->p_p->ps_traceflag & (1<<(type)) && ((p)->p_flag & P_INKTR) == 0)
 
 /*
  * ktrace record types
@@ -200,6 +194,12 @@ int	utrace(const char *, const void *, size_t);
 __END_DECLS
 
 #else
+
+/*
+ * Test for kernel trace point
+ */
+#define KTRPOINT(p, type)	\
+	((p)->p_p->ps_traceflag & (1<<(type)) && ((p)->p_flag & P_INKTR) == 0)
 
 void ktrgenio(struct proc *, int, enum uio_rw, struct iovec *, ssize_t);
 void ktrnamei(struct proc *, char *);
