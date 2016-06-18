@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.86 2016/06/03 16:16:25 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.87 2016/06/18 07:49:24 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3085,10 +3085,16 @@ iwm_nvm_init(struct iwm_softc *sc)
 		nvm_sections[section].length = len;
 	}
 	free(buf, M_DEVBUF, bufsz);
-	if (error)
-		return error;
+	if (error == 0)
+		error = iwm_parse_nvm_sections(sc, nvm_sections);
 
-	return iwm_parse_nvm_sections(sc, nvm_sections);
+	for (i = 0; i < IWM_NVM_NUM_OF_SECTIONS; i++) {
+		if (nvm_sections[i].data != NULL)
+			free(nvm_sections[i].data, M_DEVBUF,
+			    nvm_sections[i].length);
+	}
+
+	return error;
 }
 
 /*
@@ -8055,6 +8061,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	/* Free allocated memory if something failed during attachment. */
 fail4:	while (--txq_i >= 0)
 		iwm_free_tx_ring(sc, &sc->txq[txq_i]);
+	iwm_free_rx_ring(sc, &sc->rxq);
 	iwm_free_sched(sc);
 fail3:	if (sc->ict_dma.vaddr != NULL)
 		iwm_free_ict(sc);
