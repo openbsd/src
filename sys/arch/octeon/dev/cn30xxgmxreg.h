@@ -3,7 +3,7 @@
  * DONT EDIT THIS FILE
  */
 
-/*	$OpenBSD: cn30xxgmxreg.h,v 1.3 2016/06/09 15:29:22 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmxreg.h,v 1.4 2016/06/18 15:43:08 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -650,7 +650,7 @@
 
 /* Low-level SGMII link control */
 
-#define	PCS_BASE(g, i)	(0x00011800b0001000ULL + 0x20000 * (g) + 0x400 * (i))
+#define	PCS_BASE(g, i)	(0x00011800b0001000ULL + 0x8000000 * (g) + 0x400 * (i))
 #define	PCS_SIZE	0x98
 
 #define	PCS_MR_CONTROL				0x00
