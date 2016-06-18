@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.60 2016/05/23 19:14:03 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.61 2016/06/18 01:25:53 renato Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -232,7 +232,7 @@ kr_change(struct kroute *kr)
 	if (kp == NULL)
 		goto miss;
 
-	kprio = kroute_find_prio(kp, RTP_ANY);
+	kprio = kroute_find_prio(kp, kr->priority);
 	if (kprio == NULL)
 		goto miss;
 
@@ -277,7 +277,7 @@ kr_delete(struct kroute *kr)
 	kp = kroute_find_prefix(kr->af, &kr->prefix, kr->prefixlen);
 	if (kp == NULL)
 		return (0);
-	kprio = kroute_find_prio(kp, RTP_ANY);
+	kprio = kroute_find_prio(kp, kr->priority);
 	if (kprio == NULL)
 		return (0);
 	kn = kroute_find_gw(kprio, &kr->nexthop);

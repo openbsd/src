@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.39 2016/05/23 19:16:00 renato Exp $ */
+/*	$OpenBSD: lde.h,v 1.40 2016/06/18 01:25:53 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -102,6 +102,7 @@ struct fec_nh {
 	int			 af;
 	union ldpd_addr		 nexthop;
 	uint32_t		 remote_label;
+	uint8_t			 priority;
 };
 
 struct fec_node {
@@ -159,10 +160,13 @@ void		 fec_clear(struct fec_tree *, void (*)(void *));
 void		 rt_dump(pid_t);
 void		 fec_snap(struct lde_nbr *);
 void		 fec_tree_clear(void);
-struct fec_nh	*fec_nh_find(struct fec_node *, int, union ldpd_addr *);
+struct fec_nh	*fec_nh_find(struct fec_node *, int, union ldpd_addr *,
+		    uint8_t);
 uint32_t	 egress_label(enum fec_type);
-void		 lde_kernel_insert(struct fec *, int, union ldpd_addr *, int, void *);
-void		 lde_kernel_remove(struct fec *, int, union ldpd_addr *);
+void		 lde_kernel_insert(struct fec *, int, union ldpd_addr *,
+		    uint8_t, int, void *);
+void		 lde_kernel_remove(struct fec *, int, union ldpd_addr *,
+		    uint8_t);
 void		 lde_check_mapping(struct map *, struct lde_nbr *);
 void		 lde_check_request(struct map *, struct lde_nbr *);
 void		 lde_check_release(struct map *, struct lde_nbr *);

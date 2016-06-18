@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.58 2016/05/23 19:16:00 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.59 2016/06/18 01:25:53 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -436,10 +436,11 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			switch (imsg.hdr.type) {
 			case IMSG_NETWORK_ADD:
 				lde_kernel_insert(&fec, kr.af, &kr.nexthop,
-				    kr.flags & F_CONNECTED, NULL);
+				    kr.priority, kr.flags & F_CONNECTED, NULL);
 				break;
 			case IMSG_NETWORK_DEL:
-				lde_kernel_remove(&fec, kr.af, &kr.nexthop);
+				lde_kernel_remove(&fec, kr.af, &kr.nexthop,
+				    kr.priority);
 				break;
 			}
 			break;
@@ -574,6 +575,7 @@ lde_send_change_klabel(struct fec_node *fn, struct fec_nh *fnh)
 		kr.nexthop.v4 = fnh->nexthop.v4;
 		kr.local_label = fn->local_label;
 		kr.remote_label = fnh->remote_label;
+		kr.priority = fnh->priority;
 
 		lde_imsg_compose_parent(IMSG_KLABEL_CHANGE, 0, &kr,
 		    sizeof(kr));
@@ -590,6 +592,7 @@ lde_send_change_klabel(struct fec_node *fn, struct fec_nh *fnh)
 		kr.nexthop.v6 = fnh->nexthop.v6;
 		kr.local_label = fn->local_label;
 		kr.remote_label = fnh->remote_label;
+		kr.priority = fnh->priority;
 
 		lde_imsg_compose_parent(IMSG_KLABEL_CHANGE, 0, &kr,
 		    sizeof(kr));
@@ -637,6 +640,7 @@ lde_send_delete_klabel(struct fec_node *fn, struct fec_nh *fnh)
 		kr.nexthop.v4 = fnh->nexthop.v4;
 		kr.local_label = fn->local_label;
 		kr.remote_label = fnh->remote_label;
+		kr.priority = fnh->priority;
 
 		lde_imsg_compose_parent(IMSG_KLABEL_DELETE, 0, &kr,
 		    sizeof(kr));
@@ -653,6 +657,7 @@ lde_send_delete_klabel(struct fec_node *fn, struct fec_nh *fnh)
 		kr.nexthop.v6 = fnh->nexthop.v6;
 		kr.local_label = fn->local_label;
 		kr.remote_label = fnh->remote_label;
+		kr.priority = fnh->priority;
 
 		lde_imsg_compose_parent(IMSG_KLABEL_DELETE, 0, &kr,
 		    sizeof(kr));
