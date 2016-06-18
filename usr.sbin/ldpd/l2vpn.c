@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.17 2016/06/18 01:25:53 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.18 2016/06/18 17:13:05 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -89,6 +89,15 @@ l2vpn_init(struct l2vpn *l2vpn)
 
 	LIST_FOREACH(pw, &l2vpn->pw_list, entry)
 		l2vpn_pw_init(pw);
+}
+
+void
+l2vpn_exit(struct l2vpn *l2vpn)
+{
+	struct l2vpn_pw		*pw;
+
+	LIST_FOREACH(pw, &l2vpn->pw_list, entry)
+		l2vpn_pw_exit(pw);
 }
 
 struct l2vpn_if *

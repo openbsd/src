@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.40 2016/06/18 01:25:53 renato Exp $ */
+/*	$OpenBSD: lde.h,v 1.41 2016/06/18 17:13:05 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -182,6 +182,7 @@ struct l2vpn	*l2vpn_new(const char *);
 struct l2vpn	*l2vpn_find(struct ldpd_conf *, const char *);
 void		 l2vpn_del(struct l2vpn *);
 void		 l2vpn_init(struct l2vpn *);
+void		 l2vpn_exit(struct l2vpn *);
 struct l2vpn_if	*l2vpn_if_new(struct l2vpn *, struct kif *);
 struct l2vpn_if	*l2vpn_if_find(struct l2vpn *, unsigned int);
 struct l2vpn_pw	*l2vpn_pw_new(struct l2vpn *, struct kif *);
