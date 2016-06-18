@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.214 2016/05/23 15:48:59 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.215 2016/06/18 10:36:13 vgross Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -545,9 +545,11 @@ parse(char *string, int flags)
 				    string);
 				return;
 			} else if ((mib[2] == IPPROTO_TCP &&
-			    mib[3] == TCPCTL_BADDYNAMIC) ||
+			    (mib[3] == TCPCTL_BADDYNAMIC ||
+			    mib[3] == TCPCTL_ROOTONLY)) ||
 			    (mib[2] == IPPROTO_UDP &&
-			    mib[3] == UDPCTL_BADDYNAMIC)) {
+			    (mib[3] == UDPCTL_BADDYNAMIC ||
+			    mib[3] == UDPCTL_ROOTONLY))) {
 
 				special |= BADDYNAMIC;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.206 2016/04/19 22:16:25 sthen Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.207 2016/06/18 10:36:13 vgross Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -121,6 +121,7 @@ int ipport_hifirstauto = IPPORT_HIFIRSTAUTO;
 int ipport_hilastauto = IPPORT_HILASTAUTO;
 
 struct baddynamicports baddynamicports;
+struct baddynamicports rootonlyports;
 struct pool inpcb_pool;
 int inpcb_pool_initialized = 0;
 
@@ -224,6 +225,21 @@ in_baddynamic(u_int16_t port, u_int16_t proto)
 			return (1);
 #endif
 		return (DP_ISSET(baddynamicports.udp, port));
+	default:
+		return (0);
+	}
+}
+
+int
+in_rootonly(u_int16_t port, u_int16_t proto)
+{
+	switch (proto) {
+	case IPPROTO_TCP:
+		return (port < IPPORT_RESERVED ||
+		    DP_ISSET(rootonlyports.tcp, port));
+	case IPPROTO_UDP:
+		return (port < IPPORT_RESERVED ||
+		    DP_ISSET(rootonlyports.udp, port));
 	default:
 		return (0);
 	}
@@ -347,7 +363,8 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 		if ((error = in_pcbpickport(&lport, laddr, wild, inp, p)))
 			return (error);
 	} else {
-		if (ntohs(lport) < IPPORT_RESERVED && (error = suser(p, 0)))
+		if (in_rootonly(ntohs(lport), so->so_proto->pr_protocol) &&
+		    suser(p, 0) != 0)
 			return (EACCES);
 	}
 	if (nam) {

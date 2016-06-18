@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.212 2016/06/15 16:06:35 vgross Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.213 2016/06/18 10:36:13 vgross Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1275,6 +1275,12 @@ udp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case UDPCTL_BADDYNAMIC:
 		return (sysctl_struct(oldp, oldlenp, newp, newlen,
 		    baddynamicports.udp, sizeof(baddynamicports.udp)));
+
+	case UDPCTL_ROOTONLY:
+		if (newp && securelevel > 0)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    rootonlyports.udp, sizeof(rootonlyports.udp)));
 
 	case UDPCTL_STATS:
 		if (newp != NULL)

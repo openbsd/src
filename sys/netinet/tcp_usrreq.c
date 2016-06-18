@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.130 2016/03/29 18:13:20 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.131 2016/06/18 10:36:13 vgross Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -884,6 +884,12 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case TCPCTL_BADDYNAMIC:
 		return (sysctl_struct(oldp, oldlenp, newp, newlen,
 		    baddynamicports.tcp, sizeof(baddynamicports.tcp)));
+
+	case TCPCTL_ROOTONLY:
+		if (newp && securelevel > 0)
+			return (EPERM);
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    rootonlyports.tcp, sizeof(rootonlyports.tcp)));
 
 	case TCPCTL_IDENT:
 		return (tcp_ident(oldp, oldlenp, newp, newlen, 0));

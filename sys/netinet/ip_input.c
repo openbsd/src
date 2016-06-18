@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.276 2016/05/07 09:56:39 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.277 2016/06/18 10:36:13 vgross Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -163,6 +163,8 @@ ip_init(void)
 	int i;
 	const u_int16_t defbaddynamicports_tcp[] = DEFBADDYNAMICPORTS_TCP;
 	const u_int16_t defbaddynamicports_udp[] = DEFBADDYNAMICPORTS_UDP;
+	const u_int16_t defrootonlyports_tcp[] = DEFROOTONLYPORTS_TCP;
+	const u_int16_t defrootonlyports_udp[] = DEFROOTONLYPORTS_UDP;
 
 	pool_init(&ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqe",  NULL);
 	pool_init(&ipq_pool, sizeof(struct ipq), 0, 0, 0, "ipq", NULL);
@@ -189,6 +191,13 @@ ip_init(void)
 		DP_SET(baddynamicports.tcp, defbaddynamicports_tcp[i]);
 	for (i = 0; defbaddynamicports_udp[i] != 0; i++)
 		DP_SET(baddynamicports.udp, defbaddynamicports_udp[i]);
+
+	/* Fill in list of ports only root can bind to. */
+	memset(&rootonlyports, 0, sizeof(rootonlyports));
+	for (i = 0; defrootonlyports_tcp[i] != 0; i++)
+		DP_SET(rootonlyports.tcp, defrootonlyports_tcp[i]);
+	for (i = 0; defrootonlyports_udp[i] != 0; i++)
+		DP_SET(rootonlyports.udp, defrootonlyports_udp[i]);
 
 	strlcpy(ipsec_def_enc, IPSEC_DEFAULT_DEF_ENC, sizeof(ipsec_def_enc));
 	strlcpy(ipsec_def_auth, IPSEC_DEFAULT_DEF_AUTH, sizeof(ipsec_def_auth));

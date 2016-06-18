@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.112 2016/03/29 18:13:20 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.113 2016/06/18 10:36:13 vgross Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -490,7 +490,8 @@ struct	tcpstat {
 #define	TCPCTL_STATS	       21 /* TCP statistics */
 #define	TCPCTL_ALWAYS_KEEPALIVE 22 /* assume SO_KEEPALIVE is always set */
 #define	TCPCTL_SYN_USE_LIMIT   23 /* number of uses before reseeding hash */
-#define	TCPCTL_MAXID	       24
+#define TCPCTL_ROOTONLY	       24 /* return root only port bitmap */
+#define	TCPCTL_MAXID	       25
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -517,6 +518,7 @@ struct	tcpstat {
 	{ "stats",	CTLTYPE_STRUCT }, \
 	{ "always_keepalive",	CTLTYPE_INT }, \
 	{ "synuselimit", 	CTLTYPE_INT }, \
+	{ "rootonly", CTLTYPE_STRUCT }, \
 }
 
 #define	TCPCTL_VARS { \
@@ -538,6 +540,7 @@ struct	tcpstat {
 	&tcp_syn_cache_limit, \
 	&tcp_syn_bucket_limit, \
 	&tcp_do_rfc3390, \
+	NULL, \
 	NULL, \
 	NULL, \
 	NULL, \

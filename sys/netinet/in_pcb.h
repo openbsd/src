@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.98 2016/04/11 21:24:29 vgross Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.99 2016/06/18 10:36:13 vgross Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -230,6 +230,13 @@ struct inpcbtable {
 	0 }
 #define	DEFBADDYNAMICPORTS_UDP	{ 623, 664, 749, 750, 751, 2049, 0 }
 
+#define DEFROOTONLYPORTS_TCP { \
+	2049, \
+	0 }
+#define DEFROOTONLYPORTS_UDP { \
+	2049, \
+	0 }
+
 struct baddynamicports {
 	u_int32_t tcp[DP_MAPSIZE];
 	u_int32_t udp[DP_MAPSIZE];
@@ -238,6 +245,7 @@ struct baddynamicports {
 #ifdef _KERNEL
 
 extern struct baddynamicports baddynamicports;
+extern struct baddynamicports rootonlyports;
 
 #define sotopf(so)  (so->so_proto->pr_domain->dom_family)
 
@@ -279,6 +287,7 @@ void	 in_rtchange(struct inpcb *, int);
 void	 in_setpeeraddr(struct inpcb *, struct mbuf *);
 void	 in_setsockaddr(struct inpcb *, struct mbuf *);
 int	 in_baddynamic(u_int16_t, u_int16_t);
+int	 in_rootonly(u_int16_t, u_int16_t);
 int	 in_selectsrc(struct in_addr **, struct sockaddr_in *,
 	    struct ip_moptions *, struct route *, struct in_addr *, u_int);
 struct rtentry *

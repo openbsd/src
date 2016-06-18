@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.198 2016/06/07 05:52:49 tim Exp $
+.\"	$OpenBSD: sysctl.8,v 1.199 2016/06/18 10:36:13 vgross Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: June 7 2016 $
+.Dd $Mdocdate: June 18 2016 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -270,10 +270,12 @@ and a few require a kernel compiled with non-standard
 .It net.inet.tcp.synuselimit Ta integer Ta yes
 .It net.inet.tcp.rfc3390 Ta integer Ta yes
 .It net.inet.tcp.reasslimit Ta integer Ta yes
+.It net.inet.tcp.rootonly Ta array Ta yes
 .It net.inet.udp.checksum Ta integer Ta yes
 .It net.inet.udp.baddynamic Ta array Ta yes
 .It net.inet.udp.recvspace Ta integer Ta yes
 .It net.inet.udp.sendspace Ta integer Ta yes
+.It net.inet.udp.rootonly Ta array Ta yes
 .It net.inet.gre.allow Ta integer Ta yes
 .It net.inet.gre.wccp Ta integer Ta yes
 .It net.inet.esp.enable Ta integer Ta yes
