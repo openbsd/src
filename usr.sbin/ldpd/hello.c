@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.49 2016/06/13 23:01:37 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.50 2016/06/18 17:31:32 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -286,7 +286,7 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 			session_shutdown(nbr, S_TRANS_MISMTCH, lm->msgid,
 			    lm->type);
 		if (adj)
-			adj_del(adj, 0, 0);
+			adj_del(adj, S_SHUTDOWN);
 		return;
 	}
 
@@ -324,7 +324,7 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 		log_warnx("%s: lsr-id %s: hello packet advertising a different "
 		    "transport address", __func__, inet_ntoa(lsr_id));
 		if (adj)
-			adj_del(adj, 0, 0);
+			adj_del(adj, S_SHUTDOWN);
 		return;
 	}
 	if (nbr == NULL) {
@@ -334,7 +334,7 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 			    "used by lsr-id %s", __func__, log_addr(af,
 			    &trans_addr), inet_ntoa(nbrt->id));
 			if (adj)
-				adj_del(adj, 0, 0);
+				adj_del(adj, S_SHUTDOWN);
 			return;
 		}
 	}

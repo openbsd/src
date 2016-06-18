@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.63 2016/06/13 20:19:40 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.64 2016/06/18 17:31:32 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -629,9 +629,6 @@ session_shutdown(struct nbr *nbr, uint32_t status, uint32_t msgid,
 
 		send_notification_nbr(nbr, status, msgid, type);
 
-		/* try to flush write buffer, if it fails tough shit */
-		msgbuf_write(&nbr->tcp->wbuf.wbuf);
-
 		nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 		break;
 	default:
@@ -707,6 +704,8 @@ tcp_new(int fd, struct nbr *nbr)
 static void
 tcp_close(struct tcp_conn *tcp)
 {
+	/* try to flush write buffer */
+	msgbuf_write(&tcp->wbuf.wbuf);
 	evbuf_clear(&tcp->wbuf);
 
 	if (tcp->nbr) {
