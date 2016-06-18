@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.22 2016/06/05 07:56:07 jsg Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.23 2016/06/18 05:59:26 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -27,12 +27,15 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcvar.h>
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
+
+#include <dev/ofw/openfirm.h>
 
 /*
  * NOTE: on OMAP4430/AM335x these registers skew by 0x100
@@ -179,7 +182,8 @@
 #define SDHC_BUFFER_TIMEOUT	hz
 #define SDHC_TRANSFER_TIMEOUT	hz
 
-void ommmc_attach(struct device *parent, struct device *self, void *args);
+int ommmc_match(struct device *, void *, void *);
+void ommmc_attach(struct device *, struct device *, void *);
 
 struct ommmc_softc {
 	struct device sc_dev;
@@ -274,28 +278,66 @@ struct cfdriver ommmc_cd = {
 };
 
 struct cfattach ommmc_ca = {
-	sizeof(struct ommmc_softc), NULL, ommmc_attach
+	sizeof(struct ommmc_softc), ommmc_match, ommmc_attach
 };
 
+int
+ommmc_match(struct device *parent, void *match, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
+
+	return (OF_is_compatible(faa->fa_node, "ti,omap3-hsmmc") ||
+	    OF_is_compatible(faa->fa_node, "ti,omap4-hsmmc"));
+}
+
 void
-ommmc_attach(struct device *parent, struct device *self, void *args)
+ommmc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ommmc_softc		*sc = (struct ommmc_softc *) self;
-	struct armv7_attach_args	*aa = args;
+	struct fdt_attach_args		*faa = aux;
 	struct sdmmcbus_attach_args	 saa;
 	uint32_t			 caps;
+	uint32_t			 addr, size, irq;
+	int				 len, unit;
+	char				 hwmods[128];
 
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
+	if (faa->fa_nreg != 2 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
+		return;
+
+	if (faa->fa_reg[1] <= 0x100)
+		return;
+
+	if (OF_is_compatible(faa->fa_node, "ti,omap4-hsmmc")) {
+		addr = faa->fa_reg[0] + 0x100;
+		size = faa->fa_reg[1] - 0x100;
+	} else {
+		addr = faa->fa_reg[0];
+		size = faa->fa_reg[1];
+	}
+
+	if (faa->fa_nintr == 1)
+		irq = faa->fa_intr[0];
+	else
+		irq = faa->fa_intr[1];
+
+	unit = 0;
+	if ((len = OF_getprop(faa->fa_node, "ti,hwmods", hwmods,
+	    sizeof(hwmods))) == 5) {
+		if (!strncmp(hwmods, "mmc", 3) &&
+		    (hwmods[3] > '0') && (hwmods[3] <= '9'))
+			unit = hwmods[3] - '1';
+	}
+
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
 	printf("\n");
 
 	/* Enable ICLKEN, FCLKEN? */
-	prcm_enablemodule(PRCM_MMC0 + aa->aa_dev->unit);
+	prcm_enablemodule(PRCM_MMC0 + unit);
 
-	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_SDMMC,
+	sc->sc_ih = arm_intr_establish(irq, IPL_SDMMC,
 	    ommmc_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
 		printf("%s: cannot map interrupt\n", DEVNAME(sc));
@@ -406,7 +448,7 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 err:
 	if (sc->sc_ih != NULL)
 		arm_intr_disestablish(sc->sc_ih);
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, aa->aa_dev->mem[0].size);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 }
 
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.omap,v 1.8 2016/05/02 08:15:55 patrick Exp $
+#	$OpenBSD: files.omap,v 1.9 2016/06/18 05:59:26 jsg Exp $
 
 define omap {}
 device omap: omap
@@ -10,7 +10,7 @@ file	arch/armv7/omap/omap4.c
 file	arch/armv7/omap/am335x.c
 
 device ommmc: sdmmcbus
-attach ommmc at omap
+attach ommmc at fdt
 file	arch/armv7/omap/ommmc.c			ommmc
 
 device cpsw: ether, ifnet, mii, ifmedia

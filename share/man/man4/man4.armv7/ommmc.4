@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ommmc.4,v 1.1 2013/10/16 15:24:37 rapha Exp $
+.\"	$OpenBSD: ommmc.4,v 1.2 2016/06/18 05:59:26 jsg Exp $
 .\" Copyright (c) 2013 Raphael Graf <rapha@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -16,14 +16,14 @@
 .\"
 .\" Uwe Stuehler, 2007. Public Domain.
 .\"
-.Dd $Mdocdate: October 16 2013 $
+.Dd $Mdocdate: June 18 2016 $
 .Dt OMMMC 4 armv7
 .Os
 .Sh NAME
 .Nm ommmc
 .Nd MMC/SD/SDIO controller
 .Sh SYNOPSIS
-.Cd "ommmc* at omap0"
+.Cd "ommmc* at fdt?"
 .Cd "sdmmc* at ommmc?"
 .Sh DESCRIPTION
 The

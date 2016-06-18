@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.18 2016/06/14 06:32:47 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.19 2016/06/18 05:59:26 jsg Exp $
 
 machine		armv7 arm
 
@@ -73,7 +73,7 @@ dmtimer*	at omap?		# am335x dual mode timers
 omusbtll*	at omap?
 cpsw*		at omap?
 com*		at omap?		# onboard uarts
-ommmc*		at omap?		# SD/MMC card controller
+ommmc*		at fdt?			# SD/MMC card controller
 sdmmc*		at ommmc?		# SD/MMC bus
 
 ehci*		at omap?		# EHCI (shim)
