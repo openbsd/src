@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.24 2016/06/13 20:13:34 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.25 2016/06/18 17:11:37 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2015 Renato Westphal <renato@openbsd.org>
@@ -81,8 +81,15 @@ adj_del(struct adj *adj, int send_notif, uint32_t notif_status)
 	LIST_REMOVE(adj, global_entry);
 	if (adj->nbr)
 		LIST_REMOVE(adj, nbr_entry);
-	if (adj->source.type == HELLO_LINK)
+	switch (adj->source.type) {
+	case HELLO_LINK:
 		LIST_REMOVE(adj, ia_entry);
+		break;
+	case HELLO_TARGETED:
+		adj->source.target->adj = NULL;
+		break;
+	}
+
 	free(adj);
 
 	/* last adjacency deleted */
