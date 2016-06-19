@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.98 2016/06/19 10:50:27 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.99 2016/06/19 10:54:20 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -503,9 +503,10 @@ case ${action} in
 		svc=$2
 		var=$3
 		[ -z "${svc}" ] && usage
-		svc_is_avail ${svc} || \
+		[ "${svc}" = "all" ] || svc_is_avail ${svc} || \
 			rcctl_err "service ${svc} does not exist" 2
 		if [ -n "${var}" ]; then
+			[ "${svc}" = "all" ] && usage
 			[[ ${var} != @(class|flags|status|rtable|timeout|user) ]] && usage
 			if svc_is_meta ${svc}; then
 				[ "${var}" != "status" ] && \
@@ -560,11 +561,15 @@ case ${action} in
 		done
 		exit ${ret}
 		;;
-	get)
-		svc_get ${svc} "${var}"
-		;;
-	getdef)
-		( svc_getdef ${svc} "${var}" )
+	get|getdef)
+		if [ "${svc}" = "all" ]; then
+			for svc in $(svc_ls all); do
+				( svc_${action} ${svc} "${var}" )
+			done
+			return 0 # we do not want the svc status
+		else
+			( svc_${action} ${svc} "${var}" )
+		fi
 		;;
 	ls)
 		# some rc.d(8) scripts need root for rc_check()
