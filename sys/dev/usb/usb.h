@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.56 2016/06/15 19:39:34 gerhard Exp $ */
+/*	$OpenBSD: usb.h,v 1.57 2016/06/19 22:13:07 kettenis Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -508,6 +508,7 @@ typedef struct usb_port_status usb_port_status_t;
 #define	 UISUBCLASS_ETHERNET_NETWORKING_CONTROL_MODEL 6
 #define	 UISUBCLASS_ATM_NETWORKING_CONTROL_MODEL 7
 #define	 UISUBCLASS_MOBILE_DIRECT_LINE_MODEL	10
+#define	 UISUBCLASS_NETWORK_CONTROL_MODEL	13
 #define	 UISUBCLASS_MOBILE_BROADBAND_INTERFACE_MODEL 14
 #define   UIPROTO_CDC_AT			1
 
