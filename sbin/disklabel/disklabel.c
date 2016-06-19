@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.221 2016/06/13 09:54:01 jsg Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.222 2016/06/19 13:42:56 tb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -206,26 +206,36 @@ main(int argc, char *argv[])
 	if (f < 0)
 		err(4, "%s", specname);
 
-	if (autotable != NULL)
-		parse_autotable(autotable);
-
-	if (op != WRITE || aflag || dflag)
+	if (op != WRITE || aflag || dflag) {
 		readlabel(f);
-	else if (argc == 2 || argc == 3)
-		makelabel(argv[1], argc == 3 ? argv[2] : NULL, &lab);
-	else
-		usage();
 
-	if (op == EDIT || op == EDITOR || aflag) {
-		if (pledge("stdio rpath wpath cpath disklabel proc exec", NULL) == -1)
-			err(1, "pledge");
-	} else if (fstabfile) {
-		if (pledge("stdio rpath wpath cpath disklabel", NULL) == -1)
-			err(1, "pledge");
-	} else {
+		if (op == EDIT || op == EDITOR || aflag) {
+			if (pledge("stdio rpath wpath cpath disklabel proc "
+			    "exec", NULL) == -1)
+				err(1, "pledge");
+		} else if (fstabfile) {
+			if (pledge("stdio rpath wpath cpath disklabel", NULL)
+			    == -1)
+				err(1, "pledge");
+		} else {
+			if (pledge("stdio rpath wpath disklabel", NULL) == -1)
+				err(1, "pledge");
+		}
+
+		if (autotable != NULL)
+			parse_autotable(autotable);
+		parselabel();
+	} else if (argc == 2 || argc == 3) {
+		/* Ensure f is a disk device before pledging. */
+		if (ioctl(f, DIOCGDINFO, &lab) < 0)
+			err(4, "ioctl DIOCGDINFO");
+
 		if (pledge("stdio rpath wpath disklabel", NULL) == -1)
 			err(1, "pledge");
-	}
+
+		makelabel(argv[1], argc == 3 ? argv[2] : NULL, &lab);
+	} else
+		usage();
 
 	switch (op) {
 	case EDIT:
@@ -356,9 +366,6 @@ l_perror(char *s)
 void
 readlabel(int f)
 {
-	char *partname, *partduid;
-	struct fstab *fsent;
-	int i;
 
 	if (cflag && ioctl(f, DIOCRLDINFO) < 0)
 		err(4, "ioctl DIOCRLDINFO");
@@ -370,6 +377,14 @@ readlabel(int f)
 		if (ioctl(f, DIOCGDINFO, &lab) < 0)
 			err(4, "ioctl DIOCGDINFO");
 	}
+}
+
+void
+parselabel(void)
+{
+	char *partname, *partduid;
+	struct fstab *fsent;
+	int i;
 
 	i = asprintf(&partname, "/dev/%s%c", dkname, 'a');
 	if (i == -1)
