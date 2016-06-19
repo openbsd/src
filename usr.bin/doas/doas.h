@@ -1,20 +1,4 @@
-/* $OpenBSD: doas.h,v 1.7 2016/06/16 17:40:30 tedu Exp $ */
-
-#include <sys/tree.h>
-
-struct envnode {
-	RB_ENTRY(envnode) node;
-	const char *key;
-	const char *value;
-};
-
-struct env {
-	RB_HEAD(envtree, envnode) root;
-	u_int count;
-};
-
-RB_PROTOTYPE(envtree, envnode, node, envcmp)
-
+/* $OpenBSD: doas.h,v 1.8 2016/06/19 19:29:43 martijn Exp $ */
 struct rule {
 	int action;
 	int options;
@@ -31,9 +15,7 @@ extern int parse_errors;
 
 size_t arraylen(const char **);
 
-struct env *createenv(char **);
-struct env *filterenv(struct env *, struct rule *);
-char **flattenenv(struct env *);
+char **prepenv(struct rule *);
 
 #define PERMIT	1
 #define DENY	2

@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.56 2016/06/16 17:40:30 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.57 2016/06/19 19:29:43 martijn Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -204,7 +204,7 @@ checkconfig(const char *confpath, int argc, char **argv,
 }
 
 int
-main(int argc, char **argv, char **envp)
+main(int argc, char **argv)
 {
 	const char *safepath = "/bin:/sbin:/usr/bin:/usr/sbin:"
 	    "/usr/local/bin:/usr/local/sbin";
@@ -212,7 +212,6 @@ main(int argc, char **argv, char **envp)
 	char *shargv[] = { NULL, NULL };
 	char *sh;
 	const char *cmd;
-	struct env *env;
 	char cmdline[LINE_MAX];
 	char myname[_PW_NAME_LEN + 1];
 	struct passwd *pw;
@@ -227,6 +226,7 @@ main(int argc, char **argv, char **envp)
 	char cwdpath[PATH_MAX];
 	const char *cwd;
 	char *login_style = NULL;
+	char **envp;
 
 	setprogname("doas");
 
@@ -373,9 +373,7 @@ main(int argc, char **argv, char **envp)
 	syslog(LOG_AUTHPRIV | LOG_INFO, "%s ran command %s as %s from %s",
 	    myname, cmdline, pw->pw_name, cwd);
 
-	env = createenv(envp);
-	env = filterenv(env, rule);
-	envp = flattenenv(env);
+	envp = prepenv(rule);
 
 	if (rule->cmd) {
 		if (setenv("PATH", safepath, 1) == -1)
