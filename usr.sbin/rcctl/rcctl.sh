@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.96 2016/06/17 11:24:58 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.97 2016/06/19 10:46:08 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -150,8 +150,7 @@ svc_is_base()
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	grep -E 'start_daemon[[:space:]]+[[:alnum:]]' /etc/rc | \
-		cut -d ' ' -f2- | grep -qw -- ${_svc}
+	grep -qw "^${_svc}_flags" /etc/rc.conf
 }
 
 svc_is_meta()
