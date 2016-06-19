@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.79 2016/05/29 08:26:17 jmc Exp $
+.\"	$OpenBSD: mount.8,v 1.80 2016/06/19 18:43:40 jmc Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mount.8	8.7 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: May 29 2016 $
+.Dd $Mdocdate: June 19 2016 $
 .Dt MOUNT 8
 .Os
 .Sh NAME
@@ -171,7 +171,7 @@ is the default, so
 can be used to mount the file system using soft dependencies.
 Multiple options can be specified in a comma-separated list.
 The available options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width 9n
 .It async
 Metadata I/O to the file system should be done asynchronously.
 By default, only regular data is read/written asynchronously.
