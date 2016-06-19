@@ -1,4 +1,4 @@
-/* $OpenBSD: omap.c,v 1.11 2016/06/18 05:59:26 jsg Exp $ */
+/* $OpenBSD: omap.c,v 1.12 2016/06/19 14:27:35 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -48,7 +48,6 @@ struct board_dev beagleboard_devs[] = {
 	{ "omgpio",	3 },
 	{ "omgpio",	4 },
 	{ "omgpio",	5 },
-	{ "com",	2 },		/* UART3 */
 	{ NULL,		0 }
 };
 
@@ -67,7 +66,6 @@ struct board_dev beaglebone_devs[] = {
 	{ "tiiic",	0 },
 	{ "tiiic",	1 },
 	{ "tiiic",	2 },
-	{ "com",	0 },		/* UART0 */
 	{ "cpsw",	0 },
 	{ NULL,		0 }
 };
@@ -84,7 +82,6 @@ struct board_dev overo_devs[] = {
 	{ "omgpio",	3 },
 	{ "omgpio",	4 },
 	{ "omgpio",	5 },
-	{ "com",	2 },		/* UART3 */
 	{ NULL,		0 }
 };
 
@@ -98,7 +95,6 @@ struct board_dev pandaboard_devs[] = {
 	{ "omgpio",	3 },
 	{ "omgpio",	4 },
 	{ "omgpio",	5 },
-	{ "com",	2 },		/* UART3 */
 	{ "ehci",	0 },
 	{ NULL,		0 }
 };

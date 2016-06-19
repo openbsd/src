@@ -1,4 +1,4 @@
-/* $OpenBSD: omap_com.c,v 1.3 2016/06/08 15:27:05 jsg Exp $ */
+/* $OpenBSD: omap_com.c,v 1.4 2016/06/19 14:27:35 jsg Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -41,6 +41,7 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
@@ -52,10 +53,12 @@
 #include <armv7/armv7/armv7_machdep.h>
 
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/openfirm.h>
 
 #define com_isr 8
 #define ISR_RECV	(ISR_RXPL | ISR_XMODE | ISR_RCVEIR)
 
+int	omapuart_match(struct device *, void *, void *);
 void	omapuart_attach(struct device *, struct device *, void *);
 int	omapuart_activate(struct device *, int);
 
@@ -63,7 +66,7 @@ extern int comcnspeed;
 extern int comcnmode;
 
 struct cfattach com_omap_ca = {
-	sizeof (struct com_softc), NULL, omapuart_attach, NULL,
+	sizeof (struct com_softc), omapuart_match, omapuart_attach, NULL,
 	omapuart_activate
 };
 
@@ -83,26 +86,43 @@ omapuart_init_cons(void)
 	comdefaultrate = comcnspeed;
 }
 
+int
+omapuart_match(struct device *parent, void *match, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
+
+	return OF_is_compatible(faa->fa_node, "ti,omap3-uart");
+}
+
 void
 omapuart_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (struct com_softc *)self;
-	struct armv7_attach_args *aa = aux;
+	struct fdt_attach_args *faa = aux;
+	int irq;
 
-	sc->sc_iot = &armv7_a4x_bs_tag;	/* XXX: This sucks */
-	sc->sc_iobase = aa->aa_dev->mem[0].addr;
+	if (faa->fa_nreg != 2 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
+		return;
+
+	sc->sc_iot = &armv7_a4x_bs_tag; /* XXX: This sucks */
+	sc->sc_iobase = faa->fa_reg[0];
 	sc->sc_frequency = 48000000;
 	sc->sc_uarttype = COM_UART_TI16750;
 
+	if (faa->fa_nintr == 1)
+		irq = faa->fa_intr[0];
+	else
+		irq = faa->fa_intr[1];
+
 	if (bus_space_map(sc->sc_iot, sc->sc_iobase,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh)) {
+	    faa->fa_reg[1], 0, &sc->sc_ioh)) {
 		printf("%s: bus_space_map failed\n", __func__);
 		return;
 	}
 
 	com_attach_subr(sc);
 
-	(void)arm_intr_establish(aa->aa_dev->irq[0], IPL_TTY, comintr,
+	(void)arm_intr_establish(irq, IPL_TTY, comintr,
 	    sc, sc->sc_dev.dv_xname);
 }
 
