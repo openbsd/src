@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.87 2016/06/18 07:49:24 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.88 2016/06/19 12:05:25 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3175,8 +3175,8 @@ iwm_firmware_load_chunk(struct iwm_softc *sc, uint32_t dst_addr,
 			break;
 
 	if (!sc->sc_fw_chunk_done)
-		DPRINTF(("%s: fw chunk addr 0x%x len %d failed to load\n",
-		    DEVNAME(sc), dst_addr, byte_cnt));
+		printf("%s: fw chunk addr 0x%x len %d failed to load\n",
+		    DEVNAME(sc), dst_addr, byte_cnt);
 
 	if (dst_addr >= IWM_FW_MEM_EXTENDED_START &&
 	    dst_addr <= IWM_FW_MEM_EXTENDED_END && iwm_nic_lock(sc)) {
@@ -4180,7 +4180,7 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	    IWM_CSR_GP_CNTRL_REG_VAL_MAC_ACCESS_EN,
 	    (IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY |
 	     IWM_CSR_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP), 15000)) {
-		DPRINTF(("%s: acquiring device failed\n", DEVNAME(sc)));
+		printf("%s: acquiring device failed\n", DEVNAME(sc));
 		error = EBUSY;
 		goto out;
 	}
@@ -6612,12 +6612,13 @@ iwm_init_hw(struct iwm_softc *sc)
 	if ((error = iwm_preinit(sc)) != 0)
 		return error;
 
-	if ((error = iwm_start_hw(sc)) != 0)
-		return error;
-
-	if ((error = iwm_run_init_mvm_ucode(sc, 0)) != 0) {
+	if ((error = iwm_start_hw(sc)) != 0) {
+		printf("%s: could not initialize hardware\n", DEVNAME(sc));
 		return error;
 	}
+
+	if ((error = iwm_run_init_mvm_ucode(sc, 0)) != 0)
+		return error;
 
 	/*
 	 * should stop and start HW since that INIT
@@ -6629,29 +6630,44 @@ iwm_init_hw(struct iwm_softc *sc)
 		return error;
 	}
 
-	/* omstart, this time with the regular firmware */
+	/* Restart, this time with the regular firmware */
 	error = iwm_mvm_load_ucode_wait_alive(sc, IWM_UCODE_TYPE_REGULAR);
 	if (error) {
 		printf("%s: could not load firmware\n", DEVNAME(sc));
 		goto error;
 	}
 
-	if ((error = iwm_send_bt_init_conf(sc)) != 0)
+	if ((error = iwm_send_bt_init_conf(sc)) != 0) {
+		printf("%s: could not init bt coex (error %d)\n",
+		    DEVNAME(sc), error);
 		goto error;
+	}
 
-	if ((error = iwm_send_tx_ant_cfg(sc, iwm_fw_valid_tx_ant(sc))) != 0)
+	if ((error = iwm_send_tx_ant_cfg(sc, iwm_fw_valid_tx_ant(sc))) != 0) {
+		printf("%s: could not init tx ant config (error %d)\n",
+		    DEVNAME(sc), error);
 		goto error;
+	}
 
 	/* Send phy db control command and then phy db calibration*/
-	if ((error = iwm_send_phy_db_data(sc)) != 0)
+	if ((error = iwm_send_phy_db_data(sc)) != 0) {
+		printf("%s: could not init phy db (error %d)\n",
+		    DEVNAME(sc), error);
 		goto error;
+	}
 
-	if ((error = iwm_send_phy_cfg_cmd(sc)) != 0)
+	if ((error = iwm_send_phy_cfg_cmd(sc)) != 0) {
+		printf("%s: could not send phy config (error %d)\n",
+		    DEVNAME(sc), error);
 		goto error;
+	}
 
 	/* Add auxiliary station for scanning */
-	if ((error = iwm_mvm_add_aux_sta(sc)) != 0)
+	if ((error = iwm_mvm_add_aux_sta(sc)) != 0) {
+		printf("%s: could not add aux station (error %d)\n",
+		    DEVNAME(sc), error);
 		goto error;
+	}
 
 	for (i = 0; i < IWM_NUM_PHY_CTX; i++) {
 		/*
@@ -6660,8 +6676,11 @@ iwm_init_hw(struct iwm_softc *sc)
 		 * For now use the first channel we have.
 		 */
 		if ((error = iwm_mvm_phy_ctxt_add(sc,
-		    &sc->sc_phyctxt[i], &ic->ic_channels[1], 1, 1)) != 0)
+		    &sc->sc_phyctxt[i], &ic->ic_channels[1], 1, 1)) != 0) {
+			printf("%s: could not add phy context %d (error %d)\n",
+			    DEVNAME(sc), i, error);
 			goto error;
+		}
 	}
 
 	/* Initialize tx backoffs to the minimum. */
@@ -6669,35 +6688,49 @@ iwm_init_hw(struct iwm_softc *sc)
 		iwm_mvm_tt_tx_backoff(sc, 0);
 
 	error = iwm_mvm_power_update_device(sc);
-	if (error)
+	if (error) {
+		printf("%s: could send power update command (error %d)\n",
+		    DEVNAME(sc), error);
 		goto error;
+	}
 
 	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_LAR_SUPPORT)) {
-		if ((error = iwm_send_update_mcc_cmd(sc, "ZZ")) != 0)
+		if ((error = iwm_send_update_mcc_cmd(sc, "ZZ")) != 0) {
+			printf("%s: could not send mcc command (error %d)\n",
+			    DEVNAME(sc), error);
 			goto error;
+		}
 	}
 
 	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_UMAC_SCAN)) {
-		if ((error = iwm_mvm_config_umac_scan(sc)) != 0)
+		if ((error = iwm_mvm_config_umac_scan(sc)) != 0) {
+			printf("%s: could not configure scan (error %d)\n",
+			    DEVNAME(sc), error);
 			goto error;
+		}
 	}
 
 	/* Enable Tx queues. */
 	for (ac = 0; ac < EDCA_NUM_AC; ac++) {
 		error = iwm_enable_txq(sc, IWM_STATION_ID, ac,
 		    iwm_mvm_ac_to_tx_fifo[ac]);
-		if (error)
+		if (error) {
+			printf("%s: could not enable Tx queue %d (error %d)\n",
+			    DEVNAME(sc), ac, error);
 			goto error;
+		}
 	}
 
 	/* Add the MAC context. */
 	if ((error = iwm_mvm_mac_ctxt_add(sc, in)) != 0) {
-		printf("%s: failed to add MAC\n", DEVNAME(sc));
+		printf("%s: could not add MAC context (error %d)\n",
+		    DEVNAME(sc), error);
 		goto error;
  	}
 
 	if ((error = iwm_mvm_disable_beacon_filter(sc)) != 0) {
-		printf("%s: failed to disable beacon filter\n", DEVNAME(sc));
+		printf("%s: could not disable beacon filter (error %d)\n",
+		    DEVNAME(sc), error);
 		goto error;
 	}
 
