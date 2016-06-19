@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.101 2016/06/19 11:32:25 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.102 2016/06/19 15:00:37 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -150,13 +150,16 @@ svc_is_base()
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	local _cached=$(eval echo \${cached_svc_is_base_${_svc}})
+	local _cached _ret
+
+	_cached=$(eval echo \${cached_svc_is_base_${_svc}})
 	[ "${_cached}" ] && return "${_cached}"
 
 	grep -qw "^${_svc}_flags" /etc/rc.conf
+	_ret=$?
 
-	eval cached_svc_is_base_${_svc}=$?
-	eval return \${cached_svc_is_base_${_svc}}
+	set -A cached_svc_is_base_${_svc} -- ${_ret}
+	return ${_ret}
 }
 
 svc_is_meta()
@@ -164,13 +167,16 @@ svc_is_meta()
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	local _cached=$(eval echo \${cached_svc_is_meta_${_svc}})
+	local _cached _ret
+
+	_cached=$(eval echo \${cached_svc_is_meta_${_svc}})
 	[ "${_cached}" ] && return "${_cached}"
 
 	[ -r "/etc/rc.d/${_svc}" ] && ! grep -qw "^rc_cmd" /etc/rc.d/${_svc}
+	_ret=$?
 
-	eval cached_svc_is_meta_${_svc}=$?
-	eval return \${cached_svc_is_meta_${_svc}}
+	set -A cached_svc_is_meta_${_svc} -- ${_ret}
+	return ${_ret}
 }
 
 svc_is_special()
@@ -178,13 +184,16 @@ svc_is_special()
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	local _cached=$(eval echo \${cached_svc_is_special_${_svc}})
+	local _cached _ret
+
+	_cached=$(eval echo \${cached_svc_is_special_${_svc}})
 	[ "${_cached}" ] && return "${_cached}"
 
 	echo ${_special_svcs} | grep -qw -- ${_svc}
+	_ret=$?
 
-	eval cached_svc_is_special_${_svc}=$?
-	eval return \${cached_svc_is_special_${_svc}}
+	set -A cached_svc_is_special_${_svc} -- ${_ret}
+	return ${_ret}
 }
 
 svc_ls()
