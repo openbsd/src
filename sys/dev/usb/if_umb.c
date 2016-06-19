@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.1 2016/06/15 19:39:34 gerhard Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.2 2016/06/19 22:14:46 kettenis Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -204,48 +204,35 @@ const struct cfattach umb_ca = {
 
 int umb_delay = 4000;
 
-/*
- * Normally, MBIM devices are detected by their interface class and subclass.
- * But for some models that have multiple configurations, it is better to
- * match by vendor and product id so that we can select the desired
- * configuration ourselves.
- *
- * OTOH, some devices identifiy themself als an MBIM device but fail to speak
- * the MBIM protocol.
- */
-struct umb_products {
-	struct usb_devno	 dev;
-	int			 confno;
-};
-const struct umb_products umb_devs[] = {
-	/*
-	 * Add devices here to force them to attach as umb.
-	 * Format: { { VID, PID }, CONFIGNO }
-	 */
-};
-
-#define umb_lookup(vid, pid)		\
-	((const struct umb_products *)usb_lookup(umb_devs, vid, pid))
-
 int
 umb_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
 
-	if (umb_lookup(uaa->vendor, uaa->product) != NULL)
-		return UMATCH_VENDOR_PRODUCT;
 	if (!uaa->iface)
 		return UMATCH_NONE;
 	if ((id = usbd_get_interface_descriptor(uaa->iface)) == NULL)
 		return UMATCH_NONE;
-	if (id->bInterfaceClass != UICLASS_CDC ||
-	    id->bInterfaceSubClass !=
-	    UISUBCLASS_MOBILE_BROADBAND_INTERFACE_MODEL ||
-	    id->bNumEndpoints != 1)
+
+	/*
+	 * If this function implements NCM, check if alternate setting
+	 * 1 implements MBIM.
+	 */
+	if (id->bInterfaceClass == UICLASS_CDC &&
+	    id->bInterfaceSubClass ==
+	    UISUBCLASS_NETWORK_CONTROL_MODEL)
+		id = usbd_find_idesc(uaa->device->cdesc, uaa->iface->index, 1);
+	if (id == NULL)
 		return UMATCH_NONE;
 
-	return UMATCH_DEVCLASS_DEVSUBCLASS;
+	if (id->bInterfaceClass == UICLASS_CDC &&
+	    id->bInterfaceSubClass ==
+	    UISUBCLASS_MOBILE_BROADBAND_INTERFACE_MODEL &&
+	    id->bInterfaceProtocol == 0)
+		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
+
+	return UMATCH_NONE;
 }
 
 void
@@ -257,45 +244,55 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 	struct usbd_desc_iter iter;
 	const usb_descriptor_t *desc;
 	int	 v;
+	struct usb_cdc_union_descriptor *ud;
 	struct mbim_descriptor *md;
 	int	 i;
-	struct usbd_interface *ctrl_iface = NULL;
 	int	 ctrl_ep;
-	uint8_t	 data_ifaceno;
 	usb_interface_descriptor_t *id;
 	usb_config_descriptor_t	*cd;
 	usb_endpoint_descriptor_t *ed;
+	usb_interface_assoc_descriptor_t *ad;
+	int	 current_ifaceno = -1;
+	int	 data_ifaceno = -1;
 	int	 altnum;
 	int	 s;
 	struct ifnet *ifp;
 	int	 hard_mtu;
 
 	sc->sc_udev = uaa->device;
+	sc->sc_ctrl_ifaceno = uaa->ifaceno;
 
-	if (uaa->configno < 0) {
-		/*
-		 * In case the device was matched by VID/PID instead of
-		 * InterfaceClass/InterfaceSubClass, we have to pick the
-		 * correct configuration ourself.
-		 */
-		uaa->configno = umb_lookup(uaa->vendor, uaa->product)->confno;
-		DPRINTF("%s: switching to config #%d\n", DEVNAM(sc),
-		    uaa->configno);
-		status = usbd_set_config_no(sc->sc_udev, uaa->configno, 1);
-		if (status) {
-			printf("%s: failed to switch to config #%d: %s\n",
-			    DEVNAM(sc), uaa->configno, usbd_errstr(status));
-			goto fail;
-		}
-	}
-
+	/*
+	 * Some MBIM hardware does not provide the mandatory CDC Union
+	 * Descriptor, so we also look at matching Interface
+	 * Association Descriptors to find out the MBIM Data Interface
+	 * number.
+	 */
 	sc->sc_ver_maj = sc->sc_ver_min = -1;
-	usbd_desc_iter_init(sc->sc_udev, &iter);
 	hard_mtu = MBIM_MAXSEGSZ_MINVAL;
+	usbd_desc_iter_init(sc->sc_udev, &iter);
 	while ((desc = usbd_desc_iter_next(&iter))) {
+		if (desc->bDescriptorType == UDESC_IFACE_ASSOC) {
+			ad = (usb_interface_assoc_descriptor_t *)desc;
+			if (ad->bFirstInterface == uaa->ifaceno &&
+			    ad->bInterfaceCount > 1)
+				data_ifaceno = uaa->ifaceno + 1;
+			continue;
+		}
+		if (desc->bDescriptorType == UDESC_INTERFACE) {
+			id = (usb_interface_descriptor_t *)desc;
+			current_ifaceno = id->bInterfaceNumber;
+			continue;
+		}
+		if (current_ifaceno != uaa->ifaceno)
+			continue;
 		if (desc->bDescriptorType != UDESC_CS_INTERFACE)
 			continue;
 		switch (desc->bDescriptorSubtype) {
+		case UDESCSUB_CDC_UNION:
+			ud = (struct usb_cdc_union_descriptor *)desc;
+			data_ifaceno = ud->bSlaveInterface[0];
+			break;
 		case UDESCSUB_MBIM:
 			md = (struct mbim_descriptor *)desc;
 			v = UGETW(md->bcdMBIMVersion);
@@ -332,39 +329,34 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 		goto fail;
 	}
 
-	for (i = 0; i < sc->sc_udev->cdesc->bNumInterface; i++) {
+	for (i = 0; i < uaa->nifaces; i++) {
 		if (usbd_iface_claimed(sc->sc_udev, i))
 			continue;
-		id = usbd_get_interface_descriptor(&sc->sc_udev->ifaces[i]);
-		if (id == NULL)
-			continue;
-		if (id->bInterfaceClass == UICLASS_CDC &&
-		    id->bInterfaceSubClass ==
-		    UISUBCLASS_MOBILE_BROADBAND_INTERFACE_MODEL) {
-			ctrl_iface = &sc->sc_udev->ifaces[i];
-			sc->sc_ctrl_ifaceno = id->bInterfaceNumber;
-			usbd_claim_iface(sc->sc_udev, i);
-		} else if (id->bInterfaceClass == UICLASS_CDC_DATA &&
-		    id->bInterfaceSubClass == UISUBCLASS_DATA &&
-		    id->bInterfaceProtocol == UIPROTO_DATA_MBIM) {
-			sc->sc_data_iface = &sc->sc_udev->ifaces[i];
-			data_ifaceno = id->bInterfaceNumber;
+		id = usbd_get_interface_descriptor(uaa->ifaces[i]);
+		if (id != NULL && id->bInterfaceNumber == data_ifaceno) {
+			sc->sc_data_iface = uaa->ifaces[i];
 			usbd_claim_iface(sc->sc_udev, i);
 		}
-	}
-	if (ctrl_iface == NULL) {
-		printf("%s: no control interface found\n", DEVNAM(sc));
-		goto fail;
 	}
 	if (sc->sc_data_iface == NULL) {
 		printf("%s: no data interface found\n", DEVNAM(sc));
 		goto fail;
 	}
 
-	id = usbd_get_interface_descriptor(ctrl_iface);
+	/*
+	 * If this is a combined NCM/MBIM function, switch to
+	 * alternate setting one to enable MBIM.
+	 */
+	id = usbd_get_interface_descriptor(uaa->iface);
+	if (id->bInterfaceClass == UICLASS_CDC &&
+	    id->bInterfaceSubClass ==
+	    UISUBCLASS_NETWORK_CONTROL_MODEL)
+		usbd_set_interface(uaa->iface, 1);
+
+	id = usbd_get_interface_descriptor(uaa->iface);
 	ctrl_ep = -1;
 	for (i = 0; i < id->bNumEndpoints && ctrl_ep == -1; i++) {
-		ed = usbd_interface2endpoint_descriptor(ctrl_iface, i);
+		ed = usbd_interface2endpoint_descriptor(uaa->iface, i);
 		if (ed == NULL)
 			break;
 		if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT &&
@@ -376,23 +368,38 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 		goto fail;
 	}
 
+	/*
+	 * For the MBIM Data Interface, select the appropriate
+	 * alternate setting by looking for a matching descriptor that
+	 * has two endpoints.
+	 */
 	cd = usbd_get_config_descriptor(sc->sc_udev);
-	id = usbd_get_interface_descriptor(sc->sc_data_iface);
-	altnum = usbd_get_no_alts(cd, id->bInterfaceNumber);
-	if (MBIM_INTERFACE_ALTSETTING >= altnum) {
-		printf("%s: missing alt setting %d for interface #%d\n",
-		    DEVNAM(sc), MBIM_INTERFACE_ALTSETTING, data_ifaceno);
+	altnum = usbd_get_no_alts(cd, data_ifaceno);
+	for (i = 0; i < altnum; i++) {
+		id = usbd_find_idesc(cd, sc->sc_data_iface->index, i);
+		if (id == NULL)
+			continue;
+		if (id->bInterfaceClass == UICLASS_CDC_DATA &&
+		    id->bInterfaceSubClass == UISUBCLASS_DATA &&
+		    id->bInterfaceProtocol == UIPROTO_DATA_MBIM &&
+		    id->bNumEndpoints == 2)
+			break;
+	}
+	if (i == altnum || id == NULL) {
+		printf("%s: missing alt setting for interface #%d\n",
+		    DEVNAM(sc), data_ifaceno);
 		goto fail;
 	}
-	sc->sc_rx_ep = sc->sc_tx_ep = -1;
-	if ((status = usbd_set_interface(sc->sc_data_iface,
-	    MBIM_INTERFACE_ALTSETTING))) {
+	status = usbd_set_interface(sc->sc_data_iface, i);
+	if (status) {
 		printf("%s: select alt setting %d for interface #%d "
-		    "failed: %s\n", DEVNAM(sc), MBIM_INTERFACE_ALTSETTING,
-		    data_ifaceno, usbd_errstr(status));
+		    "failed: %s\n", DEVNAM(sc), i, data_ifaceno,
+		    usbd_errstr(status));
 		goto fail;
 	}
+
 	id = usbd_get_interface_descriptor(sc->sc_data_iface);
+	sc->sc_rx_ep = sc->sc_tx_ep = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		if ((ed = usbd_interface2endpoint_descriptor(sc->sc_data_iface,
 		    i)) == NULL)
@@ -420,7 +427,7 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 	    USB_TASK_TYPE_GENERIC);
 	timeout_set(&sc->sc_statechg_timer, umb_statechg_timeout, sc);
 
-	if (usbd_open_pipe_intr(ctrl_iface, ctrl_ep, USBD_SHORT_XFER_OK,
+	if (usbd_open_pipe_intr(uaa->iface, ctrl_ep, USBD_SHORT_XFER_OK,
 	    &sc->sc_ctrl_pipe, sc, &sc->sc_intr_msg, sizeof (sc->sc_intr_msg),
 	    umb_intr, USBD_DEFAULT_INTERVAL)) {
 		printf("%s: failed to open control pipe\n", DEVNAM(sc));
