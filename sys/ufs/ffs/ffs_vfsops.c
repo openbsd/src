@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.159 2016/06/19 10:21:56 dlg Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.160 2016/06/19 11:54:34 natano Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1295,7 +1295,7 @@ retry:
 	vp->v_flag |= VLOCKSWORK;
 #endif
 	ip = pool_get(&ffs_ino_pool, PR_WAITOK|PR_ZERO);
-	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
+	rrw_init(&ip->i_lock, "inode");
 	ip->i_ump = ump;
 	vref(ip->i_devvp);
 	vp->v_data = ip;

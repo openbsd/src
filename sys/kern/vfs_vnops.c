@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.84 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.85 2016/06/19 11:54:33 natano Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -513,9 +513,6 @@ vn_lock(struct vnode *vp, int flags, struct proc *p)
 {
 	int error;
 
-	if ((flags & LK_RECURSEFAIL) == 0)
-		flags |= LK_CANRECURSE;
-	
 	do {
 		if (vp->v_flag & VXLOCK) {
 			vp->v_flag |= VXWANT;

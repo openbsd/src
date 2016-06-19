@@ -1,4 +1,4 @@
-.\" $OpenBSD: mutex.9,v 1.22 2014/02/13 14:23:05 jmc Exp $
+.\" $OpenBSD: mutex.9,v 1.23 2016/06/19 11:54:33 natano Exp $
 .\"
 .\" Copyright (c) 2005 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 13 2014 $
+.Dd $Mdocdate: June 19 2016 $
 .Dt MUTEX 9
 .Os
 .Sh NAME
@@ -104,7 +104,6 @@ function will return non-zero if it succeeds in acquiring the mutex
 .Fa mtxp ,
 otherwise it will return 0.
 .Sh SEE ALSO
-.Xr lockmgr 9 ,
 .Xr msleep 9 ,
 .Xr rwlock 9 ,
 .Xr spl 9

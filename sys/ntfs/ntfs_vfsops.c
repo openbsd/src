@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.51 2016/05/22 20:27:04 bluhm Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.52 2016/06/19 11:54:33 natano Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -522,7 +522,7 @@ ntfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		ntmp->ntm_devvp->v_specmountpoint = NULL;
 
 	/* lock the device vnode before calling VOP_CLOSE() */
-	VOP_LOCK(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, 0);
 	(void)VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
 	    NOCRED, p);

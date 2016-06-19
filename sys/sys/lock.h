@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.26 2015/09/23 15:37:26 tedu Exp $	*/
+/*	$OpenBSD: lock.h,v 1.27 2016/06/19 11:54:33 natano Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -40,25 +40,16 @@
 
 #include <sys/rwlock.h>
 
-struct lock {
-	struct rrwlock	lk_lck;
-};
+#define LK_EXCLUSIVE	RW_WRITE	/* exclusive lock */
+#define LK_SHARED	RW_READ		/* shared lock */
+#define LK_TYPE_MASK	(RW_WRITE|RW_READ) /* type of lock sought */
+#define LK_NOWAIT	RW_NOSLEEP	/* do not sleep to await lock */
+#define LK_RECURSEFAIL	RW_RECURSEFAIL	/* fail if recursive exclusive lock */
+#define LK_EXCLOTHER	RW_WRITE_OTHER	/* exclusive lock held by some other thread */
+#define LK_RWFLAGS	(RW_WRITE|RW_READ|RW_NOSLEEP|RW_RECURSEFAIL|RW_WRITE_OTHER)
 
-#define LK_SHARED	0x01	/* shared lock */
-#define LK_EXCLUSIVE	0x02	/* exclusive lock */
-#define LK_TYPE_MASK	0x03	/* type of lock sought */
-#define LK_DRAIN	0x04	/* wait for all lock activity to end */
-#define LK_RELEASE	0x08	/* release any type of lock */
-#define LK_NOWAIT	0x10	/* do not sleep to await lock */
-#define LK_CANRECURSE	0x20	/* allow recursive exclusive lock */
-#define LK_RECURSEFAIL	0x40	/* fail if recursive exclusive lock */
-#define LK_RETRY	0x80	/* vn_lock: retry until locked */
-
-/* for lockstatus() only */
-#define LK_EXCLOTHER	0x100	/* exclusive lock held by some other thread */
-
-void	lockinit(struct lock *, int, char *, int, int);
-int	lockmgr(struct lock *, u_int flags, void *);
-int	lockstatus(struct lock *);
+/* LK_ specific */
+#define LK_DRAIN	0x1000UL	/* wait for all lock activity to end */
+#define LK_RETRY	0x2000UL	/* vn_lock: retry until locked */
 
 #endif /* !_LOCK_H_ */

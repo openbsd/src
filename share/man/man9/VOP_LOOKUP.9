@@ -1,6 +1,7 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.35 2016/05/23 09:31:28 natano Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.36 2016/06/19 11:54:33 natano Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
+.\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -23,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 23 2016 $
+.Dd $Mdocdate: June 19 2016 $
 .Dt VOP_LOOKUP 9
 .Os
 .Sh NAME
@@ -565,16 +566,54 @@ to lock a vnode.
 It should not be used by other file system code.
 .Fn VOP_UNLOCK
 unlocks a vnode.
-.Fn VOP_ISLOCKED
-returns 1 if
-.Fa vp
-is locked and 0 if not.
-It should be used cautiously, as not all file systems implement locks
-effectively.
 Note the asymmetry between
 .Xr vn_lock 9
 and
 .Fn VOP_UNLOCK .
+.Pp
+.Fa flags
+may contain the following flags:
+.Pp
+.Bl -tag -width LK_RECURSEFAIL -compact -offset indent
+.It Dv LK_EXCLUSIVE
+Acquire an exclusive lock.
+.It Dv LK_SHARED
+Acquire a shared lock.
+.It Dv LK_NOWAIT
+Don't wait if the vnode lock is held by someone else
+(may still wait on reclamation lock).
+.It Dv LK_RECURSEFAIL
+Attempt at recursive lock fails.
+.It Dv LK_DRAIN
+Wait for all activity on the lock to end, then mark it decommissioned.
+This feature is used to ensure that no other activity can occur while the
+underlying object of a vnode is being cleaned out.
+Must be used in combination with
+.Dv LK_EXCLUSIVE .
+.El
+.Pp
+.Fn VOP_ISLOCKED
+returns one of the following values:
+.Pp
+.Bl -tag -width LK_EXCLUSIVE -compact -offset indent
+.It Dv LK_EXCLUSIVE
+.Fa vp
+is locked for exclusive access by the calling thread.
+.It Dv LK_EXCLOTHER
+.Fa vp
+is locked for exclusive access by a different thread.
+.It Dv LK_SHARED
+.Fa vp
+is locked for shared access.
+The current thread may be one of the threads that have it locked.
+.It 0
+.Fa vp
+is not locked.
+.El
+.Pp
+.Fn VOP_ISLOCKED
+should be used cautiously, as not all file systems implement locks
+effectively.
 .Pp
 .It Fn VOP_KQFILTER vp kn
 Register the

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.22 2016/05/26 16:03:29 natano Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.23 2016/06/19 11:54:33 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -270,7 +270,7 @@ retry:
 	}
 
 	ip = malloc(sizeof(*ip), M_FUSEFS, M_WAITOK | M_ZERO);
-	lockinit(&ip->ufs_ino.i_lock, PINOD, "fuseinode", 0, 0);
+	rrw_init(&ip->ufs_ino.i_lock, "fuseinode");
 	nvp->v_data = ip;
 	ip->ufs_ino.i_vnode = nvp;
 	ip->ufs_ino.i_dev = fmp->dev;

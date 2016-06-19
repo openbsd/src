@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs.h,v 1.7 2014/12/17 19:42:15 tedu Exp $	*/
+/*	$OpenBSD: tmpfs.h,v 1.8 2016/06/19 11:54:33 natano Exp $	*/
 /*	$NetBSD: tmpfs.h,v 1.45 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ typedef struct tmpfs_node {
 	 * no vnode has been allocated or it has been reclaimed).
 	 */
 	struct rwlock		tn_nlock;	/* node lock */
-	struct lock		tn_vlock;	/* vnode lock */
+	struct rrwlock		tn_vlock;	/* vnode lock */
 	struct vnode *		tn_vnode;
 
 	/* Directory entry.  Only a hint, since hard link can have multiple. */

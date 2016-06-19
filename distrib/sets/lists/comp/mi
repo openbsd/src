@@ -2715,7 +2715,6 @@
 ./usr/share/man/man9/kthread.9
 ./usr/share/man/man9/ktrace.9
 ./usr/share/man/man9/loadfirmware.9
-./usr/share/man/man9/lock.9
 ./usr/share/man/man9/log.9
 ./usr/share/man/man9/malloc.9
 ./usr/share/man/man9/mbuf.9

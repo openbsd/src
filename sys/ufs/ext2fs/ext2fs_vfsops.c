@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.92 2016/06/19 10:21:56 dlg Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.93 2016/06/19 11:54:33 natano Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -845,7 +845,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	}
 
 	ip = pool_get(&ext2fs_inode_pool, PR_WAITOK|PR_ZERO);
-	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
+	rrw_init(&ip->i_lock, "inode");
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_ump = ump;

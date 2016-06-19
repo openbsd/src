@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.127 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.128 2016/06/19 11:54:34 natano Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1538,7 +1538,7 @@ ufs_lock(void *v)
 	struct vop_lock_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags, NULL));
+	return rrw_enter(&VTOI(vp)->i_lock, ap->a_flags & LK_RWFLAGS);
 }
 
 /*
@@ -1550,7 +1550,8 @@ ufs_unlock(void *v)
 	struct vop_unlock_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&VTOI(vp)->i_lock, LK_RELEASE, NULL));
+	rrw_exit(&VTOI(vp)->i_lock);
+	return 0;
 }
 
 /*
@@ -1561,7 +1562,7 @@ ufs_islocked(void *v)
 {
 	struct vop_islocked_args *ap = v;
 
-	return (lockstatus(&VTOI(ap->a_vp)->i_lock));
+	return rrw_status(&VTOI(ap->a_vp)->i_lock);
 }
 
 /*

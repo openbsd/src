@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.30 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.31 2016/06/19 11:54:33 natano Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -146,7 +146,7 @@ cd9660_ihashins(ip)
 	*ipp = ip;
 	/* XXX locking unlock hash list? */
 
-	lockmgr(&ip->i_lock, LK_EXCLUSIVE, NULL);
+	rrw_enter(&ip->i_lock, RW_WRITE);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.15 2016/02/06 16:10:23 stefan Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.16 2016/06/19 11:54:33 natano Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -314,7 +314,7 @@ again:
 		return error;
 	}
 
-	lockinit(&node->tn_vlock, PINOD, "tnode", 0, 0);
+	rrw_init(&node->tn_vlock, "tnode");
 	vp->v_type = node->tn_type;
 
 	/* Type-specific initialization. */

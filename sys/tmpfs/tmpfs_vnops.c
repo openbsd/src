@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.26 2016/05/02 20:06:58 natano Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.27 2016/06/19 11:54:33 natano Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -1194,7 +1194,7 @@ tmpfs_lock(void *v)
 	struct vop_lock_args *ap = v;
 	tmpfs_node_t *tnp = VP_TO_TMPFS_NODE(ap->a_vp);
 
-	return lockmgr(&tnp->tn_vlock, ap->a_flags, NULL);
+	return rrw_enter(&tnp->tn_vlock, ap->a_flags & LK_RWFLAGS);
 }
 
 int
@@ -1203,7 +1203,8 @@ tmpfs_unlock(void *v)
 	struct vop_unlock_args *ap = v;
 	tmpfs_node_t *tnp = VP_TO_TMPFS_NODE(ap->a_vp);
 
-	return lockmgr(&tnp->tn_vlock, LK_RELEASE, NULL);
+	rrw_exit(&tnp->tn_vlock);
+	return 0;
 }
 
 int
@@ -1212,7 +1213,7 @@ tmpfs_islocked(void *v)
 	struct vop_islocked_args *ap = v;
 	tmpfs_node_t *tnp = VP_TO_TMPFS_NODE(ap->a_vp);
 
-	return lockstatus(&tnp->tn_vlock);
+	return rrw_status(&tnp->tn_vlock);
 }
 
 /*

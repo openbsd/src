@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.17 2014/07/09 18:00:09 jmc Exp $
+.\" $OpenBSD: rwlock.9,v 1.18 2016/06/19 11:54:33 natano Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 9 2014 $
+.Dd $Mdocdate: June 19 2016 $
 .Dt RWLOCK 9
 .Os
 .Sh NAME
@@ -183,8 +183,8 @@ can be called during autoconf, from process context, or from interrupt context.
 .Pp
 All other functions can be called during autoconf or from process context.
 .Sh SEE ALSO
-.Xr lockmgr 9 ,
-.Xr mutex 9
+.Xr mutex 9 ,
+.Xr spl 9
 .Sh HISTORY
 The
 .Nm

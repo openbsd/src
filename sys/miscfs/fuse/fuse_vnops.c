@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.27 2016/03/19 12:04:15 natano Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.28 2016/06/19 11:54:33 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -1473,7 +1473,7 @@ fusefs_lock(void *v)
 	struct vop_lock_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&VTOI(vp)->ufs_ino.i_lock, ap->a_flags, NULL));
+	return rrw_enter(&VTOI(vp)->ufs_ino.i_lock, ap->a_flags & LK_RWFLAGS);
 }
 
 int
@@ -1482,7 +1482,8 @@ fusefs_unlock(void *v)
 	struct vop_unlock_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&VTOI(vp)->ufs_ino.i_lock, LK_RELEASE, NULL));
+	rrw_exit(&VTOI(vp)->ufs_ino.i_lock);
+	return 0;
 }
 
 int
@@ -1490,7 +1491,7 @@ fusefs_islocked(void *v)
 {
 	struct vop_islocked_args *ap = v;
 
-	return (lockstatus(&VTOI(ap->a_vp)->ufs_ino.i_lock));
+	return rrw_status(&VTOI(ap->a_vp)->ufs_ino.i_lock);
 }
 
 int

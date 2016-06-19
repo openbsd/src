@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.63 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.64 2016/06/19 11:54:33 natano Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -898,20 +898,19 @@ int
 udf_lock(void *v)
 {
 	struct vop_lock_args *ap = v;
-
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&VTOU(vp)->u_lock, ap->a_flags, NULL));
+	return rrw_enter(&VTOU(vp)->u_lock, ap->a_flags & LK_RWFLAGS);
 }
 
 int
 udf_unlock(void *v)
 {
 	struct vop_unlock_args *ap = v;
-
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&VTOU(vp)->u_lock, LK_RELEASE, NULL));
+	rrw_exit(&VTOU(vp)->u_lock);
+	return 0;
 }
 
 int
@@ -919,7 +918,7 @@ udf_islocked(void *v)
 {
 	struct vop_islocked_args *ap = v;
 
-	return (lockstatus(&VTOU(ap->a_vp)->u_lock));
+	return rrw_status(&VTOU(ap->a_vp)->u_lock);
 }
 
 int

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnsubr.9,v 1.11 2011/09/03 22:59:07 jmc Exp $
+.\"     $OpenBSD: vnsubr.9,v 1.12 2016/06/19 11:54:33 natano Exp $
 .\"     $NetBSD: vnsubr.9,v 1.21 2004/05/25 14:54:56 hannken Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: June 19 2016 $
 .Dt VNSUBR 9
 .Os
 .Sh NAME
@@ -125,23 +125,19 @@ Instead, the
 .Xr vget 9
 function should be used.
 .Pp
-The
+In addition to the
 .Fa flags
-argument may contain the following flags:
-.Pp
-.Bl -tag -width LK_EXCLUSIVE -offset indent -compact
-.It Dv LK_RETRY
-Return the vnode even if it has been reclaimed.
-.It Dv LK_NOWAIT
-Don't wait if the vnode lock is held by someone else
-(may still wait on reclamation lock).
-Must not be used with
-.Dv LK_RETRY .
-.It Dv LK_EXCLUSIVE
-Acquire an exclusive lock.
-.It Dv LK_SHARED
-Acquire a shared lock.
-.El
+accepted by
+.Xr VOP_LOCK 9 ,
+the
+.Dv LK_RETRY
+flag may be used.
+.Dv LK_RETRY
+causes
+.Fn vn_lock
+to return the vnode even if it has been reclaimed.
+It must not be used with
+.Dv LK_NOWAIT .
 .Pp
 The
 .Fn vn_lock

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.46 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.47 2016/06/19 11:54:33 natano Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -44,63 +44,6 @@
 /* CPU-dependent timing, this needs to be settable from ddb. */
 int __mp_lock_spinout = 200000000;
 #endif
-
-/*
- * Initialize a lock; required before use.
- */
-void
-lockinit(struct lock *lkp, int prio, char *wmesg, int timo, int flags)
-{
-	KASSERT(flags == 0);
-
-	memset(lkp, 0, sizeof(struct lock));
-	rrw_init(&lkp->lk_lck, wmesg);
-}
-
-int
-lockstatus(struct lock *lkp)
-{
-	switch (rrw_status(&lkp->lk_lck)) {
-	case RW_WRITE:
-		return (LK_EXCLUSIVE);
-	case RW_WRITE_OTHER:
-		return (LK_EXCLOTHER);
-	case RW_READ:
-		return (LK_SHARED);
-	case 0:
-	default:
-		return (0);
-	}
-}
-
-int
-lockmgr(struct lock *lkp, u_int flags, void *notused)
-{
-	int rwflags = 0;
-
-	KASSERT(!((flags & (LK_SHARED|LK_EXCLUSIVE)) ==
-	    (LK_SHARED|LK_EXCLUSIVE)));
-	KASSERT(!((flags & (LK_CANRECURSE|LK_RECURSEFAIL)) ==
-	    (LK_CANRECURSE|LK_RECURSEFAIL)));
-	KASSERT((flags & LK_RELEASE) ||
-	    (flags & (LK_SHARED|LK_EXCLUSIVE|LK_DRAIN)));
-
-	if (flags & LK_RELEASE) {
-		rrw_exit(&lkp->lk_lck);
-		return (0);
-	}
-	if (flags & LK_SHARED)
-		rwflags |= RW_READ;
-	if (flags & (LK_EXCLUSIVE|LK_DRAIN))
-		rwflags |= RW_WRITE;
-	if (flags & LK_RECURSEFAIL)
-		rwflags |= RW_RECURSEFAIL;
-	if (flags & LK_NOWAIT)
-		rwflags |= RW_NOSLEEP;
-
-	return (rrw_enter(&lkp->lk_lck, rwflags));
-
-}
 
 #if defined(MULTIPROCESSOR)
 /*
