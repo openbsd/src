@@ -33,7 +33,7 @@ struct bfd_iovec
 @subsubsection @code{bfd_get_mtime}
 @strong{Synopsis}
 @example
-long bfd_get_mtime (bfd *abfd);
+time_t bfd_get_mtime (bfd *abfd);
 @end example
 @strong{Description}@*
 Return the file modification time (as read from the file system, or
