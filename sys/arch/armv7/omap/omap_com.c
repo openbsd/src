@@ -1,4 +1,4 @@
-/* $OpenBSD: omap_com.c,v 1.4 2016/06/19 14:27:35 jsg Exp $ */
+/* $OpenBSD: omap_com.c,v 1.5 2016/06/19 14:38:13 jsg Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -77,7 +77,8 @@ omapuart_init_cons(void)
 	void *node;
 
 	if ((node = fdt_find_cons("ti,omap3-uart")) == NULL)
-		return;
+		if ((node = fdt_find_cons("ti,omap4-uart")) == NULL)
+			return;
 	if (fdt_get_memory_address(node, 0, &mem))
 		return;
 
@@ -91,7 +92,8 @@ omapuart_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "ti,omap3-uart");
+	return (OF_is_compatible(faa->fa_node, "ti,omap3-uart") ||
+	    OF_is_compatible(faa->fa_node, "ti,omap4-uart"));
 }
 
 void
