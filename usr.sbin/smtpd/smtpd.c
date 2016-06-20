@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.278 2016/06/07 06:52:49 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.279 2016/06/20 20:26:04 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -161,6 +161,9 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 	void			*i;
 	int			 fd, n, v, ret;
 
+	if (imsg == NULL)
+		exit(1);
+	
 	if (p->proc == PROC_LKA) {
 		switch (imsg->hdr.type) {
 		case IMSG_LKA_OPEN_FORWARD:
