@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.88 2016/06/19 12:05:25 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.89 2016/06/20 11:54:36 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -2161,7 +2161,7 @@ iwm_send_phy_db_cmd(struct iwm_softc *sc, uint16_t type,
 	struct iwm_phy_db_cmd phy_db_cmd;
 	struct iwm_host_cmd cmd = {
 		.id = IWM_PHY_DB_CMD,
-		.flags = IWM_CMD_SYNC,
+		.flags = IWM_CMD_ASYNC,
 	};
 
 	DPRINTFN(10, ("Sending PHY-DB hcmd of type %d, of length %d\n", type, length));
