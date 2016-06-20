@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.28 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: psl.h,v 1.29 2016/06/20 11:02:33 dlg Exp $	*/
 /*	$NetBSD: psl.h,v 1.12 1997/03/10 21:49:11 pk Exp $ */
 
 /*
@@ -106,9 +106,6 @@
 
 static __inline int getpsr(void);
 static __inline void setpsr(int);
-static __inline int spl0(void);
-static __inline int splhigh(void);
-static __inline void splx(int);
 static __inline int getmid(void);
 
 /*
@@ -142,28 +139,6 @@ setpsr(newpsr)
 	__asm volatile("nop");
 }
 
-static __inline int
-spl0()
-{
-	int psr, oldipl;
-
-	/*
-	 * wrpsr xors two values: we choose old psr and old ipl here,
-	 * which gives us the same value as the old psr but with all
-	 * the old PIL bits turned off.
-	 */
-	__asm volatile("rd %%psr,%0" : "=r" (psr));
-	oldipl = psr & PSR_PIL;
-	__asm volatile("wr %0,%1,%%psr" : : "r" (psr), "r" (oldipl));
-
-	/*
-	 * Three instructions must execute before we can depend
-	 * on the bits to be changed.
-	 */
-	__asm volatile("nop; nop; nop");
-	return (oldipl);
-}
-
 #ifdef DIAGNOSTIC
 /*
  * Although this function is implemented in MI code, it must be in this MD
@@ -183,83 +158,27 @@ void splassert_check(int, const char *);
 #define splsoftassert(wantipl)	do { /* nada */ } while (0)
 #endif
 
-/*
- * PIL 1 through 14 can use this macro.
- * (spl0 and splhigh are special since they put all 0s or all 1s
- * into the ipl field.)
- */
-#define	SPL(name, newipl) \
-static __inline int name(void); \
-static __inline int name() \
-{ \
-	int psr, oldipl; \
-	__asm volatile("rd %%psr,%0" : "=r" (psr)); \
-	oldipl = psr & PSR_PIL; \
-	psr &= ~oldipl; \
-	__asm volatile("wr %0,%1,%%psr" : : \
-	    "r" (psr), "n" ((newipl) << 8)); \
-	__asm volatile("nop; nop; nop"); \
-	__asm volatile("":::"memory");	/* protect from reordering */ \
-	return (oldipl); \
-}
-/* A non-priority-decreasing version of SPL */
-#define	SPLHOLD(name, newipl) \
-static __inline int name(void); \
-static __inline int name() \
-{ \
-	int psr, oldipl; \
-	__asm volatile("rd %%psr,%0" : "=r" (psr)); \
-	oldipl = psr & PSR_PIL; \
-	if ((newipl << 8) <= oldipl) \
-		return oldipl; \
-	psr &= ~oldipl; \
-	__asm volatile("wr %0,%1,%%psr" : : \
-	    "r" (psr), "n" ((newipl) << 8)); \
-	__asm volatile("nop; nop; nop"); \
-	__asm volatile("":::"memory");	/* protect from reordering */ \
-	return (oldipl); \
-}
+int	spl0(void);
+int	splraise(int);
+int	splhigh(void);
+void	splx(int);
 
-SPLHOLD(splsoftint, IPL_SOFTINT)
-#define	splsoftclock		splsoftint
-#define	splsoftnet		splsoftint
-SPLHOLD(splausoft, IPL_AUSOFT)
-SPLHOLD(splfdsoft, IPL_FDSOFT)
-SPLHOLD(splbio, IPL_BIO)
-SPLHOLD(splnet, IPL_NET)
-SPLHOLD(spltty, IPL_TTY)
-SPLHOLD(splvm, IPL_VM)
-SPLHOLD(splclock, IPL_CLOCK)
-SPLHOLD(splfd, IPL_FD)
-SPLHOLD(splzs, IPL_ZS)
-SPLHOLD(splaudio, IPL_AUHARD)
-SPLHOLD(splsched, IPL_SCHED)
-SPLHOLD(splstatclock, IPL_STATCLOCK)
+#define splsoftint()	splraise(IPL_SOFTINT)
+#define splsoftclock()	splraise(IPL_SOFTCLOCK)
+#define splsoftnet()	splraise(IPL_SOFTNET)
+#define splausoft()	splraise(IPL_AUSOFT)
+#define splfdsoft()	splraise(IPL_FDSOFT)
+#define splbio()	splraise(IPL_BIO)
+#define splnet()	splraise(IPL_NET)
+#define spltty()	splraise(IPL_TTY)
+#define splvm()		splraise(IPL_VM)
+#define splclock()	splraise(IPL_CLOCK)
+#define splfd()		splraise(IPL_FD)
+#define splzs()		splraise(IPL_ZS)
+#define splaudio()	splraise(IPL_AUDIO)
+#define splsched()	splraise(IPL_SCHED)
+#define splstatclock()	splraise(IPL_STATCLOCK)
 
-static __inline int splhigh()
-{
-	int psr, oldipl;
-
-	__asm volatile("rd %%psr,%0" : "=r" (psr));
-	__asm volatile("wr %0,0,%%psr" : : "r" (psr | PSR_PIL));
-	__asm volatile("and %1,%2,%0; nop; nop" : "=r" (oldipl) : \
-	    "r" (psr), "n" (PSR_PIL));
-	__asm volatile("":::"memory");	/* protect from reordering */
-	return (oldipl);
-}
-
-/* splx does not have a return value */
-static __inline void splx(newipl)
-	int newipl;
-{
-	int psr;
-
-	__asm volatile("":::"memory");	/* protect from reordering */
-	__asm volatile("rd %%psr,%0" : "=r" (psr));
-	__asm volatile("wr %0,%1,%%psr" : : \
-	    "r" (psr & ~PSR_PIL), "rn" (newipl));
-	__asm volatile("nop; nop; nop");
-}
 #endif /* KERNEL && !_LOCORE */
 
 #endif /* PSR_IMPL */

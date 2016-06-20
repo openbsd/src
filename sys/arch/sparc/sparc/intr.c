@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.43 2015/12/10 19:48:04 mmcc Exp $ */
+/*	$OpenBSD: intr.c,v 1.44 2016/06/20 11:02:33 dlg Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -544,3 +544,70 @@ splassert_check(int wantipl, const char *func)
 	}
 }
 #endif
+
+int
+spl0(void)
+{
+	int psr, oldipl;
+
+	/*
+	 * wrpsr xors two values: we choose old psr and old ipl here,
+	 * which gives us the same value as the old psr but with all
+	 * the old PIL bits turned off.
+	 */
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
+	oldipl = psr & PSR_PIL;
+	__asm volatile("wr %0,%1,%%psr" : : "r" (psr), "r" (oldipl));
+
+	/*
+	 * Three instructions must execute before we can depend
+	 * on the bits to be changed.
+	 */
+	__asm volatile("nop; nop; nop");
+	return (oldipl);
+}
+
+int
+splraise(int newipl)
+{
+	int psr, oldipl;
+
+	newipl <<= 8;
+
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
+	oldipl = psr & PSR_PIL;
+	if (newipl <= oldipl)
+		return oldipl;
+
+	psr &= ~PSR_PIL;
+	__asm volatile("wr %0,%1,%%psr" : : "r" (psr), "rn" (newipl));
+	__asm volatile("nop; nop; nop");
+	__asm volatile("":::"memory");	/* protect from reordering */ \
+
+	return (oldipl);
+}
+
+int
+splhigh(void)
+{
+	int psr, oldipl;
+
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("wr %0,0,%%psr" : : "r" (psr | PSR_PIL));
+	__asm volatile("and %1,%2,%0; nop; nop" : "=r" (oldipl) :
+	    "r" (psr), "n" (PSR_PIL));
+	__asm volatile("":::"memory");	/* protect from reordering */
+	return (oldipl);
+}
+
+void
+splx(int newipl)
+{
+	int psr;
+
+	__asm volatile("":::"memory");	/* protect from reordering */
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("wr %0,%1,%%psr" : :
+	    "r" (psr & ~PSR_PIL), "rn" (newipl));
+	__asm volatile("nop; nop; nop");
+}
