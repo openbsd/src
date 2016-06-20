@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.64 2016/05/27 19:45:04 deraadt Exp $	*/
+/*	$OpenBSD: mount.c,v 1.65 2016/06/20 08:36:36 ajacoutot Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -597,6 +597,21 @@ prmount(struct statfs *sf)
 			(void)printf("%s%s", !f++ ? " (" : ", ", "gens");
 		if (iso_args->flags & ISOFSMNT_EXTATT)
 			(void)printf("%s%s", !f++ ? " (" : ", ", "extatt");
+	} else if (strcmp(sf->f_fstypename, MOUNT_TMPFS) == 0) {
+		struct tmpfs_args *tmpfs_args = &sf->mount_info.tmpfs_args;
+
+		if (verbose || tmpfs_args->ta_root_uid || tmpfs_args->ta_root_gid)
+			(void)printf("%s%s=%u, %s=%u", !f++ ? " (" : ", ",
+			    "uid", tmpfs_args->ta_root_uid, "gid", tmpfs_args->ta_root_gid);
+		if (verbose || tmpfs_args->ta_root_mode != 040755)
+			(void)printf("%s%s=%04o", !f++ ? " (" : ", ",
+			    "mode", tmpfs_args->ta_root_mode & 07777);
+		if (verbose || tmpfs_args->ta_size_max)
+			(void)printf("%s%s=%lu", !f++ ? " (" : ", ",
+			    "size", tmpfs_args->ta_size_max);
+		if (verbose || tmpfs_args->ta_nodes_max)
+			(void)printf("%s%s=%lu", !f++ ? " (" : ", ",
+			    "inodes", tmpfs_args->ta_nodes_max);
 	}
 	(void)printf(f ? ")\n" : "\n");
 }
