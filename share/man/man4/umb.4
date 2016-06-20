@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umb.4,v 1.1 2016/06/15 19:39:34 gerhard Exp $
+.\"	$OpenBSD: umb.4,v 1.2 2016/06/20 09:03:08 stsp Exp $
 .\"
 .\" Copyright (c) 2016 genua mbH
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 15 2016 $
+.Dd $Mdocdate: June 20 2016 $
 .Dt UMB 4
 .Os
 .Sh NAME
@@ -26,44 +26,27 @@
 The
 .Nm
 driver provides support for USB MBIM devices.
-Those devices establish connections via celluar networks such as
-GPRS, UMTS, and LTE.
 .Pp
-The
-.Nm
-device appears as a regular point-to-point network interface,
+MBIM devices establish connections via cellular networks such as
+GPRS, UMTS, and LTE.
+They appear as a regular point-to-point network interface,
 transporting raw IP frames.
 .Pp
 Required configuration parameters like PIN and APN have to be set
-via
+with
 .Xr ifconfig 8 .
 Once the SIM card has been unlocked with the correct PIN, it
-will remain in this state until the device is power-cycled.
+will remain in this state until the MBIM device is power-cycled.
 In case the device is connected to an "always-on" USB port,
-it is possible to connect to a provider without entering the
-PIN again even afer a reboot of the system.
-.Pp
-If a default gateway route is configured for the
-.Nm
-network interface, the driver will modify the destination IP address
-dynamically, according to the information sent by the network provider.
+it may be possible to connect to a provider without entering the
+PIN again even if the system was rebooted.
 .Sh HARDWARE
-The following devices are known to be supported by the
-.Nm
-driver:
+The following devices should work:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It Tn Sierra Wireless EM8805
 .It Tn Sierra Wireless MC8305
 .El
-.Pp
-There are probably a lot more devices that also work flawlessly.
-If some devices fail to provide a confirming MBIM implementation,
-their vendor and product IDs should be added to the driver's blacklist
-manually.
-Since most devices offer multiple interfaces, blacklisted ones will
-probably be attached by some other driver, such as
-.Xr umsm 4 .
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr netintro 4 ,
@@ -78,4 +61,8 @@ probably be attached by some other driver, such as
 .Sh CAVEATS
 The
 .Nm
-driver currently does not support IPv6 addresses.
+driver does not support IPv6.
+.Pp
+Devices which fail to provide a confirming MBIM implementation will
+probably be attached by some other driver, such as
+.Xr umsm 4 .
