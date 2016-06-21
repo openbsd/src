@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.149 2016/06/18 07:59:30 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.150 2016/06/21 06:38:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1542,13 +1542,13 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 	size_t count;
 	int error;
 
-	DPRINTFN(1, "%s: read: resid = %zd\n",  DEVNAME(sc), uio->uio_resid);
+	DPRINTFN(1, "%s: read: resid = %zd\n", DEVNAME(sc), uio->uio_resid);
 
 	/* block if quiesced */
 	while (sc->quiesce)
 		tsleep(&sc->quiesce, 0, "au_qrd", 0);
 
-	/* start automatically if setinfo() was never called */
+	/* start automatically if audio_ioc_start() was never called */
 	mtx_enter(&audio_lock);
 	if (!sc->active && !sc->pause && sc->rec.used == 0) {
 		mtx_leave(&audio_lock);
@@ -1672,7 +1672,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		mtx_enter(&audio_lock);
 		audio_buf_wcommit(&sc->play, count);
 
-		/* start automatically if setinfo() was never called */
+		/* start automatically if audio_ioc_start() was never called */
 		if (!sc->active && !sc->pause &&
 		    sc->play.used == sc->play.len) {
 			mtx_leave(&audio_lock);
