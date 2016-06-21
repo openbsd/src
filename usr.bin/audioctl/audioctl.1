@@ -1,4 +1,4 @@
-.\" $OpenBSD: audioctl.1,v 1.28 2016/01/29 10:45:38 ratchov Exp $
+.\" $OpenBSD: audioctl.1,v 1.29 2016/06/21 06:32:00 ratchov Exp $
 .\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,47 +26,39 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 29 2016 $
+.Dd $Mdocdate: June 21 2016 $
 .Dt AUDIOCTL 1
 .Os
 .Sh NAME
 .Nm audioctl
-.Nd control audio device
+.Nd get or set audio driver variables
 .Sh SYNOPSIS
 .Nm audioctl
-.Op Fl an
 .Op Fl f Ar file
 .Nm audioctl
 .Op Fl n
 .Op Fl f Ar file
 .Ar name ...
 .Nm audioctl
-.Op Fl n
+.Op Fl nq
 .Op Fl f Ar file
 .Ar name Ns = Ns Ar value ...
 .Sh DESCRIPTION
 The
 .Nm
-command displays or sets various audio system driver variables.
-If a list of variables is present on the command line,
-.Nm
-prints the current value of those variables for the specified device.
-By default,
-.Nm
-operates on the
-.Pa /dev/audioctl
-device.
-.Pp
+utility retrieves or sets
+.Xr audio 4
+driver variables.
 The options are as follows:
-.Bl -tag -width "name=valueXX"
-.It Fl a
-Print all device variables and their current values.
-This is the default, if no parameters are given to
-.Nm .
+.Bl -tag -width Ds
 .It Fl f Ar file
-Specify an alternative audio control device.
+Specifies the audio control device or the audio device.
+The default is
+.Pa /dev/audioctl0 .
 .It Fl n
 Suppress printing of the variable name.
+.It Fl q
+Suppress all output when setting a variable.
 .It Ar name Ns = Ns Ar value
 Attempt to set the specified variable
 .Ar name
@@ -74,22 +66,86 @@ to
 .Ar value .
 .El
 .Pp
+If the audio control device is used, then values are only stored in the
+.Xr audio 4
+driver; they will be submitted to the hardware the next time the
+device is opened for playback or recording.
+If the audio device is used instead of the control device,
+then values are negotiated with the hardware immediately; this requires
+exclusive access to the device.
 Variables may only be changed if the device is not opened for
 playback or recording by another process.
-.Sh ENVIRONMENT
-.Bl -tag -width AUDIOCTLDEVICE
-.It Ev AUDIOCTLDEVICE
-Audio control device to use.
+.Pp
+The following variable names are available:
+.Bl -column "record.channels"
+.It Sy Name Ta Sy Meaning
+.It name Ta device name as shown by
+.Xr dmesg 8
+.It mode Ta current device mode (
+.Va play ,
+.Va record
+or both)
+.It pause Ta set if not attempting to start
+.It active Ta set if playing or recording
+.It nblks Ta number of blocks (in frames) in the play buffer
+.It blksz Ta number of frames per block
+.It rate Ta sample rate in Hz
+.It encoding Ta current sample format
+.It play.channels Ta number of play channels
+.It play.bytes Ta bytes played since playback started
+.It play.errors Ta bytes inserted during underruns
+.It record.channels Ta number of recording channels
+.It record.bytes Ta bytes recorded since device started
+.It record.errors Ta bytes dropped during overruns
 .El
+.Pp
+Encoding names use the following scheme: signedness
+.Po
+.Va s
+or
+.Va u
+.Pc
+followed
+by the precision in bits, the byte-order
+.Po
+.Va le
+or
+.Va be
+.Pc ,
+the number of
+bytes per sample, and the alignment
+.Po
+.Va msb
+or
+.Va lsb
+.Pc .
+Only the signedness and the precision are mandatory.
+Examples:
+.Va u8 , s16le , s24le3 , s24le4lsb .
 .Sh FILES
-.Bl -tag -width /dev/audioctl
-.It Pa /dev/audioctl
-default audio control device
+.Bl -tag -width /dev/audioctl0
+.It Pa /dev/audioctlN
+audio control devices
+.It Pa /dev/audioN
+audio devices
 .El
 .Sh EXAMPLES
-To set the playing sampling rate to 11025 you can enter:
+Display the number of bytes of silence inserted during play buffer
+underruns since device started:
+.Bd -literal -offset indent
+$ audioctl play.errors
+.Ed
 .Pp
-.Dl $ audioctl play.rate=11025
+Use signed 24-bit samples and 44100Hz sample rate:
+.Bd -literal -offset indent
+$ audioctl -f /dev/audio0 encoding=s24 rate=44100
+.Ed
+.Pp
+Note the use of
+.Pa /dev/audio0 ,
+to force negotiation with the hardware.
+If the above parameters are not supported by the
+hardware, then supported ones will be selected instead.
 .Sh SEE ALSO
 .Xr aucat 1 ,
 .Xr cdio 1 ,
