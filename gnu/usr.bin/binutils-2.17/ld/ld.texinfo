@@ -994,6 +994,9 @@ Marks the object as not requiring executable stack.
 @item norelro
 Don't create an ELF @code{PT_GNU_RELRO} segment header in the object.
 
+@item notext
+Permit creation of objects with text relocations.
+
 @item now
 When generating an executable or shared library, mark it to tell the
 dynamic linker to resolve all symbols when the program is started, or
@@ -1001,16 +1004,20 @@ when the shared library is linked to using dlopen, instead of
 deferring function call resolution to the point when the function is
 first called.
 
-@item wxneeded
-Marks the executable with a @code{PT_OPENBSD_WXNEEDED} segment header,
-indicating it is expected to perform W^X violating operations later
-(such as calling mprotect(2) or mmap(2) with both PROT_WRITE and PROT_EXEC).
-
 @item origin
 Marks the object may contain $ORIGIN.
 
 @item relro
 Create an ELF @code{PT_GNU_RELRO} segment header in the object.
+
+@item text
+Make creation of objects with text relocations a fatal error.
+This is the default.
+
+@item wxneeded
+Marks the executable with a @code{PT_OPENBSD_WXNEEDED} segment header,
+indicating it is expected to perform W^X violating operations later
+(such as calling mprotect(2) or mmap(2) with both PROT_WRITE and PROT_EXEC).
 
 @end table
 

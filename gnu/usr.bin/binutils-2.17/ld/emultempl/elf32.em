@@ -2193,6 +2193,10 @@ cat >>e${EMULATION_NAME}.c <<EOF
 	link_info.relro = FALSE;
       else if (strcmp (optarg, "wxneeded") == 0)
 	link_info.wxneeded = TRUE;
+      else if (strcmp (optarg, "notext") == 0)
+	link_info.allow_textrel = TRUE;
+      else if (strcmp (optarg, "text") == 0)
+	link_info.allow_textrel = FALSE;
       /* What about the other Solaris -z options? FIXME.  */
       break;
 EOF

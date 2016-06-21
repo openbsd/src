@@ -8680,27 +8680,30 @@ bfd_elf_final_link (bfd *abfd, struct bfd_link_info *info)
 	goto error_return;
 
       /* Check for DT_TEXTREL (late, in case the backend removes it).  */
-      if (info->warn_shared_textrel && info->shared)
+      if (!info->allow_textrel || (info->warn_shared_textrel && info->shared))
 	{
 	  bfd_byte *dyncon, *dynconend;
 
 	  /* Fix up .dynamic entries.  */
 	  o = bfd_get_section_by_name (dynobj, ".dynamic");
-	  BFD_ASSERT (o != NULL);
-
-	  dyncon = o->contents;
-	  dynconend = o->contents + o->size;
-	  for (; dyncon < dynconend; dyncon += bed->s->sizeof_dyn)
+	  if (o != NULL)
 	    {
-	      Elf_Internal_Dyn dyn;
-
-	      bed->s->swap_dyn_in (dynobj, dyncon, &dyn);
-
-	      if (dyn.d_tag == DT_TEXTREL)
+	      dyncon = o->contents;
+	      dynconend = o->contents + o->size;
+	      for (; dyncon < dynconend; dyncon += bed->s->sizeof_dyn)
 		{
-		  _bfd_error_handler
-		    (_("warning: creating a DT_TEXTREL in a shared object."));
-		  break;
+		  Elf_Internal_Dyn dyn;
+
+		  bed->s->swap_dyn_in (dynobj, dyncon, &dyn);
+
+		  if (dyn.d_tag == DT_TEXTREL)
+		    {
+		      _bfd_error_handler
+			(_("warning: creating a DT_TEXTREL in a shared object."));
+		      if (!info->allow_textrel)
+			goto error_return;
+		      break;
+		    }
 		}
 	    }
 	}

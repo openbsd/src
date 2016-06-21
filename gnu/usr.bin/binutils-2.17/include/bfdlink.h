@@ -270,6 +270,9 @@ struct bfd_link_info
   /* TRUE if ok to have version with no definition.  */
   unsigned int allow_undefined_version: 1;
 
+  /* TRUE if ok to have text relocations.  */
+  unsigned int allow_textrel: 1;
+
   /* TRUE if a default symbol version should be created and used for
      exported symbols.  */
   unsigned int create_default_symver: 1;
