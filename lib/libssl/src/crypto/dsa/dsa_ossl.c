@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.25 2016/06/06 23:37:37 tedu Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.26 2016/06/21 04:16:53 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -82,46 +82,6 @@ static DSA_METHOD openssl_dsa_meth = {
 	.init = dsa_init,
 	.finish = dsa_finish
 };
-
-/*
- * These macro wrappers replace attempts to use the dsa_mod_exp() and
- * bn_mod_exp() handlers in the DSA_METHOD structure. We avoid the problem of
- * having a the macro work as an expression by bundling an "err_instr". So;
- * 
- *     if (!dsa->meth->bn_mod_exp(dsa, r,dsa->g,&k,dsa->p,ctx,
- *                 dsa->method_mont_p)) goto err;
- *
- * can be replaced by;
- *
- *     DSA_BN_MOD_EXP(goto err, dsa, r, dsa->g, &k, dsa->p, ctx,
- *                 dsa->method_mont_p);
- */
-
-#define DSA_MOD_EXP(err_instr,dsa,rr,a1,p1,a2,p2,m,ctx,in_mont) \
-do { \
-	int _tmp_res53; \
-	if ((dsa)->meth->dsa_mod_exp) \
-		_tmp_res53 = (dsa)->meth->dsa_mod_exp((dsa), (rr), \
-		    (a1), (p1), (a2), (p2), (m), (ctx), (in_mont)); \
-	else \
-		_tmp_res53 = BN_mod_exp2_mont((rr), (a1), \
-		    (p1), (a2), (p2), (m), (ctx), (in_mont)); \
-	if (!_tmp_res53) \
-		err_instr; \
-} while(0)
-
-#define DSA_BN_MOD_EXP(err_instr,dsa,r,a,p,m,ctx,m_ctx) \
-do { \
-	int _tmp_res53; \
-	if ((dsa)->meth->bn_mod_exp) \
-		_tmp_res53 = (dsa)->meth->bn_mod_exp((dsa), (r), \
-		    (a), (p), (m), (ctx), (m_ctx)); \
-	else \
-		_tmp_res53 = BN_mod_exp_mont((r), (a), (p), (m), \
-		    (ctx), (m_ctx)); \
-	if (!_tmp_res53) \
-		err_instr; \
-} while(0)
 
 const DSA_METHOD *
 DSA_OpenSSL(void)
@@ -222,7 +182,7 @@ static int
 dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 {
 	BN_CTX *ctx;
-	BIGNUM k, kq, *K, *kinv = NULL, *r = NULL;
+	BIGNUM k, *kinv = NULL, *r = NULL;
 	int ret = 0;
 
 	if (!dsa->p || !dsa->q || !dsa->g) {
@@ -231,7 +191,6 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	}
 
 	BN_init(&k);
-	BN_init(&kq);
 
 	if (ctx_in == NULL) {
 		if ((ctx = BN_CTX_new()) == NULL)
@@ -248,6 +207,8 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 			goto err;
 	} while (BN_is_zero(&k));
 
+	BN_set_flags(&k, BN_FLG_CONSTTIME);
+
 	if (dsa->flags & DSA_FLAG_CACHE_MONT_P) {
 		if (!BN_MONT_CTX_set_locked(&dsa->method_mont_p,
 		    CRYPTO_LOCK_DSA, dsa->p, ctx))
@@ -256,37 +217,31 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 
 	/* Compute r = (g^k mod p) mod q */
 
-	if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0) {
-		if (!BN_copy(&kq, &k))
+	/*
+	 * We do not want timing information to leak the length of k,
+	 * so we compute g^k using an equivalent exponent of fixed
+	 * length.
+	 *
+	 * (This is a kludge that we need because the BN_mod_exp_mont()
+	 * does not let us specify the desired timing behaviour.)
+	 */
+
+	if (!BN_add(&k, &k, dsa->q))
+		goto err;
+	if (BN_num_bits(&k) <= BN_num_bits(dsa->q)) {
+		if (!BN_add(&k, &k, dsa->q))
 			goto err;
+	}
 
-		/*
-		 * We do not want timing information to leak the length of k,
-		 * so we compute g^k using an equivalent exponent of fixed
-		 * length.
-		 *
-		 * (This is a kludge that we need because the BN_mod_exp_mont()
-		 * does not let us specify the desired timing behaviour.)
-		 */
-
-		if (!BN_add(&kq, &kq, dsa->q))
+	if (dsa->meth->bn_mod_exp != NULL) {
+		if (!dsa->meth->bn_mod_exp(dsa, r, dsa->g, &k, dsa->p, ctx,
+					dsa->method_mont_p))
 			goto err;
-		if (BN_num_bits(&kq) <= BN_num_bits(dsa->q)) {
-			if (!BN_add(&kq, &kq, dsa->q))
-				goto err;
-		}
-
-		K = &kq;
 	} else {
-		K = &k;
+		if (!BN_mod_exp_mont(r, dsa->g, &k, dsa->p, ctx, dsa->method_mont_p))
+			goto err;
 	}
 
-	if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0) {
-		BN_set_flags(K, BN_FLG_CONSTTIME);
-	}
-
-	DSA_BN_MOD_EXP(goto err, dsa, r, dsa->g, K, dsa->p, ctx,
-	    dsa->method_mont_p);
 	if (!BN_mod(r,r,dsa->q,ctx))
 		goto err;
 
@@ -308,7 +263,6 @@ err:
 	if (ctx_in == NULL)
 		BN_CTX_free(ctx);
 	BN_clear_free(&k);
-	BN_clear_free(&kq);
 	return ret;
 }
 
@@ -386,8 +340,16 @@ dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
 			goto err;
 	}
 
-	DSA_MOD_EXP(goto err, dsa, &t1, dsa->g, &u1, dsa->pub_key, &u2, dsa->p,
-	    ctx, mont);
+	if (dsa->meth->dsa_mod_exp != NULL) {
+		if (!dsa->meth->dsa_mod_exp(dsa, &t1, dsa->g, &u1, dsa->pub_key, &u2,
+						dsa->p, ctx, mont))
+			goto err;
+	} else {
+		if (!BN_mod_exp2_mont(&t1, dsa->g, &u1, dsa->pub_key, &u2, dsa->p, ctx,
+						mont))
+			goto err;
+	}
+		
 	/* BN_copy(&u1,&t1); */
 	/* let u1 = u1 mod q */
 	if (!BN_mod(&u1, &t1, dsa->q, ctx))
