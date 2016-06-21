@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.25 2015/11/02 07:02:53 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.26 2016/06/21 15:25:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -200,7 +200,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		for (llist = object->load_list; llist != NULL; llist = llist->next) {
 			if (!(llist->prot & PROT_WRITE))
 				_dl_mprotect(llist->start, llist->size,
-				    llist->prot|PROT_WRITE);
+				    PROT_READ | PROT_WRITE);
 		}
 	}
 
