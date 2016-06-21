@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.32 2015/11/02 07:02:53 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.33 2016/06/21 15:21:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -107,6 +107,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	Elf_Addr	loff;
 	int	i, numrela, fails = 0;
 	size_t	size;
+	struct load_list *llist;
 
 	loff = object->obj_base;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf_RelA);
@@ -144,6 +145,17 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		    addr, object->load_name));
 #endif
 		object->dyn.fini = (void *)addr;
+	}
+
+	/*
+	 * unprotect some segments if we need it.
+	 */
+	if ((object->dyn.textrel == 1) && (rel == DT_REL || rel == DT_RELA)) {
+		for (llist = object->load_list; llist != NULL; llist = llist->next) {
+			if (!(llist->prot & PROT_WRITE))
+				_dl_mprotect(llist->start, llist->size,
+				    PROT_READ|PROT_WRITE);
+		}
 	}
 
 	/*
@@ -286,6 +298,15 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			    ELF_R_TYPE(rela->r_info), rela->r_offset,
 			    rela->r_addend, *pt));
 			break;
+		}
+	}
+
+	/* reprotect the unprotected segments */
+	if ((object->dyn.textrel == 1) && (rel == DT_REL || rel == DT_RELA)) {
+		for (llist = object->load_list; llist != NULL; llist = llist->next) {
+			if (!(llist->prot & PROT_WRITE))
+				_dl_mprotect(llist->start, llist->size,
+				    llist->prot);
 		}
 	}
 
