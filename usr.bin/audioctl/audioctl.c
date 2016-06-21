@@ -1,436 +1,278 @@
-/*	$OpenBSD: audioctl.c,v 1.30 2016/01/29 10:23:56 ratchov Exp $	*/
-/*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
-
+/*	$OpenBSD: audioctl.c,v 1.31 2016/06/21 06:26:50 ratchov Exp $	*/
 /*
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
- * All rights reserved.
+ * Copyright (c) 2016 Alexandre Ratchov <alex@caoua.org>
  *
- * Author: Lennart Augustsson
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-/*
- * audioctl(1) - a program to control audio device.
- */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <err.h>
-#include <unistd.h>
-#include <string.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/audioio.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <err.h>
 
-struct field *findfield(char *name);
-void prfield(struct field *p, const char *sep);
-void rdfield(struct field *p, char *q);
-void getinfo(int fd);
-void usage(void);
-int main(int argc, char **argv);
+/*
+ * Default bytes per sample for the given bits per sample.
+ */
+#define BPS(bits) (((bits) <= 8) ? 1 : (((bits) <= 16) ? 2 : 4))
 
-FILE *out = stdout;
-
-audio_device_t adev;
-
-audio_info_t info;
-
-char encbuf[1000];
-
-int properties, fullduplex;
-
-struct audio_pos getpos;
-
-unsigned int block_size;
+struct audio_device rname;
+struct audio_status rstatus;
+struct audio_swpar rpar, wpar;
+struct audio_pos rpos;
 
 struct field {
-	const char *name;
-	void *valp;
-	int format;
-#define STRING 1
-#define INT 2
-#define UINT 3
-#define P_R 4
-#define UCHAR 6
-#define ENC 7
-#define PROPS 8
-#define XINT 9
-	char flags;
-#define READONLY 1
-#define ALIAS 2
-#define SET 4
-	u_int oldval;
+	char *name;
+	void *raddr, *waddr;
+#define MODE	0
+#define NUM	1
+#define STR	2
+#define ENC	3
+	int type;
+	int set;
 } fields[] = {
-	{ "name", 		&adev.name, 		STRING, READONLY },
-	{ "encodings",		encbuf,			STRING, READONLY },
-	{ "properties",		&properties,		PROPS,	READONLY },
-	{ "hiwat",		&info.hiwat,		UINT,	0 },
-	{ "mode",		&info.mode,		P_R,	READONLY },
-	{ "rate",		&info.play.sample_rate,	UINT,	0 },
-	{ "precision",		&info.play.precision,	UINT,	0 },
-	{ "bps",		&info.play.bps,		UINT,	0 },
-	{ "msb",		&info.play.msb,		UINT,	0 },
-	{ "encoding",		&info.play.encoding,	ENC,	0 },
-	{ "pause",		&info.play.pause,	UCHAR,	0 },
-	{ "active",		&info.play.active,	UCHAR,	READONLY },
-	{ "block_size",		&block_size,		UINT,	0 },
-	{ "play.channels",	&info.play.channels,	UINT,	0 },
-	{ "play.bytes",		&getpos.play_pos,	UINT,	READONLY },
-	{ "play.errors",	&getpos.play_xrun,	UINT,	READONLY },
-	{ "record.channels",	&info.record.channels,	UINT,	0 },
-	{ "record.bytes",	&getpos.rec_pos,	UINT,	READONLY },
-	{ "record.errors",	&getpos.rec_xrun,	UINT,	READONLY },
-	{ 0 }
+	{"name",		&rname.name,		NULL,		STR},
+	{"mode",		&rstatus.mode,		NULL,		MODE},
+	{"pause",		&rstatus.pause,		NULL,		NUM},
+	{"active",		&rstatus.active,	NULL,		NUM},
+	{"nblks",		&rpar.nblks,		&wpar.nblks,	NUM},
+	{"blksz",		&rpar.round,		&wpar.round,	NUM},
+	{"rate",		&rpar.rate,		&wpar.rate,	NUM},
+	{"encoding",		&rpar,			&wpar,		ENC},
+	{"play.channels",	&rpar.pchan,		&wpar.pchan,	NUM},
+	{"play.bytes",		&rpos.play_pos,		NULL,		NUM},
+	{"play.errors",		&rpos.play_xrun,	NULL,		NUM},
+	{"record.channels",	&rpar.rchan,		&wpar.rchan, 	NUM},
+	{"record.bytes",	&rpos.rec_pos,		NULL,		NUM},
+	{"record.errors",	&rpos.rec_xrun,		NULL,		NUM},
+	{NULL,			NULL,			0}
 };
 
-struct {
-	const char *ename;
-	u_int eno;
-} encs[] = {
-	{ AudioEmulaw,		AUDIO_ENCODING_ULAW },
-	{ "ulaw",		AUDIO_ENCODING_ULAW },
-	{ AudioEalaw, 		AUDIO_ENCODING_ALAW },
-	{ AudioEslinear,	AUDIO_ENCODING_SLINEAR },
-	{ "linear",		AUDIO_ENCODING_SLINEAR },
-	{ AudioEulinear,	AUDIO_ENCODING_ULINEAR },
-	{ AudioEslinear_le,	AUDIO_ENCODING_SLINEAR_LE },
-	{ "linear_le",		AUDIO_ENCODING_SLINEAR_LE },
-	{ AudioEulinear_le,	AUDIO_ENCODING_ULINEAR_LE },
-	{ AudioEslinear_be,	AUDIO_ENCODING_SLINEAR_BE },
-	{ "linear_be",		AUDIO_ENCODING_SLINEAR_BE },
-	{ AudioEulinear_be,	AUDIO_ENCODING_ULINEAR_BE },
-	{ 0 }
-};
+const char usagestr[] = "usage: audioctl [-nq] [-f path] [name=[value]] ...\n";
 
-static struct {
-	const char *name;
-	u_int prop;
-} props[] = {
-	{ "full_duplex",	AUDIO_PROP_FULLDUPLEX },
-	{ "mmap",		AUDIO_PROP_MMAP },
-	{ "independent",	AUDIO_PROP_INDEPENDENT },
-	{ 0 }
-};
-
-struct field *
-findfield(char *name)
+/*
+ * parse encoding string (examples: s8, u8, s16, s16le, s24be ...)
+ * and fill enconding fields of audio_swpar structure
+ */
+int
+strtoenc(struct audio_swpar *ap, char *p)
 {
-	int i;
-	for (i = 0; fields[i].name; i++)
-		if (strcmp(fields[i].name, name) == 0)
-			return &fields[i];
-	return (0);
-}
+	/* expect "s" or "u" (signedness) */
+	if (*p == 's')
+		ap->sig = 1;
+	else if (*p == 'u')
+		ap->sig = 0;
+	else
+		return 0;
+	p++;
 
-static void
-prval(u_int format, void *valp)
-{
-	u_int v;
-	const char *cm;
-	int i;
-
-	switch (format) {
-	case STRING:
-		fprintf(out, "%s", (char *)valp);
-		break;
-	case INT:
-		fprintf(out, "%d", *(int *)valp);
-		break;
-	case UINT:
-		fprintf(out, "%u", *(u_int *)valp);
-		break;
-	case XINT:
-		fprintf(out, "0x%x", *(u_int *)valp);
-		break;
-	case UCHAR:
-		fprintf(out, "%u", *(u_char *)valp);
-		break;
-	case P_R:
-		v = *(u_int *)valp;
-		cm = "";
-		if (v & AUMODE_PLAY) {
-			fprintf(out, "play");
-			cm = ",";
-		}
-		if (v & AUMODE_RECORD)
-			fprintf(out, "%srecord", cm);
-		break;
-	case ENC:
-		v = *(u_int *)valp;
-		for (i = 0; encs[i].ename; i++)
-			if (encs[i].eno == v)
-				break;
-		if (encs[i].ename)
-			fprintf(out, "%s", encs[i].ename);
-		else
-			fprintf(out, "%u", v);
-		break;
-	case PROPS:
-		v = *(u_int *)valp;
-		for (cm = "", i = 0; props[i].name; i++) {
-			if (v & props[i].prop) {
-				fprintf(out, "%s%s", cm, props[i].name);
-				cm = ",";
-			}
-		}
-		break;
-	default:
-		errx(1, "Invalid print format.");
+	/* expect 1-2 decimal digits (bits per sample) */
+	ap->bits = 0;
+	while (*p >= '0' && *p <= '9') {
+		ap->bits = (ap->bits * 10) + *p++ - '0';
+		if (ap->bits > 32)
+			return 0;
 	}
+	if (ap->bits < 8)
+		return 0;
+
+	/* set defaults as next tokens are optional */
+	ap->bps = BPS(ap->bits);
+	ap->le = (BYTE_ORDER == LITTLE_ENDIAN);
+	ap->msb = 1;
+	if (*p == '\0')
+		return 1;
+
+	/* expect "le" or "be" (endianness) */
+	if (p[0] == 'l' && p[1] == 'e')
+		ap->le = 1;
+	else if (p[0] == 'b' && p[1] == 'e')
+		ap->le = 0;
+	else
+		return 0;
+	p += 2;
+	if (*p == '\0')
+		return 1;
+
+	/* expect 1 decimal digit (number of bytes) */
+	if (*p < '0' || *p > '9')
+		return 0;
+	ap->bps = *p - '0';
+	if (ap->bps < ((ap->bits + 7) >> 3) || ap->bps > 4)
+		return 0;
+	if (*++p == '\0')
+		return 1;
+
+	/* expect "msb" or "lsb" (alignment) */
+	if (p[0] == 'm' && p[1] == 's' && p[2] == 'b')
+		ap->msb = 1;
+	else if (p[0] == 'l' && p[1] == 's' && p[2] == 'b')
+		ap->msb = 0;
+	else if (*p == '\0')
+		return 1;
+	p += 3;
+	if (*p == '\0')
+		return 1;
+
+	/* must be no additional junk */
+	return 0;
 }
 
 void
-prfield(struct field *p, const char *sep)
+print_val(struct field *p, void *addr)
 {
-	if (sep) {
-		fprintf(out, "%s", p->name);
-		if (p->flags & SET) {
-			fprintf(out, "%s", ": ");
-			prval(p->format, &p->oldval);
-			fprintf(out, " -> ");
-		} else
-			fprintf(out, "%s", sep);
-	}
-	prval(p->format, p->valp);
-	fprintf(out, "\n");
-}
+	int mode;
+	struct audio_swpar *ap;
 
-void
-rdfield(struct field *p, char *q)
-{
-	int i;
-	u_int u;
-
-	switch (p->format) {
-	case UINT:
-		p->oldval = *(u_int *)p->valp;
-		if (sscanf(q, "%u", (unsigned int *)p->valp) != 1) {
-			warnx("Bad number %s", q);
-			return;
-		}
+	switch (p->type) {
+	case NUM:
+		printf("%u", *(unsigned int *)addr);
 		break;
-	case UCHAR:
-		*(char *)&p->oldval = *(u_char *)p->valp;
-		if (sscanf(q, "%u", &u) != 1) {
-			warnx("Bad number %s", q);
-			return;
-		}
-		*(u_char *)p->valp = u;
+	case STR:
+		printf("%s", (char *)addr);
 		break;
-	case XINT:
-		p->oldval = *(u_int *)p->valp;
-		if (sscanf(q, "0x%x", (unsigned int *)p->valp) != 1 &&
-		    sscanf(q, "%x", (unsigned int *)p->valp) != 1) {
-			warnx("Bad number %s", q);
-			return;
+	case MODE:
+		mode = *(unsigned int *)addr;
+		if (mode & AUMODE_PLAY)
+			printf("play");
+		if (mode & AUMODE_RECORD) {
+			if (mode & AUMODE_PLAY)
+				printf(",");
+			printf("record");
 		}
 		break;
 	case ENC:
-		p->oldval = *(u_int *)p->valp;
-		for (i = 0; encs[i].ename; i++)
-			if (strcmp(encs[i].ename, q) == 0)
-				break;
-		if (encs[i].ename)
-			*(u_int*)p->valp = encs[i].eno;
-		else {
-			warnx("Unknown encoding: %s", q);
-			return;
-		}
-		break;
-	default:
-		errx(1, "Invalid read format.");
-	}
-	p->flags |= SET;
-}
-
-void
-getinfo(int fd)
-{
-	int pos = 0, i = 0;
-
-	if (ioctl(fd, AUDIO_GETDEV, &adev) < 0)
-		err(1, "AUDIO_GETDEV");
-	for (;;) {
-		audio_encoding_t enc;
-		enc.index = i++;
-		if (ioctl(fd, AUDIO_GETENC, &enc) < 0)
+		ap = addr;
+		printf("%s%u", ap->sig ? "s" : "u", ap->bits);
+		if (ap->bps == 1)
 			break;
-		if (pos)
-			encbuf[pos++] = ',';
-		snprintf(encbuf+pos, sizeof(encbuf)-pos, "%s:%d:%d:%d%s",
-		    enc.name, enc.precision, enc.bps, enc.msb,
-		    enc.flags & AUDIO_ENCODINGFLAG_EMULATED ? "*" : "");
-		pos += strlen(encbuf+pos);
+		printf("%s", ap->le ? "le" : "be");
+		if (ap->bps != BPS(ap->bits) || ap->bits < ap->bps * 8) {
+			printf("%u", ap->bps);
+			if (ap->bits < ap->bps * 8)
+				printf("%s", ap->msb ? "msb" : "lsb");
+		}
 	}
-	if (ioctl(fd, AUDIO_GETFD, &fullduplex) < 0)
-		err(1, "AUDIO_GETFD");
-	if (ioctl(fd, AUDIO_GETPROPS, &properties) < 0)
-		err(1, "AUDIO_GETPROPS");
-	if (ioctl(fd, AUDIO_GETPROPS, &properties) < 0)
-		err(1, "AUDIO_GETPROPS");
-	if (ioctl(fd, AUDIO_GETINFO, &info) < 0)
-		err(1, "AUDIO_GETINFO");
-	if (ioctl(fd, AUDIO_GETPOS, &getpos) < 0)
-		err(1, "AUDIO_GETPOS");
-	block_size = info.play.block_size /
-	    (info.play.channels * info.play.bps);
 }
 
 void
-usage(void)
+parse_val(struct field *f, void *addr, char *p)
 {
-	extern char *__progname;		/* from crt0.o */
+	const char *strerr;
 
-	fprintf(stderr,
-	    "usage: %s [-an] [-f file]\n"
-	    "       %s [-n] [-f file] name ...\n"
-	    "       %s [-n] [-f file] name=value ...\n",
-	    __progname, __progname, __progname);
-
-	exit(1);
+	switch (f->type) {
+	case NUM:
+		*(unsigned int *)addr = strtonum(p, 0, UINT_MAX, &strerr);
+		if (strerr)
+			errx(1, "%s: %s", p, strerr);
+		break;
+	case ENC:
+		if (!strtoenc((struct audio_swpar *)addr, p))
+			errx(1, "%s: bad encoding", p);
+	}
 }
 
 int
 main(int argc, char **argv)
 {
-	int fd, i, ch;
-	int aflag = 0, canwrite, writeinfo = 0;
-	struct stat dstat, ostat;
-	struct field *p;
-	const char *file;
-	const char *sep = "=";
-    
-	if ((file = getenv("AUDIOCTLDEVICE")) == 0 || *file == '\0')
-		file = "/dev/audioctl";
-    
-	while ((ch = getopt(argc, argv, "af:nw")) != -1) {
-		switch (ch) {
-		case 'a':
-			aflag = 1;
-			break;
-		case 'w':
-			/* backward compatibility */
+	struct field *f;
+	char *lhs, *rhs, *path = "/dev/audioctl0";
+	int fd, c, set = 0, print_names = 1, quiet = 0;
+
+	while ((c = getopt(argc, argv, "anf:q")) != -1) {
+		switch (c) {
+		case 'a':	/* ignored, compat */
 			break;
 		case 'n':
-			sep = 0;
+			print_names = 0;
 			break;
 		case 'f':
-			file = optarg;
+			path = optarg;
+			break;
+		case 'q':
+			quiet = 1;
 			break;
 		default:
-			usage();
+			fputs(usagestr, stderr);
+			return 1;
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0)
-		aflag = 1;
-
-	if ((fd = open(file, O_RDWR)) < 0) {
-		if ((fd = open(file, O_RDONLY)) < 0)
-			err(1, "%s", file);
-		canwrite = 0;
-	} else
-		canwrite = 1;
-    
-	/* Check if stdout is the same device as the audio device. */
-	if (fstat(fd, &dstat) < 0)
-		err(1, "fstat au");
-	if (fstat(STDOUT_FILENO, &ostat) < 0)
-		err(1, "fstat stdout");
-	if (S_ISCHR(dstat.st_mode) && S_ISCHR(ostat.st_mode) &&
-	    major(dstat.st_dev) == major(ostat.st_dev) &&
-	    minor(dstat.st_dev) == minor(ostat.st_dev))
-		/* We can't write to stdout so use stderr */
-		out = stderr;
-
-	if (!argc && !aflag)
-		usage();
-
-	getinfo(fd);
-
-	if (aflag) {
-		for (i = 0; fields[i].name; i++) {
-			if (!(fields[i].flags & ALIAS)) {
-				prfield(&fields[i], sep);
-			}
-		}
-	} else {
-		while (argc--) {
-			char *q;
-		
-			if ((q = strchr(*argv, '=')) != NULL) {
-				*q++ = 0;
-				p = findfield(*argv);
-				if (p == 0)
-					warnx("field `%s' does not exist", *argv);
-				else {
-					if (!canwrite)
-						errx(1, "%s: permission denied",
-						    *argv);
-					if (p->flags & READONLY)
-						warnx("`%s' is read only", *argv);
-					else {
-						rdfield(p, q);
-						if (p->valp == &fullduplex)
-							if (ioctl(fd, AUDIO_SETFD,
-							    &fullduplex) < 0)
-								err(1, "set failed");
-					}
-					writeinfo = 1;
-				}
-			} else {
-				p = findfield(*argv);
-				if (p == 0)
-					warnx("field %s does not exist", *argv);
-				else {
-					prfield(p, sep);
-				}
-			}
-			argv++;
-		}
-		if (writeinfo) {
-			info.record.sample_rate = info.play.sample_rate;
-			info.record.encoding = info.play.encoding;
-			info.record.precision = info.play.precision;
-			info.record.bps = info.play.bps;
-			info.record.msb = info.play.msb;
-			info.record.block_size = block_size *
-				info.record.bps * info.record.channels;
-			info.play.block_size = block_size *
-				info.play.bps * info.play.channels;
-			if (ioctl(fd, AUDIO_SETINFO, &info) < 0)
-				err(1, "set failed");
-		}
-		getinfo(fd);
-		for (i = 0; fields[i].name; i++) {
-			if (fields[i].flags & SET) {
-				prfield(&fields[i], sep);
-			}
+	fd = open(path, O_RDWR);
+	if (fd < 0)
+		err(1, "%s", path);
+	if (ioctl(fd, AUDIO_GETSTATUS, &rstatus) < 0)
+		err(1, "AUDIO_GETSTATUS");
+	if (ioctl(fd, AUDIO_GETDEV, &rname) < 0)
+		err(1, "AUDIO_GETDEV");
+	if (ioctl(fd, AUDIO_GETPAR, &rpar) < 0)
+		err(1, "AUDIO_GETPAR");
+	if (ioctl(fd, AUDIO_GETPOS, &rpos) < 0)
+		err(1, "AUDIO_GETPOS");
+	if (argc == 0) {
+		for (f = fields; f->name != NULL; f++) {
+			printf("%s=", f->name);
+			print_val(f, f->raddr);
+			printf("\n");
 		}
 	}
-	exit(0);
+	AUDIO_INITPAR(&wpar);
+	for (; argc > 0; argc--, argv++) {
+		lhs = *argv;
+		rhs = strchr(*argv, '=');
+		if (rhs)
+			*rhs++ = '\0';
+		for (f = fields;; f++) {
+			if (f->name == NULL)
+				errx(1, "%s: unknown parameter", lhs);
+			if (strcmp(f->name, lhs) == 0)
+				break;
+		}
+		if (rhs) {
+			if (f->waddr == NULL)
+				errx(1, "%s: is read only", f->name);
+			parse_val(f, f->waddr, rhs);
+			f->set = 1;
+			set = 1;
+		} else {
+			if (print_names)
+				printf("%s=", f->name);
+			print_val(f, f->raddr);
+			printf("\n");
+		}
+	}
+	if (!set)
+		return 0;
+	if (ioctl(fd, AUDIO_SETPAR, &wpar) < 0)
+		err(1, "AUDIO_SETPAR");
+	if (ioctl(fd, AUDIO_GETPAR, &wpar) < 0)
+		err(1, "AUDIO_GETPAR");
+	for (f = fields; f->name != NULL; f++) {
+		if (!f->set || quiet)
+			continue;
+		if (print_names) {
+			printf("%s: ", f->name);
+			print_val(f, f->raddr);
+			printf(" -> ");
+		}
+		print_val(f, f->waddr);
+		printf("\n");
+	}
+	return 0;	
 }
