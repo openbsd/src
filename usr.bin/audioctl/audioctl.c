@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.31 2016/06/21 06:26:50 ratchov Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.32 2016/06/21 21:16:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2016 Alexandre Ratchov <alex@caoua.org>
  *
@@ -62,7 +62,10 @@ struct field {
 	{NULL,			NULL,			0}
 };
 
-const char usagestr[] = "usage: audioctl [-nq] [-f path] [name=[value]] ...\n";
+const char usagestr[] =
+	"usage: audioctl [-f path]\n"
+	"       audioctl [-n] [-f path] name ...\n"
+	"       audioctl [-nq] [-f path] name=value ...\n";
 
 /*
  * parse encoding string (examples: s8, u8, s16, s16le, s24be ...)
