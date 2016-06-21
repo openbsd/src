@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.977 2016/06/15 11:49:34 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.978 2016/06/21 16:45:37 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -669,34 +669,34 @@ pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 			     si->s->key[PF_SK_STACK]->af &&
 			     sk->af == si->s->key[PF_SK_STACK]->af &&
 			     si->s->direction != s->direction))) {
+				int reuse = 0;
+
 				if (sk->proto == IPPROTO_TCP &&
 				    si->s->src.state >= TCPS_FIN_WAIT_2 &&
-				    si->s->dst.state >= TCPS_FIN_WAIT_2) {
+				    si->s->dst.state >= TCPS_FIN_WAIT_2)
+					reuse = 1;
+				if (pf_status.debug >= LOG_NOTICE) {
+					log(LOG_NOTICE,
+					    "pf: %s key attach %s on %s: ",
+					    (idx == PF_SK_WIRE) ?
+					    "wire" : "stack",
+					    reuse ? "reuse" : "failed",
+					    s->kif->pfik_name);
+					pf_print_state_parts(s,
+					    (idx == PF_SK_WIRE) ?  sk : NULL,
+					    (idx == PF_SK_STACK) ?  sk : NULL);
+					addlog(", existing: ");
+					pf_print_state_parts(si->s,
+					    (idx == PF_SK_WIRE) ?  sk : NULL,
+					    (idx == PF_SK_STACK) ?  sk : NULL);
+					addlog("\n");
+				}
+				if (reuse) {
 					si->s->src.state = si->s->dst.state =
 					    TCPS_CLOSED;
 					/* remove late or sks can go away */
 					olds = si->s;
 				} else {
-					if (pf_status.debug >= LOG_NOTICE) {
-						log(LOG_NOTICE,
-						    "pf: %s key attach "
-						    "failed on %s: ",
-						    (idx == PF_SK_WIRE) ?
-						    "wire" : "stack",
-						    s->kif->pfik_name);
-						pf_print_state_parts(s,
-						    (idx == PF_SK_WIRE) ?
-						    sk : NULL,
-						    (idx == PF_SK_STACK) ?
-						    sk : NULL);
-						addlog(", existing: ");
-						pf_print_state_parts(si->s,
-						    (idx == PF_SK_WIRE) ?
-						    sk : NULL,
-						    (idx == PF_SK_STACK) ?
-						    sk : NULL);
-						addlog("\n");
-					}
 					pool_put(&pf_state_key_pl, sk);
 					return (-1);	/* collision! */
 				}
