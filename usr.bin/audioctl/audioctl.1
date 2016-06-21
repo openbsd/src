@@ -1,4 +1,4 @@
-.\" $OpenBSD: audioctl.1,v 1.29 2016/06/21 06:32:00 ratchov Exp $
+.\" $OpenBSD: audioctl.1,v 1.30 2016/06/21 07:55:21 jmc Exp $
 .\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,13 +77,13 @@ Variables may only be changed if the device is not opened for
 playback or recording by another process.
 .Pp
 The following variable names are available:
-.Bl -column "record.channels"
+.Bl -column "record.channels" -offset indent
 .It Sy Name Ta Sy Meaning
-.It name Ta device name as shown by
+.It name Ta device name, as shown by
 .Xr dmesg 8
 .It mode Ta current device mode (
 .Va play ,
-.Va record
+.Va record ,
 or both)
 .It pause Ta set if not attempting to start
 .It active Ta set if playing or recording
@@ -123,7 +123,7 @@ Only the signedness and the precision are mandatory.
 Examples:
 .Va u8 , s16le , s24le3 , s24le4lsb .
 .Sh FILES
-.Bl -tag -width /dev/audioctl0
+.Bl -tag -width /dev/audioctl0 -compact
 .It Pa /dev/audioctlN
 audio control devices
 .It Pa /dev/audioN
@@ -142,7 +142,7 @@ $ audioctl -f /dev/audio0 encoding=s24 rate=44100
 .Ed
 .Pp
 Note the use of
-.Pa /dev/audio0 ,
+.Pa /dev/audio0
 to force negotiation with the hardware.
 If the above parameters are not supported by the
 hardware, then supported ones will be selected instead.
