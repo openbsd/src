@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.55 2016/06/18 01:33:02 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.56 2016/06/21 21:35:24 benno Exp $ */
 
 /*
  * Copyright (c) 2013, 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -208,8 +208,16 @@ pw_type		: ETHERNET		{ $$ = PW_TYPE_ETHERNET; }
 		;
 
 varset		: STRING '=' string {
+			char *s = $1;
 			if (global.cmd_opts & LDPD_OPT_VERBOSE)
 				printf("%s = \"%s\"\n", $1, $3);
+			while (*s++) {
+				if (isspace((unsigned char)*s)) {
+					yyerror("macro name cannot contain "
+					    "whitespace");
+					YYERROR;
+				}
+			}
 			if (symset($1, $3, 0) == -1)
 				fatal("cannot store variable");
 			free($1);

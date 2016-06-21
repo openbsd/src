@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.15 2016/06/05 03:36:41 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.16 2016/06/21 21:35:24 benno Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -197,8 +197,16 @@ eigrp_af	: IPV4	{ $$ = AF_INET; }
 		;
 
 varset		: STRING '=' string {
+			char *s = $1;
 			if (global.cmd_opts & EIGRPD_OPT_VERBOSE)
 				printf("%s = \"%s\"\n", $1, $3);
+			while (*s++) {
+				if (isspace((unsigned char)*s)) {
+					yyerror("macro name cannot contain "
+					    "whitespace");
+					YYERROR;
+				}
+			}
 			if (symset($1, $3, 0) == -1)
 				fatal("cannot store variable");
 			free($1);
