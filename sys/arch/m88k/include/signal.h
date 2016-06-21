@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.7 2012/12/02 07:03:31 guenther Exp $ */
+/*	$OpenBSD: signal.h,v 1.8 2016/06/21 12:31:19 aoyama Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -46,9 +46,9 @@ typedef int sig_atomic_t;
  * to the handler to allow it to restore state properly if
  * a non-standard exit is performed.
  */
-struct  sigcontext {
-        int     __sc_unused;
-        int     sc_mask;                /* signal mask to restore */
+struct sigcontext {
+	long	sc_cookie;
+	int	sc_mask;		/* signal mask to restore */
 	/* begin machine dependent portion */
 	unsigned int sc_regs[32 + 25];
 };

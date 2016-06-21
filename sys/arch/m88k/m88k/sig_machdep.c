@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.25 2016/05/21 00:56:43 deraadt Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.26 2016/06/21 12:31:19 aoyama Exp $	*/
 /*
  * Copyright (c) 2014 Miodrag Vallat.
  *
@@ -140,6 +140,7 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	bzero(&sf, fsize);
 	sf.sf_scp = &fp->sf_sc;
 	sf.sf_sc.sc_mask = mask;
+	sf.sf_sc.sc_cookie = (long)sf.sf_scp ^ p->p_p->ps_sigcookie;
 
 	if (psp->ps_siginfo & sigmask(sig))
 		initsiginfo(&sf.sf_si, sig, code, type, val);
@@ -202,8 +203,18 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct sigcontext ksc, *scp = SCARG(uap, sigcntxp);
 	struct trapframe *tf;
+	int error;
+	vaddr_t pc;
 
-	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
+	tf = p->p_md.md_tf;
+
+	/*
+	 * This is simpler than PROC_PC, assuming XIP is always valid
+	 * on 88100, and doesn't have a delay slot on 88110
+	 * (which is the status we expect from the signal code).
+	 */ 
+	pc = CPU_IS88110 ? tf->tf_regs.exip : tf->tf_regs.sxip ^ XIP_V;
+	if (pc != p->p_p->ps_sigcoderet) {
 		sigexit(p, SIGILL);
 		return (EPERM);
 	}
@@ -223,8 +234,6 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	ksc.sc_cookie = 0;
 	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
 	    offsetof(struct sigcontext, sc_cookie), sizeof (ksc.sc_cookie));
-
-	tf = p->p_md.md_tf;
 
 	if ((((struct reg *)&ksc.sc_regs)->epsr ^ tf->tf_regs.epsr) &
 	    PSR_USERSTATIC)
