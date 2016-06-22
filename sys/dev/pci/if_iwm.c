@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.91 2016/06/22 11:30:00 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.92 2016/06/22 11:32:12 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6837,6 +6837,7 @@ iwm_stop(struct ifnet *ifp, int disable)
 {
 	struct iwm_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwm_node *in = (void *)ic->ic_bss;
 
 	sc->sc_flags &= ~IWM_FLAG_HW_INITED;
 	sc->sc_flags |= IWM_FLAG_STOPPED;
@@ -6844,6 +6845,9 @@ iwm_stop(struct ifnet *ifp, int disable)
 	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
+
+	in->in_phyctxt = NULL;
+	in->in_assoc = 0;
 
 	task_del(systq, &sc->init_task);
 	task_del(sc->sc_nswq, &sc->newstate_task);
