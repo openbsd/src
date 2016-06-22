@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.45 2016/03/03 12:32:23 mpi Exp $	*/
+/*	$OpenBSD: vector.S,v 1.46 2016/06/22 01:12:38 mikeb Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -84,6 +84,7 @@
 #include "lapic.h"
 #include "assym.h"
 #include "xen.h"
+#include "hyperv.h"
 
 /*****************************************************************************/
 
@@ -468,6 +469,40 @@ IDTVEC(resume_xen_upcall)
 3:
 	INTRFASTEXIT
 #endif /* NXEN > 0 */
+
+#if NHYPERV > 0
+/*
+ * Hyperv event channel upcall interrupt handler.
+ * Only used when the hypervisor supports direct vector callbacks.
+ */
+IDTVEC(recurse_hyperv_upcall)
+	INTR_RECURSE_HWFRAME
+	pushq	$0
+	subq	$8,%rsp			/* unused __if_trapno */
+	INTRENTRY
+	jmp	1f
+IDTVEC(intr_hyperv_upcall)
+	pushq	$0
+	subq	$8,%rsp			/* unused __if_trapno */
+	INTRENTRY
+	movl	CPUVAR(ILEVEL),%ebx
+	cmpl	$IPL_NET,%ebx
+	jae	2f
+IDTVEC(resume_hyperv_upcall)
+1:
+	incl	CPUVAR(IDEPTH)
+	movl	$IPL_NET,CPUVAR(ILEVEL)
+	sti
+	cld
+	pushq	%rbx
+	call	_C_LABEL(hv_intr)
+	jmp	_C_LABEL(Xdoreti)
+2:
+	movq	$(1 << LIR_HYPERV),%rax
+	orq	%rax,CPUVAR(IPENDING)
+3:
+	INTRFASTEXIT
+#endif /* NHYPERV > 0 */
 #endif /* NLAPIC > 0 */
 
 #define voidop(num)

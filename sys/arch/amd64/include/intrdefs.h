@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.15 2015/12/08 19:45:55 mikeb Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.16 2016/06/22 01:12:38 mikeb Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _AMD64_INTRDEFS_H
@@ -55,6 +55,7 @@
 #define	SIR_TTY		59
 
 #define	LIR_XEN		58
+#define	LIR_HYPERV	57
 
 /*
  * Maximum # of interrupt sources per CPU. 64 to fit in one word.

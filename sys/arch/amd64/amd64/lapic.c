@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.43 2016/03/06 22:41:24 naddy Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.44 2016/06/22 01:12:38 mikeb Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -56,6 +56,7 @@
 
 #include "ioapic.h"
 #include "xen.h"
+#include "hyperv.h"
 
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
@@ -358,6 +359,11 @@ lapic_boot_init(paddr_t lapic_base)
 	/* Xen HVM Event Channel Interrupt Vector */
 	idt_allocmap[LAPIC_XEN_VECTOR] = 1;
 	idt_vec_set(LAPIC_XEN_VECTOR, Xintr_xen_upcall);
+#endif
+#if NHYPERV > 0
+	/* Hyper-V Interrupt Vector */
+	idt_allocmap[LAPIC_HYPERV_VECTOR] = 1;
+	idt_vec_set(LAPIC_HYPERV_VECTOR, Xintr_hyperv_upcall);
 #endif
 
 	evcount_attach(&clk_count, "clock", &clk_irq);
