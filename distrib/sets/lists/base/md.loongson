@@ -1067,6 +1067,8 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pcmcia/pcmciareg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pcmcia/pcmciavar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pv
+./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pv/hypervreg.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pv/hypervvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pv/pvreg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pv/pvvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pv/xenreg.ph

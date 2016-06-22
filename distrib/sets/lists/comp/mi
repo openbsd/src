@@ -640,6 +640,8 @@
 ./usr/include/dev/pcmcia/pcmciareg.h
 ./usr/include/dev/pcmcia/pcmciavar.h
 ./usr/include/dev/pv
+./usr/include/dev/pv/hypervreg.h
+./usr/include/dev/pv/hypervvar.h
 ./usr/include/dev/pv/pvreg.h
 ./usr/include/dev/pv/pvvar.h
 ./usr/include/dev/pv/xenreg.h
