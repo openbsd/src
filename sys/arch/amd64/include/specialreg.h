@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.43 2016/04/26 15:57:09 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.44 2016/06/22 07:22:00 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -90,6 +90,7 @@
 #define	CR4_PCE	0x00000100	/* enable RDPMC instruction for all cpls */
 #define	CR4_OSFXSR	0x00000200	/* enable fxsave/fxrestor and SSE */
 #define	CR4_OSXMMEXCPT	0x00000400	/* enable unmasked SSE exceptions */
+#define	CR4_UMIP	0x00000800	/* user mode instruction prevention */
 #define	CR4_VMXE	0x00002000	/* enable virtual machine operation */
 #define	CR4_SMXE	0x00004000	/* enable safe mode operation */
 #define	CR4_FSGSBASE	0x00010000	/* enable {RD,WR}{FS,GS}BASE ops */
@@ -210,6 +211,7 @@
 /* SEFF ECX bits */
 #define SEFF0ECX_PREFETCHWT1	0x00000001 /* PREFETCHWT1 instruction */
 #define SEFF0ECX_AVX512VBMI	0x00000002 /* AVX-512 vector bit inst */
+#define SEFF0ECX_UMIP		0x00000004 /* UMIP support */
 #define SEFF0ECX_PKU		0x00000008 /* Page prot keys for user mode */
 
 /*
