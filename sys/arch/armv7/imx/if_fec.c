@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.2 2016/06/12 13:02:06 kettenis Exp $ */
+/* $OpenBSD: if_fec.c,v 1.3 2016/06/22 20:15:31 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -250,8 +250,6 @@ struct fec_softc *fec_sc;
 
 int fec_match(struct device *, void *, void *);
 void fec_attach(struct device *, struct device *, void *);
-int fec_enaddr_valid(u_char *);
-void fec_enaddr(struct fec_softc *);
 void fec_chip_init(struct fec_softc *);
 int fec_ioctl(struct ifnet *, u_long, caddr_t);
 void fec_start(struct ifnet *);
@@ -369,7 +367,8 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/* Figure out the hardware address. Must happen before reset. */
-	fec_enaddr(sc);
+	OF_getprop(faa->fa_node, "local-mac-address", sc->sc_ac.ac_enaddr,
+	    sizeof(sc->sc_ac.ac_enaddr));
 
 	/* reset the controller */
 	HSET4(sc, ENET_ECR, ENET_ECR_RESET);
@@ -472,58 +471,6 @@ txdma:
 	fec_dma_free(sc, &sc->txdma);
 bad:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[1]);
-}
-
-/* Try to determine a valid hardware address */
-void
-fec_enaddr(struct fec_softc *sc)
-{
-	u_int32_t tmp;
-	u_char enaddr[6];
-
-	/* XXX serial EEPROM */
-	/* XXX FDT */
-
-	/* Try to get an address from COTP */
-	memset(enaddr, 0xff, ETHER_ADDR_LEN);
-	imxocotp_get_ethernet_address(enaddr);
-	if (fec_enaddr_valid(enaddr)) {
-		memcpy(sc->sc_ac.ac_enaddr, enaddr, ETHER_ADDR_LEN);
-		return;
-	}
-
-	/* The firmware or bootloader may have already set an address */
-	tmp = HREAD4(sc, ENET_PALR);
-	sc->sc_ac.ac_enaddr[0] = (tmp >> 24) & 0xff;
-	sc->sc_ac.ac_enaddr[1] = (tmp >> 16) & 0xff;
-	sc->sc_ac.ac_enaddr[2] = (tmp >> 8) & 0xff;
-	sc->sc_ac.ac_enaddr[3] = tmp & 0xff;
-	tmp = HREAD4(sc, ENET_PAUR);
-	sc->sc_ac.ac_enaddr[4] = (tmp >> 24) & 0xff;
-	sc->sc_ac.ac_enaddr[5] = (tmp >> 16) & 0xff;
-	if (fec_enaddr_valid(sc->sc_ac.ac_enaddr))
-		return;
-
-	/* No usable address found, use a random one */
-	printf("%s: no hardware address found, using random\n",
-	    sc->sc_dev.dv_xname);
-	ether_fakeaddr(&sc->sc_ac.ac_if);
-}
-
-int
-fec_enaddr_valid(u_char addr[6])
-{
-	/* Multicast */
-	if (ETHER_IS_MULTICAST(addr))
-		return 0;
-	/* All 0/1 */
-	if (addr[0] == 0 && addr[1] == 0 && addr[2] == 0 &&
-	    addr[3] == 0 && addr[4] == 0 && addr[5] == 0)
-		return 0;
-	if (addr[0] == 0xff && addr[1] == 0xff && addr[2] == 0xff &&
-	    addr[3] == 0xff && addr[4] == 0xff && addr[5] == 0xff)
-		return 0;
-	return 1;
 }
 
 void
