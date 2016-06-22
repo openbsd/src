@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.89 2016/06/20 11:54:36 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.90 2016/06/22 11:28:27 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4376,7 +4376,8 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	tx->rts_retry_limit = IWM_RTS_DFAULT_RETRY_LIMIT;
 	tx->data_retry_limit = IWM_DEFAULT_TX_RETRY;
 
-	if (type != IEEE80211_FC0_TYPE_DATA) {
+	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
+	    type != IEEE80211_FC0_TYPE_DATA) {
 		/* for non-data, use the lowest supported rate */
 		ridx = (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) ?
 		    IWM_RIDX_OFDM : IWM_RIDX_CCK;
@@ -4393,7 +4394,8 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 			ridx = iwm_mcs2ridx[ni->ni_txmcs];
 			return &iwm_rates[ridx];
 		}
-		ridx = 0;
+		ridx = (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) ?
+		    IWM_RIDX_OFDM : IWM_RIDX_CCK;
 		for (i = 0; i < nrates; i++) {
 			if (iwm_rates[i].rate == (ni->ni_txrate &
 			    IEEE80211_RATE_VAL)) {
@@ -6124,7 +6126,7 @@ iwm_setrates(struct iwm_node *in)
 	struct iwm_softc *sc = IC2IFP(ic)->if_softc;
 	struct iwm_lq_cmd *lq = &in->in_lq;
 	struct ieee80211_rateset *rs = &ni->ni_rates;
-	int i, ridx, j, tab = 0;
+	int i, ridx, ridx_min, j, tab = 0;
 	struct iwm_host_cmd cmd = {
 		.id = IWM_LQ_CMD,
 		.len = { sizeof(in->in_lq), },
@@ -6148,7 +6150,9 @@ iwm_setrates(struct iwm_node *in)
 	 * legacy/HT are assumed to be marked with an 'invalid' PLCP value.
 	 */
 	j = 0;
-	for (ridx = IWM_RIDX_MAX; ridx >= 0; ridx--) {
+	ridx_min = (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) ?
+	    IWM_RIDX_OFDM : IWM_RIDX_CCK;
+	for (ridx = IWM_RIDX_MAX; ridx >= ridx_min; ridx--) {
 		if (j >= nitems(lq->rs_table))
 			break;
 		tab = 0;
