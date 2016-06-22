@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.44 2016/06/20 11:02:33 dlg Exp $ */
+/*	$OpenBSD: intr.c,v 1.45 2016/06/22 06:34:35 dlg Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -582,7 +582,7 @@ splraise(int newipl)
 	psr &= ~PSR_PIL;
 	__asm volatile("wr %0,%1,%%psr" : : "r" (psr), "rn" (newipl));
 	__asm volatile("nop; nop; nop");
-	__asm volatile("":::"memory");	/* protect from reordering */ \
+	__asm volatile("":::"memory");	/* protect from reordering */
 
 	return (oldipl);
 }
