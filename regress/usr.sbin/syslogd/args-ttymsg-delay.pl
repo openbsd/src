@@ -1,4 +1,4 @@
-# The client writes long messages to Sys::Syslog native method.
+# The client writes long messages while ttylog to user has been stopped.
 # The syslogd writes it into a file and through a pipe and to tty.
 # The syslogd passes it via UDP to the loghost.
 # The server receives the message on its UDP socket.
@@ -13,7 +13,10 @@ our %args = (
     client => {
 	func => sub {
 	    my $self = shift;
-	    write_lines($self, 5, 900);
+	    ${$self->{syslogd}}->ttykill("user", 'STOP');
+	    write_lines($self, 9, 900);
+	    ${$self->{syslogd}}->loggrep(qr/ttymsg delayed write/, 3);
+	    ${$self->{syslogd}}->ttykill("user", 'CONT');
 	    write_log($self);
 	},
     },
@@ -24,7 +27,7 @@ our %args = (
     },
     user => {
 	loggrep => {
-	    qr/ 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ.* [12]$/ => 2,
+	    qr/ 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ.* [12]/ => 2,
 	    get_testgrep() => 1,
 	},
     },
