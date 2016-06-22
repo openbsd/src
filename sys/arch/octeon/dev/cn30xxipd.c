@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxipd.c,v 1.8 2016/05/24 14:06:39 visa Exp $	*/
+/*	$OpenBSD: cn30xxipd.c,v 1.9 2016/06/22 13:09:35 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -35,6 +35,7 @@
 
 #include <octeon/dev/cn30xxciureg.h>
 #include <octeon/dev/cn30xxfpavar.h>
+#include <octeon/dev/cn30xxgmxreg.h>
 #include <octeon/dev/cn30xxpipreg.h>
 #include <octeon/dev/cn30xxipdreg.h>
 #include <octeon/dev/cn30xxipdvar.h>
@@ -47,7 +48,7 @@ void	cn30xxipd_dump(void);
 
 void	*cn30xxipd_intr_drop_ih;
 
-struct cn30xxipd_softc	*__cn30xxipd_softc[3/* XXX */];
+struct cn30xxipd_softc	*__cn30xxipd_softc[GMX_PORT_NUNITS];
 #endif
 
 /* XXX */

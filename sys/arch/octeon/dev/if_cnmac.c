@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.51 2016/05/30 15:41:28 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.52 2016/06/22 13:09:35 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -289,8 +289,8 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_tick_free_ch, octeon_eth_tick_free, sc);
 
 	cn30xxfau_op_init(&sc->sc_fau_done,
-	    OCTEON_CVMSEG_ETHER_OFFSET(sc->sc_port, csm_ether_fau_done),
-	    OCT_FAU_REG_ADDR_END - (8 * (sc->sc_port + 1))/* XXX */);
+	    OCTEON_CVMSEG_ETHER_OFFSET(sc->sc_dev.dv_unit, csm_ether_fau_done),
+	    OCT_FAU_REG_ADDR_END - (8 * (sc->sc_dev.dv_unit + 1))/* XXX */);
 	cn30xxfau_op_set_8(&sc->sc_fau_done, 0);
 
 	octeon_eth_pip_init(sc);

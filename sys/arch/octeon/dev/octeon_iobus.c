@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.15 2016/03/18 05:38:10 jmatthew Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.16 2016/06/22 13:09:35 visa Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -44,6 +44,7 @@
 #include <machine/intr.h>
 #include <machine/octeonvar.h>
 #include <machine/octeonreg.h>
+#include <machine/octeon_model.h>
 
 #include <octeon/dev/iobusvar.h>
 #include <octeon/dev/cn30xxgmxreg.h>
@@ -147,7 +148,6 @@ struct machine_bus_dma_tag iobus_bus_dma_tag = {
 
 static const struct octeon_iobus_addrs iobus_addrs[] = {
 	{ "octcf",	OCTEON_CF_BASE  },
-	{ "cn30xxgmx",	GMX0_BASE_PORT0 },
 	{ "octrng",	OCTEON_RNG_BASE },
 	{ "dwctwo",	USBN_BASE       },
 	{ "amdcf",	OCTEON_AMDCF_BASE},
@@ -203,8 +203,10 @@ iobussubmatch(struct device *parent, void *vcf, void *args)
 void
 iobusattach(struct device *parent, struct device *self, void *aux)
 {
-	struct device *sc = self;
+	struct iobus_attach_args aa;
 	struct octeon_config oc;
+	struct device *sc = self;
+	int chipid, i, ngmx;
 
 	/*
 	 * Map and setup CIU control registers.
@@ -233,6 +235,27 @@ iobusattach(struct device *parent, struct device *self, void *aux)
 	 * Attach all subdevices as described in the config file.
 	 */
 	config_search(iobussearch, self, sc);
+
+	chipid = octeon_get_chipid();
+	switch (octeon_model_family(chipid)) {
+	case OCTEON_MODEL_FAMILY_CN30XX:
+	case OCTEON_MODEL_FAMILY_CN50XX:
+	default:
+		ngmx = 1;
+		break;
+	case OCTEON_MODEL_FAMILY_CN61XX:
+		ngmx = 2;
+		break;
+	}
+	for (i = 0; i < ngmx; i++) {
+		aa.aa_name = "cn30xxgmx";
+		aa.aa_bust = &iobus_tag;
+		aa.aa_dmat = &iobus_bus_dma_tag;
+		aa.aa_addr = GMX0_BASE_PORT0 + GMX_BLOCK_SIZE * i;
+		aa.aa_irq = -1;
+		aa.aa_unitno = i;
+		config_found_sm(self, &aa, iobusprint, iobussubmatch);
+	}
 }
 
 int
@@ -255,6 +278,8 @@ iobussearch(struct device *parent, void *v, void *aux)
 			if (strcmp(iobus_addrs[i].name, cf->cf_driver->cd_name) == 0)
 				aa.aa_addr = iobus_addrs[i].address;
 		}
+		if (aa.aa_addr == -1)
+			return 0;
 	}
 
 	if (cf->cf_attach->ca_match(parent, cf, &aa) == 0)

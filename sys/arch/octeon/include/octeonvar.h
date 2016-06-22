@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.27 2016/05/30 15:41:28 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.28 2016/06/22 13:09:35 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -118,22 +118,11 @@ struct octeon_config {
  * CVMSEG (``scratch'') memory map
  */
 struct octeon_cvmseg_map {
-	/* 0-3 */
-	uint64_t		csm_xxx_0;
-	uint64_t		csm_xxx_1;
-	uint64_t		csm_xxx_2;
 	uint64_t		csm_pow_intr;
 
-	/* 4-19 */
 	struct octeon_cvmseg_ether_map {
-		uint64_t	csm_ether_fau_req;
 		uint64_t	csm_ether_fau_done;
-		uint64_t	csm_ether_fau_cmdptr;
-		uint64_t	csm_ether_xxx_3;
-	} csm_ether[4/* XXX */];
-
-	/* 20-32 */
-	uint64_t	xxx_20_32[32 - 20];
+	} csm_ether[12/* XXX */];
 } __packed;
 #define	OCTEON_CVMSEG_OFFSET(entry) \
 	offsetof(struct octeon_cvmseg_map, entry)

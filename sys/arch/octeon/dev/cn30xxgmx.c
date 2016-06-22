@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.24 2016/06/18 15:59:34 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.25 2016/06/22 13:09:35 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -24,11 +24,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- */
-
-/*
- *  support GMX0 interface only
- *  take no thought for other GMX interface
  */
 
 #include <sys/param.h>
@@ -221,6 +216,7 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	sc->sc_regt = aa->aa_bust; /* XXX why there are iot? */
+	sc->sc_unitno = aa->aa_unitno;
 
 	status = bus_space_map(sc->sc_regt, aa->aa_addr,
 	    GMX0_BASE_IF_SIZE(sc->sc_nports), 0, &sc->sc_regh);
@@ -235,7 +231,7 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < sc->sc_nports; i++) {
 		port_sc = &sc->sc_ports[i];
 		port_sc->sc_port_gmx = sc;
-		port_sc->sc_port_no = i;
+		port_sc->sc_port_no = GMX_PORT_NUM(sc->sc_unitno, i);
 		port_sc->sc_port_type = sc->sc_port_types[i];
 		port_sc->sc_port_ops = cn30xxgmx_port_ops[port_sc->sc_port_type];
 		status = bus_space_map(sc->sc_regt,
@@ -271,19 +267,21 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 		gmx_aa.ga_dmat = aa->aa_dmat;
 		gmx_aa.ga_addr = aa->aa_addr;
 		gmx_aa.ga_name = "cnmac";
-		gmx_aa.ga_portno = i;
+		gmx_aa.ga_portno = port_sc->sc_port_no;
 		gmx_aa.ga_port_type = sc->sc_port_types[i];
 		gmx_aa.ga_gmx = sc;
 		gmx_aa.ga_gmx_port = port_sc;
-		gmx_aa.ga_phy_addr = cn30xxgmx_port_phy_addr(i);
+		gmx_aa.ga_phy_addr = cn30xxgmx_port_phy_addr(
+		    port_sc->sc_port_no);
 		if (gmx_aa.ga_phy_addr == -1)
-			panic(": don't know phy address for port %d", i);
+			panic(": don't know phy address for port %d",
+			    port_sc->sc_port_no);
 
 		config_found_sm(self, &gmx_aa,
 		    cn30xxgmx_print, cn30xxgmx_submatch);
 
 #ifdef OCTEON_ETH_DEBUG
-		__cn30xxgmx_port_softc[i] = port_sc;
+		__cn30xxgmx_port_softc[port_sc->sc_port_no] = port_sc;
 #endif
 	}
 
@@ -495,18 +493,19 @@ int
 cn30xxgmx_tx_ovr_bp_enable(struct cn30xxgmx_port_softc *sc, int enable)
 {
 	uint64_t ovr_bp;
+	int index = GMX_PORT_INDEX(sc->sc_port_no);
 
 	ovr_bp = _GMX_RD8(sc, GMX0_TX_OVR_BP);
 	if (enable) {
-		CLR(ovr_bp, (1 << sc->sc_port_no) << TX_OVR_BP_EN_SHIFT);
-		SET(ovr_bp, (1 << sc->sc_port_no) << TX_OVR_BP_BP_SHIFT);
+		CLR(ovr_bp, (1 << index) << TX_OVR_BP_EN_SHIFT);
+		SET(ovr_bp, (1 << index) << TX_OVR_BP_BP_SHIFT);
 		/* XXX really??? */
-		SET(ovr_bp, (1 << sc->sc_port_no) << TX_OVR_BP_IGN_FULL_SHIFT);
+		SET(ovr_bp, (1 << index) << TX_OVR_BP_IGN_FULL_SHIFT);
 	} else {
-		SET(ovr_bp, (1 << sc->sc_port_no) << TX_OVR_BP_EN_SHIFT);
-		CLR(ovr_bp, (1 << sc->sc_port_no) << TX_OVR_BP_BP_SHIFT);
+		SET(ovr_bp, (1 << index) << TX_OVR_BP_EN_SHIFT);
+		CLR(ovr_bp, (1 << index) << TX_OVR_BP_BP_SHIFT);
 		/* XXX really??? */
-		SET(ovr_bp, (1 << sc->sc_port_no) << TX_OVR_BP_IGN_FULL_SHIFT);
+		SET(ovr_bp, (1 << index) << TX_OVR_BP_IGN_FULL_SHIFT);
 	}
 	_GMX_WR8(sc, GMX0_TX_OVR_BP, ovr_bp);
 	return 0;

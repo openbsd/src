@@ -3,7 +3,7 @@
  * DONT EDIT THIS FILE
  */
 
-/*	$OpenBSD: cn30xxgmxreg.h,v 1.4 2016/06/18 15:43:08 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmxreg.h,v 1.5 2016/06/22 13:09:35 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -636,8 +636,12 @@
 
 /* for bus_space(9) */
 
-#define GMX_IF_NUNITS				1
-#define GMX_PORT_NUNITS				4
+#define	GMX_PORT_NUNITS				(3 * 16)
+#define	GMX_PORT_NUM(g, i)			((g) * 16 + (i))
+#define	GMX_PORT_IFACE(port)			((port) / 16)
+#define	GMX_PORT_INDEX(port)			((port) % 16)
+
+#define	GMX_BLOCK_SIZE				0x8000000
 
 #define	GMX0_BASE_PORT0				0x0001180008000000ULL
 #define	GMX0_BASE_PORT1				0x0001180008000800ULL
