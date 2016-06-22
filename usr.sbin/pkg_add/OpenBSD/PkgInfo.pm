@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.37 2016/05/13 00:22:50 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.38 2016/06/22 12:18:21 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -236,7 +236,7 @@ sub find_pkg
 
 	if ($self->find_pkg_in($state, $state->repo->installed, $pkgname,
 	    $code)) {
-		return;
+		return 1;
 	}
 	my $repo;
 
@@ -246,7 +246,7 @@ sub find_pkg
 		$repo = $state->repo;
 	}
 
-	$self->find_pkg_in($state, $repo, $pkgname, $code);
+	return $self->find_pkg_in($state, $repo, $pkgname, $code);
 }
 
 sub get_line
@@ -672,10 +672,12 @@ sub parse_and_run
 		if ($state->{terse}) {
 			$state->banner('#1', $pkg);
 		}
-		$self->find_pkg($state, $pkg,
+		if (!$self->find_pkg($state, $pkg,
 		    sub {
 			$self->print_info($state, @_);
-		});
+		})) {
+			$exit_code = 1;
+		}
 	}
 	for my $extra (@extra) {
 		if ($state->{terse}) {
