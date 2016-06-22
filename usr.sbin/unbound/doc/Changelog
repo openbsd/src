@@ -1,3 +1,6 @@
+13 June 2016: Wouter
+	- Fix #778: unbound 1.5.9: -h segfault (null deref).
+
 2 June 2016: Wouter
 	- Fix libubound for edns optlist feature.
 	- Fix distinction between free and CRYPTO_free in dsa and ecdsa alloc.
