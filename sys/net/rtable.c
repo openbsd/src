@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.47 2016/06/14 04:42:02 jmatthew Exp $ */
+/*	$OpenBSD: rtable.c,v 1.48 2016/06/22 06:32:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -853,16 +853,16 @@ struct rtable_walk_cookie {
 int
 rtable_walk_helper(struct art_node *an, void *xrwc)
 {
+	struct srp_ref			 sr;
 	struct rtable_walk_cookie	*rwc = xrwc;
-	struct rtentry			*rt, *nrt;
+	struct rtentry			*rt;
 	int				 error = 0;
 
-	KERNEL_ASSERT_LOCKED();
-
-	SRPL_FOREACH_SAFE_LOCKED(rt, &an->an_rtlist, rt_next, nrt) {
+	SRPL_FOREACH(rt, &sr, &an->an_rtlist, rt_next) {
 		if ((error = (*rwc->rwc_func)(rt, rwc->rwc_arg, rwc->rwc_rid)))
 			break;
 	}
+	SRPL_LEAVE(&sr);
 
 	return (error);
 }
