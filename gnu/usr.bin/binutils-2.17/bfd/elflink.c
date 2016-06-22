@@ -8700,8 +8700,10 @@ bfd_elf_final_link (bfd *abfd, struct bfd_link_info *info)
 		    {
 		      _bfd_error_handler
 			(_("warning: creating a DT_TEXTREL in a shared object."));
+#if 0
 		      if (!info->allow_textrel)
 			goto error_return;
+#endif
 		      break;
 		    }
 		}
