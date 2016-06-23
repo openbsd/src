@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.323 2016/05/31 07:33:22 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.324 2016/06/23 09:08:56 henning Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -419,7 +419,7 @@ sendit:
 	 */
 #if NPF > 0
 	if (pf_test(AF_INET, PF_OUT, ifp, &m) != PF_PASS) {
-		error = EHOSTUNREACH;
+		error = EACCES;
 		m_freem(m);
 		goto done;
 	}
