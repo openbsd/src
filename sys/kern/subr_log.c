@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.46 2016/06/08 11:11:47 bluhm Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.47 2016/06/23 13:15:21 bluhm Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -155,6 +155,7 @@ msgbuf_putchar(struct msgbuf *mbp, const char c)
 	if (mbp->msg_bufr == mbp->msg_bufx) {
 		if (++mbp->msg_bufr >= mbp->msg_bufs)
 			mbp->msg_bufr = 0;
+		mbp->msg_bufd++;
 	}
 	splx(s);
 }
@@ -200,6 +201,19 @@ logread(dev_t dev, struct uio *uio, int flag)
 			goto out;
 	}
 	logsoftc.sc_state &= ~LOG_RDWAIT;
+
+	if (mbp->msg_bufd > 0) {
+		char buf[64];
+
+		l = snprintf(buf, sizeof(buf),
+		    "<%d>klog: dropped %ld byte%s, message buffer full\n",
+		    LOG_KERN|LOG_WARNING, mbp->msg_bufd,
+                    mbp->msg_bufd == 1 ? "" : "s");
+		error = uiomove(buf, ulmin(l, sizeof(buf) - 1), uio);
+		if (error)
+			goto out;
+		mbp->msg_bufd = 0;
+	}
 
 	while (uio->uio_resid > 0) {
 		if (mbp->msg_bufx >= mbp->msg_bufr)

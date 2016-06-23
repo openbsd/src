@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgbuf.h,v 1.10 2015/01/13 18:51:27 kettenis Exp $	*/
+/*	$OpenBSD: msgbuf.h,v 1.11 2016/06/23 13:15:21 bluhm Exp $	*/
 /*	$NetBSD: msgbuf.h,v 1.8 1995/03/26 20:24:27 jtc Exp $	*/
 
 /*
@@ -39,6 +39,7 @@ struct	msgbuf {
 	long	msg_bufr;		/* read pointer */
 	long	msg_bufs;		/* real msg_bufc size (bytes) */
 	long	msg_bufl;		/* # chars, <= msg_bufs */
+	long	msg_bufd;		/* number of dropped bytes */
 	char	msg_bufc[1];		/* buffer */
 };
 #ifdef _KERNEL
