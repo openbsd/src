@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.35 2016/06/23 12:44:10 espie Exp $
+# $OpenBSD: State.pm,v 1.36 2016/06/23 16:11:23 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -361,6 +361,46 @@ sub defines
 {
 	my ($self, $k) = @_;
 	return $self->{subst}->value($k);
+}
+
+sub width
+{
+	my $self = shift;
+	if (!defined $self->{width}) {
+		$self->find_window_size;
+	}
+	return $self->{width};
+}
+
+sub height
+{
+	my $self = shift;
+	if (!defined $self->{height}) {
+		$self->find_window_size;
+	}
+	return $self->{height};
+}
+		
+sub find_window_size
+{
+	my $self = shift;
+	require Term::ReadKey;
+	my @l = Term::ReadKey::GetTermSizeGWINSZ(\*STDOUT);
+	if (@l != 4) {
+		$self->{width} = 80;
+		$self->{height} = 24;
+	} else {
+		$self->{width} = $l[0];
+		$self->{height} = $l[1];
+		$SIG{'WINCH'} = sub {
+			$self->find_window_size;
+			$self->window_size_changed;
+		};
+	}
+}
+
+sub window_size_changed
+{
 }
 
 OpenBSD::Auto::cache(signer_list,

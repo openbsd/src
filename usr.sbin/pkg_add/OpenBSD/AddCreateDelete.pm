@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.37 2016/06/15 15:40:13 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.38 2016/06/23 16:11:23 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -97,6 +97,11 @@ sub handle_options
 sub is_interactive
 {
 	return shift->{interactive}->is_interactive;
+}
+
+sub window_size_changed
+{
+	shift->{progressmeter}->compute_playfield;
 }
 
 sub confirm

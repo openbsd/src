@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.48 2016/06/15 15:31:09 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.49 2016/06/23 16:11:23 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -78,6 +78,10 @@ sub for_list
 		&$code($e);
 	}
 	$self->next;
+}
+
+sub compute_playfield
+{
 }
 
 # stub class when no actual progressmeter that still prints out.
