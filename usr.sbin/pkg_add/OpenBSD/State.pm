@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.34 2015/04/06 11:07:24 espie Exp $
+# $OpenBSD: State.pm,v 1.35 2016/06/23 12:44:10 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -257,50 +257,65 @@ sub fatal
 	$self->_fatal($self->f(@_));
 }
 
+sub _fhprint
+{
+	my $self = shift;
+	my $fh = shift;
+	$self->sync_display;
+	print $fh @_;
+}
 sub _print
 {
 	my $self = shift;
-	$self->sync_display;
-	print @_;
+	$self->_fhprint(\*STDOUT, @_);
 }
 
 sub _errprint
 {
 	my $self = shift;
-	$self->sync_display;
-	print STDERR @_;
+	$self->_fhprint(\*STDERR, @_);
+}
+
+sub fhprint
+{
+	my $self = shift;
+	my $fh = shift;
+	$self->_fhprint($fh, $self->f(@_));
+}
+
+sub fhsay
+{
+	my $self = shift;
+	my $fh = shift;
+	if (@_ == 0) {
+		$self->_fhprint($fh, "\n");
+	} else {
+		$self->_fhprint($fh, $self->f(@_), "\n");
+	}
 }
 
 sub print
 {
 	my $self = shift;
-	$self->_print($self->f(@_));
+	$self->fhprint(\*STDOUT, @_);
 }
 
 sub say
 {
 	my $self = shift;
-	if (@_ == 0) {
-		$self->_print("\n");
-	} else {
-		$self->_print($self->f(@_), "\n");
-	}
+	$self->fhsay(\*STDOUT, @_);
 }
 
 sub errprint
 {
 	my $self = shift;
-	$self->_errprint($self->f(@_));
+	$self->fhprint(\*STDERR, @_);
 }
 
 sub errsay
 {
 	my $self = shift;
-	if (@_ == 0) {
-		$self->_errprint("\n");
-	} else {
-		$self->_errprint($self->f(@_), "\n");
-	}
+	$self->fhsay(\*STDERR, @_);
 }
 
 sub do_options
