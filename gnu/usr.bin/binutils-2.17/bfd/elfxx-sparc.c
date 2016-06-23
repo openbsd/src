@@ -2003,9 +2003,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
 
   if (info->shared)
     {
-      if (h->def_regular
-	  && (h->forced_local
-	      || info->symbolic))
+      if (SYMBOL_CALLS_LOCAL (info, h))
 	{
 	  struct _bfd_sparc_elf_dyn_relocs **pp;
 
