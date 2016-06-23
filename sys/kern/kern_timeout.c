@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.46 2016/06/14 15:58:03 bluhm Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.47 2016/06/23 18:41:44 stefan Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -336,6 +336,8 @@ timeout_hardclock_update(void)
 void
 softclock(void *arg)
 {
+	int delta;
+	struct circq *bucket;
 	struct timeout *to;
 	void (*fn)(void *);
 
@@ -345,14 +347,14 @@ softclock(void *arg)
 		CIRCQ_REMOVE(&to->to_list);
 
 		/* If due run it, otherwise insert it into the right bucket. */
-		if (to->to_time - ticks > 0) {
-			CIRCQ_INSERT(&to->to_list,
-			    &BUCKET((to->to_time - ticks), to->to_time));
+		delta = to->to_time - ticks;
+		if (delta > 0) {
+			bucket = &BUCKET(delta, to->to_time);
+			CIRCQ_INSERT(&to->to_list, bucket);
 		} else {
 #ifdef DEBUG
-			if (to->to_time - ticks < 0)
-				printf("timeout delayed %d\n", to->to_time -
-				    ticks);
+			if (delta < 0)
+				printf("timeout delayed %d\n", delta);
 #endif
 			to->to_flags &= ~TIMEOUT_ONQUEUE;
 			to->to_flags |= TIMEOUT_TRIGGERED;
