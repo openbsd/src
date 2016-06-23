@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.47 2016/06/23 13:15:21 bluhm Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.48 2016/06/23 15:41:42 bluhm Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -377,30 +377,27 @@ sys_sendsyslog(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) flags;
 	} */ *uap = v;
 	int error;
-#ifndef SMALL_KERNEL
 	static int dropped_count, orig_error;
-	int len;
-	char buf[64];
 
 	if (dropped_count) {
-		len = snprintf(buf, sizeof(buf),
+		size_t l;
+		char buf[64];
+
+		l = snprintf(buf, sizeof(buf),
 		    "<%d>sendsyslog: dropped %d message%s, error %d",
 		    LOG_KERN|LOG_WARNING, dropped_count,
 		    dropped_count == 1 ? "" : "s", orig_error);
-		error = dosendsyslog(p, buf, MIN((size_t)len, sizeof(buf) - 1),
+		error = dosendsyslog(p, buf, ulmin(l, sizeof(buf) - 1),
 		    0, UIO_SYSSPACE);
 		if (error == 0)
 			dropped_count = 0;
 	}
-#endif
 	error = dosendsyslog(p, SCARG(uap, buf), SCARG(uap, nbyte),
 	    SCARG(uap, flags), UIO_USERSPACE);
-#ifndef SMALL_KERNEL
 	if (error) {
 		dropped_count++;
 		orig_error = error;
 	}
-#endif
 	return (error);
 }
 
