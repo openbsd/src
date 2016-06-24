@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.37 2016/05/17 20:51:56 tedu Exp $	*/
+/*	$OpenBSD: auth.c,v 1.38 2016/06/24 17:22:56 tedu Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -741,25 +741,12 @@ plogin(user, passwd, msg, msglen)
     char **msg;
     int *msglen;
 {
-
-
     struct passwd *pw;
     char *tty;
 
-
     pw = getpwnam_shadow(user);
-    endpwent();
-    if (pw == NULL) {
-	return (UPAP_AUTHNAK);
-    }
-
-
-    /*
-     * If no passwd, don't let them login.
-     */
-    if (pw->pw_passwd == NULL || *pw->pw_passwd == '\0'
-	|| strcmp(crypt(passwd, pw->pw_passwd), pw->pw_passwd) != 0)
-	return (UPAP_AUTHNAK);
+    if (crypt_checkpass(passwd, pw ? pw->pw_passwd : NULL))
+	    return UPAP_AUTHNAK;
 
     /*
      * Write a wtmp entry for this user.
