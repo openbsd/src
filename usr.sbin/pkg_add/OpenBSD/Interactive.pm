@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Interactive.pm,v 1.20 2015/01/30 11:42:55 espie Exp $
+# $OpenBSD: Interactive.pm,v 1.21 2016/06/24 14:20:49 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -35,13 +35,23 @@ sub ask_list
 	if ($self->{always}) {
 		return $values[0];
 	}
+	my ($fh, $pid);
+	if ($self->{state}->height <= @values + 1) {
+		$pid = open($fh, "|-", "more", "-ce");
+	}
 
-	$self->{state}->errsay('#1', $prompt);
+	$fh //= \*STDERR;
+
+	$self->{state}->fhsay($fh, '#1', $prompt);
 	my $i = 0;
 	for my $v (@values) {
-		$self->{state}->errsay("#1\t#2: #3", 
+		$self->{state}->fhsay($fh, "#1\t#2: #3", 
 		    $i == 0 ? "a" : "", $i, $v);
 		$i++;
+	}
+	if (defined $pid) {
+		close($fh);
+		waitpid $pid, 0;
 	}
 LOOP:
 	$self->{state}->errprint("Your choice: ");
