@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.38 2016/06/23 16:11:23 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.39 2016/06/24 11:42:30 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -99,9 +99,11 @@ sub is_interactive
 	return shift->{interactive}->is_interactive;
 }
 
-sub window_size_changed
+sub find_window_size
 {
-	shift->{progressmeter}->compute_playfield;
+	my ($state, $cont) = @_;
+	$state->SUPER::find_window_size;
+	$state->{progressmeter}->compute_playfield($cont);
 }
 
 sub confirm

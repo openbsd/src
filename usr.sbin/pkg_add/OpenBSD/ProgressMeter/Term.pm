@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.37 2016/06/23 16:11:23 espie Exp $
+# $OpenBSD: Term.pm,v 1.38 2016/06/24 11:42:30 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -127,7 +127,7 @@ sub init
 
 sub compute_playfield
 {
-	my $self = shift;
+	my ($self, $cont) = @_;
 	$self->{playfield} = $self->width - length($self->{header}) - 7;
 	# we can print to 80 columns
 	if ($self->{glitch} && $self->{state}->config->istrue("fullwidth")) {
@@ -136,6 +136,9 @@ sub compute_playfield
 	if ($self->{playfield} < 5) {
 		$self->{playfield} = 0;
 	}
+	if ($cont) {
+		$self->{continued} = 1;
+	}
 }
 
 sub set_header
@@ -143,9 +146,6 @@ sub set_header
 	my ($self, $header) = @_;
 	$self->{header} = $header;
 	$self->compute_playfield;
-	$SIG{'CONT'} = sub {
-		$self->{continued} = 1;
-	};
 	return 1;
 }
 
