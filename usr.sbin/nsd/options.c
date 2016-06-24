@@ -49,6 +49,7 @@ nsd_options_create(region_type* region)
 	opt->keys = rbtree_create(region, rbtree_strcmp);
 	opt->ip_addresses = NULL;
 	opt->ip_transparent = 0;
+	opt->ip_freebind = 0;
 	opt->debug_mode = 0;
 	opt->verbosity = 0;
 	opt->hide_version = 0;
@@ -65,6 +66,8 @@ nsd_options_create(region_type* region)
 	opt->tcp_count = 100;
 	opt->tcp_query_count = 0;
 	opt->tcp_timeout = TCP_TIMEOUT;
+	opt->tcp_mss = 0;
+	opt->outgoing_tcp_mss = 0;
 	opt->ipv4_edns_size = EDNS_MAX_MESSAGE_LEN;
 	opt->ipv6_edns_size = EDNS_MAX_MESSAGE_LEN;
 	opt->pidfile = PIDFILE;

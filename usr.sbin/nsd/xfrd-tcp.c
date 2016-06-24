@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "nsd.h"
 #include "xfrd-tcp.h"
 #include "buffer.h"
 #include "packet.h"
@@ -522,6 +523,19 @@ xfrd_tcp_open(xfrd_tcp_set_t* set, struct xfrd_tcp_pipeline* tp,
 		close(fd);
 		xfrd_set_refresh_now(zone);
 		return 0;
+	}
+
+	if(xfrd->nsd->outgoing_tcp_mss > 0) {
+#if defined(IPPROTO_TCP) && defined(TCP_MAXSEG)
+		if(setsockopt(fd, IPPROTO_TCP, TCP_MAXSEG,
+			(void*)&xfrd->nsd->outgoing_tcp_mss,
+			sizeof(xfrd->nsd->outgoing_tcp_mss)) < 0) {
+			log_msg(LOG_ERR, "xfrd: setsockopt(TCP_MAXSEG)"
+					"failed: %s", strerror(errno));
+		}
+#else
+		log_msg(LOG_ERR, "setsockopt(TCP_MAXSEG) unsupported");
+#endif
 	}
 
 	tp->ip_len = xfrd_acl_sockaddr_to(zone->master, &tp->ip);

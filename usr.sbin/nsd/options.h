@@ -60,6 +60,7 @@ struct nsd_options {
 	ip_address_option_t* ip_addresses;
 
 	int ip_transparent;
+	int ip_freebind;
 	int debug_mode;
 	int verbosity;
 	int hide_version;
@@ -73,6 +74,8 @@ struct nsd_options {
 	int tcp_count;
 	int tcp_query_count;
 	int tcp_timeout;
+	int tcp_mss;
+	int outgoing_tcp_mss;
 	size_t ipv4_edns_size;
 	size_t ipv6_edns_size;
 	const char* pidfile;

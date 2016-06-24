@@ -269,6 +269,8 @@ timeval_to_timespec(struct timespec *left,
 	left->tv_nsec = 1000 * right->tv_usec;
 }
 
+/* get the time */
+void get_time(struct timespec* t);
 
 /*
  * Converts a string representation of a period of time into

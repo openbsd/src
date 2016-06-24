@@ -724,9 +724,12 @@ xfrd_set_timer_retry(xfrd_zone_t* zone)
 		/* if no information, use reasonable timeout */
 		if(zone->fresh_xfr_timeout == 0)
 			zone->fresh_xfr_timeout = XFRD_TRANSFER_TIMEOUT_START;
-#ifdef HAVE_ARC4RANDOM
+#ifdef HAVE_ARC4RANDOM_UNIFORM
 		xfrd_set_timer(zone, zone->fresh_xfr_timeout
-			+ arc4random()%zone->fresh_xfr_timeout);
+			+ arc4random_uniform(zone->fresh_xfr_timeout));
+#elif HAVE_ARC4RANDOM
+		xfrd_set_timer(zone, zone->fresh_xfr_timeout
+                        + arc4random() % zone->fresh_xfr_timeout);
 #else
 		xfrd_set_timer(zone, zone->fresh_xfr_timeout
 			+ random()%zone->fresh_xfr_timeout);
@@ -1045,8 +1048,10 @@ xfrd_set_timer(xfrd_zone_t* zone, time_t t)
 	/* only for times far in the future */
 	if(t > 10) {
 		time_t base = t*9/10;
-#ifdef HAVE_ARC4RANDOM
-		t = base + arc4random()%(t-base);
+#ifdef HAVE_ARC4RANDOM_UNIFORM
+		t = base + arc4random_uniform(t-base);
+#elif HAVE_ARC4RANDOM
+		t = base + arc4random() % (t-base);
 #else
 		t = base + random()%(t-base);
 #endif

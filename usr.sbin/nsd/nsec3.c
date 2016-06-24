@@ -965,9 +965,20 @@ nsec3_answer_nodata(struct query* query, struct answer* answer,
 				original->nsec3->nsec3_cover);
 	}
 	else {	/* add nsec3 to prove rrset does not exist */
-		if(original->nsec3 && original->nsec3->nsec3_is_exact) {
+		if(original->nsec3) {
+			if(!original->nsec3->nsec3_is_exact) {
+				/* go up to an existing parent */
+				while(original->parent && original->parent->nsec3 && !original->parent->nsec3->nsec3_is_exact)
+					original = original->parent;
+			}
 			nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
 				original->nsec3->nsec3_cover);
+			if(!original->nsec3->nsec3_is_exact) {
+				if(original->parent && original->parent->nsec3 && original->parent->nsec3->nsec3_is_exact)
+				    nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
+					original->parent->nsec3->nsec3_cover);
+
+			}
 		}
 	}
 }
@@ -1041,7 +1052,8 @@ nsec3_answer_authoritative(struct domain** match, struct query *query,
 #if 0
 		query->qtype != TYPE_NSEC3 &&
 #endif
-		domain_has_only_NSEC3(*match, query->zone))
+		(domain_has_only_NSEC3(*match, query->zone) ||
+		!domain_find_any_rrset(*match, query->zone)))
 	{
 		/* this looks like a NSEC3 domain, but is actually an empty non-terminal. */
 		nsec3_answer_nodata(query, answer, *match);

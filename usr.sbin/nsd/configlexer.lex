@@ -199,6 +199,7 @@ name{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_NAME;}
 ip-address{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IP_ADDRESS;}
 interface{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IP_ADDRESS;}
 ip-transparent{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IP_TRANSPARENT;}
+ip-freebind{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IP_FREEBIND;}
 debug-mode{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DEBUG_MODE;}
 hide-version{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_HIDE_VERSION;}
 ip4-only{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_IP4_ONLY;}
@@ -214,6 +215,8 @@ server-count{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_SERVER_COUNT;}
 tcp-count{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TCP_COUNT;}
 tcp-query-count{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TCP_QUERY_COUNT;}
 tcp-timeout{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TCP_TIMEOUT;}
+tcp-mss{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TCP_MSS;}
+outgoing-tcp-mss{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_OUTGOING_TCP_MSS;}
 ipv4-edns-size{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IPV4_EDNS_SIZE;}
 ipv6-edns-size{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IPV6_EDNS_SIZE;}
 pidfile{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_PIDFILE;}

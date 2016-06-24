@@ -271,7 +271,8 @@ namedb_zone_create(namedb_type* db, const dname_type* dname,
 	zone->opts = zo;
 	zone->filename = NULL;
 	zone->logstr = NULL;
-	zone->mtime = 0;
+	zone->mtime.tv_sec = 0;
+	zone->mtime.tv_nsec = 0;
 	zone->zonestatid = 0;
 	zone->is_secure = 0;
 	zone->is_changed = 0;
@@ -491,17 +492,25 @@ namedb_open (const char* filename, nsd_options_t* opt)
 }
 
 /** the the file mtime stat (or nonexist or error) */
-static int
-file_get_mtime(const char* file, time_t* mtime, int* nonexist)
+int
+file_get_mtime(const char* file, struct timespec* mtime, int* nonexist)
 {
 	struct stat s;
 	if(stat(file, &s) != 0) {
-		*mtime = 0;
+		mtime->tv_sec = 0;
+		mtime->tv_nsec = 0;
 		*nonexist = (errno == ENOENT);
 		return 0;
 	}
 	*nonexist = 0;
-	*mtime = s.st_mtime;
+	mtime->tv_sec = s.st_mtime;
+#ifdef HAVE_STRUCT_STAT_ST_MTIMENSEC
+	mtime->tv_nsec = s.st_mtimensec;
+#elif defined(HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC)
+	mtime->tv_nsec = s.st_mtim.tv_nsec;
+#else
+	mtime->tv_nsec = 0;
+#endif
 	return 1;
 }
 
@@ -509,12 +518,14 @@ void
 namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 	udb_ptr* last_task)
 {
-	time_t mtime = 0;
+	struct timespec mtime;
 	int nonexist = 0;
 	unsigned int errors;
 	const char* fname;
 	if(!nsd->db || !zone || !zone->opts || !zone->opts->pattern->zonefile)
 		return;
+	mtime.tv_sec = 0;
+	mtime.tv_nsec = 0;
 	fname = config_make_zonefile(zone->opts, nsd);
 	if(!file_get_mtime(fname, &mtime, &nonexist)) {
 		if(nonexist) {
@@ -527,20 +538,21 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 		return;
 	} else {
 		const char* zone_fname = zone->filename;
-		time_t zone_mtime = zone->mtime;
+		struct timespec zone_mtime = zone->mtime;
 		if(nsd->db->udb) {
 			zone_fname = udb_zone_get_file_str(nsd->db->udb,
 				dname_name(domain_dname(zone->apex)),
 				domain_dname(zone->apex)->name_size);
-			zone_mtime = (time_t)udb_zone_get_mtime(nsd->db->udb,
+			udb_zone_get_mtime(nsd->db->udb,
 				dname_name(domain_dname(zone->apex)),
-				domain_dname(zone->apex)->name_size);
+				domain_dname(zone->apex)->name_size,
+				&zone_mtime);
 		}
 		/* if no zone_fname, then it was acquired in zone transfer,
 		 * see if the file is newer than the zone transfer
 		 * (regardless if this is a different file), because the
 		 * zone transfer is a different content source too */
-		if(!zone_fname && zone_mtime >= mtime) {
+		if(!zone_fname && timespec_compare(&zone_mtime, &mtime) >= 0) {
 			VERBOSITY(3, (LOG_INFO, "zonefile %s is older than "
 				"zone transfer in memory", fname));
 			return;
@@ -548,7 +560,8 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 		/* if zone_fname, then the file was acquired from reading it,
 		 * and see if filename changed or mtime newer to read it */
 		} else if(zone_fname && fname &&
-		   strcmp(zone_fname, fname) == 0 && zone_mtime >= mtime) {
+		   strcmp(zone_fname, fname) == 0 &&
+		   timespec_compare(&zone_mtime, &mtime) == 0) {
 			VERBOSITY(3, (LOG_INFO, "zonefile %s is not modified",
 				fname));
 			return;
@@ -614,7 +627,8 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 		zone->is_changed = 0;
 		/* store zone into udb */
 		if(nsd->db->udb) {
-			if(!write_zone_to_udb(nsd->db->udb, zone, mtime, fname)) {
+			if(!write_zone_to_udb(nsd->db->udb, zone, &mtime,
+				fname)) {
 				log_msg(LOG_ERR, "failed to store zone in db");
 			} else {
 				VERBOSITY(2, (LOG_INFO, "zone %s written to db",

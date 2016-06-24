@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Dec 10, 2015" "NLnet Labs" "nsd 4.1.7"
+.TH "nsd.conf" "5" "Jun 14, 2016" "NLnet Labs" "nsd 4.1.10"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -169,6 +169,10 @@ Allows NSD to bind to non local addresses. This is useful to have NSD
 listen to IP addresses that are not (yet) added to the network interface, so
 that it can answer immediately when the address is added. Default is no.
 .TP
+.B ip\-freebind:\fR <yes or no>
+Set the IP_FREEBIND option to bind to nonlocal addresses and interfaces
+that are down.  Similar to ip\-transparent.  Default is no.
+.TP
 .B reuseport:\fR <yes or no>
 Use the SO_REUSEPORT socket option, and create file descriptors for every
 server in the server\-count.  This improves performance of the network
@@ -193,7 +197,7 @@ If yes, NSD listens to IPv6 connections.  Default yes.
 .TP
 .B database:\fR <filename>
 By default 
-.I @dbfile@
+.I '@dbfile@'
 is used. The specified file is used to store the compiled 
 zone information. Same as commandline option 
 .BR \-f.
@@ -246,6 +250,23 @@ Default is 0, meaning there is no maximum.
 .TP
 .B tcp\-timeout:\fR <number>
 Overrides the default TCP timeout. This also affects zone transfers over TCP.
+.TP
+.B tcp-mss:\fR <number>
+Maximum segment size (MSS) of TCP socket on which the server responds
+to queries. Value lower than common MSS on Ethernet 
+(1220 for example) will address path MTU problem.
+Note that not all platform supports socket option to set MSS (TCP_MAXSEG).
+Default is system default MSS determined by interface MTU and
+negotiation between server and client.
+.TP
+.B outgoing\-tcp\-mss:\fR <number>
+Maximum segment size (MSS) of TCP socket for outgoing XFR request
+to other namesevers. Value lower than
+common MSS on Ethernet (1220 for example) will
+address path MTU problem.
+Note that not all platform supports socket option to set MSS (TCP_MAXSEG).
+Default is system default MSS determined by interface MTU and
+negotiation between NSD and other servers.
 .TP
 .B ipv4\-edns\-size:\fR <number>
 Preferred EDNS buffer size for IPv4.  Default 4096.
@@ -795,7 +816,7 @@ also function as a resolver or cache. The configuration options that
 BIND9 has for the resolver or caching thus have no equivalents for NSD.
 .SH "FILES"
 .TP
-@dbfile@
+"@dbfile@"
 default
 .B NSD
 database

@@ -83,16 +83,28 @@ static void
 cleanup_context(void *data)
 {
 	HMAC_CTX *context = (HMAC_CTX *) data;
+#ifdef HAVE_HMAC_CTX_NEW
+	HMAC_CTX_free(context);
+#else
 	HMAC_CTX_cleanup(context);
+	free(context);
+#endif
 }
 
 static void *
 create_context(region_type *region)
 {
-	HMAC_CTX *context
-		= (HMAC_CTX *) region_alloc(region, sizeof(HMAC_CTX));
+#ifdef HAVE_HMAC_CTX_NEW
+	HMAC_CTX *context = HMAC_CTX_new();
+#else
+	HMAC_CTX *context = (HMAC_CTX *) malloc(sizeof(HMAC_CTX));
+#endif
 	region_add_cleanup(region, cleanup_context, context);
+#ifdef HAVE_HMAC_CTX_RESET
+	HMAC_CTX_reset(context);
+#else
 	HMAC_CTX_init(context);
+#endif
 	return context;
 }
 

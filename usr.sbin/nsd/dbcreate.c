@@ -146,7 +146,7 @@ write_zone(udb_base* udb, udb_ptr* z, zone_type* zone)
 
 /** create and write a zone */
 int
-write_zone_to_udb(udb_base* udb, zone_type* zone, time_t mtime,
+write_zone_to_udb(udb_base* udb, zone_type* zone, struct timespec* mtime,
 	const char* file_str)
 {
 	udb_ptr z;
@@ -165,7 +165,8 @@ write_zone_to_udb(udb_base* udb, zone_type* zone, time_t mtime,
 		}
 	}
 	/* set mtime */
-	ZONE(&z)->mtime = (uint64_t)mtime;
+	ZONE(&z)->mtime = (uint64_t)mtime->tv_sec;
+	ZONE(&z)->mtime_nsec = (uint64_t)mtime->tv_nsec;
 	ZONE(&z)->is_changed = 0;
 	udb_zone_set_log_str(udb, &z, NULL);
 	udb_zone_set_file_str(udb, &z, file_str);
@@ -350,6 +351,7 @@ namedb_write_zonefile(struct nsd* nsd, zone_options_t* zopt)
 	if(notexist || zone->is_changed) {
 		char logs[4096];
 		char bakfile[4096];
+		struct timespec mtime;
 		udb_ptr zudb;
 		if(nsd->db->udb) {
 			if(!udb_zone_search(nsd->db->udb, &zudb,
@@ -384,13 +386,19 @@ namedb_write_zonefile(struct nsd* nsd, zone_options_t* zopt)
 			return;
 		}
 		zone->is_changed = 0;
+		/* fetch the mtime of the just created zonefile so we
+		 * do not waste effort reading it back in */
+		if(!file_get_mtime(zfile, &mtime, &notexist)) {
+			get_time(&mtime);
+		}
 		if(nsd->db->udb) {
-			ZONE(&zudb)->mtime = (uint64_t)time(0);
+			ZONE(&zudb)->mtime = (uint64_t)mtime.tv_sec;
+			ZONE(&zudb)->mtime_nsec = (uint64_t)mtime.tv_nsec;
 			ZONE(&zudb)->is_changed = 0;
 			udb_zone_set_log_str(nsd->db->udb, &zudb, NULL);
 			udb_ptr_unlink(&zudb, nsd->db->udb);
 		} else {
-			zone->mtime = time(0);
+			zone->mtime = mtime;
 			if(zone->filename)
 				region_recycle(nsd->db->region, zone->filename,
 					strlen(zone->filename)+1);

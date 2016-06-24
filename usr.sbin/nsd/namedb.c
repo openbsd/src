@@ -561,6 +561,18 @@ domain_find_ns_rrsets(domain_type* domain, zone_type* zone, rrset_type **ns)
 	return NULL;
 }
 
+domain_type *
+find_dname_above(domain_type* domain, zone_type* zone)
+{
+	domain_type* d = domain->parent;
+	while(d && d != zone->apex) {
+		if(domain_find_rrset(d, zone, TYPE_DNAME))
+			return d;
+		d = d->parent;
+	}
+	return NULL;
+}
+
 int
 domain_is_glue(domain_type* domain, zone_type* zone)
 {

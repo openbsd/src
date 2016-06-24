@@ -439,9 +439,9 @@ xfrd-disk.o: $(srcdir)/xfrd-disk.c config.h $(srcdir)/xfrd-disk.h $(srcdir)/xfrd
 xfrd-notify.o: $(srcdir)/xfrd-notify.c config.h $(srcdir)/xfrd-notify.h $(srcdir)/tsig.h $(srcdir)/buffer.h \
  $(srcdir)/region-allocator.h $(srcdir)/util.h $(srcdir)/dname.h $(srcdir)/rbtree.h $(srcdir)/xfrd.h $(srcdir)/namedb.h $(srcdir)/dns.h \
  $(srcdir)/radtree.h $(srcdir)/options.h $(srcdir)/xfrd-tcp.h $(srcdir)/packet.h
-xfrd-tcp.o: $(srcdir)/xfrd-tcp.c config.h $(srcdir)/xfrd-tcp.h $(srcdir)/xfrd.h $(srcdir)/rbtree.h \
- $(srcdir)/region-allocator.h $(srcdir)/namedb.h $(srcdir)/dname.h $(srcdir)/buffer.h $(srcdir)/util.h $(srcdir)/dns.h $(srcdir)/radtree.h \
- $(srcdir)/options.h $(srcdir)/tsig.h $(srcdir)/packet.h $(srcdir)/xfrd-disk.h
+xfrd-tcp.o: $(srcdir)/xfrd-tcp.c config.h $(srcdir)/nsd.h $(srcdir)/dns.h $(srcdir)/edns.h $(srcdir)/buffer.h \
+ $(srcdir)/region-allocator.h $(srcdir)/util.h $(srcdir)/xfrd-tcp.h $(srcdir)/xfrd.h $(srcdir)/rbtree.h $(srcdir)/namedb.h $(srcdir)/dname.h \
+ $(srcdir)/radtree.h $(srcdir)/options.h $(srcdir)/tsig.h $(srcdir)/packet.h $(srcdir)/xfrd-disk.h
 zlexer.o: zlexer.c config.h $(srcdir)/zonec.h $(srcdir)/namedb.h $(srcdir)/dname.h $(srcdir)/buffer.h \
  $(srcdir)/region-allocator.h $(srcdir)/util.h $(srcdir)/dns.h $(srcdir)/radtree.h $(srcdir)/rbtree.h zparser.h
 zonec.o: $(srcdir)/zonec.c config.h $(srcdir)/zonec.h $(srcdir)/namedb.h $(srcdir)/dname.h $(srcdir)/buffer.h \

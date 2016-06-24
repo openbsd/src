@@ -27,6 +27,9 @@ server:
 	# Allow binding to non local addresses. Default no.
 	# ip-transparent: no
 
+	# Allow binding to addresses that are down.  Default no.
+	# ip-freebind: no
+
 	# use the reuseport socket option for performance. Default no.
 	# reuseport: no
 
@@ -101,6 +104,14 @@ server:
 
 	# Override the default (120 seconds) TCP timeout.
 	# tcp-timeout: 120
+
+	# Maximum segment size (MSS) of TCP socket on which the server
+	# responds to queries. Default is 0, system default MSS.
+	# tcp-mss: 0
+
+	# Maximum segment size (MSS) of TCP socket for outgoing AXFR request.
+	# Default is 0, system default MSS.
+	# outgoing-tcp-mss: 0
 
 	# Preferred EDNS buffer size for IPv4.
 	# ipv4-edns-size: 4096

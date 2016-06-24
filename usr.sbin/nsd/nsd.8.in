@@ -1,9 +1,9 @@
-.TH "NSD" "8" "Dec 10, 2015" "NLnet Labs" "NSD 4.1.7"
+.TH "NSD" "8" "Jun 14, 2016" "NLnet Labs" "NSD 4.1.10"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
 .B nsd
-\- Name Server Daemon (NSD) version 4.1.7.
+\- Name Server Daemon (NSD) version 4.1.10.
 .SH "SYNOPSIS"
 .B nsd
 .RB [ \-4 ] 
@@ -115,7 +115,7 @@ Do not fork, stay in the foreground.
 Use the specified
 .I database
 instead of the default of
-.IR @dbfile@ .
+.IR '@dbfile@' .
 If a 
 .B zonesdir: 
 is specified in the config file this path can be relative to that 
@@ -224,7 +224,7 @@ SIGUSR1
 Dump BIND8\-style statistics into the log. Ignored otherwise.
 .SH "FILES"
 .TP
-@dbfile@
+"@dbfile@"
 default
 .B NSD
 database

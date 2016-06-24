@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,4.1.7,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.1.10,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 CFLAGS="$CFLAGS"
@@ -415,7 +415,7 @@ fi
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h stddef.h sys/param.h sys/socket.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h glob.h grp.h endian.h])
+AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h netinet/tcp.h stddef.h sys/param.h sys/socket.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h glob.h grp.h endian.h])
 
 AC_DEFUN([CHECK_VALIST_DEF],
 [
@@ -585,6 +585,7 @@ AC_CHECK_TYPE(in_addr_t, [], [AC_DEFINE([in_addr_t], [uint32_t], [in_addr_t])], 
 # include <netinet/in.h>
 #endif])
 ACX_CHECK_SS_FAMILY
+AC_CHECK_MEMBERS([struct stat.st_mtimensec, struct stat.st_mtim.tv_nsec])
 
 # Checks for library functions.
 AC_FUNC_CHOWN
@@ -596,9 +597,9 @@ AC_SYS_LARGEFILE
 AC_CHECK_SIZEOF(void*)
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_FUNCS([arc4random arc4random_uniform])
-AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime strftime localtime_r setusercontext glob initgroups setresuid setreuid setresgid setregid getpwnam mmap ppoll])
+AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime strftime localtime_r setusercontext glob initgroups setresuid setreuid setresgid setregid getpwnam mmap ppoll clock_gettime])
 
-AC_ARG_ENABLE(recvmmsg, AC_HELP_STRING([--enable-recvmmsg], [Enable recvmmsg and sendmmsg compilation, faster but some kernel versions may have implementation problems]))
+AC_ARG_ENABLE(recvmmsg, AC_HELP_STRING([--enable-recvmmsg], [Enable recvmmsg and sendmmsg compilation, faster but some kernel versions may have implementation problems for IPv6]))
 case "$enable_recvmmsg" in
         yes)
 		AC_CHECK_FUNC([recvmmsg], [
@@ -829,8 +830,30 @@ AC_SUBST(ratelimit_default)
 CHECK_SSL
 if test x$HAVE_SSL = x"yes"; then
 	ACX_LIB_SSL
+
+	# Check for -pthread
+	BAKLIBS="$LIBS"
+	LIBS="-lcrypto $LIBS"
+	AC_TRY_LINK([], [
+		int HMAC_Update(void);
+		(void)HMAC_Update();
+	], [],[
+		dnl so link fails for HMAC_Update, try with -pthread.
+		BAKCFLAGS="$CFLAGS"
+		CFLAGS="$CFLAGS -pthread"
+		AC_MSG_CHECKING([if libcrypto needs -pthread])
+		AC_TRY_LINK_FUNC([HMAC_Update], [
+			AC_MSG_RESULT([yes])
+		] , [
+			AC_MSG_RESULT([no])
+			dnl restore the nonpthread value
+			CFLAGS="$BAKCFLAGS"
+		])
+	])
+	LIBS="$BAKLIBS"
+
 	if test -n "$ssldir"; then 
-            AC_CHECK_LIB(crypto, HMAC_CTX_init,, [
+            AC_CHECK_LIB(crypto, HMAC_Update,, [
                     AC_MSG_ERROR([OpenSSL found in $ssldir, but version 0.9.7 or higher is required])
                 ])
 	fi
@@ -839,6 +862,7 @@ if test x$HAVE_SSL = x"yes"; then
 	AC_CHECK_HEADERS([openssl/ssl.h],,, [AC_INCLUDES_DEFAULT])
 	AC_CHECK_HEADERS([openssl/err.h],,, [AC_INCLUDES_DEFAULT])
 	AC_CHECK_HEADERS([openssl/rand.h],,, [AC_INCLUDES_DEFAULT])
+	AC_CHECK_FUNCS([HMAC_CTX_reset HMAC_CTX_new])
 else
 	AC_MSG_WARN([No SSL, therefore remote-control is disabled])
 fi
@@ -894,6 +918,9 @@ AH_BOTTOM([
 #  ifndef _BSD_SOURCE
 #    define _BSD_SOURCE 1
 #  endif
+#  ifndef _DEFAULT_SOURCE
+#    define _DEFAULT_SOURCE 1
+#  endif
 #  ifndef __EXTENSIONS__
 #    define __EXTENSIONS__ 1
 #  endif 
@@ -936,6 +963,10 @@ AH_BOTTOM([
 
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+
+#ifdef HAVE_NETINET_TCP_H
+#include <netinet/tcp.h>
 #endif
 
 #ifdef HAVE_ARPA_INET_H

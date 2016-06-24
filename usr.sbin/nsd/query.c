@@ -609,6 +609,12 @@ struct additional_rr_types default_additional_rr_types[] = {
 	{ 0, (rr_section_type) 0 }
 };
 
+struct additional_rr_types swap_aaaa_additional_rr_types[] = {
+	{ TYPE_AAAA, ADDITIONAL_A_SECTION },
+	{ TYPE_A, ADDITIONAL_AAAA_SECTION },
+	{ 0, (rr_section_type) 0 }
+};
+
 struct additional_rr_types rt_additional_rr_types[] = {
 	{ TYPE_A, ADDITIONAL_A_SECTION },
 	{ TYPE_AAAA, ADDITIONAL_AAAA_SECTION },
@@ -698,8 +704,11 @@ add_rrset(struct query   *query,
 	result = answer_add_rrset(answer, section, owner, rrset);
 	switch (rrset_rrtype(rrset)) {
 	case TYPE_NS:
+		/* if query over IPv6, swap A and AAAA; put AAAA first */
 		add_additional_rrsets(query, answer, rrset, 0, 1,
-				      default_additional_rr_types);
+			(query->addr.ss_family == AF_INET6)?
+			swap_aaaa_additional_rr_types:
+			default_additional_rr_types);
 		break;
 	case TYPE_MB:
 		add_additional_rrsets(query, answer, rrset, 0, 0,
@@ -960,9 +969,6 @@ answer_domain(struct nsd* nsd, struct query *q, answer_type *answer,
 			zone_type* origzone = q->zone;
 			++q->cname_count;
 
-			while (!closest_encloser->is_existing)
-				closest_encloser = closest_encloser->parent;
-
 			answer_lookup_zone(nsd, q, answer, closest_match->number,
 					     closest_match == closest_encloser,
 					     closest_match, closest_encloser,
@@ -1003,6 +1009,7 @@ answer_authoritative(struct nsd   *nsd,
 {
 	domain_type *match;
 	domain_type *original = closest_match;
+	domain_type *dname_ce;
 	rrset_type *rrset;
 
 #ifdef NSEC3
@@ -1012,6 +1019,11 @@ answer_authoritative(struct nsd   *nsd,
 			closest_encloser = closest_encloser->parent;
 	}
 #endif /* NSEC3 */
+	if((dname_ce = find_dname_above(closest_encloser, q->zone)) != NULL) {
+		/* occlude the found data, the DNAME is closest_encloser */
+		closest_encloser = dname_ce;
+		exact = 0;
+	}
 
 	if (exact) {
 		match = closest_match;
@@ -1053,8 +1065,6 @@ answer_authoritative(struct nsd   *nsd,
 				return;
 			}
 
-			while (closest_encloser && !closest_encloser->is_existing)
-				closest_encloser = closest_encloser->parent;
 			answer_lookup_zone(nsd, q, answer, newnum,
 				closest_match == closest_encloser,
 				closest_match, closest_encloser, newname);
@@ -1176,6 +1186,14 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 			RCODE_SET(q->packet, RCODE_SERVFAIL);
 		return;
 	}
+	/* now move up the closest encloser until it exists, previous
+	 * (possibly empty) closest encloser was useful to finding the zone
+	 * (for empty zones too), but now we want actual data nodes */
+	if (closest_encloser && !closest_encloser->is_existing) {
+		exact = 0;
+		while (closest_encloser != NULL && !closest_encloser->is_existing)
+			closest_encloser = closest_encloser->parent;
+	}
 
 	/*
 	 * See RFC 4035 (DNSSEC protocol) section 3.1.4.1 Responding
@@ -1214,6 +1232,9 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 	} else {
 		q->delegation_domain = domain_find_ns_rrsets(
 			closest_encloser, q->zone, &q->delegation_rrset);
+		if(q->delegation_domain && find_dname_above(q->delegation_domain, q->zone)) {
+			q->delegation_domain = NULL; /* use higher DNAME */
+		}
 
 		if (!q->delegation_domain
 		    || (exact && q->qtype == TYPE_DS && closest_encloser == q->delegation_domain))
@@ -1244,15 +1265,6 @@ answer_query(struct nsd *nsd, struct query *q)
 	answer_init(&answer);
 
 	exact = namedb_lookup(nsd->db, q->qname, &closest_match, &closest_encloser);
-	if (!closest_encloser->is_existing) {
-		exact = 0;
-		while (closest_encloser != NULL && !closest_encloser->is_existing)
-			closest_encloser = closest_encloser->parent;
-	}
-	if(!closest_encloser) {
-		RCODE_SET(q->packet, RCODE_SERVFAIL);
-		return;
-	}
 
 	answer_lookup_zone(nsd, q, &answer, 0, exact, closest_match,
 		closest_encloser, q->qname);

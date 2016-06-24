@@ -95,6 +95,7 @@ udb_zone_create(udb_base* udb, udb_ptr* result, const uint8_t* dname,
 	ZONE(&z)->rr_count = 0;
 	ZONE(&z)->expired = 0;
 	ZONE(&z)->mtime = 0;
+	ZONE(&z)->mtime_nsec = 0;
 	ZONE(&z)->namelen = dlen;
 	memmove(ZONE(&z)->name, dname, dlen);
 	if(!udb_radix_tree_create(udb, &dtree)) {
@@ -222,6 +223,7 @@ udb_zone_clear(udb_base* udb, udb_ptr* zone)
 	ZONE(zone)->rr_count = 0;
 	ZONE(zone)->expired = 0;
 	ZONE(zone)->mtime = 0;
+	ZONE(zone)->mtime_nsec = 0;
 	udb_ptr_unlink(&dtree, udb);
 }
 
@@ -255,15 +257,18 @@ udb_zone_search(udb_base* udb, udb_ptr* result, const uint8_t* dname,
 	return 0;
 }
 
-uint64_t udb_zone_get_mtime(udb_base* udb, const uint8_t* dname, size_t dlen)
+void udb_zone_get_mtime(udb_base* udb, const uint8_t* dname, size_t dlen,
+	struct timespec* mtime)
 {
 	udb_ptr z;
 	if(udb_zone_search(udb, &z, dname, dlen)) {
-		uint64_t t = ZONE(&z)->mtime;
+		mtime->tv_sec = ZONE(&z)->mtime;
+		mtime->tv_nsec = ZONE(&z)->mtime_nsec;
 		udb_ptr_unlink(&z, udb);
-		return t;
+		return;
 	}
-	return 0;
+	mtime->tv_sec = 0;
+	mtime->tv_nsec = 0;
 }
 
 void udb_zone_set_log_str(udb_base* udb, udb_ptr* zone, const char* str)

@@ -1378,11 +1378,13 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 		if(nsd->db->udb) {
 			ZONE(&z)->is_changed = 1;
 			ZONE(&z)->mtime = time_end_0;
+			ZONE(&z)->mtime_nsec = time_end_1*1000;
 			udb_zone_set_log_str(nsd->db->udb, &z, log_buf);
 			udb_zone_set_file_str(nsd->db->udb, &z, NULL);
 			udb_ptr_unlink(&z, nsd->db->udb);
 		} else {
-			zonedb->mtime = time_end_0;
+			zonedb->mtime.tv_sec = time_end_0;
+			zonedb->mtime.tv_nsec = time_end_1*1000;
 			if(zonedb->logstr)
 				region_recycle(nsd->db->region, zonedb->logstr,
 					strlen(zonedb->logstr)+1);

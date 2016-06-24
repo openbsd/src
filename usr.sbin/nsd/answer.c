@@ -95,6 +95,11 @@ encode_answer(query_type *q, const answer_type *answer)
 		 * sections.
 		 */
 		if (done) {
+			/* delegations should have a usable address in it */
+			if(section == ADDITIONAL_A_SECTION &&
+				counts[ADDITIONAL_A_SECTION] == 0 &&
+				q->delegation_domain)
+				TC_SET(q->packet);
 			break;
 		}
 #endif

@@ -560,7 +560,7 @@ server_init_ifs(struct nsd *nsd, size_t from, size_t to, int* reuseport_works)
 {
 	struct addrinfo* addr;
 	size_t i;
-#if defined(SO_REUSEPORT) || defined(SO_REUSEADDR) || (defined(INET6) && (defined(IPV6_V6ONLY) || defined(IPV6_USE_MIN_MTU) || defined(IPV6_MTU) || defined(IP_TRANSPARENT)))
+#if defined(SO_REUSEPORT) || defined(SO_REUSEADDR) || (defined(INET6) && (defined(IPV6_V6ONLY) || defined(IPV6_USE_MIN_MTU) || defined(IPV6_MTU) || defined(IP_TRANSPARENT)) || defined(IP_FREEBIND))
 	int on = 1;
 #endif
 
@@ -734,6 +734,15 @@ server_init_ifs(struct nsd *nsd, size_t from, size_t to, int* reuseport_works)
 		}
 
 		/* Bind it... */
+		if (nsd->options->ip_freebind) {
+#ifdef IP_FREEBIND
+			if (setsockopt(nsd->udp[i].s, IPPROTO_IP, IP_FREEBIND, &on, sizeof(on)) < 0) {
+				log_msg(LOG_ERR, "setsockopt(...,IP_FREEBIND, ...) failed for udp: %s",
+					strerror(errno));
+			}
+#endif /* IP_FREEBIND */
+		}
+
 		if (nsd->options->ip_transparent) {
 #ifdef IP_TRANSPARENT
 			if (setsockopt(nsd->udp[i].s, IPPROTO_IP, IP_TRANSPARENT, &on, sizeof(on)) < 0) {
@@ -832,6 +841,21 @@ server_init_ifs(struct nsd *nsd, size_t from, size_t to, int* reuseport_works)
 # endif
 		}
 #endif
+		/* set maximum segment size to tcp socket */
+		if(nsd->tcp_mss > 0) {
+#if defined(IPPROTO_TCP) && defined(TCP_MAXSEG)
+			if(setsockopt(nsd->tcp[i].s, IPPROTO_TCP, TCP_MAXSEG,
+					(void*)&nsd->tcp_mss,
+					sizeof(nsd->tcp_mss)) < 0) {
+				log_msg(LOG_ERR,
+					"setsockopt(...,TCP_MAXSEG,...)"
+					" failed for tcp: %s", strerror(errno));
+			}
+#else
+			log_msg(LOG_ERR, "setsockopt(TCP_MAXSEG) unsupported");
+#endif /* defined(IPPROTO_TCP) && defined(TCP_MAXSEG) */
+		}
+
 		/* set it nonblocking */
 		/* (StevensUNP p463), if tcp listening socket is blocking, then
 		   it may block in accept, even if select() says readable. */
@@ -840,6 +864,15 @@ server_init_ifs(struct nsd *nsd, size_t from, size_t to, int* reuseport_works)
 		}
 
 		/* Bind it... */
+		if (nsd->options->ip_freebind) {
+#ifdef IP_FREEBIND
+			if (setsockopt(nsd->tcp[i].s, IPPROTO_IP, IP_FREEBIND, &on, sizeof(on)) < 0) {
+				log_msg(LOG_ERR, "setsockopt(...,IP_FREEBIND, ...) failed for tcp: %s",
+					strerror(errno));
+			}
+#endif /* IP_FREEBIND */
+		}
+
 		if (nsd->options->ip_transparent) {
 #ifdef IP_TRANSPARENT
 			if (setsockopt(nsd->tcp[i].s, IPPROTO_IP, IP_TRANSPARENT, &on, sizeof(on)) < 0) {
@@ -2395,7 +2428,10 @@ cleanup_tcp_handler(struct tcp_handler_data* data)
 	 */
 	if (slowaccept || data->nsd->current_tcp_count == data->nsd->maximum_tcp_count) {
 		configure_handler_event_types(EV_READ|EV_PERSIST);
-		slowaccept = 0;
+		if(slowaccept) {
+			event_del(&slowaccept_event);
+			slowaccept = 0;
+		}
 	}
 	--data->nsd->current_tcp_count;
 	assert(data->nsd->current_tcp_count >= 0);
