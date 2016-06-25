@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_srv.c,v 1.7 2014/10/18 17:20:40 jsing Exp $ */
+/* $OpenBSD: ocsp_srv.c,v 1.8 2016/06/25 16:10:26 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -260,7 +260,7 @@ OCSP_basic_sign(OCSP_BASICRESP *brsp, X509 *signer, EVP_PKEY *key,
 	}
 
 	if (!(flags & OCSP_NOTIME) &&
-	    !X509_gmtime_adj(brsp->tbsResponseData->producedAt, 0))
+	    !ASN1_GENERALIZEDTIME_set(brsp->tbsResponseData->producedAt, time(NULL)))
 		goto err;
 
 	/* Right now, I think that not doing double hashing is the right
