@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.100 2016/03/28 16:55:09 mestre Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.101 2016/06/25 17:03:22 tb Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -85,10 +85,6 @@ main(int argc, char *argv[])
 	struct dos_mbr dos_mbr;
 	struct mbr mbr;
 
-	/* "proc exec" for man page display */
-	if (pledge("stdio rpath wpath disklabel proc exec", NULL) == -1)
-		err(1, "pledge");
-
 	while ((ch = getopt(argc, argv, "iegpuvf:c:h:s:l:b:y")) != -1) {
 		const char *errstr;
 
@@ -168,6 +164,10 @@ main(int argc, char *argv[])
 
 	disk.name = argv[0];
 	DISK_open(i_flag || u_flag || e_flag);
+
+	/* "proc exec" for man page display */
+	if (pledge("stdio rpath wpath disklabel proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	error = MBR_read(0, &dos_mbr);
 	if (error)
