@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.243 2016/02/03 18:30:15 robert Exp $
+# $OpenBSD: PackingElement.pm,v 1.244 2016/06/25 18:02:59 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -894,6 +894,8 @@ sub new
 		return OpenBSD::PackingElement::Firmware->new;
 	} elsif ($args eq 'always-update') {
 		return OpenBSD::PackingElement::AlwaysUpdate->new;
+	} elsif ($args eq 'is-branch') {
+		return OpenBSD::PackingElement::IsBranch->new;
 	} else {
 		die "Unknown option: $args";
 	}
@@ -941,6 +943,13 @@ sub category()
 	'always-update';
 }
 
+package OpenBSD::PackingElement::IsBranch;
+our @ISA=qw(OpenBSD::PackingElement::UniqueOption);
+
+sub category()
+{
+	'is-branch';
+}
 # The special elements that don't end in the right place
 package OpenBSD::PackingElement::ExtraInfo;
 our @ISA=qw(OpenBSD::PackingElement::Unique OpenBSD::PackingElement::Comment);

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.136 2016/06/14 15:41:31 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.137 2016/06/25 18:02:59 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -257,7 +257,7 @@ sub ExtraInfoOnly
 {
 	my ($fh, $cont) = @_;
 	while (<$fh>) {
-		if (m/^\@(?:name|pkgpath|comment\s+(?:subdir|pkgpath)\=)\b/o) {
+		if (m/^\@(?:name|pkgpath|comment\s+(?:subdir|pkgpath)\=|option\s+is-branch)\b/o) {
 			&$cont($_);
 		# XXX optimization
 		} elsif (m/^\@(?:depend|wantlib|newgroup|newuser|cwd)\b/o) {
@@ -446,7 +446,7 @@ sub match_pkgpath
 }
 
 our @unique_categories =
-    (qw(name url signer digital-signature no-default-conflict manual-installation firmware always-update extrainfo localbase arch));
+    (qw(name url signer digital-signature no-default-conflict manual-installation firmware always-update is-branch extrainfo localbase arch));
 
 our @list_categories =
     (qw(conflict pkgpath ask-update depend
