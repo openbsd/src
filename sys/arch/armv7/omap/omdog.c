@@ -1,4 +1,4 @@
-/*	$OpenBSD: omdog.c,v 1.5 2014/12/10 12:27:56 mikeb Exp $	*/
+/*	$OpenBSD: omdog.c,v 1.6 2016/06/26 05:16:33 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Federico G. Schwindt <fgsch@openbsd.org>
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
@@ -24,8 +24,13 @@
 #include <sys/evcount.h>
 #include <sys/socket.h>
 #include <sys/timeout.h>
+
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/fdt.h>
+
+#include <dev/ofw/openfirm.h>
+
 #include <armv7/armv7/armv7var.h>
 
 #define WIDR		0x00			/* Identification Register */
@@ -56,6 +61,7 @@ struct omdog_softc {
 
 struct omdog_softc *omdog_sc;
 
+int	omdog_match(struct device *, void *, void *);
 void	omdog_attach(struct device *, struct device *, void *);
 int	omdog_activate(struct device *, int);
 void	omdog_start(struct omdog_softc *);
@@ -65,23 +71,35 @@ int	omdog_cb(void *, int);
 void	omdog_reset(void);
 
 struct cfattach	omdog_ca = {
-	sizeof (struct omdog_softc), NULL, omdog_attach, NULL, omdog_activate
+	sizeof (struct omdog_softc), omdog_match, omdog_attach, NULL,
+	omdog_activate
 };
 
 struct cfdriver omdog_cd = {
 	NULL, "omdog", DV_DULL
 };
 
-void
-omdog_attach(struct device *parent, struct device *self, void *args)
+int
+omdog_match(struct device *parent, void *match, void *aux)
 {
-	struct armv7_attach_args *aa = args;
+	struct fdt_attach_args *faa = aux;
+
+	return OF_is_compatible(faa->fa_node, "ti,omap3-wdt");
+}
+
+void
+omdog_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
 	struct omdog_softc *sc = (struct omdog_softc *) self;
 	u_int32_t rev;
 
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
+	if (faa->fa_nreg < 2)
+		return;
+
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
+	    faa->fa_reg[1], 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
 	rev = bus_space_read_4(sc->sc_iot, sc->sc_ioh, WIDR);

@@ -1,4 +1,4 @@
-/* $OpenBSD: omap.c,v 1.12 2016/06/19 14:27:35 jsg Exp $ */
+/* $OpenBSD: omap.c,v 1.13 2016/06/26 05:16:33 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -41,7 +41,6 @@ struct board_dev beagleboard_devs[] = {
 	{ "intc",	0 },
 	{ "gptimer",	0 },
 	{ "gptimer",	1 },
-	{ "omdog",	0 },
 	{ "omgpio",	0 },
 	{ "omgpio",	1 },
 	{ "omgpio",	2 },
@@ -58,7 +57,6 @@ struct board_dev beaglebone_devs[] = {
 	{ "edma",	0 },
 	{ "dmtimer",	0 },
 	{ "dmtimer",	1 },
-	{ "omdog",	0 },
 	{ "omgpio",	0 },
 	{ "omgpio",	1 },
 	{ "omgpio",	2 },
@@ -75,7 +73,6 @@ struct board_dev overo_devs[] = {
 	{ "intc",	0 },
 	{ "gptimer",	0 },
 	{ "gptimer",	1 },
-	{ "omdog",	0 },
 	{ "omgpio",	0 },
 	{ "omgpio",	1 },
 	{ "omgpio",	2 },
@@ -88,7 +85,6 @@ struct board_dev overo_devs[] = {
 struct board_dev pandaboard_devs[] = {
 	{ "omapid",	0 },
 	{ "prcm",	0 },
-	{ "omdog",	0 },
 	{ "omgpio",	0 },
 	{ "omgpio",	1 },
 	{ "omgpio",	2 },

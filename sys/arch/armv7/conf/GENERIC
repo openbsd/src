@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.23 2016/06/19 14:27:35 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.24 2016/06/26 05:16:33 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -64,7 +64,7 @@ intc*		at omap?		# OMAP3 interrupt controller
 edma*		at omap?		# OMAP3 dma controller
 prcm*		at omap?		# power/clock controller
 sitaracm*	at omap?		# sitara control module
-omdog*		at omap?		# watchdog timer
+omdog*		at fdt?			# watchdog timer
 omgpio*		at omap?		# user-visible GPIO pins?
 gpio*		at omgpio?
 #tiiic*		at omap?

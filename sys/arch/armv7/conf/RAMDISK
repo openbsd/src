@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.20 2016/06/19 14:27:35 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.21 2016/06/26 05:16:33 jsg Exp $
 
 machine		armv7 arm
 
@@ -63,7 +63,7 @@ intc*		at omap?		# OMAP3 interrupt controller
 edma*		at omap?		# OMAP3 dma controller
 prcm*		at omap?		# power/clock controller
 sitaracm*	at omap?		# sitara control module
-omdog*		at omap?		# watchdog timer
+omdog*		at fdt?			# watchdog timer
 omgpio*		at omap?		# user-visible GPIO pins?
 gpio*		at omgpio?
 #tiiic*		at omap?

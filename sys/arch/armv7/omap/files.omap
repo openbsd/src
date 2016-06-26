@@ -1,4 +1,4 @@
-#	$OpenBSD: files.omap,v 1.10 2016/06/19 14:27:35 jsg Exp $
+#	$OpenBSD: files.omap,v 1.11 2016/06/26 05:16:33 jsg Exp $
 
 define omap {}
 device omap: omap
@@ -55,7 +55,7 @@ attach omapid at omap
 file	arch/armv7/omap/omapid.c		omapid
 
 device omdog
-attach omdog at omap
+attach omdog at fdt
 file	arch/armv7/omap/omdog.c			omdog
 
 attach ohci at omap with omohci
