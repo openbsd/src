@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti_iic.c,v 1.2 2014/03/18 14:23:52 rapha Exp $	*/
+/*	$OpenBSD: ti_iic.c,v 1.3 2016/06/26 05:27:44 jsg Exp $	*/
 /* $NetBSD: ti_iic.c,v 1.4 2013/04/25 13:04:27 rkujawa Exp $ */
 
 /*
@@ -117,24 +117,24 @@ struct ti_iic_softc {
 
 #define DEVNAME(sc)	((sc)->sc_dev.dv_xname)
 
-static void	ti_iic_attach(struct device *, struct device *, void *);
-static int	ti_iic_intr(void *);
+void	ti_iic_attach(struct device *, struct device *, void *);
+int	ti_iic_intr(void *);
 
-static int	ti_iic_acquire_bus(void *, int);
-static void	ti_iic_release_bus(void *, int);
-static int	ti_iic_exec(void *, i2c_op_t, i2c_addr_t, const void *,
-		    size_t, void *, size_t, int);
+int	ti_iic_acquire_bus(void *, int);
+void	ti_iic_release_bus(void *, int);
+int	ti_iic_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t, void *,
+	    size_t, int);
 
-static int	ti_iic_reset(struct ti_iic_softc *);
-static int	ti_iic_op(struct ti_iic_softc *, i2c_addr_t, ti_i2cop_t,
-		    uint8_t *, size_t, int);
-static void	ti_iic_handle_intr(struct ti_iic_softc *, uint32_t);
-static void	ti_iic_do_read(struct ti_iic_softc *, uint32_t);
-static void	ti_iic_do_write(struct ti_iic_softc *, uint32_t);
+int	ti_iic_reset(struct ti_iic_softc *);
+int	ti_iic_op(struct ti_iic_softc *, i2c_addr_t, ti_i2cop_t, uint8_t *,
+	    size_t, int);
+void	ti_iic_handle_intr(struct ti_iic_softc *, uint32_t);
+void	ti_iic_do_read(struct ti_iic_softc *, uint32_t);
+void	ti_iic_do_write(struct ti_iic_softc *, uint32_t);
 
-static int	ti_iic_wait(struct ti_iic_softc *, uint16_t, uint16_t, int);
-static uint32_t	ti_iic_stat(struct ti_iic_softc *, uint32_t);
-static int	ti_iic_flush(struct ti_iic_softc *);
+int	ti_iic_wait(struct ti_iic_softc *, uint16_t, uint16_t, int);
+uint32_t	ti_iic_stat(struct ti_iic_softc *, uint32_t);
+int	ti_iic_flush(struct ti_iic_softc *);
 
 struct cfattach tiiic_ca = {
 	sizeof (struct ti_iic_softc), NULL, ti_iic_attach
@@ -144,7 +144,7 @@ struct cfdriver tiiic_cd = {
 	NULL, "tiiic", DV_DULL
 };
 
-static void
+void
 ti_iic_attach(struct device *parent, struct device *self, void *args)
 {
 	struct ti_iic_softc *sc = (struct ti_iic_softc *)self;
@@ -217,7 +217,7 @@ ti_iic_attach(struct device *parent, struct device *self, void *args)
 	(void) config_found(&sc->sc_dev, &iba, iicbus_print);
 }
 
-static int
+int
 ti_iic_intr(void *arg)
 {
 	struct ti_iic_softc *sc = arg;
@@ -240,7 +240,7 @@ ti_iic_intr(void *arg)
 	return 1;
 }
 
-static int
+int
 ti_iic_acquire_bus(void *opaque, int flags)
 {
 	struct ti_iic_softc *sc = opaque;
@@ -251,7 +251,7 @@ ti_iic_acquire_bus(void *opaque, int flags)
 	return (rw_enter(&sc->sc_buslock, RW_WRITE));
 }
 
-static void
+void
 ti_iic_release_bus(void *opaque, int flags)
 {
 	struct ti_iic_softc *sc = opaque;
@@ -262,7 +262,7 @@ ti_iic_release_bus(void *opaque, int flags)
 	rw_exit(&sc->sc_buslock);
 }
 
-static int
+int
 ti_iic_exec(void *opaque, i2c_op_t op, i2c_addr_t addr,
     const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
 {
@@ -304,7 +304,7 @@ done:
 	return err;
 }
 
-static int
+int
 ti_iic_reset(struct ti_iic_softc *sc)
 {
 	uint32_t psc, scll, sclh;
@@ -356,7 +356,7 @@ ti_iic_reset(struct ti_iic_softc *sc)
 	return 0;
 }
 
-static int
+int
 ti_iic_op(struct ti_iic_softc *sc, i2c_addr_t addr, ti_i2cop_t op,
     uint8_t *buf, size_t buflen, int flags)
 {
@@ -451,7 +451,7 @@ ti_iic_op(struct ti_iic_softc *sc, i2c_addr_t addr, ti_i2cop_t op,
 	return (sc->sc_op == TI_I2CDONE) ? 0 : EIO;
 }
 
-static void
+void
 ti_iic_handle_intr(struct ti_iic_softc *sc, uint32_t stat)
 {
 	KASSERT(stat != 0);
@@ -525,7 +525,7 @@ ti_iic_do_write(struct ti_iic_softc *sc, uint32_t stat)
 	DPRINTF(("ti_iic_do_write done\n"));
 }
 
-static int
+int
 ti_iic_wait(struct ti_iic_softc *sc, uint16_t mask, uint16_t val, int flags)
 {
 	int retry = 10;
@@ -549,7 +549,7 @@ ti_iic_wait(struct ti_iic_softc *sc, uint16_t mask, uint16_t val, int flags)
 	return 0;
 }
 
-static uint32_t
+uint32_t
 ti_iic_stat(struct ti_iic_softc *sc, uint32_t mask)
 {
 	uint32_t v;
@@ -565,7 +565,7 @@ ti_iic_stat(struct ti_iic_softc *sc, uint32_t mask)
 	return v;
 }
 
-static int
+int
 ti_iic_flush(struct ti_iic_softc *sc)
 {
 	DPRINTF(("ti_iic_flush\n"));
