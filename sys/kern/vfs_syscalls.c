@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.256 2016/06/01 22:54:45 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.257 2016/06/26 14:27:14 semarie Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1254,7 +1254,8 @@ domknodat(struct proc *p, int fd, const char *path, mode_t mode, dev_t dev)
 			break;
 		case S_IFIFO:
 #ifndef FIFO
-			return (EOPNOTSUPP);
+			error = EOPNOTSUPP;
+			break;
 #else
 			if (dev == 0) {
 				vattr.va_type = VFIFO;
