@@ -1,4 +1,4 @@
-#	$OpenBSD: files.omap,v 1.12 2016/06/26 07:25:05 jsg Exp $
+#	$OpenBSD: files.omap,v 1.13 2016/06/26 09:06:35 jsg Exp $
 
 define omap {}
 device omap: omap
@@ -14,7 +14,7 @@ attach ommmc at fdt
 file	arch/armv7/omap/ommmc.c			ommmc
 
 device cpsw: ether, ifnet, mii, ifmedia
-attach cpsw at omap
+attach cpsw at fdt
 file	arch/armv7/omap/if_cpsw.c		cpsw
 
 device prcm

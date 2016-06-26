@@ -1,4 +1,4 @@
-/* $OpenBSD: omap.c,v 1.14 2016/06/26 07:25:05 jsg Exp $ */
+/* $OpenBSD: omap.c,v 1.15 2016/06/26 09:06:35 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -61,7 +61,6 @@ struct board_dev beaglebone_devs[] = {
 	{ "omgpio",	1 },
 	{ "omgpio",	2 },
 	{ "omgpio",	3 },
-	{ "cpsw",	0 },
 	{ NULL,		0 }
 };
 

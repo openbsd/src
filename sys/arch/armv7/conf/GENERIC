@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.25 2016/06/26 07:25:05 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.26 2016/06/26 09:06:35 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -72,7 +72,7 @@ iic*		at tiiic?
 gptimer*	at omap?		# general purpose timers
 dmtimer*	at omap?		# am335x dual mode timers
 omusbtll*	at omap?
-cpsw*		at omap?
+cpsw*		at fdt?
 com*		at fdt?			# onboard uarts
 ommmc*		at fdt?			# SD/MMC card controller
 sdmmc*		at ommmc?		# SD/MMC bus
