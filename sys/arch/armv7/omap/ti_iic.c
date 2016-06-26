@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti_iic.c,v 1.3 2016/06/26 05:27:44 jsg Exp $	*/
+/*	$OpenBSD: ti_iic.c,v 1.4 2016/06/26 05:30:21 jsg Exp $	*/
 /* $NetBSD: ti_iic.c,v 1.4 2013/04/25 13:04:27 rkujawa Exp $ */
 
 /*
@@ -167,7 +167,7 @@ ti_iic_attach(struct device *parent, struct device *self, void *args)
 
 	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
 	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
-		panic("%s: bus_space_map failed!");
+		panic("%s: bus_space_map failed!", DEVNAME(sc));
 
 	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_NET,
 	    ti_iic_intr, sc, DEVNAME(sc));
