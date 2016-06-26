@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.7 2016/06/12 13:49:37 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.8 2016/06/26 01:56:07 jsg Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
     BeagleBoard, BeagleBoard xM
@@ -21,7 +21,7 @@ The following machines are targeted by OpenBSD/MACHINE:
 	  watchdog controller (omdog)
 	  GPIO controller (omgpio)
 
-    Cubieboard, Cubieboard 2, pcDuino
+    Cubieboard, pcDuino
     	Supported on-board devices:
 	 standard serial port (com)
 	 watchdog controller (sxidog)
