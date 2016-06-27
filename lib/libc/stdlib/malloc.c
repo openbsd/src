@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.188 2016/04/12 18:14:02 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.189 2016/06/27 15:33:40 tedu Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -122,6 +122,8 @@ struct dir_info {
 	char *func;			/* current function */
 	u_char rbytes[32];		/* random bytes */
 	u_short chunk_start;
+	void *unmap_me;
+	size_t unmap_me_sz;
 #ifdef MALLOC_STATS
 	size_t inserts;
 	size_t insert_collisions;
@@ -218,10 +220,16 @@ static void malloc_exit(void);
 static inline void
 _MALLOC_LEAVE(struct dir_info *d)
 {
+	void *unmap_me = d->unmap_me;
+	size_t unmap_me_sz = d->unmap_me_sz;
+
 	if (__isthreaded) {
 		d->active--;
 		_MALLOC_UNLOCK();
 	}
+
+	if (unmap_me != NULL)
+		munmap(unmap_me, unmap_me_sz);
 }
 
 static inline void
@@ -231,6 +239,8 @@ _MALLOC_ENTER(struct dir_info *d)
 		_MALLOC_LOCK();
 		d->active++;
 	}
+	d->unmap_me = NULL;
+	d->unmap_me_sz = 0;
 }
 
 static inline size_t
@@ -295,6 +305,16 @@ wrterror(struct dir_info *d, char *msg, void *p)
 	abort();
 }
 
+static inline void
+_MUNMAP(struct dir_info *d, void *p, size_t sz)
+{
+	if (d->unmap_me == NULL) {
+		d->unmap_me = p;
+		d->unmap_me_sz = sz;
+	} else if (munmap(p, sz) == -1)
+		wrterror(d, "munmap", p);
+}
+
 static void
 rbytes_init(struct dir_info *d)
 {
@@ -335,9 +355,7 @@ unmap(struct dir_info *d, void *p, size_t sz)
 	}
 
 	if (psz > mopts.malloc_cache) {
-		i = munmap(p, sz);
-		if (i)
-			wrterror(d, "munmap", p);
+		_MUNMAP(d, p, sz);
 		STATS_SUB(d->malloc_used, sz);
 		return;
 	}
@@ -350,8 +368,7 @@ unmap(struct dir_info *d, void *p, size_t sz)
 		r = &d->free_regions[(i + offset) & (mopts.malloc_cache - 1)];
 		if (r->p != NULL) {
 			rsz = r->size << MALLOC_PAGESHIFT;
-			if (munmap(r->p, rsz))
-				wrterror(d, "munmap", r->p);
+			_MUNMAP(d, r->p, rsz);
 			r->p = NULL;
 			if (tounmap > r->size)
 				tounmap -= r->size;
@@ -394,8 +411,7 @@ zapcacheregion(struct dir_info *d, void *p, size_t len)
 		r = &d->free_regions[i];
 		if (r->p >= p && r->p <= (void *)((char *)p + len)) {
 			rsz = r->size << MALLOC_PAGESHIFT;
-			if (munmap(r->p, rsz))
-				wrterror(d, "munmap", r->p);
+			_MUNMAP(d, r->p, rsz);
 			r->p = NULL;
 			d->free_regions_size -= r->size;
 			r->size = 0;
@@ -727,11 +743,9 @@ omalloc_grow(struct dir_info *d)
 		}
 	}
 	/* avoid pages containing meta info to end up in cache */
-	if (munmap(d->r, d->regions_total * sizeof(struct region_info)))
-		wrterror(d, "munmap", d->r);
-	else
-		STATS_SUB(d->malloc_used,
-		    d->regions_total * sizeof(struct region_info));
+	_MUNMAP(d, d->r, d->regions_total * sizeof(struct region_info));
+	STATS_SUB(d->malloc_used,
+	    d->regions_total * sizeof(struct region_info));
 	d->regions_free = d->regions_free + d->regions_total;
 	d->regions_total = newtotal;
 	d->r = p;
@@ -1428,10 +1442,8 @@ gotit:
 					STATS_SETF(r, f);
 					STATS_INC(pool->cheap_reallocs);
 					return p;
-				} else if (q != MAP_FAILED) {
-					if (munmap(q, needed))
-						wrterror(pool, "munmap", q);
-				}
+				} else if (q != MAP_FAILED)
+					_MUNMAP(pool, q, needed);
 			}
 		} else if (rnewsz < roldsz) {
 			if (mopts.malloc_guard) {
@@ -1600,12 +1612,9 @@ mapalign(struct dir_info *d, size_t alignment, size_t sz, int zero_fill)
 	if (p == MAP_FAILED)
 		return MAP_FAILED;
 	q = (char *)(((uintptr_t)p + alignment - 1) & ~(alignment - 1));
-	if (q != p) {
-		if (munmap(p, q - p))
-			wrterror(d, "munmap", p);
-	}
-	if (munmap(q + sz, alignment - (q - p)))
-		wrterror(d, "munmap", q + sz);
+	if (q != p)
+		_MUNMAP(d, p, q - p);
+	_MUNMAP(d, q + sz, alignment - (q - p));
 	STATS_SUB(d->malloc_used, alignment);
 
 	return q;
