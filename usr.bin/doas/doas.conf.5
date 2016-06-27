@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.27 2016/06/27 15:41:17 tedu Exp $
+.\" $OpenBSD: doas.conf.5,v 1.28 2016/06/27 15:47:38 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -136,7 +136,7 @@ permit nopass setenv { \e
         MULTI_PACKAGES NOMAN OKAY_FILES OWNER PKG_DBDIR \e
         PKG_DESTDIR PKG_TMPDIR PORTSDIR RELEASEDIR SHARED_ONLY \e
         SUBPACKAGE WRKOBJDIR SUDO_PORT_V1 } :wsrc
-permit nopass setenv { -ENV PS1=$DOAS_PS1 SSH_AUTH_SOCK } :wheel
+permit setenv { -ENV PS1=$DOAS_PS1 SSH_AUTH_SOCK } :wheel
 permit nopass tedu as root cmd /usr/sbin/procmap
 permit nopass keepenv root as root
 .Ed
