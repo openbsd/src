@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.320 2016/06/27 12:25:27 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.321 2016/06/27 15:59:51 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3690,6 +3690,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	inp->inp_flags |= (oldinp->inp_flags & INP_IPV6);
 	if (inp->inp_flags & INP_IPV6) {
 		inp->inp_ipv6.ip6_hlim = oldinp->inp_ipv6.ip6_hlim;
+		inp->inp_hops = oldinp->inp_hops;
 	}
 #endif /* INET6 */
 
@@ -4346,7 +4347,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		ip6->ip6_hlim = in6_selecthlim(NULL);
+		ip6->ip6_hlim = in6_selecthlim(inp);
 
 		error = ip6_output(m, NULL /*XXX*/, (struct route_in6 *)ro, 0,
 		    NULL, NULL);
