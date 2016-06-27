@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.62 2016/06/18 17:31:32 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.63 2016/06/27 19:06:33 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -169,8 +169,8 @@ int	 recv_address(struct nbr *, char *, uint16_t);
 #define PREFIX_SIZE(x)	(((x) + 7) / 8)
 void	 send_labelmessage(struct nbr *, uint16_t, struct mapping_head *);
 int	 recv_labelmessage(struct nbr *, char *, uint16_t, uint16_t);
-void	 gen_pw_status_tlv(struct ibuf *, uint32_t);
-void	 gen_fec_tlv(struct ibuf *, struct map *);
+int	 gen_pw_status_tlv(struct ibuf *, uint32_t);
+int	 gen_fec_tlv(struct ibuf *, struct map *);
 int	 tlv_decode_fec_elm(struct nbr *, struct ldp_msg *, char *,
 	    uint16_t, struct map *);
 

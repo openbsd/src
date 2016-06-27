@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.50 2016/06/18 17:31:32 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.51 2016/06/27 19:06:33 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -41,6 +41,7 @@ send_hello(enum hello_type type, struct iface_af *ia, struct tnbr *tnbr)
 	uint16_t		 size, holdtime = 0, flags = 0;
 	int			 fd = 0;
 	struct ibuf		*buf;
+	int			 err = 0;
 
 	switch (type) {
 	case HELLO_LINK:
@@ -96,10 +97,10 @@ send_hello(enum hello_type type, struct iface_af *ia, struct tnbr *tnbr)
 	if ((buf = ibuf_open(size)) == NULL)
 		fatal(__func__);
 
-	gen_ldp_hdr(buf, size);
+	err |= gen_ldp_hdr(buf, size);
 	size -= LDP_HDR_SIZE;
-	gen_msg_hdr(buf, MSG_TYPE_HELLO, size);
-	gen_hello_prms_tlv(buf, holdtime, flags);
+	err |= gen_msg_hdr(buf, MSG_TYPE_HELLO, size);
+	err |= gen_hello_prms_tlv(buf, holdtime, flags);
 
 	/*
 	 * RFC 7552 - Section 6.1:
@@ -109,18 +110,18 @@ send_hello(enum hello_type type, struct iface_af *ia, struct tnbr *tnbr)
 	 */
 	switch (af) {
 	case AF_INET:
-		gen_opt4_hello_prms_tlv(buf, TLV_TYPE_IPV4TRANSADDR,
+		err |= gen_opt4_hello_prms_tlv(buf, TLV_TYPE_IPV4TRANSADDR,
 		    leconf->ipv4.trans_addr.v4.s_addr);
 		break;
 	case AF_INET6:
-		gen_opt16_hello_prms_tlv(buf, TLV_TYPE_IPV6TRANSADDR,
+		err |= gen_opt16_hello_prms_tlv(buf, TLV_TYPE_IPV6TRANSADDR,
 		    leconf->ipv6.trans_addr.v6.s6_addr);
 		break;
 	default:
 		fatalx("send_hello: unknown af");
 	}
 
-	gen_opt4_hello_prms_tlv(buf, TLV_TYPE_CONFIG,
+	err |= gen_opt4_hello_prms_tlv(buf, TLV_TYPE_CONFIG,
 	    htonl(global.conf_seqnum));
 
    	/*
@@ -129,7 +130,12 @@ send_hello(enum hello_type type, struct iface_af *ia, struct tnbr *tnbr)
 	 * MUST include the Dual-Stack capability TLV in all of its LDP Hellos".
 	 */
 	if (ldp_is_dual_stack(leconf))
-		gen_ds_hello_prms_tlv(buf, leconf->trans_pref);
+		err |= gen_ds_hello_prms_tlv(buf, leconf->trans_pref);
+
+	if (err) {
+		ibuf_free(buf);
+		return (-1);
+	}
 
 	send_packet(fd, af, &dst, ia, buf->buf, buf->wpos);
 	ibuf_free(buf);

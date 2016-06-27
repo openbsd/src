@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.25 2016/05/23 19:11:42 renato Exp $ */
+/*	$OpenBSD: address.c,v 1.26 2016/06/27 19:06:33 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -25,7 +25,7 @@
 #include "lde.h"
 #include "log.h"
 
-static void	gen_address_list_tlv(struct ibuf *, uint16_t, int,
+static int	gen_address_list_tlv(struct ibuf *, uint16_t, int,
 		    struct if_addr *);
 
 void
@@ -35,6 +35,7 @@ send_address(struct nbr *nbr, int af, struct if_addr *if_addr, int withdraw)
 	uint32_t	 msg_type;
 	uint16_t	 size;
 	int		 iface_count = 0;
+	int		 err = 0;
 
 	if (!withdraw)
 		msg_type = MSG_TYPE_ADDR;
@@ -63,11 +64,15 @@ send_address(struct nbr *nbr, int af, struct if_addr *if_addr, int withdraw)
 	if ((buf = ibuf_open(size)) == NULL)
 		fatal(__func__);
 
-	gen_ldp_hdr(buf, size);
+	err |= gen_ldp_hdr(buf, size);
 	size -= LDP_HDR_SIZE;
-	gen_msg_hdr(buf, msg_type, size);
+	err |= gen_msg_hdr(buf, msg_type, size);
 	size -= LDP_MSG_SIZE;
-	gen_address_list_tlv(buf, size, af, if_addr);
+	err |= gen_address_list_tlv(buf, size, af, if_addr);
+	if (err) {
+		ibuf_free(buf);
+		return;
+	}
 
 	evbuf_enqueue(&nbr->tcp->wbuf, buf);
 
@@ -169,12 +174,13 @@ recv_address(struct nbr *nbr, char *buf, uint16_t len)
 	return (0);
 }
 
-static void
+static int
 gen_address_list_tlv(struct ibuf *buf, uint16_t size, int af,
     struct if_addr *if_addr)
 {
 	struct address_list_tlv	 alt;
 	uint16_t		 addr_size;
+	int			 err = 0;
 
 	memset(&alt, 0, sizeof(alt));
 	alt.type = TLV_TYPE_ADDRLIST;
@@ -192,13 +198,15 @@ gen_address_list_tlv(struct ibuf *buf, uint16_t size, int af,
 		fatalx("gen_address_list_tlv: unknown af");
 	}
 
-	ibuf_add(buf, &alt, sizeof(alt));
-
+	err |= ibuf_add(buf, &alt, sizeof(alt));
 	if (if_addr == NULL) {
 		LIST_FOREACH(if_addr, &global.addr_list, entry) {
-			if (if_addr->af == af)
-				ibuf_add(buf, &if_addr->addr, addr_size);
+			if (if_addr->af != af)
+				continue;
+			err |= ibuf_add(buf, &if_addr->addr, addr_size);
 		}
 	} else
-		ibuf_add(buf, &if_addr->addr, addr_size);
+		err |= ibuf_add(buf, &if_addr->addr, addr_size);
+
+	return (err);
 }

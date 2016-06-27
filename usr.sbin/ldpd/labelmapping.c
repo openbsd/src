@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.51 2016/06/18 01:29:05 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.52 2016/06/27 19:06:33 renato Exp $ */
 
 /*
  * Copyright (c) 2014, 2015 Renato Westphal <renato@openbsd.org>
@@ -30,10 +30,10 @@
 #include "log.h"
 
 static void	 enqueue_pdu(struct nbr *, struct ibuf *, uint16_t);
-static void	 gen_label_tlv(struct ibuf *, uint32_t);
+static int	 gen_label_tlv(struct ibuf *, uint32_t);
 static int	 tlv_decode_label(struct nbr *, struct ldp_msg *, char *,
 		    uint16_t, uint32_t *);
-static void	 gen_reqid_tlv(struct ibuf *, uint32_t);
+static int	 gen_reqid_tlv(struct ibuf *, uint32_t);
 
 static void
 enqueue_pdu(struct nbr *nbr, struct ibuf *buf, uint16_t size)
@@ -53,6 +53,7 @@ send_labelmessage(struct nbr *nbr, uint16_t type, struct mapping_head *mh)
 	struct mapping_entry	*me;
 	uint16_t		 msg_size, size = 0;
 	int			 first = 1;
+	int			 err = 0;
 
 	/* nothing to send */
 	if (TAILQ_EMPTY(mh))
@@ -66,7 +67,7 @@ send_labelmessage(struct nbr *nbr, uint16_t type, struct mapping_head *mh)
 				fatal(__func__);
 
 			/* real size will be set up later */
-			gen_ldp_hdr(buf, 0);
+			err |= gen_ldp_hdr(buf, 0);
 
 			size = LDP_HDR_PDU_LEN;
 			first = 0;
@@ -110,14 +111,18 @@ send_labelmessage(struct nbr *nbr, uint16_t type, struct mapping_head *mh)
 		size += msg_size;
 
 		/* append message and tlvs */
-		gen_msg_hdr(buf, type, msg_size);
-		gen_fec_tlv(buf, &me->map);
+		err |= gen_msg_hdr(buf, type, msg_size);
+		err |= gen_fec_tlv(buf, &me->map);
 		if (me->map.label != NO_LABEL)
-			gen_label_tlv(buf, me->map.label);
+			err |= gen_label_tlv(buf, me->map.label);
 		if (me->map.flags & F_MAP_REQ_ID)
-			gen_reqid_tlv(buf, me->map.requestid);
+			err |= gen_reqid_tlv(buf, me->map.requestid);
 	    	if (me->map.flags & F_MAP_PW_STATUS)
-			gen_pw_status_tlv(buf, me->map.pw_status);
+			err |= gen_pw_status_tlv(buf, me->map.pw_status);
+		if (err) {
+			ibuf_free(buf);
+			return;
+		}
 
 		TAILQ_REMOVE(mh, me, entry);
 		free(me);
@@ -423,7 +428,7 @@ err:
 }
 
 /* Other TLV related functions */
-static void
+static int
 gen_label_tlv(struct ibuf *buf, uint32_t label)
 {
 	struct label_tlv	lt;
@@ -432,7 +437,7 @@ gen_label_tlv(struct ibuf *buf, uint32_t label)
 	lt.length = htons(sizeof(label));
 	lt.label = htonl(label);
 
-	ibuf_add(buf, &lt, sizeof(lt));
+	return (ibuf_add(buf, &lt, sizeof(lt)));
 }
 
 static int
@@ -482,7 +487,7 @@ tlv_decode_label(struct nbr *nbr, struct ldp_msg *lm, char *buf,
 	return (sizeof(lt));
 }
 
-static void
+static int
 gen_reqid_tlv(struct ibuf *buf, uint32_t reqid)
 {
 	struct reqid_tlv	rt;
@@ -491,10 +496,10 @@ gen_reqid_tlv(struct ibuf *buf, uint32_t reqid)
 	rt.length = htons(sizeof(reqid));
 	rt.reqid = htonl(reqid);
 
-	ibuf_add(buf, &rt, sizeof(rt));
+	return (ibuf_add(buf, &rt, sizeof(rt)));
 }
 
-void
+int
 gen_pw_status_tlv(struct ibuf *buf, uint32_t status)
 {
 	struct pw_status_tlv	st;
@@ -503,38 +508,39 @@ gen_pw_status_tlv(struct ibuf *buf, uint32_t status)
 	st.length = htons(sizeof(status));
 	st.value = htonl(status);
 
-	ibuf_add(buf, &st, sizeof(st));
+	return (ibuf_add(buf, &st, sizeof(st)));
 }
 
-void
+int
 gen_fec_tlv(struct ibuf *buf, struct map *map)
 {
 	struct tlv	ft;
 	uint16_t	family, len, pw_type, ifmtu;
 	uint8_t		pw_len = 0;
 	uint32_t	group_id, pwid;
+	int		err = 0;
 
 	ft.type = htons(TLV_TYPE_FEC);
 
 	switch (map->type) {
 	case MAP_TYPE_WILDCARD:
 		ft.length = htons(sizeof(uint8_t));
-		ibuf_add(buf, &ft, sizeof(ft));
-		ibuf_add(buf, &map->type, sizeof(map->type));
+		err |= ibuf_add(buf, &ft, sizeof(ft));
+		err |= ibuf_add(buf, &map->type, sizeof(map->type));
 		break;
 	case MAP_TYPE_PREFIX:
 		len = PREFIX_SIZE(map->fec.prefix.prefixlen);
 		ft.length = htons(sizeof(map->type) + sizeof(family) +
 		    sizeof(map->fec.prefix.prefixlen) + len);
-		ibuf_add(buf, &ft, sizeof(ft));
+		err |= ibuf_add(buf, &ft, sizeof(ft));
 
-		ibuf_add(buf, &map->type, sizeof(map->type));
+		err |= ibuf_add(buf, &map->type, sizeof(map->type));
 		family = htons(map->fec.prefix.af);
-		ibuf_add(buf, &family, sizeof(family));
-		ibuf_add(buf, &map->fec.prefix.prefixlen,
+		err |= ibuf_add(buf, &family, sizeof(family));
+		err |= ibuf_add(buf, &map->fec.prefix.prefixlen,
 		    sizeof(map->fec.prefix.prefixlen));
 		if (len)
-			ibuf_add(buf, &map->fec.prefix.prefix, len);
+			err |= ibuf_add(buf, &map->fec.prefix.prefix, len);
 		break;
 	case MAP_TYPE_PWID:
 		if (map->flags & F_MAP_PW_ID)
@@ -545,35 +551,37 @@ gen_fec_tlv(struct ibuf *buf, struct map *map)
 		len = FEC_PWID_ELM_MIN_LEN + pw_len;
 
 		ft.length = htons(len);
-		ibuf_add(buf, &ft, sizeof(ft));
+		err |= ibuf_add(buf, &ft, sizeof(ft));
 
-		ibuf_add(buf, &map->type, sizeof(uint8_t));
+		err |= ibuf_add(buf, &map->type, sizeof(uint8_t));
 		pw_type = map->fec.pwid.type;
 		if (map->flags & F_MAP_PW_CWORD)
 			pw_type |= CONTROL_WORD_FLAG;
 		pw_type = htons(pw_type);
-		ibuf_add(buf, &pw_type, sizeof(uint16_t));
-		ibuf_add(buf, &pw_len, sizeof(uint8_t));
+		err |= ibuf_add(buf, &pw_type, sizeof(uint16_t));
+		err |= ibuf_add(buf, &pw_len, sizeof(uint8_t));
 		group_id = htonl(map->fec.pwid.group_id);
-		ibuf_add(buf, &group_id, sizeof(uint32_t));
+		err |= ibuf_add(buf, &group_id, sizeof(uint32_t));
 		if (map->flags & F_MAP_PW_ID) {
 			pwid = htonl(map->fec.pwid.pwid);
-			ibuf_add(buf, &pwid, sizeof(uint32_t));
+			err |= ibuf_add(buf, &pwid, sizeof(uint32_t));
 		}
 		if (map->flags & F_MAP_PW_IFMTU) {
 			struct subtlv 	stlv;
 
 			stlv.type = SUBTLV_IFMTU;
 			stlv.length = FEC_SUBTLV_IFMTU_LEN;
-			ibuf_add(buf, &stlv, sizeof(uint16_t));
+			err |= ibuf_add(buf, &stlv, sizeof(uint16_t));
 
 			ifmtu = htons(map->fec.pwid.ifmtu);
-			ibuf_add(buf, &ifmtu, sizeof(uint16_t));
+			err |= ibuf_add(buf, &ifmtu, sizeof(uint16_t));
 		}
 		break;
 	default:
 		break;
 	}
+
+	return (err);
 }
 
 int

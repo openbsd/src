@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.35 2016/06/11 01:55:35 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.36 2016/06/27 19:06:33 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -32,6 +32,7 @@ send_notification_full(struct tcp_conn *tcp, struct notify_msg *nm)
 {
 	struct ibuf	*buf;
 	uint16_t	 size;
+	int		 err = 0;
 
 	/* calculate size */
 	size = LDP_HDR_SIZE + LDP_MSG_SIZE + STATUS_SIZE;
@@ -51,15 +52,19 @@ send_notification_full(struct tcp_conn *tcp, struct notify_msg *nm)
 	if ((buf = ibuf_open(size)) == NULL)
 		fatal(__func__);
 
-	gen_ldp_hdr(buf, size);
+	err |= gen_ldp_hdr(buf, size);
 	size -= LDP_HDR_SIZE;
-	gen_msg_hdr(buf, MSG_TYPE_NOTIFICATION, size);
-	gen_status_tlv(buf, nm->status, nm->messageid, nm->type);
+	err |= gen_msg_hdr(buf, MSG_TYPE_NOTIFICATION, size);
+	err |= gen_status_tlv(buf, nm->status, nm->messageid, nm->type);
 	/* optional tlvs */
 	if (nm->flags & F_NOTIF_PW_STATUS)
-		gen_pw_status_tlv(buf, nm->pw_status);
+		err |= gen_pw_status_tlv(buf, nm->pw_status);
 	if (nm->flags & F_NOTIF_FEC)
-		gen_fec_tlv(buf, &nm->fec);
+		err |= gen_fec_tlv(buf, &nm->fec);
+	if (err) {
+		ibuf_free(buf);
+		return;
+	}
 
 	evbuf_enqueue(&tcp->wbuf, buf);
 }
