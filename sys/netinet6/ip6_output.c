@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.209 2016/06/15 13:49:43 florian Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.210 2016/06/27 16:33:48 jca Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1149,6 +1149,7 @@ ip6_ctloutput(int op, struct socket *so, int level, int optname,
 				}
 				/* FALLTHROUGH */
 			case IPV6_UNICAST_HOPS:
+			case IPV6_MINHOPCOUNT:
 			case IPV6_HOPLIMIT:
 
 			case IPV6_RECVPKTINFO:
@@ -1174,6 +1175,14 @@ ip6_ctloutput(int op, struct socket *so, int level, int optname,
 						inp->inp_hops = optval;
 					}
 					break;
+
+				case IPV6_MINHOPCOUNT:
+					if (optval < 0 || optval > 255)
+						error = EINVAL;
+					else
+						inp->inp_ip6_minhlim = optval;
+					break;
+
 #define OPTSET(bit) \
 do { \
 	if (optval) \
@@ -1475,6 +1484,10 @@ do { \
 
 				case IPV6_UNICAST_HOPS:
 					optval = inp->inp_hops;
+					break;
+
+				case IPV6_MINHOPCOUNT:
+					optval = inp->inp_ip6_minhlim;
 					break;
 
 				case IPV6_RECVPKTINFO:

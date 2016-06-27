@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.99 2016/06/18 10:36:13 vgross Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.100 2016/06/27 16:33:48 jca Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -132,6 +132,7 @@ struct inpcb {
 #define SL_ESP_NETWORK    2             /* ESP network (encapsulation) level */
 #define SL_IPCOMP         3             /* Compression level */
 	u_char	inp_ip_minttl;		/* minimum TTL or drop */
+#define inp_ip6_minhlim inp_ip_minttl	/* minimum Hop Limit or drop */
 #define	inp_flowinfo	inp_hu.hu_ipv6.ip6_flow
 
 	int	inp_cksum6;

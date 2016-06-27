@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.89 2016/06/01 11:11:44 jca Exp $	*/
+/*	$OpenBSD: in6.h,v 1.90 2016/06/27 16:33:48 jca Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -346,6 +346,7 @@ struct route_in6 {
 #define IPV6_PIPEX		63   /* bool; using PIPEX */
 
 #define IPV6_RECVDSTPORT	64   /* bool; receive IP dst port w/dgram */
+#define IPV6_MINHOPCOUNT	65   /* int; minimum recv hop limit */
 
 #define IPV6_RTABLE		0x1021	/* int; routing table, see SO_RTABLE */
 

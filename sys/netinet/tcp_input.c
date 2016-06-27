@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.321 2016/06/27 15:59:51 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.322 2016/06/27 16:33:48 jca Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -633,8 +633,18 @@ findpcb:
 	KASSERT(intotcpcb(inp) == NULL || intotcpcb(inp)->t_inpcb == inp);
 
 	/* Check the minimum TTL for socket. */
-	if (inp->inp_ip_minttl && inp->inp_ip_minttl > ip->ip_ttl)
-		goto drop;
+	switch (af) {
+	case AF_INET:
+		if (inp->inp_ip_minttl && inp->inp_ip_minttl > ip->ip_ttl)
+			goto drop;
+#ifdef INET6
+	case AF_INET6:
+		if (inp->inp_ip6_minhlim &&
+		    inp->inp_ip6_minhlim > ip6->ip6_hlim)
+			goto drop;
+		break;
+#endif
+	}
 
 	tp = intotcpcb(inp);
 	if (tp == NULL)
