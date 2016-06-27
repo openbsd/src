@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.28 2016/06/27 15:47:38 tedu Exp $
+.\" $OpenBSD: doas.conf.5,v 1.29 2016/06/27 17:36:33 jmc Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -59,10 +59,12 @@ The default is to reset the environment, except for the variables
 .Ev USER
 and
 .Ev USERNAME .
-.It Ic setenv { Oo Ar variable ... Oc Ic Oo Ar variable=value ... Oc Ic }
+.It Ic setenv { Oo Ar variable ... Oc Oo Ar variable=value ... Oc Ic }
 In addition to the variables mentioned above, keep the space-separated
 specified variables.
-Variables may also be removed with a leading - or set using the latter syntax.
+Variables may also be removed with a leading
+.Sq -
+or set using the latter syntax.
 If the first character of
 .Ar value
 is a
@@ -116,7 +118,7 @@ If quotes or backslashes are used in a word,
 it is not considered a keyword.
 .El
 .Sh EXAMPLES
-The following example permits users in group wsrc to build ports,
+The following example permits users in group wsrc to build ports;
 wheel to execute commands as any user while keeping the environment
 variables
 .Ev PS1
@@ -124,8 +126,8 @@ and
 .Ev SSH_AUTH_SOCK
 and
 unsetting
-.Ev ENV ,
-permits tedu to run procmap as root without a password,
+.Ev ENV ;
+permits tedu to run procmap as root without a password;
 and additionally permits root to run unrestricted commands as itself.
 .Bd -literal -offset indent
 # Non-exhaustive list of variables needed to
