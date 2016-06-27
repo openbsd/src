@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.123 2016/04/25 10:53:13 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.124 2016/06/27 08:38:15 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -85,6 +85,10 @@ sub parse_fullurl
 
 	$class->strip_urlscheme($r) or return undef;
 	return $class->unique($class->parse_url($r, $state));
+}
+
+sub dont_cleanup
+{
 }
 
 sub ftp() { 'OpenBSD::PackageRepository::FTP' }
@@ -550,6 +554,7 @@ sub open_pipe
 			my $pid3 = open(my $in, "-|");
 			$self->did_it_fork($pid3);
 			if ($pid3) {
+				$self->dont_cleanup;
 				$self->pkg_copy($in, $object);
 			} else {
 				$self->grab_object($object);

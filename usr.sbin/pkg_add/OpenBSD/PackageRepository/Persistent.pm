@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Persistent.pm,v 1.1 2014/08/27 18:40:03 kspillner Exp $
+# $OpenBSD: Persistent.pm,v 1.2 2016/06/27 08:38:15 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -129,7 +129,16 @@ sub cleanup
 		CORE::close($cmdfh);
 		CORE::close($getfh);
 		waitpid($self->{controller}, 0);
+		delete $self->{controller};
 	}
+}
+
+sub dont_cleanup
+{
+	my $self = shift;
+	CORE::close($self->{cmdfh});
+	CORE::close($self->{getfh});
+	delete $self->{controller};
 }
 
 sub reinitialize
