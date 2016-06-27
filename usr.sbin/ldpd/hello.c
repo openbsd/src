@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.51 2016/06/27 19:06:33 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.52 2016/06/27 19:18:54 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -359,8 +359,8 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 	 * to start an LDP session.
 	 */
 	if (nbr == NULL && (!ds_tlv ||
-	    ((trans_pref == DUAL_STACK_LDPOV4 && af != AF_INET) ||
-	    (trans_pref == DUAL_STACK_LDPOV6 && af != AF_INET6))))
+	    ((trans_pref == DUAL_STACK_LDPOV4 && af == AF_INET) ||
+	    (trans_pref == DUAL_STACK_LDPOV6 && af == AF_INET6))))
 		nbr = nbr_new(lsr_id, af, ds_tlv, &trans_addr, scope_id);
 
 	/* update neighbor's configuration sequence number */
