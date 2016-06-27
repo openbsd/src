@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.171 2016/06/27 16:33:48 jca Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.172 2016/06/27 16:49:45 jsing Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -230,6 +230,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	 * Can kill self with "stdio".  Killing another pid
 	 * requires "proc"
 	 */
+	[SYS_o58_kill] = PLEDGE_STDIO,
 	[SYS_kill] = PLEDGE_STDIO,
 
 	/*
