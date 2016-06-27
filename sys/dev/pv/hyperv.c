@@ -715,13 +715,13 @@ hv_vmbus_connect(struct hv_softc *sc)
 		goto errout;
 	}
 
-	memset(&cmd, sizeof(cmd), 0);
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.hdr.message_type = HV_CHANMSG_INITIATED_CONTACT;
 	cmd.interrupt_page = (uint64_t)epa;
 	cmd.monitor_page_1 = (uint64_t)mpa1;
 	cmd.monitor_page_2 = (uint64_t)mpa2;
 
-	memset(&rsp, sizeof(rsp), 0);
+	memset(&rsp, 0, sizeof(rsp));
 
 	for (i = 0; versions[i] != HV_VMBUS_VERSION_INVALID; i++) {
 		cmd.vmbus_version_requested = versions[i];
