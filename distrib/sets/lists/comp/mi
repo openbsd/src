@@ -733,6 +733,7 @@
 ./usr/include/dev/usb/if_udavreg.h
 ./usr/include/dev/usb/if_umb.h
 ./usr/include/dev/usb/if_upgtvar.h
+./usr/include/dev/usb/if_urereg.h
 ./usr/include/dev/usb/if_urlreg.h
 ./usr/include/dev/usb/if_urndisreg.h
 ./usr/include/dev/usb/if_urtwreg.h

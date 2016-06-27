@@ -729,6 +729,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/if_udavreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/if_umb.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/if_upgtvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/if_urereg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/if_urlreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/if_urndisreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/if_urtwreg.ph
