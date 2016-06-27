@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.18 2016/06/18 17:13:05 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.19 2016/06/27 19:08:39 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -74,7 +74,6 @@ l2vpn_del(struct l2vpn *l2vpn)
 		free(lif);
 	}
 	while ((pw = LIST_FIRST(&l2vpn->pw_list)) != NULL) {
-		l2vpn_pw_exit(pw);
 		LIST_REMOVE(pw, entry);
 		free(pw);
 	}
