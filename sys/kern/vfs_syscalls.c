@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.258 2016/06/27 04:14:38 semarie Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.259 2016/06/27 04:26:41 semarie Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2332,13 +2332,17 @@ dovutimens(struct proc *p, struct vnode *vp, struct timespec ts[2])
 	}
 
 	if (ts[0].tv_nsec != UTIME_OMIT) {
-		if (ts[0].tv_nsec < 0 || ts[0].tv_nsec >= 1000000000)
+		if (ts[0].tv_nsec < 0 || ts[0].tv_nsec >= 1000000000) {
+			vrele(vp);
 			return (EINVAL);
+		}
 		vattr.va_atime = ts[0];
 	}
 	if (ts[1].tv_nsec != UTIME_OMIT) {
-		if (ts[1].tv_nsec < 0 || ts[1].tv_nsec >= 1000000000)
+		if (ts[1].tv_nsec < 0 || ts[1].tv_nsec >= 1000000000) {
+			vrele(vp);
 			return (EINVAL);
+		}
 		vattr.va_mtime = ts[1];
 	}
 
