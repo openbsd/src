@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.66 2016/03/04 14:09:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.67 2016/06/27 19:55:02 jca Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -201,6 +201,20 @@ pgfind(pid_t pgid)
 	LIST_FOREACH(pgrp, PGRPHASH(pgid), pg_hash)
 		if (pgrp->pg_id == pgid)
 			return (pgrp);
+	return (NULL);
+}
+
+/*
+ * Locate a zombie process
+ */
+struct process *
+zombiefind(pid_t pid)
+{
+	struct process *pr;
+
+	LIST_FOREACH(pr, &zombprocess, ps_list)
+		if (pr->ps_mainproc->p_pid == pid)
+			return (pr);
 	return (NULL);
 }
 

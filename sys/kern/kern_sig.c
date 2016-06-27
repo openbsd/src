@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.199 2016/06/27 16:49:45 jsing Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.200 2016/06/27 19:55:02 jca Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -627,19 +627,24 @@ sys_kill(struct proc *cp, void *v, register_t *retval)
 	int pid = SCARG(uap, pid);
 	int signum = SCARG(uap, signum);
 	int error;
+	int zombie = 0;
 
 	if ((error = pledge_kill(cp, pid)) != 0)
 		return (error);
 	if (((u_int)signum) >= NSIG)
 		return (EINVAL);
 	if (pid > 0) {
-		if ((pr = prfind(pid)) == NULL)
-			return (ESRCH);
+		if ((pr = prfind(pid)) == NULL) {
+			if ((pr = zombiefind(pid)) == NULL)
+				return (ESRCH);
+			else
+				zombie = 1;
+		}
 		if (!cansignal(cp, pr, signum))
 			return (EPERM);
 
 		/* kill single process */
-		if (signum)
+		if (signum && !zombie)
 			prsignal(pr, signum);
 		return (0);
 	}
