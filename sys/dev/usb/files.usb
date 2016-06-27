@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.128 2016/06/15 19:39:34 gerhard Exp $
+#	$OpenBSD: files.usb,v 1.129 2016/06/27 11:42:47 jmatthew Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -269,6 +269,11 @@ file	dev/usb/if_ugl.c		ugl
 device	url: ether, ifnet, mii
 attach	url at uhub
 file	dev/usb/if_url.c		url
+
+# Realtek RTL8152
+device	ure: ether, ifnet, mii
+attach	ure at uhub
+file	dev/usb/if_ure.c		ure
 
 
 # Serial drivers
