@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyname.c,v 1.16 2015/10/12 19:53:58 naddy Exp $ */
+/*	$OpenBSD: ttyname.c,v 1.17 2016/06/27 06:10:04 espie Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -120,7 +120,7 @@ oldttyname(struct stat *sb, char *buf, size_t len)
 		return (errno);
 
 	while ((dirp = readdir(dp))) {
-		if (dirp->d_fileno != sb->st_ino)
+		if (dirp->d_type != DT_CHR && dirp->d_type != DT_UNKNOWN)
 			continue;
 		if (dirp->d_namlen > len - sizeof(_PATH_DEV)) {
 			(void)closedir(dp);
@@ -128,8 +128,8 @@ oldttyname(struct stat *sb, char *buf, size_t len)
 		}
 		memcpy(buf + sizeof(_PATH_DEV) - 1, dirp->d_name,
 		    dirp->d_namlen + 1);
-		if (stat(buf, &dsb) || sb->st_dev != dsb.st_dev ||
-		    sb->st_ino != dsb.st_ino)
+		if (lstat(buf, &dsb) || !S_ISCHR(dsb.st_mode) ||
+		    sb->st_rdev != dsb.st_rdev)
 			continue;
 		(void)closedir(dp);
 		return (0);
