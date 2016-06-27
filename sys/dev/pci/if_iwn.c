@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.166 2016/06/03 18:33:37 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.167 2016/06/27 19:01:02 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -5046,8 +5046,11 @@ iwn_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 void
 iwn_update_htprot(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
+	/* XXX Disabled for now. It seems to cause output errors
+	 * (tx status=0x83) and to make block ack sessions degrade
+	 * into a half-working state. */
+#if 0
 	struct iwn_softc *sc = ic->ic_softc;
-	struct iwn_ops *ops = &sc->ops;
 	enum ieee80211_htprot htprot;
 	struct iwn_rxon_assoc rxon_assoc;
 	int s, error;
@@ -5069,19 +5072,11 @@ iwn_update_htprot(struct ieee80211com *ic, struct ieee80211_node *ni)
 	rxon_assoc.rxchain = sc->rxon.rxchain;
 	rxon_assoc.acquisition = sc->rxon.acquisition;
 
-	s = splnet();
-
 	error = iwn_cmd(sc, IWN_CMD_RXON_ASSOC, &rxon_assoc,
 	    sizeof(rxon_assoc), 1);
 	if (error != 0)
 		printf("%s: RXON_ASSOC command failed\n", sc->sc_dev.dv_xname);
-
-	/* All RXONs wipe the firmware's txpower table. Restore it. */
-	error = ops->set_txpower(sc, 1);
-	if (error != 0)
-		printf("%s: could not set TX power\n", sc->sc_dev.dv_xname);
-
-	splx(s);
+#endif
 }
 
 /*
