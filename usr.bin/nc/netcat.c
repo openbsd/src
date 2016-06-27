@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.153 2016/06/02 04:26:32 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.154 2016/06/27 23:58:08 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -144,7 +144,7 @@ struct tls *tls_setup_server(struct tls *, int, char *);
 int
 main(int argc, char *argv[])
 {
-	int ch, s, ret, socksv;
+	int ch, s = -1, ret, socksv;
 	char *host, *uport;
 	struct addrinfo hints;
 	struct servent *sv;
@@ -158,7 +158,6 @@ main(int argc, char *argv[])
 	struct tls *tls_ctx = NULL;
 
 	ret = 1;
-	s = 0;
 	socksv = 5;
 	host = NULL;
 	uport = NULL;
@@ -586,8 +585,8 @@ main(int argc, char *argv[])
 		build_ports(uport);
 
 		/* Cycle through portlist, connecting to each port. */
-		for (i = 0; portlist[i] != NULL; i++) {
-			if (s)
+		for (s = -1, i = 0; portlist[i] != NULL; i++) {
+			if (s != -1)
 				close(s);
 
 			if (usetls) {
@@ -604,7 +603,7 @@ main(int argc, char *argv[])
 			else
 				s = remote_connect(host, portlist[i], hints);
 
-			if (s < 0)
+			if (s == -1)
 				continue;
 
 			ret = 0;
@@ -653,7 +652,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (s)
+	if (s != -1)
 		close(s);
 
 	tls_config_free(tls_cfg);
