@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.26 2016/06/11 17:17:10 tedu Exp $
+.\" $OpenBSD: doas.conf.5,v 1.27 2016/06/27 15:41:17 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: June 11 2016 $
+.Dd $Mdocdate: June 27 2016 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -59,9 +59,16 @@ The default is to reset the environment, except for the variables
 .Ev USER
 and
 .Ev USERNAME .
-.It Ic keepenv { Oo Ar variable ... Oc Ic }
+.It Ic setenv { Oo Ar variable ... Oc Ic Oo Ar variable=value ... Oc Ic }
 In addition to the variables mentioned above, keep the space-separated
 specified variables.
+Variables may also be removed with a leading - or set using the latter syntax.
+If the first character of
+.Ar value
+is a
+.Ql $
+then the value to be set is taken from the existing environment
+variable of the same name.
 .El
 .It Ar identity
 The username to match.
@@ -112,22 +119,24 @@ it is not considered a keyword.
 The following example permits users in group wsrc to build ports,
 wheel to execute commands as any user while keeping the environment
 variables
-.Ev ENV ,
-.Ev PS1 ,
+.Ev PS1
 and
-.Ev SSH_AUTH_SOCK ,
+.Ev SSH_AUTH_SOCK
+and
+unsetting
+.Ev ENV ,
 permits tedu to run procmap as root without a password,
 and additionally permits root to run unrestricted commands as itself.
 .Bd -literal -offset indent
 # Non-exhaustive list of variables needed to
 # build release(8) and ports(7)
-permit nopass keepenv { \e
+permit nopass setenv { \e
         FTPMODE PKG_CACHE PKG_PATH SM_PATH SSH_AUTH_SOCK \e
         DESTDIR DISTDIR FETCH_CMD FLAVOR GROUP MAKE MAKECONF \e
         MULTI_PACKAGES NOMAN OKAY_FILES OWNER PKG_DBDIR \e
         PKG_DESTDIR PKG_TMPDIR PORTSDIR RELEASEDIR SHARED_ONLY \e
         SUBPACKAGE WRKOBJDIR SUDO_PORT_V1 } :wsrc
-permit nopass keepenv { ENV PS1 SSH_AUTH_SOCK } :wheel
+permit nopass setenv { -ENV PS1=$DOAS_PS1 SSH_AUTH_SOCK } :wheel
 permit nopass tedu as root cmd /usr/sbin/procmap
 permit nopass keepenv root as root
 .Ed
