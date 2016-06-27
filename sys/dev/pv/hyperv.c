@@ -1487,8 +1487,10 @@ hv_handle_alloc(struct hv_channel *ch, void *buffer, uint32_t buflen,
 
 	/* Prepare array of frame addresses */
 	if ((frames = mallocarray(total, sizeof(*frames), M_DEVBUF, M_ZERO |
-	    waitok)) == NULL)
+	    waitok)) == NULL) {
+		free(msg, M_DEVBUF, sizeof(*msg));
 		return (ENOMEM);
+	}
 	for (i = 0; i < total; i++) {
 		if (!pmap_extract(pmap_kernel(), (vaddr_t)buffer +
 		    PAGE_SIZE * i, &pa)) {
