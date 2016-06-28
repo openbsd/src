@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.101 2015/04/07 05:37:03 guenther Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.102 2016/06/28 04:28:18 afresh1 Exp $
 #
 # Build wrapper for Perl 5.20.1-RC2
 #
@@ -158,7 +158,7 @@ CFLAGS+= -fno-tree-ter
 
 # The DynaLoader extension is now compiled statically into libperl
 miniperl: ${GENERATED} ${SRCS1:S/.c/.o/g} opmini.o perlmini.o miniperlmain.o
-	${CC} ${CPPFLAGS} ${CFLAGS} -o $@ ${SRCS1:S/.c/.o/g} opmini.o perlmini.o miniperlmain.o ${LDFLAGS} -lm -lutil
+	${CC} ${CPPFLAGS} ${CFLAGS} -o $@ ${SRCS1:S/.c/.o/g} opmini.o perlmini.o miniperlmain.o ${LDFLAGS} -lm
 
 opmini.c: op.c
 	rm -f opmini.c

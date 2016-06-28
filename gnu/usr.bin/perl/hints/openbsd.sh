@@ -84,6 +84,8 @@ esac
 # around for old NetBSD binaries.
 libswanted=`echo $libswanted | sed 's/ crypt / /'`
 
+libswanted=`echo $libswanted | sed 's/ util / /'`
+
 # Configure can't figure this out non-interactively
 d_suidsafe=$define
 
