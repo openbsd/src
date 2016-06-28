@@ -1998,8 +1998,8 @@ preprocessed.
 If the first line of an input file is @code{#NO_APP} or if you use the
 @samp{-f} option, whitespace and comments are not removed from the input file.
 Within an input file, you can ask for whitespace and comment removal in
-specific portions of the by putting a line that says @code{#APP} before the
-text that may contain whitespace or comments, and putting a line that says
+specific portions of the file by putting a line that says @code{#APP} before
+the text that may contain whitespace or comments, and putting a line that says
 @code{#NO_APP} after this text.  This feature is mainly intend to support
 @code{asm} statements in compilers whose output is otherwise free of comments
 and whitespace.
