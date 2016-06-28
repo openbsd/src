@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.213 2016/06/18 10:36:13 vgross Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.214 2016/06/28 11:22:53 jca Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -425,15 +425,25 @@ udp_input(struct mbuf *m, ...)
 				continue;
 #ifdef INET6
 			if (ip6) {
+				if (inp->inp_ip6_minhlim &&
+				    inp->inp_ip6_minhlim > ip6->ip6_hlim)
+					continue;
 				if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
 					if (!IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6,
 					    &ip6->ip6_dst))
 						continue;
 			} else
 #endif /* INET6 */
-			if (inp->inp_laddr.s_addr != INADDR_ANY) {
-				if (inp->inp_laddr.s_addr != ip->ip_dst.s_addr)
+			{
+				if (inp->inp_ip_minttl &&
+				    inp->inp_ip_minttl > ip->ip_ttl)
 					continue;
+
+				if (inp->inp_laddr.s_addr != INADDR_ANY) {
+					if (inp->inp_laddr.s_addr !=
+					    ip->ip_dst.s_addr)
+						continue;
+				}
 			}
 #ifdef INET6
 			if (ip6) {
@@ -579,6 +589,17 @@ udp_input(struct mbuf *m, ...)
 		}
 	}
 	KASSERT(sotoinpcb(inp->inp_socket) == inp);
+
+#ifdef INET6
+	if (ip6 && inp->inp_ip6_minhlim &&
+	    inp->inp_ip6_minhlim > ip6->ip6_hlim) {
+		goto bad;
+	} else
+#endif
+	if (ip && inp->inp_ip_minttl &&
+	    inp->inp_ip_minttl > ip->ip_ttl) {
+		goto bad;
+	}
 
 #if NPF > 0
 	if (inp->inp_socket->so_state & SS_ISCONNECTED)
