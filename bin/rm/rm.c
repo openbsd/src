@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.38 2016/06/28 15:20:13 tedu Exp $	*/
+/*	$OpenBSD: rm.c,v 1.39 2016/06/28 18:00:59 tedu Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -150,11 +150,8 @@ rm_tree(char **argv)
 	flags = FTS_PHYSICAL;
 	if (!needstat)
 		flags |= FTS_NOSTAT;
-	if (!(fts = fts_open(argv, flags, NULL))) {
-		if (!fflag || errno != ENOENT)
-			err(1, NULL);
-		return;
-	}
+	if (!(fts = fts_open(argv, flags, NULL)))
+		err(1, NULL);
 	while ((p = fts_read(fts)) != NULL) {
 		switch (p->fts_info) {
 		case FTS_DNR:
