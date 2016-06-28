@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.39 2016/06/28 11:23:57 jca Exp $
+.\"	$OpenBSD: ip6.4,v 1.40 2016/06/28 17:32:58 jca Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -146,7 +146,7 @@ datagrams sent on this socket.
 A value of \-1 resets to the default value.
 .It Dv IPV6_MINHOPCOUNT Fa "int *"
 Get or set the minimum hop limit header field for incoming
-packets received on this socket.
+packets received on TCP and UDP sockets.
 This can be used to implement the
 .Em Generalized TTL Security Mechanism (GTSM)
 according to RFC 5082.
