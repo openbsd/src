@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.172 2016/06/27 16:49:45 jsing Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.173 2016/06/28 04:27:58 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -355,7 +355,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 
 static const struct {
 	char *name;
-	int flags;
+	uint64_t flags;
 } pledgereq[] = {
 	{ "audio",		PLEDGE_AUDIO },
 	{ "cpath",		PLEDGE_CPATH },
