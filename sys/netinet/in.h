@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.116 2016/06/15 19:39:34 gerhard Exp $	*/
+/*	$OpenBSD: in.h,v 1.117 2016/06/28 17:18:24 chris Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -682,7 +682,9 @@ struct ip_mreq {
 #define	IPCTL_ARPQUEUED		36
 #define	IPCTL_MRTMFC		37
 #define	IPCTL_MRTVIF		38
-#define	IPCTL_MAXID		39
+#define	IPCTL_ARPTIMEOUT	39
+#define	IPCTL_ARPDOWN		40
+#define	IPCTL_MAXID		41
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -724,6 +726,8 @@ struct ip_mreq {
 	{ "arpqueued", CTLTYPE_INT }, \
 	{ "mrtmfc", CTLTYPE_STRUCT }, \
 	{ "mrtvif", CTLTYPE_STRUCT }, \
+	{ "arptimeout", CTLTYPE_INT }, \
+	{ "arpdown", CTLTYPE_INT }, \
 }
 #define	IPCTL_VARS { \
 	NULL, \
@@ -765,6 +769,8 @@ struct ip_mreq {
 	&la_hold_total, \
 	NULL, \
 	NULL, \
+	&arpt_keep, \
+	&arpt_down, \
 }
 
 #endif /* __BSD_VISIBLE */

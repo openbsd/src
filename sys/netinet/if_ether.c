@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.215 2016/06/14 09:44:41 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.216 2016/06/28 17:18:24 chris Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -74,8 +74,8 @@ struct llinfo_arp {
 #define LA_HOLD_TOTAL 100
 
 /* timer values */
-int	arpt_prune = (5*60*1);	/* walk list every 5 minutes */
-int	arpt_keep = (20*60);	/* once resolved, good for 20 more minutes */
+int	arpt_prune = (5 * 60);	/* walk list every 5 minutes */
+int	arpt_keep = (20 * 60);	/* once resolved, cache for 20 minutes */
 int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
 
 void arptfree(struct rtentry *);

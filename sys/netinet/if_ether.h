@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.71 2016/05/18 20:15:14 mpi Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.72 2016/06/28 17:18:24 chris Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -201,6 +201,9 @@ struct	arpcom {
 	int	 ac_multirangecnt;		/* number of mcast ranges */
 
 };
+
+extern int arpt_keep;				/* arp resolved cache expire */
+extern int arpt_down;				/* arp down cache expire */
 
 extern u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
 extern u_int8_t etheranyaddr[ETHER_ADDR_LEN];
