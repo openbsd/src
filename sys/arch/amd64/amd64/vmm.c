@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.64 2016/06/10 16:37:16 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.65 2016/06/28 05:50:55 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -685,7 +685,7 @@ start_vmm_on_cpu(struct cpu_info *ci)
 	 */
 	if (ci->ci_vmm_flags & CI_VMM_VMX) {
 		if (ci->ci_vmxon_region == 0)
-			panic("NULL vmxon region specified\n");
+			return;
 		else {
 			bzero(ci->ci_vmxon_region, PAGE_SIZE);
 			ci->ci_vmxon_region->vr_revision =
@@ -709,7 +709,7 @@ start_vmm_on_cpu(struct cpu_info *ci)
 
 			/* Enter VMX mode */
 			if (vmxon((uint64_t *)&ci->ci_vmxon_region_pa))
-				panic("VMXON failed\n");
+				return;
 		}
 	}
 
