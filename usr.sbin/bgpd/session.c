@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.348 2016/06/06 15:59:10 benno Exp $ */
+/*	$OpenBSD: session.c,v 1.349 2016/06/28 16:59:14 jca Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1201,12 +1201,15 @@ session_setup_socket(struct peer *p)
 			/* set hoplimit to foreign router's distance
 			   1=direct n=multihop with ttlsec, we always use 255 */
 			if (p->conf.ttlsec) {
-			/*
-			 * XXX Kernel has no ip6 equivalent of MINTTL yet so
-			 * we can't check incoming packets, but we can at least
-			 * set the outgoing TTL to allow sessions configured
-			 * with ttl-security to come up.
-			 */
+				ttl = 256 - p->conf.distance;
+				if (setsockopt(p->fd, IPPROTO_IPV6,
+				    IPV6_MINHOPCOUNT, &ttl, sizeof(ttl))
+				    == -1) {
+					log_peer_warn(&p->conf,
+					    "session_setup_socket: "
+					    "setsockopt MINHOPCOUNT");
+					return (-1);
+				}
 				ttl = 255;
 			}
 			if (setsockopt(p->fd, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
