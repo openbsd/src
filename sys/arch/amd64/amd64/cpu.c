@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.100 2016/06/08 01:00:18 tedu Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.101 2016/06/28 05:37:50 mlarkin Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -500,6 +500,8 @@ cpu_init(struct cpu_info *ci)
 		cr4 |= CR4_SMAP;
 	if (ci->ci_feature_sefflags_ebx & SEFF0EBX_FSGSBASE)
 		cr4 |= CR4_FSGSBASE;
+	if (ci->ci_feature_sefflags_ecx & SEFF0ECX_UMIP)
+		cr4 |= CR4_UMIP;
 #endif
 	if (cpu_ecxfeature & CPUIDECX_XSAVE)
 		cr4 |= CR4_OSXSAVE;

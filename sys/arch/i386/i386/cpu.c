@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.77 2016/05/18 03:45:11 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.78 2016/06/28 05:37:50 mlarkin Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -379,6 +379,8 @@ cpu_init(struct cpu_info *ci)
 #ifndef SMALL_KERNEL
 	if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMAP)
 		cr4 |= CR4_SMAP;
+	if (ci->ci_feature_sefflags_ecx & SEFF0ECX_UMIP)
+		cr4 |= CR4_UMIP;
 #endif
 
 	/*
