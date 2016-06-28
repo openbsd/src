@@ -729,14 +729,6 @@ case "$osname" in
 esac
 
 case "$osname" in
-openbsd)
-	$spitshell >>$Makefile <<!GROK!THIS!
-# When building Perl itself, link with the thread library,
-# so that extensions can use thread functions even though Perl
-# is not threaded
-CCDLFLAGS = $ccdlflags -lpthread
-!GROK!THIS!
-	;;
 aix)
 	$spitshell >>$Makefile <<!GROK!THIS!
 LIBS			= $perllibs
