@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.52 2016/06/01 11:39:59 mglocker Exp $
+#	$OpenBSD: GENERIC,v 1.53 2016/06/28 04:41:37 jmatthew Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -157,6 +157,7 @@ upl*		at uhub?	# Prolific PL2301/PL2302 host-to-host `network'
 ugl*		at uhub?	# Genesys Logic GL620USB-A host-to-host `network'
 ural*		at uhub?	# Ralink RT2500USB
 url*		at uhub?	# Realtek RTL8150L based adapters
+ure*		at uhub?	# Realtek RTL8152 based adapters
 urtw*		at uhub?	# Realtek 8187
 rsu*		at uhub?	# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 urtwn*		at uhub?	# Realtek RTL8188CU/RTL8192CU

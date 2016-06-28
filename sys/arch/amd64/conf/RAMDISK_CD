@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.161 2016/04/15 05:52:13 jsg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.162 2016/06/28 04:41:37 jmatthew Exp $
 
 machine		amd64
 maxusers	4
@@ -104,6 +104,7 @@ cdce*		at uhub?		# CDC Ethernet
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 mos*		at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
 url*		at uhub?		# Realtek RTL8150L based adapters
+ure*		at uhub?		# Realtek RTL8152 based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
 ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host

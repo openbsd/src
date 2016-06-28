@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP32,v 1.29 2015/11/02 20:14:36 miod Exp $
+#	$OpenBSD: RAMDISK-IP32,v 1.30 2016/06/28 04:41:37 jmatthew Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 
@@ -93,6 +93,7 @@ upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
 ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host
 ural*		at uhub?		# Ralink RT2500USB
 url*		at uhub?		# Realtek RTL8150L based adapters
+ure*		at uhub?		# Realtek RTL8152 based adapters
 urtw*		at uhub?		# Realtek 8187
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 zyd*		at uhub?		# Zydas ZD1211

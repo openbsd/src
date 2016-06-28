@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.228 2015/10/23 05:35:49 mlarkin Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.229 2016/06/28 04:41:37 jmatthew Exp $
 
 machine		i386
 maxusers	4
@@ -98,6 +98,7 @@ cdce*		at uhub?		# CDC Ethernet
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 mos*		at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
 url*		at uhub?		# Realtek RTL8150L based adapters
+ure*		at uhub?		# Realtek RTL8152 based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 ural*		at uhub?		# Ralink RT2500
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB

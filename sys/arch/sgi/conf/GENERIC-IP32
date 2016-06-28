@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP32,v 1.47 2016/06/02 09:53:10 mglocker Exp $
+#	$OpenBSD: GENERIC-IP32,v 1.48 2016/06/28 04:41:37 jmatthew Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 #
@@ -130,6 +130,7 @@ upl*		at uhub?	# Prolific PL2301/PL2302 host-to-host `network'
 ugl*		at uhub?	# Genesys Logic GL620USB-A host-to-host `network'
 ural*		at uhub?	# Ralink RT2500USB
 url*		at uhub?	# Realtek RTL8150L based adapters
+ure*		at uhub?	# Realtek RTL8152 based adapters
 urtw*		at uhub?	# Realtek 8187
 urtwn*		at uhub?	# Realtek RTL8188CU/RTL8192CU
 wi*		at uhub?	# WaveLAN IEEE 802.11DS

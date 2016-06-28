@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.24 2016/03/18 05:38:10 jmatthew Exp $
+#	$OpenBSD: RAMDISK,v 1.25 2016/06/28 04:41:37 jmatthew Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -79,6 +79,7 @@ ugl*		at uhub?	# Genesys Logic GL620USB-A host-to-host `network'
 udav*		at uhub?	# Davicom DM9601 based Ethernet
 mos*		at uhub?	# MOSCHIP MCS7730/7830 10/100 Ethernet
 url*		at uhub?	# Realtek RTL8150L based adapters
+ure*		at uhub?	# Realtek RTL8152 based adapters
 wi*		at uhub?	# WaveLAN IEEE 802.11DS
 uath*		at uhub?	# Atheros AR5005UG/AR5005UX
 ural*		at uhub?	# Ralink RT2500USB

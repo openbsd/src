@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.257 2016/06/01 09:48:20 mglocker Exp $g
+#	$OpenBSD: GENERIC,v 1.258 2016/06/28 04:41:37 jmatthew Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -273,6 +273,7 @@ ugl*	at uhub?		# Genesys Logic GL620A-USB host-to-host `network'
 udav*	at uhub?		# Davicom DM9601 based Ethernet
 mos*	at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
 url*	at uhub?		# Realtek RTL8150L based adapters
+ure*	at uhub?		# Realtek RTL8152 based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio

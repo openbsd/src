@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.99 2015/09/19 10:41:05 miod Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.100 2016/06/28 04:41:37 jmatthew Exp $
 
 machine		alpha
 maxusers	4
@@ -67,6 +67,7 @@ udav*		at uhub?		# Davicom DM9601 based Ethernet
 upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
 ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host
 url*		at uhub?		# Realtek RTL8150L based adapters
+ure*		at uhub?		# Realtek RTL8152 based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 
 mcbus*		at mainbus0

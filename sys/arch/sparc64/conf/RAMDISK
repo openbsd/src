@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.119 2016/04/15 01:40:25 dlg Exp $
+#	$OpenBSD: RAMDISK,v 1.120 2016/06/28 04:41:37 jmatthew Exp $
 
 machine		sparc64
 maxusers	4
@@ -229,6 +229,7 @@ mos*		at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
 ural*		at uhub?		# Ralink RT2500USB
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB
 url*		at uhub?		# Realtek RTL8150L based adapters
+ure*		at uhub?		# Realtek RTL8152 based adapters
 
 sab*		at ebus?
 sabtty*		at sab?
