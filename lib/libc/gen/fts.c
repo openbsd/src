@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.54 2016/06/28 17:12:29 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.55 2016/06/28 17:21:48 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -78,6 +78,12 @@ fts_open(char * const *argv, int options,
 
 	/* Options check. */
 	if (options & ~FTS_OPTIONMASK) {
+		errno = EINVAL;
+		return (NULL);
+	}
+
+	/* At least one path must be specified. */
+	if (*argv == NULL) {
 		errno = EINVAL;
 		return (NULL);
 	}
