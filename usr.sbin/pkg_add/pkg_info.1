@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.52 2016/02/29 22:59:33 jmc Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.53 2016/06/28 15:38:36 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: February 29 2016 $
+.Dd $Mdocdate: June 28 2016 $
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Sh SYNOPSIS
 .Nm pkg_info
 .Bk -words
-.Op Fl AaCcdfIKLMmPqRSstUv
+.Op Fl AaCcdfIKLMmPqRSstUvz
 .Op Fl E Ar filename
 .Op Fl e Ar pkg-name
 .Op Fl l Ar str
@@ -179,6 +179,14 @@ Show packages which are not required by any other packages.
 Show the deinstall-message file (if any) for each package.
 .It Fl v
 Turn on verbose output.
+.It Fl z
+Fuzzy listing option, often used together with
+.Fl m .
+Only shows stems, flavors and branches information.
+To be reused with
+.Xr pkg_add 1
+.Fl l
+to recreate a package installation with different versions and no ambiguity.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_TMPDIR

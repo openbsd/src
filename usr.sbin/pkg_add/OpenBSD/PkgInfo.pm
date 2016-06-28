@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.38 2016/06/22 12:18:21 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.39 2016/06/28 15:38:36 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -415,7 +415,18 @@ sub print_info
 		return;
 	}
 	my $plist;
-	if ($state->opt('I')) {
+	if ($state->opt('z')) {
+		$plist = $handle->plist(\&OpenBSD::PackingList::ExtraInfoOnly);
+		my $name = OpenBSD::PackageName->new_from_string($pkg);
+		my $stem = $name->{stem};
+		my $compose = $stem."--".join('-', sort keys %{$name->{flavors}});
+		if ($plist->has('is-branch')) {
+			if ($plist->fullpkgpath =~ m/\/([^\/]+?)(,.*)?$/) {
+				$compose .= "%$1";
+			}
+		}
+		$state->say("#1", $compose);
+	} elsif ($state->opt('I')) {
 		if ($state->opt('q')) {
 			$state->say("#1", $pkg);
 		} else {
@@ -567,8 +578,8 @@ sub parse_and_run
 		    }
 	    };
 	$state->{no_exports} = 1;
-	$state->handle_options('cCdfF:hIKLmPQ:qr:RsSUe:E:Ml:aAt',
-	    '[-AaCcdfIKLMmPqRSstUv] [-D nolock][-E filename] [-e pkg-name] ',
+	$state->handle_options('cCdfF:hIKLmPQ:qr:RsSUe:E:Ml:aAtz',
+	    '[-AaCcdfIKLMmPqRSstUvz] [-D nolock][-E filename] [-e pkg-name] ',
 	    '[-l str] [-Q query] [-r pkgspec] [pkg-name ...]');
 
 	if ($state->opt('r')) {
