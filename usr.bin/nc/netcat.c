@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.155 2016/06/28 00:01:10 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.156 2016/06/28 17:35:14 jca Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -115,6 +115,8 @@ int timeout = -1;
 int family = AF_UNSPEC;
 char *portlist[PORT_MAX+1];
 char *unix_dg_tmp_socket;
+int ttl = -1;
+int minttl = -1;
 
 void	atelnet(int, unsigned char *, unsigned int);
 void	build_ports(char *);
@@ -166,7 +168,7 @@ main(int argc, char *argv[])
 	signal(SIGPIPE, SIG_IGN);
 
 	while ((ch = getopt(argc, argv,
-	    "46C:cDde:FH:hI:i:K:klNnO:P:p:R:rSs:T:tUuV:vw:X:x:z")) != -1) {
+	    "46C:cDde:FH:hI:i:K:klM:m:NnO:P:p:R:rSs:T:tUuV:vw:X:x:z")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -221,6 +223,16 @@ main(int argc, char *argv[])
 			break;
 		case 'l':
 			lflag = 1;
+			break;
+		case 'M':
+			ttl = strtonum(optarg, 0, 255, &errstr);
+			if (errstr)
+				errx(1, "ttl is %s", errstr);
+			break;
+		case 'm':
+			minttl = strtonum(optarg, 0, 255, &errstr);
+			if (errstr)
+				errx(1, "minttl is %s", errstr);
 			break;
 		case 'N':
 			Nflag = 1;
@@ -1423,6 +1435,29 @@ set_common_sockopts(int s, int af)
 		    &Oflag, sizeof(Oflag)) == -1)
 			err(1, "set TCP send buffer size");
 	}
+	if (ttl != -1 || minttl != -1) {
+		int proto, in_ttl_opt, out_ttl_opt;
+		switch (af) {
+		case AF_INET:
+			proto = IPPROTO_IP;
+			in_ttl_opt = IP_MINTTL;
+			out_ttl_opt = IP_TTL;
+			break;
+		case AF_INET6:
+			proto = IPPROTO_IPV6;
+			in_ttl_opt = IPV6_MINHOPCOUNT;
+			out_ttl_opt = IPV6_UNICAST_HOPS;
+			break;
+		default:
+			errx(1, "unknown address family: %d", af);
+		}
+		if (minttl != -1 && setsockopt(s, proto, in_ttl_opt,
+		    &minttl, sizeof(minttl)))
+			err(1, "setsockopt minttl");
+		if (ttl != -1 && setsockopt(s, proto, out_ttl_opt,
+		    &ttl, sizeof(ttl)))
+			err(1, "setsockopt ttl");
+	}
 }
 
 int
@@ -1570,6 +1605,8 @@ help(void)
 	\t-K keyfile	Private key file\n\
 	\t-k		Keep inbound sockets open for multiple connects\n\
 	\t-l		Listen mode, for inbound connects\n\
+	\t-M ttl		Outgoing TTL / Hop Limit\n\
+	\t-m minttl	Minimum incoming TTL / Hop Limit\n\
 	\t-N		Shutdown the network socket after EOF on stdin\n\
 	\t-n		Suppress name/port resolutions\n\
 	\t-O length	TCP send buffer length\n\
@@ -1599,11 +1636,10 @@ usage(int ret)
 	fprintf(stderr,
 	    "usage: nc [-46cDdFhklNnrStUuvz] [-C certfile] [-e name] "
 	    "[-H hash] [-I length]\n"
-	    "\t  [-i interval] [-K keyfile] [-O length] [-P proxy_username]\n"
-	    "\t  [-p source_port] [-R CAfile] [-s source] "
-	    "[-T keyword] [-V rtable]\n"
-	    "\t  [-w timeout] [-X proxy_protocol] [-x proxy_address[:port]]\n"
-	    "\t  [destination] [port]\n");
+	    "\t  [-i interval] [-K keyfile] [-M ttl] [-m minttl] [-O length]\n"
+	    "\t  [-P proxy_username] [-p source_port] [-R CAfile] [-s source]\n"
+	    "\t  [-T keyword] [-V rtable] [-w timeout] [-X proxy_protocol]\n"
+	    "\t  [-x proxy_address[:port]] [destination] [port]\n");
 	if (ret)
 		exit(1);
 }
