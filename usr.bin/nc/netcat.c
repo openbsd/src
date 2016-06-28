@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.154 2016/06/27 23:58:08 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.155 2016/06/28 00:01:10 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -668,7 +668,7 @@ int
 unix_bind(char *path, int flags)
 {
 	struct sockaddr_un s_un;
-	int s;
+	int s, save_errno;
 
 	/* Create unix domain socket. */
 	if ((s = socket(AF_UNIX, flags | (uflag ? SOCK_DGRAM : SOCK_STREAM),
@@ -686,7 +686,9 @@ unix_bind(char *path, int flags)
 	}
 
 	if (bind(s, (struct sockaddr *)&s_un, sizeof(s_un)) < 0) {
+		save_errno = errno;
 		close(s);
+		errno = save_errno;
 		return (-1);
 	}
 	return (s);
@@ -762,7 +764,7 @@ int
 unix_connect(char *path)
 {
 	struct sockaddr_un s_un;
-	int s;
+	int s, save_errno;
 
 	if (uflag) {
 		if ((s = unix_bind(unix_dg_tmp_socket, SOCK_CLOEXEC)) < 0)
@@ -782,7 +784,9 @@ unix_connect(char *path)
 		return (-1);
 	}
 	if (connect(s, (struct sockaddr *)&s_un, sizeof(s_un)) < 0) {
+		save_errno = errno;
 		close(s);
+		errno = save_errno;
 		return (-1);
 	}
 	return (s);
@@ -816,7 +820,7 @@ int
 remote_connect(const char *host, const char *port, struct addrinfo hints)
 {
 	struct addrinfo *res, *res0;
-	int s, error, on = 1;
+	int s, error, on = 1, save_errno;
 
 	if ((error = getaddrinfo(host, port, &hints, &res)))
 		errx(1, "getaddrinfo: %s", gai_strerror(error));
@@ -855,7 +859,9 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 			warn("connect to %s port %s (%s) failed", host, port,
 			    uflag ? "udp" : "tcp");
 
+		save_errno = errno;
 		close(s);
+		errno = save_errno;
 		s = -1;
 	} while ((res0 = res0->ai_next) != NULL);
 
@@ -901,7 +907,7 @@ int
 local_listen(char *host, char *port, struct addrinfo hints)
 {
 	struct addrinfo *res, *res0;
-	int s, ret, x = 1;
+	int s, ret, x = 1, save_errno;
 	int error;
 
 	/* Allow nodename to be null. */
@@ -933,7 +939,9 @@ local_listen(char *host, char *port, struct addrinfo hints)
 		    res0->ai_addrlen) == 0)
 			break;
 
+		save_errno = errno;
 		close(s);
+		errno = save_errno;
 		s = -1;
 	} while ((res0 = res0->ai_next) != NULL);
 
