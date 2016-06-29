@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.199 2016/06/18 10:36:13 vgross Exp $
+.\"	$OpenBSD: sysctl.8,v 1.200 2016/06/29 17:54:08 chris Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: June 18 2016 $
+.Dd $Mdocdate: June 29 2016 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -246,6 +246,8 @@ and a few require a kernel compiled with non-standard
 .It net.inet.ip.ifq.drops Ta integer Ta no
 .It net.inet.ip.mforwarding Ta integer Ta yes
 .It net.inet.ip.multipath Ta integer Ta yes
+.It net.inet.ip.arptimeout Ta integer Ta yes
+.It net.inet.ip.arpdown Ta integer Ta yes
 .It net.inet.icmp.maskrepl Ta integer Ta yes
 .It net.inet.icmp.bmcastecho Ta integer Ta yes
 .It net.inet.icmp.errppslimit Ta integer Ta yes
