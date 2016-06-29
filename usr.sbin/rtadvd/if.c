@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.39 2016/03/01 20:51:05 jca Exp $	*/
+/*	$OpenBSD: if.c,v 1.40 2016/06/29 14:19:38 jca Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "rtadvd.h"
 #include "if.h"
 #include "log.h"
@@ -54,15 +55,11 @@
 	(((a) & ((size)-1)) ? (1 + ((a) | ((size)-1))) : (a))
 
 #define NEXT_SA(ap) (ap) = (struct sockaddr *) \
-	((caddr_t)(ap) + ((ap)->sa_len ? ROUNDUP((ap)->sa_len,\
+	((char *)(ap) + ((ap)->sa_len ? ROUNDUP((ap)->sa_len,\
 						 sizeof(u_long)) :\
 			  			 sizeof(u_long)))
 
 struct if_msghdr **iflist;
-int iflist_init_ok;
-size_t ifblock_size;
-char *ifblock;
-
 static void get_iflist(char **buf, size_t *size);
 static void parse_iflist(struct if_msghdr ***ifmlist_p, char *buf,
     size_t bufsize);
@@ -113,46 +110,22 @@ if_nametosdl(char *name)
 int
 if_getmtu(char *name)
 {
-	struct ifaddrs *ifap, *ifa;
-	struct if_data *ifd;
-	u_long mtu = 0;
+	int		s;
+	struct ifreq	ifr;
+	u_long		mtu = 0;
 
-	if (getifaddrs(&ifap) < 0)
-		return(0);
-	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (strcmp(ifa->ifa_name, name) == 0) {
-			ifd = ifa->ifa_data;
-			if (ifd)
-				mtu = ifd->ifi_mtu;
-			break;
-		}
-	}
-	freeifaddrs(ifap);
-
-#ifdef SIOCGIFMTU		/* XXX: this ifdef may not be necessary */
-	if (mtu == 0) {
-		struct ifreq ifr;
-		int s;
-
-		if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
-			return(0);
-
+	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) >= 0) {
 		memset(&ifr, 0, sizeof(ifr));
 		ifr.ifr_addr.sa_family = AF_INET6;
 		if (strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name)) >=
 		    sizeof(ifr.ifr_name))
 			fatalx("strlcpy");
-		if (ioctl(s, SIOCGIFMTU, (caddr_t)&ifr) < 0) {
-			close(s);
-			return(0);
-		}
+		if (ioctl(s, SIOCGIFMTU, (char *)&ifr) >= 0)
+			mtu = ifr.ifr_mtu;
 		close(s);
-
-		mtu = ifr.ifr_mtu;
 	}
-#endif
 
-	return(mtu);
+	return (mtu);
 }
 
 /* give interface index and its old flags, then new flags returned */
@@ -168,7 +141,7 @@ if_getflags(int ifindex, int oifflags)
 	}
 
 	if_indextoname(ifindex, ifr.ifr_name);
-	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
+	if (ioctl(s, SIOCGIFFLAGS, (char *)&ifr) < 0) {
 		log_warn("ioctl:SIOCGIFFLAGS: failed for %s", ifr.ifr_name);
 		close(s);
 		return (oifflags & ~IFF_UP);
@@ -184,7 +157,6 @@ lladdropt_length(struct sockaddr_dl *sdl)
 	switch (sdl->sdl_type) {
 	case IFT_CARP:
 	case IFT_ETHER:
-	case IFT_FDDI:
 		return(ROUNDUP8(ETHER_ADDR_LEN + 2));
 	default:
 		return(0);
@@ -201,7 +173,6 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 	switch (sdl->sdl_type) {
 	case IFT_CARP:
 	case IFT_ETHER:
-	case IFT_FDDI:
 		ndopt->nd_opt_len = (ROUNDUP8(ETHER_ADDR_LEN + 2)) >> 3;
 		addr = (char *)(ndopt + 1);
 		memcpy(addr, LLADDR(sdl), ETHER_ADDR_LEN);
@@ -499,6 +470,9 @@ parse_iflist(struct if_msghdr ***ifmlist_p, char *buf, size_t bufsize)
 void
 init_iflist(void)
 {
+	static size_t ifblock_size;
+	static char *ifblock;
+
 	if (ifblock) {
 		free(ifblock);
 		ifblock_size = 0;

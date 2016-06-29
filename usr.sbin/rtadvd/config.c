@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.56 2016/03/01 20:51:05 jca Exp $	*/
+/*	$OpenBSD: config.c,v 1.57 2016/06/29 14:19:38 jca Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -502,10 +502,9 @@ getconfig(char *intface)
 			tmp->linkmtu = tmp->phymtu;
 	}
 	else if (tmp->linkmtu < IPV6_MMTU || tmp->linkmtu > tmp->phymtu) {
-		log_warnx("advertised link mtu (%lu) on %s is invalid (must"
+		log_warnx("advertised link mtu (%u) on %s is invalid (must"
 		    " be between least MTU (%d) and physical link MTU (%d)",
-		    (unsigned long)tmp->linkmtu, intface,
-		    IPV6_MMTU, tmp->phymtu);
+		    tmp->linkmtu, intface, IPV6_MMTU, tmp->phymtu);
 		exit(1);
 	}
 
@@ -523,7 +522,7 @@ getconfig(char *intface)
 	/* set timer */
 	tmp->timer = rtadvd_add_timer(ra_timeout, ra_timer_update,
 				      tmp, tmp);
-	ra_timer_update((void *)tmp, &tmp->timer->tm);
+	ra_timer_update(tmp, &tmp->timer->tm);
 	rtadvd_set_timer(&tmp->timer->tm, tmp->timer);
 }
 
@@ -655,7 +654,7 @@ make_prefix(struct rainfo *rai, int ifindex, struct in6_addr *addr, int plen)
 	 * reset the timer so that the new prefix will be advertised quickly.
 	 */
 	rai->initcounter = 0;
-	ra_timer_update((void *)rai, &rai->timer->tm);
+	ra_timer_update(rai, &rai->timer->tm);
 	rtadvd_set_timer(&rai->timer->tm, rai->timer);
 }
 
@@ -907,7 +906,6 @@ getinet6sysctl(int code)
 	    < 0) {
 		log_warn("failed to get ip6 sysctl(%d)", code);
 		return(-1);
-	}
-	else
+	} else
 		return(value);
 }

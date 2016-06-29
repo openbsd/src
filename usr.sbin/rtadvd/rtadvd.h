@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.24 2016/03/01 12:51:34 jca Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.25 2016/06/29 14:19:38 jca Exp $	*/
 /*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -120,9 +120,9 @@ struct	rainfo {
 
 	/* timer related parameters */
 	struct rtadvd_timer *timer;
-	int initcounter; /* counter for the first few advertisements */
+	unsigned int initcounter; /* counter for the first few advertisements */
 	struct timeval lastsent; /* timestamp when the latest RA was sent */
-	int waiting;		/* number of RS waiting for RA */
+	unsigned int waiting;	/* number of RS waiting for RA */
 
 	/* interface information */
 	int	ifindex;
@@ -165,5 +165,4 @@ SLIST_HEAD(ralist, rainfo);
 void ra_timeout(void *);
 void ra_timer_update(void *, struct timeval *);
 
-struct rainfo *if_indextorainfo(int);
 struct prefix *find_prefix(struct rainfo *, struct in6_addr *, int);

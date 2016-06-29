@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.19 2016/02/08 23:19:00 jca Exp $	*/
+/*	$OpenBSD: dump.c,v 1.20 2016/06/29 14:19:38 jca Exp $	*/
 /*	$KAME: dump.c,v 1.27 2002/05/29 14:23:55 itojun Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ rtadvd_dump(void)
 	char *origin, *vltime, *pltime, *flags;
 	char *vltimexpire=NULL, *pltimexpire=NULL;
 
-	gettimeofday(&now, NULL); /* XXX: unused in most cases */
+	gettimeofday(&now, NULL);
 	SLIST_FOREACH(rai, &ralist, entry) {
 		log_info("%s:", rai->ifname);
 
@@ -124,16 +124,14 @@ rtadvd_dump(void)
 			time_t t = rai->lastsent.tv_sec;
 			/* note that ctime() appends CR by itself */
 			log_info("  Last RA sent: %s", ctime(&t));
-
 		}
 		if (rai->timer) {
 			time_t t = rai->timer->tm.tv_sec;
 			log_info("  Next RA will be sent: %s", ctime(&t));
 		} else
 			log_info("  RA timer is stopped");
-		log_info("  waits: %d, initcount: %d",
-
-			rai->waiting, rai->initcounter);
+		log_info("  waits: %u, initcount: %u",
+		    rai->waiting, rai->initcounter);
 
 		/* statistics */
 		log_info("  statistics: RA(out/in/inconsistent): "
