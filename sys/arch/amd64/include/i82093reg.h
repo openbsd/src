@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093reg.h,v 1.5 2015/04/19 19:45:21 sf Exp $	*/
+/*	$OpenBSD: i82093reg.h,v 1.6 2016/06/29 06:05:15 mlarkin Exp $	*/
 /* 	$NetBSD: i82093reg.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $ */
 
 /*-
@@ -155,6 +155,7 @@
 	movq	IOAPIC_SC_DATA(%rdi),%r15			;\
 	movl	(%r15),%esi					;\
 	orl	$IOAPIC_REDLO_MASK,%esi				;\
+	andl	$~IOAPIC_REDLO_RIRR,%esi			;\
 	movl	%esi,(%r15)					;\
 	ioapic_asm_unlock(num)
 
@@ -170,6 +171,7 @@
 	movl	%esi, (%r15)					;\
 	movl	(%r13),%r12d					;\
 	andl	$~IOAPIC_REDLO_MASK,%r12d			;\
+	andl	$~IOAPIC_REDLO_RIRR,%r12d			;\
 	movl	%esi,(%r15)					;\
 	movl	%r12d,(%r13)					;\
 	ioapic_asm_unlock(num)					;\

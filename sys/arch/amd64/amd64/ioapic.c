@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.24 2016/05/07 14:19:50 kettenis Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.25 2016/06/29 06:05:15 mlarkin Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
@@ -492,6 +492,7 @@ ioapic_hwmask(struct pic *pic, int pin)
 	flags = ioapic_lock(sc);
 	redlo = ioapic_read_ul(sc, IOAPIC_REDLO(pin));
 	redlo |= IOAPIC_REDLO_MASK;
+	redlo &= ~IOAPIC_REDLO_RIRR;
 	ioapic_write_ul(sc, IOAPIC_REDLO(pin), redlo);
 	ioapic_unlock(sc, flags);
 }
@@ -508,6 +509,7 @@ ioapic_hwunmask(struct pic *pic, int pin)
 	flags = ioapic_lock(sc);
 	redlo = ioapic_read_ul(sc, IOAPIC_REDLO(pin));
 	redlo &= ~IOAPIC_REDLO_MASK;
+	redlo &= ~IOAPIC_REDLO_RIRR;
 	ioapic_write_ul(sc, IOAPIC_REDLO(pin), redlo);
 	ioapic_unlock(sc, flags);
 }
