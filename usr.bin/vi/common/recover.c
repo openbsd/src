@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.24 2016/01/30 21:23:50 martijn Exp $	*/
+/*	$OpenBSD: recover.c,v 1.25 2016/06/29 20:38:39 tb Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -122,29 +122,24 @@ int
 rcv_tmp(SCR *sp, EXF *ep, char *name)
 {
 	struct stat sb;
+	static int warned = 0;
 	int fd;
 	char *dp, *p, path[PATH_MAX];
 
 	/*
 	 * !!!
 	 * ep MAY NOT BE THE SAME AS sp->ep, DON'T USE THE LATTER.
-	 *
-	 *
-	 * If the recovery directory doesn't exist, try and create it.  As
-	 * the recovery files are themselves protected from reading/writing
-	 * by other than the owner, the worst that can happen is that a user
-	 * would have permission to remove other user's recovery files.  If
-	 * the sticky bit has the BSD semantics, that too will be impossible.
 	 */
 	if (opts_empty(sp, O_RECDIR, 0))
 		goto err;
 	dp = O_STR(sp, O_RECDIR);
 	if (stat(dp, &sb)) {
-		if (errno != ENOENT || mkdir(dp, 0)) {
+		if (!warned) {
+			warned = 1;
 			msgq(sp, M_SYSERR, "%s", dp);
 			goto err;
 		}
-		(void)chmod(dp, S_IRWXU | S_IRWXG | S_IRWXO | S_ISVTX);
+		return 1;
 	}
 
 	/* Newlines delimit the mail messages. */
