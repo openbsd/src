@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.277 2016/06/23 11:56:19 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.278 2016/06/29 06:46:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -77,6 +77,7 @@ enum session_flags {
 	SF_BADINPUT		= 0x0080,
 	SF_FILTERCONN		= 0x0100,
 	SF_FILTERDATA		= 0x0200,
+	SF_FILTERTX		= 0x0400,
 };
 
 enum message_flags {
@@ -205,8 +206,9 @@ static void smtp_queue_rollback(struct smtp_session *);
 static void smtp_filter_connect(struct smtp_session *, struct sockaddr *);
 static void smtp_filter_rset(struct smtp_session *);
 static void smtp_filter_disconnect(struct smtp_session *);
-static void smtp_filter_commit(struct smtp_session *);
-static void smtp_filter_rollback(struct smtp_session *);
+static void smtp_filter_tx_begin(struct smtp_session *);
+static void smtp_filter_tx_commit(struct smtp_session *);
+static void smtp_filter_tx_rollback(struct smtp_session *);
 static void smtp_filter_eom(struct smtp_session *);
 static void smtp_filter_helo(struct smtp_session *);
 static void smtp_filter_mail(struct smtp_session *);
@@ -770,10 +772,12 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			break;
 
 		case LKA_PERMFAIL:
+			smtp_filter_tx_rollback(s);
 			smtp_reply(s, "%d %s", 530, "Sender rejected");
 			io_reload(&s->io);
 			break;
 		case LKA_TEMPFAIL:
+			smtp_filter_tx_rollback(s);
 			smtp_reply(s, "421 %s: Temporary Error",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 			io_reload(&s->io);
@@ -826,6 +830,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			smtp_reply(s, "250 %s: Ok",
 			    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 		} else {
+			smtp_filter_tx_rollback(s);
 			smtp_reply(s, "421 %s: Temporary Error",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 			smtp_enter_state(s, STATE_QUIT);
@@ -911,7 +916,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		m_end(&m);
 		s = tree_xpop(&wait_queue_commit, reqid);
 		if (!success) {
-			smtp_filter_rollback(s);
+			smtp_filter_tx_rollback(s);
 			smtp_reply(s, "421 %s: Temporary failure",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 			smtp_enter_state(s, STATE_QUIT);
@@ -919,7 +924,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 		}
 
-		smtp_filter_commit(s);
+		smtp_filter_tx_commit(s);
 		smtp_reply(s, "250 %s: %08x Message accepted for delivery",
 		    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS),
 		    evpid_to_msgid(s->tx->evp.id));
@@ -1114,7 +1119,7 @@ smtp_filter_response(uint64_t id, int query, int status, uint32_t code,
 
 	case QUERY_MAIL:
 		if (status != FILTER_OK) {
-			smtp_filter_rollback(s);
+			smtp_filter_tx_rollback(s);
 			code = code ? code : 530;
 			line = line ? line : "Sender rejected";
 			smtp_reply(s, "%d %s", code, line);
@@ -1166,7 +1171,7 @@ smtp_filter_response(uint64_t id, int query, int status, uint32_t code,
 	case QUERY_EOM:
 		if (status != FILTER_OK) {
 			tree_pop(&wait_filter_data, s->id);
-			smtp_filter_rollback(s);
+			smtp_filter_tx_rollback(s);
 			smtp_queue_rollback(s);
 			code = code ? code : 530;
 			line = line ? line : "Message rejected";
@@ -1502,7 +1507,7 @@ smtp_data_io_done(struct smtp_session *s)
 
 		tree_pop(&wait_filter_data, s->id);
 
-		smtp_filter_rollback(s);
+		smtp_filter_tx_rollback(s);
 		smtp_queue_rollback(s);
 
 		if (s->tx->msgflags & MF_ERROR_SIZE)
@@ -1739,6 +1744,7 @@ smtp_command(struct smtp_session *s, char *line)
 		if (args && smtp_parse_mail_args(s, args) == -1)
 			break;
 
+		smtp_filter_tx_begin(s);
 		smtp_filter_mail(s);
 		break;
 	/*
@@ -1780,10 +1786,12 @@ smtp_command(struct smtp_session *s, char *line)
 			break;
 		}
 
-		smtp_filter_rset(s);
-
+		if (s->flags & SF_FILTERTX)
+			smtp_filter_tx_rollback(s);
 		if (s->tx->evp.id)
 			smtp_queue_rollback(s);
+
+		smtp_filter_rset(s);
 
 		s->phase = PHASE_SETUP;
 		smtp_message_reset(s, 0);
@@ -2130,6 +2138,7 @@ smtp_message_end(struct smtp_session *s)
 	s->phase = PHASE_SETUP;
 
 	if (s->tx->msgflags & MF_ERROR) {
+		smtp_filter_tx_rollback(s);
 		smtp_queue_rollback(s);
 		if (s->tx->msgflags & MF_ERROR_SIZE)
 			smtp_reply(s, "554 %s %s: Transaction failed, message too big",
@@ -2265,6 +2274,9 @@ smtp_free(struct smtp_session *s, const char * reason)
 		io_clear(&s->tx->oev);
 		iobuf_clear(&s->tx->obuf);
 	}
+
+	if (s->flags & SF_FILTERTX)
+		smtp_filter_tx_rollback(s);
 
 	if (s->flags & SF_FILTERCONN)
 		smtp_filter_disconnect(s);
@@ -2530,15 +2542,24 @@ smtp_filter_rset(struct smtp_session *s)
 }
 
 static void
-smtp_filter_commit(struct smtp_session *s)
+smtp_filter_tx_begin(struct smtp_session *s)
 {
-	filter_event(s->id, EVENT_COMMIT);
+	s->flags |= SF_FILTERTX;
+	filter_event(s->id, EVENT_TX_BEGIN);
 }
 
 static void
-smtp_filter_rollback(struct smtp_session *s)
+smtp_filter_tx_commit(struct smtp_session *s)
 {
-	filter_event(s->id, EVENT_ROLLBACK);
+	s->flags &= ~SF_FILTERTX;
+	filter_event(s->id, EVENT_TX_COMMIT);
+}
+
+static void
+smtp_filter_tx_rollback(struct smtp_session *s)
+{
+	s->flags &= ~SF_FILTERTX;
+	filter_event(s->id, EVENT_TX_ROLLBACK);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.29 2016/02/09 22:18:17 gilles Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.30 2016/06/29 06:46:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -20,7 +20,7 @@
 #ifndef	_SMTPD_API_H_
 #define	_SMTPD_API_H_
 
-#define	FILTER_API_VERSION	 50
+#define	FILTER_API_VERSION	 51
 
 struct mailaddr {
 	char	user[SMTPD_MAXLOCALPARTSIZE];
@@ -59,8 +59,9 @@ enum filter_event_type {
 	EVENT_CONNECT,
 	EVENT_RESET,
 	EVENT_DISCONNECT,
-	EVENT_COMMIT,
-	EVENT_ROLLBACK,
+	EVENT_TX_BEGIN,
+	EVENT_TX_COMMIT,
+	EVENT_TX_ROLLBACK,
 };
 
 /* XXX - server side requires mfa_session.c update on filter_hook changes */

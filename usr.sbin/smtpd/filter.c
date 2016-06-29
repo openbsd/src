@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.18 2016/05/16 19:25:05 gilles Exp $	*/
+/*	$OpenBSD: filter.c,v 1.19 2016/06/29 06:46:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -847,8 +847,9 @@ event_to_str(int event)
 	CASE(EVENT_CONNECT);
 	CASE(EVENT_RESET);
 	CASE(EVENT_DISCONNECT);
-	CASE(EVENT_COMMIT);
-	CASE(EVENT_ROLLBACK);
+	CASE(EVENT_TX_BEGIN);
+	CASE(EVENT_TX_COMMIT);
+	CASE(EVENT_TX_ROLLBACK);
 	default:
 		return "EVENT_???";
 	}
