@@ -25,7 +25,7 @@ BEGIN {
     }
 }
 
-use Test::More 0.82 tests => 2;
+use Test::More tests => 2;
 use t::Watchdog;
 
 my $limit = 0.25; # 25% is acceptable slosh for testing timers
@@ -35,29 +35,32 @@ my $r = [Time::HiRes::gettimeofday()];
 
 $SIG{VTALRM} = sub {
     $i ? $i-- : Time::HiRes::setitimer(&Time::HiRes::ITIMER_VIRTUAL, 0);
-    note "Tick! $i ", Time::HiRes::tv_interval($r);
+    printf("# Tick! $i %s\n", Time::HiRes::tv_interval($r));
 };	
 
-note "setitimer: ", join(" ",
-    Time::HiRes::setitimer(&Time::HiRes::ITIMER_VIRTUAL, 0.5, 0.4));
+printf("# setitimer: %s\n", join(" ",
+       Time::HiRes::setitimer(&Time::HiRes::ITIMER_VIRTUAL, 0.5, 0.4)));
 
 # Assume interval timer granularity of $limit * 0.5 seconds.  Too bold?
 my $virt = Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL);
-ok defined $virt && abs($virt / 0.5) - 1 < $limit;
+ok(defined $virt && abs($virt / 0.5) - 1 < $limit,
+   "ITIMER_VIRTUAL defined with sufficient granularity")
+   or diag "virt=" . (defined $virt ? $virt : 'undef');
 
-note "getitimer: ", join(" ",
-    Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL));
+printf("# getitimer: %s\n", join(" ",
+       Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL)));
 
 while (Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL)) {
     my $j;
     for (1..1000) { $j++ } # Can't be unbreakable, must test getitimer().
 }
 
-note "getitimer: ", join(" ",
-    Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL));
+printf("# getitimer: %s\n", join(" ",
+       Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL)));
 
 $virt = Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL);
-ok defined $virt && $virt == 0;
+print("# at end, i=$i\n");
+is($virt, 0, "time left should be zero");
 
 $SIG{VTALRM} = 'DEFAULT';
 

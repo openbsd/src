@@ -8,7 +8,7 @@ BEGIN {
     }
 }
 
-use Test::More 0.82 tests => 6;
+use Test::More tests => 6;
 use t::Watchdog;
 
 eval { Time::HiRes::usleep(-2) };
@@ -23,7 +23,7 @@ my $two = CORE::time;
 Time::HiRes::usleep(10_000);
 my $three = CORE::time;
 ok $one == $two || $two == $three
-or note "slept too long, $one $two $three";
+or print("# slept too long, $one $two $three\n");
 
 SKIP: {
     skip "no gettimeofday", 1 unless &Time::HiRes::d_gettimeofday;
@@ -31,7 +31,7 @@ SKIP: {
     Time::HiRes::usleep(500_000);
     my $f2 = Time::HiRes::time();
     my $d = $f2 - $f;
-    ok $d > 0.4 && $d < 0.9 or note "slept $d secs $f to $f2";
+    ok $d > 0.4 && $d < 0.9 or print("# slept $d secs $f to $f2\n");
 }
 
 SKIP: {
@@ -39,7 +39,7 @@ SKIP: {
     my $r = [ Time::HiRes::gettimeofday() ];
     Time::HiRes::sleep( 0.5 );
     my $f = Time::HiRes::tv_interval $r;
-    ok $f > 0.4 && $f < 0.9 or note "slept $f instead of 0.5 secs.";
+    ok $f > 0.4 && $f < 0.9 or print("# slept $f instead of 0.5 secs.\n");
 }
 
 SKIP: {
@@ -59,7 +59,7 @@ SKIP: {
 
     SKIP: {
 	skip $msg, 1 unless $td < $sleep * (1 + $limit);
-	ok $a < $limit or note $msg;
+	ok $a < $limit or print("# $msg\n");
     }
 
     $t0 = Time::HiRes::gettimeofday();
@@ -71,7 +71,7 @@ SKIP: {
 
     SKIP: {
 	skip $msg, 1 unless $td < $sleep * (1 + $limit);
-	ok $a < $limit or note $msg;
+	ok $a < $limit or print("# $msg\n");
     }
 }
 
