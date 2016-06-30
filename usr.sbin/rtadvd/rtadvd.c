@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.74 2016/06/29 14:19:38 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.75 2016/06/30 10:17:18 florian Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ main(int argc, char *argv[])
 	struct pollfd pfd[2];
 	struct timeval *timeout;
 	struct passwd *pw;
-	int i, ch, npfd;
+	int i, ch, npfd, tmout;
 
 	log_init(1);		/* log to stderr until daemonized */
 
@@ -246,16 +246,19 @@ main(int argc, char *argv[])
 		/* timer expiration check and reset the timer */
 		timeout = rtadvd_check_timer();
 
-		if (timeout != NULL)
+		if (timeout != NULL) {
+			tmout = timeout->tv_sec * 1000 + timeout->tv_usec /
+			    1000;
 			log_debug("set timer to %lld.%ld. waiting for "
 			    "inputs or timeout",
 			    (long long)timeout->tv_sec,
 			    timeout->tv_usec);
-		else
+		} else {
+			tmout = INFTIM;
 			log_debug("there's no timer. waiting for inputs");
+		}
 
-		if ((i = poll(pfd, npfd,
-		    timeout->tv_sec * 1000 + timeout->tv_usec / 1000)) < 0) {
+		if ((i = poll(pfd, npfd, tmout)) < 0) {
 			/* EINTR would occur upon SIGUSR1 for status dump */
 			if (errno != EINTR)
 				log_warn("poll");
