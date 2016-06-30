@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.190 2016/06/28 06:40:11 tb Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.191 2016/06/30 09:00:48 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -617,12 +617,12 @@ omalloc_init(struct dir_info **dp)
 		for (; p != NULL && *p != '\0'; p++) {
 			switch (*p) {
 			case 'S':
-				for (q = "FGJP"; *q != '\0'; q++)
+				for (q = "CGJ"; *q != '\0'; q++)
 					omalloc_parseopt(*q);
 				mopts.malloc_cache = 0;
 				break;
 			case 's':
-				for (q = "fgj"; *q != '\0'; q++)
+				for (q = "cgj"; *q != '\0'; q++)
 					omalloc_parseopt(*q);
 				mopts.malloc_cache = MALLOC_DEFAULT_CACHE;
 				break;
