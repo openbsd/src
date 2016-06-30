@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.11 2016/04/04 17:13:54 stefan Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.12 2016/06/30 02:29:22 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -355,8 +355,8 @@ int
 vioblk_notifyq(struct vioblk_dev *dev)
 {
 	uint64_t q_gpa;
-	uint32_t vr_sz; //, osz;
-	uint16_t idx, cmd_desc_idx, secdata_desc_idx, ds_desc_idx; //, dxx;
+	uint32_t vr_sz;
+	uint16_t idx, cmd_desc_idx, secdata_desc_idx, ds_desc_idx;
 	uint8_t ds;
 	int ret;
 	off_t secbias;
