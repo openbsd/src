@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aliases.5,v 1.12 2016/01/08 20:26:54 zhuk Exp $
+.\"	$OpenBSD: aliases.5,v 1.13 2016/06/30 18:41:39 gilles Exp $
 .\"
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 8 2016 $
+.Dd $Mdocdate: June 30 2016 $
 .Dt ALIASES 5
 .Os
 .Sh NAME
@@ -73,7 +73,8 @@ An email address in RFC 5322 format
 (see
 .Xr mailaddr 7 ) .
 If an address extension is appended to the user-part,
-it is stripped so that an address such as user+ext@example.com
+it is first compared for an exact match.
+It is then stripped so that an address such as user+ext@example.com
 will only use the part that precedes
 .Sq +
 as a
