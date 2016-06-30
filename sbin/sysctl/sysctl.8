@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.200 2016/06/29 17:54:08 chris Exp $
+.\"	$OpenBSD: sysctl.8,v 1.201 2016/06/30 15:56:59 tedu Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: June 29 2016 $
+.Dd $Mdocdate: June 30 2016 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -161,8 +161,6 @@ and a few require a kernel compiled with non-standard
 .It kern.tty.tk_rawcc Ta int64_t Ta no
 .It kern.tty.tk_cancc Ta int64_t Ta no
 .It kern.tty.ttyinfo Ta struct Ta no
-.It kern.tty.maxptys Ta integer Ta yes
-.It kern.tty.nptys Ta integer Ta no
 .It kern.ccpu Ta u_int Ta no
 .It kern.fscale Ta integer Ta no
 .It kern.nprocs Ta integer Ta no
