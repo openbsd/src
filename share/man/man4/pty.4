@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pty.4,v 1.21 2015/11/21 08:04:20 jmc Exp $
+.\"	$OpenBSD: pty.4,v 1.22 2016/06/30 15:54:53 tedu Exp $
 .\"	$NetBSD: pty.4,v 1.4 1998/03/21 03:14:30 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)pty.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd $Mdocdate: November 21 2015 $
+.Dd $Mdocdate: June 30 2016 $
 .Dt PTY 4
 .Os
 .Sh NAME
@@ -70,10 +70,7 @@ the specification, space for that number of pseudo terminal pairs is
 preallocated.
 If the count is missing or is less than 2, a default count of 8 is used.
 This is not a hard limit--space for additional pseudo terminal pairs
-is allocated on demand up to the limit imposed by the
-.Li kern.tty.maxptys
-.Xr sysctl 8
-(992 by default).
+is allocated on demand up to the limit of 992.
 .Pp
 The following
 .Xr ioctl 2
