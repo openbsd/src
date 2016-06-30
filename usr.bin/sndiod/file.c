@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.21 2016/05/25 05:37:12 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.22 2016/06/30 21:37:29 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -280,7 +280,7 @@ file_process(struct file *f, struct pollfd *pfd)
 
 #ifdef DEBUG
 	if (log_level >= 3)
-		clock_gettime(CLOCK_MONOTONIC, &ts0);
+		clock_gettime(CLOCK_UPTIME, &ts0);
 #endif
 	revents = (f->state != FILE_ZOMB) ?
 	    f->ops->revents(f->arg, pfd) : 0;
@@ -292,7 +292,7 @@ file_process(struct file *f, struct pollfd *pfd)
 		f->ops->out(f->arg);
 #ifdef DEBUG
 	if (log_level >= 3) {
-		clock_gettime(CLOCK_MONOTONIC, &ts1);
+		clock_gettime(CLOCK_UPTIME, &ts1);
 		us = 1000000L * (ts1.tv_sec - ts0.tv_sec);
 		us += (ts1.tv_nsec - ts0.tv_nsec) / 1000;
 		if (log_level >= 4 || us >= 5000) {
@@ -382,7 +382,7 @@ file_poll(void)
 	 * timeout (i.e -1).
 	 */
 #ifdef DEBUG
-	clock_gettime(CLOCK_MONOTONIC, &sleepts);
+	clock_gettime(CLOCK_UPTIME, &sleepts);
 	file_utime += 1000000000LL * (sleepts.tv_sec - file_ts.tv_sec);
 	file_utime += sleepts.tv_nsec - file_ts.tv_nsec;
 #endif
@@ -405,7 +405,7 @@ file_poll(void)
 	/*
 	 * run timeouts
 	 */
-	clock_gettime(CLOCK_MONOTONIC, &ts);
+	clock_gettime(CLOCK_UPTIME, &ts);
 #ifdef DEBUG
 	file_wtime += 1000000000LL * (ts.tv_sec - sleepts.tv_sec);
 	file_wtime += ts.tv_nsec - sleepts.tv_nsec;
@@ -440,8 +440,8 @@ filelist_init(void)
 {
 	sigset_t set;
 
-	if (clock_gettime(CLOCK_MONOTONIC, &file_ts) < 0) {
-		log_puts("filelist_init: CLOCK_MONOTONIC unsupported\n");
+	if (clock_gettime(CLOCK_UPTIME, &file_ts) < 0) {
+		log_puts("filelist_init: CLOCK_UPTIME unsupported\n");
 		panic();
 	}
 	sigemptyset(&set);
