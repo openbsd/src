@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.207 2016/06/18 10:36:13 vgross Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.208 2016/06/30 12:36:27 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -879,7 +879,6 @@ in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
     u_int rtableid)
 {
 	struct sockaddr_in *sin2;
-	struct in_ifaddr *ia = NULL;
 
 	/*
 	 * If the socket(if any) is already bound, use that bound address
@@ -901,6 +900,8 @@ in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 
 		ifp = if_get(mopts->imo_ifidx);
 		if (ifp != NULL) {
+			struct in_ifaddr *ia = NULL;
+
 			if (ifp->if_rdomain == rtable_l2(rtableid))
 				IFP_TO_IA(ifp, ia);
 			if (ia == NULL) {
@@ -941,14 +942,12 @@ in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 	 * If we found a route, use the address
 	 * corresponding to the outgoing interface.
 	 */
-	if (ro->ro_rt != NULL)
-		ia = ifatoia(ro->ro_rt->rt_ifa);
+	if (ro->ro_rt != NULL) {
+		*insrc = &satosin(ro->ro_rt->rt_addr)->sin_addr;
+		return (0);
+	}
 
-	if (ia == NULL)
-		return (EADDRNOTAVAIL);
-
-	*insrc = &ia->ia_addr.sin_addr;
-	return (0);
+	return (EADDRNOTAVAIL);
 }
 
 void

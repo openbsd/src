@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.73 2016/06/27 16:36:08 jca Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.74 2016/06/30 12:36:27 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -257,8 +257,11 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 				ia6 = in6_ifawithscope(ifp, dst, rtableid);
 				if_put(ifp);
 			}
-			if (ia6 == NULL) /* xxx scope error ?*/
-				ia6 = ifatoia6(ro->ro_rt->rt_ifa);
+			if (ia6 == NULL) { /* xxx scope error ?*/
+				*in6src =
+				    &satosin6(ro->ro_rt->rt_addr)->sin6_addr;
+				return (0);
+			}
 		}
 		if (ia6 == NULL)
 			return (EHOSTUNREACH);	/* no route */
