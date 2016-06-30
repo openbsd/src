@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random_freebsd.h,v 1.3 2015/09/11 11:52:55 deraadt Exp $	*/
+/*	$OpenBSD: arc4random_freebsd.h,v 1.4 2016/06/30 12:19:51 bcook Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -78,6 +78,7 @@ _rs_allocate(struct _rs **rsp, struct _rsx **rsxp)
 	if ((*rsxp = mmap(NULL, sizeof(**rsxp), PROT_READ|PROT_WRITE,
 	    MAP_ANON|MAP_PRIVATE, -1, 0)) == MAP_FAILED) {
 		munmap(*rsp, sizeof(**rsp));
+		*rsp = NULL;
 		return (-1);
 	}
 
