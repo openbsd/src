@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.264 2016/06/28 17:18:24 chris Exp $
+.\"	$OpenBSD: sysctl.3,v 1.265 2016/06/30 15:58:06 tedu Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 28 2016 $
+.Dd $Mdocdate: June 30 2016 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -989,8 +989,6 @@ privileges may change the value.
 .Bl -column "KERN_TTY_TKRAWCC" "struct itty" "Changeable" -offset indent
 .It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
 .It Dv KERN_TTY_INFO Ta "struct itty" Ta "no"
-.It Dv KERN_TTY_NPTYS Ta "integer" Ta "no"
-.It Dv KERN_TTY_MAXPTYS Ta "integer" Ta "yes"
 .It Dv KERN_TTY_TKCANCC Ta "int64_t" Ta "no"
 .It Dv KERN_TTY_TKNIN Ta "int64_t" Ta "no"
 .It Dv KERN_TTY_TKNOUT Ta "int64_t" Ta "no"
@@ -1003,16 +1001,6 @@ The variables are as follows:
 Returns an array of
 .Li struct itty
 structures containing tty statistics.
-.It Dv KERN_TTY_MAXPTYS
-The maximum number of
-.Xr pty 4
-devices supported by the kernel.
-This is the upper bound on
-.Dv KERN_TTY_NPTYS .
-.It Dv KERN_TTY_NPTYS
-The current number of
-.Xr pty 4
-devices allocated by the kernel.
 .It Dv KERN_TTY_TKCANCC
 Returns the number of input characters in canonical mode.
 .It Dv KERN_TTY_TKNIN
