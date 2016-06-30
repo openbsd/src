@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_key.c,v 1.23 2015/02/09 15:49:22 jsing Exp $ */
+/* $OpenBSD: dh_key.c,v 1.24 2016/06/30 02:02:06 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -147,21 +147,16 @@ generate_key(DH *dh)
 	}
 
 	{
-		BIGNUM local_prk;
-		BIGNUM *prk;
+		BIGNUM prk;
 
-		if ((dh->flags & DH_FLAG_NO_EXP_CONSTTIME) == 0) {
-			BN_init(&local_prk);
-			prk = &local_prk;
-			BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
-		} else
-			prk = priv_key;
+		BN_with_flags(&prk, priv_key, BN_FLG_CONSTTIME);
 
-		if (!dh->meth->bn_mod_exp(dh, pub_key, dh->g, prk, dh->p, ctx,
-		    mont))
+		if (!dh->meth->bn_mod_exp(dh, pub_key, dh->g, &prk, dh->p, ctx,
+		    mont)) {
 			goto err;
+		}
 	}
-		
+
 	dh->pub_key = pub_key;
 	dh->priv_key = priv_key;
 	ok = 1;
@@ -206,10 +201,9 @@ compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	if (dh->flags & DH_FLAG_CACHE_MONT_P) {
 		mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
 		    CRYPTO_LOCK_DH, dh->p, ctx);
-		if ((dh->flags & DH_FLAG_NO_EXP_CONSTTIME) == 0) {
-			/* XXX */
-			BN_set_flags(dh->priv_key, BN_FLG_CONSTTIME);
-		}
+
+		BN_set_flags(dh->priv_key, BN_FLG_CONSTTIME);
+
 		if (!mont)
 			goto err;
 	}
@@ -238,16 +232,7 @@ static int
 dh_bn_mod_exp(const DH *dh, BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 {
-	/*
-	 * If a is only one word long and constant time is false, use the faster
-	 * exponenentiation function.
-	 */
-	if (a->top == 1 && (dh->flags & DH_FLAG_NO_EXP_CONSTTIME) != 0) {
-		BN_ULONG A = a->d[0];
-
-		return BN_mod_exp_mont_word(r, A, p, m, ctx, m_ctx);
-	} else
-		return BN_mod_exp_mont(r, a, p, m, ctx, m_ctx);
+	return BN_mod_exp_mont(r, a, p, m, ctx, m_ctx);
 }
 
 static int

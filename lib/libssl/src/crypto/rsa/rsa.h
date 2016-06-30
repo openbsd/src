@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.27 2015/02/14 15:10:39 miod Exp $ */
+/* $OpenBSD: rsa.h,v 1.28 2016/06/30 02:02:06 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -193,16 +193,6 @@ struct rsa_st {
  * might not need it.
  */
 #define RSA_FLAG_NO_BLINDING		0x0080
-
-/*
- * The built-in RSA implementation uses constant time operations by default
- * in private key operations, e.g., constant time modular exponentiation,
- * modular inverse without leaking branches, division without leaking branches.
- * This flag disables these constant time operations and results in faster RSA
- * private key operations.
- */
-#define RSA_FLAG_NO_CONSTTIME		0x0100
-
 
 #define EVP_PKEY_CTX_set_rsa_padding(ctx, pad) \
 	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, -1, EVP_PKEY_CTRL_RSA_PADDING, \

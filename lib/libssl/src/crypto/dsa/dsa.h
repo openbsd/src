@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.20 2016/06/21 04:16:53 bcook Exp $ */
+/* $OpenBSD: dsa.h,v 1.21 2016/06/30 02:02:06 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -89,9 +89,6 @@
 #endif
 
 #define DSA_FLAG_CACHE_MONT_P	0x01
-#define DSA_FLAG_NO_EXP_CONSTTIME       0x00 /* Does nothing. Previously this switched off 
-                                              * constant time behaviour.
-                                              */
 
 /* If this flag is set the DSA method is FIPS compliant and can be used
  * in FIPS mode. This is set in the validated module method. If an

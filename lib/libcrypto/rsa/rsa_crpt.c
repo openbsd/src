@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_crpt.c,v 1.14 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: rsa_crpt.c,v 1.15 2016/06/30 02:02:06 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -169,8 +169,8 @@ err:
 BN_BLINDING *
 RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 {
-	BIGNUM local_n;
-	BIGNUM *e, *n;
+	BIGNUM *e;
+	BIGNUM n;
 	BN_CTX *ctx;
 	BN_BLINDING *ret = NULL;
 
@@ -192,15 +192,11 @@ RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 	} else
 		e = rsa->e;
 
-	if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-		/* Set BN_FLG_CONSTTIME flag */
-		n = &local_n;
-		BN_with_flags(n, rsa->n, BN_FLG_CONSTTIME);
-	} else
-		n = rsa->n;
+	BN_with_flags(&n, rsa->n, BN_FLG_CONSTTIME);
 
-	ret = BN_BLINDING_create_param(NULL, e, n, ctx, rsa->meth->bn_mod_exp,
+	ret = BN_BLINDING_create_param(NULL, e, &n, ctx, rsa->meth->bn_mod_exp,
 	    rsa->_method_mod_n);
+
 	if (ret == NULL) {
 		RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_BN_LIB);
 		goto err;
