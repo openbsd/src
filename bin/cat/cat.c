@@ -1,4 +1,4 @@
-/*	$OpenBSD: cat.c,v 1.24 2015/11/04 21:28:01 tedu Exp $	*/
+/*	$OpenBSD: cat.c,v 1.25 2016/07/01 22:40:44 schwarze Exp $	*/
 /*	$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $	*/
 
 /*
@@ -153,10 +153,16 @@ cook_buf(FILE *fp)
 				} else
 					gobble = 0;
 			}
-			if (nflag && (!bflag || ch != '\n')) {
-				(void)fprintf(stdout, "%6d\t", ++line);
-				if (ferror(stdout))
-					break;
+			if (nflag) {
+				if (!bflag || ch != '\n') {
+					(void)fprintf(stdout, "%6d\t", ++line);
+					if (ferror(stdout))
+						break;
+				} else if (eflag) {
+					(void)fprintf(stdout, "%6s\t", "");
+					if (ferror(stdout))
+						break;
+				}
 			}
 		}
 		if (ch == '\n') {
