@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.28 2016/06/22 13:09:35 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.29 2016/07/01 15:12:37 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -260,6 +260,8 @@ struct boot_info {
 	uint64_t led_display_addr;
 	uint32_t dfaclock;
 	uint32_t config_flags;
+	/* The fields below are available when ver_minor >= 3. */
+	uint64_t fdt_addr;
 };
 
 struct octeon_bootmem_desc {

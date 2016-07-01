@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.29 2016/03/18 05:38:10 jmatthew Exp $
+#	$OpenBSD: files.octeon,v 1.30 2016/07/01 15:12:37 visa Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -13,6 +13,7 @@ major	{ octcf = 15 }
 major	{ amdcf = 19 }
 
 file	dev/cninit.c
+file	dev/ofw/fdt.c
 file	arch/octeon/octeon/autoconf.c
 file	arch/octeon/octeon/bus_dma.c
 file	arch/octeon/octeon/conf.c

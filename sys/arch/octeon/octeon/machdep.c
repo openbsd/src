@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.73 2016/03/21 14:20:57 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.74 2016/07/01 15:12:37 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -78,6 +78,7 @@
 #include <machine/memconf.h>
 
 #include <dev/cons.h>
+#include <dev/ofw/fdt.h>
 
 #include <octeon/dev/cn30xxipdreg.h>
 #include <octeon/dev/iobusvar.h>
@@ -97,6 +98,8 @@ vm_map_t phys_map;
 
 struct boot_desc *octeon_boot_desc;
 struct boot_info *octeon_boot_info;
+
+void *octeon_fdt;
 
 char uboot_rootdev[OCTEON_ARGV_MAX];
 
@@ -356,6 +359,24 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	process_bootargs();
 
 	/*
+	 * Save the FDT and let the system use it.
+	 */
+	if (octeon_boot_info->ver_minor >= 3 &&
+	    octeon_boot_info->fdt_addr != 0) {
+		void *fdt;
+		size_t fdt_size;
+
+		fdt = (void *)PHYS_TO_XKPHYS(octeon_boot_info->fdt_addr,
+		    CCA_CACHED);
+		if (fdt_init(fdt) != 0 && (fdt_size = fdt_get_size(fdt)) != 0) {
+			octeon_fdt = (void *)pmap_steal_memory(fdt_size, NULL,
+			    NULL);
+			memcpy(octeon_fdt, fdt, fdt_size);
+			fdt_init(octeon_fdt);
+		}
+	}
+
+	/*
 	 * Get a console, very early but after initial mapping setup.
 	 */
 
@@ -407,6 +428,8 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	DUMP_BOOT_INFO(led_display_addr, %#llx);
 	DUMP_BOOT_INFO(dfaclock, %d);
 	DUMP_BOOT_INFO(config_flags, %#x);
+	if (octeon_boot_info->ver_minor >= 3)
+		DUMP_BOOT_INFO(fdt_addr, %#llx);
 #endif
 
 	/*
