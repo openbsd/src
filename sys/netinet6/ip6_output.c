@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.210 2016/06/27 16:33:48 jca Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.211 2016/07/01 18:18:57 jca Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1462,6 +1462,7 @@ do { \
 			case IPV6_RECVHOPOPTS:
 			case IPV6_RECVDSTOPTS:
 			case IPV6_UNICAST_HOPS:
+			case IPV6_MINHOPCOUNT:
 			case IPV6_RECVPKTINFO:
 			case IPV6_RECVHOPLIMIT:
 			case IPV6_RECVRTHDR:
