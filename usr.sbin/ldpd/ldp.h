@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.31 2016/07/01 23:18:24 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.32 2016/07/01 23:22:42 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -44,6 +44,7 @@
 #define MIN_KEEPALIVE		3
 #define MAX_KEEPALIVE		0xffff
 #define KEEPALIVE_PER_PERIOD	3
+#define INIT_FSM_TIMEOUT	15
 
 #define	DEFAULT_HELLO_INTERVAL	5
 #define	MIN_HELLO_INTERVAL	1

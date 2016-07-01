@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.75 2016/07/01 23:14:31 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.76 2016/07/01 23:22:42 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -459,7 +459,7 @@ nbr_start_itimeout(struct nbr *nbr)
 	struct timeval	 tv;
 
 	timerclear(&tv);
-	tv.tv_sec = DEFAULT_KEEPALIVE;
+	tv.tv_sec = INIT_FSM_TIMEOUT;
 	if (evtimer_add(&nbr->init_timeout, &tv) == -1)
 		fatal(__func__);
 }
