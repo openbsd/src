@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.53 2016/07/01 23:29:55 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.54 2016/07/01 23:33:46 renato Exp $ */
 
 /*
  * Copyright (c) 2014, 2015 Renato Westphal <renato@openbsd.org>
@@ -75,7 +75,6 @@ send_labelmessage(struct nbr *nbr, uint16_t type, struct mapping_head *mh)
 
 		/* calculate size */
 		msg_size = LDP_MSG_SIZE + TLV_HDR_LEN;
-
 		switch (me->map.type) {
 		case MAP_TYPE_WILDCARD:
 			msg_size += FEC_ELM_WCARD_LEN;
@@ -95,11 +94,12 @@ send_labelmessage(struct nbr *nbr, uint16_t type, struct mapping_head *mh)
 				msg_size += PW_STATUS_TLV_LEN;
 			break;
 		}
-
 		if (me->map.label != NO_LABEL)
 			msg_size += LABEL_TLV_LEN;
 		if (me->map.flags & F_MAP_REQ_ID)
 			msg_size += REQID_TLV_LEN;
+		if (me->map.flags & F_MAP_STATUS)
+			msg_size += STATUS_SIZE;
 
 		/* maximum pdu length exceeded, we need a new ldp pdu */
 		if (size + msg_size > nbr->max_pdu_len) {
@@ -119,6 +119,9 @@ send_labelmessage(struct nbr *nbr, uint16_t type, struct mapping_head *mh)
 			err |= gen_reqid_tlv(buf, me->map.requestid);
 	    	if (me->map.flags & F_MAP_PW_STATUS)
 			err |= gen_pw_status_tlv(buf, me->map.pw_status);
+		if (me->map.flags & F_MAP_STATUS)
+			err |= gen_status_tlv(buf, me->map.status.code,
+			    me->map.status.msg_id, me->map.status.msg_type);
 		if (err) {
 			ibuf_free(buf);
 			return;
@@ -303,6 +306,14 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 				/* ignore */
 				break;
 			}
+			break;
+		case TLV_TYPE_STATUS:
+			if (tlv_len != STATUS_TLV_LEN) {
+				session_shutdown(nbr, S_BAD_TLV_LEN,
+				    lm.msgid, lm.type);
+				goto err;
+			}
+			/* ignore */
 			break;
 		case TLV_TYPE_PW_STATUS:
 			switch (type) {

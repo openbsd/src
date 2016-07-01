@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.78 2016/07/01 23:14:31 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.79 2016/07/01 23:33:46 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -205,16 +205,22 @@ struct map {
 			uint16_t	ifmtu;
 		} pwid;
 	} fec;
+	struct {
+		uint32_t	code;
+		uint32_t	msg_id;
+		uint16_t	msg_type;
+	} status;
 	uint32_t	label;
 	uint32_t	requestid;
 	uint32_t	pw_status;
 	uint8_t		flags;
 };
 #define F_MAP_REQ_ID	0x01	/* optional request message id present */
-#define F_MAP_PW_CWORD	0x02	/* pseudowire control word */
-#define F_MAP_PW_ID	0x04	/* pseudowire connection id */
-#define F_MAP_PW_IFMTU	0x08	/* pseudowire interface parameter */
-#define F_MAP_PW_STATUS	0x10	/* pseudowire status */
+#define F_MAP_STATUS	0x02	/* status */
+#define F_MAP_PW_CWORD	0x04	/* pseudowire control word */
+#define F_MAP_PW_ID	0x08	/* pseudowire connection id */
+#define F_MAP_PW_IFMTU	0x10	/* pseudowire interface parameter */
+#define F_MAP_PW_STATUS	0x20	/* pseudowire status */
 
 struct notify_msg {
 	uint32_t	status;

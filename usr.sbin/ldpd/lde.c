@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.59 2016/06/18 01:25:53 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.60 2016/07/01 23:33:46 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -816,7 +816,8 @@ lde_send_labelmapping(struct lde_nbr *ln, struct fec_node *fn, int single)
 }
 
 void
-lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn, uint32_t label)
+lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn, uint32_t label,
+    struct status_tlv *status)
 {
 	struct lde_wdraw	*lw;
 	struct map		 map;
@@ -851,6 +852,13 @@ lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn, uint32_t label)
 		map.label = label;
 	}
 
+	if (status) {
+		map.status.code = status->status_code;
+		map.status.msg_id = status->msg_id;
+		map.status.msg_type = status->msg_type;
+		map.flags |= F_MAP_STATUS;
+	}
+
 	/* SWd.1: send label withdraw. */
 	lde_imsg_compose_ldpe(IMSG_WITHDRAW_ADD, ln->peerid, 0,
  	    &map, sizeof(map));
@@ -881,7 +889,7 @@ lde_send_labelwithdraw_all(struct fec_node *fn, uint32_t label)
 	struct lde_nbr		*ln;
 
 	RB_FOREACH(ln, nbr_tree, &lde_nbrs)
-		lde_send_labelwithdraw(ln, fn, label);
+		lde_send_labelwithdraw(ln, fn, label, NULL);
 }
 
 void
@@ -1182,14 +1190,15 @@ lde_change_egress_label(int af, int was_implicit)
 	RB_FOREACH(ln, nbr_tree, &lde_nbrs) {
 		/* explicit withdraw */
 		if (was_implicit)
-			lde_send_labelwithdraw(ln, NULL, MPLS_LABEL_IMPLNULL);
+			lde_send_labelwithdraw(ln, NULL, MPLS_LABEL_IMPLNULL,
+			    NULL);
 		else {
 			if (ln->v4_enabled)
 				lde_send_labelwithdraw(ln, NULL,
-				    MPLS_LABEL_IPV4NULL);
+				    MPLS_LABEL_IPV4NULL, NULL);
 			if (ln->v6_enabled)
 				lde_send_labelwithdraw(ln, NULL,
-				    MPLS_LABEL_IPV6NULL);
+				    MPLS_LABEL_IPV6NULL, NULL);
 		}
 
 		/* advertise new label of connected prefixes */

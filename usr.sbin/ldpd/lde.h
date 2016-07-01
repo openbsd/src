@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.41 2016/06/18 17:13:05 renato Exp $ */
+/*	$OpenBSD: lde.h,v 1.42 2016/07/01 23:33:46 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -134,7 +134,7 @@ void		 lde_map2fec(struct map *, struct in_addr, struct fec *);
 void		 lde_send_labelmapping(struct lde_nbr *, struct fec_node *,
 		    int);
 void		 lde_send_labelwithdraw(struct lde_nbr *, struct fec_node *,
-		    uint32_t);
+		    uint32_t, struct status_tlv *);
 void		 lde_send_labelwithdraw_all(struct fec_node *, uint32_t);
 void		 lde_send_labelrelease(struct lde_nbr *, struct fec_node *,
 		    uint32_t);

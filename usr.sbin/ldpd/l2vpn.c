@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.19 2016/06/27 19:08:39 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.20 2016/07/01 23:33:46 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -258,6 +258,7 @@ int
 l2vpn_pw_negotiate(struct lde_nbr *ln, struct fec_node *fn, struct map *map)
 {
 	struct l2vpn_pw		*pw;
+	struct status_tlv	 status;
 
 	/* NOTE: thanks martini & friends for all this mess */
 
@@ -277,8 +278,11 @@ l2vpn_pw_negotiate(struct lde_nbr *ln, struct fec_node *fn, struct map *map)
 			return (1);
 		} else if (!(map->flags & F_MAP_PW_CWORD) &&
 		    (pw->flags & F_PW_CWORD_CONF)) {
-			/* TODO append a "Wrong C-bit" status code */
-			lde_send_labelwithdraw(ln, fn, NO_LABEL);
+			/* append a "Wrong C-bit" status code */
+			status.status_code = S_WRONG_CBIT;
+			status.msg_id = map->messageid;
+			status.msg_type = htons(MSG_TYPE_LABELMAPPING);
+			lde_send_labelwithdraw(ln, fn, NO_LABEL, &status);
 
 			pw->flags &= ~F_PW_CWORD;
 			lde_send_labelmapping(ln, fn, 1);
