@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.c,v 1.8 2016/07/01 23:14:31 renato Exp $ */
+/*	$OpenBSD: socket.c,v 1.9 2016/07/01 23:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2016 Renato Westphal <renato@openbsd.org>
@@ -382,7 +382,7 @@ sock_set_ipv6_mcast_loop(int fd)
 	unsigned int	loop = 0;
 
 	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
-	    (unsigned int *)&loop, sizeof(loop)) < 0) {
+	    &loop, sizeof(loop)) < 0) {
 		log_warn("%s: error setting IPV6_MULTICAST_LOOP", __func__);
 		return (-1);
 	}

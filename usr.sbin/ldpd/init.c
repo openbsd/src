@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.30 2016/06/27 19:06:33 renato Exp $ */
+/*	$OpenBSD: init.c,v 1.31 2016/07/01 23:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -24,7 +24,7 @@
 #include "ldpe.h"
 #include "log.h"
 
-static int	gen_init_prms_tlv(struct ibuf *, struct nbr *, uint16_t);
+static int	gen_init_prms_tlv(struct ibuf *, struct nbr *);
 static int	tlv_decode_opt_init_prms(char *, uint16_t);
 
 void
@@ -44,7 +44,7 @@ send_init(struct nbr *nbr)
 	size -= LDP_HDR_SIZE;
 	err |= gen_msg_hdr(buf, MSG_TYPE_INIT, size);
 	size -= LDP_MSG_SIZE;
-	err |= gen_init_prms_tlv(buf, nbr, size);
+	err |= gen_init_prms_tlv(buf, nbr);
 	if (err) {
 		ibuf_free(buf);
 		return;
@@ -72,16 +72,16 @@ recv_init(struct nbr *nbr, char *buf, uint16_t len)
 		return (-1);
 	}
 	memcpy(&sess, buf, sizeof(sess));
-	if (ntohs(sess.keepalive_time) < MIN_KEEPALIVE) {
-		session_shutdown(nbr, S_KEEPALIVE_BAD, init.msgid, init.type);
-		return (-1);
-	}
 	if (ntohs(sess.length) != SESS_PRMS_SIZE - TLV_HDR_LEN) {
 		session_shutdown(nbr, S_BAD_TLV_LEN, init.msgid, init.type);
 		return (-1);
 	}
 	if (ntohs(sess.proto_version) != LDP_VERSION) {
 		session_shutdown(nbr, S_BAD_PROTO_VER, init.msgid, init.type);
+		return (-1);
+	}
+	if (ntohs(sess.keepalive_time) < MIN_KEEPALIVE) {
+		session_shutdown(nbr, S_KEEPALIVE_BAD, init.msgid, init.type);
 		return (-1);
 	}
 	if (sess.lsr_id != leconf->rtr_id.s_addr ||
@@ -119,13 +119,13 @@ recv_init(struct nbr *nbr, char *buf, uint16_t len)
 }
 
 static int
-gen_init_prms_tlv(struct ibuf *buf, struct nbr *nbr, uint16_t size)
+gen_init_prms_tlv(struct ibuf *buf, struct nbr *nbr)
 {
 	struct sess_prms_tlv	parms;
 
 	memset(&parms, 0, sizeof(parms));
 	parms.type = htons(TLV_TYPE_COMMONSESSION);
-	parms.length = htons(size - TLV_HDR_LEN);
+	parms.length = htons(SESS_PRMS_SIZE - TLV_HDR_LEN);
 	parms.proto_version = htons(LDP_VERSION);
 	parms.keepalive_time = htons(nbr_get_keepalive(nbr->af, nbr->id));
 	parms.reserved = 0;

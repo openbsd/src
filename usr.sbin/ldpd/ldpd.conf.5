@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.30 2016/07/01 23:14:31 renato Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.31 2016/07/01 23:29:55 renato Exp $
 .\"
 .\" Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -260,7 +260,7 @@ Neighbor-specific parameters are listed below.
 .It Ic keepalive Ar seconds
 Set the keepalive timeout in seconds.
 Inherited from the global configuration if not given.
-The default value is 180; valid range is 3\-65535.
+Valid range is 3\-65535.
 .It Xo
 .Ic gtsm-enable
 .Pq Ic yes Ns | Ns Ic no

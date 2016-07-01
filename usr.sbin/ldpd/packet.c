@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.65 2016/07/01 23:14:31 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.66 2016/07/01 23:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -472,19 +472,16 @@ session_read(int fd, short event, void *arg)
 			return;
 		}
 		pdu_len -= LDP_HDR_PDU_LEN;
-
 		if (ldp_hdr->lsr_id != nbr->id.s_addr ||
 		    ldp_hdr->lspace_id != 0) {
 			session_shutdown(nbr, S_BAD_LDP_ID, 0, 0);
 			free(buf);
 			return;
 		}
-
 		pdu += LDP_HDR_SIZE;
 		len -= LDP_HDR_SIZE;
 
-		if (nbr->state == NBR_STA_OPER)
-			nbr_fsm(nbr, NBR_EVT_PDU_RCVD);
+		nbr_fsm(nbr, NBR_EVT_PDU_RCVD);
 
 		while (len >= LDP_MSG_SIZE) {
 			uint16_t type;

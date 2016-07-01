@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.36 2016/06/27 19:06:33 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.37 2016/07/01 23:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -25,7 +25,7 @@
 #include "log.h"
 #include "ldpe.h"
 
-static int	 gen_status_tlv(struct ibuf *, uint32_t, uint32_t, uint32_t);
+static int	 gen_status_tlv(struct ibuf *, uint32_t, uint32_t, uint16_t);
 
 void
 send_notification_full(struct tcp_conn *tcp, struct notify_msg *nm)
@@ -198,11 +198,11 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 	}
 
 	if (st.status_code & htonl(STATUS_FATAL))
-		log_warnx("received notification from neighbor %s: %s",
+		log_warnx("received notification from lsr-id %s: %s",
 		    inet_ntoa(nbr->id),
 		    notification_name(ntohl(st.status_code)));
 	else
-		log_debug("received non-fatal notification from neighbor "
+		log_debug("received non-fatal notification from lsr-id "
 		    "%s: %s", inet_ntoa(nbr->id),
 		    notification_name(ntohl(st.status_code)));
 
@@ -222,7 +222,7 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 }
 
 static int
-gen_status_tlv(struct ibuf *buf, uint32_t status, uint32_t msgid, uint32_t type)
+gen_status_tlv(struct ibuf *buf, uint32_t status, uint32_t msgid, uint16_t type)
 {
 	struct status_tlv	st;
 

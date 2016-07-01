@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.61 2016/06/18 01:29:05 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.62 2016/07/01 23:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -309,18 +309,18 @@ egress_label(enum fec_type fec_type)
 {
 	switch (fec_type) {
 	case FEC_TYPE_IPV4:
-		if (!(ldeconf->ipv4.flags & F_LDPD_AF_EXPNULL))
-			return (MPLS_LABEL_IMPLNULL);
-		return (MPLS_LABEL_IPV4NULL);
+		if (ldeconf->ipv4.flags & F_LDPD_AF_EXPNULL)
+			return (MPLS_LABEL_IPV4NULL);
+		break;
 	case FEC_TYPE_IPV6:
-		if (!(ldeconf->ipv6.flags & F_LDPD_AF_EXPNULL))
-			return (MPLS_LABEL_IMPLNULL);
-		return (MPLS_LABEL_IPV6NULL);
+		if (ldeconf->ipv6.flags & F_LDPD_AF_EXPNULL)
+			return (MPLS_LABEL_IPV6NULL);
+		break;
 	default:
-		log_warnx("%s: unexpected fec type", __func__);
+		fatalx("egress_label: unexpected fec type");
 	}
 
-	return (NO_LABEL);
+	return (MPLS_LABEL_IMPLNULL);
 }
 
 void

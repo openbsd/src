@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.64 2016/07/01 23:14:31 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.65 2016/07/01 23:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -196,7 +196,7 @@ void		 mapping_list_clr(struct mapping_head *);
 
 /* interface.c */
 struct iface	*if_new(struct kif *);
-void		 if_del(struct iface *);
+void		 if_exit(struct iface *);
 struct iface	*if_lookup(struct ldpd_conf *, unsigned short);
 struct iface_af *iface_af_get(struct iface *, int);
 void		 if_addr_add(struct kaddr *);

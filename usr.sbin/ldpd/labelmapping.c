@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.52 2016/06/27 19:06:33 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.53 2016/07/01 23:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2014, 2015 Renato Westphal <renato@openbsd.org>
@@ -382,28 +382,28 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 
 		switch (type) {
 		case MSG_TYPE_LABELMAPPING:
-			log_debug("label mapping from nbr %s, FEC %s, "
+			log_debug("label mapping from lsr-id %s, FEC %s, "
 			    "label %u", inet_ntoa(nbr->id),
 			    log_map(&me->map), me->map.label);
 			imsg_type = IMSG_LABEL_MAPPING;
 			break;
 		case MSG_TYPE_LABELREQUEST:
-			log_debug("label request from nbr %s, FEC %s",
+			log_debug("label request from lsr-id %s, FEC %s",
 			    inet_ntoa(nbr->id), log_map(&me->map));
 			imsg_type = IMSG_LABEL_REQUEST;
 			break;
 		case MSG_TYPE_LABELWITHDRAW:
-			log_debug("label withdraw from nbr %s, FEC %s",
+			log_debug("label withdraw from lsr-id %s, FEC %s",
 			    inet_ntoa(nbr->id), log_map(&me->map));
 			imsg_type = IMSG_LABEL_WITHDRAW;
 			break;
 		case MSG_TYPE_LABELRELEASE:
-			log_debug("label release from nbr %s, FEC %s",
+			log_debug("label release from lsr-id %s, FEC %s",
 			    inet_ntoa(nbr->id), log_map(&me->map));
 			imsg_type = IMSG_LABEL_RELEASE;
 			break;
 		case MSG_TYPE_LABELABORTREQ:
-			log_debug("label abort from nbr %s, FEC %s",
+			log_debug("label abort from lsr-id %s, FEC %s",
 			    inet_ntoa(nbr->id), log_map(&me->map));
 			imsg_type = IMSG_LABEL_ABORT;
 			break;
@@ -697,9 +697,6 @@ tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *lm, char *buf,
 			}
 
 			memcpy(&stlv, buf + off, sizeof(stlv));
-			off += SUBTLV_HDR_LEN;
-			pw_len -= SUBTLV_HDR_LEN;
-
 			switch (stlv.type) {
 			case SUBTLV_IFMTU:
 				if (stlv.length != FEC_SUBTLV_IFMTU_LEN) {
@@ -707,8 +704,8 @@ tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *lm, char *buf,
 					    lm->msgid, lm->type);
 					return (-1);
 				}
-				memcpy(&map->fec.pwid.ifmtu, buf + off,
-				    sizeof(uint16_t));
+				memcpy(&map->fec.pwid.ifmtu, buf + off +
+				    SUBTLV_HDR_LEN, sizeof(uint16_t));
 				map->fec.pwid.ifmtu = ntohs(map->fec.pwid.ifmtu);
 				map->flags |= F_MAP_PW_IFMTU;
 				break;
@@ -716,8 +713,8 @@ tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *lm, char *buf,
 				/* ignore */
 				break;
 			}
-			off += stlv.length - SUBTLV_HDR_LEN;
-			pw_len -= stlv.length - SUBTLV_HDR_LEN;
+			off += stlv.length;
+			pw_len -= stlv.length;
 		}
 
 		return (off);

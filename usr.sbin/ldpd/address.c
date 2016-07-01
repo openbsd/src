@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.26 2016/06/27 19:06:33 renato Exp $ */
+/*	$OpenBSD: address.c,v 1.27 2016/07/01 23:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -163,7 +163,7 @@ recv_address(struct nbr *nbr, char *buf, uint16_t len)
 			fatalx("recv_address: unknown af");
 		}
 
-		log_debug("%s: neighbor ID %s address %s%s", __func__,
+		log_debug("%s: lsr-id %s address %s%s", __func__,
 		    inet_ntoa(nbr->id), log_addr(lde_addr.af, &lde_addr.addr),
 		    ntohs(addr.type) == MSG_TYPE_ADDR ? "" : " (withdraw)");
 
