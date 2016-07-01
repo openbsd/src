@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.156 2016/06/28 17:35:14 jca Exp $ */
+/* $OpenBSD: netcat.c,v 1.157 2016/07/01 00:29:14 bcook Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1412,18 +1412,13 @@ set_common_sockopts(int s, int af)
 			err(1, NULL);
 	}
 	if (Tflag != -1) {
-		int proto, option;
-
-		if (af == AF_INET6) {
-			proto = IPPROTO_IPV6;
-			option = IPV6_TCLASS;
-		} else {
-			proto = IPPROTO_IP;
-			option = IP_TOS;
-		}
-
-		if (setsockopt(s, proto, option, &Tflag, sizeof(Tflag)) == -1)
+		if (af == AF_INET && setsockopt(s, IPPROTO_IP,
+		    IP_TOS, &Tflag, sizeof(Tflag)) == -1)
 			err(1, "set IP ToS");
+
+		else if (af == AF_INET6 && setsockopt(s, IPPROTO_IPV6,
+		    IPV6_TCLASS, &Tflag, sizeof(Tflag)) == -1)
+			err(1, "set IPv6 traffic class");
 	}
 	if (Iflag) {
 		if (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
@@ -1435,28 +1430,25 @@ set_common_sockopts(int s, int af)
 		    &Oflag, sizeof(Oflag)) == -1)
 			err(1, "set TCP send buffer size");
 	}
-	if (ttl != -1 || minttl != -1) {
-		int proto, in_ttl_opt, out_ttl_opt;
-		switch (af) {
-		case AF_INET:
-			proto = IPPROTO_IP;
-			in_ttl_opt = IP_MINTTL;
-			out_ttl_opt = IP_TTL;
-			break;
-		case AF_INET6:
-			proto = IPPROTO_IPV6;
-			in_ttl_opt = IPV6_MINHOPCOUNT;
-			out_ttl_opt = IPV6_UNICAST_HOPS;
-			break;
-		default:
-			errx(1, "unknown address family: %d", af);
-		}
-		if (minttl != -1 && setsockopt(s, proto, in_ttl_opt,
-		    &minttl, sizeof(minttl)))
-			err(1, "setsockopt minttl");
-		if (ttl != -1 && setsockopt(s, proto, out_ttl_opt,
-		    &ttl, sizeof(ttl)))
-			err(1, "setsockopt ttl");
+
+	if (ttl != -1) {
+		if (af == AF_INET && setsockopt(s, IPPROTO_IP,
+		    IP_TTL, &ttl, sizeof(ttl)))
+			err(1, "set IP TTL");
+
+		else if (af == AF_INET6 && setsockopt(s, IPPROTO_IPV6,
+		    IPV6_UNICAST_HOPS, &ttl, sizeof(ttl)))
+			err(1, "set IPv6 unicast hops");
+	}
+
+	if (minttl != -1) {
+		if (af == AF_INET && setsockopt(s, IPPROTO_IP,
+		    IP_MINTTL, &minttl, sizeof(minttl)))
+			err(1, "set IP min TTL");
+
+		else if (af == AF_INET6 && setsockopt(s, IPPROTO_IPV6,
+		    IPV6_MINHOPCOUNT, &minttl, sizeof(minttl)))
+			err(1, "set IPv6 min hop count");
 	}
 }
 
