@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.205 2016/04/02 19:55:10 krw Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.206 2016/07/01 15:00:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1897,7 +1897,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 				retryonce = 1;
 				if (f->f_file < 0) {
 					f->f_type = F_UNUSED;
-					logerrorx(f->f_un.f_fname);
+					logerror(f->f_un.f_fname);
 				} else
 					goto again;
 			} else if ((e == EPIPE || e == EBADF) &&
@@ -1906,7 +1906,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 				retryonce = 1;
 				if (f->f_file < 0) {
 					f->f_type = F_UNUSED;
-					logerrorx(f->f_un.f_fname);
+					logerror(f->f_un.f_fname);
 				} else
 					goto again;
 			} else {
@@ -1959,7 +1959,7 @@ wallmsg(struct filed *f, struct iovec *iov)
 	if (reenter++)
 		return;
 	if ((uf = priv_open_utmp()) == NULL) {
-		logerrorx(_PATH_UTMP);
+		logerror(_PATH_UTMP);
 		reenter = 0;
 		return;
 	}
@@ -2638,7 +2638,7 @@ cfline(char *line, char *progblock, char *hostblock)
 			f->f_file = priv_open_log(p);
 		if (f->f_file < 0) {
 			f->f_type = F_UNUSED;
-			logerrorx(p);
+			logerror(p);
 			break;
 		}
 		if (isatty(f->f_file)) {
