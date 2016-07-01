@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.324 2016/06/23 09:08:56 henning Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.325 2016/07/01 18:28:58 jca Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -887,12 +887,14 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 				case IP_TTL:
 					if (optval > 0 && optval <= MAXTTL)
 						inp->inp_ip.ip_ttl = optval;
+					else if (optval == -1)
+						inp->inp_ip.ip_ttl = ip_defttl;
 					else
 						error = EINVAL;
 					break;
 
 				case IP_MINTTL:
-					if (optval > 0 && optval <= MAXTTL)
+					if (optval >= 0 && optval <= MAXTTL)
 						inp->inp_ip_minttl = optval;
 					else
 						error = EINVAL;
