@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.53 2016/07/01 23:14:31 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.54 2016/07/01 23:18:24 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -54,7 +54,7 @@ send_hello(enum hello_type type, struct iface_af *ia, struct tnbr *tnbr)
 		switch (af) {
 		case AF_INET:
 			if (!(leconf->ipv4.flags & F_LDPD_AF_NO_GTSM))
-				flags |= GTSM_HELLO;
+				flags |= F_HELLO_GTSM;
 			dst.v4 = global.mcast_addr_v4;
 			break;
 		case AF_INET6:
@@ -67,9 +67,9 @@ send_hello(enum hello_type type, struct iface_af *ia, struct tnbr *tnbr)
 	case HELLO_TARGETED:
 		af = tnbr->af;
 		holdtime = tnbr->hello_holdtime;
-		flags = TARGETED_HELLO;
+		flags = F_HELLO_TARGETED;
 		if ((tnbr->flags & F_TNBR_CONFIGURED) || tnbr->pw_count)
-			flags |= REQUEST_TARG_HELLO;
+			flags |= F_HELLO_REQ_TARG;
 		fd = (ldp_af_global_get(&global, af))->ldp_edisc_socket;
 
 		/* unicast destination address */
@@ -176,12 +176,12 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 		    __func__, inet_ntoa(lsr_id), holdtime);
 		return;
 	}
-	if (multicast && (flags & TARGETED_HELLO)) {
+	if (multicast && (flags & F_HELLO_TARGETED)) {
 		log_debug("%s: lsr-id %s: multicast targeted hello", __func__,
 		    inet_ntoa(lsr_id));
 		return;
 	}
-	if (!multicast && !((flags & TARGETED_HELLO))) {
+	if (!multicast && !((flags & F_HELLO_TARGETED))) {
 		log_debug("%s: lsr-id %s: unicast link hello", __func__,
 		    inet_ntoa(lsr_id));
 		return;
@@ -219,7 +219,7 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 		 * (i.e., MUST discard the targeted Hello if it failed the
 		 * check)".
 		 */
-		if (flags & TARGETED_HELLO) {
+		if (flags & F_HELLO_TARGETED) {
 			log_debug("%s: lsr-id %s: invalid targeted hello "
 			    "transport address %s", __func__, inet_ntoa(lsr_id),
 			     log_addr(af, &trans_addr));
@@ -229,7 +229,7 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 	}
 
 	memset(&source, 0, sizeof(source));
-	if (flags & TARGETED_HELLO) {
+	if (flags & F_HELLO_TARGETED) {
 		/*
 	 	 * RFC 7552 - Section 5.2:
 		* "The link-local IPv6 addresses MUST NOT be used as the
@@ -246,13 +246,13 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 
 		/* remove the dynamic tnbr if the 'R' bit was cleared */
 		if (tnbr && (tnbr->flags & F_TNBR_DYNAMIC) &&
-		    !((flags & REQUEST_TARG_HELLO))) {
+		    !((flags & F_HELLO_REQ_TARG))) {
 			tnbr->flags &= ~F_TNBR_DYNAMIC;
 			tnbr = tnbr_check(tnbr);
 		}
 
 		if (!tnbr) {
-			if (!((flags & REQUEST_TARG_HELLO) &&
+			if (!((flags & F_HELLO_REQ_TARG) &&
 			    ((ldp_af_conf_get(leconf, af))->flags &
 			    F_LDPD_AF_THELLO_ACCEPT)))
 				return;
@@ -367,7 +367,7 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 
 	/* dynamic LDPv4 GTSM negotiation as per RFC 6720 */
 	if (nbr) {
-		if (flags & GTSM_HELLO)
+		if (flags & F_HELLO_GTSM)
 			nbr->flags |= F_NBR_GTSM_NEGOTIATED;
 		else
 			nbr->flags &= ~F_NBR_GTSM_NEGOTIATED;

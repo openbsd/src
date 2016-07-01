@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.30 2016/07/01 23:14:31 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.31 2016/07/01 23:18:24 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -140,9 +140,9 @@ struct hello_prms_tlv {
 	uint16_t	flags;
 };
 
-#define TARGETED_HELLO		0x8000
-#define REQUEST_TARG_HELLO	0x4000
-#define GTSM_HELLO		0x2000
+#define F_HELLO_TARGETED	0x8000
+#define F_HELLO_REQ_TARG	0x4000
+#define F_HELLO_GTSM		0x2000
 
 struct hello_prms_opt4_tlv {
 	uint16_t	type;
