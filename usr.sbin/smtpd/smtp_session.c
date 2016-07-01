@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.279 2016/07/01 17:53:23 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.280 2016/07/01 19:52:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1098,7 +1098,7 @@ smtp_filter_response(uint64_t id, int query, int status, uint32_t code,
 		smtp_reply(s, "250%c%s Hello %s [%s], pleased to meet you",
 		    (s->flags & SF_EHLO) ? '-' : ' ',
 		    s->smtpname,
-		    s->tx->evp.helo,
+		    s->helo,
 		    ss_to_text(&s->ss));
 
 		if (s->flags & SF_EHLO) {
@@ -1214,7 +1214,7 @@ smtp_filter_fd(uint64_t id, int fd)
 	iobuf_fqueue(&s->tx->obuf, "Received: ");
 	if (!(s->listener->flags & F_MASK_SOURCE)) {
 		iobuf_fqueue(&s->tx->obuf, "from %s (%s [%s])",
-		    s->tx->evp.helo,
+		    s->helo,
 		    s->hostname,
 		    ss_to_text(&s->ss));
 	}
