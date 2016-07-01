@@ -11,7 +11,7 @@ use warnings;
 use Socket;
 use Errno ':POSIX';
 
-my @errors = (ECONNREFUSED);
+my @errors = (ECONNREFUSED, EPIPE);
 my $errors = "(". join("|", map { $! = $_ } @errors). ")";
 
 our %args = (
