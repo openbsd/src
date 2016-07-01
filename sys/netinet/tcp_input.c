@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.323 2016/06/27 20:57:41 jca Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.324 2016/07/01 18:37:15 jca Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3702,8 +3702,11 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	if (inp->inp_flags & INP_IPV6) {
 		inp->inp_ipv6.ip6_hlim = oldinp->inp_ipv6.ip6_hlim;
 		inp->inp_hops = oldinp->inp_hops;
-	}
+	} else
 #endif /* INET6 */
+	{
+		inp->inp_ip.ip_ttl = oldinp->inp_ip.ip_ttl;
+	}
 
 #if NPF > 0
 	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED &&
