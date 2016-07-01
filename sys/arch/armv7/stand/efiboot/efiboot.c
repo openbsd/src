@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.10 2016/05/20 23:25:09 jsg Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.11 2016/07/01 09:34:39 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -238,7 +238,9 @@ struct board_id board_id_table[] = {
 	{ "google,spring",			3774 },
 	{ "kosagi,imx6q-novena",		4269 },
 	{ "samsung,universal_c210",		2838 },
+	{ "solidrun,cubox-i/dl",		4821 },
 	{ "solidrun,cubox-i/q",			4821 },
+	{ "solidrun,hummingboard/dl",		4773 },
 	{ "solidrun,hummingboard/q",		4773 },
 	{ "ti,am335x-bone",			3589 },
 	{ "ti,omap3-beagle",			1546 },
