@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.62 2016/07/01 23:29:55 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.63 2016/07/01 23:36:38 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -529,7 +529,7 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 	fn = (struct fec_node *)fec_find(&ft, &fec);
 	if (fn == NULL || LIST_EMPTY(&fn->nexthops)) {
 		/* LRq.5: send No Route notification */
-		lde_send_notification(ln->peerid, S_NO_ROUTE, map->messageid,
+		lde_send_notification(ln->peerid, S_NO_ROUTE, map->msg_id,
 		    htons(MSG_TYPE_LABELREQUEST));
 		return;
 	}
@@ -544,7 +544,7 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 
 			/* LRq.4: send Loop Detected notification */
 			lde_send_notification(ln->peerid, S_LOOP_DETECTED,
-			    map->messageid, htons(MSG_TYPE_LABELREQUEST));
+			    map->msg_id, htons(MSG_TYPE_LABELREQUEST));
 			return;
 		default:
 			break;
@@ -560,7 +560,7 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 	/* LRq.8: record label request */
 	lre = lde_req_add(ln, &fn->fec, 0);
 	if (lre != NULL)
-		lre->msgid = ntohl(map->messageid);
+		lre->msg_id = ntohl(map->msg_id);
 
 	/* LRq.9: perform LSR label distribution */
 	lde_send_labelmapping(ln, fn, 1);

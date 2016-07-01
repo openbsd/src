@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.20 2016/07/01 23:33:46 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.21 2016/07/01 23:36:38 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -258,7 +258,7 @@ int
 l2vpn_pw_negotiate(struct lde_nbr *ln, struct fec_node *fn, struct map *map)
 {
 	struct l2vpn_pw		*pw;
-	struct status_tlv	 status;
+	struct status_tlv	 st;
 
 	/* NOTE: thanks martini & friends for all this mess */
 
@@ -279,10 +279,10 @@ l2vpn_pw_negotiate(struct lde_nbr *ln, struct fec_node *fn, struct map *map)
 		} else if (!(map->flags & F_MAP_PW_CWORD) &&
 		    (pw->flags & F_PW_CWORD_CONF)) {
 			/* append a "Wrong C-bit" status code */
-			status.status_code = S_WRONG_CBIT;
-			status.msg_id = map->messageid;
-			status.msg_type = htons(MSG_TYPE_LABELMAPPING);
-			lde_send_labelwithdraw(ln, fn, NO_LABEL, &status);
+			st.status_code = S_WRONG_CBIT;
+			st.msg_id = map->msg_id;
+			st.msg_type = htons(MSG_TYPE_LABELMAPPING);
+			lde_send_labelwithdraw(ln, fn, NO_LABEL, &st);
 
 			pw->flags &= ~F_PW_CWORD;
 			lde_send_labelmapping(ln, fn, 1);
@@ -310,11 +310,9 @@ l2vpn_send_pw_status(uint32_t peerid, uint32_t status, struct fec *fec)
 	struct notify_msg	 nm;
 
 	memset(&nm, 0, sizeof(nm));
-	nm.status = S_PW_STATUS;
-
+	nm.status_code = S_PW_STATUS;
 	nm.pw_status = status;
 	nm.flags |= F_NOTIF_PW_STATUS;
-
 	lde_fec2map(fec, &nm.fec);
 	nm.flags |= F_NOTIF_FEC;
 

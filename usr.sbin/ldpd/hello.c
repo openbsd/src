@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.55 2016/07/01 23:29:55 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.56 2016/07/01 23:36:38 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -146,7 +146,7 @@ send_hello(enum hello_type type, struct iface_af *ia, struct tnbr *tnbr)
 }
 
 void
-recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
+recv_hello(struct in_addr lsr_id, struct ldp_msg *msg, int af,
     union ldpd_addr *src, struct iface *iface, int multicast, char *buf,
     uint16_t len)
 {
@@ -291,8 +291,8 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 		log_debug("%s: lsr-id %s: remote transport preference does not "
 		    "match the local preference", __func__, inet_ntoa(lsr_id));
 		if (nbr)
-			session_shutdown(nbr, S_TRANS_MISMTCH, lm->msgid,
-			    lm->type);
+			session_shutdown(nbr, S_TRANS_MISMTCH, msg->id,
+			    msg->type);
 		if (adj)
 			adj_del(adj, S_SHUTDOWN);
 		return;
@@ -307,14 +307,14 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 		case AF_INET:
 			if (nbr_adj_count(nbr, AF_INET6) > 0) {
 				session_shutdown(nbr, S_DS_NONCMPLNCE,
-				    lm->msgid, lm->type);
+				    msg->id, msg->type);
 				return;
 			}
 			break;
 		case AF_INET6:
 			if (nbr_adj_count(nbr, AF_INET) > 0) {
 				session_shutdown(nbr, S_DS_NONCMPLNCE,
-				    lm->msgid, lm->type);
+				    msg->id, msg->type);
 				return;
 			}
 			break;
@@ -468,7 +468,7 @@ tlv_decode_hello_prms(char *buf, uint16_t len, uint16_t *holdtime,
 
 	if (tlv.type != htons(TLV_TYPE_COMMONHELLO))
 		return (-1);
-	if (ntohs(tlv.length) != sizeof(tlv) - TLV_HDR_LEN)
+	if (ntohs(tlv.length) != sizeof(tlv) - TLV_HDR_SIZE)
 		return (-1);
 
 	*holdtime = ntohs(tlv.holdtime);
@@ -502,10 +502,10 @@ tlv_decode_opt_hello_prms(char *buf, uint16_t len, int *tlvs_rcvd, int af,
 	 * given address family".
 	 */
 	while (len >= sizeof(tlv)) {
-		memcpy(&tlv, buf, TLV_HDR_LEN);
-		buf += TLV_HDR_LEN;
-		len -= TLV_HDR_LEN;
-		total += TLV_HDR_LEN;
+		memcpy(&tlv, buf, TLV_HDR_SIZE);
+		buf += TLV_HDR_SIZE;
+		len -= TLV_HDR_SIZE;
+		total += TLV_HDR_SIZE;
 		tlv_len = ntohs(tlv.length);
 
 		switch (ntohs(tlv.type)) {

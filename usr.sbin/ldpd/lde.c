@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.60 2016/07/01 23:33:46 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.61 2016/07/01 23:36:38 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -311,7 +311,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 				break;
 			}
 
-			switch (nm.status) {
+			switch (nm.status_code) {
 			case S_PW_STATUS:
 				l2vpn_recv_pw_status(ln, &nm);
 				break;
@@ -794,7 +794,7 @@ lde_send_labelmapping(struct lde_nbr *ln, struct fec_node *fn, int single)
 	lre = (struct lde_req *)fec_find(&ln->recv_req, &fn->fec);
 	if (lre) {
 		/* set label request msg id in the mapping response. */
-		map.requestid = lre->msgid;
+		map.requestid = lre->msg_id;
 		map.flags = F_MAP_REQ_ID;
 
 		/* SL.7: delete record of pending request */
@@ -817,7 +817,7 @@ lde_send_labelmapping(struct lde_nbr *ln, struct fec_node *fn, int single)
 
 void
 lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn, uint32_t label,
-    struct status_tlv *status)
+    struct status_tlv *st)
 {
 	struct lde_wdraw	*lw;
 	struct map		 map;
@@ -852,10 +852,10 @@ lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn, uint32_t label,
 		map.label = label;
 	}
 
-	if (status) {
-		map.status.code = status->status_code;
-		map.status.msg_id = status->msg_id;
-		map.status.msg_type = status->msg_type;
+	if (st) {
+		map.st.status_code = st->status_code;
+		map.st.msg_id = st->msg_id;
+		map.st.msg_type = st->msg_type;
 		map.flags |= F_MAP_STATUS;
 	}
 
@@ -931,16 +931,16 @@ lde_send_labelrelease(struct lde_nbr *ln, struct fec_node *fn, uint32_t label)
 }
 
 void
-lde_send_notification(uint32_t peerid, uint32_t code, uint32_t msgid,
-    uint16_t type)
+lde_send_notification(uint32_t peerid, uint32_t status_code, uint32_t msg_id,
+    uint16_t msg_type)
 {
 	struct notify_msg nm;
 
 	memset(&nm, 0, sizeof(nm));
-	nm.status = code;
-	/* 'msgid' and 'type' should be in network byte order */
-	nm.messageid = msgid;
-	nm.type = type;
+	nm.status_code = status_code;
+	/* 'msg_id' and 'msg_type' should be in network byte order */
+	nm.msg_id = msg_id;
+	nm.msg_type = msg_type;
 
 	lde_imsg_compose_ldpe(IMSG_NOTIFICATION_SEND, peerid, 0,
 	    &nm, sizeof(nm));

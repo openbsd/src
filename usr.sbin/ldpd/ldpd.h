@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.79 2016/07/01 23:33:46 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.80 2016/07/01 23:36:38 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -191,7 +191,7 @@ TAILQ_HEAD(mapping_head, mapping_entry);
 
 struct map {
 	uint8_t		type;
-	uint32_t	messageid;
+	uint32_t	msg_id;
 	union {
 		struct {
 			uint16_t	af;
@@ -206,10 +206,10 @@ struct map {
 		} pwid;
 	} fec;
 	struct {
-		uint32_t	code;
+		uint32_t	status_code;
 		uint32_t	msg_id;
 		uint16_t	msg_type;
-	} status;
+	} st;
 	uint32_t	label;
 	uint32_t	requestid;
 	uint32_t	pw_status;
@@ -223,9 +223,9 @@ struct map {
 #define F_MAP_PW_STATUS	0x20	/* pseudowire status */
 
 struct notify_msg {
-	uint32_t	status;
-	uint32_t	messageid;	/* network byte order */
-	uint16_t	type;		/* network byte order */
+	uint32_t	status_code;
+	uint32_t	msg_id;		/* network byte order */
+	uint16_t	msg_type;	/* network byte order */
 	uint32_t	pw_status;
 	struct map	fec;
 	uint8_t		flags;

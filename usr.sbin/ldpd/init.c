@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.31 2016/07/01 23:29:55 renato Exp $ */
+/*	$OpenBSD: init.c,v 1.32 2016/07/01 23:36:38 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -56,37 +56,37 @@ send_init(struct nbr *nbr)
 int
 recv_init(struct nbr *nbr, char *buf, uint16_t len)
 {
-	struct ldp_msg		init;
+	struct ldp_msg		msg;
 	struct sess_prms_tlv	sess;
 	uint16_t		max_pdu_len;
 	int			r;
 
 	log_debug("%s: lsr-id %s", __func__, inet_ntoa(nbr->id));
 
-	memcpy(&init, buf, sizeof(init));
+	memcpy(&msg, buf, sizeof(msg));
 	buf += LDP_MSG_SIZE;
 	len -= LDP_MSG_SIZE;
 
 	if (len < SESS_PRMS_SIZE) {
-		session_shutdown(nbr, S_BAD_MSG_LEN, init.msgid, init.type);
+		session_shutdown(nbr, S_BAD_MSG_LEN, msg.id, msg.type);
 		return (-1);
 	}
 	memcpy(&sess, buf, sizeof(sess));
-	if (ntohs(sess.length) != SESS_PRMS_SIZE - TLV_HDR_LEN) {
-		session_shutdown(nbr, S_BAD_TLV_LEN, init.msgid, init.type);
+	if (ntohs(sess.length) != SESS_PRMS_LEN) {
+		session_shutdown(nbr, S_BAD_TLV_LEN, msg.id, msg.type);
 		return (-1);
 	}
 	if (ntohs(sess.proto_version) != LDP_VERSION) {
-		session_shutdown(nbr, S_BAD_PROTO_VER, init.msgid, init.type);
+		session_shutdown(nbr, S_BAD_PROTO_VER, msg.id, msg.type);
 		return (-1);
 	}
 	if (ntohs(sess.keepalive_time) < MIN_KEEPALIVE) {
-		session_shutdown(nbr, S_KEEPALIVE_BAD, init.msgid, init.type);
+		session_shutdown(nbr, S_KEEPALIVE_BAD, msg.id, msg.type);
 		return (-1);
 	}
 	if (sess.lsr_id != leconf->rtr_id.s_addr ||
 	    ntohs(sess.lspace_id) != 0) {
-		session_shutdown(nbr, S_NO_HELLO, init.msgid, init.type);
+		session_shutdown(nbr, S_NO_HELLO, msg.id, msg.type);
 		return (-1);
 	}
 
@@ -96,7 +96,7 @@ recv_init(struct nbr *nbr, char *buf, uint16_t len)
 	/* just ignore all optional TLVs for now */
 	r = tlv_decode_opt_init_prms(buf, len);
 	if (r == -1 || r != len) {
-		session_shutdown(nbr, S_BAD_TLV_VAL, init.msgid, init.type);
+		session_shutdown(nbr, S_BAD_TLV_VAL, msg.id, msg.type);
 		return (-1);
 	}
 
@@ -125,7 +125,7 @@ gen_init_prms_tlv(struct ibuf *buf, struct nbr *nbr)
 
 	memset(&parms, 0, sizeof(parms));
 	parms.type = htons(TLV_TYPE_COMMONSESSION);
-	parms.length = htons(SESS_PRMS_SIZE - TLV_HDR_LEN);
+	parms.length = htons(SESS_PRMS_LEN);
 	parms.proto_version = htons(LDP_VERSION);
 	parms.keepalive_time = htons(nbr_get_keepalive(nbr->af, nbr->id));
 	parms.reserved = 0;
@@ -145,10 +145,10 @@ tlv_decode_opt_init_prms(char *buf, uint16_t len)
 	int		total = 0;
 
 	 while (len >= sizeof(tlv)) {
-		memcpy(&tlv, buf, TLV_HDR_LEN);
-		buf += TLV_HDR_LEN;
-		len -= TLV_HDR_LEN;
-		total += TLV_HDR_LEN;
+		memcpy(&tlv, buf, TLV_HDR_SIZE);
+		buf += TLV_HDR_SIZE;
+		len -= TLV_HDR_SIZE;
+		total += TLV_HDR_SIZE;
 		tlv_len = ntohs(tlv.length);
 
 		switch (ntohs(tlv.type)) {

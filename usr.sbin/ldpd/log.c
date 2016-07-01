@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.27 2016/05/23 19:11:42 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.28 2016/07/01 23:36:38 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -318,7 +318,7 @@ if_type_name(enum iface_type type)
 }
 
 const char *
-notification_name(uint32_t status)
+status_code_name(uint32_t status)
 {
 	static char buf[16];
 

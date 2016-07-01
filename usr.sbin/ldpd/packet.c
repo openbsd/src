@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.66 2016/07/01 23:29:55 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.67 2016/07/01 23:36:38 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -66,7 +66,7 @@ gen_msg_hdr(struct ibuf *buf, uint32_t type, uint16_t size)
 	msg.type = htons(type);
 	/* exclude the 'Type' and 'Length' fields from the total */
 	msg.length = htons(size - LDP_MSG_DEAD_LEN);
-	msg.msgid = htonl(++msgcnt);
+	msg.id = htonl(++msgcnt);
 
 	return (ibuf_add(buf, &msg, sizeof(msg)));
 }
@@ -122,7 +122,7 @@ disc_recv_packet(int fd, short event, void *bula)
 		struct	cmsghdr hdr;
 		char	buf[CMSG_SPACE(CMSG_MAXLEN)];
 	} cmsgbuf;
-	struct msghdr		 msg;
+	struct msghdr		 m;
 	struct sockaddr_storage	 from;
 	struct iovec		 iov;
 	char			*buf;
@@ -136,7 +136,7 @@ disc_recv_packet(int fd, short event, void *bula)
 	uint16_t		 len;
 	struct ldp_hdr		 ldp_hdr;
 	uint16_t		 pdu_len;
-	struct ldp_msg		 ldp_msg;
+	struct ldp_msg		 msg;
 	uint16_t		 msg_len;
 	struct in_addr		 lsr_id;
 
@@ -144,24 +144,24 @@ disc_recv_packet(int fd, short event, void *bula)
 		return;
 
 	/* setup buffer */
-	memset(&msg, 0, sizeof(msg));
+	memset(&m, 0, sizeof(m));
 	iov.iov_base = buf = pkt_ptr;
 	iov.iov_len = IBUF_READ_SIZE;
-	msg.msg_name = &from;
-	msg.msg_namelen = sizeof(from);
-	msg.msg_iov = &iov;
-	msg.msg_iovlen = 1;
-	msg.msg_control = &cmsgbuf.buf;
-	msg.msg_controllen = sizeof(cmsgbuf.buf);
+	m.msg_name = &from;
+	m.msg_namelen = sizeof(from);
+	m.msg_iov = &iov;
+	m.msg_iovlen = 1;
+	m.msg_control = &cmsgbuf.buf;
+	m.msg_controllen = sizeof(cmsgbuf.buf);
 
-	if ((r = recvmsg(fd, &msg, 0)) == -1) {
+	if ((r = recvmsg(fd, &m, 0)) == -1) {
 		if (errno != EAGAIN && errno != EINTR)
 			log_debug("%s: read error: %s", __func__,
 			    strerror(errno));
 		return;
 	}
 
-	multicast = (msg.msg_flags & MSG_MCAST) ? 1 : 0;
+	multicast = (m.msg_flags & MSG_MCAST) ? 1 : 0;
 	sa2addr((struct sockaddr *)&from, &af, &src);
 	if (bad_addr(af, &src)) {
 		log_debug("%s: invalid source address: %s", __func__,
@@ -169,8 +169,8 @@ disc_recv_packet(int fd, short event, void *bula)
 		return;
 	}
 
-	for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
-	    cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+	for (cmsg = CMSG_FIRSTHDR(&m); cmsg != NULL;
+	    cmsg = CMSG_NXTHDR(&m, cmsg)) {
 		if (af == AF_INET && cmsg->cmsg_level == IPPROTO_IP &&
 		    cmsg->cmsg_type == IP_RECVIF) {
 			ifindex = ((struct sockaddr_dl *)
@@ -228,23 +228,22 @@ disc_recv_packet(int fd, short event, void *bula)
 	 * not impose any restrictions since LDP uses UDP only for sending Hello
 	 * packets.
 	 */
-	memcpy(&ldp_msg, buf, sizeof(ldp_msg));
+	memcpy(&msg, buf, sizeof(msg));
 
 	/* check "Message Length" field */
-	msg_len = ntohs(ldp_msg.length);
+	msg_len = ntohs(msg.length);
 	if (msg_len < LDP_MSG_LEN || ((msg_len + LDP_MSG_DEAD_LEN) > pdu_len)) {
 		log_debug("%s: invalid LDP message length %u, source %s",
-		    __func__, ntohs(ldp_msg.length), log_addr(af, &src));
+		    __func__, ntohs(msg.length), log_addr(af, &src));
 		return;
 	}
 	buf += LDP_MSG_SIZE;
 	len -= LDP_MSG_SIZE;
 
 	/* switch LDP packet type */
-	switch (ntohs(ldp_msg.type)) {
+	switch (ntohs(msg.type)) {
 	case MSG_TYPE_HELLO:
-		recv_hello(lsr_id, &ldp_msg, af, &src, iface, multicast,
-		    buf, len);
+		recv_hello(lsr_id, &msg, af, &src, iface, multicast, buf, len);
 		break;
 	default:
 		log_debug("%s: unknown LDP packet type, source %s", __func__,
@@ -419,7 +418,7 @@ session_read(int fd, short event, void *arg)
 	struct nbr	*nbr = arg;
 	struct tcp_conn	*tcp = nbr->tcp;
 	struct ldp_hdr	*ldp_hdr;
-	struct ldp_msg	*ldp_msg;
+	struct ldp_msg	*msg;
 	char		*buf, *pdu;
 	ssize_t		 n, len;
 	uint16_t	 pdu_len, msg_len, msg_size, max_pdu_len;
@@ -486,13 +485,13 @@ session_read(int fd, short event, void *arg)
 		while (len >= LDP_MSG_SIZE) {
 			uint16_t type;
 
-			ldp_msg = (struct ldp_msg *)pdu;
-			type = ntohs(ldp_msg->type);
-			msg_len = ntohs(ldp_msg->length);
+			msg = (struct ldp_msg *)pdu;
+			type = ntohs(msg->type);
+			msg_len = ntohs(msg->length);
 			msg_size = msg_len + LDP_MSG_DEAD_LEN;
 			if (msg_len < LDP_MSG_LEN || msg_size > pdu_len) {
-				session_shutdown(nbr, S_BAD_TLV_LEN,
-				    ldp_msg->msgid, ldp_msg->type);
+				session_shutdown(nbr, S_BAD_TLV_LEN, msg->id,
+				    msg->type);
 				free(buf);
 				return;
 			}
@@ -504,7 +503,7 @@ session_read(int fd, short event, void *arg)
 				if ((nbr->state != NBR_STA_INITIAL) &&
 				    (nbr->state != NBR_STA_OPENSENT)) {
 					session_shutdown(nbr, S_SHUTDOWN,
-					    ldp_msg->msgid, ldp_msg->type);
+					    msg->id, msg->type);
 					free(buf);
 					return;
 				}
@@ -513,7 +512,7 @@ session_read(int fd, short event, void *arg)
 				if ((nbr->state == NBR_STA_INITIAL) ||
 				    (nbr->state == NBR_STA_OPENSENT)) {
 					session_shutdown(nbr, S_SHUTDOWN,
-					    ldp_msg->msgid, ldp_msg->type);
+					    msg->id, msg->type);
 					free(buf);
 					return;
 				}
@@ -527,7 +526,7 @@ session_read(int fd, short event, void *arg)
 			case MSG_TYPE_LABELABORTREQ:
 				if (nbr->state != NBR_STA_OPER) {
 					session_shutdown(nbr, S_SHUTDOWN,
-					    ldp_msg->msgid, ldp_msg->type);
+					    msg->id, msg->type);
 					free(buf);
 					return;
 				}
@@ -562,10 +561,9 @@ session_read(int fd, short event, void *arg)
 			default:
 				log_debug("%s: unknown LDP message from nbr %s",
 				    __func__, inet_ntoa(nbr->id));
-				if (!(ntohs(ldp_msg->type) & UNKNOWN_FLAG))
+				if (!(ntohs(msg->type) & UNKNOWN_FLAG))
 					send_notification_nbr(nbr,
-					    S_UNKNOWN_MSG, ldp_msg->msgid,
-					    ldp_msg->type);
+					    S_UNKNOWN_MSG, msg->id, msg->type);
 				/* ignore the message */
 				ret = 0;
 				break;
@@ -615,8 +613,8 @@ session_write(int fd, short event, void *arg)
 }
 
 void
-session_shutdown(struct nbr *nbr, uint32_t status, uint32_t msgid,
-    uint32_t type)
+session_shutdown(struct nbr *nbr, uint32_t status, uint32_t msg_id,
+    uint32_t msg_type)
 {
 	switch (nbr->state) {
 	case NBR_STA_PRESENT:
@@ -629,7 +627,7 @@ session_shutdown(struct nbr *nbr, uint32_t status, uint32_t msgid,
 	case NBR_STA_OPER:
 		log_debug("%s: lsr-id %s", __func__, inet_ntoa(nbr->id));
 
-		send_notification_nbr(nbr, status, msgid, type);
+		send_notification_nbr(nbr, status, msg_id, msg_type);
 
 		nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 		break;

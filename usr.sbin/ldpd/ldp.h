@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.32 2016/07/01 23:22:42 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.33 2016/07/01 23:36:38 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -117,12 +117,12 @@ struct tlv {
 	uint16_t	type;
 	uint16_t	length;
 };
-#define	TLV_HDR_LEN		4
+#define	TLV_HDR_SIZE		4
 
 struct ldp_msg {
 	uint16_t	type;
 	uint16_t	length;
-	uint32_t	msgid;
+	uint32_t	id;
 	/* Mandatory Parameters */
 	/* Optional Parameters */
 } __packed;
@@ -140,7 +140,6 @@ struct hello_prms_tlv {
 	uint16_t	holdtime;
 	uint16_t	flags;
 };
-
 #define F_HELLO_TARGETED	0x8000
 #define F_HELLO_REQ_TARG	0x4000
 #define F_HELLO_GTSM		0x2000
@@ -216,6 +215,7 @@ struct sess_prms_tlv {
 } __packed;
 
 #define SESS_PRMS_SIZE		18
+#define SESS_PRMS_LEN		14
 
 struct status_tlv {
 	uint16_t	type;
@@ -258,37 +258,37 @@ struct subtlv {
 	uint8_t		type;
 	uint8_t		length;
 };
-#define	SUBTLV_HDR_LEN		2
+#define	SUBTLV_HDR_SIZE		2
 
 #define SUBTLV_IFMTU		0x01
 #define SUBTLV_VLANID		0x06
 
-#define FEC_SUBTLV_IFMTU_LEN	4
-#define FEC_SUBTLV_VLANID_LEN	4
+#define FEC_SUBTLV_IFMTU_SIZE	4
+#define FEC_SUBTLV_VLANID_SIZE	4
 
 struct label_tlv {
 	uint16_t	type;
 	uint16_t	length;
 	uint32_t	label;
 };
-
-#define LABEL_TLV_LEN		8
+#define LABEL_TLV_SIZE		8
+#define LABEL_TLV_LEN		4
 
 struct reqid_tlv {
 	uint16_t	type;
 	uint16_t	length;
 	uint32_t	reqid;
 };
-
-#define REQID_TLV_LEN		8
+#define REQID_TLV_SIZE		8
+#define REQID_TLV_LEN		4
 
 struct pw_status_tlv {
 	uint16_t	type;
 	uint16_t	length;
 	uint32_t	value;
 };
-
-#define PW_STATUS_TLV_LEN	8
+#define PW_STATUS_TLV_SIZE	8
+#define PW_STATUS_TLV_LEN	4
 
 #define PW_FORWARDING		0
 #define PW_NOT_FORWARDING	(1 << 0)

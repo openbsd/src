@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.11 2016/05/23 19:09:25 renato Exp $ */
+/*	$OpenBSD: log.h,v 1.12 2016/07/01 23:36:38 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -44,7 +44,7 @@ const char	*socket_name(int);
 const char	*nbr_state_name(int);
 const char	*if_state_name(int);
 const char	*if_type_name(enum iface_type);
-const char	*notification_name(uint32_t);
+const char	*status_code_name(uint32_t);
 const char	*pw_type_name(uint16_t);
 char		*log_hello_src(const struct hello_source *);
 const char	*log_map(const struct map *);

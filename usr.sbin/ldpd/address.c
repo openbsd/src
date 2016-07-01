@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.27 2016/07/01 23:29:55 renato Exp $ */
+/*	$OpenBSD: address.c,v 1.28 2016/07/01 23:36:38 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -82,28 +82,28 @@ send_address(struct nbr *nbr, int af, struct if_addr *if_addr, int withdraw)
 int
 recv_address(struct nbr *nbr, char *buf, uint16_t len)
 {
-	struct ldp_msg		addr;
+	struct ldp_msg		msg;
 	struct address_list_tlv	alt;
 	enum imsg_type		type;
 	struct lde_addr		lde_addr;
 
-	memcpy(&addr, buf, sizeof(addr));
+	memcpy(&msg, buf, sizeof(msg));
 	buf += LDP_MSG_SIZE;
 	len -= LDP_MSG_SIZE;
 
 	/* Address List TLV */
 	if (len < sizeof(alt)) {
-		session_shutdown(nbr, S_BAD_MSG_LEN, addr.msgid, addr.type);
+		session_shutdown(nbr, S_BAD_MSG_LEN, msg.id, msg.type);
 		return (-1);
 	}
 
 	memcpy(&alt, buf, sizeof(alt));
-	if (ntohs(alt.length) != len - TLV_HDR_LEN) {
-		session_shutdown(nbr, S_BAD_TLV_LEN, addr.msgid, addr.type);
+	if (ntohs(alt.length) != len - TLV_HDR_SIZE) {
+		session_shutdown(nbr, S_BAD_TLV_LEN, msg.id, msg.type);
 		return (-1);
 	}
 	if (ntohs(alt.type) != TLV_TYPE_ADDRLIST) {
-		session_shutdown(nbr, S_UNKNOWN_TLV, addr.msgid, addr.type);
+		session_shutdown(nbr, S_UNKNOWN_TLV, msg.id, msg.type);
 		return (-1);
 	}
 	switch (ntohs(alt.family)) {
@@ -118,13 +118,13 @@ recv_address(struct nbr *nbr, char *buf, uint16_t len)
 			return (0);
 		break;
 	default:
-		send_notification_nbr(nbr, S_UNSUP_ADDR, addr.msgid, addr.type);
+		send_notification_nbr(nbr, S_UNSUP_ADDR, msg.id, msg.type);
 		return (-1);
 	}
 	buf += sizeof(alt);
 	len -= sizeof(alt);
 
-	if (ntohs(addr.type) == MSG_TYPE_ADDR)
+	if (ntohs(msg.type) == MSG_TYPE_ADDR)
 		type = IMSG_ADDRESS_ADD;
 	else
 		type = IMSG_ADDRESS_DEL;
@@ -133,8 +133,8 @@ recv_address(struct nbr *nbr, char *buf, uint16_t len)
 		switch (ntohs(alt.family)) {
 		case AF_IPV4:
 			if (len < sizeof(struct in_addr)) {
-				session_shutdown(nbr, S_BAD_TLV_LEN, addr.msgid,
-				    addr.type);
+				session_shutdown(nbr, S_BAD_TLV_LEN, msg.id,
+				    msg.type);
 				return (-1);
 			}
 
@@ -147,8 +147,8 @@ recv_address(struct nbr *nbr, char *buf, uint16_t len)
 			break;
 		case AF_IPV6:
 			if (len < sizeof(struct in6_addr)) {
-				session_shutdown(nbr, S_BAD_TLV_LEN, addr.msgid,
-				    addr.type);
+				session_shutdown(nbr, S_BAD_TLV_LEN, msg.id,
+				    msg.type);
 				return (-1);
 			}
 
@@ -165,7 +165,7 @@ recv_address(struct nbr *nbr, char *buf, uint16_t len)
 
 		log_debug("%s: lsr-id %s address %s%s", __func__,
 		    inet_ntoa(nbr->id), log_addr(lde_addr.af, &lde_addr.addr),
-		    ntohs(addr.type) == MSG_TYPE_ADDR ? "" : " (withdraw)");
+		    ntohs(msg.type) == MSG_TYPE_ADDR ? "" : " (withdraw)");
 
 		ldpe_imsg_compose_lde(type, nbr->peerid, 0, &lde_addr,
 		    sizeof(lde_addr));
@@ -184,7 +184,7 @@ gen_address_list_tlv(struct ibuf *buf, uint16_t size, int af,
 
 	memset(&alt, 0, sizeof(alt));
 	alt.type = TLV_TYPE_ADDRLIST;
-	alt.length = htons(size - TLV_HDR_LEN);
+	alt.length = htons(size - TLV_HDR_SIZE);
 	switch (af) {
 	case AF_INET:
 		alt.family = htons(AF_IPV4);
