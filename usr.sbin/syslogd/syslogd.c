@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.206 2016/07/01 15:00:48 millert Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.207 2016/07/01 15:47:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1738,20 +1738,36 @@ fprintlog(struct filed *f, int flags, char *msg)
 		v->iov_base = "";
 		v->iov_len = 0;
 		v++;
-	} else {
+	} else if (f->f_lasttime[0] != '\0') {
 		v->iov_base = f->f_lasttime;
 		v->iov_len = 15;
 		v++;
 		v->iov_base = " ";
 		v->iov_len = 1;
 		v++;
+	} else {
+		v->iov_base = "";
+		v->iov_len = 0;
+		v++;
+		v->iov_base = "";
+		v->iov_len = 0;
+		v++;
 	}
-	v->iov_base = f->f_prevhost;
-	v->iov_len = strlen(v->iov_base);
-	v++;
-	v->iov_base = " ";
-	v->iov_len = 1;
-	v++;
+	if (f->f_prevhost[0] != '\0') {
+		v->iov_base = f->f_prevhost;
+		v->iov_len = strlen(v->iov_base);
+		v++;
+		v->iov_base = " ";
+		v->iov_len = 1;
+		v++;
+	} else {
+		v->iov_base = "";
+		v->iov_len = 0;
+		v++;
+		v->iov_base = "";
+		v->iov_len = 0;
+		v++;
+	}
 
 	if (msg) {
 		v->iov_base = msg;
