@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.29 2016/05/23 21:05:07 jmc Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.30 2016/07/01 23:14:31 renato Exp $
 .\"
 .\" Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -19,7 +19,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 23 2016 $
+.Dd $Mdocdate: July 1 2016 $
 .Dt LDPD.CONF 5
 .Os
 .Sh NAME
@@ -145,6 +145,28 @@ connected prefixes.
 The default is
 .Ic no .
 .Pp
+.It Xo
+.Ic gtsm-enable
+.Pq Ic yes Ns | Ns Ic no
+.Xc
+If set to
+.Ic yes ,
+.Xr ldpd 8
+will use the GTSM procedures described in RFC 6720 (for the IPv4 address-family)
+and RFC 7552 (for the IPv6 address-family).
+.Pp
+Since GTSM is mandatory for LDPv6, the only effect of disabling GTSM for the
+IPv6 address-family is that
+.Xr ldpd 8
+will not check the incoming packets' Hop Limit.
+Outgoing packets will still be sent using a Hop Limit of 255 to guarantee
+interoperability.
+.Pp
+If GTSM is enabled, multi-hop neighbors should have either GTSM disabled
+individually or configured with an appropriate gtsm-hops distance.
+The default is
+.Ic yes .
+.Pp
 .It Ic keepalive Ar seconds
 Set the keepalive timeout in seconds.
 The default value is 180; valid range is 3\-65535.
@@ -239,6 +261,17 @@ Neighbor-specific parameters are listed below.
 Set the keepalive timeout in seconds.
 Inherited from the global configuration if not given.
 The default value is 180; valid range is 3\-65535.
+.It Xo
+.Ic gtsm-enable
+.Pq Ic yes Ns | Ns Ic no
+.Xc
+Override the inherited configuration and enable/disable GTSM for this neighbor.
+.It Ic gtsm-hops Ar hops
+Set the maximum number of hops the neighbor may be away.
+When GTSM is enabled for this neighbor, incoming packets are required to have
+a TTL/Hop Limit of 256 minus this value, ensuring they have not passed
+through more than the expected number of hops.
+The default value is 1; valid range is 1\-255.
 .It Ic password Ar secret
 Enable TCP MD5 signatures per RFC 5036.
 .El

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.52 2016/06/27 19:18:54 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.53 2016/07/01 23:14:31 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -53,6 +53,8 @@ send_hello(enum hello_type type, struct iface_af *ia, struct tnbr *tnbr)
 		/* multicast destination address */
 		switch (af) {
 		case AF_INET:
+			if (!(leconf->ipv4.flags & F_LDPD_AF_NO_GTSM))
+				flags |= GTSM_HELLO;
 			dst.v4 = global.mcast_addr_v4;
 			break;
 		case AF_INET6:
@@ -362,6 +364,14 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *lm, int af,
 	    ((trans_pref == DUAL_STACK_LDPOV4 && af == AF_INET) ||
 	    (trans_pref == DUAL_STACK_LDPOV6 && af == AF_INET6))))
 		nbr = nbr_new(lsr_id, af, ds_tlv, &trans_addr, scope_id);
+
+	/* dynamic LDPv4 GTSM negotiation as per RFC 6720 */
+	if (nbr) {
+		if (flags & GTSM_HELLO)
+			nbr->flags |= F_NBR_GTSM_NEGOTIATED;
+		else
+			nbr->flags &= ~F_NBR_GTSM_NEGOTIATED;
+	}
 
 	/* update neighbor's configuration sequence number */
 	if (nbr && (tlvs_rcvd & F_HELLO_TLV_RCVD_CONF)) {

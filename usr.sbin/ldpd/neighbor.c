@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.74 2016/06/13 23:01:37 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.75 2016/07/01 23:14:31 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -608,6 +608,11 @@ nbr_establish_connection(struct nbr *nbr)
 		return (-1);
 	}
 
+	if (nbr_gtsm_check(nbr->fd, nbr, nbrp)) {
+		close(nbr->fd);
+		return (-1);
+	}
+
 	/*
 	 * Send an extra hello to guarantee that the remote peer has formed
 	 * an adjacency as well.
@@ -632,6 +637,89 @@ nbr_establish_connection(struct nbr *nbr)
 
 	/* connection completed immediately */
 	nbr_fsm(nbr, NBR_EVT_CONNECT_UP);
+
+	return (0);
+}
+
+int
+nbr_gtsm_enabled(struct nbr *nbr, struct nbr_params *nbrp)
+{
+	/*
+	 * RFC 6720 - Section 3:
+	 * "This document allows for the implementation to provide an option to
+	 * statically (e.g., via configuration) and/or dynamically override the
+	 * default behavior and enable/disable GTSM on a per-peer basis".
+	 */
+	if (nbrp && (nbrp->flags & F_NBRP_GTSM))
+		return (nbrp->gtsm_enabled);
+
+	if ((ldp_af_conf_get(leconf, nbr->af))->flags & F_LDPD_AF_NO_GTSM)
+		return (0);
+
+	/* By default, GTSM support has to be negotiated for LDPv4 */
+	if (nbr->af == AF_INET && !(nbr->flags & F_NBR_GTSM_NEGOTIATED))
+		return (0);
+
+	return (1);
+}
+
+int
+nbr_gtsm_setup(int fd, int af, struct nbr_params *nbrp)
+{
+	int	 ttl = 255;
+
+	if (nbrp && (nbrp->flags & F_NBRP_GTSM_HOPS))
+		ttl = 256 - nbrp->gtsm_hops;
+
+	switch (af) {
+	case AF_INET:
+		if (sock_set_ipv4_minttl(fd, ttl) == -1)
+			return (-1);
+		ttl = 255;
+		if (sock_set_ipv4_ucast_ttl(fd, ttl) == -1)
+			return (-1);
+		break;
+	case AF_INET6:
+		if (sock_set_ipv6_minhopcount(fd, ttl) == -1)
+			return (-1);
+		ttl = 255;
+		if (sock_set_ipv6_ucast_hops(fd, ttl) == -1)
+			return (-1);
+		break;
+	default:
+		fatalx("nbr_gtsm_setup: unknown af");
+	}
+
+	return (0);
+}
+
+int
+nbr_gtsm_check(int fd, struct nbr *nbr, struct nbr_params *nbrp)
+{
+	if (!nbr_gtsm_enabled(nbr, nbrp)) {
+		switch (nbr->af) {
+		case AF_INET:
+			sock_set_ipv4_ucast_ttl(fd, -1);
+			break;
+		case AF_INET6:
+			/*
+			 * Send packets with a Hop Limit of 255 even when GSTM
+			 * is disabled to guarantee interoperability.
+			 */
+			sock_set_ipv6_ucast_hops(fd, 255);
+			break;
+		default:
+			fatalx("nbr_gtsm_check: unknown af");
+			break;
+		}
+		return (0);
+	}
+
+	if (nbr_gtsm_setup(fd, nbr->af, nbrp) == -1) {
+		log_warnx("%s: error enabling GTSM for lsr-id %s", __func__,
+		    inet_ntoa(nbr->id));
+		return (-1);
+	}
 
 	return (0);
 }

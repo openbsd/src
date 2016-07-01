@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.25 2016/05/23 19:14:03 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.26 2016/07/01 23:14:31 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -74,6 +74,11 @@ print_af(int af, struct ldpd_conf *conf, struct ldpd_af_conf *af_conf)
 	else
 		printf("\texplicit-null no\n");
 
+	if (af_conf->flags & F_LDPD_AF_NO_GTSM)
+		printf("\tgtsm-enable no\n");
+	else
+		printf("\tgtsm-enable yes\n");
+
 	printf("\tkeepalive %u\n", af_conf->keepalive);
 	printf("\ttransport-address %s\n", log_addr(af, &af_conf->trans_addr));
 
@@ -115,6 +120,16 @@ print_nbrp(struct nbr_params *nbrp)
 
 	if (nbrp->flags & F_NBRP_KEEPALIVE)
 		printf("\tkeepalive %u\n", nbrp->keepalive);
+
+	if (nbrp->flags & F_NBRP_GTSM) {
+		if (nbrp->gtsm_enabled)
+			printf("\tgtsm-enable yes\n");
+		else
+			printf("\tgtsm-enable no\n");
+	}
+
+	if (nbrp->flags & F_NBRP_GTSM_HOPS)
+		printf("\tgtsm-hops %u\n", nbrp->gtsm_hops);
 
 	if (nbrp->auth.method == AUTH_MD5SIG)
 		printf("\tpassword XXXXXX\n");

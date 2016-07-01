@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.54 2016/06/18 17:13:05 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.55 2016/07/01 23:14:31 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -813,6 +813,7 @@ static void
 merge_af(int af, struct ldpd_af_conf *af_conf, struct ldpd_af_conf *xa)
 {
 	int			 egress_label_changed = 0;
+	int			 update_sockets = 0;
 
 	if (af_conf->keepalive != xa->keepalive) {
 		af_conf->keepalive = xa->keepalive;
@@ -827,6 +828,16 @@ merge_af(int af, struct ldpd_af_conf *af_conf, struct ldpd_af_conf *xa)
 	    (af_conf->flags & F_LDPD_AF_THELLO_ACCEPT) &&
 	    !(xa->flags & F_LDPD_AF_THELLO_ACCEPT))
 		ldpe_remove_dynamic_tnbrs(af);
+
+	if ((af_conf->flags & F_LDPD_AF_NO_GTSM) !=
+	    (xa->flags & F_LDPD_AF_NO_GTSM)) {
+		if (af == AF_INET6)
+			/* need to set/unset IPV6_MINHOPCOUNT */
+			update_sockets = 1;
+		else if (ldpd_process == PROC_LDP_ENGINE)
+			/* for LDPv4 just resetting the neighbors is enough */
+			ldpe_reset_nbrs(af);
+	}
 
 	if ((af_conf->flags & F_LDPD_AF_EXPNULL) !=
 	    (xa->flags & F_LDPD_AF_EXPNULL))
@@ -851,10 +862,12 @@ merge_af(int af, struct ldpd_af_conf *af_conf, struct ldpd_af_conf *xa)
 
 	if (ldp_addrcmp(af, &af_conf->trans_addr, &xa->trans_addr)) {
 		af_conf->trans_addr = xa->trans_addr;
-		if (ldpd_process == PROC_MAIN)
-			imsg_compose_event(iev_ldpe, IMSG_CLOSE_SOCKETS, af,
-			    0, -1, NULL, 0);
+		update_sockets = 1;
 	}
+
+	if (ldpd_process == PROC_MAIN && update_sockets)
+		imsg_compose_event(iev_ldpe, IMSG_CLOSE_SOCKETS, af, 0, -1,
+		    NULL, 0);
 }
 
 static void
@@ -988,7 +1001,10 @@ merge_nbrps(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 		}
 
 		/* update existing nbrps */
-		if (nbrp->keepalive != xn->keepalive ||
+		if (nbrp->flags != xn->flags ||
+		    nbrp->keepalive != xn->keepalive ||
+		    nbrp->gtsm_enabled != xn->gtsm_enabled ||
+		    nbrp->gtsm_hops != xn->gtsm_hops ||
 		    nbrp->auth.method != xn->auth.method ||
 		    strcmp(nbrp->auth.md5key, xn->auth.md5key) != 0)
 			nbrp_changed = 1;
