@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.281 2016/07/02 07:55:59 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.282 2016/07/02 08:47:30 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -120,6 +120,7 @@ struct smtp_tx {
 	size_t			 destcount;
 	TAILQ_HEAD(, smtp_rcpt)	 rcpts;
 
+	size_t			 datain;
 	size_t			 odatalen;
 	struct iobuf		 obuf;
 	struct io		 oev;
@@ -153,9 +154,6 @@ struct smtp_session {
 	char			 username[SMTPD_MAXMAILADDRSIZE];
 
 	size_t			 mailcount;
-
-	size_t			 datain;
-
 	struct event		 pause;
 
 	struct smtp_tx		*tx;
@@ -2171,7 +2169,7 @@ smtp_message_reset(struct smtp_session *s, int prepare)
 	s->tx->msgflags = 0;
 	s->tx->destcount = 0;
 	s->tx->rcptcount = 0;
-	s->datain = 0;
+	s->tx->datain = 0;
 	s->tx->odatalen = 0;
 	s->tx->dataeom = 0;
 	s->tx->rcvcount = 0;
@@ -2634,8 +2632,8 @@ smtp_filter_dataline(struct smtp_session *s, const char *line)
 		line += 1;
 
 	/* account for newline */
-	s->datain += strlen(line) + 1;
-	if (s->datain > env->sc_maxsize) {
+	s->tx->datain += strlen(line) + 1;
+	if (s->tx->datain > env->sc_maxsize) {
 		s->tx->msgflags |= MF_ERROR_SIZE;
 		return;
 	}
