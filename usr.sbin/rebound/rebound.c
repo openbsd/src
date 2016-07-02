@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.64 2016/06/05 22:41:41 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.65 2016/07/02 17:09:09 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -313,16 +313,24 @@ sendreply(int ud, struct request *req)
 	resp->id = req->clientid;
 	sendto(ud, buf, r, 0, &req->from, req->fromlen);
 	if ((ent = req->cacheent)) {
+		/*
+		 * we do this first, because there's a potential race against
+		 * other requests made at the same time. if we lose, abort.
+		 * if anything else goes wrong, though, we need to reverse.
+		 */
+		if (RB_INSERT(cachetree, &cachetree, ent))
+			return;
 		ent->ts = now;
 		ent->ts.tv_sec += 10;
 		ent->resp = malloc(r);
-		if (!ent->resp)
+		if (!ent->resp) {
+			RB_REMOVE(cachetree, &cachetree, ent);
 			return;
+		}
 		memcpy(ent->resp, buf, r);
 		ent->resplen = r;
 		cachecount += 1;
 		TAILQ_INSERT_TAIL(&cachefifo, ent, fifo);
-		RB_INSERT(cachetree, &cachetree, ent);
 	}
 }
 
