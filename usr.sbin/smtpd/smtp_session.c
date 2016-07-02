@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.282 2016/07/02 08:47:30 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.283 2016/07/02 09:32:30 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1252,10 +1252,6 @@ smtp_filter_fd(uint64_t id, int fd)
 
 	iobuf_fqueue(&s->tx->obuf, ";\n\t%s\n", time_to_text(time(NULL)));
 
-	/*
-	 * XXX This is not exactly fair, since this is not really
-	 * user data.
-	 */
 	s->tx->odatalen = iobuf_queued(&s->tx->obuf);
 
 	io_set_write(&s->tx->oev);
