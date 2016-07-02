@@ -1,4 +1,4 @@
-/*	$OpenBSD: aoa.c,v 1.6 2010/02/26 21:52:14 jasper Exp $	*/
+/*	$OpenBSD: aoa.c,v 1.7 2016/07/02 16:28:50 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -55,6 +55,7 @@
 int aoa_getdev(void *, struct audio_device *);
 int aoa_match(struct device *, void *, void *);
 void aoa_attach(struct device *, struct device *, void *);
+void aoa_defer(struct device *);
 void aoa_set_volume(struct aoa_softc *, int, int);
 void aoa_get_default_params(void *, int, struct audio_params *);
 
@@ -123,6 +124,8 @@ aoa_match(struct device *parent, void *match, void *aux)
 		return (1);
 	if (strcmp(compat, "AOAK2") == 0)
 		return (1);
+	if (strcmp(compat, "AOAShasta") == 0)
+		return (1);
 
 	return (0);
 }
@@ -135,7 +138,16 @@ aoa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_setvolume = aoa_set_volume;
 
 	i2s_attach(parent, sc, aux);
+	config_defer(self, aoa_defer);
+}
+
+void
+aoa_defer(struct device *dev)
+{
+	struct aoa_softc *sc = (struct aoa_softc *)dev;
+
 	audio_attach_mi(&aoa_hw_if, sc, &sc->sc_dev);
+	deq_reset(sc);
 }
 
 int
