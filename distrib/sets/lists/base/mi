@@ -470,7 +470,7 @@
 ./usr/bin/paste
 ./usr/bin/patch
 ./usr/bin/perl
-./usr/bin/perl5.20.2
+./usr/bin/perl5.20.3
 ./usr/bin/perlbug
 ./usr/bin/perldoc
 ./usr/bin/perlivp
@@ -1484,6 +1484,7 @@
 ./usr/libdata/perl5/pod/perl5200delta.pod
 ./usr/libdata/perl5/pod/perl5201delta.pod
 ./usr/libdata/perl5/pod/perl5202delta.pod
+./usr/libdata/perl5/pod/perl5203delta.pod
 ./usr/libdata/perl5/pod/perl561delta.pod
 ./usr/libdata/perl5/pod/perl56delta.pod
 ./usr/libdata/perl5/pod/perl581delta.pod
