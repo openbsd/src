@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.32 2016/04/13 14:24:30 tb Exp $
+.\" $OpenBSD: pledge.2,v 1.33 2016/07/03 04:36:08 semarie Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 13 2016 $
+.Dd $Mdocdate: July 3 2016 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -318,6 +318,10 @@ relating to a file:
 .Xr lchown 2 ,
 .Xr fchown 2 ,
 .Xr utimes 2 .
+.It Va "chown"
+The
+.Xr chown 2
+family is allowed to change the user or group on a file.
 .It Va "flock"
 File locking via
 .Xr fcntl 2 ,

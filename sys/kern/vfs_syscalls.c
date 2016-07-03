@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.259 2016/06/27 04:26:41 semarie Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.260 2016/07/03 04:36:08 semarie Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2091,7 +2091,7 @@ dofchownat(struct proc *p, int fd, const char *path, uid_t uid, gid_t gid,
 
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
-	nd.ni_pledge = PLEDGE_FATTR | PLEDGE_RPATH;
+	nd.ni_pledge = PLEDGE_CHOWN | PLEDGE_RPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2142,7 +2142,7 @@ sys_lchown(struct proc *p, void *v, register_t *retval)
 	gid_t gid = SCARG(uap, gid);
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
-	nd.ni_pledge = PLEDGE_FATTR | PLEDGE_RPATH;
+	nd.ni_pledge = PLEDGE_CHOWN | PLEDGE_RPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;

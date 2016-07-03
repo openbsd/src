@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.173 2016/06/28 04:27:58 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.174 2016/07/03 04:36:08 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -333,10 +333,11 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_chflags] = PLEDGE_FATTR,
 	[SYS_chflagsat] = PLEDGE_FATTR,
 	[SYS_fchflags] = PLEDGE_FATTR,
-	[SYS_chown] = PLEDGE_FATTR,
-	[SYS_fchownat] = PLEDGE_FATTR,
-	[SYS_lchown] = PLEDGE_FATTR,
-	[SYS_fchown] = PLEDGE_FATTR,
+
+	[SYS_chown] = PLEDGE_CHOWN,
+	[SYS_fchownat] = PLEDGE_CHOWN,
+	[SYS_lchown] = PLEDGE_CHOWN,
+	[SYS_fchown] = PLEDGE_CHOWN,
 
 	[SYS_socket] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YPACTIVE,
 	[SYS_connect] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YPACTIVE,
@@ -358,13 +359,14 @@ static const struct {
 	uint64_t flags;
 } pledgereq[] = {
 	{ "audio",		PLEDGE_AUDIO },
+	{ "chown",		PLEDGE_CHOWN | PLEDGE_CHOWNUID },
 	{ "cpath",		PLEDGE_CPATH },
 	{ "disklabel",		PLEDGE_DISKLABEL },
 	{ "dns",		PLEDGE_DNS },
 	{ "dpath",		PLEDGE_DPATH },
 	{ "drm",		PLEDGE_DRM },
 	{ "exec",		PLEDGE_EXEC },
-	{ "fattr",		PLEDGE_FATTR },
+	{ "fattr",		PLEDGE_FATTR | PLEDGE_CHOWN },
 	{ "flock",		PLEDGE_FLOCK },
 	{ "getpw",		PLEDGE_GETPW },
 	{ "id",			PLEDGE_ID },
@@ -1064,6 +1066,9 @@ int
 pledge_chown(struct proc *p, uid_t uid, gid_t gid)
 {
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
+		return (0);
+
+	if (p->p_p->ps_pledge & PLEDGE_CHOWNUID)
 		return (0);
 
 	if (uid != -1 && uid != p->p_ucred->cr_uid)
