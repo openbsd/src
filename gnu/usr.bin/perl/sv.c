@@ -12698,7 +12698,7 @@ S_sv_dup_common(pTHX_ const SV *const sstr, CLONE_PARAMS *const param)
 		    }
 		    items = AvMAX((const AV *)sstr) - AvFILLp((const AV *)sstr);
 		    while (items-- > 0) {
-			*dst_ary++ = &PL_sv_undef;
+			*dst_ary++ = NULL;
 		    }
 		}
 		else {

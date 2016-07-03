@@ -2255,6 +2255,19 @@ EOP
     }
 
     {
+        fresh_perl_is(<<'EOF',
+                my $s = "\x{41c}";
+                $s =~ /(.*)/ or die;
+                $ls = lc $1;
+                print $ls eq lc $s ? "good\n" : "bad: [$ls]\n";
+EOF
+            "good\n",
+            {},
+            "swash triggered by lc() doesn't corrupt \$1"
+        );
+    }
+
+    {
         #' RT #119075
         no warnings 'regexp';   # Silence "has useless greediness modifier"
         local $@;

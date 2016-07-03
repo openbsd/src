@@ -16,7 +16,7 @@
 
 my $interactive = ( @ARGV && $ARGV[0] =~ /interactive/ );
 
-BEGIN { print "1 .. 8\n"; }
+BEGIN { print "1..8\n"; }
 END { print "not ok 1\n" unless $loaded }
 use Term::ReadKey;
 

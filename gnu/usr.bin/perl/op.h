@@ -1005,7 +1005,7 @@ For custom ops the type is returned from the registration, and it is up
 to the registree to ensure it is accurate.  The value returned will be
 one of the OA_* constants from op.h.
 
-=for apidoc Am|bool|OP_TYPE_IS|OP *o, Optype type
+=for apidoc Am|bool|OP_TYPE_IS|OP *o|Optype type
 Returns true if the given OP is not a NULL pointer
 and if it is of the given type.
 
@@ -1013,7 +1013,7 @@ The negation of this macro, C<OP_TYPE_ISNT> is also available
 as well as C<OP_TYPE_IS_NN> and C<OP_TYPE_ISNT_NN> which elide
 the NULL pointer check.
 
-=for apidoc Am|bool|OP_TYPE_IS_OR_WAS|OP *o, Optype type
+=for apidoc Am|bool|OP_TYPE_IS_OR_WAS|OP *o|Optype type
 Returns true if the given OP is not a NULL pointer and
 if it is of the given type or used to be before being
 replaced by an OP of type OP_NULL.

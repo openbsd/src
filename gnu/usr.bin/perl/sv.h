@@ -792,13 +792,18 @@ C<SvIV_set> instead of the lvalue assignment to C<SvIVX>.
 Set the value of the NV pointer in sv to val.  See C<SvIV_set>.
 
 =for apidoc Am|void|SvPV_set|SV* sv|char* val
-Set the value of the PV pointer in C<sv> to the C<NUL>-terminated string
-C<val>.  See also C<SvIV_set>.
+This is probably not what you want to use, you probably wanted
+L</sv_usepvn_flags> or L</sv_setpvn> or L</sv_setpvs>.
 
+Set the value of the PV pointer in C<sv> to the Perl allocated
+C<NUL>-terminated string C<val>.  See also C<SvIV_set>.
+
+Remember to free the previous PV buffer. There are many things to check.
 Beware that the existing pointer may be involved in copy-on-write or other
 mischief, so do C<SvOOK_off(sv)> and use C<sv_force_normal> or
 C<SvPV_force> (or check the SvIsCOW flag) first to make sure this
-modification is safe.
+modification is safe. Then finally, if it is not a COW, call C<SvPV_free> to
+free the previous PV buffer.
 
 =for apidoc Am|void|SvUV_set|SV* sv|UV val
 Set the value of the UV pointer in sv to val.  See C<SvIV_set>.

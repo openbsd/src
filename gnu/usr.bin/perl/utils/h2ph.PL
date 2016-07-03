@@ -769,7 +769,7 @@ sub inc_dirs
 sub build_preamble_if_necessary
 {
     # Increment $VERSION every time this function is modified:
-    my $VERSION     = 3;
+    my $VERSION     = 4;
     my $preamble    = "$Dest_dir/_h2ph_pre.ph";
 
     # Can we skip building the preamble file?
@@ -788,6 +788,11 @@ sub build_preamble_if_necessary
 
     open  PREAMBLE, ">$preamble" or die "Cannot open $preamble:  $!";
 	print PREAMBLE "# This file was created by h2ph version $VERSION\n";
+        # Prevent non-portable hex constants from warning.
+        #
+        # We still produce an overflow warning if we can't represent
+        # a hex constant as an integer.
+        print PREAMBLE "no warnings qw(portable);\n";
 
 	foreach (sort keys %define) {
 	    if ($opt_D) {
@@ -814,6 +819,18 @@ DEFINE
 		# integer:
 		print PREAMBLE
 		    "unless (defined &$_) { sub $_() { $1 } }\n\n";
+            } elsif ($define{$_} =~ /^([+-]?0x[\da-f]+)U?L{0,2}$/i) {
+                # hex integer
+                # Special cased, since perl warns on hex integers
+                # that can't be represented in a UV.
+                #
+                # This way we get the warning at time of use, so the user
+                # only gets the warning if they happen to use this
+                # platform-specific definition.
+                my $code = $1;
+                $code = "hex('$code')" if length $code > 10;
+                print PREAMBLE
+                    "unless (defined &$_) { sub $_() { $code } }\n\n";
 	    } elsif ($define{$_} =~ /^\w+$/) {
 		my $def = $define{$_};
 		if ($isatype{$def}) {

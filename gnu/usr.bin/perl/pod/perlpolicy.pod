@@ -84,9 +84,9 @@ the Perl community should expect from Perl's developers:
 
 =item *
 
-We "officially" support the two most recent stable release series.  5.14.x
-and earlier are now out of support.  As of the release of 5.20.0, we will
-"officially" end support for Perl 5.16.x, other than providing security
+We "officially" support the two most recent stable release series.  5.16.x
+and earlier are now out of support.  As of the release of 5.22.0, we will
+"officially" end support for Perl 5.18.x, other than providing security
 updates as described below.
 
 =item *
@@ -515,10 +515,14 @@ Civility is simple:  stick to the facts while avoiding demeaning remarks and
 sarcasm.  It is not enough to be factual.  You must also be civil.  Responding
 in kind to incivility is not acceptable.
 
+While civility is required, kindness is encouraged; if you have any doubt about
+whether you are being civil, simply ask yourself, "Am I being kind?" and aspire
+to that.
+
 If the list moderators tell you that you are not being civil, carefully
-consider how your words have appeared before responding in any way.  You may
-protest, but repeated protest in the face of a repeatedly reaffirmed decision
-is not acceptable.
+consider how your words have appeared before responding in any way.  Were they
+kind?  You may protest, but repeated protest in the face of a repeatedly
+reaffirmed decision is not acceptable.
 
 Unacceptable behavior will result in a public and clearly identified warning.
 Repeated unacceptable behavior will result in removal from the mailing list and

@@ -9,7 +9,7 @@ BEGIN { require "./test.pl"; }
 
 # This test depends on t/lib/Devel/switchd*.pm.
 
-plan(tests => 19);
+plan(tests => 20);
 
 my $r;
 
@@ -285,3 +285,25 @@ is(
   "42\n",
   '-d does not conflict with sort optimisations'
 );
+
+# [perl #123748]
+#
+# On some platforms, it's possible that calls to getenv() will
+# return a pointer to statically allocated data that may be
+# overwritten by subsequent calls to getenv/putenv/setenv/unsetenv.
+#
+# In perl.c, s = PerlEnv_GetEnv("PERL5OPT") is called, and
+# then moreswitches(s), which, if -d:switchd_empty is given,
+# will call my_setenv("PERL5DB", "use Devel::switchd_empty"),
+# and then return to continue parsing s.
+{
+local $ENV{PERL5OPT} = '-d:switchd_empty';
+
+like(
+  runperl(
+   switches => [ '-Ilib' ], prog => 'print q(hi)',
+  ),
+  qr/hi/,
+ 'putenv does not interfere with PERL5OPT parsing',
+);
+}

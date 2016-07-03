@@ -33,7 +33,8 @@ This I<does> make even Unix programmers C<binmode> your binary streams,
 or open them with C<:raw>, but that's the only way to get at them
 portably anyway.
 
-B<WARNING>: C<use autoload> and C<use open> do not get along with each other.
+B<WARNING>: C<use autodie> (pre 2.26) and C<use open> do not get along with each
+other.
 
 =head2 ℞ 1: Generic Unicode-savvy filter
 
@@ -439,7 +440,7 @@ convert such strings manually.
  use Unicode::UCD qw(num);
  my $str = "got Ⅻ and ४५६७ and ⅞ and here";
  my @nums = ();
- while (/$str =~ (\d+|\N)/g) {  # not just ASCII!
+ while ($str =~ /(\d+|\N)/g) {  # not just ASCII!
     push @nums, num($1);
  }
  say "@nums";   #     12      4567      0.875
@@ -637,7 +638,7 @@ won’t fit into a byte.  Here’s how to manually manage the translation:
     # assume $uni_key holds a normal Perl string (abstract Unicode)
     my $enc_key   = encode("UTF-8", $uni_key, 1);
     my $enc_value = $dbhash{$enc_key};
-    my $uni_value = decode("UTF-8", $enc_key, 1);
+    my $uni_value = decode("UTF-8", $enc_value, 1);
 
 =head2 ℞ 43: Unicode text in DBM hashes, the easy way
 

@@ -491,7 +491,7 @@ mini_obj = $(minindt_obj) $(MINIDTRACE_O)
 ndt_obj = $(obj0) $(obj1) $(obj2) $(obj3) $(ARCHOBJS)
 obj = $(ndt_obj) $(DTRACE_O)
 
-perltoc_pod_prereqs = extra.pods pod/perl5202delta.pod pod/perlapi.pod pod/perlintern.pod pod/perlmodlib.pod
+perltoc_pod_prereqs = extra.pods pod/perl5203delta.pod pod/perlapi.pod pod/perlintern.pod pod/perlmodlib.pod
 generated_pods = pod/perltoc.pod $(perltoc_pod_prereqs)
 generated_headers = uudmap.h bitcount.h mg_data.h
 
@@ -1010,9 +1010,9 @@ pod/perlintern.pod: $(MINIPERL_EXE) autodoc.pl embed.fnc
 pod/perlmodlib.pod: $(MINIPERL_EXE) pod/perlmodlib.PL MANIFEST
 	$(MINIPERL) pod/perlmodlib.PL -q
 
-pod/perl5202delta.pod: pod/perldelta.pod
-	$(RMS) pod/perl5202delta.pod
-	$(LNS) perldelta.pod pod/perl5202delta.pod
+pod/perl5203delta.pod: pod/perldelta.pod
+	$(RMS) pod/perl5203delta.pod
+	$(LNS) perldelta.pod pod/perl5203delta.pod
 
 extra.pods: $(MINIPERL_EXE)
 	-@test ! -f extra.pods || rm -f `cat extra.pods`

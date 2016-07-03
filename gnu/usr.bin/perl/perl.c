@@ -2003,6 +2003,10 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
 #endif
 	(s = PerlEnv_getenv("PERL5OPT")))
     {
+        /* s points to static memory in getenv(), which may be overwritten at
+         * any time; use a mortal copy instead */
+	s = SvPVX(sv_2mortal(newSVpv(s, 0)));
+
 	while (isSPACE(*s))
 	    s++;
 	if (*s == '-' && *(s+1) == 'T') {

@@ -282,11 +282,15 @@ be for formatting as a footnote).
 X<=encoding> X<encoding>
 
 This command is used for declaring the encoding of a document.  Most
-users won't need this; but if your encoding isn't US-ASCII or Latin-1,
-then put a C<=encoding I<encodingname>> command early in the document so
+users won't need this; but if your encoding isn't US-ASCII,
+then put a C<=encoding I<encodingname>> command very early in the document so
 that pod formatters will know how to decode the document.  For
 I<encodingname>, use a name recognized by the L<Encode::Supported>
-module.  Examples:
+module.  Some pod formatters may try to guess between a Latin-1 versus
+UTF-8 encoding, but they may guess wrong.  It's best to be explicit if
+you use anything besides strict ASCII.  Examples:
+
+  =encoding latin1
 
   =encoding utf8
 

@@ -28,19 +28,20 @@ BEGIN {
 # bets, given alternative encryption/hashing schemes like MD5,
 # C2 (or higher) security schemes, and non-UNIX platforms.
 
+my $alg = '$2b$12$12345678901234567890';   # Use Blowfish
 SKIP: {
 	skip ("VOS crypt ignores salt.", 1) if ($^O eq 'vos');
-	ok(substr(crypt("ab", "cd"), 2) ne substr(crypt("ab", "ce"), 2), "salt makes a difference");
+	ok(substr(crypt("ab", $alg . "cd"), 2) ne substr(crypt("ab", $alg . "ce"), 2), "salt makes a difference");
 }
 
 $a = "a\xFF\x{100}";
 
-eval {$b = crypt($a, "cd")};
+eval {$b = crypt($a, $alg . "cd")};
 like($@, qr/Wide character in crypt/, "wide characters ungood");
 
 chop $a; # throw away the wide character
 
-eval {$b = crypt($a, "cd")};
+eval {$b = crypt($a, $alg . "cd")};
 is($@, '',                   "downgrade to eight bit characters");
-is($b, crypt("a\xFF", "cd"), "downgrade results agree");
+is($b, crypt("a\xFF", $alg . "cd"), "downgrade results agree");
 

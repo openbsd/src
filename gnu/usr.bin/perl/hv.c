@@ -3154,7 +3154,7 @@ Perl_refcounted_he_fetch_pvn(pTHX_ const struct refcounted_he *chain,
 	Perl_croak(aTHX_ "panic: refcounted_he_fetch_pvn bad flags %"UVxf,
 	    (UV)flags);
     if (!chain)
-	return &PL_sv_placeholder;
+	goto ret;
     if (flags & REFCOUNTED_HE_KEY_UTF8) {
 	/* For searching purposes, canonicalise to Latin-1 where possible. */
 	const char *keyend = keypv + keylen, *p;
@@ -3214,6 +3214,7 @@ Perl_refcounted_he_fetch_pvn(pTHX_ const struct refcounted_he *chain,
 	    return sv_2mortal(refcounted_he_value(chain));
 	}
     }
+  ret:
     return flags & REFCOUNTED_HE_EXISTS ? NULL : &PL_sv_placeholder;
 }
 

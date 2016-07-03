@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 #
-# $Id: genchars.pl,v 1.1.1.1 2016/05/07 16:03:08 espie Exp $
+# $Id: genchars.pl,v 1.2 2016/07/03 01:07:58 afresh1 Exp $
 #
 ##############################
 $version="1.97";

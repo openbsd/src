@@ -9,7 +9,7 @@ BEGIN {
      skip_all_without_config('useithreads');
      skip_all_if_miniperl("no dynamic loading on miniperl, no threads");
 
-     plan(27);
+     plan(28);
 }
 
 use strict;
@@ -398,5 +398,11 @@ fresh_perl_is(
    {},
   'no crash when deleting $::{INC} in thread'
 );
+
+fresh_perl_is(<<'CODE', 'ok', 'no crash modifying extended array element');
+use threads;
+my @a = 1;
+threads->create(sub { $#a = 1; $a[1] = 2; print qq/ok\n/ })->join;
+CODE
 
 # EOF

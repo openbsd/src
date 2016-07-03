@@ -736,7 +736,7 @@ PERLVAR(I, debug_pad,	struct perl_debug_pad)	/* always needed because of the re 
 /* Hook for File::Glob */
 PERLVARI(I, globhook,	globhook_t, NULL)
 
-/* The last unconditional member of the interpreter structure when 5.20.2 was
+/* The last unconditional member of the interpreter structure when 5.20.3 was
    released. The offset of the end of this is baked into a global variable in 
    any shared perl library which will allow a sanity test in future perl
    releases.  */

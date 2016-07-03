@@ -2,19 +2,19 @@
 
 =head1 NAME
 
-perldelta - what is new for perl v5.20.2
+perldelta - what is new for perl v5.20.3
 
 =head1 DESCRIPTION
 
-This document describes differences between the 5.20.1 release and the 5.20.2
+This document describes differences between the 5.20.2 release and the 5.20.3
 release.
 
-If you are upgrading from an earlier release such as 5.20.0, first read
-L<perl5201delta>, which describes differences between 5.20.0 and 5.20.1.
+If you are upgrading from an earlier release such as 5.20.1, first read
+L<perl5202delta>, which describes differences between 5.20.1 and 5.20.2.
 
 =head1 Incompatible Changes
 
-There are no changes intentionally incompatible with 5.20.1.  If any exist,
+There are no changes intentionally incompatible with 5.20.2.  If any exist,
 they are bugs, and we request that you submit a report.  See L</Reporting Bugs>
 below.
 
@@ -26,150 +26,87 @@ below.
 
 =item *
 
-L<attributes> has been upgraded from version 0.22 to 0.23.
+L<Errno> has been upgraded from version 1.20_05 to 1.20_06.
 
-The usage of C<memEQs> in the XS has been corrected.
-L<[perl #122701]|https://rt.perl.org/Ticket/Display.html?id=122701>
-
-=item *
-
-L<Data::Dumper> has been upgraded from version 2.151 to 2.151_01.
-
-Fixes CVE-2014-4330 by adding a configuration variable/option to limit
-recursion when dumping deep data structures.
+Add B<-P> to the pre-processor command-line on GCC 5.  GCC added extra line
+directives, breaking parsing of error code definitions.
+L<[perl #123784]|https://rt.perl.org/Ticket/Display.html?id=123784>
 
 =item *
 
-L<Errno> has been upgraded from version 1.20_03 to 1.20_05.
+L<Module::CoreList> has been upgraded from version 5.20150214 to 5.20150822.
 
-Warnings when building the XS on Windows with the Visual C++ compiler are now
-avoided.
-
-=item *
-
-L<feature> has been upgraded from version 1.36 to 1.36_01.
-
-The C<postderef> feature has now been documented.  This feature was actually
-added in Perl 5.20.0 but was accidentally omitted from the feature
-documentation until now.
+Updated to cover the latest releases of Perl.
 
 =item *
 
-L<IO::Socket> has been upgraded from version 1.37 to 1.38.
+L<perl5db.pl> has been upgraded from 1.44 to 1.44_01.
 
-Document the limitations of the connected() method.
-L<[perl #123096]|https://rt.perl.org/Ticket/Display.html?id=123096>
-
-=item *
-
-L<Module::CoreList> has been upgraded from version 5.020001 to 5.20150214.
-
-The list of Perl versions covered has been updated.
-
-=item *
-
-PathTools has been upgraded from version 3.48 to 3.48_01.
-
-A warning from the B<gcc> compiler is now avoided when building the XS.
-
-=item *
-
-L<PerlIO::scalar> has been upgraded from version 0.18 to 0.18_01.
-
-Reading from a position well past the end of the scalar now correctly returns
-end of file.
-L<[perl #123443]|https://rt.perl.org/Ticket/Display.html?id=123443>
-
-Seeking to a negative position still fails, but no longer leaves the file
-position set to a negation location.
-
-C<eof()> on a C<PerlIO::scalar> handle now properly returns true when the file
-position is past the 2GB mark on 32-bit systems.
-
-=item *
-
-L<Storable> has been upgraded from version 2.49 to 2.49_01.
-
-Minor grammatical change to the documentation only.
-
-=item *
-
-L<VMS::DCLsym> has been upgraded from version 1.05 to 1.05_01.
-
-Minor formatting change to the documentation only.
-
-=item *
-
-L<VMS::Stdio> has been upgraded from version 2.4 to 2.41.
-
-Minor formatting change to the documentation only.
+The debugger would cause an assertion failure.
+L<[perl #124127]|https://rt.perl.org/Ticket/Display.html?id=124127>
 
 =back
 
 =head1 Documentation
 
-=head2 New Documentation
-
-=head3 L<perlunicook>
-
-This document, by Tom Christiansen, provides examples of handling Unicode in
-Perl.
-
 =head2 Changes to Existing Documentation
 
-=head3 L<perlexperiment>
+=head3 L<perlfunc>
 
 =over 4
 
 =item *
 
-Added reference to subroutine signatures.  This feature was actually added in
-Perl 5.20.0 but was accidentally omitted from the experimental feature
-documentation until now.
+Mention that L<C<study()>|perlfunc/study> is currently a no-op.
 
 =back
 
-=head3 L<perlpolicy>
+=head3 L<perlguts>
 
 =over 4
 
 =item *
 
-The process whereby features may graduate from experimental status has now been
-formally documented.
+The OOK example has been updated to account for COW changes and a change in the
+storage of the offset.
 
 =back
 
-=head3 L<perlsyn>
+=head3 L<perlhacktips>
 
 =over 4
 
 =item *
 
-An ambiguity in the documentation of the ellipsis statement has been corrected.
-L<[perl #122661]|https://rt.perl.org/Ticket/Display.html?id=122661>
+Documentation has been added illustrating the perils of assuming the contents
+of static memory pointed to by the return values of Perl wrappers for C library
+functions doesn't change.
 
 =back
 
-=head1 Diagnostics
-
-The following additions or changes have been made to diagnostic output,
-including warnings and fatal error messages.  For the complete list of
-diagnostic messages, see L<perldiag>.
-
-=head2 Changes to Existing Diagnostics
+=head3 L<perlpodspec>
 
 =over 4
 
 =item *
 
-L<Bad symbol for scalar|perldiag/"Bad symbol for scalar"> is now documented.
-This error is not new, but was not previously documented here.
+The specification of the POD language is changing so that the default encoding
+of PODs that aren't in UTF-8 (unless otherwise indicated) is CP1252 instead of
+ISO-8859-1 (Latin1).
+
+=back
+
+=head1 Utility Changes
+
+=head2 L<h2ph>
+
+=over 4
 
 =item *
 
-L<Missing right brace on \N{}|perldiag/"Missing right brace on \N{}"> is now
-documented.  This error is not new, but was not previously documented here.
+B<h2ph> now handles hexadecimal constants in the compiler's predefined macro
+definitions, as visible in C<$Config{cppsymbols}>.
+L<[perl #123784]|https://rt.perl.org/Ticket/Display.html?id=123784>
 
 =back
 
@@ -179,18 +116,44 @@ documented.  This error is not new, but was not previously documented here.
 
 =item *
 
-The test script F<re/rt122747.t> has been added to verify that
-L<perl #122747|https://rt.perl.org/Ticket/Display.html?id=122747> remains
-fixed.
+F<t/perf/taint.t> has been added to see if optimisations with taint issues are
+keeping things fast.
+
+=item *
+
+F<t/porting/re_context.t> has been added to test that L<utf8> and its
+dependencies only use the subset of the C<$1..$n> capture vars that
+Perl_save_re_context() is hard-coded to localize, because that function has no
+efficient way of determining at runtime what vars to localize.
 
 =back
 
 =head1 Platform Support
 
-=head2 Regained Platforms
+=head2 Platform-Specific Notes
 
-IRIX and Tru64 platforms are working again.  (Some C<make test> failures
-remain.)
+=over 4
+
+=item Win32
+
+=over 4
+
+=item *
+
+Previously, when compiling with a 64-bit Visual C++, every Perl XS module
+(including CPAN ones) and Perl aware C file would unconditionally have around a
+dozen warnings from F<hv_func.h>.  These warnings have been silenced.  GCC (all
+bitness) and 32-bit Visual C++ were not affected.
+
+=item *
+
+B<miniperl.exe> is now built with B<-fno-strict-aliasing>, allowing 64-bit
+builds to complete with GCC 4.8.
+L<[perl #123976]|https://rt.perl.org/Ticket/Display.html?id=123976>
+
+=back
+
+=back
 
 =head1 Selected Bug Fixes
 
@@ -198,174 +161,108 @@ remain.)
 
 =item *
 
-AIX now sets the length in C<< getsockopt >> correctly.
-L<[perl #120835]|https://rt.perl.org/Ticket/Display.html?id=120835>,
-L<[cpan #91183]|https://rt.cpan.org/Ticket/Display.html?id=91183>,
-L<[cpan #85570]|https://rt.cpan.org/Ticket/Display.html?id=85570>
+Repeated global pattern matches in scalar context on large tainted strings were
+exponentially slow depending on the current match position in the string.
+L<[perl #123202]|https://rt.perl.org/Ticket/Display.html?id=123202>
 
 =item *
 
-In Perl 5.20.0, C<$^N> accidentally had the internal UTF8 flag turned off if
-accessed from a code block within a regular expression, effectively
-UTF8-encoding the value.  This has been fixed.
-L<[perl #123135]|https://rt.perl.org/Ticket/Display.html?id=123135>
+The original visible value of L<C<$E<sol>>|perlvar/$E<sol>> is now preserved
+when it is set to an invalid value.  Previously if you set C<$/> to a reference
+to an array, for example, perl would produce a runtime error and not set PL_rs,
+but Perl code that checked C<$/> would see the array reference.
+L<[perl #123218]|https://rt.perl.org/Ticket/Display.html?id=123218>
 
 =item *
 
-Various cases where the name of a sub is used (autoload, overloading, error
-messages) used to crash for lexical subs, but have been fixed.
+Perl 5.14.0 introduced a bug whereby C<eval { LABEL: }> would crash.  This has
+been fixed.
+L<[perl #123652]|https://rt.perl.org/Ticket/Display.html?id=123652>
 
 =item *
 
-An assertion failure when parsing C<sort> with debugging enabled has been
-fixed.
-L<[perl #122771]|https://rt.perl.org/Ticket/Display.html?id=122771>
+Extending an array cloned from a parent thread could result in "Modification of
+a read-only value attempted" errors when attempting to modify the new elements.
+L<[perl #124127]|https://rt.perl.org/Ticket/Display.html?id=124127>
 
 =item *
 
-Loading UTF8 tables during a regular expression match could cause assertion
-failures under debugging builds if the previous match used the very same
-regular expression.
-L<[perl #122747]|https://rt.perl.org/Ticket/Display.html?id=122747>
+Several cases of data used to store environment variable contents in core C
+code being potentially overwritten before being used have been fixed.
+L<[perl #123748]|https://rt.perl.org/Ticket/Display.html?id=123748>
 
 =item *
 
-Due to a mistake in the string-copying logic, copying the value of a state
-variable could instead steal the value and undefine the variable.  This bug,
-introduced in Perl 5.20, would happen mostly for long strings (1250 chars or
-more), but could happen for any strings under builds with copy-on-write
-disabled.
-L<[perl #123029]|https://rt.perl.org/Ticket/Display.html?id=123029>
+UTF-8 variable names used in array indexes, unquoted UTF-8 HERE-document
+terminators and UTF-8 function names all now work correctly.
+L<[perl #124113]|https://rt.perl.org/Ticket/Display.html?id=124113>
 
 =item *
 
-Fixed a bug that could cause perl to execute an infinite loop during
-compilation.
-L<[perl #122995]|https://rt.perl.org/Ticket/Display.html?id=122995>
+A subtle bug introduced in Perl 5.20.2 involving UTF-8 in regular expressions
+and sometimes causing a crash has been fixed.  A new test script has been added
+to test this fix; see under L</Testing>.
+L<[perl #124109]|https://rt.perl.org/Ticket/Display.html?id=124109>
 
 =item *
 
-On Win32, restoring in a child pseudo-process a variable that was C<local()>ed
-in a parent pseudo-process before the C<fork> happened caused memory corruption
-and a crash in the child pseudo-process (and therefore OS process).
-L<[perl #40565]|https://rt.perl.org/Ticket/Display.html?id=40565>
+Some patterns starting with C</.*..../> matched against long strings have been
+slow since Perl 5.8, and some of the form C</.*..../i> have been slow since
+Perl 5.18.  They are now all fast again.
+L<[perl #123743]|https://rt.perl.org/Ticket/Display.html?id=123743>
 
 =item *
 
-Tainted constants evaluated at compile time no longer cause unrelated
-statements to become tainted.
-L<[perl #122669]|https://rt.perl.org/Ticket/Display.html?id=122669>
+Warning fatality is now ignored when rewinding the stack.  This prevents
+infinite recursion when the now fatal error also causes rewinding of the stack.
+L<[perl #123398]|https://rt.perl.org/Ticket/Display.html?id=123398>
 
 =item *
 
-Calling C<write> on a format with a C<^**> field could produce a panic in
-sv_chop() if there were insufficient arguments or if the variable used to fill
-the field was empty.
-L<[perl #123245]|https://rt.perl.org/Ticket/Display.html?id=123245>
+C<setpgrp($nonzero)> (with one argument) was accidentally changed in Perl 5.16
+to mean C<setpgrp(0)>.  This has been fixed.
 
 =item *
 
-In Perl 5.20.0, C<sort CORE::fake> where 'fake' is anything other than a
-keyword started chopping of the last 6 characters and treating the result as a
-sort sub name.  The previous behaviour of treating "CORE::fake" as a sort sub
-name has been restored.
-L<[perl #123410]|https://rt.perl.org/Ticket/Display.html?id=123410>
+A crash with C<< %::=(); J->${\"::"} >> has been fixed.
+L<[perl #125541]|https://rt.perl.org/Ticket/Display.html?id=125541>
 
 =item *
 
-A bug in regular expression patterns that could lead to segfaults and other
-crashes has been fixed.  This occurred only in patterns compiled with C<"/i">,
-while taking into account the current POSIX locale (this usually means they
-have to be compiled within the scope of C<S<"use locale">>), and there must be
-a string of at least 128 consecutive bytes to match.
-L<[perl #123539]|https://rt.perl.org/Ticket/Display.html?id=123539>
+Regular expression possessive quantifier Perl 5.20 regression now fixed.
+C<qr/>I<PAT>C<{>I<min>,I<max>C<}+>C</> is supposed to behave identically to
+C<qr/(?E<gt>>I<PAT>C<{>I<min>,I<max>C<})/>.  Since Perl 5.20, this didn't work
+if I<min> and I<max> were equal.
+L<[perl #125825]|https://rt.perl.org/Ticket/Display.html?id=125825>
 
 =item *
 
-C<qr/@array(?{block})/> no longer dies with "Bizarre copy of ARRAY".
-L<[perl #123344]|https://rt.perl.org/Ticket/Display.html?id=123344>
-
-=item *
-
-C<gmtime> no longer crashes with not-a-number values.
-L<[perl #123495]|https://rt.perl.org/Ticket/Display.html?id=123495>
-
-=item *
-
-Certain syntax errors in substitutions, such as C<< s/${<>{})// >>, would
-crash, and had done so since Perl 5.10.  (In some cases the crash did not start
-happening until Perl 5.16.)  The crash has, of course, been fixed.
-L<[perl #123542]|https://rt.perl.org/Ticket/Display.html?id=123542>
-
-=item *
-
-A memory leak in some regular expressions, introduced in Perl 5.20.1, has been
-fixed.
-L<[perl #123198]|https://rt.perl.org/Ticket/Display.html?id=123198>
-
-=item *
-
-C<< formline("@...", "a"); >> would crash.  The C<FF_CHECKNL> case in
-pp_formline() didn't set the pointer used to mark the chop position, which led
-to the C<FF_MORE> case crashing with a segmentation fault.  This has been
-fixed.
-L<[perl #123538]|https://rt.perl.org/Ticket/Display.html?id=123538>
-L<[perl #123622]|https://rt.perl.org/Ticket/Display.html?id=123622>
-
-=item *
-
-A possible buffer overrun and crash when parsing a literal pattern during
-regular expression compilation has been fixed.
-L<[perl #123604]|https://rt.perl.org/Ticket/Display.html?id=123604>
-
-=back
-
-=head1 Known Problems
-
-=over 4
-
-=item *
-
-It is a known bug that lexical subroutines cannot be used as the C<SUBNAME>
-argument to C<sort>.  This will be fixed in a future version of Perl.
-
-=back
-
-=head1 Errata From Previous Releases
-
-=over 4
-
-=item *
-
-A regression has been fixed that was introduced in Perl 5.20.0 (fixed in Perl
-5.20.1 as well as here) in which a UTF-8 encoded regular expression pattern
-that contains a single ASCII lowercase letter does not match its uppercase
-counterpart.
-L<[perl #122655]|https://rt.perl.org/Ticket/Display.html?id=122655>
+Code like C</$a[/> used to read the next line of input and treat it as though
+it came immediately after the opening bracket.  Some invalid code consequently
+would parse and run, but some code caused crashes, so this is now disallowed.
+L<[perl #123712]|https://rt.perl.org/Ticket/Display.html?id=123712>
 
 =back
 
 =head1 Acknowledgements
 
-Perl 5.20.2 represents approximately 5 months of development since Perl 5.20.1
-and contains approximately 6,300 lines of changes across 170 files from 34
+Perl 5.20.3 represents approximately 7 months of development since Perl 5.20.2
+and contains approximately 3,200 lines of changes across 99 files from 26
 authors.
 
 Excluding auto-generated files, documentation and release tools, there were
-approximately 1,900 lines of changes to 80 .pm, .t, .c and .h files.
+approximately 1,500 lines of changes to 43 .pm, .t, .c and .h files.
 
 Perl continues to flourish into its third decade thanks to a vibrant community
 of users and developers.  The following people are known to have contributed
-the improvements that became Perl 5.20.2:
+the improvements that became Perl 5.20.3:
 
-Aaron Crane, Abigail, Andreas Voegele, Andy Dougherty, Anthony Heading,
-Aristotle Pagaltzis, Chris 'BinGOs' Williams, Craig A. Berry, Daniel Dragan,
-Doug Bell, Ed J, Father Chrysostomos, Glenn D. Golden, H.Merijn Brand, Hugo van
-der Sanden, James E Keenan, Jarkko Hietaniemi, Jim Cromie, Karen Etheridge,
-Karl Williamson, kmx, Matthew Horsfall, Max Maischein, Peter Martini, Rafael
-Garcia-Suarez, Ricardo Signes, Shlomi Fish, Slaven Rezic, Steffen Müller,
-Steve Hay, Tadeusz Sośnierz, Tony Cook, Yves Orton, Ævar Arnfjörð
-Bjarmason.
+Alex Vandiver, Andy Dougherty, Aristotle Pagaltzis, Chris 'BinGOs' Williams,
+Craig A. Berry, Dagfinn Ilmari Mannsåker, Daniel Dragan, David Mitchell,
+Father Chrysostomos, H.Merijn Brand, James E Keenan, James McCoy, Jarkko
+Hietaniemi, Karen Etheridge, Karl Williamson, kmx, Lajos Veres, Lukas Mai,
+Matthew Horsfall, Petr Písař, Randy Stauner, Ricardo Signes, Sawyer X, Steve
+Hay, Tony Cook, Yves Orton.
 
 The list above is almost certainly incomplete as it is automatically generated
 from version control history.  In particular, it does not include the names of
@@ -383,8 +280,8 @@ the F<AUTHORS> file in the Perl source distribution.
 
 If you find what you think is a bug, you might check the articles recently
 posted to the comp.lang.perl.misc newsgroup and the perl bug database at
-https://rt.perl.org/ .  There may also be information at http://www.perl.org/ ,
-the Perl Home Page.
+https://rt.perl.org/ .  There may also be information at
+http://www.perl.org/ , the Perl Home Page.
 
 If you believe you have an unreported bug, please run the L<perlbug> program
 included with your release.  Be sure to trim your bug down to a tiny but

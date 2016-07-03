@@ -8865,7 +8865,7 @@ Perl_ck_eval(pTHX_ OP *o)
 	SVOP * const kid = (SVOP*)cUNOPo->op_first;
 	assert(kid);
 
-	if (kid->op_type == OP_LINESEQ || kid->op_type == OP_STUB) {
+	if (o->op_type == OP_ENTERTRY) {
 	    LOGOP *enter;
 #ifdef PERL_MAD
 	    OP* const oldo = o;

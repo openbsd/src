@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan( tests => 33 );
+plan( tests => 36 );
 
 sub empty_sub {}
 
@@ -221,4 +221,54 @@ ok !exists $INC{"re.pm"}, 're.pm not loaded yet';
     eval "sub foo{}";
     is $str[1], $str[0],
       'Pure-Perl sub clobbering sub whose DESTROY assigns to the glob';
+}
+
+# RT #124156 death during unwinding causes crash
+# the tie allows us to trigger another die while cleaning up the stack
+# from an earlier die.
+
+{
+    package RT124156;
+
+    sub TIEHASH { bless({}, $_[0]) }
+    sub EXISTS { 0 }
+    sub FETCH { undef }
+    sub STORE { }
+    sub DELETE { die "outer\n" }
+
+    my @value;
+    eval {
+        @value = sub {
+            @value = sub {
+                my %a;
+                tie %a, "RT124156";
+                local $a{foo} = "bar";
+                die "inner";
+                ("dd2a", "dd2b");
+            }->();
+            ("cc3a", "cc3b");
+        }->();
+    };
+    ::is($@, "outer\n", "RT124156 plain");
+
+    my $destroyed = 0;
+    sub DESTROY { $destroyed = 1 }
+
+    sub f {
+        my $x;
+        my $f = sub {
+            $x = 1; # force closure
+            my %a;
+            tie %a, "RT124156";
+            local $a{foo} = "bar";
+            die "inner";
+        };
+        bless $f, 'RT124156';
+        $f->();
+    }
+
+    eval { f(); };
+    # as opposed to $@ eq "Can't undef active subroutine"
+    ::is($@, "outer\n", "RT124156 depth");
+    ::is($destroyed, 1, "RT124156 freed cv");
 }

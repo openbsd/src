@@ -4252,6 +4252,11 @@ PERL_CALLCONV NV	Perl_sv_nv(pTHX_ SV* sv)
 #define PERL_ARGS_ASSERT_SV_NV	\
 	assert(sv)
 
+PERL_STATIC_INLINE bool	S_sv_only_taint_gmagic(SV *sv)
+			__attribute__nonnull__(1);
+#define PERL_ARGS_ASSERT_SV_ONLY_TAINT_GMAGIC	\
+	assert(sv)
+
 PERL_CALLCONV char*	Perl_sv_peek(pTHX_ SV* sv);
 PERL_CALLCONV void	Perl_sv_pos_b2u(pTHX_ SV *const sv, I32 *const offsetp)
 			__attribute__nonnull__(pTHX_2);

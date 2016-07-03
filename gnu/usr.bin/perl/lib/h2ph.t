@@ -48,7 +48,7 @@ $result = runperl( progfile => '_h2ph_pre.ph',
                    stderr => 1 );
 like( $result, qr/syntax OK$/, "preamble compiles");
 
-$result = runperl( switches => ["-w"],
+$result = runperl( switches => ['-I.', "-w"],
                    stderr => 1,
                    prog => <<'PROG' );
 $SIG{__WARN__} = sub { die $_[0] }; require q(lib/h2ph.pht);

@@ -976,8 +976,10 @@ Perl_pad_findmy_pvn(pTHX_ const char *namepv, STRLEN namelen, U32 flags)
 
         if (is_utf8)
             flags |= padadd_UTF8_NAME;
-        else
+        else {
             flags &= ~padadd_UTF8_NAME;
+            SAVEFREEPV(namepv);
+        }
     }
 
     offset = pad_findlex(namepv, namelen, flags,

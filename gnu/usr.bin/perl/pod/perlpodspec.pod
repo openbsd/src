@@ -633,15 +633,21 @@ UTF-16.  If the file begins with the three literal byte values
 
 =item *
 
-A naive but sufficient heuristic for testing the first highbit
+A naive but often sufficient heuristic for testing the first highbit
 byte-sequence in a BOM-less file (whether in code or in Pod!), to see
 whether that sequence is valid as UTF-8 (RFC 2279) is to check whether
-that the first byte in the sequence is in the range 0xC0 - 0xFD
+that the first byte in the sequence is in the range 0xC2 - 0xFD
 I<and> whether the next byte is in the range
 0x80 - 0xBF.  If so, the parser may conclude that this file is in
 UTF-8, and all highbit sequences in the file should be assumed to
 be UTF-8.  Otherwise the parser should treat the file as being
-in Latin-1.  In the unlikely circumstance that the first highbit
+in Latin-1.  (A better check is to pass a copy of the sequence to
+L<utf8::decode()|utf8> which performs a full validity check on the
+sequence and returns TRUE if it is valid UTF-8, FALSE otherwise.  This
+function is always pre-loaded, is fast because it is written in C, and
+will only get called at most once, so you don't need to avoid it out of
+performance concerns.)
+In the unlikely circumstance that the first highbit
 sequence in a truly non-UTF-8 file happens to appear to be UTF-8, one
 can cater to our heuristic (as well as any more intelligent heuristic)
 by prefacing that line with a comment line containing a highbit

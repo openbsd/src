@@ -32,8 +32,8 @@ Leon Brocard, Dave Mitchell, Jesse Vincent, Ricardo Signes, Steve Hay,
 Matt S Trout, David Golden, Florian Ragwitz, Tatsuhiko Miyagawa,
 Chris C<BinGOs> Williams, Zefram, Ævar Arnfjörð Bjarmason, Stevan
 Little, Dave Rolsky, Max Maischein, Abigail, Jesse Luehrs, Tony Cook,
-Dominic Hargreaves, Aaron Crane, Aristotle Pagaltzis, Matthew Horsfall
-and Peter Martini.
+Dominic Hargreaves, Aaron Crane, Aristotle Pagaltzis, Matthew Horsfall,
+Peter Martini, and Sawyer X.
 
 =head2 PUMPKIN?
 
@@ -540,6 +540,9 @@ the strings?).
  Steve     5.20.1       2014-Sep-14
  Steve     5.20.2-RC1   2015-Jan-31
  Steve     5.20.2       2015-Feb-14
+ Steve     5.20.3-RC1   2015-Aug-22
+ Steve     5.20.3-RC2   2015-Aug-29
+ Steve     5.20.3       2015-Sep-12
 
  Ricardo   5.21.0       2014-May-27     The 5.21 development track
  Matthew H 5.21.1       2014-Jun-20
@@ -550,6 +553,17 @@ the strings?).
  BinGOs    5.21.6       2014-Nov-20
  Max M     5.21.7       2014-Dec-20
  Matthew H 5.21.8       2015-Jan-20
+ Sawyer X  5.21.9       2015-Feb-20
+ Steve     5.21.10      2015-Mar-20
+ Steve     5.21.11      2015-Apr-20
+
+ Ricardo   5.22.0-RC1   2015-May-19     The 5.22 maintenance track
+ Ricardo   5.22.0-RC2   2015-May-21
+ Ricardo   5.22.0       2015-Jun-01
+
+ Ricardo   5.23.0       2015-Jun-20     The 5.23 development track
+ Matthew   5.23.1       2015-Jul-20
+ Matthew   5.23.2       2015-Aug-20
 
 =head2 SELECTED RELEASE SIZES
 
@@ -631,6 +645,7 @@ explained below.
  5.16.0         5562 109   1077  80  20504 2702   8750 2375   4815 152
  5.18.0         5892 113   1088  79  20077 2760   9365 2439   4943 154
  5.20.0         6243 115   1187  75  19499 2701   9620 2457   5145 159
+ 5.22.0         7819 115   1284  77  19121 2635   9772 2434   5615 176
 
 The "core"..."doc" mean the following files from the Perl source code
 distribution.  The glob notation ** means recursively, (.) means
@@ -935,25 +950,25 @@ the Perl source distribution for somewhat more selected releases.
 
  ======================================================================
 
-                  5.20.0
+                  5.20.0           5.22.0
 
- Configure    552      1
- Cross        118     15
- NetWare      467     61
- Porting     1204     68
- djgpp         18      7
- h2pl          13     15
- hints        355     90
- mad          174      8
- os2          510     70
- plan9        316     17
- qnx            1      4
- symbian      290     54
- utils        241     27
- vms          538     12
- vos            8      7
- win32       1183     64
- x2p          341     19
+ Configure    552      1       570      1
+ Cross        118     15       118     15
+ djgpp         18      7        17      7
+ h2pl          13     15        13     15
+ hints        355     90       356     87
+ mad          174      8         -      -
+ NetWare      467     61       466     61
+ os2          510     70       510     70
+ plan9        316     17       317     17
+ Porting     1204     68      1393     71
+ qnx            1      4         1      4
+ symbian      290     54       291     54
+ utils        241     27       242     27
+ vms          538     12       532     12
+ vos            8      7         8      7
+ win32       1183     64      1201     64
+ x2p          341     19         -      -
 
 =head2 SELECTED PATCH SIZES
 

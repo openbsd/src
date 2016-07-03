@@ -158,10 +158,10 @@ esac
 # under a compiler other than c89.
 case "$usedl" in
 define)
-echo 'cat >.$$.c; '"$cc"' -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -D_SHR_ENVIRON -E -Wc,"LANGLVL(DOLLARINNAMES)",NOLOC ${1+"$@"} .$$.c | grep -v "??="; rm .$$.c' > cppstdin
+echo 'cat >.$$.c; '"$cc"' -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -D_SHR_ENVIRON -E -Wc,"LANGLVL(DOLLARINNAMES)",NOLOC ${1+"$@"} .$$.c | fgrep -v "??="; rm .$$.c' > cppstdin
     ;;
 *)
-echo 'cat >.$$.c; '"$cc"' -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -E -Wc,"LANGLVL(DOLLARINNAMES)",NOLOC ${1+"$@"} .$$.c | grep -v "??="; rm .$$.c' > cppstdin
+echo 'cat >.$$.c; '"$cc"' -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -E -Wc,"LANGLVL(DOLLARINNAMES)",NOLOC ${1+"$@"} .$$.c | fgrep -v "??="; rm .$$.c' > cppstdin
     ;;
 esac
 

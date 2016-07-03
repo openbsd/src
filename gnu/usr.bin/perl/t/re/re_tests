@@ -1887,5 +1887,7 @@ A+(*PRUNE)BC(?{})	AAABC	y	$&	AAABC
 /(alias|status)es$/i	Statuses	y	$1	Status	# [perl #121778]
 (.)(?{$~=$^N})	\x{100}	y	$~	\x{100}		# [perl #123135]
 
+/(a+){1}+a/	aaa	n	-	-		# [perl #125825]
+
 # Keep these lines at the end of the file
 # vim: softtabstop=0 noexpandtab

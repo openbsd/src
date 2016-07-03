@@ -1301,7 +1301,7 @@ buffer has reached the end of the input text.
 */
 
 #define LEX_FAKE_EOF 0x80000000
-#define LEX_NO_TERM  0x40000000
+#define LEX_NO_TERM  0x40000000 /* here-doc */
 
 bool
 Perl_lex_next_chunk(pTHX_ U32 flags)
@@ -1315,6 +1315,8 @@ Perl_lex_next_chunk(pTHX_ U32 flags)
     bool got_some;
     if (flags & ~(LEX_KEEP_PREVIOUS|LEX_FAKE_EOF|LEX_NO_TERM))
 	Perl_croak(aTHX_ "Lexing code internal error (%s)", "lex_next_chunk");
+    if (!(flags & LEX_NO_TERM) && PL_lex_inwhat)
+	return FALSE;
     linestr = PL_parser->linestr;
     buf = SvPVX(linestr);
     if (!(flags & LEX_KEEP_PREVIOUS) &&
@@ -1960,7 +1962,7 @@ S_skipspace_flags(pTHX_ char *s, U32 flags)
 	STRLEN bufptr_pos = PL_bufptr - SvPVX(PL_linestr);
 	PL_bufptr = s;
 	lex_read_space(flags | LEX_KEEP_PREVIOUS |
-		(PL_sublex_info.sub_inwhat || PL_lex_state == LEX_FORMLINE ?
+		(PL_lex_inwhat || PL_lex_state == LEX_FORMLINE ?
 		    LEX_NO_NEXT_CHUNK : 0));
 	s = PL_bufptr;
 	PL_bufptr = SvPVX(PL_linestr) + bufptr_pos;
@@ -1997,7 +1999,7 @@ S_check_uni(pTHX)
 	PL_last_uni++;
     s = PL_last_uni;
     while (isWORDCHAR_lazy_if(s,UTF) || *s == '-')
-	s++;
+	s += UTF ? UTF8SKIP(s) : 1;
     if ((t = strchr(s, '(')) && t < PL_bufptr)
 	return;
 
@@ -2795,7 +2797,6 @@ S_sublex_done(pTHX)
 	PL_bufend = SvPVX(PL_linestr);
 	PL_bufend += SvCUR(PL_linestr);
 	PL_expect = XOPERATOR;
-	PL_sublex_info.sub_inwhat = 0;
 	return ')';
     }
 }
@@ -5197,7 +5198,8 @@ Perl_yylex(pTHX)
 	if (PL_madskills)
 	    PL_faketokens = 0;
 #endif
-	if (!PL_rsfp && (!PL_parser->filtered || s+1 < PL_bufend)) {
+	if ((!PL_rsfp || PL_lex_inwhat)
+	 && (!PL_parser->filtered || s+1 < PL_bufend)) {
 	    PL_last_uni = 0;
 	    PL_last_lop = 0;
 	    if (PL_lex_brackets &&
@@ -6107,6 +6109,7 @@ Perl_yylex(pTHX)
 	}
 	switch (PL_expect) {
 	case XTERM:
+	case XTERMORDORDOR:
 	    PL_lex_brackstack[PL_lex_brackets++] = XOPERATOR;
 	    PL_lex_allbrackets++;
 	    OPERATOR(HASHBRACK);
@@ -6621,7 +6624,7 @@ Perl_yylex(pTHX)
 			char *t = s+1;
 
 			while (isSPACE(*t) || isWORDCHAR_lazy_if(t,UTF) || *t == '$')
-			    t++;
+			    t += UTF ? UTF8SKIP(t) : 1;
 			if (*t++ == ',') {
 			    PL_bufptr = PEEKSPACE(PL_bufptr); /* XXX can realloc */
 			    while (t < PL_bufend && *t != ']')
@@ -10060,10 +10063,14 @@ S_scan_heredoc(pTHX_ char *s)
 	    term = '"';
 	if (!isWORDCHAR_lazy_if(s,UTF))
 	    deprecate("bare << to mean <<\"\"");
-	for (; isWORDCHAR_lazy_if(s,UTF); s++) {
-	    if (d < e)
-		*d++ = *s;
+	peek = s;
+	while (isWORDCHAR_lazy_if(peek,UTF)) {
+	    peek += UTF ? UTF8SKIP(peek) : 1;
 	}
+	len = (peek - s >= e - d) ? (e - d) : (peek - s);
+	Copy(s, d, len, char);
+	s += len;
+	d += len;
     }
     if (d >= PL_tokenbuf + sizeof PL_tokenbuf - 1)
 	Perl_croak(aTHX_ "Delimiter for here document is too long");

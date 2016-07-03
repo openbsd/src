@@ -560,6 +560,39 @@ temporarily try the following:
 But in any case, try to keep the features and operating systems
 separate.
 
+=item *
+
+Assuming the contents of static memory pointed to by the return values
+of Perl wrappers for C library functions doesn't change.  Many C library
+functions return pointers to static storage that can be overwritten by
+subsequent calls to the same or related functions.  Perl has
+light-weight wrappers for some of these functions, and which don't make
+copies of the static memory.  A good example is the interface to the
+environment variables that are in effect for the program.  Perl has
+C<PerlEnv_getenv> to get values from the environment.  But the return is
+a pointer to static memory in the C library.  If you are using the value
+to immediately test for something, that's fine, but if you save the
+value and expect it to be unchanged by later processing, you would be
+wrong, but perhaps you wouldn't know it because different C library
+implementations behave differently, and the one on the platform you're
+testing on might work for your situation.  But on some platforms, a
+subsequent call to C<PerlEnv_getenv> or related function WILL overwrite
+the memory that your first call points to.  This has led to some
+hard-to-debug problems.  Do a L<perlapi/savepv> to make a copy, thus
+avoiding these problems.  You will have to free the copy when you're
+done to avoid memory leaks.  If you don't have control over when it gets
+freed, you'll need to make the copy in a mortal scalar, like so:
+
+ if ((s = PerlEnv_getenv("foo") == NULL) {
+    ... /* handle NULL case */
+ }
+ else {
+     s = SvPVX(sv_2mortal(newSVpv(s, 0)));
+ }
+
+The above example works only if C<"s"> is C<NUL>-terminated; otherwise
+you have to pass its length to C<newSVpv>.
+
 =back
 
 =head2 Problematic System Interfaces

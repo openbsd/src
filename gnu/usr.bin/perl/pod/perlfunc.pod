@@ -7671,14 +7671,18 @@ X<study>
 
 =for Pod::Functions optimize input data for repeated searches
 
-Takes extra time to study SCALAR (C<$_> if unspecified) in anticipation of
-doing many pattern matches on the string before it is next modified.
+May take extra time to study SCALAR (C<$_> if unspecified) in anticipation
+of doing many pattern matches on the string before it is next modified.
 This may or may not save time, depending on the nature and number of
 patterns you are searching and the distribution of character
 frequencies in the string to be searched; you probably want to compare
 run times with and without it to see which is faster.  Those loops
 that scan for many short constant strings (including the constant
 parts of more complex patterns) will benefit most.
+
+Note that since Perl version 5.16 this function has been a no-op, but
+this might change in a future release.
+
 (The way C<study> works is this: a linked list of every
 character in the string to be searched is made, so we know, for
 example, where all the C<'k'> characters are.  From each search string,

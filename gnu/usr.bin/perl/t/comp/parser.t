@@ -502,6 +502,9 @@ like $@, "^No such class a1b at ", 'TYPE of my of for statement';
 # Used to crash [perl #123542]
 eval 's /${<>{}) //';
 
+# Also used to crash [perl #123652]
+eval{$1=eval{a:}};
+
 # Add new tests HERE (above this line)
 
 # bug #74022: Loop on characters in \p{OtherIDContinue}

@@ -1407,6 +1407,7 @@ Apd	|void	|sv_magic	|NN SV *const sv|NULLOK SV *const obj|const int how \
 Apd	|MAGIC *|sv_magicext	|NN SV *const sv|NULLOK SV *const obj|const int how \
 				|NULLOK const MGVTBL *const vtbl|NULLOK const char *const name \
 				|const I32 namlen
+Ein	|bool	|sv_only_taint_gmagic|NN SV *sv
 : exported for re.pm
 EXp	|MAGIC *|sv_magicext_mglob|NN SV *sv
 ApdbamR	|SV*	|sv_mortalcopy	|NULLOK SV *const oldsv

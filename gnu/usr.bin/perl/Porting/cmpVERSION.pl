@@ -42,7 +42,7 @@ unless (defined $tag_to_compare) {
         $check = `git describe --abbrev=0 $check 2>$null`;
         chomp $check;
         last unless $check =~ /-RC/;
-        $check .= '^';
+        $check .= '~1';
     }
     $tag_to_compare = $check;
     # Thanks to David Golden for this suggestion.

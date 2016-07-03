@@ -960,8 +960,8 @@
  *	This symbol contains the ~name expanded version of ARCHLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define ARCHLIB "/pro/lib/perl5/5.20.2/i686-linux-64int-ld"		/**/
-#define ARCHLIB_EXP "/pro/lib/perl5/5.20.2/i686-linux-64int-ld"		/**/
+#define ARCHLIB "/pro/lib/perl5/5.20.3/i686-linux-64int-ld"		/**/
+#define ARCHLIB_EXP "/pro/lib/perl5/5.20.3/i686-linux-64int-ld"		/**/
 
 /* ARCHNAME:
  *	This symbol holds a string representing the architecture name.
@@ -2068,8 +2068,8 @@
  *	This symbol contains the ~name expanded version of PRIVLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define PRIVLIB "/pro/lib/perl5/5.20.2"		/**/
-#define PRIVLIB_EXP "/pro/lib/perl5/5.20.2"		/**/
+#define PRIVLIB "/pro/lib/perl5/5.20.3"		/**/
+#define PRIVLIB_EXP "/pro/lib/perl5/5.20.3"		/**/
 
 /* PTRSIZE:
  *	This symbol contains the size of a pointer, so that the C preprocessor
@@ -2119,8 +2119,8 @@
  *	This symbol contains the ~name expanded version of SITEARCH, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define SITEARCH "/pro/lib/perl5/site_perl/5.20.2/i686-linux-64int-ld"		/**/
-#define SITEARCH_EXP "/pro/lib/perl5/site_perl/5.20.2/i686-linux-64int-ld"		/**/
+#define SITEARCH "/pro/lib/perl5/site_perl/5.20.3/i686-linux-64int-ld"		/**/
+#define SITEARCH_EXP "/pro/lib/perl5/site_perl/5.20.3/i686-linux-64int-ld"		/**/
 
 /* SITELIB:
  *	This symbol contains the name of the private library for this package.
@@ -2142,8 +2142,8 @@
  *	removed.  The elements in inc_version_list (inc_version_list.U) can
  *	be tacked onto this variable to generate a list of directories to search.
  */
-#define SITELIB "/pro/lib/perl5/site_perl/5.20.2"		/**/
-#define SITELIB_EXP "/pro/lib/perl5/site_perl/5.20.2"		/**/
+#define SITELIB "/pro/lib/perl5/site_perl/5.20.3"		/**/
+#define SITELIB_EXP "/pro/lib/perl5/site_perl/5.20.3"		/**/
 #define SITELIB_STEM "/pro/lib/perl5/site_perl"		/**/
 
 /* SSize_t:
@@ -4332,7 +4332,7 @@
  *	script to make sure (one hopes) that it runs with perl and not
  *	some shell.
  */
-#define STARTPERL "#!/pro/bin/perl5.20.2"		/**/
+#define STARTPERL "#!/pro/bin/perl5.20.3"		/**/
 
 /* HAS_STDIO_STREAM_ARRAY:
  *	This symbol, if defined, tells that there is an array

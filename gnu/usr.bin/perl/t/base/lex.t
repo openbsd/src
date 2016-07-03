@@ -434,3 +434,6 @@ print "ok $test - y <comment> <newline> ...\n"; $test++;
 print "not " unless (time
                      =>) eq time=>;
 print "ok $test - => quotes keywords across lines\n"; $test++;
+
+# Used to crash [perl #123711]
+0-5x-l{0};

@@ -2070,7 +2070,8 @@ foreach my $ord (78, 163, 256) {
   SKIP: {
       skip 'No crypt function, skipping crypt tests', 4 if(!$Config{d_crypt});
       # 59998
-      sub cr { my $x = crypt($_[0], $_[1]); $x }
+      my $alg = '$2b$12$12345678901234567890';   # Use Blowfish
+      sub cr { my $x = crypt($_[0], $alg . $_[1]); $x }
       sub co { my $x = ~$_[0]; $x }
       my ($a, $b);
       $a = cr('hello', 'foo' . $TAINT);

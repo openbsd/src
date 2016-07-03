@@ -323,22 +323,40 @@ Hence, at this point, the start of the buffer that we allocated lives
 at C<SvPVX(sv) - SvIV(sv)> in memory and the PV pointer is pointing
 into the middle of this allocated storage.
 
-This is best demonstrated by example:
+This is best demonstrated by example.  Normally copy-on-write will prevent
+the substitution from operator from using this hack, but if you can craft a
+string for which copy-on-write is not possible, you can see it in play.  In
+the current implementation, the final byte of a string buffer is used as a
+copy-on-write reference count.  If the buffer is not big enough, then
+copy-on-write is skipped.  First have a look at an empty string:
 
-  % ./perl -Ilib -MDevel::Peek -le '$a="12345"; $a=~s/.//; Dump($a)'
-  SV = PVIV(0x8128450) at 0x81340f0
+  % ./perl -Ilib -MDevel::Peek -le '$a=""; $a .= ""; Dump $a'
+  SV = PV(0x7ffb7c008a70) at 0x7ffb7c030390
+    REFCNT = 1
+    FLAGS = (POK,pPOK)
+    PV = 0x7ffb7bc05b50 ""\0
+    CUR = 0
+    LEN = 10
+
+Notice here the LEN is 10.  (It may differ on your platform.)  Extend the
+length of the string to one less than 10, and do a substitution:
+
+  % ./perl -Ilib -MDevel::Peek -le '$a=""; $a.="123456789"; $a=~s/.//; Dump($a)'
+  SV = PV(0x7ffa04008a70) at 0x7ffa04030390
     REFCNT = 1
     FLAGS = (POK,OOK,pPOK)
-    IV = 1  (OFFSET)
-    PV = 0x8135781 ( "1" . ) "2345"\0
-    CUR = 4
-    LEN = 5
+    OFFSET = 1
+    PV = 0x7ffa03c05b61 ( "\1" . ) "23456789"\0
+    CUR = 8
+    LEN = 9
 
-Here the number of bytes chopped off (1) is put into IV, and
-C<Devel::Peek::Dump> helpfully reminds us that this is an offset.  The
+Here the number of bytes chopped off (1) is shown next as the OFFSET.  The
 portion of the string between the "real" and the "fake" beginnings is
 shown in parentheses, and the values of C<SvCUR> and C<SvLEN> reflect
-the fake beginning, not the real one.
+the fake beginning, not the real one.  (The first character of the string
+buffer happens to have changed to "\1" here, not "1", because the current
+implementation stores the offset count in the string buffer.  This is
+subject to change.)
 
 Something similar to the offset hack is performed on AVs to enable
 efficient shifting and splicing off the beginning of the array; while

@@ -67,7 +67,7 @@ ReadKey.c: cchars.h
 sub MY::test {
 	my $self = shift;
 	$_ = $self->MM::test();
-	s#example/test.pl#-w example/test.pl interactive#;
+	s#example/test.pl#-w example/test.pl#;
 	$_;
 }
 

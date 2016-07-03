@@ -1,4 +1,4 @@
-#	$OpenBSD: Pledge.pm,v 1.1 2015/11/29 19:01:27 afresh1 Exp $	#
+#	$OpenBSD: Pledge.pm,v 1.2 2016/07/03 01:07:57 afresh1 Exp $	#
 package OpenBSD::Pledge;
 
 use 5.020002;
@@ -94,7 +94,7 @@ L</pledge>.
 
 L<pledge(2)>
 
-L<http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man2/pledge.2>
+L<http://man.openbsd.org/pledge.2>
 
 =head1 AUTHOR
 

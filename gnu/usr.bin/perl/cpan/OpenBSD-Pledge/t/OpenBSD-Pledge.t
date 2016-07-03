@@ -1,4 +1,4 @@
-#	$OpenBSD: OpenBSD-Pledge.t,v 1.1 2015/11/29 19:01:27 afresh1 Exp $	#
+#	$OpenBSD: OpenBSD-Pledge.t,v 1.2 2016/07/03 01:07:58 afresh1 Exp $	#
 ## no critic 'version'
 ## no critic 'package'
 # Before 'make install' is performed this script should be runnable with
@@ -82,7 +82,9 @@ xspledge_ok cpath => sub { mkdir q{/} };
 eval { OpenBSD::Pledge::_pledge( q{}, {} ) } && fail "Should have died";
 like $@, qr/not an ARRAY reference/ms, "Correct error for non arrayref";
 
+TODO:
 {
+local $TODO = 'Path support is disabled for now';
 	my $pid = fork // die "Unable to fork: $!\n";
 
 	if ( !$pid ) {

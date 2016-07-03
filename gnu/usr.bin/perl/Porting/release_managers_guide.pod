@@ -350,6 +350,15 @@ the raw reports.
 Similarly, monitor the smoking of perl for compiler warnings, and try to
 fix.
 
+=for checklist skip BLEAD-POINT
+
+=head3 monitor CPAN testers for failures
+
+For any release except a BLEAD-POINT: Examine the relevant analysis report(s)
+at http://analysis.cpantesters.org/beforemaintrelease to see how the impending
+release is performing compared to previous releases with regard to building
+and testing CPAN modules.
+
 =head3 update perldelta
 
 Get perldelta in a mostly finished state.
@@ -539,7 +548,7 @@ For each Perl release since the previous release of the current branch, check
 for modules that have identical version numbers but different contents by
 running:
 
-    $ ./perl Porting/cmpVERSION.pl --tag=v5.X.YY
+    $ ./perl -Ilib Porting/cmpVERSION.pl --tag=v5.X.YY
 
 (This is done automatically by F<t/porting/cmp_version.t> for the previous
 release of the current branch, but not for any releases from other branches.)
@@ -624,7 +633,10 @@ Also edit Module::CoreList's new version number in its F<Changes> file.
 
 =head4 Add Module::CoreList version bump to perldelta
 
-Add a perldelta entry for the new Module::CoreList version.
+Add a perldelta entry for the new Module::CoreList version. You only
+need to do this if you want to add notes about the changes included
+with this version of Module::CoreList. Otherwise, its version bump
+will be automatically filled in below in L<finalize perldelta>.
 
 =for checklist skip RC
 
@@ -871,7 +883,7 @@ the tarball and directory name:
     $ git status           # and there's nothing lying around
 
     $ perl Porting/makerel -b -s RC1            # for a release candidate
-    $ perl Porting/makerel -b                   # for a final release
+    $ perl Porting/makerel -b                   # for the release itself
 
 This creates the  directory F<../perl-x.y.z-RC1> or similar, copies all
 the MANIFEST files into it, sets the correct permissions on them, then

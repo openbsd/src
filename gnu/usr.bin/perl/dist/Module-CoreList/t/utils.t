@@ -11,7 +11,7 @@ is( Module::CoreList::Utils->first_release('corelist'), 5.008009, 'corelist with
 is( Module::CoreList::Utils->first_release_by_date('corelist'), 5.009002, 'corelist with v5.9.2');
 is( Module::CoreList::Utils::first_release_by_date('corelist'), 5.009002, 'corelist with v5.9.2');
 {
-  my @expected = qw(a2p c2ph cppstdin find2perl h2xs pstruct s2p);
+  my @expected = sort qw(a2p c2ph cppstdin find2perl h2xs pstruct s2p);
   {
     my @foo = Module::CoreList::Utils->utilities(5.001);
     is_deeply( \@foo, \@expected, '5.001 utils all present and correct' );

@@ -123,9 +123,11 @@ ccflags="${ccflags} -fno-common -DPERL_DARWIN"
 # stdint.h defining INT32_MIN as (-INT32_MAX-1)
 # -- Edward Moy
 #
-case "$(grep '^#define INT32_MIN' /usr/include/stdint.h)" in
+if test -f /usr/include/stdint.h; then
+  case "$(grep '^#define INT32_MIN' /usr/include/stdint.h)" in
   *-2147483648) ccflags="${ccflags} -DINT32_MIN_BROKEN -DINT64_MIN_BROKEN" ;;
-esac
+  esac
+fi
 
 # Avoid Apple's cpp precompiler, better for extensions
 if [ "X`echo | ${cc} -no-cpp-precomp -E - 2>&1 >/dev/null`" = "X" ]; then

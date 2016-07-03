@@ -6,13 +6,23 @@ use vars qw[$VERSION %utilities];
 use Module::CoreList;
 use Module::CoreList::TieHashDelta;
 
-$VERSION = '5.20150214';
+$VERSION = '5.20150822';
 
 sub utilities {
     my $perl = shift;
     $perl = shift if eval { $perl->isa(__PACKAGE__) };
     return unless $perl or exists $utilities{$perl};
     return sort keys %{ $utilities{$perl} };
+}
+
+sub _released_order {   # Sort helper, to make '?' sort after everything else
+    (substr($Module::CoreList::released{$a}, 0, 1) eq "?")
+    ? ((substr($Module::CoreList::released{$b}, 0, 1) eq "?")
+        ? 0
+        : 1)
+    : ((substr($Module::CoreList::released{$b}, 0, 1) eq "?")
+        ? -1
+        : $Module::CoreList::released{$a} cmp $Module::CoreList::released{$b} )
 }
 
 sub first_release_raw {
@@ -32,7 +42,7 @@ sub first_release_raw {
 sub first_release_by_date {
     my @perls = &first_release_raw;
     return unless @perls;
-    return (sort { $Module::CoreList::released{$a} cmp $Module::CoreList::released{$b} } @perls)[0];
+    return (sort _released_order @perls)[0];
 }
 
 sub first_release {
@@ -47,7 +57,7 @@ sub removed_from {
 }
 
 sub removed_from_by_date {
-  my @perls = sort { $Module::CoreList::released{$a} cmp $Module::CoreList::released{$b} } &removed_raw;
+  my @perls = sort _released_order &removed_raw;
   return shift @perls;
 }
 
@@ -1008,6 +1018,63 @@ my %delta = (
     },
     5.020002 => {
         delta_from => 5.020001,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.021009 => {
+        delta_from => 5.021008,
+        changed => {
+            'encguess'              => '1',
+        },
+        removed => {
+        }
+    },
+    5.021010 => {
+        delta_from => 5.021009,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.021011 => {
+        delta_from => 5.02101,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.022000 => {
+        delta_from => 5.021011,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.023000 => {
+        delta_from => 5.022000,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.023001 => {
+        delta_from => 5.023,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.023002 => {
+        delta_from => 5.023001,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.020003 => {
+        delta_from => 5.020002,
         changed => {
         },
         removed => {

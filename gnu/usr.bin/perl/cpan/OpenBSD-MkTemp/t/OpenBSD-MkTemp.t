@@ -10,6 +10,7 @@ use warnings;
 
 use Test::More;
 use Errno;
+use FileHandle;
 use Scalar::Util qw( openhandle );
 BEGIN { use_ok('OpenBSD::MkTemp') };
 

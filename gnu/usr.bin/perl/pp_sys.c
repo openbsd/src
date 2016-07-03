@@ -4324,7 +4324,7 @@ PP(pp_setpgrp)
     Pid_t pgrp;
     Pid_t pid;
     pgrp = MAXARG == 2 && (TOPs||POPs) ? POPi : 0;
-    if (MAXARG > 0) pid = TOPs && TOPi;
+    if (MAXARG > 0) pid = TOPs ? TOPi : 0;
     else {
 	pid = 0;
 	XPUSHi(-1);

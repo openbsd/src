@@ -5012,6 +5012,7 @@ pod/perl5182delta.pod		Perl changes in version 5.18.2
 pod/perl5184delta.pod		Perl changes in version 5.18.4
 pod/perl5200delta.pod		Perl changes in version 5.20.0
 pod/perl5201delta.pod		Perl changes in version 5.20.1
+pod/perl5202delta.pod		Perl changes in version 5.20.2
 pod/perl561delta.pod		Perl changes in version 5.6.1
 pod/perl56delta.pod		Perl changes in version 5.6
 pod/perl581delta.pod		Perl changes in version 5.8.1
@@ -5771,6 +5772,7 @@ t/op/warn.t			See if warn works
 t/op/while.t			See if while loops work
 t/op/write.t			See if write works (formats work)
 t/op/yadayada.t			See if ... works
+t/perf/taint.t			See if optimisations are keeping things fast (taint issues)
 t/perl.supp			Perl valgrind suppressions
 t/porting/args_assert.t		Check that all PERL_ARGS_ASSERT* macros are used
 t/porting/authors.t		Check that all authors have been acknowledged
@@ -5797,6 +5799,7 @@ t/porting/perlfunc.t		Test that Functions_pm.PL can parse perlfunc.pod
 t/porting/podcheck.t		Test the POD of shipped modules is well formed
 t/porting/pod_rules.t		Check that various pod lists are consistent
 t/porting/readme.t		Check that all files in Porting/ are mentioned in Porting/README.pod
+t/porting/re_context.t		Check assumptions made by save_re_context()
 t/porting/regen.t		Check that regen.pl doesn't need running
 t/porting/ss_dup.t		Check that sv.c:ss_dup handle everything
 t/porting/test_bootstrap.t	Test that the instructions for test bootstrapping aren't accidentally overlooked.

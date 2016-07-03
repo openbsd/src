@@ -22,9 +22,9 @@ The build procedure is completely standard:
 Make perl executable and create a symlink for libperl:
 
   chmod a+x /boot/common/bin/perl
-  cd /boot/common/lib; ln -s perl5/5.20.2/BePC-haiku/CORE/libperl.so .
+  cd /boot/common/lib; ln -s perl5/5.20.3/BePC-haiku/CORE/libperl.so .
 
-Replace C<5.20.2> with your respective version of Perl.
+Replace C<5.20.3> with your respective version of Perl.
 
 =head1 KNOWN PROBLEMS
 

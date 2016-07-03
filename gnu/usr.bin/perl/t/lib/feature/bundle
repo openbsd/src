@@ -117,3 +117,11 @@ EXPECT
 Use of assignment to $[ is deprecated at - line 2.
 Assigning non-zero to $[ is no longer possible at - line 5.
 b
+########
+# NAME $^H accidentally enabling all features
+eval 'BEGIN { $^H |= 0x1c020000 } $_ = evalbytes 12345';
+print $_||$@;
+EXPECT
+Number found where operator expected at (eval 1) line 1, near "evalbytes 12345"
+	(Do you need to predeclare evalbytes?)
+syntax error at (eval 1) line 1, near "evalbytes 12345"

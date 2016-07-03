@@ -691,6 +691,8 @@ keith.s.thompson\100gmail.com           kst\100mib.org
 ken\100mathforum.org                    kenahoo\100gmail.com
 +                                       ken.williams\100thomsonreuters.com
 kentfredric\100gmail.com                kentnl\100cpan.org
+kmx\100volny.cz                         kmx\100volny.cz
++                                       kmx\100cpan.org
 kroepke\100dolphin-services.de          kay\100dolphin-services.de
 kst\100mib.org                          kst\100cts.com
 +                                       kst\100SDSC.EDU

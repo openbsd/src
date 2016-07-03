@@ -1388,8 +1388,8 @@ libswanted_uselargefiles=''
 : set usesocks on the Configure command line to enable socks.
 : List of libraries we want.
 : If anyone needs extra -lxxx, put those in a hint file.
-libswanted="socket bind inet nsl nm ndbm gdbm dbm db malloc dl ld sun"
-libswanted="$libswanted m crypt sec util c cposix posix ucb bsd BSD"
+libswanted="cl pthread socket bind inet nsl nm ndbm gdbm dbm db malloc dl ld"
+libswanted="$libswanted sun m crypt sec util c cposix posix ucb bsd BSD"
 : We probably want to search /usr/shlib before most other libraries.
 : This is only used by the lib/ExtUtils/MakeMaker.pm routine extliblist.
 glibpth=`echo " $glibpth " | sed -e 's! /usr/shlib ! !'`
@@ -3271,7 +3271,7 @@ EOM
 		$sed -e 's/://' -e 's/\./_/'` && osname=next && osvers=$4
 	$test -d /usr/apollo/bin && osname=apollo
 	$test -f /etc/saf/_sactab && osname=svr4
-	$test -d /usr/include/minix && osname=minix
+	$test -d /usr/include/minix && osname=minix && osvers=`$uname -r`
 	$test -f /system/gnu_library/bin/ar.pm && osname=vos
 	if $test -d /MachTen -o -d /MachTen_Folder; then
 		osname=machten
@@ -20736,7 +20736,7 @@ int check_min ()
 
 int main (int argc, char *argv[])
 {
-    fprintf (stderr, "Sizeof time_t = %ld\n", sizeof (time_t));
+    /* fprintf (stderr, "Sizeof time_t = %ld\n", sizeof (time_t)); */
     check_max ();
     check_min ();
     return (0);

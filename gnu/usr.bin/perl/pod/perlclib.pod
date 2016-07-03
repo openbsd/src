@@ -222,7 +222,7 @@ everywhere by now.
  system(s)                   Don't. Look at pp_system or use my_popen
 
  getenv(s)                   PerlEnv_getenv(s)
- setenv(s, val)              my_putenv(s, val)
+ setenv(s, val)              my_setenv(s, val)
 
 =head2 Miscellaneous functions
 

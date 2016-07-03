@@ -1339,7 +1339,7 @@ Perl_gv_stashpvn(pTHX_ const char *name, U32 namelen, I32 flags)
     tmpgv = gv_fetchpvn_flags(tmpbuf, tmplen, flags, SVt_PVHV);
     if (tmpbuf != smallbuf)
 	Safefree(tmpbuf);
-    if (!tmpgv)
+    if (!tmpgv || !isGV_with_GP(tmpgv))
 	return NULL;
     stash = GvHV(tmpgv);
     if (!(flags & ~GV_NOADD_MASK) && !stash) return NULL;

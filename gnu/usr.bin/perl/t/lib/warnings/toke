@@ -1510,3 +1510,34 @@ Use of literal control characters in variable names is deprecated at (eval 2) li
 -a;
 ;-a;
 EXPECT
+########
+# toke.c
+# [perl #124113] Compile-time warning with UTF8 variable in array index
+use warnings;
+use utf8;
+my $𝛃 = 0;
+my @array = (0);
+my $v = $array[ 0 + $𝛃 ];
+   $v = $array[ $𝛃 + 0 ];
+EXPECT
+########
+# toke.c
+# Allow Unicode here doc boundaries
+use warnings;
+use utf8;
+my $v = <<EnFraçais;
+Comme ca!
+EnFraçais
+print $v;
+EXPECT
+Comme ca!
+########
+# toke.c
+# Fix 'Use of "..." without parentheses is ambiguous' warning for
+# Unicode function names
+use utf8;
+use warnings;
+sub 𝛃(;$) { return 0; }
+my $v = 𝛃 - 5;
+EXPECT
+Warning: Use of "𝛃" without parentheses is ambiguous at - line 7.

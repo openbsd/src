@@ -756,7 +756,7 @@ Perl_re_intuit_start(pTHX_
 
         /* ml_anch: check after \n?
          *
-         * A note about IMPLICIT: on an un-anchored pattern beginning
+         * A note about PREGf_IMPLICIT: on an un-anchored pattern beginning
          * with /.*.../, these flags will have been added by the
          * compiler:
          *   /.*abc/, /.*abc/m:  PREGf_IMPLICIT | PREGf_ANCH_MBOL
@@ -2684,86 +2684,52 @@ Perl_regexec_flags(pTHX_ REGEXP * const rx, char *stringarg, char *strend,
 	));
     }
 
-    /* Simplest case:  anchored match need be tried only once. */
-    /*  [unless only anchor is BOL and multiline is set] */
-    if (prog->intflags & (PREGf_ANCH & ~PREGf_ANCH_GPOS)) {
-	if (s == startpos && regtry(reginfo, &s))
-	    goto got_it;
-        else if (multiline || (prog->intflags & (PREGf_IMPLICIT | PREGf_ANCH_MBOL))) /* XXXX SBOL? */
-	{
-	    char *end;
+    /* Simplest case: anchored match need be tried only once, or with
+     * MBOL, only at the beginning of each line.
+     *
+     * Note that /.*.../ sets PREGf_IMPLICIT|MBOL, while /.*.../s sets
+     * PREGf_IMPLICIT|SBOL. The idea is that with /.*.../s, if it doesn't
+     * match at the start of the string then it won't match anywhere else
+     * either; while with /.*.../, if it doesn't match at the beginning,
+     * the earliest it could match is at the start of the next line */
 
-	    if (minlen)
-		dontbother = minlen - 1;
-	    end = HOP3c(strend, -dontbother, strbeg) - 1;
-	    /* for multiline we only have to try after newlines */
-	    if (prog->check_substr || prog->check_utf8) {
-                /* because of the goto we can not easily reuse the macros for bifurcating the
-                   unicode/non-unicode match modes here like we do elsewhere - demerphq */
-                if (utf8_target) {
-                    if (s == startpos)
-                        goto after_try_utf8;
-                    while (1) {
-                        if (regtry(reginfo, &s)) {
-                            goto got_it;
-                        }
-                      after_try_utf8:
-                        if (s > end) {
-                            goto phooey;
-                        }
-                        if (prog->extflags & RXf_USE_INTUIT) {
-                            s = re_intuit_start(rx, sv, strbeg,
-                                    s + UTF8SKIP(s), strend, flags, NULL);
-                            if (!s) {
-                                goto phooey;
-                            }
-                        }
-                        else {
-                            s += UTF8SKIP(s);
-                        }
-                    }
-                } /* end search for check string in unicode */
-                else {
-                    if (s == startpos) {
-                        goto after_try_latin;
-                    }
-                    while (1) {
-                        if (regtry(reginfo, &s)) {
-                            goto got_it;
-                        }
-                      after_try_latin:
-                        if (s > end) {
-                            goto phooey;
-                        }
-                        if (prog->extflags & RXf_USE_INTUIT) {
-                            s = re_intuit_start(rx, sv, strbeg,
-                                        s + 1, strend, flags, NULL);
-                            if (!s) {
-                                goto phooey;
-                            }
-                        }
-                        else {
-                            s++;
-                        }
-                    }
-                } /* end search for check string in latin*/
-	    } /* end search for check string */
-	    else { /* search for newline */
-		if (s > startpos) {
-                    /*XXX: The s-- is almost definitely wrong here under unicode - demeprhq*/
-		    s--;
-		}
-		/* We can use a more efficient search as newlines are the same in unicode as they are in latin */
-		while (s <= end) { /* note it could be possible to match at the end of the string */
-		    if (*s++ == '\n') {	/* don't need PL_utf8skip here */
-			if (regtry(reginfo, &s))
-			    goto got_it;
-		    }
-		}
-	    } /* end search for newline */
-	} /* end anchored/multiline check string search */
-	goto phooey;
-    } else if (prog->intflags & PREGf_ANCH_GPOS)
+    if (prog->intflags & (PREGf_ANCH & ~PREGf_ANCH_GPOS)) {
+        char *end;
+
+	if (regtry(reginfo, &s))
+	    goto got_it;
+
+        if (!(prog->intflags & PREGf_ANCH_MBOL))
+            goto phooey;
+
+        /* didn't match at start, try at other newline positions */
+
+        if (minlen)
+            dontbother = minlen - 1;
+        end = HOP3c(strend, -dontbother, strbeg) - 1;
+
+        /* skip to next newline */
+
+        while (s <= end) { /* note it could be possible to match at the end of the string */
+            /* NB: newlines are the same in unicode as they are in latin */
+            if (*s++ != '\n')
+                continue;
+            if (prog->check_substr || prog->check_utf8) {
+            /* note that with PREGf_IMPLICIT, intuit can only fail
+             * or return the start position, so it's of limited utility.
+             * Nevertheless, I made the decision that the potential for
+             * quick fail was still worth it - DAPM */
+                s = re_intuit_start(rx, sv, strbeg, s, strend, flags, NULL);
+                if (!s)
+                    goto phooey;
+            }
+            if (regtry(reginfo, &s))
+                goto got_it;
+        }
+        goto phooey;
+    } /* end anchored search */
+
+    if (prog->intflags & PREGf_ANCH_GPOS)
     {
         /* PREGf_ANCH_GPOS should never be true if PREGf_GPOS_SEEN is not true */
         assert(prog->intflags & PREGf_GPOS_SEEN);

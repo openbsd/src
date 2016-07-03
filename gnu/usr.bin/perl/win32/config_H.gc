@@ -1973,7 +1973,9 @@
  *	available to exclusively create and open a uniquely named
  *	temporary file.
  */
-/*#define HAS_MKSTEMP		/ **/
+#if __MINGW64_VERSION_MAJOR >= 4
+#define HAS_MKSTEMP
+#endif
 
 /* HAS_MMAP:
  *	This symbol, if defined, indicates that the mmap system call is

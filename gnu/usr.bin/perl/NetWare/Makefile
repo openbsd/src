@@ -86,7 +86,7 @@ NLM_VERSION    = 3,20,0
 
 
 # Here comes the CW tools - TO BE FILLED TO BUILD WITH CW -
-MODULE_DESC     = "Perl 5.20.2 for NetWare"
+MODULE_DESC     = "Perl 5.20.3 for NetWare"
 CCTYPE          = CodeWarrior
 C_COMPILER		= mwccnlm -c
 CPP_COMPILER	= mwccnlm
@@ -462,7 +462,7 @@ INST_NW_TOP2 = $(INST_NW_DRV)\perl
 # versioned installation can be obtained by setting INST_TOP above to a
 # path that includes an arbitrary version string.
 #
-INST_VER	= \5.20.2
+INST_VER	= \5.20.3
 
 #
 # Comment this out if you DON'T want your perl installation to have

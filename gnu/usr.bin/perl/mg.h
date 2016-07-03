@@ -63,7 +63,7 @@ struct magic {
 /* assumes get-magic and stringification have already occurred */
 # define MgBYTEPOS_set(mg,sv,pv,off) (			 \
     assert_((mg)->mg_type == PERL_MAGIC_regex_global)	  \
-    SvPOK(sv) && !SvGMAGICAL(sv)			   \
+    SvPOK(sv) && (!SvGMAGICAL(sv) || sv_only_taint_gmagic(sv))  \
 	? (mg)->mg_len = (off), (mg)->mg_flags |= MGf_BYTES \
 	: ((mg)->mg_len = DO_UTF8(sv)			     \
 	    ? (SSize_t)utf8_length((U8 *)(pv), (U8 *)(pv)+(off)) \

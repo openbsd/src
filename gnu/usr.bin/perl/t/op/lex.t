@@ -4,7 +4,7 @@ use warnings;
 
 BEGIN { chdir 't'; require './test.pl'; }
 
-plan(tests => 8);
+plan(tests => 11);
 
 {
     no warnings 'deprecated';
@@ -88,3 +88,29 @@ is runperl(
  ."2.\n",
   'no buffer corruption with multiline *{...expr...}'
 ;
+
+fresh_perl_is(
+  '/$a[/<<a',
+  "Missing right curly or square bracket at - line 1, within pattern\n" .
+  "syntax error at - line 1, at EOF\n" .
+  "Execution of - aborted due to compilation errors.\n",
+   { stderr => 1 },
+  '/$a[/<<a with no newline [perl #123712]'
+);
+fresh_perl_is(
+  '/$a[m||/<<a',
+  "Missing right curly or square bracket at - line 1, within pattern\n" .
+  "syntax error at - line 1, at EOF\n" .
+  "Execution of - aborted due to compilation errors.\n",
+   { stderr => 1 },
+  '/$a[m||/<<a with no newline [perl #123712]'
+);
+
+fresh_perl_is(
+  '"@{"',
+  "Missing right curly or square bracket at - line 1, within string\n" .
+  "syntax error at - line 1, at EOF\n" .
+  "Execution of - aborted due to compilation errors.\n",
+   { stderr => 1 },
+  '"@{" [perl #123712]'
+);

@@ -17,6 +17,295 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.20.3-RC2 - Anon., trans. Malcolm C. Lyons, "The Story of Abu Muhammad the Idle and the Marvels He Encountered with the Ape As Well As the Marvels of the Seas and Islands", from "Tales of the Marvellous and News of the Strange"
+
+L<Announced on 2015-08-29 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2015/08/msg230544.html>
+
+'I fled from Basra, sad and tearful, with no idea where I was going,
+and I was reciting these lines:
+
+  The pain of parting makes me melt away,
+  As lovers do when those they love are harsh.
+  I wonder at the patience that I showed
+  When I had lost my love, for that was wonderful.
+  Beloved, do you know that since you left,
+  I have remained confused in misery.
+
+I then heard a voice that said: "Damn you, have you no fear of
+Almighty God that you hand over a girl to an unbelieving 'ifrit?"  I
+walked for a time amongst the palm-trees until I caught sight of a
+person, whom I approached.  When I asked him who he was he said: "I
+am one of the jinn who were converted to Islam at the hands of 'Ali
+ibn Abi Talib, may God ennoble him."  "How can I get to my wife?" I
+asked him, and he said: "Wretched fellow, you had a bird which you
+allowed to fly away and now you want to fly after it."  But he
+added: "Follow this road with God's blessing all night until dawn
+and then by the shore you will see a huge cave in which there is an
+idol made of white stone.  You must drink of the water that there is
+coming out of the cave and smear your face with its mud.  Stay there
+and a barge will pass you as you stand opposite the statue.  Various
+different creatures will emerge, heads without bodies and bodies
+without heads, and they will prostrate themselves in adoration to
+the idol rather than to Almighty God.  When you see that, embark on
+the barge and cross to the other bank and walk along it until
+sunset.  On a high point you will see a castle built of bricks of
+gold and silver.  That is where your 'ifrit will be.  I have now
+told you about this, so goodbye."
+
+=head2 v5.20.3-RC1 - Anon., trans. Malcolm C. Lyons, "The Story of Abu Muhammad the Idle and the Marvels He Encountered with the Ape As Well As the Marvels of the Seas and Islands", from "Tales of the Marvellous and News of the Strange"
+
+L<Announced on 2015-08-22 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2015/08/msg230359.html>
+
+'On the night of the wedding the ape came to sit in front of me and
+asked me what I intended to do.  "Whatever you tell me," I replied,
+and he said: "Take care not to covet the girl, or I shall come back
+and burn you up and leave you as a lesson for those who can learn."
+I agreed to this and when evening came I found the world full of
+candles and torches burning in holders of gold and silver.  There
+were servants and serving girls, and everyone who saw me
+congratulated me on my good fortune, as there was no girl on the
+face of the earth more beautiful than my bride.
+[...]
+'Next morning I went out to the market, and people went in and asked
+her how the night had been.  "He never looked up at me," she told
+them.  Then, when it was afternoon, I went to my house, where the
+ape was sitting by the door.  "Tell me what you did," it said, and I
+told it: "By God, I did not learn and do not know whether this was a
+man or a girl."  "That's what I want," it said.
+[...]
+'On the second night my bride was brought to me, after which the
+servants left her and went away.  She fell asleep, and, while she
+was sleeping, I killed the cock, wrapped it in the cloth and put the
+four poles from the couch over it.  Suddenly there was a huge crash
+like a peal of thunder and a fiery 'ifrit swooped on the girl.  I
+fainted at the sight and when I recovered I heard a voice saying:
+"By the Lord of the Ka'ba, the girl has been carried off!" and there
+was a sound like the rustling of wind and bitter weeping.  At this I
+shed tears, struck my head and was filled with regret when it was no
+longer of any use, for to me the whole world was worth no more than
+a bean.
+
+=head2 v5.23.2 - Blind Guardian, "Skalds and Shadows"
+
+L<Announced on 2015-08-20 by Matthew Horsfall|http://www.nntp.perl.org/group/perl.perl5.porters/2015/08/msg230298.html>
+
+  Would you believe in a night like this
+  A night like this, when visions come true
+  Would you believe in a tale like this
+  A lay of bliss, praise in the old lore
+  Come to the blazing fire and
+
+  See me in the shadows
+  See me in the shadows
+  Songs I will sing
+  Of runes and rings
+  Just hand me my harp
+  This night turns into myth
+  Nothing seems real
+  You soon will feel
+  The world we live in is another skald's
+  Dream in the shadows
+  Dream in the shadows
+
+  Do you believe there is sense in it
+  Is it truth or myth?
+  They´re one in my rhymes
+  Nobody knows the meaning behind
+  The weaver's line
+  Well nobody else but the Norns can
+  See through the blazing fires of time and
+  All things will proceed as the
+  Child of the hallowed
+  Will speak to you now
+
+  See me in the shadows
+  See me in the shadows
+  Songs I will sing of tribes and kings
+  The carrion bird and the hall of the slain
+  Nothing seems real
+  You soon will feel
+  The world we live in is another skald´s
+  Dream in the shadows
+  Dream in the shadows
+
+  Do not fear for my reason
+  There's nothing to hide
+  How bitter your treason
+  How bitter the lie
+  Remember the runes and remember the light
+  All I ever want is to be at your side
+  We'll gladden the raven now I will
+  Run through the blazing fires
+  That's my choice
+  Cause things shall proceed as foreseen
+
+=head2 v5.23.1 - Elizabeth Haydon, "The Assassin King"
+
+L<Announced on 2015-07-20 by Matthew Horsfall|http://www.nntp.perl.org/group/perl.perl5.porters/2015/07/msg229413.html>
+
+  I was born beneath this willow,
+  Where my sire the earth did farm
+  Had the green grass as my pillow
+  The east wind as a blanket warm.
+
+  But away! away! called the wind from the west
+  And in answer I did run
+  Seeking glory and adventure
+  Promised by the rising sun.
+
+  I found love beneath this willow,
+  As true a love as life could hold,
+  Pledged my heart and swore my fealty
+  Sealed with a kiss and a band of gold.
+
+  But to arms! to arms! called the wind from the west
+  In faithful answer I did run
+  Marching forth for king and country
+  In battles 'neath the midday sun.
+
+  Oft I dreamt of that fair willow
+  As the seven seas I plied
+  And the girl who I left waiting
+  Longing to be at her side.
+
+  But about! about! called the wind from the west
+  As once again my ship did run
+  Down the coast, about the wide world
+  Flying sails in the setting sun.
+
+  Now I lie beneath the willow
+  Now at last no more to roam,
+  My bride and earth so tightly hold me
+  In their arms I'm finally home.
+
+  While away! away! calls the wind from the west
+  Beyond the grave my spirit, free
+  Will chase the sun into the morning
+  Beyond the sky, beyond the sea.
+
+=head2 v5.23.0 - Bob Dylan, Maggie's Farm
+
+L<Announced on 2015-06-20 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2015/06/msg228807.html>
+
+  I ain't gonna work on Maggie's farm no more
+  I ain't gonna work on Maggie's farm no more
+  Well, I try my best
+  To be just like I am
+  But everybody wants you
+  To be just like them
+  They sing while you slave and I just get bored
+  I ain't gonna work on Maggie's farm no more
+
+=head2 v5.22.0 - Gene Wolfe, The Citadel of the Autarch
+
+L<Announced on 2015-06-01 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2015/06/msg228300.html>
+
+“You are the advocate of the dead.”
+
+The old man nodded. “I am. People talk about being fair to this one and
+that one, but nobody I ever heard talks about doing right by them. We
+take everything they had, which is all right. And spit, most often, on
+their opinions, which I suppose is all right too. But we ought to
+remember now and then how much of what we have we got from them. I
+figure while I’m still here I ought to put a word in for them.”
+
+=head2 v5.22.0-RC2 - T.S. Eliot, unpublished work
+
+L<Announced on 2015-05-21 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2015/05/msg228142.html>
+
+  And when thyself with silver foot shall pass
+  Among the theories scattered on the grass
+  Take up my good intentions with the rest
+
+=head2 v5.22.0-RC1 - Gene Wolfe, Citadel of the Autarch
+
+L<Announced on 2015-05-19 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2015/05/msg228059.html>
+
+There is no limit to stupidity. Space itself is said to be bounded by
+its own curvature, but stupidity continues beyond infinity.
+
+=head2 v5.21.11 - Algernon Charles Swinburne, "Dolores (Notre-Dame des Sept Douleurs)"
+
+L<Announced on 2015-04-20 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2015/04/msg227472.html>
+
+  They shall pass and their places be taken,
+    The gods and the priests that are pure.
+  They shall pass, and shalt thou not be shaken?
+    They shall perish, and shalt thou endure?
+  Death laughs, breathing close and relentless
+    In the nostrils and eyelids of lust,
+  With a pinch in his fingers of scentless
+    And delicate dust.
+
+  But the worm shall revive thee with kisses;
+    Thou shalt change and transmute as a god,
+  As the rod to a serpent that hisses,
+    As the serpent again to a rod.
+  Thy life shall not cease though thou doff it;
+    Thou shalt live until evil be slain,
+  And good shall die first, said thy prophet,
+    Our Lady of Pain.
+
+=head2 v5.21.10 - Aldous Huxley, "The Devils of Loudun"
+
+L<Announced on 2015-03-20 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2015/03/msg226847.html>
+
+The fire burned on, the good fathers continued to sprinkle and intone.
+Suddenly a flock of pigeons came swooping down from the church and
+started to wheel around the roaring column of flame and smoke.  The
+crowd shouted, the archers waved their halberds at the birds, Lactance
+and Tranquille splashed them on the wing with holy water.  In vain.  The
+pigeons were not to be driven away.  Round and round they flew, diving
+through the smoke, singeing their feathers in the flames.  Both parties
+claimed a miracle.  For the parson's enemies the birds, quite obviously,
+were a troop of devils, come to fetch away his soul.  For his friends,
+they were emblems of the Holy Ghost and living proof of his innocence.
+It never seems to have occurred to anyone that they were just pigeons,
+obeying the laws of their own, their blessedly other-than-human nature.
+
+=head2 v5.21.9 - Emily Dickinson, "There is Another Sky"
+
+L<Announced on 2015-02-20 by Sawyer X|http://www.nntp.perl.org/group/perl.perl5.porters/2015/02/msg226002.html>
+
+There is another sky,
+Ever serene and fair,
+And there is another sunshine,
+Though it be darkness there;
+Never mind faded forests, Austin,
+Never mind silent fields -
+Here is a little forest,
+Whose leaf is ever green;
+Here is a brighter garden,
+Where not a frost has been;
+In its unfading flowers
+I hear the bright bee hum:
+Prithee, my brother,
+Into my garden come!
+
+=head2 v5.20.2 - Jonathan "Jonti" Picking, L<"Magical Trevor"|http://www.weebls-stuff.com/other-toons/video/magical-trevor.html>
+
+L<Announced on 2015-02-14 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2015/02/msg225777.html>
+
+  Everyone loves Magical Trevor,
+  'Cos the tricks that he does are ever so clever;
+  Look at him now, disappearin' the cow,
+  Where is the cow hidden right now?
+
+  Taking a bow, it's Magical Trevor,
+  Everybody's seen that the trick is clever;
+  Look at him there with his leathery, leathery whip!
+  It's made of magic, and with a little flip--
+
+  Yeah, yeah, yeah, the cow is back,
+  Yeah, yeah, yeah, the cow is back;
+  Back, back, back from his magical journey,
+  Yeah!
+
+  What did he see in the parallel dimension?
+  He saw beans, lots of beans, lots of beans, lots of beans;
+  Oh, beans, lots of beans, lots of beans, lots of beans,
+  Yeah, yeah!
+
 =head2 v5.20.2-RC1 - Jonathan "Jonti" Picking, L<"Scampi"|http://www.weebls-stuff.com/other-toons/video/scampi.html>
 
 L<Announced on 2015-02-01 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2015/02/msg225273.html>
