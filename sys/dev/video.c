@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.39 2016/06/01 09:48:20 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.40 2016/07/03 20:05:44 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -31,7 +31,6 @@
 #include <sys/videoio.h>
 
 #include <dev/video_if.h>
-#include <dev/videovar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -40,6 +39,27 @@
 #else
 #define DPRINTF(x)
 #endif
+
+struct video_softc {
+	struct device		 dev;
+	void			*hw_hdl;	/* hardware driver handle */
+	struct device		*sc_dev;	/* hardware device struct */
+	struct video_hw_if	*hw_if;		/* hardware interface */
+	char			 sc_dying;	/* device detached */
+#define VIDEO_OPEN	0x01
+	char			 sc_open;
+
+	int			 sc_fsize;
+	uint8_t			*sc_fbuffer;
+	size_t			 sc_fbufferlen;
+	int			 sc_vidmode;	/* access mode */
+#define		VIDMODE_NONE	0
+#define		VIDMODE_MMAP	1
+#define		VIDMODE_READ	2
+	int			 sc_frames_ready;
+
+	struct selinfo		 sc_rsel;	/* read selector */
+};
 
 int	videoprobe(struct device *, void *, void *);
 void	videoattach(struct device *, struct device *, void *);
