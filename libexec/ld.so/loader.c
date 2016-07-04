@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.161 2016/06/08 11:58:59 kettenis Exp $ */
+/*	$OpenBSD: loader.c,v 1.162 2016/07/04 21:15:06 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -44,7 +44,6 @@
 #include "resolve.h"
 #include "sod.h"
 #include "stdlib.h"
-#include "dl_prebind.h"
 
 /*
  * Local decls.
@@ -65,8 +64,6 @@ char *_dl_bindnow;
 char *_dl_traceld;
 char *_dl_debug;
 char *_dl_showmap;
-char *_dl_noprebind;
-char *_dl_prebind_validate;
 char *_dl_tracefmt1, *_dl_tracefmt2, *_dl_traceprog;
 
 int _dl_trust;
@@ -220,8 +217,6 @@ _dl_setup_env(const char *argv0, char **envp)
 	_dl_tracefmt1 = _dl_getenv("LD_TRACE_LOADED_OBJECTS_FMT1", envp);
 	_dl_tracefmt2 = _dl_getenv("LD_TRACE_LOADED_OBJECTS_FMT2", envp);
 	_dl_traceprog = _dl_getenv("LD_TRACE_LOADED_OBJECTS_PROGNAME", envp);
-	_dl_noprebind = _dl_getenv("LD_NOPREBIND", envp);
-	_dl_prebind_validate = _dl_getenv("LD_PREBINDVALIDATE", envp);
 
 	/*
 	 * Don't allow someone to change the search paths if he runs
@@ -474,11 +469,6 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 			next_load->start = (char *)TRUNC_PG(phdp->p_vaddr) + exe_loff;
 			next_load->size = (phdp->p_vaddr & align) + phdp->p_filesz;
 			next_load->prot = PFLAGS(phdp->p_flags);
-
-			if (phdp->p_flags & 0x08000000) {
-//				dump_prelink(phdp->p_vaddr + exe_loff, phdp->p_memsz);
-				prebind_load_exe(phdp, exe_obj);
-			}
 			break;
 		case PT_TLS:
 			if (phdp->p_filesz > phdp->p_memsz) {
@@ -537,13 +527,9 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	 * Everything should be in place now for doing the relocation
 	 * and binding. Call _dl_rtld to do the job. Fingers crossed.
 	 */
-
-	_dl_prebind_pre_resolve();
 	failed = 0;
 	if (_dl_traceld == NULL)
 		failed = _dl_rtld(_dl_objects);
-
-	_dl_prebind_post_resolve();
 
 	if (_dl_debug || _dl_traceld) {
 		if (_dl_traceld)
@@ -665,14 +651,12 @@ _dl_rtld(elf_object_t *object)
 			_dl_symcache = NULL;
 		}
 	}
-	prebind_symcache(object, SYM_NOTPLT);
 
 	/*
 	 * Do relocation information first, then GOT.
 	 */
 	fails =_dl_md_reloc(object, DT_REL, DT_RELSZ);
 	fails += _dl_md_reloc(object, DT_RELA, DT_RELASZ);
-	prebind_symcache(object, SYM_PLT);
 	fails += _dl_md_reloc_got(object, !(_dl_bindnow ||
 	    object->obj_flags & DF_1_NOW));
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ld.so.1,v 1.21 2014/02/22 02:54:36 guenther Exp $
+.\"	$OpenBSD: ld.so.1,v 1.22 2016/07/04 21:15:06 guenther Exp $
 .\"	$NetBSD: rtld.1,v 1.2 1995/10/08 23:43:28 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 22 2014 $
+.Dd $Mdocdate: July 4 2016 $
 .Dt LD.SO 1
 .Os
 .Sh NAME
@@ -161,13 +161,6 @@ are recognised and have their usual meaning.
 When set, be verbose about what
 .Nm
 does.
-.Pp
-.It Ev LD_NOPREBIND
-When set, ignore any prebind data associated with the program or libraries.
-.Pp
-.It Ev LD_PREBINDVALIDATE
-When set, perform symbol relocation of the given binary and the associated
-libraries, compare the results against the prebind values, then exit.
 .El
 .Sh FILES
 .Bl -tag -width /var/run/ld.so.hintsXXX -compact
