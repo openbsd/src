@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.120 2016/06/28 04:41:37 jmatthew Exp $
+#	$OpenBSD: RAMDISK,v 1.121 2016/07/04 21:51:40 kettenis Exp $
 
 machine		sparc64
 maxusers	4
@@ -83,6 +83,7 @@ wi*		at pcmcia?		# WaveLAN IEEE 802.11DS
 hme*		at pci?			# Sun Happy Meal 10/100
 gem*		at pci?			# Sun GEM 10/100/Gigabit
 cas*		at pci?			# Sun Cassini 100/Gigabit
+nep*		at pci?			# Sun Neptune ethernet
 ti*		at pci?			# Alteon Tigon 1Gb ethernet
 skc*		at pci?			# SysKonnect GEnesis 984x
 sk*		at skc?			#  each port of above
