@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.34 2016/05/26 17:23:39 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.35 2016/07/04 04:33:35 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -420,7 +420,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
 	int i, num;
 	Elf_Rel *rel;
-	struct load_list *llist;
 
 	if (pltgot == NULL)
 		return (0); /* it is possible to have no PLT/GOT relocations */
@@ -439,24 +438,11 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 		rel = (Elf_Rel *)(object->Dyn.info[DT_JMPREL]);
 		num = (object->Dyn.info[DT_PLTRELSZ]);
-		for (llist = object->load_list; llist != NULL;
-		    llist = llist->next) {
-			if (!(llist->prot & PROT_WRITE))
-				_dl_mprotect(llist->start, llist->size,
-				    PROT_READ | PROT_WRITE);
-		}
 		for (i = 0; i < num/sizeof(Elf_Rel); i++, rel++) {
 			Elf_Addr *where;
 			where = (Elf_Addr *)(rel->r_offset + object->obj_base);
 			*where += object->obj_base;
 		}
-		for (llist = object->load_list; llist != NULL;
-		    llist = llist->next) {
-			if (!(llist->prot & PROT_WRITE))
-				_dl_mprotect(llist->start, llist->size,
-				    llist->prot);
-		}
-
 	}
 
 	/* mprotect the GOT */
