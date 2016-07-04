@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.55 2015/10/18 03:17:48 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.56 2016/07/04 04:05:29 guenther Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -161,12 +161,10 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (!clear) {
-		if (argc != 1 && argc != 2)
+		if (argc != 1)
 			usage();
 		dirn = argv[0];
 	}
-	if (argc == 2)
-		kernel = argv[1];
 
 	(void)time(&now);
 	kmem_setup();
