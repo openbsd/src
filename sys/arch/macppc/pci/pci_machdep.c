@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.6 2015/03/30 13:54:14 mpi Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.7 2016/07/04 09:30:18 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Martin Pieuchot
@@ -247,6 +247,7 @@ ofw_enumerate_pcibus(struct pci_softc *sc,
 	pci_chipset_tag_t pc = sc->sc_pc;
 	struct ofw_pci_register reg;
 	int len, node, b, d, f, ret;
+	uint32_t val = 0;
 	char compat[32];
 	pcireg_t bhlcr;
 	pcitag_t tag;
@@ -265,8 +266,48 @@ ofw_enumerate_pcibus(struct pci_softc *sc,
 			return (ret);
 	}
 
+	/*
+	 * An HT-PCI bridge is needed for interrupt mapping, attach it first
+	 */
+	if (len > 0 && strcmp(compat, "u3-ht") == 0) {
+		int snode;
+
+		for (snode = OF_child(node); snode; snode = OF_peer(snode)) {
+			val = 0;
+			if ((OF_getprop(snode, "shasta-interrupt-sequencer",
+			    &val, sizeof(val)) < sizeof(val)) || val != 1)
+				continue;
+
+			if (OF_getprop(snode, "reg", &reg, sizeof(reg))
+			    < sizeof(reg))
+				continue;
+
+			b = OFW_PCI_PHYS_HI_BUS(reg.phys_hi);
+			d = OFW_PCI_PHYS_HI_DEVICE(reg.phys_hi);
+			f = OFW_PCI_PHYS_HI_FUNCTION(reg.phys_hi);
+
+			tag = PCITAG_CREATE(snode, b, d, f);
+
+			bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+			if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
+				continue;
+
+			ret = pci_probe_device(sc, tag, match, pap);
+			if (match != NULL && ret != 0)
+				return (ret);
+		}
+	}
+
 	for (node = OF_child(node); node; node = OF_peer(node)) {
 		if (OF_getprop(node, "reg", &reg, sizeof(reg)) < sizeof(reg))
+			continue;
+
+		/*
+		 * Skip HT-PCI bridge, it has been attached before.
+		 */
+		val = 0;
+		if ((OF_getprop(node, "shasta-interrupt-sequencer", &val,
+		    sizeof(val)) >= sizeof(val)) && val == 1)
 			continue;
 
 		b = OFW_PCI_PHYS_HI_BUS(reg.phys_hi);
