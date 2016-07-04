@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.12 2016/06/30 02:29:22 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.13 2016/07/04 23:03:52 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -148,6 +148,7 @@ viornd_notifyq(void)
 {
 	uint64_t q_gpa;
 	uint32_t vr_sz;
+	size_t sz;
 	int ret;
 	char *buf, *rnd_data;
 	struct vring_desc *desc;
@@ -183,8 +184,11 @@ viornd_notifyq(void)
 	used = (struct vring_used *)(buf +
 	    viornd.vq[viornd.cfg.queue_notify].vq_usedoffset);
 
-	/* XXX sanity check len here */
-	rnd_data = malloc(desc[avail->ring[avail->idx]].len);
+	sz = desc[avail->ring[avail->idx]].len;
+	if (sz > MAXPHYS)
+		fatal("viornd descriptor size too large (%zu)", sz);
+
+	rnd_data = malloc(sz);
 
 	if (rnd_data != NULL) {
 		arc4random_buf(rnd_data, desc[avail->ring[avail->idx]].len);
@@ -208,7 +212,8 @@ viornd_notifyq(void)
 			}
 		}
 		free(rnd_data);
-	}
+	} else
+		fatal("memory allocation error for viornd data");
 
 	free(buf);
 
