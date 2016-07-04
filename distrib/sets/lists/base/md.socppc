@@ -1238,7 +1238,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/videomode/edidvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/videomode/vesagtf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/videomode/videomode.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/videovar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/vscsivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons
