@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.216 2016/05/04 19:48:08 jca Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.217 2016/07/04 03:24:48 guenther Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -2635,6 +2635,7 @@ send_file_list(char *whichf)
 	int simple = 0;
 	volatile int freeglob = 0;
 	glob_t gl;
+	size_t prefixlen;
 
 	if (strpbrk(whichf, "~{[*?") != NULL) {
 		memset(&gl, 0, sizeof(gl));
@@ -2694,9 +2695,11 @@ send_file_list(char *whichf)
 		if ((dirp = opendir(dirname)) == NULL)
 			continue;
 
+		if (dirname[0] == '.' && dirname[1] == '\0')
+			prefixlen = 0;
+		else
+			prefixlen = strlen(dirname) + 1;
 		while ((dir = readdir(dirp)) != NULL) {
-			char nbuf[PATH_MAX];
-
 			if (recvurg) {
 				myoob();
 				recvurg = 0;
@@ -2710,14 +2713,12 @@ send_file_list(char *whichf)
 			    dir->d_namlen == 2)
 				continue;
 
-			snprintf(nbuf, sizeof(nbuf), "%s/%s", dirname,
-				 dir->d_name);
-
 			/*
 			 * We have to do a stat to insure it's
 			 * not a directory or special file.
 			 */
-			if (simple || (stat(nbuf, &st) == 0 &&
+			if (simple ||
+			    (fstatat(dirfd(dirp), dir->d_name, &st, 0) == 0 &&
 			    S_ISREG(st.st_mode))) {
 				if (dout == NULL) {
 					dout = dataconn("file list", (off_t)-1,
@@ -2726,13 +2727,14 @@ send_file_list(char *whichf)
 						goto out;
 					transflag++;
 				}
-				if (nbuf[0] == '.' && nbuf[1] == '/')
-					fprintf(dout, "%s%s\n", &nbuf[2],
-						type == TYPE_A ? "\r" : "");
-				else
-					fprintf(dout, "%s%s\n", nbuf,
-						type == TYPE_A ? "\r" : "");
-				byte_count += strlen(nbuf) + 1;
+
+				if (prefixlen) {
+					fprintf(dout, "%s/", dirname);
+					byte_count += prefixlen;
+				}
+				fprintf(dout, "%s%s\n", dir->d_name,
+				    type == TYPE_A ? "\r" : "");
+				byte_count += dir->d_namlen + 1;
 			}
 		}
 		(void) closedir(dirp);

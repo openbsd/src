@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.100 2016/01/26 18:02:51 jasper Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.101 2016/07/04 03:24:48 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -526,14 +526,8 @@ make_file_list(char *buf)
 		} else if (dent->d_type == DT_LNK ||
 			    dent->d_type == DT_UNKNOWN) {
 			struct stat	statbuf;
-			char		statname[NFILEN + 2];
 
-			statbuf.st_mode = 0;
-			ret = snprintf(statname, sizeof(statname), "%s/%s",
-			    dir, dent->d_name);
-			if (ret < 0 || ret > sizeof(statname) - 1)
-				continue;
-			if (stat(statname, &statbuf) < 0)
+			if (fstatat(dirfd(dirp), dent->d_name, &statbuf, 0) < 0)
 				continue;
 			if (S_ISDIR(statbuf.st_mode))
 				isdir = 1;
