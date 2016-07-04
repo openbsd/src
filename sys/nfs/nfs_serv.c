@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.108 2016/04/29 14:40:36 beck Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.109 2016/07/04 18:34:03 natano Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1163,7 +1163,12 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 		error = NFSERR_BADTYPE;
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		vput(nd.ni_dvp);
+		if (nd.ni_dvp == nd.ni_vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		if (nd.ni_vp)
+			vput(nd.ni_vp);
 		goto out;
 	}
 	VATTR_NULL(&va);
@@ -1185,7 +1190,11 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 		error = EEXIST;
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		vput(nd.ni_dvp);
+		if (nd.ni_dvp == nd.ni_vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		vput(nd.ni_vp);
 		goto out;
 	}
 	va.va_type = vtyp;
