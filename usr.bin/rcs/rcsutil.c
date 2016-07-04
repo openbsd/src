@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.44 2015/06/13 20:15:21 nicm Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.45 2016/07/04 01:39:12 millert Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -330,16 +330,19 @@ rcs_getrevnum(const char *rev_str, RCSFILE *file)
  * Returns the string's pointer.
  */
 char *
-rcs_prompt(const char *prompt)
+rcs_prompt(const char *prompt, int flags)
 {
 	BUF *bp;
 	size_t len;
 	char *buf;
 
+	if (!(flags & INTERACTIVE) && isatty(STDIN_FILENO))
+		flags |= INTERACTIVE;
+
 	bp = buf_alloc(0);
-	if (isatty(STDIN_FILENO))
+	if (flags & INTERACTIVE)
 		(void)fprintf(stderr, "%s", prompt);
-	if (isatty(STDIN_FILENO))
+	if (flags & INTERACTIVE)
 		(void)fprintf(stderr, ">> ");
 	clearerr(stdin);
 	while ((buf = fgetln(stdin, &len)) != NULL) {
@@ -349,7 +352,7 @@ rcs_prompt(const char *prompt)
 		else
 			buf_append(bp, buf, len);
 
-		if (isatty(STDIN_FILENO))
+		if (flags & INTERACTIVE)
 			(void)fprintf(stderr, ">> ");
 	}
 	buf_putc(bp, '\0');
@@ -438,7 +441,7 @@ rcs_rev_select(RCSFILE *file, const char *range)
  * Returns 0 on success, -1 on failure, setting errno.
  */
 int
-rcs_set_description(RCSFILE *file, const char *in)
+rcs_set_description(RCSFILE *file, const char *in, int flags)
 {
 	BUF *bp;
 	char *content;
@@ -458,7 +461,7 @@ rcs_set_description(RCSFILE *file, const char *in)
 		content = xstrdup(in + 1);
 	/* Get description from stdin. */
 	else
-		content = rcs_prompt(prompt);
+		content = rcs_prompt(prompt, flags);
 
 	rcs_desc_set(file, content);
 	free(content);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.223 2015/11/02 16:45:21 nicm Exp $	*/
+/*	$OpenBSD: ci.c,v 1.224 2016/07/04 01:39:12 millert Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -279,7 +279,7 @@ checkin_main(int argc, char **argv)
 			errx(1, "failed to open rcsfile `%s'", pb.fpath);
 
 		if ((pb.flags & DESCRIPTION) &&
-		    rcs_set_description(pb.file, pb.description) == -1)
+		    rcs_set_description(pb.file, pb.description, pb.flags) == -1)
 			err(1, "%s", pb.filename);
 
 		if (!(pb.flags & QUIET))
@@ -406,7 +406,7 @@ checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2, int flags)
 		(void)fprintf(stderr, "new revision: %s; "
 		    "previous revision: %s\n", nrev, prev);
 
-	rcs_msg = rcs_prompt(prompt);
+	rcs_msg = rcs_prompt(prompt, flags);
 
 	return (rcs_msg);
 }
@@ -621,7 +621,7 @@ checkin_init(struct checkin_params *pb)
 
 	/* Get description from user */
 	if (pb->description == NULL &&
-	    rcs_set_description(pb->file, NULL) == -1) {
+	    rcs_set_description(pb->file, NULL, pb->flags) == -1) {
 		warn("%s", pb->filename);
 		return (-1);
 	}
