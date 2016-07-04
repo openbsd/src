@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.174 2016/07/04 17:56:54 guenther Exp $
+#	$OpenBSD: bsd.own.mk,v 1.175 2016/07/04 18:01:44 guenther Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -14,8 +14,6 @@ WARNINGS?=	no
 SKEY?=		yes
 # Set `YP' to `yes' to build with support for NIS/YP.
 YP?=		yes
-# Set `DEBUGLIBS' to `yes' to build libraries with debugging symbols
-DEBUGLIBS?=	no
 
 GCC3_ARCH=m88k
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.145 2016/05/30 21:35:08 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.146 2016/07/04 18:01:44 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -80,7 +80,6 @@ SRCS+=	${SRCS_${MACHINE_CPU}}
 ASM:=	${ASM:N${i:R}.o}
 .endfor
 
-GASM=	${ASM:.o=.go}
 PASM=	${ASM:.o=.po}
 SASM=	${ASM:.o=.so}
 DASM=	${ASM:.o=.do}
@@ -93,13 +92,11 @@ ASM_NOERR=__get_tcb.o __set_tcb.o __threxit.o __thrsleep.o __thrwakeup.o \
 	issetugid.o \
 	sched_yield.o sync.o \
 	umask.o 
-GASM_NOERR=	${ASM_NOERR:.o=.go}
 PASM_NOERR=	${ASM_NOERR:.o=.po}
 SASM_NOERR=	${ASM_NOERR:.o=.so}
 DASM_NOERR=	${ASM_NOERR:.o=.do}
 
 PSEUDO=
-GPSEUDO=${PSEUDO:.o=.go}
 PPSEUDO=${PSEUDO:.o=.po}
 SPSEUDO=${PSEUDO:.o=.so}
 DPSEUDO=${PSEUDO:.o=.do}
@@ -107,13 +104,11 @@ DPSEUDO=${PSEUDO:.o=.do}
 # syscalls that CANNOT FAIL and whose function has one more leading underbar
 # than its matching SYS_* symbol.  E.g., _exit() --> SYS_exit
 PSEUDO_NOERR=	_exit.o
-GPSEUDO_NOERR=${PSEUDO_NOERR:.o=.go}
 PPSEUDO_NOERR=${PSEUDO_NOERR:.o=.po}
 SPSEUDO_NOERR=${PSEUDO_NOERR:.o=.so}
 DPSEUDO_NOERR=${PSEUDO_NOERR:.o=.do}
 
 HIDDEN= ___getcwd.o fork.o sigaction.o _ptrace.o ${CANCEL:=.o}
-GHIDDEN=${HIDDEN:.o=.go}
 PHIDDEN=${HIDDEN:.o=.po}
 SHIDDEN=${HIDDEN:.o=.so}
 DHIDDEN=${HIDDEN:.o=.do}
@@ -146,38 +141,32 @@ GENERATE.rsyscall_hidden=\
 
 # ...and one of these to control how it's compiled
 FINISH=	${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} -x assembler-with-cpp -
-FINISH.go=${FINISH} -o ${.TARGET}.o			&& ${TRIM.debug}
 FINISH.po=${FINISH} -o ${.TARGET}.o -DPROF		&& ${TRIM.debug}
 FINISH.so=${FINISH} -o ${.TARGET}   ${PICFLAG}
 FINISH.do=${FINISH} -o ${.TARGET}.o ${DIST_CFLAGS}	&& ${TRIM}
 FINISH.o =${FINISH} -o ${.TARGET}.o			&& ${TRIM}
 
 # Use those to generate the desired syscall stubs
-${GASM}: ${SYS_DEP} ; @${GENERATE.rsyscall} | ${FINISH.go}
 ${PASM}: ${SYS_DEP} ; @${GENERATE.rsyscall} | ${FINISH.po}
 ${SASM}: ${SYS_DEP} ; @${GENERATE.rsyscall} | ${FINISH.so}
 ${DASM}: ${SYS_DEP} ; @${GENERATE.rsyscall} | ${FINISH.do}
 ${ASM}:  ${SYS_DEP} ; @${GENERATE.rsyscall} | ${FINISH.o}
 
-${GASM_NOERR}: ${SYS_DEP} ; @${GENERATE.rsyscall_noerr} | ${FINISH.go}
 ${PASM_NOERR}: ${SYS_DEP} ; @${GENERATE.rsyscall_noerr} | ${FINISH.po}
 ${SASM_NOERR}: ${SYS_DEP} ; @${GENERATE.rsyscall_noerr} | ${FINISH.so}
 ${DASM_NOERR}: ${SYS_DEP} ; @${GENERATE.rsyscall_noerr} | ${FINISH.do}
 ${ASM_NOERR}:  ${SYS_DEP} ; @${GENERATE.rsyscall_noerr} | ${FINISH.o}
 
-${GPSEUDO}: ${SYS_DEP} ; @${GENERATE.pseudo} | ${FINISH.go}
 ${PPSEUDO}: ${SYS_DEP} ; @${GENERATE.pseudo} | ${FINISH.po}
 ${SPSEUDO}: ${SYS_DEP} ; @${GENERATE.pseudo} | ${FINISH.so}
 ${DPSEUDO}: ${SYS_DEP} ; @${GENERATE.pseudo} | ${FINISH.do}
 ${PSEUDO}:  ${SYS_DEP} ; @${GENERATE.pseudo} | ${FINISH.o}
 
-${GPSEUDO_NOERR}: ${SYS_DEP} ; @${GENERATE.pseudo_noerr} | ${FINISH.go}
 ${PPSEUDO_NOERR}: ${SYS_DEP} ; @${GENERATE.pseudo_noerr} | ${FINISH.po}
 ${SPSEUDO_NOERR}: ${SYS_DEP} ; @${GENERATE.pseudo_noerr} | ${FINISH.so}
 ${DPSEUDO_NOERR}: ${SYS_DEP} ; @${GENERATE.pseudo_noerr} | ${FINISH.do}
 ${PSEUDO_NOERR}:  ${SYS_DEP} ; @${GENERATE.pseudo_noerr} | ${FINISH.o}
 
-${GHIDDEN}: ${SYS_DEP} ; @${GENERATE.rsyscall_hidden} | ${FINISH.go}
 ${PHIDDEN}: ${SYS_DEP} ; @${GENERATE.rsyscall_hidden} | ${FINISH.po}
 ${SHIDDEN}: ${SYS_DEP} ; @${GENERATE.rsyscall_hidden} | ${FINISH.so}
 ${DHIDDEN}: ${SYS_DEP} ; @${GENERATE.rsyscall_hidden} | ${FINISH.do}

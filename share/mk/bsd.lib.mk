@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.76 2016/05/15 03:44:32 guenther Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.77 2016/07/04 18:01:44 guenther Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -26,7 +26,7 @@ SHLIB_MINOR=${minor}
 # .do used for distrib "crunchgen" object files
 # .m for objective c files.
 .SUFFIXES:
-.SUFFIXES: .out .o .go .po .so .do .S .s .c .cc .cpp .C .cxx .f .y .l .m4 .m
+.SUFFIXES: .out .o .po .so .do .S .s .c .cc .cpp .C .cxx .f .y .l .m4 .m
 
 .if defined(NOPIE)
 CFLAGS+=	${NOPIE_FLAGS}
@@ -39,12 +39,6 @@ DIST_CFLAGS+=	-Os
 .c.o:
 	@echo "${COMPILE.c} ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.c} ${.IMPSRC}  -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-.c.go:
-	@echo "${COMPILE.c} -g ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} -g ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -72,12 +66,6 @@ DIST_CFLAGS+=	-Os
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.cc.go .cpp.go .C.go .cxx.go:
-	@echo "${COMPILE.cc} -g ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.cc} -g ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
 .cc.po .cpp.po .C.po .cxx.po:
 	@echo "${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}.o
@@ -97,12 +85,6 @@ DIST_CFLAGS+=	-Os
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.f.go:
-	@echo "${COMPILE.f} -g ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.f} -g ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
 .f.po:
 	@echo "${COMPILE.f} -p ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.f} -p ${.IMPSRC} -o ${.TARGET}.o
@@ -116,12 +98,6 @@ DIST_CFLAGS+=	-Os
 	@rm -f ${.TARGET}.o
 
 .S.o .s.o:
-	@echo "${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-.S.go .s.go:
 	@echo "${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
@@ -161,9 +137,6 @@ CXXFLAGS+=	${CXXOPTS}
 DEBUG?=	-g
 
 _LIBS=lib${LIB}.a
-.if (${DEBUGLIBS:L} == "yes")
-_LIBS+=lib${LIB}_g.a
-.endif
 .if !defined(NOPROFILE)
 _LIBS+=lib${LIB}_p.a
 .endif
@@ -198,13 +171,6 @@ lib${LIB}.a: ${OBJS}
 	@rm -f lib${LIB}.a
 	@${AR} cq lib${LIB}.a `${LORDER} ${OBJS} | tsort -q`
 	${RANLIB} lib${LIB}.a
-
-GOBJS+=	${OBJS:.o=.go}
-lib${LIB}_g.a: ${GOBJS}
-	@echo building debugging ${LIB} library
-	@rm -f lib${LIB}_g.a
-	@${AR} cq lib${LIB}_g.a `${LORDER} ${GOBJS} | tsort -q`
-	${RANLIB} lib${LIB}_g.a
 
 POBJS+=	${OBJS:.o=.po}
 lib${LIB}_p.a: ${POBJS}
@@ -266,7 +232,7 @@ afterdepend: .depend
 		echo "$$0: cannot create temp file, exiting..."; \
 		exit 1; \
 	fi; \
-	sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.go \1.po \1.so \1.do:/' \
+	sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.so \1.do:/' \
 	      < .depend > $$TMP; \
 	mv $$TMP .depend)
 .endif
@@ -284,15 +250,6 @@ realinstall:
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .endif
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}.a
-.if (${DEBUGLIBS:L} == "yes")
-#	ranlib lib${LIB}_g.a
-	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m 600 \
-	    lib${LIB}_g.a ${DESTDIR}${LIBDIR}/debug/lib${LIB}.a
-.if (${INSTALL_COPY} != "-p")
-	${RANLIB} -t ${DESTDIR}${LIBDIR}/debug/lib${LIB}.a
-.endif
-	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/debug/lib${LIB}.a
-.endif
 .if !defined(NOPROFILE)
 #	ranlib lib${LIB}_p.a
 	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m 600 \

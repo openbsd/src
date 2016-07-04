@@ -33,9 +33,5 @@ afterinstall:
 	for i in ${_LIBS}; do \
 	    ln -f $$i `echo $$i | sed 's/form/formw/'`; \
 	done
-.if (${DEBUGLIBS:L} == "yes")
-	-cd ${DESTDIR}${LIBDIR}/debug; \
-	    ln -f lib${LIB}.a lib`echo ${LIB} | sed 's/form/formw/'`.a
-.endif
 
 .include <bsd.lib.mk>

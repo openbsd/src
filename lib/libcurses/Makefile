@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.68 2016/05/26 21:24:16 millert Exp $
+#	$OpenBSD: Makefile,v 1.69 2016/07/04 18:01:44 guenther Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -166,13 +166,6 @@ afterinstall:
 	    ln -f $$i `echo $$i | sed 's/curses/ncurses/'`; \
 	    ln -f $$i `echo $$i | sed 's/curses/ncursesw/'`; \
 	done
-.if (${DEBUGLIBS:L} == "yes")
-	-cd ${DESTDIR}${LIBDIR}/debug; \
-	    ln -f lib${LIB}.a lib`echo ${LIB} | sed 's/curses/termlib/'`.a; \
-	    ln -f lib${LIB}.a lib`echo ${LIB} | sed 's/curses/termcap/'`.a; \
-	    ln -f lib${LIB}.a lib`echo ${LIB} | sed 's/curses/ncurses/'`.a; \
-	    ln -f lib${LIB}.a lib`echo ${LIB} | sed 's/curses/ncursesw/'`.a
-.endif
 
 .include <bsd.lib.mk>
 

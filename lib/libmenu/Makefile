@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.16 2016/03/30 06:38:42 jmc Exp $
+# $OpenBSD: Makefile,v 1.17 2016/07/04 18:01:44 guenther Exp $
 
 LIB=	menu
 SRCS=	m_attribs.c m_cursor.c m_driver.c m_format.c \
@@ -31,9 +31,5 @@ afterinstall:
 	for i in ${_LIBS}; do \
 	    ln -f $$i `echo $$i | sed 's/menu/menuw/'`; \
 	done
-.if (${DEBUGLIBS:L} == "yes")
-	-cd ${DESTDIR}${LIBDIR}/debug; \
-	    ln -f lib${LIB}.a lib`echo ${LIB} | sed 's/menu/menuw/'`.a
-.endif
 
 .include <bsd.lib.mk>

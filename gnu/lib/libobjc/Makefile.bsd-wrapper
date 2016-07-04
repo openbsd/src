@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 2013/08/06 19:11:53 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 2016/07/04 18:01:44 guenther Exp $
 
 LIB=		objc
 
@@ -59,7 +59,7 @@ includes:
 depend: 
 	cd ${GCCDIR} && exec ${MAKE} -f Makefile.bsd-wrapper config.status target_path tconfig.h
 
-sendmsg.o sendmsg.go sendmsg.po sendmsg.so: runtime-info.h
+sendmsg.o sendmsg.po sendmsg.so: runtime-info.h
 
 runtime-info.h:
 		echo "" > tmp-runtime
@@ -113,12 +113,6 @@ gc.o: gc.c
 	@${COMPILE.c} ${.ALLSRC}  -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
-	
-gc.go: gc.c
-	@echo "${COMPILE.c} -g ${.ALLSRC} -o ${.TARGET}"
-	@${COMPILE.c} -g ${.ALLSRC} -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
 
 gc.po: gc.c
 	@echo "${COMPILE.c} -p ${.ALLSRC} -o ${.TARGET}"
@@ -136,12 +130,6 @@ gc.so: gc.c
 	@echo "${COMPILE.m} ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.m} ${.IMPSRC}  -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-.m.go:
-	@echo "${COMPILE.m} -g ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.m} -g ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .m.po:
