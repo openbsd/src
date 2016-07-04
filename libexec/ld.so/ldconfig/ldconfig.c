@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.35 2015/11/15 02:49:59 deraadt Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.36 2016/07/04 20:56:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -49,8 +49,6 @@
 #include <unistd.h>
 #include <limits.h>
 
-#include "prebind.h"
-
 #include "ld.h"
 
 #undef major
@@ -59,12 +57,9 @@
 extern char			*__progname;
 
 int				verbose;
-static int			delete;
-static int			doprebind;
 static int			nostd;
 static int			justread;
 int				merge;
-int				safe;
 static int			rescan;
 static int			unconfig;
 
@@ -92,7 +87,7 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-DmPRrSsUv] [path ...]\n", __progname);
+	    "usage: %s [-mRrsUv] [path ...]\n", __progname);
 	exit(1);
 }
 
@@ -122,17 +117,8 @@ main(int argc, char *argv[])
 		case 's':
 			nostd = 1;
 			break;
-		case 'S':
-			safe = 1;
-			break;
 		case 'v':
 			verbose = 1;
-			break;
-		case 'D':
-			delete = 1;
-			break;
-		case 'P':
-			doprebind = 1;
 			break;
 		default:
 			usage();
@@ -158,16 +144,6 @@ main(int argc, char *argv[])
 		*dir_list = '\0';
 	} else if (!nostd)
 		std_search_path();
-
-	if (delete) {
-		if (rescan || unconfig || merge || justread || nostd || doprebind)
-			errx(1, "cannot mix -U -R -r -s -P options with -D");
-		exit(prebind_delete(&argv[optind]));
-	} else if (doprebind) {
-		if (rescan || unconfig || justread || nostd)
-			errx(1, "cannot mix other options with -P");
-		exit(prebind(&argv[optind]));
-	}
 
 	if (unconfig) {
 		if (optind < argc)

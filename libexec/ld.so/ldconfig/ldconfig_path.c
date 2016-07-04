@@ -1,4 +1,4 @@
-/*	$OpenBSD: prebind_path.c,v 1.4 2015/08/23 06:27:32 deraadt Exp $	*/
+/*	$OpenBSD: ldconfig_path.c,v 1.1 2016/07/04 20:56:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2013 Kurt Miller <kurt@intricatesoftware.com>
