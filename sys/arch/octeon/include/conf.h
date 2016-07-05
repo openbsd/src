@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.1 2010/09/20 06:32:30 syuu Exp $	*/
+/*	$OpenBSD: conf.h,v 1.2 2016/07/05 12:53:40 visa Exp $	*/
 /*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
@@ -30,4 +30,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _OCTEON_CONF_H_
+#define _OCTEON_CONF_H_
+
 #include <sys/conf.h>
+
+/* open, close, ioctl */
+#define cdev_openprom_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, 0, selfalse, \
+	(dev_type_mmap((*))) enodev }
+
+cdev_decl(openprom);
+
+#endif	/* _OCTEON_CONF_H_ */

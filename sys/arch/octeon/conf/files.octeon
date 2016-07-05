@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.30 2016/07/01 15:12:37 visa Exp $
+#	$OpenBSD: files.octeon,v 1.31 2016/07/05 12:53:40 visa Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -117,3 +117,6 @@ file	arch/octeon/dev/octeon_pcibus.c			pcibus
 file	arch/octeon/dev/octeon_bus_space.c
 
 file	arch/octeon/octeon/pciide_machdep.c		pciide
+
+pseudo-device	openprom
+file	arch/octeon/octeon/openprom.c			openprom needs-flag

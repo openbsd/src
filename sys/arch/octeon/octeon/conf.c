@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 2016/04/25 20:09:14 tedu Exp $ */
+/*	$OpenBSD: conf.c,v 1.18 2016/07/05 12:53:40 visa Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -140,6 +140,7 @@ cdev_decl(pci);
 #include "vscsi.h"
 #include "pppx.h"
 #include "fuse.h"
+#include "openprom.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -167,7 +168,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NCOM,com),	/* 17: 16C450 serial interface */
 	cdev_disk_init(NWD,wd),		/* 18: ST506/ESDI/IDE disk */
 	cdev_disk_init(NAMDCF,amdcf),	/* 19: CF disk */
-	cdev_notdef(),			/* 20: */
+	cdev_openprom_init(NOPENPROM,openprom),	/* 20: /dev/openprom */
 	cdev_notdef(),			/* 21: */
 	cdev_disk_init(NRD,rd),		/* 22: ramdisk device */
 	cdev_notdef(),			/* 23: was: concatenated disk driver */

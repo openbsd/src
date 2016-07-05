@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.25 2016/06/28 04:41:37 jmatthew Exp $
+#	$OpenBSD: RAMDISK,v 1.26 2016/07/05 12:53:40 visa Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -101,6 +101,7 @@ ukphy*		at mii?
 atphy*		at mii?
 brswphy*	at mii?
 
+pseudo-device	openprom
 pseudo-device	loop 1
 pseudo-device	bpfilter 1
 pseudo-device	rd 1

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.27 2016/06/28 04:41:37 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.28 2016/07/05 12:53:40 visa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -176,3 +176,5 @@ owid*		at onewire?	# ID
 owsbm*		at onewire?	# Smart Battery Monitor
 owtemp* 	at onewire?	# Temperature
 owctr*		at onewire?	# Counter device
+
+pseudo-device	openprom
