@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.30 2016/01/25 21:44:01 martijn Exp $	*/
+/*	$OpenBSD: forward.c,v 1.31 2016/07/05 05:06:27 jsg Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -353,7 +353,7 @@ tfreopen(struct tailfile *tf) {
 			else
 				reopen[nfiles-1] = tf;
 		} else {
-			warnx("Lost track of %s", ttf->fname);
+			warnx("Lost track of %s", tf->fname);
 			nfiles--;
 		}
 	}
