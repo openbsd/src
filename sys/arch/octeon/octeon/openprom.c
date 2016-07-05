@@ -1,4 +1,4 @@
-/*	$OpenBSD: openprom.c,v 1.1 2016/07/05 12:53:40 visa Exp $	*/
+/*	$OpenBSD: openprom.c,v 1.2 2016/07/05 13:41:46 visa Exp $	*/
 /*	$NetBSD: openprom.c,v 1.4 2002/01/10 06:21:53 briggs Exp $ */
 
 /*
@@ -200,10 +200,8 @@ openpromioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	case OPIOCNEXTPROP:
 		if ((flags & FREAD) == 0)
 			return (EBADF);
-		if (node == 0) {
-			printf("%s node == 0\n", __func__);
+		if (node == 0)
 			return (EINVAL);
-		}
 		error = openpromgetstr(op->op_namelen, op->op_name, &name);
 		if (error)
 			break;
@@ -222,7 +220,6 @@ openpromioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		error = OF_nextprop(node, buf, nextprop);
 		splx(s);
 		if (error == -1) {
-			printf("%s OF_nextprop\n", __func__);
 			error = EINVAL;
 			break;
 		}
