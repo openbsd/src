@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.111 2016/06/07 06:12:37 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.112 2016/07/05 00:35:09 tedu Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -438,13 +438,13 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	FREF(fp);
 	memp = NULL;
 	if (size > sizeof (stkbuf)) {
-		memp = (caddr_t)malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
+		memp = malloc(size, M_IOCTLOPS, M_WAITOK);
 		data = memp;
 	} else
 		data = (caddr_t)stkbuf;
 	if (com&IOC_IN) {
 		if (size) {
-			error = copyin(SCARG(uap, data), data, (u_int)size);
+			error = copyin(SCARG(uap, data), data, size);
 			if (error) {
 				goto out;
 			}
@@ -480,7 +480,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	case FIOSETOWN:
 		tmp = *(int *)data;
 		if (fp->f_type == DTYPE_SOCKET) {
-			struct socket *so = (struct socket *)fp->f_data;
+			struct socket *so = fp->f_data;
 
 			so->so_pgid = tmp;
 			so->so_siguid = p->p_ucred->cr_ruid;
@@ -499,7 +499,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 			tmp = pr->ps_pgrp->pg_id;
 		}
 		error = (*fp->f_ops->fo_ioctl)
-			(fp, TIOCSPGRP, (caddr_t)&tmp, p);
+		    (fp, TIOCSPGRP, (caddr_t)&tmp, p);
 		break;
 
 	case FIOGETOWN:
@@ -521,7 +521,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	 * already set and checked above.
 	 */
 	if (error == 0 && (com&IOC_OUT) && size)
-		error = copyout(data, SCARG(uap, data), (u_int)size);
+		error = copyout(data, SCARG(uap, data), size);
 out:
 	FRELE(fp, p);
 	if (memp)
