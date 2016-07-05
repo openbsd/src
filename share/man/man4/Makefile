@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.624 2016/06/27 23:50:31 jmatthew Exp $
+#	$OpenBSD: Makefile,v 1.625 2016/07/05 11:43:02 tim Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpiasus.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -41,7 +41,8 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	oce.4 ohci.4 options.4 onewire.4 oosiop.4 osiop.4 otus.4 \
 	owid.4 owctr.4 owsbm.4 owtemp.4 \
 	pair.4 pcagpio.4 pcaled.4 pcdisplay.4 pchb.4 pchtemp.4 pci.4 pcib.4 \
-	pcfadc.4 pcfiic.4 pciide.4 pckbc.4 pckbd.4 pcmcia.4 pcn.4 pcppi.4 \
+	pcfadc.4 pcfiic.4 pcfrtc.4 pciide.4 pckbc.4 pckbd.4 pcmcia.4 pcn.4 \
+	pcppi.4 \
 	pcscp.4 pf.4 pflog.4 pflow.4 pfsync.4 pgt.4 piixpm.4 pim.4 pipex.4 \
 	pms.4 ppb.4 ppp.4 pppoe.4 pppx.4 pty.4 puc.4 pvbus.4 pwdog.4 \
 	qla.4 qle.4 qlw.4 qsphy.4 radio.4 \
