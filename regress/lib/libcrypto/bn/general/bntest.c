@@ -514,7 +514,7 @@ int
 test_div_word(BIO *bp)
 {
 	BIGNUM   a, b;
-	BN_ULONG r, rmod, s;
+	BN_ULONG r, rmod, s = 0;
 	int i;
 	int rc = 1;
 
@@ -536,7 +536,6 @@ test_div_word(BIO *bp)
 			break;
 		}
 
-		s = b.d[0];
 		rmod = BN_mod_word(&b, s);
 		r = BN_div_word(&b, s);
 
