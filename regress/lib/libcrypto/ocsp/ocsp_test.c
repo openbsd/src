@@ -2,21 +2,22 @@
 #include <netdb.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <err.h>
 #include <sys/socket.h>
 
 #include <openssl/ssl.h>
 #include <openssl/ocsp.h>
 
 static int tcp_connect(char *host, char *port) {
-	int err, sd = -1;
+	int error, sd = -1;
 	struct addrinfo hints, *res, *r;
 
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 
-	err = getaddrinfo(host, port, &hints, &res);
-	if (err != 0) {
+	error = getaddrinfo(host, port, &hints, &res);
+	if (error != 0) {
 		perror("getaddrinfo()");
 		exit(-1);
 	}
@@ -45,6 +46,7 @@ int main(int argc, char *argv[]) {
 	OCSP_BASICRESP *br = NULL;
 	X509_STORE     *st = NULL;
 	STACK_OF(X509) *ch = NULL;
+	char *host, *port;
 
 	SSL *ssl;
 	SSL_CTX *ctx;
@@ -56,7 +58,14 @@ int main(int argc, char *argv[]) {
 
 	SSL_CTX_load_verify_locations(ctx, "/etc/ssl/cert.pem", NULL);
 
-	sd = tcp_connect(argv[1], argv[2]);
+	if (argc != 3)
+		errx(-1, "need a host and port to connect to");
+	else {
+		host = argv[1];
+		port = argv[2];
+	}
+
+	sd = tcp_connect(host, port);
 
 	ssl = SSL_new(ctx);
 
@@ -64,12 +73,12 @@ int main(int argc, char *argv[]) {
 	SSL_set_tlsext_status_type(ssl, TLSEXT_STATUSTYPE_ocsp);
 
 	if (SSL_connect(ssl) <= 0) {
-		puts("SSL connect error");
+		printf("SSL connect error\n");
 		exit(-1);
 	}
 
 	if (SSL_get_verify_result(ssl) != X509_V_OK) {
-		puts("Certificate doesn't verify");
+		printf("Certificate doesn't verify from host %s port %s\n", host, port);
 		exit(-1);
 	}
 
@@ -79,7 +88,7 @@ int main(int argc, char *argv[]) {
 	len = SSL_get_tlsext_status_ocsp_resp(ssl, &p);
 
 	if (!p) {
-		puts("No OCSP response received");
+		printf("No OCSP response received for %s port %s\n", host, port);
 		exit(-1);
 	}
 
@@ -110,7 +119,7 @@ int main(int argc, char *argv[]) {
 		exit(-1);
 	}
 
-	printf("OCSP validated from %s %s\n", argv[1], argv[2]);
+	printf("OCSP validated from %s %s\n", host, port);
 
 	return 0;
 }
