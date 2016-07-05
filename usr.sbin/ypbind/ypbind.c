@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.66 2016/03/21 00:49:36 guenther Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.67 2016/07/05 16:41:40 jca Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -53,6 +53,7 @@
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 #include <ifaddrs.h>
+#include <poll.h>
 
 #define SERVERSDIR	"/etc/yp"
 #define BINDINGDIR	"/var/yp/binding"
@@ -336,10 +337,8 @@ main(int argc, char *argv[])
 {
 	char path[PATH_MAX];
 	struct sockaddr_in sin;
-	struct timeval tv;
-	fd_set *fdsrp = NULL;
-	int fdsrl = 0;
-	int width, lockfd, lsock;
+	struct pollfd *pfd = NULL;
+	int width = 0, lockfd, lsock;
 	socklen_t len;
 	int evil = 0, one = 1;
 	DIR *dirp;
@@ -530,44 +529,34 @@ main(int argc, char *argv[])
 	checkwork();
 
 	while (1) {
-		extern int __svc_fdsetsize;
-		extern void *__svc_fdset;
-
-		if (fdsrp == NULL || fdsrl != __svc_fdsetsize) {
-			free(fdsrp);
-
-			fdsrl = __svc_fdsetsize;
-			width = __svc_fdsetsize;
-			if (rpcsock > __svc_fdsetsize)
-				width = rpcsock;
-			if (pingsock > __svc_fdsetsize)
-				width = pingsock;
-			fdsrp = calloc(howmany(width+1, NFDBITS), sizeof(fd_mask));
-			if (fdsrp == NULL)
-				errx(1, "no memory");
+		if (pfd == NULL || width != svc_max_pollfd + 2) {
+			width = svc_max_pollfd + 2;
+			pfd = reallocarray(pfd, width, sizeof *pfd);
+			if (pfd == NULL)
+				err(1, NULL);
 		}
 
-		bcopy(__svc_fdset, fdsrp, howmany(fdsrl+1, NFDBITS) *
-		    sizeof(fd_mask));
-		FD_SET(rpcsock, fdsrp);
-		FD_SET(pingsock, fdsrp);
+		pfd[0].fd = rpcsock;
+		pfd[0].events = POLLIN;
+		pfd[1].fd = pingsock;
+		pfd[1].events = POLLIN;
+		memcpy(pfd + 2, svc_pollfd, svc_max_pollfd);
 
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
-
-		switch (select(width+1, fdsrp, NULL, NULL, &tv)) {
+		switch (poll(pfd, width, 1000)) {
 		case 0:
 			checkwork();
 			break;
 		case -1:
-			perror("select\n");
+			if (errno != EINTR)
+				perror("poll");
 			break;
 		default:
-			if (FD_ISSET(rpcsock, fdsrp))
+			/* No need to check for POLLHUP on UDP sockets. */
+			if (pfd[0].revents & POLLIN)
 				handle_replies();
-			if (FD_ISSET(pingsock, fdsrp))
+			if (pfd[1].revents & POLLIN)
 				handle_ping();
-			svc_getreqset2(fdsrp, width);
+			svc_getreq_poll(pfd + 2, svc_max_pollfd);
 			if (check)
 				checkwork();
 			break;
