@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_word.c,v 1.12 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: bn_word.c,v 1.13 2016/07/05 02:54:35 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,6 +72,20 @@ BN_mod_word(const BIGNUM *a, BN_ULONG w)
 
 	if (w == 0)
 		return (BN_ULONG) - 1;
+
+#ifndef BN_ULLONG
+	/* If |w| is too long and we don't have |BN_ULLONG| then we need to fall back
+	* to using |BN_div_word|. */
+	if (w > ((BN_ULONG)1 << BN_BITS4)) {
+		BIGNUM *tmp = BN_dup(a);
+		if (tmp == NULL) {
+			return (BN_ULONG)-1;
+		}
+		ret = BN_div_word(tmp, w);
+		BN_free(tmp);
+		return ret;
+	}
+#endif
 
 	bn_check_top(a);
 	w &= BN_MASK2;

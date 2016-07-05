@@ -514,7 +514,7 @@ int
 test_div_word(BIO *bp)
 {
 	BIGNUM   a, b;
-	BN_ULONG r, s;
+	BN_ULONG r, rmod, s;
 	int i;
 	int rc = 1;
 
@@ -523,13 +523,33 @@ test_div_word(BIO *bp)
 
 	for (i = 0; i < num0; i++) {
 		do {
-			BN_bntest_rand(&a, 512, -1, 0);
-			BN_bntest_rand(&b, BN_BITS2, -1, 0);
+			if (!BN_bntest_rand(&a, 512, -1, 0) ||
+			    !BN_bntest_rand(&b, BN_BITS2, -1, 0)) {
+				rc = 0;
+				break;
+			}
 			s = b.d[0];
 		} while (!s);
 
-		BN_copy(&b, &a);
+		if (!BN_copy(&b, &a)) {
+			rc = 0;
+			break;
+		}
+
+		s = b.d[0];
+		rmod = BN_mod_word(&b, s);
 		r = BN_div_word(&b, s);
+
+		if (r == (BN_ULONG)-1 || rmod == (BN_ULONG)-1) {
+			rc = 0;
+			break;
+		}
+
+		if (rmod != r) {
+			fprintf(stderr, "Mod (word) test failed!\n");
+			rc = 0;
+			break;
+		}
 
 		if (bp != NULL) {
 			if (!results) {

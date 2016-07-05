@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_check.c,v 1.15 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: dh_check.c,v 1.16 2016/07/05 02:54:35 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -89,10 +89,14 @@ DH_check(const DH *dh, int *ret)
 
 	if (BN_is_word(dh->g, DH_GENERATOR_2)) {
 		l = BN_mod_word(dh->p, 24);
+		if (l == (BN_ULONG)-1)
+			goto err;
 		if (l != 11)
 			*ret |= DH_NOT_SUITABLE_GENERATOR;
 	} else if (BN_is_word(dh->g, DH_GENERATOR_5)) {
 		l = BN_mod_word(dh->p, 10);
+		if (l == (BN_ULONG)-1)
+			goto err;
 		if (l != 3 && l != 7)
 			*ret |= DH_NOT_SUITABLE_GENERATOR;
 	} else

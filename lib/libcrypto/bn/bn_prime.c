@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.14 2015/10/21 19:02:22 miod Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.15 2016/07/05 02:54:35 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -277,9 +277,13 @@ BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
 		/* a is even => a is prime if and only if a == 2 */
 		return BN_is_word(a, 2);
 	if (do_trial_division) {
-		for (i = 1; i < NUMPRIMES; i++)
-			if (BN_mod_word(a, primes[i]) == 0)
+		for (i = 1; i < NUMPRIMES; i++) {
+			BN_ULONG mod = BN_mod_word(a, primes[i]);
+			if (mod == (BN_ULONG)-1)
+				goto err;
+			if (mod == 0)
 				return 0;
+		}
 		if (!BN_GENCB_call(cb, 1, -1))
 			goto err;
 	}
@@ -398,8 +402,12 @@ again:
 	if (!BN_rand(rnd, bits, 1, 1))
 		return (0);
 	/* we now have a random number 'rand' to test. */
-	for (i = 1; i < NUMPRIMES; i++)
-		mods[i] = (prime_t)BN_mod_word(rnd, (BN_ULONG)primes[i]);
+	for (i = 1; i < NUMPRIMES; i++) {
+		BN_ULONG mod = BN_mod_word(rnd, (BN_ULONG)primes[i]);
+		if (mod == (BN_ULONG)-1)
+			return (0);
+		mods[i] = (prime_t)mod;
+	}
 	maxdelta = BN_MASK2 - primes[NUMPRIMES - 1];
 	delta = 0;
 loop:
@@ -452,7 +460,10 @@ probable_prime_dh(BIGNUM *rnd, int bits, const BIGNUM *add, const BIGNUM *rem,
 loop:
 	for (i = 1; i < NUMPRIMES; i++) {
 		/* check that rnd is a prime */
-		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= 1) {
+		BN_LONG mod = BN_mod_word(rnd, (BN_ULONG)primes[i]);
+		if (mod == (BN_ULONG)-1)
+			goto err;
+		if (mod <= 1) {
 			if (!BN_add(rnd, rnd, add))
 				goto err;
 			goto loop;
@@ -514,8 +525,11 @@ loop:
 		/* check that p and q are prime */
 		/* check that for p and q
 		 * gcd(p-1,primes) == 1 (except for 2) */
-		if ((BN_mod_word(p, (BN_ULONG)primes[i]) == 0) ||
-		    (BN_mod_word(q, (BN_ULONG)primes[i]) == 0)) {
+		BN_ULONG pmod = BN_mod_word(p, (BN_ULONG)primes[i]);
+		BN_ULONG qmod = BN_mod_word(q, (BN_ULONG)primes[i]);
+		if (pmod == (BN_ULONG)-1 || qmod == (BN_ULONG)-1)
+			goto err;
+		if (pmod == 0 || qmod == 0) {
 			if (!BN_add(p, p, padd))
 				goto err;
 			if (!BN_add(q, q, qadd))

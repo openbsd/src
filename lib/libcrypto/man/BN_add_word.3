@@ -1,4 +1,4 @@
-.Dd $Mdocdate: February 23 2015 $
+.Dd $Mdocdate: July 5 2016 $
 .Dt BN_ADD_WORD 3
 .Os
 .Sh NAME
@@ -75,7 +75,8 @@ returns the remainder of
 .Fa a
 divided by
 .Fa w
-.Pq Li a%w .
+.Pq Li a%w
+or (BN_ULONG)-1 on error.
 .Pp
 For
 .Fn BN_div_word
