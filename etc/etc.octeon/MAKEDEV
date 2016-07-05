@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.octeon/MAKEDEV.md,v 1.10 2016/04/28 18:17:31 natano Exp 
-#	OpenBSD: MAKEDEV.common,v 1.88 2016/05/21 15:17:49 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.89 2016/05/26 16:29:51 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -211,6 +211,7 @@ std)
 	M stderr	c 7 2
 	M ksyms		c 35 0 640 kmem
 	M klog		c 6 0 600
+	M openprom	c 20 0 600
 	;;
 
 vscsi*)
@@ -218,7 +219,7 @@ vscsi*)
 	;;
 
 video*)
-	M video$U  c 45 $U 600 
+	M video$U  c 45 $U 600
 	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
 	;;
 
