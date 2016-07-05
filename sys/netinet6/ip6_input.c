@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.160 2016/05/19 11:34:40 jca Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.161 2016/07/05 10:17:14 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -461,11 +461,7 @@ ip6_input(struct mbuf *m)
 		 * packets to a tentative, duplicated, or somehow invalid
 		 * address must not be accepted.
 		 */
-		if (!(ia6->ia6_flags & IN6_IFF_NOTREADY)) {
-			/* this address is ready */
-			ours = 1;
-			goto hbhcheck;
-		} else {
+		if ((ia6->ia6_flags & (IN6_IFF_TENTATIVE|IN6_IFF_DUPLICATED))) {
 			char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
 			inet_ntop(AF_INET6, &ip6->ip6_src, src, sizeof(src));
@@ -476,6 +472,10 @@ ip6_input(struct mbuf *m)
 			    src, dst));
 
 			goto bad;
+		} else {
+			/* this address is ready */
+			ours = 1;
+			goto hbhcheck;
 		}
 	}
 

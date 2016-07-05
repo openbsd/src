@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.75 2016/07/05 09:17:10 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.76 2016/07/05 10:17:14 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -130,8 +130,8 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 		if_put(ifp); /* put reference from in6_selectif */
 
 		ia6 = ifatoia6(ifa_ifwithaddr(sin6tosa(&sa6), rtableid));
-		if (ia6 == NULL ||
-		    (ia6->ia6_flags & (IN6_IFF_ANYCAST | IN6_IFF_NOTREADY)))
+		if (ia6 == NULL || (ia6->ia6_flags &
+		     (IN6_IFF_ANYCAST|IN6_IFF_TENTATIVE|IN6_IFF_DUPLICATED)))
 			return (EADDRNOTAVAIL);
 
 		pi->ipi6_addr = sa6.sin6_addr; /* XXX: this overrides pi */

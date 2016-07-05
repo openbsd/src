@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.139 2016/05/02 22:15:49 jmatthew Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.140 2016/07/05 10:17:14 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1876,14 +1876,6 @@ in6_ifadd(struct nd_prefix *pr, int privacy)
 		ia6 = ifatoia6(ifa);
 	else
 		return NULL;
-
-#if 0 /* don't care link local addr state, and always do DAD */
-	/* if link-local address is not eligible, do not autoconfigure. */
-	if (ifatoia6(ifa)->ia6_flags & IN6_IFF_NOTREADY) {
-		printf("in6_ifadd: link-local address not ready\n");
-		return NULL;
-	}
-#endif
 
 	/* prefixlen + ifidlen must be equal to 128 */
 	plen0 = in6_mask2len(&ia6->ia_prefixmask.sin6_addr, NULL);

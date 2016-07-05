@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.90 2016/04/11 15:28:03 vgross Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.91 2016/07/05 10:17:14 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -676,7 +676,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			break;
 		}
 		if (ifa && ifatoia6(ifa)->ia6_flags &
-		    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|
+		    (IN6_IFF_ANYCAST|IN6_IFF_TENTATIVE|IN6_IFF_DUPLICATED|
 		     IN6_IFF_DETACHED|IN6_IFF_DEPRECATED)) {
 			error = EADDRNOTAVAIL;
 			break;

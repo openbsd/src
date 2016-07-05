@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.92 2016/04/11 21:24:29 vgross Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.93 2016/07/05 10:17:14 mpi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -208,9 +208,8 @@ in6_pcbaddrisavail(struct inpcb *inp, struct sockaddr_in6 *sin6, int wild,
 		 * flag to control the bind(2) behavior against
 		 * deprecated addresses (default: forbid bind(2)).
 		 */
-		if (ifa &&
-		    ifatoia6(ifa)->ia6_flags &
-		    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|IN6_IFF_DETACHED))
+		if (ifa && ifatoia6(ifa)->ia6_flags & (IN6_IFF_ANYCAST|
+		    IN6_IFF_TENTATIVE|IN6_IFF_DUPLICATED|IN6_IFF_DETACHED))
 			return (EADDRNOTAVAIL);
 	}
 	if (lport) {

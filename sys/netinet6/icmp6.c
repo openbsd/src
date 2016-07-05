@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.185 2016/03/29 11:57:51 chl Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.186 2016/07/05 10:17:14 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1229,13 +1229,14 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	/*
 	 * If the incoming packet was addressed directly to us (i.e. unicast),
 	 * use dst as the src for the reply.
-	 * The IN6_IFF_NOTREADY case would be VERY rare, but is possible
-	 * (for example) when we encounter an error while forwarding procedure
-	 * destined to a duplicated address of ours.
+	 * The IN6_IFF_TENTATIVE|IN6_IFF_DUPLICATED case would be VERY rare,
+	 * but is possible (for example) when we encounter an error while
+	 * forwarding procedure destined to a duplicated address of ours.
 	 */
 	TAILQ_FOREACH(ia6, &in6_ifaddr, ia_list)
 		if (IN6_ARE_ADDR_EQUAL(&t, &ia6->ia_addr.sin6_addr) &&
-		    (ia6->ia6_flags & (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) == 0) {
+		    (ia6->ia6_flags & (IN6_IFF_ANYCAST|IN6_IFF_TENTATIVE|
+		    IN6_IFF_DUPLICATED)) == 0) {
 			src = &t;
 			break;
 		}
@@ -1621,9 +1622,8 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 	{
 		/* get ip6 linklocal address for ifp(my outgoing interface). */
 		struct in6_ifaddr *ia6;
-		if ((ia6 = in6ifa_ifpforlinklocal(ifp,
-						 IN6_IFF_NOTREADY|
-						 IN6_IFF_ANYCAST)) == NULL)
+		if ((ia6 = in6ifa_ifpforlinklocal(ifp, IN6_IFF_TENTATIVE|
+		    IN6_IFF_DUPLICATED|IN6_IFF_ANYCAST)) == NULL)
 			goto fail;
 		ifp_ll6 = &ia6->ia_addr.sin6_addr;
 	}
