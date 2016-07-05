@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.30 2016/06/06 22:32:47 bru Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.31 2016/07/05 19:33:14 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1125,11 +1125,13 @@ wsmouse_matching(int *matrix, int m, int n, int *buffer)
 	for (; p < alt; *p++ = 0) {}
 	for (col = 0; col < n; col++) {
 		delta = INT_MAX;
-		for (i = 0, p = matrix + col; i < m; i++, p += n)
-			if ((d = *p - red[i]) <= delta) {
+		for (i = 0, p = matrix + col; i < m; i++, p += n) {
+			d = *p - red[i];
+			if (d < delta || (d == delta && r2c[i] < 0)) {
 				delta = d;
 				row = i;
 			}
+		}
 		cd[col] = delta;
 		if (r2c[row] < 0) {
 			r2c[row] = col;
@@ -1151,7 +1153,8 @@ wsmouse_matching(int *matrix, int m, int n, int *buffer)
 						mc[i] = j;
 					}
 					d -= red[i];
-					if (d <= delta) {
+					if (d < delta || (d == delta
+					    && r2c[i] < 0)) {
 						delta = d;
 						row = i;
 					}
