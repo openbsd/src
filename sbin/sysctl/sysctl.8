@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.201 2016/06/30 15:56:59 tedu Exp $
+.\"	$OpenBSD: sysctl.8,v 1.202 2016/07/05 17:41:59 tim Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: June 30 2016 $
+.Dd $Mdocdate: July 5 2016 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -140,7 +140,6 @@ and a few require a kernel compiled with non-standard
 .It kern.somaxconn Ta integer Ta yes
 .It kern.sominconn Ta integer Ta yes
 .It kern.usermount Ta integer Ta yes
-.It kern.random Ta struct Ta no
 .It kern.nosuidcoredump Ta integer Ta yes
 .It kern.fsync Ta integer Ta no
 .It kern.sysvmsg Ta integer Ta no
@@ -421,10 +420,6 @@ flag lists all the filesystems compiled into the running kernel.
 .It In sys/sysctl.h
 definitions for top level identifiers and second level kernel and hardware
 identifiers
-.It In dev/rndvar.h
-definitions for
-.Xr random 4
-device's statistics structure
 .It In sys/socket.h
 definitions for second level network identifiers
 .It In sys/gmon.h
