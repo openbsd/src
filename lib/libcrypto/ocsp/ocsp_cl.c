@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_cl.c,v 1.9 2016/06/25 15:38:44 beck Exp $ */
+/* $OpenBSD: ocsp_cl.c,v 1.10 2016/07/05 03:24:38 beck Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -364,8 +364,6 @@ OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 		 */
 		if (maxsec >= 0) {
 			t_tmp = t_now - maxsec;
-			if (gmtime_r(&t_tmp, &tm_tmp) == NULL)
-				return 0;
 			if (gmtime_r(&t_tmp, &tm_tmp) == NULL)
 				return 0;
 			if (asn1_tm_cmp(&tm_this, &tm_tmp) < 0) {
