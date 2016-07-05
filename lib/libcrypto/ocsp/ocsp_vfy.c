@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_vfy.c,v 1.12 2014/07/09 19:08:10 tedu Exp $ */
+/* $OpenBSD: ocsp_vfy.c,v 1.13 2016/07/05 00:21:47 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -80,6 +80,7 @@ OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs, X509_STORE *st,
 {
 	X509 *signer, *x;
 	STACK_OF(X509) *chain = NULL;
+	STACK_OF(X509) *untrusted = NULL;
 	X509_STORE_CTX ctx;
 	int i, ret = 0;
 
@@ -108,11 +109,21 @@ OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs, X509_STORE *st,
 	if (!(flags & OCSP_NOVERIFY)) {
 		int init_res;
 
-		if (flags & OCSP_NOCHAIN)
-			init_res = X509_STORE_CTX_init(&ctx, st, signer, NULL);
-		else
-			init_res = X509_STORE_CTX_init(&ctx, st, signer,
-			    bs->certs);
+		if (flags & OCSP_NOCHAIN) {
+			untrusted = NULL;
+		} else if (bs->certs && certs) {
+			untrusted = sk_X509_dup(bs->certs);
+			for (i = 0; i < sk_X509_num(certs); i++) {
+				if (!sk_X509_push(untrusted,
+					sk_X509_value(certs, i))) {
+					OCSPerr(OCSP_F_OCSP_BASIC_VERIFY,
+					    ERR_R_MALLOC_FAILURE);
+					goto end;
+				}
+			}
+		} else
+			untrusted = bs->certs;
+		init_res = X509_STORE_CTX_init(&ctx, st, signer, untrusted);
 		if (!init_res) {
 			ret = -1;
 			OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, ERR_R_X509_LIB);
@@ -163,6 +174,8 @@ OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs, X509_STORE *st,
 end:
 	if (chain)
 		sk_X509_pop_free(chain, X509_free);
+	if (bs->certs && certs)
+		sk_X509_free(untrusted);
 	return ret;
 }
 
@@ -433,10 +446,11 @@ ocsp_req_find_signer(X509 **psigner, OCSP_REQUEST *req, X509_NAME *nm,
 	X509 *signer;
 
 	if (!(flags & OCSP_NOINTERN)) {
-		signer =
-		    X509_find_by_subject(req->optionalSignature->certs, nm);
-		*psigner = signer;
-		return 1;
+		signer = X509_find_by_subject(req->optionalSignature->certs, nm);
+		if (signer) {
+			*psigner = signer;
+			return 1;
+		}
 	}
 
 	signer = X509_find_by_subject(certs, nm);
