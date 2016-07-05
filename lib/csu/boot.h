@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.15 2016/03/12 23:28:47 guenther Exp $ */
+/*	$OpenBSD: boot.h,v 1.16 2016/07/05 00:44:41 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -48,7 +48,6 @@
 #include "resolve.h"
 #include "sod.h"
 #include "stdlib.h"
-#include "dl_prebind.h"
 
 /*
  * Use the internal, hidden name for any syscalls we need, to avoid
