@@ -1575,6 +1575,7 @@
 ./usr/share/man/man4/pcdisplay.4
 ./usr/share/man/man4/pcfadc.4
 ./usr/share/man/man4/pcfiic.4
+./usr/share/man/man4/pcfrtc.4
 ./usr/share/man/man4/pchb.4
 ./usr/share/man/man4/pchtemp.4
 ./usr/share/man/man4/pci.4
@@ -2359,6 +2360,7 @@
 ./usr/share/man/man8/ntpd.8
 ./usr/share/man/man8/octeon
 ./usr/share/man/man8/octeon/MAKEDEV.8
+./usr/share/man/man8/octeon/eeprom.8
 ./usr/share/man/man8/ospf6ctl.8
 ./usr/share/man/man8/ospf6d.8
 ./usr/share/man/man8/ospfctl.8
