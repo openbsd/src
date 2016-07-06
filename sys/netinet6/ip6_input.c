@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.161 2016/07/05 10:17:14 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.162 2016/07/06 15:50:00 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -122,6 +122,7 @@ struct ip6stat ip6stat;
 void ip6_init2(void *);
 int ip6_check_rh0hdr(struct mbuf *, int *);
 
+int ip6_hbhchcheck(struct mbuf *, int *, int *, int *);
 int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
 struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
 
@@ -192,7 +193,6 @@ ip6_input(struct mbuf *m)
 	struct ip6_hdr *ip6;
 	int off, nest;
 	u_int16_t src_scope, dst_scope;
-	u_int32_t plen, rtalert = ~0;
 	int nxt, ours = 0;
 #if NPF > 0
 	struct in6_addr odst;
@@ -495,77 +495,14 @@ ip6_input(struct mbuf *m)
 	}
 
   hbhcheck:
-	/*
-	 * Process Hop-by-Hop options header if it's contained.
-	 * m may be modified in ip6_hopopts_input().
-	 * If a JumboPayload option is included, plen will also be modified.
-	 */
-	plen = (u_int32_t)ntohs(ip6->ip6_plen);
-	off = sizeof(struct ip6_hdr);
-	if (ip6->ip6_nxt == IPPROTO_HOPOPTS) {
-		struct ip6_hbh *hbh;
 
-		if (ip6_hopopts_input(&plen, &rtalert, &m, &off)) {
-			if_put(ifp);
-			return;	/* m have already been freed */
-		}
-
-		/* adjust pointer */
-		ip6 = mtod(m, struct ip6_hdr *);
-
-		/*
-		 * if the payload length field is 0 and the next header field
-		 * indicates Hop-by-Hop Options header, then a Jumbo Payload
-		 * option MUST be included.
-		 */
-		if (ip6->ip6_plen == 0 && plen == 0) {
-			/*
-			 * Note that if a valid jumbo payload option is
-			 * contained, ip6_hopopts_input() must set a valid
-			 * (non-zero) payload length to the variable plen.
-			 */
-			ip6stat.ip6s_badoptions++;
-			icmp6_error(m, ICMP6_PARAM_PROB,
-				    ICMP6_PARAMPROB_HEADER,
-				    (caddr_t)&ip6->ip6_plen - (caddr_t)ip6);
-			if_put(ifp);
-			return;
-		}
-		IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m, sizeof(struct ip6_hdr),
-			sizeof(struct ip6_hbh));
-		if (hbh == NULL) {
-			ip6stat.ip6s_tooshort++;
-			if_put(ifp);
-			return;
-		}
-		nxt = hbh->ip6h_nxt;
-
-		/*
-		 * accept the packet if a router alert option is included
-		 * and we act as an IPv6 router.
-		 */
-		if (rtalert != ~0 && ip6_forwarding)
-			ours = 1;
-	} else
-		nxt = ip6->ip6_nxt;
-
-	/*
-	 * Check that the amount of data in the buffers
-	 * is as at least much as the IPv6 header would have us expect.
-	 * Trim mbufs if longer than we expect.
-	 * Drop packet if shorter than we expect.
-	 */
-	if (m->m_pkthdr.len - sizeof(struct ip6_hdr) < plen) {
-		ip6stat.ip6s_tooshort++;
-		goto bad;
+	if (ip6_hbhchcheck(m, &off, &nxt, &ours)) {
+		if_put(ifp);
+		return;	/* m have already been freed */
 	}
-	if (m->m_pkthdr.len > sizeof(struct ip6_hdr) + plen) {
-		if (m->m_len == m->m_pkthdr.len) {
-			m->m_len = sizeof(struct ip6_hdr) + plen;
-			m->m_pkthdr.len = sizeof(struct ip6_hdr) + plen;
-		} else
-			m_adj(m, sizeof(struct ip6_hdr) + plen - m->m_pkthdr.len);
-	}
+
+	/* adjust pointer */
+	ip6 = mtod(m, struct ip6_hdr *);
 
 	/*
 	 * Forward if desirable.
@@ -638,6 +575,89 @@ ip6_input(struct mbuf *m)
  bad:
 	if_put(ifp);
 	m_freem(m);
+}
+
+int
+ip6_hbhchcheck(struct mbuf *m, int *offp, int *nxtp, int *oursp)
+{
+	struct ip6_hdr *ip6;
+	u_int32_t plen, rtalert = ~0;
+
+	ip6 = mtod(m, struct ip6_hdr *);
+
+	/*
+	 * Process Hop-by-Hop options header if it's contained.
+	 * m may be modified in ip6_hopopts_input().
+	 * If a JumboPayload option is included, plen will also be modified.
+	 */
+	plen = (u_int32_t)ntohs(ip6->ip6_plen);
+	*offp = sizeof(struct ip6_hdr);
+	if (ip6->ip6_nxt == IPPROTO_HOPOPTS) {
+		struct ip6_hbh *hbh;
+
+		if (ip6_hopopts_input(&plen, &rtalert, &m, offp)) {
+			return (-1);	/* m have already been freed */
+		}
+
+		/* adjust pointer */
+		ip6 = mtod(m, struct ip6_hdr *);
+
+		/*
+		 * if the payload length field is 0 and the next header field
+		 * indicates Hop-by-Hop Options header, then a Jumbo Payload
+		 * option MUST be included.
+		 */
+		if (ip6->ip6_plen == 0 && plen == 0) {
+			/*
+			 * Note that if a valid jumbo payload option is
+			 * contained, ip6_hopopts_input() must set a valid
+			 * (non-zero) payload length to the variable plen.
+			 */
+			ip6stat.ip6s_badoptions++;
+			icmp6_error(m, ICMP6_PARAM_PROB,
+				    ICMP6_PARAMPROB_HEADER,
+				    (caddr_t)&ip6->ip6_plen - (caddr_t)ip6);
+			return (-1);
+		}
+		IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m, sizeof(struct ip6_hdr),
+			sizeof(struct ip6_hbh));
+		if (hbh == NULL) {
+			ip6stat.ip6s_tooshort++;
+			return (-1);
+		}
+		*nxtp = hbh->ip6h_nxt;
+
+		/*
+		 * accept the packet if a router alert option is included
+		 * and we act as an IPv6 router.
+		 */
+		if (rtalert != ~0 && ip6_forwarding)
+			*oursp = 1;
+	} else
+		*nxtp = ip6->ip6_nxt;
+
+	/*
+	 * Check that the amount of data in the buffers
+	 * is as at least much as the IPv6 header would have us expect.
+	 * Trim mbufs if longer than we expect.
+	 * Drop packet if shorter than we expect.
+	 */
+	if (m->m_pkthdr.len - sizeof(struct ip6_hdr) < plen) {
+		ip6stat.ip6s_tooshort++;
+		m_freem(m);
+		return (-1);
+	}
+	if (m->m_pkthdr.len > sizeof(struct ip6_hdr) + plen) {
+		if (m->m_len == m->m_pkthdr.len) {
+			m->m_len = sizeof(struct ip6_hdr) + plen;
+			m->m_pkthdr.len = sizeof(struct ip6_hdr) + plen;
+		} else {
+			m_adj(m,
+			    sizeof(struct ip6_hdr) + plen - m->m_pkthdr.len);
+		}
+	}
+
+	return (0);
 }
 
 /* scan packet for RH0 routing header. Mostly stolen from pf.c:pf_test() */
