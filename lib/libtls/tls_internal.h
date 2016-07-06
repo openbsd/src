@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.29 2016/05/27 14:38:40 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.30 2016/07/06 16:16:36 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -42,10 +42,8 @@ struct tls_error {
 struct tls_keypair {
 	struct tls_keypair *next;
 
-	const char *cert_file;
 	char *cert_mem;
 	size_t cert_len;
-	const char *key_file;
 	char *key_mem;
 	size_t key_len;
 };
@@ -53,7 +51,6 @@ struct tls_keypair {
 struct tls_config {
 	struct tls_error error;
 
-	const char *ca_file;
 	const char *ca_path;
 	char *ca_mem;
 	size_t ca_len;
