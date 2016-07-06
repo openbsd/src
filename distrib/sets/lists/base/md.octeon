@@ -1703,6 +1703,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/octeon/octeon_model.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/octeon/octeonreg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/octeon/octeonvar.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/octeon/openpromio.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/octeon/param.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/octeon/pcb.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/octeon/pci_machdep.ph
@@ -2097,4 +2098,5 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/zlib.ph
 ./usr/local/libdata/perl5/site_perl/mips64-openbsd
+./usr/sbin/eeprom
 ./usr/sbin/pcidump

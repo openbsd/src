@@ -627,6 +627,7 @@
 ./usr/include/octeon/octeon_model.h
 ./usr/include/octeon/octeonreg.h
 ./usr/include/octeon/octeonvar.h
+./usr/include/octeon/openpromio.h
 ./usr/include/octeon/param.h
 ./usr/include/octeon/pcb.h
 ./usr/include/octeon/pci_machdep.h
