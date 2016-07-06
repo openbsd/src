@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.47 2016/06/23 18:41:44 stefan Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.48 2016/07/06 15:53:01 tedu Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -202,9 +202,9 @@ timeout_add(struct timeout *new, int to_ticks)
 int
 timeout_add_tv(struct timeout *to, const struct timeval *tv)
 {
-	long long to_ticks;
+	uint64_t to_ticks;
 
-	to_ticks = (long long)hz * tv->tv_sec + tv->tv_usec / tick;
+	to_ticks = (uint64_t)hz * tv->tv_sec + tv->tv_usec / tick;
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
 	if (to_ticks == 0 && tv->tv_usec > 0)
@@ -216,9 +216,9 @@ timeout_add_tv(struct timeout *to, const struct timeval *tv)
 int
 timeout_add_ts(struct timeout *to, const struct timespec *ts)
 {
-	long long to_ticks;
+	uint64_t to_ticks;
 
-	to_ticks = (long long)hz * ts->tv_sec + ts->tv_nsec / (tick * 1000);
+	to_ticks = (uint64_t)hz * ts->tv_sec + ts->tv_nsec / (tick * 1000);
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
 	if (to_ticks == 0 && ts->tv_nsec > 0)
@@ -230,9 +230,9 @@ timeout_add_ts(struct timeout *to, const struct timespec *ts)
 int
 timeout_add_bt(struct timeout *to, const struct bintime *bt)
 {
-	long long to_ticks;
+	uint64_t to_ticks;
 
-	to_ticks = (long long)hz * bt->sec + (long)(((uint64_t)1000000 *
+	to_ticks = (uint64_t)hz * bt->sec + (long)(((uint64_t)1000000 *
 	    (uint32_t)(bt->frac >> 32)) >> 32) / tick;
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
@@ -245,9 +245,9 @@ timeout_add_bt(struct timeout *to, const struct bintime *bt)
 int
 timeout_add_sec(struct timeout *to, int secs)
 {
-	long long to_ticks;
+	uint64_t to_ticks;
 
-	to_ticks = (long long)hz * secs;
+	to_ticks = (uint64_t)hz * secs;
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
 
@@ -257,9 +257,9 @@ timeout_add_sec(struct timeout *to, int secs)
 int
 timeout_add_msec(struct timeout *to, int msecs)
 {
-	long long to_ticks;
+	uint64_t to_ticks;
 
-	to_ticks = (long long)msecs * 1000 / tick;
+	to_ticks = (uint64_t)msecs * 1000 / tick;
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
 	if (to_ticks == 0 && msecs > 0)

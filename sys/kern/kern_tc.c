@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.28 2014/12/10 02:44:47 tedu Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.29 2016/07/06 15:53:01 tedu Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -357,7 +357,7 @@ tc_setclock(struct timespec *ts)
 	/* convert the bintime to ticks */
 	bintime_sub(&bt, &bt2);
 	bintime_add(&naptime, &bt);
-	adj_ticks = (long long)hz * bt.sec +
+	adj_ticks = (uint64_t)hz * bt.sec +
 	    (((uint64_t)1000000 * (uint32_t)(bt.frac >> 32)) >> 32) / tick;
 	if (adj_ticks > 0) {
 		if (adj_ticks > INT_MAX)
