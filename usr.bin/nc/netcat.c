@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.157 2016/07/01 00:29:14 bcook Exp $ */
+/* $OpenBSD: netcat.c,v 1.158 2016/07/06 16:31:18 jsing Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -65,7 +65,6 @@
 #define POLL_NETIN 2
 #define POLL_STDOUT 3
 #define BUFSIZE 16384
-#define DEFAULT_CA_FILE "/etc/ssl/cert.pem"
 
 #define TLS_LEGACY	(1 << 1)
 #define TLS_NOVERIFY	(1 << 2)
@@ -99,17 +98,11 @@ int	rtableid = -1;
 int	usetls;					/* use TLS */
 char    *Cflag;					/* Public cert file */
 char    *Kflag;					/* Private key file */
-char    *Rflag = DEFAULT_CA_FILE;		/* Root CA file */
+char    *Rflag;					/* Root CA file */
 int	tls_cachanged;				/* Using non-default CA file */
 int     TLSopt;					/* TLS options */
 char	*tls_expectname;			/* required name in peer cert */
 char	*tls_expecthash;			/* required hash of peer cert */
-uint8_t *cacert;
-size_t  cacertlen;
-uint8_t *privkey;
-size_t  privkeylen;
-uint8_t *pubcert;
-size_t  pubcertlen;
 
 int timeout = -1;
 int family = AF_UNSPEC;
@@ -444,29 +437,22 @@ main(int argc, char *argv[])
 	}
 
 	if (usetls) {
-		if (Rflag && (cacert = tls_load_file(Rflag, &cacertlen, NULL)) == NULL)
-			errx(1, "unable to load root CA file %s", Rflag);
-		if (Cflag && (pubcert = tls_load_file(Cflag, &pubcertlen, NULL)) == NULL)
-			errx(1, "unable to load TLS certificate file %s", Cflag);
-		if (Kflag && (privkey = tls_load_file(Kflag, &privkeylen, NULL)) == NULL)
-			errx(1, "unable to load TLS key file %s", Kflag);
-
 		if (Pflag) {
-			if (pledge("stdio inet dns tty", NULL) == -1)
+			if (pledge("stdio inet dns rpath tty", NULL) == -1)
 				err(1, "pledge");
-		} else if (pledge("stdio inet dns", NULL) == -1)
+		} else if (pledge("stdio inet dns rpath", NULL) == -1)
 			err(1, "pledge");
 
 		if (tls_init() == -1)
 			errx(1, "unable to initialize TLS");
 		if ((tls_cfg = tls_config_new()) == NULL)
 			errx(1, "unable to allocate TLS config");
-		if (Rflag && tls_config_set_ca_mem(tls_cfg, cacert, cacertlen) == -1)
-			errx(1, "unable to set root CA file %s", Rflag);
-		if (Cflag && tls_config_set_cert_mem(tls_cfg, pubcert, pubcertlen) == -1)
-			errx(1, "unable to set TLS certificate file %s", Cflag);
-		if (Kflag && tls_config_set_key_mem(tls_cfg, privkey, privkeylen) == -1)
-			errx(1, "unable to set TLS key file %s", Kflag);
+		if (Rflag && tls_config_set_ca_file(tls_cfg, Rflag) == -1)
+			errx(1, "%s", tls_config_error(tls_cfg));
+		if (Cflag && tls_config_set_cert_file(tls_cfg, Cflag) == -1)
+			errx(1, "%s", tls_config_error(tls_cfg));
+		if (Kflag && tls_config_set_key_file(tls_cfg, Kflag) == -1)
+			errx(1, "%s", tls_config_error(tls_cfg));
 		if (TLSopt & TLS_LEGACY) {
 			tls_config_set_protocols(tls_cfg, TLS_PROTOCOLS_ALL);
 			tls_config_set_ciphers(tls_cfg, "legacy");
@@ -481,6 +467,12 @@ main(int argc, char *argv[])
 				    "together");
 			tls_config_insecure_noverifycert(tls_cfg);
 		}
+
+		if (Pflag) {
+			if (pledge("stdio inet dns tty", NULL) == -1)
+				err(1, "pledge");
+		} else if (pledge("stdio inet dns", NULL) == -1)
+			err(1, "pledge");
 	}
 	if (lflag) {
 		struct tls *tls_cctx = NULL;
