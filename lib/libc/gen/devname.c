@@ -1,4 +1,4 @@
-/*	$OpenBSD: devname.c,v 1.12 2015/09/13 08:31:47 guenther Exp $ */
+/*	$OpenBSD: devname.c,v 1.13 2016/07/06 04:35:12 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,14 +37,13 @@
 #include <limits.h>
 #include <paths.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
 static char *
 devname_nodb(dev_t dev, mode_t type)
 {
-	static char buf[sizeof(_PATH_DEV) + NAME_MAX];
+	static char buf[NAME_MAX + 1];
 	char *name = NULL;
 	struct dirent *dp;
 	struct stat sb;
@@ -52,19 +51,14 @@ devname_nodb(dev_t dev, mode_t type)
 
 	if ((dirp = opendir(_PATH_DEV)) == NULL)
 		return (NULL);
-	if (strlcpy(buf, _PATH_DEV, sizeof(buf)) >= sizeof(buf))
-		return (NULL);
 	while ((dp = readdir(dirp)) != NULL) {
 		if (dp->d_type != DT_UNKNOWN && DTTOIF(dp->d_type) != type)
 			continue;
-		buf[sizeof(_PATH_DEV) - 1] = '\0';
-		if (strlcat(buf, dp->d_name, sizeof(buf)) >= sizeof(buf))
+		if (fstatat(dirfd(dirp), dp->d_name, &sb, AT_SYMLINK_NOFOLLOW)
+		    || sb.st_rdev != dev || (sb.st_mode & S_IFMT) != type)
 			continue;
-		if (lstat(buf, &sb) == -1)
-			continue;
-		if (sb.st_rdev != dev || (sb.st_mode & S_IFMT) != type)
-			continue;
-		name = buf + sizeof(_PATH_DEV) - 1;
+		strlcpy(buf, dp->d_name, sizeof(buf));
+		name = buf;
 		break;
 	}
 	closedir(dirp);
