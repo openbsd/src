@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.28 2016/06/10 16:33:15 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.29 2016/07/06 07:09:15 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -675,9 +675,10 @@ create_memory_map(struct vm_create_params *vcp)
 
 	/*
 	 * Second memory region: LOWMEM_KB - 1MB.
-	 * XXX Normally ROMs or parts of video RAM are mapped here.
+	 *
+	 * N.B. - Normally ROMs or parts of video RAM are mapped here.
 	 * We have to add this region, because some systems
-	 * unconditionally write to 0xb8000 (video RAM), and
+	 * unconditionally write to 0xb8000 (VGA RAM), and
 	 * we need to make sure that vmm(4) permits accesses
 	 * to it. So allocate guest memory for it.
 	 */
