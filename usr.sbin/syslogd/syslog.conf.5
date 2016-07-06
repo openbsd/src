@@ -26,10 +26,10 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.33 2015/09/10 15:16:44 schwarze Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.34 2016/07/06 19:29:13 millert Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: July 6 2016 $
 .Dt SYSLOG.CONF 5
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ The
 .Em selector
 field is separated from the
 .Em action
-field by one or more tab characters.
+field by one or more tab or space characters.
 .Pp
 The
 .Em selectors
@@ -334,6 +334,10 @@ file appeared in
 .Bx 4.3 ,
 along with
 .Xr syslogd 8 .
+.Pp
+Historic versions of
+.Xr syslogd 8
+did not support space-delimited fields.
 .Sh BUGS
 The effects of multiple selectors are sometimes not intuitive.
 For example

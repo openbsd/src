@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.207 2016/07/01 15:47:15 millert Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.208 2016/07/06 19:29:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -2454,19 +2454,19 @@ cfline(char *line, char *progblock, char *hostblock)
 		f->f_hostname = strdup(hostblock);
 
 	/* scan through the list of selectors */
-	for (p = line; *p && *p != '\t';) {
+	for (p = line; *p && *p != '\t' && *p != ' ';) {
 
 		/* find the end of this facility name list */
-		for (q = p; *q && *q != '\t' && *q++ != '.'; )
+		for (q = p; *q && *q != '\t' && *q != ' ' && *q++ != '.'; )
 			continue;
 
 		/* collect priority name */
-		for (bp = buf; *q && !strchr("\t,;", *q); )
+		for (bp = buf; *q && !strchr("\t,; ", *q); )
 			*bp++ = *q++;
 		*bp = '\0';
 
 		/* skip cruft */
-		while (*q && strchr(", ;", *q))
+		while (*q && strchr(",;", *q))
 			q++;
 
 		/* decode priority name */
@@ -2489,8 +2489,8 @@ cfline(char *line, char *progblock, char *hostblock)
 		}
 
 		/* scan facilities */
-		while (*p && !strchr("\t.;", *p)) {
-			for (bp = buf; *p && !strchr("\t,;.", *p); )
+		while (*p && !strchr("\t.; ", *p)) {
+			for (bp = buf; *p && !strchr("\t,;. ", *p); )
 				*bp++ = *p++;
 			*bp = '\0';
 			if (*buf == '*')
@@ -2516,7 +2516,7 @@ cfline(char *line, char *progblock, char *hostblock)
 	}
 
 	/* skip to action part */
-	while (*p == '\t')
+	while (*p == '\t' || *p == ' ')
 		p++;
 
 	switch (*p) {
