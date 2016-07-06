@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.191 2016/06/30 09:00:48 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.192 2016/07/06 20:32:02 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -533,10 +533,12 @@ omalloc_parseopt(char opt)
 		mopts.malloc_hint = 1;
 		break;
 	case 'j':
-		mopts.malloc_junk = 0;
+		if (mopts.malloc_junk > 0)
+			mopts.malloc_junk--;
 		break;
 	case 'J':
-		mopts.malloc_junk = 2;
+		if (mopts.malloc_junk < 2)
+			mopts.malloc_junk++;
 		break;
 	case 'n':
 	case 'N':

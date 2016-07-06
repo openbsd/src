@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.conf.5,v 1.6 2016/02/19 23:27:17 tb Exp $
+.\"	$OpenBSD: malloc.conf.5,v 1.7 2016/07/06 20:32:02 otto Exp $
 .\"
 .\" Copyright (c) 2012 Damien Miller <djm@openbsd.org>
 .\" Copyright (c) 2008, 2009, 2010, 2011 Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 19 2016 $
+.Dd $Mdocdate: July 6 2016 $
 .Dt MALLOC.CONF 5
 .Os
 .Sh NAME
@@ -35,7 +35,8 @@ and finally looks at the global variable
 .Va malloc_options
 in the program.
 Each is scanned for the following flags.
-Flags are single letters, uppercase means on, lowercase means off.
+Flags are single letters.
+Unless otherwise noted uppercase means on, lowercase means off.
 .Bl -tag -width indent
 .It Cm C
 .Dq Canaries .
@@ -77,20 +78,23 @@ cause a segmentation fault upon any access.
 Pass a hint to the kernel about pages we don't use.
 If the machine is paging a lot this may help a bit.
 .It Cm J
-.Dq Junk .
-Fill some junk into the area allocated.
+.Dq More junking .
+Increase the junk level by one if it is smaller than 2.
+.It Cm j
+.Dq Less junking .
+Decrease the junk level by one if it is larger than 0.
+Junking writes some junk bytes into the area allocated.
 Currently junk is bytes of 0xd0 when allocating; this is pronounced
 .Dq Duh .
 \&:-)
 Freed chunks are filled with 0xdf.
-.It Cm j
-.Dq Don't Junk .
-By default, small chunks are always junked, and the first part of pages
-is junked after free.
-The reuse of freed memory is delayed.
-After the delay, the filling pattern is validated
-and the process is aborted if the pattern was modified.
-This option ensures that no junking is performed.
+By default the junk level is 1: small chunks are always junked
+and the first part of pages is junked after free.
+After a delay (if not switched off by the F option),
+the filling pattern is validated and the process is aborted if the pattern
+was modified.
+If the junk level is zero, no junking is performed.
+For junk level 2, junking is done without size restrictions.
 .It Cm P
 .Dq Move allocations within a page.
 Allocations larger than half a page but smaller than a page
