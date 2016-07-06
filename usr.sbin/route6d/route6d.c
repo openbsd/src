@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.86 2016/01/25 05:15:43 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.87 2016/07/06 16:38:09 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -58,7 +58,6 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
-#include <util.h>
 
 #include "route6d.h"
 
@@ -142,7 +141,6 @@ struct	rip6 *ripbuf;	/* packet buffer for sending */
 
 struct	riprt {
 	struct	riprt *rrt_next;	/* next destination */
-	struct	riprt *rrt_same;	/* same destination - future use */
 	struct	netinfo6 rrt_info;	/* network info */
 	struct	in6_addr rrt_gw;	/* gateway */
 	u_long	rrt_flags;		/* kernel routing table flags */
@@ -215,7 +213,7 @@ void ifdump(int);
 void ifdump0(FILE *, const struct ifc *);
 void rtdump(int);
 void rt_entry(struct rt_msghdr *, int);
-void rtdexit(void);
+__dead void rtdexit(void);
 void riprequest(struct ifc *, struct netinfo6 *, int, struct sockaddr_in6 *);
 void ripflush(struct ifc *, struct sockaddr_in6 *);
 void sendrequest(struct ifc *);
@@ -253,16 +251,8 @@ main(int argc, char *argv[])
 	int	error = 0;
 	struct	ifc *ifcp;
 	sigset_t mask, omask;
-	char *progname;
 	char *ep;
 
-	progname = strrchr(*argv, '/');
-	if (progname)
-		progname++;
-	else
-		progname = *argv;
-
-	pid = getpid();
 	while ((ch = getopt(argc, argv, "A:N:O:R:T:L:t:adDhlnqsS")) != -1) {
 		switch (ch) {
 		case 'A':
@@ -326,7 +316,9 @@ main(int argc, char *argv[])
 		}
 	}
 
-	openlog(progname, LOG_NDELAY|LOG_PID, LOG_DAEMON);
+	openlog("route6d", LOG_NDELAY|LOG_PID, LOG_DAEMON);
+
+	pid = getpid();
 
 	if ((ripbuf = calloc(RIP6_MAXMTU, 1)) == NULL)
 		fatal("calloc");
@@ -1268,7 +1260,6 @@ riprecv(void)
 			}
 			nq = &rrt->rrt_info;
 
-			rrt->rrt_same = NULL;
 			rrt->rrt_index = ifcp->ifc_index;
 			rrt->rrt_flags = RTF_UP|RTF_GATEWAY;
 			rrt->rrt_gw = nh;
@@ -1989,7 +1980,6 @@ ifrt(struct ifc *ifcp, int again)
 		if (ifcp->ifc_flags & IFF_UP) {
 			if ((rrt = calloc(1, sizeof(struct riprt))) == NULL)
 				fatal("calloc: struct riprt");
-			rrt->rrt_same = NULL;
 			rrt->rrt_index = ifcp->ifc_index;
 			rrt->rrt_t = 0;	/* don't age */
 			rrt->rrt_info.rip6_dest = ifa->ifa_addr;
@@ -2145,7 +2135,6 @@ ifrt_p2p(struct ifc *ifcp, int again)
 				fatal("calloc: struct riprt");
 				/*NOTREACHED*/
 			}
-			rrt->rrt_same = NULL;
 			rrt->rrt_index = ifcp->ifc_index;
 			rrt->rrt_t = 0;	/* don't age */
 			switch (i) {
@@ -2518,7 +2507,6 @@ rt_entry(struct rt_msghdr *rtm, int again)
 		/*NOTREACHED*/
 	}
 	np = &rrt->rrt_info;
-	rrt->rrt_same = NULL;
 	rrt->rrt_t = time(NULL);
 	if (aflag == 0 && (rtm->rtm_flags & RTF_STATIC))
 		rrt->rrt_t = 0;	/* Don't age static routes */
@@ -2630,7 +2618,6 @@ addroute(struct riprt *rrt, const struct in6_addr *gw, struct ifc *ifcp)
 	rtm->rtm_type = RTM_ADD;
 	rtm->rtm_version = RTM_VERSION;
 	rtm->rtm_seq = ++seq;
-	rtm->rtm_pid = pid;
 	rtm->rtm_flags = rrt->rrt_flags;
 	rtm->rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
 	rtm->rtm_inits = RTV_HOPCOUNT;
@@ -2694,7 +2681,6 @@ delroute(struct netinfo6 *np, struct in6_addr *gw)
 	rtm->rtm_type = RTM_DELETE;
 	rtm->rtm_version = RTM_VERSION;
 	rtm->rtm_seq = ++seq;
-	rtm->rtm_pid = pid;
 	rtm->rtm_flags = RTF_UP | RTF_GATEWAY;
 	if (np->rip6_plen == sizeof(struct in6_addr) * 8)
 		rtm->rtm_flags |= RTF_HOST;
@@ -2741,7 +2727,6 @@ struct in6_addr *
 getroute(struct netinfo6 *np, struct in6_addr *gw)
 {
 	u_char buf[BUFSIZ];
-	int myseq;
 	int len;
 	struct rt_msghdr *rtm;
 	struct sockaddr_in6 *sin6;
@@ -2751,8 +2736,7 @@ getroute(struct netinfo6 *np, struct in6_addr *gw)
 	memset(rtm, 0, len);
 	rtm->rtm_type = RTM_GET;
 	rtm->rtm_version = RTM_VERSION;
-	myseq = ++seq;
-	rtm->rtm_seq = myseq;
+	rtm->rtm_seq = ++seq;
 	rtm->rtm_addrs = RTA_DST;
 	rtm->rtm_msglen = len;
 	sin6 = (struct sockaddr_in6 *)&buf[sizeof(struct rt_msghdr)];
@@ -2772,7 +2756,7 @@ getroute(struct netinfo6 *np, struct in6_addr *gw)
 		}
 		rtm = (struct rt_msghdr *)buf;
 	} while (rtm->rtm_version != RTM_VERSION ||
-	    rtm->rtm_seq != myseq || rtm->rtm_pid != pid);
+	    rtm->rtm_seq != seq || rtm->rtm_pid != pid);
 	sin6 = (struct sockaddr_in6 *)&buf[sizeof(struct rt_msghdr)];
 	if (rtm->rtm_addrs & RTA_DST) {
 		sin6 = (struct sockaddr_in6 *)
