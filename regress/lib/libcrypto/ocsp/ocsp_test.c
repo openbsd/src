@@ -47,6 +47,11 @@ int main(int argc, char *argv[]) {
 	X509_STORE     *st = NULL;
 	STACK_OF(X509) *ch = NULL;
 	char *host, *port;
+#ifdef _PATH_SSL_CA_FILE
+	char *cafile = _PATH_SSL_CA_FILE;
+#else
+	char *cafile = "/etc/ssl/cert.pem";
+#endif
 
 	SSL *ssl;
 	SSL_CTX *ctx;
@@ -56,7 +61,10 @@ int main(int argc, char *argv[]) {
 
 	ctx = SSL_CTX_new(SSLv23_client_method());
 
-	SSL_CTX_load_verify_locations(ctx, "/etc/ssl/cert.pem", NULL);
+	if (!SSL_CTX_load_verify_locations(ctx, cafile, NULL)) {
+		printf("failed to load %s\n", cafile);
+		exit(-1);
+	}
 
 	if (argc != 3)
 		errx(-1, "need a host and port to connect to");
