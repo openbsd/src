@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_term.c,v 1.25 2016/05/27 09:18:11 martijn Exp $	*/
+/*	$OpenBSD: cl_term.c,v 1.26 2016/07/07 09:26:26 semarie Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -266,6 +266,7 @@ cl_omesg(SCR *sp, CL_PRIVATE *clp, int on)
 			msgq(sp, M_SYSERR, "%s", tty);
 		return (1);
 	}
+	sb.st_mode &= ACCESSPERMS;
 
 	/* Save the original status if it's unknown. */
 	if (clp->tgw == TGW_UNKNOWN)
