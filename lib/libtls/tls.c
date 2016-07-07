@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.40 2016/07/06 16:16:36 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.41 2016/07/07 14:09:03 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -216,7 +216,9 @@ tls_configure_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
 
 	if (!required &&
 	    keypair->cert_mem == NULL &&
-	    keypair->key_mem == NULL)
+	    keypair->key_mem == NULL &&
+	    keypair->cert_file == NULL &&
+	    keypair->key_file == NULL)
 		return(0);
 
 	if (keypair->cert_mem != NULL) {
@@ -256,6 +258,21 @@ tls_configure_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
 		bio = NULL;
 		EVP_PKEY_free(pkey);
 		pkey = NULL;
+	}
+
+	if (keypair->cert_file != NULL) {
+		if (SSL_CTX_use_certificate_chain_file(ssl_ctx,
+		    keypair->cert_file) != 1) {
+			tls_set_errorx(ctx, "failed to load certificate file");
+			goto err;
+		}
+	}
+	if (keypair->key_file != NULL) {
+		if (SSL_CTX_use_PrivateKey_file(ssl_ctx,
+		    keypair->key_file, SSL_FILETYPE_PEM) != 1) {
+			tls_set_errorx(ctx, "failed to load private key file");
+			goto err;
+		}
 	}
 
 	if (SSL_CTX_check_private_key(ssl_ctx) != 1) {
@@ -329,7 +346,7 @@ tls_configure_ssl_verify(struct tls *ctx, int verify)
 			goto err;
 		}
 	} else if (SSL_CTX_load_verify_locations(ctx->ssl_ctx,
-	    NULL, ctx->config->ca_path) != 1) {
+	    ctx->config->ca_file, ctx->config->ca_path) != 1) {
 		tls_set_errorx(ctx, "ssl verify setup failure");
 		goto err;
 	}
