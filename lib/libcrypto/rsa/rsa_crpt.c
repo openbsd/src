@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_crpt.c,v 1.15 2016/06/30 02:02:06 bcook Exp $ */
+/* $OpenBSD: rsa_crpt.c,v 1.16 2016/07/07 11:53:12 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -192,6 +192,7 @@ RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 	} else
 		e = rsa->e;
 
+	BN_init(&n);
 	BN_with_flags(&n, rsa->n, BN_FLG_CONSTTIME);
 
 	ret = BN_BLINDING_create_param(NULL, e, &n, ctx, rsa->meth->bn_mod_exp,

@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.41 2016/06/30 02:02:06 bcook Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.42 2016/07/07 11:53:12 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -432,6 +432,7 @@ RSA_eay_private_encrypt(int flen, const unsigned char *from, unsigned char *to,
 	} else {
 		BIGNUM d;
 
+		BN_init(&d);
 		BN_with_flags(&d, rsa->d, BN_FLG_CONSTTIME);
 
 		if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
@@ -556,6 +557,7 @@ RSA_eay_private_decrypt(int flen, const unsigned char *from, unsigned char *to,
 	} else {
 		BIGNUM d;
 
+		BN_init(&d);
 		BN_with_flags(&d, rsa->d, BN_FLG_CONSTTIME);
 
 		if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
@@ -742,6 +744,8 @@ RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 		 * Make sure BN_mod_inverse in Montgomery intialization uses the
 		 * BN_FLG_CONSTTIME flag
 		 */
+		BN_init(&p);
+		BN_init(&q);
 		BN_with_flags(&p, rsa->p, BN_FLG_CONSTTIME);
 		BN_with_flags(&q, rsa->q, BN_FLG_CONSTTIME);
 
@@ -761,12 +765,14 @@ RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 			goto err;
 
 	/* compute I mod q */
+	BN_init(&c);
 	BN_with_flags(&c, I, BN_FLG_CONSTTIME);
 
 	if (!BN_mod(r1, &c, rsa->q, ctx))
 		goto err;
 
 	/* compute r1^dmq1 mod q */
+	BN_init(&dmq1);
 	BN_with_flags(&dmq1, rsa->dmq1, BN_FLG_CONSTTIME);
 
 	if (!rsa->meth->bn_mod_exp(m1, r1, &dmq1, rsa->q, ctx,
@@ -780,6 +786,7 @@ RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 		goto err;
 
 	/* compute r1^dmp1 mod p */
+	BN_init(&dmp1);
 	BN_with_flags(&dmp1, rsa->dmp1, BN_FLG_CONSTTIME);
 
 	if (!rsa->meth->bn_mod_exp(r0, r1, &dmp1, rsa->p, ctx,
@@ -801,6 +808,7 @@ RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 		goto err;
 
 	/* Turn BN_FLG_CONSTTIME flag on before division operation */
+	BN_init(&pr1);
 	BN_with_flags(&pr1, r1, BN_FLG_CONSTTIME);
 
 	if (!BN_mod(r0, &pr1, rsa->p, ctx))
@@ -847,6 +855,7 @@ RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 			 */
 			BIGNUM d;
 
+			BN_init(&d);
 			BN_with_flags(&d, rsa->d, BN_FLG_CONSTTIME);
 
 			if (!rsa->meth->bn_mod_exp(r0, I, &d, rsa->n, ctx,
