@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.32 2016/07/02 05:58:00 jmc Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.33 2016/07/07 19:56:27 rzalamena Exp $
 .\"
 .\" Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -19,7 +19,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 2 2016 $
+.Dd $Mdocdate: July 7 2016 $
 .Dt LDPD.CONF 5
 .Os
 .Sh NAME
@@ -287,11 +287,11 @@ l2vpn name type vpls {
         interface em1
         pseudowire mpw1 {
                 pw-id 100
-                neighbor 192.168.1.10
+                neighbor-id 192.168.1.10
         }
         pseudowire mpw2 {
                 pw-id 200
-                neighbor 10.0.1.5
+                neighbor-id 10.0.1.5
         }
 }
 .Ed
@@ -330,7 +330,7 @@ A pseudowire interface is specified by its name.
 .Bd -literal -offset indent
 pseudowire mpw5 {
 	pw-id 5000
-	neighbor 172.16.1.50
+	neighbor-id 172.16.1.50
 }
 .Ed
 .Pp
