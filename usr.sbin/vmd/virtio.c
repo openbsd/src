@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.13 2016/07/04 23:03:52 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.14 2016/07/07 00:58:31 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1148,96 +1148,100 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 	    sizeof(struct vring_desc) * VIORND_QUEUE_SIZE
 	    + sizeof(uint16_t) * (2 + VIORND_QUEUE_SIZE));
 
-
-	vioblk = malloc(sizeof(struct vioblk_dev) * vcp->vcp_ndisks);
-	if (vioblk == NULL) {
-		log_warn("%s: malloc failure allocating vioblks",
-		    __progname);
-		return;
-	}
-
-	memset(vioblk, 0, sizeof(struct vioblk_dev) * vcp->vcp_ndisks);
-
-	/* One virtio block device for each disk defined in vcp */
-	for (i = 0; i < vcp->vcp_ndisks; i++) {
-		if ((sz = lseek(child_disks[i], 0, SEEK_END)) == -1)
-			continue;
-
-		if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
-		    PCI_PRODUCT_QUMRANET_VIO_BLOCK, PCI_CLASS_MASS_STORAGE,
-		    PCI_SUBCLASS_MASS_STORAGE_SCSI,
-		    PCI_VENDOR_OPENBSD,
-		    PCI_PRODUCT_VIRTIO_BLOCK, 1, NULL)) {
-			log_warnx("%s: can't add PCI virtio block "
-			    "device", __progname);
-			return;
-		}
-		if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_blk_io,
-		    &vioblk[i])) {
-			log_warnx("%s: can't add bar for virtio block "
-			    "device", __progname);
-			return;
-		}
-		vioblk[i].vq[0].qs = VIOBLK_QUEUE_SIZE;
-		vioblk[i].vq[0].vq_availoffset = sizeof(struct vring_desc) *
-		    VIORND_QUEUE_SIZE;
-		vioblk[i].vq[0].vq_usedoffset = VIRTQUEUE_ALIGN(
-		    sizeof(struct vring_desc) * VIOBLK_QUEUE_SIZE
-		    + sizeof(uint16_t) * (2 + VIOBLK_QUEUE_SIZE));
-		vioblk[i].vq[0].last_avail = 0;
-		vioblk[i].fd = child_disks[i];
-		vioblk[i].sz = sz / 512;
-	}
-
-	vionet = malloc(sizeof(struct vionet_dev) * vcp->vcp_nnics);
-	if (vionet == NULL) {
-		log_warn("%s: malloc failure allocating vionets",
-		    __progname);
-		return;
-	}
-
-	memset(vionet, 0, sizeof(struct vionet_dev) * vcp->vcp_nnics);
-
-	nr_vionet = vcp->vcp_nnics;
-	/* Virtio network */
-	for (i = 0; i < vcp->vcp_nnics; i++) {
-		if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
-		    PCI_PRODUCT_QUMRANET_VIO_NET, PCI_CLASS_SYSTEM,
-		    PCI_SUBCLASS_SYSTEM_MISC,
-		    PCI_VENDOR_OPENBSD,
-		    PCI_PRODUCT_VIRTIO_NETWORK, 1, NULL)) {
-			log_warnx("%s: can't add PCI virtio net device",
+	if (vcp->vcp_ndisks > 0) {
+		vioblk = malloc(sizeof(struct vioblk_dev) * vcp->vcp_ndisks);
+		if (vioblk == NULL) {
+			log_warn("%s: malloc failure allocating vioblks",
 			    __progname);
 			return;
 		}
 
-		if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_net_io,
-		    &vionet[i])) {
-			log_warnx("%s: can't add bar for virtio net "
-			    "device", __progname);
+		memset(vioblk, 0, sizeof(struct vioblk_dev) * vcp->vcp_ndisks);
+
+		/* One virtio block device for each disk defined in vcp */
+		for (i = 0; i < vcp->vcp_ndisks; i++) {
+			if ((sz = lseek(child_disks[i], 0, SEEK_END)) == -1)
+				continue;
+
+			if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
+			    PCI_PRODUCT_QUMRANET_VIO_BLOCK,
+			    PCI_CLASS_MASS_STORAGE,
+			    PCI_SUBCLASS_MASS_STORAGE_SCSI,
+			    PCI_VENDOR_OPENBSD,
+			    PCI_PRODUCT_VIRTIO_BLOCK, 1, NULL)) {
+				log_warnx("%s: can't add PCI virtio block "
+				    "device", __progname);
+				return;
+			}
+			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_blk_io,
+			    &vioblk[i])) {
+				log_warnx("%s: can't add bar for virtio block "
+				    "device", __progname);
+				return;
+			}
+			vioblk[i].vq[0].qs = VIOBLK_QUEUE_SIZE;
+			vioblk[i].vq[0].vq_availoffset =
+			    sizeof(struct vring_desc) * VIORND_QUEUE_SIZE;
+			vioblk[i].vq[0].vq_usedoffset = VIRTQUEUE_ALIGN(
+			    sizeof(struct vring_desc) * VIOBLK_QUEUE_SIZE
+			    + sizeof(uint16_t) * (2 + VIOBLK_QUEUE_SIZE));
+			vioblk[i].vq[0].last_avail = 0;
+			vioblk[i].fd = child_disks[i];
+			vioblk[i].sz = sz / 512;
+		}
+	}
+
+	if (vcp->vcp_nnics > 0) {
+		vionet = malloc(sizeof(struct vionet_dev) * vcp->vcp_nnics);
+		if (vionet == NULL) {
+			log_warn("%s: malloc failure allocating vionets",
+			    __progname);
 			return;
 		}
 
-		vionet[i].vq[0].qs = VIONET_QUEUE_SIZE;
-		vionet[i].vq[0].vq_availoffset = sizeof(struct vring_desc) *
-		    VIONET_QUEUE_SIZE;
-		vionet[i].vq[0].vq_usedoffset = VIRTQUEUE_ALIGN(
-		    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE
-		    + sizeof(uint16_t) * (2 + VIONET_QUEUE_SIZE));
-		vionet[i].vq[0].last_avail = 0;
-		vionet[i].vq[1].qs = VIONET_QUEUE_SIZE;
-		vionet[i].vq[1].vq_availoffset = sizeof(struct vring_desc) *
-		    VIONET_QUEUE_SIZE;
-		vionet[i].vq[1].vq_usedoffset = VIRTQUEUE_ALIGN(
-		    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE
-		    + sizeof(uint16_t) * (2 + VIONET_QUEUE_SIZE));
-		vionet[i].vq[1].last_avail = 0;
-		vionet[i].fd = child_taps[i];
+		memset(vionet, 0, sizeof(struct vionet_dev) * vcp->vcp_nnics);
+
+		nr_vionet = vcp->vcp_nnics;
+		/* Virtio network */
+		for (i = 0; i < vcp->vcp_nnics; i++) {
+			if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
+			    PCI_PRODUCT_QUMRANET_VIO_NET, PCI_CLASS_SYSTEM,
+			    PCI_SUBCLASS_SYSTEM_MISC,
+			    PCI_VENDOR_OPENBSD,
+			    PCI_PRODUCT_VIRTIO_NETWORK, 1, NULL)) {
+				log_warnx("%s: can't add PCI virtio net device",
+				    __progname);
+				return;
+			}
+
+			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_net_io,
+			    &vionet[i])) {
+				log_warnx("%s: can't add bar for virtio net "
+				    "device", __progname);
+				return;
+			}
+
+			vionet[i].vq[0].qs = VIONET_QUEUE_SIZE;
+			vionet[i].vq[0].vq_availoffset =
+			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE;
+			vionet[i].vq[0].vq_usedoffset = VIRTQUEUE_ALIGN(
+			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE
+			    + sizeof(uint16_t) * (2 + VIONET_QUEUE_SIZE));
+			vionet[i].vq[0].last_avail = 0;
+			vionet[i].vq[1].qs = VIONET_QUEUE_SIZE;
+			vionet[i].vq[1].vq_availoffset =
+			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE;
+			vionet[i].vq[1].vq_usedoffset = VIRTQUEUE_ALIGN(
+			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE
+			    + sizeof(uint16_t) * (2 + VIONET_QUEUE_SIZE));
+			vionet[i].vq[1].last_avail = 0;
+			vionet[i].fd = child_taps[i];
 
 #if 0
-		/* User defined MAC */
-		vionet[i].cfg.device_feature = VIRTIO_NET_F_MAC;
-		bcopy(&vcp->vcp_macs[i], &vionet[i].mac, 6);
+			/* User defined MAC */
+			vionet[i].cfg.device_feature = VIRTIO_NET_F_MAC;
+			bcopy(&vcp->vcp_macs[i], &vionet[i].mac, 6);
 #endif
+		}
 	}
 }

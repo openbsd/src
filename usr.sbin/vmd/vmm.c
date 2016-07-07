@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.29 2016/07/06 07:09:15 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.30 2016/07/07 00:58:31 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -785,6 +785,9 @@ vmm_create_vm(struct vm_create_params *vcp)
 	if (vcp->vcp_ndisks > VMM_MAX_DISKS_PER_VM)
 		return (EINVAL);
 
+	if (vcp->vcp_nnics > VMM_MAX_NICS_PER_VM)
+		return (EINVAL);
+
 	if (ioctl(env->vmd_fd, VMM_IOC_CREATE, vcp) < 0)
 		return (errno);
 
@@ -862,13 +865,30 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 	struct vm_run_params **vrp;
 	struct vm_terminate_params vtp;
 
+	if (vcp == NULL)
+		return (EINVAL);
+
+	if (child_disks == NULL && vcp->vcp_ndisks != 0)
+		return (EINVAL);
+
+	if (child_taps == NULL && vcp->vcp_nnics != 0)
+		return (EINVAL);
+
+	if (vcp->vcp_ncpus > VMM_MAX_VCPUS_PER_VM)
+		return (EINVAL);
+
+	if (vcp->vcp_ndisks > VMM_MAX_DISKS_PER_VM)
+		return (EINVAL);
+
+	if (vcp->vcp_nnics > VMM_MAX_NICS_PER_VM)
+		return (EINVAL);
+
+	if (vcp->vcp_nmemranges == 0 ||
+	    vcp->vcp_nmemranges > VMM_MAX_MEM_RANGES)
+		return (EINVAL);
+
 	ret = 0;
 
-	/* XXX cap vcp_ncpus to avoid overflow here */
-	/*
-	 * XXX ensure nvcpus in vcp is same as vm, or fix vmm to return einval
-	 * on bad vcpu id
-	 */
 	tid = malloc(sizeof(pthread_t) * vcp->vcp_ncpus);
 	vrp = malloc(sizeof(struct vm_run_params *) * vcp->vcp_ncpus);
 	if (tid == NULL || vrp == NULL) {
