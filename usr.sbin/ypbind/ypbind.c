@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.67 2016/07/05 16:41:40 jca Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.68 2016/07/08 19:32:26 millert Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -338,7 +338,7 @@ main(int argc, char *argv[])
 	char path[PATH_MAX];
 	struct sockaddr_in sin;
 	struct pollfd *pfd = NULL;
-	int width = 0, lockfd, lsock;
+	int width = 0, nready, lockfd, lsock;
 	socklen_t len;
 	int evil = 0, one = 1;
 	DIR *dirp;
@@ -540,9 +540,10 @@ main(int argc, char *argv[])
 		pfd[0].events = POLLIN;
 		pfd[1].fd = pingsock;
 		pfd[1].events = POLLIN;
-		memcpy(pfd + 2, svc_pollfd, svc_max_pollfd);
+		memcpy(pfd + 2, svc_pollfd, sizeof(*pfd) * svc_max_pollfd);
 
-		switch (poll(pfd, width, 1000)) {
+		nready = poll(pfd, width, 1000);
+		switch (nready) {
 		case 0:
 			checkwork();
 			break;
@@ -552,11 +553,15 @@ main(int argc, char *argv[])
 			break;
 		default:
 			/* No need to check for POLLHUP on UDP sockets. */
-			if (pfd[0].revents & POLLIN)
+			if (pfd[0].revents & POLLIN) {
 				handle_replies();
-			if (pfd[1].revents & POLLIN)
+				nready--;
+			}
+			if (pfd[1].revents & POLLIN) {
 				handle_ping();
-			svc_getreq_poll(pfd + 2, svc_max_pollfd);
+				nready--;
+			}
+			svc_getreq_poll(pfd + 2, nready);
 			if (check)
 				checkwork();
 			break;
