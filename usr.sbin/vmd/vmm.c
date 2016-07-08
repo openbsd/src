@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.30 2016/07/07 00:58:31 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.31 2016/07/08 06:35:12 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1088,9 +1088,9 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 
 			goto ret;
 		} else {
-			/* XXX should this return 0xff as the data read? */
 			log_warnx("%s: i8253 PIT: read from control "
-			    "port unsupported", __progname);
+			    "port unsupported - returning 0", __progname);
+			vei->vei.vei_data = 0;
 		}
 	} else {
 		sel = vei->vei.vei_port - (TIMER_CNTR0 + TIMER_BASE);
