@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.127 2015/07/19 06:31:16 yuo Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.128 2016/07/08 08:30:53 kettenis Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.124 2015/07/19 06:30:02 yuo Exp 
+ *	OpenBSD: miidevs,v 1.125 2016/07/08 08:30:06 kettenis Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -133,8 +133,8 @@
 #define	MII_STR_ATHEROS_F1	"F1 10/100/1000 PHY"
 #define	MII_MODEL_ATHEROS_F2	0x0002
 #define	MII_STR_ATHEROS_F2	"F2 10/100 PHY"
-#define	MII_MODEL_ATHEROS_F1_7	0x0007
-#define	MII_STR_ATHEROS_F1_7	"F1 10/100/1000 PHY"
+#define	MII_MODEL_ATHEROS_AR8035	0x0007
+#define	MII_STR_ATHEROS_AR8035	"AR8035 10/100/1000 PHY"
 
 /* Altima PHYs */
 #define	MII_MODEL_xxALTIMA_AC_UNKNOWN	0x0001
