@@ -1,4 +1,4 @@
-/*	$OpenBSD: atphy.c,v 1.9 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: atphy.c,v 1.10 2016/07/08 08:30:06 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -84,10 +84,10 @@ const struct mii_phy_funcs atphy_funcs = {
 static const struct mii_phydesc atphys[] = {
 	{ MII_OUI_ATHEROS,	MII_MODEL_ATHEROS_F1,
 	  MII_STR_ATHEROS_F1 },
-	{ MII_OUI_ATHEROS,	MII_MODEL_ATHEROS_F1_7,
-	  MII_STR_ATHEROS_F1_7 },
 	{ MII_OUI_ATHEROS,	MII_MODEL_ATHEROS_F2,
 	  MII_STR_ATHEROS_F2 },
+	{ MII_OUI_ATHEROS,	MII_MODEL_ATHEROS_AR8035,
+	  MII_STR_ATHEROS_AR8035 },
 	{ 0,			0,
 	  NULL },
 };
