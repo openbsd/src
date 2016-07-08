@@ -16,6 +16,7 @@
 
 #include <sys/ioctl.h>
 
+#include <err.h>
 #include <term.h>
 #include <termios.h>
 
@@ -266,6 +267,7 @@ get_term(void)
 {
 	char *t1, *t2;
 	char *term;
+	int  err;
 
 	/*
 	 * Find out what kind of terminal this is.
@@ -274,8 +276,11 @@ get_term(void)
 		term = DEFAULT_TERM;
 	hardcopy = 0;
 
-	if (setupterm(term, 1, NULL) < 0) {
-		hardcopy = 1;
+	if (setupterm(term, 1, &err) < 0) {
+		if (err == 1)
+			hardcopy = 1;
+		else
+			errx(1, "%s: unknown terminal type", term);
 	}
 	if (hard_copy == 1)
 		hardcopy = 1;
