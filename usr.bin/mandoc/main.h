@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.h,v 1.19 2015/11/07 13:57:55 schwarze Exp $ */
+/*	$OpenBSD: main.h,v 1.20 2016/07/08 22:27:58 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -43,7 +43,6 @@ void		 *locale_alloc(const struct manoutput *);
 void		 *utf8_alloc(const struct manoutput *);
 void		 *ascii_alloc(const struct manoutput *);
 void		  ascii_free(void *);
-void		  ascii_sepline(void *);
 
 void		 *pdf_alloc(const struct manoutput *);
 void		 *ps_alloc(const struct manoutput *);
@@ -51,3 +50,4 @@ void		  pspdf_free(void *);
 
 void		  terminal_mdoc(void *, const struct roff_man *);
 void		  terminal_man(void *, const struct roff_man *);
+void		  terminal_sepline(void *);
