@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.183 2016/06/07 01:29:38 tedu Exp $	*/
+/*	$OpenBSD: route.c,v 1.184 2016/07/09 20:39:17 tedu Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -644,8 +644,11 @@ newroute(int argc, char **argv)
 		} else
 			break;
 	}
-	if (*cmd == 'g')
+	if (*cmd == 'g') {
+		if (ret != 0 && qflag == 0)
+			warn("writing to routing socket");
 		exit(0);
+	}
 	oerrno = errno;
 	if (!qflag) {
 		printf("%s %s %s", cmd, ishost ? "host" : "net", dest);
@@ -1165,8 +1168,6 @@ rtmsg(int cmd, int flags, int fmask, uint8_t prio)
 	if (debugonly)
 		return (0);
 	if (write(s, &m_rtmsg, l) != l) {
-		if (qflag == 0)
-			warn("writing to routing socket");
 		return (-1);
 	}
 	if (cmd == RTM_GET) {
