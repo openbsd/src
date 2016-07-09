@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.27 2016/06/28 04:41:37 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.28 2016/07/09 12:32:50 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -52,7 +52,7 @@ iic*		at imxiic?
 imxesdhc*	at fdt?			# SDHC controller
 sdmmc*		at imxesdhc?		# SD/MMC bus
 ahci*		at fdt?			# AHCI/SATA
-ehci*		at imx?			# EHCI (shim)
+ehci*		at fdt?			# EHCI (shim)
 usb*		at ehci?
 
 # OMAP3xxx/OMAP4xxx SoC

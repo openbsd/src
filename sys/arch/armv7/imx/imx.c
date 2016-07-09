@@ -1,4 +1,4 @@
-/* $OpenBSD: imx.c,v 1.20 2016/06/13 23:43:58 kettenis Exp $ */
+/* $OpenBSD: imx.c,v 1.21 2016/07/09 12:32:50 kettenis Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -47,8 +47,6 @@ struct board_dev hummingboard_devs[] = {
 	{ "imxgpio",	4 },
 	{ "imxgpio",	5 },
 	{ "imxgpio",	6 },
-	{ "ehci",	0 },
-	{ "ehci",	1 },
 	{ NULL,		0 }
 };
 
@@ -63,7 +61,6 @@ struct board_dev sabrelite_devs[] = {
 	{ "imxgpio",	4 },
 	{ "imxgpio",	5 },
 	{ "imxgpio",	6 },
-	{ "ehci",	0 },
 	{ NULL,		0 }
 };
 
@@ -79,7 +76,6 @@ struct board_dev sabresd_devs[] = {
 	{ "imxgpio",	4 },
 	{ "imxgpio",	5 },
 	{ "imxgpio",	6 },
-	{ "ehci",	0 },
 	{ NULL,		0 }
 };
 
@@ -94,7 +90,6 @@ struct board_dev udoo_devs[] = {
 	{ "imxgpio",	4 },
 	{ "imxgpio",	5 },
 	{ "imxgpio",	6 },
-	{ "ehci",	0 },
 	{ NULL,		0 }
 };
 
@@ -109,7 +104,6 @@ struct board_dev utilite_devs[] = {
 	{ "imxgpio",	4 },
 	{ "imxgpio",	5 },
 	{ "imxgpio",	6 },
-	{ "ehci",	0 },
 	{ NULL,		0 }
 };
 
@@ -124,7 +118,6 @@ struct board_dev novena_devs[] = {
 	{ "imxgpio",	4 },
 	{ "imxgpio",	5 },
 	{ "imxgpio",	6 },
-	{ "ehci",	0 },
 	{ NULL,		0 }
 };
 
@@ -139,7 +132,6 @@ struct board_dev wandboard_devs[] = {
 	{ "imxgpio",	4 },
 	{ "imxgpio",	5 },
 	{ "imxgpio",	6 },
-	{ "ehci",	0 },
 	{ NULL,		0 }
 };
 
