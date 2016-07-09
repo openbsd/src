@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.41 2015/02/07 23:49:00 tedu Exp $
+#	$OpenBSD: inter.phone,v 1.42 2016/07/09 23:32:51 schwarze Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -6,7 +6,7 @@
 1:510:Berkeley:USA
 7:495:Moscow:Russia
 7:3832:Novosibirsk:Russia
-7:812:St. Peterburg:Russia
+7:812:St. Petersburg:Russia
 7:::Kazakhstan
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
