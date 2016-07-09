@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.3 2016/06/22 20:15:31 kettenis Exp $ */
+/* $OpenBSD: if_fec.c,v 1.4 2016/07/09 12:39:28 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -42,6 +42,7 @@
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
+#include <dev/mii/miidevs.h>
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxccmvar.h>
@@ -133,19 +134,14 @@
 #define ENET_MII_CLK		2500
 #define ENET_ALIGNMENT		16
 
-#define ENET_HUMMINGBOARD_PHY			0
 #define ENET_HUMMINGBOARD_PHY_RST		(3*32+15)
 #define ENET_SABRELITE_PHY			6
 #define ENET_SABRELITE_PHY_RST			(2*32+23)
-#define ENET_SABRESD_PHY			1
 #define ENET_SABRESD_PHY_RST			(0*32+25)
-#define ENET_NITROGEN6X_PHY			6
 #define ENET_NITROGEN6X_PHY_RST			(0*32+27)
 #define ENET_UDOO_PHY				6
 #define ENET_UDOO_PHY_RST			(2*32+23)
 #define ENET_UDOO_PWR				(1*32+31)
-#define ENET_UTILITE_PHY			0
-#define ENET_WANDBOARD_PHY			1
 #define ENET_NOVENA_PHY				7
 #define ENET_NOVENA_PHY_RST			(2*32+23)
 
@@ -251,6 +247,7 @@ struct fec_softc *fec_sc;
 int fec_match(struct device *, void *, void *);
 void fec_attach(struct device *, struct device *, void *);
 void fec_chip_init(struct fec_softc *);
+void fec_phy_init(struct fec_softc *, struct mii_softc *);
 int fec_ioctl(struct ifnet *, u_long, caddr_t);
 void fec_start(struct ifnet *);
 int fec_encap(struct fec_softc *, struct mbuf *);
@@ -293,6 +290,7 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	struct fec_softc *sc = (struct fec_softc *) self;
 	struct fdt_attach_args *faa = aux;
 	struct mii_data *mii;
+	struct mii_softc *child;
 	struct ifnet *ifp;
 	int tsize, rsize, tbsize, rbsize, s;
 	uint32_t intr[8];
@@ -450,6 +448,10 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&mii->mii_media, 0, fec_ifmedia_upd, fec_ifmedia_sts);
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
+	child = LIST_FIRST(&mii->mii_phys);
+	if (child)
+		fec_phy_init(sc, child);
+
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
@@ -478,34 +480,20 @@ fec_chip_init(struct fec_softc *sc)
 {
 	struct device *dev = (struct device *) sc;
 	int phy = 0;
-	uint32_t reg;
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ENET_MSCR,
 	    (((imxccm_get_fecclk() + (ENET_MII_CLK << 2) - 1) / (ENET_MII_CLK << 2)) << 1) | 0x100);
 
 	switch (board_id)
 	{
-	case BOARD_ID_IMX6_CUBOXI:
-	case BOARD_ID_IMX6_HUMMINGBOARD:
-		phy = ENET_HUMMINGBOARD_PHY;
-		break;
 	case BOARD_ID_IMX6_SABRELITE:
 		phy = ENET_SABRELITE_PHY;
-		break;
-	case BOARD_ID_IMX6_SABRESD:
-		phy = ENET_SABRESD_PHY;
 		break;
 	case BOARD_ID_IMX6_UDOO:
 		phy = ENET_UDOO_PHY;
 		break;
-	case BOARD_ID_IMX6_UTILITE:
-		phy = ENET_UTILITE_PHY;
-		break;
 	case BOARD_ID_IMX6_NOVENA:
 		phy = ENET_NOVENA_PHY;
-		break;
-	case BOARD_ID_IMX6_WANDBOARD:
-		phy = ENET_WANDBOARD_PHY;
 		break;
 	}
 
@@ -572,11 +560,18 @@ fec_chip_init(struct fec_softc *sc)
 		fec_miibus_writereg(dev, phy, 0x0b, 0x8106);
 		fec_miibus_writereg(dev, phy, 0x0c, 0xffff);
 		break;
-	case BOARD_ID_IMX6_CUBOXI:		/* AR8035 */
-	case BOARD_ID_IMX6_HUMMINGBOARD:	/* AR8035 */
-	case BOARD_ID_IMX6_SABRESD:		/* AR8031 */
-	case BOARD_ID_IMX6_UTILITE:
-	case BOARD_ID_IMX6_WANDBOARD:		/* AR8031 */
+	}
+}
+
+void
+fec_phy_init(struct fec_softc *sc, struct mii_softc *child)
+{
+	struct device *dev = (struct device *)sc;
+	int phy = child->mii_phy;
+	uint32_t reg;
+
+	if (child->mii_oui == MII_OUI_ATHEROS &&
+	    child->mii_model == MII_MODEL_ATHEROS_AR8035) {
 		/* disable SmartEEE */
 		fec_miibus_writereg(dev, phy, 0x0d, 0x0003);
 		fec_miibus_writereg(dev, phy, 0x0e, 0x805d);
@@ -584,7 +579,7 @@ fec_chip_init(struct fec_softc *sc)
 		reg = fec_miibus_readreg(dev, phy, 0x0e);
 		fec_miibus_writereg(dev, phy, 0x0e, reg & ~0x0100);
 
-		/* enable 125MHz clk output for AR8031 */
+		/* enable 125MHz clk output */
 		fec_miibus_writereg(dev, phy, 0x0d, 0x0007);
 		fec_miibus_writereg(dev, phy, 0x0e, 0x8016);
 		fec_miibus_writereg(dev, phy, 0x0d, 0x4007);
@@ -601,7 +596,6 @@ fec_chip_init(struct fec_softc *sc)
 		reg = fec_miibus_readreg(dev, phy, 0x00);
 		if (reg & 0x0800)
 			fec_miibus_writereg(dev, phy, 0x00, reg & ~0x0800);
-		break;
 	}
 }
 
