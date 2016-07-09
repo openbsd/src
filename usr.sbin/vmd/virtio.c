@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.14 2016/07/07 00:58:31 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.15 2016/07/09 09:06:22 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <errno.h>
 #include <poll.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -789,11 +790,13 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	uint64_t q_gpa;
 	uint32_t vr_sz;
 	uint16_t idx, pkt_desc_idx, hdr_desc_idx;
+	ptrdiff_t off;
 	int ret;
 	char *vr;
 	struct vring_desc *desc, *pkt_desc, *hdr_desc;
 	struct vring_avail *avail;
 	struct vring_used *used;
+	struct vring_used_elem *ue;
 
 	ret = 0;
 
@@ -824,7 +827,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 
 	idx = dev->vq[0].last_avail & VIONET_QUEUE_MASK;
 
-	if ((avail->idx & VIONET_QUEUE_MASK) == idx) {
+	if ((dev->vq[0].notified_avail & VIONET_QUEUE_MASK) == idx) {
 		log_warnx("vionet queue notify - no space, dropping packet");
 		free(vr);
 		return (0);
@@ -854,13 +857,20 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 
 	ret = 1;
 	dev->cfg.isr_status = 1;
-	used->ring[used->idx & VIONET_QUEUE_MASK].id = hdr_desc_idx;
-	used->ring[used->idx & VIONET_QUEUE_MASK].len = hdr_desc->len + sz;
+	ue = &used->ring[used->idx & VIONET_QUEUE_MASK];
+	ue->id = hdr_desc_idx;
+	ue->len = hdr_desc->len + sz;
 	used->idx++;
 	dev->vq[0].last_avail = (dev->vq[0].last_avail + 1);
-	*spc = avail->idx - dev->vq[0].last_avail;
-	if (write_mem(q_gpa, vr, vr_sz)) {
+	*spc = dev->vq[0].notified_avail - dev->vq[0].last_avail;
+
+	off = (char *)ue - vr;
+	if (write_mem(q_gpa + off, ue, sizeof *ue))
 		log_warnx("vionet: error writing vio ring");
+	else {
+		off = (char *)&used->idx - vr;
+		if (write_mem(q_gpa + off, &used->idx, sizeof used->idx))
+			log_warnx("vionet: error writing vio ring");
 	}
 
 	free(vr);
@@ -868,42 +878,57 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	return (ret);
 }
 
+/*
+ * vionet_rx
+ *
+ * Enqueue data that was received on a tap file descriptor
+ * to the vionet device queue.
+ */
+static int
+vionet_rx(struct vionet_dev *dev)
+{
+	char buf[PAGE_SIZE];
+	int hasdata, num_enq = 0, spc = 0;
+	ssize_t sz;
+
+	do {
+		sz = read(dev->fd, buf, sizeof buf);
+		if (sz == -1) {
+			/*
+			 * If we get EAGAIN, No data is currently available.
+			 * Do not treat this as an error.
+			 */
+			if (errno != EAGAIN)
+				log_warn("unexpected read error on vionet "
+				    "device");
+		} else if (sz != 0)
+			num_enq += vionet_enq_rx(dev, buf, sz, &spc);
+		else if (sz == 0) {
+			log_debug("process_rx: no data");
+			hasdata = 0;
+			break;
+		}
+
+		hasdata = fd_hasdata(dev->fd);
+	} while (spc && hasdata);
+
+	dev->rx_pending = hasdata;
+	return (num_enq);
+}
+
 int
 vionet_process_rx(void)
 {
-	int i, num_enq, spc, hasdata;
-	ssize_t sz;
-	char *buf;
-	struct pollfd pfd;
+	int i, num_enq;
 
 	num_enq = 0;
-	buf = malloc(PAGE_SIZE);
 	for (i = 0 ; i < nr_vionet; i++) {
 		if (!vionet[i].rx_added)
 			continue;
 
-		spc = 1;
-		hasdata = 1;
-		memset(buf, 0, PAGE_SIZE);
-		memset(&pfd, 0, sizeof(struct pollfd));
-		pfd.fd = vionet[i].fd;
-		pfd.events = POLLIN;
-		while (spc && hasdata) {
-			hasdata = poll(&pfd, 1, 0);
-			if (hasdata == 1) {
-				sz = read(vionet[i].fd, buf, PAGE_SIZE);
-				if (sz != 0) {
-					num_enq += vionet_enq_rx(&vionet[i],
-					    buf, sz, &spc);
-				} else if (sz == 0) {
-					log_debug("process_rx: no data");
-					hasdata = 0;
-				}
-			}
-		}
+		if (vionet[i].rx_pending || fd_hasdata(vionet[i].fd))
+			num_enq += vionet_rx(&vionet[i]);
 	}
-
-	free(buf);
 
 	/*
 	 * XXX returns the number of packets enqueued across all vionet, which
@@ -917,11 +942,8 @@ vionet_notify_rx(struct vionet_dev *dev)
 {
 	uint64_t q_gpa;
 	uint32_t vr_sz;
-	uint16_t idx, pkt_desc_idx;
 	char *vr;
-	struct vring_desc *desc, *pkt_desc;
 	struct vring_avail *avail;
-	struct vring_used *used;
 
 	vr_sz = vring_size(VIONET_QUEUE_SIZE);
 	q_gpa = dev->vq[dev->cfg.queue_notify].qa;
@@ -933,26 +955,18 @@ vionet_notify_rx(struct vionet_dev *dev)
 		return;
 	}
 
-	memset(vr, 0, vr_sz);
-
 	if (read_mem(q_gpa, vr, vr_sz)) {
 		log_warnx("error reading gpa 0x%llx", q_gpa);
 		free(vr);
 		return;
 	}
 
-	/* Compute offsets in ring of descriptors, avail ring, and used ring */
-	desc = (struct vring_desc *)(vr);
+	/* Compute offset into avail ring */
 	avail = (struct vring_avail *)(vr +
 	    dev->vq[dev->cfg.queue_notify].vq_availoffset);
-	used = (struct vring_used *)(vr +
-	    dev->vq[dev->cfg.queue_notify].vq_usedoffset);
-
-	idx = dev->vq[dev->cfg.queue_notify].last_avail & VIONET_QUEUE_MASK;
-	pkt_desc_idx = avail->ring[idx] & VIONET_QUEUE_MASK;
-	pkt_desc = &desc[pkt_desc_idx];
 
 	dev->rx_added = 1;
+	dev->vq[0].notified_avail = avail->idx;
 
 	free(vr);
 }

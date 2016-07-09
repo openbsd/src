@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.3 2015/12/03 08:42:11 reyk Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.4 2016/07/09 09:06:22 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -34,6 +34,10 @@
 /* All the devices we support have either 1 or 2 queues */
 #define VIRTIO_MAX_QUEUES	2
 
+/*
+ * This struct stores notifications from a virtio driver. There is
+ * one such struct per virtio device.
+ */
 struct virtio_io_cfg {
 	uint32_t device_feature;
 	uint32_t guest_feature;
@@ -45,12 +49,42 @@ struct virtio_io_cfg {
 	uint8_t isr_status;
 };
 
+/*
+ * A virtio device can have several virtqs. For example, vionet has one virtq
+ * each for transmitting and receiving packets. This struct describes the state
+ * of one virtq, such as their address in memory, size, offsets of rings, etc.
+ * There is one virtio_vq_info per virtq.
+ */
 struct virtio_vq_info {
+	/* Guest physical address of virtq */
 	uint32_t qa;
+
+	/* Queue size: number of queue entries in virtq */
 	uint32_t qs;
+
+	/*
+	 * The offset of the 'available' ring within the virtq located at
+	 * guest physical address qa above
+	 */
 	uint32_t vq_availoffset;
+
+	/*
+	 * The offset of the 'used' ring within the virtq located at guest
+	 * physical address qa above
+	 */
 	uint32_t vq_usedoffset;
+
+	/*
+	 * The index into a slot of the 'available' ring that a virtio device
+	 * can consume next
+	 */
 	uint16_t last_avail;
+
+	/*
+	 * The most recent index into the 'available' ring that a virtio
+	 * driver notified to the host.
+	 */
+	uint16_t notified_avail;
 };
 
 struct viornd_dev {
@@ -74,6 +108,7 @@ struct vionet_dev {
 	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
 
 	int fd, rx_added;
+	int rx_pending;
 	uint8_t mac[6];
 };
 

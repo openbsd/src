@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.31 2016/07/08 06:35:12 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.32 2016/07/09 09:06:22 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include <imsg.h>
 #include <limits.h>
+#include <poll.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1760,4 +1761,25 @@ read_mem(paddr_t src, void *buf, size_t len)
 	}
 
 	return (0);
+}
+
+/*
+ * fd_hasdata
+ *
+ * Returns 1 if data can be read from an fd, or 0 otherwise.
+ */
+int
+fd_hasdata(int fd)
+{
+	struct pollfd pfd[1];
+	int nready, hasdata = 0;
+
+	pfd[0].fd = fd;
+	pfd[0].events = POLLIN;
+	nready = poll(pfd, 1, 0);
+	if (nready == -1)
+		log_warn("checking file descriptor for data failed");
+	else if (nready == 1 && pfd[0].revents & POLLIN)
+		hasdata = 1;
+	return (hasdata);
 }
