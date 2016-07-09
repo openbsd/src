@@ -1,6 +1,12 @@
-dnl	$OpenBSD: prep,v 1.8 2016/05/29 13:50:13 jsg Exp $
+dnl	$OpenBSD: prep,v 1.9 2016/07/09 07:19:52 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
+
+Firmware which provides an EFI interface with a Device Tree Blob (DTB)
+file is required to boot.  In most cases this is provided by images of
+U-Boot 2016.07 or newer on SD/MMC devices or in SPI flash.  If the
+miniroot images are used, U-Boot and DTB files are distributed as part
+of the miniroot disk images.
 
 OpenBSD can be installed onto a disk by copying the miniroot for your
 board "miniroot-board-{:--:}OSrev.fs" image to an SD card.
@@ -24,3 +30,19 @@ Booting from an SD card:
   In order to make it boot from the micro SD card, you will need to hold down
   the small button located by the SD card slot while powering on the board.
   Once you have done this the board will boot from the SD card as the default.
+
+Running EFI payloads with U-Boot:
+
+If the U-Boot target supports "distro_bootcmd" efiboot will automatically
+be loaded by placing bootarm.efi into /efi/boot/bootarm.efi on a FAT
+filesystem.  With dtb files placed in in /, /dtbs/, or /dtb/current/.
+
+If the U-Boot target supports bootefi but not automatically finding it with
+"distro_bootcmd" then it must be loaded manually or by U-Boot commands or
+script.
+	=> run findfdt
+	=> load mmc 0:1 ${fdt_addr_r} ${fdtfile}
+	=> load mmc 0:1 ${kernel_addr_r} efi/boot/bootarm.efi
+	=> bootefi ${kernel_addr_r} ${fdt_addr_r}
+The bootloader will then run and try to load sd0a:/bsd off an FFS
+filesystem after a timeout.
