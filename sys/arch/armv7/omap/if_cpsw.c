@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.35 2016/06/26 09:06:35 jsg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.36 2016/07/09 04:25:44 jsg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -83,7 +83,6 @@
 #include <dev/mii/miivar.h>
 
 #include <arch/armv7/armv7/armv7var.h>
-#include <arch/armv7/omap/sitara_cm.h>
 #include <arch/armv7/omap/if_cpswreg.h>
 
 #include <dev/ofw/openfirm.h>
@@ -119,6 +118,13 @@ struct cpsw_ring_data {
 	struct mbuf		*rx_mb[CPSW_NRXDESCS];
 };
 
+struct cpsw_port_config {
+	uint8_t			 enaddr[ETHER_ADDR_LEN];
+	int			 phy_id;
+	int			 rgmii;
+	int			 vlan;
+};
+
 struct cpsw_softc {
 	struct device		 sc_dev;
 	bus_space_tag_t		 sc_bst;
@@ -152,6 +158,8 @@ struct cpsw_softc {
 	volatile bool		 sc_rxeoq;
 	struct timeout		 sc_tick;
 	int			 sc_active_port;
+
+	struct cpsw_port_config	 sc_port_config[2];
 };
 
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
@@ -180,7 +188,7 @@ int	cpsw_rxintr(void *);
 int	cpsw_txintr(void *);
 int	cpsw_miscintr(void *);
 
-void	cpsw_get_mac_addr(struct cpsw_softc *);
+void	cpsw_get_port_config(struct cpsw_port_config *, int);
 
 struct cfattach cpsw_ca = {
 	sizeof(struct cpsw_softc),
@@ -270,27 +278,6 @@ cpsw_rxdesc_paddr(struct cpsw_softc * const sc, u_int x)
 	return sc->sc_rxdescs_pa + sizeof(struct cpsw_cpdma_bd) * x;
 }
 
-void
-cpsw_get_mac_addr(struct cpsw_softc *sc)
-{
-	struct arpcom *ac = &sc->sc_ac;
-	u_int32_t	mac_lo = 0, mac_hi = 0;
-
-	sitara_cm_reg_read_4(OMAP2SCM_MAC_ID0_LO, &mac_lo);
-	sitara_cm_reg_read_4(OMAP2SCM_MAC_ID0_HI, &mac_hi);
-
-	if ((mac_lo == 0) && (mac_hi == 0))
-		printf("%s: invalid ethernet address\n", DEVNAME(sc));
-	else {
-		ac->ac_enaddr[0] = (mac_hi >>  0) & 0xff;
-		ac->ac_enaddr[1] = (mac_hi >>  8) & 0xff;
-		ac->ac_enaddr[2] = (mac_hi >> 16) & 0xff;
-		ac->ac_enaddr[3] = (mac_hi >> 24) & 0xff;
-		ac->ac_enaddr[4] = (mac_lo >>  0) & 0xff;
-		ac->ac_enaddr[5] = (mac_lo >>  8) & 0xff;
-	}
-}
-
 static void
 cpsw_mdio_init(struct cpsw_softc *sc)
 {
@@ -370,7 +357,9 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->sc_tick, cpsw_tick, sc);
 
-	cpsw_get_mac_addr(sc);
+	cpsw_get_port_config(sc->sc_port_config, faa->fa_node);
+	memcpy(sc->sc_ac.ac_enaddr, sc->sc_port_config[0].enaddr,
+	    ETHER_ADDR_LEN);
 
 	sc->sc_rxthih = arm_intr_establish(intr[0], IPL_NET, cpsw_rxthintr, sc,
 	    DEVNAME(sc));
@@ -466,7 +455,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&sc->sc_mii.mii_media, 0, cpsw_mediachange,
 	    cpsw_mediastatus);
 	mii_attach(self, &sc->sc_mii, 0xffffffff,
-	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	    sc->sc_port_config[0].phy_id, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		printf("no PHY found!\n");
 		ifmedia_add(&sc->sc_mii.mii_media,
@@ -1282,4 +1271,34 @@ cpsw_miscintr(void *arg)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_MISC);
 
 	return 1;
+}
+
+void
+cpsw_get_port_config(struct cpsw_port_config *conf, int pnode)
+{
+	char mode[32];
+	uint32_t phy_id[2];
+	int node;
+	int port = 0;
+
+	for (node = OF_child(pnode); node; node = OF_peer(node)) {
+		if (OF_getprop(node, "local-mac-address", conf[port].enaddr,
+		    sizeof(conf[port].enaddr)) != sizeof(conf[port].enaddr))
+			continue;
+
+		conf[port].vlan = OF_getpropint(node, "dual_emac_res_vlan", 0);
+
+		if (OF_getpropintarray(node, "phy_id", phy_id,
+		    sizeof(phy_id)) == sizeof(phy_id))
+			conf[port].phy_id = phy_id[1];
+
+		if (OF_getprop(node, "phy-mode", mode, sizeof(mode)) > 0 &&
+		    !strcmp(mode, "rgmii"))
+			conf[port].rgmii = 1;
+		else
+			conf[port].rgmii = 0;
+
+		if (port == 0)
+			port = 1;
+	}
 }
