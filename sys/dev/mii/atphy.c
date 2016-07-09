@@ -1,4 +1,4 @@
-/*	$OpenBSD: atphy.c,v 1.10 2016/07/08 08:30:06 kettenis Exp $	*/
+/*	$OpenBSD: atphy.c,v 1.11 2016/07/09 15:59:22 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -126,6 +126,7 @@ atphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &atphy_funcs;
+	sc->mii_oui = MII_OUI(ma->mii_id1, ma->mii_id2);
 	sc->mii_model = MII_MODEL(ma->mii_id2);
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
