@@ -1,4 +1,4 @@
-/* $OpenBSD: imx.c,v 1.21 2016/07/09 12:32:50 kettenis Exp $ */
+/* $OpenBSD: imx.c,v 1.22 2016/07/09 18:14:18 kettenis Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -24,33 +24,20 @@
 #include <arm/mainbus/mainbus.h>
 #include <armv7/armv7/armv7var.h>
 
+#include <dev/ofw/fdt.h>
+
 int	imx_match(struct device *, void *, void *);
 void	imx6_init();
 
 struct cfattach imx_ca = {
-	sizeof(struct armv7_softc), imx_match, armv7_attach, NULL,
-	config_activate_children
+	sizeof(struct armv7_softc), imx_match, armv7_attach
 };
 
 struct cfdriver imx_cd = {
 	NULL, "imx", DV_DULL
 };
 
-struct board_dev hummingboard_devs[] = {
-	{ "imxocotp",	0 },
-	{ "imxccm",	0 },
-	{ "imxiomuxc",	0 },
-	{ "imxgpio",	0 },
-	{ "imxgpio",	1 },
-	{ "imxgpio",	2 },
-	{ "imxgpio",	3 },
-	{ "imxgpio",	4 },
-	{ "imxgpio",	5 },
-	{ "imxgpio",	6 },
-	{ NULL,		0 }
-};
-
-struct board_dev sabrelite_devs[] = {
+struct board_dev imx_devs[] = {
 	{ "imxccm",	0 },
 	{ "imxiomuxc",	0 },
 	{ "imxocotp",	0 },
@@ -64,144 +51,35 @@ struct board_dev sabrelite_devs[] = {
 	{ NULL,		0 }
 };
 
-struct board_dev sabresd_devs[] = {
-	{ "imxocotp",	0 },
-	{ "imxccm",	0 },
-	{ "imxtemp",	0 },
-	{ "imxiomuxc",	0 },
-	{ "imxgpio",	0 },
-	{ "imxgpio",	1 },
-	{ "imxgpio",	2 },
-	{ "imxgpio",	3 },
-	{ "imxgpio",	4 },
-	{ "imxgpio",	5 },
-	{ "imxgpio",	6 },
-	{ NULL,		0 }
-};
-
-struct board_dev udoo_devs[] = {
-	{ "imxocotp",	0 },
-	{ "imxccm",	0 },
-	{ "imxiomuxc",	0 },
-	{ "imxgpio",	0 },
-	{ "imxgpio",	1 },
-	{ "imxgpio",	2 },
-	{ "imxgpio",	3 },
-	{ "imxgpio",	4 },
-	{ "imxgpio",	5 },
-	{ "imxgpio",	6 },
-	{ NULL,		0 }
-};
-
-struct board_dev utilite_devs[] = {
-	{ "imxocotp",	0 },
-	{ "imxccm",	0 },
-	{ "imxiomuxc",	0 },
-	{ "imxgpio",	0 },
-	{ "imxgpio",	1 },
-	{ "imxgpio",	2 },
-	{ "imxgpio",	3 },
-	{ "imxgpio",	4 },
-	{ "imxgpio",	5 },
-	{ "imxgpio",	6 },
-	{ NULL,		0 }
-};
-
-struct board_dev novena_devs[] = {
-	{ "imxccm",	0 },
-	{ "imxiomuxc",	0 },
-	{ "imxocotp",	0 },
-	{ "imxgpio",	0 },
-	{ "imxgpio",	1 },
-	{ "imxgpio",	2 },
-	{ "imxgpio",	3 },
-	{ "imxgpio",	4 },
-	{ "imxgpio",	5 },
-	{ "imxgpio",	6 },
-	{ NULL,		0 }
-};
-
-struct board_dev wandboard_devs[] = {
-	{ "imxccm",	0 },
-	{ "imxiomuxc",	0 },
-	{ "imxocotp",	0 },
-	{ "imxgpio",	0 },
-	{ "imxgpio",	1 },
-	{ "imxgpio",	2 },
-	{ "imxgpio",	3 },
-	{ "imxgpio",	4 },
-	{ "imxgpio",	5 },
-	{ "imxgpio",	6 },
-	{ NULL,		0 }
-};
-
-struct armv7_board imx_boards[] = {
-	{
-		BOARD_ID_IMX6_CUBOXI,
-		hummingboard_devs,
-		imx6_init,
-	},
-	{
-		BOARD_ID_IMX6_HUMMINGBOARD,
-		hummingboard_devs,
-		imx6_init,
-	},
-	{
-		BOARD_ID_IMX6_SABRELITE,
-		sabrelite_devs,
-		imx6_init,
-	},
-	{
-		BOARD_ID_IMX6_SABRESD,
-		sabresd_devs,
-		imx6_init,
-	},
-	{
-		BOARD_ID_IMX6_UDOO,
-		udoo_devs,
-		imx6_init,
-	},
-	{
-		BOARD_ID_IMX6_UTILITE,
-		utilite_devs,
-		imx6_init,
-	},
-	{
-		BOARD_ID_IMX6_NOVENA,
-		novena_devs,
-		imx6_init,
-	},
-	{
-		BOARD_ID_IMX6_WANDBOARD,
-		wandboard_devs,
-		imx6_init,
-	},
-	{ 0, NULL, NULL },
+const char *imx_compatible[] = {
+	"fsl,imx6sl",
+	"fsl,imx6sx",
+	"fsl,imx6dl",
+	"fsl,imx6q",
+	NULL
 };
 
 struct board_dev *
 imx_board_devs(void)
 {
+	void *node;
 	int i;
 
-	for (i = 0; imx_boards[i].board_id != 0; i++) {
-		if (imx_boards[i].board_id == board_id)
-			return (imx_boards[i].devs);
+	node = fdt_find_node("/");
+	if (node == NULL)
+		return NULL;
+
+	for (i = 0; imx_compatible[i] != NULL; i++) {
+		if (fdt_is_compatible(node, imx_compatible[i]))
+			return imx_devs;
 	}
-	return (NULL);
+	return NULL;
 }
 
 void
 imx_board_init(void)
 {
-	int i;
-
-	for (i = 0; imx_boards[i].board_id != 0; i++) {
-		if (imx_boards[i].board_id == board_id) {
-			imx_boards[i].init();
-			break;
-		}
-	}
+	imx6_init();
 }
 
 int
