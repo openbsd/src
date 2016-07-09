@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.169 2016/03/15 20:50:23 krw Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.170 2016/07/09 15:23:36 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -25,7 +25,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
-#include <getopt.h>
 #include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
