@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.72 2016/06/17 10:48:25 dlg Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.73 2016/07/09 17:13:05 stefan Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -67,6 +67,8 @@ static __inline void amap_list_insert(struct vm_amap *);
 static __inline void amap_list_remove(struct vm_amap *);   
 
 struct vm_amap_chunk *amap_chunk_get(struct vm_amap *, int, int, int);
+void amap_chunk_free(struct vm_amap *, struct vm_amap_chunk *);
+void amap_wiperange_chunk(struct vm_amap *, struct vm_amap_chunk *, int, int);
 
 static __inline void
 amap_list_insert(struct vm_amap *amap)
@@ -135,13 +137,21 @@ void
 amap_chunk_free(struct vm_amap *amap, struct vm_amap_chunk *chunk)
 {
 	int bucket = UVM_AMAP_BUCKET(amap, chunk->ac_baseslot);
+	struct vm_amap_chunk *nchunk;
 
 	if (UVM_AMAP_SMALL(amap))
 		return;
 
+	nchunk = TAILQ_NEXT(chunk, ac_list);
 	TAILQ_REMOVE(&amap->am_chunks, chunk, ac_list);
-	if (amap->am_buckets[bucket] == chunk)
-		amap->am_buckets[bucket] = NULL;
+	if (amap->am_buckets[bucket] == chunk) {
+		if (nchunk != NULL &&
+		    UVM_AMAP_BUCKET(amap, nchunk->ac_baseslot) == bucket)
+			amap->am_buckets[bucket] = nchunk;
+		else
+			amap->am_buckets[bucket] = NULL;
+
+	}
 	pool_put(&uvm_amap_chunk_pool, chunk);
 	amap->am_ncused--;
 }
@@ -314,8 +324,10 @@ amap_alloc1(int slots, int waitf, int lazyalloc)
 	amap->am_nslot = slots;
 	amap->am_nused = 0;
 
-	if (UVM_AMAP_SMALL(amap))
+	if (UVM_AMAP_SMALL(amap)) {
+		amap->am_small.ac_nslot = slots;
 		return (amap);
+	}
 
 	amap->am_ncused = 0;
 	TAILQ_INIT(&amap->am_chunks);
@@ -831,6 +843,48 @@ amap_pp_adjref(struct vm_amap *amap, int curslot, vsize_t slotlen, int adjval)
 
 }
 
+void
+amap_wiperange_chunk(struct vm_amap *amap, struct vm_amap_chunk *chunk,
+    int slotoff, int slots)
+{
+	int curslot, i, map;
+	int startbase, endbase;
+	struct vm_anon *anon;
+
+	startbase = AMAP_BASE_SLOT(slotoff);
+	endbase = AMAP_BASE_SLOT(slotoff + slots - 1);
+
+	map = chunk->ac_usedmap;
+	if (startbase == chunk->ac_baseslot)
+		map &= ~((1 << (slotoff - startbase)) - 1);
+	if (endbase == chunk->ac_baseslot)
+		map &= (1 << (slotoff + slots - endbase)) - 1;
+
+	for (i = ffs(map); i != 0; i = ffs(map)) {
+		int refs;
+
+		curslot = i - 1;
+		map ^= 1 << curslot;
+		chunk->ac_usedmap ^= 1 << curslot;
+		anon = chunk->ac_anon[curslot];
+
+		/* remove it from the amap */
+		chunk->ac_anon[curslot] = NULL;
+
+		amap->am_nused--;
+
+		/* drop anon reference count */
+		refs = --anon->an_ref;
+		if (refs == 0) {
+			/*
+			 * we just eliminated the last reference to an
+			 * anon.  free it.
+			 */
+			uvm_anfree(anon);
+		}
+	}
+}
+
 /*
  * amap_wiperange: wipe out a range of an amap
  * [different from amap_wipeout because the amap is kept intact]
@@ -838,83 +892,50 @@ amap_pp_adjref(struct vm_amap *amap, int curslot, vsize_t slotlen, int adjval)
 void
 amap_wiperange(struct vm_amap *amap, int slotoff, int slots)
 {
-	int curslot, i, map, bybucket;
 	int bucket, startbucket, endbucket;
-	int startbase, endbase;
-	struct vm_anon *anon;
 	struct vm_amap_chunk *chunk, *nchunk;
 
 	/*
 	 * we can either traverse the amap by am_chunks or by am_buckets
 	 * depending on which is cheaper.    decide now.
 	 */
-	startbucket = UVM_AMAP_BUCKET(amap, slotoff);
-	endbucket = UVM_AMAP_BUCKET(amap, slotoff + slots - 1);
-
-	if (UVM_AMAP_SMALL(amap)) {
-		bybucket = FALSE;
-		chunk = &amap->am_small;
-	} else if (endbucket + 1 - startbucket >= amap->am_ncused) {
-		bybucket = FALSE;
-		chunk = TAILQ_FIRST(&amap->am_chunks);
-	} else {
-		bybucket = TRUE;
-		bucket = startbucket;
-		chunk = amap->am_buckets[bucket];
-	}
-
-	startbase = AMAP_BASE_SLOT(slotoff);
-	endbase = AMAP_BASE_SLOT(slotoff + slots - 1);
-	for (;;) {
-		if (chunk == NULL || (bybucket &&
-		    UVM_AMAP_BUCKET(amap, chunk->ac_baseslot) != bucket)) {
-			if (!bybucket || bucket >= endbucket)
-				break;
-			bucket++;
-			chunk = amap->am_buckets[bucket];
-			continue;
-		} else if (!bybucket) {
+	if (UVM_AMAP_SMALL(amap))
+		amap_wiperange_chunk(amap, &amap->am_small, slotoff, slots);
+	else if (endbucket + 1 - startbucket >= amap->am_ncused) {
+		TAILQ_FOREACH_SAFE(chunk, &amap->am_chunks, ac_list, nchunk) {
 			if (chunk->ac_baseslot + chunk->ac_nslot <= slotoff)
-				goto next;
+				continue;
 			if (chunk->ac_baseslot >= slotoff + slots)
-				goto next;
+				continue;
+
+			amap_wiperange_chunk(amap, chunk, slotoff, slots);
+			if (chunk->ac_usedmap == 0)
+				amap_chunk_free(amap, chunk);
 		}
+	} else {
+		startbucket = UVM_AMAP_BUCKET(amap, slotoff);
+		endbucket = UVM_AMAP_BUCKET(amap, slotoff + slots - 1);
 
-		map = chunk->ac_usedmap;
-		if (startbase == chunk->ac_baseslot)
-			map &= ~((1 << (slotoff - startbase)) - 1);
-		if (endbase == chunk->ac_baseslot)
-			map &= (1 << (slotoff + slots - endbase)) - 1;
+		for (bucket = startbucket; bucket <= endbucket; bucket++) {
+			for (chunk = amap->am_buckets[bucket]; chunk != NULL;
+			    chunk = nchunk) {
+				nchunk = TAILQ_NEXT(chunk, ac_list);
 
-		for (i = ffs(map); i != 0; i = ffs(map)) {
-			int refs;
+				if (UVM_AMAP_BUCKET(amap, chunk->ac_baseslot) !=
+				    bucket)
+					break;
+				if (chunk->ac_baseslot + chunk->ac_nslot <=
+				    slotoff)
+					continue;
+				if (chunk->ac_baseslot >= slotoff + slots)
+					continue;
 
-			curslot = i - 1;
-			map ^= 1 << curslot;
-			chunk->ac_usedmap ^= 1 << curslot;
-			anon = chunk->ac_anon[curslot];
-
-			/* remove it from the amap */
-			chunk->ac_anon[curslot] = NULL;
-
-			amap->am_nused--;
-
-			/* drop anon reference count */
-			refs = --anon->an_ref;
-			if (refs == 0) {
-				/*
-				 * we just eliminated the last reference to an
-				 * anon.  free it.
-				 */
-				uvm_anfree(anon);
+				amap_wiperange_chunk(amap, chunk, slotoff,
+				    slots);
+				if (chunk->ac_usedmap == 0)
+					amap_chunk_free(amap, chunk);
 			}
 		}
-
-next:
-		nchunk = TAILQ_NEXT(chunk, ac_list);
-		if (chunk->ac_usedmap == 0)
-			amap_chunk_free(amap, chunk);
-		chunk = nchunk;
 	}
 }
 
