@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.16 2016/07/08 18:20:48 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.17 2016/07/09 12:31:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -35,6 +35,7 @@ void	*skip_node_name(u_int32_t *);
 void	*skip_node(void *);
 void	*skip_nops(u_int32_t *);
 void	*fdt_parent_node_recurse(void *, void *);
+void	*fdt_find_phandle_recurse(void *, uint32_t);
 int	 fdt_node_property_int(void *, char *, int *);
 int	 fdt_node_property_ints(void *, char *, int *, int);
 int	 fdt_translate_memory_address(void *, struct fdt_memory *);
@@ -443,6 +444,34 @@ fdt_parent_node(void *node)
 	return fdt_parent_node_recurse(pnode, node);
 }
 
+void *
+fdt_find_phandle_recurse(void *node, uint32_t phandle)
+{
+	void *child;
+	char *data;
+	void *tmp;
+	int len;
+
+	len = fdt_node_property(node, "phandle", &data);
+	if (len < 0)
+		len = fdt_node_property(node, "linux,phandle", &data);
+
+	if (len == sizeof(uint32_t) && bemtoh32(data) == phandle)
+		return node;
+
+	for (child = fdt_child_node(node); child; child = fdt_next_node(child))
+		if ((tmp = fdt_find_phandle_recurse(child, phandle)))
+			return tmp;
+
+	return NULL;
+}
+
+void *
+fdt_find_phandle(uint32_t phandle)
+{
+	return fdt_find_phandle_recurse(fdt_next_node(0), phandle);
+}
+
 /*
  * Translate memory address depending on parent's range.
  *
@@ -748,6 +777,15 @@ OF_getnodebyname(int handle, const char *name)
 		node = fdt_next_node(node);
 	}
 
+	return node ? ((char *)node - (char *)tree.header) : 0;
+}
+
+int
+OF_getnodebyphandle(uint32_t phandle)
+{
+	void *node;
+
+	node = fdt_find_phandle(phandle);
 	return node ? ((char *)node - (char *)tree.header) : 0;
 }
 
