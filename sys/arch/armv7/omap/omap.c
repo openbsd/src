@@ -1,4 +1,4 @@
-/* $OpenBSD: omap.c,v 1.15 2016/06/26 09:06:35 jsg Exp $ */
+/* $OpenBSD: omap.c,v 1.16 2016/07/10 03:04:00 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -23,6 +23,8 @@
 #include <arm/mainbus/mainbus.h>
 #include <armv7/armv7/armv7var.h>
 
+#include <dev/ofw/fdt.h>
+
 int	omap_match(struct device *, void *, void *);
 void	omap3_init();
 void	omap4_init();
@@ -36,7 +38,7 @@ struct cfdriver omap_cd = {
 	NULL, "omap", DV_DULL
 };
 
-struct board_dev beagleboard_devs[] = {
+struct board_dev omap3_dev[] = {
 	{ "prcm",	0 },
 	{ "intc",	0 },
 	{ "gptimer",	0 },
@@ -50,7 +52,7 @@ struct board_dev beagleboard_devs[] = {
 	{ NULL,		0 }
 };
 
-struct board_dev beaglebone_devs[] = {
+struct board_dev am33xx_dev[] = {
 	{ "prcm",	0 },
 	{ "sitaracm",	0 },
 	{ "intc",	0 },
@@ -64,21 +66,7 @@ struct board_dev beaglebone_devs[] = {
 	{ NULL,		0 }
 };
 
-struct board_dev overo_devs[] = {
-	{ "prcm",	0 },
-	{ "intc",	0 },
-	{ "gptimer",	0 },
-	{ "gptimer",	1 },
-	{ "omgpio",	0 },
-	{ "omgpio",	1 },
-	{ "omgpio",	2 },
-	{ "omgpio",	3 },
-	{ "omgpio",	4 },
-	{ "omgpio",	5 },
-	{ NULL,		0 }
-};
-
-struct board_dev pandaboard_devs[] = {
+struct board_dev omap4_dev[] = {
 	{ "omapid",	0 },
 	{ "prcm",	0 },
 	{ "omgpio",	0 },
@@ -91,50 +79,61 @@ struct board_dev pandaboard_devs[] = {
 	{ NULL,		0 }
 };
 
-struct armv7_board omap_boards[] = {
+struct omap_soc {
+	char			*compatible;
+	struct board_dev	*devs;
+	void			(*init)(void);
+};
+
+struct omap_soc omap_socs[] = {
 	{
-		BOARD_ID_OMAP3_BEAGLE,
-		beagleboard_devs,
+		"ti,omap3",
+		omap3_dev,
 		omap3_init,
 	},
 	{
-		BOARD_ID_AM335X_BEAGLEBONE,
-		beaglebone_devs,
+		"ti,am33xx",
+		am33xx_dev,
 		am335x_init,
 	},
 	{
-		BOARD_ID_OMAP3_OVERO,
-		overo_devs,
-		omap3_init,
-	},
-	{
-		BOARD_ID_OMAP4_PANDA,
-		pandaboard_devs,
+		"ti,omap4",
+		omap4_dev,
 		omap4_init,
 	},
-	{ 0, NULL, NULL },
+	{ NULL, NULL, NULL },
 };
 
 struct board_dev *
 omap_board_devs(void)
 {
+	void *node;
 	int i;
 
-	for (i = 0; omap_boards[i].board_id != 0; i++) {
-		if (omap_boards[i].board_id == board_id)
-			return (omap_boards[i].devs);
+	node = fdt_find_node("/");
+	if (node == NULL)
+		return NULL;
+
+	for (i = 0; omap_socs[i].compatible != NULL; i++) {
+		if (fdt_is_compatible(node, omap_socs[i].compatible))
+			return omap_socs[i].devs;
 	}
-	return (NULL);
+	return NULL;
 }
 
 void
 omap_board_init(void)
 {
+	void *node;
 	int i;
 
-	for (i = 0; omap_boards[i].board_id != 0; i++) {
-		if (omap_boards[i].board_id == board_id) {
-			omap_boards[i].init();
+	node = fdt_find_node("/");
+	if (node == NULL)
+		return;
+
+	for (i = 0; omap_socs[i].compatible != NULL; i++) {
+		if (fdt_is_compatible(node, omap_socs[i].compatible)) {
+			omap_socs[i].init();
 			break;
 		}
 	}
