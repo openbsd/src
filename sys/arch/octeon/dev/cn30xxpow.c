@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpow.c,v 1.7 2014/08/11 18:56:49 miod Exp $	*/
+/*	$OpenBSD: cn30xxpow.c,v 1.8 2016/07/10 10:18:58 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -135,7 +135,7 @@ cn30xxpow_work_response_async(uint64_t scraddr)
 {
 	uint64_t result;
 
-	mips_sync();
+	octeon_synciobdma();
 	result = octeon_cvmseg_read_8(scraddr);
 
 	return (result & POW_IOBDMA_GET_WORK_RESULT_NO_WORK) ?

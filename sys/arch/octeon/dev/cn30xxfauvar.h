@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfauvar.h,v 1.2 2013/06/01 22:20:35 jasper Exp $	*/
+/*	$OpenBSD: cn30xxfauvar.h,v 1.3 2016/07/10 10:18:58 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -125,7 +125,7 @@ cn30xxfau_op_inc_fetch_8(struct cn30xxfau_desc *fd, int64_t v)
 static inline int64_t
 cn30xxfau_op_inc_read_8(struct cn30xxfau_desc *fd)
 {
-	mips_sync();
+	octeon_synciobdma();
 	return octeon_cvmseg_read_8(fd->fd_scroff);
 }
 
