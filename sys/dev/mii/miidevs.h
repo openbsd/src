@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.128 2016/07/08 08:30:53 kettenis Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.129 2016/07/10 20:18:56 kettenis Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.125 2016/07/08 08:30:06 kettenis Exp 
+ *	OpenBSD: miidevs,v 1.126 2016/07/10 20:18:15 kettenis Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -46,6 +46,7 @@
 #define	MII_OUI_VITESSE	0x0001c1	/* Vitesse */
 #define	MII_OUI_CICADA	0x0003f1	/* Cicada */
 #define	MII_OUI_CENIX	0x000749	/* CENiX */
+#define	MII_OUI_MICREL	0x000885	/* Micrel */
 #define	MII_OUI_BROADCOM2	0x000af7	/* Broadcom */
 #define	MII_OUI_RDC	0x000bb4	/* RDC Semi. */
 #define	MII_OUI_ASIX	0x000ec6	/* ASIX */
@@ -379,6 +380,12 @@
 #define	MII_STR_MARVELL_E3016	"88E3016 10/100 PHY"
 #define	MII_MODEL_MARVELL_PHYG65G	0x0027
 #define	MII_STR_MARVELL_PHYG65G	"PHYG65G Gigabit PHY"
+
+/* Micrel PHYs */
+#define	MII_MODEL_MICREL_KSZ9021	0x0021
+#define	MII_STR_MICREL_KSZ9021	"KSZ9021 10/100/1000 PHY"
+#define	MII_MODEL_MICREL_KSZ9031	0x0022
+#define	MII_STR_MICREL_KSZ9031	"KSZ9031 10/100/1000 PHY"
 
 /* Myson PHYs */
 #define	MII_MODEL_MYSON_MTD972	0x0000
