@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.175 2016/07/10 00:39:23 guenther Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.176 2016/07/10 14:21:24 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -79,7 +79,7 @@
 #include "drm.h"
 #endif
 
-int pledgereq_flags(const char *req);
+uint64_t pledgereq_flags(const char *req);
 int canonpath(const char *input, char *buf, size_t bufsize);
 int substrcmp(const char *p1, size_t s1, const char *p2, size_t s2);
 int resolvpath(struct proc *p, char **rdir, size_t *rdirlen, char **cwd,
@@ -404,7 +404,7 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, request)) {
 		size_t rbuflen;
 		char *rbuf, *rp, *pn;
-		int f;
+		uint64_t f;
 
 		rbuf = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 		error = copyinstr(SCARG(uap, request), rbuf, MAXPATHLEN,
@@ -1515,7 +1515,7 @@ pledge_swapctl(struct proc *p)
 }
 
 /* bsearch over pledgereq. return flags value if found, 0 else */
-int
+uint64_t
 pledgereq_flags(const char *req_name)
 {
 	int base = 0, cmp, i, lim;
