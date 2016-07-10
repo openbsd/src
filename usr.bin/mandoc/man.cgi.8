@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.cgi.8,v 1.17 2016/07/07 14:32:24 schwarze Exp $
+.\"	$OpenBSD: man.cgi.8,v 1.18 2016/07/10 10:03:15 schwarze Exp $
 .\"
 .\" Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2016 $
+.Dd $Mdocdate: July 10 2016 $
 .Dt MAN.CGI 8
 .Os
 .Sh NAME
@@ -220,13 +220,16 @@ run
 .Pp
 .Dl make man.cgi
 .Pp
-and copy the files to the proper locations.
-Reading the
-.Cm installcgi
-target in the
-.Pa Makefile
-can help with that, but do not run it without carefully checking it
-because the directory layouts of web servers vary greatly.
+and copy the resulting binary to the proper location,
+for example using the command:
+.Pp
+.Dl make installcgi
+.Pp
+In addition to that, make sure the default manpath contains the files
+.Pa man1/apropos.1
+and
+.Pa man8/man.cgi.8 ,
+or the documentation links at the bottom of the index page will not work.
 .Ss URI interface
 .Nm
 uniform resource identifiers are not needed for interactive use,
@@ -367,10 +370,6 @@ Default
 data directory containing all the manual trees.
 Can be overridden by
 .Dv MAN_DIR .
-.It Pa /man/mandoc/man1/apropos.1 , /man/mandoc/man8/man.cgi.8
-Manual pages documenting
-.Nm
-itself, linked from the index page.
 .It Pa /man/manpath.conf
 The list of available manpaths, one per line.
 If any of the lines in this file contains a slash

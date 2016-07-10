@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.72 2016/07/09 19:44:52 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.73 2016/07/10 10:03:15 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@usta.de>
@@ -468,9 +468,6 @@ validate_manpath(const struct req *req, const char* manpath)
 {
 	size_t	 i;
 
-	if ( ! strcmp(manpath, "mandoc"))
-		return 1;
-
 	for (i = 0; i < req->psz; i++)
 		if ( ! strcmp(manpath, req->p[i]))
 			return 1;
@@ -497,9 +494,9 @@ pg_index(const struct req *req)
 	resp_searchform(req, FOCUS_QUERY);
 	printf("<p>\n"
 	       "This web interface is documented in the\n"
-	       "<a href=\"/%s%smandoc/man8/man.cgi.8\">man.cgi</a>\n"
+	       "<a href=\"/%s%sman.cgi.8\">man.cgi(8)</a>\n"
 	       "manual, and the\n"
-	       "<a href=\"/%s%smandoc/man1/apropos.1\">apropos</a>\n"
+	       "<a href=\"/%s%sapropos.1\">apropos(1)</a>\n"
 	       "manual explains the query syntax.\n"
 	       "</p>\n",
 	       scriptname, *scriptname == '\0' ? "" : "/",
@@ -882,12 +879,7 @@ pg_show(struct req *req, const char *fullpath)
 		free(manpath);
 		return;
 	}
-
-	if (strcmp(manpath, "mandoc")) {
-		free(req->q.manpath);
-		req->q.manpath = manpath;
-	} else
-		free(manpath);
+	free(manpath);
 
 	if ( ! validate_filename(file)) {
 		pg_error_badrequest(
