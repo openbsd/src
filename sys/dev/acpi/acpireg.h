@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.35 2016/05/07 18:03:36 kettenis Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.36 2016/07/10 20:36:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -338,7 +338,7 @@ struct acpi_madt_x2apic {
 	u_int8_t	reserved[2];
 	u_int32_t	apic_id;
 	u_int32_t	flags;		/* Same flags as acpi_madt_lapic */
-	u_int32_t	apic_proc_uid;
+	u_int32_t	acpi_proc_uid;
 } __packed;
 
 struct acpi_madt_x2apic_nmi {
