@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cat.1,v 1.35 2015/11/04 21:28:01 tedu Exp $
+.\"	$OpenBSD: cat.1,v 1.36 2016/07/10 00:15:39 tedu Exp $
 .\"	$NetBSD: cat.1,v 1.12 1995/09/27 05:38:55 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)cat.1	8.3 (Berkeley) 5/2/95
 .\"
-.Dd $Mdocdate: November 4 2015 $
+.Dd $Mdocdate: July 10 2016 $
 .Dt CAT 1
 .Os
 .Sh NAME
@@ -61,25 +61,25 @@ reads from the standard input.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl b
-Implies the
-.Fl n
-option but doesn't count blank lines.
+Number the lines, but don't count blank lines.
 .It Fl e
-Implies the
-.Fl v
-option and also prints a dollar sign
+Print a dollar sign
 .Pq Ql \&$
 at the end of each line.
+Implies the
+.Fl v
+option to display non-printing characters.
 .It Fl n
 Number the output lines, starting at 1.
 .It Fl s
 Squeeze multiple adjacent empty lines, causing the output to be
 single spaced.
 .It Fl t
+Print tab characters as
+.Ql ^I .
 Implies the
 .Fl v
-option and also prints tab characters as
-.Ql ^I .
+option to display non-printing characters.
 .It Fl u
 The output is guaranteed to be unbuffered (see
 .Xr setvbuf 3 ) .
@@ -89,9 +89,6 @@ Control characters print as
 .Ql ^X
 for control-X, with the exception of the tab and EOL characters,
 which are displayed normally.
-The tab character, control-I, can be made visible via the
-.Fl t
-option.
 The DEL character (octal 0177) prints as
 .Ql ^? .
 Non-ASCII characters (with the high bit set) are printed as
