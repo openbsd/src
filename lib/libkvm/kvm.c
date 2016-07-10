@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.61 2016/05/14 14:24:54 kettenis Exp $ */
+/*	$OpenBSD: kvm.c,v 1.62 2016/07/10 23:06:48 tedu Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -44,6 +44,7 @@
 #include <sys/exec.h>
 #include <sys/kcore.h>
 
+#include <stddef.h>
 #include <errno.h>
 #include <ctype.h>
 #include <db.h>
@@ -791,9 +792,9 @@ kvm_nlist(kvm_t *kd, struct nlist *nl)
 		/*
 		 * Avoid alignment issues.
 		 */
-		bcopy(&((struct nlist *)rec.data)->n_type,
+		bcopy((char *)rec.data + offsetof(struct nlist, n_type),
 		    &p->n_type, sizeof(p->n_type));
-		bcopy(&((struct nlist *)rec.data)->n_value,
+		bcopy((char *)rec.data + offsetof(struct nlist, n_value),
 		    &p->n_value, sizeof(p->n_value));
 	}
 	/*
