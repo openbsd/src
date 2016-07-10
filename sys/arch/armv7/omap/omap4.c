@@ -1,4 +1,4 @@
-/* $OpenBSD: omap4.c,v 1.3 2013/11/06 19:03:07 syl Exp $ */
+/* $OpenBSD: omap4.c,v 1.4 2016/07/10 02:55:15 jsg Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -27,9 +27,6 @@
 #define OMAPID_ADDR	0x4a002000
 #define OMAPID_SIZE	0x1000
 
-#define WD_ADDR		0x4a314000
-#define WD_SIZE		0x80
-
 #define GPIOx_SIZE	0x1000
 #define GPIO1_ADDR	0x4a310000
 #define GPIO2_ADDR	0x48055000
@@ -44,21 +41,6 @@
 #define GPIO4_IRQ	32
 #define GPIO5_IRQ	33
 #define GPIO6_IRQ	34
-
-#define UARTx_SIZE	0x400
-#define UART1_ADDR	0x4806A000
-#define UART2_ADDR	0x4806C000
-#define UART3_ADDR	0x48020000
-#define UART4_ADDR	0x4806E000
-
-#define UART1_IRQ	72
-#define UART2_IRQ	73
-#define UART3_IRQ	74
-#define UART4_IRQ	70
-
-#define HSMMCx_SIZE	0x200
-#define HSMMC1_ADDR	0x4809c100
-#define HSMMC1_IRQ	83
 
 #define PRM_ADDR	0x4a306000
 #define PRM_SIZE	0x2000
@@ -143,35 +125,6 @@ struct armv7_dev omap4_devs[] = {
 	  .unit = 5,
 	  .mem = { { GPIO6_ADDR, GPIOx_SIZE } },
 	  .irq = { GPIO6_IRQ }
-	},
-
-	/*
-	 * Watchdog Timer
-	 */
-
-	{ .name = "omdog",
-	  .unit = 0,
-	  .mem = { { WD_ADDR, WD_SIZE } }
-	},
-
-	/*
-	 * UART
-	 */
-
-	{ .name = "com",
-	  .unit = 2,
-	  .mem = { { UART3_ADDR, UARTx_SIZE } },
-	  .irq = { UART3_IRQ }
-	},
-
-	/*
-	 * MMC
-	 */
-
-	{ .name = "ommmc",
-	  .unit = 0,
-	  .mem = { { HSMMC1_ADDR, HSMMCx_SIZE } },
-	  .irq = { HSMMC1_IRQ }
 	},
 
 	/*

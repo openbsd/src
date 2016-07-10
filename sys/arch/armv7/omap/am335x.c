@@ -1,4 +1,4 @@
-/* $OpenBSD: am335x.c,v 1.7 2014/03/18 07:34:17 syl Exp $ */
+/* $OpenBSD: am335x.c,v 1.8 2016/07/10 02:55:15 jsg Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -50,10 +50,6 @@
 #define DMTIMER6_IRQ	94
 #define DMTIMER7_IRQ	95
 
-#define WD_SIZE		0x80
-#define WD_ADDR		0x44E35000
-#define WD_IRQ		91
-
 #define GPIOx_SIZE	0x200
 #define GPIO0_ADDR	0x44E07000
 #define GPIO1_ADDR	0x4804C000
@@ -72,38 +68,6 @@
 #define EDMACOMP_IRQ	12
 #define EDMAMPERR_IRQ	13
 #define EDMAERR_IRQ	14
-
-#define UARTx_SIZE	0x90
-#define UART0_ADDR	0x44E09000
-#define UART1_ADDR	0x48022000
-#define UART2_ADDR	0x48024000
-#define UART3_ADDR	0x481A6000
-#define UART4_ADDR	0x481A8000
-#define UART5_ADDR	0x481AA000
-#define UART0_IRQ	72
-#define UART1_IRQ	73
-#define UART2_IRQ	74
-#define UART3_IRQ	44
-#define UART4_IRQ	45
-#define UART5_IRQ	46
-
-#define HSMMCx_SIZE	0x200
-#define HSMMC0_ADDR	0x48060100
-#define HSMMC1_ADDR	0x481d8100
-#define HSMMC0_IRQ	64
-#define HSMMC1_IRQ	28
-
-#define CPSW_SIZE	0x4000
-#define CPSW_ADDR	0x4A100000
-#define CPSW_IRQ	40
-
-#define IICx_SIZE	0x1000
-#define IIC0_ADDR	0x44e0b000
-#define IIC1_ADDR	0x4802a000
-#define IIC2_ADDR	0x4819c000
-#define IIC0_IRQ	70
-#define IIC1_IRQ	71
-#define IIC2_IRQ	30
 
 struct armv7_dev am335x_devs[] = {
 
@@ -160,25 +124,6 @@ struct armv7_dev am335x_devs[] = {
 	},
 
 	/*
-	 * Watchdog Timer
-	 */
-
-	{ .name = "omdog",
-	  .unit = 0,
-	  .mem = { { WD_ADDR, WD_SIZE } }
-	},
-
-	/*
-	 * UART
-	 */
-
-	{ .name = "com",
-	  .unit = 0,
-	  .mem = { { UART0_ADDR, UARTx_SIZE } },
-	  .irq = { UART0_IRQ }
-	},
-
-	/*
 	 * GPIO 
 	 */
 
@@ -204,51 +149,6 @@ struct armv7_dev am335x_devs[] = {
 	  .unit = 3,
 	  .mem = { { GPIO3_ADDR, GPIOx_SIZE } },
 	  .irq = { GPIO3_IRQ }
-	},
-
-	/*
-	 * IIC 
-	 */
-
-	{ .name = "tiiic",
-	  .unit = 0,
-	  .mem = { { IIC0_ADDR, IICx_SIZE } },
-	  .irq = { IIC0_IRQ }
-	},
-
-	{ .name = "tiiic",
-	  .unit = 1,
-	  .mem = { { IIC1_ADDR, IICx_SIZE } },
-	  .irq = { IIC1_IRQ }
-	},
-
-	{ .name = "tiiic",
-	  .unit = 2,
-	  .mem = { { IIC2_ADDR, IICx_SIZE } },
-	  .irq = { IIC2_IRQ }
-	},
-
-	/*
-	 * MMC
-	 */
-
-	{ .name = "ommmc",
-	  .unit = 0,
-	  .mem = { { HSMMC0_ADDR, HSMMCx_SIZE } },
-	  .irq = { HSMMC0_IRQ }
-	},
-
-	{ .name = "ommmc",
-	  .unit = 1,
-	  .mem = { { HSMMC1_ADDR, HSMMCx_SIZE } },
-	  .irq = { HSMMC1_IRQ }
-	},
-
-	/* cpsw Ethernet */
-	{ .name = "cpsw",
-	  .unit = 0,
-	  .mem = { { CPSW_ADDR, CPSW_SIZE } },
-	  .irq = { CPSW_IRQ }
 	},
 
 	/* Terminator */
