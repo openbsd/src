@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.55 2015/08/29 22:13:56 deraadt Exp $
+#	$OpenBSD: airport,v 1.56 2016/07/10 13:52:27 schwarze Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1114,7 +1114,7 @@ MOB:Mobile Municipal/Bates Field, Alabama, USA
 MOD:Harry Sham Feild, Modesto, California, USA
 MOL:Aro, Molde, Norway
 MOT:Minot, North Dakota, USA
-MOW:All Airports around Moskow, Russia
+MOW:All Airports around Moscow, Russia
 MPA:Mpacha, Namibia
 MPB:Miami Public Seaplane Base, Florida, USA
 MPL:Frejorgues, Montpellier, France
