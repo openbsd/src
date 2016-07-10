@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.33 2015/08/25 07:00:11 deraadt Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.34 2016/07/10 20:41:19 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -289,6 +289,42 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		case ACPI_MADT_LAPIC_NMI:
 			nlapic_nmis++;
+			break;
+		case ACPI_MADT_X2APIC:
+			dprintf("%s: X2APIC: acpi_proc_uid %x, apic_id %x, flags 0x%x\n",
+			    self->dv_xname, entry->madt_x2apic.acpi_proc_uid,
+			    entry->madt_x2apic.apic_id,
+			    entry->madt_x2apic.flags);
+
+			if (entry->madt_x2apic.apic_id > 255 ||
+			    (entry->madt_x2apic.flags & ACPI_PROC_ENABLE) == 0)
+				break;
+
+			memset(&caa, 0, sizeof(struct cpu_attach_args));
+			if (lapic_cpu_number() == entry->madt_x2apic.apic_id)
+				caa.cpu_role = CPU_ROLE_BP;
+			else {
+				caa.cpu_role = CPU_ROLE_AP;
+				ncpusfound++;
+			}
+			caa.caa_name = "cpu";
+			caa.cpu_number = entry->madt_x2apic.apic_id;
+#ifdef MULTIPROCESSOR
+			caa.cpu_func = &mp_cpu_funcs;
+#endif
+#ifdef __i386__
+			/*
+			 * XXX utterly wrong.  These are the
+			 * cpu_feature/cpu_id from the BSP cpu, now
+			 * being given to another cpu.  This is
+			 * bullshit.
+			 */
+			extern int cpu_id, cpu_feature;
+			caa.cpu_signature = cpu_id;
+			caa.feature_flags = cpu_feature;
+#endif
+
+			config_found(mainbus, &caa, acpimadt_print);
 			break;
 		}
 		addr += entry->madt_lapic.length;
