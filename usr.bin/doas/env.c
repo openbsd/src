@@ -1,4 +1,4 @@
-/* $OpenBSD: env.c,v 1.3 2016/06/27 15:41:17 tedu Exp $ */
+/* $OpenBSD: env.c,v 1.4 2016/07/10 03:24:31 tedu Exp $ */
 /*
  * Copyright (c) 2016 Ted Unangst <tedu@openbsd.org>
  *
@@ -87,7 +87,7 @@ createenv(struct rule *rule)
 			struct envnode *node;
 			const char *e, *eq;
 			size_t len;
-			char keybuf[1024];
+			char name[1024];
 
 			e = environ[i];
 
@@ -95,12 +95,12 @@ createenv(struct rule *rule)
 			if ((eq = strchr(e, '=')) == NULL || eq == e)
 				continue;
 			len = eq - e;
-			if (len > sizeof(keybuf) - 1)
+			if (len > sizeof(name) - 1)
 				continue;
-			memcpy(keybuf, e, len);
-			keybuf[len] = '\0';
+			memcpy(name, e, len);
+			name[len] = '\0';
 
-			node = createnode(keybuf, eq + 1);
+			node = createnode(name, eq + 1);
 			if (RB_INSERT(envtree, &env->root, node)) {
 				/* ignore any later duplicates */
 				freenode(node);
