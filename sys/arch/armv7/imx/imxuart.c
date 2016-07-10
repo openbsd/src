@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.6 2016/06/11 14:26:18 jsg Exp $ */
+/* $OpenBSD: imxuart.c,v 1.7 2016/07/10 11:46:28 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -44,6 +44,7 @@
 #include <armv7/armv7/armv7var.h>
 #include <armv7/armv7/armv7_machdep.h>
 #include <armv7/imx/imxccmvar.h>
+#include <armv7/imx/imxiomuxcvar.h>
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
@@ -164,6 +165,8 @@ imxuart_attach(struct device *parent, struct device *self, void *aux)
 
 	if (faa->fa_nreg < 2 || faa->fa_nintr < 3)
 		return;
+
+	imxiomuxc_pinctrlbyname(faa->fa_node, "default");
 
 	sc->sc_irq = arm_intr_establish(faa->fa_intr[1], IPL_TTY,
 	    imxuart_intr, sc, sc->sc_dev.dv_xname);

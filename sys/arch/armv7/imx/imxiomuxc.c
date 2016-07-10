@@ -1,6 +1,7 @@
-/* $OpenBSD: imxiomuxc.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
+/* $OpenBSD: imxiomuxc.c,v 1.3 2016/07/10 11:46:28 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
+ * Copyright (c) 2016 Mark Kettenus <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,36 +24,20 @@
 #include <sys/evcount.h>
 #include <sys/socket.h>
 #include <sys/timeout.h>
+
 #include <machine/intr.h>
 #include <machine/bus.h>
+
 #include <armv7/armv7/armv7var.h>
+#include <armv7/imx/imxiomuxcvar.h>
+
+#include <dev/ofw/openfirm.h>
 
 /* registers */
 #define IOMUXC_GPR1			0x004
 #define IOMUXC_GPR8			0x020
 #define IOMUXC_GPR12			0x030
 #define IOMUXC_GPR13			0x034
-
-#define IOMUXC_MUX_CTL_PAD_EIM_EB2	0x08C
-#define IOMUXC_MUX_CTL_PAD_EIM_DATA16	0x090
-#define IOMUXC_MUX_CTL_PAD_EIM_DATA17	0x094
-#define IOMUXC_MUX_CTL_PAD_EIM_DATA18	0x098
-#define IOMUXC_MUX_CTL_PAD_EIM_DATA21	0x0A4
-#define IOMUXC_MUX_CTL_PAD_EIM_DATA28	0x0C4
-
-#define IOMUXC_PAD_CTL_PAD_EIM_EB2	0x3A0
-#define IOMUXC_PAD_CTL_PAD_EIM_DATA16	0x3A4
-#define IOMUXC_PAD_CTL_PAD_EIM_DATA17	0x3A8
-#define IOMUXC_PAD_CTL_PAD_EIM_DATA18	0x3AC
-#define IOMUXC_PAD_CTL_PAD_EIM_DATA21	0x3B8
-#define IOMUXC_PAD_CTL_PAD_EIM_DATA28	0x3D8
-
-#define IOMUXC_I2C1_SCL_IN_SELECT_INPUT	0x898
-#define IOMUXC_I2C1_SDA_IN_SELECT_INPUT	0x89C
-#define IOMUXC_I2C2_SCL_IN_SELECT_INPUT	0x8A0
-#define IOMUXC_I2C2_SDA_IN_SELECT_INPUT	0x8A4
-#define IOMUXC_I2C3_SCL_IN_SELECT_INPUT	0x8A8
-#define IOMUXC_I2C3_SDA_IN_SELECT_INPUT	0x8AC
 
 /* bits and bytes */
 #define IOMUXC_GPR1_REF_SSP_EN					(1 << 16)
@@ -119,6 +104,9 @@
 
 #define IOMUX_CONFIG_SION		(1 << 4)
 
+#define IMX_PINCTRL_NO_PAD_CTL		(1 << 31)
+#define IMX_PINCTRL_SION		(1 << 30)
+
 struct imxiomuxc_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
@@ -128,11 +116,7 @@ struct imxiomuxc_softc {
 struct imxiomuxc_softc *imxiomuxc_sc;
 
 void imxiomuxc_attach(struct device *parent, struct device *self, void *args);
-void imxiomuxc_enable_sata(void);
-void imxiomuxc_enable_i2c(int);
-void imxiomuxc_enable_pcie(void);
-void imxiomuxc_pcie_refclk(int);
-void imxiomuxc_pcie_test_powerdown(int);
+int imxiomuxc_pinctrl(uint32_t);
 
 struct cfattach imxiomuxc_ca = {
 	sizeof (struct imxiomuxc_softc), NULL, imxiomuxc_attach
@@ -155,6 +139,123 @@ imxiomuxc_attach(struct device *parent, struct device *self, void *args)
 
 	printf("\n");
 	imxiomuxc_sc = sc;
+}
+
+int
+imxiomuxc_pinctrlbyid(int node, int id)
+{
+	char pinctrl[32];
+	uint32_t *phandles;
+	int len, i;
+
+	snprintf(pinctrl, sizeof(pinctrl), "pinctrl-%d", id);
+	len = OF_getproplen(node, pinctrl);
+	if (len <= 0)
+		return -1;
+
+	phandles = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, pinctrl, phandles, len);
+	for (i = 0; i < len / sizeof(uint32_t); i++)
+		imxiomuxc_pinctrl(phandles[i]);
+	free(phandles, M_TEMP, len);
+	return 0;
+}
+
+int
+imxiomuxc_pinctrlbyname(int node, const char *config)
+{
+	char *names;
+	char *name;
+	char *end;
+	int id = 0;
+	int len;
+
+	len = OF_getproplen(node, "pinctrl-names");
+	if (len <= 0)
+		printf("no pinctrl-names\n");
+
+	names = malloc(len, M_TEMP, M_WAITOK);
+	OF_getprop(node, "pinctrl-names", names, len);
+	end = names + len;
+	name = names;
+	while (name < end) {
+		if (strcmp(name, config) == 0) {
+			free(names, M_TEMP, len);
+			return imxiomuxc_pinctrlbyid(node, id);
+		}
+		name += strlen(name) + 1;
+		id++;
+	}
+	free(names, M_TEMP, len);
+	return -1;
+}
+
+int
+imxiomuxc_pinctrl(uint32_t phandle)
+{
+	struct imxiomuxc_softc *sc = imxiomuxc_sc;
+	uint32_t *pins;
+	int npins;
+	int node;
+	int len;
+	int i;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return -1;
+
+	len = OF_getproplen(node, "fsl,pins");
+	if (len <= 0)
+		return -1;
+
+	pins = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "fsl,pins", pins, len);
+	npins = len / (6 * sizeof(uint32_t));
+
+	for (i = 0; i < npins; i++) {
+		uint32_t mux_reg = pins[6 * i + 0];
+		uint32_t conf_reg = pins[6 * i + 1];
+		uint32_t input_reg = pins[6 * i + 2];
+		uint32_t mux_val = pins[6 * i + 3];
+		uint32_t conf_val = pins[6 * i + 5];
+		uint32_t input_val = pins[6 * i + 4];
+		uint32_t val;
+
+		/* Set MUX mode. */
+		if (conf_val & IMX_PINCTRL_SION)
+			mux_val |= IOMUX_CONFIG_SION;
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, mux_reg, mux_val);
+
+		/* Set PAD config. */
+		if ((conf_val & IMX_PINCTRL_NO_PAD_CTL) == 0)
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    conf_reg, conf_val);
+
+		/* Set input select. */
+		if ((input_val >> 24) == 0xff) {
+			/*
+			 * Magic value used to clear or set specific
+			 * bits in the general purpose registers.
+			 */
+			uint8_t shift = (input_val >> 16) & 0xff;
+			uint8_t width = (input_val >> 8) & 0xff;
+			uint32_t clr = ((1 << width) - 1) << shift;
+			uint32_t set = (input_val & 0xff) << shift;
+
+			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+			    input_reg);
+			val &= ~clr;
+			val |= set;
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    input_reg, val);
+		} else if (input_reg != 0) {
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    input_reg, input_val);
+		}
+	}
+
+	free(pins, M_TEMP, len);
+	return 0;
 }
 
 void
@@ -219,44 +320,4 @@ imxiomuxc_pcie_test_powerdown(int enable)
 	if (enable)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR1,
 		    bus_space_read_4(sc->sc_iot, sc->sc_ioh, IOMUXC_GPR1) | IOMUXC_GPR1_TEST_POWERDOWN);
-}
-
-void
-imxiomuxc_enable_i2c(int x)
-{
-	struct imxiomuxc_softc *sc = imxiomuxc_sc;
-
-	/* let's just use EIM for those */
-	switch (x) {
-		case 0:
-			/* scl in select */
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_MUX_CTL_PAD_EIM_DATA21, IOMUX_CONFIG_SION | 6);
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_I2C1_SCL_IN_SELECT_INPUT, 0);
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_PAD_CTL_PAD_EIM_DATA21, IOMUXC_IMX6Q_I2C_PAD_CTRL);
-			/* sda in select */
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_MUX_CTL_PAD_EIM_DATA28, IOMUX_CONFIG_SION | 1);
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_I2C1_SDA_IN_SELECT_INPUT, 0);
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_PAD_CTL_PAD_EIM_DATA28, IOMUXC_IMX6Q_I2C_PAD_CTRL);
-			break;
-		case 1:
-			/* scl in select */
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_MUX_CTL_PAD_EIM_EB2, IOMUX_CONFIG_SION | 6);
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_I2C2_SCL_IN_SELECT_INPUT, 0);
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_PAD_CTL_PAD_EIM_EB2, IOMUXC_IMX6Q_I2C_PAD_CTRL);
-			/* sda in select */
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_MUX_CTL_PAD_EIM_DATA16, IOMUX_CONFIG_SION | 6);
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_I2C2_SDA_IN_SELECT_INPUT, 0);
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_PAD_CTL_PAD_EIM_DATA16, IOMUXC_IMX6Q_I2C_PAD_CTRL);
-			break;
-		case 2:
-			/* scl in select */
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_MUX_CTL_PAD_EIM_DATA17, IOMUX_CONFIG_SION | 6);
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_I2C3_SCL_IN_SELECT_INPUT, 0);
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_PAD_CTL_PAD_EIM_DATA17, IOMUXC_IMX6Q_I2C_PAD_CTRL);
-			/* sda in select */
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_MUX_CTL_PAD_EIM_DATA18, IOMUX_CONFIG_SION | 6);
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_I2C3_SDA_IN_SELECT_INPUT, 0);
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOMUXC_PAD_CTL_PAD_EIM_DATA18, IOMUXC_IMX6Q_I2C_PAD_CTRL);
-			break;
-	}
 }

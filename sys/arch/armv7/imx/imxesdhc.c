@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.23 2016/06/14 14:41:03 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.24 2016/07/10 11:46:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -35,6 +35,7 @@
 #include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxgpiovar.h>
+#include <armv7/imx/imxiomuxcvar.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -305,6 +306,8 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 		panic("imxesdhc_attach: bus_space_map failed!");
 
 	printf("\n");
+
+	imxiomuxc_pinctrlbyname(faa->fa_node, "default");
 
 	sc->sc_ih = arm_intr_establish(faa->fa_intr[1], IPL_SDMMC,
 	   imxesdhc_intr, sc, sc->sc_dev.dv_xname);

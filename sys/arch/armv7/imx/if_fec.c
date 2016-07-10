@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.4 2016/07/09 12:39:28 kettenis Exp $ */
+/* $OpenBSD: if_fec.c,v 1.5 2016/07/10 11:46:28 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -47,7 +47,7 @@
 #include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxgpiovar.h>
-#include <armv7/imx/imxocotpvar.h>
+#include <armv7/imx/imxiomuxcvar.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -308,6 +308,8 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 		panic("fec_attach: bus_space_map failed!");
 
 	sc->sc_dma_tag = faa->fa_dmat;
+
+	imxiomuxc_pinctrlbyname(faa->fa_node, "default");
 
 	/* power it up */
 	imxccm_enable_enet();

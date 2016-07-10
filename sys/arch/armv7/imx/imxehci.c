@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.10 2016/07/09 12:32:50 kettenis Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.11 2016/07/10 11:46:28 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -34,6 +34,7 @@
 #include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxgpiovar.h>
+#include <armv7/imx/imxiomuxcvar.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -169,6 +170,8 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+	imxiomuxc_pinctrlbyname(faa->fa_node, "default");
 
 	imxccm_enable_usboh3();
 	delay(1000);

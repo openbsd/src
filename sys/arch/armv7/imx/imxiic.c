@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.7 2016/06/09 12:35:46 kettenis Exp $ */
+/* $OpenBSD: imxiic.c,v 1.8 2016/07/10 11:46:28 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -134,7 +134,7 @@ imxiic_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/* set iomux pins */
-	imxiomuxc_enable_i2c(sc->unit);
+	imxiomuxc_pinctrlbyname(faa->fa_node, "default");
 
 	/* set speed to 100kHz */
 	imxiic_setspeed(sc, 100);
