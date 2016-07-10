@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.131 2016/05/17 23:43:47 bluhm Exp $	*/
+/*	$OpenBSD: tty.c,v 1.132 2016/07/10 00:39:31 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -731,9 +731,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case  TIOCSETD:
 	case  TIOCSETAF:
 	case  TIOCSETAW:
-#ifdef notdef
 	case  TIOCSPGRP:
-#endif
 	case  TIOCSTAT:
 	case  TIOCSTI:
 	case  TIOCSWINSZ:
