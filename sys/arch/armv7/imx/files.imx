@@ -1,4 +1,4 @@
-#	$OpenBSD: files.imx,v 1.12 2016/07/09 12:32:50 kettenis Exp $
+#	$OpenBSD: files.imx,v 1.13 2016/07/10 14:01:10 kettenis Exp $
 
 define imx {}
 device imx: imx
@@ -29,7 +29,7 @@ attach imxocotp at imx
 file	arch/armv7/imx/imxocotp.c		imxocotp
 
 device imxgpio
-attach imxgpio at imx
+attach imxgpio at fdt
 file	arch/armv7/imx/imxgpio.c		imxgpio
 
 device	imxiic: i2cbus

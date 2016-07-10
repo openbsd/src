@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.28 2016/07/09 12:32:50 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.29 2016/07/10 14:01:10 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -44,7 +44,7 @@ imxccm*		at imx?			# clock control module
 imxiomuxc*	at imx?			# iomux controller
 imxdog*		at fdt?			# watchdog timer
 imxocotp*	at imx?			# on-chip otp controller
-imxgpio*	at imx?			# user-visible GPIO pins?
+imxgpio*	at fdt?			# user-visible GPIO pins?
 fec*		at fdt?			# Ethernet
 imxuart*	at fdt?			# onboard uarts
 imxiic*		at fdt?			# i2c

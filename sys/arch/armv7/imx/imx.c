@@ -1,4 +1,4 @@
-/* $OpenBSD: imx.c,v 1.22 2016/07/09 18:14:18 kettenis Exp $ */
+/* $OpenBSD: imx.c,v 1.23 2016/07/10 14:01:10 kettenis Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -41,13 +41,6 @@ struct board_dev imx_devs[] = {
 	{ "imxccm",	0 },
 	{ "imxiomuxc",	0 },
 	{ "imxocotp",	0 },
-	{ "imxgpio",	0 },
-	{ "imxgpio",	1 },
-	{ "imxgpio",	2 },
-	{ "imxgpio",	3 },
-	{ "imxgpio",	4 },
-	{ "imxgpio",	5 },
-	{ "imxgpio",	6 },
 	{ NULL,		0 }
 };
 

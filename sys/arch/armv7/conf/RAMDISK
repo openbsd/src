@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.25 2016/07/09 12:32:50 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.26 2016/07/10 14:01:10 kettenis Exp $
 
 machine		armv7 arm
 
@@ -43,7 +43,7 @@ imxccm*		at imx?			# clock control module
 imxiomuxc*	at imx?			# iomux controller
 imxdog*		at fdt?			# watchdog timer
 imxocotp*	at imx?			# on-chip otp controller
-imxgpio*	at imx?			# user-visible GPIO pins?
+imxgpio*	at fdt?			# user-visible GPIO pins?
 fec*		at fdt?			# Ethernet
 imxuart*	at fdt?			# onboard uarts
 imxiic*		at fdt?			# i2c
