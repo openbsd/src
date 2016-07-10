@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2016/05/11 21:52:50 deraadt Exp $
+# $OpenBSD: Makefile,v 1.14 2016/07/10 15:16:15 visa Exp $
 
 NOPROG=
 NOMAN=
@@ -10,7 +10,7 @@ CC=${HOSTCC}
     ${MACHINE} == "armish" || ${MACHINE} == "armv7" || \
     ${MACHINE} == "hppa" || ${MACHINE} == "i386" || \
     ${MACHINE} == "landisk" || ${MACHINE} == "loongson" || \
-    ${MACHINE} == "sgi" || \
+    ${MACHINE} == "octeon" || ${MACHINE} == "sgi" || \
     ${MACHINE} == "sparc64" || ${MACHINE} == "zaurus")
 
 FIRM= 	kue
