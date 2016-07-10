@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.174 2016/07/03 04:36:08 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.175 2016/07/10 00:39:23 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -577,7 +577,8 @@ pledge_fail(struct proc *p, int error, uint64_t code)
 	printf("%s(%d): syscall %d \"%s\"\n", p->p_comm, p->p_pid,
 	    p->p_pledge_syscall, codes);
 #ifdef KTRACE
-	ktrpledge(p, error, code, p->p_pledge_syscall);
+	if (KTRPOINT(p, KTR_PLEDGE))
+		ktrpledge(p, error, code, p->p_pledge_syscall);
 #endif
 	/* Send uncatchable SIGABRT for coredump */
 	memset(&sa, 0, sizeof sa);
