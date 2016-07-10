@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiomuxc.c,v 1.4 2016/07/10 17:17:22 kettenis Exp $ */
+/* $OpenBSD: imxiomuxc.c,v 1.5 2016/07/10 20:53:04 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -172,7 +172,7 @@ imxiomuxc_pinctrlbyname(int node, const char *config)
 
 	len = OF_getproplen(node, "pinctrl-names");
 	if (len <= 0)
-		printf("no pinctrl-names\n");
+		return -1;
 
 	names = malloc(len, M_TEMP, M_WAITOK);
 	OF_getprop(node, "pinctrl-names", names, len);
