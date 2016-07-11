@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.27 2016/03/07 12:07:56 mestre Exp $	*/
+/*	$OpenBSD: factor.c,v 1.28 2016/07/11 18:30:21 tb Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,7 +65,7 @@
 /*
  * prime[i] is the (i+1)th prime.
  *
- * We are able to sieve 2^32-1 because this byte table yields all primes 
+ * We are able to sieve 2^32-1 because this byte table yields all primes
  * up to 65537 and 65537^2 > 2^32-1.
  */
 extern const ubig prime[];
@@ -74,9 +73,10 @@ extern const ubig *pr_limit;		/* largest prime in the prime array */
 extern const char pattern[];
 extern const int pattern_size;
 
-void	pr_fact(u_int64_t);		/* print factors of a value */
-void	pr_bigfact(u_int64_t);
-__dead void	usage(void);
+static void		pr_fact(u_int64_t);	/* print factors of a value */
+static void		pr_bigfact(u_int64_t);
+static u_int32_t	usqrt(u_int64_t);
+static void __dead	usage(void);
 
 int
 main(int argc, char *argv[])
@@ -152,7 +152,7 @@ main(int argc, char *argv[])
  *
  * Prime factors are printed with leading spaces.
  */
-void
+static void
 pr_fact(u_int64_t val)		/* Factor this value. */
 {
 	const ubig *fact;	/* The factor found. */
@@ -196,15 +196,16 @@ pr_fact(u_int64_t val)		/* Factor this value. */
 	(void)putchar('\n');
 }
 
-
-/* At this point, our number may have factors greater than those in primes[];
+/*
+ * At this point, our number may have factors greater than those in primes[];
  * however, we can generate primes up to 32 bits (see primes(6)), which is
  * sufficient to factor a 64-bit quad.
  */
-void
+static void
 pr_bigfact(u_int64_t val)	/* Factor this value. */
 {
-	ubig start, stop, factor;
+	u_int64_t start, stop;
+	ubig factor;
 	char *q;
 	const ubig *p;
 	ubig fact_lim, mod;
@@ -212,7 +213,7 @@ pr_bigfact(u_int64_t val)	/* Factor this value. */
 	char table[TABSIZE];	/* Eratosthenes sieve of odd numbers */
 
 	start = *pr_limit + 2;
-	stop  = (ubig)sqrt((double)val);
+	stop = usqrt(val) + 1;
 	if ((stop & 0x1) == 0)
 		stop++;
 	/*
@@ -230,7 +231,8 @@ pr_bigfact(u_int64_t val)	/* Factor this value. */
 		memcpy(table, &pattern[factor], pattern_size-factor);
 		/* main block pattern copies */
 		for (fact_lim = pattern_size - factor;
-		    fact_lim + pattern_size <= TABSIZE; fact_lim += pattern_size) {
+		    fact_lim + pattern_size <= TABSIZE;
+		    fact_lim += pattern_size) {
 			memcpy(&table[fact_lim], pattern, pattern_size);
 		}
 		/* final block pattern copy */
@@ -238,11 +240,10 @@ pr_bigfact(u_int64_t val)	/* Factor this value. */
 
 		if (stop-start > TABSIZE+TABSIZE) {
 			tab_lim = &table[TABSIZE]; /* sieve it all */
-			fact_lim = (int)sqrt(
-					(double)(start)+TABSIZE+TABSIZE+1.0);
+			fact_lim = usqrt(start + TABSIZE + TABSIZE + 1);
 		} else {
 			tab_lim = &table[(stop - start)/2]; /* partial sieve */
-			fact_lim = (int)sqrt((double)(stop) + 1.0);
+			fact_lim = usqrt(stop + 1);
 		}
 		/* sieve for factors >= 17 */
 		factor = 17;	/* 17 is first prime to use */
@@ -267,11 +268,11 @@ pr_bigfact(u_int64_t val)	/* Factor this value. */
 			if (*q) {
 				if (val % start == 0) {
 					do {
-						(void)printf(" %lu", (unsigned long) start);
+						printf(" %llu", start);
 						val /= start;
 					} while ((val % start) == 0);
 					(void)fflush(stdout);
-					stop  = (ubig)sqrt((double)val);
+					stop = usqrt(val) + 1;
 					if ((stop & 0x1) == 0)
 						stop++;
 				}
@@ -282,8 +283,26 @@ pr_bigfact(u_int64_t val)	/* Factor this value. */
 		printf(" %llu", val);
 }
 
+/* Code taken from ping.c */
+static u_int32_t
+usqrt(u_int64_t n)
+{
+	u_int64_t y, x = 1;
 
-void
+	if (n == 0 || n == 1)
+		return n;
+
+	do { /* newton was a stinker */
+		y = x;
+		x = n / x;
+		x += y;
+		x /= 2;
+	} while (((y < x) && (x - y) > 1) || (y - x) > 1);
+
+	return (u_int32_t)x;
+}
+
+static void __dead
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [number ...]\n", getprogname());
