@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vfsops.c,v 1.8 2016/01/13 13:01:40 gsoares Exp $	*/
+/*	$OpenBSD: tmpfs_vfsops.c,v 1.9 2016/07/11 22:36:25 tedu Exp $	*/
 /*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -125,6 +125,9 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 	error = copyin(data, &args, sizeof(struct tmpfs_args));
 	if (error)
 		return error;
+	if (args.ta_root_uid == VNOVAL || args.ta_root_gid == VNOVAL ||
+	    args.ta_root_mode == VNOVAL)
+		return EINVAL;
 
 	/* Get the memory usage limit for this file-system. */
 	if (args.ta_size_max < PAGE_SIZE) {
