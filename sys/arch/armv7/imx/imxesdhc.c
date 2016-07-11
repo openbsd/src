@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.24 2016/07/10 11:46:28 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.25 2016/07/11 14:54:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -38,6 +38,7 @@
 #include <armv7/imx/imxiomuxcvar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_gpio.h>
 
 /* registers */
 #define SDHC_DS_ADDR			0x00
@@ -178,6 +179,7 @@ struct imxesdhc_softc {
 	bus_dma_tag_t		sc_dmat;
 	void			*sc_ih; /* Interrupt handler */
 	int			sc_node;
+	uint32_t		sc_gpio[3];
 	u_int sc_flags;
 
 	int unit;			/* unit id */
@@ -311,6 +313,10 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ih = arm_intr_establish(faa->fa_intr[1], IPL_SDMMC,
 	   imxesdhc_intr, sc, sc->sc_dev.dv_xname);
+
+	OF_getpropintarray(sc->sc_node, "cd-gpios", sc->sc_gpio,
+	    sizeof(sc->sc_gpio));
+	gpio_controller_config_pin(sc->sc_gpio, GPIO_CONFIG_INPUT);
 
 	/*
 	 * Reset the host controller and enable interrupts.
@@ -544,87 +550,11 @@ int
 imxesdhc_card_detect(sdmmc_chipset_handle_t sch)
 {
 	struct imxesdhc_softc *sc = sch;
-	int gpio;
 
 	if (OF_getproplen(sc->sc_node, "non-removable") == 0)
 		return 1;
 
-	switch (board_id)
-	{
-	case BOARD_ID_IMX6_CUBOXI:
-	case BOARD_ID_IMX6_HUMMINGBOARD:
-		switch (sc->unit) {
-			case 1:
-				gpio = 0*32 + 4;
-				break;
-			default:
-				return 0;
-		}
-		imxgpio_set_dir(gpio, IMXGPIO_DIR_IN);
-		return imxgpio_get_bit(gpio) ? 0 : 1;
-	case BOARD_ID_IMX6_SABRELITE:
-		switch (sc->unit) {
-			case 2:
-				gpio = 6*32 + 0;
-				break;
-			case 3:
-				gpio = 1*32 + 6;
-				break;
-			default:
-				return 0;
-		}
-		imxgpio_set_dir(gpio, IMXGPIO_DIR_IN);
-		return imxgpio_get_bit(gpio) ? 0 : 1;
-	case BOARD_ID_IMX6_SABRESD:
-		switch (sc->unit) {
-			case 1:
-				gpio = 1*32 + 2;
-				break;
-			case 2:
-				gpio = 1*32 + 0;
-				break;
-			default:
-				return 0;
-		}
-		imxgpio_set_dir(gpio, IMXGPIO_DIR_IN);
-		return imxgpio_get_bit(gpio) ? 0 : 1;
-	case BOARD_ID_IMX6_UTILITE:
-		switch (sc->unit) {
-			case 2:
-				gpio = 6*32 + 1;
-				break;
-			default:
-				return 0;
-		}
-		imxgpio_set_dir(gpio, IMXGPIO_DIR_IN);
-		return imxgpio_get_bit(gpio) ? 0 : 1;
-	case BOARD_ID_IMX6_NOVENA:
-		switch (sc->unit) {
-			case 1:
-				gpio = 0*32 + 4;
-				break;
-			default:
-				return 0;
-		}
-		imxgpio_set_dir(gpio, IMXGPIO_DIR_IN);
-		return imxgpio_get_bit(gpio) ? 0 : 1;
-	case BOARD_ID_IMX6_WANDBOARD:
-		switch (sc->unit) {
-			case 0:
-				gpio = 0*32 + 2;
-				break;
-			case 2:
-				gpio = 2*32 + 9;
-				break;
-			default:
-				return 0;
-		}
-		imxgpio_set_dir(gpio, IMXGPIO_DIR_IN);
-		return imxgpio_get_bit(gpio) ? 0 : 1;
-	default:
-		printf("%s: unhandled board\n", __func__);
-		return 1;
-	}
+	return gpio_controller_get_pin(sc->sc_gpio);
 }
 
 /*
