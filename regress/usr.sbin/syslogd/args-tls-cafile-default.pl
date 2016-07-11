@@ -13,7 +13,7 @@ our %args = (
     syslogd => {
 	loghost => '@tls://localhost:$connectport',
 	ktrace => {
-	    qr{NAMI  "/etc/ssl/cert.pem"} => 3,
+	    qr{NAMI  "/etc/ssl/cert.pem"} => 1,
 	},
 	loggrep => {
 	    qr{CAfile /etc/ssl/cert.pem} => 1,
