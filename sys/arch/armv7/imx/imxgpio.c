@@ -1,4 +1,4 @@
-/* $OpenBSD: imxgpio.c,v 1.8 2016/07/10 14:01:10 kettenis Exp $ */
+/* $OpenBSD: imxgpio.c,v 1.9 2016/07/11 14:51:31 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -33,6 +33,7 @@
 #include <armv7/imx/imxgpiovar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_gpio.h>
 
 /* iMX6 registers */
 #define GPIO_DR			0x00
@@ -74,6 +75,7 @@ struct imxgpio_softc {
 	    unsigned int gpio);
 	void (*sc_set_dir)(struct imxgpio_softc *sc,
 	    unsigned int gpio, unsigned int dir);
+	struct gpio_controller sc_gc;
 };
 
 #define GPIO_PIN_TO_INST(x)	((x) >> 5)
@@ -81,6 +83,10 @@ struct imxgpio_softc {
 
 int imxgpio_match(struct device *, void *, void *);
 void imxgpio_attach(struct device *, struct device *, void *);
+
+void imxgpio_config_pin(void *, uint32_t *, int);
+int imxgpio_get_pin(void *, uint32_t *);
+void imxgpio_set_pin(void *, uint32_t *, int);
 
 unsigned int imxgpio_v6_get_bit(struct imxgpio_softc *, unsigned int);
 void imxgpio_v6_set_bit(struct imxgpio_softc *, unsigned int);
@@ -119,6 +125,13 @@ imxgpio_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[1], 0, &sc->sc_ioh))
 		panic("imxgpio_attach: bus_space_map failed!");
 
+	sc->sc_gc.gc_node = faa->fa_node;
+	sc->sc_gc.gc_cookie = sc;
+	sc->sc_gc.gc_config_pin = imxgpio_config_pin;
+	sc->sc_gc.gc_get_pin = imxgpio_get_pin;
+	sc->sc_gc.gc_set_pin = imxgpio_set_pin;
+	gpio_controller_register(&sc->sc_gc);
+
 	sc->sc_get_bit  = imxgpio_v6_get_bit;
 	sc->sc_set_bit = imxgpio_v6_set_bit;
 	sc->sc_clear_bit = imxgpio_v6_clear_bit;
@@ -130,6 +143,59 @@ imxgpio_attach(struct device *parent, struct device *self, void *aux)
 	/* XXX - SYSCONFIG */
 	/* XXX - CTRL */
 	/* XXX - DEBOUNCE */
+}
+
+void
+imxgpio_config_pin(void *cookie, uint32_t *cells, int config)
+{
+	struct imxgpio_softc *sc = cookie;
+	uint32_t pin = cells[0];
+	uint32_t val;
+
+	if (pin >= GPIO_NUM_PINS)
+		return;
+
+	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_GDIR);
+	if (config & GPIO_CONFIG_OUTPUT)
+		val |= 1 << pin;
+	else
+		val &= ~(1 << pin);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_GDIR, val);
+}
+
+int
+imxgpio_get_pin(void *cookie, uint32_t *cells)
+{
+	struct imxgpio_softc *sc = cookie;
+	uint32_t pin = cells[0];
+	uint32_t flags = cells[1];
+	uint32_t reg;
+	int val;
+
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_DR);
+	reg &= (1 << pin);
+	val = (reg >> pin) & 1;
+	if (flags & GPIO_ACTIVE_LOW)
+		val = !val;;
+	return val;
+}
+
+void
+imxgpio_set_pin(void *cookie, uint32_t *cells, int val)
+{
+	struct imxgpio_softc *sc = cookie;
+	uint32_t pin = cells[0];
+	uint32_t flags = cells[1];
+	uint32_t reg;
+
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_DR);
+	if (flags & GPIO_ACTIVE_LOW)
+		val = !val;
+	if (val)
+		reg |= (1 << pin);
+	else
+		reg &= ~(1 << pin);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_DR, reg);
 }
 
 unsigned int
