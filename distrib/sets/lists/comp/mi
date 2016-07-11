@@ -463,6 +463,7 @@
 ./usr/include/dev/mulaw.h
 ./usr/include/dev/ofw
 ./usr/include/dev/ofw/fdt.h
+./usr/include/dev/ofw/ofw_gpio.h
 ./usr/include/dev/ofw/ofw_pci.h
 ./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/onewire

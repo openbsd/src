@@ -459,6 +459,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mulaw.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ofw
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ofw/fdt.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ofw/ofw_gpio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ofw/ofw_pci.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/onewire
