@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.176 2016/07/10 14:21:24 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.177 2016/07/11 19:11:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -840,10 +840,8 @@ pledge_recvfd(struct proc *p, struct file *fp)
 
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
-	if ((p->p_p->ps_pledge & PLEDGE_RECVFD) == 0) {
-		printf("recvmsg not allowed\n");
+	if ((p->p_p->ps_pledge & PLEDGE_RECVFD) == 0)
 		return pledge_fail(p, EPERM, PLEDGE_RECVFD);
-	}
 
 	switch (fp->f_type) {
 	case DTYPE_SOCKET:
