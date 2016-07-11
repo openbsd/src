@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.5 2016/07/10 11:46:28 kettenis Exp $ */
+/* $OpenBSD: if_fec.c,v 1.6 2016/07/11 14:56:18 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -50,6 +50,7 @@
 #include <armv7/imx/imxiomuxcvar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_gpio.h>
 
 /* configuration registers */
 #define ENET_EIR		0x004
@@ -294,6 +295,8 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp;
 	int tsize, rsize, tbsize, rbsize, s;
 	uint32_t intr[8];
+	uint32_t phy_reset_gpio[3];
+	uint32_t phy_reset_duration;
 
 	if (faa->fa_nreg < 2)
 		return;
@@ -314,55 +317,19 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	/* power it up */
 	imxccm_enable_enet();
 
-	switch (board_id)
-	{
-	case BOARD_ID_IMX6_CUBOXI:
-	case BOARD_ID_IMX6_HUMMINGBOARD:
-		/* We need to reset the AR8035 PHY twice. */
-		imxgpio_clear_bit(ENET_HUMMINGBOARD_PHY_RST);
-		imxgpio_set_dir(ENET_HUMMINGBOARD_PHY_RST, IMXGPIO_DIR_OUT);
-		delay(2000);
-		imxgpio_set_bit(ENET_HUMMINGBOARD_PHY_RST);
-		delay(2000);
-		imxgpio_clear_bit(ENET_HUMMINGBOARD_PHY_RST);
-		delay(2000);
-		imxgpio_set_bit(ENET_HUMMINGBOARD_PHY_RST);
-		delay(2000);
-		break;
-	case BOARD_ID_IMX6_SABRELITE:
-		/* SABRE Lite PHY reset */
-		imxgpio_clear_bit(ENET_SABRELITE_PHY_RST);
-		imxgpio_set_dir(ENET_SABRELITE_PHY_RST, IMXGPIO_DIR_OUT);
-		imxgpio_clear_bit(ENET_NITROGEN6X_PHY_RST);
-		imxgpio_set_dir(ENET_NITROGEN6X_PHY_RST, IMXGPIO_DIR_OUT);
-		delay(1000 * 10);
-		imxgpio_set_bit(ENET_SABRELITE_PHY_RST);
-		imxgpio_set_bit(ENET_NITROGEN6X_PHY_RST);
-		delay(100);
-		break;
-	case BOARD_ID_IMX6_SABRESD:
-		imxgpio_clear_bit(ENET_SABRESD_PHY_RST);
-		imxgpio_set_dir(ENET_SABRESD_PHY_RST, IMXGPIO_DIR_OUT);
-		delay(1000 * 10);
-		imxgpio_set_bit(ENET_SABRESD_PHY_RST);
-		delay(100);
-		break;
-	case BOARD_ID_IMX6_UDOO:
-		imxgpio_set_bit(ENET_UDOO_PWR);
-		imxgpio_set_dir(ENET_UDOO_PWR, IMXGPIO_DIR_OUT);
-		imxgpio_clear_bit(ENET_UDOO_PHY_RST);
-		imxgpio_set_dir(ENET_UDOO_PHY_RST, IMXGPIO_DIR_OUT);
-		delay(1000 * 1);
-		imxgpio_set_bit(ENET_UDOO_PHY_RST);
-		delay(1000 * 100);
-		break;
-	case BOARD_ID_IMX6_NOVENA:
-		imxgpio_clear_bit(ENET_NOVENA_PHY_RST);
-		imxgpio_set_dir(ENET_NOVENA_PHY_RST, IMXGPIO_DIR_OUT);
-		delay(1000 * 10);
-		imxgpio_set_bit(ENET_NOVENA_PHY_RST);
-		delay(100);
-		break;
+	/* reset PHY */
+	if (OF_getpropintarray(faa->fa_node, "phy-reset-gpios", phy_reset_gpio,
+	    sizeof(phy_reset_gpio)) == sizeof(phy_reset_gpio)) {
+		phy_reset_duration = OF_getpropint(faa->fa_node,
+		    "phy-reset-duration", 1);
+		if (phy_reset_duration > 1000)
+			phy_reset_duration = 1;
+
+		gpio_controller_config_pin(phy_reset_gpio, GPIO_CONFIG_OUTPUT);
+		gpio_controller_set_pin(phy_reset_gpio, 0);
+		delay(phy_reset_duration * 1000);
+		gpio_controller_set_pin(phy_reset_gpio, 1);
+		delay(1000);
 	}
 	printf("\n");
 
