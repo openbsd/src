@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukphy.c,v 1.23 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: ukphy.c,v 1.24 2016/07/11 09:50:02 kettenis Exp $	*/
 /*	$NetBSD: ukphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -114,6 +114,8 @@ ukphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &ukphy_funcs;
+	sc->mii_oui = MII_OUI(ma->mii_id1, ma->mii_id2);
+	sc->mii_model = MII_MODEL(ma->mii_id2);
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 
