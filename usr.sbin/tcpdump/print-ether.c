@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ether.c,v 1.30 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-ether.c,v 1.31 2016/07/11 00:27:50 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -89,29 +89,34 @@ u_short extracted_ethertype;
 void
 ether_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
-	u_int caplen = h->caplen;
-	u_int length = h->len;
-	struct ether_header *ep;
-	u_short ether_type;
-
 	ts_print(&h->ts);
-
-	if (caplen < sizeof(struct ether_header)) {
-		printf("[|ether]");
-		goto out;
-	}
 
 	/*
 	 * Some printers want to get back at the ethernet addresses,
 	 * and/or check that they're not walking off the end of the packet.
 	 * Rather than pass them all the way down, we set these globals.
 	 */
-	packetp = p;
-	snapend = p + caplen;
+	snapend = p + h->caplen;
+
+	ether_tryprint(p, h->len, 1);
+}
+
+void
+ether_tryprint(const u_char *p, u_int length, int first_header)
+{
+	struct ether_header *ep;
+	u_int caplen = snapend - p;
+	u_short ether_type;
+
+	if (caplen < sizeof(struct ether_header)) {
+		printf("[|ether]");
+		goto out;
+	}
 
 	if (eflag)
 		ether_print(p, length);
 
+	packetp = p;
 	length -= sizeof(struct ether_header);
 	caplen -= sizeof(struct ether_header);
 	ep = (struct ether_header *)p;
@@ -152,14 +157,15 @@ ether_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 				default_print(p, caplen);
 		}
 	}
-	if (xflag) {
+	if (xflag && first_header) {
 		if (eflag)
 			default_print(packetp, snapend - packetp);
 		else
 			default_print(p, caplen);
 	}
  out:
-	putchar('\n');
+	if (first_header)
+		putchar('\n');
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.66 2015/11/15 20:35:36 mmcc Exp $	*/
+/*	$OpenBSD: interface.h,v 1.67 2016/07/11 00:27:50 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Id: interface.h,v 1.66 2015/11/15 20:35:36 mmcc Exp $ (LBL)
+ * @(#) $Id: interface.h,v 1.67 2016/07/11 00:27:50 rzalamena Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -205,6 +205,7 @@ extern void pfsync_if_print(u_char *, const struct pcap_pkthdr *,
 extern void pfsync_ip_print(const u_char *, u_int, const u_char *);
 extern void ether_if_print(u_char *, const struct pcap_pkthdr *,
 	const u_char *);
+extern void ether_tryprint(const u_char *, u_int, int);
 extern void fddi_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
 extern void ppp_ether_if_print(u_char *, const struct pcap_pkthdr *,
 	const u_char *);

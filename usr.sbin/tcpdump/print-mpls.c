@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-mpls.c,v 1.2 2010/06/30 19:01:06 claudio Exp $	*/
+/*	$OpenBSD: print-mpls.c,v 1.3 2016/07/11 00:27:50 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -26,15 +26,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netmpls/mpls.h>
+
 #include <stdio.h>
 
 #include "interface.h"
 #include "extract.h"		    /* must come after interface.h */
 
+#define CW_SEQUENCE_MASK       (0x0000ffffU)
+
+int controlword_tryprint(const u_char **, u_int *);
+
 void
 mpls_print(const u_char *bp, u_int len)
 {
 	u_int32_t tag, label, exp, bottom, ttl;
+	int has_cw;
 
  again:
 	if (bp + sizeof(tag) > snapend)
@@ -55,6 +64,9 @@ mpls_print(const u_char *bp, u_int len)
 
 	if (!bottom)
 		goto again;
+
+	/* Handle pseudowire control word. */
+	has_cw = controlword_tryprint(&bp, &len);
 
 	/*
 	 * guessing the underlying protocol is about all we can do if
@@ -107,7 +119,34 @@ mpls_print(const u_char *bp, u_int len)
 		}
 	}
 
+	if (has_cw)
+		ether_tryprint(bp, len, 0);
+
 	return;
 trunc:
 	printf("[|mpls]");
+}
+
+/* Print control word if any and returns 1 on success. */
+int
+controlword_tryprint(const u_char **bp, u_int *lenp)
+{
+	uint32_t cw, frag, seq;
+
+	if (*lenp < 4)
+		return (0);
+
+	cw = EXTRACT_32BITS(*bp);
+	if (cw & CW_ZERO_MASK)
+		return (0);
+
+	*bp += sizeof(cw);
+	*lenp += sizeof(cw);
+
+	frag = (cw & CW_FRAG_MASK) >> 16;
+	seq = cw & CW_SEQUENCE_MASK;
+
+	printf("CW(frag %u, sequence %u) ", frag, seq);
+
+	return (1);
 }
