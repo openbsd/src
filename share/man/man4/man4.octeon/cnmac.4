@@ -1,4 +1,4 @@
-.\" $OpenBSD: cnmac.4,v 1.1 2015/11/17 13:25:36 visa Exp $
+.\" $OpenBSD: cnmac.4,v 1.2 2016/07/11 13:23:14 visa Exp $
 .\"
 .\" Copyright (c) 2015 Visa Hankala
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 17 2015 $
+.Dd $Mdocdate: July 11 2016 $
 .Dt CNMAC 4 octeon
 .Os
 .Sh NAME
@@ -26,8 +26,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports built-in Ethernet ports on Cavium OCTEON CN30xx and Cavium
-OCTEON Plus CN50xx system on chips.
+driver supports built-in Ethernet ports on Cavium OCTEON CN30xx,
+Cavium OCTEON Plus CN50xx and Cavium OCTEON II CN61xx system on chips.
 Among the routers based on these chips are the following:
 .Pp
 .Bl -item -offset indent -compact
@@ -36,9 +36,13 @@ D-Link DSR-500
 .It
 Portwell CAM-0100
 .It
+Ubiquiti Networks EdgeRouter
+.It
 Ubiquiti Networks EdgeRouter LITE
 .It
 Ubiquiti Networks EdgeRouter PoE
+.It
+Ubiquiti Networks EdgeRouter PRO
 .El
 .Pp
 The
