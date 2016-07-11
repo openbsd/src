@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.138 2016/06/14 09:48:52 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.139 2016/07/11 09:23:06 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -99,7 +99,6 @@ struct rtentry {
 	struct sockaddr	*rt_dest;	/* destination */
 	SRPL_ENTRY(rtentry) rt_next;	/* Next multipath entry to our dst. */
 #endif
-	struct sockaddr *rt_addr;	/* the answer: address to use */
 	struct sockaddr	*rt_gateway;	/* value */
 	struct ifaddr	*rt_ifa;	/* the answer: interface addr to use */
 	caddr_t		 rt_llinfo;	/* pointer to link level info cache or
