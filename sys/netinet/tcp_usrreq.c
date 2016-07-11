@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.131 2016/06/18 10:36:13 vgross Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.132 2016/07/11 10:35:43 mpi Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -977,12 +977,13 @@ void
 tcp_update_sndspace(struct tcpcb *tp)
 {
 	struct socket *so = tp->t_inpcb->inp_socket;
-	u_long nmax;
+	u_long nmax = so->so_snd.sb_hiwat;
 
-	if (sbchecklowmem())
+	if (sbchecklowmem()) {
 		/* low on memory try to get rid of some */
-		nmax = tcp_sendspace;
-	else if (so->so_snd.sb_wat != tcp_sendspace)
+		if (tcp_sendspace < nmax)
+			nmax = tcp_sendspace;
+	} else if (so->so_snd.sb_wat != tcp_sendspace)
 		/* user requested buffer size, auto-scaling disabled */
 		nmax = so->so_snd.sb_wat;
 	else
@@ -1017,10 +1018,11 @@ tcp_update_rcvspace(struct tcpcb *tp)
 	struct socket *so = tp->t_inpcb->inp_socket;
 	u_long nmax = so->so_rcv.sb_hiwat;
 
-	if (sbchecklowmem())
+	if (sbchecklowmem()) {
 		/* low on memory try to get rid of some */
-		nmax = tcp_recvspace;
-	else if (so->so_rcv.sb_wat != tcp_recvspace)
+		if (tcp_recvspace < nmax)
+			nmax = tcp_recvspace;
+	} else if (so->so_rcv.sb_wat != tcp_recvspace)
 		/* user requested buffer size, auto-scaling disabled */
 		nmax = so->so_rcv.sb_wat;
 	else {
