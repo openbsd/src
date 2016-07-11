@@ -1,0 +1,45 @@
+/*	$OpenBSD: ofw_gpio.h,v 1.1 2016/07/11 14:49:41 kettenis Exp $	*/
+/*
+ * Copyright (c) 2016 Mark Kettenis
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#ifndef _DEV_OFW_GPIO_H_
+#define _DEV_OFW_GPIO_H_
+
+#define GPIO_ACTIVE_HIGH	0
+#define GPIO_ACTIVE_LOW		1
+
+struct gpio_controller {
+	int	gc_node;
+	void	*gc_cookie;
+	void	(*gc_config_pin)(void *, uint32_t *, int);
+	int	(*gc_get_pin)(void *, uint32_t *);
+	void	(*gc_set_pin)(void *, uint32_t *, int);
+
+	LIST_ENTRY(gpio_controller) gc_list;
+	uint32_t gc_phandle;
+	uint32_t gc_cells;
+};
+
+void	gpio_controller_register(struct gpio_controller *);
+
+#define GPIO_CONFIG_INPUT	0x0000
+#define GPIO_CONFIG_OUTPUT	0x0001
+void	gpio_controller_config_pin(uint32_t *, int);
+
+int	gpio_controller_get_pin(uint32_t *);
+void	gpio_controller_set_pin(uint32_t *, int);
+
+#endif /* _DEV_OFW_GPIO_H_ */
