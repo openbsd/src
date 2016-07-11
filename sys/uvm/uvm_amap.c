@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.73 2016/07/09 17:13:05 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.74 2016/07/11 08:38:49 stefan Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -895,6 +895,9 @@ amap_wiperange(struct vm_amap *amap, int slotoff, int slots)
 	int bucket, startbucket, endbucket;
 	struct vm_amap_chunk *chunk, *nchunk;
 
+	startbucket = UVM_AMAP_BUCKET(amap, slotoff);
+	endbucket = UVM_AMAP_BUCKET(amap, slotoff + slots - 1);
+
 	/*
 	 * we can either traverse the amap by am_chunks or by am_buckets
 	 * depending on which is cheaper.    decide now.
@@ -913,9 +916,6 @@ amap_wiperange(struct vm_amap *amap, int slotoff, int slots)
 				amap_chunk_free(amap, chunk);
 		}
 	} else {
-		startbucket = UVM_AMAP_BUCKET(amap, slotoff);
-		endbucket = UVM_AMAP_BUCKET(amap, slotoff + slots - 1);
-
 		for (bucket = startbucket; bucket <= endbucket; bucket++) {
 			for (chunk = amap->am_buckets[bucket]; chunk != NULL;
 			    chunk = nchunk) {
