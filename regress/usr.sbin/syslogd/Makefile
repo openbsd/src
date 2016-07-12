@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2015/11/04 20:02:26 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.15 2016/07/12 09:57:20 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -84,10 +84,10 @@ run-regress-$a: $a
 ca.crt fake-ca.crt:
 	openssl req -batch -new -subj /L=OpenBSD/O=syslogd-regress/OU=ca/CN=root/ -nodes -newkey rsa -keyout ${@:R}.key -x509 -out $@
 
-server.req:
-	openssl req -batch -new -subj /L=OpenBSD/O=syslogd-regress/OU=server/CN=localhost/ -nodes -newkey rsa -keyout ${@:R}.key -out $@
+client.req server.req:
+	openssl req -batch -new -subj /L=OpenBSD/O=syslogd-regress/OU=${@:R}/CN=localhost/ -nodes -newkey rsa -keyout ${@:R}.key -out $@
 
-server.crt: ca.crt server.req
+client.crt server.crt: ca.crt ${@:R}.req
 	openssl x509 -CAcreateserial -CAkey ca.key -CA ca.crt -req -in ${@:R}.req -out $@
 
 empty:
@@ -96,7 +96,7 @@ empty:
 toobig:
 	dd if=/dev/zero of=$@ bs=1 count=1 seek=50M
 
-${REGRESS_TARGETS:M*tls*}: server.crt 127.0.0.1.crt
+${REGRESS_TARGETS:M*tls*}: client.crt server.crt 127.0.0.1.crt
 ${REGRESS_TARGETS:M*empty*}: empty
 ${REGRESS_TARGETS:M*toobig*}: toobig
 ${REGRESS_TARGETS:M*fake*}: fake-ca.crt

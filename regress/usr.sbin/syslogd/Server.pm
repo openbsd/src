@@ -1,4 +1,4 @@
-#	$OpenBSD: Server.pm,v 1.7 2015/12/04 13:49:42 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.8 2016/07/12 09:57:20 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -50,13 +50,15 @@ sub listen {
 	    Proto		=> $proto,
 	    ReuseAddr		=> 1,
 	    Domain		=> $self->{listendomain},
-	    $self->{listenaddr} ? (LocalAddr => $self->{listenaddr}) : (),
-	    $self->{listenport} ? (LocalPort => $self->{listenport}) : (),
+	    $self->{listenaddr}	? (LocalAddr => $self->{listenaddr}) : (),
+	    $self->{listenport}	? (LocalPort => $self->{listenport}) : (),
 	    SSL_key_file	=> "server.key",
 	    SSL_cert_file	=> "server.crt",
-	    SSL_verify_mode	=> SSL_VERIFY_NONE,
-	    $self->{sslversion} ? (SSL_version => $self->{sslversion}) : (),
-	    $self->{sslciphers} ? (SSL_cipher_list => $self->{sslciphers}) : (),
+	    SSL_ca_file		=> ($self->{cacrt} || "ca.crt"),
+	    $self->{sslverify}	? (SSL_verify_mode => SSL_VERIFY_PEER) : (),
+	    $self->{sslverify}	? (SSL_verifycn_scheme => "none") : (),
+	    $self->{sslversion}	? (SSL_version => $self->{sslversion}) : (),
+	    $self->{sslciphers}	? (SSL_cipher_list => $self->{sslciphers}) : (),
 	) or die ref($self), " $iosocket socket failed: $!,$SSL_ERROR";
 	if ($self->{listenproto} ne "udp") {
 		listen($ls, 1)
@@ -101,6 +103,8 @@ sub child {
 	if ($self->{listenproto} eq "tls") {
 		print STDERR "ssl version: ",$as->get_sslversion(),"\n";
 		print STDERR "ssl cipher: ",$as->get_cipher(),"\n";
+		print STDERR "ssl subject: ", $as->peer_certificate("subject")
+		    ,"\n" if $self->{sslverify};
 	}
 
 	*STDIN = *STDOUT = $self->{as} = $as;
