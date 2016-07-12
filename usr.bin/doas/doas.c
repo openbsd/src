@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.58 2016/06/24 20:49:56 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.59 2016/07/12 12:10:42 semarie Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -230,7 +230,7 @@ main(int argc, char **argv)
 
 	setprogname("doas");
 
-	if (pledge("stdio rpath getpw tty proc exec id", NULL) == -1)
+	if (pledge("stdio rpath getpw tty recvfd proc exec id", NULL) == -1)
 		err(1, "pledge");
 
 	closefrom(STDERR_FILENO + 1);
