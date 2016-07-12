@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.261 2016/07/06 19:26:35 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.262 2016/07/12 20:53:04 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -412,7 +412,7 @@ sys_unmount(struct proc *p, void *v, register_t *retval)
 	if (vfs_busy(mp, VB_WRITE|VB_WAIT))
 		return (EBUSY);
 
-	return (dounmount(mp, SCARG(uap, flags), p, vp));
+	return (dounmount(mp, SCARG(uap, flags) & MNT_FORCE, p, vp));
 }
 
 /*
