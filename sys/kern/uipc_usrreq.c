@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.98 2016/07/12 13:19:14 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.99 2016/07/12 14:28:02 tedu Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -898,6 +898,8 @@ unp_gc(void *arg __unused)
 		for (i = 0; i < defer->ud_n; i++) {
 			memcpy(&fp, &((struct file **)(defer + 1))[i],
 			    sizeof(fp));
+			if (fp == NULL)
+				continue;
 			FREF(fp);
 			if ((unp = fptounp(fp)) != NULL)
 				unp->unp_msgcount--;
