@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.41 2016/07/12 09:47:25 bluhm Exp $
+.\"	$OpenBSD: syslogd.8,v 1.42 2016/07/12 23:04:30 bluhm Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -88,6 +88,8 @@ PEM encoded file containing the client certificate for TLS connections
 to a remote host.
 The default is not to use a client certificate for the connection
 to a syslog server.
+This option has to be used together with
+.Fl k Ar key_file .
 .It Fl d
 Enable debugging to the standard output,
 and do not disassociate from the controlling terminal.
