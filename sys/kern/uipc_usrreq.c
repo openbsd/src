@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.97 2016/04/25 20:18:31 tedu Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.98 2016/07/12 13:19:14 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -673,35 +673,31 @@ unp_externalize(struct mbuf *rights, socklen_t controllen, int flags)
 		goto restart;
 	}
 
-	rp = (struct file **)CMSG_DATA(cm);
-
-	fdp = mallocarray(nfds, sizeof(int), M_TEMP, M_WAITOK);
-
 	/* Make sure the recipient should be able to see the descriptors.. */
-	if (p->p_fd->fd_rdir != NULL) {
-		rp = (struct file **)CMSG_DATA(cm);
-		for (i = 0; i < nfds; i++) {
-			fp = *rp++;
+	rp = (struct file **)CMSG_DATA(cm);
+	for (i = 0; i < nfds; i++) {
+		fp = *rp++;
+		error = pledge_recvfd(p, fp);
+		if (error)
+			break;
 
-			error = pledge_recvfd(p, fp);
-			if (error)
+		/*
+		 * No to block devices.  If passing a directory,
+		 * make sure that it is underneath the root.
+		 */
+		if (p->p_fd->fd_rdir != NULL && fp->f_type == DTYPE_VNODE) {
+			struct vnode *vp = (struct vnode *)fp->f_data;
+
+			if (vp->v_type == VBLK ||
+			    (vp->v_type == VDIR &&
+			    !vn_isunder(vp, p->p_fd->fd_rdir, p))) {
+				error = EPERM;
 				break;
-			/*
-			 * No to block devices.  If passing a directory,
-			 * make sure that it is underneath the root.
-			 */
-			if (fp->f_type == DTYPE_VNODE) {
-				struct vnode *vp = (struct vnode *)fp->f_data;
-
-				if (vp->v_type == VBLK ||
-				    (vp->v_type == VDIR &&
-				    !vn_isunder(vp, p->p_fd->fd_rdir, p))) {
-					error = EPERM;
-					break;
-				}
 			}
 		}
 	}
+
+	fdp = mallocarray(nfds, sizeof(int), M_TEMP, M_WAITOK);
 
 restart:
 	fdplock(p->p_fd);
