@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.11 2016/07/10 11:46:28 kettenis Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.12 2016/07/12 15:16:00 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -92,6 +92,10 @@ struct imxehci_softc {
 struct cfattach imxehci_ca = {
 	sizeof (struct imxehci_softc), imxehci_match, imxehci_attach,
 	imxehci_detach
+};
+
+struct cfdriver imxehci_cd = {
+	NULL, "imxehci", DV_DULL
 };
 
 int
