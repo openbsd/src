@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.18 2016/06/22 19:29:29 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.19 2016/07/12 15:44:58 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -139,7 +139,7 @@ sub ttykill {
 
 sub child {
 	my $self = shift;
-	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
+	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : "env";
 
 	my @pkill = (@sudo, "pkill", "-KILL", "-x", "syslogd");
 	my @pgrep = ("pgrep", "-x", "syslogd");
