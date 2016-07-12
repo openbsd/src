@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.27 2016/07/12 19:04:53 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.28 2016/07/12 19:17:49 kettenis Exp $
 
 machine		armv7 arm
 
@@ -50,7 +50,7 @@ imxiic*		at fdt?			# i2c
 iic*		at imxiic?
 imxesdhc*	at fdt?			# SDHC controller
 sdmmc*		at imxesdhc?		# SD/MMC bus
-ahci*		at fdt?			# AHCI/SATA
+imxahci*	at fdt?			# AHCI/SATA
 imxehci*	at fdt?			# EHCI
 usb*		at imxehci?
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: imxahci.c,v 1.4 2016/06/09 12:39:17 kettenis Exp $ */
+/* $OpenBSD: imxahci.c,v 1.5 2016/07/12 19:17:49 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -95,7 +95,7 @@ struct cfattach imxahci_ca = {
 };
 
 struct cfdriver imxahci_cd = {
-	NULL, "ahci", DV_DULL
+	NULL, "imxahci", DV_DULL
 };
 
 int
