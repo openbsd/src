@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.31 2016/07/05 19:33:14 bru Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.32 2016/07/12 22:02:53 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1266,11 +1266,8 @@ wsmouse_mt_init(struct device *sc, int num_slots, int tracking)
 	    &((struct wsmouse_softc *) sc)->input;
 	int n, size;
 
-	if (num_slots == input->mt.num_slots
-	    && (!tracking == ((input->flags & MT_TRACKING) == 0)))
-		return (0);
-
 	free_mt_slots(input);
+	memset(&input->mt, 0, sizeof(struct mt_state));
 
 	if (tracking)
 		input->flags |= MT_TRACKING;
