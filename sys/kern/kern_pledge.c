@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.177 2016/07/11 19:11:34 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.178 2016/07/12 06:06:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -835,8 +835,7 @@ pledge_namei_wlpath(struct proc *p, struct nameidata *ni)
 int
 pledge_recvfd(struct proc *p, struct file *fp)
 {
-	struct vnode *vp = NULL;
-	char *vtypes[] = { VTYPE_NAMES };
+	struct vnode *vp;
 
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
@@ -854,7 +853,6 @@ pledge_recvfd(struct proc *p, struct file *fp)
 			return (0);
 		break;
 	}
-	printf("recvfd type %d %s\n", fp->f_type, vp ? vtypes[vp->v_type] : "");
 	return pledge_fail(p, EINVAL, PLEDGE_RECVFD);
 }
 
@@ -864,16 +862,12 @@ pledge_recvfd(struct proc *p, struct file *fp)
 int
 pledge_sendfd(struct proc *p, struct file *fp)
 {
-	struct vnode *vp = NULL;
-	char *vtypes[] = { VTYPE_NAMES };
+	struct vnode *vp;
 
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
-
-	if ((p->p_p->ps_pledge & PLEDGE_SENDFD) == 0) {
-		printf("sendmsg not allowed\n");
+	if ((p->p_p->ps_pledge & PLEDGE_SENDFD) == 0)
 		return pledge_fail(p, EPERM, PLEDGE_SENDFD);
-	}
 
 	switch (fp->f_type) {
 	case DTYPE_SOCKET:
@@ -886,7 +880,6 @@ pledge_sendfd(struct proc *p, struct file *fp)
 			return (0);
 		break;
 	}
-	printf("sendfd type %d %s\n", fp->f_type, vp ? vtypes[vp->v_type] : "");
 	return pledge_fail(p, EINVAL, PLEDGE_SENDFD);
 }
 
