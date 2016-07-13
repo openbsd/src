@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.12 2016/07/12 15:16:00 kettenis Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.13 2016/07/13 09:12:46 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -33,10 +33,10 @@
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxccmvar.h>
-#include <armv7/imx/imxgpiovar.h>
 #include <armv7/imx/imxiomuxcvar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_gpio.h>
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
@@ -70,16 +70,11 @@
 #define USBNC_USB_UH1_CTRL_OVER_CUR_POL	(1 << 8)
 #define USBNC_USB_UH1_CTRL_OVER_CUR_DIS	(1 << 7)
 
-/* board specific */
-#define EHCI_HUMMINGBOARD_USB_H1_PWR	0
-#define EHCI_HUMMINGBOARD_USB_OTG_PWR	(2*32+22)
-#define EHCI_NITROGEN6X_USB_HUB_RST	(6*32+12)
-#define EHCI_SABRESD_USB_PWR		(0*32+29)
-#define EHCI_UTILITE_USB_HUB_RST	(6*32+8)
-
 int	imxehci_match(struct device *, void *, void *);
 void	imxehci_attach(struct device *, struct device *, void *);
 int	imxehci_detach(struct device *, int);
+
+void	imxehci_enable_vbus(uint32_t);
 
 struct imxehci_softc {
 	struct ehci_softc	sc;
@@ -116,6 +111,7 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t phy[1], misc[2];
 	uint32_t phy_reg[2];
 	uint32_t misc_reg[2];
+	uint32_t vbus;
 	int node;
 
 	if (faa->fa_nreg < 2 || faa->fa_nintr < 3)
@@ -180,56 +176,13 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	imxccm_enable_usboh3();
 	delay(1000);
 
-	if (misc[1] == 1) {
-		/* enable usb port power */
-		switch (board_id) {
-		case BOARD_ID_IMX6_CUBOXI:
-		case BOARD_ID_IMX6_HUMMINGBOARD:
-			imxgpio_set_bit(EHCI_HUMMINGBOARD_USB_H1_PWR);
-			imxgpio_set_dir(EHCI_HUMMINGBOARD_USB_H1_PWR, IMXGPIO_DIR_OUT);
-			delay(10);
-			break;
-		case BOARD_ID_IMX6_SABRELITE:
-			imxgpio_clear_bit(EHCI_NITROGEN6X_USB_HUB_RST);
-			imxgpio_set_dir(EHCI_NITROGEN6X_USB_HUB_RST, IMXGPIO_DIR_OUT);
-			delay(1000 * 2);
-			imxgpio_set_bit(EHCI_NITROGEN6X_USB_HUB_RST);
-			delay(10);
-			break;
-		case BOARD_ID_IMX6_SABRESD:
-			imxgpio_set_bit(EHCI_SABRESD_USB_PWR);
-			imxgpio_set_dir(EHCI_SABRESD_USB_PWR, IMXGPIO_DIR_OUT);
-			delay(10);
-			break;
-		case BOARD_ID_IMX6_UTILITE:
-			imxgpio_clear_bit(EHCI_UTILITE_USB_HUB_RST);
-			imxgpio_set_dir(EHCI_UTILITE_USB_HUB_RST, IMXGPIO_DIR_OUT);
-			delay(10);
-			imxgpio_set_bit(EHCI_UTILITE_USB_HUB_RST);
-			delay(1000);
-			break;
-		}
+	/* enable usb bus power */
+	vbus = OF_getpropint(faa->fa_node, "vbus-supply", 0);
+	if (vbus)
+		imxehci_enable_vbus(vbus);
 
-		/* disable the carger detection, else signal on DP will be poor */
-		imxccm_disable_usb2_chrg_detect();
-		/* power host 1 */
-		imxccm_enable_pll_usb2();
-
-		/* over current and polarity setting */
-		bus_space_write_4(sc->sc.iot, sc->nc_ioh, USBNC_USB_UH1_CTRL,
-		    bus_space_read_4(sc->sc.iot, sc->nc_ioh, USBNC_USB_UH1_CTRL) |
-		    (USBNC_USB_UH1_CTRL_OVER_CUR_POL | USBNC_USB_UH1_CTRL_OVER_CUR_DIS));
-	} else if (misc[1] == 0) {
-		/* enable usb port power */
-		switch (board_id) {
-		case BOARD_ID_IMX6_CUBOXI:
-		case BOARD_ID_IMX6_HUMMINGBOARD:
-			imxgpio_set_dir(EHCI_HUMMINGBOARD_USB_OTG_PWR, IMXGPIO_DIR_OUT);
-			imxgpio_set_bit(EHCI_HUMMINGBOARD_USB_OTG_PWR);
-			delay(10);
-			break;
-		}
-
+	switch (misc[1]) {
+	case 0:
 		/* disable the carger detection, else signal on DP will be poor */
 		imxccm_disable_usb1_chrg_detect();
 		/* power host 0 */
@@ -239,6 +192,18 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_write_4(sc->sc.iot, sc->nc_ioh, USBNC_USB_OTG_CTRL,
 		    bus_space_read_4(sc->sc.iot, sc->nc_ioh, USBNC_USB_OTG_CTRL) |
 		    (USBNC_USB_OTG_CTRL_OVER_CUR_POL | USBNC_USB_OTG_CTRL_OVER_CUR_DIS));
+		break;
+	case 1:
+		/* disable the carger detection, else signal on DP will be poor */
+		imxccm_disable_usb2_chrg_detect();
+		/* power host 1 */
+		imxccm_enable_pll_usb2();
+
+		/* over current and polarity setting */
+		bus_space_write_4(sc->sc.iot, sc->nc_ioh, USBNC_USB_UH1_CTRL,
+		    bus_space_read_4(sc->sc.iot, sc->nc_ioh, USBNC_USB_UH1_CTRL) |
+		    (USBNC_USB_UH1_CTRL_OVER_CUR_POL | USBNC_USB_UH1_CTRL_OVER_CUR_DIS));
+		break;
 	}
 
 	bus_space_write_4(sc->sc.iot, sc->ph_ioh, USBPHY_CTRL_CLR,
@@ -343,4 +308,33 @@ imxehci_detach(struct device *self, int flags)
 	}
 
 	return (0);
+}
+
+void
+imxehci_enable_vbus(uint32_t phandle)
+{
+	uint32_t gpio[3];
+	int active;
+	int node;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return;
+
+	if (!OF_is_compatible(node, "regulator-fixed"))
+		return;
+
+	imxiomuxc_pinctrlbyname(node, "default");
+
+	if (OF_getproplen(node, "enable-active-high") == 0)
+		active = 1;
+	else
+		active = 0;
+
+	if (OF_getpropintarray(node, "gpio", gpio,
+	    sizeof(gpio)) != sizeof(gpio))
+		return;
+	
+	gpio_controller_config_pin(gpio, GPIO_CONFIG_OUTPUT);
+	gpio_controller_set_pin(gpio, active);
 }
