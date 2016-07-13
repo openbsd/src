@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.47 2016/04/13 10:49:26 mpi Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.48 2016/07/13 15:40:26 deraadt Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -180,18 +180,6 @@ void	smc91cxx_start(struct ifnet *);
 void	smc91cxx_resume(struct smc91cxx_softc *);
 void	smc91cxx_watchdog(struct ifnet *);
 int	smc91cxx_ioctl(struct ifnet *, u_long, caddr_t);
-
-static __inline int ether_cmp(void *, void *);
-static __inline int
-ether_cmp(va, vb)
-	void *va, *vb;
-{
-	u_int8_t *a = va;
-	u_int8_t *b = vb;
-
-	return ((a[5] != b[5]) || (a[4] != b[4]) || (a[3] != b[3]) ||
-		(a[2] != b[2]) || (a[1] != b[1]) || (a[0] != b[0]));
-}
 
 void
 smc91cxx_attach(sc, myea)
