@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.187 2016/07/13 01:51:22 dlg Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.188 2016/07/13 08:40:46 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -882,7 +882,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 			dr->installed = 0;
 	}
 
-	if ((rt->rt_flags & RTF_GATEWAY) != 0)
+	if (ISSET(rt->rt_flags, RTF_GATEWAY|RTF_MULTICAST))
 		return;
 
 	if (nd6_need_cache(ifp) == 0 && (rt->rt_flags & RTF_HOST) == 0) {

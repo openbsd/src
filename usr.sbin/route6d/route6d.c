@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.87 2016/07/06 16:38:09 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.88 2016/07/13 08:40:46 mpi Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -2308,45 +2308,16 @@ do { \
 	RTFLAG("D", RTF_DYNAMIC);
 	RTFLAG("M", RTF_MODIFIED);
 	RTFLAG("d", RTF_DONE);
-#ifdef	RTF_MASK
-	RTFLAG("m", RTF_MASK);
-#endif
+	RTFLAG("m", RTF_MULTICAST);
 	RTFLAG("C", RTF_CLONING);
-#ifdef RTF_CLONED
 	RTFLAG("c", RTF_CLONED);
-#endif
-#ifdef RTF_PRCLONING
-	RTFLAG("c", RTF_PRCLONING);
-#endif
-#ifdef RTF_WASCLONED
-	RTFLAG("W", RTF_WASCLONED);
-#endif
 	RTFLAG("L", RTF_LLINFO);
 	RTFLAG("S", RTF_STATIC);
 	RTFLAG("B", RTF_BLACKHOLE);
-#ifdef RTF_PROTO3
 	RTFLAG("3", RTF_PROTO3);
-#endif
 	RTFLAG("2", RTF_PROTO2);
 	RTFLAG("1", RTF_PROTO1);
-#ifdef RTF_BROADCAST
 	RTFLAG("b", RTF_BROADCAST);
-#endif
-#ifdef RTF_DEFAULT
-	RTFLAG("d", RTF_DEFAULT);
-#endif
-#ifdef RTF_ISAROUTER
-	RTFLAG("r", RTF_ISAROUTER);
-#endif
-#ifdef RTF_TUNNEL
-	RTFLAG("T", RTF_TUNNEL);
-#endif
-#ifdef RTF_AUTH
-	RTFLAG("A", RTF_AUTH);
-#endif
-#ifdef RTF_CRYPT
-	RTFLAG("E", RTF_CRYPT);
-#endif
 #undef RTFLAG
 	return buf;
 }

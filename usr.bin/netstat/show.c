@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.49 2015/09/11 20:10:26 mpi Exp $	*/
+/*	$OpenBSD: show.c,v 1.50 2016/07/13 08:40:46 mpi Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -78,8 +78,8 @@ static const struct bits bits[] = {
 	{ RTF_DYNAMIC,	'D' },
 	{ RTF_MODIFIED,	'M' },
 	{ RTF_DONE,	'd' }, /* Completed -- for routing messages only */
-	{ RTF_MASK,	'm' }, /* Mask Present -- for routing messages only */
 	{ RTF_CLONING,	'C' },
+	{ RTF_MULTICAST,'m' },
 	{ RTF_LLINFO,	'L' },
 	{ RTF_STATIC,	'S' },
 	{ RTF_PROTO1,	'1' },
