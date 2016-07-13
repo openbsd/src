@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.5 2016/06/12 13:10:06 kettenis Exp $ */
+/* $OpenBSD: simplebus.c,v 1.6 2016/07/13 20:42:44 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -35,6 +35,8 @@ struct simplebus_softc {
 	int			 sc_node;
 	bus_space_tag_t		 sc_iot;
 	bus_dma_tag_t		 sc_dmat;
+	int			 sc_acells;
+	int			 sc_scells;
 };
 
 struct cfattach simplebus_ca = {
@@ -74,6 +76,10 @@ simplebus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = fa->fa_node;
 	sc->sc_iot = fa->fa_iot;
 	sc->sc_dmat = fa->fa_dmat;
+	sc->sc_acells = OF_getpropint(sc->sc_node, "#address-cells",
+	    fa->fa_acells);
+	sc->sc_scells = OF_getpropint(sc->sc_node, "#size-cells",
+	    fa->fa_scells);
 
 	if (OF_getprop(sc->sc_node, "name", name, sizeof(name)) > 0) {
 		name[sizeof(name) - 1] = 0;
@@ -114,6 +120,8 @@ simplebus_attach_node(struct device *self, int node)
 	fa.fa_node = node;
 	fa.fa_iot = sc->sc_iot;
 	fa.fa_dmat = sc->sc_dmat;
+	fa.fa_acells = sc->sc_acells;
+	fa.fa_scells = sc->sc_scells;
 
 	len = OF_getproplen(node, "reg");
 	if (len > 0 && (len % sizeof(uint32_t)) == 0) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.10 2016/05/29 11:03:34 jsg Exp $ */
+/* $OpenBSD: mainbus.c,v 1.11 2016/07/13 20:42:44 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -36,6 +36,8 @@ struct mainbus_softc {
 	struct device		 sc_dev;
 	bus_space_tag_t		 sc_iot;
 	bus_dma_tag_t		 sc_dmat;
+	int			 sc_acells;
+	int			 sc_scells;
 };
 
 struct cfattach mainbus_ca = {
@@ -96,6 +98,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = &armv7_bs_tag;
 #endif
 	sc->sc_dmat = &mainbus_dma_tag;
+	sc->sc_acells = OF_getpropint(OF_peer(0), "#address-cells", 1);
+	sc->sc_scells = OF_getpropint(OF_peer(0), "#size-cells", 1);
 
 	if ((len = OF_getprop(node, "model", buffer, sizeof(buffer))) > 0) {
 		printf(": %s\n", buffer);
@@ -145,6 +149,8 @@ mainbus_attach_node(struct device *self, int node)
 	fa.fa_node = node;
 	fa.fa_iot = sc->sc_iot;
 	fa.fa_dmat = sc->sc_dmat;
+	fa.fa_acells = sc->sc_acells;
+	fa.fa_scells = sc->sc_scells;
 
 	/* TODO: attach the device's clocks first? */
 
