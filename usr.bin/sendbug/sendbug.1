@@ -1,9 +1,9 @@
-.\" $OpenBSD: sendbug.1,v 1.27 2016/02/18 21:57:26 jmc Exp $
+.\" $OpenBSD: sendbug.1,v 1.28 2016/07/13 20:31:27 jmc Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
 .\"
-.Dd $Mdocdate: February 18 2016 $
+.Dd $Mdocdate: July 13 2016 $
 .Dt SENDBUG 1
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@ output are important for ACPI development and can only be included if
 is run as root.
 .Pp
 Fields enclosed in
-.Sq \*(Lt\*(Gt
+.Sq <>
 should be completed by the user.
 Once the PR is filled out,
 the user exits the editor and is presented with a choice:
@@ -47,8 +47,6 @@ the user is given a chance to re-edit the report.
 If send is selected,
 the report is mailed to the bugs database,
 with a Cc to the author.
-An auto-generated reply will be sent
-confirming the mail has been received.
 Any follow up mail to the PR
 should keep the same mail subject.
 .Pp
