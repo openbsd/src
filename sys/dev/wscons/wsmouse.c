@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.32 2016/07/12 22:02:53 bru Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.33 2016/07/13 15:41:51 deraadt Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1321,7 +1321,7 @@ wsmouse_set_param(struct device *sc, size_t param, int value)
 	struct wsmouseparams *params = &input->params;
 	int *p;
 
-	if (param < 0 || param > WSMPARAM_LASTFIELD) {
+	if (param > WSMPARAM_LASTFIELD) {
 		printf("wsmouse_set_param: invalid parameter type\n");
 		return;
 	}
