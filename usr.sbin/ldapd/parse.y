@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.18 2016/06/21 21:35:24 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.19 2016/07/13 16:35:47 jsing Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -1214,7 +1214,7 @@ load_certfile(struct ldapd_config *env, const char *name, u_int8_t flags)
 		goto err;
 
 	tls_config_set_protocols(s->config, TLS_PROTOCOLS_ALL);
-	if (tls_config_set_ciphers(s->config, "compat")) {
+	if (tls_config_set_ciphers(s->config, "all")) {
 		log_warn("load_certfile: failed to set tls ciphers: %s",
 		    tls_config_error(s->config));
 		goto err;

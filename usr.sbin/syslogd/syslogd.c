@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.209 2016/07/12 09:47:25 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.210 2016/07/13 16:35:47 jsing Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -617,7 +617,7 @@ main(int argc, char *argv[])
 			logerrorx("options -c and -k must be used together");
 		}
 		tls_config_set_protocols(client_config, TLS_PROTOCOLS_ALL);
-		if (tls_config_set_ciphers(client_config, "compat") != 0)
+		if (tls_config_set_ciphers(client_config, "all") != 0)
 			logerror("tls set client ciphers");
 	}
 	if (server_config && server_ctx) {
