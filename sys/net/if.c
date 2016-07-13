@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.435 2016/07/12 09:33:13 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.436 2016/07/13 16:45:19 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -833,6 +833,10 @@ if_netisr(void *unused)
 
 		atomic_clearbits_int(&netisr, n);
 
+#if NETHER > 0
+		if (n & (1 << NETISR_ARP))
+			arpintr();
+#endif
 		if (n & (1 << NETISR_IP))
 			ipintr();
 #ifdef INET6

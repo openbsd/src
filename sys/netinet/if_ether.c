@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.218 2016/07/13 08:40:46 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.219 2016/07/13 16:45:19 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -85,6 +85,8 @@ void in_arpinput(struct ifnet *, struct mbuf *);
 void in_revarpinput(struct ifnet *, struct mbuf *);
 int arpcache(struct ifnet *, struct ether_arp *, struct rtentry *);
 void arpreply(struct ifnet *, struct mbuf *, struct in_addr *, uint8_t *);
+
+struct niqueue arpinq = NIQUEUE_INITIALIZER(50, NETISR_ARP);
 
 LIST_HEAD(, llinfo_arp) arp_list;
 struct	pool arp_pool;		/* pool for llinfo_arp structures */
@@ -438,7 +440,28 @@ arpinput(struct ifnet *ifp, struct mbuf *m)
 	if (m->m_len < len && (m = m_pullup(m, len)) == NULL)
 		return;
 
-	in_arpinput(ifp, m);
+	niq_enqueue(&arpinq, m);
+}
+
+void
+arpintr(void)
+{
+	struct mbuf_list ml;
+	struct mbuf *m;
+	struct ifnet *ifp;
+
+	niq_delist(&arpinq, &ml);
+
+	while ((m = ml_dequeue(&ml)) != NULL) {
+		ifp = if_get(m->m_pkthdr.ph_ifidx);
+
+		if (ifp != NULL)
+			in_arpinput(ifp, m);
+		else
+			m_freem(m);
+
+		if_put(ifp);
+	}
 }
 
 /*
@@ -788,7 +811,7 @@ in_revarpinput(struct ifnet *ifp, struct mbuf *m)
 	switch (op) {
 	case ARPOP_REQUEST:
 	case ARPOP_REPLY:	/* per RFC */
-		in_arpinput(ifp, m);
+		niq_enqueue(&arpinq, m);
 		return;
 	case ARPOP_REVREPLY:
 		break;
