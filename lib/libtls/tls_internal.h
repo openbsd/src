@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.31 2016/07/07 14:09:03 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.32 2016/07/13 16:30:48 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -26,8 +26,10 @@
 
 #define _PATH_SSL_CA_FILE "/etc/ssl/cert.pem"
 
-#define TLS_CIPHERS_COMPAT	"ALL:!aNULL:!eNULL"
 #define TLS_CIPHERS_DEFAULT	"TLSv1.2+AEAD+ECDHE:TLSv1.2+AEAD+DHE"
+#define TLS_CIPHERS_COMPAT	"HIGH:!aNULL"
+#define TLS_CIPHERS_LEGACY	"HIGH:MEDIUM:!aNULL"
+#define TLS_CIPHERS_ALL		"ALL:!aNULL:!eNULL"
 
 union tls_addr {
 	struct in_addr ip4;

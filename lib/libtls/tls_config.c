@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.21 2016/07/07 14:09:03 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.22 2016/07/13 16:30:48 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -289,9 +289,13 @@ tls_config_set_ciphers(struct tls_config *config, const char *ciphers)
 	    strcasecmp(ciphers, "default") == 0 ||
 	    strcasecmp(ciphers, "secure") == 0)
 		ciphers = TLS_CIPHERS_DEFAULT;
-	else if (strcasecmp(ciphers, "compat") == 0 ||
-	    strcasecmp(ciphers, "legacy") == 0)
+	else if (strcasecmp(ciphers, "compat") == 0)
 		ciphers = TLS_CIPHERS_COMPAT;
+	else if (strcasecmp(ciphers, "legacy") == 0)
+		ciphers = TLS_CIPHERS_LEGACY;
+	else if (strcasecmp(ciphers, "all") == 0 ||
+	    strcasecmp(ciphers, "insecure") == 0)
+		ciphers = TLS_CIPHERS_ALL;
 
 	if ((ssl_ctx = SSL_CTX_new(SSLv23_method())) == NULL) {
 		tls_config_set_errorx(config, "out of memory");

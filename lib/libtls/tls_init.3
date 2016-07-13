@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.61 2016/05/27 11:25:57 sthen Exp $
+.\" $OpenBSD: tls_init.3,v 1.62 2016/07/13 16:30:48 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 27 2016 $
+.Dd $Mdocdate: July 13 2016 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -322,12 +322,17 @@ sets the list of ciphers that may be used.
 Lists of ciphers are specified by name, and the
 permitted names are:
 .Pp
-.Bl -tag -width "default" -offset indent -compact
-.It Dv "secure"
-.It Dv "default" (an alias for secure)
+.Bl -tag -width "insecure" -offset indent -compact
+.It Dv "secure" (or alias "default")
+.It Dv "compat"
 .It Dv "legacy"
-.It Dv "compat" (an alias for legacy)
+.It Dv "insecure" (or alias "all")
 .El
+.Pp
+Alternatively, libssl cipher strings can be specified.
+See the CIPHERS section of
+.Xr openssl 1
+for further information.
 .Pp
 .Em (Client and server)
 .It
