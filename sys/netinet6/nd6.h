@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.62 2016/06/15 11:49:34 mpi Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.63 2016/07/13 01:51:22 dlg Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -144,7 +144,6 @@ struct	llinfo_nd6 {
 	TAILQ_ENTRY(llinfo_nd6)	ln_list;
 	struct	rtentry *ln_rt;
 	struct	mbuf *ln_hold;	/* last packet until resolved/timeout */
-	time_t	ln_expire;	/* lifetime for NDP state transition */
 	long	ln_asked;	/* number of queries already sent for addr */
 	int	ln_byhint;	/* # of times we made it reachable by UL hint */
 	short	ln_state;	/* reachability state */
@@ -154,7 +153,7 @@ struct	llinfo_nd6 {
 };
 
 #define ND6_IS_LLINFO_PROBREACH(n) ((n)->ln_state > ND6_LLINFO_INCOMPLETE)
-#define ND6_LLINFO_PERMANENT(n)	((n)->ln_expire == 0)
+#define ND6_LLINFO_PERMANENT(n)	((n)->ln_rt->rt_expire == 0)
 
 /* node constants */
 #define MAX_REACHABLE_TIME		3600000	/* msec */

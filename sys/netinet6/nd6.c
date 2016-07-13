@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.186 2016/06/15 11:49:34 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.187 2016/07/13 01:51:22 dlg Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -311,10 +311,10 @@ nd6_llinfo_settimer(struct llinfo_nd6 *ln, int secs)
 	s = splsoftnet();
 
 	if (secs < 0) {
-		ln->ln_expire = 0;
+		ln->ln_rt->rt_expire = 0;
 		timeout_del(&ln->ln_timer_ch);
 	} else {
-		ln->ln_expire = time_uptime + secs;
+		ln->ln_rt->rt_expire = time_uptime + secs;
 		timeout_add_sec(&ln->ln_timer_ch, secs);
 	}
 
@@ -981,7 +981,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		if (req == RTM_ADD) {
 		        /*
 			 * gate should have some valid AF_LINK entry,
-			 * and ln->ln_expire should have some lifetime
+			 * and ln expire should have some lifetime
 			 * which is specified by ndp command.
 			 */
 			ln->ln_state = ND6_LLINFO_REACHABLE;
@@ -1200,7 +1200,7 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 			splx(s);
 			break;
 		}
-		expire = ln->ln_expire;
+		expire = ln->ln_rt->rt_expire;
 		if (expire != 0) {
 			expire -= time_uptime;
 			expire += time_second;
