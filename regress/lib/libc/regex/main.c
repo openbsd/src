@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2016/05/26 14:17:58 schwarze Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2016/07/13 06:17:11 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.2 1995/04/20 22:39:51 cgd Exp $	*/
 
 #include <stdio.h>
@@ -46,19 +46,19 @@ main(int argc, char *argv[])
 
 	progname = argv[0];
 
-	while ((c = getopt(argc, argv, "c:e:S:E:x")) != -1)
+	while ((c = getopt(argc, argv, "c:E:e:S:x")) != -1)
 		switch (c) {
 		case 'c':	/* compile options */
 			copts = options('c', optarg);
+			break;
+		case 'E':	/* end offset */
+			endoff = (regoff_t)atoi(optarg);
 			break;
 		case 'e':	/* execute options */
 			eopts = options('e', optarg);
 			break;
 		case 'S':	/* start offset */
 			startoff = (regoff_t)atoi(optarg);
-			break;
-		case 'E':	/* end offset */
-			endoff = (regoff_t)atoi(optarg);
 			break;
 		case 'x':	/* Debugging. */
 			debug++;
@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 		}
 	if (errflg) {
 		fprintf(stderr, "usage: %s ", progname);
-		fprintf(stderr, "[-c copt][-C][-d] [re]\n");
+		fprintf(stderr, "[-x] [-c copt] [-E endoff] [-e eopt] [-S startoff] [re]\n");
 		exit(2);
 	}
 
