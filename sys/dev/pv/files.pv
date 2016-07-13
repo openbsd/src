@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pv,v 1.6 2016/06/22 01:13:07 mikeb Exp $
+#	$OpenBSD: files.pv,v 1.7 2016/07/13 21:59:35 mikeb Exp $
 #
 # Config file and device description for paravirtual devices.
 # Included by ports that need it.
@@ -27,3 +27,7 @@ file	dev/pv/if_xnf.c			xnf
 device	hyperv {}
 attach	hyperv at pvbus
 file	dev/pv/hyperv.c			hyperv	needs-flag
+
+device	hvn: ether, ifnet, ifmedia
+attach	hvn at hyperv
+file	dev/pv/if_hvn.c			hvn
