@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.32 2015/12/08 19:04:50 mmcc Exp $	*/
+/*	$OpenBSD: day.c,v 1.33 2016/07/13 21:32:01 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -543,8 +543,9 @@ isnow(char *endp, int bodun)
 				tdiff = difftime(ttmp, f_time)/ SECSPERDAY;
 				if (tdiff <= offset + f_dayAfter ||
 				    (bodun && tdiff == -1)) {
-					if (tdiff >=  0 ||
-					    (bodun && tdiff == -1)) {
+					if ((tmtmp.tm_mon == month) &&
+					    (tdiff >=  0 ||
+					    (bodun && tdiff == -1))) {
 					if ((tmp = malloc(sizeof(struct match))) == NULL)
 						err(1, NULL);
 					tmp->when = ttmp;
