@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.65 2016/06/28 05:50:55 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.66 2016/07/13 06:57:35 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3359,8 +3359,8 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 	case 0x00:	/* Max level and vendor ID */
 		*rax = 0x07; /* cpuid_level */
 		*rbx = *((uint32_t *)&cpu_vendor);
-		*rcx = *((uint32_t *)&cpu_vendor + 1);
-		*rdx = *((uint32_t *)&cpu_vendor + 2);
+		*rdx = *((uint32_t *)&cpu_vendor + 1);
+		*rcx = *((uint32_t *)&cpu_vendor + 2);
 		break;
 	case 0x01:	/* Version, brand, feature info */
 		*rax = cpu_id;
