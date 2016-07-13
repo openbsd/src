@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.96 2015/09/21 09:47:15 phessler Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.97 2016/07/13 20:07:38 benno Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,8 +41,9 @@ void		 print_peer(struct peer_config *, struct bgpd_config *,
 const char	*print_auth_alg(u_int8_t);
 const char	*print_enc_alg(u_int8_t);
 void		 print_announce(struct peer_config *, const char *);
+void		 print_as(struct filter_rule *);
 void		 print_rule(struct peer *, struct filter_rule *);
-const char *	 mrt_type(enum mrt_type);
+const char	*mrt_type(enum mrt_type);
 void		 print_mrt(struct bgpd_config *, u_int32_t, u_int32_t,
 		    const char *, const char *);
 void		 print_groups(struct bgpd_config *, struct peer *);
@@ -506,6 +507,26 @@ print_announce(struct peer_config *p, const char *c)
 			printf("%s\tannounce %s\n", c, aid2str(aid));
 }
 
+void print_as(struct filter_rule *r)
+{
+	switch(r->match.as.op) {
+	case OP_RANGE:
+		printf("%s - ", log_as(r->match.as.as_min));
+		printf("%s ", log_as(r->match.as.as_max));
+		break;
+	case OP_XRANGE:
+		printf("%s >< ", log_as(r->match.as.as_min));
+		printf("%s ", log_as(r->match.as.as_max));
+		break;
+	case OP_NE:
+		printf("!= %s ", log_as(r->match.as.as));
+		break;
+	default:
+		printf("%s ", log_as(r->match.as.as));
+		break;
+	}
+}
+
 void
 print_rule(struct peer *peer_l, struct filter_rule *r)
 {
@@ -577,15 +598,16 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 
 	if (r->match.as.type) {
 		if (r->match.as.type == AS_ALL)
-			printf("AS %s ", log_as(r->match.as.as));
+			printf("AS ");
 		else if (r->match.as.type == AS_SOURCE)
-			printf("source-as %s ", log_as(r->match.as.as));
+			printf("source-as ");
 		else if (r->match.as.type == AS_TRANSIT)
-			printf("transit-as %s ", log_as(r->match.as.as));
+			printf("transit-as ");
 		else if (r->match.as.type == AS_PEER)
-			printf("peer-as %s ", log_as(r->match.as.as));
+			printf("peer-as ");
 		else
-			printf("unfluffy-as %s ", log_as(r->match.as.as));
+			printf("unfluffy-as ");
+		print_as(r);
 	}
 
 	if (r->match.aslen.type) {
