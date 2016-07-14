@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.4 2016/07/14 12:42:00 sf Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.5 2016/07/14 12:44:53 sf Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -250,7 +250,7 @@ vioscsi_scsi_cmd(struct scsi_xfer *xs)
 		DPRINTF("vioscsi_scsi_cmd: polling...\n");
 		int timeout = 1000;
 		do {
-			vsc->sc_ops->intr(vsc);
+			virtio_poll_intr(vsc);
 			if (vr->vr_xs != xs)
 				break;
 			delay(1000);

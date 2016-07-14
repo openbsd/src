@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.10 2016/07/14 12:42:00 sf Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.11 2016/07/14 12:44:53 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -460,7 +460,7 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 
 	timeout = 1000;
 	do {
-		if (vsc->sc_ops->intr(vsc) && vr->vr_len == VIOBLK_DONE)
+		if (virtio_poll_intr(vsc) && vr->vr_len == VIOBLK_DONE)
 			break;
 
 		delay(1000);
