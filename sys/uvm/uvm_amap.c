@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.74 2016/07/11 08:38:49 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.75 2016/07/14 16:23:49 stefan Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -272,7 +272,13 @@ amap_alloc1(int slots, int waitf, int lazyalloc)
 	int buckets, i, n;
 	int pwaitf = (waitf == M_WAITOK) ? PR_WAITOK : PR_NOWAIT;
 
-	chunks = roundup(slots, UVM_AMAP_CHUNK) / UVM_AMAP_CHUNK;
+	KASSERT(slots > 0);
+
+	/*
+	 * Cast to unsigned so that rounding up cannot cause integer overflow
+	 * if slots is large.
+	 */
+	chunks = roundup((unsigned int)slots, UVM_AMAP_CHUNK) / UVM_AMAP_CHUNK;
 
 	if (lazyalloc) {
 		/*
@@ -313,8 +319,6 @@ amap_alloc1(int slots, int waitf, int lazyalloc)
 		    pwaitf | PR_ZERO);
 	if (amap == NULL)
 		return(NULL);
-
-	KASSERT(slots > 0);
 
 	amap->am_ref = 1;
 	amap->am_flags = 0;
@@ -382,9 +386,11 @@ struct vm_amap *
 amap_alloc(vaddr_t sz, int waitf, int lazyalloc)
 {
 	struct vm_amap *amap;
-	int slots;
+	size_t slots;
 
 	AMAP_B2SLOT(slots, sz);		/* load slots */
+	if (slots > INT_MAX)
+		return (NULL);
 
 	amap = amap_alloc1(slots, waitf, lazyalloc);
 	if (amap)
