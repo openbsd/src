@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.6 2016/07/11 14:56:18 kettenis Exp $ */
+/* $OpenBSD: if_fec.c,v 1.7 2016/07/14 14:05:51 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -225,7 +225,7 @@ struct fec_softc {
 	struct device		sc_dev;
 	struct arpcom		sc_ac;
 	struct mii_data		sc_mii;
-	int			sc_phyno;
+	int			sc_node;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	void			*sc_ih; /* Interrupt handler */
@@ -247,7 +247,6 @@ struct fec_softc *fec_sc;
 
 int fec_match(struct device *, void *, void *);
 void fec_attach(struct device *, struct device *, void *);
-void fec_chip_init(struct fec_softc *);
 void fec_phy_init(struct fec_softc *, struct mii_softc *);
 int fec_ioctl(struct ifnet *, u_long, caddr_t);
 void fec_start(struct ifnet *);
@@ -305,6 +304,7 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	    intr, sizeof(intr)) < sizeof(intr))
 		return;
 
+	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
 	    faa->fa_reg[1], 0, &sc->sc_ioh))
@@ -403,8 +403,9 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
-	/* initialize the chip */
-	fec_chip_init(sc);
+	/* initialize the MII clock */
+	HWRITE4(sc, ENET_MSCR,
+	    (((imxccm_get_fecclk() + (ENET_MII_CLK << 2) - 1) / (ENET_MII_CLK << 2)) << 1) | 0x100);
 
 	/* Initialize MII/media info. */
 	mii = &sc->sc_mii;
@@ -445,94 +446,6 @@ bad:
 }
 
 void
-fec_chip_init(struct fec_softc *sc)
-{
-	struct device *dev = (struct device *) sc;
-	int phy = 0;
-
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ENET_MSCR,
-	    (((imxccm_get_fecclk() + (ENET_MII_CLK << 2) - 1) / (ENET_MII_CLK << 2)) << 1) | 0x100);
-
-	switch (board_id)
-	{
-	case BOARD_ID_IMX6_SABRELITE:
-		phy = ENET_SABRELITE_PHY;
-		break;
-	case BOARD_ID_IMX6_UDOO:
-		phy = ENET_UDOO_PHY;
-		break;
-	case BOARD_ID_IMX6_NOVENA:
-		phy = ENET_NOVENA_PHY;
-		break;
-	}
-
-	switch (board_id)
-	{
-	case BOARD_ID_IMX6_UDOO:	/* Micrel KSZ9031 */
-		/* prefer master mode */
-		fec_miibus_writereg(dev, phy, 0x9, 0x1c00);
-
-		/* control data pad skew */
-		fec_miibus_writereg(dev, phy, 0x0d, 0x0002);
-		fec_miibus_writereg(dev, phy, 0x0e, 0x0004);
-		fec_miibus_writereg(dev, phy, 0x0d, 0x4002);
-		fec_miibus_writereg(dev, phy, 0x0e, 0x0000);
-
-		/* rx data pad skew */
-		fec_miibus_writereg(dev, phy, 0x0d, 0x0002);
-		fec_miibus_writereg(dev, phy, 0x0e, 0x0005);
-		fec_miibus_writereg(dev, phy, 0x0d, 0x4002);
-		fec_miibus_writereg(dev, phy, 0x0e, 0x0000);
-
-		/* tx data pad skew */
-		fec_miibus_writereg(dev, phy, 0x0d, 0x0002);
-		fec_miibus_writereg(dev, phy, 0x0e, 0x0006);
-		fec_miibus_writereg(dev, phy, 0x0d, 0x4002);
-		fec_miibus_writereg(dev, phy, 0x0e, 0x0000);
-
-		/* gtx and rx data pad skew */
-		fec_miibus_writereg(dev, phy, 0x0d, 0x0002);
-		fec_miibus_writereg(dev, phy, 0x0e, 0x0008);
-		fec_miibus_writereg(dev, phy, 0x0d, 0x4002);
-		fec_miibus_writereg(dev, phy, 0x0e, 0x03ff);
-		break;
-	case BOARD_ID_IMX6_SABRELITE:	/* Micrel KSZ9021 */
-		/* prefer master mode */
-		fec_miibus_writereg(dev, phy, 0x9, 0x1f00);
-
-		/* min rx data delay */
-		fec_miibus_writereg(dev, phy, 0x0b, 0x8105);
-		fec_miibus_writereg(dev, phy, 0x0c, 0x0000);
-
-		/* min tx data delay */
-		fec_miibus_writereg(dev, phy, 0x0b, 0x8106);
-		fec_miibus_writereg(dev, phy, 0x0c, 0x0000);
-
-		/* max rx/tx clock delay, min rx/tx control delay */
-		fec_miibus_writereg(dev, phy, 0x0b, 0x8104);
-		fec_miibus_writereg(dev, phy, 0x0c, 0xf0f0);
-		fec_miibus_writereg(dev, phy, 0x0b, 0x104);
-
-		/* enable all interrupts */
-		fec_miibus_writereg(dev, phy, 0x1b, 0xff00);
-		break;
-	case BOARD_ID_IMX6_NOVENA:	/* Micrel KSZ9021 */
-		/* TXEN_SKEW_PS/TXC_SKEW_PS/RXDV_SKEW_PS/RXC_SKEW_PS */
-		fec_miibus_writereg(dev, phy, 0x0b, 0x8104);
-		fec_miibus_writereg(dev, phy, 0x0c, 0xf0f0);
-
-		/* RXD0_SKEW_PS/RXD1_SKEW_PS/RXD2_SKEW_PS/RXD3_SKEW_PS */
-		fec_miibus_writereg(dev, phy, 0x0b, 0x8105);
-		fec_miibus_writereg(dev, phy, 0x0c, 0x0000);
-
-		/* TXD0_SKEW_PS/TXD1_SKEW_PS/TXD2_SKEW_PS/TXD3_SKEW_PS */
-		fec_miibus_writereg(dev, phy, 0x0b, 0x8106);
-		fec_miibus_writereg(dev, phy, 0x0c, 0xffff);
-		break;
-	}
-}
-
-void
 fec_phy_init(struct fec_softc *sc, struct mii_softc *child)
 {
 	struct device *dev = (struct device *)sc;
@@ -565,6 +478,89 @@ fec_phy_init(struct fec_softc *sc, struct mii_softc *child)
 		reg = fec_miibus_readreg(dev, phy, 0x00);
 		if (reg & 0x0800)
 			fec_miibus_writereg(dev, phy, 0x00, reg & ~0x0800);
+	}
+
+	if (child->mii_oui == MII_OUI_MICREL &&
+	    child->mii_model == MII_MODEL_MICREL_KSZ9021) {
+		uint32_t rxc, rxdv, txc, txen;
+		uint32_t rxd0, rxd1, rxd2, rxd3;
+		uint32_t txd0, txd1, txd2, txd3;
+		uint32_t val;
+
+		rxc = OF_getpropint(sc->sc_node, "rxc-skew-ps", 1400) / 200;
+		rxdv = OF_getpropint(sc->sc_node, "rxdv-skew-ps", 1400) / 200;
+		txc = OF_getpropint(sc->sc_node, "txc-skew-ps", 1400) / 200;
+		txen = OF_getpropint(sc->sc_node, "txen-skew-ps", 1400) / 200;
+		rxd0 = OF_getpropint(sc->sc_node, "rxd0-skew-ps", 1400) / 200;
+		rxd1 = OF_getpropint(sc->sc_node, "rxd1-skew-ps", 1400) / 200;
+		rxd2 = OF_getpropint(sc->sc_node, "rxd2-skew-ps", 1400) / 200;
+		rxd3 = OF_getpropint(sc->sc_node, "rxd3-skew-ps", 1400) / 200;
+		txd0 = OF_getpropint(sc->sc_node, "txd0-skew-ps", 1400) / 200;
+		txd1 = OF_getpropint(sc->sc_node, "txd1-skew-ps", 1400) / 200;
+		txd2 = OF_getpropint(sc->sc_node, "txd2-skew-ps", 1400) / 200;
+		txd3 = OF_getpropint(sc->sc_node, "txd3-skew-ps", 1400) / 200;
+
+		val = ((rxc & 0xf) << 12) | ((rxdv & 0xf) << 8) |
+		    ((txc & 0xf) << 4) | ((txen & 0xf) << 0);
+		fec_miibus_writereg(dev, phy, 0x0b, 0x8104);
+		fec_miibus_writereg(dev, phy, 0x0c, val);
+
+		val = ((rxd3 & 0xf) << 12) | ((rxd2 & 0xf) << 8) |
+		    ((rxd1 & 0xf) << 4) | ((rxd0 & 0xf) << 0);
+		fec_miibus_writereg(dev, phy, 0x0b, 0x8105);
+		fec_miibus_writereg(dev, phy, 0x0c, val);
+
+		val = ((txd3 & 0xf) << 12) | ((txd2 & 0xf) << 8) |
+		    ((txd1 & 0xf) << 4) | ((txd0 & 0xf) << 0);
+		fec_miibus_writereg(dev, phy, 0x0b, 0x8106);
+		fec_miibus_writereg(dev, phy, 0x0c, val);
+	}
+
+	if (child->mii_oui == MII_OUI_MICREL &&
+	    child->mii_model == MII_MODEL_MICREL_KSZ9031) {
+		uint32_t rxc, rxdv, txc, txen;
+		uint32_t rxd0, rxd1, rxd2, rxd3;
+		uint32_t txd0, txd1, txd2, txd3;
+		uint32_t val;
+
+		rxc = OF_getpropint(sc->sc_node, "rxc-skew-ps", 900) / 60;
+		rxdv = OF_getpropint(sc->sc_node, "rxdv-skew-ps", 420) / 60;
+		txc = OF_getpropint(sc->sc_node, "txc-skew-ps", 900) / 60;
+		txen = OF_getpropint(sc->sc_node, "txen-skew-ps", 420) / 60;
+		rxd0 = OF_getpropint(sc->sc_node, "rxd0-skew-ps", 420) / 60;
+		rxd1 = OF_getpropint(sc->sc_node, "rxd1-skew-ps", 420) / 60;
+		rxd2 = OF_getpropint(sc->sc_node, "rxd2-skew-ps", 420) / 60;
+		rxd3 = OF_getpropint(sc->sc_node, "rxd3-skew-ps", 420) / 60;
+		txd0 = OF_getpropint(sc->sc_node, "txd0-skew-ps", 420) / 60;
+		txd1 = OF_getpropint(sc->sc_node, "txd1-skew-ps", 420) / 60;
+		txd2 = OF_getpropint(sc->sc_node, "txd2-skew-ps", 420) / 60;
+		txd3 = OF_getpropint(sc->sc_node, "txd3-skew-ps", 420) / 60;
+
+		val = ((rxdv & 0xf) << 4) || ((txen & 0xf) << 0);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x0002);
+		fec_miibus_writereg(dev, phy, 0x0e, 0x0004);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x4002);
+		fec_miibus_writereg(dev, phy, 0x0e, val);
+
+		val = ((rxd3 & 0xf) << 12) | ((rxd2 & 0xf) << 8) |
+		    ((rxd1 & 0xf) << 4) | ((rxd0 & 0xf) << 0);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x0002);
+		fec_miibus_writereg(dev, phy, 0x0e, 0x0005);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x4002);
+		fec_miibus_writereg(dev, phy, 0x0e, val);
+
+		val = ((txd3 & 0xf) << 12) | ((txd2 & 0xf) << 8) |
+		    ((txd1 & 0xf) << 4) | ((txd0 & 0xf) << 0);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x0002);
+		fec_miibus_writereg(dev, phy, 0x0e, 0x0006);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x4002);
+		fec_miibus_writereg(dev, phy, 0x0e, val);
+
+		val = ((txc & 0x1f) << 5) || ((rxc & 0x1f) << 0);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x0002);
+		fec_miibus_writereg(dev, phy, 0x0e, 0x0008);
+		fec_miibus_writereg(dev, phy, 0x0d, 0x4002);
+		fec_miibus_writereg(dev, phy, 0x0e, val);
 	}
 }
 
