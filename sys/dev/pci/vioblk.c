@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.11 2016/07/14 12:44:53 sf Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.12 2016/07/14 12:50:07 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -116,6 +116,7 @@ int	vioblk_alloc_reqs(struct vioblk_softc *, int);
 int	vioblk_vq_done(struct virtqueue *);
 void	vioblk_vq_done1(struct vioblk_softc *, struct virtio_softc *,
 			struct virtqueue *, int);
+void	vioblk_reset(struct vioblk_softc *);
 
 void	vioblk_scsi_cmd(struct scsi_xfer *);
 int	vioblk_dev_probe(struct scsi_link *);
@@ -305,6 +306,32 @@ vioblk_vq_done1(struct vioblk_softc *sc, struct virtio_softc *vsc,
 }
 
 void
+vioblk_reset(struct vioblk_softc *sc)
+{
+	int i;
+
+	/* reset device to stop DMA */
+	virtio_reset(sc->sc_virtio);
+
+	/* finish requests that have been completed */
+	vioblk_vq_done(&sc->sc_vq[0]);
+
+	/* abort all remaining requests */
+	for (i = 0; i < sc->sc_link.openings; i++) {
+		struct virtio_blk_req *vr = &sc->sc_reqs[i];
+		struct scsi_xfer *xs = vr->vr_xs;
+
+		if (vr->vr_len == VIOBLK_DONE)
+			continue;
+
+		xs->error = XS_DRIVER_STUFFUP;
+		xs->resid = xs->datalen;
+		scsi_done(xs);
+		vr->vr_len = VIOBLK_DONE;
+	}
+}
+
+void
 vioblk_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct vioblk_softc *sc = xs->sc_link->adapter_softc;
@@ -458,13 +485,22 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
-	timeout = 1000;
+	timeout = 15 * 1000;
 	do {
 		if (virtio_poll_intr(vsc) && vr->vr_len == VIOBLK_DONE)
 			break;
 
 		delay(1000);
 	} while(--timeout > 0);
+	if (timeout <= 0) {
+		uint32_t features;
+		printf("%s: SCSI_POLL timed out\n", __func__);
+		vioblk_reset(sc);
+		virtio_reinit_start(vsc);
+		features = virtio_negotiate_features(vsc, vsc->sc_features,
+		    NULL);
+		KASSERT(features == vsc->sc_features);
+	}
 	splx(s);
 	return;
 
