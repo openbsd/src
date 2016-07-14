@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.201 2016/07/06 15:53:01 tedu Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.202 2016/07/14 05:55:08 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1823,6 +1823,9 @@ int
 filt_sigattach(struct knote *kn)
 {
 	struct process *pr = curproc->p_p;
+
+	if (kn->kn_id >= NSIG)
+		return EINVAL;
 
 	kn->kn_ptr.p_process = pr;
 	kn->kn_flags |= EV_CLEAR;		/* automatically set */

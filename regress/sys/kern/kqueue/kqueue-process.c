@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-process.c,v 1.9 2016/03/17 19:40:43 krw Exp $	*/
+/*	$OpenBSD: kqueue-process.c,v 1.10 2016/07/14 05:55:08 guenther Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <err.h>
+#include <errno.h>
 #include <unistd.h>
 #include <signal.h>
 
@@ -64,6 +65,14 @@ do_process(void)
 	    NOTE_EXIT|NOTE_FORK|NOTE_EXEC|NOTE_TRACK, 0, NULL);
 	ASS(kevent(kq, &ke, 1, NULL, 0, NULL) == 0,
 	    warn("can't register events on kqueue"));
+
+	/* negative case */
+	EV_SET(&ke, pid + (1ULL << 32), EVFILT_PROC, EV_ADD|EV_ENABLE|EV_CLEAR,
+	    NOTE_EXIT|NOTE_FORK|NOTE_EXEC|NOTE_TRACK, 0, NULL);
+	ASS(kevent(kq, &ke, 1, NULL, 0, NULL) != 0,
+	    warnx("can register bogus pid on kqueue"));
+	ASS(errno == ESRCH,
+	    warn("register bogus pid on kqueue returned wrong error"));
 
 	kill(pid, SIGUSR1);	/* sync 1 */
 

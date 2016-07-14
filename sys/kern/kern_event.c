@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.73 2016/07/14 02:35:17 tedu Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.74 2016/07/14 05:55:08 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -215,6 +215,9 @@ filt_procattach(struct knote *kn)
 	if ((curproc->p_p->ps_flags & PS_PLEDGE) &&
 	    (curproc->p_p->ps_pledge & PLEDGE_PROC) == 0)
 		return pledge_fail(curproc, EPERM, PLEDGE_PROC);
+
+	if (kn->kn_id > PID_MAX)
+		return ESRCH;
 
 	pr = prfind(kn->kn_id);
 	if (pr == NULL)

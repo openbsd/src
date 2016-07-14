@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-signal.c,v 1.1 2011/07/07 02:00:51 guenther Exp $	*/
+/*	$OpenBSD: kqueue-signal.c,v 1.2 2016/07/14 05:55:08 guenther Exp $	*/
 /*
  *	Written by Philip Guenther <guenther@openbsd.org> 2011 Public Domain
  */
@@ -70,6 +70,12 @@ do_signal(void)
 	EV_SET(&ke, SIGUSR2, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, NULL);
 	ASS(kevent(kq, &ke, 1, NULL, 0, NULL) == 0,
 	    warn("can't register events on kqueue"));
+
+	EV_SET(&ke, 10000, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, NULL);
+	ASS(kevent(kq, &ke, 1, NULL, 0, NULL) != 0,
+	    warnx("registered bogus signal on kqueue"));
+	ASS(errno == EINVAL,
+	    warn("registering bogus signal on kqueue returned wrong error"));
 
 	ASSX(saw_usr1 == 0);
 	kill(pid, SIGUSR1);
