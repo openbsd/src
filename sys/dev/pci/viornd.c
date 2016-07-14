@@ -1,4 +1,4 @@
-/*	$OpenBSD: viornd.c,v 1.2 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: viornd.c,v 1.3 2016/07/14 12:42:00 sf Exp $	*/
 
 /*
  * Copyright (c) 2014 Stefan Fritsch <sf@sfritsch.de>
@@ -94,7 +94,6 @@ viornd_attach(struct device *parent, struct device *self, void *aux)
 		panic("already attached to something else");
 	vsc->sc_child = self;
 	vsc->sc_ipl = IPL_NET;
-	vsc->sc_intrhand = virtio_vq_intr;
 	sc->sc_virtio = vsc;
 
 	virtio_negotiate_features(vsc, 0, NULL);

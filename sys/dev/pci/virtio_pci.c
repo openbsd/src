@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.12 2015/11/15 16:00:15 deraadt Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.13 2016/07/14 12:42:00 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -403,10 +403,10 @@ virtio_pci_intr(void *arg)
 		return 0;
 	KERNEL_LOCK();
 	if ((isr & VIRTIO_CONFIG_ISR_CONFIG_CHANGE) &&
-	    (vsc->sc_config_change != NULL))
+	    (vsc->sc_config_change != NULL)) {
 		r = (vsc->sc_config_change)(vsc);
-	if (vsc->sc_intrhand != NULL)
-		r |= (vsc->sc_intrhand)(vsc);
+	}
+	r |= virtio_check_vqs(vsc);
 	KERNEL_UNLOCK();
 
 	return r;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.9 2015/12/05 19:57:03 sf Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.10 2016/07/14 12:42:00 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -168,7 +168,6 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 		panic("already attached to something else");
 	vsc->sc_child = self;
 	vsc->sc_ipl = IPL_BIO;
-	vsc->sc_intrhand = virtio_vq_intr;
 	sc->sc_virtio = vsc;
 
         features = virtio_negotiate_features(vsc,

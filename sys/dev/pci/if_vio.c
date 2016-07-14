@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.41 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.42 2016/07/14 12:42:00 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -521,7 +521,6 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_ipl = IPL_NET;
 	vsc->sc_vqs = &sc->sc_vq[0];
 	vsc->sc_config_change = 0;
-	vsc->sc_intrhand = virtio_vq_intr;
 
 	features = VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS |
 	    VIRTIO_NET_F_CTRL_VQ | VIRTIO_NET_F_CTRL_RX |

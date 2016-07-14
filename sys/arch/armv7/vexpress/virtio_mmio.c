@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.2 2016/04/24 00:57:23 patrick Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.3 2016/07/14 12:42:00 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -465,9 +465,8 @@ virtio_mmio_intr(void *arg)
 	if ((isr & VIRTIO_MMIO_INT_CONFIG) &&
 	    (vsc->sc_config_change != NULL))
 		r = (vsc->sc_config_change)(vsc);
-	if ((isr & VIRTIO_MMIO_INT_VRING) &&
-	    (vsc->sc_intrhand != NULL))
-		r |= (vsc->sc_intrhand)(vsc);
+	if ((isr & VIRTIO_MMIO_INT_VRING))
+		r |= virtio_check_vqs(vsc);
 
 	return r;
 }
