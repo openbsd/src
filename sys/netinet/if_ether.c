@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.219 2016/07/13 16:45:19 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.220 2016/07/14 14:01:40 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		if (la == NULL)
 			break;
 		LIST_REMOVE(la, la_list);
-		rt->rt_llinfo = 0;
+		rt->rt_llinfo = NULL;
 		rt->rt_flags &= ~RTF_LLINFO;
 		la_hold_total -= ml_purge(&la->la_ml);
 		pool_put(&arp_pool, la);
@@ -530,7 +530,12 @@ in_arpinput(struct ifnet *ifp, struct mbuf *m)
 		    "address %s\n", addr, ether_sprintf(ea->arp_sha));
 		itaddr = isaddr;
 	} else if (rt != NULL) {
-		if (arpcache(ifp, ea, rt))
+		int error;
+
+		KERNEL_LOCK();
+		error = arpcache(ifp, ea, rt);
+		KERNEL_UNLOCK();
+		if (error)
 			goto out;
 	}
 
@@ -572,7 +577,15 @@ arpcache(struct ifnet *ifp, struct ether_arp *ea, struct rtentry *rt)
 	unsigned int len;
 	int changed = 0;
 
+	KERNEL_ASSERT_LOCKED();
 	KASSERT(sdl != NULL);
+
+	/*
+	 * This can happen if the entry has been deleted by another CPU
+	 * after we found it.
+	 */
+	if (la == NULL)
+		return (0);
 
 	if (sdl->sdl_alen > 0) {
 		if (memcmp(ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
