@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.162 2016/07/06 15:50:00 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.163 2016/07/14 14:39:12 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -299,20 +299,17 @@ ip6_input(struct mbuf *m)
 		ip6stat.ip6s_badscope++;
 		goto bad;
 	}
-#if 0
+
 	/*
 	 * Reject packets with IPv4 compatible addresses (auto tunnel).
 	 *
-	 * The code forbids auto tunnel relay case in RFC1933 (the check is
-	 * stronger than RFC1933).  We may want to re-enable it if mech-xx
-	 * is revised to forbid relaying case.
+	 * The code forbids automatic tunneling as per RFC4213.
 	 */
 	if (IN6_IS_ADDR_V4COMPAT(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_V4COMPAT(&ip6->ip6_dst)) {
 		ip6stat.ip6s_badscope++;
 		goto bad;
 	}
-#endif
 
 	/*
 	 * If the packet has been received on a loopback interface it
