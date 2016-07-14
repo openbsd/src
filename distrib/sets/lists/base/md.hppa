@@ -1099,8 +1099,10 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pv
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pv/hypervreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pv/hypervvar.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pv/if_hvnreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pv/pvreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pv/pvvar.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pv/rndisreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pv/xenreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pv/xenvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/radio_if.ph
