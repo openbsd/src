@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.305 2016/05/27 19:45:04 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.306 2016/07/14 15:39:40 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -275,7 +275,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	int error, level, inthostid, stackgap;
 	dev_t dev;
 	extern int somaxconn, sominconn;
-	extern int usermount, nosuidcoredump;
+	extern int nosuidcoredump;
 	extern int maxlocksperuid;
 	extern int pool_debug;
 	extern int uvm_wxabort;
@@ -414,8 +414,10 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &somaxconn));
 	case KERN_SOMINCONN:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &sominconn));
-	case KERN_USERMOUNT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &usermount));
+	case KERN_USERMOUNT: {
+		int usermount = 0;
+		return (sysctl_rdint(oldp, oldlenp, newp, usermount));
+		}
 	case KERN_ARND: {
 		char buf[512];
 

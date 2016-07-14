@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.262 2016/07/12 20:53:04 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.263 2016/07/14 15:39:40 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -63,7 +63,6 @@
 #include <sys/syscallargs.h>
 
 extern int suid_clear;
-int	usermount = 0;		/* sysctl: by default, users may not mount */
 
 static int change_dir(struct nameidata *, struct proc *);
 
@@ -116,7 +115,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 	struct vfsconf *vfsp;
 	int flags = SCARG(uap, flags);
 
-	if (usermount == 0 && (error = suser(p, 0)))
+	if ((error = suser(p, 0)))
 		return (error);
 
 	/*
