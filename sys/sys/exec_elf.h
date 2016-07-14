@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.58 2016/05/29 00:48:05 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.59 2016/07/14 06:03:46 guenther Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -425,6 +425,8 @@ typedef struct {
 #define PT_HIOS		0x6fffffff	/*  specific segment types */
 #define PT_LOPROC	0x70000000	/* reserved range for processor */
 #define PT_HIPROC	0x7fffffff	/*  specific segment types */
+
+#define PT_GNU_RELRO		0x6474e552	/* Read-only after relocation */
 
 #define PT_OPENBSD_RANDOMIZE	0x65a3dbe6	/* fill with random data */
 #define PT_OPENBSD_WXNEEDED	0x65a3dbe7	/* program performs W^X violations */
