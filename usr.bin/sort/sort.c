@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.85 2015/10/24 15:19:01 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.86 2016/07/14 08:31:18 semarie Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -870,7 +870,7 @@ main(int argc, char *argv[])
 
 	set_hw_params();
 
-	if (pledge("stdio rpath wpath cpath fattr proc exec", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr chown proc exec", NULL) == -1)
 		err(2, "pledge");
 
 	outfile = "-";
@@ -1053,7 +1053,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (compress_program == NULL) {
-		if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
+		if (pledge("stdio rpath wpath cpath fattr chown", NULL) == -1)
 			err(2, "pledge");
 	}
 

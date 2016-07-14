@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.32 2016/03/17 05:27:10 bentley Exp $	*/
+/*	$OpenBSD: main.c,v 1.33 2016/07/14 08:31:18 semarie Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -160,7 +160,7 @@ main(int argc, char *argv[])
 		termwidth = 80;
 
 	if (inplace != NULL) {
-		if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
+		if (pledge("stdio rpath wpath cpath fattr chown", NULL) == -1)
 			error(FATAL, "pledge: %s", strerror(errno));
 	} else {
 		if (pledge("stdio rpath wpath cpath", NULL) == -1)
