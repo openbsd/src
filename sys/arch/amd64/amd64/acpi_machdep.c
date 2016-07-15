@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.75 2016/05/18 04:42:49 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.76 2016/07/15 22:05:40 tom Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -129,7 +129,6 @@ acpi_intr_establish(int irq, int flags, int level,
 	else
 		map->flags |= (MPS_INTTR_LEVEL << MPS_INTTR_SHIFT);
 
-	map->redir = (IOAPIC_REDLO_DEL_LOPRI << IOAPIC_REDLO_DEL_SHIFT);
 	map->redir = (IOAPIC_REDLO_DEL_LOPRI << IOAPIC_REDLO_DEL_SHIFT);
 	switch ((map->flags >> MPS_INTPO_SHIFT) & MPS_INTPO_MASK) {
 	case MPS_INTPO_DEF:
