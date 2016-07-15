@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.34 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: names.c,v 1.35 2016/07/15 09:27:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -73,12 +73,15 @@ check_window_name(struct window *w)
 		if (!event_initialized(&w->name_event))
 			evtimer_set(&w->name_event, name_time_callback, w);
 		if (!evtimer_pending(&w->name_event, NULL)) {
-			log_debug("@%u name timer queued (%d left)", w->id, left);
+			log_debug("@%u name timer queued (%d left)", w->id,
+			    left);
 			timerclear(&next);
 			next.tv_usec = left;
 			event_add(&w->name_event, &next);
-		} else
-			log_debug("@%u name timer already queued (%d left)", w->id, left);
+		} else {
+			log_debug("@%u name timer already queued (%d left)",
+			    w->id, left);
+		}
 		return;
 	}
 	memcpy(&w->name_time, &tv, sizeof w->name_time);
