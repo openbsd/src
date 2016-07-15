@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.24 2016/06/18 09:59:35 jsg Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.25 2016/07/15 22:28:25 tom Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -373,7 +373,6 @@ ommmc_attach(struct device *parent, struct device *self, void *aux)
 	sc->clkbase = 96 * 1000;
 #if 0
 	if (SDHC_BASE_FREQ_KHZ(caps) != 0)
-		sc->clkbase = SDHC_BASE_FREQ_KHZ(caps);
 		sc->clkbase = SDHC_BASE_FREQ_KHZ(caps);
 #endif
 	if (sc->clkbase == 0) {
