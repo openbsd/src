@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.170 2016/07/09 15:23:36 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.171 2016/07/15 18:02:32 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -127,6 +127,9 @@ struct	mdoc_handler {
 	mdoc_fp		 fp; /* optional handler */
 	uint64_t	 mask;  /* set unless handler returns 0 */
 };
+
+
+int		 mandocdb(int, char *[]);
 
 static	void	 dbclose(int);
 static	void	 dbadd(struct mpage *);

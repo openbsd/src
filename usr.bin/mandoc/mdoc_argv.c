@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_argv.c,v 1.63 2015/10/17 00:19:58 schwarze Exp $ */
+/*	$OpenBSD: mdoc_argv.c,v 1.64 2016/07/15 18:02:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -27,6 +27,7 @@
 #include "roff.h"
 #include "mdoc.h"
 #include "libmandoc.h"
+#include "roff_int.h"
 #include "libmdoc.h"
 
 #define	MULTI_STEP	 5 /* pre-allocate argument values */

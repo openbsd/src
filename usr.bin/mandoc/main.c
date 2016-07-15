@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.173 2016/07/08 22:27:58 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.174 2016/07/15 18:02:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -74,6 +74,9 @@ struct	curparse {
 	void		 *outdata;	/* data for output */
 	struct manoutput *outopts;	/* output options */
 };
+
+
+int			  mandocdb(int, char *[]);
 
 static	int		  fs_lookup(const struct manpaths *,
 				size_t ipath, const char *,

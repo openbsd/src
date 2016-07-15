@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_hash.c,v 1.24 2015/10/06 18:30:43 schwarze Exp $ */
+/*	$OpenBSD: man_hash.c,v 1.25 2016/07/15 18:02:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -22,8 +22,10 @@
 #include <limits.h>
 #include <string.h>
 
+#include "mandoc.h"
 #include "roff.h"
 #include "man.h"
+#include "libmandoc.h"
 #include "libman.h"
 
 #define	HASH_DEPTH	 6
