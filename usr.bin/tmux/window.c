@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.163 2016/06/16 10:55:47 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.164 2016/07/15 09:28:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -842,6 +842,7 @@ window_pane_spawn(struct window_pane *wp, int argc, char **argv,
 	log_debug("spawn: %s -- %s", wp->shell, cmd);
 	for (i = 0; i < wp->argc; i++)
 		log_debug("spawn: argv[%d] = %s", i, wp->argv[i]);
+	environ_log(env);
 
 	memset(&ws, 0, sizeof ws);
 	ws.ws_col = screen_size_x(&wp->base);
