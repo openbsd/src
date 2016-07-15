@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.38 2016/06/10 11:46:15 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.39 2016/07/15 00:49:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -38,6 +38,9 @@ screen_init(struct screen *s, u_int sx, u_int sy, u_int hlimit)
 	s->ccolour = xstrdup("");
 	s->tabs = NULL;
 
+	s->dirty = NULL;
+	s->dirtysize = 0;
+
 	screen_reinit(s);
 }
 
@@ -64,6 +67,7 @@ screen_reinit(struct screen *s)
 void
 screen_free(struct screen *s)
 {
+	free(s->dirty);
 	free(s->tabs);
 	free(s->title);
 	free(s->ccolour);

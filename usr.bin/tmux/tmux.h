@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.637 2016/07/15 00:42:56 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.638 2016/07/15 00:49:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -60,7 +60,7 @@ struct tmuxproc;
 #define NAME_INTERVAL 500000
 
 /* The maximum amount of data to hold from a pty (the event high watermark). */
-#define READ_SIZE 128
+#define READ_SIZE 4096
 
 /* Attribute to make gcc check printf-like arguments. */
 #define printflike(a, b) __attribute__ ((format (printf, a, b)))
@@ -648,6 +648,7 @@ enum utf8_state {
 
 /* Grid line flags. */
 #define GRID_LINE_WRAPPED 0x1
+#define GRID_LINE_EXTENDED 0x2
 
 /* Grid cell data. */
 struct grid_cell {
@@ -769,30 +770,38 @@ struct screen_sel {
 
 /* Virtual screen. */
 struct screen {
-	char		*title;
+	char			*title;
 
-	struct grid	*grid;		/* grid data */
+	struct grid		*grid;		/* grid data */
 
-	u_int		 cx;		/* cursor x */
-	u_int		 cy;		/* cursor y */
+	u_int			 cx;		/* cursor x */
+	u_int			 cy;		/* cursor y */
 
-	u_int		 cstyle;	/* cursor style */
-	char		*ccolour;	/* cursor colour string */
+	u_int			 cstyle;	/* cursor style */
+	char			*ccolour;	/* cursor colour string */
 
-	u_int		 rupper;	/* scroll region top */
-	u_int		 rlower;	/* scroll region bottom */
+	u_int			 rupper;	/* scroll region top */
+	u_int		 	 rlower;	/* scroll region bottom */
 
-	int		 mode;
+	int			 mode;
 
-	bitstr_t	*tabs;
+	bitstr_t		*tabs;
 
-	struct screen_sel sel;
+	bitstr_t		*dirty;
+	u_int			 dirtysize;
+
+	struct screen_sel	 sel;
 };
 
 /* Screen write context. */
 struct screen_write_ctx {
-	struct window_pane *wp;
-	struct screen	*s;
+	struct window_pane	*wp;
+	struct screen		*s;
+	u_int			 dirty;
+
+	u_int			 cells;
+	u_int			 written;
+	u_int			 skipped;
 };
 
 /* Screen size. */
@@ -1198,7 +1207,6 @@ struct tty_ctx {
 
 	/* Saved last cell on line. */
 	struct grid_cell last_cell;
-	u_int		 last_width;
 };
 
 /* Saved message entry. */
@@ -1982,6 +1990,7 @@ int	 attributes_fromstring(const char *);
 
 /* grid.c */
 extern const struct grid_cell grid_default_cell;
+int	 grid_cells_equal(const struct grid_cell *, const struct grid_cell *);
 struct grid *grid_create(u_int, u_int, u_int);
 void	 grid_destroy(struct grid *);
 int	 grid_compare(struct grid *, struct grid *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.53 2016/07/15 00:42:56 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.54 2016/07/15 00:49:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -43,8 +43,6 @@ const struct grid_cell_entry grid_default_entry = {
 	0, { .data = { 0, 8, 8, ' ' } }
 };
 
-int	grid_check_y(struct grid *, u_int);
-
 void	grid_reflow_copy(struct grid_line *, u_int, struct grid_line *l,
 	    u_int, u_int);
 void	grid_reflow_join(struct grid *, u_int *, struct grid_line *, u_int);
@@ -64,7 +62,7 @@ grid_clear_cell(struct grid *gd, u_int px, u_int py)
 }
 
 /* Check grid y position. */
-int
+static int
 grid_check_y(struct grid *gd, u_int py)
 {
 	if ((py) >= (gd)->hsize + (gd)->sy) {
@@ -72,6 +70,21 @@ grid_check_y(struct grid *gd, u_int py)
 		return (-1);
 	}
 	return (0);
+}
+
+/* Compare grid cells. Return 1 if equal, 0 if not. */
+int
+grid_cells_equal(const struct grid_cell *gca, const struct grid_cell *gcb)
+{
+	if (gca->fg != gcb->fg || gca->bg != gcb->bg)
+		return (0);
+	if (gca->attr != gcb->attr || gca->flags != gcb->flags)
+		return (0);
+	if (gca->data.width != gcb->data.width)
+		return (0);
+	if (gca->data.size != gcb->data.size)
+		return (0);
+	return (memcmp(gca->data.data, gcb->data.data, gca->data.size) == 0);
 }
 
 /* Create a new grid. */
@@ -131,7 +144,7 @@ grid_compare(struct grid *ga, struct grid *gb)
 		for (xx = 0; xx < gla->cellsize; xx++) {
 			grid_get_cell(ga, xx, yy, &gca);
 			grid_get_cell(gb, xx, yy, &gcb);
-			if (memcmp(&gca, &gcb, sizeof (struct grid_cell)) != 0)
+			if (!grid_cells_equal(&gca, &gcb))
 				return (1);
 		}
 	}
@@ -305,6 +318,8 @@ grid_set_cell(struct grid *gd, u_int px, u_int py, const struct grid_cell *gc)
 	    (gc->bg & COLOUR_FLAG_RGB)))
 		extended = 1;
 	if (extended) {
+		gl->flags |= GRID_LINE_EXTENDED;
+
 		if (~gce->flags & GRID_FLAG_EXTENDED) {
 			gl->extddata = xreallocarray(gl->extddata,
 			    gl->extdsize + 1, sizeof *gl->extddata);

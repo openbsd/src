@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.204 2016/07/15 00:42:56 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.205 2016/07/15 00:49:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1175,7 +1175,7 @@ tty_reset(struct tty *tty)
 {
 	struct grid_cell	*gc = &tty->cell;
 
-	if (memcmp(gc, &grid_default_cell, sizeof *gc) == 0)
+	if (grid_cells_equal(gc, &grid_default_cell))
 		return;
 
 	if ((gc->attr & GRID_ATTR_CHARSET) && tty_use_acs(tty))
