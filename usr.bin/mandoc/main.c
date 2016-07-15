@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.175 2016/07/15 18:49:53 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.176 2016/07/15 19:31:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -927,7 +927,7 @@ woptions(struct curparse *curp, char *arg)
 
 	while (*arg) {
 		o = arg;
-		switch (getsubopt(&arg, UNCONST(toks), &v)) {
+		switch (getsubopt(&arg, (char * const *)toks, &v)) {
 		case 0:
 			curp->wstop = 1;
 			break;

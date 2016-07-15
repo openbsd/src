@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.h,v 1.20 2016/07/08 22:27:58 schwarze Exp $ */
+/*	$OpenBSD: main.h,v 1.21 2016/07/15 19:31:53 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,8 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#define	UNCONST(a)	((void *)(uintptr_t)(const void *)(a))
 
 struct	roff_man;
 struct	manoutput;
