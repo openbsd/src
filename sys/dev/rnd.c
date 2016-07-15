@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.181 2016/05/23 15:48:59 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.182 2016/07/15 19:02:30 tom Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -222,7 +222,6 @@ struct timer_rand_state {	/* There is one of these per entropy source */
 
 struct rand_event {
 	struct timer_rand_state *re_state;
-	u_int re_nbits;
 	u_int re_time;
 	u_int re_val;
 } rnd_event_space[QEVLEN];
@@ -372,7 +371,6 @@ enqueue_randomness(u_int state, u_int val)
 	rep = rnd_put();
 
 	rep->re_state = p;
-	rep->re_nbits = nbits;
 	rep->re_time += ts.tv_nsec ^ (ts.tv_sec << 20);
 	rep->re_val += val;
 
@@ -441,7 +439,6 @@ dequeue_randomness(void *v)
 {
 	struct rand_event *rep;
 	u_int32_t buf[2];
-	u_int nbits;
 
 	mtx_enter(&entropylock);
 
@@ -451,7 +448,6 @@ dequeue_randomness(void *v)
 	while ((rep = rnd_get())) {
 		buf[0] = rep->re_time;
 		buf[1] = rep->re_val;
-		nbits = rep->re_nbits;
 		mtx_leave(&entropylock);
 
 		add_entropy_words(buf, 2);
