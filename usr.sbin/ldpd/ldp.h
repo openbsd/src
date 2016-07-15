@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.33 2016/07/01 23:36:38 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.34 2016/07/15 17:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -297,6 +297,6 @@ struct pw_status_tlv {
 #define PW_PSN_RX_FAULT		(1 << 3)
 #define PW_PSN_TX_FAULT		(1 << 4)
 
-#define	NO_LABEL		UINT_MAX
+#define	NO_LABEL		UINT32_MAX
 
 #endif /* !_LDP_H_ */

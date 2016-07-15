@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.31 2016/05/23 19:06:03 renato Exp $
+/*	$OpenBSD: ldpctl.c,v 1.32 2016/07/15 17:09:25 renato Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -57,8 +57,6 @@ int		 show_l2vpn_pw_msg(struct imsg *);
 int		 show_l2vpn_binding_msg(struct imsg *);
 const char	*get_media_descr(uint64_t);
 void		 print_baudrate(uint64_t);
-char		*print_label(char **, uint32_t);
-const char	*print_pw_type(uint16_t);
 
 struct imsgbuf	*ibuf;
 
@@ -402,7 +400,7 @@ int
 show_lib_msg(struct imsg *imsg, struct parse_result *res)
 {
 	struct ctl_rt	*rt;
-	char		*dstnet, *local = NULL, *remote = NULL;
+	char		*dstnet;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_LIB:
@@ -419,12 +417,9 @@ show_lib_msg(struct imsg *imsg, struct parse_result *res)
 		if (strlen(dstnet) > 20)
 			printf("\n%25s", " ");
 		printf(" %-15s %-11s %-13s %6s\n", inet_ntoa(rt->nexthop),
-		    print_label(&local, rt->local_label),
-		    print_label(&remote, rt->remote_label),
+		    log_label(rt->local_label), log_label(rt->remote_label),
 		    rt->in_use ? "yes" : "no");
 
-		free(remote);
-		free(local);
 		free(dstnet);
 		break;
 	case IMSG_CTL_END:
@@ -483,7 +478,6 @@ show_fib_msg(struct imsg *imsg, struct parse_result *res)
 {
 	struct kroute	*k;
 	char		*p;
-	char		*local = NULL, *remote = NULL;
 	const char	*nexthop;
 
 	switch (imsg->hdr.type) {
@@ -530,12 +524,9 @@ show_fib_msg(struct imsg *imsg, struct parse_result *res)
 		} else if (k->flags & F_CONNECTED)
 			printf("link#%-13u", k->ifindex);
 
-		printf("%-18s", print_label(&local, k->local_label));
-		printf("%s", print_label(&local, k->remote_label));
+		printf("%-18s", log_label(k->local_label));
+		printf("%s", log_label(k->remote_label));
 		printf("\n");
-
-		free(remote);
-		free(local);
 		break;
 	case IMSG_CTL_END:
 		printf("\n");
@@ -621,7 +612,7 @@ show_l2vpn_binding_msg(struct imsg *imsg)
 
 		printf("Neighbor: %s - PWID: %u (%s)\n",
 		    inet_ntoa(pw->lsr_id), pw->pwid,
-		    print_pw_type(pw->type));
+		    pw_type_name(pw->type));
 		printf("%-12s%-15s%-15s%-10s\n", "", "Label", "Group-ID",
 		    "MTU");
 		if (pw->local_label != NO_LABEL)
@@ -690,41 +681,4 @@ print_baudrate(uint64_t baudrate)
 		printf("%llu KBit/s", baudrate / IF_Kbps(1));
 	else
 		printf("%llu Bit/s", baudrate);
-}
-
-char *
-print_label(char **string, uint32_t label)
-{
-	if (label == NO_LABEL) {
-		if (asprintf(string, "-") == -1)
-			err(1, NULL);
-	} else if (label == MPLS_LABEL_IMPLNULL) {
-		if (asprintf(string, "imp-null") == -1)
-			err(1, NULL);
-	} else if (label == MPLS_LABEL_IPV4NULL ||
-	    label == MPLS_LABEL_IPV6NULL) {
-		if (asprintf(string, "exp-null") == -1)
-			err(1, NULL);
-	} else {
-		if (asprintf(string, "%u", label) == -1)
-			err(1, NULL);
-	}
-
-	return (*string);
-}
-
-const char *
-print_pw_type(uint16_t pw_type)
-{
-	static char buf[64];
-
-	switch (pw_type) {
-	case PW_TYPE_ETHERNET_TAGGED:
-		return ("Eth Tagged");
-	case PW_TYPE_ETHERNET:
-		return ("Ethernet");
-	default:
-		snprintf(buf, sizeof(buf), "[%0x]", pw_type);
-		return (buf);
-	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.12 2016/07/01 23:36:38 renato Exp $ */
+/*	$OpenBSD: log.h,v 1.13 2016/07/15 17:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -39,6 +39,10 @@ const char	*log_sockaddr(void *);
 const char	*log_in6addr(const struct in6_addr *);
 const char	*log_in6addr_scope(const struct in6_addr *, unsigned int);
 const char	*log_addr(int, const union ldpd_addr *);
+char		*log_label(uint32_t);
+char		*log_hello_src(const struct hello_source *);
+const char	*log_map(const struct map *);
+const char	*log_fec(const struct fec *);
 const char	*af_name(int);
 const char	*socket_name(int);
 const char	*nbr_state_name(int);
@@ -46,9 +50,6 @@ const char	*if_state_name(int);
 const char	*if_type_name(enum iface_type);
 const char	*status_code_name(uint32_t);
 const char	*pw_type_name(uint16_t);
-char		*log_hello_src(const struct hello_source *);
-const char	*log_map(const struct map *);
-const char	*log_fec(const struct fec *);
 void		 log_rtmsg(unsigned char);
 
 #endif /* _LOG_H_ */

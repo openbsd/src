@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.28 2016/07/01 23:36:38 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.29 2016/07/15 17:09:25 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netmpls/mpls.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,6 +27,7 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <limits.h>
 
 #include "ldpd.h"
 #include "ldpe.h"
@@ -241,6 +245,132 @@ log_addr(int af, const union ldpd_addr *addr)
 	return ("???");
 }
 
+#define	TF_BUFS	4
+#define	TF_LEN	32
+
+char *
+log_label(uint32_t label)
+{
+	char		*buf;
+	static char	 tfbuf[TF_BUFS][TF_LEN];	/* ring buffer */
+	static int	 idx = 0;
+
+	buf = tfbuf[idx++];
+	if (idx == TF_BUFS)
+		idx = 0;
+
+	switch (label) {
+	case NO_LABEL:
+		snprintf(buf, TF_LEN, "-");
+		break;
+	case MPLS_LABEL_IMPLNULL:
+		snprintf(buf, TF_LEN, "imp-null");
+		break;
+	case MPLS_LABEL_IPV4NULL:
+	case MPLS_LABEL_IPV6NULL:
+		snprintf(buf, TF_LEN, "exp-null");
+		break;
+	default:
+		snprintf(buf, TF_LEN, "%u", label);
+		break;
+	}
+
+	return (buf);
+}
+
+char *
+log_hello_src(const struct hello_source *src)
+{
+	static char buf[64];
+
+	switch (src->type) {
+	case HELLO_LINK:
+		snprintf(buf, sizeof(buf), "iface %s",
+		    src->link.ia->iface->name);
+		break;
+	case HELLO_TARGETED:
+		snprintf(buf, sizeof(buf), "source %s",
+		    log_addr(src->target->af, &src->target->addr));
+		break;
+	}
+
+	return (buf);
+}
+
+const char *
+log_map(const struct map *map)
+{
+	static char	buf[64];
+	int		af;
+
+	switch (map->type) {
+	case MAP_TYPE_WILDCARD:
+		if (snprintf(buf, sizeof(buf), "wildcard") < 0)
+			return ("???");
+		break;
+	case MAP_TYPE_PREFIX:
+		switch (map->fec.prefix.af) {
+		case AF_IPV4:
+			af = AF_INET;
+			break;
+		case AF_IPV6:
+			af = AF_INET6;
+			break;
+		default:
+			return ("???");
+		}
+
+		if (snprintf(buf, sizeof(buf), "%s/%u",
+		    log_addr(af, &map->fec.prefix.prefix),
+		    map->fec.prefix.prefixlen) == -1)
+			return ("???");
+		break;
+	case MAP_TYPE_PWID:
+		if (snprintf(buf, sizeof(buf), "pwid %u (%s)",
+		    map->fec.pwid.pwid,
+		    pw_type_name(map->fec.pwid.type)) == -1)
+			return ("???");
+		break;
+	default:
+		return ("???");
+	}
+
+	return (buf);
+}
+
+const char *
+log_fec(const struct fec *fec)
+{
+	static char	buf[64];
+	union ldpd_addr	addr;
+
+	switch (fec->type) {
+	case FEC_TYPE_IPV4:
+		addr.v4 = fec->u.ipv4.prefix;
+		if (snprintf(buf, sizeof(buf), "ipv4 %s/%u",
+		    log_addr(AF_INET, &addr), fec->u.ipv4.prefixlen) == -1)
+			return ("???");
+		break;
+	case FEC_TYPE_IPV6:
+		addr.v6 = fec->u.ipv6.prefix;
+		if (snprintf(buf, sizeof(buf), "ipv6 %s/%u",
+		    log_addr(AF_INET6, &addr), fec->u.ipv6.prefixlen) == -1)
+			return ("???");
+		break;
+	case FEC_TYPE_PWID:
+		if (snprintf(buf, sizeof(buf),
+		    "pwid %u (%s) - %s",
+		    fec->u.pwid.pwid, pw_type_name(fec->u.pwid.type),
+		    inet_ntoa(fec->u.pwid.lsr_id)) == -1)
+			return ("???");
+		break;
+	default:
+		return ("???");
+	}
+
+	return (buf);
+}
+
 /* names */
 const char *
 af_name(int af)
@@ -415,99 +545,6 @@ pw_type_name(uint16_t pw_type)
 		snprintf(buf, sizeof(buf), "[%0x]", pw_type);
 		return (buf);
 	}
-}
-
-char *
-log_hello_src(const struct hello_source *src)
-{
-	static char buffer[64];
-
-	switch (src->type) {
-	case HELLO_LINK:
-		snprintf(buffer, sizeof(buffer), "iface %s",
-		    src->link.ia->iface->name);
-		break;
-	case HELLO_TARGETED:
-		snprintf(buffer, sizeof(buffer), "source %s",
-		    log_addr(src->target->af, &src->target->addr));
-		break;
-	}
-
-	return (buffer);
-}
-
-const char *
-log_map(const struct map *map)
-{
-	static char	buf[64];
-	int		af;
-
-	switch (map->type) {
-	case MAP_TYPE_WILDCARD:
-		if (snprintf(buf, sizeof(buf), "wildcard") < 0)
-			return ("???");
-		break;
-	case MAP_TYPE_PREFIX:
-		switch (map->fec.prefix.af) {
-		case AF_IPV4:
-			af = AF_INET;
-			break;
-		case AF_IPV6:
-			af = AF_INET6;
-			break;
-		default:
-			return ("???");
-		}
-
-		if (snprintf(buf, sizeof(buf), "%s/%u",
-		    log_addr(af, &map->fec.prefix.prefix),
-		    map->fec.prefix.prefixlen) == -1)
-			return ("???");
-		break;
-	case MAP_TYPE_PWID:
-		if (snprintf(buf, sizeof(buf), "pwid %u (%s)",
-		    map->fec.pwid.pwid,
-		    pw_type_name(map->fec.pwid.type)) == -1)
-			return ("???");
-		break;
-	default:
-		return ("???");
-	}
-
-	return (buf);
-}
-
-const char *
-log_fec(const struct fec *fec)
-{
-	static char	buf[64];
-	union ldpd_addr	addr;
-
-	switch (fec->type) {
-	case FEC_TYPE_IPV4:
-		addr.v4 = fec->u.ipv4.prefix;
-		if (snprintf(buf, sizeof(buf), "ipv4 %s/%u",
-		    log_addr(AF_INET, &addr), fec->u.ipv4.prefixlen) == -1)
-			return ("???");
-		break;
-	case FEC_TYPE_IPV6:
-		addr.v6 = fec->u.ipv6.prefix;
-		if (snprintf(buf, sizeof(buf), "ipv6 %s/%u",
-		    log_addr(AF_INET6, &addr), fec->u.ipv6.prefixlen) == -1)
-			return ("???");
-		break;
-	case FEC_TYPE_PWID:
-		if (snprintf(buf, sizeof(buf),
-		    "pwid %u (%s) - %s",
-		    fec->u.pwid.pwid, pw_type_name(fec->u.pwid.type),
-		    inet_ntoa(fec->u.pwid.lsr_id)) == -1)
-			return ("???");
-		break;
-	default:
-		return ("???");
-	}
-
-	return (buf);
 }
 
 static char *msgtypes[] = {
