@@ -1,3 +1,5 @@
+/*	$OpenBSD: octeon_intr.c,v 1.13 2016/07/16 10:41:53 visa Exp $	*/
+
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
  *
