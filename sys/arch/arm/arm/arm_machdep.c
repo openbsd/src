@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm_machdep.c,v 1.3 2011/09/20 22:02:10 miod Exp $	*/
+/*	$OpenBSD: arm_machdep.c,v 1.4 2016/07/16 06:41:20 tom Exp $	*/
 /*	$NetBSD: arm_machdep.c,v 1.7 2003/10/25 19:44:42 scw Exp $	*/
 
 /*
@@ -85,13 +85,6 @@
 #include <machine/pcb.h>
 #include <machine/vmparam.h>
 #include <machine/bus.h>
-
-static __inline struct trapframe *
-process_frame(struct proc *p)
-{
-
-	return (p->p_addr->u_pcb.pcb_tf);
-}
 
 /*
  * The ARM architecture places the vector page at address 0.
