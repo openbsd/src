@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.c,v 1.15 2015/01/24 15:13:55 kettenis Exp $	*/
+/*	$OpenBSD: eisa_machdep.c,v 1.16 2016/07/16 06:08:52 mlarkin Exp $	*/
 /*	$NetBSD: eisa_machdep.c,v 1.10.22.2 2000/06/25 19:36:58 sommerfeld Exp $	*/
 
 /*-
@@ -119,10 +119,6 @@ eisa_maxslots(eisa_chipset_tag_t ec)
 int
 eisa_intr_map(eisa_chipset_tag_t ec, u_int irq, eisa_intr_handle_t *ihp)
 {
-#if NIOAPIC > 0
-	struct mp_intr_map *mip;
-#endif
-
 	if (irq >= ICU_LEN) {
 		printf("eisa_intr_map: bad IRQ %d\n", irq);
 		*ihp = -1;
@@ -132,26 +128,6 @@ eisa_intr_map(eisa_chipset_tag_t ec, u_int irq, eisa_intr_handle_t *ihp)
 		printf("eisa_intr_map: changed IRQ 2 to IRQ 9\n");
 		irq = 9;
 	}
-
-#if NIOAPIC > 0
-	if (mp_busses != NULL) {
-		/*
-		 * Assumes 1:1 mapping between PCI bus numbers and
-		 * the numbers given by the MP bios.
-		 * XXX Is this a valid assumption?
-		 */
-		
-		for (mip = mp_busses[bus].mb_intrs; mip != NULL;
-		    mip = mip->next) {
-			if (mip->bus_pin == irq) {
-				*ihp = mip->ioapic_ih | irq;
-				return (0);
-			}
-		}
-		if (mip == NULL)
-			printf("eisa_intr_map: no MP mapping found\n");
-	}
-#endif
 
 	*ihp = irq;
 	return (0);
@@ -165,14 +141,6 @@ eisa_intr_string(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
 	if (ih == 0 || (ih & 0xff) >= ICU_LEN || ih == 2)
 		panic("eisa_intr_string: bogus handle 0x%x", ih);
 
-#if NIOAPIC > 0
-	if (ih & APIC_INT_VIA_APIC) {
-		snprintf(irqstr, sizeof irqstr, "apic %d int %d (irq %d)",
-		    APIC_IRQ_APIC(ih), APIC_IRQ_PIN(ih), ih & 0xff);
-		return (irqstr);
-	}
-#endif
-
 	snprintf(irqstr, sizeof irqstr, "irq %d", ih);
 	return (irqstr);
 	
@@ -182,14 +150,6 @@ void *
 eisa_intr_establish(eisa_chipset_tag_t ec, eisa_intr_handle_t ih, int type,
     int level, int (*func)(void *), void *arg, char *what)
 {
-#if NIOAPIC > 0
-	if (ih != -1) {
-		if (ih != -1 && (ih & APIC_INT_VIA_APIC)) {
-			return (apic_intr_establish(ih, type, level, func, arg,
-			    what));
-		}
-	}
-#endif
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
 		panic("eisa_intr_establish: bogus handle 0x%x", ih);
 
