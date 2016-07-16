@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.13 2016/07/14 12:42:00 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.14 2016/07/16 12:07:21 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -45,8 +45,11 @@
  * XXX: PCI-endian while the device specific registers are native endian.
  */
 
+#define MAX_MSIX_VECS	8
 #define virtio_set_status(sc, s) virtio_pci_set_status(sc, s)
 #define virtio_device_reset(sc) virtio_set_status((sc), 0)
+
+struct virtio_pci_softc;
 
 int		virtio_pci_match(struct device *, void *, void *);
 void		virtio_pci_attach(struct device *, struct device *, void *);
@@ -66,7 +69,20 @@ void		virtio_pci_setup_queue(struct virtio_softc *, uint16_t, uint32_t);
 void		virtio_pci_set_status(struct virtio_softc *, int);
 uint32_t	virtio_pci_negotiate_features(struct virtio_softc *, uint32_t,
 					      const struct virtio_feature_name *);
-int		virtio_pci_intr(void *);
+int		virtio_pci_msix_establish(struct virtio_pci_softc *, struct pci_attach_args *, int, int (*)(void *), void *);
+int		virtio_pci_setup_msix(struct virtio_pci_softc *, struct pci_attach_args *, int);
+void		virtio_pci_free_irqs(struct virtio_pci_softc *);
+int		virtio_pci_poll_intr(void *);
+int		virtio_pci_legacy_intr(void *);
+int		virtio_pci_config_intr(void *);
+int		virtio_pci_queue_intr(void *);
+int		virtio_pci_shared_queue_intr(void *);
+
+enum irq_type {
+	IRQ_NO_MSIX,
+	IRQ_MSIX_SHARED, /* vec 0: config irq, vec 1 shared by all vqs */
+	IRQ_MSIX_PER_VQ, /* vec 0: config irq, vec n: irq of vq[n-1] */
+};
 
 struct virtio_pci_softc {
 	struct virtio_softc	sc_sc;
@@ -76,9 +92,10 @@ struct virtio_pci_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_iosize;
 
-	void                    *sc_ih;
+	void			*sc_ih[MAX_MSIX_VECS];
 
 	int			sc_config_offset;
+	enum irq_type		sc_irq_type;
 };
 
 struct cfattach virtio_pci_ca = {
@@ -103,7 +120,7 @@ struct virtio_ops virtio_pci_ops = {
 	virtio_pci_setup_queue,
 	virtio_pci_set_status,
 	virtio_pci_negotiate_features,
-	virtio_pci_intr,
+	virtio_pci_poll_intr,
 };
 
 uint16_t
@@ -124,6 +141,19 @@ virtio_pci_setup_queue(struct virtio_softc *vsc, uint16_t idx, uint32_t addr)
 	    idx);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_CONFIG_QUEUE_ADDRESS,
 	    addr);
+
+	/*
+	 * This path is only executed if this function is called after
+	 * the child's attach function has finished. In other cases,
+	 * it's done in virtio_pci_setup_msix().
+	 */
+	if (sc->sc_irq_type != IRQ_NO_MSIX) {
+		int vec = 1;
+		if (sc->sc_irq_type == IRQ_MSIX_PER_VQ)
+		       vec += idx;
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+		    VIRTIO_MSI_QUEUE_VECTOR, vec);
+	}
 }
 
 void
@@ -175,16 +205,13 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* subsystem ID shows what I am */
 	id = PCI_PRODUCT(pci_conf_read(pc, tag, PCI_SUBSYS_ID_REG));
 
-#ifdef notyet
-	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, NULL))
-		printf(", msix capable");
-#endif
 	printf("\n");
 
 	vsc->sc_ops = &virtio_pci_ops;
 	sc->sc_pc = pc;
 	vsc->sc_dmat = pa->pa_dmat;
 	sc->sc_config_offset = VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI;
+	sc->sc_irq_type = IRQ_NO_MSIX;
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &sc->sc_iosize, 0)) {
@@ -211,26 +238,34 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_1;
 	}
 
-	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
-		printf("%s: couldn't map interrupt\n", vsc->sc_dev.dv_xname);
-		goto fail_2;
-	}
-	intrstr = pci_intr_string(pc, ih);
-	/*
-	 * We always set the IPL_MPSAFE flag in order to do the relatively
-	 * expensive ISR read without lock, and then grab the kernel lock in
-	 * the interrupt handler.
-	 * For now, we don't support IPL_MPSAFE vq_done functions.
-	 */
-	KASSERT((vsc->sc_ipl & IPL_MPSAFE) == 0);
-	sc->sc_ih = pci_intr_establish(pc, ih, vsc->sc_ipl | IPL_MPSAFE,
-	    virtio_pci_intr, sc, vsc->sc_dev.dv_xname);
-	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", vsc->sc_dev.dv_xname);
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		goto fail_2;
+	if (virtio_pci_setup_msix(sc, pa, 0) == 0) {
+		sc->sc_irq_type = IRQ_MSIX_PER_VQ;
+		intrstr = "msix per-VQ";
+	} else if (virtio_pci_setup_msix(sc, pa, 1) == 0) {
+		sc->sc_irq_type = IRQ_MSIX_SHARED;
+		intrstr = "msix shared";
+	} else {
+		if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
+			printf("%s: couldn't map interrupt\n", vsc->sc_dev.dv_xname);
+			goto fail_2;
+		}
+		intrstr = pci_intr_string(pc, ih);
+		/*
+		 * We always set the IPL_MPSAFE flag in order to do the relatively
+		 * expensive ISR read without lock, and then grab the kernel lock in
+		 * the interrupt handler.
+		 * For now, we don't support IPL_MPSAFE vq_done functions.
+		 */
+		KASSERT((vsc->sc_ipl & IPL_MPSAFE) == 0);
+		sc->sc_ih[0] = pci_intr_establish(pc, ih, vsc->sc_ipl | IPL_MPSAFE,
+		    virtio_pci_legacy_intr, sc, vsc->sc_dev.dv_xname);
+		if (sc->sc_ih[0] == NULL) {
+			printf("%s: couldn't establish interrupt", vsc->sc_dev.dv_xname);
+			if (intrstr != NULL)
+				printf(" at %s", intrstr);
+			printf("\n");
+			goto fail_2;
+		}
 	}
 	printf("%s: %s\n", vsc->sc_dev.dv_xname, intrstr);
 
@@ -258,8 +293,7 @@ virtio_pci_detach(struct device *self, int flags)
 	}
 	KASSERT(vsc->sc_child == 0 || vsc->sc_child == VIRTIO_CHILD_ERROR);
 	KASSERT(vsc->sc_vqs == 0);
-	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
-	sc->sc_ih = 0;
+	virtio_pci_free_irqs(sc);
 	if (sc->sc_iosize)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 	sc->sc_iosize = 0;
@@ -386,11 +420,107 @@ virtio_pci_write_device_config_8(struct virtio_softc *vsc,
 	    sc->sc_config_offset + index + sizeof(uint32_t), value >> 32);
 }
 
+int
+virtio_pci_msix_establish(struct virtio_pci_softc *sc,
+    struct pci_attach_args *pa, int idx, int (*handler)(void *), void *ih_arg)
+{
+	struct virtio_softc *vsc = &sc->sc_sc;
+	pci_intr_handle_t ih;
+
+	if (pci_intr_map_msix(pa, idx, &ih) != 0) {
+#if VIRTIO_DEBUG
+		printf("%s[%d]: pci_intr_map_msix failed\n",
+		    vsc->sc_dev.dv_xname, idx);
+#endif
+		return 1;
+	}
+	sc->sc_ih[idx] = pci_intr_establish(sc->sc_pc, ih, vsc->sc_ipl,
+	    handler, ih_arg, vsc->sc_dev.dv_xname);
+	if (sc->sc_ih[idx] == NULL) {
+		printf("%s[%d]: couldn't establish msix interrupt\n",
+		    vsc->sc_dev.dv_xname, idx);
+		return 1;
+	}
+	return 0;
+}
+
+void
+virtio_pci_free_irqs(struct virtio_pci_softc *sc)
+{
+	struct virtio_softc *vsc = &sc->sc_sc;
+	int i;
+
+	if (sc->sc_config_offset == VIRTIO_CONFIG_DEVICE_CONFIG_MSI) {
+		for (i = 0; i < vsc->sc_nvqs; i++) {
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			    VIRTIO_CONFIG_QUEUE_SELECT, i);
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			    VIRTIO_MSI_QUEUE_VECTOR, VIRTIO_MSI_NO_VECTOR);
+		}
+	}
+
+	for (i = 0; i < MAX_MSIX_VECS; i++) {
+		if (sc->sc_ih[i]) {
+			pci_intr_disestablish(sc->sc_pc, sc->sc_ih[i]);
+			sc->sc_ih[i] = NULL;
+		}
+	}
+
+	sc->sc_config_offset = VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI;
+}
+
+int
+virtio_pci_setup_msix(struct virtio_pci_softc *sc, struct pci_attach_args *pa,
+    int shared)
+{
+	struct virtio_softc *vsc = &sc->sc_sc;
+	int i;
+
+	if (virtio_pci_msix_establish(sc, pa, 0, virtio_pci_config_intr, vsc))
+		return 1;
+	sc->sc_config_offset = VIRTIO_CONFIG_DEVICE_CONFIG_MSI;
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, VIRTIO_MSI_CONFIG_VECTOR, 0);
+
+	if (shared) {
+		if (virtio_pci_msix_establish(sc, pa, 1,
+		    virtio_pci_shared_queue_intr, vsc)) {
+			goto fail;
+		}
+
+		for (i = 0; i < vsc->sc_nvqs; i++) {
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			    VIRTIO_CONFIG_QUEUE_SELECT, i);
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			    VIRTIO_MSI_QUEUE_VECTOR, 1);
+		}
+	} else {
+		for (i = 0; i <= vsc->sc_nvqs; i++) {
+			if (virtio_pci_msix_establish(sc, pa, i + 1,
+			    virtio_pci_queue_intr, &vsc->sc_vqs[i])) {
+				goto fail;
+			}
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			    VIRTIO_CONFIG_QUEUE_SELECT, i);
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			    VIRTIO_MSI_QUEUE_VECTOR, i + 1);
+		}
+	}
+
+	return 0;
+fail:
+	virtio_pci_free_irqs(sc);
+	return 1;
+}
+
 /*
  * Interrupt handler.
  */
+
+/*
+ * Only used without MSI-X
+ */
 int
-virtio_pci_intr(void *arg)
+virtio_pci_legacy_intr(void *arg)
 {
 	struct virtio_pci_softc *sc = arg;
 	struct virtio_softc *vsc = &sc->sc_sc;
@@ -411,6 +541,60 @@ virtio_pci_intr(void *arg)
 
 	return r;
 }
+
+/*
+ * Only used with MSI-X
+ */
+int
+virtio_pci_config_intr(void *arg)
+{
+	struct virtio_softc *vsc = arg;
+
+	if (vsc->sc_config_change != NULL)
+		return vsc->sc_config_change(vsc);
+	return 0;
+}
+
+/*
+ * Only used with MSI-X
+ */
+int
+virtio_pci_queue_intr(void *arg)
+{
+	struct virtqueue *vq = arg;
+
+	if (vq->vq_done)
+		return (vq->vq_done)(vq);
+	return 0;
+}
+
+int
+virtio_pci_shared_queue_intr(void *arg)
+{
+	struct virtio_softc *vsc = arg;
+
+	return virtio_check_vqs(vsc);
+}
+
+/*
+ * Interrupt handler to be used when polling.
+ * We cannot use isr here because it is not defined in MSI-X mode.
+ */
+int
+virtio_pci_poll_intr(void *arg)
+{
+	struct virtio_pci_softc *sc = arg;
+	struct virtio_softc *vsc = &sc->sc_sc;
+	int r = 0;
+
+	if (vsc->sc_config_change != NULL)
+		r = (vsc->sc_config_change)(vsc);
+
+	r |= virtio_check_vqs(vsc);
+
+	return r;
+}
+
 
 void
 virtio_pci_kick(struct virtio_softc *vsc, uint16_t idx)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtioreg.h,v 1.2 2012/10/12 21:12:19 reyk Exp $	*/
+/*	$OpenBSD: virtioreg.h,v 1.3 2016/07/16 12:07:21 sf Exp $	*/
 /*	$NetBSD: virtioreg.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -105,6 +105,9 @@
 #define VIRTIO_MSI_CONFIG_VECTOR	20 /* 16bit, optional */
 #define VIRTIO_MSI_QUEUE_VECTOR		22 /* 16bit, optional */
 #define VIRTIO_CONFIG_DEVICE_CONFIG_MSI		24
+
+#define VIRTIO_MSI_NO_VECTOR		0xffff
+
 
 /* Virtqueue */
 /* This marks a buffer as continuing via the next field. */
