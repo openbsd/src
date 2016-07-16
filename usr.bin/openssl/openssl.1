@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.32 2016/02/12 13:03:19 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.33 2016/07/16 07:27:53 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: February 12 2016 $
+.Dd $Mdocdate: July 16 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -147,43 +147,8 @@ The
 .Nm
 program is a command line tool for using the various
 cryptography functions of
-.Nm OpenSSL Ns Li 's
-.Em crypto
-library from the shell.
-It can be used for
-.Pp
-.Bl -bullet -offset indent -compact
-.It
-Creation and management of private keys, public keys, and parameters
-.It
-Public key cryptographic operations
-.It
-Creation of X.509 certificates, CSRs and CRLs
-.It
-Calculation of Message Digests
-.It
-Encryption and Decryption with Ciphers
-.It
-SSL/TLS Client and Server Tests
-.It
-Handling of S/MIME signed or encrypted mail
-.It
-Time stamp requests, generation, and verification
-.El
-.Sh COMMAND SUMMARY
-The
-.Nm
-program provides a rich variety of commands
-.Pf ( Cm command
-in the
-.Sx SYNOPSIS
-above),
-each of which often has a wealth of options and arguments
-.Pf ( Ar command_opts
-and
-.Ar command_args
-in the
-.Sx SYNOPSIS ) .
+.Nm OpenSSL Ns 's
+crypto library from the shell.
 .Pp
 The pseudo-commands
 .Cm list-standard-commands , list-message-digest-commands ,
@@ -204,7 +169,7 @@ list all cipher and message digest names,
 one entry per line.
 Aliases are listed as:
 .Pp
-.D1 from =\*(Gt to
+.D1 from => to
 .Pp
 The pseudo-command
 .Cm list-public-key-algorithms
@@ -242,263 +207,6 @@ is not able to detect pseudo-commands such as
 or
 .Cm no- Ns Ar XXX
 itself.
-.Sh STANDARD COMMANDS
-.Bl -tag -width "asn1parse"
-.It Cm asn1parse
-Parse an ASN.1 sequence.
-.It Cm ca
-Certificate Authority
-.Pq CA
-management.
-.It Cm ciphers
-Cipher suite description determination.
-.It Cm crl
-Certificate Revocation List
-.Pq CRL
-management.
-.It Cm crl2pkcs7
-CRL to PKCS#7 conversion.
-.It Cm dgst
-Message digest calculation.
-.It Cm dh
-Diffie-Hellman parameter management.
-Obsoleted by
-.Cm dhparam .
-.It Cm dhparam
-Generation and management of Diffie-Hellman parameters.
-Superseded by
-.Cm genpkey
-and
-.Cm pkeyparam .
-.It Cm dsa
-DSA data management.
-.It Cm dsaparam
-DSA parameter generation and management.
-Superseded by
-.Cm genpkey
-and
-.Cm pkeyparam .
-.It Cm ec
-Elliptic curve (EC) key processing.
-.It Cm ecparam
-EC parameter manipulation and generation.
-.It Cm enc
-Encoding with ciphers.
-.It Cm errstr
-Error number to error string conversion.
-.It Cm gendh
-Generation of Diffie-Hellman parameters.
-Obsoleted by
-.Cm dhparam .
-.It Cm gendsa
-Generation of DSA private key from parameters.
-Superseded by
-.Cm genpkey
-and
-.Cm pkey .
-.It Cm genpkey
-Generation of private keys or parameters.
-.It Cm genrsa
-Generation of RSA private key.
-Superseded by
-.Cm genpkey .
-.It Cm nseq
-Create or examine a Netscape certificate sequence.
-.It Cm ocsp
-Online Certificate Status Protocol utility.
-.It Cm passwd
-Generation of hashed passwords.
-.It Cm pkcs7
-PKCS#7 data management.
-.It Cm pkcs8
-PKCS#8 data management.
-.It Cm pkcs12
-PKCS#12 data management.
-.It Cm pkey
-Public and private key management.
-.It Cm pkeyparam
-Public key algorithm parameter management.
-.It Cm pkeyutl
-Public key algorithm cryptographic operation utility.
-.It Cm prime
-Generate prime numbers or test numbers for primality.
-.It Cm rand
-Generate pseudo-random bytes.
-.It Cm req
-PKCS#10 X.509 Certificate Signing Request
-.Pq CSR
-management.
-.It Cm rsa
-RSA key management.
-.It Cm rsautl
-RSA utility for signing, verification, encryption, and decryption.
-Superseded by
-.Cm pkeyutl .
-.It Cm s_client
-This implements a generic SSL/TLS client which can establish a transparent
-connection to a remote server speaking SSL/TLS.
-It's intended for testing purposes only and provides only rudimentary
-interface functionality but internally uses mostly all functionality of the
-.Nm OpenSSL
-.Em ssl
-library.
-.It Cm s_server
-This implements a generic SSL/TLS server which accepts connections from remote
-clients speaking SSL/TLS.
-It's intended for testing purposes only and provides only rudimentary
-interface functionality but internally uses mostly all functionality of the
-.Nm OpenSSL
-.Em ssl
-library.
-It provides both an own command line oriented protocol for testing
-SSL functions and a simple HTTP response
-facility to emulate an SSL/TLS-aware webserver.
-.It Cm s_time
-SSL connection timer.
-.It Cm sess_id
-SSL session data management.
-.It Cm smime
-S/MIME mail processing.
-.It Cm speed
-Algorithm speed measurement.
-.It Cm spkac
-SPKAC printing and generating utility.
-.It Cm ts
-Time stamping authority tool (client/server).
-.It Cm verify
-X.509 certificate verification.
-.It Cm version
-.Nm OpenSSL
-version information.
-.It Cm x509
-X.509 certificate data management.
-.El
-.Sh MESSAGE DIGEST COMMANDS
-.Bl -tag -width "streebog512"
-.It Cm gost-mac
-GOST-MAC digest.
-.It Cm streebog256
-Streebog-256 digest.
-.It Cm streebog512
-Streebog-512 digest.
-.It Cm md_gost94
-GOST R 34.11-94 digest.
-.It Cm md4
-MD4 digest.
-.It Cm md5
-MD5 digest.
-.It Cm ripemd160
-RIPEMD-160 digest.
-.It Cm sha
-SHA digest.
-.It Cm sha1
-SHA-1 digest.
-.It Cm sha224
-SHA-224 digest.
-.It Cm sha256
-SHA-256 digest.
-.It Cm sha384
-SHA-384 digest.
-.It Cm sha512
-SHA-512 digest.
-.It Cm whirlpool
-Whirlpool digest.
-.El
-.Sh ENCODING AND CIPHER COMMANDS
-.Bl -tag -width Ds -compact
-.It Cm aes-128-cbc | aes-128-ecb | aes-192-cbc | aes-192-ecb
-.It Cm aes-256-cbc | aes-256-ecb
-AES cipher.
-.Pp
-.It Cm base64
-Base64 encoding.
-.Pp
-.It Xo
-.Cm bf | bf-cbc | bf-cfb |
-.Cm bf-ecb | bf-ofb
-.Xc
-Blowfish cipher.
-.Pp
-.It Cm cast | cast-cbc
-CAST cipher.
-.Pp
-.It Cm cast5-cbc | cast5-cfb | cast5-ecb | cast5-ofb
-CAST5 cipher.
-.Pp
-.It Xo
-.Cm des | des-cbc | des-cfb | des-ecb |
-.Cm des-ede | des-ede-cbc
-.Xc
-.It Cm des-ede-cfb | des-ede-ofb | des-ofb
-DES cipher.
-.Pp
-.It Xo
-.Cm des3 | desx | des-ede3 |
-.Cm des-ede3-cbc | des-ede3-cfb | des-ede3-ofb
-.Xc
-Triple DES cipher.
-.Pp
-.It Xo
-.Cm rc2 | rc2-40-cbc | rc2-64-cbc | rc2-cbc |
-.Cm rc2-cfb | rc2-ecb | rc2-ofb
-.Xc
-RC2 cipher.
-.Pp
-.It Cm rc4 | rc4-40
-RC4 cipher.
-.El
-.Sh PASS PHRASE ARGUMENTS
-Several commands accept password arguments, typically using
-.Fl passin
-and
-.Fl passout
-for input and output passwords, respectively.
-These allow the password to be obtained from a variety of sources.
-Both of these options take a single argument whose format is described below.
-If no password argument is given and a password is required,
-then the user is prompted to enter one:
-this will typically be read from the current terminal with echoing turned off.
-.Bl -tag -width "fd:number"
-.It Ar pass : Ns Ar password
-The actual password is
-.Ar password .
-Since the password is visible to utilities
-(like
-.Xr ps 1
-under
-.Ux )
-this form should only be used where security is not important.
-.It Ar env : Ns Ar var
-Obtain the password from the environment variable
-.Ar var .
-Since the environment of other processes is visible on certain platforms
-(e.g.\&
-.Xr ps 1
-under certain
-.Ux
-OSes) this option should be used with caution.
-.It Ar file : Ns Ar path
-The first line of
-.Ar path
-is the password.
-If the same
-.Ar path
-argument is supplied to
-.Fl passin
-and
-.Fl passout ,
-then the first line will be used for the input password and the next line
-for the output password.
-.Ar path
-need not refer to a regular file:
-it could, for example, refer to a device or named pipe.
-.It Ar fd : Ns Ar number
-Read the password from the file descriptor
-.Ar number .
-This can be used to send the data via a pipe for example.
-.It Ar stdin
-Read the password from standard input.
-.El
 .\"
 .\" ASN1PARSE
 .\"
@@ -844,11 +552,6 @@ serial number in hex with
 appended.
 .It Fl passin Ar arg
 The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl policy Ar arg
 This option defines the CA
 .Qq policy
@@ -1875,11 +1578,6 @@ Key length must conform to any restrictions of the MAC algorithm.
 The file to output to, or standard output by default.
 .It Fl passin Ar arg
 The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl prverify Ar file
 Verify the signature using the private key in
 .Ar file .
@@ -2165,18 +1863,8 @@ This specifies the output format; the options have the same meaning as the
 option.
 .It Fl passin Ar arg
 The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl passout Ar arg
 The output file password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl pubin
 By default, a private key is read from the input file.
 With this option a public key is read instead.
@@ -2425,18 +2113,8 @@ is currently not implemented in
 .Nm OpenSSL .
 .It Fl passin Ar arg
 The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl passout Ar arg
 The output file password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl pubin
 By default a private key is read from the input file;
 with this option a public key is read instead.
@@ -2819,11 +2497,6 @@ and
 used.
 .It Fl pass Ar arg
 The password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl S Ar salt
 The actual
 .Ar salt
@@ -3154,11 +2827,6 @@ and
 are mutually exclusive.
 .It Fl pass Ar arg
 The output file password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl pkeyopt Ar opt : Ns Ar value
 Set the public key algorithm option
 .Ar opt
@@ -3288,11 +2956,6 @@ The output
 If this argument is not specified, standard output is used.
 .It Fl passout Ar arg
 The output file password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Ar numbits
 The size of the private key to generate in bits.
 This must be the last option specified.
@@ -4122,18 +3785,8 @@ This specifies the output format; the options have the same meaning as the
 option.
 .It Fl passin Ar arg
 The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl passout Ar arg
 The output file password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl topk8
 Normally, a PKCS#8 private key is expected on input and a traditional format
 private key will be written.
@@ -4372,18 +4025,8 @@ to write certificates and private keys to, standard output by default.
 They are all written in PEM format.
 .It Fl passin Ar arg
 The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl passout Ar arg
 The output file password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl twopass
 Prompt for separate integrity and encryption passwords: most software
 always assumes these are the same so this option will render such
@@ -4506,18 +4149,8 @@ to write the PKCS#12 file to.
 Standard output is used by default.
 .It Fl passin Ar arg
 The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl passout Ar arg
 The output file password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .El
 .Sh PKCS12 NOTES
 Although there are a large number of options,
@@ -4693,18 +4326,8 @@ the options have the same meaning as the
 option.
 .It Fl passin Ar arg
 The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl passout Ar arg
 The output file password source.
-For more information about the format of
-.Ar arg
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl pubin
 By default a private key is read from the input file:
 with this option a public key is read instead.
@@ -4855,11 +4478,6 @@ Specify the output filename to write to,
 or standard output by default.
 .It Fl passin Ar arg
 The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl peerform Ar DER | PEM
 The peer key format DER or PEM.
 .It Fl peerkey Ar file
@@ -5293,18 +4911,8 @@ This specifies the output format; the options have the same meaning as the
 option.
 .It Fl passin Ar arg
 The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl passout Ar arg
 The output file password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl pubkey
 Outputs the public key.
 .It Fl reqopt Ar option
@@ -5904,18 +5512,8 @@ This specifies the output format; the options have the same meaning as the
 option.
 .It Fl passin Ar arg
 The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl passout Ar arg
 The output file password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl pubin
 By default, a private key is read from the input file; with this
 option a public key is read instead.
@@ -7384,11 +6982,6 @@ or
 this option has no effect.
 .It Fl passin Ar arg
 The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl recip Ar file
 The recipients certificate when decrypting a message.
 This certificate
@@ -7922,11 +7515,6 @@ and
 The default is stdout.
 .It Fl passin Ar arg
 The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl policy Ar object_id
 The default policy to use for the response unless the client
 explicitly requires a particular TSA policy.
@@ -8348,11 +7936,6 @@ Specifies the output
 to write to, or standard output by default.
 .It Fl passin Ar arg
 The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl pubkey
 Output the public key of an SPKAC
 .Pq not used if an SPKAC is being created .
@@ -8940,11 +8523,6 @@ This specifies the output format; the options have the same meaning as the
 option.
 .It Fl passin Ar arg
 The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .El
 .Sh X509 DISPLAY OPTIONS
 .Sy Note :
@@ -9803,6 +9381,58 @@ This means that any directories using the old form
 must have their links rebuilt using
 .Ar c_rehash
 or similar.
+.Sh NOTES
+Several commands accept password arguments, typically using
+.Fl passin
+and
+.Fl passout
+for input and output passwords, respectively.
+These allow the password to be obtained from a variety of sources.
+Both of these options take a single argument whose format is described below.
+If no password argument is given and a password is required,
+then the user is prompted to enter one:
+this will typically be read from the current terminal with echoing turned off.
+.Bl -tag -width "fd:number"
+.It Ar pass : Ns Ar password
+The actual password is
+.Ar password .
+Since the password is visible to utilities
+(like
+.Xr ps 1
+under
+.Ux )
+this form should only be used where security is not important.
+.It Ar env : Ns Ar var
+Obtain the password from the environment variable
+.Ar var .
+Since the environment of other processes is visible on certain platforms
+(e.g.\&
+.Xr ps 1
+under certain
+.Ux
+OSes) this option should be used with caution.
+.It Ar file : Ns Ar path
+The first line of
+.Ar path
+is the password.
+If the same
+.Ar path
+argument is supplied to
+.Fl passin
+and
+.Fl passout ,
+then the first line will be used for the input password and the next line
+for the output password.
+.Ar path
+need not refer to a regular file:
+it could, for example, refer to a device or named pipe.
+.It Ar fd : Ns Ar number
+Read the password from the file descriptor
+.Ar number .
+This can be used to send the data via a pipe for example.
+.It Ar stdin
+Read the password from standard input.
+.El
 .\"
 .\" FILES
 .\"
