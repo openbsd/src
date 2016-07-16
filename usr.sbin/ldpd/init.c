@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.32 2016/07/01 23:36:38 renato Exp $ */
+/*	$OpenBSD: init.c,v 1.33 2016/07/16 19:20:16 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -25,7 +25,6 @@
 #include "log.h"
 
 static int	gen_init_prms_tlv(struct ibuf *, struct nbr *);
-static int	tlv_decode_opt_init_prms(char *, uint16_t);
 
 void
 send_init(struct nbr *nbr)
@@ -59,7 +58,6 @@ recv_init(struct nbr *nbr, char *buf, uint16_t len)
 	struct ldp_msg		msg;
 	struct sess_prms_tlv	sess;
 	uint16_t		max_pdu_len;
-	int			r;
 
 	log_debug("%s: lsr-id %s", __func__, inet_ntoa(nbr->id));
 
@@ -93,11 +91,41 @@ recv_init(struct nbr *nbr, char *buf, uint16_t len)
 	buf += SESS_PRMS_SIZE;
 	len -= SESS_PRMS_SIZE;
 
-	/* just ignore all optional TLVs for now */
-	r = tlv_decode_opt_init_prms(buf, len);
-	if (r == -1 || r != len) {
-		session_shutdown(nbr, S_BAD_TLV_VAL, msg.id, msg.type);
-		return (-1);
+	/* Optional Parameters */
+	while (len > 0) {
+		struct tlv 	tlv;
+		uint16_t	tlv_len;
+
+		if (len < sizeof(tlv)) {
+			session_shutdown(nbr, S_BAD_TLV_LEN, msg.id, msg.type);
+			return (-1);
+		}
+
+		memcpy(&tlv, buf, TLV_HDR_SIZE);
+		tlv_len = ntohs(tlv.length);
+		if (tlv_len + TLV_HDR_SIZE > len) {
+			session_shutdown(nbr, S_BAD_TLV_LEN, msg.id, msg.type);
+			return (-1);
+		}
+		buf += TLV_HDR_SIZE;
+		len -= TLV_HDR_SIZE;
+
+		switch (ntohs(tlv.type)) {
+		case TLV_TYPE_ATMSESSIONPAR:
+			session_shutdown(nbr, S_BAD_TLV_VAL, msg.id, msg.type);
+			return (-1);
+		case TLV_TYPE_FRSESSION:
+			session_shutdown(nbr, S_BAD_TLV_VAL, msg.id, msg.type);
+			return (-1);
+		default:
+			if (!(ntohs(tlv.type) & UNKNOWN_FLAG))
+				send_notification_nbr(nbr, S_UNKNOWN_TLV,
+				    msg.id, msg.type);
+			/* ignore unknown tlv */
+			break;
+		}
+		buf += tlv_len;
+		len -= tlv_len;
 	}
 
 	nbr->keepalive = min(nbr_get_keepalive(nbr->af, nbr->id),
@@ -135,39 +163,4 @@ gen_init_prms_tlv(struct ibuf *buf, struct nbr *nbr)
 	parms.lspace_id = 0;
 
 	return (ibuf_add(buf, &parms, SESS_PRMS_SIZE));
-}
-
-static int
-tlv_decode_opt_init_prms(char *buf, uint16_t len)
-{
-	struct tlv	tlv;
-	uint16_t	tlv_len;
-	int		total = 0;
-
-	 while (len >= sizeof(tlv)) {
-		memcpy(&tlv, buf, TLV_HDR_SIZE);
-		buf += TLV_HDR_SIZE;
-		len -= TLV_HDR_SIZE;
-		total += TLV_HDR_SIZE;
-		tlv_len = ntohs(tlv.length);
-
-		switch (ntohs(tlv.type)) {
-		case TLV_TYPE_ATMSESSIONPAR:
-			log_warnx("ATM session parameter present");
-			return (-1);
-		case TLV_TYPE_FRSESSION:
-			log_warnx("FR session parameter present");
-			return (-1);
-		default:
-			/* if unknown flag set, ignore TLV */
-			if (!(ntohs(tlv.type) & UNKNOWN_FLAG))
-				return (-1);
-			break;
-		}
-		buf += tlv_len;
-		len -= tlv_len;
-		total += tlv_len;
-	}
-
-	return (total);
 }
