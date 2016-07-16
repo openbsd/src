@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_cl.c,v 1.10 2016/07/05 03:24:38 beck Exp $ */
+/* $OpenBSD: ocsp_cl.c,v 1.11 2016/07/16 16:14:28 beck Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -330,7 +330,6 @@ int
 OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
     ASN1_GENERALIZEDTIME *nextupd, long nsec, long maxsec)
 {
-	int ret = 1;
 	time_t t_now, t_tmp;
 	struct tm tm_this, tm_next, tm_tmp;
 
@@ -347,7 +346,7 @@ OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 	    V_ASN1_GENERALIZEDTIME) != V_ASN1_GENERALIZEDTIME) {
 		OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY,
 		    OCSP_R_ERROR_IN_THISUPDATE_FIELD);
-		ret = 0;
+		return 0;
 	} else {
 		t_tmp = t_now + nsec;
 		if (gmtime_r(&t_tmp, &tm_tmp) == NULL)
@@ -355,7 +354,7 @@ OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 		if (asn1_tm_cmp(&tm_this, &tm_tmp) > 0) {
 			OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY,
 			    OCSP_R_STATUS_NOT_YET_VALID);
-			ret = 0;
+			return 0;
 		}
 
 		/*
@@ -369,20 +368,20 @@ OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 			if (asn1_tm_cmp(&tm_this, &tm_tmp) < 0) {
 				OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY,
 				    OCSP_R_STATUS_TOO_OLD);
-				ret = 0;
+				return 0;
 			}
 		}
 	}
 
 	if (!nextupd)
-		return ret;
+		return 1;
 
 	/* Check nextUpdate is valid and not more than nsec in the past */
 	if (asn1_time_parse(nextupd->data, nextupd->length, &tm_next,
 	    V_ASN1_GENERALIZEDTIME) != V_ASN1_GENERALIZEDTIME) {
 		OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY,
 		    OCSP_R_ERROR_IN_NEXTUPDATE_FIELD);
-		ret = 0;
+		return 0;
 	} else {
 		t_tmp = t_now - nsec;
 		if (gmtime_r(&t_tmp, &tm_tmp) == NULL)
@@ -390,16 +389,16 @@ OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 		if (asn1_tm_cmp(&tm_next, &tm_tmp) < 0) {
 			OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY,
 			    OCSP_R_STATUS_EXPIRED);
-			ret = 0;
+			return 0;
 		}
 	}
 
 	/* Also don't allow nextUpdate to precede thisUpdate */
-	if (ASN1_STRING_cmp(nextupd, thisupd) < 0) {
+	if (asn1_tm_cmp(&tm_next, &tm_this) < 0) {
 		OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY,
 		    OCSP_R_NEXTUPDATE_BEFORE_THISUPDATE);
-		ret = 0;
+		return 0;
 	}
 
-	return ret;
+	return 1;
 }
