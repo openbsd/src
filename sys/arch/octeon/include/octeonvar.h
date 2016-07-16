@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.30 2016/07/10 10:18:58 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.31 2016/07/16 10:19:55 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -73,14 +73,6 @@ struct octeon_config {
 
 	bus_dma_tag_t mc_iobus_dmat;
 	bus_dma_tag_t mc_bootbus_dmat;
-/*
-	struct mips_bus_dma_tag mc_core1_dmat;
-
-	struct extent *mc_io_ex;
-	struct extent *mc_mem_ex;
-
-	int	mc_mallocsafe;
-*/
 };
 
 /*
@@ -292,13 +284,6 @@ extern struct boot_info *octeon_boot_info;
 #define BOOTINFO_CFG_FLAG_DEBUG		(1ull << 2)
 #define BOOTINFO_CFG_FLAG_NO_MAGIC	(1ull << 3)
 
-void	octeon_bus_io_init(bus_space_tag_t, void *);
-void	octeon_bus_mem_init(bus_space_tag_t, void *);
-void	octeon_cal_timer(int);
-void	octeon_dma_init(struct octeon_config *);
-void	octeon_intr_init(void);
-int	octeon_get_ethaddr(int, u_int8_t *);
-
 int	octeon_ioclock_speed(void);
 
 #endif /* _KERNEL */
@@ -384,35 +369,6 @@ static inline void
 octeon_cvmseg_write_8(size_t offset, uint64_t value)
 {
 	octeon_xkphys_write_8(0xffffffffffff8000ULL + offset, value);
-}
-
-/* XXX */
-static inline uint32_t
-octeon_disable_interrupt(uint32_t *new)
-{
-	uint32_t s, tmp;
-
-	__asm volatile (
-		_ASM_PROLOGUE
-		"	mfc0	%[s], $12		\n"
-		"	and	%[tmp], %[s], ~1	\n"
-		"	mtc0	%[tmp], $12		\n"
-		_ASM_EPILOGUE
-		: [s]"=&r"(s), [tmp]"=&r"(tmp));
-	if (new)
-		*new = tmp;
-	return s;
-}
-
-/* XXX */
-static inline void
-octeon_restore_status(uint32_t s)
-{
-	__asm volatile (
-		_ASM_PROLOGUE
-		"	mtc0	%[s], $12		\n"
-		_ASM_EPILOGUE
-		:: [s]"r"(s));
 }
 
 static inline uint64_t
