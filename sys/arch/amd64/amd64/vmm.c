@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.66 2016/07/13 06:57:35 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.67 2016/07/16 06:32:18 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -100,7 +100,6 @@ struct vmm_softc {
 
 int vmm_probe(struct device *, void *, void *);
 void vmm_attach(struct device *, struct device *, void *);
-int vmm_activate(struct device *, int);
 int vmmopen(dev_t, int, int, struct proc *);
 int vmmioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int vmmclose(dev_t, int, int, struct proc *);
@@ -187,7 +186,7 @@ struct cfdriver vmm_cd = {
 };
 
 const struct cfattach vmm_ca = {
-	sizeof(struct vmm_softc), vmm_probe, vmm_attach, NULL, vmm_activate
+	sizeof(struct vmm_softc), vmm_probe, vmm_attach, NULL, NULL
 };
 
 /* Pools for VMs and VCPUs */
@@ -307,19 +306,6 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 	pool_setipl(&vcpu_pool, IPL_NONE);
 
 	vmm_softc = sc;
-}
-
-/*
- * vmm_activate
- *
- * Autoconf routine used during activate/deactivate.
- *
- * XXX need this for suspend/resume
- */
-int
-vmm_activate(struct device *self, int act)
-{
-	return 0;
 }
 
 /*
