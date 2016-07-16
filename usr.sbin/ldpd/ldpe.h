@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.66 2016/07/01 23:33:46 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.67 2016/07/16 19:24:30 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -251,7 +251,7 @@ void			 nbr_clear_ctl(struct ctl_nbr *);
 
 /* packet.c */
 int			 gen_ldp_hdr(struct ibuf *, uint16_t);
-int			 gen_msg_hdr(struct ibuf *, uint32_t, uint16_t);
+int			 gen_msg_hdr(struct ibuf *, uint16_t, uint16_t);
 int			 send_packet(int, int, union ldpd_addr *,
 			    struct iface_af *, void *, size_t);
 void			 disc_recv_packet(int, short, void *);

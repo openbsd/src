@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.28 2016/07/01 23:36:38 renato Exp $ */
+/*	$OpenBSD: address.c,v 1.29 2016/07/16 19:24:30 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -32,7 +32,7 @@ void
 send_address(struct nbr *nbr, int af, struct if_addr *if_addr, int withdraw)
 {
 	struct ibuf	*buf;
-	uint32_t	 msg_type;
+	uint16_t	 msg_type;
 	uint16_t	 size;
 	int		 iface_count = 0;
 	int		 err = 0;
