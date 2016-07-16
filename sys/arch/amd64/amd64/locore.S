@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.81 2016/06/22 01:12:38 mikeb Exp $	*/
+/*	$OpenBSD: locore.S,v 1.82 2016/07/16 06:04:29 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -106,13 +106,10 @@
 
 #include "assym.h"
 #include "lapic.h"
-#include "ioapic.h"
 #include "ksyms.h"
-#include "acpi.h"
 #include "xen.h"
 #include "hyperv.h"
 
-#include <sys/errno.h>
 #include <sys/syscall.h>
 
 #include <machine/param.h>
