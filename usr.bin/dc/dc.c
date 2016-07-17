@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.17 2015/11/03 04:58:58 mmcc Exp $	*/
+/*	$OpenBSD: dc.c,v 1.18 2016/07/17 17:30:47 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -50,6 +50,8 @@ dc_main(int argc, char *argv[])
 	if ((buf = strdup("")) == NULL)
 		err(1, NULL);
 	/* accept and ignore a single dash to be 4.4BSD dc(1) compatible */
+	optind = 1;
+	optreset = 1;
 	while ((ch = getopt(argc, argv, "e:x-")) != -1) {
 		switch (ch) {
 		case 'e':
