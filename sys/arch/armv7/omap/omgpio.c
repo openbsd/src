@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.6 2016/01/31 00:14:50 jsg Exp $ */
+/* $OpenBSD: omgpio.c,v 1.7 2016/07/17 00:25:21 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -34,6 +34,8 @@
 #include <armv7/omap/prcmvar.h>
 #include <armv7/omap/sitara_cm.h>
 #include <armv7/omap/omgpiovar.h>
+
+#include <dev/ofw/fdt.h>
 
 #include "gpio.h"
 
@@ -179,6 +181,7 @@ struct omgpio_softc {
 	struct gpio_chipset_tag	sc_gpio_gc;
 	gpio_pin_t		sc_gpio_pins[GPIO_NUM_PINS];
 	struct omgpio_regs	sc_regs;
+	int			(*sc_padconf_set_gpioflags)(uint32_t, uint32_t);
 };
 
 #define GPIO_PIN_TO_INST(x)	((x) >> 5)
@@ -189,7 +192,6 @@ struct omgpio_softc {
 
 u_int32_t omgpio_read4(struct omgpio_softc *, u_int32_t);
 void omgpio_write4(struct omgpio_softc *, u_int32_t, u_int32_t);
-int omgpio_match(struct device *, void *, void *);
 void omgpio_attach(struct device *, struct device *, void *);
 void omgpio_recalc_interrupts(struct omgpio_softc *);
 int omgpio_irq(void *);
@@ -198,7 +200,7 @@ int omgpio_pin_dir_read(struct omgpio_softc *, unsigned int);
 void omgpio_pin_dir_write(struct omgpio_softc *, unsigned int, unsigned int);
 
 struct cfattach omgpio_ca = {
-	sizeof (struct omgpio_softc), omgpio_match, omgpio_attach
+	sizeof (struct omgpio_softc), NULL, omgpio_attach
 };
 
 struct cfdriver omgpio_cd = {
@@ -223,21 +225,6 @@ omgpio_write4(struct omgpio_softc *sc, u_int32_t reg, u_int32_t val)
 	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val));
 }
 
-int
-omgpio_match(struct device *parent, void *v, void *aux)
-{
-	switch (board_id) {
-	case BOARD_ID_OMAP3_BEAGLE:
-	case BOARD_ID_OMAP3_OVERO:
-	case BOARD_ID_AM335X_BEAGLEBONE:
-	case BOARD_ID_OMAP4_PANDA:
-		break; /* continue trying */
-	default:
-		return 0; /* unknown */
-	}
-	return (1);
-}
-
 void
 omgpio_attach(struct device *parent, struct device *self, void *args)
 {
@@ -246,6 +233,12 @@ omgpio_attach(struct device *parent, struct device *self, void *args)
 	struct gpiobus_attach_args gba;
 	u_int32_t	rev;
 	int		i;
+	void		*node;
+
+	node = fdt_find_node("/");
+	if (node == NULL)
+		panic("%s: could not get fdt root node",
+		    sc->sc_dev.dv_xname);
 
 	prcm_enablemodule(PRCM_GPIO0 + aa->aa_dev->unit);
 
@@ -254,9 +247,8 @@ omgpio_attach(struct device *parent, struct device *self, void *args)
 	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", DEVNAME(sc));
 
-	switch (board_id) {
-	case BOARD_ID_OMAP3_BEAGLE:
-	case BOARD_ID_OMAP3_OVERO:
+	if (fdt_is_compatible(node, "ti,omap3")) {
+		sc->sc_padconf_set_gpioflags = NULL;
 		sc->sc_regs.revision = GPIO3_REVISION;
 		sc->sc_regs.sysconfig = GPIO3_SYSCONFIG;
 		sc->sc_regs.irqstatus_raw0 = -1;
@@ -285,8 +277,8 @@ omgpio_attach(struct device *parent, struct device *self, void *args)
 		sc->sc_regs.setwkupena = GPIO3_SETWKUENA;
 		sc->sc_regs.cleardataout = GPIO3_CLEARDATAOUT;
 		sc->sc_regs.setdataout = GPIO3_SETDATAOUT;
-		break;
-	case BOARD_ID_OMAP4_PANDA:
+	} else if (fdt_is_compatible(node, "ti,omap4")) {
+		sc->sc_padconf_set_gpioflags = NULL;
 		sc->sc_regs.revision = GPIO4_REVISION;
 		sc->sc_regs.sysconfig = GPIO4_SYSCONFIG;
 		sc->sc_regs.irqstatus_raw0 = GPIO4_IRQSTATUS_RAW_0;
@@ -315,8 +307,8 @@ omgpio_attach(struct device *parent, struct device *self, void *args)
 		sc->sc_regs.setwkupena = GPIO4_SETWKUENA;
 		sc->sc_regs.cleardataout = GPIO4_CLEARDATAOUT;
 		sc->sc_regs.setdataout = GPIO4_SETDATAOUT;
-		break;
-	case BOARD_ID_AM335X_BEAGLEBONE:
+	} else if (fdt_is_compatible(node, "ti,am33xx")) {
+		sc->sc_padconf_set_gpioflags = sitara_cm_padconf_set_gpioflags;
 		sc->sc_regs.revision = GPIO_AM335X_REVISION;
 		sc->sc_regs.sysconfig = GPIO_AM335X_SYSCONFIG;
 		sc->sc_regs.irqstatus_raw0 = GPIO_AM335X_IRQSTATUS_RAW_0;
@@ -345,8 +337,9 @@ omgpio_attach(struct device *parent, struct device *self, void *args)
 		sc->sc_regs.setwkupena = -1;
 		sc->sc_regs.cleardataout = GPIO_AM335X_CLEARDATAOUT;
 		sc->sc_regs.setdataout = GPIO_AM335X_SETDATAOUT;
-		break;
-	}
+	} else
+		panic("%s: could not find a compatible soc",
+		    sc->sc_dev.dv_xname);
 
 	rev = READ4(sc, sc->sc_regs.revision);
 
@@ -469,8 +462,8 @@ omgpio_pin_ctl(void *arg, int pin, int flags)
 	else if (flags & GPIO_PIN_OUTPUT)
 		omgpio_pin_dir_write(sc, pin, OMGPIO_DIR_OUT);
 
-	if (board_id == BOARD_ID_AM335X_BEAGLEBONE)
-		sitara_cm_padconf_set_gpioflags(
+	if (sc->sc_padconf_set_gpioflags)
+		sc->sc_padconf_set_gpioflags(
 		    sc->sc_dev.dv_unit * GPIO_NUM_PINS + pin, flags);
 }
 
