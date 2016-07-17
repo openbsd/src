@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_nist.c,v 1.15 2014/10/28 07:35:58 jsg Exp $ */
+/* $OpenBSD: bn_nist.c,v 1.16 2016/07/17 21:21:40 bcook Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -510,7 +510,7 @@ BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 	}
 #else
 	{
-		BN_ULONG t_d[BN_NIST_192_TOP];
+		BN_ULONG t_d[BN_NIST_192_TOP] = {0};
 
 		nist_set_192(t_d, buf.bn, 0, 3, 3);
 		carry = (int)bn_add_words(r_d, r_d, t_d, BN_NIST_192_TOP);
@@ -568,7 +568,7 @@ BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 		BN_ULONG bn[BN_NIST_224_TOP];
 		unsigned int ui[BN_NIST_224_TOP *
 		    sizeof(BN_ULONG) / sizeof(unsigned int)];
-	} buf;
+	} buf = {0};
 	BN_ULONG c_d[BN_NIST_224_TOP], *res;
 	uintptr_t mask;
 	union {
@@ -673,7 +673,7 @@ BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 	}
 #else
 	{
-		BN_ULONG t_d[BN_NIST_224_TOP];
+		BN_ULONG t_d[BN_NIST_224_TOP] = {0};
 
 		nist_set_224(t_d, buf.bn, 10, 9, 8, 7, 0, 0, 0);
 		carry = (int)bn_add_words(r_d, r_d, t_d, BN_NIST_224_TOP);
@@ -746,7 +746,7 @@ BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 		unsigned int ui[BN_NIST_256_TOP *
 		    sizeof(BN_ULONG) / sizeof(unsigned int)];
 	} buf;
-	BN_ULONG c_d[BN_NIST_256_TOP], *res;
+	BN_ULONG c_d[BN_NIST_256_TOP] = {0}, *res;
 	uintptr_t mask;
 	union {
 		bn_addsub_f f;
@@ -879,7 +879,7 @@ BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 	}
 #else
 	{
-		BN_ULONG t_d[BN_NIST_256_TOP];
+		BN_ULONG t_d[BN_NIST_256_TOP] = {0};
 
 		/*S1*/
 		nist_set_256(t_d, buf.bn, 15, 14, 13, 12, 11, 0, 0, 0);
@@ -1133,7 +1133,7 @@ BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 	}
 #else
 	{
-		BN_ULONG t_d[BN_NIST_384_TOP];
+		BN_ULONG t_d[BN_NIST_384_TOP] = {0};
 
 		/*S1*/
 		nist_set_256(t_d, buf.bn, 0, 0, 0, 0, 0, 23 - 4, 22 - 4,
