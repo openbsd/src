@@ -1,4 +1,4 @@
-/* $OpenBSD: sitara_cmreg.h,v 1.1 2013/09/04 14:38:32 patrick Exp $ */
+/* $OpenBSD: sitara_cmreg.h,v 1.2 2016/07/17 02:45:05 jsg Exp $ */
 /*	$NetBSD: sitara_cmreg.h,v 1.1 2013/04/17 15:04:39 bouyer Exp $	*/
 
 /*
@@ -39,6 +39,8 @@
 #define SCM_REVISION_MAJOR(x)	(((x) & 0x00000700) >>  8)
 #define SCM_REVISION_CUSTOM(x)	(((x) & 0x000000c0) >>  6)
 #define SCM_REVISION_MINOR(x)	(((x) & 0x0000001f) >>  0)
+
+#define SCM_PINMUX		0x800
 
 #define OMAP2SCM_MAC_ID0_LO	0x630
 #define OMAP2SCM_MAC_ID0_HI	0x634

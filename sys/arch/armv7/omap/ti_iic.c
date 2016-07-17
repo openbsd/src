@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti_iic.c,v 1.5 2016/06/26 07:25:05 jsg Exp $	*/
+/*	$OpenBSD: ti_iic.c,v 1.6 2016/07/17 02:45:05 jsg Exp $	*/
 /* $NetBSD: ti_iic.c,v 1.4 2013/04/25 13:04:27 rkujawa Exp $ */
 
 /*
@@ -65,9 +65,8 @@
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
-#include <armv7/omap/sitara_cm.h>
-#include <armv7/omap/sitara_cmreg.h>
 #include <armv7/omap/ti_iicreg.h>
+#include <armv7/omap/sitara_cm.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -165,16 +164,8 @@ ti_iic_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	struct i2cbus_attach_args iba;
 	uint16_t rev;
-	const char *mode;
-	u_int state;
 	int irq, unit, len;
-	char buf[20];
 	char hwmods[128];
-	char *pin;
-	/* BBB specific pin names */
-	char *pins[6] = {"I2C0_SDA", "I2C0_SCL",
-			"SPIO_D1", "SPI0_CS0",
-			"UART1_CTSn", "UART1_RTSn"};
 
 	if (faa->fa_nreg != 2 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
 		return;
@@ -203,34 +194,12 @@ ti_iic_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[1], 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", DEVNAME(sc));
 
+	sitara_cm_pinctrlbyname(faa->fa_node, "default");
+
 	sc->sc_ih = arm_intr_establish(irq, IPL_NET,
 	    ti_iic_intr, sc, DEVNAME(sc));
 
 	prcm_enablemodule(PRCM_I2C0 + unit);
-
-	if (board_id == BOARD_ID_AM335X_BEAGLEBONE) {
-		pin = pins[unit * 2];
-		snprintf(buf, sizeof buf, "I2C%d_SDA", unit);
-		if (sitara_cm_padconf_set(pin, buf,
-		    (0x01 << 4) | (0x01 << 5) | (0x01 << 6)) != 0) {
-			printf(": can't switch %s pad\n", buf);
-			return;
-		}
-		if (sitara_cm_padconf_get(pin, &mode, &state) == 0) {
-			printf(": %s state %d ", mode, state);
-		}
-
-		pin = pins[unit * 2 + 1];
-		snprintf(buf, sizeof buf, "I2C%d_SCL", unit);
-		if (sitara_cm_padconf_set(pin, buf,
-		    (0x01 << 4) | (0x01 << 5) | (0x01 << 6)) != 0) {
-			printf(": can't switch %s pad\n", buf);
-			return;
-		}
-		if (sitara_cm_padconf_get(pin, &mode, &state) == 0) {
-			printf(": %s state %d ", mode, state);
-		}
-	}
 
 	rev = I2C_READ_REG(sc, AM335X_I2C_REVNB_LO);
 	printf(" rev %d.%d\n",

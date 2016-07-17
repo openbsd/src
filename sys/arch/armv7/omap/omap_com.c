@@ -1,4 +1,4 @@
-/* $OpenBSD: omap_com.c,v 1.5 2016/06/19 14:38:13 jsg Exp $ */
+/* $OpenBSD: omap_com.c,v 1.6 2016/07/17 02:45:05 jsg Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -51,6 +51,7 @@
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/armv7/armv7_machdep.h>
+#include <armv7/omap/sitara_cm.h>
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
@@ -121,6 +122,8 @@ omapuart_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: bus_space_map failed\n", __func__);
 		return;
 	}
+
+	sitara_cm_pinctrlbyname(faa->fa_node, "default");
 
 	com_attach_subr(sc);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.36 2016/07/09 04:25:44 jsg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.37 2016/07/17 02:45:05 jsg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -84,6 +84,7 @@
 
 #include <arch/armv7/armv7/armv7var.h>
 #include <arch/armv7/omap/if_cpswreg.h>
+#include <arch/armv7/omap/sitara_cm.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -334,9 +335,11 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet * const ifp = &ac->ac_if;
 	u_int32_t idver;
 	int error;
+	int node;
 	u_int i;
 	uint32_t intr[4];
 	uint32_t memsize;
+	char name[32];
 
 	if (faa->fa_nreg < 2 || (faa->fa_nintr != 4 && faa->fa_nintr != 12))
 		return;
@@ -354,6 +357,19 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	 * we map a size that is a superset of both
 	 */
 	memsize = 0x4000;
+
+	sitara_cm_pinctrlbyname(faa->fa_node, "default");
+
+	for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
+		memset(name, 0, sizeof(name));
+
+		if (OF_getprop(node, "compatible", name, sizeof(name)) == -1)
+			continue;
+
+		if (strcmp(name, "ti,davinci_mdio") != 0)
+			continue;
+		sitara_cm_pinctrlbyname(node, "default");
+	}
 
 	timeout_set(&sc->sc_tick, cpsw_tick, sc);
 

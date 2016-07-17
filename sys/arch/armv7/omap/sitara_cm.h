@@ -1,4 +1,4 @@
-/* $OpenBSD: sitara_cm.h,v 1.1 2013/09/04 14:38:32 patrick Exp $ */
+/* $OpenBSD: sitara_cm.h,v 1.2 2016/07/17 02:45:05 jsg Exp $ */
 /* $NetBSD: sitara_cm.h,v 1.1 2013/04/17 14:31:02 bouyer Exp $ */
 /*
  * Copyright (c) 2010
@@ -74,5 +74,7 @@ int sitara_cm_padconf_set_gpioflags(uint32_t gpio, uint32_t flags);
 void sitara_cm_padconf_get_gpioflags(uint32_t gpio, uint32_t *flags);
 int sitara_cm_reg_read_4(uint32_t reg, uint32_t *val);
 int sitara_cm_reg_write_4(uint32_t reg, uint32_t val);
+int sitara_cm_pinctrlbyid(int node, int id);
+int sitara_cm_pinctrlbyname(int node, const char *);
 
 #endif /* _OMAP_SCM_H_ */

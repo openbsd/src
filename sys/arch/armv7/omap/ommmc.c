@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.25 2016/07/15 22:28:25 tom Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.26 2016/07/17 02:45:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -34,6 +34,7 @@
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
+#include <armv7/omap/sitara_cm.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -333,6 +334,8 @@ ommmc_attach(struct device *parent, struct device *self, void *aux)
 		panic("%s: bus_space_map failed!", __func__);
 
 	printf("\n");
+
+	sitara_cm_pinctrlbyname(faa->fa_node, "default");
 
 	/* Enable ICLKEN, FCLKEN? */
 	prcm_enablemodule(PRCM_MMC0 + unit);

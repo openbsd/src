@@ -1,4 +1,4 @@
-/* $OpenBSD: sitara_cm.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
+/* $OpenBSD: sitara_cm.c,v 1.3 2016/07/17 02:45:05 jsg Exp $ */
 /* $NetBSD: sitara_cm.c,v 1.1 2013/04/17 14:31:02 bouyer Exp $ */
 /*
  * Copyright (c) 2010
@@ -52,6 +52,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
@@ -61,7 +62,10 @@
 #include <armv7/omap/sitara_cm.h>
 #include <armv7/omap/sitara_cmreg.h>
 
+#include <dev/ofw/openfirm.h>
+
 void sitara_cm_attach(struct device *parent, struct device *self, void *aux);
+int sitara_cm_pinctrl(uint32_t);
 
 struct sitara_cm_softc {
         struct device		sc_dev;
@@ -391,4 +395,95 @@ sitara_cm_attach(struct device *parent, struct device *self, void *aux)
 		panic("sitara_cm_attach: read revision");
 	printf(": control module, rev %d.%d\n",
 	    SCM_REVISION_MAJOR(rev), SCM_REVISION_MINOR(rev));
+}
+
+int
+sitara_cm_pinctrlbyid(int node, int id)
+{
+	char pinctrl[32];
+	uint32_t *phandles;
+	int len, i;
+
+	if (!sitara_cm_sc)
+		return -1;
+
+	snprintf(pinctrl, sizeof(pinctrl), "pinctrl-%d", id);
+	len = OF_getproplen(node, pinctrl);
+	if (len <= 0)
+		return -1;
+
+	phandles = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, pinctrl, phandles, len);
+	for (i = 0; i < len / sizeof(uint32_t); i++)
+		sitara_cm_pinctrl(phandles[i]);
+	free(phandles, M_TEMP, len);
+	return 0;
+}
+
+int
+sitara_cm_pinctrlbyname(int node, const char *config)
+{
+	char *names;
+	char *name;
+	char *end;
+	int id = 0;
+	int len;
+
+	if (!sitara_cm_sc)
+		return -1;
+
+	len = OF_getproplen(node, "pinctrl-names");
+	if (len <= 0)
+		printf("no pinctrl-names\n");
+
+	names = malloc(len, M_TEMP, M_WAITOK);
+	OF_getprop(node, "pinctrl-names", names, len);
+	end = names + len;
+	name = names;
+	while (name < end) {
+		if (strcmp(name, config) == 0) {
+			free(names, M_TEMP, len);
+			return sitara_cm_pinctrlbyid(node, id);
+		}
+		name += strlen(name) + 1;
+		id++;
+	}
+	free(names, M_TEMP, len);
+	return -1;
+}
+
+int
+sitara_cm_pinctrl(uint32_t phandle)
+{
+	struct sitara_cm_softc *sc = sitara_cm_sc;
+	uint32_t *pins;
+	int npins;
+	int node;
+	int len;
+	int i, j;
+
+	if (sc == NULL)
+		return -1;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return -1;
+
+	len = OF_getproplen(node, "pinctrl-single,pins");
+	if (len <= 0)
+		return -1;
+
+	pins = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "pinctrl-single,pins", pins, len);
+	npins = len / (2 * sizeof(uint32_t));
+
+	for (i = 0, j = 0; i < npins; i++, j += 2) {
+		uint32_t conf_reg = SCM_PINMUX + pins[2 * i + 0];
+		uint32_t conf_val = pins[2 * i + 1];
+
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, conf_reg, conf_val);
+	}
+
+	free(pins, M_TEMP, len);
+	return 0;
 }
