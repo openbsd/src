@@ -1,4 +1,4 @@
-.\"	$OpenBSD: jot.1,v 1.20 2016/07/17 04:04:46 tb Exp $
+.\"	$OpenBSD: jot.1,v 1.21 2016/07/17 04:15:25 tb Exp $
 .\"	$NetBSD: jot.1,v 1.2 1994/11/14 20:27:36 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -238,12 +238,7 @@ Generate the strings xaa through xaz:
 .Pp
 .Dl $ jot \-w xa%c 26 a
 .Pp
-Generate 20 random 8-letter strings
-(note that the character
-.Sq {
-comes after the character
-.Sq z
-in the ASCII character set):
+Generate 20 random 8-letter strings:
 .Pp
 .Dl "$ jot \-r \-c 160 a z | rs \-g0 0 8"
 .Pp
