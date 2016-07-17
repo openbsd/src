@@ -1,4 +1,4 @@
-/* $OpenBSD: intc.c,v 1.4 2016/01/31 00:14:50 jsg Exp $ */
+/* $OpenBSD: intc.c,v 1.5 2016/07/17 00:28:46 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -23,6 +23,9 @@
 #include <sys/evcount.h>
 #include <machine/bus.h>
 #include <armv7/armv7/armv7var.h>
+
+#include <dev/ofw/fdt.h>
+
 #include "intc.h"
 
 #define INTC_NUM_IRQ intc_nirq
@@ -116,6 +119,11 @@ intc_attach(struct device *parent, struct device *self, void *args)
 	struct armv7_attach_args *aa = args;
 	int i;
 	u_int32_t rev;
+	void *node;
+
+	node = fdt_find_node("/");
+	if (node == NULL)
+		panic("%s: could not get fdt root node", __func__);
 
 	intc_iot = aa->aa_iot;
 	if (bus_space_map(intc_iot, aa->aa_dev->mem[0].addr,
@@ -137,14 +145,10 @@ intc_attach(struct device *parent, struct device *self, void *args)
 	bus_space_write_4(intc_iot, intc_ioh, INTC_SYSCONFIG,
 	    INTC_SYSCONFIG_AUTOIDLE);
 
-	switch (board_id) {
-	case BOARD_ID_AM335X_BEAGLEBONE:
+	if (fdt_is_compatible(node, "ti,am33xx"))
 		intc_nirq = 128;
-		break;
-	default:
+	else
 		intc_nirq = 96;
-		break;
-	}
 
 	/* mask all interrupts */
 	for (i = 0; i < INTC_NUM_BANKS; i++)
