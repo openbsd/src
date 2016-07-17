@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.51 2015/11/10 23:48:18 jmc Exp $
+.\"	$OpenBSD: event.3,v 1.52 2016/07/17 11:21:07 stefan Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: July 17 2016 $
 .Dt EVENT_INIT 3
 .Os
 .Sh NAME
@@ -416,8 +416,9 @@ By default,
 assigns the middle priority to all events unless their priority
 is explicitly set.
 .Sh THREAD SAFE EVENTS
-.Nm Libevent
-has experimental support for thread-safe events.
+The
+.Nm event
+API has experimental support for thread-safe events.
 When initializing the library via
 .Fn event_init ,
 an event base is returned.
@@ -442,8 +443,9 @@ should be called after preparing a bufferevent with
 should be used to free memory associated with the event base
 when it is no longer needed.
 .Sh BUFFERED EVENTS
-.Nm libevent
-provides an abstraction on top of the regular event callbacks.
+The
+.Nm event
+API provides an abstraction on top of the regular event callbacks.
 This abstraction is called a
 .Va "buffered event" .
 A buffered event provides input and output buffers that get filled
