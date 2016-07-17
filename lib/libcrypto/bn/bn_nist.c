@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_nist.c,v 1.16 2016/07/17 21:21:40 bcook Exp $ */
+/* $OpenBSD: bn_nist.c,v 1.17 2016/07/17 22:01:01 bcook Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -59,6 +59,7 @@
 #include <machine/endian.h>
 
 #include <stdint.h>
+#include <string.h>
 
 #include "bn_lcl.h"
 
@@ -568,7 +569,8 @@ BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 		BN_ULONG bn[BN_NIST_224_TOP];
 		unsigned int ui[BN_NIST_224_TOP *
 		    sizeof(BN_ULONG) / sizeof(unsigned int)];
-	} buf = {0};
+	} buf;
+	memset(&buf, 0, sizeof(buf));
 	BN_ULONG c_d[BN_NIST_224_TOP], *res;
 	uintptr_t mask;
 	union {
