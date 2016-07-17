@@ -1,4 +1,4 @@
-/* $OpenBSD: sunxi.c,v 1.12 2016/06/11 07:07:59 jsg Exp $ */
+/* $OpenBSD: sunxi.c,v 1.13 2016/07/17 17:45:14 kettenis Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -24,6 +24,8 @@
 #include <arm/mainbus/mainbus.h>
 #include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
+
+#include <dev/ofw/fdt.h>
 
 int	sunxi_match(struct device *, void *, void *);
 void	sxia1x_init();
@@ -56,6 +58,21 @@ struct board_dev sun4i_devs[] = {
 	{ NULL,		0 }
 };
 
+struct board_dev sun5i_devs[] = {
+	{ "sxipio",	0 },
+	{ "sxiccmu",	0 },
+	{ "a1xintc",	0 },
+	{ "sxitimer",	0 },
+	{ "sxitimer",	1 },
+	{ "sxitimer",	2 },
+	{ "sxidog",	0 },
+	{ "ehci",	0 },
+#if 0
+	{ "ohci",	0 },
+#endif
+	{ NULL,		0 }
+};
+
 struct board_dev sun7i_devs[] = {
 	{ "sxipio",	0 },
 	{ "sxiccmu",	0 },
@@ -71,41 +88,62 @@ struct board_dev sun7i_devs[] = {
 	{ NULL,		0 }
 };
 
-struct armv7_board sunxi_boards[] = {
+struct sunxi_soc {
+	char			*compatible;
+	struct board_dev	*devs;
+	void			(*init)(void);
+};
+
+struct sunxi_soc sunxi_socs[] = {
 	{
-		BOARD_ID_SUN4I_A10,
+		"allwinner,sun4i-a10",
 		sun4i_devs,
 		sxia1x_init,
 	},
 	{
-		BOARD_ID_SUN7I_A20,
+		"allwinner,sun5i-a10s",
+		sun5i_devs,
+		sxia1x_init,
+	},
+	{
+		"allwinner,sun7i-a20",
 		sun7i_devs,
 		sxia20_init,
 	},
-	{ 0, NULL, NULL },
+	{ NULL, NULL, NULL },
 };
 
 struct board_dev *
 sunxi_board_devs(void)
 {
+	void *node;
 	int i;
 
-	for (i = 0; sunxi_boards[i].board_id != 0; i++) {
-		if (sunxi_boards[i].board_id == board_id)
-			return (sunxi_boards[i].devs);
+	node = fdt_find_node("/");
+	if (node == NULL)
+		return NULL;
+
+	for (i = 0; sunxi_socs[i].compatible != NULL; i++) {
+		if (fdt_is_compatible(node, sunxi_socs[i].compatible))
+			return sunxi_socs[i].devs;
 	}
-	return (NULL);
+	return NULL;
 }
 
 void
 sunxi_board_init(void)
 {
 	bus_space_handle_t ioh;
+	void *node;
 	int i, match = 0;
 
-	for (i = 0; sunxi_boards[i].board_id != 0; i++) {
-		if (sunxi_boards[i].board_id == board_id) {
-			sunxi_boards[i].init();
+	node = fdt_find_node("/");
+	if (node == NULL)
+		return;
+
+	for (i = 0; sunxi_socs[i].compatible != NULL; i++) {
+		if (fdt_is_compatible(node, sunxi_socs[i].compatible)) {
+			sunxi_socs[i].init();
 			match = 1;
 			break;
 		}
