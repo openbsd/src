@@ -1,4 +1,4 @@
-.\"	$OpenBSD: jot.1,v 1.19 2016/01/04 23:21:28 schwarze Exp $
+.\"	$OpenBSD: jot.1,v 1.20 2016/07/17 04:04:46 tb Exp $
 .\"	$NetBSD: jot.1,v 1.2 1994/11/14 20:27:36 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)jot.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 4 2016 $
+.Dd $Mdocdate: July 17 2016 $
 .Dt JOT 1
 .Os
 .Sh NAME
@@ -225,41 +225,6 @@ specifying an integer format:
 .Bd -literal -offset indent
 $ jot -w %d 6 1 10 0.5
 .Ed
-.Pp
-For random sequences, the output format also influences the range
-and distribution of the generated numbers:
-.Bd -literal -offset indent
-$ jot -r 100000 1 3 | sort -n | uniq -c
-24950 1
-50038 2
-25012 3
-.Ed
-.Pp
-The values at the beginning and end of the interval
-are generated less frequently than the other values.
-There are several ways to solve this problem and generate evenly distributed
-integers:
-.Bd -literal -offset indent
-$ jot -r -p 0 100000 0.5 3.5 | sort -n | uniq -c
-33374 1
-33363 2
-33263 3
-
-$ jot -w %d -r 100000 1 4 | sort -n | uniq -c
-33306 1
-33473 2
-33221 3
-.Ed
-.Pp
-Note that with random sequences, all numbers generated will
-be smaller than the upper bound.
-The largest value generated will be a tiny bit smaller than
-the upper bound.
-For floating point formats, the value is rounded as described
-before being printed.
-For integer formats, the highest value printed will be one less
-than the requested upper bound, because the generated value will
-be truncated.
 .Sh EXAMPLES
 Print 21 evenly spaced numbers increasing from \-1 to 1:
 .Pp
@@ -280,7 +245,7 @@ comes after the character
 .Sq z
 in the ASCII character set):
 .Pp
-.Dl "$ jot \-r \-c 160 a { | rs \-g0 0 8"
+.Dl "$ jot \-r \-c 160 a z | rs \-g0 0 8"
 .Pp
 Infinitely many
 .Xr yes 1 Ns 's

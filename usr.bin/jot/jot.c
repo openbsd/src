@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.27 2016/01/10 01:15:52 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.28 2016/07/17 04:04:46 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -277,9 +277,6 @@ main(int argc, char *argv[])
 		if (prec > 9)	/* pow(10, prec) > UINT32_MAX */
 			errx(1, "requested precision too large");
 
-		while (prec-- > 0)
-			pow10 *= 10;
-
 		if (ender < begin) {
 			x = begin;
 			begin = ender;
@@ -287,16 +284,22 @@ main(int argc, char *argv[])
 		}
 		x = ender - begin;
 
-		/*
-		 * If pow10 * (ender - begin) is an integer, use
-		 * arc4random_uniform().
-		 */
-		use_unif = fmod(pow10 * (ender - begin), 1) == 0;
-		if (use_unif) {
-			uintx = pow10 * (ender - begin);
-			if (uintx >= UINT32_MAX)
-				errx(1, "requested range too large");
-			uintx++;
+		if (prec == 0 && (fmod(ender, 1) != 0 || fmod(begin, 1) != 0))
+			use_unif = 0;
+		else {
+			while (prec-- > 0)
+				pow10 *= 10;
+			/*
+			 * If pow10 * (ender - begin) is an integer, use
+			 * arc4random_uniform().
+			 */
+			use_unif = fmod(pow10 * (ender - begin), 1) == 0;
+			if (use_unif) {
+				uintx = pow10 * (ender - begin);
+				if (uintx >= UINT32_MAX)
+					errx(1, "requested range too large");
+				uintx++;
+			}
 		}
 
 		for (i = 1; i <= reps || infinity; i++) {
