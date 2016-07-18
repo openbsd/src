@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.59 2016/07/12 12:10:42 semarie Exp $ */
+/* $OpenBSD: doas.c,v 1.60 2016/07/18 16:46:30 zhuk Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -281,9 +281,11 @@ main(int argc, char **argv)
 
 	if (sflag) {
 		sh = getenv("SHELL");
-		if (sh == NULL || *sh == '\0')
-			shargv[0] = pw->pw_shell;
-		else
+		if (sh == NULL || *sh == '\0') {
+			shargv[0] = strdup(pw->pw_shell);
+			if (shargv[0] == NULL)
+				err(1, NULL);
+		} else
 			shargv[0] = sh;
 		argv = shargv;
 		argc = 1;
