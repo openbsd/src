@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.133 2016/05/04 08:31:00 schwarze Exp $
+.\"	$OpenBSD: sh.1,v 1.134 2016/07/18 18:24:21 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 4 2016 $
+.Dd $Mdocdate: July 18 2016 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -30,13 +30,12 @@ The
 .Nm
 utility is a
 .Em command language interpreter :
-it reads its input,
-breaks it down into parts,
-and then executes those parts.
-Its chief uses are in interfacing between the user and the operating system,
-reading commands on the command line,
-and in chaining together groups of commands in a very flexible manner,
-through a shell script.
+it reads one or more commands,
+either from the command line or from a file
+(a shell script),
+and then sets about executing those commands.
+Thus it is the
+main interface between the user and the operating system.
 .Pp
 This version of
 .Nm
