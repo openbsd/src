@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.653 2016/06/22 10:13:14 kettenis Exp $	*/
+/*	$OpenBSD: parse.y,v 1.654 2016/07/18 15:21:33 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -181,7 +181,7 @@ struct node_queue {
 	int			 scheduler;
 	struct node_queue	*next;
 	struct node_queue	*tail;
-}	*oqueues = NULL;
+};
 
 struct node_qassign {
 	char		*qname;
