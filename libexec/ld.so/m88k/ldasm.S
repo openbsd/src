@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.21 2016/07/18 04:35:57 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.22 2016/07/18 08:43:16 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -43,6 +43,7 @@
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
+#define __cerror	_dl_cerror
 #include <SYS.h>
 
 /*
@@ -149,86 +150,53 @@ ENTRY(_dl_bind_start)
 	
 	jmp.n	%r11
 	 addu	%r31, %r31, REG_SIZE + PLT_FRAME_SIZE
+END(_dl_bind_start)
 
 /* ld.so SYSCALLS */
 
+/*
+ * m88k syscall return ABI requires the same amount of ASM
+ * whether or not the syscall can possibly fail, so there's
+ * no benefit to a DL_SYSCALL_NOERR() macro.
+ */
 #define DL_SYSCALL(n)	DL_SYSCALL2(n,n)
 #define DL_SYSCALL2(n,c)				\
 	__ENTRY(_dl_,n);				\
 	__DO_SYSCALL(c);				\
-	br	_dl_cerror
-
-#define DL_SYSCALL2_NOERR(n,c)				\
-	__ENTRY(_dl_,n);				\
-	__DO_SYSCALL(c)
-
-DL_SYSCALL(close)
-	jmp	%r1
+	br	_dl_cerror;				\
+	jmp	%r1;					\
+	END(_dl_##n)
 
 ENTRY(_dl_exit)
 	__DO_SYSCALL(exit)
 1:	br	1b
+END(_dl_exit)
 
+DL_SYSCALL(close)
 DL_SYSCALL(issetugid)
-	jmp	%r1
-
 DL_SYSCALL(getthrid)
-	jmp	%r1
-
 DL_SYSCALL2(_syscall,__syscall)
-	jmp	%r1
-
 DL_SYSCALL(munmap)
-	jmp	%r1
-
 DL_SYSCALL(mprotect)
-	jmp	%r1
-
 DL_SYSCALL(open)
-	jmp	%r1
-
 DL_SYSCALL(read)
-	jmp	%r1
-
 DL_SYSCALL(write)
-	jmp	%r1
-
 DL_SYSCALL(fstat)
-	jmp	%r1
-
 DL_SYSCALL(gettimeofday)
-	jmp	%r1
-
 DL_SYSCALL(readlink)
-	jmp	%r1
-
 DL_SYSCALL(lstat)
-	jmp	%r1
-
 DL_SYSCALL(utrace)
-	jmp	%r1
-
 DL_SYSCALL(getentropy)
-	jmp	%r1
-
 DL_SYSCALL(sendsyslog)
-	jmp	%r1
-
 DL_SYSCALL(pledge)
-	jmp	%r1
-
 DL_SYSCALL2(getcwd,__getcwd)
-	jmp	%r1
-
 DL_SYSCALL(sysctl)
-	jmp	%r1
-
 DL_SYSCALL(getdents)
-	jmp	%r1
 
-_dl_cerror:
+ENTRY(_dl_cerror)
 	jmp.n	%r1
 	 subu	%r2, %r0, %r2
+END(_dl_cerror)
 
 ENTRY(_dl_cacheflush)
 	tb0	0, %r0, 451
