@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.432 2016/07/18 13:17:44 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.433 2016/07/18 19:11:18 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1379,18 +1379,6 @@ struct pf_queuespec {
 	u_int				 qlimit;
 	u_int32_t			 qid;
 	u_int32_t			 parent_qid;
-};
-
-struct cbq_opts {
-	u_int		minburst;
-	u_int		maxburst;
-	u_int		pktsize;
-	u_int		maxpktsize;
-	u_int		ns_per_byte;
-	u_int		maxidle;
-	int		minidle;
-	u_int		offtime;
-	int		flags;
 };
 
 struct priq_opts {

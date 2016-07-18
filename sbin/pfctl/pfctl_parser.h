@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.104 2014/10/27 21:51:32 mikeb Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.105 2016/07/18 19:11:18 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -155,7 +155,6 @@ struct node_hfsc_opts {
 struct node_queue_opt {
 	int			 qtype;
 	union {
-		struct cbq_opts		cbq_opts;
 		struct priq_opts	priq_opts;
 		struct node_hfsc_opts	hfsc_opts;
 	}			 data;
