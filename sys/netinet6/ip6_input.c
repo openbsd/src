@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.163 2016/07/14 14:39:12 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.164 2016/07/18 19:50:49 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -198,7 +198,6 @@ ip6_input(struct mbuf *m)
 	struct in6_addr odst;
 #endif
 	int srcrt = 0, isanycast = 0;
-	u_int rtableid = 0;
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
 	if (ifp == NULL)
@@ -413,8 +412,6 @@ ip6_input(struct mbuf *m)
 		goto hbhcheck;
 	}
 
-	rtableid = m->m_pkthdr.ph_rtableid;
-
 	/*
 	 *  Unicast check
 	 */
@@ -422,7 +419,7 @@ ip6_input(struct mbuf *m)
 	    !ISSET(ip6_forward_rt.ro_rt->rt_flags, RTF_MPATH) &&
 	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
 			       &ip6_forward_rt.ro_dst.sin6_addr) &&
-	    rtableid == ip6_forward_rt.ro_tableid)
+	    m->m_pkthdr.ph_rtableid == ip6_forward_rt.ro_tableid)
 		ip6stat.ip6s_forward_cachehit++;
 	else {
 		if (ip6_forward_rt.ro_rt) {
@@ -436,7 +433,7 @@ ip6_input(struct mbuf *m)
 		ip6_forward_rt.ro_dst.sin6_len = sizeof(struct sockaddr_in6);
 		ip6_forward_rt.ro_dst.sin6_family = AF_INET6;
 		ip6_forward_rt.ro_dst.sin6_addr = ip6->ip6_dst;
-		ip6_forward_rt.ro_tableid = rtableid;
+		ip6_forward_rt.ro_tableid = m->m_pkthdr.ph_rtableid;
 
 		ip6_forward_rt.ro_rt = rtalloc_mpath(
 		    sin6tosa(&ip6_forward_rt.ro_dst),
