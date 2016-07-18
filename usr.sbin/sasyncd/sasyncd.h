@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.h,v 1.17 2012/09/15 00:46:43 guenther Exp $	*/
+/*	$OpenBSD: sasyncd.h,v 1.18 2016/07/18 21:22:09 benno Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -136,8 +136,10 @@ void		control_setrun(void);
  *  6 = timers
  */
 void	log_init(char *);
-void	log_msg(int, const char *, ...);
-void	log_err(const char *, ...);
+void	log_msg(int, const char *, ...)
+		__attribute__((__format__ (printf, 2, 3)));
+void	log_err(const char *, ...)
+		__attribute__((__format__ (printf, 1, 2)));
 
 /* monitor.c */
 pid_t	monitor_init(void);

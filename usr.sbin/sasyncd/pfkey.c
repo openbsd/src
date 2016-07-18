@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.25 2015/10/18 02:39:04 mmcc Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.26 2016/07/18 21:22:09 benno Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -424,7 +424,7 @@ pfkey_queue_message(u_int8_t *data, u_int32_t datalen)
 
 	sadb->sadb_msg_pid = getpid();
 	sadb->sadb_msg_seq = seq++;
-	log_msg(2, "pfkey_queue_message: pfkey %s len %u seq %u",
+	log_msg(2, "pfkey_queue_message: pfkey %s len %zu seq %u",
 	    pfkey_print_type(sadb), sadb->sadb_msg_len * CHUNK,
 	    sadb->sadb_msg_seq);
 
@@ -491,7 +491,7 @@ pfkey_snapshot(void *v)
 				memcpy(sendbuf, m, m->sadb_msg_len * CHUNK);
 				net_queue(p, MSG_PFKEYDATA, sendbuf,
 				    m->sadb_msg_len * CHUNK);
-				log_msg(2, "pfkey_snapshot: sync SA %p len %u "
+				log_msg(2, "pfkey_snapshot: sync SA %p len %zu "
 				    "to peer %s", m,
 				    m->sadb_msg_len * CHUNK, p->name);
 			}
@@ -522,7 +522,7 @@ pfkey_snapshot(void *v)
 				net_queue(p, MSG_PFKEYDATA, sendbuf,
 				    m->sadb_msg_len * CHUNK);
 				log_msg(2, "pfkey_snapshot: sync FLOW %p len "
-				    "%u to peer %s", m,
+				    "%zu to peer %s", m,
 				    m->sadb_msg_len * CHUNK, p->name);
 			}
 		}

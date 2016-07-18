@@ -1,4 +1,4 @@
-/*	$OpenBSD: net_ctl.c,v 1.10 2015/08/20 22:39:29 deraadt Exp $	*/
+/*	$OpenBSD: net_ctl.c,v 1.11 2016/07/18 21:22:09 benno Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -158,7 +158,7 @@ net_ctl_send(struct syncpeer *p, u_int32_t type, u_int32_t d, u_int32_t d2)
 	struct ctlmsg	*m = malloc(sizeof *m);
 
 	if (!m) {
-		log_err("malloc(%u)", sizeof *m);
+		log_err("malloc(%zu)", sizeof *m);
 		return -1;
 	}
 
