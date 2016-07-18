@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_nist.c,v 1.17 2016/07/17 22:01:01 bcook Exp $ */
+/* $OpenBSD: bn_nist.c,v 1.18 2016/07/18 01:04:52 bcook Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -570,7 +570,6 @@ BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 		unsigned int ui[BN_NIST_224_TOP *
 		    sizeof(BN_ULONG) / sizeof(unsigned int)];
 	} buf;
-	memset(&buf, 0, sizeof(buf));
 	BN_ULONG c_d[BN_NIST_224_TOP], *res;
 	uintptr_t mask;
 	union {
@@ -604,6 +603,8 @@ BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 		nist_cp_bn(r_d, a_d, BN_NIST_224_TOP);
 	} else
 		r_d = a_d;
+
+	memset(&buf, 0, sizeof(buf));
 
 #if BN_BITS2==64
 	/* copy upper 256 bits of 448 bit number ... */
