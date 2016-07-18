@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.12 2016/03/06 20:25:27 guenther Exp $	*/
+/*	$OpenBSD: subr.c,v 1.13 2016/07/18 09:36:50 guenther Exp $	*/
 /*	$NetBSD: subr.c,v 1.6 1995/08/31 23:01:45 jtc Exp $	*/
 
 /*-
@@ -42,9 +42,13 @@
 #include "ktrace.h"
 #include "extern.h"
 
+/*
+ * If you change the trace point letters, then update to match:
+ * ktrace/ktrace.1, ktrace/ltrace.1, kdump/kdump.1, and
+ * usage() in kdump/kdump.c
+ */
 int
-getpoints(s)
-	const char *s;
+getpoints(const char *s, int defpoints)
 {
 	int facs = 0;
 
@@ -53,11 +57,14 @@ getpoints(s)
 		case 'c':
 			facs |= KTRFAC_SYSCALL | KTRFAC_SYSRET;
 			break;
+		case 'i':
+			facs |= KTRFAC_GENIO;
+			break;
 		case 'n':
 			facs |= KTRFAC_NAMEI;
 			break;
-		case 'i':
-			facs |= KTRFAC_GENIO;
+		case 'p':
+			facs |= KTRFAC_PLEDGE;
 			break;
 		case 's':
 			facs |= KTRFAC_PSIG;
@@ -75,7 +82,7 @@ getpoints(s)
 			facs |= KTRFAC_EXECENV;
 			break;
 		case '+':
-			facs |= DEF_POINTS;
+			facs |= defpoints;
 			break;
 		default:
 			return (-1);

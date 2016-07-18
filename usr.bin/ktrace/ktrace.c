@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.32 2015/04/18 18:28:37 deraadt Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.33 2016/07/18 09:36:50 guenther Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 				inherit = 1;
 				break;
 			case 't':
-				trpoints = getpoints(optarg);
+				trpoints = getpoints(optarg, KTRFAC_USER);
 				if (trpoints < 0) {
 					warnx("unknown facility in %s", optarg);
 					usage();
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 				pidset = 1;
 				break;
 			case 't':
-				trpoints = getpoints(optarg);
+				trpoints = getpoints(optarg, DEF_POINTS);
 				if (trpoints < 0) {
 					warnx("unknown facility in %s", optarg);
 					usage();

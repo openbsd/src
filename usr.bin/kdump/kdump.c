@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.128 2016/06/02 22:47:13 tedu Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.129 2016/07/18 09:36:50 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -192,7 +192,7 @@ main(int argc, char *argv[])
 			timestamp = timestamp == 2 ? 3 : 1;
 			break;
 		case 't':
-			trpoints = getpoints(optarg);
+			trpoints = getpoints(optarg, DEF_POINTS);
 			if (trpoints < 0)
 				errx(1, "unknown trace point in %s", optarg);
 			break;
@@ -1384,7 +1384,7 @@ usage(void)
 	extern char *__progname;
 	fprintf(stderr, "usage: %s "
 	    "[-dHlnRTXx] [-f file] [-m maxdata] [-p pid]\n"
-	    "%*s[-t [cinstuxX+]]\n",
+	    "%*s[-t [cinpstuxX+]]\n",
 	    __progname, (int)(sizeof("usage: ") + strlen(__progname)), "");
 	exit(1);
 }

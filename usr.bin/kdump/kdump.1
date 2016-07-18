@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kdump.1,v 1.31 2016/06/02 22:47:13 tedu Exp $
+.\"	$OpenBSD: kdump.1,v 1.32 2016/07/18 09:36:50 guenther Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)kdump.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: June 2 2016 $
+.Dd $Mdocdate: July 18 2016 $
 .Dt KDUMP 1
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Op Fl f Ar file
 .Op Fl m Ar maxdata
 .Op Fl p Ar pid
-.Op Fl t Op Cm cinstuxX+
+.Op Fl t Op Cm cinpstuxX+
 .Sh DESCRIPTION
 .Nm
 displays the kernel trace files produced with
@@ -94,7 +94,7 @@ Display relative timestamps (time since previous entry).
 Display absolute timestamps for each entry (seconds since the Epoch).
 .It Fl TR
 If both options are specified, display timestamps relative to trace start.
-.It Fl t Op Cm cinstuxX+
+.It Fl t Op Cm cinpstuxX+
 Selects which tracepoints to display.
 See the
 .Fl t

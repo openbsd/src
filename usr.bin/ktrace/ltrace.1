@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ltrace.1,v 1.9 2016/03/06 20:25:27 guenther Exp $
+.\"	$OpenBSD: ltrace.1,v 1.10 2016/07/18 09:36:50 guenther Exp $
 .\"
 .\" Copyright (c) 2013 Miodrag Vallat.
 .\"
@@ -43,7 +43,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 6 2016 $
+.Dd $Mdocdate: July 18 2016 $
 .Dt LTRACE 1
 .Os
 .Sh NAME
@@ -102,16 +102,9 @@ Inherit; pass the trace flags to all future children of the designated
 processes.
 .It Fl t Ar trstr
 The string argument represents the kernel trace points, one per letter.
-The default flags are
-.Cm c ,
-.Cm i ,
-.Cm n ,
-.Cm s ,
-.Cm t ,
-.Cm u ,
-and
-.Cm x .
-The following table equates the letters with the tracepoints:
+The default is just
+.Cm u .
+The following table equates the letters with the trace points:
 .Pp
 .Bl -tag -width flag -offset indent -compact
 .It Cm c
@@ -120,6 +113,10 @@ trace system calls
 trace I/O
 .It Cm n
 trace namei translations
+.It Cm p
+trace violation of
+.Xr pledge 2
+restrictions
 .It Cm s
 trace signal processing
 .It Cm t
