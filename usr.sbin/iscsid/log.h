@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.2 2011/04/27 18:59:01 claudio Exp $ */
+/*	$OpenBSD: log.h,v 1.3 2016/07/18 21:18:48 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,13 +23,21 @@
 
 void	log_init(int);
 void	log_verbose(int);
-void	vlog(int, const char *, va_list);
-void	log_warn(const char *, ...);
-void	log_warnx(const char *, ...);
-void	log_info(const char *, ...);
-void	log_debug(const char *, ...);
-void	fatal(const char *) __dead;
-void	fatalx(const char *) __dead;
+void	vlog(int, const char *, va_list)
+		__attribute__((__format__ (printf, 2, 0)));
+void	log_warn(const char *, ...)
+		__attribute__((__format__ (printf, 1, 2)));
+void	log_warnx(const char *, ...)
+		__attribute__((__format__ (printf, 1, 2)));
+void	log_info(const char *, ...)
+		__attribute__((__format__ (printf, 1, 2)));
+void	log_debug(const char *, ...)
+		__attribute__((__format__ (printf, 1, 2)));
+void	fatal(const char *) __dead
+		__attribute__((__format__ (printf, 1, 0)));
+void	fatalx(const char *) __dead
+		__attribute__((__format__ (printf, 1, 0)));
+
 void	log_hexdump(void *, size_t);
 void	log_pdu(struct pdu *, int);
 
