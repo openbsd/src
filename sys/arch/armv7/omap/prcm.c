@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.10 2016/07/17 00:21:13 jsg Exp $ */
+/* $OpenBSD: prcm.c,v 1.11 2016/07/18 15:03:01 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -287,6 +287,12 @@ prcm_v3_bit(int mod)
 		return PRCM_CLK_EN_GPIO5;
 	case PRCM_GPIO5:
 		return PRCM_CLK_EN_GPIO6;
+	case PRCM_I2C0:
+		return PRCM_CLK_EN_I2C1;
+	case PRCM_I2C1:
+		return PRCM_CLK_EN_I2C2;
+	case PRCM_I2C2:
+		return PRCM_CLK_EN_I2C3;
 	default:
 		panic("%s: module not found\n", __func__);
 	}
@@ -396,6 +402,10 @@ prcm_v4_enablemodule(struct prcm_softc *sc, int mod)
 {
 	switch (mod) {
 		case PRCM_MMC0:
+		case PRCM_MMC1:
+		case PRCM_MMC2:
+		case PRCM_MMC3:
+		case PRCM_MMC4:
 			break;
 		case PRCM_USBP1_PHY:
 		case PRCM_USBP2_PHY:
@@ -414,6 +424,12 @@ prcm_v4_enablemodule(struct prcm_softc *sc, int mod)
 		case  PRCM_GPIO3:
 		case  PRCM_GPIO4:
 		case  PRCM_GPIO5:
+			/* XXX */
+			break;
+		case PRCM_I2C0:
+		case PRCM_I2C1:
+		case PRCM_I2C2:
+		case PRCM_I2C3:
 			/* XXX */
 			break;
 	default:
