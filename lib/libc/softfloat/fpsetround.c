@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetround.c,v 1.5 2015/09/13 14:21:46 miod Exp $	*/
+/*	$OpenBSD: fpsetround.c,v 1.6 2016/07/18 19:05:22 guenther Exp $	*/
 /* $NetBSD: fpsetround.c,v 1.2 2002/01/13 21:45:53 thorpej Exp $ */
 
 /*-
@@ -37,9 +37,7 @@
 #include "milieu.h"
 #include <softfloat.h>
 
-#ifdef __weak_alias
 __weak_alias(_fpsetround,fpsetround);
-#endif
 
 fp_rnd
 fpsetround(fp_rnd rnd_dir)

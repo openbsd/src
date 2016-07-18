@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetsticky.c,v 1.5 2015/09/13 14:21:46 miod Exp $	*/
+/*	$OpenBSD: fpsetsticky.c,v 1.6 2016/07/18 19:05:22 guenther Exp $	*/
 /* $NetBSD: fpsetsticky.c,v 1.2 2002/01/13 21:45:54 thorpej Exp $ */
 
 /*-
@@ -37,9 +37,7 @@
 #include "milieu.h"
 #include <softfloat.h>
 
-#ifdef __weak_alias
 __weak_alias(_fpsetsticky,fpsetsticky);
-#endif
 
 fp_except
 fpsetsticky(fp_except except)
