@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlv.c,v 1.11 2016/02/21 18:59:54 renato Exp $ */
+/*	$OpenBSD: tlv.c,v 1.12 2016/07/18 21:14:30 benno Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -300,13 +300,13 @@ tlv_decode_seq(int af, struct tlv *tlv, char *buf,
 		switch (af) {
 		case AF_INET:
 			if (alen != INADDRSZ) {
-				log_debug("%s: invalid address length");
+				log_debug("%s: invalid address length", __func__);
 				return (-1);
 			}
 			break;
 		case AF_INET6:
 			if (alen != IN6ADDRSZ) {
-				log_debug("%s: invalid address length");
+				log_debug("%s: invalid address length", __func__);
 				return (-1);
 			}
 			break;
