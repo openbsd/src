@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitimer.c,v 1.5 2016/02/01 23:31:34 jsg Exp $	*/
+/*	$OpenBSD: sxitimer.c,v 1.6 2016/07/18 19:22:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -76,6 +76,8 @@
 #define	STATTIMER		1
 #define	CNTRTIMER		2
 
+#define TIMER_SYNC		3
+
 void	sxitimer_attach(struct device *, struct device *, void *);
 int	sxitimer_tickintr(void *);
 int	sxitimer_statintr(void *);
@@ -83,6 +85,7 @@ void	sxitimer_cpu_initclocks(void);
 void	sxitimer_setstatclockrate(int);
 uint64_t	sxitimer_readcnt64(void);
 uint32_t	sxitimer_readcnt32(void);
+void	sxitimer_sync(void);
 void	sxitimer_delay(u_int);
 
 u_int sxitimer_get_timecount(struct timecounter *);
@@ -267,6 +270,7 @@ int
 sxitimer_tickintr(void *frame)
 {
 	uint32_t now, nextevent;
+	uint32_t val;
 	int rc = 0;
 
 	splassert(IPL_CLOCK);	
@@ -304,12 +308,21 @@ sxitimer_tickintr(void *frame)
 		sxitimer_tick_nextevt = now;
 	}
 
+	val = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(TICKTIMER));
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(TICKTIMER), val & ~TIMER_ENABLE);
+
+	sxitimer_sync();
+
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_INTV(TICKTIMER), nextevent);
 
+	val = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(TICKTIMER));
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_CTRL(TICKTIMER),
-	    TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
+	    val | TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
 
 	return rc;
 }
@@ -318,6 +331,7 @@ int
 sxitimer_statintr(void *frame)
 {
 	uint32_t now, nextevent, r;
+	uint32_t val;
 	int rc = 0;
 
 	splassert(IPL_STATCLOCK);	
@@ -352,12 +366,21 @@ sxitimer_statintr(void *frame)
 		sxitimer_stat_nextevt = now;
 	}
 
+	val = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(STATTIMER));
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(STATTIMER), val & ~TIMER_ENABLE);
+
+	sxitimer_sync();
+
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_INTV(STATTIMER), nextevent);
 
+	val = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(STATTIMER));
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_CTRL(STATTIMER),
-	    TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
+	    val | TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
 
 	return rc;
 }
@@ -388,6 +411,15 @@ sxitimer_readcnt32(void)
 {
 	return bus_space_read_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_CURR(CNTRTIMER));
+}
+
+void
+sxitimer_sync(void)
+{
+	uint32_t now = sxitimer_readcnt32();
+
+	while ((now - sxitimer_readcnt32()) < TIMER_SYNC)
+		CPU_BUSY_CYCLE();
 }
 
 void
