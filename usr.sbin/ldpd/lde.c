@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.61 2016/07/01 23:36:38 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.62 2016/07/18 21:10:37 benno Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -1134,7 +1134,7 @@ lde_req_add(struct lde_nbr *ln, struct fec *fec, int sent)
 		lre->fec = *fec;
 
 		if (fec_insert(t, &lre->fec)) {
-			log_warnx("failed to add %s/%u to %s req",
+			log_warnx("failed to add %s to %s req",
 			    log_fec(&lre->fec), sent ? "sent" : "recv");
 			free(lre);
 			return (NULL);

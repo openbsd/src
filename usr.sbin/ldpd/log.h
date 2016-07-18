@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.13 2016/07/15 17:09:25 renato Exp $ */
+/*	$OpenBSD: log.h,v 1.14 2016/07/18 21:10:37 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -28,13 +28,20 @@ struct fec;
 
 void		 log_init(int);
 void		 log_verbose(int);
-void		 logit(int, const char *, ...);
-void		 log_warn(const char *, ...);
-void		 log_warnx(const char *, ...);
-void		 log_info(const char *, ...);
-void		 log_debug(const char *, ...);
-void		 fatal(const char *) __dead;
-void		 fatalx(const char *) __dead;
+void		 logit(int, const char *, ...)
+			__attribute__((__format__ (printf, 2, 3)));
+void		 log_warn(const char *, ...)
+			__attribute__((__format__ (printf, 1, 2)));
+void		 log_warnx(const char *, ...)
+			__attribute__((__format__ (printf, 1, 2)));
+void		 log_info(const char *, ...)
+			__attribute__((__format__ (printf, 1, 2)));
+void		 log_debug(const char *, ...)
+			__attribute__((__format__ (printf, 1, 2)));
+void		 fatal(const char *) __dead
+			__attribute__((__format__ (printf, 1, 0)));
+void		 fatalx(const char *) __dead
+			__attribute__((__format__ (printf, 1, 0)));
 const char	*log_sockaddr(void *);
 const char	*log_in6addr(const struct in6_addr *);
 const char	*log_in6addr_scope(const struct in6_addr *, unsigned int);
