@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2016/07/11 13:15:20 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2016/07/18 09:09:24 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -50,6 +50,15 @@ regress:
 	@echo are empty.  Fill out these variables for additional tests.
 .endif
 
+.if ! empty (REMOTE_SSH)
+.if make (regress) || make (all)
+.BEGIN: pf.conf addr.py
+	@echo
+	${SUDO} true
+	ssh -t ${REMOTE_SSH} ${SUDO} true
+.endif
+.endif
+
 depend: addr.py
 
 # Create python include file containing the addresses.
@@ -80,7 +89,7 @@ PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u ${.CURDIR}/
 reset-route:
 	@echo '\n======== $@ ========'
 	-${SUDO} route -n delete -host ${REMOTE_ADDR}
-	ssh -t ${REMOTE_SSH} ${SUDO} sh -c "'\
+	ssh ${REMOTE_SSH} ${SUDO} sh -c "'\
 	    route -n delete -inet -host ${LOCAL_ADDR};\
 	    route -n delete -inet -net ${FAKE_NET};\
 	    route -n delete -inet -host ${FAKE_NET_ADDR};\
@@ -88,7 +97,7 @@ reset-route:
 reset-route6:
 	@echo '\n======== $@ ========'
 	-${SUDO} route -n delete -host ${REMOTE_ADDR6}
-	ssh -t ${REMOTE_SSH} ${SUDO} sh -c "'\
+	ssh ${REMOTE_SSH} ${SUDO} sh -c "'\
 	    route -n delete -inet6 -host ${LOCAL_ADDR6};\
 	    route -n delete -inet6 -net ${FAKE_NET6};\
 	    route -n delete -inet6 -host ${FAKE_NET_ADDR6};\
