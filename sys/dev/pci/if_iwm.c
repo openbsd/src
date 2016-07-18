@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.92 2016/06/22 11:32:12 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.93 2016/07/18 13:09:08 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4381,6 +4381,7 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 		/* for non-data, use the lowest supported rate */
 		ridx = (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) ?
 		    IWM_RIDX_OFDM : IWM_RIDX_CCK;
+		tx->data_retry_limit = IWM_MGMT_DFAULT_RETRY_LIMIT;
 	} else if (ic->ic_fixed_mcs != -1) {
 		ridx = sc->sc_fixed_ridx;
 	} else if (ic->ic_fixed_rate != -1) {
