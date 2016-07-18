@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.9 2007/10/24 19:50:33 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.10 2016/07/18 21:20:31 benno Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -196,7 +196,7 @@ nbr_new(u_int32_t nbr_id, struct iface *iface)
 	/* set event structures */
 	evtimer_set(&nbr->timeout_timer, nbr_timeout_timer, nbr);
 
-	log_debug("nbr_new: neighbor ID %s, peerid %lu",
+	log_debug("nbr_new: neighbor ID %s, peerid %u",
 	    inet_ntoa(nbr->id), nbr->peerid);
 
 	return (nbr);
@@ -211,7 +211,7 @@ nbr_act_del(struct nbr *nbr)
 	    nbr->state != NBR_STA_REQ_RCVD)
 		nbr_failed_new(nbr);
 
-	log_debug("nbr_del: neighbor ID %s, peerid %lu", inet_ntoa(nbr->id),
+	log_debug("nbr_del: neighbor ID %s, peerid %u", inet_ntoa(nbr->id),
 	    nbr->peerid);
 
 	/* stop timer */
