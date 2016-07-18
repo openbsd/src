@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.978 2016/06/21 16:45:37 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.979 2016/07/18 13:17:44 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6759,6 +6759,27 @@ pf_cksum(struct pf_pdesc *pd, struct mbuf *m)
 		/* nothing */
 		break;
 	}
+}
+
+int
+pf_ouraddr(struct mbuf *m)
+{
+	struct pf_state_key	*sk;
+
+	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED)
+		return (1);
+
+	sk = m->m_pkthdr.pf.statekey;
+	if (sk != NULL) {
+		if (sk->inp != NULL)
+			return (1);
+
+		/* If we have linked state keys it is certainly forwarded. */
+		if (sk->reverse != NULL)
+			return (0);
+	}
+
+	return (-1);
 }
 
 /*

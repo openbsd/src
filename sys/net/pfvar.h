@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.431 2016/03/29 10:34:42 sashan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.432 2016/07/18 13:17:44 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1763,6 +1763,7 @@ int	pf_rtlabel_match(struct pf_addr *, sa_family_t, struct pf_addr_wrap *,
 	    int);
 int	pf_socket_lookup(struct pf_pdesc *);
 struct pf_state_key *pf_alloc_state_key(int);
+int	pf_ouraddr(struct mbuf *);
 void	pf_pkt_addr_changed(struct mbuf *);
 struct inpcb *pf_inp_lookup(struct mbuf *);
 void	pf_inp_link(struct mbuf *, struct inpcb *);
