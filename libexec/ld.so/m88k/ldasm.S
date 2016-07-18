@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.20 2016/07/15 09:25:47 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.21 2016/07/18 04:35:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -75,9 +75,10 @@ ENTRY(_dl_start)
 	or	%r2,  %r30, 0		| kernel args
 	or	%r3,  %r31, 0		| array base
 	bsr	1f			| the following instruction is skipped
-	bcnd	eq0, %r0, _DYNAMIC	| but gives us the pc-relative offset
-1:	ld.hu	%r5, %r1, 2		| fetch branch offset (low 16 bits)
-	lda	%r4, %r1[%r5]		|
+	bsr	_DYNAMIC		| but gives us the pc-relative offset
+1:	ld	%r6, %r1, 0		| fetch branch instruction
+	mak	%r5, %r6, 26<2>		| pick branch offset and shift left by 2
+	addu	%r4, %r5, %r1
 	bsr	_dl_boot_bind
 
 	ld	%r2,  %r30, 0		| argc
