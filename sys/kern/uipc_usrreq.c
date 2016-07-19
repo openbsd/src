@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.99 2016/07/12 14:28:02 tedu Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.100 2016/07/19 05:30:48 tedu Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -64,6 +64,7 @@ struct	unp_deferral {
 	SLIST_ENTRY(unp_deferral)	ud_link;
 	int	ud_n;
 	/* followed by ud_n struct file * pointers */
+	struct file *ud_fp[];
 };
 
 /* list of sets of files that were sent over sockets that are now closed */
@@ -896,8 +897,7 @@ unp_gc(void *arg __unused)
 	while ((defer = SLIST_FIRST(&unp_deferred)) != NULL) {
 		SLIST_REMOVE_HEAD(&unp_deferred, ud_link);
 		for (i = 0; i < defer->ud_n; i++) {
-			memcpy(&fp, &((struct file **)(defer + 1))[i],
-			    sizeof(fp));
+			fp = defer->ud_fp[i];
 			if (fp == NULL)
 				continue;
 			FREF(fp);
@@ -1059,7 +1059,7 @@ unp_discard(struct file **rp, int nfds)
 	/* copy the file pointers to a deferral structure */
 	defer = malloc(sizeof(*defer) + sizeof(*rp) * nfds, M_TEMP, M_WAITOK);
 	defer->ud_n = nfds;
-	memcpy(defer + 1, rp, sizeof(*rp) * nfds);
+	memcpy(&defer->ud_fp[0], rp, sizeof(*rp) * nfds);
 	memset(rp, 0, sizeof(*rp) * nfds);
 	SLIST_INSERT_HEAD(&unp_deferred, defer, ud_link);
 
