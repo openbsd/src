@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.c,v 1.2 2016/07/19 17:31:22 reyk Exp $	*/
+/*	$OpenBSD: switchd.c,v 1.3 2016/07/19 17:34:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -252,7 +252,7 @@ int
 switchd_tap(void)
 {
 	int	 fd;
-	if ((fd = open("/dev/tun0", O_WRONLY)) == -1)
+	if ((fd = open("/dev/tap0", O_WRONLY)) == -1)
 		return (-1);
 	return (fd);
 }
