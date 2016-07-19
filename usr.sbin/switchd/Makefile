@@ -1,9 +1,7 @@
-# $OpenBSD: Makefile,v 1.1 2016/07/19 16:54:26 reyk Exp $
+# $OpenBSD: Makefile,v 1.2 2016/07/19 18:14:08 reyk Exp $
 
-NAME=		switch
-
-PROG=		${NAME}d
-MAN=		${NAME}d.8 ${NAME}d.conf.5
+PROG=		switchd
+MAN=		switchd.8 switchd.conf.5
 
 SRCS=		imsg_util.c log.c packet.c switch.c timer.c util.c
 SRCS+=		switchd.c ofp.c ofp10.c ofp13.c control.c proc.c
@@ -13,8 +11,7 @@ SRCS+=		parse.y ofcconn.c
 LDADD=		-levent -lutil
 DPADD=		${LIBEVENT} ${LIBUTIL}
 
-CFLAGS+=	-DSWITCHD_NAME=\"${NAME}\"
-CFLAGS+=	-Wall -I${.CURDIR} -I${.CURDIR}/../${NAME}d
+CFLAGS+=	-Wall -I${.CURDIR} -I${.CURDIR}/../switchd
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
