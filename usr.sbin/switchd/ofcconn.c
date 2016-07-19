@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofcconn.c,v 1.1 2016/07/19 16:54:26 reyk Exp $	*/
+/*	$OpenBSD: ofcconn.c,v 1.2 2016/07/19 17:31:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -78,6 +78,7 @@ int		 ofcconn_say_hello(struct ofcconn *);
 pid_t
 ofcconn_proc_init(struct privsep *ps, struct privsep_proc *p)
 {
+	p->p_shutdown = ofcconn_proc_shutdown;
 	return (proc_run(ps, p, procs, nitems(procs), NULL, NULL));
 }
 

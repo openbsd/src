@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.c,v 1.1 2016/07/19 16:54:26 reyk Exp $	*/
+/*	$OpenBSD: switchd.c,v 1.2 2016/07/19 17:31:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -54,8 +54,7 @@ __dead void	usage(void);
 static struct privsep_proc procs[] = {
 	{ "ofp",	PROC_OFP, NULL, ofp },
 	{ "control",	PROC_CONTROL, parent_dispatch_control, control },
-	{ "ofcconn",	PROC_OFCCONN, NULL, ofcconn_proc_init,
-	    .p_shutdown = ofcconn_proc_shutdown }
+	{ "ofcconn",	PROC_OFCCONN, NULL, ofcconn_proc_init }
 };
 
 __dead void
