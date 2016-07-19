@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.21 2016/07/04 08:11:48 mpi Exp $ */
+/*	$OpenBSD: art.c,v 1.22 2016/07/19 10:51:44 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -706,11 +706,11 @@ art_walk_apply(struct art_root *ar,
 {
 	int error = 0;
 
-	KERNEL_ASSERT_LOCKED();
-
 	if ((an != NULL) && (an != next)) {
 		/* this assumes an->an_dst is not used by f */
+		KERNEL_UNLOCK();
 		error = (*f)(an, arg);
+		KERNEL_LOCK();
 	}
 
 	return (error);
