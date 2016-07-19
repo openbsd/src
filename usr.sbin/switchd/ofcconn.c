@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofcconn.c,v 1.2 2016/07/19 17:31:22 reyk Exp $	*/
+/*	$OpenBSD: ofcconn.c,v 1.3 2016/07/19 18:04:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -73,7 +73,7 @@ void		 ofcconn_reset_evdevf(struct ofcconn *);
 void		 ofcconn_close(struct ofcconn *);
 void		 ofcconn_free(struct ofcconn *);
 void		 ofcconn_shutdown_all(void);
-int		 ofcconn_say_hello(struct ofcconn *);
+int		 ofcconn_send_hello(struct ofcconn *);
 
 pid_t
 ofcconn_proc_init(struct privsep *ps, struct privsep_proc *p)
@@ -144,16 +144,16 @@ ofcconn_create(const char *name, struct switch_controller *swc, int fd)
 	struct ofcconn	*oc = NULL;
 
 	if ((oc = calloc(1, sizeof(struct ofcconn))) == NULL) {
-		log_warn("%s: calloc() failed", __func__);
-		goto on_error;
+		log_warn("%s: calloc failed", __func__);
+		goto fail;
 	}
 	if ((oc->oc_device = strdup(name)) == NULL) {
-		log_warn("%s: calloc() failed", __func__);
-		goto on_error;
+		log_warn("%s: calloc failed", __func__);
+		goto fail;
 	}
 	if ((oc->oc_buf = ibuf_new(NULL, 0)) == NULL) {
-		log_warn("%s: ibuf_new() failed", __func__);
-		goto on_error;
+		log_warn("%s: failed to get new ibuf", __func__);
+		goto fail;
 	}
 
 	oc->oc_sock = -1;
@@ -170,7 +170,7 @@ ofcconn_create(const char *name, struct switch_controller *swc, int fd)
 
 	return (oc);
 
-on_error:
+ fail:
 	if (oc != NULL) {
 		free(oc->oc_device);
 		ibuf_release(oc->oc_buf);
@@ -189,19 +189,19 @@ ofcconn_connect(struct ofcconn *oc)
 
 	if ((sock = socket(oc->oc_peer.ss_family, SOCK_STREAM | SOCK_NONBLOCK,
 	    IPPROTO_TCP)) == -1) {
-		log_warn("%s: opening of channel with %s failed.  "
-		    "socket()", oc->oc_device,
+		log_warn("%s: failed to open socket for channel with %s",
+		    oc->oc_device,
 		    print_host(&oc->oc_peer, buf, sizeof(buf)));
-		goto on_error;
+		goto fail;
 	}
 
 	if (connect(sock, (struct sockaddr *)&oc->oc_peer,
 	    oc->oc_peer.ss_len) == -1) {
 		if (errno != EINPROGRESS) {
-			log_warn("%s: opening OpenFlow channel with %s "
-			    "failed.  connect()", oc->oc_device,
+			log_warn("%s: failed to connect channel to %s",
+			    oc->oc_device,
 			    print_host(&oc->oc_peer, buf, sizeof(buf)));
-			goto on_error;
+			goto fail;
 		}
 	}
 
@@ -219,7 +219,7 @@ ofcconn_connect(struct ofcconn *oc)
 
 	return (0);
 
-on_error:
+ fail:
 	if (sock >= 0)
 		close(sock);
 
@@ -245,22 +245,22 @@ ofcconn_on_sockio(int fd, short evmask, void *ctx)
 			getsockopt(oc->oc_sock, SOL_SOCKET, SO_ERROR, &err,
 			    &optlen);
 			if (err != 0) {
-				log_warnx("%s: opening OpenFlow channel with "
-				    "%s failed: %s",
-				    oc->oc_device, print_host(&oc->oc_peer,
-				    buf, sizeof(buf)), strerror(err));
+				log_warnx("%s: connection error with %s: %s ",
+				    oc->oc_device,
+				    print_host(&oc->oc_peer, buf, sizeof(buf)),
+				    strerror(err));
 				oc->oc_conn_fails++;
 				ofcconn_close(oc);
 				ofcconn_connect_again(oc);
 				return;
 			}
-			log_info("%s: OpenFlow channel with %s connected",
+			log_info("%s: OpenFlow channel to %s connected",
 			    oc->oc_device,
 			    print_host(&oc->oc_peer, buf, sizeof(buf)));
 			event_del(&oc->oc_evtimer);
 			oc->oc_connected = 1;
 			oc->oc_conn_fails = 0;
-			if (ofcconn_say_hello(oc) != 0)
+			if (ofcconn_send_hello(oc) != 0)
 				return;
 		} else {
 			oc->oc_sock_write_ready = 1;
@@ -282,26 +282,26 @@ ofcconn_on_sockio(int fd, short evmask, void *ctx)
 		    ibuf_data(oc->oc_buf) + wpos,
 		    ibuf_left(oc->oc_buf))) <= 0) {
 			if (sz == 0)
-				log_warnx("%s: OpenFlow channel is closed by "
-				    "peer",
+				log_warnx("%s: connection closed by peer",
 				    oc->oc_device);
 			else
-				log_warn("%s: OpenFlow channel read error",
+				log_warn("%s: connection read error",
 				    oc->oc_device);
-			goto on_fail;
+			goto fail;
 		}
 		if (ibuf_setsize(oc->oc_buf, wpos + sz) == -1)
-			goto on_fail;
+			goto fail;
 		if (oc->oc_devf_write_ready) {
 			if (ofcconn_write(oc) == -1)
-				goto on_fail;
+				goto fail;
 			event_active(&oc->oc_evdevf, 0, 1);
 		}
 	}
 	ofcconn_reset_evsock(oc);
 
 	return;
-on_fail:
+
+ fail:
 	ofcconn_close(oc);
 	ofcconn_connect_again(oc);
 }
@@ -317,32 +317,33 @@ ofcconn_on_devfio(int fd, short evmask, void *ctx)
 	if (evmask & EV_WRITE) {
 		oc->oc_devf_write_ready = 1;
 		if (ofcconn_write(oc) == -1)
-			goto on_fail;
+			goto fail;
 	}
 
 	if (evmask & EV_READ && oc->oc_sock_write_ready) {
 		if ((sz = read(oc->oc_devf, buf, sizeof(buf))) <= 0) {
 			if (sz < 0)
-				log_warn("%s: %s read()", __func__,
+				log_warn("%s: %s read", __func__,
 				    oc->oc_device);
-			goto on_fail;
+			goto fail;
 		}
 		hdr = (struct ofp_header *)buf;
-		if (hdr->oh_type == OFP_T_HELLO)
-			goto dont_forward;
-		if ((sz2 = write(oc->oc_sock, buf, sz)) != sz) {
-			log_warn("%s: %s write()", __func__, oc->oc_device);
-			goto on_fail;
+		if (hdr->oh_type != OFP_T_HELLO) {
+			/* forward packet */
+			if ((sz2 = write(oc->oc_sock, buf, sz)) != sz) {
+				log_warn("%s: %s write", __func__,
+				    oc->oc_device);
+				goto fail;
+			}
+			oc->oc_sock_write_ready = 0;
+			/* schedule an event to reset the event handlers */
+			event_active(&oc->oc_evsock, 0, 1);
 		}
-		oc->oc_sock_write_ready = 0;
-		/* schedule an event to reset the event handlers */
-		event_active(&oc->oc_evsock, 0, 1);
-dont_forward:	;
 	}
 	ofcconn_reset_evdevf(oc);
 
 	return;
-on_fail:
+ fail:
 	ofcconn_close(oc);
 	ofcconn_connect_again(oc);
 }
@@ -369,8 +370,8 @@ ofcconn_on_timer(int fd, short evmask, void *ctx)
 	if (oc->oc_sock < 0)
 		ofcconn_connect(oc);
 	else if (!oc->oc_connected) {
-		log_warnx("%s: opening OpenFlow channel with %s failed: "
-		    "timeout", oc->oc_device,
+		log_warnx("%s: timeout connecting channel to %s",
+		    oc->oc_device,
 		    print_host(&oc->oc_peer, buf, sizeof(buf)));
 		ofcconn_close(oc);
 		oc->oc_conn_fails++;
@@ -427,8 +428,8 @@ ofcconn_write(struct ofcconn *oc)
 	size_t			 sz, pktlen;
 	void			*pkt;
 	/* XXX */
-	u_char buf[65535];
-	int remain = 0;
+	unsigned char		 buf[65536];
+	int			 remain = 0;
 
 	/* Try to write if the OFP header has arrived */
 	if (!oc->oc_devf_write_ready ||
@@ -440,15 +441,15 @@ ofcconn_write(struct ofcconn *oc)
 
 	if ((pkt = ibuf_seek(oc->oc_buf, 0, pktlen)) != NULL) {
 		hdr = pkt;
-		if (hdr->oh_type == OFP_T_HELLO)
-			goto dont_forward;
-		/* Has entire packet already */
-		if ((sz = write(oc->oc_devf, pkt, pktlen)) != pktlen) {
-			log_warn("%s: %s(%d, %d)", __func__, oc->oc_device,
-			    (int)sz, (int)pktlen);
-			return (-1);
+		if (hdr->oh_type != OFP_T_HELLO) {
+			/* forward packet; has entire packet already */
+			if ((sz = write(oc->oc_devf, pkt, pktlen)) != pktlen) {
+				log_debug("%s: %s size %d pktlen %d",
+				    __func__,
+				    oc->oc_device, (int)sz, (int)pktlen);
+				return (-1);
+			}
 		}
-dont_forward:
 		/* XXX preserve the remaining part */
 		if ((remain = oc->oc_buf->wpos - pktlen) > 0)
 			memmove(buf, (caddr_t)pkt + pktlen, remain);
@@ -489,7 +490,7 @@ ofcconn_free(struct ofcconn *oc)
 }
 
 int
-ofcconn_say_hello(struct ofcconn *oc)
+ofcconn_send_hello(struct ofcconn *oc)
 {
 	struct ofp_header	 hdr;
 	ssize_t			 sz;
@@ -500,7 +501,7 @@ ofcconn_say_hello(struct ofcconn *oc)
 	hdr.oh_xid = htonl(0xffffffffUL);
 
 	if ((sz = write(oc->oc_sock, &hdr, sizeof(hdr))) != sz) {
-		log_warn("%s: %s write()", __func__, oc->oc_device);
+		log_warn("%s: %s write", __func__, oc->oc_device);
 		ofcconn_close(oc);
 		ofcconn_connect_again(oc);
 		return (-1);
