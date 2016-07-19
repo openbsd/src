@@ -1,4 +1,4 @@
-.\"	$OpenBSD: switchd.conf.5,v 1.1 2016/07/19 16:54:26 reyk Exp $
+.\"	$OpenBSD: switchd.conf.5,v 1.2 2016/07/19 17:30:30 reyk Exp $
 .\"
 .\" Copyright (c) 2014, 2015, 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -81,35 +81,35 @@ OpenFlow switches.
 Secure connections can be enabled with the optional
 .Ic tls
 keyword.
-.It Ic device on Ar device-name Oo Ic forward to Ar uri Oc
-Attach to a
-.Xr switch 4
-device.
-When attached,
-.Xr switchd 8
-will accept OpenFlow messages from the connected kernel interface.
-The daemon either handles the requests locally or sends them to a remote
-controller if the
-.Ic forward to
-directive is set.
-The
-.Ar uri
-is the method and address to connect to the remote controller,
-with the format
-.Ar protocol:address:port
-where the
-.Ar protocol
-can be either
-.Dq tcp
-or
-.Dq tls .
+.\".It Ic device on Ar device-name Oo Ic forward to Ar uri Oc
+.\"Attach to a
+.\".Xr switch 4
+.\"device.
+.\"When attached,
+.\".Xr switchd 8
+.\"will accept OpenFlow messages from the connected kernel interface.
+.\"The daemon either handles the requests locally or sends them to a remote
+.\"controller if the
+.\".Ic forward to
+.\"directive is set.
+.\"The
+.\".Ar uri
+.\"is the method and address to connect to the remote controller,
+.\"with the format
+.\".Ar protocol:address:port
+.\"where the
+.\".Ar protocol
+.\"can be either
+.\".Dq tcp
+.\"or
+.\".Dq tls .
 .El
 .Sh EXAMPLES
 The folowing example is a typical one.
 .Bd -literal -offset indent
 listen on 0.0.0.0 port 6633
-device "/dev/switch0"
-device "/dev/switch1" forward to tcp:192.168.0.1:6633
+.\"device "/dev/switch0"
+.\"device "/dev/switch1" forward to tcp:192.168.0.1:6633
 .Ed
 .Sh SEE ALSO
 .Xr switchd 8
