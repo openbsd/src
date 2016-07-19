@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.166 2016/07/19 09:23:51 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.167 2016/07/19 15:57:13 phessler Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -375,10 +375,12 @@ ip6_input(struct mbuf *m)
 		goto hbhcheck;
 	}
 
+#if NPF > 0
 	if (pf_ouraddr(m) == 1) {
 		ours = 1;
 		goto hbhcheck;
 	}
+#endif
 
 	/*
 	 * Multicast check
