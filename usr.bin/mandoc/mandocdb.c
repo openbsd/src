@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.171 2016/07/15 18:02:32 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.172 2016/07/19 13:30:16 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -174,7 +174,8 @@ static	void	 putkeys(const struct mpage *, char *, size_t, uint64_t);
 static	void	 putmdockey(const struct mpage *,
 			const struct roff_node *, uint64_t);
 static	int	 render_string(char **, size_t *);
-static	void	 say(const char *, const char *, ...);
+static	void	 say(const char *, const char *, ...)
+			__attribute__((__format__ (printf, 2, 3)));
 static	int	 set_basedir(const char *, int);
 static	int	 treescan(void);
 static	size_t	 utf8(unsigned int, char [7]);
@@ -1786,7 +1787,7 @@ putkeys(const struct mpage *mpage, char *cp, size_t sz, uint64_t v)
 			name_mask &= ~NAME_FIRST;
 		if (debug > 1)
 			say(mpage->mlinks->file,
-			    "Adding name %*s, bits=%d", sz, cp, v);
+			    "Adding name %*s, bits=0x%llu", (int)sz, cp, v);
 	} else {
 		htab = &strings;
 		if (debug > 1)
@@ -1794,7 +1795,7 @@ putkeys(const struct mpage *mpage, char *cp, size_t sz, uint64_t v)
 			if ((uint64_t)1 << i & v)
 			    say(mpage->mlinks->file,
 				"Adding key %s=%*s",
-				mansearch_keynames[i], sz, cp);
+				mansearch_keynames[i], (int)sz, cp);
 	}
 
 	end = cp + sz;

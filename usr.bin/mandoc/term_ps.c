@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ps.c,v 1.44 2015/12/23 20:31:17 mmcc Exp $ */
+/*	$OpenBSD: term_ps.c,v 1.45 2016/07/19 13:30:16 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -99,7 +99,8 @@ static	void		  ps_growbuf(struct termp *, size_t);
 static	void		  ps_letter(struct termp *, int);
 static	void		  ps_pclose(struct termp *);
 static	void		  ps_pletter(struct termp *, int);
-static	void		  ps_printf(struct termp *, const char *, ...);
+static	void		  ps_printf(struct termp *, const char *, ...)
+				__attribute__((__format__ (printf, 2, 3)));
 static	void		  ps_putchar(struct termp *, char);
 static	void		  ps_setfont(struct termp *, enum termfont);
 static	void		  ps_setwidth(struct termp *, int, int);

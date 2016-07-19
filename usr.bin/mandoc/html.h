@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.34 2015/11/07 13:57:55 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.35 2016/07/19 13:30:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -158,7 +158,8 @@ void		  print_tbl(struct html *, const struct tbl_span *);
 void		  print_eqn(struct html *, const struct eqn *);
 void		  print_paragraph(struct html *);
 
-void		  bufcat_fmt(struct html *, const char *, ...);
+void		  bufcat_fmt(struct html *, const char *, ...)
+			__attribute__((__format__ (printf, 2, 3)));
 void		  bufcat(struct html *, const char *);
 void		  bufcat_id(struct html *, const char *);
 void		  bufcat_style(struct html *,
