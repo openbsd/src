@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.164 2016/07/18 19:50:49 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.165 2016/07/19 08:13:46 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -197,7 +197,7 @@ ip6_input(struct mbuf *m)
 #if NPF > 0
 	struct in6_addr odst;
 #endif
-	int srcrt = 0, isanycast = 0;
+	int srcrt = 0;
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
 	if (ifp == NULL)
@@ -450,7 +450,7 @@ ip6_input(struct mbuf *m)
 		struct in6_ifaddr *ia6 =
 			ifatoia6(ip6_forward_rt.ro_rt->rt_ifa);
 		if (ia6->ia6_flags & IN6_IFF_ANYCAST)
-			isanycast = 1;
+			m->m_flags |= M_ACAST;
 		/*
 		 * packets to a tentative, duplicated, or somehow invalid
 		 * address must not be accepted.
@@ -552,7 +552,7 @@ ip6_input(struct mbuf *m)
 		}
 
 		/* draft-itojun-ipv6-tcp-to-anycast */
-		if (isanycast && nxt == IPPROTO_TCP) {
+		if (ISSET(m->m_flags, M_ACAST) && (nxt == IPPROTO_TCP)) {
 			if (m->m_len >= sizeof(struct ip6_hdr)) {
 				icmp6_error(m, ICMP6_DST_UNREACH,
 					ICMP6_DST_UNREACH_ADDR,
