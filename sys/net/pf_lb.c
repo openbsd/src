@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.54 2016/06/24 13:55:57 bluhm Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.55 2016/07/19 12:51:19 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -90,11 +90,6 @@
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #endif /* INET6 */
-
-
-/*
- * Global variables
- */
 
 u_int64_t		 pf_hash(struct pf_addr *, struct pf_addr *,
 			    struct pf_poolhashkey *, sa_family_t);
