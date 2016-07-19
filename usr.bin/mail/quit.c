@@ -1,4 +1,4 @@
-/*	$OpenBSD: quit.c,v 1.22 2015/11/11 01:12:10 deraadt Exp $	*/
+/*	$OpenBSD: quit.c,v 1.23 2016/07/19 06:43:27 deraadt Exp $	*/
 /*	$NetBSD: quit.c,v 1.6 1996/12/28 07:11:07 tls Exp $	*/
 
 /*
@@ -188,6 +188,8 @@ quit(void)
 	mbox = expand("&");
 	mcount = c;
 	if (value("append") == NULL) {
+		int fdx;
+
 		(void)snprintf(tempname, sizeof(tempname),
 		    "%s/mail.RmXXXXXXXXXX", tmpdir);
 		if ((fd = mkstemp(tempname)) == -1 ||
@@ -220,7 +222,8 @@ quit(void)
 			return(-1);
 		}
 		(void)Fclose(obuf);
-		(void)close(open(mbox, O_CREAT | O_TRUNC | O_WRONLY, 0600));
+		if ((fdx = open(mbox, O_CREAT | O_TRUNC | O_WRONLY, 0600)) != -1)
+			close(fdx);
 		if ((obuf = Fopen(mbox, "r+")) == NULL) {
 			warn("%s", mbox);
 			(void)Fclose(ibuf);

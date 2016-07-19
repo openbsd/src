@@ -1,4 +1,4 @@
-/*	$OpenBSD: v7.local.c,v 1.16 2015/11/11 01:12:10 deraadt Exp $	*/
+/*	$OpenBSD: v7.local.c,v 1.17 2016/07/19 06:43:27 deraadt Exp $	*/
 /*	$NetBSD: v7.local.c,v 1.8 1997/05/13 06:15:58 mikel Exp $	*/
 
 /*
@@ -70,9 +70,13 @@ findmail(char *user, char *buf, int buflen)
 void
 demail(void)
 {
+	int fd;
 
-	if (value("keep") != NULL || rm(mailname) < 0)
-		(void)close(open(mailname, O_CREAT | O_TRUNC | O_WRONLY, 0600));
+	if (value("keep") != NULL || rm(mailname) < 0) {
+		fd = open(mailname, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+		if (fd != -1)
+			close(fd);
+	}
 }
 
 /*
