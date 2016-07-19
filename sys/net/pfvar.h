@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.433 2016/07/18 19:11:18 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.434 2016/07/19 13:30:51 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1655,15 +1655,18 @@ extern struct pf_queuehead		  pf_queues[2];
 extern struct pf_queuehead		 *pf_queues_active, *pf_queues_inactive;
 
 extern u_int32_t		 ticket_pabuf;
+extern struct pool		 pf_src_tree_pl, pf_sn_item_pl, pf_rule_pl;
+extern struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl,
+				    pf_rule_item_pl, pf_queue_pl;
+extern struct pool		 pf_state_scrub_pl;
+extern struct ifnet		*sync_ifp;
+extern struct pf_rule		 pf_default_rule;
+
 extern int			 pf_tbladdr_setup(struct pf_ruleset *,
 				    struct pf_addr_wrap *);
 extern void			 pf_tbladdr_remove(struct pf_addr_wrap *);
 extern void			 pf_tbladdr_copyout(struct pf_addr_wrap *);
 extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
-extern struct pool		 pf_src_tree_pl, pf_sn_item_pl, pf_rule_pl;
-extern struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl,
-				    pf_rule_item_pl, pf_queue_pl;
-extern struct pool		 pf_state_scrub_pl;
 extern void			 pf_purge_thread(void *);
 extern void			 pf_purge_expired_src_nodes(int);
 extern void			 pf_purge_expired_states(u_int32_t);
@@ -1692,9 +1695,6 @@ extern void			 pf_state_export(struct pfsync_state *,
 				    struct pf_state *);
 extern void			 pf_print_state(struct pf_state *);
 extern void			 pf_print_flags(u_int8_t);
-
-extern struct ifnet		*sync_ifp;
-extern struct pf_rule		 pf_default_rule;
 extern void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
 				    sa_family_t);
 void				 pf_rm_rule(struct pf_rulequeue *,
