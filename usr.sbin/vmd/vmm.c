@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.32 2016/07/09 09:06:22 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.33 2016/07/19 09:52:34 natano Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -890,8 +890,8 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 
 	ret = 0;
 
-	tid = malloc(sizeof(pthread_t) * vcp->vcp_ncpus);
-	vrp = malloc(sizeof(struct vm_run_params *) * vcp->vcp_ncpus);
+	tid = calloc(vcp->vcp_ncpus, sizeof(pthread_t));
+	vrp = calloc(vcp->vcp_ncpus, sizeof(struct vm_run_params *));
 	if (tid == NULL || vrp == NULL) {
 		log_warn("%s: memory allocation error - exiting.",
 		    __progname);

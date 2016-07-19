@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.15 2016/07/09 09:06:22 stefan Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.16 2016/07/19 09:52:34 natano Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -166,13 +166,11 @@ viornd_notifyq(void)
 	q_gpa = viornd.vq[viornd.cfg.queue_notify].qa;
 	q_gpa = q_gpa * VIRTIO_PAGE_SIZE;
 
-	buf = malloc(vr_sz);
+	buf = calloc(1, vr_sz);
 	if (buf == NULL) {
-		log_warn("malloc error getting viornd ring");
+		log_warn("calloc error getting viornd ring");
 		return (0);
 	}
-
-	memset(buf, 0, vr_sz);
 
 	if (read_mem(q_gpa, buf, vr_sz)) {
 		free(buf);
@@ -382,13 +380,11 @@ vioblk_notifyq(struct vioblk_dev *dev)
 	q_gpa = dev->vq[dev->cfg.queue_notify].qa;
 	q_gpa = q_gpa * VIRTIO_PAGE_SIZE;
 
-	vr = malloc(vr_sz);
+	vr = calloc(1, vr_sz);
 	if (vr == NULL) {
-		log_warn("malloc error getting vioblk ring");
+		log_warn("calloc error getting vioblk ring");
 		return (0);
 	}
-
-	memset(vr, 0, vr_sz);
 
 	if (read_mem(q_gpa, vr, vr_sz)) {
 		log_warnx("error reading gpa 0x%llx", q_gpa);
@@ -804,13 +800,11 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	q_gpa = dev->vq[0].qa;
 	q_gpa = q_gpa * VIRTIO_PAGE_SIZE;
 
-	vr = malloc(vr_sz);
+	vr = calloc(1, vr_sz);
 	if (vr == NULL) {
-		log_warn("rx enq: malloc error getting vionet ring");
+		log_warn("rx enq: calloc error getting vionet ring");
 		return (0);
 	}
-
-	memset(vr, 0, vr_sz);
 
 	if (read_mem(q_gpa, vr, vr_sz)) {
 		log_warnx("rx enq: error reading gpa 0x%llx", q_gpa);
@@ -1002,13 +996,11 @@ vionet_notifyq(struct vionet_dev *dev)
 	q_gpa = dev->vq[dev->cfg.queue_notify].qa;
 	q_gpa = q_gpa * VIRTIO_PAGE_SIZE;
 
-	vr = malloc(vr_sz);
+	vr = calloc(1, vr_sz);
 	if (vr == NULL) {
-		log_warn("malloc error getting vionet ring");
+		log_warn("calloc error getting vionet ring");
 		goto out;
 	}
-
-	memset(vr, 0, vr_sz);
 
 	if (read_mem(q_gpa, vr, vr_sz)) {
 		log_warnx("error reading gpa 0x%llx", q_gpa);
@@ -1163,14 +1155,12 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 	    + sizeof(uint16_t) * (2 + VIORND_QUEUE_SIZE));
 
 	if (vcp->vcp_ndisks > 0) {
-		vioblk = malloc(sizeof(struct vioblk_dev) * vcp->vcp_ndisks);
+		vioblk = calloc(vcp->vcp_ndisks, sizeof(struct vioblk_dev));
 		if (vioblk == NULL) {
-			log_warn("%s: malloc failure allocating vioblks",
+			log_warn("%s: calloc failure allocating vioblks",
 			    __progname);
 			return;
 		}
-
-		memset(vioblk, 0, sizeof(struct vioblk_dev) * vcp->vcp_ndisks);
 
 		/* One virtio block device for each disk defined in vcp */
 		for (i = 0; i < vcp->vcp_ndisks; i++) {
@@ -1206,14 +1196,12 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 	}
 
 	if (vcp->vcp_nnics > 0) {
-		vionet = malloc(sizeof(struct vionet_dev) * vcp->vcp_nnics);
+		vionet = calloc(vcp->vcp_nnics, sizeof(struct vionet_dev));
 		if (vionet == NULL) {
-			log_warn("%s: malloc failure allocating vionets",
+			log_warn("%s: calloc failure allocating vionets",
 			    __progname);
 			return;
 		}
-
-		memset(vionet, 0, sizeof(struct vionet_dev) * vcp->vcp_nnics);
 
 		nr_vionet = vcp->vcp_nnics;
 		/* Virtio network */
