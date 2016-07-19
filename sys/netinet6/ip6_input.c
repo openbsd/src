@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.165 2016/07/19 08:13:46 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.166 2016/07/19 09:23:51 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -375,7 +375,7 @@ ip6_input(struct mbuf *m)
 		goto hbhcheck;
 	}
 
-	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+	if (pf_ouraddr(m) == 1) {
 		ours = 1;
 		goto hbhcheck;
 	}
