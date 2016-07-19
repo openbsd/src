@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.1 2016/07/19 16:54:26 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.2 2016/07/19 18:09:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -87,12 +87,6 @@ static const struct token t_reset[] = {
 };
 
 static const struct token t_load[] = {
-	{ PATH,		"",		NONE,		NULL },
-	{ ENDTOKEN,	"",		NONE,		NULL }
-};
-
-static const struct token t_opt_path[] = {
-	{ NOTOKEN,	"",		NONE,		NULL },
 	{ PATH,		"",		NONE,		NULL },
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
