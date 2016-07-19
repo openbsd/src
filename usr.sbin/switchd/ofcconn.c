@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofcconn.c,v 1.3 2016/07/19 18:04:04 reyk Exp $	*/
+/*	$OpenBSD: ofcconn.c,v 1.4 2016/07/19 18:11:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -311,7 +311,7 @@ ofcconn_on_devfio(int fd, short evmask, void *ctx)
 {
 	struct ofcconn		*oc = ctx;
 	static char		 buf[65536];/* max size of OpenFlow message */
-	size_t			 sz, sz2;
+	ssize_t			 sz, sz2;
 	struct ofp_header	*hdr;
 
 	if (evmask & EV_WRITE) {
@@ -500,7 +500,8 @@ ofcconn_send_hello(struct ofcconn *oc)
 	hdr.oh_length = htons(sizeof(hdr));
 	hdr.oh_xid = htonl(0xffffffffUL);
 
-	if ((sz = write(oc->oc_sock, &hdr, sizeof(hdr))) != sz) {
+	sz = sizeof(hdr);
+	if (write(oc->oc_sock, &hdr, sz) != sz) {
 		log_warn("%s: %s write", __func__, oc->oc_device);
 		ofcconn_close(oc);
 		ofcconn_connect_again(oc);

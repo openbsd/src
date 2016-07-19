@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.c,v 1.1 2016/07/19 16:54:26 reyk Exp $	*/
+/*	$OpenBSD: ofp.c,v 1.2 2016/07/19 18:11:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -208,7 +208,7 @@ ofp_send(struct switch_connection *con, struct ofp_header *oh,
 	struct iovec		 iov[2];
 	int			 cnt = 0;
 	void			*data;
-	size_t			 len;
+	ssize_t			 len;
 
 	if (oh != NULL) {
 		iov[cnt].iov_base = oh;

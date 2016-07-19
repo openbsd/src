@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp10.c,v 1.1 2016/07/19 16:54:26 reyk Exp $	*/
+/*	$OpenBSD: ofp10.c,v 1.2 2016/07/19 18:11:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -170,7 +170,7 @@ ofp10_debug_packet_out(struct switchd *sc,
 
 	off += sizeof(*pout);
 	while ((ah = ibuf_seek(ibuf, off, len)) != NULL &&
-	    ntohs(ah->ah_len) >= sizeof(*ah)) {
+	    ntohs(ah->ah_len) >= (uint16_t)sizeof(*ah)) {
 		switch (ntohs(ah->ah_type)) {
 		case OFP10_ACTION_OUTPUT:
 			ao = (struct ofp10_action_output *)ah;
