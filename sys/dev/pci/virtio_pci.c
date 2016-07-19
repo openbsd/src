@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.14 2016/07/16 12:07:21 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.15 2016/07/19 02:51:09 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -212,6 +212,12 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_dmat = pa->pa_dmat;
 	sc->sc_config_offset = VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI;
 	sc->sc_irq_type = IRQ_NO_MSIX;
+
+	/*
+	 * For virtio, ignore normal MSI black/white-listing depending on the
+	 * PCI bridge but enable it unconditionally.
+	 */
+	pa->pa_flags |= PCI_FLAGS_MSI_ENABLED;
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &sc->sc_iosize, 0)) {
