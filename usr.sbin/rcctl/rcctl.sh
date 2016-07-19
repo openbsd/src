@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.102 2016/06/19 15:00:37 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.103 2016/07/19 08:28:03 sthen Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -53,7 +53,7 @@ ls_rcscripts()
 
 	cd /etc/rc.d && set -- *
 	for _s; do
-		[ "${_s}" = "rc.subr" ] && continue
+		[[ ${_s} = *.* ]] && continue
 		[ ! -d "${_s}" ] && echo "${_s}"
 	done
 }
