@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.h,v 1.9 2016/07/18 21:17:32 benno Exp $	*/
+/*	$OpenBSD: ifstated.h,v 1.10 2016/07/19 08:04:53 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride
@@ -150,7 +150,5 @@ void	vlog(int, const char *, va_list)
 		__attribute__((__format__ (printf, 2, 0)));
 void	logit(int, const char *, ...)
 		__attribute__((__format__ (printf, 2, 3)));
-void fatal(const char *) __dead
-		__attribute__((__format__ (printf, 1, 0)));
-void fatalx(const char *) __dead
-		__attribute__((__format__ (printf, 1, 0)));
+void fatal(const char *) __dead;
+void fatalx(const char *) __dead;
