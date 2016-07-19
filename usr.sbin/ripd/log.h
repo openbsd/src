@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.4 2016/07/18 21:20:31 benno Exp $ */
+/*	$OpenBSD: log.h,v 1.5 2016/07/19 07:58:51 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,10 +35,8 @@ void		 log_info(const char *, ...)
 			__attribute__((__format__ (printf, 1, 2)));
 void		 log_debug(const char *, ...)
 			__attribute__((__format__ (printf, 1, 2)));
-void		 fatal(const char *) __dead
-			__attribute__((__format__ (printf, 1, 0)));
-void		 fatalx(const char *) __dead
-			__attribute__((__format__ (printf, 1, 0)));
+void		 fatal(const char *) __dead;
+void		 fatalx(const char *) __dead;
 const char	*if_type_name(enum iface_type);
 const char	*nbr_state_name(int);
 
