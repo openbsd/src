@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.311 2016/07/11 13:06:31 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.312 2016/07/19 10:26:41 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1721,22 +1721,14 @@ rt_if_remove(struct ifnet *ifp)
 	}
 }
 
-/*
- * Note that deleting a RTF_CLONING route can trigger the
- * deletion of more entries, so we need to cancel the walk
- * and return EAGAIN.  The caller should restart the walk
- * as long as EAGAIN is returned.
- */
 int
 rt_if_remove_rtdelete(struct rtentry *rt, void *vifp, u_int id)
 {
 	struct ifnet	*ifp = vifp;
 
 	if (rt->rt_ifidx == ifp->if_index) {
-		int	cloning = (rt->rt_flags & RTF_CLONING);
-
-		if (rtdeletemsg(rt, ifp, id) == 0 && cloning)
-			return (EAGAIN);
+		rtdeletemsg(rt, ifp, id);
+		return (EAGAIN);
 	}
 
 	return (0);
