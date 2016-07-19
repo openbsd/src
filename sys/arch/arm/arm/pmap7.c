@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.26 2016/07/18 13:38:11 tom Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.27 2016/07/19 02:26:15 tom Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -710,13 +710,6 @@ pmap_free_l1(pmap_t pm)
 	vaddr_t va;
 	uint npg;
 
-{
-	u_int cur_ttb;
-
-	__asm volatile("mrc p15, 0, %0, c2, c0, 0" : "=r"(cur_ttb));
-	cur_ttb &= ~(L1_TABLE_SIZE - 1);
-
-}
 	pm->pm_l1 = NULL;
 	TAILQ_REMOVE(&l1_list, l1, l1_link);
 
