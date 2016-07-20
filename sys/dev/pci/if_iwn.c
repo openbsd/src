@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.167 2016/06/27 19:01:02 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.168 2016/07/20 10:26:42 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -5046,11 +5046,8 @@ iwn_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 void
 iwn_update_htprot(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-	/* XXX Disabled for now. It seems to cause output errors
-	 * (tx status=0x83) and to make block ack sessions degrade
-	 * into a half-working state. */
-#if 0
 	struct iwn_softc *sc = ic->ic_softc;
+	struct iwn_ops *ops = &sc->ops;
 	enum ieee80211_htprot htprot;
 	struct iwn_rxon_assoc rxon_assoc;
 	int s, error;
@@ -5066,17 +5063,38 @@ iwn_update_htprot(struct ieee80211com *ic, struct ieee80211_node *ni)
 	rxon_assoc.flags = sc->rxon.flags;
 	rxon_assoc.filter = sc->rxon.filter;
 	rxon_assoc.ofdm_mask = sc->rxon.ofdm_mask;
+	rxon_assoc.cck_mask = sc->rxon.cck_mask;
 	rxon_assoc.ht_single_mask = sc->rxon.ht_single_mask;
 	rxon_assoc.ht_dual_mask = sc->rxon.ht_dual_mask;
 	rxon_assoc.ht_triple_mask = sc->rxon.ht_triple_mask;
 	rxon_assoc.rxchain = sc->rxon.rxchain;
 	rxon_assoc.acquisition = sc->rxon.acquisition;
 
+	s = splnet();
+
 	error = iwn_cmd(sc, IWN_CMD_RXON_ASSOC, &rxon_assoc,
 	    sizeof(rxon_assoc), 1);
 	if (error != 0)
 		printf("%s: RXON_ASSOC command failed\n", sc->sc_dev.dv_xname);
-#endif
+
+	DELAY(100);
+
+	/* All RXONs wipe the firmware's txpower table. Restore it. */
+	error = ops->set_txpower(sc, 1);
+	if (error != 0)
+		printf("%s: could not set TX power\n", sc->sc_dev.dv_xname);
+
+	DELAY(100);
+
+	/* Restore power saving level */
+	if (ic->ic_flags & IEEE80211_F_PMGTON)
+		error = iwn_set_pslevel(sc, 0, 3, 1);
+	else
+		error = iwn_set_pslevel(sc, 0, 0, 1);
+	if (error != 0)
+		printf("%s: could not set PS level\n", sc->sc_dev.dv_xname);
+
+	splx(s);
 }
 
 /*
