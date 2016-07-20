@@ -6,7 +6,7 @@ checked for certain messages.  The test arguments are kept in the
 args-*.pl files.  To find socket splicing bugs, each test is run
 in both copy and splice mode.
 
-SUDO=sudo
+SUDO=doas
 As relayd needs root privileges either run the tests as root or set
 this variable and run make as a regular user.  Only the code that
 requires it, is run as root.
