@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.69 2015/09/11 19:35:37 mpi Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.70 2016/07/20 19:57:54 bluhm Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -72,6 +72,7 @@ extern	char *__progname; /* program name, from crt0.o */
 int	kread(u_long addr, void *buf, int size);
 char	*plural(u_int64_t);
 char	*plurales(u_int64_t);
+char	*pluralys(u_int64_t);
 
 void	protopr(kvm_t *, u_long, u_int, int);
 

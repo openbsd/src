@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.114 2016/07/20 09:15:28 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.115 2016/07/20 19:57:53 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -454,6 +454,12 @@ struct	tcpstat {
 	u_int64_t tcps_sc_collisions;	/* # of hash collisions */
 	u_int64_t tcps_sc_retransmitted;/* # of retransmissions */
 	u_int64_t tcps_sc_seedrandom;	/* # of syn cache seeds with random */
+	u_int64_t tcps_sc_hash_size;	/* hash buckets in current syn cache */
+	u_int64_t tcps_sc_entry_count;	/* # of entries in current syn cache */
+	u_int64_t tcps_sc_entry_limit;	/* limit of syn cache entries */
+	u_int64_t tcps_sc_bucket_maxlen;/* maximum # of entries in any bucket */
+	u_int64_t tcps_sc_bucket_limit;	/* limit of syn cache bucket list */
+	u_int64_t tcps_sc_uses_left;	/* use counter of current syn cache */
 
 	u_int64_t tcps_conndrained;	/* # of connections drained */
 
@@ -584,6 +590,7 @@ extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_syn_use_limit;   /* number of uses before reseeding hash */
 extern	struct syn_cache_set tcp_syn_cache[];
+extern	int tcp_syn_cache_active; /* active syn cache, may be 0 or 1 */
 
 int	 tcp_attach(struct socket *);
 void	 tcp_canceltimers(struct tcpcb *);

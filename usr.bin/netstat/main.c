@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.109 2016/01/01 17:38:45 mpi Exp $	*/
+/*	$OpenBSD: main.c,v 1.110 2016/07/20 19:57:54 bluhm Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -386,6 +386,12 @@ char *
 plurales(u_int64_t n)
 {
 	return (n != 1 ? "es" : "");
+}
+
+char *
+pluralys(u_int64_t n)
+{
+	return (n != 1 ? "ies" : "y");
 }
 
 /*

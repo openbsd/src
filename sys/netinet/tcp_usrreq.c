@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.133 2016/07/20 09:15:28 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.134 2016/07/20 19:57:53 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -936,6 +936,24 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case TCPCTL_STATS:
 		if (newp != NULL)
 			return (EPERM);
+		{
+			struct syn_cache_set *set;
+			int i;
+
+			set = &tcp_syn_cache[tcp_syn_cache_active];
+			tcpstat.tcps_sc_hash_size = set->scs_size;
+			tcpstat.tcps_sc_entry_count = set->scs_count;
+			tcpstat.tcps_sc_entry_limit = tcp_syn_cache_limit;
+			tcpstat.tcps_sc_bucket_maxlen = 0;
+			for (i = 0; i < set->scs_size; i++) {
+				if (tcpstat.tcps_sc_bucket_maxlen <
+				    set->scs_buckethead[i].sch_length)
+					tcpstat.tcps_sc_bucket_maxlen =
+					    set->scs_buckethead[i].sch_length;
+			}
+			tcpstat.tcps_sc_bucket_limit = tcp_syn_bucket_limit;
+			tcpstat.tcps_sc_uses_left = set->scs_use;
+		}
 		return (sysctl_struct(oldp, oldlenp, newp, newlen,
 		    &tcpstat, sizeof(tcpstat)));
 

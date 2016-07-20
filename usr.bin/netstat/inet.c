@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.146 2016/04/26 22:24:10 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.147 2016/07/20 19:57:54 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -367,8 +367,14 @@ tcp_stats(char *name)
 	printf(m, tcpstat.f1, plural(tcpstat.f1), tcpstat.f2, plural(tcpstat.f2))
 #define	p2a(f1, f2, m) if (tcpstat.f1 || tcpstat.f2 || sflag <= 1) \
 	printf(m, tcpstat.f1, plural(tcpstat.f1), tcpstat.f2)
-#define	p3(f, m) if (tcpstat.f || sflag <= 1) \
+#define	p2b(f1, f2, m) if (tcpstat.f1 || sflag <= 1) \
+	printf(m, tcpstat.f1, tcpstat.f2)
+#define	p2bys(f1, f2, m) if (tcpstat.f1 || sflag <= 1) \
+	printf(m, tcpstat.f1, pluralys(tcpstat.f1), tcpstat.f2)
+#define	pes(f, m) if (tcpstat.f || sflag <= 1) \
 	printf(m, tcpstat.f, plurales(tcpstat.f))
+#define	pys(f, m) if (tcpstat.f || sflag <= 1) \
+	printf(m, tcpstat.f, pluralys(tcpstat.f))
 
 	p(tcps_sndtotal, "\t%u packet%s sent\n");
 	p2(tcps_sndpack,tcps_sndbyte,
@@ -427,7 +433,7 @@ tcp_stats(char *name)
 	p(tcps_keepdrops, "\t\t%u connection%s dropped by keepalive\n");
 	p(tcps_predack, "\t%u correct ACK header prediction%s\n");
 	p(tcps_preddat, "\t%u correct data packet header prediction%s\n");
-	p3(tcps_pcbhashmiss, "\t%u PCB cache miss%s\n");
+	pes(tcps_pcbhashmiss, "\t%u PCB cache miss%s\n");
 	p1(tcps_noport, "\t%u dropped due to no socket\n");
 
 	p(tcps_ecn_accepts, "\t%u ECN connection%s accepted\n");
@@ -443,7 +449,7 @@ tcp_stats(char *name)
 
 	p(tcps_badsyn, "\t%u bad connection attempt%s\n");
 	p(tcps_dropsyn, "\t%u SYN packet%s dropped due to queue or memory full\n");
-	p1(tcps_sc_added, "\t%qd SYN cache entries added\n");
+	pys(tcps_sc_added, "\t%qd SYN cache entr%s added\n");
 	p(tcps_sc_collisions, "\t\t%qd hash collision%s\n");
 	p1(tcps_sc_completed, "\t\t%qd completed\n");
 	p1(tcps_sc_aborted, "\t\t%qd aborted (no space to build PCB)\n");
@@ -454,9 +460,16 @@ tcp_stats(char *name)
 	p1(tcps_sc_unreach, "\t\t%qd dropped due to ICMP unreachable\n");
 	p(tcps_sc_retransmitted, "\t%qd SYN,ACK%s retransmitted\n");
 	p(tcps_sc_dupesyn, "\t%qd duplicate SYN%s received for entries "
-		"already in the cache\n");
+	    "already in the cache\n");
 	p(tcps_sc_dropped, "\t%qd SYN%s dropped (no route or no space)\n");
 	p(tcps_sc_seedrandom, "\t%qd SYN cache seed%s with new random\n");
+	p1(tcps_sc_hash_size, "\t%qd hash bucket array size in current "
+	    "SYN cache\n");
+	p2bys(tcps_sc_entry_count, tcps_sc_entry_limit,
+	    "\t%qd entr%s in current SYN cache, limit is %qd\n");
+	p2b(tcps_sc_bucket_maxlen, tcps_sc_bucket_limit,
+	    "\t%qd longest bucket length in current SYN cache, limit is %qd\n");
+	p(tcps_sc_uses_left, "\t%qd use%s of current SYN cache left\n");
 
 	p(tcps_sack_recovery_episode, "\t%qd SACK recovery episode%s\n");
 	p(tcps_sack_rexmits,
@@ -471,7 +484,10 @@ tcp_stats(char *name)
 #undef p1
 #undef p2
 #undef p2a
-#undef p3
+#undef p2b
+#undef p2bys
+#undef pes
+#undef pys
 }
 
 /*
