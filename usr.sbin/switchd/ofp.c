@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.c,v 1.2 2016/07/19 18:11:08 reyk Exp $	*/
+/*	$OpenBSD: ofp.c,v 1.3 2016/07/20 14:15:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -71,6 +71,7 @@ ofp(struct privsep *ps, struct privsep_proc *p)
 
 	pid = proc_run(ps, p, procs, nitems(procs), ofp_init, NULL);
 	close(srv->srv_fd);
+	close(sc->sc_tap);
 
 	return (pid);
 }

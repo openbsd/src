@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp10.c,v 1.2 2016/07/19 18:11:08 reyk Exp $	*/
+/*	$OpenBSD: ofp10.c,v 1.3 2016/07/20 14:15:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -48,6 +48,9 @@ int	 ofp10_error(struct switchd *, struct switch_connection *,
 
 int	 ofp10_packet_match(struct packet *, struct ofp10_match *, unsigned int);
 
+void	 ofp10_debug_header(struct switchd *,
+	    struct sockaddr_storage *, struct sockaddr_storage *,
+	    struct ofp_header *);
 int	 ofp10_debug_packet_in(struct switchd *,
 	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *, struct ibuf *);

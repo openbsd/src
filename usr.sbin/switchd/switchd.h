@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.2 2016/07/20 11:43:31 jsg Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.3 2016/07/20 14:15:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -186,9 +186,6 @@ void		 ofp_accept(int, short, void *);
 /* ofp10.c */
 int		 ofp10_hello(struct switchd *, struct switch_connection *,
 		    struct ofp_header *, struct ibuf *);
-void		 ofp10_debug_header(struct switchd *,
-		    struct sockaddr_storage *, struct sockaddr_storage *,
-		    struct ofp_header *);
 void		 ofp10_debug(struct switchd *,
 		    struct sockaddr_storage *, struct sockaddr_storage *,
 		    struct ofp_header *, struct ibuf *);
@@ -196,9 +193,6 @@ int		 ofp10_input(struct switchd *, struct switch_connection *,
 		    struct ofp_header *, struct ibuf *);
 
 /* ofp13.c */
-void		 ofp13_debug(struct switchd *,
-		    struct sockaddr_storage *, struct sockaddr_storage *,
-		    struct ofp_header *, struct ibuf *);
 int		 ofp13_input(struct switchd *, struct switch_connection *,
 		    struct ofp_header *, struct ibuf *);
 
