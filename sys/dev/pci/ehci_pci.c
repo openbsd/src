@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.29 2015/11/09 10:01:17 mpi Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.30 2016/07/20 09:48:06 mpi Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -207,8 +207,14 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
 
 	/* Enable workaround for dropped interrupts as required */
-	if (sc->sc.sc_id_vendor == PCI_VENDOR_VIATECH)
+	switch (sc->sc.sc_id_vendor) {
+	case PCI_VENDOR_ATI:
+	case PCI_VENDOR_VIATECH:
 		sc->sc.sc_flags |= EHCIF_DROPPED_INTR_WORKAROUND;
+		break;
+	default:
+		break;
+	}
 
 	ehci_pci_takecontroller(sc, 0);
 	r = ehci_init(&sc->sc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.190 2015/12/11 12:23:09 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.191 2016/07/20 09:48:07 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2825,11 +2825,11 @@ ehci_timeout_task(void *addr)
 }
 
 /*
- * Some EHCI chips from VIA seem to trigger interrupts before writing back the
- * qTD status, or miss signalling occasionally under heavy load.  If the host
- * machine is too fast, we we can miss transaction completion - when we scan
- * the active list the transaction still seems to be active.  This generally
- * exhibits itself as a umass stall that never recovers.
+ * Some EHCI chips from VIA / ATI seem to trigger interrupts before writing
+ * back the qTD status, or miss signalling occasionally under heavy load.
+ * If the host machine is too fast, we can miss transaction completion - when
+ * we scan the active list the transaction still seems to be active. This
+ * generally exhibits itself as a umass stall that never recovers.
  *
  * We work around this behaviour by setting up this callback after any softintr
  * that completes with transactions still pending, giving us another chance to
