@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.1 2016/07/19 16:54:26 reyk Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.2 2016/07/20 21:04:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -143,6 +143,14 @@ main(int argc, char *argv[])
 		}
 		err(1, "connect: %s", sock);
 	}
+
+	/*
+	 * pledge in switchctl:
+	 * stdio - for malloc and basic I/O including events.
+	 * dns - for parsehostport() in the device spec.
+	 */
+	if (pledge("stdio dns", NULL) == -1)
+		err(1, "pledge");
 
 	if (res->ibuf != NULL)
 		ibuf = res->ibuf;
