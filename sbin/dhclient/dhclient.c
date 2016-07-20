@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.374 2016/07/19 17:23:20 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.375 2016/07/20 19:25:39 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2586,12 +2586,12 @@ priv_write_file(char *path, int flags, mode_t mode, uid_t uid, gid_t gid,
 		note("Short contents write to '%s' (%zd vs %zu)", path,
 		    n, sz);
 
+	if (fchown(fd, 0, 0) == -1)
+		note("fchown(fd, %d, %d) of '%s' failed (%s)",
+		    0, 0, path, strerror(errno));
 	if (fchmod(fd, mode) == -1)
 		note("fchmod(fd, 0x%x) of '%s' failed (%s)", mode,
 		    path, strerror(errno));
-	if (fchown(fd, uid, gid) == -1)
-		note("fchown(fd, %d, %d) of '%s' failed (%s)", uid,
-		    gid, path, strerror(errno));
 
 	close(fd);
 }
