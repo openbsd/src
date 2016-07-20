@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.1 2016/07/19 16:54:26 reyk Exp $	*/
+/*	$OpenBSD: packet.c,v 1.2 2016/07/20 20:07:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -50,8 +50,8 @@ packet_ether_unicast(uint8_t *ea)
 	return (0);
 }
 
-long
-packet_input(struct switchd *sc, struct switch_control *sw, long port,
+uint32_t
+packet_input(struct switchd *sc, struct switch_control *sw, uint32_t port,
     struct ibuf *ibuf, size_t len, struct packet *pkt)
 {
 	struct ether_header	*eh;
@@ -78,11 +78,11 @@ packet_input(struct switchd *sc, struct switch_control *sw, long port,
 	else
 		dst = switch_cached(sw, eh->ether_dhost);
 
-	log_debug("%s: %s -> %s, port %ld -> %ld", __func__,
+	log_debug("%s: %s -> %s, port %u -> %u", __func__,
 	    print_ether(eh->ether_shost),
 	    print_ether(eh->ether_dhost),
 	    src->mac_port,
-	    dst == NULL ? -1 : dst->mac_port);
+	    dst == NULL ? OFP_PORT_ANY : dst->mac_port);
 
-	return (dst == NULL ? -1 : dst->mac_port);
+	return (dst == NULL ? OFP_PORT_ANY : dst->mac_port);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: switch.c,v 1.1 2016/07/19 16:54:26 reyk Exp $	*/
+/*	$OpenBSD: switch.c,v 1.2 2016/07/20 20:07:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -184,7 +184,7 @@ switch_remove(struct switchd *sc, struct switch_control *sw)
 
 struct macaddr *
 switch_learn(struct switchd *sc, struct switch_control *sw,
-    uint8_t *ea, long port)
+    uint8_t *ea, uint32_t port)
 {
 	struct macaddr	*mac, *oldmac = NULL;
 	struct timeval	 tv;
@@ -209,7 +209,7 @@ switch_learn(struct switchd *sc, struct switch_control *sw,
 	mac->mac_port = port;
 	mac->mac_age = tv.tv_sec;
 
-	log_debug("%s: %s mac %s on switch %u port %ld",
+	log_debug("%s: %s mac %s on switch %u port %u",
 	    __func__, oldmac == NULL ? "learned new" : "updated",
 	    print_ether(ea), sw->sw_id, port);
 

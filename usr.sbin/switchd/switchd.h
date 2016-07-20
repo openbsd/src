@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.3 2016/07/20 14:15:08 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.4 2016/07/20 20:07:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -50,7 +50,7 @@ struct packet {
 
 struct macaddr {
 	uint8_t			 mac_addr[ETHER_ADDR_LEN];
-	long			 mac_port;
+	uint32_t			 mac_port;
 	time_t			 mac_age;
 	RB_ENTRY(macaddr)	 mac_entry;
 };
@@ -134,8 +134,8 @@ int		 switchd_tap(void);
 int		 switchd_open_device(struct privsep *, const char *, size_t);
 
 /* packet.c */
-long		 packet_input(struct switchd *, struct switch_control *, long,
-		    struct ibuf *, size_t, struct packet *);
+uint32_t	 packet_input(struct switchd *, struct switch_control *,
+		    uint32_t, struct ibuf *, size_t, struct packet *);
 
 /* switch.c */
 void		 switch_init(struct switchd *);
@@ -147,7 +147,7 @@ void		 switch_remove(struct switchd *, struct switch_control *);
 struct switch_control
 		*switch_get(struct switch_connection *);
 struct macaddr	*switch_learn(struct switchd *, struct switch_control *,
-		    uint8_t *, long);
+		    uint8_t *, uint32_t);
 struct macaddr	*switch_cached(struct switch_control *, uint8_t *);
 RB_PROTOTYPE(switch_head, switch_control, sw_entry, switch_cmp);
 RB_PROTOTYPE(macaddr_head, macaddr, mac_entry, switch_maccmp);
