@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.h,v 1.1 2016/07/19 16:54:26 reyk Exp $	*/
+/*	$OpenBSD: ofp.h,v 1.2 2016/07/20 19:57:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -26,7 +26,9 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#define OFP_IFNAMSIZ			16	/* on-wire (not IF_NAMSIZE) */
+#define OFP_IFNAMSIZ	16	/* on-wire (not IF_NAMSIZE) */
+#define OFP_ALIGNMENT	8	/* OFP alignment */
+#define OFP_ALIGN(_x)	(((_x) + (OFP_ALIGNMENT - 1)) & ~(OFP_ALIGNMENT - 1))
 
 struct ofp_header {
 	uint8_t		 oh_version;		/* OpenFlow version */
@@ -265,21 +267,21 @@ struct ofp_instruction_experimenter {
 
 /* Actions */
 #define OFP_ACTION_OUTPUT		0	/* Output to switch port */
-#define OFP_ACTION_COPY_TTL_OUT		11	/* */
-#define OFP_ACTION_COPY_TTL_IN		12	/* */
-#define OFP_ACTION_SET_MPLS_TTL		15	/* */
-#define OFP_ACTION_DEC_MPLS_TTL		16	/* */
-#define OFP_ACTION_PUSH_VLAN		17	/* */
-#define OFP_ACTION_POP_VLAN		18	/* */
-#define OFP_ACTION_PUSH_MPLS		19	/* */
-#define OFP_ACTION_POP_MPLS		20	/* */
-#define OFP_ACTION_SET_QUEUE		21	/* */
-#define OFP_ACTION_GROUP		22	/* */
-#define OFP_ACTION_SET_NW_TTL		23	/* */
-#define OFP_ACTION_DEC_NW_TTL		24	/* */
-#define OFP_ACTION_SET_FIELD		25	/* */
-#define OFP_ACTION_PUSH_PBB		26	/* */
-#define OFP_ACTION_POP_PBB		27	/* */
+#define OFP_ACTION_COPY_TTL_OUT		11	/* ? */
+#define OFP_ACTION_COPY_TTL_IN		12	/* ? */
+#define OFP_ACTION_SET_MPLS_TTL		15	/* ? */
+#define OFP_ACTION_DEC_MPLS_TTL		16	/* ? */
+#define OFP_ACTION_PUSH_VLAN		17	/* ? */
+#define OFP_ACTION_POP_VLAN		18	/* ? */
+#define OFP_ACTION_PUSH_MPLS		19	/* ? */
+#define OFP_ACTION_POP_MPLS		20	/* ? */
+#define OFP_ACTION_SET_QUEUE		21	/* ? */
+#define OFP_ACTION_GROUP		22	/* ? */
+#define OFP_ACTION_SET_NW_TTL		23	/* ? */
+#define OFP_ACTION_DEC_NW_TTL		24	/* ? */
+#define OFP_ACTION_SET_FIELD		25	/* ? */
+#define OFP_ACTION_PUSH_PBB		26	/* ? */
+#define OFP_ACTION_POP_PBB		27	/* ? */
 #define OFP_ACTION_EXPERIMENTER		0xffff	/* Vendor-specific action */
 
 /* Action Header */
@@ -353,64 +355,64 @@ struct ofp_packet_out {
 } __packed;
 
 /* Flow match fields for basic class */
-#define OFP_XM_T_IN_PORT		0
-#define OFP_XM_T_IN_PHY_PORT		1
-#define OFP_XM_T_META			2
-#define OFP_XM_T_ETH_DST		3
-#define OFP_XM_T_ETH_SRC		4
-#define OFP_XM_T_ETH_TYPE		5
-#define OFP_XM_T_VLAN_VID		6
-#define OFP_XM_T_VLAN_PCP		7
-#define OFP_XM_T_IP_DSCP		8
-#define OFP_XM_T_IP_ECN			9
-#define OFP_XM_T_IP_PROTO		10
-#define OFP_XM_T_IPV4_SRC		11
-#define OFP_XM_T_IPV4_DST		12
-#define OFP_XM_T_TCP_SRC		13
-#define OFP_XM_T_TCP_DST		14
-#define OFP_XM_T_UDP_SRC		15
-#define OFP_XM_T_UDP_DST		16
-#define OFP_XM_T_SCTP_SRC		17
-#define OFP_XM_T_SCTP_DST		18
-#define OFP_XM_T_ICMPV4_TYPE		19
-#define OFP_XM_T_ICMPV4_CODE		20
-#define OFP_XM_T_ARP_OP			21
-#define OFP_XM_T_ARP_SPA		22
-#define OFP_XM_T_ARP_TPA		23
-#define OFP_XM_T_ARP_SHA		24
-#define OFP_XM_T_ARP_THA		25
-#define OFP_XM_T_IPV6_SRC		26
-#define OFP_XM_T_IPV6_DST		27
-#define OFP_XM_T_IPV6_FLABEL		28
-#define OFP_XM_T_ICMPV6_TYPE		29
-#define OFP_XM_T_ICMPV6_CODE		30
-#define OFP_XM_T_IPV6_ND_TARGET		31
-#define OFP_XM_T_IPV6_ND_SLL		32
-#define OFP_XM_T_IPV6_ND_TLL		33
-#define OFP_XM_T_MPLS_LABEL		34
-#define OFP_XM_T_MPLS_TC		35
-#define OFP_XM_T_MPLS_BOS		36
-#define OFP_XM_T_PBB_ISID		37
-#define OFP_XM_T_TUNNEL_ID		38
-#define OFP_XM_T_IPV6_EXTHDR		39
-#define OFP_XM_T_MAX			40
+#define OFP_XM_T_IN_PORT		0	/* ? */
+#define OFP_XM_T_IN_PHY_PORT		1	/* ? */
+#define OFP_XM_T_META			2	/* ? */
+#define OFP_XM_T_ETH_DST		3	/* ? */
+#define OFP_XM_T_ETH_SRC		4	/* ? */
+#define OFP_XM_T_ETH_TYPE		5	/* ? */
+#define OFP_XM_T_VLAN_VID		6	/* ? */
+#define OFP_XM_T_VLAN_PCP		7	/* ? */
+#define OFP_XM_T_IP_DSCP		8	/* ? */
+#define OFP_XM_T_IP_ECN			9	/* ? */
+#define OFP_XM_T_IP_PROTO		10	/* ? */
+#define OFP_XM_T_IPV4_SRC		11	/* ? */
+#define OFP_XM_T_IPV4_DST		12	/* ? */
+#define OFP_XM_T_TCP_SRC		13	/* ? */
+#define OFP_XM_T_TCP_DST		14	/* ? */
+#define OFP_XM_T_UDP_SRC		15	/* ? */
+#define OFP_XM_T_UDP_DST		16	/* ? */
+#define OFP_XM_T_SCTP_SRC		17	/* ? */
+#define OFP_XM_T_SCTP_DST		18	/* ? */
+#define OFP_XM_T_ICMPV4_TYPE		19	/* ? */
+#define OFP_XM_T_ICMPV4_CODE		20	/* ? */
+#define OFP_XM_T_ARP_OP			21	/* ? */
+#define OFP_XM_T_ARP_SPA		22	/* ? */
+#define OFP_XM_T_ARP_TPA		23	/* ? */
+#define OFP_XM_T_ARP_SHA		24	/* ? */
+#define OFP_XM_T_ARP_THA		25	/* ? */
+#define OFP_XM_T_IPV6_SRC		26	/* ? */
+#define OFP_XM_T_IPV6_DST		27	/* ? */
+#define OFP_XM_T_IPV6_FLABEL		28	/* ? */
+#define OFP_XM_T_ICMPV6_TYPE		29	/* ? */
+#define OFP_XM_T_ICMPV6_CODE		30	/* ? */
+#define OFP_XM_T_IPV6_ND_TARGET		31	/* ? */
+#define OFP_XM_T_IPV6_ND_SLL		32	/* ? */
+#define OFP_XM_T_IPV6_ND_TLL		33	/* ? */
+#define OFP_XM_T_MPLS_LABEL		34	/* ? */
+#define OFP_XM_T_MPLS_TC		35	/* ? */
+#define OFP_XM_T_MPLS_BOS		36	/* ? */
+#define OFP_XM_T_PBB_ISID		37	/* ? */
+#define OFP_XM_T_TUNNEL_ID		38	/* ? */
+#define OFP_XM_T_IPV6_EXTHDR		39	/* ? */
+#define OFP_XM_T_MAX			40	/* ? */
 
 /* Flow match fields for nxm1 class */
-#define OFP_XM_NXMT_TUNNEL_ID		38
-#define OFP_XM_NXMT_TUNNEL_IPV4_SRC	31
-#define OFP_XM_NXMT_TUNNEL_IPV4_DST	32
-#define OFP_XM_NXMT_TUNNEL_IPV6_SRC	109
-#define OFP_XM_NXMT_TUNNEL_IPV6_DST	110
+#define OFP_XM_NXMT_TUNNEL_ID		38	/* ? */
+#define OFP_XM_NXMT_TUNNEL_IPV4_SRC	31	/* ? */
+#define OFP_XM_NXMT_TUNNEL_IPV4_DST	32	/* ? */
+#define OFP_XM_NXMT_TUNNEL_IPV6_SRC	109	/* ? */
+#define OFP_XM_NXMT_TUNNEL_IPV6_DST	110	/* ? */
 
 /* OXM class */
-#define OFP_OXM_C_NXM_0			0x0000
-#define OFP_OXM_C_NXM_1			0x0001
-#define OFP_OXM_C_OPENFLOW_BASIC	0x8000
-#define OFP_OXM_C_OPENFLOW_EXPERIMENTER	0xffff
+#define OFP_OXM_C_NXM_0			0x0000	/* NXM 0 */
+#define OFP_OXM_C_NXM_1			0x0001	/* NXM 1 */
+#define OFP_OXM_C_OPENFLOW_BASIC	0x8000	/* OpenFlow Basic */
+#define OFP_OXM_C_OPENFLOW_EXPERIMENTER	0xffff	/* OpenFlow Experimenter */
 
 /* VLAN matching flag */
-#define OFP_XM_VID_PRESENT		0x1000
-#define OFP_XM_VID_NONE			0x0000
+#define OFP_XM_VID_PRESENT		0x1000	/* VLAN ID present */
+#define OFP_XM_VID_NONE			0x0000	/* No VLAN ID */
 
 struct ofp_ox_match {
 	uint16_t	oxm_class;

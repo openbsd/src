@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.2 2016/07/20 14:15:08 reyk Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.3 2016/07/20 19:57:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
@@ -55,6 +56,8 @@ void	 ofp13_debug(struct switchd *,
 void	 ofp13_debug_header(struct switchd *,
 	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *);
+int	 ofp13_debug_oxm(struct switchd *, struct ofp_ox_match *,
+	    struct ofp_header *, struct ibuf *, off_t);
 int	 ofp13_debug_packet_in(struct switchd *,
 	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *, struct ibuf *);
@@ -132,14 +135,54 @@ ofp13_debug(struct switchd *sc,
 }
 
 int
+ofp13_debug_oxm(struct switchd *sc, struct ofp_ox_match *oxm,
+   struct ofp_header *oh, struct ibuf *ibuf, off_t off)
+{
+	uint16_t	 class;
+	uint8_t		 type;
+	uint32_t	 port;
+	void		*ptr;
+
+	/* match element is always followed by data */
+	if (oxm->oxm_length == 0)
+		return (0);
+
+	type = OFP_OXM_GET_FIELD(oxm);
+	class = ntohs(oxm->oxm_class);
+
+	log_debug("\tox match class %s type %s length %u",
+	    print_map(class, ofp_oxm_map),
+	    print_map(type, ofp_xm_t_map),
+	    oxm->oxm_length);
+
+	switch (class) {
+	case OFP_OXM_C_OPENFLOW_BASIC:
+		switch (type) {
+		case OFP_XM_T_IN_PORT:
+			off += sizeof(*oxm);
+			if ((ptr = ibuf_seek(ibuf, off, sizeof(port))) == NULL)
+				return (-1);
+			port = *(uint32_t *)ptr;
+			log_debug("\t\tport %u", ntohl(port));
+			break;
+		}
+		break;
+	}
+
+	return (0);
+}
+
+int
 ofp13_debug_packet_in(struct switchd *sc,
     struct sockaddr_storage *src, struct sockaddr_storage *dst,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
 	struct ofp_packet_in	*pin;
+	struct ofp_match	*om;
+	struct ofp_ox_match	*oxm;
 	uint8_t			*p;
-	size_t			 len;
-	off_t			 off;
+	ssize_t			 len, mlen;
+	off_t			 moff, off;
 
 	off = 0;
 	if ((pin = ibuf_seek(ibuf, off, sizeof(*pin))) == NULL)
@@ -150,8 +193,36 @@ ofp13_debug_packet_in(struct switchd *sc,
 	    print_map(ntohs(pin->pin_reason), ofp_pktin_map),
 	    pin->pin_table_id,
 	    be64toh(pin->pin_cookie));
+	off += offsetof(struct ofp_packet_in, pin_match);
+
+	om = &pin->pin_match;
+	mlen = ntohs(om->om_length);
+	log_debug("\tmatch type %s length %zu (padded to %zu)",
+	    print_map(ntohs(om->om_type), ofp_match_map),
+	    mlen, OFP_ALIGN(mlen) + ETHER_ALIGN);
+
+	/* current match offset, aligned offset after all matches */
+	moff = off + sizeof(*om);
+	off += OFP_ALIGN(mlen) + ETHER_ALIGN;
+
+	switch (htons(om->om_type)) {
+	case OFP_MATCH_OXM:
+		do {
+			if ((oxm = ibuf_seek(ibuf, moff, sizeof(*oxm))) == NULL)
+				return (-1);
+			if (ofp13_debug_oxm(sc, oxm, oh, ibuf, moff) == -1)
+				return (-1);
+			moff += sizeof(*oxm) + oxm->oxm_length;
+			mlen -= sizeof(*oxm) + oxm->oxm_length;
+		} while (mlen > 0 && oxm->oxm_length);
+		break;
+	case OFP_MATCH_STANDARD:
+		/* deprecated */
+		break;
+	}
+
+	/* Calculate offset from the beginning */
 	len = ntohs(pin->pin_total_len);
-	off += sizeof(*pin);
 	if ((p = ibuf_seek(ibuf, off, len)) == NULL)
 		return (-1);
 	if (sc->sc_tap != -1)

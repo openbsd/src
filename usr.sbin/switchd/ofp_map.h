@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp_map.h,v 1.2 2016/07/20 14:15:08 reyk Exp $	*/
+/*	$OpenBSD: ofp_map.h,v 1.3 2016/07/20 19:57:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -37,9 +37,10 @@ extern struct constmap ofp10_errflowmod_map[];
 /* OpenFlow 1.3+ maps */
 extern struct constmap ofp_v_map[];
 extern struct constmap ofp_t_map[];
-extern struct constmap ofp_hi_map[];
 extern struct constmap ofp_pktin_map[];
 extern struct constmap ofp_port_map[];
+extern struct constmap ofp_oxm_map[];
+extern struct constmap ofp_xm_t_map[];
 extern struct constmap ofp_config_map[];
 extern struct constmap ofp_portstate_map[];
 extern struct constmap ofp_portconfig_map[];

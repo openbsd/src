@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: genmap.sh,v 1.1 2016/07/19 16:54:26 reyk Exp $
+# $OpenBSD: genmap.sh,v 1.2 2016/07/20 19:57:54 reyk Exp $
 
 # Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
 #
@@ -58,7 +58,7 @@ tok=$(echo ${TOKEN} | tr "[:upper:]" "[:lower:]")
 INC="#include ${HEADER}"
 
 MAP=$(grep "struct constmap ${tok}_" $MAPFILE |
-	sed -Ee "s/.*${tok}_([^_]+)_map.*/\1/g")
+	sed -Ee "s/.*${tok}_(.+)_map.*/\1/g")
 
 # Print license/copyright notice and headers
 cat <<EOF
