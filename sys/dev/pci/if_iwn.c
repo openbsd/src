@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.168 2016/07/20 10:26:42 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.169 2016/07/20 16:24:37 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -4870,7 +4870,7 @@ iwn_run(struct iwn_softc *sc)
 
 	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
 		/* Link LED blinks while monitoring. */
-		iwn_set_led(sc, IWN_LED_LINK, 5, 5);
+		iwn_set_led(sc, IWN_LED_LINK, 50, 50);
 		return 0;
 	}
 	if ((error = iwn_set_timing(sc, ni)) != 0) {
