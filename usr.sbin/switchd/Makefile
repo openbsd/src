@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2016/07/19 18:14:08 reyk Exp $
+# $OpenBSD: Makefile,v 1.3 2016/07/20 14:04:51 reyk Exp $
 
 PROG=		switchd
 MAN=		switchd.8 switchd.conf.5
@@ -20,12 +20,12 @@ CFLAGS+=	-Wsign-compare
 GENERATED=	ofp_map.c ofp10_map.c
 CLEANFILES+=	${GENERATED} *~
 
-ofp_map.c: genmap.sh ${.CURDIR}/ofp.h
+ofp_map.c: genmap.sh ${.CURDIR}/ofp_map.h ${.CURDIR}/ofp.h
 	/bin/sh ${.CURDIR}/genmap.sh -i ${.CURDIR}/ofp.h -t ofp \
 	    -m ${.CURDIR}/ofp_map.h -h '"ofp.h"' > $@
 	@touch $@
 
-ofp10_map.c: genmap.sh ${.CURDIR}/ofp10.h
+ofp10_map.c: genmap.sh ${.CURDIR}/ofp_map.h ${.CURDIR}/ofp10.h
 	/bin/sh ${.CURDIR}/genmap.sh -i ${.CURDIR}/ofp10.h -t ofp10 \
 	    -m ${.CURDIR}/ofp_map.h -h '"ofp10.h"' > $@
 	@touch $@
