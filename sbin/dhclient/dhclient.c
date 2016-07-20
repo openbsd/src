@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.375 2016/07/20 19:25:39 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.376 2016/07/20 19:40:04 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2542,8 +2542,8 @@ priv_write_resolv_conf(struct imsg *imsg)
 	sz = imsg->hdr.len - IMSG_HEADER_SIZE;
 
 	priv_write_file("/etc/resolv.conf",
-	    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
-	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0, contents, sz);
+	    O_WRONLY | O_CREAT | O_TRUNC,
+	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, contents, sz);
 }
 
 void
@@ -2561,12 +2561,12 @@ priv_write_option_db(struct imsg *imsg)
 	sz = imsg->hdr.len - IMSG_HEADER_SIZE;
 
 	priv_write_file(path_option_db,
-	    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK | O_NOFOLLOW,
-	    S_IRUSR | S_IWUSR | S_IRGRP, 0, 0, contents, sz);
+	    O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW,
+	    S_IRUSR | S_IWUSR | S_IRGRP, contents, sz);
 }
 
 void
-priv_write_file(char *path, int flags, mode_t mode, uid_t uid, gid_t gid,
+priv_write_file(char *path, int flags, mode_t mode,
     u_int8_t *contents, size_t sz)
 {
 	ssize_t n;
