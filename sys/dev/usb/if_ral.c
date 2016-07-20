@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.139 2016/04/13 11:03:37 mpi Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.140 2016/07/20 10:24:43 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1231,7 +1231,7 @@ ural_start(struct ifnet *ifp)
 	 * net80211 may still try to send management frames even if the
 	 * IFF_RUNNING flag is not set...
 	 */
-	if ((ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	for (;;) {
