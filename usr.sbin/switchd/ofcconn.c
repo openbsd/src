@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofcconn.c,v 1.5 2016/07/20 21:01:06 reyk Exp $	*/
+/*	$OpenBSD: ofcconn.c,v 1.6 2016/07/20 21:06:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -74,20 +74,20 @@ void		 ofcconn_close(struct ofcconn *);
 void		 ofcconn_free(struct ofcconn *);
 void		 ofcconn_shutdown_all(void);
 int		 ofcconn_send_hello(struct ofcconn *);
-void		 ofccon_run(struct privsep *, struct privsep_proc *, void *);
+void		 ofcconn_run(struct privsep *, struct privsep_proc *, void *);
 
 pid_t
 ofcconn(struct privsep *ps, struct privsep_proc *p)
 {
 	p->p_shutdown = ofcconn_shutdown;
-	return (proc_run(ps, p, procs, nitems(procs), ofccon_run, NULL));
+	return (proc_run(ps, p, procs, nitems(procs), ofcconn_run, NULL));
 }
 
 void
-ofccon_run(struct privsep *ps, struct privsep_proc *p, void *arg)
+ofcconn_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
 	/*
-	 * pledge in the control process:
+	 * pledge in the ofcconn process:
  	 * stdio - for malloc and basic I/O including events.
 	 * inet - for socket operations and OpenFlow connections.
 	 * recvfd - for receiving new sockets on reload.
