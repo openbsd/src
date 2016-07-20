@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.93 2016/07/05 10:17:14 mpi Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.94 2016/07/20 18:51:50 vgross Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -281,9 +281,7 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	 * with the address specified by setsockopt(IPV6_PKTINFO).
 	 * Is it the intended behavior?
 	 */
-	error = in6_selectsrc(&in6a, sin6, inp->inp_outputopts6,
-	    inp->inp_moptions6, &inp->inp_route6, &inp->inp_laddr6,
-	    inp->inp_rtableid);
+	error = in6_pcbselsrc(&in6a, sin6, inp, inp->inp_outputopts6);
 	if (error)
 		return (error);
 

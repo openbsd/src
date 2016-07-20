@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.91 2016/07/05 10:17:14 mpi Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.92 2016/07/20 18:51:50 vgross Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -396,9 +396,7 @@ rip6_output(struct mbuf *m, ...)
 	{
 		struct in6_addr *in6a;
 
-		error = in6_selectsrc(&in6a, dstsock, optp,
-		    in6p->inp_moptions6, &in6p->inp_route6, &in6p->inp_laddr6,
-		    in6p->inp_rtableid);
+		error = in6_pcbselsrc(&in6a, dstsock, in6p, optp);
 		if (error)
 			goto bad;
 
@@ -700,9 +698,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		}
 
 		/* Source address selection. XXX: need pcblookup? */
-		error = in6_selectsrc(&in6a, addr, in6p->inp_outputopts6,
-		    in6p->inp_moptions6, &in6p->inp_route6,
-		    &in6p->inp_laddr6, in6p->inp_rtableid);
+		error = in6_pcbselsrc(&in6a, addr, in6p, in6p->inp_outputopts6);
 		if (error)
 			break;
 		in6p->inp_laddr6 = *in6a;

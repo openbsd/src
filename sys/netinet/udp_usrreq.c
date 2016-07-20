@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.214 2016/06/28 11:22:53 jca Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.215 2016/07/20 18:51:50 vgross Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -989,8 +989,7 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 			goto release;
 		}
 
-		error = in_selectsrc(&laddr, sin, inp->inp_moptions,
-		    &inp->inp_route, &inp->inp_laddr, inp->inp_rtableid);
+		error = in_pcbselsrc(&laddr, sin, inp);
 		if (error)
 			goto release;
 
