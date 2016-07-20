@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2016/05/31 18:35:58 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.18 2016/07/20 19:56:24 krw Exp $
 
 PROG=		installboot
 SRCS=		installboot.c util.c
@@ -10,77 +10,29 @@ DPADD=		${LIBUTIL}
 
 LDSTATIC=	${STATIC}
 
-.if ${MACHINE} == "alpha"
-SRCS += stubs.c
-.endif
-
 .if ${MACHINE} == "amd64"
 CFLAGS += -DSOFTRAID
 SRCS += i386_installboot.c
 SRCS += i386_nlist.c
 SRCS += i386_softraid.c
-.endif
-
-.if ${MACHINE} == "armish"
-SRCS += stubs.c
-.endif
-
-.if ${MACHINE} == "armv7"
+.elif ${MACHINE} == "armv7"
 SRCS += armv7_installboot.c
-.endif
-
-.if ${MACHINE} == "hppa"
+.elif ${MACHINE} == "hppa"
 CFLAGS += -DBOOTSTRAP
 SRCS += hppa_installboot.c
-.endif
-
-.if ${MACHINE} == "i386"
+.elif ${MACHINE} == "i386"
 CFLAGS += -DSOFTRAID
 SRCS += i386_installboot.c
 SRCS += i386_nlist.c
 SRCS += i386_softraid.c
-.endif
-
-.if ${MACHINE} == "landisk"
+.elif ${MACHINE} == "landisk"
 CFLAGS += -DBOOTSTRAP
 SRCS += landisk_installboot.c
-.endif
-
-.if ${MACHINE} == "loongson"
-SRCS += stubs.c
-.endif
-
-.if ${MACHINE} == "luna88k"
-SRCS += stubs.c
-.endif
-
-.if ${MACHINE} == "macppc"
-SRCS += stubs.c
-.endif
-
-.if ${MACHINE} == "octeon"
-SRCS += stubs.c
-.endif
-
-.if ${MACHINE} == "sgi"
-SRCS += stubs.c
-.endif
-
-.if ${MACHINE} == "socppc"
-SRCS += stubs.c
-.endif
-
-.if ${MACHINE} == "sparc"
-SRCS += stubs.c
-.endif
-
-.if ${MACHINE} == "sparc64"
+.elif ${MACHINE} == "sparc64"
 CFLAGS += -DSOFTRAID
 SRCS += sparc64_installboot.c
 SRCS += sparc64_softraid.c
-.endif
-
-.if ${MACHINE} == "zaurus"
+.else
 SRCS += stubs.c
 .endif
 
