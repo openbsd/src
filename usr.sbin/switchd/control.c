@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.1 2016/07/19 16:54:26 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.2 2016/07/20 21:01:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2016 Reyk Floeter <reyk@openbsd.org>
@@ -48,6 +48,72 @@ struct ctl_conn
 void	 control_close(int, struct control_sock *);
 void	 control_dispatch_imsg(int, short, void *);
 void	 control_imsg_forward(struct imsg *);
+void	 control_run(struct privsep *, struct privsep_proc *, void *);
+
+int	 control_dispatch_ofp(int, struct privsep_proc *, struct imsg *);
+
+static struct privsep_proc procs[] = {
+	{ "ofp",	PROC_OFP,	control_dispatch_ofp },
+	{ "parent",	PROC_PARENT,	NULL },
+	{ "ofcconn",	PROC_OFCCONN,	NULL }
+};
+
+pid_t
+control(struct privsep *ps, struct privsep_proc *p)
+{
+	return (proc_run(ps, p, procs, nitems(procs), control_run, NULL));
+}
+
+void
+control_run(struct privsep *ps, struct privsep_proc *p, void *arg)
+{
+	/*
+	 * pledge in the control process:
+ 	 * stdio - for malloc and basic I/O including events.
+	 * cpath - for managing the control socket.
+	 * unix - for the control socket.
+	 */
+	if (pledge("stdio cpath unix", NULL) == -1)
+		fatal("pledge");
+}
+
+int
+control_dispatch_ofp(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	int		 cfd;
+	struct ctl_conn	*c;
+	uint8_t		*d = imsg->data;
+	size_t		 s;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SWITCH:
+	case IMSG_CTL_MAC:
+		IMSG_SIZE_CHECK(imsg, &cfd);
+		memcpy(&cfd, d, sizeof(cfd));
+
+		if ((c = control_connbyfd(cfd)) == NULL)
+			fatalx("invalid control connection");
+
+		s = IMSG_DATA_SIZE(imsg) - sizeof(cfd);
+		d += sizeof(cfd);
+		imsg_compose_event(&c->iev, imsg->hdr.type, 0, 0, -1, d, s);
+		return (0);
+	case IMSG_CTL_END:
+		IMSG_SIZE_CHECK(imsg, &cfd);
+		memcpy(&cfd, d, sizeof(cfd));
+
+		if ((c = control_connbyfd(cfd)) == NULL)
+			fatalx("invalid control connection");
+
+		imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1, NULL, 0);
+		return (0);
+
+	default:
+		break;
+	}
+
+	return (-1);
+}
 
 int
 control_init(struct privsep *ps, struct control_sock *cs)
@@ -318,56 +384,4 @@ control_imsg_forward(struct imsg *imsg)
 			imsg_compose(&c->iev.ibuf, imsg->hdr.type,
 			    0, imsg->hdr.pid, -1, imsg->data,
 			    imsg->hdr.len - IMSG_HEADER_SIZE);
-}
-
-int control_dispatch_ofp(int, struct privsep_proc *, struct imsg *);
-
-static struct privsep_proc procs[] = {
-	{ "ofp",	PROC_OFP,	control_dispatch_ofp },
-	{ "parent",	PROC_PARENT,	NULL },
-	{ "ofcconn",	PROC_OFCCONN,	NULL }
-};
-
-pid_t
-control(struct privsep *ps, struct privsep_proc *p)
-{
-	return (proc_run(ps, p, procs, nitems(procs), NULL, NULL));
-}
-
-int
-control_dispatch_ofp(int fd, struct privsep_proc *p, struct imsg *imsg)
-{
-	int		 cfd;
-	struct ctl_conn	*c;
-	uint8_t		*d = imsg->data;
-	size_t		 s;
-
-	switch (imsg->hdr.type) {
-	case IMSG_CTL_SWITCH:
-	case IMSG_CTL_MAC:
-		IMSG_SIZE_CHECK(imsg, &cfd);
-		memcpy(&cfd, d, sizeof(cfd));
-
-		if ((c = control_connbyfd(cfd)) == NULL)
-			fatalx("invalid control connection");
-
-		s = IMSG_DATA_SIZE(imsg) - sizeof(cfd);
-		d += sizeof(cfd);
-		imsg_compose_event(&c->iev, imsg->hdr.type, 0, 0, -1, d, s);
-		return (0);
-	case IMSG_CTL_END:
-		IMSG_SIZE_CHECK(imsg, &cfd);
-		memcpy(&cfd, d, sizeof(cfd));
-
-		if ((c = control_connbyfd(cfd)) == NULL)
-			fatalx("invalid control connection");
-
-		imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1, NULL, 0);
-		return (0);
-
-	default:
-		break;
-	}
-
-	return (-1);
 }

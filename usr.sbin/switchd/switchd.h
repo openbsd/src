@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.4 2016/07/20 20:07:02 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.5 2016/07/20 21:01:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -197,8 +197,8 @@ int		 ofp13_input(struct switchd *, struct switch_connection *,
 		    struct ofp_header *, struct ibuf *);
 
 /* ofcconn.c */
-pid_t		 ofcconn_proc_init(struct privsep *, struct privsep_proc *);
-void		 ofcconn_proc_shutdown(void);
+pid_t		 ofcconn(struct privsep *, struct privsep_proc *);
+void		 ofcconn_shutdown(void);
 
 /* imsg_util.c */
 struct ibuf	*ibuf_new(void *, size_t);

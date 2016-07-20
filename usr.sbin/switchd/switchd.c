@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.c,v 1.4 2016/07/20 11:43:31 jsg Exp $	*/
+/*	$OpenBSD: switchd.c,v 1.5 2016/07/20 21:01:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -54,7 +54,7 @@ __dead void	usage(void);
 static struct privsep_proc procs[] = {
 	{ "ofp",	PROC_OFP, NULL, ofp },
 	{ "control",	PROC_CONTROL, parent_dispatch_control, control },
-	{ "ofcconn",	PROC_OFCCONN, NULL, ofcconn_proc_init }
+	{ "ofcconn",	PROC_OFCCONN, NULL, ofcconn }
 };
 
 __dead void
@@ -169,8 +169,18 @@ main(int argc, char *argv[])
 
 	ps->ps_ninstances = 1;
 	proc_init(ps, procs, nitems(procs));
+	log_procinit("parent");
 
-	setproctitle("parent");
+	/*
+	 * pledge in the parent process:
+	 * stdio - for malloc and basic I/O including events.
+	 * rpath - for reload to open and read the configuration files.
+	 * inet - for opening OpenFlow and device sockets.
+	 * dns - for resolving host in the configuration files.
+	 * sendfd - send sockets to child processes on reload.
+	 */
+	if (pledge("stdio rpath inet dns proc sendfd", NULL) == -1)
+		fatal("pledge");
 
 	event_init();
 

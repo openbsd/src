@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.c,v 1.3 2016/07/20 14:15:08 reyk Exp $	*/
+/*	$OpenBSD: ofp.c,v 1.4 2016/07/20 21:01:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -39,7 +39,7 @@
 
 int	 ofp_dispatch_control(int, struct privsep_proc *, struct imsg *);
 int	 ofp_dispatch_parent(int, struct privsep_proc *, struct imsg *);
-void	 ofp_init(struct privsep *, struct privsep_proc *, void *);
+void	 ofp_run(struct privsep *, struct privsep_proc *, void *);
 int	 ofp_add_device(struct switchd *, int, const char *);
 
 static unsigned int	 id = 0;
@@ -69,7 +69,7 @@ ofp(struct privsep *ps, struct privsep_proc *p)
 	    &srv->srv_addr)) == -1)
 		fatal("listen");
 
-	pid = proc_run(ps, p, procs, nitems(procs), ofp_init, NULL);
+	pid = proc_run(ps, p, procs, nitems(procs), ofp_run, NULL);
 	close(srv->srv_fd);
 	close(sc->sc_tap);
 
@@ -77,10 +77,19 @@ ofp(struct privsep *ps, struct privsep_proc *p)
 }
 
 void
-ofp_init(struct privsep *ps, struct privsep_proc *p, void *arg)
+ofp_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
 	struct switchd		*sc = ps->ps_env;
 	struct switch_server	*srv = &sc->sc_server;
+
+	/*
+	 * pledge in the control process:
+ 	 * stdio - for malloc and basic I/O including events.
+	 * inet - for handling tcp connections with OpenFlow peers.
+	 * recvfd - for receiving new sockets on reload.
+	 */
+	if (pledge("stdio inet recvfd", NULL) == -1)
+		fatal("pledge");
 
 	event_set(&srv->srv_ev, srv->srv_fd, EV_READ, ofp_accept, srv);
 	event_add(&srv->srv_ev, NULL);
