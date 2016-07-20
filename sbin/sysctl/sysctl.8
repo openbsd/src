@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.202 2016/07/05 17:41:59 tim Exp $
+.\"	$OpenBSD: sysctl.8,v 1.203 2016/07/20 09:15:28 bluhm Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: July 5 2016 $
+.Dd $Mdocdate: July 20 2016 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -256,7 +256,6 @@ and a few require a kernel compiled with non-standard
 .It net.inet.tcp.keepinittime Ta integer Ta yes
 .It net.inet.tcp.keepidle Ta integer Ta yes
 .It net.inet.tcp.keepintvl Ta integer Ta yes
-.It net.inet.tcp.always_keepalive Ta integer Ta yes
 .It net.inet.tcp.slowhz Ta integer Ta no
 .It net.inet.tcp.baddynamic Ta array Ta yes
 .It net.inet.tcp.sack Ta integer Ta yes
@@ -266,10 +265,13 @@ and a few require a kernel compiled with non-standard
 .It net.inet.tcp.ecn Ta integer Ta yes
 .It net.inet.tcp.syncachelimit Ta integer Ta yes
 .It net.inet.tcp.synbucketlimit Ta integer Ta yes
-.It net.inet.tcp.synuselimit Ta integer Ta yes
 .It net.inet.tcp.rfc3390 Ta integer Ta yes
 .It net.inet.tcp.reasslimit Ta integer Ta yes
+.It net.inet.tcp.sackholelimit Ta integer Ta yes
+.It net.inet.tcp.always_keepalive Ta integer Ta yes
+.It net.inet.tcp.synuselimit Ta integer Ta yes
 .It net.inet.tcp.rootonly Ta array Ta yes
+.It net.inet.tcp.synhashsize Ta integer Ta yes
 .It net.inet.udp.checksum Ta integer Ta yes
 .It net.inet.udp.baddynamic Ta array Ta yes
 .It net.inet.udp.recvspace Ta integer Ta yes

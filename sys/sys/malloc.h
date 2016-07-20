@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.112 2015/08/24 15:33:49 mpi Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.113 2016/07/20 09:15:28 bluhm Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -169,7 +169,7 @@
 #define	M_KEVENT	137	/* kqueue related */
 
 	/*		138	   free */
-	/*		139	   free */
+#define	M_SYNCACHE	139	/* syn cache hash array */
 
 #define M_UDFMOUNT	140	/* UDF mount */
 #define M_UDFFENTRY	141	/* UDF file entry */
@@ -307,7 +307,7 @@
 	"NTFS vrun",	/* 136 M_NTFSRUN */ \
 	"kqueue",	/* 137 M_KEVENT */ \
 	NULL,	/* 138 free */ \
-	"NULL", \
+	"SYN cache",	/* 139 M_SYNCACHE */ \
 	"UDF mount",	/* 140 M_UDFMOUNT */ \
 	"UDF file entry",	/* 141 M_UDFFENTRY */ \
 	"UDF file id",	/* 142 M_UDFFID */ \

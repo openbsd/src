@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.113 2016/06/18 10:36:13 vgross Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.114 2016/07/20 09:15:28 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -316,10 +316,11 @@ struct syn_cache_head {
 };
 
 struct syn_cache_set {
-        struct		syn_cache_head scs_buckethead[TCP_SYN_HASH_SIZE];
-        int		scs_count;
-        int		scs_use;
-        u_int32_t	scs_random[5];
+	struct		syn_cache_head *scs_buckethead;
+	int		scs_size;
+	int		scs_count;
+	int		scs_use;
+	u_int32_t	scs_random[5];
 };
 
 #endif /* _KERNEL */
@@ -491,7 +492,8 @@ struct	tcpstat {
 #define	TCPCTL_ALWAYS_KEEPALIVE 22 /* assume SO_KEEPALIVE is always set */
 #define	TCPCTL_SYN_USE_LIMIT   23 /* number of uses before reseeding hash */
 #define TCPCTL_ROOTONLY	       24 /* return root only port bitmap */
-#define	TCPCTL_MAXID	       25
+#define	TCPCTL_SYN_HASH_SIZE   25 /* number of buckets in the hash */
+#define	TCPCTL_MAXID	       26
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -519,6 +521,7 @@ struct	tcpstat {
 	{ "always_keepalive",	CTLTYPE_INT }, \
 	{ "synuselimit", 	CTLTYPE_INT }, \
 	{ "rootonly", CTLTYPE_STRUCT }, \
+	{ "synhashsize", 	CTLTYPE_INT }, \
 }
 
 #define	TCPCTL_VARS { \
@@ -540,6 +543,7 @@ struct	tcpstat {
 	&tcp_syn_cache_limit, \
 	&tcp_syn_bucket_limit, \
 	&tcp_do_rfc3390, \
+	NULL, \
 	NULL, \
 	NULL, \
 	NULL, \
@@ -575,6 +579,7 @@ extern	int tcp_do_rfc3390;	/* RFC3390 Increasing TCP's Initial Window */
 extern	struct pool tcpqe_pool;
 extern	int tcp_reass_limit;	/* max entries for tcp reass queues */
 
+extern	int tcp_syn_hash_size;  /* adjustable size of the hash array */
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_syn_use_limit;   /* number of uses before reseeding hash */

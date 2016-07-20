@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.324 2016/07/01 18:37:15 jca Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.325 2016/07/20 09:15:28 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3266,7 +3266,7 @@ tcp_mss_adv(struct mbuf *m, int af)
  */
 
 /* syn hash parameters */
-int	tcp_syn_cache_size = TCP_SYN_HASH_SIZE;
+int	tcp_syn_hash_size = TCP_SYN_HASH_SIZE;
 int	tcp_syn_cache_limit = TCP_SYN_HASH_SIZE*TCP_SYN_BUCKET_SIZE;
 int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
 int	tcp_syn_use_limit = 100000;
@@ -3360,7 +3360,13 @@ syn_cache_init(void)
 	int i;
 
 	/* Initialize the hash buckets. */
-	for (i = 0; i < tcp_syn_cache_size; i++) {
+	tcp_syn_cache[0].scs_buckethead = mallocarray(tcp_syn_hash_size,
+	    sizeof(struct syn_cache_head), M_SYNCACHE, M_WAITOK|M_ZERO);
+	tcp_syn_cache[1].scs_buckethead = mallocarray(tcp_syn_hash_size,
+	    sizeof(struct syn_cache_head), M_SYNCACHE, M_WAITOK|M_ZERO);
+	tcp_syn_cache[0].scs_size = tcp_syn_hash_size;
+	tcp_syn_cache[1].scs_size = tcp_syn_hash_size;
+	for (i = 0; i < tcp_syn_hash_size; i++) {
 		TAILQ_INIT(&tcp_syn_cache[0].scs_buckethead[i].sch_bucket);
 		TAILQ_INIT(&tcp_syn_cache[1].scs_buckethead[i].sch_bucket);
 	}
@@ -3377,7 +3383,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	struct syn_cache_set *set = &tcp_syn_cache[tcp_syn_cache_active];
 	struct syn_cache_head *scp;
 	struct syn_cache *sc2;
-	int s;
+	int i, s;
 
 	s = splsoftnet();
 
@@ -3385,16 +3391,33 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	 * If there are no entries in the hash table, reinitialize
 	 * the hash secrets.  To avoid useless cache swaps and
 	 * reinitialization, use it until the limit is reached.
+	 * An emtpy cache is also the oportunity to resize the hash.
 	 */
 	if (set->scs_count == 0 && set->scs_use <= 0) {
-		arc4random_buf(set->scs_random, sizeof(set->scs_random));
 		set->scs_use = tcp_syn_use_limit;
+		if (set->scs_size != tcp_syn_hash_size) {
+			scp = mallocarray(tcp_syn_hash_size, sizeof(struct
+			    syn_cache_head), M_SYNCACHE, M_NOWAIT|M_ZERO);
+			if (scp == NULL) {
+				/* Try again next time. */
+				set->scs_use = 0;
+			} else {
+				free(set->scs_buckethead, M_SYNCACHE,
+				    set->scs_size *
+				    sizeof(struct syn_cache_head));
+				set->scs_buckethead = scp;
+				set->scs_size = tcp_syn_hash_size;
+				for (i = 0; i < tcp_syn_hash_size; i++)
+					TAILQ_INIT(&scp[i].sch_bucket);
+			}
+		}
+		arc4random_buf(set->scs_random, sizeof(set->scs_random));
 		tcpstat.tcps_sc_seedrandom++;
 	}
 
 	SYN_HASHALL(sc->sc_hash, &sc->sc_src.sa, &sc->sc_dst.sa,
 	    set->scs_random);
-	scp = &set->scs_buckethead[sc->sc_hash % tcp_syn_cache_size];
+	scp = &set->scs_buckethead[sc->sc_hash % set->scs_size];
 	sc->sc_buckethead = scp;
 
 	/*
@@ -3437,7 +3460,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 		 */
 		scp2 = scp;
 		if (TAILQ_EMPTY(&scp2->sch_bucket)) {
-			sce = &set->scs_buckethead[tcp_syn_cache_size];
+			sce = &set->scs_buckethead[set->scs_size];
 			for (++scp2; scp2 != scp; scp2++) {
 				if (scp2 >= sce)
 					scp2 = &set->scs_buckethead[0];
@@ -3595,7 +3618,7 @@ syn_cache_lookup(struct sockaddr *src, struct sockaddr *dst,
 		if (sets[i]->scs_count == 0)
 			continue;
 		SYN_HASHALL(hash, src, dst, sets[i]->scs_random);
-		scp = &sets[i]->scs_buckethead[hash % tcp_syn_cache_size];
+		scp = &sets[i]->scs_buckethead[hash % sets[i]->scs_size];
 		*headp = scp;
 		TAILQ_FOREACH(sc, &scp->sch_bucket, sc_bucketq) {
 			if (sc->sc_hash != hash)

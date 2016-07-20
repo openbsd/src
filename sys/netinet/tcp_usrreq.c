@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.132 2016/07/11 10:35:43 mpi Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.133 2016/07/20 09:15:28 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -953,6 +953,27 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				tcp_syn_cache[0].scs_use = tcp_syn_use_limit;
 			if (tcp_syn_cache[1].scs_use > tcp_syn_use_limit)
 				tcp_syn_cache[1].scs_use = tcp_syn_use_limit;
+		}
+		return (0);
+
+	case TCPCTL_SYN_HASH_SIZE:
+		nval = tcp_syn_hash_size;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &nval);
+		if (error)
+			return (error);
+		if (nval != tcp_syn_hash_size) {
+			if (nval < 1 || nval > 100000)
+				return (EINVAL);
+			/*
+			 * If global hash size has been changed, switch sets as
+			 * soon as possible.  Then the actual hash array will
+			 * be reallocated.
+			 */
+			if (tcp_syn_cache[0].scs_size != nval)
+				tcp_syn_cache[0].scs_use = 0;
+			if (tcp_syn_cache[1].scs_size != nval)
+				tcp_syn_cache[1].scs_use = 0;
+			tcp_syn_hash_size = nval;
 		}
 		return (0);
 
