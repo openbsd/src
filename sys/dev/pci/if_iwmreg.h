@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.13 2016/05/28 08:13:16 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.14 2016/07/20 18:24:38 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -3773,7 +3773,7 @@ struct iwm_uapsd_misbehaving_ap_notif {
  *      beacon filtering; beacons will not be forced to be sent to driver
  *      regardless of whether its temerature has been changed.
  * @bf_enable_beacon_filter: 1, beacon filtering is enabled; 0, disabled.
- * @bf_filter_escape_timer: Send beacons to to driver if no beacons were passed
+ * @bf_escape_timer: Send beacons to driver if no beacons were passed
  *      for a specific period of time. Units: Beacons.
  * @ba_escape_timer: Fully receive and parse beacon if no beacons were passed
  *      for a longer period of time then this escape-timeout. Units: Beacons.

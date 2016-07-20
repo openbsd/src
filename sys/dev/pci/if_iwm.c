@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.95 2016/07/18 13:10:35 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.96 2016/07/20 18:24:38 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6290,7 +6290,14 @@ iwm_newstate_task(void *psc)
 	case IEEE80211_S_RUN: {
 		in = (struct iwm_node *)ic->ic_bss;
 		iwm_mvm_power_mac_update_mode(sc, in);
+#ifdef notyet
+		/* 
+		 * Disabled for now. Default beacon filter settings
+		 * prevent net80211 from getting ERP and HT protection
+		 * updates from beacons.
+		 */
 		iwm_mvm_enable_beacon_filter(sc, in);
+#endif
 		iwm_mvm_update_quotas(sc, in);
 
 		/* init amrr */
