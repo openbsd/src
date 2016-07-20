@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.c,v 1.3 2016/07/19 17:34:13 reyk Exp $	*/
+/*	$OpenBSD: switchd.c,v 1.4 2016/07/20 11:43:31 jsg Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -61,7 +61,7 @@ __dead void
 usage(void)
 {
 	extern const char	*__progname;
-	fprintf(stderr, "usage: %s [-dv] [-D macro=value] [-f file] "
+	fprintf(stderr, "usage: %s [-dnv] [-D macro=value] [-f file] "
 	    "[-c mac-cache-size] [-t cache-timeout]\n",
 	    __progname);
 	exit(1);
@@ -76,13 +76,14 @@ main(int argc, char *argv[])
 	const char		*errstr = NULL;
 	int			 c;
 	int			 debug = 0, verbose = 0;
+	uint32_t		 opts = 0;
 	unsigned int		 cache = SWITCHD_CACHE_MAX;
 	unsigned int		 timeout = SWITCHD_CACHE_TIMEOUT;
 	const char		*conffile = SWITCHD_CONFIG;
 
 	log_init(1, LOG_DAEMON);
 
-	while ((c = getopt(argc, argv, "c:dD:f:ht:v")) != -1) {
+	while ((c = getopt(argc, argv, "c:dD:f:hnt:v")) != -1) {
 		switch (c) {
 		case 'c':
 			cache = strtonum(optarg, 1, UINT32_MAX, &errstr);
@@ -102,6 +103,9 @@ main(int argc, char *argv[])
 		case 'f':
 			conffile = optarg;
 			break;
+		case 'n':
+			opts |= SWITCHD_OPT_NOACTION;
+			break;
 		case 't':
 			timeout = strtonum(optarg, 0, UINT32_MAX, &errstr);
 			if (errstr != NULL) {
@@ -111,6 +115,7 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			verbose++;
+			opts |= SWITCHD_OPT_VERBOSE;
 			break;
 		default:
 			usage();
@@ -125,6 +130,7 @@ main(int argc, char *argv[])
 
 	sc->sc_cache_max = cache;
 	sc->sc_cache_timeout = timeout;
+	sc->sc_opts = opts;
 
 	srv = &sc->sc_server;
 	srv->srv_sc = sc;
@@ -137,6 +143,12 @@ main(int argc, char *argv[])
 	if (parse_config(sc->sc_conffile, sc) == -1) {
 		proc_kill(&sc->sc_ps);
 		exit(1);
+	}
+
+	if (opts & SWITCHD_OPT_NOACTION) {
+		fprintf(stderr, "configuration OK\n");
+		proc_kill(&sc->sc_ps);
+		exit(0);
 	}
 
 	/* check for root privileges */

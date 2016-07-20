@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.1 2016/07/19 16:54:26 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.2 2016/07/20 11:43:31 jsg Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -109,6 +109,7 @@ struct switchd {
 	unsigned int		 sc_cache_max;
 	unsigned int		 sc_cache_timeout;
 	char			 sc_conffile[PATH_MAX];
+	uint8_t			 sc_opts;
 	TAILQ_HEAD(, switch_device)
 				 sc_conns;
 };
@@ -121,6 +122,9 @@ struct ofp_callback {
 			    struct sockaddr_storage *, struct ofp_header *,
 			    struct ibuf *);
 };
+
+#define SWITCHD_OPT_VERBOSE		0x01
+#define SWITCHD_OPT_NOACTION		0x04
 
 /* switchd.c */
 int		 switchd_socket(struct sockaddr *, int);
