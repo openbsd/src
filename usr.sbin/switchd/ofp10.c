@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp10.c,v 1.4 2016/07/21 07:58:44 reyk Exp $	*/
+/*	$OpenBSD: ofp10.c,v 1.5 2016/07/21 08:39:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -328,8 +328,8 @@ ofp10_packet_in(struct switchd *sc, struct switch_connection *con,
 	len = ntohs(pin->pin_total_len);
 	srcport = ntohs(pin->pin_port);
 
-	if ((dstport = packet_input(sc, con->con_switch,
-	    srcport, ibuf, len, &pkt)) == -1 ||
+	if (packet_input(sc, con->con_switch,
+	    srcport, &dstport, ibuf, len, &pkt) == -1 ||
 	    dstport > OFP10_PORT_MAX) {
 		/* fallback to flooding */
 		dstport = OFP10_PORT_FLOOD;
