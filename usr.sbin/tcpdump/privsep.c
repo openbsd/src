@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.40 2015/12/05 19:27:17 mmcc Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.41 2016/07/21 07:22:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -136,15 +136,10 @@ priv_init(int argc, char **argv)
 	int bpfd = -1;
 	int i, socks[2], cmd, nflag = 0;
 	struct passwd *pw;
-	uid_t uid;
-	gid_t gid;
 	char *cmdbuf, *infile = NULL;
 	char *RFileName = NULL;
 	char *WFileName = NULL;
 	sigset_t allsigs, oset;
-
-	if (geteuid() != 0)
-		errx(1, "need root privileges");
 
 	closefrom(STDERR_FILENO + 1);
 	for (i = 1; i < _NSIG; i++)
@@ -162,46 +157,39 @@ priv_init(int argc, char **argv)
 		err(1, "fork() failed");
 
 	if (child_pid) {
-		/* Parent, drop privileges to _tcpdump */
-		pw = getpwnam("_tcpdump");
-		if (pw == NULL)
-			errx(1, "unknown user _tcpdump");
-
-		/* chroot, drop privs and return */
-		if (chroot(pw->pw_dir) != 0)
-			err(1, "unable to chroot");
-		if (chdir("/") != 0)
-			err(1, "unable to chdir");
-
-		/* drop to _tcpdump */
-		if (setgroups(1, &pw->pw_gid) == -1)
-			err(1, "setgroups() failed");
-		if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
-			err(1, "setresgid() failed");
-		if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
-			err(1, "setresuid() failed");
-		endpwent();
-
 		close(socks[0]);
 		priv_fd = socks[1];
 
 		set_slave_signals();
 		sigprocmask(SIG_SETMASK, &oset, NULL);
 
+		/*
+		 * Parent, attempt to drop privs and chroot.  If any of this
+		 * fails that is OK, safety is still provided by pledge(2).
+		 */
+		pw = getpwnam("_tcpdump");
+		if (pw == NULL)
+			return (0);
+
+		/* Attempt to chroot */
+		if (chroot(pw->pw_dir) == -1)
+			return (0);
+		if (chdir("/") == -1)
+			return (0);
+
+		/* drop to _tcpdump */
+		if (setgroups(1, &pw->pw_gid) == -1)
+			return (0);
+		if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
+			return (0);
+		if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
+			return (0);
+
 		return (0);
 	}
 
 	sigprocmask(SIG_SETMASK, &oset, NULL);
 	signal(SIGINT, SIG_IGN);
-
-	/* Child - drop suid privileges */
-	gid = getgid();
-	uid = getuid();
-
-	if (setresgid(gid, gid, gid) == -1)
-		err(1, "setresgid() failed");
-	if (setresuid(uid, uid, uid) == -1)
-		err(1, "setresuid() failed");
 
 	/* parse the arguments for required options */
 	opterr = 0;
