@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.7 2016/07/14 14:05:51 kettenis Exp $ */
+/* $OpenBSD: if_fec.c,v 1.8 2016/07/21 02:32:23 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -103,6 +103,7 @@
 #define ENET_RCR_PROM		(1 << 3)
 #define ENET_RCR_FCE		(1 << 5)
 #define ENET_RCR_RGMII_MODE	(1 << 6)
+#define ENET_RCR_RMII_10T	(1 << 9)
 #define ENET_RCR_MAX_FL(x)	(((x) & 0x3fff) << 16)
 #define ENET_TCR_FDEN		(1 << 2)
 #define ENET_EIR_MII		(1 << 23)
@@ -1050,17 +1051,22 @@ void
 fec_miibus_statchg(struct device *dev)
 {
 	struct fec_softc *sc = (struct fec_softc *)dev;
-	int ecr;
+	uint32_t ecr, rcr;
 
-	ecr = HREAD4(sc, ENET_ECR);
+	ecr = HREAD4(sc, ENET_ECR) & ~ENET_ECR_SPEED;
+	rcr = HREAD4(sc, ENET_RCR) & ~ENET_RCR_RMII_10T;
 	switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
 	case IFM_1000_T:  /* Gigabit */
 		ecr |= ENET_ECR_SPEED;
 		break;
-	default:
-		ecr &= ~ENET_ECR_SPEED;
+	case IFM_100_TX:
+		break;
+	case IFM_10_T:
+		rcr |= ENET_RCR_RMII_10T;
+		break;
 	}
 	HWRITE4(sc, ENET_ECR, ecr);
+	HWRITE4(sc, ENET_RCR, rcr);
 
 	return;
 }
