@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp10.c,v 1.5 2016/07/21 08:39:23 reyk Exp $	*/
+/*	$OpenBSD: ofp10.c,v 1.6 2016/07/21 08:40:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -317,7 +317,7 @@ ofp10_packet_in(struct switchd *sc, struct switch_connection *con,
 	struct ibuf			*obuf = NULL;
 	int				 ret = -1;
 	size_t				 len;
-	long				 srcport, dstport;
+	uint32_t			 srcport, dstport;
 	int				 addflow = 0;
 	int				 addpacket = 0;
 
