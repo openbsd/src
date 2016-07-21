@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.38 2016/07/21 18:33:27 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.39 2016/07/21 18:40:26 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -133,8 +133,7 @@
 .Cm list-public-key-algorithms
 .Pp
 .Nm
-.Cm no- Ns Ar XXX
-.Op Ar arbitrary options
+.Cm no- Ns Ar command
 .Sh DESCRIPTION
 .Nm OpenSSL
 is a cryptography toolkit implementing the
@@ -147,7 +146,7 @@ The
 .Nm
 program is a command line tool for using the various
 cryptography functions of
-.Nm OpenSSL Ns 's
+.Nm openssl Ns 's
 crypto library from the shell.
 .Pp
 The pseudo-commands
@@ -176,22 +175,18 @@ The pseudo-command
 lists all supported public key algorithms.
 .Pp
 The pseudo-command
-.Cm no- Ns Ar XXX
+.Cm no- Ns Ar command
 tests whether a command of the
 specified name is available.
-If no command named
-.Ar XXX
-exists,
+If
+.Ar command
+does not exist,
 it returns 0
-.Pq success
 and prints
-.Cm no- Ns Ar XXX ;
+.Cm no- Ns Ar command ;
 otherwise it returns 1 and prints
-.Ar XXX .
-In both cases, the output goes to
-.Em stdout
-and nothing is printed to
-.Em stderr .
+.Ar command .
+In both cases, the output goes to stdout and nothing is printed to stderr.
 Additional command line arguments are always ignored.
 Since for each cipher there is a command of the same name,
 this provides an easy way for shell scripts to test for the
@@ -200,12 +195,12 @@ availability of ciphers in the
 program.
 .Pp
 .Sy Note :
-.Cm no- Ns Ar XXX
+.Cm no- Ns Ar command
 is not able to detect pseudo-commands such as
 .Cm quit ,
 .Cm list- Ns Ar ... Ns Cm -commands ,
 or
-.Cm no- Ns Ar XXX
+.Cm no- Ns Ar command
 itself.
 .Sh ASN1PARSE
 .nr nS 1
