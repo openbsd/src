@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.4 2016/07/21 07:58:44 reyk Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.5 2016/07/21 14:25:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -241,7 +241,7 @@ ofp13_validate_packet_out(struct switchd *sc,
 	    "actions length %u",
 	    ntohl(pout->pout_buffer_id),
 	    print_map(ntohl(pout->pout_in_port), ofp_port_map),
-	    ntohl(pout->pout_actions_len));
+	    ntohs(pout->pout_actions_len));
 	len = ntohl(pout->pout_actions_len);
 
 	off += sizeof(*pout);
@@ -381,29 +381,71 @@ int
 ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
     struct ofp_header *ih, struct ibuf *ibuf)
 {
-#if 0
 	struct ofp_packet_in		*pin;
 	struct ofp_packet_out		*pout;
 	struct ofp_action_output	*ao;
+#if 0
 	struct ofp_flow_mod		*fm;
+#endif
 	struct ofp_header		*oh;
+	struct ofp_match		*om;
+	struct ofp_ox_match		*oxm;
 	struct packet			 pkt;
 	struct ibuf			*obuf = NULL;
 	int				 ret = -1;
-	size_t				 len;
-	long				 srcport, dstport;
+	ssize_t				 len, mlen;
+	uint32_t			 srcport = 0, dstport;
 	int				 addflow = 0;
 	int				 addpacket = 0;
+	off_t			 	 off, moff;
+	void				*ptr;
 
 	if ((pin = ibuf_getdata(ibuf, sizeof(*pin))) == NULL)
 		return (-1);
 
 	bzero(&pkt, sizeof(pkt));
 	len = ntohs(pin->pin_total_len);
-	srcport = ntohs(pin->pin_port);
 
-	if ((dstport = packet_input(sc, con->con_switch,
-	    srcport, ibuf, len, &pkt)) == -1 ||
+	/* very basic way of getting the source port */
+	om = &pin->pin_match;
+	mlen = ntohs(om->om_length);
+	off = (OFP_ALIGN(mlen) + ETHER_ALIGN) - sizeof(pin->pin_match);
+	moff = ibuf_dataoffset(ibuf);
+
+	do {
+		if ((oxm = ibuf_seek(ibuf, moff, sizeof(*oxm))) == NULL)
+			return (-1);
+
+		/* Find IN_PORT */
+		switch (ntohs(oxm->oxm_class)) {
+		case OFP_OXM_C_OPENFLOW_BASIC:
+			switch (OFP_OXM_GET_FIELD(oxm)) {
+			case OFP_XM_T_IN_PORT:
+				moff += sizeof(*oxm);
+				if ((ptr = ibuf_seek(ibuf, moff,
+				    sizeof(srcport))) == NULL)
+					return (-1);
+				srcport = htonl(*(uint32_t *)ptr);
+				mlen = 0; /* break loop */
+				break;
+			default:
+				/* ignore unsupported match types */
+				break;
+			}
+		default:
+			/* ignore unsupported match classes */
+			break;
+		}
+		moff += sizeof(*oxm) + oxm->oxm_length;
+		mlen -= sizeof(*oxm) + oxm->oxm_length;
+	} while (mlen > 0 && oxm->oxm_length);
+
+	/* Skip all matches and seek to the packet */
+	if (ibuf_getdata(ibuf, off) == NULL)
+		return (-1);
+
+	if (packet_input(sc, con->con_switch,
+	    srcport, &dstport, ibuf, len, &pkt) == -1 ||
 	    dstport > OFP_PORT_MAX) {
 		/* fallback to flooding */
 		dstport = OFP_PORT_FLOOD;
@@ -416,13 +458,14 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 	}
 
 	if (dstport <= OFP_PORT_MAX)
-		addflow = 1;
+		addflow = 0;
 
 	if ((obuf = ibuf_static()) == NULL)
 		goto done;
 
  again:
 	if (addflow) {
+#if 0
 		if ((fm = ibuf_advance(obuf, sizeof(*fm))) == NULL)
 			goto done;
 
@@ -438,13 +481,14 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 		fm->fm_flags = htons(OFP_FLOWFLAG_SEND_FLOW_REMOVED);
 		if (pin->pin_buffer_id == (uint32_t)-1)
 			addpacket = 1;
+#endif
 	} else {
 		if ((pout = ibuf_advance(obuf, sizeof(*pout))) == NULL)
 			goto done;
 
 		oh = &pout->pout_oh;
 		pout->pout_buffer_id = pin->pin_buffer_id;
-		pout->pout_port = pin->pin_port;
+		pout->pout_in_port = htonl(srcport);
 		pout->pout_actions_len = htons(sizeof(*ao));
 
 		if (pin->pin_buffer_id == (uint32_t)-1)
@@ -455,7 +499,7 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 		goto done;
 	ao->ao_type = htons(OFP_ACTION_OUTPUT);
 	ao->ao_len =  htons(sizeof(*ao));
-	ao->ao_port = htons((uint16_t)dstport);
+	ao->ao_port = htonl(dstport);
 	ao->ao_max_len = 0;
 
 	/* Add optional packet payload */
@@ -486,7 +530,4 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
  done:
 	ibuf_release(obuf);
 	return (ret);
-#else
-	return (0);
-#endif
 }
