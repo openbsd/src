@@ -154,7 +154,6 @@ int	hvn_iff(struct hvn_softc *);
 void	hvn_init(struct hvn_softc *);
 void	hvn_stop(struct hvn_softc *);
 void	hvn_start(struct ifnet *);
-void	hvn_intr(void *);
 void	hvn_txeof(struct hvn_softc *, uint64_t);
 void	hvn_rxeof(struct hvn_softc *, void *);
 int	hvn_rx_ring_create(struct hvn_softc *);
@@ -423,24 +422,6 @@ hvn_start(struct ifnet *ifp)
 		ifp->if_oerrors++;
 	}
 }
-
-#if 0
-void
-hvn_intr(void *arg)
-{
-	struct hvn_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	uint64_t rid;
-	uint32_t rlen;
-	int rv;
-
-	if (!(ifp->if_flags & IFF_RUNNING))
-		return;
-
-	if (ifq_is_oactive(&ifp->if_snd))
-		ifq_restart(&ifp->if_snd);
-}
-#endif
 
 void
 hvn_txeof(struct hvn_softc *sc, uint64_t tid)
@@ -860,20 +841,6 @@ hvn_nvsp_detach(struct hvn_softc *sc)
 		km_free(sc->sc_nvspbuf, HVN_NVSP_BUFSIZE, &kv_any, &kp_zero);
 		sc->sc_nvspbuf = NULL;
 	}
-}
-
-static inline void
-hexdump(const char *header, void *data, size_t size)
-{
-	uint8_t *ptr = data;
-	int i;
-
-	for (i = 0; i < size; i++) {
-		if ((i % 16) == 0)
-			printf("%s%s+0x%02x:", i > 0 ? "\n" : "", header, i);
-		printf(" %02x", ptr[i]);
-	}
-	printf("\n");
 }
 
 static inline struct rndis_cmd *

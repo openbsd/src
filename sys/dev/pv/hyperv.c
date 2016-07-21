@@ -1899,15 +1899,8 @@ hv_attach_devices(struct hv_softc *sc)
 	TAILQ_FOREACH(ch, &sc->sc_channels, ch_entry) {
 		if (ch->ch_state != HV_CHANSTATE_OFFERED)
 			continue;
-#if 0
-		if (strcmp(ch->ch_ident, "network") != 0 &&
-		    strcmp(ch->ch_ident, "scsi") != 0 &&
-		    strcmp(ch->ch_ident, "ide") != 0)
-			continue;
-#else
 		if (!(ch->ch_flags & CHF_MONITOR))
 			continue;
-#endif
 		dv = malloc(sizeof(*dv), M_DEVBUF, M_ZERO | M_NOWAIT);
 		if (dv == NULL) {
 			printf("%s: failed to allocate device object\n",
