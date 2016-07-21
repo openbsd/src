@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.36 2016/07/20 14:42:03 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.37 2016/07/21 16:34:08 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: July 20 2016 $
+.Dd $Mdocdate: July 21 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -963,13 +963,9 @@ Cipher suites using MD5.
 .It Cm SHA1 , SHA
 Cipher suites using SHA1.
 .El
-.\"
-.\" CRL
-.\"
 .Sh CRL
 .nr nS 1
 .Nm "openssl crl"
-.Bk -words
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar dir
 .Op Fl fingerprint
@@ -983,12 +979,22 @@ Cipher suites using SHA1.
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Op Fl text
-.Ek
 .nr nS 0
 .Pp
 The
 .Nm crl
 command processes CRL files in DER or PEM format.
+.Pp
+.Cm DER
+is a DER-encoded CRL structure.
+.Cm PEM ,
+the default,
+is a base64-encoded version of the DER form with header and footer lines.
+The PEM CRL format uses the header and footer lines:
+.Bd -unfilled -offset indent
+-----BEGIN X509 CRL-----
+-----END X509 CRL-----
+.Ed
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -1008,54 +1014,28 @@ Print the CRL fingerprint.
 Output a hash of the issuer name.
 This can be used to look up CRLs in a directory by issuer name.
 .It Fl in Ar file
-This specifies the input file to read from, or standard input if this
-option is not specified.
-.It Fl inform Ar DER | PEM
-This specifies the input format.
-.Ar DER
-format is a DER-encoded CRL structure.
-.Ar PEM
-.Pq the default
-is a base64-encoded version of the DER form with header and footer lines.
+The input file to read from, or standard input if not specified.
+.It Fl inform Cm DER | PEM
+The input format.
 .It Fl issuer
 Output the issuer name.
 .It Fl lastupdate
 Output the
-.Ar lastUpdate
+.Cm lastUpdate
 field.
 .It Fl nextupdate
 Output the
-.Ar nextUpdate
+.Cm nextUpdate
 field.
 .It Fl noout
 Don't output the encoded version of the CRL.
 .It Fl out Ar file
-Specifies the output file to write to, or standard output by
-default.
-.It Fl outform Ar DER | PEM
-This specifies the output format; the options have the same meaning as the
-.Fl inform
-option.
+The output file to write to, or standard output if not specified.
+.It Fl outform Cm DER | PEM
+The output format.
 .It Fl text
 Print out the CRL in text form.
 .El
-.Sh CRL NOTES
-The PEM CRL format uses the header and footer lines:
-.Bd -unfilled -offset indent
------BEGIN X509 CRL-----
------END X509 CRL-----
-.Ed
-.Sh CRL EXAMPLES
-Convert a CRL file from PEM to DER:
-.Pp
-.Dl $ openssl crl -in crl.pem -outform DER -out crl.der
-.Pp
-Output the text form of a DER-encoded certificate:
-.Pp
-.Dl $ openssl crl -in crl.der -inform DER -text -noout
-.Sh CRL BUGS
-Ideally, it should be possible to create a CRL using appropriate options
-and files too.
 .\"
 .\" CRL2PKCS7
 .\"
