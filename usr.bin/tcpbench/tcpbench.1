@@ -1,4 +1,4 @@
-.\" $OpenBSD: tcpbench.1,v 1.20 2014/08/19 03:28:53 dlg Exp $
+.\" $OpenBSD: tcpbench.1,v 1.21 2016/07/21 10:11:11 claudio Exp $
 .\"
 .\" Copyright (c) 2008 Damien Miller <djm@mindrot.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 19 2014 $
+.Dd $Mdocdate: July 21 2016 $
 .Dt TCPBENCH 1
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Nm
 .Fl l
 .Nm
-.Op Fl 46uv
+.Op Fl 46RUuv
 .Op Fl B Ar buf
 .Op Fl b Ar addr
 .Op Fl k Ar kvars
@@ -39,7 +39,7 @@
 .Nm
 .Bk -words
 .Fl s
-.Op Fl 46uv
+.Op Fl 46Uuv
 .Op Fl B Ar buf
 .Op Fl k Ar kvars
 .Op Fl p Ar port
@@ -47,6 +47,7 @@
 .Op Fl S Ar space
 .Op Fl T Ar toskeyword
 .Op Fl V Ar rtable
+.Op Ar hostname
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -105,6 +106,9 @@ Use the given number of TCP connections (default: 1).
 UDP is connectionless so this option isn't valid.
 .It Fl p Ar port
 Specify the port used for the test stream (default: 12345).
+.It Fl R
+In client mode the write buffer size is randomized up to the size specified via
+.Fl B .
 .It Fl r Ar interval
 Specify the statistics interval reporting rate in milliseconds (default: 1000).
 .It Fl S Ar space
@@ -138,6 +142,11 @@ or a number in either hex or decimal.
 Stop after
 .Ar secs
 seconds.
+.It Fl U
+Use AF_UNIX sockets instead of IPv4 or IPv6 sockets.
+In client and server mode 
+.Ar hostname
+is used as the path to the AF_UNIX socket.
 .It Fl u
 Use UDP instead of TCP; this must be specified on both the client
 and the server.

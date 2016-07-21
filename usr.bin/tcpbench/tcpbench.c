@@ -21,6 +21,7 @@
 #include <sys/socketvar.h>
 #include <sys/resource.h>
 #include <sys/queue.h>
+#include <sys/un.h>
 
 #include <net/route.h>
 
@@ -66,6 +67,8 @@ struct {
 	int	  Tflag;	/* ToS if != -1 */
 	int	  vflag;	/* Verbose */
 	int	  uflag;	/* UDP mode */
+	int	  Uflag;	/* UNIX (AF_LOCAL) mode */
+	int	  Rflag;	/* randomize client write size */
 	kvm_t	 *kvmh;		/* Kvm handler */
 	char	**kvars;	/* Kvm enabled vars */
 	u_long	  ktcbtab;	/* Ktcb */
@@ -179,11 +182,11 @@ usage(void)
 {
 	fprintf(stderr,
 	    "usage: tcpbench -l\n"
-	    "       tcpbench [-46uv] [-B buf] [-b addr] [-k kvars] [-n connections]\n"
+	    "       tcpbench [-46RUuv] [-B buf] [-b addr] [-k kvars] [-n connections]\n"
 	    "                [-p port] [-r interval] [-S space] [-T toskeyword]\n"
 	    "                [-t secs] [-V rtable] hostname\n"
-	    "       tcpbench -s [-46uv] [-B buf] [-k kvars] [-p port]\n"
-	    "                [-r interval] [-S space] [-T toskeyword] [-V rtable]\n");
+	    "       tcpbench -s [-46Uuv] [-B buf] [-k kvars] [-p port] [-r interval]\n"
+	    "                [-S space] [-T toskeyword] [-V rtable] [hostname]\n");
 	exit(1);
 }
 
@@ -212,6 +215,11 @@ saddr_ntop(const struct sockaddr *addr, socklen_t alen, char *buf, size_t len)
 	char hbuf[NI_MAXHOST], pbuf[NI_MAXSERV];
 	int herr;
 
+	if (addr->sa_family == AF_UNIX) {
+		struct sockaddr_un *sun = (struct sockaddr_un *)addr;
+		snprintf(buf, len, "%s", sun->sun_path);
+		return;
+	}
 	if ((herr = getnameinfo(addr, alen, hbuf, sizeof(hbuf),
 	    pbuf, sizeof(pbuf), NI_NUMERICHOST|NI_NUMERICSERV)) != 0) {
 		if (herr == EAI_SYSTEM)
@@ -805,7 +813,8 @@ server_init(struct addrinfo *aitop, struct statctx *udp_sc)
 			fprintf(stderr, "bound to fd %d\n", sock);
 		lnfds++;
 	}
-	freeaddrinfo(aitop);
+	if (!ptb->Uflag)
+		freeaddrinfo(aitop);
 	if (lnfds == 0)
 		errx(1, "No working listen addresses found");
 }	
@@ -815,8 +824,11 @@ client_handle_sc(int fd, short event, void *v_sc)
 {
 	struct statctx *sc = v_sc;
 	ssize_t n;
+	size_t blen = sc->buflen;
 
-	if ((n = write(sc->fd, sc->buf, sc->buflen)) == -1) {
+	if (ptb->Rflag)
+		blen = arc4random_uniform(blen) + 1;
+	if ((n = write(sc->fd, sc->buf, blen)) == -1) {
 		if (errno == EINTR || errno == EWOULDBLOCK ||
 		    (UDP_MODE && errno == ENOBUFS))
 			return;
@@ -916,7 +928,8 @@ client_init(struct addrinfo *aitop, int nconn, struct statctx *udp_sc,
 		if (mainstats.nconns == 1)
 			set_slice_timer(1);
 	}
-	freeaddrinfo(aitop);
+	if (!ptb->Uflag)
+		freeaddrinfo(aitop);
 	if (aib != NULL)
 		freeaddrinfo(aib);
 
@@ -995,12 +1008,13 @@ main(int argc, char **argv)
 	const char *host = NULL, *port = DEFAULT_PORT, *srcbind = NULL;
 	struct event ev_sigint, ev_sigterm, ev_sighup, ev_progtimer;
 	struct statctx *udp_sc = NULL;
+	struct sockaddr_un sock_un;
 
 	/* Init world */
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	ptb = &tcpbench;
 	ptb->dummybuf_len = 0;
-	ptb->Sflag = ptb->sflag = ptb->vflag = 0;
+	ptb->Sflag = ptb->sflag = ptb->vflag = ptb->Rflag = ptb->Uflag = 0;
 	ptb->kvmh  = NULL;
 	ptb->kvars = NULL;
 	ptb->rflag = DEFAULT_STATS_INTERVAL;
@@ -1009,7 +1023,7 @@ main(int argc, char **argv)
 	aib = NULL;
 	secs = 0;
 
-	while ((ch = getopt(argc, argv, "46b:B:hlk:n:p:r:sS:t:T:uvV:")) != -1) {
+	while ((ch = getopt(argc, argv, "46b:B:hlk:n:p:Rr:sS:t:T:uUvV:")) != -1) {
 		switch (ch) {
 		case '4':
 			family = PF_INET;
@@ -1028,6 +1042,9 @@ main(int argc, char **argv)
 				errx(1, "strdup");
 			ptb->kvars = check_prepare_kvars(tmp);
 			free(tmp);
+			break;
+		case 'R':
+			ptb->Rflag = 1;
 			break;
 		case 'r':
 			ptb->rflag = strtonum(optarg, 0, 60 * 60 * 24 * 1000,
@@ -1077,6 +1094,9 @@ main(int argc, char **argv)
 		case 'u':
 			ptb->uflag = 1;
 			break;
+		case 'U':
+			ptb->Uflag = 1;
+			break;
 		case 'T':
 			if (map_tos(optarg, &ptb->Tflag))
 				break;
@@ -1102,12 +1122,12 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (pledge("stdio rpath dns inet id proc", NULL) == -1)
+	if (pledge("stdio rpath dns inet unix id proc", NULL) == -1)
 		err(1, "pledge");
 
 	argv += optind;
 	argc -= optind;
-	if ((argc != (ptb->sflag ? 0 : 1)) ||
+	if ((argc != (ptb->sflag && !ptb->Uflag ? 0 : 1)) ||
 	    (UDP_MODE && (ptb->kvars || nconn != 1)))
 		usage();
 
@@ -1122,10 +1142,10 @@ main(int argc, char **argv)
 	} else
 		drop_gid();
 
-	if (pledge("stdio id dns inet", NULL) == -1)
+	if (pledge("stdio id dns inet unix", NULL) == -1)
 		err(1, "pledge");
 
-	if (!ptb->sflag)
+	if (!ptb->sflag || ptb->Uflag)
 		host = argv[0];
 	/*
 	 * Rationale,
@@ -1149,27 +1169,40 @@ main(int argc, char **argv)
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_protocol = IPPROTO_TCP;
 	}
-	if (ptb->sflag)
-		hints.ai_flags = AI_PASSIVE;
-	if (srcbind != NULL) {
-		hints.ai_flags |= AI_NUMERICHOST;
-		herr = getaddrinfo(srcbind, NULL, &hints, &aib);
-		hints.ai_flags &= ~AI_NUMERICHOST;
-		if (herr != 0) {
+	if (ptb->Uflag) {
+		hints.ai_family = AF_UNIX;
+		hints.ai_protocol = 0;
+		sock_un.sun_family = AF_UNIX;
+		if (strlcpy(sock_un.sun_path, host, sizeof(sock_un.sun_path)) >=
+		    sizeof(sock_un.sun_path))
+			errx(1, "socket name '%s' too long", host);
+		hints.ai_addr = (struct sockaddr *)&sock_un;
+		hints.ai_addrlen = sizeof(sock_un);
+		aitop = &hints;
+	} else {
+		if (ptb->sflag)
+			hints.ai_flags = AI_PASSIVE;
+		if (srcbind != NULL) {
+			hints.ai_flags |= AI_NUMERICHOST;
+			herr = getaddrinfo(srcbind, NULL, &hints, &aib);
+			hints.ai_flags &= ~AI_NUMERICHOST;
+			if (herr != 0) {
+				if (herr == EAI_SYSTEM)
+					err(1, "getaddrinfo");
+				else
+					errx(1, "getaddrinfo: %s",
+					    gai_strerror(herr));
+			}
+		}
+		if ((herr = getaddrinfo(host, port, &hints, &aitop)) != 0) {
 			if (herr == EAI_SYSTEM)
 				err(1, "getaddrinfo");
 			else
 				errx(1, "getaddrinfo: %s", gai_strerror(herr));
 		}
 	}
-	if ((herr = getaddrinfo(host, port, &hints, &aitop)) != 0) {
-		if (herr == EAI_SYSTEM)
-			err(1, "getaddrinfo");
-		else
-			errx(1, "getaddrinfo: %s", gai_strerror(herr));
-	}
 
-	if (pledge("stdio id inet", NULL) == -1)
+	if (pledge("stdio id inet unix", NULL) == -1)
 		err(1, "pledge");
 
 	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
@@ -1181,7 +1214,7 @@ main(int argc, char **argv)
 	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
 		err(1, "getrlimit");
 
-	if (pledge("stdio inet", NULL) == -1)
+	if (pledge("stdio inet unix", NULL) == -1)
 		err(1, "pledge");
 
 	/* Init world */
