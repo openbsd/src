@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.346 2016/06/03 17:36:37 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.347 2016/07/21 10:13:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -96,7 +96,7 @@ void		 rde_update6_queue_runner(u_int8_t);
 
 void		 peer_init(u_int32_t);
 void		 peer_shutdown(void);
-void		 peer_localaddrs(struct rde_peer *, struct bgpd_addr *);
+int		 peer_localaddrs(struct rde_peer *, struct bgpd_addr *);
 struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
 struct rde_peer	*peer_get(u_int32_t);
 void		 peer_up(u_int32_t, struct session_up *);
@@ -3134,7 +3134,7 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 	return (peer);
 }
 
-void
+int
 peer_localaddrs(struct rde_peer *peer, struct bgpd_addr *laddr)
 {
 	struct ifaddrs	*ifap, *ifa, *match;
@@ -3146,8 +3146,10 @@ peer_localaddrs(struct rde_peer *peer, struct bgpd_addr *laddr)
 		if (sa_cmp(laddr, match->ifa_addr) == 0)
 			break;
 
-	if (match == NULL)
-		fatalx("peer_localaddrs: local address not found");
+	if (match == NULL) {
+		log_warnx("peer_localaddrs: local address not found");
+		return (-1);
+	}
 
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		if (ifa->ifa_addr->sa_family == AF_INET &&
@@ -3182,6 +3184,7 @@ peer_localaddrs(struct rde_peer *peer, struct bgpd_addr *laddr)
 	}
 
 	freeifaddrs(ifap);
+	return (0);
 }
 
 void
@@ -3216,7 +3219,11 @@ peer_up(u_int32_t id, struct session_up *sup)
 	    sizeof(peer->remote_addr));
 	memcpy(&peer->capa, &sup->capa, sizeof(peer->capa));
 
-	peer_localaddrs(peer, &sup->local_addr);
+	if (peer_localaddrs(peer, &sup->local_addr)) {
+		peer->state = PEER_DOWN;
+		imsg_compose(ibuf_se, IMSG_SESSION_DOWN, id, 0, -1, NULL, 0);
+		return;
+	}
 
 	peer->state = PEER_UP;
 	up_init(peer);

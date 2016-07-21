@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.349 2016/06/28 16:59:14 jca Exp $ */
+/*	$OpenBSD: session.c,v 1.350 2016/07/21 10:13:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2900,6 +2900,16 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 					fatal("imsg_compose: "
 					    "IMSG_SESSION_RESTARTED");
 			}
+			break;
+		case IMSG_SESSION_DOWN:
+			if (idx != PFD_PIPE_ROUTE)
+				fatalx("update request not from RDE");
+			if ((p = getpeerbyid(imsg.hdr.peerid)) == NULL) {
+				log_warnx("no such peer: id=%u",
+				    imsg.hdr.peerid);
+				break;
+			}
+			session_stop(p, ERR_CEASE_ADMIN_DOWN);
 			break;
 		default:
 			break;
