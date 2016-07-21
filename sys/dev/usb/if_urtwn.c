@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.65 2016/06/17 10:53:55 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.66 2016/07/21 08:38:33 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1299,7 +1299,10 @@ urtwn_tx(void *cookie, struct mbuf *m, struct ieee80211_node *ni)
 			    SM(R92C_TXDW1_RAID, raid) | R92C_TXDW1_AGGBK);
 		}
 
-		if (ic->ic_flags & IEEE80211_F_USEPROT) {
+		if (m->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold) {
+			txd->txdw4 |= htole32(R92C_TXDW4_RTSEN |
+			    R92C_TXDW4_HWRTSEN);
+		} else if (ic->ic_flags & IEEE80211_F_USEPROT) {
 			if (ic->ic_protmode == IEEE80211_PROT_CTSONLY) {
 				txd->txdw4 |= htole32(R92C_TXDW4_CTS2SELF |
 				    R92C_TXDW4_HWRTSEN);
