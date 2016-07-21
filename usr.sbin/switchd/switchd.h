@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.5 2016/07/20 21:01:06 reyk Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.6 2016/07/21 07:58:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -118,7 +118,7 @@ struct ofp_callback {
 	uint8_t		 cb_type;
 	int		(*cb)(struct switchd *, struct switch_connection *,
 			    struct ofp_header *, struct ibuf *);
-	int		(*debug)(struct switchd *, struct sockaddr_storage *,
+	int		(*validate)(struct switchd *, struct sockaddr_storage *,
 			    struct sockaddr_storage *, struct ofp_header *,
 			    struct ibuf *);
 };
@@ -182,11 +182,14 @@ void		 ofp_read(int, short, void *);
 int		 ofp_send(struct switch_connection *, struct ofp_header *,
 		    struct ibuf *);
 void		 ofp_accept(int, short, void *);
+int		 ofp_validate_header(struct switchd *,
+		    struct sockaddr_storage *, struct sockaddr_storage *,
+		    struct ofp_header *, uint8_t);
 
 /* ofp10.c */
 int		 ofp10_hello(struct switchd *, struct switch_connection *,
 		    struct ofp_header *, struct ibuf *);
-void		 ofp10_debug(struct switchd *,
+int		 ofp10_validate(struct switchd *,
 		    struct sockaddr_storage *, struct sockaddr_storage *,
 		    struct ofp_header *, struct ibuf *);
 int		 ofp10_input(struct switchd *, struct switch_connection *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.3 2016/07/20 19:57:54 reyk Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.4 2016/07/21 07:58:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -39,38 +39,35 @@
 #include "switchd.h"
 #include "ofp_map.h"
 
-int	 ofp13_hello(struct switchd *, struct switch_connection *,
-	    struct ofp_header *, struct ibuf *);
-int	 ofp13_echo_request(struct switchd *, struct switch_connection *,
-	    struct ofp_header *, struct ibuf *);
-int	 ofp13_packet_in(struct switchd *, struct switch_connection *,
-	    struct ofp_header *, struct ibuf *);
-int	 ofp13_error(struct switchd *, struct switch_connection *,
+int	 ofp13_validate(struct switchd *,
+	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *, struct ibuf *);
 
 int	 ofp13_packet_match(struct packet *, struct ofp_match *, unsigned int);
 
-void	 ofp13_debug(struct switchd *,
+int	 ofp13_hello(struct switchd *, struct switch_connection *,
+	    struct ofp_header *, struct ibuf *);
+int	 ofp13_echo_request(struct switchd *, struct switch_connection *,
+	    struct ofp_header *, struct ibuf *);
+int	 ofp13_validate_error(struct switchd *,
 	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *, struct ibuf *);
-void	 ofp13_debug_header(struct switchd *,
-	    struct sockaddr_storage *, struct sockaddr_storage *,
-	    struct ofp_header *);
-int	 ofp13_debug_oxm(struct switchd *, struct ofp_ox_match *,
+int	 ofp13_error(struct switchd *, struct switch_connection *,
+	    struct ofp_header *, struct ibuf *);
+int	 ofp13_validate_oxm(struct switchd *, struct ofp_ox_match *,
 	    struct ofp_header *, struct ibuf *, off_t);
-int	 ofp13_debug_packet_in(struct switchd *,
+int	 ofp13_validate_packet_in(struct switchd *,
 	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *, struct ibuf *);
-int	 ofp13_debug_packet_out(struct switchd *,
-	    struct sockaddr_storage *, struct sockaddr_storage *,
+int	 ofp13_packet_in(struct switchd *, struct switch_connection *,
 	    struct ofp_header *, struct ibuf *);
-int	 ofp13_debug_error(struct switchd *,
+int	 ofp13_validate_packet_out(struct switchd *,
 	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *, struct ibuf *);
 
 struct ofp_callback ofp13_callbacks[] = {
 	{ OFP_T_HELLO,			ofp13_hello, NULL },
-	{ OFP_T_ERROR,			NULL, ofp13_debug_error },
+	{ OFP_T_ERROR,			NULL, ofp13_validate_error },
 	{ OFP_T_ECHO_REQUEST,		ofp13_echo_request, NULL },
 	{ OFP_T_ECHO_REPLY,		NULL, NULL },
 	{ OFP_T_EXPERIMENTER,		NULL, NULL },
@@ -79,10 +76,11 @@ struct ofp_callback ofp13_callbacks[] = {
 	{ OFP_T_GET_CONFIG_REQUEST,	NULL, NULL },
 	{ OFP_T_GET_CONFIG_REPLY,	NULL, NULL },
 	{ OFP_T_SET_CONFIG,		NULL, NULL },
-	{ OFP_T_PACKET_IN,		ofp13_packet_in, ofp13_debug_packet_in },
+	{ OFP_T_PACKET_IN,		ofp13_packet_in,
+					ofp13_validate_packet_in },
 	{ OFP_T_FLOW_REMOVED,		NULL, NULL },
 	{ OFP_T_PORT_STATUS,		NULL, NULL },
-	{ OFP_T_PACKET_OUT,		NULL, ofp13_debug_packet_out },
+	{ OFP_T_PACKET_OUT,		NULL, ofp13_validate_packet_out },
 	{ OFP_T_FLOW_MOD,		NULL, NULL },
 	{ OFP_T_GROUP_MOD,		NULL, NULL },
 	{ OFP_T_PORT_MOD,		NULL, NULL },
@@ -101,42 +99,33 @@ struct ofp_callback ofp13_callbacks[] = {
 	{ OFP_T_METER_MOD,		NULL, NULL },
 };
 
-void
-ofp13_debug_header(struct switchd *sc,
-    struct sockaddr_storage *src, struct sockaddr_storage *dst,
-    struct ofp_header *oh)
-{
-	log_debug("%s > %s: version %s type %s length %u xid %u",
-	    print_host(src, NULL, 0),
-	    print_host(dst, NULL, 0),
-	    print_map(oh->oh_version, ofp_v_map),
-	    print_map(oh->oh_type, ofp_t_map),
-	    ntohs(oh->oh_length), ntohl(oh->oh_xid));
-}
-
-void
-ofp13_debug(struct switchd *sc,
+int
+ofp13_validate(struct switchd *sc,
     struct sockaddr_storage *src, struct sockaddr_storage *dst,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
-	ofp13_debug_header(sc, src, dst, oh);
+	uint8_t	type;
 
-	if (ibuf == NULL ||
-	    oh->oh_version != OFP_V_1_3 ||
-	    oh->oh_type >= OFP_T_TYPE_MAX ||
-	    ofp13_callbacks[oh->oh_type].debug == NULL)
-		return;
-	if (ofp13_callbacks[oh->oh_type].debug(sc, src, dst, oh, ibuf) != 0)
-		goto fail;
-
-	return;
- fail:
-	log_debug("\tinvalid packet");
+	if (ofp_validate_header(sc, src, dst, oh, OFP_V_1_3) != 0) {
+		log_debug("\tinvalid header");
+		return (-1);
+	}
+	if (ibuf == NULL) {
+		/* The response packet buffer is optional */
+		return (0);
+	}
+	type = oh->oh_type;
+	if (ofp13_callbacks[type].validate != NULL &&
+	    ofp13_callbacks[type].validate(sc, src, dst, oh, ibuf) != 0) {
+		log_debug("\tinvalid packet");
+		return (-1);
+	}
+	return (0);
 }
 
 int
-ofp13_debug_oxm(struct switchd *sc, struct ofp_ox_match *oxm,
-   struct ofp_header *oh, struct ibuf *ibuf, off_t off)
+ofp13_validate_oxm(struct switchd *sc, struct ofp_ox_match *oxm,
+    struct ofp_header *oh, struct ibuf *ibuf, off_t off)
 {
 	uint16_t	 class;
 	uint8_t		 type;
@@ -173,7 +162,7 @@ ofp13_debug_oxm(struct switchd *sc, struct ofp_ox_match *oxm,
 }
 
 int
-ofp13_debug_packet_in(struct switchd *sc,
+ofp13_validate_packet_in(struct switchd *sc,
     struct sockaddr_storage *src, struct sockaddr_storage *dst,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
@@ -210,7 +199,7 @@ ofp13_debug_packet_in(struct switchd *sc,
 		do {
 			if ((oxm = ibuf_seek(ibuf, moff, sizeof(*oxm))) == NULL)
 				return (-1);
-			if (ofp13_debug_oxm(sc, oxm, oh, ibuf, moff) == -1)
+			if (ofp13_validate_oxm(sc, oxm, oh, ibuf, moff) == -1)
 				return (-1);
 			moff += sizeof(*oxm) + oxm->oxm_length;
 			mlen -= sizeof(*oxm) + oxm->oxm_length;
@@ -231,7 +220,7 @@ ofp13_debug_packet_in(struct switchd *sc,
 }
 
 int
-ofp13_debug_packet_out(struct switchd *sc,
+ofp13_validate_packet_out(struct switchd *sc,
     struct sockaddr_storage *src, struct sockaddr_storage *dst,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
@@ -283,7 +272,7 @@ ofp13_debug_packet_out(struct switchd *sc,
 }
 
 int
-ofp13_debug_error(struct switchd *sc,
+ofp13_validate_error(struct switchd *sc,
     struct sockaddr_storage *src, struct sockaddr_storage *dst,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
@@ -320,13 +309,8 @@ int
 ofp13_input(struct switchd *sc, struct switch_connection *con,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
-	ofp13_debug(sc, &con->con_peer, &con->con_local, oh, ibuf);
-
-	if (oh->oh_version != OFP_V_1_3 ||
-	    oh->oh_type >= OFP_T_TYPE_MAX) {
-		log_debug("unsupported packet");
+	if (ofp13_validate(sc, &con->con_peer, &con->con_local, oh, ibuf) != 0)
 		return (-1);
-	}
 
 	if (ofp13_callbacks[oh->oh_type].cb == NULL) {
 		log_debug("message not supported: %s",
@@ -343,8 +327,7 @@ int
 ofp13_hello(struct switchd *sc, struct switch_connection *con,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
-	if (oh->oh_version == OFP_V_1_3 &&
-	    switch_add(con) == NULL) {
+	if (switch_add(con) == NULL) {
 		log_debug("%s: failed to add switch", __func__);
 		ofp_close(con);
 		return (-1);
@@ -354,8 +337,9 @@ ofp13_hello(struct switchd *sc, struct switch_connection *con,
 	oh->oh_version = OFP_V_1_3;
 	oh->oh_length = htons(sizeof(*oh));
 	oh->oh_xid = htonl(con->con_xidnxt++);
+	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, NULL) != 0)
+		return (-1);
 	ofp_send(con, oh, NULL);
-	ofp13_debug(sc, &con->con_local, &con->con_peer, oh, NULL);
 
 	return (0);
 }
@@ -366,7 +350,8 @@ ofp13_echo_request(struct switchd *sc, struct switch_connection *con,
 {
 	/* Echo reply */
 	oh->oh_type = OFP_T_ECHO_REPLY;
-	ofp13_debug(sc, &con->con_local, &con->con_peer, oh, NULL);
+	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, NULL) != 0)
+		return (-1);
 	ofp_send(con, oh, NULL);
 
 	return (0);
@@ -484,7 +469,8 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 	oh->oh_type = addflow ? OFP_T_FLOW_MOD : OFP_T_PACKET_OUT;
 	oh->oh_xid = htonl(con->con_xidnxt++);
 
-	ofp13_debug(sc, &con->con_local, &con->con_peer, oh, obuf);
+	if (ofp13_validate(sc, &con->con_local, &con->con_peer, oh, obuf) != 0)
+		return (-1);
 
 	ofp_send(con, NULL, obuf);
 

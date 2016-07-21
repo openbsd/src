@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.c,v 1.5 2016/07/20 21:06:09 reyk Exp $	*/
+/*	$OpenBSD: ofp.c,v 1.6 2016/07/21 07:58:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -36,6 +36,7 @@
 #include "ofp.h"
 #include "ofp10.h"
 #include "switchd.h"
+#include "ofp_map.h"
 
 int	 ofp_dispatch_control(int, struct privsep_proc *, struct imsg *);
 int	 ofp_dispatch_parent(int, struct privsep_proc *, struct imsg *);
@@ -155,6 +156,40 @@ ofp_close(struct switch_connection *con)
 	TAILQ_REMOVE(&conn_head, con, con_next);
 }
 
+int
+ofp_validate_header(struct switchd *sc,
+    struct sockaddr_storage *src, struct sockaddr_storage *dst,
+    struct ofp_header *oh, uint8_t version)
+{
+	struct constmap	*tmap;
+
+	/* For debug, don't verify the header if the version is unset */
+	if (version != OFP_V_0 &&
+	    (oh->oh_version != version ||
+	    oh->oh_type >= OFP_T_TYPE_MAX))
+		return (-1);
+
+	switch (version) {
+	case OFP_V_1_0:
+	case OFP_V_1_1:
+		tmap = ofp10_t_map;
+		break;
+	case OFP_V_1_3:
+	default:
+		tmap = ofp_t_map;
+		break;
+	}
+
+	log_debug("%s > %s: version %s type %s length %u xid %u",
+	    print_host(src, NULL, 0),
+	    print_host(dst, NULL, 0),
+	    print_map(oh->oh_version, ofp_v_map),
+	    print_map(oh->oh_type, tmap),
+	    ntohs(oh->oh_length), ntohl(oh->oh_xid));
+
+	return (0);
+}
+
 void
 ofp_read(int fd, short event, void *arg)
 {
@@ -189,19 +224,21 @@ ofp_read(int fd, short event, void *arg)
 
 	switch (oh->oh_version) {
 	case OFP_V_1_0:
-		ofp10_input(sc, con, oh, ibuf);
+		if (ofp10_input(sc, con, oh, ibuf) != 0)
+			goto fail;
 		break;
 	case OFP_V_1_3:
-		ofp13_input(sc, con, oh, ibuf);
+		if (ofp13_input(sc, con, oh, ibuf) != 0)
+			goto fail;
 		break;
 	case OFP_V_1_1:
 	case OFP_V_1_2:
-		ofp10_debug(sc, &con->con_peer, &con->con_local, oh, ibuf);
 		/* FALLTHROUGH */
 	default:
-		ofp10_debug(sc, &con->con_peer, &con->con_local, oh, ibuf);
+		(void)ofp10_validate(sc,
+		    &con->con_peer, &con->con_local, oh, ibuf);
 		ofp10_hello(sc, con, oh, ibuf);
-		break;
+		goto fail;
 	}
 
 	return;

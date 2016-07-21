@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp10.c,v 1.3 2016/07/20 14:15:08 reyk Exp $	*/
+/*	$OpenBSD: ofp10.c,v 1.4 2016/07/21 07:58:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -39,31 +39,28 @@
 #include "switchd.h"
 #include "ofp_map.h"
 
-int	 ofp10_echo_request(struct switchd *, struct switch_connection *,
-	    struct ofp_header *, struct ibuf *);
-int	 ofp10_packet_in(struct switchd *, struct switch_connection *,
-	    struct ofp_header *, struct ibuf *);
-int	 ofp10_error(struct switchd *, struct switch_connection *,
-	    struct ofp_header *, struct ibuf *);
 
 int	 ofp10_packet_match(struct packet *, struct ofp10_match *, unsigned int);
 
-void	 ofp10_debug_header(struct switchd *,
-	    struct sockaddr_storage *, struct sockaddr_storage *,
-	    struct ofp_header *);
-int	 ofp10_debug_packet_in(struct switchd *,
+int	 ofp10_echo_request(struct switchd *, struct switch_connection *,
+	    struct ofp_header *, struct ibuf *);
+int	 ofp10_validate_error(struct switchd *,
 	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *, struct ibuf *);
-int	 ofp10_debug_packet_out(struct switchd *,
+int	 ofp10_error(struct switchd *, struct switch_connection *,
+	    struct ofp_header *, struct ibuf *);
+int	 ofp10_validate_packet_in(struct switchd *,
 	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *, struct ibuf *);
-int	 ofp10_debug_error(struct switchd *,
+int	 ofp10_packet_in(struct switchd *, struct switch_connection *,
+	    struct ofp_header *, struct ibuf *);
+int	 ofp10_validate_packet_out(struct switchd *,
 	    struct sockaddr_storage *, struct sockaddr_storage *,
 	    struct ofp_header *, struct ibuf *);
 
 struct ofp_callback ofp10_callbacks[] = {
 	{ OFP10_T_HELLO,		ofp10_hello, NULL },
-	{ OFP10_T_ERROR,		NULL, ofp10_debug_error },
+	{ OFP10_T_ERROR,		NULL, ofp10_validate_error },
 	{ OFP10_T_ECHO_REQUEST,		ofp10_echo_request, NULL },
 	{ OFP10_T_ECHO_REPLY,		NULL, NULL },
 	{ OFP10_T_EXPERIMENTER,		NULL, NULL },
@@ -72,10 +69,10 @@ struct ofp_callback ofp10_callbacks[] = {
 	{ OFP10_T_GET_CONFIG_REQUEST,	NULL, NULL },
 	{ OFP10_T_GET_CONFIG_REPLY,	NULL, NULL },
 	{ OFP10_T_SET_CONFIG,		NULL, NULL },
-	{ OFP10_T_PACKET_IN,		ofp10_packet_in, ofp10_debug_packet_in },
+	{ OFP10_T_PACKET_IN,		ofp10_packet_in, ofp10_validate_packet_in },
 	{ OFP10_T_FLOW_REMOVED,		NULL, NULL },
 	{ OFP10_T_PORT_STATUS,		NULL, NULL },
-	{ OFP10_T_PACKET_OUT,		NULL, ofp10_debug_packet_out },
+	{ OFP10_T_PACKET_OUT,		NULL, ofp10_validate_packet_out },
 	{ OFP10_T_FLOW_MOD,		NULL, NULL },
 	{ OFP10_T_PORT_MOD,		NULL, NULL },
 	{ OFP10_T_STATS_REQUEST,	NULL, NULL },
@@ -86,41 +83,32 @@ struct ofp_callback ofp10_callbacks[] = {
 	{ OFP10_T_QUEUE_GET_CONFIG_REPLY, NULL, NULL }
 };
 
-void
-ofp10_debug_header(struct switchd *sc,
-    struct sockaddr_storage *src, struct sockaddr_storage *dst,
-    struct ofp_header *oh)
-{
-	log_debug("%s > %s: version %s type %s length %u xid %u",
-	    print_host(src, NULL, 0),
-	    print_host(dst, NULL, 0),
-	    print_map(oh->oh_version, ofp_v_map),
-	    print_map(oh->oh_type, ofp10_t_map),
-	    ntohs(oh->oh_length), ntohl(oh->oh_xid));
-}
-
-void
-ofp10_debug(struct switchd *sc,
+int
+ofp10_validate(struct switchd *sc,
     struct sockaddr_storage *src, struct sockaddr_storage *dst,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
-	ofp10_debug_header(sc, src, dst, oh);
+	uint8_t	type;
 
-	if (ibuf == NULL ||
-	    oh->oh_version != OFP_V_1_0 ||
-	    oh->oh_type >= OFP_T_TYPE_MAX ||
-	    ofp10_callbacks[oh->oh_type].debug == NULL)
-		return;
-	if (ofp10_callbacks[oh->oh_type].debug(sc, src, dst, oh, ibuf) != 0)
-		goto fail;
-
-	return;
- fail:
-	log_debug("\tinvalid packet");
+	if (ofp_validate_header(sc, src, dst, oh, OFP_V_1_0) != 0) {
+		log_debug("\tinvalid header");
+		return (-1);
+	}
+	if (ibuf == NULL) {
+		/* The response packet buffer is optional */
+		return (0);
+	}
+	type = oh->oh_type;
+	if (ofp10_callbacks[type].validate != NULL &&
+	    ofp10_callbacks[type].validate(sc, src, dst, oh, ibuf) != 0) {
+		log_debug("\tinvalid packet");
+		return (-1);
+	}
+	return (0);
 }
 
 int
-ofp10_debug_packet_in(struct switchd *sc,
+ofp10_validate_packet_in(struct switchd *sc,
     struct sockaddr_storage *src, struct sockaddr_storage *dst,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
@@ -144,11 +132,12 @@ ofp10_debug_packet_in(struct switchd *sc,
 		return (-1);
 	if (sc->sc_tap != -1)
 		(void)write(sc->sc_tap, p, len);
+
 	return (0);
 }
 
 int
-ofp10_debug_packet_out(struct switchd *sc,
+ofp10_validate_packet_out(struct switchd *sc,
     struct sockaddr_storage *src, struct sockaddr_storage *dst,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
@@ -199,7 +188,7 @@ ofp10_debug_packet_out(struct switchd *sc,
 }
 
 int
-ofp10_debug_error(struct switchd *sc,
+ofp10_validate_error(struct switchd *sc,
     struct sockaddr_storage *src, struct sockaddr_storage *dst,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
@@ -236,13 +225,8 @@ int
 ofp10_input(struct switchd *sc, struct switch_connection *con,
     struct ofp_header *oh, struct ibuf *ibuf)
 {
-	ofp10_debug(sc, &con->con_peer, &con->con_local, oh, ibuf);
-
-	if (oh->oh_version != OFP_V_1_0 ||
-	    oh->oh_type >= OFP_T_TYPE_MAX) {
-		log_debug("unsupported packet");
+	if (ofp10_validate(sc, &con->con_peer, &con->con_local, oh, ibuf) != 0)
 		return (-1);
-	}
 
 	if (ofp10_callbacks[oh->oh_type].cb == NULL) {
 		log_debug("message not supported: %s",
@@ -270,8 +254,9 @@ ofp10_hello(struct switchd *sc, struct switch_connection *con,
 	oh->oh_version = OFP_V_1_0;
 	oh->oh_length = htons(sizeof(*oh));
 	oh->oh_xid = htonl(con->con_xidnxt++);
+	if (ofp10_validate(sc, &con->con_local, &con->con_peer, oh, NULL) != 0)
+		return (-1);
 	ofp_send(con, oh, NULL);
-	ofp10_debug(sc, &con->con_local, &con->con_peer, oh, NULL);
 
 #if 0
 	(void)write(fd, &oh, sizeof(oh));
@@ -293,7 +278,8 @@ ofp10_echo_request(struct switchd *sc, struct switch_connection *con,
 {
 	/* Echo reply */
 	oh->oh_type = OFP10_T_ECHO_REPLY;
-	ofp10_debug(sc, &con->con_local, &con->con_peer, oh, NULL);
+	if (ofp10_validate(sc, &con->con_local, &con->con_peer, oh, NULL) != 0)
+		return (-1);
 	ofp_send(con, oh, NULL);
 
 	return (0);
@@ -409,7 +395,8 @@ ofp10_packet_in(struct switchd *sc, struct switch_connection *con,
 	oh->oh_type = addflow ? OFP10_T_FLOW_MOD : OFP10_T_PACKET_OUT;
 	oh->oh_xid = htonl(con->con_xidnxt++);
 
-	ofp10_debug(sc, &con->con_local, &con->con_peer, oh, obuf);
+	if (ofp10_validate(sc, &con->con_local, &con->con_peer, oh, obuf) != 0)
+		goto done;
 
 	ofp_send(con, NULL, obuf);
 
