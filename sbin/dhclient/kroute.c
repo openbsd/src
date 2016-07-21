@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.79 2016/02/06 19:30:52 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.80 2016/07/21 09:58:55 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -329,7 +329,7 @@ delete_addresses(void)
 		    (ifa->ifa_flags & IFF_POINTOPOINT) ||
 		    (!(ifa->ifa_flags & IFF_UP)) ||
 		    (ifa->ifa_addr->sa_family != AF_INET) ||
-		    (strcmp(ifi->name, ifa->ifa_name)))
+		    (strcmp(ifi->name, ifa->ifa_name) != 0))
 			continue;
 
 		memcpy(&addr, &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
@@ -681,7 +681,7 @@ check_route_label(struct sockaddr_rtlabel *label)
 	if (!label)
 		return (ROUTE_LABEL_NONE);
 
-	if (strncmp("DHCLIENT ", label->sr_label, 9))
+	if (strncmp("DHCLIENT ", label->sr_label, 9) != 0)
 		return (ROUTE_LABEL_NOT_DHCLIENT);
 
 	pid = (pid_t)strtonum(label->sr_label + 9, 1, INT_MAX, NULL);

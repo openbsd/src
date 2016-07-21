@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.105 2016/02/06 19:30:52 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.106 2016/07/21 09:58:55 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -90,7 +90,7 @@ get_hw_address(void)
 		    (!(ifa->ifa_flags & IFF_UP)))
 			continue;
 
-		if (strcmp(ifi->name, ifa->ifa_name))
+		if (strcmp(ifi->name, ifa->ifa_name) != 0)
 			continue;
 		found = 1;
 

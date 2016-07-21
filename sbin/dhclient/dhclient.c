@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.376 2016/07/20 19:40:04 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.377 2016/07/21 09:58:55 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -736,14 +736,14 @@ state_reboot(void)
 		if (client->active->expiry <= cur_time)
 			client->active = NULL;
 		else if (addressinuse(client->active->address, ifname) &&
-		    strncmp(ifname, ifi->name, IF_NAMESIZE))
+		    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0)
 			client->active = NULL;
 	}
 
 	/* Run through the list of leases and see if one can be used. */
 	TAILQ_FOREACH(lp, &client->leases, next) {
 		if (addressinuse(lp->address, ifname) &&
-		    strncmp(ifname, ifi->name, IF_NAMESIZE))
+		    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0)
 			continue;
 		if (client->active || lp->is_static)
 			break;
@@ -1156,7 +1156,7 @@ addressinuse(struct in_addr address, char *ifname)
 		if (memcmp(&address, &sin->sin_addr, sizeof(address)) == 0) {
 			strlcpy(ifname, ifa->ifa_name, IF_NAMESIZE);
 			used = 1;
-			if (strncmp(ifname, ifi->name, IF_NAMESIZE))
+			if (strncmp(ifname, ifi->name, IF_NAMESIZE) != 0)
 				break;
 		}
 	}
@@ -1188,7 +1188,7 @@ packet_to_lease(struct in_addr client_addr, struct option_data *options)
 		if (options[i].len == 0)
 			continue;
 		if (!unknown_ok && strncmp("option-",
-		    dhcp_options[i].name, 7)) {
+		    dhcp_options[i].name, 7) != 0) {
 			warning("dhcpoffer: unknown option %d", i);
 			lease->is_invalid = 1;
 		}
@@ -1258,7 +1258,7 @@ packet_to_lease(struct in_addr client_addr, struct option_data *options)
 	lease->address.s_addr = client->packet.yiaddr.s_addr;
 	memset(ifname, 0, sizeof(ifname));
 	if (addressinuse(lease->address, ifname) &&
-	    strncmp(ifname, ifi->name, IF_NAMESIZE)) {
+	    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0) {
 		warning("%s already configured on %s",
 		    inet_ntoa(lease->address), ifname);
 		lease->is_invalid = 1;
@@ -1421,7 +1421,7 @@ state_panic(void)
 	time(&cur_time);
 	TAILQ_FOREACH(lp, &client->leases, next) {
 		if (addressinuse(lp->address, ifname) &&
-		    strncmp(ifname, ifi->name, IF_NAMESIZE))
+		    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0)
 			continue;
 		if (lp->is_static) {
 			set_lease_times(lp);
@@ -2162,7 +2162,7 @@ get_ifname(char *arg)
 	struct ifg_req *ifg;
 	int s, len;
 
-	if (!strcmp(arg, "egress")) {
+	if (strcmp(arg, "egress") == 0) {
 		s = socket(AF_INET, SOCK_DGRAM, 0);
 		if (s == -1)
 			error("socket error");
@@ -2725,14 +2725,14 @@ compare_lease(struct client_lease *active, struct client_lease *new)
 	if (active->server_name != new->server_name) {
 		if (!active->server_name || !new->server_name)
 			return (1);
-		if (strcmp(active->server_name, new->server_name))
+		if (strcmp(active->server_name, new->server_name) != 0)
 			return (1);
 	}
 
 	if (active->filename != new->filename) {
 		if (!active->filename || !new->filename)
 			return (1);
-		if (strcmp(active->filename, new->filename))
+		if (strcmp(active->filename, new->filename) != 0)
 			return (1);
 	}
 
