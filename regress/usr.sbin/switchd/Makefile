@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/07/19 17:04:19 reyk Exp $
+# $OpenBSD: Makefile,v 1.2 2016/07/22 09:28:59 reyk Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-Net-Pcap		Perl interface for libpcap
@@ -54,9 +54,9 @@ run-regress-$a: $a
 
 ${OFP_HEADERS}:
 	@-mkdir -p ${.OBJDIR}/net
-	# XXX headers can be in two different locations
-	@-test ${SRC_PATH}/$@ && cp ${SRC_PATH}/$@ ${.OBJDIR}
-	@-test ${SYS_PATH}/$@ && cp ${SYS_PATH}/$@ ${.OBJDIR}/net
+	@-for i in ${SRC_PATH}/$@ ${SYS_PATH}/$@; do \
+		test -s $$i && grep -v '^#include' $$i > ${.OBJDIR}/$@; \
+	done
 
 .SUFFIXES: .h .ph
 .h.ph:
