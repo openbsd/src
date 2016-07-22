@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.312 2016/07/19 10:26:41 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.313 2016/07/22 11:03:30 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -688,8 +688,9 @@ rtflushclone1(struct rtentry *rt, void *arg, u_int id)
 	        return 0;
 
 	if (ISSET(rt->rt_flags, RTF_CLONED) && rtequal(rt->rt_parent, parent)) {
-	        rtdeletemsg(rt, ifp, id);
-		error = EAGAIN;
+	        error = rtdeletemsg(rt, ifp, id);
+	        if (error == 0)
+			error = EAGAIN;
 	} else
 		error = 0;
 
@@ -1725,13 +1726,16 @@ int
 rt_if_remove_rtdelete(struct rtentry *rt, void *vifp, u_int id)
 {
 	struct ifnet	*ifp = vifp;
+	int		 error;
 
-	if (rt->rt_ifidx == ifp->if_index) {
-		rtdeletemsg(rt, ifp, id);
-		return (EAGAIN);
-	}
+	if (rt->rt_ifidx != ifp->if_index)
+		return (0);
 
-	return (0);
+	if ((error = rtdeletemsg(rt, ifp, id)))
+		return (error);
+
+	return (EAGAIN);
+
 }
 
 #ifndef SMALL_KERNEL
@@ -1785,7 +1789,10 @@ rt_if_linkstate_change(struct rtentry *rt, void *arg, u_int id)
 			 * new routes from a better source.
 			 */
 			if (ISSET(rt->rt_flags, RTF_CLONED|RTF_DYNAMIC)) {
-				rtdeletemsg(rt, ifp, id);
+				int error;
+
+				if ((error = rtdeletemsg(rt, ifp, id)))
+					return (error);
 				return (EAGAIN);
 			}
 			/* take route down */
