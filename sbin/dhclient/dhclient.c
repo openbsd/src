@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.377 2016/07/21 09:58:55 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.378 2016/07/22 13:23:38 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -794,21 +794,24 @@ state_init(void)
 void
 state_selecting(void)
 {
-	struct client_lease *picked;
+	struct client_lease *lease, *picked;
 
 	cancel_timeout();
 
-	/* Take the first valid DHCPOFFER, discard the rest. */
-	picked = NULL;
-	while (!TAILQ_EMPTY(&client->offered_leases) && !picked) {
-		picked = TAILQ_FIRST(&client->offered_leases);
-		TAILQ_REMOVE(&client->offered_leases, picked, next);
-		if (picked->is_invalid) {
-			make_decline(picked);
-			send_decline();
-			free_client_lease(picked);
-			picked = NULL;
+	/* Take the first valid DHCPOFFER. */
+	TAILQ_FOREACH_SAFE(picked, &client->offered_leases, next, lease) {
+		if (picked->is_invalid == 0) {
+			TAILQ_REMOVE(&client->offered_leases, picked, next);
+			break;
 		}
+	}
+	/* DECLINE the rest of the offers. */
+	while (!TAILQ_EMPTY(&client->offered_leases)) {
+		lease = TAILQ_FIRST(&client->offered_leases);
+		TAILQ_REMOVE(&client->offered_leases, lease, next);
+		make_decline(lease);
+		send_decline();
+		free_client_lease(lease);
 	}
 
 	if (!picked) {
