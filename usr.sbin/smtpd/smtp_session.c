@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.283 2016/07/02 09:32:30 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.284 2016/07/22 12:12:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -185,7 +185,6 @@ static int smtp_parse_rcpt_args(struct smtp_session *, char *);
 static void smtp_rfc4954_auth_plain(struct smtp_session *, char *);
 static void smtp_rfc4954_auth_login(struct smtp_session *, char *);
 static void smtp_message_end(struct smtp_session *);
-static void smtp_message_reset(struct smtp_session *, int);
 static int smtp_message_printf(struct smtp_session *, const char *, ...);
 static void smtp_free(struct smtp_session *, const char *);
 static const char *smtp_strstate(int);
@@ -649,17 +648,10 @@ smtp_session(struct listener *listener, int sock,
 	if ((s = calloc(1, sizeof(*s))) == NULL)
 		return (-1);
 
-	if (smtp_tx(s) == 0) {
-		free(s);
-		return -1;
-	}
-
 	if (iobuf_init(&s->iobuf, LINE_MAX, LINE_MAX) == -1) {
-		smtp_tx_free(s->tx);
 		free(s);
 		return (-1);
 	}
-	TAILQ_INIT(&s->tx->rcpts);
 
 	s->id = generate_uid();
 	s->listener = listener;
@@ -667,7 +659,6 @@ smtp_session(struct listener *listener, int sock,
 	io_init(&s->io, sock, s, smtp_io, &s->iobuf);
 	io_set_timeout(&s->io, SMTPD_SESSION_TIMEOUT * 1000);
 	io_set_write(&s->io);
-	io_init(&s->tx->oev, -1, s, NULL, NULL); /* initialise 'sock', but not to 0 */
 
 	s->state = STATE_NEW;
 	s->phase = PHASE_INIT;
@@ -677,28 +668,6 @@ smtp_session(struct listener *listener, int sock,
 	log_trace(TRACE_SMTP, "smtp: %p: connected to listener %p "
 	    "[hostname=%s, port=%d, tag=%s]", s, listener,
 	    listener->hostname, ntohs(listener->port), listener->tag);
-
-	/* Setup parser and callbacks before smtp_connected() can be called */
-	rfc2822_parser_init(&s->tx->rfc2822_parser);
-	rfc2822_header_default_callback(&s->tx->rfc2822_parser,
-	    header_default_callback, s);
-	rfc2822_header_callback(&s->tx->rfc2822_parser, "bcc",
-	    header_bcc_callback, s);
-	rfc2822_header_callback(&s->tx->rfc2822_parser, "from",
-	    header_domain_append_callback, s);
-	rfc2822_header_callback(&s->tx->rfc2822_parser, "to",
-	    header_domain_append_callback, s);
-	rfc2822_header_callback(&s->tx->rfc2822_parser, "cc",
-	    header_domain_append_callback, s);
-	rfc2822_body_callback(&s->tx->rfc2822_parser,
-	    dataline_callback, s);
-
-	if (listener->local || listener->port == 587) {
-		rfc2822_missing_header_callback(&s->tx->rfc2822_parser, "date",
-		    header_missing_callback, s);
-		rfc2822_missing_header_callback(&s->tx->rfc2822_parser, "message-id",
-		    header_missing_callback, s);
-	}
 
 	/* For local enqueueing, the hostname is already set */
 	if (hostname) {
@@ -772,11 +741,13 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 
 		case LKA_PERMFAIL:
 			smtp_filter_tx_rollback(s);
+			smtp_tx_free(s->tx);
 			smtp_reply(s, "%d %s", 530, "Sender rejected");
 			io_reload(&s->io);
 			break;
 		case LKA_TEMPFAIL:
 			smtp_filter_tx_rollback(s);
+			smtp_tx_free(s->tx);
 			smtp_reply(s, "421 %s: Temporary Error",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 			io_reload(&s->io);
@@ -831,6 +802,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 		} else {
 			smtp_filter_tx_rollback(s);
+			smtp_tx_free(s->tx);
 			smtp_reply(s, "421 %s: Temporary Error",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 			smtp_enter_state(s, STATE_QUIT);
@@ -917,6 +889,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		s = tree_xpop(&wait_queue_commit, reqid);
 		if (!success) {
 			smtp_filter_tx_rollback(s);
+			smtp_tx_free(s->tx);
 			smtp_reply(s, "421 %s: Temporary failure",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 			smtp_enter_state(s, STATE_QUIT);
@@ -944,10 +917,9 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			    rcpt->destcount,
 			    s->flags & SF_EHLO ? "ESMTP" : "SMTP");
 		}
-
+		smtp_tx_free(s->tx);
 		s->mailcount++;
 		s->phase = PHASE_SETUP;
-		smtp_message_reset(s, 0);
 		smtp_enter_state(s, STATE_HELO);
 		io_reload(&s->io);
 		return;
@@ -1120,6 +1092,7 @@ smtp_filter_response(uint64_t id, int query, int status, uint32_t code,
 	case QUERY_MAIL:
 		if (status != FILTER_OK) {
 			smtp_filter_tx_rollback(s);
+			smtp_tx_free(s->tx);
 			code = code ? code : 530;
 			line = line ? line : "Sender rejected";
 			smtp_reply(s, "%d %s", code, line);
@@ -1173,10 +1146,10 @@ smtp_filter_response(uint64_t id, int query, int status, uint32_t code,
 			tree_pop(&wait_filter_data, s->id);
 			smtp_filter_tx_rollback(s);
 			smtp_queue_rollback(s);
+			smtp_tx_free(s->tx);
 			code = code ? code : 530;
 			line = line ? line : "Message rejected";
 			smtp_reply(s, "%d %s", code, line);
-			smtp_message_reset(s, 0);
 			smtp_enter_state(s, STATE_HELO);
 			io_reload(&s->io);
 			return;
@@ -1442,8 +1415,45 @@ smtp_tx(struct smtp_session *s)
 	if (tx == NULL)
 		return 0;
 
+	TAILQ_INIT(&tx->rcpts);
+	io_init(&tx->oev, -1, s, NULL, NULL); /* initialise 'sock', but not to 0 */
+
 	s->tx = tx;
 	tx->session = s;
+
+	/* setup the envelope */
+	s->tx->evp.ss = s->ss;
+	(void)strlcpy(s->tx->evp.tag, s->listener->tag, sizeof(s->tx->evp.tag));
+	(void)strlcpy(s->tx->evp.smtpname, s->smtpname, sizeof(s->tx->evp.smtpname));
+	(void)strlcpy(s->tx->evp.hostname, s->hostname, sizeof s->tx->evp.hostname);
+	(void)strlcpy(s->tx->evp.helo, s->helo, sizeof s->tx->evp.helo);
+
+	if (s->flags & SF_BOUNCE)
+		s->tx->evp.flags |= EF_BOUNCE;
+	if (s->flags & SF_AUTHENTICATED)
+		s->tx->evp.flags |= EF_AUTHENTICATED;
+
+	/* Setup parser and callbacks */
+	rfc2822_parser_init(&tx->rfc2822_parser);
+	rfc2822_header_default_callback(&tx->rfc2822_parser,
+	    header_default_callback, s);
+	rfc2822_header_callback(&tx->rfc2822_parser, "bcc",
+	    header_bcc_callback, s);
+	rfc2822_header_callback(&tx->rfc2822_parser, "from",
+	    header_domain_append_callback, s);
+	rfc2822_header_callback(&tx->rfc2822_parser, "to",
+	    header_domain_append_callback, s);
+	rfc2822_header_callback(&tx->rfc2822_parser, "cc",
+	    header_domain_append_callback, s);
+	rfc2822_body_callback(&tx->rfc2822_parser,
+	    dataline_callback, s);
+
+	if (s->listener->local || s->listener->port == 587) {
+		rfc2822_missing_header_callback(&tx->rfc2822_parser, "date",
+		    header_missing_callback, s);
+		rfc2822_missing_header_callback(&tx->rfc2822_parser, "message-id",
+		    header_missing_callback, s);
+	}
 
 	return 1;
 }
@@ -1451,6 +1461,15 @@ smtp_tx(struct smtp_session *s)
 static void
 smtp_tx_free(struct smtp_tx *tx)
 {
+	struct smtp_rcpt *rcpt;
+
+	rfc2822_parser_release(&tx->rfc2822_parser);
+
+	while ((rcpt = TAILQ_FIRST(&tx->rcpts))) {
+		TAILQ_REMOVE(&tx->rcpts, rcpt, entry);
+		free(rcpt);
+	}
+
 	tx->session->tx = NULL;
 
 	free(tx);
@@ -1522,7 +1541,7 @@ smtp_data_io_done(struct smtp_session *s)
                             esc_description(ESC_DELIVERY_NOT_AUTHORIZED_MESSAGE_REFUSED));
 		else if (s->tx->msgflags)
 			smtp_reply(s, "421 Internal server error");
-		smtp_message_reset(s, 0);
+		smtp_tx_free(s->tx);
 		smtp_enter_state(s, STATE_HELO);
 		io_reload(&s->io);
 	}
@@ -1608,8 +1627,6 @@ smtp_command(struct smtp_session *s, char *line)
 			s->flags |= SF_EHLO;
 			s->flags |= SF_8BITMIME;
 		}
-
-		smtp_message_reset(s, 1);
 
 		smtp_filter_helo(s);
 		break;
@@ -1729,16 +1746,24 @@ smtp_command(struct smtp_session *s, char *line)
 			break;
 		}
 
-		smtp_message_reset(s, 1);
+		if (!smtp_tx(s)) {
+			smtp_reply(s, "421 %s: Temporary Error",
+			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
+			smtp_enter_state(s, STATE_QUIT);
+			break;
+		}
 
 		if (smtp_mailaddr(&s->tx->evp.sender, args, 1, &args,
 			s->smtpname) == 0) {
+			smtp_tx_free(s->tx);
 			smtp_reply(s, "553 %s: Sender address syntax error",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_OTHER_ADDRESS_STATUS));
 			break;
 		}
-		if (args && smtp_parse_mail_args(s, args) == -1)
+		if (args && smtp_parse_mail_args(s, args) == -1) {
+			smtp_tx_free(s->tx);
 			break;
+		}
 
 		smtp_filter_tx_begin(s);
 		smtp_filter_mail(s);
@@ -1782,15 +1807,16 @@ smtp_command(struct smtp_session *s, char *line)
 			break;
 		}
 
-		if (s->flags & SF_FILTERTX)
+		if (s->tx) {
 			smtp_filter_tx_rollback(s);
-		if (s->tx->msgid)
-			smtp_queue_rollback(s);
+			if (s->tx->msgid)
+				smtp_queue_rollback(s);
+			smtp_tx_free(s->tx);
+		}
 
 		smtp_filter_rset(s);
 
 		s->phase = PHASE_SETUP;
-		smtp_message_reset(s, 0);
 		smtp_reply(s, "250 %s: Reset state",
 		    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 		break;
@@ -1808,8 +1834,6 @@ smtp_command(struct smtp_session *s, char *line)
 			    esc_description(ESC_INVALID_COMMAND_ARGUMENTS));
 			break;
 		}
-
-		rfc2822_parser_reset(&s->tx->rfc2822_parser);
 
 		smtp_filter_data(s);
 		break;
@@ -2142,47 +2166,12 @@ smtp_message_end(struct smtp_session *s)
 			    esc_description(ESC_MESSAGE_TOO_BIG_FOR_SYSTEM));
 		else
 			smtp_reply(s, "%d Message rejected", s->tx->msgcode);
-		smtp_message_reset(s, 0);
+		smtp_tx_free(s->tx);
 		smtp_enter_state(s, STATE_HELO);
 		return;
 	}
 
 	smtp_queue_commit(s);
-}
-
-static void
-smtp_message_reset(struct smtp_session *s, int prepare)
-{
-	struct smtp_rcpt	*rcpt;
-
-	while ((rcpt = TAILQ_FIRST(&s->tx->rcpts))) {
-		TAILQ_REMOVE(&s->tx->rcpts, rcpt, entry);
-		free(rcpt);
-	}
-
-	s->tx->msgid = 0;
-	memset(&s->tx->evp, 0, sizeof s->tx->evp);
-	s->tx->msgflags = 0;
-	s->tx->destcount = 0;
-	s->tx->rcptcount = 0;
-	s->tx->datain = 0;
-	s->tx->odatalen = 0;
-	s->tx->dataeom = 0;
-	s->tx->rcvcount = 0;
-	s->tx->hdrdone = 0;
-
-	if (prepare) {
-		s->tx->evp.ss = s->ss;
-		(void)strlcpy(s->tx->evp.tag, s->listener->tag, sizeof(s->tx->evp.tag));
-		(void)strlcpy(s->tx->evp.smtpname, s->smtpname, sizeof(s->tx->evp.smtpname));
-		(void)strlcpy(s->tx->evp.hostname, s->hostname, sizeof s->tx->evp.hostname);
-		(void)strlcpy(s->tx->evp.helo, s->helo, sizeof s->tx->evp.helo);
-
-		if (s->flags & SF_BOUNCE)
-			s->tx->evp.flags |= EF_BOUNCE;
-		if (s->flags & SF_AUTHENTICATED)
-			s->tx->evp.flags |= EF_AUTHENTICATED;
-	}
 }
 
 static int
@@ -2260,20 +2249,19 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 static void
 smtp_free(struct smtp_session *s, const char * reason)
 {
-	struct smtp_rcpt	*rcpt;
-
 	log_debug("debug: smtp: %p: deleting session: %s", s, reason);
 
 	tree_pop(&wait_filter_data, s->id);
 
-	if (s->tx->msgid) {
-		smtp_queue_rollback(s);
-		io_clear(&s->tx->oev);
-		iobuf_clear(&s->tx->obuf);
-	}
-
-	if (s->flags & SF_FILTERTX)
+	if (s->tx) {
+		if (s->tx->msgid) {
+			smtp_queue_rollback(s);
+			io_clear(&s->tx->oev);
+			iobuf_clear(&s->tx->obuf);
+		}
 		smtp_filter_tx_rollback(s);
+		smtp_tx_free(s->tx);
+	}
 
 	if (s->flags & SF_FILTERCONN)
 		smtp_filter_disconnect(s);
@@ -2283,16 +2271,8 @@ smtp_free(struct smtp_session *s, const char * reason)
 	if (s->flags & SF_SECURE && s->listener->flags & F_STARTTLS)
 		stat_decrement("smtp.tls", 1);
 
-	while ((rcpt = TAILQ_FIRST(&s->tx->rcpts))) {
-		TAILQ_REMOVE(&s->tx->rcpts, rcpt, entry);
-		free(rcpt);
-	}
-
-	rfc2822_parser_release(&s->tx->rfc2822_parser);
-
 	io_clear(&s->io);
 	iobuf_clear(&s->iobuf);
-	smtp_tx_free(s->tx);
 	free(s);
 
 	smtp_collect();
