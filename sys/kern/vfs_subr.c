@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.248 2016/06/19 11:54:33 natano Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.249 2016/07/22 09:54:09 kettenis Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1290,7 +1290,7 @@ vfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			if (vfsp->vfc_typenum == name[0])
 				break;
 
-		if (vfsp == NULL)
+		if (vfsp == NULL || vfsp->vfc_vfsops->vfs_sysctl == NULL)
 			return (EOPNOTSUPP);
 
 		return ((*vfsp->vfc_vfsops->vfs_sysctl)(&name[1], namelen - 1,
