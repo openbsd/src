@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.c,v 1.5 2016/07/20 21:01:06 reyk Exp $	*/
+/*	$OpenBSD: switchd.c,v 1.6 2016/07/22 09:31:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -175,11 +175,12 @@ main(int argc, char *argv[])
 	 * pledge in the parent process:
 	 * stdio - for malloc and basic I/O including events.
 	 * rpath - for reload to open and read the configuration files.
+	 * wpath - for accessing the /dev/switch device.
 	 * inet - for opening OpenFlow and device sockets.
 	 * dns - for resolving host in the configuration files.
 	 * sendfd - send sockets to child processes on reload.
 	 */
-	if (pledge("stdio rpath inet dns proc sendfd", NULL) == -1)
+	if (pledge("stdio rpath wpath inet dns proc sendfd", NULL) == -1)
 		fatal("pledge");
 
 	event_init();
