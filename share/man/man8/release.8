@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.73 2016/06/26 15:17:43 tb Exp $
+.\"	$OpenBSD: release.8,v 1.74 2016/07/23 00:10:15 jmc Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: June 26 2016 $
+.Dd $Mdocdate: July 23 2016 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -40,13 +40,7 @@ Create boot and installation disk images.
 .Pp
 The following sections describe each of the required steps in detail.
 .Pp
-Commands to be run as a user with write permissions on the source and
-ports trees
-.Pf ( Pa /usr/src
-and
-.Pa /usr/ports
-respectively)
-are preceded by a dollar sign
+Commands to be run as a user are preceded by a dollar sign
 .Pq Sq $ .
 Commands that must be run as the superuser are preceded by a hash mark
 .Pq Sq # .
@@ -101,7 +95,8 @@ $ cd PORTSPATH && cvs up -r TAG -Pd
 .Pp
 Replace
 .Va XSRCDIR
-with the path to your X Window System sources.
+with the path to your X Window System sources, typically
+.Pa /usr/xenocara .
 Replace
 .Va PORTSPATH
 with the path to your ports tree sources, typically
