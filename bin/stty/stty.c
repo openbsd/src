@@ -1,4 +1,4 @@
-/*	$OpenBSD: stty.c,v 1.19 2016/03/23 14:52:42 mmcc Exp $	*/
+/*	$OpenBSD: stty.c,v 1.20 2016/07/23 08:57:18 bluhm Exp $	*/
 /*	$NetBSD: stty.c,v 1.11 1995/03/21 09:11:30 cgd Exp $	*/
 
 /*-
@@ -97,11 +97,15 @@ args:	argc -= optind;
 		/* FALLTHROUGH */
 	case BSD:
 	case POSIX:
+		if (*argv)
+			errx(1, "either display or modify");
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
 		print(&i.t, &i.win, i.ldisc, fmt);
 		break;
 	case GFLAG:
+		if (*argv)
+			errx(1, "either display or modify");
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
 		gprint(&i.t, &i.win, i.ldisc);
