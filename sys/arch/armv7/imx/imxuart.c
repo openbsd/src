@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.7 2016/07/10 11:46:28 kettenis Exp $ */
+/* $OpenBSD: imxuart.c,v 1.8 2016/07/23 15:02:08 patrick Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -162,6 +162,7 @@ imxuart_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct imxuart_softc *sc = (struct imxuart_softc *) self;
 	struct fdt_attach_args *faa = aux;
+	int maj;
 
 	if (faa->fa_nreg < 2 || faa->fa_nintr < 3)
 		return;
@@ -176,8 +177,15 @@ imxuart_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[1], 0, &sc->sc_ioh))
 		panic("imxuartattach: bus_space_map failed!");
 
-	if (faa->fa_reg[0] == imxuartconsaddr)
+	if (faa->fa_reg[0] == imxuartconsaddr) {
+		/* Locate the major number. */
+		for (maj = 0; maj < nchrdev; maj++)
+			if (cdevsw[maj].d_open == imxuartopen)
+				break;
+		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+
 		printf(": console");
+	}
 
 	timeout_set(&sc->sc_diag_tmo, imxuart_diag, sc);
 	timeout_set(&sc->sc_dtr_tmo, imxuart_raisedtr, sc);
