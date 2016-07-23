@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.19 2015/06/06 07:19:56 stsp Exp $
+# $OpenBSD: FwUpdate.pm,v 1.20 2016/07/23 18:09:47 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -225,11 +225,10 @@ sub mark_set_for_deletion
 	$set->{updates}++;
 }
 
-# no way we can find a new quirks on the firmware site
+# no quirks for firmware, bypass entirely
 sub do_quirks
 {
 	my ($self, $state) = @_;
-	$self->SUPER::do_quirks($state);
 	$state->finish_init;
 }
 
