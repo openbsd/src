@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.9 2016/07/22 13:20:30 jsg Exp $ */
+/* $OpenBSD: if_fec.c,v 1.10 2016/07/23 14:39:10 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -326,10 +326,20 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 		if (phy_reset_duration > 1000)
 			phy_reset_duration = 1;
 
+		/*
+		 * The Linux people really screwed the pooch here.
+		 * The Linux kernel always treats the gpio as
+		 * active-low, even if it is marked as active-high in
+		 * the device tree.  As a result the device tree for
+		 * many boards incorrectly marks the gpio as
+		 * active-high.  
+		 */
+		phy_reset_gpio[2] = GPIO_ACTIVE_LOW;
+
 		gpio_controller_config_pin(phy_reset_gpio, GPIO_CONFIG_OUTPUT);
-		gpio_controller_set_pin(phy_reset_gpio, 0);
-		delay(phy_reset_duration * 1000);
 		gpio_controller_set_pin(phy_reset_gpio, 1);
+		delay(phy_reset_duration * 1000);
+		gpio_controller_set_pin(phy_reset_gpio, 0);
 		delay(1000);
 	}
 	printf("\n");
