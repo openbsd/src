@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.68 2016/07/16 18:36:41 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.69 2016/07/23 07:00:39 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1324,14 +1324,17 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 	 * We must be able to clear the following:
 	 * IA32_VMX_ENTRY_TO_SMM - enter to SMM
 	 * IA32_VMX_DEACTIVATE_DUAL_MONITOR_TREATMENT
-	 * XXX clear load debug_ctrls on entry ?
+	 * IA32_VMX_LOAD_DEBUG_CONTROLS
+	 * IA32_VMX_LOAD_IA32_PERF_GLOBAL_CTRL_ON_ENTRY
 	 */
 	if (ug == 1)
 		want1 = 0;
 	else
 		want1 = IA32_VMX_IA32E_MODE_GUEST;
 	want0 = IA32_VMX_ENTRY_TO_SMM |
-	    IA32_VMX_DEACTIVATE_DUAL_MONITOR_TREATMENT;
+	    IA32_VMX_DEACTIVATE_DUAL_MONITOR_TREATMENT |
+	    IA32_VMX_LOAD_DEBUG_CONTROLS |
+	    IA32_VMX_LOAD_IA32_PERF_GLOBAL_CTRL_ON_ENTRY;
 
 	if (vcpu->vc_vmx_basic & IA32_VMX_TRUE_CTLS_AVAIL) {
 		ctrl = IA32_VMX_TRUE_ENTRY_CTLS;
