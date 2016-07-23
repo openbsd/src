@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.901 2016/05/27 21:13:17 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.902 2016/07/23 17:55:45 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1495,7 +1495,7 @@ install_http() {
 	if [[ -n $_mirror ]]; then
 		PACKAGE_PATH=$(print -r -- "$_url_base" |
 			sed -E "/\/(snapshots|[0-9]\.[0-9])\/($ARCH)\/*$/!d
-				s!!/%c/packages/%a/!;q")
+				s!!/\1/packages/$(arch -s)/!;q")
 	fi
 }
 
