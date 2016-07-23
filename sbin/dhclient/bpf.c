@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.41 2016/07/19 17:23:20 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.42 2016/07/23 15:53:19 stsp Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -114,27 +114,8 @@ if_register_send(void)
  *
  * XXX: Changes to the filter program may require changes to the
  * constant offsets used in if_register_receive to patch the BPF program!
- *
- * Adapted from script shown by
- *
- * tcpdump -d 'ether dst 00:00:00:00:00:00 ip proto \udp dst port 67'
- *
- * NOTE: tcpdump shows absolute jumps and relative jumps are required here!
  */
 struct bpf_insn dhcp_bpf_filter[] = {
-	/*
-	 * Make sure this is directed to our MAC.
-	 *     a) compare last 4 octets
-	 *     b) compare first 2 octets
-	 *
-	 * NOTE: MAC value must be patched in!
-	 */
-
-	BPF_STMT(BPF_LD + BPF_W + BPF_ABS, 2),
-	BPF_JUMP(BPF_JMP + BPF_JEQ +  BPF_K, 0x00000000, 0, 12), /* patch */
-	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 0),
-	BPF_JUMP(BPF_JMP + BPF_JEQ +  BPF_K, 0x0000, 0, 10), /* patch */
-
 	/* Make sure this is an IP packet. */
 	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 12),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 8),
@@ -209,8 +190,6 @@ if_register_receive(void)
 	struct bpf_version v;
 	struct bpf_program p;
 	int flag = 1, sz;
-	uint32_t bits;
-	uint16_t bits16;
 
 	/* Open a BPF device and hang it on this interface. */
 	ifi->bfdesc = if_register_bpf();
@@ -256,13 +235,7 @@ if_register_receive(void)
 	 * XXX: changes to filter program may require changes to the
 	 * insn number(s) used below!
 	 */
-	memcpy(&bits, ((uint8_t *)&ifi->hw_address) + 2, sizeof(bits));
-	dhcp_bpf_filter[1].k = ntohl(bits);
-
-	memcpy(&bits16, ((uint8_t *)&ifi->hw_address), sizeof(bits16));
-	dhcp_bpf_filter[3].k = ntohs(bits16);
-
-	dhcp_bpf_filter[12].k = LOCAL_PORT;
+	dhcp_bpf_filter[8].k = LOCAL_PORT;
 
 	if (ioctl(ifi->bfdesc, BIOCSETF, &p) < 0)
 		error("Can't install packet filter program: %s",
