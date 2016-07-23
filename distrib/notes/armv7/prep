@@ -1,6 +1,12 @@
-dnl	$OpenBSD: prep,v 1.9 2016/07/09 07:19:52 jsg Exp $
+dnl	$OpenBSD: prep,v 1.10 2016/07/23 16:22:17 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
+
+To perform an installation you must be able to interact with the serial
+console of the machine.  USB OTG ports such as the one found on the
+BeagleBone will not function as a console.  You need to be able to
+interact with the firmware on the console.  Often this requires a 3.3V
+TTL level adapter connected to pins or a header on the board.
 
 Firmware which provides an EFI interface with a Device Tree Blob (DTB)
 file is required to boot.  In most cases this is provided by images of
