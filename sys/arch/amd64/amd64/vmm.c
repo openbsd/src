@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.70 2016/07/23 07:17:21 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.71 2016/07/23 07:25:29 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3381,6 +3381,7 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 		 *  XXX - timestamp (CPUID_TSC)
 		 *  monitor/mwait (CPUIDECX_MWAIT)
 		 *  performance monitoring (CPUIDECX_PDCM)
+		 *  hyperthreading (CPUID_HTT)
 		 * plus:
 		 *  hypervisor (CPUIDECX_HV)
 		 */
@@ -3389,11 +3390,15 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 		    CPUIDECX_MWAIT | CPUIDECX_PDCM |
 		    CPUIDECX_VMX | CPUIDECX_XSAVE);
 		*rdx = curcpu()->ci_feature_flags &
-		    ~(CPUID_ACPI | CPUID_TM | CPUID_TSC);
+		    ~(CPUID_ACPI | CPUID_TM | CPUID_TSC | CPUID_HTT);
 		break;
 	case 0x02:	/* Cache and TLB information */
 		DPRINTF("vmx_handle_cpuid: function 0x02 (cache/TLB) not"
 		    " supported\n");
+		*rax = 0;
+		*rbx = 0;
+		*rcx = 0;
+		*rdx = 0;
 		break;
 	case 0x03:	/* Processor serial number (not supported) */
 		*rax = 0;
@@ -3404,6 +3409,10 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 	case 0x04:
 		DPRINTF("vmx_handle_cpuid: function 0x04 (deterministic "
 		    "cache info) not supported\n");
+		*rax = 0;
+		*rbx = 0;
+		*rcx = 0;
+		*rdx = 0;
 		break;
 	case 0x05:	/* MONITOR/MWAIT (not supported) */
 		*rax = 0;
@@ -3435,6 +3444,10 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 	case 0x09:	/* Direct Cache Access (not supported) */
 		DPRINTF("vmx_handle_cpuid: function 0x09 (direct cache access)"
 		    " not supported\n");
+		*rax = 0;
+		*rbx = 0;
+		*rcx = 0;
+		*rdx = 0;
 		break;
 	case 0x0a:	/* Architectural performance monitoring */
 		*rax = 0;
@@ -3445,26 +3458,50 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 	case 0x0b:	/* Extended topology enumeration (not supported) */
 		DPRINTF("vmx_handle_cpuid: function 0x0b (topology enumeration)"
 		    " not supported\n");
+		*rax = 0;
+		*rbx = 0;
+		*rcx = 0;
+		*rdx = 0;
 		break;
 	case 0x0d:	/* Processor ext. state information (not supported) */
 		DPRINTF("vmx_handle_cpuid: function 0x0d (ext. state info)"
 		    " not supported\n");
+		*rax = 0;
+		*rbx = 0;
+		*rcx = 0;
+		*rdx = 0;
 		break;
 	case 0x0f:	/* QoS info (not supported) */
 		DPRINTF("vmx_handle_cpuid: function 0x0f (QoS info)"
 		    " not supported\n");
+		*rax = 0;
+		*rbx = 0;
+		*rcx = 0;
+		*rdx = 0;
 		break;
 	case 0x14:	/* Processor Trace info (not supported) */
 		DPRINTF("vmx_handle_cpuid: function 0x14 (processor trace info)"
 		    " not supported\n");
+		*rax = 0;
+		*rbx = 0;
+		*rcx = 0;
+		*rdx = 0;
 		break;
 	case 0x15:	/* TSC / Core Crystal Clock info (not supported) */
 		DPRINTF("vmx_handle_cpuid: function 0x15 (TSC / CCC info)"
 		    " not supported\n");
+		*rax = 0;
+		*rbx = 0;
+		*rcx = 0;
+		*rdx = 0;
 		break;
 	case 0x16:	/* Processor frequency info (not supported) */
 		DPRINTF("vmx_handle_cpuid: function 0x16 (frequency info)"
 		    " not supported\n");
+		*rax = 0;
+		*rbx = 0;
+		*rcx = 0;
+		*rdx = 0;
 		break;
 	case 0x40000000:	/* Hypervisor information */
 		*rax = 0;
@@ -3522,9 +3559,17 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 	case 0x80000008:	/* Phys bits info and topology (AMD) */
 		DPRINTF("vmx_handle_cpuid: function 0x80000008 (phys bits info)"
 		    " not supported\n");
+		*rax = 0;
+		*rbx = 0;
+		*rcx = 0;
+		*rdx = 0;
 		break;
 	default:
 		DPRINTF("vmx_handle_cpuid: unsupported rax=0x%llx\n", *rax);
+		*rax = 0;
+		*rbx = 0;
+		*rcx = 0;
+		*rdx = 0;
 	}
 
 	vcpu->vc_gueststate.vg_rip += insn_length;
