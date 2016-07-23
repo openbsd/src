@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.106 2016/05/31 16:41:08 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.107 2016/07/23 09:12:33 krw Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -482,7 +482,7 @@ havelabel:
 			bsize = MINIMUM(DFL_BLKSIZE, 8 * fsize);
 	}
 	if (density == 0)
-		density = NFPI * fsize;
+		density = (NFPI * fsize) / (sectorsize / DEV_BSIZE);
 	if (minfree < MINFREE && opt != FS_OPTSPACE && reqopt == -1) {
 		warnx("warning: changing optimization to space "
 		    "because minfree is less than %d%%\n", MINFREE);
