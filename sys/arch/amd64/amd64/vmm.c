@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.69 2016/07/23 07:00:39 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.70 2016/07/23 07:17:21 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -40,7 +40,7 @@
 
 #include <dev/isa/isareg.h>
 
-#ifdef VMM_DEBUG
+#ifdef VMM_DEBUG 
 int vmm_debug = 0;
 #define DPRINTF(x...)	do { if (vmm_debug) printf(x); } while(0)
 #else
@@ -2721,13 +2721,34 @@ vcpu_run_vmx(struct vcpu *vcpu, uint8_t from_exit, int16_t *injint)
 			case VMX_EXIT_HLT:
 				break;
 			case VMX_EXIT_TRIPLE_FAULT:
+				DPRINTF("%s: vm %d vcpu %d triple fault\n",
+				    __func__, vcpu->vc_parent->vm_id,
+				    vcpu->vc_id);
+#ifdef VMM_DEBUG
+				vmx_vcpu_dump_regs(vcpu);
+				dump_vcpu(vcpu);
+#endif /* VMM_DEBUG */
 				break;
+			case VMX_EXIT_ENTRY_FAILED_GUEST_STATE:
+				DPRINTF("%s: vm %d vcpu %d failed entry "
+				    "due to invalid guest state\n",
+				    __func__, vcpu->vc_parent->vm_id,
+				    vcpu->vc_id);
+#ifdef VMM_DEBUG
+				vmx_vcpu_dump_regs(vcpu);
+				dump_vcpu(vcpu);
+#endif /* VMM_DEBUG */
+				return EINVAL;
 			default:
-				printf("vcpu_run_vmx: returning from exit "
-				    "with unknown reason %d (%s)\n",
+				printf("%s: unimplemented exit type %d (%s)\n",
+				    __func__,
 				    vcpu->vc_gueststate.vg_exit_reason,
 				    vmx_exit_reason_decode(
 					vcpu->vc_gueststate.vg_exit_reason));
+#ifdef VMM_DEBUG
+				vmx_vcpu_dump_regs(vcpu);
+				dump_vcpu(vcpu);
+#endif /* VMM_DEBUG */
 				break;
 			}
 		}
