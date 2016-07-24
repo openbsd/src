@@ -1252,6 +1252,7 @@
 ./usr/share/man/man4/cdcef.4
 ./usr/share/man/man4/cfxga.4
 ./usr/share/man/man4/ch.4
+./usr/share/man/man4/chvgpio.4
 ./usr/share/man/man4/ciphy.4
 ./usr/share/man/man4/ciss.4
 ./usr/share/man/man4/clcs.4
