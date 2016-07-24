@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.41 2016/07/21 07:22:38 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.42 2016/07/24 22:46:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -164,26 +164,29 @@ priv_init(int argc, char **argv)
 		sigprocmask(SIG_SETMASK, &oset, NULL);
 
 		/*
-		 * Parent, attempt to drop privs and chroot.  If any of this
-		 * fails that is OK, safety is still provided by pledge(2).
+		 * If run as regular user, packet parser will rely on
+		 * pledge(2). If we are root, we want to chroot also..
 		 */
+		if (getuid() != 0)
+			return (0);
+
 		pw = getpwnam("_tcpdump");
 		if (pw == NULL)
-			return (0);
+			errx(1, "unknown user _tcpdump");
 
 		/* Attempt to chroot */
 		if (chroot(pw->pw_dir) == -1)
-			return (0);
+			errx(1, "unable to chroot");
 		if (chdir("/") == -1)
-			return (0);
+			err(1, "unable to chdir");
 
 		/* drop to _tcpdump */
 		if (setgroups(1, &pw->pw_gid) == -1)
-			return (0);
+			err(1, "setgroups() failed");
 		if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
-			return (0);
+			err(1, "setresgid() failed");
 		if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
-			return (0);
+			err(1, "setresuid() failed");
 
 		return (0);
 	}
