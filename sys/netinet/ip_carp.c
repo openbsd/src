@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.292 2016/07/19 16:08:46 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.293 2016/07/25 16:44:04 benno Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -80,6 +80,7 @@
 #include <net/bpf.h>
 #endif
 
+#include "vlan.h"
 #if NVLAN > 0
 #include <net/if_vlan_var.h>
 #endif
