@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.142 2016/06/10 20:33:29 vgross Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.143 2016/07/25 13:19:32 natano Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -117,7 +117,6 @@ int	bpf_sysctl_locked(int *, u_int, void *, size_t *, void *, size_t);
 
 struct bpf_d *bpfilter_lookup(int);
 struct bpf_d *bpfilter_create(int);
-void bpfilter_destroy(struct bpf_d *);
 
 /*
  * Reference count access to descriptor buffers
@@ -368,6 +367,7 @@ bpfclose(dev_t dev, int flag, int mode, struct proc *p)
 	if (d->bd_bif)
 		bpf_detachd(d);
 	bpf_wakeup(d);
+	LIST_REMOVE(d, bd_list);
 	D_PUT(d);
 	splx(s);
 
@@ -1494,7 +1494,7 @@ bpf_freed(struct bpf_d *d)
 	srp_update_locked(&bpf_insn_gc, &d->bd_rfilter, NULL);
 	srp_update_locked(&bpf_insn_gc, &d->bd_wfilter, NULL);
 
-	bpfilter_destroy(d);
+	free(d, M_DEVBUF, sizeof(*d));
 }
 
 /*
@@ -1548,20 +1548,8 @@ bpfdetach(struct ifnet *ifp)
 				if (cdevsw[maj].d_open == bpfopen)
 					break;
 
-			while ((bd = SRPL_FIRST_LOCKED(&bp->bif_dlist))) {
-				struct bpf_d *d;
-
-				/*
-				 * Locate the minor number and nuke the vnode
-				 * for any open instance.
-				 */
-				LIST_FOREACH(d, &bpf_d_list, bd_list)
-					if (d == bd) {
-						vdevgone(maj, d->bd_unit,
-						    d->bd_unit, VCHR);
-						break;
-					}
-			}
+			while ((bd = SRPL_FIRST_LOCKED(&bp->bif_dlist)))
+				vdevgone(maj, bd->bd_unit, bd->bd_unit, VCHR);
 
 			free(bp, M_DEVBUF, sizeof *bp);
 		} else
@@ -1649,13 +1637,6 @@ bpfilter_create(int unit)
 		LIST_INSERT_HEAD(&bpf_d_list, bd, bd_list);
 	}
 	return (bd);
-}
-
-void
-bpfilter_destroy(struct bpf_d *bd)
-{
-	LIST_REMOVE(bd, bd_list);
-	free(bd, M_DEVBUF, sizeof(*bd));
 }
 
 /*
