@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.228 2016/07/23 14:52:39 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.229 2016/07/25 19:52:56 deraadt Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -41,7 +41,7 @@ option		CD9660		# ISO 9660 + Rock Ridge file system
 option		UDF		# UDF (DVD) file system
 option		MSDOSFS		# MS-DOS file system
 option		FIFO		# FIFOs; RECOMMENDED
-option		TMPFS		# efficient memory file system
+#option		TMPFS		# efficient memory file system
 option		FUSE		# FUSE
 
 option		SOCKET_SPLICE	# Socket Splicing for TCP and UDP
