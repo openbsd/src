@@ -39,6 +39,8 @@ print OUT "\n# perlivp $^V\n";
 
 print OUT <<'!NO!SUBS!';
 
+BEGIN { pop @INC if $INC[-1] eq '.' }
+
 sub usage {
     warn "@_\n" if @_;
     print << "    EOUSAGE";

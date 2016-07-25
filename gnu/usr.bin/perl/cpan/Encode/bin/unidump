@@ -1,5 +1,6 @@
 #!./perl
 
+BEGIN { pop @INC if $INC[-1] eq '.' }
 use strict;
 use Encode;
 use Getopt::Std;

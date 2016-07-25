@@ -16,7 +16,7 @@ use Net::Config;
 @ISA       = qw(Exporter);
 @EXPORT_OK = qw(hostname hostdomain hostfqdn domainname);
 
-$VERSION = "2.23";
+$VERSION = "2.23_01";
 
 my ($host, $domain, $fqdn) = (undef, undef, undef);
 

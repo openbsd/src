@@ -28,7 +28,7 @@ Exporter::export_ok_tags('all');
 
 $GunzipError = '';
 
-$VERSION = '2.064';
+$VERSION = '2.064_01';
 
 sub new
 {

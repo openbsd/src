@@ -7,7 +7,7 @@ use vars qw($something_has_failed_at);
 use vars qw(
             $VERSION
 );
-$VERSION = "5.5";
+$VERSION = "5.5_01";
 
 
 sub new {

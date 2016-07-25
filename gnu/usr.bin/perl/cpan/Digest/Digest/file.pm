@@ -8,7 +8,7 @@ use Digest ();
 
 use vars qw($VERSION @ISA @EXPORT_OK);
 
-$VERSION = "1.16";
+$VERSION = "1.16_01";
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(digest_file_ctx digest_file digest_file_hex digest_file_base64);
 

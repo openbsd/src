@@ -12,7 +12,7 @@ CPAN::HandleConfig - internal configuration handling for CPAN.pm
 
 =cut 
 
-$VERSION = "5.5005"; # see also CPAN::Config::VERSION at end of file
+$VERSION = "5.5005_01"; # see also CPAN::Config::VERSION at end of file
 
 %can = (
         commit   => "Commit changes to disk",
@@ -768,7 +768,7 @@ sub prefs_lookup {
 
     use strict;
     use vars qw($AUTOLOAD $VERSION);
-    $VERSION = "5.5005";
+    $VERSION = "5.5005_01";
 
     # formerly CPAN::HandleConfig was known as CPAN::Config
     sub AUTOLOAD { ## no critic

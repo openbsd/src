@@ -16,7 +16,7 @@ Version 3.30
 
 =cut
 
-our $VERSION = '3.30';
+our $VERSION = '3.30_01';
 
 use constant GOT_TIME_HIRES => do {
     eval 'use Time::HiRes qw(time);';

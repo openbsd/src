@@ -1,7 +1,7 @@
 package CPAN::FTP::netrc;
 use strict;
 
-$CPAN::FTP::netrc::VERSION = $CPAN::FTP::netrc::VERSION = "1.01";
+$CPAN::FTP::netrc::VERSION = $CPAN::FTP::netrc::VERSION = "1.01_01";
 
 # package CPAN::FTP::netrc;
 sub new {

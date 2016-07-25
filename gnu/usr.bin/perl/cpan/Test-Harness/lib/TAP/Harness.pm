@@ -20,7 +20,7 @@ Version 3.30
 
 =cut
 
-our $VERSION = '3.30';
+our $VERSION = '3.30_01';
 
 $ENV{HARNESS_ACTIVE}  = 1;
 $ENV{HARNESS_VERSION} = $VERSION;

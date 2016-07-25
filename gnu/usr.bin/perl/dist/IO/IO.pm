@@ -7,7 +7,7 @@ use Carp;
 use strict;
 use warnings;
 
-our $VERSION = "1.31";
+our $VERSION = "1.31_01";
 XSLoader::load 'IO', $VERSION;
 
 sub import {
@@ -18,6 +18,8 @@ sub import {
     
     my @l = @_ ? @_ : qw(Handle Seekable File Pipe Socket Dir);
 
+    local @INC = @INC;
+    pop @INC if $INC[-1] eq '.';
     eval join("", map { "require IO::" . (/(\w+)/)[0] . ";\n" } @l)
 	or croak $@;
 }

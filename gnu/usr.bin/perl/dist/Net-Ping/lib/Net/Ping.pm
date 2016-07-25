@@ -17,7 +17,7 @@ use Time::HiRes;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(pingecho);
-$VERSION = "2.43";
+$VERSION = "2.43_01";
 
 # Constants
 
@@ -410,7 +410,11 @@ sub ping_external {
       $timeout            # Seconds after which ping times out
      ) = @_;
 
-  eval { require Net::Ping::External; }
+  eval {
+    local @INC = @INC;
+    pop @INC if $INC[-1] eq '.';
+    require Net::Ping::External;
+  }
     or croak('Protocol "external" not supported on your system: Net::Ping::External not found');
   return Net::Ping::External::ping(ip => $ip, timeout => $timeout);
 }

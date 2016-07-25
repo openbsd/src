@@ -11,7 +11,7 @@ use File::GlobMapper;
 require Exporter;
 our ($VERSION, @ISA, @EXPORT, %EXPORT_TAGS, $HAS_ENCODE);
 @ISA = qw(Exporter);
-$VERSION = '2.064';
+$VERSION = '2.064_01';
 
 @EXPORT = qw( isaFilehandle isaFilename isaScalar
               whatIsInput whatIsOutput 
@@ -464,7 +464,7 @@ sub createSelfTiedObject
 #
 #require Exporter;
 #our ($VERSION, @ISA, @EXPORT);
-#$VERSION = '2.000_08';
+#$VERSION = '2.000_09';
 #@ISA = qw(Exporter);
 
 $EXPORT_TAGS{Parse} = [qw( ParseParameters 

@@ -3,6 +3,7 @@
 # $Id: ucmlint,v 2.2 2008/03/12 09:51:11 dankogai Exp $
 #
 
+BEGIN { pop @INC if $INC[-1] eq '.' }
 use strict;
 our  $VERSION = do { my @r = (q$Revision: 2.2 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 

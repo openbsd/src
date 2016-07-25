@@ -11,7 +11,7 @@ require 5.005;
 
 
 {   no strict 'vars';
-    $VERSION = '0.33';
+    $VERSION = '0.33_01';
 
     %EXPORT_TAGS = (
         standard => [qw(openlog syslog closelog setlogmask)],
@@ -888,6 +888,8 @@ sub silent_eval (&) {
 sub can_load {
     my ($module, $verbose) = @_;
     local($SIG{__DIE__}, $SIG{__WARN__}, $@);
+    local @INC = @INC;
+    pop @INC if $INC[-1] eq '.';
     my $loaded = eval "use $module; 1";
     warn $@ if not $loaded and $verbose;
     return $loaded

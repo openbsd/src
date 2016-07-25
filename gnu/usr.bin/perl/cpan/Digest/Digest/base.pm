@@ -2,7 +2,7 @@ package Digest::base;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = "1.16";
+$VERSION = "1.16_01";
 
 # subclass is supposed to implement at least these
 sub new;

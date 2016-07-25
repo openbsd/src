@@ -1,7 +1,7 @@
 package bignum;
 use 5.006;
 
-$VERSION = '0.37';
+$VERSION = '0.37_01';
 use Exporter;
 @ISA 		= qw( bigint );
 @EXPORT_OK	= qw( PI e bexp bpi hex oct ); 
@@ -155,6 +155,8 @@ sub import
     # see if we can find Math::BigInt::Lite
     if (!defined $a && !defined $p)		# rounding won't work to well
       {
+      local @INC = @INC;
+      pop @INC if $INC[-1] eq '.';
       eval 'require Math::BigInt::Lite;';
       if ($@ eq '')
         {

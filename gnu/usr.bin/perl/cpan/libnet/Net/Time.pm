@@ -17,7 +17,7 @@ use IO::Select;
 @ISA       = qw(Exporter);
 @EXPORT_OK = qw(inet_time inet_daytime);
 
-$VERSION = "2.10";
+$VERSION = "2.10_01";
 
 $TIMEOUT = 120;
 

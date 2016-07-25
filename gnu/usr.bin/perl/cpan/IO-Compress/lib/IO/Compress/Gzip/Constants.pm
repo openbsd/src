@@ -9,7 +9,7 @@ require Exporter;
 our ($VERSION, @ISA, @EXPORT, %GZIP_OS_Names);
 our ($GZIP_FNAME_INVALID_CHAR_RE, $GZIP_FCOMMENT_INVALID_CHAR_RE);
 
-$VERSION = '2.064';
+$VERSION = '2.064_01';
 
 @ISA = qw(Exporter);
 

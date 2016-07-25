@@ -1,5 +1,6 @@
 #!perl
 use 5.006;
+BEGIN { pop @INC if $INC[-1] eq '.' }
 use strict;
 eval {
   require ExtUtils::ParseXS;

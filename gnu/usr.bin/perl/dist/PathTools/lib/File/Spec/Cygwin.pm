@@ -4,7 +4,7 @@ use strict;
 use vars qw(@ISA $VERSION);
 require File::Spec::Unix;
 
-$VERSION = '3.48_02';
+$VERSION = '3.48_03';
 $VERSION =~ tr/_//;
 
 @ISA = qw(File::Spec::Unix);
@@ -137,7 +137,11 @@ sub case_tolerant {
   if ($mntopts and ($mntopts =~ /,managed/)) {
     return 0;
   }
-  eval { require Win32API::File; } or return 1;
+  eval {
+      local @INC = @INC;
+      pop @INC if $INC[-1] eq '.';
+      require Win32API::File;
+  } or return 1;
   my $osFsType = "\0"x256;
   my $osVolName = "\0"x256;
   my $ouFsFlags = 0;

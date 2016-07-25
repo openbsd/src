@@ -37,7 +37,7 @@ BEGIN {
   }
 }
 
-$VERSION = "2.30";
+$VERSION = "2.30_01";
 @ISA     = qw(Exporter);
 @EXPORT  = qw(CMD_INFO CMD_OK CMD_MORE CMD_REJECT CMD_ERROR CMD_PENDING);
 

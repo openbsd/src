@@ -2,7 +2,7 @@ package base;
 
 use strict 'vars';
 use vars qw($VERSION);
-$VERSION = '2.22';
+$VERSION = '2.22_01';
 $VERSION = eval $VERSION;
 
 # constant.pm is slow
@@ -96,7 +96,11 @@ sub import {
             {
                 local $SIG{__DIE__};
                 my $fn = _module_to_filename($base);
-                eval { require $fn };
+                eval {
+                    local @INC = @INC;
+                    pop @INC if $INC[-1] eq '.';
+                    require $fn
+                };
                 # Only ignore "Can't locate" errors from our eval require.
                 # Other fatal errors (syntax etc) must be reported.
                 #

@@ -1,6 +1,7 @@
 #!./perl
 # $Id: piconv,v 2.6 2014/03/28 02:37:42 dankogai Exp $
 #
+BEGIN { pop @INC if $INC[-1] eq '.' }
 use 5.8.0;
 use strict;
 use Encode ;

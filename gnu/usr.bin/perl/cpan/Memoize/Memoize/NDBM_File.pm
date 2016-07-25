@@ -12,7 +12,7 @@ See L<Memoize>.
 
 use NDBM_File;
 @ISA = qw(NDBM_File);
-$VERSION = '1.03';
+$VERSION = '1.03_01';
 
 $Verbose = 0;
 

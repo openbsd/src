@@ -10,7 +10,7 @@ See L<Memoize::Expire>.
 
 =cut
 
-$VERSION = '1.03';
+$VERSION = '1.03_01';
 use Carp;
 
 my $Zero = pack("N", 0);

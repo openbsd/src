@@ -72,7 +72,7 @@ package CPAN::Queue;
 # in CPAN::Distribution::rematein.
 
 use vars qw{ @All $VERSION };
-$VERSION = "5.5002";
+$VERSION = "5.5002_01";
 
 # CPAN::Queue::queue_item ;
 sub queue_item {

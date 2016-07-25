@@ -49,7 +49,7 @@ use strict;
 
 package CPAN::Kwalify;
 use vars qw($VERSION $VAR1);
-$VERSION = "5.50";
+$VERSION = "5.50_01";
 
 use File::Spec ();
 

@@ -7,7 +7,7 @@ use overload fallback => 1, map { ($_ => 'run') } qw/
     bool "" 0+
 /;
 
-$VERSION = "5.50";
+$VERSION = "5.50_01";
 
 sub run {
     $_[0]->();

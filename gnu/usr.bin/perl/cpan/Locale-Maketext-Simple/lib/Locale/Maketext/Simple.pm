@@ -1,5 +1,5 @@
 package Locale::Maketext::Simple;
-$Locale::Maketext::Simple::VERSION = '0.21';
+$Locale::Maketext::Simple::VERSION = '0.21_01';
 
 use strict;
 use 5.005;
@@ -134,7 +134,12 @@ sub load_loc {
     my $pkg = join('::', grep { defined and length } $args{Class}, $args{Subclass});
     return $Loc{$pkg} if exists $Loc{$pkg};
 
-    eval { require Locale::Maketext::Lexicon; 1 }   or return;
+    eval {
+        local @INC = @INC;
+        pop @INC if $INC[-1] eq '.';
+        require Locale::Maketext::Lexicon;
+        1
+    } or return;
     $Locale::Maketext::Lexicon::VERSION > 0.20	    or return;
     eval { require File::Spec; 1 }		    or return;
 

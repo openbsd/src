@@ -4,7 +4,7 @@ use strict;
 use vars qw(@ISA $VERSION);
 require File::Spec::Unix;
 
-$VERSION = '3.48_02';
+$VERSION = '3.48_03';
 $VERSION =~ tr/_//;
 
 @ISA = qw(File::Spec::Unix);
@@ -39,7 +39,10 @@ via the C<DECC$FILENAME_UNIX_REPORT> CRTL feature.
 
 my $use_feature;
 BEGIN {
-    if (eval { local $SIG{__DIE__}; require VMS::Feature; }) {
+    if (eval { local $SIG{__DIE__};
+               local @INC = @INC;
+               pop @INC if $INC[-1] eq '.';
+               require VMS::Feature; }) {
         $use_feature = 1;
     }
 }

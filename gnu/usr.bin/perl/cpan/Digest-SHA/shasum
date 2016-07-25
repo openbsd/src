@@ -94,11 +94,12 @@ L<Digest::SHA::PurePerl>.
 
 END_OF_POD
 
+BEGIN { pop @INC if $INC[-1] eq '.' }
 use strict;
 use Fcntl;
 use Getopt::Long;
 
-my $VERSION = "5.88";
+my $VERSION = "5.88_01";
 
 sub usage {
 	my($err, $msg) = @_;

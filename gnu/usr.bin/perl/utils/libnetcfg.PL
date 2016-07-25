@@ -97,6 +97,7 @@ Jarkko Hietaniemi, conversion into libnetcfg for inclusion into Perl 5.8.
 
 # $Id: Configure,v 1.8 1997/03/04 09:22:32 gbarr Exp $
 
+BEGIN { pop @INC if $INC[-1] eq '.' }
 use strict;
 use IO::File;
 use Getopt::Std;

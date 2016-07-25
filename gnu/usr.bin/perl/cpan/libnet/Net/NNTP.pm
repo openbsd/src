@@ -14,7 +14,7 @@ use Carp;
 use Time::Local;
 use Net::Config;
 
-$VERSION = "2.26";
+$VERSION = "2.26_01";
 @ISA     = qw(Net::Cmd IO::Socket::INET);
 
 

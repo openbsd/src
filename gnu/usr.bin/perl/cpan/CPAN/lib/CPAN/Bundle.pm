@@ -8,7 +8,7 @@ use CPAN::Module;
 use vars qw(
             $VERSION
 );
-$VERSION = "5.5001";
+$VERSION = "5.5001_01";
 
 sub look {
     my $self = shift;

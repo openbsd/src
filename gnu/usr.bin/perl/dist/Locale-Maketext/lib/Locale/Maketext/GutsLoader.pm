@@ -2,7 +2,7 @@ package Locale::Maketext::GutsLoader;
 
 use Locale::Maketext;
 
-our $VERSION = '1.20';
+our $VERSION = '1.20_01';
 
 sub zorp { return scalar @_ }
 

@@ -35,6 +35,8 @@ $Config{startperl}
 
 print OUT <<'!NO!SUBS!';
 
+BEGIN { pop @INC if $INC[-1] eq '.' }
+
 use warnings;
 
 =head1 NAME

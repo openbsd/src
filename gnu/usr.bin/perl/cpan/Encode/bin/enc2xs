@@ -4,6 +4,7 @@ BEGIN {
     # with $ENV{PERL_CORE} set
     # In case we need it in future...
     require Config; import Config;
+    pop @INC if $INC[-1] eq '.';
 }
 use strict;
 use warnings;

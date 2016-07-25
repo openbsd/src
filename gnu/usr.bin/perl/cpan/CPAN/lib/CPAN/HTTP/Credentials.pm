@@ -4,7 +4,7 @@ package CPAN::HTTP::Credentials;
 use strict;
 use vars qw($USER $PASSWORD $PROXY_USER $PROXY_PASSWORD);
 
-$CPAN::HTTP::Credentials::VERSION = $CPAN::HTTP::Credentials::VERSION = "1.9600";
+$CPAN::HTTP::Credentials::VERSION = $CPAN::HTTP::Credentials::VERSION = "1.9600_01";
 
 sub clear_credentials {
    _clear_non_proxy_credentials();

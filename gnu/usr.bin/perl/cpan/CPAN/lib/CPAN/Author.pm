@@ -8,7 +8,7 @@ use CPAN::InfoObj;
 use vars qw(
             $VERSION
 );
-$VERSION = "5.5002";
+$VERSION = "5.5002_01";
 
 package CPAN::Author;
 use strict;

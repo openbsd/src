@@ -38,6 +38,12 @@ $Config{startperl}
 	if \$running_under_some_shell;
 !GROK!THIS!
 
+print <<'!NO!SUBS!';
+
+BEGIN { pop @INC if $INC[-1] eq '.' }
+
+!NO!SUBS!
+
 while (<IN>) {
     print OUT unless /^package diagnostics/;
 }

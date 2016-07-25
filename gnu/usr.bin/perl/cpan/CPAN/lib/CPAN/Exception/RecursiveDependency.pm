@@ -7,7 +7,7 @@ use overload '""' => "as_string";
 use vars qw(
             $VERSION
 );
-$VERSION = "5.5";
+$VERSION = "5.5_01";
 
 # a module sees its distribution (no version)
 # a distribution sees its prereqs (which are module names) (usually with versions)

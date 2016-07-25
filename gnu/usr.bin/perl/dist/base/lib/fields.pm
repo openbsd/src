@@ -11,7 +11,7 @@ unless( eval q{require warnings::register; warnings::register->import; 1} ) {
 }
 use vars qw(%attr $VERSION);
 
-$VERSION = '2.17';
+$VERSION = '2.17_01';
 
 # constant.pm is slow
 sub PUBLIC     () { 2**0  }

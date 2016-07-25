@@ -56,6 +56,8 @@ require Encode::Config;
 eval {
     local $SIG{__DIE__};
     local $SIG{__WARN__};
+    local @INC = @INC;
+    pop @INC if $INC[-1] eq '.';
     require Encode::ConfigLocal;
 };
 

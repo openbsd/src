@@ -17,7 +17,7 @@ use warnings ;
 use bytes ;
 our ($VERSION, $XS_VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 
-$VERSION = '2.064';
+$VERSION = '2.064_01';
 $XS_VERSION = $VERSION; 
 $VERSION = eval $VERSION;
 

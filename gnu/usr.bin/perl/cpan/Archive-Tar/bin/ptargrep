@@ -4,6 +4,7 @@
 # archive.  See 'ptargrep --help' for more documentation.
 #
 
+BEGIN { pop @INC if $INC[-1] eq '.' }
 use strict;
 use warnings;
 

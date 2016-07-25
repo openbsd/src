@@ -6,7 +6,7 @@ use strict ;
 use Config qw(%Config);
 use File::Copy;
 
-my $VERSION = '1.0';
+my $VERSION = '1.0_01';
 
 
 BEGIN

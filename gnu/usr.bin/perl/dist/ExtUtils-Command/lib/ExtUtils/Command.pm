@@ -12,7 +12,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK $VERSION);
 @ISA       = qw(Exporter);
 @EXPORT    = qw(cp rm_f rm_rf mv cat eqtime mkpath touch test_f test_d chmod
                 dos2unix);
-$VERSION = '1.18';
+$VERSION = '1.18_01';
 
 my $Is_VMS   = $^O eq 'VMS';
 my $Is_VMS_mode = $Is_VMS;
@@ -24,7 +24,10 @@ if( $Is_VMS ) {
     my $vms_efs;
     my $vms_case;
 
-    if (eval { local $SIG{__DIE__}; require VMS::Feature; }) {
+    if (eval { local $SIG{__DIE__};
+               local @INC = @INC;
+               pop @INC if $INC[-1] eq '.';
+               require VMS::Feature; }) {
         $vms_unix_rpt = VMS::Feature::current("filename_unix_report");
         $vms_efs = VMS::Feature::current("efs_charset");
         $vms_case = VMS::Feature::current("efs_case_preserve");

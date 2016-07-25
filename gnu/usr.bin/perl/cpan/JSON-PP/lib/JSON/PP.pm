@@ -11,7 +11,7 @@ use Carp ();
 use B ();
 #use Devel::Peek;
 
-$JSON::PP::VERSION = '2.27203';
+$JSON::PP::VERSION = '2.27203_01';
 
 @JSON::PP::EXPORT = qw(encode_json decode_json from_json to_json);
 
@@ -1425,7 +1425,7 @@ use constant INCR_M_JSON => 3; # outside anything, count nesting
 use constant INCR_M_C0   => 4;
 use constant INCR_M_C1   => 5;
 
-$JSON::PP::IncrParser::VERSION = '1.01';
+$JSON::PP::IncrParser::VERSION = '1.01_01';
 
 my $unpack_format = $] < 5.006 ? 'C*' : 'U*';
 

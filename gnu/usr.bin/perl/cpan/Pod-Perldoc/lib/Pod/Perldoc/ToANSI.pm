@@ -4,7 +4,7 @@ use warnings;
 use parent qw(Pod::Perldoc::BaseTo);
 
 use vars qw($VERSION);
-$VERSION = '3.23';
+$VERSION = '3.23_01';
 
 sub is_pageable        { 1 }
 sub write_with_binmode { 0 }

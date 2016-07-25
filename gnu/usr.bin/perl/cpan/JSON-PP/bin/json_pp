@@ -1,11 +1,12 @@
 #!/usr/bin/perl
 
+BEGIN { pop @INC if $INC[-1] eq '.' }
 use strict;
 use Getopt::Long;
 
 use JSON::PP ();
 
-my $VERSION = '1.00';
+my $VERSION = '1.00_01';
 
 # imported from JSON-XS/bin/json_xs
 

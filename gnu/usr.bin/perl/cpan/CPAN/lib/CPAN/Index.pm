@@ -1,7 +1,7 @@
 package CPAN::Index;
 use strict;
 use vars qw($LAST_TIME $DATE_OF_02 $DATE_OF_03 $HAVE_REANIMATED $VERSION);
-$VERSION = "1.9601";
+$VERSION = "1.9601_01";
 @CPAN::Index::ISA = qw(CPAN::Debug);
 $LAST_TIME ||= 0;
 $DATE_OF_03 ||= 0;

@@ -6,7 +6,7 @@ use vars qw($VERSION);
 
 use if $] < 5.008 => "IO::Scalar";
 
-$VERSION = '1.62';
+$VERSION = '1.62_01';
 
 =head1 NAME
 
@@ -458,9 +458,20 @@ sub AUTOLOAD { 1 }
 sub DESTROY { 1 }
 }
 
+# load a module without searching the default entry for the current
+# directory
+sub _safe_load_module {
+  my $name = shift;
+
+  local @INC = @INC;
+  pop @INC if $INC[-1] eq '.';
+
+  eval "require $name; 1";
+}
+
 sub _init_logger
 	{
-	my $log4perl_loaded = eval "require Log::Log4perl; 1";
+	my $log4perl_loaded = _safe_load_module("Log::Log4perl");
 
     unless( $log4perl_loaded )
         {
@@ -898,7 +909,7 @@ sub _load_local_lib # -I
 	{
 	$logger->debug( "Loading local::lib" );
 
-	my $rc = eval { require local::lib; 1; };
+	my $rc = _safe_load_module("local::lib");
 	unless( $rc ) {
 		$logger->die( "Could not load local::lib" );
 		}
@@ -1013,7 +1024,7 @@ sub _get_file
 	{
 	my $path = shift;
 
-	my $loaded = eval "require LWP::Simple; 1;";
+	my $loaded = _safe_load_module("LWP::Simple");
 	croak "You need LWP::Simple to use features that fetch files from CPAN\n"
 		unless $loaded;
 
@@ -1035,7 +1046,7 @@ sub _gitify
 	{
 	my $args = shift;
 
-	my $loaded = eval "require Archive::Extract; 1;";
+	my $loaded = _safe_load_module("Archive::Extract");
 	croak "You need Archive::Extract to use features that gitify distributions\n"
 		unless $loaded;
 
@@ -1099,7 +1110,7 @@ sub _show_Changes
 sub _get_changes_file
 	{
 	croak "Reading Changes files requires LWP::Simple and URI\n"
-		unless eval "require LWP::Simple; require URI; 1";
+		unless _safe_load_module("LWP::Simple") && _safe_load_module("URI");
 
     my $url = shift;
 

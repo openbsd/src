@@ -6,7 +6,7 @@ use vars qw($prompt);
 use vars qw(
             $VERSION
 );
-$VERSION = "5.5";
+$VERSION = "5.5_01";
 
 
 $prompt = "cpan> ";

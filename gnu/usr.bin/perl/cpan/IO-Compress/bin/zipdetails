@@ -5,6 +5,7 @@
 # Display info on the contents of a Zip file
 #
 
+BEGIN { pop @INC if $INC[-1] eq '.' }
 use strict;
 use warnings ;
 
@@ -177,7 +178,7 @@ my %Extras = (
 
        );
 
-my $VERSION = "1.06" ;
+my $VERSION = "1.06_01" ;
 
 my $FH;
 

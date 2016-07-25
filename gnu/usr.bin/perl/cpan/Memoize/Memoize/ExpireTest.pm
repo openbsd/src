@@ -18,7 +18,7 @@ to mjd-perl-memoize+@plover.com.
 
 =cut
 
-$VERSION = '1.03';
+$VERSION = '1.03_01';
 my %cache;
 
 sub TIEHASH {	

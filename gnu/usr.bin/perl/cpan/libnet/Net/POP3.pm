@@ -13,7 +13,7 @@ use Net::Cmd;
 use Carp;
 use Net::Config;
 
-$VERSION = "2.31";
+$VERSION = "2.31_01";
 
 @ISA = qw(Net::Cmd IO::Socket::INET);
 

@@ -22,7 +22,7 @@ use vars    qw[ $VERBOSE $PREFER_BIN $FROM_EMAIL $USER_AGENT
                 $FTP_PASSIVE $TIMEOUT $DEBUG $WARN $FORCEIPV4
             ];
 
-$VERSION        = '0.48';
+$VERSION        = '0.48_01';
 $VERSION        = eval $VERSION;    # avoid warnings with development releases
 $PREFER_BIN     = 0;                # XXX TODO implement
 $FROM_EMAIL     = 'File-Fetch@example.com';
@@ -567,6 +567,8 @@ sub _lwp_fetch {
 
     };
 
+    local @INC = @INC;
+    pop @INC if $INC[-1] eq '.';
     unless( can_load( modules => $use_list ) ) {
         $METHOD_FAIL->{'lwp'} = 1;
         return;
@@ -619,6 +621,8 @@ sub _httptiny_fetch {
 
     };
 
+    local @INC = @INC;
+    pop @INC if $INC[-1] eq '.';
     unless( can_load(modules => $use_list) ) {
         $METHOD_FAIL->{'httptiny'} = 1;
         return;
@@ -658,6 +662,8 @@ sub _httplite_fetch {
 
     };
 
+    local @INC = @INC;
+    pop @INC if $INC[-1] eq '.';
     unless( can_load(modules => $use_list) ) {
         $METHOD_FAIL->{'httplite'} = 1;
         return;
@@ -733,6 +739,8 @@ sub _iosock_fetch {
         'IO::Select'       => '0.0',
     };
 
+    local @INC = @INC;
+    pop @INC if $INC[-1] eq '.';
     unless( can_load(modules => $use_list) ) {
         $METHOD_FAIL->{'iosock'} = 1;
         return;
@@ -814,6 +822,8 @@ sub _netftp_fetch {
     check( $tmpl, \%hash ) or return;
 
     ### required modules ###
+    local @INC = @INC;
+    pop @INC if $INC[-1] eq '.';
     my $use_list = { 'Net::FTP' => 0 };
 
     unless( can_load( modules => $use_list ) ) {

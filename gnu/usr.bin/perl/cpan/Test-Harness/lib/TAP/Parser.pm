@@ -31,7 +31,7 @@ Version 3.30
 
 =cut
 
-our $VERSION = '3.30';
+our $VERSION = '3.30_01';
 
 my $DEFAULT_TAP_VERSION = 12;
 my $MAX_TAP_VERSION     = 13;

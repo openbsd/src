@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 
+BEGIN { pop @INC if $INC[-1] eq '.' }
 use Config;
 use File::Basename qw(&basename &dirname);
 use Cwd;

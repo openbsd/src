@@ -1,5 +1,5 @@
 package Encode::$_Name_;
-our $VERSION = "0.01";
+our $VERSION = "0.01_01";
  
 use Encode;
 use XSLoader;

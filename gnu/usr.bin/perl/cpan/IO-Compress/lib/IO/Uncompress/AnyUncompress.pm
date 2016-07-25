@@ -13,7 +13,7 @@ require Exporter ;
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, $AnyUncompressError);
 
-$VERSION = '2.064';
+$VERSION = '2.064_01';
 $AnyUncompressError = '';
 
 @ISA = qw( Exporter IO::Uncompress::Base );
@@ -27,6 +27,8 @@ Exporter::export_ok_tags('all');
 
 BEGIN
 {
+   local @INC = @INC;
+   pop @INC if $INC[-1] eq '.';
    eval ' use IO::Uncompress::Adapter::Inflate 2.064 ;';
    eval ' use IO::Uncompress::Adapter::Bunzip2 2.064 ;';
    eval ' use IO::Uncompress::Adapter::LZO 2.064 ;';

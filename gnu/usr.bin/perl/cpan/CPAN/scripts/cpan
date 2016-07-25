@@ -1,10 +1,11 @@
 #!/usr/local/bin/perl
 
+BEGIN { pop @INC if $INC[-1] eq '.' }
 use strict;
 use vars qw($VERSION);
 
 use App::Cpan '1.60_02';
-$VERSION = '1.61';
+$VERSION = '1.61_01';
 
 my $rc = App::Cpan->run( @ARGV );
 

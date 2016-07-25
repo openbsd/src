@@ -216,6 +216,7 @@ This program is distributed under the Artistic License.
 
 =cut
 
+BEGIN { pop @INC if $INC[-1] eq '.' }
 use Pod::Html;
 
 pod2html @ARGV;

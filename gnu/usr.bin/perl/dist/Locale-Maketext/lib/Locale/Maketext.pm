@@ -27,7 +27,7 @@ BEGIN {
 }
 
 
-$VERSION = '1.25';
+$VERSION = '1.25_01';
 @ISA = ();
 
 $MATCH_SUPERS = 1;
@@ -449,6 +449,8 @@ sub _try_use {   # Basically a wrapper around "require Modulename"
 
     local $SIG{'__DIE__'};
     local $@;
+    local @INC = @INC;
+    pop @INC if $INC[-1] eq '.';
     eval "require $module"; # used to be "use $module", but no point in that.
 
     if($@) {

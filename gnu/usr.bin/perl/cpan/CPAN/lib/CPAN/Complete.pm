@@ -42,7 +42,7 @@ use strict;
 use vars qw(
             $VERSION
 );
-$VERSION = "5.5001";
+$VERSION = "5.5001_01";
 
 package CPAN::Complete;
 use strict;
