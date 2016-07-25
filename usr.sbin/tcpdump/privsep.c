@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.42 2016/07/24 22:46:32 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.43 2016/07/25 02:35:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -174,9 +174,8 @@ priv_init(int argc, char **argv)
 		if (pw == NULL)
 			errx(1, "unknown user _tcpdump");
 
-		/* Attempt to chroot */
 		if (chroot(pw->pw_dir) == -1)
-			errx(1, "unable to chroot");
+			err(1, "unable to chroot");
 		if (chdir("/") == -1)
 			err(1, "unable to chdir");
 
