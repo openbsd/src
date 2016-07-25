@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.350 2016/07/21 10:13:58 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.351 2016/07/25 14:29:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -201,6 +201,9 @@ session_main(int debug, int verbose)
 	struct listen_addr	*la;
 	void			*newp;
 	short			 events;
+
+	log_init(debug);
+	log_verbose(verbose);
 
 	if ((pw = getpwnam(BGPD_USER)) == NULL)
 		fatal(NULL);
