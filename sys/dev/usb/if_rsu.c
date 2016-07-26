@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.34 2016/04/13 11:03:37 mpi Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.35 2016/07/26 15:37:12 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2263,7 +2263,7 @@ rsu_init(struct ifnet *ifp)
 
 	/* We're ready to go. */
 	ifp->if_flags |= IFF_RUNNING;
-	ifq_set_oactive(&ifp->if_snd);
+	ifq_clr_oactive(&ifp->if_snd);
 
 #ifdef notyet
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
