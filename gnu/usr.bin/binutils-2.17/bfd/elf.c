@@ -4731,6 +4731,12 @@ get_program_header_size (bfd *abfd)
       ++segs;
     }
 
+  if (elf_tdata (abfd)->wxneeded)
+    {
+      /* We need a PT_OPENBSD_WXNEEDED segment.  */
+      ++segs;
+    }
+
   for (s = abfd->sections; s != NULL; s = s->next)
     {
       if ((s->flags & SEC_LOAD) != 0
