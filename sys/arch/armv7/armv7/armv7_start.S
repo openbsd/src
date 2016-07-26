@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_start.S,v 1.6 2016/04/25 04:46:57 jsg Exp $	*/
+/*	$OpenBSD: armv7_start.S,v 1.7 2016/07/26 18:09:07 kettenis Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -161,7 +161,7 @@ _C_LABEL(bootstrap_start):
 	CPWAIT(r0)
 
 	/* Restore U-Boot arguments */
-	mov	r0, r6
+	mov	r0, r9
 	mov	r1, r7
 	mov	r2, r8
 

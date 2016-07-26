@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.31 2016/06/14 10:03:51 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.32 2016/07/26 18:09:07 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -385,10 +385,11 @@ copy_io_area_map(pd_entry_t *new_pd)
 u_int
 initarm(void *arg0, void *arg1, void *arg2)
 {
-	int loop, loop1, i, physsegs;
+	int loop, loop1, i, physsegs = VM_PHYSSEG_MAX;
 	u_int l1pagetable;
 	pv_addr_t kernel_l1pt;
 	pv_addr_t fdt;
+	paddr_t loadaddr;
 	paddr_t memstart;
 	psize_t memsize;
 	void *config;
@@ -399,6 +400,7 @@ initarm(void *arg0, void *arg1, void *arg2)
 	int	(*map_func_save)(void *, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 
+	loadaddr = (paddr_t)arg0;
 	board_id = (uint32_t)arg1;
 	/*
 	 * u-boot has decided the top four bits are
@@ -514,7 +516,7 @@ initarm(void *arg0, void *arg1, void *arg2)
 	boothowto |= RB_DFLTROOT;
 #endif /* RAMDISK_HOOKS */
 
-	physical_freestart = (((unsigned long)esym - KERNEL_TEXT_BASE +0xfff) & ~0xfff) + memstart;
+	physical_freestart = (((unsigned long)esym - KERNEL_TEXT_BASE +0xfff) & ~0xfff) + loadaddr;
 	physical_freeend = MIN((uint64_t)memstart+memsize, (paddr_t)-PAGE_SIZE);
 
 	physmem = (physical_end - physical_start) / PAGE_SIZE;
@@ -557,7 +559,7 @@ initarm(void *arg0, void *arg1, void *arg2)
 	/* Define a macro to simplify memory allocation */
 #define	valloc_pages(var, np)				\
 	alloc_pages((var).pv_pa, (np));			\
-	(var).pv_va = KERNEL_BASE + (var).pv_pa - physical_start;
+	(var).pv_va = KERNEL_BASE + (var).pv_pa - loadaddr;
 
 #define alloc_pages(var, np)				\
 	(var) = physical_freestart;			\
@@ -677,10 +679,10 @@ initarm(void *arg0, void *arg1, void *arg2)
 		logical = 0x00000000;	/* offset of kernel in RAM */
 
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
-		    physical_start + logical, textsize,
+		    loadaddr + logical, textsize,
 		    PROT_READ | PROT_WRITE | PROT_EXEC, PTE_CACHE);
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
-		    physical_start + logical, totalsize - textsize,
+		    loadaddr + logical, totalsize - textsize,
 		    PROT_READ | PROT_WRITE, PTE_CACHE);
 	}
 
@@ -797,7 +799,13 @@ initarm(void *arg0, void *arg1, void *arg2)
 	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
 	    atop(physical_freestart), atop(physical_freeend), 0);
 
-	physsegs = MIN(bootconfig.dramblocks, VM_PHYSSEG_MAX);
+	if (physical_start < loadaddr) {
+		uvm_page_physload(atop(physical_start), atop(loadaddr),
+		    atop(physical_start), atop(loadaddr), 0);
+		physsegs--;
+	}
+
+	physsegs = MIN(bootconfig.dramblocks, physsegs);
 
 	for (i = 1; i < physsegs; i++) {
 		paddr_t dramstart = bootconfig.dram[i].address;
