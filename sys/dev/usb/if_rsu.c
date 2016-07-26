@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.35 2016/07/26 15:37:12 stsp Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.36 2016/07/26 18:18:04 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -246,6 +246,7 @@ rsu_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_RSN;		/* WPA/RSN. */
 	/* Check if HT support is present. */
 	if (usb_lookup(rsu_devs_noht, uaa->vendor, uaa->product) == NULL) {
+#ifdef notyet
 		/* Set HT capabilities. */
 		ic->ic_htcaps =
 		    IEEE80211_HTCAP_CBW20_40 |
@@ -253,6 +254,7 @@ rsu_attach(struct device *parent, struct device *self, void *aux)
 		/* Set supported HT rates. */
 		for (i = 0; i < 2; i++)
 			ic->ic_sup_mcs[i] = 0xff;
+#endif
 	}
 
 	/* Set supported .11b and .11g rates. */
