@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpgetround.c,v 1.3 2014/04/17 09:01:25 guenther Exp $	*/
+/*	$OpenBSD: fpgetround.c,v 1.4 2016/07/26 19:07:09 guenther Exp $	*/
 /*	$NetBSD: fpgetround.c,v 1.1 1999/07/07 01:55:08 danw Exp $	*/
 
 /*
@@ -34,10 +34,11 @@
 #include <ieeefp.h>
 
 fp_rnd
-fpgetround()
+fpgetround(void)
 {
 	u_int64_t fpscr;
 
 	__asm__ volatile("mffs %0" : "=f"(fpscr));
 	return (fpscr & 0x3);
 }
+DEF_WEAK(fpgetround);

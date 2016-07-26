@@ -1,4 +1,4 @@
-/*	$OpenBSD: flt_rounds.c,v 1.6 2015/10/27 05:54:49 guenther Exp $	*/
+/*	$OpenBSD: flt_rounds.c,v 1.7 2016/07/26 19:07:09 guenther Exp $	*/
 /*	$NetBSD: flt_rounds.c,v 1.5 2001/05/25 12:14:05 simonb Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 
 #include <sys/types.h>
 #include <float.h>
+#include <ieeefp.h>
 
 
 static const int map[] = {
@@ -44,7 +45,7 @@ static const int map[] = {
 };
 
 int
-__flt_rounds()
+__flt_rounds(void)
 {
 #ifdef _SOFT_FLOAT
 	return map[fpgetround()];

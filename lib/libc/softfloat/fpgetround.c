@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpgetround.c,v 1.6 2016/07/18 19:05:22 guenther Exp $	*/
+/*	$OpenBSD: fpgetround.c,v 1.7 2016/07/26 19:07:09 guenther Exp $	*/
 /* $NetBSD: fpgetround.c,v 1.2 2002/01/13 21:45:53 thorpej Exp $ */
 
 /*-
@@ -45,3 +45,4 @@ fpgetround(void)
 
 	return float_rounding_mode;
 }
+DEF_WEAK(fpgetround);
