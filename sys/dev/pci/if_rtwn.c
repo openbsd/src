@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.23 2016/07/21 08:38:33 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.24 2016/07/26 13:00:28 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -742,16 +742,20 @@ uint16_t
 rtwn_pci_read_2(void *cookie, uint16_t addr)
 {
 	struct rtwn_pci_softc *sc = cookie;
+	uint16_t val;
 
-	return bus_space_read_2(sc->sc_st, sc->sc_sh, addr);
+	val = bus_space_read_2(sc->sc_st, sc->sc_sh, addr);
+	return le16toh(val);
 }
 
 uint32_t
 rtwn_pci_read_4(void *cookie, uint16_t addr)
 {
 	struct rtwn_pci_softc *sc = cookie;
+	uint32_t val;
 
-	return bus_space_read_4(sc->sc_st, sc->sc_sh, addr);
+	val = bus_space_read_4(sc->sc_st, sc->sc_sh, addr);
+	return le32toh(val);
 }
 
 void

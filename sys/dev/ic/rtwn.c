@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.9 2016/06/17 10:53:55 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.10 2016/07/26 13:00:28 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -297,14 +297,12 @@ rtwn_write_1(struct rtwn_softc *sc, uint16_t addr, uint8_t val)
 void
 rtwn_write_2(struct rtwn_softc *sc, uint16_t addr, uint16_t val)
 {
-	val = htole16(val);
 	sc->sc_ops.write_2(sc->sc_ops.cookie, addr, val);
 }
 
 void
 rtwn_write_4(struct rtwn_softc *sc, uint16_t addr, uint32_t val)
 {
-	val = htole32(val);
 	sc->sc_ops.write_4(sc->sc_ops.cookie, addr, val);
 }
 
@@ -687,13 +685,11 @@ rtwn_ra_init(struct rtwn_softc *sc)
 		/* Configure Automatic Rate Fallback Register. */
 		if (ic->ic_curmode == IEEE80211_MODE_11B) {
 			if (rates & 0x0c)
-				rtwn_write_4(sc, R92C_ARFR(0),
-				    htole32(rates & 0x0d));
+				rtwn_write_4(sc, R92C_ARFR(0), rates & 0x0d);
 			else
-				rtwn_write_4(sc, R92C_ARFR(0),
-				    htole32(rates & 0x0f));
+				rtwn_write_4(sc, R92C_ARFR(0), rates & 0x0f);
 		} else
-			rtwn_write_4(sc, R92C_ARFR(0), htole32(rates & 0x0ff5));
+			rtwn_write_4(sc, R92C_ARFR(0), rates & 0x0ff5);
 	}
 
 	if (sc->chip & RTWN_CHIP_88E)
