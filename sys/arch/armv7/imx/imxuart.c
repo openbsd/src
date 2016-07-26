@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.8 2016/07/23 15:02:08 patrick Exp $ */
+/* $OpenBSD: imxuart.c,v 1.9 2016/07/26 22:10:10 patrick Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -138,15 +138,15 @@ struct cdevsw imxuartdev =
 void
 imxuart_init_cons(void)
 {
-	struct fdt_memory mem;
+	struct fdt_reg reg;
 	void *node;
 
 	if ((node = fdt_find_cons("fsl,imx21-uart")) == NULL)
 		return;
-	if (fdt_get_memory_address(node, 0, &mem))
+	if (fdt_get_reg(node, 0, &reg))
 		return;
 
-	imxuartcnattach(&armv7_bs_tag, mem.addr, comcnspeed, comcnmode);
+	imxuartcnattach(&armv7_bs_tag, reg.addr, comcnspeed, comcnmode);
 }
 
 int

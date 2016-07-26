@@ -1,4 +1,4 @@
-/* $OpenBSD: omap_com.c,v 1.6 2016/07/17 02:45:05 jsg Exp $ */
+/* $OpenBSD: omap_com.c,v 1.7 2016/07/26 22:10:10 patrick Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -74,16 +74,16 @@ struct cfattach com_omap_ca = {
 void
 omapuart_init_cons(void)
 {
-	struct fdt_memory mem;
+	struct fdt_reg reg;
 	void *node;
 
 	if ((node = fdt_find_cons("ti,omap3-uart")) == NULL)
 		if ((node = fdt_find_cons("ti,omap4-uart")) == NULL)
 			return;
-	if (fdt_get_memory_address(node, 0, &mem))
+	if (fdt_get_reg(node, 0, &reg))
 		return;
 
-	comcnattach(&armv7_a4x_bs_tag, mem.addr, comcnspeed, 48000000,
+	comcnattach(&armv7_a4x_bs_tag, reg.addr, comcnspeed, 48000000,
 	    comcnmode);
 	comdefaultrate = comcnspeed;
 }

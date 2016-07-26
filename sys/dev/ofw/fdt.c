@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.17 2016/07/09 12:31:05 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.18 2016/07/26 22:10:10 patrick Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -38,7 +38,7 @@ void	*fdt_parent_node_recurse(void *, void *);
 void	*fdt_find_phandle_recurse(void *, uint32_t);
 int	 fdt_node_property_int(void *, char *, int *);
 int	 fdt_node_property_ints(void *, char *, int *, int);
-int	 fdt_translate_memory_address(void *, struct fdt_memory *);
+int	 fdt_translate_reg(void *, struct fdt_reg *);
 #ifdef DEBUG
 void 	 fdt_print_node_recurse(void *, int);
 #endif
@@ -492,7 +492,7 @@ fdt_find_phandle(uint32_t phandle)
  * has a ranges attribute and ask the same questions again.
  */
 int
-fdt_translate_memory_address(void *node, struct fdt_memory *mem)
+fdt_translate_reg(void *node, struct fdt_reg *reg)
 {
 	void *parent;
 	int pac, psc, ac, sc, ret, rlen, rone, *range;
@@ -512,7 +512,7 @@ fdt_translate_memory_address(void *node, struct fdt_memory *mem)
 
 	/* Empty ranges means 1:1 mapping. Continue translation on parent. */
 	if (rlen <= 0)
-		return fdt_translate_memory_address(parent, mem);
+		return fdt_translate_reg(parent, reg);
 
 	/* We only support 32-bit (1), and 64-bit (2) wide addresses here. */
 	ret = fdt_node_property_int(parent, "#address-cells", &pac);
@@ -554,7 +554,7 @@ fdt_translate_memory_address(void *node, struct fdt_memory *mem)
 			size = (size << 32) + betoh32(range[ac + pac + 1]);
 
 		/* Try next, if we're not in the range. */
-		if (mem->addr < from || (mem->addr + mem->size) > (from + size))
+		if (reg->addr < from || (reg->addr + reg->size) > (from + size))
 			continue;
 
 		/* All good, extract to address and translate. */
@@ -562,9 +562,9 @@ fdt_translate_memory_address(void *node, struct fdt_memory *mem)
 		if (pac == 2)
 			to = (to << 32) + betoh32(range[ac + 1]);
 
-		mem->addr -= from;
-		mem->addr += to;
-		return fdt_translate_memory_address(parent, mem);
+		reg->addr -= from;
+		reg->addr += to;
+		return fdt_translate_reg(parent, reg);
 	}
 
 	/* To be successful, we must have returned in the for-loop. */
@@ -575,12 +575,12 @@ fdt_translate_memory_address(void *node, struct fdt_memory *mem)
  * Parse the memory address and size of a node.
  */
 int
-fdt_get_memory_address(void *node, int idx, struct fdt_memory *mem)
+fdt_get_reg(void *node, int idx, struct fdt_reg *reg)
 {
 	void *parent;
 	int ac, sc, off, ret, *in, inlen;
 
-	if (node == NULL || mem == NULL)
+	if (node == NULL || reg == NULL)
 		return EINVAL;
 
 	parent = fdt_parent_node(node);
@@ -603,15 +603,15 @@ fdt_get_memory_address(void *node, int idx, struct fdt_memory *mem)
 
 	off = idx * (ac + sc);
 
-	mem->addr = betoh32(in[off]);
+	reg->addr = betoh32(in[off]);
 	if (ac == 2)
-		mem->addr = (mem->addr << 32) + betoh32(in[off + 1]);
+		reg->addr = (reg->addr << 32) + betoh32(in[off + 1]);
 
-	mem->size = betoh32(in[off + ac]);
+	reg->size = betoh32(in[off + ac]);
 	if (sc == 2)
-		mem->size = (mem->size << 32) + betoh32(in[off + ac + 1]);
+		reg->size = (reg->size << 32) + betoh32(in[off + ac + 1]);
 
-	return fdt_translate_memory_address(parent, mem);
+	return fdt_translate_reg(parent, reg);
 }
 
 int

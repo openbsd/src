@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.32 2016/07/26 18:09:07 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.33 2016/07/26 22:10:10 patrick Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -450,17 +450,17 @@ initarm(void *arg0, void *arg1, void *arg2)
 	}
 
 	if (fdt_init(config) && fdt_get_size(config) != 0) {
-		struct fdt_memory mem;
+		struct fdt_reg reg;
 		void *node;
 
 		node = fdt_find_node("/memory");
-		if (node == NULL || fdt_get_memory_address(node, 0, &mem))
+		if (node == NULL || fdt_get_reg(node, 0, &reg))
 			panic("initarm: no memory specificed");
 
-		memstart = mem.addr;
-		memsize = mem.size;
-		physical_start = mem.addr;
-		physical_end = MIN(mem.addr + mem.size, (paddr_t)-PAGE_SIZE);
+		memstart = reg.addr;
+		memsize = reg.size;
+		physical_start = reg.addr;
+		physical_end = MIN(reg.addr + reg.size, (paddr_t)-PAGE_SIZE);
 
 		node = fdt_find_node("/chosen");
 		if (node != NULL) {

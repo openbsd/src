@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.5 2016/06/11 08:08:16 jsg Exp $ */
+/* $OpenBSD: exuart.c,v 1.6 2016/07/26 22:10:10 patrick Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -137,19 +137,19 @@ int		exuartdefaultrate = B115200;
 void
 exuart_init_cons(void)
 {
-	struct fdt_memory mem;
+	struct fdt_reg reg;
 	void *node;
 
 	if ((node = fdt_find_cons("samsung,exynos4210-uart")) == NULL)
 		return;
-	if (fdt_get_memory_address(node, 0, &mem))
+	if (fdt_get_reg(node, 0, &reg))
 		return;
 
 	/* dtb uses serial2, qemu uses serial0 */
 	if (board_id == BOARD_ID_EXYNOS4_SMDKC210)
-		mem.addr = 0x13800000;
+		reg.addr = 0x13800000;
 
-	exuartcnattach(&armv7_bs_tag, mem.addr, comcnspeed, comcnmode);
+	exuartcnattach(&armv7_bs_tag, reg.addr, comcnspeed, comcnmode);
 }
 
 int
@@ -185,10 +185,10 @@ exuartattach(struct device *parent, struct device *self, void *args)
 	sc->sc_iot = aa->aa_iot;
 #if NFDT > 0
 	if (aa->aa_node) {
-		struct fdt_memory fdtmem;
+		struct fdt_reg reg;
 		uint32_t ints[3];
 
-		if (fdt_get_memory_address(aa->aa_node, 0, &fdtmem))
+		if (fdt_get_reg(aa->aa_node, 0, &reg))
 			panic("%s: could not extract memory data from FDT",
 			    __func__);
 
@@ -198,8 +198,8 @@ exuartattach(struct device *parent, struct device *self, void *args)
 			panic("%s: could not extract interrupt data from FDT",
 			    __func__);
 
-		mem.addr = fdtmem.addr;
-		mem.size = fdtmem.size;
+		mem.addr = reg.addr;
+		mem.size = reg.size;
 
 		irq = ints[1];
 	} else

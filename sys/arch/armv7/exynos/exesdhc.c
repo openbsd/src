@@ -1,4 +1,4 @@
-/*	$OpenBSD: exesdhc.c,v 1.7 2016/05/05 11:01:08 kettenis Exp $	*/
+/*	$OpenBSD: exesdhc.c,v 1.8 2016/07/26 22:10:10 patrick Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -273,13 +273,13 @@ exesdhc_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_iot = aa->aa_iot;
 #if NFDT > 0
 	if (aa->aa_node) {
-		struct fdt_memory fdtmem;
+		struct fdt_reg reg;
 		static int unit = 0;
 		uint32_t ints[3];
 
 		sc->unit = unit++;
 
-		if (fdt_get_memory_address(aa->aa_node, 0, &fdtmem))
+		if (fdt_get_reg(aa->aa_node, 0, &reg))
 			panic("%s: could not extract memory data from FDT",
 			    __func__);
 
@@ -289,8 +289,8 @@ exesdhc_attach(struct device *parent, struct device *self, void *args)
 			panic("%s: could not extract interrupt data from FDT",
 			    __func__);
 
-		mem.addr = fdtmem.addr;
-		mem.size = fdtmem.size;
+		mem.addr = reg.addr;
+		mem.size = reg.size;
 
 		irq = ints[1];
 	} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.3 2016/07/14 12:42:00 sf Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.4 2016/07/26 22:10:10 patrick Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -203,10 +203,10 @@ virtio_mmio_attach(struct device *parent, struct device *self, void *aux)
 
 #if NFDT > 0
 	if (aa->aa_node) {
-		struct fdt_memory fdtmem;
+		struct fdt_reg reg;
 		uint32_t ints[3];
 
-		if (fdt_get_memory_address(aa->aa_node, 0, &fdtmem))
+		if (fdt_get_reg(aa->aa_node, 0, &reg))
 			panic("%s: could not extract memory data from FDT", __func__);
 
 		if (fdt_node_property_ints(aa->aa_node, "interrupts",
@@ -214,8 +214,8 @@ virtio_mmio_attach(struct device *parent, struct device *self, void *aux)
 			panic("%s: could not extract interrupt data from FDT",
 			    __func__);
 
-		mem.addr = fdtmem.addr;
-		mem.size = fdtmem.size;
+		mem.addr = reg.addr;
+		mem.size = reg.size;
 
 		irq = ints[1];
 	} else

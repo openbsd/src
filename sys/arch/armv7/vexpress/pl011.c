@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl011.c,v 1.3 2016/06/08 15:27:05 jsg Exp $	*/
+/*	$OpenBSD: pl011.c,v 1.4 2016/07/26 22:10:10 patrick Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -140,15 +140,15 @@ int		pl011defaultrate = B38400;
 void
 pl011_init_cons(void)
 {
-	struct fdt_memory mem;
+	struct fdt_reg reg;
 	void *node;
 
 	if ((node = fdt_find_cons("arm,pl011")) == NULL)
 		return;
-	if (fdt_get_memory_address(node, 0, &mem))
+	if (fdt_get_reg(node, 0, &reg))
 		return;
 
-	pl011cnattach(&armv7_bs_tag, mem.addr, comcnspeed, comcnmode);
+	pl011cnattach(&armv7_bs_tag, reg.addr, comcnspeed, comcnmode);
 }
 
 int
@@ -177,13 +177,13 @@ pl011attach(struct device *parent, struct device *self, void *args)
 
 #if NFDT > 0
 	if (aa->aa_node) {
-		struct fdt_memory fdtmem;
+		struct fdt_reg reg;
 
-		if (fdt_get_memory_address(aa->aa_node, 0, &fdtmem))
+		if (fdt_get_reg(aa->aa_node, 0, &reg))
 			panic("%s: could not extract memory data from FDT",
 			  __func__);
-		mem.addr = fdtmem.addr;
-		mem.size = fdtmem.size;
+		mem.addr = reg.addr;
+		mem.size = reg.size;
 
 		if (fdt_node_property_ints(aa->aa_node, "interrupts",
 		    ints, 3) != 3)

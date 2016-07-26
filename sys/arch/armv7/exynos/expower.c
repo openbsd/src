@@ -1,4 +1,4 @@
-/* $OpenBSD: expower.c,v 1.3 2016/04/24 00:57:23 patrick Exp $ */
+/* $OpenBSD: expower.c,v 1.4 2016/07/26 22:10:10 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -92,12 +92,12 @@ expower_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_iot = aa->aa_iot;
 #if NFDT > 0
 	if (aa->aa_node) {
-		struct fdt_memory fdtmem;
-		if (fdt_get_memory_address(aa->aa_node, 0, &fdtmem))
+		struct fdt_reg reg;
+		if (fdt_get_reg(aa->aa_node, 0, &reg))
 			panic("%s: could not extract memory data from FDT",
 			    __func__);
-		mem.addr = fdtmem.addr;
-		mem.size = fdtmem.size;
+		mem.addr = reg.addr;
+		mem.size = reg.size;
 	} else
 #endif
 	{

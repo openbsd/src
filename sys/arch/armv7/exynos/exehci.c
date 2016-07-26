@@ -1,4 +1,4 @@
-/*	$OpenBSD: exehci.c,v 1.3 2016/04/24 00:57:23 patrick Exp $ */
+/*	$OpenBSD: exehci.c,v 1.4 2016/07/26 22:10:10 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -131,16 +131,16 @@ exehci_attach(struct device *parent, struct device *self, void *aux)
 
 #if NFDT > 0
 	if (aa->aa_node) {
-		struct fdt_memory fhmem, fpmem;
+		struct fdt_reg hreg, preg;
 		uint32_t ints[3];
 
-		if (fdt_get_memory_address(aa->aa_node, 0, &fhmem))
+		if (fdt_get_reg(aa->aa_node, 0, &hreg))
 			panic("%s: could not extract memory data from FDT",
 			    __func__);
 
 		/* XXX: In a different way, please. */
 		void *node = fdt_find_compatible("samsung,exynos5250-usb2-phy");
-		if (node == NULL || fdt_get_memory_address(node, 0, &fpmem))
+		if (node == NULL || fdt_get_reg(node, 0, &preg))
 			panic("%s: could not extract phy data from FDT",
 			    __func__);
 
@@ -150,10 +150,10 @@ exehci_attach(struct device *parent, struct device *self, void *aux)
 			panic("%s: could not extract interrupt data from FDT",
 			    __func__);
 
-		hmem.addr = fhmem.addr;
-		hmem.size = fhmem.size;
-		pmem.addr = fpmem.addr;
-		pmem.size = fpmem.size;
+		hmem.addr = hreg.addr;
+		hmem.size = hreg.size;
+		pmem.addr = preg.addr;
+		pmem.size = preg.size;
 
 		irq = ints[1];
 	} else

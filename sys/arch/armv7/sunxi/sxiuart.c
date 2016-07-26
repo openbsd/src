@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiuart.c,v 1.7 2016/06/12 06:58:39 jsg Exp $	*/
+/*	$OpenBSD: sxiuart.c,v 1.8 2016/07/26 22:10:10 patrick Exp $	*/
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  * Copyright (c) 2013 Artturi Alm
@@ -146,15 +146,15 @@ struct cdevsw sxiuartdev =
 void
 sxiuart_init_cons(void)
 {
-	struct fdt_memory mem;
+	struct fdt_reg reg;
 	void *node;
 
 	if ((node = fdt_find_cons("snps,dw-apb-uart")) == NULL)
 		return;
-	if (fdt_get_memory_address(node, 0, &mem))
+	if (fdt_get_reg(node, 0, &reg))
 		return;
 
-	sxiuartcnattach(&armv7_a4x_bs_tag, mem.addr, comcnspeed, 24000000,
+	sxiuartcnattach(&armv7_a4x_bs_tag, reg.addr, comcnspeed, 24000000,
 	    comcnmode);
 }
 
