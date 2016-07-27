@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.56 2016/07/22 09:30:36 benno Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.57 2016/07/27 06:55:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -150,7 +150,8 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	struct protocol		*proto = rlay->rl_proto;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	char			*line = NULL, *key, *value;
-	int			 action;
+	char			*urlproto, *host, *path;
+	int			 action, unique, ret;
 	const char		*errstr;
 	size_t			 size, linelen;
 	struct kv		*hdr = NULL;
@@ -331,11 +332,35 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		    strcasecmp("chunked", value) == 0)
 			desc->http_chunked = 1;
 
+		/* The following header should only occur once */
+		if (strcasecmp("Host", key) == 0) {
+			unique = 1;
+
+			/*
+			 * The path may contain a URL.  The host in the
+			 * URL has to match the Host: value.
+			 */
+			if (parse_url(desc->http_path,
+			    &urlproto, &host, &path) == 0) {
+				ret = strcasecmp(host, value);
+				free(urlproto);
+				free(host);
+				free(path);
+				if (ret != 0) {
+					relay_abort_http(con, 400,
+					    "malformed host", 0);
+					goto abort;
+				}
+			}
+		} else
+			unique = 0;
+
 		if (cre->line != 1) {
 			if ((hdr = kv_add(&desc->http_headers, key,
-			    value)) == NULL) {
-				free(line);
-				goto fail;
+			    value, unique)) == NULL) {
+				relay_abort_http(con, 400,
+				    "malformed header", 0);
+				goto abort;
 			}
 			desc->http_lastheader = hdr;
 		}
@@ -1537,7 +1562,7 @@ relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions)
 		if (addkv && kv->kv_matchtree != NULL) {
 			/* Add new entry to the list (eg. new HTTP header) */
 			if ((match = kv_add(kv->kv_matchtree, kp->kv_key,
-			    kp->kv_value)) == NULL)
+			    kp->kv_value, 0)) == NULL)
 				goto fail;
 			match->kv_option = kp->kv_option;
 			match->kv_type = kp->kv_type;

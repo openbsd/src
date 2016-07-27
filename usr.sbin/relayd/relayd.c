@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.153 2016/02/02 17:51:11 sthen Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.154 2016/07/27 06:55:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -645,9 +645,8 @@ purge_relay(struct relayd *env, struct relay *rlay)
 	free(rlay);
 }
 
-
 struct kv *
-kv_add(struct kvtree *keys, char *key, char *value)
+kv_add(struct kvtree *keys, char *key, char *value, int unique)
 {
 	struct kv	*kv, *oldkv;
 
@@ -655,24 +654,30 @@ kv_add(struct kvtree *keys, char *key, char *value)
 		return (NULL);
 	if ((kv = calloc(1, sizeof(*kv))) == NULL)
 		return (NULL);
-	if ((kv->kv_key = strdup(key)) == NULL) {
-		free(kv);
-		return (NULL);
-	}
+	if ((kv->kv_key = strdup(key)) == NULL)
+		goto fail;
 	if (value != NULL &&
-	    (kv->kv_value = strdup(value)) == NULL) {
-		free(kv->kv_key);
-		free(kv);
-		return (NULL);
-	}
+	    (kv->kv_value = strdup(value)) == NULL)
+		goto fail;
 	TAILQ_INIT(&kv->kv_children);
 
 	if ((oldkv = RB_INSERT(kvtree, keys, kv)) != NULL) {
+		/*
+		 * return error if the key should occur only once,
+		 * or add it to a list attached to the key's node.
+		 */
+		if (unique)
+			goto fail;
 		TAILQ_INSERT_TAIL(&oldkv->kv_children, kv, kv_entry);
 		kv->kv_parent = oldkv;
 	}
 
 	return (kv);
+ fail:
+	free(kv->kv_key);
+	free(kv->kv_value);
+	free(kv);
+	return (NULL);
 }
 
 int
@@ -1379,6 +1384,52 @@ canonicalize_host(const char *host, char *name, size_t len)
  fail:
 	errno = EINVAL;
 	return (NULL);
+}
+
+int
+parse_url(const char *url, char **protoptr, char **hostptr, char **pathptr)
+{
+	char	*p, *proto = NULL, *host = NULL, *path = NULL;
+
+	/* return error if it is not a URL */
+	if ((p = strstr(url, ":/")) == NULL ||
+	    (strcspn(url, ":/") != (size_t)(p - url)))
+		return (-1);
+
+	/* get protocol */
+	if ((proto = strdup(url)) == NULL)
+		goto fail;
+	p = proto + (p - url);
+
+	/* get host */
+	p += strspn(p, ":/");
+	if (*p == '\0' || (host = strdup(p)) == NULL)
+		goto fail;
+	*p = '\0';
+
+	/* find and copy path or default to "/" */
+	if ((p = strchr(host, '/')) == NULL)
+		p = "/";
+	if ((path = strdup(p)) == NULL)
+		goto fail;
+
+	/* strip path after host */
+	host[strcspn(host, "/")] = '\0';
+
+	DPRINTF("%s: %s proto %s, host %s, path %s", __func__,
+	    url, proto, host, path);
+
+	*protoptr = proto;
+	*hostptr = host;
+	*pathptr = path;
+
+	return (0);
+
+ fail:
+	free(proto);
+	free(host);
+	free(path);
+	return (-1);
 }
 
 int
