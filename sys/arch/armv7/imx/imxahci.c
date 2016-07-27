@@ -1,4 +1,4 @@
-/* $OpenBSD: imxahci.c,v 1.5 2016/07/12 19:17:49 kettenis Exp $ */
+/* $OpenBSD: imxahci.c,v 1.6 2016/07/27 11:45:02 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -34,6 +34,7 @@
 #include <armv7/imx/imxiomuxcvar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 /* registers */
 #define SATA_CAP		0x000
@@ -114,15 +115,15 @@ imxahci_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	uint32_t timeout = 0x100000;
 
-	if (faa->fa_nreg < 2 || faa->fa_nintr < 3)
+	if (faa->fa_nreg < 1 || faa->fa_nintr < 3)
 		return;
 
 	sc->sc_iot = faa->fa_iot;
-	sc->sc_ios = faa->fa_reg[1];
+	sc->sc_ios = faa->fa_reg[0].size;
 	sc->sc_dmat = faa->fa_dmat;
 
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
-	    faa->fa_reg[1], 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("imxahci_attach: bus_space_map failed!");
 
 	sc->sc_ih = arm_intr_establish(faa->fa_intr[1], IPL_BIO,

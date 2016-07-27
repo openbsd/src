@@ -1,4 +1,4 @@
-/* $OpenBSD: omap_com.c,v 1.7 2016/07/26 22:10:10 patrick Exp $ */
+/* $OpenBSD: omap_com.c,v 1.8 2016/07/27 11:45:02 patrick Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -104,11 +104,11 @@ omapuart_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	int irq;
 
-	if (faa->fa_nreg != 2 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
+	if (faa->fa_nreg != 1 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
 		return;
 
 	sc->sc_iot = &armv7_a4x_bs_tag; /* XXX: This sucks */
-	sc->sc_iobase = faa->fa_reg[0];
+	sc->sc_iobase = faa->fa_reg[0].addr;
 	sc->sc_frequency = 48000000;
 	sc->sc_uarttype = COM_UART_TI16750;
 
@@ -118,7 +118,7 @@ omapuart_attach(struct device *parent, struct device *self, void *aux)
 		irq = faa->fa_intr[1];
 
 	if (bus_space_map(sc->sc_iot, sc->sc_iobase,
-	    faa->fa_reg[1], 0, &sc->sc_ioh)) {
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
 		printf("%s: bus_space_map failed\n", __func__);
 		return;
 	}

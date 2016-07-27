@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.9 2016/07/26 22:10:10 patrick Exp $ */
+/* $OpenBSD: imxuart.c,v 1.10 2016/07/27 11:45:02 patrick Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -164,7 +164,7 @@ imxuart_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	int maj;
 
-	if (faa->fa_nreg < 2 || faa->fa_nintr < 3)
+	if (faa->fa_nreg < 1 || faa->fa_nintr < 3)
 		return;
 
 	imxiomuxc_pinctrlbyname(faa->fa_node, "default");
@@ -173,11 +173,11 @@ imxuart_attach(struct device *parent, struct device *self, void *aux)
 	    imxuart_intr, sc, sc->sc_dev.dv_xname);
 
 	sc->sc_iot = faa->fa_iot;
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
-	    faa->fa_reg[1], 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("imxuartattach: bus_space_map failed!");
 
-	if (faa->fa_reg[0] == imxuartconsaddr) {
+	if (faa->fa_reg[0].addr == imxuartconsaddr) {
 		/* Locate the major number. */
 		for (maj = 0; maj < nchrdev; maj++)
 			if (cdevsw[maj].d_open == imxuartopen)

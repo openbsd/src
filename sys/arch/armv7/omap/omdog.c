@@ -1,4 +1,4 @@
-/*	$OpenBSD: omdog.c,v 1.6 2016/06/26 05:16:33 jsg Exp $	*/
+/*	$OpenBSD: omdog.c,v 1.7 2016/07/27 11:45:02 patrick Exp $	*/
 /*
  * Copyright (c) 2013 Federico G. Schwindt <fgsch@openbsd.org>
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
@@ -30,6 +30,7 @@
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 #include <armv7/armv7/armv7var.h>
 
@@ -94,12 +95,12 @@ omdog_attach(struct device *parent, struct device *self, void *aux)
 	struct omdog_softc *sc = (struct omdog_softc *) self;
 	u_int32_t rev;
 
-	if (faa->fa_nreg < 2)
+	if (faa->fa_nreg < 1)
 		return;
 
 	sc->sc_iot = faa->fa_iot;
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
-	    faa->fa_reg[1], 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
 	rev = bus_space_read_4(sc->sc_iot, sc->sc_ioh, WIDR);

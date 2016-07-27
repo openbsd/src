@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.25 2016/07/11 14:54:18 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.26 2016/07/27 11:45:02 patrick Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -39,6 +39,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
+#include <dev/ofw/fdt.h>
 
 /* registers */
 #define SDHC_DS_ADDR			0x00
@@ -296,15 +297,15 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t caps;
 	uint32_t width;
 
-	if (faa->fa_nreg < 2 || faa->fa_nintr < 3)
+	if (faa->fa_nreg < 1 || faa->fa_nintr < 3)
 		return;
 
-	sc->unit = (faa->fa_reg[0] & 0xc000) >> 14;
+	sc->unit = (faa->fa_reg[0].addr & 0xc000) >> 14;
 	sc->sc_node = faa->fa_node;
 	sc->sc_dmat = faa->fa_dmat;
 	sc->sc_iot = faa->fa_iot;
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
-	    faa->fa_reg[1], 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("imxesdhc_attach: bus_space_map failed!");
 
 	printf("\n");

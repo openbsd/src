@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiuart.c,v 1.8 2016/07/26 22:10:10 patrick Exp $	*/
+/*	$OpenBSD: sxiuart.c,v 1.9 2016/07/27 11:45:02 patrick Exp $	*/
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  * Copyright (c) 2013 Artturi Alm
@@ -175,7 +175,7 @@ sxiuart_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh;
 	int s, irq;
 
-	if (faa->fa_nreg != 2 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
+	if (faa->fa_nreg != 1 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
 		return;
 
 	if (faa->fa_nintr == 1)
@@ -184,12 +184,12 @@ sxiuart_attach(struct device *parent, struct device *self, void *aux)
 		irq = faa->fa_intr[1];
 
 	sc->sc_iot = iot = faa->fa_iot;
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
-	    faa->fa_reg[1], 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("sxiuartattach: bus_space_map failed!");
 	ioh = sc->sc_ioh;
 
-	if (faa->fa_reg[0] == sxiuartconsaddr) {
+	if (faa->fa_reg[0].addr == sxiuartconsaddr) {
 		cn_tab->cn_dev = makedev(12 /* XXX */, 0);
 		cdevsw[12] = sxiuartdev;		/* KLUDGE */
 

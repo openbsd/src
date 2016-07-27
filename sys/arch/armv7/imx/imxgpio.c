@@ -1,4 +1,4 @@
-/* $OpenBSD: imxgpio.c,v 1.9 2016/07/11 14:51:31 kettenis Exp $ */
+/* $OpenBSD: imxgpio.c,v 1.10 2016/07/27 11:45:02 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -34,6 +34,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
+#include <dev/ofw/fdt.h>
 
 /* iMX6 registers */
 #define GPIO_DR			0x00
@@ -117,12 +118,12 @@ imxgpio_attach(struct device *parent, struct device *self, void *aux)
 	struct imxgpio_softc *sc = (struct imxgpio_softc *)self;
 	struct fdt_attach_args *faa = aux;
 
-	if (faa->fa_nreg < 2)
+	if (faa->fa_nreg < 1)
 		return;
 
 	sc->sc_iot = faa->fa_iot;
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
-	    faa->fa_reg[1], 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("imxgpio_attach: bus_space_map failed!");
 
 	sc->sc_gc.gc_node = faa->fa_node;

@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.8 2016/07/10 11:46:28 kettenis Exp $ */
+/* $OpenBSD: imxiic.c,v 1.9 2016/07/27 11:45:02 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -30,6 +30,7 @@
 #include <armv7/imx/imxiicvar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 /* registers */
 #define I2C_IADR	0x00
@@ -115,15 +116,15 @@ imxiic_attach(struct device *parent, struct device *self, void *aux)
 	struct imxiic_softc *sc = (struct imxiic_softc *)self;
 	struct fdt_attach_args *faa = aux;
 
-	if (faa->fa_nreg < 2)
+	if (faa->fa_nreg < 1)
 		return;
 
 	sc->sc_iot = faa->fa_iot;
-	sc->sc_ios = faa->fa_reg[1];
+	sc->sc_ios = faa->fa_reg[0].size;
 	sc->sc_node = faa->fa_node;
-	sc->unit = (faa->fa_reg[0] & 0xc000) >> 14;
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
-	    faa->fa_reg[1], 0, &sc->sc_ioh))
+	sc->unit = (faa->fa_reg[0].addr & 0xc000) >> 14;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("imxiic_attach: bus_space_map failed!");
 
 #if 0

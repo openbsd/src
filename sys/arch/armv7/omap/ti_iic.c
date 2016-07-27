@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti_iic.c,v 1.6 2016/07/17 02:45:05 jsg Exp $	*/
+/*	$OpenBSD: ti_iic.c,v 1.7 2016/07/27 11:45:02 patrick Exp $	*/
 /* $NetBSD: ti_iic.c,v 1.4 2013/04/25 13:04:27 rkujawa Exp $ */
 
 /*
@@ -69,6 +69,7 @@
 #include <armv7/omap/sitara_cm.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 #ifndef AM335X_I2C_SLAVE_ADDR
 #define AM335X_I2C_SLAVE_ADDR	0x01
@@ -167,7 +168,7 @@ ti_iic_attach(struct device *parent, struct device *self, void *aux)
 	int irq, unit, len;
 	char hwmods[128];
 
-	if (faa->fa_nreg != 2 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
+	if (faa->fa_nreg != 1 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
 		return;
 
 	sc->sc_iot = faa->fa_iot;
@@ -190,8 +191,8 @@ ti_iic_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_rxthres = sc->sc_txthres = 4;
 
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
-	    faa->fa_reg[1], 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", DEVNAME(sc));
 
 	sitara_cm_pinctrlbyname(faa->fa_node, "default");

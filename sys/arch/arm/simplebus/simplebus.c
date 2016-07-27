@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.7 2016/07/18 11:53:32 patrick Exp $ */
+/* $OpenBSD: simplebus.c,v 1.8 2016/07/27 11:45:02 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -22,6 +22,7 @@
 #include <sys/malloc.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 #include <arm/fdt.h>
 
@@ -125,7 +126,8 @@ simplebus_attach_node(struct device *self, int node)
 	struct simplebus_softc	*sc = (struct simplebus_softc *)self;
 	struct fdt_attach_args	 fa;
 	char			 buffer[128];
-	int			 len;
+	int			 i, len, line;
+	uint32_t		*cell, *reg;
 
 	if (!OF_getprop(node, "compatible", buffer, sizeof(buffer)))
 		return;
@@ -143,11 +145,33 @@ simplebus_attach_node(struct device *self, int node)
 	fa.fa_scells = sc->sc_scells;
 
 	len = OF_getproplen(node, "reg");
-	if (len > 0 && (len % sizeof(uint32_t)) == 0) {
-		fa.fa_reg = malloc(len, M_DEVBUF, M_WAITOK);
-		fa.fa_nreg = len / sizeof(uint32_t);
+	line = (sc->sc_acells + sc->sc_scells) * sizeof(uint32_t);
+	if (len > 0 && line > 0 && (len % line) == 0) {
+		reg = malloc(len, M_TEMP, M_WAITOK);
+		OF_getpropintarray(node, "reg", reg, len);
 
-		OF_getpropintarray(node, "reg", fa.fa_reg, len);
+		fa.fa_reg = malloc((len / line) * sizeof(struct fdt_reg),
+		    M_DEVBUF, M_WAITOK | M_ZERO);
+		fa.fa_nreg = (len / line);
+
+		for (i = 0, cell = reg; i < len / line; i++) {
+			if (sc->sc_acells >= 1)
+				fa.fa_reg[i].addr = cell[0];
+			if (sc->sc_acells == 2) {
+				fa.fa_reg[i].addr <<= 32;
+				fa.fa_reg[i].addr |= cell[1];
+			}
+			cell += sc->sc_acells;
+			if (sc->sc_scells >= 1)
+				fa.fa_reg[i].size = cell[0];
+			if (sc->sc_scells == 2) {
+				fa.fa_reg[i].size <<= 32;
+				fa.fa_reg[i].size |= cell[1];
+			}
+			cell += sc->sc_scells;
+		}
+
+		free(reg, M_TEMP, len);
 	}
 
 	len = OF_getproplen(node, "interrupts");
@@ -162,7 +186,7 @@ simplebus_attach_node(struct device *self, int node)
 
 	config_found(self, &fa, NULL);
 
-	free(fa.fa_reg, M_DEVBUF, fa.fa_nreg * sizeof(uint32_t));
+	free(fa.fa_reg, M_DEVBUF, fa.fa_nreg * sizeof(struct fdt_reg));
 	free(fa.fa_intr, M_DEVBUF, fa.fa_nintr * sizeof(uint32_t));
 }
 

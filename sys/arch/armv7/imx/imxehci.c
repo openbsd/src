@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.13 2016/07/13 09:12:46 kettenis Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.14 2016/07/27 11:45:02 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -37,6 +37,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
+#include <dev/ofw/fdt.h>
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
@@ -114,7 +115,7 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t vbus;
 	int node;
 
-	if (faa->fa_nreg < 2 || faa->fa_nintr < 3)
+	if (faa->fa_nreg < 1 || faa->fa_nintr < 3)
 		return;
 
 	if (OF_getpropintarray(faa->fa_node, "fsl,usbphy",
@@ -143,11 +144,11 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc.iot = faa->fa_iot;
 	sc->sc.sc_bus.dmatag = faa->fa_dmat;
-	sc->sc.sc_size = faa->fa_reg[1] - USB_EHCI_OFFSET;
+	sc->sc.sc_size = faa->fa_reg[0].size - USB_EHCI_OFFSET;
 
 	/* Map I/O space */
-	if (bus_space_map(sc->sc.iot, faa->fa_reg[0],
-	    faa->fa_reg[1], 0, &sc->uh_ioh)) {
+	if (bus_space_map(sc->sc.iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->uh_ioh)) {
 		printf(": cannot map mem space\n");
 		goto out;
 	}
@@ -281,7 +282,7 @@ mem2:
 	bus_space_unmap(sc->sc.iot, sc->ph_ioh, phy_reg[1]);
 mem1:
 mem0:
-	bus_space_unmap(sc->sc.iot, sc->sc.ioh, faa->fa_reg[1]);
+	bus_space_unmap(sc->sc.iot, sc->sc.ioh, faa->fa_reg[0].size);
 	sc->sc.sc_size = 0;
 out:
 	return;

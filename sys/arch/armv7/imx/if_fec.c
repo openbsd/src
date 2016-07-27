@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.10 2016/07/23 14:39:10 kettenis Exp $ */
+/* $OpenBSD: if_fec.c,v 1.11 2016/07/27 11:45:02 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -51,6 +51,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
+#include <dev/ofw/fdt.h>
 
 /* configuration registers */
 #define ENET_EIR		0x004
@@ -298,7 +299,7 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t phy_reset_gpio[3];
 	uint32_t phy_reset_duration;
 
-	if (faa->fa_nreg < 2)
+	if (faa->fa_nreg < 1)
 		return;
 
 	if (OF_getpropintarray(faa->fa_node, "interrupts-extended",
@@ -307,8 +308,8 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
-	    faa->fa_reg[1], 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("fec_attach: bus_space_map failed!");
 
 	sc->sc_dma_tag = faa->fa_dmat;
@@ -453,7 +454,7 @@ rxdma:
 txdma:
 	fec_dma_free(sc, &sc->txdma);
 bad:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[1]);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[0].size);
 }
 
 void

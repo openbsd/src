@@ -1,4 +1,4 @@
-/* $OpenBSD: imxdog.c,v 1.3 2016/06/13 23:43:58 kettenis Exp $ */
+/* $OpenBSD: imxdog.c,v 1.4 2016/07/27 11:45:02 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -29,6 +29,7 @@
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 #include <armv7/armv7/armv7var.h>
 
@@ -73,12 +74,12 @@ imxdog_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	struct imxdog_softc *sc = (struct imxdog_softc *) self;
 
-	if (faa->fa_nreg < 2)
+	if (faa->fa_nreg < 1)
 		return;
 
 	sc->sc_iot = faa->fa_iot;
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
-	    faa->fa_reg[1], 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("imxdog_attach: bus_space_map failed!");
 
 	printf("\n");

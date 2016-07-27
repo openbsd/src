@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.26 2016/07/17 02:45:05 jsg Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.27 2016/07/27 11:45:02 patrick Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -37,6 +37,7 @@
 #include <armv7/omap/sitara_cm.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 /*
  * NOTE: on OMAP4430/AM335x these registers skew by 0x100
@@ -302,18 +303,18 @@ ommmc_attach(struct device *parent, struct device *self, void *aux)
 	int				 len, unit;
 	char				 hwmods[128];
 
-	if (faa->fa_nreg != 2 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
+	if (faa->fa_nreg != 1 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
 		return;
 
-	if (faa->fa_reg[1] <= 0x100)
+	if (faa->fa_reg[0].size <= 0x100)
 		return;
 
 	if (OF_is_compatible(faa->fa_node, "ti,omap4-hsmmc")) {
-		addr = faa->fa_reg[0] + 0x100;
-		size = faa->fa_reg[1] - 0x100;
+		addr = faa->fa_reg[0].addr + 0x100;
+		size = faa->fa_reg[0].size - 0x100;
 	} else {
-		addr = faa->fa_reg[0];
-		size = faa->fa_reg[1];
+		addr = faa->fa_reg[0].addr;
+		size = faa->fa_reg[0].size;
 	}
 
 	if (faa->fa_nintr == 1)

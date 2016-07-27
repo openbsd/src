@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.16 2016/06/12 06:58:39 jsg Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.17 2016/07/27 11:45:02 patrick Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -52,6 +52,7 @@
 #include <armv7/sunxi/sxipiovar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 /* configuration registers */
 #define	SXIE_CR			0x0000
@@ -212,7 +213,7 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp;
 	int s, irq;
 
-	if (faa->fa_nreg != 2 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
+	if (faa->fa_nreg != 1 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
 		return;
 
 	if (faa->fa_nintr == 1)
@@ -222,8 +223,8 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = faa->fa_iot;
 
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0],
-	    faa->fa_reg[1], 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("sxie_attach: bus_space_map ioh failed!");
 
 	if (bus_space_map(sc->sc_iot, SID_ADDR, SID_SIZE, 0, &sc->sc_sid_ioh))
