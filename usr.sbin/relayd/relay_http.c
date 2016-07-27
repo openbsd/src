@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.57 2016/07/27 06:55:44 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.58 2016/07/27 11:02:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -401,9 +401,9 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		case HTTP_METHOD_DELETE:
 		case HTTP_METHOD_GET:
 		case HTTP_METHOD_HEAD:
-		case HTTP_METHOD_OPTIONS:
 			cre->toread = 0;
 			break;
+		case HTTP_METHOD_OPTIONS:
 		case HTTP_METHOD_PATCH:
 		case HTTP_METHOD_POST:
 		case HTTP_METHOD_PUT:
