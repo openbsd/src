@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_uartbus.c,v 1.6 2015/05/23 12:08:14 jsg Exp $ */
+/*	$OpenBSD: octeon_uartbus.c,v 1.7 2016/07/27 11:28:40 visa Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -47,7 +47,6 @@
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/ns16550reg.h>
-#define	com_lcr	com_cfcr
 
 int	 uartbusmatch(struct device *, void *, void *);
 void	 uartbusattach(struct device *, struct device *, void *);
@@ -91,11 +90,6 @@ void	*uartbus_space_vaddr(bus_space_tag_t, bus_space_handle_t);
 
 bus_addr_t uartbus_pa_to_device(paddr_t);
 paddr_t	 uartbus_device_to_pa(bus_addr_t);
-
-bus_size_t uartbus_get_read_reg(bus_size_t);
-bus_size_t uartbus_get_write_reg(bus_size_t, u_int8_t);
-
-static int lcr = 0;
 
 struct cfattach uartbus_ca = {
 	sizeof(struct device), uartbusmatch, uartbusattach
@@ -195,8 +189,7 @@ uartbusattach(struct device *parent, struct device *self, void *aux)
 u_int8_t
 uartbus_read_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
-	o = uartbus_get_read_reg(o);
-	return (u_int8_t)(volatile uint64_t)*(volatile uint64_t *)(h + o);
+	return *(volatile uint64_t *)(h + (o << 3));
 }
 
 u_int16_t
@@ -220,8 +213,7 @@ uartbus_read_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 void
 uartbus_write_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v)
 {
-	o = uartbus_get_write_reg(o, 1);
-	*(volatile uint64_t *)(h + o) = (volatile uint64_t)v;
+	*(volatile uint64_t *)(h + (o << 3)) = v;
 }
 
 void
@@ -326,42 +318,4 @@ paddr_t
 uartbus_device_to_pa(bus_addr_t addr)
 {
 	return (paddr_t)addr;
-}
-
-bus_size_t
-uartbus_get_read_reg(bus_size_t o)
-{
-	if (lcr & LCR_DLAB)
-		switch(o) {
-			case com_dlbl:
-				return (bus_size_t)0x80;
-			case com_dlbh:
-				return (bus_size_t)0x88;
-		}
-
-	return (bus_size_t)(o << 3);
-}
-
-bus_size_t
-uartbus_get_write_reg(bus_size_t o, u_int8_t v)
-{
-	if (o == com_lcr)
-		lcr = v;
-
-	switch(o) {
-		case com_data:
-			return (bus_size_t)0x40;
-		case com_fifo:
-			return (bus_size_t)0x50;
-	}
-
-	if (lcr & LCR_DLAB)
-		switch(o) {
-			case com_dlbl:
-				return (bus_size_t)0x80;
-			case com_dlbh:
-				return (bus_size_t)0x88;
-		}
-
-	return (bus_size_t)(o << 3);
 }
