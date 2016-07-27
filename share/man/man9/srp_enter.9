@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srp_enter.9,v 1.13 2016/06/07 14:37:46 jmc Exp $
+.\"	$OpenBSD: srp_enter.9,v 1.14 2016/07/27 12:55:41 jca Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 7 2016 $
+.Dd $Mdocdate: July 27 2016 $
 .Dt SRP_ENTER 9
 .Os
 .Sh NAME
@@ -128,7 +128,8 @@ with the data referenced by
 .Fa v .
 When clearing or replacing the last reference to a data structure,
 .Fn srp_finalize
-must be used to ensure that the data is longer in use via any srp structures.
+must be used to ensure that the data is no longer in use via any srp
+structures.
 .Fn srp_swap
 uses atomic CPU operations to change the reference.
 .Fn srp_update_locked
