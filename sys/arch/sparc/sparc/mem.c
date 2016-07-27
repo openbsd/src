@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.25 2015/02/10 22:44:35 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.26 2016/07/27 15:12:36 tedu Exp $	*/
 /*	$NetBSD: mem.c,v 1.13 1996/03/30 21:12:16 christos Exp $ */
 
 /*
@@ -60,12 +60,8 @@ extern vaddr_t prom_vend;
 caddr_t zeropage;
 vaddr_t mem_page;
 
-/*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	switch (minor(dev)) {
@@ -80,23 +76,15 @@ mmopen(dev, flag, mode, p)
 	}
 }
 
-/*ARGSUSED*/
 int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	return (0);
 }
 
-/*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	off_t o;
 	paddr_t pa;
@@ -175,8 +163,6 @@ mmrw(dev, uio, flags)
 				uio->uio_resid = 0;
 			return (0);
 
-/* XXX should add sbus, etc */
-
 #if defined(SUN4)
 /* minor device 11 (/dev/eeprom) is the old-style (a'la Sun 3) EEPROM */
 		case 11:
@@ -215,23 +201,14 @@ unlock:
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-        dev_t dev;
-        off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 
 	return (-1);
 }
 
-/*ARGSUSED*/
 int
-mmioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	return (EOPNOTSUPP);
 }

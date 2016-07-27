@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.14 2015/02/10 22:44:35 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.15 2016/07/27 15:12:36 tedu Exp $	*/
 /*	$NetBSD: mem.c,v 1.18 2001/04/24 04:31:12 thorpej Exp $ */
 
 /*
@@ -58,34 +58,22 @@ vaddr_t prom_vstart = 0xf000000;
 vaddr_t prom_vend = 0xf0100000;
 caddr_t zeropage;
 
-/*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	return (0);
 }
 
-/*ARGSUSED*/
 int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	return (0);
 }
 
-/*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	vaddr_t o, v;
 	size_t c;
@@ -158,8 +146,6 @@ mmrw(dev, uio, flags)
 				uio->uio_resid = 0;
 			return (0);
 
-/* XXX should add sbus, etc */
-
 		/*
 		 * minor device 12 (/dev/zero) is source of nulls on read,
 		 * rathole on write.
@@ -194,10 +180,7 @@ unlock:
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 
 	return (-1);
