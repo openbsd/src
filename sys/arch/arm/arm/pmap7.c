@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.27 2016/07/19 02:26:15 tom Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.28 2016/07/27 21:12:49 patrick Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1155,7 +1155,7 @@ pmap_page_remove(struct vm_page *pg)
 		KDASSERT(l2b != NULL);
 
 		ptep = &l2b->l2b_kva[l2pte_index(pv->pv_va)];
-		if (l2pte_valid(*ptep)) {
+		if (*ptep != 0) {
 			pte = *ptep;
 
 			/* inline pmap_is_current(pm) */
