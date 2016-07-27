@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.75 2016/07/14 16:23:49 stefan Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.76 2016/07/27 14:48:56 tedu Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -270,7 +270,7 @@ amap_alloc1(int slots, int waitf, int lazyalloc)
 	struct vm_amap_chunk *chunk, *tmp;
 	int chunks, chunkperbucket = 1, hashshift = 0;
 	int buckets, i, n;
-	int pwaitf = (waitf == M_WAITOK) ? PR_WAITOK : PR_NOWAIT;
+	int pwaitf = (waitf & M_WAITOK) ? PR_WAITOK : PR_NOWAIT;
 
 	KASSERT(slots > 0);
 
