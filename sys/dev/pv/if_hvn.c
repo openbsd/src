@@ -675,7 +675,7 @@ hvn_nvsp_attach(struct hvn_softc *sc)
 
 	mtx_init(&sc->sc_nvsplck, IPL_NET);
 
-	memset(pkt, 0, sizeof(pkt));
+	memset(pkt, 0, sizeof(*pkt));
 	pkt->msg_type = nvsp_type_init;
 	init = (struct nvsp_init *)&pkt->msg;
 
@@ -696,7 +696,7 @@ hvn_nvsp_attach(struct hvn_softc *sc)
 		return (-1);
 	}
 
-	memset(pkt, 0, sizeof(pkt));
+	memset(pkt, 0, sizeof(*pkt));
 	pkt->msg_type = nvsp_type_send_ndis_vers;
 	ver = (struct nvsp_send_ndis_version *)&pkt->msg;
 	if (sc->sc_proto <= NVSP_PROTOCOL_VERSION_4)
