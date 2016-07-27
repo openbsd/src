@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.124 2016/06/27 08:38:15 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.125 2016/07/27 12:57:10 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -299,9 +299,9 @@ sub did_it_fork
 		$self->{state}->fatal("Cannot fork: #1", $!);
 	}
 	if ($pid == 0) {
-		undef $SIG{'WINCH'};
-		undef $SIG{'CONT'};
-		undef $SIG{'INFO'};
+		delete $SIG{'WINCH'};
+		delete $SIG{'CONT'};
+		delete $SIG{'INFO'};
 	}
 }
 
