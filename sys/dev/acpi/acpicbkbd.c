@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicbkbd.c,v 1.1 2016/07/01 15:02:49 jcs Exp $ */
+/* $OpenBSD: acpicbkbd.c,v 1.2 2016/07/27 02:26:26 jcs Exp $ */
 /*
  * Copyright (c) 2016 joshua stein <jcs@openbsd.org>
  *
@@ -24,6 +24,8 @@
 
 #include <dev/wscons/wsconsio.h>
 
+/* #define ACPICBKBD_DEBUG */
+
 #ifdef ACPICBKBD_DEBUG
 #define DPRINTF(x)	printf x
 #else
@@ -42,6 +44,7 @@ struct acpicbkbd_softc {
 
 int	acpicbkbd_match(struct device *, void *, void *);
 void	acpicbkbd_attach(struct device *, struct device *, void *);
+int	acpicbkbd_activate(struct device *, int);
 
 int	acpicbkbd_get_backlight(struct wskbd_backlight *);
 int	acpicbkbd_set_backlight(struct wskbd_backlight *);
@@ -50,7 +53,11 @@ extern int (*wskbd_get_backlight)(struct wskbd_backlight *);
 extern int (*wskbd_set_backlight)(struct wskbd_backlight *);
 
 struct cfattach acpicbkbd_ca = {
-	sizeof(struct acpicbkbd_softc), acpicbkbd_match, acpicbkbd_attach
+	sizeof(struct acpicbkbd_softc),
+	acpicbkbd_match,
+	acpicbkbd_attach,
+	NULL,
+	acpicbkbd_activate,
 };
 
 struct cfdriver acpicbkbd_cd = {
@@ -93,6 +100,21 @@ acpicbkbd_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
+acpicbkbd_activate(struct device *self, int act)
+{
+	struct acpicbkbd_softc	*sc = (struct acpicbkbd_softc *)self;
+
+	switch (act) {
+	case DVACT_WAKEUP:
+		/* restore backlight to pre-suspend value */
+		acpi_addtask(sc->sc_acpi, acpicbkbd_write_backlight, sc, 0);
+
+		break;
+	}
+	return (0);
+}
+
+int
 acpicbkbd_get_backlight(struct wskbd_backlight *kbl)
 {
 	struct acpicbkbd_softc *sc = acpicbkbd_cd.cd_devs[0];
@@ -130,7 +152,7 @@ acpicbkbd_write_backlight(void *arg0, int arg1)
 	struct acpicbkbd_softc *sc = arg0;
 	struct aml_value arg;
 
-	DPRINTF(("%s: writing backlight of %lld\n", DEVNAME(sc),
+	DPRINTF(("%s: writing backlight of %lld\n", sc->sc_dev.dv_xname,
 	    sc->sc_backlight));
 
 	memset(&arg, 0, sizeof(arg));
