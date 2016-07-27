@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_gpio.c,v 1.1 2016/07/11 14:49:41 kettenis Exp $	*/
+/*	$OpenBSD: ofw_gpio.c,v 1.2 2016/07/27 21:13:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -81,4 +81,17 @@ gpio_controller_set_pin(uint32_t *cells, int val)
 
 	if (gc && gc->gc_set_pin)
 		gc->gc_set_pin(gc->gc_cookie, &cells[1], val);
+}
+
+uint32_t *
+gpio_controller_next_pin(uint32_t *cells)
+{
+	struct gpio_controller *gc;
+	uint32_t phandle = cells[0];
+
+	LIST_FOREACH(gc, &gpio_controllers, gc_list)
+		if (gc->gc_phandle == phandle)
+			return cells + gc->gc_cells + 1;
+
+	return NULL;
 }

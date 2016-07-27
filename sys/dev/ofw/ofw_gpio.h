@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_gpio.h,v 1.1 2016/07/11 14:49:41 kettenis Exp $	*/
+/*	$OpenBSD: ofw_gpio.h,v 1.2 2016/07/27 21:13:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -41,5 +41,6 @@ void	gpio_controller_config_pin(uint32_t *, int);
 
 int	gpio_controller_get_pin(uint32_t *);
 void	gpio_controller_set_pin(uint32_t *, int);
+uint32_t *gpio_controller_next_pin(uint32_t *);
 
 #endif /* _DEV_OFW_GPIO_H_ */
