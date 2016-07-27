@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_space.c,v 1.6 2014/11/16 12:30:56 deraadt Exp $ */
+/*	$OpenBSD: armv7_space.c,v 1.7 2016/07/27 21:25:25 patrick Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -172,14 +172,6 @@ armv7_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	vaddr_t va;
 	pt_entry_t *pte;
 
-	if ((u_long)bpa > (u_long)KERNEL_BASE) {
-		/* Some IO registers (ex. UART ports for console)
-		   are mapped to fixed address by board specific
-		   routine. */
-		*bshp = bpa;
-		return(0);
-	}
-
 	startpa = trunc_page(bpa);
 	endpa = round_page(bpa + size);
 
@@ -212,9 +204,6 @@ void
 armv7_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	vaddr_t	va, endva;
-
-	if (bsh > (u_long)KERNEL_BASE)
-		return;
 
 	va = trunc_page((vaddr_t)bsh);
 	endva = round_page((vaddr_t)bsh + size);
