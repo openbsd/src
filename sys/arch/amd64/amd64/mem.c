@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.28 2015/09/08 04:28:34 semarie Exp $ */
+/*	$OpenBSD: mem.c,v 1.29 2016/07/27 21:13:39 tedu Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,6 @@ int mem_range_attr_set(struct mem_range_desc *, int *);
 #endif
 
 
-/*ARGSUSED*/
 int
 mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -106,7 +105,6 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -117,7 +115,6 @@ mmclose(dev_t dev, int flag, int mode, struct proc *p)
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
@@ -138,13 +135,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		}
 		switch (minor(dev)) {
 
-/* minor device 0 is physical memory */
+		/* minor device 0 is physical memory */
 		case 0:
 			v = PMAP_DIRECT_MAP(uio->uio_offset);
 			error = uiomove((caddr_t)v, uio->uio_resid, uio);
 			continue;
 
-/* minor device 1 is kernel memory */
+		/* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
 			c = ulmin(iov->iov_len, MAXPHYS);
@@ -159,20 +156,20 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
-/* minor device 2 is EOF/RATHOLE */
+		/* minor device 2 is /dev/null */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
+		/* minor device 12 is /dev/zero */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
 				c = iov->iov_len;
 				break;
 			}
 			if (zeropage == NULL)
-				zeropage = (caddr_t)
+				zeropage =
 				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK|M_ZERO);
 			c = ulmin(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);
@@ -196,14 +193,14 @@ mmmmap(dev_t dev, off_t off, int prot)
 	struct proc *p = curproc;	/* XXX */
 
 	switch (minor(dev)) {
-/* minor device 0 is physical memory */
+	/* minor device 0 is physical memory */
 	case 0:
 		if (suser(p, 0) != 0 && amd64_pa_used(off))
 			return -1;
 		return off;
 
 #ifdef APERTURE
-/* minor device 4 is aperture driver */
+	/* minor device 4 is aperture driver */
 	case 4:
 		/* Check if a write combining mapping is requested. */
 		if (off >= MEMRANGE_WC_RANGE)
@@ -332,6 +329,4 @@ mem_range_attr_set(struct mem_range_desc *mrd, int *arg)
 
 	return (mem_range_softc.mr_op->set(&mem_range_softc, mrd, arg));
 }
-
 #endif /* MTRR */
-
