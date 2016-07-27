@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmeter.h,v 1.14 2012/04/12 14:25:57 deraadt Exp $	*/
+/*	$OpenBSD: vmmeter.h,v 1.15 2016/07/27 14:44:59 tedu Exp $	*/
 /*	$NetBSD: vmmeter.h,v 1.9 1995/03/26 20:25:04 jtc Exp $	*/
 
 /*-
@@ -62,14 +62,14 @@ struct vmtotal {
  * Fork/vfork/__tfork accounting.
  */
 struct  forkstat {
-	int	cntfork;	/* number of fork() calls */
-	int	cntvfork;	/* number of vfork() calls */
-	int	cnttfork;	/* number of __tfork() calls */
-	int	cntkthread;	/* number of kernel threads created */
-	int	sizfork;	/* VM pages affected by fork() */
-	int	sizvfork;	/* VM pages affected by vfork() */
-	int	siztfork;	/* VM pages affected by __tfork() */
-	int	sizkthread;	/* VM pages affected by kernel threads */
+	uint32_t	cntfork;	/* number of fork() calls */
+	uint32_t	cntvfork;	/* number of vfork() calls */
+	uint32_t	cnttfork;	/* number of __tfork() calls */
+	uint32_t	cntkthread;	/* number of kernel threads created */
+	uint64_t	sizfork;	/* VM pages affected by fork() */
+	uint64_t	sizvfork;	/* VM pages affected by vfork() */
+	uint64_t	siztfork;	/* VM pages affected by __tfork() */
+	uint64_t	sizkthread;	/* VM pages affected by kernel threads */
 };
 
 /* These sysctl names are only really used by sysctl(8) */

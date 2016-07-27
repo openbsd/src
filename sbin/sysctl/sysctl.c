@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.215 2016/06/18 10:36:13 vgross Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.216 2016/07/27 14:44:59 tedu Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -1732,28 +1732,28 @@ sysctl_forkstat(char *string, char **bufpp, int mib[], int flags, int *typep)
 		(void)printf("%s%s", string, equ);
 	switch (indx)	{
 	case KERN_FORKSTAT_FORK:
-		(void)printf("%d\n", fks.cntfork);
+		(void)printf("%u\n", fks.cntfork);
 		break;
 	case KERN_FORKSTAT_VFORK:
-		(void)printf("%d\n", fks.cntvfork);
+		(void)printf("%u\n", fks.cntvfork);
 		break;
 	case KERN_FORKSTAT_TFORK:
-		(void)printf("%d\n", fks.cnttfork);
+		(void)printf("%u\n", fks.cnttfork);
 		break;
 	case KERN_FORKSTAT_KTHREAD:
-		(void)printf("%d\n", fks.cntkthread);
+		(void)printf("%u\n", fks.cntkthread);
 		break;
 	case KERN_FORKSTAT_SIZFORK:
-		(void)printf("%d\n", fks.sizfork);
+		(void)printf("%llu\n", fks.sizfork);
 		break;
 	case KERN_FORKSTAT_SIZVFORK:
-		(void)printf("%d\n", fks.sizvfork);
+		(void)printf("%llu\n", fks.sizvfork);
 		break;
 	case KERN_FORKSTAT_SIZTFORK:
-		(void)printf("%d\n", fks.siztfork);
+		(void)printf("%llu\n", fks.siztfork);
 		break;
 	case KERN_FORKSTAT_SIZKTHREAD:
-		(void)printf("%d\n", fks.sizkthread);
+		(void)printf("%llu\n", fks.sizkthread);
 		break;
 	}
 	return (-1);

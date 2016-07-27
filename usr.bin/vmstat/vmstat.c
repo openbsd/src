@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.139 2015/12/24 03:25:08 mmcc Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.140 2016/07/27 14:44:59 tedu Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -605,15 +605,15 @@ doforkst(void)
 		kread(X_FORKSTAT, &fks, sizeof(struct forkstat));
 	}
 
-	(void)printf("%d forks, %d pages, average %.2f\n",
+	(void)printf("%u forks, %llu pages, average %.2f\n",
 	    fks.cntfork, fks.sizfork, (double)fks.sizfork / fks.cntfork);
-	(void)printf("%d vforks, %d pages, average %.2f\n",
+	(void)printf("%u vforks, %llu pages, average %.2f\n",
 	    fks.cntvfork, fks.sizvfork,
 	    (double)fks.sizvfork / (fks.cntvfork ? fks.cntvfork : 1));
-	(void)printf("%d __tforks, %d pages, average %.2f\n",
+	(void)printf("%u __tforks, %llu pages, average %.2f\n",
 	    fks.cnttfork, fks.siztfork,
 	    (double)fks.siztfork / (fks.cnttfork ? fks.cnttfork : 1));
-	(void)printf("%d kthread creations, %d pages, average %.2f\n",
+	(void)printf("%u kthread creations, %llu pages, average %.2f\n",
 	    fks.cntkthread, fks.sizkthread,
 	    (double)fks.sizkthread / (fks.cntkthread ? fks.cntkthread : 1));
 }
