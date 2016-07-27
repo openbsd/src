@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.40 2016/06/28 17:35:34 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.41 2016/07/27 12:58:21 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -417,6 +417,10 @@ sub print_info
 	my $plist;
 	if ($state->opt('z')) {
 		$plist = $handle->plist(\&OpenBSD::PackingList::ExtraInfoOnly);
+		# firmware don't belong
+		if ($plist->has('firmware')) {
+			return;
+		}
 		my $name = OpenBSD::PackageName->new_from_string($plist->pkgname);
 		my $stem = $name->{stem};
 		my $compose = $stem."--".join('-', sort keys %{$name->{flavors}});
