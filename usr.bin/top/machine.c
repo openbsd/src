@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.86 2016/05/11 08:11:27 edd Exp $	 */
+/* $OpenBSD: machine.c,v 1.87 2016/07/28 21:45:00 tedu Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -366,20 +366,25 @@ static char **
 get_proc_args(struct kinfo_proc *kp)
 {
 	static char	**s;
-	size_t		siz = 100;
+	static size_t	siz = 1023;
 	int		mib[4];
 
-	for (;; siz *= 2) {
-		if ((s = realloc(s, siz)) == NULL)
-			err(1, NULL);
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_PROC_ARGS;
-		mib[2] = kp->p_pid;
-		mib[3] = KERN_PROC_ARGV;
-		if (sysctl(mib, 4, s, &siz, NULL, 0) == 0)
+	if (!s && !(s = malloc(siz)))
+		err(1, NULL);
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_PROC_ARGS;
+	mib[2] = kp->p_pid;
+	mib[3] = KERN_PROC_ARGV;
+	for (;;) {
+		size_t space = siz;
+		if (sysctl(mib, 4, s, &space, NULL, 0) == 0)
 			break;
 		if (errno != ENOMEM)
 			return NULL;
+		siz *= 2;
+		if ((s = realloc(s, siz)) == NULL)
+			err(1, NULL);
 	}
 	return s;
 }
