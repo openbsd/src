@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.179 2016/07/28 12:08:14 mikeb Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.180 2016/07/28 12:12:16 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -382,7 +382,7 @@ static const struct {
 	{ "rpath",		PLEDGE_RPATH },
 	{ "sendfd",		PLEDGE_SENDFD },
 	{ "settime",		PLEDGE_SETTIME },
-	{ "stdio",		PLEDGE_STDIO|PLEDGE_RECVFD },
+	{ "stdio",		PLEDGE_STDIO },
 	{ "tmppath",		PLEDGE_TMPPATH },
 	{ "tty",		PLEDGE_TTY },
 	{ "unix",		PLEDGE_UNIX },
