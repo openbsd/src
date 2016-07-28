@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2016/06/07 01:29:38 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2016/07/28 21:37:10 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.13 1997/07/01 05:37:51 lukem Exp $	*/
 
 /*
@@ -81,9 +81,9 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	if ((inputdev = getenv("TAPE")) == NULL)
+	if ((inputdev = getenv("TAPE")) == NULL || *inputdev == '\0')
 		inputdev = _PATH_DEFTAPE;
-	if ((tmpdir = getenv("TMPDIR")) == NULL)
+	if ((tmpdir = getenv("TMPDIR")) == NULL || *tmpdir == '\0')
 		tmpdir = _PATH_TMP;
 	if ((tmpdir = strdup(tmpdir)) == NULL)
 		err(1, NULL);
