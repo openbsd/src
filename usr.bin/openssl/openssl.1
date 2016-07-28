@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.40 2016/07/23 19:31:35 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.41 2016/07/28 16:20:21 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: July 23 2016 $
+.Dd $Mdocdate: July 28 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -255,7 +255,7 @@ Indent the output according to the
 .Qq depth
 of the structures.
 .It Fl in Ar file
-The input file; the default is standard input.
+The input file to read from, or standard input if not specified.
 .It Fl inform Cm der | pem | txt
 The input format.
 .It Fl length Ar number
@@ -349,7 +349,7 @@ It also maintains a text database of issued certificates and their status.
 The options relevant to CAs are as follows:
 .Bl -tag -width "XXXX"
 .It Fl batch
-This sets the batch mode.
+Batch mode.
 In this mode no questions will be asked
 and all certificates will be certified automatically.
 .It Fl cert Ar file
@@ -359,7 +359,7 @@ Specifies the configuration file to use.
 .It Fl days Ar arg
 The number of days to certify the certificate for.
 .It Fl enddate Ar date
-This allows the expiry date to be explicitly set.
+Set the expiry date.
 The format of the date is YYMMDDHHMMSSZ
 .Pq the same as an ASN1 UTCTime structure .
 .It Fl extensions Ar section
@@ -449,7 +449,7 @@ appended.
 .It Fl passin Ar arg
 The key password source.
 .It Fl policy Ar arg
-This option defines the CA
+Define the CA
 .Qq policy
 to use.
 The policy section in the configuration file
@@ -491,7 +491,7 @@ then it can be preceded by a number and a
 .It Fl ss_cert Ar file
 A single self-signed certificate to be signed by the CA.
 .It Fl startdate Ar date
-This allows the start date to be explicitly set.
+Set the start date.
 The format of the date is YYMMDDHHMMSSZ
 .Pq the same as an ASN1 UTCTime structure .
 .It Fl status Ar serial
@@ -500,7 +500,7 @@ Show the status of the certificate with serial number
 .It Fl updatedb
 Update database for expired certificates.
 .It Fl verbose
-This prints extra details about the operations being performed.
+Print extra details about the operations being performed.
 .El
 .Pp
 The options relevant to CRLs are as follows:
@@ -510,12 +510,12 @@ This is the same as
 .Fl crl_compromise ,
 except the revocation reason is set to CACompromise.
 .It Fl crl_compromise Ar time
-This sets the revocation reason to keyCompromise and the compromise time to
+Set the revocation reason to keyCompromise and the compromise time to
 .Ar time .
 .Ar time
 should be in GeneralizedTime format, i.e. YYYYMMDDHHMMSSZ.
 .It Fl crl_hold Ar instruction
-This sets the CRL revocation reason code to certificateHold and the hold
+Set the CRL revocation reason code to certificateHold and the hold
 instruction to
 .Ar instruction
 which must be an OID.
@@ -556,7 +556,7 @@ can't handle V2 CRLs.
 .It Fl crlhours Ar num
 The number of hours before the next CRL is due.
 .It Fl gencrl
-This option generates a CRL based on information in the index file.
+Generate a CRL based on information in the index file.
 .It Fl revoke Ar file
 A
 .Ar file
@@ -793,7 +793,7 @@ The
 command converts
 .Nm openssl
 cipher lists into ordered SSL cipher preference lists.
-It can be used as a test tool to determine the appropriate cipherlist.
+It can be used as a way to determine the appropriate cipher list.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
