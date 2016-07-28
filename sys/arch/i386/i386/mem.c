@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.47 2015/09/08 07:12:56 deraadt Exp $ */
+/*	$OpenBSD: mem.c,v 1.48 2016/07/28 16:08:56 tedu Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -48,6 +48,7 @@
 #include <sys/malloc.h>
 #include <sys/memrange.h>
 #include <sys/fcntl.h>
+#include <sys/rwlock.h>
 
 #include <machine/cpu.h>
 #include <machine/conf.h>
@@ -119,18 +120,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 	size_t c;
 	struct iovec *iov;
 	int error = 0;
-	static int physlock;
+	static struct rwlock physlock = RWLOCK_INITIALIZER("mmrw");
 
 	if (minor(dev) == 0) {
 		/* lock against other uses of shared vmmap */
-		while (physlock > 0) {
-			physlock++;
-			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
-			    "mmrw", 0);
-			if (error)
-				return (error);
-		}
-		physlock = 1;
+		error = rw_enter(&physlock, RW_WRITE | RW_INTR);
+		if (error)
+			return (error);
 	}
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -197,9 +193,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		uio->uio_resid -= c;
 	}
 	if (minor(dev) == 0) {
-		if (physlock > 1)
-			wakeup((caddr_t)&physlock);
-		physlock = 0;
+		rw_exit(&physlock);
 	}
 	return (error);
 }
