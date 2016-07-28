@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.102 2016/07/28 21:37:45 tedu Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.103 2016/07/28 21:40:25 tedu Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -681,13 +681,10 @@ toggleleavetmp(int f, int n)
 int
 bkupleavetmp(const char *fn)
 {
-	char	*tmp = NULL;
-
 	if (!leavetmp)
 		return(FALSE);
 
-	tmp = strstr(fn, "/tmp");
-	if (tmp == fn)
+	if (strncmp(fn, "/tmp", 4) == 0)
 		return (TRUE);
 
 	return (FALSE);
