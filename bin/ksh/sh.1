@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.134 2016/07/18 18:24:21 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.135 2016/07/28 16:36:02 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 18 2016 $
+.Dd $Mdocdate: July 28 2016 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -2196,9 +2196,6 @@ as well as if its modification time changes.
 This implementation of
 .Nm
 does not provide notification when these files are created.
-.It
-Command substitution occurring within double quotes
-is subject to pathname expansion but should not be.
 .It
 The built-in
 .Ic newgrp
