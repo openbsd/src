@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.23 2016/07/28 12:08:14 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.24 2016/07/28 17:35:13 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -632,50 +632,41 @@ xnf_txeof(struct xnf_softc *sc)
 	union xnf_tx_desc *txd;
 	struct mbuf *m;
 	bus_dmamap_t dmap;
-	volatile uint32_t r;
 	uint32_t cons;
-	int i, id, pkts = 0;
+	int i, id;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
 	    BUS_DMASYNC_POSTWRITE);
 
-	do {
-		for (cons = sc->sc_tx_cons; cons != txr->txr_cons; cons++) {
-			i = cons & (XNF_TX_DESC - 1);
-			txd = &txr->txr_desc[i];
-			dmap = sc->sc_tx_dmap[i];
+	for (cons = sc->sc_tx_cons; cons != txr->txr_cons; cons++) {
+		i = cons & (XNF_TX_DESC - 1);
+		txd = &txr->txr_desc[i];
+		dmap = sc->sc_tx_dmap[i];
 
-			id = txd->txd_rsp.txp_id;
-			memset(txd, 0, sizeof(*txd));
-			txd->txd_req.txq_id = id;
+		id = txd->txd_rsp.txp_id;
+		memset(txd, 0, sizeof(*txd));
+		txd->txd_req.txq_id = id;
 
-			m = sc->sc_tx_buf[i];
-			KASSERT(m != NULL);
-			sc->sc_tx_buf[i] = NULL;
+		m = sc->sc_tx_buf[i];
+		KASSERT(m != NULL);
+		sc->sc_tx_buf[i] = NULL;
 
-			bus_dmamap_sync(sc->sc_dmat, dmap, 0, 0,
-			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmat, dmap);
-			m_free(m);
-			pkts++;
-		}
+		bus_dmamap_sync(sc->sc_dmat, dmap, 0, 0,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, dmap);
+		m_free(m);
+	}
 
-		if (pkts > 0) {
-			sc->sc_tx_cons = cons;
-			txr->txr_cons_event = cons +
-			    ((txr->txr_prod - cons) >> 1) + 1;
-			bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
-			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-			pkts = 0;
-		}
+	sc->sc_tx_cons = cons;
+	txr->txr_cons_event = sc->sc_tx_cons +
+	    ((txr->txr_prod - sc->sc_tx_cons) >> 1) + 1;
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-		r = txr->txr_cons - sc->sc_tx_cons;
-	} while (r > 0);
-
+	if (txr->txr_cons == txr->txr_prod)
+		ifp->if_timer = 0;
 	if (ifq_is_oactive(&ifp->if_snd))
 		ifq_restart(&ifp->if_snd);
-	else if (txr->txr_cons == txr->txr_prod)
-		ifp->if_timer = 0;
 
 	return (0);
 }
@@ -691,92 +682,85 @@ xnf_rxeof(struct xnf_softc *sc)
 	struct mbuf *lmp = sc->sc_rx_cbuf[1];
 	struct mbuf *m;
 	bus_dmamap_t dmap;
-	volatile uint32_t r;
 	uint32_t cons;
-	int i, id, flags, len, offset, pkts = 0;
+	int i, id, flags, len, offset;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_rmap, 0, 0,
 	    BUS_DMASYNC_POSTREAD);
 
-	do {
-		for (cons = sc->sc_rx_cons; cons != rxr->rxr_cons; cons++) {
-			i = cons & (XNF_RX_DESC - 1);
-			rxd = &rxr->rxr_desc[i];
-			dmap = sc->sc_rx_dmap[i];
+	for (cons = sc->sc_rx_cons; cons != rxr->rxr_cons; cons++) {
+		i = cons & (XNF_RX_DESC - 1);
+		rxd = &rxr->rxr_desc[i];
+		dmap = sc->sc_rx_dmap[i];
 
-			len = rxd->rxd_rsp.rxp_status;
-			flags = rxd->rxd_rsp.rxp_flags;
-			offset = rxd->rxd_rsp.rxp_offset;
-			id = rxd->rxd_rsp.rxp_id;
-			memset(rxd, 0, sizeof(*rxd));
-			rxd->rxd_req.rxq_id = id;
+		len = rxd->rxd_rsp.rxp_status;
+		flags = rxd->rxd_rsp.rxp_flags;
+		offset = rxd->rxd_rsp.rxp_offset;
+		id = rxd->rxd_rsp.rxp_id;
+		memset(rxd, 0, sizeof(*rxd));
+		rxd->rxd_req.rxq_id = id;
 
-			bus_dmamap_sync(sc->sc_dmat, dmap, 0, 0,
-			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmat, dmap);
+		bus_dmamap_sync(sc->sc_dmat, dmap, 0, 0,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, dmap);
 
-			m = sc->sc_rx_buf[i];
-			KASSERT(m != NULL);
-			sc->sc_rx_buf[i] = NULL;
+		m = sc->sc_rx_buf[i];
+		KASSERT(m != NULL);
+		sc->sc_rx_buf[i] = NULL;
 
-			if (flags & XNF_RXF_MGMT)
-				printf("%s: management data present\n",
-				    ifp->if_xname);
+		if_rxr_put(&sc->sc_rx_slots, 1);
 
-			if (flags & XNF_RXF_CSUM_VALID)
-				m->m_pkthdr.csum_flags = M_TCP_CSUM_IN_OK |
-				    M_UDP_CSUM_IN_OK;
-
-			if_rxr_put(&sc->sc_rx_slots, 1);
-			pkts++;
-
-			if (len < 0 || (len + offset > PAGE_SIZE)) {
-				ifp->if_ierrors++;
-				m_freem(m);
-				continue;
-			}
-
-			m->m_len = len;
-			m->m_data += offset;
-
-			if (fmp == NULL) {
-				m->m_pkthdr.len = len;
-				fmp = m;
-			} else {
-				m->m_flags &= ~M_PKTHDR;
-				lmp->m_next = m;
-				fmp->m_pkthdr.len += m->m_len;
-			}
-			lmp = m;
-
-			if (flags & XNF_RXF_CHUNK) {
-				sc->sc_rx_cbuf[0] = fmp;
-				sc->sc_rx_cbuf[1] = lmp;
-				continue;
-			}
-
-			m = fmp;
-
-			ml_enqueue(&ml, m);
-			sc->sc_rx_cbuf[0] = sc->sc_rx_cbuf[1] =
-			    fmp = lmp = NULL;
+		if (flags & XNF_RXF_MGMT) {
+			printf("%s: management data present\n",
+			    ifp->if_xname);
+			m_freem(m);
+			continue;
 		}
 
-		if (pkts > 0) {
-			sc->sc_rx_cons = cons;
-			rxr->rxr_cons_event = cons + 1;
-			bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_rmap, 0, 0,
-			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-			pkts = 0;
+		if (flags & XNF_RXF_CSUM_VALID)
+			m->m_pkthdr.csum_flags = M_TCP_CSUM_IN_OK |
+			    M_UDP_CSUM_IN_OK;
+
+		if (len < 0 || (len + offset > PAGE_SIZE)) {
+			ifp->if_ierrors++;
+			m_freem(m);
+			continue;
 		}
 
-		r = rxr->rxr_cons - sc->sc_rx_cons;
-	} while (r > 0);
+		m->m_len = len;
+		m->m_data += offset;
 
-	if (!ml_empty(&ml)) {
-		if_input(ifp, &ml);
-		xnf_rx_ring_fill(sc);
+		if (fmp == NULL) {
+			m->m_pkthdr.len = len;
+			fmp = m;
+		} else {
+			m->m_flags &= ~M_PKTHDR;
+			lmp->m_next = m;
+			fmp->m_pkthdr.len += m->m_len;
+		}
+		lmp = m;
+
+		if (flags & XNF_RXF_CHUNK) {
+			sc->sc_rx_cbuf[0] = fmp;
+			sc->sc_rx_cbuf[1] = lmp;
+			continue;
+		}
+
+		m = fmp;
+
+		ml_enqueue(&ml, m);
+		sc->sc_rx_cbuf[0] = sc->sc_rx_cbuf[1] = fmp = lmp = NULL;
 	}
+
+	sc->sc_rx_cons = cons;
+	rxr->rxr_cons_event = sc->sc_rx_cons + 1;
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_rmap, 0, 0,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	xnf_rx_ring_fill(sc);
+
+	if (!ml_empty(&ml))
+		if_input(ifp, &ml);
 
 	return (0);
 }
