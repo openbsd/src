@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.22 2016/04/19 18:15:41 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.23 2016/07/28 12:08:14 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -467,7 +467,7 @@ xnf_start(struct ifnet *ifp)
 	struct xnf_softc *sc = ifp->if_softc;
 	struct xnf_tx_ring *txr = sc->sc_tx_ring;
 	struct mbuf *m;
-	int error, pkts = 0;
+	int pkts = 0;
 	uint32_t prod;
 
 	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
@@ -479,25 +479,23 @@ xnf_start(struct ifnet *ifp)
 	prod = txr->txr_prod;
 
 	for (;;) {
-		m = ifq_deq_begin(&ifp->if_snd);
+		if ((XNF_TX_DESC - (prod - sc->sc_tx_cons)) <
+		    sc->sc_tx_frags) {
+			/* transient */
+			ifq_set_oactive(&ifp->if_snd);
+			break;
+		}
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
-		error = xnf_encap(sc, m, &prod);
-		if (error == ENOENT) {
-			/* transient */
-			ifq_deq_rollback(&ifp->if_snd, m);
-			ifq_set_oactive(&ifp->if_snd);
-			break;
-		} else if (error) {
+		if (xnf_encap(sc, m, &prod)) {
 			/* the chain is too large */
 			ifp->if_oerrors++;
-			ifq_deq_commit(&ifp->if_snd, m);
 			m_freem(m);
 			continue;
 		}
 		ifp->if_opackets++;
-		ifq_deq_commit(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -534,8 +532,6 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 	uint32_t oprod = *prod;
 	int i, id, flags, n = 0;
 
-	if ((XNF_TX_DESC - (*prod - sc->sc_tx_cons)) < sc->sc_tx_frags)
-		return (ENOENT);
 	n = chainlen(m_head);
 	if (n > sc->sc_tx_frags && m_defrag(m_head, M_DONTWAIT))
 		goto errout;
