@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.36 2016/03/10 08:41:12 jmc Exp $
+.\"	$OpenBSD: rmd160.3,v 1.37 2016/07/28 03:52:41 tedu Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -17,7 +17,7 @@
 .\" See http://www.esat.kuleuven.ac.be/~bosselae/ripemd160.html
 .\"	for detailed information about RIPEMD-160.
 .\"
-.Dd $Mdocdate: March 10 2016 $
+.Dd $Mdocdate: July 28 2016 $
 .Dt RMD160INIT 3
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Ft void
 .Fn RMD160Init "RMD160_CTX *context"
 .Ft void
-.Fn RMD160Update "RMD160_CTX *context" "const u_int8_t *data" "u_int32_t nbytes"
+.Fn RMD160Update "RMD160_CTX *context" "const u_int8_t *data" "size_t nbytes"
 .Ft void
 .Fn RMD160Pad "RMD160_CTX *context"
 .Ft void
