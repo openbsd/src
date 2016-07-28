@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.147 2016/03/15 03:17:51 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.148 2016/07/28 21:57:57 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -83,6 +83,7 @@ struct cpu_info {
 	struct proc *ci_curproc; 	/* current owner of the processor */
 	cpuid_t ci_cpuid; 		/* our CPU ID */
 	u_int ci_apicid;		/* our APIC ID */
+	u_int ci_acpi_proc_id;
 	u_int32_t ci_randseed;
 
 #if defined(MULTIPROCESSOR)

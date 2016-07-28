@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.54 2015/12/12 12:33:49 reyk Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.55 2016/07/28 21:57:56 kettenis Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 		memset(&caa, 0, sizeof(caa));
 		caa.caa_name = "cpu";
-		caa.cpu_number = 0;
+		caa.cpu_apicid = 0;
 		caa.cpu_role = CPU_ROLE_SP;
 		caa.cpu_func = 0;
 		caa.cpu_signature = cpu_id;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.78 2016/06/28 05:37:50 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.79 2016/07/28 21:57:56 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -229,17 +229,18 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		ci = &cpu_info_primary;
 #ifdef MULTIPROCESSOR
-		if (caa->cpu_number != lapic_cpu_number()) {
+		if (caa->cpu_apicid != lapic_cpu_number()) {
 			panic("%s: running cpu is at apic %d"
 			    " instead of at expected %d",
-			    self->dv_xname, lapic_cpu_number(), caa->cpu_number);
+			    self->dv_xname, lapic_cpu_number(), caa->cpu_apicid);
 		}
 #endif
 		bcopy(self, &ci->ci_dev, sizeof *self);
 	}
 
 	ci->ci_self = ci;
-	ci->ci_apicid = caa->cpu_number;
+	ci->ci_apicid = caa->cpu_apicid;
+	ci->ci_acpi_proc_id = caa->cpu_acpi_proc_id;
 #ifdef MULTIPROCESSOR
 	ci->ci_cpuid = cpunum;
 #else
@@ -294,7 +295,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	case CPU_ROLE_BP:
-		printf("apid %d (boot processor)\n", caa->cpu_number);
+		printf("apid %d (boot processor)\n", caa->cpu_apicid);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
 		identifycpu(ci);
 #ifdef MTRR
@@ -310,7 +311,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		lapic_calibrate_timer(ci);
 #endif
 #if NIOAPIC > 0
-		ioapic_bsp_id = caa->cpu_number;
+		ioapic_bsp_id = caa->cpu_apicid;
 #endif
 		cpu_init_mwait(&ci->ci_dev);
 		break;
@@ -319,7 +320,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		/*
 		 * report on an AP
 		 */
-		printf("apid %d (application processor)\n", caa->cpu_number);
+		printf("apid %d (application processor)\n", caa->cpu_apicid);
 
 #ifdef MULTIPROCESSOR
 		gdt_alloc_cpu(ci);

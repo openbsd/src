@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.6 2015/07/18 19:21:03 sf Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.7 2016/07/28 21:57:57 kettenis Exp $	*/
 /* $NetBSD: cpuvar.h,v 1.1.2.3 2000/02/21 18:54:07 sommerfeld Exp $ */
 
 /*-
@@ -78,7 +78,8 @@ extern struct cpu_functions mp_cpu_funcs;
 
 struct cpu_attach_args {
 	const char *caa_name;
-	int cpu_number;
+	int cpu_apicid;
+	int cpu_acpi_proc_id;
 	int cpu_role;
 	struct cpu_functions *cpu_func;
 	int cpu_signature;

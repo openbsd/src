@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.82 2016/01/12 01:11:15 jcs Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.83 2016/07/28 21:57:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -40,9 +40,6 @@ extern int acpi_debug;
 #endif
 
 extern int acpi_hasprocfvs;
-
-#define LAPIC_MAP_SIZE	256
-extern u_int8_t acpi_lapic_flags[LAPIC_MAP_SIZE];
 
 struct klist;
 struct acpiec_softc;

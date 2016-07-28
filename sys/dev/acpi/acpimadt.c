@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.34 2016/07/10 20:41:19 kettenis Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.35 2016/07/28 21:57:56 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -39,8 +39,6 @@
 #include <machine/mpbiosvar.h>
 
 #include "ioapic.h"
-
-u_int8_t acpi_lapic_flags[LAPIC_MAP_SIZE];
 
 int acpimadt_match(struct device *, void *, void *);
 void acpimadt_attach(struct device *, struct device *, void *);
@@ -244,8 +242,6 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 
 			lapic_map[entry->madt_lapic.acpi_proc_id] =
 			    entry->madt_lapic.apic_id;
-			acpi_lapic_flags[entry->madt_lapic.acpi_proc_id] =
-			    entry->madt_lapic.flags;
 
 			memset(&caa, 0, sizeof(struct cpu_attach_args));
 			if (lapic_cpu_number() == entry->madt_lapic.apic_id)
@@ -255,7 +251,8 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 				ncpusfound++;
 			}
 			caa.caa_name = "cpu";
-			caa.cpu_number = entry->madt_lapic.apic_id;
+			caa.cpu_apicid = entry->madt_lapic.apic_id;
+			caa.cpu_acpi_proc_id = entry->madt_lapic.acpi_proc_id;
 #ifdef MULTIPROCESSOR
 			caa.cpu_func = &mp_cpu_funcs;
 #endif
@@ -308,7 +305,8 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 				ncpusfound++;
 			}
 			caa.caa_name = "cpu";
-			caa.cpu_number = entry->madt_x2apic.apic_id;
+			caa.cpu_apicid = entry->madt_x2apic.apic_id;
+			caa.cpu_acpi_proc_id = entry->madt_x2apic.acpi_proc_uid;
 #ifdef MULTIPROCESSOR
 			caa.cpu_func = &mp_cpu_funcs;
 #endif

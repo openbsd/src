@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.312 2016/06/10 20:03:46 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.313 2016/07/28 21:57:56 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1960,6 +1960,8 @@ acpi_add_device(struct aml_node *node, void *arg)
 	struct acpi_attach_args aaa;
 #ifdef MULTIPROCESSOR
 	struct aml_value res;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 	int proc_id = -1;
 #endif
 
@@ -1980,8 +1982,11 @@ acpi_add_device(struct aml_node *node, void *arg)
 				proc_id = res.v_processor.proc_id;
 			aml_freevalue(&res);
 		}
-		if (proc_id < -1 || proc_id >= LAPIC_MAP_SIZE ||
-		    (acpi_lapic_flags[proc_id] & ACPI_PROC_ENABLE) == 0)
+		CPU_INFO_FOREACH(cii, ci) {
+			if (ci->ci_acpi_proc_id == proc_id)
+				break;
+		}
+		if (ci == NULL)
 			return 0;
 #endif
 		nacpicpus++;
