@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.120 2016/02/16 14:48:42 krw Exp $
+dnl	$OpenBSD: m4.common,v 1.121 2016/07/28 17:19:24 zhuk Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -31,7 +31,7 @@ out as follows:
 
 	INSTALL.MACHINE	Installation notes; this file.
 
-	SHA256		Output of the sum(1) program using the option
+	SHA256		Output of the cksum(1) program using the option
 			-a sha256, usable for verification of the
 			correctness of downloaded files.
 
