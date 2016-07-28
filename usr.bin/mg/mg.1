@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.104 2016/04/14 17:05:32 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.105 2016/07/28 21:37:45 tedu Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: April 14 2016 $
+.Dd $Mdocdate: July 28 2016 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -94,8 +94,8 @@ working directory, or all backups can be moved to a
 .Pa ~/.mg.d
 directory where files retain their path name to retain uniqueness.
 Use the backup-to-home-directory to alternate between these two locations.
-Further, if any application creates backup files in the
-.Ev TMPDIR ,
+Further, if any application creates backup files in
+.Pa /tmp ,
 these can be left with the leave-tmpdir-backups command.
 .Sh TAGS
 .Nm
@@ -661,8 +661,8 @@ Delete forward
 words.
 .It leave-tmpdir-backups
 Modifies the behaviour of backup-to-home-directory.
-Backup files that would normally reside in the system
-.Ev TMPDIR
+Backup files that would normally reside in
+.Pa /tmp
 are left there and not moved to the
 .Pa ~/.mg.d
 directory.

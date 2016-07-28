@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.101 2016/07/04 03:24:48 guenther Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.102 2016/07/28 21:37:45 tedu Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -664,7 +664,7 @@ backuptohomedir(int f, int n)
 
 /*
  * For applications that use mg as the editor and have a desire to keep
- * '~' files in the TMPDIR, toggle the location: /tmp | ~/.mg.d
+ * '~' files in /tmp, toggle the location: /tmp | ~/.mg.d
  */
 int
 toggleleavetmp(int f, int n)
@@ -681,18 +681,10 @@ toggleleavetmp(int f, int n)
 int
 bkupleavetmp(const char *fn)
 {
-	char	*tmpdir, *tmp = NULL;
+	char	*tmp = NULL;
 
 	if (!leavetmp)
 		return(FALSE);
-
-	if((tmpdir = getenv("TMPDIR")) != NULL && *tmpdir != '\0') {
-		tmp = strstr(fn, tmpdir);
-		if (tmp == fn)
-			return (TRUE);
-
-		return (FALSE);
-	}
 
 	tmp = strstr(fn, "/tmp");
 	if (tmp == fn)
