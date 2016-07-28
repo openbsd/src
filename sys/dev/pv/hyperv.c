@@ -397,7 +397,7 @@ hv_cmd(struct hv_softc *sc, void *cmd, size_t cmdlen, void *rsp,
 	int rv;
 
 	if (cmdlen > HV_MESSAGE_PAYLOAD) {
-		printf("%s: payload too large (%lu)\n", sc->sc_dev.dv_xname,
+		printf("%s: payload too large (%ld)\n", sc->sc_dev.dv_xname,
 		    cmdlen);
 		return (EMSGSIZE);
 	}
@@ -568,12 +568,12 @@ hv_event_intr(struct hv_softc *sc)
 				continue;
 			ch = hv_channel_lookup(sc, relid);
 			if (ch == NULL) {
-				printf("%s: unhandled event on %d\n",
+				printf("%s: unhandled event on %u\n",
 				    sc->sc_dev.dv_xname, relid);
 				continue;
 			}
 			if (ch->ch_state != HV_CHANSTATE_OPENED) {
-				printf("%s: channel %d is not active\n",
+				printf("%s: channel %u is not active\n",
 				    sc->sc_dev.dv_xname, relid);
 				continue;
 			}
@@ -600,7 +600,7 @@ hv_message_intr(struct hv_softc *sc)
 
 		hdr = (struct hv_channel_msg_header *)msg->payload;
 		if (hdr->message_type >= HV_CHANMSG_COUNT) {
-			printf("%s: unhandled message type %u flags %#x\n",
+			printf("%s: unhandled message type %d flags %#x\n",
 			    sc->sc_dev.dv_xname, hdr->message_type,
 			    msg->header.message_flags);
 			goto skip;
@@ -608,7 +608,7 @@ hv_message_intr(struct hv_softc *sc)
 		if (hv_msg_dispatch[hdr->message_type].hmd_handler)
 			hv_msg_dispatch[hdr->message_type].hmd_handler(sc, hdr);
 		else
-			printf("%s: unhandled message type %u\n",
+			printf("%s: unhandled message type %d\n",
 			    sc->sc_dev.dv_xname, hdr->message_type);
  skip:
 		msg->header.message_type = HV_MESSAGE_TYPE_NONE;
