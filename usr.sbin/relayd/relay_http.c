@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.58 2016/07/27 11:02:41 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.59 2016/07/29 10:00:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -401,13 +401,38 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		case HTTP_METHOD_DELETE:
 		case HTTP_METHOD_GET:
 		case HTTP_METHOD_HEAD:
+		/* WebDAV methods */
+		case HTTP_METHOD_COPY:
+		case HTTP_METHOD_MOVE:
 			cre->toread = 0;
 			break;
 		case HTTP_METHOD_OPTIONS:
-		case HTTP_METHOD_PATCH:
 		case HTTP_METHOD_POST:
 		case HTTP_METHOD_PUT:
 		case HTTP_METHOD_RESPONSE:
+		/* WebDAV methods */
+		case HTTP_METHOD_PROPFIND:
+		case HTTP_METHOD_PROPPATCH:
+		case HTTP_METHOD_MKCOL:
+		case HTTP_METHOD_LOCK:
+		case HTTP_METHOD_UNLOCK:
+		case HTTP_METHOD_VERSION_CONTROL:
+		case HTTP_METHOD_REPORT:
+		case HTTP_METHOD_CHECKOUT:
+		case HTTP_METHOD_CHECKIN:
+		case HTTP_METHOD_UNCHECKOUT:
+		case HTTP_METHOD_MKWORKSPACE:
+		case HTTP_METHOD_UPDATE:
+		case HTTP_METHOD_LABEL:
+		case HTTP_METHOD_MERGE:
+		case HTTP_METHOD_BASELINE_CONTROL:
+		case HTTP_METHOD_MKACTIVITY:
+		case HTTP_METHOD_ORDERPATCH:
+		case HTTP_METHOD_ACL:
+		case HTTP_METHOD_MKREDIRECTREF:
+		case HTTP_METHOD_UPDATEREDIRECTREF:
+		case HTTP_METHOD_SEARCH:
+		case HTTP_METHOD_PATCH:
 			/* HTTP request payload */
 			if (cre->toread > 0)
 				bev->readcb = relay_read_httpcontent;

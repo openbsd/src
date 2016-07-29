@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.168 2015/11/06 18:06:29 bentley Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.169 2016/07/29 10:00:12 reyk Exp $
 .\"
 .\" Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 6 2015 $
+.Dd $Mdocdate: July 29 2016 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -1125,23 +1125,39 @@ Match the HTTP request method.
 The method is specified by
 .Ar name
 and can be either
+.Ic ACL ,
+.Ic BASELINE-CONTROL ,
+.Ic CHECKIN ,
+.Ic CHECKOUT ,
 .Ic CONNECT ,
 .Ic COPY ,
 .Ic DELETE ,
 .Ic GET ,
 .Ic HEAD ,
+.Ic LABEL ,
 .Ic LOCK ,
+.Ic MERGE ,
+.Ic MKACTIVITY ,
 .Ic MKCOL ,
+.Ic MKREDIRECTREF ,
+.Ic MKWORKSPACE ,
 .Ic MOVE ,
 .Ic OPTIONS ,
+.Ic ORDERPATCH ,
 .Ic PATCH ,
 .Ic POST ,
 .Ic PROPFIND ,
 .Ic PROPPATCH ,
 .Ic PUT ,
+.Ic REPORT ,
+.Ic SEARCH ,
 .Ic TRACE ,
+.Ic UNCHECKOUT ,
+.Ic UNLOCK ,
+.Ic UPDATE ,
+.Ic UPDATEREDIRECTREF ,
 or
-.Ic UNLOCK .
+.Ic VERSION-CONTROL .
 .It Xo
 .Ar type Ar option
 .Oo Oo Ic digest Oc
