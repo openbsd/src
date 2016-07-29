@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.284 2016/07/22 12:12:29 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.285 2016/07/29 08:53:07 giovanni Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -934,23 +934,26 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		strnvis(user, s->username, sizeof user, VIS_WHITE | VIS_SAFE);
 		if (success == LKA_OK) {
 			log_info("%016"PRIx64" smtp "
-			    "event=authentication user=%s result=ok",
-			    s->id, user);
+			    "event=authentication user=%s address=%s "
+			    "host=%s result=ok",
+			    s->id, user, ss_to_text(&s->ss), s->hostname);
 			s->flags |= SF_AUTHENTICATED;
 			smtp_reply(s, "235 %s: Authentication succeeded",
 			    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 		}
 		else if (success == LKA_PERMFAIL) {
 			log_info("%016"PRIx64" smtp "
-			    "event=authentication user=%s result=permfail",
-			    s->id, user);
+			    "event=authentication user=%s address=%s "
+			    "host=%s result=permfail",
+			    s->id, user, ss_to_text(&s->ss), s->hostname);
 			smtp_auth_failure_pause(s);
 			return;
 		}
 		else if (success == LKA_TEMPFAIL) {
 			log_info("%016"PRIx64" smtp "
-			    "event=authentication user=%s result=tempfail",
-			    s->id, user);
+			    "event=authentication user=%s address=%s "
+			    "host=%s result=tempfail",
+			    s->id, user, ss_to_text(&s->ss), s->hostname);
 			smtp_reply(s, "421 %s: Temporary failure",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 		}
