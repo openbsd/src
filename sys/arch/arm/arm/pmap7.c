@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.28 2016/07/27 21:12:49 patrick Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.29 2016/07/29 06:46:15 patrick Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1132,7 +1132,7 @@ pmap_page_remove(struct vm_page *pg)
 	struct l2_bucket *l2b;
 	struct pv_entry *pv, *npv;
 	pmap_t pm, curpm;
-	pt_entry_t *ptep, pte;
+	pt_entry_t *ptep;
 	boolean_t flush;
 
 	NPDEBUG(PDB_FOLLOW,
@@ -1156,10 +1156,9 @@ pmap_page_remove(struct vm_page *pg)
 
 		ptep = &l2b->l2b_kva[l2pte_index(pv->pv_va)];
 		if (*ptep != 0) {
-			pte = *ptep;
-
 			/* inline pmap_is_current(pm) */
-			if (pm == curpm || pm == pmap_kernel()) {
+			if (l2pte_valid(*ptep) &&
+			    (pm == curpm || pm == pmap_kernel())) {
 				if (PV_BEEN_EXECD(pv->pv_flags))
 					cpu_icache_sync_range(pv->pv_va, PAGE_SIZE);
 				if (flush == FALSE) {
