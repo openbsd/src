@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.217 2016/06/17 10:48:25 dlg Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.218 2016/07/29 20:44:40 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -770,6 +770,9 @@ uvm_map_isavail(struct vm_map *map, struct uvm_addr_state *uaddr,
 	struct uvm_addr_state *free;
 	struct uvm_map_addr *atree;
 	struct vm_map_entry *i, *i_end;
+
+	if (addr + sz < addr)
+		return 0;
 
 	/*
 	 * Kernel memory above uvm_maxkaddr is considered unavailable.
