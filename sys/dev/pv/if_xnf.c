@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.25 2016/07/29 18:31:22 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.26 2016/07/29 18:31:51 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -776,21 +776,21 @@ xnf_rx_ring_fill(void *arg)
 	struct xnf_rx_ring *rxr = sc->sc_rx_ring;
 	bus_dmamap_t dmap;
 	struct mbuf *m;
-	uint32_t cons, prod;
-	static int timer = 0;
-	int i, flags, n;
+	uint32_t cons, prod, oprod;
+	int i, flags, n, s;
+
+	s = splnet();
 
 	cons = rxr->rxr_cons;
-	prod = rxr->rxr_prod;
+	prod = oprod = rxr->rxr_prod;
 
 	n = if_rxr_get(&sc->sc_rx_slots, XNF_RX_DESC);
 
 	/* Less than XNF_RX_MIN slots available? */
 	if (n == 0 && prod - cons < XNF_RX_MIN) {
+		splx(s);
 		if (ifp->if_flags & IFF_RUNNING)
-			timeout_add(&sc->sc_rx_fill, 1 << timer);
-		if (timer < 10)
-			timer++;
+			timeout_add(&sc->sc_rx_fill, 10);
 		return;
 	}
 
@@ -803,7 +803,7 @@ xnf_rx_ring_fill(void *arg)
 			break;
 		m->m_len = m->m_pkthdr.len = XNF_MCLEN;
 		dmap = sc->sc_rx_dmap[i];
-		flags = (sc->sc_domid << 16) | BUS_DMA_READ |BUS_DMA_NOWAIT;
+		flags = (sc->sc_domid << 16) | BUS_DMA_READ | BUS_DMA_NOWAIT;
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmap, m, flags)) {
 			m_freem(m);
 			break;
@@ -820,7 +820,17 @@ xnf_rx_ring_fill(void *arg)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_rmap, 0, 0,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	xen_intr_signal(sc->sc_xih);
+	if (prod - cons < XNF_RX_MIN) {
+		splx(s);
+		if (ifp->if_flags & IFF_RUNNING)
+			timeout_add(&sc->sc_rx_fill, 10);
+		return;
+	}
+
+	if (prod - rxr->rxr_prod_event < prod - oprod)
+		xen_intr_signal(sc->sc_xih);
+
+	splx(s);
 }
 
 int
