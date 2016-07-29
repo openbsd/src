@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.48 2015/11/23 18:04:53 deraadt Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.49 2016/07/29 17:38:41 jmc Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: November 23 2015 $
+.Dd $Mdocdate: July 29 2016 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -118,8 +118,8 @@ Scoped IPv6 address notation is accepted as well
 for details).
 .Pp
 Up to
-.Dv MAXNS
-(currently 3) name servers may be listed, one per line.
+.Dv ASR_MAXNS
+(currently 5) name servers may be listed, one per line.
 If there are multiple servers, the resolver library queries them in the
 order listed.
 If no
