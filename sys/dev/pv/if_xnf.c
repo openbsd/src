@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.24 2016/07/28 17:35:13 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.25 2016/07/29 18:31:22 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -468,7 +468,7 @@ xnf_start(struct ifnet *ifp)
 	struct xnf_tx_ring *txr = sc->sc_tx_ring;
 	struct mbuf *m;
 	int pkts = 0;
-	uint32_t prod;
+	uint32_t prod, oprod;
 
 	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
@@ -476,7 +476,7 @@ xnf_start(struct ifnet *ifp)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
 	    BUS_DMASYNC_POSTREAD);
 
-	prod = txr->txr_prod;
+	prod = oprod = txr->txr_prod;
 
 	for (;;) {
 		if ((XNF_TX_DESC - (prod - sc->sc_tx_cons)) <
@@ -505,7 +505,10 @@ xnf_start(struct ifnet *ifp)
 	}
 	if (pkts > 0) {
 		txr->txr_prod = prod;
-		xen_intr_signal(sc->sc_xih);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		if (prod - txr->txr_prod_event < prod - oprod)
+			xen_intr_signal(sc->sc_xih);
 		ifp->if_timer = 5;
 	}
 }
