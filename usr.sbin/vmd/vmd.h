@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.21 2016/07/09 09:06:22 stefan Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.22 2016/07/29 16:36:51 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -57,12 +57,14 @@ enum imsg_type {
 	IMSG_VMDOP_GET_INFO_VM_DATA,
 	IMSG_VMDOP_GET_INFO_VM_END_DATA,
 	IMSG_VMDOP_LOAD,
-	IMSG_VMDOP_RELOAD
+	IMSG_VMDOP_RELOAD,
+	IMSG_VMDOP_TERMINATE_VM_EVENT
 };
 
 struct vmop_result {
 	int			 vmr_result;
 	uint32_t		 vmr_id;
+	pid_t			 vmr_pid;
 	char			 vmr_ttyname[VM_TTYNAME_MAX];
 };
 
@@ -78,6 +80,7 @@ struct vmop_id {
 
 struct vmd_vm {
 	struct vm_create_params	 vm_params;
+	pid_t			 vm_pid;
 	uint32_t		 vm_vmid;
 	int			 vm_kernel;
 	int			 vm_disks[VMM_MAX_DISKS_PER_VM];
@@ -109,6 +112,7 @@ void	 vmd_reload(int, const char *);
 struct vmd_vm *vm_getbyvmid(uint32_t);
 struct vmd_vm *vm_getbyid(uint32_t);
 struct vmd_vm *vm_getbyname(const char *);
+struct vmd_vm *vm_getbypid(pid_t);
 void	 vm_remove(struct vmd_vm *);
 char	*get_string(uint8_t *, size_t);
 

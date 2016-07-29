@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.27 2016/02/05 11:40:15 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.28 2016/07/29 16:36:51 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -148,6 +148,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		memcpy(&vmr, imsg->data, sizeof(vmr));
 		if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL)
 			fatalx("%s: invalid vm response", __func__);
+		vm->vm_pid = vmr.vmr_pid;
 		vcp = &vm->vm_params;
 		vcp->vcp_id = vmr.vmr_id;
 
@@ -181,9 +182,11 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
+	case IMSG_VMDOP_TERMINATE_VM_EVENT:
 		IMSG_SIZE_CHECK(imsg, &vmr);
 		memcpy(&vmr, imsg->data, sizeof(vmr));
-		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
+		if (imsg->hdr.type == IMSG_VMDOP_TERMINATE_VM_RESPONSE)
+			proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
 		if (vmr.vmr_result == 0) {
 			/* Remove local reference */
 			vm = vm_getbyid(vmr.vmr_id);
@@ -502,6 +505,19 @@ vm_getbyname(const char *name)
 
 	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
 		if (strcmp(vm->vm_params.vcp_name, name) == 0)
+			return (vm);
+	}
+
+	return (NULL);
+}
+
+struct vmd_vm *
+vm_getbypid(pid_t pid)
+{
+	struct vmd_vm	*vm;
+
+	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
+		if (vm->vm_pid == pid)
 			return (vm);
 	}
 

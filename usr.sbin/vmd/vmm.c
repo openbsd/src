@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.33 2016/07/19 09:52:34 natano Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.34 2016/07/29 16:36:51 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
+#include <sys/wait.h>
 #include <sys/uio.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -103,6 +104,7 @@ struct i8253_counter i8253_counter[3];
 struct ns8250_regs com1_regs;
 io_fn_t ioports_map[MAX_PORTS];
 
+void vmm_sighdlr(int, short, void *);
 int start_client_vmd(void);
 int opentap(void);
 int start_vm(struct imsg *, uint32_t *);
@@ -190,6 +192,10 @@ vmm_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
 	if (config_init(ps->ps_env) == -1)
 		fatal("failed to initialize configuration");
+
+	signal_del(&ps->ps_evsigchld);
+	signal_set(&ps->ps_evsigchld, SIGCHLD, vmm_sighdlr, ps);
+	signal_add(&ps->ps_evsigchld, NULL);
 
 #if 0
 	/*
@@ -294,6 +300,60 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	}
 
 	return (0);
+}
+
+void
+vmm_sighdlr(int sig, short event, void *arg)
+{
+	struct privsep *ps = arg;
+	int status;
+	uint32_t vmid;
+	pid_t pid;
+	struct vmop_result vmr;
+	struct vmd_vm *vm;
+	struct vm_terminate_params vtp;
+
+	switch (sig) {
+	case SIGCHLD:
+		do {
+			pid = waitpid(-1, &status, WNOHANG);
+			if (pid <= 0)
+				continue;
+
+			if (WIFEXITED(status) || WIFSIGNALED(status)) {
+				vm = vm_getbypid(pid);
+				if (vm == NULL) {
+					/*
+					 * If the VM is gone already, it
+					 * got terminated via a
+					 * IMSG_VMDOP_TERMINATE_VM_REQUEST.
+					 */
+					continue;
+				}
+
+				vmid = vm->vm_params.vcp_id;
+				vtp.vtp_vm_id = vmid;
+				if (terminate_vm(&vtp) == 0) {
+					memset(&vmr, 0, sizeof(vmr));
+					vmr.vmr_result = 0;
+					vmr.vmr_id = vmid;
+					vm_remove(vm);
+					if (proc_compose_imsg(ps, PROC_PARENT,
+					    -1, IMSG_VMDOP_TERMINATE_VM_EVENT,
+					    0, -1, &vmr, sizeof(vmr)) == -1)
+						log_warnx("could not signal "
+						    "termination of VM %u to "
+						    "parent", vmid);
+				} else
+					log_warnx("could not terminate VM %u",
+					    vmid);
+			} else
+				fatalx("unexpected cause of SIGCHLD");
+		} while (pid > 0 || (pid == -1 && errno == EINTR));
+		break;
+	default:
+		fatalx("unexpected signal");
+	}
 }
 
 /*
@@ -436,6 +496,8 @@ start_vm(struct imsg *imsg, uint32_t *id)
 
 	if (ret > 0) {
 		/* Parent */
+		vm->vm_pid = ret;
+
 		for (i = 0 ; i < vcp->vcp_ndisks; i++) {
 			close(vm->vm_disks[i]);
 			vm->vm_disks[i] = -1;
@@ -864,7 +926,6 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 	pthread_t *tid;
 	void *exit_status;
 	struct vm_run_params **vrp;
-	struct vm_terminate_params vtp;
 
 	if (vcp == NULL)
 		return (EINVAL);
@@ -949,13 +1010,6 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 		if (exit_status != NULL) {
 			log_warnx("%s: vm %d vcpu run thread %zd exited "
 			    "abnormally", __progname, vcp->vcp_id, i);
-			/* Terminate the VM if we can */
-			memset(&vtp, 0, sizeof(vtp));
-			vtp.vtp_vm_id = vcp->vcp_id;
-			if (terminate_vm(&vtp)) {
-				log_warnx("%s: could not terminate vm %d",
-				    __progname, vcp->vcp_id);
-			}
 			ret = EIO;
 		}
 	}
