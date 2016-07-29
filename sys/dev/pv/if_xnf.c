@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.28 2016/07/29 22:01:57 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.29 2016/07/29 22:25:28 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -158,6 +158,7 @@ struct xnf_softc {
 	struct ifmedia		 sc_media;
 
 	xen_intr_handle_t	 sc_xih;
+	struct timeout		 sc_timer;
 
 	int			 sc_caps;
 #define  XNF_CAP_SG		  0x0001
@@ -176,7 +177,6 @@ struct xnf_softc {
 	struct mbuf		*sc_rx_buf[XNF_RX_DESC];
 	bus_dmamap_t		 sc_rx_dmap[XNF_RX_DESC]; /* maps for packets */
 	struct mbuf		*sc_rx_cbuf[2];	  	  /* chain handling */
-	struct timeout		 sc_rx_fill;
 
 	/* Tx ring */
 	struct xnf_tx_ring	*sc_tx_ring;
@@ -201,6 +201,7 @@ void	xnf_stop(struct xnf_softc *);
 void	xnf_start(struct ifnet *);
 int	xnf_encap(struct xnf_softc *, struct mbuf *, uint32_t *);
 void	xnf_intr(void *);
+void	xnf_timer(void *);
 void	xnf_watchdog(struct ifnet *);
 int	xnf_txeof(struct xnf_softc *);
 int	xnf_rxeof(struct xnf_softc *);
@@ -309,7 +310,7 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	timeout_set(&sc->sc_rx_fill, xnf_rx_ring_fill, sc);
+	timeout_set(&sc->sc_timer, xnf_timer, sc);
 
 	/* Kick out emulated em's and re's */
 	sc->sc_xen->sc_flags |= XSF_UNPLUG_NIC;
@@ -442,7 +443,7 @@ xnf_stop(struct xnf_softc *sc)
 
 	xen_intr_mask(sc->sc_xih);
 
-	timeout_del(&sc->sc_rx_fill);
+	timeout_del(&sc->sc_timer);
 	ifp->if_timer = 0;
 
 	ifq_barrier(&ifp->if_snd);
@@ -611,7 +612,18 @@ xnf_intr(void *arg)
 	if (ifp->if_flags & IFF_RUNNING) {
 		xnf_rxeof(sc);
 		xnf_txeof(sc);
+		timeout_add(&sc->sc_timer, 10);
 	}
+}
+
+void
+xnf_timer(void *arg)
+{
+	struct xnf_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+
+	if (ifp->if_flags & IFF_RUNNING)
+		xen_intr_schedule(sc->sc_xih);
 }
 
 void
@@ -773,9 +785,7 @@ xnf_rx_ring_fill(void *arg)
 	bus_dmamap_t dmap;
 	struct mbuf *m;
 	uint32_t cons, prod, oprod;
-	int i, flags, s;
-
-	s = splnet();
+	int i, flags;
 
 	cons = rxr->rxr_cons;
 	prod = oprod = rxr->rxr_prod;
@@ -804,12 +814,10 @@ xnf_rx_ring_fill(void *arg)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_rmap, 0, 0,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	if ((prod - cons < XNF_RX_DESC) && (ifp->if_flags & IFF_RUNNING))
-		timeout_add(&sc->sc_rx_fill, 10);
+	if ((prod - cons < XNF_RX_MIN) && (ifp->if_flags & IFF_RUNNING))
+		xen_intr_schedule(sc->sc_xih);
 	if (prod - rxr->rxr_prod_event < prod - oprod)
 		xen_intr_signal(sc->sc_xih);
-
-	splx(s);
 }
 
 int
