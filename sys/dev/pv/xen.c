@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.56 2016/04/28 16:40:10 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.57 2016/07/29 21:27:43 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -642,10 +642,19 @@ xen_intr(void)
 				continue;
 			}
 			xi->xi_evcnt.ec_count++;
-			if (xi->xi_handler)
-				xi->xi_handler(xi->xi_arg);
+			task_add(xi->xi_taskq, &xi->xi_task);
 		}
 	}
+}
+
+void
+xen_intr_schedule(xen_intr_handle_t xih)
+{
+	struct xen_softc *sc = xen_sc;
+	struct xen_intsrc *xi;
+
+	if ((xi = xen_lookup_intsrc(sc, (evtchn_port_t)xih)) != NULL)
+		task_add(xi->xi_taskq, &xi->xi_task);
 }
 
 void
@@ -685,9 +694,16 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih, int domain,
 	if (xi == NULL)
 		return (-1);
 
-	xi->xi_handler = handler;
-	xi->xi_arg = arg;
 	xi->xi_port = (evtchn_port_t)*xih;
+
+	xi->xi_taskq = taskq_create(name, 1, IPL_NET, TASKQ_MPSAFE);
+	if (!xi->xi_taskq) {
+		printf("%s: failed to create interrupt task for %s\n",
+		    sc->sc_dev.dv_xname, name);
+		free(xi, M_DEVBUF, sizeof(*xi));
+		return (-1);
+	}
+	task_set(&xi->xi_task, handler, arg);
 
 	if (port == 0) {
 		/* We're being asked to allocate a new event port */
