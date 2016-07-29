@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.28 2016/04/19 18:15:41 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.29 2016/07/29 21:05:26 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -530,6 +530,7 @@ xs_intr(void *arg)
 
 	/* Response processing */
 
+ again:
 	if (xs->xs_rmsg == NULL) {
 		if (avail < sizeof(xmh)) {
 			printf("%s: incomplete header: %d\n",
@@ -596,6 +597,9 @@ xs_intr(void *arg)
 			wakeup(xs->xs_rchan);
 		}
 	}
+
+	if ((avail = xs_ring_avail(xsr, 0)) > 0)
+		goto again;
 
  out:
 	/* Wakeup sleeping writes (if any) */
