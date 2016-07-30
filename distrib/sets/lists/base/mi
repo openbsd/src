@@ -207,9 +207,6 @@
 ./etc/rpc
 ./etc/services
 ./etc/signify
-./etc/signify/openbsd-58-base.pub
-./etc/signify/openbsd-58-fw.pub
-./etc/signify/openbsd-58-pkg.pub
 ./etc/signify/openbsd-59-base.pub
 ./etc/signify/openbsd-59-fw.pub
 ./etc/signify/openbsd-59-pkg.pub
