@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.53 2016/07/30 09:29:14 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.54 2016/07/30 09:45:09 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -165,9 +165,6 @@ void	octeon_eth_tick_misc(void *);
 int	octeon_eth_recv_mbuf(struct octeon_eth_softc *,
 	    uint64_t *, struct mbuf **, int *);
 int	octeon_eth_recv_check_code(struct octeon_eth_softc *, uint64_t);
-#if 0 /* not used */
-int      octeon_eth_recv_check_jumbo(struct octeon_eth_softc *, uint64_t);
-#endif
 int	octeon_eth_recv_check_link(struct octeon_eth_softc *, uint64_t);
 int	octeon_eth_recv_check(struct octeon_eth_softc *, uint64_t);
 int	octeon_eth_recv(struct octeon_eth_softc *, uint64_t *);
@@ -328,7 +325,6 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX */
 	sc->sc_rate_recv_check_link_cap.tv_sec = 1;
-	sc->sc_rate_recv_check_jumbo_cap.tv_sec = 1;
 	sc->sc_rate_recv_check_code_cap.tv_sec = 1;
 
 #if 1
@@ -1206,16 +1202,6 @@ octeon_eth_recv_check_code(struct octeon_eth_softc *sc, uint64_t word2)
 	return 1;
 }
 
-#if 0 /* not used */
-int
-octeon_eth_recv_check_jumbo(struct octeon_eth_softc *sc, uint64_t word2)
-{
-	if (__predict_false((word2 & PIP_WQE_WORD2_IP_BUFS) > (1ULL << 56)))
-		return 1;
-	return 0;
-}
-#endif
-
 int
 octeon_eth_recv_check_link(struct octeon_eth_softc *sc, uint64_t word2)
 {
@@ -1235,17 +1221,6 @@ octeon_eth_recv_check(struct octeon_eth_softc *sc, uint64_t word2)
 			    sc->sc_dev.dv_xname);
 		return 1;
 	}
-
-#if 0 /* XXX Performance tuning (Jumbo-frame is not supported yet!) */
-	if (__predict_false(octeon_eth_recv_check_jumbo(sc, word2)) != 0) {
-		/* XXX jumbo frame */
-		if (ratecheck(&sc->sc_rate_recv_check_jumbo_last,
-		    &sc->sc_rate_recv_check_jumbo_cap))
-			log(LOG_DEBUG,
-			    "jumbo frame was received\n");
-		return 1;
-	}
-#endif
 
 	if (__predict_false(octeon_eth_recv_check_code(sc, word2)) != 0) {
 		if ((word2 & PIP_WQE_WORD2_NOIP_OPECODE) == PIP_WQE_WORD2_RE_OPCODE_LENGTH) {
