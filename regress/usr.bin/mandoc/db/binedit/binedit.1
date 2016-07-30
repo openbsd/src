@@ -1,0 +1,172 @@
+.\"	$OpenBSD: binedit.1,v 1.1 2016/07/30 10:56:13 schwarze Exp $
+.\"
+.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 30 2016 $
+.Dt BINEDIT 1
+.Os
+.Sh NAME
+.Nm binedit
+.Nd non-interactive binary file editor
+.Sh SYNOPSIS
+.Nm binedit
+.Ar command_string
+.Sh DESCRIPTION
+The
+.Nm
+utility reads a string of arbitrary bytes from the standard input,
+edits it according to the
+.Ar command_string ,
+and writes the resulting string of bytes to the standard output.
+.Pp
+The
+.Ar command_string
+consists of an arbitrary number of one-letter commands.
+Some commands take a numeric argument.
+No delimiters are used.
+.Pp
+Commands use two number registers:
+A
+.Va value
+set by
+.Ic r
+and
+.Ic w ,
+modfied by
+.Ic i ,
+and used by
+.Ic d ,
+and a
+.Va destination
+set by
+.Ic d
+and used by
+.Ic a .
+.Pp
+All numbers are signed 32-bit integers.
+On the command line, they are given in decimal notation,
+optionally preceded by a sign.
+In the input and output streams, they are represented in
+big endian (network) byte order.
+.Pp
+The commands are as follows:
+.Bl -tag -width Ds
+.It Ic a
+Advance: copy bytes up to and including the input
+.Va destination
+set with the
+.Ic d
+command.
+.It Ic c Ar bytes
+Copy the specified number of
+.Ar bytes .
+.It Ic d
+Set the input file
+.Va destination
+to the saved
+.Va value .
+Bytes are counted from 1.
+.It Ic f
+Finish: copy all remaining bytes.
+This command can only appear once at the end of the
+.Ar command_string .
+.It Ic i Op Ar amount
+Increment the saved
+.Va value
+by the given
+.Ar amount ,
+by default 1.
+.It Ic r
+Read one number from the standard input and save the
+.Va value .
+.It Ic s Ar bytes
+Skip the specified number of
+.Ar bytes
+on the standard input.
+.It Ic w Op Ar value
+Write the given
+.Ar value
+and also save it.
+If no argument is given, the saved
+.Va value
+is written.
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh EXAMPLES
+See the file
+.Pa /usr/src/regress/usr.bin/mandoc/db/run/Makefile
+for several examples.
+For example, with the
+.Ar command_string
+.Ic c12rdwariwf ,
+.Nm
+reads a valid
+.Xr mandoc_db 5
+file from the standard input and prints a corrupted version to the
+standard output where the final magic is incremented by one.
+.Sh DIAGNOSTICS
+Error messages are formatted as follows:
+.Pp
+.D1 Ar command : message Ns Op Ns : Ar errno_message
+.Pp
+The
+.Ar message
+strings are as follows:
+.Bl -tag -width Ds
+.It Ar command : Sy EOF
+The input file ended prematurely.
+Can occur during the
+.Ic a ,
+.Ic c ,
+.Ic r ,
+and
+.Ic s
+commands.
+.It Ar command : Sy getchar : Ar errno_message
+The
+.Xr getchar 3
+function failed.
+Can occur during the
+.Ic a ,
+.Ic c ,
+.Ic f ,
+and
+.Ic s
+commands.
+.It Ic r : Sy fread : Ar errno_message
+The
+.Xr fread 3
+function failed while processing an
+.Ic r
+command.
+.It Ic w : Sy fwrite : Ar errno_message
+The
+.Xr fwrite 3
+function failed while processing a
+.Ic w
+command.
+.It Ic f Ns ... : Sy not the last command
+An
+.Ic f
+command was encountered before the end of the
+.Ar command_string .
+.It Ar command : Sy invalid command
+An invalid byte was found in the
+.Ar command_string ,
+or an argument was given after a command that does not accept one.
+.El
+.Sh AUTHORS
+.An Ingo Schwarze Aq Mt schwarze@openbsd.org

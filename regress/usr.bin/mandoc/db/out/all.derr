@@ -1,0 +1,87 @@
+
+>>> padipage
+dbm_dump: name0 jumps from 0x28 to 0x3c
+dbm_dump: sect0 jumps from 0x44 to 0x54
+dbm_dump: desc0 jumps from 0x57 to 0x5a
+dbm_dump: file0 jumps from 0x63 to 0x6c
+dbm_dump: macros jumps from 0x7b to 0x8c
+
+>>> padfpage
+dbm_dump: name0 jumps from 0x28 to 0x44
+dbm_dump: sect0 jumps from 0x54 to 0x57
+dbm_dump: desc0 jumps from 0x5a to 0x63
+dbm_dump: file0 jumps from 0x6c to 0x7b
+
+>>> padmpage
+dbm_dump: name jumps from 0x58 to 0x68
+dbm_dump: sect jumps from 0x7a to 0x7d
+dbm_dump: desc jumps from 0x89 to 0x92
+dbm_dump: file jumps from 0xaa to 0xba
+dbm_dump: name0 jumps from 0x3c to 0x50
+
+>>> padmacros
+dbm_dump: macros jumps from 0x14 to 0x4c
+
+>>> padimacro
+dbm_dump: macro0 jumps from 0xa8 to 0xac
+
+>>> padmmacro
+dbm_dump: macro jumps from 0xac to 0xb0
+
+>>> padientry
+dbm_dump: value0 jumps from 0xf4 to 0xfc
+dbm_dump: page0 jumps from 0x10c to 0x114
+dbm_dump: macro jumps from 0x124 to 0x12c
+
+>>> padfentry
+dbm_dump: value0 jumps from 0xf4 to 0x103
+dbm_dump: page0 jumps from 0x113 to 0x11c
+
+>>> padmentry
+dbm_dump: value jumps from 0x103 to 0x10c
+dbm_dump: pages jumps from 0x11c to 0x124
+dbm_dump: value0 jumps from 0xf4 to 0xfc
+
+>>> padfmagic
+dbm_dump: end jumps from 0x138 to 0x13c
+
+>>> nonexistent
+dbm_dump: nonexistent.db: No such file or directory
+
+>>> short
+dbm_dump: dbm_map(short.db): File too short
+dbm_dump: short.db: Inappropriate file type or format
+
+>>> badimagic
+dbm_dump: dbm_map(badimagic.db): Bad initial magic 3a7d0cdc (expected 3a7d0cdb)
+dbm_dump: badimagic.db: Inappropriate file type or format
+
+>>> badversion
+dbm_dump: dbm_map(badversion.db): Bad version number 1 (expected 0)
+dbm_dump: badversion.db: Inappropriate file type or format
+
+>>> badmacrosp
+dbm_dump: dbm_get: Database corrupt: offset 1000 > 316
+dbm_dump: dbm_open(badmacrosp.db): Invalid offset of macros array
+dbm_dump: badmacrosp.db: Inappropriate file type or format
+
+>>> badendp
+dbm_dump: dbm_map(badendp.db): Inconsistent file size 316 (expected 317)
+dbm_dump: badendp.db: Inappropriate file type or format
+
+>>> badnpages
+dbm_dump: dbm_open(badnpages.db): Invalid number of pages: -1
+dbm_dump: badnpages.db: Inappropriate file type or format
+
+>>> badnmacros
+dbm_dump: dbm_open(badnmacros.db): Invalid number of macros: 37
+dbm_dump: badnmacros.db: Inappropriate file type or format
+
+>>> badmacrop
+dbm_dump: dbm_get: Database corrupt: offset 1000 > 316
+dbm_dump: dbm_open(badmacrop.db): Invalid offset of macro 0
+dbm_dump: badmacrop.db: Inappropriate file type or format
+
+>>> badfmagic
+dbm_dump: dbm_map(badfmagic.db): Bad final magic 3a7d0cdc (expected 3a7d0cdb)
+dbm_dump: badfmagic.db: Inappropriate file type or format

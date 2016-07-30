@@ -1,0 +1,45 @@
+initial magic 0x3a7d0cdb
+version       0x00000000
+macros offset 0x0000004c
+end offset    0x00000170
+page count    0
+macros count  36
+=== MACROS ===
+macro 00 entry count 0
+macro 01 entry count 0
+macro 02 entry count 0
+macro 03 entry count 0
+macro 04 entry count 0
+macro 05 entry count 0
+macro 06 entry count 0
+macro 07 entry count 0
+macro 08 entry count 0
+macro 09 entry count 0
+macro 10 entry count 0
+macro 11 entry count 0
+macro 12 entry count 0
+macro 13 entry count 0
+macro 14 entry count 0
+macro 15 entry count 0
+macro 16 entry count 0
+macro 17 entry count 0
+macro 18 entry count 0
+macro 19 entry count 0
+macro 20 entry count 0
+macro 21 entry count 0
+macro 22 entry count 0
+macro 23 entry count 0
+macro 24 entry count 0
+macro 25 entry count 0
+macro 26 entry count 0
+macro 27 entry count 0
+macro 28 entry count 0
+macro 29 entry count 0
+macro 30 entry count 0
+macro 31 entry count 0
+macro 32 entry count 0
+macro 33 entry count 0
+macro 34 entry count 0
+macro 35 entry count 0
+=== END OF MACROS ===
+final magic   0x3a7d0cdb

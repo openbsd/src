@@ -1,0 +1,191 @@
+.\"	$OpenBSD: dbm_dump.1,v 1.1 2016/07/30 10:56:13 schwarze Exp $
+.\"
+.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 30 2016 $
+.Dt DBM_DUMP 1
+.Os
+.Sh NAME
+.Nm dbm_dump
+.Nd dump a mandoc.db(5) file
+.Sh SYNOPSIS
+.Nm dbm_dump
+.Ar file
+.Sh DESCRIPTION
+The
+.Nm
+utility reads a
+.Xr mandoc_db 5
+database from the given
+.Ar file
+and dumps it to the standard output in a format that is suitable for
+.Xr diff 1 .
+.Pp
+Offsets are given in bytes, zero-based, and printed in hexadecimal numbers.
+Counts are printed in decimal numbers.
+.Pp
+Each non-empty table - the PAGES table, the MACROS table, and any
+MACRO table - is preceded and followed by a line beginning with
+three equal signs
+.Pq Sq === .
+Empty tables produce no output.
+.Pp
+In the PAGES table, an entry may produce four or five lines of output,
+depending on whether an
+.Fa arch
+value is present.
+Each
+.Fa name
+value is preceded by one or more attributes in square brackets,
+telling what kind of a name it is:
+.Pp
+.Bl -tag -width 1n -compact -offset indent
+.It Sy f
+a file name
+.It Sy h
+a header line name taken from a
+.Ic \&Dt
+or
+.Ic \&TH
+macro
+.It Sy 1
+the name from the first
+.Ic \&Nm
+macro in the NAME section
+.It Sy t
+a title name: a name from any
+.Ic \&Nm
+macro in the NAME section
+.It Sy s
+any name from a
+.Ic \&Nm
+macro in the SYNOPSIS section
+.El
+.Pp
+In each MACRO table, macro values are followed by the primary name
+of each page in which they occur.
+This does not uniquely identify the pages because several pages
+may share the same primary name.
+.Sh FILES
+The header files
+.Qq Pa mansearch.h ,
+.Qq Pa dbm_map.h ,
+and
+.Qq Pa dbm.h
+and the object files
+.Pa dbm_map.o
+and
+.Pa dbm.o
+from the
+.Xr mandoc 1
+build are required to compile and link
+.Nm .
+.Sh EXIT STATUS
+.Ex -std
+It fails when no argument or more than one argument is given or when
+.Fn dbm_open
+fails.
+The pointer jumps described below
+.Sx DIAGNOSTICS
+do not imply failure.
+.Sh EXAMPLES
+Several examples of
+.Nm
+output can be found in the directory
+.Pa /usr/src/regress/usr.bin/mandoc/db/out/ .
+Standard output is saved in files with the extension
+.Pa *.dout ,
+standard error is collected in the file
+.Pa all.derr .
+.Sh DIAGNOSTICS
+The function
+.Fn dbm_open
+detects various kinds of issues with the file format
+and reports them on the standard error output.
+.Pp
+Otherwise, the
+.Nm
+utility checks that the input file contains no holes
+and that no pointers point backwards.
+For each violation, the following message is printed:
+.Pp
+.D1 Ar pointer Sy jumps from Ar expected Sy to Ar specified
+.Pp
+Here,
+.Ar pointer
+specifies what the dubious pointer is supposed to point to:
+.Pp
+.Bl -tag -width macros -compact
+.It Sy name0
+the primary name of the first page
+.It Sy name
+the primary name of another page
+.It Sy sect0
+the first section of the first page
+.It Sy sect
+the first section of another page
+.It Sy arch0
+the first architecture of the first architecture-specific page
+.It Sy arch
+the first architecture of another page
+.It Sy desc0
+the one-line description of the first page
+.It Sy desc
+the one-line description of another page
+.It Sy file0
+the first filename of the first page
+.It Sy file
+the first filename of another page
+.It Sy macros
+the number of macro tables
+.It Sy macro0
+the number of entries in the first macro table
+.It Sy macro
+the number of entries in another macro table
+.It Sy value0
+the first value of a macro
+.It Sy value
+another value of a macro
+.It Sy pages0
+the list of pointers to pages mentioning the first macro value
+.It Sy pages
+the list of pointers to pages mentioning another macro value
+.It Sy end
+the final magic
+.El
+.Pp
+The hexadecimal 32-bit integers
+.Ar expected
+and
+.Ar specified
+give the byte offset of a specific data element in the file;
+respectively, the one
+.Ar expected
+from the end of the preceding data in the file and the one actually
+.Ar found
+when reading the location where the pointer ought to be.
+If
+.Ar found
+is greater than
+.Ar expected ,
+there is a hole, and the file could theoretically still be usable,
+even though it is not likely to be correct.
+If
+.Ar found
+is less than
+.Ar expected ,
+the file is corrupt because it contains a backward pointer.
+.Sh AUTHORS
+.An Ingo Schwarze Aq Mt schwarze@openbsd.org

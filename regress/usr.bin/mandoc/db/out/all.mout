@@ -1,0 +1,94 @@
+
+>>> empty
+
+>>> onepage
+empty(1) - no title
+
+>>> twopages
+> second
+man1/second.1
+> empty
+man1/empty.1
+man1/second.1
+
+>>> threepages
+> second
+man1/second.1
+> third
+man1/third.1
+> empty
+man1/empty.1
+man1/second.1
+man1/third.1
+
+>>> threemacros
+> Xr=one
+man1/empty.1
+> Xr~^t
+empty(1) - two(2) # three(3) # one(1)
+
+>>> sortpages
+one, empty(1) - no title
+two, empty(1) - no title
+
+>>> sortpages_rev
+one, empty(1) - no title
+two, empty(1) - no title
+
+>>> so
+man1/one.1
+
+>>> so_rev
+man1/one.1
+
+>>> sortnames
+sortnames, link, withsyn, another, last, onlysyn(1) - sorting names
+
+>>> twosect
+empty(1, 8) - no title
+
+>>> twoarch
+empty(1/amd64, i386) - no title
+
+>>> fn
+> fn_type
+man3/fn.3
+> fn_func
+man3/fn.3
+> fn_arg
+man3/fn.3
+> fo_type
+man3/fn.3
+> fo_func
+> fo_arg
+man3/fn.3
+
+>>> in
+> In
+man3/in.3
+> Fd
+man3/in.3
+
+>>> va
+> b2
+man3/va.3
+> t1
+man3/va.3
+> a1
+man3/va.3
+> t2
+man3/va.3
+> a2
+man3/va.3
+
+>>> sh
+> Sh
+man1/sh.1
+> Ss
+man1/sh.1
+
+>>> xr
+> bare
+man1/xr.1
+> page
+man1/xr.1
