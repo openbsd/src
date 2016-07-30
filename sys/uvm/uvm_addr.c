@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.16 2016/06/02 18:48:01 tedu Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.17 2016/07/30 16:37:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -254,7 +254,9 @@ uvm_addr_fitspace(vaddr_t *min_result, vaddr_t *max_result,
 	if (low_addr > high_addr)
 		return ENOMEM;
 	fspace = high_addr - low_addr;
-	if (fspace < sz + before_gap + after_gap)
+	if (fspace < before_gap + after_gap)
+		return ENOMEM;
+	if (fspace - before_gap - after_gap < sz)
 		return ENOMEM;
 
 	/* Calculate lowest address. */
@@ -520,7 +522,7 @@ uaddr_lin_select(struct vm_map *map, struct uvm_addr_state *uaddr,
 	/* Deal with guardpages: search for space with one extra page. */
 	guard_sz = ((map->flags & VM_MAP_GUARDPAGES) == 0 ? 0 : PAGE_SIZE);
 
-	if (uaddr->uaddr_maxaddr - uaddr->uaddr_minaddr < sz + guard_sz)
+	if (uaddr->uaddr_maxaddr - uaddr->uaddr_minaddr - guard_sz < sz)
 		return ENOMEM;
 	return uvm_addr_linsearch(map, uaddr, entry_out, addr_out, 0, sz,
 	    align, offset, 1, uaddr->uaddr_minaddr, uaddr->uaddr_maxaddr - sz,
@@ -582,6 +584,8 @@ uaddr_rnd_select(struct vm_map *map, struct uvm_addr_state *uaddr,
 	/* Deal with guardpages: search for space with one extra page. */
 	guard_sz = ((map->flags & VM_MAP_GUARDPAGES) == 0 ? 0 : PAGE_SIZE);
 
+	if (uaddr->uaddr_maxaddr - guard_sz < sz)
+		return ENOMEM;
 	minaddr = uvm_addr_align_forward(uaddr->uaddr_minaddr, align, offset);
 	maxaddr = uvm_addr_align_backward(uaddr->uaddr_maxaddr - sz - guard_sz,
 	    align, offset);
@@ -964,6 +968,8 @@ uaddr_bestfit_select(struct vm_map *map, struct uvm_addr_state *uaddr_p,
 
 	uaddr = (struct uaddr_bestfit_state *)uaddr_p;
 	guardsz = ((map->flags & VM_MAP_GUARDPAGES) ? PAGE_SIZE : 0);
+	if (sz + guardsz < sz)
+		return ENOMEM;
 
 	/*
 	 * Find smallest item on freelist capable of holding item.
