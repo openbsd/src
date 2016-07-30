@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.52 2016/06/22 13:09:35 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.53 2016/07/30 09:29:14 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -134,8 +134,7 @@ void	octeon_eth_send_queue_add(struct octeon_eth_softc *,
 	    struct mbuf *, uint64_t *);
 void	octeon_eth_send_queue_del(struct octeon_eth_softc *,
 	    struct mbuf **, uint64_t **);
-int	octeon_eth_buf_free_work(struct octeon_eth_softc *,
-	    uint64_t *, uint64_t);
+int	octeon_eth_buf_free_work(struct octeon_eth_softc *, uint64_t *);
 void	octeon_eth_buf_ext_free(caddr_t, u_int, void *);
 
 int	octeon_eth_ioctl(struct ifnet *, u_long, caddr_t);
@@ -629,13 +628,12 @@ octeon_eth_send_queue_del(struct octeon_eth_softc *sc, struct mbuf **rm,
 }
 
 int
-octeon_eth_buf_free_work(struct octeon_eth_softc *sc, uint64_t *work,
-    uint64_t word2)
+octeon_eth_buf_free_work(struct octeon_eth_softc *sc, uint64_t *work)
 {
 	paddr_t addr, pktbuf;
 	unsigned int back;
 
-	if (ISSET(word2, PIP_WQE_WORD2_IP_BUFS)) {
+	if (ISSET(work[2], PIP_WQE_WORD2_IP_BUFS)) {
 		addr = work[3] & PIP_WQE_WORD3_ADDR, CCA_CACHED;
 		back = (work[3] & PIP_WQE_WORD3_BACK) >>
 		    PIP_WQE_WORD3_BACK_SHIFT;
@@ -1317,7 +1315,7 @@ octeon_eth_recv(struct octeon_eth_softc *sc, uint64_t *work)
 	return 0;
 
 drop:
-	octeon_eth_buf_free_work(sc, work, word2);
+	octeon_eth_buf_free_work(sc, work);
 	return 1;
 }
 
