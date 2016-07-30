@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.19 2016/05/23 00:05:35 deraadt Exp $
+#	$OpenBSD: files.armv7,v 1.20 2016/07/30 08:07:01 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -12,9 +12,6 @@ file	arch/arm/arm/conf.c
 
 #interrupt API layer
 file	arch/armv7/armv7/intr.c
-
-# u-boot argument support
-file	arch/armv7/armv7/uboot_tags.c
 
 # CPU support and integrated peripherals
 file	arch/arm/arm/irq_dispatch.S
