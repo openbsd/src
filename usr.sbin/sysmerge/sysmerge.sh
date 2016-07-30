@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.226 2016/05/14 16:14:40 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.227 2016/07/30 06:31:17 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -179,11 +179,6 @@ sm_run() {
 	local _auto_upg _c _c1 _c2 _cursum _diff _i _k _j _cfdiff _cffiles
 	local _ignorefiles _cvsid1 _cvsid2 _matchsum _mismatch
 
-	# XXX remove after OPENBSD_6_0
-	if [[ -d /usr/share/sysmerge && -d /var/sysmerge ]]; then
-		cp -fp /usr/share/sysmerge/*sum /var/sysmerge/ 2>/dev/null
-		rm -rf /usr/share/sysmerge
-	fi
 	# XXX remove after OPENBSD_6_1
 	rm -f /var/sysmerge/examplessum
 
