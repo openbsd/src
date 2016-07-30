@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.33 2016/07/01 15:02:49 jcs Exp $
+#	$OpenBSD: files.acpi,v 1.34 2016/07/30 16:25:04 jcs Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -135,3 +135,8 @@ file	dev/acpi/dwiic.c		dwiic
 device	acpicbkbd
 attach	acpicbkbd at acpi
 file	dev/acpi/acpicbkbd.c		acpicbkbd
+
+# Ambient Light Sensor
+device	acpials
+attach	acpials at acpi
+file	dev/acpi/acpials.c		acpials
