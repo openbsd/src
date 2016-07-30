@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.160 2016/07/13 16:35:47 jsing Exp $ */
+/* $OpenBSD: netcat.c,v 1.161 2016/07/30 22:04:04 halex Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -834,13 +834,12 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 	struct addrinfo *res, *res0;
 	int s, error, on = 1, save_errno;
 
-	if ((error = getaddrinfo(host, port, &hints, &res)))
+	if ((error = getaddrinfo(host, port, &hints, &res0)))
 		errx(1, "getaddrinfo: %s", gai_strerror(error));
 
-	res0 = res;
-	do {
-		if ((s = socket(res0->ai_family, res0->ai_socktype |
-		    SOCK_NONBLOCK, res0->ai_protocol)) < 0)
+	for (res = res0; res; res = res->ai_next) {
+		if ((s = socket(res->ai_family, res->ai_socktype |
+		    SOCK_NONBLOCK, res->ai_protocol)) < 0)
 			continue;
 
 		/* Bind to a local port or source address if specified. */
@@ -850,7 +849,7 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 			/* try SO_BINDANY, but don't insist */
 			setsockopt(s, SOL_SOCKET, SO_BINDANY, &on, sizeof(on));
 			memset(&ahints, 0, sizeof(struct addrinfo));
-			ahints.ai_family = res0->ai_family;
+			ahints.ai_family = res->ai_family;
 			ahints.ai_socktype = uflag ? SOCK_DGRAM : SOCK_STREAM;
 			ahints.ai_protocol = uflag ? IPPROTO_UDP : IPPROTO_TCP;
 			ahints.ai_flags = AI_PASSIVE;
@@ -863,9 +862,9 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 			freeaddrinfo(ares);
 		}
 
-		set_common_sockopts(s, res0->ai_family);
+		set_common_sockopts(s, res->ai_family);
 
-		if (timeout_connect(s, res0->ai_addr, res0->ai_addrlen) == 0)
+		if (timeout_connect(s, res->ai_addr, res->ai_addrlen) == 0)
 			break;
 		if (vflag)
 			warn("connect to %s port %s (%s) failed", host, port,
@@ -875,9 +874,9 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 		close(s);
 		errno = save_errno;
 		s = -1;
-	} while ((res0 = res0->ai_next) != NULL);
+	}
 
-	freeaddrinfo(res);
+	freeaddrinfo(res0);
 
 	return (s);
 }
@@ -932,37 +931,36 @@ local_listen(char *host, char *port, struct addrinfo hints)
 	if (host == NULL && hints.ai_family == AF_UNSPEC)
 		hints.ai_family = AF_INET;
 
-	if ((error = getaddrinfo(host, port, &hints, &res)))
+	if ((error = getaddrinfo(host, port, &hints, &res0)))
 		errx(1, "getaddrinfo: %s", gai_strerror(error));
 
-	res0 = res;
-	do {
-		if ((s = socket(res0->ai_family, res0->ai_socktype,
-		    res0->ai_protocol)) < 0)
+	for (res = res0; res; res = res->ai_next) {
+		if ((s = socket(res->ai_family, res->ai_socktype,
+		    res->ai_protocol)) < 0)
 			continue;
 
 		ret = setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &x, sizeof(x));
 		if (ret == -1)
 			err(1, NULL);
 
-		set_common_sockopts(s, res0->ai_family);
+		set_common_sockopts(s, res->ai_family);
 
-		if (bind(s, (struct sockaddr *)res0->ai_addr,
-		    res0->ai_addrlen) == 0)
+		if (bind(s, (struct sockaddr *)res->ai_addr,
+		    res->ai_addrlen) == 0)
 			break;
 
 		save_errno = errno;
 		close(s);
 		errno = save_errno;
 		s = -1;
-	} while ((res0 = res0->ai_next) != NULL);
+	}
 
 	if (!uflag && s != -1) {
 		if (listen(s, 1) < 0)
 			err(1, "listen");
 	}
 
-	freeaddrinfo(res);
+	freeaddrinfo(res0);
 
 	return (s);
 }
