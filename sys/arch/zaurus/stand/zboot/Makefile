@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.17 2016/03/30 06:38:45 jmc Exp $
+#	$OpenBSD: Makefile,v 1.18 2016/07/30 03:25:49 guenther Exp $
 
 MAN=	boot.8
 MANSUBDIR=zaurus
 
 .if ${MACHINE} == "zaurus"
 PROG=	zboot
-LDFLAGS+=-nostdlib -Bstatic -nopie
+LDFLAGS+=-nostdlib -Bstatic -nopie -znorelro
 INSTALL_STRIP=
 
 SRCS=	crt0.c

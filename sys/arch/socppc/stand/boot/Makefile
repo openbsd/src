@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2016/03/30 06:38:45 jmc Exp $
+#	$OpenBSD: Makefile,v 1.17 2016/07/30 03:25:49 guenther Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -44,7 +44,7 @@ LIBSA=          ${SALIB}
 STANDIR=	${.CURDIR}/..
 
 RELOC=		0x100000
-LDFLAGS=	-Ttext ${RELOC} -nopie
+LDFLAGS=	-Ttext ${RELOC} -nopie -znorelro
 OBJCOPY?=	objcopy
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ}

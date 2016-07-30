@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2012/09/02 16:21:05 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2016/07/30 03:25:48 guenther Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ PROG=	mbr
 SRCS=	mbr.S
 AFLAGS+=-nostdinc -I${.OBJDIR} -I${.CURDIR}/.. -I${.CURDIR}/../../.. #-Wa,a
 AFLAGS+=-fno-pie
-LDFLAGS+=-N -e start -Ttext 0x8c200200 -nopie
+LDFLAGS+=-N -e start -Ttext 0x8c200200 -nopie -znorelro
 OBJCOPY?=objcopy
 
 INSTALL_STRIP=

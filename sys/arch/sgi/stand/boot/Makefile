@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2012/08/31 08:14:08 pascal Exp $
+#	$OpenBSD: Makefile,v 1.16 2016/07/30 03:25:49 guenther Exp $
 
 NOMAN=		noman
 
@@ -7,7 +7,7 @@ CFLAGS+=	${SAABI} -mno-abicalls -D_NO_ABICALLS -nostdinc -D__sgi__ \
 		-I${.CURDIR}/../../../../lib/libsa \
 		-I${.OBJDIR}
 CFLAGS+=	-D__INTERNAL_LIBSA_CREAD ${STANDALONE} -fno-pie
-LDFLAGS+=	-nopie
+LDFLAGS+=	-nopie -znorelro
 
 AFLAGS+=	${SAABI}
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2015/06/14 18:33:53 miod Exp $
+#	$OpenBSD: Makefile,v 1.22 2016/07/30 03:25:49 guenther Exp $
 #	$NetBSD: Makefile,v 1.2 1995/09/30 21:43:38 pk Exp $
 
 PROG=	boot
@@ -27,7 +27,7 @@ elfclean: clean-elf.c
 	${HOSTCC} -o elfclean ${.ALLSRC}
 
 ${PROG}: ${OBJS} ${LIBS} elfclean
-	${LD} -nopie -N -Ttext ${RELOC2} --format a.out-sparc-netbsd \
+	${LD} -nopie -znorelro -N -Ttext ${RELOC2} --format a.out-sparc-netbsd \
 	    -e start ${OBJS} ${LIBSA} ${LIBZ} -o ${.TARGET}.elf
 	./elfclean ${.TARGET}.elf
 	objcopy -j .text -j .data -j .bss -O a.out-sparc-netbsd \

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2015/09/11 17:46:59 miod Exp $
+#	$OpenBSD: Makefile,v 1.15 2016/07/30 03:25:49 guenther Exp $
 #	$NetBSD: Makefile,v 1.2 1997/04/17 07:46:24 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -41,7 +41,7 @@ CPPFLAGS+=	-DRELOC=0x${RELOC} -DCONSPEED=57600
 LIBS!=          cd $(.CURDIR)/$(R); $(MAKE) libdep
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ}
-	${LD} -nopie -N -X -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
+	${LD} -nopie -znorelro -N -X -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
 	    ${OBJS} ${LIBS}
 
 .include <bsd.prog.mk>

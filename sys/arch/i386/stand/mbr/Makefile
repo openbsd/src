@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2013/01/18 21:09:04 espie Exp $
+#	$OpenBSD: Makefile,v 1.20 2016/07/30 03:25:48 guenther Exp $
 #
 
 S=	${.CURDIR}/../../../..
@@ -9,7 +9,7 @@ SRCS=	mbr.S
 AFLAGS+=-I${.CURDIR} -I${.CURDIR}/../../.. #-Wa,-a
 AFLAGS+=-fno-pie
 LD=ld
-LDFLAGS=-nostdlib -Ttext 0 -x -N -s -Bstatic -e start -nopie
+LDFLAGS=-nostdlib -Ttext 0 -x -N -s -Bstatic -e start -nopie -znorelro
 
 NOMAN=
 #MAN+=	mbr.8

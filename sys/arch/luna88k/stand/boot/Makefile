@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2014/02/23 20:01:04 miod Exp $
+#	$OpenBSD: Makefile,v 1.7 2016/07/30 03:25:49 guenther Exp $
 #	$NetBSD: Makefile,v 1.9 2013/01/22 15:48:40 tsutsui Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
@@ -19,7 +19,7 @@ OBJCOPY?=	objcopy
 TEXTADDR=	0x700000	# 7MB
 LDSCRIPT=	${.CURDIR}/boot.ldscript
 LINKFORMAT=	-static -N -Ttext ${TEXTADDR} -T ${LDSCRIPT} \
-		--warn-common -nopie
+		--warn-common -nopie -znorelro
 
 SRCS=	locore.S
 SRCS+=	init_main.c
