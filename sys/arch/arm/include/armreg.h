@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.31 2016/07/31 03:49:51 jsg Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.32 2016/07/31 06:24:38 jsg Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -171,6 +171,8 @@
 #define CPU_ID_CORTEX_A17	0x410fc0e0
 #define CPU_ID_CORTEX_A17_R1	0x411fc0e0
 #define CPU_ID_CORTEX_A17_MASK	0xff0ffff0
+#define CPU_ID_CORTEX_A35	0x410fd040
+#define CPU_ID_CORTEX_A35_MASK	0xff0ffff0
 #define CPU_ID_CORTEX_A53	0x410fd030
 #define CPU_ID_CORTEX_A53_R1	0x411fd030
 #define CPU_ID_CORTEX_A53_MASK	0xff0ffff0
@@ -180,6 +182,8 @@
 #define CPU_ID_CORTEX_A72	0x410fd080
 #define CPU_ID_CORTEX_A72_R1	0x411fd080
 #define CPU_ID_CORTEX_A72_MASK	0xff0ffff0
+#define CPU_ID_CORTEX_A73	0x410fd090
+#define CPU_ID_CORTEX_A73_MASK	0xff0ffff0
 
 /* CPUID on >= v7 */
 #define ID_MMFR0_VMSA_MASK	0x0000000f
