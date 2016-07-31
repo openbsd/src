@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.41 2016/04/04 09:06:28 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.42 2016/07/31 03:49:51 jsg Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -470,29 +470,32 @@ set_cpufuncs()
 	 */
 
 #ifdef CPU_ARMv7
-	if ((cputype & CPU_ID_CORTEX_A5_MASK) == CPU_ID_CORTEX_A5 ||
-	    (cputype & CPU_ID_CORTEX_A7_MASK) == CPU_ID_CORTEX_A7 ||
-	    (cputype & CPU_ID_CORTEX_A8_MASK) == CPU_ID_CORTEX_A8 ||
-	    (cputype & CPU_ID_CORTEX_A9_MASK) == CPU_ID_CORTEX_A9 ||
-	    (cputype & CPU_ID_CORTEX_A15_MASK) == CPU_ID_CORTEX_A15 ||
-	    (cputype & CPU_ID_CORTEX_A17_MASK) == CPU_ID_CORTEX_A17 ||
-	    (cputype & CPU_ID_CORTEX_A53_MASK) == CPU_ID_CORTEX_A53 ||
-	    (cputype & CPU_ID_CORTEX_A57_MASK) == CPU_ID_CORTEX_A57 ||
-	    (cputype & CPU_ID_CORTEX_A72_MASK) == CPU_ID_CORTEX_A72) {
-		cpufuncs = armv7_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
-		arm_get_cachetype_cp15v7();
-		armv7_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
-		armv7_dcache_sets_max =
-		    (1U << (arm_dcache_l2_linesize + arm_dcache_l2_nsets)) -
-		    armv7_dcache_sets_inc;
-		armv7_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
-		armv7_dcache_index_max = 0U - armv7_dcache_index_inc;
-		pmap_pte_init_armv7();
+	if ((cputype & CPU_ID_ARCH_MASK) == CPU_ID_ARCH_CPUID) {
+		uint32_t mmfr0;
 
-		/* Use powersave on this CPU. */
-		cpu_do_powersave = 1;
-		return 0;
+		__asm volatile("mrc p15, 0, %0, c0, c1, 4"
+			: "=r" (mmfr0));
+
+		switch (mmfr0 & ID_MMFR0_VMSA_MASK) {
+		case VMSA_V7:
+		case VMSA_V7_PXN:
+		case VMSA_V7_LDT:
+			cpufuncs = armv7_cpufuncs;
+			/* V4 or higher */
+			cpu_reset_needs_v4_MMU_disable = 1;
+			arm_get_cachetype_cp15v7();
+			armv7_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
+			armv7_dcache_sets_max = (1U << (arm_dcache_l2_linesize +
+			    arm_dcache_l2_nsets)) - armv7_dcache_sets_inc;
+			armv7_dcache_index_inc = 1U << (32 -
+			    arm_dcache_l2_assoc);
+			armv7_dcache_index_max = 0U - armv7_dcache_index_inc;
+			pmap_pte_init_armv7();
+
+			/* Use powersave on this CPU. */
+			cpu_do_powersave = 1;
+			return 0;
+		}
 	}
 #endif /* CPU_ARMv7 */
 #ifdef CPU_XSCALE_80321
