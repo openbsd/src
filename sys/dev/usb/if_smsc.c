@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.27 2016/04/13 11:03:37 mpi Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.28 2016/07/31 12:51:49 kettenis Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -146,7 +146,6 @@ void		 smsc_init(void *);
 void		 smsc_stop(struct smsc_softc *);
 void		 smsc_start(struct ifnet *);
 void		 smsc_reset(struct smsc_softc *);
-struct mbuf	*smsc_newbuf(void);
 
 void		 smsc_tick(void *);
 void		 smsc_tick_task(void *);
@@ -1197,17 +1196,12 @@ smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		else
 			total_len -= pktlen;
 		
-		m = smsc_newbuf();
+		m = m_devget(buf, pktlen, ETHER_ALIGN);
 		if (m == NULL) {
-			smsc_dbg_printf(sc, "smc_newbuf returned NULL\n");
+			smsc_dbg_printf(sc, "m_devget returned NULL\n");
 			ifp->if_ierrors++;
 			goto done;
 		}
-
-		m->m_pkthdr.len = m->m_len = pktlen;
-		m_adj(m, ETHER_ALIGN);
-
-		memcpy(mtod(m, char *), buf, pktlen);
 
 		ml_enqueue(&ml, m);
 	} while (total_len > 0);
@@ -1328,24 +1322,6 @@ smsc_rx_list_init(struct smsc_softc *sc)
 	}
 
 	return (0);
-}
-
-struct mbuf *
-smsc_newbuf(void)
-{
-	struct mbuf	*m;
-
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
-		return (NULL);
-
-	MCLGET(m, M_DONTWAIT);
-	if (!(m->m_flags & M_EXT)) {
-		m_freem(m);
-		return (NULL);
-	}
-
-	return (m);
 }
 
 int
