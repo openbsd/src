@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.29 2016/07/29 06:46:15 patrick Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.30 2016/07/31 22:04:44 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -373,13 +373,7 @@ struct pv_entry {
  * Macro to determine if a mapping might be resident in the
  * instruction cache and/or TLB
  */
-#define	PV_BEEN_EXECD(f)  (((f) & (PVF_REF | PVF_EXEC)) == (PVF_REF | PVF_EXEC))
-
-/*
- * Macro to determine if a mapping might be resident in the
- * data cache and/or TLB
- */
-#define	PV_BEEN_REFD(f)   (((f) & PVF_REF) != 0)
+#define	PV_BEEN_EXECD(f)  (((f) & PVF_EXEC) != 0)
 
 /*
  * Local prototypes
@@ -1034,11 +1028,12 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 			*ptep = npte;
 			PTE_SYNC(ptep);
 			/* Flush the TLB entry if a current pmap. */
-			if (PV_BEEN_EXECD(oflags))
-				pmap_tlb_flushID_SE(pm, pv->pv_va);
-			else
-			if (PV_BEEN_REFD(oflags))
-				pmap_tlb_flushD_SE(pm, pv->pv_va);
+			if (l2pte_valid(opte)) {
+				if (PV_BEEN_EXECD(oflags))
+					pmap_tlb_flushID_SE(pm, pv->pv_va);
+				else
+					pmap_tlb_flushD_SE(pm, pv->pv_va);
+			}
 		}
 
 		NPDEBUG(PDB_BITS,
@@ -1454,11 +1449,12 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			}
 		}
 
-		if (PV_BEEN_EXECD(oflags))
-			pmap_tlb_flushID_SE(pm, va);
-		else
-		if (PV_BEEN_REFD(oflags))
-			pmap_tlb_flushD_SE(pm, va);
+		if (l2pte_valid(opte)) {
+			if (PV_BEEN_EXECD(oflags))
+				pmap_tlb_flushID_SE(pm, va);
+			else
+				pmap_tlb_flushD_SE(pm, va);
+		}
 	}
 
 	/*
@@ -1484,7 +1480,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	struct l2_bucket *l2b;
 	vaddr_t next_bucket;
 	pt_entry_t *ptep;
-	u_int mappings, is_exec, is_refd;
+	u_int mappings, is_exec;
 
 	NPDEBUG(PDB_REMOVE, printf("pmap_remove: pmap=%p sva=%08lx eva=%08lx\n",
 	    pm, sva, eva));
@@ -1525,7 +1521,6 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			pm->pm_stats.resident_count--;
 			pa = l2pte_pa(pte);
 			is_exec = 0;
-			is_refd = l2pte_valid(pte);
 
 			/*
 			 * Update flags. In a number of circumstances,
@@ -1538,7 +1533,6 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 				pve = pmap_remove_pv(pg, pm, sva);
 				if (pve != NULL) {
 					is_exec = PV_BEEN_EXECD(pve->pv_flags);
-					is_refd = PV_BEEN_REFD(pve->pv_flags);
 					pool_put(&pmap_pv_pool, pve);
 				}
 			}
@@ -1553,11 +1547,12 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 
 			*ptep = L2_TYPE_INV;
 			PTE_SYNC(ptep);
-			if (is_exec)
-				pmap_tlb_flushID_SE(pm, sva);
-			else
-			if (is_refd)
-				pmap_tlb_flushD_SE(pm, sva);
+			if (l2pte_valid(pte)) {
+				if (is_exec)
+					pmap_tlb_flushID_SE(pm, sva);
+				else
+					pmap_tlb_flushD_SE(pm, sva);
+			}
 
 			sva += PAGE_SIZE;
 			ptep++;
@@ -1732,7 +1727,7 @@ void
 pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	struct l2_bucket *l2b;
-	pt_entry_t *ptep, pte;
+	pt_entry_t *ptep, pte, opte;
 	vaddr_t next_bucket;
 	u_int flags;
 	int flush;
@@ -1782,19 +1777,19 @@ NPDEBUG(PDB_PROTECT, printf("\n"));
 		ptep = &l2b->l2b_kva[l2pte_index(sva)];
 
 		while (sva < next_bucket) {
-			pte = *ptep;
+			opte = *ptep;
 			/* !!! not l2pte_valid */
 /* XXX actually would only matter if really valid ??? */
-			if (pte != 0 && l2pte_is_writeable(pte, pm)) {
+			if (opte != 0 && l2pte_is_writeable(opte, pm)) {
 				struct vm_page *pg;
 				u_int f;
 
-				pg = PHYS_TO_VM_PAGE(l2pte_pa(pte));
+				pg = PHYS_TO_VM_PAGE(l2pte_pa(opte));
 				if (pg != NULL)
 					pmap_clean_page(pg, FALSE);
-				pte = (pte & ~L2_S_PROT_MASK) |
+				pte = (opte & ~L2_S_PROT_MASK) |
 				    L2_S_PROT(pm == pmap_kernel() ? PTE_KERNEL : PTE_USER,
-				      pte & L2_V7_S_XN ? PROT_READ : PROT_READ | PROT_EXEC);
+				      opte & L2_V7_S_XN ? PROT_READ : PROT_READ | PROT_EXEC);
 				*ptep = pte;
 				PTE_SYNC(ptep);
 
@@ -1802,15 +1797,16 @@ NPDEBUG(PDB_PROTECT, printf("\n"));
 					f = pmap_modify_pv(pg, pm, sva,
 					    PVF_WRITE, 0);
 				} else
-					f = PVF_REF | PVF_EXEC;
+					f = PVF_EXEC;
 
 				if (flush >= 0) {
 					flush++;
-					if (PV_BEEN_EXECD(f))
-						cpu_tlb_flushID_SE(sva);
-					else
-					if (PV_BEEN_REFD(f))
-						cpu_tlb_flushD_SE(sva);
+					if (l2pte_valid(opte)) {
+						if (PV_BEEN_EXECD(f))
+							cpu_tlb_flushID_SE(sva);
+						else
+							cpu_tlb_flushD_SE(sva);
+					}
 				} else
 					flags |= f;
 			}
@@ -1824,7 +1820,6 @@ NPDEBUG(PDB_PROTECT, printf("\n"));
 		if (PV_BEEN_EXECD(flags))
 			pmap_tlb_flushID(pm);
 		else
-		if (PV_BEEN_REFD(flags))
 			pmap_tlb_flushD(pm);
 	}
 NPDEBUG(PDB_PROTECT, printf("\n"));
