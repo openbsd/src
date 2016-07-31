@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.17 2016/04/24 01:31:02 patrick Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.18 2016/07/31 09:18:01 jsg Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -96,13 +96,8 @@ extern void proc_trampoline	(void);
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	struct proc *p1;
-	struct proc *p2;
-	void *stack;
-	size_t stacksize;
-	void (*func) (void *);
-	void *arg;
+cpu_fork(struct proc *p1, struct proc *p2, void *stack,
+    size_t stacksize, void (*func) (void *), void *arg)
 {
 	struct pcb *pcb = (struct pcb *)&p2->p_addr->u_pcb;
 	struct trapframe *tf;
@@ -166,9 +161,7 @@ cpu_exit(struct proc *p)
  * do not need to pass an access_type to pmap_enter().
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
 	paddr_t fpa;
@@ -204,9 +197,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 
