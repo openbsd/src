@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplugd.c,v 1.13 2015/11/19 06:05:40 deraadt Exp $	*/
+/*	$OpenBSD: hotplugd.c,v 1.14 2016/07/31 20:13:12 natano Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -80,7 +80,7 @@ main(int argc, char *argv[])
 	if (argc > 0)
 		usage();
 
-	if ((devfd = open(device, O_RDONLY)) == -1)
+	if ((devfd = open(device, O_RDONLY | O_CLOEXEC)) == -1)
 		err(1, "%s", device);
 
 	bzero(&sact, sizeof(sact));
