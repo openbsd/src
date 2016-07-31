@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.71 2016/04/05 18:09:30 jca Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.72 2016/07/31 19:12:26 jca Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -139,11 +139,9 @@ void ifinfo(char *, int, char **);
 void rtrlist(void);
 void plist(void);
 void pfx_flush(void);
-void rtrlist(void);
 void rtr_flush(void);
 void harmonize_rtr(void);
 static char *sec2str(time_t);
-static char *ether_str(struct sockaddr_dl *);
 static void ts_print(const struct timeval *);
 static int rdomain = 0;
 
