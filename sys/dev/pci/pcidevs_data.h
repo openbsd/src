@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1801 2016/06/01 01:15:05 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1802 2016/07/31 07:36:16 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -11144,6 +11144,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HD Graphics 520",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1200V5_HB,
+	    "Xeon E3-1200 v5 Host",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE6G_H_GT2,
 	    "HD Graphics 530",
 	},
@@ -16984,6 +16988,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "100 Series MEI",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_MEI_2,
+	    "100 Series MEI",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_IDER,
 	    "100 Series IDER",
 	},
@@ -16992,12 +17000,44 @@ static const struct pci_known_product pci_known_products[] = {
 	    "100 Series KT",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_H110_LPC,
+	    "H110 LPC",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_H170_LPC,
 	    "H170 LPC",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_LPC,
-	    "100 Series LPC",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_Z170_LPC,
+	    "Z170 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_Q170_LPC,
+	    "Q170 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_Q150_LPC,
+	    "Q150 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_B150_LPC,
+	    "B150 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C236_LPC,
+	    "C236 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CQM170_LPC,
+	    "CQM170 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_HM170_LPC,
+	    "HM170 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CM236_LPC,
+	    "CM236 LPC",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_PCIE_17,
