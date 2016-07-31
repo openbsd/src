@@ -1084,6 +1084,7 @@
 ./usr/share/man/man4/acphy.4
 ./usr/share/man/man4/acpi.4
 ./usr/share/man/man4/acpiac.4
+./usr/share/man/man4/acpials.4
 ./usr/share/man/man4/acpiasus.4
 ./usr/share/man/man4/acpibat.4
 ./usr/share/man/man4/acpibtn.4
