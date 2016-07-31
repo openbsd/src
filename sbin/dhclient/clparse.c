@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.95 2016/06/03 02:31:17 tedu Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.96 2016/07/31 18:55:16 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -110,6 +110,10 @@ read_client_conf(void)
 	    [config->requested_option_count++] = DHO_DOMAIN_NAME_SERVERS;
 	config->requested_options
 	    [config->requested_option_count++] = DHO_HOST_NAME;
+	config->requested_options
+	    [config->requested_option_count++] = DHO_BOOTFILE_NAME;
+	config->requested_options
+	    [config->requested_option_count++] = DHO_TFTP_SERVER;
 
 	if ((cfile = fopen(path_dhclient_conf, "r")) != NULL) {
 		do {
