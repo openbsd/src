@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_lchpass.c,v 1.18 2015/11/18 19:27:46 tedu Exp $	*/
+/*	$OpenBSD: login_lchpass.c,v 1.19 2016/08/01 17:04:18 jca Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -59,7 +59,6 @@ int local_passwd(char *, int);
 int
 main(int argc, char *argv[])
 {
-	login_cap_t *lc;
 	struct iovec iov[2];
 	struct passwd *pwd;
 	char *username = NULL, *hash = NULL, *p;
