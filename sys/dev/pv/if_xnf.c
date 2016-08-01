@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.29 2016/07/29 22:25:28 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.30 2016/08/01 13:48:33 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -85,10 +85,10 @@ union xnf_rx_desc {
 #define XNF_RX_MIN		32
 
 struct xnf_rx_ring {
-	uint32_t		 rxr_prod;
-	uint32_t		 rxr_prod_event;
-	uint32_t		 rxr_cons;
-	uint32_t		 rxr_cons_event;
+	volatile uint32_t	 rxr_prod;
+	volatile uint32_t	 rxr_prod_event;
+	volatile uint32_t	 rxr_cons;
+	volatile uint32_t	 rxr_cons_event;
 	uint32_t		 rxr_reserved[12];
 	union xnf_rx_desc	 rxr_desc[XNF_RX_DESC];
 } __packed;
@@ -124,10 +124,10 @@ union xnf_tx_desc {
 #define XNF_TX_FRAG		18
 
 struct xnf_tx_ring {
-	uint32_t		 txr_prod;
-	uint32_t		 txr_prod_event;
-	uint32_t		 txr_cons;
-	uint32_t		 txr_cons_event;
+	volatile uint32_t	 txr_prod;
+	volatile uint32_t	 txr_prod_event;
+	volatile uint32_t	 txr_cons;
+	volatile uint32_t	 txr_cons_event;
 	uint32_t		 txr_reserved[12];
 	union xnf_tx_desc	 txr_desc[XNF_TX_DESC];
 } __packed;
