@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.14 2015/05/28 20:53:05 jcs Exp $	*/
+/*	$OpenBSD: mem.c,v 1.15 2016/08/01 15:58:22 tedu Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 2003/10/16 12:02:58 jdolecek Exp $	*/
 
 /*
@@ -98,12 +98,8 @@ extern int allowaperture;
 #endif
 
 
-/*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	switch (minor(dev)) {
 		case 0:
@@ -129,12 +125,8 @@ mmopen(dev, flag, mode, p)
 	return (0);
 }
 
-/*ARGSUSED*/
 int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 #ifdef APERTURE
 	if (minor(dev) == 4)
@@ -147,12 +139,8 @@ mmclose(dev, flag, mode, p)
 #define DEV_NULL 2
 #define DEV_ZERO 12
 
-/*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	vaddr_t o, v;
 	size_t c;
@@ -237,10 +225,7 @@ mmrw(dev, uio, flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	struct proc *p = curproc;	/* XXX */
 
@@ -262,10 +247,9 @@ mmmmap(dev, off, prot)
 		return -1;
 	return off;
 }
-/*ARGSUSED*/
+
 int
 mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	return (EOPNOTSUPP);
 }
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.20 2015/02/10 22:44:35 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.21 2016/08/01 15:58:22 tedu Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -68,7 +68,6 @@ caddr_t zeropage;
 #define mmwrite mmrw
 cdev_decl(mm);
 
-/*ARGSUSED*/
 int
 mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -84,14 +83,12 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 	}
 }
 
-/*ARGSUSED*/
 int
 mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
@@ -112,7 +109,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		}
 		switch (minor(dev)) {
 
-/* minor device 0 is physical memory */
+		/* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
 			c = iov->iov_len;
@@ -122,7 +119,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
-/* minor device 1 is kernel memory */
+		/* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
 			c = ulmin(iov->iov_len, MAXPHYS);
@@ -153,13 +150,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				return (EFAULT);
 			}
 
-/* minor device 2 is EOF/RATHOLE */
+		/* minor device 2 is /dev/null */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
+		/* minor device 12 is /dev/zero */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
 				c = iov->iov_len;
@@ -185,7 +182,6 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 	return error;
 }
 
-/*ARGSUSED*/
 paddr_t
 mmmmap(dev_t dev, off_t off, int prot)
 {

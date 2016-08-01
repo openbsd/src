@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.3 2015/02/10 22:44:35 miod Exp $ */
+/*	$OpenBSD: mem.c,v 1.4 2016/08/01 15:58:22 tedu Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,12 +55,8 @@ extern vaddr_t first_addr, last_addr;
 extern caddr_t kernelstart;
 extern void *etext;
 
-/*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	switch (minor(dev)) {
@@ -74,23 +70,15 @@ mmopen(dev, flag, mode, p)
 	}
 }
 
-/*ARGSUSED*/
 int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	return (0);
 }
 
-/*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	vaddr_t v;
 	size_t c;
@@ -108,13 +96,13 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-/* minor device 0 is physical memory */
+		/* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
 			error = uiomove((caddr_t)v, uio->uio_resid, uio);
 			continue;
 
-/* minor device 1 is kernel memory */
+		/* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
 			c = ulmin(iov->iov_len, MAXPHYS);
@@ -129,13 +117,13 @@ mmrw(dev, uio, flags)
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
-/* minor device 2 is EOF/RATHOLE */
+		/* minor device 2 is /dev/null */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
+		/* minor device 12 is /dev/zero */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
 				c = iov->iov_len;
@@ -163,22 +151,13 @@ mmrw(dev, uio, flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-        dev_t dev;
-        off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	return (-1);
 }
 
-/*ARGSUSED*/
 int
-mmioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	return (EOPNOTSUPP);
 }

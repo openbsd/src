@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.36 2015/02/10 22:44:35 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.37 2016/08/01 15:58:22 tedu Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -156,12 +156,9 @@ struct cfdriver mem_cd = {
 caddr_t zeropage;
 
 int
-memmatch(parent, cfdata, aux)
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+memmatch(struct device *parent, void *cfdata, void *aux)
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 
 	if (ca->ca_type.iodc_type != HPPA_TYPE_MEMORY ||
 	    ca->ca_type.iodc_sv_model != HPPA_MEMORY_PDEP)
@@ -171,10 +168,7 @@ memmatch(parent, cfdata, aux)
 }
 
 void
-memattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+memattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pdc_iodc_minit pdc_minit PDC_ALIGNMENT;
 	struct mem_softc *sc = (struct mem_softc *)self;
@@ -275,10 +269,9 @@ memattach(parent, self, aux)
 }
 
 void
-viper_setintrwnd(mask)
-	u_int32_t mask;
+viper_setintrwnd(u_int32_t mask)
 {
-	register struct mem_softc *sc;
+	struct mem_softc *sc;
 
 	sc = mem_cd.cd_devs[0];
 
@@ -287,7 +280,7 @@ viper_setintrwnd(mask)
 }
 
 void
-viper_eisa_en()
+viper_eisa_en(void)
 {
 	struct mem_softc *sc;
 
@@ -307,30 +300,19 @@ viper_eisa_en()
 }
 
 int
-mmopen(dev, flag, ioflag, p)
-	dev_t dev;
-	int flag;
-	int ioflag;
-	struct proc *p;
-{
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmopen(dev_t dev, int flag, int ioflag, struct proc *p)
 {
 	return (0);
 }
 
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmclose(dev_t dev, int flag, int mode, struct proc *p)
+{
+	return (0);
+}
+
+int
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	struct iovec *iov;
 	vaddr_t	v, o;
@@ -406,10 +388,7 @@ mmrw(dev, uio, flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	if (minor(dev) != 0)
 		return (-1);
@@ -426,12 +405,7 @@ mmmmap(dev, off, prot)
 }
 
 int
-mmioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	return (EOPNOTSUPP);
 }
