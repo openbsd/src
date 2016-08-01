@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.30 2016/08/01 17:32:19 jsing Exp $ */
+/* $OpenBSD: tls.h,v 1.31 2016/08/01 17:40:23 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -27,7 +27,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-#define TLS_API	20141031
+#define TLS_API	20160801
 
 #define TLS_PROTOCOL_TLSv1_0	(1 << 1)
 #define TLS_PROTOCOL_TLSv1_1	(1 << 2)
