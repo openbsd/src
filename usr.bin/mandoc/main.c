@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.176 2016/07/15 19:31:53 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.177 2016/08/01 10:32:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -317,9 +317,6 @@ main(int argc, char *argv[])
 	/* man(1), whatis(1), apropos(1) */
 
 	if (search.argmode != ARG_FILE) {
-		if (argc == 0)
-			usage(search.argmode);
-
 		if (search.argmode == ARG_NAME &&
 		    outmode == OUTMODE_ONE)
 			search.firstmatch = 1;
@@ -327,7 +324,6 @@ main(int argc, char *argv[])
 		/* Access the mandoc database. */
 
 		manconf_parse(&conf, conf_file, defpaths, auxpaths);
-		mansearch_setup(1);
 		if ( ! mansearch(&search, &conf.manpath,
 		    argc, argv, &res, &sz))
 			usage(search.argmode);
@@ -431,7 +427,7 @@ main(int argc, char *argv[])
 
 			if (resp == NULL)
 				parse(&curp, fd, *argv);
-			else if (resp->form & FORM_SRC) {
+			else if (resp->form == FORM_SRC) {
 				/* For .so only; ignore failure. */
 				chdir(conf.manpath.paths[resp->ipath]);
 				parse(&curp, fd, resp->file);
@@ -480,7 +476,6 @@ out:
 	if (search.argmode != ARG_FILE) {
 		manconf_free(&conf);
 		mansearch_free(res, sz);
-		mansearch_setup(0);
 	}
 
 	free(defos);
@@ -584,7 +579,8 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 	glob_t		 globinfo;
 	struct manpage	*page;
 	char		*file;
-	int		 form, globres;
+	int		 globres;
+	enum form	 form;
 
 	form = FORM_SRC;
 	mandoc_asprintf(&file, "%s/man%s/%s.%s",
