@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.436 2016/05/17 13:42:28 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.437 2016/08/01 00:48:22 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 17 2016 $
+.Dd $Mdocdate: August 1 2016 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -3223,6 +3223,8 @@ that something will be able to make sense of it.
 Common Makefile fragment for a set of ports, included automatically.
 .It Pa /cdrom/distfiles
 Default path to a CD-ROM (or other media) full of distribution files.
+.It Pa ${PORTSDIR}/distfiles
+Default setup of ${DISTDIR}.
 .It Pa ${DISTDIR}
 Cache of all distribution files.
 .It Pa distinfo
