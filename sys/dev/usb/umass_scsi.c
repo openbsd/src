@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.43 2015/12/16 14:50:26 mpi Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.44 2016/08/01 10:56:31 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -118,9 +118,9 @@ umass_atapi_attach(struct umass_softc *sc)
 
 	scbus = umass_scsi_setup(sc);
 	scbus->sc_link.adapter_target = UMASS_SCSIID_HOST;
-	scbus->sc_link.luns = 1;
+	scbus->sc_link.luns = sc->maxlun + 1;
 	scbus->sc_link.openings = 1;
-	scbus->sc_link.flags |= SDEV_ATAPI;
+	scbus->sc_link.flags |= SDEV_UMASS | SDEV_ATAPI;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &scbus->sc_link;
