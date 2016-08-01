@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.h,v 1.8 2016/07/29 10:00:12 reyk Exp $	*/
+/*	$OpenBSD: http.h,v 1.9 2016/08/01 21:14:45 benno Exp $	*/
 
 /*
  * Copyright (c) 2012 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -241,6 +241,7 @@ struct http_descriptor {
 	enum httpmethod		 http_method;
 	int			 http_chunked;
 	char			*http_version;
+	unsigned int		 http_status;
 
 	/* Rewritten path remains NULL if not used */
 	char			*http_path_alias;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.60 2016/07/29 10:09:26 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.61 2016/08/01 21:14:45 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -258,6 +258,15 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				free(line);
 				goto fail;
 			}
+			desc->http_status = strtonum(desc->http_rescode, 100,
+			    599, &errstr);
+			if (errstr) {
+				DPRINTF("%s: http_status %s: errno %d, %s",
+				    __func__, desc->http_rescode, errno,
+				    errstr);
+				free(line);
+				goto fail;
+			}
 			DPRINTF("http_version %s http_rescode %s "
 			    "http_resmesg %s", desc->http_version,
 			    desc->http_rescode, desc->http_resmesg);
@@ -303,16 +312,28 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			}
 		} else if (desc->http_method != HTTP_METHOD_NONE &&
 		    strcasecmp("Content-Length", key) == 0) {
+			/*
+			 * These methods should not have a body
+			 * and thus no Content-Length header.
+			 */
 			if (desc->http_method == HTTP_METHOD_TRACE ||
 			    desc->http_method == HTTP_METHOD_CONNECT) {
-				/*
-				 * These method should not have a body
-				 * and thus no Content-Length header.
-				 */
 				relay_abort_http(con, 400, "malformed", 0);
 				goto abort;
 			}
-
+			/*
+			 * response with a status code of 1xx
+			 * (Informational) or 204 (No Content) MUST
+			 * not have a Content-Length (rfc 7230 3.3.3)
+			 */
+			if (desc->http_method == HTTP_METHOD_RESPONSE && (
+			    ((desc->http_status >= 100 &&
+			    desc->http_status < 200) ||
+			    desc->http_status == 204))) {
+				relay_abort_http(con, 500,
+				    "Internal Server Error", 0);
+				goto abort;
+			}
 			/*
 			 * Need to read data from the client after the
 			 * HTTP header.
