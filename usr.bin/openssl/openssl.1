@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.42 2016/07/28 16:22:06 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.43 2016/08/01 07:23:29 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: July 28 2016 $
+.Dd $Mdocdate: August 1 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1060,23 +1060,15 @@ or standard output if not specified.
 .It Fl outform Cm der | pem
 Specify the PKCS#7 structure output format.
 .El
-.\"
-.\" DGST
-.\"
 .Sh DGST
 .nr nS 1
 .Nm "openssl dgst"
-.Bk -words
-.Oo
-.Fl gost-mac | streebog256 | streebog512 | md_gost94 |
-.Fl md4 | md5 | ripemd160 | sha1 |
-.Fl sha224 | sha256 | sha384 | sha512 | whirlpool
-.Oc
-.Op Fl binary
 .Op Fl cd
+.Op Fl binary
+.Op Fl Ar digest
 .Op Fl hex
 .Op Fl hmac Ar key
-.Op Fl keyform Ar PEM
+.Op Fl keyform Cm pem
 .Op Fl mac Ar algorithm
 .Op Fl macopt Ar nm : Ns Ar v
 .Op Fl out Ar file
@@ -1087,16 +1079,7 @@ Specify the PKCS#7 structure output format.
 .Op Fl sigopt Ar nm : Ns Ar v
 .Op Fl verify Ar file
 .Op Ar
-.Ek
 .nr nS 0
-.Pp
-.Nm openssl
-.Cm gost-mac | streebog256 | streebog512 | md_gost94 |
-.Cm md4 | md5 | ripemd160 | sha1 |
-.Cm sha224 | sha256 | sha384 | sha512 | whirlpool
-.Op Fl c
-.Op Fl d
-.Op Ar
 .Pp
 The digest functions output the message digest of a supplied
 .Ar file
@@ -1110,11 +1093,22 @@ The options are as follows:
 .It Fl binary
 Output the digest or signature in binary form.
 .It Fl c
-Print out the digest in two-digit groups separated by colons; only relevant if
-.Em hex
-format output is used.
+Print out the digest in two-digit groups separated by colons.
 .It Fl d
 Print out BIO debugging information.
+.It Fl Ar digest
+Use the specified message
+.Ar digest .
+The default is MD5.
+The available digests can be displayed using
+.Nm openssl
+.Cm list-message-digest-commands .
+The following are equivalent:
+.Nm openssl dgst
+.Fl md5
+and
+.Nm openssl
+.Cm md5 .
 .It Fl hex
 Digest is to be output as a hex dump.
 This is the default case for a
@@ -1123,7 +1117,7 @@ digest as opposed to a digital signature.
 .It Fl hmac Ar key
 Create a hashed MAC using
 .Ar key .
-.It Fl keyform Ar PEM
+.It Fl keyform Cm pem
 Specifies the key format to sign the digest with.
 .It Fl mac Ar algorithm
 Create a keyed Message Authentication Code (MAC).
@@ -1137,16 +1131,17 @@ Passes options to the MAC algorithm, specified by
 .Fl mac .
 The following options are supported by HMAC:
 .Bl -tag -width Ds
-.It Ar key : Ns Ar string
+.It Cm key : Ns Ar string
 Specifies the MAC key as an alphanumeric string
 (use if the key contain printable characters only).
 String length must conform to any restrictions of the MAC algorithm.
-.It Ar hexkey : Ns Ar string
+.It Cm hexkey : Ns Ar string
 Specifies the MAC key in hexadecimal form (two hex digits per byte).
 Key length must conform to any restrictions of the MAC algorithm.
 .El
 .It Fl out Ar file
-The file to output to, or standard output by default.
+The output file to write to,
+or standard output if not specified.
 .It Fl passin Ar arg
 The key password source.
 .It Fl prverify Ar file
@@ -1175,30 +1170,6 @@ or
 File or files to digest.
 If no files are specified then standard input is used.
 .El
-.Sh DGST NOTES
-The digest of choice for all new applications is SHA1.
-Other digests are, however, still widely used.
-.Pp
-If you wish to sign or verify data using the DSA algorithm, the dss1
-digest must be used.
-.Pp
-A source of random numbers is required for certain signing algorithms, in
-particular DSA.
-.Pp
-The signing and verify options should only be used if a single file is
-being signed or verified.
-.\"
-.\" DH
-.\"
-.Sh DH
-Diffie-Hellman Parameter Management.
-The
-.Nm dh
-command has been replaced by
-.Nm dhparam .
-See
-.Sx DHPARAM
-below.
 .\"
 .\" DHPARAM
 .\"
