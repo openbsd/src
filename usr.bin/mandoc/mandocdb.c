@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.173 2016/08/01 10:32:39 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.174 2016/08/01 20:46:33 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -405,7 +405,8 @@ mandocdb(int argc, char *argv[])
 		if (OP_TEST != op && 0 == set_basedir(path_arg, 1))
 			goto out;
 
-		if ((dba = dba_read(MANDOC_DB)) != NULL) {
+		dba = nodb ? dba_new(128) : dba_read(MANDOC_DB);
+		if (dba != NULL) {
 			/*
 			 * The existing database is usable.  Process
 			 * all files specified on the command-line.
@@ -420,7 +421,7 @@ mandocdb(int argc, char *argv[])
 			use_all = 1;
 			for (i = 0; i < argc; i++)
 				filescan(argv[i]);
-			if (OP_TEST != op)
+			if (nodb == 0)
 				dbprune(dba);
 		} else {
 			/*
