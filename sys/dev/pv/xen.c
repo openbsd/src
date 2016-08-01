@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.57 2016/07/29 21:27:43 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.58 2016/08/01 14:37:39 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -784,7 +784,10 @@ xen_intr_disestablish(xen_intr_handle_t xih)
 
 	evcount_detach(&xi->xi_evcnt);
 
+	/* XXX not MP safe */
 	SLIST_REMOVE(&sc->sc_intrs, xi, xen_intsrc, xi_entry);
+
+	taskq_destroy(xi->xi_taskq);
 
 	setbit((char *)&sc->sc_ipg->evtchn_mask[0], xi->xi_port);
 	clrbit((char *)&sc->sc_ipg->evtchn_pending[0], xi->xi_port);
