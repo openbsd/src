@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.61 2016/08/01 21:14:45 benno Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.62 2016/08/01 21:25:53 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -341,8 +341,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			 * the carriage return? And some browsers seem to
 			 * include the line length in the content-length.
 			 */
-			cre->toread = strtonum(value, 0, LLONG_MAX,
-			    &errstr);
+			cre->toread = strtonum(value, 0, LLONG_MAX, &errstr);
 			if (errstr) {
 				relay_abort_http(con, 500, errstr, 0);
 				goto abort;
@@ -1793,11 +1792,12 @@ relay_test(struct protocol *proto, struct ctl_relay_event *cre)
 			if (res == RES_BAD || res == RES_INTERNAL)
 				return(res);
 			res = 0;
-	       		r = TAILQ_NEXT(r, rule_entry);
+			r = TAILQ_NEXT(r, rule_entry);
 		}
 	}
 
-	if (rule != NULL && relay_match_actions(cre, rule, NULL, &actions) != 0) {
+	if (rule != NULL && relay_match_actions(cre, rule, NULL, &actions)
+	    != 0) {
 		/* Something bad happened, drop */
 		action = RES_DROP;
 	}
