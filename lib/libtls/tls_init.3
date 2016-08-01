@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.62 2016/07/13 16:30:48 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.63 2016/08/01 17:32:19 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2016 $
+.Dd $Mdocdate: August 1 2016 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm tls_config_new ,
 .Nm tls_config_free ,
 .Nm tls_config_parse_protocols ,
+.Nm tls_config_set_alpn ,
 .Nm tls_config_set_ca_file ,
 .Nm tls_config_set_ca_path ,
 .Nm tls_config_set_ca_mem ,
@@ -54,8 +55,9 @@
 .Nm tls_peer_cert_hash ,
 .Nm tls_peer_cert_notbefore ,
 .Nm tls_peer_cert_notafter ,
-.Nm tls_conn_version ,
+.Nm tls_conn_alpn_selected ,
 .Nm tls_conn_cipher ,
+.Nm tls_conn_version ,
 .Nm tls_load_file ,
 .Nm tls_client ,
 .Nm tls_server ,
@@ -87,6 +89,8 @@
 .Fn tls_config_free "struct tls_config *config"
 .Ft "int"
 .Fn tls_config_parse_protocols "uint32_t *protocols" "const char *protostr"
+.Ft "int"
+.Fn tls_config_set_alpn "struct tls_config *config" "const char *alpn"
 .Ft "int"
 .Fn tls_config_set_ca_file "struct tls_config *config" "const char *ca_file"
 .Ft "int"
@@ -148,9 +152,11 @@
 .Ft "time_t"
 .Fn tls_peer_cert_notafter "struct tls *ctx"
 .Ft "const char *"
-.Fn tls_conn_version "struct tls *ctx"
+.Fn tls_conn_alpn_selected "struct tls *ctx"
 .Ft "const char *"
 .Fn tls_conn_cipher "struct tls *ctx"
+.Ft "const char *"
+.Fn tls_conn_version "struct tls *ctx"
 .Ft "uint8_t *"
 .Fn tls_load_file "const char *file" "size_t *len" "char *password"
 .Ft "struct tls *"
@@ -294,6 +300,11 @@ added to it.
 The following functions modify a configuration by setting parameters.
 Configuration options may apply to only clients or only servers or both.
 .Bl -bullet -offset four
+.It
+.Fn tls_config_set_alpn
+sets the ALPN protocols that are supported.
+The alpn string is a comma separated list of protocols, in order of preference.
+.Em (Client and Server)
 .It
 .Fn tls_config_set_ca_file
 sets the filename used to load a file
@@ -480,13 +491,14 @@ the peer certificate from
 will only succeed after the handshake is complete.
 .Em (Server and client)
 .It
-.Fn tls_conn_version
-returns a string
-corresponding to a TLS version negotiated with the peer
+.Fn tls_conn_alpn_selected
+returns a string that specifies the ALPN protocol selected for use with the peer
 connected to
 .Ar ctx .
-.Fn tls_conn_version
+If no protocol was selected then NULL is returned.
+.Fn tls_conn_alpn_selected
 will only succeed after the handshake is complete.
+.Em (Server and Client)
 .It
 .Fn tls_conn_cipher
 returns a string
@@ -496,6 +508,14 @@ connected to
 .Fn tls_conn_cipher
 will only succeed after the handshake is complete.
 .Em (Server and client)
+.It
+.Fn tls_conn_version
+returns a string
+corresponding to a TLS version negotiated with the peer
+connected to
+.Ar ctx .
+.Fn tls_conn_version
+will only succeed after the handshake is complete.
 .It
 .Fn tls_load_file
 loads a certificate or key from disk into memory to be loaded with
