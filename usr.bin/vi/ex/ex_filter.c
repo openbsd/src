@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_filter.c,v 1.14 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: ex_filter.c,v 1.15 2016/08/01 18:27:35 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ ex_filter(SCR *sp, EXCMD *cmdp, MARK *fm, MARK *tm, MARK *rp, char *cmd,
 	pid_t parent_writer_pid, utility_pid;
 	recno_t nread;
 	int input[2], output[2], fd, rval;
-	char *name, tname[PATH_MAX];
+	char *name, tname[] = "/tmp/vi.XXXXXXXXXX";
 
 	rval = 0;
 
@@ -79,10 +79,6 @@ ex_filter(SCR *sp, EXCMD *cmdp, MARK *fm, MARK *tm, MARK *rp, char *cmd,
 	input[0] = input[1] = output[0] = output[1] = -1;
 
 	if (ftype == FILTER_BANG) {
-		if (opts_empty(sp, O_TMP_DIRECTORY, 0))
-			goto err;
-		(void)snprintf(tname, sizeof(tname),
-		    "%s/vi.XXXXXXXXXX", O_STR(sp, O_TMP_DIRECTORY));
 		fd = mkstemp(tname);
 		if (fd == -1) {
 			msgq(sp, M_SYSERR,

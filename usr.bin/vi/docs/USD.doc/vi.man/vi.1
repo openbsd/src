@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.64 2016/02/09 07:41:12 jmc Exp $
+.\"	$OpenBSD: vi.1,v 1.65 2016/08/01 18:27:35 bentley Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: February 9 2016 $
+.Dd $Mdocdate: August 1 2016 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -2285,8 +2285,6 @@ Set the number of columns in the screen.
 .Nm vi
 only.
 Skip leading comments in shell, C and C++ language files.
-.It Cm directory , dir Bq "environment variable TMPDIR, or /tmp"
-The directory where temporary files are created.
 .It Cm edcompatible , ed Bq off
 Remember the values of the
 .Sq c
@@ -2628,10 +2626,6 @@ runs, or the
 option is explicitly reset by the user,
 .Nm ex Ns / Ns Nm vi
 enters the value into the environment.
-.It Ev TMPDIR
-The location used to stored temporary files (see also the
-.Cm directory
-edit option).
 .El
 .Sh ASYNCHRONOUS EVENTS
 .Bl -tag -width "SIGWINCH" -compact

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.21 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.22 2016/08/01 18:27:35 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -63,8 +63,6 @@ OPTLIST const optlist[] = {
 	{"columns",	f_columns,	OPT_NUM,	OPT_NOSAVE},
 /* O_COMMENT	  4.4BSD */
 	{"comment",	NULL,		OPT_0BOOL,	0},
-/* O_TMP_DIRECTORY	    4BSD */
-	{"directory",	NULL,		OPT_STR,	0},
 /* O_EDCOMPATIBLE   4BSD */
 	{"edcompatible",NULL,		OPT_0BOOL,	0},
 /* O_ESCAPETIME	  4.4BSD */
@@ -237,7 +235,6 @@ static OABBREV const abbrev[] = {
 	{"aw",		O_AUTOWRITE},		/*     4BSD */
 	{"bf",		O_BEAUTIFY},		/*     4BSD */
 	{"co",		O_COLUMNS},		/*   4.4BSD */
-	{"dir",		O_TMP_DIRECTORY},	/*     4BSD */
 	{"eb",		O_ERRORBELLS},		/*     4BSD */
 	{"ed",		O_EDCOMPATIBLE},	/*     4BSD */
 	{"ex",		O_EXRC},		/* System V (undocumented) */
@@ -333,17 +330,6 @@ opts_init(SCR *sp, int *oargs)
 	(void)snprintf(b1, sizeof(b1),
 	    "cdpath=%s", (s = getenv("CDPATH")) == NULL ? ":" : s);
 	OI(O_CDPATH, b1);
-
-	/*
-	 * !!!
-	 * Vi historically stored temporary files in /var/tmp.  We store them
-	 * in /tmp by default, hoping it's a memory based file system.  There
-	 * are two ways to change this -- the user can set either the directory
-	 * option or the TMPDIR environmental variable.
-	 */
-	(void)snprintf(b1, sizeof(b1),
-	    "directory=%s", (s = getenv("TMPDIR")) == NULL ? _PATH_TMP : s);
-	OI(O_TMP_DIRECTORY, b1);
 	OI(O_ESCAPETIME, "escapetime=1");
 	OI(O_FILEC, "filec=\t");
 	OI(O_KEYTIME, "keytime=6");
