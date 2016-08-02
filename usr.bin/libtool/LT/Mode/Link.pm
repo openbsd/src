@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.31 2016/04/27 09:50:57 ajacoutot Exp $
+# $OpenBSD: Link.pm,v 1.32 2016/08/02 16:09:55 jca Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -127,6 +127,7 @@ sub run
 	    'all-static',
 	    'allow-undefined', # we don't care about THAT one
 	    'avoid-version',
+	    'bindir:',
 	    'dlopen:',
 	    'dlpreopen:',
 	    'export-dynamic',
@@ -152,7 +153,7 @@ sub run
 	    'version-info:',
 	    'version-number:');
 
-	# XXX options ignored: dlopen, dlpreopen, no-fast-install,
+	# XXX options ignored: bindir, dlopen, dlpreopen, no-fast-install,
 	# 	no-install, no-undefined, precious-files-regex,
 	# 	shrext, thread-safe, prefer-pic, prefer-non-pic
 
