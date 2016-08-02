@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.40 2016/06/29 14:19:38 jca Exp $	*/
+/*	$OpenBSD: if.c,v 1.41 2016/08/02 17:00:09 jca Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <event.h>
 
 #include "rtadvd.h"
 #include "if.h"

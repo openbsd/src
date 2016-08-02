@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.20 2016/06/29 14:19:38 jca Exp $	*/
+/*	$OpenBSD: dump.c,v 1.21 2016/08/02 17:00:09 jca Exp $	*/
 /*	$KAME: dump.c,v 1.27 2002/05/29 14:23:55 itojun Exp $	*/
 
 /*
@@ -51,9 +51,9 @@
 #include <string.h>
 #include <errno.h>
 #include <netdb.h>
+#include <event.h>
 
 #include "rtadvd.h"
-#include "timer.h"
 #include "if.h"
 #include "log.h"
 #include "dump.h"
@@ -108,9 +108,10 @@ rtadvd_dump(void)
 	struct dnssldom *dnsd;
 	char prefixbuf[INET6_ADDRSTRLEN];
 	int first;
-	struct timeval now;
+	struct timeval now, next;
 	char *origin, *vltime, *pltime, *flags;
 	char *vltimexpire=NULL, *pltimexpire=NULL;
+	char ctimebuf[26];
 
 	gettimeofday(&now, NULL);
 	SLIST_FOREACH(rai, &ralist, entry) {
@@ -122,12 +123,15 @@ rtadvd_dump(void)
 		/* control information */
 		if (rai->lastsent.tv_sec) {
 			time_t t = rai->lastsent.tv_sec;
-			/* note that ctime() appends CR by itself */
-			log_info("  Last RA sent: %s", ctime(&t));
+			(void)strlcpy(ctimebuf, ctime(&t), sizeof(ctimebuf));
+			ctimebuf[strcspn(ctimebuf, "\n")] = '\0';
+			log_info("  Last RA sent: %s", ctimebuf);
 		}
-		if (rai->timer) {
-			time_t t = rai->timer->tm.tv_sec;
-			log_info("  Next RA will be sent: %s", ctime(&t));
+		if (evtimer_pending(&rai->timer.ev, &next)) {
+			time_t t = next.tv_sec;
+			(void)strlcpy(ctimebuf, ctime(&t), sizeof(ctimebuf));
+			ctimebuf[strcspn(ctimebuf, "\n")] = '\0';
+			log_info("  Next RA will be sent: %s", ctimebuf);
 		} else
 			log_info("  RA timer is stopped");
 		log_info("  waits: %u, initcount: %u",

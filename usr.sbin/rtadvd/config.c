@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.57 2016/06/29 14:19:38 jca Exp $	*/
+/*	$OpenBSD: config.c,v 1.58 2016/08/02 17:00:09 jca Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -55,10 +55,10 @@
 #include <unistd.h>
 #include <ifaddrs.h>
 #include <stdint.h>
+#include <event.h>
 
 #include "rtadvd.h"
 #include "advcap.h"
-#include "timer.h"
 #include "if.h"
 #include "config.h"
 #include "log.h"
@@ -520,10 +520,7 @@ getconfig(char *intface)
 	make_packet(tmp);
 
 	/* set timer */
-	tmp->timer = rtadvd_add_timer(ra_timeout, ra_timer_update,
-				      tmp, tmp);
-	ra_timer_update(tmp, &tmp->timer->tm);
-	rtadvd_set_timer(&tmp->timer->tm, tmp->timer);
+	ra_timer_update(tmp);
 }
 
 void
@@ -654,8 +651,7 @@ make_prefix(struct rainfo *rai, int ifindex, struct in6_addr *addr, int plen)
 	 * reset the timer so that the new prefix will be advertised quickly.
 	 */
 	rai->initcounter = 0;
-	ra_timer_update(rai, &rai->timer->tm);
-	rtadvd_set_timer(&rai->timer->tm, rai->timer);
+	ra_timer_update(rai);
 }
 
 /*

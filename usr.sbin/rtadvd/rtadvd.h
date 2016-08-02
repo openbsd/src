@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.25 2016/06/29 14:19:38 jca Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.26 2016/08/02 17:00:09 jca Exp $	*/
 /*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -61,6 +61,11 @@
 #define PREFIX_FROM_CONFIG 2
 #define PREFIX_FROM_DYNAMIC 3
 
+struct rtadvd_timer {
+	struct event ev;
+	struct timeval tm;
+};
+
 struct prefix {
 	TAILQ_ENTRY(prefix) entry;
 
@@ -119,7 +124,7 @@ struct	rainfo {
 	SLIST_ENTRY(rainfo) entry;
 
 	/* timer related parameters */
-	struct rtadvd_timer *timer;
+	struct rtadvd_timer timer;
 	unsigned int initcounter; /* counter for the first few advertisements */
 	struct timeval lastsent; /* timestamp when the latest RA was sent */
 	unsigned int waiting;	/* number of RS waiting for RA */
@@ -162,7 +167,6 @@ struct	rainfo {
 };
 SLIST_HEAD(ralist, rainfo);
 
-void ra_timeout(void *);
-void ra_timer_update(void *, struct timeval *);
+void ra_timer_update(struct rainfo *);
 
 struct prefix *find_prefix(struct rainfo *, struct in6_addr *, int);

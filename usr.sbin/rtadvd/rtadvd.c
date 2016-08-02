@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.75 2016/06/30 10:17:18 florian Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.76 2016/08/02 17:00:09 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -49,16 +49,15 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <poll.h>
 #include <err.h>
 #include <errno.h>
+#include <event.h>
 #include <string.h>
 #include <pwd.h>
 #include <signal.h>
 
 #include "rtadvd.h"
 #include "advcap.h"
-#include "timer.h"
 #include "if.h"
 #include "config.h"
 #include "dump.h"
@@ -69,8 +68,6 @@ static u_char *rcvcmsgbuf;
 static size_t rcvcmsgbuflen;
 static u_char *sndcmsgbuf = NULL;
 static size_t sndcmsgbuflen;
-volatile sig_atomic_t do_dump;
-volatile sig_atomic_t do_die;
 struct msghdr sndmhdr;
 struct iovec rcviov[2];
 struct iovec sndiov[2];
@@ -129,11 +126,8 @@ u_int32_t ndopt_flags[] = {
 };
 
 static __dead void usage(void);
-static void set_die(int);
-static __dead void die(void);
 static void sock_open(void);
 static void rtsock_open(void);
-static void rtadvd_input(void);
 static void rs_input(int, struct nd_router_solicit *,
     struct in6_pktinfo *, struct sockaddr_in6 *);
 static void ra_input(int, struct nd_router_advert *,
@@ -144,17 +138,24 @@ static int nd6_options(struct nd_opt_hdr *, int,
     union nd_opts *, u_int32_t);
 static void free_ndopts(union nd_opts *);
 static void ra_output(struct rainfo *);
-static void rtmsg_input(void);
-static void rtadvd_set_dump(int);
 static struct rainfo *if_indextorainfo(int);
+
+static void dump_cb(int, short, void *);
+static void die_cb(int, short, void *);
+static void rtsock_cb(int, short, void *);
+static void sock_cb(int, short, void *);
+static void timer_cb(int, short, void *);
 
 int
 main(int argc, char *argv[])
 {
-	struct pollfd pfd[2];
-	struct timeval *timeout;
 	struct passwd *pw;
-	int i, ch, npfd, tmout;
+	int ch;
+	struct event ev_sock;
+	struct event ev_rtsock;
+	struct event ev_sigterm;
+	struct event ev_sigusr1;
+	struct rainfo *rai;
 
 	log_init(1);		/* log to stderr until daemonized */
 
@@ -220,58 +221,31 @@ main(int argc, char *argv[])
 	if (pledge("stdio inet route", NULL) == -1)
 		err(1, "pledge");
 
-	npfd = 1;
-	pfd[0].fd = sock;
-	pfd[0].events = POLLIN;
-	if (rtsock >= 0) {
-		pfd[1].fd = rtsock;
-		pfd[1].events = POLLIN;
-		npfd++;
+	event_init();
+
+	signal_set(&ev_sigterm, SIGTERM, die_cb, NULL);
+	signal_add(&ev_sigterm, NULL);
+	signal_set(&ev_sigusr1, SIGUSR1, dump_cb, NULL);
+	signal_add(&ev_sigusr1, NULL);
+
+	event_set(&ev_sock, sock, EV_READ|EV_PERSIST, sock_cb, NULL);
+	event_add(&ev_sock, NULL);
+	if (rtsock != -1) {
+		event_set(&ev_rtsock, rtsock, EV_READ|EV_PERSIST, rtsock_cb,
+		    NULL);
+		event_add(&ev_rtsock, NULL);
 	}
 
-	signal(SIGTERM, set_die);
-	signal(SIGUSR1, rtadvd_set_dump);
-
-	while (1) {
-		if (do_dump) {	/* SIGUSR1 */
-			do_dump = 0;
-			rtadvd_dump();
-		}
-
-		if (do_die) {
-			die();
-			/*NOTREACHED*/
-		}
-
-		/* timer expiration check and reset the timer */
-		timeout = rtadvd_check_timer();
-
-		if (timeout != NULL) {
-			tmout = timeout->tv_sec * 1000 + timeout->tv_usec /
-			    1000;
-			log_debug("set timer to %lld.%ld. waiting for "
-			    "inputs or timeout",
-			    (long long)timeout->tv_sec,
-			    timeout->tv_usec);
-		} else {
-			tmout = INFTIM;
-			log_debug("there's no timer. waiting for inputs");
-		}
-
-		if ((i = poll(pfd, npfd, tmout)) < 0) {
-			/* EINTR would occur upon SIGUSR1 for status dump */
-			if (errno != EINTR)
-				log_warn("poll");
-			continue;
-		}
-		if (i == 0)	/* timeout */
-			continue;
-		if (rtsock != -1 && (pfd[1].revents & POLLIN))
-			rtmsg_input();
-		if (pfd[0].revents & POLLIN)
-			rtadvd_input();
+	SLIST_FOREACH(rai, &ralist, entry) {
+		evtimer_set(&rai->timer.ev, timer_cb, rai);
+		evtimer_add(&rai->timer.ev, &rai->timer.tm);
 	}
-	exit(0);		/* NOTREACHED */
+
+	event_dispatch();
+
+	log_warn("event_dispatch returned");
+
+	return 1;
 }
 
 static void
@@ -283,19 +257,13 @@ usage(void)
 }
 
 static void
-rtadvd_set_dump(int signo)
+dump_cb(int sig, short event, void *arg)
 {
-	do_dump = 1;
+	rtadvd_dump();
 }
 
 static void
-set_die(int signo)
-{
-	do_die = 1;
-}
-
-static void
-die(void)
+die_cb(int sig, short event, void *arg)
 {
 	struct rainfo *ra;
 	int i;
@@ -317,7 +285,7 @@ die(void)
 }
 
 static void
-rtmsg_input(void)
+rtsock_cb(int fd, short event, void *arg)
 {
 	int n, type, ifindex = 0, plen;
 	size_t len;
@@ -462,7 +430,7 @@ rtmsg_input(void)
 		    (iflist[ifindex]->ifm_flags & IFF_UP) == 0) {
 			log_info("interface %s becomes down. stop timer.",
 			    rai->ifname);
-			rtadvd_remove_timer(&rai->timer);
+			evtimer_del(&rai->timer.ev);
 		} else if ((oldifflags & IFF_UP) == 0 && /* DOWN to UP */
 			 (iflist[ifindex]->ifm_flags & IFF_UP) != 0) {
 			log_info("interface %s becomes up. restart timer.",
@@ -470,16 +438,14 @@ rtmsg_input(void)
 
 			rai->initcounter = 0; /* reset the counter */
 			rai->waiting = 0; /* XXX */
-			rai->timer = rtadvd_add_timer(ra_timeout,
-			    ra_timer_update, rai, rai);
-			ra_timer_update(rai, &rai->timer->tm);
-			rtadvd_set_timer(&rai->timer->tm, rai->timer);
+			ra_timer_update(rai);
+			evtimer_add(&rai->timer.ev, &rai->timer.tm);
 		}
 	}
 }
 
 void
-rtadvd_input(void)
+sock_cb(int fd, short event, void *arg)
 {
 	int i;
 	int *hlimp = NULL;
@@ -677,7 +643,8 @@ rs_input(int len, struct nd_router_solicit *rs,
 	 */
 	{
 		long delay;	/* must not be greater than 1000000 */
-		struct timeval interval, now, min_delay, tm_tmp, *rest;
+		struct timeval interval, now, min_delay, tm_tmp, next,
+		    computed;
 
 		/*
 		 * If there is already a waiting RS packet, don't
@@ -685,6 +652,8 @@ rs_input(int len, struct nd_router_solicit *rs,
 		 */
 		if (ra->waiting++)
 			goto done;
+
+		gettimeofday(&now, NULL);
 
 		/*
 		 * Compute a random delay. If the computed value
@@ -696,11 +665,17 @@ rs_input(int len, struct nd_router_solicit *rs,
 		delay = arc4random_uniform(MAX_RA_DELAY_TIME);
 		interval.tv_sec = 0;
 		interval.tv_usec = delay;
-		rest = rtadvd_timer_rest(ra->timer);
-		if (timercmp(rest, &interval, <)) {
+		/*
+		 * Could happen if an interface has transitioned from DOWN to
+		 * UP and we haven't re-enabled the timer yet.
+		 */
+		if (!evtimer_pending(&ra->timer.ev, &next))
+			goto done;
+		timeradd(&now, &interval, &computed);
+		if (timercmp(&computed, &next, >)) {
 			log_debug("random delay is larger than "
 			    "the rest of normal timer");
-			interval = *rest;
+			goto done;
 		}
 
 		/*
@@ -710,16 +685,13 @@ rs_input(int len, struct nd_router_solicit *rs,
 		 * MIN_DELAY_BETWEEN_RAS plus the random value after the
 		 * previous advertisement was sent.
 		 */
-		gettimeofday(&now, NULL);
-		timersub(&now, &ra->lastsent, &tm_tmp);
 		min_delay.tv_sec = MIN_DELAY_BETWEEN_RAS;
 		min_delay.tv_usec = 0;
-		if (timercmp(&tm_tmp, &min_delay, <)) {
-			timersub(&min_delay, &tm_tmp, &min_delay);
-			timeradd(&min_delay, &interval, &interval);
-		}
-		rtadvd_set_timer(&interval, ra->timer);
-		goto done;
+		timeradd(&ra->lastsent, &min_delay, &tm_tmp);
+		if (timercmp(&computed, &tm_tmp, <))
+			computed = tm_tmp;
+		timersub(&computed, &now, &computed);
+		evtimer_add(&ra->timer.ev, &computed);
 	}
 
   done:
@@ -1280,20 +1252,23 @@ ra_output(struct rainfo *rainfo)
 
 /* process RA timer */
 void
-ra_timeout(void *data)
+timer_cb(int fd, short event, void *data)
 {
 	struct rainfo *rai = (struct rainfo *)data;
 
 	log_debug("RA timer on %s is expired", rai->ifname);
 
 	ra_output(rai);
+
+	ra_timer_update(rai);
+	evtimer_add(&rai->timer.ev, &rai->timer.tm);
 }
 
 /* update RA timer */
 void
-ra_timer_update(void *data, struct timeval *tm)
+ra_timer_update(struct rainfo *rai)
 {
-	struct rainfo *rai = (struct rainfo *)data;
+	struct timeval *tm = &rai->timer.tm;
 	long interval;
 
 	/*
