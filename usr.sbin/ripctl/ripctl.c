@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripctl.c,v 1.16 2015/12/05 13:13:47 claudio Exp $
+/*	$OpenBSD: ripctl.c,v 1.17 2016/08/02 16:05:32 jca Exp $
  *
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -59,7 +59,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s command [argument ...]\n", __progname);
+	fprintf(stderr, "usage: %s [-s socket] command [argument ...]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -73,9 +74,25 @@ main(int argc, char *argv[])
 	int			 ctl_sock;
 	int			 done = 0, verbose = 0;
 	int			 n;
+	int			 ch;
+	char			*sockname = RIPD_SOCKET;
+
+	while ((ch = getopt(argc, argv, "s:")) != -1) {
+		switch (ch) {
+		case 's':
+			sockname = optarg;
+			break;
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
 
 	/* parse options */
-	if ((res = parse(argc - 1, argv + 1)) == NULL)
+	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
 
 	/* connect to ripd control socket */
@@ -84,9 +101,9 @@ main(int argc, char *argv[])
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, RIPD_SOCKET, sizeof(sun.sun_path));
+	strlcpy(sun.sun_path, sockname, sizeof(sun.sun_path));
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
-		err(1, "connect: %s", RIPD_SOCKET);
+		err(1, "connect: %s", sockname);
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");

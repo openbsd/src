@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.27 2016/02/02 17:51:11 sthen Exp $ */
+/*	$OpenBSD: ripd.c,v 1.28 2016/08/02 16:05:32 jca Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -70,7 +70,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dnv] [-D macro=value] [-f file]\n",
+	fprintf(stderr,
+	    "usage: %s [-dnv] [-D macro=value] [-f file] [-s socket]\n",
 	    __progname);
 	exit(1);
 }
@@ -122,15 +123,17 @@ main(int argc, char *argv[])
 	int		 ch;
 	int		 opts = 0;
 	char		*conffile;
+	char 		*sockname;
 	size_t		 len;
 
 	conffile = CONF_FILE;
 	ripd_process = PROC_MAIN;
+	sockname = RIPD_SOCKET;
 
 	log_init(1);	/* log to stderr until daemonized */
 	log_verbose(1);
 
-	while ((ch = getopt(argc, argv, "cdD:f:nv")) != -1) {
+	while ((ch = getopt(argc, argv, "cdD:f:ns:v")) != -1) {
 		switch (ch) {
 		case 'c':
 			opts |= RIPD_OPT_FORCE_DEMOTE;
@@ -148,6 +151,9 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			opts |= RIPD_OPT_NOACTION;
+			break;
+		case 's':
+			sockname = optarg;
 			break;
 		case 'v':
 			if (opts & RIPD_OPT_VERBOSE)
@@ -182,6 +188,7 @@ main(int argc, char *argv[])
 	/* parse config file */
 	if ((conf = parse_config(conffile, opts)) == NULL )
 		exit(1);
+	conf->csock = sockname;
 
 	if (conf->opts & RIPD_OPT_NOACTION) {
 		if (conf->opts & RIPD_OPT_VERBOSE)
@@ -287,7 +294,7 @@ ripd_shutdown(void)
 		if_del(i);
 	}
 
-	control_cleanup();
+	control_cleanup(conf->csock);
 	kr_shutdown();
 
 	do {

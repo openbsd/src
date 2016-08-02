@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.22 2015/09/27 17:32:36 stsp Exp $ */
+/*	$OpenBSD: ripd.h,v 1.23 2016/08/02 16:05:32 jca Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -239,6 +239,7 @@ struct ripd_conf {
 	int			 rip_socket;
 	int			 redistribute;
 	u_int			 rdomain;
+	char			*csock;
 };
 
 /* kroute */
