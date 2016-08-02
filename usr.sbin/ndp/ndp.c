@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.74 2016/07/31 19:23:24 jca Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.75 2016/08/02 16:17:54 jca Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -110,6 +110,7 @@
 /* packing rule for routing socket */
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+/* XXX remove */
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 static pid_t pid;
@@ -579,6 +580,7 @@ dump(struct in6_addr *addr, int cflag)
 		    W_IF, W_IF, "Netif", "Expire", "S", "Flags");
 
 again:;
+	lim = NULL;
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
 	mib[2] = 0;
@@ -602,7 +604,7 @@ again:;
 		break;
 	}
 
-	for (next = buf; next && next < lim; next += rtm->rtm_msglen) {
+	for (next = buf; next && lim && next < lim; next += rtm->rtm_msglen) {
 		int isrouter = 0, prbs = 0;
 
 		rtm = (struct rt_msghdr *)next;
