@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.6 2016/08/01 17:32:19 jsing Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.7 2016/08/02 07:47:11 jsing Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -150,26 +150,6 @@ tls_get_peer_cert_times(struct tls *ctx, time_t *notbefore, time_t *notafter)
 	return (rv);
 }
 
-static int
-tls_conninfo_alpn_proto(struct tls *ctx)
-{
-	const unsigned char *p;
-	unsigned int len;
-
-	free(ctx->conninfo->alpn);
-	ctx->conninfo->alpn = NULL;
-
-	SSL_get0_alpn_selected(ctx->ssl_conn, &p, &len);
-	if (len > 0) {
-		if ((ctx->conninfo->alpn = malloc(len + 1)) == NULL)
-			return (-1);
-		memcpy(ctx->conninfo->alpn, p, len);
-		ctx->conninfo->alpn[len] = '\0';
-	}
-
-	return (0);
-}
-
 int
 tls_get_conninfo(struct tls *ctx) {
 	const char * tmp;
@@ -195,9 +175,6 @@ tls_get_conninfo(struct tls *ctx) {
 	ctx->conninfo->cipher = strdup(tmp);
 	if (ctx->conninfo->cipher == NULL)
 		goto err;
-	if (tls_conninfo_alpn_proto(ctx) == -1)
-		goto err;
-
 	return (0);
 err:
 	tls_free_conninfo(ctx->conninfo);
@@ -207,8 +184,6 @@ err:
 void
 tls_free_conninfo(struct tls_conninfo *conninfo) {
 	if (conninfo != NULL) {
-		free(conninfo->alpn);
-		conninfo->alpn = NULL;
 		free(conninfo->hash);
 		conninfo->hash = NULL;
 		free(conninfo->subject);
@@ -220,14 +195,6 @@ tls_free_conninfo(struct tls_conninfo *conninfo) {
 		free(conninfo->cipher);
 		conninfo->cipher = NULL;
 	}
-}
-
-const char *
-tls_conn_alpn_selected(struct tls *ctx)
-{
-	if (ctx->conninfo == NULL)
-		return (NULL);
-	return (ctx->conninfo->alpn);
 }
 
 const char *

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.20 2016/08/01 17:32:19 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.21 2016/08/02 07:47:11 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -48,20 +48,6 @@ tls_server_conn(struct tls *ctx)
 	return (conn_ctx);
 }
 
-static int
-tls_server_alpn_cb(SSL *ssl, const unsigned char **out, unsigned char *outlen,
-    const unsigned char *in, unsigned int inlen, void *arg)
-{
-	struct tls *ctx = arg;
-
-	if (SSL_select_next_proto((unsigned char**)out, outlen,
-	    ctx->config->alpn, ctx->config->alpn_len, in, inlen) ==
-	    OPENSSL_NPN_NEGOTIATED)
-		return (SSL_TLSEXT_ERR_OK);
-
-	return (SSL_TLSEXT_ERR_NOACK);
-}
-
 int
 tls_configure_server(struct tls *ctx)
 {
@@ -84,10 +70,6 @@ tls_configure_server(struct tls *ctx)
 		if (tls_configure_ssl_verify(ctx, verify) == -1)
 			goto err;
 	}
-
-	if (ctx->config->alpn != NULL)
-		SSL_CTX_set_alpn_select_cb(ctx->ssl_ctx, tls_server_alpn_cb,
-		    ctx);
 
 	if (ctx->config->dheparams == -1)
 		SSL_CTX_set_dh_auto(ctx->ssl_ctx, 1);

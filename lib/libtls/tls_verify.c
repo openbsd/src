@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.15 2015/09/29 13:10:53 jsing Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.16 2016/08/02 07:47:11 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -114,7 +114,6 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name)
 		GENERAL_NAME	*altname;
 
 		altname = sk_GENERAL_NAME_value(altname_stack, i);
-
 		if (altname->type != type)
 			continue;
 
