@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.30 2016/08/01 13:48:33 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.31 2016/08/03 15:08:06 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -158,7 +158,6 @@ struct xnf_softc {
 	struct ifmedia		 sc_media;
 
 	xen_intr_handle_t	 sc_xih;
-	struct timeout		 sc_timer;
 
 	int			 sc_caps;
 #define  XNF_CAP_SG		  0x0001
@@ -201,11 +200,10 @@ void	xnf_stop(struct xnf_softc *);
 void	xnf_start(struct ifnet *);
 int	xnf_encap(struct xnf_softc *, struct mbuf *, uint32_t *);
 void	xnf_intr(void *);
-void	xnf_timer(void *);
 void	xnf_watchdog(struct ifnet *);
-int	xnf_txeof(struct xnf_softc *);
-int	xnf_rxeof(struct xnf_softc *);
-void	xnf_rx_ring_fill(void *);
+void	xnf_txeof(struct xnf_softc *);
+void	xnf_rxeof(struct xnf_softc *);
+int	xnf_rx_ring_fill(struct xnf_softc *);
 int	xnf_rx_ring_create(struct xnf_softc *);
 void	xnf_rx_ring_drain(struct xnf_softc *);
 void	xnf_rx_ring_destroy(struct xnf_softc *);
@@ -309,8 +307,6 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	timeout_set(&sc->sc_timer, xnf_timer, sc);
 
 	/* Kick out emulated em's and re's */
 	sc->sc_xen->sc_flags |= XSF_UNPLUG_NIC;
@@ -443,7 +439,6 @@ xnf_stop(struct xnf_softc *sc)
 
 	xen_intr_mask(sc->sc_xih);
 
-	timeout_del(&sc->sc_timer);
 	ifp->if_timer = 0;
 
 	ifq_barrier(&ifp->if_snd);
@@ -610,20 +605,9 @@ xnf_intr(void *arg)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
 	if (ifp->if_flags & IFF_RUNNING) {
-		xnf_rxeof(sc);
 		xnf_txeof(sc);
-		timeout_add(&sc->sc_timer, 10);
+		xnf_rxeof(sc);
 	}
-}
-
-void
-xnf_timer(void *arg)
-{
-	struct xnf_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
-
-	if (ifp->if_flags & IFF_RUNNING)
-		xen_intr_schedule(sc->sc_xih);
 }
 
 void
@@ -637,7 +621,7 @@ xnf_watchdog(struct ifnet *ifp)
 	    txr->txr_prod_event, txr->txr_cons_event);
 }
 
-int
+void
 xnf_txeof(struct xnf_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
@@ -680,11 +664,9 @@ xnf_txeof(struct xnf_softc *sc)
 		ifp->if_timer = 0;
 	if (ifq_is_oactive(&ifp->if_snd))
 		ifq_restart(&ifp->if_snd);
-
-	return (0);
 }
 
-int
+void
 xnf_rxeof(struct xnf_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
@@ -768,24 +750,22 @@ xnf_rxeof(struct xnf_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_rmap, 0, 0,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	xnf_rx_ring_fill(sc);
-
 	if (!ml_empty(&ml))
 		if_input(ifp, &ml);
 
-	return (0);
+	if (xnf_rx_ring_fill(sc) || (sc->sc_rx_cons != rxr->rxr_cons))
+		xen_intr_schedule(sc->sc_xih);
 }
 
-void
-xnf_rx_ring_fill(void *arg)
+int
+xnf_rx_ring_fill(struct xnf_softc *sc)
 {
-	struct xnf_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct xnf_rx_ring *rxr = sc->sc_rx_ring;
 	bus_dmamap_t dmap;
 	struct mbuf *m;
 	uint32_t cons, prod, oprod;
-	int i, flags;
+	int i, flags, resched = 0;
 
 	cons = rxr->rxr_cons;
 	prod = oprod = rxr->rxr_prod;
@@ -815,9 +795,11 @@ xnf_rx_ring_fill(void *arg)
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	if ((prod - cons < XNF_RX_MIN) && (ifp->if_flags & IFF_RUNNING))
-		xen_intr_schedule(sc->sc_xih);
+		resched = 1;
 	if (prod - rxr->rxr_prod_event < prod - oprod)
 		xen_intr_signal(sc->sc_xih);
+
+	return (resched);
 }
 
 int
