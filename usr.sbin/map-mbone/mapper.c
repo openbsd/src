@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapper.c,v 1.23 2015/08/20 22:39:29 deraadt Exp $	*/
+/*	$OpenBSD: mapper.c,v 1.24 2016/08/03 23:13:54 krw Exp $	*/
 /*	$NetBSD: mapper.c,v 1.3 1995/12/10 11:12:04 mycroft Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
@@ -495,7 +495,7 @@ void accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 		    for (nb_n = old_neighbors; nb_n; nb_n = nb_n->next)
 			if (nb_i->addr == nb_n->addr) {
 			    if (nb_i->metric != nb_n->metric
-				|| nb_i->threshold != nb_i->threshold)
+				|| nb_i->threshold != nb_n->threshold)
 				logit(LOG_WARNING, 0,
 				    "inconsistent %s for neighbor %s of %s",
 				    "metric/threshold",
