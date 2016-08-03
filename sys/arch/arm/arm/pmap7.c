@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.31 2016/07/31 22:27:07 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.32 2016/08/03 11:52:43 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1028,12 +1028,8 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 			*ptep = npte;
 			PTE_SYNC(ptep);
 			/* Flush the TLB entry if a current pmap. */
-			if (l2pte_valid(opte)) {
-				if (PV_BEEN_EXECD(oflags))
-					pmap_tlb_flushID_SE(pm, pv->pv_va);
-				else
-					pmap_tlb_flushD_SE(pm, pv->pv_va);
-			}
+			if (l2pte_valid(opte))
+				pmap_tlb_flushID_SE(pm, pv->pv_va);
 		}
 
 		NPDEBUG(PDB_BITS,
@@ -1281,7 +1277,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	ptep = &l2b->l2b_kva[l2pte_index(va)];
 	opte = *ptep;
 	npte = pa;
-	oflags = 0;
 
 	if (opte != 0) {	/* not l2pte_valid!!! MIOD */
 		/*
@@ -1367,7 +1362,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				 * must remove it from the PV list
 				 */
 				pve = pmap_remove_pv(opg, pm, va);
-				oflags = pve->pv_flags;
 			} else
 			if ((pve = pool_get(&pmap_pv_pool, PR_NOWAIT)) == NULL){
 				if ((flags & PMAP_CANFAIL) == 0)
@@ -1397,8 +1391,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			 * at this address.
 			 */
 			pve = pmap_remove_pv(opg, pm, va);
-			oflags = pve->pv_flags;
-
 			pool_put(&pmap_pv_pool, pve);
 		}
 	}
@@ -1449,12 +1441,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			}
 		}
 
-		if (l2pte_valid(opte)) {
-			if (PV_BEEN_EXECD(oflags))
-				pmap_tlb_flushID_SE(pm, va);
-			else
-				pmap_tlb_flushD_SE(pm, va);
-		}
+		if (l2pte_valid(opte))
+			pmap_tlb_flushID_SE(pm, va);
 	}
 
 	/*
@@ -1480,7 +1468,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	struct l2_bucket *l2b;
 	vaddr_t next_bucket;
 	pt_entry_t *ptep;
-	u_int mappings, is_exec;
+	u_int mappings;
 
 	NPDEBUG(PDB_REMOVE, printf("pmap_remove: pmap=%p sva=%08lx eva=%08lx\n",
 	    pm, sva, eva));
@@ -1520,7 +1508,6 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 
 			pm->pm_stats.resident_count--;
 			pa = l2pte_pa(pte);
-			is_exec = 0;
 
 			/*
 			 * Update flags. In a number of circumstances,
@@ -1531,10 +1518,8 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			if (pg != NULL) {
 				struct pv_entry *pve;
 				pve = pmap_remove_pv(pg, pm, sva);
-				if (pve != NULL) {
-					is_exec = PV_BEEN_EXECD(pve->pv_flags);
+				if (pve != NULL)
 					pool_put(&pmap_pv_pool, pve);
-				}
 			}
 
 			/*
@@ -1547,12 +1532,8 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 
 			*ptep = L2_TYPE_INV;
 			PTE_SYNC(ptep);
-			if (l2pte_valid(pte)) {
-				if (is_exec)
-					pmap_tlb_flushID_SE(pm, sva);
-				else
-					pmap_tlb_flushD_SE(pm, sva);
-			}
+			if (l2pte_valid(pte))
+				pmap_tlb_flushID_SE(pm, sva);
 
 			sva += PAGE_SIZE;
 			ptep++;
@@ -1801,12 +1782,8 @@ NPDEBUG(PDB_PROTECT, printf("\n"));
 
 				if (flush >= 0) {
 					flush++;
-					if (l2pte_valid(opte)) {
-						if (PV_BEEN_EXECD(f))
-							cpu_tlb_flushID_SE(sva);
-						else
-							cpu_tlb_flushD_SE(sva);
-					}
+					if (l2pte_valid(opte))
+						cpu_tlb_flushID_SE(sva);
 				} else
 					flags |= f;
 			}
@@ -1816,12 +1793,9 @@ NPDEBUG(PDB_PROTECT, printf("\n"));
 		}
 	}
 
-	if (flush < 0) {
-		if (PV_BEEN_EXECD(flags))
-			pmap_tlb_flushID(pm);
-		else
-			pmap_tlb_flushD(pm);
-	}
+	if (flush < 0)
+		pmap_tlb_flushID(pm);
+
 NPDEBUG(PDB_PROTECT, printf("\n"));
 }
 
