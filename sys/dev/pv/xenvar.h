@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.34 2016/08/03 14:55:58 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.35 2016/08/03 17:14:41 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -142,6 +142,18 @@ struct xs_transaction {
 #define XST_POLL		0x0001
 	struct xs_softc		*xst_sc;
 };
+
+static inline int
+atomic_setbit_ptr(volatile void *ptr, int bit)
+{
+	int obit;
+
+	__asm__ __volatile__ ("lock btsl %2,%1; sbbl %0,%0" :
+	    "=r" (obit), "=m" (*(volatile long *)ptr) : "Ir" (bit) :
+	    "memory");
+
+	return (obit);
+}
 
 static inline int
 atomic_clearbit_ptr(volatile void *ptr, int bit)

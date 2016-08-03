@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.59 2016/08/03 14:55:57 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.60 2016/08/03 17:14:41 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -743,7 +743,7 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih, int domain,
 	SLIST_INSERT_HEAD(&sc->sc_intrs, xi, xi_entry);
 
 	/* Mask the event port */
-	setbit((char *)&sc->sc_ipg->evtchn_mask[0], xi->xi_port);
+	atomic_setbit_ptr(&sc->sc_ipg->evtchn_mask[0], xi->xi_port);
 
 #if defined(XEN_DEBUG) && disabled
 	memset(&es, 0, sizeof(es));
@@ -789,9 +789,8 @@ xen_intr_disestablish(xen_intr_handle_t xih)
 
 	taskq_destroy(xi->xi_taskq);
 
-	setbit((char *)&sc->sc_ipg->evtchn_mask[0], xi->xi_port);
-	clrbit((char *)&sc->sc_ipg->evtchn_pending[0], xi->xi_port);
-	virtio_membar_sync();
+	atomic_setbit_ptr(&sc->sc_ipg->evtchn_mask[0], xi->xi_port);
+	atomic_clearbit_ptr(&sc->sc_ipg->evtchn_pending[0], xi->xi_port);
 
 	if (!xi->xi_noclose) {
 		ec.port = xi->xi_port;
@@ -837,8 +836,7 @@ xen_intr_mask(xen_intr_handle_t xih)
 
 	if ((xi = xen_lookup_intsrc(sc, port)) != NULL) {
 		xi->xi_masked = 1;
-		setbit((char *)&sc->sc_ipg->evtchn_mask[0], xi->xi_port);
-		virtio_membar_sync();
+		atomic_setbit_ptr(&sc->sc_ipg->evtchn_mask[0], xi->xi_port);
 	}
 }
 
