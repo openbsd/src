@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrace.c,v 1.36 2016/08/03 23:22:48 krw Exp $	*/
+/*	$OpenBSD: mtrace.c,v 1.37 2016/08/03 23:37:25 krw Exp $	*/
 /*	$NetBSD: mtrace.c,v 1.5 1995/12/10 10:57:15 mycroft Exp $	*/
 
 /*
@@ -855,7 +855,7 @@ stat_line(struct tr_resp *r, struct tr_resp *s, int have_next, int *rst)
     v_pps = v_out / timediff;
     g_pps = g_out / timediff;
 
-    if (v_out && (s->tr_vifout != 0xFFFFFFFF && s->tr_vifout != 0) ||
+    if ((v_out && (s->tr_vifout != 0xFFFFFFFF && s->tr_vifout != 0)) ||
 		 (r->tr_vifout != 0xFFFFFFFF && r->tr_vifout != 0))
 	    have |= OUTS;
 
@@ -1530,7 +1530,7 @@ usage: mtrace [-lMnpsv] [-g gateway] [-i if_addr] [-m max_hops] [-q nqueries]\n\
 
     if (base.rtime == 0) {
 	printf("Timed out receiving responses\n");
-	if (IN_MULTICAST(ntohl(tdst)))
+	if (IN_MULTICAST(ntohl(tdst))) {
 	  if (tdst == query_cast)
 	    printf("Perhaps no local router has a route for source %s\n",
 		   inet_fmt(qsrc, s1));
@@ -1540,6 +1540,7 @@ or no router local to it has a route for source %s,\n\
 or multicast at ttl %d doesn't reach its last-hop router for that source\n",
 		   inet_fmt(qdst, s2), inet_fmt(qgrp, s3), inet_fmt(qsrc, s1),
 		   qttl ? qttl : MULTICAST_TTL1);
+	}
 	exit(1);
     }
 
