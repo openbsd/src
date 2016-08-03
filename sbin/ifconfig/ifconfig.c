@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.324 2016/06/15 19:39:33 gerhard Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.325 2016/08/03 20:45:36 vgross Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1451,9 +1451,9 @@ setifllprio(const char *val, int d)
 
 	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 
-	ifr.ifr_mtu = strtonum(val, 0, UCHAR_MAX, &errmsg);
+	ifr.ifr_llprio = strtonum(val, 0, UCHAR_MAX, &errmsg);
 	if (errmsg)
-		errx(1, "mtu %s: %s", val, errmsg);
+		errx(1, "llprio %s: %s", val, errmsg);
 	if (ioctl(s, SIOCSIFLLPRIO, (caddr_t)&ifr) < 0)
 		warn("SIOCSIFLLPRIO");
 }
