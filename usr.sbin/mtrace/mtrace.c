@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrace.c,v 1.35 2016/03/07 00:16:35 mmcc Exp $	*/
+/*	$OpenBSD: mtrace.c,v 1.36 2016/08/03 23:22:48 krw Exp $	*/
 /*	$NetBSD: mtrace.c,v 1.5 1995/12/10 10:57:15 mycroft Exp $	*/
 
 /*
@@ -1057,7 +1057,7 @@ print_stats(struct resp_buf *base, struct resp_buf *prev, struct resp_buf *new)
     }
 
     while (TRUE) {
-	if ((n->tr_inaddr != b->tr_inaddr) || (n->tr_inaddr != b->tr_inaddr))
+	if ((n->tr_inaddr != b->tr_inaddr) || (p->tr_inaddr != b->tr_inaddr))
 	  return 1;		/* Route changed */
 
 	if ((n->tr_inaddr != n->tr_outaddr))
