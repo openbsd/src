@@ -1,4 +1,4 @@
-/*	$OpenBSD: infocmp.c,v 1.22 2015/11/11 02:52:46 deraadt Exp $	*/
+/*	$OpenBSD: infocmp.c,v 1.23 2016/08/03 16:32:08 krw Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -44,7 +44,7 @@
 
 #include <dump_entry.h>
 
-MODULE_ID("$Id: infocmp.c,v 1.22 2015/11/11 02:52:46 deraadt Exp $")
+MODULE_ID("$Id: infocmp.c,v 1.23 2016/08/03 16:32:08 krw Exp $")
 
 #define L_CURL "{"
 #define R_CURL "}"
@@ -628,7 +628,7 @@ analyze_string(const char *name, const char *cap, TERMTYPE *tp)
 	    char *cp = tp->Strings[i];
 
 	    /* don't use soft-key capabilities */
-	    if (strnames[i][0] == 'k' && strnames[i][0] == 'f')
+	    if (strnames[i][0] == 'k' && strnames[i][1] == 'f')
 		continue;
 
 	    if (cp != ABSENT_STRING && cp != CANCELLED_STRING && cp[0] && cp
