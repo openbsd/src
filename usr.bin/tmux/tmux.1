@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.491 2016/06/16 10:55:47 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.492 2016/08/03 09:08:40 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 16 2016 $
+.Dd $Mdocdate: August 3 2016 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3800,9 +3800,7 @@ Before the command is executed, the first occurrence of the string
 .Ql %%
 and all occurrences of
 .Ql %1
-are replaced by the response to the first prompt, the second
-.Ql %%
-and all
+are replaced by the response to the first prompt, all
 .Ql %2
 are replaced with the response to the second prompt, and so on for further
 prompts.
