@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.34 2016/07/30 16:25:04 jcs Exp $
+#	$OpenBSD: files.acpi,v 1.35 2016/08/03 17:23:38 jcs Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -140,3 +140,8 @@ file	dev/acpi/acpicbkbd.c		acpicbkbd
 device	acpials
 attach	acpials at acpi
 file	dev/acpi/acpials.c		acpials
+
+# Trusted Platform Module
+device	tpm
+attach	tpm at acpi
+file	dev/acpi/tpm.c			tpm
