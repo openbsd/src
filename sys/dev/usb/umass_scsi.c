@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.44 2016/08/01 10:56:31 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.45 2016/08/03 13:44:49 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -78,8 +78,6 @@ void umass_scsi_cb(struct umass_softc *sc, void *priv, int residue,
 		   int status);
 void umass_scsi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 			 int status);
-struct umass_scsi_softc *umass_scsi_setup(struct umass_softc *);
-
 void *umass_io_get(void *);
 void umass_io_put(void *, void *);
 
@@ -87,59 +85,6 @@ int
 umass_scsi_attach(struct umass_softc *sc)
 {
 	struct scsibus_attach_args saa;
-	struct umass_scsi_softc *scbus;
-
-	scbus = umass_scsi_setup(sc);
-	scbus->sc_link.adapter_target = UMASS_SCSIID_HOST;
-	scbus->sc_link.luns = sc->maxlun + 1;
-	scbus->sc_link.flags &= ~SDEV_ATAPI;
-	scbus->sc_link.flags |= SDEV_UMASS;
-
-	bzero(&saa, sizeof(saa));
-	saa.saa_sc_link = &scbus->sc_link;
-
-	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: SCSI\n"
-			     "sc = 0x%p, scbus = 0x%p\n",
-			     sc->sc_dev.dv_xname, sc, scbus));
-
-	sc->sc_refcnt++;
-	scbus->sc_child = config_found((struct device *)sc, &saa, scsiprint);
-	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(&sc->sc_dev);
-
-	return (0);
-}
-
-int
-umass_atapi_attach(struct umass_softc *sc)
-{
-	struct scsibus_attach_args saa;
-	struct umass_scsi_softc *scbus;
-
-	scbus = umass_scsi_setup(sc);
-	scbus->sc_link.adapter_target = UMASS_SCSIID_HOST;
-	scbus->sc_link.luns = sc->maxlun + 1;
-	scbus->sc_link.openings = 1;
-	scbus->sc_link.flags |= SDEV_UMASS | SDEV_ATAPI;
-
-	bzero(&saa, sizeof(saa));
-	saa.saa_sc_link = &scbus->sc_link;
-
-	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n"
-			     "sc = 0x%p, scbus = 0x%p\n",
-			     sc->sc_dev.dv_xname, sc, scbus));
-
-	sc->sc_refcnt++;
-	scbus->sc_child = config_found((struct device *)sc, &saa, scsiprint);
-	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(&sc->sc_dev);
-
-	return (0);
-}
-
-struct umass_scsi_softc *
-umass_scsi_setup(struct umass_softc *sc)
-{
 	struct umass_scsi_softc *scbus;
 
 	scbus = malloc(sizeof(*scbus), M_DEVBUF, M_WAITOK | M_ZERO);
@@ -152,11 +97,40 @@ umass_scsi_setup(struct umass_softc *sc)
 	scbus->sc_link.adapter_buswidth = 2;
 	scbus->sc_link.adapter = &umass_scsi_switch;
 	scbus->sc_link.adapter_softc = sc;
+	scbus->sc_link.adapter_target = UMASS_SCSIID_HOST;
 	scbus->sc_link.openings = 1;
-	scbus->sc_link.quirks |= SDEV_ONLYBIG | sc->sc_busquirks;
+	scbus->sc_link.quirks = SDEV_ONLYBIG | sc->sc_busquirks;
 	scbus->sc_link.pool = &scbus->sc_iopool;
+	scbus->sc_link.luns = sc->maxlun + 1;
+	scbus->sc_link.flags = SDEV_UMASS;
 
-	return (scbus);
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &scbus->sc_link;
+
+	switch (sc->sc_cmd) {
+	case UMASS_CPROTO_RBC:
+	case UMASS_CPROTO_SCSI:
+		DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: SCSI\n"
+				     "sc = 0x%p, scbus = 0x%p\n",
+				     sc->sc_dev.dv_xname, sc, scbus));
+		break;
+	case UMASS_CPROTO_UFI:
+	case UMASS_CPROTO_ATAPI:
+		scbus->sc_link.flags |= SDEV_ATAPI;
+		DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n"
+				     "sc = 0x%p, scbus = 0x%p\n",
+				     sc->sc_dev.dv_xname, sc, scbus));
+		break;
+	default:
+		break;
+	}
+
+	sc->sc_refcnt++;
+	scbus->sc_child = config_found((struct device *)sc, &saa, scsiprint);
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(&sc->sc_dev);
+
+	return (0);
 }
 
 int
