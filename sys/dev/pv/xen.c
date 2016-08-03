@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.58 2016/08/01 14:37:39 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.59 2016/08/03 14:55:57 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -633,8 +633,8 @@ xen_intr(void)
 		for (bit = 0; pending > 0; pending >>= 1, bit++) {
 			if ((pending & 1) == 0)
 				continue;
-			sc->sc_ipg->evtchn_pending[row] &= ~(1 << bit);
-			virtio_membar_producer();
+			atomic_clearbit_ptr(&sc->sc_ipg->evtchn_pending[row],
+			    bit);
 			port = (row * LONG_BIT) + bit;
 			if ((xi = xen_lookup_intsrc(sc, port)) == NULL) {
 				printf("%s: unhandled interrupt on port %u\n",

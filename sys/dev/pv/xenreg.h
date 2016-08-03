@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenreg.h,v 1.8 2016/01/18 19:06:48 mikeb Exp $	*/
+/*	$OpenBSD: xenreg.h,v 1.9 2016/08/03 14:55:57 mikeb Exp $	*/
 
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -237,8 +237,8 @@ struct shared_info {
 	 * per-vcpu selector word to be set. Each bit in the selector covers a
 	 * 'C long' in the PENDING bitfield array.
 	 */
-	unsigned long evtchn_pending[sizeof(unsigned long) * 8];
-	unsigned long evtchn_mask[sizeof(unsigned long) * 8];
+	volatile unsigned long evtchn_pending[sizeof(unsigned long) * 8];
+	volatile unsigned long evtchn_mask[sizeof(unsigned long) * 8];
 
 	/*
 	 * Wallclock time: updated only by control software. Guests should
