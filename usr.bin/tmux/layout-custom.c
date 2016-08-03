@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-custom.c,v 1.9 2016/07/15 09:27:35 nicm Exp $ */
+/* $OpenBSD: layout-custom.c,v 1.10 2016/08/03 09:07:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -150,7 +150,7 @@ layout_parse(struct window *w, const char *layout)
 
 		/* Fewer panes than cells - close the bottom right. */
 		lcchild = layout_find_bottomright(lc);
-		layout_destroy_cell(lcchild, &lc);
+		layout_destroy_cell(w, lcchild, &lc);
 	}
 
 	/* Save the old window size and resize to the layout size. */
