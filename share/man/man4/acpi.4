@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.46 2016/07/30 16:25:04 jcs Exp $
+.\"	$OpenBSD: acpi.4,v 1.47 2016/08/03 22:46:44 jcs Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 30 2016 $
+.Dd $Mdocdate: August 3 2016 $
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -84,6 +84,8 @@ ASUSTeK AI Booster ACPI ATK0110 temperature, voltage, and fan sensor
 Intel Bay Trail GPIO controller
 .It Xr chvgpio 4
 Intel Cherry View GPIO controller
+.It Xr tpm 4
+Trusted Platform Module support
 .El
 .Sh FILES
 .Bl -tag -width "/dev/apmctlXXX"
