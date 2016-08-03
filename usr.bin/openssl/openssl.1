@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.43 2016/08/01 07:23:29 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.44 2016/08/03 06:43:21 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 1 2016 $
+.Dd $Mdocdate: August 3 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1170,47 +1170,44 @@ or
 File or files to digest.
 If no files are specified then standard input is used.
 .El
-.\"
-.\" DHPARAM
-.\"
 .Sh DHPARAM
 .nr nS 1
 .Nm "openssl dhparam"
-.Bk -words
 .Op Fl 2 | 5
 .Op Fl C
 .Op Fl check
 .Op Fl dsaparam
 .Op Fl in Ar file
-.Op Fl inform Ar DER | PEM
+.Op Fl inform Cm der | pem
 .Op Fl noout
 .Op Fl out Ar file
-.Op Fl outform Ar DER | PEM
+.Op Fl outform Cm der | pem
 .Op Fl text
 .Op Ar numbits
-.Ek
 .nr nS 0
 .Pp
 The
 .Nm dhparam
 command is used to manipulate DH parameter files.
+Only the older PKCS#3 DH is supported,
+not the newer X9.42 DH.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl 2 , 5
-The generator to use, either 2 or 5.
+The generator to use;
 2 is the default.
 If present, the input file is ignored and parameters are generated instead.
 .It Fl C
-This option converts the parameters into C code.
+Convert the parameters into C code.
 The parameters can then be loaded by calling the
-.Cm get_dh Ns Ar numbits Ns Li ()
+.No get_dh Ns Ar numbits
 function.
 .It Fl check
 Check the DH parameters.
 .It Fl dsaparam
-If this option is used, DSA rather than DH parameters are read or created;
-they are converted to DH format.
+Read or create DSA parameters,
+converted to DH format on output.
 Otherwise,
 .Qq strong
 primes
@@ -1226,87 +1223,38 @@ Beware that with such DSA-style DH parameters,
 a fresh DH key should be created for each use to
 avoid small-subgroup attacks that may be possible otherwise.
 .It Fl in Ar file
-This specifies the input
-.Ar file
-to read parameters from, or standard input if this option is not specified.
-.It Fl inform Ar DER | PEM
-This specifies the input format.
-The argument
-.Ar DER
+The input file to read from,
+or standard input if not specified.
+.It Fl inform Cm der | pem
+The input format.
+.Cm der
 uses an ASN1 DER-encoded form compatible with the PKCS#3 DHparameter
 structure.
-The
-.Ar PEM
-form is the default format:
+.Cm pem
+is the default:
 it consists of the DER format base64-encoded with
-additional header and footer lines.
+additional header and footer lines:
+.Bd -unfilled -offset indent
+-----BEGIN DH PARAMETERS-----
+-----END DH PARAMETERS-----
+.Ed
 .It Fl noout
-This option inhibits the output of the encoded version of the parameters.
+Inhibit the output of the encoded version of the parameters.
+.It Fl out Ar file
+The output file to write to,
+or standard output if not specified.
+.It Fl outform Cm der | pem
+The output format.
+.It Fl text
+Print out the DH parameters in human readable form.
 .It Ar numbits
-This argument specifies that a parameter set should be generated of size
+Generate a parameter set of size
 .Ar numbits .
 It must be the last option.
 If not present, a value of 2048 is used.
 If this value is present, the input file is ignored and
 parameters are generated instead.
-.It Fl out Ar file
-This specifies the output
-.Ar file
-to write parameters to.
-Standard output is used if this option is not present.
-The output filename should
-.Em not
-be the same as the input filename.
-.It Fl outform Ar DER | PEM
-This specifies the output format; the options have the same meaning as the
-.Fl inform
-option.
-.It Fl text
-This option prints out the DH parameters in human readable form.
 .El
-.Sh DHPARAM WARNINGS
-The program
-.Nm dhparam
-combines the functionality of the programs
-.Nm dh
-and
-.Nm gendh
-in previous versions of
-.Nm OpenSSL
-and
-.Nm SSLeay .
-The
-.Nm dh
-and
-.Nm gendh
-programs are retained for now, but may have different purposes in future
-versions of
-.Nm OpenSSL .
-.Sh DHPARAM NOTES
-PEM format DH parameters use the header and footer lines:
-.Bd -unfilled -offset indent
------BEGIN DH PARAMETERS-----
------END DH PARAMETERS-----
-.Ed
-.Pp
-.Nm OpenSSL
-currently only supports the older PKCS#3 DH,
-not the newer X9.42 DH.
-.Pp
-This program manipulates DH parameters not keys.
-.Sh DHPARAM BUGS
-There should be a way to generate and manipulate DH keys.
-.Sh DHPARAM HISTORY
-The
-.Nm dhparam
-command was added in
-.Nm OpenSSL
-0.9.5.
-The
-.Fl dsaparam
-option was added in
-.Nm OpenSSL
-0.9.6.
 .\"
 .\" DSA
 .\"
