@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.22 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: clock.c,v 1.23 2016/08/03 17:33:50 jcs Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -427,12 +427,9 @@ clock_expandyear(int clockyear)
 	else
 		cmoscentury = 0;
 	splx(s);
-	if (!cmoscentury) {
-#ifdef DIAGNOSTIC
-		printf("clock: unknown CMOS layout\n");
-#endif
+	if (!cmoscentury)
 		return (clockyear);
-	}
+
 	cmoscentury = bcdtobin(cmoscentury);
 
 	if (cmoscentury != clockcentury) {
