@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm_armv7.S,v 1.10 2016/04/25 04:46:56 jsg Exp $ */
+/* $OpenBSD: cpufunc_asm_armv7.S,v 1.11 2016/08/03 07:05:05 kettenis Exp $ */
 /*
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
  *
@@ -45,7 +45,7 @@ ENTRY(armv7_setttb)
 	isb	sy
 
 	mcr	CP15_TTBR0(r0)		/* load new TTB */
-	mcr	CP15_TLBIALL(r0)	/* invalidate I+D TLBs */
+	mcr	CP15_TLBIALL(r0)	/* invalidate unified TLB */
 	dsb	sy
 	isb	sy
 
@@ -55,45 +55,27 @@ ENTRY(armv7_setttb)
  * TLB functions
  */
 ENTRY(armv7_tlb_flushID_SE)
-	mcr	CP15_DTLBIMVA		/* flush D tlb single entry */
-	mcr	CP15_ITLBIMVA		/* flush I tlb single entry */
+	mcr	CP15_TLBIMVA(r0)	/* flush unified tlb single entry */
 	mcr	CP15_BPIMVA		/* flush va from BP */
 	dsb	sy
 	isb	sy
 	mov	pc, lr
 
-ENTRY(armv7_tlb_flushI_SE)
-	mcr	CP15_ITLBIMVA		/* flush I tlb single entry */
-	mcr	CP15_BPIMVA		/* flush va from BP */
-	dsb	sy
-	isb	sy
-	mov	pc, lr
-
-/*
- * TLB functions
- */
 ENTRY(armv7_tlb_flushID)
-	mcr	CP15_TLBIALL(r0)	/* flush I+D tlb */
+	mcr	CP15_TLBIALL(r0)	/* flush unified tlb */
 	mcr	CP15_BPIALL		/* Flush BP cache */
-	dsb	sy
-	isb	sy
-	mov	pc, lr
-
-ENTRY(armv7_tlb_flushI)
-	mcr	CP15_ITLBIALL		/* flush I tlb */
-	mcr	CP15_BPIALL		/* Flush BP cache */
-	dsb	sy
-	isb	sy
-	mov	pc, lr
-
-ENTRY(armv7_tlb_flushD)
-	mcr	CP15_DTLBIALL		/* flush D tlb */
 	dsb	sy
 	isb	sy
 	mov	pc, lr
 
 ENTRY(armv7_tlb_flushD_SE)
-	mcr	CP15_DTLBIMVA		/* flush D tlb single entry */
+	mcr	CP15_TLBIMVA(r0)	/* flush unified tlb single entry */
+	dsb	sy
+	isb	sy
+	mov	pc, lr
+
+ENTRY(armv7_tlb_flushD)
+	mcr	CP15_TLBIALL(r0)	/* flush unified tlb */
 	dsb	sy
 	isb	sy
 	mov	pc, lr
@@ -251,7 +233,7 @@ ENTRY(armv7_context_switch)
 	isb	sy
 
 	mcr	CP15_TTBR0(r0)		/* set the new TTB */
-	mcr	CP15_TLBIALL(r0)	/* and flush the I+D tlbs */
+	mcr	CP15_TLBIALL(r0)	/* and flush the unified tlb */
 	dsb	sy
 	isb	sy
 	mov	pc, lr
