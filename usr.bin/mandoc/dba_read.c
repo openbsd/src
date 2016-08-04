@@ -1,4 +1,4 @@
-/*	$OpenBSD: dba_read.c,v 1.1 2016/08/01 10:32:39 schwarze Exp $ */
+/*	$OpenBSD: dba_read.c,v 1.2 2016/08/04 09:33:53 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -45,7 +45,7 @@ dba_read(const char *fname)
 	if (dbm_open(fname) == -1)
 		return NULL;
 	npages = dbm_page_count();
-	dba = dba_new(npages);
+	dba = dba_new(npages < 128 ? 128 : npages);
 	for (ip = 0; ip < npages; ip++) {
 		pdata = dbm_page_get(ip);
 		page = dba_page_new(dba->pages, pdata->name, pdata->sect,
