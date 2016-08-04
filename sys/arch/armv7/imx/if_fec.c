@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.11 2016/07/27 11:45:02 patrick Exp $ */
+/* $OpenBSD: if_fec.c,v 1.12 2016/08/04 14:14:05 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -486,10 +486,7 @@ fec_phy_init(struct fec_softc *sc, struct mii_softc *child)
 		reg = fec_miibus_readreg(dev, phy, 0x1e);
 		fec_miibus_writereg(dev, phy, 0x1e, reg | 0x0100);
 
-		/* phy power */
-		reg = fec_miibus_readreg(dev, phy, 0x00);
-		if (reg & 0x0800)
-			fec_miibus_writereg(dev, phy, 0x00, reg & ~0x0800);
+		PHY_RESET(child);
 	}
 
 	if (child->mii_oui == MII_OUI_MICREL &&
