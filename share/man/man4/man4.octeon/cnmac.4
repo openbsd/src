@@ -1,4 +1,4 @@
-.\" $OpenBSD: cnmac.4,v 1.2 2016/07/11 13:23:14 visa Exp $
+.\" $OpenBSD: cnmac.4,v 1.3 2016/08/04 13:22:20 visa Exp $
 .\"
 .\" Copyright (c) 2015 Visa Hankala
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: July 11 2016 $
+.Dd $Mdocdate: August 4 2016 $
 .Dt CNMAC 4 octeon
 .Os
 .Sh NAME
@@ -48,8 +48,8 @@ Ubiquiti Networks EdgeRouter PRO
 The
 .Nm
 driver supports TCP/UDP checksum offload on IPv4/IPv6 reception and
-transmission.
-The driver additionally supports IPv4 checksum offload on reception.
+transmission, and IPv4 checksum offload on reception.
+The driver additionally supports jumbo frames.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
