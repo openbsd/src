@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.54 2016/07/30 09:45:09 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.55 2016/08/04 13:10:31 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -310,6 +310,7 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = octeon_eth_ioctl;
 	ifp->if_start = octeon_eth_start;
 	ifp->if_watchdog = octeon_eth_watchdog;
+	ifp->if_hardmtu = OCTEON_ETH_MAX_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(GATHER_QUEUE_SIZE, IFQ_MAXLEN));
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_TCPv4 |
@@ -627,17 +628,25 @@ int
 octeon_eth_buf_free_work(struct octeon_eth_softc *sc, uint64_t *work)
 {
 	paddr_t addr, pktbuf;
-	unsigned int back;
+	uint64_t word3;
+	unsigned int back, nbufs;
 
-	if (ISSET(work[2], PIP_WQE_WORD2_IP_BUFS)) {
-		addr = work[3] & PIP_WQE_WORD3_ADDR, CCA_CACHED;
-		back = (work[3] & PIP_WQE_WORD3_BACK) >>
+	nbufs = (work[2] & PIP_WQE_WORD2_IP_BUFS) >>
+	    PIP_WQE_WORD2_IP_BUFS_SHIFT;
+	word3 = work[3];
+	while (nbufs-- > 0) {
+		addr = word3 & PIP_WQE_WORD3_ADDR, CCA_CACHED;
+		back = (word3 & PIP_WQE_WORD3_BACK) >>
 		    PIP_WQE_WORD3_BACK_SHIFT;
 		pktbuf = (addr & ~(CACHE_LINE_SIZE - 1)) -
 		    back * CACHE_LINE_SIZE;
 
 		cn30xxfpa_store(pktbuf, OCTEON_POOL_NO_PKT,
 		    OCTEON_POOL_SIZE_PKT / CACHE_LINE_SIZE);
+
+		if (nbufs > 0)
+			memcpy(&word3, (void *)PHYS_TO_XKPHYS(addr -
+			    sizeof(word3), CCA_CACHED), sizeof(word3));
 	}
 
 	cn30xxfpa_buf_put_paddr(octeon_eth_fb_wqe, XKPHYS_TO_PHYS(work));
@@ -1153,36 +1162,67 @@ int
 octeon_eth_recv_mbuf(struct octeon_eth_softc *sc, uint64_t *work,
     struct mbuf **rm, int *nmbuf)
 {
-	struct mbuf *m, **pm;
+	struct mbuf *m, *m0, *mprev, **pm;
 	paddr_t addr, pktbuf;
 	uint64_t word1 = work[1];
 	uint64_t word2 = work[2];
 	uint64_t word3 = work[3];
-	unsigned int back;
+	unsigned int back, i, nbufs;
+	unsigned int left, total, size;
 
 	cn30xxfpa_buf_put_paddr(octeon_eth_fb_wqe, XKPHYS_TO_PHYS(work));
 
-	if ((word2 >> PIP_WQE_WORD2_IP_BUFS_SHIFT) != 1)
-		panic("%s: expected one buffer, got %llu", __func__,
-		    word2 >> PIP_WQE_WORD2_IP_BUFS_SHIFT);
+	nbufs = (word2 & PIP_WQE_WORD2_IP_BUFS) >> PIP_WQE_WORD2_IP_BUFS_SHIFT;
+	if (nbufs == 0)
+		panic("%s: dynamic short packet", __func__);
 
-	addr = word3 & PIP_WQE_WORD3_ADDR;
-	back = (word3 & PIP_WQE_WORD3_BACK) >> PIP_WQE_WORD3_BACK_SHIFT;
-	pktbuf = (addr & ~(CACHE_LINE_SIZE - 1)) - back * CACHE_LINE_SIZE;
-	pm = (struct mbuf **)PHYS_TO_XKPHYS(pktbuf, CCA_CACHED) - 1;
-	m = *pm;
-	*pm = NULL;
-	if ((paddr_t)m->m_pkthdr.ph_cookie != pktbuf)
-		panic("%s: packet pool is corrupted, mbuf cookie %p != "
-		    "pktbuf %p", __func__, m->m_pkthdr.ph_cookie,
-		    (void *)pktbuf);
+	m0 = mprev = NULL;
+	total = left = (word1 & PIP_WQE_WORD1_LEN) >> 48;
+	for (i = 0; i < nbufs; i++) {
+		addr = word3 & PIP_WQE_WORD3_ADDR;
+		back = (word3 & PIP_WQE_WORD3_BACK) >> PIP_WQE_WORD3_BACK_SHIFT;
+		pktbuf = (addr & ~(CACHE_LINE_SIZE - 1)) -
+		    back * CACHE_LINE_SIZE;
+		pm = (struct mbuf **)PHYS_TO_XKPHYS(pktbuf, CCA_CACHED) - 1;
+		m = *pm;
+		*pm = NULL;
+		if ((paddr_t)m->m_pkthdr.ph_cookie != pktbuf)
+			panic("%s: packet pool is corrupted, mbuf cookie %p != "
+			    "pktbuf %p", __func__, m->m_pkthdr.ph_cookie,
+			    (void *)pktbuf);
 
-	m->m_pkthdr.ph_cookie = NULL;
-	m->m_data += addr - pktbuf;
-	m->m_len = m->m_pkthdr.len = (word1 & PIP_WQE_WORD1_LEN) >> 48;
+		/*
+		 * Because of a hardware bug in some Octeon models the size
+		 * field of word3 can be wrong. However, the hardware uses
+		 * all space in a buffer before moving to the next one so
+		 * it is possible to derive the size of this data segment
+		 * from the size of packet data buffers.
+		 */
+		size = OCTEON_POOL_SIZE_PKT - (addr - pktbuf);
+		if (size > left)
+			size = left;
 
-	*rm = m;
-	*nmbuf = 1;
+		m->m_pkthdr.ph_cookie = NULL;
+		m->m_data += addr - pktbuf;
+		m->m_len = size;
+		left -= size;
+
+		if (m0 == NULL)
+			m0 = m;
+		else {
+			m->m_flags &= ~M_PKTHDR;
+			mprev->m_next = m;
+		}
+		mprev = m;
+
+		if (i + 1 < nbufs)
+			memcpy(&word3, (void *)PHYS_TO_XKPHYS(addr -
+			    sizeof(word3), CCA_CACHED), sizeof(word3));
+	}
+
+	m0->m_pkthdr.len = total;
+	*rm = m0;
+	*nmbuf = nbufs;
 
 	return 0;
 }

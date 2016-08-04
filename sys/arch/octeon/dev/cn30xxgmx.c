@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.25 2016/06/22 13:09:35 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.26 2016/08/04 13:10:31 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -571,13 +571,12 @@ int
 cn30xxgmx_rx_frm_ctl_enable(struct cn30xxgmx_port_softc *sc,
     uint64_t rx_frm_ctl)
 {
-	/*
-	 * XXX Jumbo-frame Workarounds
-	 *     Current implementation of cnmac is required to
-	 *     configure GMX0_RX0_JABBER[CNT] as follows:
-	 *	RX0_FRM_MAX(1536) <= GMX0_RX0_JABBER <= 1536(0x600)
-	 */
-	_GMX_PORT_WR8(sc, GMX0_RX0_JABBER, GMX_FRM_MAX_SIZ);
+	struct ifnet *ifp = &sc->sc_port_ac->ac_if;
+	unsigned int maxlen;
+
+	maxlen = roundup(ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN +
+	    ETHER_VLAN_ENCAP_LEN, 8);
+	_GMX_PORT_WR8(sc, GMX0_RX0_JABBER, maxlen);
 
 	return cn30xxgmx_rx_frm_ctl_xable(sc, rx_frm_ctl, 1);
 }
