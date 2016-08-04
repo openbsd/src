@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tpm.4,v 1.1 2016/08/03 22:46:44 jcs Exp $
+.\"	$OpenBSD: tpm.4,v 1.2 2016/08/04 05:39:28 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Hans-Joerg Hoexer
 .\" Copyright (c) 2016 joshua stein <jcs@openbsd.org>
@@ -15,19 +15,19 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 3 2016 $
+.Dd $Mdocdate: August 4 2016 $
 .Dt TPM 4
 .Os
 .Sh NAME
 .Nm tpm
-.Nd Trusted Platform Module devices
+.Nd Trusted Platform Module device
 .Sh SYNOPSIS
 .Cd "tpm* at acpi?"
 .Sh DESCRIPTION
 The
 .Nm
 driver supports devices implementing the TPM Interface Spec 1.2.
-.Sh HARDWARE
+.Pp
 Supported devices include:
 .Pp
 .Bl -bullet -compact -offset indent
@@ -46,7 +46,6 @@ STM ST19WP18
 .It
 Winbond WEC WPCT200
 .El
-.Pp
 .Sh HISTORY
 The
 .Nm
