@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.7 2016/08/01 21:08:20 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.8 2016/08/04 12:17:36 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -28,6 +28,11 @@
 
 #include <dev/ofw/openfirm.h>
 
+uint32_t arm_intr_get_parent(int);
+
+void *arm_intr_prereg_fdt(void *, int *, int, int (*)(void *),
+    void *, char *);
+
 int arm_dflt_splraise(int);
 int arm_dflt_spllower(int);
 void arm_dflt_splx(int);
@@ -39,8 +44,6 @@ const char *arm_dflt_intr_string(void *cookie);
 
 void arm_dflt_intr(void *);
 void arm_intr(void *);
-
-uint32_t arm_intr_get_parent(int);
 
 #define SI_TO_IRQBIT(x) (1 << (x))
 uint32_t arm_smask[NIPL];
@@ -100,18 +103,110 @@ arm_intr_get_parent(int node)
 	return phandle;
 }
 
+/*
+ * Interrupt pre-registration.
+ *
+ * To allow device drivers to establish interrupt handlers before all
+ * relevant interrupt controllers have been attached, we support
+ * pre-registration of interrupt handlers.  For each node in the
+ * device tree that has an "interrupt-controller" property, we
+ * register a dummy interrupt controller that simply stashes away all
+ * relevant details of the interrupt handler being established.
+ * Later, when the real interrupt controller registers itself, we
+ * establush those interrupt handlers based on that information.
+ */
+
+#define MAX_INTERRUPT_CELLS	4
+
+struct intr_prereg {
+	LIST_ENTRY(intr_prereg) ip_list;
+	uint32_t ip_phandle;
+	uint32_t ip_cell[MAX_INTERRUPT_CELLS];
+
+	int ip_level;
+	int (*ip_func)(void *);
+	void *ip_arg;
+	char *ip_name;
+};
+
+LIST_HEAD(, intr_prereg) prereg_interrupts =
+	LIST_HEAD_INITIALIZER(prereg_interrupts);
+
+void *
+arm_intr_prereg_fdt(void *cookie, int *cell, int level,
+    int (*func)(void *), void *arg, char *name)
+{
+	struct interrupt_controller *ic = cookie;
+	struct intr_prereg *ip;
+	int i;
+
+	ip = malloc(sizeof(struct intr_prereg), M_DEVBUF, M_ZERO | M_WAITOK);
+	ip->ip_phandle = ic->ic_phandle;
+	for (i = 0; i < ic->ic_cells; i++)
+		ip->ip_cell[i] = cell[i];
+	ip->ip_level = level;
+	ip->ip_func = func;
+	ip->ip_arg = arg;
+	ip->ip_name = name;
+	LIST_INSERT_HEAD(&prereg_interrupts, ip, ip_list);
+
+	return ip;
+}
+
+void
+arm_intr_init_fdt_recurse(int node)
+{
+	struct interrupt_controller *ic;
+
+	if (OF_getproplen(node, "interrupt-controller") >= 0) {
+		ic = malloc(sizeof(struct interrupt_controller),
+		    M_DEVBUF, M_ZERO | M_WAITOK);
+		ic->ic_node = node;
+		ic->ic_cookie = ic;
+		ic->ic_establish = arm_intr_prereg_fdt;
+		arm_intr_register_fdt(ic);
+	}
+
+	for (node = OF_child(node); node; node = OF_peer(node))
+		arm_intr_init_fdt_recurse(node);
+}
+
+void
+arm_intr_init_fdt(void)
+{
+	int node = OF_peer(0);
+
+	if (node)
+		arm_intr_init_fdt_recurse(node);
+}
+
 LIST_HEAD(, interrupt_controller) interrupt_controllers =
 	LIST_HEAD_INITIALIZER(interrupt_controllers);
 
 void
 arm_intr_register_fdt(struct interrupt_controller *ic)
 {
+	struct intr_prereg *ip;
+	void *ih;
+
 	ic->ic_cells = OF_getpropint(ic->ic_node, "#interrupt-cells", 0);
 	ic->ic_phandle = OF_getpropint(ic->ic_node, "phandle", 0);
 	if (ic->ic_cells == 0 || ic->ic_phandle == 0)
 		return;
+	KASSERT(ic->ic_cells <= MAX_INTERRUPT_CELLS);
 
 	LIST_INSERT_HEAD(&interrupt_controllers, ic, ic_list);
+
+	/* Establish pre-registered interrupt handlers. */
+	LIST_FOREACH(ip, &prereg_interrupts, ip_list) {
+		if (ip->ip_phandle != ic->ic_phandle)
+			continue;
+
+		ih = ic->ic_establish(ic->ic_cookie, ip->ip_cell,
+		    ip->ip_level, ip->ip_func, ip->ip_arg, ip->ip_name);
+		if (ih == NULL)
+			printf("can't establish interrupt %s\n", ip->ip_name);
+	}
 }
 
 void *
@@ -185,6 +280,29 @@ arm_intr_establish_fdt_idx(int node, int idx, int level, int (*func)(void *),
 
 	free(cells, M_TEMP, len);
 	return val;
+}
+
+/*
+ * Some interrupt controllers transparently forward interrupts to
+ * their parent.  Such interrupt controllers can use this function to
+ * delegate the interrupt handler to their parent.
+ */
+void *
+arm_intr_parent_establish_fdt(void *cookie, int *cell, int level,
+    int (*func)(void *), void *arg, char *name)
+{
+	struct interrupt_controller *ic = cookie;
+	uint32_t phandle;
+
+	phandle = arm_intr_get_parent(ic->ic_node);
+	LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
+		if (ic->ic_phandle == phandle)
+			break;
+	}
+	if (ic == NULL)
+		return NULL;
+
+	return ic->ic_establish(ic->ic_cookie, cell, level, func, arg, name);
 }
 
 int

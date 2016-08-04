@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 2016/08/01 14:17:00 patrick Exp $	*/
+/*	$OpenBSD: intr.h,v 1.4 2016/08/04 12:17:36 kettenis Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -156,11 +156,15 @@ struct interrupt_controller {
 	uint32_t ic_cells;
 };
 
+void	 arm_intr_init_fdt(void);
 void	 arm_intr_register_fdt(struct interrupt_controller *);
 void	*arm_intr_establish_fdt(int, int, int (*)(void *),
 	    void *, char *);
 void	*arm_intr_establish_fdt_idx(int, int, int, int (*)(void *),
 	    void *, char *);
+
+void	*arm_intr_parent_establish_fdt(void *, int *, int,
+	    int (*)(void *), void *, char *);
 
 #ifdef DIAGNOSTIC
 /*
