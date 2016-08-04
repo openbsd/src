@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.50 2016/07/22 11:14:41 mpi Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.51 2016/08/04 20:46:24 vgross Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -154,9 +154,7 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 			goto release;
 		}
 
-		error = in6_selectsrc(&laddr, sin6, optp,
-		    in6p->inp_moptions6, &in6p->inp_route6,
-		    &in6p->inp_laddr6, in6p->inp_rtableid);
+		error = in6_pcbselsrc(&laddr, sin6, in6p, optp);
 		if (error)
 			goto release;
 

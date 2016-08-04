@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.78 2016/07/22 11:14:41 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.79 2016/08/04 20:46:24 vgross Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -88,15 +88,18 @@ int in6_selectif(struct sockaddr_in6 *, struct ip6_pktopts *,
 
 /*
  * Return an IPv6 address, which is the most appropriate for a given
- * destination and user specified options.
- * If necessary, this function lookups the routing table and returns
- * an entry to the caller for later use.
+ * destination and pcb. We need the additional opt parameter because
+ * the values set at pcb level can be overriden via cmsg.
  */
 int
-in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
-    struct ip6_pktopts *opts, struct ip6_moptions *mopts,
-    struct route_in6 *ro, struct in6_addr *laddr, u_int rtableid)
+in6_pcbselsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
+    struct inpcb *inp, struct ip6_pktopts *opts)
 {
+	struct ip6_moptions *mopts = inp->inp_moptions6;
+	struct route_in6 *ro = &inp->inp_route6;
+	struct in6_addr *laddr = &inp->inp_laddr6;
+	u_int rtableid = inp->inp_rtableid;
+
 	struct ifnet *ifp = NULL;
 	struct in6_addr *dst;
 	struct in6_ifaddr *ia6 = NULL;
@@ -168,6 +171,25 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 		*in6src = &ia6->ia_addr.sin6_addr;
 		return (0);
 	}
+
+	return in6_selectsrc(in6src, dstsock, mopts, ro, rtableid);
+}
+
+/*
+ * Return an IPv6 address, which is the most appropriate for a given
+ * destination and multicast options.
+ * If necessary, this function lookups the routing table and returns
+ * an entry to the caller for later use.
+ */
+int
+in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
+    struct ip6_moptions *mopts, struct route_in6 *ro, u_int rtableid)
+{
+	struct ifnet *ifp = NULL;
+	struct in6_addr *dst;
+	struct in6_ifaddr *ia6 = NULL;
+
+	dst = &dstsock->sin6_addr;
 
 	/*
 	 * If the destination address is a link-local unicast address or

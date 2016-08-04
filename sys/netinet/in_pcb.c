@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.212 2016/07/22 11:14:41 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.213 2016/08/04 20:46:24 vgross Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -525,8 +525,7 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	if (sin->sin_port == 0)
 		return (EADDRNOTAVAIL);
 
-	error = in_selectsrc(&ina, sin, inp->inp_moptions, &inp->inp_route,
-	    &inp->inp_laddr, inp->inp_rtableid);
+	error = in_pcbselsrc(&ina, sin, inp);
 	if (error)
 		return (error);
 
@@ -876,10 +875,14 @@ in_pcbrtentry(struct inpcb *inp)
  * an entry to the caller for later use.
  */
 int
-in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
-    struct ip_moptions *mopts, struct route *ro, struct in_addr *laddr,
-    u_int rtableid)
+in_pcbselsrc(struct in_addr **insrc, struct sockaddr_in *sin,
+    struct inpcb *inp)
 {
+	struct ip_moptions *mopts = inp->inp_moptions;
+	struct route *ro = &inp->inp_route;
+	struct in_addr *laddr = &inp->inp_laddr;
+	u_int rtableid = inp->inp_rtableid;
+
 	struct sockaddr_in *sin2;
 	struct in_ifaddr *ia = NULL;
 
