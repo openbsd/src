@@ -1,5 +1,5 @@
 initial magic 0x3a7d0cdb
-version       0x00000000
+version       0x00000001
 macros offset 0x00000064
 end offset    0x000001b8
 page count    1

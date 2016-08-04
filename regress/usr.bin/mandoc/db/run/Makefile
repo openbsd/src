@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/07/30 10:56:13 schwarze Exp $
+# $OpenBSD: Makefile,v 1.2 2016/08/04 09:18:53 schwarze Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 #
@@ -100,7 +100,7 @@ empty.db empty.mout empty.merr:
 	@makewhatis man
 	@if man -kM man something > empty.mout 2> empty.merr; \
 		then false; else test $$? -eq 5; fi
-	@mv man/mandoc.new.db empty.db
+	@mv man/mandoc.db empty.db
 	@rmdir man
 
 onepage.db onepage.mout: ${.CURDIR}/../man/empty.1
@@ -110,7 +110,7 @@ onepage.db onepage.mout: ${.CURDIR}/../man/empty.1
 	@cp ${.CURDIR}/../man/empty.1 man/man1/
 	@makewhatis man
 	@man -kM man title > onepage.mout
-	@mv man/mandoc.new.db onepage.db
+	@mv man/mandoc.db onepage.db
 	@rm -rf man
 
 twopages.db twopages.mout: ${.CURDIR}/../man/empty.1
@@ -122,7 +122,7 @@ twopages.db twopages.mout: ${.CURDIR}/../man/empty.1
 	@(echo "> second"; man -wM man second | sed 's#.*/man/##'; \
 	  echo "> empty"; man -wM man empty | sed 's#.*/man/##') \
 	  > twopages.mout
-	@mv man/mandoc.new.db twopages.db
+	@mv man/mandoc.db twopages.db
 	@rm -rf man
 
 threepages.db threepages.mout: ${.CURDIR}/../man/empty.1
@@ -136,7 +136,7 @@ threepages.db threepages.mout: ${.CURDIR}/../man/empty.1
 	  echo "> third"; man -wM man third | sed 's#.*/man/##'; \
 	  echo "> empty"; man -wM man empty | sed 's#.*/man/##') \
 	  > threepages.mout
-	@mv man/mandoc.new.db threepages.db
+	@mv man/mandoc.db threepages.db
 	@rm -rf man
 
 threemacros.db threemacros.mout: ${.CURDIR}/../man/empty.1
@@ -148,7 +148,7 @@ threemacros.db threemacros.mout: ${.CURDIR}/../man/empty.1
 	@makewhatis man
 	@(echo "> Xr=one"; man -kwM man Xr=one | sed 's#.*/man/##'; \
 	  echo "> Xr~^t"; man -kM man -O Xr Xr~^t;) > threemacros.mout
-	@mv man/mandoc.new.db threemacros.db
+	@mv man/mandoc.db threemacros.db
 	@rm -rf man
 
 sortpages.db sortpages.mout: makeinodes ${.CURDIR}/../man/empty.1
@@ -160,7 +160,7 @@ sortpages.db sortpages.mout: makeinodes ${.CURDIR}/../man/empty.1
 	@mv man/man1/2 man/man1/two.1
 	@makewhatis man
 	@man -kM man Nm=empty > sortpages.mout
-	@mv man/mandoc.new.db sortpages.db
+	@mv man/mandoc.db sortpages.db
 	@rm -rf man
 
 sortpages_rev.db sortpages_rev.mout: makeinodes ${.CURDIR}/../man/empty.1
@@ -172,7 +172,7 @@ sortpages_rev.db sortpages_rev.mout: makeinodes ${.CURDIR}/../man/empty.1
 	@mv man/man1/1 man/man1/two.1
 	@makewhatis man
 	@man -kM man Nm=empty > sortpages_rev.mout
-	@mv man/mandoc.new.db sortpages_rev.db
+	@mv man/mandoc.db sortpages_rev.db
 	@rm -rf man
 
 so.db so.mout: makeinodes ${.CURDIR}/../man/empty.1
@@ -184,7 +184,7 @@ so.db so.mout: makeinodes ${.CURDIR}/../man/empty.1
 	@mv man/man1/2 man/man1/two.1
 	@makewhatis man
 	@man -wM man two | sed 's#.*/man/##' > so.mout
-	@mv man/mandoc.new.db so.db
+	@mv man/mandoc.db so.db
 	@rm -rf man
 
 so_rev.db so_rev.mout: makeinodes ${.CURDIR}/../man/empty.1
@@ -196,7 +196,7 @@ so_rev.db so_rev.mout: makeinodes ${.CURDIR}/../man/empty.1
 	@mv man/man1/1 man/man1/two.1
 	@makewhatis man
 	@man -wM man two | sed 's#.*/man/##' > so_rev.mout
-	@mv man/mandoc.new.db so_rev.db
+	@mv man/mandoc.db so_rev.db
 	@rm -rf man
 
 sortnames.db sortnames.mout: ${.CURDIR}/../man/sortnames.1
@@ -206,7 +206,7 @@ sortnames.db sortnames.mout: ${.CURDIR}/../man/sortnames.1
 	@ln man/man1/sortnames.1 man/man1/link.1
 	@makewhatis man
 	@man -kM man Nm=onlysyn > sortnames.mout
-	@mv man/mandoc.new.db sortnames.db
+	@mv man/mandoc.db sortnames.db
 	@rm -rf man
 
 twosect.db twosect.mout: ${.CURDIR}/../man/empty.1
@@ -217,7 +217,7 @@ twosect.db twosect.mout: ${.CURDIR}/../man/empty.1
 	@ln man/man1/empty.1 man/man8/empty.8
 	@makewhatis man
 	@man -kM man -s 1 title > twosect.mout
-	@mv man/mandoc.new.db twosect.db
+	@mv man/mandoc.db twosect.db
 	@rm -rf man
 
 twoarch.db twoarch.mout: ${.CURDIR}/../man/empty.1
@@ -228,7 +228,7 @@ twoarch.db twoarch.mout: ${.CURDIR}/../man/empty.1
 	@ln man/man1/i386/empty.1 man/man1/amd64/empty.1
 	@makewhatis man
 	@man -kM man -S i386 title > twoarch.mout
-	@mv man/mandoc.new.db twoarch.db
+	@mv man/mandoc.db twoarch.db
 	@rm -rf man
 
 fn.db fn.mout: ${.CURDIR}/../man/fn.3
@@ -243,7 +243,7 @@ fn.db fn.mout: ${.CURDIR}/../man/fn.3
 	  echo "> fo_func"; man -kwM man Fn=fo_func | sed 's#.*/man/##'; \
 	  echo "> fo_arg";  man -kwM man Fa=fo_arg  | sed 's#.*/man/##') \
 	  > fn.mout
-	@mv man/mandoc.new.db fn.db
+	@mv man/mandoc.db fn.db
 	@rm -rf man
 
 in.db in.mout: ${.CURDIR}/../man/in.3
@@ -254,7 +254,7 @@ in.db in.mout: ${.CURDIR}/../man/in.3
 	@(echo "> In"; man -kwM man In=in.h | sed 's#.*/man/##'; \
 	  echo "> Fd"; man -kwM man In=fd.h | sed 's#.*/man/##') \
 	  > in.mout
-	@mv man/mandoc.new.db in.db
+	@mv man/mandoc.db in.db
 	@rm -rf man
 
 va.db va.mout: ${.CURDIR}/../man/va.3
@@ -268,7 +268,7 @@ va.db va.mout: ${.CURDIR}/../man/va.3
 	  echo "> t2"; man -kwM man Vt='struct vt_two' | sed 's#.*/man/##'; \
 	  echo "> a2"; man -kwM man Va='int va_two'  | sed 's#.*/man/##') \
 	  > va.mout
-	@mv man/mandoc.new.db va.db
+	@mv man/mandoc.db va.db
 	@rm -rf man
 
 sh.db sh.mout: ${.CURDIR}/../man/sh.1
@@ -279,7 +279,7 @@ sh.db sh.mout: ${.CURDIR}/../man/sh.1
 	@(echo "> Sh"; man -kwM man Sh=sh_title | sed 's#.*/man/##'; \
 	  echo "> Ss"; man -kwM man Ss=ss_title | sed 's#.*/man/##') \
 	  > sh.mout
-	@mv man/mandoc.new.db sh.db
+	@mv man/mandoc.db sh.db
 	@rm -rf man
 
 xr.db xr.mout: ${.CURDIR}/../man/xr.1
@@ -290,7 +290,7 @@ xr.db xr.mout: ${.CURDIR}/../man/xr.1
 	@(echo "> bare"; man -kwM man 'Xr~^bare$$' | sed 's#.*/man/##'; \
 	  echo "> page"; man -kwM man 'Xr=page(1)' | sed 's#.*/man/##') \
 	  > xr.mout
-	@mv man/mandoc.new.db xr.db
+	@mv man/mandoc.db xr.db
 	@rm -rf man
 
 all.mout: ${OUT_TESTS:C/$/.mout/}

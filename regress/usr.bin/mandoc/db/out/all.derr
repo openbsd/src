@@ -57,7 +57,7 @@ dbm_dump: dbm_map(badimagic.db): Bad initial magic 3a7d0cdc (expected 3a7d0cdb)
 dbm_dump: badimagic.db: Inappropriate file type or format
 
 >>> badversion
-dbm_dump: dbm_map(badversion.db): Bad version number 1 (expected 0)
+dbm_dump: dbm_map(badversion.db): Bad version number 2 (expected 1)
 dbm_dump: badversion.db: Inappropriate file type or format
 
 >>> badmacrosp
