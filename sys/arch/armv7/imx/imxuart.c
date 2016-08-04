@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.10 2016/07/27 11:45:02 patrick Exp $ */
+/* $OpenBSD: imxuart.c,v 1.11 2016/08/04 15:52:52 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -164,12 +164,12 @@ imxuart_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	int maj;
 
-	if (faa->fa_nreg < 1 || faa->fa_nintr < 3)
+	if (faa->fa_nreg < 1)
 		return;
 
 	imxiomuxc_pinctrlbyname(faa->fa_node, "default");
 
-	sc->sc_irq = arm_intr_establish(faa->fa_intr[1], IPL_TTY,
+	sc->sc_irq = arm_intr_establish_fdt(faa->fa_node, IPL_TTY,
 	    imxuart_intr, sc, sc->sc_dev.dv_xname);
 
 	sc->sc_iot = faa->fa_iot;

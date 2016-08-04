@@ -1,4 +1,4 @@
-/* $OpenBSD: imxahci.c,v 1.6 2016/07/27 11:45:02 patrick Exp $ */
+/* $OpenBSD: imxahci.c,v 1.7 2016/08/04 15:52:52 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -115,7 +115,7 @@ imxahci_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	uint32_t timeout = 0x100000;
 
-	if (faa->fa_nreg < 1 || faa->fa_nintr < 3)
+	if (faa->fa_nreg < 1)
 		return;
 
 	sc->sc_iot = faa->fa_iot;
@@ -126,7 +126,7 @@ imxahci_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("imxahci_attach: bus_space_map failed!");
 
-	sc->sc_ih = arm_intr_establish(faa->fa_intr[1], IPL_BIO,
+	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_BIO,
 	    ahci_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");

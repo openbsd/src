@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.9 2016/01/31 00:14:50 jsg Exp $ */
+/* $OpenBSD: ampintc.c,v 1.10 2016/08/04 15:52:52 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -26,20 +26,15 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/evcount.h>
-#include <arm/cpufunc.h>
+
 #include <machine/bus.h>
+#include <machine/fdt.h>
+
+#include <arm/cpufunc.h>
 #include <arm/cortex/cortex.h>
 
-/* offset from periphbase */
-#define ICP_ADDR	0x100
-#define ICP_SIZE	0x100
-#define ICD_ADDR	0x1000
-#define ICD_SIZE	0x1000
-
-#define ICD_A7_A15_ADDR	0x1000
-#define ICD_A7_A15_SIZE	0x1000
-#define ICP_A7_A15_ADDR	0x2000
-#define ICP_A7_A15_SIZE	0x1000
+#include <dev/ofw/fdt.h>
+#include <dev/ofw/openfirm.h>
 
 /* registers */
 #define	ICD_DCR			0x000
@@ -107,8 +102,6 @@
 #define ICD_COMP_ID_2			0xFEC
 #define ICD_COMP_ID_3			0xFEC
 
-#define ICD_SIZE 			0x1000
-
 
 #define ICPICR				0x00
 #define ICPIPMR				0x04
@@ -125,13 +118,10 @@
 #define ICPPRP				0x14
 #define ICPHPIR				0x18
 #define ICPIIR				0xFC
-#define ICP_SIZE			0x100
+
 /*
  * what about periph_id and component_id 
  */
-
-#define AMPAMPINTC_SIZE			0x1000
-
 
 #define IRQ_ENABLE	1
 #define IRQ_DISABLE	0
@@ -143,6 +133,7 @@ struct ampintc_softc {
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_d_ioh, sc_p_ioh;
 	struct evcount		 sc_spur;
+	struct interrupt_controller sc_ic;
 };
 struct ampintc_softc *ampintc;
 
@@ -176,6 +167,8 @@ void		*ampintc_intr_establish(int, int, int (*)(void *), void *,
 		    char *);
 void		*ampintc_intr_establish_ext(int, int, int (*)(void *), void *,
 		    char *);
+void		*ampintc_intr_establish_fdt(void *, int *, int,
+		    int (*)(void *), void *, char *);
 void		 ampintc_intr_disestablish(void *);
 void		 ampintc_irq_handler(void *);
 const char	*ampintc_intr_string(void *);
@@ -194,92 +187,81 @@ struct cfdriver ampintc_cd = {
 	NULL, "ampintc", DV_DULL
 };
 
+static char *ampintc_compatibles[] = {
+	"arm,cortex-a7-gic",
+	"arm,cortex-a9-gic",
+	"arm,cortex-a15-gic",
+	NULL
+};
+
 int
 ampintc_match(struct device *parent, void *cfdata, void *aux)
 {
-	return (1);
+	struct fdt_attach_args *faa = aux;
+	int i;
+
+	for (i = 0; ampintc_compatibles[i]; i++)
+		if (OF_is_compatible(faa->fa_node, ampintc_compatibles[i]))
+			return (1);
+
+	return (0);
 }
 
 paddr_t gic_dist_base, gic_cpu_base, gic_dist_size, gic_cpu_size;
 
 void
-ampintc_attach(struct device *parent, struct device *self, void *args)
+ampintc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ampintc_softc *sc = (struct ampintc_softc *)self;
-	struct cortex_attach_args *ia = args;
+	struct fdt_attach_args *faa = aux;
 	int i, nintr;
-	bus_space_tag_t		iot;
-	bus_space_handle_t	d_ioh, p_ioh;
-	uint32_t		icp, icpsize, icd, icdsize;
 
 	ampintc = sc;
 
 	arm_init_smask();
 
-	iot = ia->ca_iot;
-	icp = ia->ca_periphbase + ICP_ADDR;
-	icpsize = ICP_SIZE;
-	icd = ia->ca_periphbase + ICD_ADDR;
-	icdsize = ICD_SIZE;
+	sc->sc_iot = faa->fa_iot;
 
-	if ((cputype & CPU_ID_CORTEX_A7_MASK) == CPU_ID_CORTEX_A7 ||
-	    (cputype & CPU_ID_CORTEX_A15_MASK) == CPU_ID_CORTEX_A15 ||
-	    (cputype & CPU_ID_CORTEX_A17_MASK) == CPU_ID_CORTEX_A17) {
-		icp = ia->ca_periphbase + ICP_A7_A15_ADDR;
-		icpsize = ICP_A7_A15_SIZE;
-		icd = ia->ca_periphbase + ICD_A7_A15_ADDR;
-		icdsize = ICD_A7_A15_SIZE;
-	}
+	/* First row: ICD */
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_d_ioh))
+		panic("%s: ICD bus_space_map failed!", __func__);
 
-	/* exynos gic isn't at the expected offsets from periphbase */
-	if (gic_cpu_base)
-		icp = gic_cpu_base;
-	if (gic_cpu_size)
-		icpsize = gic_cpu_size;
-	if (gic_dist_base)
-		icd = gic_dist_base;
-	if (gic_dist_size)
-		icdsize = gic_dist_size;
-
-	if (bus_space_map(iot, icp, icpsize, 0, &p_ioh))
-		panic("ampintc_attach: ICP bus_space_map failed!");
-
-	if (bus_space_map(iot, icd, icdsize, 0, &d_ioh))
-		panic("ampintc_attach: ICD bus_space_map failed!");
-
-	sc->sc_iot = iot;
-	sc->sc_d_ioh = d_ioh;
-	sc->sc_p_ioh = p_ioh;
+	/* Second row: ICP */
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[1].addr,
+	    faa->fa_reg[1].size, 0, &sc->sc_p_ioh))
+		panic("%s: ICP bus_space_map failed!", __func__);
 
 	evcount_attach(&sc->sc_spur, "irq1023/spur", NULL);
 
-	nintr = 32 * (bus_space_read_4(iot, d_ioh, ICD_ICTR) & ICD_ICTR_ITL_M);
+	nintr = 32 * (bus_space_read_4(sc->sc_iot, sc->sc_d_ioh,
+	    ICD_ICTR) & ICD_ICTR_ITL_M);
 	nintr += 32; /* ICD_ICTR + 1, irq 0-31 is SGI, 32+ is PPI */
 	sc->sc_nintr = nintr;
 	printf(" nirq %d\n", nintr);
 
-
 	/* Disable all interrupts, clear all pending */
 	for (i = 0; i < nintr/32; i++) {
-		bus_space_write_4(iot, d_ioh, ICD_ICERn(i*32), ~0);
-		bus_space_write_4(iot, d_ioh, ICD_ICPRn(i*32), ~0);
+		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh,
+		    ICD_ICERn(i*32), ~0);
+		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh,
+		    ICD_ICPRn(i*32), ~0);
 	}
 	for (i = 0; i < nintr; i++) {
 		/* lowest priority ?? */
-		bus_space_write_1(iot, d_ioh, ICD_IPRn(i), 0xff);
+		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPRn(i), 0xff);
 		/* target no cpus */
-		bus_space_write_1(iot, d_ioh, ICD_IPTRn(i), 0);
+		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(i), 0);
 	}
 	for (i = 2; i < nintr/16; i++) {
 		/* irq 32 - N */
-		bus_space_write_4(iot, d_ioh, ICD_ICRn(i*16), 0);
+		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_ICRn(i*16), 0);
 	}
 
 	/* software reset of the part? */
 	/* set protection bit (kernel only)? */
 
 	/* XXX - check power saving bit */
-
 
 	sc->sc_ampintc_handler = mallocarray(nintr,
 	    sizeof(*sc->sc_ampintc_handler), M_DEVBUF, M_ZERO | M_NOWAIT);
@@ -296,9 +278,14 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 	    ampintc_intr_disestablish, ampintc_intr_string, ampintc_irq_handler);
 
 	/* enable interrupts */
-	bus_space_write_4(iot, d_ioh, ICD_DCR, 3);
-	bus_space_write_4(iot, p_ioh, ICPICR, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_DCR, 3);
+	bus_space_write_4(sc->sc_iot, sc->sc_p_ioh, ICPICR, 1);
 	enable_interrupts(PSR_I);
+
+	sc->sc_ic.ic_node = faa->fa_node;
+	sc->sc_ic.ic_cookie = self;
+	sc->sc_ic.ic_establish = ampintc_intr_establish_fdt;
+	arm_intr_register_fdt(&sc->sc_ic);
 }
 
 void
@@ -530,6 +517,27 @@ ampintc_intr_establish_ext(int irqno, int level, int (*func)(void *),
     void *arg, char *name)
 {
 	return ampintc_intr_establish(irqno+32, level, func, arg, name);
+}
+
+void *
+ampintc_intr_establish_fdt(void *cookie, int *cell, int level,
+    int (*func)(void *), void *arg, char *name)
+{
+	struct ampintc_softc	*sc = (struct ampintc_softc *)cookie;
+	int			 irq;
+
+	/* 2nd cell contains the interrupt number */
+	irq = cell[1];
+
+	/* 1st cell contains type: 0 SPI (32-X), 1 PPI (16-31) */
+	if (cell[0] == 0)
+		irq += 32;
+	else if (cell[0] == 1)
+		irq += 16;
+	else
+		panic("%s: bogus interrupt type", sc->sc_dev.dv_xname);
+
+	return ampintc_intr_establish(irq, level, func, arg, name);
 }
 
 void *

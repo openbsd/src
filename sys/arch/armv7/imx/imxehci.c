@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.14 2016/07/27 11:45:02 patrick Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.15 2016/08/04 15:52:52 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -115,7 +115,7 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t vbus;
 	int node;
 
-	if (faa->fa_nreg < 1 || faa->fa_nintr < 3)
+	if (faa->fa_nreg < 1)
 		return;
 
 	if (OF_getpropintarray(faa->fa_node, "fsl,usbphy",
@@ -255,7 +255,7 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	EOWRITE4(&sc->sc, EHCI_PORTSC(1),
 	    EOREAD4(&sc->sc, EHCI_PORTSC(1)) & ~EHCI_PS_PTS_UTMI_MASK);
 
-	sc->sc_ih = arm_intr_establish(faa->fa_intr[1], IPL_USB,
+	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_USB,
 	    ehci_intr, &sc->sc, devname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");

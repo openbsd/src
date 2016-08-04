@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.12 2016/08/04 14:14:05 kettenis Exp $ */
+/* $OpenBSD: if_fec.c,v 1.13 2016/08/04 15:52:52 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -295,16 +295,11 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *child;
 	struct ifnet *ifp;
 	int tsize, rsize, tbsize, rbsize, s;
-	uint32_t intr[8];
 	uint32_t phy_reset_gpio[3];
 	uint32_t phy_reset_duration;
 
 	if (faa->fa_nreg < 1)
 		return;
-
-	if (OF_getpropintarray(faa->fa_node, "interrupts-extended",
-	    intr, sizeof(intr)) < sizeof(intr))
-		intr[2] = 0x76;
 
 	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;
@@ -356,7 +351,7 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	HWRITE4(sc, ENET_EIMR, 0);
 	HWRITE4(sc, ENET_EIR, 0xffffffff);
 
-	sc->sc_ih = arm_intr_establish(intr[2], IPL_NET,
+	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_NET,
 	    fec_intr, sc, sc->sc_dev.dv_xname);
 
 	tsize = ENET_MAX_TXD * sizeof(struct fec_buf_desc);

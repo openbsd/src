@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.26 2016/07/27 11:45:02 patrick Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.27 2016/08/04 15:52:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -297,7 +297,7 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t caps;
 	uint32_t width;
 
-	if (faa->fa_nreg < 1 || faa->fa_nintr < 3)
+	if (faa->fa_nreg < 1)
 		return;
 
 	sc->unit = (faa->fa_reg[0].addr & 0xc000) >> 14;
@@ -312,7 +312,7 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 
 	imxiomuxc_pinctrlbyname(faa->fa_node, "default");
 
-	sc->sc_ih = arm_intr_establish(faa->fa_intr[1], IPL_SDMMC,
+	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_SDMMC,
 	   imxesdhc_intr, sc, sc->sc_dev.dv_xname);
 
 	OF_getpropintarray(sc->sc_node, "cd-gpios", sc->sc_gpio,

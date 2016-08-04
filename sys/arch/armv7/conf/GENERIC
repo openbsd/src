@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.31 2016/07/12 19:17:49 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.32 2016/08/04 15:52:52 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -33,7 +33,7 @@ cpu0		at mainbus?
 
 # Cortex-A9
 cortex0		at mainbus?
-ampintc*	at cortex?
+ampintc*	at fdt?
 amptimer*	at cortex?
 agtimer*	at cortex?
 armliicc*	at cortex?
@@ -42,6 +42,7 @@ armliicc*	at cortex?
 imx0		at mainbus?		# iMX SoC
 imxccm*		at imx?			# clock control module
 imxiomuxc*	at imx?			# iomux controller
+imxgpc*		at fdt?			# power controller
 imxdog*		at fdt?			# watchdog timer
 imxocotp*	at imx?			# on-chip otp controller
 imxgpio*	at fdt?			# user-visible GPIO pins?
