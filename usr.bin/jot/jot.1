@@ -1,4 +1,4 @@
-.\"	$OpenBSD: jot.1,v 1.21 2016/07/17 04:15:25 tb Exp $
+.\"	$OpenBSD: jot.1,v 1.22 2016/08/05 13:49:19 tb Exp $
 .\"	$NetBSD: jot.1,v 1.2 1994/11/14 20:27:36 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)jot.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 17 2016 $
+.Dd $Mdocdate: August 5 2016 $
 .Dt JOT 1
 .Os
 .Sh NAME
@@ -104,11 +104,10 @@ in which case the data is inserted rather than appended.
 The last four arguments indicate, respectively,
 the maximum number of data, the lower bound, the upper bound,
 and the step size.
-While at least one of them must appear,
-any of the other three may be omitted, and
+Any of these may be omitted, and
 will be considered as such if given as
 .Ql - .
-Any three of these arguments determines the fourth.
+Any three of these arguments determine the fourth.
 If four are specified and the given and computed values of
 .Ar reps
 conflict, the lower value is used.
