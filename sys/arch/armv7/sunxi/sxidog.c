@@ -1,4 +1,4 @@
-/* $OpenBSD: sxidog.c,v 1.7 2016/02/02 21:40:47 jsg Exp $ */
+/* $OpenBSD: sxidog.c,v 1.8 2016/08/05 21:45:37 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -26,9 +26,13 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
 #include <armv7/sunxi/sunxireg.h>
 #include <armv7/armv7/armv7var.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 /* registers */
 #define WDOG_CR			0x00
@@ -62,6 +66,7 @@ struct sxidog_softc {
 
 struct sxidog_softc *sxidog_sc = NULL;	/* for sxidog_reset() */
 
+int sxidog_match(struct device *, void *, void *);
 void sxidog_attach(struct device *, struct device *, void *);
 int sxidog_activate(struct device *, int);
 int sxidog_callback(void *, int);
@@ -71,7 +76,7 @@ int sxidog_intr(void *);
 void sxidog_reset(void);
 
 struct cfattach	sxidog_ca = {
-	sizeof (struct sxidog_softc), NULL, sxidog_attach,
+	sizeof (struct sxidog_softc), sxidog_match, sxidog_attach,
 	NULL, sxidog_activate
 };
 
@@ -79,15 +84,26 @@ struct cfdriver sxidog_cd = {
 	NULL, "sxidog", DV_DULL
 };
 
-void
-sxidog_attach(struct device *parent, struct device *self, void *args)
+int
+sxidog_match(struct device *parent, void *match, void *aux)
 {
-	struct armv7_attach_args *aa = args;
-	struct sxidog_softc *sc = (struct sxidog_softc *)self;
+	struct fdt_attach_args *faa = aux;
 
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
+	return OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-wdt");
+}
+
+void
+sxidog_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct sxidog_softc *sc = (struct sxidog_softc *)self;
+	struct fdt_attach_args *faa = aux;
+
+	if (faa->fa_nreg < 1)
+		return;
+
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("sxidog_attach: bus_space_map failed!");
 
 #ifdef DEBUG
@@ -95,7 +111,7 @@ sxidog_attach(struct device *parent, struct device *self, void *args)
 	    SXIREAD4(sc, WDOG_MR));
 #endif
 #if 0
-	(void)intc_intr_establish(aa->aa_dev->irq[0], IPL_HIGH, /* XXX */
+	(void)intc_intr_establish_fdt(faa->fa_node, IPL_HIGH, /* XXX */
 	    sxidog_intr, sc, sc->sc_dev.dv_xname);
 #endif
 	sxidog_sc = sc;

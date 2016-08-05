@@ -1,4 +1,4 @@
-/* $OpenBSD: sunxi.c,v 1.16 2016/08/05 21:39:02 kettenis Exp $ */
+/* $OpenBSD: sunxi.c,v 1.17 2016/08/05 21:45:37 kettenis Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -45,7 +45,6 @@ struct board_dev sun4i_devs[] = {
 	{ "sxitimer",	0 },
 	{ "sxitimer",	1 },
 	{ "sxitimer",	2 },
-	{ "sxidog",	0 },
 	{ NULL,		0 }
 };
 
@@ -55,14 +54,12 @@ struct board_dev sun5i_devs[] = {
 	{ "sxitimer",	0 },
 	{ "sxitimer",	1 },
 	{ "sxitimer",	2 },
-	{ "sxidog",	0 },
 	{ NULL,		0 }
 };
 
 struct board_dev sun7i_devs[] = {
 	{ "sxipio",	0 },
 	{ "sxiccmu",	0 },
-	{ "sxidog",	0 },
 	{ NULL,		0 }
 };
 

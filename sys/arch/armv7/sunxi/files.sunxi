@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sunxi,v 1.9 2016/08/05 21:29:23 kettenis Exp $
+#	$OpenBSD: files.sunxi,v 1.10 2016/08/05 21:45:37 kettenis Exp $
 
 define	sunxi {}
 device	sunxi: sunxi
@@ -25,7 +25,7 @@ attach	sxitimer at sunxi
 file	arch/armv7/sunxi/sxitimer.c		sxitimer
 
 device	sxidog
-attach	sxidog at sunxi
+attach	sxidog at fdt
 file	arch/armv7/sunxi/sxidog.c		sxidog
 
 device	sxirtc

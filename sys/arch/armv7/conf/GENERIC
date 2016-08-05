@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.35 2016/08/05 21:29:23 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.36 2016/08/05 21:45:37 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -90,7 +90,7 @@ sxipio*		at sunxi?		# GPIO pins for leds & PHYs
 gpio*		at sxipio?
 sxiccmu*	at sunxi?		# Clock Control Module/Unit
 sxitimer*	at sunxi?
-sxidog*		at sunxi?		# watchdog timer
+sxidog*		at fdt?			# watchdog timer
 sxirtc*		at fdt?			# Real Time Clock
 sxiuart*	at fdt?			# onboard UARTs
 sxie*		at fdt?
