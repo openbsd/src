@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route6d.8,v 1.24 2015/09/10 18:15:10 schwarze Exp $
+.\"	$OpenBSD: route6d.8,v 1.25 2016/08/05 11:32:28 jca Exp $
 .\"	$KAME: route6d.8,v 1.11 2002/06/02 15:00:30 itojun Exp $
 .\"
 .\" Copyright (c) 1996 WIDE Project. All rights reserved.
@@ -15,7 +15,7 @@
 .\" LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 .\" A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: August 5 2016 $
 .Dt ROUTE6D 8
 .Os
 .Sh NAME
@@ -36,7 +36,6 @@
 .Sm off
 .Op Fl O No \~ Ar prefix No / Ar preflen , Ar if1 Op , Ar if2 , ...
 .Sm on
-.Op Fl R Ar routelog
 .Sm off
 .Op Fl T No \~ Ar if1 Op , Ar if2 , ...
 .Sm on
@@ -172,11 +171,6 @@ Makes
 .Nm
 use listen-only mode.
 No advertisement is sent.
-.It Fl R Ar routelog
-This option makes
-.Nm
-log route changes (add/delete) to the file
-.Ar routelog .
 .It Fl S
 This option is the same as
 .Fl s ,
@@ -216,19 +210,7 @@ Upon receipt of signal
 or
 .Dv SIGUSR1 ,
 .Nm
-will dump the current internal state into
-.Pa /var/run/route6d_dump .
-.Sh FILES
-.Bl -tag -width /var/run/route6d_dump -compact
-.It Pa /var/run/route6d_dump
-Contains the internal state dumps created if
-.Nm
-receives a
-.Dv SIGINT
-or
-.Dv SIGUSR1
-signal.
-.El
+will log a dump of the current internal state.
 .Sh SEE ALSO
 .Xr ripd 8
 .Sh STANDARDS
@@ -244,17 +226,6 @@ signal.
 uses the advanced IPv6 API,
 defined in RFC 3542,
 for communicating with peers using link-local addresses.
-.Pp
-Internally
-.Nm
-embeds interface identifiers into bits 32 to 63 of link-local addresses
-.Po
-.Li fe80::xx
-and
-.Li ff02::xx
-.Pc
-so they will be visible in the internal state dump file
-.Pq Pa /var/run/route6d_dump .
 .Pp
 Routing table manipulation differs from IPv6 implementation to implementation.
 Currently
