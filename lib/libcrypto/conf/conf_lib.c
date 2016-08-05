@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_lib.c,v 1.13 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: conf_lib.c,v 1.14 2016/08/05 17:25:51 deraadt Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2000.
  */
@@ -321,7 +321,8 @@ NCONF_get_string(const CONF *conf, const char *group, const char *name)
 		return NULL;
 	}
 	CONFerr(CONF_F_NCONF_GET_STRING, CONF_R_NO_VALUE);
-	ERR_asprintf_error_data("group=%s name=%s", group, name);
+	ERR_asprintf_error_data("group=%s name=%s",
+	    group ? group : "", name);
 	return NULL;
 }
 
