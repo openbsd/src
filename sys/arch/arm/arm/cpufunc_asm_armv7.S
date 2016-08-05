@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm_armv7.S,v 1.11 2016/08/03 07:05:05 kettenis Exp $ */
+/* $OpenBSD: cpufunc_asm_armv7.S,v 1.12 2016/08/05 19:56:52 kettenis Exp $ */
 /*
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
  *
@@ -161,7 +161,7 @@ ENTRY(armv7_idcache_wbinv_range)
 1:
 	mcr	CP15_DCCMVAU(r0)	/* Clean D cache SE with VA to PoU */
 	mcr	CP15_ICIMVAU(r0)	/* Invalidate I cache SE with VA */
-	mcr	CP15_CNTPCT(r0, c7), 1	/* Purge D cache SE with VA */
+	mcr	CP15_DCCIMVAC(r0)	/* Purge D cache SE with VA */
 	add	r0, r0, ip
 	subs	r1, r1, ip
 	bhi	1b
@@ -183,7 +183,7 @@ ENTRY(armv7_dcache_wbinv_range)
 1:
 	mcr	CP15_DCCMVAU(r0)	/* Clean D cache SE with VA to PoU */
 	mcr	CP15_ICIMVAU(r0)	/* Invalidate I cache SE with VA */
-	mcr	CP15_CNTPCT(r0, c7), 1	/* Purge D cache SE with VA */
+	mcr	CP15_DCCIMVAC(r0)	/* Purge D cache SE with VA */
 	add	r0, r0, ip
 	subs	r1, r1, ip
 	bhi	1b
