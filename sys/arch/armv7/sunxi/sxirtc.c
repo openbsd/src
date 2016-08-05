@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirtc.c,v 1.6 2016/02/01 23:36:57 jsg Exp $	*/
+/*	$OpenBSD: sxirtc.c,v 1.7 2016/08/05 21:29:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2013 Artturi Alm
@@ -24,9 +24,13 @@
 #include <dev/clock_subr.h>
 
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 #define	SXIRTC_YYMMDD	0x04
 #define	SXIRTC_HHMMSS	0x08
@@ -48,10 +52,11 @@ struct sxirtc_softc {
 	uint32_t		leap_shift;
 };
 
+int	sxirtc_match(struct device *, void *, void *);
 void	sxirtc_attach(struct device *, struct device *, void *);
 
 struct cfattach sxirtc_ca = {
-	sizeof(struct device), NULL, sxirtc_attach
+	sizeof(struct device), sxirtc_match, sxirtc_attach
 };
 
 struct cfdriver sxirtc_cd = {
@@ -61,23 +66,35 @@ struct cfdriver sxirtc_cd = {
 int	sxirtc_gettime(todr_chip_handle_t, struct timeval *);
 int	sxirtc_settime(todr_chip_handle_t, struct timeval *);
 
+int
+sxirtc_match(struct device *parent, void *match, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
+
+	return (OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-rtc") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-rtc"));
+}
+
 void
-sxirtc_attach(struct device *parent, struct device *self, void *args)
+sxirtc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sxirtc_softc *sc = (struct sxirtc_softc *)self;
-	struct armv7_attach_args *aa = args;
+	struct fdt_attach_args *faa = aux;
 	todr_chip_handle_t handle;
+
+	if (faa->fa_nreg < 1)
+		return;
 
 	handle = malloc(sizeof(struct todr_chip_handle), M_DEVBUF, M_NOWAIT);
 	if (handle == NULL)
 		panic("sxirtc_attach: couldn't allocate todr_handle");
 
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("sxirtc_attach: bus_space_map failed!");
 
-	if (board_id == BOARD_ID_SUN7I_A20) {
+	if (OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-rtc")) {
 		sc->base_year = 1970;
 		sc->year_mask = 0xff;
 		sc->leap_shift = 24;

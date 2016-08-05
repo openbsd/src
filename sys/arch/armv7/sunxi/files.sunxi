@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sunxi,v 1.8 2016/08/05 20:38:17 kettenis Exp $
+#	$OpenBSD: files.sunxi,v 1.9 2016/08/05 21:29:23 kettenis Exp $
 
 define	sunxi {}
 device	sunxi: sunxi
@@ -29,7 +29,7 @@ attach	sxidog at sunxi
 file	arch/armv7/sunxi/sxidog.c		sxidog
 
 device	sxirtc
-attach	sxirtc at sunxi
+attach	sxirtc at fdt
 file	arch/armv7/sunxi/sxirtc.c		sxirtc
 
 device	sxiahci: scsi, atascsi
