@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.75 2016/08/02 16:17:54 jca Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.76 2016/08/05 11:44:10 jca Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -110,8 +110,6 @@
 /* packing rule for routing socket */
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-/* XXX remove */
-#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 static pid_t pid;
 static int nflag;
