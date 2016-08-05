@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.174 2016/08/01 20:46:33 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.175 2016/08/05 17:20:30 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -1662,7 +1662,7 @@ parse_mdoc_Nm(struct mpage *mpage, const struct roff_meta *meta,
 	if ( ! (mpage->name_head_done ||
 	    n->child == NULL || n->child->string == NULL ||
 	    strcasecmp(n->child->string, meta->title))) {
-		putkey(mpage, n->child->string, ROFFT_HEAD);
+		putkey(mpage, n->child->string, NAME_HEAD);
 		mpage->name_head_done = 1;
 	}
 	return 0;
