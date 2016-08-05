@@ -1,7 +1,7 @@
 /*-
  * Copyright (c) 2009-2012 Microsoft Corp.
  * Copyright (c) 2010-2012 Citrix Inc.
- * Copyright (c) 2012 NetApp Inc. 
+ * Copyright (c) 2012 NetApp Inc.
  * Copyright (c) 2016 Mike Belopuhov <mike@esdenera.com>
  * All rights reserved.
  *
@@ -1277,7 +1277,7 @@ hvn_rndis_status(struct hvn_softc *sc, caddr_t buf, uint32_t len)
 		break;
 	/* Ignore these */
 	case RNDIS_STATUS_OFFLOAD_CURRENT_CONFIG:
-		break;
+		return;
 	default:
 		DPRINTF("%s: unhandled status %#x\n", sc->sc_dev.dv_xname, sta);
 		return;
