@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.29 2016/08/05 13:21:31 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.30 2016/08/05 13:33:21 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -394,8 +394,11 @@ getformat(void)
 	if (boring)				/* no need to bother */
 		return;
 	for (p = format; *p != '\0'; p++)	/* look for '%' */
-		if (*p == '%' && *(p+1) != '%')	/* leave %% alone */
-			break;
+		if (*p == '%') {
+			if (*(p+1) != '%')
+				break;
+			p++;			/* leave %% alone */
+		}
 	sz = sizeof(format) - strlen(format) - 1;
 	if (*p == '\0' && !chardata) {
 		int n;
