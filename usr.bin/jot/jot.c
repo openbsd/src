@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.28 2016/07/17 04:04:46 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.29 2016/08/05 13:21:31 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -54,10 +54,10 @@
 
 #define	is_default(s)	(strcmp((s), "-") == 0)
 
-static double	begin;
-static double	ender;
-static double	s;
-static long	reps;
+static double	begin = BEGIN_DEF;
+static double	ender = ENDER_DEF;
+static double	s = STEP_DEF;
+static long	reps = REPS_DEF;
 static bool	randomize;
 static bool	infinity;
 static bool	boring;
