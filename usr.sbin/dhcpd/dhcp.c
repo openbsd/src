@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.45 2016/02/06 23:50:10 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.46 2016/08/05 14:02:23 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -62,10 +62,16 @@ int outstanding_pings;
 static char dhcp_message[256];
 
 void
-dhcp(struct packet *packet)
+dhcp(struct packet *packet, int is_udpsock)
 {
 	if (!locate_network(packet) && packet->packet_type != DHCPREQUEST)
 		return;
+
+	if (is_udpsock && packet->packet_type != DHCPINFORM) {
+		note("Unable to handle a DHCP message type=%d on UDP "
+		    "socket", packet->packet_type);
+		return;
+	}
 
 	switch (packet->packet_type) {
 	case DHCPDISCOVER:
