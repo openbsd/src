@@ -1226,7 +1226,7 @@ hv_ring_put(struct hv_ring_data *wrd, uint8_t *data, uint32_t datalen)
 	memcpy(&wrd->rd_ring->buffer[wrd->rd_prod], data, left);
 	memcpy(&wrd->rd_ring->buffer[0], data + left, datalen - left);
 	wrd->rd_prod += datalen;
-	wrd->rd_prod &= wrd->rd_data_size - 1;
+	wrd->rd_prod %= wrd->rd_data_size;
 }
 
 static inline void
@@ -1239,7 +1239,7 @@ hv_ring_get(struct hv_ring_data *rrd, uint8_t *data, uint32_t datalen,
 	memcpy(data + left, &rrd->rd_ring->buffer[0], datalen - left);
 	if (!peek) {
 		rrd->rd_cons += datalen;
-		rrd->rd_cons &= rrd->rd_data_size - 1;
+		rrd->rd_cons %= rrd->rd_data_size;
 	}
 }
 
@@ -1418,7 +1418,7 @@ hv_ring_read(struct hv_ring_data *rrd, void *data, uint32_t datalen,
 
 	if (offset) {
 		rrd->rd_cons += offset;
-		rrd->rd_cons &= rrd->rd_data_size - 1;
+		rrd->rd_cons %= rrd->rd_data_size;
 	}
 
 	hv_ring_get(rrd, (uint8_t *)data, datalen, 0);
