@@ -1,4 +1,4 @@
-# $OpenBSD: regress.sh,v 1.1 2016/07/30 13:55:54 tb Exp $
+# $OpenBSD: regress.sh,v 1.2 2016/08/05 13:24:04 tb Exp $
 # $FreeBSD: head/usr.bin/jot/tests/regress.sh 208728 2010-06-02 07:47:29Z brian $
 
 JOT=${JOT-jot}
@@ -23,7 +23,7 @@ REGRESSION_TEST([[dhdd]], [[${JOT} - 20 - -]])
 REGRESSION_TEST([[ddhh]], [[${JOT} - - 120 2]])
 REGRESSION_TEST([[ddhd]], [[${JOT} - - 120 -]])
 REGRESSION_TEST([[dddh]], [[${JOT} - - - 2]])
-#REGRESSION_TEST([[dddd]], [[${JOT} - - - -]])
+REGRESSION_TEST([[dddd]], [[${JOT} - - - -]])
 REGRESSION_TEST([[hhhh2]], [[${JOT} 30 20 160 2]])
 REGRESSION_TEST([[hhhd2]], [[${JOT} 30 20 160 -]])
 REGRESSION_TEST([[hhdh2]], [[${JOT} 30 20 - 2]])
