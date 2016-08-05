@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.76 2016/08/05 11:44:10 jca Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.77 2016/08/05 11:53:23 jca Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -932,8 +932,7 @@ ifinfo(char *ifname, int argc, char **argv)
 		err(1, "ioctl(SIOCGIFINFO_IN6)");
 		/* NOTREACHED */
 	}
-#define ND nd.ndi
-	newflags = ND.flags;
+	newflags = nd.ndi.flags;
 	for (i = 0; i < argc; i++) {
 		int clear = 0;
 		char *cp = argv[i];
@@ -955,7 +954,7 @@ ifinfo(char *ifname, int argc, char **argv)
 		SETFLAG("nud", ND6_IFF_PERFORMNUD);
 		SETFLAG("accept_rtadv", ND6_IFF_ACCEPT_RTADV);
 
-		ND.flags = newflags;
+		nd.ndi.flags = newflags;
 		if (ioctl(s, SIOCSIFINFO_FLAGS, (caddr_t)&nd) < 0) {
 			err(1, "ioctl(SIOCSIFINFO_FLAGS)");
 			/* NOTREACHED */
@@ -963,24 +962,24 @@ ifinfo(char *ifname, int argc, char **argv)
 #undef SETFLAG
 	}
 
-	if (!ND.initialized) {
+	if (!nd.ndi.initialized) {
 		errx(1, "%s: not initialized yet", ifname);
 		/* NOTREACHED */
 	}
 
 	printf("basereachable=%ds%dms",
-	    ND.basereachable / 1000, ND.basereachable % 1000);
-	printf(", reachable=%ds", ND.reachable);
-	printf(", retrans=%ds%dms", ND.retrans / 1000, ND.retrans % 1000);
-	if (ND.flags) {
+	    nd.ndi.basereachable / 1000, nd.ndi.basereachable % 1000);
+	printf(", reachable=%ds", nd.ndi.reachable);
+	printf(", retrans=%ds%dms", nd.ndi.retrans / 1000,
+	    nd.ndi.retrans % 1000);
+	if (nd.ndi.flags) {
 		printf("\nFlags: ");
-		if ((ND.flags & ND6_IFF_PERFORMNUD))
+		if ((nd.ndi.flags & ND6_IFF_PERFORMNUD))
 			printf("nud ");
-		if ((ND.flags & ND6_IFF_ACCEPT_RTADV))
+		if ((nd.ndi.flags & ND6_IFF_ACCEPT_RTADV))
 			printf("accept_rtadv ");
 	}
 	putc('\n', stdout);
-#undef ND
 
 	close(s);
 }
