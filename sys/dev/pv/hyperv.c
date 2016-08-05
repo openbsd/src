@@ -1628,7 +1628,7 @@ hv_attach_internal(struct hv_softc *sc)
 	int i;
 
 	TAILQ_FOREACH(ch, &sc->sc_channels, ch_entry) {
-		if (ch->ch_state != HV_CHANSTATE_OPENED)
+		if (ch->ch_state != HV_CHANSTATE_OFFERED)
 			continue;
 		if (ch->ch_flags & CHF_MONITOR)
 			continue;
