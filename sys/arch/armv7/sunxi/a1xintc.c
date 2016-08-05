@@ -1,4 +1,4 @@
-/*	$OpenBSD: a1xintc.c,v 1.7 2016/01/31 00:14:50 jsg Exp $	*/
+/*	$OpenBSD: a1xintc.c,v 1.8 2016/08/05 19:00:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -24,10 +24,14 @@
 #include <sys/evcount.h>
 
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
 #include <armv7/sunxi/a1xintc.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 #ifdef DEBUG_INTC
 #define DPRINTF(x)	do { if (a1xintcdebug) printf x; } while (0)
@@ -134,19 +138,23 @@ volatile int a1xsoftint_pending;
 struct intrq a1xintc_handler[NIRQ];
 u_int32_t a1xintc_smask[NIPL];
 u_int32_t a1xintc_imask[NBANKS][NIPL];
+struct interrupt_controller a1xintc_ic;
 
 bus_space_tag_t		a1xintc_iot;
 bus_space_handle_t	a1xintc_ioh;
 int			a1xintc_nirq;
 
+int	a1xintc_match(struct device *, void *, void *);
 void	a1xintc_attach(struct device *, struct device *, void *);
 int	a1xintc_spllower(int);
 int	a1xintc_splraise(int);
 void	a1xintc_setipl(int);
 void	a1xintc_calc_masks(void);
+void	*a1xintc_intr_establish_fdt(void *, int *, int, int (*)(void *),
+	    void *, char *);
 
 struct cfattach	a1xintc_ca = {
-	sizeof (struct device), NULL, a1xintc_attach
+	sizeof (struct device), a1xintc_match, a1xintc_attach
 };
 
 struct cfdriver a1xintc_cd = {
@@ -155,15 +163,23 @@ struct cfdriver a1xintc_cd = {
 
 int a1xintc_attached = 0;
 
-void
-a1xintc_attach(struct device *parent, struct device *self, void *args)
+int
+a1xintc_match(struct device *parent, void *match, void *aux)
 {
-	struct armv7_attach_args *aa = args;
+	struct fdt_attach_args *faa = aux;
+
+	return OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-ic");
+}
+
+void
+a1xintc_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
 	int i, j;
 
-	a1xintc_iot = aa->aa_iot;
-	if (bus_space_map(a1xintc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &a1xintc_ioh))
+	a1xintc_iot = faa->fa_iot;
+	if (bus_space_map(a1xintc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &a1xintc_ioh))
 		panic("a1xintc_attach: bus_space_map failed!");
 
 	/* disable/mask/clear all interrupts */
@@ -196,6 +212,10 @@ a1xintc_attach(struct device *parent, struct device *self, void *args)
 	a1xintc_setipl(IPL_HIGH);  /* XXX ??? */
 	enable_interrupts(PSR_I);
 	printf("\n");
+
+	a1xintc_ic.ic_node = faa->fa_node;
+	a1xintc_ic.ic_establish = a1xintc_intr_establish_fdt;
+	arm_intr_register_fdt(&a1xintc_ic);
 }
 
 void
@@ -353,7 +373,8 @@ a1xintc_irq_handler(void *frame)
 }
 
 void *
-a1xintc_intr_establish(int irq, int lvl, int (*f)(void *), void *arg, char *name)
+a1xintc_intr_establish(int irq, int level, int (*func)(void *),
+    void *arg, char *name)
 {
 	int psw;
 	struct intrhand *ih;
@@ -362,7 +383,7 @@ a1xintc_intr_establish(int irq, int lvl, int (*f)(void *), void *arg, char *name
 	if (irq <= 0 || irq >= NIRQ)
 		panic("intr_establish: bogus irq %d %s\n", irq, name);
 
-	DPRINTF(("intr_establish: irq %d level %d [%s]\n", irq, lvl,
+	DPRINTF(("intr_establish: irq %d level %d [%s]\n", irq, level,
 	    name != NULL ? name : "NULL"));
 
 	psw = disable_interrupts(PSR_I);
@@ -372,9 +393,9 @@ a1xintc_intr_establish(int irq, int lvl, int (*f)(void *), void *arg, char *name
 	    cold ? M_NOWAIT : M_WAITOK);
 	if (ih == NULL)
 		panic("intr_establish: can't malloc handler info\n");
-	ih->ih_func = f;
+	ih->ih_func = func;
 	ih->ih_arg = arg;
-	ih->ih_ipl = lvl;
+	ih->ih_ipl = level;
 	ih->ih_irq = irq;
 	ih->ih_name = name;
 
@@ -393,6 +414,13 @@ a1xintc_intr_establish(int irq, int lvl, int (*f)(void *), void *arg, char *name
 	
 	restore_interrupts(psw);
 	return (ih);
+}
+
+void *
+a1xintc_intr_establish_fdt(void *cookie, int *cell, int level,
+    int (*func)(void *), void *arg, char *name)
+{
+	return a1xintc_intr_establish(cell[0], level, func, arg, name);
 }
 
 void

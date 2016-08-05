@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiehci.c,v 1.4 2014/05/19 13:11:31 mpi Exp $ */
+/*	$OpenBSD: sxiehci.c,v 1.5 2016/08/05 19:00:25 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -52,6 +52,7 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -61,6 +62,9 @@
 #include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sxiccmuvar.h>
 #include <armv7/sunxi/sxipiovar.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
@@ -78,6 +82,7 @@
 #define AHB_INCR4		(1 << 9)
 #define AHB_INCR8		(1 << 10)
 
+int	sxiehci_match(struct device *, void *, void *);
 void	sxiehci_attach(struct device *, struct device *, void *);
 int	sxiehci_detach(struct device *, int);
 int	sxiehci_activate(struct device *, int);
@@ -90,28 +95,39 @@ struct sxiehci_softc {
 int sxiehci_init(struct sxiehci_softc *, int);
 
 struct cfattach sxiehci_ca = {
-	sizeof (struct sxiehci_softc), NULL, sxiehci_attach,
+	sizeof(struct sxiehci_softc), sxiehci_match, sxiehci_attach,
 	sxiehci_detach, sxiehci_activate
 };
 
-/* XXX
- * given the nature of SoCs, i think this should just panic on failure,
- * instead of disestablishing interrupt and unmapping space etc..
- */
+int
+sxiehci_match(struct device *parent, void *match, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
+
+	if (OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-ehci"))
+	    return 1;
+	if (OF_is_compatible(faa->fa_node, "allwinner,sun5i-a13-ehci"))
+	    return 1;
+	if (OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-ehci"))
+	    return 1;
+
+	return 0;
+}
+
 void
 sxiehci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sxiehci_softc	*sc = (struct sxiehci_softc *)self;
-	struct armv7_attach_args *aa = aux;
+	struct fdt_attach_args	*faa = aux;
 	usbd_status		 r;
 	char			*devname = sc->sc.sc_bus.bdev.dv_xname;
 
-	sc->sc.iot = aa->aa_iot;
-	sc->sc.sc_bus.dmatag = aa->aa_dmat;
-	sc->sc.sc_size = aa->aa_dev->mem[0].size;
+	sc->sc.iot = faa->fa_iot;
+	sc->sc.sc_bus.dmatag = faa->fa_dmat;
+	sc->sc.sc_size = faa->fa_reg[0].size;
 
-	if (bus_space_map(sc->sc.iot, aa->aa_dev->mem[0].addr,
-		aa->aa_dev->mem[0].size, 0, &sc->sc.ioh)) {
+	if (bus_space_map(sc->sc.iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc.ioh)) {
 		printf(": cannot map mem space\n");
 		goto out;
 	}
@@ -125,7 +141,7 @@ sxiehci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
 	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
 
-	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_USB,
+	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_USB,
 	    ehci_intr, &sc->sc, devname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");

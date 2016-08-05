@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiahci.c,v 1.8 2015/01/22 14:33:01 krw Exp $	*/
+/*	$OpenBSD: sxiahci.c,v 1.9 2016/08/05 19:00:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013,2014 Artturi Alm
@@ -25,6 +25,7 @@
 #include <sys/queue.h>
 
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
 #include <dev/ic/ahcireg.h>
 #include <dev/ic/ahcivar.h>
@@ -33,6 +34,9 @@
 #include <armv7/sunxi/sunxireg.h>
 #include <armv7/sunxi/sxiccmuvar.h>
 #include <armv7/sunxi/sxipiovar.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 #define	SXIAHCI_CAP	0x0000
 #define	SXIAHCI_GHC	0x0004
@@ -49,6 +53,7 @@
 #define  SXIAHCI_PREG_DMA_MASK	(0xff<<8)
 #define  SXIAHCI_PREG_DMA_INIT	(0x44<<8)
 
+int	sxiahci_match(struct device *, void *, void *);
 void	sxiahci_attach(struct device *, struct device *, void *);
 int	sxiahci_detach(struct device *, int);
 int	sxiahci_activate(struct device *, int);
@@ -68,30 +73,41 @@ struct sxiahci_softc {
 
 struct cfattach sxiahci_ca = {
 	sizeof(struct sxiahci_softc),
-	NULL,
+	sxiahci_match,
 	sxiahci_attach,
 	sxiahci_detach,
 	sxiahci_activate
 };
 
 struct cfdriver sxiahci_cd = {
-	NULL, "ahci", DV_DULL
+	NULL, "sxiahci", DV_DULL
 };
 
-void
-sxiahci_attach(struct device *parent, struct device *self, void *args)
+int
+sxiahci_match(struct device *parent, void *match, void *aux)
 {
-	struct armv7_attach_args *aa = args;
+	struct fdt_attach_args *faa = aux;
+
+	return OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-ahci");
+}
+
+void
+sxiahci_attach(struct device *parent, struct device *self, void *aux)
+{
 	struct sxiahci_softc *sxisc = (struct sxiahci_softc *)self;
 	struct ahci_softc *sc = &sxisc->sc;
+	struct fdt_attach_args *faa = aux;
 	uint32_t timo;
 
-	sc->sc_iot = aa->aa_iot;
-	sc->sc_ios = aa->aa_dev->mem[0].size;
-	sc->sc_dmat = aa->aa_dmat;
+	if (faa->fa_nreg < 1)
+		return;
 
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    sc->sc_ios, 0, &sc->sc_ioh))
+	sc->sc_iot = faa->fa_iot;
+	sc->sc_ios = faa->fa_reg[0].size;
+	sc->sc_dmat = faa->fa_dmat;
+
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("sxiahci_attach: bus_space_map failed!");
 
 	/* enable clock */
@@ -152,12 +168,14 @@ sxiahci_attach(struct device *parent, struct device *self, void *args)
 	sxipio_setcfg(SXIAHCI_PWRPIN, SXIPIO_OUTPUT);
 	sxipio_setpin(SXIAHCI_PWRPIN);
 
-	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_BIO,
+	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_BIO,
 	    ahci_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");
 		goto clrpwr;
 	}
+
+	printf(":");
 
 	SXIWRITE4(sc, SXIAHCI_PI, 1);
 	SXICLR4(sc, SXIAHCI_CAP, AHCI_REG_CAP_SPM);

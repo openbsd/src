@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.29 2016/08/04 15:52:52 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.30 2016/08/05 19:00:25 kettenis Exp $
 
 machine		armv7 arm
 
@@ -84,7 +84,7 @@ usb*		at ehci?
 sunxi0		at mainbus?
 
 # Sunxi on-chip devices
-a1xintc*	at sunxi?		# A1x interrupt controller
+a1xintc*	at fdt?			# A1x interrupt controller
 sxipio*		at sunxi?		# GPIO pins for leds & PHYs
 gpio*		at sxipio?
 sxiccmu*	at sunxi?		# Clock Control Module/Unit
@@ -93,8 +93,8 @@ sxidog*		at sunxi?		# watchdog timer
 sxirtc*		at sunxi?		# Real Time Clock
 sxiuart*	at fdt?			# onboard UARTs
 sxie*		at fdt?
-ahci*		at sunxi?		# AHCI/SATA (shim)
-ehci*		at sunxi?		# EHCI (shim)
+sxiahci*	at fdt?			# AHCI/SATA
+ehci*		at fdt?			# EHCI (shim)
 usb*		at ehci?	#flags 0x1
 #ohci*		at sunxi?
 #usb*		at ohci?
