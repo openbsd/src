@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.38 2016/03/28 11:06:09 chl Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.39 2016/08/05 10:34:18 jca Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -66,6 +66,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <limits.h>
+#include <poll.h>
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
@@ -486,9 +487,9 @@ allhosts(void)
 	AUTH *unix_auth;
 	size_t outlen[2];
 	int sock[2] = { -1, -1 };
-	int i, maxfd, rval;
+	int i, rval;
 	u_long xid[2], port[2];
-	fd_set *fds = NULL;
+	struct pollfd pfd[2];
 	struct sockaddr_in *sin, baddr;
 	struct rmtcallargs args;
 	struct rmtcallres res[2];
@@ -533,11 +534,6 @@ allhosts(void)
 	outlen[1] = xdr_getpos(&xdr);
 	xdr_destroy(&xdr);
 
-	maxfd = MAXIMUM(sock[0], sock[1]) + 1;
-	fds = calloc(howmany(maxfd, NFDBITS), sizeof(fd_mask));
-	if (fds == NULL)
-		err(1, NULL);
-
 	baddr.sin_len = sizeof(struct sockaddr_in);
 	baddr.sin_family = AF_INET;
 	baddr.sin_port = htons(PMAPPORT);
@@ -558,7 +554,7 @@ allhosts(void)
 	 * a version 3 broadcast.  On odd ones we send a version 2
 	 * broadcast.  This should give version 3 replies enough
 	 * of an 'edge' over the old version 2 ones in most cases.
-	 * We select() waiting for replies for 5 seconds in between
+	 * We poll() waiting for replies for 5 seconds in between
 	 * each broadcast.
 	 */
 	for (i = 0; i < 6; i++) {
@@ -587,28 +583,30 @@ allhosts(void)
 		}
 
 		/*
-		 * We stay in the select loop for ~5 seconds
+		 * We stay in the poll loop for ~5 seconds
 		 */
 		timeout.it_value.tv_sec = 5;
 		timeout.it_value.tv_usec = 0;
 		while (timerisset(&timeout.it_value)) {
-			FD_SET(sock[0], fds);
-			FD_SET(sock[1], fds);
+			pfd[0].fd = sock[0];
+			pfd[0].events = POLLIN;
+			pfd[1].fd = sock[1];
+			pfd[1].events = POLLIN;
 			setitimer(ITIMER_REAL, &timeout, NULL);
-			rval = select(maxfd, fds, NULL, NULL, NULL);
+			rval = poll(pfd, 2, 0);
 			setitimer(ITIMER_REAL, NULL, &timeout);
 			if (rval == -1) {
 				if (errno == EINTR)
 					break;
-				err(1, "select");	/* shouldn't happen */
+				err(1, "poll");	/* shouldn't happen */
 			}
-			if (FD_ISSET(sock[1], fds)) {
+			if (pfd[1].revents & POLLIN) {
 				stat = get_reply(sock[1], (in_port_t)port[1],
 				    xid[1], &msg[1], &res[1], rusers_reply_3);
 				if (stat != RPC_SUCCESS)
 					goto cleanup;
 			}
-			if (FD_ISSET(sock[0], fds)) {
+			if (pfd[0].revents & POLLIN) {
 				stat = get_reply(sock[0], (in_port_t)port[0],
 				    xid[0], &msg[0], &res[0], rusers_reply);
 				if (stat != RPC_SUCCESS)
@@ -619,7 +617,6 @@ allhosts(void)
 cleanup:
 	if (ifap != NULL)
 		freeifaddrs(ifap);
-	free(fds);
 	if (sock[0] >= 0)
 		(void)close(sock[0]);
 	if (sock[1] >= 0)
