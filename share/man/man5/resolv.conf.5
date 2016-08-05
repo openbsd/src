@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.49 2016/07/29 17:38:41 jmc Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.50 2016/08/05 17:02:04 schwarze Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: July 29 2016 $
+.Dd $Mdocdate: August 5 2016 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -95,7 +95,7 @@ to refer to hard-coded information in local files, or otherwise
 override the defaults.
 .Pp
 A keyword and its values must appear on a single line, and the keyword (e.g.\&
-.Cm nameserver )
+.Ic nameserver )
 must start the line.
 The value follows the keyword, separated by whitespace.
 A hash mark
@@ -108,7 +108,7 @@ the routines that read the file.
 .Pp
 The configuration options (which may be placed in either file) are:
 .Bl -tag -width nameserver
-.It Cm nameserver
+.It Ic nameserver
 IPv4 address (in dot notation)
 or IPv6 address (in hex-and-colon notation)
 of a name server that the resolver should query.
@@ -123,24 +123,24 @@ Up to
 If there are multiple servers, the resolver library queries them in the
 order listed.
 If no
-.Cm nameserver
+.Ic nameserver
 entries are present, the default is to use the name server on the local machine.
 (The algorithm used is to try a name server, and if the query times out,
 try the next, until out of name servers, then repeat trying all name servers
 until a maximum number of retries are performed.)
-.It Cm domain
+.It Ic domain
 Local domain name.
 Most queries for names within this domain can use short names
 relative to the local domain.
 If no
-.Cm domain
+.Ic domain
 entry is present, the domain is determined
 from the local host name returned by
 .Xr gethostname 3 \(en
 the domain part is taken to be everything after the first dot.
 Finally, if the host name does not contain a domain part, the root
 domain is assumed.
-.It Cm lookup
+.It Ic lookup
 This keyword is used by the library routines
 .Xr gethostbyname 3
 and
@@ -157,22 +157,22 @@ Search for entries in
 .El
 .Pp
 If the
-.Cm lookup
+.Ic lookup
 keyword is not used in the system's
-.Pa resolv.conf
+.Nm resolv.conf
 file then the assumed order is
 .Cm bind file .
 Furthermore, if the system's
-.Pa resolv.conf
+.Nm resolv.conf
 file does not exist, then the only database used is
 .Cm file .
-.It Cm search
+.It Ic search
 Search list for hostname lookup.
 The search list is normally determined from the local domain name;
 by default, it begins with the local domain name, then successive
 parent domains that have at least two components in their names.
 This may be changed by listing the desired domain search path following the
-.Cm search
+.Ic search
 keyword with spaces or tabs separating the names.
 Most resolver queries will be attempted using each component
 of the search path in turn until a match is found.
@@ -184,18 +184,18 @@ for one of the domains.
 The search list is currently limited to six domains
 with a total of 1024 characters.
 Only one
-.Cm search
+.Ic search
 line should appear; if more than one is present, the last one found
 overwrites any values found in earlier lines.
 So if such a line appears in the
 .Nm resolv.conf.tail
 file, it should include all the domains that need to be searched.
-.It Cm sortlist
+.It Ic sortlist
 Allows addresses returned by
 .Xr gethostbyname 3
 to be sorted.
 A
-.Cm sortlist
+.Ic sortlist
 is specified by IP address netmask pairs.
 The netmask is optional and defaults to the natural netmask of the net.
 The IP address and optional network pairs are separated by slashes.
@@ -203,14 +203,14 @@ Up to 10 pairs may be specified.
 For example:
 .Pp
 .Dl sortlist 130.155.160.0/255.255.240.0 130.155.0.0
-.It Cm family
+.It Ic family
 Specify which type of Internet protocol family to prefer,
 if a host is reachable using different address families.
 By default IPv4 addresses are queried first,
 and then IPv6 addresses.
 The syntax is:
 .Bd -ragged -offset indent
-.Cm family Ar family Op Ar family
+.Ic family Ar family Op Ar family
 .Ed
 .Pp
 A maximum of two families can be specified, where
@@ -218,19 +218,19 @@ A maximum of two families can be specified, where
 can be any of:
 .Pp
 .Bl -tag -width "inet4XXX" -offset indent -compact
-.It inet4
+.It Cm inet4
 IPv4 queries.
-.It inet6
+.It Cm inet6
 IPv6 queries.
 .El
 .Pp
 If only one family is specified,
 only that family is tried.
-.It Cm options
+.It Ic options
 Allows certain internal resolver variables to be modified.
 The syntax is:
 .Bd -ragged -offset indent
-.Cm options Ar option ...
+.Ic options Ar option ...
 .Ed
 .Pp
 Where
@@ -253,7 +253,7 @@ and thus send larger replies.
 DNS query packets with the EDNS0 extension are not compatible with
 non-EDNS0 DNS servers,
 so the option must be used only when all the servers listed in
-.Cm nameserver
+.Ic nameserver
 lines are able to handle the extension.
 By default on
 .Ox
@@ -302,9 +302,9 @@ Normal behaviour is to query via UDP but fall back to TCP on failure.
 .El
 .Pp
 The
-.Cm domain
+.Ic domain
 and
-.Cm search
+.Ic search
 keywords are mutually exclusive.
 If more than one instance of these keywords is present, the last instance
 will override.
@@ -313,7 +313,7 @@ will override.
 .It Ev LOCALDOMAIN
 A space-separated list of search domains,
 overriding the
-.Cm search
+.Ic search
 keyword of a system's
 .Nm resolv.conf
 or
@@ -322,7 +322,7 @@ file.
 .It Ev RES_OPTIONS
 A space-separated list of resolver options,
 overriding the
-.Cm options
+.Ic options
 keyword of a system's
 .Nm resolv.conf
 or
