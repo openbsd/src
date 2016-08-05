@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.41 2016/03/21 22:41:28 bluhm Exp $	*/
+/*	$OpenBSD: util.c,v 1.42 2016/08/05 15:42:05 tedu Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -74,16 +74,36 @@ _dl_strdup(const char *orig)
 void
 _dl_randombuf(void *v, size_t buflen)
 {
+	static char bytes[256];
+	static u_int reserve;
 	char *buf = v;
 	size_t chunk;
 
 	while (buflen != 0) {
-		if (buflen > 256)
-			chunk = 256;
+		if (reserve == 0) {
+			if (_dl_getentropy(bytes, sizeof(bytes)) != 0)
+				_dl_exit(8);
+			reserve = sizeof(bytes);
+		}
+		if (buflen > reserve)
+			chunk = reserve;
 		else
 			chunk = buflen;
-		if (_dl_getentropy(buf, chunk) != 0)
-			_dl_exit(8);
+#if 0
+		memcpy(buf, bytes + reserve - chunk, chunk);
+		memset(bytes + reserve - chunk, 0, chunk);
+#else
+		{
+			char *d = buf;
+			char *s = bytes + reserve - chunk;
+			u_int l;
+			for (l = chunk; l > 0; l--, s++, d++) {
+				*d = *s;
+				*s = 0;
+			}
+		}
+#endif
+		reserve -= chunk;
 		buflen -= chunk;
 		buf += chunk;
 	}
