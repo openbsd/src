@@ -1,4 +1,4 @@
-/*	$OpenBSD: dba.c,v 1.1 2016/08/01 10:32:39 schwarze Exp $ */
+/*	$OpenBSD: dba.c,v 1.2 2016/08/05 21:37:39 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -18,6 +18,7 @@
  * The interface is defined in "dba.h".
  */
 #include <sys/types.h>
+#include <endian.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
