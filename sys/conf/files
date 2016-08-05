@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.620 2016/06/17 19:20:19 guenther Exp $
+#	$OpenBSD: files,v 1.621 2016/08/05 11:40:22 kettenis Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -193,7 +193,8 @@ file    dev/ic/qla.c                    qla
 
 # Advanced Host Controller Interface for Serial ATA
 device	ahci: scsi, atascsi
-file	dev/ic/ahci.c			ahci | ahci_pci | ahci_jmb needs-flag
+file	dev/ic/ahci.c			ahci | (ahci_pci | ahci_jmb |
+						imxahci) needs-flag
 
 # NVM Express Controller
 device	nvme: scsi
