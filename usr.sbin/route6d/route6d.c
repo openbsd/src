@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.90 2016/08/05 11:34:51 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.91 2016/08/05 11:38:00 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -159,6 +159,7 @@ int	hflag = 0;	/* don't split horizon */
 int	lflag = 0;	/* exchange site local routes */
 int	sflag = 0;	/* announce static routes w/ split horizon */
 int	Sflag = 0;	/* announce static routes to every interface */
+int	uflag = 0;	/* always log route updates (additions/deletions) */
 unsigned long routetag = 0;	/* route tag attached on originating case */
 
 char	*filter[MAXFILTER];
@@ -247,7 +248,7 @@ main(int argc, char *argv[])
 
 	log_init(1); /* log to stderr until daemonized */
 
-	while ((ch = getopt(argc, argv, "A:N:O:T:L:t:adDhlnqsS")) != -1) {
+	while ((ch = getopt(argc, argv, "A:N:O:T:L:t:adDhlnqsSu")) != -1) {
 		switch (ch) {
 		case 'A':
 		case 'N':
@@ -279,6 +280,7 @@ main(int argc, char *argv[])
 		FLAG('q', qflag, 1); break;
 		FLAG('s', sflag, 1); break;
 		FLAG('S', Sflag, 1); break;
+		FLAG('u', uflag, 1); break;
 #undef	FLAG
 		default:
 			fatalx("Invalid option specified, terminating");
@@ -2564,9 +2566,14 @@ addroute(struct riprt *rrt, const struct in6_addr *gw, struct ifc *ifcp)
 	np = &rrt->rrt_info;
 	inet_ntop(AF_INET6, (const void *)gw, (char *)buf1, sizeof(buf1));
 	inet_ntop(AF_INET6, (void *)&ifcp->ifc_mylladdr, (char *)buf2, sizeof(buf2));
-	log_debug("RTADD: %s/%d gw %s [%d] ifa %s",
-	    inet6_n2p(&np->rip6_dest), np->rip6_plen, buf1,
-	    np->rip6_metric - 1, buf2);
+	if (uflag)
+		log_info("RTADD: %s/%d gw %s [%d] ifa %s",
+		    inet6_n2p(&np->rip6_dest), np->rip6_plen, buf1,
+		    np->rip6_metric - 1, buf2);
+	else
+		log_debug("RTADD: %s/%d gw %s [%d] ifa %s",
+		    inet6_n2p(&np->rip6_dest), np->rip6_plen, buf1,
+		    np->rip6_metric - 1, buf2);
 
 	if (nflag)
 		return 0;
@@ -2620,8 +2627,12 @@ delroute(struct netinfo6 *np, struct in6_addr *gw)
 	int	len;
 
 	inet_ntop(AF_INET6, (void *)gw, (char *)buf2, sizeof(buf2));
-	log_debug("RTDEL: %s/%d gw %s", inet6_n2p(&np->rip6_dest),
-	    np->rip6_plen, buf2);
+	if (uflag)
+		log_info("RTDEL: %s/%d gw %s", inet6_n2p(&np->rip6_dest),
+		    np->rip6_plen, buf2);
+	else
+		log_debug("RTDEL: %s/%d gw %s", inet6_n2p(&np->rip6_dest),
+		    np->rip6_plen, buf2);
 
 	if (nflag)
 		return 0;
