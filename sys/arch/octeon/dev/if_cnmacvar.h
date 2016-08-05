@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmacvar.h,v 1.14 2016/08/04 13:10:31 visa Exp $	*/
+/*	$OpenBSD: if_cnmacvar.h,v 1.15 2016/08/05 13:18:27 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -106,8 +106,6 @@ struct octeon_eth_softc {
 
 	size_t			sc_ip_offset;
 
-	struct timeval		sc_rate_recv_check_link_last;
-	struct timeval		sc_rate_recv_check_link_cap;
 	struct timeval		sc_rate_recv_check_code_last;
 	struct timeval		sc_rate_recv_check_code_cap;
 };

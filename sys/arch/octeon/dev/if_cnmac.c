@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.55 2016/08/04 13:10:31 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.56 2016/08/05 13:18:27 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -165,7 +165,6 @@ void	octeon_eth_tick_misc(void *);
 int	octeon_eth_recv_mbuf(struct octeon_eth_softc *,
 	    uint64_t *, struct mbuf **, int *);
 int	octeon_eth_recv_check_code(struct octeon_eth_softc *, uint64_t);
-int	octeon_eth_recv_check_link(struct octeon_eth_softc *, uint64_t);
 int	octeon_eth_recv_check(struct octeon_eth_softc *, uint64_t);
 int	octeon_eth_recv(struct octeon_eth_softc *, uint64_t *);
 void	octeon_eth_recv_intr(void *, uint64_t *);
@@ -325,7 +324,6 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 
 	/* XXX */
-	sc->sc_rate_recv_check_link_cap.tv_sec = 1;
 	sc->sc_rate_recv_check_code_cap.tv_sec = 1;
 
 #if 1
@@ -1243,25 +1241,8 @@ octeon_eth_recv_check_code(struct octeon_eth_softc *sc, uint64_t word2)
 }
 
 int
-octeon_eth_recv_check_link(struct octeon_eth_softc *sc, uint64_t word2)
-{
-	if (__predict_false(!cn30xxgmx_link_status(sc->sc_gmx_port)))
-		return 1;
-	return 0;
-}
-
-int
 octeon_eth_recv_check(struct octeon_eth_softc *sc, uint64_t word2)
 {
-	if (__predict_false(octeon_eth_recv_check_link(sc, word2)) != 0) {
-		if (ratecheck(&sc->sc_rate_recv_check_link_last,
-		    &sc->sc_rate_recv_check_link_cap))
-			log(LOG_DEBUG,
-			    "%s: link is not up, the packet was dropped\n",
-			    sc->sc_dev.dv_xname);
-		return 1;
-	}
-
 	if (__predict_false(octeon_eth_recv_check_code(sc, word2)) != 0) {
 		if ((word2 & PIP_WQE_WORD2_NOIP_OPECODE) == PIP_WQE_WORD2_RE_OPCODE_LENGTH) {
 			/* no logging */
