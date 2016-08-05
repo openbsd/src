@@ -1843,6 +1843,7 @@
 ./usr/share/man/man4/ti.4
 ./usr/share/man/man4/tl.4
 ./usr/share/man/man4/tlphy.4
+./usr/share/man/man4/tpm.4
 ./usr/share/man/man4/tqphy.4
 ./usr/share/man/man4/trm.4
 ./usr/share/man/man4/trunk.4
