@@ -4,11 +4,11 @@ macros offset 0x0000008c
 end offset    0x000001b0
 page count    2
 === PAGES ===
-page name # [f1t]empty 
+page name # [fh1t]empty 
 page sect # 1 
 page desc # no title 
 page file src # man1/empty.1 
-page name # [f]second # [1t]empty 
+page name # [f]second # [h1t]empty 
 page sect # 1 
 page desc # no title 
 page file src # man1/second.1 

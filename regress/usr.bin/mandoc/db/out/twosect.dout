@@ -4,7 +4,7 @@ macros offset 0x0000005c
 end offset    0x00000180
 page count    1
 === PAGES ===
-page name # [f1t]empty 
+page name # [fh1t]empty 
 page sect # 1 # 8 
 page desc # no title 
 page file src # man8/empty.8 # man1/empty.1 
