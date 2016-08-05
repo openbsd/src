@@ -534,7 +534,7 @@ hv_event_intr(struct hv_softc *sc)
 	int cpu = CPU_INFO_UNIT(ci);
 	int bit, dword, maxdword, relid;
 	struct hv_channel *ch;
-	uint32_t *revents;
+	uint32_t *revents, pending;
 
 	evt = (struct hv_synic_event_flags *)sc->sc_siep[cpu] + HV_MESSAGE_SINT;
 	if ((sc->sc_proto == HV_VMBUS_VERSION_WS2008) ||
@@ -559,8 +559,9 @@ hv_event_intr(struct hv_softc *sc)
 	for (dword = 0; dword < maxdword; dword++) {
 		if (revents[dword] == 0)
 			continue;
-		for (bit = 0; bit < 32; bit++) {
-			if (!atomic_clearbit_ptr(&revents[dword], bit))
+		pending = atomic_swap_uint(&revents[dword], 0);
+		for (bit = 0; pending > 0; pending >>= 1, bit++) {
+			if ((pending & 1) == 0)
 				continue;
 			relid = (dword << 5) + bit;
 			/* vmbus channel protocol message */
