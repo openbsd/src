@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolver.3,v 1.33 2015/12/16 18:12:42 jmc Exp $
+.\"	$OpenBSD: resolver.3,v 1.34 2016/08/05 16:16:06 schwarze Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 16 2015 $
+.Dd $Mdocdate: August 5 2016 $
 .Dt RES_INIT 3
 .Os
 .Sh NAME
@@ -103,10 +103,10 @@ query and reply messages with Internet domain name servers.
 .Pp
 Global configuration and state information that is used by the
 resolver routines is kept in the structure
-.Li _res .
+.Va _res .
 Most of the values have reasonable defaults and can be ignored.
 Options stored in
-.Li _res.options
+.Va _res.options
 are defined in
 .In resolv.h
 and are as follows.
@@ -207,19 +207,17 @@ if not specified in the configuration file;
 it can be overridden by the environment variable
 .Ev LOCALDOMAIN .
 This environment variable may contain several blank-separated
-tokens if you wish to override the
-.Fa search list
-on a per-process basis.
+tokens if you wish to override the search list on a per-process basis.
 This is similar to the
-.Fa search
+.Ic search
 command in the configuration file.
 Another environment variable
 .Ev RES_OPTIONS
 can be set to override certain internal resolver options which
 are otherwise set by changing fields in the
-.Fa _res
+.Va _res
 structure or are inherited from the configuration file's
-.Fa options
+.Ic options
 command.
 The syntax of the
 .Ev RES_OPTIONS
@@ -385,7 +383,18 @@ The configuration file.
 .%T Simple Mail Transfer Protocol
 .Re
 .Sh HISTORY
-The
-.Nm
-function appeared in
+The functions
+.Fn res_mkquery ,
+.Fn res_send ,
+.Fn res_init ,
+.Fn dn_comp ,
+and
+.Fn dn_expand
+appeared in
 .Bx 4.3 .
+The functions
+.Fn res_query
+and
+.Fn res_search
+appeared in
+.Bx 4.3 Tahoe .

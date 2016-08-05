@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostbyname.3,v 1.31 2016/08/05 07:54:15 martijn Exp $
+.\"	$OpenBSD: gethostbyname.3,v 1.32 2016/08/05 16:16:06 schwarze Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,7 +68,11 @@ The
 and
 .Fn gethostbyaddr
 functions each return a pointer to an object with the following structure
-describing an Internet host referenced by name or by address, respectively.
+describing an Internet host referenced by
+.Fa name
+or
+.Fa addr ,
+respectively.
 This structure contains either information obtained from a name server,
 broken-out fields from a line in
 .Pa /etc/hosts ,
@@ -93,13 +97,17 @@ The members of this structure are:
 .It Fa h_name
 Official name of the host.
 .It Fa h_aliases
-A null-terminated array of alternate names for the host.
+A
+.Dv NULL Ns -terminated
+array of alternate names for the host.
 .It Fa h_addrtype
 The type of address being returned.
 .It Fa h_length
 The length, in bytes, of the address.
 .It Fa h_addr_list
-A null-terminated array of network addresses for the host.
+A
+.Dv NULL Ns -terminated
+array of network addresses for the host.
 Host addresses are returned in network byte order.
 .It Fa h_addr
 The first address in
@@ -137,33 +145,28 @@ The only address family currently supported is
 The
 .Fn sethostent
 function may be used to request the use of a connected
-.Tn TCP
-socket for queries.
+TCP socket for queries.
 If the
 .Fa stayopen
 flag is non-zero,
-this sets the option to send all queries to the name server using
-.Tn TCP
+this sets the option to send all queries to the name server using TCP
 and to retain the connection after each call to
 .Fn gethostbyname
 or
 .Fn gethostbyaddr .
-Otherwise, queries are performed using
-.Tn UDP
-datagrams.
+Otherwise, queries are performed using UDP datagrams.
 .Pp
 The
 .Fn endhostent
-function closes the
-.Tn TCP
-connection.
+function closes the TCP connection.
 .Pp
 The
 .Fn herror
 function prints an error message describing the failure.
 If its argument
 .Fa string
-is non-null,
+is not
+.Dv NULL ,
 it is prepended to the message string and separated from it by a colon
 .Pq Ql \&:
 and a space.
@@ -171,10 +174,10 @@ The error message is printed with a trailing newline.
 The contents of the error message is the same as that returned by
 .Fn hstrerror
 with argument
-.Fa h_errno .
+.Va h_errno .
 .Sh ENVIRONMENT
 .Bl -tag -width RES_OPTIONS
-.It RES_OPTIONS
+.It Ev RES_OPTIONS
 A list of options to override the resolver's internal defaults.
 See
 .Xr resolv.conf 5
@@ -191,7 +194,9 @@ Error return status from
 .Fn gethostbyname2 ,
 and
 .Fn gethostbyaddr
-is indicated by return of a null pointer.
+is indicated by return of a
+.Dv NULL
+pointer.
 The external integer
 .Va h_errno
 may then be checked to see whether this is a temporary failure
@@ -238,10 +243,6 @@ The function completed successfully.
 .Xr hostname 7
 .Sh HISTORY
 The
-.Fn herror
-function appeared in
-.Bx 4.3 .
-The
 .Fn endhostent ,
 .Fn gethostbyaddr ,
 .Fn gethostbyname ,
@@ -249,7 +250,18 @@ The
 and
 .Fn sethostent
 functions appeared in
-.Bx 4.2 .
+.Bx 4.1c .
+The function
+.Fn herror
+was added in
+.Bx 4.3 Tahoe ,
+.Fn hstrerror
+in
+.Bx 4.4 ,
+and
+.Fn gethostbyname2
+in
+.Ox 2.1 .
 .Sh CAVEATS
 If the search routines in
 .Xr resolv.conf 5
