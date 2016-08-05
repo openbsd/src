@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.33 2016/08/05 19:00:25 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.34 2016/08/05 20:38:17 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -85,7 +85,7 @@ usb*		at ehci?
 sunxi0		at mainbus?
 
 # Sunxi on-chip devices
-a1xintc*	at fdt?			# A1x interrupt controller
+sxiintc*	at fdt?			# A1x interrupt controller
 sxipio*		at sunxi?		# GPIO pins for leds & PHYs
 gpio*		at sxipio?
 sxiccmu*	at sunxi?		# Clock Control Module/Unit

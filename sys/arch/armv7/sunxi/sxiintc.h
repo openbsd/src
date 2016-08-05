@@ -1,4 +1,4 @@
-/*	$OpenBSD: a1xintc.h,v 1.3 2015/05/19 06:09:35 jsg Exp $ */
+/*	$OpenBSD: sxiintc.h,v 1.1 2016/08/05 20:38:17 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -15,8 +15,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _A1XINTC_H_
-#define _A1XINTC_H_
+#ifndef _SXIINTC_H_
+#define _SXIINTC_H_
 
 #ifndef _LOCORE
 
@@ -27,21 +27,21 @@
 
 extern volatile int current_spl_level;
 extern volatile int softint_pending;
-void a1xintc_do_pending(void);
+void sxiintc_do_pending(void);
 
 #define SI_TO_IRQBIT(si)  (1U<<(si))
-void a1xintc_setipl(int);
-void a1xintc_splx(int);
-int a1xintc_splraise(int);
-int a1xintc_spllower(int);
-void a1xintc_setsoftintr(int);
+void sxiintc_setipl(int);
+void sxiintc_splx(int);
+int sxiintc_splraise(int);
+int sxiintc_spllower(int);
+void sxiintc_setsoftintr(int);
 
-void a1xintc_irq_handler(void *);
-void *a1xintc_intr_establish(int, int, int (*)(void *), void *, char *);
-void a1xintc_intr_disestablish(void *);
-const char *a1xintc_intr_string(void *);
+void sxiintc_irq_handler(void *);
+void *sxiintc_intr_establish(int, int, int (*)(void *), void *, char *);
+void sxiintc_intr_disestablish(void *);
+const char *sxiintc_intr_string(void *);
 
 #endif /* ! _LOCORE */
 
-#endif /* _A1XINTC_H_ */
+#endif /* _SXIINTC_H_ */
 

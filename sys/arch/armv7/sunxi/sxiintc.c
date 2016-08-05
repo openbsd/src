@@ -1,4 +1,4 @@
-/*	$OpenBSD: a1xintc.c,v 1.8 2016/08/05 19:00:25 kettenis Exp $	*/
+/*	$OpenBSD: sxiintc.c,v 1.1 2016/08/05 20:38:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -28,15 +28,15 @@
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
-#include <armv7/sunxi/a1xintc.h>
+#include <armv7/sunxi/sxiintc.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
 
 #ifdef DEBUG_INTC
-#define DPRINTF(x)	do { if (a1xintcdebug) printf x; } while (0)
-#define DPRINTFN(n,x)	do { if (a1xintcdebug>(n)) printf x; } while (0)
-int	a1xintcdebug = 10;
+#define DPRINTF(x)	do { if (sxiintcdebug) printf x; } while (0)
+#define DPRINTFN(n,x)	do { if (sxiintcdebug>(n)) printf x; } while (0)
+int	sxiintcdebug = 10;
 char *ipl_strtbl[NIPL] = {
 	"IPL_NONE",
 	"IPL_SOFT",
@@ -135,36 +135,36 @@ struct intrq {
 
 volatile int a1xsoftint_pending;
 
-struct intrq a1xintc_handler[NIRQ];
-u_int32_t a1xintc_smask[NIPL];
-u_int32_t a1xintc_imask[NBANKS][NIPL];
-struct interrupt_controller a1xintc_ic;
+struct intrq sxiintc_handler[NIRQ];
+u_int32_t sxiintc_smask[NIPL];
+u_int32_t sxiintc_imask[NBANKS][NIPL];
+struct interrupt_controller sxiintc_ic;
 
-bus_space_tag_t		a1xintc_iot;
-bus_space_handle_t	a1xintc_ioh;
-int			a1xintc_nirq;
+bus_space_tag_t		sxiintc_iot;
+bus_space_handle_t	sxiintc_ioh;
+int			sxiintc_nirq;
 
-int	a1xintc_match(struct device *, void *, void *);
-void	a1xintc_attach(struct device *, struct device *, void *);
-int	a1xintc_spllower(int);
-int	a1xintc_splraise(int);
-void	a1xintc_setipl(int);
-void	a1xintc_calc_masks(void);
-void	*a1xintc_intr_establish_fdt(void *, int *, int, int (*)(void *),
+int	sxiintc_match(struct device *, void *, void *);
+void	sxiintc_attach(struct device *, struct device *, void *);
+int	sxiintc_spllower(int);
+int	sxiintc_splraise(int);
+void	sxiintc_setipl(int);
+void	sxiintc_calc_masks(void);
+void	*sxiintc_intr_establish_fdt(void *, int *, int, int (*)(void *),
 	    void *, char *);
 
-struct cfattach	a1xintc_ca = {
-	sizeof (struct device), a1xintc_match, a1xintc_attach
+struct cfattach	sxiintc_ca = {
+	sizeof (struct device), sxiintc_match, sxiintc_attach
 };
 
-struct cfdriver a1xintc_cd = {
-	NULL, "a1xintc", DV_DULL
+struct cfdriver sxiintc_cd = {
+	NULL, "sxiintc", DV_DULL
 };
 
-int a1xintc_attached = 0;
+int sxiintc_attached = 0;
 
 int
-a1xintc_match(struct device *parent, void *match, void *aux)
+sxiintc_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
@@ -172,54 +172,54 @@ a1xintc_match(struct device *parent, void *match, void *aux)
 }
 
 void
-a1xintc_attach(struct device *parent, struct device *self, void *aux)
+sxiintc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 	int i, j;
 
-	a1xintc_iot = faa->fa_iot;
-	if (bus_space_map(a1xintc_iot, faa->fa_reg[0].addr,
-	    faa->fa_reg[0].size, 0, &a1xintc_ioh))
-		panic("a1xintc_attach: bus_space_map failed!");
+	sxiintc_iot = faa->fa_iot;
+	if (bus_space_map(sxiintc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sxiintc_ioh))
+		panic("sxiintc_attach: bus_space_map failed!");
 
 	/* disable/mask/clear all interrupts */
 	for (i = 0; i < NBANKS; i++) {
-		bus_space_write_4(a1xintc_iot, a1xintc_ioh, INTC_ENABLE_REG(i), 0);
-		bus_space_write_4(a1xintc_iot, a1xintc_ioh, INTC_MASK_REG(i), 0);
-		bus_space_write_4(a1xintc_iot, a1xintc_ioh, INTC_IRQ_PENDING_REG(i),
+		bus_space_write_4(sxiintc_iot, sxiintc_ioh, INTC_ENABLE_REG(i), 0);
+		bus_space_write_4(sxiintc_iot, sxiintc_ioh, INTC_MASK_REG(i), 0);
+		bus_space_write_4(sxiintc_iot, sxiintc_ioh, INTC_IRQ_PENDING_REG(i),
 		    0xffffffff);
 		for (j = 0; j < NIPL; j++)
-			a1xintc_imask[i][j] = 0;
+			sxiintc_imask[i][j] = 0;
 	}
 
 	/* XXX */
-	bus_space_write_4(a1xintc_iot, a1xintc_ioh, INTC_PROTECTION_REG, 1);
-	bus_space_write_4(a1xintc_iot, a1xintc_ioh, INTC_NMI_CTRL_REG, 0);
+	bus_space_write_4(sxiintc_iot, sxiintc_ioh, INTC_PROTECTION_REG, 1);
+	bus_space_write_4(sxiintc_iot, sxiintc_ioh, INTC_NMI_CTRL_REG, 0);
 
 	for (i = 0; i < NIRQ; i++)
-		TAILQ_INIT(&a1xintc_handler[i].iq_list);
+		TAILQ_INIT(&sxiintc_handler[i].iq_list);
 
-	a1xintc_calc_masks();
+	sxiintc_calc_masks();
 
 	arm_init_smask();
-	a1xintc_attached = 1;
+	sxiintc_attached = 1;
 
 	/* insert self as interrupt handler */
-	arm_set_intr_handler(a1xintc_splraise, a1xintc_spllower, a1xintc_splx,
-	    a1xintc_setipl,
-	    a1xintc_intr_establish, a1xintc_intr_disestablish, a1xintc_intr_string,
-	    a1xintc_irq_handler);
-	a1xintc_setipl(IPL_HIGH);  /* XXX ??? */
+	arm_set_intr_handler(sxiintc_splraise, sxiintc_spllower, sxiintc_splx,
+	    sxiintc_setipl,
+	    sxiintc_intr_establish, sxiintc_intr_disestablish, sxiintc_intr_string,
+	    sxiintc_irq_handler);
+	sxiintc_setipl(IPL_HIGH);  /* XXX ??? */
 	enable_interrupts(PSR_I);
 	printf("\n");
 
-	a1xintc_ic.ic_node = faa->fa_node;
-	a1xintc_ic.ic_establish = a1xintc_intr_establish_fdt;
-	arm_intr_register_fdt(&a1xintc_ic);
+	sxiintc_ic.ic_node = faa->fa_node;
+	sxiintc_ic.ic_establish = sxiintc_intr_establish_fdt;
+	arm_intr_register_fdt(&sxiintc_ic);
 }
 
 void
-a1xintc_calc_masks(void)
+sxiintc_calc_masks(void)
 {
 	struct cpu_info *ci = curcpu();
 	int irq;
@@ -229,14 +229,14 @@ a1xintc_calc_masks(void)
 	for (irq = 0; irq < NIRQ; irq++) {
 		int max = IPL_NONE;
 		int min = IPL_HIGH;
-		TAILQ_FOREACH(ih, &a1xintc_handler[irq].iq_list, ih_list) {
+		TAILQ_FOREACH(ih, &sxiintc_handler[irq].iq_list, ih_list) {
 			if (ih->ih_ipl > max)
 				max = ih->ih_ipl;
 			if (ih->ih_ipl < min)
 				min = ih->ih_ipl;
 		}
 
-		a1xintc_handler[irq].iq_irq = max;
+		sxiintc_handler[irq].iq_irq = max;
 
 		if (max == IPL_NONE)
 			min = IPL_NONE;
@@ -250,38 +250,38 @@ a1xintc_calc_masks(void)
 #endif
 		/* Enable interrupts at lower levels, clear -> enable */
 		for (i = 0; i < min; i++)
-			a1xintc_imask[IRQ2REG32(irq)][i] &=
+			sxiintc_imask[IRQ2REG32(irq)][i] &=
 			    ~(1 << IRQ2BIT32(irq));
 		for (; i < NIPL; i++)
-			a1xintc_imask[IRQ2REG32(irq)][i] |=
+			sxiintc_imask[IRQ2REG32(irq)][i] |=
 			    (1 << IRQ2BIT32(irq));
 		/* XXX - set enable/disable, priority */ 
 	}
 
-	a1xintc_setipl(ci->ci_cpl);
+	sxiintc_setipl(ci->ci_cpl);
 }
 
 void
-a1xintc_splx(int new)
+sxiintc_splx(int new)
 {
 	struct cpu_info *ci = curcpu();
-	a1xintc_setipl(new);
+	sxiintc_setipl(new);
 
 	if (ci->ci_ipending & arm_smask[ci->ci_cpl])
 		arm_do_pending_intr(ci->ci_cpl);
 }
 
 int
-a1xintc_spllower(int new)
+sxiintc_spllower(int new)
 {
 	struct cpu_info *ci = curcpu();
 	int old = ci->ci_cpl;
-	a1xintc_splx(new);
+	sxiintc_splx(new);
 	return (old);
 }
 
 int
-a1xintc_splraise(int new)
+sxiintc_splraise(int new)
 {
 	struct cpu_info *ci = curcpu();
 	int old;
@@ -297,13 +297,13 @@ a1xintc_splraise(int new)
 	if (old > new)
 		new = old;
 
-	a1xintc_setipl(new);
+	sxiintc_setipl(new);
   
 	return (old);
 }
 
 void
-a1xintc_setipl(int new)
+sxiintc_setipl(int new)
 {
 	struct cpu_info *ci = curcpu();
 	int i, psw;
@@ -312,7 +312,7 @@ a1xintc_setipl(int new)
 	 * XXX not needed, because all interrupts are disabled
 	 * by default, so touching maskregs has no effect, i hope.
 	 */
-	if (a1xintc_attached == 0) {
+	if (sxiintc_attached == 0) {
 		ci->ci_cpl = new;
 		return;
 	}
@@ -320,47 +320,47 @@ a1xintc_setipl(int new)
 	psw = disable_interrupts(PSR_I);
 	ci->ci_cpl = new;
 	for (i = 0; i < NBANKS; i++)
-		bus_space_write_4(a1xintc_iot, a1xintc_ioh,
-		    INTC_MASK_REG(i), a1xintc_imask[i][new]);
+		bus_space_write_4(sxiintc_iot, sxiintc_ioh,
+		    INTC_MASK_REG(i), sxiintc_imask[i][new]);
 	restore_interrupts(psw);
 }
 
 void
-a1xintc_irq_handler(void *frame)
+sxiintc_irq_handler(void *frame)
 {
 	struct intrhand *ih;
 	void *arg;
 	uint32_t pr;
 	int irq, prio, s;
 
-	irq = bus_space_read_4(a1xintc_iot, a1xintc_ioh, INTC_VECTOR_REG) >> 2;
+	irq = bus_space_read_4(sxiintc_iot, sxiintc_ioh, INTC_VECTOR_REG) >> 2;
 	if (irq == 0)
 		return;
 
-	prio = a1xintc_handler[irq].iq_irq;
-	s = a1xintc_splraise(prio);
+	prio = sxiintc_handler[irq].iq_irq;
+	s = sxiintc_splraise(prio);
 	splassert(prio);
 
-	pr = bus_space_read_4(a1xintc_iot, a1xintc_ioh,
+	pr = bus_space_read_4(sxiintc_iot, sxiintc_ioh,
 	    INTC_ENABLE_REG(IRQ2REG32(irq)));
-	bus_space_write_4(a1xintc_iot, a1xintc_ioh,
+	bus_space_write_4(sxiintc_iot, sxiintc_ioh,
 	    INTC_ENABLE_REG(IRQ2REG32(irq)),
 	    pr & ~(1 << IRQ2BIT32(irq)));
 
 	/* clear pending */
-	pr = bus_space_read_4(a1xintc_iot, a1xintc_ioh,
+	pr = bus_space_read_4(sxiintc_iot, sxiintc_ioh,
 	    INTC_IRQ_PENDING_REG(IRQ2REG32(irq)));
-	bus_space_write_4(a1xintc_iot, a1xintc_ioh,
+	bus_space_write_4(sxiintc_iot, sxiintc_ioh,
 	    INTC_IRQ_PENDING_REG(IRQ2REG32(irq)),
 	    pr | (1 << IRQ2BIT32(irq)));
 
-	pr = bus_space_read_4(a1xintc_iot, a1xintc_ioh,
+	pr = bus_space_read_4(sxiintc_iot, sxiintc_ioh,
 	    INTC_ENABLE_REG(IRQ2REG32(irq)));
-	bus_space_write_4(a1xintc_iot, a1xintc_ioh,
+	bus_space_write_4(sxiintc_iot, sxiintc_ioh,
 	    INTC_ENABLE_REG(IRQ2REG32(irq)),
 	    pr | (1 << IRQ2BIT32(irq)));
 
-	TAILQ_FOREACH(ih, &a1xintc_handler[irq].iq_list, ih_list) {
+	TAILQ_FOREACH(ih, &sxiintc_handler[irq].iq_list, ih_list) {
 		if (ih->ih_arg != 0)
 			arg = ih->ih_arg;
 		else
@@ -369,11 +369,11 @@ a1xintc_irq_handler(void *frame)
 		if (ih->ih_func(arg)) 
 			ih->ih_count.ec_count++;
 	}
-	a1xintc_splx(s);
+	sxiintc_splx(s);
 }
 
 void *
-a1xintc_intr_establish(int irq, int level, int (*func)(void *),
+sxiintc_intr_establish(int irq, int level, int (*func)(void *),
     void *arg, char *name)
 {
 	int psw;
@@ -399,32 +399,32 @@ a1xintc_intr_establish(int irq, int level, int (*func)(void *),
 	ih->ih_irq = irq;
 	ih->ih_name = name;
 
-	TAILQ_INSERT_TAIL(&a1xintc_handler[irq].iq_list, ih, ih_list);
+	TAILQ_INSERT_TAIL(&sxiintc_handler[irq].iq_list, ih, ih_list);
 
 	if (name != NULL)
 		evcount_attach(&ih->ih_count, name, &ih->ih_irq);
 
-	er = bus_space_read_4(a1xintc_iot, a1xintc_ioh,
+	er = bus_space_read_4(sxiintc_iot, sxiintc_ioh,
 	    INTC_ENABLE_REG(IRQ2REG32(irq)));
-	bus_space_write_4(a1xintc_iot, a1xintc_ioh,
+	bus_space_write_4(sxiintc_iot, sxiintc_ioh,
 	    INTC_ENABLE_REG(IRQ2REG32(irq)),
 	    er | (1 << IRQ2BIT32(irq)));
 
-	a1xintc_calc_masks();
+	sxiintc_calc_masks();
 	
 	restore_interrupts(psw);
 	return (ih);
 }
 
 void *
-a1xintc_intr_establish_fdt(void *cookie, int *cell, int level,
+sxiintc_intr_establish_fdt(void *cookie, int *cell, int level,
     int (*func)(void *), void *arg, char *name)
 {
-	return a1xintc_intr_establish(cell[0], level, func, arg, name);
+	return sxiintc_intr_establish(cell[0], level, func, arg, name);
 }
 
 void
-a1xintc_intr_disestablish(void *cookie)
+sxiintc_intr_disestablish(void *cookie)
 {
 	struct intrhand *ih = cookie;
 	int irq = ih->ih_irq;
@@ -433,26 +433,26 @@ a1xintc_intr_disestablish(void *cookie)
 
 	psw = disable_interrupts(PSR_I);
 
-	TAILQ_REMOVE(&a1xintc_handler[irq].iq_list, ih, ih_list);
+	TAILQ_REMOVE(&sxiintc_handler[irq].iq_list, ih, ih_list);
 
 	if (ih->ih_name != NULL)
 		evcount_detach(&ih->ih_count);
 
 	free(ih, M_DEVBUF, 0);
 
-	er = bus_space_read_4(a1xintc_iot, a1xintc_ioh,
+	er = bus_space_read_4(sxiintc_iot, sxiintc_ioh,
 	    INTC_ENABLE_REG(IRQ2REG32(irq)));
-	bus_space_write_4(a1xintc_iot, a1xintc_ioh,
+	bus_space_write_4(sxiintc_iot, sxiintc_ioh,
 	    INTC_ENABLE_REG(IRQ2REG32(irq)),
 	    er & ~(1 << IRQ2BIT32(irq)));
 
-	a1xintc_calc_masks();
+	sxiintc_calc_masks();
 
 	restore_interrupts(psw);
 }
 
 const char *
-a1xintc_intr_string(void *cookie)
+sxiintc_intr_string(void *cookie)
 {
 	return "asd?";
 }
