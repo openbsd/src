@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.60 2016/08/03 17:14:41 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.61 2016/08/05 18:31:21 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -628,13 +628,14 @@ xen_intr(void)
 	for (row = 0; selector > 0; selector >>= 1, row++) {
 		if ((selector & 1) == 0)
 			continue;
-		pending = sc->sc_ipg->evtchn_pending[row] &
-		    ~(sc->sc_ipg->evtchn_mask[row]);
+		if ((sc->sc_ipg->evtchn_pending[row] &
+		    ~(sc->sc_ipg->evtchn_mask[row])) == 0)
+			continue;
+		pending = atomic_swap_ulong(&sc->sc_ipg->evtchn_pending[row],
+		    0) & ~(sc->sc_ipg->evtchn_mask[row]);
 		for (bit = 0; pending > 0; pending >>= 1, bit++) {
 			if ((pending & 1) == 0)
 				continue;
-			atomic_clearbit_ptr(&sc->sc_ipg->evtchn_pending[row],
-			    bit);
 			port = (row * LONG_BIT) + bit;
 			if ((xi = xen_lookup_intsrc(sc, port)) == NULL) {
 				printf("%s: unhandled interrupt on port %u\n",
