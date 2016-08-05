@@ -1684,7 +1684,7 @@ hv_service_common(struct hv_channel *ch, uint32_t *rlen, uint64_t *rid,
 	int rv;
 
 	rv = hv_channel_recv(ch, ch->ch_buf, ch->ch_buflen, rlen, rid, 0);
-	if ((rv && rv != EAGAIN) || *rlen == 0)
+	if (rv || *rlen == 0)
 		return (rv);
 	*hdr = (struct hv_icmsg_hdr *)&ch->ch_buf[sizeof(struct hv_pipe_hdr)];
 	if ((*hdr)->icmsgtype == HV_ICMSGTYPE_NEGOTIATE) {
