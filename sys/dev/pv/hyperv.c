@@ -693,7 +693,8 @@ hv_vmbus_connect(struct hv_softc *sc)
 	}
 
 	sc->sc_wevents = (uint32_t *)sc->sc_events;
-	sc->sc_revents = (uint32_t *)sc->sc_events + (PAGE_SIZE >> 1);
+	sc->sc_revents = (uint32_t *)((caddr_t)sc->sc_events +
+	    (PAGE_SIZE >> 1));
 
 	sc->sc_monitor[0] = km_alloc(PAGE_SIZE, &kv_any, &kp_zero, &kd_nowait);
 	if (sc->sc_monitor == NULL) {
