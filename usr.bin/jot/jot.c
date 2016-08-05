@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.30 2016/08/05 13:33:21 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.31 2016/08/05 13:43:38 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -195,9 +195,9 @@ main(int argc, char *argv[])
 			mask = 015;
 			break;
 		case 006:
-			reps = REPS_DEF;
-			mask = 016;
-			break;
+			s = ender > begin ? 1 : -1;
+			mask = 007;
+			/* FALLTHROUGH */
 		case 007:
 			if (randomize) {
 				reps = REPS_DEF;
