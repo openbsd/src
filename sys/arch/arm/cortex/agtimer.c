@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.5 2015/12/12 19:57:00 mmcc Exp $ */
+/* $OpenBSD: agtimer.c,v 1.6 2016/08/05 13:31:29 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -315,7 +315,7 @@ agtimer_cpu_initclocks()
 	pc->pc_nexttickevent = pc->pc_nextstatevent = next;
 
 	reg = agtimer_get_ctrl();
-	reg &= GTIMER_CNTP_CTL_IMASK;
+	reg &= ~GTIMER_CNTP_CTL_IMASK;
 	reg |= GTIMER_CNTP_CTL_ENABLE;
 	agtimer_set_tval(sc->sc_ticks_per_second);
 	agtimer_set_ctrl(reg);
@@ -391,7 +391,7 @@ agtimer_startclock(void)
 	pc->pc_nexttickevent = pc->pc_nextstatevent = nextevent;
 
 	reg = agtimer_get_ctrl();
-	reg &= GTIMER_CNTP_CTL_IMASK;
+	reg &= ~GTIMER_CNTP_CTL_IMASK;
 	reg |= GTIMER_CNTP_CTL_ENABLE;
 	agtimer_set_tval(sc->sc_ticks_per_second);
 	agtimer_set_ctrl(reg);
