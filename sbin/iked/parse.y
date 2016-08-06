@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.56 2016/07/20 12:31:00 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.57 2016/08/06 07:08:59 pascal Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -823,7 +823,6 @@ ikeauth		: /* empty */			{
 			memcpy(&$$, &$2, sizeof($$));
 			$$.auth_method = IKEV2_AUTH_SHARED_KEY_MIC;
 			$$.auth_eap = 0;
-			$$.auth_length = 0;
 		}
 		| EAP STRING			{
 			unsigned int i;
