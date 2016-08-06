@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.7 2016/07/17 00:25:21 jsg Exp $ */
+/* $OpenBSD: omgpio.c,v 1.8 2016/08/06 18:21:34 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -616,11 +616,7 @@ omgpio_intr_establish(struct omgpio_softc *sc, unsigned int gpio, int level, int
 
 	psw = disable_interrupts(PSR_I);
 
-	/* no point in sleeping unless someone can free memory. */
-	ih = (struct intrhand *)malloc( sizeof *ih, M_DEVBUF,
-	    cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("intr_establish: can't malloc handler info");
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_ipl = level;

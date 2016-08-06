@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiintc.c,v 1.1 2016/08/05 20:38:17 kettenis Exp $	*/
+/*	$OpenBSD: sxiintc.c,v 1.2 2016/08/06 18:21:34 patrick Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -388,11 +388,7 @@ sxiintc_intr_establish(int irq, int level, int (*func)(void *),
 
 	psw = disable_interrupts(PSR_I);
 
-	/* no point in sleeping unless someone can free memory. */
-	ih = (struct intrhand *)malloc (sizeof *ih, M_DEVBUF,
-	    cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("intr_establish: can't malloc handler info\n");
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_ipl = level;
