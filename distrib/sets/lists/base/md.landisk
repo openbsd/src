@@ -887,6 +887,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ofw/fdt.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ofw/ofw_gpio.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ofw/ofw_pci.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/dev/ofw/ofw_pinctrl.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/onewire
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/onewire/onewiredevs.ph
