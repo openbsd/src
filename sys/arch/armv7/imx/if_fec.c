@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.13 2016/08/04 15:52:52 kettenis Exp $ */
+/* $OpenBSD: if_fec.c,v 1.14 2016/08/06 04:03:20 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -136,17 +136,6 @@
 
 #define ENET_MII_CLK		2500
 #define ENET_ALIGNMENT		16
-
-#define ENET_HUMMINGBOARD_PHY_RST		(3*32+15)
-#define ENET_SABRELITE_PHY			6
-#define ENET_SABRELITE_PHY_RST			(2*32+23)
-#define ENET_SABRESD_PHY_RST			(0*32+25)
-#define ENET_NITROGEN6X_PHY_RST			(0*32+27)
-#define ENET_UDOO_PHY				6
-#define ENET_UDOO_PHY_RST			(2*32+23)
-#define ENET_UDOO_PWR				(1*32+31)
-#define ENET_NOVENA_PHY				7
-#define ENET_NOVENA_PHY_RST			(2*32+23)
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
