@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.12 2016/08/06 17:25:14 patrick Exp $ */
+/* $OpenBSD: ampintc.c,v 1.13 2016/08/06 18:18:48 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -553,11 +553,7 @@ ampintc_intr_establish(int irqno, int level, int (*func)(void *),
 		panic("ampintc_intr_establish: bogus irqnumber %d: %s",
 		     irqno, name);
 
-	/* no point in sleeping unless someone can free memory. */
-	ih = (struct intrhand *)malloc (sizeof *ih, M_DEVBUF,
-	    cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("intr_establish: can't malloc handler info");
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_ipl = level;
