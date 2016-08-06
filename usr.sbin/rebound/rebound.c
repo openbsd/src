@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.65 2016/07/02 17:09:09 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.66 2016/08/06 19:56:51 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -710,6 +710,7 @@ main(int argc, char **argv)
 		kevent(kq, &kev, 1, NULL, 0, NULL);
 
 		/* wait for something to happen: HUP or child exiting */
+		timeout = NULL;
 		while (1) {
 			r = kevent(kq, NULL, 0, &kev, 1, timeout);
 			if (r == -1)
