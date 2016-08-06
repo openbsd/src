@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.4 2015/10/23 04:39:24 guenther Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.5 2016/08/06 19:16:09 guenther Exp $	*/
 /*	$NetBSD: sigprocmask.S,v 1.5 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ SYSENTRY_HIDDEN(sigprocmask)
 	moveq	r1, #0x00000000
 	ldrne	r1, [r1]
 	SYSTRAP(sigprocmask)
-	bcs	PIC_SYM(CERROR, PLT)
+	bcs	CERROR
 	teq	r2, #0x00000000
 	strne	r0, [r2]
 	mov	r0, #0x00000000

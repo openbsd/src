@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.4 2015/08/31 02:53:56 guenther Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.5 2016/08/06 19:16:09 guenther Exp $	*/
 /*	$NetBSD: ffs.S,v 1.5 2003/04/05 23:08:52 bjh21 Exp $	*/
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include "SYS.h"
+#include "DEFS.h"
 
 /*
  * ffs - find first set bit, this algorithm isolates the first set

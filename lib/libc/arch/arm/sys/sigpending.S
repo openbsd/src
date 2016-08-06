@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.4 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.5 2016/08/06 19:16:09 guenther Exp $	*/
 /*	$NetBSD: sigpending.S,v 1.5 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 SYSENTRY(sigpending)
 	mov	r2, r0
 	SYSTRAP(sigpending)
-	bcs	PIC_SYM(CERROR, PLT)
+	bcs	CERROR
 	str	r0, [r2]
 	mov	r0, #0x00000000
 	mov	r15, r14

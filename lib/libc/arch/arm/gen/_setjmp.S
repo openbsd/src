@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.3 2016/05/23 00:18:57 guenther Exp $	*/
+/*	$OpenBSD: _setjmp.S,v 1.4 2016/08/06 19:16:09 guenther Exp $	*/
 /*	$NetBSD: _setjmp.S,v 1.5 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 #include <machine/setjmp.h>
 
 /*
@@ -69,6 +69,7 @@ ENTRY(_setjmp)
 
 .L_setjmp_magic:
 	.word	_JB_MAGIC__SETJMP
+END_STRONG(_setjmp)
 
 ENTRY(_longjmp)
 	ldr	r2, .L_setjmp_magic
@@ -101,5 +102,6 @@ ENTRY(_longjmp)
 
 	/* validation failed, die die die. */
 botch:
-	bl	PIC_SYM(_libc_abort, PLT)
+	bl	_HIDDEN(abort)
 	b	. - 8		/* Cannot get here */
+END_STRONG(_longjmp)

@@ -1,4 +1,4 @@
-/* $OpenBSD: tfork_thread.S,v 1.3 2015/09/10 13:29:09 guenther Exp $ */
+/* $OpenBSD: tfork_thread.S,v 1.4 2016/08/06 19:16:09 guenther Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -25,7 +25,7 @@
 
 ENTRY(__tfork_thread)
 	SYSTRAP(__tfork)
-	bcs	1f		/* XXX can this be PIC_SYM(CERROR, PLT) ? */
+	bcs	CERROR
 
 	/* check if we are parent or child */
 	cmp	r0, #0
@@ -37,6 +37,4 @@ ENTRY(__tfork_thread)
 	mov	pc, r2
 	nop
 	SYSTRAP(__threxit)
-1:
-	b	PIC_SYM(CERROR, PLT)
 END(__tfork_thread)

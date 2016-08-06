@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.4 2016/05/23 00:18:57 guenther Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.5 2016/08/06 19:16:09 guenther Exp $	*/
 /*	$NetBSD: setjmp.S,v 1.5 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 #include <machine/setjmp.h>
 
 /*
@@ -51,7 +51,7 @@ ENTRY(setjmp)
 	stmfd	sp!, {r0, r14}
 	mov	r0, #0x00000000
 
-	bl	PIC_SYM(_C_LABEL(_libc_sigblock), PLT)
+	bl	_HIDDEN(sigblock)
 	mov	r1, r0
 
 	ldmfd	sp!, {r0, r14}
@@ -78,6 +78,7 @@ ENTRY(setjmp)
 
 .Lsetjmp_magic:
 	.word	_JB_MAGIC_SETJMP
+END_STRONG(setjmp)
 
 
 ENTRY(longjmp)
@@ -94,7 +95,7 @@ ENTRY(longjmp)
 	sub	sp, sp, #4	/* align the stack */
 
 	mov	r0, r2
-	bl	PIC_SYM(_C_LABEL(_libc_sigsetmask), PLT)
+	bl	_HIDDEN(sigsetmask)
 
 	add	sp, sp, #4	/* unalign the stack */
 	ldmfd	sp!, {r0, r1, r14} 
@@ -130,5 +131,6 @@ ENTRY(longjmp)
 
 	/* validation failed, die die die. */
 botch:
-	bl	PIC_SYM(_libc_abort, PLT)
+	bl	_HIDDEN(abort)
 	b	. - 8		/* Cannot get here */
+END_STRONG(longjmp)

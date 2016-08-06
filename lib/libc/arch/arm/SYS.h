@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.15 2016/05/07 19:05:21 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.16 2016/08/06 19:16:09 guenther Exp $	*/
 /*	$NetBSD: SYS.h,v 1.8 2003/08/07 16:42:02 agc Exp $	*/
 
 /*-
@@ -35,31 +35,8 @@
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 #include <sys/syscall.h>
-
-
-/*
- * We define a hidden alias with the prefix "_libc_" for each global symbol
- * that may be used internally.  By referencing _libc_x instead of x, other
- * parts of libc prevent overriding by the application and avoid unnecessary
- * relocations.
- */
-#define _HIDDEN(x)		_libc_##x
-#define _HIDDEN_ALIAS(x,y)			\
-	STRONG_ALIAS(_HIDDEN(x),y);		\
-	.hidden _HIDDEN(x)
-#define _HIDDEN_FALIAS(x,y)			\
-	_HIDDEN_ALIAS(x,y);			\
-	.type _HIDDEN(x),#function
-
-/*
- * For functions implemented in ASM that aren't syscalls.
- *   END_STRONG(x)	Like DEF_STRONG() in C; for standard/reserved C names
- *   END_WEAK(x)	Like DEF_WEAK() in C; for non-ISO C names
- */
-#define	END_STRONG(x)	END(x); _HIDDEN_FALIAS(x,x); END(_HIDDEN(x))
-#define	END_WEAK(x)	END_STRONG(x); .weak x
 
 
 #define SYSENTRY(x)					\
@@ -90,10 +67,10 @@
 
 #define _SYSCALL(x, y)							\
 	_SYSCALL_NOERROR(x,y);						\
-	bcs PIC_SYM(CERROR, PLT)
+	bcs CERROR
 #define _SYSCALL_HIDDEN(x, y)						\
 	_SYSCALL_HIDDEN_NOERROR(x,y);					\
-	bcs PIC_SYM(CERROR, PLT)
+	bcs CERROR
 
 #define SYSCALL_NOERROR(x)						\
 	_SYSCALL_NOERROR(x,x)

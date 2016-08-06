@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsetjmp.S,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
+/*	$OpenBSD: sigsetjmp.S,v 1.3 2016/08/06 19:16:09 guenther Exp $	*/
 /*	$NetBSD: sigsetjmp.S,v 1.3 2002/08/17 19:54:30 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 #include <machine/setjmp.h>
 
 /*
@@ -48,8 +48,8 @@
 
 ENTRY(sigsetjmp)
 	teq	r1, #0
-	beq	PIC_SYM(_C_LABEL(_setjmp), PLT)
-	b	PIC_SYM(_C_LABEL(setjmp), PLT)
+	beq	_HIDDEN(_setjmp)
+	b	_HIDDEN(setjmp)
 
 .L_setjmp_magic:
 	.word	_JB_MAGIC__SETJMP
@@ -58,5 +58,5 @@ ENTRY(siglongjmp)
 	ldr	r2, .L_setjmp_magic
 	ldr	r3, [r0]
 	teq	r2, r3
-	beq	PIC_SYM(_C_LABEL(_longjmp), PLT)
-	b	PIC_SYM(_C_LABEL(longjmp), PLT)
+	beq	_HIDDEN(_longjmp)
+	b	_HIDDEN(longjmp)

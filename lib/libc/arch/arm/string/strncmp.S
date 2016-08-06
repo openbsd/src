@@ -1,4 +1,4 @@
-/*	$OpenBSD: strncmp.S,v 1.5 2015/08/31 02:53:56 guenther Exp $	*/
+/*	$OpenBSD: strncmp.S,v 1.6 2016/08/06 19:16:09 guenther Exp $	*/
 /*      $NetBSD: strncmp.S,v 1.2 2003/04/05 23:08:52 bjh21 Exp $ */
 
 /*
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "SYS.h"
+#include "DEFS.h"
 
 ENTRY(strncmp)
 /* if (len == 0) return 0 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.8 2016/05/30 05:18:52 guenther Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.9 2016/08/06 19:16:09 guenther Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.7 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@ ENTRY(sbrk)
 	mov	r3, r0
 	add	r0, r0, r1
 	SYSTRAP(break)
-	bcs	PIC_SYM(CERROR, PLT)
+	bcs	CERROR
 
 	/* Store new curbrk value */
 	ldr	r0, [r2]
