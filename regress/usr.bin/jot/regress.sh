@@ -1,4 +1,4 @@
-# $OpenBSD: regress.sh,v 1.2 2016/08/05 13:24:04 tb Exp $
+# $OpenBSD: regress.sh,v 1.3 2016/08/06 14:41:14 tb Exp $
 # $FreeBSD: head/usr.bin/jot/tests/regress.sh 208728 2010-06-02 07:47:29Z brian $
 
 JOT=${JOT-jot}
@@ -37,6 +37,9 @@ REGRESSION_TEST([[dhhd2]], [[${JOT} - 20 160 -]])
 REGRESSION_TEST([[ddhh2]], [[${JOT} - - 160 2]])
 REGRESSION_TEST([[rand1]], [[${JOT} -r 10000 0 9 | sort -u]])
 REGRESSION_TEST([[rand2]], [[${JOT} -r 10000 9 0 | sort -u]])
+# rdhhh and rhdhh test if begin and ender are set to the default with jot -r
+REGRESSION_TEST([[rdhhh]], [[${JOT} -r 100 - 10 2 2>/dev/null | sort -n | head -1]])
+REGRESSION_TEST([[rhdhh]], [[${JOT} -r 100 90 - 2 2>/dev/null | sort -n | tail -1]])
 REGRESSION_TEST([[n21]], [[${JOT} 21 -1 1.00]])
 REGRESSION_TEST([[ascii]], [[${JOT} -c 128 0]])
 REGRESSION_TEST([[xaa]], [[${JOT} -w xa%c 26 a]])
