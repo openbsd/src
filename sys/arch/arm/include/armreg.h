@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.32 2016/07/31 06:24:38 jsg Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.33 2016/08/06 16:46:25 kettenis Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -338,5 +338,21 @@
 #define INSN_SIZE		4		/* Always 4 bytes */
 #define INSN_COND_MASK		0xf0000000	/* Condition mask */
 #define INSN_COND_AL		0xe0000000	/* Always condition */
+
+/* Translation Table Base Register */
+#define TTBR_C			(1 << 0)	/* without MPE */
+#define TTBR_S			(1 << 1)
+#define TTBR_IMP		(1 << 2)
+#define TTBR_RGN_MASK		(3 << 3)
+#define  TTBR_RGN_NC		(0 << 3)
+#define  TTBR_RGN_WBWA		(1 << 3)
+#define  TTBR_RGN_WT		(2 << 3)
+#define  TTBR_RGN_WBNWA		(3 << 3)
+#define TTBR_NOS		(1 << 5)
+#define TTBR_IRGN_MASK		((1 << 0) | (1 << 6))
+#define  TTBR_IRGN_NC		((0 << 0) | (0 << 6))
+#define  TTBR_IRGN_WBWA		((0 << 0) | (1 << 6))
+#define  TTBR_IRGN_WT		((1 << 0) | (0 << 6))
+#define  TTBR_IRGN_WBNWA	((1 << 0) | (1 << 6))
 
 #endif

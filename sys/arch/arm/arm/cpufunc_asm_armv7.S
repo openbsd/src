@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm_armv7.S,v 1.12 2016/08/05 19:56:52 kettenis Exp $ */
+/* $OpenBSD: cpufunc_asm_armv7.S,v 1.13 2016/08/06 16:46:25 kettenis Exp $ */
 /*
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
  *
@@ -17,6 +17,7 @@
 
 #include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/armreg.h>
 #include <arm/sysreg.h>
 
 ENTRY(armv7_cpu_sleep)
@@ -35,6 +36,9 @@ ENTRY(armv7_periphbase)
 	mrc	CP15_CBAR(r0)	
 	mov	pc, lr
 
+/* Suitable default for a uniprocessor kernel. */
+#define TTBR_DEFAULT	(TTBR_IRGN_WBNWA | TTBR_RGN_WBNWA)
+
 /*
  * Functions to set the MMU Translation Table Base register
  */
@@ -44,6 +48,7 @@ ENTRY(armv7_setttb)
 	dsb	sy
 	isb	sy
 
+	orr	r0, r0, #TTBR_DEFAULT
 	mcr	CP15_TTBR0(r0)		/* load new TTB */
 	mcr	CP15_TLBIALL(r0)	/* invalidate unified TLB */
 	dsb	sy
@@ -232,6 +237,7 @@ ENTRY(armv7_context_switch)
 	dsb	sy
 	isb	sy
 
+	orr	r0, r0, #TTBR_DEFAULT
 	mcr	CP15_TTBR0(r0)		/* set the new TTB */
 	mcr	CP15_TLBIALL(r0)	/* and flush the unified tlb */
 	dsb	sy

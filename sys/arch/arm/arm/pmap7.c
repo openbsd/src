@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.32 2016/08/03 11:52:43 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.33 2016/08/06 16:46:25 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -3291,7 +3291,7 @@ pmap_pte_init_generic(void)
 void
 pmap_pte_init_armv7(void)
 {
-	uint32_t cachereg;
+	uint32_t id_mmfr3;
 
 	/*
 	 * XXX 
@@ -3305,9 +3305,10 @@ pmap_pte_init_armv7(void)
 	pte_l2_l_cache_mode = L2_C|L2_B;
 	pte_l2_s_cache_mode = L2_C|L2_B;
 
-	pte_l1_s_cache_mode_pt = L1_S_C;
-	pte_l2_l_cache_mode_pt = L2_C;
-	pte_l2_s_cache_mode_pt = L2_C;
+	pte_l1_s_cache_mode_pt = L1_S_B|L1_S_C;
+	pte_l2_l_cache_mode_pt = L2_B|L2_C;
+	pte_l2_s_cache_mode_pt = L2_B|L2_C;
+	pmap_needs_pte_sync = 1;
 
 	pte_l1_s_cache_mask = L1_S_CACHE_MASK_v7;
 	pte_l2_l_cache_mask = L2_L_CACHE_MASK_v7;
@@ -3339,26 +3340,10 @@ pmap_pte_init_armv7(void)
 	pte_l1_c_proto = L1_C_PROTO_v7;
 	pte_l2_s_proto = L2_S_PROTO_v7;
 
-	/* probe L1 dcache */
-	__asm volatile("mcr p15, 2, %0, c0, c0, 0" :: "r" (0) );
-	__asm volatile("mrc p15, 1, %0, c0, c0, 0" : "=r" (cachereg) );
-	if ((cachereg & 0x80000000) == 0) {
-#if 0
-		/*
-		 * pmap_pte_init_generic() has defaulted to write-through
-		 * settings for pte pages, but the cache does not support
-		 * write-through.
-		 */
-		pmap_needs_pte_sync = 1;
-		pte_l1_s_cache_mode_pt = L1_S_B|L1_S_C;
-		pte_l2_l_cache_mode_pt = L2_B|L2_C;
-		pte_l2_s_cache_mode_pt = L2_B|L2_C;
-#endif
-		/* XXX: Don't cache PTEs, until write-back is fixed. */
-		pte_l1_s_cache_mode_pt = L1_S_V7_TEX(1);
-		pte_l2_l_cache_mode_pt = L2_V7_L_TEX(1);
-		pte_l2_s_cache_mode_pt = L2_V7_S_TEX(1);
-	}
+	/* Check for coherent walk. */
+	__asm volatile("mrc p15, 0, %0, c0, c1, 7" : "=r"(id_mmfr3));
+	if ((id_mmfr3 & 0x00f00000) == 0x00100000)
+		pmap_needs_pte_sync = 0;
 }
 
 uint32_t pmap_alias_dist;
