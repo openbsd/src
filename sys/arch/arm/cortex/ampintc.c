@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.10 2016/08/04 15:52:52 kettenis Exp $ */
+/* $OpenBSD: ampintc.c,v 1.11 2016/08/06 11:04:47 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -583,17 +583,25 @@ ampintc_intr_establish(int irqno, int level, int (*func)(void *),
 void
 ampintc_intr_disestablish(void *cookie)
 {
-#if 0
-	int psw;
-	struct intrhand *ih = cookie;
-	int irqno = ih->ih_irq;
+	struct ampintc_softc	*sc = ampintc;
+	struct intrhand		*ih = cookie;
+	int			 psw;
+
+#ifdef DEBUG_INTC
+	printf("ampintc_intr_disestablish irq %d level %d [%s]\n",
+	    ih->ih_irq, ih->ih_ipl, ih->ih_name);
+#endif
+
 	psw = disable_interrupts(PSR_I);
-	TAILQ_REMOVE(&sc->sc_ampintc_handler[irqno].iq_list, ih, ih_list);
+
+	TAILQ_REMOVE(&sc->sc_ampintc_handler[ih->ih_irq].iq_list, ih, ih_list);
 	if (ih->ih_name != NULL)
 		evcount_detach(&ih->ih_count);
-	free(ih, M_DEVBUF, 0);
+	free(ih, M_DEVBUF, sizeof(*ih));
+
+	ampintc_calc_mask();
+
 	restore_interrupts(psw);
-#endif
 }
 
 const char *
