@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.15 2016/08/04 15:52:52 kettenis Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.16 2016/08/06 17:18:38 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -33,10 +33,10 @@
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxccmvar.h>
-#include <armv7/imx/imxiomuxcvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
+#include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/usb/ehcireg.h>
@@ -172,7 +172,7 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	imxiomuxc_pinctrlbyname(faa->fa_node, "default");
+	pinctrl_byname(faa->fa_node, "default");
 
 	imxccm_enable_usboh3();
 	delay(1000);
@@ -325,7 +325,7 @@ imxehci_enable_vbus(uint32_t phandle)
 	if (!OF_is_compatible(node, "regulator-fixed"))
 		return;
 
-	imxiomuxc_pinctrlbyname(node, "default");
+	pinctrl_byname(node, "default");
 
 	if (OF_getproplen(node, "enable-active-high") == 0)
 		active = 1;

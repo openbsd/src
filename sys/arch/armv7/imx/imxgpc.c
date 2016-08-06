@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxgpc.c,v 1.1 2016/08/04 14:31:50 kettenis Exp $	*/
+/*	$OpenBSD: imxgpc.c,v 1.2 2016/08/06 17:18:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -56,6 +56,7 @@ imxgpc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_node = faa->fa_node;
 	sc->sc_ic.ic_cookie = &sc->sc_ic;
 	sc->sc_ic.ic_establish = arm_intr_parent_establish_fdt;
+	sc->sc_ic.ic_disestablish = arm_intr_parent_disestablish_fdt;
 	arm_intr_register_fdt(&sc->sc_ic);
 
 	printf("\n");

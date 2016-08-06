@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.10 2016/08/04 15:52:52 kettenis Exp $ */
+/* $OpenBSD: imxiic.c,v 1.11 2016/08/06 17:18:38 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -25,11 +25,11 @@
 #include <machine/fdt.h>
 
 #include <armv7/armv7/armv7var.h>
-#include <armv7/imx/imxiomuxcvar.h>
 #include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxiicvar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
 /* registers */
@@ -135,7 +135,7 @@ imxiic_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/* set iomux pins */
-	imxiomuxc_pinctrlbyname(faa->fa_node, "default");
+	pinctrl_byname(faa->fa_node, "default");
 
 	/* set speed to 100kHz */
 	imxiic_setspeed(sc, 100);

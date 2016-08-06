@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiomuxc.c,v 1.5 2016/07/10 20:53:04 patrick Exp $ */
+/* $OpenBSD: imxiomuxc.c,v 1.6 2016/08/06 17:18:38 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -32,6 +32,7 @@
 #include <armv7/imx/imxiomuxcvar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pinctrl.h>
 
 /* registers */
 #define IOMUXC_GPR1			0x004
@@ -116,7 +117,7 @@ struct imxiomuxc_softc {
 struct imxiomuxc_softc *imxiomuxc_sc;
 
 void imxiomuxc_attach(struct device *parent, struct device *self, void *args);
-int imxiomuxc_pinctrl(uint32_t);
+int imxiomuxc_pinctrl(uint32_t, void *);
 
 struct cfattach imxiomuxc_ca = {
 	sizeof (struct imxiomuxc_softc), NULL, imxiomuxc_attach
@@ -131,69 +132,26 @@ imxiomuxc_attach(struct device *parent, struct device *self, void *args)
 {
 	struct armv7_attach_args *aa = args;
 	struct imxiomuxc_softc *sc = (struct imxiomuxc_softc *) self;
+	int node;
 
 	sc->sc_iot = aa->aa_iot;
 	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
 	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("imxiomuxc_attach: bus_space_map failed!");
 
+	node = OF_finddevice("/dev/soc/iomuxc@020e0000");
+	if (node != -1)
+		pinctrl_register(node, imxiomuxc_pinctrl, sc);
+
 	printf("\n");
 	imxiomuxc_sc = sc;
 }
 
 int
-imxiomuxc_pinctrlbyid(int node, int id)
+imxiomuxc_pinctrl(uint32_t phandle, void *cookie)
 {
-	char pinctrl[32];
-	uint32_t *phandles;
-	int len, i;
-
-	snprintf(pinctrl, sizeof(pinctrl), "pinctrl-%d", id);
-	len = OF_getproplen(node, pinctrl);
-	if (len <= 0)
-		return -1;
-
-	phandles = malloc(len, M_TEMP, M_WAITOK);
-	OF_getpropintarray(node, pinctrl, phandles, len);
-	for (i = 0; i < len / sizeof(uint32_t); i++)
-		imxiomuxc_pinctrl(phandles[i]);
-	free(phandles, M_TEMP, len);
-	return 0;
-}
-
-int
-imxiomuxc_pinctrlbyname(int node, const char *config)
-{
-	char *names;
-	char *name;
-	char *end;
-	int id = 0;
-	int len;
-
-	len = OF_getproplen(node, "pinctrl-names");
-	if (len <= 0)
-		return -1;
-
-	names = malloc(len, M_TEMP, M_WAITOK);
-	OF_getprop(node, "pinctrl-names", names, len);
-	end = names + len;
-	name = names;
-	while (name < end) {
-		if (strcmp(name, config) == 0) {
-			free(names, M_TEMP, len);
-			return imxiomuxc_pinctrlbyid(node, id);
-		}
-		name += strlen(name) + 1;
-		id++;
-	}
-	free(names, M_TEMP, len);
-	return -1;
-}
-
-int
-imxiomuxc_pinctrl(uint32_t phandle)
-{
-	struct imxiomuxc_softc *sc = imxiomuxc_sc;
+	struct imxiomuxc_softc *sc = cookie;
+	char name[31];
 	uint32_t *pins;
 	int npins;
 	int node;
@@ -203,6 +161,9 @@ imxiomuxc_pinctrl(uint32_t phandle)
 	node = OF_getnodebyphandle(phandle);
 	if (node == 0)
 		return -1;
+
+	OF_getprop(node, "name", name, sizeof(name));
+	name[sizeof(name) - 1] = 0;
 
 	len = OF_getproplen(node, "fsl,pins");
 	if (len <= 0)

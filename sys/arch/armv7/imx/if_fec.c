@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.14 2016/08/06 04:03:20 jsg Exp $ */
+/* $OpenBSD: if_fec.c,v 1.15 2016/08/06 17:18:38 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -47,10 +47,10 @@
 #include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxgpiovar.h>
-#include <armv7/imx/imxiomuxcvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
+#include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
 /* configuration registers */
@@ -298,7 +298,7 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dma_tag = faa->fa_dmat;
 
-	imxiomuxc_pinctrlbyname(faa->fa_node, "default");
+	pinctrl_byname(faa->fa_node, "default");
 
 	/* power it up */
 	imxccm_enable_enet();

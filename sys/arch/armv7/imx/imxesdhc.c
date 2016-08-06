@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.27 2016/08/04 15:52:52 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.28 2016/08/06 17:18:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -34,11 +34,10 @@
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxccmvar.h>
-#include <armv7/imx/imxgpiovar.h>
-#include <armv7/imx/imxiomuxcvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
+#include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
 /* registers */
@@ -310,7 +309,7 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	imxiomuxc_pinctrlbyname(faa->fa_node, "default");
+	pinctrl_byname(faa->fa_node, "default");
 
 	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_SDMMC,
 	   imxesdhc_intr, sc, sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.11 2016/08/04 15:52:52 kettenis Exp $ */
+/* $OpenBSD: imxuart.c,v 1.12 2016/08/06 17:18:38 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -31,7 +31,6 @@
 
 #include <dev/cons.h>
 
-
 #ifdef DDB
 #include <ddb/db_var.h>
 #endif
@@ -46,8 +45,9 @@
 #include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxiomuxcvar.h>
 
-#include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/fdt.h>
 
 #define DEVUNIT(x)      (minor(x) & 0x7f)
 #define DEVCUA(x)       (minor(x) & 0x80)
@@ -167,7 +167,7 @@ imxuart_attach(struct device *parent, struct device *self, void *aux)
 	if (faa->fa_nreg < 1)
 		return;
 
-	imxiomuxc_pinctrlbyname(faa->fa_node, "default");
+	pinctrl_byname(faa->fa_node, "default");
 
 	sc->sc_irq = arm_intr_establish_fdt(faa->fa_node, IPL_TTY,
 	    imxuart_intr, sc, sc->sc_dev.dv_xname);

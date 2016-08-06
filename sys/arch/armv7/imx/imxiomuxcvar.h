@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiomuxcvar.h,v 1.2 2016/07/10 11:46:28 kettenis Exp $ */
+/* $OpenBSD: imxiomuxcvar.h,v 1.3 2016/08/06 17:18:38 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -17,9 +17,6 @@
 
 #ifndef IMXIOMUXCVAR_H
 #define IMXIOMUXCVAR_H
-
-int imxiomuxc_pinctrlbyid(int node, int id);
-int imxiomuxc_pinctrlbyname(int node, const char *);
 
 void imxiomuxc_enable_sata(void);
 void imxiomuxc_enable_pcie(void);
