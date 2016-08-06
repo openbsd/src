@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.38 2016/08/06 00:40:54 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.39 2016/08/06 00:54:02 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -103,7 +103,7 @@ usb*		at ehci?	#flags 0x1
 # ARM Versatile Express
 vexpress0	at mainbus?
 sysreg*		at vexpress?
-pluart*		at vexpress?
+pluart*		at fdt?
 plrtc*		at fdt?
 virtio*		at fdt?
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl011.c,v 1.4 2016/07/26 22:10:10 patrick Exp $	*/
+/*	$OpenBSD: pl011.c,v 1.5 2016/08/06 00:54:02 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -38,10 +38,7 @@
 #endif
 
 #include <machine/bus.h>
-//#include <machine/clock.h>
-#if NFDT > 0
 #include <machine/fdt.h>
-#endif
 #include <arm/armv7/armv7var.h>
 #include <armv7/vexpress/pl011reg.h>
 #include <armv7/vexpress/pl011var.h>
@@ -49,6 +46,7 @@
 #include <armv7/armv7/armv7_machdep.h>
 
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/openfirm.h>
 
 #define DEVUNIT(x)      (minor(x) & 0x7f)
 #define DEVCUA(x)       (minor(x) & 0x80)
@@ -154,58 +152,34 @@ pl011_init_cons(void)
 int
 pl011probe(struct device *parent, void *self, void *aux)
 {
-#if NFDT > 0
-	struct armv7_attach_args *aa = aux;
+	struct fdt_attach_args *faa = aux;
 
-	if (fdt_node_compatible("arm,pl011", aa->aa_node))
-		return 1;
-#endif
-
-	return 0;
+	return OF_is_compatible(faa->fa_node, "arm,pl011");
 }
 
 struct cdevsw pl011dev =
 	cdev_tty_init(3/*XXX NUART */ ,pl011);		/* 12: serial port */
 
 void
-pl011attach(struct device *parent, struct device *self, void *args)
+pl011attach(struct device *parent, struct device *self, void *aux)
 {
-	struct armv7_attach_args *aa = args;
+	struct fdt_attach_args *faa = aux;
 	struct pl011_softc *sc = (struct pl011_softc *) self;
-	struct armv7mem mem;
-	int irq;
 
-#if NFDT > 0
-	if (aa->aa_node) {
-		struct fdt_reg reg;
-
-		if (fdt_get_reg(aa->aa_node, 0, &reg))
-			panic("%s: could not extract memory data from FDT",
-			  __func__);
-		mem.addr = reg.addr;
-		mem.size = reg.size;
-
-		if (fdt_node_property_ints(aa->aa_node, "interrupts",
-		    ints, 3) != 3)
-			panic("%s: could not extract interrupt data from FDT",
-			    __func__);
-		irq = ints[1];
-	} else
-#endif
-	{
-		irq = aa->aa_dev->irq[0];
-		mem.addr = aa->aa_dev->mem[0].addr;
-		mem.size = aa->aa_dev->mem[0].size;
+	if (faa->fa_nreg < 1) {
+		printf(": no register data\n");
+		return;
 	}
 
-	sc->sc_irq = arm_intr_establish(irq, IPL_TTY, pl011_intr,
+	sc->sc_irq = arm_intr_establish_fdt(faa->fa_node, IPL_TTY, pl011_intr,
 	    sc, sc->sc_dev.dv_xname);
 
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, mem.addr, mem.size, 0, &sc->sc_ioh))
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr, faa->fa_reg[0].size,
+	    0, &sc->sc_ioh))
 		panic("pl011attach: bus_space_map failed!");
 
-	if (mem.addr == pl011consaddr)
+	if (faa->fa_reg[0].addr == pl011consaddr)
 		printf(" console");
 
 	timeout_set(&sc->sc_diag_tmo, pl011_diag, sc);
