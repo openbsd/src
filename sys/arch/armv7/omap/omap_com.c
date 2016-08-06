@@ -1,4 +1,4 @@
-/* $OpenBSD: omap_com.c,v 1.8 2016/07/27 11:45:02 patrick Exp $ */
+/* $OpenBSD: omap_com.c,v 1.9 2016/08/06 10:07:45 jsg Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -102,20 +102,14 @@ omapuart_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (struct com_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	int irq;
 
-	if (faa->fa_nreg != 1 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
+	if (faa->fa_nreg < 1)
 		return;
 
 	sc->sc_iot = &armv7_a4x_bs_tag; /* XXX: This sucks */
 	sc->sc_iobase = faa->fa_reg[0].addr;
 	sc->sc_frequency = 48000000;
 	sc->sc_uarttype = COM_UART_TI16750;
-
-	if (faa->fa_nintr == 1)
-		irq = faa->fa_intr[0];
-	else
-		irq = faa->fa_intr[1];
 
 	if (bus_space_map(sc->sc_iot, sc->sc_iobase,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
@@ -127,7 +121,7 @@ omapuart_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(sc);
 
-	(void)arm_intr_establish(irq, IPL_TTY, comintr,
+	(void)arm_intr_establish_fdt(faa->fa_node, IPL_TTY, comintr,
 	    sc, sc->sc_dev.dv_xname);
 }
 

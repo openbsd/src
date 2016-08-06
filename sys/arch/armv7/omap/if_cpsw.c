@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.38 2016/07/27 11:45:02 patrick Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.39 2016/08/06 10:07:45 jsg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -338,19 +338,11 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	int error;
 	int node;
 	u_int i;
-	uint32_t intr[4];
 	uint32_t memsize;
 	char name[32];
 
-	if (faa->fa_nreg < 1 || (faa->fa_nintr != 4 && faa->fa_nintr != 12))
+	if (faa->fa_nreg < 1)
 		return;
-
-	for (i = 0; i < 4; i++) {
-		if (faa->fa_nintr == 4)
-			intr[i] = faa->fa_intr[i];
-		else
-			intr[i] = faa->fa_intr[(3 * i) + 1];
-	}
 
 	/*
 	 * fa_reg[0].size is size of CPSW_SS and CPSW_PORT
@@ -378,14 +370,14 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	memcpy(sc->sc_ac.ac_enaddr, sc->sc_port_config[0].enaddr,
 	    ETHER_ADDR_LEN);
 
-	sc->sc_rxthih = arm_intr_establish(intr[0], IPL_NET, cpsw_rxthintr, sc,
-	    DEVNAME(sc));
-	sc->sc_rxih = arm_intr_establish(intr[1], IPL_NET, cpsw_rxintr, sc,
-	    DEVNAME(sc));
-	sc->sc_txih = arm_intr_establish(intr[2], IPL_NET, cpsw_txintr, sc,
-	    DEVNAME(sc));
-	sc->sc_miscih = arm_intr_establish(intr[3], IPL_NET, cpsw_miscintr, sc,
-	    DEVNAME(sc));
+	sc->sc_rxthih = arm_intr_establish_fdt_idx(faa->fa_node, 0, IPL_NET,
+	    cpsw_rxthintr, sc, DEVNAME(sc));
+	sc->sc_rxih = arm_intr_establish_fdt_idx(faa->fa_node, 1, IPL_NET,
+	    cpsw_rxintr, sc, DEVNAME(sc));
+	sc->sc_txih = arm_intr_establish_fdt_idx(faa->fa_node, 2, IPL_NET,
+	    cpsw_txintr, sc, DEVNAME(sc));
+	sc->sc_miscih = arm_intr_establish_fdt_idx(faa->fa_node, 3, IPL_NET,
+	    cpsw_miscintr, sc, DEVNAME(sc));
 
 	sc->sc_bst = faa->fa_iot;
 	sc->sc_bdt = faa->fa_dmat;

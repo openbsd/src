@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.27 2016/07/27 11:45:02 patrick Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.28 2016/08/06 10:07:45 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -299,11 +299,11 @@ ommmc_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args		*faa = aux;
 	struct sdmmcbus_attach_args	 saa;
 	uint32_t			 caps;
-	uint32_t			 addr, size, irq;
+	uint32_t			 addr, size;
 	int				 len, unit;
 	char				 hwmods[128];
 
-	if (faa->fa_nreg != 1 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
+	if (faa->fa_nreg < 1)
 		return;
 
 	if (faa->fa_reg[0].size <= 0x100)
@@ -316,11 +316,6 @@ ommmc_attach(struct device *parent, struct device *self, void *aux)
 		addr = faa->fa_reg[0].addr;
 		size = faa->fa_reg[0].size;
 	}
-
-	if (faa->fa_nintr == 1)
-		irq = faa->fa_intr[0];
-	else
-		irq = faa->fa_intr[1];
 
 	unit = 0;
 	if ((len = OF_getprop(faa->fa_node, "ti,hwmods", hwmods,
@@ -341,7 +336,7 @@ ommmc_attach(struct device *parent, struct device *self, void *aux)
 	/* Enable ICLKEN, FCLKEN? */
 	prcm_enablemodule(PRCM_MMC0 + unit);
 
-	sc->sc_ih = arm_intr_establish(irq, IPL_SDMMC,
+	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_SDMMC,
 	    ommmc_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
 		printf("%s: cannot map interrupt\n", DEVNAME(sc));

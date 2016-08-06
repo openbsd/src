@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti_iic.c,v 1.7 2016/07/27 11:45:02 patrick Exp $	*/
+/*	$OpenBSD: ti_iic.c,v 1.8 2016/08/06 10:07:45 jsg Exp $	*/
 /* $NetBSD: ti_iic.c,v 1.4 2013/04/25 13:04:27 rkujawa Exp $ */
 
 /*
@@ -165,19 +165,14 @@ ti_iic_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	struct i2cbus_attach_args iba;
 	uint16_t rev;
-	int irq, unit, len;
+	int unit, len;
 	char hwmods[128];
 
-	if (faa->fa_nreg != 1 || (faa->fa_nintr != 1 && faa->fa_nintr != 3))
+	if (faa->fa_nreg < 1)
 		return;
 
 	sc->sc_iot = faa->fa_iot;
 	sc->sc_node = faa->fa_node;
-	
-	if (faa->fa_nintr == 1)
-		irq = faa->fa_intr[0];
-	else
-		irq = faa->fa_intr[1];
 
 	unit = 0;
 	if ((len = OF_getprop(faa->fa_node, "ti,hwmods", hwmods,
@@ -197,7 +192,7 @@ ti_iic_attach(struct device *parent, struct device *self, void *aux)
 
 	sitara_cm_pinctrlbyname(faa->fa_node, "default");
 
-	sc->sc_ih = arm_intr_establish(irq, IPL_NET,
+	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_NET,
 	    ti_iic_intr, sc, DEVNAME(sc));
 
 	prcm_enablemodule(PRCM_I2C0 + unit);

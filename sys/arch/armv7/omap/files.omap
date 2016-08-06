@@ -1,4 +1,4 @@
-#	$OpenBSD: files.omap,v 1.13 2016/06/26 09:06:35 jsg Exp $
+#	$OpenBSD: files.omap,v 1.14 2016/08/06 10:07:45 jsg Exp $
 
 define omap {}
 device omap: omap
@@ -39,7 +39,7 @@ attach edma at omap
 file	arch/armv7/omap/edma.c			edma
 
 device intc
-attach intc at omap
+attach intc at fdt
 file	arch/armv7/omap/intc.c			intc
 
 device gptimer
