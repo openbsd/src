@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.12 2016/08/04 12:17:36 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.13 2016/08/06 00:04:39 jsg Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -22,6 +22,7 @@
 #include <sys/malloc.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 #include <arm/mainbus/mainbus.h>
 
@@ -38,6 +39,8 @@ struct mainbus_softc {
 	bus_dma_tag_t		 sc_dmat;
 	int			 sc_acells;
 	int			 sc_scells;
+	int			*sc_ranges;
+	int			 sc_rangeslen;
 };
 
 struct cfattach mainbus_ca = {
@@ -122,6 +125,13 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* TODO: Scan for interrupt controllers and attach them first? */
 
+	sc->sc_rangeslen = OF_getproplen(OF_peer(0), "ranges");
+	if (sc->sc_rangeslen > 0 && !(sc->sc_rangeslen % sizeof(uint32_t))) {
+		sc->sc_ranges = malloc(sc->sc_rangeslen, M_TEMP, M_WAITOK);
+		OF_getpropintarray(OF_peer(0), "ranges", sc->sc_ranges,
+		    sc->sc_rangeslen);
+	}
+
 	/* Scan the whole tree. */
 	for (node = OF_child(node);
 	    node != 0;
@@ -140,6 +150,8 @@ mainbus_attach_node(struct device *self, int node)
 	struct mainbus_softc	*sc = (struct mainbus_softc *)self;
 	struct fdt_attach_args	 fa;
 	char			 buffer[128];
+	int			 i, len, line;
+	uint32_t		*cell, *reg;
 
 	if (!OF_getprop(node, "compatible", buffer, sizeof(buffer)))
 		return;
@@ -156,9 +168,50 @@ mainbus_attach_node(struct device *self, int node)
 	fa.fa_acells = sc->sc_acells;
 	fa.fa_scells = sc->sc_scells;
 
+	len = OF_getproplen(node, "reg");
+	line = (sc->sc_acells + sc->sc_scells) * sizeof(uint32_t);
+	if (len > 0 && (len % line) == 0) {
+		reg = malloc(len, M_TEMP, M_WAITOK);
+		OF_getpropintarray(node, "reg", reg, len);
+
+		fa.fa_reg = malloc((len / line) * sizeof(struct fdt_reg),
+		    M_DEVBUF, M_WAITOK);
+		fa.fa_nreg = (len / line);
+
+		for (i = 0, cell = reg; i < len / line; i++) {
+			if (sc->sc_acells >= 1)
+				fa.fa_reg[i].addr = cell[0];
+			if (sc->sc_acells == 2) {
+				fa.fa_reg[i].addr <<= 32;
+				fa.fa_reg[i].addr |= cell[1];
+			}
+			cell += sc->sc_acells;
+			if (sc->sc_scells >= 1)
+				fa.fa_reg[i].size = cell[0];
+			if (sc->sc_scells == 2) {
+				fa.fa_reg[i].size <<= 32;
+				fa.fa_reg[i].size |= cell[1];
+			}
+			cell += sc->sc_scells;
+		}
+
+		free(reg, M_TEMP, len);
+	}
+
+	len = OF_getproplen(node, "interrupts");
+	if (len > 0 && (len % sizeof(uint32_t)) == 0) {
+		fa.fa_intr = malloc(len, M_DEVBUF, M_WAITOK);
+		fa.fa_nintr = len / sizeof(uint32_t);
+
+		OF_getpropintarray(node, "interrupts", fa.fa_intr, len);
+	}
+
 	/* TODO: attach the device's clocks first? */
 
 	config_found(self, &fa, NULL);
+
+	free(fa.fa_reg, M_DEVBUF, fa.fa_nreg * sizeof(struct fdt_reg));
+	free(fa.fa_intr, M_DEVBUF, fa.fa_nintr * sizeof(uint32_t));
 }
 
 /*
