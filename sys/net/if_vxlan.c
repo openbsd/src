@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.38 2016/04/13 11:41:15 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.39 2016/08/06 14:29:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -562,11 +562,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 		memcpy(sa, srcsa, sa->sa_len);
 #endif
 
-	/* Clear multicast flag from the outer packet */
-	if (sc->sc_imo.imo_num_memberships > 0 &&
-	    m->m_flags & (M_MCAST) &&
-	    !ETHER_IS_MULTICAST(eh->ether_dhost))
-		m->m_flags &= ~M_MCAST;
+	m->m_flags &= ~(M_MCAST|M_BCAST);
 
 #if NPF > 0
 	pf_pkt_addr_changed(m);
