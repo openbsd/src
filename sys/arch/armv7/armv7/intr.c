@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.8 2016/08/04 12:17:36 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.9 2016/08/06 17:25:15 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -30,8 +30,9 @@
 
 uint32_t arm_intr_get_parent(int);
 
-void *arm_intr_prereg_fdt(void *, int *, int, int (*)(void *),
+void *arm_intr_prereg_establish_fdt(void *, int *, int, int (*)(void *),
     void *, char *);
+void arm_intr_prereg_disestablish_fdt(void *);
 
 int arm_dflt_splraise(int);
 int arm_dflt_spllower(int);
@@ -127,13 +128,16 @@ struct intr_prereg {
 	int (*ip_func)(void *);
 	void *ip_arg;
 	char *ip_name;
+
+	struct interrupt_controller *ip_ic;
+	void *ip_ih;
 };
 
 LIST_HEAD(, intr_prereg) prereg_interrupts =
 	LIST_HEAD_INITIALIZER(prereg_interrupts);
 
 void *
-arm_intr_prereg_fdt(void *cookie, int *cell, int level,
+arm_intr_prereg_establish_fdt(void *cookie, int *cell, int level,
     int (*func)(void *), void *arg, char *name)
 {
 	struct interrupt_controller *ic = cookie;
@@ -154,6 +158,21 @@ arm_intr_prereg_fdt(void *cookie, int *cell, int level,
 }
 
 void
+arm_intr_prereg_disestablish_fdt(void *cookie)
+{
+	struct intr_prereg *ip = cookie;
+	struct interrupt_controller *ic = ip->ip_ic;
+
+	if (ip->ip_ic != NULL && ip->ip_ih != NULL)
+		ic->ic_disestablish(ip->ip_ih);
+
+	if (ip->ip_ic != NULL)
+		LIST_REMOVE(ip, ip_list);
+
+	free(ip, M_DEVBUF, sizeof(*ip));
+}
+
+void
 arm_intr_init_fdt_recurse(int node)
 {
 	struct interrupt_controller *ic;
@@ -163,7 +182,8 @@ arm_intr_init_fdt_recurse(int node)
 		    M_DEVBUF, M_ZERO | M_WAITOK);
 		ic->ic_node = node;
 		ic->ic_cookie = ic;
-		ic->ic_establish = arm_intr_prereg_fdt;
+		ic->ic_establish = arm_intr_prereg_establish_fdt;
+		ic->ic_disestablish = arm_intr_prereg_disestablish_fdt;
 		arm_intr_register_fdt(ic);
 	}
 
@@ -186,8 +206,7 @@ LIST_HEAD(, interrupt_controller) interrupt_controllers =
 void
 arm_intr_register_fdt(struct interrupt_controller *ic)
 {
-	struct intr_prereg *ip;
-	void *ih;
+	struct intr_prereg *ip, *tip;
 
 	ic->ic_cells = OF_getpropint(ic->ic_node, "#interrupt-cells", 0);
 	ic->ic_phandle = OF_getpropint(ic->ic_node, "phandle", 0);
@@ -198,16 +217,24 @@ arm_intr_register_fdt(struct interrupt_controller *ic)
 	LIST_INSERT_HEAD(&interrupt_controllers, ic, ic_list);
 
 	/* Establish pre-registered interrupt handlers. */
-	LIST_FOREACH(ip, &prereg_interrupts, ip_list) {
+	LIST_FOREACH_SAFE(ip, &prereg_interrupts, ip_list, tip) {
 		if (ip->ip_phandle != ic->ic_phandle)
 			continue;
 
-		ih = ic->ic_establish(ic->ic_cookie, ip->ip_cell,
+		ip->ip_ic = ic;
+		ip->ip_ih = ic->ic_establish(ic->ic_cookie, ip->ip_cell,
 		    ip->ip_level, ip->ip_func, ip->ip_arg, ip->ip_name);
-		if (ih == NULL)
+		if (ip->ip_ih == NULL)
 			printf("can't establish interrupt %s\n", ip->ip_name);
+
+		LIST_REMOVE(ip, ip_list);
 	}
 }
+
+struct arm_intr_handle {
+	struct interrupt_controller *ih_ic;
+	void *ih_ih;
+};
 
 void *
 arm_intr_establish_fdt(int node, int level, int (*func)(void *),
@@ -223,6 +250,7 @@ arm_intr_establish_fdt_idx(int node, int idx, int level, int (*func)(void *),
 	struct interrupt_controller *ic;
 	int i, len, ncells, extended = 1;
 	uint32_t *cell, *cells, phandle;
+	struct arm_intr_handle *ih;
 	void *val = NULL;
 
 	len = OF_getproplen(node, "interrupts-extended");
@@ -279,7 +307,25 @@ arm_intr_establish_fdt_idx(int node, int idx, int level, int (*func)(void *),
 	}
 
 	free(cells, M_TEMP, len);
-	return val;
+
+	if (val == NULL)
+		return NULL;
+
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih->ih_ic = ic;
+	ih->ih_ih = val;
+
+	return ih;
+}
+
+void
+arm_intr_disestablish_fdt(void *cookie)
+{
+	struct arm_intr_handle *ih = cookie;
+	struct interrupt_controller *ic = ih->ih_ic;
+
+	ic->ic_disestablish(ih->ih_ih);
+	free(ih, M_DEVBUF, sizeof(*ih));
 }
 
 /*
@@ -292,7 +338,9 @@ arm_intr_parent_establish_fdt(void *cookie, int *cell, int level,
     int (*func)(void *), void *arg, char *name)
 {
 	struct interrupt_controller *ic = cookie;
+	struct arm_intr_handle *ih;
 	uint32_t phandle;
+	void *val;
 
 	phandle = arm_intr_get_parent(ic->ic_node);
 	LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
@@ -302,7 +350,25 @@ arm_intr_parent_establish_fdt(void *cookie, int *cell, int level,
 	if (ic == NULL)
 		return NULL;
 
-	return ic->ic_establish(ic->ic_cookie, cell, level, func, arg, name);
+	val = ic->ic_establish(ic->ic_cookie, cell, level, func, arg, name);
+	if (val == NULL)
+		return NULL;
+
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih->ih_ic = ic;
+	ih->ih_ih = val;
+
+	return ih;
+}
+
+void
+arm_intr_parent_disestablish_fdt(void *cookie)
+{
+	struct arm_intr_handle *ih = cookie;
+	struct interrupt_controller *ic = ih->ih_ic;
+
+	ic->ic_disestablish(ih->ih_ih);
+	free(ih, M_DEVBUF, sizeof(*ih));
 }
 
 int

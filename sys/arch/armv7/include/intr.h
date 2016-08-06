@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.4 2016/08/04 12:17:36 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.5 2016/08/06 17:25:15 patrick Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -150,6 +150,7 @@ struct interrupt_controller {
 	void	*ic_cookie;
 	void	*(*ic_establish)(void *, int *, int, int (*)(void *),
 		    void *, char *);
+	void	 (*ic_disestablish)(void *);
 
 	LIST_ENTRY(interrupt_controller) ic_list;
 	uint32_t ic_phandle;
@@ -162,9 +163,11 @@ void	*arm_intr_establish_fdt(int, int, int (*)(void *),
 	    void *, char *);
 void	*arm_intr_establish_fdt_idx(int, int, int, int (*)(void *),
 	    void *, char *);
+void	 arm_intr_disestablish_fdt(void *);
 
 void	*arm_intr_parent_establish_fdt(void *, int *, int,
 	    int (*)(void *), void *, char *);
+void	 arm_intr_parent_disestablish_fdt(void *);
 
 #ifdef DIAGNOSTIC
 /*

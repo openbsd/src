@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.11 2016/08/06 11:04:47 patrick Exp $ */
+/* $OpenBSD: ampintc.c,v 1.12 2016/08/06 17:25:14 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -285,6 +285,7 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_node = faa->fa_node;
 	sc->sc_ic.ic_cookie = self;
 	sc->sc_ic.ic_establish = ampintc_intr_establish_fdt;
+	sc->sc_ic.ic_disestablish = ampintc_intr_disestablish;
 	arm_intr_register_fdt(&sc->sc_ic);
 }
 
