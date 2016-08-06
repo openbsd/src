@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.38 2016/07/11 14:51:31 kettenis Exp $
+#	$OpenBSD: files.arm,v 1.39 2016/08/06 17:16:13 kettenis Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -29,7 +29,6 @@ file	arch/arm/simplebus/simplebus.c		simplebus
 
 # FDT support
 file	dev/ofw/fdt.c
-file	dev/ofw/ofw_gpio.c
 
 include "arch/arm/cortex/files.cortex"
 

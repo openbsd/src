@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.20 2016/07/30 08:07:01 kettenis Exp $
+#	$OpenBSD: files.armv7,v 1.21 2016/08/06 17:16:13 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -23,6 +23,10 @@ file	arch/armv7/armv7/armv7_machdep.c
 file	arch/armv7/armv7/autoconf.c
 file	arch/armv7/armv7/platform.c
 file	arch/arm/arm/disksubr.c			disk
+
+# FDT support
+file	dev/ofw/ofw_gpio.c
+file	dev/ofw/ofw_pinctrl.c
 
 include "dev/sdmmc/files.sdmmc"
 
