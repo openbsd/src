@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.4 2016/07/26 22:10:10 patrick Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.5 2016/08/06 00:30:47 jsg Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -37,10 +37,11 @@
 #include <dev/pci/virtioreg.h>
 #include <dev/pci/virtiovar.h>
 
-#if NFDT > 0
 #include <machine/fdt.h>
-#endif
 #include <armv7/armv7/armv7var.h>
+
+#include <dev/ofw/fdt.h>
+#include <dev/ofw/openfirm.h>
 
 #define VIRTIO_MMIO_MAGIC		('v' | 'i' << 8 | 'r' << 16 | 't' << 24)
 
@@ -181,56 +182,29 @@ virtio_mmio_set_status(struct virtio_softc *vsc, int status)
 int
 virtio_mmio_match(struct device *parent, void *cfdata, void *aux)
 {
-#if NFDT > 0
-	struct armv7_attach_args *aa = aux;
+	struct fdt_attach_args *faa = aux;
 
-	if (fdt_node_compatible("virtio,mmio", aa->aa_node))
-			return 1;
-#endif
-
-	return 0;
+	return OF_is_compatible(faa->fa_node, "virtio,mmio");
 }
 
 void
 virtio_mmio_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct armv7_attach_args *aa = aux;
+	struct fdt_attach_args *faa = aux;
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)self;
 	struct virtio_softc *vsc = &sc->sc_sc;
-	struct armv7mem mem;
 	uint32_t id, magic, version;
-	int irq;
 
-#if NFDT > 0
-	if (aa->aa_node) {
-		struct fdt_reg reg;
-		uint32_t ints[3];
-
-		if (fdt_get_reg(aa->aa_node, 0, &reg))
-			panic("%s: could not extract memory data from FDT", __func__);
-
-		if (fdt_node_property_ints(aa->aa_node, "interrupts",
-		    ints, 3) != 3)
-			panic("%s: could not extract interrupt data from FDT",
-			    __func__);
-
-		mem.addr = reg.addr;
-		mem.size = reg.size;
-
-		irq = ints[1];
-	} else
-#endif
-	{
-		mem.addr = aa->aa_dev->mem[0].addr;
-		mem.size = aa->aa_dev->mem[0].size;
-
-		irq = aa->aa_dev->irq[0];
+	if (faa->fa_nreg < 1) {
+		printf(": no register data\n");
+		return;
 	}
 
-	sc->sc_iosize = mem.size;
-	sc->sc_iot = aa->aa_iot;
-	sc->sc_dmat = aa->aa_dmat;
-	if (bus_space_map(sc->sc_iot, mem.addr, mem.size, 0, &sc->sc_ioh))
+	sc->sc_iosize = faa->fa_reg[0].size;
+	sc->sc_iot = faa->fa_iot;
+	sc->sc_dmat = faa->fa_dmat;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr, faa->fa_reg[0].size,
+	    0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
 	magic = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
@@ -281,7 +255,7 @@ virtio_mmio_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_1;
 	}
 
-	sc->sc_ih = arm_intr_establish(irq, vsc->sc_ipl,
+	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, vsc->sc_ipl,
 	    virtio_mmio_intr, sc, vsc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",

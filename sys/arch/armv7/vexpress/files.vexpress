@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vexpress,v 1.3 2016/05/02 08:15:55 patrick Exp $
+#	$OpenBSD: files.vexpress,v 1.4 2016/08/06 00:30:47 jsg Exp $
 
 define vexpress {}
 device vexpress: vexpress
@@ -16,7 +16,7 @@ device plrtc
 attach plrtc at vexpress
 file	arch/armv7/vexpress/pl031.c	plrtc
 
-attach	virtio at vexpress with virtio_mmio
+attach	virtio at fdt with virtio_mmio
 file	arch/armv7/vexpress/virtio_mmio.c	virtio_mmio
 
 device sysreg

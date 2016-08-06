@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.36 2016/08/05 21:45:37 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.37 2016/08/06 00:30:47 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -105,7 +105,7 @@ vexpress0	at mainbus?
 sysreg*		at vexpress?
 pluart*		at vexpress?
 plrtc*		at vexpress?
-virtio*		at vexpress?
+virtio*		at fdt?
 
 # Exynos
 exynos0		at mainbus?

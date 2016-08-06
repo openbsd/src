@@ -1,4 +1,4 @@
-/*	$OpenBSD: vexpress.c,v 1.5 2016/06/04 18:09:16 jsg Exp $	*/
+/*	$OpenBSD: vexpress.c,v 1.6 2016/08/06 00:30:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Jonathan Gray <jsg@openbsd.org>
@@ -42,10 +42,6 @@ struct board_dev vexpress_devs[] = {
 	{ "sysreg",	0 },
 	{ "pluart",	0 },
 	{ "plrtc",	0 },
-	{ "virtio",	0 },
-	{ "virtio",	1 },
-	{ "virtio",	2 },
-	{ "virtio",	3 },
 	{ NULL,		0 }
 };
 
