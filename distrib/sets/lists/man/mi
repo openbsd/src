@@ -1180,7 +1180,6 @@
 ./usr/share/man/man4/armish/intro.4
 ./usr/share/man/man4/armish/mem.4
 ./usr/share/man/man4/armv7
-./usr/share/man/man4/armv7/a1xintc.4
 ./usr/share/man/man4/armv7/cpsw.4
 ./usr/share/man/man4/armv7/dmtimer.4
 ./usr/share/man/man4/armv7/edma.4
@@ -1203,6 +1202,7 @@
 ./usr/share/man/man4/armv7/sxiccmu.4
 ./usr/share/man/man4/armv7/sxidog.4
 ./usr/share/man/man4/armv7/sxie.4
+./usr/share/man/man4/armv7/sxiintc.4
 ./usr/share/man/man4/armv7/sxipio.4
 ./usr/share/man/man4/armv7/sxitimer.4
 ./usr/share/man/man4/armv7/sysreg.4
