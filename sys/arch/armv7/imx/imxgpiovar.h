@@ -1,4 +1,4 @@
-/* $OpenBSD: imxgpiovar.h,v 1.1 2013/09/06 20:45:53 patrick Exp $ */
+/* $OpenBSD: imxgpiovar.h,v 1.2 2016/08/06 18:12:13 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -28,14 +28,5 @@ unsigned int imxgpio_get_bit(unsigned int gpio);
 void imxgpio_set_bit(unsigned int gpio);
 void imxgpio_clear_bit(unsigned int gpio);
 void imxgpio_set_dir(unsigned int gpio, unsigned int dir);
-
-/* interrupts */
-void imxgpio_clear_intr(unsigned int gpio);
-void imxgpio_intr_mask(unsigned int gpio);
-void imxgpio_intr_unmask(unsigned int gpio);
-void imxgpio_intr_level(unsigned int gpio, unsigned int level);
-void *imxgpio_intr_establish(unsigned int gpio, int level, int spl,
-    int (*func)(void *), void *arg, char *name);
-void imxgpio_intr_disestablish(void *cookie);
 
 #endif /* IMXGPIOVAR_H */
