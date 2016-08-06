@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl031.c,v 1.1 2015/06/14 05:01:31 jsg Exp $	*/
+/*	$OpenBSD: pl031.c,v 1.2 2016/08/06 00:40:54 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Jonathan Gray <jsg@openbsd.org>
@@ -22,8 +22,12 @@
 #include <sys/systm.h>
 
 #include <machine/bus.h>
+#include <machine/fdt.h>
 #include <armv7/armv7/armv7var.h>
 #include <dev/clock_subr.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 #define RTCDR	0x00
 #define RTCMR	0x04
@@ -44,13 +48,14 @@ struct plrtc_softc {
 	bus_space_handle_t	 sc_ioh;
 };
 
+int	plrtc_match(struct device *, void *, void *);
 void	plrtc_attach(struct device *, struct device *, void *);
 int	plrtc_gettime(struct todr_chip_handle *, struct timeval *);
 int	plrtc_settime(struct todr_chip_handle *, struct timeval *);
 
 
 struct cfattach plrtc_ca = {
-	sizeof(struct plrtc_softc), NULL , plrtc_attach
+	sizeof(struct plrtc_softc), plrtc_match, plrtc_attach
 };
 
 struct cfdriver plrtc_cd = {
@@ -81,16 +86,29 @@ plrtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 	return (0);
 }
 
+int
+plrtc_match(struct device *parent, void *match, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
+
+	return (OF_is_compatible(faa->fa_node, "arm,pl031"));
+}
+
 void
 plrtc_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct armv7_attach_args	*aa = aux;
+	struct fdt_attach_args		*faa = aux;
 	struct plrtc_softc		*sc = (struct plrtc_softc *) self;
 	todr_chip_handle_t		 handle;
 
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh)) {
+	if (faa->fa_nreg < 1) {
+		printf(": no register data\n");
+		return;
+	}
+
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
 		printf(": failed to map mem space\n");
 		return;
 	}
