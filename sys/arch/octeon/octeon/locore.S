@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.8 2016/04/14 15:48:09 visa Exp $ */
+/*	$OpenBSD: locore.S,v 1.9 2016/08/06 09:32:05 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -62,7 +62,7 @@ start:
 	dmtc0	t0, COP_0_CVMMEMCTL
 
 /* initialize pagegrain */
-	dli	t0, 0x20000000
+	dli	t0, PGRAIN_ELPA
 	dmtc0	t0, COP_0_TLB_PG_GRAIN
 
 	mfc0    v0, COP_0_STATUS_REG

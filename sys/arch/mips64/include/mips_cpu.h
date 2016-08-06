@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips_cpu.h,v 1.2 2015/09/24 18:38:58 miod Exp $	*/
+/*	$OpenBSD: mips_cpu.h,v 1.3 2016/08/06 09:32:04 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -217,6 +217,10 @@
 #define	COP_0_PRID		$15
 #define	COP_0_CONFIG		$16
 
+/* MIPS64 release 2 */
+#define	COP_0_TLB_PG_GRAIN	$5, 1
+#define	COP_0_EBASE		$15, 1
+
 /* R4000/5000/10000 */
 #define	COP_0_TLB_INDEX		$0
 #define	COP_0_TLB_RANDOM	$1
@@ -269,10 +273,8 @@
 #define	COP_0_DIAG		$22
 
 /* Octeon specific */
-#define COP_0_TLB_PG_GRAIN	$5, 1
 #define COP_0_CVMCTL		$9, 7
 #define COP_0_CVMMEMCTL		$11, 7
-#define COP_0_EBASE		$15, 1
 
 /*
  * COP_0_COUNT speed divider.
@@ -288,6 +290,15 @@
  */
 #define	FPC_ID			$0
 #define	FPC_CSR			$31
+
+/*
+ * PageGrain register
+ */
+#define	PGRAIN_RIE		0x80000000
+#define	PGRAIN_XIE		0x40000000
+#define	PGRAIN_ELPA		0x20000000
+#define	PGRAIN_ESP		0x10000000
+#define	PGRAIN_IEC		0x08000000
 
 #endif	/* _KERNEL || _STANDALONE */
 
