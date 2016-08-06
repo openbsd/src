@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.56 2016/08/05 13:18:27 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.57 2016/08/06 04:32:24 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -164,7 +164,6 @@ void	octeon_eth_tick_misc(void *);
 
 int	octeon_eth_recv_mbuf(struct octeon_eth_softc *,
 	    uint64_t *, struct mbuf **, int *);
-int	octeon_eth_recv_check_code(struct octeon_eth_softc *, uint64_t);
 int	octeon_eth_recv_check(struct octeon_eth_softc *, uint64_t);
 int	octeon_eth_recv(struct octeon_eth_softc *, uint64_t *);
 void	octeon_eth_recv_intr(void *, uint64_t *);
@@ -322,9 +321,6 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 
 	memcpy(sc->sc_arpcom.ac_enaddr, enaddr, ETHER_ADDR_LEN);
 	ether_ifattach(ifp);
-
-	/* XXX */
-	sc->sc_rate_recv_check_code_cap.tv_sec = 1;
 
 #if 1
 	octeon_eth_buf_init(sc);
@@ -1226,43 +1222,25 @@ octeon_eth_recv_mbuf(struct octeon_eth_softc *sc, uint64_t *work,
 }
 
 int
-octeon_eth_recv_check_code(struct octeon_eth_softc *sc, uint64_t word2)
+octeon_eth_recv_check(struct octeon_eth_softc *sc, uint64_t word2)
 {
-	uint64_t opecode = word2 & PIP_WQE_WORD2_NOIP_OPECODE;
+	static struct timeval rxerr_log_interval = { 0, 250000 };
+	uint64_t opecode;
 
 	if (__predict_true(!ISSET(word2, PIP_WQE_WORD2_NOIP_RE)))
 		return 0;
 
-	/* this error is harmless */
-	if (opecode == PIP_OVER_ERR)
+	opecode = word2 & PIP_WQE_WORD2_NOIP_OPECODE;
+	if ((sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG) &&
+	    ratecheck(&sc->sc_rxerr_log_last, &rxerr_log_interval))
+		log(LOG_DEBUG, "%s: rx error (%lld)\n", sc->sc_dev.dv_xname,
+		    opecode);
+
+	/* XXX harmless error? */
+	if (opecode == PIP_WQE_WORD2_RE_OPCODE_OVRRUN)
 		return 0;
 
 	return 1;
-}
-
-int
-octeon_eth_recv_check(struct octeon_eth_softc *sc, uint64_t word2)
-{
-	if (__predict_false(octeon_eth_recv_check_code(sc, word2)) != 0) {
-		if ((word2 & PIP_WQE_WORD2_NOIP_OPECODE) == PIP_WQE_WORD2_RE_OPCODE_LENGTH) {
-			/* no logging */
-			/* XXX inclement special error count */
-		} else if ((word2 & PIP_WQE_WORD2_NOIP_OPECODE) == 
-				PIP_WQE_WORD2_RE_OPCODE_PARTIAL) {
-			/* not an error. it's because of overload */
-		}
-		else {
-			if (ratecheck(&sc->sc_rate_recv_check_code_last,
-			    &sc->sc_rate_recv_check_code_cap)) 
-				log(LOG_WARNING,
-				    "%s: a reception error occured, "
-				    "the packet was dropped (error code = %lld)\n",
-				    sc->sc_dev.dv_xname, word2 & PIP_WQE_WORD2_NOIP_OPECODE);
-		}
-		return 1;
-	}
-
-	return 0;
 }
 
 int

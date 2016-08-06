@@ -3,7 +3,7 @@
  * DONT EDIT THIS FILE
  */
 
-/*	$OpenBSD: cn30xxpipreg.h,v 1.5 2016/05/30 15:41:28 visa Exp $	*/
+/*	$OpenBSD: cn30xxpipreg.h,v 1.6 2016/08/06 04:32:24 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -617,10 +617,5 @@
 #define PIP_WQE_WORD2_RE_OPCODE_XXX_16		16ULL
 #define PIP_WQE_WORD2_RE_OPCODE_SKIP		17ULL
 #define PIP_WQE_WORD2_RE_OPCODE_L2MAL		18ULL
-
-/* XXX backward compatibility */
-#define	PIP_OVER_ERR		PIP_WQE_WORD2_RE_OPCODE_OVRRUN
-#define	PIP_GMX_FCS_ERR		PIP_WQE_WORD2_RE_OPCODE_GMXFCS
-#define	PIP_ALIGN_ERR		PIP_WQE_WORD2_RE_OPCODE_ALIGN
 
 #endif /* _CN30XXPIPREG_H_ */
