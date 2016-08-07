@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.96 2016/07/20 18:24:38 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.97 2016/08/07 23:06:39 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7600,8 +7600,8 @@ iwm_intr(void *arg)
 #endif
 
 		printf("%s: fatal firmware error\n", DEVNAME(sc));
-		ifp->if_flags &= ~IFF_UP;
 		iwm_stop(ifp, 1);
+		task_add(systq, &sc->init_task);
 		rv = 1;
 		goto out;
 
