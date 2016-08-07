@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.26 2016/05/07 19:05:23 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.27 2016/08/07 03:03:44 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -39,7 +39,8 @@
 _dl_start:
 	movl	%esp,%eax		# save stack pointer for _rtld
 	subl	$DL_DATA_SIZE,%esp	# allocate dl_data
-	pushl	$0			# push 0 for dynamicp (unused on i386)
+	call	1f			# push &_DYNAMIC...
+1:	addl	$(_DYNAMIC-1b),(%esp)	# ...for dl_boot_bind
 	movl	%esp,%ebx
 	movl	%ebx,%edi		# save dl_data arg for dl_boot
 	pushl	%ebx			# push dl_data for dl_boot_bind
