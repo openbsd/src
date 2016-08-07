@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.13 2016/03/20 02:32:39 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.14 2016/08/07 02:44:00 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -124,6 +124,8 @@
 	"	dsubu	$s0, $ra, $s1		\n" \
 	"	daddu	$a0, $sp, 160		\n" \
 	"	daddu	$a1, $sp, 0		\n" \
+	"	dla	$a2, _DYNAMIC		\n" \
+	"	daddu	$a2, $s0		\n" \
 	"	dla	$t9, _dl_boot_bind	\n" \
 	"	daddu	$t9, $s0		\n" \
 	"	jalr	$t9			\n" \
