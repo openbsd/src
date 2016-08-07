@@ -1940,8 +1940,7 @@ fi
 if test -n "$GENERATE_PIE_SCRIPT" ; then
 if test -n "$GENERATE_COMBRELOC_SCRIPT" ; then
 echo '  ; else if (link_info.pie && link_info.combreloc' >> e${EMULATION_NAME}.c
-echo '             && link_info.relro' >> e${EMULATION_NAME}.c
-echo '             && (link_info.flags & DF_BIND_NOW)) return' >> e${EMULATION_NAME}.c
+echo '             && link_info.relro) return' >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xdw			>> e${EMULATION_NAME}.c
 echo '  ; else if (link_info.pie && link_info.combreloc && config.data_bss_contig == TRUE) return' >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xdcz                >> e${EMULATION_NAME}.c
@@ -1956,8 +1955,7 @@ fi
 if test -n "$GENERATE_SHLIB_SCRIPT" ; then
 if test -n "$GENERATE_COMBRELOC_SCRIPT" ; then
 echo '  ; else if (link_info.shared && link_info.combreloc' >> e${EMULATION_NAME}.c
-echo '             && link_info.relro' >> e${EMULATION_NAME}.c
-echo '             && (link_info.flags & DF_BIND_NOW)) return' >> e${EMULATION_NAME}.c
+echo '             && link_info.relro) return' >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xsw			>> e${EMULATION_NAME}.c
 echo '  ; else if (link_info.shared && link_info.combreloc) return' >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xsc			>> e${EMULATION_NAME}.c
@@ -1968,8 +1966,7 @@ fi
 echo '  ; else if (config.data_bss_contig == TRUE) return' >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xz                 >> e${EMULATION_NAME}.c
 if test -n "$GENERATE_COMBRELOC_SCRIPT" ; then
-echo '  ; else if (link_info.combreloc && link_info.relro' >> e${EMULATION_NAME}.c
-echo '             && (link_info.flags & DF_BIND_NOW)) return' >> e${EMULATION_NAME}.c
+echo '  ; else if (link_info.combreloc && link_info.relro) return' >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xw			>> e${EMULATION_NAME}.c
 echo '  ; else if (link_info.combreloc) return'		>> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xc			>> e${EMULATION_NAME}.c
@@ -2002,8 +1999,7 @@ fi
 if test -n "$GENERATE_PIE_SCRIPT" ; then
 if test -n "$GENERATE_COMBRELOC_SCRIPT" ; then
 cat >>e${EMULATION_NAME}.c <<EOF
-  else if (link_info.pie && link_info.combreloc
-	   && link_info.relro && (link_info.flags & DF_BIND_NOW))
+  else if (link_info.pie && link_info.combreloc && link_info.relro)
     return "ldscripts/${EMULATION_NAME}.xdw";
   else if (link_info.pie && link_info.combreloc && config.data_bss_contig == TRUE)
     return "ldscripts/${EMULATION_NAME}.xdcz";
@@ -2021,8 +2017,7 @@ fi
 if test -n "$GENERATE_SHLIB_SCRIPT" ; then
 if test -n "$GENERATE_COMBRELOC_SCRIPT" ; then
 cat >>e${EMULATION_NAME}.c <<EOF
-  else if (link_info.shared && link_info.combreloc
-	   && link_info.relro && (link_info.flags & DF_BIND_NOW))
+  else if (link_info.shared && link_info.combreloc && link_info.relro)
     return "ldscripts/${EMULATION_NAME}.xsw";
   else if (link_info.shared && link_info.combreloc)
     return "ldscripts/${EMULATION_NAME}.xsc";
@@ -2039,8 +2034,7 @@ cat >>e${EMULATION_NAME}.c <<EOF
 EOF
 if test -n "$GENERATE_COMBRELOC_SCRIPT" ; then
 cat >>e${EMULATION_NAME}.c <<EOF
-  else if (link_info.combreloc && link_info.relro
-	   && (link_info.flags & DF_BIND_NOW))
+  else if (link_info.combreloc && link_info.relro)
     return "ldscripts/${EMULATION_NAME}.xw";
   else if (link_info.combreloc)
     return "ldscripts/${EMULATION_NAME}.xc";
