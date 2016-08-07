@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.7 2016/03/20 02:32:39 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.8 2016/08/07 02:30:55 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -95,7 +95,8 @@
 	"__start:				\n" \
 	"	movl	%esp,%eax	# save SP for dl_boot_bind \n" \
 	"	subl	$16*4,%esp 	# allocate dl_data \n" \
-	"	pushl	$0	# push 0 for dynamicp (unused on i386) \n" \
+	"	call	1f		# push &_DYNAMIC... \n" \
+	"1:	addl	$(_DYNAMIC-1b),(%esp)	# ...for dl_boot_bind \n" \
 	"	movl	%esp,%ebx		\n" \
 	"	pushl	%ebx		# push dl_data for dl_boot_bind \n" \
 	"					\n" \
