@@ -3292,6 +3292,9 @@ print_output_section_statement
   asection *section = output_section_statement->bfd_section;
   int len;
 
+  if (output_section_statement->constraint == -1)
+    return;
+
   if (output_section_statement != abs_output_section)
     {
       minfo ("\n%s", output_section_statement->name);
