@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.35 2016/05/07 19:05:23 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.36 2016/08/07 03:05:23 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -77,6 +77,7 @@ L2:	ldiq	s3, L2		/* get where the linker thought we were */
 	mov	s2, a1
 	lda	t5, _DYNAMIC
 	addq	s2, t5, a0
+	mov	a0, s6
 
 	bsr	ra, _reloc_alpha_got
 
@@ -95,7 +96,7 @@ L2:	ldiq	s3, L2		/* get where the linker thought we were */
 	mov	a5, s5
 	lda	s2, 0(sp)
 	mov	s2, a1
-	mov	0,  a2		/* dynamicp is unused on alpha */
+	mov	s6, a2		/* &_DYNAMIC */
 	CALL(_dl_boot_bind)
 	mov	s3, a0		/* **argv  */
 	mov	s4, a1		/* **envp  */
