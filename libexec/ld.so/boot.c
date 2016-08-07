@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.7 2016/07/15 09:25:47 guenther Exp $ */
+/*	$OpenBSD: boot.c,v 1.8 2016/08/07 02:57:19 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -129,11 +129,10 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 
 #if defined(__alpha__)
 	dynp = (Elf_Dyn *)((long)_DYNAMIC);
-#elif defined(__sparc__) || defined(__sparc64__) || defined(__powerpc__) || \
-    defined(__hppa__) || defined(__sh__) || defined(__m88k__)
-	dynp = dynamicp;
-#else
+#elif defined(__amd64__) || defined(__arm__) || defined(__i386__) || defined(__mips64__)
 	dynp = (Elf_Dyn *)((long)_DYNAMIC + loff);
+#else
+	dynp = dynamicp;
 #endif
 
 	_dl_memset(&dynld, 0, sizeof(dynld));
