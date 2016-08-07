@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.19 2016/08/07 02:30:55 guenther Exp $ */
+/*	$OpenBSD: boot.h,v 1.20 2016/08/07 02:34:52 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -146,9 +146,7 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	 * Cache the data for easier access.
 	 */
 
-#if defined(__alpha__)
-	dynp = (Elf_Dyn *)((long)_DYNAMIC);
-#elif defined(__mips64__)
+#if defined(__mips64__)
 	dynp = (Elf_Dyn *)((long)_DYNAMIC + loff);
 #else
 	dynp = dynamicp;
