@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.40 2016/08/06 14:33:33 reyk Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.41 2016/08/07 13:49:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -130,7 +130,7 @@ vxlan_clone_create(struct if_clone *ifc, int unit)
 	    M_WAITOK|M_ZERO);
 	sc->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
 	sc->sc_dstport = htons(VXLAN_PORT);
-	sc->sc_vnetid = -1;
+	sc->sc_vnetid = VXLAN_VNI_UNSET;
 
 	ifp = &sc->sc_ac.ac_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "vxlan%d", unit);
@@ -454,7 +454,7 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSVNETID:
-		if (ifr->ifr_vnetid > 0x00ffffff) {
+		if (ifr->ifr_vnetid > VXLAN_VNI_MAX) {
 			error = EINVAL;
 			break;
 		}
@@ -465,7 +465,7 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCGVNETID:
-		if (sc->sc_vnetid == -1) {
+		if (sc->sc_vnetid == VXLAN_VNI_UNSET) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
@@ -474,7 +474,7 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCDVNETID:
 		s = splnet();
-		sc->sc_vnetid = -1;
+		sc->sc_vnetid = VXLAN_VNI_UNSET;
 		(void)vxlan_config(ifp, NULL, NULL);
 		splx(s);
 		break;
@@ -576,7 +576,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 		if (vni != 0)
 			return (0);
 
-		vni = -1;
+		vni = VXLAN_VNI_UNSET;
 	}
 
 	LIST_FOREACH(sc, &vxlan_tagh[VXLAN_TAGHASH(vni)], sc_entry) {
@@ -753,7 +753,7 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 	}
 #endif
 
-	if (sc->sc_vnetid != -1) {
+	if (sc->sc_vnetid != VXLAN_VNI_UNSET) {
 		vu->vu_v.vxlan_flags = htonl(VXLAN_FLAGS_VNI);
 		vu->vu_v.vxlan_id = htonl(sc->sc_vnetid << VXLAN_VNI_S);
 	} else {

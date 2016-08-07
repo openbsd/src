@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.h,v 1.9 2016/08/06 14:33:33 reyk Exp $	*/
+/*	$OpenBSD: if_vxlan.h,v 1.10 2016/08/07 13:49:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -32,6 +32,9 @@ struct vxlan_header {
 #define VXLAN_VNI_S		8
 #define VXLAN_RESERVED2		0x000000ff
 } __packed;
+
+#define VXLAN_VNI_MAX		0x00ffffff	/* 24bit vnetid */
+#define VXLAN_VNI_UNSET		0xffffffff	/* -1 */
 
 struct vxlanudphdr {
 	struct udphdr		vu_u;
