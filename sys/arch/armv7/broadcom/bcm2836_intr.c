@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.1 2016/08/07 17:46:36 kettenis Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.2 2016/08/07 18:43:17 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -144,6 +144,7 @@ bcm_intc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bcm_intc_softc *sc = (struct bcm_intc_softc *)self;
 	struct fdt_attach_args *faa = aux;
+	uint32_t reg[2];
 	int node;
 	int i;
 
@@ -159,20 +160,21 @@ bcm_intc_attach(struct device *parent, struct device *self, void *aux)
 		panic("%s: bus_space_map failed!", __func__);
 
 	/*
-	 * ARM Local area, because fuck you.
+	 * ARM control logic.
 	 *
-	 * The original rPi with the BCM2835 does implement the same IC
-	 * but with a different IRQ basis. On the BCM2836 there's an
-	 * additional area to enable Timer/Mailbox interrupts, which
-	 * is not yet exposed in the given DT.
+	 * XXX Should really be implemented as a separate interrupt
+	 * controller, but for now it is easier to handle it together
+	 * with its BCM2835 partner.
 	 */
-	extern struct bus_space armv7_bs_tag;
-	if (bus_space_map(&armv7_bs_tag, 0x40000000, 0x1000, 0,
-	    &sc->sc_lioh))
-		panic("%s: bus_space_map failed!", __func__);
+	node = OF_finddevice("/soc/local_intc");
+	if (node == -1)
+		panic("%s: can't find ARM control logic\n", __func__);
 
-	bus_space_write_4(sc->sc_iot, sc->sc_lioh, 0, 0);
-	bus_space_write_4(sc->sc_iot, sc->sc_lioh, 8, 0x80000000);
+	if (OF_getpropintarray(node, "reg", reg, sizeof(reg)) != sizeof(reg))
+		panic("%s: can't map ARM control logic\n", __func__);
+
+	if (bus_space_map(sc->sc_iot, reg[0], reg[1], 0, &sc->sc_lioh))
+		panic("%s: bus_space_map failed!", __func__);
 
 	printf("\n");
 
@@ -184,7 +186,7 @@ bcm_intc_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_DISABLE_BANK2,
 	    0xffffffff);
 
-	/* ARM local specific */
+	/* ARM control specific */
 	bus_space_write_4(sc->sc_iot, sc->sc_lioh, ARM_LOCAL_CONTROL, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_lioh, ARM_LOCAL_PRESCALER,
 	    PRESCALER_19_2);
@@ -213,14 +215,11 @@ bcm_intc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_intc.ic_disestablish = bcm_intc_intr_disestablish;
 	arm_intr_register_fdt(&sc->sc_intc);
 
-	node = OF_finddevice("/soc/local_intc");
-	if (node != -1) {
-		sc->sc_l1_intc.ic_node = node;
-		sc->sc_l1_intc.ic_cookie = sc;
-		sc->sc_l1_intc.ic_establish = l1_intc_intr_establish_fdt;
-		sc->sc_l1_intc.ic_disestablish = bcm_intc_intr_disestablish;
-		arm_intr_register_fdt(&sc->sc_l1_intc);
-	}
+	sc->sc_l1_intc.ic_node = node;
+	sc->sc_l1_intc.ic_cookie = sc;
+	sc->sc_l1_intc.ic_establish = l1_intc_intr_establish_fdt;
+	sc->sc_l1_intc.ic_disestablish = bcm_intc_intr_disestablish;
+	arm_intr_register_fdt(&sc->sc_l1_intc);
 
 	bcm_intc_setipl(IPL_HIGH);  /* XXX ??? */
 	enable_interrupts(PSR_I);
