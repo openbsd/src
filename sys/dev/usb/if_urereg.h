@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_urereg.h,v 1.2 2016/08/07 00:21:57 jmatthew Exp $	*/
 /*-
  * Copyright (c) 2015 Kevin Lo <kevlo@FreeBSD.org>
  * All rights reserved.
