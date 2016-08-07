@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.41 2016/08/07 13:49:12 reyk Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.42 2016/08/07 14:26:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -345,7 +345,7 @@ vxlan_config(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		return (error);
 
 	if ((port = vxlan_sockaddr_port(dst)) != 0)
-		sc->sc_dstport = port;		
+		sc->sc_dstport = port;
 
 	if (!reset) {
 		bzero(&sc->sc_src, sizeof(sc->sc_src));
