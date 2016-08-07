@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.86 2015/10/11 11:48:46 jasper Exp $
+# $OpenBSD: pkg-config,v 1.87 2016/08/07 08:59:25 tb Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -396,7 +396,7 @@ sub setup_self
 	my $pkg_pc = OpenBSD::PkgConfig->new;
 	$pkg_pc->add_property('Version', $version);
 	$pkg_pc->add_variable('pc_path', join(":", @PKGPATH));
-	$pkg_pc->add_property('URL', "http://www.openbsd.org/cgi-bin/man.cgi?query=pkg-config");
+	$pkg_pc->add_property('URL', "http://man.openbsd.org/pkg-config");
 	$pkg_pc->add_property('Description', "fetch metadata about installed software packages");
 	$configs{'pkg-config'} = $pkg_pc;
 }
