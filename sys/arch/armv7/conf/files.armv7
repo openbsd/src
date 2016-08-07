@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.21 2016/08/06 17:16:13 kettenis Exp $
+#	$OpenBSD: files.armv7,v 1.22 2016/08/07 17:46:36 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -69,3 +69,4 @@ include "arch/armv7/omap/files.omap"
 include "arch/armv7/sunxi/files.sunxi"
 include "arch/armv7/exynos/files.exynos"
 include "arch/armv7/vexpress/files.vexpress"
+include "arch/armv7/broadcom/files.broadcom"

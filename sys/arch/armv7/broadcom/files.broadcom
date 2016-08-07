@@ -1,0 +1,13 @@
+#	$OpenBSD: files.broadcom,v 1.1 2016/08/07 17:46:36 kettenis Exp $
+
+device bcmintc
+attach bcmintc at fdt
+file	arch/armv7/broadcom/bcm2836_intr.c		bcmintc
+
+device bcmmuart
+attach bcmmuart at fdt
+file	arch/armv7/broadcom/bcm2835_muart.c		bcmmuart
+
+include		"dev/usb/dwc2/files.dwc2"
+attach	dwctwo at fdt with bcmdwctwo
+file	arch/armv7/broadcom/bcm2835_dwctwo.c		bcmdwctwo	needs-flag

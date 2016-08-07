@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.41 2016/08/06 10:07:45 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.42 2016/08/07 17:46:36 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -124,6 +124,12 @@ ehci*		at exehci?
 exesdhc*	at exynos?
 sdmmc*		at exesdhc?
 exuart*		at exynos?
+
+# Raspberry Pi 2/3
+bcmintc*	at fdt?
+bcmmuart*	at fdt?
+dwctwo*		at fdt?
+usb*		at dwctwo?
 
 crosec*		at iic?
 wskbd*		at crosec? mux 1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: platform.c,v 1.8 2016/06/08 15:56:29 jsg Exp $	*/
+/*	$OpenBSD: platform.c,v 1.9 2016/08/07 17:46:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -39,6 +39,7 @@ void	imxuart_init_cons(void);
 void	omapuart_init_cons(void);
 void	sxiuart_init_cons(void);
 void	pl011_init_cons(void);
+void	bcmmuart_init_cons(void);
 
 struct armv7_platform *imx_platform_match(void);
 struct armv7_platform *omap_platform_match(void);
@@ -104,6 +105,7 @@ platform_init_cons(void)
 	omapuart_init_cons();
 	sxiuart_init_cons();
 	pl011_init_cons();
+	bcmmuart_init_cons();
 }
 
 void
