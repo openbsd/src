@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.5 2016/08/06 19:16:09 guenther Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.6 2016/08/07 02:02:57 guenther Exp $	*/
 /*	$NetBSD: setjmp.S,v 1.5 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*
@@ -33,8 +33,10 @@
  * SUCH DAMAGE.
  */
 
-#include "DEFS.h"
+#include "SYS.h"
 #include <machine/setjmp.h>
+
+	.hidden	__jmpxor
 
 /*
  * C library -- setjmp, longjmp
@@ -48,36 +50,45 @@
 
 ENTRY(setjmp)
 	/* Block all signals and retrieve the old signal mask */
-	stmfd	sp!, {r0, r14}
-	mov	r0, #0x00000000
-
-	bl	_HIDDEN(sigblock)
-	mov	r1, r0
-
-	ldmfd	sp!, {r0, r14}
+	mov	r2, r0
+	mov	r1, #0x00000000
+	mov	r0, #0x00000001			/* SIG_BLOCK */
+	SYSTRAP(sigprocmask)
 
 	/* Store signal mask */
-	str	r1, [r0, #(25 * 4)]
+	str	r0, [r2, #(25 * 4)]
 
 	ldr	r1, .Lsetjmp_magic
-	str	r1, [r0], #4
+	str	r1, [r2], #4
+
+	ldr	r12, .L_jmpxor_setjmp
+1:	add	r12, pc, r12			/* r12 = &__jmpxor */
+	ldr	r3, [r12], #4			/* r3 = __jmpxor[1] */
+	ldr	r12, [r12] 			/* r12 = __jmpxor[0] */
+	eor	r12, r13, r12			/* r12 = sp ^ __jmpxor[0] */
+	eor	r3, lr, r3			/* r3 = lr ^ __jmpxor[1] */
 
 #ifdef SOFTFLOAT
-	add	r0, r0, #52
+	add	r2, r2, #52
 #else
 	/* Store fp registers */
-	sfm	f4, 4, [r0], #48
+	sfm	f4, 4, [r2], #48
 	/* Store fpsr */
 	rfs	r1
-	str	r1, [r0], #0x0004
+	str	r1, [r2], #0x0004
 #endif	/*SOFTFLOAT*/
 	/* Store integer registers */
-        stmia	r0, {r4-r14}
-        mov	r0, #0x00000000
-        mov	r15, r14
+	stmia	r2, {r3-r12}
+
+	mov	r0, #0x00000000
+	mov	r12, r0				/* overwrite __jmpxor copies */
+	mov	r3, r0
+	mov	pc, lr
 
 .Lsetjmp_magic:
 	.word	_JB_MAGIC_SETJMP
+.L_jmpxor_setjmp:
+	.word	__jmpxor - 1b
 END_STRONG(setjmp)
 
 
@@ -87,47 +98,48 @@ ENTRY(longjmp)
 	teq	r2, r3
 	bne	botch
 
-	/* Fetch signal mask */
-	ldr	r2, [r0, #(25 * 4)]
+	/* Fetch signal mask and call sigprocmask */
+	mov	r3, r0				/* r3 = jmpbuf */
+	mov	r2, r1				/* r2 = retvalue */
+	ldr	r1, [r0, #(25 * 4)]
+	mov	r0, #0x00000003			/* SIG_SETMASK */
+	SYSTRAP(sigprocmask)
 
-	/* Set signal mask */
-	stmfd	sp!, {r0, r1, r14}
-	sub	sp, sp, #4	/* align the stack */
-
-	mov	r0, r2
-	bl	_HIDDEN(sigsetmask)
-
-	add	sp, sp, #4	/* unalign the stack */
-	ldmfd	sp!, {r0, r1, r14} 
-
-	add	r0, r0, #4
+	add	r3, r3, #4
 #ifdef SOFTFLOAT
-	add	r0, r0, #52
+	add	r3, r3, #52
 #else
 	/* Restore fp registers */
-	lfm	f4, 4, [r0], #48
+	lfm	f4, 4, [r3], #48
 	/* Restore FPSR */
-	ldr	r4, [r0], #0x0004
+	ldr	r4, [r3], #0x0004
 	wfs	r4
 #endif	/* SOFTFLOAT */
 	/* Restore integer registers */
-        ldmia	r0, {r4-r14}
+	ldmia	r3, {r3-r12}
 
-	/* Validate sp and r14 */
+	ldr	r0, .L_jmpxor_longjmp
+1:	add	r0, pc, r0		/* r0 = &__jmpxor */
+	ldr	lr, [r0], #4		/* lr = __jmpxor[1] */
+	eor	lr, r3, lr		/* lr ^= jmpbuf[LR] */
+	ldr	r0, [r0] 		/* r0 = __jmpxor[0] */
+	eor	r13, r0, r12		/* sp = __jmpxor[0] ^ jmpbuf[SP] */
+	mov	r12, r2			/* overwrite __jmpxor copies */
+	mov	r3, r2
+
+	/* Validate sp and lr */
 	teq	sp, #0
-	teqne	r14, #0
+	teqne	lr, #0
 	beq	botch
 
 	/* Set return value */
-
-	mov	r0, r1
+	mov	r0, r12
 	teq	r0, #0x00000000
 	moveq	r0, #0x00000001
-#ifdef __ARM_26__
-	mov	r15, r14
-#else
-	mov	r15, r14
-#endif
+	mov	pc, lr
+
+.L_jmpxor_longjmp:
+	.word	__jmpxor - 1b
 
 	/* validation failed, die die die. */
 botch:

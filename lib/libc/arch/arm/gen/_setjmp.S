@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.4 2016/08/06 19:16:09 guenther Exp $	*/
+/*	$OpenBSD: _setjmp.S,v 1.5 2016/08/07 02:02:57 guenther Exp $	*/
 /*	$NetBSD: _setjmp.S,v 1.5 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*
@@ -36,6 +36,15 @@
 #include "DEFS.h"
 #include <machine/setjmp.h>
 
+	.section	.openbsd.randomdata,"aw",%progbits
+	.align 4
+	.globl	__jmpxor
+__jmpxor:
+	.zero 4*2		/* (sp, lr) */
+	END(__jmpxor)
+	.type	__jmpxor,%object
+
+
 /*
  * C library -- _setjmp, _longjmp
  *
@@ -52,6 +61,13 @@
 ENTRY(_setjmp)
 	ldr	r1, .L_setjmp_magic
 	str	r1, [r0], #4
+	ldr	r2, .L_jmpxor_setjmp
+1:	add	r2, pc, r2			/* r2 = &__jmpxor */
+	ldr	r3, [r2], #4			/* r3 = __jmpxor[1] */
+	ldr	r2, [r2] 			/* r2 = __jmpxor[0] */
+	eor	r2, r13, r2			/* r2 = sp ^ __jmpxor[0] */
+	eor	r3, lr, r3			/* r3 = lr ^ __jmpxor[1] */
+
 #ifdef SOFTFLOAT
 	add	r0, r0, #52
 #else
@@ -62,13 +78,17 @@ ENTRY(_setjmp)
 	str	r1, [r0], #0x0004
 #endif	/* SOFTFLOAT */
 	/* Store integer registers */
-        stmia	r0, {r4-r14}
+	stmia	r0, {r2-r11}
 
-        mov	r0, #0x00000000
-        mov	r15, r14
+	mov	r0, #0x00000000
+	mov	r2, r0				/* overwrite __jmpxor copies */
+	mov	r3, r0
+	mov	pc, lr
 
 .L_setjmp_magic:
 	.word	_JB_MAGIC__SETJMP
+.L_jmpxor_setjmp:
+	.word	__jmpxor - 1b
 END_STRONG(_setjmp)
 
 ENTRY(_longjmp)
@@ -86,19 +106,31 @@ ENTRY(_longjmp)
 	ldr	r4, [r0], #0x0004
 	wfs	r4
 #endif	/* SOFTFLOAT */
-       	/* Restore integer registers */
-        ldmia	r0, {r4-r14}
+	/* Restore integer registers */
+	ldmia	r0, {r2-r11}
 
-	/* Validate sp and r14 */
+	ldr	r0, .L_jmpxor_longjmp
+1:	add	r0, pc, r0			/* r0 = &__jmpxor */
+	ldr	lr, [r0], #4			/* lr = __jmpxor[1] */
+	eor	lr, r3, lr			/* lr ^= jmpbuf[LR] */
+	ldr	r0, [r0] 			/* r0 = __jmpxor[0] */
+	eor	r13, r0, r2		/* sp = __jmpxor[0] ^ jmpbuf[SP] */
+	mov	r2, r1				/* overwrite __jmpxor copies */
+	mov	r3, r1
+
+	/* Validate sp and lr */
 	teq	sp, #0
-	teqne	r14, #0
+	teqne	lr, #0
 	beq	botch
 
 	/* Set return value */
 	mov	r0, r1
 	teq	r0, #0x00000000
 	moveq	r0, #0x00000001
-	mov	r15, r14
+	mov	pc, lr
+
+.L_jmpxor_longjmp:
+	.word	__jmpxor - 1b
 
 	/* validation failed, die die die. */
 botch:

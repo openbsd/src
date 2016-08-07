@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.h,v 1.3 2013/02/09 20:52:12 miod Exp $	*/
+/*	$OpenBSD: setjmp.h,v 1.4 2016/08/07 02:02:57 guenther Exp $	*/
 /*	$NetBSD: setjmp.h,v 1.2 2001/08/25 14:45:59 bjh21 Exp $	*/
 
 /*
@@ -8,11 +8,6 @@
 #define	_JBLEN	64		/* size, in longs, of a jmp_buf */
 
 /*
- * NOTE: The internal structure of a jmp_buf is *PRIVATE*
- *       This information is provided as there is software
- *       that fiddles with this with obtain the stack pointer
- *	 (yes really ! and it's commercial !).
- *
  * Description of the setjmp buffer
  *
  * word  0	magic number	(dependant on creator)
@@ -21,17 +16,17 @@
  *	 7 -  9 f6		fp register 6
  *	10 - 12	f7		fp register 7
  *	13	fpsr		fp status register
- *	14	r4		register 4
- *	15	r5		register 5
- *	16	r6		register 6
- *	17	r7		register 7
- *	18	r8		register 8
- *	19	r9		register 9
- *	20	r10		register 10 (sl)
- *	21	r11		register 11 (fp)
- *	22	r12		register 12 (ip)
- *	23	r13		register 13 (sp)
- *	24	r14		register 14 (lr)
+ *	14	r13		register 13 (sp) XOR cookie0
+ *	15	r14		register 14 (lr) XOR cookie1
+ *	16	r4		register 4
+ *	17	r5		register 5
+ *	18	r6		register 6
+ *	19	r7		register 7
+ *	20	r8		register 8
+ *	21	r9		register 9
+ *	22	r10		register 10 (sl)
+ *	23	r11		register 11 (fp)
+ *	24	unused		unused
  *	25	signal mask	(dependant on magic)
  *	26	(con't)
  *	27	(con't)
@@ -66,17 +61,14 @@
 #define _JB_REG_F6		 7
 #define _JB_REG_F7		10
 #define _JB_REG_FPSR		13
-#define _JB_REG_R4		14
-#define _JB_REG_R5		15
-#define _JB_REG_R6		16
-#define _JB_REG_R7		17
-#define _JB_REG_R8		18
-#define _JB_REG_R9		19
-#define _JB_REG_R10		20
-#define _JB_REG_R11		21
-#define _JB_REG_R12		22
-#define _JB_REG_R13		23
-#define _JB_REG_R14		24
+#define _JB_REG_R4		16
+#define _JB_REG_R5		17
+#define _JB_REG_R6		18
+#define _JB_REG_R7		19
+#define _JB_REG_R8		20
+#define _JB_REG_R9		21
+#define _JB_REG_R10		22
+#define _JB_REG_R11		23
 
 /* Only valid with the _JB_MAGIC_SETJMP magic */
 
