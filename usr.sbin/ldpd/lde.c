@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.63 2016/08/08 16:45:51 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.64 2016/08/08 21:42:13 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -163,7 +163,7 @@ lde_shutdown(void)
 	free(iev_main);
 
 	log_info("label decision engine exiting");
-	_exit(0);
+	exit(0);
 }
 
 /* imesg */

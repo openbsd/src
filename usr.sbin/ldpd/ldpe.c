@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.67 2016/06/18 17:31:32 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.68 2016/08/08 21:42:13 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -191,7 +191,7 @@ ldpe_shutdown(void)
 	free(pkt_ptr);
 
 	log_info("ldp engine exiting");
-	_exit(0);
+	exit(0);
 }
 
 /* imesg */
