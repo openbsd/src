@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.45 2016/08/05 08:12:12 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.46 2016/08/08 18:13:51 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 5 2016 $
+.Dd $Mdocdate: August 8 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -261,7 +261,7 @@ The input format.
 .It Fl length Ar number
 Number of bytes to parse; the default is until end of file.
 .It Fl noout
-Don't output the parsed version of the input file.
+Do not output the parsed version of the input file.
 .It Fl offset Ar number
 Starting offset to begin parsing; the default is start of file.
 .It Fl oid Ar file
@@ -1009,7 +1009,7 @@ Output the
 .Cm nextUpdate
 field.
 .It Fl noout
-Don't output the encoded version of the CRL.
+Do not output the encoded version of the CRL.
 .It Fl out Ar file
 The output file to write to, or standard output if not specified.
 .It Fl outform Cm der | pem
@@ -1239,7 +1239,7 @@ additional header and footer lines:
 -----END DH PARAMETERS-----
 .Ed
 .It Fl noout
-Inhibit the output of the encoded version of the parameters.
+Do not output the encoded version of the parameters.
 .It Fl out Ar file
 The output file to write to,
 or standard output if not specified.
@@ -1341,7 +1341,7 @@ In the case of a private key, PKCS#8 format is also accepted.
 .It Fl modulus
 Print the value of the public key component of the key.
 .It Fl noout
-Prevent output of the encoded version of the key.
+Do not output the encoded version of the key.
 .It Fl out Ar file
 The output file to write to,
 or standard output if not specified.
@@ -1363,90 +1363,70 @@ This option is automatically set if the input is a public key.
 .It Fl text
 Print out the public/private key components and parameters.
 .El
-.\"
-.\" DSAPARAM
-.\"
 .Sh DSAPARAM
 .nr nS 1
 .Nm "openssl dsaparam"
-.Bk -words
 .Op Fl C
 .Op Fl genkey
 .Op Fl in Ar file
-.Op Fl inform Ar DER | PEM
+.Op Fl inform Cm der | pem
 .Op Fl noout
 .Op Fl out Ar file
-.Op Fl outform Ar DER | PEM
+.Op Fl outform Cm der | pem
 .Op Fl text
 .Op Ar numbits
-.Ek
 .nr nS 0
 .Pp
 The
 .Nm dsaparam
 command is used to manipulate or generate DSA parameter files.
 .Pp
-The options are as follows:
-.Bl -tag -width Ds
-.It Fl C
-This option converts the parameters into C code.
-The parameters can then be loaded by calling the
-.Cm get_dsa Ns Ar XXX Ns Li ()
-function.
-.It Fl genkey
-This option will generate a DSA either using the specified or generated
-parameters.
-.It Fl in Ar file
-This specifies the input
-.Ar file
-to read parameters from, or standard input if this option is not specified.
-If the
-.Ar numbits
-parameter is included, then this option will be ignored.
-.It Fl inform Ar DER | PEM
-This specifies the input format.
-The
-.Ar DER
-argument uses an ASN1 DER-encoded form compatible with RFC 2459
-.Pq PKIX
-DSS-Parms that is a SEQUENCE consisting of p, q and g, respectively.
-The
-.Ar PEM
-form is the default format:
-it consists of the DER format base64-encoded with additional header
-and footer lines.
-.It Fl noout
-This option inhibits the output of the encoded version of the parameters.
-.It Ar numbits
-This option specifies that a parameter set should be generated of size
-.Ar numbits .
-If this option is included, the input file
-.Pq if any
-is ignored.
-.It Fl out Ar file
-This specifies the output
-.Ar file
-to write parameters to.
-Standard output is used if this option is not present.
-The output filename should
-.Em not
-be the same as the input filename.
-.It Fl outform Ar DER | PEM
-This specifies the output format; the options have the same meaning as the
-.Fl inform
-option.
-.It Fl text
-This option prints out the DSA parameters in human readable form.
-.El
-.Sh DSAPARAM NOTES
 PEM format DSA parameters use the header and footer lines:
 .Bd -unfilled -offset indent
 -----BEGIN DSA PARAMETERS-----
 -----END DSA PARAMETERS-----
 .Ed
 .Pp
-DSA parameter generation is a slow process and as a result the same set of
-DSA parameters is often used to generate several distinct keys.
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl C
+Convert the parameters into C code.
+The parameters can then be loaded by calling the
+.No get_dsa Ns Ar XXX
+function.
+.It Fl genkey
+Generate a DSA key either using the specified or generated
+parameters.
+.It Fl in Ar file
+The input file to read from,
+or standard input if not specified.
+If the
+.Ar numbits
+parameter is included, then this option is ignored.
+.It Fl inform Cm der | pem
+The input format.
+.Cm der
+uses an ASN1 DER-encoded form compatible with RFC 2459
+.Pq PKIX
+DSS-Parms that is a SEQUENCE consisting of p, q and g, respectively.
+.Cm pem
+is the default format:
+it consists of the DER format base64-encoded with additional header
+and footer lines.
+.It Fl noout
+Do not output the encoded version of the parameters.
+.It Fl out Ar file
+The output file to write to,
+or standard output if not specified.
+.It Fl outform Cm der | pem
+The output format.
+.It Fl text
+Print the DSA parameters in human readable form.
+.It Ar numbits
+Generate a parameter set of size
+.Ar numbits .
+If this option is included, the input file is ignored.
+.El
 .\"
 .\" EC
 .\"
