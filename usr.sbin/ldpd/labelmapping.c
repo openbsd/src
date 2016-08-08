@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.58 2016/07/16 19:20:16 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.59 2016/08/08 16:45:51 renato Exp $ */
 
 /*
  * Copyright (c) 2014, 2015 Renato Westphal <renato@openbsd.org>
@@ -356,7 +356,7 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 		switch (me->map.type) {
 		case MAP_TYPE_PREFIX:
 			switch (me->map.fec.prefix.af) {
-			case AF_IPV4:
+			case AF_INET:
 				if (label == MPLS_LABEL_IPV6NULL) {
 					session_shutdown(nbr, S_BAD_TLV_VAL,
 					    msg.id, msg.type);
@@ -365,7 +365,7 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 				if (!nbr->v4_enabled)
 					goto next;
 				break;
-			case AF_IPV6:
+			case AF_INET6:
 				if (label == MPLS_LABEL_IPV4NULL) {
 					session_shutdown(nbr, S_BAD_TLV_VAL,
 					    msg.id, msg.type);
@@ -547,9 +547,18 @@ gen_fec_tlv(struct ibuf *buf, struct map *map)
 		ft.length = htons(sizeof(map->type) + sizeof(family) +
 		    sizeof(map->fec.prefix.prefixlen) + len);
 		err |= ibuf_add(buf, &ft, sizeof(ft));
-
 		err |= ibuf_add(buf, &map->type, sizeof(map->type));
-		family = htons(map->fec.prefix.af);
+		switch (map->fec.prefix.af) {
+		case AF_INET:
+			family = htons(AF_IPV4);
+			break;
+		case AF_INET6:
+			family = htons(AF_IPV6);
+			break;
+		default:
+			fatalx("gen_fec_tlv: unknown af");
+			break;
+		}
 		err |= ibuf_add(buf, &family, sizeof(family));
 		err |= ibuf_add(buf, &map->fec.prefix.prefixlen,
 		    sizeof(map->fec.prefix.prefixlen));
@@ -628,10 +637,16 @@ tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *msg, char *buf,
 		/* Address Family */
 		memcpy(&map->fec.prefix.af, buf + off,
 		    sizeof(map->fec.prefix.af));
-		map->fec.prefix.af = ntohs(map->fec.prefix.af);
 		off += sizeof(map->fec.prefix.af);
-		if (map->fec.prefix.af != AF_IPV4 &&
-		    map->fec.prefix.af != AF_IPV6) {
+		map->fec.prefix.af = ntohs(map->fec.prefix.af);
+		switch (map->fec.prefix.af) {
+		case AF_IPV4:
+			map->fec.prefix.af = AF_INET;
+			break;
+		case AF_IPV6:
+			map->fec.prefix.af = AF_INET6;
+			break;
+		default:
 			send_notification_nbr(nbr, S_UNSUP_ADDR, msg->id,
 			    msg->type);
 			return (-1);
@@ -651,6 +666,10 @@ tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *msg, char *buf,
 		    sizeof(map->fec.prefix.prefix));
 		memcpy(&map->fec.prefix.prefix, buf + off,
 		    PREFIX_SIZE(map->fec.prefix.prefixlen));
+
+		/* Just in case... */
+		ldp_applymask(map->fec.prefix.af, &map->fec.prefix.prefix,
+		    &map->fec.prefix.prefix, map->fec.prefix.prefixlen);
 
 		return (off + PREFIX_SIZE(map->fec.prefix.prefixlen));
 	case MAP_TYPE_PWID:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.29 2016/07/15 17:09:25 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.30 2016/08/08 16:45:51 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -301,7 +301,6 @@ const char *
 log_map(const struct map *map)
 {
 	static char	buf[64];
-	int		af;
 
 	switch (map->type) {
 	case MAP_TYPE_WILDCARD:
@@ -309,19 +308,8 @@ log_map(const struct map *map)
 			return ("???");
 		break;
 	case MAP_TYPE_PREFIX:
-		switch (map->fec.prefix.af) {
-		case AF_IPV4:
-			af = AF_INET;
-			break;
-		case AF_IPV6:
-			af = AF_INET6;
-			break;
-		default:
-			return ("???");
-		}
-
 		if (snprintf(buf, sizeof(buf), "%s/%u",
-		    log_addr(af, &map->fec.prefix.prefix),
+		    log_addr(map->fec.prefix.af, &map->fec.prefix.prefix),
 		    map->fec.prefix.prefixlen) == -1)
 			return ("???");
 		break;

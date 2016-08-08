@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.62 2016/07/18 21:10:37 benno Exp $ */
+/*	$OpenBSD: lde.c,v 1.63 2016/08/08 16:45:51 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -695,13 +695,13 @@ lde_fec2map(struct fec *fec, struct map *map)
 	switch (fec->type) {
 	case FEC_TYPE_IPV4:
 		map->type = MAP_TYPE_PREFIX;
-		map->fec.prefix.af = AF_IPV4;
+		map->fec.prefix.af = AF_INET;
 		map->fec.prefix.prefix.v4 = fec->u.ipv4.prefix;
 		map->fec.prefix.prefixlen = fec->u.ipv4.prefixlen;
 		break;
 	case FEC_TYPE_IPV6:
 		map->type = MAP_TYPE_PREFIX;
-		map->fec.prefix.af = AF_IPV6;
+		map->fec.prefix.af = AF_INET6;
 		map->fec.prefix.prefix.v6 = fec->u.ipv6.prefix;
 		map->fec.prefix.prefixlen = fec->u.ipv6.prefixlen;
 		break;
@@ -723,12 +723,12 @@ lde_map2fec(struct map *map, struct in_addr lsr_id, struct fec *fec)
 	switch (map->type) {
 	case MAP_TYPE_PREFIX:
 		switch (map->fec.prefix.af) {
-		case AF_IPV4:
+		case AF_INET:
 			fec->type = FEC_TYPE_IPV4;
 			fec->u.ipv4.prefix = map->fec.prefix.prefix.v4;
 			fec->u.ipv4.prefixlen = map->fec.prefix.prefixlen;
 			break;
-		case AF_IPV6:
+		case AF_INET6:
 			fec->type = FEC_TYPE_IPV6;
 			fec->u.ipv6.prefix = map->fec.prefix.prefix.v6;
 			fec->u.ipv6.prefixlen = map->fec.prefix.prefixlen;
