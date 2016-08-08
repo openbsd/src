@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.189 2016/07/13 08:40:46 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.190 2016/08/08 13:09:36 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -438,8 +438,10 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 			break;
 		}
 
-		if (!newifaddr)
+		if (!newifaddr) {
+			dohooks(ifp->if_addrhooks, 0);
 			break;
+		}
 
 		/* Perform DAD, if needed. */
 		if (ia6->ia6_flags & IN6_IFF_TENTATIVE)
