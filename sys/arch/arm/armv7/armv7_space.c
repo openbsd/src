@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_space.c,v 1.7 2016/07/27 21:25:25 patrick Exp $ */
+/*	$OpenBSD: armv7_space.c,v 1.8 2016/08/08 14:47:52 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -166,11 +166,11 @@ struct bus_space armv7_bs_tag = {
 
 int
 armv7_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
-	      int flag, bus_space_handle_t *bshp)
+	      int flags, bus_space_handle_t *bshp)
 {
 	u_long startpa, endpa, pa;
 	vaddr_t va;
-	pt_entry_t *pte;
+	int pmap_flags = PMAP_DEVICE;
 
 	startpa = trunc_page(bpa);
 	endpa = round_page(bpa + size);
@@ -183,18 +183,11 @@ armv7_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
 
-	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, PROT_READ | PROT_WRITE);
-		if ((flag & BUS_SPACE_MAP_CACHEABLE) == 0) {
-			pte = vtopte(va);
-			*pte &= ~L2_S_CACHE_MASK;
-			*pte |= L2_B;
-			PTE_SYNC(pte);
-			/* XXX: pmap_kenter_pa() also does PTE_SYNC(). a bit of
-			 *      waste.
-			 */
-		}
-	}
+	if (flags & BUS_SPACE_MAP_CACHEABLE)
+		pmap_flags = 0;
+
+	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
+		pmap_kenter_pa(va, pa | pmap_flags, PROT_READ | PROT_WRITE);
 	pmap_update(pmap_kernel());
 
 	return(0);

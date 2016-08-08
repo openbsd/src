@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.40 2016/03/22 23:35:01 patrick Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.41 2016/08/08 14:47:52 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -179,6 +179,13 @@ struct pmap {
 };
 
 typedef struct pmap *pmap_t;
+
+/*
+ * MD flags that we use for pmap_enter (in the pa):
+ */
+#define PMAP_PA_MASK	~((paddr_t)PAGE_MASK) /* to remove the flags */
+#define PMAP_NOCACHE	0x1 /* non-cacheable memory. */
+#define PMAP_DEVICE	0x2 /* device memory. */
 
 /*
  * Physical / virtual address structure. In a number of places (particularly

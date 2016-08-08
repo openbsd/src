@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.34 2016/08/08 09:06:47 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.35 2016/08/08 14:47:52 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -928,33 +928,6 @@ pmap_l2ptp_ctor(void *v)
 }
 
 /*
- * Make a pmap_kernel() mapping uncached. Used by bus_dma for coherent pages.
- */
-void
-pmap_uncache_page(paddr_t va, vaddr_t pa)
-{
-	struct vm_page *pg;
-	struct pv_entry *pv;
-	pt_entry_t *pte;
-
-	if ((pg = PHYS_TO_VM_PAGE(pa)) != NULL) {
-		pv = pmap_find_pv(pg, pmap_kernel(), va);
-		if (pv != NULL)
-			pv->pv_flags |= PVF_NC;	/* XXX ought to be pg attr */
-	}
-
-	pte = vtopte(va);
-	*pte &= ~L2_S_CACHE_MASK;
-	*pte |= L2_B; /* device memory */
-	PTE_SYNC(pte);
-	cpu_tlb_flushD_SE(va);
-	cpu_cpwait();
-
-	cpu_dcache_wbinv_range(va, PAGE_SIZE);
-	cpu_sdcache_wbinv_range(va, pa, PAGE_SIZE);
-}
-
-/*
  * Modify pte bits for all ptes corresponding to the given physical address.
  * We use `maskbits' rather than `clearbits' because we're always passing
  * constants and the latter would require an extra inversion at run-time.
@@ -1514,6 +1487,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	struct l2_bucket *l2b;
 	pt_entry_t *ptep, opte, npte;
+	pt_entry_t cache_mode = pte_l2_s_cache_mode;
 
 	NPDEBUG(PDB_KENTER,
 	    printf("pmap_kenter_pa: va 0x%08lx, pa 0x%08lx, prot 0x%x\n",
@@ -1528,22 +1502,32 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	if (opte == 0)
 		l2b->l2b_occupancy++;
 
-	npte = L2_S_PROTO | pa | L2_S_PROT(PTE_KERNEL, prot) |
-	    pte_l2_s_cache_mode;
+	if (pa & PMAP_DEVICE)
+		cache_mode = L2_B;
+	else if (pa & PMAP_NOCACHE)
+		cache_mode = L2_V7_S_TEX(1);
+
+	npte = L2_S_PROTO | (pa & PMAP_PA_MASK) |
+	    L2_S_PROT(PTE_KERNEL, prot) | cache_mode;
 	*ptep = npte;
 	PTE_SYNC(ptep);
 	if (l2pte_valid(opte)) {
 		cpu_tlb_flushD_SE(va);
 		cpu_cpwait();
 	}
+
+	if (pa & PMAP_NOCACHE) {
+		cpu_dcache_wbinv_range(va, PAGE_SIZE);
+		cpu_sdcache_wbinv_range(va, (pa & PMAP_PA_MASK), PAGE_SIZE);
+	}
 }
 
 void
 pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable)
 {
-	pmap_kenter_pa(va, pa, prot);
 	if (cacheable == 0)
-		pmap_uncache_page(va, pa);
+		pa |= PMAP_NOCACHE;
+	pmap_kenter_pa(va, pa, prot);
 }
 
 void
