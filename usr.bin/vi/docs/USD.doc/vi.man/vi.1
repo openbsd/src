@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.65 2016/08/01 18:27:35 bentley Exp $
+.\"	$OpenBSD: vi.1,v 1.66 2016/08/08 15:09:33 sobrado Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: August 1 2016 $
+.Dd $Mdocdate: August 8 2016 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -2408,7 +2408,7 @@ only.
 Display a command prompt.
 .It Cm readonly , ro Bq off
 Mark the file and session as read-only.
-.It Cm recdir Bq /var/tmp/vi.recover
+.It Cm recdir Bq /tmp/vi.recover
 The directory where recovery files are stored.
 .It Cm redraw , re Bq off
 .Nm vi
@@ -2666,7 +2666,7 @@ for more information.
 .\" ignores these signals.
 .El
 .Sh FILES
-.Bl -tag -width "/var/tmp/vi.recover"
+.Bl -tag -width "/tmp/vi.recover"
 .It Pa /bin/sh
 The default user shell.
 .It Pa /etc/vi.exrc
@@ -2680,7 +2680,7 @@ Must be owned by root or the user,
 and writable only by the owner.
 .It Pa /tmp
 Temporary file directory.
-.It Pa /var/tmp/vi.recover
+.It Pa /tmp/vi.recover
 The default recovery file directory.
 .It Pa $HOME/.nexrc
 First choice for user's home directory startup file, read for

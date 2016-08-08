@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# $OpenBSD: recover,v 1.9 2001/11/06 23:31:08 millert Exp $
+# $OpenBSD: recover,v 1.10 2016/08/08 15:09:32 sobrado Exp $
 #
 # Script to (safely) recover nvi edit sessions.
 #
@@ -8,7 +8,7 @@
 use Fcntl;
 require 'sys/syscall.ph';
 
-$recoverdir = $ARGV[0] || "/var/tmp/vi.recover";
+$recoverdir = $ARGV[0] || "/tmp/vi.recover";
 $sendmail = "/usr/sbin/sendmail";
 
 die "Sorry, $0 must be run as root\n" if $>;

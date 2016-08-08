@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.ref,v 1.13 2016/01/06 22:41:53 millert Exp $
+.\"	$OpenBSD: vi.ref,v 1.14 2016/08/08 15:09:33 sobrado Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -436,7 +436,7 @@ and the superuser may recover any edit session.
 Edit sessions are backed by files in the directory named by the
 .OP recdir
 option (the directory
-.LI /var/tmp/vi.recover
+.LI /tmp/vi.recover
 by default), and are named
 .QC vi.XXXXXXXXXX ,
 where
@@ -490,7 +490,7 @@ user to recover the edit session.
 In addition, it has all of the necessary email headers for
 .XR sendmail 8 .
 .\" When the system is rebooted, all of the files in
-.\" .LI /var/tmp/vi.recover
+.\" .LI /tmp/vi.recover
 .\" named
 .\" .QC recover.XXXXXXXXXX
 .\" should be sent to their owners, by email, using the
