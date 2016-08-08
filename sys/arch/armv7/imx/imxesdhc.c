@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.28 2016/08/06 17:18:38 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.29 2016/08/08 10:10:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -180,6 +180,9 @@ struct imxesdhc_softc {
 	void			*sc_ih; /* Interrupt handler */
 	int			sc_node;
 	uint32_t		sc_gpio[3];
+	uint32_t		sc_vmmc;
+	uint32_t		sc_pwrseq;
+	uint32_t		sc_vdd;
 	u_int sc_flags;
 
 	int unit;			/* unit id */
@@ -201,9 +204,13 @@ struct imxesdhc_softc {
 /* Host controller functions called by the attachment driver. */
 int	imxesdhc_host_found(struct imxesdhc_softc *, bus_space_tag_t,
 	    bus_space_handle_t, bus_size_t, int);
-void	imxesdhc_power(int, void *);
 void	imxesdhc_shutdown(void *);
 int	imxesdhc_intr(void *);
+
+void	imxesdhc_enable_vbus(uint32_t);
+void	imxesdhc_clock_enable(uint32_t);
+void	imxesdhc_pwrseq_pre(uint32_t);
+void	imxesdhc_pwrseq_post(uint32_t);
 
 /* RESET MODES */
 #define MMC_RESET_DAT	1
@@ -317,6 +324,9 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 	OF_getpropintarray(sc->sc_node, "cd-gpios", sc->sc_gpio,
 	    sizeof(sc->sc_gpio));
 	gpio_controller_config_pin(sc->sc_gpio, GPIO_CONFIG_INPUT);
+
+	sc->sc_vmmc = OF_getpropint(sc->sc_node, "vmmc-supply", 0);
+	sc->sc_pwrseq = OF_getpropint(sc->sc_node, "mmc-pwrseq", 0);
 
 	/*
 	 * Reset the host controller and enable interrupts.
@@ -448,13 +458,121 @@ err:
 	return;
 }
 
-
-/*
- * Power hook established by or called from attachment driver.
- */
 void
-imxesdhc_power(int why, void *arg)
+imxesdhc_enable_vbus(uint32_t phandle)
 {
+	uint32_t gpio[3];
+	int active;
+	int node;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return;
+
+	if (!OF_is_compatible(node, "regulator-fixed"))
+		return;
+
+	pinctrl_byname(node, "default");
+
+	if (OF_getproplen(node, "enable-active-high") == 0)
+		active = 1;
+	else
+		active = 0;
+
+	if (OF_getpropintarray(node, "gpio", gpio,
+	    sizeof(gpio)) != sizeof(gpio))
+		return;
+	
+	gpio_controller_config_pin(gpio, GPIO_CONFIG_OUTPUT);
+	gpio_controller_set_pin(gpio, active);
+}
+
+void
+imxesdhc_clock_enable(uint32_t phandle)
+{
+	uint32_t gpios[3];
+	int node;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return;
+
+	if (!OF_is_compatible(node, "gpio-gate-clock"))
+		return;
+
+	pinctrl_byname(node, "default");
+
+	OF_getpropintarray(node, "enable-gpios", gpios, sizeof(gpios));
+	gpio_controller_config_pin(&gpios[0], GPIO_CONFIG_OUTPUT);
+	gpio_controller_set_pin(&gpios[0], 1);
+}
+
+void
+imxesdhc_pwrseq_pre(uint32_t phandle)
+{
+	uint32_t *gpios, *gpio;
+	uint32_t clocks;
+	int node;
+	int len;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return;
+
+	if (!OF_is_compatible(node, "mmc-pwrseq-simple"))
+		return;
+
+	pinctrl_byname(node, "default");
+
+	clocks = OF_getpropint(node, "clocks", 0);
+	if (clocks)
+		imxesdhc_clock_enable(clocks);
+
+	len = OF_getproplen(node, "reset-gpios");
+	if (len <= 0)
+		return;
+
+	gpios = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "reset-gpios", gpios, len);
+
+	gpio = gpios;
+	while (gpio && gpio < gpios + (len / sizeof(uint32_t))) {
+		gpio_controller_config_pin(gpio, GPIO_CONFIG_OUTPUT);
+		gpio_controller_set_pin(gpio, 1);
+		gpio = gpio_controller_next_pin(gpio);
+	}
+
+	free(gpios, M_TEMP, len);
+}
+
+void
+imxesdhc_pwrseq_post(uint32_t phandle)
+{
+	uint32_t *gpios, *gpio;
+	int node;
+	int len;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return;
+
+	if (!OF_is_compatible(node, "mmc-pwrseq-simple"))
+		return;
+
+	len = OF_getproplen(node, "reset-gpios");
+	if (len <= 0)
+		return;
+
+	gpios = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "reset-gpios", gpios, len);
+
+	gpio = gpios;
+	while (gpio && gpio < gpios + (len / sizeof(uint32_t))) {
+		gpio_controller_set_pin(gpio, 0);
+		gpio = gpio_controller_next_pin(gpio);
+	}
+
+	free(gpios, M_TEMP, len);
 }
 
 /*
@@ -564,6 +682,28 @@ imxesdhc_card_detect(sdmmc_chipset_handle_t sch)
 int
 imxesdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 {
+	struct imxesdhc_softc *sc = sch;
+	uint32_t vdd;
+
+	ocr &= sc->ocr;
+	if (ISSET(ocr, MMC_OCR_3_2V_3_3V|MMC_OCR_3_3V_3_4V))
+		vdd = 3300000;
+	else if (ISSET(ocr, MMC_OCR_2_9V_3_0V|MMC_OCR_3_0V_3_1V))
+		vdd = 3000000;
+	else if (ISSET(ocr, MMC_OCR_1_65V_1_95V))
+		vdd = 1800000;
+
+	if (sc->sc_vdd == 0 && vdd > 0)
+		imxesdhc_pwrseq_pre(sc->sc_pwrseq);
+
+	/* enable mmc power */
+	if (sc->sc_vmmc && vdd > 0)
+		imxesdhc_enable_vbus(sc->sc_vmmc);
+
+	if (sc->sc_vdd == 0 && vdd > 0)
+		imxesdhc_pwrseq_post(sc->sc_pwrseq);
+
+	sc->sc_vdd = vdd;
 	return 0;
 }
 
