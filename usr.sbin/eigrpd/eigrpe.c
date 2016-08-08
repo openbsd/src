@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.24 2016/06/05 17:07:41 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.25 2016/08/08 16:48:53 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -195,7 +195,7 @@ eigrpe_shutdown(void)
 	free(pkt_ptr);
 
 	log_info("eigrp engine exiting");
-	_exit(0);
+	exit(0);
 }
 
 /* imesg */

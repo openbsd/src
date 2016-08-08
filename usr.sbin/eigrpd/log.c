@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.3 2016/04/15 13:10:56 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.4 2016/08/08 16:48:53 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -157,10 +157,7 @@ fatal(const char *emsg)
 			logit(LOG_CRIT, "fatal in %s: %s",
 			    procnames[eigrpd_process], emsg);
 
-	if (eigrpd_process == PROC_MAIN)
-		exit(1);
-	else				/* parent copes via SIGCHLD */
-		_exit(1);
+	exit(1);
 }
 
 void
