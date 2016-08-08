@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.351 2016/07/25 14:29:28 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.352 2016/08/08 21:44:00 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -582,7 +582,7 @@ session_main(int debug, int verbose)
 	control_shutdown(csock);
 	control_shutdown(rcsock);
 	log_info("session engine exiting");
-	_exit(0);
+	exit(0);
 }
 
 void
