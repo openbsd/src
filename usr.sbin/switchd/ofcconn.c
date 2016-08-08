@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofcconn.c,v 1.6 2016/07/20 21:06:09 reyk Exp $	*/
+/*	$OpenBSD: ofcconn.c,v 1.7 2016/08/08 07:24:27 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -42,34 +43,48 @@ static struct privsep_proc procs[] = {
 	{ "ofp",	PROC_OFP,	NULL }
 };
 
+struct ofcconn;
+
+/* OpenFlow Switch */
+struct ofsw {
+	int			 os_fd;
+	char			*os_name;
+	int			 os_write_ready;
+	TAILQ_HEAD(,ofcconn)	 os_ofcconns;
+	struct event		 os_evio;
+	TAILQ_ENTRY(ofsw)	 os_next;
+};
+TAILQ_HEAD(, ofsw)	 ofsw_list = TAILQ_HEAD_INITIALIZER(ofsw_list);
+
 /* OpenFlow Channel Connection */
 struct ofcconn {
-	char			*oc_device;
+	struct ofsw		*oc_sw;
+	char			*oc_name;
 	struct sockaddr_storage	 oc_peer;
 	int			 oc_sock;
-	int			 oc_devf;
-	int			 oc_sock_write_ready;
-	int			 oc_devf_write_ready;
+	int			 oc_write_ready;
 	int			 oc_connected;
 	int			 oc_conn_fails;
 	struct ibuf		*oc_buf;
 	TAILQ_ENTRY(ofcconn)	 oc_next;
 	struct event		 oc_evsock;
-	struct event		 oc_evdevf;
 	struct event		 oc_evtimer;
 };
 
-TAILQ_HEAD(, ofcconn)	 ofcconn_list = TAILQ_HEAD_INITIALIZER(ofcconn_list);
-
-struct ofcconn	*ofcconn_create(const char *, struct switch_controller *, int);
+struct ofsw	*ofsw_create(const char *, int);
+void		 ofsw_close(struct ofsw *);
+void		 ofsw_free(struct ofsw *);
+void		 ofsw_on_io(int, short, void *);
+int		 ofsw_write(struct ofsw *, struct ofcconn *);
+int		 ofsw_ofc_write_ready(struct ofsw *);
+void		 ofsw_reset_event_handlers(struct ofsw *);
+int		 ofsw_new_ofcconn(struct ofsw *, struct switch_controller *);
 int		 ofcconn_connect(struct ofcconn *);
 void		 ofcconn_on_sockio(int, short, void *);
-void		 ofcconn_on_devfio(int, short, void *);
-int		 ofcconn_write(struct ofcconn *);
 void		 ofcconn_connect_again(struct ofcconn *);
 void		 ofcconn_on_timer(int, short, void *);
-void		 ofcconn_reset_evsock(struct ofcconn *);
-void		 ofcconn_reset_evdevf(struct ofcconn *);
+void		 ofcconn_reset_event_handlers(struct ofcconn *);
+void		 ofcconn_io_fail(struct ofcconn *);
 void		 ofcconn_close(struct ofcconn *);
 void		 ofcconn_free(struct ofcconn *);
 void		 ofcconn_shutdown_all(void);
@@ -99,18 +114,18 @@ ofcconn_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 void
 ofcconn_shutdown(void)
 {
-	struct ofcconn	*e, *t;
+	struct ofsw	*e, *t;
 
-	TAILQ_FOREACH_SAFE(e, &ofcconn_list, oc_next, t) {
-		ofcconn_close(e);
-		ofcconn_free(e);
+	TAILQ_FOREACH_SAFE(e, &ofsw_list, os_next, t) {
+		ofsw_close(e);
+		ofsw_free(e);
 	}
 }
 
 int
 ofcconn_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct ofcconn			*conn;
+	struct ofsw			*os;
 	struct switch_device		*sdv;
 	struct switch_controller	*swc;
 
@@ -123,9 +138,8 @@ ofcconn_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		sdv = imsg->data;
 		swc = &sdv->sdv_swc;
-		if ((conn = ofcconn_create(sdv->sdv_device, swc,
-		    imsg->fd)) != NULL)
-			ofcconn_connect(conn);
+		if ((os = ofsw_create(sdv->sdv_device, imsg->fd)) != NULL)
+			ofsw_new_ofcconn(os, swc);
 		return (0);
 	case IMSG_CTL_DEVICE_DISCONNECT:
 		if (IMSG_DATA_SIZE(imsg) < sizeof(*sdv)) {
@@ -134,15 +148,14 @@ ofcconn_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			return (0);
 		}
 		sdv = imsg->data;
-		TAILQ_FOREACH(conn, &ofcconn_list, oc_next) {
-			if (!strcmp(conn->oc_device, sdv->sdv_device))
+		TAILQ_FOREACH(os, &ofsw_list, os_next) {
+			if (!strcmp(os->os_name, sdv->sdv_device))
 				break;
 		}
-		if (conn) {
-			log_warnx("%s: closed by request",
-			    conn->oc_device);
-			ofcconn_close(conn);
-			ofcconn_free(conn);
+		if (os) {
+			log_warnx("%s: closed by request", os->os_name);
+			ofsw_close(os);
+			ofsw_free(os);
 		}
 		return (0);
 	default:
@@ -152,28 +165,237 @@ ofcconn_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	return (-1);
 }
 
-struct ofcconn *
-ofcconn_create(const char *name, struct switch_controller *swc, int fd)
+struct ofsw *
+ofsw_create(const char *name, int fd)
+{
+	struct ofsw	*os = NULL;
+
+	if ((os = calloc(1, sizeof(struct ofsw))) == NULL) {
+		log_warn("%s: calloc failed", __func__);
+		goto fail;
+	}
+	if ((os->os_name = strdup(name)) == NULL) {
+		log_warn("%s: strdup failed", __func__);
+		goto fail;
+	}
+	os->os_fd = fd;
+	TAILQ_INIT(&os->os_ofcconns);
+	TAILQ_INSERT_TAIL(&ofsw_list, os, os_next);
+
+	event_set(&os->os_evio, os->os_fd, EV_READ|EV_WRITE, ofsw_on_io, os);
+	event_add(&os->os_evio, NULL);
+
+	return (os);
+
+ fail:
+	if (os != NULL)
+		free(os->os_name);
+	free(os);
+
+	return (NULL);
+}
+
+void
+ofsw_close(struct ofsw *os)
+{
+	struct ofcconn	*oc, *oct;
+
+	if (os->os_fd >= 0) {
+		close(os->os_fd);
+		event_del(&os->os_evio);
+		os->os_fd = -1;
+	}
+	TAILQ_FOREACH_SAFE(oc, &os->os_ofcconns, oc_next, oct) {
+		ofcconn_close(oc);
+		ofcconn_free(oc);
+	}
+}
+
+void
+ofsw_free(struct ofsw *os)
+{
+	if (os != NULL)
+		return;
+
+	TAILQ_REMOVE(&ofsw_list, os, os_next);
+	free(os->os_name);
+	free(os);
+}
+
+void
+ofsw_on_io(int fd, short evmask, void *ctx)
+{
+	struct ofsw		*os = ctx;
+	struct ofcconn		*oc, *oct;
+	static char		 msg[65536];/* max size of OpenFlow message */
+	ssize_t			 msgsz, sz;
+	struct ofp_header	*hdr;
+
+	if (evmask & EV_WRITE || os->os_write_ready) {
+		os->os_write_ready = 1;
+		if (ofsw_write(os, NULL) == -1)
+			return;
+	}
+
+	if ((evmask & EV_READ) && ofsw_ofc_write_ready(os)) {
+		if ((msgsz = read(os->os_fd, msg, sizeof(msg))) <= 0) {
+			if (msgsz < 0)
+				log_warn("%s: %s read", __func__, os->os_name);
+			else
+				log_warnx("%s: %s closed", __func__,
+				    os->os_name);
+			ofsw_close(os);
+			ofsw_free(os);
+			return;
+		}
+		hdr = (struct ofp_header *)msg;
+		if (hdr->oh_type != OFP_T_HELLO) {
+			TAILQ_FOREACH_SAFE(oc, &os->os_ofcconns, oc_next, oct) {
+				if ((sz = write(oc->oc_sock, msg, msgsz))
+				    != msgsz) {
+					log_warn("%s: sending a message to "
+					    "%s failed", os->os_name,
+					    oc->oc_name);
+					ofcconn_io_fail(oc);
+					continue;
+				}
+				oc->oc_write_ready = 0;
+				ofcconn_reset_event_handlers(oc);
+			}
+		}
+	}
+	ofsw_reset_event_handlers(os);
+
+	return;
+}
+
+int
+ofsw_write(struct ofsw *os, struct ofcconn *oc0)
+{
+	struct ofcconn		*oc = oc0;
+	struct ofp_header	*hdr;
+	u_char			*msg;
+	ssize_t			 sz, msglen;
+	int			 remain = 0;
+	unsigned char		 buf[65536];
+
+	if (!os->os_write_ready)
+		return (0);
+
+ again:
+	if (oc != NULL) {
+		hdr = ibuf_seek(oc->oc_buf, 0, sizeof(*hdr));
+		if (hdr == NULL)
+			return (0);
+		msglen = ntohs(hdr->oh_length);
+		msg = ibuf_seek(oc->oc_buf, 0, msglen);
+		if (msg == NULL)
+			return (0);
+	} else {
+		TAILQ_FOREACH(oc, &os->os_ofcconns, oc_next) {
+			hdr = ibuf_seek(oc->oc_buf, 0, sizeof(*hdr));
+			if (hdr == NULL)
+				continue;
+			msglen = ntohs(hdr->oh_length);
+			msg = ibuf_seek(oc->oc_buf, 0, msglen);
+			if (msg != NULL)
+				break;
+		}
+		if (oc == NULL)
+			return (0);	/* no message to write yet */
+	}
+	if (hdr->oh_type != OFP_T_HELLO) {
+		if ((sz = write(os->os_fd, msg, msglen)) != msglen) {
+			if (sz < 0)
+				log_warn("%s: %s write failed", __func__,
+				    os->os_name);
+			else
+				log_warn("%s: %s write partially", __func__,
+				    os->os_name);
+			ofsw_close(os);
+			ofsw_free(os);
+			return (-1);
+		}
+		os->os_write_ready = 0;
+	}
+
+	/* XXX preserve the remaining part */
+	if ((remain = oc->oc_buf->wpos - msglen) > 0)
+		memcpy(buf, (caddr_t)msg + msglen, remain);
+	ibuf_reset(oc->oc_buf);
+
+	/* XXX put the remaining part again */
+	if (remain > 0)
+		ibuf_add(oc->oc_buf, buf, remain);
+
+	if (os->os_write_ready) {
+		oc = NULL;
+		goto again;
+	}
+
+	return (0);
+}
+
+int
+ofsw_ofc_write_ready(struct ofsw *os)
+{
+	struct ofcconn	*oc;
+	int		 write_ready = 0;
+
+	TAILQ_FOREACH(oc, &os->os_ofcconns, oc_next) {
+		if (oc->oc_write_ready)
+			write_ready = 1;
+		else
+			break;
+	}
+	if (oc != NULL)
+		return (0);
+
+	return (write_ready);
+}
+
+void
+ofsw_reset_event_handlers(struct ofsw *os)
+{
+	short	evmask = 0, oevmask;
+
+	oevmask = event_pending(&os->os_evio, EV_READ|EV_WRITE, NULL);
+
+	if (ofsw_ofc_write_ready(os))
+		evmask |= EV_READ;
+	if (!os->os_write_ready)
+		evmask |= EV_WRITE;
+
+	if (oevmask != evmask) {
+		if (oevmask)
+			event_del(&os->os_evio);
+		event_set(&os->os_evio, os->os_fd, evmask, ofsw_on_io, os);
+		event_add(&os->os_evio, NULL);
+	}
+}
+
+int
+ofsw_new_ofcconn(struct ofsw *os, struct switch_controller *swc)
 {
 	struct ofcconn	*oc = NULL;
+	char		 buf[128];
 
 	if ((oc = calloc(1, sizeof(struct ofcconn))) == NULL) {
 		log_warn("%s: calloc failed", __func__);
 		goto fail;
 	}
-	if ((oc->oc_device = strdup(name)) == NULL) {
-		log_warn("%s: calloc failed", __func__);
+
+	if (asprintf(&oc->oc_name, "tcp:%s",
+	    print_host(&swc->swc_addr, buf, sizeof(buf))) == -1) {
+		log_warn("%s: strdup failed", __func__);
 		goto fail;
 	}
 	if ((oc->oc_buf = ibuf_new(NULL, 0)) == NULL) {
 		log_warn("%s: failed to get new ibuf", __func__);
 		goto fail;
 	}
-
+	oc->oc_sw = os;
 	oc->oc_sock = -1;
-	oc->oc_devf = fd;
-	TAILQ_INSERT_TAIL(&ofcconn_list, oc, oc_next);
-
 	memcpy(&oc->oc_peer, &swc->swc_addr, sizeof(oc->oc_peer));
 
 	if (ntohs(((struct sockaddr_in *)&oc->oc_peer)->sin_port) == 0)
@@ -181,31 +403,30 @@ ofcconn_create(const char *name, struct switch_controller *swc, int fd)
 		    htons(SWITCHD_CTLR_PORT);
 
 	evtimer_set(&oc->oc_evtimer, ofcconn_on_timer, oc);
+	TAILQ_INSERT_TAIL(&os->os_ofcconns, oc, oc_next);
 
-	return (oc);
+	return (ofcconn_connect(oc));
 
  fail:
 	if (oc != NULL) {
-		free(oc->oc_device);
+		free(oc->oc_name);
 		ibuf_release(oc->oc_buf);
 	}
 	free(oc);
 
-	return (NULL);
+	return (-1);
 }
 
 int
 ofcconn_connect(struct ofcconn *oc)
 {
 	int		 sock = -1;
-	char		 buf[256];
 	struct timeval	 tv;
 
 	if ((sock = socket(oc->oc_peer.ss_family, SOCK_STREAM | SOCK_NONBLOCK,
 	    IPPROTO_TCP)) == -1) {
 		log_warn("%s: failed to open socket for channel with %s",
-		    oc->oc_device,
-		    print_host(&oc->oc_peer, buf, sizeof(buf)));
+		    oc->oc_sw->os_name, oc->oc_name);
 		goto fail;
 	}
 
@@ -213,8 +434,7 @@ ofcconn_connect(struct ofcconn *oc)
 	    oc->oc_peer.ss_len) == -1) {
 		if (errno != EINPROGRESS) {
 			log_warn("%s: failed to connect channel to %s",
-			    oc->oc_device,
-			    print_host(&oc->oc_peer, buf, sizeof(buf)));
+			    oc->oc_sw->os_name, oc->oc_name);
 			goto fail;
 		}
 	}
@@ -222,9 +442,6 @@ ofcconn_connect(struct ofcconn *oc)
 	oc->oc_sock = sock;
 	event_set(&oc->oc_evsock, oc->oc_sock, EV_READ|EV_WRITE,
 	    ofcconn_on_sockio, oc);
-	event_set(&oc->oc_evdevf, oc->oc_devf, EV_READ|EV_WRITE,
-	    ofcconn_on_devfio, oc);
-	event_add(&oc->oc_evdevf, NULL);
 	event_add(&oc->oc_evsock, NULL);
 
 	tv.tv_sec = SWITCHD_OFCCONN_TIMEOUT;
@@ -246,12 +463,11 @@ ofcconn_connect(struct ofcconn *oc)
 void
 ofcconn_on_sockio(int fd, short evmask, void *ctx)
 {
-	struct ofcconn		*oc = ctx;
-	ssize_t			 sz;
-	size_t			 wpos;
-	char			 buf[256];
-	int			 err;
-	socklen_t		 optlen;
+	struct ofcconn	*oc = ctx;
+	ssize_t		 sz;
+	size_t		 wpos;
+	int		 err;
+	socklen_t	 optlen;
 
 	if (evmask & EV_WRITE) {
 		if (oc->oc_connected == 0) {
@@ -259,9 +475,8 @@ ofcconn_on_sockio(int fd, short evmask, void *ctx)
 			getsockopt(oc->oc_sock, SOL_SOCKET, SO_ERROR, &err,
 			    &optlen);
 			if (err != 0) {
-				log_warnx("%s: connection error with %s: %s ",
-				    oc->oc_device,
-				    print_host(&oc->oc_peer, buf, sizeof(buf)),
+				log_warnx("%s: connection error with %s: %s",
+				    oc->oc_sw->os_name, oc->oc_name,
 				    strerror(err));
 				oc->oc_conn_fails++;
 				ofcconn_close(oc);
@@ -269,21 +484,18 @@ ofcconn_on_sockio(int fd, short evmask, void *ctx)
 				return;
 			}
 			log_info("%s: OpenFlow channel to %s connected",
-			    oc->oc_device,
-			    print_host(&oc->oc_peer, buf, sizeof(buf)));
+			    oc->oc_sw->os_name, oc->oc_name);
+
 			event_del(&oc->oc_evtimer);
 			oc->oc_connected = 1;
 			oc->oc_conn_fails = 0;
 			if (ofcconn_send_hello(oc) != 0)
 				return;
-		} else {
-			oc->oc_sock_write_ready = 1;
-			/* schedule an event to reset the event handlers */
-			event_active(&oc->oc_evdevf, 0, 1);
-		}
+		} else
+			oc->oc_write_ready = 1;
 	}
 
-	if (evmask & EV_READ && ibuf_left(oc->oc_buf) > 0) {
+	if ((evmask & EV_READ) && ibuf_left(oc->oc_buf) > 0) {
 		wpos = ibuf_length(oc->oc_buf);
 
 		/* XXX temporally fix not to access unallocated area */
@@ -292,71 +504,27 @@ ofcconn_on_sockio(int fd, short evmask, void *ctx)
 			ibuf_setsize(oc->oc_buf, wpos);
 		}
 
-		if ((sz = read(oc->oc_sock,
-		    ibuf_data(oc->oc_buf) + wpos,
+		if ((sz = read(oc->oc_sock, ibuf_data(oc->oc_buf) + wpos,
 		    ibuf_left(oc->oc_buf))) <= 0) {
 			if (sz == 0)
-				log_warnx("%s: connection closed by peer",
-				    oc->oc_device);
+				log_warnx("%s: %s: connection closed by peer",
+				    oc->oc_sw->os_name, oc->oc_name);
 			else
-				log_warn("%s: connection read error",
-				    oc->oc_device);
+				log_warn("%s: %s: connection read error",
+				    oc->oc_sw->os_name, oc->oc_name);
 			goto fail;
 		}
 		if (ibuf_setsize(oc->oc_buf, wpos + sz) == -1)
 			goto fail;
-		if (oc->oc_devf_write_ready) {
-			if (ofcconn_write(oc) == -1)
-				goto fail;
-			event_active(&oc->oc_evdevf, 0, 1);
-		}
+
+		if (ofsw_write(oc->oc_sw, oc) == -1)
+			return;	/* oc is already freeed */
 	}
-	ofcconn_reset_evsock(oc);
+	ofcconn_reset_event_handlers(oc);
+	ofsw_reset_event_handlers(oc->oc_sw);
 
 	return;
 
- fail:
-	ofcconn_close(oc);
-	ofcconn_connect_again(oc);
-}
-
-void
-ofcconn_on_devfio(int fd, short evmask, void *ctx)
-{
-	struct ofcconn		*oc = ctx;
-	static char		 buf[65536];/* max size of OpenFlow message */
-	ssize_t			 sz, sz2;
-	struct ofp_header	*hdr;
-
-	if (evmask & EV_WRITE) {
-		oc->oc_devf_write_ready = 1;
-		if (ofcconn_write(oc) == -1)
-			goto fail;
-	}
-
-	if (evmask & EV_READ && oc->oc_sock_write_ready) {
-		if ((sz = read(oc->oc_devf, buf, sizeof(buf))) <= 0) {
-			if (sz < 0)
-				log_warn("%s: %s read", __func__,
-				    oc->oc_device);
-			goto fail;
-		}
-		hdr = (struct ofp_header *)buf;
-		if (hdr->oh_type != OFP_T_HELLO) {
-			/* forward packet */
-			if ((sz2 = write(oc->oc_sock, buf, sz)) != sz) {
-				log_warn("%s: %s write", __func__,
-				    oc->oc_device);
-				goto fail;
-			}
-			oc->oc_sock_write_ready = 0;
-			/* schedule an event to reset the event handlers */
-			event_active(&oc->oc_evsock, 0, 1);
-		}
-	}
-	ofcconn_reset_evdevf(oc);
-
-	return;
  fail:
 	ofcconn_close(oc);
 	ofcconn_connect_again(oc);
@@ -379,14 +547,12 @@ void
 ofcconn_on_timer(int fd, short evmask, void *ctx)
 {
 	struct ofcconn	*oc = ctx;
-	char		 buf[256];
 
 	if (oc->oc_sock < 0)
 		ofcconn_connect(oc);
 	else if (!oc->oc_connected) {
 		log_warnx("%s: timeout connecting channel to %s",
-		    oc->oc_device,
-		    print_host(&oc->oc_peer, buf, sizeof(buf)));
+		    oc->oc_sw->os_name, oc->oc_name);
 		ofcconn_close(oc);
 		oc->oc_conn_fails++;
 		ofcconn_connect_again(oc);
@@ -394,7 +560,7 @@ ofcconn_on_timer(int fd, short evmask, void *ctx)
 }
 
 void
-ofcconn_reset_evsock(struct ofcconn *oc)
+ofcconn_reset_event_handlers(struct ofcconn *oc)
 {
 	short	evmask = 0, oevmask;
 
@@ -402,79 +568,25 @@ ofcconn_reset_evsock(struct ofcconn *oc)
 
 	if (ibuf_left(oc->oc_buf) > 0)
 		evmask |= EV_READ;
-	if (!oc->oc_sock_write_ready)
+	if (!oc->oc_write_ready)
 		evmask |= EV_WRITE;
 
 	if (oevmask != evmask) {
 		if (oevmask)
 			event_del(&oc->oc_evsock);
-		event_set(&oc->oc_evsock, oc->oc_sock, evmask,
-		    ofcconn_on_sockio, oc);
-		event_add(&oc->oc_evsock, NULL);
+		if (evmask) {
+			event_set(&oc->oc_evsock, oc->oc_sock, evmask,
+			    ofcconn_on_sockio, oc);
+			event_add(&oc->oc_evsock, NULL);
+		}
 	}
 }
 
 void
-ofcconn_reset_evdevf(struct ofcconn *oc)
+ofcconn_io_fail(struct ofcconn *oc)
 {
-	short	evmask = 0, oevmask;
-
-	oevmask = event_pending(&oc->oc_evdevf, EV_READ|EV_WRITE, NULL);
-
-	if (oc->oc_sock_write_ready)
-		evmask |= EV_READ;
-	if (!oc->oc_devf_write_ready)
-		evmask |= EV_WRITE;
-
-	if (oevmask != evmask) {
-		if (oevmask)
-			event_del(&oc->oc_evdevf);
-		event_set(&oc->oc_evdevf, oc->oc_devf, evmask,
-		    ofcconn_on_devfio, oc);
-		event_add(&oc->oc_evdevf, NULL);
-	}
-}
-
-int
-ofcconn_write(struct ofcconn *oc)
-{
-	struct ofp_header	*hdr;
-	size_t			 sz, pktlen;
-	void			*pkt;
-	/* XXX */
-	unsigned char		 buf[65536];
-	int			 remain = 0;
-
-	/* Try to write if the OFP header has arrived */
-	if (!oc->oc_devf_write_ready ||
-	    (hdr = ibuf_seek(oc->oc_buf, 0, sizeof(*hdr))) == NULL)
-		return (0);
-
-	/* Check the length in the OFP header */
-	pktlen = ntohs(hdr->oh_length);
-
-	if ((pkt = ibuf_seek(oc->oc_buf, 0, pktlen)) != NULL) {
-		hdr = pkt;
-		if (hdr->oh_type != OFP_T_HELLO) {
-			/* forward packet; has entire packet already */
-			if ((sz = write(oc->oc_devf, pkt, pktlen)) != pktlen) {
-				log_debug("%s: %s size %d pktlen %d",
-				    __func__,
-				    oc->oc_device, (int)sz, (int)pktlen);
-				return (-1);
-			}
-		}
-		/* XXX preserve the remaining part */
-		if ((remain = oc->oc_buf->wpos - pktlen) > 0)
-			memmove(buf, (caddr_t)pkt + pktlen, remain);
-		ibuf_reset(oc->oc_buf);
-		oc->oc_devf_write_ready = 0;
-	}
-	/* XXX put the remaining part again */
-	if (remain > 0)
-		ibuf_add(oc->oc_buf, buf, remain);
-
-	return (0);
+	ofcconn_close(oc);
+	ofcconn_connect_again(oc);
 }
 
 void
@@ -484,9 +596,8 @@ ofcconn_close(struct ofcconn *oc)
 		event_del(&oc->oc_evsock);
 		close(oc->oc_sock);
 		oc->oc_sock = -1;
-		oc->oc_sock_write_ready = 0;
+		oc->oc_write_ready = 0;
 	}
-	event_del(&oc->oc_evdevf);
 	event_del(&oc->oc_evtimer);
 	oc->oc_connected = 0;
 }
@@ -496,10 +607,9 @@ ofcconn_free(struct ofcconn *oc)
 {
 	if (oc == NULL)
 		return;
-	close(oc->oc_devf);
-	TAILQ_REMOVE(&ofcconn_list, oc, oc_next);
+	TAILQ_REMOVE(&oc->oc_sw->os_ofcconns, oc, oc_next);
 	ibuf_release(oc->oc_buf);
-	free(oc->oc_device);
+	free(oc->oc_name);
 	free(oc);
 }
 
@@ -516,7 +626,8 @@ ofcconn_send_hello(struct ofcconn *oc)
 
 	sz = sizeof(hdr);
 	if (write(oc->oc_sock, &hdr, sz) != sz) {
-		log_warn("%s: %s write", __func__, oc->oc_device);
+		log_warn("%s: %s: %s; write", __func__, oc->oc_sw->os_name,
+		    oc->oc_name);
 		ofcconn_close(oc);
 		ofcconn_connect_again(oc);
 		return (-1);
