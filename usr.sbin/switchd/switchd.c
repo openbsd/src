@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.c,v 1.6 2016/07/22 09:31:33 reyk Exp $	*/
+/*	$OpenBSD: switchd.c,v 1.7 2016/08/08 16:52:15 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -217,7 +217,8 @@ switchd_socket(struct sockaddr *sock, int reuseport)
 	int s = -1, val;
 	struct linger lng;
 
-	if ((s = socket(sock->sa_family, SOCK_STREAM, IPPROTO_TCP)) == -1)
+	if ((s = socket(sock->sa_family, SOCK_STREAM | SOCK_NONBLOCK,
+	    IPPROTO_TCP)) == -1)
 		goto bad;
 
 	/*
@@ -232,8 +233,6 @@ switchd_socket(struct sockaddr *sock, int reuseport)
 		    sizeof(int)) == -1)
 			goto bad;
 	}
-	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
-		goto bad;
 
 	/*
 	 * TCP options
