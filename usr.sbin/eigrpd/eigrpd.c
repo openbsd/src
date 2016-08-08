@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.16 2016/06/05 17:19:18 renato Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.17 2016/08/08 21:38:42 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -40,9 +40,8 @@
 
 void		main_sig_handler(int, short, void *);
 __dead void	usage(void);
-void		eigrpd_shutdown(void);
+__dead void	eigrpd_shutdown(void);
 pid_t		start_child(enum eigrpd_process, char *, int, int, int, char *);
-int		check_child(pid_t, const char *);
 
 void	main_dispatch_eigrpe(int, short, void *);
 void	main_dispatch_rde(int, short, void *);
@@ -65,29 +64,11 @@ pid_t			 rde_pid = 0;
 void
 main_sig_handler(int sig, short event, void *arg)
 {
-	/*
-	 * signal handler rules don't apply, libevent decouples for us
-	 */
-
-	int	die = 0;
-
+	/* signal handler rules don't apply, libevent decouples for us */
 	switch (sig) {
 	case SIGTERM:
 	case SIGINT:
-		die = 1;
-		/* FALLTHROUGH */
-	case SIGCHLD:
-		if (check_child(eigrpe_pid, "eigrp engine")) {
-			eigrpe_pid = 0;
-			die = 1;
-		}
-		if (check_child(rde_pid, "route decision engine")) {
-			rde_pid = 0;
-			die = 1;
-		}
-		if (die)
-			eigrpd_shutdown();
-		break;
+		eigrpd_shutdown();
 	case SIGHUP:
 		if (eigrp_reload() == -1)
 			log_warnx("configuration reload failed");
@@ -116,7 +97,7 @@ struct eigrpd_global global;
 int
 main(int argc, char *argv[])
 {
-	struct event		 ev_sigint, ev_sigterm, ev_sigchld, ev_sighup;
+	struct event		 ev_sigint, ev_sigterm, ev_sighup;
 	char			*saved_argv0;
 	int			 ch;
 	int			 debug = 0, rflag = 0, eflag = 0;
@@ -248,11 +229,9 @@ main(int argc, char *argv[])
 	/* setup signal handler */
 	signal_set(&ev_sigint, SIGINT, main_sig_handler, NULL);
 	signal_set(&ev_sigterm, SIGTERM, main_sig_handler, NULL);
-	signal_set(&ev_sigchld, SIGCHLD, main_sig_handler, NULL);
 	signal_set(&ev_sighup, SIGHUP, main_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
-	signal_add(&ev_sigchld, NULL);
 	signal_add(&ev_sighup, NULL);
 	signal(SIGPIPE, SIG_IGN);
 
@@ -287,41 +266,40 @@ main(int argc, char *argv[])
 	    eigrpd_conf->rdomain) == -1)
 		fatalx("kr_init failed");
 
-	if (pledge("inet rpath stdio proc sendfd", NULL) == -1)
+	if (pledge("inet rpath stdio sendfd", NULL) == -1)
 		fatal("pledge");
 
 	event_dispatch();
 
 	eigrpd_shutdown();
-	/* NOTREACHED */
-	return (0);
 }
 
-void
+__dead void
 eigrpd_shutdown(void)
 {
-	pid_t		 	 pid;
-
-	if (eigrpe_pid)
-		kill(eigrpe_pid, SIGTERM);
-
-	if (rde_pid)
-		kill(rde_pid, SIGTERM);
-
-	kr_shutdown();
-
-	do {
-		if ((pid = wait(NULL)) == -1 &&
-		    errno != EINTR && errno != ECHILD)
-			fatal("wait");
-	} while (pid != -1 || (pid == -1 && errno == EINTR));
-
-	config_clear(eigrpd_conf);
+	pid_t		 pid;
+	int		 status;
 
 	msgbuf_clear(&iev_eigrpe->ibuf.w);
 	free(iev_eigrpe);
+	iev_eigrpe = NULL;
 	msgbuf_clear(&iev_rde->ibuf.w);
 	free(iev_rde);
+	iev_rde = NULL;
+
+	config_clear(eigrpd_conf);
+	kr_shutdown();
+
+	do {
+		pid = wait(&status);
+		if (pid == -1) {
+			if (errno != EINTR && errno != ECHILD)
+				fatal("wait");
+		} else if (WIFSIGNALED(status))
+			log_warnx("%s terminated; signal %d",
+			    (pid == rde_pid) ? "route decision engine" :
+			    "eigrp engine", WTERMSIG(status));
+	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
 	log_info("terminating");
 	exit(0);
@@ -371,26 +349,6 @@ start_child(enum eigrpd_process p, char *argv0, int fd, int debug, int verbose,
 
 	execvp(argv0, argv);
 	fatal("execvp");
-}
-
-int
-check_child(pid_t pid, const char *pname)
-{
-	int	status;
-
-	if (waitpid(pid, &status, WNOHANG) > 0) {
-		if (WIFEXITED(status)) {
-			log_warnx("lost child: %s exited", pname);
-			return (1);
-		}
-		if (WIFSIGNALED(status)) {
-			log_warnx("lost child: %s terminated; signal %d",
-			    pname, WTERMSIG(status));
-			return (1);
-		}
-	}
-
-	return (0);
 }
 
 /* imsg handling */
@@ -535,18 +493,20 @@ main_dispatch_rde(int fd, short event, void *bula)
 	}
 }
 
-void
+int
 main_imsg_compose_eigrpe(int type, pid_t pid, void *data, uint16_t datalen)
 {
 	if (iev_eigrpe == NULL)
-		return;
-	imsg_compose_event(iev_eigrpe, type, 0, pid, -1, data, datalen);
+		return (-1);
+	return (imsg_compose_event(iev_eigrpe, type, 0, pid, -1, data, datalen));
 }
 
-void
+int
 main_imsg_compose_rde(int type, pid_t pid, void *data, uint16_t datalen)
 {
-	imsg_compose_event(iev_rde, type, 0, pid, -1, data, datalen);
+	if (iev_rde == NULL)
+		return (-1);
+	return (imsg_compose_event(iev_rde, type, 0, pid, -1, data, datalen));
 }
 
 void
@@ -660,9 +620,9 @@ eigrp_reload(void)
 int
 eigrp_sendboth(enum imsg_type type, void *buf, uint16_t len)
 {
-	if (imsg_compose_event(iev_eigrpe, type, 0, 0, -1, buf, len) == -1)
+	if (main_imsg_compose_eigrpe(type, 0, buf, len) == -1)
 		return (-1);
-	if (imsg_compose_event(iev_rde, type, 0, 0, -1, buf, len) == -1)
+	if (main_imsg_compose_rde(type, 0, buf, len) == -1)
 		return (-1);
 	return (0);
 }

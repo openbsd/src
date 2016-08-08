@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.15 2016/06/05 03:36:41 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.16 2016/08/08 21:38:42 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -481,8 +481,8 @@ void		 addscope(struct sockaddr_in6 *, uint32_t);
 void		 clearscope(struct in6_addr *);
 
 /* eigrpd.c */
-void		 main_imsg_compose_eigrpe(int, pid_t, void *, uint16_t);
-void		 main_imsg_compose_rde(int, pid_t, void *, uint16_t);
+int		 main_imsg_compose_eigrpe(int, pid_t, void *, uint16_t);
+int		 main_imsg_compose_rde(int, pid_t, void *, uint16_t);
 void		 merge_config(struct eigrpd_conf *, struct eigrpd_conf *);
 struct eigrpd_conf *config_new_empty(void);
 void		 config_clear(struct eigrpd_conf *);
