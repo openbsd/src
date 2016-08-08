@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofcconn.c,v 1.7 2016/08/08 07:24:27 yasuoka Exp $	*/
+/*	$OpenBSD: ofcconn.c,v 1.8 2016/08/08 08:22:29 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -214,7 +214,7 @@ ofsw_close(struct ofsw *os)
 void
 ofsw_free(struct ofsw *os)
 {
-	if (os != NULL)
+	if (os == NULL)
 		return;
 
 	TAILQ_REMOVE(&ofsw_list, os, os_next);
