@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.34 2016/07/30 08:07:01 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.35 2016/08/08 19:27:12 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -794,6 +794,8 @@ initarm(void *arg0, void *arg1, void *arg2)
 		Debugger();
 #endif
 	printf("board type: %u\n", board_id);
+
+	cpu_setup();
 
 	/* We return the new stack pointer address */
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
