@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.78 2016/07/04 21:15:06 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.79 2016/08/08 21:59:20 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -147,6 +147,10 @@ struct elf_object {
 	Elf_Addr	tls_align;
 	const void	*tls_static_data;
 	int		tls_offset;
+
+	/* relro bits */
+	Elf_Addr	relro_addr;
+	Elf_Addr	relro_size;
 
 	/* generation number of last grpsym insert on this object */
 	unsigned int grpsym_gen;

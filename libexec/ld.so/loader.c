@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.162 2016/07/04 21:15:06 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.163 2016/08/08 21:59:20 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -478,6 +478,10 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 			}
 			ptls = phdp;
 			break;
+		case PT_GNU_RELRO:
+			exe_obj->relro_addr = phdp->p_vaddr + exe_loff;
+			exe_obj->relro_size = phdp->p_memsz;
+			break;
 		}
 		phdp++;
 	}
@@ -524,37 +528,9 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	_dl_allocate_tls_offsets();
 
 	/*
-	 * Everything should be in place now for doing the relocation
-	 * and binding. Call _dl_rtld to do the job. Fingers crossed.
-	 */
-	failed = 0;
-	if (_dl_traceld == NULL)
-		failed = _dl_rtld(_dl_objects);
-
-	if (_dl_debug || _dl_traceld) {
-		if (_dl_traceld)
-			_dl_pledge("stdio rpath", NULL);
-		_dl_show_objects();
-	}
-
-	DL_DEB(("dynamic loading done, %s.\n",
-	    (failed == 0) ? "success":"failed"));
-
-	if (failed != 0)
-		_dl_exit(1);
-
-	if (_dl_traceld)
-		_dl_exit(0);
-
-	_dl_loading_object = NULL;
-
-	/* set up the TIB for the initial thread */
-	_dl_allocate_first_tib();
-
-	_dl_fixup_user_env();
-
-	/*
-	 * Finally make something to help gdb when poking around in the code.
+	 * Make something to help gdb when poking around in the code.
+	 * Do this poking at the .dynamic section now, before relocation
+	 * renders it read-only
 	 */
 	map_link = NULL;
 #ifdef __mips__
@@ -593,6 +569,38 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 			    PROT_READ|PROT_EXEC);
 #endif
 	}
+
+
+	/*
+	 * Everything should be in place now for doing the relocation
+	 * and binding. Call _dl_rtld to do the job. Fingers crossed.
+	 */
+
+	failed = 0;
+	if (_dl_traceld == NULL)
+		failed = _dl_rtld(_dl_objects);
+
+	if (_dl_debug || _dl_traceld) {
+		if (_dl_traceld)
+			_dl_pledge("stdio rpath", NULL);
+		_dl_show_objects();
+	}
+
+	DL_DEB(("dynamic loading done, %s.\n",
+	    (failed == 0) ? "success":"failed"));
+
+	if (failed != 0)
+		_dl_exit(1);
+
+	if (_dl_traceld)
+		_dl_exit(0);
+
+	_dl_loading_object = NULL;
+
+	/* set up the TIB for the initial thread */
+	_dl_allocate_first_tib();
+
+	_dl_fixup_user_env();
 
 	_dl_debug_state();
 

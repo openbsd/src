@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.77 2016/07/04 21:15:06 guenther Exp $ */
+/*	$OpenBSD: library.c,v 1.78 2016/08/08 21:59:20 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -98,6 +98,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	struct load_list *next_load, *load_list = NULL;
 	Elf_Addr maxva = 0, minva = ELFDEFNNAME(NO_ADDR);
 	Elf_Addr libaddr, loff, align = _dl_pagesz - 1;
+	Elf_Addr relro_addr = 0, relro_size = 0;
 	elf_object_t *object;
 	char	hbuf[4096];
 	Elf_Dyn *dynp = NULL;
@@ -281,6 +282,11 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 			    phdp->p_memsz);
 			break;
 
+		case PT_GNU_RELRO:
+			relro_addr = phdp->p_vaddr + loff;
+			relro_size = phdp->p_memsz;
+			break;
+
 		default:
 			break;
 		}
@@ -299,6 +305,8 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 		object->dev = sb.st_dev;
 		object->inode = sb.st_ino;
 		object->obj_flags |= flags;
+		object->relro_addr = relro_addr;
+		object->relro_size = relro_size;
 		_dl_set_sod(object->load_name, &object->sod);
 		if (ptls != NULL && ptls->p_memsz)
 			_dl_set_tls(object, ptls, libaddr, libname);

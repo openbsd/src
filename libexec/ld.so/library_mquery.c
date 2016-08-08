@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.54 2016/07/04 21:15:06 guenther Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.55 2016/08/08 21:59:20 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -108,6 +108,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	Elf_Addr load_end = 0;
 	Elf_Addr align = _dl_pagesz - 1, off, size;
 	Elf_Phdr *ptls = NULL;
+	Elf_Addr relro_addr = 0, relro_size = 0;
 	struct stat sb;
 	char hbuf[4096];
 
@@ -297,10 +298,15 @@ retry:
 	}
 
 	phdp = (Elf_Phdr *)(hbuf + ehdr->e_phoff);
-	for (i = 0; i < ehdr->e_phnum; i++, phdp++)
+	for (i = 0; i < ehdr->e_phnum; i++, phdp++) {
 		if (phdp->p_type == PT_OPENBSD_RANDOMIZE)
 			_dl_randombuf((char *)(phdp->p_vaddr + LOFF),
 			    phdp->p_memsz);
+		else if (phdp->p_type == PT_GNU_RELRO) {
+			relro_addr = phdp->p_vaddr + LOFF;
+			relro_size = phdp->p_memsz;
+		}
+	}
 
 	_dl_close(libfile);
 
@@ -315,6 +321,8 @@ retry:
 		object->dev = sb.st_dev;
 		object->inode = sb.st_ino;
 		object->obj_flags |= flags;
+		object->relro_addr = relro_addr;
+		object->relro_size = relro_size;
 		_dl_set_sod(object->load_name, &object->sod);
 		if (ptls != NULL && ptls->p_memsz)
 			_dl_set_tls(object, ptls, (Elf_Addr)lowld->start,
