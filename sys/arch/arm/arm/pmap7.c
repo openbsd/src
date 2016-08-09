@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.35 2016/08/08 14:47:52 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.36 2016/08/09 13:13:51 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -378,7 +378,6 @@ struct pv_entry {
 /*
  * Local prototypes
  */
-int		pmap_set_pt_cache_mode(pd_entry_t *, vaddr_t);
 void		pmap_alloc_specials(vaddr_t *, int, vaddr_t *,
 		    pt_entry_t **);
 static boolean_t	pmap_is_current(pmap_t);
@@ -395,10 +394,9 @@ void		pmap_free_l1(pmap_t);
 struct l2_bucket *pmap_get_l2_bucket(pmap_t, vaddr_t);
 struct l2_bucket *pmap_alloc_l2_bucket(pmap_t, vaddr_t);
 void		pmap_free_l2_bucket(pmap_t, struct l2_bucket *, u_int);
-void		pmap_l2ptp_ctor(void *);
 
 void		pmap_clearbit(struct vm_page *, u_int);
-void		pmap_clean_page(struct vm_page *, int);
+void		pmap_clean_page(struct vm_page *);
 void		pmap_page_remove(struct vm_page *);
 
 void		pmap_init_l1(struct l1_ttable *, pd_entry_t *);
@@ -626,12 +624,10 @@ uint nl1;
 void
 pmap_alloc_l1(pmap_t pm, int domain)
 {
-	struct l2_bucket *l2b;
 	struct l1_ttable *l1;
 	struct pglist plist;
 	struct vm_page *m;
 	pd_entry_t *pl1pt;
-	pt_entry_t *ptep, pte;
 	vaddr_t va, eva;
 	int error;
 
@@ -664,22 +660,6 @@ printf("%s: %d %d\n", __func__, domain, ++nl1);
 		paddr_t pa = VM_PAGE_TO_PHYS(m);
 
 		pmap_kenter_pa(va, pa, PROT_READ | PROT_WRITE);
-		/*
-		 * Make sure the L1 descriptor table is mapped
-		 * with the cache-mode set to write-through, or
-		 * correctly synced.
-		 */
-		l2b = pmap_get_l2_bucket(pmap_kernel(), va);
-		ptep = &l2b->l2b_kva[l2pte_index(va)];
-		pte = *ptep;
-
-		if ((pte & L2_S_CACHE_MASK) != pte_l2_s_cache_mode_pt) {
-			pte = (pte & ~L2_S_CACHE_MASK) | pte_l2_s_cache_mode_pt;
-			*ptep = pte;
-			PTE_SYNC(ptep);
-			cpu_tlb_flushD_SE(va);
-		}
-
 		m = TAILQ_NEXT(m, pageq);
 	}
 
@@ -798,7 +778,7 @@ pmap_alloc_l2_bucket(pmap_t pm, vaddr_t va)
 			}
 			return (NULL);
 		}
-		pmap_l2ptp_ctor(ptep);
+		PTE_SYNC_RANGE(ptep, L2_TABLE_SIZE_REAL / sizeof(pt_entry_t));
 		pmap_extract(pmap_kernel(), (vaddr_t)ptep, &l2b->l2b_phys);
 
 		l2->l2_occupancy++;
@@ -894,40 +874,6 @@ pmap_free_l2_bucket(pmap_t pm, struct l2_bucket *l2b, u_int count)
 }
 
 /*
- * Cache constructors for L2 descriptor tables, metadata and pmap
- * structures.
- */
-void
-pmap_l2ptp_ctor(void *v)
-{
-	struct l2_bucket *l2b;
-	pt_entry_t *ptep, pte;
-	vaddr_t va = (vaddr_t)v & ~PGOFSET;
-
-	/*
-	 * The mappings for these page tables were initially made using
-	 * pmap_kenter_pa() by the pool subsystem. Therefore, the cache-
-	 * mode will not be right for page table mappings. To avoid
-	 * polluting the pmap_kenter_pa() code with a special case for
-	 * page tables, we simply fix up the cache-mode here if it's not
-	 * correct.
-	 */
-	l2b = pmap_get_l2_bucket(pmap_kernel(), va);
-	KDASSERT(l2b != NULL);
-	ptep = &l2b->l2b_kva[l2pte_index(va)];
-	pte = *ptep;
-
-	if ((pte & L2_S_CACHE_MASK) != pte_l2_s_cache_mode_pt) {
-		*ptep = (pte & ~L2_S_CACHE_MASK) | pte_l2_s_cache_mode_pt;
-		PTE_SYNC(ptep);
-		cpu_tlb_flushD_SE(va);
-		cpu_cpwait();
-	}
-
-	PTE_SYNC_RANGE(v, L2_TABLE_SIZE_REAL / sizeof(pt_entry_t));
-}
-
-/*
  * Modify pte bits for all ptes corresponding to the given physical address.
  * We use `maskbits' rather than `clearbits' because we're always passing
  * constants and the latter would require an extra inversion at run-time.
@@ -953,13 +899,6 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 
 	if (pg->mdpage.pvh_list == NULL)
 		return;
-
-	/*
-	 * If we are changing a writable or modified page to
-	 * read-only (or worse), be sure to flush it first.
-	 */
-	if (maskbits & (PVF_WRITE|PVF_MOD))
-		pmap_clean_page(pg, FALSE);
 
 	/*
 	 * Loop over all current mappings setting/clearing as appropriate
@@ -1014,45 +953,33 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 /*
  * pmap_clean_page()
  *
- * This is a local function used to work out the best strategy to writeback
- * a single page.
- *
- * Its policy is effectively:
- *  o If there are no mappings, we don't bother doing anything with the cache.
- *  o If there is a valid mapping, we use it to clean that page.
- *  o If there is no valid mapping, we create a temporary one and wb through it.
+ * Invalidate all I$ aliases for a single page.
  */
 void
-pmap_clean_page(struct vm_page *pg, int isync)
+pmap_clean_page(struct vm_page *pg)
 {
 	pmap_t pm;
 	struct pv_entry *pv;
 
-	/*
-	 * To save time, we are only walking the pv list if an I$ invalidation
-	 * is required.  Otherwise all we need is to map the page and writeback.
-	 */
-	if (isync) {
-		if (curproc)
-			pm = curproc->p_vmspace->vm_map.pmap;
-		else
-			pm = pmap_kernel();
+	if (curproc)
+		pm = curproc->p_vmspace->vm_map.pmap;
+	else
+		pm = pmap_kernel();
 
-		for (pv = pg->mdpage.pvh_list; pv; pv = pv->pv_next) {
-			/* inline !pmap_is_current(pv->pv_pmap) */
-			if (pv->pv_pmap != pmap_kernel() && pv->pv_pmap != pm)
-				continue;
+	for (pv = pg->mdpage.pvh_list; pv; pv = pv->pv_next) {
+		/* inline !pmap_is_current(pv->pv_pmap) */
+		if (pv->pv_pmap != pmap_kernel() && pv->pv_pmap != pm)
+			continue;
 
-			/*
-			 * The page is mapped non-cacheable in 
-			 * this map.  No need to flush the cache.
-			 */
-			if (pv->pv_flags & PVF_NC) /* XXX ought to be pg attr */
-				break;
+		/*
+		 * The page is mapped non-cacheable in 
+		 * this map.  No need to flush the cache.
+		 */
+		if (pv->pv_flags & PVF_NC) /* XXX ought to be pg attr */
+			break;
 
-			if (PV_BEEN_EXECD(pv->pv_flags))
-				cpu_icache_sync_range(pv->pv_va, PAGE_SIZE);
-		}
+		if (PV_BEEN_EXECD(pv->pv_flags))
+			cpu_icache_sync_range(pv->pv_va, PAGE_SIZE);
 	}
 }
 
@@ -1146,11 +1073,6 @@ pmap_create(void)
 	pm->pm_refs = 1;
 	pm->pm_stats.wired_count = 0;
 	pmap_alloc_l1(pm, PMAP_DOMAIN_USER_V7);
-
-	/*
-	 * Note: The pool ctor ensures that the pm_l2[] array is already
-	 * initialised to zero.
-	 */
 
 	return (pm);
 }
@@ -1453,7 +1375,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			 * gets invalidated.	
 			 */
 			if (pg != NULL)
-				pmap_clean_page(pg, TRUE);
+				pmap_clean_page(pg);
 
 			*ptep = L2_TYPE_INV;
 			PTE_SYNC(ptep);
@@ -1693,8 +1615,6 @@ NPDEBUG(PDB_PROTECT, printf("\n"));
 				u_int f;
 
 				pg = PHYS_TO_VM_PAGE(l2pte_pa(opte));
-				if (pg != NULL)
-					pmap_clean_page(pg, FALSE);
 				pte = (opte & ~L2_S_PROT_MASK) |
 				    L2_S_PROT(pm == pmap_kernel() ? PTE_KERNEL : PTE_USER,
 				      opte & L2_V7_S_XN ? PROT_READ : PROT_READ | PROT_EXEC);
@@ -2522,7 +2442,6 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	pd_entry_t pde;
 	pt_entry_t *ptep;
 	paddr_t pa;
-	vaddr_t va;
 	vsize_t size;
 	int l1idx, l2idx, l2next = 0;
 
@@ -2591,28 +2510,6 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 			if ((ptep[l2idx] & L2_TYPE_MASK) != L2_TYPE_INV)
 				l2b->l2b_occupancy++;
 		}
-
-		/*
-		 * Make sure the descriptor itself has the correct cache mode.
-		 * If not, fix it, but whine about the problem. Port-meisters
-		 * should consider this a clue to fix up their initarm()
-		 * function. :)
-		 */
-		if (pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)ptep)) {
-			printf("pmap_bootstrap: WARNING! wrong cache mode for "
-			    "L2 pte @ %p\n", ptep);
-		}
-	}
-
-	/*
-	 * Ensure the primary (kernel) L1 has the correct cache mode for
-	 * a page table. Bitch if it is not correctly set.
-	 */
-	for (va = (vaddr_t)kernel_l1pt;
-	    va < ((vaddr_t)kernel_l1pt + L1_TABLE_SIZE); va += PAGE_SIZE) {
-		if (pmap_set_pt_cache_mode(kernel_l1pt, va))
-			printf("pmap_bootstrap: WARNING! wrong cache mode for "
-			    "primary L1 @ 0x%lx\n", va);
 	}
 
 	cpu_idcache_wbinv_all();
@@ -2631,11 +2528,8 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	virtual_end = vend;
 
 	pmap_alloc_specials(&virtual_avail, 1, &csrcp, &csrc_pte);
-	pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)csrc_pte);
 	pmap_alloc_specials(&virtual_avail, 1, &cdstp, &cdst_pte);
-	pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)cdst_pte);
 	pmap_alloc_specials(&virtual_avail, 1, &cwbp, &cwb_pte);
-	pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)cwb_pte);
 	pmap_alloc_specials(&virtual_avail, 1, (void *)&memhook, NULL);
 	pmap_alloc_specials(&virtual_avail, round_page(MSGBUFSIZE) / PAGE_SIZE,
 	    (void *)&msgbufaddr, NULL);
@@ -2691,48 +2585,6 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 
 	cpu_dcache_wbinv_all();
 	cpu_sdcache_wbinv_all();
-}
-
-int
-pmap_set_pt_cache_mode(pd_entry_t *kl1, vaddr_t va)
-{
-	pd_entry_t *pdep, pde;
-	pt_entry_t *ptep, pte;
-	vaddr_t pa;
-	int rv = 0;
-
-	/*
-	 * Make sure the descriptor itself has the correct cache mode
-	 */
-	pdep = &kl1[L1_IDX(va)];
-	pde = *pdep;
-
-	if (l1pte_section_p(pde)) {
-		if ((pde & L1_S_CACHE_MASK) != pte_l1_s_cache_mode_pt) {
-			*pdep = (pde & ~L1_S_CACHE_MASK) |
-			    pte_l1_s_cache_mode_pt;
-			PTE_SYNC(pdep);
-			cpu_tlb_flushD_SE(va);
-			rv = 1;
-		}
-	} else {
-		pa = (paddr_t)(pde & L1_C_ADDR_MASK);
-		ptep = (pt_entry_t *)kernel_pt_lookup(pa);
-		if (ptep == NULL)
-			panic("pmap_bootstrap: No L2 for L2 @ va %p", ptep);
-
-		ptep = &ptep[l2pte_index(va)];
-		pte = *ptep;
-		if ((pte & L2_S_CACHE_MASK) != pte_l2_s_cache_mode_pt) {
-			*ptep = (pte & ~L2_S_CACHE_MASK) |
-			    pte_l2_s_cache_mode_pt;
-			PTE_SYNC(ptep);
-			cpu_tlb_flushD_SE(va);
-			rv = 1;
-		}
-	}
-
-	return (rv);
 }
 
 void
@@ -3155,74 +3007,13 @@ void		(*pmap_copy_page_func)(struct vm_page *, struct vm_page *);
 void		(*pmap_zero_page_func)(struct vm_page *);
 
 void
-pmap_pte_init_generic(void)
-{
-
-	pte_l1_s_cache_mode = L1_S_B|L1_S_C;
-	pte_l1_s_cache_mask = L1_S_CACHE_MASK_generic;
-
-	pte_l2_l_cache_mode = L2_B|L2_C;
-	pte_l2_l_cache_mask = L2_L_CACHE_MASK_generic;
-
-	pte_l2_s_cache_mode = L2_B|L2_C;
-	pte_l2_s_cache_mask = L2_S_CACHE_MASK_generic;
-
-	/*
-	 * If we have a write-through cache, set B and C.  If
-	 * we have a write-back cache, then we assume setting
-	 * only C will make those pages write-through.
-	 */
-	if (cpufuncs.cf_dcache_wb_range == (void *) cpufunc_nullop) {
-		pte_l1_s_cache_mode_pt = L1_S_B|L1_S_C;
-		pte_l2_l_cache_mode_pt = L2_B|L2_C;
-		pte_l2_s_cache_mode_pt = L2_B|L2_C;
-	} else {
-		pte_l1_s_cache_mode_pt = L1_S_C;
-		pte_l2_l_cache_mode_pt = L2_C;
-		pte_l2_s_cache_mode_pt = L2_C;
-	}
-
-	pte_l1_s_coherent = L1_S_COHERENT_generic;
-	pte_l2_l_coherent = L2_L_COHERENT_generic;
-	pte_l2_s_coherent = L2_S_COHERENT_generic;
-
-	pte_l1_s_prot_ur = L1_S_PROT_UR_generic;
-	pte_l1_s_prot_uw = L1_S_PROT_UW_generic;
-	pte_l1_s_prot_kr = L1_S_PROT_KR_generic;
-	pte_l1_s_prot_kw = L1_S_PROT_KW_generic;
-	pte_l1_s_prot_mask = L1_S_PROT_MASK_generic;
-
-	pte_l2_l_prot_ur = L2_L_PROT_UR_generic;
-	pte_l2_l_prot_uw = L2_L_PROT_UW_generic;
-	pte_l2_l_prot_kr = L2_L_PROT_KR_generic;
-	pte_l2_l_prot_kw = L2_L_PROT_KW_generic;
-	pte_l2_l_prot_mask = L2_L_PROT_MASK_generic;
-
-	pte_l2_s_prot_ur = L2_S_PROT_UR_generic;
-	pte_l2_s_prot_uw = L2_S_PROT_UW_generic;
-	pte_l2_s_prot_kr = L2_S_PROT_KR_generic;
-	pte_l2_s_prot_kw = L2_S_PROT_KW_generic;
-	pte_l2_s_prot_mask = L2_S_PROT_MASK_generic;
-
-	pte_l1_s_proto = L1_S_PROTO_generic;
-	pte_l1_c_proto = L1_C_PROTO_generic;
-	pte_l2_s_proto = L2_S_PROTO_generic;
-
-	pmap_copy_page_func = pmap_copy_page_generic;
-	pmap_zero_page_func = pmap_zero_page_generic;
-}
-
-void
 pmap_pte_init_armv7(void)
 {
 	uint32_t id_mmfr3;
 
 	/*
-	 * XXX 
-	 * ARMv7 is compatible with generic, but we want to use proper TEX
-	 * settings eventually
+	 * XXX We want to use proper TEX settings eventually.
 	 */
-	pmap_pte_init_generic();
 
 	/* write-allocate should be tested */
 	pte_l1_s_cache_mode = L1_S_C|L1_S_B;
@@ -3263,6 +3054,9 @@ pmap_pte_init_armv7(void)
 	pte_l1_s_proto = L1_S_PROTO_v7;
 	pte_l1_c_proto = L1_C_PROTO_v7;
 	pte_l2_s_proto = L2_S_PROTO_v7;
+
+	pmap_copy_page_func = pmap_copy_page_generic;
+	pmap_zero_page_func = pmap_zero_page_generic;
 
 	/* Check for coherent walk. */
 	__asm volatile("mrc p15, 0, %0, c0, c1, 7" : "=r"(id_mmfr3));
