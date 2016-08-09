@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiuart.c,v 1.10 2016/08/05 19:00:25 kettenis Exp $	*/
+/*	$OpenBSD: sxiuart.c,v 1.11 2016/08/09 16:52:42 mglocker Exp $	*/
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  * Copyright (c) 2013 Artturi Alm
@@ -377,29 +377,36 @@ sxiuart_param(struct tty *tp, struct termios *t)
 		bus_space_write_1(iot, ioh, SXIUART_MCR, sc->sc_mcr);
 	}
 
-	if (ospeed != 0) { /* XXX sc_initialize? */
-		while (ISSET(tp->t_state, TS_BUSY)) {
-			++sc->sc_halt;
-			error = ttysleep(tp, &tp->t_outq,
-			    TTOPRI | PCATCH, "sxiuartprm", 0);
-			--sc->sc_halt;
-			if (error) {
-				sxiuart_start(tp);
-				return (error);
+	if (sc->sc_initialize || (tp->t_ispeed != t->c_ispeed)) {
+		sc->sc_initialize = 0;
+
+		if (ospeed != 0) {
+			while (ISSET(tp->t_state, TS_BUSY)) {
+				++sc->sc_halt;
+				error = ttysleep(tp, &tp->t_outq,
+				    TTOPRI | PCATCH, "sxiuartprm", 0);
+				--sc->sc_halt;
+				if (error) {
+					sxiuart_start(tp);
+					return (error);
+				}
 			}
-		}
-		bus_space_write_1(iot, ioh, SXIUART_LCR, lcr | LCR_DLAB);
-		ratediv = 13;
-		bus_space_write_1(iot, ioh, SXIUART_DLL, ratediv);
-		bus_space_write_1(iot, ioh, SXIUART_DLH, ratediv >> 8);
-		bus_space_write_1(iot, ioh, SXIUART_LCR, lcr);
-		SET(sc->sc_mcr, MCR_DTR);
-		bus_space_write_1(iot, ioh, SXIUART_MCR, sc->sc_mcr);
+
+			bus_space_write_1(iot, ioh, SXIUART_LCR,
+			    lcr | LCR_DLAB);
+			ratediv = 13;
+			bus_space_write_1(iot, ioh, SXIUART_DLL, ratediv);
+			bus_space_write_1(iot, ioh, SXIUART_DLH, ratediv >> 8);
+			bus_space_write_1(iot, ioh, SXIUART_LCR, lcr);
+			SET(sc->sc_mcr, MCR_DTR);
+			bus_space_write_1(iot, ioh, SXIUART_MCR, sc->sc_mcr);
+		} else
+			bus_space_write_1(iot, ioh, SXIUART_LCR, lcr);
+
+		/* setup fifo */
+		bus_space_write_1(iot, ioh, SXIUART_FCR, FIFOE | FIFO_RXT0);
 	} else
 		bus_space_write_1(iot, ioh, SXIUART_LCR, lcr);
-
-	/* setup fifo */
-	bus_space_write_1(iot, ioh, SXIUART_FCR, FIFOE | FIFO_RXT0);
 
 	/* When not using CRTSCTS, RTS follows DTR. */
 	if (!ISSET(t->c_cflag, CRTSCTS)) {
