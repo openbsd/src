@@ -1,4 +1,4 @@
-.\"	$OpenBSD: connect.2,v 1.27 2015/10/11 07:25:11 guenther Exp $
+.\"	$OpenBSD: connect.2,v 1.28 2016/08/09 12:06:58 millert Exp $
 .\"	$NetBSD: connect.2,v 1.8 1995/10/12 15:40:48 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)connect.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: October 11 2015 $
+.Dd $Mdocdate: August 9 2016 $
 .Dt CONNECT 2
 .Os
 .Sh NAME
@@ -106,8 +106,8 @@ The attempt to connect was forcefully rejected.
 .It Bq Er EHOSTUNREACH
 The destination address specified an unreachable host.
 .It Bq Er EINTR
-A connect was interrupted before it succeeded
-by the delivery of a signal.
+Connection establishment was interrupted by the delivery of a signal.
+The attempt will continue asynchronously as if the socket was non-blocking.
 .It Bq Er ENETUNREACH
 The network isn't reachable from this host.
 .It Bq Er EADDRINUSE
@@ -131,9 +131,7 @@ with
 .Dv SO_ERROR
 to check for error conditions.
 .It Bq Er EALREADY
-The socket is non-blocking
-and a previous connection attempt
-has not yet been completed.
+A previous connection attempt has not yet been completed.
 .El
 .Pp
 The following errors are specific to connecting names in the
