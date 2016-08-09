@@ -1,9 +1,6 @@
 ./.cshrc
 ./.profile
 ./etc/changelist
-./etc/csh.cshrc
-./etc/csh.login
-./etc/csh.logout
 ./etc/dumpdates
 ./etc/fbtab
 ./etc/ftpusers
