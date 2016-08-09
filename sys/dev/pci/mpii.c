@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.102 2016/03/07 18:43:59 naddy Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.103 2016/08/09 15:04:34 krw Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -2926,6 +2926,11 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 			xs->resid = xs->datalen -
 			    lemtoh32(&sie->transfer_count);
 			break;
+
+		case SCSI_CHECK:
+			xs->error = XS_SENSE;
+			break;
+
 		default:
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
