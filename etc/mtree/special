@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.119 2016/04/25 20:38:11 tedu Exp $
+#	$OpenBSD: special,v 1.120 2016/08/09 21:24:32 halex Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -16,9 +16,9 @@ etc		type=dir mode=0755 uname=root gname=wheel
 bgpd.conf	type=file mode=0600 uname=root gname=wheel optional
 chio.conf	type=file mode=0644 uname=root gname=operator optional
 crontab		type=file mode=0600 uname=root gname=wheel optional
-csh.cshrc	type=file mode=0644 uname=root gname=wheel
-csh.login	type=file mode=0644 uname=root gname=wheel
-csh.logout	type=file mode=0644 uname=root gname=wheel
+csh.cshrc	type=file mode=0644 uname=root gname=wheel optional
+csh.login	type=file mode=0644 uname=root gname=wheel optional
+csh.logout	type=file mode=0644 uname=root gname=wheel optional
 daily		type=file mode=0644 uname=root gname=wheel
 daily.local	type=file mode=0644 uname=root gname=wheel optional
 dhcpd.conf	type=file mode=0644 uname=root gname=wheel optional
