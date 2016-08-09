@@ -1,4 +1,4 @@
-/*	$OpenBSD: connect.c,v 1.1 2011/09/18 16:36:58 fgsch Exp $	*/
+/*	$OpenBSD: connect.c,v 1.2 2016/08/09 02:25:35 guenther Exp $	*/
 /*
  * Federico G. Schwindt <fgsch@openbsd.org>, 2011. Public Domain.
  */
@@ -30,7 +30,10 @@ thr_connect(void *arg)
 	sa.sin_port = htons(23);
 	sa.sin_addr.s_addr = htonl(0xc7b98903);	/* cvs.openbsd.org */
 	ASSERT(connect(s, (struct sockaddr *)&sa, sizeof(sa)) == -1);
-	return ((caddr_t)NULL + errno);
+	int err = errno;
+	ASSERT(connect(s, (struct sockaddr *)&sa, sizeof(sa)) == -1);
+	ASSERT(errno == EALREADY);
+	return ((caddr_t)NULL + err);
 }
 
 int
