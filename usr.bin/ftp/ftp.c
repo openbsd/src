@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.96 2016/03/16 15:41:11 krw Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.97 2016/08/09 12:09:40 millert Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -107,6 +107,36 @@ off_t	restart_point = 0;
 
 
 FILE	*cin, *cout;
+
+static int
+connect_sync(int s, const struct sockaddr *name, socklen_t namelen)
+{
+	struct pollfd pfd[1];
+	int error = 0;
+	socklen_t len = sizeof(error);
+
+	if (connect(s, name, namelen) < 0) {
+		if (errno != EINTR)
+			return -1;
+	}
+
+	/* An interrupted connect(2) continues asyncronously. */
+	pfd[0].fd = s;
+	pfd[0].events = POLLOUT;
+	for (;;) {
+		if (poll(pfd, 1, -1) == -1) {
+			if (errno != EINTR)
+				return -1;
+			continue;
+		}
+		if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &len) < 0)
+			return -1;
+		if (error != 0)
+			errno = error;
+		break;
+	}
+	return (error ? -1 : 0);
+}
 
 char *
 hookup(char *host, char *port)
@@ -219,10 +249,7 @@ hookup(char *host, char *port)
 			}
 		}
 #endif /* !SMALL */
-		while ((error = connect(s, res->ai_addr, res->ai_addrlen)) < 0
-				&& errno == EINTR) {
-			;
-		}
+		error = connect_sync(s, res->ai_addr, res->ai_addrlen);
 		if (error) {
 			/* this "if" clause is to prevent print warning twice */
 			if (verbose && res->ai_next) {
@@ -1517,10 +1544,8 @@ reinit:
 		} else
 			goto bad;
 
-		while (connect(data, (struct sockaddr *)&data_addr,
+		if (connect_sync(data, (struct sockaddr *)&data_addr,
 			    data_addr.su_len) < 0) {
-			if (errno == EINTR)
-				continue;
 			if (activefallback) {
 				(void)close(data);
 				data = -1;
