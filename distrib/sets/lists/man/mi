@@ -1175,10 +1175,6 @@
 ./usr/share/man/man4/aps.4
 ./usr/share/man/man4/arc.4
 ./usr/share/man/man4/arcofi.4
-./usr/share/man/man4/armish
-./usr/share/man/man4/armish/autoconf.4
-./usr/share/man/man4/armish/intro.4
-./usr/share/man/man4/armish/mem.4
 ./usr/share/man/man4/armv7
 ./usr/share/man/man4/armv7/cpsw.4
 ./usr/share/man/man4/armv7/dmtimer.4
@@ -2003,7 +1999,6 @@
 ./usr/share/man/man5/aliases.5
 ./usr/share/man/man5/amd64
 ./usr/share/man/man5/ar.5
-./usr/share/man/man5/armish
 ./usr/share/man/man5/bgpd.conf.5
 ./usr/share/man/man5/bootparams.5
 ./usr/share/man/man5/bsd.port.arch.mk.5
@@ -2178,9 +2173,6 @@
 ./usr/share/man/man8/amd64/pxeboot.8
 ./usr/share/man/man8/amd64/wsmoused.8
 ./usr/share/man/man8/amq.8
-./usr/share/man/man8/armish
-./usr/share/man/man8/armish/MAKEDEV.8
-./usr/share/man/man8/armish/boot.8
 ./usr/share/man/man8/armv7
 ./usr/share/man/man8/armv7/MAKEDEV.8
 ./usr/share/man/man8/armv7/eeprom.8

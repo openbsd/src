@@ -1,4 +1,0 @@
-dnl	$OpenBSD: whatis,v 1.2 2008/03/10 21:34:14 miod Exp $
-
-OpenBSD/MACHINE runs on the Thecus N2100 and IODATA HDL-G ARM-based
-network disk appliances.

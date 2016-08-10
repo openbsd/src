@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.426 2016/08/09 21:24:31 halex Exp $
+#	$OpenBSD: Makefile,v 1.427 2016/08/10 14:27:15 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -261,7 +261,7 @@ distrib:
 	release allarchs kernels release-sets m4 install-mtree \
 	bootblocks ${ALL_KERNELS}
 
-SUBDIR+= etc.alpha etc.amd64 etc.armish etc.armv7
+SUBDIR+= etc.alpha etc.amd64 etc.armv7
 SUBDIR+= etc.hppa etc.i386 etc.landisk etc.loongson etc.luna88k
 SUBDIR+= etc.macppc etc.octeon
 SUBDIR+= etc.sgi etc.socppc etc.sparc etc.sparc64 etc.zaurus

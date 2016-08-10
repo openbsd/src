@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.6 2009/09/24 19:53:47 miod Exp $
+#	$OpenBSD: Makefile,v 1.7 2016/08/10 14:27:16 deraadt Exp $
 
 MAN+=	arm_sync_icache.2 arm_drain_writebuf.2
-MANSUBDIR=armish zaurus
+MANSUBDIR=zaurus
 
 .if ${MACHINE_ARCH} == "arm"
 NOPIC=

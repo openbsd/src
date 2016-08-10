@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2016/05/11 21:52:48 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2016/08/10 14:27:15 deraadt Exp $
 
 .PATH: ${.CURDIR}/../../../usr.sbin/installboot
 
@@ -18,10 +18,6 @@ CFLAGS += -DSOFTRAID
 SRCS += i386_installboot.c
 SRCS += i386_nlist.c
 SRCS += i386_softraid.c
-.endif
-
-.if ${MACHINE} == "armish"
-SRCS += stubs.c
 .endif
 
 .if ${MACHINE} == "armv7"
