@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.42 2016/08/07 17:46:36 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.43 2016/08/10 06:51:57 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -35,7 +35,7 @@ cpu0		at mainbus?
 cortex0		at mainbus?
 ampintc*	at fdt?
 amptimer*	at cortex?
-agtimer*	at cortex?
+agtimer*	at fdt?
 armliicc*	at cortex?
 
 # iMX

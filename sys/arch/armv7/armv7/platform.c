@@ -1,4 +1,4 @@
-/*	$OpenBSD: platform.c,v 1.9 2016/08/07 17:46:36 kettenis Exp $	*/
+/*	$OpenBSD: platform.c,v 1.10 2016/08/10 06:51:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -33,6 +33,8 @@
 #include "vexpress.h"
 
 static struct armv7_platform *platform;
+
+void	agtimer_init(void);
 
 void	exuart_init_cons(void);
 void	imxuart_init_cons(void);
@@ -73,7 +75,9 @@ void
 platform_init(void)
 {
 	int i;
-	
+
+	agtimer_init();
+
 	for (i = 0; i < nitems(plat_match); i++) {
 		platform = plat_match[i]();
 		if (platform != NULL)

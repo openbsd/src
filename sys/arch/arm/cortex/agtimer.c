@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.6 2016/08/05 13:31:29 kettenis Exp $ */
+/* $OpenBSD: agtimer.c,v 1.7 2016/08/10 06:51:57 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -25,10 +25,15 @@
 #include <sys/timetc.h>
 #include <sys/evcount.h>
 
-#include <arm/cpufunc.h>
-#include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/bus.h>
+#include <machine/fdt.h>
+
+#include <arm/cpufunc.h>
 #include <arm/cortex/cortex.h>
+
+#include <dev/ofw/fdt.h>
+#include <dev/ofw/openfirm.h>
 
 /* registers */
 #define GTIMER_CNTP_CTL_ENABLE		(1 << 0)
@@ -54,6 +59,7 @@ struct agtimer_pcpu_softc {
 
 struct agtimer_softc {
 	struct device		sc_dev;
+	int			sc_node;
 
 	struct agtimer_pcpu_softc sc_pstat[MAX_ARM_CPUS];
 
@@ -71,22 +77,13 @@ struct agtimer_softc {
 
 int		agtimer_match(struct device *, void *, void *);
 void		agtimer_attach(struct device *, struct device *, void *);
-uint64_t	agtimer_readcnt64(struct agtimer_softc *sc);
+uint64_t	agtimer_readcnt64(void);
 int		agtimer_intr(void *);
 void		agtimer_cpu_initclocks(void);
 void		agtimer_delay(u_int);
 void		agtimer_setstatclockrate(int stathz);
 void		agtimer_set_clockrate(int32_t new_frequency);
 void		agtimer_startclock(void);
-
-/* hack - XXXX
- * agtimer connects directly to ampintc, not thru the generic
- * interface because it uses an 'internal' interrupt
- * not a peripheral interrupt.
- */
-void	*ampintc_intr_establish(int, int, int (*)(void *), void *, char *);
-
-
 
 struct cfattach agtimer_ca = {
 	sizeof (struct agtimer_softc), agtimer_match, agtimer_attach
@@ -97,7 +94,7 @@ struct cfdriver agtimer_cd = {
 };
 
 uint64_t
-agtimer_readcnt64(struct agtimer_softc *sc)
+agtimer_readcnt64(void)
 {
 	uint64_t val;
 
@@ -152,20 +149,23 @@ agtimer_set_tval(uint32_t val)
 int
 agtimer_match(struct device *parent, void *cfdata, void *aux)
 {
-	if ((cpufunc_id() & CPU_ID_CORTEX_A7_MASK) == CPU_ID_CORTEX_A7 ||
-	    (cpufunc_id() & CPU_ID_CORTEX_A15_MASK) == CPU_ID_CORTEX_A15 ||
-	    (cpufunc_id() & CPU_ID_CORTEX_A17_MASK) == CPU_ID_CORTEX_A17)
-		return (1);
+	struct fdt_attach_args *faa = (struct fdt_attach_args *)aux;
 
-	return 0;
+	return OF_is_compatible(faa->fa_node, "arm,armv7-timer");
 }
 
 void
-agtimer_attach(struct device *parent, struct device *self, void *args)
+agtimer_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct agtimer_softc *sc = (struct agtimer_softc *)self;
+	struct fdt_attach_args *faa = aux;
 
+	sc->sc_node = faa->fa_node;
+
+	agtimer_frequency =
+	    OF_getpropint(sc->sc_node, "clock-frequency", agtimer_frequency);
 	sc->sc_ticks_per_second = agtimer_frequency;
+
 	printf(": tick rate %d KHz\n", sc->sc_ticks_per_second /1000);
 
 	/* XXX: disable user access */
@@ -192,8 +192,7 @@ agtimer_attach(struct device *parent, struct device *self, void *args)
 u_int
 agtimer_get_timecount(struct timecounter *tc)
 {
-	struct agtimer_softc *sc = agtimer_timecounter.tc_priv;
-	return agtimer_readcnt64(sc);
+	return agtimer_readcnt64();
 }
 
 int
@@ -218,7 +217,7 @@ agtimer_intr(void *frame)
 	 * do the right thing
 	 */
 
-	now = agtimer_readcnt64(sc);
+	now = agtimer_readcnt64();
 
 	while (pc->pc_nexttickevent <= now) {
 		pc->pc_nexttickevent += sc->sc_ticks_per_intr;
@@ -301,17 +300,13 @@ agtimer_cpu_initclocks()
 	sc->sc_ticks_err_cnt = sc->sc_ticks_per_second % hz;
 	pc->pc_ticks_err_sum = 0;
 
-	/* establish interrupts */
-	/* XXX - irq */
+	/* Setup secure and non-secure timer IRQs. */
+	arm_intr_establish_fdt_idx(sc->sc_node, 0, IPL_CLOCK,
+	    agtimer_intr, NULL, "tick");
+	arm_intr_establish_fdt_idx(sc->sc_node, 1, IPL_CLOCK,
+	    agtimer_intr, NULL, "tick");
 
-	/* secure physical timer */
-	ampintc_intr_establish(29, IPL_CLOCK, agtimer_intr,
-	    NULL, "tick");
-	/* non-secure physical timer */
-	ampintc_intr_establish(30, IPL_CLOCK, agtimer_intr,
-	    NULL, "tick");
-
-	next = agtimer_readcnt64(sc) + sc->sc_ticks_per_intr;
+	next = agtimer_readcnt64() + sc->sc_ticks_per_intr;
 	pc->pc_nexttickevent = pc->pc_nextstatevent = next;
 
 	reg = agtimer_get_ctrl();
@@ -324,29 +319,28 @@ agtimer_cpu_initclocks()
 void
 agtimer_delay(u_int usecs)
 {
-	struct agtimer_softc	*sc = agtimer_cd.cd_devs[0];
 	u_int32_t		clock, oclock, delta, delaycnt;
 	volatile int		j;
 	int			csec, usec;
 
-	if (usecs > (0x80000000 / (sc->sc_ticks_per_second))) {
+	if (usecs > (0x80000000 / agtimer_frequency)) {
 		csec = usecs / 10000;
 		usec = usecs % 10000;
 
-		delaycnt = (sc->sc_ticks_per_second / 100) * csec +
-		    (sc->sc_ticks_per_second / 100) * usec / 10000;
+		delaycnt = (agtimer_frequency / 100) * csec +
+		    (agtimer_frequency / 100) * usec / 10000;
 	} else {
-		delaycnt = sc->sc_ticks_per_second * usecs / 1000000;
+		delaycnt = agtimer_frequency * usecs / 1000000;
 	}
 	if (delaycnt <= 1)
 		for (j = 100; j > 0; j--)
 			;
 
-	oclock = agtimer_readcnt64(sc);
+	oclock = agtimer_readcnt64();
 	while (1) {
 		for (j = 100; j > 0; j--)
 			;
-		clock = agtimer_readcnt64(sc);
+		clock = agtimer_readcnt64();
 		delta = clock - oclock;
 		if (delta > delaycnt)
 			break;
@@ -387,7 +381,7 @@ agtimer_startclock(void)
 	uint64_t nextevent;
 	uint32_t reg;
 
-	nextevent = agtimer_readcnt64(sc) + sc->sc_ticks_per_intr;
+	nextevent = agtimer_readcnt64() + sc->sc_ticks_per_intr;
 	pc->pc_nexttickevent = pc->pc_nextstatevent = nextevent;
 
 	reg = agtimer_get_ctrl();
@@ -395,4 +389,20 @@ agtimer_startclock(void)
 	reg |= GTIMER_CNTP_CTL_ENABLE;
 	agtimer_set_tval(sc->sc_ticks_per_second);
 	agtimer_set_ctrl(reg);
+}
+
+void
+agtimer_init(void)
+{
+	uint32_t id_pfr1, cntfrq = 0;
+
+	/* Check for Generic Timer support. */
+	__asm volatile("mrc p15, 0, %0, c0, c1, 1" : "=r"(id_pfr1));
+	if ((id_pfr1 & 0x000f0000) == 0x00010000)
+		__asm volatile("mrc p15, 0, %0, c14, c0, 0" : "=r" (cntfrq));
+
+	if (cntfrq != 0) {
+		agtimer_frequency = cntfrq;
+		arm_clock_register(NULL, agtimer_delay, NULL, NULL);
+	}
 }
