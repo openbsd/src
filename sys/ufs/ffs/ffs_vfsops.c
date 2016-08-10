@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.160 2016/06/19 11:54:34 natano Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.161 2016/08/10 08:04:57 natano Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1367,8 +1367,7 @@ retry:
 	 * Initialize the vnode from the inode, check for aliases.
 	 * Note that the underlying vnode may have changed.
 	 */
-	error = ufs_vinit(mp, &ffs_specvops, FFS_FIFOOPS, &vp);
-	if (error) {
+	if ((error = ffs_vinit(mp, &vp)) != 0) {
 		vput(vp);
 		*vpp = NULL;
 		return (error);

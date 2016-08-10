@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.129 2016/07/14 03:34:28 guenther Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.130 2016/08/10 08:04:57 natano Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1800,72 +1800,6 @@ ufs_advlock(void *v)
 
 	return (lf_advlock(&ip->i_lockf, DIP(ip, size), ap->a_id, ap->a_op,
 	    ap->a_fl, ap->a_flags));
-}
-
-/*
- * Initialize the vnode associated with a new inode, handle aliased
- * vnodes.
- */
-int
-ufs_vinit(struct mount *mntp, struct vops *specops, struct vops *fifoops,
-    struct vnode **vpp)
-{
-	struct inode *ip;
-	struct vnode *vp, *nvp;
-	struct timeval mtv;
-
-	vp = *vpp;
-	ip = VTOI(vp);
-	switch(vp->v_type = IFTOVT(DIP(ip, mode))) {
-	case VCHR:
-	case VBLK:
-		vp->v_op = specops;
-		if ((nvp = checkalias(vp, DIP(ip, rdev), mntp)) != NULL) {
-			/*
-			 * Discard unneeded vnode, but save its inode.
-			 * Note that the lock is carried over in the inode
-			 * to the replacement vnode.
-			 */
-			nvp->v_data = vp->v_data;
-			vp->v_data = NULL;
-			vp->v_op = &spec_vops;
-#ifdef VFSLCKDEBUG
-			vp->v_flag &= ~VLOCKSWORK;
-#endif
-			vrele(vp);
-			vgone(vp);
-			/*
-			 * Reinitialize aliased inode.
-			 */
-			vp = nvp;
-			ip->i_vnode = vp;
-		}
-		break;
-	case VFIFO:
-#ifdef FIFO
-		vp->v_op = fifoops;
-		break;
-#else
-		return (EOPNOTSUPP);
-#endif
-	case VNON:
-	case VBAD:
-	case VSOCK:
-	case VLNK:
-	case VDIR:
-	case VREG:
-		break;
-	}
-	if (ip->i_number == ROOTINO)
-		vp->v_flag |= VROOT;
-	/*
-	 * Initialize modrev times
-	 */
-	getmicrouptime(&mtv);
-	ip->i_modrev = (u_quad_t)mtv.tv_sec << 32;
-	ip->i_modrev |= (u_quad_t)mtv.tv_usec * 4294;
-	*vpp = vp;
-	return (0);
 }
 
 /*
