@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.31 2016/08/10 08:04:57 natano Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.32 2016/08/10 11:33:01 natano Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
@@ -245,6 +245,7 @@ ffs_isfreeblock(struct fs *fs, u_char *cp, daddr_t h)
 	}
 }
 
+#ifdef _KERNEL
 /*
  * Initialize the vnode associated with a new inode, handle aliased
  * vnodes.
@@ -309,3 +310,4 @@ ffs_vinit(struct mount *mntp, struct vnode **vpp)
 	*vpp = vp;
 	return (0);
 }
+#endif /* _KERNEL */
