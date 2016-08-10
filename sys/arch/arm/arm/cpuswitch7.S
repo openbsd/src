@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch7.S,v 1.10 2016/04/25 12:16:20 jsg Exp $	*/
+/*	$OpenBSD: cpuswitch7.S,v 1.11 2016/08/10 06:46:36 kettenis Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -87,13 +87,6 @@
 
 /* LINTSTUB: include <sys/param.h> */
 	
-/*
- * These are used for switching the translation table/DACR.
- * Since the vector page can be invalid for a short time, we must
- * disable both regular IRQs *and* FIQs.
- *
- * XXX: This is not necessary if the vector table is relocated.
- */
 #define IRQdisableALL \
 	cpsid	if
 
@@ -263,8 +256,6 @@ ENTRY(cpu_switchto)
 	/* rem: r10 = old L1 */
 	/* rem: r11 = new L1 */
 
-	ldr	r7, [r9, #(PCB_PL1VEC)]
-
 	/*
 	 * At this point we need to kill IRQ's again.
 	 *
@@ -272,36 +263,11 @@ ENTRY(cpu_switchto)
 	 */
 	IRQdisableALL
 
-	/*
-	 * Ensure the vector table is accessible by fixing up the L1
-	 */
-	cmp	r7, #0			/* No need to fixup vector table? */
-	ldrne	r2, [r7]		/* But if yes, fetch current value */
-	ldrne	r0, [r9, #(PCB_L1VEC)]	/* Fetch new vector_page value */
 	mcr	CP15_DACR(r1)		/* Update DACR for new context */
-	cmpne	r2, r0			/* Stuffing the same value? */
-#ifndef PMAP_INCLUDE_PTE_SYNC
-	strne	r0, [r7]		/* Nope, update it */
-#else
-	beq	.Lcs_same_vector
-	str	r0, [r7]		/* Otherwise, update it */
-
-	/*
-	 * Need to sync the cache to make sure that last store is
-	 * visible to the MMU.
-	 */
-	ldr	r2, .Lcpufuncs
-	mov	r0, r7
-	mov	r1, #4
-	mov	lr, pc
-	ldr	pc, [r2, #CF_DCACHE_WB_RANGE]
-
-.Lcs_same_vector:
-#endif /* PMAP_INCLUDE_PTE_SYNC */
 
 	cmp	r10, r11		/* Switching to the same L1? */
 	ldr	r10, .Lcpufuncs
-	beq	.Lcs_same_l1		/* Yup. */
+	beq	.Lcs_context_switched	/* Yup. */
 
 	/*
 	 * Do a full context switch, including full TLB flush.
@@ -309,19 +275,6 @@ ENTRY(cpu_switchto)
 	mov	r0, r11
 	mov	lr, pc
 	ldr	pc, [r10, #CF_CONTEXT_SWITCH]
-
-	b	.Lcs_context_switched
-
-	/*
-	 * We're switching to a different process in the same L1.
-	 * In this situation, we only need to flush the TLB for the
-	 * vector_page mapping, and even then only if r7 is non-NULL.
-	 */
-.Lcs_same_l1:
-	cmp	r7, #0
-	movne	r0, #0			/* We *know* vector_page's VA is 0x0 */
-	movne	lr, pc
-	ldrne	pc, [r10, #CF_TLB_FLUSHID_SE]
 
 .Lcs_context_switched:
 
