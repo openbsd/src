@@ -2390,6 +2390,8 @@ get_segment_type (unsigned long p_type)
 			return "OPENBSD_RANDOMIZE";
     case PT_OPENBSD_WXNEEDED:
 			return "OPENBSD_WXNEEDED";
+    case PT_OPENBSD_BOOTDATA:
+			return "OPENBSD_BOOTDATA";
 
     default:
       if ((p_type >= PT_LOPROC) && (p_type <= PT_HIPROC))

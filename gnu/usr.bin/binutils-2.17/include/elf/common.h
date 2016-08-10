@@ -307,6 +307,7 @@
 
 #define PT_OPENBSD_RANDOMIZE	0x65a3dbe6 /* Fill with random data. */
 #define PT_OPENBSD_WXNEEDED	0x65a3dbe7 /* Program does W^X violations */
+#define PT_OPENBSD_BOOTDATA	0x65a41be6 /* Section for boot arguments */
 
 /* Program segment permissions, in program header p_flags field.  */
 

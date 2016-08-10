@@ -1087,6 +1087,7 @@ get_segment_type (unsigned int p_type)
     case PT_GNU_RELRO: pt = "RELRO"; break;
     case PT_OPENBSD_RANDOMIZE: pt = "OPENBSD_RANDOMIZE"; break;
     case PT_OPENBSD_WXNEEDED: pt = "OPENBSD_WXNEEDED"; break;
+    case PT_OPENBSD_BOOTDATA: pt = "OPENBSD_BOOTDATA"; break;
     default: pt = NULL; break;
     }
   return pt;
