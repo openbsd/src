@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.43 2016/08/03 07:05:05 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.44 2016/08/10 21:22:43 kettenis Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -581,7 +581,8 @@ armv7_setup()
 	    | CPU_CONTROL_AFLT_ENABLE
 	    | CPU_CONTROL_DC_ENABLE
 	    | CPU_CONTROL_BPRD_ENABLE
-	    | CPU_CONTROL_IC_ENABLE;
+	    | CPU_CONTROL_IC_ENABLE
+	    | CPU_CONTROL_AFE;
 
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;

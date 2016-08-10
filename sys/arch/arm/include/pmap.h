@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.41 2016/08/08 14:47:52 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.42 2016/08/10 21:22:43 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -470,7 +470,7 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L1_S_PROT_KW_xscale	(L1_S_AP(AP_W))
 #define	L1_S_PROT_MASK_xscale	(L1_S_AP(0x03))
 
-#define	L1_S_PROT_UR_v7		(L1_S_V7_AP(AP_KRWUR))
+#define	L1_S_PROT_UR_v7		(L1_S_V7_AP(AP_V7_KRUR))
 #define	L1_S_PROT_UW_v7		(L1_S_V7_AP(AP_KRWURW))
 #define	L1_S_PROT_KR_v7		(L1_S_V7_AP(AP_V7_KR))
 #define	L1_S_PROT_KW_v7		(L1_S_V7_AP(AP_KRW))
@@ -496,7 +496,7 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L2_L_PROT_UW_xscale	(L2_AP(AP_U|AP_W))
 #define	L2_L_PROT_MASK_xscale	(L2_AP(AP_U|AP_W))
 
-#define	L2_L_PROT_UR_v7		(L2_V7_AP(AP_KRWUR))
+#define	L2_L_PROT_UR_v7		(L2_V7_AP(AP_V7_KRUR))
 #define	L2_L_PROT_UW_v7		(L2_V7_AP(AP_KRWURW))
 #define	L2_L_PROT_KR_v7		(L2_V7_AP(AP_V7_KR))
 #define	L2_L_PROT_KW_v7		(L2_V7_AP(AP_KRW))
@@ -522,7 +522,7 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L2_S_PROT_KW_xscale	(L2_AP0(AP_W))
 #define	L2_S_PROT_MASK_xscale	(L2_AP0(AP_U|AP_W))
 
-#define	L2_S_PROT_UR_v7		(L2_V7_AP(AP_KRWUR))
+#define	L2_S_PROT_UR_v7		(L2_V7_AP(AP_V7_KRUR))
 #define	L2_S_PROT_UW_v7		(L2_V7_AP(AP_KRWURW))
 #define	L2_S_PROT_KR_v7		(L2_V7_AP(AP_V7_KR))
 #define	L2_S_PROT_KW_v7		(L2_V7_AP(AP_KRW))
