@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.111 2016/05/03 21:05:14 mestre Exp $ */
+/* $OpenBSD: user.c,v 1.112 2016/08/10 20:30:34 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -164,9 +164,6 @@ enum {
 	MaxUserNameLen = _PW_NAME_LEN,
 	MaxCommandLen = 2048,
 	PasswordLength = _PASSWORD_LEN,
-
-	DES_Len = 13,
-
 	LowGid = DEF_LOWUID,
 	HighGid = DEF_HIGHUID
 };
@@ -855,51 +852,6 @@ getnextuid(int sync_uid_gid, uid_t *uid, uid_t low_uid, uid_t high_uid)
 	return 0;
 }
 
-/* structure which defines a password type */
-typedef struct passwd_type_t {
-	const char     *type;		/* optional type descriptor */
-	int		desc_length;	/* length of type descriptor */
-	int		length;		/* length of password */
-} passwd_type_t;
-
-#define NBLF "$2b"
-#define BLF  "$2a"
-#define MD5  "$1"
-#define DES  ""
-
-static passwd_type_t	passwd_types[] = {
-	{ NBLF,	3,	54	},	/* Blowfish bcrypt version 2b */
-	{ BLF,	3,	54	},	/* Blowfish */
-	{ MD5,	2,	34	},	/* MD5 */
-	{ DES,	0,	DES_Len	},	/* standard DES */
-	{ NULL,	-1,	-1	}	/* none - terminate search */
-};
-
-/* return non-zero if it's a valid password - check length for cipher type */
-static int
-valid_password_length(char *newpasswd)
-{
-	passwd_type_t  *pwtp;
-
-	for (pwtp = passwd_types ; pwtp->desc_length >= 0 ; pwtp++) {
-		if (strncmp(newpasswd, pwtp->type, pwtp->desc_length) == 0) {
-			char *p;
-
-			if (strcmp(pwtp->type, BLF) != 0 &&
-			    strcmp(pwtp->type, NBLF) != 0) {
-				return strlen(newpasswd) == pwtp->length;
-			}
-			/* Skip first three `$'. */
-			if ((p = strchr(newpasswd, '$')) == NULL ||
-			    *(++p) == '$' || (p = strchr(p, '$')) == NULL ||
-			    *(++p) == '$' || (p = strchr(p, '$')) == NULL)
-				continue;
-			return (strlen(p) - 1);
-		}
-	}
-	return 0;
-}
-
 /* look for a valid time, return 0 if it was specified but bad */
 static int
 scantime(time_t *tp, char *s)
@@ -1130,16 +1082,8 @@ adduser(char *login_name, user_t *up)
 		warnx("Warning: home directory `%s' doesn't exist, and -m was"
 		    " not specified", home);
 	}
-	if (up->u_password != NULL && valid_password_length(up->u_password)) {
-		(void) strlcpy(password, up->u_password, sizeof(password));
-	} else {
-		(void) memset(password, '*', DES_Len);
-		password[DES_Len] = 0;
-		if (up->u_password != NULL) {
-			warnx("Password `%s' is invalid: setting it to `%s'",
-				up->u_password, password);
-		}
-	}
+	(void) strlcpy(password, up->u_password ? up->u_password : "*",
+	    sizeof(password));
 	cc = snprintf(buf, sizeof(buf), "%s:%s:%u:%u:%s:%lld:%lld:%s:%s:%s\n",
 	    login_name,
 	    password,
@@ -1476,15 +1420,8 @@ moduser(char *login_name, char *newlogin, user_t *up)
 			}
 		}
 		if (up->u_flags & F_PASSWORD) {
-			if (up->u_password != NULL) {
-				if (!valid_password_length(up->u_password)) {
-					(void) close(ptmpfd);
-					pw_abort();
-					errx(EXIT_FAILURE, "Invalid password: `%s'",
-						up->u_password);
-				}
+			if (up->u_password != NULL)
 				pwp->pw_passwd = up->u_password;
-			}
 		}
 		if (up->u_flags & F_ACCTLOCK) {
 			/* lock the account */
@@ -2028,7 +1965,6 @@ userdel(int argc, char **argv)
 {
 	struct passwd	*pwp;
 	user_t		u;
-	char		password[PasswordLength + 1];
 	int		defaultfield;
 	int		rmhome;
 	int		bigD;
@@ -2086,9 +2022,7 @@ userdel(int argc, char **argv)
 	if (u.u_preserve) {
 		u.u_flags |= F_SHELL;
 		memsave(&u.u_shell, NOLOGIN, strlen(NOLOGIN));
-		(void) memset(password, '*', DES_Len);
-		password[DES_Len] = 0;
-		memsave(&u.u_password, password, strlen(password));
+		memsave(&u.u_password, "*", strlen("*"));
 		u.u_flags |= F_PASSWORD;
 		openlog("userdel", LOG_PID, LOG_USER);
 		return moduser(*argv, *argv, &u) ? EXIT_SUCCESS : EXIT_FAILURE;
