@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.220 2016/08/10 12:29:02 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.221 2016/08/10 20:16:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -1752,8 +1752,9 @@ post_sh_authors(POST_ARGS)
 static void
 post_sh_head(POST_ARGS)
 {
-	const char	*goodsec;
-	enum roff_sec	 sec;
+	struct roff_node	*nch;
+	const char		*goodsec;
+	enum roff_sec		 sec;
 
 	/*
 	 * Process a new section.  Sections are either "named" or
@@ -1769,8 +1770,10 @@ post_sh_head(POST_ARGS)
 	if (sec != SEC_NAME && mdoc->lastnamed == SEC_NONE)
 		mandoc_vmsg(MANDOCERR_NAMESEC_FIRST, mdoc->parse,
 		    mdoc->last->line, mdoc->last->pos, "Sh %s",
-		    sec == SEC_CUSTOM ? mdoc->last->child->string :
-		    secnames[sec]);
+		    sec != SEC_CUSTOM ? secnames[sec] :
+		    (nch = mdoc->last->child) == NULL ? "" :
+		    nch->type == ROFFT_TEXT ? nch->string :
+		    mdoc_macronames[nch->tok]);
 
 	/* The SYNOPSIS gets special attention in other areas. */
 
