@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.39 2016/08/07 18:00:53 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.40 2016/08/10 07:09:37 jsg Exp $
 
 machine		armv7 arm
 
@@ -34,7 +34,7 @@ cpu0		at mainbus?
 cortex0		at mainbus?
 ampintc*	at fdt?
 amptimer*	at cortex?
-agtimer*	at cortex?
+agtimer*	at fdt?
 armliicc*	at cortex?
 
 # iMX
