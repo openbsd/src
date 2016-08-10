@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.219 2016/08/10 12:04:57 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.220 2016/08/10 12:29:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -1055,10 +1055,11 @@ post_it(POST_ARGS)
 			    mdoc_argnames[nbl->args->argv[0].arg]);
 		/* FALLTHROUGH */
 	case LIST_item:
-		if (nit->head->child != NULL)
+		if ((nch = nit->head->child) != NULL)
 			mandoc_vmsg(MANDOCERR_ARG_SKIP,
 			    mdoc->parse, nit->line, nit->pos,
-			    "It %s", nit->head->child->string);
+			    "It %s", nch->string == NULL ?
+			    mdoc_macronames[nch->tok] : nch->string);
 		break;
 	case LIST_column:
 		cols = (int)nbl->norm->Bl.ncols;
