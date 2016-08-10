@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.218 2016/08/09 15:08:15 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.219 2016/08/10 12:04:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -500,6 +500,7 @@ post_bl_norm(POST_ARGS)
 		mandoc_msg(MANDOCERR_BL_NOTYPE, mdoc->parse,
 		    n->line, n->pos, "Bl");
 		n->norm->Bl.type = LIST_item;
+		mdoclt = MDOC_Item;
 	}
 
 	/*
