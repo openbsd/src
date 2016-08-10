@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.47 2016/08/09 17:07:33 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.48 2016/08/10 17:41:08 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 9 2016 $
+.Dd $Mdocdate: August 10 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1015,7 +1015,7 @@ The output file to write to, or standard output if not specified.
 .It Fl outform Cm der | pem
 The output format.
 .It Fl text
-Print out the CRL in text form.
+Print the CRL in text form.
 .El
 .Sh CRL2PKCS7
 .nr nS 1
@@ -1093,9 +1093,9 @@ The options are as follows:
 .It Fl binary
 Output the digest or signature in binary form.
 .It Fl c
-Print out the digest in two-digit groups separated by colons.
+Print the digest in two-digit groups separated by colons.
 .It Fl d
-Print out BIO debugging information.
+Print BIO debugging information.
 .It Fl Ar digest
 Use the specified message
 .Ar digest .
@@ -1246,7 +1246,7 @@ or standard output if not specified.
 .It Fl outform Cm der | pem
 The output format.
 .It Fl text
-Print out the DH parameters in human readable form.
+Print the DH parameters in human readable form.
 .It Ar numbits
 Generate a parameter set of size
 .Ar numbits .
@@ -1361,7 +1361,7 @@ By default, a private key is output.
 With this option a public key will be output instead.
 This option is automatically set if the input is a public key.
 .It Fl text
-Print out the public/private key components and parameters.
+Print the public/private key components and parameters.
 .El
 .Sh DSAPARAM
 .nr nS 1
@@ -1519,8 +1519,8 @@ When used with a public key it
 uses the SubjectPublicKeyInfo structure as specified in RFC 3280.
 .Cm pem
 is the default format:
-it consists of the DER format base64
-encoded with additional header and footer lines.
+it consists of the DER format base64-encoded
+with additional header and footer lines.
 In the case of a private key
 PKCS#8 format is also accepted.
 .It Fl noout
@@ -1558,40 +1558,47 @@ By default a private key is output;
 with this option a public key is output instead.
 This option is automatically set if the input is a public key.
 .It Fl text
-Print out the public/private key components and parameters.
+Print the public/private key components and parameters.
 .El
-.\"
-.\" ECPARAM
-.\"
 .Sh ECPARAM
 .nr nS 1
 .Nm "openssl ecparam"
-.Bk -words
 .Op Fl C
 .Op Fl check
 .Op Fl conv_form Ar arg
 .Op Fl genkey
 .Op Fl in Ar file
-.Op Fl inform Ar DER | PEM
+.Op Fl inform Cm der | pem
 .Op Fl list_curves
 .Op Fl name Ar arg
 .Op Fl no_seed
 .Op Fl noout
 .Op Fl out Ar file
-.Op Fl outform Ar DER | PEM
+.Op Fl outform Cm der | pem
 .Op Fl param_enc Ar arg
 .Op Fl text
-.Ek
 .nr nS 0
 .Pp
-This command is used to manipulate or generate EC parameter files.
+The
+.Nm ecparam
+command is used to manipulate or generate EC parameter files.
+.Nm openssl
+is not able to generate new groups so
+.Nm ecparam
+can only create EC parameters from known (named) curves.
+.Pp
+PEM format EC parameters use the header and footer lines:
+.Bd -literal -offset indent
+-----BEGIN EC PARAMETERS-----
+-----END EC PARAMETERS-----
+.Ed
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl C
 Convert the EC parameters into C code.
 The parameters can then be loaded by calling the
-.Fn get_ec_group_XXX
+.No get_ec_group_ Ns Ar XXX
 function.
 .It Fl check
 Validate the elliptic curve parameters.
@@ -1600,57 +1607,50 @@ Specify how the points on the elliptic curve are converted
 into octet strings.
 Possible values are:
 .Cm compressed
-(the default value),
+(the default),
 .Cm uncompressed ,
 and
 .Cm hybrid .
 For more information regarding
-the point conversion forms please read the X9.62 standard.
+the point conversion forms see the X9.62 standard.
 Note:
 Due to patent issues the
 .Cm compressed
 option is disabled by default for binary curves
 and can be enabled by defining the preprocessor macro
-.Ar OPENSSL_EC_BIN_PT_COMP
+.Dv OPENSSL_EC_BIN_PT_COMP
 at compile time.
 .It Fl genkey
 Generate an EC private key using the specified parameters.
 .It Fl in Ar file
-Specify the input filename to read parameters from or standard input if
-this option is not specified.
-.It Fl inform Ar DER | PEM
-Specify the input format.
-DER uses an ASN.1 DER-encoded
+The input file to read from,
+or standard input if not specified.
+.It Fl inform Cm der | pem
+The input format.
+.Cm der
+uses an ASN.1 DER-encoded
 form compatible with RFC 3279 EcpkParameters.
-PEM is the default format:
-it consists of the DER format base64 encoded with additional
+.Cm pem
+is the default format:
+it consists of the DER format base64-encoded with additional
 header and footer lines.
 .It Fl list_curves
-Print out a list of all
+Print a list of all
 currently implemented EC parameter names and exit.
 .It Fl name Ar arg
-Use the EC parameters with the specified 'short' name.
-Use
-.Fl list_curves
-to get a list of all currently implemented EC parameters.
+Use the EC parameters with the specified "short" name.
 .It Fl no_seed
-Inhibit that the 'seed' for the parameter generation
-is included in the ECParameters structure (see RFC 3279).
+Do not include the seed for the parameter generation
+in the ECParameters structure (see RFC 3279).
 .It Fl noout
-Inhibit the output of the encoded version of the parameters.
+Do not output the encoded version of the parameters.
 .It Fl out Ar file
-Specify the output filename parameters are written to.
-Standard output is used if this option is not present.
-The output filename should
-.Em not
-be the same as the input filename.
-.It Fl outform Ar DER | PEM
-Specify the output format;
-the parameters have the same meaning as the
-.Fl inform
-option.
+The output file to write to,
+or standard output if not specified.
+.It Fl outform Cm der | pem
+The output format.
 .It Fl param_enc Ar arg
-This specifies how the elliptic curve parameters are encoded.
+Specify how the elliptic curve parameters are encoded.
 Possible value are:
 .Cm named_curve ,
 i.e. the EC parameters are specified by an OID, or
@@ -1662,62 +1662,10 @@ The default value is
 Note: the
 .Cm implicitlyCA
 alternative, as specified in RFC 3279,
-is currently not implemented in
-.Nm OpenSSL .
+is currently not implemented.
 .It Fl text
-Print out the EC parameters in human readable form.
+Print the EC parameters in human readable form.
 .El
-.Sh ECPARAM NOTES
-PEM format EC parameters use the header and footer lines:
-.Bd -literal -offset indent
------BEGIN EC PARAMETERS-----
------END EC PARAMETERS-----
-.Ed
-.Pp
-.Nm OpenSSL
-is currently not able to generate new groups and therefore
-.Nm ecparam
-can only create EC parameters from known (named) curves.
-.Sh ECPARAM EXAMPLES
-To create EC parameters with the group 'prime192v1':
-.Bd -literal -offset indent
-$ openssl ecparam -out ec_param.pem -name prime192v1
-.Ed
-.Pp
-To create EC parameters with explicit parameters:
-.Bd -literal -offset indent
-$ openssl ecparam -out ec_param.pem -name prime192v1 \e
-	-param_enc explicit
-.Ed
-.Pp
-To validate given EC parameters:
-.Bd -literal -offset indent
-$ openssl ecparam -in ec_param.pem -check
-.Ed
-.Pp
-To create EC parameters and a private key:
-.Bd -literal -offset indent
-$ openssl ecparam -out ec_key.pem -name prime192v1 -genkey
-.Ed
-.Pp
-To change the point encoding to 'compressed':
-.Bd -literal -offset indent
-$ openssl ecparam -in ec_in.pem -out ec_out.pem \e
-	-conv_form compressed
-.Ed
-.Pp
-To print out the EC parameters to standard output:
-.Bd -literal -offset indent
-$ openssl ecparam -in ec_param.pem -noout -text
-.Ed
-.Sh ECPARAM HISTORY
-The
-.Nm ecparam
-command was first introduced in
-.Nm OpenSSL
-0.9.8.
-.Sh ECPARAM AUTHORS
-.An Nils Larsch .
 .\"
 .\" ENC
 .\"
