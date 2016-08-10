@@ -193,8 +193,8 @@ RODATA_ALIGN_ADD_VAL="${CREATE_SHLIB-${RODATA_ALIGN_ADD:-0}} ${CREATE_SHLIB+0}"
 test "$LD_FLAG" = "n" || test "$LD_FLAG" = "N" || test "${LD_FLAG%%(cpie|pie)}" = "Z" || NO_PAD="y"
 if test "$NO_PAD" = "y" ; then
   PAD_RO0="${RELOCATING+${RODATA_ALIGN} + ${RODATA_ALIGN_ADD_VAL};}"
-  PAD_PLT0="${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));} .pltpad0 ${RELOCATING-0} : { ${RELOCATING+__plt_start = .;} }"
-  PAD_PLT1=".pltpad1 ${RELOCATING-0} : { ${RELOCATING+__plt_end = .;}} ${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));}"
+  PAD_PLT0="${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));}"
+  PAD_PLT1="${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));}"
   PAD_GOT0="${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));} .gotpad0 ${RELOCATING-0} : { ${RELOCATING+__got_start = .;} }"
   PAD_GOT1=".gotpad1 ${RELOCATING-0} : { ${RELOCATING+__got_end = .;}} ${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));}"
   test "$NO_PAD_CDTOR" = "y" || PAD_CDTOR=
@@ -248,6 +248,8 @@ else
 fi
 
 cat <<EOF
+/* DATA_GOT=${DATA_GET+y} SDATA_GOT=${SDATA_GOT+y} SEPARATE_GOTPLT=${SEPARATE_GOTPLT+y} */
+/* DATA_PLT=${DATA_PLT+y} BSS_PLT=${BSS_PLT+y} DATA_NONEXEC_PLT=${DATA_NONEXEC_PLT+y} */
 OUTPUT_FORMAT("${OUTPUT_FORMAT}", "${BIG_OUTPUT_FORMAT}",
 	      "${LITTLE_OUTPUT_FORMAT}")
 OUTPUT_ARCH(${OUTPUT_ARCH})
@@ -267,6 +269,35 @@ SECTIONS
   ${CREATE_SHLIB-${CREATE_PIE-${RELOCATING+PROVIDE (__executable_start = ${TEXT_START_ADDR}); . = ${TEXT_BASE_ADDRESS};}}}
   ${CREATE_SHLIB+${RELOCATING+. = ${SHLIB_TEXT_START_ADDR:-0} + SIZEOF_HEADERS;}}
   ${CREATE_PIE+${RELOCATING+. = ${SHLIB_TEXT_START_ADDR:-0} + SIZEOF_HEADERS;}}
+  .init         ${RELOCATING-0} : 
+  { 
+    ${RELOCATING+${INIT_START}}
+    KEEP (*(.init))
+    ${RELOCATING+${INIT_END}}
+  } =${NOP-0}
+
+  ${TEXT_PLT+${PLT}}
+  ${TINY_READONLY_SECTION}
+  .text         ${RELOCATING-0} :
+  {
+    ${RELOCATING+${TEXT_START_SYMBOLS}}
+    *(.text .stub${RELOCATING+ .text.* .gnu.linkonce.t.*})
+    KEEP (*(.text.*personality*))
+    /* .gnu.warning sections are handled specially by elf32.em.  */
+    *(.gnu.warning)
+    ${RELOCATING+${OTHER_TEXT_SECTIONS}}
+  } =${NOP-0}
+  .fini         ${RELOCATING-0} :
+  {
+    ${RELOCATING+${FINI_START}}
+    KEEP (*(.fini))
+    ${RELOCATING+${FINI_END}}
+  } =${NOP-0}
+  ${RELOCATING+PROVIDE (__${ETEXT_NAME} = .);}
+  ${RELOCATING+PROVIDE (_${ETEXT_NAME} = .);}
+  ${RELOCATING+PROVIDE (${ETEXT_NAME} = .);}
+
+  ${PAD_RO+${PAD_RO0}}
   ${CREATE_SHLIB-${INTERP}}
   ${INITIAL_READONLY_SECTIONS}
   ${TEXT_DYNAMIC+${DYNAMIC}}
@@ -337,34 +368,6 @@ cat <<EOF
   .rela.plt     ${RELOCATING-0} : { *(.rela.plt) }
   ${OTHER_PLT_RELOC_SECTIONS}
 
-  .init         ${RELOCATING-0} : 
-  { 
-    ${RELOCATING+${INIT_START}}
-    KEEP (*(.init))
-    ${RELOCATING+${INIT_END}}
-  } =${NOP-0}
-
-  ${TEXT_PLT+${PLT}}
-  ${TINY_READONLY_SECTION}
-  .text         ${RELOCATING-0} :
-  {
-    ${RELOCATING+${TEXT_START_SYMBOLS}}
-    *(.text .stub${RELOCATING+ .text.* .gnu.linkonce.t.*})
-    KEEP (*(.text.*personality*))
-    /* .gnu.warning sections are handled specially by elf32.em.  */
-    *(.gnu.warning)
-    ${RELOCATING+${OTHER_TEXT_SECTIONS}}
-  } =${NOP-0}
-  .fini         ${RELOCATING-0} :
-  {
-    ${RELOCATING+${FINI_START}}
-    KEEP (*(.fini))
-    ${RELOCATING+${FINI_END}}
-  } =${NOP-0}
-  ${RELOCATING+PROVIDE (__${ETEXT_NAME} = .);}
-  ${RELOCATING+PROVIDE (_${ETEXT_NAME} = .);}
-  ${RELOCATING+PROVIDE (${ETEXT_NAME} = .);}
-  ${PAD_RO+${PAD_RO0}}
   ${WRITABLE_RODATA-${RODATA}}
   .rodata1      ${RELOCATING-0} : { *(.rodata1) }
   ${CREATE_SHLIB-${SDATA2}}
@@ -374,11 +377,22 @@ cat <<EOF
   .eh_frame     ${RELOCATING-0} : ONLY_IF_RO { KEEP (*(.eh_frame)) }
   .gcc_except_table ${RELOCATING-0} : ONLY_IF_RO { *(.gcc_except_table .gcc_except_table.*) }
 
+  ${DATA_NONEXEC_PLT-${DATA_PLT+${PLT_BEFORE_GOT-${PAD_PLT+${PAD_PLT0}}}}}
+  ${DATA_NONEXEC_PLT-${DATA_PLT+${PLT_BEFORE_GOT-${PLT}}}}
+  ${DATA_NONEXEC_PLT+${SDATA_GOT+${PAD_GOT+${PAD_GOT0}}}}
+  ${DATA_NONEXEC_PLT+${SDATA_GOT+${PLT}}}
+  ${DATA_NONEXEC_PLT+${SDATA_GOT+${RELOCATING+${OTHER_GOT_SYMBOLS}}}}
+  ${DATA_NONEXEC_PLT+${SDATA_GOT+${sdata_GOT-${GOT}}}}
+  ${DATA_NONEXEC_PLT+${SDATA_GOT+${OTHER_GOT_SECTIONS}}}
+  ${DATA_NONEXEC_PLT+${SDATA_GOT+${PAD_GOT+${PAD_GOT1}}}}
+
   /* Adjust the address for the data segment.  We want to adjust up to
      the same address within the page on the next page up.  */
   ${CREATE_SHLIB-${CREATE_PIE-${RELOCATING+. = ${DATA_ADDR-${DATA_SEGMENT_ALIGN}};}}}
   ${CREATE_SHLIB+${RELOCATING+. = ${SHLIB_DATA_ADDR-${DATA_SEGMENT_ALIGN}};}}
   ${CREATE_PIE+${RELOCATING+. = ${SHLIB_DATA_ADDR-${DATA_SEGMENT_ALIGN}};}}
+  ${DATA_GOT+${PAD_GOT+${RELOCATING+PROVIDE_HIDDEN(__got_start = .);}}}
+  ${SDATA_GOT+${PAD_GOT+${RELOCATING+PROVIDE_HIDDEN(__got_start = .);}}}
 
   /* Exception handling  */
   .eh_frame     ${RELOCATING-0} : ONLY_IF_RW { KEEP (*(.eh_frame)) }
@@ -419,27 +433,45 @@ cat <<EOF
   ${RELOCATING+${DATARELRO}}
   ${OTHER_RELRO_SECTIONS}
   ${TEXT_DYNAMIC-${DYNAMIC}}
-  ${DATA_GOT+${PAD_GOT+${PAD_GOT0}}}
-  ${DATA_GOT+${DATA_NONEXEC_PLT+${PLT}}}
-  ${DATA_GOT+${RELRO_NOW+${GOT}}}
-  ${DATA_GOT+${RELRO_NOW+${GOTPLT}}}
-  ${DATA_GOT+${RELRO_NOW+${PAD_GOT+${PAD_GOT1}}}}
-  ${DATA_GOT+${RELRO_NOW-${SEPARATE_GOTPLT+${GOT}}}}
+  ${DATA_GOT+${RELRO_NOW-${PAD_GOT+${PAD_GOT0}}}}
   /* If PAD_CDTOR, and separate .got and .got.plt sections, CTOR and DTOR
      are relocated here to receive the same mprotect protection as .got */
   ${DATA_GOT+${RELRO_NOW-${SEPARATE_GOTPLT+${PAD_CDTOR+${RELOCATING+${CTOR}}}}}}
   ${DATA_GOT+${RELRO_NOW-${SEPARATE_GOTPLT+${PAD_CDTOR+${RELOCATING+${DTOR}}}}}}
+  ${DATA_GOT+${RELRO_NOW+${PAD_CDTOR+${RELOCATING+${CTOR}}}}}
+  ${DATA_GOT+${RELRO_NOW+${PAD_CDTOR+${RELOCATING+${DTOR}}}}}
+  ${DATA_GOT+${DATA_NONEXEC_PLT+${PLT}}}
+  ${DATA_GOT+${RELRO_NOW+${GOT}}}
+  ${DATA_GOT+${RELRO_NOW+${GOTPLT}}}
+  ${DATA_GOT+${RELRO_NOW+${SDATA_GOT-${PAD_GOT+${RELOCATING+PROVIDE_HIDDEN(__got_end = .);}}}}}
+  ${DATA_GOT+${RELRO_NOW-${SEPARATE_GOTPLT+${GOT}}}}
   ${DATA_GOT+${RELRO_NOW-${SEPARATE_GOTPLT+${PAD_GOT+${PAD_GOT1}}}}}
+
+  ${DATA_NONEXEC_PLT+${DATA_GOT-${PAD_CDTOR+${RELOCATING+${CTOR}}}}}
+  ${DATA_NONEXEC_PLT+${DATA_GOT-${PAD_CDTOR+${RELOCATING+${DTOR}}}}}
+  ${DATA_NONEXEC_PLT-${DATA_GOT-${PAD_CDTOR+${RELOCATING+${CTOR}}}}}
+  ${DATA_NONEXEC_PLT-${DATA_GOT-${PAD_CDTOR+${RELOCATING+${DTOR}}}}}
+
+  ${DATA_NONEXEC_PLT-${DATA_PLT+${PLT_BEFORE_GOT+${PLT}}}}
+  ${DATA_NONEXEC_PLT-${SDATA_GOT+${RELOCATING+${OTHER_GOT_SYMBOLS}}}}
+  ${DATA_NONEXEC_PLT-${SDATA_GOT+${sdata_GOT-${GOT}}}}
+
+  ${DATA_NONEXEC_PLT-${SDATA_GOT+${OTHER_GOT_SECTIONS}}}
+  ${DATA_NONEXEC_PLT-${SDATA_GOT+${RELRO_NOW+${RELOCATING+PROVIDE_HIDDEN(__got_end = .);}}}}
+  ${DATA_NONEXEC_PLT-${SDATA_GOT+${RELRO_NOW-${RELOCATING+${PAD_GOT1}}}}}
+
+  ${BSS_PLT+${bss_PLT-${PLT}}}
+
   ${RELOCATING+${DATA_SEGMENT_RELRO_END}}
+
+  ${SDATA}
+  ${OTHER_SDATA_SECTIONS}
+
   ${DATA_GOT+${RELRO_NOW-${SEPARATE_GOTPLT-${GOT}}}}
   ${DATA_GOT+${RELRO_NOW-${SEPARATE_GOTPLT-${PAD_CDTOR+${RELOCATING+${CTOR}}}}}}
   ${DATA_GOT+${RELRO_NOW-${SEPARATE_GOTPLT-${PAD_CDTOR+${RELOCATING+${DTOR}}}}}}
   ${DATA_GOT+${RELRO_NOW-${SEPARATE_GOTPLT-${PAD_GOT+${PAD_GOT1}}}}}
   ${DATA_GOT+${RELRO_NOW-${GOTPLT}}}
-
-  ${DATA_NONEXEC_PLT-${DATA_PLT+${PLT_BEFORE_GOT-${PAD_PLT+${PAD_PLT0}}}}}
-  ${DATA_NONEXEC_PLT-${DATA_PLT+${PLT_BEFORE_GOT-${PLT}}}}
-  ${DATA_NONEXEC_PLT-${DATA_PLT+${PLT_BEFORE_GOT-${PAD_PLT+${PAD_PLT1}}}}}
 
   .data         ${RELOCATING-0} :
   {
@@ -454,32 +486,10 @@ cat <<EOF
   ${PAD_CDTOR-${SMALL_DATA_CTOR+${RELOCATING+${CTOR}}}}
   ${PAD_CDTOR-${SMALL_DATA_DTOR+${RELOCATING+${DTOR}}}}
 
-  ${DATA_NONEXEC_PLT-${DATA_PLT+${PLT_BEFORE_GOT+${PAD_PLT+${PAD_PLT0}}}}}
-  ${DATA_NONEXEC_PLT-${DATA_PLT+${PLT_BEFORE_GOT+${PLT}}}}
-  ${DATA_NONEXEC_PLT-${DATA_PLT+${PLT_BEFORE_GOT+${PAD_PLT+${PAD_PLT1}}}}}
-  ${SDATA_GOT+${PAD_GOT+${PAD_GOT0}}}
-  ${SDATA_GOT+${DATA_NONEXEC_PLT+${PLT}}}
-  ${SDATA_GOT+${RELOCATING+${OTHER_GOT_SYMBOLS}}}
-  ${SDATA_GOT+${GOT}}
-
-  ${DATA_GOT+${RELRO_NOW+${PAD_CDTOR+${RELOCATING+${CTOR}}}}}
-  ${DATA_GOT+${RELRO_NOW+${PAD_CDTOR+${RELOCATING+${DTOR}}}}}
-  ${DATA_GOT-${PAD_CDTOR+${RELOCATING+${CTOR}}}}
-  ${DATA_GOT-${PAD_CDTOR+${RELOCATING+${DTOR}}}}
-
-  ${SDATA_GOT+${OTHER_GOT_SECTIONS}}
-  ${SDATA_GOT+${PAD_GOT+${PAD_GOT1}}}
-
-  ${SDATA}
-  ${OTHER_SDATA_SECTIONS}
-
   ${RELOCATING+${DATA_END_SYMBOLS-_edata = .; PROVIDE (edata = .);}}
   ${RELOCATING+__bss_start = .;}
   ${RELOCATING+${OTHER_BSS_SYMBOLS}}
   ${SBSS}
-  ${BSS_PLT+${PAD_PLT+${PAD_PLT0}}}
-  ${BSS_PLT+${PLT}}
-  ${BSS_PLT+${PAD_PLT+${PAD_PLT1}}}
   .bss          ${RELOCATING-0} :
   {
    *(.dynbss)

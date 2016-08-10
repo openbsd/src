@@ -7,6 +7,7 @@ OUTPUT_FORMAT="elf32-hppa"
 
 # other necessary defines, similar but not the same as linux.
 MAXPAGESIZE=0x1000
+COMMONPAGESIZE=0x1000
 ENTRY="__start"
 MACHINE=hppa1.1    # We use 1.1 specific features.
 OTHER_READONLY_SECTIONS=".PARISC.unwind ${RELOCATING-0} : { *(.PARISC.unwind) }"

@@ -299,7 +299,11 @@ main (int argc, char **argv)
   link_info.new_dtags = FALSE;
   link_info.combreloc = TRUE;
   link_info.eh_frame_hdr = FALSE;
+#if defined(__mips64__) || defined(__m88k__)
   link_info.relro = FALSE;
+#else
+  link_info.relro = TRUE;
+#endif
   link_info.strip_discarded = TRUE;
   link_info.strip = strip_none;
   link_info.discard = discard_sec_merge;
