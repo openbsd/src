@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.5 2016/08/10 21:22:43 kettenis Exp $	*/
+/*	$OpenBSD: pte.h,v 1.6 2016/08/10 22:28:51 kettenis Exp $	*/
 /*	$NetBSD: pte.h,v 1.6 2003/04/18 11:08:28 scw Exp $	*/
 
 /*
@@ -156,6 +156,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L1_S_V7_nG	0x00020000	/* not Global */
 #define	L1_S_V7_S	0x00010000	/* Shareable */
 #define	L1_S_V7_AP(x)	((((x) & 0x4) << 13) | (((x) & 3) << 10))	/* AP */
+#define	L1_S_V7_AF	L1_S_V7_AP(1)	/* Access Flag */
 #define	L1_S_V7_IMP	0x00000200	/* implementation defined */
 #define	L1_S_V7_XN	0x00000010	/* eXecute Never */
 
@@ -219,8 +220,9 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_V7_S_XN	0x00000001	/* eXecute Never */
 
 #define	L2_V7_AP(x)	((((x) & 0x04) << 7) | (((x) & 0x03) << 4))	/* AP */
-#define	L2_V7_S		0x00000400	/* Shared */
-#define	L2_V7_nG	0x00000200	/* not Global */
+#define	L2_V7_AF	L2_V7_AP(1)	/* Access Flag */
+#define	L2_V7_S		0x00000400	/* Sharable */
+#define	L2_V7_nG	0x00000800	/* not Global */
 
 /*
  * Access Permissions for L1 and L2 Descriptors. (except for V7)
