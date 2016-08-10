@@ -1,4 +1,4 @@
-.Dd July 4, 2014
+.Dd August 10, 2016
 .Dt BL-NOTYPE 1
 .Os OpenBSD
 .Sh NAME
@@ -12,7 +12,7 @@ Some text.
 .El tail argument
 .Pp
 no type:
-.Bl -offset indent
+.Bl -offset indent -width Ds
 .It
 Some text.
 .El

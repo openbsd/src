@@ -1,4 +1,4 @@
-.Dd July 3, 2014
+.Dd August 10, 2016
 .Dt BL-EMPTYITEM 1
 .Os OpenBSD
 .Sh NAME
@@ -31,7 +31,7 @@ three
 .El
 hyphen list:
 .Bl -hyphen
-.It head argument
+.It Sy head argument
 one
 .It
 .It
