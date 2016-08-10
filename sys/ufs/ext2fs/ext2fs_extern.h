@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.35 2014/07/14 08:54:13 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_extern.h,v 1.36 2016/08/10 07:53:02 natano Exp $	*/
 /*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
 
 /*-
@@ -91,8 +91,7 @@ int	ext2fs_checkpath(struct inode *, struct inode *, struct ucred *);
 
 /* ext2fs_subr.c */
 int	ext2fs_bufatoff(struct inode *, off_t, char **, struct buf **);
-int	ext2fs_vinit(struct mount *, struct vops *, struct vops *,
-	    struct vnode **);
+int	ext2fs_vinit(struct mount *, struct vnode **);
 #ifdef DIAGNOSTIC
 void	ext2fs_checkoverlap(struct buf *, struct inode *);
 #endif
@@ -149,7 +148,4 @@ extern struct vops ext2fs_vops;
 extern struct vops ext2fs_specvops;
 #ifdef FIFO
 extern struct vops ext2fs_fifovops;
-#define EXT2FS_FIFOOPS &ext2fs_fifovops
-#else
-#define EXT2FS_FIFOOPS NULL
 #endif

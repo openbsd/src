@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_subr.c,v 1.34 2016/02/04 12:45:03 mikeb Exp $	*/
+/*	$OpenBSD: ext2fs_subr.c,v 1.35 2016/08/10 07:53:02 natano Exp $	*/
 /*	$NetBSD: ext2fs_subr.c,v 1.1 1997/06/11 09:34:03 bouyer Exp $	*/
 
 /*
@@ -145,8 +145,7 @@ ext2fs_checkoverlap(struct buf *bp, struct inode *ip)
  * Initialize the vnode associated with a new inode, handle aliased vnodes.
  */
 int
-ext2fs_vinit(struct mount *mp, struct vops *specops,
-    struct vops *fifoops, struct vnode **vpp)
+ext2fs_vinit(struct mount *mp, struct vnode **vpp)
 {
 	struct inode *ip;
 	struct vnode *vp, *nvp;
@@ -159,7 +158,7 @@ ext2fs_vinit(struct mount *mp, struct vops *specops,
 	switch(vp->v_type) {
 	case VCHR:
 	case VBLK:
-		vp->v_op = specops;
+		vp->v_op = &ext2fs_specvops;
 
 		nvp = checkalias(vp, letoh32(ip->i_e2din->e2di_rdev), mp);
 		if (nvp != NULL) {
@@ -185,7 +184,7 @@ ext2fs_vinit(struct mount *mp, struct vops *specops,
 
 	case VFIFO:
 #ifdef FIFO
-		vp->v_op = fifoops;
+		vp->v_op = &ext2fs_fifovops;
 		break;
 #else
 		return (EOPNOTSUPP);

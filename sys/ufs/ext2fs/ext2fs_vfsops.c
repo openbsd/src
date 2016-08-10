@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.93 2016/06/19 11:54:33 natano Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.94 2016/08/10 07:53:02 natano Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -918,7 +918,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 * Initialize the vnode from the inode, check for aliases.
 	 * Note that the underlying vnode may have changed.
 	 */
-	error = ext2fs_vinit(mp, &ext2fs_specvops, EXT2FS_FIFOOPS, &vp);
+	error = ext2fs_vinit(mp, &vp);
 	if (error) {
 		vput(vp);
 		*vpp = NULL;
