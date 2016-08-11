@@ -7,3 +7,9 @@ _mcount
 frexpl
 ldexpl
 modfl
+
+/* needed by ld.so unless/until this switches to RELRO */
+__got_start
+__got_end
+__plt_start
+__plt_end

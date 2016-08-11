@@ -13,12 +13,6 @@ _edata
 _end
 __end
 
-/* needed by ld.so unless/until we switch to RELRO */
-__got_start
-__got_end
-__plt_start
-__plt_end
-
 /* sys */
 __get_tcb
 __semctl
