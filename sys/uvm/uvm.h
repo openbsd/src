@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.60 2015/10/08 15:58:38 kettenis Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.61 2016/08/11 01:17:33 dlg Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ struct uvm {
 	struct mutex aiodoned_lock;
 
 	/* static kernel map entry pool */
-	vm_map_entry_t kentry_free;	/* free page pool */
+	SLIST_HEAD(, vm_map_entry) kentry_free; /* free page pool */
 
 	/* aio_done is locked by uvm.aiodoned_lock. */
 	TAILQ_HEAD(, buf) aio_done;		/* done async i/o reqs */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.55 2015/09/09 23:33:37 kettenis Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.56 2016/08/11 01:17:33 dlg Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -161,6 +161,7 @@ union vm_map_object {
 struct vm_map_entry {
 	union {
 		RB_ENTRY(vm_map_entry)	addr_entry; /* address tree */
+		SLIST_ENTRY(vm_map_entry) addr_kentry;
 	} daddrs;
 
 	union {
