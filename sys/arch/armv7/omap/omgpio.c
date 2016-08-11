@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.8 2016/08/06 18:21:34 patrick Exp $ */
+/* $OpenBSD: omgpio.c,v 1.9 2016/08/11 04:33:06 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -26,6 +26,7 @@
 #include <arm/cpufunc.h>
 
 #include <machine/bus.h>
+#include <machine/fdt.h>
 #include <machine/intr.h>
 
 #include <dev/gpio/gpiovar.h>
@@ -36,6 +37,7 @@
 #include <armv7/omap/omgpiovar.h>
 
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/openfirm.h>
 
 #include "gpio.h"
 
@@ -175,7 +177,7 @@ struct omgpio_softc {
 	void			*sc_ih_l;
 	int 			sc_max_il;
 	int 			sc_min_il;
-	int			sc_irq;
+	int			sc_node;
 	struct intrhand		*sc_handlers[GPIO_NUM_PINS];
 	int			sc_omap_ver;
 	struct gpio_chipset_tag	sc_gpio_gc;
@@ -192,6 +194,7 @@ struct omgpio_softc {
 
 u_int32_t omgpio_read4(struct omgpio_softc *, u_int32_t);
 void omgpio_write4(struct omgpio_softc *, u_int32_t, u_int32_t);
+int omgpio_match(struct device *, void *, void *);
 void omgpio_attach(struct device *, struct device *, void *);
 void omgpio_recalc_interrupts(struct omgpio_softc *);
 int omgpio_irq(void *);
@@ -200,11 +203,17 @@ int omgpio_pin_dir_read(struct omgpio_softc *, unsigned int);
 void omgpio_pin_dir_write(struct omgpio_softc *, unsigned int, unsigned int);
 
 struct cfattach omgpio_ca = {
-	sizeof (struct omgpio_softc), NULL, omgpio_attach
+	sizeof (struct omgpio_softc), omgpio_match, omgpio_attach
 };
 
 struct cfdriver omgpio_cd = {
 	NULL, "omgpio", DV_DULL
+};
+
+const char *omgpio_compatible[] = {
+	"ti,omap3-gpio",
+	"ti,omap4-gpio",
+	NULL
 };
 
 u_int32_t
@@ -225,29 +234,49 @@ omgpio_write4(struct omgpio_softc *sc, u_int32_t reg, u_int32_t val)
 	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val));
 }
 
-void
-omgpio_attach(struct device *parent, struct device *self, void *args)
+int
+omgpio_match(struct device *parent, void *match, void *aux)
 {
-	struct armv7_attach_args *aa = args;
+	struct fdt_attach_args *faa = aux;
+	int i;
+
+	for (i = 0; omgpio_compatible[i] != NULL; i++) {
+		if (OF_is_compatible(faa->fa_node, omgpio_compatible[i]))
+			return 1;
+	}
+	return 0;
+}
+
+void
+omgpio_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
 	struct omgpio_softc *sc = (struct omgpio_softc *) self;
 	struct gpiobus_attach_args gba;
 	u_int32_t	rev;
-	int		i;
-	void		*node;
+	int		i, len, unit;
+	char		hwmods[64];
 
-	node = fdt_find_node("/");
-	if (node == NULL)
-		panic("%s: could not get fdt root node",
-		    sc->sc_dev.dv_xname);
+	if (faa->fa_nreg < 1)
+		return;
 
-	prcm_enablemodule(PRCM_GPIO0 + aa->aa_dev->unit);
+	unit = 0;
+	if ((len = OF_getprop(faa->fa_node, "ti,hwmods", hwmods,
+	    sizeof(hwmods))) == 6) {
+		if ((strncmp(hwmods, "gpio", 4) == 0) &&
+		    (hwmods[4] > '0') && (hwmods[4] <= '9'))
+			unit = hwmods[4] - '1';
+	}
 
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
+	prcm_enablemodule(PRCM_GPIO0 + unit);
+
+	sc->sc_node = faa->fa_node;
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", DEVNAME(sc));
 
-	if (fdt_is_compatible(node, "ti,omap3")) {
+	if (OF_is_compatible(faa->fa_node, "ti,omap3-gpio")) {
 		sc->sc_padconf_set_gpioflags = NULL;
 		sc->sc_regs.revision = GPIO3_REVISION;
 		sc->sc_regs.sysconfig = GPIO3_SYSCONFIG;
@@ -277,7 +306,7 @@ omgpio_attach(struct device *parent, struct device *self, void *args)
 		sc->sc_regs.setwkupena = GPIO3_SETWKUENA;
 		sc->sc_regs.cleardataout = GPIO3_CLEARDATAOUT;
 		sc->sc_regs.setdataout = GPIO3_SETDATAOUT;
-	} else if (fdt_is_compatible(node, "ti,omap4")) {
+	} else if (OF_is_compatible(faa->fa_node, "ti,omap4-gpio")) {
 		sc->sc_padconf_set_gpioflags = NULL;
 		sc->sc_regs.revision = GPIO4_REVISION;
 		sc->sc_regs.sysconfig = GPIO4_SYSCONFIG;
@@ -292,7 +321,7 @@ omgpio_attach(struct device *parent, struct device *self, void *args)
 		sc->sc_regs.irqwaken0 = GPIO4_IRQWAKEN_0;
 		sc->sc_regs.irqwaken1 = GPIO4_IRQWAKEN_1;
 		sc->sc_regs.sysstatus = GPIO4_SYSSTATUS;
-		sc->sc_regs.wakeupenable = GPIO4_WAKEUPENABLE;
+		sc->sc_regs.wakeupenable = -1;
 		sc->sc_regs.ctrl = GPIO4_CTRL;
 		sc->sc_regs.oe = GPIO4_OE;
 		sc->sc_regs.datain = GPIO4_DATAIN;
@@ -303,40 +332,10 @@ omgpio_attach(struct device *parent, struct device *self, void *args)
 		sc->sc_regs.fallingdetect = GPIO4_FALLINGDETECT;
 		sc->sc_regs.debounceenable = GPIO4_DEBOUNCENABLE;
 		sc->sc_regs.debouncingtime = GPIO4_DEBOUNCINGTIME;
-		sc->sc_regs.clearwkupena = GPIO4_CLEARWKUPENA;
-		sc->sc_regs.setwkupena = GPIO4_SETWKUENA;
-		sc->sc_regs.cleardataout = GPIO4_CLEARDATAOUT;
-		sc->sc_regs.setdataout = GPIO4_SETDATAOUT;
-	} else if (fdt_is_compatible(node, "ti,am33xx")) {
-		sc->sc_padconf_set_gpioflags = sitara_cm_padconf_set_gpioflags;
-		sc->sc_regs.revision = GPIO_AM335X_REVISION;
-		sc->sc_regs.sysconfig = GPIO_AM335X_SYSCONFIG;
-		sc->sc_regs.irqstatus_raw0 = GPIO_AM335X_IRQSTATUS_RAW_0;
-		sc->sc_regs.irqstatus_raw1 = GPIO_AM335X_IRQSTATUS_RAW_1;
-		sc->sc_regs.irqstatus0 = GPIO_AM335X_IRQSTATUS_0;
-		sc->sc_regs.irqstatus1 = GPIO_AM335X_IRQSTATUS_1;
-		sc->sc_regs.irqstatus_set0 = GPIO_AM335X_IRQSTATUS_SET_0;
-		sc->sc_regs.irqstatus_set1 = GPIO_AM335X_IRQSTATUS_SET_1;
-		sc->sc_regs.irqstatus_clear0 = GPIO_AM335X_IRQSTATUS_CLR_0;
-		sc->sc_regs.irqstatus_clear1 = GPIO_AM335X_IRQSTATUS_CLR_1;
-		sc->sc_regs.irqwaken0 = GPIO_AM335X_IRQWAKEN_0;
-		sc->sc_regs.irqwaken1 = GPIO_AM335X_IRQWAKEN_1;
-		sc->sc_regs.sysstatus = GPIO_AM335X_SYSSTATUS;
-		sc->sc_regs.wakeupenable = -1;
-		sc->sc_regs.ctrl = GPIO_AM335X_CTRL;
-		sc->sc_regs.oe = GPIO_AM335X_OE;
-		sc->sc_regs.datain = GPIO_AM335X_DATAIN;
-		sc->sc_regs.dataout = GPIO_AM335X_DATAOUT;
-		sc->sc_regs.leveldetect0 = GPIO_AM335X_LEVELDETECT0;
-		sc->sc_regs.leveldetect1 = GPIO_AM335X_LEVELDETECT1;
-		sc->sc_regs.risingdetect = GPIO_AM335X_RISINGDETECT;
-		sc->sc_regs.fallingdetect = GPIO_AM335X_FALLINGDETECT;
-		sc->sc_regs.debounceenable = GPIO_AM335X_DEBOUNCENABLE;
-		sc->sc_regs.debouncingtime = GPIO_AM335X_DEBOUNCINGTIME;
 		sc->sc_regs.clearwkupena = -1;
 		sc->sc_regs.setwkupena = -1;
-		sc->sc_regs.cleardataout = GPIO_AM335X_CLEARDATAOUT;
-		sc->sc_regs.setdataout = GPIO_AM335X_SETDATAOUT;
+		sc->sc_regs.cleardataout = GPIO4_CLEARDATAOUT;
+		sc->sc_regs.setdataout = GPIO4_SETDATAOUT;
 	} else
 		panic("%s: could not find a compatible soc",
 		    sc->sc_dev.dv_xname);
@@ -344,8 +343,6 @@ omgpio_attach(struct device *parent, struct device *self, void *args)
 	rev = READ4(sc, sc->sc_regs.revision);
 
 	printf(": rev %d.%d\n", rev >> 4 & 0xf, rev & 0xf);
-
-	sc->sc_irq = aa->aa_dev->irq[0];
 
 	WRITE4(sc, sc->sc_regs.irqstatus_clear0, ~0);
 	WRITE4(sc, sc->sc_regs.irqstatus_clear1, ~0);
@@ -722,18 +719,18 @@ omgpio_recalc_interrupts(struct omgpio_softc *sc)
 
 #if 0
 	if ((max == IPL_NONE || max != sc->sc_max_il) && sc->sc_ih_h != NULL)
-		arm_intr_disestablish(sc->sc_ih_h);
+		arm_intr_disestablish_fdt(sc->sc_ih_h);
 
 	if (max != IPL_NONE && max != sc->sc_max_il) {
-		sc->sc_ih_h = arm_intr_establish(sc->sc_irq, max, omgpio_irq,
+		sc->sc_ih_h = arm_intr_establish_fdt(sc->sc_node, max, omgpio_irq,
 		    sc, NULL);
 	}
 #else
 	if (sc->sc_ih_h != NULL)
-		arm_intr_disestablish(sc->sc_ih_h);
+		arm_intr_disestablish_fdt(sc->sc_ih_h);
 
 	if (max != IPL_NONE) {
-		sc->sc_ih_h = arm_intr_establish(sc->sc_irq, max, omgpio_irq,
+		sc->sc_ih_h = arm_intr_establish_fdt(sc->sc_node, max, omgpio_irq,
 		    sc, NULL);
 	}
 #endif
@@ -741,10 +738,10 @@ omgpio_recalc_interrupts(struct omgpio_softc *sc)
 	sc->sc_max_il = max;
 
 	if (sc->sc_ih_l != NULL)
-		arm_intr_disestablish(sc->sc_ih_l);
+		arm_intr_disestablish_fdt(sc->sc_ih_l);
 
 	if (max != min) {
-		sc->sc_ih_h = arm_intr_establish(sc->sc_irq, min,
+		sc->sc_ih_h = arm_intr_establish_fdt(sc->sc_node, min,
 		    omgpio_irq_dummy, sc, NULL);
 	}
 	sc->sc_min_il = min;
