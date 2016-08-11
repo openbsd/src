@@ -1,4 +1,4 @@
-/*	$OpenBSD: omehci.c,v 1.3 2014/05/19 13:11:31 mpi Exp $ */
+/*	$OpenBSD: omehci.c,v 1.4 2016/08/11 01:53:18 jsg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -52,6 +52,7 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -63,9 +64,13 @@
 #include <armv7/omap/omgpiovar.h>
 #include <armv7/omap/omehcivar.h>
 
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
+
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 
+int	omehci_match(struct device *, void *, void *);
 void	omehci_attach(struct device *, struct device *, void *);
 int	omehci_detach(struct device *, int);
 int	omehci_activate(struct device *, int);
@@ -97,25 +102,43 @@ void omehci_uhh_init(struct omehci_softc *sc);
 void omehci_v4_early_init(void);
 
 struct cfattach omehci_ca = {
-	sizeof (struct omehci_softc), NULL, omehci_attach,
+	sizeof (struct omehci_softc), omehci_match, omehci_attach,
 	omehci_detach, omehci_activate
 };
+
+struct cfdriver omehci_cd = {
+	NULL, "omehci", DV_DULL
+};
+
+int
+omehci_match(struct device *parent, void *match, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
+
+	return OF_is_compatible(faa->fa_node, "ti,usbhs-host");
+}
 
 void
 omehci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct omehci_softc	*sc = (struct omehci_softc *)self;
-	struct armv7_attach_args *aa = aux;
+	struct fdt_attach_args *faa = aux;
 	usbd_status		 r;
 	char			*devname = sc->sc.sc_bus.bdev.dv_xname;
 	uint32_t		 i;
+	char			 port_mode[16];
+	char			 name[32];
+	int			 node;
+	uint32_t		 reg[2];
 
-	sc->sc.iot = aa->aa_iot;
-	sc->sc.sc_bus.dmatag = aa->aa_dmat;
-	sc->sc.sc_size = aa->aa_dev->mem[0].size;
+	if (faa->fa_nreg < 1)
+		return;
+
+	sc->sc.iot = faa->fa_iot;
+	sc->sc.sc_bus.dmatag = faa->fa_dmat;
 
 	/* set defaults */
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < OMAP_HS_USB_PORTS; i++) {
 		sc->phy_reset[i] = 0;
 		sc->port_mode[i] = EHCI_HCD_OMAP_MODE_UNKNOWN;
 		sc->reset_gpio_pin[i] = -1;
@@ -125,32 +148,62 @@ omehci_attach(struct device *parent, struct device *self, void *aux)
 	{
 	case BOARD_ID_OMAP4_PANDA:
 		sc->tll_avail = 0;
-		sc->port_mode[0] = EHCI_HCD_OMAP_MODE_PHY;
 		sc->early_init = omehci_v4_early_init;
 		break;
 	default:
 		break;
 	}
 
+	strlcpy(name, "portX-mode", sizeof(name));
+
+	for (i = 0; i < OMAP_HS_USB_PORTS; i++) {
+		name[4] = '1' + i;
+		memset(port_mode, 0, sizeof(port_mode));
+
+		if (OF_getprop(faa->fa_node, name, port_mode,
+		    sizeof(port_mode)) == -1)
+			continue;
+
+		if (strcmp(port_mode, "ehci-phy") == 0)
+			sc->port_mode[i] = EHCI_HCD_OMAP_MODE_PHY;
+		if (strcmp(port_mode, "ehci-hsic") == 0)
+			sc->port_mode[i] = EHCI_HCD_OMAP_MODE_HSIC;
+		if (strcmp(port_mode, "ehci-tll") == 0)
+			sc->port_mode[i] = EHCI_HCD_OMAP_MODE_TLL ;
+	}
+
+	for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
+		if (OF_is_compatible(node, "ti,ehci-omap"))
+			break;
+	}
+
+	if (node == 0)
+		panic("could not find ehci child node");
+
+	if (OF_getpropintarray(node, "reg", reg, sizeof(reg)) != sizeof(reg))
+		return;
+
 	/* Map I/O space */
-	if (bus_space_map(sc->sc.iot, aa->aa_dev->mem[0].addr,
-		aa->aa_dev->mem[0].size, 0, &sc->sc.ioh)) {
+	if (bus_space_map(sc->sc.iot, reg[0], reg[1], 0, &sc->sc.ioh)) {
 		printf(": cannot map mem space\n");
 		goto out;
 	}
+	sc->sc.sc_size = reg[1];
 
-	if (bus_space_map(sc->sc.iot, aa->aa_dev->mem[1].addr,
-		aa->aa_dev->mem[1].size, 0, &sc->uhh_ioh)) {
+	if (bus_space_map(sc->sc.iot, faa->fa_reg[0].addr, faa->fa_reg[0].size,
+	    0, &sc->uhh_ioh)) {
 		printf(": cannot map mem space\n");
 		goto mem0;
 	}
 
+#if 0
 	if (sc->tll_avail &&
 	    bus_space_map(sc->sc.iot, aa->aa_dev->mem[2].addr,
-		aa->aa_dev->mem[2].size, 0, &sc->tll_ioh)) {
+	    aa->aa_dev->mem[2].size, 0, &sc->tll_ioh)) {
 		printf(": cannot map mem space\n");
 		goto mem1;
 	}
+#endif
 
 	printf("\n");
 
@@ -164,7 +217,7 @@ omehci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
 	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
 
-	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_USB,
+	sc->sc_ih = arm_intr_establish_fdt(node, IPL_USB,
 	    ehci_intr, &sc->sc, devname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");
@@ -188,9 +241,11 @@ intr:
 	arm_intr_disestablish(sc->sc_ih);
 	sc->sc_ih = NULL;
 mem2:
+#if 0
 	bus_space_unmap(sc->sc.iot, sc->tll_ioh, aa->aa_dev->mem[2].size);
 mem1:
-	bus_space_unmap(sc->sc.iot, sc->uhh_ioh, aa->aa_dev->mem[1].size);
+#endif
+	bus_space_unmap(sc->sc.iot, sc->uhh_ioh, faa->fa_reg[0].size);
 mem0:
 	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 	sc->sc.sc_size = 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: omap.c,v 1.17 2016/08/06 10:07:45 jsg Exp $ */
+/* $OpenBSD: omap.c,v 1.18 2016/08/11 01:53:18 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -73,7 +73,6 @@ struct board_dev omap4_dev[] = {
 	{ "omgpio",	3 },
 	{ "omgpio",	4 },
 	{ "omgpio",	5 },
-	{ "ehci",	0 },
 	{ NULL,		0 }
 };
 

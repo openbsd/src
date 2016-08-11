@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.43 2016/08/10 06:51:57 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.44 2016/08/11 01:53:18 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -78,8 +78,8 @@ com*		at fdt?			# onboard uarts
 ommmc*		at fdt?			# SD/MMC card controller
 sdmmc*		at ommmc?		# SD/MMC bus
 
-ehci*		at omap?		# EHCI (shim)
-usb*		at ehci?
+omehci*		at fdt?			# EHCI
+usb*		at omehci?
 
 # Sunxi A1x/A20 SoC
 sunxi0		at mainbus?
