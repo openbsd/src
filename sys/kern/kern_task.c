@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.17 2015/12/08 11:48:54 dlg Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.18 2016/08/11 01:32:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -295,11 +295,11 @@ taskq_thread(void *xtq)
 	last = (--tq->tq_running == 0);
 	mtx_leave(&tq->tq_mtx);
 
-	if (ISSET(tq->tq_flags, TASKQ_MPSAFE))
-		KERNEL_LOCK();
-
 	if (ISSET(tq->tq_flags, TASKQ_CANTSLEEP))
 		atomic_clearbits_int(&curproc->p_flag, P_CANTSLEEP);
+
+	if (ISSET(tq->tq_flags, TASKQ_MPSAFE))
+		KERNEL_LOCK();
 
 	if (last)
 		wakeup_one(&tq->tq_running);
