@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.436 2016/07/13 16:45:19 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.437 2016/08/11 00:58:22 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -241,8 +241,7 @@ ifinit(void)
 
 	timeout_set(&net_tick_to, net_tick, &net_tick_to);
 
-	softnettq = taskq_create("softnet", 1, IPL_NET,
-	    TASKQ_MPSAFE | TASKQ_CANTSLEEP);
+	softnettq = taskq_create("softnet", 1, IPL_NET, TASKQ_MPSAFE);
 	if (softnettq == NULL)
 		panic("unable to create softnet taskq");
 
