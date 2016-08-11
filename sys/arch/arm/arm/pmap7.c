@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.36 2016/08/09 13:13:51 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.37 2016/08/11 00:28:06 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -850,6 +850,7 @@ pmap_free_l2_bucket(pmap_t pm, struct l2_bucket *l2b, u_int count)
 	if (l1pd == (L1_C_DOM(pm->pm_domain) | L1_TYPE_C)) {
 		*pl1pd = L1_TYPE_INV;
 		PTE_SYNC(pl1pd);
+		pmap_tlb_flushID_SE(pm, l1idx << L1_S_SHIFT);
 	}
 
 	/*
