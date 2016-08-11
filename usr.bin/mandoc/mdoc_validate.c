@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.221 2016/08/10 20:16:43 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.222 2016/08/11 10:46:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -877,9 +877,10 @@ post_display(POST_ARGS)
 	n = mdoc->last;
 	switch (n->type) {
 	case ROFFT_BODY:
-		if (n->end != ENDBODY_NOT)
-			break;
-		if (n->child == NULL)
+		if (n->end != ENDBODY_NOT) {
+			if (n->tok == MDOC_Bd && n->parent->args == NULL)
+				roff_node_delete(mdoc, n);
+		} else if (n->child == NULL)
 			mandoc_msg(MANDOCERR_BLK_EMPTY, mdoc->parse,
 			    n->line, n->pos, mdoc_macronames[n->tok]);
 		else if (n->tok == MDOC_D1)
