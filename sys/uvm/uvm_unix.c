@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.58 2016/04/04 16:34:16 stefan Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.59 2016/08/12 22:46:02 kettenis Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -161,6 +161,7 @@ uvm_coredump_walkmap(struct proc *p, void *iocookie,
 		}
 
 		if (!(entry->protection & PROT_WRITE) &&
+		    entry->aref.ar_amap == NULL &&
 		    entry->start != p->p_p->ps_sigcode)
 			continue;
 
