@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.8 2016/08/12 16:02:31 kettenis Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.9 2016/08/12 19:55:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -28,6 +28,7 @@
 
 #include <dev/gpio/gpiovar.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
 
 #include <armv7/armv7/armv7var.h>
@@ -73,6 +74,7 @@ struct sxipio_softc {
 
 	struct sxipio_pin	*sc_pins;
 	int			sc_npins;
+	struct gpio_controller	sc_gc;
 
 	struct gpio_chipset_tag	 sc_gpio_tag[SXIPIO_NPORT];
 	gpio_pin_t		 sc_gpio_pins[SXIPIO_NPORT][32];
@@ -92,7 +94,6 @@ struct sxipio_softc {
 
 void sxipio_attach(struct device *, struct device *, void *);
 void sxipio_attach_gpio(struct device *);
-int sxipio_pinctrl(uint32_t, void *);
 
 struct cfattach sxipio_ca = {
 	sizeof (struct sxipio_softc), NULL, sxipio_attach
@@ -101,6 +102,11 @@ struct cfattach sxipio_ca = {
 struct cfdriver sxipio_cd = {
 	NULL, "sxipio", DV_DULL
 };
+
+int	sxipio_pinctrl(uint32_t, void *);
+void	sxipio_config_pin(void *, uint32_t *, int);
+int	sxipio_get_pin(void *, uint32_t *);
+void	sxipio_set_pin(void *, uint32_t *, int);
 
 struct sxipio_softc	*sxipio_sc = NULL;
 bus_space_tag_t		 sxipio_iot;
@@ -153,18 +159,26 @@ sxipio_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_irq = aa->aa_dev->irq[0];
 
 	node = OF_finddevice("/soc@01c00000/pinctrl@01c20800");
-	if (node != -1) {
-		for (i = 0; i < nitems(sxipio_pins); i++) {
-			if (OF_is_compatible(node, sxipio_pins[i].compat)) {
-				sc->sc_pins = sxipio_pins[i].pins;
-				sc->sc_npins = sxipio_pins[i].npins;
-				break;
-			}
-		}
+	if (node == -1)
+		panic("sxipio: can't find device tree node");
 
-		if (sc->sc_pins)
-			pinctrl_register(node, sxipio_pinctrl, sc);
+	for (i = 0; i < nitems(sxipio_pins); i++) {
+		if (OF_is_compatible(node, sxipio_pins[i].compat)) {
+			sc->sc_pins = sxipio_pins[i].pins;
+			sc->sc_npins = sxipio_pins[i].npins;
+			break;
+		}
 	}
+
+	KASSERT(sc->sc_pins);
+	pinctrl_register(node, sxipio_pinctrl, sc);
+
+	sc->sc_gc.gc_node = node;
+	sc->sc_gc.gc_cookie = sc;
+	sc->sc_gc.gc_config_pin = sxipio_config_pin;
+	sc->sc_gc.gc_get_pin = sxipio_get_pin;
+	sc->sc_gc.gc_set_pin = sxipio_set_pin;
+	gpio_controller_register(&sc->sc_gc);
 
 	config_defer(self, sxipio_attach_gpio);
 
@@ -473,4 +487,63 @@ sxipio_pinctrl(uint32_t phandle, void *cookie)
 err:
 	free(names, M_TEMP, len);
 	return -1;
+}
+
+void
+sxipio_config_pin(void *cookie, uint32_t *cells, int config)
+{
+	struct sxipio_softc *sc = cookie;
+	uint32_t port = cells[0];
+	uint32_t pin = cells[1];
+	int mux, off;
+
+	if (port > SXIPIO_NPORT || pin > 32)
+		return;
+
+	mux = (config & GPIO_CONFIG_OUTPUT) ? 1 : 0;
+	off = (pin & 0x7) << 2;
+	SXICMS4(sc, SXIPIO_CFG(port, pin), 0x7 << off, mux << off);
+}
+
+int
+sxipio_get_pin(void *cookie, uint32_t *cells)
+{
+	struct sxipio_softc *sc = cookie;
+	uint32_t port = cells[0];
+	uint32_t pin = cells[1];
+	uint32_t flags = cells[2];
+	uint32_t reg;
+	int val;
+
+	if (port > SXIPIO_NPORT || pin > 32)
+		return 0;
+
+	reg = SXIREAD4(sc, SXIPIO_DAT(port));
+	reg &= (1 << pin);
+	val = (reg >> pin) & 1;
+	if (flags & GPIO_ACTIVE_LOW)
+		val = !val;
+	return val;
+}
+
+void
+sxipio_set_pin(void *cookie, uint32_t *cells, int val)
+{
+	struct sxipio_softc *sc = cookie;
+	uint32_t port = cells[0];
+	uint32_t pin = cells[1];
+	uint32_t flags = cells[2];
+	uint32_t reg;
+
+	if (port > SXIPIO_NPORT || pin > 32)
+		return;
+
+	reg = SXIREAD4(sc, SXIPIO_DAT(port));
+	if (flags & GPIO_ACTIVE_LOW)
+		val = !val;
+	if (val)
+		reg |= (1 << pin);
+	else
+		reg &= ~(1 << pin);
+	SXIWRITE4(sc, SXIPIO_DAT(port), reg);
 }
