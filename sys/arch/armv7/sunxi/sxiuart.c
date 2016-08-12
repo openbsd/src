@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiuart.c,v 1.11 2016/08/09 16:52:42 mglocker Exp $	*/
+/*	$OpenBSD: sxiuart.c,v 1.12 2016/08/12 16:09:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  * Copyright (c) 2013 Artturi Alm
@@ -45,8 +45,9 @@
 #include <armv7/sunxi/sxiuartreg.h>
 #include <armv7/sunxi/sunxireg.h>
 
-#include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/fdt.h>
 
 #define DEVUNIT(x)      (minor(x) & 0x7f)
 #define DEVCUA(x)       (minor(x) & 0x80)
@@ -177,6 +178,8 @@ sxiuart_attach(struct device *parent, struct device *self, void *aux)
 
 	if (faa->fa_nreg < 1)
 		return;
+
+	pinctrl_byname(faa->fa_node, "default");
 
 	sc->sc_iot = iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
