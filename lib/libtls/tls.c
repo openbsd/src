@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.43 2016/08/02 07:47:11 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.44 2016/08/12 15:10:59 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -309,6 +309,14 @@ tls_configure_ssl(struct tls *ctx)
 		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_TLSv1_1);
 	if ((ctx->config->protocols & TLS_PROTOCOL_TLSv1_2) == 0)
 		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_TLSv1_2);
+
+	if (ctx->config->alpn != NULL) {
+		if (SSL_CTX_set_alpn_protos(ctx->ssl_ctx, ctx->config->alpn,
+		    ctx->config->alpn_len) != 0) {
+			tls_set_errorx(ctx, "failed to set alpn");
+			goto err;
+		}
+	}
 
 	if (ctx->config->ciphers != NULL) {
 		if (SSL_CTX_set_cipher_list(ctx->ssl_ctx,

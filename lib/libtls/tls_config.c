@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.24 2016/08/02 07:47:11 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.25 2016/08/12 15:10:59 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -166,6 +166,7 @@ tls_config_free(struct tls_config *config)
 
 	free(config->error.msg);
 
+	free(config->alpn);
 	free((char *)config->ca_file);
 	free((char *)config->ca_mem);
 	free((char *)config->ca_path);
@@ -247,6 +248,72 @@ tls_config_parse_protocols(uint32_t *protocols, const char *protostr)
 	free(s);
 
 	return (0);
+}
+
+static int
+tls_config_parse_alpn(struct tls_config *config, const char *alpn,
+    char **alpn_data, size_t *alpn_len)
+{
+	size_t buf_len, i, len;
+	char *buf = NULL;
+	char *s = NULL;
+	char *p, *q;
+
+	if ((buf_len = strlen(alpn) + 1) > 65535) {
+		tls_config_set_errorx(config, "alpn too large");
+		goto err;
+	}
+
+	if ((buf = malloc(buf_len)) == NULL) {
+		tls_config_set_errorx(config, "out of memory");
+		goto err;
+	}
+
+	if ((s = strdup(alpn)) == NULL) {
+		tls_config_set_errorx(config, "out of memory");
+		goto err;
+	}
+
+	i = 0;
+	q = s;
+	while ((p = strsep(&q, ",")) != NULL) {
+		if ((len = strlen(p)) == 0) {
+			tls_config_set_errorx(config,
+			    "alpn protocol with zero length");
+			goto err;
+		}
+		if (len > 255) {
+			tls_config_set_errorx(config,
+			    "alpn protocol too long");
+			goto err;
+		}
+		buf[i++] = len & 0xff;
+		memcpy(&buf[i], p, len);
+		i += len;
+	}
+
+	free(s);
+
+	*alpn_data = buf;
+	*alpn_len = buf_len;
+
+	return (0);
+
+ err:
+	free(buf);
+	free(s);
+
+	*alpn_data = NULL;
+	*alpn_len = 0;
+
+	return (-1);
+}
+
+int
+tls_config_set_alpn(struct tls_config *config, const char *alpn)
+{
+	return tls_config_parse_alpn(config, alpn, &config->alpn,
+	    &config->alpn_len);
 }
 
 int
