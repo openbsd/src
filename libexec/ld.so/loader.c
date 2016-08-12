@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.163 2016/08/08 21:59:20 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.164 2016/08/12 20:39:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -308,7 +308,7 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 			for (loop = 1; loop < libcount; loop++) {
 				unsigned int rnd;
 				int cur;
-				rnd = _dl_random();
+				rnd = _dl_arc4random();
 				rnd = rnd % (loop+1);
 				cur = randomlist[rnd];
 				randomlist[rnd] = randomlist[loop];

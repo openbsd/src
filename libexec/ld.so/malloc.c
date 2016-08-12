@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.8 2016/05/19 18:50:01 guenther Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.9 2016/08/12 20:39:01 deraadt Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -196,7 +196,7 @@ wrterror(char *msg)
 static void
 rbytes_init(struct dir_info *d)
 {
-	_dl_randombuf(d->rbytes, sizeof(d->rbytes));
+	_dl_arc4randombuf(d->rbytes, sizeof(d->rbytes));
 	d->rbytesused = 0;
 }
 
@@ -358,7 +358,7 @@ omalloc_init(struct dir_info **dp)
 	mopts.malloc_guard = MALLOC_PAGESIZE;
 
 	do {
-		_dl_randombuf(&mopts.malloc_canary,
+		_dl_arc4randombuf(&mopts.malloc_canary,
 		    sizeof(mopts.malloc_canary));
 	} while (mopts.malloc_canary == 0);
 
@@ -376,7 +376,7 @@ omalloc_init(struct dir_info **dp)
 	    MALLOC_PAGESIZE, PROT_NONE);
 	d_avail = (DIR_INFO_RSZ - sizeof(*d)) >> MALLOC_MINSHIFT;
 
-	_dl_randombuf(&tmp, sizeof(tmp));
+	_dl_arc4randombuf(&tmp, sizeof(tmp));
 	d = (struct dir_info *)(p + MALLOC_PAGESIZE +
 	    ((tmp % d_avail) << MALLOC_MINSHIFT)); /* not uniform */
 

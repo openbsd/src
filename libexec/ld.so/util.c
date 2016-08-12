@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.42 2016/08/05 15:42:05 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.43 2016/08/12 20:39:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -72,7 +72,7 @@ _dl_strdup(const char *orig)
 }
 
 void
-_dl_randombuf(void *v, size_t buflen)
+_dl_arc4randombuf(void *v, size_t buflen)
 {
 	static char bytes[256];
 	static u_int reserve;
@@ -110,9 +110,9 @@ _dl_randombuf(void *v, size_t buflen)
 }
 
 u_int32_t
-_dl_random(void)
+_dl_arc4random(void)
 {
 	u_int32_t rnd;
-	_dl_randombuf(&rnd, sizeof(rnd));
+	_dl_arc4randombuf(&rnd, sizeof(rnd));
 	return (rnd);
 }

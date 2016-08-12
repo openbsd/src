@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.55 2016/08/08 21:59:20 guenther Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.56 2016/08/12 20:39:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -300,7 +300,7 @@ retry:
 	phdp = (Elf_Phdr *)(hbuf + ehdr->e_phoff);
 	for (i = 0; i < ehdr->e_phnum; i++, phdp++) {
 		if (phdp->p_type == PT_OPENBSD_RANDOMIZE)
-			_dl_randombuf((char *)(phdp->p_vaddr + LOFF),
+			_dl_arc4randombuf((char *)(phdp->p_vaddr + LOFF),
 			    phdp->p_memsz);
 		else if (phdp->p_type == PT_GNU_RELRO) {
 			relro_addr = phdp->p_vaddr + LOFF;
