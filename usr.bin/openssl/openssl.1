@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.48 2016/08/10 17:41:08 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.49 2016/08/12 06:17:22 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 10 2016 $
+.Dd $Mdocdate: August 12 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1666,13 +1666,9 @@ is currently not implemented.
 .It Fl text
 Print the EC parameters in human readable form.
 .El
-.\"
-.\" ENC
-.\"
 .Sh ENC
 .nr nS 1
 .Nm "openssl enc"
-.Bk -words
 .Fl ciphername
 .Op Fl AadePp
 .Op Fl base64
@@ -1691,7 +1687,6 @@ Print the EC parameters in human readable form.
 .Op Fl pass Ar arg
 .Op Fl S Ar salt
 .Op Fl salt
-.Ek
 .nr nS 0
 .Pp
 The symmetric cipher commands allow data to be encrypted or decrypted
@@ -1699,6 +1694,17 @@ using various block and stream ciphers using keys based on passwords
 or explicitly provided.
 Base64 encoding or decoding can also be performed either by itself
 or in addition to the encryption or decryption.
+The program can be called either as
+.Nm openssl Ar ciphername
+or
+.Nm openssl enc - Ns Ar ciphername .
+.Pp
+Some of the ciphers do not have large keys and others have security
+implications if not used correctly.
+All the block ciphers normally use PKCS#5 padding,
+also known as standard block padding.
+If padding is disabled, the input data must be a multiple of the cipher
+block length.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -1710,7 +1716,7 @@ option is set, then base64 process the data on one line.
 Base64 process the data.
 This means that if encryption is taking place, the data is base64-encoded
 after encryption.
-If decryption is set, the input data is base64 decoded before
+If decryption is set, the input data is base64-decoded before
 being decrypted.
 .It Fl bufsize Ar number
 Set the buffer size for I/O.
@@ -1719,11 +1725,11 @@ Decrypt the input data.
 .It Fl debug
 Debug the BIOs used for I/O.
 .It Fl e
-Encrypt the input data: this is the default.
+Encrypt the input data.
+This is the default.
 .It Fl in Ar file
-The input
-.Ar file ;
-standard input by default.
+The input file to read from,
+or standard input if none is specified.
 .It Fl iv Ar IV
 The actual
 .Ar IV
@@ -1734,21 +1740,17 @@ When only the
 .Ar key
 is specified using the
 .Fl K
-option, the
-.Ar IV
-must explicitly be defined.
+option,
+the IV must explicitly be defined.
 When a password is being specified using one of the other options,
-the
-.Ar IV
-is generated from this password.
+the IV is generated from this password.
 .It Fl K Ar key
 The actual
 .Ar key
 to use:
 this must be represented as a string comprised only of hex digits.
-If only the key is specified, the
-.Ar IV
-must be additionally specified using the
+If only the key is specified,
+the IV must also be specified using the
 .Fl iv
 option.
 When both a
@@ -1759,9 +1761,7 @@ are specified, the
 .Ar key
 given with the
 .Fl K
-option will be used and the
-.Ar IV
-generated from the password will be taken.
+option will be used and the IV generated from the password will be taken.
 It probably does not make much sense to specify both
 .Ar key
 and
@@ -1770,16 +1770,12 @@ and
 The
 .Ar password
 to derive the key from.
-This is for compatibility with previous versions of
-.Nm OpenSSL .
 Superseded by the
 .Fl pass
 option.
 .It Fl kfile Ar file
 Read the password to derive the key from the first line of
 .Ar file .
-This is for compatibility with previous versions of
-.Nm OpenSSL .
 Superseded by the
 .Fl pass
 option.
@@ -1789,43 +1785,28 @@ Use
 to create a key from a pass phrase.
 .Ar digest
 may be one of
-.Dq md5
+.Cm md5
 or
-.Dq sha1 .
+.Cm sha1 .
 .It Fl none
 Use NULL cipher (no encryption or decryption of input).
 .It Fl nopad
 Disable standard block padding.
 .It Fl nosalt
-Don't use a
-.Ar salt
-in the key derivation routines.
+Don't use a salt in the key derivation routines.
 This option should
 .Em NEVER
-be used unless compatibility with previous versions of
-.Nm OpenSSL
-or
-.Nm SSLeay
-is required.
+be used
+since it makes it possible to perform efficient dictionary
+attacks on the password and to attack stream cipher encrypted data.
 .It Fl out Ar file
-The output
-.Ar file ,
-standard output by default.
+The output file to read from,
+or standard output if none is specified.
 .It Fl P
-Print out the
-.Ar salt ,
-.Ar key ,
-and
-.Ar IV
-used, then immediately exit;
+Print out the salt, key, and IV used, then immediately exit;
 don't do any encryption or decryption.
 .It Fl p
-Print out the
-.Ar salt ,
-.Ar key ,
-and
-.Ar IV
-used.
+Print out the salt, key, and IV used.
 .It Fl pass Ar arg
 The password source.
 .It Fl S Ar salt
@@ -1834,155 +1815,12 @@ The actual
 to use:
 this must be represented as a string comprised only of hex digits.
 .It Fl salt
-Use a
-.Ar salt
-in the key derivation routines.
-This is the default.
-.El
-.Sh ENC NOTES
-The program can be called either as
-.Nm openssl ciphername
-or
-.Nm openssl enc -ciphername .
-.Pp
-A password will be prompted for to derive the
-.Ar key
-and
-.Ar IV
-if necessary.
-.Pp
-The
-.Fl nosalt
-option should
-.Em NEVER
-be used unless compatibility with previous versions of
-.Nm OpenSSL
-or
-.Nm SSLeay
-is required.
-.Pp
-With the
-.Fl nosalt
-option it is possible to perform efficient dictionary
-attacks on the password and to attack stream cipher encrypted data.
-The reason for this is that without the salt
-the same password always generates the same encryption key.
-When the salt
-is being used the first eight bytes of the encrypted data are reserved
-for the salt:
-it is generated at random when encrypting a file and read from the
+Use a salt in the key derivation routines (the default).
+When the salt is being used
+the first eight bytes of the encrypted data are reserved for the salt:
+it is randomly generated when encrypting a file and read from the
 encrypted file when it is decrypted.
-.Pp
-Some of the ciphers do not have large keys and others have security
-implications if not used correctly.
-A beginner is advised to just use a strong block cipher in CBC mode
-such as bf or des3.
-.Pp
-All the block ciphers normally use PKCS#5 padding also known as standard block
-padding:
-this allows a rudimentary integrity or password check to be performed.
-However, since the chance of random data passing the test is
-better than 1 in 256, it isn't a very good test.
-.Pp
-If padding is disabled, the input data must be a multiple of the cipher
-block length.
-.Pp
-All RC2 ciphers have the same key and effective key length.
-.Pp
-Blowfish and RC5 algorithms use a 128-bit key.
-.Sh ENC SUPPORTED CIPHERS
-.Bd -unfilled -offset indent
-aes-[128|192|256]-cbc	128/192/256 bit AES in CBC mode
-aes-[128|192|256]	Alias for aes-[128|192|256]-cbc
-aes-[128|192|256]-cfb	128/192/256 bit AES in 128 bit CFB mode
-aes-[128|192|256]-cfb1	128/192/256 bit AES in 1 bit CFB mode
-aes-[128|192|256]-cfb8	128/192/256 bit AES in 8 bit CFB mode
-aes-[128|192|256]-ecb	128/192/256 bit AES in ECB mode
-aes-[128|192|256]-ofb	128/192/256 bit AES in OFB mode
-
-base64			Base 64
-
-bf			Alias for bf-cbc
-bf-cbc			Blowfish in CBC mode
-bf-cfb			Blowfish in CFB mode
-bf-ecb			Blowfish in ECB mode
-bf-ofb			Blowfish in OFB mode
-
-cast			Alias for cast-cbc
-cast-cbc		CAST in CBC mode
-cast5-cbc		CAST5 in CBC mode
-cast5-cfb		CAST5 in CFB mode
-cast5-ecb		CAST5 in ECB mode
-cast5-ofb		CAST5 in OFB mode
-
-des			Alias for des-cbc
-des-cbc			DES in CBC mode
-des-cfb			DES in CBC mode
-des-ecb			DES in ECB mode
-des-ofb			DES in OFB mode
-
-des-ede			Two key triple DES EDE in ECB mode
-des-ede-cbc		Two key triple DES EDE in CBC mode
-des-ede-cfb		Two key triple DES EDE in CFB mode
-des-ede-ofb		Two key triple DES EDE in OFB mode
-
-des3			Alias for des-ede3-cbc
-des-ede3		Three key triple DES EDE in ECB mode
-des-ede3-cbc		Three key triple DES EDE in CBC mode
-des-ede3-cfb		Three key triple DES EDE CFB mode
-des-ede3-ofb		Three key triple DES EDE in OFB mode
-
-desx			DESX algorithm
-
-rc2			Alias for rc2-cbc
-rc2-cbc			128-bit RC2 in CBC mode
-rc2-cfb			128-bit RC2 in CFB mode
-rc2-ecb			128-bit RC2 in ECB mode
-rc2-ofb			128-bit RC2 in OFB mode
-rc2-64-cbc		64-bit RC2 in CBC mode
-rc2-40-cbc		40-bit RC2 in CBC mode
-
-rc4			128-bit RC4
-rc4-40			40-bit RC4
-.Ed
-.Sh ENC EXAMPLES
-Just base64 encode a binary file:
-.Pp
-.Dl $ openssl base64 -in file.bin -out file.b64
-.Pp
-Decode the same file:
-.Pp
-.Dl $ openssl base64 -d -in file.b64 -out file.bin
-.Pp
-Encrypt a file using triple DES in CBC mode using a prompted password:
-.Pp
-.Dl $ openssl des3 -salt -in file.txt -out file.des3
-.Pp
-Decrypt a file using a supplied password:
-.Pp
-.Dl "$ openssl des3 -d -in file.des3 -out file.txt -k mypassword"
-.Pp
-Encrypt a file then base64 encode it
-(so it can be sent via mail for example)
-using Blowfish in CBC mode:
-.Pp
-.Dl $ openssl bf -a -salt -in file.txt -out file.bf
-.Pp
-Base64 decode a file then decrypt it:
-.Pp
-.Dl "$ openssl bf -d -a -in file.bf -out file.txt"
-.Sh ENC BUGS
-The
-.Fl A
-option when used with large files doesn't work properly.
-.Pp
-There should be an option to allow an iteration count to be included.
-.Pp
-The
-.Nm enc
-program only supports a fixed number of algorithms with certain parameters.
-Therefore it is not possible to use RC2 with a 76-bit key
-or RC4 with an 84-bit key with this program.
+.El
 .\"
 .\" ERRSTR
 .\"
