@@ -1,4 +1,4 @@
-.\"	$OpenBSD: jot.1,v 1.22 2016/08/05 13:49:19 tb Exp $
+.\"	$OpenBSD: jot.1,v 1.23 2016/08/12 21:49:31 tb Exp $
 .\"	$NetBSD: jot.1,v 1.2 1994/11/14 20:27:36 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)jot.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: August 5 2016 $
+.Dd $Mdocdate: August 12 2016 $
 .Dt JOT 1
 .Os
 .Sh NAME
@@ -101,27 +101,39 @@ conversion specification inside
 in which case the data is inserted rather than appended.
 .El
 .Pp
-The last four arguments indicate, respectively,
-the maximum number of data, the lower bound, the upper bound,
-and the step size.
-Any of these may be omitted, and
-will be considered as such if given as
-.Ql - .
+The last four arguments specify the length of the output sequence,
+its start and end points, and the step size.
 Any three of these arguments determine the fourth.
-If four are specified and the given and computed values of
+If the given and computed values for
 .Ar reps
 conflict, the lower value is used.
-If fewer than three are specified, defaults are assigned
-left to right, except for
-.Ar s ,
-which assumes its default unless both
+.Pp
+Arguments can be omitted by specifying a
+.Ql - .
+The default values for
+.Ar reps ,
+.Ar begin ,
+.Ar end ,
+and
+.Ar s
+are 100, 1, 100, and 1, respectively.
+Omitted values are computed if possible or assume the default.
+A special case arises if only
 .Ar begin
 and
 .Ar end
-are given.
+are specified:
+if
+.Ar begin
+is greater than
+.Ar end
+then
+.Ar s
+is set to \(mi1, otherwise it is set to 1;
+afterwards
+.Ar reps
+is computed.
 .Pp
-Defaults for the four arguments are, respectively,
-100, 1, 100, and 1.
 .Ar reps
 is expected to be an unsigned integer,
 and if given as zero is taken to be infinite.
