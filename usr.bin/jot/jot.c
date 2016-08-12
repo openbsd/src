@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.31 2016/08/05 13:43:38 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.32 2016/08/12 21:17:41 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -52,11 +52,16 @@
 #define	ENDER_DEF	100
 #define	STEP_DEF	1
 
+#define	STEP		1
+#define	ENDER		2
+#define	BEGIN		4
+#define	REPS		8
+
 #define	is_default(s)	(strcmp((s), "-") == 0)
 
 static double	begin = BEGIN_DEF;
 static double	ender = ENDER_DEF;
-static double	s = STEP_DEF;
+static double	step = STEP_DEF;
 static long	reps = REPS_DEF;
 static bool	randomize;
 static bool	infinity;
@@ -131,9 +136,9 @@ main(int argc, char *argv[])
 	switch (argc) {	/* examine args right to left, falling thru cases */
 	case 4:
 		if (!is_default(argv[3])) {
-			if (!sscanf(argv[3], "%lf", &s))
+			if (!sscanf(argv[3], "%lf", &step))
 				errx(1, "Bad s value:  %s", argv[3]);
-			mask |= 01;
+			mask |= STEP;
 			if (randomize)
 				warnx("random seeding not supported");
 		}
@@ -141,7 +146,7 @@ main(int argc, char *argv[])
 		if (!is_default(argv[2])) {
 			if (!sscanf(argv[2], "%lf", &ender))
 				ender = argv[2][strlen(argv[2])-1];
-			mask |= 02;
+			mask |= ENDER;
 			if (prec == -1)
 				n = getprec(argv[2]);
 		}
@@ -149,7 +154,7 @@ main(int argc, char *argv[])
 		if (!is_default(argv[1])) {
 			if (!sscanf(argv[1], "%lf", &begin))
 				begin = argv[1][strlen(argv[1])-1];
-			mask |= 04;
+			mask |= BEGIN;
 			if (prec == -1)
 				prec = getprec(argv[1]);
 			if (n > prec)		/* maximum precision */
@@ -159,7 +164,7 @@ main(int argc, char *argv[])
 		if (!is_default(argv[0])) {
 			if (!sscanf(argv[0], "%ld", &reps))
 				errx(1, "Bad reps value:  %s", argv[0]);
-			mask |= 010;
+			mask |= REPS;
 			if (prec == -1)
 				prec = 0;
 		}
@@ -172,101 +177,74 @@ main(int argc, char *argv[])
 		    argv[4]);
 	}
 	getformat();
-	while (mask)	/* 4 bit mask has 1's where last 4 args were given */
-		switch (mask) {	/* fill in the 0's by default or computation */
-		case 001:
-			reps = REPS_DEF;
-			mask = 011;
-			break;
-		case 002:
-			reps = REPS_DEF;
-			mask = 012;
-			break;
-		case 003:
-			reps = REPS_DEF;
-			mask = 013;
-			break;
-		case 004:
-			reps = REPS_DEF;
-			mask = 014;
-			break;
-		case 005:
-			reps = REPS_DEF;
-			mask = 015;
-			break;
-		case 006:
-			s = ender > begin ? 1 : -1;
-			mask = 007;
-			/* FALLTHROUGH */
-		case 007:
-			if (randomize) {
-				reps = REPS_DEF;
-				mask = 0;
-				break;
-			}
-			if (s == 0.0) {
-				reps = 0;
-				mask = 0;
-				break;
-			}
-			reps = (ender - begin + s) / s;
-			if (reps <= 0)
-				errx(1, "Impossible stepsize");
-			mask = 0;
-			break;
-		case 010:
-			begin = BEGIN_DEF;
-			mask = 014;
-			break;
-		case 011:
-			begin = BEGIN_DEF;
-			mask = 015;
-			break;
-		case 012:
-			s = STEP_DEF;
-			mask = 013;
-			break;
-		case 013:
-			if (randomize)
-				begin = BEGIN_DEF;
-			else if (reps == 0)
-				errx(1, "Must specify begin if reps == 0");
-			begin = ender - reps * s + s;
-			mask = 0;
-			break;
-		case 014:
-			s = STEP_DEF;
-			mask = 015;
-			break;
-		case 015:
-			if (randomize)
-				ender = ENDER_DEF;
-			else
-				ender = begin + reps * s - s;
-			mask = 0;
-			break;
-		case 016:
+	/* If random output is requested, use defaults for omitted values. */
+	if (!randomize) {
+		/*
+		 * Consolidate the values of reps, begin, ender, step:
+		 * The formula ender - begin == (reps - 1) * step shows that any
+		 * three determine the fourth (unless reps == 1 or step == 0).
+		 * The manual states the following rules:
+		 * 1. If four are specified, compare the given and the computed
+		 *    value of reps and take the smaller of the two.
+		 * 2. If steps was omitted, it takes the default, unless both
+		 *    begin and ender were specified.
+		 * 3. Assign defaults to omitted values for reps, begin, ender,
+		 *    from left to right.
+		 * 4. reps == 0 means infinite output
+		 */
+		switch (mask) { /* Four cases involve both begin and ender. */
+		case REPS | BEGIN | ENDER | STEP:
 			if (reps == 0)
-				errx(1, "Infinite sequences cannot be bounded");
-			else if (reps == 1)
-				s = 0.0;
-			else
-				s = (ender - begin) / (reps - 1);
-			mask = 0;
-			break;
-		case 017:		/* if reps given and implied, */
-			if (!randomize && s != 0.0) {
-				long t = (ender - begin + s) / s;
+				errx(1,
+				    "Can't specify end of infinite sequence");
+			if (step != 0.0) {
+				long t = (ender - begin + step) / step;
 				if (t <= 0)
 					errx(1, "Impossible stepsize");
-				if (t < reps)		/* take lesser */
+				if (t < reps)
 					reps = t;
 			}
-			mask = 0;
+			break;
+		case REPS | BEGIN | ENDER:
+			if (reps == 0)
+				errx(1,
+				    "Can't specify end of infinite sequence");
+			if (reps == 1)
+				step = 0.0;
+			else
+				step = (ender - begin) / (reps - 1);
+			break;
+		case BEGIN | ENDER:
+			step = ender > begin ? 1 : -1; /* FreeBSD's behavior. */
+			/* FALLTHROUGH */
+		case BEGIN | ENDER | STEP:
+			if (step == 0.0) {
+				reps = 0;
+				break;
+			}
+			reps = (ender - begin + step) / step;
+			if (reps <= 0)
+				errx(1, "Impossible stepsize");
+			break;
+		case ENDER:		/* Four cases involve only ender. */
+		case ENDER | STEP:
+		case REPS | ENDER:
+		case REPS | ENDER | STEP:
+			if (reps == 0)
+				errx(1,
+				    "Must specify start of infinite sequence");
+			begin = ender - reps * step + step;
 			break;
 		default:
-			errx(1, "bad mask");
+			/*
+			 * The remaining eight cases omit ender.  We don't need
+			 * to compute anything because only reps, begin, step
+			 * are used for producing output below.  Rules 2. and 3.
+			 * together imply that ender will be set last.
+			 */
+			break;
 		}
+	}
 	if (reps == 0)
 		infinity = true;
 	if (randomize) {
@@ -315,14 +293,14 @@ main(int argc, char *argv[])
 			if (putdata(v, reps == i && !infinity))
 				errx(1, "range error in conversion: %f", v);
 		}
-	}
-	else
-		for (i = 1, x = begin; i <= reps || infinity; i++, x += s)
+	} else {
+		for (i = 1, x = begin; i <= reps || infinity; i++, x += step)
 			if (putdata(x, reps == i && !infinity))
 				errx(1, "range error in conversion: %f", x);
+	}
 	if (finalnl)
 		putchar('\n');
-	exit(0);
+	return (0);
 }
 
 static int
