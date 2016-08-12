@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.49 2016/08/12 06:17:22 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.50 2016/08/12 06:21:12 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -1821,9 +1821,6 @@ the first eight bytes of the encrypted data are reserved for the salt:
 it is randomly generated when encrypting a file and read from the
 encrypted file when it is decrypted.
 .El
-.\"
-.\" ERRSTR
-.\"
 .Sh ERRSTR
 .Nm openssl errstr
 .Op Fl stats
@@ -1854,28 +1851,6 @@ The options are as follows:
 .It Fl stats
 Print debugging statistics about various aspects of the hash table.
 .El
-.Sh ERRSTR EXAMPLES
-The following error code:
-.Pp
-.Dl 27594:error:2006D080:lib(32):func(109):reason(128):bss_file.c:107:
-.Pp
-\&...can be displayed with:
-.Pp
-.Dl $ openssl errstr 2006D080
-.Pp
-\&...to produce the error message:
-.Pp
-.Dl error:2006D080:BIO routines:BIO_new_file:no such file
-.\"
-.\" GENDH
-.\"
-.Sh GENDH
-Generation of Diffie-Hellman Parameters.
-Replaced by
-.Nm dhparam .
-See
-.Sx DHPARAM
-above.
 .\"
 .\" GENDSA
 .\"
