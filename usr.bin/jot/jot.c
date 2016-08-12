@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.32 2016/08/12 21:17:41 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.33 2016/08/12 21:31:11 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -78,7 +78,7 @@ static char	format[BUFSIZ];
 static void	getformat(void);
 static int	getprec(char *);
 static int	putdata(double, bool);
-static void	usage(void);
+static void __dead	usage(void);
 
 int
 main(int argc, char *argv[])
@@ -336,7 +336,7 @@ putdata(double x, bool last)
 	return (0);
 }
 
-static void
+static void __dead
 usage(void)
 {
 	(void)fprintf(stderr, "usage: jot [-cnr] [-b word] [-p precision] "
