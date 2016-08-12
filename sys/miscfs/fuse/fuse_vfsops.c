@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.23 2016/06/19 11:54:33 natano Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.24 2016/08/12 20:18:44 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -170,15 +170,12 @@ int
 fusefs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct vnode *nvp;
-	struct fusefs_node *ip;
 	int error;
 
 	if ((error = VFS_VGET(mp, (ino_t)FUSE_ROOTINO, &nvp)) != 0)
 		return (error);
 
-	ip = VTOI(nvp);
 	nvp->v_type = VDIR;
-	ip->vtype = VDIR;
 
 	*vpp = nvp;
 	return (0);

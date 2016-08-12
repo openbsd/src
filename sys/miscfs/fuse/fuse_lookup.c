@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.11 2016/03/19 12:04:15 natano Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.12 2016/08/12 20:18:44 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -147,7 +147,6 @@ fusefs_lookup(void *v)
 			goto out;
 
 		tdp->v_type = IFTOVT(fbuf->fb_vattr.va_mode);
-		VTOI(tdp)->vtype = tdp->v_type;
 		*vpp = tdp;
 		cnp->cn_flags |= SAVENAME;
 
@@ -183,10 +182,8 @@ fusefs_lookup(void *v)
 	} else {
 		error = VFS_VGET(fmp->mp, nid, &tdp);
 
-		if (!error) {
+		if (!error)
 			tdp->v_type = IFTOVT(fbuf->fb_vattr.va_mode);
-			VTOI(tdp)->vtype = tdp->v_type;
-		}
 
 		update_vattr(fmp->mp, &fbuf->fb_vattr);
 

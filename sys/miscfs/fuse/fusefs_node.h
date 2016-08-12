@@ -1,4 +1,4 @@
-/* $OpenBSD: fusefs_node.h,v 1.2 2014/02/01 09:30:38 syl Exp $ */
+/* $OpenBSD: fusefs_node.h,v 1.3 2016/08/12 20:18:44 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -46,8 +46,6 @@ struct fusefs_node {
 
 	/** meta **/
 	off_t             filesize;
-	uint64_t          nlookup;
-	enum vtype        vtype;
 };
 
 #ifdef ITOV

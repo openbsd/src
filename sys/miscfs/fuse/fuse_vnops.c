@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.28 2016/06/19 11:54:33 natano Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.29 2016/08/12 20:18:44 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -235,7 +235,7 @@ fusefs_open(void *v)
 		return (ENXIO);
 
 	isdir = 0;
-	if (ip->vtype == VDIR)
+	if (ap->a_vp->v_type == VDIR)
 		isdir = 1;
 	else {
 		if ((ap->a_mode & FREAD) && (ap->a_mode & FWRITE)) {
@@ -274,7 +274,7 @@ fusefs_close(void *v)
 	if (!fmp->sess_init)
 		return (0);
 
-	if (ip->vtype == VDIR) {
+	if (ap->a_vp->v_type == VDIR) {
 		isdir = 1;
 
 		if (ip->fufh[fufh_type].fh_type != FUFH_INVALID)
@@ -665,7 +665,6 @@ fusefs_symlink(void *v)
 	}
 
 	tdp->v_type = VLNK;
-	VTOI(tdp)->vtype = tdp->v_type;
 	VTOI(tdp)->parent = dp->ufs_ino.i_number;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 
@@ -762,7 +761,7 @@ fusefs_inactive(void *v)
 		fufh = &(ip->fufh[type]);
 		if (fufh->fh_type != FUFH_INVALID)
 			fusefs_file_close(fmp, ip, fufh->fh_type, type,
-			    (ip->vtype == VDIR), ap->a_p);
+			    (vp->v_type == VDIR), ap->a_p);
 	}
 
 	error = VOP_GETATTR(vp, &vattr, cred, p);
@@ -835,7 +834,7 @@ fusefs_reclaim(void *v)
 		if (fufh->fh_type != FUFH_INVALID) {
 			printf("fusefs: vnode being reclaimed is valid\n");
 			fusefs_file_close(fmp, ip, fufh->fh_type, type,
-			    (ip->vtype == VDIR), ap->a_p);
+			    (vp->v_type == VDIR), ap->a_p);
 		}
 	}
 	/*
@@ -932,8 +931,6 @@ fusefs_create(void *v)
 	}
 
 	tdp->v_type = IFTOVT(fbuf->fb_io_mode);
-	VTOI(tdp)->vtype = tdp->v_type;
-
 	if (dvp != NULL && dvp->v_type == VDIR)
 		VTOI(tdp)->parent = ip->ufs_ino.i_number;
 
@@ -998,8 +995,6 @@ fusefs_mknod(void *v)
 	}
 
 	tdp->v_type = IFTOVT(fbuf->fb_io_mode);
-	VTOI(tdp)->vtype = tdp->v_type;
-
 	if (dvp != NULL && dvp->v_type == VDIR)
 		VTOI(tdp)->parent = ip->ufs_ino.i_number;
 
@@ -1211,7 +1206,7 @@ abortit:
 	 * "ls" or "pwd" with the "." directory entry missing, and "cd .."
 	 * doesn't work if the ".." entry is missing.
 	 */
-	if (ip->vtype == VDIR) {
+	if (fvp->v_type == VDIR) {
 		/*
 		 * Avoid ".", "..", and aliases of "." for obvious reasons.
 		 */
@@ -1325,8 +1320,6 @@ fusefs_mkdir(void *v)
 	}
 
 	tdp->v_type = IFTOVT(fbuf->fb_io_mode);
-	VTOI(tdp)->vtype = tdp->v_type;
-
 	if (dvp != NULL && dvp->v_type == VDIR)
 		VTOI(tdp)->parent = ip->ufs_ino.i_number;
 
