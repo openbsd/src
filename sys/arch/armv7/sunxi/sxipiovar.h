@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipiovar.h,v 1.3 2015/05/20 03:49:23 jsg Exp $	*/
+/*	$OpenBSD: sxipiovar.h,v 1.4 2016/08/12 16:02:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Artturi Alm
  *
@@ -16,6 +16,30 @@
  */
 
 #include <sys/gpio.h>
+
+struct sxipio_func {
+	const char *name;
+	int mux;
+};
+
+struct sxipio_pin {
+	const char *name;
+	int port, pin;
+	struct sxipio_func funcs[8];
+};
+
+#define SXIPIO_PORT_A	0
+#define SXIPIO_PORT_B	1
+#define SXIPIO_PORT_C	2
+#define SXIPIO_PORT_D	3
+#define SXIPIO_PORT_E	4
+#define SXIPIO_PORT_F	5
+#define SXIPIO_PORT_G	6
+#define SXIPIO_PORT_H	7
+#define SXIPIO_PORT_I	8
+
+#define SXIPIO_PIN(port, pin) \
+	"P" #port #pin,  SXIPIO_PORT_ ## port, pin
 
 /*
  * XXX To keep things simple for now, functions below work as if there
@@ -37,3 +61,6 @@ int sxipio_getpin(int);
 void sxipio_setpin(int);
 void sxipio_clrpin(int);
 int sxipio_togglepin(int);
+
+int sxipio_pinctrlbyid(int node, int id);
+int sxipio_pinctrlbyname(int node, const char *);
