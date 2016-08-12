@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti_iic.c,v 1.8 2016/08/06 10:07:45 jsg Exp $	*/
+/*	$OpenBSD: ti_iic.c,v 1.9 2016/08/12 03:22:41 jsg Exp $	*/
 /* $NetBSD: ti_iic.c,v 1.4 2013/04/25 13:04:27 rkujawa Exp $ */
 
 /*
@@ -66,9 +66,9 @@
 #include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
 #include <armv7/omap/ti_iicreg.h>
-#include <armv7/omap/sitara_cm.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
 #ifndef AM335X_I2C_SLAVE_ADDR
@@ -190,7 +190,7 @@ ti_iic_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", DEVNAME(sc));
 
-	sitara_cm_pinctrlbyname(faa->fa_node, "default");
+	pinctrl_byname(faa->fa_node, "default");
 
 	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_NET,
 	    ti_iic_intr, sc, DEVNAME(sc));

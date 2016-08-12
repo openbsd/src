@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.39 2016/08/06 10:07:45 jsg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.40 2016/08/12 03:22:41 jsg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -84,9 +84,9 @@
 
 #include <arch/armv7/armv7/armv7var.h>
 #include <arch/armv7/omap/if_cpswreg.h>
-#include <arch/armv7/omap/sitara_cm.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
 #define CPSW_TXFRAGS	16
@@ -351,7 +351,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	memsize = 0x4000;
 
-	sitara_cm_pinctrlbyname(faa->fa_node, "default");
+	pinctrl_byname(faa->fa_node, "default");
 
 	for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
 		memset(name, 0, sizeof(name));
@@ -361,7 +361,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 
 		if (strcmp(name, "ti,davinci_mdio") != 0)
 			continue;
-		sitara_cm_pinctrlbyname(node, "default");
+		pinctrl_byname(node, "default");
 	}
 
 	timeout_set(&sc->sc_tick, cpsw_tick, sc);

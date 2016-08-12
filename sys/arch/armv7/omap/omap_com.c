@@ -1,4 +1,4 @@
-/* $OpenBSD: omap_com.c,v 1.9 2016/08/06 10:07:45 jsg Exp $ */
+/* $OpenBSD: omap_com.c,v 1.10 2016/08/12 03:22:41 jsg Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -51,10 +51,10 @@
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/armv7/armv7_machdep.h>
-#include <armv7/omap/sitara_cm.h>
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pinctrl.h>
 
 #define com_isr 8
 #define ISR_RECV	(ISR_RXPL | ISR_XMODE | ISR_RCVEIR)
@@ -117,7 +117,7 @@ omapuart_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sitara_cm_pinctrlbyname(faa->fa_node, "default");
+	pinctrl_byname(faa->fa_node, "default");
 
 	com_attach_subr(sc);
 

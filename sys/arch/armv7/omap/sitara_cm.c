@@ -1,4 +1,4 @@
-/* $OpenBSD: sitara_cm.c,v 1.3 2016/07/17 02:45:05 jsg Exp $ */
+/* $OpenBSD: sitara_cm.c,v 1.4 2016/08/12 03:22:41 jsg Exp $ */
 /* $NetBSD: sitara_cm.c,v 1.1 2013/04/17 14:31:02 bouyer Exp $ */
 /*
  * Copyright (c) 2010
@@ -63,9 +63,10 @@
 #include <armv7/omap/sitara_cmreg.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pinctrl.h>
 
 void sitara_cm_attach(struct device *parent, struct device *self, void *aux);
-int sitara_cm_pinctrl(uint32_t);
+int sitara_cm_pinctrl(uint32_t, void *);
 
 struct sitara_cm_softc {
         struct device		sc_dev;
@@ -379,6 +380,7 @@ sitara_cm_attach(struct device *parent, struct device *self, void *aux)
 	struct sitara_cm_softc *sc = (struct sitara_cm_softc *)self;
 	struct armv7_attach_args *aa = aux;
 	uint32_t rev;
+	int node;
 
 	if (sitara_cm_sc)
 		panic("sitara_cm_attach: already attached");
@@ -389,6 +391,10 @@ sitara_cm_attach(struct device *parent, struct device *self, void *aux)
 	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh) != 0)
 		panic("%s: bus_space_map failed!\n", __func__);
 
+	node = OF_finddevice("/ocp/l4_wkup@44c00000/scm@210000/pinmux@800");
+	if (node != -1)
+		pinctrl_register(node, sitara_cm_pinctrl, sc);
+
 	sitara_cm_sc = sc;
 
 	if (sitara_cm_reg_read_4(OMAP2SCM_REVISION, &rev) != 0)
@@ -398,64 +404,9 @@ sitara_cm_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-sitara_cm_pinctrlbyid(int node, int id)
+sitara_cm_pinctrl(uint32_t phandle, void *cookie)
 {
-	char pinctrl[32];
-	uint32_t *phandles;
-	int len, i;
-
-	if (!sitara_cm_sc)
-		return -1;
-
-	snprintf(pinctrl, sizeof(pinctrl), "pinctrl-%d", id);
-	len = OF_getproplen(node, pinctrl);
-	if (len <= 0)
-		return -1;
-
-	phandles = malloc(len, M_TEMP, M_WAITOK);
-	OF_getpropintarray(node, pinctrl, phandles, len);
-	for (i = 0; i < len / sizeof(uint32_t); i++)
-		sitara_cm_pinctrl(phandles[i]);
-	free(phandles, M_TEMP, len);
-	return 0;
-}
-
-int
-sitara_cm_pinctrlbyname(int node, const char *config)
-{
-	char *names;
-	char *name;
-	char *end;
-	int id = 0;
-	int len;
-
-	if (!sitara_cm_sc)
-		return -1;
-
-	len = OF_getproplen(node, "pinctrl-names");
-	if (len <= 0)
-		printf("no pinctrl-names\n");
-
-	names = malloc(len, M_TEMP, M_WAITOK);
-	OF_getprop(node, "pinctrl-names", names, len);
-	end = names + len;
-	name = names;
-	while (name < end) {
-		if (strcmp(name, config) == 0) {
-			free(names, M_TEMP, len);
-			return sitara_cm_pinctrlbyid(node, id);
-		}
-		name += strlen(name) + 1;
-		id++;
-	}
-	free(names, M_TEMP, len);
-	return -1;
-}
-
-int
-sitara_cm_pinctrl(uint32_t phandle)
-{
-	struct sitara_cm_softc *sc = sitara_cm_sc;
+	struct sitara_cm_softc *sc = cookie;
 	uint32_t *pins;
 	int npins;
 	int node;

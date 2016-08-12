@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.28 2016/08/06 10:07:45 jsg Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.29 2016/08/12 03:22:41 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -34,9 +34,9 @@
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
-#include <armv7/omap/sitara_cm.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
 /*
@@ -331,7 +331,7 @@ ommmc_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	sitara_cm_pinctrlbyname(faa->fa_node, "default");
+	pinctrl_byname(faa->fa_node, "default");
 
 	/* Enable ICLKEN, FCLKEN? */
 	prcm_enablemodule(PRCM_MMC0 + unit);
