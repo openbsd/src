@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.170 2016/04/02 12:18:44 espie Exp $
+# $OpenBSD: Add.pm,v 1.171 2016/08/12 11:17:37 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -420,7 +420,8 @@ use OpenBSD::Temp;
 sub find_extractible
 {
 	my ($self, $state, $wanted, $tied) = @_;
-	if ($self->{tieto} || $self->{link} || $self->{symlink}) {
+	if ($self->{tieto} && !$state->{delete_first} 
+	    || $self->{link} || $self->{symlink}) {
 		$tied->{$self->name} = $self;
 	} else {
 		$wanted->{$self->name} = $self;
