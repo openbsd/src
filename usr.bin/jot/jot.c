@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.33 2016/08/12 21:31:11 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.34 2016/08/12 23:29:59 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -348,18 +348,9 @@ usage(void)
 static int
 getprec(char *s)
 {
-	char	*p;
-	char	*q;
-
-	for (p = s; *p != '\0'; p++)
-		if (*p == '.')
-			break;
-	if (*p == '\0')
+	if ((s = strchr(s, '.')) == NULL)
 		return (0);
-	for (q = ++p; *p != '\0'; p++)
-		if (!isdigit((unsigned char)*p))
-			break;
-	return (p - q);
+	return (strspn(s + 1, "0123456789"));
 }
 
 static void
