@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.44 2016/08/12 15:10:59 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.45 2016/08/13 13:05:51 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -216,9 +216,7 @@ tls_configure_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
 
 	if (!required &&
 	    keypair->cert_mem == NULL &&
-	    keypair->key_mem == NULL &&
-	    keypair->cert_file == NULL &&
-	    keypair->key_file == NULL)
+	    keypair->key_mem == NULL)
 		return(0);
 
 	if (keypair->cert_mem != NULL) {
@@ -258,21 +256,6 @@ tls_configure_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
 		bio = NULL;
 		EVP_PKEY_free(pkey);
 		pkey = NULL;
-	}
-
-	if (keypair->cert_file != NULL) {
-		if (SSL_CTX_use_certificate_chain_file(ssl_ctx,
-		    keypair->cert_file) != 1) {
-			tls_set_errorx(ctx, "failed to load certificate file");
-			goto err;
-		}
-	}
-	if (keypair->key_file != NULL) {
-		if (SSL_CTX_use_PrivateKey_file(ssl_ctx,
-		    keypair->key_file, SSL_FILETYPE_PEM) != 1) {
-			tls_set_errorx(ctx, "failed to load private key file");
-			goto err;
-		}
 	}
 
 	if (SSL_CTX_check_private_key(ssl_ctx) != 1) {
@@ -340,31 +323,46 @@ tls_configure_ssl(struct tls *ctx)
 int
 tls_configure_ssl_verify(struct tls *ctx, int verify)
 {
+	size_t ca_len = ctx->config->ca_len;
+	char *ca_mem = ctx->config->ca_mem;
+	char *ca_free = NULL;
+
 	SSL_CTX_set_verify(ctx->ssl_ctx, verify, NULL);
 
-	if (ctx->config->ca_mem != NULL) {
-		/* XXX do this in set. */
-		if (ctx->config->ca_len > INT_MAX) {
+	/* If no CA has been specified, attempt to load the default. */
+	if (ctx->config->ca_mem == NULL && ctx->config->ca_path == NULL) {
+		if (tls_config_load_file(&ctx->error, "CA", _PATH_SSL_CA_FILE,
+		    &ca_mem, &ca_len) != 0)
+			goto err;
+		ca_free = ca_mem;
+	}
+
+	if (ca_mem != NULL) {
+		if (ca_len > INT_MAX) {
 			tls_set_errorx(ctx, "ca too long");
 			goto err;
 		}
-		if (SSL_CTX_load_verify_mem(ctx->ssl_ctx,
-		    ctx->config->ca_mem, ctx->config->ca_len) != 1) {
+		if (SSL_CTX_load_verify_mem(ctx->ssl_ctx, ca_mem,
+		    ca_len) != 1) {
 			tls_set_errorx(ctx, "ssl verify memory setup failure");
 			goto err;
 		}
-	} else if (SSL_CTX_load_verify_locations(ctx->ssl_ctx,
-	    ctx->config->ca_file, ctx->config->ca_path) != 1) {
-		tls_set_errorx(ctx, "ssl verify setup failure");
+	} else if (SSL_CTX_load_verify_locations(ctx->ssl_ctx, NULL,
+	    ctx->config->ca_path) != 1) {
+		tls_set_errorx(ctx, "ssl verify locations failure");
 		goto err;
 	}
 	if (ctx->config->verify_depth >= 0)
 		SSL_CTX_set_verify_depth(ctx->ssl_ctx,
 		    ctx->config->verify_depth);
 
+	free(ca_free);
+
 	return (0);
 
  err:
+	free(ca_free);
+
 	return (-1);
 }
 
