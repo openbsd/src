@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmuvar.h,v 1.2 2013/11/01 21:15:05 aalm Exp $	*/
+/*	$OpenBSD: sxiccmuvar.h,v 1.3 2016/08/13 21:48:44 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -25,6 +25,8 @@ enum CCMU_MODULES {
 	CCMU_OHCI1,
 	CCMU_AHCI,
 	CCMU_EMAC,
+	CCMU_GMAC_MII,
+	CCMU_GMAC_RGMII,
 	CCMU_DMA,
 	CCMU_UART0,
 	CCMU_UART1,

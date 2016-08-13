@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.5 2013/11/26 20:33:12 deraadt Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.6 2016/08/13 21:48:44 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -64,6 +64,24 @@
 #define	CCMU_AHB_GATING_EMAC		(1 << 17)
 #define	CCMU_AHB_GATING_SATA		(1 << 25)
 
+#define	CCMU_AHB_GATING1		0x64
+#define	CCMU_AHB_GATING_MALI400		(1 << 20)
+#define	CCMU_AHB_GATING_MP		(1 << 18)
+#define	CCMU_AHB_GATING_GMAC		(1 << 17)
+#define	CCMU_AHB_GATING_DE_FE1		(1 << 15)
+#define	CCMU_AHB_GATING_DE_FE0		(1 << 14)
+#define	CCMU_AHB_GATING_DE_BE1		(1 << 13)
+#define	CCMU_AHB_GATING_DE_BE0		(1 << 12)
+#define	CCMU_AHB_GATING_HDMI		(1 << 11)
+#define	CCMU_AHB_GATING_CSI1		(1 << 9)
+#define	CCMU_AHB_GATING_CSI0		(1 << 8)
+#define	CCMU_AHB_GATING_LCD1		(1 << 5)
+#define	CCMU_AHB_GATING_LCD0		(1 << 4)
+#define	CCMU_AHB_GATING_TVE1		(1 << 3)
+#define	CCMU_AHB_GATING_TVE0		(1 << 2)
+#define	CCMU_AHB_GATING_TVD		(1 << 1)
+#define	CCMU_AHB_GATING_VE		(1 << 0)
+
 #define	CCMU_APB_GATING0		0x68
 #define	CCMU_APB_GATING_PIO		(1 << 5)
 #define	CCMU_APB_GATING1		0x6c
@@ -88,6 +106,20 @@
 #define	CCMU_USB2_RESET			(1 << 2)
 #define	CCMU_USB1_RESET			(1 << 1)
 #define	CCMU_USB0_RESET			(1 << 0)
+
+#define	CCMU_GMAC_CLK_REG		0x164
+#define	CCMU_GMAC_CLK_TXC_DIV		(0x3 << 8)
+#define	CCMU_GMAC_CLK_TXC_DIV_1000	0
+#define	CCMU_GMAC_CLK_TXC_DIV_100	1
+#define	CCMU_GMAC_CLK_TXC_DIV_10	2
+#define	CCMU_GMAC_CLK_RXDC		(0x7 << 5)
+#define	CCMU_GMAC_CLK_RXIE		(1 << 4)
+#define	CCMU_GMAC_CLK_TXIE		(1 << 3)
+#define	CCMU_GMAC_CLK_PIT		(1 << 2)
+#define	CCMU_GMAC_CLK_TCS		(0x3 << 0)
+#define	CCMU_GMAC_CLK_TCS_MII		0
+#define	CCMU_GMAC_CLK_TCS_EXT_125	1
+#define	CCMU_GMAC_CLK_TCS_INT_RGMII	2
 
 struct sxiccmu_softc {
 	struct device		sc_dev;
@@ -167,6 +199,18 @@ sxiccmu_enablemodule(int mod)
 	case CCMU_EMAC:
 		SXISET4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_EMAC);
 		break;
+	case CCMU_GMAC_MII:
+		SXISET4(sc, CCMU_AHB_GATING1, CCMU_AHB_GATING_GMAC);
+		SXICMS4(sc, CCMU_GMAC_CLK_REG,
+		    CCMU_GMAC_CLK_PIT|CCMU_GMAC_CLK_TCS,
+		    CCMU_GMAC_CLK_TCS_MII);
+		break;
+	case CCMU_GMAC_RGMII:
+		SXISET4(sc, CCMU_AHB_GATING1, CCMU_AHB_GATING_GMAC);
+		SXICMS4(sc, CCMU_GMAC_CLK_REG,
+		    CCMU_GMAC_CLK_PIT|CCMU_GMAC_CLK_TCS,
+		    CCMU_GMAC_CLK_PIT|CCMU_GMAC_CLK_TCS_INT_RGMII);
+		break;
 	case CCMU_DMA:
 		SXISET4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_DMA);
 		break;
@@ -235,6 +279,10 @@ sxiccmu_disablemodule(int mod)
 		break;
 	case CCMU_EMAC:
 		SXICLR4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_EMAC);
+		break;
+	case CCMU_GMAC_MII:
+	case CCMU_GMAC_RGMII:
+		SXICLR4(sc, CCMU_AHB_GATING1, CCMU_AHB_GATING_GMAC);
 		break;
 	case CCMU_DMA:
 		SXICLR4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_DMA);
