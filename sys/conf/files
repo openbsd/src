@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.623 2016/08/11 09:30:57 natano Exp $
+#	$OpenBSD: files,v 1.624 2016/08/13 20:35:57 kettenis Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -316,6 +316,11 @@ file	dev/ic/i82596.c			ie & (ie_pci | ie_eisa | ie_gsc)
 # Sun GEM Ethernet controllers
 device	gem: ether, ifnet, ifmedia, mii
 file	dev/ic/gem.c			gem
+
+# Synopsis Designware GMAC core, as found on Allwinner A20
+# and other SoCs
+device	dwge: ether, ifnet, ifmedia, mii
+file	dev/ic/dwc_gmac.c		dwge
 
 device	ti: ether, ifnet, ifmedia, mii, firmload
 file	dev/ic/ti.c			ti
