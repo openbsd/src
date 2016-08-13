@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.161 2016/08/10 08:04:57 natano Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.162 2016/08/13 21:28:09 guenther Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -867,7 +867,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		for (i = 0; i < fs->fs_ncg; i++)
 			*lp++ = fs->fs_contigsumsize;
 	}
-	mp->mnt_data = (qaddr_t)ump;
+	mp->mnt_data = ump;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	/* Use on-disk fsid if it exists, else fake it */
 	if (fs->fs_id[0] != 0 && fs->fs_id[1] != 0)
