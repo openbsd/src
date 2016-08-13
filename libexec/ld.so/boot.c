@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.13 2016/08/09 03:58:35 guenther Exp $ */
+/*	$OpenBSD: boot.c,v 1.14 2016/08/13 20:57:04 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -77,12 +77,11 @@ struct boot_dyn {
 void _dl_boot_bind(const long, long *, Elf_Dyn *);
 
 void
-_dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
+_dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 {
 	struct boot_dyn	dynld;		/* Resolver data for the loader */
 	AuxInfo		*auxstack;
 	long		*stack;
-	Elf_Dyn		*dynp;
 	int		n, argc;
 	char		**argv, **envp;
 	long		loff;
@@ -126,8 +125,6 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	 * Scan the DYNAMIC section for the loader.
 	 * Cache the data for easier access.
 	 */
-	dynp = dynamicp;
-
 	_dl_memset(&dynld, 0, sizeof(dynld));
 	while (dynp->d_tag != DT_NULL) {
 		/* first the tags that are pointers to be relocated */
