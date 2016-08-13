@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.26 2016/08/13 13:05:51 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.27 2016/08/13 13:15:53 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -311,6 +311,10 @@ tls_config_parse_alpn(struct tls_config *config, const char *alpn,
 	char *s = NULL;
 	char *p, *q;
 
+	free(*alpn_data);
+	*alpn_data = NULL;
+	*alpn_len = 0;
+
 	if ((buf_len = strlen(alpn) + 1) > 65535) {
 		tls_config_set_errorx(config, "alpn too large");
 		goto err;
@@ -354,9 +358,6 @@ tls_config_parse_alpn(struct tls_config *config, const char *alpn,
  err:
 	free(buf);
 	free(s);
-
-	*alpn_data = NULL;
-	*alpn_len = 0;
 
 	return (-1);
 }
