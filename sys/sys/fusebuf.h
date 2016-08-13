@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.h,v 1.9 2014/01/16 09:31:44 syl Exp $ */
+/* $OpenBSD: fusebuf.h,v 1.10 2016/08/13 11:42:46 natano Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon
  * Copyright (c) 2013 Martin Pieuchot
@@ -132,9 +132,6 @@ struct fusebuf {
 #define FBT_RECLAIM	27
 
 #ifdef _KERNEL
-
-/* The node ID of the root inode */
-#define FUSE_ROOT_ID	1
 
 /* fusebuf prototypes */
 struct	fusebuf *fb_setup(size_t, ino_t, int, struct proc *);
