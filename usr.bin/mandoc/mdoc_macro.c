@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.162 2015/10/20 02:00:49 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.163 2016/08/13 09:14:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -290,7 +290,7 @@ rew_pending(struct roff_man *mdoc, const struct roff_node *n)
 			case ROFFT_HEAD:
 				roff_body_alloc(mdoc, n->line, n->pos,
 				    n->tok);
-				return;
+				break;
 			case ROFFT_BLOCK:
 				break;
 			default:
