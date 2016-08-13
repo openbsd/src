@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.16 2016/08/06 17:18:38 kettenis Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.17 2016/08/13 11:08:58 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -37,6 +37,7 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/usb/ehcireg.h>
@@ -74,8 +75,6 @@
 int	imxehci_match(struct device *, void *, void *);
 void	imxehci_attach(struct device *, struct device *, void *);
 int	imxehci_detach(struct device *, int);
-
-void	imxehci_enable_vbus(uint32_t);
 
 struct imxehci_softc {
 	struct ehci_softc	sc;
@@ -180,7 +179,7 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	/* enable usb bus power */
 	vbus = OF_getpropint(faa->fa_node, "vbus-supply", 0);
 	if (vbus)
-		imxehci_enable_vbus(vbus);
+		regulator_enable(vbus);
 
 	switch (misc[1]) {
 	case 0:
@@ -309,33 +308,4 @@ imxehci_detach(struct device *self, int flags)
 	}
 
 	return (0);
-}
-
-void
-imxehci_enable_vbus(uint32_t phandle)
-{
-	uint32_t gpio[3];
-	int active;
-	int node;
-
-	node = OF_getnodebyphandle(phandle);
-	if (node == 0)
-		return;
-
-	if (!OF_is_compatible(node, "regulator-fixed"))
-		return;
-
-	pinctrl_byname(node, "default");
-
-	if (OF_getproplen(node, "enable-active-high") == 0)
-		active = 1;
-	else
-		active = 0;
-
-	if (OF_getpropintarray(node, "gpio", gpio,
-	    sizeof(gpio)) != sizeof(gpio))
-		return;
-	
-	gpio_controller_config_pin(gpio, GPIO_CONFIG_OUTPUT);
-	gpio_controller_set_pin(gpio, active);
 }

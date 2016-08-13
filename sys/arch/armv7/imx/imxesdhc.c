@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.29 2016/08/08 10:10:56 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.30 2016/08/13 11:08:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -38,6 +38,7 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 /* registers */
@@ -207,7 +208,6 @@ int	imxesdhc_host_found(struct imxesdhc_softc *, bus_space_tag_t,
 void	imxesdhc_shutdown(void *);
 int	imxesdhc_intr(void *);
 
-void	imxesdhc_enable_vbus(uint32_t);
 void	imxesdhc_clock_enable(uint32_t);
 void	imxesdhc_pwrseq_pre(uint32_t);
 void	imxesdhc_pwrseq_post(uint32_t);
@@ -459,35 +459,6 @@ err:
 }
 
 void
-imxesdhc_enable_vbus(uint32_t phandle)
-{
-	uint32_t gpio[3];
-	int active;
-	int node;
-
-	node = OF_getnodebyphandle(phandle);
-	if (node == 0)
-		return;
-
-	if (!OF_is_compatible(node, "regulator-fixed"))
-		return;
-
-	pinctrl_byname(node, "default");
-
-	if (OF_getproplen(node, "enable-active-high") == 0)
-		active = 1;
-	else
-		active = 0;
-
-	if (OF_getpropintarray(node, "gpio", gpio,
-	    sizeof(gpio)) != sizeof(gpio))
-		return;
-	
-	gpio_controller_config_pin(gpio, GPIO_CONFIG_OUTPUT);
-	gpio_controller_set_pin(gpio, active);
-}
-
-void
 imxesdhc_clock_enable(uint32_t phandle)
 {
 	uint32_t gpios[3];
@@ -698,7 +669,7 @@ imxesdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 
 	/* enable mmc power */
 	if (sc->sc_vmmc && vdd > 0)
-		imxesdhc_enable_vbus(sc->sc_vmmc);
+		regulator_enable(sc->sc_vmmc);
 
 	if (sc->sc_vdd == 0 && vdd > 0)
 		imxesdhc_pwrseq_post(sc->sc_pwrseq);
