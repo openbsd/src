@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.52 2016/06/19 11:54:33 natano Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.53 2016/08/13 20:53:17 guenther Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -345,7 +345,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp,
 	ntmp->ntm_gid = argsp->gid;
 	ntmp->ntm_mode = argsp->mode;
 	ntmp->ntm_flag = argsp->flag;
-	mp->mnt_data = (qaddr_t) ntmp;
+	mp->mnt_data = ntmp;
 	TAILQ_INIT(&ntmp->ntm_ntnodeq);
 
 	/* set file name encode/decode hooks XXX utf-8 only for now */

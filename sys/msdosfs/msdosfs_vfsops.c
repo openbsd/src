@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.78 2016/05/22 20:27:04 bluhm Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.79 2016/08/13 20:53:17 guenther Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -566,7 +566,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p,
 		pmp->pm_flags |= MSDOSFSMNT_RONLY;
 	else
 		pmp->pm_fmod = 1;
-	mp->mnt_data = (qaddr_t)pmp;
+	mp->mnt_data = pmp;
         mp->mnt_stat.f_fsid.val[0] = (long)dev;
         mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
 #ifdef QUOTA

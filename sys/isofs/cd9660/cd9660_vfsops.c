@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.80 2016/06/19 11:54:33 natano Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.81 2016/08/13 20:53:17 guenther Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -380,7 +380,7 @@ iso_mountfs(devvp, mp, p, argp)
 	brelse(pribp);
 	pribp = NULL;
 
-	mp->mnt_data = (qaddr_t)isomp;
+	mp->mnt_data = isomp;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
 	mp->mnt_stat.f_namemax = NAME_MAX;
