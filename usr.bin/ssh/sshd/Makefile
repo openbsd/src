@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.88 2016/01/14 16:17:40 markus Exp $
+#	$OpenBSD: Makefile,v 1.89 2016/08/13 17:47:41 markus Exp $
 
 .PATH:		${.CURDIR}/..
 .include "${.CURDIR}/../Makefile.inc"
@@ -12,16 +12,12 @@ MAN=	sshd.8 sshd_config.5
 SRCS=	sshd.c auth-rhosts.c auth-passwd.c \
 	sshpty.c sshlogin.c servconf.c serverloop.c \
 	auth.c auth2.c auth-options.c session.c \
-	auth-chall.c auth2-chall.c groupaccess.c \
+	auth2-chall.c groupaccess.c \
 	auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c \
 	monitor_mm.c monitor.c monitor_wrap.c \
 	sftp-server.c sftp-common.c \
 	sandbox-pledge.c
-
-.if (${SSH1:L} == "yes")
-SRCS+=	auth-rsa.c auth-rh-rsa.c auth1.c
-.endif
 
 .include <bsd.own.mk> # for KERBEROS and AFS
 
