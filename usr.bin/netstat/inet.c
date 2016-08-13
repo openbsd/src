@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.147 2016/07/20 19:57:54 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.148 2016/08/13 17:36:04 krw Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -378,10 +378,10 @@ tcp_stats(char *name)
 
 	p(tcps_sndtotal, "\t%u packet%s sent\n");
 	p2(tcps_sndpack,tcps_sndbyte,
-	    "\t\t%u data packet%s (%qd byte%s)\n");
+	    "\t\t%u data packet%s (%lld byte%s)\n");
 	p2(tcps_sndrexmitpack, tcps_sndrexmitbyte,
-	    "\t\t%u data packet%s (%qd byte%s) retransmitted\n");
-	p(tcps_sndrexmitfast, "\t\t%qd fast retransmitted packet%s\n");
+	    "\t\t%u data packet%s (%lld byte%s) retransmitted\n");
+	p(tcps_sndrexmitfast, "\t\t%lld fast retransmitted packet%s\n");
 	p2a(tcps_sndacks, tcps_delack,
 	    "\t\t%u ack-only packet%s (%u delayed)\n");
 	p(tcps_sndurg, "\t\t%u URG only packet%s\n");
@@ -390,21 +390,21 @@ tcp_stats(char *name)
 	p(tcps_sndctrl, "\t\t%u control packet%s\n");
 	p(tcps_outswcsum, "\t\t%u packet%s software-checksummed\n");
 	p(tcps_rcvtotal, "\t%u packet%s received\n");
-	p2(tcps_rcvackpack, tcps_rcvackbyte, "\t\t%u ack%s (for %qd byte%s)\n");
+	p2(tcps_rcvackpack, tcps_rcvackbyte, "\t\t%u ack%s (for %lld byte%s)\n");
 	p(tcps_rcvdupack, "\t\t%u duplicate ack%s\n");
 	p(tcps_rcvacktoomuch, "\t\t%u ack%s for unsent data\n");
 	p(tcps_rcvacktooold, "\t\t%u ack%s for old data\n");
 	p2(tcps_rcvpack, tcps_rcvbyte,
-	    "\t\t%u packet%s (%qu byte%s) received in-sequence\n");
+	    "\t\t%u packet%s (%llu byte%s) received in-sequence\n");
 	p2(tcps_rcvduppack, tcps_rcvdupbyte,
-	    "\t\t%u completely duplicate packet%s (%qd byte%s)\n");
+	    "\t\t%u completely duplicate packet%s (%lld byte%s)\n");
 	p(tcps_pawsdrop, "\t\t%u old duplicate packet%s\n");
 	p2(tcps_rcvpartduppack, tcps_rcvpartdupbyte,
-	    "\t\t%u packet%s with some duplicate data (%qd byte%s duplicated)\n");
+	    "\t\t%u packet%s with some duplicate data (%lld byte%s duplicated)\n");
 	p2(tcps_rcvoopack, tcps_rcvoobyte,
-	    "\t\t%u out-of-order packet%s (%qd byte%s)\n");
+	    "\t\t%u out-of-order packet%s (%lld byte%s)\n");
 	p2(tcps_rcvpackafterwin, tcps_rcvbyteafterwin,
-	    "\t\t%u packet%s (%qd byte%s) of data after window\n");
+	    "\t\t%u packet%s (%lld byte%s) of data after window\n");
 	p(tcps_rcvwinprobe, "\t\t%u window probe%s\n");
 	p(tcps_rcvwinupd, "\t\t%u window update packet%s\n");
 	p(tcps_rcvafterclose, "\t\t%u packet%s received after close\n");
@@ -415,13 +415,13 @@ tcp_stats(char *name)
 	p1(tcps_rcvmemdrop, "\t\t%u discarded due to memory shortage\n");
 	p(tcps_inswcsum, "\t\t%u packet%s software-checksummed\n");
 	p(tcps_rcvbadsig, "\t\t%u bad/missing md5 checksum%s\n");
-	p(tcps_rcvgoodsig, "\t\t%qd good md5 checksum%s\n");
+	p(tcps_rcvgoodsig, "\t\t%lld good md5 checksum%s\n");
 	p(tcps_connattempt, "\t%u connection request%s\n");
 	p(tcps_accepts, "\t%u connection accept%s\n");
 	p(tcps_connects, "\t%u connection%s established (including accepts)\n");
 	p2(tcps_closed, tcps_drops,
 	    "\t%u connection%s closed (including %u drop%s)\n");
-	p(tcps_conndrained, "\t%qd connection%s drained\n");
+	p(tcps_conndrained, "\t%lld connection%s drained\n");
 	p(tcps_conndrops, "\t%u embryonic connection%s dropped\n");
 	p2(tcps_rttupdated, tcps_segstimed,
 	    "\t%u segment%s updated rtt (of %u attempt%s)\n");
@@ -449,36 +449,36 @@ tcp_stats(char *name)
 
 	p(tcps_badsyn, "\t%u bad connection attempt%s\n");
 	p(tcps_dropsyn, "\t%u SYN packet%s dropped due to queue or memory full\n");
-	pys(tcps_sc_added, "\t%qd SYN cache entr%s added\n");
-	p(tcps_sc_collisions, "\t\t%qd hash collision%s\n");
-	p1(tcps_sc_completed, "\t\t%qd completed\n");
-	p1(tcps_sc_aborted, "\t\t%qd aborted (no space to build PCB)\n");
-	p1(tcps_sc_timed_out, "\t\t%qd timed out\n");
-	p1(tcps_sc_overflowed, "\t\t%qd dropped due to overflow\n");
-	p1(tcps_sc_bucketoverflow, "\t\t%qd dropped due to bucket overflow\n");
-	p1(tcps_sc_reset, "\t\t%qd dropped due to RST\n");
-	p1(tcps_sc_unreach, "\t\t%qd dropped due to ICMP unreachable\n");
-	p(tcps_sc_retransmitted, "\t%qd SYN,ACK%s retransmitted\n");
-	p(tcps_sc_dupesyn, "\t%qd duplicate SYN%s received for entries "
+	pys(tcps_sc_added, "\t%lld SYN cache entr%s added\n");
+	p(tcps_sc_collisions, "\t\t%lld hash collision%s\n");
+	p1(tcps_sc_completed, "\t\t%lld completed\n");
+	p1(tcps_sc_aborted, "\t\t%lld aborted (no space to build PCB)\n");
+	p1(tcps_sc_timed_out, "\t\t%lld timed out\n");
+	p1(tcps_sc_overflowed, "\t\t%lld dropped due to overflow\n");
+	p1(tcps_sc_bucketoverflow, "\t\t%lld dropped due to bucket overflow\n");
+	p1(tcps_sc_reset, "\t\t%lld dropped due to RST\n");
+	p1(tcps_sc_unreach, "\t\t%lld dropped due to ICMP unreachable\n");
+	p(tcps_sc_retransmitted, "\t%lld SYN,ACK%s retransmitted\n");
+	p(tcps_sc_dupesyn, "\t%lld duplicate SYN%s received for entries "
 	    "already in the cache\n");
-	p(tcps_sc_dropped, "\t%qd SYN%s dropped (no route or no space)\n");
-	p(tcps_sc_seedrandom, "\t%qd SYN cache seed%s with new random\n");
-	p1(tcps_sc_hash_size, "\t%qd hash bucket array size in current "
+	p(tcps_sc_dropped, "\t%lld SYN%s dropped (no route or no space)\n");
+	p(tcps_sc_seedrandom, "\t%lld SYN cache seed%s with new random\n");
+	p1(tcps_sc_hash_size, "\t%lld hash bucket array size in current "
 	    "SYN cache\n");
 	p2bys(tcps_sc_entry_count, tcps_sc_entry_limit,
-	    "\t%qd entr%s in current SYN cache, limit is %qd\n");
+	    "\t%lld entr%s in current SYN cache, limit is %lld\n");
 	p2b(tcps_sc_bucket_maxlen, tcps_sc_bucket_limit,
-	    "\t%qd longest bucket length in current SYN cache, limit is %qd\n");
-	p(tcps_sc_uses_left, "\t%qd use%s of current SYN cache left\n");
+	    "\t%lld longest bucket length in current SYN cache, limit is %lld\n");
+	p(tcps_sc_uses_left, "\t%lld use%s of current SYN cache left\n");
 
-	p(tcps_sack_recovery_episode, "\t%qd SACK recovery episode%s\n");
+	p(tcps_sack_recovery_episode, "\t%lld SACK recovery episode%s\n");
 	p(tcps_sack_rexmits,
-		"\t\t%qd segment rexmit%s in SACK recovery episodes\n");
+		"\t\t%lld segment rexmit%s in SACK recovery episodes\n");
 	p(tcps_sack_rexmit_bytes,
-		"\t\t%qd byte rexmit%s in SACK recovery episodes\n");
+		"\t\t%lld byte rexmit%s in SACK recovery episodes\n");
 	p(tcps_sack_rcv_opts,
-		"\t%qd SACK option%s received\n");
-	p(tcps_sack_snd_opts, "\t%qd SACK option%s sent\n");
+		"\t%lld SACK option%s received\n");
+	p(tcps_sack_snd_opts, "\t%lld SACK option%s sent\n");
 
 #undef p
 #undef p1
@@ -991,8 +991,8 @@ ah_stats(char *name)
 	p(ahs_invalid, "\t%u packet%s attempted to use an invalid TDB\n");
 	p(ahs_toobig, "\t%u packet%s got larger than max IP packet size\n");
 	p(ahs_crypto, "\t%u packet%s that failed crypto processing\n");
-	p(ahs_ibytes, "\t%qu input byte%s\n");
-	p(ahs_obytes, "\t%qu output byte%s\n");
+	p(ahs_ibytes, "\t%llu input byte%s\n");
+	p(ahs_obytes, "\t%llu output byte%s\n");
 
 #undef p
 #undef p1
@@ -1026,8 +1026,8 @@ etherip_stats(char *name)
 	p(etherip_adrops, "\t%u packet%s dropped for other reasons\n");
 	p(etherip_ipackets, "\t%u input ethernet-in-IP packet%s\n");
 	p(etherip_opackets, "\t%u output ethernet-in-IP packet%s\n");
-	p(etherip_ibytes, "\t%qu input byte%s\n");
-	p(etherip_obytes, "\t%qu output byte%s\n");
+	p(etherip_ibytes, "\t%llu input byte%s\n");
+	p(etherip_obytes, "\t%llu output byte%s\n");
 #undef p
 }
 
@@ -1072,8 +1072,8 @@ esp_stats(char *name)
 	p(esps_udpencin, "\t%u input UDP encapsulated ESP packet%s\n");
 	p(esps_udpencout, "\t%u output UDP encapsulated ESP packet%s\n");
 	p(esps_udpinval, "\t%u UDP packet%s for non-encapsulating TDB received\n");
-	p(esps_ibytes, "\t%qu input byte%s\n");
-	p(esps_obytes, "\t%qu output byte%s\n");
+	p(esps_ibytes, "\t%llu input byte%s\n");
+	p(esps_obytes, "\t%llu output byte%s\n");
 
 #undef p
 }
@@ -1105,8 +1105,8 @@ ipip_stats(char *name)
 	p(ipips_pdrops, "\t%u packet%s dropped due to policy\n");
 	p(ipips_spoof, "\t%u packet%s with possibly spoofed local addresses\n");
 	p(ipips_qfull, "\t%u packet%s were dropped due to full output queue\n");
-	p(ipips_ibytes, "\t%qu input byte%s\n");
-	p(ipips_obytes, "\t%qu output byte%s\n");
+	p(ipips_ibytes, "\t%llu input byte%s\n");
+	p(ipips_obytes, "\t%llu output byte%s\n");
 	p(ipips_family, "\t%u protocol family mismatche%s\n");
 	p(ipips_unspec, "\t%u attempt%s to use tunnel with unspecified endpoint(s)\n");
 #undef p
@@ -1263,8 +1263,8 @@ ipcomp_stats(char *name)
 	p(ipcomps_toobig, "\t%u packet%s got larger than max IP packet size\n");
 	p(ipcomps_crypto, "\t%u packet%s that failed (de)compression processing\n");
 	p(ipcomps_minlen, "\t%u packet%s less than minimum compression length\n");
-	p(ipcomps_ibytes, "\t%qu input byte%s\n");
-	p(ipcomps_obytes, "\t%qu output byte%s\n");
+	p(ipcomps_ibytes, "\t%llu input byte%s\n");
+	p(ipcomps_obytes, "\t%llu output byte%s\n");
 
 #undef p
 }
