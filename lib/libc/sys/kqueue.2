@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.32 2015/11/07 22:57:52 jmc Exp $
+.\"	$OpenBSD: kqueue.2,v 1.33 2016/08/13 17:05:02 tedu Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: November 7 2015 $
+.Dd $Mdocdate: August 13 2016 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -138,7 +138,7 @@ struct kevent {
 	short	   filter;	/* filter for event */
 	u_short	   flags;	/* action flags for kqueue */
 	u_int	   fflags;	/* filter flag value */
-	quad_t	   data;	/* filter data value */
+	int64_t	   data;	/* filter data value */
 	void	   *udata;	/* opaque user data identifier */
 };
 .Ed
