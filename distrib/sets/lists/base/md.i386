@@ -929,6 +929,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ofw/ofw_gpio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ofw/ofw_pci.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ofw/ofw_pinctrl.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ofw/ofw_regulator.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/onewire
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/onewire/onewiredevs.ph
