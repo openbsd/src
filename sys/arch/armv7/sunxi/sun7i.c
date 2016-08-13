@@ -1,4 +1,4 @@
-/* $OpenBSD: sun7i.c,v 1.4 2016/02/01 23:31:34 jsg Exp $ */
+/* $OpenBSD: sun7i.c,v 1.5 2016/08/13 13:55:25 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -37,104 +37,6 @@ struct armv7_dev sxia20_devs[] = {
 	{ .name = "sxiccmu",
 	  .unit = 0,
 	  .mem = { { CCMU_ADDR, CCMU_SIZE } },
-	},
-
-	/* Watchdog Timer */
-	{ .name = "sxidog",
-	  .unit = 0,
-	  .mem = { { WDOG_ADDR, WDOG_SIZE } }
-	},
-
-	/* Real Time Clock */
-	{ .name = "sxirtc",
-	  .unit = 0,
-	  .mem = { { RTC_ADDR, RTC_SIZE } }
-	},
-
-	/* DMA Controller */
-	{ .name = "sxidmac",
-	  .unit = 0,
-	  .mem = { { DMAC_ADDR, DMAC_SIZE } },
-	  .irq = { DMAC_IRQ }
-	},
-
-	/* UART */
-	{ .name = "sxiuart",
-	  .unit = 0,
-	  .mem = { { UART0_ADDR, UARTx_SIZE } },
-	  .irq = { UART0_IRQ }
-	},
-	{ .name = "sxiuart",
-	  .unit = 1,
-	  .mem = { { UART1_ADDR, UARTx_SIZE } },
-	  .irq = { UART1_IRQ }
-	},
-	{ .name = "sxiuart",
-	  .unit = 2,
-	  .mem = { { UART2_ADDR, UARTx_SIZE } },
-	  .irq = { UART2_IRQ }
-	},
-	{ .name = "sxiuart",
-	  .unit = 3,
-	  .mem = { { UART3_ADDR, UARTx_SIZE } },
-	  .irq = { UART3_IRQ }
-	},
-	{ .name = "sxiuart",
-	  .unit = 4,
-	  .mem = { { UART4_ADDR, UARTx_SIZE } },
-	  .irq = { UART4_IRQ }
-	},
-	{ .name = "sxiuart",
-	  .unit = 5,
-	  .mem = { { UART5_ADDR, UARTx_SIZE } },
-	  .irq = { UART5_IRQ }
-	},
-	{ .name = "sxiuart",
-	  .unit = 6,
-	  .mem = { { UART6_ADDR, UARTx_SIZE } },
-	  .irq = { UART6_IRQ }
-	},
-	{ .name = "sxiuart",
-	  .unit = 7,
-	  .mem = { { UART7_ADDR, UARTx_SIZE } },
-	  .irq = { UART7_IRQ }
-	},
-
-	/* EMAC */
-	{ .name = "sxie",
-	  .unit = 0,
-	  .mem = {	{ EMAC_ADDR, EMAC_SIZE },
-			{ SXIESRAM_ADDR, SXIESRAM_SIZE } },
-	  .irq = { EMAC_IRQ}
-	},
-
-	/* SATA/AHCI */
-	{ .name = "ahci",
-	  .unit = 0,
-	  .mem = { { SATA_ADDR, SATA_SIZE } },
-	  .irq = { SATA_IRQ }
-	},
-
-	/* USB */
-	{ .name = "ehci",
-	  .unit = 0,
-	  .mem = { { USB1_ADDR, USBx_SIZE } },
-	  .irq = { USB1_IRQ }
-	},
-	{ .name = "ehci",
-	  .unit = 1,
-	  .mem = { { USB2_ADDR, USBx_SIZE } },
-	  .irq = { USB2_IRQ }
-	},
-	{ .name = "ohci",
-	  .unit = 0,
-	  .mem = { { USB1_ADDR, USBx_SIZE } },
-	  .irq = { USB0_IRQ }
-	},
-	{ .name = "ohci",
-	  .unit = 1,
-	  .mem = { { USB2_ADDR, USBx_SIZE } },
-	  .irq = { USB1_IRQ }
 	},
 
 	/* Terminator */
