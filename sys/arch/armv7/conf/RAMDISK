@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.42 2016/08/11 04:33:06 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.43 2016/08/13 22:07:01 kettenis Exp $
 
 machine		armv7 arm
 
@@ -93,6 +93,7 @@ sxidog*		at fdt?			# watchdog timer
 sxirtc*		at fdt?			# Real Time Clock
 sxiuart*	at fdt?			# onboard UARTs
 sxie*		at fdt?
+dwge*		at fdt?
 sxiahci*	at fdt?			# AHCI/SATA
 ehci*		at fdt?			# EHCI (shim)
 usb*		at ehci?	#flags 0x1

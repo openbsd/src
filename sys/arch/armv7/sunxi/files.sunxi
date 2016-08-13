@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sunxi,v 1.10 2016/08/05 21:45:37 kettenis Exp $
+#	$OpenBSD: files.sunxi,v 1.11 2016/08/13 22:07:01 kettenis Exp $
 
 define	sunxi {}
 device	sunxi: sunxi
@@ -49,3 +49,6 @@ file	arch/armv7/sunxi/sxiuart.c		sxiuart
 device	sxie: ether, ifnet, mii, ifmedia
 attach	sxie at fdt
 file	arch/armv7/sunxi/sxie.c			sxie
+
+attach	dwge at fdt with dwge_fdt
+file	arch/armv7/sunxi/if_dwge_fdt.c		dwge_fdt
