@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.30 2016/05/16 15:13:50 kettenis Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.31 2016/08/14 10:32:17 kettenis Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -589,7 +589,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	if (offset >= map->dm_mapsize)
 		panic("_bus_dmamap_sync: bad offset %lu (map size is %lu)",
 		    offset, map->dm_mapsize);
-	if (len == 0 || (offset + len) > map->dm_mapsize)
+	if ((offset + len) > map->dm_mapsize)
 		panic("_bus_dmamap_sync: bad length");
 #endif
 
