@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmp.c,v 1.14 2015/12/29 19:04:46 gsoares Exp $      */
+/*      $OpenBSD: cmp.c,v 1.15 2016/08/14 18:34:48 guenther Exp $      */
 /*      $NetBSD: cmp.c,v 1.7 1995/09/08 03:22:56 tls Exp $      */
 
 /*
@@ -115,8 +115,8 @@ main(int argc, char *argv[])
 	if (pledge("stdio", NULL) == -1)
 		err(ERR_EXIT, "pledge");
 
-	skip1 = argc > 2 ? strtoq(argv[2], NULL, 0) : 0;
-	skip2 = argc == 4 ? strtoq(argv[3], NULL, 0) : 0;
+	skip1 = argc > 2 ? strtoll(argv[2], NULL, 0) : 0;
+	skip2 = argc == 4 ? strtoll(argv[3], NULL, 0) : 0;
 
 	if (!special) {
 		if (fstat(fd1, &sb1)) {

@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.26 2012/07/08 21:19:42 naddy Exp $	*/
+/*	$OpenBSD: spec.c,v 1.27 2016/08/14 18:34:48 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -241,7 +241,7 @@ set(char *t, NODE *ip)
 				error("%s", strerror(errno));
 			break;
 		case F_SIZE:
-			ip->st_size = strtouq(val, &ep, 10);
+			ip->st_size = strtoll(val, &ep, 10);
 			if (*ep)
 				error("invalid size %s", val);
 			break;

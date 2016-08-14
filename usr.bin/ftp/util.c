@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.78 2016/07/28 21:37:45 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.79 2016/08/14 18:34:48 guenther Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -580,7 +580,7 @@ remotesize(const char *file, int noisy)
 		cp = strchr(reply_string, ' ');
 		if (cp != NULL) {
 			cp++;
-			size = strtoq(cp, &ep, 10);
+			size = strtoll(cp, &ep, 10);
 			if (*ep != '\0' && !isspace((unsigned char)*ep))
 				size = -1;
 		}

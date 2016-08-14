@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmt.c,v 1.19 2015/11/04 21:27:03 tedu Exp $	*/
+/*	$OpenBSD: rmt.c,v 1.20 2016/08/14 18:34:48 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -209,7 +209,7 @@ top:
 		getstring(count, sizeof(count));
 		getstring(pos, sizeof(pos));
 		DEBUG2("rmtd: L %s %s\n", count, pos);
-		orval = lseek(tape, strtoq(count, NULL, 0), atoi(pos));
+		orval = lseek(tape, strtoll(count, NULL, 0), atoi(pos));
 		if (orval == -1)
 			goto ioerror;
 		goto respond;

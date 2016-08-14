@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.28 2016/07/11 18:30:21 tb Exp $	*/
+/*	$OpenBSD: factor.c,v 1.29 2016/08/14 18:34:48 guenther Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ main(int argc, char *argv[])
 			if (*p == '-')
 				errx(1, "negative numbers aren't permitted.");
 			errno = 0;
-			val = strtouq(buf, &p, 10);
+			val = strtoull(buf, &p, 10);
 			if (errno)
 				err(1, "%s", buf);
 			for (; isblank((unsigned char)*p); ++p)
@@ -129,7 +129,7 @@ main(int argc, char *argv[])
 			if (argv[0][0] == '-')
 				errx(1, "negative numbers aren't permitted.");
 			errno = 0;
-			val = strtouq(argv[0], &p, 10);
+			val = strtoull(argv[0], &p, 10);
 			if (errno)
 				err(1, "%s", argv[0]);
 			if (*p != '\0')

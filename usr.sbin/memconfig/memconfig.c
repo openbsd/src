@@ -1,4 +1,4 @@
-/* $OpenBSD: memconfig.c,v 1.17 2015/12/21 21:37:09 mmcc Exp $ */
+/* $OpenBSD: memconfig.c,v 1.18 2016/08/14 18:34:48 guenther Exp $ */
 
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
@@ -178,7 +178,7 @@ listfunc(int memfd, int argc, char *argv[])
 			continue;
 		if (owner && strcmp(mrd[i].mr_owner, owner))
 			continue;
-		printf("%qx/%qx %.8s ", mrd[i].mr_base, mrd[i].mr_len,
+		printf("%llx/%llx %.8s ", mrd[i].mr_base, mrd[i].mr_len,
 		       mrd[i].mr_owner[0] ? mrd[i].mr_owner : "-");
 		for (j = 0; j < 32; j++) {
 			if ( ((1<<j) & mrd[i].mr_flags) == 0)
@@ -213,12 +213,12 @@ setfunc(int memfd, int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "b:l:o:")) != -1)
 		switch(ch) {
 		case 'b':
-			mrd.mr_base = strtouq(optarg, &ep, 0);
+			mrd.mr_base = strtoull(optarg, &ep, 0);
 			if ((ep == optarg) || (*ep != 0))
 				help("set");
 			break;
 		case 'l':
-			mrd.mr_len = strtouq(optarg, &ep, 0);
+			mrd.mr_len = strtoull(optarg, &ep, 0);
 			if ((ep == optarg) || (*ep != 0))
 				help("set");
 			break;
@@ -272,14 +272,14 @@ clearfunc(int memfd, int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "b:l:o:")) != -1)
 		switch(ch) {
 		case 'b':
-			mrd.mr_base = strtouq(optarg, &ep, 0);
+			mrd.mr_base = strtoull(optarg, &ep, 0);
 			if ((ep == optarg) || (*ep != 0))
 				help("clear");
 			else
 				got_base = 1;
 			break;
 		case 'l':
-			mrd.mr_len = strtouq(optarg, &ep, 0);
+			mrd.mr_len = strtoull(optarg, &ep, 0);
 			if ((ep == optarg) || (*ep != 0))
 				help("clear");
 			break;
