@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.32 2015/12/26 13:48:38 mestre Exp $       */
+/*    $OpenBSD: func.c,v 1.33 2016/08/14 19:46:31 guenther Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -1036,8 +1036,6 @@ doumask(Char **v, struct command *t)
     (void) umask(i);
 }
 
-typedef quad_t RLIM_TYPE;
-
 static struct limits {
     int     limconst;
     char   *limname;
@@ -1060,10 +1058,10 @@ static struct limits {
 };
 
 static struct limits *findlim(Char *);
-static RLIM_TYPE getval(struct limits *, Char **);
+static rlim_t getval(struct limits *, Char **);
 static void limtail(Char *, char *);
 static void plim(struct limits *, Char);
-static int setlim(struct limits *, Char, RLIM_TYPE);
+static int setlim(struct limits *, Char, rlim_t);
 
 static struct limits *
 findlim(Char *cp)
@@ -1089,7 +1087,7 @@ void
 dolimit(Char **v, struct command *t)
 {
     struct limits *lp;
-    RLIM_TYPE limit;
+    rlim_t limit;
     char    hard = 0;
 
     v++;
@@ -1112,7 +1110,7 @@ dolimit(Char **v, struct command *t)
 	stderror(ERR_SILENT);
 }
 
-static  RLIM_TYPE
+static  rlim_t
 getval(struct limits *lp, Char **v)
 {
     float f;
@@ -1124,14 +1122,14 @@ getval(struct limits *lp, Char **v)
 	cp++;
     if (*cp == 0) {
 	if (*v == 0)
-	    return ((RLIM_TYPE) ((f + 0.5) * lp->limdiv));
+	    return ((rlim_t) ((f + 0.5) * lp->limdiv));
 	cp = *v;
     }
     switch (*cp) {
     case ':':
 	if (lp->limconst != RLIMIT_CPU)
 	    goto badscal;
-	return ((RLIM_TYPE) (f * 60.0 + atof(short2str(cp + 1))));
+	return ((rlim_t) (f * 60.0 + atof(short2str(cp + 1))));
     case 'h':
 	if (lp->limconst != RLIMIT_CPU)
 	    goto badscal;
@@ -1177,7 +1175,7 @@ badscal:
     if (f > (float) RLIM_INFINITY)
 	return RLIM_INFINITY;
     else
-	return ((RLIM_TYPE) f);
+	return ((rlim_t) f);
 }
 
 static void
@@ -1196,7 +1194,7 @@ static void
 plim(struct limits *lp, Char hard)
 {
     struct rlimit rlim;
-    RLIM_TYPE limit;
+    rlim_t limit;
 
     (void) fprintf(cshout, "%s \t", lp->limname);
 
@@ -1208,8 +1206,8 @@ plim(struct limits *lp, Char hard)
     else if (lp->limconst == RLIMIT_CPU)
 	psecs((long) limit);
     else
-	(void) fprintf(cshout, "%ld %s", (long) (limit / lp->limdiv),
-		       lp->limscale);
+	(void) fprintf(cshout, "%llu %s",
+	    (unsigned long long) (limit / lp->limdiv), lp->limscale);
     (void) fputc('\n', cshout);
 }
 
@@ -1228,7 +1226,7 @@ dounlimit(Char **v, struct command *t)
     }
     if (*v == 0) {
 	for (lp = limits; lp->limconst >= 0; lp++)
-	    if (setlim(lp, hard, (RLIM_TYPE) RLIM_INFINITY) < 0)
+	    if (setlim(lp, hard, RLIM_INFINITY) < 0)
 		lerr++;
 	if (lerr)
 	    stderror(ERR_SILENT);
@@ -1236,13 +1234,13 @@ dounlimit(Char **v, struct command *t)
     }
     while (*v) {
 	lp = findlim(*v++);
-	if (setlim(lp, hard, (RLIM_TYPE) RLIM_INFINITY) < 0)
+	if (setlim(lp, hard, RLIM_INFINITY) < 0)
 	    stderror(ERR_SILENT);
     }
 }
 
 static int
-setlim(struct limits *lp, Char hard, RLIM_TYPE limit)
+setlim(struct limits *lp, Char hard, rlim_t limit)
 {
     struct rlimit rlim;
 
