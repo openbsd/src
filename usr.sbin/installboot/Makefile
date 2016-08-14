@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2016/07/20 19:56:24 krw Exp $
+#	$OpenBSD: Makefile,v 1.19 2016/08/14 13:47:52 krw Exp $
 
 PROG=		installboot
 SRCS=		installboot.c util.c
@@ -10,7 +10,7 @@ DPADD=		${LIBUTIL}
 
 LDSTATIC=	${STATIC}
 
-.if ${MACHINE} == "amd64"
+.if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
 CFLAGS += -DSOFTRAID
 SRCS += i386_installboot.c
 SRCS += i386_nlist.c
@@ -20,11 +20,6 @@ SRCS += armv7_installboot.c
 .elif ${MACHINE} == "hppa"
 CFLAGS += -DBOOTSTRAP
 SRCS += hppa_installboot.c
-.elif ${MACHINE} == "i386"
-CFLAGS += -DSOFTRAID
-SRCS += i386_installboot.c
-SRCS += i386_nlist.c
-SRCS += i386_softraid.c
 .elif ${MACHINE} == "landisk"
 CFLAGS += -DBOOTSTRAP
 SRCS += landisk_installboot.c
