@@ -1184,6 +1184,7 @@
 ./usr/share/man/man4/armv7/imx.4
 ./usr/share/man/man4/armv7/imxesdhc.4
 ./usr/share/man/man4/armv7/imxiic.4
+./usr/share/man/man4/armv7/imxtemp.4
 ./usr/share/man/man4/armv7/intc.4
 ./usr/share/man/man4/armv7/intro.4
 ./usr/share/man/man4/armv7/omap.4
@@ -1269,6 +1270,7 @@
 ./usr/share/man/man4/dpt.4
 ./usr/share/man/man4/drm.4
 ./usr/share/man/man4/dwctwo.4
+./usr/share/man/man4/dwge.4
 ./usr/share/man/man4/dwiic.4
 ./usr/share/man/man4/eap.4
 ./usr/share/man/man4/ec.4

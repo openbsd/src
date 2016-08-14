@@ -228,6 +228,8 @@
 ./usr/include/dev/ic/dptvar.h
 ./usr/include/dev/ic/ds1286reg.h
 ./usr/include/dev/ic/ds1687reg.h
+./usr/include/dev/ic/dwc_gmac_reg.h
+./usr/include/dev/ic/dwc_gmac_var.h
 ./usr/include/dev/ic/elink3reg.h
 ./usr/include/dev/ic/elink3var.h
 ./usr/include/dev/ic/espreg.h
