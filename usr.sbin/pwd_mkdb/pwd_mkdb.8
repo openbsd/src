@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwd_mkdb.8,v 1.25 2016/05/09 11:13:10 naddy Exp $
+.\"	$OpenBSD: pwd_mkdb.8,v 1.26 2016/08/14 14:57:15 tb Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)pwd_mkdb.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 9 2016 $
+.Dd $Mdocdate: August 14 2016 $
 .Dt PWD_MKDB 8
 .Os
 .Sh NAME
@@ -60,8 +60,6 @@ The
 .Ar file
 must be in the correct format (see
 .Xr passwd 5 ) .
-It is important to note that the format used in this system is
-different from the historic 6th Edition-style format.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -125,7 +123,7 @@ exits zero on success, non-zero on failure.
 .It Pa /etc/master.passwd
 current password file
 .It Pa /etc/passwd
-a 6th Edition-style password file
+legacy password file
 .It Pa /etc/pwd.db
 insecure password database file
 .It Pa /etc/pwd.db.tmp
