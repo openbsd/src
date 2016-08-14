@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.60 2016/08/08 19:27:12 kettenis Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.61 2016/08/14 13:29:22 jsg Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -150,7 +150,6 @@
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
-#include <arm/sa11x0/sa1111_reg.h>
 #include <machine/machine_reg.h>
 #include <machine/zaurus_var.h>
 
