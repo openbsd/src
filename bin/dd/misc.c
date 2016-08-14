@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.18 2014/02/12 01:18:36 bluhm Exp $	*/
+/*	$OpenBSD: misc.c,v 1.19 2016/08/14 21:13:08 krw Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
 
 /*-
@@ -90,7 +90,7 @@ summary(void)
 	}
 	if (!(ddflags & C_NOXFER)) {
 		(void)snprintf(buf[3], sizeof(buf[3]),
-		    "%qd bytes transferred in %lld.%03ld secs "
+		    "%lld bytes transferred in %lld.%03ld secs "
 		    "(%0.0f bytes/sec)\n", (long long)st.bytes,
 		    (long long)nowtv.tv_sec, nowtv.tv_usec / 1000,
 		    ((double)st.bytes * 1000000) / microsecs);
