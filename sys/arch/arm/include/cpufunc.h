@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.25 2016/04/03 13:55:23 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.26 2016/08/14 11:30:54 jsg Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -253,7 +253,7 @@ extern unsigned armv7_dcache_index_inc;
 #endif
 
 
-#if defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0)
+#if defined(CPU_XSCALE_PXA2X0)
 void	armv4_tlb_flushID	(void);
 void	armv4_tlb_flushI	(void);
 void	armv4_tlb_flushD	(void);
@@ -262,8 +262,7 @@ void	armv4_tlb_flushD_SE	(u_int va);
 void	armv4_drain_writebuf	(void);
 #endif
 
-#if defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0) || (ARM_MMU_XSCALE == 1)
+#if defined(CPU_XSCALE_PXA2X0) || (ARM_MMU_XSCALE == 1)
 void	xscale_cpwait		(void);
 
 void	xscale_cpu_sleep	(int mode);
@@ -301,7 +300,7 @@ void	xscale_cache_flushD_rng	(vaddr_t start, vsize_t end);
 void	xscale_context_switch	(u_int);
 
 void	xscale_setup		(void);
-#endif	/* CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 */
+#endif	/* CPU_XSCALE_PXA2X0 */
 
 #define tlb_flush	cpu_tlb_flushID
 #define setttb		cpu_setttb

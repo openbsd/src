@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.31 2016/07/31 06:24:38 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.32 2016/08/14 11:30:54 jsg Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -95,20 +95,6 @@ static const char * const generic_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15"
 };
 
-static const char * const i80321_steppings[16] = {
-	"step A-0",	"step B-0",	"rev 2",	"rev 3",
-	"rev 4",	"rev 5",	"rev 6",	"rev 7",
-	"rev 8",	"rev 9",	"rev 10",	"rev 11",
-	"rev 12",	"rev 13",	"rev 14",	"rev 15"
-};
-
-static const char * const i80219_steppings[16] = {
-	"step A-0",	"rev 1",	"rev 2",	"rev 3",
-	"rev 4",	"rev 5",	"rev 6",	"rev 7",
-	"rev 8",	"rev 9",	"rev 10",	"rev 11",
-	"rev 12",	"rev 13",	"rev 14",	"rev 15",
-};
-
 /* Steppings for PXA2[15]0 */
 static const char * const pxa2x0_steppings[16] = {
 	"step A-0",	"step A-1",	"step B-0",	"step B-1",
@@ -143,20 +129,6 @@ struct cpuidtab {
 };
 
 const struct cpuidtab cpuids[] = {
-	{ CPU_ID_80321_400,	CPU_CLASS_XSCALE,	"i80321 400MHz",
-	  i80321_steppings },
-	{ CPU_ID_80321_600,	CPU_CLASS_XSCALE,	"i80321 600MHz",
-	  i80321_steppings },
-	{ CPU_ID_80321_400_B0,	CPU_CLASS_XSCALE,	"i80321 400MHz",
-	  i80321_steppings },
-	{ CPU_ID_80321_600_B0,	CPU_CLASS_XSCALE,	"i80321 600MHz",
-	  i80321_steppings },
-
-	{ CPU_ID_80219_400,	CPU_CLASS_XSCALE,	"i80219 400MHz",
-	  i80219_steppings },
-	{ CPU_ID_80219_600,	CPU_CLASS_XSCALE,	"i80219 600MHz",
-	  i80219_steppings },
-
 	{ CPU_ID_PXA250A,	CPU_CLASS_XSCALE,	"PXA250",
 	  pxa2x0_steppings },
 	{ CPU_ID_PXA210A,	CPU_CLASS_XSCALE,	"PXA210",
@@ -353,7 +325,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	case CPU_CLASS_ARMv7:
 #endif
 
-#if defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0)
+#if defined(CPU_XSCALE_PXA2X0)
 	case CPU_CLASS_XSCALE:
 #endif
 		break;

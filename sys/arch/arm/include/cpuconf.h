@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.16 2016/03/22 23:35:01 patrick Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.17 2016/08/14 11:30:54 jsg Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.7 2003/05/23 00:57:24 ichiro Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 /*
  * Determine which ARM architecture versions are configured.
  */
-#if (defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0))
+#if defined(CPU_XSCALE_PXA2X0)
 #define	ARM_ARCH_5	1
 #else
 #define	ARM_ARCH_5	0
@@ -78,7 +78,7 @@
 #define	ARM_MMU_GENERIC		0
 #endif
 
-#if (defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0))
+#if defined(CPU_XSCALE_PXA2X0)
 #define	ARM_MMU_XSCALE		1
 #else
 #define	ARM_MMU_XSCALE		0
@@ -92,17 +92,5 @@
 
 #define	ARM_NMMUS		(ARM_MMU_GENERIC +	\
 				 ARM_MMU_XSCALE + ARM_MMU_V7)
-
-/*
- * Define features that may be present on a subset of CPUs
- *
- *	ARM_XSCALE_PMU		Performance Monitoring Unit on 80321
- */
-
-#if defined(CPU_XSCALE_80321)
-#define ARM_XSCALE_PMU	1
-#else
-#define ARM_XSCALE_PMU	0
-#endif
 
 #endif /* _ARM_CPUCONF_H_ */

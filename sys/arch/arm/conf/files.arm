@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.39 2016/08/06 17:16:13 kettenis Exp $
+#	$OpenBSD: files.arm,v 1.40 2016/08/14 11:30:54 jsg Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -48,11 +48,9 @@ file	arch/arm/arm/bcopyinout.S
 file	arch/arm/arm/copystr.S
 file	arch/arm/arm/cpufunc.c
 file	arch/arm/arm/cpufunc_asm.S
-file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_xscale_80321 |
-							cpu_xscale_pxa2x0
+file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_xscale_pxa2x0
 file	arch/arm/arm/cpufunc_asm_armv7.S	cpu_armv7
-file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale_80321 |
-							cpu_xscale_pxa2x0
+file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale_pxa2x0
 file	arch/arm/arm/process_machdep.c
 file	arch/arm/arm/sig_machdep.c
 file	arch/arm/arm/sigcode.S
