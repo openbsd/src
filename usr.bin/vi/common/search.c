@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.13 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: search.c,v 1.14 2016/08/14 21:47:16 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -223,10 +223,6 @@ f_search(SCR *sp, MARK *fm, MARK *rm, char *ptrn, size_t plen, char **eptrn,
 		match[0].rm_so = coff;
 		match[0].rm_eo = len;
 
-#if defined(DEBUG) && 0
-		TRACE(sp, "F search: %lu from %u to %u\n",
-		    lno, coff, len != 0 ? len - 1 : len);
-#endif
 		/* Search the line. */
 		eval = regexec(&sp->re_c, l, 1, match,
 		    (match[0].rm_so == 0 ? 0 : REG_NOTBOL) | REG_STARTEND);
@@ -244,10 +240,6 @@ f_search(SCR *sp, MARK *fm, MARK *rm, char *ptrn, size_t plen, char **eptrn,
 		if (wrapped && LF_ISSET(SEARCH_WMSG))
 			search_msg(sp, S_WRAP);
 
-#if defined(DEBUG) && 0
-		TRACE(sp, "F search: %qu to %qu\n",
-		    match[0].rm_so, match[0].rm_eo);
-#endif
 		rm->lno = lno;
 		rm->cno = match[0].rm_so;
 
@@ -356,9 +348,6 @@ b_search(SCR *sp, MARK *fm, MARK *rm, char *ptrn, size_t plen, char **eptrn,
 		match[0].rm_so = 0;
 		match[0].rm_eo = len;
 
-#if defined(DEBUG) && 0
-		TRACE(sp, "B search: %lu from 0 to %qu\n", lno, match[0].rm_eo);
-#endif
 		/* Search the line. */
 		eval = regexec(&sp->re_c, l, 1, match,
 		    (match[0].rm_eo == len ? 0 : REG_NOTEOL) | REG_STARTEND);
@@ -380,10 +369,6 @@ b_search(SCR *sp, MARK *fm, MARK *rm, char *ptrn, size_t plen, char **eptrn,
 		if (wrapped && LF_ISSET(SEARCH_WMSG))
 			search_msg(sp, S_WRAP);
 
-#if defined(DEBUG) && 0
-		TRACE(sp, "B found: %qu to %qu\n",
-		    match[0].rm_so, match[0].rm_eo);
-#endif
 		/*
 		 * We now have the first match on the line.  Step through the
 		 * line character by character until find the last acceptable
