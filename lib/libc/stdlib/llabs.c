@@ -1,4 +1,4 @@
-/*	$OpenBSD: llabs.c,v 1.3 2007/01/08 19:39:25 deraadt Exp $	*/
+/*	$OpenBSD: llabs.c,v 1.4 2016/08/14 23:18:03 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,3 +36,5 @@ llabs(long long j)
 {
 	return (j < 0 ? -j : j);
 }
+
+__weak_alias(qabs, llabs);

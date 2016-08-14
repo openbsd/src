@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.7 2016/03/13 18:34:21 guenther Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.8 2016/08/14 23:18:03 guenther Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -119,8 +119,8 @@ PROTO_DEPRECATED(nrand48);
 PROTO_DEPRECATED(posix_openpt);
 PROTO_DEPRECATED(ptsname);
 PROTO_NORMAL(putenv);
-PROTO_DEPRECATED(qabs);
-PROTO_DEPRECATED(qdiv);
+/*PROTO_DEPRECATED(qabs);	alias of llabs */
+/*PROTO_DEPRECATED(qdiv);	alias of lldiv */
 PROTO_NORMAL(qsort);
 PROTO_DEPRECATED(radixsort);
 PROTO_STD_DEPRECATED(rand);
