@@ -1,4 +1,4 @@
-/* $OpenBSD: imxocotpvar.h,v 1.1 2013/09/06 20:45:54 patrick Exp $ */
+/* $OpenBSD: imxocotpvar.h,v 1.2 2016/08/14 19:08:44 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -16,3 +16,4 @@
  */
 
 void imxocotp_get_ethernet_address(u_int8_t* mac);
+uint32_t imxocotp_get_temperature_calibration(void);
