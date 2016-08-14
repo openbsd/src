@@ -1,4 +1,4 @@
-/*	$OpenBSD: logutmp.c,v 1.12 2014/10/25 03:19:22 lteo Exp $	*/
+/*	$OpenBSD: logutmp.c,v 1.13 2016/08/14 22:57:31 guenther Exp $	*/
 /*
  * Portions Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -76,7 +76,7 @@ ftpd_login(struct utmp *ut)
 	/*
 	 * Now find a slot that's not in use...
 	 */
-	(void)lseek(fd, (off_t)(topslot * sizeof(struct utmp)), SEEK_SET);
+	(void)lseek(fd, (off_t)topslot * sizeof(struct utmp), SEEK_SET);
 
 	while (1) {
 		if (read(fd, &ubuf, sizeof(struct utmp)) ==
@@ -88,8 +88,8 @@ ftpd_login(struct utmp *ut)
 			}
 			topslot++;
 		} else {
-			(void)lseek(fd, (off_t)(topslot *
-			    sizeof(struct utmp)), SEEK_SET);
+			(void)lseek(fd, (off_t)topslot * sizeof(struct utmp),
+			    SEEK_SET);
 			break;
 		}
 	}
