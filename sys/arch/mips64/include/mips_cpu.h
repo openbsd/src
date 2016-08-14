@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips_cpu.h,v 1.3 2016/08/06 09:32:04 visa Exp $	*/
+/*	$OpenBSD: mips_cpu.h,v 1.4 2016/08/14 08:23:52 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -290,6 +290,32 @@
  */
 #define	FPC_ID			$0
 #define	FPC_CSR			$31
+
+/*
+ * Config3 register
+ */
+#define	CONFIG3_M		0x80000000
+#define	CONFIG3_BPG		0x40000000
+#define	CONFIG3_CMGCR		0x20000000
+#define	CONFIG3_IPLW		0x00600000
+#define	CONFIG3_MMAR		0x001c0000
+#define	CONFIG3_MCU		0x00020000
+#define	CONFIG3_ISAOnExc	0x00010000
+#define	CONFIG3_ISA		0x0000c000
+#define	CONFIG3_ULRI		0x00002000
+#define	CONFIG3_RXI		0x00001000
+#define	CONFIG3_DSP2P		0x00000800
+#define	CONFIG3_DSPP		0x00000400
+#define	CONFIG3_CTXTC		0x00000200
+#define	CONFIG3_ITL		0x00000100
+#define	CONFIG3_LPA		0x00000080
+#define	CONFIG3_VEIC		0x00000040
+#define	CONFIG3_VInt		0x00000020
+#define	CONFIG3_SP		0x00000010
+#define	CONFIG3_CDMM		0x00000008
+#define	CONFIG3_MT		0x00000004
+#define	CONFIG3_SM		0x00000002
+#define	CONFIG3_TL		0x00000001
 
 /*
  * PageGrain register

@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.54 2015/09/29 17:07:53 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.55 2016/08/14 08:23:52 visa Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -239,10 +239,8 @@ ctx1:
 	dmtc0	v0, COP_0_TLB_HI
 	PTE_LOAD ta0, 0(t1)
 	PTE_LOAD ta1, PTE_OFFS(t1)
-	dsll	ta0, ta0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
-	dsrl	ta0, ta0, (64 - PG_FRAMEBITS)
-	dsll	ta1, ta1, (64 - PG_FRAMEBITS)
-	dsrl	ta1, ta1, (64 - PG_FRAMEBITS)
+	PTE_CLEAR_SWBITS(ta0)
+	PTE_CLEAR_SWBITS(ta1)
 	dmtc0	ta0, COP_0_TLB_LO0
 	dmtc0	ta1, COP_0_TLB_LO1
 	PTR_ADDU v0, 2*PAGE_SIZE
@@ -254,13 +252,11 @@ ctx1:
 	dmtc0	v0, COP_0_TLB_HI		# init high entry (tlbid)
 	PTE_LOAD ta0, (2*PTE_OFFS)(t1)
 	PTE_LOAD ta1, (3*PTE_OFFS)(t1)
-	dsll	ta0, ta0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
-	dsrl	ta0, ta0, (64 - PG_FRAMEBITS)
+	PTE_CLEAR_SWBITS(ta0)
 	TLB_HAZARD
 	tlbp
 	TLB_HAZARD			# necessary?
-	dsll	ta1, ta1, (64 - PG_FRAMEBITS)
-	dsrl	ta1, ta1, (64 - PG_FRAMEBITS)
+	PTE_CLEAR_SWBITS(ta1)
 	mfc0	t0, COP_0_TLB_INDEX
 	nop
 	bltz	t0, ctx2			# not in tlb

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.44 2014/08/12 19:33:59 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.45 2016/08/14 08:23:52 visa Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -160,12 +160,12 @@ xtlb_miss:
 	bltz	k1, _inv_seg
 	dsll	k0, k0, 1
 	dsll	k1, k1, 1
-#else
-	dsll	k0, k0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
-	dsll	k1, k1, (64 - PG_FRAMEBITS)
-#endif
 	dsrl	k0, k0, (64 - PG_FRAMEBITS)
 	dsrl	k1, k1, (64 - PG_FRAMEBITS)
+#else
+	PTE_CLEAR_SWBITS(k0)
+	PTE_CLEAR_SWBITS(k1)
+#endif
 	dmtc0	k0, COP_0_TLB_LO0
 	dmtc0	k1, COP_0_TLB_LO1
 	TLB_HAZARD
@@ -218,8 +218,21 @@ go_u_general:
  */
 NLEAF(k_tlb_inv, 0)
 	.set	noat
-	LA	k1, (VM_MIN_KERNEL_ADDRESS)	# compute index
+#ifdef CPU_OCTEON
+	/* Check if the fault was caused by an instruction fetch. */
+	dmfc0	k0, COP_0_CAUSE_REG
+	/* XXX bbit0 k0, CR_BR_DELAY_BIT, 1f */
+	li	k1, CR_BR_DELAY
+	and	k0, k0, k1
+	beq	k0, zero, 1f			# fault in a branch delay slot?
+	 dmfc0	k1, COP_0_EXC_PC
+	daddu	k1, k1, 4			# adjust for the slot
+1:	dmfc0	k0, COP_0_BAD_VADDR
+	beq	k0, k1, go_k_general
+#else
 	dmfc0	k0, COP_0_BAD_VADDR		# get the fault address
+#endif
+	LA	k1, (VM_MIN_KERNEL_ADDRESS)	# compute index
 	PTR_SUBU k0, k0, k1
 	lw	k1, Sysmapsize			# index within range?
 	PTR_SRL	k0, k0, PGSHIFT
@@ -241,14 +254,12 @@ NLEAF(k_tlb_inv, 0)
 	bltz	k0, sys_stk_chk			# probe fail
 	PTE_LOAD k0, 0(k1)			# get PTE entry
 
-	dsll	k0, k0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
-	dsrl	k0, k0, (64 - PG_FRAMEBITS)
+	PTE_CLEAR_SWBITS(k0)
 	dmtc0	k0, COP_0_TLB_LO0		# load PTE entry
 	and	k0, k0, PG_V			# check for valid entry
 	beq	k0, zero, go_k_general		# PTE invalid
 	PTE_LOAD k0, PTE_OFFS(k1)		# get odd PTE entry
-	dsll	k0, k0, (64 - PG_FRAMEBITS)
-	dsrl	k0, k0, (64 - PG_FRAMEBITS)
+	PTE_CLEAR_SWBITS(k0)
 	dmtc0	k0, COP_0_TLB_LO1		# load PTE entry
 	TLB_HAZARD
 	tlbwi					# write TLB
@@ -266,14 +277,12 @@ k_tlb_inv_odd:
 	bltz	k0, sys_stk_chk			# probe fail
 	PTE_LOAD k0, 0(k1)			# get PTE entry
 
-	dsll	k0, k0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
-	dsrl	k0, k0, (64 - PG_FRAMEBITS)
+	PTE_CLEAR_SWBITS(k0)
 	dmtc0	k0, COP_0_TLB_LO1		# save PTE entry
 	and	k0, k0, PG_V			# check for valid entry
 	beq	k0, zero, go_k_general		# PTE invalid
 	PTE_LOAD k0, -PTE_OFFS(k1)		# get even PTE entry
-	dsll	k0, k0, (64 - PG_FRAMEBITS)
-	dsrl	k0, k0, (64 - PG_FRAMEBITS)
+	PTE_CLEAR_SWBITS(k0)
 	dmtc0	k0, COP_0_TLB_LO0		# save PTE entry
 	TLB_HAZARD
 	tlbwi					# update TLB
@@ -313,11 +322,9 @@ NLEAF(k_tlb_miss, 0)
 	PTR_ADDU k1, k1, k0
 	PTE_LOAD k0, 0(k1)			# get PTE entry
 	PTE_LOAD k1, PTE_OFFS(k1)		# get odd PTE entry
-	dsll	k0, k0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
-	dsrl	k0, k0, (64 - PG_FRAMEBITS)
+	PTE_CLEAR_SWBITS(k0)
 	dmtc0	k0, COP_0_TLB_LO0		# load PTE entry
-	dsll	k1, k1, (64 - PG_FRAMEBITS)
-	dsrl	k1, k1, (64 - PG_FRAMEBITS)
+	PTE_CLEAR_SWBITS(k1)
 	dmtc0	k1, COP_0_TLB_LO1		# load PTE entry
 	TLB_HAZARD
 	tlbwr					# write TLB
@@ -498,10 +505,10 @@ LEAF(tlb_update, 0)
 	TLB_HAZARD
 	tlbp				# Probe for the entry.
 	TLB_HAZARD			# necessary?
-	dsll	a1, a1, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
+	PTE_CLEAR_SWBITS(a1)
 	mfc0	v0, COP_0_TLB_INDEX	# See what we got
 	bne	ta1, zero, 2f		# Decide even odd
-	dsrl	a1, a1, (64 - PG_FRAMEBITS)
+	nop
 # EVEN
 	bltz	v0, 1f			# index < 0 => !found
 	nop
@@ -604,11 +611,9 @@ LEAF(tlb_update_indexed, 0)
 	mtc0	ta1, COP_0_TLB_PG_MASK	# init mask
 	dmtc0	a0, COP_0_TLB_HI	# init high reg.
 
-	dsll	a1, a1, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
-	dsrl	a1, a1, (64 - PG_FRAMEBITS)
+	PTE_CLEAR_SWBITS(a1)
 	dmtc0	a1, COP_0_TLB_LO0	# init low reg0.
-	dsll	a2, a2, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
-	dsrl	a2, a2, (64 - PG_FRAMEBITS)
+	PTE_CLEAR_SWBITS(a2)
 	dmtc0	a2, COP_0_TLB_LO1	# init low reg1.
 
 	TLB_HAZARD

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.18 2014/03/22 00:00:38 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.19 2016/08/14 08:23:52 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,6 +64,27 @@ typedef u_int32_t pt_entry_t;
 
 #endif /* _LOCORE */
 
+#ifdef MIPS_PTE64
+#define	PTE_BITS	64
+#else
+#define	PTE_BITS	32
+#endif
+
+#ifdef CPU_MIPS64R2
+#define	PTE_CLEAR_SWBITS(reg)						\
+	.set	push;							\
+	.set	mips64r2;						\
+	/* Clear SW bits around PG_XI. */				\
+	dins	reg, zero, (PTE_BITS - 1), 1;				\
+	dins	reg, zero, PG_FRAMEBITS, (PTE_BITS - 2 - PG_FRAMEBITS);	\
+	.set	pop
+#else
+#define	PTE_CLEAR_SWBITS(reg)						\
+	/* Clear SW bits left of PG_FRAMEBITS. */			\
+	dsll	reg, reg, (64 - PG_FRAMEBITS);				\
+	dsrl	reg, reg, (64 - PG_FRAMEBITS)
+#endif
+
 /* entryhi values */
 
 #ifndef CPU_R8000
@@ -100,13 +121,23 @@ typedef u_int32_t pt_entry_t;
 #endif
 
 /* software pte bits - not put in entrylo */
-#ifdef CPU_R8000
+#if defined(CPU_R8000)
 #define	PG_WIRED	0x00000010
 #define	PG_RO		0x00000020
-#else
+#elif defined(CPU_R4000)
 #define	PG_WIRED	(1ULL << (PG_FRAMEBITS + 2))
 #define	PG_RO		(1ULL << (PG_FRAMEBITS + 1))
 #define	PG_SP		(1ULL << (PG_FRAMEBITS + 0))	/* ``special'' bit */
+#else
+#define	PG_WIRED	(1ULL << (PG_FRAMEBITS + 2))
+			/* 1ULL << (PG_FRAMEBITS + 1) is PG_XI. */
+#define	PG_RO		(1ULL << (PG_FRAMEBITS + 0))
+#endif
+
+#ifdef CPU_MIPS64R2
+#define	PG_XI		(1ULL << (PTE_BITS - 2))
+#else
+#define	PG_XI		0x00000000
 #endif
 
 #define	PG_NV		0x00000000

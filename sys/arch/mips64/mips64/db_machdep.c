@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.45 2016/03/06 19:42:27 mpi Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.46 2016/08/14 08:23:52 visa Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -400,6 +400,9 @@ db_print_tlb(uint tlbno, uint64_t tlblo)
 #endif
 	if (tlblo & PG_V) {
 		db_printf("%016lx ", pa);
+#ifdef CPU_MIPS64R2
+		db_printf("%c", tlblo & PG_XI ? 'X' : ' ');
+#endif
 		db_printf("%c", tlblo & PG_M ? 'M' : ' ');
 #ifndef CPU_R8000
 		db_printf("%c", tlblo & PG_G ? 'G' : ' ');

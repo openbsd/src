@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.90 2016/05/11 15:50:29 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.91 2016/08/14 08:23:52 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -38,6 +38,7 @@
 #include <sys/atomic.h>
 
 #include <mips64/cache.h>
+#include <mips64/mips_cpu.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/vmparam.h>
@@ -64,7 +65,7 @@ void	 pmap_do_remove(pmap_t, vaddr_t, vaddr_t);
 int	 pmap_enter_pv(pmap_t, vaddr_t, vm_page_t, pt_entry_t *);
 void	 pmap_remove_pv(pmap_t, vaddr_t, paddr_t);
 void	 pmap_page_remove(struct vm_page *);
-void	 pmap_page_wrprotect(struct vm_page *);
+void	 pmap_page_wrprotect(struct vm_page *, vm_prot_t);
 void	*pmap_pg_alloc(struct pool *, int, int *);
 void	 pmap_pg_free(struct pool *, void *);
 
@@ -155,6 +156,8 @@ static struct pmap_asid_info pmap_asid_info[MAXCPUS];
 pt_entry_t	*Sysmap;		/* kernel pte table */
 u_int		Sysmapsize;		/* number of pte's in Sysmap */
 const vaddr_t	Sysmapbase = VM_MIN_KERNEL_ADDRESS;	/* for libkvm */
+
+pt_entry_t	pg_xi;
 
 void
 pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
@@ -383,6 +386,11 @@ pmap_bootstrap(void)
 		pmap_asid_info[i].pma_asidgen = 1;
 		pmap_asid_info[i].pma_asid = MIN_USER_ASID + 1;
 	}
+
+#ifdef CPU_MIPS64R2
+	if (cp0_get_pagegrain() & PGRAIN_XIE)
+		pg_xi = PG_XI;
+#endif
 }
 
 /*
@@ -713,11 +721,15 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
  * Makes all mappings to a given page read-only.
  */
 void
-pmap_page_wrprotect(struct vm_page *pg)
+pmap_page_wrprotect(struct vm_page *pg, vm_prot_t prot)
 {
 	struct cpu_info *ci = curcpu();
-	pt_entry_t *pte, entry;
+	pt_entry_t *pte, entry, p;
 	pv_entry_t pv;
+
+	p = PG_RO;
+	if (!(prot & PROT_EXEC))
+		p |= pg_xi;
 
 	mtx_enter(&pg->mdpage.pv_mtx);
 	for (pv = pg_to_pvh(pg); pv != NULL; pv = pv->pv_next) {
@@ -735,7 +747,7 @@ pmap_page_wrprotect(struct vm_page *pg)
 			    (entry & PG_CACHEMODE) == PG_CACHED)
 				Mips_HitSyncDCachePage(ci, pv->pv_va,
 				    pfn_to_pad(entry));
-			entry = (entry & ~PG_M) | PG_RO;
+			entry = (entry & ~(PG_M | PG_XI)) | p;
 			*pte = entry;
 			pmap_update_kernel_page(pv->pv_va, entry);
 			pmap_shootdown_page(pmap_kernel(), pv->pv_va);
@@ -750,7 +762,7 @@ pmap_page_wrprotect(struct vm_page *pg)
 			    (entry & PG_CACHEMODE) == PG_CACHED)
 				Mips_SyncDCachePage(ci, pv->pv_va,
 				    pfn_to_pad(entry));
-			entry = (entry & ~PG_M) | PG_RO;
+			entry = (entry & ~(PG_M | PG_XI)) | p;
 			*pte = entry;
 			pmap_update_user_page(pv->pv_pmap, pv->pv_va, entry);
 			pmap_shootdown_page(pv->pv_pmap, pv->pv_va);
@@ -828,7 +840,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	/* copy_on_write */
 	case PROT_READ:
 	case PROT_READ | PROT_EXEC:
-		pmap_page_wrprotect(pg);
+		pmap_page_wrprotect(pg, prot);
 		break;
 
 	/* remove_all */
@@ -859,6 +871,8 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	}
 
 	p = (prot & PROT_WRITE) ? PG_M : PG_RO;
+	if (!(prot & PROT_EXEC))
+		p |= pg_xi;
 
 	pmap_lock(pmap);
 
@@ -886,7 +900,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				if ((entry & PG_CACHEMODE) == PG_CACHED)
 					Mips_HitSyncDCachePage(ci, sva,
 					    pfn_to_pad(entry));
-			entry = (entry & ~(PG_M | PG_RO)) | p;
+			entry = (entry & ~(PG_M | PG_RO | PG_XI)) | p;
 			*pte = entry;
 			/*
 			 * Update the TLB if the given address is in the cache.
@@ -932,7 +946,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 					Mips_SyncDCachePage(ci, sva,
 					    pfn_to_pad(entry));
 			}
-			entry = (entry & ~(PG_M | PG_RO)) | p;
+			entry = (entry & ~(PG_M | PG_RO | PG_XI)) | p;
 			*pte = entry;
 			pmap_update_user_page(pmap, sva, entry);
 			pmap_shootdown_page(pmap, sva);
@@ -1025,6 +1039,9 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			npte = (PG_IOPAGE | PG_RO) & ~(PG_G | PG_M);
 		}
 	}
+
+	if (!(prot & PROT_EXEC))
+		npte |= pg_xi;
 
 	if (pmap == pmap_kernel()) {
 		if (pg != NULL) {
@@ -1192,6 +1209,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		npte |= PG_RWPAGE;
 	else
 		npte |= PG_ROPAGE;
+	if (!(prot & PROT_EXEC))
+		npte |= pg_xi;
 	pte = kvtopte(va);
 	if ((*pte & PG_V) == 0) {
 		atomic_inc_long(&pmap_kernel()->pm_stats.resident_count);

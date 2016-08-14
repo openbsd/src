@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.116 2016/03/06 19:42:27 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.117 2016/08/14 08:23:52 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -304,7 +304,25 @@ itsa(struct trapframe *trapframe, struct cpu_info *ci, struct proc *p,
 
 	case T_TLB_LD_MISS:
 	case T_TLB_ST_MISS:
-		ftype = (type == T_TLB_ST_MISS) ? PROT_WRITE : PROT_READ;
+		if (type == T_TLB_LD_MISS) {
+#ifdef CPU_OCTEON
+			vaddr_t pc;
+
+			/*
+			 * Check if the fault was caused by
+			 * an instruction fetch.
+			 */
+			pc = trapframe->pc;
+			if (trapframe->cause & CR_BR_DELAY)
+				pc += 4;
+			if (pc == trapframe->badvaddr)
+				ftype = PROT_EXEC;
+			else
+#endif
+			ftype = PROT_READ;
+		} else
+			ftype = PROT_WRITE;
+
 		pcb = &p->p_addr->u_pcb;
 		/* check for kernel address */
 		if (trapframe->badvaddr < 0) {
@@ -342,10 +360,22 @@ itsa(struct trapframe *trapframe, struct cpu_info *ci, struct proc *p,
 			goto err;
 		}
 
-	case T_TLB_LD_MISS+T_USER:
+	case T_TLB_LD_MISS+T_USER: {
+#ifdef CPU_OCTEON
+		vaddr_t pc;
+
+		/* Check if the fault was caused by an instruction fetch. */
+		pc = trapframe->pc;
+		if (trapframe->cause & CR_BR_DELAY)
+			pc += 4;
+		if (pc == trapframe->badvaddr)
+			ftype = PROT_EXEC;
+		else
+#endif
 		ftype = PROT_READ;
 		pcb = &p->p_addr->u_pcb;
 		goto fault_common;
+	}
 
 	case T_TLB_ST_MISS+T_USER:
 		ftype = PROT_WRITE;

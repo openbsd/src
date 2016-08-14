@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.74 2016/07/01 15:12:37 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.75 2016/08/14 08:23:52 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -130,6 +130,7 @@ vaddr_t		mips_init(__register_t, __register_t, __register_t, __register_t);
 boolean_t 	is_memory_range(paddr_t, psize_t, psize_t);
 void		octeon_memory_init(struct boot_info *);
 int		octeon_cpuspeed(int *);
+void		octeon_tlb_init(void);
 static void	process_bootargs(void);
 static uint64_t	get_ncpusfound(void);
 
@@ -337,7 +338,7 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	Octeon_ConfigCache(curcpu());
 	Octeon_SyncCache(curcpu());
 
-	tlb_init(bootcpu_hwinfo.tlbsize);
+	octeon_tlb_init();
 
 	/*
 	 * Save the the boot information for future reference since we can't
@@ -593,6 +594,21 @@ octeon_ioclock_speed(void)
 	}
 }
 
+void
+octeon_tlb_init(void)
+{
+	uint32_t pgrain = 0;
+
+#ifdef MIPS_PTE64
+	pgrain |= PGRAIN_ELPA;
+#endif
+	if (cp0_get_config_3() & CONFIG3_RXI)
+		pgrain |= PGRAIN_XIE;
+	cp0_set_pagegrain(pgrain);
+
+	tlb_init(bootcpu_hwinfo.tlbsize);
+}
+
 static u_int64_t
 get_ncpusfound(void)
 {
@@ -825,7 +841,7 @@ hw_cpu_hatch(struct cpu_info *ci)
 	 */
 	setsr(getsr() | SR_KX | SR_UX);
 
-	tlb_init(64);
+	octeon_tlb_init();
 	tlb_set_pid(0);
 
 	/*

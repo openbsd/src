@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.110 2016/03/06 19:42:27 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.111 2016/08/14 08:23:52 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -480,10 +480,12 @@ register_t cp0_get_config(void);
 uint32_t cp0_get_config_1(void);
 uint32_t cp0_get_config_2(void);
 uint32_t cp0_get_config_3(void);
+uint32_t cp0_get_pagegrain(void);
 register_t cp0_get_prid(void);
 void	cp0_reset_cause(register_t);
 void	cp0_set_compare(u_int);
 void	cp0_set_config(register_t);
+void	cp0_set_pagegrain(uint32_t);
 void	cp0_set_trapbase(register_t);
 u_int	cp1_get_prid(void);
 
