@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.43 2015/05/29 00:33:37 uebayasi Exp $ */
+/* $OpenBSD: mfireg.h,v 1.44 2016/08/14 01:52:47 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -774,7 +774,7 @@ struct mfi_ld_list {
 		uint8_t		mll_res2;
 		uint8_t		mll_res3;
 		uint8_t		mll_res4;
-		u_quad_t	mll_size;
+		uint64_t	mll_size;
 	} mll_list[MFI_MAX_LD];
 } __packed;
 
@@ -818,8 +818,8 @@ struct mfi_ld_parm {
 } __packed;
 
 struct mfi_ld_span {
-	u_quad_t		mls_start_block;
-	u_quad_t		mls_no_blocks;
+	uint64_t		mls_start_block;
+	uint64_t		mls_no_blocks;
 	uint16_t		mls_index;
 	uint8_t			mls_res[6];
 } __packed;
@@ -845,7 +845,7 @@ struct mfi_ld_progress {
 
 struct mfi_ld_details {
 	struct mfi_ld_cfg	mld_cfg;
-	u_quad_t		mld_size;
+	uint64_t		mld_size;
 	struct mfi_ld_progress	mld_progress;
 	uint16_t		mld_clust_own_id;
 	uint8_t			mld_res1;
@@ -862,7 +862,7 @@ struct mfi_pd_address {
 	uint8_t			mpa_enc_slot;
 	uint8_t			mpa_scsi_type;
 	uint8_t			mpa_port;
-	u_quad_t		mpa_sas_address[2];
+	uint64_t		mpa_sas_address[2];
 } __packed;
 
 struct mfi_pd_list {
@@ -919,12 +919,12 @@ struct mfi_pd_details {
 		uint8_t		mpp_severed;
 		uint8_t		mpp_connector_idx[2];
 		uint8_t		mpp_res[4];
-		u_quad_t	mpp_sas_addr[2];
+		uint64_t	mpp_sas_addr[2];
 		uint8_t		mpp_res2[16];
 	} __packed mpd_path;
-	u_quad_t		mpd_size;
-	u_quad_t		mpd_no_coerce_size;
-	u_quad_t		mpd_coerce_size;
+	uint64_t		mpd_size;
+	uint64_t		mpd_no_coerce_size;
+	uint64_t		mpd_coerce_size;
 	uint16_t		mpd_enc_id;
 	uint8_t			mpd_enc_idx;
 	uint8_t			mpd_enc_slot;
@@ -973,7 +973,7 @@ struct mfi_pd_allowedops_list {
 
 /* array configuration from MR_DCMD_CONF_GET */
 struct mfi_array {
-	u_quad_t		mar_smallest_pd;
+	uint64_t		mar_smallest_pd;
 	uint8_t			mar_no_disk;
 	uint8_t			mar_res1;
 	uint16_t		mar_array_ref;
