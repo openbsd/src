@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.57 2016/08/06 04:32:24 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.58 2016/08/14 08:49:37 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1380,28 +1380,13 @@ void
 octeon_eth_tick_misc(void *arg)
 {
 	struct octeon_eth_softc *sc = arg;
-	struct ifnet *ifp;
-	u_quad_t iqdrops, delta;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int s;
 
 	s = splnet();
 
-	ifp = &sc->sc_arpcom.ac_if;
-
-	iqdrops = ifp->if_iqdrops;
 	cn30xxgmx_stats(sc->sc_gmx_port);
-#ifdef OCTEON_ETH_DEBUG
-	delta = ifp->if_iqdrops - iqdrops;
-	printf("%s: %qu packets dropped at GMX FIFO\n",
-			ifp->if_xname, delta);
-#endif
 	cn30xxpip_stats(sc->sc_pip, ifp, sc->sc_port);
-	delta = ifp->if_iqdrops - iqdrops;
-#ifdef OCTEON_ETH_DEBUG
-	printf("%s: %qu packets dropped at PIP + GMX FIFO\n",
-			ifp->if_xname, delta);
-#endif
-
 	mii_tick(&sc->sc_mii);
 
 	splx(s);
