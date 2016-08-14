@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.37 2015/11/04 00:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.38 2016/08/14 04:51:29 dlg Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -568,15 +568,15 @@ struct _tulip_softc_t {
 #define	TULIP_PERF_TOTAL	2
 #define	TULIP_PERF_MAX		3
     struct tulip_perfstats {
-	u_quad_t perf_intr_cycles;
-	u_quad_t perf_ifstart_cycles;
-	u_quad_t perf_ifioctl_cycles;
-	u_quad_t perf_ifwatchdog_cycles;
-	u_quad_t perf_timeout_cycles;
-	u_quad_t perf_txput_cycles;
-	u_quad_t perf_txintr_cycles;
-	u_quad_t perf_rxintr_cycles;
-	u_quad_t perf_rxget_cycles;
+	uint64_t perf_intr_cycles;
+	uint64_t perf_ifstart_cycles;
+	uint64_t perf_ifioctl_cycles;
+	uint64_t perf_ifwatchdog_cycles;
+	uint64_t perf_timeout_cycles;
+	uint64_t perf_txput_cycles;
+	uint64_t perf_txintr_cycles;
+	uint64_t perf_rxintr_cycles;
+	uint64_t perf_rxget_cycles;
 	unsigned perf_intr;
 	unsigned perf_ifstart;
 	unsigned perf_ifioctl;
@@ -826,7 +826,7 @@ extern struct cfdriver de_cd;
 	    (sc)->tulip_curperfstats.perf_ ## name++; \
 	} while (0)
 #if defined(__i386__)
-typedef u_quad_t tulip_cycle_t;
+typedef uint64_t tulip_cycle_t;
 static __inline__ tulip_cycle_t
 TULIP_PERFREAD(
     void)
