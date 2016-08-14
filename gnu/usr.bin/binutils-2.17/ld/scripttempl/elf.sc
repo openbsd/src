@@ -248,8 +248,6 @@ else
 fi
 
 cat <<EOF
-/* DATA_GOT=${DATA_GET+y} SDATA_GOT=${SDATA_GOT+y} SEPARATE_GOTPLT=${SEPARATE_GOTPLT+y} */
-/* DATA_PLT=${DATA_PLT+y} BSS_PLT=${BSS_PLT+y} DATA_NONEXEC_PLT=${DATA_NONEXEC_PLT+y} */
 OUTPUT_FORMAT("${OUTPUT_FORMAT}", "${BIG_OUTPUT_FORMAT}",
 	      "${LITTLE_OUTPUT_FORMAT}")
 OUTPUT_ARCH(${OUTPUT_ARCH})
@@ -433,7 +431,6 @@ cat <<EOF
   ${RELOCATING+${DATARELRO}}
   ${OTHER_RELRO_SECTIONS}
   ${TEXT_DYNAMIC-${DYNAMIC}}
-  ${DATA_GOT+${RELRO_NOW-${PAD_GOT+${PAD_GOT0}}}}
   /* If PAD_CDTOR, and separate .got and .got.plt sections, CTOR and DTOR
      are relocated here to receive the same mprotect protection as .got */
   ${DATA_GOT+${RELRO_NOW-${SEPARATE_GOTPLT+${PAD_CDTOR+${RELOCATING+${CTOR}}}}}}
