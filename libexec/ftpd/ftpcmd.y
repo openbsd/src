@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.62 2015/11/16 17:31:14 tedu Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.63 2016/08/14 22:56:29 guenther Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ cmd_list
 				free(fromname);
 				fromname = NULL;
 			}
-			restart_point = (off_t) 0;
+			restart_point = 0;
 		}
 	| cmd_list rcmd
 	;
@@ -638,7 +638,7 @@ cmd
 rcmd
 	: RNFR check_login SP pathname CRLF
 		{
-			restart_point = (off_t) 0;
+			restart_point = 0;
 			if ($2 && $4) {
 				if (fromname)
 					free(fromname);

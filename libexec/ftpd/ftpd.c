@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.217 2016/07/04 03:24:48 guenther Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.218 2016/08/14 22:56:29 guenther Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -185,12 +185,13 @@ char	proctitle[BUFSIZ];	/* initial part of title */
 		*(file2) == '/' ? "" : curdir(), file2);
 #define LOGBYTES(cmd, file, cnt) \
 	if (logging > 1) { \
-		if (cnt == (off_t)-1) \
+		if ((cnt) == -1) \
 		    syslog(LOG_INFO,"%s %s%s", cmd, \
 			*(file) == '/' ? "" : curdir(), file); \
 		else \
-		    syslog(LOG_INFO, "%s %s%s = %qd bytes", \
-			cmd, (*(file) == '/') ? "" : curdir(), file, cnt); \
+		    syslog(LOG_INFO, "%s %s%s = %lld bytes", \
+			cmd, (*(file) == '/') ? "" : curdir(), file, \
+			(long long)(cnt)); \
 	}
 
 static void	 ack(char *);
@@ -979,7 +980,7 @@ pass(char *passwd)
 		flags |= LOGIN_SETUMASK;
 	else
 		(void) umask(defumask);
-	if (setusercontext(lc, pw, (uid_t)0, flags) != 0) {
+	if (setusercontext(lc, pw, 0, flags) != 0) {
 		perror_reply(421, "Local resource failure: setusercontext");
 		syslog(LOG_NOTICE, "setusercontext: %m");
 		dologout(1);
@@ -992,7 +993,7 @@ pass(char *passwd)
 
 	/* open utmp before chroot */
 	if (doutmp) {
-		memset((void *)&utmp, 0, sizeof(utmp));
+		memset(&utmp, 0, sizeof(utmp));
 		(void)time(&utmp.ut_time);
 		(void)strncpy(utmp.ut_name, pw->pw_name, sizeof(utmp.ut_name));
 		(void)strncpy(utmp.ut_host, remotehost, sizeof(utmp.ut_host));
@@ -1205,7 +1206,7 @@ retrieve(char *cmd, char *name)
 	if (dout == NULL)
 		goto done;
 	time(&start);
-	send_data(fin, dout, (off_t)st.st_blksize, st.st_size,
+	send_data(fin, dout, st.st_blksize, st.st_size,
 	    (restart_point == 0 && cmd == NULL && S_ISREG(st.st_mode)));
 	if ((cmd == NULL) && stats)
 		logxfer(name, byte_count, start);
@@ -1277,7 +1278,7 @@ store(char *name, char *mode, int unique)
 			 * because we are changing from reading to
 			 * writing.
 			 */
-			if (fseek(fout, 0L, SEEK_CUR) < 0) {
+			if (fseek(fout, 0, SEEK_CUR) < 0) {
 				perror_reply(550, name);
 				goto done;
 			}
@@ -1286,7 +1287,7 @@ store(char *name, char *mode, int unique)
 			goto done;
 		}
 	}
-	din = dataconn(name, (off_t)-1, "r");
+	din = dataconn(name, -1, "r");
 	if (din == NULL)
 		goto done;
 	if (receive_data(din, fout) == 0) {
@@ -1380,9 +1381,9 @@ dataconn(char *name, off_t size, char *mode)
 
 	file_size = size;
 	byte_count = 0;
-	if (size != (off_t) -1) {
-		(void) snprintf(sizebuf, sizeof(sizebuf), " (%qd bytes)",
-		    size);
+	if (size != -1) {
+		(void) snprintf(sizebuf, sizeof(sizebuf), " (%lld bytes)",
+		    (long long)size);
 	} else
 		sizebuf[0] = '\0';
 	if (pdata >= 0) {
@@ -1573,7 +1574,7 @@ send_data(FILE *instr, FILE *outstr, off_t blksize, off_t filesize, int isreg)
 		netfd = fileno(outstr);
 		filefd = fileno(instr);
 
-		if (isreg && filesize < (off_t)16 * 1024 * 1024) {
+		if (isreg && filesize < 16 * 1024 * 1024) {
 			size_t fsize = (size_t)filesize;
 
 			if (fsize == 0) {
@@ -1582,8 +1583,7 @@ send_data(FILE *instr, FILE *outstr, off_t blksize, off_t filesize, int isreg)
 				return(0);
 			}
 
-			buf = mmap(0, fsize, PROT_READ, MAP_SHARED, filefd,
-			    (off_t)0);
+			buf = mmap(0, fsize, PROT_READ, MAP_SHARED, filefd, 0);
 			if (buf == MAP_FAILED) {
 				syslog(LOG_WARNING, "mmap(%llu): %m",
 				    (unsigned long long)fsize);
@@ -2236,11 +2236,12 @@ myoob(void)
 	}
 	if (strcmp(cp, "STAT\r\n") == 0) {
 		tmpline[0] = '\0';
-		if (file_size != (off_t) -1)
-			reply(213, "Status: %qd of %qd bytes transferred",
-			    byte_count, file_size);
+		if (file_size != -1)
+			reply(213, "Status: %lld of %lld bytes transferred",
+			    (long long)byte_count, (long long)file_size);
 		else
-			reply(213, "Status: %qd bytes transferred", byte_count);
+			reply(213, "Status: %lld bytes transferred",
+			    (long long)byte_count);
 	}
 }
 
@@ -2680,7 +2681,7 @@ send_file_list(char *whichf)
 
 		if (S_ISREG(st.st_mode)) {
 			if (dout == NULL) {
-				dout = dataconn("file list", (off_t)-1, "w");
+				dout = dataconn("file list", -1, "w");
 				if (dout == NULL)
 					goto out;
 				transflag++;
@@ -2721,8 +2722,7 @@ send_file_list(char *whichf)
 			    (fstatat(dirfd(dirp), dir->d_name, &st, 0) == 0 &&
 			    S_ISREG(st.st_mode))) {
 				if (dout == NULL) {
-					dout = dataconn("file list", (off_t)-1,
-						"w");
+					dout = dataconn("file list", -1, "w");
 					if (dout == NULL)
 						goto out;
 					transflag++;
@@ -2802,7 +2802,7 @@ logxfer(char *name, off_t size, time_t start)
 		strvis(vpw, guest? guestpw : pw->pw_name, VIS_SAFE|VIS_NOSLASH);
 
 		len = snprintf(buf, sizeof(buf),
-		    "%.24s %lld %s %qd %s %c %s %c %c %s ftp %d %s %s\n",
+		    "%.24s %lld %s %lld %s %c %s %c %c %s ftp %d %s %s\n",
 		    ctime(&now), (long long)(now - start + (now == start)),
 		    vremotehost, (long long)size, vpath,
 		    ((type == TYPE_A) ? 'a' : 'b'), "*" /* none yet */,
