@@ -1,4 +1,4 @@
-/* $OpenBSD: fmt_test.c,v 1.10 2012/11/12 14:10:48 halex Exp $ */
+/* $OpenBSD: fmt_test.c,v 1.11 2016/08/14 23:08:09 guenther Exp $ */
 
 /*
  * Combined tests for fmt_scaled and scan_scaled.
@@ -19,7 +19,7 @@ static int scan_test(void);
 static void print_errno(int e);
 static int assert_int(int testnum, int checknum, int expect, int result);
 static int assert_errno(int testnum, int checknum, int expect, int result);
-static int assert_quad_t(int testnum, int checknum, quad_t expect, quad_t result);
+static int assert_llong(int testnum, int checknum, long long expect, long long result);
 static int assert_str(int testnum, int checknum, char * expect, char * result);
 
 extern char *__progname;
@@ -71,7 +71,7 @@ main(int argc, char **argv)
 /************** tests for fmt_scaled *******************/
 
 static struct {			/* the test cases */
-	quad_t input;
+	long long input;
 	char *expect;
 	int err;
 } ddata[] = {
@@ -154,7 +154,7 @@ extern int errno;
 
 struct {					/* the test cases */
 	char *input;
-	quad_t result;
+	long long result;
 	int err;
 } sdata[] = {
 	{ "0",		0, 0 },
@@ -205,7 +205,7 @@ print_errno(int e)
 
 /** Print one result */
 static void
-print(char *input, quad_t result, int ret)
+print(char *input, long long result, int ret)
 {
 	int e = errno;
 	printf("\"%10s\" --> %lld (%d)", input, result, ret);
@@ -221,7 +221,7 @@ scan_test(void)
 {
 	unsigned int i, errs = 0, e;
 	int ret;
-	quad_t result;
+	long long result;
 
 	for (i = 0; i < SDATA_LENGTH; i++) {
 		result = IMPROBABLE;
@@ -237,7 +237,7 @@ scan_test(void)
 		if (sdata[i].err)
 			errs += assert_errno(i, 2, sdata[i].err, errno);
 		else 
-			errs += assert_quad_t(i, 3, sdata[i].result, result);
+			errs += assert_llong(i, 3, sdata[i].result, result);
 	}
 	return errs;
 }
@@ -269,7 +269,7 @@ assert_errno(int testnum, int check, int expect, int result)
 }
 
 static int
-assert_quad_t(int testnum, int check, quad_t expect, quad_t result)
+assert_llong(int testnum, int check, long long expect, long long result)
 {
 	if (expect == result)
 		return 0;
