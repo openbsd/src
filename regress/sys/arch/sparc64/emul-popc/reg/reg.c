@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.c,v 1.2 2003/07/12 04:22:02 jason Exp $	*/
+/*	$OpenBSD: reg.c,v 1.3 2016/08/14 23:01:13 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -61,7 +61,7 @@ test_it(int64_t v)
 	ta = asm_popc(v);
 	if (tc == ta)
 		return (0);
-	printf("%qd: C(%qd) ASM(%qd)\n", v, tc, ta);
+	printf("%lld: C(%lld) ASM(%lld)\n", v, tc, ta);
 	return (1);
 }
 
@@ -74,7 +74,7 @@ test_ones(void)
 	for (i = 0; i < 64; i++) {
 		v = 1LL << i;
 		if (c_popc(v) != 1) {
-			printf("ONES popc(%qd) != 1\n", v);
+			printf("ONES popc(%lld) != 1\n", v);
 			r = 1;
 		}
 		if (test_it(v))
