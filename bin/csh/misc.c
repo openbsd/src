@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.18 2015/12/26 13:48:38 mestre Exp $	*/
+/*	$OpenBSD: misc.c,v 1.19 2016/08/14 19:45:24 guenther Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/03/21 09:03:09 cgd Exp $	*/
 
 /*-
@@ -170,8 +170,9 @@ void
 closem(void)
 {
     int f;
+    int max = sysconf(_SC_OPEN_MAX);
 
-    for (f = 0; f < sysconf(_SC_OPEN_MAX); f++)
+    for (f = 0; f < max; f++)
 	if (f != SHIN && f != SHOUT && f != SHERR && f != OLDSTD &&
 	    f != FSHTTY)
 	    (void) close(f);
