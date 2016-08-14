@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.44 2016/08/10 21:22:43 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.45 2016/08/14 10:36:47 kettenis Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -568,6 +568,26 @@ armv7_setup()
 	uint32_t auxctrl, auxctrlmask;
 	uint32_t cpuctrl, cpuctrlmask;
 
+	auxctrl = auxctrlmask = 0;
+
+	switch (cputype & CPU_ID_CORTEX_MASK) {
+	case CPU_ID_CORTEX_A5:
+	case CPU_ID_CORTEX_A9:
+		/* Cache and TLB maintenance broadcast */
+#ifdef notyet
+		auxctrlmask |= CORTEXA9_AUXCTL_FW;
+		auxctrl |= CORTEXA9_AUXCTL_FW;
+#endif
+		/* FALLTHROUGH */
+	case CPU_ID_CORTEX_A7:
+	case CPU_ID_CORTEX_A15:
+	case CPU_ID_CORTEX_A17:
+		/* Set SMP to allow LDREX/STREX */
+		auxctrlmask |= CORTEXA9_AUXCTL_SMP;
+		auxctrl |= CORTEXA9_AUXCTL_SMP;
+		break;
+	}
+
 	cpuctrlmask = CPU_CONTROL_MMU_ENABLE
 	    | CPU_CONTROL_AFLT_ENABLE
 	    | CPU_CONTROL_DC_ENABLE
@@ -590,29 +610,16 @@ armv7_setup()
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
+	/*
+	 * Set the auxilliary control register first, as the SMP bit
+	 * needs to be set to 1 before the caches and the MMU are
+	 * enabled.
+	 */
+	cpu_auxcontrol(auxctrlmask, auxctrl);
+
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(cpuctrlmask, cpuctrl);
-
-	auxctrl = auxctrlmask = 0;
-
-	switch (cputype & CPU_ID_CORTEX_MASK) {
-	case CPU_ID_CORTEX_A5:
-	case CPU_ID_CORTEX_A9:
-		/* Cache and TLB maintenance broadcast */
-#ifdef notyet
-		auxctrl |= (1 << 0);
-#endif
-		/* FALLTHROUGH */
-	case CPU_ID_CORTEX_A7:
-	case CPU_ID_CORTEX_A15:
-	case CPU_ID_CORTEX_A17:
-		/* Set SMP to allow LDREX/STREX */
-		auxctrl |= (1 << 6);
-		break;
-	}
-
-	cpu_auxcontrol(auxctrlmask, auxctrl);
 
 	/* And again. */
 	cpu_idcache_wbinv_all();
