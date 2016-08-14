@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.28 2015/03/17 03:23:17 guenther Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.29 2016/08/14 04:47:52 guenther Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -251,13 +251,15 @@ ul_asc(u_long val, char *str, int len, int base)
 				*pt-- = '0' + (char)digit;
 			else
 				*pt-- = 'a' + (char)(digit - 10);
-			if ((val = (val >> 4)) == (u_long)0)
+			val >>= 4;
+			if (val == 0)
 				break;
 		}
 	} else {
 		while (pt >= str) {
 			*pt-- = '0' + (char)(val & 0x7);
-			if ((val = (val >> 3)) == (u_long)0)
+			val >>= 3;
+			if (val == 0)
 				break;
 		}
 	}
@@ -267,26 +269,26 @@ ul_asc(u_long val, char *str, int len, int base)
 	 */
 	while (pt >= str)
 		*pt-- = '0';
-	if (val != (u_long)0)
+	if (val != 0)
 		return(-1);
 	return(0);
 }
 
 /*
- * asc_uqd()
- *	convert hex/octal character string into a u_quad_t. We do not have to
- *	check for overflow! (the headers in all supported formats are not large
- *	enough to create an overflow).
+ * asc_ull()
+ *	Convert hex/octal character string into a unsigned long long.
+ *	We do not have to check for overflow!  (The headers in all
+ *	supported formats are not large enough to create an overflow).
  *	NOTE: strings passed to us are NOT TERMINATED.
  * Return:
- *	u_quad_t value
+ *	unsigned long long value
  */
 
-u_quad_t
-asc_uqd(char *str, int len, int base)
+unsigned long long
+asc_ull(char *str, int len, int base)
 {
 	char *stop;
-	u_quad_t tval = 0;
+	unsigned long long tval = 0;
 
 	stop = str + len;
 
@@ -319,17 +321,17 @@ asc_uqd(char *str, int len, int base)
 }
 
 /*
- * uqd_asc()
- *	convert an u_quad_t into a hex/oct ascii string. pads with LEADING
- *	ascii 0's to fill string completely
+ * ull_asc()
+ *	Convert an unsigned long long into a hex/oct ascii string.
+ *	Pads with LEADING ascii 0's to fill string completely
  *	NOTE: the string created is NOT TERMINATED.
  */
 
 int
-uqd_asc(u_quad_t val, char *str, int len, int base)
+ull_asc(unsigned long long val, char *str, int len, int base)
 {
 	char *pt;
-	u_quad_t digit;
+	unsigned long long digit;
 
 	/*
 	 * WARNING str is not '\0' terminated by this routine
@@ -347,13 +349,15 @@ uqd_asc(u_quad_t val, char *str, int len, int base)
 				*pt-- = '0' + (char)digit;
 			else
 				*pt-- = 'a' + (char)(digit - 10);
-			if ((val = (val >> 4)) == (u_quad_t)0)
+			val >>= 4;
+			if (val == 0)
 				break;
 		}
 	} else {
 		while (pt >= str) {
 			*pt-- = '0' + (char)(val & 0x7);
-			if ((val = (val >> 3)) == (u_quad_t)0)
+			val >>= 3;
+			if (val == 0)
 				break;
 		}
 	}
@@ -363,7 +367,7 @@ uqd_asc(u_quad_t val, char *str, int len, int base)
 	 */
 	while (pt >= str)
 		*pt-- = '0';
-	if (val != (u_quad_t)0)
+	if (val != 0)
 		return(-1);
 	return(0);
 }

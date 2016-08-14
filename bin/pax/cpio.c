@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.27 2015/03/19 05:14:24 guenther Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.28 2016/08/14 04:47:52 guenther Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -270,7 +270,7 @@ int
 cpio_rd(ARCHD *arcn, char *buf)
 {
 	int nsz;
-	u_quad_t val;
+	unsigned long long val;
 	HD_CPIO *hd;
 
 	/*
@@ -293,14 +293,14 @@ cpio_rd(ARCHD *arcn, char *buf)
 	arcn->sb.st_nlink = (nlink_t)asc_ul(hd->c_nlink, sizeof(hd->c_nlink),
 	    OCT);
 	arcn->sb.st_rdev = (dev_t)asc_ul(hd->c_rdev, sizeof(hd->c_rdev), OCT);
-	val = asc_uqd(hd->c_mtime, sizeof(hd->c_mtime), OCT);
+	val = asc_ull(hd->c_mtime, sizeof(hd->c_mtime), OCT);
 	if ((time_t)val < 0 || (time_t)val != val)
 		arcn->sb.st_mtime = INT_MAX;			/* XXX 2038 */
 	else
 		arcn->sb.st_mtime = val;
 	arcn->sb.st_mtim.tv_nsec = 0;
 	arcn->sb.st_ctim = arcn->sb.st_atim = arcn->sb.st_mtim;
-	arcn->sb.st_size = (off_t)asc_uqd(hd->c_filesize,sizeof(hd->c_filesize),
+	arcn->sb.st_size = (off_t)asc_ull(hd->c_filesize,sizeof(hd->c_filesize),
 	    OCT);
 
 	/*
@@ -396,7 +396,7 @@ cpio_wr(ARCHD *arcn)
 		/*
 		 * set data size for file data
 		 */
-		if (uqd_asc((u_quad_t)arcn->sb.st_size, hd->c_filesize,
+		if (ull_asc(arcn->sb.st_size, hd->c_filesize,
 		    sizeof(hd->c_filesize), OCT)) {
 			paxwarn(1,"File is too large for cpio format %s",
 			    arcn->org_name);
@@ -439,7 +439,7 @@ cpio_wr(ARCHD *arcn)
 		 OCT) ||
 	    ul_asc((u_long)arcn->sb.st_rdev, hd->c_rdev, sizeof(hd->c_rdev),
 		OCT) ||
-	    uqd_asc(arcn->sb.st_mtime < 0 ? 0 : arcn->sb.st_mtime, hd->c_mtime,
+	    ull_asc(arcn->sb.st_mtime < 0 ? 0 : arcn->sb.st_mtime, hd->c_mtime,
 		sizeof(hd->c_mtime), OCT) ||
 	    ul_asc((u_long)nsz, hd->c_namesize, sizeof(hd->c_namesize), OCT))
 		goto out;
@@ -575,7 +575,7 @@ vcpio_rd(ARCHD *arcn, char *buf)
 	arcn->sb.st_mtime = (time_t)asc_ul(hd->c_mtime,sizeof(hd->c_mtime),HEX);
 	arcn->sb.st_mtim.tv_nsec = 0;
 	arcn->sb.st_ctim = arcn->sb.st_atim = arcn->sb.st_mtim;
-	arcn->sb.st_size = (off_t)asc_uqd(hd->c_filesize,
+	arcn->sb.st_size = (off_t)asc_ull(hd->c_filesize,
 	    sizeof(hd->c_filesize), HEX);
 	arcn->sb.st_nlink = (nlink_t)asc_ul(hd->c_nlink, sizeof(hd->c_nlink),
 	    HEX);
@@ -711,7 +711,7 @@ vcpio_wr(ARCHD *arcn)
 		 * much to pad.
 		 */
 		arcn->pad = VCPIO_PAD(arcn->sb.st_size);
-		if (uqd_asc((u_quad_t)arcn->sb.st_size, hd->c_filesize,
+		if (ull_asc(arcn->sb.st_size, hd->c_filesize,
 		    sizeof(hd->c_filesize), HEX)) {
 			paxwarn(1,"File is too large for sv4cpio format %s",
 			    arcn->org_name);

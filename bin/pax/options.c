@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.93 2016/04/19 03:26:11 guenther Exp $	*/
+/*	$OpenBSD: options.c,v 1.94 2016/08/14 04:47:52 guenther Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -1373,7 +1373,7 @@ printflg(unsigned int flg)
 
 	(void)fprintf(stderr,"%s: Invalid combination of options:", argv0);
 	while ((nxt = ffs(flg)) != 0) {
-		flg = flg >> nxt;
+		flg >>= nxt;
 		pos += nxt;
 		(void)fprintf(stderr, " -%c", flgch[pos-1]);
 	}

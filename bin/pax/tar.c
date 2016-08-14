@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.59 2016/02/15 02:38:53 guenther Exp $	*/
+/*	$OpenBSD: tar.c,v 1.60 2016/08/14 04:47:52 guenther Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -56,7 +56,7 @@ static size_t expandname(char *, size_t, char **, const char *, size_t);
 static u_long tar_chksm(char *, int);
 static char *name_split(char *, int);
 static int ul_oct(u_long, char *, int, int);
-static int uqd_oct(u_quad_t, char *, int, int);
+static int ull_oct(unsigned long long, char *, int, int);
 #ifndef SMALL
 static int rd_xheader(ARCHD *arcn, int, off_t);
 #endif
@@ -186,30 +186,31 @@ ul_oct(u_long val, char *str, int len, int term)
 	 */
 	while (pt >= str) {
 		*pt-- = '0' + (char)(val & 0x7);
-		if ((val = val >> 3) == (u_long)0)
+		val >>= 3;
+		if (val == 0)
 			break;
 	}
 
 	while (pt >= str)
 		*pt-- = '0';
-	if (val != (u_long)0)
+	if (val != 0)
 		return(-1);
 	return(0);
 }
 
 /*
- * uqd_oct()
- *	convert an u_quad_t to an octal string. one of many oddball field
- *	termination characters are used by the various versions of tar in the
- *	different fields. term selects which kind to use. str is '0' padded
- *	at the front to len. we are unable to use only one format as many old
- *	tar readers are very cranky about this.
+ * ull_oct()
+ *	Convert an unsigned long long to an octal string.  One of many oddball
+ *	field termination characters are used by the various versions of tar
+ *	in the different fields.  term selects which kind to use.  str is
+ *	'0' padded at the front to len.  We are unable to use only one format
+ *	as many old tar readers are very cranky about this.
  * Return:
  *	0 if the number fit into the string, -1 otherwise
  */
 
 static int
-uqd_oct(u_quad_t val, char *str, int len, int term)
+ull_oct(unsigned long long val, char *str, int len, int term)
 {
 	char *pt;
 
@@ -240,13 +241,14 @@ uqd_oct(u_quad_t val, char *str, int len, int term)
 	 */
 	while (pt >= str) {
 		*pt-- = '0' + (char)(val & 0x7);
-		if ((val = val >> 3) == 0)
+		val >>= 3;
+		if (val == 0)
 			break;
 	}
 
 	while (pt >= str)
 		*pt-- = '0';
-	if (val != (u_quad_t)0)
+	if (val != 0)
 		return(-1);
 	return(0);
 }
@@ -378,7 +380,7 @@ int
 tar_rd(ARCHD *arcn, char *buf)
 {
 	HD_TAR *hd;
-	u_quad_t val;
+	unsigned long long val;
 	char *pt;
 
 	/*
@@ -404,8 +406,8 @@ tar_rd(ARCHD *arcn, char *buf)
 	    0xfff);
 	arcn->sb.st_uid = (uid_t)asc_ul(hd->uid, sizeof(hd->uid), OCT);
 	arcn->sb.st_gid = (gid_t)asc_ul(hd->gid, sizeof(hd->gid), OCT);
-	arcn->sb.st_size = (off_t)asc_uqd(hd->size, sizeof(hd->size), OCT);
-	val = asc_uqd(hd->mtime, sizeof(hd->mtime), OCT);
+	arcn->sb.st_size = (off_t)asc_ull(hd->size, sizeof(hd->size), OCT);
+	val = asc_ull(hd->mtime, sizeof(hd->mtime), OCT);
 	if ((time_t)val < 0 || (time_t)val != val)
 		arcn->sb.st_mtime = INT_MAX;                    /* XXX 2038 */
 	else
@@ -615,9 +617,9 @@ tar_wr(ARCHD *arcn)
 		 * data follows this file, so set the pad
 		 */
 		hd->linkflag = AREGTYPE;
-		if (uqd_oct((u_quad_t)arcn->sb.st_size, hd->size,
-		    sizeof(hd->size), 1)) {
-			paxwarn(1,"File is too large for tar %s", arcn->org_name);
+		if (ull_oct(arcn->sb.st_size, hd->size, sizeof(hd->size), 1)) {
+			paxwarn(1, "File is too large for tar %s",
+			    arcn->org_name);
 			return(1);
 		}
 		arcn->pad = TAR_PAD(arcn->sb.st_size);
@@ -627,7 +629,7 @@ tar_wr(ARCHD *arcn)
 	 * copy those fields that are independent of the type
 	 */
 	if (ul_oct((u_long)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 0) ||
-	    uqd_oct(arcn->sb.st_mtime < 0 ? 0 : arcn->sb.st_mtime, hd->mtime,
+	    ull_oct(arcn->sb.st_mtime < 0 ? 0 : arcn->sb.st_mtime, hd->mtime,
 		sizeof(hd->mtime), 1) ||
 	    ul_oct((u_long)arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 0) ||
 	    ul_oct((u_long)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 0))
@@ -739,7 +741,7 @@ ustar_rd(ARCHD *arcn, char *buf)
 	int cnt = 0;
 	dev_t devmajor;
 	dev_t devminor;
-	u_quad_t val;
+	unsigned long long val;
 
 	/*
 	 * we only get proper sized buffers
@@ -809,8 +811,8 @@ reset:
 	 */
 	arcn->sb.st_mode = (mode_t)(asc_ul(hd->mode, sizeof(hd->mode), OCT) &
 	    0xfff);
-	arcn->sb.st_size = (off_t)asc_uqd(hd->size, sizeof(hd->size), OCT);
-	val = asc_uqd(hd->mtime, sizeof(hd->mtime), OCT);
+	arcn->sb.st_size = (off_t)asc_ull(hd->size, sizeof(hd->size), OCT);
+	val = asc_ull(hd->mtime, sizeof(hd->mtime), OCT);
 	if ((time_t)val < 0 || (time_t)val != val)
 		arcn->sb.st_mtime = INT_MAX;                    /* XXX 2038 */
 	else
@@ -1044,9 +1046,9 @@ ustar_wr(ARCHD *arcn)
 		else
 			hd->typeflag = REGTYPE;
 		arcn->pad = TAR_PAD(arcn->sb.st_size);
-		if (uqd_oct((u_quad_t)arcn->sb.st_size, hd->size,
-		    sizeof(hd->size), 3)) {
-			paxwarn(1,"File is too long for ustar %s",arcn->org_name);
+		if (ull_oct(arcn->sb.st_size, hd->size, sizeof(hd->size), 3)) {
+			paxwarn(1, "File is too long for ustar %s",
+			    arcn->org_name);
 			return(1);
 		}
 		break;
@@ -1087,7 +1089,7 @@ ustar_wr(ARCHD *arcn)
 		if (ul_oct((u_long)gid_nobody, hd->gid, sizeof(hd->gid), 3))
 			goto out;
 	}
-	if (uqd_oct(arcn->sb.st_mtime < 0 ? 0 : arcn->sb.st_mtime, hd->mtime,
+	if (ull_oct(arcn->sb.st_mtime < 0 ? 0 : arcn->sb.st_mtime, hd->mtime,
 		sizeof(hd->mtime), 3) ||
 	    ul_oct((u_long)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 3))
 		goto out;
