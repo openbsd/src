@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.47 2015/03/19 05:14:24 guenther Exp $	*/
+/*	$OpenBSD: tables.c,v 1.48 2016/08/14 18:30:33 guenther Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -442,7 +442,7 @@ chk_ftime(ARCHD *arcn)
 		 * add the name at the end of the scratch file, saving the
 		 * offset. add the file to the head of the hash chain
 		 */
-		if ((pt->seek = lseek(ffd, (off_t)0, SEEK_END)) >= 0) {
+		if ((pt->seek = lseek(ffd, 0, SEEK_END)) >= 0) {
 			if (write(ffd, arcn->name, namelen) == namelen) {
 				pt->mtim = arcn->sb.st_mtim;
 				pt->namelen = namelen;

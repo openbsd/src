@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.60 2016/08/14 04:47:52 guenther Exp $	*/
+/*	$OpenBSD: tar.c,v 1.61 2016/08/14 18:30:33 guenther Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -84,7 +84,7 @@ char *gnu_link_string;			/* GNU ././@LongLink hackery link */
 int
 tar_endwr(void)
 {
-	return(wr_skip((off_t)(NULLCNT*BLKMULT)));
+	return wr_skip(NULLCNT * BLKMULT);
 }
 
 /*
@@ -97,7 +97,7 @@ tar_endwr(void)
 off_t
 tar_endrd(void)
 {
-	return((off_t)(NULLCNT*BLKMULT));
+	return NULLCNT * BLKMULT;
 }
 
 /*
@@ -592,7 +592,7 @@ tar_wr(ARCHD *arcn)
 		 */
 		hd->linkflag = AREGTYPE;
 		hd->name[len-1] = '/';
-		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
+		if (ul_oct(0, hd->size, sizeof(hd->size), 1))
 			goto out;
 	} else if (arcn->type == PAX_SLK) {
 		/*
@@ -601,7 +601,7 @@ tar_wr(ARCHD *arcn)
 		hd->linkflag = SYMTYPE;
 		fieldcpy(hd->linkname, sizeof(hd->linkname), arcn->ln_name,
 		    sizeof(arcn->ln_name));
-		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
+		if (ul_oct(0, hd->size, sizeof(hd->size), 1))
 			goto out;
 	} else if (PAX_IS_HARDLINK(arcn->type)) {
 		/*
@@ -610,7 +610,7 @@ tar_wr(ARCHD *arcn)
 		hd->linkflag = LNKTYPE;
 		fieldcpy(hd->linkname, sizeof(hd->linkname), arcn->ln_name,
 		    sizeof(arcn->ln_name));
-		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
+		if (ul_oct(0, hd->size, sizeof(hd->size), 1))
 			goto out;
 	} else {
 		/*
@@ -628,11 +628,11 @@ tar_wr(ARCHD *arcn)
 	/*
 	 * copy those fields that are independent of the type
 	 */
-	if (ul_oct((u_long)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 0) ||
+	if (ul_oct(arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 0) ||
 	    ull_oct(arcn->sb.st_mtime < 0 ? 0 : arcn->sb.st_mtime, hd->mtime,
 		sizeof(hd->mtime), 1) ||
-	    ul_oct((u_long)arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 0) ||
-	    ul_oct((u_long)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 0))
+	    ul_oct(arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 0) ||
+	    ul_oct(arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 0))
 		goto out;
 
 	/*
@@ -645,7 +645,7 @@ tar_wr(ARCHD *arcn)
 		goto out;
 	if (wr_rdbuf(hdblk, sizeof(HD_TAR)) < 0)
 		return(-1);
-	if (wr_skip((off_t)(BLKMULT - sizeof(HD_TAR))) < 0)
+	if (wr_skip(BLKMULT - sizeof(HD_TAR)) < 0)
 		return(-1);
 	if (PAX_IS_REG(arcn->type))
 		return(0);
@@ -973,7 +973,7 @@ ustar_wr(ARCHD *arcn)
 	 */
 	memset(hdblk, 0, sizeof(hdblk));
 	hd = (HD_USTAR *)hdblk;
-	arcn->pad = 0L;
+	arcn->pad = 0;
 
 	/*
 	 * split the name, or zero out the prefix
@@ -1002,7 +1002,7 @@ ustar_wr(ARCHD *arcn)
 	switch (arcn->type) {
 	case PAX_DIR:
 		hd->typeflag = DIRTYPE;
-		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
+		if (ul_oct(0, hd->size, sizeof(hd->size), 3))
 			goto out;
 		break;
 	case PAX_CHR:
@@ -1011,16 +1011,16 @@ ustar_wr(ARCHD *arcn)
 			hd->typeflag = CHRTYPE;
 		else
 			hd->typeflag = BLKTYPE;
-		if (ul_oct((u_long)MAJOR(arcn->sb.st_rdev), hd->devmajor,
+		if (ul_oct(MAJOR(arcn->sb.st_rdev), hd->devmajor,
 		   sizeof(hd->devmajor), 3) ||
-		   ul_oct((u_long)MINOR(arcn->sb.st_rdev), hd->devminor,
+		   ul_oct(MINOR(arcn->sb.st_rdev), hd->devminor,
 		   sizeof(hd->devminor), 3) ||
-		   ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
+		   ul_oct(0, hd->size, sizeof(hd->size), 3))
 			goto out;
 		break;
 	case PAX_FIF:
 		hd->typeflag = FIFOTYPE;
-		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
+		if (ul_oct(0, hd->size, sizeof(hd->size), 3))
 			goto out;
 		break;
 	case PAX_SLK:
@@ -1032,7 +1032,7 @@ ustar_wr(ARCHD *arcn)
 			hd->typeflag = LNKTYPE;
 		fieldcpy(hd->linkname, sizeof(hd->linkname), arcn->ln_name,
 		    sizeof(arcn->ln_name));
-		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
+		if (ul_oct(0, hd->size, sizeof(hd->size), 3))
 			goto out;
 		break;
 	case PAX_REG:
@@ -1061,7 +1061,7 @@ ustar_wr(ARCHD *arcn)
 	 * set the remaining fields. Some versions want all 16 bits of mode
 	 * we better humor them (they really do not meet spec though)....
 	 */
-	if (ul_oct((u_long)arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 3)) {
+	if (ul_oct(arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 3)) {
 		if (uid_nobody == 0) {
 			if (uid_name("nobody", &uid_nobody) == -1)
 				goto out;
@@ -1072,10 +1072,10 @@ ustar_wr(ARCHD *arcn)
 			    "Ustar header field is too small for uid %lu, "
 			    "using nobody", (u_long)arcn->sb.st_uid);
 		}
-		if (ul_oct((u_long)uid_nobody, hd->uid, sizeof(hd->uid), 3))
+		if (ul_oct(uid_nobody, hd->uid, sizeof(hd->uid), 3))
 			goto out;
 	}
-	if (ul_oct((u_long)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 3)) {
+	if (ul_oct(arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 3)) {
 		if (gid_nobody == 0) {
 			if (gid_name("nobody", &gid_nobody) == -1)
 				goto out;
@@ -1086,12 +1086,12 @@ ustar_wr(ARCHD *arcn)
 			    "Ustar header field is too small for gid %lu, "
 			    "using nobody", (u_long)arcn->sb.st_gid);
 		}
-		if (ul_oct((u_long)gid_nobody, hd->gid, sizeof(hd->gid), 3))
+		if (ul_oct(gid_nobody, hd->gid, sizeof(hd->gid), 3))
 			goto out;
 	}
 	if (ull_oct(arcn->sb.st_mtime < 0 ? 0 : arcn->sb.st_mtime, hd->mtime,
 		sizeof(hd->mtime), 3) ||
-	    ul_oct((u_long)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 3))
+	    ul_oct(arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 3))
 		goto out;
 	if (!Nflag) {
 		strncpy(hd->uname, name_uid(arcn->sb.st_uid, 0), sizeof(hd->uname));
@@ -1111,7 +1111,7 @@ ustar_wr(ARCHD *arcn)
 		goto out;
 	if (wr_rdbuf(hdblk, sizeof(HD_USTAR)) < 0)
 		return(-1);
-	if (wr_skip((off_t)(BLKMULT - sizeof(HD_USTAR))) < 0)
+	if (wr_skip(BLKMULT - sizeof(HD_USTAR)) < 0)
 		return(-1);
 	if (PAX_IS_REG(arcn->type))
 		return(0);

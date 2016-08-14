@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf_subs.c,v 1.27 2015/03/19 05:14:24 guenther Exp $	*/
+/*	$OpenBSD: buf_subs.c,v 1.28 2016/08/14 18:30:33 guenther Exp $	*/
 /*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
 
 /*-
@@ -236,7 +236,7 @@ appnd_start(off_t skcnt)
 	skcnt += bufend - bufpt;
 	if ((cnt = (skcnt/blksz) * blksz) < skcnt)
 		cnt += blksz;
-	if (ar_rev((off_t)cnt) < 0)
+	if (ar_rev(cnt) < 0)
 		goto out;
 
 	/*
@@ -258,7 +258,7 @@ appnd_start(off_t skcnt)
 				goto out;
 			bufpt += res;
 		}
-		if (ar_rev((off_t)(bufpt - buf)) < 0)
+		if (ar_rev(bufpt - buf) < 0)
 			goto out;
 		bufpt = buf + cnt;
 		bufend = buf + blksz;
@@ -428,7 +428,7 @@ rd_skip(off_t skcnt)
 	 * what is left we have to read (which may be the whole thing if
 	 * ar_fow() told us the device can only read to skip records);
 	 */
-	while (res > 0L) {
+	while (res > 0) {
 		cnt = bufend - bufpt;
 		/*
 		 * if the read fails, we will have to resync
@@ -565,7 +565,7 @@ wr_skip(off_t skcnt)
 	/*
 	 * loop while there is more padding to add
 	 */
-	while (skcnt > 0L) {
+	while (skcnt > 0) {
 		cnt = bufend - bufpt;
 		if ((cnt <= 0) && ((cnt = buf_flush(blksz)) < 0))
 			return(-1);
@@ -606,7 +606,7 @@ wr_rdfile(ARCHD *arcn, int ifd, off_t *left)
 	/*
 	 * while there are more bytes to write
 	 */
-	while (size > 0L) {
+	while (size > 0) {
 		cnt = bufend - bufpt;
 		if ((cnt <= 0) && ((cnt = buf_flush(blksz)) < 0)) {
 			*left = size;
@@ -625,7 +625,7 @@ wr_rdfile(ARCHD *arcn, int ifd, off_t *left)
 	 */
 	if (res < 0)
 		syswarn(1, errno, "Read fault on %s", arcn->org_name);
-	else if (size != 0L)
+	else if (size != 0)
 		paxwarn(1, "File changed size during read %s", arcn->org_name);
 	else if (fstat(ifd, &sb) < 0)
 		syswarn(1, errno, "Failed stat on %s", arcn->org_name);
@@ -681,14 +681,14 @@ rd_wrfile(ARCHD *arcn, int ofd, off_t *left)
 	} else
 		syswarn(0,errno,"Unable to obtain block size for file %s",fnm);
 	rem = sz;
-	*left = 0L;
+	*left = 0;
 
 	/*
 	 * Copy the archive to the file the number of bytes specified. We have
 	 * to assume that we want to recover file holes as none of the archive
 	 * formats can record the location of file holes.
 	 */
-	while (size > 0L) {
+	while (size > 0) {
 		cnt = bufend - bufpt;
 		/*
 		 * if we get a read error, we do not want to skip, as we may
@@ -721,20 +721,20 @@ rd_wrfile(ARCHD *arcn, int ofd, off_t *left)
 	 * written. just closing with the file offset moved forward may not put
 	 * a hole at the end of the file.
 	 */
-	if (isem && (arcn->sb.st_size > 0L))
+	if (isem && (arcn->sb.st_size > 0))
 		file_flush(ofd, fnm, isem);
 
 	/*
 	 * if we failed from archive read, we do not want to skip
 	 */
-	if ((size > 0L) && (*left == 0L))
+	if ((size > 0) && (*left == 0))
 		return(-1);
 
 	/*
 	 * some formats record a crc on file data. If so, then we compare the
 	 * calculated crc to the crc stored in the archive
 	 */
-	if (docrc && (size == 0L) && (arcn->crc != crc))
+	if (docrc && (size == 0) && (arcn->crc != crc))
 		paxwarn(1,"Actual crc does not match expected crc %s",arcn->name);
 	return(0);
 }
@@ -750,7 +750,7 @@ void
 cp_file(ARCHD *arcn, int fd1, int fd2)
 {
 	int cnt;
-	off_t cpcnt = 0L;
+	off_t cpcnt = 0;
 	int res = 0;
 	char *fnm = arcn->name;
 	int no_hole = 0;
@@ -813,7 +813,7 @@ cp_file(ARCHD *arcn, int fd1, int fd2)
 	 * written. just closing with the file offset moved forward may not put
 	 * a hole at the end of the file.
 	 */
-	if (!no_hole && isem && (arcn->sb.st_size > 0L))
+	if (!no_hole && isem && (arcn->sb.st_size > 0))
 		file_flush(fd2, fnm, isem);
 }
 

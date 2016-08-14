@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.48 2016/02/16 04:30:07 guenther Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.49 2016/08/14 18:30:33 guenther Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -961,7 +961,7 @@ file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
 				 * skip, buf is empty so far
 				 */
 				if (fd > -1 &&
-				    lseek(fd, (off_t)wcnt, SEEK_CUR) < 0) {
+				    lseek(fd, wcnt, SEEK_CUR) < 0) {
 					syswarn(1,errno,"File seek on %s",
 					    name);
 					return(-1);
@@ -1031,7 +1031,7 @@ file_flush(int fd, char *fname, int isempt)
 	/*
 	 * move back one byte and write a zero
 	 */
-	if (lseek(fd, (off_t)-1, SEEK_CUR) < 0) {
+	if (lseek(fd, -1, SEEK_CUR) < 0) {
 		syswarn(1, errno, "Failed seek on file %s", fname);
 		return;
 	}
@@ -1080,8 +1080,8 @@ set_crc(ARCHD *arcn, int fd)
 {
 	int i;
 	int res;
-	off_t cpcnt = 0L;
-	u_long size;
+	off_t cpcnt = 0;
+	size_t size;
 	u_int32_t crc = 0;
 	char tbuf[FILEBLK];
 	struct stat sb;
@@ -1090,12 +1090,12 @@ set_crc(ARCHD *arcn, int fd)
 		/*
 		 * hmm, no fd, should never happen. well no crc then.
 		 */
-		arcn->crc = 0L;
+		arcn->crc = 0;
 		return(0);
 	}
 
-	if ((size = (u_long)arcn->sb.st_blksize) > (u_long)sizeof(tbuf))
-		size = (u_long)sizeof(tbuf);
+	if ((size = arcn->sb.st_blksize) > sizeof(tbuf))
+		size = sizeof(tbuf);
 
 	/*
 	 * read all the bytes we think that there are in the file. If the user
@@ -1119,7 +1119,7 @@ set_crc(ARCHD *arcn, int fd)
 		syswarn(1, errno, "Failed stat on %s", arcn->org_name);
 	else if (timespeccmp(&arcn->sb.st_mtim, &sb.st_mtim, !=))
 		paxwarn(1, "File %s was modified during read", arcn->org_name);
-	else if (lseek(fd, (off_t)0L, SEEK_SET) < 0)
+	else if (lseek(fd, 0, SEEK_SET) < 0)
 		syswarn(1, errno, "File rewind failed on: %s", arcn->org_name);
 	else {
 		arcn->crc = crc;
