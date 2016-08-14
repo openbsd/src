@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
-/*	$OpenBSD: compare.c,v 1.25 2015/12/21 19:37:21 mmcc Exp $	*/
+/*	$OpenBSD: compare.c,v 1.26 2016/08/14 20:53:19 krw Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -182,8 +182,9 @@ typeerr:		LABEL;
 	}
 	if (s->flags & F_SIZE && s->st_size != p->fts_statp->st_size) {
 		LABEL;
-		(void)printf("%ssize (%qd, %qd)\n",
-		    tab, s->st_size, p->fts_statp->st_size);
+		(void)printf("%ssize (%lld, %lld)\n",
+		    tab, (long long)s->st_size,
+		    (long long)p->fts_statp->st_size);
 		tab = "\t";
 	}
 	/*
