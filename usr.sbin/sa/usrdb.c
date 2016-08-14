@@ -1,4 +1,4 @@
-/*	$OpenBSD: usrdb.c,v 1.9 2010/08/30 16:14:36 matthew Exp $	*/
+/*	$OpenBSD: usrdb.c,v 1.10 2016/08/14 22:29:01 krw Exp $	*/
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -231,7 +231,7 @@ usracct_print(void)
 	while (rv == 0) {
 		memcpy(ui, data.data, sizeof(struct userinfo));
 
-		printf("%-8s %9qu ",
+		printf("%-8s %9llu ",
 		    user_from_uid(ui->ui_uid, 0), ui->ui_calls);
 
 		t = (double) (ui->ui_utime + ui->ui_stime) /
@@ -243,15 +243,15 @@ usracct_print(void)
 
 		/* ui->ui_calls is always != 0 */
 		if (dflag)
-			printf("%12qu%s", ui->ui_io / ui->ui_calls, "avio");
+			printf("%12llu%s", ui->ui_io / ui->ui_calls, "avio");
 		else
-			printf("%12qu%s", ui->ui_io, "tio");
+			printf("%12llu%s", ui->ui_io, "tio");
 
 		/* t is always >= 0.0001; see above */
 		if (kflag)
 			printf("%12.0f%s", ui->ui_mem / t, "k");
 		else
-			printf("%12qu%s", ui->ui_mem, "k*sec");
+			printf("%12llu%s", ui->ui_mem, "k*sec");
 
 		printf("\n");
 

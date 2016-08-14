@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: extern.h,v 1.4 2015/01/16 06:40:20 deraadt Exp $
+ *	$Id: extern.h,v 1.5 2016/08/14 22:29:01 krw Exp $
  */
 
 #include <sys/param.h>	/* MAXCOMLEN */
@@ -38,23 +38,23 @@
 struct cmdinfo {
 	char		ci_comm[MAXCOMLEN+2];	/* command name (+ '*') */
 	uid_t		ci_uid;			/* user id */
-	u_quad_t	ci_calls;		/* number of calls */
-	u_quad_t	ci_etime;		/* elapsed time */
-	u_quad_t	ci_utime;		/* user time */
-	u_quad_t	ci_stime;		/* system time */
-	u_quad_t	ci_mem;			/* memory use */
-	u_quad_t	ci_io;			/* number of disk i/o ops */
+	uint64_t	ci_calls;		/* number of calls */
+	uint64_t	ci_etime;		/* elapsed time */
+	uint64_t	ci_utime;		/* user time */
+	uint64_t	ci_stime;		/* system time */
+	uint64_t	ci_mem;			/* memory use */
+	uint64_t	ci_io;			/* number of disk i/o ops */
 	u_int		ci_flags;		/* flags; see below */
 };
 #define	CI_UNPRINTABLE	0x0001			/* unprintable chars in name */
 
 struct userinfo {
 	uid_t		ui_uid;			/* user id; for consistency */
-	u_quad_t	ui_calls;		/* number of invocations */
-	u_quad_t	ui_utime;		/* user time */
-	u_quad_t	ui_stime;		/* system time */
-	u_quad_t	ui_mem;			/* memory use */
-	u_quad_t	ui_io;			/* number of disk i/o ops */
+	uint64_t	ui_calls;		/* number of invocations */
+	uint64_t	ui_utime;		/* user time */
+	uint64_t	ui_stime;		/* system time */
+	uint64_t	ui_mem;			/* memory use */
+	uint64_t	ui_io;			/* number of disk i/o ops */
 };
 
 /* typedefs */
