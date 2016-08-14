@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.38 2016/05/28 17:16:39 tb Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.39 2016/08/14 22:35:54 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -131,13 +131,13 @@ fsirand(char *device)
 	for (i = 0; sbtry[i] != -1; i++) {
 		sblockloc = sbtry[i];
 
-		if (lseek(devfd, (off_t)sblockloc, SEEK_SET) == -1) {
-			warn("Can't seek to superblock (%qd) on %s", sblockloc,
-			    devpath);
+		if (lseek(devfd, sblockloc, SEEK_SET) == -1) {
+			warn("Can't seek to superblock (%lld) on %s",
+			    (long long)sblockloc, devpath);
 			return (1);
 		}
 
-		if ((n = read(devfd, (void *)sblock, SBSIZE)) != SBSIZE) {
+		if ((n = read(devfd, sblock, SBSIZE)) != SBSIZE) {
 			warnx("Can't read superblock on %s: %s", devpath,
 			    (n < SBSIZE) ? "short read" : strerror(errno));
 			return (1);
@@ -180,10 +180,10 @@ fsirand(char *device)
 	tmpsblock = (struct fs *)&sbuftmp;
 	for (cg = 0; cg < sblock->fs_ncg; cg++) {
 		dblk = fsbtodb(sblock, cgsblock(sblock, cg));
-		if (lseek(devfd, (off_t)dblk * (off_t)bsize, SEEK_SET) < 0) {
-			warn("Can't seek to %qd", (off_t)dblk * bsize);
+		if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) < 0) {
+			warn("Can't seek to %lld", (long long)dblk * bsize);
 			return (1);
-		} else if ((n = read(devfd, (void *)tmpsblock, SBSIZE)) != SBSIZE) {
+		} else if ((n = read(devfd, tmpsblock, SBSIZE)) != SBSIZE) {
 			warn("Can't read backup superblock %d on %s: %s",
 			    cg + 1, devpath, (n < SBSIZE) ? "short read"
 			    : strerror(errno));
@@ -229,12 +229,12 @@ fsirand(char *device)
 		sblock->fs_id[0] = (u_int32_t)time(NULL);
 		sblock->fs_id[1] = arc4random();
 
-		if (lseek(devfd, (off_t)SBOFF, SEEK_SET) == -1) {
-			warn("Can't seek to superblock (%qd) on %s", SBOFF,
-			    devpath);
+		if (lseek(devfd, SBOFF, SEEK_SET) == -1) {
+			warn("Can't seek to superblock (%lld) on %s",
+			    (long long)SBOFF, devpath);
 			return (1);
 		}
-		if ((n = write(devfd, (void *)sblock, SBSIZE)) != SBSIZE) {
+		if ((n = write(devfd, sblock, SBSIZE)) != SBSIZE) {
 			warn("Can't write superblock on %s: %s", devpath,
 			    (n < SBSIZE) ? "short write" : strerror(errno));
 			return (1);
@@ -246,11 +246,12 @@ fsirand(char *device)
 		/* Update superblock if appropriate */
 		if ((sblock->fs_inodefmt >= FS_44INODEFMT) && !printonly) {
 			dblk = fsbtodb(sblock, cgsblock(sblock, cg));
-			if (lseek(devfd, (off_t)dblk * (off_t)bsize,
+			if (lseek(devfd, (off_t)dblk * bsize,
 			    SEEK_SET) < 0) {
-				warn("Can't seek to %qd", (off_t)dblk * bsize);
+				warn("Can't seek to %lld",
+				    (long long)dblk * bsize);
 				return (1);
-			} else if ((n = write(devfd, (void *)sblock, SBSIZE)) !=
+			} else if ((n = write(devfd, sblock, SBSIZE)) !=
 			    SBSIZE) {
 				warn("Can't read backup superblock %d on %s: %s",
 				    cg + 1, devpath, (n < SBSIZE) ? "short write"
@@ -261,8 +262,8 @@ fsirand(char *device)
 
 		/* Read in inodes, then print or randomize generation nums */
 		dblk = fsbtodb(sblock, ino_to_fsba(sblock, inumber));
-		if (lseek(devfd, (off_t)dblk * (off_t)bsize, SEEK_SET) < 0) {
-			warn("Can't seek to %qd", (off_t)dblk * bsize);
+		if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) < 0) {
+			warn("Can't seek to %lld", (long long)dblk * bsize);
 			return (1);
 		} else if ((n = read(devfd, inodebuf, ibufsize)) != ibufsize) {
 			warnx("Can't read inodes: %s",
@@ -290,9 +291,9 @@ fsirand(char *device)
 
 		/* Write out modified inodes */
 		if (!printonly) {
-			if (lseek(devfd, (off_t)dblk * (off_t)bsize, SEEK_SET) < 0) {
-				warn("Can't seek to %qd",
-				    (off_t)dblk * bsize);
+			if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) < 0) {
+				warn("Can't seek to %lld",
+				    (long long)dblk * bsize);
 				return (1);
 			} else if ((n = write(devfd, inodebuf, ibufsize)) !=
 				 ibufsize) {
