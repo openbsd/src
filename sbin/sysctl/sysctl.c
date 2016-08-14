@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.216 2016/07/27 14:44:59 tedu Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.217 2016/08/14 22:54:56 guenther Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -710,8 +710,7 @@ parse(char *string, int flags)
 			break;
 
 		case CTLTYPE_QUAD:
-			/* XXX - assumes sizeof(long long) == sizeof(quad_t) */
-			(void)sscanf(newval, "%lld", (long long *)&quadval);
+			(void)sscanf(newval, "%lld", &quadval);
 			newval = &quadval;
 			newsize = sizeof(quadval);
 			break;
@@ -940,20 +939,22 @@ parse(char *string, int flags)
 
 	case CTLTYPE_QUAD:
 		if (newsize == 0) {
-			long long tmp = *(quad_t *)buf;
+			int64_t tmp;
 
+			memcpy(&tmp, buf, sizeof tmp);
 			if (!nflag)
 				(void)printf("%s%s", string, equ);
 			(void)printf("%lld\n", tmp);
 		} else {
-			long long tmp = *(quad_t *)buf;
+			int64_t tmp;
 
+			memcpy(&tmp, buf, sizeof tmp);
 			if (!qflag) {
 				if (!nflag)
 					(void)printf("%s: %lld -> ",
 					    string, tmp);
-				tmp = *(quad_t *)newval;
-				(void)printf("%qd\n", tmp);
+				memcpy(&tmp, newval, sizeof tmp);
+				(void)printf("%lld\n", tmp);
 			}
 		}
 		return;
