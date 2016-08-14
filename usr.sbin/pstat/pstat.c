@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.107 2016/07/18 11:48:55 guenther Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.108 2016/08/14 22:47:26 guenther Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -530,7 +530,7 @@ ufs_print(struct vnode *vp)
 		else
 			(void)printf(" %7s", name);
 	else
-		(void)printf(" %7qd", ip->i_ffs1_size);
+		(void)printf(" %7lld", (long long)ip->i_ffs1_size);
 	return (0);
 }
 
@@ -630,7 +630,7 @@ nfs_print(struct vnode *vp)
 		else
 			(void)printf(" %7s", name);
 	else
-		(void)printf(" %7qd", np->n_size);
+		(void)printf(" %7lld", (long long)np->n_size);
 	return (0);
 }
 
