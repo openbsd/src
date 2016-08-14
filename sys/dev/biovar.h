@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.44 2015/05/29 00:33:37 uebayasi Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.45 2016/08/14 04:08:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -105,7 +105,7 @@ struct bioc_disk {
 #define BIOC_SDSCRUB_S		"Scrubbing"
 #define BIOC_SDINVALID		0xff
 #define BIOC_SDINVALID_S	"Invalid"
-	u_quad_t	bd_size;	/* size of the disk */
+	uint64_t	bd_size;	/* size of the disk */
 
 	char		bd_vendor[32];	/* scsi string */
 	char		bd_serial[32];	/* serial number */
@@ -141,7 +141,7 @@ struct bioc_vol {
 #define BIOC_SVREBUILD_S	"Rebuild"
 #define BIOC_SVINVALID		0xff
 #define BIOC_SVINVALID_S	"Invalid"
-	u_quad_t	bv_size;	/* size of the disk */
+	uint64_t	bv_size;	/* size of the disk */
 	int		bv_level;	/* raid level */
 	int		bv_nodisk;	/* nr of drives */
 	int		bv_cache;	/* cache mode */

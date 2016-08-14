@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.112 2015/09/10 18:10:34 deraadt Exp $	*/
+/*	$OpenBSD: ips.c,v 1.113 2016/08/14 04:08:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1145,7 +1145,7 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 		}
 	}
 
-	bv->bv_size = (u_quad_t)letoh32(ld->size) * IPS_SECSZ;
+	bv->bv_size = (uint64_t)letoh32(ld->size) * IPS_SECSZ;
 	bv->bv_level = di->drive[vid].raid;
 	bv->bv_nodisk = ld->chunkcnt;
 
@@ -1221,7 +1221,7 @@ out:
 	bd->bd_channel = chan;
 	bd->bd_target = target;
 	bd->bd_lun = 0;
-	bd->bd_size = (u_quad_t)letoh32(dev->seccnt) * IPS_SECSZ;
+	bd->bd_size = (uint64_t)letoh32(dev->seccnt) * IPS_SECSZ;
 
 	bzero(bd->bd_vendor, sizeof(bd->bd_vendor));
 	memcpy(bd->bd_vendor, dev->devid, MIN(sizeof(bd->bd_vendor),

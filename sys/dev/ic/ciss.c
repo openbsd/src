@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.74 2015/09/09 18:23:55 deraadt Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.75 2016/08/14 04:08:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -1016,7 +1016,7 @@ ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		bv->bv_status = BIOC_SVINVALID;
 		blks = (u_int)letoh16(ldid->nblocks[1]) << 16 |
 		    letoh16(ldid->nblocks[0]);
-		bv->bv_size = blks * (u_quad_t)letoh16(ldid->blksize);
+		bv->bv_size = blks * (uint64_t)letoh16(ldid->blksize);
 		bv->bv_level = ciss_level[ldid->type];
 		bv->bv_nodisk = ldp->ndrives;
 		strlcpy(bv->bv_dev, ldp->xname, sizeof(bv->bv_dev));

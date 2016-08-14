@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.203 2015/10/23 00:08:57 jsg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.204 2016/08/14 04:08:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -3264,7 +3264,7 @@ mpi_ioctl_vol(struct mpi_softc *sc, struct bioc_vol *bv)
 	if (rpg0->volume_status & MPI_CFG_RAID_VOL_0_STATUS_RESYNCING)
 		bv->bv_status = BIOC_SVREBUILD;
 
-	bv->bv_size = (u_quad_t)lemtoh32(&rpg0->max_lba) * 512;
+	bv->bv_size = (uint64_t)lemtoh32(&rpg0->max_lba) * 512;
 
 	switch (sc->sc_vol_list[id].vol_type) {
 	case MPI_CFG_RAID_TYPE_RAID_IS:
@@ -3356,7 +3356,7 @@ mpi_ioctl_disk(struct mpi_softc *sc, struct bioc_disk *bd)
 	bd->bd_channel = pdpg0.phys_disk_bus;
 	bd->bd_target = pdpg0.phys_disk_id;
 	bd->bd_lun = 0;
-	bd->bd_size = (u_quad_t)lemtoh32(&pdpg0.max_lba) * 512;
+	bd->bd_size = (uint64_t)lemtoh32(&pdpg0.max_lba) * 512;
 	strlcpy(bd->bd_vendor, (char *)pdpg0.vendor_id, sizeof(bd->bd_vendor));
 
 	switch (pdpg0.phys_disk_state) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.231 2015/09/09 18:23:55 deraadt Exp $	*/
+/*	$OpenBSD: ami.c,v 1.232 2016/08/14 04:08:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1971,8 +1971,8 @@ ami_vol(struct ami_softc *sc, struct bioc_vol *bv, struct ami_big_diskarray *p)
 		}
 
 		bv->bv_status = BIOC_SVONLINE;
-		bv->bv_size = (u_quad_t)p->apd[i].adp_size *
-		    (u_quad_t)512;
+		bv->bv_size = (uint64_t)p->apd[i].adp_size *
+		    (uint64_t)512;
 		bv->bv_nodisk = 1;
 		strlcpy(bv->bv_dev,
 		    sc->sc_hdr[bv->bv_volid].dev,
@@ -2176,7 +2176,7 @@ ami_ioctl_vol(struct ami_softc *sc, struct bioc_vol *bv)
 	if (p->ald[i].adl_spandepth > 1)
 		bv->bv_level *= 10;
 
-	bv->bv_size *= (u_quad_t)512;
+	bv->bv_size *= (uint64_t)512;
 
 	strlcpy(bv->bv_dev, sc->sc_hdr[i].dev, sizeof(bv->bv_dev));
 	
@@ -2223,8 +2223,8 @@ ami_ioctl_disk(struct ami_softc *sc, struct bioc_disk *bd)
 			    AMI_MAX_TARGET +
 			    p->ald[i].asp[s].adv[t].add_target;
 
-			bd->bd_size = (u_quad_t)p->apd[off].adp_size *
-			    (u_quad_t)512;
+			bd->bd_size = (uint64_t)p->apd[off].adp_size *
+			    (uint64_t)512;
 
 			switch (p->apd[off].adp_ostatus) {
 			case AMI_PD_UNCNF:
