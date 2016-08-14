@@ -1,4 +1,4 @@
-.\" $OpenBSD: useradd.8,v 1.33 2015/09/12 15:14:11 schwarze Exp $
+.\" $OpenBSD: useradd.8,v 1.34 2016/08/14 09:52:08 tb Exp $
 .\" $NetBSD: useradd.8,v 1.26 2003/02/25 10:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: September 12 2015 $
+.Dd $Mdocdate: August 14 2016 $
 .Dt USERADD 8
 .Os
 .Sh NAME
@@ -210,7 +210,9 @@ Create a new home directory for the new user.
 .It Fl o
 Allow the new user to have a UID which is already in use for another user.
 .It Fl p Ar password
-Specifies an already-encrypted password for the new user.
+Specifies a password encrypted with
+.Xr encrypt 1
+for the new user.
 This password can then be changed by using the
 .Xr chpass 1
 utility.
