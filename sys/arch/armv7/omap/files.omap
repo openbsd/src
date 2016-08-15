@@ -1,4 +1,4 @@
-#	$OpenBSD: files.omap,v 1.16 2016/08/11 04:33:06 jsg Exp $
+#	$OpenBSD: files.omap,v 1.17 2016/08/15 13:42:49 patrick Exp $
 
 define omap {}
 device omap: omap
@@ -64,10 +64,6 @@ file	arch/armv7/omap/omohci.c		omohci
 device omehci: usbus
 attach omehci at fdt
 file	arch/armv7/omap/omehci.c		omehci
-
-# NS16550 compatible serial ports
-attach	com at fdt with com_omap
-file	arch/armv7/omap/omap_com.c		com_omap
 
 device omusbtll
 attach omusbtll at omap

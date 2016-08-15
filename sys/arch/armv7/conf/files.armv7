@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.23 2016/08/13 10:58:45 kettenis Exp $
+#	$OpenBSD: files.armv7,v 1.24 2016/08/15 13:42:49 patrick Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -71,3 +71,7 @@ include "arch/armv7/sunxi/files.sunxi"
 include "arch/armv7/exynos/files.exynos"
 include "arch/armv7/vexpress/files.vexpress"
 include "arch/armv7/broadcom/files.broadcom"
+
+# Console related stuff
+attach	com at fdt with com_fdt
+file	arch/armv7/dev/com_fdt.c		com_fdt

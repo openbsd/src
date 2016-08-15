@@ -1,4 +1,4 @@
-/* $OpenBSD: omap_com.c,v 1.10 2016/08/12 03:22:41 jsg Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.1 2016/08/15 13:42:49 patrick Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -59,20 +59,20 @@
 #define com_isr 8
 #define ISR_RECV	(ISR_RXPL | ISR_XMODE | ISR_RCVEIR)
 
-int	omapuart_match(struct device *, void *, void *);
-void	omapuart_attach(struct device *, struct device *, void *);
-int	omapuart_activate(struct device *, int);
+int	com_fdt_match(struct device *, void *, void *);
+void	com_fdt_attach(struct device *, struct device *, void *);
+int	com_fdt_activate(struct device *, int);
 
 extern int comcnspeed;
 extern int comcnmode;
 
-struct cfattach com_omap_ca = {
-	sizeof (struct com_softc), omapuart_match, omapuart_attach, NULL,
-	omapuart_activate
+struct cfattach com_fdt_ca = {
+	sizeof (struct com_softc), com_fdt_match, com_fdt_attach, NULL,
+	com_fdt_activate
 };
 
 void
-omapuart_init_cons(void)
+com_fdt_init_cons(void)
 {
 	struct fdt_reg reg;
 	void *node;
@@ -89,7 +89,7 @@ omapuart_init_cons(void)
 }
 
 int
-omapuart_match(struct device *parent, void *match, void *aux)
+com_fdt_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
@@ -98,7 +98,7 @@ omapuart_match(struct device *parent, void *match, void *aux)
 }
 
 void
-omapuart_attach(struct device *parent, struct device *self, void *aux)
+com_fdt_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (struct com_softc *)self;
 	struct fdt_attach_args *faa = aux;
@@ -126,7 +126,7 @@ omapuart_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-omapuart_activate(struct device *self, int act)
+com_fdt_activate(struct device *self, int act)
 {
 	struct com_softc *sc = (struct com_softc *)self;
 	bus_space_tag_t iot = sc->sc_iot;
