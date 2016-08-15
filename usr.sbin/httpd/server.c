@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.87 2016/08/15 14:14:55 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.88 2016/08/15 16:12:34 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -416,6 +416,33 @@ server_foreach(int (*srv_cb)(struct server *,
 	}
 
 	return (0);
+}
+
+struct server *
+server_match(struct server *s2, int match_name)
+{
+	struct server	*s1;
+
+	/* Attempt to find matching server. */
+	TAILQ_FOREACH(s1, env->sc_servers, srv_entry) {
+		if ((s1->srv_conf.flags & SRVFLAG_LOCATION) != 0)
+			continue;
+		if (match_name) {
+			if (strcmp(s1->srv_conf.name, s2->srv_conf.name) != 0)
+				continue;
+		}
+		if (s1->srv_conf.port != s2->srv_conf.port)
+			continue;
+		if (sockaddr_cmp(
+		    (struct sockaddr *)&s1->srv_conf.ss,
+		    (struct sockaddr *)&s2->srv_conf.ss,
+		    s1->srv_conf.prefixlen) != 0)
+			continue;
+
+		return (s1);
+	}
+
+	return (NULL);
 }
 
 int

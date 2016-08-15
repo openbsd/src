@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.79 2016/08/15 13:48:24 jsing Exp $	*/
+/*	$OpenBSD: parse.y,v 1.80 2016/08/15 16:12:34 jsing Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -107,7 +107,6 @@ int		 host_if(const char *, struct addresslist *,
 int		 host(const char *, struct addresslist *,
 		    int, struct portrange *, const char *, int);
 void		 host_free(struct addresslist *);
-struct server	*server_match(struct server *, int);
 struct server	*server_inherit(struct server *, struct server_config *,
 		    struct server_config *);
 int		 getservice(char *);
@@ -1989,33 +1988,6 @@ host_free(struct addresslist *al)
 		TAILQ_REMOVE(al, h, entry);
 		free(h);
 	}
-}
-
-struct server *
-server_match(struct server *s2, int match_name)
-{
-	struct server	*s1;
-
-	/* Attempt to find matching server. */
-	TAILQ_FOREACH(s1, conf->sc_servers, srv_entry) {
-		if ((s1->srv_conf.flags & SRVFLAG_LOCATION) != 0)
-			continue;
-		if (match_name) {
-			if (strcmp(s1->srv_conf.name, s2->srv_conf.name) != 0)
-				continue;
-		}
-		if (s1->srv_conf.port != s2->srv_conf.port)
-			continue;
-		if (sockaddr_cmp(
-		    (struct sockaddr *)&s1->srv_conf.ss,
-		    (struct sockaddr *)&s2->srv_conf.ss,
-		    s1->srv_conf.prefixlen) != 0)
-			continue;
-
-		return (s1);
-	}
-
-	return (NULL);
 }
 
 struct server *
