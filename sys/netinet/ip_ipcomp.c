@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.44 2015/07/15 22:16:42 deraadt Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.45 2016/08/15 11:35:25 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -473,7 +473,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 
 	if (mi != NULL) {
 		/* Replace the rest of the mbuf chain. */
-		struct mbuf    *n = m_copym2(mi, 0, M_COPYALL, M_DONTWAIT);
+		struct mbuf    *n = m_dup_pkt(mi, 0, M_DONTWAIT);
 
 		if (n == NULL) {
 			DPRINTF(("ipcomp_output(): bad mbuf chain, IPCA %s/%08x\n",

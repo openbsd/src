@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.137 2016/03/07 18:44:00 naddy Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.138 2016/08/15 11:35:25 dlg Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -895,7 +895,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 	if (mi != NULL)	{
 		/* Replace the rest of the mbuf chain. */
-		struct mbuf *n = m_copym2(mi, 0, M_COPYALL, M_DONTWAIT);
+		struct mbuf *n = m_dup_pkt(mi, 0, M_DONTWAIT);
 
 		if (n == NULL) {
 			DPRINTF(("esp_output(): bad mbuf chain, SA %s/%08x\n",
