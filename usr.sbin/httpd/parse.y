@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.78 2016/06/21 21:35:24 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.79 2016/08/15 13:48:24 jsing Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -107,6 +107,7 @@ int		 host_if(const char *, struct addresslist *,
 int		 host(const char *, struct addresslist *,
 		    int, struct portrange *, const char *, int);
 void		 host_free(struct addresslist *);
+struct server	*server_match(struct server *, int);
 struct server	*server_inherit(struct server *, struct server_config *,
 		    struct server_config *);
 int		 getservice(char *);
@@ -283,24 +284,13 @@ server		: SERVER optmatch STRING	{
 
 			TAILQ_INSERT_TAIL(&srv->srv_hosts, srv_conf, entry);
 		} '{' optnl serveropts_l '}'	{
-			struct server		*s = NULL, *sn;
+			struct server		*s, *sn;
 			struct server_config	*a, *b;
 
 			srv_conf = &srv->srv_conf;
 
-			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
-				if ((s->srv_conf.flags &
-				    SRVFLAG_LOCATION) == 0 &&
-				    strcmp(s->srv_conf.name,
-				    srv->srv_conf.name) == 0 &&
-				    s->srv_conf.port == srv->srv_conf.port &&
-				    sockaddr_cmp(
-				    (struct sockaddr *)&s->srv_conf.ss,
-				    (struct sockaddr *)&srv->srv_conf.ss,
-				    s->srv_conf.prefixlen) == 0)
-					break;
-			}
-			if (s != NULL) {
+			/* Check if the new server already exists. */
+			if (server_match(srv, 1) != NULL) {
 				yyerror("server \"%s\" defined twice",
 				    srv->srv_conf.name);
 				serverconfig_free(srv_conf);
@@ -315,16 +305,39 @@ server		: SERVER optmatch STRING	{
 				YYERROR;
 			}
 
+			if ((s = server_match(srv, 0)) != NULL) {
+				if ((s->srv_conf.flags & SRVFLAG_TLS) != 
+				    (srv->srv_conf.flags & SRVFLAG_TLS)) {
+					yyerror("server \"%s\": tls and "
+					    "non-tls on same address/port",
+					    srv->srv_conf.name);
+					serverconfig_free(srv_conf);
+					free(srv);
+					YYERROR;
+				}
+				if (server_tls_cmp(s, srv) != 0) {
+					yyerror("server \"%s\": tls "
+					    "configuration mismatch on same "
+					    "address/port",
+					    srv->srv_conf.name);
+					serverconfig_free(srv_conf);
+					free(srv);
+					YYERROR;
+				}
+			}
+
 			if ((srv->srv_conf.flags & SRVFLAG_TLS) &&
 			    srv->srv_conf.tls_protocols == 0) {
-				yyerror("no TLS protocols");
+				yyerror("server \"%s\": no tls protocols",
+				    srv->srv_conf.name);
+				serverconfig_free(srv_conf);
 				free(srv);
 				YYERROR;
 			}
 
 			if (server_tls_load_keypair(srv) == -1) {
-				yyerror("failed to load public/private keys "
-				    "for server %s", srv->srv_conf.name);
+				yyerror("server \"%s\": failed to load "
+				    "public/private keys", srv->srv_conf.name);
 				serverconfig_free(srv_conf);
 				free(srv);
 				YYERROR;
@@ -398,7 +411,7 @@ serveroptsl	: LISTEN ON STRING opttls port {
 				    sizeof(*alias))) == NULL)
 					fatal("out of memory");
 
-				/* Add as an alias */
+				/* Add as an IP-based alias. */
 				s_conf = alias;
 			} else
 				s_conf = &srv->srv_conf;
@@ -416,9 +429,8 @@ serveroptsl	: LISTEN ON STRING opttls port {
 			s_conf->prefixlen = h->prefixlen;
 			host_free(&al);
 
-			if ($4) {
+			if ($4)
 				s_conf->flags |= SRVFLAG_TLS;
-			}
 
 			if (alias != NULL) {
 				/* IP-based; use name match flags from parent */
@@ -468,8 +480,20 @@ serveroptsl	: LISTEN ON STRING opttls port {
 			}
 		}
 		| tls			{
+			struct server_config	*sc;
+			int			 tls_flag = 0;
+
 			if (parentsrv != NULL) {
 				yyerror("tls configuration inside location");
+				YYERROR;
+			}
+
+			/* Ensure that at least one server has TLS enabled. */
+			TAILQ_FOREACH(sc, &srv->srv_hosts, entry) {
+				tls_flag |= (sc->flags & SRVFLAG_TLS);
+			}
+			if (tls_flag == 0) {
+				yyerror("tls options without tls listener");
 				YYERROR;
 			}
 		}
@@ -716,7 +740,7 @@ tlsopts		: CERTIFICATE STRING		{
 		| PROTOCOLS STRING		{
 			if (tls_config_parse_protocols(
 			    &srv_conf->tls_protocols, $2) != 0) {
-				yyerror("invalid TLS protocols");
+				yyerror("invalid tls protocols");
 				free($2);
 				YYERROR;
 			}
@@ -1968,6 +1992,33 @@ host_free(struct addresslist *al)
 }
 
 struct server *
+server_match(struct server *s2, int match_name)
+{
+	struct server	*s1;
+
+	/* Attempt to find matching server. */
+	TAILQ_FOREACH(s1, conf->sc_servers, srv_entry) {
+		if ((s1->srv_conf.flags & SRVFLAG_LOCATION) != 0)
+			continue;
+		if (match_name) {
+			if (strcmp(s1->srv_conf.name, s2->srv_conf.name) != 0)
+				continue;
+		}
+		if (s1->srv_conf.port != s2->srv_conf.port)
+			continue;
+		if (sockaddr_cmp(
+		    (struct sockaddr *)&s1->srv_conf.ss,
+		    (struct sockaddr *)&s2->srv_conf.ss,
+		    s1->srv_conf.prefixlen) != 0)
+			continue;
+
+		return (s1);
+	}
+
+	return (NULL);
+}
+
+struct server *
 server_inherit(struct server *src, struct server_config *alias,
     struct server_config *addr)
 {
@@ -2028,19 +2079,7 @@ server_inherit(struct server *src, struct server_config *alias,
 	}
 
 	/* Check if the new server already exists */
-	TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
-		if ((s->srv_conf.flags &
-		    SRVFLAG_LOCATION) == 0 &&
-		    strcmp(s->srv_conf.name,
-		    dst->srv_conf.name) == 0 &&
-		    s->srv_conf.port == dst->srv_conf.port &&
-		    sockaddr_cmp(
-		    (struct sockaddr *)&s->srv_conf.ss,
-		    (struct sockaddr *)&dst->srv_conf.ss,
-		    s->srv_conf.prefixlen) == 0)
-			break;
-	}
-	if (s != NULL) {
+	if (server_match(dst, 1) != NULL) {
 		yyerror("server \"%s\" defined twice",
 		    dst->srv_conf.name);
 		serverconfig_free(&dst->srv_conf);

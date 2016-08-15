@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.85 2016/04/28 17:18:06 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.86 2016/08/15 13:48:24 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -127,6 +127,30 @@ server_privinit(struct server *srv)
 	/* Open listening socket in the privileged process */
 	if ((srv->srv_s = server_socket_listen(&srv->srv_conf.ss,
 	    srv->srv_conf.port, &srv->srv_conf)) == -1)
+		return (-1);
+
+	return (0);
+}
+
+int
+server_tls_cmp(struct server *s1, struct server *s2)
+{
+	struct server_config	*sc1, *sc2;
+
+	sc1 = &s1->srv_conf;
+	sc2 = &s2->srv_conf;
+
+	if (sc1->tls_protocols != sc2->tls_protocols)
+		return (-1);
+	if (strcmp(sc1->tls_cert_file, sc2->tls_cert_file) != 0)
+		return (-1);
+	if (strcmp(sc1->tls_key_file, sc2->tls_key_file) != 0)
+		return (-1);
+	if (strcmp(sc1->tls_ciphers, sc2->tls_ciphers) != 0)
+		return (-1);
+	if (strcmp(sc1->tls_dhe_params, sc2->tls_dhe_params) != 0)
+		return (-1);
+	if (strcmp(sc1->tls_ecdhe_curve, sc2->tls_ecdhe_curve) != 0)
 		return (-1);
 
 	return (0);
