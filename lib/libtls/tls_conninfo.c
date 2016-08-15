@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.8 2016/08/12 15:10:59 jsing Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.9 2016/08/15 14:47:41 jsing Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -171,8 +171,10 @@ tls_conninfo_alpn_proto(struct tls *ctx)
 }
 
 int
-tls_get_conninfo(struct tls *ctx) {
+tls_get_conninfo(struct tls *ctx)
+{
 	const char * tmp;
+
 	if (ctx->ssl_peer_cert != NULL) {
 		if (tls_get_peer_cert_hash(ctx, &ctx->conninfo->hash) == -1)
 			goto err;
@@ -205,7 +207,8 @@ err:
 }
 
 void
-tls_free_conninfo(struct tls_conninfo *conninfo) {
+tls_free_conninfo(struct tls_conninfo *conninfo)
+{
 	if (conninfo != NULL) {
 		free(conninfo->alpn);
 		conninfo->alpn = NULL;
