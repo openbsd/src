@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc_gmac.c,v 1.1 2016/08/13 20:35:57 kettenis Exp $	*/
+/*	$OpenBSD: dwc_gmac.c,v 1.2 2016/08/15 18:31:28 kettenis Exp $	*/
 /* $NetBSD: dwc_gmac.c,v 1.34 2015/08/21 20:12:29 jmcneill Exp $ */
 
 /*-
@@ -141,7 +141,7 @@ struct cfdriver dwge_cd = {
 };
 
 void
-dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
+dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk, int phyloc)
 {
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	struct mii_data * const mii = &sc->sc_mii;
@@ -228,7 +228,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 
 	ifmedia_init(&mii->mii_media, 0, dwc_gmac_ifmedia_upd,
 	    dwc_gmac_ifmedia_sts);
-	mii_attach((void *)sc, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY,
+	mii_attach((void *)sc, mii, 0xffffffff, phyloc, MII_OFFSET_ANY,
 	    MIIF_DOPAUSE);
 
 	if (LIST_EMPTY(&mii->mii_phys)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc_gmac_var.h,v 1.1 2016/08/13 20:35:57 kettenis Exp $	*/
+/*	$OpenBSD: dwc_gmac_var.h,v 1.2 2016/08/15 18:31:28 kettenis Exp $	*/
 /* $NetBSD: dwc_gmac_var.h,v 1.6 2014/11/22 18:31:03 jmcneill Exp $ */
 
 /*-
@@ -91,5 +91,5 @@ struct dwc_gmac_softc {
 	uint16_t sc_mii_clk;
 };
 
-void dwc_gmac_attach(struct dwc_gmac_softc*, uint32_t /*mii_clk*/);
+void dwc_gmac_attach(struct dwc_gmac_softc*, uint32_t, int);
 int dwc_gmac_intr(struct dwc_gmac_softc*);

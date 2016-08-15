@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge_fdt.c,v 1.1 2016/08/13 22:07:01 kettenis Exp $	*/
+/*	$OpenBSD: if_dwge_fdt.c,v 1.2 2016/08/15 18:31:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -81,7 +81,10 @@ dwge_fdt_attach(struct device *parent, struct device *self, void *aux)
 	struct dwc_gmac_softc *sc = &fsc->sc_core;
 	struct fdt_attach_args *faa = aux;
 	char phy_mode[8];
+	int phyloc = MII_PHY_ANY;
 	uint32_t phy_supply;
+	uint32_t phy;
+	int node;
 	int clock;
 
 	if (faa->fa_nreg < 1)
@@ -105,6 +108,12 @@ dwge_fdt_attach(struct device *parent, struct device *self, void *aux)
 	else
 		clock = CCMU_GMAC_RGMII;
 
+	/* lookup PHY */
+	phy = OF_getpropint(faa->fa_node, "phy", 0);
+	node = OF_getnodebyphandle(phy);
+	if (node)
+		phyloc = OF_getpropint(node, "reg", phyloc);
+
 	/* enable clock */
 	sxiccmu_enablemodule(clock);
 	delay(5000);
@@ -121,7 +130,7 @@ dwge_fdt_attach(struct device *parent, struct device *self, void *aux)
 		goto clrpwr;
 	}
 
-	dwc_gmac_attach(sc, GMAC_MII_CLK_150_250M_DIV102);
+	dwc_gmac_attach(sc, GMAC_MII_CLK_150_250M_DIV102, phyloc);
 
 	return;
 clrpwr:
