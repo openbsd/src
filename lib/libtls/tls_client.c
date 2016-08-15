@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.33 2016/04/28 17:05:59 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.34 2016/08/15 14:04:23 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -193,9 +193,10 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 		goto err;
 	}
 
-	if (tls_configure_ssl(ctx) != 0)
+	if (tls_configure_ssl(ctx, ctx->ssl_ctx) != 0)
 		goto err;
-	if (tls_configure_keypair(ctx, ctx->ssl_ctx, ctx->config->keypair, 0) != 0)
+	if (tls_configure_ssl_keypair(ctx, ctx->ssl_ctx,
+	    ctx->config->keypair, 0) != 0)
 		goto err;
 
 	if (ctx->config->verify_name) {
@@ -204,9 +205,9 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 			goto err;
 		}
 	}
-
 	if (ctx->config->verify_cert &&
-	    (tls_configure_ssl_verify(ctx, SSL_VERIFY_PEER) == -1))
+	    (tls_configure_ssl_verify(ctx, ctx->ssl_ctx,
+	     SSL_VERIFY_PEER) == -1))
 		goto err;
 
 	if ((ctx->ssl_conn = SSL_new(ctx->ssl_ctx)) == NULL) {

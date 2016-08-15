@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.22 2016/08/12 15:10:59 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.23 2016/08/15 14:04:23 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -73,15 +73,16 @@ tls_configure_server(struct tls *ctx)
 		goto err;
 	}
 
-	if (tls_configure_ssl(ctx) != 0)
+	if (tls_configure_ssl(ctx, ctx->ssl_ctx) != 0)
 		goto err;
-	if (tls_configure_keypair(ctx, ctx->ssl_ctx, ctx->config->keypair, 1) != 0)
+	if (tls_configure_ssl_keypair(ctx, ctx->ssl_ctx,
+	    ctx->config->keypair, 1) != 0)
 		goto err;
 	if (ctx->config->verify_client != 0) {
 		int verify = SSL_VERIFY_PEER;
 		if (ctx->config->verify_client == 1)
 			verify |= SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
-		if (tls_configure_ssl_verify(ctx, verify) == -1)
+		if (tls_configure_ssl_verify(ctx, ctx->ssl_ctx, verify) == -1)
 			goto err;
 	}
 

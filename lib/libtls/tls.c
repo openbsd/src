@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.45 2016/08/13 13:05:51 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.46 2016/08/15 14:04:23 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -207,7 +207,7 @@ tls_configure(struct tls *ctx, struct tls_config *config)
 }
 
 int
-tls_configure_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
+tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
     struct tls_keypair *keypair, int required)
 {
 	EVP_PKEY *pkey = NULL;
@@ -274,27 +274,27 @@ tls_configure_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
 }
 
 int
-tls_configure_ssl(struct tls *ctx)
+tls_configure_ssl(struct tls *ctx, SSL_CTX *ssl_ctx)
 {
-	SSL_CTX_set_mode(ctx->ssl_ctx, SSL_MODE_ENABLE_PARTIAL_WRITE);
-	SSL_CTX_set_mode(ctx->ssl_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+	SSL_CTX_set_mode(ssl_ctx, SSL_MODE_ENABLE_PARTIAL_WRITE);
+	SSL_CTX_set_mode(ssl_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 
-	SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_SSLv2);
-	SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_SSLv3);
+	SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2);
+	SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv3);
 
-	SSL_CTX_clear_options(ctx->ssl_ctx, SSL_OP_NO_TLSv1);
-	SSL_CTX_clear_options(ctx->ssl_ctx, SSL_OP_NO_TLSv1_1);
-	SSL_CTX_clear_options(ctx->ssl_ctx, SSL_OP_NO_TLSv1_2);
+	SSL_CTX_clear_options(ssl_ctx, SSL_OP_NO_TLSv1);
+	SSL_CTX_clear_options(ssl_ctx, SSL_OP_NO_TLSv1_1);
+	SSL_CTX_clear_options(ssl_ctx, SSL_OP_NO_TLSv1_2);
 
 	if ((ctx->config->protocols & TLS_PROTOCOL_TLSv1_0) == 0)
-		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_TLSv1);
+		SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TLSv1);
 	if ((ctx->config->protocols & TLS_PROTOCOL_TLSv1_1) == 0)
-		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_TLSv1_1);
+		SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TLSv1_1);
 	if ((ctx->config->protocols & TLS_PROTOCOL_TLSv1_2) == 0)
-		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_NO_TLSv1_2);
+		SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TLSv1_2);
 
 	if (ctx->config->alpn != NULL) {
-		if (SSL_CTX_set_alpn_protos(ctx->ssl_ctx, ctx->config->alpn,
+		if (SSL_CTX_set_alpn_protos(ssl_ctx, ctx->config->alpn,
 		    ctx->config->alpn_len) != 0) {
 			tls_set_errorx(ctx, "failed to set alpn");
 			goto err;
@@ -302,7 +302,7 @@ tls_configure_ssl(struct tls *ctx)
 	}
 
 	if (ctx->config->ciphers != NULL) {
-		if (SSL_CTX_set_cipher_list(ctx->ssl_ctx,
+		if (SSL_CTX_set_cipher_list(ssl_ctx,
 		    ctx->config->ciphers) != 1) {
 			tls_set_errorx(ctx, "failed to set ciphers");
 			goto err;
@@ -310,7 +310,7 @@ tls_configure_ssl(struct tls *ctx)
 	}
 
 	if (ctx->config->verify_time == 0) {
-		X509_VERIFY_PARAM_set_flags(ctx->ssl_ctx->param,
+		X509_VERIFY_PARAM_set_flags(ssl_ctx->param,
 		    X509_V_FLAG_NO_CHECK_TIME);
 	}
 
@@ -321,13 +321,13 @@ tls_configure_ssl(struct tls *ctx)
 }
 
 int
-tls_configure_ssl_verify(struct tls *ctx, int verify)
+tls_configure_ssl_verify(struct tls *ctx, SSL_CTX *ssl_ctx, int verify)
 {
 	size_t ca_len = ctx->config->ca_len;
 	char *ca_mem = ctx->config->ca_mem;
 	char *ca_free = NULL;
 
-	SSL_CTX_set_verify(ctx->ssl_ctx, verify, NULL);
+	SSL_CTX_set_verify(ssl_ctx, verify, NULL);
 
 	/* If no CA has been specified, attempt to load the default. */
 	if (ctx->config->ca_mem == NULL && ctx->config->ca_path == NULL) {
@@ -342,19 +342,17 @@ tls_configure_ssl_verify(struct tls *ctx, int verify)
 			tls_set_errorx(ctx, "ca too long");
 			goto err;
 		}
-		if (SSL_CTX_load_verify_mem(ctx->ssl_ctx, ca_mem,
-		    ca_len) != 1) {
+		if (SSL_CTX_load_verify_mem(ssl_ctx, ca_mem, ca_len) != 1) {
 			tls_set_errorx(ctx, "ssl verify memory setup failure");
 			goto err;
 		}
-	} else if (SSL_CTX_load_verify_locations(ctx->ssl_ctx, NULL,
+	} else if (SSL_CTX_load_verify_locations(ssl_ctx, NULL,
 	    ctx->config->ca_path) != 1) {
 		tls_set_errorx(ctx, "ssl verify locations failure");
 		goto err;
 	}
 	if (ctx->config->verify_depth >= 0)
-		SSL_CTX_set_verify_depth(ctx->ssl_ctx,
-		    ctx->config->verify_depth);
+		SSL_CTX_set_verify_depth(ssl_ctx, ctx->config->verify_depth);
 
 	free(ca_free);
 
