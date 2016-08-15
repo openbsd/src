@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.19 2016/08/05 22:19:23 kettenis Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.20 2016/08/15 09:20:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -49,9 +49,9 @@
 #include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
 #include <armv7/sunxi/sxiccmuvar.h>
-#include <armv7/sunxi/sxipiovar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
 /* configuration registers */
@@ -215,6 +215,8 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 	if (faa->fa_nreg < 1)
 		return;
 
+	pinctrl_byname(faa->fa_node, "default");
+
 	sc->sc_iot = faa->fa_iot;
 
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
@@ -273,11 +275,9 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 void
 sxie_socware_init(struct sxie_softc *sc)
 {
-	int i, have_mac = 0;
+	int have_mac = 0;
 	uint32_t reg;
 
-	for (i = 0; i < SXIPIO_EMAC_NPINS; i++)
-		sxipio_setcfg(i, 2); /* mux pins to EMAC */
 	sxiccmu_enablemodule(CCMU_EMAC);
 
 	/* MII clock cfg */
