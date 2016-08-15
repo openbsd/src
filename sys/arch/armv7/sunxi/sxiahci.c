@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiahci.c,v 1.9 2016/08/05 19:00:25 kettenis Exp $	*/
+/*	$OpenBSD: sxiahci.c,v 1.10 2016/08/15 09:16:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013,2014 Artturi Alm
@@ -33,9 +33,9 @@
 #include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
 #include <armv7/sunxi/sxiccmuvar.h>
-#include <armv7/sunxi/sxipiovar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 #define	SXIAHCI_CAP	0x0000
@@ -97,6 +97,7 @@ sxiahci_attach(struct device *parent, struct device *self, void *aux)
 	struct sxiahci_softc *sxisc = (struct sxiahci_softc *)self;
 	struct ahci_softc *sc = &sxisc->sc;
 	struct fdt_attach_args *faa = aux;
+	uint32_t target_supply;
 	uint32_t timo;
 
 	if (faa->fa_nreg < 1)
@@ -165,8 +166,9 @@ sxiahci_attach(struct device *parent, struct device *self, void *aux)
 	SXIWRITE4(sc, SXIAHCI_RWC, 7);
 
 	/* power up phy */
-	sxipio_setcfg(SXIAHCI_PWRPIN, SXIPIO_OUTPUT);
-	sxipio_setpin(SXIAHCI_PWRPIN);
+	target_supply = OF_getpropint(faa->fa_node, "target-supply", 0);
+	if (target_supply)
+		regulator_enable(target_supply);
 
 	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_BIO,
 	    ahci_intr, sc, sc->sc_dev.dv_xname);
@@ -190,7 +192,8 @@ sxiahci_attach(struct device *parent, struct device *self, void *aux)
 irq:
 	arm_intr_disestablish(sc->sc_ih);
 clrpwr:
-	sxipio_clrpin(SXIAHCI_PWRPIN);
+	if (target_supply)
+		regulator_disable(target_supply);
 dismod:
 	sxiccmu_disablemodule(CCMU_AHCI);
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
