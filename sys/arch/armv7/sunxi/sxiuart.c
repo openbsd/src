@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiuart.c,v 1.12 2016/08/12 16:09:37 kettenis Exp $	*/
+/*	$OpenBSD: sxiuart.c,v 1.13 2016/08/15 04:32:57 mglocker Exp $	*/
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  * Copyright (c) 2013 Artturi Alm
@@ -660,11 +660,18 @@ sxiuartopen(dev_t dev, int flag, int mode, struct proc *p)
 		iot = sc->sc_iot;
 		ioh = sc->sc_ioh;
 
-		bus_space_write_1(iot, ioh, SXIUART_FCR, FIFOE | FIFO_RXT2);
-		delay(100);
-		while (ISSET(bus_space_read_1(iot, ioh, SXIUART_LSR),
-		    LSR_RXRDY))
+		/* (Re)enable and drain FIFOs. */
+		for (;;) {
+			bus_space_write_1(iot, ioh, SXIUART_FCR, 0);
+			delay(100);
 			(void)bus_space_read_1(iot, ioh, SXIUART_RBR);
+			bus_space_write_1(iot, ioh, SXIUART_FCR,
+			    FIFOE | FIFO_RXT0);
+			delay(100);
+			if (!ISSET(bus_space_read_1(iot, ioh, SXIUART_LSR),
+			    LSR_RXRDY))
+				break;
+		}
 
 		sc->sc_mcr = MCR_DTR | MCR_RTS | MCR_IENABLE;
 		bus_space_write_1(iot, ioh, SXIUART_MCR, sc->sc_mcr);
