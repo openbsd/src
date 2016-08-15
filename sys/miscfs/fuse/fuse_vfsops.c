@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.25 2016/08/13 11:42:46 natano Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.26 2016/08/15 07:39:46 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -300,28 +300,13 @@ retry:
 int
 fusefs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
-	struct ufid *ufhp;
-
-	ufhp = (struct ufid *)fhp;
-	if (ufhp->ufid_len != sizeof(struct ufid) ||
-	    ufhp->ufid_ino < FUSE_ROOTINO)
-		return (ESTALE);
-
-	return (VFS_VGET(mp, ufhp->ufid_ino, vpp));
+	return (EINVAL);
 }
 
 int
 fusefs_vptofh(struct vnode *vp, struct fid *fhp)
 {
-	struct fusefs_node *ip;
-	struct ufid *ufhp;
-
-	ip = VTOI(vp);
-	ufhp = (struct ufid *)fhp;
-	ufhp->ufid_len = sizeof(struct ufid);
-	ufhp->ufid_ino = ip->ufs_ino.i_number;
-
-	return (0);
+	return (EINVAL);
 }
 
 int
