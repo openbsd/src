@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.46 2016/05/31 15:28:08 jsing Exp $	*/
+/*	$OpenBSD: config.c,v 1.47 2016/08/15 14:14:55 jsing Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -241,10 +241,10 @@ config_settls(struct httpd *env, struct server *srv)
 	if ((srv_conf->flags & SRVFLAG_TLS) == 0)
 		return (0);
 
-	log_debug("%s: configuring TLS for %s", __func__, srv_conf->name);
+	log_debug("%s: configuring tls for %s", __func__, srv_conf->name);
 
 	if (srv_conf->tls_cert_len != 0) {
-		DPRINTF("%s: sending TLS cert \"%s[%u]\" to %s fd %d", __func__,
+		DPRINTF("%s: sending tls cert \"%s[%u]\" to %s fd %d", __func__,
 		    srv_conf->name, srv_conf->id, ps->ps_title[PROC_SERVER],
 		    srv->srv_s);
 
@@ -266,7 +266,7 @@ config_settls(struct httpd *env, struct server *srv)
 	}
 
 	if (srv_conf->tls_key_len != 0) {
-		DPRINTF("%s: sending TLS key \"%s[%u]\" to %s fd %d", __func__,
+		DPRINTF("%s: sending tls key \"%s[%u]\" to %s fd %d", __func__,
 		    srv_conf->name, srv_conf->id, ps->ps_title[PROC_SERVER],
 		    srv->srv_s);
 
@@ -580,7 +580,7 @@ config_gettls(struct httpd *env, struct imsg *imsg)
 		goto fail;
 	}
 
-	DPRINTF("%s: %s %d TLS configuration \"%s[%u]\"", __func__,
+	DPRINTF("%s: %s %d tls configuration \"%s[%u]\"", __func__,
 	    ps->ps_title[privsep_process], ps->ps_instance,
 	    srv_conf->name, srv_conf->id);
 

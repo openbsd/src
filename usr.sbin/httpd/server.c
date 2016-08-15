@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.86 2016/08/15 13:48:24 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.87 2016/08/15 14:14:55 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -186,7 +186,7 @@ server_tls_init(struct server *srv)
 	if ((srv->srv_conf.flags & SRVFLAG_TLS) == 0)
 		return (0);
 
-	log_debug("%s: setting up TLS for %s", __func__, srv->srv_conf.name);
+	log_debug("%s: setting up tls for %s", __func__, srv->srv_conf.name);
 
 	if (tls_init() != 0) {
 		log_warnx("%s: failed to initialise tls", __func__);
@@ -232,7 +232,7 @@ server_tls_init(struct server *srv)
 	}
 
 	if (tls_configure(srv->srv_tls_ctx, srv->srv_tls_config) != 0) {
-		log_warnx("%s: failed to configure TLS - %s", __func__,
+		log_warnx("%s: failed to configure tls - %s", __func__,
 		    tls_error(srv->srv_tls_ctx));
 		return (-1);
 	}
@@ -972,7 +972,7 @@ server_handshake_tls(int fd, short event, void *arg)
 	int ret;
 
 	if (event == EV_TIMEOUT) {
-		server_close(clt, "TLS handshake timeout");
+		server_close(clt, "tls handshake timeout");
 		return;
 	}
 
@@ -991,9 +991,9 @@ server_handshake_tls(int fd, short event, void *arg)
 		    server_handshake_tls, &clt->clt_tv_start,
 		    &srv->srv_conf.timeout, clt);
 	} else {
-		log_warnx("%s: TLS handshake failed - %s", __func__,
+		log_warnx("%s: tls handshake failed - %s", __func__,
 		    tls_error(clt->clt_tls_ctx));
-		server_close(clt, "TLS handshake failed");
+		server_close(clt, "tls handshake failed");
 	}
 }
 
