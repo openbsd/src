@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.35 2016/08/08 19:27:12 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.36 2016/08/15 21:04:32 patrick Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -124,6 +124,7 @@
 
 #include <dev/cons.h>
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/openfirm.h>
 
 #include <net/if.h>
 
@@ -214,6 +215,8 @@ bs_protos(bs_notimpl);
 
 int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
+
+int stdout_node = 0;
 
 /*
  * void boot(int howto, char *bootstr)
@@ -902,8 +905,10 @@ fdt_find_cons(const char *name)
 	/* Lookup the physical address of the interface. */
 	if (stdout) {
 		node = fdt_find_node(stdout);
-		if (node && fdt_is_compatible(node, name))
+		if (node && fdt_is_compatible(node, name)) {
+			stdout_node = OF_finddevice(stdout);
 			return (node);
+		}
 	}
 
 	return (NULL);

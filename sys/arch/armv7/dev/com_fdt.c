@@ -1,4 +1,4 @@
-/* $OpenBSD: com_fdt.c,v 1.2 2016/08/15 14:17:34 patrick Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.3 2016/08/15 21:04:32 patrick Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -123,6 +123,11 @@ com_fdt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc.sc_iobase = faa->fa_reg[0].addr;
 	sc->sc.sc_frequency = 48000000;
 	sc->sc.sc_uarttype = COM_UART_TI16750;
+
+	if (stdout_node == faa->fa_node) {
+		SET(sc->sc.sc_hwflags, COM_HW_CONSOLE);
+		SET(sc->sc.sc_swflags, COM_SW_SOFTCAR);
+	}
 
 	if (bus_space_map(sc->sc.sc_iot, sc->sc.sc_iobase,
 	    faa->fa_reg[0].size, 0, &sc->sc.sc_ioh)) {
