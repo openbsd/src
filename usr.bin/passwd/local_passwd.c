@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.47 2016/05/08 20:27:43 tim Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.48 2016/08/15 04:28:31 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -97,8 +97,7 @@ local_passwd(char *uname, int authenticated)
 		err(1, "pledge");
 
 	/* Reset password change time based on login.conf. */
-	period = (time_t)login_getcaptime(lc, "passwordtime",
-	    (quad_t)0, (quad_t)0);
+	period = (time_t)login_getcaptime(lc, "passwordtime", 0, 0);
 	if (period > 0) {
 		pw->pw_change = time(NULL) + period;
 	} else {
