@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.26 2016/04/28 14:46:10 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.27 2016/08/15 22:14:19 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -339,6 +339,7 @@ struct ieee80211_nodereq {
 	uint8_t			nr_rxmcs[howmany(80,NBBY)];
 	uint16_t		nr_max_rxrate;	/* in Mb/s, 0 <= rate <= 1023 */
 	uint8_t			nr_tx_mcs_set;
+	uint8_t			nr_txmcs;
 };
 
 #define IEEE80211_NODEREQ_STATE(_s)	(1 << _s)
@@ -352,6 +353,7 @@ struct ieee80211_nodereq {
 #define IEEE80211_NODEREQ_AP		0x01	/* access point */
 #define IEEE80211_NODEREQ_AP_BSS	0x02	/* current bss access point */
 #define IEEE80211_NODEREQ_COPY		0x04	/* add node with flags */
+#define IEEE80211_NODEREQ_HT		0x08	/* HT negotiated */
 
 #define SIOCG80211NODE		_IOWR('i', 211, struct ieee80211_nodereq)
 #define SIOCS80211NODE		 _IOW('i', 212, struct ieee80211_nodereq)
