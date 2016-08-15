@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.15 2016/08/01 15:58:22 tedu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.16 2016/08/15 22:01:59 tedu Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 2003/10/16 12:02:58 jdolecek Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 		/* authorize only one simultaneous open() unless
 		 * allowaperture=3 */
 		if (ap_open_count > 0 && allowaperture < 3)
-			return(EPERM);
+			return (EPERM);
 		ap_open_count++;
 		break;
 #endif
@@ -216,7 +216,6 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		}
 	}
 	if (minor(dev) == DEV_MEM) {
-/*unlock:*/
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
 		physlock = 0;

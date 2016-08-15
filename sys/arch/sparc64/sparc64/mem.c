@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.15 2016/07/27 15:12:36 tedu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.16 2016/08/15 22:01:59 tedu Exp $	*/
 /*	$NetBSD: mem.c,v 1.18 2001/04/24 04:31:12 thorpej Exp $ */
 
 /*
@@ -140,16 +140,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 
-		/* minor device 2 is EOF/RATHOLE */
+		/* minor device 2 is /dev/null */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-		/*
-		 * minor device 12 (/dev/zero) is source of nulls on read,
-		 * rathole on write.
-		 */
+		/* minor device 12 is /dev/zero */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;

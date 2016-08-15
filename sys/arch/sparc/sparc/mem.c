@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.26 2016/07/27 15:12:36 tedu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.27 2016/08/15 22:01:59 tedu Exp $	*/
 /*	$NetBSD: mem.c,v 1.13 1996/03/30 21:12:16 christos Exp $ */
 
 /*
@@ -157,14 +157,14 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			error = uiomove((caddr_t)va, c, uio);
 			continue;
 
-		/* minor device 2 is EOF/RATHOLE */
+		/* minor device 2 is /dev/null */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
 #if defined(SUN4)
-/* minor device 11 (/dev/eeprom) is the old-style (a'la Sun 3) EEPROM */
+		/* minor device 11 is /dev/eeprom */
 		case 11:
 			if (cputyp == CPU_SUN4)
 				error = eeprom_uio(uio);
@@ -174,7 +174,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			continue;
 #endif /* SUN4 */
 
-/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
+		/* minor device 12 is /dev/zero */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;

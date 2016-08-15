@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.22 2015/09/06 16:24:19 deraadt Exp $	*/
+/*	$OpenBSD: mem.c,v 1.23 2016/08/15 22:01:59 tedu Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -188,7 +188,6 @@ mem_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 
 #endif /* SMALL_KERNEL */
 
-/*ARGSUSED*/
 int
 mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -207,7 +206,7 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 		/* authorize only one simultaneous open() unless
 		 * allowaperture=3 */
 		if (ap_open_count > 0 && allowaperture < 3)
-			return(EPERM);
+			return (EPERM);
 		ap_open_count++;
 		break;
 #endif
@@ -217,7 +216,6 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -228,7 +226,6 @@ mmclose(dev_t dev, int flag, int mode, struct proc *p)
 	return 0;
 }
 
-/*ARGSUSED*/
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
@@ -265,15 +262,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
-		/* minor device 2 is EOF/RATHOLE */
+		/* minor device 2 is /dev/null */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return 0;
 
-		/* minor device 12 (/dev/zero) is source of nulls on read,
-		 * rathole on write
-		 */
+		/* minor device 12 is /dev/zero */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
 				c = iov->iov_len;
@@ -305,7 +300,6 @@ mmmmap(dev_t dev, off_t off, int prot)
 	return (-1);
 }
 
-/*ARGSUSED*/
 int
 mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {

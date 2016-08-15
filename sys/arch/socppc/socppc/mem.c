@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.4 2015/02/10 22:44:35 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.5 2016/08/15 22:01:59 tedu Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -55,7 +55,6 @@
 
 #include <machine/conf.h>
 
-/*ARGSUSED*/
 int
 mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -83,7 +82,6 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -94,7 +92,6 @@ mmclose(dev_t dev, int flag, int mode, struct proc *p)
 	return 0;
 }
 
-/*ARGSUSED*/
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
@@ -131,15 +128,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
-		/* minor device 2 is EOF/RATHOLE */
+		/* minor device 2 is /dev/null */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return 0;
 
-		/* minor device 12 (/dev/zero) is source of nulls on read,
-		 * rathole on write
-		 */
+		/* minor device 12 is /dev/zero */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
 				c = iov->iov_len;
@@ -171,7 +166,6 @@ mmmmap(dev_t dev, off_t off, int prot)
 	return (-1);
 }
 
-/*ARGSUSED*/
 int
 mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {

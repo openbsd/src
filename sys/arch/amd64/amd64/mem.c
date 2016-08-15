@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.29 2016/07/27 21:13:39 tedu Exp $ */
+/*	$OpenBSD: mem.c,v 1.30 2016/08/15 22:01:59 tedu Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -95,7 +95,7 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 		/* authorize only one simultaneous open() unless
 		 * allowaperture=3 */
 		if (ap_open_count > 0 && allowaperture < 3)
-			return(EPERM);
+			return (EPERM);
 		ap_open_count++;
 		break;
 #endif

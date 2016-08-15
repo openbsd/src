@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.6 2015/02/10 22:44:35 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.7 2016/08/15 22:01:59 tedu Exp $	*/
 /*	$NetBSD: mem.c,v 1.21 2006/07/23 22:06:07 ad Exp $	*/
 
 /*
@@ -102,7 +102,6 @@ cdev_decl(mm);
 #define	DEV_NULL	2
 #define	DEV_ZERO	12
 
-/* ARGSUSED */
 int
 mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -119,14 +118,12 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
@@ -208,7 +205,6 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 	return (error);
 }
 
-/*ARGSUSED*/
 paddr_t
 mmmmap(dev_t dev, off_t off, int prot)
 {
@@ -222,7 +218,6 @@ mmmmap(dev_t dev, off_t off, int prot)
 	return ((paddr_t)off);
 }
 
-/*ARGSUSED*/
 int
 mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {

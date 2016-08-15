@@ -1,4 +1,4 @@
-/* $OpenBSD: mem.c,v 1.29 2016/08/01 15:58:22 tedu Exp $ */
+/* $OpenBSD: mem.c,v 1.30 2016/08/15 22:01:59 tedu Exp $ */
 /* $NetBSD: mem.c,v 1.26 2000/03/29 03:48:20 simonb Exp $ */
 
 /*
@@ -84,7 +84,7 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 		/* authorize only one simultaneous open() unless
 		 * allowaperture=3 */
 		if (ap_open_count > 0 && allowaperture < 3)
-			return(EPERM);
+			return (EPERM);
 		ap_open_count++;
 		return (0);
 #endif
@@ -126,7 +126,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		}
 		switch (minor(dev)) {
 
-/* minor device 0 is physical memory */
+		/* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
 kmemphys:
@@ -167,13 +167,13 @@ kmemphys:
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 
-/* minor device 2 is EOF/rathole */
+		/* minor device 2 is /dev/null */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
+		/* minor device 12 is /dev/zero */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
@@ -202,18 +202,18 @@ mmmmap(dev_t dev, off_t off, int prot)
 {
 	switch (minor(dev)) {
 	case 0:
-	/*
-	 * /dev/mem is the only one that makes sense through this
-	 * interface.  For /dev/kmem any physaddr we return here
-	 * could be transient and hence incorrect or invalid at
-	 * a later time.  /dev/null just doesn't make any sense
-	 * and /dev/zero is a hack that is handled via the default
-	 * pager in mmap().
-	 */
+		/*
+		 * /dev/mem is the only one that makes sense through this
+		 * interface.  For /dev/kmem any physaddr we return here
+		 * could be transient and hence incorrect or invalid at
+		 * a later time.  /dev/null just doesn't make any sense
+		 * and /dev/zero is a hack that is handled via the default
+		 * pager in mmap().
+		 */
 
-	/*
-	 * Allow access only in RAM.
-	 */
+		/*
+		 * Allow access only in RAM.
+		 */
 		if ((prot & alpha_pa_access(atop(off))) != prot)
 			return (-1);
 		return off;
