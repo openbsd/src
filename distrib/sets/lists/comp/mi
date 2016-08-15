@@ -2477,8 +2477,6 @@
 ./usr/share/man/man3/pw_init.3
 ./usr/share/man/man3/pw_lock.3
 ./usr/share/man/man3/pwcache.3
-./usr/share/man/man3/qabs.3
-./usr/share/man/man3/qdiv.3
 ./usr/share/man/man3/qsort.3
 ./usr/share/man/man3/queue.3
 ./usr/share/man/man3/radius_new_request_packet.3
