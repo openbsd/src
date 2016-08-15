@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm_armv7.S,v 1.13 2016/08/06 16:46:25 kettenis Exp $ */
+/* $OpenBSD: cpufunc_asm_armv7.S,v 1.14 2016/08/15 21:08:56 kettenis Exp $ */
 /*
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
  *
@@ -103,8 +103,6 @@ ENTRY(armv7_tlb_flushD)
 	i_inc	.req r3
 ENTRY(armv7_icache_sync_range)
 	ldr	ip, .Larmv7_icache_line_size
-	cmp	r1, #0x8000
-	movcs	r1, #0x8000	/* XXX needs to match cache size... */
 	ldr	ip, [ip]
 	sub	r1, r1, #1		/* Don't overrun */
 	sub	r3, ip, #1
@@ -136,8 +134,6 @@ ENTRY(armv7_icache_sync_all)
 
 ENTRY(armv7_dcache_wb_range)
 	ldr	ip, .Larmv7_dcache_line_size
-	cmp	r1, #0x8000
-	movcs	r1, #0x8000	/* XXX needs to match cache size... */
 	ldr	ip, [ip]
 	sub	r1, r1, #1		/* Don't overrun */
 	sub	r3, ip, #1
@@ -155,8 +151,6 @@ ENTRY(armv7_dcache_wb_range)
 
 ENTRY(armv7_idcache_wbinv_range)
 	ldr	ip, .Larmv7_idcache_line_size
-	cmp	r1, #0x8000
-	movcs	r1, #0x8000	/* XXX needs to match cache size... */
 	ldr	ip, [ip]
 	sub	r1, r1, #1		/* Don't overrun */
 	sub	r3, ip, #1
@@ -177,8 +171,6 @@ ENTRY(armv7_idcache_wbinv_range)
 
 ENTRY(armv7_dcache_wbinv_range)
 	ldr	ip, .Larmv7_dcache_line_size
-	cmp	r1, #0x8000
-	movcs	r1, #0x8000	/* XXX needs to match cache size... */
 	ldr	ip, [ip]
 	sub	r1, r1, #1		/* Don't overrun */
 	sub	r3, ip, #1
@@ -198,8 +190,6 @@ ENTRY(armv7_dcache_wbinv_range)
 
 ENTRY(armv7_dcache_inv_range)
 	ldr	ip, .Larmv7_dcache_line_size
-	cmp	r1, #0x8000
-	movcs	r1, #0x8000	/* XXX needs to match cache size... */
 	ldr	ip, [ip]
 	sub	r1, r1, #1		/* Don't overrun */
 	sub	r3, ip, #1
