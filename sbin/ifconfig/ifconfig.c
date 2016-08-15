@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.325 2016/08/03 20:45:36 vgross Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.326 2016/08/15 22:16:46 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2341,8 +2341,19 @@ ieee80211_printnode(struct ieee80211_nodereq *nr)
 
 	if (nr->nr_pwrsave)
 		printf("powersave ");
-	/* Only print the fastest rate */
-	if (nr->nr_max_rxrate) {
+	/* 
+	 * Print our current Tx rate for associated nodes.
+	 * Print the fastest supported rate for APs.
+	 */
+	if ((nr->nr_flags & (IEEE80211_NODEREQ_AP)) == 0) {
+		if (nr->nr_flags & IEEE80211_NODEREQ_HT) {
+			printf("HT-MCS%d ", nr->nr_txmcs);
+		} else if (nr->nr_rates) {
+			printf("%uM ",
+			    (nr->nr_rates[nr->nr_txrate] & IEEE80211_RATE_VAL)
+			    / 2);
+		}
+	} else if (nr->nr_max_rxrate) {
 		printf("%uM HT ", nr->nr_max_rxrate);
 	} else if (nr->nr_rxmcs[0] != 0) {
 		for (i = IEEE80211_HT_NUM_MCS - 1; i >= 0; i--) {
@@ -2351,9 +2362,8 @@ ieee80211_printnode(struct ieee80211_nodereq *nr)
 		}
 		printf("HT-MCS%d ", i);
 	} else if (nr->nr_nrates) {
-		printf("%uM",
+		printf("%uM ",
 		    (nr->nr_rates[nr->nr_nrates - 1] & IEEE80211_RATE_VAL) / 2);
-		putchar(' ');
 	}
 	/* ESS is the default, skip it */
 	nr->nr_capinfo &= ~IEEE80211_CAPINFO_ESS;
