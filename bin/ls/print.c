@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.35 2015/12/01 18:36:13 schwarze Exp $	*/
+/*	$OpenBSD: print.c,v 1.36 2016/08/15 16:57:53 krw Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
 
 static int	printaname(FTSENT *, u_long, u_long);
 static void	printlink(FTSENT *);
-static void	printsize(size_t, off_t);
+static void	printsize(int, off_t);
 static void	printtime(time_t);
 static int	printtype(u_int);
 static int	compute_columns(DISPLAY *, int *);
@@ -98,8 +98,8 @@ printlong(DISPLAY *dp)
 			(void)printf("%*llu ", dp->s_inode,
 			    (unsigned long long)sp->st_ino);
 		if (f_size)
-			(void)printf("%*qd ",
-			    dp->s_block, howmany(sp->st_blocks, blocksize));
+			(void)printf("%*lld ", dp->s_block,
+			    howmany((long long)sp->st_blocks, blocksize));
 		(void)strmode(sp->st_mode, buf);
 		np = p->fts_pointer;
 		(void)printf("%s %*u ", buf, dp->s_nlink, sp->st_nlink);
@@ -112,8 +112,9 @@ printlong(DISPLAY *dp)
 			(void)printf("%3d, %3d ",
 			    major(sp->st_rdev), minor(sp->st_rdev));
 		else if (dp->bcfile)
-			(void)printf("%*s%*qd ",
-			    8 - dp->s_size, "", dp->s_size, sp->st_size);
+			(void)printf("%*s%*lld ",
+			    8 - dp->s_size, "", dp->s_size,
+			    (long long)sp->st_size);
 		else
 			printsize(dp->s_size, sp->st_size);
 		if (f_accesstime)
@@ -229,8 +230,8 @@ printaname(FTSENT *p, u_long inodefield, u_long sizefield)
 		chcnt += printf("%*llu ", (int)inodefield,
 		    (unsigned long long)sp->st_ino);
 	if (f_size)
-		chcnt += printf("%*qd ",
-		    (int)sizefield, howmany(sp->st_blocks, blocksize));
+		chcnt += printf("%*lld ", (int)sizefield,
+		    howmany((long long)sp->st_blocks, blocksize));
 	chcnt += mbsprint(p->fts_name, 1);
 	if (f_type || (f_typedir && S_ISDIR(sp->st_mode)))
 		chcnt += printtype(sp->st_mode);
@@ -366,13 +367,13 @@ printlink(FTSENT *p)
 }
 
 static void
-printsize(size_t width, off_t bytes)
+printsize(int width, off_t bytes)
 {
 	char ret[FMT_SCALED_STRSIZE];
 
 	if ((f_humanval) && (fmt_scaled(bytes, ret) != -1)) {
-		(void)printf("%*s ", (u_int)width, ret);
+		(void)printf("%*s ", width, ret);
 		return;
 	}
-	(void)printf("%*qd ", (u_int)width, bytes);
+	(void)printf("%*lld ", width, (long long)bytes);
 }
