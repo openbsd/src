@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.18 2016/05/28 08:13:16 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.19 2016/08/15 12:59:53 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -316,7 +316,6 @@ struct iwm_ucode_status {
 #define IWM_MVM_TE_SESSION_PROTECTION_MIN_TIME_MS 400
 
 enum IWM_CMD_MODE {
-	IWM_CMD_SYNC		= 0,
 	IWM_CMD_ASYNC		= (1 << 0),
 	IWM_CMD_WANT_SKB	= (1 << 1),
 	IWM_CMD_SEND_IN_RFKILL	= (1 << 2),
