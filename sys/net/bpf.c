@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.144 2016/08/15 07:03:47 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.145 2016/08/15 07:12:11 mpi Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1172,10 +1172,7 @@ bpf_tap(caddr_t arg, u_char *pkt, u_int pktlen, u_int direction)
 
 			KERNEL_LOCK();
 			s = splnet();
-			if (d->bd_bif != NULL) {
-				bpf_catchpacket(d, pkt, pktlen, slen,
-				    bcopy, &tv);
-			}
+			bpf_catchpacket(d, pkt, pktlen, slen, bcopy, &tv);
 			splx(s);
 			KERNEL_UNLOCK();
 
@@ -1265,10 +1262,8 @@ _bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction,
 
 			KERNEL_LOCK();
 			s = splnet();
-			if (d->bd_bif != NULL) {
-				bpf_catchpacket(d, (u_char *)m, pktlen, slen,
-				    cpfn, &tv);
-			}
+			bpf_catchpacket(d, (u_char *)m, pktlen, slen, cpfn,
+			    &tv);
 			splx(s);
 			KERNEL_UNLOCK();
 
@@ -1398,7 +1393,12 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 {
 	struct bpf_hdr *hp;
 	int totlen, curlen;
-	int hdrlen = d->bd_bif->bif_hdrlen;
+	int hdrlen;
+
+	if (d->bd_bif == NULL)
+		return;
+
+	hdrlen = d->bd_bif->bif_hdrlen;
 
 	/*
 	 * Figure out how many bytes to move.  If the packet is
