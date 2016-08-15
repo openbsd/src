@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.143 2016/07/25 13:19:32 natano Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.144 2016/08/15 07:03:47 mpi Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -116,7 +116,6 @@ int	filt_bpfread(struct knote *, long);
 int	bpf_sysctl_locked(int *, u_int, void *, size_t *, void *, size_t);
 
 struct bpf_d *bpfilter_lookup(int);
-struct bpf_d *bpfilter_create(int);
 
 /*
  * Reference count access to descriptor buffers
@@ -331,23 +330,28 @@ bpfilterattach(int n)
 int
 bpfopen(dev_t dev, int flag, int mode, struct proc *p)
 {
-	struct bpf_d *d;
+	struct bpf_d *bd;
+	int unit = minor(dev);
 
-	if (minor(dev) & ((1 << CLONE_SHIFT) - 1))
+	if (unit & ((1 << CLONE_SHIFT) - 1))
 		return (ENXIO);
 
+	KASSERT(bpfilter_lookup(unit) == NULL);
+
 	/* create on demand */
-	if ((d = bpfilter_create(minor(dev))) == NULL)
+	if ((bd = malloc(sizeof(*bd), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (EBUSY);
 
 	/* Mark "free" and do most initialization. */
-	d->bd_bufsize = bpf_bufsize;
-	d->bd_sig = SIGIO;
+	bd->bd_unit = unit;
+	bd->bd_bufsize = bpf_bufsize;
+	bd->bd_sig = SIGIO;
 
 	if (flag & FNONBLOCK)
-		d->bd_rtout = -1;
+		bd->bd_rtout = -1;
 
-	D_GET(d);
+	D_GET(bd);
+	LIST_INSERT_HEAD(&bpf_d_list, bd, bd_list);
 
 	return (0);
 }
@@ -1623,20 +1627,6 @@ bpfilter_lookup(int unit)
 		if (bd->bd_unit == unit)
 			return (bd);
 	return (NULL);
-}
-
-struct bpf_d *
-bpfilter_create(int unit)
-{
-	struct bpf_d *bd;
-
-	KASSERT(bpfilter_lookup(unit) == NULL);
-
-	if ((bd = malloc(sizeof(*bd), M_DEVBUF, M_NOWAIT|M_ZERO)) != NULL) {
-		bd->bd_unit = unit;
-		LIST_INSERT_HEAD(&bpf_d_list, bd, bd_list);
-	}
-	return (bd);
 }
 
 /*
