@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.20 2016/03/06 19:42:27 mpi Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.21 2016/08/16 13:03:58 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -159,10 +159,6 @@ setregs(p, pack, stack, retval)
 #endif
 	if (ci->ci_fpuproc == p)
 		ci->ci_fpuproc = NULL;
-	p->p_md.md_ss_addr = 0;
-	p->p_md.md_pc_ctrl = 0;
-	p->p_md.md_watch_1 = 0;
-	p->p_md.md_watch_2 = 0;
 
 	retval[1] = 0;
 }

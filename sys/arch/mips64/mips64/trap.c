@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.117 2016/08/14 08:23:52 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.118 2016/08/16 13:03:58 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,8 +69,6 @@
 #include <machine/mips_opcode.h>
 #include <machine/regnum.h>
 #include <machine/trap.h>
-
-#include <mips64/rm7000.h>
 
 #ifdef DDB
 #include <mips64/db_machdep.h>
@@ -677,12 +675,6 @@ fault_common_no_miss:
 		if (trapframe->cause & CR_BR_DELAY)
 			va += 4;
 		printf("watch exception @ %p\n", va);
-#ifdef RM7K_PERFCNTR
-		if (rm7k_watchintr(trapframe)) {
-			/* Return to user, don't add any more overhead */
-			return;
-		}
-#endif
 		i = SIGTRAP;
 		typ = TRAP_BRKPT;
 		break;
@@ -706,17 +698,6 @@ fault_common_no_miss:
 			    trapframe->pc, 0, 0);
 		else
 			locr0->pc += 4;
-#ifdef RM7K_PERFCNTR
-		if (instr == 0x040c0000) { /* Performance cntr trap */
-			int result;
-
-			result = rm7k_perfcntr(trapframe->a0, trapframe->a1,
-						trapframe->a2, trapframe->a3);
-			locr0->v0 = -result;
-			/* Return to user, don't add any more overhead */
-			return;
-		} else
-#endif
 		/*
 		 * GCC 4 uses teq with code 7 to signal divide by
 	 	 * zero at runtime. This is one instruction shorter

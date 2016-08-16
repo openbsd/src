@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.59 2015/12/25 08:34:50 visa Exp $ */
+/*	$OpenBSD: cpu.c,v 1.60 2016/08/16 13:03:58 visa Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -51,7 +51,6 @@ struct cpuset cpus_running;
 #endif
 
 vaddr_t	cache_valias_mask;
-int	cpu_is_rm7k = 0;
 
 struct cfattach cpu_ca = {
 	sizeof(struct device), cpumatch, cpuattach
@@ -175,7 +174,6 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 			printf("PMC-Sierra RM7000 CPU");
 		else
 			printf("PMC-Sierra RM7000A CPU");
-		cpu_is_rm7k++;
 		break;
 	case MIPS_R8000:
 		printf("MIPS R8000 CPU");

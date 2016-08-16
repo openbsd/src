@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.151 2016/03/06 19:42:27 mpi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.152 2016/08/16 13:03:58 visa Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -69,10 +69,6 @@ CACHE_PROTOS(ip22)
 #endif
 #ifdef TGT_INDIGO2
 CACHE_PROTOS(tcc)
-#endif
-
-#ifdef CPU_RM7000
-#include <mips64/rm7000.h>
 #endif
 
 #include <dev/cons.h>
@@ -1012,79 +1008,3 @@ is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 
 	return FALSE;
 }
-
-#ifdef CPU_RM7000
-#ifdef	RM7K_PERFCNTR
-/*
- * RM7000 Performance counter support.
- */
-int
-rm7k_perfcntr(cmd, arg1, arg2, arg3)
-	int cmd;
-	long  arg1, arg2, arg3;
-{
-	int result;
-	quad_t cntval;
-	struct proc *p = curproc;
-
-
-	switch(cmd) {
-	case PCNT_FNC_SELECT:
-		if ((arg1 & 0xff) > PCNT_SRC_MAX ||
-		   (arg1 & ~(PCNT_CE|PCNT_UM|PCNT_KM|0xff)) != 0) {
-			result = EINVAL;
-			break;
-		}
-#ifdef DEBUG
-printf("perfcnt select %x, proc %p\n", arg1, p);
-#endif
-		p->p_md.md_pc_count = 0;
-		p->p_md.md_pc_spill = 0;
-		p->p_md.md_pc_ctrl = arg1;
-		result = 0;
-		break;
-
-	case PCNT_FNC_READ:
-		cntval = p->p_md.md_pc_count;
-		cntval += (quad_t)p->p_md.md_pc_spill << 31;
-		result = copyout(&cntval, (void *)arg1, sizeof(cntval));
-		break;
-
-	default:
-#ifdef DEBUG
-printf("perfcnt error %d\n", cmd);
-#endif
-		result = -1;
-		break;
-	}
-	return(result);
-}
-
-/*
- * Called when the performance counter d31 gets set.
- * Increase spill value and reset d31.
- */
-void
-rm7k_perfintr(trapframe)
-	struct trapframe *trapframe;
-{
-	struct proc *p = curproc;
-
-#ifdef DEBUG
-	printf("perfintr proc %p!\n", p);
-#endif
-	cp0_setperfcount(cp0_getperfcount() & 0x7fffffff);
-	if (p != NULL) {
-		p->p_md.md_pc_spill++;
-	}
-}
-
-int
-rm7k_watchintr(trapframe)
-	struct trapframe *trapframe;
-{
-	return(0);
-}
-
-#endif	/* RM7K_PERFCNTR */
-#endif	/* CPU_RM7000 */

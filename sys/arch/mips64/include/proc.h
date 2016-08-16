@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.9 2016/03/06 19:42:27 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.10 2016/08/16 13:03:58 visa Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,13 +55,7 @@ struct mdproc {
 	vaddr_t	md_fpbranchva;		/* vaddr of fp branch destination */
 	vaddr_t	md_fpslotva;		/* initial vaddr of delay slot */
 
-/* The following is RM7000 dependent, but kept in for compatibility */
-	int	md_pc_ctrl;		/* performance counter control */
-	int	md_pc_count;		/* performance counter */
-	int	md_pc_spill;		/* performance counter spill */
-	quad_t	md_watch_1;
-	quad_t	md_watch_2;
-	int	md_watch_m;
+	int32_t	md_obsolete[10];	/* Were RM7000-specific data. */
 };
 
 /*

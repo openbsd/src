@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp0access.S,v 1.19 2012/10/03 11:18:23 miod Exp $ */
+/*	$OpenBSD: cp0access.S,v 1.20 2016/08/16 13:03:58 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -219,27 +219,4 @@ LEAF(cp0_set_trapbase, 0)
 	j	ra
 	 NOP
 END(cp0_set_trapbase)
-#endif
-
-#ifdef notused
-LEAF(cp0_getperfcount, 0)
-	MFC0	v0, COP_0_PC_COUNT
-	MFC0_HAZARD
-	j	ra
-	NOP
-END(cp0_getperfcount)
-
-LEAF(cp0_setperfcount, 0)
-	MTC0	a0, COP_0_PC_COUNT
-	MTC0_HAZARD
-	j	ra
-	NOP
-END(cp0_setperfcount)
-
-LEAF(cp0_setperfctrl, 0)
-	MTC0	a0, COP_0_PC_CTRL
-	MTC0_HAZARD
-	j	ra
-	NOP
-END(cp0_setperfctrl)
 #endif

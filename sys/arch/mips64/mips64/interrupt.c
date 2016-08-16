@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.66 2016/03/06 19:42:27 mpi Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.67 2016/08/16 13:03:58 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -39,8 +39,6 @@
 #include <mips64/mips_cpu.h>
 #include <machine/intr.h>
 #include <machine/frame.h>
-
-#include <mips64/rm7000.h>
 
 #ifdef DDB
 #include <mips64/db_machdep.h>
@@ -128,11 +126,6 @@ interrupt(struct trapframe *trapframe)
 		clearsoftintr0();
 		atomic_inc_long((unsigned long *)&soft_count.ec_count);
 	}
-
-#ifdef RM7K_PERFCNTR
-	if (pending & CR_INT_PERF)
-		rm7k_perfintr(trapframe);
-#endif
 
 	for (i = 0; i <= last_low_int; i++) {
 		uint32_t active;

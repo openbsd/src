@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.38 2014/03/26 19:38:18 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.39 2016/08/16 13:03:58 visa Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -266,55 +266,12 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	PTR_L	t0, CI_CURPROCPADDR(t1)	# curprocpaddr
 	SAVE_CPU_SREG(t0, 0)
 
-#ifdef PERFCNTRS
-	lw	t0, cpu_is_rm7k
-	beqz	t0, 1f			# not an RM7K. Don't do perf save.
-	nop
-
-	mfc0	v0, COP_0_PC_CTRL
-	PTR_L	t0, curproc
-	sw	v0, P_PC_CTRL(t0)
-	dmfc0	v0, COP_0_WATCH_1
-	dmfc0	v1, COP_0_WATCH_2
-	sd	v0, P_WATCH_1(t0)
-	sd	v1, P_WATCH_2(t0)
-	mfc0	v0, COP_0_WATCH_M
-	mfc0	v1, COP_0_PC_COUNT
-	sw	v0, P_WATCH_M(t0)
-	sw	v1, P_PC_COUNT(t0)
-	mtc0	zero, COP_0_PC_CTRL
-	dmtc0	zero, COP_0_WATCH_1
-	dmtc0	zero, COP_0_WATCH_2
-	nop;nop;nop;nop
-1:
-#endif
 	jal	ast
 	nop
 
 /*
  * Restore user registers and return. NOTE: interrupts are enabled.
  */
-#ifdef PERFCNTRS
-	lw	t0, cpu_is_rm7k
-	beqz	t0, 1f			# not an RM7K. Don't do perf setup.
-
-	GET_CPU_INFO(t1, t0)
-	PTR_L	t0, CI_CURPROC(t1)	# set up rm7k.
-	ld	v0, P_WATCH_1(t1)
-	dmtc0	v0, COP_0_WATCH_1
-	ld	v0, P_WATCH_2(t1)
-	dmtc0	v0, COP_0_WATCH_2
-	lw	v0, P_WATCH_M(t1)
-	mtc0	v0, COP_0_WATCH_M
-	lw	v0, P_PC_CTRL(t1)
-	lw	v1, P_PC_COUNT(t1)
-	nop;nop
-	mtc0	v0, COP_0_PC_CTRL
-	nop;nop;nop;nop
-	mtc0	v1, COP_0_PC_COUNT
-	nop;nop;nop;nop
-1:
-#endif
 	GET_CPU_INFO(t1, t0)
 	PTR_L	t0, CI_CURPROCPADDR(t1)
 	RESTORE_CPU_SREG(t0, 0)
@@ -419,27 +376,6 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	MTC0	t0, COP_0_STATUS_REG
 	MTC0_SR_IE_HAZARD
 
-#ifdef PERFCNTRS
-	lw	t0, cpu_is_rm7k
-	beqz	t0, 1f			# not an RM7K. Don't do perf save.
-	nop
-
-	mfc0	v0, COP_0_PC_CTRL
-	PTR_L	t0, CI_CURPROC(k1)
-	sw	v0, P_PC_CTRL(t0)
-	dmfc0	v0, COP_0_WATCH_1
-	dmfc0	v1, COP_0_WATCH_2
-	sd	v0, P_WATCH_1(t0)
-	sd	v1, P_WATCH_2(t0)
-	mfc0	v0, COP_0_WATCH_M
-	mfc0	v1, COP_0_PC_COUNT
-	sw	v0, P_WATCH_M(t0)
-	sw	v1, P_PC_COUNT(t0)
-	mtc0	zero, COP_0_PC_CTRL
-	nop;nop;nop;nop
-1:
-#endif
-
 	jal	trap
 	PTR_S	a3, CF_RA_OFFS(sp)		# for debugging
 
@@ -457,27 +393,6 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	nop
 
 4:
-#ifdef PERFCNTRS
-	lw	t0, cpu_is_rm7k
-	beqz	t0, 1f			# not an RM7K. Don't do perf setup.
-
-	GET_CPU_INFO(t1, t0)
-	PTR_L	t0, CI_CURPROC(k1)	# set up rm7k.
-	ld	v0, P_WATCH_1(t0)
-	dmtc0	v0, COP_0_WATCH_1
-	ld	v0, P_WATCH_2(t0)
-	dmtc0	v0, COP_0_WATCH_2
-	lw	v0, P_WATCH_M(t0)
-	mtc0	v0, COP_0_WATCH_M
-	lw	v0, P_PC_CTRL(t0)
-	lw	v1, P_PC_COUNT(t0)
-	nop;nop
-	mtc0	v0, COP_0_PC_CTRL
-	nop;nop;nop;nop
-	mtc0	v1, COP_0_PC_COUNT
-	nop;nop;nop;nop
-1:
-#endif
 	MFC0	t0, COP_0_STATUS_REG	# disable interrupts
 	LI	t1, ~SR_INT_ENAB
 	and	t0, t0, t1

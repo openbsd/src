@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.55 2016/08/14 08:23:52 visa Exp $ */
+/*	$OpenBSD: context.S,v 1.56 2016/08/16 13:03:58 visa Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -344,31 +344,6 @@ LEAF(proc_trampoline, 0)
 
 	jal	s0
 	 move	a0,s1			# invoke callback.
-
-#if 0	/* && defined(RM7000_ICR) */
-	lw	t0, cpu_is_rm7k
-	beqz	t0, 1f			# not an RM7K. Don't do IC reg.
-	 NOP
-	
-	GET_CPU_INFO(t1, t0)
-	PTR_L	t0, CI_CURPROC(t1)	# set up rm7k.
-	ld	v0, P_WATCH_1(t0)
-	dmtc0	v0, COP_0_WATCH_1
-	ld	v0, P_WATCH_2(t0)
-	dmtc0	v0, COP_0_WATCH_2
-	lw	v0, P_WATCH_M(t0)
-	mtc0	v0, COP_0_WATCH_M
-	lw	v0, P_PC_CTRL(t0)
-	lw	v1, P_PC_COUNT(t0)
-	nop;nop
-	mtc0	v0, COP_0_PC_CTRL
-	nop;nop;nop;nop
-	mtc0	v1, COP_0_PC_COUNT
-	nop;nop;nop;nop
-	li	v0, IC_INT_PERF
-	ctc0	v0, COP_0_ICR		# enable perfcntr interrupt.
-1:
-#endif
 
 	MFC0	t0, COP_0_STATUS_REG
 	MFC0_HAZARD
