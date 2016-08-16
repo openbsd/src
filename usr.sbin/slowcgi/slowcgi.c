@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.48 2015/11/20 09:04:01 tb Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.49 2016/08/16 08:23:18 reyk Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -46,6 +46,10 @@
 #define FCGI_PADDING_SIZE	 255
 #define FCGI_RECORD_SIZE	 \
     (sizeof(struct fcgi_record_header) + FCGI_CONTENT_SIZE + FCGI_PADDING_SIZE)
+
+#define FCGI_ALIGNMENT		 8
+#define FCGI_ALIGN(n)		 \
+    (((n) + (FCGI_ALIGNMENT - 1)) & ~(FCGI_ALIGNMENT - 1))
 
 #define STDOUT_DONE		 1
 #define STDERR_DONE		 2
@@ -552,6 +556,21 @@ slowcgi_sig_handler(int sig, short event, void *arg)
 void
 slowcgi_add_response(struct request *c, struct fcgi_response *resp)
 {
+	struct fcgi_record_header	*header;
+	size_t				 padded_len;
+
+	header = (struct fcgi_record_header*)resp->data;
+
+	/* The FastCGI spec suggests to align the output buffer */
+	padded_len = FCGI_ALIGN(resp->data_len);
+	if (padded_len > resp->data_len) {
+		/* There should always be FCGI_PADDING_SIZE bytes left */
+		if (padded_len > FCGI_RECORD_SIZE)
+			lerr(1, "response too long");
+		header->padding_len = padded_len - resp->data_len;
+		resp->data_len = padded_len;
+	}
+
 	TAILQ_INSERT_TAIL(&c->response_head, resp, entry);
 	event_add(&c->resp_ev, NULL);
 }
@@ -964,7 +983,7 @@ create_end_record(struct request *c)
 	struct fcgi_record_header	*header;
 	struct fcgi_end_request_body	*end_request;
 
-	if ((resp = malloc(sizeof(struct fcgi_response))) == NULL) {
+	if ((resp = calloc(1, sizeof(struct fcgi_response))) == NULL) {
 		lwarnx("cannot malloc fcgi_response");
 		return;
 	}
@@ -996,7 +1015,7 @@ script_in(int fd, struct event *ev, struct request *c, uint8_t type)
 	struct fcgi_record_header	*header;
 	ssize_t				 n;
 
-	if ((resp = malloc(sizeof(struct fcgi_response))) == NULL) {
+	if ((resp = calloc(1, sizeof(struct fcgi_response))) == NULL) {
 		lwarnx("cannot malloc fcgi_response");
 		return;
 	}
