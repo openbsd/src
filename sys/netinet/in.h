@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.117 2016/06/28 17:18:24 chris Exp $	*/
+/*	$OpenBSD: in.h,v 1.118 2016/08/16 22:21:17 vgross Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -307,6 +307,8 @@ struct ip_opts {
 #define IP_RECVRTABLE		35   /* bool; receive rdomain w/dgram */
 #define IP_IPSECFLOWINFO	36   /* bool; IPsec flow info for dgram */
 #define IP_IPDEFTTL		37   /* int; IP TTL system default */
+#define IP_SENDSRCADDR		IP_RECVDSTADDR  /* struct in_addr; */
+						/* source address to use */
 
 #define IP_RTABLE		0x1021	/* int; routing table, see SO_RTABLE */
 #define IP_DIVERTFL		0x1022	/* int; divert direction flag opt */

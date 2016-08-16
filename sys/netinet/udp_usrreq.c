@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.217 2016/08/04 20:46:24 vgross Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.218 2016/08/16 22:21:17 vgross Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -909,6 +909,7 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 	struct sockaddr_in *sin = NULL;
 	struct udpiphdr *ui;
 	u_int32_t ipsecflowinfo = 0;
+	struct sockaddr_in src_sin;
 	int len = m->m_pkthdr.len;
 	struct in_addr *laddr;
 	int error = 0;
@@ -926,6 +927,8 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 		error = EMSGSIZE;
 		goto release;
 	}
+
+	memset(&src_sin, 0, sizeof(src_sin));
 
 	if (control) {
 		u_int clen;
@@ -960,9 +963,20 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 			    cm->cmsg_level == IPPROTO_IP &&
 			    cm->cmsg_type == IP_IPSECFLOWINFO) {
 				ipsecflowinfo = *(u_int32_t *)CMSG_DATA(cm);
-				break;
-			}
+			} else
 #endif
+			if (cm->cmsg_len == CMSG_LEN(sizeof(struct in_addr)) &&
+			    cm->cmsg_level == IPPROTO_IP &&
+			    cm->cmsg_type == IP_SENDSRCADDR) {
+				memcpy(&src_sin.sin_addr, CMSG_DATA(cm),
+				    sizeof(struct in_addr));
+				src_sin.sin_family = AF_INET;
+				src_sin.sin_len = sizeof(src_sin);
+				/* no check on reuse when sin->sin_port == 0 */
+				if ((error = in_pcbaddrisavail(inp, &src_sin,
+				    0, curproc)))
+					goto release;
+			}
 			clen -= CMSG_ALIGN(cm->cmsg_len);
 			cmsgs += CMSG_ALIGN(cm->cmsg_len);
 		} while (clen);
@@ -999,6 +1013,17 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 			splx(s);
 			if (error)
 				goto release;
+		}
+
+		if (src_sin.sin_len > 0 &&
+		    src_sin.sin_addr.s_addr != INADDR_ANY &&
+		    src_sin.sin_addr.s_addr != inp->inp_laddr.s_addr) {
+			src_sin.sin_port = inp->inp_lport;
+			if (inp->inp_laddr.s_addr != INADDR_ANY &&
+			    (error =
+			    in_pcbaddrisavail(inp, &src_sin, 0, curproc)))
+				goto release;
+			laddr = &src_sin.sin_addr;
 		}
 	} else {
 		if (inp->inp_faddr.s_addr == INADDR_ANY) {
