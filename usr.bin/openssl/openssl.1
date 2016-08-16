@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.52 2016/08/14 09:02:52 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.53 2016/08/16 06:40:24 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 14 2016 $
+.Dd $Mdocdate: August 16 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1993,38 +1993,37 @@ The EC curve to use.
 Print an unencrypted text representation of private and public keys and
 parameters along with the DER or PEM structure.
 .El
-.\"
-.\" GENRSA
-.\"
 .Sh GENRSA
 .nr nS 1
 .Nm "openssl genrsa"
-.Bk -words
 .Op Fl 3 | f4
-.Oo
-.Fl aes128 | aes192 | aes256 |
-.Fl des | des3
-.Oc
+.Op Fl aes128 | aes192 | aes256 | des | des3
 .Op Fl out Ar file
 .Op Fl passout Ar arg
 .Op Ar numbits
-.Ek
 .nr nS 0
 .Pp
 The
 .Nm genrsa
-command generates an RSA private key.
+command generates an RSA private key,
+which essentially involves the generation of two prime numbers.
+When generating the key,
+various symbols will be output to indicate the progress of the generation.
+A
+.Sq \&.
+represents each number which has passed an initial sieve test;
+.Sq +
+means a number has passed a single round of the Miller-Rabin primality test.
+A newline means that the number has passed all the prime tests
+(the actual number depends on the key size).
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl 3 | f4
 The public exponent to use, either 3 or 65537.
 The default is 65537.
-.It Xo
-.Fl aes128 | aes192 | aes256 |
-.Fl des | des3
-.Xc
-These options encrypt the private key with the AES, DES,
+.It Fl aes128 | aes192 | aes256 | des | des3
+Encrypt the private key with the AES, DES,
 or the triple DES ciphers, respectively, before outputting it.
 If none of these options are specified, no encryption is used.
 If encryption is used, a pass phrase is prompted for,
@@ -2032,9 +2031,8 @@ if it is not supplied via the
 .Fl passout
 option.
 .It Fl out Ar file
-The output
-.Ar file .
-If this argument is not specified, standard output is used.
+The output file to write to,
+or standard output if none is specified.
 .It Fl passout Ar arg
 The output file password source.
 .It Ar numbits
@@ -2042,28 +2040,6 @@ The size of the private key to generate in bits.
 This must be the last option specified.
 The default is 2048.
 .El
-.Sh GENRSA NOTES
-RSA private key generation essentially involves the generation of two prime
-numbers.
-When generating a private key, various symbols will be output to
-indicate the progress of the generation.
-A
-.Sq \&.
-represents each number which has passed an initial sieve test;
-.Sq +
-means a number has passed a single round of the Miller-Rabin primality test.
-A newline means that the number has passed all the prime tests
-.Pq the actual number depends on the key size .
-.Pp
-Because key generation is a random process,
-the time taken to generate a key may vary somewhat.
-.Sh GENRSA BUGS
-A quirk of the prime generation algorithm is that it cannot generate small
-primes.
-Therefore the number of bits should not be less that 64.
-For typical private keys this will not matter because for security reasons
-they will be much larger
-.Pq typically 2048 bits .
 .\"
 .\" NSEQ
 .\"
