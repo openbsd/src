@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.313 2016/07/22 11:03:30 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.314 2016/08/16 09:01:14 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -873,7 +873,7 @@ rtrequest_delete(struct rt_addrinfo *info, u_int8_t prio, struct ifnet *ifp,
 	 * kernel.
 	 */
 	if ((rt->rt_flags & (RTF_LOCAL|RTF_BROADCAST)) &&
-	    prio != RTP_LOCAL) {
+	    (prio & RTP_MASK) != RTP_LOCAL) {
 		rtfree(rt);
 		return (EINVAL);
 	}
