@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.36 2016/08/15 16:57:53 krw Exp $	*/
+/*	$OpenBSD: print.c,v 1.37 2016/08/16 16:09:24 krw Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -52,11 +52,11 @@
 #include "ls.h"
 #include "extern.h"
 
-static int	printaname(FTSENT *, u_long, u_long);
+static int	printaname(FTSENT *, int, int);
 static void	printlink(FTSENT *);
 static void	printsize(int, off_t);
 static void	printtime(time_t);
-static int	printtype(u_int);
+static int	printtype(mode_t);
 static int	compute_columns(DISPLAY *, int *);
 
 #define	IS_NOPRINT(p)	((p)->fts_number == NO_PRINT)
@@ -219,7 +219,7 @@ printcol(DISPLAY *dp)
  * return # of characters printed, no trailing characters.
  */
 static int
-printaname(FTSENT *p, u_long inodefield, u_long sizefield)
+printaname(FTSENT *p, int inodefield, int sizefield)
 {
 	struct stat *sp;
 	int chcnt;
@@ -227,10 +227,10 @@ printaname(FTSENT *p, u_long inodefield, u_long sizefield)
 	sp = p->fts_statp;
 	chcnt = 0;
 	if (f_inode)
-		chcnt += printf("%*llu ", (int)inodefield,
+		chcnt += printf("%*llu ", inodefield,
 		    (unsigned long long)sp->st_ino);
 	if (f_size)
-		chcnt += printf("%*lld ", (int)sizefield,
+		chcnt += printf("%*lld ", sizefield,
 		    howmany((long long)sp->st_blocks, blocksize));
 	chcnt += mbsprint(p->fts_name, 1);
 	if (f_type || (f_typedir && S_ISDIR(sp->st_mode)))
@@ -323,7 +323,7 @@ printstream(DISPLAY *dp)
 }
 
 static int
-printtype(u_int mode)
+printtype(mode_t mode)
 {
 	switch (mode & S_IFMT) {
 	case S_IFDIR:
