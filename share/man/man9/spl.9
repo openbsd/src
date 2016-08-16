@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spl.9,v 1.25 2015/11/23 17:53:57 jmc Exp $
+.\"	$OpenBSD: spl.9,v 1.26 2016/08/16 23:49:35 dlg Exp $
 .\"	$NetBSD: spl.9,v 1.1 1997/03/11 06:15:05 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
@@ -27,10 +27,11 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 23 2015 $
+.Dd $Mdocdate: August 16 2016 $
 .Dt SPLX 9
 .Os
 .Sh NAME
+.Nm splraise ,
 .Nm splhigh ,
 .Nm splserial ,
 .Nm splsched ,
@@ -50,6 +51,8 @@
 .Nd modify system interrupt priority level
 .Sh SYNOPSIS
 .In machine/intr.h
+.Ft int
+.Fn splraise "int ipl"
 .Ft int
 .Fn splhigh void
 .Ft int
@@ -93,7 +96,7 @@ The code may then safely access variables and data structures which
 are used by kernel code that runs at an equal or lower priority level.
 .Pp
 An
-.Nm
+.Nm spl
 function exists for each distinct priority level which can exist in
 the system.
 These macros and the corresponding priority levels are
@@ -183,11 +186,16 @@ unblocks all interrupts.
 .El
 .Pp
 The
+.Fn splraise
+macro blocks interrupts at the interrupt priority level specified by
+.Fa ipl .
+.Pp
+The
 .Fn splx
 macro restores the system priority level to the one encoded in
 .Fa s ,
 which must be a value previously returned by one of the other
-.Nm
+.Nm spl
 macros.
 .Pp
 The
