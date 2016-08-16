@@ -1,4 +1,4 @@
-/*	$OpenBSD: conv.c,v 1.12 2015/01/16 06:39:31 deraadt Exp $	*/
+/*	$OpenBSD: conv.c,v 1.13 2016/08/16 16:44:55 krw Exp $	*/
 /*	$NetBSD: conv.c,v 1.6 1996/02/20 19:29:02 jtc Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@ def(void)
 		 * Ddout copies the leftover output to the beginning of
 		 * the buffer and resets the output buffer.  Reset the
 		 * input buffer to match it.
-	 	 */
+		 */
 		in.dbp = out.dbp;
 		in.dbcnt = out.dbcnt;
 	}
