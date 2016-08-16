@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.379 2016/07/23 15:53:19 stsp Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.380 2016/08/16 21:57:51 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -65,6 +65,9 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+
+#include <net80211/ieee80211.h>
+#include <net80211/ieee80211_ioctl.h>
 
 #include <arpa/inet.h>
 
@@ -423,13 +426,15 @@ char **saved_argv;
 int
 main(int argc, char *argv[])
 {
+	struct ifreq ifr;
+	struct ieee80211_nwid nwid;
 	struct stat sb;
 	int	 ch, fd, socket_fd[2];
 	extern char *__progname;
 	struct passwd *pw;
 	char *ignore_list = NULL;
 	ssize_t tailn;
-	int rtfilter, tailfd;
+	int rtfilter, sock, tailfd;
 
 	saved_argv = argv;
 
@@ -497,6 +502,19 @@ main(int argc, char *argv[])
 		error("%s: no such interface", ifi->name);
 
 	tzset();
+
+	/* Get the ssid if present. */
+	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		error("Can't create socket to get ssid");
+	memset(&ifr, 0, sizeof(ifr));
+	memset(&nwid, 0, sizeof(nwid));
+	ifr.ifr_data = (caddr_t)&nwid;
+	strlcpy(ifr.ifr_name, ifi->name, sizeof(ifr.ifr_name));
+	if (ioctl(sock, SIOCG80211NWID, (caddr_t)&ifr) == 0) {
+		memset(ifi->ssid, 0, sizeof(ifi->ssid));
+		memcpy(ifi->ssid, nwid.i_nwid, nwid.i_len);
+	}
+	close(sock);
 
 	/* Put us into the correct rdomain */
 	ifi->rdomain = get_rdomain(ifi->name);
@@ -741,6 +759,8 @@ state_reboot(void)
 
 	/* Run through the list of leases and see if one can be used. */
 	TAILQ_FOREACH(lp, &client->leases, next) {
+		if (strcmp(lp->ssid, ifi->ssid) != 0)
+			continue;
 		if (addressinuse(lp->address, ifname) &&
 		    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0)
 			continue;
@@ -907,6 +927,7 @@ dhcpack(struct in_addr client_addr, struct option_data *options, char *info)
 	}
 
 	client->new = lease;
+	memcpy(client->new->ssid, ifi->ssid, sizeof(client->new->ssid));
 
 	/* Stop resending DHCPREQUEST. */
 	cancel_timeout();
@@ -1034,6 +1055,9 @@ newlease:
 	TAILQ_FOREACH_SAFE(lease, &client->leases, next, pl) {
 		if (lease->is_static)
 			break;
+		if (client->active && strcmp(client->active->ssid,
+		    lease->ssid) != 0)
+			continue;
 		if (client->active == lease)
 			seen = 1;
 		else if (lease->expiry <= cur_time || lease->address.s_addr ==
@@ -1422,6 +1446,8 @@ state_panic(void)
 	/* Run through the list of leases and see if one can be used. */
 	time(&cur_time);
 	TAILQ_FOREACH(lp, &client->leases, next) {
+		if (strcmp(lp->ssid, ifi->ssid) != 0)
+			continue;
 		if (addressinuse(lp->address, ifname) &&
 		    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0)
 			continue;
@@ -1909,6 +1935,24 @@ lease_as_string(char *type, struct client_lease *lease)
 		sz -= rslt;
 		rslt = pretty_print_string(p, sz, lease->server_name,
 		    strlen(lease->server_name), 1);
+		if (rslt == -1 || rslt >= sz)
+			return (NULL);
+		p += rslt;
+		sz -= rslt;
+		rslt = snprintf(p, sz, ";\n");
+		if (rslt == -1 || rslt >= sz)
+			return (NULL);
+		p += rslt;
+		sz -= rslt;
+	}
+	if (strlen(lease->ssid)) {
+		rslt = snprintf(p, sz, "  ssid ");
+		if (rslt == -1 || rslt >= sz)
+			return (NULL);
+		p += rslt;
+		sz -= rslt;
+		rslt = pretty_print_string(p, sz, lease->ssid,
+		    strlen(lease->ssid), 1);
 		if (rslt == -1 || rslt >= sz)
 			return (NULL);
 		p += rslt;
@@ -2421,6 +2465,7 @@ clone_lease(struct client_lease *oldlease)
 	newlease->is_bootp = oldlease->is_bootp;
 	newlease->address = oldlease->address;
 	newlease->next_server = oldlease->next_server;
+	memcpy(newlease->ssid, oldlease->ssid, sizeof(newlease->ssid));
 
 	if (oldlease->server_name) {
 		newlease->server_name = strdup(oldlease->server_name);

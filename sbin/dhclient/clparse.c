@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.96 2016/07/31 18:55:16 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.97 2016/08/16 21:57:51 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -506,11 +506,13 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 
 	/*
 	 * The new lease will supersede a lease of the same type and for
-	 * the same address.
+	 * the same address or the same SSID.
 	 */
 	TAILQ_FOREACH_SAFE(lp, &client->leases, next, pl) {
-		if (lp->address.s_addr == lease->address.s_addr &&
-		    lp->is_static == is_static) {
+		if (lp->is_static != is_static)
+			continue;
+		if ((strcmp(lp->ssid, ifi->ssid) == 0) ||
+		    (lp->address.s_addr == lease->address.s_addr)) {
 			TAILQ_REMOVE(&client->leases, lp, next);
 			lp->is_static = 0;	/* Else it won't be freed. */
 			free_client_lease(lp);
@@ -584,6 +586,12 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease)
 		return;
 	case TOK_SERVER_NAME:
 		lease->server_name = parse_string(cfile);
+		return;
+	case TOK_SSID:
+		val = parse_string(cfile);
+		if (val)
+			strlcpy(lease->ssid, val, sizeof(lease->ssid));
+		free(val);
 		return;
 	case TOK_RENEW:
 		lease->renewal = parse_date(cfile);
