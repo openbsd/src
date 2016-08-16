@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.158 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: com.c,v 1.159 2016/08/16 08:15:04 kettenis Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1583,6 +1583,7 @@ com_attach_subr(struct com_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	int probe = 0;
 	u_int8_t lcr;
 
 	sc->sc_ier = 0;
@@ -1616,7 +1617,7 @@ com_attach_subr(struct com_softc *sc)
 	/*
 	 * Skip specific probes if attachment code knows it already.
 	 */
-	if (sc->sc_uarttype == COM_UART_UNKNOWN)
+	if (sc->sc_uarttype == COM_UART_UNKNOWN) {
 		switch (bus_space_read_1(iot, ioh, com_iir) >> 6) {
 		case 0:
 			sc->sc_uarttype = COM_UART_16450;
@@ -1631,8 +1632,11 @@ com_attach_subr(struct com_softc *sc)
 			sc->sc_uarttype = COM_UART_UNKNOWN;
 			break;
 		}
+		probe = 1;
+	}
 
-	if (sc->sc_uarttype == COM_UART_16550A) { /* Probe for ST16650s */
+	/* Probe for ST16650s */
+	if (probe && sc->sc_uarttype == COM_UART_16550A) {
 		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
 		if (bus_space_read_1(iot, ioh, com_efr) == 0) {
 			bus_space_write_1(iot, ioh, com_efr, EFR_CTS);
@@ -1647,7 +1651,8 @@ com_attach_subr(struct com_softc *sc)
 	}
 
 #if 0	/* until com works with large FIFOs */
-	if (sc->sc_uarttype == COM_UART_ST16650V2) { /* Probe for XR16850s */
+	/* Probe for XR16850s */
+	if (probe && sc->sc_uarttype == COM_UART_ST16650V2) {
 		u_int8_t dlbl, dlbh;
 
 		/* Enable latch access and get the current values. */
@@ -1670,7 +1675,8 @@ com_attach_subr(struct com_softc *sc)
 	}
 #endif
 
-	if (sc->sc_uarttype == COM_UART_16550A) { /* Probe for TI16750s */
+	/* Probe for TI16750s */
+	if (probe && sc->sc_uarttype == COM_UART_16550A) {
 		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
 		bus_space_write_1(iot, ioh, com_fifo,
 		    FIFO_ENABLE | FIFO_ENABLE_64BYTE);
@@ -1686,7 +1692,9 @@ com_attach_subr(struct com_softc *sc)
 
 	/* Reset the LCR (latch access is probably enabled). */
 	bus_space_write_1(iot, ioh, com_lcr, lcr);
-	if (sc->sc_uarttype == COM_UART_16450) { /* Probe for 8250 */
+
+	/* Probe for 8250 */
+	if (probe && sc->sc_uarttype == COM_UART_16450) {
 		u_int8_t scr0, scr1, scr2;
 
 		scr0 = bus_space_read_1(iot, ioh, com_scratch);
