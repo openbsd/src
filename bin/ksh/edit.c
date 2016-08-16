@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.53 2016/03/17 23:33:23 mmcc Exp $	*/
+/*	$OpenBSD: edit.c,v 1.54 2016/08/16 15:32:07 tb Exp $	*/
 
 /*
  * Command line editing - common code
@@ -298,9 +298,7 @@ static void	glob_path(int flags, const char *pat, XPtrV *wp,
 void
 x_print_expansions(int nwords, char *const *words, int is_command)
 {
-	int use_copy = 0;
 	int prefix_len;
-	XPtrV l;
 
 	/* Check if all matches are in the same directory (in this
 	 * case, we want to omit the directory name)
@@ -319,25 +317,29 @@ x_print_expansions(int nwords, char *const *words, int is_command)
 				break;
 		/* All in same directory? */
 		if (i == nwords) {
+			XPtrV l;
+
 			while (prefix_len > 0 && words[0][prefix_len - 1] != '/')
 				prefix_len--;
-			use_copy = 1;
 			XPinit(l, nwords + 1);
 			for (i = 0; i < nwords; i++)
 				XPput(l, words[i] + prefix_len);
 			XPput(l, NULL);
+
+			/* Enumerate expansions */
+			x_putc('\r');
+			x_putc('\n');
+			pr_list((char **) XPptrv(l));
+
+			XPfree(l); /* not x_free_words() */
+			return;
 		}
 	}
 
-	/*
-	 * Enumerate expansions
-	 */
+	/* Enumerate expansions */
 	x_putc('\r');
 	x_putc('\n');
-	pr_list(use_copy ? (char **) XPptrv(l) : words);
-
-	if (use_copy)
-		XPfree(l); /* not x_free_words() */
+	pr_list(words);
 }
 
 /*
