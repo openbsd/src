@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.57 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.58 2016/08/16 19:00:59 tb Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -221,18 +221,18 @@ cvs_logmsg_create(char *dir, struct cvs_flisthead *added,
 
 		printf("\nLog message unchanged or not specified\n"
 		    "a)bort, c)ontinue, e)dit, !)reuse this message "
-		    "unchanged for remaining dirs\nAction: (continue) ");
+		    "unchanged for remaining dirs\nAction: (abort) ");
 		(void)fflush(stdout);
 
 		c = getc(stdin);
-		if (c == EOF || c == 'a') {
+		if (c == EOF || c == '\n' || c == 'a' || c == 'A') {
 			fatal("Aborted by user");
-		} else if (c == '\n' || c == 'c') {
+		} else if (c == 'c' || c == 'C') {
 			if (prevmsg == NULL)
 				prevmsg = xstrdup("");
 			logmsg = xstrdup(prevmsg);
 			break;
-		} else if (c == 'e') {
+		} else if (c == 'e' || c == 'E') {
 			continue;
 		} else if (c == '!') {
 			reuse = 1;
