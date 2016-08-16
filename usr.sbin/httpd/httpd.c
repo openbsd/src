@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.56 2016/06/10 12:09:48 florian Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.57 2016/08/16 18:41:57 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* nitems */
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>

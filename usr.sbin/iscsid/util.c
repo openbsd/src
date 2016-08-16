@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.7 2016/03/20 00:01:22 krw Exp $ */
+/*	$OpenBSD: util.c,v 1.8 2016/08/16 18:41:57 tedu Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* nitems */
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/uio.h>

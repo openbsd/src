@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.10 2016/04/02 19:55:10 krw Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.11 2016/08/16 18:41:57 tedu Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* nitems */
 #include <sys/stat.h>
 
 #include <dirent.h>
@@ -44,6 +43,10 @@
 #include <unistd.h>
 
 #include "syslogd.h"
+
+#ifndef nitems
+#define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
+#endif
 
 struct tty_delay {
 	struct event	 td_event;

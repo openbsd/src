@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.c,v 1.18 2015/01/16 15:57:06 deraadt Exp $ */
+/*	$OpenBSD: iscsid.c,v 1.19 2016/08/16 18:41:57 tedu Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* nitems */
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.106 2016/08/15 16:12:34 jsing Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.107 2016/08/16 18:41:57 tedu Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -37,6 +37,10 @@
 #include <vis.h>
 
 #include "patterns.h"
+
+#ifndef nitems
+#define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
+#endif
 
 #define CONF_FILE		"/etc/httpd.conf"
 #define HTTPD_SOCKET		"/var/run/httpd.sock"
