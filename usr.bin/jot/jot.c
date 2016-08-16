@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.34 2016/08/12 23:29:59 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.35 2016/08/16 16:49:24 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -165,6 +165,8 @@ main(int argc, char *argv[])
 			if (!sscanf(argv[0], "%ld", &reps))
 				errx(1, "Bad reps value:  %s", argv[0]);
 			mask |= REPS;
+			if (reps == 0)
+				infinity = true;
 			if (prec == -1)
 				prec = 0;
 		}
@@ -176,8 +178,9 @@ main(int argc, char *argv[])
 		errx(1, "Too many arguments.  What do you mean by %s?",
 		    argv[4]);
 	}
+
 	getformat();
-	/* If random output is requested, use defaults for omitted values. */
+
 	if (!randomize) {
 		/*
 		 * Consolidate the values of reps, begin, ender, step:
@@ -190,11 +193,10 @@ main(int argc, char *argv[])
 		 *    begin and ender were specified.
 		 * 3. Assign defaults to omitted values for reps, begin, ender,
 		 *    from left to right.
-		 * 4. reps == 0 means infinite output
 		 */
 		switch (mask) { /* Four cases involve both begin and ender. */
 		case REPS | BEGIN | ENDER | STEP:
-			if (reps == 0)
+			if (infinity)
 				errx(1,
 				    "Can't specify end of infinite sequence");
 			if (step != 0.0) {
@@ -206,7 +208,7 @@ main(int argc, char *argv[])
 			}
 			break;
 		case REPS | BEGIN | ENDER:
-			if (reps == 0)
+			if (infinity)
 				errx(1,
 				    "Can't specify end of infinite sequence");
 			if (reps == 1)
@@ -220,6 +222,7 @@ main(int argc, char *argv[])
 		case BEGIN | ENDER | STEP:
 			if (step == 0.0) {
 				reps = 0;
+				infinity = true;
 				break;
 			}
 			reps = (ender - begin + step) / step;
@@ -230,7 +233,7 @@ main(int argc, char *argv[])
 		case ENDER | STEP:
 		case REPS | ENDER:
 		case REPS | ENDER | STEP:
-			if (reps == 0)
+			if (infinity)
 				errx(1,
 				    "Must specify start of infinite sequence");
 			begin = ender - reps * step + step;
@@ -244,10 +247,11 @@ main(int argc, char *argv[])
 			 */
 			break;
 		}
-	}
-	if (reps == 0)
-		infinity = true;
-	if (randomize) {
+
+		for (i = 1, x = begin; i <= reps || infinity; i++, x += step)
+			if (putdata(x, reps == i && !infinity))
+				errx(1, "range error in conversion: %f", x);
+	} else { /* Random output: use defaults for omitted values. */
 		bool		use_unif;
 		uint32_t	pow10 = 1;
 		uint32_t	uintx = 0; /* Initialized to make gcc happy. */
@@ -293,13 +297,11 @@ main(int argc, char *argv[])
 			if (putdata(v, reps == i && !infinity))
 				errx(1, "range error in conversion: %f", v);
 		}
-	} else {
-		for (i = 1, x = begin; i <= reps || infinity; i++, x += step)
-			if (putdata(x, reps == i && !infinity))
-				errx(1, "range error in conversion: %f", x);
 	}
+
 	if (finalnl)
 		putchar('\n');
+
 	return (0);
 }
 
