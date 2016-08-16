@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.27 2016/08/15 22:01:59 tedu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.28 2016/08/16 18:17:36 tedu Exp $	*/
 /*	$NetBSD: mem.c,v 1.13 1996/03/30 21:12:16 christos Exp $ */
 
 /*
@@ -47,6 +47,7 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/rwlock.h>
 #include <sys/conf.h>
 
 #include <sparc/sparc/vaddrs.h>
@@ -86,24 +87,19 @@ mmclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
+	static struct rwlock physlock = RWLOCK_INITIALIZER("mmrw");
 	off_t o;
 	paddr_t pa;
 	vaddr_t va;
 	size_t c;
 	struct iovec *iov;
 	int error = 0;
-	static int physlock;
 
 	if (minor(dev) == 0) {
 		/* lock against other uses of shared mem_page */
-		while (physlock > 0) {
-			physlock++;
-			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
-			    "mmrw", 0);
-			if (error)
-				return (error);
-		}
-		physlock = 1;
+		error = rw_enter(&physlock, RW_WRITE | RW_INTR);
+		if (error)
+			return (error);
 		if (mem_page == 0)
 			mem_page = uvm_km_valloc_wait(kernel_map, NBPG);
 		if (mem_page == 0)
@@ -193,9 +189,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 	}
 	if (minor(dev) == 0) {
 unlock:
-		if (physlock > 1)
-			wakeup((caddr_t)&physlock);
-		physlock = 0;
+		rw_exit(&physlock);
 	}
 	return (error);
 }
