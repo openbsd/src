@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers_proc.c,v 1.24 2013/11/13 15:24:21 deraadt Exp $	*/
+/*	$OpenBSD: rusers_proc.c,v 1.25 2016/08/16 04:48:04 tedu Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -111,7 +111,7 @@ rusers_num_svc(void *arg, struct svc_req *rqstp)
 		syslog(LOG_ERR, "%m");
 		return (0);
 	}
-	lseek(fd, (off_t)0, SEEK_SET);
+	lseek(fd, 0, SEEK_SET);
 	ufp = fdopen(fd, "r");
 	if (!ufp) {
 		close(fd);
@@ -120,7 +120,7 @@ rusers_num_svc(void *arg, struct svc_req *rqstp)
 	}
 
 	/* only entries with both name and line fields */
-	while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1)
+	while (fread(&usr, sizeof(usr), 1, ufp) == 1)
 		if (*usr.ut_name && *usr.ut_line)
 			num_users++;
 
@@ -135,7 +135,7 @@ do_names_3(int all)
 	struct utmp usr;
 	int fd, nusers = 0;
 
-	bzero((char *)&ut, sizeof(ut));
+	bzero(&ut, sizeof(ut));
 	ut.utmp_array_val = &utmps[0];
 
 	fd = dup(utmp_fd);
@@ -143,7 +143,7 @@ do_names_3(int all)
 		syslog(LOG_ERR, "%m");
 		return (0);
 	}
-	lseek(fd, (off_t)0, SEEK_SET);
+	lseek(fd, 0, SEEK_SET);
 	ufp = fdopen(fd, "r");
 	if (!ufp) {
 		close(fd);
@@ -152,7 +152,7 @@ do_names_3(int all)
 	}
 
 	/* only entries with both name and line fields */
-	while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1 &&
+	while (fread(&usr, sizeof(usr), 1, ufp) == 1 &&
 	    nusers < MAXUSERS)
 		if (*usr.ut_name && *usr.ut_line) {
 			utmps[nusers].ut_type = RUSERS_USER_PROCESS;
@@ -198,7 +198,7 @@ do_names_2(int all)
 	struct utmp usr;
 	int fd, nusers = 0;
 
-	bzero((char *)&ut, sizeof(ut));
+	bzero(&ut, sizeof(ut));
 	ut.uia_arr = utmp_idlep;
 	ut.uia_cnt = 0;
 
@@ -207,7 +207,7 @@ do_names_2(int all)
 		syslog(LOG_ERR, "%m");
 		return (0);
 	}
-	lseek(fd, (off_t)0, SEEK_SET);
+	lseek(fd, 0, SEEK_SET);
 	ufp = fdopen(fd, "r");
 	if (!ufp) {
 		close(fd);
@@ -216,7 +216,7 @@ do_names_2(int all)
 	}
 
 	/* only entries with both name and line fields */
-	while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1 &&
+	while (fread(&usr, sizeof(usr), 1, ufp) == 1 &&
 	    nusers < MAXUSERS)
 		if (*usr.ut_name && *usr.ut_line) {
 			utmp_idlep[nusers] = &utmp_idle[nusers];
@@ -262,7 +262,7 @@ do_names_1(int all)
 	struct utmp usr;
 	int fd, nusers = 0;
 
-	bzero((char *)&ut, sizeof(ut));
+	bzero(&ut, sizeof(ut));
 	ut.uta_arr = ru_utmpp;
 	ut.uta_cnt = 0;
 
@@ -271,7 +271,7 @@ do_names_1(int all)
 		syslog(LOG_ERR, "%m");
 		return (0);
 	}
-	lseek(fd, (off_t)0, SEEK_SET);
+	lseek(fd, 0, SEEK_SET);
 	ufp = fdopen(fd, "r");
 	if (!ufp) {
 		close(fd);
@@ -280,7 +280,7 @@ do_names_1(int all)
 	}
 
 	/* only entries with both name and line fields */
-	while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1 &&
+	while (fread(&usr, sizeof(usr), 1, ufp) == 1 &&
 	    nusers < MAXUSERS)
 		if (*usr.ut_name && *usr.ut_line) {
 			ru_utmpp[nusers] = &ru_utmp[nusers];
