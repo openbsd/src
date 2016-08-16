@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.57 2016/03/22 17:58:28 mmcc Exp $	*/
+/*	$OpenBSD: main.c,v 1.58 2016/08/16 20:04:46 natano Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -859,7 +859,7 @@ exec_command(void)
 		if ((addr = write_file(*fnp ? fnp : old_filename,
 		    (c == 'W') ? "a" : "w", first_addr, second_addr)) < 0)
 			return ERR;
-		else if (addr == addr_last)
+		else if (addr == addr_last && *fnp != '!')
 			modified = 0;
 		else if (modified && !scripted && n == 'q')
 			gflag = EMOD;
