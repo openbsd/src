@@ -1,4 +1,4 @@
-/* $OpenBSD: login_yubikey.c,v 1.14 2016/04/24 18:52:52 benno Exp $ */
+/* $OpenBSD: login_yubikey.c,v 1.15 2016/08/16 04:44:38 tedu Exp $ */
 
 /*
  * Copyright (c) 2010 Daniel Hartmeier <daniel@benzedrine.cx>
@@ -140,8 +140,7 @@ main(int argc, char *argv[])
 		mode = 0;
 		count = -1;
 		while (++count < sizeof(response) &&
-		    read(3, &response[count], (size_t)1) ==
-		    (ssize_t)1) {
+		    read(3, &response[count], 1) == 1) {
 			if (response[count] == '\0' && ++mode == 2)
 				break;
 			if (response[count] == '\0' && mode == 1)
