@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.7 2016/08/15 22:01:59 tedu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.8 2016/08/16 18:21:54 tedu Exp $	*/
 /*	$NetBSD: mem.c,v 1.21 2006/07/23 22:06:07 ad Exp $	*/
 
 /*
@@ -97,19 +97,15 @@ boolean_t __mm_mem_addr(paddr_t);
 #define mmwrite	mmrw
 cdev_decl(mm);
 
-#define	DEV_MEM		0
-#define	DEV_KMEM	1
-#define	DEV_NULL	2
-#define	DEV_ZERO	12
 
 int
 mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	switch (minor(dev)) {
-	case DEV_MEM:
-	case DEV_KMEM:
-	case DEV_NULL:
-	case DEV_ZERO:
+	case 0:
+	case 1:
+	case 2:
+	case 12:
 		break;
 	default:
 		return (ENXIO);
@@ -145,7 +141,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		v = uio->uio_offset;
 
 		switch (minor(dev)) {
-		case DEV_MEM:
+		case 0:
 			/* Physical address */
 			if (__mm_mem_addr(v)) {
 				o = v & PGOFSET;
@@ -157,7 +153,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			}
 			break;
 
-		case DEV_KMEM:
+		case 1:
 			if (v < SH3_P1SEG_BASE)			/* P0 */
 				return (EFAULT);
 			if (v < SH3_P2SEG_BASE) {		/* P1 */
@@ -180,12 +176,12 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			}
 			break;
 
-		case DEV_NULL:
+		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-		case DEV_ZERO:
+		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
 				return (0);
@@ -210,7 +206,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 {
 	struct proc *p = curproc;
 
-	if (minor(dev) != DEV_MEM)
+	if (minor(dev) != 0)
 		return (-1);
 
 	if (__mm_mem_addr((paddr_t)off) == FALSE && suser(p, 0) != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.17 2016/08/16 18:17:36 tedu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.18 2016/08/16 18:21:54 tedu Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 2003/10/16 12:02:58 jdolecek Exp $	*/
 
 /*
@@ -134,10 +134,6 @@ mmclose(dev_t dev, int flag, int mode, struct proc *p)
 #endif
 	return (0);
 }
-#define DEV_MEM 0
-#define DEV_KMEM 1
-#define DEV_NULL 2
-#define DEV_ZERO 12
 
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
@@ -149,7 +145,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 	int error = 0;
 	vm_prot_t prot;
 
-	if (minor(dev) == DEV_MEM) {
+	if (minor(dev) == 0) {
 		/* lock against other uses of shared vmmap */
 		error = rw_enter(&physlock, RW_WRITE | RW_INTR);
 		if (error)
@@ -167,7 +163,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		}
 		switch (minor(dev)) {
 
-		case DEV_MEM:
+		case 0:
 			v = uio->uio_offset;
 			prot = uio->uio_rw == UIO_READ ? PROT_READ :
 			    PROT_WRITE;
@@ -182,7 +178,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			pmap_update(pmap_kernel());
 			break;
 
-		case DEV_KMEM:
+		case 1:
 			v = uio->uio_offset;
 			c = ulmin(iov->iov_len, MAXPHYS);
 			if (!uvm_kernacc((caddr_t)v, c,
@@ -191,12 +187,12 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 
-		case DEV_NULL:
+		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-		case DEV_ZERO:
+		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
 				return (0);
@@ -212,7 +208,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			return (ENXIO);
 		}
 	}
-	if (minor(dev) == DEV_MEM) {
+	if (minor(dev) == 0) {
 		rw_exit(&physlock);
 	}
 	return (error);
@@ -231,7 +227,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 	 * and /dev/zero is a hack that is handled via the default
 	 * pager in mmap().
 	 */
-	if (minor(dev) != DEV_MEM)
+	if (minor(dev) != 0)
 		return (-1);
 
 	/* minor device 0 is physical memory */
