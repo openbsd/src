@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwd_mkdb.8,v 1.26 2016/08/14 14:57:15 tb Exp $
+.\"	$OpenBSD: pwd_mkdb.8,v 1.27 2016/08/16 17:51:38 tedu Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)pwd_mkdb.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: August 14 2016 $
+.Dd $Mdocdate: August 16 2016 $
 .Dt PWD_MKDB 8
 .Os
 .Sh NAME
@@ -83,7 +83,7 @@ for instance in a
 .Xr chroot 8
 jail.
 .It Fl p
-Create a 6th Edition-style password file and install it into
+Create a legacy password file and install it into
 .Pa /etc/passwd .
 .It Fl s
 Only update the secure version of the database.
