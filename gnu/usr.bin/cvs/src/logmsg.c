@@ -346,7 +346,7 @@ do_editor (dir, messagep, repository, changes)
 	{
 	    (void) printf ("\nLog message unchanged or not specified\n");
 	    (void) printf ("a)bort, c)ontinue, e)dit, !)reuse this message unchanged for remaining dirs\n");
-	    (void) printf ("Action: (continue) ");
+	    (void) printf ("Action: (abort) ");
 	    (void) fflush (stdout);
 	    line_length = get_line (&line, &line_chars_allocated, stdin);
 	    if (line_length < 0)
@@ -358,14 +358,14 @@ do_editor (dir, messagep, repository, changes)
 		error (1, 0, "aborting");
 	    }
 	    else if (line_length == 0
-		     || *line == '\n' || *line == 'c' || *line == 'C')
-		break;
-	    if (*line == 'a' || *line == 'A')
+		     || *line == '\n' || *line == 'a' || *line == 'A')
 		{
 		    if (unlink_file (fname) < 0)
 			error (0, errno, "warning: cannot remove temp file %s", fname);
 		    error (1, 0, "aborted by user");
 		}
+	    if (*line == 'c' || *line == 'C')
+		break;	
 	    if (*line == 'e' || *line == 'E')
 		goto again;
 	    if (*line == '!')
