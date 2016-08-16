@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.37 2016/08/11 00:28:06 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.38 2016/08/16 10:16:33 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -2810,7 +2810,7 @@ pmap_link_l2pt(vaddr_t l1pt, vaddr_t va, pv_addr_t *l2pv)
 	pd_entry_t *pde = (pd_entry_t *) l1pt, proto;
 	u_int slot = va >> L1_S_SHIFT;
 
-	proto = L1_S_DOM(PMAP_DOMAIN_KERNEL) | L1_C_PROTO;
+	proto = L1_C_DOM(PMAP_DOMAIN_KERNEL) | L1_C_PROTO;
 
 	pde[slot + 0] = proto | (l2pv->pv_pa + 0x000);
 #ifdef ARM32_NEW_VM_LAYOUT
