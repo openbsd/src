@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.89 2016/08/16 08:36:29 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.90 2016/08/16 17:10:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1018,7 +1018,7 @@ server_tls_handshake(int fd, short event, void *arg)
 		    server_tls_handshake, &clt->clt_tv_start,
 		    &srv->srv_conf.timeout, clt);
 	} else {
-		log_warnx("%s: tls handshake failed - %s", __func__,
+		log_debug("%s: tls handshake failed - %s", __func__,
 		    tls_error(clt->clt_tls_ctx));
 		server_close(clt, "tls handshake failed");
 	}
