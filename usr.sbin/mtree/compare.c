@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
-/*	$OpenBSD: compare.c,v 1.26 2016/08/14 20:53:19 krw Exp $	*/
+/*	$OpenBSD: compare.c,v 1.27 2016/08/16 16:41:46 krw Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -212,11 +212,11 @@ typeerr:		LABEL;
 				if (utimes(p->fts_accpath, tv))
 					(void)printf(", not modified: %s)\n",
 					    strerror(errno));
-				else  
-					(void)printf(", modified)\n");  
+				else
+					(void)printf(", modified)\n");
 			} else
 				(void)printf(")\n");
-			tab = "\t";   
+			tab = "\t";
 		}
 	}
 	if (s->flags & F_CKSUM) {
@@ -327,18 +327,18 @@ typeerr:		LABEL;
 			REPLACE_COMMA(cur_flags);
 			printf("%sflags (%s, %s", tab, (*db_flags == '\0') ?
 						  "-" : db_flags,
-						  (*cur_flags == '\0') ? 
+						  (*cur_flags == '\0') ?
 						  "-" : cur_flags);
 				tab = "\t";
 			if (uflag)
 				if (chflags(p->fts_accpath, s->file_flags))
 					(void)printf(", not modified: %s)\n",
 						strerror(errno));
-				else	
+				else
 					(void)printf(", modified)\n");
 			else
 				(void)printf(")\n");
-			tab = "\t"; 
+			tab = "\t";
 
 			free(db_flags);
 			free(cur_flags);

@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.31 2016/08/14 20:53:19 krw Exp $	*/
+/*	$OpenBSD: create.c,v 1.32 2016/08/16 16:41:46 krw Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -116,7 +116,6 @@ cwalk(void)
 			if (!dflag)
 				statf(indent, p);
 			break;
-			
 		}
 	}
 	(void)fts_close(t);
@@ -139,7 +138,7 @@ statf(int indent, FTSENT *p)
 	escaped_name = malloc(esc_len);
 	if (escaped_name == NULL)
 		error("statf: %s", strerror(errno));
- 	strnvis(escaped_name, p->fts_name, esc_len,
+	strnvis(escaped_name, p->fts_name, esc_len,
 	    VIS_WHITE | VIS_OCTAL | VIS_GLOB);
 
 	if (iflag || S_ISDIR(p->fts_statp->st_mode))
