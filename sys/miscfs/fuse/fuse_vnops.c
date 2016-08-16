@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.29 2016/08/12 20:18:44 natano Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.30 2016/08/16 21:32:58 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -857,7 +857,6 @@ fusefs_reclaim(void *v)
 	 * Remove the inode from its hash chain.
 	 */
 	ufs_ihashrem(&ip->ufs_ino);
-	cache_purge(vp);
 
 	free(ip, M_FUSEFS, 0);
 	vp->v_data = NULL;
@@ -1386,11 +1385,9 @@ fusefs_rmdir(void *v)
 		goto out;
 	}
 
-	cache_purge(dvp);
 	vput(dvp);
 	dvp = NULL;
 
-	cache_purge(ITOV(ip));
 	fb_delete(fbuf);
 out:
 	if (dvp)

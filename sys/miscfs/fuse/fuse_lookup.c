@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.12 2016/08/12 20:18:44 natano Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.13 2016/08/16 21:32:58 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -64,9 +64,6 @@ fusefs_lookup(void *v)
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return (EROFS);
 
-	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0)
-		return (error);
-
 	if (flags & ISDOTDOT) {
 		/* got ".." */
 		nid = dp->parent;
@@ -120,10 +117,8 @@ fusefs_lookup(void *v)
 		 * Write access to directory required to delete files.
 		 */
 		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc);
-		if (error != 0) {
-			fb_delete(fbuf);
-			return (error);
-		}
+		if (error)
+			goto out;
 
 		cnp->cn_flags |= SAVENAME;
 	}
@@ -132,10 +127,8 @@ fusefs_lookup(void *v)
 		/*
 		 * Write access to directory required to delete files.
 		 */
-		if ((error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc)) != 0) {
-			fb_delete(fbuf);
-			return (error);
-		}
+		if ((error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc)) != 0)
+			goto out;
 
 		if (nid == VTOI(vdp)->ufs_ino.i_number) {
 			error = EISDIR;
@@ -187,10 +180,8 @@ fusefs_lookup(void *v)
 
 		update_vattr(fmp->mp, &fbuf->fb_vattr);
 
-		if (error) {
-			fb_delete(fbuf);
-			return (error);
-		}
+		if (error)
+			goto out;
 
 		if (vdp != NULL && vdp->v_type == VDIR)
 			VTOI(tdp)->parent = dp->ufs_ino.i_number;
@@ -204,10 +195,6 @@ fusefs_lookup(void *v)
 	}
 
 out:
-	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE &&
-	    nameiop != DELETE)
-		cache_enter(vdp, *vpp, cnp);
-
 	fb_delete(fbuf);
 	return (error);
 }
