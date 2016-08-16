@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermgmt.conf.5,v 1.12 2016/01/08 20:26:54 zhuk Exp $
+.\" $OpenBSD: usermgmt.conf.5,v 1.13 2016/08/16 11:33:07 tb Exp $
 .\" $NetBSD: usermgmt.conf.5,v 1.3 2002/10/02 13:49:11 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 8 2016 $
+.Dd $Mdocdate: August 16 2016 $
 .Dt USERMGMT.CONF 5
 .Os
 .Sh NAME
@@ -92,7 +92,8 @@ Also see the
 .Ar expire
 field.
 .It Ic password
-Specifies an already-encrypted default password.
+Specifies a default password encrypted with
+.Xr encrypt 1 .
 .It Ic preserve
 If this value is one of
 .Ql true ,
