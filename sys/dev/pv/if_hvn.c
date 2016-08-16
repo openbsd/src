@@ -268,7 +268,7 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	DPRINTF("%s", sc->sc_dev.dv_xname);
-	printf(": channel %u, address %s\n", sc->sc_chan->ch_relid,
+	printf(": channel %u, address %s\n", sc->sc_chan->ch_id,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	ether_ifattach(ifp);
@@ -721,7 +721,7 @@ void
 hvn_nvsp_intr(void *arg)
 {
 	struct hvn_softc *sc = arg;
-	struct hv_pktdesc *d;
+	struct vmbus_chanpkt_hdr *cph;
 	struct nvsp *pkt;
 	uint64_t rid;
 	uint32_t rlen;
@@ -736,10 +736,10 @@ hvn_nvsp_intr(void *arg)
 				    "packet\n", sc->sc_dev.dv_xname);
 			break;
 		}
-		d = (struct hv_pktdesc *)sc->sc_nvspbuf;
-		pkt = (struct nvsp *)((char *)d + (d->offset << 3));
+		cph = (struct vmbus_chanpkt_hdr *)sc->sc_nvspbuf;
+		pkt = (struct nvsp *)VMBUS_CHANPKT_CONST_DATA(cph);
 
-		if (d->type == HV_PKT_COMPLETION) {
+		if (cph->cph_type == VMBUS_CHANPKT_TYPE_COMP) {
 			switch (pkt->msg_type) {
 			case nvsp_type_init_comp:
 			case nvsp_type_send_rx_buf_comp:
@@ -750,17 +750,17 @@ hvn_nvsp_intr(void *arg)
 				wakeup_one(&sc->sc_nvsp);
 				break;
 			case nvsp_type_send_rndis_pkt_comp:
-				hvn_txeof(sc, d->tid);
+				hvn_txeof(sc, cph->cph_tid);
 				break;
 			default:
 				printf("%s: unhandled NVSP packet type %d "
 				    "on completion\n", sc->sc_dev.dv_xname,
 				    pkt->msg_type);
 			}
-		} else if (d->type == HV_PKT_DATA_USING_TRANSFER_PAGES) {
+		} else if (cph->cph_type == VMBUS_CHANPKT_TYPE_RXBUF) {
 			switch (pkt->msg_type) {
 			case nvsp_type_send_rndis_pkt:
-				hvn_rndis_filter(sc, d->tid, d + 1);
+				hvn_rndis_filter(sc, cph->cph_tid, cph);
 				break;
 			default:
 				printf("%s: unhandled NVSP packet type %d "
@@ -769,7 +769,7 @@ hvn_nvsp_intr(void *arg)
 			}
 		} else
 			printf("%s: unknown NVSP packet type %u\n",
-			    sc->sc_dev.dv_xname, d->type);
+			    sc->sc_dev.dv_xname, cph->cph_type);
 	}
 }
 
@@ -781,8 +781,8 @@ hvn_nvsp_output(struct hvn_softc *sc, struct nvsp *pkt, uint64_t tid, int timo)
 
 	do {
 		rv = hv_channel_send(sc->sc_chan, pkt, sizeof(*pkt),
-		    tid, HV_PKT_DATA_IN_BAND,
-		    timo ? HV_PKTFLAG_COMPLETION_REQUESTED : 0);
+		    tid, VMBUS_CHANPKT_TYPE_INBAND,
+		    timo ? VMBUS_CHANPKT_FLAG_RC : 0);
 		if (rv == EAGAIN) {
 			if (timo)
 				tsleep(pkt, PRIBIO, "hvnsend", timo / 10);
@@ -822,7 +822,7 @@ hvn_nvsp_ack(struct hvn_softc *sc, struct nvsp *pkt, uint64_t tid)
 
 	do {
 		rv = hv_channel_send(sc->sc_chan, pkt, sizeof(*pkt),
-		    tid, HV_PKT_COMPLETION, 0);
+		    tid, VMBUS_CHANPKT_TYPE_COMP, 0);
 		if (rv == EAGAIN)
 			delay(100);
 		else if (rv) {
@@ -1015,7 +1015,7 @@ int
 hvn_rndis_ctloutput(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 {
 	struct nvsp_send_rndis_pkt *msg;
-	struct hv_page_buffer pb[2];
+	struct vmbus_gpa sgl[1];
 	int tries = 10;
 	int rv;
 
@@ -1026,14 +1026,14 @@ hvn_rndis_ctloutput(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 	msg->chan_type = 1; /* control */
 	msg->send_buf_section_idx = NVSP_INVALID_SECTION_INDEX;
 
-	pb[0].pfn = rc->rc_pfn;
-	pb[0].length = rc->rc_req->msg_len;
-	pb[0].offset = 0;
+	sgl[0].gpa_page = rc->rc_pfn;
+	sgl[0].gpa_len = rc->rc_req->msg_len;
+	sgl[0].gpa_ofs = 0;
 
 	hvn_submit_cmd(sc, rc);
 
 	do {
-		rv = hv_channel_sendbuf(sc->sc_chan, pb, 1, &rc->rc_nvsp,
+		rv = hv_channel_send_sgl(sc->sc_chan, sgl, 1, &rc->rc_nvsp,
 		    sizeof(struct nvsp), rc->rc_id);
 		if (rv == EAGAIN)
 			tsleep(rc, PRIBIO, "hvnsendbuf", timo / 10);
@@ -1079,23 +1079,18 @@ hvn_rndis_filter(struct hvn_softc *sc, uint64_t tid, void *arg)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct nvsp pkt;
-	struct hv_transfer_page_header *hdr = arg;
+	struct vmbus_chanpkt_prplist *cp = arg;
 	struct nvsp_send_rndis_pkt_comp *cmp;
 	uint32_t off, len, type, status = 0;
 	int i;
 
-	if (hdr->set_id != HVN_RX_BUFID) {
-		DPRINTF("%s: transfer page invalid set id %#x\n",
-		    sc->sc_dev.dv_xname, hdr->set_id);
-		return;
-	}
 	if (sc->sc_rx_ring == NULL) {
 		DPRINTF("%s: invalid rx ring\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	for (i = 0; i < hdr->range_count; i++) {
-		off = hdr->range[i].byte_offset;
-		len = hdr->range[i].byte_count;
+	for (i = 0; i < cp->cp_range_cnt; i++) {
+		off = cp->cp_range[i].gpa_ofs;
+		len = cp->cp_range[i].gpa_len;
 
 		KASSERT(off + len <= sc->sc_rx_size);
 		KASSERT(len >= RNDIS_HEADER_SIZE + 4);

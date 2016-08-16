@@ -94,9 +94,9 @@ void	hv_intr(void);
 void	hv_event_intr(struct hv_softc *);
 void	hv_message_intr(struct hv_softc *);
 int	hv_vmbus_connect(struct hv_softc *);
-void	hv_channel_response(struct hv_softc *, struct hv_channel_msg_header *);
-void	hv_channel_offer(struct hv_softc *, struct hv_channel_msg_header *);
-void	hv_channel_delivered(struct hv_softc *, struct hv_channel_msg_header *);
+void	hv_channel_response(struct hv_softc *, struct vmbus_chanmsg_hdr *);
+void	hv_channel_offer(struct hv_softc *, struct vmbus_chanmsg_hdr *);
+void	hv_channel_delivered(struct hv_softc *, struct vmbus_chanmsg_hdr *);
 int	hv_channel_scan(struct hv_softc *);
 void	hv_process_offer(struct hv_softc *, struct hv_offer *);
 struct hv_channel *
@@ -118,31 +118,31 @@ struct {
 	int		  hmd_response;
 	int		  hmd_request;
 	void		(*hmd_handler)(struct hv_softc *,
-			    struct hv_channel_msg_header *);
+			    struct vmbus_chanmsg_hdr *);
 } hv_msg_dispatch[] = {
-	{ HV_CHANMSG_INVALID,			0, NULL },
-	{ HV_CHANMSG_OFFER_CHANNEL,		0, hv_channel_offer },
-	{ HV_CHANMSG_RESCIND_CHANNEL_OFFER,	0, NULL },
-	{ HV_CHANMSG_REQUEST_OFFERS,		HV_CHANMSG_OFFER_CHANNEL,
+	{ 0,					0, NULL },
+	{ VMBUS_CHANMSG_CHOFFER,		0, hv_channel_offer },
+	{ VMBUS_CHANMSG_CHRESCIND,		0, NULL },
+	{ VMBUS_CHANMSG_CHREQUEST,		VMBUS_CHANMSG_CHOFFER,
 	  NULL },
-	{ HV_CHANMSG_ALL_OFFERS_DELIVERED,	0,
+	{ VMBUS_CHANMSG_CHOFFER_DONE,		0,
 	  hv_channel_delivered },
-	{ HV_CHANMSG_OPEN_CHANNEL,		0, NULL },
-	{ HV_CHANMSG_OPEN_CHANNEL_RESULT,	HV_CHANMSG_OPEN_CHANNEL,
+	{ VMBUS_CHANMSG_CHOPEN,			0, NULL },
+	{ VMBUS_CHANMSG_CHOPEN_RESP,		VMBUS_CHANMSG_CHOPEN,
 	  hv_channel_response },
-	{ HV_CHANMSG_CLOSE_CHANNEL,		0, NULL },
-	{ HV_CHANMSG_GPADL_HEADER,		0, NULL },
-	{ HV_CHANMSG_GPADL_BODY,		0, NULL },
-	{ HV_CHANMSG_GPADL_CREATED,		HV_CHANMSG_GPADL_HEADER,
+	{ VMBUS_CHANMSG_CHCLOSE,		0, NULL },
+	{ VMBUS_CHANMSG_GPADL_CONN,		0, NULL },
+	{ VMBUS_CHANMSG_GPADL_SUBCONN,		0, NULL },
+	{ VMBUS_CHANMSG_GPADL_CONNRESP,		VMBUS_CHANMSG_GPADL_CONN,
 	  hv_channel_response },
-	{ HV_CHANMSG_GPADL_TEARDOWN,		0, NULL },
-	{ HV_CHANMSG_GPADL_TORNDOWN,		HV_CHANMSG_GPADL_TEARDOWN,
+	{ VMBUS_CHANMSG_GPADL_DISCONN,		0, NULL },
+	{ VMBUS_CHANMSG_GPADL_DISCONNRESP,	VMBUS_CHANMSG_GPADL_DISCONN,
 	  hv_channel_response },
-	{ HV_CHANMSG_REL_ID_RELEASED,		0, NULL },
-	{ HV_CHANMSG_INITIATED_CONTACT,		0, NULL },
-	{ HV_CHANMSG_VERSION_RESPONSE,		HV_CHANMSG_INITIATED_CONTACT,
+	{ VMBUS_CHANMSG_CHFREE,			0, NULL },
+	{ VMBUS_CHANMSG_CONNECT,		0, NULL },
+	{ VMBUS_CHANMSG_CONNECT_RESP,		VMBUS_CHANMSG_CONNECT,
 	  hv_channel_response },
-	{ HV_CHANMSG_UNLOAD,			0, NULL },
+	{ VMBUS_CHANMSG_DISCONNECT,		0, NULL },
 };
 
 struct timecounter hv_timecounter = {
@@ -222,13 +222,13 @@ hv_fake_version(struct hv_softc *sc)
 	/* FreeBSD 10 apparently */
 	ver = 0x8200ULL << 48;
 	ver |= 10 << 16;
-	wrmsr(HV_X64_MSR_GUEST_OS_ID, ver);
+	wrmsr(MSR_HV_GUEST_OS_ID, ver);
 }
 
 u_int
 hv_gettime(struct timecounter *tc)
 {
-	u_int now = rdmsr(HV_X64_MSR_TIME_REF_COUNT);
+	u_int now = rdmsr(MSR_HV_TIME_REF_COUNT);
 
 	return (now);
 }
@@ -247,11 +247,10 @@ hv_init_hypercall(struct hv_softc *sc)
 		return (-1);
 	}
 
-	msr = (atop(pa) << HV_X64_MSR_HYPERCALL_PASHIFT) |
-	    HV_X64_MSR_HYPERCALL_ENABLED;
-	wrmsr(HV_X64_MSR_HYPERCALL, msr);
+	msr = (atop(pa) << MSR_HV_HYPERCALL_PGSHIFT) | MSR_HV_HYPERCALL_ENABLE;
+	wrmsr(MSR_HV_HYPERCALL, msr);
 
-	if (!(rdmsr(HV_X64_MSR_HYPERCALL) & HV_X64_MSR_HYPERCALL_ENABLED)) {
+	if (!(rdmsr(MSR_HV_HYPERCALL) & MSR_HV_HYPERCALL_ENABLE)) {
 		printf(": failed to set up a hypercall page\n");
 		return (-1);
 	}
@@ -270,14 +269,14 @@ hv_hypercall(struct hv_softc *sc, uint64_t control, void *input,
 	    pmap_extract(pmap_kernel(), (vaddr_t)input, &input_pa) == 0) {
 		printf("%s: hypercall input PA extraction failed\n",
 		    sc->sc_dev.dv_xname);
-		return (~HV_STATUS_SUCCESS);
+		return (~HYPERCALL_STATUS_SUCCESS);
 	}
 
 	if (output != NULL &&
 	    pmap_extract(pmap_kernel(), (vaddr_t)output, &output_pa) == 0) {
 		printf("%s: hypercall output PA extraction failed\n",
 		    sc->sc_dev.dv_xname);
-		return (~HV_STATUS_SUCCESS);
+		return (~HYPERCALL_STATUS_SUCCESS);
 	}
 
 #ifdef __amd64__
@@ -331,7 +330,7 @@ hv_init_interrupts(struct hv_softc *sc)
 		return (-1);
 	}
 
-	sc->sc_proto = HV_VMBUS_VERSION_WS2008;
+	sc->sc_proto = VMBUS_VERSION_WS2008;
 
 	return (hv_init_synic(sc));
 }
@@ -341,10 +340,8 @@ hv_init_synic(struct hv_softc *sc)
 {
 	struct cpu_info *ci = curcpu();
 	int cpu = CPU_INFO_UNIT(ci);
-	uint64_t simp, siefp, sctrl, sint, version;
+	uint64_t simp, siefp, sctrl, sint;
 	paddr_t pa;
-
-	version = rdmsr(HV_X64_MSR_SVERSION);
 
 	/*
 	 * Setup the Synic's message page
@@ -353,11 +350,11 @@ hv_init_synic(struct hv_softc *sc)
 		printf(": SIMP PA extraction failed\n");
 		return (-1);
 	}
-	simp = rdmsr(HV_X64_MSR_SIMP);
-	simp &= (1 << HV_X64_MSR_SIMP_PASHIFT) - 1;
-	simp |= (atop(pa) << HV_X64_MSR_SIMP_PASHIFT);
-	simp |= HV_X64_MSR_SIMP_ENABLED;
-	wrmsr(HV_X64_MSR_SIMP, simp);
+	simp = rdmsr(MSR_HV_SIMP);
+	simp &= (1 << MSR_HV_SIMP_PGSHIFT) - 1;
+	simp |= (atop(pa) << MSR_HV_SIMP_PGSHIFT);
+	simp |= MSR_HV_SIMP_ENABLE;
+	wrmsr(MSR_HV_SIMP, simp);
 
 	/*
 	 * Setup the Synic's event page
@@ -366,22 +363,26 @@ hv_init_synic(struct hv_softc *sc)
 		printf(": SIEP PA extraction failed\n");
 		return (-1);
 	}
-	siefp = rdmsr(HV_X64_MSR_SIEFP);
-	siefp &= (1<<HV_X64_MSR_SIEFP_PASHIFT) - 1;
-	siefp |= (atop(pa) << HV_X64_MSR_SIEFP_PASHIFT);
-	siefp |= HV_X64_MSR_SIEFP_ENABLED;
-	wrmsr(HV_X64_MSR_SIEFP, siefp);
+	siefp = rdmsr(MSR_HV_SIEFP);
+	siefp &= (1<<MSR_HV_SIEFP_PGSHIFT) - 1;
+	siefp |= (atop(pa) << MSR_HV_SIEFP_PGSHIFT);
+	siefp |= MSR_HV_SIEFP_ENABLE;
+	wrmsr(MSR_HV_SIEFP, siefp);
 
-	/* HV_SHARED_SINT_IDT_VECTOR + 0x20 */
-	sint = sc->sc_idtvec | HV_X64_MSR_SINT_AUTOEOI;
-	wrmsr(HV_X64_MSR_SINT0 + HV_MESSAGE_SINT, sint);
+	/*
+	 * Configure and unmask SINT for message and event flags
+	 */
+	sint = rdmsr(MSR_HV_SINT0 + VMBUS_SINT_MESSAGE);
+	sint = sc->sc_idtvec | MSR_HV_SINT_AUTOEOI |
+	    (sint & MSR_HV_SINT_RSVD_MASK);
+	wrmsr(MSR_HV_SINT0 + VMBUS_SINT_MESSAGE, sint);
 
 	/* Enable the global synic bit */
-	sctrl = rdmsr(HV_X64_MSR_SCONTROL);
-	sctrl |= HV_X64_MSR_SCONTROL_ENABLED;
-	wrmsr(HV_X64_MSR_SCONTROL, sctrl);
+	sctrl = rdmsr(MSR_HV_SCONTROL);
+	sctrl |= MSR_HV_SCTRL_ENABLE;
+	wrmsr(MSR_HV_SCONTROL, sctrl);
 
-	sc->sc_vcpus[cpu] = rdmsr(HV_X64_MSR_VP_INDEX);
+	sc->sc_vcpus[cpu] = rdmsr(MSR_HV_VP_INDEX);
 
 	DPRINTF("vcpu%u: SIMP %#llx SIEFP %#llx SCTRL %#llx\n",
 	    sc->sc_vcpus[cpu], simp, siefp, sctrl);
@@ -396,7 +397,7 @@ hv_cmd(struct hv_softc *sc, void *cmd, size_t cmdlen, void *rsp,
 	struct hv_msg msg;
 	int rv;
 
-	if (cmdlen > HV_MESSAGE_PAYLOAD) {
+	if (cmdlen > VMBUS_MSG_DSIZE_MAX) {
 		printf("%s: payload too large (%lu)\n", sc->sc_dev.dv_xname,
 		    cmdlen);
 		return (EMSGSIZE);
@@ -404,8 +405,8 @@ hv_cmd(struct hv_softc *sc, void *cmd, size_t cmdlen, void *rsp,
 
 	memset(&msg, 0, sizeof(msg));
 
-	msg.msg_req.payload_size = cmdlen;
-	memcpy(msg.msg_req.payload, cmd, cmdlen);
+	msg.msg_req.hc_dsize = cmdlen;
+	memcpy(msg.msg_req.hc_data, cmd, cmdlen);
 
 	if (!(flags & HCF_NOREPLY)) {
 		msg.msg_rsp = rsp;
@@ -429,8 +430,8 @@ hv_start(struct hv_softc *sc, struct hv_msg *msg)
 	uint16_t status;
 	int i, s;
 
-	msg->msg_req.connection_id = HV_MESSAGE_CONNECTION_ID;
-	msg->msg_req.message_type = 1;
+	msg->msg_req.hc_connid = VMBUS_CONNID_MESSAGE;
+	msg->msg_req.hc_msgtype = 1;
 
 	if (!(msg->msg_flags & MSGF_NOQUEUE)) {
 		mtx_enter(&sc->sc_reqlck);
@@ -439,9 +440,9 @@ hv_start(struct hv_softc *sc, struct hv_msg *msg)
 	}
 
 	for (i = 0; i < nitems(delays); i++) {
-		status = hv_hypercall(sc, HV_CALL_POST_MESSAGE,
+		status = hv_hypercall(sc, HYPERCALL_POST_MESSAGE,
 		    &msg->msg_req, NULL);
-		if (status != HV_STATUS_INSUFFICIENT_BUFFERS)
+		if (status == HYPERCALL_STATUS_SUCCESS)
 			break;
 		if (msg->msg_flags & MSGF_NOSLEEP) {
 			delay(delays[i]);
@@ -513,7 +514,7 @@ hv_intr_signal(struct hv_softc *sc, void *con)
 {
 	uint64_t status;
 
-	status = hv_hypercall(sc, HV_CALL_SIGNAL_EVENT, con, NULL);
+	status = hv_hypercall(sc, HYPERCALL_SIGNAL_EVENT, con, NULL);
 	return ((uint16_t)status);
 }
 
@@ -529,31 +530,32 @@ hv_intr(void)
 void
 hv_event_intr(struct hv_softc *sc)
 {
-	struct hv_synic_event_flags *evt;
+	struct vmbus_evtflags *evt;
 	struct cpu_info *ci = curcpu();
 	int cpu = CPU_INFO_UNIT(ci);
-	int bit, dword, maxdword, relid;
+	int bit, dword, maxdword, chanid;
 	struct hv_channel *ch;
 	uint32_t *revents, pending;
 
-	evt = (struct hv_synic_event_flags *)sc->sc_siep[cpu] + HV_MESSAGE_SINT;
-	if ((sc->sc_proto == HV_VMBUS_VERSION_WS2008) ||
-	    (sc->sc_proto == HV_VMBUS_VERSION_WIN7)) {
-		if (atomic_clearbit_ptr(&evt->flags[0], 0) == 0)
+	evt = (struct vmbus_evtflags *)sc->sc_siep[cpu] +
+	    VMBUS_SINT_MESSAGE;
+	if ((sc->sc_proto == VMBUS_VERSION_WS2008) ||
+	    (sc->sc_proto == VMBUS_VERSION_WIN7)) {
+		if (atomic_clearbit_ptr(&evt->evt_flags[0], 0) == 0)
 			return;
-		maxdword = HV_MAX_NUM_CHANNELS_SUPPORTED >> 5;
+		maxdword = VMBUS_CHAN_MAX_COMPAT >> 5;
 		/*
 		 * receive size is 1/2 page and divide that by 4 bytes
 		 */
 		revents = sc->sc_revents;
 	} else {
-		maxdword = nitems(evt->flags);
+		maxdword = nitems(evt->evt_flags);
 		/*
 		 * On Host with Win8 or above, the event page can be
 		 * checked directly to get the id of the channel
 		 * that has the pending interrupt.
 		 */
-		revents = &evt->flags[0];
+		revents = &evt->evt_flags[0];
 	}
 
 	for (dword = 0; dword < maxdword; dword++) {
@@ -563,19 +565,19 @@ hv_event_intr(struct hv_softc *sc)
 		for (bit = 0; pending > 0; pending >>= 1, bit++) {
 			if ((pending & 1) == 0)
 				continue;
-			relid = (dword << 5) + bit;
+			chanid = (dword << 5) + bit;
 			/* vmbus channel protocol message */
-			if (relid == 0)
+			if (chanid == 0)
 				continue;
-			ch = hv_channel_lookup(sc, relid);
+			ch = hv_channel_lookup(sc, chanid);
 			if (ch == NULL) {
 				printf("%s: unhandled event on %d\n",
-				    sc->sc_dev.dv_xname, relid);
+				    sc->sc_dev.dv_xname, chanid);
 				continue;
 			}
 			if (ch->ch_state != HV_CHANSTATE_OPENED) {
 				printf("%s: channel %d is not active\n",
-				    sc->sc_dev.dv_xname, relid);
+				    sc->sc_dev.dv_xname, chanid);
 				continue;
 			}
 			ch->ch_evcnt.ec_count++;
@@ -588,49 +590,49 @@ hv_event_intr(struct hv_softc *sc)
 void
 hv_message_intr(struct hv_softc *sc)
 {
-	struct hv_vmbus_message *msg;
-	struct hv_channel_msg_header *hdr;
+	struct vmbus_message *msg;
+	struct vmbus_chanmsg_hdr *hdr;
 	struct cpu_info *ci = curcpu();
 	int cpu = CPU_INFO_UNIT(ci);
 
 	for (;;) {
-		msg = (struct hv_vmbus_message *)sc->sc_simp[cpu] +
-		    HV_MESSAGE_SINT;
-		if (msg->header.message_type == HV_MESSAGE_TYPE_NONE)
+		msg = (struct vmbus_message *)sc->sc_simp[cpu] +
+		    VMBUS_SINT_MESSAGE;
+		if (msg->msg_type == VMBUS_MSGTYPE_NONE)
 			break;
 
-		hdr = (struct hv_channel_msg_header *)msg->payload;
-		if (hdr->message_type >= HV_CHANMSG_COUNT) {
+		hdr = (struct vmbus_chanmsg_hdr *)msg->msg_data;
+		if (hdr->chm_type >= VMBUS_CHANMSG_COUNT) {
 			printf("%s: unhandled message type %u flags %#x\n",
-			    sc->sc_dev.dv_xname, hdr->message_type,
-			    msg->header.message_flags);
+			    sc->sc_dev.dv_xname, hdr->chm_type,
+			    msg->msg_flags);
 			goto skip;
 		}
-		if (hv_msg_dispatch[hdr->message_type].hmd_handler)
-			hv_msg_dispatch[hdr->message_type].hmd_handler(sc, hdr);
+		if (hv_msg_dispatch[hdr->chm_type].hmd_handler)
+			hv_msg_dispatch[hdr->chm_type].hmd_handler(sc, hdr);
 		else
 			printf("%s: unhandled message type %u\n",
-			    sc->sc_dev.dv_xname, hdr->message_type);
+			    sc->sc_dev.dv_xname, hdr->chm_type);
  skip:
-		msg->header.message_type = HV_MESSAGE_TYPE_NONE;
+		msg->msg_type = VMBUS_MSGTYPE_NONE;
 		membar_sync();
-		if (msg->header.message_flags & HV_SYNIC_MHF_PENDING)
-			wrmsr(HV_X64_MSR_EOM, 0);
+		if (msg->msg_flags & VMBUS_MSGFLAG_PENDING)
+			wrmsr(MSR_HV_EOM, 0);
 	}
 }
 
 void
-hv_channel_response(struct hv_softc *sc, struct hv_channel_msg_header *rsphdr)
+hv_channel_response(struct hv_softc *sc, struct vmbus_chanmsg_hdr *rsphdr)
 {
 	struct hv_msg *msg, *tmp;
-	struct hv_channel_msg_header *reqhdr;
+	struct vmbus_chanmsg_hdr *reqhdr;
 	int req;
 
-	req = hv_msg_dispatch[rsphdr->message_type].hmd_request;
+	req = hv_msg_dispatch[rsphdr->chm_type].hmd_request;
 	mtx_enter(&sc->sc_reqlck);
 	TAILQ_FOREACH_SAFE(msg, &sc->sc_reqs, msg_entry, tmp) {
-		reqhdr = (struct hv_channel_msg_header *)&msg->msg_req.payload;
-		if (reqhdr->message_type == req) {
+		reqhdr = (struct vmbus_chanmsg_hdr *)&msg->msg_req.hc_data;
+		if (reqhdr->chm_type == req) {
 			TAILQ_REMOVE(&sc->sc_reqs, msg, msg_entry);
 			break;
 		}
@@ -646,7 +648,7 @@ hv_channel_response(struct hv_softc *sc, struct hv_channel_msg_header *rsphdr)
 }
 
 void
-hv_channel_offer(struct hv_softc *sc, struct hv_channel_msg_header *hdr)
+hv_channel_offer(struct hv_softc *sc, struct vmbus_chanmsg_hdr *hdr)
 {
 	struct hv_offer *co;
 
@@ -665,7 +667,7 @@ hv_channel_offer(struct hv_softc *sc, struct hv_channel_msg_header *hdr)
 }
 
 void
-hv_channel_delivered(struct hv_softc *sc, struct hv_channel_msg_header *hdr)
+hv_channel_delivered(struct hv_softc *sc, struct vmbus_chanmsg_hdr *hdr)
 {
 	atomic_setbits_int(&sc->sc_flags, HSF_OFFERS_DELIVERED);
 	wakeup(hdr);
@@ -674,12 +676,12 @@ hv_channel_delivered(struct hv_softc *sc, struct hv_channel_msg_header *hdr)
 int
 hv_vmbus_connect(struct hv_softc *sc)
 {
-	const uint32_t versions[] = { HV_VMBUS_VERSION_WIN8_1,
-	    HV_VMBUS_VERSION_WIN8, HV_VMBUS_VERSION_WIN7,
-	    HV_VMBUS_VERSION_WS2008, HV_VMBUS_VERSION_INVALID
+	const uint32_t versions[] = {
+		VMBUS_VERSION_WIN8_1, VMBUS_VERSION_WIN8,
+		VMBUS_VERSION_WIN7, VMBUS_VERSION_WS2008
 	};
-	struct hv_channel_initiate_contact cmd;
-	struct hv_channel_version_response rsp;
+	struct vmbus_chanmsg_connect cmd;
+	struct vmbus_chanmsg_connect_resp rsp;
 	paddr_t epa, mpa1, mpa2;
 	int i;
 
@@ -718,22 +720,22 @@ hv_vmbus_connect(struct hv_softc *sc)
 	}
 
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.hdr.message_type = HV_CHANMSG_INITIATED_CONTACT;
-	cmd.interrupt_page = (uint64_t)epa;
-	cmd.monitor_page_1 = (uint64_t)mpa1;
-	cmd.monitor_page_2 = (uint64_t)mpa2;
+	cmd.chm_hdr.chm_type = VMBUS_CHANMSG_CONNECT;
+	cmd.chm_evtflags = (uint64_t)epa;
+	cmd.chm_mnf1 = (uint64_t)mpa1;
+	cmd.chm_mnf2 = (uint64_t)mpa2;
 
 	memset(&rsp, 0, sizeof(rsp));
 
-	for (i = 0; versions[i] != HV_VMBUS_VERSION_INVALID; i++) {
-		cmd.vmbus_version_requested = versions[i];
+	for (i = 0; i < nitems(versions); i++) {
+		cmd.chm_ver = versions[i];
 		if (hv_cmd(sc, &cmd, sizeof(cmd), &rsp, sizeof(rsp),
 		    HCF_NOSLEEP)) {
-			DPRINTF("%s: INITIATED_CONTACT failed\n",
+			DPRINTF("%s: CONNECT failed\n",
 			    sc->sc_dev.dv_xname);
 			goto errout;
 		}
-		if (rsp.version_supported) {
+		if (rsp.chm_done) {
 			sc->sc_flags |= HSF_CONNECTED;
 			sc->sc_proto = versions[i];
 			sc->sc_handle = 0xe1e10 - 1; /* magic! */
@@ -742,7 +744,7 @@ hv_vmbus_connect(struct hv_softc *sc)
 			break;
 		}
 	}
-	if (versions[i] == HV_VMBUS_VERSION_INVALID) {
+	if (i == nitems(versions)) {
 		printf("%s: failed to negotiate protocol version\n",
 		    sc->sc_dev.dv_xname);
 		goto errout;
@@ -948,18 +950,18 @@ hv_guid_sprint(struct hv_guid *guid, char *str, size_t size)
 int
 hv_channel_scan(struct hv_softc *sc)
 {
-	struct hv_channel_msg_header hdr;
-	struct hv_channel_offer_channel rsp, *offer;
+	struct vmbus_chanmsg_hdr hdr;
+	struct vmbus_chanmsg_choffer rsp, *offer;
 	struct hv_offer *co;
 
 	SIMPLEQ_INIT(&sc->sc_offers);
 	mtx_init(&sc->sc_offerlck, IPL_NET);
 
-	hdr.message_type = HV_CHANMSG_REQUEST_OFFERS;
-	hdr.padding = 0;
+	memset(&hdr, 0, sizeof(hdr));
+	hdr.chm_type = VMBUS_CHANMSG_CHREQUEST;
 
 	if (hv_cmd(sc, &hdr, sizeof(hdr), &rsp, sizeof(rsp), HCF_NOREPLY)) {
-		DPRINTF("%s: REQUEST_OFFERS failed\n", sc->sc_dev.dv_xname);
+		DPRINTF("%s: CHREQUEST failed\n", sc->sc_dev.dv_xname);
 		return (-1);
 	}
 
@@ -997,7 +999,7 @@ hv_process_offer(struct hv_softc *sc, struct hv_offer *co)
 		return;
 	}
 	nch->ch_sc = sc;
-	hv_guid_sprint(&co->co_chan.offer.interface_type, nch->ch_ident,
+	hv_guid_sprint(&co->co_chan.chm_chtype, nch->ch_ident,
 	    sizeof(nch->ch_ident));
 
 	/*
@@ -1007,28 +1009,23 @@ hv_process_offer(struct hv_softc *sc, struct hv_offer *co)
 	 */
 	nch->ch_flags |= CHF_BATCHED;
 
-	KASSERT((((vaddr_t)&nch->ch_sigevt) & 0x7) == 0);
-	memset(&nch->ch_sigevt, 0, sizeof(nch->ch_sigevt));
-	nch->ch_sigevt.connection_id = HV_EVENT_CONNECTION_ID;
+	KASSERT((((vaddr_t)&nch->ch_monprm) & 0x7) == 0);
+	memset(&nch->ch_monprm, 0, sizeof(nch->ch_monprm));
+	nch->ch_monprm.mp_connid = VMBUS_CONNID_EVENT;
 
-	if (sc->sc_proto != HV_VMBUS_VERSION_WS2008) {
-		if (co->co_chan.is_dedicated_interrupt)
-			nch->ch_flags |= CHF_DEDICATED;
-		nch->ch_sigevt.connection_id = co->co_chan.connection_id;
-	}
+	if (sc->sc_proto != VMBUS_VERSION_WS2008)
+		nch->ch_monprm.mp_connid = co->co_chan.chm_connid;
 
-	if (co->co_chan.monitor_allocated) {
-		nch->ch_mgroup = co->co_chan.monitor_id >> 5;
-		nch->ch_mindex = co->co_chan.monitor_id & 0x1f;
+	if (co->co_chan.chm_flags1 & VMBUS_CHOFFER_FLAG1_HASMNF) {
+		nch->ch_mgroup = co->co_chan.chm_montrig >> 5;
+		nch->ch_mindex = co->co_chan.chm_montrig & 0x1f;
 		nch->ch_flags |= CHF_MONITOR;
 	}
 
-	nch->ch_relid = co->co_chan.child_rel_id;
+	nch->ch_id = co->co_chan.chm_chanid;
 
-	memcpy(&nch->ch_type, &co->co_chan.offer.interface_type,
-	    sizeof(ch->ch_type));
-	memcpy(&nch->ch_inst, &co->co_chan.offer.interface_instance,
-	    sizeof(ch->ch_inst));
+	memcpy(&nch->ch_type, &co->co_chan.chm_chtype, sizeof(ch->ch_type));
+	memcpy(&nch->ch_inst, &co->co_chan.chm_chinst, sizeof(ch->ch_inst));
 
 	mtx_enter(&sc->sc_channelck);
 	TAILQ_FOREACH(ch, &sc->sc_channels, ch_entry) {
@@ -1037,7 +1034,7 @@ hv_process_offer(struct hv_softc *sc, struct hv_offer *co)
 			break;
 	}
 	if (ch != NULL) {
-		if (co->co_chan.offer.sub_channel_index == 0) {
+		if (co->co_chan.chm_subidx == 0) {
 			printf("%s: unknown offer \"%s\"\n",
 			    sc->sc_dev.dv_xname, nch->ch_ident);
 			mtx_leave(&sc->sc_channelck);
@@ -1046,7 +1043,7 @@ hv_process_offer(struct hv_softc *sc, struct hv_offer *co)
 		}
 #ifdef HYPERV_DEBUG
 		printf("%s: subchannel %u for \"%s\"\n", sc->sc_dev.dv_xname,
-		    co->co_chan.offer.sub_channel_index, ch->ch_ident);
+		    co->co_chan.chm_subidx, ch->ch_ident);
 #endif
 		mtx_leave(&sc->sc_channelck);
 		free(nch, M_DEVBUF, sizeof(*nch));
@@ -1059,10 +1056,10 @@ hv_process_offer(struct hv_softc *sc, struct hv_offer *co)
 	mtx_leave(&sc->sc_channelck);
 
 #ifdef HYPERV_DEBUG
-	printf("%s: channel %u: \"%s\"", sc->sc_dev.dv_xname, nch->ch_relid,
+	printf("%s: channel %u: \"%s\"", sc->sc_dev.dv_xname, nch->ch_id,
 	    nch->ch_ident);
-	if (co->co_chan.monitor_allocated)
-		printf(", monitor %u\n", co->co_chan.monitor_id);
+	if (nch->ch_flags & CHF_MONITOR)
+		printf(", monitor %u\n", co->co_chan.chm_montrig);
 	else
 		printf("\n");
 #endif
@@ -1074,7 +1071,7 @@ hv_channel_lookup(struct hv_softc *sc, uint32_t relid)
 	struct hv_channel *ch;
 
 	TAILQ_FOREACH(ch, &sc->sc_channels, ch_entry) {
-		if (ch->ch_relid == relid)
+		if (ch->ch_id == relid)
 			return (ch);
 	}
 	return (NULL);
@@ -1099,20 +1096,20 @@ hv_channel_ring_create(struct hv_channel *ch, uint32_t sndbuflen,
 	ch->ch_ring_npg = ch->ch_ring_size >> PAGE_SHIFT;
 
 	memset(&ch->ch_wrd, 0, sizeof(ch->ch_wrd));
-	ch->ch_wrd.rd_ring = (struct hv_ring_buffer *)ch->ch_ring;
+	ch->ch_wrd.rd_ring = (struct vmbus_bufring *)ch->ch_ring;
 	ch->ch_wrd.rd_size = sndbuflen;
-	ch->ch_wrd.rd_data_size = sndbuflen - sizeof(struct hv_ring_buffer);
+	ch->ch_wrd.rd_data_size = sndbuflen - sizeof(struct vmbus_bufring);
 	mtx_init(&ch->ch_wrd.rd_lock, IPL_NET);
 
 	memset(&ch->ch_rrd, 0, sizeof(ch->ch_rrd));
-	ch->ch_rrd.rd_ring = (struct hv_ring_buffer *)((uint8_t *)ch->ch_ring +
+	ch->ch_rrd.rd_ring = (struct vmbus_bufring *)((uint8_t *)ch->ch_ring +
 	    sndbuflen);
 	ch->ch_rrd.rd_size = rcvbuflen;
-	ch->ch_rrd.rd_data_size = rcvbuflen - sizeof(struct hv_ring_buffer);
+	ch->ch_rrd.rd_data_size = rcvbuflen - sizeof(struct vmbus_bufring);
 	mtx_init(&ch->ch_rrd.rd_lock, IPL_NET);
 
 	if (hv_handle_alloc(ch, ch->ch_ring, sndbuflen + rcvbuflen,
-	    &ch->ch_ring_hndl)) {
+	    &ch->ch_ring_gpadl)) {
 		printf("%s: failed to obtain a PA handle for the ring\n",
 		    sc->sc_dev.dv_xname);
 		hv_channel_ring_destroy(ch);
@@ -1128,7 +1125,7 @@ hv_channel_ring_destroy(struct hv_channel *ch)
 	km_free(ch->ch_ring, ch->ch_wrd.rd_size + ch->ch_rrd.rd_size,
 	    &kv_any, &kp_zero);
 	ch->ch_ring = NULL;
-	hv_handle_free(ch, ch->ch_ring_hndl);
+	hv_handle_free(ch, ch->ch_ring_gpadl);
 
 	memset(&ch->ch_wrd, 0, sizeof(ch->ch_wrd));
 	memset(&ch->ch_rrd, 0, sizeof(ch->ch_rrd));
@@ -1139,8 +1136,8 @@ hv_channel_open(struct hv_channel *ch, void *udata, size_t udatalen,
     void (*handler)(void *), void *arg)
 {
 	struct hv_softc *sc = ch->ch_sc;
-	struct hv_channel_open cmd;
-	struct hv_channel_open_result rsp;
+	struct vmbus_chanmsg_chopen cmd;
+	struct vmbus_chanmsg_chopen_resp rsp;
 	int rv;
 
 	if (ch->ch_ring == NULL &&
@@ -1150,16 +1147,15 @@ hv_channel_open(struct hv_channel *ch, void *udata, size_t udatalen,
 	}
 
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.header.message_type = HV_CHANMSG_OPEN_CHANNEL;
-	cmd.open_id = ch->ch_relid;
-	cmd.child_rel_id = ch->ch_relid;
-	cmd.ring_buffer_gpadl_handle = ch->ch_ring_hndl;
-	cmd.downstream_ring_buffer_page_offset =
-	    ch->ch_wrd.rd_size >> PAGE_SHIFT;
-	cmd.target_vcpu = ch->ch_vcpu;
+	cmd.chm_hdr.chm_type = VMBUS_CHANMSG_CHOPEN;
+	cmd.chm_openid = ch->ch_id;
+	cmd.chm_chanid = ch->ch_id;
+	cmd.chm_gpadl = ch->ch_ring_gpadl;
+	cmd.chm_txbr_pgcnt = ch->ch_wrd.rd_size >> PAGE_SHIFT;
+	cmd.chm_vcpuid = ch->ch_vcpu;
 
 	if (udata && udatalen > 0)
-		memcpy(&cmd.user_data, udata, udatalen);
+		memcpy(cmd.chm_udata, udata, udatalen);
 
 	memset(&rsp, 0, sizeof(rsp));
 
@@ -1171,7 +1167,7 @@ hv_channel_open(struct hv_channel *ch, void *udata, size_t udatalen,
 	rv = hv_cmd(sc, &cmd, sizeof(cmd), &rsp, sizeof(rsp), 0);
 	if (rv) {
 		hv_channel_ring_destroy(ch);
-		DPRINTF("%s: OPEN_CHANNEL failed with %d\n",
+		DPRINTF("%s: CHOPEN failed with %d\n",
 		    sc->sc_dev.dv_xname, rv);
 		ch->ch_handler = NULL;
 		ch->ch_ctx = NULL;
@@ -1186,17 +1182,17 @@ int
 hv_channel_close(struct hv_channel *ch)
 {
 	struct hv_softc *sc = ch->ch_sc;
-	struct hv_channel_close cmd;
+	struct vmbus_chanmsg_chclose cmd;
 	int rv;
 
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.header.message_type = HV_CHANMSG_CLOSE_CHANNEL;
-	cmd.child_rel_id = ch->ch_relid;
+	cmd.chm_hdr.chm_type = VMBUS_CHANMSG_CHCLOSE;
+	cmd.chm_chanid = ch->ch_id;
 
 	ch->ch_state = HV_CHANSTATE_CLOSING;
 	rv = hv_cmd(sc, &cmd, sizeof(cmd), NULL, 0, HCF_NOREPLY);
 	if (rv) {
-		DPRINTF("%s: CLOSE_CHANNEL failed with %d\n",
+		DPRINTF("%s: CHCLOSE failed with %d\n",
 		    sc->sc_dev.dv_xname, rv);
 		return (-1);
 	}
@@ -1208,16 +1204,16 @@ hv_channel_close(struct hv_channel *ch)
 static inline void
 hv_channel_setevent(struct hv_softc *sc, struct hv_channel *ch)
 {
-	struct hv_monitor_trigger_group *mtg;
+	struct vmbus_mon_trig *mtg;
 
 	/* Each uint32_t represents 32 channels */
-	atomic_setbit_ptr((uint32_t *)sc->sc_wevents + (ch->ch_relid >> 5),
-	    ch->ch_relid & 31);
+	atomic_setbit_ptr((uint32_t *)sc->sc_wevents + (ch->ch_id >> 5),
+	    ch->ch_id & 31);
 	if (ch->ch_flags & CHF_MONITOR) {
-		mtg = &sc->sc_monitor[1]->trigger_group[ch->ch_mgroup];
-		atomic_setbit_ptr((uint32_t *)&mtg->pending, ch->ch_mindex);
+		mtg = &sc->sc_monitor[1]->mnf_trigs[ch->ch_mgroup];
+		atomic_setbit_ptr((uint32_t *)&mtg->mt_pending, ch->ch_mindex);
 	} else
-		hv_intr_signal(sc, &ch->ch_sigevt);
+		hv_intr_signal(sc, &ch->ch_monprm);
 }
 
 static inline void
@@ -1225,8 +1221,8 @@ hv_ring_put(struct hv_ring_data *wrd, uint8_t *data, uint32_t datalen)
 {
 	int left = MIN(datalen, wrd->rd_data_size - wrd->rd_prod);
 
-	memcpy(&wrd->rd_ring->buffer[wrd->rd_prod], data, left);
-	memcpy(&wrd->rd_ring->buffer[0], data + left, datalen - left);
+	memcpy(&wrd->rd_ring->br_data[wrd->rd_prod], data, left);
+	memcpy(&wrd->rd_ring->br_data[0], data + left, datalen - left);
 	wrd->rd_prod += datalen;
 	wrd->rd_prod %= wrd->rd_data_size;
 }
@@ -1237,8 +1233,8 @@ hv_ring_get(struct hv_ring_data *rrd, uint8_t *data, uint32_t datalen,
 {
 	int left = MIN(datalen, rrd->rd_data_size - rrd->rd_cons);
 
-	memcpy(data, &rrd->rd_ring->buffer[rrd->rd_cons], left);
-	memcpy(data + left, &rrd->rd_ring->buffer[0], datalen - left);
+	memcpy(data, &rrd->rd_ring->br_data[rrd->rd_cons], left);
+	memcpy(data + left, &rrd->rd_ring->br_data[0], datalen - left);
 	if (!peek) {
 		rrd->rd_cons += datalen;
 		rrd->rd_cons %= rrd->rd_data_size;
@@ -1251,8 +1247,8 @@ hv_ring_get(struct hv_ring_data *rrd, uint8_t *data, uint32_t datalen,
 static inline void
 hv_ring_avail(struct hv_ring_data *rd, uint32_t *towrite, uint32_t *toread)
 {
-	uint32_t ridx = rd->rd_ring->read_index;
-	uint32_t widx = rd->rd_ring->write_index;
+	uint32_t ridx = rd->rd_ring->br_rindex;
+	uint32_t widx = rd->rd_ring->br_windex;
 	uint32_t r, w;
 
 	w =  HV_BYTES_AVAIL_TO_WRITE(ridx, widx, rd->rd_data_size);
@@ -1293,13 +1289,13 @@ hv_ring_write(struct hv_ring_data *wrd, struct iovec *iov, int iov_cnt,
 	hv_ring_put(wrd, (uint8_t *)&indices, sizeof(indices));
 
 	membar_sync();
-	wrd->rd_ring->write_index = wrd->rd_prod;
+	wrd->rd_ring->br_windex = wrd->rd_prod;
 
 	mtx_leave(&wrd->rd_lock);
 
 	/* Signal when the ring transitions from being empty to non-empty */
-	if (wrd->rd_ring->interrupt_mask == 0 &&
-	    wrd->rd_ring->read_index == oprod)
+	if (wrd->rd_ring->br_imask == 0 &&
+	    wrd->rd_ring->br_rindex == oprod)
 		*needsig = 1;
 	else
 		*needsig = 0;
@@ -1312,23 +1308,23 @@ hv_channel_send(struct hv_channel *ch, void *data, uint32_t datalen,
     uint64_t rid, int type, uint32_t flags)
 {
 	struct hv_softc *sc = ch->ch_sc;
-	struct hv_pktdesc d;
+	struct vmbus_chanpkt cp;
 	struct iovec iov[3];
 	uint32_t pktlen, pktlen_aligned;
 	uint64_t zeropad = 0;
 	int rv, needsig = 0;
 
-	pktlen = sizeof(d) + datalen;
+	pktlen = sizeof(cp) + datalen;
 	pktlen_aligned = roundup(pktlen, sizeof(uint64_t));
 
-	d.type = type;
-	d.flags = flags;
-	d.offset = sizeof(d) >> 3;
-	d.length = pktlen_aligned >> 3;
-	d.tid = rid;
+	cp.cp_hdr.cph_type = type;
+	cp.cp_hdr.cph_flags = flags;
+	VMBUS_CHANPKT_SETLEN(cp.cp_hdr.cph_hlen, sizeof(cp));
+	VMBUS_CHANPKT_SETLEN(cp.cp_hdr.cph_tlen, pktlen_aligned);
+	cp.cp_hdr.cph_tid = rid;
 
-	iov[0].iov_base = &d;
-	iov[0].iov_len = sizeof(d);
+	iov[0].iov_base = &cp;
+	iov[0].iov_len = sizeof(cp);
 
 	iov[1].iov_base = data;
 	iov[1].iov_len = datalen;
@@ -1344,31 +1340,31 @@ hv_channel_send(struct hv_channel *ch, void *data, uint32_t datalen,
 }
 
 int
-hv_channel_sendbuf(struct hv_channel *ch, struct hv_page_buffer *pb,
-    uint32_t npb, void *data, uint32_t datalen, uint64_t rid)
+hv_channel_send_sgl(struct hv_channel *ch, struct vmbus_gpa *sgl,
+    uint32_t nsge, void *data, uint32_t datalen, uint64_t rid)
 {
 	struct hv_softc *sc = ch->ch_sc;
-	struct hv_gpadesc d;
+	struct vmbus_chanpkt_sglist cp;
 	struct iovec iov[4];
 	uint32_t buflen, pktlen, pktlen_aligned;
 	uint64_t zeropad = 0;
 	int rv, needsig = 0;
 
-	buflen = sizeof(struct hv_page_buffer) * npb;
-	pktlen = sizeof(d) + datalen + buflen;
+	buflen = sizeof(struct vmbus_gpa) * nsge;
+	pktlen = sizeof(cp) + datalen + buflen;
 	pktlen_aligned = roundup(pktlen, sizeof(uint64_t));
 
-	d.type = HV_PKT_DATA_USING_GPA_DIRECT;
-	d.flags = HV_PKTFLAG_COMPLETION_REQUESTED;
-	d.offset = (sizeof(d) + buflen) >> 3;
-	d.length = pktlen_aligned >> 3;
-	d.tid = rid;
-	d.range_count = npb;
+	cp.cp_hdr.cph_type = VMBUS_CHANPKT_TYPE_GPA;
+	cp.cp_hdr.cph_flags = VMBUS_CHANPKT_FLAG_RC;
+	VMBUS_CHANPKT_SETLEN(cp.cp_hdr.cph_hlen, sizeof(cp) + buflen);
+	VMBUS_CHANPKT_SETLEN(cp.cp_hdr.cph_tlen, pktlen_aligned);
+	cp.cp_hdr.cph_tid = rid;
+	cp.cp_gpa_cnt = nsge;
 
-	iov[0].iov_base = &d;
-	iov[0].iov_len = sizeof(d);
+	iov[0].iov_base = &cp;
+	iov[0].iov_len = sizeof(cp);
 
-	iov[1].iov_base = pb;
+	iov[1].iov_base = sgl;
 	iov[1].iov_len = buflen;
 
 	iov[2].iov_base = data;
@@ -1427,7 +1423,7 @@ hv_ring_read(struct hv_ring_data *rrd, void *data, uint32_t datalen,
 	hv_ring_get(rrd, (uint8_t *)&indices, sizeof(indices), 0);
 
 	membar_sync();
-	rrd->rd_ring->read_index = rrd->rd_cons;
+	rrd->rd_ring->br_rindex = rrd->rd_cons;
 
 	mtx_leave(&rrd->rd_lock);
 
@@ -1438,17 +1434,17 @@ int
 hv_channel_recv(struct hv_channel *ch, void *data, uint32_t datalen,
     uint32_t *rlen, uint64_t *rid, int raw)
 {
-	struct hv_pktdesc d;
+	struct vmbus_chanpkt_hdr cph;
 	uint32_t offset, pktlen;
 	int rv;
 
 	*rlen = 0;
 
-	if ((rv = hv_ring_peek(&ch->ch_rrd, &d, sizeof(d))) != 0)
+	if ((rv = hv_ring_peek(&ch->ch_rrd, &cph, sizeof(cph))) != 0)
 		return (rv);
 
-	offset = raw ? 0 : (d.offset << 3);
-	pktlen = (d.length << 3) - offset;
+	offset = raw ? 0 : VMBUS_CHANPKT_GETLEN(cph.cph_hlen);
+	pktlen = VMBUS_CHANPKT_GETLEN(cph.cph_tlen) - offset;
 	if (pktlen > datalen) {
 		printf("%s: pktlen %u datalen %u\n", __func__, pktlen, datalen);
 		return (EINVAL);
@@ -1457,7 +1453,7 @@ hv_channel_recv(struct hv_channel *ch, void *data, uint32_t datalen,
 	rv = hv_ring_read(&ch->ch_rrd, data, pktlen, offset);
 	if (rv == 0) {
 		*rlen = pktlen;
-		*rid = d.tid;
+		*rid = cph.cph_tid;
 	}
 
 	return (rv);
@@ -1468,15 +1464,16 @@ hv_handle_alloc(struct hv_channel *ch, void *buffer, uint32_t buflen,
     uint32_t *handle)
 {
 	struct hv_softc *sc = ch->ch_sc;
-	struct hv_gpadl_header *hdr;
-	struct hv_gpadl_body *body, *cmd;
-	struct hv_gpadl_created rsp;
+	struct vmbus_chanmsg_gpadl_conn *hdr;
+	struct vmbus_chanmsg_gpadl_subconn *cmd;
+	struct vmbus_chanmsg_gpadl_connresp rsp;
 	struct hv_msg *msg;
 	int i, j, last, left, rv;
 	int bodylen = 0, ncmds = 0, pfn = 0;
 	int waitok = cold ? M_NOWAIT : M_WAITOK;
 	uint64_t *frames;
 	paddr_t pa;
+	caddr_t body;
 	/* Total number of pages to reference */
 	int total = atop(buflen);
 	/* Number of pages that will fit the header */
@@ -1503,9 +1500,9 @@ hv_handle_alloc(struct hv_channel *ch, void *buffer, uint32_t buflen,
 		frames[i] = atop(pa);
 	}
 
-	msg->msg_req.payload_size = sizeof(struct hv_gpadl_header) +
-	    sizeof(struct hv_gpa_range) + inhdr * sizeof(uint64_t);
-	hdr = (struct hv_gpadl_header *)msg->msg_req.payload;
+	msg->msg_req.hc_dsize = sizeof(struct vmbus_chanmsg_gpadl_conn) +
+	    /* sizeof(struct vmbus_gpa_range) */ + inhdr * sizeof(uint64_t);
+	hdr = (struct vmbus_chanmsg_gpadl_conn *)msg->msg_req.hc_data;
 	msg->msg_rsp = &rsp;
 	msg->msg_rsplen = sizeof(rsp);
 	if (!waitok)
@@ -1516,7 +1513,7 @@ hv_handle_alloc(struct hv_channel *ch, void *buffer, uint32_t buflen,
 	/* Allocate additional gpadl_body structures if required */
 	if (left > 0) {
 		ncmds = MAX(1, left / HV_NPFNBODY + left % HV_NPFNBODY);
-		bodylen = ncmds * HV_MESSAGE_PAYLOAD;
+		bodylen = ncmds * VMBUS_MSG_DSIZE_MAX;
 		body = malloc(bodylen, M_DEVBUF, M_ZERO | waitok);
 		if (body == NULL) {
 			free(msg, M_DEVBUF, sizeof(*msg));
@@ -1527,41 +1524,41 @@ hv_handle_alloc(struct hv_channel *ch, void *buffer, uint32_t buflen,
 
 	*handle = atomic_inc_int_nv(&sc->sc_handle);
 
-	hdr->header.message_type = HV_CHANMSG_GPADL_HEADER;
-	hdr->child_rel_id = ch->ch_relid;
-	hdr->gpadl = *handle;
+	hdr->chm_hdr.chm_type = VMBUS_CHANMSG_GPADL_CONN;
+	hdr->chm_chanid = ch->ch_id;
+	hdr->chm_gpadl = *handle;
 
 	/* Single range for a contiguous buffer */
-	hdr->range_count = 1;
-	hdr->range_buf_len = sizeof(struct hv_gpa_range) + total *
+	hdr->chm_range_cnt = 1;
+	hdr->chm_range_len = sizeof(struct vmbus_gpa_range) + total *
 	    sizeof(uint64_t);
-	hdr->range[0].byte_offset = 0;
-	hdr->range[0].byte_count = buflen;
+	hdr->chm_range.gpa_ofs = 0;
+	hdr->chm_range.gpa_len = buflen;
 
 	/* Fit as many pages as possible into the header */
 	for (i = 0; i < inhdr; i++)
-		hdr->range[0].pfn_array[i] = frames[pfn++];
+		hdr->chm_range.gpa_page[i] = frames[pfn++];
 
 	for (i = 0; i < ncmds; i++) {
-		cmd = (struct hv_gpadl_body *)((caddr_t)body +
-		    HV_MESSAGE_PAYLOAD * i);
-		cmd->header.message_type = HV_CHANMSG_GPADL_BODY;
-		cmd->gpadl = *handle;
+		cmd = (struct vmbus_chanmsg_gpadl_subconn *)(body +
+		    VMBUS_MSG_DSIZE_MAX * i);
+		cmd->chm_hdr.chm_type = VMBUS_CHANMSG_GPADL_SUBCONN;
+		cmd->chm_gpadl = *handle;
 		last = MIN(left, HV_NPFNBODY);
 		for (j = 0; j < last; j++)
-			cmd->pfn[j] = frames[pfn++];
+			cmd->chm_gpa_page[j] = frames[pfn++];
 		left -= last;
 	}
 
 	rv = hv_start(sc, msg);
 	if (rv != 0) {
-		DPRINTF("%s: GPADL_HEADER failed\n", sc->sc_dev.dv_xname);
+		DPRINTF("%s: GPADL_CONN failed\n", sc->sc_dev.dv_xname);
 		goto out;
 	}
 	for (i = 0; i < ncmds; i++) {
 		int cmdlen = sizeof(*cmd);
-		cmd = (struct hv_gpadl_body *)((caddr_t)body +
-		    HV_MESSAGE_PAYLOAD * i);
+		cmd = (struct vmbus_chanmsg_gpadl_subconn *)(body +
+		    VMBUS_MSG_DSIZE_MAX * i);
 		/* Last element can be short */
 		if (i == ncmds - 1)
 			cmdlen += last * sizeof(uint64_t);
@@ -1569,7 +1566,7 @@ hv_handle_alloc(struct hv_channel *ch, void *buffer, uint32_t buflen,
 			cmdlen += HV_NPFNBODY * sizeof(uint64_t);
 		rv = hv_cmd(sc, cmd, cmdlen, NULL, 0, waitok | HCF_NOREPLY);
 		if (rv != 0) {
-			DPRINTF("%s: GPADL_BODY (iteration %d/%d) failed "
+			DPRINTF("%s: GPADL_SUBCONN (iteration %d/%d) failed "
 			    "with %d\n", sc->sc_dev.dv_xname, i, ncmds, rv);
 			goto out;
 		}
@@ -1587,7 +1584,7 @@ hv_handle_alloc(struct hv_channel *ch, void *buffer, uint32_t buflen,
 	if (rv != 0)
 		return (rv);
 
-	KASSERT(*handle == rsp.gpadl);
+	KASSERT(*handle == rsp.chm_gpadl);
 
 	return (0);
 }
@@ -1596,18 +1593,18 @@ void
 hv_handle_free(struct hv_channel *ch, uint32_t handle)
 {
 	struct hv_softc *sc = ch->ch_sc;
-	struct hv_gpadl_teardown cmd;
-	struct hv_gpadl_torndown rsp;
+	struct vmbus_chanmsg_gpadl_disconn cmd;
+	struct vmbus_chanmsg_gpadl_disconn rsp;
 	int rv;
 
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.header.message_type = HV_CHANMSG_GPADL_TEARDOWN;
-	cmd.child_rel_id = ch->ch_relid;
-	cmd.gpadl = handle;
+	cmd.chm_hdr.chm_type = VMBUS_CHANMSG_GPADL_DISCONN;
+	cmd.chm_chanid = ch->ch_id;
+	cmd.chm_gpadl = handle;
 
 	rv = hv_cmd(sc, &cmd, sizeof(cmd), &rsp, sizeof(rsp), 0);
 	if (rv)
-		DPRINTF("%s: GPADL_TEARDOWN failed with %d\n",
+		DPRINTF("%s: GPADL_DISCONN failed with %d\n",
 		    sc->sc_dev.dv_xname, rv);
 }
 
@@ -1734,7 +1731,7 @@ hv_heartbeat(void *arg)
 		    sc->sc_dev.dv_xname, hdr->icmsgtype);
 	}
 	hdr->icflags = HV_ICMSGHDRFLAG_TRANSACTION | HV_ICMSGHDRFLAG_RESPONSE;
-	hv_channel_send(ch, ch->ch_buf, rlen, rid, HV_PKT_DATA_IN_BAND, 0);
+	hv_channel_send(ch, ch->ch_buf, rlen, rid, VMBUS_CHANPKT_TYPE_INBAND, 0);
 }
 
 void
@@ -1806,16 +1803,16 @@ hv_shutdown(void *arg)
 		msg = (struct hv_shutdown_msg *)(hdr + 1);
 		if (msg->flags == 0 || msg->flags == 1) {
 			shutdown = 1;
-			hdr->status = HV_S_OK;
+			hdr->status = HV_ICMSG_STATUS_OK;
 		} else
-			hdr->status = HV_E_FAIL;
+			hdr->status = HV_ICMSG_STATUS_FAIL;
 	} else if (hdr->icmsgtype != HV_ICMSGTYPE_NEGOTIATE) {
 		printf("%s: unhandled shutdown message type %u\n",
 		    sc->sc_dev.dv_xname, hdr->icmsgtype);
 	}
 
 	hdr->icflags = HV_ICMSGHDRFLAG_TRANSACTION | HV_ICMSGHDRFLAG_RESPONSE;
-	hv_channel_send(ch, ch->ch_buf, rlen, rid, HV_PKT_DATA_IN_BAND, 0);
+	hv_channel_send(ch, ch->ch_buf, rlen, rid, VMBUS_CHANPKT_TYPE_INBAND, 0);
 
 	if (shutdown)
 		task_add(systq, &sc->sc_sdtask);
@@ -1875,7 +1872,7 @@ hv_timesync(void *arg)
 	}
 
 	hdr->icflags = HV_ICMSGHDRFLAG_TRANSACTION | HV_ICMSGHDRFLAG_RESPONSE;
-	hv_channel_send(ch, ch->ch_buf, rlen, rid, HV_PKT_DATA_IN_BAND, 0);
+	hv_channel_send(ch, ch->ch_buf, rlen, rid, VMBUS_CHANPKT_TYPE_INBAND, 0);
 }
 
 static int

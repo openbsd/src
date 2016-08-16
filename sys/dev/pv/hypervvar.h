@@ -32,7 +32,7 @@ struct hv_msg {
 #define  MSGF_NOSLEEP			  0x0001
 #define  MSGF_NOQUEUE			  0x0002
 #define  MSGF_ORPHANED			  0x0004
-	struct hv_input_post_message	 msg_req;
+	struct hypercall_postmsg_in	 msg_req;
 	void				*msg_rsp;
 	size_t				 msg_rsplen;
 	TAILQ_ENTRY(hv_msg)		 msg_entry;
@@ -40,13 +40,13 @@ struct hv_msg {
 TAILQ_HEAD(hv_queue, hv_msg);
 
 struct hv_offer {
-	struct hv_channel_offer_channel	 co_chan;
+	struct vmbus_chanmsg_choffer	 co_chan;
 	SIMPLEQ_ENTRY(hv_offer)		 co_entry;
 };
 SIMPLEQ_HEAD(hv_offers, hv_offer);
 
 struct hv_ring_data {
-	struct hv_ring_buffer		*rd_ring;
+	struct vmbus_bufring		*rd_ring;
 	uint32_t			 rd_size;
 	struct mutex			 rd_lock;
 	uint32_t			 rd_prod;
@@ -63,7 +63,7 @@ struct hv_channel {
 #define  HV_CHANSTATE_OPENED		  2
 #define  HV_CHANSTATE_CLOSING		  3
 #define  HV_CHANSTATE_CLOSED		  4
-	uint32_t			 ch_relid;
+	uint32_t			 ch_id;
 
 	struct hv_guid			 ch_type;
 	struct hv_guid			 ch_inst;
@@ -73,7 +73,7 @@ struct hv_channel {
 	uint8_t				 ch_mindex;
 
 	void				*ch_ring;
-	uint32_t			 ch_ring_hndl;
+	uint32_t			 ch_ring_gpadl;
 	uint32_t			 ch_ring_npg;
 	ulong				 ch_ring_size;
 
@@ -90,10 +90,9 @@ struct hv_channel {
 
 	uint32_t			 ch_flags;
 #define  CHF_BATCHED			  0x0001
-#define  CHF_DEDICATED			  0x0002
-#define  CHF_MONITOR			  0x0004
+#define  CHF_MONITOR			  0x0002
 
-	struct hv_input_signal_event	 ch_sigevt __attribute__((aligned(8)));
+	struct hv_mon_param		 ch_monprm __attribute__((aligned(8)));
 
 	TAILQ_ENTRY(hv_channel)		 ch_entry;
 };
@@ -142,7 +141,7 @@ struct hv_softc {
 	uint32_t			*sc_revents;	/* Read events */
 
 	/* Monitor pages for parent<->child notifications */
-	struct hv_monitor_page		*sc_monitor[2];
+	struct vmbus_mnf		*sc_monitor[2];
 
 	struct hv_queue	 		 sc_reqs;	/* Request queue */
 	struct mutex			 sc_reqlck;
@@ -197,7 +196,7 @@ int	hv_channel_open(struct hv_channel *, void *, size_t, void (*)(void *),
 int	hv_channel_close(struct hv_channel *);
 int	hv_channel_send(struct hv_channel *, void *, uint32_t, uint64_t,
 	    int, uint32_t);
-int	hv_channel_sendbuf(struct hv_channel *, struct hv_page_buffer *,
+int	hv_channel_send_sgl(struct hv_channel *, struct vmbus_gpa *,
 	    uint32_t, void *, uint32_t, uint64_t);
 int	hv_channel_recv(struct hv_channel *, void *, uint32_t, uint32_t *,
 	    uint64_t *, int);
