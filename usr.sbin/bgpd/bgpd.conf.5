@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.144 2016/06/28 16:59:14 jca Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.145 2016/08/17 08:13:52 phessler Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 28 2016 $
+.Dd $Mdocdate: August 17 2016 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -617,16 +617,21 @@ The default for IBGP peers is
 .Pq Ic none Ns | Ns Ic unicast Ns | Ns Ic vpn
 .Xc
 For the given address family, control which subsequent address families
-(at the moment, only
+are announced during the capabilities negotiation.
+Only routes for that address family and subsequent address family will be
+announced and processed.
+.Pp
+At the moment, only
 .Em none ,
 which disables the announcement of that address family,
 .Em unicast ,
 and
 .Em vpn ,
-which allows the distribution of BGP MPLS VPNs, are supported) are announced
-during the capabilities negotiation.
-Only routes for that address family and subsequent address family will be
-announced and processed.
+which allows the distribution of BGP MPLS VPNs, are supported.
+.Pp
+The default is
+.Ic unicast
+for the same address family of the session.
 .Pp
 .It Xo
 .Ic announce as-4byte
