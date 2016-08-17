@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.26 2016/02/06 23:50:10 krw Exp $ */
+/*	$OpenBSD: confpars.c,v 1.27 2016/08/17 00:38:26 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -176,13 +176,9 @@ read_leases(void)
 		 | VENDOR_CLASS class-declaration
 		 | USER_CLASS class-declaration
 		 | RANGE address-range-declaration */
-
-int parse_statement(cfile, group, type, host_decl, declaration)
-	FILE *cfile;
-	struct group *group;
-	int type;
-	struct host_decl *host_decl;
-	int declaration;
+int
+parse_statement(FILE *cfile, struct group *group, int type,
+	struct host_decl *host_decl, int declaration)
 {
 	int token;
 	char *val;
@@ -435,10 +431,8 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 			| DYNAMIC_BOOTP
 			| UNKNOWN_CLIENTS */
 
-void parse_allow_deny(cfile, group, flag)
-	FILE *cfile;
-	struct group *group;
-	int flag;
+void
+parse_allow_deny(FILE *cfile, struct group *group, int flag)
 {
 	int token;
 	char *val;
@@ -512,9 +506,8 @@ parse_lbrace(FILE *cfile)
 
 /* host-declaration :== hostname '{' parameters declarations '}' */
 
-void parse_host_declaration(cfile, group)
-	FILE *cfile;
-	struct group *group;
+void
+parse_host_declaration(FILE *cfile, struct group *group)
 {
 	char *val;
 	int token;
@@ -577,10 +570,8 @@ void parse_host_declaration(cfile, group)
 /* class-declaration :== STRING '{' parameters declarations '}'
 */
 
-void parse_class_declaration(cfile, group, type)
-	FILE *cfile;
-	struct group *group;
-	int type;
+void
+parse_class_declaration(FILE *cfile, struct group *group, int type)
 {
 	char *val;
 	int token;
@@ -625,9 +616,8 @@ void parse_class_declaration(cfile, group, type)
 /* shared-network-declaration :==
 			hostname LBRACE declarations parameters RBRACE */
 
-void parse_shared_net_declaration(cfile, group)
-	FILE *cfile;
-	struct group *group;
+void
+parse_shared_net_declaration(FILE *cfile, struct group *group)
 {
 	char *val;
 	int token;
@@ -702,9 +692,8 @@ void parse_shared_net_declaration(cfile, group)
 /* subnet-declaration :==
 	net NETMASK netmask RBRACE parameters declarations LBRACE */
 
-void parse_subnet_declaration(cfile, share)
-	FILE *cfile;
-	struct shared_network *share;
+void
+parse_subnet_declaration(FILE *cfile, struct shared_network *share)
 {
 	char *val;
 	int token;
@@ -799,9 +788,8 @@ void parse_subnet_declaration(cfile, share)
 
 /* group-declaration :== RBRACE parameters declarations LBRACE */
 
-void parse_group_declaration(cfile, group)
-	FILE *cfile;
-	struct group *group;
+void
+parse_group_declaration(FILE *cfile, struct group *group)
 {
 	char *val;
 	int token;
@@ -856,6 +844,7 @@ parse_cidr(FILE *cfile, unsigned char *addr, unsigned char *prefix)
 	}
 
 	token = next_token(&val, cfile);
+
 	if (token == TOK_NUMBER_OR_NAME)
 		*prefix = strtonum(val, 0, 32, &errstr);
 
@@ -880,9 +869,8 @@ nocidr:
    a TREE_LIMIT node to catch hostnames that evaluate to more than
    one IP address. */
 
-struct tree *parse_ip_addr_or_hostname(cfile, uniform)
-	FILE *cfile;
-	int uniform;
+struct tree *
+parse_ip_addr_or_hostname(FILE *cfile, int uniform)
 {
 	char *val;
 	int token;
@@ -933,8 +921,8 @@ struct tree *parse_ip_addr_or_hostname(cfile, uniform)
    ip-addrs-or-hostnames :== ip-addr-or-hostname
 			   | ip-addrs-or-hostnames ip-addr-or-hostname */
 
-struct tree_cache *parse_fixed_addr_param(cfile)
-	FILE *cfile;
+struct tree_cache *
+parse_fixed_addr_param(FILE *cfile)
 {
 	char *val;
 	int token;
@@ -964,9 +952,8 @@ struct tree_cache *parse_fixed_addr_param(cfile)
    would be painful to come up with BNF for it.   However, it always
    starts as above and ends in a SEMI. */
 
-void parse_option_param(cfile, group)
-	FILE *cfile;
-	struct group *group;
+void
+parse_option_param(FILE *cfile, struct group *group)
 {
 	char *val;
 	int token;
