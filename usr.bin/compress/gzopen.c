@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.31 2016/04/29 13:50:35 millert Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.32 2016/08/17 12:02:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -209,8 +209,14 @@ gz_close(void *cookie, struct z_info *info, const char *name, struct stat *sb)
 		info->mtime = s->z_time;
 		info->crc = s->z_crc;
 		info->hlen = s->z_hlen;
-		info->total_in = s->z_total_in;
-		info->total_out = s->z_total_out;
+		if (s->z_mode == 'r') {
+			info->total_in = s->z_total_in;
+			info->total_out = s->z_total_out;
+		} else {
+			info->total_in = s->z_stream.total_in;
+			info->total_out = s->z_stream.total_out;
+		}
+
 	}
 
 	setfile(name, s->z_fd, sb);
@@ -509,8 +515,6 @@ gz_write(void *cookie, const char *buf, int len)
 			break;
 	}
 	s->z_crc = crc32(s->z_crc, buf, len);
-	s->z_total_in += s->z_stream.total_in;
-	s->z_total_out += s->z_stream.total_out;
 
 	return (int)(len - s->z_stream.avail_in);
 #endif
