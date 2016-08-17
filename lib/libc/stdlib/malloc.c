@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.192 2016/07/06 20:32:02 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.193 2016/08/17 05:33:54 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -249,7 +249,7 @@ hash(void *p)
 	return sum;
 }
 
-static void
+__dead static void
 wrterror(struct dir_info *d, char *msg, void *p)
 {
 	char		*q = " error: ";
@@ -329,10 +329,8 @@ unmap(struct dir_info *d, void *p, size_t sz)
 	struct region_info *r;
 	u_int i, offset;
 
-	if (sz != PAGEROUND(sz)) {
+	if (sz != PAGEROUND(sz))
 		wrterror(d, "munmap round", NULL);
-		return;
-	}
 
 	if (psz > mopts.malloc_cache) {
 		i = munmap(p, sz);
@@ -415,10 +413,8 @@ map(struct dir_info *d, void *hint, size_t sz, int zero_fill)
 	if (mopts.malloc_canary != (d->canary1 ^ (u_int32_t)(uintptr_t)d) ||
 	    d->canary1 != ~d->canary2)
 		wrterror(d, "internal struct corrupt", NULL);
-	if (sz != PAGEROUND(sz)) {
+	if (sz != PAGEROUND(sz))
 		wrterror(d, "map round", NULL);
-		return MAP_FAILED;
-	}
 	if (!hint && psz > d->free_regions_size) {
 		_MALLOC_LEAVE(d);
 		p = MMAP(sz);
@@ -667,11 +663,9 @@ omalloc_init(struct dir_info **dp)
 	d->regions_free = d->regions_total = MALLOC_INITIAL_REGIONS;
 	regioninfo_size = d->regions_total * sizeof(struct region_info);
 	d->r = MMAP(regioninfo_size);
-	if (d->r == MAP_FAILED) {
+	if (d->r == MAP_FAILED)
 		wrterror(NULL, "malloc init mmap failed", NULL);
-		d->regions_total = 0;
-		return 1;
-	}
+
 	for (i = 0; i <= MALLOC_MAXSHIFT; i++) {
 		LIST_INIT(&d->chunk_info_list[i]);
 		for (j = 0; j < MALLOC_CHUNK_LISTS; j++)
@@ -1045,15 +1039,11 @@ find_chunknum(struct dir_info *d, struct region_info *r, void *ptr)
 	/* Find the chunk number on the page */
 	chunknum = ((uintptr_t)ptr & MALLOC_PAGEMASK) >> info->shift;
 
-	if ((uintptr_t)ptr & ((1U << (info->shift)) - 1)) {
+	if ((uintptr_t)ptr & ((1U << (info->shift)) - 1))
 		wrterror(d, "modified chunk-pointer", ptr);
-		return -1;
-	}
 	if (info->bits[chunknum / MALLOC_BITS] &
-	    (1U << (chunknum % MALLOC_BITS))) {
+	    (1U << (chunknum % MALLOC_BITS)))
 		wrterror(d, "chunk is already free", ptr);
-		return -1;
-	}
 	return chunknum;
 }
 
@@ -1226,10 +1216,8 @@ malloc(size_t size)
 	r = omalloc(d, size, 0, CALLER);
 	d->active--;
 	_MALLOC_UNLOCK();
-	if (r == NULL && mopts.malloc_xmalloc) {
+	if (r == NULL && mopts.malloc_xmalloc)
 		wrterror(d, "out of memory", NULL);
-		errno = ENOMEM;
-	}
 	if (r != NULL)
 		errno = saved_errno;
 	return r;
@@ -1244,20 +1232,16 @@ validate_junk(struct dir_info *pool, void *p) {
 	if (p == NULL)
 		return;
 	r = find(pool, p);
-	if (r == NULL) {
+	if (r == NULL)
 		wrterror(pool, "bogus pointer in validate_junk", p);
-		return;
-	}
 	REALSIZE(sz, r);
 	if (sz > 0 && sz <= MALLOC_MAXCHUNK)
 		sz -= mopts.malloc_canaries;
 	if (sz > 32)
 		sz = 32;
 	for (byte = 0; byte < sz; byte++) {
-		if (((unsigned char *)p)[byte] != SOME_FREEJUNK) {
+		if (((unsigned char *)p)[byte] != SOME_FREEJUNK)
 			wrterror(pool, "use after free", p);
-			return;
-		}
 	}
 }
 
@@ -1268,18 +1252,14 @@ ofree(struct dir_info *pool, void *p)
 	size_t sz;
 
 	r = find(pool, p);
-	if (r == NULL) {
+	if (r == NULL)
 		wrterror(pool, "bogus pointer (double free?)", p);
-		return;
-	}
 	REALSIZE(sz, r);
 	if (sz > MALLOC_MAXCHUNK) {
 		if (sz - mopts.malloc_guard >= MALLOC_PAGESIZE -
 		    MALLOC_LEEWAY) {
-			if (r->p != p) {
+			if (r->p != p)
 				wrterror(pool, "bogus pointer", p);
-				return;
-			}
 		} else {
 #if notyetbecause_of_realloc
 			/* shifted towards the end */
@@ -1320,20 +1300,16 @@ ofree(struct dir_info *pool, void *p)
 			i = getrbyte(pool) & MALLOC_DELAYED_CHUNK_MASK;
 			tmp = p;
 			p = pool->delayed_chunks[i];
-			if (tmp == p) {
+			if (tmp == p)
 				wrterror(pool, "double free", p);
-				return;
-			}
 			if (mopts.malloc_junk)
 				validate_junk(pool, p);
 			pool->delayed_chunks[i] = tmp;
 		}
 		if (p != NULL) {
 			r = find(pool, p);
-			if (r == NULL) {
+			if (r == NULL)
 				wrterror(pool, "bogus pointer (double free?)", p);
-				return;
-			}
 			free_bytes(pool, r, p);
 		}
 	}
@@ -1354,7 +1330,6 @@ free(void *ptr)
 	if (d == NULL) {
 		_MALLOC_UNLOCK();
 		wrterror(d, "free() called before allocation", NULL);
-		return;
 	}
 	d->func = "free():";
 	if (d->active++) {
@@ -1380,10 +1355,8 @@ orealloc(struct dir_info *pool, void *p, size_t newsz, void *f)
 		return omalloc(pool, newsz, 0, f);
 
 	r = find(pool, p);
-	if (r == NULL) {
+	if (r == NULL)
 		wrterror(pool, "bogus pointer (double free?)", p);
-		return NULL;
-	}
 	if (newsz >= SIZE_MAX - mopts.malloc_guard - MALLOC_PAGESIZE) {
 		errno = ENOMEM;
 		return NULL;
@@ -1512,10 +1485,8 @@ realloc(void *ptr, size_t size)
 
 	d->active--;
 	_MALLOC_UNLOCK();
-	if (r == NULL && mopts.malloc_xmalloc) {
+	if (r == NULL && mopts.malloc_xmalloc)
 		wrterror(d, "out of memory", NULL);
-		errno = ENOMEM;
-	}
 	if (r != NULL)
 		errno = saved_errno;
 	return r;
@@ -1565,10 +1536,8 @@ calloc(size_t nmemb, size_t size)
 
 	d->active--;
 	_MALLOC_UNLOCK();
-	if (r == NULL && mopts.malloc_xmalloc) {
+	if (r == NULL && mopts.malloc_xmalloc)
 		wrterror(d, "out of memory", NULL);
-		errno = ENOMEM;
-	}
 	if (r != NULL)
 		errno = saved_errno;
 	return r;
@@ -1580,14 +1549,10 @@ mapalign(struct dir_info *d, size_t alignment, size_t sz, int zero_fill)
 {
 	char *p, *q;
 
-	if (alignment < MALLOC_PAGESIZE || ((alignment - 1) & alignment) != 0) {
+	if (alignment < MALLOC_PAGESIZE || ((alignment - 1) & alignment) != 0)
 		wrterror(d, "mapalign bad alignment", NULL);
-		return MAP_FAILED;
-	}
-	if (sz != PAGEROUND(sz)) {
+	if (sz != PAGEROUND(sz))
 		wrterror(d, "mapalign round", NULL);
-		return MAP_FAILED;
-	}
 
 	/* Allocate sz + alignment bytes of memory, which must include a
 	 * subrange of size bytes that is properly aligned.  Unmap the
@@ -1696,10 +1661,8 @@ posix_memalign(void **memptr, size_t alignment, size_t size)
 	d->active--;
 	_MALLOC_UNLOCK();
 	if (r == NULL) {
-		if (mopts.malloc_xmalloc) {
+		if (mopts.malloc_xmalloc)
 			wrterror(d, "out of memory", NULL);
-			errno = ENOMEM;
-		}
 		goto err;
 	}
 	errno = saved_errno;
@@ -1948,10 +1911,8 @@ malloc_dump(int fd)
 		if (p == NULL)
 			continue;
 		r = find(pool, p);
-		if (r == NULL) {
+		if (r == NULL)
 			wrterror(pool, "bogus pointer in malloc_dump", p);
-			continue;
-		}
 		free_bytes(pool, r, p);
 		pool->delayed_chunks[i] = NULL;
 	}
