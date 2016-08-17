@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860var.h,v 1.23 2016/03/21 21:16:30 stsp Exp $	*/
+/*	$OpenBSD: rt2860var.h,v 1.24 2016/08/17 11:50:52 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -149,7 +149,7 @@ struct rt2860_softc {
 
 	uint16_t			mac_ver;
 	uint16_t			mac_rev;
-	uint8_t				rf_rev;
+	uint16_t			rf_rev;
 	uint8_t				freq;
 	uint8_t				ntxchains;
 	uint8_t				nrxchains;

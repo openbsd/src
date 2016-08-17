@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.32 2014/05/24 10:10:17 stsp Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.33 2016/08/17 11:50:52 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -759,6 +759,9 @@
 /* possible flags for RT5390 RF register 39. */
 #define RT5390_RX_LO2	(1 << 7)
 
+/* possible flags for RT5390 RF register 42 */
+#define RT5390_RX_CTB	(1 << 6)
+
 /* possible flags for RT3053 RF register 46 */
 #define RT3593_RX_CTB	(1 << 5)
 
@@ -910,20 +913,22 @@ struct rt2860_rxwi {
 #define RT2860_RF3	1
 #define RT2860_RF4	3
 
-#define RT2860_RF_2820	1	/* 2T3R */
-#define RT2860_RF_2850	2	/* dual-band 2T3R */
-#define RT2860_RF_2720	3	/* 1T2R */
-#define RT2860_RF_2750	4	/* dual-band 1T2R */
-#define RT3070_RF_3020	5	/* 1T1R */
-#define RT3070_RF_2020	6	/* b/g */
-#define RT3070_RF_3021	7	/* 1T2R */
-#define RT3070_RF_3022	8	/* 2T2R */
-#define RT3070_RF_3052	9	/* dual-band 2T2R */
-#define RT3070_RF_3320	11	/* 1T1R */
-#define RT3070_RF_3053	13	/* dual-band 3T3R */
+#define RT2860_RF_2820	0x0001	/* 2T3R */
+#define RT2860_RF_2850	0x0002	/* dual-band 2T3R */
+#define RT2860_RF_2720	0x0003	/* 1T2R */
+#define RT2860_RF_2750	0x0004	/* dual-band 1T2R */
+#define RT3070_RF_3020	0x0005	/* 1T1R */
+#define RT3070_RF_2020	0x0006	/* b/g */
+#define RT3070_RF_3021	0x0007	/* 1T2R */
+#define RT3070_RF_3022	0x0008	/* 2T2R */
+#define RT3070_RF_3052	0x0009	/* dual-band 2T2R */
+#define RT3070_RF_3320	0x000b	/* 1T1R */
+#define RT3070_RF_3053	0x000d	/* dual-band 3T3R */
 #define RT5592_RF_5592	0x000f	/* dual-band 2T2R */
 #define RT5390_RF_5370	0x5370	/* 1T1R */
 #define RT5390_RF_5372	0x5372	/* 2T2R */
+#define RT5390_RF_5390	0x5390	/* 1T1R */
+#define RT5390_RF_5392	0x5392	/* 2T2R */
 
 /* USB commands for RT2870 only */
 #define RT2870_RESET		1
@@ -934,6 +939,7 @@ struct rt2860_rxwi {
 
 #define RT2860_EEPROM_DELAY	1	/* minimum hold time (microsecond) */
 
+#define RT2860_EEPROM_CHIPID		0x00
 #define RT2860_EEPROM_VERSION		0x01
 #define RT2860_EEPROM_MAC01		0x02
 #define RT2860_EEPROM_MAC23		0x03
@@ -1077,14 +1083,17 @@ static const struct rt2860_rate {
  */
 #define RT2860_DEF_MAC					\
 	{ RT2860_BCN_OFFSET0,		0xf8f0e8e0 },	\
+	{ RT2860_BCN_OFFSET1,		0x6f77d0c8 },	\
 	{ RT2860_LEGACY_BASIC_RATE,	0x0000013f },	\
 	{ RT2860_HT_BASIC_RATE,		0x00008003 },	\
 	{ RT2860_MAC_SYS_CTRL,		0x00000000 },	\
+	{ RT2860_RX_FILTR_CFG,		0x00017f97 },	\
 	{ RT2860_BKOFF_SLOT_CFG,	0x00000209 },	\
 	{ RT2860_TX_SW_CFG0,		0x00000000 },	\
 	{ RT2860_TX_SW_CFG1,		0x00080606 },	\
 	{ RT2860_TX_LINK_CFG,		0x00001020 },	\
 	{ RT2860_TX_TIMEOUT_CFG,	0x000a2090 },	\
+	{ RT2860_MAX_LEN_CFG,		0x00001f00 },	\
 	{ RT2860_LED_CFG,		0x7f031e46 },	\
 	{ RT2860_WMM_AIFSN_CFG,		0x00002273 },	\
 	{ RT2860_WMM_CWMIN_CFG,		0x00002344 },	\
@@ -1144,6 +1153,7 @@ static const struct rt2860_rate {
 #define RT2860_DEF_BBP	\
 	{  65, 0x2c },	\
 	{  66, 0x38 },	\
+	{  68, 0x0b },	\
 	{  69, 0x12 },	\
 	{  70, 0x0a },	\
 	{  73, 0x10 },	\
@@ -1441,7 +1451,7 @@ static const struct rt2860_rate {
 	{  4, 0x40 },	\
 	{  5, 0x03 },	\
 	{  6, 0x02 },	\
-	{  7, 0x70 },	\
+	{  7, 0x60 },	\
 	{  9, 0x0f },	\
 	{ 10, 0x41 },	\
 	{ 11, 0x21 },	\
