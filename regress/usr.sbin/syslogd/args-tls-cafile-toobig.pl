@@ -13,7 +13,7 @@ our %args = (
     syslogd => {
 	loghost => '@tls://localhost:$connectport',
 	loggrep => {
-	    qr/CAfile larger than 50MB/ => 2,
+	    qr/CAfile toobig/ => 1,
 	    qr/Logging to FORWTLS \@tls:\/\/localhost:\d+/ => '>=4',
 	    qr/syslogd: tls_connect_socket .*: /.
 		qr/ssl verify memory setup failure/ => 2,
