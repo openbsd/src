@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfwprintf.c,v 1.15 2015/12/28 22:08:18 mmcc Exp $ */
+/*	$OpenBSD: vfwprintf.c,v 1.16 2016/08/17 18:07:07 deraadt Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -49,6 +49,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "local.h"
@@ -816,12 +817,28 @@ fp_common:
 			/*FALLTHROUGH*/
 		case 's':
 			if (flags & LONGINT) {
-				if ((cp = GETARG(wchar_t *)) == NULL)
+				if ((cp = GETARG(wchar_t *)) == NULL) {
+					struct syslog_data sdata = SYSLOG_DATA_INIT;
+					int save_errno = errno;
+
+					syslog_r(LOG_CRIT | LOG_CONS, &sdata,
+					    "vfwprintf \%ls NULL in \"%s\"", fmt0);
+					errno = save_errno;
+
 					cp = L"(null)";
+				}
 			} else {
 				char *mbsarg;
-				if ((mbsarg = GETARG(char *)) == NULL)
+				if ((mbsarg = GETARG(char *)) == NULL) {
+					struct syslog_data sdata = SYSLOG_DATA_INIT;
+					int save_errno = errno;
+
+					syslog_r(LOG_CRIT | LOG_CONS, &sdata,
+					    "vfwprintf \%s NULL in \"%s\"", fmt0);
+					errno = save_errno;
+
 					mbsarg = "(null)";
+				}
 				free(convbuf);
 				convbuf = __mbsconv(mbsarg, prec);
 				if (convbuf == NULL) {

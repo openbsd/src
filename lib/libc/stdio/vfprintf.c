@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.73 2016/06/06 17:22:59 millert Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.74 2016/08/17 18:07:07 deraadt Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -50,6 +50,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <syslog.h>
 #include <wchar.h>
 
 #include "local.h"
@@ -857,6 +858,13 @@ fp_common:
 				free(convbuf);
 				convbuf = NULL;
 				if ((wcp = GETARG(wchar_t *)) == NULL) {
+					struct syslog_data sdata = SYSLOG_DATA_INIT;
+					int save_errno = errno;
+
+					syslog_r(LOG_CRIT | LOG_CONS, &sdata,
+					    "vfprintf \%ls NULL in \"%s\"", fmt0);
+					errno = save_errno;
+
 					cp = "(null)";
 				} else {
 					convbuf = __wcsconv(wcp, prec);
@@ -868,8 +876,16 @@ fp_common:
 				}
 			} else
 #endif /* PRINTF_WIDE_CHAR */
-			if ((cp = GETARG(char *)) == NULL)
+			if ((cp = GETARG(char *)) == NULL) {
+				struct syslog_data sdata = SYSLOG_DATA_INIT;
+				int save_errno = errno;
+
+				syslog_r(LOG_CRIT | LOG_CONS, &sdata,
+				    "vfprintf \%s NULL in \"%s\"", fmt0);
+				errno = save_errno;
+
 				cp = "(null)";
+			}
 			if (prec >= 0) {
 				/*
 				 * can't use strlen; can only look for the
