@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.133 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.134 2016/08/17 11:08:08 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -278,6 +278,8 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_caps =
 	    IEEE80211_C_WEP |		/* WEP */
 	    IEEE80211_C_RSN |		/* WPA/RSN */
+	    IEEE80211_C_SCANALL |	/* device scans all channels at once */
+	    IEEE80211_C_SCANALLBAND |	/* driver scans all bands at once */
 	    IEEE80211_C_MONITOR |	/* monitor mode supported */
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
