@@ -1,4 +1,4 @@
-/*	$OpenBSD: dba.c,v 1.2 2016/08/05 21:37:39 schwarze Exp $ */
+/*	$OpenBSD: dba.c,v 1.3 2016/08/17 18:05:40 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -169,7 +169,7 @@ dba_page_add(struct dba_array *page, int32_t ie, const char *str)
 	if (ie == DBP_ARCH) {
 		if (entries == NULL)
 			return;
-		if (str == NULL) {
+		if (str == NULL || *str == '\0') {
 			dba_array_free(entries);
 			dba_array_set(page, DBP_ARCH, NULL);
 			return;
