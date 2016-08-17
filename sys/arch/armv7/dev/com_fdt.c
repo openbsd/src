@@ -1,4 +1,4 @@
-/* $OpenBSD: com_fdt.c,v 1.3 2016/08/15 21:04:32 patrick Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.4 2016/08/17 13:05:02 patrick Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -58,10 +58,12 @@
 
 #define com_isr 8
 #define ISR_RECV	(ISR_RXPL | ISR_XMODE | ISR_RCVEIR)
+#define com_usr 31	/* Synopsys DesignWare UART */
 
 int	com_fdt_match(struct device *, void *, void *);
 void	com_fdt_attach(struct device *, struct device *, void *);
 int	com_fdt_activate(struct device *, int);
+int	com_fdt_intr_designware(void *);
 
 extern int comcnspeed;
 extern int comcnmode;
@@ -81,14 +83,23 @@ com_fdt_init_cons(void)
 {
 	struct fdt_reg reg;
 	void *node;
+	int freq = 48000000;
 
-	if ((node = fdt_find_cons("ti,omap3-uart")) == NULL)
-		if ((node = fdt_find_cons("ti,omap4-uart")) == NULL)
+	if ((node = fdt_find_cons("ti,omap3-uart")) == NULL &&
+	    (node = fdt_find_cons("ti,omap4-uart")) == NULL &&
+	    (node = fdt_find_cons("snps,dw-apb-uart")) == NULL)
 			return;
 	if (fdt_get_reg(node, 0, &reg))
 		return;
 
-	comcnattach(&armv7_a4x_bs_tag, reg.addr, comcnspeed, 48000000,
+	if ((node = fdt_find_node("/")) != NULL &&
+	    (fdt_is_compatible(node, "allwinner,sun4i-a10") ||
+	    fdt_is_compatible(node, "allwinner,sun5i-a10s") ||
+	    fdt_is_compatible(node, "allwinner,sun5i-r8") ||
+	    fdt_is_compatible(node, "allwinner,sun7i-a20")))
+		freq = 24000000;
+
+	comcnattach(&armv7_a4x_bs_tag, reg.addr, comcnspeed, freq,
 	    comcnmode);
 	comdefaultrate = comcnspeed;
 }
@@ -99,7 +110,8 @@ com_fdt_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "ti,omap3-uart") ||
-	    OF_is_compatible(faa->fa_node, "ti,omap4-uart"));
+	    OF_is_compatible(faa->fa_node, "ti,omap4-uart") ||
+	    OF_is_compatible(faa->fa_node, "snps,dw-apb-uart"));
 }
 
 void
@@ -107,6 +119,8 @@ com_fdt_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_fdt_softc *sc = (struct com_fdt_softc *)self;
 	struct fdt_attach_args *faa = aux;
+	int (*intr)(void *) = comintr;
+	int node;
 
 	if (faa->fa_nreg < 1)
 		return;
@@ -124,6 +138,18 @@ com_fdt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc.sc_frequency = 48000000;
 	sc->sc.sc_uarttype = COM_UART_TI16750;
 
+	if (OF_is_compatible(faa->fa_node, "snps,dw-apb-uart")) {
+		sc->sc.sc_uarttype = COM_UART_16550;
+		intr = com_fdt_intr_designware;
+	}
+
+	if ((node = OF_finddevice("/")) != 0 &&
+	    (OF_is_compatible(node, "allwinner,sun4i-a10") ||
+	    OF_is_compatible(node, "allwinner,sun5i-a10s") ||
+	    OF_is_compatible(node, "allwinner,sun5i-r8") ||
+	    OF_is_compatible(node, "allwinner,sun7i-a20")))
+		sc->sc.sc_frequency = 24000000;
+
 	if (stdout_node == faa->fa_node) {
 		SET(sc->sc.sc_hwflags, COM_HW_CONSOLE);
 		SET(sc->sc.sc_swflags, COM_SW_SOFTCAR);
@@ -139,7 +165,7 @@ com_fdt_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(&sc->sc);
 
-	(void)arm_intr_establish_fdt(faa->fa_node, IPL_TTY, comintr,
+	arm_intr_establish_fdt(faa->fa_node, IPL_TTY, intr,
 	    sc, sc->sc.sc_dev.dv_xname);
 }
 
@@ -168,4 +194,14 @@ com_fdt_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
+}
+
+int
+com_fdt_intr_designware(void *cookie)
+{
+	struct com_softc *sc = cookie;
+
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh, com_usr);
+
+	return comintr(sc);
 }

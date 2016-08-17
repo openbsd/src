@@ -1,4 +1,4 @@
-/*	$OpenBSD: platform.c,v 1.11 2016/08/15 13:42:49 patrick Exp $	*/
+/*	$OpenBSD: platform.c,v 1.12 2016/08/17 13:05:02 patrick Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -39,7 +39,6 @@ void	agtimer_init(void);
 void	exuart_init_cons(void);
 void	imxuart_init_cons(void);
 void	com_fdt_init_cons(void);
-void	sxiuart_init_cons(void);
 void	pl011_init_cons(void);
 void	bcmmuart_init_cons(void);
 
@@ -107,7 +106,6 @@ platform_init_cons(void)
 	exuart_init_cons();
 	imxuart_init_cons();
 	com_fdt_init_cons();
-	sxiuart_init_cons();
 	pl011_init_cons();
 	bcmmuart_init_cons();
 }

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.47 2016/08/14 19:08:44 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.48 2016/08/17 13:05:02 patrick Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -93,7 +93,7 @@ sxiccmu*	at sunxi?		# Clock Control Module/Unit
 sxitimer*	at sunxi?
 sxidog*		at fdt?			# watchdog timer
 sxirtc*		at fdt?			# Real Time Clock
-sxiuart*	at fdt?			# onboard UARTs
+#sxiuart*	at fdt?			# onboard UARTs
 sxie*		at fdt?
 dwge*		at fdt?
 sxiahci*	at fdt?			# AHCI/SATA
