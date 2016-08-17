@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.103 2016/05/21 09:07:11 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.104 2016/08/17 09:42:03 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -622,12 +622,23 @@ ieee80211_end_scan(struct ifnet *ifp)
 				ieee80211_free_node(ic, ni);
 			continue;
 		}
-		if (ieee80211_match_bss(ic, ni) == 0) {
-			if (selbs == NULL)
-				selbs = ni;
-			else if (ni->ni_rssi > selbs->ni_rssi)
-				selbs = ni;
-		}
+		if (ieee80211_match_bss(ic, ni) != 0)
+			continue;
+
+		/* Pick the AP/IBSS match with the best RSSI. */
+		if (selbs == NULL)
+			selbs = ni;
+		else if ((ic->ic_caps & IEEE80211_C_SCANALLBAND) &&
+		    IEEE80211_IS_CHAN_5GHZ(selbs->ni_chan) &&
+		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan) &&
+		    selbs->ni_rssi >= (ic->ic_max_rssi - (ic->ic_max_rssi / 4)))
+			/* 
+			 * Prefer 5GHz (with reasonable RSSI) over 2GHz since
+			 * the 5GHz band is usually less saturated.
+			 */
+			continue;
+		else if (ni->ni_rssi > selbs->ni_rssi)
+			selbs = ni;
 	}
 	if (selbs == NULL)
 		goto notfound;
