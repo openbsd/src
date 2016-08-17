@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.17 2015/01/06 00:38:32 dlg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.18 2016/08/17 11:56:42 kettenis Exp $	*/
 /*	$NetBSD: atomic.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
 
 /*
@@ -293,23 +293,16 @@ x86_atomic_clearbits_u32(volatile u_int32_t *ptr, u_int32_t bits)
 	__asm volatile(LOCK " andl %1,%0" :  "=m" (*ptr) : "ir" (~bits));
 }
 
-/*
- * XXX XXX XXX
- * theoretically 64bit cannot be used as
- * an "i" and thus if we ever try to give
- * these anything from the high dword there
- * is an asm error pending
- */
 static __inline void
 x86_atomic_setbits_u64(volatile u_int64_t *ptr, u_int64_t bits)
 {
-	__asm volatile(LOCK " orq %1,%0" :  "=m" (*ptr) : "ir" (bits));
+	__asm volatile(LOCK " orq %1,%0" :  "=m" (*ptr) : "er" (bits));
 }
 
 static __inline void
 x86_atomic_clearbits_u64(volatile u_int64_t *ptr, u_int64_t bits)
 {
-	__asm volatile(LOCK " andq %1,%0" :  "=m" (*ptr) : "ir" (~bits));
+	__asm volatile(LOCK " andq %1,%0" :  "=m" (*ptr) : "er" (~bits));
 }
 
 #define x86_atomic_testset_ul	x86_atomic_testset_u64
