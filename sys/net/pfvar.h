@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.434 2016/07/19 13:30:51 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.435 2016/08/17 03:24:12 procter Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1205,10 +1205,6 @@ struct pf_pdesc {
 	u_int8_t	 didx;		/* key index for destination */
 	u_int8_t	 destchg;	/* flag set when destination changed */
 	u_int8_t	 pflog;		/* flags for packet logging */
-	u_int8_t	 csum_status;	/* proto cksum ok/bad/unchecked */
-#define	PF_CSUM_UNKNOWN	0
-#define	PF_CSUM_BAD	1
-#define	PF_CSUM_OK	2
 };
 
 
@@ -1715,9 +1711,14 @@ void	pf_addr_inc(struct pf_addr *, sa_family_t);
 
 void   *pf_pull_hdr(struct mbuf *, int, void *, int, u_short *, u_short *,
 	    sa_family_t);
-void	pf_change_a(struct pf_pdesc *, void *, u_int32_t);
-int	pf_check_proto_cksum(struct pf_pdesc *, int, int, u_int8_t,
-	    sa_family_t);
+#define PF_HI (true)
+#define PF_LO (!PF_HI)
+#define PF_ALGNMNT(off) (((off) % 2) == 0 ? PF_HI : PF_LO)
+void	pf_patch_8(struct pf_pdesc *, u_int8_t *, u_int8_t, bool);
+void	pf_patch_16(struct pf_pdesc *, u_int16_t *, u_int16_t);
+void	pf_patch_16_unaligned(struct pf_pdesc *, void *, u_int16_t, bool);
+void	pf_patch_32(struct pf_pdesc *, u_int32_t *, u_int32_t);
+void	pf_patch_32_unaligned(struct pf_pdesc *, void *, u_int32_t, bool);
 int	pflog_packet(struct pf_pdesc *, u_int8_t, struct pf_rule *,
 	    struct pf_rule *, struct pf_ruleset *, struct pf_rule *);
 void	pf_send_deferred_syn(struct pf_state *);
@@ -1905,8 +1906,6 @@ int			 pf_map_addr(sa_family_t, struct pf_rule *,
 			    struct pf_pool *, enum pf_sn_types);
 
 int			 pf_postprocess_addr(struct pf_state *);
-
-void			 pf_cksum(struct pf_pdesc *, struct mbuf *);
 
 struct pf_state_key	*pf_state_key_ref(struct pf_state_key *);
 void			 pf_state_key_unref(struct pf_state_key *);

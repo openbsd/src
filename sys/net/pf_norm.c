@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.188 2016/06/15 11:49:34 mpi Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.189 2016/08/17 03:24:12 procter Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -855,10 +855,6 @@ pf_normalize_tcp(struct pf_pdesc *pd)
 	u_int8_t	 flags;
 	u_int		 rewrite = 0;
 
-	if (pd->csum_status == PF_CSUM_UNKNOWN)
-		pf_check_proto_cksum(pd, pd->off, pd->tot_len - pd->off,
-		    pd->proto, pd->af);
-
 	flags = th->th_flags;
 	if (flags & TH_SYN) {
 		/* Illegal packet */
@@ -880,21 +876,23 @@ pf_normalize_tcp(struct pf_pdesc *pd)
 	}
 
 	/* If flags changed, or reserved data set, then adjust */
-	if (flags != th->th_flags || th->th_x2 != 0) {
-		th->th_flags = flags;
-		th->th_x2 = 0;
-		rewrite = 1;
-	}
+ 	if (flags != th->th_flags || th->th_x2 != 0) {
+ 		/* hack: set 4-bit th_x2 = 0 */
+		u_int8_t *th_off = (u_int8_t*)(&th->th_ack+1);
+ 		pf_patch_8(pd, th_off, th->th_off << 4, PF_HI);
+
+ 		pf_patch_8(pd, &th->th_flags, flags, PF_LO);
+ 		rewrite = 1;
+ 	}
 
 	/* Remove urgent pointer, if TH_URG is not set */
 	if (!(flags & TH_URG) && th->th_urp) {
-		th->th_urp = 0;
+		pf_patch_16(pd, &th->th_urp, 0);
 		rewrite = 1;
 	}
 
 	/* copy back packet headers if we sanitized */
 	if (rewrite) {
-		pf_cksum(pd, pd->m);
 		m_copyback(pd->m, pd->off, sizeof(*th), th, M_NOWAIT);
 	}
 
@@ -1008,7 +1006,7 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 	u_int32_t	 tsval, tsecr;
 	u_int		 tsval_from_last;
 	u_int8_t	 hdr[60];
-	u_int8_t	*opt;
+	u_int8_t	*opts, *opt;
 	int		 copyback = 0;
 	int		 got_ts = 0;
 
@@ -1049,7 +1047,7 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 	    pd->af)) {
 		/* Diddle with TCP options */
 		int hlen;
-		opt = hdr + sizeof(struct tcphdr);
+		opt = opts = hdr + sizeof(struct tcphdr);
 		hlen = (th->th_off << 2) - sizeof(struct tcphdr);
 		while (hlen >= TCPOLEN_TIMESTAMP) {
 			switch (*opt) {
@@ -1077,28 +1075,35 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 					return (PF_DROP);
 				}
 				if (opt[1] >= TCPOLEN_TIMESTAMP) {
-					memcpy(&tsval, &opt[2],
-					    sizeof(u_int32_t));
+					u_int8_t *ts = opt + 2;
+					u_int8_t *tsr = opt + 6;
+
+					memcpy(&tsval, ts, sizeof(u_int32_t));
+					memcpy(&tsecr, tsr, sizeof(u_int32_t));
+
+					/* modulate TS */
 					if (tsval && src->scrub &&
 					    (src->scrub->pfss_flags &
 					    PFSS_TIMESTAMP)) {
+						/* note: tsval used further on */
 						tsval = ntohl(tsval);
-						pf_change_a(pd, &opt[2],
+						pf_patch_32_unaligned(pd, ts,
 						    htonl(tsval +
-						    src->scrub->pfss_ts_mod));
+							src->scrub->pfss_ts_mod),
+						    PF_ALGNMNT(ts - opts));
 						copyback = 1;
 					}
 
-					/* Modulate TS reply iff valid (!0) */
-					memcpy(&tsecr, &opt[6],
-					    sizeof(u_int32_t));
+					/* modulate TS reply if any (!0) */
 					if (tsecr && dst->scrub &&
 					    (dst->scrub->pfss_flags &
 					    PFSS_TIMESTAMP)) {
+						/* note: tsecr used further on */
 						tsecr = ntohl(tsecr)
 						    - dst->scrub->pfss_ts_mod;
-						pf_change_a(pd, &opt[6],
-						    htonl(tsecr));
+						pf_patch_32_unaligned(pd, tsr,
+						    htonl(tsecr),
+						    PF_ALGNMNT(tsr - opts));
 						copyback = 1;
 					}
 					got_ts = 1;
@@ -1391,12 +1396,8 @@ pf_normalize_mss(struct pf_pdesc *pd, u_int16_t maxmss)
 	u_int16_t	 mss;
 	int		 thoff;
 	int		 opt, cnt, optlen = 0;
-	u_char		 opts[MAX_TCPOPTLEN];
-	u_char		*optp = opts;
-
-	if (pd->csum_status == PF_CSUM_UNKNOWN)
-		pf_check_proto_cksum(pd, pd->off, pd->tot_len - pd->off,
-		    pd->proto, pd->af);
+	u_int8_t	 opts[MAX_TCPOPTLEN];
+	u_int8_t	*optp = opts;
 
 	thoff = th->th_off << 2;
 	cnt = thoff - sizeof(struct tcphdr);
@@ -1419,13 +1420,15 @@ pf_normalize_mss(struct pf_pdesc *pd, u_int16_t maxmss)
 				break;
 		}
 		if (opt == TCPOPT_MAXSEG) {
-			memcpy(&mss, (optp + 2), 2);
+			u_int8_t *mssp = optp + 2;
+			memcpy(&mss, mssp, sizeof(mss));
 			if (ntohs(mss) > maxmss) {
-				mss = htons(maxmss);
+				size_t mssoffopts = mssp - opts;
+				pf_patch_16_unaligned(pd, &mss,
+				    htons(maxmss), PF_ALGNMNT(mssoffopts));
 				m_copyback(pd->m,
-				    pd->off + sizeof(*th) + optp + 2 - opts,
-				    2, &mss, M_NOWAIT);
-				pf_cksum(pd, pd->m);
+				    pd->off + sizeof(*th) + mssoffopts,
+				    sizeof(mss), &mss, M_NOWAIT);
 				m_copyback(pd->m, pd->off, sizeof(*th), th,
 				    M_NOWAIT);
 			}
