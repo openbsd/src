@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.902 2016/07/23 17:55:45 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.903 2016/08/17 13:53:20 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -226,6 +226,19 @@ prep_root_mail() {
 	cat <<__EOT >>/mnt/etc/rc.firsttime
 ( /usr/bin/mail -s '$_subject' root <$_ufn && rm $_ufn ) >/dev/null 2>&1 &
 __EOT
+}
+
+# Examine the contents of the DHCP lease file named in $1 for a line
+# containing the field provided as parameters.
+#
+# Return the value of the first field found.
+lease_value () {
+	local _lf=$1 _o
+
+	shift
+	for _o; do
+		sed -E '/^ *(option )?'"$_o"' (.*);$/!d;s//\2/;s/^"//;s/"$//;q' "$_lf" | grep ^ && return
+	done
 }
 
 # ------------------------------------------------------------------------------
@@ -489,7 +502,7 @@ log_answers() {
 
 # Fetch response file for autoinstall.
 get_responsefile() {
-	local _rf _if _mac _mode _lf _hn _path
+	local _rf _if _mac _mode _lf _hn _path _aifile
 	AI_MODE=
 
 	[[ -f /auto_upgrade.conf ]] && _rf=/auto_upgrade.conf _mode=upgrade
@@ -512,10 +525,16 @@ get_responsefile() {
 		done
 		[[ -n $_if ]] && dhclient $_if || break
 		_lf=/var/db/dhclient.leases.$_if
-		export AI_SERVER=$(sed "/^ *next-server /!d;s///;s/;$//;q" $_lf)
-		_mode=$(sed -E '/^ *filename "(.*\/)?auto_(install|upgrade)";$/!d;s//\2/;q' $_lf)
-		_path=$(sed -E '/^ *filename "(.*\/)[^/]+";$/!d;s//\1/;q' $_lf)
-		_hn=$(sed -E '/^ *option host-name "(.*)";$/!d;s//\1/;q' $_lf)
+
+		_aifile=$(lease_value $_lf filename bootfile-name)
+		[[ $_aifile = ?(*/)auto_@(install|upgrade) ]] || _aifile=
+		_path=${_aifile%auto_@(install|upgrade)}
+		_mode=${_aifile##*?(/)auto_}
+
+		AI_SERVER=$(lease_value $_lf server-name tftp-server-name next-server)
+		export AI_SERVER
+
+		_hn=$(lease_value $_if host-name)
 		hostname "$_hn"
 	done
 
@@ -534,7 +553,7 @@ get_responsefile() {
 			fi
 		done
 	else
-		[[ -z $AI_SERVER ]] && echo "Could not determine next-server."
+		[[ -z $AI_SERVER ]] && echo "Could not determine auto server."
 		[[ -z $_mode ]] && echo "Could not determine auto mode."
 	fi
 

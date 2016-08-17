@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoinstall.8,v 1.17 2016/02/28 18:10:26 rpe Exp $
+.\"     $OpenBSD: autoinstall.8,v 1.18 2016/08/17 13:53:20 krw Exp $
 .\"
 .\" Copyright (c) 2013 Robert Peichaer <rpe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 28 2016 $
+.Dd $Mdocdate: August 17 2016 $
 .Dt AUTOINSTALL 8
 .Os
 .Sh NAME
@@ -70,12 +70,21 @@ or
 .Ar hostname Ns - Ns Pa upgrade.conf
 for upgrade answers.
 The URL used to fetch the file is constructed from information provided in
-the
 .Xr dhcpd.conf 5
-statements
+statements.
+One of the statements
+.Ic server-name ,
+.Ic option tftp-server-name ,
+or
 .Ic next-server
-and
-.Ic filename .
+(in that order of priority) specify the
+.Ar server .
+One of the statements
+.Ic filename
+or
+.Ic option bootfile-name
+(in that order of priority) specify the
+.Ar filename .
 If
 .Ar filename
 is
@@ -83,9 +92,9 @@ is
 then the URLs tried are, in order:
 .Sm off
 .Bd -unfilled -offset indent
-.No http:// Ar next-server No / Ar MAC_address No -install.conf
-.No http:// Ar next-server No / Ar hostname No -install.conf
-.No http:// Ar next-server No /install.conf
+.No http:// Ar server No / Ar MAC_address No -install.conf
+.No http:// Ar server No / Ar hostname No -install.conf
+.No http:// Ar server No /install.conf
 .Ed
 .Sm on
 .Pp
@@ -105,9 +114,9 @@ is
 the URLs tried are, in order:
 .Sm off
 .Bd -unfilled -offset indent
-.No http:// Ar next-server No / Ar MAC_address No -upgrade.conf
-.No http:// Ar next-server No / Ar hostname No -upgrade.conf
-.No http:// Ar next-server No /upgrade.conf
+.No http:// Ar server No / Ar MAC_address No -upgrade.conf
+.No http:// Ar server No / Ar hostname No -upgrade.conf
+.No http:// Ar server No /upgrade.conf
 .Ed
 .Sm on
 .Pp
