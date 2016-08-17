@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.60 2016/03/15 20:50:22 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.61 2016/08/17 01:16:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -212,10 +212,6 @@ struct scb *	ahd_find_scb_by_tag(struct ahd_softc *, u_int);
 void		ahd_fini_scbdata(struct ahd_softc *ahd);
 void		ahd_setup_iocell_workaround(struct ahd_softc *ahd);
 void		ahd_iocell_first_selection(struct ahd_softc *ahd);
-void		ahd_add_col_list(struct ahd_softc *ahd,
-					 struct scb *scb, u_int col_idx);
-void		ahd_rem_col_list(struct ahd_softc *ahd,
-					 struct scb *scb);
 void		ahd_chip_init(struct ahd_softc *ahd);
 void		ahd_qinfifo_requeue(struct ahd_softc *ahd,
 					    struct scb *prev_scb,
@@ -3398,7 +3394,7 @@ ahd_update_pending_scbs(struct ahd_softc *ahd)
 	 * active transaction on the bus.
 	 */
 	pending_scb_count = 0;
-	LIST_FOREACH(pending_scb, &ahd->pending_scbs, pending_links) {
+	TAILQ_FOREACH(pending_scb, &ahd->pending_scbs, next) {
 		struct ahd_devinfo devinfo;
 		struct ahd_initiator_tinfo *tinfo;
 		struct ahd_tmode_tstate *tstate;
@@ -3442,7 +3438,7 @@ ahd_update_pending_scbs(struct ahd_softc *ahd)
 		ahd_outb(ahd, SCSISEQ0, ahd_inb(ahd, SCSISEQ0) & ~ENSELO);
 	saved_scbptr = ahd_get_scbptr(ahd);
 	/* Ensure that the hscbs down on the card match the new information */
-	LIST_FOREACH(pending_scb, &ahd->pending_scbs, pending_links) {
+	TAILQ_FOREACH(pending_scb, &ahd->pending_scbs, next) {
 		u_int	scb_tag;
 		u_int	control;
 
@@ -5252,7 +5248,7 @@ ahd_alloc(void *platform_arg, char *name)
 	if (ahd->seep_config == NULL)
 		return (NULL);
 
-	LIST_INIT(&ahd->pending_scbs);
+	TAILQ_INIT(&ahd->pending_scbs);
 	LIST_INIT(&ahd->timedout_scbs);
 
 	/* We don't know our unit number until the OSM sets it */
@@ -5612,12 +5608,11 @@ ahd_init_scbdata(struct ahd_softc *ahd)
 
 	scb_data = &ahd->scb_data;
 	TAILQ_INIT(&scb_data->free_scbs);
-	for (i = 0; i < AHD_NUM_TARGETS * AHD_NUM_LUNS_NONPKT; i++)
-		LIST_INIT(&scb_data->free_scb_lists[i]);
-	LIST_INIT(&scb_data->any_dev_free_scb_list);
 	SLIST_INIT(&scb_data->hscb_maps);
 	SLIST_INIT(&scb_data->sg_maps);
 	SLIST_INIT(&scb_data->sense_maps);
+	mtx_init(&ahd->sc_scb_mtx, IPL_BIO);
+	scsi_iopool_init(&ahd->sc_iopool, ahd, ahd_scb_alloc, ahd_scb_free);
 
 	/* Determine the number of hardware SCBs and initialize them */
 	scb_data->maxhscbs = ahd_probe_scbs(ahd);
@@ -5670,29 +5665,15 @@ ahd_find_scb_by_tag(struct ahd_softc *ahd, u_int tag)
 	/*
 	 * Look on the pending list.
 	 */
-	LIST_FOREACH(scb, &ahd->pending_scbs, pending_links) {
+	TAILQ_FOREACH(scb, &ahd->pending_scbs, next) {
 		if (SCB_GET_TAG(scb) == tag)
 			return (scb);
 	}
 
 	/*
-	 * Then on all of the collision free lists.
-	 */
-	TAILQ_FOREACH(scb, &ahd->scb_data.free_scbs, links.tqe) {
-		struct scb *list_scb;
-
-		list_scb = scb;
-		do {
-			if (SCB_GET_TAG(list_scb) == tag)
-				return (list_scb);
-			list_scb = LIST_NEXT(list_scb, collision_links);
-		} while (list_scb);
-	}
-
-	/*
 	 * And finally on the generic free list.
 	 */
-	LIST_FOREACH(scb, &ahd->scb_data.any_dev_free_scb_list, links.le) {
+	TAILQ_FOREACH(scb, &ahd->scb_data.free_scbs, next) {
 		if (SCB_GET_TAG(scb) == tag)
 			return (scb);
 	}
@@ -5801,85 +5782,23 @@ ahd_iocell_first_selection(struct ahd_softc *ahd)
 	ahd->flags |= AHD_HAD_FIRST_SEL;
 }
 
-/*************************** SCB Management ***********************************/
-void
-ahd_add_col_list(struct ahd_softc *ahd, struct scb *scb, u_int col_idx)
-{
-	struct	scb_list *free_list;
-	struct	scb_tailq *free_tailq;
-	struct	scb *first_scb;
-
-	scb->flags |= SCB_ON_COL_LIST;
-	AHD_SET_SCB_COL_IDX(scb, col_idx);
-	free_list = &ahd->scb_data.free_scb_lists[col_idx];
-	free_tailq = &ahd->scb_data.free_scbs;
-	first_scb = LIST_FIRST(free_list);
-	if (first_scb != NULL) {
-		LIST_INSERT_AFTER(first_scb, scb, collision_links);
-	} else {
-		LIST_INSERT_HEAD(free_list, scb, collision_links);
-		TAILQ_INSERT_TAIL(free_tailq, scb, links.tqe);
-	}
-}
-
-void
-ahd_rem_col_list(struct ahd_softc *ahd, struct scb *scb)
-{
-	struct	scb_list *free_list;
-	struct	scb_tailq *free_tailq;
-	struct	scb *first_scb;
-	u_int	col_idx;
-
-	scb->flags &= ~SCB_ON_COL_LIST;
-	col_idx = AHD_GET_SCB_COL_IDX(ahd, scb);
-	free_list = &ahd->scb_data.free_scb_lists[col_idx];
-	free_tailq = &ahd->scb_data.free_scbs;
-	first_scb = LIST_FIRST(free_list);
-	if (first_scb == scb) {
-		struct scb *next_scb;
-
-		/*
-		 * Maintain order in the collision free
-		 * lists for fairness if this device has
-		 * other colliding tags active.
-		 */
-		next_scb = LIST_NEXT(scb, collision_links);
-		if (next_scb != NULL) {
-			TAILQ_INSERT_AFTER(free_tailq, scb,
-					   next_scb, links.tqe);
-		}
-		TAILQ_REMOVE(free_tailq, scb, links.tqe);
-	}
-	LIST_REMOVE(scb, collision_links);
-}
-
 /*
  * Get a free scb. If there are none, see if we can allocate a new SCB.
  */
-struct scb *
-ahd_get_scb(struct ahd_softc *ahd, u_int col_idx)
+void *
+ahd_scb_alloc(void *xahd)
 {
+	struct ahd_softc *ahd = xahd;
 	struct scb *scb;
 
-	TAILQ_FOREACH(scb, &ahd->scb_data.free_scbs, links.tqe) {
-		if (AHD_GET_SCB_COL_IDX(ahd, scb) != col_idx) {
-			ahd_rem_col_list(ahd, scb);
-			goto found;
-		}
+	mtx_enter(&ahd->sc_scb_mtx);
+	scb = TAILQ_FIRST(&ahd->scb_data.free_scbs);
+	if (scb) {
+		TAILQ_REMOVE(&ahd->scb_data.free_scbs, scb, next);
+		scb->flags |= SCB_ACTIVE;
 	}
-	if ((scb = LIST_FIRST(&ahd->scb_data.any_dev_free_scb_list)) == NULL) {
-		/* All scb's are allocated at initialization in OpenBSD. */
-		return (NULL);
-	}
-	LIST_REMOVE(scb, links.le);
-	if (col_idx != AHD_NEVER_COL_IDX
-	 && (scb->col_scb != NULL)
-	 && (scb->col_scb->flags & SCB_ACTIVE) == 0) {
-		LIST_REMOVE(scb->col_scb, links.le);
-		ahd_add_col_list(ahd, scb->col_scb, col_idx);
-	}
-found:
-	scb->flags |= SCB_ACTIVE;
+	mtx_leave(&ahd->sc_scb_mtx);
+
 	return (scb);
 }
 
@@ -5887,56 +5806,20 @@ found:
  * Return an SCB resource to the free list.
  */
 void
-ahd_free_scb(struct ahd_softc *ahd, struct scb *scb)
+ahd_scb_free(void *xahd, void *xscb)
 {
+	struct ahd_softc *ahd = xahd;
+	struct scb *scb = xscb;
 
 	/* Clean up for the next user */
 	scb->flags = SCB_FLAG_NONE;
 	scb->hscb->control = 0;
 	ahd->scb_data.scbindex[SCB_GET_TAG(scb)] = NULL;
 
-	if (scb->col_scb == NULL) {
-
-		/*
-		 * No collision possible.  Just free normally.
-		 */
-		LIST_INSERT_HEAD(&ahd->scb_data.any_dev_free_scb_list,
-				 scb, links.le);
-	} else if ((scb->col_scb->flags & SCB_ON_COL_LIST) != 0) {
-
-		/*
-		 * The SCB we might have collided with is on
-		 * a free collision list.  Put both SCBs on
-		 * the generic list.
-		 */
-		ahd_rem_col_list(ahd, scb->col_scb);
-		LIST_INSERT_HEAD(&ahd->scb_data.any_dev_free_scb_list,
-				 scb, links.le);
-		LIST_INSERT_HEAD(&ahd->scb_data.any_dev_free_scb_list,
-				 scb->col_scb, links.le);
-	} else if ((scb->col_scb->flags
-		  & (SCB_PACKETIZED|SCB_ACTIVE)) == SCB_ACTIVE
-		&& (scb->col_scb->hscb->control & TAG_ENB) != 0) {
-
-		/*
-		 * The SCB we might collide with on the next allocation
-		 * is still active in a non-packetized, tagged, context.
-		 * Put us on the SCB collision list.
-		 */
-		ahd_add_col_list(ahd, scb,
-				 AHD_GET_SCB_COL_IDX(ahd, scb->col_scb));
-	} else {
-		/*
-		 * The SCB we might collide with on the next allocation
-		 * is either active in a packetized context, or free.
-		 * Since we can't collide, put this SCB on the generic
-		 * free list.
-		 */
-		LIST_INSERT_HEAD(&ahd->scb_data.any_dev_free_scb_list,
-				 scb, links.le);
-	}
-
+	mtx_enter(&ahd->sc_scb_mtx);
+	TAILQ_INSERT_HEAD(&ahd->scb_data.free_scbs, scb, next);
 	aic_platform_scb_free(ahd, scb);
+	mtx_leave(&ahd->sc_scb_mtx);
 }
 
 void
@@ -6067,7 +5950,6 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 	scb_data->sgs_left -= newcount;
 	for (i = 0; i < newcount; i++) {
 		struct scb_platform_data *pdata = NULL;
-		u_int col_tag;
 		int error;
 
 		next_scb = (struct scb *)malloc(sizeof(*next_scb),
@@ -6118,11 +6000,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 			break;
 		}
 		next_scb->hscb->tag = aic_htole16(scb_data->numscbs);
-		col_tag = scb_data->numscbs ^ 0x100;
-		next_scb->col_scb = ahd_find_scb_by_tag(ahd, col_tag);
-		if (next_scb->col_scb != NULL)
-			next_scb->col_scb->col_scb = next_scb;
-		ahd_free_scb(ahd, next_scb);
+		ahd_scb_free(ahd, next_scb);
 		hscb++;
 		hscb_busaddr += sizeof(*hscb);
 		segs += ahd_sglist_size(ahd);
@@ -7011,7 +6889,7 @@ ahd_suspend(struct ahd_softc *ahd)
 
 	ahd_pause_and_flushwork(ahd);
 
-	if (LIST_FIRST(&ahd->pending_scbs) != NULL) {
+	if (!TAILQ_EMPTY(&ahd->pending_scbs)) {
 		ahd_unpause(ahd);
 		return (EBUSY);
 	}
@@ -7217,7 +7095,7 @@ ahd_reset_cmds_pending(struct ahd_softc *ahd)
 	ahd_flush_qoutfifo(ahd);
 
 	pending_cmds = 0;
-	LIST_FOREACH(scb, &ahd->pending_scbs, pending_links) {
+	TAILQ_FOREACH(scb, &ahd->pending_scbs, next) {
 		pending_cmds++;
 	}
 	ahd_outw(ahd, CMDS_PENDING, pending_cmds - ahd_qinfifo_count(ahd));
@@ -7698,10 +7576,10 @@ ahd_abort_scbs(struct ahd_softc *ahd, int target, char channel,
 	 * These are other tagged commands that were
 	 * disconnected when the reset occurred.
 	 */
-	scbp_next = LIST_FIRST(&ahd->pending_scbs);
+	scbp_next = TAILQ_FIRST(&ahd->pending_scbs);
 	while (scbp_next != NULL) {
 		scbp = scbp_next;
-		scbp_next = LIST_NEXT(scbp, pending_links);
+		scbp_next = TAILQ_NEXT(scbp, next);
 		if (ahd_match_scb(ahd, scbp, target, channel, lun, tag, role)) {
 			cam_status ostat;
 
@@ -8909,7 +8787,7 @@ ahd_dump_card_state(struct ahd_softc *ahd)
 	saved_scb_index = ahd_get_scbptr(ahd);
 	printf("Pending list:");
 	i = 0;
-	LIST_FOREACH(scb, &ahd->pending_scbs, pending_links) {
+	TAILQ_FOREACH(scb, &ahd->pending_scbs, next) {
 		if (i++ > AHD_SCB_MAX)
 			break;
 		cur_col = printf("\n%3d FIFO_USE[0x%x] ", SCB_GET_TAG(scb),
@@ -8924,19 +8802,7 @@ ahd_dump_card_state(struct ahd_softc *ahd)
 
 	printf("Kernel Free SCB list: ");
 	i = 0;
-	TAILQ_FOREACH(scb, &ahd->scb_data.free_scbs, links.tqe) {
-		struct scb *list_scb;
-
-		list_scb = scb;
-		do {
-			printf("%d ", SCB_GET_TAG(list_scb));
-			list_scb = LIST_NEXT(list_scb, collision_links);
-		} while (list_scb && i++ < AHD_SCB_MAX);
-	}
-
-	LIST_FOREACH(scb, &ahd->scb_data.any_dev_free_scb_list, links.le) {
-		if (i++ > AHD_SCB_MAX)
-			break;
+	TAILQ_FOREACH(scb, &ahd->scb_data.free_scbs, next) {
 		printf("%d ", SCB_GET_TAG(scb));
 	}
 	printf("\n");
@@ -9147,7 +9013,7 @@ ahd_timeout(void *arg)
 		 * timeouts for them. They're about to be aborted so no need
 		 * for them to timeout.
 		 */
-		LIST_FOREACH(list_scb, &ahd->pending_scbs, pending_links) {
+		TAILQ_FOREACH(list_scb, &ahd->pending_scbs, next) {
 			if (list_scb->xs)
 				timeout_del(&list_scb->xs->stimeout);
 		}
@@ -9682,7 +9548,7 @@ ahd_handle_en_lun(struct ahd_softc *ahd, struct cam_sim *sim, union ccb *ccb)
 		ahd_lock(ahd, &s);
 
 		ccb->ccb_h.status = CAM_REQ_CMP;
-		LIST_FOREACH(scb, &ahd->pending_scbs, pending_links) {
+		TAILQ_FOREACH(scb, &ahd->pending_scbs, next) {
 			struct ccb_hdr *ccbh;
 
 			ccbh = &scb->io_ctx->ccb_h;

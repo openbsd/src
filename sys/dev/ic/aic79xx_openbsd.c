@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.44 2016/03/19 11:34:22 mpi Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.45 2016/08/17 01:16:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -112,7 +112,8 @@ ahd_attach(struct ahd_softc *ahd)
 		ahd->sc_channel.adapter_buswidth = 16;
 	ahd->sc_channel.adapter_softc = ahd;
 	ahd->sc_channel.adapter = &ahd_switch;
-	ahd->sc_channel.openings = 16;
+	ahd->sc_channel.openings = 16; /* Must ALWAYS be < 256!! */
+	ahd->sc_channel.pool = &ahd->sc_iopool;
 
 	if (bootverbose) {
 		ahd_controller_info(ahd, ahd_info, sizeof ahd_info);
@@ -158,11 +159,10 @@ void
 ahd_done(struct ahd_softc *ahd, struct scb *scb)
 {
 	struct scsi_xfer *xs = scb->xs;
-	int s;
 
 	/* XXX in ahc there is some bus_dmamap_sync(PREREAD|PREWRITE); */
 
-	LIST_REMOVE(scb, pending_links);
+	TAILQ_REMOVE(&ahd->pending_scbs, scb, next);
 
 	timeout_del(&xs->stimeout);
 
@@ -249,10 +249,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 		xs->error = XS_SENSE;
 	}
 
-	ahd_lock(ahd, &s);
-	ahd_free_scb(ahd, scb);
 	scsi_done(xs);
-	ahd_unlock(ahd, &s);
 }
 
 void
@@ -282,7 +279,6 @@ ahd_action(struct scsi_xfer *xs)
 	int	s;
 	struct	ahd_initiator_tinfo *tinfo;
 	struct	ahd_tmode_tstate *tstate;
-	u_int	col_idx;
 	u_int16_t quirks;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB3, ("ahd_action\n"));
@@ -305,22 +301,13 @@ ahd_action(struct scsi_xfer *xs)
 
 	quirks = xs->sc_link->quirks;
 
-	if ((quirks & SDEV_NOTAGS) != 0 ||
-	    (tinfo->curr.ppr_options & MSG_EXT_PPR_PROT_IUS) != 0)
-		col_idx = AHD_NEVER_COL_IDX;
-	else
-		col_idx = AHD_BUILD_COL_IDX(target_id, xs->sc_link->lun);
-
-	if ((scb = ahd_get_scb(ahd, col_idx)) == NULL) {
-		ahd->flags |= AHD_RESOURCE_SHORTAGE;
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		ahd_unlock(ahd, &s);
-		return;
-	}
 	ahd_unlock(ahd, &s);
 
+	scb = xs->io;
 	hscb = scb->hscb;
+	scb->flags = SCB_FLAG_NONE;
+	scb->hscb->control = 0;
+	ahd->scb_data.scbindex[SCB_GET_TAG(scb)] = NULL;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB3, ("start scb(%p)\n", scb));
 
@@ -398,7 +385,6 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 		if (nsegments != 0)
 			bus_dmamap_unload(ahd->parent_dmat,
 					  scb->dmamap);
-		ahd_free_scb(ahd, scb);
 		ahd_unlock(ahd, &s);
 		return;
 	}
@@ -429,7 +415,7 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 
 	/* XXX with ahc there was some bus_dmamap_sync(PREREAD|PREWRITE); */
 
-	LIST_INSERT_HEAD(&ahd->pending_scbs, scb, pending_links);
+	TAILQ_INSERT_HEAD(&ahd->pending_scbs, scb, next);
 
 	if (!(xs->flags & SCSI_POLL))
 		timeout_add_msec(&xs->stimeout, xs->timeout);
@@ -507,7 +493,6 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 	       struct scb *scb)
 {
 	struct hardware_scb *hscb;
-	int s;
 
 	hscb = scb->hscb;
 	xs->resid = xs->status = 0;
@@ -515,11 +500,8 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 
 	hscb->cdb_len = xs->cmdlen;
 	if (hscb->cdb_len > MAX_CDB_LEN) {
-		ahd_lock(ahd, &s);
-		ahd_free_scb(ahd, scb);
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
-		ahd_unlock(ahd, &s);
 		return;
 	}
 
@@ -542,11 +524,8 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 			printf("%s: in ahd_setup_data(): bus_dmamap_load() "
 			    "= %d\n", ahd_name(ahd), error);
 #endif
-			ahd_lock(ahd, &s);
-			ahd_free_scb(ahd, scb);
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
-			ahd_unlock(ahd, &s);
 			return;
 		}
 		ahd_execute_scb(scb, scb->dmamap->dm_segs,

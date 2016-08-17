@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.25 2015/12/17 19:35:24 tedu Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.26 2016/08/17 01:16:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -156,26 +156,6 @@ struct scb_platform_data;
 #undef	AHD_TMODE_ENABLE
 #define	AHD_TMODE_ENABLE 0
 #endif
-
-#define AHD_BUILD_COL_IDX(target, lun)				\
-	(((lun) << 4) | target)
-
-#define AHD_GET_SCB_COL_IDX(ahd, scb)				\
-	((SCB_GET_LUN(scb) << 4) | SCB_GET_TARGET(ahd, scb))
-
-#define AHD_SET_SCB_COL_IDX(scb, col_idx)				\
-do {									\
-	(scb)->hscb->scsiid = ((col_idx) << TID_SHIFT) & TID;		\
-	(scb)->hscb->lun = ((col_idx) >> 4) & (AHD_NUM_LUNS_NONPKT-1);	\
-} while (0)
-
-#define AHD_COPY_SCB_COL_IDX(dst, src)				\
-do {								\
-	dst->hscb->scsiid = src->hscb->scsiid;			\
-	dst->hscb->lun = src->hscb->lun;			\
-} while (0)
-
-#define	AHD_NEVER_COL_IDX 0xFFFF
 
 /**************************** Driver Constants ********************************/
 /*
@@ -637,21 +617,9 @@ typedef enum {
 } scb_flag;
 
 struct scb {
+	TAILQ_ENTRY(scb)	  next;
 	struct	hardware_scb	 *hscb;
-	union {
-		SLIST_ENTRY(scb)  sle;
-		LIST_ENTRY(scb)	  le;
-		TAILQ_ENTRY(scb)  tqe;
-	} links;
-	union {
-		SLIST_ENTRY(scb)  sle;
-		LIST_ENTRY(scb)	  le;
-		TAILQ_ENTRY(scb)  tqe;
-	} links2;
-#define pending_links links2.le
-#define collision_links links2.le
 	LIST_ENTRY(scb)		  timedout_links;
-	struct scb		 *col_scb;
 	struct scsi_xfer	 *xs;
 
 	struct ahd_softc	 *ahd_softc;
@@ -675,21 +643,9 @@ LIST_HEAD(scb_list, scb);
 
 struct scb_data {
 	/*
-	 * TAILQ of lists of free SCBs grouped by device
-	 * collision domains.
-	 */
-	struct scb_tailq free_scbs;
-
-	/*
-	 * Per-device lists of SCBs whose tag ID would collide
-	 * with an already active tag on the device.
-	 */
-	struct scb_list free_scb_lists[AHD_NUM_TARGETS * AHD_NUM_LUNS_NONPKT];
-
-	/*
 	 * SCBs that will not collide with any active device.
 	 */
-	struct scb_list any_dev_free_scb_list;
+	struct scb_tailq free_scbs;
 
 	/*
 	 * Mapping from tag to SCB.
@@ -1109,12 +1065,15 @@ struct ahd_softc {
 	/*
 	 * SCBs that have been sent to the controller
 	 */
-	LIST_HEAD(, scb)	  pending_scbs;
+	TAILQ_HEAD(, scb)	  pending_scbs;
 
 	/*
 	 * SCBs whose timeout routine has been called.
 	 */
 	LIST_HEAD(, scb)	  timedout_scbs;
+
+	struct mutex		  sc_scb_mtx;
+	struct scsi_iopool	  sc_iopool;
 
 	/*
 	 * Current register window mode information.
@@ -1418,8 +1377,8 @@ void			 ahd_softc_insert(struct ahd_softc *);
 struct ahd_softc	*ahd_find_softc(struct ahd_softc *ahd);
 void			 ahd_set_unit(struct ahd_softc *, int);
 void			 ahd_set_name(struct ahd_softc *, char *);
-struct scb		*ahd_get_scb(struct ahd_softc *ahd, u_int col_idx);
-void			 ahd_free_scb(struct ahd_softc *ahd, struct scb *scb);
+void			*ahd_scb_alloc(void *);
+void			 ahd_scb_free(void *, void *);
 void			 ahd_alloc_scbs(struct ahd_softc *ahd);
 void			 ahd_free(struct ahd_softc *ahd);
 int			 ahd_reset(struct ahd_softc *ahd, int reinit);
