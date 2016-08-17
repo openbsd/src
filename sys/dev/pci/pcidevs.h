@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1802 2016/07/31 07:36:16 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1803 2016/08/17 10:01:20 stsp Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6441,6 +6441,10 @@
 #define	PCI_PRODUCT_RALINK_RT3592	0x3592		/* RT3592 */
 #define	PCI_PRODUCT_RALINK_RT3593	0x3593		/* RT3593 */
 #define	PCI_PRODUCT_RALINK_RT5390	0x5390		/* RT5390 */
+#define	PCI_PRODUCT_RALINK_RT5392	0x5392		/* RT5392 */
+#define	PCI_PRODUCT_RALINK_RT5390_1	0x539a		/* RT5390 */
+#define	PCI_PRODUCT_RALINK_RT5390_2	0x539b		/* RT5390 */
+#define	PCI_PRODUCT_RALINK_RT5390_3	0x539f		/* RT5390 */
 
 /* RDC products */
 #define	PCI_PRODUCT_RDC_R1010_IDE	0x1010		/* R1010 IDE */
