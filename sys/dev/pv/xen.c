@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.61 2016/08/05 18:31:21 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.62 2016/08/17 17:18:38 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -744,7 +744,7 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih, int domain,
 	SLIST_INSERT_HEAD(&sc->sc_intrs, xi, xi_entry);
 
 	/* Mask the event port */
-	atomic_setbit_ptr(&sc->sc_ipg->evtchn_mask[0], xi->xi_port);
+	set_bit(xi->xi_port, &sc->sc_ipg->evtchn_mask[0]);
 
 #if defined(XEN_DEBUG) && disabled
 	memset(&es, 0, sizeof(es));
@@ -790,8 +790,8 @@ xen_intr_disestablish(xen_intr_handle_t xih)
 
 	taskq_destroy(xi->xi_taskq);
 
-	atomic_setbit_ptr(&sc->sc_ipg->evtchn_mask[0], xi->xi_port);
-	atomic_clearbit_ptr(&sc->sc_ipg->evtchn_pending[0], xi->xi_port);
+	set_bit(xi->xi_port, &sc->sc_ipg->evtchn_mask[0]);
+	clear_bit(xi->xi_port, &sc->sc_ipg->evtchn_pending[0]);
 
 	if (!xi->xi_noclose) {
 		ec.port = xi->xi_port;
@@ -820,8 +820,7 @@ xen_intr_enable(void)
 				printf("%s: unmasking port %u failed\n",
 				    sc->sc_dev.dv_xname, xi->xi_port);
 			virtio_membar_sync();
-			if (isset((char *)&sc->sc_ipg->evtchn_mask[0],
-			    xi->xi_port))
+			if (test_bit(xi->xi_port, &sc->sc_ipg->evtchn_mask[0]))
 				printf("%s: port %u is still masked\n",
 				    sc->sc_dev.dv_xname, xi->xi_port);
 		}
@@ -837,7 +836,7 @@ xen_intr_mask(xen_intr_handle_t xih)
 
 	if ((xi = xen_lookup_intsrc(sc, port)) != NULL) {
 		xi->xi_masked = 1;
-		atomic_setbit_ptr(&sc->sc_ipg->evtchn_mask[0], xi->xi_port);
+		set_bit(xi->xi_port, &sc->sc_ipg->evtchn_mask[0]);
 	}
 }
 
@@ -851,7 +850,7 @@ xen_intr_unmask(xen_intr_handle_t xih)
 
 	if ((xi = xen_lookup_intsrc(sc, port)) != NULL) {
 		xi->xi_masked = 0;
-		if (!isset((char *)&sc->sc_ipg->evtchn_mask[0], xi->xi_port))
+		if (!test_bit(xi->xi_port, &sc->sc_ipg->evtchn_mask[0]))
 			return (0);
 		eu.port = xi->xi_port;
 		return (xen_evtchn_hypercall(sc, EVTCHNOP_unmask, &eu,

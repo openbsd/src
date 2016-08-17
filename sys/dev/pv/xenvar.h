@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.35 2016/08/03 17:14:41 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.36 2016/08/17 17:18:38 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -143,28 +143,22 @@ struct xs_transaction {
 	struct xs_softc		*xst_sc;
 };
 
-static inline int
-atomic_setbit_ptr(volatile void *ptr, int bit)
+static __inline void
+clear_bit(u_int b, volatile void *p)
 {
-	int obit;
-
-	__asm__ __volatile__ ("lock btsl %2,%1; sbbl %0,%0" :
-	    "=r" (obit), "=m" (*(volatile long *)ptr) : "Ir" (bit) :
-	    "memory");
-
-	return (obit);
+	atomic_clearbits_int(((volatile u_int *)p) + (b >> 5), 1 << (b & 0x1f));
 }
 
-static inline int
-atomic_clearbit_ptr(volatile void *ptr, int bit)
+static __inline void
+set_bit(u_int b, volatile void *p)
 {
-	int obit;
+	atomic_setbits_int(((volatile u_int *)p) + (b >> 5), 1 << (b & 0x1f));
+}
 
-	__asm__ __volatile__ ("lock btrl %2,%1; sbbl %0,%0" :
-	    "=r" (obit), "=m" (*(volatile long *)ptr) : "Ir" (bit) :
-	    "memory");
-
-	return (obit);
+static __inline int
+test_bit(u_int b, volatile void *p)
+{
+	return !!(((volatile u_int *)p)[b >> 5] & (1 << (b & 0x1f)));
 }
 
 int	xs_cmd(struct xs_transaction *, int, const char *, struct iovec **,
