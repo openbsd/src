@@ -69,13 +69,10 @@ struct hv_channel {
 	struct hv_guid			 ch_inst;
 	char				 ch_ident[38];
 
-	uint8_t				 ch_mgroup;
-	uint8_t				 ch_mindex;
-
 	void				*ch_ring;
 	uint32_t			 ch_ring_gpadl;
 	uint32_t			 ch_ring_npg;
-	ulong				 ch_ring_size;
+	u_long				 ch_ring_size;
 
 	struct hv_ring_data		 ch_wrd;
 	struct hv_ring_data		 ch_rrd;
@@ -92,6 +89,8 @@ struct hv_channel {
 #define  CHF_BATCHED			  0x0001
 #define  CHF_MONITOR			  0x0002
 
+	uint8_t				 ch_mgroup;
+	uint8_t				 ch_mindex;
 	struct hv_mon_param		 ch_monprm __attribute__((aligned(8)));
 
 	TAILQ_ENTRY(hv_channel)		 ch_entry;
@@ -137,8 +136,8 @@ struct hv_softc {
 
 	/* Channel port events page */
 	void				*sc_events;
-	uint32_t			*sc_wevents;	/* Write events */
-	uint32_t			*sc_revents;	/* Read events */
+	u_long				*sc_wevents;	/* Write events */
+	u_long				*sc_revents;	/* Read events */
 
 	/* Monitor pages for parent<->child notifications */
 	struct vmbus_mnf		*sc_monitor[2];
@@ -165,28 +164,22 @@ struct hv_softc {
 	struct ksensor			 sc_sensor;
 };
 
-static inline int
-atomic_setbit_ptr(volatile void *ptr, int bit)
+static __inline void
+clear_bit(u_int b, volatile void *p)
 {
-	int obit;
-
-	__asm__ __volatile__ ("lock btsl %2,%1; sbbl %0,%0" :
-	    "=r" (obit), "=m" (*(volatile long *)ptr) : "Ir" (bit) :
-	    "memory");
-
-	return (obit);
+	atomic_clearbits_int(((volatile u_int *)p) + (b >> 5), 1 << (b & 0x1f));
 }
 
-static inline int
-atomic_clearbit_ptr(volatile void *ptr, int bit)
+static __inline void
+set_bit(u_int b, volatile void *p)
 {
-	int obit;
+	atomic_setbits_int(((volatile u_int *)p) + (b >> 5), 1 << (b & 0x1f));
+}
 
-	__asm__ __volatile__ ("lock btrl %2,%1; sbbl %0,%0" :
-	    "=r" (obit), "=m" (*(volatile long *)ptr) : "Ir" (bit) :
-	    "memory");
-
-	return (obit);
+static __inline int
+test_bit(u_int b, volatile void *p)
+{
+	return !!(((volatile u_int *)p)[b >> 5] & (1 << (b & 0x1f)));
 }
 
 int	hv_handle_alloc(struct hv_channel *, void *, uint32_t, uint32_t *);

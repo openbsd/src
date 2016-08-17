@@ -533,23 +533,24 @@ hv_event_intr(struct hv_softc *sc)
 	struct vmbus_evtflags *evt;
 	struct cpu_info *ci = curcpu();
 	int cpu = CPU_INFO_UNIT(ci);
-	int bit, dword, maxdword, chanid;
+	int bit, row, maxrow, chanid;
 	struct hv_channel *ch;
-	uint32_t *revents, pending;
+	u_long *revents, pending;
 
 	evt = (struct vmbus_evtflags *)sc->sc_siep[cpu] +
 	    VMBUS_SINT_MESSAGE;
 	if ((sc->sc_proto == VMBUS_VERSION_WS2008) ||
 	    (sc->sc_proto == VMBUS_VERSION_WIN7)) {
-		if (atomic_clearbit_ptr(&evt->evt_flags[0], 0) == 0)
+		if (!test_bit(0, &evt->evt_flags[0]))
 			return;
-		maxdword = VMBUS_CHAN_MAX_COMPAT >> 5;
+		clear_bit(0, &evt->evt_flags[0]);
+		maxrow = VMBUS_CHAN_MAX_COMPAT / VMBUS_EVTFLAG_LEN;
 		/*
 		 * receive size is 1/2 page and divide that by 4 bytes
 		 */
 		revents = sc->sc_revents;
 	} else {
-		maxdword = nitems(evt->evt_flags);
+		maxrow = nitems(evt->evt_flags);
 		/*
 		 * On Host with Win8 or above, the event page can be
 		 * checked directly to get the id of the channel
@@ -558,14 +559,14 @@ hv_event_intr(struct hv_softc *sc)
 		revents = &evt->evt_flags[0];
 	}
 
-	for (dword = 0; dword < maxdword; dword++) {
-		if (revents[dword] == 0)
+	for (row = 0; row < maxrow; row++) {
+		if (revents[row] == 0)
 			continue;
-		pending = atomic_swap_uint(&revents[dword], 0);
+		pending = atomic_swap_ulong(&revents[row], 0);
 		for (bit = 0; pending > 0; pending >>= 1, bit++) {
 			if ((pending & 1) == 0)
 				continue;
-			chanid = (dword << 5) + bit;
+			chanid = (row * LONG_BIT) + bit;
 			/* vmbus channel protocol message */
 			if (chanid == 0)
 				continue;
@@ -695,9 +696,8 @@ hv_vmbus_connect(struct hv_softc *sc)
 		goto errout;
 	}
 
-	sc->sc_wevents = (uint32_t *)sc->sc_events;
-	sc->sc_revents = (uint32_t *)((caddr_t)sc->sc_events +
-	    (PAGE_SIZE >> 1));
+	sc->sc_wevents = (u_long *)sc->sc_events;
+	sc->sc_revents = (u_long *)((caddr_t)sc->sc_events + (PAGE_SIZE >> 1));
 
 	sc->sc_monitor[0] = km_alloc(PAGE_SIZE, &kv_any, &kp_zero, &kd_nowait);
 	if (sc->sc_monitor == NULL) {
@@ -1017,8 +1017,8 @@ hv_process_offer(struct hv_softc *sc, struct hv_offer *co)
 		nch->ch_monprm.mp_connid = co->co_chan.chm_connid;
 
 	if (co->co_chan.chm_flags1 & VMBUS_CHOFFER_FLAG1_HASMNF) {
-		nch->ch_mgroup = co->co_chan.chm_montrig >> 5;
-		nch->ch_mindex = co->co_chan.chm_montrig & 0x1f;
+		nch->ch_mgroup = co->co_chan.chm_montrig / VMBUS_MONTRIG_LEN;
+		nch->ch_mindex = co->co_chan.chm_montrig % VMBUS_MONTRIG_LEN;
 		nch->ch_flags |= CHF_MONITOR;
 	}
 
@@ -1207,11 +1207,10 @@ hv_channel_setevent(struct hv_softc *sc, struct hv_channel *ch)
 	struct vmbus_mon_trig *mtg;
 
 	/* Each uint32_t represents 32 channels */
-	atomic_setbit_ptr((uint32_t *)sc->sc_wevents + (ch->ch_id >> 5),
-	    ch->ch_id & 31);
+	set_bit(ch->ch_id, sc->sc_wevents);
 	if (ch->ch_flags & CHF_MONITOR) {
 		mtg = &sc->sc_monitor[1]->mnf_trigs[ch->ch_mgroup];
-		atomic_setbit_ptr((uint32_t *)&mtg->mt_pending, ch->ch_mindex);
+		set_bit(ch->ch_mindex, &mtg->mt_pending);
 	} else
 		hv_intr_signal(sc, &ch->ch_monprm);
 }

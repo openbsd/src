@@ -302,8 +302,13 @@ struct vmbus_message {
  * Hyper-V SynIC event flags
  */
 
+#define VMBUS_EVTFLAGS_SIZE	256
+#define VMBUS_EVTFLAGS_MAX	((VMBUS_EVTFLAGS_SIZE / LONG_BIT) * 8)
+#define VMBUS_EVTFLAG_LEN	LONG_BIT
+#define VMBUS_EVTFLAG_MASK	(LONG_BIT - 1)
+
 struct vmbus_evtflags {
-	uint32_t	evt_flags[64];
+	ulong		evt_flags[VMBUS_EVTFLAGS_MAX];
 } __packed;
 
 /*
