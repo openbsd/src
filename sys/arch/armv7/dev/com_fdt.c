@@ -1,4 +1,4 @@
-/* $OpenBSD: com_fdt.c,v 1.4 2016/08/17 13:05:02 patrick Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.5 2016/08/17 13:26:40 patrick Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -56,13 +56,10 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pinctrl.h>
 
-#define com_isr 8
-#define ISR_RECV	(ISR_RXPL | ISR_XMODE | ISR_RCVEIR)
 #define com_usr 31	/* Synopsys DesignWare UART */
 
 int	com_fdt_match(struct device *, void *, void *);
 void	com_fdt_attach(struct device *, struct device *, void *);
-int	com_fdt_activate(struct device *, int);
 int	com_fdt_intr_designware(void *);
 
 extern int comcnspeed;
@@ -74,8 +71,7 @@ struct com_fdt_softc {
 };
 
 struct cfattach com_fdt_ca = {
-	sizeof (struct com_fdt_softc), com_fdt_match, com_fdt_attach, NULL,
-	com_fdt_activate
+	sizeof (struct com_fdt_softc), com_fdt_match, com_fdt_attach
 };
 
 void
@@ -167,33 +163,6 @@ com_fdt_attach(struct device *parent, struct device *self, void *aux)
 
 	arm_intr_establish_fdt(faa->fa_node, IPL_TTY, intr,
 	    sc, sc->sc.sc_dev.dv_xname);
-}
-
-int
-com_fdt_activate(struct device *self, int act)
-{
-	struct com_softc *sc = (struct com_softc *)self;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	struct tty *tp = sc->sc_tty;
-
-	switch (act) {
-	case DVACT_SUSPEND:
-		break;
-	case DVACT_RESUME:
-		if (sc->enabled) {
-			sc->sc_initialize = 1;
-			comparam(tp, &tp->t_termios);
-			bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
-
-			if (ISSET(sc->sc_hwflags, COM_HW_SIR)) {
-				bus_space_write_1(iot, ioh, com_isr,
-				    ISR_RECV);
-			}
-		}
-		break;
-	}
-	return 0;
 }
 
 int
