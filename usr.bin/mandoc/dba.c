@@ -1,4 +1,4 @@
-/*	$OpenBSD: dba.c,v 1.3 2016/08/17 18:05:40 schwarze Exp $ */
+/*	$OpenBSD: dba.c,v 1.4 2016/08/17 18:58:31 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -135,7 +135,8 @@ dba_page_new(struct dba_array *pages, const char *name, const char *sect,
 
 	page = dba_array_new(DBP_MAX, 0);
 	entry = dba_array_new(1, DBA_STR | DBA_GROW);
-	dba_array_add(entry, prepend(name, NAME_FILE & NAME_MASK));
+	if (name != NULL)
+		dba_array_add(entry, prepend(name, NAME_FILE & NAME_MASK));
 	dba_array_add(page, entry);
 	entry = dba_array_new(1, DBA_STR | DBA_GROW);
 	dba_array_add(entry, (void *)sect);
