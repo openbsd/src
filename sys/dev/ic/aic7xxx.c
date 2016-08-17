@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.91 2015/07/17 21:42:49 krw Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.92 2016/08/17 01:17:54 krw Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.91 2015/07/17 21:42:49 krw Exp $
+ * $Id: aic7xxx.c,v 1.92 2016/08/17 01:17:54 krw Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -4234,6 +4234,9 @@ ahc_init_scbdata(struct ahc_softc *ahc)
 	SLIST_INIT(&scb_data->free_scbs);
 	SLIST_INIT(&scb_data->sg_maps);
 
+	mtx_init(&ahc->sc_scb_mtx, IPL_BIO);
+	scsi_iopool_init(&ahc->sc_iopool, ahc, ahc_scb_alloc, ahc_scb_free);
+
 	/* Allocate SCB resources */
 	scb_data->scbarray = mallocarray(AHC_SCB_MAX_ALLOC, sizeof(struct scb),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
@@ -4296,12 +4299,11 @@ ahc_init_scbdata(struct ahc_softc *ahc)
 	/*
 	 * Reserve the next queued SCB.
 	 */
-	ahc->next_queued_scb = ahc_get_scb(ahc);
-
-	/*
-	 * Note that we were successful
-	 */
-	return (0);
+	ahc->next_queued_scb = scsi_io_get(&ahc->sc_iopool,
+	    SCSI_POLL | SCSI_NOSLEEP);
+	if (ahc->next_queued_scb != NULL)
+		/* Note that we were successful */
+		return (0);
 
 error_exit:
 
@@ -4424,8 +4426,10 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 
 		next_scb->hscb = &scb_data->hscbs[scb_data->numscbs];
 		next_scb->hscb->tag = ahc->scb_data->numscbs;
+		mtx_enter(&ahc->sc_scb_mtx);
 		SLIST_INSERT_HEAD(&ahc->scb_data->free_scbs,
 				  next_scb, links.sle);
+		mtx_leave(&ahc->sc_scb_mtx);
 		segs += AHC_NSEG;
 		physaddr += (AHC_NSEG * sizeof(struct ahc_dma_seg));
 		next_scb++;
@@ -6614,12 +6618,14 @@ ahc_dump_card_state(struct ahc_softc *ahc)
 
 	printf("Kernel Free SCB list: ");
 	i = 0;
+	mtx_enter(&ahc->sc_scb_mtx);
 	SLIST_FOREACH(scb, &ahc->scb_data->free_scbs, links.sle) {
 		if (i++ > 256)
 			break;
 		printf("%d ", scb->hscb->tag);
 	}
 	printf("\n");
+	mtx_leave(&ahc->sc_scb_mtx);
 
 	maxtarget = (ahc->features & (AHC_WIDE|AHC_TWIN)) ? 15 : 7;
 	for (target = 0; target <= maxtarget; target++) {

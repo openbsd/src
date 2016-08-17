@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_inline.h,v 1.16 2015/07/17 21:42:49 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_inline.h,v 1.17 2016/08/17 01:17:54 krw Exp $	*/
 /*	$NetBSD: aic7xxx_inline.h,v 1.4 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -258,9 +258,6 @@ IO_INLINE uint32_t
 			ahc_inl(struct ahc_softc *ahc, u_int port);
 IO_INLINE void	ahc_outl(struct ahc_softc *ahc, u_int port,
 				 uint32_t value);
-IO_INLINE struct scb*
-			ahc_get_scb(struct ahc_softc *ahc);
-IO_INLINE void		ahc_free_scb(struct ahc_softc *ahc, struct scb *scb);
 IO_INLINE struct scb *ahc_lookup_scb(struct ahc_softc *ahc, u_int tag);
 IO_INLINE void		ahc_swap_with_next_hscb(struct ahc_softc *ahc,
 						struct scb *scb);
@@ -338,43 +335,6 @@ ahc_outl(struct ahc_softc *ahc, u_int port, uint32_t value)
 	ahc_outb(ahc, port+2, ((value) >> 16) & 0xFF);
 	ahc_outb(ahc, port+3, ((value) >> 24) & 0xFF);
 }
-
-/*
- * Get a free scb. If there are none, see if we can allocate a new SCB.
- */
-IO_INLINE struct scb *
-ahc_get_scb(struct ahc_softc *ahc)
-{
-	struct scb *scb;
-
-	scb = SLIST_FIRST(&ahc->scb_data->free_scbs);
-
-	if (scb != NULL)
-		SLIST_REMOVE_HEAD(&ahc->scb_data->free_scbs, links.sle);
-
-	return (scb);
-}
-
-/*
- * Return an SCB resource to the free list.
- */
-IO_INLINE void
-ahc_free_scb(struct ahc_softc *ahc, struct scb *scb)
-{
-	struct hardware_scb *hscb;
-
-	hscb = scb->hscb;
-	/* Clean up for the next user */
-	ahc->scb_data->scbindex[hscb->tag] = NULL;
-	scb->flags = SCB_FLAG_NONE;
-	hscb->control = 0;
-
-	SLIST_INSERT_HEAD(&ahc->scb_data->free_scbs, scb, links.sle);
-
-	/* Notify the OSM that a resource is now available. */
-	ahc_platform_scb_free(ahc, scb);
-}
-
 
 IO_INLINE struct scb *
 ahc_lookup_scb(struct ahc_softc *ahc, u_int tag)

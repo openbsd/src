@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.54 2015/07/17 21:42:49 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.55 2016/08/17 01:17:54 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -89,6 +89,7 @@ ahc_attach(struct ahc_softc *ahc)
 	ahc->sc_channel.adapter_softc = ahc;
 	ahc->sc_channel.adapter = &ahc_switch;
 	ahc->sc_channel.openings = 16;
+	ahc->sc_channel.pool = &ahc->sc_iopool;
 
 	if (ahc->features & AHC_TWIN) {
 		/* Configure the second scsi bus */
@@ -160,7 +161,6 @@ void
 ahc_done(struct ahc_softc *ahc, struct scb *scb)
 {
 	struct scsi_xfer *xs = scb->xs;
-	int s;
 
 	bus_dmamap_sync(ahc->parent_dmat, ahc->scb_data->hscb_dmamap,
 	    0, ahc->scb_data->hscb_dmamap->dm_mapsize,
@@ -254,10 +254,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		xs->error = XS_SENSE;
 	}
 
-        s = splbio();
-	ahc_free_scb(ahc, scb);
 	scsi_done(xs);
-        splx(s);
 }
 
 void
@@ -284,7 +281,6 @@ ahc_action(struct scsi_xfer *xs)
 	struct hardware_scb *hscb;
 	u_int target_id;
 	u_int our_id;
-	int s;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB3, ("ahc_action\n"));
 	ahc = (struct ahc_softc *)xs->sc_link->adapter_softc;
@@ -293,18 +289,16 @@ ahc_action(struct scsi_xfer *xs)
 	our_id = SCSI_SCSI_ID(ahc, xs->sc_link);
 
 	/*
-	 * get an scb to use.
+	 * get the scb to use.
 	 */
-	s = splbio();
-	scb = ahc_get_scb(ahc);
-	splx(s);
-	if (scb == NULL) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		return;
-	}
+	scb = xs->io;
+
+	/* Clean up for the next user */
+	scb->flags = SCB_FLAG_NONE;
 
 	hscb = scb->hscb;
+	hscb->control = 0;
+	ahc->scb_data->scbindex[hscb->tag] = NULL;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB3, ("start scb(%p)\n", scb));
 	scb->xs = xs;
@@ -531,7 +525,6 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsi_xfer *xs,
 	       struct scb *scb)
 {
 	struct hardware_scb *hscb;
-	int s;
 
 	hscb = scb->hscb;
 	xs->resid = xs->status = 0;
@@ -539,9 +532,6 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsi_xfer *xs,
 
 	hscb->cdb_len = xs->cmdlen;
 	if (hscb->cdb_len > sizeof(hscb->cdb32)) {
-		s = splbio();
-		ahc_free_scb(ahc, scb);
-		splx(s);
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		return;
@@ -569,9 +559,6 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsi_xfer *xs,
 			       "= %d\n",
 			       ahc_name(ahc), error);
 #endif
-			s = splbio();
-			ahc_free_scb(ahc, scb);
-			splx(s);
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
 			return;
@@ -755,4 +742,48 @@ ahc_adapter_req_set_xfer_mode(struct ahc_softc *ahc, struct scb *scb)
 	    AHC_TRANS_GOAL, FALSE);
 
 	splx(s);
+}
+
+/*
+ * Get a free scb. If there are none, see if we can allocate a new SCB.
+ */
+void *
+ahc_scb_alloc(void *xahc)
+{
+	struct ahc_softc *ahc = xahc;
+	struct scb *scb;
+
+	mtx_enter(&ahc->sc_scb_mtx);
+	scb = SLIST_FIRST(&ahc->scb_data->free_scbs);
+
+	if (scb != NULL)
+		SLIST_REMOVE_HEAD(&ahc->scb_data->free_scbs, links.sle);
+
+	mtx_leave(&ahc->sc_scb_mtx);
+
+	return (scb);
+}
+
+/*
+ * Return an SCB resource to the free list.
+ */
+void
+ahc_scb_free(void *xahc, void *io)
+{
+	struct ahc_softc *ahc = xahc;
+	struct scb *scb = io;
+	struct hardware_scb *hscb;
+
+	hscb = scb->hscb;
+	/* Clean up for the next user */
+	ahc->scb_data->scbindex[hscb->tag] = NULL;
+	scb->flags = SCB_FLAG_NONE;
+	hscb->control = 0;
+
+	mtx_enter(&ahc->sc_scb_mtx);
+	SLIST_INSERT_HEAD(&ahc->scb_data->free_scbs, scb, links.sle);
+	mtx_leave(&ahc->sc_scb_mtx);
+
+	/* Notify the OSM that a resource is now available. */
+	ahc_platform_scb_free(ahc, scb);
 }

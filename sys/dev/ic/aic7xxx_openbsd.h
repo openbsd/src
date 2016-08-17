@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.h,v 1.25 2015/07/17 21:42:49 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.h,v 1.26 2016/08/17 01:17:54 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -427,5 +427,7 @@ ahc_platform_flushwork(struct ahc_softc *ahc)
 void	  ahc_done(struct ahc_softc *, struct scb *);
 void	  ahc_send_async(struct ahc_softc *, char, u_int, u_int, ac_code,
     void *);
+void	 *ahc_scb_alloc(void *);
+void	  ahc_scb_free(void *, void *);
 
 #endif  /* _AIC7XXX_OPENBSD_H_ */
