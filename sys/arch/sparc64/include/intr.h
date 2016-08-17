@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.19 2016/06/13 01:08:13 dlg Exp $	*/
+/*	$OpenBSD: intr.h,v 1.20 2016/08/17 10:49:09 dlg Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
@@ -69,7 +69,7 @@ void    intr_establish(int, struct intrhand *);
 #define	IPL_NONE	0		/* nothing */
 #define	IPL_SOFTINT	1		/* softint */
 #define	IPL_SOFTCLOCK	1		/* timeouts */
-#define	IPL_SOFTNET	1		/* protocol stack */
+#define	IPL_SOFTNET	2		/* protocol stack */
 #define	IPL_BIO		PIL_BIO		/* block I/O */
 #define	IPL_NET		PIL_NET		/* network */
 #define	IPL_SOFTTTY	4		/* delayed terminal handling */
@@ -84,7 +84,6 @@ void    intr_establish(int, struct intrhand *);
 #define	IPL_HIGH	PIL_HIGH	/* everything */
 
 #define spl0()		_spl(IPL_NONE)
-#define splsoftint()	_splraise(IPL_SOFTINT)
 #define splsoftclock()	_splraise(IPL_SOFTCLOCK)
 #define splsoftnet()	_splraise(IPL_SOFTNET)
 #define splbio()	_splraise(IPL_BIO)
