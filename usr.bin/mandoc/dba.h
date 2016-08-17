@@ -1,4 +1,4 @@
-/*	$OpenBSD: dba.h,v 1.1 2016/08/01 10:32:39 schwarze Exp $ */
+/*	$OpenBSD: dba.h,v 1.2 2016/08/17 20:46:06 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -40,8 +40,7 @@ struct dba	*dba_read(const char *);
 int		 dba_write(const char *, struct dba *);
 
 struct dba_array *dba_page_new(struct dba_array *, const char *,
-			const char *, const char *, const char *,
-			const char *, enum form);
+			const char *, const char *, enum form);
 void		 dba_page_add(struct dba_array *, int32_t, const char *);
 void		 dba_page_alias(struct dba_array *, const char *, uint64_t);
 

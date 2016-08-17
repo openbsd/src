@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.175 2016/08/05 17:20:30 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.176 2016/08/17 20:46:06 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -1982,11 +1982,12 @@ dbadd(struct dba *dba, struct mpage *mpage)
 	cp = mpage->desc;
 	i = strlen(cp);
 	mustfree = render_string(&cp, &i);
-	mpage->dba = dba_page_new(dba->pages, mlink->name, mpage->sec,
+	mpage->dba = dba_page_new(dba->pages,
 	    *mpage->arch == '\0' ? mlink->arch : mpage->arch,
 	    cp, mlink->file, mpage->form);
 	if (mustfree)
 		free(cp);
+	dba_page_add(mpage->dba, DBP_SECT, mpage->sec);
 
 	while (mlink != NULL) {
 		dbadd_mlink(mlink);
