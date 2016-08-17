@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.27 2016/08/17 00:38:26 krw Exp $ */
+/*	$OpenBSD: confpars.c,v 1.28 2016/08/17 00:55:33 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -53,10 +53,11 @@
 #include "dhcpd.h"
 #include "dhctoken.h"
 
-/* conf-file :== parameters declarations EOF
-   parameters :== <nil> | parameter | parameters parameter
-   declarations :== <nil> | declaration | declarations declaration */
-
+/*
+ * conf-file :== parameters declarations EOF
+ * parameters :== <nil> | parameter | parameters parameter
+ * declarations :== <nil> | declaration | declarations declaration
+ */
 int
 readconf(void)
 {
@@ -70,7 +71,7 @@ readconf(void)
 	/* Set up the initial dhcp option universe. */
 	initialize_universes();
 
-	/* Set up the global defaults... */
+	/* Set up the global defaults. */
 	root_group.default_lease_time = 43200; /* 12 hours. */
 	root_group.max_lease_time = 86400; /* 24 hours. */
 	root_group.bootp_lease_cutoff = MAX_TIME;
@@ -97,10 +98,11 @@ readconf(void)
 	return !warnings_occurred;
 }
 
-/* lease-file :== lease-declarations EOF
-   lease-statments :== <nil>
-		   | lease-declaration
-		   | lease-declarations lease-declaration
+/*
+ * lease-file :== lease-declarations EOF
+ * lease-statments :== <nil>
+ *		   | lease-declaration
+ *		   | lease-declarations lease-declaration
  */
 void
 read_leases(void)
@@ -111,15 +113,17 @@ read_leases(void)
 
 	new_parse(path_dhcpd_db);
 
-	/* Open the lease file.   If we can't open it, fail.   The reason
-	   for this is that although on initial startup, the absence of
-	   a lease file is perfectly benign, if dhcpd has been running
-	   and this file is absent, it means that dhcpd tried and failed
-	   to rewrite the lease database.   If we proceed and the
-	   problem which caused the rewrite to fail has been fixed, but no
-	   human has corrected the database problem, then we are left
-	   thinking that no leases have been assigned to anybody, which
-	   could create severe network chaos. */
+	/*
+	 * Open the lease file.   If we can't open it, fail.   The reason
+	 * for this is that although on initial startup, the absence of
+	 * a lease file is perfectly benign, if dhcpd has been running
+	 * and this file is absent, it means that dhcpd tried and failed
+	 * to rewrite the lease database.   If we proceed and the
+	 * problem which caused the rewrite to fail has been fixed, but no
+	 * human has corrected the database problem, then we are left
+	 * thinking that no leases have been assigned to anybody, which
+	 * could create severe network chaos.
+	 */
 	if ((cfile = fopen(path_dhcpd_db, "r")) == NULL) {
 		warning("Can't open lease database %s: %m -- %s",
 		    path_dhcpd_db,
@@ -148,34 +152,36 @@ read_leases(void)
 	fclose(cfile);
 }
 
-/* statement :== parameter | declaration
-
-   parameter :== timestamp
-	     | DEFAULT_LEASE_TIME lease_time
-	     | MAX_LEASE_TIME lease_time
-	     | DYNAMIC_BOOTP_LEASE_CUTOFF date
-	     | DYNAMIC_BOOTP_LEASE_LENGTH lease_time
-	     | BOOT_UNKNOWN_CLIENTS boolean
-	     | GET_LEASE_HOSTNAMES boolean
-	     | USE_HOST_DECL_NAME boolean
-	     | NEXT_SERVER ip-addr-or-hostname SEMI
-	     | option_parameter
-	     | SERVER-IDENTIFIER ip-addr-or-hostname SEMI
-	     | FILENAME string-parameter
-	     | SERVER_NAME string-parameter
-	     | hardware-parameter
-	     | fixed-address-parameter
-	     | ALLOW allow-deny-keyword
-	     | DENY allow-deny-keyword
-	     | USE_LEASE_ADDR_FOR_DEFAULT_ROUTE boolean
-
-   declaration :== host-declaration
-		 | group-declaration
-		 | shared-network-declaration
-		 | subnet-declaration
-		 | VENDOR_CLASS class-declaration
-		 | USER_CLASS class-declaration
-		 | RANGE address-range-declaration */
+/*
+ * statement :== parameter | declaration
+ *
+ * parameter :== timestamp
+ *	     | DEFAULT_LEASE_TIME lease_time
+ *	     | MAX_LEASE_TIME lease_time
+ *	     | DYNAMIC_BOOTP_LEASE_CUTOFF date
+ *	     | DYNAMIC_BOOTP_LEASE_LENGTH lease_time
+ *	     | BOOT_UNKNOWN_CLIENTS boolean
+ *	     | GET_LEASE_HOSTNAMES boolean
+ *	     | USE_HOST_DECL_NAME boolean
+ *	     | NEXT_SERVER ip-addr-or-hostname SEMI
+ *	     | option_parameter
+ *	     | SERVER-IDENTIFIER ip-addr-or-hostname SEMI
+ *	     | FILENAME string-parameter
+ *	     | SERVER_NAME string-parameter
+ *	     | hardware-parameter
+ *	     | fixed-address-parameter
+ *	     | ALLOW allow-deny-keyword
+ *	     | DENY allow-deny-keyword
+ *	     | USE_LEASE_ADDR_FOR_DEFAULT_ROUTE boolean
+ *
+ * declaration :== host-declaration
+ *		 | group-declaration
+ *		 | shared-network-declaration
+ *		 | subnet-declaration
+ *		 | VENDOR_CLASS class-declaration
+ *		 | USER_CLASS class-declaration
+ *		 | RANGE address-range-declaration
+ */
 int
 parse_statement(FILE *cfile, struct group *group, int type,
 	struct host_decl *host_decl, int declaration)
@@ -237,8 +243,10 @@ parse_statement(FILE *cfile, struct group *group, int type,
 			break;
 		}
 
-		/* Otherwise, cons up a fake shared network structure
-		   and populate it with the lone subnet... */
+		/*
+		 * Otherwise, cons up a fake shared network structure
+		 * and populate it with the lone subnet.
+		 */
 
 		share = calloc(1, sizeof(struct shared_network));
 		if (!share)
@@ -259,8 +267,10 @@ parse_statement(FILE *cfile, struct group *group, int type,
 			if (share->name == NULL)
 				error("no memory for subnet name");
 
-			/* Copy the authoritative parameter from the subnet,
-			   since there is no opportunity to declare it here. */
+			/*
+			 * Copy the authoritative parameter from the subnet,
+			 * since there is no opportunity to declare it here.
+			 */
 			share->group->authoritative =
 				share->subnets->group->authoritative;
 			enter_shared_network(share);
@@ -426,11 +436,12 @@ parse_statement(FILE *cfile, struct group *group, int type,
 	return 0;
 }
 
-/* allow-deny-keyword :== BOOTP
-			| BOOTING
-			| DYNAMIC_BOOTP
-			| UNKNOWN_CLIENTS */
-
+/*
+ * allow-deny-keyword :== BOOTP
+ *			| BOOTING
+ *			| DYNAMIC_BOOTP
+ *			| UNKNOWN_CLIENTS
+ */
 void
 parse_allow_deny(FILE *cfile, struct group *group, int flag)
 {
@@ -463,8 +474,9 @@ parse_allow_deny(FILE *cfile, struct group *group, int flag)
 	parse_semi(cfile);
 }
 
-/* boolean :== ON SEMI | OFF SEMI | TRUE SEMI | FALSE SEMI */
-
+/*
+ * boolean :== ON SEMI | OFF SEMI | TRUE SEMI | FALSE SEMI
+ */
 int
 parse_boolean(FILE *cfile)
 {
@@ -485,9 +497,10 @@ parse_boolean(FILE *cfile)
 	return rv;
 }
 
-/* Expect a left brace; if there isn't one, skip over the rest of the
-   statement and return zero; otherwise, return 1. */
-
+/*
+ * Expect a left brace; if there isn't one, skip over the rest of the
+ * statement and return zero; otherwise, return 1.
+ */
 int
 parse_lbrace(FILE *cfile)
 {
@@ -504,8 +517,9 @@ parse_lbrace(FILE *cfile)
 }
 
 
-/* host-declaration :== hostname '{' parameters declarations '}' */
-
+/*
+ * host-declaration :== hostname '{' parameters declarations '}'
+ */
 void
 parse_host_declaration(FILE *cfile, struct group *group)
 {
@@ -567,9 +581,9 @@ parse_host_declaration(FILE *cfile, struct group *group)
 	enter_host(host);
 }
 
-/* class-declaration :== STRING '{' parameters declarations '}'
-*/
-
+/*
+ * class-declaration :== STRING '{' parameters declarations '}'
+ */
 void
 parse_class_declaration(FILE *cfile, struct group *group, int type)
 {
@@ -613,9 +627,10 @@ parse_class_declaration(FILE *cfile, struct group *group, int type)
 	} while (1);
 }
 
-/* shared-network-declaration :==
-			hostname LBRACE declarations parameters RBRACE */
-
+/*
+ * shared-network-declaration :==
+ *			hostname LBRACE declarations parameters RBRACE
+ */
 void
 parse_shared_net_declaration(FILE *cfile, struct group *group)
 {
@@ -636,7 +651,7 @@ parse_shared_net_declaration(FILE *cfile, struct group *group)
 	share->group = clone_group(group, "parse_shared_net_declaration");
 	share->group->shared_network = share;
 
-	/* Get the name of the shared network... */
+	/* Get the name of the shared network. */
 	token = peek_token(&val, cfile);
 	if (token == TOK_STRING) {
 		token = next_token(&val, cfile);
@@ -689,9 +704,10 @@ parse_shared_net_declaration(FILE *cfile, struct group *group)
 	} while (1);
 }
 
-/* subnet-declaration :==
-	net NETMASK netmask RBRACE parameters declarations LBRACE */
-
+/*
+ * subnet-declaration :==
+ *	net NETMASK netmask RBRACE parameters declarations LBRACE
+ */
 void
 parse_subnet_declaration(FILE *cfile, struct shared_network *share)
 {
@@ -710,7 +726,7 @@ parse_subnet_declaration(FILE *cfile, struct shared_network *share)
 	subnet->group = clone_group(share->group, "parse_subnet_declaration");
 	subnet->group->subnet = subnet;
 
-	/* Get the network number... */
+	/* Get the network number. */
 	if (!parse_numeric_aggregate(cfile, addr, &len, '.', 10, 8)) {
 		free(subnet->group);
 		free(subnet);
@@ -729,7 +745,7 @@ parse_subnet_declaration(FILE *cfile, struct shared_network *share)
 		return;
 	}
 
-	/* Get the netmask... */
+	/* Get the netmask. */
 	if (!parse_numeric_aggregate(cfile, addr, &len, '.', 10, 8)) {
 		free(subnet->group);
 		free(subnet);
@@ -761,8 +777,10 @@ parse_subnet_declaration(FILE *cfile, struct shared_network *share)
 		    SUBNET_DECL, NULL, declaration);
 	} while (1);
 
-	/* If this subnet supports dynamic bootp, flag it so in the
-	   shared_network containing it. */
+	/*
+	 * If this subnet supports dynamic bootp, flag it so in the
+	 * shared_network containing it.
+	 */
 	if (subnet->group->dynamic_bootp)
 		share->group->dynamic_bootp = 1;
 
@@ -786,8 +804,9 @@ parse_subnet_declaration(FILE *cfile, struct shared_network *share)
 	}
 }
 
-/* group-declaration :== RBRACE parameters declarations LBRACE */
-
+/*
+ * group-declaration :== RBRACE parameters declarations LBRACE
+ */
 void
 parse_group_declaration(FILE *cfile, struct group *group)
 {
@@ -818,7 +837,8 @@ parse_group_declaration(FILE *cfile, struct group *group)
 	} while (1);
 }
 
-/* cidr :== ip-address "/" bit-count
+/*
+ * cidr :== ip-address "/" bit-count
  * ip-address :== NUMBER [ DOT NUMBER [ DOT NUMBER [ DOT NUMBER ] ] ]
  * bit-count :== 0..32
  */
@@ -862,13 +882,14 @@ nocidr:
 	return 0;
 }
 
-/* ip-addr-or-hostname :== ip-address | hostname
-   ip-address :== NUMBER DOT NUMBER DOT NUMBER DOT NUMBER
-
-   Parse an ip address or a hostname.   If uniform is zero, put in
-   a TREE_LIMIT node to catch hostnames that evaluate to more than
-   one IP address. */
-
+/*
+ * ip-addr-or-hostname :== ip-address | hostname
+ * ip-address :== NUMBER DOT NUMBER DOT NUMBER DOT NUMBER
+ *
+ * Parse an ip address or a hostname.   If uniform is zero, put in
+ * a TREE_LIMIT node to catch hostnames that evaluate to more than
+ * one IP address.
+ */
 struct tree *
 parse_ip_addr_or_hostname(FILE *cfile, int uniform)
 {
@@ -917,10 +938,11 @@ parse_ip_addr_or_hostname(FILE *cfile, int uniform)
 }
 
 
-/* fixed-addr-parameter :== ip-addrs-or-hostnames SEMI
-   ip-addrs-or-hostnames :== ip-addr-or-hostname
-			   | ip-addrs-or-hostnames ip-addr-or-hostname */
-
+/*
+ * fixed-addr-parameter :== ip-addrs-or-hostnames SEMI
+ * ip-addrs-or-hostnames :== ip-addr-or-hostname
+ *			   | ip-addrs-or-hostnames ip-addr-or-hostname
+ */
 struct tree_cache *
 parse_fixed_addr_param(FILE *cfile)
 {
@@ -945,13 +967,14 @@ parse_fixed_addr_param(FILE *cfile)
 	return tree_cache(tree);
 }
 
-/* option_parameter :== identifier DOT identifier <syntax> SEMI
-		      | identifier <syntax> SEMI
-
-   Option syntax is handled specially through format strings, so it
-   would be painful to come up with BNF for it.   However, it always
-   starts as above and ends in a SEMI. */
-
+/*
+ * option_parameter :== identifier DOT identifier <syntax> SEMI
+ *		      | identifier <syntax> SEMI
+ *
+ * Option syntax is handled specially through format strings, so it
+ * would be painful to come up with BNF for it. However, it always
+ * starts as above and ends in a SEMI.
+ */
 void
 parse_option_param(FILE *cfile, struct group *group)
 {
@@ -978,10 +1001,10 @@ parse_option_param(FILE *cfile, struct group *group)
 		error("no memory for vendor token.");
 	token = peek_token(&val, cfile);
 	if (token == '.') {
-		/* Go ahead and take the DOT token... */
+		/* Go ahead and take the DOT token. */
 		token = next_token(&val, cfile);
 
-		/* The next token should be an identifier... */
+		/* The next token should be an identifier. */
 		token = next_token(&val, cfile);
 		if (!is_identifier(token)) {
 			parse_warn("expecting identifier after '.'");
@@ -991,12 +1014,16 @@ parse_option_param(FILE *cfile, struct group *group)
 			return;
 		}
 
-		/* Look up the option name hash table for the specified
-		   vendor. */
+		/*
+		 * Look up the option name hash table for the specified
+		 * vendor.
+		 */
 		universe = ((struct universe *)hash_lookup(&universe_hash,
 		    (unsigned char *)vendor, 0));
-		/* If it's not there, we can't parse the rest of the
-		   declaration. */
+		/*
+		 * If it's not there, we can't parse the rest of the
+		 * declaration.
+		 */
 		if (!universe) {
 			parse_warn("no vendor named %s.", vendor);
 			skip_to_semi(cfile);
@@ -1004,13 +1031,15 @@ parse_option_param(FILE *cfile, struct group *group)
 			return;
 		}
 	} else {
-		/* Use the default hash table, which contains all the
-		   standard dhcp option names. */
+		/*
+		 * Use the default hash table, which contains all the
+		 * standard dhcp option names.
+		 */
 		val = vendor;
 		universe = &dhcp_universe;
 	}
 
-	/* Look up the actual option info... */
+	/* Look up the actual option info. */
 	option = (struct option *)hash_lookup(universe->hash,
 	    (unsigned char *)val, 0);
 
@@ -1029,11 +1058,13 @@ parse_option_param(FILE *cfile, struct group *group)
 	/* Free the initial identifier token. */
 	free(vendor);
 
-	/* Parse the option data... */
+	/* Parse the option data. */
 	do {
-		/* Set a flag if this is an array of a simple type (i.e.,
-		   not an array of pairs of IP addresses, or something
-		   like that. */
+		/*
+		 * Set a flag if this is an array of a simple type (i.e.,
+		 * not an array of pairs of IP addresses, or something
+		 * like that.
+		 */
 		int uniform = option->format[1] == 'A';
 
 		for (fmt = option->format; *fmt; fmt++) {
@@ -1075,7 +1106,7 @@ parse_option_param(FILE *cfile, struct group *group)
 				}
 				break;
 
-			case 't': /* Text string... */
+			case 't': /* Text string. */
 				token = next_token(&val, cfile);
 				if (token != TOK_STRING
 				    && !is_identifier(token)) {
@@ -1096,8 +1127,8 @@ parse_option_param(FILE *cfile, struct group *group)
 				tree = tree_concat(tree, t);
 				break;
 
-			case 'L': /* Unsigned 32-bit integer... */
-			case 'l':	/* Signed 32-bit integer... */
+			case 'L': /* Unsigned 32-bit integer. */
+			case 'l': /* Signed 32-bit integer. */
 				token = next_token(&val, cfile);
 				if (token != TOK_NUMBER && token !=
 				    TOK_NUMBER_OR_NAME) {
@@ -1109,8 +1140,8 @@ parse_option_param(FILE *cfile, struct group *group)
 				convert_num(buf, val, 0, 32);
 				tree = tree_concat(tree, tree_const(buf, 4));
 				break;
-			case 's':	/* Signed 16-bit integer. */
-			case 'S':	/* Unsigned 16-bit integer. */
+			case 's': /* Signed 16-bit integer. */
+			case 'S': /* Unsigned 16-bit integer. */
 				token = next_token(&val, cfile);
 				if (token != TOK_NUMBER && token !=
 				    TOK_NUMBER_OR_NAME) {
@@ -1122,8 +1153,8 @@ parse_option_param(FILE *cfile, struct group *group)
 				convert_num(buf, val, 0, 16);
 				tree = tree_concat(tree, tree_const(buf, 2));
 				break;
-			case 'b':	/* Signed 8-bit integer. */
-			case 'B':	/* Unsigned 8-bit integer. */
+			case 'b': /* Signed 8-bit integer. */
+			case 'B': /* Unsigned 8-bit integer. */
 				token = next_token(&val, cfile);
 				if (token != TOK_NUMBER && token !=
 				    TOK_NUMBER_OR_NAME) {
@@ -1192,22 +1223,23 @@ parse_option_param(FILE *cfile, struct group *group)
 	group->options[option->code] = tree_cache(tree);
 }
 
-/* lease_declaration :== LEASE ip_address LBRACE lease_parameters RBRACE
-
-   lease_parameters :== <nil>
-		      | lease_parameter
-		      | lease_parameters lease_parameter
-
-   lease_parameter :== STARTS date
-		     | ENDS date
-		     | TIMESTAMP date
-		     | HARDWARE hardware-parameter
-		     | UID hex_numbers SEMI
-		     | HOSTNAME hostname SEMI
-		     | CLIENT_HOSTNAME hostname SEMI
-		     | CLASS identifier SEMI
-		     | DYNAMIC_BOOTP SEMI */
-
+/*
+ * lease_declaration :== LEASE ip_address LBRACE lease_parameters RBRACE
+ *
+ * lease_parameters :== <nil>
+ *		      | lease_parameter
+ *		      | lease_parameters lease_parameter
+ *
+ * lease_parameter :== STARTS date
+ *		     | ENDS date
+ *		     | TIMESTAMP date
+ *		     | HARDWARE hardware-parameter
+ *		     | UID hex_numbers SEMI
+ *		     | HOSTNAME hostname SEMI
+ *		     | CLIENT_HOSTNAME hostname SEMI
+ *		     | CLASS identifier SEMI
+ *		     | DYNAMIC_BOOTP SEMI
+ */
 struct lease *
 parse_lease_declaration(FILE *cfile)
 {
@@ -1220,7 +1252,7 @@ parse_lease_declaration(FILE *cfile)
 	char tbuf[32];
 	static struct lease lease;
 
-	/* Zap the lease structure... */
+	/* Zap the lease structure. */
 	memset(&lease, 0, sizeof lease);
 
 	/* Get the address for which the lease has been issued. */
@@ -1269,7 +1301,7 @@ parse_lease_declaration(FILE *cfile)
 			}
 		} else {
 			switch (token) {
-				/* Colon-separated hexadecimal octets... */
+				/* Colon-separated hexadecimal octets. */
 			case TOK_UID:
 				seenbit = 8;
 				token = peek_token(&val, cfile);
@@ -1397,7 +1429,7 @@ parse_address_range(FILE *cfile, struct subnet *subnet)
 		subnet->group->dynamic_bootp = dynamic = 1;
 	}
 
-	/* Get the bottom address in the range... */
+	/* Get the bottom address in the range. */
 	if (!parse_numeric_aggregate(cfile, addr, &len, '.', 10, 8))
 		return;
 	memcpy(low.iabuf, addr, len);
@@ -1408,7 +1440,7 @@ parse_address_range(FILE *cfile, struct subnet *subnet)
 	if (token == ';')
 		high = low;
 	else {
-		/* Get the top address in the range... */
+		/* Get the top address in the range. */
 		if (!parse_numeric_aggregate(cfile, addr, &len, '.', 10, 8))
 			return;
 		memcpy(high.iabuf, addr, len);
@@ -1422,6 +1454,6 @@ parse_address_range(FILE *cfile, struct subnet *subnet)
 		return;
 	}
 
-	/* Create the new address range... */
+	/* Create the new address range. */
 	new_address_range(low, high, subnet, dynamic);
 }
