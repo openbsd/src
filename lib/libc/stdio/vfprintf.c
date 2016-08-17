@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.74 2016/08/17 18:07:07 deraadt Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.75 2016/08/17 22:15:08 tedu Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -862,7 +862,7 @@ fp_common:
 					int save_errno = errno;
 
 					syslog_r(LOG_CRIT | LOG_CONS, &sdata,
-					    "vfprintf \%ls NULL in \"%s\"", fmt0);
+					    "vfprintf %%ls NULL in \"%s\"", fmt0);
 					errno = save_errno;
 
 					cp = "(null)";
@@ -881,7 +881,7 @@ fp_common:
 				int save_errno = errno;
 
 				syslog_r(LOG_CRIT | LOG_CONS, &sdata,
-				    "vfprintf \%s NULL in \"%s\"", fmt0);
+				    "vfprintf %%s NULL in \"%s\"", fmt0);
 				errno = save_errno;
 
 				cp = "(null)";
