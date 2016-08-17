@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.6 2016/01/10 10:01:07 jsg Exp $	*/
+/*	$OpenBSD: control.c,v 1.7 2016/08/17 05:07:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* nitems */
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/socket.h>

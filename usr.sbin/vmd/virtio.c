@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.16 2016/07/19 09:52:34 natano Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.17 2016/08/17 05:07:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -16,19 +16,21 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>	/* PAGE_SIZE */
+
+#include <machine/vmmvar.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/virtioreg.h>
+#include <dev/pci/vioblkreg.h>
+
 #include <errno.h>
 #include <poll.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <unistd.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/virtioreg.h>
-#include <dev/pci/vioblkreg.h>
-#include <machine/vmmvar.h>
-#include <machine/param.h>
+
 #include "pci.h"
 #include "vmd.h"
 #include "virtio.h"

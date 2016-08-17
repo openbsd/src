@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.28 2016/07/29 16:36:51 stefan Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.29 2016/08/17 05:07:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* nitems */
 #include <sys/queue.h>
 #include <sys/wait.h>
 #include <sys/cdefs.h>
