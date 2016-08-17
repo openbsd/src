@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.88 2015/08/28 23:28:39 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.89 2016/08/17 11:09:01 dlg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -169,22 +169,12 @@ struct cpu_info {
 
 extern struct cpu_info *cpus;
 
-#define curpcb		curcpu()->ci_cpcb
-#define fpproc		curcpu()->ci_fpproc
-
 #ifdef MULTIPROCESSOR
 
-#define	cpu_number()	(curcpu()->ci_number)
+register struct cpu_info *__curcpu asm ("%g7");
 
-extern __inline struct cpu_info *curcpu(void);
-extern __inline struct cpu_info *
-curcpu(void)
-{
-	struct cpu_info *ci;
-
-	__asm volatile("mov %%g7, %0" : "=r"(ci));
-	return (ci->ci_self);
-}
+#define curcpu()	(__curcpu->ci_self)
+#define cpu_number()	(__curcpu->ci_number)
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_number == 0)
 #define CPU_INFO_ITERATOR	int
@@ -200,10 +190,11 @@ void	sparc64_broadcast_ipi(void (*)(void), u_int64_t, u_int64_t);
 
 void	cpu_unidle(struct cpu_info *);
 
-#else
+#else /* MULTIPROCESSOR */
 
+#define	__curcpu	((struct cpu_info *)CPUINFO_VA)
+#define curcpu()	__curcpu
 #define cpu_number()	0
-#define	curcpu()	((struct cpu_info *)CPUINFO_VA)
 
 #define CPU_IS_PRIMARY(ci)	1
 #define CPU_INFO_ITERATOR	int
@@ -214,7 +205,10 @@ void	cpu_unidle(struct cpu_info *);
 
 #define cpu_unidle(ci)
 
-#endif
+#endif /* MULTIPROCESSOR */
+
+#define curpcb		__curcpu->ci_cpcb
+#define fpproc		__curcpu->ci_fpproc
 
 #define CPU_BUSY_CYCLE()	do {} while (0)
 
