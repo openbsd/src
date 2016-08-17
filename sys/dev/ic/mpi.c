@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.204 2016/08/14 04:08:03 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.205 2016/08/17 01:02:31 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1449,20 +1449,21 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 	DNPRINTF(MPI_D_CMD, "%s:  tag: 0x%04x\n", DEVNAME(sc),
 	    letoh16(sie->tag));
 
-	xs->status = sie->scsi_status;
+	if (sie->scsi_state & MPI_SCSIIO_ERR_STATE_NO_SCSI_STATUS)
+		xs->status = SCSI_TERMINATED;
+	else
+		xs->status = sie->scsi_status;
+	xs->resid = 0;
+
 	switch (lemtoh16(&sie->ioc_status)) {
 	case MPI_IOCSTATUS_SCSI_DATA_UNDERRUN:
 		xs->resid = xs->datalen - lemtoh32(&sie->transfer_count);
-		if (sie->scsi_state & MPI_SCSIIO_ERR_STATE_NO_SCSI_STATUS) {
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-		}
 		/* FALLTHROUGH */
 	case MPI_IOCSTATUS_SUCCESS:
 	case MPI_IOCSTATUS_SCSI_RECOVERED_ERROR:
 		switch (xs->status) {
 		case SCSI_OK:
-			xs->resid = 0;
+			xs->error = XS_NOERROR;
 			break;
 
 		case SCSI_CHECK:
