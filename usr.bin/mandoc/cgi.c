@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.76 2016/08/10 18:39:04 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.77 2016/08/18 00:44:37 jsg Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@usta.de>
@@ -336,6 +336,7 @@ resp_copy(const char *filename)
 		fflush(stdout);
 		while ((sz = read(fd, buf, sizeof(buf))) > 0)
 			write(STDOUT_FILENO, buf, sz);
+		close(fd);
 	}
 }
 
