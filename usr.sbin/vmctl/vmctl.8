@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.12 2016/08/18 11:33:48 jmc Exp $
+.\"	$OpenBSD: vmctl.8,v 1.13 2016/08/18 16:12:05 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -43,8 +43,8 @@ The
 .Ar id
 argument can be either a numeric, non-zero identifier or alternatively
 the name of a virtual machine.
-.Sh VM COMMANDS
-The options are as follows:
+.Pp
+The commands are as follows:
 .Bl -tag -width Ds
 .It Cm console Ar id
 Using
@@ -90,6 +90,23 @@ Lists VMs running on the host, optionally listing just the selected VM
 Stops (terminates) a VM defined by the specified VM
 .Ar id .
 .El
+.Pp
+If the
+.Fl i
+option is specified during VM startup, a corresponding number
+of host-side
+.Xr tap 4
+interfaces will be allocated and mapped to the
+.Xr vio 4
+interfaces inside the guest VM.
+This tap/vio interface mapping
+allows guest network traffic to be manipulated by the host.
+Any valid host-side interface configuration may be performed on these
+tap interfaces, such as bridging (via
+.Xr bridge 4 ) ,
+or using
+.Xr pf 4
+nat-to rules to create private or host-side NATed networks, as desired.
 .Sh FILES
 .Bl -tag -width "/etc/var/run/vmd.sockXX" -compact
 .It Pa /etc/vm.conf
@@ -110,23 +127,6 @@ The VMM subsystem could not be enabled or disabled as requested.
 .It
 A requested VM-based operation could not be completed.
 .El
-.Sh VM NETWORKING
-If the
-.Fl i
-option is specified during VM startup, a corresponding number
-of host-side
-.Xr tap 4
-interfaces will be allocated and mapped to the
-.Xr vio 4
-interfaces inside the guest VM.
-This tap/vio interface mapping
-allows guest network traffic to be manipulated by the host.
-Any valid host-side interface configuration may be performed on these
-tap interfaces, such as bridging (via
-.Xr bridge 4 ) ,
-or using
-.Xr pf 4
-nat-to rules to create private or host-side NATed networks, as desired.
 .Sh EXAMPLES
 Create a 4.5 Gigabyte disk image, disk.img:
 .Dl $ vmctl create disk.img -s 4.5G
