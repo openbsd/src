@@ -74,6 +74,9 @@
 
 #define HVN_DEBUG			1
 
+#define HVN_NVS_BUFSIZE		  	PAGE_SIZE
+#define HVN_NVS_MSGSIZE			32
+
 /*
  * RNDIS control interface
  */
@@ -82,28 +85,22 @@
 
 struct rndis_cmd {
 	uint32_t			 rc_id;
+	struct hvn_nvs_rndis		 rc_msg;
 	struct rndis			*rc_req;
 	bus_dmamap_t			 rc_dmap;
 	uint64_t			 rc_pfn;
 	struct rndis			 rc_cmp;
 	uint32_t			 rc_cmplen;
 	uint8_t				 rc_cmpbuf[HVN_RNDIS_CMPBUFSZ];
-	struct nvsp			 rc_nvsp;
 	struct mutex			 rc_mtx;
 	TAILQ_ENTRY(rndis_cmd)		 rc_entry;
 };
 TAILQ_HEAD(rndis_queue, rndis_cmd);
 
 /*
- * Rx ring
- */
-#define HVN_RX_BUFID			0xcafe
-
-/*
  * Tx ring
  */
 #define HVN_TX_DESC			128
-#define HVN_TX_BUFID			0xface
 
 struct hvn_softc {
 	struct device			 sc_dev;
@@ -116,13 +113,12 @@ struct hvn_softc {
 	int				 sc_link_state;
 	int				 sc_promisc;
 
-	/* NVSP protocol */
+	/* NVS protocol */
 	int				 sc_proto;
-	uint32_t			 sc_nvsptid;
-	struct nvsp			 sc_nvsp;
-	uint8_t				*sc_nvspbuf;
-#define  HVN_NVSP_BUFSIZE		 (PAGE_SIZE * 4)
-	struct mutex			 sc_nvsplck;
+	uint32_t			 sc_nvstid;
+	uint8_t				 sc_nvsrsp[HVN_NVS_MSGSIZE];
+	uint8_t				*sc_nvsbuf;
+	struct mutex			 sc_nvslck;
 
 	/* RNDIS protocol */
 	uint32_t			 sc_rndisrid;
@@ -166,15 +162,15 @@ void	hvn_get_link_status(struct hvn_softc *);
 void	hvn_link_status(struct hvn_softc *);
 
 /* NSVP */
-int	hvn_nvsp_attach(struct hvn_softc *);
-void	hvn_nvsp_intr(void *);
-int	hvn_nvsp_output(struct hvn_softc *, struct nvsp *, uint64_t, int);
-int	hvn_nvsp_ack(struct hvn_softc *, struct nvsp *, uint64_t);
-void	hvn_nvsp_detach(struct hvn_softc *);
+int	hvn_nvs_attach(struct hvn_softc *);
+void	hvn_nvs_intr(void *);
+int	hvn_nvs_cmd(struct hvn_softc *, void *, size_t, uint64_t, int);
+int	hvn_nvs_ack(struct hvn_softc *, uint64_t);
+void	hvn_nvs_detach(struct hvn_softc *);
 
 /* RNDIS */
 int	hvn_rndis_attach(struct hvn_softc *);
-int	hvn_rndis_ctloutput(struct hvn_softc *, struct rndis_cmd *, int);
+int	hvn_rndis_cmd(struct hvn_softc *, struct rndis_cmd *, int);
 void	hvn_rndis_filter(struct hvn_softc *sc, uint64_t, void *);
 void	hvn_rndis_input(struct hvn_softc *, caddr_t, uint32_t,
 	    struct mbuf_list *);
@@ -220,7 +216,7 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 
 	DPRINTF("\n");
 
-	if (hvn_nvsp_attach(sc)) {
+	if (hvn_nvs_attach(sc)) {
 		printf(": failed to init NVSP\n");
 		return;
 	}
@@ -277,7 +273,7 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
  detach:
 	hvn_rx_ring_destroy(sc);
 	hvn_tx_ring_destroy(sc);
-	hvn_nvsp_detach(sc);
+	hvn_nvs_detach(sc);
 	if (ifp->if_start)
 		if_detach(ifp);
 }
@@ -434,12 +430,11 @@ hvn_txeof(struct hvn_softc *sc, uint64_t tid)
 int
 hvn_rx_ring_create(struct hvn_softc *sc)
 {
-	struct nvsp *pkt = &sc->sc_nvsp;
-	struct nvsp_send_rx_buf *msg;
-	struct nvsp_send_rx_buf_comp *cmp;
+	struct hvn_nvs_rxbuf_conn cmd;
+	struct hvn_nvs_rxbuf_conn_resp *rsp;
 	uint64_t tid;
 
-	if (sc->sc_proto <= NVSP_PROTOCOL_VERSION_2)
+	if (sc->sc_proto <= HVN_NVS_PROTO_VERSION_2)
 		sc->sc_rx_size = 15 * 1024 * 1024;	/* 15MB */
 	else
 		sc->sc_rx_size = 16 * 1024 * 1024; 	/* 16MB */
@@ -457,25 +452,24 @@ hvn_rx_ring_create(struct hvn_softc *sc)
 		goto errout;
 	}
 
-	memset(pkt, 0, sizeof(*pkt));
-	pkt->msg_type = nvsp_type_send_rx_buf;
-	msg = (struct nvsp_send_rx_buf *)&pkt->msg;
-	msg->gpadl_handle = sc->sc_rx_hndl;
-	msg->id = HVN_RX_BUFID;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.nvs_type = HVN_NVS_TYPE_RXBUF_CONN;
+	cmd.nvs_gpadl = sc->sc_rx_hndl;
+	cmd.nvs_sig = HVN_NVS_RXBUF_SIG;
 
-	tid = atomic_inc_int_nv(&sc->sc_nvsptid);
-	if (hvn_nvsp_output(sc, pkt, tid, 100))
+	tid = atomic_inc_int_nv(&sc->sc_nvstid);
+	if (hvn_nvs_cmd(sc, &cmd, sizeof(cmd), tid, 100))
 		goto errout;
 
-	cmp = (struct nvsp_send_rx_buf_comp *)&pkt->msg;
-	if (cmp->status != nvsp_status_success) {
+	rsp = (struct hvn_nvs_rxbuf_conn_resp *)&sc->sc_nvsrsp;
+	if (rsp->nvs_status != HVN_NVS_STATUS_OK) {
 		DPRINTF("%s: failed to set up the Rx ring\n",
 		    sc->sc_dev.dv_xname);
 		goto errout;
 	}
-	if (cmp->num_sections > 1) {
+	if (rsp->nvs_nsect > 1) {
 		DPRINTF("%s: invalid number of Rx ring sections: %d\n",
-		    sc->sc_dev.dv_xname, cmp->num_sections);
+		    sc->sc_dev.dv_xname, rsp->nvs_nsect);
 		hvn_rx_ring_destroy(sc);
 		return (-1);
 	}
@@ -496,20 +490,18 @@ hvn_rx_ring_create(struct hvn_softc *sc)
 int
 hvn_rx_ring_destroy(struct hvn_softc *sc)
 {
-	struct nvsp *pkt = &sc->sc_nvsp;
-	struct nvsp_revoke_rx_buf *msg;
+	struct hvn_nvs_rxbuf_disconn cmd;
 	uint64_t tid;
 
 	if (sc->sc_rx_ring == NULL)
 		return (0);
 
-	memset(pkt, 0, sizeof(*pkt));
-	pkt->msg_type = nvsp_type_revoke_rx_buf;
-	msg = (struct nvsp_revoke_rx_buf *)&pkt->msg;
-	msg->id = HVN_RX_BUFID;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.nvs_type = HVN_NVS_TYPE_RXBUF_DISCONN;
+	cmd.nvs_sig = HVN_NVS_RXBUF_SIG;
 
-	tid = atomic_inc_int_nv(&sc->sc_nvsptid);
-	if (hvn_nvsp_output(sc, pkt, tid, 0))
+	tid = atomic_inc_int_nv(&sc->sc_nvstid);
+	if (hvn_nvs_cmd(sc, &cmd, sizeof(cmd), tid, 0))
 		return (-1);
 
 	delay(100);
@@ -527,9 +519,8 @@ hvn_rx_ring_destroy(struct hvn_softc *sc)
 int
 hvn_tx_ring_create(struct hvn_softc *sc)
 {
-	struct nvsp *pkt = &sc->sc_nvsp;
-	struct nvsp_send_tx_buf *msg;
-	struct nvsp_send_tx_buf_comp *cmp;
+	struct hvn_nvs_chim_conn cmd;
+	struct hvn_nvs_chim_conn_resp *rsp;
 	uint64_t tid;
 
 	sc->sc_tx_size = 15 * 1024 * 1024;	/* 15MB */
@@ -547,18 +538,17 @@ hvn_tx_ring_create(struct hvn_softc *sc)
 		goto errout;
 	}
 
-	memset(pkt, 0, sizeof(*pkt));
-	pkt->msg_type = nvsp_type_send_tx_buf;
-	msg = (struct nvsp_send_tx_buf *)&pkt->msg;
-	msg->gpadl_handle = sc->sc_tx_hndl;
-	msg->id = HVN_TX_BUFID;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.nvs_type = HVN_NVS_TYPE_CHIM_CONN;
+	cmd.nvs_gpadl = sc->sc_tx_hndl;
+	cmd.nvs_sig = HVN_NVS_CHIM_SIG;
 
-	tid = atomic_inc_int_nv(&sc->sc_nvsptid);
-	if (hvn_nvsp_output(sc, pkt, tid, 100))
+	tid = atomic_inc_int_nv(&sc->sc_nvstid);
+	if (hvn_nvs_cmd(sc, &cmd, sizeof(cmd), tid, 100))
 		goto errout;
 
-	cmp = (struct nvsp_send_tx_buf_comp *)&pkt->msg;
-	if (cmp->status != nvsp_status_success) {
+	rsp = (struct hvn_nvs_chim_conn_resp *)&sc->sc_nvsrsp;
+	if (rsp->nvs_status != HVN_NVS_STATUS_OK) {
 		DPRINTF("%s: failed to set up the Tx ring\n",
 		    sc->sc_dev.dv_xname);
 		goto errout;
@@ -580,20 +570,18 @@ hvn_tx_ring_create(struct hvn_softc *sc)
 int
 hvn_tx_ring_destroy(struct hvn_softc *sc)
 {
-	struct nvsp *pkt = &sc->sc_nvsp;
-	struct nvsp_revoke_tx_buf *msg;
+	struct hvn_nvs_chim_disconn cmd;
 	uint64_t tid;
 
 	if (sc->sc_tx_ring == NULL)
 		return (0);
 
-	memset(pkt, 0, sizeof(*pkt));
-	pkt->msg_type = nvsp_type_revoke_tx_buf;
-	msg = (struct nvsp_revoke_tx_buf *)&pkt->msg;
-	msg->id = HVN_TX_BUFID;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.nvs_type = HVN_NVS_TYPE_CHIM_DISCONN;
+	cmd.nvs_sig = HVN_NVS_CHIM_SIG;
 
-	tid = atomic_inc_int_nv(&sc->sc_nvsptid);
-	if (hvn_nvsp_output(sc, pkt, tid, 0))
+	tid = atomic_inc_int_nv(&sc->sc_nvstid);
+	if (hvn_nvs_cmd(sc, &cmd, sizeof(cmd), tid, 0))
 		return (-1);
 
 	delay(100);
@@ -604,7 +592,6 @@ hvn_tx_ring_destroy(struct hvn_softc *sc)
 
 	km_free(sc->sc_tx_ring, sc->sc_tx_size, &kv_any, &kp_zero);
 	sc->sc_tx_ring = NULL;
-
 	return (0);
 }
 
@@ -642,24 +629,23 @@ hvn_get_link_status(struct hvn_softc *sc)
 }
 
 int
-hvn_nvsp_attach(struct hvn_softc *sc)
+hvn_nvs_attach(struct hvn_softc *sc)
 {
 	const uint32_t protos[] = {
-		NVSP_PROTOCOL_VERSION_5, NVSP_PROTOCOL_VERSION_4,
-		NVSP_PROTOCOL_VERSION_2, NVSP_PROTOCOL_VERSION_1
+		HVN_NVS_PROTO_VERSION_5, HVN_NVS_PROTO_VERSION_4,
+		HVN_NVS_PROTO_VERSION_2, HVN_NVS_PROTO_VERSION_1
 	};
-	struct nvsp *pkt = &sc->sc_nvsp;
-	struct nvsp_init *init;
-	struct nvsp_init_comp *cmp;
-	struct nvsp_send_ndis_version *ver;
+	struct hvn_nvs_init cmd;
+	struct hvn_nvs_init_resp *rsp;
+	struct hvn_nvs_ndis_init ncmd;
 	uint64_t tid;
 	uint32_t ndisver;
 	int i;
 
 	/* 4 page sized buffer for channel messages */
-	sc->sc_nvspbuf = km_alloc(HVN_NVSP_BUFSIZE, &kv_any, &kp_zero,
+	sc->sc_nvsbuf = km_alloc(HVN_NVS_BUFSIZE, &kv_any, &kp_zero,
 	    (cold ? &kd_nowait : &kd_waitok));
-	if (sc->sc_nvspbuf == NULL) {
+	if (sc->sc_nvsbuf == NULL) {
 		DPRINTF("%s: failed to allocate channel data buffer\n",
 		    sc->sc_dev.dv_xname);
 		return (-1);
@@ -667,25 +653,23 @@ hvn_nvsp_attach(struct hvn_softc *sc)
 	sc->sc_chan->ch_buflen = PAGE_SIZE * 4;
 
 	/* Associate our interrupt handler with the channel */
-	if (hv_channel_open(sc->sc_chan, NULL, 0, hvn_nvsp_intr, sc)) {
+	if (hv_channel_open(sc->sc_chan, NULL, 0, hvn_nvs_intr, sc)) {
 		DPRINTF("%s: failed to open channel\n", sc->sc_dev.dv_xname);
-		km_free(sc->sc_nvspbuf, HVN_NVSP_BUFSIZE, &kv_any, &kp_zero);
+		km_free(sc->sc_nvsbuf, HVN_NVS_BUFSIZE, &kv_any, &kp_zero);
 		return (-1);
 	}
 
-	mtx_init(&sc->sc_nvsplck, IPL_NET);
+	mtx_init(&sc->sc_nvslck, IPL_NET);
 
-	memset(pkt, 0, sizeof(*pkt));
-	pkt->msg_type = nvsp_type_init;
-	init = (struct nvsp_init *)&pkt->msg;
-
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.nvs_type = HVN_NVS_TYPE_INIT;
 	for (i = 0; i < nitems(protos); i++) {
-		init->protocol_version = init->protocol_version_2 = protos[i];
-		tid = atomic_inc_int_nv(&sc->sc_nvsptid);
-		if (hvn_nvsp_output(sc, pkt, tid, 100))
+		cmd.nvs_ver_min = cmd.nvs_ver_max = protos[i];
+		tid = atomic_inc_int_nv(&sc->sc_nvstid);
+		if (hvn_nvs_cmd(sc, &cmd, sizeof(cmd), tid, 100))
 			return (-1);
-		cmp = (struct nvsp_init_comp *)&pkt->msg;
-		if (cmp->status == nvsp_status_success) {
+		rsp = (struct hvn_nvs_init_resp *)&sc->sc_nvsrsp;
+		if (rsp->nvs_status == HVN_NVS_STATUS_OK) {
 			sc->sc_proto = protos[i];
 			break;
 		}
@@ -696,18 +680,17 @@ hvn_nvsp_attach(struct hvn_softc *sc)
 		return (-1);
 	}
 
-	memset(pkt, 0, sizeof(*pkt));
-	pkt->msg_type = nvsp_type_send_ndis_vers;
-	ver = (struct nvsp_send_ndis_version *)&pkt->msg;
-	if (sc->sc_proto <= NVSP_PROTOCOL_VERSION_4)
+	memset(&ncmd, 0, sizeof(ncmd));
+	ncmd.nvs_type = HVN_NVS_TYPE_NDIS_INIT;
+	if (sc->sc_proto <= HVN_NVS_PROTO_VERSION_4)
 		ndisver = NDIS_VERSION_6_1;
 	else
 		ndisver = NDIS_VERSION_6_30;
-	ver->ndis_major_vers = (ndisver & 0xffff0000) >> 16;
-	ver->ndis_minor_vers = (ndisver & 0x0000ffff);
+	ncmd.nvs_ndis_major = (ndisver & 0xffff0000) >> 16;
+	ncmd.nvs_ndis_minor = (ndisver & 0x0000ffff);
 
-	tid = atomic_inc_int_nv(&sc->sc_nvsptid);
-	if (hvn_nvsp_output(sc, pkt, tid, 100))
+	tid = atomic_inc_int_nv(&sc->sc_nvstid);
+	if (hvn_nvs_cmd(sc, &ncmd, sizeof(ncmd), tid, 100))
 		return (-1);
 
 	DPRINTF("%s: NVSP %u.%u, NDIS %u.%u\n", sc->sc_dev.dv_xname,
@@ -718,54 +701,54 @@ hvn_nvsp_attach(struct hvn_softc *sc)
 }
 
 void
-hvn_nvsp_intr(void *arg)
+hvn_nvs_intr(void *arg)
 {
 	struct hvn_softc *sc = arg;
 	struct vmbus_chanpkt_hdr *cph;
-	struct nvsp *pkt;
+	struct hvn_nvs_hdr *nvs;
 	uint64_t rid;
 	uint32_t rlen;
 	int rv;
 
 	for (;;) {
-		rv = hv_channel_recv(sc->sc_chan, sc->sc_nvspbuf,
-		    HVN_NVSP_BUFSIZE, &rlen, &rid, 1);
+		rv = hv_channel_recv(sc->sc_chan, sc->sc_nvsbuf,
+		    HVN_NVS_BUFSIZE, &rlen, &rid, 1);
 		if (rv != 0 || rlen == 0) {
 			if (rv != EAGAIN)
 				printf("%s: failed to receive an NVSP "
 				    "packet\n", sc->sc_dev.dv_xname);
 			break;
 		}
-		cph = (struct vmbus_chanpkt_hdr *)sc->sc_nvspbuf;
-		pkt = (struct nvsp *)VMBUS_CHANPKT_CONST_DATA(cph);
+		cph = (struct vmbus_chanpkt_hdr *)sc->sc_nvsbuf;
+		nvs = (struct hvn_nvs_hdr *)VMBUS_CHANPKT_CONST_DATA(cph);
 
 		if (cph->cph_type == VMBUS_CHANPKT_TYPE_COMP) {
-			switch (pkt->msg_type) {
-			case nvsp_type_init_comp:
-			case nvsp_type_send_rx_buf_comp:
-			case nvsp_type_send_tx_buf_comp:
-			case nvsp_type_subchannel:
+			switch (nvs->nvs_type) {
+			case HVN_NVS_TYPE_INIT_RESP:
+			case HVN_NVS_TYPE_RXBUF_CONNRESP:
+			case HVN_NVS_TYPE_CHIM_CONNRESP:
+			case HVN_NVS_TYPE_SUBCH_RESP:
 				/* copy the response back */
-				memcpy(&sc->sc_nvsp, pkt, sizeof(sc->sc_nvsp));
-				wakeup_one(&sc->sc_nvsp);
+				memcpy(&sc->sc_nvsrsp, nvs, HVN_NVS_MSGSIZE);
+				wakeup_one(&sc->sc_nvsrsp);
 				break;
-			case nvsp_type_send_rndis_pkt_comp:
+			case HVN_NVS_TYPE_RNDIS_ACK:
 				hvn_txeof(sc, cph->cph_tid);
 				break;
 			default:
 				printf("%s: unhandled NVSP packet type %d "
 				    "on completion\n", sc->sc_dev.dv_xname,
-				    pkt->msg_type);
+				    nvs->nvs_type);
 			}
 		} else if (cph->cph_type == VMBUS_CHANPKT_TYPE_RXBUF) {
-			switch (pkt->msg_type) {
-			case nvsp_type_send_rndis_pkt:
+			switch (nvs->nvs_type) {
+			case HVN_NVS_TYPE_RNDIS:
 				hvn_rndis_filter(sc, cph->cph_tid, cph);
 				break;
 			default:
 				printf("%s: unhandled NVSP packet type %d "
 				    "on receive\n", sc->sc_dev.dv_xname,
-				    pkt->msg_type);
+				    nvs->nvs_type);
 			}
 		} else
 			printf("%s: unknown NVSP packet type %u\n",
@@ -774,32 +757,34 @@ hvn_nvsp_intr(void *arg)
 }
 
 int
-hvn_nvsp_output(struct hvn_softc *sc, struct nvsp *pkt, uint64_t tid, int timo)
+hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
+    int timo)
 {
+	struct hvn_nvs_hdr *hdr = cmd;
 	int tries = 10;
 	int rv;
 
 	do {
-		rv = hv_channel_send(sc->sc_chan, pkt, sizeof(*pkt),
+		rv = hv_channel_send(sc->sc_chan, cmd, cmdsize,
 		    tid, VMBUS_CHANPKT_TYPE_INBAND,
 		    timo ? VMBUS_CHANPKT_FLAG_RC : 0);
 		if (rv == EAGAIN) {
 			if (timo)
-				tsleep(pkt, PRIBIO, "hvnsend", timo / 10);
+				tsleep(cmd, PRIBIO, "hvnsend", timo / 10);
 			else
 				delay(100);
 		} else if (rv) {
 			DPRINTF("%s: NVSP operation %d send error %d\n",
-			    sc->sc_dev.dv_xname, pkt->msg_type, rv);
+			    sc->sc_dev.dv_xname, hdr->nvs_type, rv);
 			return (rv);
 		}
 	} while (rv != 0 && --tries > 0);
 
 	if (timo) {
-		mtx_enter(&sc->sc_nvsplck);
-		rv = msleep(&sc->sc_nvsp, &sc->sc_nvsplck, PRIBIO, "hvnvsp",
+		mtx_enter(&sc->sc_nvslck);
+		rv = msleep(&sc->sc_nvsrsp, &sc->sc_nvslck, PRIBIO, "hvnvsp",
 		    timo);
-		mtx_leave(&sc->sc_nvsplck);
+		mtx_leave(&sc->sc_nvslck);
 #ifdef HVN_DEBUG
 		switch (rv) {
 		case EINTR:
@@ -807,7 +792,7 @@ hvn_nvsp_output(struct hvn_softc *sc, struct nvsp *pkt, uint64_t tid, int timo)
 			break;
 		case EWOULDBLOCK:
 			printf("%s: NVSP opertaion %d timed out\n",
-			    sc->sc_dev.dv_xname, pkt->msg_type);
+			    sc->sc_dev.dv_xname, hdr->nvs_type);
 		}
 	}
 #endif
@@ -815,13 +800,16 @@ hvn_nvsp_output(struct hvn_softc *sc, struct nvsp *pkt, uint64_t tid, int timo)
 }
 
 int
-hvn_nvsp_ack(struct hvn_softc *sc, struct nvsp *pkt, uint64_t tid)
+hvn_nvs_ack(struct hvn_softc *sc, uint64_t tid)
 {
+	struct hvn_nvs_rndis_ack cmd;
 	int tries = 5;
 	int rv;
 
+	cmd.nvs_type = HVN_NVS_TYPE_RNDIS_ACK;
+	cmd.nvs_status = HVN_NVS_STATUS_OK;
 	do {
-		rv = hv_channel_send(sc->sc_chan, pkt, sizeof(*pkt),
+		rv = hv_channel_send(sc->sc_chan, &cmd, sizeof(cmd),
 		    tid, VMBUS_CHANPKT_TYPE_COMP, 0);
 		if (rv == EAGAIN)
 			delay(100);
@@ -835,11 +823,11 @@ hvn_nvsp_ack(struct hvn_softc *sc, struct nvsp *pkt, uint64_t tid)
 }
 
 void
-hvn_nvsp_detach(struct hvn_softc *sc)
+hvn_nvs_detach(struct hvn_softc *sc)
 {
 	if (hv_channel_close(sc->sc_chan) == 0) {
-		km_free(sc->sc_nvspbuf, HVN_NVSP_BUFSIZE, &kv_any, &kp_zero);
-		sc->sc_nvspbuf = NULL;
+		km_free(sc->sc_nvsbuf, HVN_NVS_BUFSIZE, &kv_any, &kp_zero);
+		sc->sc_nvsbuf = NULL;
 	}
 }
 
@@ -908,7 +896,7 @@ hvn_free_cmd(struct hvn_softc *sc, struct rndis_cmd *rc)
 {
 	memset(rc->rc_req, 0, sizeof(*rc->rc_req));
 	memset(&rc->rc_cmp, 0, sizeof(rc->rc_cmp));
-	memset(&rc->rc_nvsp, 0, sizeof(rc->rc_nvsp));
+	memset(&rc->rc_msg, 0, sizeof(rc->rc_msg));
 	mtx_enter(&sc->sc_cntl_fqlck);
 	TAILQ_INSERT_TAIL(&sc->sc_cntl_fq, rc, rc_entry);
 	mtx_leave(&sc->sc_cntl_fqlck);
@@ -978,7 +966,7 @@ hvn_rndis_attach(struct hvn_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, rc->rc_dmap, 0, PAGE_SIZE,
 	    BUS_DMASYNC_PREWRITE);
 
-	if ((rv = hvn_rndis_ctloutput(sc, rc, 500)) != 0) {
+	if ((rv = hvn_rndis_cmd(sc, rc, 500)) != 0) {
 		DPRINTF("%s: INITIALIZE_MSG failed, error %u\n",
 		    sc->sc_dev.dv_xname, rv);
 		hvn_free_cmd(sc, rc);
@@ -1012,19 +1000,18 @@ errout:
 }
 
 int
-hvn_rndis_ctloutput(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
+hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 {
-	struct nvsp_send_rndis_pkt *msg;
+	struct hvn_nvs_rndis *msg = &rc->rc_msg;
 	struct vmbus_gpa sgl[1];
 	int tries = 10;
 	int rv;
 
 	KASSERT(timo > 0);
 
-	rc->rc_nvsp.msg_type = nvsp_type_send_rndis_pkt;
-	msg = (struct nvsp_send_rndis_pkt *)&rc->rc_nvsp.msg;
-	msg->chan_type = 1; /* control */
-	msg->send_buf_section_idx = NVSP_INVALID_SECTION_INDEX;
+	msg->nvs_type = HVN_NVS_TYPE_RNDIS;
+	msg->nvs_rndis_mtype = HVN_NVS_RNDIS_MTYPE_CTRL;
+	msg->nvs_chim_idx = HVN_NVS_CHIM_IDX_INVALID;
 
 	sgl[0].gpa_page = rc->rc_pfn;
 	sgl[0].gpa_len = rc->rc_req->msg_len;
@@ -1033,8 +1020,8 @@ hvn_rndis_ctloutput(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 	hvn_submit_cmd(sc, rc);
 
 	do {
-		rv = hv_channel_send_sgl(sc->sc_chan, sgl, 1, &rc->rc_nvsp,
-		    sizeof(struct nvsp), rc->rc_id);
+		rv = hv_channel_send_sgl(sc->sc_chan, sgl, 1, &rc->rc_msg,
+		    sizeof(struct hvn_nvs_rndis), rc->rc_id);
 		if (rv == EAGAIN)
 			tsleep(rc, PRIBIO, "hvnsendbuf", timo / 10);
 		else if (rv) {
@@ -1078,10 +1065,8 @@ hvn_rndis_filter(struct hvn_softc *sc, uint64_t tid, void *arg)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-	struct nvsp pkt;
 	struct vmbus_chanpkt_prplist *cp = arg;
-	struct nvsp_send_rndis_pkt_comp *cmp;
-	uint32_t off, len, type, status = 0;
+	uint32_t off, len, type;
 	int i;
 
 	if (sc->sc_rx_ring == NULL) {
@@ -1121,11 +1106,7 @@ hvn_rndis_filter(struct hvn_softc *sc, uint64_t tid, void *arg)
 			    sc->sc_dev.dv_xname, type);
 		}
 	}
-	memset(&pkt, 0, sizeof(pkt));
-	pkt.msg_type = nvsp_type_send_rndis_pkt_comp;
-	cmp = (struct nvsp_send_rndis_pkt_comp *)&pkt.msg;
-	cmp->status = status;	/* XXX */
-	hvn_nvsp_ack(sc, &pkt, tid);
+	hvn_nvs_ack(sc, tid);
 
 	if (MBUF_LIST_FIRST(&ml))
 		if_input(ifp, &ml);
@@ -1308,7 +1289,7 @@ hvn_rndis_query(struct hvn_softc *sc, uint32_t oid, void *res, size_t *length)
 	bus_dmamap_sync(sc->sc_dmat, rc->rc_dmap, 0, PAGE_SIZE,
 	    BUS_DMASYNC_PREWRITE);
 
-	if ((rv = hvn_rndis_ctloutput(sc, rc, 500)) != 0) {
+	if ((rv = hvn_rndis_cmd(sc, rc, 500)) != 0) {
 		DPRINTF("%s: QUERY_MSG failed, error %d\n",
 		    sc->sc_dev.dv_xname, rv);
 		hvn_free_cmd(sc, rc);
@@ -1367,7 +1348,7 @@ hvn_rndis_set(struct hvn_softc *sc, uint32_t oid, void *data, size_t length)
 	bus_dmamap_sync(sc->sc_dmat, rc->rc_dmap, 0, PAGE_SIZE,
 	    BUS_DMASYNC_PREWRITE);
 
-	if ((rv = hvn_rndis_ctloutput(sc, rc, 500)) != 0) {
+	if ((rv = hvn_rndis_cmd(sc, rc, 500)) != 0) {
 		DPRINTF("%s: SET_MSG failed, error %u\n",
 		    sc->sc_dev.dv_xname, rv);
 		hvn_free_cmd(sc, rc);
@@ -1439,7 +1420,7 @@ hvn_rndis_detach(struct hvn_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, rc->rc_dmap, 0, PAGE_SIZE,
 	    BUS_DMASYNC_PREWRITE);
 
-	if ((rv = hvn_rndis_ctloutput(sc, rc, 500)) != 0)
+	if ((rv = hvn_rndis_cmd(sc, rc, 500)) != 0)
 		DPRINTF("%s: HALT_MSG failed, error %u\n",
 		    sc->sc_dev.dv_xname, rv);
 
