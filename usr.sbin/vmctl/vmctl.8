@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.11 2016/08/18 00:06:32 mlarkin Exp $
+.\"	$OpenBSD: vmctl.8,v 1.12 2016/08/18 11:33:48 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -111,21 +111,20 @@ The VMM subsystem could not be enabled or disabled as requested.
 A requested VM-based operation could not be completed.
 .El
 .Sh VM NETWORKING
-If the -i option is specified during VM start, a corresponding number
+If the
+.Fl i
+option is specified during VM startup, a corresponding number
 of host-side
 .Xr tap 4
 interfaces will be allocated and mapped to the
 .Xr vio 4
-interfaces inside the guest VM. This
-.Xr tap 4 /
-.Xr vio 4
-interface mapping allows guest network traffic to be manipulated by
-the host. Any valid host-side interface configuration may be performed
-on these
-.Xr tap 4
-interfaces, such as bridging (via
-.Xr bridge 4
-), or using
+interfaces inside the guest VM.
+This tap/vio interface mapping
+allows guest network traffic to be manipulated by the host.
+Any valid host-side interface configuration may be performed on these
+tap interfaces, such as bridging (via
+.Xr bridge 4 ) ,
+or using
 .Xr pf 4
 nat-to rules to create private or host-side NATed networks, as desired.
 .Sh EXAMPLES
@@ -141,14 +140,14 @@ $ vmctl start "myvm" -m 512M -i 1 -d disk.img -k /bsd
 Terminate VM number 1:
 .Dl $ vmctl stop 1
 .Sh SEE ALSO
+.Xr bridge 4 ,
+.Xr pf 4 ,
+.Xr tap 4 ,
+.Xr vio 4 ,
 .Xr vmm 4 ,
 .Xr vm.conf 5 ,
 .Xr rc.conf 8 ,
-.Xr vmd 8 ,
-.Xr vio 4 ,
-.Xr tap 4 ,
-.Xr bridge 4 ,
-.Xr pf 4
+.Xr vmd 8
 .Sh HISTORY
 The
 .Nm
