@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.53 2016/08/16 06:40:24 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.54 2016/08/18 12:07:21 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 16 2016 $
+.Dd $Mdocdate: August 18 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -2040,9 +2040,6 @@ The size of the private key to generate in bits.
 This must be the last option specified.
 The default is 2048.
 .El
-.\"
-.\" NSEQ
-.\"
 .Sh NSEQ
 .Nm openssl nseq
 .Op Fl in Ar file
@@ -2051,21 +2048,26 @@ The default is 2048.
 .Pp
 The
 .Nm nseq
-command takes a file containing a Netscape certificate
-sequence and prints out the certificates contained in it or takes a
-file of certificates and converts it into a Netscape certificate
-sequence.
+command takes a file containing a Netscape certificate sequence
+(an alternative to the standard PKCS#7 format)
+and prints out the certificates contained in it,
+or takes a file of certificates
+and converts it into a Netscape certificate sequence.
+.Pp
+The PEM-encoded form uses the same headers and footers as a certificate:
+.Bd -unfilled -offset indent
+-----BEGIN CERTIFICATE-----
+-----END CERTIFICATE-----
+.Ed
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl in Ar file
-This specifies the input
-.Ar file
-to read, or standard input if this option is not specified.
+The input file to read from,
+or standard input if not specified.
 .It Fl out Ar file
-Specifies the output
-.Ar file ,
-or standard output by default.
+The output file to write to,
+or standard output if not specified.
 .It Fl toseq
 Normally, a Netscape certificate sequence will be input and the output
 is the certificates contained in it.
@@ -2074,32 +2076,6 @@ With the
 option the situation is reversed:
 a Netscape certificate sequence is created from a file of certificates.
 .El
-.Sh NSEQ EXAMPLES
-Output the certificates in a Netscape certificate sequence:
-.Bd -literal -offset indent
-$ openssl nseq -in nseq.pem -out certs.pem
-.Ed
-.Pp
-Create a Netscape certificate sequence:
-.Bd -literal -offset indent
-$ openssl nseq -in certs.pem -toseq -out nseq.pem
-.Ed
-.Sh NSEQ NOTES
-The PEM-encoded form uses the same headers and footers as a certificate:
-.Bd -unfilled -offset indent
------BEGIN CERTIFICATE-----
------END CERTIFICATE-----
-.Ed
-.Pp
-A Netscape certificate sequence is a Netscape specific form that can be sent
-to browsers as an alternative to the standard PKCS#7 format when several
-certificates are sent to the browser:
-for example during certificate enrollment.
-It is used by the Netscape certificate server, for example.
-.Sh NSEQ BUGS
-This program needs a few more options,
-like allowing DER or PEM input and output files
-and allowing multiple certificate files to be used.
 .\"
 .\" OCSP
 .\"
