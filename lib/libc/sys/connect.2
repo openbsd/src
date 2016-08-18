@@ -1,4 +1,4 @@
-.\"	$OpenBSD: connect.2,v 1.29 2016/08/09 17:34:06 millert Exp $
+.\"	$OpenBSD: connect.2,v 1.30 2016/08/18 22:29:02 millert Exp $
 .\"	$NetBSD: connect.2,v 1.8 1995/10/12 15:40:48 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)connect.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 9 2016 $
+.Dd $Mdocdate: August 18 2016 $
 .Dt CONNECT 2
 .Os
 .Sh NAME
@@ -104,6 +104,56 @@ If the connection or binding succeeds, 0 is returned.
 Otherwise a \-1 is returned, and a more specific error
 code is stored in
 .Va errno .
+.Sh EXAMPLES
+The following code connects to the host described by
+.Fa name
+and handles the case where
+.Fn connect
+is interrupted by a signal.
+.Bd -literal -offset indent
+#include <sys/socket.h>
+#include <poll.h>
+#include <errno.h>
+#include <err.h>
+
+int
+connect_wait(int s, const struct sockaddr *name, socklen_t namelen)
+{
+	struct pollfd pfd[1];
+	int error = 0;
+	socklen_t len = sizeof(error);
+
+	pfd[0].fd = s;
+	pfd[0].events = POLLOUT;
+	for (;;) {
+		if (poll(pfd, 1, -1) == -1) {
+			if (errno != EINTR)
+				return -1;
+			continue;
+		}
+		if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &len) < 0)
+			return -1;
+		if (error != 0)
+			errno = error;
+		break;
+	}
+	return (error ? -1 : 0);
+}
+
+\&...
+
+int retcode;
+
+\&...
+
+retcode = connect(s, name, namelen);
+if (retcode == -1) {
+	if (errno == EINTR)
+		retcode = connect_wait(s, name, namelen);
+	if (retcode == -1)
+		err(1, "connect");
+}
+.Ed
 .Sh ERRORS
 The
 .Fn connect
