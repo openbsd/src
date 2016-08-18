@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.191 2016/07/20 09:48:07 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.192 2016/08/18 11:59:58 jsg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2539,8 +2539,10 @@ ehci_alloc_itd(struct ehci_softc *sc)
 	if (freeitd == NULL) {
 		err = usb_allocmem(&sc->sc_bus, EHCI_ITD_SIZE * EHCI_ITD_CHUNK,
 		    EHCI_PAGE_SIZE, &dma);
-		if (err)
+		if (err) {
+			splx(s);
 			return (NULL);
+		}
 
 		for (i = 0; i < EHCI_ITD_CHUNK; i++) {
 			offs = i * EHCI_ITD_SIZE;
