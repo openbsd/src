@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.79 2016/08/14 18:34:48 guenther Exp $	*/
+/*	$OpenBSD: util.c,v 1.80 2016/08/18 16:23:06 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -76,6 +76,7 @@
 #include <fcntl.h>
 #include <libgen.h>
 #include <glob.h>
+#include <poll.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -1068,3 +1069,36 @@ controlediting(void)
 }
 #endif /* !SMALL */
 
+/*
+ * Wrapper for connect(2) that restarts the syscall when
+ * interrupted and operates synchronously.
+ */
+int
+connect_sync(int s, const struct sockaddr *name, socklen_t namelen)
+{
+	struct pollfd pfd[1];
+	int error = 0;
+	socklen_t len = sizeof(error);
+
+	if (connect(s, name, namelen) < 0) {
+		if (errno != EINTR)
+			return -1;
+	}
+
+	/* An interrupted connect(2) continues asyncronously. */
+	pfd[0].fd = s;
+	pfd[0].events = POLLOUT;
+	for (;;) {
+		if (poll(pfd, 1, -1) == -1) {
+			if (errno != EINTR)
+				return -1;
+			continue;
+		}
+		if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &len) < 0)
+			return -1;
+		if (error != 0)
+			errno = error;
+		break;
+	}
+	return (error ? -1 : 0);
+}

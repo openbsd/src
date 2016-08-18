@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.147 2016/05/27 15:16:16 jsing Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.148 2016/08/18 16:23:06 millert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -558,9 +558,7 @@ noslash:
 #endif /* !SMALL */
 
 again:
-		if (connect(s, res->ai_addr, res->ai_addrlen) < 0) {
-			if (errno == EINTR)
-				goto again;
+		if (connect_sync(s, res->ai_addr, res->ai_addrlen) < 0) {
 			save_errno = errno;
 			close(s);
 			errno = save_errno;

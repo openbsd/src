@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.97 2016/08/09 12:09:40 millert Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.98 2016/08/18 16:23:06 millert Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -107,36 +107,6 @@ off_t	restart_point = 0;
 
 
 FILE	*cin, *cout;
-
-static int
-connect_sync(int s, const struct sockaddr *name, socklen_t namelen)
-{
-	struct pollfd pfd[1];
-	int error = 0;
-	socklen_t len = sizeof(error);
-
-	if (connect(s, name, namelen) < 0) {
-		if (errno != EINTR)
-			return -1;
-	}
-
-	/* An interrupted connect(2) continues asyncronously. */
-	pfd[0].fd = s;
-	pfd[0].events = POLLOUT;
-	for (;;) {
-		if (poll(pfd, 1, -1) == -1) {
-			if (errno != EINTR)
-				return -1;
-			continue;
-		}
-		if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &len) < 0)
-			return -1;
-		if (error != 0)
-			errno = error;
-		break;
-	}
-	return (error ? -1 : 0);
-}
 
 char *
 hookup(char *host, char *port)
