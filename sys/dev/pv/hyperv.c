@@ -738,7 +738,7 @@ hv_vmbus_connect(struct hv_softc *sc)
 		if (rsp.chm_done) {
 			sc->sc_flags |= HSF_CONNECTED;
 			sc->sc_proto = versions[i];
-			sc->sc_handle = 0xe1e10 - 1; /* magic! */
+			sc->sc_handle = VMBUS_GPADL_START;
 			DPRINTF("%s: protocol version %#x\n",
 			    sc->sc_dev.dv_xname, versions[i]);
 			break;
