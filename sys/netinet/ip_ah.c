@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.120 2016/08/15 11:35:25 dlg Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.121 2016/08/18 06:01:10 dlg Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -929,7 +929,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
 	struct cryptodesc *crda;
 	struct tdb_crypto *tc;
-	struct mbuf *mo, *mi;
+	struct mbuf *mi;
 	struct cryptop *crp;
 	u_int16_t iplen;
 	int len, rplen;
@@ -1037,18 +1037,14 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 	/*
 	 * Loop through mbuf chain; if we find a readonly mbuf,
-	 * replace the rest of the chain.
+	 * copy the packet.
 	 */
-	mo = NULL;
 	mi = m;
-	while (mi != NULL && !M_READONLY(mi)) {
-		mo = mi;
+	while (mi != NULL && !M_READONLY(mi))
 		mi = mi->m_next;
-	}
 
 	if (mi != NULL) {
-		/* Replace the rest of the mbuf chain. */
-		struct mbuf *n = m_dup_pkt(mi, 0, M_DONTWAIT);
+		struct mbuf *n = m_dup_pkt(m, 0, M_DONTWAIT);
 
 		if (n == NULL) {
 			ahstat.ahs_hdrops++;
@@ -1056,12 +1052,8 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			return ENOBUFS;
 		}
 
-		if (mo != NULL)
-			mo->m_next = n;
-		else
-			m = n;
-
-		m_freem(mi);
+		m_freem(m);
+		m = n;
 	}
 
 	/* Inject AH header. */

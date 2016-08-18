@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.45 2016/08/15 11:35:25 dlg Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.46 2016/08/18 06:01:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -373,7 +373,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 	struct cryptodesc *crdc = NULL;
 	struct cryptop *crp;
 	struct tdb_crypto *tc;
-	struct mbuf    *mi, *mo;
+	struct mbuf    *mi;
 #ifdef ENCDEBUG
 	char buf[INET6_ADDRSTRLEN];
 #endif
@@ -462,18 +462,14 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 	}
 	/*
 	 * Loop through mbuf chain; if we find a readonly mbuf,
-	 * replace the rest of the chain.
+	 * copy the packet.
 	 */
-	mo = NULL;
 	mi = m;
-	while (mi != NULL && !M_READONLY(mi)) {
-		mo = mi;
+	while (mi != NULL && !M_READONLY(mi))
 		mi = mi->m_next;
-	}
 
 	if (mi != NULL) {
-		/* Replace the rest of the mbuf chain. */
-		struct mbuf    *n = m_dup_pkt(mi, 0, M_DONTWAIT);
+		struct mbuf *n = m_dup_pkt(m, 0, M_DONTWAIT);
 
 		if (n == NULL) {
 			DPRINTF(("ipcomp_output(): bad mbuf chain, IPCA %s/%08x\n",
@@ -483,12 +479,9 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 			m_freem(m);
 			return ENOBUFS;
 		}
-		if (mo != NULL)
-			mo->m_next = n;
-		else
-			m = n;
 
-		m_freem(mi);
+		m_freem(m);
+		m = n;
 	}
 	/* Ok now, we can pass to the crypto processing */
 
