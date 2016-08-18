@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip.4,v 1.40 2016/08/16 22:21:17 vgross Exp $
+.\"	$OpenBSD: ip.4,v 1.41 2016/08/18 11:45:18 jmc Exp $
 .\"	$NetBSD: ip.4,v 1.3 1994/11/30 16:22:19 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ip.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd $Mdocdate: August 16 2016 $
+.Dd $Mdocdate: August 18 2016 $
 .Dt IP 4
 .Os
 .Sh NAME
@@ -293,8 +293,9 @@ cmsg_type = IP_RECVRTABLE
 When sending on a
 .Dv SOCK_DGRAM
 socket with
-.Xr sendmsg 2
-, the source address to be used can be passed as ancillary data with a type code of
+.Xr sendmsg 2 ,
+the source address to be used can be passed as ancillary data
+with a type code of
 .Dv IP_SENDSRCADDR .
 The
 .Va msg_control
