@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.23 2016/08/15 14:04:23 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.24 2016/08/18 15:52:03 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -62,55 +62,56 @@ tls_server_alpn_cb(SSL *ssl, const unsigned char **out, unsigned char *outlen,
 	return (SSL_TLSEXT_ERR_NOACK);
 }
 
-int
-tls_configure_server(struct tls *ctx)
+static int
+tls_configure_server_ssl(struct tls *ctx, SSL_CTX **ssl_ctx,
+    struct tls_keypair *keypair)
 {
-	EC_KEY *ecdh_key;
 	unsigned char sid[SSL_MAX_SSL_SESSION_ID_LENGTH];
+	EC_KEY *ecdh_key;
 
-	if ((ctx->ssl_ctx = SSL_CTX_new(SSLv23_server_method())) == NULL) {
+	SSL_CTX_free(*ssl_ctx);
+
+	if ((*ssl_ctx = SSL_CTX_new(SSLv23_server_method())) == NULL) {
 		tls_set_errorx(ctx, "ssl context failure");
 		goto err;
 	}
 
-	if (tls_configure_ssl(ctx, ctx->ssl_ctx) != 0)
+	if (tls_configure_ssl(ctx, *ssl_ctx) != 0)
 		goto err;
-	if (tls_configure_ssl_keypair(ctx, ctx->ssl_ctx,
-	    ctx->config->keypair, 1) != 0)
+	if (tls_configure_ssl_keypair(ctx, *ssl_ctx, keypair, 1) != 0)
 		goto err;
 	if (ctx->config->verify_client != 0) {
 		int verify = SSL_VERIFY_PEER;
 		if (ctx->config->verify_client == 1)
 			verify |= SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
-		if (tls_configure_ssl_verify(ctx, ctx->ssl_ctx, verify) == -1)
+		if (tls_configure_ssl_verify(ctx, *ssl_ctx, verify) == -1)
 			goto err;
 	}
 
 	if (ctx->config->alpn != NULL)
-		SSL_CTX_set_alpn_select_cb(ctx->ssl_ctx, tls_server_alpn_cb,
+		SSL_CTX_set_alpn_select_cb(*ssl_ctx, tls_server_alpn_cb,
 		    ctx);
 
 	if (ctx->config->dheparams == -1)
-		SSL_CTX_set_dh_auto(ctx->ssl_ctx, 1);
+		SSL_CTX_set_dh_auto(*ssl_ctx, 1);
 	else if (ctx->config->dheparams == 1024)
-		SSL_CTX_set_dh_auto(ctx->ssl_ctx, 2);
+		SSL_CTX_set_dh_auto(*ssl_ctx, 2);
 
 	if (ctx->config->ecdhecurve == -1) {
-		SSL_CTX_set_ecdh_auto(ctx->ssl_ctx, 1);
+		SSL_CTX_set_ecdh_auto(*ssl_ctx, 1);
 	} else if (ctx->config->ecdhecurve != NID_undef) {
 		if ((ecdh_key = EC_KEY_new_by_curve_name(
 		    ctx->config->ecdhecurve)) == NULL) {
 			tls_set_errorx(ctx, "failed to set ECDHE curve");
 			goto err;
 		}
-		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_SINGLE_ECDH_USE);
-		SSL_CTX_set_tmp_ecdh(ctx->ssl_ctx, ecdh_key);
+		SSL_CTX_set_options(*ssl_ctx, SSL_OP_SINGLE_ECDH_USE);
+		SSL_CTX_set_tmp_ecdh(*ssl_ctx, ecdh_key);
 		EC_KEY_free(ecdh_key);
 	}
 
 	if (ctx->config->ciphers_server == 1)
-		SSL_CTX_set_options(ctx->ssl_ctx,
-		    SSL_OP_CIPHER_SERVER_PREFERENCE);
+		SSL_CTX_set_options(*ssl_ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
 
 	/*
 	 * Set session ID context to a random value.  We don't support
@@ -118,10 +119,27 @@ tls_configure_server(struct tls *ctx)
 	 * session ID context that is valid during run time.
 	 */
 	arc4random_buf(sid, sizeof(sid));
-	if (!SSL_CTX_set_session_id_context(ctx->ssl_ctx, sid, sizeof(sid))) {
-		tls_set_errorx(ctx, "failed to set session id context");
+	if (SSL_CTX_set_session_id_context(*ssl_ctx, sid,
+	    sizeof(sid)) != 1) {
+		tls_set_error(ctx, "failed to set session id context");
 		goto err;
 	}
+
+	return (0);
+
+  err:
+	SSL_CTX_free(*ssl_ctx);
+	*ssl_ctx = NULL;
+
+	return (-1);
+}
+
+int
+tls_configure_server(struct tls *ctx)
+{
+	if (tls_configure_server_ssl(ctx, &ctx->ssl_ctx,
+	    ctx->config->keypair) == -1)
+		goto err;
 
 	return (0);
 
