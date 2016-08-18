@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouseinput.h,v 1.1 2016/03/30 23:34:12 bru Exp $ */
+/* $OpenBSD: wsmouseinput.h,v 1.2 2016/08/18 21:12:35 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -139,6 +139,7 @@ struct evq_access {
 void wsmouse_evq_put(struct evq_access *, int, int);
 void wsmouse_init_scaling(struct wsmouseinput *);
 
+void wsmouse_input_reset(struct wsmouseinput *);
 void wsmouse_input_init(struct wsmouseinput *, struct wseventvar **);
 void wsmouse_input_cleanup(struct wsmouseinput *);
 

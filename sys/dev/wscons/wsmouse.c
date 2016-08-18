@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.33 2016/07/13 15:41:51 deraadt Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.34 2016/08/18 21:12:35 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -378,6 +378,8 @@ int
 wsmousedoopen(struct wsmouse_softc *sc, struct wseventvar *evp)
 {
 	sc->sc_base.me_evp = evp;
+
+	wsmouse_input_reset(&sc->input);
 
 	/* enable the device, and punt if that's not possible */
 	return (*sc->sc_accessops->enable)(sc->sc_accesscookie);
@@ -1266,8 +1268,11 @@ wsmouse_mt_init(struct device *sc, int num_slots, int tracking)
 	    &((struct wsmouse_softc *) sc)->input;
 	int n, size;
 
+	if (num_slots == input->mt.num_slots
+	    && (!tracking == ((input->flags & MT_TRACKING) == 0)))
+		return (0);
+
 	free_mt_slots(input);
-	memset(&input->mt, 0, sizeof(struct mt_state));
 
 	if (tracking)
 		input->flags |= MT_TRACKING;
@@ -1363,6 +1368,27 @@ wsmouse_set_mode(struct device *sc, int mode)
 		return (0);
 	}
 	return (-1);
+}
+
+void
+wsmouse_input_reset(struct wsmouseinput *input)
+{
+	int num_slots, *matrix;
+	struct mt_slot *slots;
+
+	memset(&input->btn, 0, sizeof(struct btn_state));
+	memset(&input->motion, 0, sizeof(struct motion_state));
+	memset(&input->touch, 0, sizeof(struct touch_state));
+	input->touch.min_pressure = input->params.pressure_hi;
+	if ((num_slots = input->mt.num_slots)) {
+		slots = input->mt.slots;
+		matrix = input->mt.matrix;
+		memset(&input->mt, 0, sizeof(struct mt_state));
+		memset(slots, 0, num_slots * sizeof(struct mt_slot));
+		input->mt.num_slots = num_slots;
+		input->mt.slots = slots;
+		input->mt.matrix = matrix;
+	}
 }
 
 void
