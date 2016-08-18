@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.65 2016/08/12 15:10:59 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.66 2016/08/18 15:43:12 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 12 2016 $
+.Dd $Mdocdate: August 18 2016 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -271,7 +271,7 @@ The
 function initializes global data structures.
 It should be called once before any other functions.
 .Pp
-The following functions create and free configuration objects.
+The following functions create and free configuration objects:
 .Bl -bullet -offset four
 .It
 .Fn tls_config_new
@@ -297,8 +297,8 @@ If a value has a negative prefix (in the form of a leading exclamation mark)
 then it is removed from the list of available protocols, rather than being
 added to it.
 .Pp
-The following functions modify a configuration by setting parameters.
-Configuration options may apply to only clients or only servers or both.
+The following functions modify a configuration by setting parameters (the
+configuration options may only apply to clients, to servers or to both):
 .Bl -bullet -offset four
 .It
 .Fn tls_config_set_alpn
@@ -425,13 +425,35 @@ a certificate.
 enables client certificate verification, without requiring the client
 to send a certificate.
 .Em (Server)
+.El
+.Pp
+The following functions return information about a TLS connection and will only
+succeed after the handshake is complete (the connection information may only
+apply to clients, to servers or to both):
+.Bl -bullet -offset four
+.It
+.Fn tls_conn_alpn_selected
+returns a string that specifies the ALPN protocol selected for use with the peer
+connected to
+.Ar ctx .
+If no protocol was selected then NULL is returned.
+.Em (Server and Client)
+.It
+.Fn tls_conn_cipher
+returns a string corresponding to the cipher suite negotiated with the peer
+connected to
+.Ar ctx .
+.Em (Server and client)
+.It
+.Fn tls_conn_version
+returns a string corresponding to a TLS version negotiated with the peer
+connected to
+.Ar ctx .
 .It
 .Fn tls_peer_cert_provided
 checks if the peer of
 .Ar ctx
 has provided a certificate.
-.Fn tls_peer_cert_provided
-can only succeed after the handshake is complete.
 .Em (Server and client)
 .It
 .Fn tls_peer_cert_contains_name
@@ -440,24 +462,18 @@ checks if the peer of a TLS
 has provided a certificate that contains a
 SAN or CN that matches
 .Ar name .
-.Fn tls_peer_cert_contains_name
-can only succeed after the handshake is complete.
 .Em (Server and client)
 .It
 .Fn tls_peer_cert_subject
 returns a string
 corresponding to the subject of the peer certificate from
 .Ar ctx .
-.Fn tls_peer_cert_subject
-will only succeed after the handshake is complete.
 .Em (Server and client)
 .It
 .Fn tls_peer_cert_issuer
 returns a string
 corresponding to the issuer of the peer certificate from
 .Ar ctx .
-.Fn tls_peer_cert_issuer
-will only succeed after the handshake is complete.
 .Em (Server and client)
 .It
 .Fn tls_peer_cert_hash
@@ -479,43 +495,17 @@ printf "SHA256:${h}\\n"
 returns the time corresponding to the start of the validity period of
 the peer certificate from
 .Ar ctx .
-.Fn tls_peer_cert_notbefore
-will only succeed after the handshake is complete.
 .Em (Server and client)
 .It
 .Fn tls_peer_cert_notafter
 returns the time corresponding to the end of the validity period of
 the peer certificate from
 .Ar ctx .
-.Fn tls_peer_cert_notafter
-will only succeed after the handshake is complete.
 .Em (Server and client)
-.It
-.Fn tls_conn_alpn_selected
-returns a string that specifies the ALPN protocol selected for use with the peer
-connected to
-.Ar ctx .
-If no protocol was selected then NULL is returned.
-.Fn tls_conn_alpn_selected
-will only succeed after the handshake is complete.
-.Em (Server and Client)
-.It
-.Fn tls_conn_cipher
-returns a string
-corresponding to the cipher suite negotiated with the peer
-connected to
-.Ar ctx .
-.Fn tls_conn_cipher
-will only succeed after the handshake is complete.
-.Em (Server and client)
-.It
-.Fn tls_conn_version
-returns a string
-corresponding to a TLS version negotiated with the peer
-connected to
-.Ar ctx .
-.Fn tls_conn_version
-will only succeed after the handshake is complete.
+.El
+.Pp
+The following are TLS related utility functions:
+.Bl -bullet -offset four
 .It
 .Fn tls_load_file
 loads a certificate or key from disk into memory to be loaded with
@@ -529,7 +519,7 @@ argument is specified.
 .Em (Client and server)
 .El
 .Pp
-The following functions create, prepare, and free a connection context.
+The following functions create, prepare, and free a connection context:
 .Bl -bullet -offset four
 .It
 .Fn tls_client
@@ -547,7 +537,7 @@ frees a TLS context after use.
 .El
 .Pp
 The following functions initiate a connection and perform input and output
-operations.
+operations:
 .Bl -bullet -offset four
 .It
 .Fn tls_connect
