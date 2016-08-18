@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.38 2016/08/16 10:16:33 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.39 2016/08/18 09:28:22 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1136,7 +1136,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 	ptep = &l2b->l2b_kva[l2pte_index(va)];
 	opte = *ptep;
-	npte = pa;
+	npte = pa | L2_V7_AF;
 
 	if (opte != 0) {	/* not l2pte_valid!!! MIOD */
 		/*
@@ -1430,7 +1430,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	else if (pa & PMAP_NOCACHE)
 		cache_mode = L2_V7_S_TEX(1);
 
-	npte = L2_S_PROTO | (pa & PMAP_PA_MASK) |
+	npte = L2_S_PROTO | (pa & PMAP_PA_MASK) | L2_V7_AF |
 	    L2_S_PROT(PTE_KERNEL, prot) | cache_mode;
 	*ptep = npte;
 	PTE_SYNC(ptep);
@@ -2072,7 +2072,7 @@ pmap_zero_page_generic(struct vm_page *pg)
 	 * Hook in the page, zero it, and purge the cache for that
 	 * zeroed page. Invalidate the TLB as needed.
 	 */
-	*cdst_pte = L2_S_PROTO | phys |
+	*cdst_pte = L2_S_PROTO | phys | L2_V7_AF |
 	    L2_S_PROT(PTE_KERNEL, PROT_WRITE) | pte_l2_s_cache_mode;
 	PTE_SYNC(cdst_pte);
 	cpu_tlb_flushD_SE(cdstp);
@@ -2102,10 +2102,10 @@ pmap_copy_page_generic(struct vm_page *src_pg, struct vm_page *dst_pg)
 	 * the cache for the appropriate page. Invalidate the TLB
 	 * as required.
 	 */
-	*csrc_pte = L2_S_PROTO | src |
+	*csrc_pte = L2_S_PROTO | src | L2_V7_AF |
 	    L2_S_PROT(PTE_KERNEL, PROT_READ) | pte_l2_s_cache_mode;
 	PTE_SYNC(csrc_pte);
-	*cdst_pte = L2_S_PROTO | dst |
+	*cdst_pte = L2_S_PROTO | dst | L2_V7_AF |
 	    L2_S_PROT(PTE_KERNEL, PROT_WRITE) | pte_l2_s_cache_mode;
 	PTE_SYNC(cdst_pte);
 	cpu_tlb_flushD_SE(csrcp);
@@ -2156,7 +2156,7 @@ pmap_grow_map(vaddr_t va, pt_entry_t cache_mode, paddr_t *pap)
 	KDASSERT(l2b != NULL);
 
 	ptep = &l2b->l2b_kva[l2pte_index(va)];
-	*ptep = L2_S_PROTO | pa | cache_mode |
+	*ptep = L2_S_PROTO | pa | L2_V7_AF | cache_mode |
 	    L2_S_PROT(PTE_KERNEL, PROT_READ | PROT_WRITE);
 	PTE_SYNC(ptep);
 	cpu_tlb_flushD_SE(va);
@@ -2743,7 +2743,7 @@ pmap_map_section(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 		break;
 	}
 
-	pde[va >> L1_S_SHIFT] = L1_S_PROTO | pa |
+	pde[va >> L1_S_SHIFT] = L1_S_PROTO | pa | L1_S_V7_AF |
 	    L1_S_PROT(PTE_KERNEL, prot) | fl | L1_S_DOM(PMAP_DOMAIN_KERNEL);
 	PTE_SYNC(&pde[va >> L1_S_SHIFT]);
 }
@@ -2788,12 +2788,12 @@ pmap_map_entry(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 		panic("pmap_map_entry: can't find L2 table for VA 0x%08lx", va);
 
 #ifndef ARM32_NEW_VM_LAYOUT
-	pte[(va >> PGSHIFT) & 0x3ff] =
-	    L2_S_PROTO | pa | L2_S_PROT(PTE_KERNEL, prot) | fl;
+	pte[(va >> PGSHIFT) & 0x3ff] = L2_S_PROTO | pa | L2_V7_AF |
+	    L2_S_PROT(PTE_KERNEL, prot) | fl;
 	PTE_SYNC(&pte[(va >> PGSHIFT) & 0x3ff]);
 #else
-	pte[l2pte_index(va)] =
-	    L2_S_PROTO | pa | L2_S_PROT(PTE_KERNEL, prot) | fl;
+	pte[l2pte_index(va)] = L2_S_PROTO | pa | L2_V7_AF |
+	    L2_S_PROT(PTE_KERNEL, prot) | fl;
 	PTE_SYNC(&pte[l2pte_index(va)]);
 #endif
 }
@@ -2881,8 +2881,8 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 			printf("S");
 #endif
 			pde[va >> L1_S_SHIFT] = L1_S_PROTO | pa |
-			    L1_S_PROT(PTE_KERNEL, prot) | f1 |
-			    L1_S_DOM(PMAP_DOMAIN_KERNEL);
+			    L1_S_V7_AF | L1_S_PROT(PTE_KERNEL, prot) |
+			    f1 | L1_S_DOM(PMAP_DOMAIN_KERNEL);
 			PTE_SYNC(&pde[va >> L1_S_SHIFT]);
 			va += L1_S_SIZE;
 			pa += L1_S_SIZE;
@@ -2917,12 +2917,12 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 			for (i = 0; i < 16; i++) {
 #ifndef ARM32_NEW_VM_LAYOUT
 				pte[((va >> PGSHIFT) & 0x3f0) + i] =
-				    L2_L_PROTO | pa |
+				    L2_L_PROTO | pa | L2_V7_AF |
 				    L2_L_PROT(PTE_KERNEL, prot) | f2l;
 				PTE_SYNC(&pte[((va >> PGSHIFT) & 0x3f0) + i]);
 #else
 				pte[l2pte_index(va) + i] =
-				    L2_L_PROTO | pa |
+				    L2_L_PROTO | pa | L2_V7_AF |
 				    L2_L_PROT(PTE_KERNEL, prot) | f2l;
 				PTE_SYNC(&pte[l2pte_index(va) + i]);
 #endif
@@ -2938,12 +2938,12 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 		printf("P");
 #endif
 #ifndef ARM32_NEW_VM_LAYOUT
-		pte[(va >> PGSHIFT) & 0x3ff] =
-		    L2_S_PROTO | pa | L2_S_PROT(PTE_KERNEL, prot) | f2s;
+		pte[(va >> PGSHIFT) & 0x3ff] = L2_S_PROTO | pa | L2_V7_AF |
+		    L2_S_PROT(PTE_KERNEL, prot) | f2s;
 		PTE_SYNC(&pte[(va >> PGSHIFT) & 0x3ff]);
 #else
-		pte[l2pte_index(va)] =
-		    L2_S_PROTO | pa | L2_S_PROT(PTE_KERNEL, prot) | f2s;
+		pte[l2pte_index(va)] = L2_S_PROTO | pa | L2_V7_AF |
+		    L2_S_PROT(PTE_KERNEL, prot) | f2s;
 		PTE_SYNC(&pte[l2pte_index(va)]);
 #endif
 		va += PAGE_SIZE;
