@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.36 2016/08/15 21:04:32 patrick Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.37 2016/08/19 15:31:10 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -640,7 +640,7 @@ initarm(void *arg0, void *arg1, void *arg2)
 
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    loadaddr + logical, textsize,
-		    PROT_READ | PROT_WRITE | PROT_EXEC, PTE_CACHE);
+		    PROT_READ | PROT_EXEC, PTE_CACHE);
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    loadaddr + logical, totalsize - textsize,
 		    PROT_READ | PROT_WRITE, PTE_CACHE);
