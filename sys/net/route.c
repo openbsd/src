@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.314 2016/08/16 09:01:14 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.315 2016/08/19 07:12:54 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -236,17 +236,19 @@ struct rtentry *
 rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
 {
 	struct rtentry		*rt0, *rt = NULL;
-	struct rt_addrinfo	 info;
 	int			 s, error = 0;
-
-	bzero(&info, sizeof(info));
-	info.rti_info[RTAX_DST] = dst;
 
 	s = splsoftnet();
 	rt = rtable_match(tableid, dst, src);
 	if (rt != NULL) {
 		if ((rt->rt_flags & RTF_CLONING) && ISSET(flags, RT_RESOLVE)) {
+			struct rt_addrinfo	 info;
+
 			rt0 = rt;
+
+			memset(&info, 0, sizeof(info));
+			info.rti_info[RTAX_DST] = dst;
+
 			KERNEL_LOCK();
 			error = rtrequest(RTM_RESOLVE, &info, RTP_DEFAULT,
 			    &rt, tableid);
