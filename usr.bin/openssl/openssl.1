@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.54 2016/08/18 12:07:21 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.55 2016/08/19 08:46:38 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 18 2016 $
+.Dd $Mdocdate: August 19 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -2076,22 +2076,15 @@ With the
 option the situation is reversed:
 a Netscape certificate sequence is created from a file of certificates.
 .El
-.\"
-.\" OCSP
-.\"
 .Sh OCSP
 .nr nS 1
 .Nm "openssl ocsp"
-.Bk -words
 .Op Fl CA Ar file
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar directory
 .Op Fl cert Ar file
 .Op Fl dgst Ar alg
-.Oo
-.Fl host
-.Ar hostname : Ns Ar port
-.Oc
+.Op Fl host Ar hostname : Ns Ar port
 .Op Fl index Ar indexfile
 .Op Fl issuer Ar file
 .Op Fl ndays Ar days
@@ -2131,15 +2124,11 @@ a Netscape certificate sequence is created from a file of certificates.
 .Op Fl VAfile Ar file
 .Op Fl validity_period Ar nsec
 .Op Fl verify_other Ar file
-.Ek
 .nr nS 0
 .Pp
-The Online Certificate Status Protocol
-.Pq OCSP
-enables applications to determine the
-.Pq revocation
-state of an identified certificate
-.Pq RFC 2560 .
+The Online Certificate Status Protocol (OCSP)
+enables applications to determine the (revocation) state
+of an identified certificate (RFC 2560).
 .Pp
 The
 .Nm ocsp
@@ -2151,11 +2140,8 @@ and behave like a mini OCSP server itself.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl CAfile Ar file , Fl CApath Ar directory
-.Ar file
-or
-.Ar path
-containing trusted CA certificates.
-These are used to verify the signature on the OCSP response.
+A file or path containing trusted CA certificates,
+used to verify the signature on the OCSP response.
 .It Fl cert Ar file
 Add the certificate
 .Ar file
@@ -2164,32 +2150,28 @@ The issuer certificate is taken from the previous
 .Fl issuer
 option, or an error occurs if no issuer certificate is specified.
 .It Fl dgst Ar alg
-Sets the digest algorithm to use for certificate identification
-in the OCSP request.
+Use the digest algorithm
+.Ar alg
+for certificate identification in the OCSP request.
 By default SHA-1 is used.
 .It Xo
 .Fl host Ar hostname : Ns Ar port ,
 .Fl path Ar path
 .Xc
-If the
-.Fl host
-option is present, then the OCSP request is sent to the host
+Send
+the OCSP request to
 .Ar hostname
-on port
+on
 .Ar port .
 .Fl path
 specifies the HTTP path name to use, or
-.Sq /
+.Pa /
 by default.
 .It Fl issuer Ar file
-This specifies the current issuer certificate.
-This option can be used multiple times.
-The certificate specified in
-.Ar file
-must be in PEM format.
-This option
-.Em must
-come before any
+The current issuer certificate,
+in PEM format.
+Can be used multiple times
+and must come before any
 .Fl cert
 options.
 .It Fl no_cert_checks
@@ -2202,14 +2184,14 @@ Don't verify the OCSP response signer's certificate at all.
 Since this option allows the OCSP response to be signed by any certificate,
 it should only be used for testing purposes.
 .It Fl no_certs
-Don't include any certificates in signed request.
+Don't include any certificates in the signed request.
 .It Fl no_chain
 Do not use certificates in the response as additional untrusted CA
 certificates.
 .It Fl no_intern
 Ignore certificates contained in the OCSP response
 when searching for the signer's certificate.
-With this option, the signer's certificate must be specified with either the
+The signer's certificate must be specified with either the
 .Fl verify_other
 or
 .Fl VAfile
@@ -2219,40 +2201,29 @@ Don't check the signature on the OCSP response.
 Since this option tolerates invalid signatures on OCSP responses,
 it will normally only be used for testing purposes.
 .It Fl nonce , no_nonce
-Add an OCSP
-.Em nonce
-extension to a request or disable an OCSP
-.Em nonce
-addition.
+Add an OCSP nonce extension to a request,
+or disable an OCSP nonce addition.
 Normally, if an OCSP request is input using the
 .Fl respin
-option no
-.Em nonce
-is added:
+option no nonce is added:
 using the
 .Fl nonce
-option will force addition of a
-.Em nonce .
+option will force the addition of a nonce.
 If an OCSP request is being created (using the
 .Fl cert
 and
 .Fl serial
 options)
-a
-.Em nonce
-is automatically added; specifying
+a nonce is automatically added; specifying
 .Fl no_nonce
 overrides this.
 .It Fl noverify
-Don't attempt to verify the OCSP response signature or the
-.Em nonce
-values.
-This option will normally only be used for debugging
+Don't attempt to verify the OCSP response signature or the nonce values.
+This is normally only be used for debugging
 since it disables all verification of the responder's certificate.
 .It Fl out Ar file
-Specify output
-.Ar file ;
-default is standard output.
+Specify the output file to write to,
+or standard output if none is specified.
 .It Fl req_text , resp_text , text
 Print out the text form of the OCSP request, response, or both, respectively.
 .It Fl reqin Ar file , Fl respin Ar file
@@ -2276,9 +2247,8 @@ option except the certificate with serial number
 is added to the request.
 The serial number is interpreted as a decimal integer unless preceded by
 .Sq 0x .
-Negative integers can also be specified by preceding the value with a
-.Sq -
-sign.
+Negative integers can also be specified
+by preceding the value with a minus sign.
 .It Fl sign_other Ar file
 Additional certificates to include in the signed request.
 .It Fl signer Ar file , Fl signkey Ar file
@@ -2305,21 +2275,16 @@ Both HTTP and HTTPS
 .Pq SSL/TLS
 URLs can be specified.
 .It Fl VAfile Ar file
-.Ar file
-containing explicitly trusted responder certificates.
+A file containing explicitly trusted responder certificates.
 Equivalent to the
 .Fl verify_other
 and
 .Fl trust_other
 options.
 .It Fl validity_period Ar nsec , Fl status_age Ar age
-These options specify the range of times, in seconds, which will be tolerated
-in an OCSP response.
-Each certificate status response includes a
-.Em notBefore
-time and an optional
-.Em notAfter
-time.
+The range of times, in seconds, which will be tolerated in an OCSP response.
+Each certificate status response includes a notBefore time
+and an optional notAfter time.
 The current time should fall between these two values,
 but the interval between the two times may be only a few seconds.
 In practice the OCSP responder and clients' clocks may not be precisely
@@ -2327,61 +2292,49 @@ synchronised and so such a check may fail.
 To avoid this the
 .Fl validity_period
 option can be used to specify an acceptable error range in seconds,
-the default value is 5 minutes.
+the default value being 5 minutes.
 .Pp
-If the
-.Em notAfter
-time is omitted from a response, then this means that new status
-information is immediately available.
-In this case the age of the
-.Em notBefore
-field is checked to see it is not older than
+If the notAfter time is omitted from a response,
+it means that new status information is immediately available.
+In this case the age of the notBefore field is checked
+to see it is not older than
 .Ar age
 seconds old.
 By default, this additional check is not performed.
 .It Fl verify_other Ar file
-.Ar file
-containing additional certificates to search when attempting to locate
-the OCSP response signing certificate.
-Some responders omit the actual signer's certificate from the response;
-this option can be used to supply the necessary certificate in such cases.
+A file containing additional certificates to search
+when attempting to locate the OCSP response signing certificate.
+Some responders omit the actual signer's certificate from the response,
+so this can be used to supply the necessary certificate.
 .El
-.Sh OCSP SERVER OPTIONS
+.Pp
+The options for the OCSP server are as follows:
 .Bl -tag -width "XXXX"
 .It Fl CA Ar file
 CA certificate corresponding to the revocation information in
 .Ar indexfile .
 .It Fl index Ar indexfile
 .Ar indexfile
-is a text index file in
-.Nm ca
-format containing certificate revocation information.
+is a text index file in ca format
+containing certificate revocation information.
 .Pp
-If the
-.Fl index
-option is specified, the
+If this option is specified,
 .Nm ocsp
-utility is in
-.Em responder
-mode, otherwise it is in
-.Em client
-mode.
-The request(s) the responder processes can be either specified on
+is in responder mode, otherwise it is in client mode.
+The requests the responder processes can be either specified on
 the command line (using the
 .Fl issuer
 and
 .Fl serial
 options), supplied in a file (using the
 .Fl respin
-option) or via external OCSP clients (if
+option), or via external OCSP clients (if
 .Ar port
 or
 .Ar url
 is specified).
 .Pp
-If the
-.Fl index
-option is present, then the
+If this option is present, then the
 .Fl CA
 and
 .Fl rsigner
@@ -2391,24 +2344,23 @@ Number of
 .Ar minutes
 or
 .Ar days
-when fresh revocation information is available: used in the
-.Ar nextUpdate
-field.
-If neither option is present, the
-.Em nextUpdate
-field is omitted, meaning fresh revocation information is immediately available.
+when fresh revocation information is available:
+used in the nextUpdate field.
+If neither option is present,
+the nextUpdate field is omitted,
+meaning fresh revocation information is immediately available.
 .It Fl nrequest Ar number
-The OCSP server will exit after receiving
+Exit after receiving
 .Ar number
-requests, default unlimited.
+requests (the default is unlimited).
 .It Fl port Ar portnum
 Port to listen for OCSP requests on.
-The port may also be specified using the
+May also be specified using the
 .Fl url
 option.
 .It Fl resp_key_id
 Identify the signer certificate using the key ID;
-default is to use the subject name.
+the default is to use the subject name.
 .It Fl resp_no_certs
 Don't include any certificates in the OCSP response.
 .It Fl rkey Ar file
@@ -2421,12 +2373,9 @@ Additional certificates to include in the OCSP response.
 .It Fl rsigner Ar file
 The certificate to sign OCSP responses with.
 .El
-.Sh OCSP RESPONSE VERIFICATION
-OCSP Response follows the rules specified in RFC 2560.
 .Pp
 Initially the OCSP responder certificate is located and the signature on
 the OCSP request checked using the responder certificate's public key.
-.Pp
 Then a normal certificate verify is performed on the OCSP responder certificate
 building up a certificate chain in the process.
 The locations of the trusted certificates used to build the chain can be
@@ -2435,13 +2384,10 @@ specified by the
 and
 .Fl CApath
 options or they will be looked for in the standard
-.Nm OpenSSL
-certificates
-directory.
+.Nm openssl
+certificates directory.
 .Pp
-If the initial verify fails, the OCSP verify process halts with an
-error.
-.Pp
+If the initial verify fails, the OCSP verify process halts with an error.
 Otherwise the issuing CA certificate in the request is compared to the OCSP
 responder certificate: if there is a match then the OCSP verify succeeds.
 .Pp
@@ -2455,16 +2401,15 @@ is trusted for OCSP signing.
 If it is, the OCSP verify succeeds.
 .Pp
 If none of these checks is successful, the OCSP verify fails.
-.Pp
 What this effectively means is that if the OCSP responder certificate is
 authorised directly by the CA it is issuing revocation information about
-.Pq and it is correctly configured ,
+(and it is correctly configured),
 then verification will succeed.
 .Pp
-If the OCSP responder is a
-.Em global responder
-which can give details about multiple CAs and has its own separate
-certificate chain, then its root CA can be trusted for OCSP signing.
+If the OCSP responder is a global responder,
+which can give details about multiple CAs
+and has its own separate certificate chain,
+then its root CA can be trusted for OCSP signing.
 For example:
 .Bd -literal -offset indent
 $ openssl x509 -in ocspCA.pem -addtrust OCSPSigning \e
@@ -2475,79 +2420,6 @@ Alternatively, the responder certificate itself can be explicitly trusted
 with the
 .Fl VAfile
 option.
-.Sh OCSP NOTES
-As noted, most of the verify options are for testing or debugging purposes.
-Normally, only the
-.Fl CApath , CAfile
-and
-.Pq if the responder is a `global VA'
-.Fl VAfile
-options need to be used.
-.Pp
-The OCSP server is only useful for test and demonstration purposes:
-it is not really usable as a full OCSP responder.
-It contains only a very simple HTTP request handling and can only handle
-the POST form of OCSP queries.
-It also handles requests serially, meaning it cannot respond to
-new requests until it has processed the current one.
-The text index file format of revocation is also inefficient for large
-quantities of revocation data.
-.Pp
-It is possible to run the
-.Nm ocsp
-application in
-.Em responder
-mode via a CGI script using the
-.Fl respin
-and
-.Fl respout
-options.
-.Sh OCSP EXAMPLES
-Create an OCSP request and write it to a file:
-.Bd -literal -offset indent
-$ openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem \e
-	-reqout req.der
-.Ed
-.Pp
-Send a query to an OCSP responder with URL
-.Pa http://ocsp.myhost.com/ ,
-save the response to a file and print it out in text form:
-.Bd -literal -offset indent
-$ openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem \e
-	-url http://ocsp.myhost.com/ -resp_text -respout resp.der
-.Ed
-.Pp
-Read in an OCSP response and print out in text form:
-.Pp
-.Dl $ openssl ocsp -respin resp.der -text
-.Pp
-OCSP server on port 8888 using a standard
-.Nm ca
-configuration, and a separate responder certificate.
-All requests and responses are printed to a file:
-.Bd -literal -offset indent
-$ openssl ocsp -index demoCA/index.txt -port 8888 -rsigner \e
-	rcert.pem -CA demoCA/cacert.pem -text -out log.txt
-.Ed
-.Pp
-As above, but exit after processing one request:
-.Bd -literal -offset indent
-$ openssl ocsp -index demoCA/index.txt -port 8888 -rsigner \e
-	rcert.pem -CA demoCA/cacert.pem -nrequest 1
-.Ed
-.Pp
-Query status information using internally generated request:
-.Bd -literal -offset indent
-$ openssl ocsp -index demoCA/index.txt -rsigner rcert.pem -CA \e
-	demoCA/cacert.pem -issuer demoCA/cacert.pem -serial 1
-.Ed
-.Pp
-Query status information using request read from a file and write
-the response to a second file:
-.Bd -literal -offset indent
-$ openssl ocsp -index demoCA/index.txt -rsigner rcert.pem -CA \e
-	demoCA/cacert.pem -reqin req.der -respout resp.der
-.Ed
 .\"
 .\" PASSWD
 .\"
