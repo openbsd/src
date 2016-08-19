@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.44 2015/11/26 19:01:47 deraadt Exp $
+.\"	$OpenBSD: passwd.1,v 1.45 2016/08/19 10:57:24 danj Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)passwd.1	6.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: November 26 2015 $
+.Dd $Mdocdate: August 19 2016 $
 .Dt PASSWD 1
 .Os
 .Sh NAME
@@ -70,7 +70,8 @@ Password encryption parameters depend on the configuration of the
 .Dq localcipher
 capability in
 .Xr login.conf 5 .
-If none is specified, then blowfish with 8 rounds is used.
+If none is specified then blowfish is used, with the number of
+rounds selected based on system performance.
 .Sh FILES
 .Bl -tag -width /etc/master.passwd -compact
 .It Pa /etc/login.conf
