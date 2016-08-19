@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.95 2016/01/08 15:54:13 jcs Exp $
+#	$OpenBSD: files.hppa,v 1.96 2016/08/19 20:48:36 tedu Exp $
 #
 # hppa-specific configuration info
 
@@ -116,7 +116,7 @@ file	arch/hppa/dev/lcd.c			lcd needs-flag
 
 device	mem
 attach	mem at gedoens
-file	arch/hppa/dev/mem.c			mem
+file	arch/hppa/hppa/mem.c			mem
 
 device	cpu
 attach	cpu at gedoens
