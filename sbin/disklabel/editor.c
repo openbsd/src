@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.300 2015/12/10 17:26:59 mmcc Exp $	*/
+/*	$OpenBSD: editor.c,v 1.301 2016/08/19 08:06:25 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -667,12 +667,15 @@ cylinderalign:
 		/* Everything seems ok so configure the partition. */
 		DL_SETPSIZE(pp, secs);
 		DL_SETPOFFSET(pp, chunkstart);
-		fragsize = (lp->d_secsize == DEV_BSIZE) ? 2048 :
-		    lp->d_secsize;
+		fragsize = 2048;
 		if (secs * lp->d_secsize > 128ULL * 1024 * 1024 * 1024)
 			fragsize *= 2;
 		if (secs * lp->d_secsize > 512ULL * 1024 * 1024 * 1024)
 			fragsize *= 2;
+		if (fragsize < lp->d_secsize)
+			fragsize = lp->d_secsize;
+		if (fragsize > MAXBSIZE / 8)
+			fragsize = MAXBSIZE / 8;
 #if defined (__sparc__) && !defined(__sparc64__)
 		/* can't boot from > 8k boot blocks */
 		pp->p_fragblock =
@@ -891,13 +894,14 @@ editor_add(struct disklabel *lp, char *p)
 
 	if (get_offset(lp, partno) == 0 &&
 	    get_size(lp, partno) == 0) {
-		fragsize = (lp->d_secsize == DEV_BSIZE) ? 2048 :
-		    lp->d_secsize;
+		fragsize = 2048;
 		new_size = DL_GETPSIZE(pp) * lp->d_secsize;
 		if (new_size > 128ULL * 1024 * 1024 * 1024)
 			fragsize *= 2;
 		if (new_size > 512ULL * 1024 * 1024 * 1024)
 			fragsize *= 2;
+		if (fragsize < lp->d_secsize)
+			fragsize = lp->d_secsize;
 		if (fragsize > MAXBSIZE / 8)
 			fragsize = MAXBSIZE / 8;
 #if defined (__sparc__) && !defined(__sparc64__)
