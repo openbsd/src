@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.43 2016/08/19 13:56:08 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.44 2016/08/19 14:05:23 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -482,7 +482,7 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 
 #define	L1_S_COHERENT_generic	(L1_S_B|L1_S_C)
 #define	L1_S_COHERENT_xscale	(L1_S_B|L1_S_C|L1_S_XSCALE_TEX(TEX_XSCALE_X))
-#define	L1_S_COHERENT_v7	(L1_S_C|L1_S_V7_TEX_MASK)
+#define	L1_S_COHERENT_v7	(L1_S_C)
 
 #define	L2_L_PROT_KR_generic	(L2_AP(0))
 #define	L2_L_PROT_UR_generic	(L2_AP(AP_U))
@@ -508,7 +508,7 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 
 #define	L2_L_COHERENT_generic	(L2_B|L2_C)
 #define	L2_L_COHERENT_xscale	(L2_B|L2_C|L2_XSCALE_L_TEX(TEX_XSCALE_X))
-#define	L2_L_COHERENT_v7	(L2_C|L2_V7_L_TEX_MASK)
+#define	L2_L_COHERENT_v7	(L2_C)
 
 #define	L2_S_PROT_UR_generic	(L2_AP(AP_U))
 #define	L2_S_PROT_UW_generic	(L2_AP(AP_U|AP_W))
@@ -534,7 +534,7 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 
 #define	L2_S_COHERENT_generic	(L2_B|L2_C)
 #define	L2_S_COHERENT_xscale	(L2_B|L2_C|L2_XSCALE_T_TEX(TEX_XSCALE_X))
-#define	L2_S_COHERENT_v7	(L2_C|L2_V7_S_TEX_MASK)
+#define	L2_S_COHERENT_v7	(L2_C)
 
 #define	L1_S_PROTO_generic	(L1_TYPE_S | L1_S_IMP)
 #define	L1_S_PROTO_xscale	(L1_TYPE_S)
