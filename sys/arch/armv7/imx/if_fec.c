@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.15 2016/08/06 17:18:38 kettenis Exp $ */
+/* $OpenBSD: if_fec.c,v 1.16 2016/08/19 18:25:53 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -320,10 +320,14 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 		 * active-high.  
 		 */
 		phy_reset_gpio[2] = GPIO_ACTIVE_LOW;
-
 		gpio_controller_config_pin(phy_reset_gpio, GPIO_CONFIG_OUTPUT);
+
+		/*
+		 * On some Cubox-i machines we need to hold the PHY in
+		 * reset a little bit longer than specified.
+		 */
 		gpio_controller_set_pin(phy_reset_gpio, 1);
-		delay(phy_reset_duration * 1000);
+		delay((phy_reset_duration + 1) * 1000);
 		gpio_controller_set_pin(phy_reset_gpio, 0);
 		delay(1000);
 	}
