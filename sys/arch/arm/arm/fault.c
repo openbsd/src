@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.20 2016/02/27 13:08:06 mpi Exp $	*/
+/*	$OpenBSD: fault.c,v 1.21 2016/08/19 13:56:08 kettenis Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -154,10 +154,10 @@ static const struct data_abort data_aborts[] = {
 	{dab_fatal,	"V7 fault 00000"},
 	{dab_align,	"Alignment Fault 1"},
 	{dab_fatal,	"Debug Event"},
-	{dab_fatal,	"Access Flag Fault (S)"},
+	{NULL,		"Access Flag Fault (S)"},
 	{dab_buserr,	"External Linefetch Abort (S)"},
 	{NULL,		"Translation Fault (S)"},
-	{dab_fatal,	"Access Flag Fault (P)"},
+	{NULL,		"Access Flag Fault (P)"},
 	{NULL,		"Translation Fault (P)"},
 	{dab_buserr,	"External Non-Linefetch Abort (S)"},
 	{NULL,		"Domain Fault (S)"},

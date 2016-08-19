@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.42 2016/08/10 21:22:43 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.43 2016/08/19 13:56:08 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -758,10 +758,7 @@ L2_S_PROT(int ku, vm_prot_t pr)
 static __inline boolean_t
 l2pte_is_writeable(pt_entry_t pte, struct pmap *pm)
 {
-	/* XXX use of L2_V7_S_XN */
-	return (pte & L2_S_PROT_MASK & ~L2_V7_S_XN) ==
-	    L2_S_PROT(pm == pmap_kernel() ? PTE_KERNEL : PTE_USER,
-	              PROT_WRITE);
+	return (pte & L2_V7_AP(0x4)) == 0;
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.39 2016/08/18 09:28:22 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.40 2016/08/19 13:56:08 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -921,27 +921,24 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 		    pv, pv->pv_pmap, pv->pv_va, oflags));
 
 		if (maskbits & (PVF_WRITE|PVF_MOD)) {
-			/* make the pte read only */
-			npte = (npte & ~L2_S_PROT_MASK) |
-			    L2_S_PROT(pm == pmap_kernel() ? PTE_KERNEL : PTE_USER,
-			      npte & L2_V7_S_XN ? PROT_READ : PROT_READ | PROT_EXEC);
+			/* Disable write access. */
+			npte |= L2_V7_AP(0x4);
 		}
 
 		if (maskbits & PVF_REF) {
 			/*
-			 * Make the PTE invalid so that we will take a
-			 * page fault the next time the mapping is
-			 * referenced.
+			 * Clear the Access Flag such that we will
+			 * take a page fault the next time the mapping
+			 * is referenced.
 			 */
-			npte = (npte & ~L2_TYPE_MASK) | L2_TYPE_INV |
-			    (npte & L2_V7_S_XN);
+			npte &= ~L2_V7_AF;
 		}
 
 		if (npte != opte) {
 			*ptep = npte;
 			PTE_SYNC(ptep);
 			/* Flush the TLB entry if a current pmap. */
-			if (l2pte_valid(opte))
+			if (opte & L2_V7_AF)
 				pmap_tlb_flushID_SE(pm, pv->pv_va);
 		}
 
@@ -997,7 +994,7 @@ pmap_page_remove(struct vm_page *pg)
 	struct l2_bucket *l2b;
 	struct pv_entry *pv, *npv;
 	pmap_t pm, curpm;
-	pt_entry_t *ptep;
+	pt_entry_t *ptep, opte;
 	boolean_t flush;
 
 	NPDEBUG(PDB_FOLLOW,
@@ -1020,9 +1017,10 @@ pmap_page_remove(struct vm_page *pg)
 		KDASSERT(l2b != NULL);
 
 		ptep = &l2b->l2b_kva[l2pte_index(pv->pv_va)];
-		if (*ptep != 0) {
+		opte = *ptep;
+		if (opte != L2_TYPE_INV) {
 			/* inline pmap_is_current(pm) */
-			if (l2pte_valid(*ptep) &&
+			if ((opte & L2_V7_AF) &&
 			    (pm == curpm || pm == pmap_kernel())) {
 				if (PV_BEEN_EXECD(pv->pv_flags))
 					cpu_icache_sync_range(pv->pv_va, PAGE_SIZE);
@@ -1136,9 +1134,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 	ptep = &l2b->l2b_kva[l2pte_index(va)];
 	opte = *ptep;
-	npte = pa | L2_V7_AF;
+	npte = L2_S_PROTO | pa;
 
-	if (opte != 0) {	/* not l2pte_valid!!! MIOD */
+	if (opte != L2_TYPE_INV) {
 		/*
 		 * There is already a mapping at this address.
 		 * If the physical address is different, lookup the
@@ -1164,9 +1162,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			 * - The physical page has already been referenced
 			 *   so no need to re-do referenced emulation here.
 			 */
-			npte |= L2_S_PROTO;
-
 			nflags |= PVF_REF;
+			npte |= L2_V7_AF;
 
 			if ((prot & PROT_WRITE) != 0 &&
 			    ((flags & PROT_WRITE) != 0 ||
@@ -1183,8 +1180,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			/*
 			 * Need to do page referenced emulation.
 			 */
-			npte &= ~L2_TYPE_MASK;
-			npte |= L2_TYPE_INV;
 			prot &= ~PROT_WRITE;
 			mapped = 0;
 		}
@@ -1231,7 +1226,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 * These are always readable, and possibly writable, from
 		 * the get go as we don't need to track ref/mod status.
 		 */
-		npte |= L2_S_PROTO;
+		npte |= L2_V7_AF;
 
 		if (opg) {
 			/*
@@ -1252,7 +1247,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	/*
 	 * Keep the stats up to date
 	 */
-	if (opte == 0) {	/* !! not l2pte_valid MIOD */
+	if (opte == L2_TYPE_INV) {
 		l2b->l2b_occupancy++;
 		pm->pm_stats.resident_count++;
 	} 
@@ -1271,7 +1266,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 * is current
 		 */
 		PTE_SYNC(ptep);
-		if (/* va != vector_page && */ l2pte_valid(npte)) {
+		if (npte & L2_V7_AF) {
 			/*
 			 * This mapping is likely to be accessed as
 			 * soon as we return to userland. Fix up the
@@ -1289,7 +1284,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			}
 		}
 
-		if (l2pte_valid(opte))
+		if (opte & L2_V7_AF)
 			pmap_tlb_flushID_SE(pm, va);
 	}
 
@@ -1345,7 +1340,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 
 			pte = *ptep;
 
-			if (pte == 0) {	/* !!! not l2pte_valid */
+			if (pte == L2_TYPE_INV) {
 				/*
 				 * Nothing here, move along
 				 */
@@ -1380,7 +1375,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 
 			*ptep = L2_TYPE_INV;
 			PTE_SYNC(ptep);
-			if (l2pte_valid(pte))
+			if (pte & L2_V7_AF)
 				pmap_tlb_flushID_SE(pm, sva);
 
 			sva += PAGE_SIZE;
@@ -1422,7 +1417,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	ptep = &l2b->l2b_kva[l2pte_index(va)];
 	opte = *ptep;
 
-	if (opte == 0)
+	if (opte == L2_TYPE_INV)
 		l2b->l2b_occupancy++;
 
 	if (pa & PMAP_DEVICE)
@@ -1434,7 +1429,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	    L2_S_PROT(PTE_KERNEL, prot) | cache_mode;
 	*ptep = npte;
 	PTE_SYNC(ptep);
-	if (l2pte_valid(opte)) {
+	if (opte & L2_V7_AF) {
 		cpu_tlb_flushD_SE(va);
 		cpu_cpwait();
 	}
@@ -1479,12 +1474,12 @@ pmap_kremove(vaddr_t va, vsize_t len)
 
 		while (va < next_bucket) {
 			opte = *ptep;
-			if (opte != 0) {	/* !! not l2pte_valid */
+			if (opte != L2_TYPE_INV) {
 				*ptep = L2_TYPE_INV;
 				PTE_SYNC(ptep);
 				mappings++;
 			}
-			if (l2pte_valid(opte))
+			if (opte & L2_V7_AF)
 				cpu_tlb_flushD_SE(va);
 			va += PAGE_SIZE;
 			ptep++;
@@ -1531,7 +1526,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		ptep = &ptep[l2pte_index(va)];
 		pte = *ptep;
 
-		if (pte == 0)	/* !!! not l2pte_valid */
+		if (pte == L2_TYPE_INV)
 			return (FALSE);
 
 		switch (pte & L2_TYPE_MASK) {
@@ -1558,7 +1553,7 @@ void
 pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	struct l2_bucket *l2b;
-	pt_entry_t *ptep, pte, opte;
+	pt_entry_t *ptep, opte;
 	vaddr_t next_bucket;
 	u_int flags;
 	int flush;
@@ -1609,17 +1604,12 @@ NPDEBUG(PDB_PROTECT, printf("\n"));
 
 		while (sva < next_bucket) {
 			opte = *ptep;
-			/* !!! not l2pte_valid */
-/* XXX actually would only matter if really valid ??? */
-			if (opte != 0 && l2pte_is_writeable(opte, pm)) {
+			if (opte != L2_TYPE_INV && l2pte_is_writeable(opte, pm)) {
 				struct vm_page *pg;
 				u_int f;
 
 				pg = PHYS_TO_VM_PAGE(l2pte_pa(opte));
-				pte = (opte & ~L2_S_PROT_MASK) |
-				    L2_S_PROT(pm == pmap_kernel() ? PTE_KERNEL : PTE_USER,
-				      opte & L2_V7_S_XN ? PROT_READ : PROT_READ | PROT_EXEC);
-				*ptep = pte;
+				*ptep = opte | L2_V7_AP(0x4);
 				PTE_SYNC(ptep);
 
 				if (pg != NULL) {
@@ -1630,7 +1620,7 @@ NPDEBUG(PDB_PROTECT, printf("\n"));
 
 				if (flush >= 0) {
 					flush++;
-					if (l2pte_valid(opte))
+					if (opte & L2_V7_AF)
 						cpu_tlb_flushID_SE(sva);
 				} else
 					flags |= f;
@@ -1759,7 +1749,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	 */
 	ptep = &l2b->l2b_kva[l2pte_index(va)];
 	pte = *ptep;
-	if (pte == 0)
+	if (pte == L2_TYPE_INV)
 		goto out;
 
 	/* only if vectors are low ?? */
@@ -1767,9 +1757,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	 * Catch a userland access to the vector page mapped at 0x0
 	 */
 	if (user) {
-		/* XXX use of L2_V7_S_XN */
-		if ((pte & L2_S_PROT_MASK & ~L2_V7_S_XN) != L2_S_PROT(PTE_USER, PROT_READ) &&
-		    (pte & L2_S_PROT_MASK & ~L2_V7_S_XN) != L2_S_PROT(PTE_USER, PROT_WRITE))
+		if ((pte & L2_V7_AP(0x2)) == 0)
 			goto out;
 	}
 
@@ -1823,14 +1811,10 @@ Debugger();
 		 * We've already set the cacheable bits based on
 		 * the assumption that we can write to this page.
 		 */
-		*ptep = (pte & ~(L2_TYPE_MASK|L2_S_PROT_MASK)) | L2_S_PROTO |
-		    L2_S_PROT(pm == pmap_kernel() ? PTE_KERNEL : PTE_USER,
-		      pte & L2_V7_S_XN ? PROT_WRITE : PROT_WRITE | PROT_EXEC);
+		*ptep = (pte & ~L2_V7_AP(0x4));
 		PTE_SYNC(ptep);
 		rv = 1;
-	} else
-	/* XXX use of L2_V7_S_XN */
-	if ((pte & L2_TYPE_MASK & ~L2_V7_S_XN) == L2_TYPE_INV) {
+	} else if ((pte & L2_V7_AF) == 0) {
 		/*
 		 * This looks like a good candidate for "page referenced"
 		 * emulation.
@@ -1849,13 +1833,13 @@ Debugger();
 
 		pg->mdpage.pvh_attrs |= PVF_REF;
 		pv->pv_flags |= PVF_REF;
+		pte |= L2_V7_AF;
 
 		NPDEBUG(PDB_FOLLOW,
 		    printf("pmap_fault_fixup: ref emul. pm %p, va 0x%08lx, pa 0x%08lx\n",
 		    pm, va, pg->phys_addr));
 
-		/* XXX use of L2_V7_S_XN */
-		*ptep = (pte & ~(L2_TYPE_MASK & ~L2_V7_S_XN)) | L2_S_PROTO;
+		*ptep = pte;
 		PTE_SYNC(ptep);
 		rv = 1;
 	} else {
@@ -2508,7 +2492,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 		for (l2idx = 0;
 		    l2idx < (L2_TABLE_SIZE_REAL / sizeof(pt_entry_t));
 		    l2idx++) {
-			if ((ptep[l2idx] & L2_TYPE_MASK) != L2_TYPE_INV)
+			if (ptep[l2idx] != L2_TYPE_INV)
 				l2b->l2b_occupancy++;
 		}
 	}
