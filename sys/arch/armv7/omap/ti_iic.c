@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti_iic.c,v 1.9 2016/08/12 03:22:41 jsg Exp $	*/
+/*	$OpenBSD: ti_iic.c,v 1.10 2016/08/19 05:25:08 jsg Exp $	*/
 /* $NetBSD: ti_iic.c,v 1.4 2013/04/25 13:04:27 rkujawa Exp $ */
 
 /*
@@ -268,8 +268,7 @@ ti_iic_exec(void *opaque, i2c_op_t op, i2c_addr_t addr,
     const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
 {
 	struct ti_iic_softc *sc = opaque;
-	int err;
-
+	int err = 0;
 
 	DPRINTF(("ti_iic_exec: op 0x%x cmdlen %zd len %zd flags 0x%x\n",
 	    op, cmdlen, len, flags));
