@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.c,v 1.4 2011/04/10 03:20:59 guenther Exp $	*/
+/*	$OpenBSD: copy.c,v 1.5 2016/08/19 01:37:50 deraadt Exp $	*/
 
 /* Written by Ted Unangst 2004 Public Domain */
 
@@ -10,7 +10,7 @@
 #include <sys/ioctl.h>
 #include <sys/syslimits.h>
 #include <net/if.h>
-#include <strings.h>
+#include <string.h>
 #include <errno.h>
 
 #include <stdio.h>
