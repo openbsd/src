@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.283 2016/08/13 17:47:41 markus Exp $ */
+/* $OpenBSD: session.c,v 1.284 2016/08/19 03:18:06 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -505,7 +505,7 @@ do_exec_pty(Session *s, const char *command)
 		close(ttyfd);
 
 		/* record login, etc. similar to login(1) */
-		if (!(options.use_login && command == NULL))
+		if (command != NULL)
 			do_login(s, command);
 
 		/*
@@ -804,46 +804,41 @@ do_setup_env(Session *s, const char *shell)
 	ssh_gssapi_do_child(&env, &envsize);
 #endif
 
-	if (!options.use_login) {
-		/* Set basic environment. */
-		for (i = 0; i < s->num_env; i++)
-			child_set_env(&env, &envsize, s->env[i].name,
-			    s->env[i].val);
+	/* Set basic environment. */
+	for (i = 0; i < s->num_env; i++)
+		child_set_env(&env, &envsize, s->env[i].name, s->env[i].val);
 
-		child_set_env(&env, &envsize, "USER", pw->pw_name);
-		child_set_env(&env, &envsize, "LOGNAME", pw->pw_name);
-		child_set_env(&env, &envsize, "HOME", pw->pw_dir);
-		if (setusercontext(lc, pw, pw->pw_uid, LOGIN_SETPATH) < 0)
-			child_set_env(&env, &envsize, "PATH", _PATH_STDPATH);
-		else
-			child_set_env(&env, &envsize, "PATH", getenv("PATH"));
+	child_set_env(&env, &envsize, "USER", pw->pw_name);
+	child_set_env(&env, &envsize, "LOGNAME", pw->pw_name);
+	child_set_env(&env, &envsize, "HOME", pw->pw_dir);
+	if (setusercontext(lc, pw, pw->pw_uid, LOGIN_SETPATH) < 0)
+		child_set_env(&env, &envsize, "PATH", _PATH_STDPATH);
+	else
+		child_set_env(&env, &envsize, "PATH", getenv("PATH"));
 
-		snprintf(buf, sizeof buf, "%.200s/%.50s",
-			 _PATH_MAILDIR, pw->pw_name);
-		child_set_env(&env, &envsize, "MAIL", buf);
+	snprintf(buf, sizeof buf, "%.200s/%.50s", _PATH_MAILDIR, pw->pw_name);
+	child_set_env(&env, &envsize, "MAIL", buf);
 
-		/* Normal systems set SHELL by default. */
-		child_set_env(&env, &envsize, "SHELL", shell);
-	}
+	/* Normal systems set SHELL by default. */
+	child_set_env(&env, &envsize, "SHELL", shell);
+
 	if (getenv("TZ"))
 		child_set_env(&env, &envsize, "TZ", getenv("TZ"));
 
 	/* Set custom environment options from RSA authentication. */
-	if (!options.use_login) {
-		while (custom_environment) {
-			struct envstring *ce = custom_environment;
-			char *str = ce->s;
+	while (custom_environment) {
+		struct envstring *ce = custom_environment;
+		char *str = ce->s;
 
-			for (i = 0; str[i] != '=' && str[i]; i++)
-				;
-			if (str[i] == '=') {
-				str[i] = 0;
-				child_set_env(&env, &envsize, str, str + i + 1);
-			}
-			custom_environment = ce->next;
-			free(ce->s);
-			free(ce);
+		for (i = 0; str[i] != '=' && str[i]; i++)
+			;
+		if (str[i] == '=') {
+			str[i] = 0;
+			child_set_env(&env, &envsize, str, str + i + 1);
 		}
+		custom_environment = ce->next;
+		free(ce->s);
+		free(ce);
 	}
 
 	/* SSH_CLIENT deprecated */
@@ -878,7 +873,7 @@ do_setup_env(Session *s, const char *shell)
 		    auth_sock_name);
 
 	/* read $HOME/.ssh/environment. */
-	if (options.permit_user_env && !options.use_login) {
+	if (options.permit_user_env) {
 		snprintf(buf, sizeof buf, "%.200s/.ssh/environment",
 		    pw->pw_dir);
 		read_environment_file(&env, &envsize, buf);
@@ -1108,20 +1103,6 @@ do_pwchange(Session *s)
 }
 
 static void
-launch_login(struct passwd *pw, const char *hostname)
-{
-	/* Launch login(1). */
-
-	execl("/usr/bin/login", "login", "-h", hostname,
-	    "-p", "-f", "--", pw->pw_name, (char *)NULL);
-
-	/* Login couldn't be executed, die. */
-
-	perror("login");
-	exit(1);
-}
-
-static void
 child_close_fds(void)
 {
 	extern int auth_sock;
@@ -1168,11 +1149,10 @@ child_close_fds(void)
 void
 do_child(Session *s, const char *command)
 {
-	struct ssh *ssh = active_state;	/* XXX */
 	extern char **environ;
 	char **env;
 	char *argv[ARGV_MAX];
-	const char *shell, *shell0, *hostname = NULL;
+	const char *shell, *shell0;
 	struct passwd *pw = s->pw;
 	int r = 0;
 
@@ -1187,18 +1167,12 @@ do_child(Session *s, const char *command)
 		exit(1);
 	}
 
-	/* login(1) is only called if we execute the login shell */
-	if (options.use_login && command != NULL)
-		options.use_login = 0;
-
 	/*
 	 * Login(1) does this as well, and it needs uid 0 for the "-h"
 	 * switch, so we let login(1) to this for us.
 	 */
-	if (!options.use_login) {
-		do_nologin(pw);
-		do_setusercontext(pw);
-	}
+	do_nologin(pw);
+	do_setusercontext(pw);
 
 	/*
 	 * Get the shell from the password data.  An empty shell field is
@@ -1214,10 +1188,6 @@ do_child(Session *s, const char *command)
 
 	shell = login_getcapstr(lc, "shell", (char *)shell, (char *)shell);
 
-	/* we have to stash the hostname before we close our socket. */
-	if (options.use_login)
-		hostname = session_get_remote_name_or_ip(ssh, utmp_len,
-		    options.use_dns);
 	/*
 	 * Close the connection descriptors; note that this is the child, and
 	 * the server will still have the socket open, and it is important
@@ -1274,8 +1244,7 @@ do_child(Session *s, const char *command)
 
 	closefrom(STDERR_FILENO + 1);
 
-	if (!options.use_login)
-		do_rc_files(s, shell);
+	do_rc_files(s, shell);
 
 	/* restore SIGPIPE for child */
 	signal(SIGPIPE, SIG_DFL);
@@ -1301,11 +1270,6 @@ do_child(Session *s, const char *command)
 	}
 
 	fflush(NULL);
-
-	if (options.use_login) {
-		launch_login(pw, hostname);
-		/* NEVERREACHED */
-	}
 
 	/* Get the last component of the shell name. */
 	if ((shell0 = strrchr(shell, '/')) != NULL)
@@ -2111,11 +2075,6 @@ session_setup_x11fwd(Session *s)
 	if (options.xauth_location == NULL ||
 	    (stat(options.xauth_location, &st) == -1)) {
 		packet_send_debug("No xauth program; cannot forward with spoofing.");
-		return 0;
-	}
-	if (options.use_login) {
-		packet_send_debug("X11 forwarding disabled; "
-		    "not compatible with UseLogin=yes.");
 		return 0;
 	}
 	if (s->display != NULL) {
