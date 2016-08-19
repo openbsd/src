@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.41 2016/08/19 15:47:27 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.42 2016/08/19 17:31:04 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1553,41 +1553,27 @@ void
 pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	struct l2_bucket *l2b;
-	pt_entry_t *ptep, opte;
+	pt_entry_t *ptep, opte, npte;
 	vaddr_t next_bucket;
-	u_int flags;
 	int flush;
 
 	NPDEBUG(PDB_PROTECT,
 	    printf("pmap_protect: pm %p sva 0x%lx eva 0x%lx prot 0x%x",
 	    pm, sva, eva, prot));
 
-	if ((prot & PROT_READ) == 0) {
-NPDEBUG(PDB_PROTECT, printf("\n"));
+	if ((prot & (PROT_WRITE | PROT_EXEC)) == (PROT_WRITE | PROT_EXEC))
+		return;
+
+	if (prot == PROT_NONE) {
 		pmap_remove(pm, sva, eva);
 		return;
 	}
-
-	if (prot & PROT_WRITE) {
-		/*
-		 * If this is a read->write transition, just ignore it and let
-		 * uvm_fault() take care of it later.
-		 */
-NPDEBUG(PDB_PROTECT, printf("\n"));
-/* XXX WHAT IF RWX -> RW ??? */
-		return;
-	}
-
-	/*
-	 * OK, at this point, we know we're doing write-protect operation.
-	 */
-
+		
 	/* XXX is that threshold of 4 the best choice for v7? */
 	if (pmap_is_current(pm))
 		flush = ((eva - sva) > (PAGE_SIZE * 4)) ? -1 : 0;
 	else
 		flush = -1;
-	flags = 0;
 
 	while (sva < eva) {
 		next_bucket = L2_NEXT_BUCKET(sva);
@@ -1603,27 +1589,27 @@ NPDEBUG(PDB_PROTECT, printf("\n"));
 		ptep = &l2b->l2b_kva[l2pte_index(sva)];
 
 		while (sva < next_bucket) {
-			opte = *ptep;
-			if (opte != L2_TYPE_INV && l2pte_is_writeable(opte, pm)) {
+			npte = opte = *ptep;
+			if (opte != L2_TYPE_INV) {
 				struct vm_page *pg;
-				u_int f;
 
-				pg = PHYS_TO_VM_PAGE(l2pte_pa(opte));
-				*ptep = opte | L2_V7_AP(0x4);
+				if ((prot & PROT_WRITE) == 0)
+					npte |= L2_V7_AP(0x4);
+				if ((prot & PROT_EXEC) == 0)
+					npte |= L2_V7_S_XN;
+				*ptep = npte;
 				PTE_SYNC(ptep);
 
-				if (pg != NULL) {
-					f = pmap_modify_pv(pg, pm, sva,
+				pg = PHYS_TO_VM_PAGE(l2pte_pa(opte));
+				if (pg != NULL && (prot & PROT_WRITE) == 0)
+					pmap_modify_pv(pg, pm, sva,
 					    PVF_WRITE, 0);
-				} else
-					f = PVF_EXEC;
 
 				if (flush >= 0) {
 					flush++;
 					if (opte & L2_V7_AF)
 						cpu_tlb_flushID_SE(sva);
-				} else
-					flags |= f;
+				}
 			}
 
 			sva += PAGE_SIZE;
@@ -1634,7 +1620,7 @@ NPDEBUG(PDB_PROTECT, printf("\n"));
 	if (flush < 0)
 		pmap_tlb_flushID(pm);
 
-NPDEBUG(PDB_PROTECT, printf("\n"));
+	NPDEBUG(PDB_PROTECT, printf("\n"));
 }
 
 void
@@ -1752,6 +1738,9 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	if (pte == L2_TYPE_INV)
 		goto out;
 
+	if ((ftype & PROT_EXEC) && (pte & L2_V7_S_XN))
+		goto out;
+
 	/* only if vectors are low ?? */
 	/*
 	 * Catch a userland access to the vector page mapped at 0x0
@@ -1763,15 +1752,6 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 
 	pa = l2pte_pa(pte);
 
-	if ((ftype & PROT_EXEC) && (pte & L2_V7_S_XN)) {
-printf("%s: va %08lx ftype %x %c pte %08x\n", __func__, va, ftype, user ? 'u' : 's', pte);
-printf("fault on exec\n");
-#ifdef DDB
-Debugger();
-#endif
-		/* XXX FIX THIS */
-		goto out;
-	}
 	if ((ftype & PROT_WRITE) && !l2pte_is_writeable(pte, pm)) {
 		/*
 		 * This looks like a good candidate for "page modified"

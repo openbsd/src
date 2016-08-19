@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.44 2016/08/19 14:05:23 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.45 2016/08/19 17:31:04 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -703,14 +703,11 @@ L1_S_PROT(int ku, vm_prot_t pr)
 		pte = (pr & PROT_WRITE) ? L1_S_PROT_UW : L1_S_PROT_UR;
 	else
 		pte = (pr & PROT_WRITE) ? L1_S_PROT_KW : L1_S_PROT_KR;
-	/*
-	 * If we set the XN bit, the abort handlers or the vector page
-	 * might be marked as such. Needs Debugging.
-	 */
-	/*
+
+#ifdef CPU_ARMv7
 	if ((pr & PROT_EXEC) == 0)
 		pte |= L1_S_V7_XN;
-	*/
+#endif
 
 	return pte;
 }
@@ -723,14 +720,11 @@ L2_L_PROT(int ku, vm_prot_t pr)
 		pte = (pr & PROT_WRITE) ? L2_L_PROT_UW : L2_L_PROT_UR;
 	else
 		pte = (pr & PROT_WRITE) ? L2_L_PROT_KW : L2_L_PROT_KR;
-	/*
-	 * If we set the XN bit, the abort handlers or the vector page
-	 * might be marked as such. Needs Debugging.
-	 */
-	/*
+
+#ifdef CPU_ARMv7
 	if ((pr & PROT_EXEC) == 0)
 		pte |= L2_V7_L_XN;
-	*/
+#endif
 
 	return pte;
 }
@@ -743,14 +737,11 @@ L2_S_PROT(int ku, vm_prot_t pr)
 		pte = (pr & PROT_WRITE) ? L2_S_PROT_UW : L2_S_PROT_UR;
 	else
 		pte = (pr & PROT_WRITE) ? L2_S_PROT_KW : L2_S_PROT_KR;
-	/*
-	 * If we set the XN bit, the abort handlers or the vector page
-	 * might be marked as such. Needs Debugging.
-	 */
-	/*
+
+#ifdef CPU_ARMv7
 	if ((pr & PROT_EXEC) == 0)
 		pte |= L2_V7_S_XN;
-	*/
+#endif
 
 	return pte;
 }
