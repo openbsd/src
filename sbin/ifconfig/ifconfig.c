@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.326 2016/08/15 22:16:46 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.327 2016/08/19 09:06:24 jsg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2348,7 +2348,7 @@ ieee80211_printnode(struct ieee80211_nodereq *nr)
 	if ((nr->nr_flags & (IEEE80211_NODEREQ_AP)) == 0) {
 		if (nr->nr_flags & IEEE80211_NODEREQ_HT) {
 			printf("HT-MCS%d ", nr->nr_txmcs);
-		} else if (nr->nr_rates) {
+		} else if (nr->nr_nrates) {
 			printf("%uM ",
 			    (nr->nr_rates[nr->nr_txrate] & IEEE80211_RATE_VAL)
 			    / 2);
