@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.40 2016/08/19 13:56:08 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.41 2016/08/19 15:47:27 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1421,7 +1421,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		l2b->l2b_occupancy++;
 
 	if (pa & PMAP_DEVICE)
-		cache_mode = L2_B;
+		cache_mode = L2_B | L2_V7_S_XN;
 	else if (pa & PMAP_NOCACHE)
 		cache_mode = L2_V7_S_TEX(1);
 
