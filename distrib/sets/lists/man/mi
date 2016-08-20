@@ -1200,6 +1200,7 @@
 ./usr/share/man/man4/armv7/sxidog.4
 ./usr/share/man/man4/armv7/sxie.4
 ./usr/share/man/man4/armv7/sxiintc.4
+./usr/share/man/man4/armv7/sximmc.4
 ./usr/share/man/man4/armv7/sxipio.4
 ./usr/share/man/man4/armv7/sxitimer.4
 ./usr/share/man/man4/armv7/sysreg.4
