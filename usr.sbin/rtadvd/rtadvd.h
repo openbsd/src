@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.26 2016/08/02 17:00:09 jca Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.27 2016/08/20 15:05:52 jca Exp $	*/
 /*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -160,10 +160,10 @@ struct	rainfo {
 	u_char *ra_data;
 
 	/* statistics */
-	u_quad_t raoutput;	/* number of RAs sent */
-	u_quad_t rainput;	/* number of RAs received */
-	u_quad_t rainconsistent; /* number of RAs inconsistent with ours */
-	u_quad_t rsinput;	/* number of RSs received */
+	uint64_t raoutput;	/* number of RAs sent */
+	uint64_t rainput;	/* number of RAs received */
+	uint64_t rainconsistent; /* number of RAs inconsistent with ours */
+	uint64_t rsinput;	/* number of RSs received */
 };
 SLIST_HEAD(ralist, rainfo);
 
