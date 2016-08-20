@@ -1,0 +1,16 @@
+.Dd August 20, 2016
+.Dt TBL-COLUMN 1
+.Os OpenBSD
+.Sh NAME
+.Nm TBL-column
+.Nd tables inside column lists
+.Sh DESCRIPTION
+.Bl -column "a" "b"
+.Sy a Ta b
+.TS
+lll.
+1	2	3
+4	5	6
+.TE
+.Em c Ta d
+.El

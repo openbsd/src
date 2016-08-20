@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.29 2015/10/12 15:27:53 schwarze Exp $
+# $OpenBSD: Makefile,v 1.30 2016/08/20 14:43:39 schwarze Exp $
 
 REGRESS_TARGETS  = item inset diag ohang bullet dash enum hang tag
-REGRESS_TARGETS += column extend nested offset secstart
+REGRESS_TARGETS += column colNoIt extend nested offset secstart
 
 REGRESS_TARGETS += notype multitype badargs
 REGRESS_TARGETS += empty noIt emptyhead emptytag emptyitem multitag
@@ -23,7 +23,7 @@ LINT_TARGETS	+= bareIt bareTa break breakingIt broken
 
 SKIP_GROFF ?= notype empty break breakingIt broken emptytag
 
-SKIP_TMAN ?= column multitype multitag bareTa break broken
+SKIP_TMAN ?= column colNoIt multitype multitag bareTa break broken
 
 # Fixing the indentation in long .IP and .TP tags in -man -Tascii
 # caused a minor regression in -Tman that is not trivial to fix,

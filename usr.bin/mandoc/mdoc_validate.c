@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.223 2016/08/11 11:39:19 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.224 2016/08/20 14:43:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -1320,11 +1320,41 @@ post_bl(POST_ARGS)
 		return;
 	}
 	while (nchild != NULL) {
+		nnext = nchild->next;
 		if (nchild->tok == MDOC_It ||
 		    (nchild->tok == MDOC_Sm &&
-		     nchild->next != NULL &&
-		     nchild->next->tok == MDOC_It)) {
-			nchild = nchild->next;
+		     nnext != NULL && nnext->tok == MDOC_It)) {
+			nchild = nnext;
+			continue;
+		}
+
+		/*
+		 * In .Bl -column, the first rows may be implicit,
+		 * that is, they may not start with .It macros.
+		 * Such rows may be followed by nodes generated on the
+		 * roff level, for example .TS, which cannot be moved
+		 * out of the list.  In that case, wrap such roff nodes
+		 * into an implicit row.
+		 */
+
+		if (nchild->prev != NULL) {
+			mdoc->last = nchild;
+			mdoc->next = ROFF_NEXT_SIBLING;
+			roff_block_alloc(mdoc, nchild->line,
+			    nchild->pos, MDOC_It);
+			roff_head_alloc(mdoc, nchild->line,
+			    nchild->pos, MDOC_It);
+			mdoc->next = ROFF_NEXT_SIBLING;
+			roff_body_alloc(mdoc, nchild->line,
+			    nchild->pos, MDOC_It);
+			while (nchild->tok != MDOC_It) {
+				mdoc_node_relink(mdoc, nchild);
+				if ((nchild = nnext) == NULL)
+					break;
+				nnext = nchild->next;
+				mdoc->next = ROFF_NEXT_SIBLING;
+			}
+			mdoc->last = nbody;
 			continue;
 		}
 
@@ -1340,13 +1370,11 @@ post_bl(POST_ARGS)
 		nblock  = nbody->parent;
 		nprev   = nblock->prev;
 		nparent = nblock->parent;
-		nnext   = nchild->next;
 
 		/*
 		 * Unlink this child.
 		 */
 
-		assert(nchild->prev == NULL);
 		nbody->child = nnext;
 		if (nnext == NULL)
 			nbody->last  = NULL;

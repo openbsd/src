@@ -1,0 +1,13 @@
+TBL-COLUMN(1)               General Commands Manual              TBL-COLUMN(1)
+
+NNAAMMEE
+     TTBBLL--ccoolluummnn - tables inside column lists
+
+DDEESSCCRRIIPPTTIIOONN
+     aa    b
+     1   2   3
+     4   5   6
+
+     _c    d
+
+OpenBSD                         August 20, 2016                        OpenBSD

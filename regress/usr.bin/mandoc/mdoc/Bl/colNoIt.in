@@ -1,0 +1,15 @@
+.Dd August 20, 2016
+.Dt BL-COLNOIT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bl-colNoIt
+.Nd column lists without item macros
+.Sh DESCRIPTION
+.Bl -column "a" "b"
+.Sy a Ta b
+.Em c Ta d
+.El
+.Bl -column "a" "b"
+a	b
+c	d
+.El
