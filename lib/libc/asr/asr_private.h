@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.38 2015/12/16 16:32:30 deraadt Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.39 2016/08/20 19:08:57 jca Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -341,6 +341,13 @@ int _asr_iter_domain(struct asr_query *, const char *, char *, size_t);
 		fprintf(_asr_debug, "--------------\n");		\
 	} } while (0)
 
+#else /* DEBUG */
+
+#define DPRINT(...)
+#define DPRINT_PACKET(...)
+
+#endif /* DEBUG */
+
 const char *_asr_querystr(int);
 const char *_asr_statestr(int);
 const char *_asr_transitionstr(int);
@@ -349,13 +356,6 @@ void _asr_dump_config(FILE *, struct asr *);
 void _asr_dump_packet(FILE *, const void *, size_t);
 
 extern FILE *_asr_debug;
-
-#else /* DEBUG */
-
-#define DPRINT(...)
-#define DPRINT_PACKET(...)
-
-#endif /* DEBUG */
 
 #define async_set_state(a, s) do {		\
 	DPRINT("asr: [%s@%p] %s -> %s\n",	\
