@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.44 2016/08/20 21:04:18 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.45 2016/08/20 21:07:07 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1166,7 +1166,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			npte |= L2_V7_AF;
 
 			if ((flags & PROT_WRITE) ||
-			    (pg->mdpage.pvh_attrs & PVF_MOD)) {
+			     (pg->mdpage.pvh_attrs & PVF_MOD)) {
 				/*
 				 * This is a writable mapping, and the
 				 * page's mod state indicates it has
@@ -1702,7 +1702,6 @@ pmap_clear_reference(struct vm_page *pg)
 int
 pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 {
-#if 0
 	struct l2_dtable *l2;
 	struct l2_bucket *l2b;
 	pd_entry_t *pl1pd, l1pd;
@@ -1795,10 +1794,36 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		*ptep = (pte & ~L2_V7_AP(0x4));
 		PTE_SYNC(ptep);
 		rv = 1;
+	} else if ((pte & L2_V7_AF) == 0) {
+		/*
+		 * This looks like a good candidate for "page referenced"
+		 * emulation.
+		 */
+		struct pv_entry *pv;
+		struct vm_page *pg;
+
+		/* Extract the physical address of the page */
+		if ((pg = PHYS_TO_VM_PAGE(pa)) == NULL)
+			goto out;
+
+		/* Get the current flags for this page. */
+		pv = pmap_find_pv(pg, pm, va);
+		if (pv == NULL)
+			goto out;
+
+		pg->mdpage.pvh_attrs |= PVF_REF;
+		pv->pv_flags |= PVF_REF;
+		pte |= L2_V7_AF;
+
+		NPDEBUG(PDB_FOLLOW,
+		    printf("pmap_fault_fixup: ref emul. pm %p, va 0x%08lx, pa 0x%08lx\n",
+		    pm, va, pg->phys_addr));
+
+		*ptep = pte;
+		PTE_SYNC(ptep);
+		rv = 1;
 	} else {
-extern int last_fault_code;
 printf("%s: va %08lx ftype %x %c pte %08x\n", __func__, va, ftype, user ? 'u' : 's', pte);
-printf("fsr 0x%08x\n", last_fault_code);
 		goto out;
 	}
 
@@ -1821,92 +1846,6 @@ printf("fsr 0x%08x\n", last_fault_code);
 
 out:
 	return (rv);
-#else
-	return 0;
-#endif
-}
-
-/*
- * dab_access() handles the following data aborts:
- *
- *  Access flag fault -- Level 1
- *  Access flag fault -- Level 2
- *
- * Set the Access Flag and mark the page as referenced.
- */
-int
-dab_access(trapframe_t *tf, u_int fsr, u_int far, struct proc *p)
-{
-	struct pmap *pm = p->p_vmspace->vm_map.pmap;
-	vaddr_t va = trunc_page(far);
-	struct l2_dtable *l2;
-	struct l2_bucket *l2b;
-	pt_entry_t *ptep, pte;
-	struct pv_entry *pv;
-	struct vm_page *pg;
-	paddr_t pa;
-	u_int l1idx;
-
-	l1idx = L1_IDX(va);
-
-	/*
-	 * If there is no l2_dtable for this address, then the process
-	 * has no business accessing it.
-	 */
-	l2 = pm->pm_l2[L2_IDX(l1idx)];
-	if (l2 == NULL) {
-		printf("l2\n");
-		return 1;
-	}
-
-	/*
-	 * Likewise if there is no L2 descriptor table
-	 */
-	l2b = &l2->l2_bucket[L2_BUCKET(l1idx)];
-	if (l2b->l2b_kva == NULL) {
-		printf("l2b\n");
-		return 1;
-	}
-
-	/*
-	 * Check the PTE itself.
-	 */
-	ptep = &l2b->l2b_kva[l2pte_index(va)];
-	pte = *ptep;
-	if (pte == L2_TYPE_INV) {
-		printf("pte\n");
-		return 1;
-	}
-
-	pa = l2pte_pa(pte);
-
-	/*
-	 * Perform page referenced emulation.
-	 */
-	KASSERT((pte & L2_V7_AF) == 0);
-
-	/* Extract the physical address of the page */
-	if ((pg = PHYS_TO_VM_PAGE(pa)) == NULL) {
-		printf("pg va 0x%08lx pa 0x%08lx pte 0x%08x\n", va, pa, pte);
-		printf("fsr 0x%08x far 0x%08x\n", fsr, far);
-		Debugger();
-		return 1;
-	}
-
-	/* Get the current flags for this page. */
-	pv = pmap_find_pv(pg, pm, va);
-	if (pv == NULL) {
-		printf("pv\n");
-		return 1;
-	}
-
-	pg->mdpage.pvh_attrs |= PVF_REF;
-	pv->pv_flags |= PVF_REF;
-	pte |= L2_V7_AF;
-
-	*ptep = pte;
-	PTE_SYNC(ptep);
-	return 0;
 }
 
 /*
