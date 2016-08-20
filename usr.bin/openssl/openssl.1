@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.56 2016/08/20 07:56:09 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.57 2016/08/20 12:54:49 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -1729,7 +1729,7 @@ Encrypt the input data.
 This is the default.
 .It Fl in Ar file
 The input file to read from,
-or standard input if none is specified.
+or standard input if not specified.
 .It Fl iv Ar IV
 The actual
 .Ar IV
@@ -1801,7 +1801,7 @@ since it makes it possible to perform efficient dictionary
 attacks on the password and to attack stream cipher encrypted data.
 .It Fl out Ar file
 The output file to write to,
-or standard output if none is specified.
+or standard output if not specified.
 .It Fl P
 Print out the salt, key, and IV used, then immediately exit;
 don't do any encryption or decryption.
@@ -1885,7 +1885,7 @@ A pass phrase is prompted for.
 If none of these options are specified, no encryption is used.
 .It Fl out Ar file
 The output file to write to,
-or standard output if none is specified.
+or standard output if not specified.
 .It Ar paramfile
 Specify the DSA parameter file to use.
 The parameters in this file determine the size of the private key.
@@ -1939,7 +1939,7 @@ or
 options.
 .It Fl out Ar file
 The output file to write to,
-or standard output if none is specified.
+or standard output if not specified.
 .It Fl outform Cm der | pem
 The output format.
 .It Fl paramfile Ar file
@@ -2032,7 +2032,7 @@ if it is not supplied via the
 option.
 .It Fl out Ar file
 The output file to write to,
-or standard output if none is specified.
+or standard output if not specified.
 .It Fl passout Ar arg
 The output file password source.
 .It Ar numbits
@@ -2223,7 +2223,7 @@ This is normally only be used for debugging
 since it disables all verification of the responder's certificate.
 .It Fl out Ar file
 Specify the output file to write to,
-or standard output if none is specified.
+or standard output if not specified.
 .It Fl req_text , resp_text , text
 Print out the text form of the OCSP request, response, or both, respectively.
 .It Fl reqin Ar file , Fl respin Ar file
@@ -2481,69 +2481,24 @@ Read passwords from standard input.
 In the output list, prepend the cleartext password and a TAB character
 to each password hash.
 .El
-.\"
-.\" PKCS7
-.\"
 .Sh PKCS7
 .nr nS 1
 .Nm "openssl pkcs7"
-.Bk -words
 .Op Fl in Ar file
-.Op Fl inform Ar DER | PEM
+.Op Fl inform Cm der | pem
 .Op Fl noout
 .Op Fl out Ar file
-.Op Fl outform Ar DER | PEM
+.Op Fl outform Cm der | pem
 .Op Fl print_certs
 .Op Fl text
-.Ek
 .nr nS 0
 .Pp
 The
 .Nm pkcs7
 command processes PKCS#7 files in DER or PEM format.
+The PKCS#7 routines only understand PKCS#7 v 1.5 as specified in RFC 2315.
+They cannot currently parse, for example, the new CMS as described in RFC 2630.
 .Pp
-The options are as follows:
-.Bl -tag -width Ds
-.It Fl in Ar file
-This specifies the input
-.Ar file
-to read from, or standard input if this option is not specified.
-.It Fl inform Ar DER | PEM
-This specifies the input format.
-.Ar DER
-format is a DER-encoded PKCS#7 v1.5 structure.
-.Ar PEM
-.Pq the default
-is a base64-encoded version of the DER form with header and footer lines.
-.It Fl noout
-Don't output the encoded version of the PKCS#7 structure
-(or certificates if
-.Fl print_certs
-is set).
-.It Fl out Ar file
-Specifies the output
-.Ar file
-to write to, or standard output by default.
-.It Fl outform Ar DER | PEM
-This specifies the output format; the options have the same meaning as the
-.Fl inform
-option.
-.It Fl print_certs
-Prints out any certificates or CRLs contained in the file.
-They are preceded by their subject and issuer names in a one-line format.
-.It Fl text
-Prints out certificate details in full rather than just subject and
-issuer names.
-.El
-.Sh PKCS7 EXAMPLES
-Convert a PKCS#7 file from PEM to DER:
-.Pp
-.Dl $ openssl pkcs7 -in file.pem -outform DER -out file.der
-.Pp
-Output all certificates in a file:
-.Pp
-.Dl $ openssl pkcs7 -in file.pem -print_certs -out certs.pem
-.Sh PKCS7 NOTES
 The PEM PKCS#7 format uses the header and footer lines:
 .Bd -unfilled -offset indent
 -----BEGIN PKCS7-----
@@ -2555,11 +2510,35 @@ For compatibility with some CAs it will also accept:
 -----BEGIN CERTIFICATE-----
 -----END CERTIFICATE-----
 .Ed
-.Sh PKCS7 RESTRICTIONS
-There is no option to print out all the fields of a PKCS#7 file.
 .Pp
-The PKCS#7 routines only understand PKCS#7 v 1.5 as specified in RFC 2315.
-They cannot currently parse, for example, the new CMS as described in RFC 2630.
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl in Ar file
+The input file to read from,
+or standard input if not specified.
+.It Fl inform Cm der | pem
+The input format.
+.Cm der
+format is a DER-encoded PKCS#7 v1.5 structure.
+.Cm pem
+(the default)
+is a base64-encoded version of the DER form with header and footer lines.
+.It Fl noout
+Don't output the encoded version of the PKCS#7 structure
+(or certificates if
+.Fl print_certs
+is set).
+.It Fl out Ar file
+The output to write to,
+or standard output if not specified.
+.It Fl outform Cm der | pem
+The output format.
+.It Fl print_certs
+Print any certificates or CRLs contained in the file,
+preceded by their subject and issuer names in a one-line format.
+.It Fl text
+Print certificate details in full rather than just subject and issuer names.
+.El
 .\"
 .\" PKCS8
 .\"
