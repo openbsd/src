@@ -1,4 +1,4 @@
-/* $OpenBSD: com_fdt.c,v 1.6 2016/08/17 13:44:48 patrick Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.7 2016/08/20 10:41:54 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -26,6 +26,7 @@
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
+#include <dev/cons.h>
 
 /* pick up armv7_a4x_bs_tag */
 #include <arch/arm/armv7/armv7var.h>
@@ -55,12 +56,20 @@ struct cfattach com_fdt_ca = {
 	sizeof (struct com_fdt_softc), com_fdt_match, com_fdt_attach
 };
 
+int com_fdt_cngetc(dev_t);
+void com_fdt_cnputc(dev_t, int);
+void com_fdt_cnpollc(dev_t, int);
+
+struct consdev com_fdt_cons = {
+	NULL, NULL, com_fdt_cngetc, com_fdt_cnputc, com_fdt_cnpollc, NULL,
+	NODEV, CN_LOWPRI
+};
+
 void
 com_fdt_init_cons(void)
 {
 	struct fdt_reg reg;
 	void *node;
-	int freq = 48000000;
 
 	if ((node = fdt_find_cons("ti,omap3-uart")) == NULL &&
 	    (node = fdt_find_cons("ti,omap4-uart")) == NULL &&
@@ -69,16 +78,21 @@ com_fdt_init_cons(void)
 	if (fdt_get_reg(node, 0, &reg))
 		return;
 
-	if ((node = fdt_find_node("/")) != NULL &&
-	    (fdt_is_compatible(node, "allwinner,sun4i-a10") ||
-	    fdt_is_compatible(node, "allwinner,sun5i-a10s") ||
-	    fdt_is_compatible(node, "allwinner,sun5i-r8") ||
-	    fdt_is_compatible(node, "allwinner,sun7i-a20")))
-		freq = 24000000;
+	/*
+	 * Figuring out the clock frequency is rather complicated as
+	 * om many SoCs this requires traversing a fair amount of the
+	 * clock tree.  Instead we rely on the firmware to set up the
+	 * console for us and bypass the cominit() call that
+	 * comcnattach() does by doing the minimal setup here.
+	 */
 
-	comcnattach(&armv7_a4x_bs_tag, reg.addr, comcnspeed, freq,
-	    comcnmode);
-	comdefaultrate = comcnspeed;
+	comconsiot = &armv7_a4x_bs_tag;
+	if (bus_space_map(comconsiot, reg.addr, reg.size, 0, &comconsioh))
+		return;
+
+	comconsrate = comcnspeed;
+	comconscflag = comcnmode;
+	cn_tab = &com_fdt_cons;
 }
 
 int
@@ -130,6 +144,7 @@ com_fdt_attach(struct device *parent, struct device *self, void *aux)
 	if (stdout_node == faa->fa_node) {
 		SET(sc->sc.sc_hwflags, COM_HW_CONSOLE);
 		SET(sc->sc.sc_swflags, COM_SW_SOFTCAR);
+		comconsfreq = sc->sc.sc_frequency;
 	}
 
 	if (bus_space_map(sc->sc.sc_iot, sc->sc.sc_iobase,
@@ -154,4 +169,21 @@ com_fdt_intr_designware(void *cookie)
 	bus_space_read_1(sc->sc_iot, sc->sc_ioh, com_usr);
 
 	return comintr(sc);
+}
+
+int
+com_fdt_cngetc(dev_t dev)
+{
+	return com_common_getc(comconsiot, comconsioh);
+}
+
+void
+com_fdt_cnputc(dev_t dev, int c)
+{
+	com_common_putc(comconsiot, comconsioh, c);
+}
+
+void
+com_fdt_cnpollc(dev_t dev, int on)
+{
 }
