@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.435 2016/08/17 03:24:12 procter Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.436 2016/08/20 08:34:30 procter Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1714,11 +1714,11 @@ void   *pf_pull_hdr(struct mbuf *, int, void *, int, u_short *, u_short *,
 #define PF_HI (true)
 #define PF_LO (!PF_HI)
 #define PF_ALGNMNT(off) (((off) % 2) == 0 ? PF_HI : PF_LO)
-void	pf_patch_8(struct pf_pdesc *, u_int8_t *, u_int8_t, bool);
-void	pf_patch_16(struct pf_pdesc *, u_int16_t *, u_int16_t);
-void	pf_patch_16_unaligned(struct pf_pdesc *, void *, u_int16_t, bool);
-void	pf_patch_32(struct pf_pdesc *, u_int32_t *, u_int32_t);
-void	pf_patch_32_unaligned(struct pf_pdesc *, void *, u_int32_t, bool);
+int	pf_patch_8(struct pf_pdesc *, u_int8_t *, u_int8_t, bool);
+int	pf_patch_16(struct pf_pdesc *, u_int16_t *, u_int16_t);
+int	pf_patch_16_unaligned(struct pf_pdesc *, void *, u_int16_t, bool);
+int	pf_patch_32(struct pf_pdesc *, u_int32_t *, u_int32_t);
+int	pf_patch_32_unaligned(struct pf_pdesc *, void *, u_int32_t, bool);
 int	pflog_packet(struct pf_pdesc *, u_int8_t, struct pf_rule *,
 	    struct pf_rule *, struct pf_ruleset *, struct pf_rule *);
 void	pf_send_deferred_syn(struct pf_state *);
