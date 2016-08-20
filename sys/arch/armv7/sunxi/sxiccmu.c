@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.6 2016/08/13 21:48:44 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.7 2016/08/20 19:34:44 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -94,6 +94,17 @@
 #define	CCMU_NAND_CLK_SRC_GATING_PLL6	(1 << 24)
 #define	CCMU_NAND_CLK_SRC_GATING_PLL5	(2 << 24)
 #define	CCMU_NAND_CLK_SRC_GATING_MASK	(3 << 24)
+
+#define CCMU_SDx_CLK(x)			(0x88 + (x) * 4)
+#define CCMU_SDx_CLK_GATING		(1U << 31)
+#define CCMU_SDx_CLK_SRC_GATING_OSC24M	(0 << 24)
+#define CCMU_SDx_CLK_SRC_GATING_PLL6	(1 << 24)
+#define CCMU_SDx_CLK_SRC_GATING_PLL5	(2 << 24)
+#define CCMU_SDx_CLK_SRC_GATING_MASK	(3 << 24)
+#define CCMU_SDx_CLK_FACTOR_N		(3 << 16)
+#define CCMU_SDx_CLK_FACTOR_N_SHIFT	16
+#define CCMU_SDx_CLK_FACTOR_M		(7 << 0)
+#define CCMU_SDx_CLK_FACTOR_M_SHIFT	0
 
 #define	CCMU_SATA_CLK			0xc8
 #define	CCMU_SATA_CLK_SRC_GATING	(1 << 24)
@@ -320,4 +331,33 @@ sxiccmu_disablemodule(int mod)
 	default:
 		break;
 	}
+}
+
+void
+sxiccmu_set_sd_clock(int mod, int freq)
+{
+	struct sxiccmu_softc *sc = sxiccmu_cd.cd_devs[0];
+	uint32_t clk;
+	int m, n;
+
+	if (freq <= 400000) {
+		n = 2;
+		if (freq > 0)
+			m = ((24000000 / (1 << n)) / freq) - 1;
+		else
+			m = 15;
+	} else {
+		n = 0;
+		m = 0;
+	}
+	
+	clk = SXIREAD4(sc, CCMU_SDx_CLK(mod - CCMU_SDMMC0));
+	clk &= ~CCMU_SDx_CLK_SRC_GATING_MASK;
+	clk |= CCMU_SDx_CLK_SRC_GATING_OSC24M;
+	clk &= ~CCMU_SDx_CLK_FACTOR_N;
+	clk |= n << CCMU_SDx_CLK_FACTOR_N_SHIFT;
+	clk &= ~CCMU_SDx_CLK_FACTOR_M;
+	clk |= m << CCMU_SDx_CLK_FACTOR_M_SHIFT;
+	clk |= CCMU_SDx_CLK_GATING;
+	SXIWRITE4(sc, CCMU_SDx_CLK(mod - CCMU_SDMMC0), clk);
 }
