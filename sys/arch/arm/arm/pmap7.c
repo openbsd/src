@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.42 2016/08/19 17:31:04 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.43 2016/08/20 12:36:59 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1165,9 +1165,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			nflags |= PVF_REF;
 			npte |= L2_V7_AF;
 
-			if ((prot & PROT_WRITE) != 0 &&
-			    ((flags & PROT_WRITE) != 0 ||
-			     (pg->mdpage.pvh_attrs & PVF_MOD) != 0)) {
+			if ((flags & PROT_WRITE) ||
+			     (pg->mdpage.pvh_attrs & PVF_MOD)) {
 				/*
 				 * This is a writable mapping, and the
 				 * page's mod state indicates it has
@@ -1175,6 +1174,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				 * writable from the outset.
 				 */
 				nflags |= PVF_MOD;
+			} else {
+				prot &= ~PROT_WRITE;
 			}
 		} else {
 			/*
@@ -1241,8 +1242,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	/*
 	 * Make sure userland mappings get the right permissions
 	 */
-	npte |= L2_S_PROT(pm == pmap_kernel() ?  PTE_KERNEL : PTE_USER,
-	    prot & ~PROT_WRITE);
+	npte |= L2_S_PROT(pm == pmap_kernel() ?  PTE_KERNEL : PTE_USER, prot);
 
 	/*
 	 * Keep the stats up to date
