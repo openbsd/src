@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc2822.c,v 1.7 2016/02/04 22:35:17 eric Exp $	*/
+/*	$OpenBSD: rfc2822.c,v 1.8 2016/08/20 20:47:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -138,6 +138,7 @@ rfc2822_parser_init(struct rfc2822_parser *rp)
 	TAILQ_INIT(&rp->header.lines);
 	rfc2822_header_default_callback(rp, hdr_dflt_cb, NULL);
 	rfc2822_body_callback(rp, body_dflt_cb, NULL);
+	rfc2822_parser_reset(rp);
 }
 
 void
