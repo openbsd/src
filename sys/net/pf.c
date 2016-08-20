@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.980 2016/08/17 03:24:11 procter Exp $ */
+/*	$OpenBSD: pf.c,v 1.981 2016/08/20 08:31:36 procter Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -154,8 +154,6 @@ int			 pf_check_tcp_cksum(struct mbuf *, int, int,
 			    sa_family_t);
 static __inline void	 pf_cksum_fixup(u_int16_t *, u_int16_t, u_int16_t,
 			    u_int8_t);
-void			 pf_translate_ap(struct pf_pdesc *, struct pf_addr *,
-			    u_int16_t *, struct pf_addr *, u_int16_t);
 void			 pf_cksum_fixup_a(u_int16_t *, const struct pf_addr *,
 			    const struct pf_addr *, sa_family_t, u_int8_t);
 int			 pf_modulate_sack(struct pf_pdesc *,
@@ -1907,16 +1905,6 @@ pf_patch_32(struct pf_pdesc *pd, u_int32_t *f, u_int32_t v)
 	pf_cksum_fixup(pc, *f / (1 << 16), v / (1 << 16), pd->proto);
 	pf_cksum_fixup(pc, *f % (1 << 16), v % (1 << 16), pd->proto);
 	*f = v;
-}
-
-void
-pf_translate_ap(struct pf_pdesc *pd, struct pf_addr *a, u_int16_t *p,
-    struct pf_addr *an, u_int16_t pn)
-{
-	if (pd->af == pd->naf)
-		pf_translate_a(pd, a, an);
-	if (p != NULL)
-		pf_patch_16(pd, p, pn);
 }
 
 void
@@ -4009,12 +3997,16 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 	case IPPROTO_TCP:
 		if (afto || PF_ANEQ(saddr, pd->src, pd->af) ||
 		    *pd->sport != sport) {
-			pf_translate_ap(pd, pd->src, pd->sport, saddr, sport);
+			if (pd->af == pd->naf)
+				pf_translate_a(pd, pd->src, saddr);
+			pf_patch_16(pd, pd->sport, sport);
 			rewrite = 1;
 		}
 		if (afto || PF_ANEQ(daddr, pd->dst, pd->af) ||
 		    *pd->dport != dport) {
-			pf_translate_ap(pd, pd->dst, pd->dport, daddr, dport);
+			if (pd->af == pd->naf)
+				pf_translate_a(pd, pd->dst, daddr);
+			pf_patch_16(pd, pd->dport, dport);
 			rewrite = 1;
 		}
 		break;
@@ -4022,12 +4014,16 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 	case IPPROTO_UDP:
 		if (afto || PF_ANEQ(saddr, pd->src, pd->af) ||
 		    *pd->sport != sport) {
-			pf_translate_ap(pd, pd->src, pd->sport, saddr, sport);
+			if (pd->af == pd->naf)
+				pf_translate_a(pd, pd->src, saddr);
+			pf_patch_16(pd, pd->sport, sport);
 			rewrite = 1;
 		}
 		if (afto || PF_ANEQ(daddr, pd->dst, pd->af) ||
 		    *pd->dport != dport) {
-			pf_translate_ap(pd, pd->dst, pd->dport, daddr, dport);
+			if (pd->af == pd->naf)
+				pf_translate_a(pd, pd->dst, daddr);
+			pf_patch_16(pd, pd->dport, dport);
 			rewrite = 1;
 		}
 		break;
@@ -4078,11 +4074,11 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 			rewrite = 1;
 		} else {
 			if (PF_ANEQ(saddr, pd->src, pd->af)) {
-				pf_translate_ap(pd, pd->src, NULL, saddr, 0);
+				pf_translate_a(pd, pd->src, saddr);
 				rewrite = 1;
 			}
 			if (PF_ANEQ(daddr, pd->dst, pd->af)) {
-				pf_translate_ap(pd, pd->dst, NULL, daddr, 0);
+				pf_translate_a(pd, pd->dst, daddr);
 				rewrite = 1;
 			}
 		}
@@ -4113,11 +4109,11 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 #ifdef INET6
 		case AF_INET6:
 			if (!afto && PF_ANEQ(saddr, pd->src, pd->af)) {
-				pf_translate_ap(pd, pd->src, NULL, saddr, 0);
+				pf_translate_a(pd, pd->src, saddr);
 				rewrite = 1;
 			}
 			if (!afto && PF_ANEQ(daddr, pd->dst, pd->af)) {
-				pf_translate_ap(pd, pd->dst, NULL, daddr, 0);
+				pf_translate_a(pd, pd->dst, daddr);
 				rewrite = 1;
 			}
 			break;
@@ -4738,18 +4734,24 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 #endif /* INET6 */
 
 		if (afto || PF_ANEQ(pd->src, &nk->addr[sidx], pd->af) ||
-		    nk->port[sidx] != pd->osport)
-			pf_translate_ap(pd, pd->src, pd->sport,
-			    &nk->addr[sidx], nk->port[sidx]);
+		    nk->port[sidx] != pd->osport) {
+			if (pd->af == pd->naf)
+				pf_translate_a(pd, pd->src, &nk->addr[sidx]);
+			if (pd->sport != NULL)
+				pf_patch_16(pd, pd->sport, nk->port[sidx]);
+		}
 
 		if (afto || PF_ANEQ(pd->dst, &nk->addr[didx], pd->af) ||
 		    pd->rdomain != nk->rdomain)
 			pd->destchg = 1;
 
 		if (afto || PF_ANEQ(pd->dst, &nk->addr[didx], pd->af) ||
-		    nk->port[didx] != pd->odport)
-			pf_translate_ap(pd, pd->dst, pd->dport,
-			    &nk->addr[didx], nk->port[didx]);
+		    nk->port[didx] != pd->odport) {
+			if (pd->af == pd->naf)
+				pf_translate_a(pd, pd->dst, &nk->addr[didx]);
+			if (pd->dport != NULL)
+				pf_patch_16(pd, pd->dport, nk->port[didx]);
+		}
 
 		pd->m->m_pkthdr.ph_rtableid = nk->rdomain;
 		copyback = 1;
@@ -4868,7 +4870,13 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 			sidx = afto ? pd->didx : pd->sidx;
 			didx = afto ? pd->sidx : pd->didx;
 			iidx = afto ? !iidx : iidx;
-
+#ifdef	INET6
+			if (afto) {
+				PF_ACPY(&pd->nsaddr, &nk->addr[sidx], nk->af);
+				PF_ACPY(&pd->ndaddr, &nk->addr[didx], nk->af);
+				pd->naf = nk->af;
+			}
+#endif /* INET6 */
 			if (pd->rdomain != nk->rdomain)
 				pd->destchg = 1;
 			pd->m->m_pkthdr.ph_rtableid = nk->rdomain;
@@ -4913,14 +4921,15 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 					pd->proto = IPPROTO_ICMP;
 				}
 				if (!afto && PF_ANEQ(pd->src,
-				    &nk->addr[sidx], AF_INET6))
-					pf_translate_ap(pd, pd->src, NULL,
-					    &nk->addr[sidx], 0);
+				    &nk->addr[sidx], AF_INET6)) {
+					pf_translate_a(pd,
+					    pd->src, &nk->addr[sidx]);
+				}
 
 				if (!afto && PF_ANEQ(pd->dst,
 				    &nk->addr[didx], AF_INET6)) {
-					pf_translate_ap(pd, pd->dst, NULL,
-					    &nk->addr[didx], 0);
+					pf_translate_a(pd,
+					    pd->dst, &nk->addr[didx]);
 					pd->destchg = 1;
 				}
 
@@ -4938,12 +4947,8 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 #endif /* INET6 */
 			}
 #ifdef	INET6
-			if (afto) {
-				PF_ACPY(&pd->nsaddr, &nk->addr[sidx], nk->af);
-				PF_ACPY(&pd->ndaddr, &nk->addr[didx], nk->af);
-				pd->naf = nk->af;
+			if (afto)
 				return (PF_AFRT);
-			}
 #endif /* INET6 */
 		}
 	} else {
@@ -5150,14 +5155,12 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 					    pd, &pd2, &nk->addr[sidx],
 					    &nk->addr[didx], pd->af, nk->af))
 						return (PF_DROP);
-					pf_translate_ap(pd,
-					    pd2.src, &th.th_sport,
-					    &nk->addr[pd2.sidx],
-					    nk->port[sidx]);
-					pf_translate_ap(pd,
-					    pd2.dst, &th.th_dport,
-					    &nk->addr[pd2.didx],
-					    nk->port[didx]);
+
+					pf_patch_16(pd,
+					    &th.th_sport, nk->port[sidx]);
+					pf_patch_16(pd,
+					    &th.th_dport, nk->port[didx]);
+
 					m_copyback(pd2.m, pd2.off, 8, &th,
 					    M_NOWAIT);
 					return (PF_AFRT);
@@ -5268,14 +5271,12 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 					    pd, &pd2, &nk->addr[sidx],
 					    &nk->addr[didx], pd->af, nk->af))
 						return (PF_DROP);
-					pf_translate_ap(pd,
-					    pd2.src, &uh.uh_sport,
-					    &nk->addr[pd2.sidx],
-					    nk->port[sidx]);
-					pf_translate_ap(pd,
-					    pd2.dst, &uh.uh_dport,
-					    &nk->addr[pd2.didx],
-					    nk->port[didx]);
+
+					pf_patch_16(pd,
+					    &uh.uh_sport, nk->port[sidx]);
+					pf_patch_16(pd,
+					    &uh.uh_dport, nk->port[didx]);
+
 					m_copyback(pd2.m, pd2.off, sizeof(uh),
 					    &uh, M_NOWAIT);
 					return (PF_AFRT);
