@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.45 2016/08/20 21:07:07 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.46 2016/08/20 21:08:16 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1166,7 +1166,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			npte |= L2_V7_AF;
 
 			if ((flags & PROT_WRITE) ||
-			     (pg->mdpage.pvh_attrs & PVF_MOD)) {
+			    (pg->mdpage.pvh_attrs & PVF_MOD)) {
 				/*
 				 * This is a writable mapping, and the
 				 * page's mod state indicates it has
