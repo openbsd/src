@@ -1,4 +1,4 @@
-.Dd December 18, 2014
+.Dd August 20, 2016
 .Dt BL-BREAK 1
 .Os OpenBSD
 .Sh NAME
@@ -55,6 +55,16 @@ first line after table
 second line after table
 .El
 after list
+.Sh DIAGNOSTICS
+.Bl -column column
+.It column
+.Bd -ragged -offset indent
+inside display
+.El
+.Ta stray tab
+after stray tab
+.Ed
+after display
 .Sh CAVEATS
 .Bl -hang
 .It before broken block Bo inside both

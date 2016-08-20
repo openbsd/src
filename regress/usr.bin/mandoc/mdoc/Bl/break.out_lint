@@ -7,10 +7,12 @@ mandoc: break.in:42:2: ERROR: skipping item outside list: It
 mandoc: break.in:53:2: WARNING: blocks badly nested: Bl breaks Bd
 mandoc: break.in:56:2: WARNING: blocks badly nested: Bl breaks Bd
 mandoc: break.in:58:2: ERROR: inserting missing end of block: Sh breaks Bd
-mandoc: break.in:61:2: WARNING: blocks badly nested: Bl breaks Bo
-mandoc: break.in:63:2: ERROR: inserting missing end of block: Sh breaks Bo
-mandoc: break.in:66:2: WARNING: blocks badly nested: Bl breaks Bo
-mandoc: break.in:65:25: ERROR: appending missing end of block: Bo
-mandoc: break.in:64:2: ERROR: appending missing end of block: Bl
-mandoc: break.in:65:2: WARNING: empty list item: Bl -enum It
-mandoc: break.in:65:2: ERROR: skipping all arguments: It before broken block
+mandoc: break.in:63:2: WARNING: blocks badly nested: Bl breaks Bd
+mandoc: break.in:64:2: ERROR: skipping column outside column list: Ta
+mandoc: break.in:71:2: WARNING: blocks badly nested: Bl breaks Bo
+mandoc: break.in:73:2: ERROR: inserting missing end of block: Sh breaks Bo
+mandoc: break.in:76:2: WARNING: blocks badly nested: Bl breaks Bo
+mandoc: break.in:75:25: ERROR: appending missing end of block: Bo
+mandoc: break.in:74:2: ERROR: appending missing end of block: Bl
+mandoc: break.in:75:2: WARNING: empty list item: Bl -enum It
+mandoc: break.in:75:2: ERROR: skipping all arguments: It before broken block

@@ -33,10 +33,17 @@ EEXXAAMMPPLLEESS
                       table after list
 
 
+DDIIAAGGNNOOSSTTIICCSS
+     column
+
+           inside display after stray tab
+
+     after display
+
 CCAAVVEEAATTSS
      before broken block [inside both after list]
 
 BBUUGGSS
      1.
 
-OpenBSD                        December 18, 2014                       OpenBSD
+OpenBSD                         August 20, 2016                        OpenBSD

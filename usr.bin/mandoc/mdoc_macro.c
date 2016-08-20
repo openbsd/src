@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.163 2016/08/13 09:14:56 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.164 2016/08/20 15:58:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1457,7 +1457,7 @@ phrase_ta(MACRO_PROT_ARGS)
 			continue;
 		if (n->tok == MDOC_It && n->type == ROFFT_BODY)
 			body = n;
-		if (n->tok == MDOC_Bl)
+		if (n->tok == MDOC_Bl && n->end == ENDBODY_NOT)
 			break;
 	}
 
