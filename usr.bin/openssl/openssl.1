@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.55 2016/08/19 08:46:38 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.56 2016/08/20 07:56:09 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 19 2016 $
+.Dd $Mdocdate: August 20 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -2420,9 +2420,6 @@ Alternatively, the responder certificate itself can be explicitly trusted
 with the
 .Fl VAfile
 option.
-.\"
-.\" PASSWD
-.\"
 .Sh PASSWD
 .nr nS 1
 .Nm "openssl passwd"
@@ -2439,26 +2436,7 @@ option.
 .Pp
 The
 .Nm passwd
-command computes the hash of a password typed at run-time
-or the hash of each password in a list.
-The password list is taken from the named
-.Ar file
-for option
-.Fl in ,
-from stdin for option
-.Fl stdin ,
-or from the command line, or from the terminal otherwise.
-The
-.Ux
-standard algorithm
-.Em crypt
-and the MD5-based
-.Bx
-password algorithm
-.Em 1
-and its Apache variant
-.Em apr1
-are available.
+command computes the hash of a password.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -2466,19 +2444,20 @@ The options are as follows:
 Use the MD5 based
 .Bx
 password algorithm
-.Em 1 .
+.Qq 1 .
 .It Fl apr1
 Use the
-.Em apr1
+.Qq apr1
 algorithm
-.Pq Apache variant of the
+.Po
+Apache variant of the
 .Bx
-algorithm.
+algorithm
+.Pc .
 .It Fl crypt
 Use the
-.Em crypt
-algorithm
-.Pq default .
+.Qq crypt
+algorithm (the default).
 .It Fl in Ar file
 Read passwords from
 .Ar file .
@@ -2492,29 +2471,16 @@ This only makes sense in conjunction with the
 .Fl table
 option.
 .It Fl salt Ar string
-Use the specified
-.Ar salt .
+Use the salt specified by
+.Ar string .
 When reading a password from the terminal, this implies
 .Fl noverify .
 .It Fl stdin
-Read passwords from
-.Em stdin .
+Read passwords from standard input.
 .It Fl table
 In the output list, prepend the cleartext password and a TAB character
 to each password hash.
 .El
-.Sh PASSWD EXAMPLES
-.Dl $ openssl passwd -crypt -salt xx password
-prints
-.Qq xxj31ZMTZzkVA .
-.Pp
-.Dl $ openssl passwd -1 -salt xxxxxxxx password
-prints
-.Qq $1$xxxxxxxx$UYCIxa628.9qXjpQCjM4a. .
-.Pp
-.Dl $ openssl passwd -apr1 -salt xxxxxxxx password
-prints
-.Qq $apr1$xxxxxxxx$dxHfLAsjHkDRmG83UXe8K0 .
 .\"
 .\" PKCS7
 .\"
