@@ -1,4 +1,4 @@
-/*	$OpenBSD: platform.c,v 1.12 2016/08/17 13:05:02 patrick Exp $	*/
+/*	$OpenBSD: platform.c,v 1.13 2016/08/20 15:44:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -40,7 +40,6 @@ void	exuart_init_cons(void);
 void	imxuart_init_cons(void);
 void	com_fdt_init_cons(void);
 void	pl011_init_cons(void);
-void	bcmmuart_init_cons(void);
 
 struct armv7_platform *imx_platform_match(void);
 struct armv7_platform *omap_platform_match(void);
@@ -107,7 +106,6 @@ platform_init_cons(void)
 	imxuart_init_cons();
 	com_fdt_init_cons();
 	pl011_init_cons();
-	bcmmuart_init_cons();
 }
 
 void

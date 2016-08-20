@@ -1,4 +1,4 @@
-/* $OpenBSD: com_fdt.c,v 1.7 2016/08/20 10:41:54 kettenis Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.8 2016/08/20 15:44:04 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -71,16 +71,17 @@ com_fdt_init_cons(void)
 	struct fdt_reg reg;
 	void *node;
 
-	if ((node = fdt_find_cons("ti,omap3-uart")) == NULL &&
-	    (node = fdt_find_cons("ti,omap4-uart")) == NULL &&
-	    (node = fdt_find_cons("snps,dw-apb-uart")) == NULL)
+	if ((node = fdt_find_cons("brcm,bcm2835-aux-uart")) == NULL &&
+	    (node = fdt_find_cons("snps,dw-apb-uart")) == NULL &&
+	    (node = fdt_find_cons("ti,omap3-uart")) == NULL &&
+	    (node = fdt_find_cons("ti,omap4-uart")) == NULL)
 			return;
 	if (fdt_get_reg(node, 0, &reg))
 		return;
 
 	/*
 	 * Figuring out the clock frequency is rather complicated as
-	 * om many SoCs this requires traversing a fair amount of the
+	 * on many SoCs this requires traversing a fair amount of the
 	 * clock tree.  Instead we rely on the firmware to set up the
 	 * console for us and bypass the cominit() call that
 	 * comcnattach() does by doing the minimal setup here.
@@ -100,9 +101,10 @@ com_fdt_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return (OF_is_compatible(faa->fa_node, "ti,omap3-uart") ||
-	    OF_is_compatible(faa->fa_node, "ti,omap4-uart") ||
-	    OF_is_compatible(faa->fa_node, "snps,dw-apb-uart"));
+	return (OF_is_compatible(faa->fa_node, "brcm,bcm2835-aux-uart") ||
+	    OF_is_compatible(faa->fa_node, "snps,dw-apb-uart") ||
+	    OF_is_compatible(faa->fa_node, "ti,omap3-uart") ||
+	    OF_is_compatible(faa->fa_node, "ti,omap4-uart"));
 }
 
 void
@@ -126,12 +128,19 @@ com_fdt_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc.sc_iot = &sc->sc_iot;
 	sc->sc.sc_iobase = faa->fa_reg[0].addr;
-	sc->sc.sc_frequency = 48000000;
-	sc->sc.sc_uarttype = COM_UART_TI16750;
+	sc->sc.sc_uarttype = COM_UART_16550;
+	sc->sc.sc_frequency = COM_FREQ;
 
-	if (OF_is_compatible(faa->fa_node, "snps,dw-apb-uart")) {
-		sc->sc.sc_uarttype = COM_UART_16550;
+	if (OF_is_compatible(faa->fa_node, "snps,dw-apb-uart"))
 		intr = com_fdt_intr_designware;
+
+	if (OF_is_compatible(faa->fa_node, "brcm,bcm2835-aux-uart"))
+		sc->sc.sc_frequency = 500000000;
+
+	if (OF_is_compatible(faa->fa_node, "ti,omap3-uart") ||
+	    OF_is_compatible(faa->fa_node, "ti,omap4-uart")) {
+		sc->sc.sc_uarttype = COM_UART_TI16750;
+		sc->sc.sc_frequency = 48000000;
 	}
 
 	if ((node = OF_finddevice("/")) != 0 &&

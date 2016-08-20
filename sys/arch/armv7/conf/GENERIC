@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.49 2016/08/20 13:24:38 patrick Exp $
+#	$OpenBSD: GENERIC,v 1.50 2016/08/20 15:44:04 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -128,7 +128,6 @@ exuart*		at exynos?
 
 # Raspberry Pi 2/3
 bcmintc*	at fdt?
-bcmmuart*	at fdt?
 dwctwo*		at fdt?
 usb*		at dwctwo?
 
