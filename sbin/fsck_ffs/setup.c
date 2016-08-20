@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.60 2015/11/24 21:42:54 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.61 2016/08/20 15:04:21 tb Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -103,7 +103,8 @@ setup(char *dev)
 		setcdevname(rdevname, dev, preen);
 
 		if (!hotroot())
-			if (pledge("stdio rpath wpath getpw disklabel", NULL) == -1)
+			if (pledge("stdio rpath wpath getpw tty disklabel",
+			    NULL) == -1)
 				err(1, "pledge");
 	}
 	if (fstat(fsreadfd, &statb) < 0) {
@@ -146,8 +147,13 @@ setup(char *dev)
 
 	if (!hotroot()) {
 #ifndef SMALL
-		if (pledge("stdio getpw", NULL) == -1)
-			err(1, "pledge");
+		if (strcmp("fsdb", getprogname()) == 0) {
+			if (pledge("stdio rpath getpw tty", NULL) == -1)
+				err(1, "pledge");
+		} else {
+			if (pledge("stdio getpw", NULL) == -1)
+				err(1, "pledge");
+		}
 #else
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
