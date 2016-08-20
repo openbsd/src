@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.80 2016/08/18 16:23:06 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.81 2016/08/20 20:18:42 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -67,6 +67,7 @@
  * FTP User Program -- Misc support routines
  */
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 #include <sys/time.h>
 #include <arpa/ftp.h>
 
@@ -1070,35 +1071,25 @@ controlediting(void)
 #endif /* !SMALL */
 
 /*
- * Wrapper for connect(2) that restarts the syscall when
- * interrupted and operates synchronously.
+ * Wait for an asynchronous connect(2) attempt to finish.
  */
 int
-connect_sync(int s, const struct sockaddr *name, socklen_t namelen)
+connect_wait(int s)
 {
 	struct pollfd pfd[1];
 	int error = 0;
 	socklen_t len = sizeof(error);
 
-	if (connect(s, name, namelen) < 0) {
-		if (errno != EINTR)
-			return -1;
-	}
-
-	/* An interrupted connect(2) continues asyncronously. */
 	pfd[0].fd = s;
 	pfd[0].events = POLLOUT;
-	for (;;) {
-		if (poll(pfd, 1, -1) == -1) {
-			if (errno != EINTR)
-				return -1;
-			continue;
-		}
-		if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &len) < 0)
-			return -1;
-		if (error != 0)
-			errno = error;
-		break;
+
+	if (poll(pfd, 1, -1) == -1)
+		return -1;
+	if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &len) < 0)
+		return -1;
+	if (error != 0) {
+		errno = error;
+		return -1;
 	}
-	return (error ? -1 : 0);
+	return 0;
 }
