@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.44 2016/08/17 13:05:02 patrick Exp $
+#	$OpenBSD: RAMDISK,v 1.45 2016/08/20 13:24:38 patrick Exp $
 
 machine		armv7 arm
 
@@ -91,7 +91,6 @@ sxiccmu*	at sunxi?		# Clock Control Module/Unit
 sxitimer*	at sunxi?
 sxidog*		at fdt?			# watchdog timer
 sxirtc*		at fdt?			# Real Time Clock
-#sxiuart*	at fdt?			# onboard UARTs
 sxie*		at fdt?
 dwge*		at fdt?
 sxiahci*	at fdt?			# AHCI/SATA

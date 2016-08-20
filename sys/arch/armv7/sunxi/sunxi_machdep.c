@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunxi_machdep.c,v 1.11 2016/06/08 15:27:05 jsg Exp $	*/
+/*	$OpenBSD: sunxi_machdep.c,v 1.12 2016/08/20 13:24:38 patrick Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -32,7 +32,6 @@
 #include <armv7/armv7/armv7var.h>
 #include <armv7/armv7/armv7_machdep.h>
 
-extern int sxiuartcnattach(bus_space_tag_t, bus_addr_t, int, long, tcflag_t);
 extern void sxidog_reset(void);
 extern struct board_dev *sunxi_board_devs(void);
 extern void sunxi_board_init(void);
