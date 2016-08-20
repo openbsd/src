@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.76 2016/08/02 17:00:09 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.77 2016/08/20 15:10:18 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -1294,6 +1294,6 @@ ra_timer_update(struct rainfo *rai)
 	tm->tv_sec = interval;
 	tm->tv_usec = 0;
 
-	log_debug("RA timer on %s is set to %lld:%ld", rai->ifname,
+	log_debug("RA timer on %s set to %lld.%lds", rai->ifname,
 	    (long long)tm->tv_sec, tm->tv_usec);
 }
