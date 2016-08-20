@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.21 2013/06/13 05:13:12 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.22 2016/08/20 19:31:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -56,10 +56,6 @@
 #define	USPACE_ALIGN	0			/* u-area alignment 0-none */
 
 #define	NMBCLUSTERS	4096			/* map size, max cluster allocation */
-
-#ifndef	MSGBUFSIZE
-#define	MSGBUFSIZE	(1 * PAGE_SIZE)		/* default message buffer size */
-#endif
 
 /*
  * Maximum size of the kernel malloc arena in PAGE_SIZE-sized
