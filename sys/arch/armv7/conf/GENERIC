@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.50 2016/08/20 15:44:04 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.51 2016/08/20 19:44:02 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -96,6 +96,8 @@ sxirtc*		at fdt?			# Real Time Clock
 sxie*		at fdt?
 dwge*		at fdt?
 sxiahci*	at fdt?			# AHCI/SATA
+sximmc*		at fdt?			# SD/MMC card controller
+sdmmc*		at sximmc?		# SD/MMC bus
 ehci*		at fdt?			# EHCI (shim)
 usb*		at ehci?	#flags 0x1
 #ohci*		at sunxi?
