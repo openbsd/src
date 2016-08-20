@@ -1,0 +1,12 @@
+.Dd August 20, 2016
+.Dt BREAK-NOTOPEN 1
+.Os OpenBSD
+.Sh NAME
+.Nm break-notopen
+.Nd mismatching end macro inside two open blocks
+.Sh DESCRIPTION
+.Ao ao
+.Bo bo pc
+.Pc bc
+.Bc ac
+.Ac tail

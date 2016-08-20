@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.164 2016/08/20 15:58:16 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.165 2016/08/20 17:58:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2016 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -547,13 +547,24 @@ blk_exp_close(MACRO_PROT_ARGS)
 		break;
 	}
 
+	/* Search backwards for the beginning of our own body. */
+
+	atok = rew_alt(tok);
+	body = NULL;
+	for (n = mdoc->last; n; n = n->parent) {
+		if (n->flags & MDOC_ENDED || n->tok != atok ||
+		    n->type != ROFFT_BODY || n->end != ENDBODY_NOT)
+			continue;
+		body = n;
+		break;
+	}
+
 	/*
 	 * Search backwards for beginnings of blocks,
 	 * both of our own and of pending sub-blocks.
 	 */
 
-	atok = rew_alt(tok);
-	body = endbody = itblk = later = NULL;
+	endbody = itblk = later = NULL;
 	for (n = mdoc->last; n; n = n->parent) {
 		if (n->flags & MDOC_ENDED) {
 			if ( ! (n->flags & MDOC_VALID))
@@ -561,15 +572,15 @@ blk_exp_close(MACRO_PROT_ARGS)
 			continue;
 		}
 
-		/* Remember the start of our own body. */
+		/*
+		 * Mismatching end macros can never break anything,
+		 * SYNOPSIS name blocks can never be broken,
+		 * and we only care about the breaking of BLOCKs.
+		 */
 
-		if (n->type == ROFFT_BODY && atok == n->tok) {
-			if (n->end == ENDBODY_NOT)
-				body = n;
-			continue;
-		}
-
-		if (n->type != ROFFT_BLOCK || n->tok == MDOC_Nm)
+		if (body == NULL ||
+		    n->tok == MDOC_Nm ||
+		    n->type != ROFFT_BLOCK)
 			continue;
 
 		if (n->tok == MDOC_It) {
@@ -637,8 +648,6 @@ blk_exp_close(MACRO_PROT_ARGS)
 	if (body == NULL) {
 		mandoc_msg(MANDOCERR_BLK_NOTOPEN, mdoc->parse,
 		    line, ppos, mdoc_macronames[tok]);
-		if (later != NULL)
-			later->flags &= ~MDOC_BROKEN;
 		if (maxargs && endbody == NULL) {
 			/*
 			 * Stray .Ec without previous .Eo:

@@ -1,0 +1,9 @@
+BREAK-NOTOPEN(1)            General Commands Manual           BREAK-NOTOPEN(1)
+
+NNAAMMEE
+     bbrreeaakk--nnoottooppeenn - mismatching end macro inside two open blocks
+
+DDEESSCCRRIIPPTTIIOONN
+     <ao [bo pc bc] ac> tail
+
+OpenBSD                         August 20, 2016                        OpenBSD
