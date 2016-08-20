@@ -1,4 +1,4 @@
-/* $OpenBSD: sximmc.c,v 1.1 2016/08/15 21:03:27 kettenis Exp $ */
+/* $OpenBSD: sximmc.c,v 1.2 2016/08/20 19:41:14 kettenis Exp $ */
 /* $NetBSD: awin_mmc.c,v 1.23 2015/11/14 10:32:40 bouyer Exp $ */
 
 /*-
@@ -40,12 +40,15 @@
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmc_ioreg.h>
 
+#include <armv7/sunxi/sunxireg.h>
 #include <armv7/sunxi/sxiccmuvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
+
+//#define SXIMMC_DEBUG
 
 #define SXIMMC_GCTRL			0x0000
 #define SXIMMC_CLKCR			0x0004
@@ -234,6 +237,7 @@ struct sximmc_softc {
 	bus_space_handle_t sc_clk_bsh;
 	bus_dma_tag_t sc_dmat;
 	int sc_node;
+	int sc_unit;
 
 	int sc_use_dma;
 
@@ -344,6 +348,7 @@ sximmc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	sc->sc_node = faa->fa_node;
+	sc->sc_unit = (faa->fa_reg[0].addr - SDMMC0_ADDR) / SDMMCx_SIZE;
 	sc->sc_bst = faa->fa_iot;
 	sc->sc_dmat = faa->fa_dmat;
 
@@ -355,12 +360,12 @@ sximmc_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_use_dma = 1;
 
-	printf("\n");
+	printf(": unit %d\n", sc->sc_unit);
 
 	pinctrl_byname(faa->fa_node, "default");
 
 	/* enable clock */
-	sxiccmu_enablemodule(CCMU_SDMMC0);
+	sxiccmu_enablemodule(CCMU_SDMMC0 + sc->sc_unit);
 	delay(5000);
 
 #if 0
@@ -447,7 +452,9 @@ sximmc_attach(struct device *parent, struct device *self, void *aux)
 	saa.saa_clkmax = awin_chip_id() == AWIN_CHIP_ID_A80 ? 48000 : 50000;
 #endif
 
+#if 0
 	saa.caps = SMC_CAPS_SD_HIGHSPEED | SMC_CAPS_MMC_HIGHSPEED;
+#endif
 
 	width = OF_getpropint(sc->sc_node, "bus-width", 1);
 	if (width >= 8)
@@ -524,6 +531,8 @@ sximmc_set_clock(struct sximmc_softc *sc, u_int freq)
 	delay(20000);
 #endif
 
+	sxiccmu_set_sd_clock(CCMU_SDMMC0 + sc->sc_unit, freq * 1000);
+	delay(20000);
 	return 0;
 }
 
@@ -653,7 +662,11 @@ sximmc_host_ocr(sdmmc_chipset_handle_t sch)
 int
 sximmc_host_maxblklen(sdmmc_chipset_handle_t sch)
 {
+#if 0
 	return 8192;
+#else
+	return 512;
+#endif
 }
 
 int
@@ -922,23 +935,22 @@ sximmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		cmdval |= SXIMMC_CMD_CHECK_RSP_CRC;
 
 	if (cmd->c_datalen > 0) {
-		unsigned int nblks;
+		uint16_t blksize;
+		uint16_t blkcount;
 
 		cmdval |= SXIMMC_CMD_DATA_EXP | SXIMMC_CMD_WAIT_PRE_OVER;
 		if (!ISSET(cmd->c_flags, SCF_CMD_READ)) {
 			cmdval |= SXIMMC_CMD_WRITE;
 		}
 
-		nblks = cmd->c_datalen / cmd->c_blklen;
-		if (nblks == 0 || (cmd->c_datalen % cmd->c_blklen) != 0)
-			++nblks;
-
-		if (nblks > 1) {
+		blksize = MIN(cmd->c_datalen, cmd->c_blklen);
+		blkcount = cmd->c_datalen / blksize;
+		if (blkcount > 1) {
 			cmdval |= SXIMMC_CMD_SEND_AUTO_STOP;
 		}
 
-		MMC_WRITE(sc, SXIMMC_BLKSZ, cmd->c_blklen);
-		MMC_WRITE(sc, SXIMMC_BYTECNT, nblks * cmd->c_blklen);
+		MMC_WRITE(sc, SXIMMC_BLKSZ, blksize);
+		MMC_WRITE(sc, SXIMMC_BYTECNT, blkcount * blksize);
 	}
 
 	sc->sc_intr_rint = 0;
