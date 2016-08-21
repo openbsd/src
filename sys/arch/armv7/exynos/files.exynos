@@ -1,4 +1,4 @@
-#	$OpenBSD: files.exynos,v 1.4 2016/05/02 08:15:55 patrick Exp $
+#	$OpenBSD: files.exynos,v 1.5 2016/08/21 06:36:23 jsg Exp $
 
 define exynos {}
 device exynos: exynos
@@ -10,7 +10,7 @@ file	arch/armv7/exynos/exynos5.c		exynos
 
 # serial ports
 device exuart
-attach	exuart at exynos
+attach	exuart at fdt
 file	arch/armv7/exynos/exuart.c		exuart
 
 device exdisplay: wsemuldisplaydev, rasops16

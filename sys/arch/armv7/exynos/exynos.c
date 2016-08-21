@@ -1,4 +1,4 @@
-/* $OpenBSD: exynos.c,v 1.12 2016/06/04 18:09:16 jsg Exp $ */
+/* $OpenBSD: exynos.c,v 1.13 2016/08/21 06:36:23 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -43,7 +43,6 @@ struct board_dev chromebook_devs[] = {
 	{ "exclock",	0 },
 	{ "expower",	0 },
 	{ "exsysreg",	0 },
-//	{ "exuart",	1 },
 	{ "exgpio",	0 },
 	{ "exgpio",	1 },
 	{ "exgpio",	2 },
@@ -65,10 +64,6 @@ struct board_dev nuri_devs[] = {
 //	{ "exclock",	0 },
 	{ "expower",	0 },
 	{ "exsysreg",	0 },
-//	{ "exuart",	0 },
-	{ "exuart",	1 },
-	{ "exuart",	2 },
-	{ "exuart",	3 },
 	{ "exgpio",	0 },
 	{ "exgpio",	1 },
 	{ "exgpio",	2 },
@@ -91,10 +86,6 @@ struct board_dev smdkc210_devs[] = {
 //	{ "exclock",	0 },
 	{ "expower",	0 },
 	{ "exsysreg",	0 },
-//	{ "exuart",	0 },
-	{ "exuart",	1 },
-	{ "exuart",	2 },
-	{ "exuart",	3 },
 	{ "exgpio",	0 },
 	{ "exgpio",	1 },
 	{ "exgpio",	2 },

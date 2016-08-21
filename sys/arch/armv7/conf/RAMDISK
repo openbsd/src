@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.47 2016/08/20 19:44:02 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.48 2016/08/21 06:36:23 jsg Exp $
 
 machine		armv7 arm
 
@@ -124,7 +124,7 @@ exehci*		at exynos?
 ehci*		at exehci?
 exesdhc*	at exynos?
 sdmmc*		at exesdhc?
-exuart*		at exynos?
+exuart*		at fdt?
 
 # Raspberry Pi 2/3
 bcmintc*	at fdt?
