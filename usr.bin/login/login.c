@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.67 2015/12/26 20:51:35 guenther Exp $	*/
+/*	$OpenBSD: login.c,v 1.68 2016/08/21 03:26:04 beck Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -540,7 +540,7 @@ failed:
 				badlogin(username);
 				sleepexit(1);
 			}
-			sleep((u_int)((cnt - backoff) * tries / 2));
+			sleep(1);
 		}
 	}
 
