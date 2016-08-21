@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.903 2016/08/17 13:53:20 krw Exp $
+#	$OpenBSD: install.sub,v 1.904 2016/08/21 18:47:01 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -527,7 +527,7 @@ get_responsefile() {
 		_lf=/var/db/dhclient.leases.$_if
 
 		_aifile=$(lease_value $_lf filename bootfile-name)
-		[[ $_aifile = ?(*/)auto_@(install|upgrade) ]] || _aifile=
+		[[ $_aifile == ?(*/)auto_@(install|upgrade) ]] || _aifile=
 		_path=${_aifile%auto_@(install|upgrade)}
 		_mode=${_aifile##*?(/)auto_}
 
