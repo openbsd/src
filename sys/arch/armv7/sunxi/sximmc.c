@@ -1,4 +1,4 @@
-/* $OpenBSD: sximmc.c,v 1.2 2016/08/20 19:41:14 kettenis Exp $ */
+/* $OpenBSD: sximmc.c,v 1.3 2016/08/21 23:02:32 kettenis Exp $ */
 /* $NetBSD: awin_mmc.c,v 1.23 2015/11/14 10:32:40 bouyer Exp $ */
 
 /*-
@@ -44,6 +44,7 @@
 #include <armv7/sunxi/sxiccmuvar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
@@ -365,7 +366,7 @@ sximmc_attach(struct device *parent, struct device *self, void *aux)
 	pinctrl_byname(faa->fa_node, "default");
 
 	/* enable clock */
-	sxiccmu_enablemodule(CCMU_SDMMC0 + sc->sc_unit);
+	clock_enable(faa->fa_node, NULL);
 	delay(5000);
 
 #if 0
