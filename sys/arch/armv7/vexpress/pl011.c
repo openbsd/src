@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl011.c,v 1.5 2016/08/06 00:54:02 jsg Exp $	*/
+/*	$OpenBSD: pl011.c,v 1.6 2016/08/21 07:08:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -165,6 +165,7 @@ pl011attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 	struct pl011_softc *sc = (struct pl011_softc *) self;
+	int maj;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no register data\n");
@@ -179,8 +180,15 @@ pl011attach(struct device *parent, struct device *self, void *aux)
 	    0, &sc->sc_ioh))
 		panic("pl011attach: bus_space_map failed!");
 
-	if (faa->fa_reg[0].addr == pl011consaddr)
-		printf(" console");
+	if (stdout_node == faa->fa_node) {
+		/* Locate the major number. */
+		for (maj = 0; maj < nchrdev; maj++)
+			if (cdevsw[maj].d_open == pl011open)
+				break;
+		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+
+		printf(": console");
+	}
 
 	timeout_set(&sc->sc_diag_tmo, pl011_diag, sc);
 	timeout_set(&sc->sc_dtr_tmo, pl011_raisedtr, sc);
