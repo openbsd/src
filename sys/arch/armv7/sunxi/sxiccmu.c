@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.8 2016/08/21 21:39:59 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.9 2016/08/21 23:01:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -210,6 +210,61 @@ struct sxiccmu_device sxiccmu_devices[] = {
 	{
 		.compat = "allwinner,sun4i-a10-apb1-clk",
 		.get_frequency = sxiccmu_apb1_get_frequency,
+	},
+	{
+		.compat = "allwinner,sun4i-a10-ahb-gates-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun4i-a10-apb0-gates-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun4i-a10-apb1-gates-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun5i-a10s-ahb-gates-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun5i-a10s-apb0-gates-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun5i-a10s-apb1-gates-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun5i-a13-ahb-gates-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun5i-a13-apb0-gates-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun5i-a13-apb1-gates-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun7i-a20-ahb-gates-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun7i-a20-apb0-gates-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable
 	},
 	{
 		.compat = "allwinner,sun7i-a20-apb1-gates-clk",
