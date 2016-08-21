@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.7 2016/08/20 19:34:44 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.8 2016/08/21 21:39:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -20,6 +20,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/time.h>
 #include <sys/device.h>
 
@@ -31,6 +32,9 @@
 #include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
 #include <armv7/sunxi/sxiccmuvar.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 
 #ifdef DEBUG_CCMU
 #define DPRINTF(x)	do { printf x; } while (0)
@@ -149,11 +153,14 @@ struct cfdriver sxiccmu_cd = {
 	NULL, "sxiccmu", DV_DULL
 };
 
+void sxiccmu_attach_clock(struct sxiccmu_softc *, int);
+
 void
 sxiccmu_attach(struct device *parent, struct device *self, void *args)
 {
 	struct sxiccmu_softc *sc = (struct sxiccmu_softc *)self;
 	struct armv7_attach_args *aa = args;
+	int node;
 
 	sc->sc_iot = aa->aa_iot;
 
@@ -161,7 +168,173 @@ sxiccmu_attach(struct device *parent, struct device *self, void *args)
 	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("sxiccmu_attach: bus_space_map failed!");
 
+	node = OF_finddevice("/clocks");
+	if (node == -1)
+		panic("%s: can't find clocks", __func__);
+
 	printf("\n");
+
+	for (node = OF_child(node); node; node = OF_peer(node))
+		sxiccmu_attach_clock(sc, node);
+}
+
+struct sxiccmu_clock {
+	struct clock_device sc_cd;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+	int sc_node;
+};
+
+struct sxiccmu_device {
+	const char *compat;
+	uint32_t (*get_frequency)(void *, uint32_t *);
+	void	(*enable)(void *, uint32_t *, int);
+};
+
+uint32_t sxiccmu_gen_get_frequency(void *, uint32_t *);
+uint32_t sxiccmu_osc_get_frequency(void *, uint32_t *);
+uint32_t sxiccmu_pll6_get_frequency(void *, uint32_t *);
+uint32_t sxiccmu_apb1_get_frequency(void *, uint32_t *);
+
+void	sxiccmu_gate_enable(void *, uint32_t *, int);
+
+struct sxiccmu_device sxiccmu_devices[] = {
+	{
+		.compat = "allwinner,sun4i-a10-osc-clk",
+		.get_frequency = sxiccmu_osc_get_frequency,
+	},
+	{
+		.compat = "allwinner,sun4i-a10-pll6-clk",
+		.get_frequency = sxiccmu_pll6_get_frequency,
+	},
+	{
+		.compat = "allwinner,sun4i-a10-apb1-clk",
+		.get_frequency = sxiccmu_apb1_get_frequency,
+	},
+	{
+		.compat = "allwinner,sun7i-a20-apb1-gates-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable
+	},
+};
+
+void
+sxiccmu_attach_clock(struct sxiccmu_softc *sc, int node)
+{
+	struct sxiccmu_clock *clock;
+	uint32_t reg[2];
+	int i;
+
+	for (i = 0; i < nitems(sxiccmu_devices); i++)
+		if (OF_is_compatible(node, sxiccmu_devices[i].compat))
+			break;
+	if (i == nitems(sxiccmu_devices))
+		return;
+
+	clock = malloc(sizeof(*clock), M_DEVBUF, M_WAITOK);
+	clock->sc_node = node;
+
+	if (OF_getpropintarray(node, "reg", reg, sizeof(reg)) == sizeof(reg)) {
+		clock->sc_iot = sc->sc_iot;
+		if (bus_space_map(clock->sc_iot, reg[0], reg[1], 0,
+		    &clock->sc_ioh)) {
+			printf("%s: can't map registers", sc->sc_dev.dv_xname);
+			free(clock, M_DEVBUF, sizeof(*clock));
+			return;
+		}
+	}
+
+	clock->sc_cd.cd_node = node;
+	clock->sc_cd.cd_cookie = clock;
+	clock->sc_cd.cd_get_frequency = sxiccmu_devices[i].get_frequency;
+	clock->sc_cd.cd_enable = sxiccmu_devices[i].enable;
+	clock_register(&clock->sc_cd);
+}
+
+/*
+ * A "generic" function that simply gets the clock frequency from the
+ * parent clock.  Useful for clock gating devices that don't scale the
+ * their clocks.
+ */
+uint32_t
+sxiccmu_gen_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct sxiccmu_clock *sc = cookie;
+
+	return clock_get_frequency(sc->sc_node, NULL);
+}
+
+uint32_t
+sxiccmu_osc_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct sxiccmu_clock *sc = cookie;
+
+	return OF_getpropint(sc->sc_node, "clock-frequency", 24000000);
+}
+
+#define CCU_PLL6_FACTOR_N(x)		(((x) >> 8) & 0x1f)
+#define CCU_PLL6_FACTOR_K(x)		(((x) >> 4) & 0x3)
+#define CCU_PLL6_FACTOR_M(x)		(((x) >> 0) & 0x3)
+
+uint32_t
+sxiccmu_pll6_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct sxiccmu_clock *sc = cookie;
+	uint32_t reg, k, m, n, freq;
+	uint32_t idx = cells[0];
+
+	/* XXX Assume bypass is disabled. */
+	reg = SXIREAD4(sc, 0);
+	k = CCU_PLL6_FACTOR_K(reg) + 1;
+	m = CCU_PLL6_FACTOR_M(reg) + 1;
+	n = CCU_PLL6_FACTOR_N(reg);
+
+	freq = clock_get_frequency_idx(sc->sc_node, 0);
+	switch (idx) {
+	case 0:	
+		return (freq * n * k) / m / 6;		/* pll6_sata */
+	case 1:	
+		return (freq * n * k) / m / 2;		/* pll6_other */
+	case 2:	
+		return (freq * n * k) / m;		/* pll6 */
+	case 3:
+		return (freq * n * k) / m / 4;		/* pll6_div_4 */
+	}
+
+	return 0;
+}
+
+#define CCU_APB1_CLK_RAT_N(x)		(((x) >> 16) & 0x3)
+#define CCU_APB1_CLK_RAT_M(x)		(((x) >> 0) & 0x1f)
+#define CCU_APB1_CLK_SRC_SEL(x)		(((x) >> 24) & 0x3)
+
+uint32_t
+sxiccmu_apb1_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct sxiccmu_clock *sc = cookie;
+	uint32_t reg, m, n, freq;
+	int idx;
+
+	reg = SXIREAD4(sc, 0);
+	m = CCU_APB1_CLK_RAT_M(reg);
+	n = CCU_APB1_CLK_RAT_N(reg);
+	idx = CCU_APB1_CLK_SRC_SEL(reg);
+
+	freq = clock_get_frequency_idx(sc->sc_node, idx);
+	return freq / (1 << n) / (m + 1);
+}
+
+void
+sxiccmu_gate_enable(void *cookie, uint32_t *cells, int on)
+{
+	struct sxiccmu_clock *sc = cookie;
+	int reg = cells[0] / 32;
+	int bit = cells[0] % 32;
+
+	if (on)
+		SXISET4(sc, reg * 4, (1U << bit));
+	else
+		SXICLR4(sc, reg * 4, (1U << bit));
 }
 
 /* XXX spl? */
