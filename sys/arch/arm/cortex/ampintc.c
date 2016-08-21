@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.13 2016/08/06 18:18:48 patrick Exp $ */
+/* $OpenBSD: ampintc.c,v 1.14 2016/08/21 06:47:47 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -206,8 +206,6 @@ ampintc_match(struct device *parent, void *cfdata, void *aux)
 
 	return (0);
 }
-
-paddr_t gic_dist_base, gic_cpu_base, gic_dist_size, gic_cpu_size;
 
 void
 ampintc_attach(struct device *parent, struct device *self, void *aux)
