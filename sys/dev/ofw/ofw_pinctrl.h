@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_pinctrl.h,v 1.1 2016/08/06 17:12:34 kettenis Exp $	*/
+/*	$OpenBSD: ofw_pinctrl.h,v 1.2 2016/08/21 14:41:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -24,4 +24,4 @@ int	pinctrl_byphandle(uint32_t);
 int	pinctrl_byid(int, int);
 int	pinctrl_byname(int, const char *);
 
-#endif /* _DEV_OFW_GPIO_H_ */
+#endif /* _DEV_OFW_PINCTRL_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.h,v 1.1 2016/08/13 10:52:21 kettenis Exp $	*/
+/*	$OpenBSD: ofw_regulator.h,v 1.2 2016/08/21 14:41:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -21,4 +21,4 @@
 int	regulator_enable(uint32_t);
 int	regulator_disable(uint32_t);
 
-#endif /* _DEV_OFW_GPIO_H_ */
+#endif /* _DEV_OFW_REGULATOR_H_ */
