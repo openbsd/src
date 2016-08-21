@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.24 2016/08/15 13:42:49 patrick Exp $
+#	$OpenBSD: files.armv7,v 1.25 2016/08/21 21:38:05 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -25,6 +25,7 @@ file	arch/armv7/armv7/platform.c
 file	arch/arm/arm/disksubr.c			disk
 
 # FDT support
+file	dev/ofw/ofw_clock.c
 file	dev/ofw/ofw_gpio.c
 file	dev/ofw/ofw_pinctrl.c
 file	dev/ofw/ofw_regulator.c
