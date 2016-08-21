@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.13 2016/08/16 21:32:58 natano Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.14 2016/08/21 09:23:33 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -174,14 +174,10 @@ fusefs_lookup(void *v)
 		error = 0;
 	} else {
 		error = VFS_VGET(fmp->mp, nid, &tdp);
-
-		if (!error)
-			tdp->v_type = IFTOVT(fbuf->fb_vattr.va_mode);
-
-		update_vattr(fmp->mp, &fbuf->fb_vattr);
-
 		if (error)
 			goto out;
+
+		tdp->v_type = IFTOVT(fbuf->fb_vattr.va_mode);
 
 		if (vdp != NULL && vdp->v_type == VDIR)
 			VTOI(tdp)->parent = dp->ufs_ino.i_number;

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.30 2016/08/16 21:32:58 natano Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.31 2016/08/21 09:23:33 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -203,19 +203,6 @@ filt_fusefsvnode(struct knote *kn, long int hint)
 	return (kn->kn_fflags != 0);
 }
 
-void
-update_vattr(struct mount *mp, struct vattr *v)
-{
-	v->va_fsid = mp->mnt_stat.f_fsid.val[0];
-	v->va_type = IFTOVT(v->va_mode);
-#if (S_BLKSIZE == 512)
-	v->va_bytes = v->va_bytes << 9;
-#else
-	v->va_bytes = v->va_bytes * S_BLKSIZE;
-#endif
-	v->va_mode = v->va_mode & ~S_IFMT;
-}
-
 int
 fusefs_open(void *v)
 {
@@ -401,8 +388,13 @@ fusefs_getattr(void *v)
 		return (error);
 	}
 
-	update_vattr(fmp->mp, &fbuf->fb_vattr);
 	memcpy(vap, &fbuf->fb_vattr, sizeof(*vap));
+
+	vap->va_fsid = fmp->mp->mnt_stat.f_fsid.val[0];
+	vap->va_type = IFTOVT(vap->va_mode);
+	vap->va_bytes *= S_BLKSIZE;
+	vap->va_mode &= ~S_IFMT;
+
 	fb_delete(fbuf);
 	return (error);
 }
@@ -518,15 +510,12 @@ fusefs_setattr(void *v)
 	}
 
 	error = fb_queue(fmp->dev, fbuf);
-
 	if (error) {
 		if (error == ENOSYS)
 			fmp->undef_op |= UNDEF_SETATTR;
 		goto out;
 	}
 
-	update_vattr(fmp->mp, &fbuf->fb_vattr);
-	memcpy(vap, &fbuf->fb_vattr, sizeof(*vap));
 	VN_KNOTE(ap->a_vp, NOTE_ATTRIB);
 
 out:
