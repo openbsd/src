@@ -1,4 +1,4 @@
-/*	$OpenBSD: fgetwln.c,v 1.1 2015/01/12 20:58:07 millert Exp $	*/
+/*	$OpenBSD: fgetwln.c,v 1.2 2016/08/21 21:10:52 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins.
@@ -67,7 +67,7 @@ fgetwln(FILE * __restrict fp, size_t *lenp)
 		if (wc == L'\n')
 			break;
 	}
-	if (len == 0)
+	if (len == 0 || fp->_flags & __SERR)
 		goto error;
 
 	FUNLOCKFILE(fp);
