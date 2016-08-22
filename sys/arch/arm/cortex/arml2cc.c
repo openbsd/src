@@ -1,4 +1,4 @@
-/* $OpenBSD: arml2cc.c,v 1.4 2015/05/20 00:39:16 jsg Exp $ */
+/* $OpenBSD: arml2cc.c,v 1.5 2016/08/22 01:42:00 jsg Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -114,6 +114,7 @@ void arml2cc_cache_range_op(paddr_t, psize_t, bus_size_t);
 void arml2cc_cache_way_op(struct arml2cc_softc *, bus_size_t, uint32_t);
 void arml2cc_cache_op(struct arml2cc_softc *, bus_size_t, uint32_t);
 void arml2cc_cache_sync(struct arml2cc_softc *);
+void arml2cc_sdcache_drain_writebuf(void);
 
 struct cfattach armliicc_ca = {
 	sizeof (struct arml2cc_softc), arml2cc_match, arml2cc_attach
@@ -165,6 +166,7 @@ arml2cc_attach(struct device *parent, struct device *self, void *args)
 	cpufuncs.cf_sdcache_wbinv_range = arml2cc_sdcache_wbinv_range;
 	cpufuncs.cf_sdcache_inv_range = arml2cc_sdcache_inv_range;
 	cpufuncs.cf_sdcache_wb_range = arml2cc_sdcache_wb_range;
+	cpufuncs.cf_sdcache_drain_writebuf = arml2cc_sdcache_drain_writebuf;
 }
 
 void
@@ -219,6 +221,16 @@ arml2cc_cache_sync(struct arml2cc_softc *sc)
 {
 	/* ARM Errata 753970 */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0x740, 0xffffffff);
+}
+
+void
+arml2cc_sdcache_drain_writebuf(void)
+{
+	struct arml2cc_softc * const sc = arml2cc_sc;
+	if (sc == NULL || !sc->sc_enabled)
+		return;
+
+	arml2cc_cache_sync(sc);
 }
 
 void

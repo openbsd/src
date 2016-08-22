@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.31 2016/08/14 10:32:17 kettenis Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.32 2016/08/22 01:41:59 jsg Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -615,6 +615,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	if (map->_dm_flags & ARM32_DMAMAP_COHERENT) {
 		/* Drain the write buffer. */
 		cpu_drain_writebuf();
+		cpu_sdcache_drain_writebuf();
 		return;
 	}
 
