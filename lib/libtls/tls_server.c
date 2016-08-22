@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.24 2016/08/18 15:52:03 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.25 2016/08/22 14:51:37 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -14,6 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/socket.h>
+
+#include <arpa/inet.h>
 
 #include <openssl/ec.h>
 #include <openssl/err.h>
@@ -63,6 +67,92 @@ tls_server_alpn_cb(SSL *ssl, const unsigned char **out, unsigned char *outlen,
 }
 
 static int
+tls_servername_cb(SSL *ssl, int *al, void *arg)
+{
+	struct tls *ctx = (struct tls *)arg;
+	struct tls_sni_ctx *sni_ctx;
+	union tls_addr addrbuf;
+	struct tls *conn_ctx;
+	const char *name;
+
+	if ((conn_ctx = SSL_get_app_data(ssl)) == NULL)
+		goto err;
+
+	if ((name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name)) == NULL) {
+		/*
+		 * The servername callback gets called even when there is no
+		 * TLS servername extension provided by the client. Sigh!
+		 */
+		return (SSL_TLSEXT_ERR_NOACK);
+	}
+
+	/* Per RFC 6066 section 3: ensure that name is not an IP literal. */
+	if (inet_pton(AF_INET, name, &addrbuf) == 1 ||
+            inet_pton(AF_INET6, name, &addrbuf) == 1)
+		goto err;
+
+	free((char *)conn_ctx->servername);
+	if ((conn_ctx->servername = strdup(name)) == NULL)
+		goto err;
+
+	/* Find appropriate SSL context for requested servername. */
+	for (sni_ctx = ctx->sni_ctx; sni_ctx != NULL; sni_ctx = sni_ctx->next) {
+		if (tls_check_name(ctx, sni_ctx->ssl_cert, name) == 0) {
+			SSL_set_SSL_CTX(conn_ctx->ssl_conn, sni_ctx->ssl_ctx);
+			return (SSL_TLSEXT_ERR_OK);
+		}
+	}
+
+	/* No match, use the existing context/certificate. */
+	return (SSL_TLSEXT_ERR_OK);
+
+ err:
+	/*
+	 * There is no way to tell libssl that an internal failure occurred.
+	 * The only option we have is to return a fatal alert.
+	 */
+	*al = TLS1_AD_INTERNAL_ERROR;
+	return (SSL_TLSEXT_ERR_ALERT_FATAL);
+}
+
+static int
+tls_keypair_load_cert(struct tls_keypair *keypair, struct tls_error *error,
+    X509 **cert)
+{
+	char *errstr = "unknown";
+	BIO *cert_bio = NULL;
+	int ssl_err;
+
+	X509_free(*cert);
+	*cert = NULL;
+
+	if (keypair->cert_mem == NULL) {
+		tls_error_set(error, "keypair has no certificate");
+		goto err;
+	}
+	if ((cert_bio = BIO_new_mem_buf(keypair->cert_mem,
+	    keypair->cert_len)) == NULL) {
+		tls_error_set(error, "failed to create certificate bio");
+		goto err;
+	}
+	if ((*cert = PEM_read_bio_X509(cert_bio, NULL, NULL, NULL)) == NULL) {
+		if ((ssl_err = ERR_peek_error()) != 0)
+		    errstr = ERR_error_string(ssl_err, NULL);
+		tls_error_set(error, "failed to load certificate: %s", errstr);
+		goto err;
+	}
+
+	BIO_free(cert_bio);
+
+	return (0);
+
+ err:
+	BIO_free(cert_bio);
+
+	return (-1);
+}
+
+static int
 tls_configure_server_ssl(struct tls *ctx, SSL_CTX **ssl_ctx,
     struct tls_keypair *keypair)
 {
@@ -73,6 +163,16 @@ tls_configure_server_ssl(struct tls *ctx, SSL_CTX **ssl_ctx,
 
 	if ((*ssl_ctx = SSL_CTX_new(SSLv23_server_method())) == NULL) {
 		tls_set_errorx(ctx, "ssl context failure");
+		goto err;
+	}
+
+	if (SSL_CTX_set_tlsext_servername_callback(*ssl_ctx,
+	    tls_servername_cb) != 1) {
+		tls_set_error(ctx, "failed to set servername callback");
+		goto err;
+	}
+	if (SSL_CTX_set_tlsext_servername_arg(*ssl_ctx, ctx) != 1) {
+		tls_set_error(ctx, "failed to set servername callback arg");
 		goto err;
 	}
 
@@ -134,11 +234,43 @@ tls_configure_server_ssl(struct tls *ctx, SSL_CTX **ssl_ctx,
 	return (-1);
 }
 
+static int
+tls_configure_server_sni(struct tls *ctx)
+{
+	struct tls_sni_ctx **sni_ctx;
+	struct tls_keypair *kp;
+
+	if (ctx->config->keypair->next == NULL)
+		return (0);
+
+	/* Set up additional SSL contexts for SNI. */
+	sni_ctx = &ctx->sni_ctx;
+	for (kp = ctx->config->keypair->next; kp != NULL; kp = kp->next) {
+		if ((*sni_ctx = tls_sni_ctx_new()) == NULL) {
+			tls_set_errorx(ctx, "out of memory");
+			goto err;
+		}
+		if (tls_configure_server_ssl(ctx, &(*sni_ctx)->ssl_ctx, kp) == -1)
+			goto err;
+		if (tls_keypair_load_cert(kp, &ctx->error,
+		    &(*sni_ctx)->ssl_cert) == -1)
+			goto err;
+		sni_ctx = &(*sni_ctx)->next;
+	}
+
+	return (0);
+
+ err:
+	return (-1);
+}
+
 int
 tls_configure_server(struct tls *ctx)
 {
 	if (tls_configure_server_ssl(ctx, &ctx->ssl_ctx,
 	    ctx->config->keypair) == -1)
+		goto err;
+	if (tls_configure_server_sni(ctx) == -1)
 		goto err;
 
 	return (0);
