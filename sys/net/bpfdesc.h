@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.30 2016/03/30 12:33:10 dlg Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.31 2016/08/22 10:40:36 mpi Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -41,8 +41,6 @@
 #define _NET_BPFDESC_H_
 
 #ifdef _KERNEL
-
-#include <sys/selinfo.h>
 
 /*
  * Descriptor associated with each open bpf file.
@@ -90,6 +88,8 @@ struct bpf_d {
 	struct selinfo	bd_sel;		/* bsd select info */
 	int		bd_unit;	/* logical unit number */
 	LIST_ENTRY(bpf_d) bd_list;	/* descriptor list */
+
+	struct task	bd_wake_task;	/* delay csignal() and selwakeup() */
 };
 
 /*

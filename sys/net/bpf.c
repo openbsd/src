@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.147 2016/08/15 07:20:14 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.148 2016/08/22 10:40:36 mpi Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -57,6 +57,8 @@
 #include <sys/atomic.h>
 #include <sys/srp.h>
 #include <sys/specdev.h>
+#include <sys/selinfo.h>
+#include <sys/task.h>
 
 #include <net/if.h>
 #include <net/bpf.h>
@@ -103,6 +105,7 @@ int	bpf_setif(struct bpf_d *, struct ifreq *);
 int	bpfpoll(dev_t, int, struct proc *);
 int	bpfkqfilter(dev_t, struct knote *);
 void	bpf_wakeup(struct bpf_d *);
+void	bpf_wakeup_cb(void *);
 void	bpf_catchpacket(struct bpf_d *, u_char *, size_t, size_t,
 	    void (*)(const void *, void *, size_t), struct timeval *);
 void	bpf_reset_d(struct bpf_d *);
@@ -345,6 +348,7 @@ bpfopen(dev_t dev, int flag, int mode, struct proc *p)
 	bd->bd_unit = unit;
 	bd->bd_bufsize = bpf_bufsize;
 	bd->bd_sig = SIGIO;
+	task_set(&bd->bd_wake_task, bpf_wakeup_cb, bd);
 
 	if (flag & FNONBLOCK)
 		bd->bd_rtout = -1;
@@ -515,12 +519,29 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 void
 bpf_wakeup(struct bpf_d *d)
 {
-	wakeup((caddr_t)d);
+	/*
+	 * As long as csignal() and selwakeup() need to be protected
+	 * by the KERNEL_LOCK() we have to delay the wakeup to
+	 * another context to keep the hot path KERNEL_LOCK()-free.
+	 */
+	bpf_get(d);
+	if (!task_add(systq, &d->bd_wake_task))
+		bpf_put(d);
+}
+
+void
+bpf_wakeup_cb(void *xd)
+{
+	struct bpf_d *d = xd;
+
+	KERNEL_ASSERT_LOCKED();
+
+	wakeup(d);
 	if (d->bd_async && d->bd_sig)
-		csignal(d->bd_pgid, d->bd_sig,
-		    d->bd_siguid, d->bd_sigeuid);
+		csignal(d->bd_pgid, d->bd_sig, d->bd_siguid, d->bd_sigeuid);
 
 	selwakeup(&d->bd_sel);
+	bpf_put(d);
 }
 
 int
