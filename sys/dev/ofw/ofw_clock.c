@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_clock.c,v 1.4 2016/08/22 19:28:27 kettenis Exp $	*/
+/*	$OpenBSD: ofw_clock.c,v 1.5 2016/08/22 22:06:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -326,7 +326,8 @@ reset_assert_cells(uint32_t *cells, int assert)
 			break;
 	}
 
-	rd->rd_reset(rd->rd_cookie, &cells[1], assert);
+	if (rd && rd->rd_reset)
+		rd->rd_reset(rd->rd_cookie, &cells[1], assert);
 }
 
 uint32_t *
@@ -390,7 +391,7 @@ reset_do_assert_idx(int node, int idx, int assert)
 	OF_getpropintarray(node, "resets", resets, len);
 
 	reset = resets;
-	while (reset && resets < resets + (len / sizeof(uint32_t))) {
+	while (reset && reset < resets + (len / sizeof(uint32_t))) {
 		if (idx <= 0)
 			reset_assert_cells(reset, assert);
 		if (idx == 0)
