@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2015/12/02 11:05:35 mpi Exp $
+# $OpenBSD: Makefile,v 1.11 2016/08/22 17:43:29 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -160,12 +160,13 @@ rttest${n}:
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
+# Cannot change the gateway of an mpath route
 n=	13
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
 	${RCMD} add -mpath 10.8.1/24 192.0.2.3
 	${RCMD} add -mpath 10.8.1/24 192.0.2.4
-	${RCMD} change -mpath 10.8.1/24 192.0.2.5 && exit 1 || exit 0
+	${RCMD} change -mpath 10.8.1/24 192.0.2.1 && exit 1 || exit 0
 
 # Changing MTU should not change the ifa
 n=	14
