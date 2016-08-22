@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.57 2016/08/20 12:54:49 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.58 2016/08/22 13:39:52 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 20 2016 $
+.Dd $Mdocdate: August 22 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -2539,141 +2539,35 @@ preceded by their subject and issuer names in a one-line format.
 .It Fl text
 Print certificate details in full rather than just subject and issuer names.
 .El
-.\"
-.\" PKCS8
-.\"
 .Sh PKCS8
 .nr nS 1
 .Nm "openssl pkcs8"
-.Bk -words
 .Op Fl embed
 .Op Fl in Ar file
-.Op Fl inform Ar DER | PEM
+.Op Fl inform Cm der | pem
 .Op Fl nocrypt
 .Op Fl noiter
 .Op Fl nooct
 .Op Fl nsdb
 .Op Fl out Ar file
-.Op Fl outform Ar DER | PEM
+.Op Fl outform Cm der | pem
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
 .Op Fl topk8
 .Op Fl v1 Ar alg
 .Op Fl v2 Ar alg
-.Ek
 .nr nS 0
 .Pp
 The
 .Nm pkcs8
-command processes private keys in PKCS#8 format.
-It can handle both unencrypted PKCS#8 PrivateKeyInfo format
-and EncryptedPrivateKeyInfo format with a variety of PKCS#5
-.Pq v1.5 and v2.0
-and PKCS#12 algorithms.
+command processes private keys
+(both encrypted and unencrypted)
+in PKCS#8 format
+with a variety of PKCS#5 (v1.5 and v2.0) and PKCS#12 algorithms.
+The default encryption is only 56 bits;
+keys encrypted using PKCS#5 v2.0 algorithms and high iteration counts
+are more secure.
 .Pp
-The options are as follows:
-.Bl -tag -width Ds
-.It Fl embed
-This option generates DSA keys in a broken format.
-The DSA parameters are embedded inside the
-.Em PrivateKey
-structure.
-In this form the OCTET STRING contains an ASN1 SEQUENCE consisting of
-two structures:
-a SEQUENCE containing the parameters and an ASN1 INTEGER containing
-the private key.
-.It Fl in Ar file
-This specifies the input
-.Ar file
-to read a key from, or standard input if this option is not specified.
-If the key is encrypted, a pass phrase will be prompted for.
-.It Fl inform Ar DER | PEM
-This specifies the input format.
-If a PKCS#8 format key is expected on input,
-then either a
-DER- or PEM-encoded version of a PKCS#8 key will be expected.
-Otherwise the DER or PEM format of the traditional format private key is used.
-.It Fl nocrypt
-PKCS#8 keys generated or input are normally PKCS#8
-.Em EncryptedPrivateKeyInfo
-structures using an appropriate password-based encryption algorithm.
-With this option, an unencrypted
-.Em PrivateKeyInfo
-structure is expected or output.
-This option does not encrypt private keys at all and should only be used
-when absolutely necessary.
-Certain software such as some versions of Java code signing software use
-unencrypted private keys.
-.It Fl noiter
-Use an iteration count of 1.
-See the
-.Sx PKCS12
-section below for a detailed explanation of this option.
-.It Fl nooct
-This option generates RSA private keys in a broken format that some software
-uses.
-Specifically the private key should be enclosed in an OCTET STRING,
-but some software just includes the structure itself without the
-surrounding OCTET STRING.
-.It Fl nsdb
-This option generates DSA keys in a broken format compatible with Netscape
-private key databases.
-The
-.Em PrivateKey
-contains a SEQUENCE consisting of the public and private keys, respectively.
-.It Fl out Ar file
-This specifies the output
-.Ar file
-to write a key to, or standard output by default.
-If any encryption options are set, a pass phrase will be prompted for.
-The output filename should
-.Em not
-be the same as the input filename.
-.It Fl outform Ar DER | PEM
-This specifies the output format; the options have the same meaning as the
-.Fl inform
-option.
-.It Fl passin Ar arg
-The key password source.
-.It Fl passout Ar arg
-The output file password source.
-.It Fl topk8
-Normally, a PKCS#8 private key is expected on input and a traditional format
-private key will be written.
-With the
-.Fl topk8
-option the situation is reversed:
-it reads a traditional format private key and writes a PKCS#8 format key.
-.It Fl v1 Ar alg
-This option specifies a PKCS#5 v1.5 or PKCS#12 algorithm to use.
-A complete list of possible algorithms is included below.
-.It Fl v2 Ar alg
-This option enables the use of PKCS#5 v2.0 algorithms.
-Normally, PKCS#8 private keys are encrypted with the password-based
-encryption algorithm called
-.Em pbeWithMD5AndDES-CBC ;
-this uses 56-bit DES encryption but it was the strongest encryption
-algorithm supported in PKCS#5 v1.5.
-Using the
-.Fl v2
-option PKCS#5 v2.0 algorithms are used which can use any
-encryption algorithm such as 168-bit triple DES or 128-bit RC2, however
-not many implementations support PKCS#5 v2.0 yet.
-If using private keys with
-.Nm OpenSSL
-then this doesn't matter.
-.Pp
-The
-.Ar alg
-argument is the encryption algorithm to use; valid values include
-.Ar des , des3 ,
-and
-.Ar rc2 .
-It is recommended that
-.Ar des3
-is used.
-.El
-.Sh PKCS8 NOTES
 The encrypted form of a PEM-encoded PKCS#8 file uses the following
 headers and footers:
 .Bd -unfilled -offset indent
@@ -2687,92 +2581,82 @@ The unencrypted form uses:
 -----END PRIVATE KEY-----
 .Ed
 .Pp
-Private keys encrypted using PKCS#5 v2.0 algorithms and high iteration
-counts are more secure than those encrypted using the traditional
-.Nm SSLeay
-compatible formats.
-So if additional security is considered important, the keys should be converted.
-.Pp
-The default encryption is only 56 bits because this is the encryption
-that most current implementations of PKCS#8 support.
-.Pp
-Some software may use PKCS#12 password-based encryption algorithms
-with PKCS#8 format private keys: these are handled automatically
-but there is no option to produce them.
-.Pp
-It is possible to write out
-DER-encoded encrypted private keys in PKCS#8 format because the encryption
-details are included at an ASN1
-level whereas the traditional format includes them at a PEM level.
-.Sh PKCS#5 V1.5 AND PKCS#12 ALGORITHMS
-Various algorithms can be used with the
-.Fl v1
-command line option, including PKCS#5 v1.5 and PKCS#12.
-These are described in more detail below.
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl embed
+Generate DSA keys in a broken format.
+The DSA parameters are embedded inside the PrivateKey structure.
+In this form the OCTET STRING contains an ASN1 SEQUENCE consisting of
+two structures:
+a SEQUENCE containing the parameters and an ASN1 INTEGER containing
+the private key.
+.It Fl in Ar file
+The input file to read from,
+or standard input if not specified.
+If the key is encrypted, a pass phrase will be prompted for.
+.It Fl inform Cm der | pem
+The input format.
+If a PKCS#8 format key is expected on input,
+then either a
+DER- or PEM-encoded version of a PKCS#8 key will be expected.
+Otherwise the DER or PEM format of the traditional format private key is used.
+.It Fl nocrypt
+Generate an unencrypted PrivateKeyInfo structure.
+This option does not encrypt private keys at all
+and should only be used when absolutely necessary.
+.It Fl noiter
+Use an iteration count of 1.
+See the
+.Sx PKCS12
+section below for a detailed explanation of this option.
+.It Fl nooct
+Generate RSA private keys in a broken format that some software uses.
+Specifically the private key should be enclosed in an OCTET STRING,
+but some software just includes the structure itself without the
+surrounding OCTET STRING.
+.It Fl nsdb
+Generate DSA keys in a broken format compatible with Netscape
+private key databases.
+The PrivateKey contains a SEQUENCE
+consisting of the public and private keys, respectively.
+.It Fl out Ar file
+The output file to write to,
+or standard output if none is specified.
+If any encryption options are set, a pass phrase will be prompted for.
+.It Fl outform Cm der | pem
+The output format.
+.It Fl passin Ar arg
+The key password source.
+.It Fl passout Ar arg
+The output file password source.
+.It Fl topk8
+Read a traditional format private key and write a PKCS#8 format key.
+.It Fl v1 Ar alg
+Specify a PKCS#5 v1.5 or PKCS#12 algorithm to use.
 .Pp
 .Bl -tag -width "XXXX" -compact
-.It Ar PBE-MD5-DES
-These algorithms were included in the original PKCS#5 v1.5 specification.
-They only offer 56 bits of protection since they both use DES.
-.Pp
-.It Ar PBE-SHA1-RC2-64 | PBE-MD5-RC2-64 | PBE-SHA1-DES
-These algorithms are not mentioned in the original PKCS#5 v1.5 specification
-but they use the same key derivation algorithm and are supported by some
-software.
-They are mentioned in PKCS#5 v2.0.
-They use either 64-bit RC2 or 56-bit DES.
-.Pp
-.It Ar PBE-SHA1-RC4-128 | PBE-SHA1-RC4-40 | PBE-SHA1-3DES | PBE-SHA1-2DES
-.It Ar PBE-SHA1-RC2-128 | PBE-SHA1-RC2-40
-These algorithms use the PKCS#12 password-based encryption algorithm and
-allow strong encryption algorithms like triple DES or 128-bit RC2 to be used.
+.It PBE-MD5-DES
+56-bit DES.
+.It PBE-SHA1-RC2-64 | PBE-MD5-RC2-64 | PBE-SHA1-DES
+64-bit RC2 or 56-bit DES.
+.It PBE-SHA1-RC4-128 | PBE-SHA1-RC4-40 | PBE-SHA1-3DES
+.It PBE-SHA1-2DES | PBE-SHA1-RC2-128 | PBE-SHA1-RC2-40
+PKCS#12 password-based encryption algorithm,
+which allow strong encryption algorithms like triple DES or 128-bit RC2.
 .El
-.Sh PKCS8 EXAMPLES
-Convert a private key from traditional to PKCS#5 v2.0 format using triple DES:
+.It Fl v2 Ar alg
+Use PKCS#5 v2.0 algorithms.
+Supports algorithms such as 168-bit triple DES or 128-bit RC2,
+however not many implementations support PKCS#5 v2.0 yet
+(if using private keys with
+.Nm openssl
+this doesn't matter).
 .Pp
-.Dl "$ openssl pkcs8 -in key.pem -topk8 -v2 des3 -out enckey.pem"
-.Pp
-Convert a private key to PKCS#8 using a PKCS#5 1.5 compatible algorithm
-.Pq DES :
-.Pp
-.Dl $ openssl pkcs8 -in key.pem -topk8 -out enckey.pem
-.Pp
-Convert a private key to PKCS#8 using a PKCS#12 compatible algorithm
-.Pq 3DES :
-.Bd -literal -offset indent
-$ openssl pkcs8 -in key.pem -topk8 -out enckey.pem \e
-	-v1 PBE-SHA1-3DES
-.Ed
-.Pp
-Read a DER-unencrypted PKCS#8 format private key:
-.Pp
-.Dl "$ openssl pkcs8 -inform DER -nocrypt -in key.der -out key.pem"
-.Pp
-Convert a private key from any PKCS#8 format to traditional format:
-.Pp
-.Dl $ openssl pkcs8 -in pk8.pem -out key.pem
-.Sh PKCS8 STANDARDS
-Test vectors from this PKCS#5 v2.0 implementation were posted to the
-pkcs-tng mailing list using triple DES, DES and RC2 with high iteration counts;
-several people confirmed that they could decrypt the private
-keys produced and therefore it can be assumed that the PKCS#5 v2.0
-implementation is reasonably accurate at least as far as these
-algorithms are concerned.
-.Pp
-The format of PKCS#8 DSA
-.Pq and other
-private keys is not well documented:
-it is hidden away in PKCS#11 v2.01, section 11.9;
-.Nm OpenSSL Ns Li 's
-default DSA PKCS#8 private key format complies with this standard.
-.Sh PKCS8 BUGS
-There should be an option that prints out the encryption algorithm
-in use and other details such as the iteration count.
-.Pp
-PKCS#8 using triple DES and PKCS#5 v2.0 should be the default private
-key format; for
-.Nm OpenSSL
-compatibility, several of the utilities use the old format at present.
+.Ar alg
+is the encryption algorithm to use;
+valid values include des, des3, and rc2.
+It is recommended that des3 is used.
+.El
 .\"
 .\" PKCS12
 .\"
