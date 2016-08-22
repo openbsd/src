@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_clock.h,v 1.1 2016/08/21 21:38:05 kettenis Exp $	*/
+/*	$OpenBSD: ofw_clock.h,v 1.2 2016/08/22 11:23:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -35,5 +35,19 @@ uint32_t clock_get_frequency(int, const char *);
 uint32_t clock_get_frequency_idx(int, int);
 void	clock_enable(int, const char *);
 void	clock_enable_idx(int, int);
+void	clock_disable(int, const char *);
+void	clock_disable_idx(int, int);
+
+static inline void
+clock_enable_all(int node)
+{
+	clock_enable_idx(node, -1);
+}
+
+static inline void
+clock_disable_all(int node)
+{
+	clock_disable_idx(node, -1);
+}
 
 #endif /* _DEV_OFW_CLOCK_H_ */

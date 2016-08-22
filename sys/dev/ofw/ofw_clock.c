@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_clock.c,v 1.1 2016/08/21 21:38:05 kettenis Exp $	*/
+/*	$OpenBSD: ofw_clock.c,v 1.2 2016/08/22 11:23:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -71,7 +71,7 @@ clock_get_frequency_cells(uint32_t *cells)
 }
 
 void
-clock_enable_cells(uint32_t *cells)
+clock_enable_cells(uint32_t *cells, int on)
 {
 	struct clock_device *cd;
 	uint32_t phandle = cells[0];
@@ -82,7 +82,7 @@ clock_enable_cells(uint32_t *cells)
 	}
 
 	if (cd && cd->cd_enable)
-		cd->cd_enable(cd->cd_cookie, &cells[1], 1);
+		cd->cd_enable(cd->cd_cookie, &cells[1], on);
 }
 
 uint32_t *
@@ -173,7 +173,7 @@ clock_get_frequency(int node, const char *name)
 }
 
 void
-clock_enable_idx(int node, int idx)
+clock_do_enable_idx(int node, int idx, int on)
 {
 	uint32_t *clocks;
 	uint32_t *clock;
@@ -188,10 +188,10 @@ clock_enable_idx(int node, int idx)
 
 	clock = clocks;
 	while (clock && clock < clocks + (len / sizeof(uint32_t))) {
-		if (idx == 0) {
-			clock_enable_cells(clock);
+		if (idx <= 0)
+			clock_enable_cells(clock, on);
+		if (idx == 0)
 			break;
-		}
 		clock = clock_next_clock(clock);
 		idx--;
 	}
@@ -200,7 +200,7 @@ clock_enable_idx(int node, int idx)
 }
 
 void
-clock_enable(int node, const char *name)
+clock_do_enable(int node, const char *name, int on)
 {
 	int idx;
 
@@ -208,5 +208,29 @@ clock_enable(int node, const char *name)
 	if (idx == -1)
 		return;
 
-	clock_enable_idx(node, idx);
+	clock_do_enable_idx(node, idx, on);
+}
+
+void
+clock_enable_idx(int node, int idx)
+{
+	clock_do_enable_idx(node, idx, 1);
+}
+
+void
+clock_enable(int node, const char *name)
+{
+	clock_do_enable(node, name, 1);
+}
+
+void
+clock_disable_idx(int node, int idx)
+{
+	clock_do_enable_idx(node, idx, 0);
+}
+
+void
+clock_disable(int node, const char *name)
+{
+	clock_do_enable(node, name, 0);
 }
