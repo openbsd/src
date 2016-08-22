@@ -1,7 +1,8 @@
-/*	$OpenBSD: sxiehci.c,v 1.6 2016/08/05 21:28:13 kettenis Exp $ */
+/*	$OpenBSD: sxiehci.c,v 1.7 2016/08/22 18:31:07 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
+ * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -59,45 +60,38 @@
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 
-#include <armv7/armv7/armv7var.h>
-#include <armv7/sunxi/sxiccmuvar.h>
-#include <armv7/sunxi/sxipiovar.h>
-
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
+#include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 
-#define EHCI_HC_DEVSTR		"Sunxi Integrated USB 2.0 controller"
-
 #define USB_PMU_IRQ_ENABLE	0x800
-
-#define SDRAM_REG_HPCR_USB1	(0x250 + ((1 << 2) * 4))
-#define SDRAM_REG_HPCR_USB2	(0x250 + ((1 << 2) * 5))
-#define SDRAM_BP_HPCR_ACCESS	(1 << 0)
-
 #define ULPI_BYPASS		(1 << 0)
 #define AHB_INCRX_ALIGN		(1 << 8)
 #define AHB_INCR4		(1 << 9)
 #define AHB_INCR8		(1 << 10)
+
+struct sxiehci_softc {
+	struct ehci_softc	sc;
+	int			sc_node;
+	void			*sc_ih;
+};
 
 int	sxiehci_match(struct device *, void *, void *);
 void	sxiehci_attach(struct device *, struct device *, void *);
 int	sxiehci_detach(struct device *, int);
 int	sxiehci_activate(struct device *, int);
 
-struct sxiehci_softc {
-	struct ehci_softc	 sc;
-	void			*sc_ih;
-};
-
-int sxiehci_init(struct sxiehci_softc *, int);
-
 struct cfattach sxiehci_ca = {
 	sizeof(struct sxiehci_softc), sxiehci_match, sxiehci_attach,
 	sxiehci_detach, sxiehci_activate
 };
+
+void sxiehci_attach_phy(struct sxiehci_softc *);
 
 int
 sxiehci_match(struct device *parent, void *match, void *aux)
@@ -125,6 +119,7 @@ sxiehci_attach(struct device *parent, struct device *self, void *aux)
 	if (faa->fa_nreg < 1)
 		return;
 
+	sc->sc_node = faa->fa_node;
 	sc->sc.iot = faa->fa_iot;
 	sc->sc.sc_bus.dmatag = faa->fa_dmat;
 	sc->sc.sc_size = faa->fa_reg[0].size;
@@ -137,8 +132,8 @@ sxiehci_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	if (sxiehci_init(sc, self->dv_unit))
-		return;
+	clock_enable_all(sc->sc_node);
+	sxiehci_attach_phy(sc);
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
@@ -150,7 +145,7 @@ sxiehci_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unable to establish interrupt\n");
 		printf("XXX - disable ehci");
 #if 0
-		sxiccmu_disable(CCMU_EHCI+unit?);
+		clock_disable_all(sc->sc_node);
 #endif
 		goto mem0;
 	}
@@ -161,7 +156,7 @@ sxiehci_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: init failed, error=%d\n", devname, r);
 		printf("XXX - disable ehci");
 #if 0
-		sxiccmu_disable(CCMU_EHCI+unit?);
+		clock_disable_all(sc->sc_node);
 #endif
 		goto intr;
 	}
@@ -180,29 +175,14 @@ out:
 	return;
 }
 
-int
-sxiehci_init(struct sxiehci_softc *sc, int unit)
+void
+sxiehci_attach_phy(struct sxiehci_softc *sc)
 {
-	uint32_t r, val;
-	int pin, mod;
-
-	if (unit > 1)
-		panic("sxiehci_init: unit >1 %d", unit);
-	else if (unit == 0) {
-		pin = SXIPIO_USB1_PWR;
-		r = SDRAM_REG_HPCR_USB1;
-		mod = CCMU_EHCI0;
-	} else {
-		pin = SXIPIO_USB2_PWR;
-		r = SDRAM_REG_HPCR_USB2;
-		mod = CCMU_EHCI1;
-	}
-
-	sxiccmu_enablemodule(mod);
-
-	/* power up */
-	sxipio_setcfg(pin, SXIPIO_OUTPUT);
-	sxipio_setpin(pin);
+	uint32_t vbus_supply;
+	uint32_t phys[2];
+	char name[32];
+	uint32_t val;
+	int node;
 
 	val = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USB_PMU_IRQ_ENABLE);
 	val |= AHB_INCR8;	/* AHB INCR8 enable */
@@ -211,11 +191,24 @@ sxiehci_init(struct sxiehci_softc *sc, int unit)
 	val |= ULPI_BYPASS;	/* ULPI bypass enable */
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USB_PMU_IRQ_ENABLE, val);
 
-	val = bus_space_read_4(sc->sc.iot, sc->sc.ioh, r);
-	val |= SDRAM_BP_HPCR_ACCESS;
-	bus_space_write_4(sc->sc.iot, sc->sc.ioh, r, val);
+	if (OF_getpropintarray(sc->sc_node, "phys", phys,
+	    sizeof(phys)) != sizeof(phys))
+		return;
 
-	return (0);
+	node = OF_getnodebyphandle(phys[0]);
+	if (node == -1)
+		return;
+
+	pinctrl_byname(node, "default");
+	clock_enable(node, "usb_phy");
+
+	snprintf(name, sizeof(name), "usb%d_reset", phys[1]);
+	reset_deassert(node, name);
+
+	snprintf(name, sizeof(name), "usb%d_vbus-supply", phys[1]);
+	vbus_supply = OF_getpropint(node, name, 0);
+	if (vbus_supply)
+		regulator_enable(vbus_supply);
 }
 
 int
@@ -239,8 +232,8 @@ sxiehci_detach(struct device *self, int flags)
 	}
 	/* XXX */
 #if 0
-	sxiccmu_disable(CCMU_EHCI+unit?);
-	sxipio_clrpin(pin);
+	sxiehci_detach_phy(sc);
+	clock_disable_all(sc->sc_node);
 #endif
 	return (0);
 }
