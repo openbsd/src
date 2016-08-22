@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.9 2016/08/21 23:01:57 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.10 2016/08/22 06:48:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -194,8 +194,8 @@ struct sxiccmu_device {
 uint32_t sxiccmu_gen_get_frequency(void *, uint32_t *);
 uint32_t sxiccmu_osc_get_frequency(void *, uint32_t *);
 uint32_t sxiccmu_pll6_get_frequency(void *, uint32_t *);
+void	sxiccmu_pll6_enable(void *, uint32_t *, int);
 uint32_t sxiccmu_apb1_get_frequency(void *, uint32_t *);
-
 void	sxiccmu_gate_enable(void *, uint32_t *, int);
 
 struct sxiccmu_device sxiccmu_devices[] = {
@@ -206,6 +206,7 @@ struct sxiccmu_device sxiccmu_devices[] = {
 	{
 		.compat = "allwinner,sun4i-a10-pll6-clk",
 		.get_frequency = sxiccmu_pll6_get_frequency,
+		.enable = sxiccmu_pll6_enable
 	},
 	{
 		.compat = "allwinner,sun4i-a10-apb1-clk",
@@ -327,9 +328,18 @@ sxiccmu_osc_get_frequency(void *cookie, uint32_t *cells)
 	return OF_getpropint(sc->sc_node, "clock-frequency", 24000000);
 }
 
+#define CCU_PLL6_ENABLE			(1U << 31)
+#define CCU_PLL6_BYPASS_EN		(1U << 30)
+#define CCU_PLL6_SATA_CLK_EN		(1U << 14)
 #define CCU_PLL6_FACTOR_N(x)		(((x) >> 8) & 0x1f)
+#define CCU_PLL6_FACTOR_N_MASK		(0x1f << 8)
+#define CCU_PLL6_FACTOR_N_SHIFT		8
 #define CCU_PLL6_FACTOR_K(x)		(((x) >> 4) & 0x3)
+#define CCU_PLL6_FACTOR_K_MASK		(0x3 << 4)
+#define CCU_PLL6_FACTOR_K_SHIFT		4
 #define CCU_PLL6_FACTOR_M(x)		(((x) >> 0) & 0x3)
+#define CCU_PLL6_FACTOR_M_MASK		(0x3 << 0)
+#define CCU_PLL6_FACTOR_M_SHIFT		0
 
 uint32_t
 sxiccmu_pll6_get_frequency(void *cookie, uint32_t *cells)
@@ -357,6 +367,34 @@ sxiccmu_pll6_get_frequency(void *cookie, uint32_t *cells)
 	}
 
 	return 0;
+}
+
+void
+sxiccmu_pll6_enable(void *cookie, uint32_t *cells, int on)
+{
+	struct sxiccmu_clock *sc = cookie;
+	uint32_t idx = cells[0];
+	uint32_t reg;
+
+	/* 
+	 * Since this clock has several outputs, we never turn it off.
+	 */
+
+	reg = SXIREAD4(sc, 0);
+	switch (idx) {
+	case 0:			/* pll6_sata */
+		if (on)
+			reg |= CCU_PLL6_SATA_CLK_EN;
+		else
+			reg &= ~CCU_PLL6_SATA_CLK_EN;
+		/* FALLTHROUGH */
+	case 1:			/* pll6_other */
+	case 2:			/* pll6 */
+	case 3:			/* pll6_div_4 */
+		if (on)
+			reg |= CCU_PLL6_ENABLE;
+	}
+	SXIWRITE4(sc, 0, reg);
 }
 
 #define CCU_APB1_CLK_RAT_N(x)		(((x) >> 16) & 0x3)
