@@ -536,7 +536,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/dec
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/dec/clockvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/dec/mcclockvar.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ic/dwc_gmac_var.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/eisa
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/eisa/eisadevs.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/eisa/eisadevs_data.ph
@@ -657,6 +656,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ic/ds1286reg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ic/ds1687reg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ic/dwc_gmac_reg.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ic/dwc_gmac_var.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ic/elink3reg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ic/elink3var.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ic/espreg.ph
@@ -892,6 +892,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/mulaw.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ofw
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ofw/fdt.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ofw/ofw_clock.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ofw/ofw_gpio.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ofw/ofw_pci.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ofw/ofw_pinctrl.ph
