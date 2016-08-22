@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmuvar.h,v 1.4 2016/08/20 19:34:44 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmuvar.h,v 1.5 2016/08/22 19:43:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -15,37 +15,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-void sxiccmu_enablemodule(int);
-void sxiccmu_disablemodule(int);
-
 void sxiccmu_set_sd_clock(int, int);
 
 enum CCMU_MODULES {
-	CCMU_EHCI0,
-	CCMU_EHCI1,
-	CCMU_OHCI0,
-	CCMU_OHCI1,
-	CCMU_AHCI,
-	CCMU_EMAC,
-	CCMU_GMAC_MII,
-	CCMU_GMAC_RGMII,
-	CCMU_DMA,
-	CCMU_UART0,
-	CCMU_UART1,
-	CCMU_UART2,
-	CCMU_UART3,
-	CCMU_UART4,
-	CCMU_UART5,
-	CCMU_UART6,
-	CCMU_UART7,
-	CCMU_TWI0,
-	CCMU_TWI1,
-	CCMU_TWI2,
-	CCMU_TWI3,
-	CCMU_TWI4,
 	CCMU_SDMMC0,
 	CCMU_SDMMC1,
 	CCMU_SDMMC2,
-	CCMU_SDMMC3,
-	CCMU_PIO
+	CCMU_SDMMC3
 };
