@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.151 2015/12/09 09:27:40 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.152 2016/08/22 15:37:23 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -702,7 +702,7 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 	struct ip *ip = mtod(m, struct ip *);
 	struct mbuf *opts = NULL;
 	struct sockaddr_in sin;
-	struct rtentry *rt;
+	struct rtentry *rt = NULL;
 	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);
 	u_int rtableid;
 
@@ -733,7 +733,6 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 		if (rtisvalid(rt) &&
 		    ISSET(rt->rt_flags, RTF_LOCAL|RTF_BROADCAST))
 			ia = ifatoia(rt->rt_ifa);
-		rtfree(rt);
 	}
 
 	/*
@@ -742,6 +741,8 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 	 * drop the packet as there is no path to the host.
 	 */
 	if (ia == NULL) {
+		rtfree(rt);
+
 		memset(&sin, 0, sizeof(sin));
 		sin.sin_len = sizeof(sin);
 		sin.sin_family = AF_INET;
@@ -756,12 +757,14 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 		}
 
 		ia = ifatoia(rt->rt_ifa);
-		rtfree(rt);
 	}
 
 	ip->ip_dst = ip->ip_src;
-	ip->ip_src = ia->ia_addr.sin_addr;
 	ip->ip_ttl = MAXTTL;
+
+	/* It is safe to dereference ``ia'' iff ``rt'' is valid. */
+	ip->ip_src = ia->ia_addr.sin_addr;
+	rtfree(rt);
 
 	if (optlen > 0) {
 		u_char *cp;
