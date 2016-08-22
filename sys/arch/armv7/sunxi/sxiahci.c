@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiahci.c,v 1.10 2016/08/15 09:16:26 kettenis Exp $	*/
+/*	$OpenBSD: sxiahci.c,v 1.11 2016/08/22 11:24:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013,2014 Artturi Alm
@@ -32,9 +32,9 @@
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
-#include <armv7/sunxi/sxiccmuvar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
@@ -111,8 +111,8 @@ sxiahci_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("sxiahci_attach: bus_space_map failed!");
 
-	/* enable clock */
-	sxiccmu_enablemodule(CCMU_AHCI);
+	/* enable clocks */
+	clock_enable_all(faa->fa_node);
 	delay(5000);
 
 	/* XXX setup magix */
@@ -195,7 +195,7 @@ clrpwr:
 	if (target_supply)
 		regulator_disable(target_supply);
 dismod:
-	sxiccmu_disablemodule(CCMU_AHCI);
+	clock_disable_all(faa->fa_node);
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 }
 
@@ -222,7 +222,7 @@ sxiahci_activate(struct device *self, int act)
 int
 sxiahci_port_start(struct ahci_port *ap, int fre_only)
 {
-	u_int32_t			r;
+	uint32_t r;
 
 	/* Setup DMA */
 	r = ahci_pread(ap, SXIAHCI_PREG_DMA);
