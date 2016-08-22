@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.20 2016/08/15 09:20:47 kettenis Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.21 2016/08/22 19:38:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -46,11 +46,10 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
-#include <armv7/sunxi/sxiccmuvar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
@@ -226,6 +225,8 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_iot, SID_ADDR, SID_SIZE, 0, &sc->sc_sid_ioh))
 		panic("sxie_attach: bus_space_map sid_ioh failed!");
 
+	clock_enable_all(faa->fa_node);
+
 	sxie_socware_init(sc);
 	sc->txf_inuse = 0;
 
@@ -277,8 +278,6 @@ sxie_socware_init(struct sxie_softc *sc)
 {
 	int have_mac = 0;
 	uint32_t reg;
-
-	sxiccmu_enablemodule(CCMU_EMAC);
 
 	/* MII clock cfg */
 	SXICMS4(sc, SXIE_MACMCFG, 15 << 2, 13 << 2);
