@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.176 2016/08/17 20:46:06 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.177 2016/08/22 16:12:52 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -424,10 +424,10 @@ mandocdb(int argc, char *argv[])
 			if (nodb == 0)
 				dbprune(dba);
 		} else {
-			/*
-			 * Database missing or corrupt.
-			 * Recreate from scratch.
-			 */
+			/* Database missing or corrupt. */
+			say(MANDOC_DB,
+			    "%s: Automatically recreating from scratch",
+			    strerror(errno));
 			exitcode = (int)MANDOCLEVEL_OK;
 			op = OP_DEFAULT;
 			if (0 == treescan())
