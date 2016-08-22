@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.11 2016/08/22 18:18:35 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.12 2016/08/22 19:29:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -190,6 +190,7 @@ struct sxiccmu_clock {
 struct sxiccmu_device {
 	const char *compat;
 	uint32_t (*get_frequency)(void *, uint32_t *);
+	int	(*set_frequency)(void *, uint32_t *, uint32_t);
 	void	(*enable)(void *, uint32_t *, int);
 	void	(*reset)(void *, uint32_t *, int);
 };
@@ -199,6 +200,7 @@ uint32_t sxiccmu_osc_get_frequency(void *, uint32_t *);
 uint32_t sxiccmu_pll6_get_frequency(void *, uint32_t *);
 void	sxiccmu_pll6_enable(void *, uint32_t *, int);
 uint32_t sxiccmu_apb1_get_frequency(void *, uint32_t *);
+int	sxiccmu_gmac_set_frequency(void *, uint32_t *, uint32_t);
 void	sxiccmu_gate_enable(void *, uint32_t *, int);
 void	sxiccmu_reset(void *, uint32_t *, int);
 
@@ -282,6 +284,10 @@ struct sxiccmu_device sxiccmu_devices[] = {
 		.get_frequency = sxiccmu_gen_get_frequency,
 		.enable = sxiccmu_gate_enable
 	},
+	{
+		.compat = "allwinner,sun7i-a20-gmac-clk",
+		.set_frequency = sxiccmu_gmac_set_frequency
+	},
 };
 
 void
@@ -313,6 +319,7 @@ sxiccmu_attach_clock(struct sxiccmu_softc *sc, int node)
 	clock->sc_cd.cd_node = node;
 	clock->sc_cd.cd_cookie = clock;
 	clock->sc_cd.cd_get_frequency = sxiccmu_devices[i].get_frequency;
+	clock->sc_cd.cd_set_frequency = sxiccmu_devices[i].set_frequency;
 	clock->sc_cd.cd_enable = sxiccmu_devices[i].enable;
 	clock_register(&clock->sc_cd);
 
@@ -432,6 +439,33 @@ sxiccmu_apb1_get_frequency(void *cookie, uint32_t *cells)
 
 	freq = clock_get_frequency_idx(sc->sc_node, idx);
 	return freq / (1 << n) / (m + 1);
+}
+
+#define	CCU_GMAC_CLK_PIT		(1 << 2)
+#define	CCU_GMAC_CLK_TCS		(3 << 0)
+#define	CCU_GMAC_CLK_TCS_MII		0
+#define	CCU_GMAC_CLK_TCS_EXT_125	1
+#define	CCU_GMAC_CLK_TCS_INT_RGMII	2
+
+int
+sxiccmu_gmac_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
+{
+	struct sxiccmu_clock *sc = cookie;
+
+	switch (freq) {
+	case 25000000:		/* MMI, 25 MHz */
+		SXICMS4(sc, 0, CCU_GMAC_CLK_PIT|CCU_GMAC_CLK_TCS,
+		    CCU_GMAC_CLK_TCS_MII);
+		break;
+	case 125000000:		/* RGMII, 125 MHz */
+		SXICMS4(sc, 0, CCU_GMAC_CLK_PIT|CCU_GMAC_CLK_TCS,
+		    CCU_GMAC_CLK_PIT|CCU_GMAC_CLK_TCS_INT_RGMII);
+		break;
+	default:
+		return -1;
+	}
+
+	return 0;
 }
 
 void
