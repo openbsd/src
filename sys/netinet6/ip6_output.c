@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.211 2016/07/01 18:18:57 jca Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.212 2016/08/22 10:33:22 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1754,7 +1754,7 @@ ip6_pcbopts(struct ip6_pktopts **pktopt, struct mbuf *m, struct socket *so)
 		 * Only turning off any previous options, regardless of
 		 * whether the opt is just created or given.
 		 */
-		free(opt, M_IP6OPT, 0);
+		free(opt, M_IP6OPT, sizeof(*opt));
 		return (0);
 	}
 
@@ -1764,7 +1764,7 @@ ip6_pcbopts(struct ip6_pktopts **pktopt, struct mbuf *m, struct socket *so)
 	if ((error = ip6_setpktopts(m, opt, NULL, priv,
 	    so->so_proto->pr_protocol)) != 0) {
 		ip6_clearpktopts(opt, -1);	/* XXX discard all options */
-		free(opt, M_IP6OPT, 0);
+		free(opt, M_IP6OPT, sizeof(*opt));
 		return (error);
 	}
 	*pktopt = opt;

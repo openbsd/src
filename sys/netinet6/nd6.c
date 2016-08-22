@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.188 2016/07/13 08:40:46 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.189 2016/08/22 10:33:22 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ void
 nd6_ifdetach(struct nd_ifinfo *nd)
 {
 
-	free(nd, M_IP6NDP, 0);
+	free(nd, M_IP6NDP, sizeof(*nd));
 }
 
 void
@@ -1634,7 +1634,7 @@ nd6_sysctl(int name, void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	ol = oldlenp ? *oldlenp : 0;
 
 	if (oldp) {
-		p = malloc(*oldlenp, M_TEMP, M_WAITOK | M_CANFAIL);
+		p = malloc(ol, M_TEMP, M_WAITOK | M_CANFAIL);
 		if (!p)
 			return ENOMEM;
 	} else
@@ -1656,8 +1656,7 @@ nd6_sysctl(int name, void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 		error = ENOPROTOOPT;
 		break;
 	}
-	if (p)
-		free(p, M_TEMP, 0);
+	free(p, M_TEMP, ol);
 
 	return (error);
 }

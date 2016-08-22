@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.140 2016/07/05 10:17:14 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.141 2016/08/22 10:33:22 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -667,7 +667,7 @@ defrtrlist_del(struct nd_defrouter *dr)
 		    dr->ifp->if_xname);
 	}
 
-	free(dr, M_IP6NDP, 0);
+	free(dr, M_IP6NDP, sizeof(*dr));
 }
 
 /*
@@ -995,7 +995,7 @@ void
 pfxrtr_del(struct nd_pfxrouter *pfr)
 {
 	LIST_REMOVE(pfr, pfr_entry);
-	free(pfr, M_IP6NDP, 0);
+	free(pfr, M_IP6NDP, sizeof(*pfr));
 }
 
 struct nd_prefix *
@@ -1145,7 +1145,7 @@ prelist_remove(struct nd_prefix *pr)
 
 	/* free list of routers that adversed the prefix */
 	LIST_FOREACH_SAFE(pfr, &pr->ndpr_advrtrs, pfr_entry, next)
-		free(pfr, M_IP6NDP, 0);
+		free(pfr, M_IP6NDP, sizeof(*pfr));
 
 	ext->nprefixes--;
 	if (ext->nprefixes < 0) {
@@ -1153,7 +1153,7 @@ prelist_remove(struct nd_prefix *pr)
 		    pr->ndpr_ifp->if_xname);
 	}
 
-	free(pr, M_IP6NDP, 0);
+	free(pr, M_IP6NDP, sizeof(*pr));
 
 	pfxlist_onlink_check();
 	splx(s);
