@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.41 2016/08/22 14:55:59 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.42 2016/08/22 17:12:35 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -162,8 +162,8 @@ int tls_set_errorx(struct tls *ctx, const char *fmt, ...)
 int tls_ssl_error(struct tls *ctx, SSL *ssl_conn, int ssl_ret,
     const char *prefix);
 
-int tls_get_conninfo(struct tls *ctx);
-void tls_free_conninfo(struct tls_conninfo *conninfo);
+int tls_conninfo_populate(struct tls *ctx);
+void tls_conninfo_free(struct tls_conninfo *conninfo);
 
 int asn1_time_parse(const char *, size_t, struct tm *, int);
 
