@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.492 2016/08/03 09:08:40 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.493 2016/08/22 20:07:58 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 3 2016 $
+.Dd $Mdocdate: August 22 2016 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -987,7 +987,7 @@ bind-key -Troot   a switch-client -Ttable1
 .Sh WINDOWS AND PANES
 A
 .Nm
-window may be in one of several modes.
+window may be in one of two modes.
 The default permits direct access to the terminal attached to the window.
 The other is copy mode, which permits a section of a window or its
 history to be copied to a
@@ -3873,7 +3873,7 @@ and so on.
 When the
 .Ic buffer-limit
 option is reached, the oldest automatically named buffer is deleted.
-Explicitly named are not subject to
+Explicitly named buffers are not subject to
 .Ic buffer-limit
 and may be deleted with
 .Ic delete-buffer
