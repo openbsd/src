@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.91 2016/08/16 18:41:57 tedu Exp $	*/
+/*	$OpenBSD: server.c,v 1.92 2016/08/22 15:02:18 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -132,7 +132,7 @@ server_privinit(struct server *srv)
 }
 
 int
-server_tls_cmp(struct server *s1, struct server *s2)
+server_tls_cmp(struct server *s1, struct server *s2, int match_keypair)
 {
 	struct server_config	*sc1, *sc2;
 
@@ -141,16 +141,19 @@ server_tls_cmp(struct server *s1, struct server *s2)
 
 	if (sc1->tls_protocols != sc2->tls_protocols)
 		return (-1);
-	if (strcmp(sc1->tls_cert_file, sc2->tls_cert_file) != 0)
-		return (-1);
-	if (strcmp(sc1->tls_key_file, sc2->tls_key_file) != 0)
-		return (-1);
 	if (strcmp(sc1->tls_ciphers, sc2->tls_ciphers) != 0)
 		return (-1);
 	if (strcmp(sc1->tls_dhe_params, sc2->tls_dhe_params) != 0)
 		return (-1);
 	if (strcmp(sc1->tls_ecdhe_curve, sc2->tls_ecdhe_curve) != 0)
 		return (-1);
+
+	if (match_keypair) {
+		if (strcmp(sc1->tls_cert_file, sc2->tls_cert_file) != 0)
+			return (-1);
+		if (strcmp(sc1->tls_key_file, sc2->tls_key_file) != 0)
+			return (-1);
+	}
 
 	return (0);
 }
@@ -182,6 +185,8 @@ server_tls_load_keypair(struct server *srv)
 int
 server_tls_init(struct server *srv)
 {
+	struct server_config *srv_conf;
+
 	if ((srv->srv_conf.flags & SRVFLAG_TLS) == 0)
 		return (0);
 
@@ -228,6 +233,19 @@ server_tls_init(struct server *srv)
 		log_warnx("%s: failed to set tls certificate/key: %s",
 		    __func__, tls_config_error(srv->srv_tls_config));
 		return (-1);
+	}
+
+	TAILQ_FOREACH(srv_conf, &srv->srv_hosts, entry) {
+		if (srv_conf->tls_cert == NULL || srv_conf->tls_key == NULL)
+			continue;
+		log_debug("%s: adding keypair for server %s", __func__,
+		    srv->srv_conf.name);
+		if (tls_config_add_keypair_mem(srv->srv_tls_config,
+		    srv_conf->tls_cert, srv_conf->tls_cert_len,
+		    srv_conf->tls_key, srv_conf->tls_key_len) != 0) {
+			log_warnx("%s: failed to add tls keypair", __func__);
+			return (-1);
+		}
 	}
 
 	if (tls_configure(srv->srv_tls_ctx, srv->srv_tls_config) != 0) {
@@ -284,6 +302,9 @@ server_launch(void)
 	struct server		*srv;
 
 	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
+		log_debug("%s: configuring server %s", __func__,
+		    srv->srv_conf.name);
+
 		server_tls_init(srv);
 		server_http_init(srv);
 
