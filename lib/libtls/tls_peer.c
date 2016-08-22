@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_peer.c,v 1.5 2015/10/07 23:33:38 beck Exp $ */
+/* $OpenBSD: tls_peer.c,v 1.6 2016/08/22 17:08:10 jsing Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -26,24 +26,24 @@
 const char *
 tls_peer_cert_hash(struct tls *ctx)
 {
-	if (ctx->conninfo)
-		return (ctx->conninfo->hash);
-	return NULL;
+	if (ctx->conninfo == NULL)
+		return (NULL);
+	return (ctx->conninfo->hash);
 }
 const char *
 tls_peer_cert_issuer(struct tls *ctx)
 {
-	if (ctx->conninfo)
-		return (ctx->conninfo->issuer);
-	return NULL;
+	if (ctx->conninfo == NULL)
+		return (NULL);
+	return (ctx->conninfo->issuer);
 }
 
 const char *
 tls_peer_cert_subject(struct tls *ctx)
 {
-	if (ctx->conninfo)
-		return (ctx->conninfo->subject);
-	return NULL;
+	if (ctx->conninfo == NULL)
+		return (NULL);
+	return (ctx->conninfo->subject);
 }
 
 int
