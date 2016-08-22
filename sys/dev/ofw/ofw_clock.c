@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_clock.c,v 1.3 2016/08/22 18:16:58 kettenis Exp $	*/
+/*	$OpenBSD: ofw_clock.c,v 1.4 2016/08/22 19:28:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -72,6 +72,23 @@ clock_get_frequency_cells(uint32_t *cells)
 	}
 
 	return 0;
+}
+
+int
+clock_set_frequency_cells(uint32_t *cells, uint32_t freq)
+{
+	struct clock_device *cd;
+	uint32_t phandle = cells[0];
+
+	LIST_FOREACH(cd, &clock_devices, cd_list) {
+		if (cd->cd_phandle == phandle)
+			break;
+	}
+
+	if (cd && cd->cd_set_frequency)
+		return cd->cd_set_frequency(cd->cd_cookie, &cells[1], freq);
+
+	return -1;
 }
 
 void
@@ -174,6 +191,47 @@ clock_get_frequency(int node, const char *name)
 		return 0;
 
 	return clock_get_frequency_idx(node, idx);
+}
+
+int
+clock_set_frequency_idx(int node, int idx, uint32_t freq)
+{
+	uint32_t *clocks;
+	uint32_t *clock;
+	int rv = -1;
+	int len;
+
+	len = OF_getproplen(node, "clocks");
+	if (len <= 0)
+		return 0;
+
+	clocks = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "clocks", clocks, len);
+
+	clock = clocks;
+	while (clock && clock < clocks + (len / sizeof(uint32_t))) {
+		if (idx == 0) {
+			rv = clock_set_frequency_cells(clock, freq);
+			break;
+		}
+		clock = clock_next_clock(clock);
+		idx--;
+	}
+
+	free(clocks, M_TEMP, len);
+	return rv;
+}
+
+int
+clock_set_frequency(int node, const char *name, uint32_t freq)
+{
+	int idx;
+
+	idx = clock_index(node, name);
+	if (idx == -1)
+		return 0;
+
+	return clock_set_frequency_idx(node, idx, freq);
 }
 
 void
