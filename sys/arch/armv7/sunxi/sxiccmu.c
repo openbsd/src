@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.10 2016/08/22 06:48:38 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.11 2016/08/22 18:18:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -179,16 +179,19 @@ sxiccmu_attach(struct device *parent, struct device *self, void *args)
 }
 
 struct sxiccmu_clock {
-	struct clock_device sc_cd;
+	int sc_node;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-	int sc_node;
+
+	struct clock_device sc_cd;
+	struct reset_device sc_rd;
 };
 
 struct sxiccmu_device {
 	const char *compat;
 	uint32_t (*get_frequency)(void *, uint32_t *);
 	void	(*enable)(void *, uint32_t *, int);
+	void	(*reset)(void *, uint32_t *, int);
 };
 
 uint32_t sxiccmu_gen_get_frequency(void *, uint32_t *);
@@ -197,6 +200,7 @@ uint32_t sxiccmu_pll6_get_frequency(void *, uint32_t *);
 void	sxiccmu_pll6_enable(void *, uint32_t *, int);
 uint32_t sxiccmu_apb1_get_frequency(void *, uint32_t *);
 void	sxiccmu_gate_enable(void *, uint32_t *, int);
+void	sxiccmu_reset(void *, uint32_t *, int);
 
 struct sxiccmu_device sxiccmu_devices[] = {
 	{
@@ -226,6 +230,12 @@ struct sxiccmu_device sxiccmu_devices[] = {
 		.compat = "allwinner,sun4i-a10-apb1-gates-clk",
 		.get_frequency = sxiccmu_gen_get_frequency,
 		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun4i-a10-usb-clk",
+		.get_frequency = sxiccmu_gen_get_frequency,
+		.enable = sxiccmu_gate_enable,
+		.reset = sxiccmu_reset
 	},
 	{
 		.compat = "allwinner,sun5i-a10s-ahb-gates-clk",
@@ -305,6 +315,13 @@ sxiccmu_attach_clock(struct sxiccmu_softc *sc, int node)
 	clock->sc_cd.cd_get_frequency = sxiccmu_devices[i].get_frequency;
 	clock->sc_cd.cd_enable = sxiccmu_devices[i].enable;
 	clock_register(&clock->sc_cd);
+
+	if (sxiccmu_devices[i].reset) {
+		clock->sc_rd.rd_node = node;
+		clock->sc_rd.rd_cookie = clock;
+		clock->sc_rd.rd_reset = sxiccmu_devices[i].reset;
+		reset_register(&clock->sc_rd);
+	}
 }
 
 /*
@@ -428,6 +445,19 @@ sxiccmu_gate_enable(void *cookie, uint32_t *cells, int on)
 		SXISET4(sc, reg * 4, (1U << bit));
 	else
 		SXICLR4(sc, reg * 4, (1U << bit));
+}
+
+void
+sxiccmu_reset(void *cookie, uint32_t *cells, int assert)
+{
+	struct sxiccmu_clock *sc = cookie;
+	int reg = cells[0] / 32;
+	int bit = cells[0] % 32;
+
+	if (assert)
+		SXICLR4(sc, reg * 4, (1U << bit));
+	else
+		SXISET4(sc, reg * 4, (1U << bit));
 }
 
 /* XXX spl? */
