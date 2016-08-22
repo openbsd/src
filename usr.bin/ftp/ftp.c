@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.99 2016/08/20 20:18:42 millert Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.100 2016/08/22 16:27:00 millert Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -83,20 +83,13 @@
 
 #include "ftp_var.h"
 
-union sockunion {
-	struct sockinet {
-		u_char si_len;
-		u_char si_family;
-		u_short si_port;
-	} su_si;
-	struct sockaddr_in  su_sin;
-	struct sockaddr_in6 su_sin6;
+union sockaddr_union {
+	struct sockaddr     sa;
+	struct sockaddr_in  sin;
+	struct sockaddr_in6 sin6;
 };
-#define su_len		su_si.si_len
-#define su_family	su_si.si_family
-#define su_port		su_si.si_port
 
-union sockunion myctladdr, hisctladdr, data_addr;
+union sockaddr_union myctladdr, hisctladdr, data_addr;
 
 int	data = -1;
 int	abrtflag = 0;
@@ -259,12 +252,12 @@ hookup(char *host, char *port)
 		ares = NULL;
 	}
 #endif /* !SMALL */
-	if (getsockname(s, (struct sockaddr *)&myctladdr, &namelen) < 0) {
+	if (getsockname(s, &myctladdr.sa, &namelen) < 0) {
 		warn("getsockname");
 		code = -1;
 		goto bad;
 	}
-	if (hisctladdr.su_family == AF_INET) {
+	if (hisctladdr.sa.sa_family == AF_INET) {
 		tos = IPTOS_LOWDELAY;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos, sizeof(int)) < 0)
 			warn("setsockopt TOS (ignored)");
@@ -1280,9 +1273,9 @@ initconn(void)
 	struct addrinfo *ares;
 #endif
 
-	if (myctladdr.su_family == AF_INET6
-	 && (IN6_IS_ADDR_LINKLOCAL(&myctladdr.su_sin6.sin6_addr)
-	  || IN6_IS_ADDR_SITELOCAL(&myctladdr.su_sin6.sin6_addr))) {
+	if (myctladdr.sa.sa_family == AF_INET6
+	 && (IN6_IS_ADDR_LINKLOCAL(&myctladdr.sin6.sin6_addr)
+	  || IN6_IS_ADDR_SITELOCAL(&myctladdr.sin6.sin6_addr))) {
 		warnx("use of scoped address can be troublesome");
 	}
 #ifndef SMALL
@@ -1306,7 +1299,7 @@ initconn(void)
 reinit:
 	if (passivemode) {
 		data_addr = myctladdr;
-		data = socket(data_addr.su_family, SOCK_STREAM, 0);
+		data = socket(data_addr.sa.sa_family, SOCK_STREAM, 0);
 		if (data < 0) {
 			warn("socket");
 			return (1);
@@ -1324,7 +1317,7 @@ reinit:
 			       sizeof(on)) < 0)
 			warn("setsockopt (ignored)");
 #endif /* !SMALL */
-		switch (data_addr.su_family) {
+		switch (data_addr.sa.sa_family) {
 		case AF_INET:
 			if (epsv4 && !epsv4bad) {
 				int ov;
@@ -1397,7 +1390,7 @@ reinit:
 		if (!pasvcmd)
 			goto bad;
 		if (strcmp(pasvcmd, "PASV") == 0) {
-			if (data_addr.su_family != AF_INET) {
+			if (data_addr.sa.sa_family != AF_INET) {
 				fputs(
 "Passive mode AF mismatch. Shouldn't happen!\n", ttyout);
 				goto bad;
@@ -1416,18 +1409,18 @@ reinit:
 				goto bad;
 			}
 			memset(&data_addr, 0, sizeof(data_addr));
-			data_addr.su_family = AF_INET;
-			data_addr.su_len = sizeof(struct sockaddr_in);
-			data_addr.su_sin.sin_addr.s_addr =
+			data_addr.sin.sin_family = AF_INET;
+			data_addr.sin.sin_len = sizeof(struct sockaddr_in);
+			data_addr.sin.sin_addr.s_addr =
 				htonl(pack4(addr, 0));
-			data_addr.su_port = htons(pack2(port, 0));
+			data_addr.sin.sin_port = htons(pack2(port, 0));
 		} else if (strcmp(pasvcmd, "LPSV") == 0) {
 			if (code / 10 == 22 && code != 228) {
 				fputs("wrong server: return code must be 228\n",
 					ttyout);
 				goto bad;
 			}
-			switch (data_addr.su_family) {
+			switch (data_addr.sa.sa_family) {
 			case AF_INET:
 				error = sscanf(pasv,
 "%u,%u,%u,%u,%u,%u,%u,%u,%u",
@@ -1447,11 +1440,11 @@ reinit:
 				}
 
 				memset(&data_addr, 0, sizeof(data_addr));
-				data_addr.su_family = AF_INET;
-				data_addr.su_len = sizeof(struct sockaddr_in);
-				data_addr.su_sin.sin_addr.s_addr =
+				data_addr.sin.sin_family = AF_INET;
+				data_addr.sin.sin_len = sizeof(struct sockaddr_in);
+				data_addr.sin.sin_addr.s_addr =
 					htonl(pack4(addr, 0));
-				data_addr.su_port = htons(pack2(port, 0));
+				data_addr.sin.sin_port = htons(pack2(port, 0));
 				break;
 			case AF_INET6:
 				error = sscanf(pasv,
@@ -1475,17 +1468,17 @@ reinit:
 				}
 
 				memset(&data_addr, 0, sizeof(data_addr));
-				data_addr.su_family = AF_INET6;
-				data_addr.su_len = sizeof(struct sockaddr_in6);
+				data_addr.sin6.sin6_family = AF_INET6;
+				data_addr.sin6.sin6_len = sizeof(struct sockaddr_in6);
 			    {
 				u_int32_t *p32;
-				p32 = (u_int32_t *)&data_addr.su_sin6.sin6_addr;
+				p32 = (u_int32_t *)&data_addr.sin6.sin6_addr;
 				p32[0] = htonl(pack4(addr, 0));
 				p32[1] = htonl(pack4(addr, 4));
 				p32[2] = htonl(pack4(addr, 8));
 				p32[3] = htonl(pack4(addr, 12));
 			    }
-				data_addr.su_port = htons(pack2(port, 0));
+				data_addr.sin6.sin6_port = htons(pack2(port, 0));
 				break;
 			default:
 				fputs("Bad family!\n", ttyout);
@@ -1512,12 +1505,12 @@ reinit:
 				goto bad;
 			}
 			data_addr = hisctladdr;
-			data_addr.su_port = htons(port[1]);
+			data_addr.sin.sin_port = htons(port[1]);
 		} else
 			goto bad;
 
-		for (error = connect(data, (struct sockaddr *)&data_addr,
-		    data_addr.su_len); error != 0 && errno == EINTR;
+		for (error = connect(data, &data_addr.sa, data_addr.sa.sa_len);
+		    error != 0 && errno == EINTR;
 		    error = connect_wait(data))
 			continue;
 		if (error != 0) {
@@ -1531,7 +1524,7 @@ reinit:
 			warn("connect");
 			goto bad;
 		}
-		if (data_addr.su_family == AF_INET) {
+		if (data_addr.sa.sa_family == AF_INET) {
 			on = IPTOS_THROUGHPUT;
 			if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
 				       sizeof(int)) < 0)
@@ -1543,10 +1536,10 @@ reinit:
 noport:
 	data_addr = myctladdr;
 	if (sendport)
-		data_addr.su_port = 0;	/* let system pick one */
+		data_addr.sin.sin_port = 0;	/* let system pick one */
 	if (data != -1)
 		(void)close(data);
-	data = socket(data_addr.su_family, SOCK_STREAM, 0);
+	data = socket(data_addr.sa.sa_family, SOCK_STREAM, 0);
 	if (data < 0) {
 		warn("socket");
 		if (tmpno)
@@ -1559,7 +1552,7 @@ noport:
 			warn("setsockopt (reuse address)");
 			goto bad;
 		}
-	switch (data_addr.su_family) {
+	switch (data_addr.sa.sa_family) {
 	case AF_INET:
 		on = IP_PORTRANGE_HIGH;
 		if (setsockopt(data, IPPROTO_IP, IP_PORTRANGE,
@@ -1573,7 +1566,7 @@ noport:
 			warn("setsockopt IPV6_PORTRANGE (ignored)");
 		break;
 	}
-	if (bind(data, (struct sockaddr *)&data_addr, data_addr.su_len) < 0) {
+	if (bind(data, &data_addr.sa, data_addr.sa.sa_len) < 0) {
 		warn("bind");
 		goto bad;
 	}
@@ -1584,7 +1577,7 @@ noport:
 		warn("setsockopt (ignored)");
 #endif /* !SMALL */
 	namelen = sizeof(data_addr);
-	if (getsockname(data, (struct sockaddr *)&data_addr, &namelen) < 0) {
+	if (getsockname(data, &data_addr.sa, &namelen) < 0) {
 		warn("getsockname");
 		goto bad;
 	}
@@ -1596,10 +1589,10 @@ noport:
 	if (sendport) {
 		char hname[NI_MAXHOST], pbuf[NI_MAXSERV];
 		int af_tmp;
-		union sockunion tmp;
+		union sockaddr_union tmp;
 
 		tmp = data_addr;
-		switch (tmp.su_family) {
+		switch (tmp.sa.sa_family) {
 		case AF_INET:
 			if (!epsv4 || epsv4bad) {
 				result = COMPLETE +1;
@@ -1607,12 +1600,12 @@ noport:
 			}
 			/*FALLTHROUGH*/
 		case AF_INET6:
-			if (tmp.su_family == AF_INET6)
-				tmp.su_sin6.sin6_scope_id = 0;
-			af_tmp = (tmp.su_family == AF_INET) ? 1 : 2;
-			if (getnameinfo((struct sockaddr *)&tmp,
-			    tmp.su_len, hname, sizeof(hname),
-			    pbuf, sizeof(pbuf), NI_NUMERICHOST | NI_NUMERICSERV)) {
+			if (tmp.sa.sa_family == AF_INET6)
+				tmp.sin6.sin6_scope_id = 0;
+			af_tmp = (tmp.sa.sa_family == AF_INET) ? 1 : 2;
+			if (getnameinfo(&tmp.sa, tmp.sa.sa_len, hname,
+			    sizeof(hname), pbuf, sizeof(pbuf),
+			    NI_NUMERICHOST | NI_NUMERICSERV)) {
 				result = ERROR;
 			} else {
 				result = command("EPRT |%d|%s|%s|",
@@ -1636,17 +1629,17 @@ noport:
 		if (result == COMPLETE)
 			goto skip_port;
 
-		switch (data_addr.su_family) {
+		switch (data_addr.sa.sa_family) {
 		case AF_INET:
-			a = (char *)&data_addr.su_sin.sin_addr;
-			p = (char *)&data_addr.su_port;
+			a = (char *)&data_addr.sin.sin_addr;
+			p = (char *)&data_addr.sin.sin_port;
 			result = command("PORT %d,%d,%d,%d,%d,%d",
 				 UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]),
 				 UC(p[0]), UC(p[1]));
 			break;
 		case AF_INET6:
-			a = (char *)&data_addr.su_sin6.sin6_addr;
-			p = (char *)&data_addr.su_port;
+			a = (char *)&data_addr.sin6.sin6_addr;
+			p = (char *)&data_addr.sin6.sin6_port;
 			result = command(
 "LPRT %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
 				 6, 16,
@@ -1670,7 +1663,7 @@ noport:
 	}
 	if (tmpno)
 		sendport = 1;
-	if (data_addr.su_family == AF_INET) {
+	if (data_addr.sa.sa_family == AF_INET) {
 		on = IPTOS_THROUGHPUT;
 		if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
 			       sizeof(int)) < 0)
@@ -1687,14 +1680,14 @@ bad:
 FILE *
 dataconn(const char *lmode)
 {
-	union sockunion from;
-	socklen_t fromlen = myctladdr.su_len;
+	union sockaddr_union from;
+	socklen_t fromlen = myctladdr.sa.sa_len;
 	int s;
 
 	if (passivemode)
 		return (fdopen(data, lmode));
 
-	s = accept(data, (struct sockaddr *) &from, &fromlen);
+	s = accept(data, &from.sa, &fromlen);
 	if (s < 0) {
 		warn("accept");
 		(void)close(data), data = -1;
@@ -1702,7 +1695,7 @@ dataconn(const char *lmode)
 	}
 	(void)close(data);
 	data = s;
-	if (from.su_family == AF_INET) {
+	if (from.sa.sa_family == AF_INET) {
 		int tos = IPTOS_THROUGHPUT;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
 				sizeof(int)) < 0) {
@@ -1739,8 +1732,8 @@ pswitch(int flag)
 	static struct comvars {
 		int connect;
 		char name[HOST_NAME_MAX+1];
-		union sockunion mctl;
-		union sockunion hctl;
+		union sockaddr_union mctl;
+		union sockaddr_union hctl;
 		FILE *in;
 		FILE *out;
 		int tpe;
