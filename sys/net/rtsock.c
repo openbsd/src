@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.194 2016/07/11 13:06:31 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.195 2016/08/22 16:01:52 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -99,6 +99,7 @@ struct walkarg {
 int	route_ctloutput(int, struct socket *, int, int, struct mbuf **);
 void	route_input(struct mbuf *m0, ...);
 int	route_arp_conflict(struct rt_addrinfo *, unsigned int);
+int	route_cleargateway(struct rtentry *, void *, unsigned int);
 
 struct mbuf	*rt_msg1(int, struct rt_addrinfo *);
 int		 rt_msg2(int, int, struct rt_addrinfo *, caddr_t,
@@ -556,7 +557,7 @@ route_output(struct mbuf *m, ...)
 
 	/* make sure that kernel-only bits are not set */
 	rtm->rtm_priority &= RTP_MASK;
-	rtm->rtm_flags &= ~(RTF_DONE|RTF_CLONED);
+	rtm->rtm_flags &= ~(RTF_DONE|RTF_CLONED|RTF_CACHED);
 	rtm->rtm_fmask &= RTF_FMASK;
 
 	if (rtm->rtm_priority != 0) {
@@ -615,6 +616,33 @@ route_output(struct mbuf *m, ...)
 		}
 		break;
 	case RTM_DELETE:
+		if (!rtable_exists(tableid)) {
+			error = EAFNOSUPPORT;
+			goto flush;
+		}
+
+		rt = rtable_lookup(tableid, info.rti_info[RTAX_DST],
+		    info.rti_info[RTAX_NETMASK], info.rti_info[RTAX_GATEWAY],
+		    prio);
+
+		/*
+		 * Invalidate the cache of automagically created and
+		 * referenced L2 entries to make sure that ``rt_gwroute''
+		 * pointer stays valid for other CPUs.
+		 */
+		if ((rt != NULL) && (ISSET(rt->rt_flags, RTF_CACHED))) {
+			ifp = if_get(rt->rt_ifidx);
+			KASSERT(ifp != NULL);
+			ifp->if_rtrequest(ifp, RTM_INVALIDATE, rt);
+			if_put(ifp);
+			/* Reset the MTU of the gateway route. */
+			rtable_walk(tableid, rt_key(rt)->sa_family,
+			    route_cleargateway, rt);
+			goto report;
+		}
+		rtfree(rt);
+		rt = NULL;
+
 		error = rtrequest(RTM_DELETE, &info, prio, &rt, tableid);
 		if (error == 0)
 			goto report;
@@ -746,12 +774,6 @@ report:
 				if ((error = rt_getifa(&info, tableid)) != 0)
 					goto flush;
 				ifa = info.rti_ifa;
-			}
-			if (info.rti_info[RTAX_GATEWAY] != NULL && (error =
-			    rt_setgate(rt, info.rti_info[RTAX_GATEWAY],
-			    tableid)))
-				goto flush;
-			if (ifa) {
 				if (rt->rt_ifa != ifa) {
 					ifp = if_get(rt->rt_ifidx);
 					KASSERT(ifp != NULL);
@@ -769,6 +791,10 @@ report:
 #endif
 				}
 			}
+			if (info.rti_info[RTAX_GATEWAY] != NULL && (error =
+			    rt_setgate(rt, info.rti_info[RTAX_GATEWAY],
+			    tableid)))
+				goto flush;
 #ifdef MPLS
 			if ((rtm->rtm_flags & RTF_MPLS) &&
 			    info.rti_info[RTAX_SRC] != NULL) {
@@ -888,6 +914,18 @@ fail:
 		rp->rcb_proto.sp_family = PF_ROUTE;
 
 	return (error);
+}
+
+int
+route_cleargateway(struct rtentry *rt, void *arg, unsigned int rtableid)
+{
+	struct rtentry *nhrt = arg;
+
+	if (ISSET(rt->rt_flags, RTF_GATEWAY) && rt->rt_gwroute == nhrt &&
+	    !ISSET(rt->rt_locks, RTV_MTU))
+                rt->rt_mtu = 0;
+
+	return (0);
 }
 
 /*

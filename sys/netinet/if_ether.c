@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.220 2016/07/14 14:01:40 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.221 2016/08/22 16:01:52 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -78,6 +78,7 @@ int	arpt_prune = (5 * 60);	/* walk list every 5 minutes */
 int	arpt_keep = (20 * 60);	/* once resolved, cache for 20 minutes */
 int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
 
+void arpinvalidate(struct rtentry *);
 void arptfree(struct rtentry *);
 void arptimer(void *);
 struct rtentry *arplookup(struct in_addr *, int, int, unsigned int);
@@ -215,6 +216,12 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		rt->rt_flags &= ~RTF_LLINFO;
 		la_hold_total -= ml_purge(&la->la_ml);
 		pool_put(&arp_pool, la);
+		break;
+
+	case RTM_INVALIDATE:
+		if (!ISSET(rt->rt_flags, RTF_LOCAL))
+			arpinvalidate(rt);
+		break;
 	}
 }
 
@@ -306,7 +313,6 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	struct sockaddr_dl *sdl;
 	struct rtentry *rt = NULL;
 	char addr[INET_ADDRSTRLEN];
-	int error;
 
 	if (m->m_flags & M_BCAST) {	/* broadcast */
 		memcpy(desten, etherbroadcastaddr, sizeof(etherbroadcastaddr));
@@ -317,10 +323,12 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		return (0);
 	}
 
-	error = rt_checkgate(rt0, &rt);
-	if (error) {
+	rt = rt_getll(rt0);
+
+	if (ISSET(rt->rt_flags, RTF_REJECT) &&
+	    (rt->rt_expire == 0 || time_uptime < rt->rt_expire)) {
 		m_freem(m);
-		return (error);
+		return (rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 
 	if (!ISSET(rt->rt_flags, RTF_LLINFO)) {
@@ -667,23 +675,31 @@ arpcache(struct ifnet *ifp, struct ether_arp *ea, struct rtentry *rt)
 
 	return (0);
 }
+
+void
+arpinvalidate(struct rtentry *rt)
+{
+	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
+	struct sockaddr_dl *sdl = satosdl(rt->rt_gateway);
+
+	la_hold_total -= ml_purge(&la->la_ml);
+	sdl->sdl_alen = 0;
+	la->la_asked = 0;
+}
+
 /*
  * Free an arp entry.
  */
 void
 arptfree(struct rtentry *rt)
 {
-	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
-	struct sockaddr_dl *sdl = satosdl(rt->rt_gateway);
 	struct ifnet *ifp;
 
-	ifp = if_get(rt->rt_ifidx);
-	if ((sdl != NULL) && (sdl->sdl_family == AF_LINK)) {
-		sdl->sdl_alen = 0;
-		la->la_asked = 0;
-	}
+	arpinvalidate(rt);
 
-	if (!ISSET(rt->rt_flags, RTF_STATIC))
+	ifp = if_get(rt->rt_ifidx);
+	KASSERT(ifp != NULL);
+	if (!ISSET(rt->rt_flags, RTF_STATIC|RTF_CACHED))
 		rtdeletemsg(rt, ifp, ifp->if_rdomain);
 	if_put(ifp);
 }

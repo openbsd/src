@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.189 2016/08/22 10:33:22 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.190 2016/08/22 16:01:52 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -93,6 +93,7 @@ struct nd_prhead nd_prefix = { 0 };
 int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 
 void nd6_slowtimo(void *);
+void nd6_invalidate(struct rtentry *);
 struct llinfo_nd6 *nd6_free(struct rtentry *, int);
 void nd6_llinfo_timer(void *);
 
@@ -711,6 +712,17 @@ nd6_is_addr_neighbor(struct sockaddr_in6 *addr, struct ifnet *ifp)
 	return (0);
 }
 
+void
+nd6_invalidate(struct rtentry *rt)
+{
+	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
+
+	m_freem(ln->ln_hold);
+	ln->ln_hold = NULL;
+	ln->ln_state = ND6_LLINFO_INCOMPLETE;
+	ln->ln_asked = 0;
+}
+
 /*
  * Free an nd6 llinfo entry.
  * Since the function would cause significant changes in the kernel, DO NOT
@@ -814,7 +826,7 @@ nd6_free(struct rtentry *rt, int gc)
 	 * caches, and disable the route entry not to be used in already
 	 * cached routes.
 	 */
-	if (!ISSET(rt->rt_flags, RTF_STATIC))
+	if (!ISSET(rt->rt_flags, RTF_STATIC|RTF_CACHED))
 		rtdeletemsg(rt, ifp, ifp->if_rdomain);
 	splx(s);
 
@@ -1097,6 +1109,11 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		rt->rt_flags &= ~RTF_LLINFO;
 		m_freem(ln->ln_hold);
 		pool_put(&nd6_pool, ln);
+		break;
+
+	case RTM_INVALIDATE:
+		nd6_invalidate(rt);
+		break;
 	}
 }
 
@@ -1495,17 +1512,18 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	struct sockaddr_dl *sdl;
 	struct rtentry *rt;
 	struct llinfo_nd6 *ln = NULL;
-	int error;
 
 	if (m->m_flags & M_MCAST) {
 		ETHER_MAP_IPV6_MULTICAST(&satosin6(dst)->sin6_addr, desten);
 		return (0);
 	}
 
-	error = rt_checkgate(rt0, &rt);
-	if (error) {
+	rt = rt_getll(rt0);
+
+	if (ISSET(rt->rt_flags, RTF_REJECT) &&
+	    (rt->rt_expire == 0 || time_uptime < rt->rt_expire)) {
 		m_freem(m);
-		return (error);
+		return (rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 
 	/*

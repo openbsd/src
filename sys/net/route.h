@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.141 2016/07/13 08:40:46 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.142 2016/08/22 16:01:52 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -103,7 +103,12 @@ struct rtentry {
 	struct ifaddr	*rt_ifa;	/* the answer: interface addr to use */
 	caddr_t		 rt_llinfo;	/* pointer to link level info cache or
 					   to an MPLS structure */ 
-	struct rtentry	*rt_gwroute;	/* implied entry for gatewayed routes */
+	union {
+		struct rtentry	*_nh;	/* implied entry for gatewayed routes */
+		unsigned int	 _ref;	/* # gatewayed caching this route */
+	} RT_gw;
+#define rt_gwroute	 RT_gw._nh
+#define rt_cachecnt	 RT_gw._ref
 	struct rtentry	*rt_parent;	/* If cloned, parent of this route. */
 	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
 	struct rt_kmetrics rt_rmx;	/* metrics used by rx'ing protocols */
@@ -139,6 +144,7 @@ struct rtentry {
 #define RTF_ANNOUNCE	RTF_PROTO2	/* announce L2 entry */
 #define RTF_PROTO1	0x8000		/* protocol specific routing flag */
 #define RTF_CLONED	0x10000		/* this is a cloned route */
+#define RTF_CACHED	0x20000		/* cached by a RTF_GATEWAY entry */
 #define RTF_MPATH	0x40000		/* multipath route or operation */
 #define RTF_MPLS	0x100000	/* MPLS additional infos */
 #define RTF_LOCAL	0x200000	/* route to a local address */
@@ -227,6 +233,7 @@ struct rt_msghdr {
 #define RTM_IFINFO	0xe	/* iface going up/down etc. */
 #define RTM_IFANNOUNCE	0xf	/* iface arrival/departure */
 #define RTM_DESYNC	0x10	/* route socket buffer overflow */
+#define RTM_INVALIDATE	0x11	/* Invalidate cache of L2 route */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
@@ -363,7 +370,7 @@ void	 rt_sendmsg(struct rtentry *, int, u_int);
 void	 rt_sendaddrmsg(struct rtentry *, int, struct ifaddr *);
 void	 rt_missmsg(int, struct rt_addrinfo *, int, uint8_t, u_int, int, u_int);
 int	 rt_setgate(struct rtentry *, struct sockaddr *, u_int);
-int	 rt_checkgate(struct rtentry *, struct rtentry **);
+struct rtentry *rt_getll(struct rtentry *);
 void	 rt_setmetrics(u_long, const struct rt_metrics *, struct rt_kmetrics *);
 void	 rt_getmetrics(const struct rt_kmetrics *, struct rt_metrics *);
 
