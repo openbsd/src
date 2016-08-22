@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.27 2016/08/13 13:15:53 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.28 2016/08/22 14:55:59 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -227,6 +227,18 @@ tls_config_free(struct tls_config *config)
 	free(config);
 }
 
+static void
+tls_config_keypair_add(struct tls_config *config, struct tls_keypair *keypair)
+{
+	struct tls_keypair *kp;
+
+	kp = config->keypair;
+	while (kp->next != NULL)
+		kp = kp->next;
+
+	kp->next = keypair;
+}
+
 const char *
 tls_config_error(struct tls_config *config)
 {
@@ -367,6 +379,50 @@ tls_config_set_alpn(struct tls_config *config, const char *alpn)
 {
 	return tls_config_parse_alpn(config, alpn, &config->alpn,
 	    &config->alpn_len);
+}
+
+int
+tls_config_add_keypair_file(struct tls_config *config,
+    const char *cert_file, const char *key_file)
+{
+	struct tls_keypair *keypair;
+
+	if ((keypair = tls_keypair_new()) == NULL)
+		return (-1);
+	if (tls_keypair_set_cert_file(keypair, &config->error, cert_file) != 0)
+		goto err;
+	if (tls_keypair_set_key_file(keypair, &config->error, key_file) != 0)
+		goto err;
+
+	tls_config_keypair_add(config, keypair);
+
+	return (0);
+
+ err:
+	tls_keypair_free(keypair);
+	return (-1);
+}
+
+int
+tls_config_add_keypair_mem(struct tls_config *config, const uint8_t *cert,
+    size_t cert_len, const uint8_t *key, size_t key_len)
+{
+	struct tls_keypair *keypair;
+
+	if ((keypair = tls_keypair_new()) == NULL)
+		return (-1);
+	if (tls_keypair_set_cert_mem(keypair, cert, cert_len) != 0)
+		goto err;
+	if (tls_keypair_set_key_mem(keypair, key, key_len) != 0)
+		goto err;
+
+	tls_config_keypair_add(config, keypair);
+
+	return (0);
+
+ err:
+	tls_keypair_free(keypair);
+	return (-1);
 }
 
 int

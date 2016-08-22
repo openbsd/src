@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.66 2016/08/18 15:43:12 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.67 2016/08/22 14:55:59 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 18 2016 $
+.Dd $Mdocdate: August 22 2016 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -24,6 +24,8 @@
 .Nm tls_config_new ,
 .Nm tls_config_free ,
 .Nm tls_config_parse_protocols ,
+.Nm tls_config_add_keypair_file ,
+.Nm tls_config_add_keypair_mem ,
 .Nm tls_config_set_alpn ,
 .Nm tls_config_set_ca_file ,
 .Nm tls_config_set_ca_path ,
@@ -57,6 +59,7 @@
 .Nm tls_peer_cert_notafter ,
 .Nm tls_conn_alpn_selected ,
 .Nm tls_conn_cipher ,
+.Nm tls_conn_servername ,
 .Nm tls_conn_version ,
 .Nm tls_load_file ,
 .Nm tls_client ,
@@ -89,6 +92,10 @@
 .Fn tls_config_free "struct tls_config *config"
 .Ft "int"
 .Fn tls_config_parse_protocols "uint32_t *protocols" "const char *protostr"
+.Ft "int"
+.Fn tls_config_add_keypair_file "struct tls_config *config" "const char *cert_file" "const char *key_file"
+.Ft "int"
+.Fn tls_config_add_keypair_mem "struct tls_config *config" "const uint8_t *cert" "size_t cert_len" "const uint8_t *key" "size_t key_len"
 .Ft "int"
 .Fn tls_config_set_alpn "struct tls_config *config" "const char *alpn"
 .Ft "int"
@@ -155,6 +162,8 @@
 .Fn tls_conn_alpn_selected "struct tls *ctx"
 .Ft "const char *"
 .Fn tls_conn_cipher "struct tls *ctx"
+.Ft "const char *"
+.Fn tls_conn_servername "struct tls *ctx"
 .Ft "const char *"
 .Fn tls_conn_version "struct tls *ctx"
 .Ft "uint8_t *"
@@ -301,6 +310,16 @@ The following functions modify a configuration by setting parameters (the
 configuration options may only apply to clients, to servers or to both):
 .Bl -bullet -offset four
 .It
+.Fn tls_config_add_keypair_file
+adds an additional public certificate and private key from the specified files,
+used as an alternative certificate for Server Name Indication.
+.Em (Server)
+.It
+.Fn tls_config_set_keypair_mem
+adds an additional public certificate and private key from memory,
+used as an alternative certificate for Server Name Indication.
+.Em (Server)
+.It
 .Fn tls_config_set_alpn
 sets the ALPN protocols that are supported.
 The alpn string is a comma separated list of protocols, in order of preference.
@@ -444,6 +463,12 @@ returns a string corresponding to the cipher suite negotiated with the peer
 connected to
 .Ar ctx .
 .Em (Server and client)
+.It
+.Fn tls_conn_servername
+returns a string corresponding to the servername that the client connected to
+.Ar ctx
+requested by sending a TLS Server Name Indication extension.
+.Em (Server)
 .It
 .Fn tls_conn_version
 returns a string corresponding to a TLS version negotiated with the peer

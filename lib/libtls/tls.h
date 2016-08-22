@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.33 2016/08/12 15:10:59 jsing Exp $ */
+/* $OpenBSD: tls.h,v 1.34 2016/08/22 14:55:59 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -51,6 +51,11 @@ const char *tls_error(struct tls *_ctx);
 
 struct tls_config *tls_config_new(void);
 void tls_config_free(struct tls_config *_config);
+
+int tls_config_add_keypair_file(struct tls_config *_config,
+    const char *_cert_file, const char *_key_file);
+int tls_config_add_keypair_mem(struct tls_config *_config, const uint8_t *_cert,
+    size_t _cert_len, const uint8_t *_key, size_t _key_len);
 
 int tls_config_set_alpn(struct tls_config *_config, const char *_alpn);
 int tls_config_set_ca_file(struct tls_config *_config, const char *_ca_file);
@@ -119,6 +124,7 @@ time_t	tls_peer_cert_notafter(struct tls *_ctx);
 
 const char *tls_conn_alpn_selected(struct tls *_ctx);
 const char *tls_conn_cipher(struct tls *_ctx);
+const char *tls_conn_servername(struct tls *_ctx);
 const char *tls_conn_version(struct tls *_ctx);
 
 uint8_t *tls_load_file(const char *_file, size_t *_len, char *_password);
