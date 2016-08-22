@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.152 2016/06/13 21:24:43 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.153 2016/08/22 10:23:42 claudio Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -373,6 +373,8 @@ bad:
 	return (error);
 }
 
+int m_getuio(struct mbuf **, int, long, struct uio *);
+
 #define	SBLOCKWAIT(f)	(((f) & MSG_DONTWAIT) ? M_NOWAIT : M_WAITOK)
 /*
  * Send on a socket.
@@ -395,10 +397,7 @@ int
 sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
     struct mbuf *control, int flags)
 {
-	struct mbuf **mp;
-	struct mbuf *m;
 	long space, clen = 0;
-	u_long len, mlen;
 	size_t resid;
 	int error, s;
 	int atomic = sosendallatonce(so) || top;
@@ -475,7 +474,6 @@ restart:
 			goto restart;
 		}
 		splx(s);
-		mp = &top;
 		space -= clen;
 		do {
 			if (uio == NULL) {
@@ -485,52 +483,14 @@ restart:
 				resid = 0;
 				if (flags & MSG_EOR)
 					top->m_flags |= M_EOR;
-			} else do {
-				if (top == 0) {
-					MGETHDR(m, M_WAIT, MT_DATA);
-					mlen = MHLEN;
-					m->m_pkthdr.len = 0;
-					m->m_pkthdr.ph_ifidx = 0;
-				} else {
-					MGET(m, M_WAIT, MT_DATA);
-					mlen = MLEN;
-				}
-				if (resid >= MINCLSIZE && space >= MCLBYTES) {
-					MCLGET(m, M_NOWAIT);
-					if ((m->m_flags & M_EXT) == 0)
-						goto nopages;
-					if (atomic && top == 0) {
-						len = ulmin(MCLBYTES - max_hdr,
-						    resid);
-						m->m_data += max_hdr;
-					} else
-						len = ulmin(MCLBYTES, resid);
-					space -= len;
-				} else {
-nopages:
-					len = ulmin(ulmin(mlen, resid), space);
-					space -= len;
-					/*
-					 * For datagram protocols, leave room
-					 * for protocol headers in first mbuf.
-					 */
-					if (atomic && top == 0 && len < mlen)
-						MH_ALIGN(m, len);
-				}
-				error = uiomove(mtod(m, caddr_t), len, uio);
+			} else {
+				error = m_getuio(&top, atomic,
+				    space, uio);
+				space -= top->m_pkthdr.len;
 				resid = uio->uio_resid;
-				m->m_len = len;
-				*mp = m;
-				top->m_pkthdr.len += len;
-				if (error)
-					goto release;
-				mp = &m->m_next;
-				if (resid == 0) {
-					if (flags & MSG_EOR)
-						top->m_flags |= M_EOR;
-					break;
-				}
-			} while (space > 0 && atomic);
+				if (flags & MSG_EOR)
+					top->m_flags |= M_EOR;
+			}
 			s = splsoftnet();		/* XXX */
 			if (resid == 0)
 				so->so_state &= ~SS_ISSENDING;
@@ -539,9 +499,8 @@ nopages:
 			    top, addr, control, curproc);
 			splx(s);
 			clen = 0;
-			control = 0;
-			top = 0;
-			mp = &top;
+			control = NULL;
+			top = NULL;
 			if (error)
 				goto release;
 		} while (resid && space > 0);
@@ -556,6 +515,76 @@ out:
 	if (control)
 		m_freem(control);
 	return (error);
+}
+
+int
+m_getuio(struct mbuf **mp, int atomic, long space, struct uio *uio)
+{
+	struct mbuf *m, *top = NULL;
+	struct mbuf **nextp = &top;
+	u_long len, mlen;
+	size_t resid = uio->uio_resid;
+	int error;
+
+	do {
+		if (top == NULL) {
+			MGETHDR(m, M_WAIT, MT_DATA);
+			mlen = MHLEN;
+			m->m_pkthdr.len = 0;
+			m->m_pkthdr.ph_ifidx = 0;
+		} else {
+			MGET(m, M_WAIT, MT_DATA);
+			mlen = MLEN;
+		}
+		/* chain mbuf together */
+		*nextp = m;
+		nextp = &m->m_next;
+
+		resid = ulmin(resid, space);
+		if (resid >= MINCLSIZE) {
+			mlen = ulmin(resid, MAXMCLBYTES);
+			MCLGETI(m, M_NOWAIT, NULL, mlen);
+
+			if ((m->m_flags & M_EXT) == 0) {
+				/* should not happen */
+				m_freem(top);
+				return (ENOBUFS);
+			}
+			mlen = m->m_ext.ext_size;
+			len = ulmin(mlen, resid);
+			/*
+			 * For datagram protocols, leave room
+			 * for protocol headers in first mbuf.
+			 */
+			if (atomic && top == NULL && len < mlen - max_hdr)
+				m->m_data += max_hdr;
+		} else {
+			len = ulmin(mlen, resid);
+			/*
+			 * For datagram protocols, leave room
+			 * for protocol headers in first mbuf.
+			 */
+			if (atomic && top == NULL && len < mlen - max_hdr)
+				MH_ALIGN(m, len);
+		}
+
+		error = uiomove(mtod(m, caddr_t), len, uio);
+		if (error) {
+			m_freem(top);
+			return (error);
+		}
+
+		/* adjust counters */
+		resid = uio->uio_resid;
+		space -= len;
+		m->m_len = len;
+		top->m_pkthdr.len += len;
+
+		/* Is there more space and more data? */
+	} while (space > 0 && resid > 0);
+
+	*mp = top;
+	return 0;
 }
 
 /*
