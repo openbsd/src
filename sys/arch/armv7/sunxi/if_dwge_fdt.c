@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge_fdt.c,v 1.2 2016/08/15 18:31:28 kettenis Exp $	*/
+/*	$OpenBSD: if_dwge_fdt.c,v 1.3 2016/08/22 19:31:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -40,14 +40,11 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <armv7/armv7/armv7var.h>
-#include <armv7/sunxi/sunxireg.h>
-#include <armv7/sunxi/sxiccmuvar.h>
-
 #include <dev/ic/dwc_gmac_var.h>
 #include <dev/ic/dwc_gmac_reg.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/ofw_regulator.h>
@@ -84,8 +81,8 @@ dwge_fdt_attach(struct device *parent, struct device *self, void *aux)
 	int phyloc = MII_PHY_ANY;
 	uint32_t phy_supply;
 	uint32_t phy;
+	uint32_t freq;
 	int node;
-	int clock;
 
 	if (faa->fa_nreg < 1)
 		return;
@@ -104,9 +101,10 @@ dwge_fdt_attach(struct device *parent, struct device *self, void *aux)
 	/* default to RGMII */
 	OF_getprop(faa->fa_node, "phy-mode", phy_mode, sizeof(phy_mode));
 	if (strcmp(phy_mode, "mii") == 0)
-		clock = CCMU_GMAC_MII;
+		freq = 25000000;
 	else
-		clock = CCMU_GMAC_RGMII;
+		freq = 125000000;
+	clock_set_frequency(faa->fa_node, "allwinner_gmac_tx", freq);
 
 	/* lookup PHY */
 	phy = OF_getpropint(faa->fa_node, "phy", 0);
@@ -115,7 +113,7 @@ dwge_fdt_attach(struct device *parent, struct device *self, void *aux)
 		phyloc = OF_getpropint(node, "reg", phyloc);
 
 	/* enable clock */
-	sxiccmu_enablemodule(clock);
+	clock_enable(faa->fa_node, "stmmaceth");
 	delay(5000);
 
 	/* power up phy */
@@ -136,7 +134,7 @@ dwge_fdt_attach(struct device *parent, struct device *self, void *aux)
 clrpwr:
 	if (phy_supply)
 		regulator_disable(phy_supply);
-	sxiccmu_disablemodule(clock);
+	clock_disable(faa->fa_node, "stmmaceth");
 	bus_space_unmap(sc->sc_bst, sc->sc_bsh, faa->fa_reg[0].size);
 }
 
