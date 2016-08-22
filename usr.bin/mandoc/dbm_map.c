@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbm_map.c,v 1.1 2016/08/01 10:32:39 schwarze Exp $ */
+/*	$OpenBSD: dbm_map.c,v 1.2 2016/08/22 16:05:56 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -70,8 +70,14 @@ dbm_map(const char *fname)
 		goto fail;
 	magic = dbm_getint(0);
 	if (be32toh(*magic) != MANDOCDB_MAGIC) {
-		warnx("dbm_map(%s): Bad initial magic %x (expected %x)",
-		    fname, be32toh(*magic), MANDOCDB_MAGIC);
+		if (strncmp(dbm_base, "SQLite format 3", 15))
+			warnx("dbm_map(%s): "
+			    "Bad initial magic %x (expected %x)",
+			    fname, be32toh(*magic), MANDOCDB_MAGIC);
+		else
+			warnx("dbm_map(%s): "
+			    "Obsolete format based on SQLite 3",
+			    fname);
 		errno = EFTYPE;
 		goto fail;
 	}
