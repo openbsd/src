@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_clock.h,v 1.2 2016/08/22 11:23:54 kettenis Exp $	*/
+/*	$OpenBSD: ofw_clock.h,v 1.3 2016/08/22 18:16:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -49,5 +49,20 @@ clock_disable_all(int node)
 {
 	clock_disable_idx(node, -1);
 }
+
+struct reset_device {
+	int	rd_node;
+	void	*rd_cookie;
+	void	(*rd_reset)(void *, uint32_t *, int);
+
+	LIST_ENTRY(reset_device) rd_list;
+	uint32_t rd_phandle;
+	uint32_t rd_cells;
+};
+
+void	reset_register(struct reset_device *);
+
+void	reset_assert(int, const char *);
+void	reset_deassert(int, const char *);
 
 #endif /* _DEV_OFW_CLOCK_H_ */
