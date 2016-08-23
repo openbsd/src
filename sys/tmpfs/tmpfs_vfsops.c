@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vfsops.c,v 1.10 2016/07/22 13:11:01 kettenis Exp $	*/
+/*	$OpenBSD: tmpfs_vfsops.c,v 1.11 2016/08/23 04:28:18 dlg Exp $	*/
 /*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -75,8 +75,10 @@ tmpfs_init(struct vfsconf *vfsp)
 
 	pool_init(&tmpfs_dirent_pool, sizeof(tmpfs_dirent_t), 0, 0, PR_WAITOK,
 	    "tmpfs_dirent", NULL);
+	pool_setipl(&tmpfs_dirent_pool, IPL_NONE);
 	pool_init(&tmpfs_node_pool, sizeof(tmpfs_node_t), 0, 0, PR_WAITOK,
 	    "tmpfs_node", NULL);
+	pool_setipl(&tmpfs_node_pool, IPL_NONE);
 
 	return 0;
 }
