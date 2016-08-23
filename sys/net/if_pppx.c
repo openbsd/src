@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.51 2016/04/13 11:41:15 mpi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.52 2016/08/23 12:37:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -250,6 +250,7 @@ pppxopen(dev_t dev, int flags, int mode, struct proc *p)
 		pppx_if_pl = malloc(sizeof(*pppx_if_pl), M_DEVBUF, M_WAITOK);
 		pool_init(pppx_if_pl, sizeof(struct pppx_if), 0, 0, PR_WAITOK,
 		    "pppxif", NULL);
+		pool_setipl(pppx_if_pl, IPL_NONE);
 	}
 
 	pxd = malloc(sizeof(*pxd), M_DEVBUF, M_WAITOK | M_ZERO);
