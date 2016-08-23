@@ -1369,10 +1369,10 @@ phyint_send6(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 {
 	struct mbuf *mb_copy;
 	struct ifnet *ifp = mifp->m6_ifp;
-	int error = 0;
-	int s = splsoftnet();
-	static struct route_in6 ro;
-	struct sockaddr_in6 *dst6;
+	struct sockaddr_in6 *dst6, sin6;
+	int s, error = 0;
+
+	s = splsoftnet();
 
 	/*
 	 * Make a new reference to the packet; make sure that
@@ -1404,7 +1404,7 @@ phyint_send6(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 		/* XXX: ip6_output will override ip6->ip6_hlim */
 		im6o.im6o_hlim = ip6->ip6_hlim;
 		im6o.im6o_loop = 1;
-		error = ip6_output(mb_copy, NULL, &ro, IPV6_FORWARDING, &im6o,
+		error = ip6_output(mb_copy, NULL, NULL, IPV6_FORWARDING, &im6o,
 		    NULL);
 		splx(s);
 		return;
@@ -1414,12 +1414,13 @@ phyint_send6(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 	 * If we belong to the destination multicast group
 	 * on the outgoing interface, loop back a copy.
 	 */
-	dst6 = &ro.ro_dst;
+	dst6 = &sin6;
+	memset(&sin6, 0, sizeof(sin6));
 	if (in6_hasmulti(&ip6->ip6_dst, ifp)) {
 		dst6->sin6_len = sizeof(struct sockaddr_in6);
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_addr = ip6->ip6_dst;
-		ip6_mloopback(ifp, m, &ro.ro_dst);
+		ip6_mloopback(ifp, m, dst6);
 	}
 	/*
 	 * Put the packet into the sending queue of the outgoing interface
@@ -1429,8 +1430,7 @@ phyint_send6(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 		dst6->sin6_len = sizeof(struct sockaddr_in6);
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_addr = ip6->ip6_dst;
-		error = ifp->if_output(ifp, mb_copy, sin6tosa(&ro.ro_dst),
-		    NULL);
+		error = ifp->if_output(ifp, mb_copy, sin6tosa(dst6), NULL);
 	} else {
 		if (ip6_mcast_pmtu)
 			icmp6_error(mb_copy, ICMP6_PACKET_TOO_BIG, 0,
