@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.42 2016/07/23 15:53:19 stsp Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.43 2016/08/23 09:26:02 mpi Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -64,7 +64,7 @@
 #include "dhcp.h"
 #include "dhcpd.h"
 
-int if_register_bpf(void);
+int if_register_bpf(struct interface_info *ifi);
 
 /*
  * Called by get_interface_list for each interface that's discovered.
@@ -72,7 +72,7 @@ int if_register_bpf(void);
  * mask.
  */
 int
-if_register_bpf(void)
+if_register_bpf(struct interface_info *ifi)
 {
 	struct ifreq ifr;
 	int sock;
@@ -90,7 +90,7 @@ if_register_bpf(void)
 }
 
 void
-if_register_send(void)
+if_register_send(struct interface_info *ifi)
 {
 	int sock, on = 1;
 
@@ -185,14 +185,14 @@ struct bpf_insn dhcp_bpf_wfilter[] = {
 int dhcp_bpf_wfilter_len = sizeof(dhcp_bpf_wfilter) / sizeof(struct bpf_insn);
 
 void
-if_register_receive(void)
+if_register_receive(struct interface_info *ifi)
 {
 	struct bpf_version v;
 	struct bpf_program p;
 	int flag = 1, sz;
 
 	/* Open a BPF device and hang it on this interface. */
-	ifi->bfdesc = if_register_bpf();
+	ifi->bfdesc = if_register_bpf(ifi);
 
 	/* Make sure the BPF version is in range. */
 	if (ioctl(ifi->bfdesc, BIOCVERSION, &v) < 0)
@@ -257,7 +257,7 @@ if_register_receive(void)
 }
 
 ssize_t
-send_packet(struct in_addr from, struct in_addr to)
+send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to)
 {
 	struct sockaddr_in dest;
 	struct ether_header eh;
@@ -275,7 +275,7 @@ send_packet(struct in_addr from, struct in_addr to)
 	dest.sin_addr.s_addr = to.s_addr;
 
 	if (to.s_addr == INADDR_BROADCAST) {
-		assemble_eh_header(&eh);
+		assemble_eh_header(ifi, &eh);
 		iov[0].iov_base = &eh;
 		iov[0].iov_len = sizeof(eh);
 		iovcnt++;
@@ -333,7 +333,8 @@ send_packet(struct in_addr from, struct in_addr to)
 }
 
 ssize_t
-receive_packet(struct sockaddr_in *from, struct ether_addr *hfrom)
+receive_packet(struct interface_info *ifi, struct sockaddr_in *from,
+    struct ether_addr *hfrom)
 {
 	int length = 0, offset = 0;
 	struct bpf_hdr hdr;

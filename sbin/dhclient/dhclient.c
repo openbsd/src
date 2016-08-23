@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.380 2016/08/16 21:57:51 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.381 2016/08/23 09:26:02 mpi Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -359,7 +359,7 @@ routehandler(void)
 
 		if (ifi->flags & IFI_VALID_LLADDR) {
 			memcpy(&hw, &ifi->hw_address, sizeof(hw));
-			get_hw_address();
+			get_hw_address(ifi);
 			if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
 				warning("LLADDR changed; restarting");
 				ifi->flags |= IFI_NEW_LLADDR;
@@ -368,7 +368,7 @@ routehandler(void)
 			}
 		}
 
-		linkstat = interface_status(ifi->name);
+		linkstat = interface_status(ifi);
 		if (linkstat != ifi->linkstat) {
 #ifdef DEBUG
 			debug("link state %s -> %s",
@@ -379,7 +379,7 @@ routehandler(void)
 			if (ifi->linkstat) {
 				if (client->state == S_PREBOOT) {
 					state_preboot();
-					get_hw_address();
+					get_hw_address(ifi);
 				} else {
 					client->state = S_REBOOTING;
 					state_reboot();
@@ -544,7 +544,7 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&client->leases);
 	TAILQ_INIT(&client->offered_leases);
 
-	read_client_conf();
+	read_client_conf(ifi);
 
 	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
 		error("cannot open %s: %s", _PATH_DEVNULL, strerror(errno));
@@ -591,7 +591,7 @@ main(int argc, char *argv[])
 	    O_RDONLY|O_EXLOCK|O_CREAT|O_NOFOLLOW, 0640)) == -1)
 		error("can't open and lock %s: %s", path_dhclient_db,
 		    strerror(errno));
-	read_client_leases();
+	read_client_leases(ifi);
 	if ((leaseFile = fopen(path_dhclient_db, "w")) == NULL)
 		error("can't open %s: %s", path_dhclient_db, strerror(errno));
 	rewrite_client_leases();
@@ -603,7 +603,7 @@ main(int argc, char *argv[])
 	 * the routing socket is listening, the RTM_IFINFO message with the
 	 * RTF_UP flag reset will cause premature exit.
 	 */
-	ifi->linkstat = interface_status(ifi->name);
+	ifi->linkstat = interface_status(ifi);
 	if (ifi->linkstat == 0)
 		interface_link_forceup(ifi->name);
 
@@ -621,8 +621,8 @@ main(int argc, char *argv[])
 		error("setsockopt(ROUTE_TABLEFILTER): %s", strerror(errno));
 
 	/* Register the interface. */
-	if_register_receive();
-	if_register_send();
+	if_register_receive(ifi);
+	if_register_send(ifi);
 
 	if (chroot(_PATH_VAREMPTY) == -1)
 		error("chroot");
@@ -657,7 +657,7 @@ main(int argc, char *argv[])
 		state_preboot();
 	}
 
-	dispatch();
+	dispatch(ifi);
 
 	/* not reached */
 	return (0);
@@ -685,7 +685,7 @@ state_preboot(void)
 
 	interval = (int)(cur_time - client->startup_time);
 
-	ifi->linkstat = interface_status(ifi->name);
+	ifi->linkstat = interface_status(ifi);
 
 	if (log_perror && interval > 3) {
 		if (!preamble && !ifi->linkstat) {
@@ -729,7 +729,7 @@ state_reboot(void)
 	deleting.s_addr = INADDR_ANY;
 	adding.s_addr = INADDR_ANY;
 
-	get_hw_address();
+	get_hw_address(ifi);
 	opt = &config->send_options[DHO_DHCP_CLIENT_IDENTIFIER];
 	/*
 	 * Check both len && data so
@@ -985,7 +985,7 @@ bind_lease(void)
 	client->new = NULL;
 
 	/* Deleting the addresses also clears out arp entries. */
-	delete_addresses();
+	delete_addresses(ifi);
 	flush_routes();
 
 	opt = &options[DHO_INTERFACE_MTU];
@@ -1421,7 +1421,7 @@ send_discover(void)
 	note("DHCPDISCOVER on %s - interval %lld", ifi->name,
 	    (long long)client->interval);
 
-	rslt = send_packet(inaddr_any, inaddr_broadcast);
+	rslt = send_packet(ifi, inaddr_any, inaddr_broadcast);
 	if (rslt == -1 && errno == EAFNOSUPPORT) {
 		warning("dhclient cannot be used on %s", ifi->name);
 		quit = INTERNALSIG;
@@ -1575,7 +1575,7 @@ send_request(void)
 	note("DHCPREQUEST on %s to %s", ifi->name,
 	    inet_ntoa(destination.sin_addr));
 
-	send_packet(from, destination.sin_addr);
+	send_packet(ifi, from, destination.sin_addr);
 
 	set_timeout_interval(client->interval, send_request);
 }
@@ -1585,7 +1585,7 @@ send_decline(void)
 {
 	note("DHCPDECLINE on %s", ifi->name);
 
-	send_packet(inaddr_any, inaddr_broadcast);
+	send_packet(ifi, inaddr_any, inaddr_broadcast);
 }
 
 void
@@ -2161,7 +2161,7 @@ fork_privchld(int fd, int fd2)
 			continue;
 		}
 
-		dispatch_imsg(priv_ibuf);
+		dispatch_imsg(ifi, priv_ibuf);
 	}
 
 	imsg_clear(priv_ibuf);
@@ -2182,7 +2182,7 @@ fork_privchld(int fd, int fd2)
 	if (quit != SIGTERM) {
 		memset(&imsg, 0, sizeof(imsg));
 		imsg.addr = active_addr;
-		priv_cleanup(&imsg);
+		priv_cleanup(ifi, &imsg);
 	}
 
 	if (quit == SIGHUP) {
@@ -2582,7 +2582,7 @@ priv_write_resolv_conf(struct imsg *imsg)
 		return;
 	}
 
-	if (!resolv_conf_priority())
+	if (!resolv_conf_priority(ifi))
 		return;
 
 	contents = imsg->data;

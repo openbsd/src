@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.75 2016/02/06 19:30:52 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.76 2016/08/23 09:26:02 mpi Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -645,8 +645,8 @@ toobig:
 }
 
 void
-do_packet(unsigned int from_port, struct in_addr from,
-    struct ether_addr *hfrom)
+do_packet(struct interface_info *ifi, unsigned int from_port,
+    struct in_addr from, struct ether_addr *hfrom)
 {
 	struct dhcp_packet *packet = &client->packet;
 	struct option_data options[256];

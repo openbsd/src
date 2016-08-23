@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.40 2016/02/06 19:30:52 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.41 2016/08/23 09:26:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -35,7 +35,7 @@
 #include "privsep.h"
 
 void
-dispatch_imsg(struct imsgbuf *ibuf)
+dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 {
 	struct imsg			 imsg;
 	ssize_t				 n;
@@ -54,7 +54,7 @@ dispatch_imsg(struct imsgbuf *ibuf)
 			    sizeof(struct imsg_delete_address))
 				warning("bad IMSG_DELETE_ADDRESS");
 			else
-				priv_delete_address(imsg.data);
+				priv_delete_address(ifi, imsg.data);
 			break;
 
 		case IMSG_ADD_ADDRESS:
@@ -62,7 +62,7 @@ dispatch_imsg(struct imsgbuf *ibuf)
 			    sizeof(struct imsg_add_address))
 				warning("bad IMSG_ADD_ADDRESS");
 			else
-				priv_add_address(imsg.data);
+				priv_add_address(ifi, imsg.data);
 			break;
 
 		case IMSG_FLUSH_ROUTES:
@@ -70,7 +70,7 @@ dispatch_imsg(struct imsgbuf *ibuf)
 			    sizeof(struct imsg_flush_routes))
 				warning("bad IMSG_FLUSH_ROUTES");
 			else
-				priv_flush_routes(imsg.data);
+				priv_flush_routes(ifi, imsg.data);
 			break;
 
 		case IMSG_ADD_ROUTE:
@@ -78,7 +78,7 @@ dispatch_imsg(struct imsgbuf *ibuf)
 			    sizeof(struct imsg_add_route))
 				warning("bad IMSG_ADD_ROUTE");
 			else
-				priv_add_route(imsg.data);
+				priv_add_route(ifi, imsg.data);
 			break;
 
 		case IMSG_SET_INTERFACE_MTU:
@@ -86,7 +86,7 @@ dispatch_imsg(struct imsgbuf *ibuf)
 			    sizeof(struct imsg_set_interface_mtu))
 				warning("bad IMSG_SET_INTERFACE_MTU");
 			else
-				priv_set_interface_mtu(imsg.data);
+				priv_set_interface_mtu(ifi, imsg.data);
 			break;
 
 		case IMSG_HUP:

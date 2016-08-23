@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.97 2016/08/16 21:57:51 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.98 2016/08/23 09:26:02 mpi Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -59,12 +59,13 @@
 #include "dhcpd.h"
 #include "dhctoken.h"
 
-void parse_client_statement(FILE *);
+void parse_client_statement(FILE *, struct interface_info *);
 int parse_X(FILE *, u_int8_t *, int);
 int parse_option_list(FILE *, u_int8_t *, size_t);
-void parse_interface_declaration(FILE *);
-void parse_client_lease_statement(FILE *, int);
-void parse_client_lease_declaration(FILE *, struct client_lease *);
+void parse_interface_declaration(FILE *, struct interface_info *);
+void parse_client_lease_statement(FILE *, int, struct interface_info *);
+void parse_client_lease_declaration(FILE *, struct client_lease *,
+    struct interface_info *);
 int parse_option_decl(FILE *, struct option_data *);
 void parse_reject_statement(FILE *);
 
@@ -75,7 +76,7 @@ void parse_reject_statement(FILE *);
  *			 | client-declarations client-declaration
  */
 void
-read_client_conf(void)
+read_client_conf(struct interface_info *ifi)
 {
 	FILE *cfile;
 	int token;
@@ -120,7 +121,7 @@ read_client_conf(void)
 			token = peek_token(NULL, cfile);
 			if (token == EOF)
 				break;
-			parse_client_statement(cfile);
+			parse_client_statement(cfile, ifi);
 		} while (1);
 		fclose(cfile);
 	}
@@ -132,7 +133,7 @@ read_client_conf(void)
  *		     | client-lease-statements LEASE client-lease-statement
  */
 void
-read_client_leases(void)
+read_client_leases(struct interface_info *ifi)
 {
 	FILE	*cfile;
 	int	 token;
@@ -151,7 +152,7 @@ read_client_leases(void)
 			warning("Corrupt lease file - possible data loss!");
 			break;
 		}
-		parse_client_lease_statement(cfile, 0);
+		parse_client_lease_statement(cfile, 0, ifi);
 	} while (1);
 	fclose(cfile);
 }
@@ -180,7 +181,7 @@ read_client_leases(void)
  *	TOK_REJECT reject-statement
  */
 void
-parse_client_statement(FILE *cfile)
+parse_client_statement(FILE *cfile, struct interface_info *ifi)
 {
 	u_int8_t optlist[256];
 	char *string;
@@ -261,10 +262,10 @@ parse_client_statement(FILE *cfile)
 		parse_lease_time(cfile, &config->initial_interval);
 		break;
 	case TOK_INTERFACE:
-		parse_interface_declaration(cfile);
+		parse_interface_declaration(cfile, ifi);
 		break;
 	case TOK_LEASE:
-		parse_client_lease_statement(cfile, 1);
+		parse_client_lease_statement(cfile, 1, ifi);
 		break;
 	case TOK_ALIAS:
 	case TOK_MEDIA:
@@ -411,7 +412,7 @@ syntaxerror:
  *	INTERFACE string LBRACE client-declarations RBRACE
  */
 void
-parse_interface_declaration(FILE *cfile)
+parse_interface_declaration(FILE *cfile, struct interface_info *ifi)
 {
 	char *val;
 	int token;
@@ -445,7 +446,7 @@ parse_interface_declaration(FILE *cfile)
 		}
 		if (token == '}')
 			break;
-		parse_client_statement(cfile);
+		parse_client_statement(cfile, ifi);
 	} while (1);
 	token = next_token(&val, cfile);
 }
@@ -460,7 +461,7 @@ parse_interface_declaration(FILE *cfile)
  *		client-lease-declarations client-lease-declaration
  */
 void
-parse_client_lease_statement(FILE *cfile, int is_static)
+parse_client_lease_statement(FILE *cfile, int is_static, struct interface_info *ifi)
 {
 	struct client_lease	*lease, *lp, *pl;
 	struct option_data	*opt1, *opt2;
@@ -487,7 +488,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 		}
 		if (token == '}')
 			break;
-		parse_client_lease_declaration(cfile, lease);
+		parse_client_lease_declaration(cfile, lease, ifi);
 	} while (1);
 	token = next_token(NULL, cfile);
 
@@ -544,7 +545,8 @@ parse_client_lease_statement(FILE *cfile, int is_static)
  *	EXPIRE time-decl
  */
 void
-parse_client_lease_declaration(FILE *cfile, struct client_lease *lease)
+parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
+    struct interface_info *ifi)
 {
 	char *val;
 	int token;

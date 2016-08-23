@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.80 2016/07/21 09:58:55 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.81 2016/08/23 09:26:02 mpi Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -48,7 +48,7 @@ struct in_addr active_addr;
 int	create_route_label(struct sockaddr_rtlabel *);
 int	check_route_label(struct sockaddr_rtlabel *);
 void	populate_rti_info(struct sockaddr **, struct rt_msghdr *);
-void	delete_route(int, struct rt_msghdr *);
+void	delete_route(struct interface_info *, int, struct rt_msghdr *);
 
 #define	ROUTE_LABEL_NONE		1
 #define	ROUTE_LABEL_NOT_DHCLIENT	2
@@ -80,7 +80,7 @@ flush_routes(void)
 }
 
 void
-priv_flush_routes(struct imsg_flush_routes *imsg)
+priv_flush_routes(struct interface_info *ifi, struct imsg_flush_routes *imsg)
 {
 	char ifname[IF_NAMESIZE];
 	struct sockaddr *rti_info[RTAX_MAX];
@@ -147,11 +147,11 @@ priv_flush_routes(struct imsg_flush_routes *imsg)
 		switch (check_route_label(sa_rl)) {
 		case ROUTE_LABEL_DHCLIENT_OURS:
 			/* Always delete routes we labeled. */
-			delete_route(s, rtm);
+			delete_route(ifi, s, rtm);
 			break;
 		case ROUTE_LABEL_DHCLIENT_DEAD:
 			if (imsg->zapzombies)
-				delete_route(s, rtm);
+				delete_route(ifi, s, rtm);
 			break;
 		case ROUTE_LABEL_DHCLIENT_LIVE:
 		case ROUTE_LABEL_DHCLIENT_UNKNOWN:
@@ -165,7 +165,7 @@ priv_flush_routes(struct imsg_flush_routes *imsg)
 			    sa_in->sin_addr.s_addr == INADDR_ANY &&
 			    rtm->rtm_tableid == ifi->rdomain &&
 			    strcmp(ifi->name, ifname) == 0)
-				delete_route(s, rtm);
+				delete_route(ifi, s, rtm);
 			break;
 		default:
 			break;
@@ -199,7 +199,7 @@ add_route(struct in_addr dest, struct in_addr netmask,
 }
 
 void
-priv_add_route(struct imsg_add_route *imsg)
+priv_add_route(struct interface_info *ifi, struct imsg_add_route *imsg)
 {
 	char destbuf[INET_ADDRSTRLEN], gatewaybuf[INET_ADDRSTRLEN];
 	char maskbuf[INET_ADDRSTRLEN], ifabuf[INET_ADDRSTRLEN];
@@ -316,7 +316,7 @@ priv_add_route(struct imsg_add_route *imsg)
  * Delete all existing inet addresses on interface.
  */
 void
-delete_addresses(void)
+delete_addresses(struct interface_info *ifi)
 {
 	struct in_addr addr;
 	struct ifaddrs *ifap, *ifa;
@@ -366,7 +366,8 @@ delete_address(struct in_addr addr)
 }
 
 void
-priv_delete_address(struct imsg_delete_address *imsg)
+priv_delete_address(struct interface_info *ifi,
+    struct imsg_delete_address *imsg)
 {
 	struct ifaliasreq ifaliasreq;
 	struct sockaddr_in *in;
@@ -419,7 +420,8 @@ set_interface_mtu(int mtu)
 }
 
 void
-priv_set_interface_mtu(struct imsg_set_interface_mtu *imsg)
+priv_set_interface_mtu(struct interface_info *ifi,
+    struct imsg_set_interface_mtu *imsg)
 {
 	struct ifreq ifr;
 	int s;
@@ -463,7 +465,7 @@ add_address(struct in_addr addr, struct in_addr mask)
 }
 
 void
-priv_add_address(struct imsg_add_address *imsg)
+priv_add_address(struct interface_info *ifi, struct imsg_add_address *imsg)
 {
 	struct ifaliasreq ifaliasreq;
 	struct sockaddr_in *in;
@@ -535,23 +537,23 @@ sendhup(struct client_lease *active)
  * priv_cleanup removes dhclient installed routes and address.
  */
 void
-priv_cleanup(struct imsg_hup *imsg)
+priv_cleanup(struct interface_info *ifi, struct imsg_hup *imsg)
 {
 	struct imsg_flush_routes fimsg;
 	struct imsg_delete_address dimsg;
 
 	fimsg.zapzombies = 0;	/* Only zapzombies when binding a lease. */
-	priv_flush_routes(&fimsg);
+	priv_flush_routes(ifi, &fimsg);
 
 	if (imsg->addr.s_addr == INADDR_ANY)
 		return;
 
 	dimsg.addr = imsg->addr;
-	priv_delete_address(&dimsg);
+	priv_delete_address(ifi, &dimsg);
 }
 
 int
-resolv_conf_priority(void)
+resolv_conf_priority(struct interface_info *ifi)
 {
 	struct iovec iov[3];
 	struct {
@@ -723,7 +725,7 @@ populate_rti_info(struct sockaddr **rti_info, struct rt_msghdr *rtm)
 }
 
 void
-delete_route(int s, struct rt_msghdr *rtm)
+delete_route(struct interface_info *ifi, int s, struct rt_msghdr *rtm)
 {
 	static int seqno;
 	ssize_t rlen;

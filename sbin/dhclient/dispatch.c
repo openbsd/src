@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.106 2016/07/21 09:58:55 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.107 2016/08/23 09:26:02 mpi Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -71,10 +71,10 @@
 
 struct dhcp_timeout timeout;
 
-void packethandler(void);
+void packethandler(struct interface_info *ifi);
 
 void
-get_hw_address(void)
+get_hw_address(struct interface_info *ifi)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_dl *sdl;
@@ -117,7 +117,7 @@ get_hw_address(void)
  * Loop waiting for packets, timeouts or routing messages.
  */
 void
-dispatch(void)
+dispatch(struct interface_info *ifi)
 {
 	int count, to_msec;
 	struct pollfd fds[3];
@@ -173,7 +173,7 @@ dispatch(void)
 		}
 
 		if ((fds[0].revents & (POLLIN | POLLHUP)))
-			packethandler();
+			packethandler(ifi);
 		if ((fds[1].revents & (POLLIN | POLLHUP)))
 			routehandler();
 		if (fds[2].revents & POLLOUT)
@@ -196,14 +196,14 @@ dispatch(void)
 }
 
 void
-packethandler(void)
+packethandler(struct interface_info *ifi)
 {
 	struct sockaddr_in from;
 	struct ether_addr hfrom;
 	struct in_addr ifrom;
 	ssize_t result;
 
-	if ((result = receive_packet(&from, &hfrom)) == -1) {
+	if ((result = receive_packet(ifi, &from, &hfrom)) == -1) {
 		warning("%s receive_packet failed: %s", ifi->name,
 		    strerror(errno));
 		ifi->errors++;
@@ -220,7 +220,7 @@ packethandler(void)
 
 	ifrom.s_addr = from.sin_addr.s_addr;
 
-	do_packet(from.sin_port, ifrom, &hfrom);
+	do_packet(ifi, from.sin_port, ifrom, &hfrom);
 }
 
 void
@@ -262,7 +262,7 @@ interface_link_forceup(char *ifname)
 }
 
 int
-interface_status(char *ifname)
+interface_status(struct interface_info *ifi)
 {
 	struct ifreq ifr;
 	struct ifmediareq ifmr;
@@ -273,9 +273,9 @@ interface_status(char *ifname)
 
 	/* Get interface flags. */
 	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	strlcpy(ifr.ifr_name, ifi->name, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCGIFFLAGS, &ifr) == -1) {
-		error("ioctl(SIOCGIFFLAGS) on %s: %s", ifname,
+		error("ioctl(SIOCGIFFLAGS) on %s: %s", ifi->name,
 		    strerror(errno));
 	}
 
@@ -286,7 +286,7 @@ interface_status(char *ifname)
 	if (ifi->flags & IFI_NOMEDIA)
 		goto active;
 	memset(&ifmr, 0, sizeof(ifmr));
-	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
+	strlcpy(ifmr.ifm_name, ifi->name, sizeof(ifmr.ifm_name));
 	if (ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmr) == -1) {
 		/*
 		 * EINVAL or ENOTTY simply means that the interface does not
