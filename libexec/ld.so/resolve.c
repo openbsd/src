@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.74 2016/08/08 21:59:20 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.75 2016/08/23 06:46:17 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -246,6 +246,7 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
     int phdrc, const int objtype, const long lbase, const long obase)
 {
 	elf_object_t *object;
+
 #if 0
 	_dl_printf("objname [%s], dynp %p, objtype %x lbase %lx, obase %lx\n",
 	    objname, dynp, objtype, lbase, obase);
@@ -322,6 +323,12 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 		object->Dyn.info[DT_FINI] += obase;
 	if (object->Dyn.info[DT_JMPREL])
 		object->Dyn.info[DT_JMPREL] += obase;
+	if (object->Dyn.info[DT_INIT_ARRAY])
+		object->Dyn.info[DT_INIT_ARRAY] += obase;
+	if (object->Dyn.info[DT_FINI_ARRAY])
+		object->Dyn.info[DT_FINI_ARRAY] += obase;
+	if (object->Dyn.info[DT_PREINIT_ARRAY])
+		object->Dyn.info[DT_PREINIT_ARRAY] += obase;
 
 	if (object->Dyn.info[DT_HASH] != 0) {
 		Elf_Word *hashtab = (Elf_Word *)object->Dyn.info[DT_HASH];

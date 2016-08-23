@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.79 2016/08/08 21:59:20 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.80 2016/08/23 06:46:17 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -81,13 +81,23 @@ struct elf_object {
 			const char	*soname;
 			const char	*rpath;
 			Elf_Addr	symbolic;
-			Elf_Rel	*rel;
+			Elf_Rel		*rel;
 			Elf_Addr	relsz;
 			Elf_Addr	relent;
 			Elf_Addr	pltrel;
 			Elf_Addr	debug;
 			Elf_Addr	textrel;
 			Elf_Addr	jmprel;
+			Elf_Addr	bind_now;
+			void		(**init_array)(void);
+			void		(**fini_array)(void);
+			Elf_Addr	init_arraysz;
+			Elf_Addr	fini_arraysz;
+			const char	*runpath;
+			Elf_Addr	flags;
+			Elf_Addr	encoding;
+			void		(**preinit_array)(void);
+			Elf_Addr	preinit_arraysz;
 		} u;
 	} Dyn;
 #define dyn Dyn.u

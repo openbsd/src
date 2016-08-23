@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.165 2016/08/14 04:30:39 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.166 2016/08/23 06:46:17 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -53,6 +53,7 @@ void _dl_debug_state(void);
 void _dl_setup_env(const char *_argv0, char **_envp);
 void _dl_dtors(void);
 void _dl_fixup_user_env(void);
+void _dl_call_preinit(elf_object_t *);
 void _dl_call_init_recurse(elf_object_t *object, int initfirst);
 
 int  _dl_pagesz;
@@ -73,9 +74,31 @@ struct r_debug *_dl_debug_map;
 void _dl_dopreload(char *paths);
 
 /*
+ * Run dtors for a single object.
+ */
+void
+_dl_run_dtors(elf_object_t *obj)
+{
+	if (obj->dyn.fini_array) {
+		int num = obj->dyn.fini_arraysz / sizeof(Elf_Addr);
+		int i;
+
+		DL_DEB(("doing finiarray obj %p @%p: [%s]\n",
+		    obj, obj->dyn.fini_array, obj->load_name));
+		for (i = num; i > 0; i--)
+			(*obj->dyn.fini_array[i-1])();
+	}
+
+	if (obj->dyn.fini) {
+		DL_DEB(("doing dtors obj %p @%p: [%s]\n",
+		    obj, obj->dyn.fini, obj->load_name));
+		(*obj->dyn.fini)();
+	}
+}
+
+/*
  * Run dtors for all objects that are eligible.
  */
-
 void
 _dl_run_all_dtors(void)
 {
@@ -91,10 +114,10 @@ _dl_run_all_dtors(void)
 
 	while (fini_complete == 0) {
 		fini_complete = 1;
-		for (node = _dl_objects->next;
+		for (node = _dl_objects;
 		    node != NULL;
 		    node = node->next) {
-			if ((node->dyn.fini) &&
+			if ((node->dyn.fini || node->dyn.fini_array) &&
 			    (OBJECT_REF_CNT(node) == 0) &&
 			    (node->status & STAT_INIT_DONE) &&
 			    ((node->status & STAT_FINI_DONE) == 0)) {
@@ -105,10 +128,10 @@ _dl_run_all_dtors(void)
 					node->status |= STAT_FINI_READY;
 			    }
 		}
-		for (node = _dl_objects->next;
+		for (node = _dl_objects;
 		    node != NULL;
 		    node = node->next ) {
-			if ((node->dyn.fini) &&
+			if ((node->dyn.fini || node->dyn.fini_array) &&
 			    (OBJECT_REF_CNT(node) == 0) &&
 			    (node->status & STAT_INIT_DONE) &&
 			    ((node->status & STAT_FINI_DONE) == 0) &&
@@ -120,18 +143,14 @@ _dl_run_all_dtors(void)
 		}
 
 
-		for (node = _dl_objects->next;
+		for (node = _dl_objects;
 		    node != NULL;
 		    node = node->next ) {
 			if (node->status & STAT_FINI_READY) {
-				DL_DEB(("doing dtors obj %p @%p: [%s]\n",
-				    node, node->dyn.fini,
-				    node->load_name));
-
 				fini_complete = 0;
 				node->status |= STAT_FINI_DONE;
 				node->status &= ~STAT_FINI_READY;
-				(*node->dyn.fini)();
+				_dl_run_dtors(node);
 			}
 		}
 
@@ -156,11 +175,6 @@ _dl_dtors(void)
 	_dl_unload_dlopen();
 
 	DL_DEB(("doing dtors\n"));
-
-	/* main program runs its dtors itself
-	 * but we want to run dtors on all it's children);
-	 */
-	_dl_objects->status |= STAT_FINI_DONE;
 
 	_dl_objects->opencount--;
 	_dl_notify_unload_shlib(_dl_objects);
@@ -605,14 +619,10 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	_dl_debug_state();
 
 	/*
-	 * The first object is the executable itself,
-	 * it is responsible for running it's own ctors/dtors
-	 * thus do NOT run the ctors for the executable, all of
-	 * the shared libraries which follow.
 	 * Do not run init code if run from ldd.
 	 */
 	if (_dl_objects->next != NULL) {
-		_dl_objects->status |= STAT_INIT_DONE;
+		_dl_call_preinit(_dl_objects);
 		_dl_call_init(_dl_objects);
 	}
 
@@ -690,6 +700,20 @@ _dl_rtld(elf_object_t *object)
 }
 
 void
+_dl_call_preinit(elf_object_t *object)
+{
+	if (object->dyn.preinit_array) {
+		int num = object->dyn.preinit_arraysz / sizeof(Elf_Addr);
+		int i;
+
+		DL_DEB(("doing preinitarray obj %p @%p: [%s]\n",
+		    object, object->dyn.preinit_array, object->load_name));
+		for (i = 0; i < num; i++)
+			(*object->dyn.preinit_array[i])();
+	}
+}
+
+void
 _dl_call_init(elf_object_t *object)
 {
 	_dl_call_init_recurse(object, 1);
@@ -721,6 +745,16 @@ _dl_call_init_recurse(elf_object_t *object, int initfirst)
 		DL_DEB(("doing ctors obj %p @%p: [%s]\n",
 		    object, object->dyn.init, object->load_name));
 		(*object->dyn.init)();
+	}
+
+	if (object->dyn.init_array) {
+		int num = object->dyn.init_arraysz / sizeof(Elf_Addr);
+		int i;
+
+		DL_DEB(("doing initarray obj %p @%p: [%s]\n",
+		    object, object->dyn.init_array, object->load_name));
+		for (i = 0; i < num; i++)
+			(*object->dyn.init_array[i])();
 	}
 
 	object->status |= STAT_INIT_DONE;

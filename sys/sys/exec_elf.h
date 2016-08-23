@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.59 2016/07/14 06:03:46 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.60 2016/08/23 06:46:17 kettenis Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -526,7 +526,7 @@ typedef struct {
 #define DF_1_CONLFAT	0x00002000
 
 /* ld.so: number of low tags that are used saved internally (0 .. DT_NUM-1) */
-#define DT_NUM		(DT_JMPREL+1)
+#define DT_NUM		(DT_PREINIT_ARRAYSZ+1)
 
 /* Standard ELF hashing function */
 unsigned int elf_hash(const unsigned char *name);
