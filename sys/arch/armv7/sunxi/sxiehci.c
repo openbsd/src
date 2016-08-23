@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiehci.c,v 1.7 2016/08/22 18:31:07 kettenis Exp $ */
+/*	$OpenBSD: sxiehci.c,v 1.8 2016/08/23 21:43:51 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -133,6 +133,7 @@ sxiehci_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	clock_enable_all(sc->sc_node);
+	reset_deassert_all(sc->sc_node);
 	sxiehci_attach_phy(sc);
 
 	/* Disable interrupts, so we don't get any spurious ones. */
@@ -200,7 +201,19 @@ sxiehci_attach_phy(struct sxiehci_softc *sc)
 		return;
 
 	pinctrl_byname(node, "default");
-	clock_enable(node, "usb_phy");
+
+	/*
+	 * On sun4i, sun5i and sun7i, there is a single clock.  The
+	 * more recent SoCs have a separate clock for each PHY.
+	 */
+	if (OF_is_compatible(node, "allwinner,sun4i-a10-usb-phy") ||
+	    OF_is_compatible(node, "allwinner,sun5i-a13-usb-phy") ||
+	    OF_is_compatible(node, "allwinner,sun7i-a20-usb-phy")) {
+		clock_enable(node, "usb_phy");
+	} else {
+		snprintf(name, sizeof(name), "usb%d_phy", phys[1]);
+		clock_enable(node, name);
+	}
 
 	snprintf(name, sizeof(name), "usb%d_reset", phys[1]);
 	reset_deassert(node, name);
