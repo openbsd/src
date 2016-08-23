@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.306 2016/07/14 15:39:40 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.307 2016/08/23 23:28:02 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -325,7 +325,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_MAXFILES:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxfiles));
 	case KERN_NFILES:
-		return (sysctl_rdint(oldp, oldlenp, newp, nfiles));
+		return (sysctl_rdint(oldp, oldlenp, newp, numfiles));
 	case KERN_TTYCOUNT:
 		return (sysctl_rdint(oldp, oldlenp, newp, tty_count));
 	case KERN_NUMVNODES:
