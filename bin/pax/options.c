@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.94 2016/08/14 04:47:52 guenther Exp $	*/
+/*	$OpenBSD: options.c,v 1.95 2016/08/23 06:00:28 guenther Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -186,11 +186,13 @@ options(int argc, char **argv)
 	argv0 = __progname;
 
 	if (strcmp(NM_TAR, argv0) == 0) {
+		op_mode = OP_TAR;
 		tar_options(argc, argv);
 		return;
 	}
 #ifndef NOCPIO
 	else if (strcmp(NM_CPIO, argv0) == 0) {
+		op_mode = OP_CPIO;
 		cpio_options(argc, argv);
 		return;
 	}
@@ -199,6 +201,7 @@ options(int argc, char **argv)
 	 * assume pax as the default
 	 */
 	argv0 = NM_PAX;
+	op_mode = OP_PAX;
 	pax_options(argc, argv);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.57 2016/08/14 18:30:33 guenther Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.58 2016/08/23 06:00:28 guenther Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -390,12 +390,12 @@ ar_close(int in_sig)
 		return;
 	}
 
-	if (strcmp(NM_PAX, argv0) == 0)
+	if (op_mode == OP_PAX)
 		(void)dprintf(listfd, "%s: %s vol %d, %lu files,"
 		    " %llu bytes read, %llu bytes written.\n",
 		    argv0, frmt->name, arvol-1, flcnt, rdcnt, wrcnt);
 #ifndef NOCPIO
-	else if (strcmp(NM_CPIO, argv0) == 0)
+	else if (op_mode == OP_CPIO)
 		(void)dprintf(listfd, "%llu blocks\n",
 		    (rdcnt ? rdcnt : wrcnt) / 5120);
 #endif /* !NOCPIO */
@@ -1112,7 +1112,7 @@ ar_next(void)
 	if (sigprocmask(SIG_SETMASK, &o_mask, NULL) < 0)
 		syswarn(0, errno, "Unable to restore signal mask");
 
-	if (done || !wr_trail || force_one_volume || strcmp(NM_TAR, argv0) == 0)
+	if (done || !wr_trail || force_one_volume || op_mode == OP_TAR)
 		return(-1);
 
 	tty_prnt("\nATTENTION! %s archive volume change required.\n", argv0);

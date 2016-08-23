@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.50 2016/08/23 03:31:44 guenther Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.51 2016/08/23 06:00:28 guenther Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -371,7 +371,7 @@ node_creat(ARCHD *arcn)
 			 * potential symlink chain before trying to create the
 			 * directory.
 			 */
-			if (strcmp(NM_TAR, argv0) == 0 && Lflag) {
+			if (op_mode == OP_TAR && Lflag) {
 				while (lstat(nm, &sb) == 0 &&
 				    S_ISLNK(sb.st_mode)) {
 					len = readlink(nm, target,
@@ -484,7 +484,7 @@ badlink:
 	if (pmode && !defer_pmode)
 		set_pmode(nm, arcn->sb.st_mode);
 
-	if (arcn->type == PAX_DIR && strcmp(NM_CPIO, argv0) != 0) {
+	if (arcn->type == PAX_DIR && op_mode != OP_CPIO) {
 		/*
 		 * Dirs must be processed again at end of extract to set times
 		 * and modes to agree with those stored in the archive. However
@@ -758,7 +758,7 @@ set_ids(char *fnm, uid_t uid, gid_t gid)
 		 * ignore EPERM unless in verbose mode or being run by root.
 		 * if running as pax, POSIX requires a warning.
 		 */
-		if (strcmp(NM_PAX, argv0) == 0 || errno != EPERM || vflag ||
+		if (op_mode == OP_PAX || errno != EPERM || vflag ||
 		    geteuid() == 0)
 			syswarn(1, errno, "Unable to set file uid/gid of %s",
 			    fnm);
@@ -775,7 +775,7 @@ fset_ids(char *fnm, int fd, uid_t uid, gid_t gid)
 		 * ignore EPERM unless in verbose mode or being run by root.
 		 * if running as pax, POSIX requires a warning.
 		 */
-		if (strcmp(NM_PAX, argv0) == 0 || errno != EPERM || vflag ||
+		if (op_mode == OP_PAX || errno != EPERM || vflag ||
 		    geteuid() == 0)
 			syswarn(1, errno, "Unable to set file uid/gid of %s",
 			    fnm);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.45 2016/06/23 06:37:36 semarie Exp $	*/
+/*	$OpenBSD: pax.c,v 1.46 2016/08/23 06:00:28 guenther Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -90,6 +90,7 @@ int	exit_val;		/* exit value */
 int	docrc;			/* check/create file crc */
 char	*dirptr;		/* destination dir in a copy */
 char	*argv0;			/* root of argv[0] */
+enum op_mode op_mode;		/* what program are we acting as? */
 sigset_t s_mask;		/* signal mask for cleanup critical sect */
 FILE	*listf = stderr;	/* file pointer to print file list to */
 int	listfd = STDERR_FILENO;	/* fd matching listf, for sighandler output */

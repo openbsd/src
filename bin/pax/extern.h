@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.55 2016/08/14 04:47:52 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.56 2016/08/23 06:00:28 guenther Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -240,6 +240,7 @@ extern int exit_val;
 extern int docrc;
 extern char *dirptr;
 extern char *argv0;
+extern enum op_mode { OP_PAX, OP_TAR, OP_CPIO } op_mode;
 extern FILE *listf;
 extern int listfd;
 extern char *tempfile;

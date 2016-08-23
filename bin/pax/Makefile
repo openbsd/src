@@ -1,5 +1,6 @@
-#	$OpenBSD: Makefile,v 1.11 2014/01/08 04:58:36 guenther Exp $
+#	$OpenBSD: Makefile,v 1.12 2016/08/23 06:00:28 guenther Exp $
 
+WARNINGS=Yes
 PROG=   pax
 SRCS=	ar_io.c ar_subs.c buf_subs.c cache.c cpio.c file_subs.c ftree.c\
 	gen_subs.c getoldopt.c options.c pat_rep.c pax.c sel_subs.c tables.c\
