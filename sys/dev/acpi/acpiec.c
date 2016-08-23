@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.53 2016/05/07 18:03:36 kettenis Exp $ */
+/* $OpenBSD: acpiec.c,v 1.54 2016/08/23 18:26:21 jcs Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -218,10 +218,12 @@ acpiec_read(struct acpiec_softc *sc, u_int8_t addr, int len, u_int8_t *buffer)
 	 */
 	dnprintf(20, "%s: read %d, %d\n", DEVNAME(sc), (int)addr, len);
 	sc->sc_ecbusy = 1;
-	acpiec_burst_enable(sc);
+	if (len > 1)
+		acpiec_burst_enable(sc);
 	for (reg = 0; reg < len; reg++)
 		buffer[reg] = acpiec_read_1(sc, addr + reg);
-	acpiec_burst_disable(sc);
+	if (len > 1)
+		acpiec_burst_disable(sc);
 	sc->sc_ecbusy = 0;
 }
 
@@ -237,10 +239,12 @@ acpiec_write(struct acpiec_softc *sc, u_int8_t addr, int len, u_int8_t *buffer)
 	 */
 	dnprintf(20, "%s: write %d, %d\n", DEVNAME(sc), (int)addr, len);
 	sc->sc_ecbusy = 1;
-	acpiec_burst_enable(sc);
+	if (len > 1)
+		acpiec_burst_enable(sc);
 	for (reg = 0; reg < len; reg++)
 		acpiec_write_1(sc, addr + reg, buffer[reg]);
-	acpiec_burst_disable(sc);
+	if (len > 1)
+		acpiec_burst_disable(sc);
 	sc->sc_ecbusy = 0;
 }
 
