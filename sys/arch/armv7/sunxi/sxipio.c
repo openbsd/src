@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.9 2016/08/12 19:55:54 kettenis Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.10 2016/08/23 18:16:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -158,7 +158,7 @@ sxipio_attach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_irq = aa->aa_dev->irq[0];
 
-	node = OF_finddevice("/soc@01c00000/pinctrl@01c20800");
+	node = OF_finddevice("/soc/pinctrl@01c20800");
 	if (node == -1)
 		panic("sxipio: can't find device tree node");
 
