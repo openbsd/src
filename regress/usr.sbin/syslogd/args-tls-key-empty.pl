@@ -7,11 +7,15 @@ use warnings;
 use Socket;
 
 my $key = "/etc/ssl/private/127.0.0.1:6514.key";
+my $cert = "/etc/ssl/127.0.0.1:6514.crt";
 my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
 my @cmd = (@sudo, "cp", "--", "empty", $key);
 system(@cmd) and die "Command '@cmd' failed: $?";
+@cmd = (@sudo, "cp", "--", "127.0.0.1.crt", $cert);
+system(@cmd) and die "Command '@cmd' failed: $?";
 END {
-    my @cmd = (@sudo, "rm", "-f", "--", $key);
+    local $?;
+    my @cmd = (@sudo, "rm", "-f", "--", $key, $cert);
     system(@cmd) and warn "Command '@cmd' failed: $?";
 }
 
@@ -32,13 +36,13 @@ our %args = (
 	options => ["-S", "127.0.0.1:6514"],
 	ktrace => {
 	    qr{NAMI  "/etc/ssl/private/127.0.0.1:6514.key"} => 1,
-	    qr{NAMI  "/etc/ssl/private/127.0.0.1.key"} => 0,
 	    qr{NAMI  "/etc/ssl/127.0.0.1:6514.crt"} => 1,
-	    qr{NAMI  "/etc/ssl/127.0.0.1.crt"} => 1,
+	    qr{NAMI  "/etc/ssl/private/127.0.0.1.key"} => 0,
+	    qr{NAMI  "/etc/ssl/127.0.0.1.crt"} => 0,
 	},
 	loggrep => {
 	    qr{Keyfile $key} => 1,
-	    qr{Certfile /etc/ssl/127.0.0.1.crt} => 1,
+	    qr{Certfile $cert} => 1,
 	    qr{syslogd: tls_configure server} => 2,
 	},
     },

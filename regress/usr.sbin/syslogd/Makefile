@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2016/07/12 09:57:20 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.16 2016/08/23 21:20:05 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -36,7 +36,7 @@ REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 LDFLAGS +=		-lutil
 CLEANFILES +=		*.log *.log.? *.conf ktrace.out stamp-*
 CLEANFILES +=		*.out *.sock *.ktrace *.fstat ttylog
-CLEANFILES +=		*.pem *.req *.crt *.key *.srl empty toobig
+CLEANFILES +=		*.pem *.req *.key *.crt *.srl empty toobig
 
 .MAIN: all
 
@@ -74,12 +74,16 @@ run-regress-$a: $a
 
 127.0.0.1.crt:
 	openssl req -batch -new -subj /L=OpenBSD/O=syslogd-regress/OU=syslogd/CN=127.0.0.1/ -nodes -newkey rsa -keyout 127.0.0.1.key -x509 -out $@
-	${SUDO} cp 127.0.0.1.crt /etc/ssl/
-	${SUDO} cp 127.0.0.1.key /etc/ssl/private/
-	${SUDO} cp 127.0.0.1.crt /etc/ssl/localhost.crt
-	${SUDO} cp 127.0.0.1.key /etc/ssl/private/localhost.key
-	${SUDO} cp 127.0.0.1.crt /etc/ssl/::1.crt
+	${SUDO} rm -f /etc/ssl/private/127.0.0.1:6514.key
+	${SUDO} rm -f /etc/ssl/127.0.0.1:6514.crt
+	${SUDO} rm -f /etc/ssl/private/127.0.0.1.key
+	${SUDO} rm -f /etc/ssl/127.0.0.1.crt
+	${SUDO} cp 127.0.0.1.key /etc/ssl/private/127.0.0.1.key
+	${SUDO} cp 127.0.0.1.crt /etc/ssl/127.0.0.1.crt
 	${SUDO} cp 127.0.0.1.key /etc/ssl/private/::1.key
+	${SUDO} cp 127.0.0.1.crt /etc/ssl/::1.crt
+	${SUDO} cp 127.0.0.1.key /etc/ssl/private/localhost.key
+	${SUDO} cp 127.0.0.1.crt /etc/ssl/localhost.crt
 
 ca.crt fake-ca.crt:
 	openssl req -batch -new -subj /L=OpenBSD/O=syslogd-regress/OU=ca/CN=root/ -nodes -newkey rsa -keyout ${@:R}.key -x509 -out $@

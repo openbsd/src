@@ -11,6 +11,7 @@ my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
 my @cmd = (@sudo, "rm", "-f", "--", $key);
 system(@cmd) and die "Command '@cmd' failed: $?";
 END {
+    local $?;
     my @cmd = (@sudo, "cp", "--", "127.0.0.1.key", $key);
     system(@cmd) and warn "Command '@cmd' failed: $?";
 }
@@ -32,14 +33,14 @@ our %args = (
 	options => ["-S", "127.0.0.1:6514"],
 	ktrace => {
 	    qr{NAMI  "/etc/ssl/private/127.0.0.1:6514.key"} => 1,
+	    qr{NAMI  "/etc/ssl/127.0.0.1:6514.crt"} => 0,
 	    qr{NAMI  "/etc/ssl/private/127.0.0.1.key"} => 1,
-	    qr{NAMI  "/etc/ssl/127.0.0.1:6514.crt"} => 1,
-	    qr{NAMI  "/etc/ssl/127.0.0.1.crt"} => 1,
+	    qr{NAMI  "/etc/ssl/127.0.0.1.crt"} => 0,
 	},
 	loggrep => {
 	    qr{Keyfile } => 0,
-	    qr{Certfile /etc/ssl/127.0.0.1.crt} => 1,
-	    qr{syslogd: open keyfile: No such file or directory} => 2,
+	    qr{Certfile } => 0,
+	    qr{syslogd: tls_config_set_key_file} => 4,
 	    qr{syslogd: tls_configure server} => 2,
 	},
     },

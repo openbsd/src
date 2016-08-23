@@ -28,8 +28,8 @@ our %args = (
 	},
 	ktrace => {
 	    qr{NAMI  "/etc/ssl/private/\[::1\]:6514.key"} => 1,
-	    qr{NAMI  "/etc/ssl/private/::1.key"} => 1,
 	    qr{NAMI  "/etc/ssl/\[::1\]:6514.crt"} => 0,
+	    qr{NAMI  "/etc/ssl/private/::1.key"} => 1,
 	    qr{NAMI  "/etc/ssl/::1.crt"} => 1,
 	},
 	loggrep => {
