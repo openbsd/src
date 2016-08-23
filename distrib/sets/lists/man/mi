@@ -1088,6 +1088,7 @@
 ./usr/share/man/man4/acpiasus.4
 ./usr/share/man/man4/acpibat.4
 ./usr/share/man/man4/acpibtn.4
+./usr/share/man/man4/acpicbkbd.4
 ./usr/share/man/man4/acpicpu.4
 ./usr/share/man/man4/acpidock.4
 ./usr/share/man/man4/acpiec.4
