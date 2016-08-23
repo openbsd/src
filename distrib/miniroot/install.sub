@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.905 2016/08/21 19:22:15 halex Exp $
+#	$OpenBSD: install.sub,v 1.906 2016/08/23 16:49:48 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -539,7 +539,7 @@ get_responsefile() {
 		AI_SERVER=$(lease_value $_lf server-name tftp-server-name next-server)
 		export AI_SERVER
 
-		_hn=$(lease_value $_if host-name)
+		_hn=$(lease_value $_lf host-name)
 		hostname "$_hn"
 	done
 
