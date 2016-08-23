@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.66 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.67 2016/08/23 03:28:01 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -669,7 +669,7 @@ schizo_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 	struct schizo_pbm *pbm = t->cookie;
 	int i, ss;
 
-	DPRINTF(SDB_BUSMAP, ("schizo_bus_map: type %d off %qx sz %qx flags %d",
+	DPRINTF(SDB_BUSMAP,("schizo_bus_map: type %d off %llx sz %llx flags %d",
 	    t->default_type,
 	    (unsigned long long)offset,
 	    (unsigned long long)size,
@@ -713,7 +713,7 @@ schizo_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 
 	ss = t->default_type;
 
-	DPRINTF(SDB_BUSMAP, ("schizo_bus_mmap: prot %d flags %d pa %qx\n",
+	DPRINTF(SDB_BUSMAP, ("schizo_bus_mmap: prot %d flags %d pa %llx\n",
 	    prot, flags, (unsigned long long)paddr));
 
 	if (t->parent == 0 || t->parent->sparc_bus_mmap == 0) {

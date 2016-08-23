@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.73 2014/07/12 22:37:03 uebayasi Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.74 2016/08/23 03:28:01 guenther Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -1000,7 +1000,7 @@ psycho_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 	struct psycho_pbm *pp = t->cookie;
 	int i, ss;
 
-	DPRINTF(PDB_BUSMAP, ("\npsycho_bus_map: type %d off %qx sz %qx "
+	DPRINTF(PDB_BUSMAP, ("\npsycho_bus_map: type %d off %llx sz %llx "
 	    "flags %d", t->default_type, (unsigned long long)offset,
 	    (unsigned long long)size, flags));
 
@@ -1029,7 +1029,7 @@ psycho_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 		paddr |= ((bus_addr_t)pp->pp_range[i].phys_hi) << 32;
 		DPRINTF(PDB_BUSMAP,
 		    ("\n_psycho_bus_map: mapping paddr space %lx offset %lx "
-			"paddr %qx",
+			"paddr %llx",
 		    (long)ss, (long)offset,
 		    (unsigned long long)paddr));
 		return ((*t->sparc_bus_map)(t, t0, paddr, size, flags, hp));
@@ -1048,7 +1048,7 @@ psycho_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 
 	ss = t->default_type;
 
-	DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_mmap: prot %d flags %d pa %qx",
+	DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_mmap: prot %d flags %d pa %llx",
 	    prot, flags, (unsigned long long)paddr));
 
 	if (t->parent == 0 || t->parent->sparc_bus_mmap == 0) {
@@ -1067,7 +1067,7 @@ psycho_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 		paddr = pp->pp_range[i].phys_lo + offset;
 		paddr |= ((bus_addr_t)pp->pp_range[i].phys_hi) << 32;
 		DPRINTF(PDB_BUSMAP, ("\npsycho_bus_mmap: mapping paddr "
-		    "space %lx offset %lx paddr %qx",
+		    "space %lx offset %lx paddr %llx",
 		    (long)ss, (long)offset,
 		    (unsigned long long)paddr));
 		return ((*t->sparc_bus_mmap)(t, t0, paddr, off, prot, flags));
@@ -1293,16 +1293,16 @@ found:
 	 */
 	if (intrmapptr) {
 		intrmap = *intrmapptr;
-		DPRINTF(PDB_INTR, ("; read intrmap = %016qx",
+		DPRINTF(PDB_INTR, ("; read intrmap = %016llx",
 			(unsigned long long)intrmap));
 
 		/* Enable the interrupt */
 		intrmap |= INTMAP_V;
 		DPRINTF(PDB_INTR, ("; addr of intrmapptr = %p", intrmapptr));
-		DPRINTF(PDB_INTR, ("; writing intrmap = %016qx",
+		DPRINTF(PDB_INTR, ("; writing intrmap = %016llx",
 			(unsigned long long)intrmap));
 		*intrmapptr = intrmap;
-		DPRINTF(PDB_INTR, ("; reread intrmap = %016qx",
+		DPRINTF(PDB_INTR, ("; reread intrmap = %016llx",
 			(unsigned long long)(intrmap = *intrmapptr)));
 	}
 	return (ih);

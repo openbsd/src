@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.23 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.24 2016/08/23 03:28:01 guenther Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -465,8 +465,8 @@ _ebus_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 				       range[i].phys_lo;
 		pciaddr += lo;
 		DPRINTF(EDB_BUSMAP,
-		    ("\n_ebus_bus_map: mapping space %x paddr offset %qx "
-		    "pciaddr %qx\n", (int)t->default_type,
+		    ("\n_ebus_bus_map: mapping space %x paddr offset %llx "
+		    "pciaddr %llx\n", (int)t->default_type,
 		    (unsigned long long)offset, (unsigned long long)pciaddr));
                 return ((*t->sparc_bus_map)(t, t0, pciaddr, size, flags, hp));
 	}
@@ -497,7 +497,7 @@ ebus_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 		if (offset != paddr)
 			continue;
 
-		DPRINTF(EDB_BUSMAP, ("\n_ebus_bus_mmap: mapping paddr %qx\n",
+		DPRINTF(EDB_BUSMAP, ("\n_ebus_bus_mmap: mapping paddr %llx\n",
 		    (unsigned long long)paddr));
 		return ((*t->sparc_bus_mmap)(t, t0, paddr, off, prot, flags));
 	}

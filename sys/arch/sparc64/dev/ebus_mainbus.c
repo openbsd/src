@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus_mainbus.c,v 1.9 2015/09/27 11:29:20 kettenis Exp $	*/
+/*	$OpenBSD: ebus_mainbus.c,v 1.10 2016/08/23 03:28:01 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -226,7 +226,7 @@ ebus_mainbus_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 				    range[i].phys_lo;
 		addr += lo;
 		DPRINTF(EDB_BUSMAP,
-		    ("\n_ebus_mainbus_bus_map: paddr offset %qx addr %qx\n", 
+		    ("\n_ebus_mainbus_bus_map: paddr offset %llx addr %llx\n", 
 		    (unsigned long long)offset, (unsigned long long)addr));
                 return ((*t->sparc_bus_map)(t, t0, addr, size, flags, hp));
 	}

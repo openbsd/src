@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.61 2015/11/08 22:27:10 miod Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.62 2016/08/23 03:28:01 guenther Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -1211,7 +1211,7 @@ ncr53c9x_dequeue(sc, ecb)
 	li = TINFO_LUN(ti, lun);
 #ifdef DIAGNOSTIC
 	if ((!li) || (li->lun != lun))
-		panic("ncr53c9x_dequeue: lun %qx for ecb %p does not exist",
+		panic("ncr53c9x_dequeue: lun %llx for ecb %p does not exist",
 		    (long long)lun, ecb);
 #endif
 	if (li->untagged == ecb) {
@@ -1221,7 +1221,7 @@ ncr53c9x_dequeue(sc, ecb)
 	if (ecb->tag[0] && li->queued[ecb->tag[1]]) {
 #ifdef DIAGNOSTIC
 		if (li->queued[ecb->tag[1]] && (li->queued[ecb->tag[1]] != ecb))
-			panic("ncr53c9x_dequeue: slot %d for lun %qx has %p "
+			panic("ncr53c9x_dequeue: slot %d for lun %llx has %p "
 			    "instead of ecb %p", ecb->tag[1],
 			    (long long)lun,
 			    li->queued[ecb->tag[1]], ecb);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.42 2016/03/14 23:08:05 krw Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.43 2016/08/23 03:28:01 guenther Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -831,7 +831,7 @@ db_pmap_kernel(addr, have_addr, count, modif)
 		/* lookup an entry for this VA */
 		
 		if ((data = pseg_get(&kernel_pmap_, (vaddr_t)addr))) {
-			db_printf("pmap_kernel(%p)->pm_segs[%lx][%lx][%lx]=>%qx\n",
+			db_printf("pmap_kernel(%p)->pm_segs[%lx][%lx][%lx]=>%llx\n",
 				  (void *)addr, (u_long)va_to_seg(addr), 
 				  (u_long)va_to_dir(addr), (u_long)va_to_pte(addr),
 				  (unsigned long long)data);

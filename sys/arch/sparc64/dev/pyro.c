@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.28 2014/12/09 06:58:29 doug Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.29 2016/08/23 03:28:01 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -534,7 +534,7 @@ pyro_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 	struct pyro_pbm *pbm = t->cookie;
 	int i, ss;
 
-	DPRINTF(PDB_BUSMAP, ("pyro_bus_map: type %d off %qx sz %qx flags %d",
+	DPRINTF(PDB_BUSMAP, ("pyro_bus_map: type %d off %llx sz %llx flags %d",
 	    t->default_type,
 	    (unsigned long long)offset,
 	    (unsigned long long)size,
@@ -578,7 +578,7 @@ pyro_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 
 	ss = t->default_type;
 
-	DPRINTF(PDB_BUSMAP, ("pyro_bus_mmap: prot %d flags %d pa %qx\n",
+	DPRINTF(PDB_BUSMAP, ("pyro_bus_mmap: prot %d flags %d pa %llx\n",
 	    prot, flags, (unsigned long long)paddr));
 
 	if (t->parent == 0 || t->parent->sparc_bus_mmap == 0) {
