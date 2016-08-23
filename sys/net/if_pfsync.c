@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.229 2016/04/29 08:55:03 krw Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.230 2016/08/23 12:37:44 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -303,6 +303,7 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 		TAILQ_INIT(&sc->sc_qs[q]);
 
 	pool_init(&sc->sc_pool, PFSYNC_PLSIZE, 0, 0, 0, "pfsync", NULL);
+	pool_setipl(&sc->sc_pool, IPL_SOFTNET);
 	TAILQ_INIT(&sc->sc_upd_req_list);
 	TAILQ_INIT(&sc->sc_deferrals);
 	sc->sc_deferred = 0;
