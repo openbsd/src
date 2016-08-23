@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_clock.h,v 1.4 2016/08/22 19:28:27 kettenis Exp $	*/
+/*	$OpenBSD: ofw_clock.h,v 1.5 2016/08/23 21:30:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -65,6 +65,20 @@ struct reset_device {
 void	reset_register(struct reset_device *);
 
 void	reset_assert(int, const char *);
+void	reset_assert_idx(int, int);
 void	reset_deassert(int, const char *);
+void	reset_deassert_idx(int, int);
+
+static inline void
+reset_assert_all(int node)
+{
+	reset_assert_idx(node, -1);
+}
+
+static inline void
+reset_deassert_all(int node)
+{
+	reset_deassert_idx(node, -1);
+}
 
 #endif /* _DEV_OFW_CLOCK_H_ */

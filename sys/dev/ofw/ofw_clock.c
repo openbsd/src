@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_clock.c,v 1.5 2016/08/22 22:06:59 kettenis Exp $	*/
+/*	$OpenBSD: ofw_clock.c,v 1.6 2016/08/23 21:30:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -416,9 +416,21 @@ reset_do_assert(int node, const char *name, int assert)
 }
 
 void
+reset_assert_idx(int node, int idx)
+{
+	reset_do_assert_idx(node, idx, 1);
+}
+
+void
 reset_assert(int node, const char *name)
 {
 	reset_do_assert(node, name, 1);
+}
+
+void
+reset_deassert_idx(int node, int idx)
+{
+	reset_do_assert_idx(node, idx, 0);
 }
 
 void
