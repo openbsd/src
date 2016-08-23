@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.64 2016/03/06 19:42:27 mpi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.65 2016/08/23 12:54:09 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -703,10 +703,14 @@ mips_init(uint64_t argc, uint64_t argv, uint64_t envp, uint64_t cv,
 
 	/*
 	 * Build proper TLB refill handler trampolines.
+	 *
+	 * On Loongson 2F, the XTLB refill exception actually uses
+	 * the TLB refill vector.
 	 */
 
 	xtlb_handler = (vaddr_t)&xtlb_miss;
 	build_trampoline(TLB_MISS_EXC_VEC, xtlb_handler);
+	build_trampoline(XTLB_MISS_EXC_VEC, xtlb_handler);
 
 	/*
 	 * Turn off bootstrap exception vectors.
