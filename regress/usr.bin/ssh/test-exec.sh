@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.53 2016/04/15 02:57:10 djm Exp $
+#	$OpenBSD: test-exec.sh,v 1.54 2016/08/23 06:36:23 djm Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
@@ -91,7 +91,8 @@ if [ "x$TEST_SSH_CONCH" != "x" ]; then
 	CONCH="${TEST_SSH_CONCH}"
 fi
 
-SSH_PROTOCOLS=`$SSH -Q protocol-version`
+SSH_PROTOCOLS=2
+#SSH_PROTOCOLS=`$SSH -Q protocol-version`
 if [ "x$TEST_SSH_PROTOCOLS" != "x" ]; then
 	SSH_PROTOCOLS="${TEST_SSH_PROTOCOLS}"
 fi
@@ -259,7 +260,6 @@ fi
 # create server config
 cat << EOF > $OBJ/sshd_config
 	Port			$PORT
-	Protocol		$PROTO
 	AddressFamily		inet
 	ListenAddress		127.0.0.1
 	#ListenAddress		::1
@@ -292,7 +292,6 @@ echo 'StrictModes no' >> $OBJ/sshd_proxy
 # create client config
 cat << EOF > $OBJ/ssh_config
 Host *
-	Protocol		$PROTO
 	Hostname		127.0.0.1
 	HostKeyAlias		localhost-with-alias
 	Port			$PORT
