@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardslot.c,v 1.19 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: cardslot.c,v 1.20 2016/08/24 09:31:56 dlg Exp $	*/
 /*	$NetBSD: cardslot.c,v 1.9 2000/03/22 09:35:06 haya Exp $	*/
 
 /*
@@ -101,9 +101,11 @@ cardslotattach(struct device *parent, struct device *self, void *aux)
 	struct cardbus_softc *csc = NULL;
 	struct pcmcia_softc *psc = NULL;
 
-	if (cardsloteventpool.pr_size == 0)
+	if (cardsloteventpool.pr_size == 0) {
 		pool_init(&cardsloteventpool, sizeof(struct cardslot_event),
 		    0, 0, 0, "cardslot", NULL);
+		pool_setipl(&cardsloteventpool, IPL_BIO);
+	}
 
 	sc->sc_slot = sc->sc_dev.dv_unit;
 	sc->sc_cb_softc = NULL;
