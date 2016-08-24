@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.56 2015/12/30 09:07:00 tedu Exp $	*/
+/*	$OpenBSD: history.c,v 1.57 2016/08/24 13:32:17 millert Exp $	*/
 
 /*
  * command history
@@ -60,9 +60,15 @@ c_fc(char **wp)
 	struct temp *tf = NULL;
 	char *p, *editor = NULL;
 	int gflag = 0, lflag = 0, nflag = 0, sflag = 0, rflag = 0;
-	int optc;
+	int optc, ret;
 	char *first = NULL, *last = NULL;
 	char **hfirst, **hlast, **hp;
+	static int depth;
+
+	if (depth != 0) {
+		bi_errorf("history function called recursively");
+		return 1;
+	}
 
 	if (!Flag(FTALKING_I)) {
 		bi_errorf("history functions not available");
@@ -145,7 +151,10 @@ c_fc(char **wp)
 		    hist_get_newest(false);
 		if (!hp)
 			return 1;
-		return hist_replace(hp, pat, rep, gflag);
+		depth++;
+		ret = hist_replace(hp, pat, rep, gflag);
+		depth--;
+		return ret;
 	}
 
 	if (editor && (lflag || nflag)) {
@@ -229,7 +238,6 @@ c_fc(char **wp)
 	/* XXX: source should not get trashed by this.. */
 	{
 		Source *sold = source;
-		int ret;
 
 		ret = command(editor ? editor : "${FCEDIT:-/bin/ed} $_", 0);
 		source = sold;
@@ -265,7 +273,10 @@ c_fc(char **wp)
 		shf_close(shf);
 		*xp = '\0';
 		strip_nuls(Xstring(xs, xp), Xlength(xs, xp));
-		return hist_execute(Xstring(xs, xp));
+		depth++;
+		ret = hist_execute(Xstring(xs, xp));
+		depth--;
+		return ret;
 	}
 }
 
