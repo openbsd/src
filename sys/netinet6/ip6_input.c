@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.167 2016/07/19 15:57:13 phessler Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.168 2016/08/24 09:41:12 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -184,13 +184,13 @@ ip6intr(void)
 		ip6_input(m);
 }
 
-extern struct	route_in6 ip6_forward_rt;
-
 void
 ip6_input(struct mbuf *m)
 {
 	struct ifnet *ifp;
 	struct ip6_hdr *ip6;
+	struct sockaddr_in6 sin6;
+	struct rtentry *rt = NULL;
 	int off, nest;
 	u_int16_t src_scope, dst_scope;
 	int nxt, ours = 0;
@@ -414,43 +414,23 @@ ip6_input(struct mbuf *m)
 		goto hbhcheck;
 	}
 
+
 	/*
 	 *  Unicast check
 	 */
-	if (rtisvalid(ip6_forward_rt.ro_rt) &&
-	    !ISSET(ip6_forward_rt.ro_rt->rt_flags, RTF_MPATH) &&
-	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
-			       &ip6_forward_rt.ro_dst.sin6_addr) &&
-	    m->m_pkthdr.ph_rtableid == ip6_forward_rt.ro_tableid)
-		ip6stat.ip6s_forward_cachehit++;
-	else {
-		if (ip6_forward_rt.ro_rt) {
-			/* route is down or destination is different */
-			ip6stat.ip6s_forward_cachemiss++;
-			rtfree(ip6_forward_rt.ro_rt);
-			ip6_forward_rt.ro_rt = NULL;
-		}
-
-		bzero(&ip6_forward_rt.ro_dst, sizeof(struct sockaddr_in6));
-		ip6_forward_rt.ro_dst.sin6_len = sizeof(struct sockaddr_in6);
-		ip6_forward_rt.ro_dst.sin6_family = AF_INET6;
-		ip6_forward_rt.ro_dst.sin6_addr = ip6->ip6_dst;
-		ip6_forward_rt.ro_tableid = m->m_pkthdr.ph_rtableid;
-
-		ip6_forward_rt.ro_rt = rtalloc_mpath(
-		    sin6tosa(&ip6_forward_rt.ro_dst),
-		    &ip6->ip6_src.s6_addr32[0],
-		    ip6_forward_rt.ro_tableid);
-	}
+	memset(&sin6, 0, sizeof(struct sockaddr_in6));
+	sin6.sin6_len = sizeof(struct sockaddr_in6);
+	sin6.sin6_family = AF_INET6;
+	sin6.sin6_addr = ip6->ip6_dst;
+	rt = rtalloc_mpath(sin6tosa(&sin6), &ip6->ip6_src.s6_addr32[0],
+	    m->m_pkthdr.ph_rtableid);
 
 	/*
 	 * Accept the packet if the route to the destination is marked
 	 * as local.
 	 */
-	if (rtisvalid(ip6_forward_rt.ro_rt) &&
-	    ISSET(ip6_forward_rt.ro_rt->rt_flags, RTF_LOCAL)) {
-		struct in6_ifaddr *ia6 =
-			ifatoia6(ip6_forward_rt.ro_rt->rt_ifa);
+	if (rtisvalid(rt) && ISSET(rt->rt_flags, RTF_LOCAL)) {
+		struct in6_ifaddr *ia6 = ifatoia6(rt->rt_ifa);
 		if (ia6->ia6_flags & IN6_IFF_ANYCAST)
 			m->m_flags |= M_ACAST;
 		/*
@@ -493,6 +473,7 @@ ip6_input(struct mbuf *m)
   hbhcheck:
 
 	if (ip6_hbhchcheck(m, &off, &nxt, &ours)) {
+		rtfree(rt);
 		if_put(ifp);
 		return;	/* m have already been freed */
 	}
@@ -522,7 +503,7 @@ ip6_input(struct mbuf *m)
 		if (!ours)
 			goto bad;
 	} else if (!ours) {
-		ip6_forward(m, srcrt);
+		ip6_forward(m, rt, srcrt);
 		if_put(ifp);
 		return;
 	}
@@ -566,9 +547,11 @@ ip6_input(struct mbuf *m)
 
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
 	}
+	rtfree(rt);
 	if_put(ifp);
 	return;
  bad:
+	rtfree(rt);
 	if_put(ifp);
 	m_freem(m);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.68 2016/08/22 10:33:22 mpi Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.69 2016/08/24 09:41:12 mpi Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -596,9 +596,9 @@ void
 frag6_slowtimo(void)
 {
 	struct ip6q *q6, *nq6;
-	int s = splsoftnet();
-	extern struct route_in6 ip6_forward_rt;
+	int s;
 
+	s = splsoftnet();
 	IP6Q_LOCK();
 	TAILQ_FOREACH_SAFE(q6, &frag6_queue, ip6q_queue, nq6)
 		if (--q6->ip6q_ttl == 0) {
@@ -617,17 +617,6 @@ frag6_slowtimo(void)
 		frag6_freef(TAILQ_LAST(&frag6_queue, ip6q_head));
 	}
 	IP6Q_UNLOCK();
-
-	/*
-	 * Routing changes might produce a better route than we last used;
-	 * make sure we notice eventually, even if forwarding only for one
-	 * destination and the cache is never replaced.
-	 */
-	if (ip6_forward_rt.ro_rt) {
-		rtfree(ip6_forward_rt.ro_rt);
-		ip6_forward_rt.ro_rt = NULL;
-	}
-
 	splx(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.91 2016/06/15 11:49:34 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.92 2016/08/24 09:41:12 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -68,8 +68,6 @@
 #include <netinet/tcp.h>
 #endif
 
-struct	route_in6 ip6_forward_rt;
-
 /*
  * Forward a packet.  If some error occurs return the sender
  * an icmp packet.  Note we can't always generate a meaningful
@@ -84,18 +82,16 @@ struct	route_in6 ip6_forward_rt;
  */
 
 void
-ip6_forward(struct mbuf *m, int srcrt)
+ip6_forward(struct mbuf *m, struct rtentry *rt, int srcrt)
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-	struct sockaddr_in6 *dst;
-	struct rtentry *rt;
+	struct sockaddr_in6 *dst, sin6;
 	struct ifnet *ifp = NULL;
 	int error = 0, type = 0, code = 0;
 	struct mbuf *mcopy = NULL;
 #ifdef IPSEC
 	struct tdb *tdb = NULL;
 #endif /* IPSEC */
-	u_int rtableid = 0;
 	char src6[INET6_ADDRSTRLEN], dst6[INET6_ADDRSTRLEN];
 
 	/*
@@ -120,13 +116,13 @@ ip6_forward(struct mbuf *m, int srcrt)
 			    m->m_pkthdr.ph_ifidx);
 		}
 		m_freem(m);
-		return;
+		goto out;
 	}
 
 	if (ip6->ip6_hlim <= IPV6_HLIMDEC) {
 		icmp6_error(m, ICMP6_TIME_EXCEEDED,
 				ICMP6_TIME_EXCEED_TRANSIT, 0);
-		return;
+		goto out;
 	}
 	ip6->ip6_hlim -= IPV6_HLIMDEC;
 
@@ -164,40 +160,26 @@ reroute:
 	}
 #endif /* IPSEC */
 
-#if NPF > 0
-	rtableid = m->m_pkthdr.ph_rtableid;
-#endif
+	dst = &sin6;
+	memset(dst, 0, sizeof(*dst));
+	dst->sin6_len = sizeof(struct sockaddr_in6);
+	dst->sin6_family = AF_INET6;
+	dst->sin6_addr = ip6->ip6_dst;
 
-	dst = &ip6_forward_rt.ro_dst;
-	if (!rtisvalid(ip6_forward_rt.ro_rt) ||
-	   ISSET(ip6_forward_rt.ro_rt->rt_flags, RTF_MPATH) ||
-	   !IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst->sin6_addr) ||
-	   ip6_forward_rt.ro_tableid != rtableid) {
-		if (ip6_forward_rt.ro_rt) {
-			rtfree(ip6_forward_rt.ro_rt);
-			ip6_forward_rt.ro_rt = NULL;
-		}
-		bzero(dst, sizeof(*dst));
-		dst->sin6_len = sizeof(struct sockaddr_in6);
-		dst->sin6_family = AF_INET6;
-		dst->sin6_addr = ip6->ip6_dst;
-		ip6_forward_rt.ro_tableid = rtableid;
-		ip6_forward_rt.ro_rt = rtalloc_mpath(
-		    sin6tosa(&ip6_forward_rt.ro_dst),
-		    &ip6->ip6_src.s6_addr32[0],
-		    ip6_forward_rt.ro_tableid);
-
-		if (ip6_forward_rt.ro_rt == NULL) {
+	if (!rtisvalid(rt)) {
+		rtfree(rt);
+		rt = rtalloc_mpath(sin6tosa(dst), &ip6->ip6_src.s6_addr32[0],
+		    m->m_pkthdr.ph_rtableid);
+		if (rt == NULL) {
 			ip6stat.ip6s_noroute++;
 			if (mcopy) {
 				icmp6_error(mcopy, ICMP6_DST_UNREACH,
 					    ICMP6_DST_UNREACH_NOROUTE, 0);
 			}
 			m_freem(m);
-			return;
+			goto out;
 		}
 	}
-	rt = ip6_forward_rt.ro_rt;
 
 	/*
 	 * Scope check: if a packet can't be delivered to its destination
@@ -262,7 +244,7 @@ reroute:
 	    ip6_sendredirects &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
 		if ((ifp->if_flags & IFF_POINTOPOINT) &&
-		    nd6_is_addr_neighbor(&ip6_forward_rt.ro_dst, ifp)) {
+		    nd6_is_addr_neighbor(&sin6, ifp)) {
 			/*
 			 * If the incoming interface is equal to the outgoing
 			 * one, the link attached to the interface is
@@ -381,5 +363,6 @@ senderr:
 freecopy:
 	m_freem(mcopy);
 out:
+	rtfree(rt);
 	if_put(ifp);
 }
