@@ -1,4 +1,4 @@
-/*	$OpenBSD: fgetwln.c,v 1.2 2016/08/21 21:10:52 schwarze Exp $	*/
+/*	$OpenBSD: fgetwln.c,v 1.3 2016/08/24 18:35:12 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins.
@@ -61,8 +61,10 @@ fgetwln(FILE * __restrict fp, size_t *lenp)
 	while ((wc = __fgetwc_unlock(fp)) != WEOF) {
 #define	GROW	512
 		if (len >= fp->_lb._size / sizeof(wchar_t) &&
-		    __slbexpand(fp, len + GROW))
+		    __slbexpand(fp, len + GROW)) {
+			fp->_flags |= __SERR;
 			goto error;
+		}
 		*((wchar_t *)fp->_lb._base + len++) = wc;
 		if (wc == L'\n')
 			break;
