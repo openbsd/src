@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.57 2016/08/24 13:32:17 millert Exp $	*/
+/*	$OpenBSD: history.c,v 1.58 2016/08/24 16:09:40 millert Exp $	*/
 
 /*
  * command history
@@ -14,6 +14,7 @@
  */
 
 #include <sys/stat.h>
+#include <sys/uio.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -901,6 +902,7 @@ writehistfile(int lno, char *cmd)
 	unsigned char	*new;
 	int	bytes;
 	unsigned char	hdr[5];
+	struct iovec	iov[2];
 
 	(void) flock(histfd, LOCK_EX);
 	sizenow = lseek(histfd, 0L, SEEK_END);
@@ -941,8 +943,11 @@ writehistfile(int lno, char *cmd)
 	hdr[2] = (lno>>16)&0xff;
 	hdr[3] = (lno>>8)&0xff;
 	hdr[4] = lno&0xff;
-	(void) write(histfd, hdr, 5);
-	(void) write(histfd, cmd, strlen(cmd)+1);
+	iov[0].iov_base = hdr;
+	iov[0].iov_len = 5;
+	iov[1].iov_base = cmd;
+	iov[1].iov_len = strlen(cmd) + 1;
+	(void) writev(histfd, iov, 2);
 	hsize = lseek(histfd, 0L, SEEK_END);
 	(void) flock(histfd, LOCK_UN);
 	return;
