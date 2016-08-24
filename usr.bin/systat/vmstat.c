@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.80 2015/08/20 22:32:42 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.81 2016/08/24 03:13:45 guenther Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@ static struct Info {
 	struct	vmtotal Total;
 	struct	nchstats nchstats;
 	long	nchcount;
-	u_quad_t *intrcnt;
+	uint64_t *intrcnt;
 } s, s1, s2, s3, z;
 
 extern struct _disk	cur;
@@ -606,25 +606,25 @@ getinfo(struct Info *si)
 	size = sizeof(si->time);
 	if (sysctl(cp_time_mib, 2, &si->time, &size, NULL, 0) < 0) {
 		error("Can't get KERN_CPTIME: %s\n", strerror(errno));
-		bzero(&si->time, sizeof(si->time));
+		memset(&si->time, 0, sizeof(si->time));
 	}
 
 	size = sizeof(si->nchstats);
 	if (sysctl(nchstats_mib, 2, &si->nchstats, &size, NULL, 0) < 0) {
 		error("Can't get KERN_NCHSTATS: %s\n", strerror(errno));
-		bzero(&si->nchstats, sizeof(si->nchstats));
+		memset(&si->nchstats, 0, sizeof(si->nchstats));
 	}
 
 	size = sizeof(si->uvmexp);
 	if (sysctl(uvmexp_mib, 2, &si->uvmexp, &size, NULL, 0) < 0) {
 		error("Can't get VM_UVMEXP: %s\n", strerror(errno));
-		bzero(&si->uvmexp, sizeof(si->uvmexp));
+		memset(&si->uvmexp, 0, sizeof(si->uvmexp));
 	}
 
 	size = sizeof(si->Total);
 	if (sysctl(vmtotal_mib, 2, &si->Total, &size, NULL, 0) < 0) {
 		error("Can't get VM_METER: %s\n", strerror(errno));
-		bzero(&si->Total, sizeof(si->Total));
+		memset(&si->Total, 0, sizeof(si->Total));
 	}
 }
 
@@ -632,7 +632,7 @@ static void
 allocinfo(struct Info *si)
 {
 	memset(si, 0, sizeof(*si));
-	si->intrcnt = calloc(nintr, sizeof(u_quad_t));
+	si->intrcnt = calloc(nintr, sizeof(*si->intrcnt));
 	if (si->intrcnt == NULL)
 		errx(2, "out of memory");
 }
@@ -640,11 +640,11 @@ allocinfo(struct Info *si)
 static void
 copyinfo(struct Info *from, struct Info *to)
 {
-	u_quad_t *intrcnt;
+	uint64_t *intrcnt;
 
 	intrcnt = to->intrcnt;
 	*to = *from;
-	bcopy(from->intrcnt, to->intrcnt = intrcnt, nintr * sizeof (u_quad_t));
+	memcpy(to->intrcnt = intrcnt, from->intrcnt, nintr * sizeof(*intrcnt));
 }
 
 static void

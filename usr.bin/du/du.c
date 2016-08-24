@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.31 2015/10/10 05:32:52 deraadt Exp $	*/
+/*	$OpenBSD: du.c,v 1.32 2016/08/24 03:13:45 guenther Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 
 
 int	 linkchk(FTSENT *);
-void	 prtout(quad_t, char *, int);
+void	 prtout(int64_t, char *, int);
 void	 usage(void);
 
 int
@@ -59,7 +59,7 @@ main(int argc, char *argv[])
 	FTS *fts;
 	FTSENT *p;
 	long blocksize;
-	quad_t totalblocks;
+	int64_t totalblocks;
 	int ftsoptions, listfiles, maxdepth;
 	int Hflag, Lflag, cflag, hflag, kflag;
 	int ch, notused, rval;
@@ -177,7 +177,7 @@ main(int argc, char *argv[])
 			 * root of a traversal, display the total.
 			 */
 			if (p->fts_level <= maxdepth)
-				prtout((quad_t)howmany(p->fts_number,
+				prtout(howmany(p->fts_number,
 				    (unsigned long)blocksize), p->fts_path,
 				    hflag);
 			break;
@@ -207,7 +207,7 @@ main(int argc, char *argv[])
 	if (errno)
 		err(1, "fts_read");
 	if (cflag) {
-		prtout((quad_t)howmany(totalblocks, blocksize), "total", hflag);
+		prtout(howmany(totalblocks, blocksize), "total", hflag);
 	}
 	fts_close(fts);
 	exit(rval);
@@ -301,17 +301,17 @@ linkchk(FTSENT *p)
 }
 
 void
-prtout(quad_t size, char *path, int hflag)
+prtout(int64_t size, char *path, int hflag)
 {
 	if (!hflag)
-		(void)printf("%lld\t%s\n", (long long)size, path);
+		(void)printf("%lld\t%s\n", size, path);
 	else {
 		char buf[FMT_SCALED_STRSIZE];
 
 		if (fmt_scaled(size * 512, buf) == 0)
 			(void)printf("%s\t%s\n", buf, path);
 		else
-			(void)printf("%lld\t%s\n", (long long)size, path);
+			(void)printf("%lld\t%s\n", size, path);
 	}
 }
 

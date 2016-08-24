@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.20 2016/03/15 04:19:13 mmcc Exp $	*/
+/*	$OpenBSD: parse.c,v 1.21 2016/08/24 03:13:45 guenther Exp $	*/
 /*	$NetBSD: parse.c,v 1.12 2001/12/07 13:37:39 bjh21 Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ rewrite(FS *fs)
 	PR *pr, **nextpr;
 	FU *fu;
 	char *p1, *p2;
-	char savech, *fmtp, cs[3];
+	char savech, *fmtp, cs[4];
 	int nconv, prec;
 	size_t len;
 
@@ -295,9 +295,10 @@ rewrite(FS *fs)
 				else
 					pr->flags = F_UINT;
 
-				cs[2] = '\0';
-				cs[1] = cs[0];
-				cs[0] = 'q';
+				cs[3] = '\0';
+				cs[2] = cs[0];
+				cs[1] = 'l';
+				cs[0] = 'l';
 				switch(fu->bcnt) {
 				case 0: case 4:
 					pr->bcnt = 4;
@@ -355,9 +356,10 @@ rewrite(FS *fs)
 					++p2;
 					switch(p1[2]) {
 					case 'd': case 'o': case'x':
-						cs[0] = 'q';
-						cs[1] = p1[2];
-						cs[2] = '\0';
+						cs[0] = 'l';
+						cs[1] = 'l';
+						cs[2] = p1[2];
+						cs[3] = '\0';
 						break;
 					default:
 						if (p1[2])
