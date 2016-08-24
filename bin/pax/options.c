@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.96 2016/08/24 19:13:52 guenther Exp $	*/
+/*	$OpenBSD: options.c,v 1.97 2016/08/24 19:15:42 guenther Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -641,7 +641,6 @@ static void
 tar_options(int argc, char **argv)
 {
 	int c;
-	int fstdin = 0;
 	int Oflag = 0;
 	int nincfiles = 0;
 	int incfiles_max = 0;
@@ -688,15 +687,6 @@ tar_options(int argc, char **argv)
 			/*
 			 * filename where the archive is stored
 			 */
-			if ((optarg[0] == '-') && (optarg[1]== '\0')) {
-				/*
-				 * treat a - as stdin
-				 */
-				fstdin = 1;
-				arcname = NULL;
-				break;
-			}
-			fstdin = 0;
 			arcname = optarg;
 			break;
 		case 'h':
@@ -872,20 +862,19 @@ tar_options(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (!fstdin && ((arcname == NULL) || (*arcname == '\0'))) {
+	if ((arcname == NULL) || (*arcname == '\0')) {
 		arcname = getenv("TAPE");
 		if ((arcname == NULL) || (*arcname == '\0'))
 			arcname = _PATH_DEFTAPE;
-		else if ((arcname[0] == '-') && (arcname[1]== '\0')) {
-			arcname = NULL;
-			fstdin = 1;
-		}
 	}
+	if ((arcname[0] == '-') && (arcname[1]== '\0'))
+		arcname = NULL;
 
-	/* Traditional tar behaviour (pax uses stderr unless in list mode) */
-	if (fstdin == 1 && act == ARCHIVE)
-		listf = stderr;
-	else
+	/*
+	 * Traditional tar behaviour: list-like output goes to stdout unless
+	 * writing the archive there.  (pax uses stderr unless in list mode)
+	 */
+        if (act == LIST || act == EXTRACT || arcname != NULL)
 		listf = stdout;
 
 	/* Traditional tar behaviour (pax wants to read file list from stdin) */
