@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.46 2016/08/20 21:08:16 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.47 2016/08/24 13:09:52 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1699,153 +1699,70 @@ pmap_clear_reference(struct vm_page *pg)
  */
 /* See <arm/pmap.h> */
 
+/*
+ * dab_access() handles the following data aborts:
+ *
+ *  FAULT_ACCESS_2 - Access flag fault -- Level 2
+ *
+ * Set the Access Flag and mark the page as referenced.
+ */
 int
-pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
+dab_access(trapframe_t *tf, u_int fsr, u_int far, struct proc *p)
 {
+	struct pmap *pm = p->p_vmspace->vm_map.pmap;
+	vaddr_t va = trunc_page(far);
 	struct l2_dtable *l2;
 	struct l2_bucket *l2b;
-	pd_entry_t *pl1pd, l1pd;
 	pt_entry_t *ptep, pte;
+	struct pv_entry *pv;
+	struct vm_page *pg;
 	paddr_t pa;
 	u_int l1idx;
-	int rv = 0;
 
 	l1idx = L1_IDX(va);
 
 	/*
 	 * If there is no l2_dtable for this address, then the process
 	 * has no business accessing it.
-	 *
-	 * Note: This will catch userland processes trying to access
-	 * kernel addresses.
 	 */
 	l2 = pm->pm_l2[L2_IDX(l1idx)];
-	if (l2 == NULL)
-		goto out;
+	KASSERT(l2 != NULL);
 
 	/*
 	 * Likewise if there is no L2 descriptor table
 	 */
 	l2b = &l2->l2_bucket[L2_BUCKET(l1idx)];
-	if (l2b->l2b_kva == NULL)
-		goto out;
+	KASSERT(l2b->l2b_kva != NULL);
 
 	/*
 	 * Check the PTE itself.
 	 */
 	ptep = &l2b->l2b_kva[l2pte_index(va)];
 	pte = *ptep;
-	if (pte == L2_TYPE_INV)
-		goto out;
-
-	if ((ftype & PROT_EXEC) && (pte & L2_V7_S_XN))
-		goto out;
-
-	/* only if vectors are low ?? */
-	/*
-	 * Catch a userland access to the vector page mapped at 0x0
-	 */
-	if (user) {
-		if ((pte & L2_V7_AP(0x2)) == 0)
-			goto out;
-	}
+	KASSERT(pte != L2_TYPE_INV);
 
 	pa = l2pte_pa(pte);
 
-	if ((ftype & PROT_WRITE) && !l2pte_is_writeable(pte, pm)) {
-		/*
-		 * This looks like a good candidate for "page modified"
-		 * emulation...
-		 */
-		struct pv_entry *pv;
-		struct vm_page *pg;
-
-		/* Extract the physical address of the page */
-		if ((pg = PHYS_TO_VM_PAGE(pa)) == NULL)
-			goto out;
-
-		/* Get the current flags for this page. */
-		pv = pmap_find_pv(pg, pm, va);
-		if (pv == NULL)
-			goto out;
-
-		/*
-		 * Do the flags say this page is writable? If not then it
-		 * is a genuine write fault. If yes then the write fault is
-		 * our fault as we did not reflect the write access in the
-		 * PTE. Now we know a write has occurred we can correct this
-		 * and also set the modified bit
-		 */
-		if ((pv->pv_flags & PVF_WRITE) == 0)
-			goto out;
-
-		NPDEBUG(PDB_FOLLOW,
-		    printf("pmap_fault_fixup: mod emul. pm %p, va 0x%08lx, pa 0x%08lx\n",
-		    pm, va, pg->phys_addr));
-
-		pg->mdpage.pvh_attrs |= PVF_REF | PVF_MOD;
-		pv->pv_flags |= PVF_REF | PVF_MOD;
-
-		/* 
-		 * Re-enable write permissions for the page.
-		 * We've already set the cacheable bits based on
-		 * the assumption that we can write to this page.
-		 */
-		*ptep = (pte & ~L2_V7_AP(0x4));
-		PTE_SYNC(ptep);
-		rv = 1;
-	} else if ((pte & L2_V7_AF) == 0) {
-		/*
-		 * This looks like a good candidate for "page referenced"
-		 * emulation.
-		 */
-		struct pv_entry *pv;
-		struct vm_page *pg;
-
-		/* Extract the physical address of the page */
-		if ((pg = PHYS_TO_VM_PAGE(pa)) == NULL)
-			goto out;
-
-		/* Get the current flags for this page. */
-		pv = pmap_find_pv(pg, pm, va);
-		if (pv == NULL)
-			goto out;
-
-		pg->mdpage.pvh_attrs |= PVF_REF;
-		pv->pv_flags |= PVF_REF;
-		pte |= L2_V7_AF;
-
-		NPDEBUG(PDB_FOLLOW,
-		    printf("pmap_fault_fixup: ref emul. pm %p, va 0x%08lx, pa 0x%08lx\n",
-		    pm, va, pg->phys_addr));
-
-		*ptep = pte;
-		PTE_SYNC(ptep);
-		rv = 1;
-	} else {
-printf("%s: va %08lx ftype %x %c pte %08x\n", __func__, va, ftype, user ? 'u' : 's', pte);
-		goto out;
-	}
-
 	/*
-	 * We know there is a valid mapping here, so simply
-	 * fix up the L1 if necessary.
+	 * Perform page referenced emulation.
 	 */
-	pl1pd = &pm->pm_l1->l1_kva[l1idx];
-	l1pd = l2b->l2b_phys | L1_C_DOM(pm->pm_domain) | L1_C_PROTO;
-	if (*pl1pd != l1pd) {
-		*pl1pd = l1pd;
-		PTE_SYNC(pl1pd);
-		rv = 1;
-	}
+	KASSERT((pte & L2_V7_AF) == 0);
 
-	if (rv) {
-		cpu_tlb_flushID_SE(va);
-		cpu_cpwait();
-	}
+	/* Extract the physical address of the page */
+	pg = PHYS_TO_VM_PAGE(pa);
+	KASSERT(pg != NULL);
 
-out:
-	return (rv);
+	/* Get the current flags for this page. */
+	pv = pmap_find_pv(pg, pm, va);
+	KASSERT(pv != NULL);
+
+	pg->mdpage.pvh_attrs |= PVF_REF;
+	pv->pv_flags |= PVF_REF;
+	pte |= L2_V7_AF;
+
+	*ptep = pte;
+	PTE_SYNC(ptep);
+	return 0;
 }
 
 /*
