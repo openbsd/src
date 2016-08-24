@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.60 2016/08/24 08:07:33 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.61 2016/08/24 08:17:24 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -2914,9 +2914,6 @@ in addition to the encoded version.
 Print out only public key components
 even if a private key is being processed.
 .El
-.\"
-.\" PKEYPARAM
-.\"
 .Sh PKEYPARAM
 .Cm openssl pkeyparam
 .Op Fl in Ar file
@@ -2925,35 +2922,23 @@ even if a private key is being processed.
 .Op Fl text
 .Pp
 The
-.Nm pkey
+.Nm pkeyparam
 command processes public or private keys.
-They can be converted between various forms and their components printed out.
+The key type is determined by the PEM headers.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl in Ar file
-This specifies the input filename to read parameters from,
-or standard input if this option is not specified.
+The input file to read from,
+or standard input if not specified.
 .It Fl noout
 Do not output the encoded version of the parameters.
 .It Fl out Ar file
-This specifies the output filename to write parameters to,
-or standard output if this option is not specified.
+The output file to write to,
+or standard output if not specified.
 .It Fl text
-Prints out the parameters in plain text in addition to the encoded version.
+Print the parameters in plain text, in addition to the encoded version.
 .El
-.Sh PKEYPARAM EXAMPLES
-Print out text version of parameters:
-.Bd -literal -offset indent
-$ openssl pkeyparam -in param.pem -text
-.Ed
-.Sh PKEYPARAM NOTES
-There are no
-.Fl inform
-or
-.Fl outform
-options for this command because only PEM format is supported
-because the key type is determined by the PEM headers.
 .\"
 .\" PKEYUTL
 .\"
