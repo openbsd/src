@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.189 2016/08/04 20:46:24 vgross Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.190 2016/08/24 09:38:29 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1152,6 +1152,7 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 void
 icmp6_reflect(struct mbuf *m, size_t off)
 {
+	struct rtentry *rt = NULL;
 	struct ip6_hdr *ip6;
 	struct icmp6_hdr *icmp6;
 	struct in6_ifaddr *ia6;
@@ -1249,32 +1250,28 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	}
 
 	if (src == NULL) {
-		int error;
-		struct route_in6 ro;
-		char addr[INET6_ADDRSTRLEN];
-
 		/*
 		 * This case matches to multicasts, our anycast, or unicasts
 		 * that we do not own.  Select a source address based on the
 		 * source address of the erroneous packet.
 		 */
-		bzero(&ro, sizeof(ro));
-		error = in6_selectsrc(&src, &sa6_src, NULL, &ro,
+		rt = rtalloc(sin6tosa(&sa6_src), RT_RESOLVE,
 		    m->m_pkthdr.ph_rtableid);
-		if (ro.ro_rt)
-			rtfree(ro.ro_rt); /* XXX: we could use this */
-		if (error) {
+		if (!rtisvalid(rt)) {
+			char addr[INET6_ADDRSTRLEN];
+
 			nd6log((LOG_DEBUG,
-			    "icmp6_reflect: source can't be determined: "
-			    "dst=%s, error=%d\n",
-			    inet_ntop(AF_INET6, &sa6_src.sin6_addr,
-				addr, sizeof(addr)),
-			    error));
+			    "%s: source can't be determined: dst=%s\n",
+			    __func__, inet_ntop(AF_INET6, &sa6_src.sin6_addr,
+				addr, sizeof(addr))));
+			rtfree(rt);
 			goto bad;
 		}
+		src = &ifatoia6(rt->rt_ifa)->ia_addr.sin6_addr;
 	}
 
 	ip6->ip6_src = *src;
+	rtfree(rt);
 
 	ip6->ip6_flow = 0;
 	ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
