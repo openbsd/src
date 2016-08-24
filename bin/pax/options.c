@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.95 2016/08/23 06:00:28 guenther Exp $	*/
+/*	$OpenBSD: options.c,v 1.96 2016/08/24 19:13:52 guenther Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -1090,7 +1090,7 @@ static void
 cpio_options(int argc, char **argv)
 {
 	const char *errstr;
-	int c;
+	int c, list_only = 0;
 	unsigned i;
 	char *str;
 	FILE *fp;
@@ -1188,8 +1188,7 @@ cpio_options(int argc, char **argv)
 				/*
 				 * list contents of archive
 				 */
-				act = LIST;
-				listf = stdout;
+				list_only = 1;
 				break;
 			case 'u':
 				/*
@@ -1322,8 +1321,16 @@ cpio_options(int argc, char **argv)
 	 * process the args as they are interpreted by the operation mode
 	 */
 	switch (act) {
-		case LIST:
 		case EXTRACT:
+			if (list_only) {
+				act = LIST;
+
+				/*
+				 * cpio is like pax: list to stderr
+				 * unless in list mode
+				 */
+				listf = stdout;
+			}
 			while (*argv != NULL)
 				if (pat_add(*argv++, NULL) < 0)
 					cpio_usage();
