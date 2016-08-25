@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.61 2016/08/24 08:17:24 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.62 2016/08/25 14:37:28 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 24 2016 $
+.Dd $Mdocdate: August 25 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -2939,13 +2939,9 @@ or standard output if not specified.
 .It Fl text
 Print the parameters in plain text, in addition to the encoded version.
 .El
-.\"
-.\" PKEYUTL
-.\"
 .Sh PKEYUTL
 .nr nS 1
 .Nm "openssl pkeyutl"
-.Bk -words
 .Op Fl asn1parse
 .Op Fl certin
 .Op Fl decrypt
@@ -2954,10 +2950,10 @@ Print the parameters in plain text, in addition to the encoded version.
 .Op Fl hexdump
 .Op Fl in Ar file
 .Op Fl inkey Ar file
-.Op Fl keyform Ar DER | PEM
+.Op Fl keyform Cm der | pem
 .Op Fl out Ar file
 .Op Fl passin Ar arg
-.Op Fl peerform Ar DER | PEM
+.Op Fl peerform Cm der | pem
 .Op Fl peerkey Ar file
 .Op Fl pkeyopt Ar opt : Ns Ar value
 .Op Fl pubin
@@ -2966,7 +2962,6 @@ Print the parameters in plain text, in addition to the encoded version.
 .Op Fl sign
 .Op Fl verify
 .Op Fl verifyrecover
-.Ek
 .nr nS 0
 .Pp
 The
@@ -2992,59 +2987,37 @@ Encrypt the input data using a public key.
 .It Fl hexdump
 Hex dump the output data.
 .It Fl in Ar file
-Specify the input filename to read data from,
-or standard input if this option is not specified.
+The input file to read from,
+or standard input if not specified.
 .It Fl inkey Ar file
 The input key file.
 By default it should be a private key.
-.It Fl keyform Ar DER | PEM
-The key format DER or PEM.
+.It Fl keyform Cm der | pem
+The key format.
 .It Fl out Ar file
-Specify the output filename to write to,
-or standard output by default.
+The output file to write to,
+or standard output if not specified.
 .It Fl passin Ar arg
 The key password source.
-.It Fl peerform Ar DER | PEM
-The peer key format DER or PEM.
+.It Fl peerform Cm der | pem
+The peer key format.
 .It Fl peerkey Ar file
 The peer key file, used by key derivation (agreement) operations.
 .It Fl pkeyopt Ar opt : Ns Ar value
-Public key options.
-.It Fl pubin
-The input file is a public key.
-.It Fl rev
-Reverse the order of the input buffer.
-This is useful for some libraries (such as CryptoAPI)
-which represent the buffer in little endian format.
-.It Fl sigfile Ar file
-Signature file (verify operation only).
-.It Fl sign
-Sign the input data and output the signed result.
-This requires a private key.
-.It Fl verify
-Verify the input data against the signature file and indicate if the
-verification succeeded or failed.
-.It Fl verifyrecover
-Verify the input data and output the recovered data.
-.El
-.Sh PKEYUTL NOTES
-The operations and options supported vary according to the key algorithm
-and its implementation.
-The
-.Nm OpenSSL
-operations and options are indicated below.
-.Pp
-Unless otherwise mentioned all algorithms support the
-.Ar digest : Ns Ar alg
-option which specifies the digest in use
+Set the public key algorithm option
+.Ar opt
+to
+.Ar value .
+Unless otherwise mentioned, all algorithms support the format
+.Ar digest : Ns Ar alg ,
+which specifies the digest to use
 for sign, verify, and verifyrecover operations.
 The value
 .Ar alg
 should represent a digest name as used in the
-.Fn EVP_get_digestbyname
-function, for example
-.Cm sha1 .
-.Ss RSA algorithm
+.Xr EVP_get_digestbyname 3
+function.
+.Pp
 The RSA algorithm supports the
 encrypt, decrypt, sign, verify, and verifyrecover operations in general.
 Some padding modes only support some of these
@@ -3072,13 +3045,10 @@ signed or verified directly instead of using a DigestInfo structure.
 If a digest is set then a DigestInfo
 structure is used and its length
 must correspond to the digest type.
-.Pp
 For oeap mode only encryption and decryption is supported.
-.Pp
 For x931 if the digest type is set it is used to format the block data;
 otherwise the first byte is used to specify the X9.31 digest ID.
 Sign, verify, and verifyrecover can be performed in this mode.
-.Pp
 For pss mode only sign and verify are supported and the digest type must be
 specified.
 .It rsa_pss_saltlen : Ns Ar len
@@ -3090,48 +3060,35 @@ When signing -2 sets the salt length to the maximum permissible value.
 When verifying -2 causes the salt length to be automatically determined
 based on the PSS block structure.
 .El
-.Ss DSA algorithm
+.Pp
 The DSA algorithm supports the sign and verify operations.
 Currently there are no additional options other than
 .Ar digest .
 Only the SHA1 digest can be used and this digest is assumed by default.
-.Ss DH algorithm
+.Pp
 The DH algorithm supports the derive operation
 and no additional options.
-.Ss EC algorithm
+.Pp
 The EC algorithm supports the sign, verify, and derive operations.
 The sign and verify operations use ECDSA and derive uses ECDH.
 Currently there are no additional options other than
 .Ar digest .
 Only the SHA1 digest can be used and this digest is assumed by default.
-.Sh PKEYUTL EXAMPLES
-Sign some data using a private key:
-.Bd -literal -offset indent
-$ openssl pkeyutl -sign -in file -inkey key.pem -out sig
-.Ed
-.Pp
-Recover the signed data (e.g. if an RSA key is used):
-.Bd -literal -offset indent
-$ openssl pkeyutl -verifyrecover -in sig -inkey key.pem
-.Ed
-.Pp
-Verify the signature (e.g. a DSA key):
-.Bd -literal -offset indent
-$ openssl pkeyutl -verify -in file -sigfile sig \e
-	-inkey key.pem
-.Ed
-.Pp
-Sign data using a message digest value (this is currently only valid for RSA):
-.Bd -literal -offset indent
-$ openssl pkeyutl -sign -in file -inkey key.pem \e
-	-out sig -pkeyopt digest:sha256
-.Ed
-.Pp
-Derive a shared secret value:
-.Bd -literal -offset indent
-$ openssl pkeyutl -derive -inkey key.pem \e
-	-peerkey pubkey.pem -out secret
-.Ed
+.It Fl pubin
+The input file is a public key.
+.It Fl rev
+Reverse the order of the input buffer.
+.It Fl sigfile Ar file
+Signature file (verify operation only).
+.It Fl sign
+Sign the input data and output the signed result.
+This requires a private key.
+.It Fl verify
+Verify the input data against the signature file and indicate if the
+verification succeeded or failed.
+.It Fl verifyrecover
+Verify the input data and output the recovered data.
+.El
 .\"
 .\" PRIME
 .\"
