@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.61 2016/06/28 14:47:00 tedu Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.62 2016/08/25 14:13:19 bluhm Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -34,6 +34,7 @@
 
 #include <sys/selinfo.h>			/* for struct selinfo */
 #include <sys/queue.h>
+#include <sys/task.h>
 #include <sys/timeout.h>
 #include <sys/rwlock.h>
 
@@ -92,6 +93,7 @@ struct socket {
 		off_t	ssp_max;		/* maximum number of bytes */
 		struct	timeval ssp_idletv;	/* idle timeout */
 		struct	timeout ssp_idleto;
+		struct	task ssp_task;		/* task for somove */
 	} *so_sp;
 /*
  * Variables for socket buffering.

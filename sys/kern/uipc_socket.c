@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.154 2016/08/25 13:59:16 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.155 2016/08/25 14:13:19 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -59,6 +59,7 @@ void	sbsync(struct sockbuf *, struct mbuf *);
 int	sosplice(struct socket *, int, off_t, struct timeval *);
 void	sounsplice(struct socket *, struct socket *, int);
 void	soidle(void *);
+void	sotask(void *);
 int	somove(struct socket *, int);
 
 void	filt_sordetach(struct knote *kn);
@@ -85,6 +86,7 @@ int	sominconn = SOMINCONN;
 struct pool socket_pool;
 #ifdef SOCKET_SPLICE
 struct pool sosplice_pool;
+struct taskq *sosplice_taskq;
 #endif
 
 void
@@ -1066,6 +1068,7 @@ sorflush(struct socket *so)
 #define so_splicemax	so_sp->ssp_max
 #define so_idletv	so_sp->ssp_idletv
 #define so_idleto	so_sp->ssp_idleto
+#define so_splicetask	so_sp->ssp_task
 
 int
 sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
@@ -1073,6 +1076,12 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	struct file	*fp;
 	struct socket	*sosp;
 	int		 s, error = 0;
+
+	if (sosplice_taskq == NULL)
+		sosplice_taskq = taskq_create("sosplice", 1, IPL_SOFTNET,
+		    TASKQ_CANTSLEEP);
+	if (sosplice_taskq == NULL)
+		return (ENOMEM);
 
 	if ((so->so_proto->pr_flags & PR_SPLICE) == 0)
 		return (EPROTONOSUPPORT);
@@ -1151,6 +1160,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	else
 		timerclear(&so->so_idletv);
 	timeout_set(&so->so_idleto, soidle, so);
+	task_set(&so->so_splicetask, sotask, so);
 
 	/*
 	 * To prevent softnet interrupt from calling somove() while
@@ -1174,6 +1184,7 @@ sounsplice(struct socket *so, struct socket *sosp, int wakeup)
 {
 	splsoftassert(IPL_SOFTNET);
 
+	task_del(sosplice_taskq, &so->so_splicetask);
 	timeout_del(&so->so_idleto);
 	sosp->so_snd.sb_flagsintr &= ~SB_SPLICE;
 	so->so_rcv.sb_flagsintr &= ~SB_SPLICE;
@@ -1194,6 +1205,27 @@ soidle(void *arg)
 		sounsplice(so, so->so_sp->ssp_socket, 1);
 	}
 	splx(s);
+}
+
+void
+sotask(void *arg)
+{
+	struct socket *so = arg;
+	int s;
+
+	s = splsoftnet();
+	if (so->so_rcv.sb_flagsintr & SB_SPLICE) {
+		/*
+		 * We may not sleep here as sofree() and unsplice() may be
+		 * called from softnet interrupt context.  This would remove
+		 * the socket during somove().
+		 */
+		somove(so, M_DONTWAIT);
+	}
+	splx(s);
+
+	/* Avoid user land starvation. */
+	yield();
 }
 
 /*
@@ -1469,19 +1501,26 @@ somove(struct socket *so, int wait)
 	return (1);
 }
 
-#undef so_splicelen
-#undef so_splicemax
-#undef so_idletv
-#undef so_idleto
-
 #endif /* SOCKET_SPLICE */
 
 void
 sorwakeup(struct socket *so)
 {
 #ifdef SOCKET_SPLICE
-	if (so->so_rcv.sb_flagsintr & SB_SPLICE)
-		(void) somove(so, M_DONTWAIT);
+	if (so->so_rcv.sb_flagsintr & SB_SPLICE) {
+		/*
+		 * TCP has a sendbuffer that can handle multiple packets
+		 * at once.  So queue the stream a bit to accumulate data.
+		 * The sosplice thread will call somove() later and send
+		 * the packets calling tcp_output() only once.
+		 * In the UDP case, send out the packets immediately.
+		 * Using a thread would make things slower.
+		 */
+		if (so->so_proto->pr_flags & PR_WANTRCVD)
+			task_add(sosplice_taskq, &so->so_splicetask);
+		else
+			somove(so, M_DONTWAIT);
+	}
 	if (isspliced(so))
 		return;
 #endif
@@ -1495,7 +1534,7 @@ sowwakeup(struct socket *so)
 {
 #ifdef SOCKET_SPLICE
 	if (so->so_snd.sb_flagsintr & SB_SPLICE)
-		(void) somove(so->so_sp->ssp_soback, M_DONTWAIT);
+		task_add(sosplice_taskq, &so->so_sp->ssp_soback->so_splicetask);
 #endif
 	sowakeup(so, &so->so_snd);
 }
