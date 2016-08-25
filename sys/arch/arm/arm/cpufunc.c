@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.47 2016/08/22 01:41:59 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.48 2016/08/25 08:17:57 kettenis Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -529,6 +529,7 @@ armv7_setup()
 {
 	uint32_t auxctrl, auxctrlmask;
 	uint32_t cpuctrl, cpuctrlmask;
+	uint32_t id_pfr1;
 
 	auxctrl = auxctrlmask = 0;
 
@@ -568,6 +569,16 @@ armv7_setup()
 
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+
+	/*
+	 * Check for the Virtualization Extensions and enable UWXN of
+	 * those are included.
+	 */
+	__asm volatile("mrc p15, 0, %0, c0, c1, 1" : "=r"(id_pfr1));
+	if ((id_pfr1 & 0x0000f000) == 0x00001000) {
+		cpuctrlmask |= CPU_CONTROL_UWXN;
+		cpuctrl |= CPU_CONTROL_UWXN;
+	}
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.36 2016/08/24 13:09:52 kettenis Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.37 2016/08/25 08:17:57 kettenis Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -248,6 +248,8 @@
 #define CPU_CONTROL_L2		(1<<25) /* L2: L2 cache enable */
 
 /* added with v7 */
+#define CPU_CONTROL_WXN		(1<<19)	/* WXN: Write implies XN */
+#define CPU_CONTROL_UWXN	(1<<20)	/* UWXN: Unpriv write implies XN */
 #define CPU_CONTROL_NMFI	(1<<27) /* NMFI: Non Maskable fast interrupt */ 
 #define CPU_CONTROL_TRE		(1<<28) /* TRE: TEX Remap Enable */
 #define CPU_CONTROL_AFE		(1<<29) /* AFE: Access Flag Enable */
