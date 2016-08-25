@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmap_fixed.c,v 1.1.1.1 2006/04/06 20:39:03 kurt Exp $	*/
+/*	$OpenBSD: mmap_fixed.c,v 1.2 2016/08/25 05:12:06 deraadt Exp $	*/
 
 /*
  * Public domain. 2006, Kurt Miller <kurt@intricatesoftware.com>
@@ -24,7 +24,7 @@ main(void)
 	mem_area = mmap(0, MEM_SIZE, PROT_NONE, MAP_ANON, -1, 0);
 
 	for (i = 0; i < 20000; i++) {
-		if (mmap(mem_area, MEM_SIZE, PROT_READ|PROT_WRITE|PROT_EXEC,
+		if (mmap(mem_area, MEM_SIZE, PROT_READ|PROT_WRITE,
 		    MAP_ANON|MAP_FIXED, -1, 0) == MAP_FAILED)
 			err(1, NULL);
 	}
