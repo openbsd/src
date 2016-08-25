@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.153 2016/03/16 20:16:39 mestre Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.154 2016/08/25 05:23:19 tedu Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -1455,7 +1455,6 @@ bump_nofile(void)
  */
 #define	BUFSIZE	4096
 
-/* ARGSUSED */
 void
 echo_stream(int s, struct servtab *sep)
 {
@@ -1469,7 +1468,6 @@ echo_stream(int s, struct servtab *sep)
 	exit(0);
 }
 
-/* ARGSUSED */
 void
 echo_dg(int s, struct servtab *sep)
 {
@@ -1487,7 +1485,6 @@ echo_dg(int s, struct servtab *sep)
 	(void) sendto(s, buffer, i, 0, (struct sockaddr *)&ss, size);
 }
 
-/* ARGSUSED */
 void
 discard_stream(int s, struct servtab *sep)
 {
@@ -1500,7 +1497,6 @@ discard_stream(int s, struct servtab *sep)
 	exit(0);
 }
 
-/* ARGSUSED */
 void
 discard_dg(int s, struct servtab *sep)
 {
@@ -1526,7 +1522,6 @@ initring(void)
 			*endring++ = i;
 }
 
-/* ARGSUSED */
 void
 chargen_stream(int s, struct servtab *sep)
 {
@@ -1558,7 +1553,6 @@ chargen_stream(int s, struct servtab *sep)
 	exit(0);
 }
 
-/* ARGSUSED */
 void
 chargen_dg(int s, struct servtab *sep)
 {
@@ -1611,7 +1605,6 @@ machtime(void)
 	return (htonl((u_int32_t)tv.tv_sec + 2208988800UL));
 }
 
-/* ARGSUSED */
 void
 machtime_stream(int s, struct servtab *sep)
 {
@@ -1621,7 +1614,6 @@ machtime_stream(int s, struct servtab *sep)
 	(void) write(s, &result, sizeof(result));
 }
 
-/* ARGSUSED */
 void
 machtime_dg(int s, struct servtab *sep)
 {
@@ -1641,7 +1633,6 @@ machtime_dg(int s, struct servtab *sep)
 }
 
 /* Return human-readable time of day */
-/* ARGSUSED */
 void
 daytime_stream(int s, struct servtab *sep)
 {
@@ -1655,7 +1646,6 @@ daytime_stream(int s, struct servtab *sep)
 }
 
 /* Return human-readable time of day */
-/* ARGSUSED */
 void
 daytime_dg(int s, struct servtab *sep)
 {
