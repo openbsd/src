@@ -29,7 +29,7 @@ our %args = (
     },
     relayd => {
 	protocol => [ "http",
-	    "tcp socket buffer 64",
+	    "tcp socket buffer 1024",
 	    "match request header log",
 	    "match request path log",
 	],
