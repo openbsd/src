@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_check.8,v 1.6 2014/02/11 08:58:34 sthen Exp $
+.\"	$OpenBSD: pkg_check.8,v 1.7 2016/08/25 14:58:43 espie Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 11 2014 $
+.Dd $Mdocdate: August 25 2016 $
 .Dt PKG_CHECK 8
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm pkg_check
 .Bk -words
-.Op Fl fIimnqvx
+.Op Fl fFIimnqvx
 .Op Fl D Ar name Ns Op = Ns Ar value
 .Ek
 .Sh DESCRIPTION
@@ -59,7 +59,7 @@ Checks that all direct dependencies have corresponding reverse dependencies.
 .It Files from packages
 Checks that each file, link or directory in those packing-lists actually exist,
 and that their checksum matches what's recorded in the packing-list.
-.It Other files
+.It Other files Po option Fl F Pc
 Checks that there are no other random objects under
 .Pa /usr/local .
 .El
@@ -87,6 +87,8 @@ do not check digital signatures.
 .El
 .It Fl f
 Force the removal of bogus package information.
+.It Fl F
+Check the filesystem for random objects.
 .It Fl I
 Force non-interactive mode.
 Default is to be interactive when run from a tty.
@@ -100,6 +102,9 @@ to always display the progress meter in cases it would not do so by default.
 Don't actually modify packages, just perform checks.
 .It Fl q
 Don't verify checksums for files, just check for their existence.
+Doubling
+.Fl q
+will bypass that check entirely.
 .It Fl v
 Turn on verbose output.
 Several
