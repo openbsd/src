@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.249 2016/07/22 09:54:09 kettenis Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.250 2016/08/25 00:01:13 dlg Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -145,8 +145,10 @@ vntblinit(void)
 	maxvnodes = 2 * initialvnodes;
 	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, PR_WAITOK,
 	    "vnodes", NULL);
+	pool_setipl(&vnode_pool, IPL_NONE);
 	pool_init(&uvm_vnode_pool, sizeof(struct uvm_vnode), 0, 0, PR_WAITOK,
 	    "uvmvnodes", NULL);
+	pool_setipl(&uvm_vnode_pool, IPL_NONE);
 	TAILQ_INIT(&vnode_hold_list);
 	TAILQ_INIT(&vnode_free_list);
 	TAILQ_INIT(&mountlist);

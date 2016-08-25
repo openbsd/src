@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.21 2015/12/22 21:39:34 mmcc Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.22 2016/08/25 00:01:13 dlg Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -77,6 +77,7 @@ lf_init(void)
 {
 	pool_init(&lockfpool, sizeof(struct lockf), 0, 0, PR_WAITOK,
 	    "lockfpl", NULL);
+	pool_setipl(&lockfpool, IPL_NONE);
 }
 
 struct lockf *lf_alloc(uid_t, int);
