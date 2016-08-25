@@ -1,7 +1,8 @@
-/*	$OpenBSD: ofp.h,v 1.2 2016/07/20 19:57:54 reyk Exp $	*/
+/*	$OpenBSD: ofp.h,v 1.3 2016/08/25 11:00:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -487,6 +488,7 @@ struct ofp_error {
 	uint8_t			err_data[0];
 	/* Followed by optional data */
 } __packed;
+#define OFP_ERRDATA_MAX			64
 
 /* Error types */
 #define OFP_ERRTYPE_HELLO_FAILED	0	/* Hello protocol failed */
