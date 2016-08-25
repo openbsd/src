@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: relayd.pl,v 1.14 2016/05/03 19:13:04 bluhm Exp $
+#	$OpenBSD: relayd.pl,v 1.15 2016/08/25 22:56:13 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -51,6 +51,7 @@ $s = Server->new(
     redo                => $redo,
     %{$args{server}},
     testfile            => $testfile,
+    client              => \$c,
 ) unless $args{server}{noserver};
 $r = Relayd->new(
     forward             => $ARGV[0],
@@ -71,6 +72,7 @@ $c = Client->new(
     connectport         => $rport,
     %{$args{client}},
     testfile            => $testfile,
+    server              => \$s,
 ) unless $args{client}{noclient};
 
 $s->run unless $args{server}{noserver};

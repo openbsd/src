@@ -3,6 +3,10 @@
 
 use strict;
 use warnings;
+use Errno ':POSIX';
+
+my @errors = (EWOULDBLOCK);
+my $errors = "(". join("|", map { $! = $_ } @errors). ")";
 
 my $size = 2**21;
 
@@ -11,14 +15,16 @@ our %args = (
 	fast => 1,
 	max => 100,
 	func => sub {
-	    http_request(@_, $size, "1.0", "");
-	    http_response(@_, $size);
+	    my $self = shift;
+	    http_request($self , $size, "1.0", "");
+	    http_response($self , $size);
 	    print STDERR "going to sleep\n";
-	    sleep 8;
-	    read_char(@_, $size);
+	    ${$self->{server}}->loggrep(qr/short write \($errors\)/, 8)
+		or die "no short write in server.log";
+	    read_char($self, $size);
 	    return;
 	},
-	rcvbuf => 2**8,
+	rcvbuf => 2**12,
 	nocheck => 1,
     },
     relayd => {
@@ -31,7 +37,7 @@ our %args = (
     server => {
 	fast => 1,
 	func => \&http_server,
-	sndbuf => 2**8,
+	sndbuf => 2**12,
 	sndtimeo => 2,
 	loggrep => 'short write',
 

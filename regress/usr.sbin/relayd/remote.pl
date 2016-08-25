@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.8 2016/05/03 19:13:04 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.9 2016/08/25 22:56:13 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -107,6 +107,7 @@ $s = Server->new(
     listenaddr          => ($mode eq "auto" ? $ARGV[1] : undef),
     listenport          => ($mode eq "manual" ? $ARGV[0] : undef),
     testfile            => $testfile,
+    client              => \$c,
 ) unless $args{server}{noserver};
 if ($mode eq "auto") {
 	$r = Remote->new(
@@ -129,6 +130,7 @@ $c = Client->new(
     connectaddr         => ($mode eq "manual" ? $ARGV[1] : $r->{listenaddr}),
     connectport         => ($mode eq "manual" ? $ARGV[2] : $r->{listenport}),
     testfile            => $testfile,
+    server              => \$s,
 ) unless $args{client}{noclient};
 
 $s->run unless $args{server}{noserver};

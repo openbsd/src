@@ -1,4 +1,4 @@
-#	$OpenBSD: Server.pm,v 1.9 2015/07/18 22:11:34 benno Exp $
+#	$OpenBSD: Server.pm,v 1.10 2016/08/25 22:56:13 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -20,6 +20,7 @@ use warnings;
 package Server;
 use parent 'Proc';
 use Carp;
+use Config;
 use Socket;
 use Socket6;
 use IO::Socket;
@@ -57,14 +58,16 @@ sub new {
 		    pack('i', $self->{rcvbuf}))
 		    or die ref($self), " set rcvbuf SO_RCVBUF failed: $!";
 	}
+	my $packstr = $Config{longsize} == 8 ? 'ql!' :
+	    $Config{byteorder} == 1234 ? 'lxxxxl!' : 'xxxxll!';
 	if ($self->{sndtimeo}) {
 		setsockopt($ls, SOL_SOCKET, SO_SNDTIMEO,
-		    pack('l!l!', $self->{sndtimeo}, 0))
+		    pack($packstr, $self->{sndtimeo}, 0))
 		    or die ref($self), " set SO_SNDTIMEO failed failed: $!";
 	}
 	if ($self->{rcvtimeo}) {
 		setsockopt($ls, SOL_SOCKET, SO_RCVTIMEO,
-		    pack('l!l!', $self->{rcvtimeo}, 0))
+		    pack($packstr, $self->{rcvtimeo}, 0))
 		    or die ref($self), " set SO_RCVTIMEO failed failed: $!";
 	}
 	my $log = $self->{log};
