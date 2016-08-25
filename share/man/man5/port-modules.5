@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.206 2016/05/18 19:13:02 jca Exp $
+.\"	$OpenBSD: port-modules.5,v 1.207 2016/08/25 14:57:35 dcoppa Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 18 2016 $
+.Dd $Mdocdate: August 25 2016 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -703,8 +703,6 @@ Set
 to `g77' or `gfortran', depending on what the port requires.
 The default is `g77'.
 The dependencies are chosen according to
-.Ev COMPILER_VERSION
-and
 .Ev MODFORTRAN_COMPILER .
 .It gcc4
 If
