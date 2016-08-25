@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.56 2016/08/23 06:00:28 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.57 2016/08/25 01:44:55 guenther Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -98,12 +98,8 @@ int buf_flush(int);
 /*
  * cache.c
  */
-int uidtb_start(void);
-int gidtb_start(void);
 int usrtb_start(void);
 int grptb_start(void);
-char * name_uid(uid_t, int);
-char * name_gid(gid_t, int);
 int uid_name(char *, uid_t *);
 int gid_name(char *, gid_t *);
 
@@ -306,7 +302,6 @@ int tar_opt(void);
 int tar_rd(ARCHD *, char *);
 int tar_wr(ARCHD *);
 int ustar_strd(void);
-int ustar_stwr(void);
 int ustar_id(char *, int);
 int ustar_rd(ARCHD *, char *);
 int ustar_wr(ARCHD *);

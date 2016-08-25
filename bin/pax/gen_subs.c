@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.29 2016/08/14 04:47:52 guenther Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.30 2016/08/25 01:44:55 guenther Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -37,12 +37,15 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <grp.h>
+#include <pwd.h>
 #include <stdio.h>
-#include <utmp.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <utmp.h>
 #include <vis.h>
+
 #include "pax.h"
 #include "extern.h"
 
@@ -104,8 +107,8 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 	    localtime(&(sbp->st_mtime))) == 0)
 		f_date[0] = '\0';
 	(void)fprintf(fp, "%s%2u %-*.*s %-*.*s ", f_mode, sbp->st_nlink,
-		NAME_WIDTH, UT_NAMESIZE, name_uid(sbp->st_uid, 1),
-		NAME_WIDTH, UT_NAMESIZE, name_gid(sbp->st_gid, 1));
+		NAME_WIDTH, UT_NAMESIZE, user_from_uid(sbp->st_uid, 0),
+		NAME_WIDTH, UT_NAMESIZE, group_from_gid(sbp->st_gid, 0));
 
 	/*
 	 * print device id's for devices, or sizes for other nodes

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.61 2016/08/14 18:30:33 guenther Exp $	*/
+/*	$OpenBSD: tar.c,v 1.62 2016/08/25 01:44:55 guenther Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -39,11 +39,14 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <errno.h>
+#include <grp.h>
 #include <limits.h>
-#include <string.h>
+#include <pwd.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "pax.h"
 #include "extern.h"
 #include "tar.h"
@@ -679,21 +682,6 @@ ustar_strd(void)
 }
 
 /*
- * ustar_stwr()
- *	initialization for ustar write
- * Return:
- *	0 if ok, -1 otherwise
- */
-
-int
-ustar_stwr(void)
-{
-	if ((uidtb_start() < 0) || (gidtb_start() < 0))
-		return(-1);
-	return(0);
-}
-
-/*
  * ustar_id()
  *	determine if a block given to us is a valid ustar header. We have to
  *	be on the lookout for those pesky blocks of all zero's
@@ -934,7 +922,7 @@ int
 ustar_wr(ARCHD *arcn)
 {
 	HD_USTAR *hd;
-	char *pt;
+	char *pt, *name;
 	char hdblk[sizeof(HD_USTAR)];
 
 	/*
@@ -1094,11 +1082,10 @@ ustar_wr(ARCHD *arcn)
 	    ul_oct(arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 3))
 		goto out;
 	if (!Nflag) {
-		strncpy(hd->uname, name_uid(arcn->sb.st_uid, 0), sizeof(hd->uname));
-		strncpy(hd->gname, name_gid(arcn->sb.st_gid, 0), sizeof(hd->gname));
-	} else {
-		strncpy(hd->uname, "", sizeof(hd->uname));
-		strncpy(hd->gname, "", sizeof(hd->gname));
+		if ((name = user_from_uid(arcn->sb.st_uid, 1)) != NULL)
+			strncpy(hd->uname, name, sizeof(hd->uname));
+		if ((name = group_from_gid(arcn->sb.st_gid, 1)) != NULL)
+			strncpy(hd->gname, name, sizeof(hd->gname));
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.21 2014/05/24 18:51:00 guenther Exp $	*/
+/*	$OpenBSD: cache.c,v 1.22 2016/08/25 01:44:55 guenther Exp $	*/
 /*	$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $	*/
 
 /*-
@@ -56,58 +56,8 @@
 
 static	int pwopn = 0;		/* is password file open */
 static	int gropn = 0;		/* is group file open */
-static UIDC **uidtb = NULL;	/* uid to name cache */
-static GIDC **gidtb = NULL;	/* gid to name cache */
 static UIDC **usrtb = NULL;	/* user name to uid cache */
 static GIDC **grptb = NULL;	/* group name to gid cache */
-
-/*
- * uidtb_start
- *	creates an empty uidtb
- * Return:
- *	0 if ok, -1 otherwise
- */
-
-int
-uidtb_start(void)
-{
-	static int fail = 0;
-
-	if (uidtb != NULL)
-		return(0);
-	if (fail)
-		return(-1);
-	if ((uidtb = calloc(UID_SZ, sizeof(UIDC *))) == NULL) {
-		++fail;
-		paxwarn(1, "Unable to allocate memory for user id cache table");
-		return(-1);
-	}
-	return(0);
-}
-
-/*
- * gidtb_start
- *	creates an empty gidtb
- * Return:
- *	0 if ok, -1 otherwise
- */
-
-int
-gidtb_start(void)
-{
-	static int fail = 0;
-
-	if (gidtb != NULL)
-		return(0);
-	if (fail)
-		return(-1);
-	if ((gidtb = calloc(GID_SZ, sizeof(GIDC *))) == NULL) {
-		++fail;
-		paxwarn(1, "Unable to allocate memory for group id cache table");
-		return(-1);
-	}
-	return(0);
-}
 
 /*
  * usrtb_start
@@ -155,138 +105,6 @@ grptb_start(void)
 		return(-1);
 	}
 	return(0);
-}
-
-/*
- * name_uid()
- *	caches the name (if any) for the uid. If frc set, we always return the
- *	the stored name (if valid or invalid match). We use a simple hash table.
- * Return
- *	Pointer to stored name (or a empty string)
- */
-
-char *
-name_uid(uid_t uid, int frc)
-{
-	struct passwd *pw;
-	UIDC *ptr;
-
-	if ((uidtb == NULL) && (uidtb_start() < 0))
-		return("");
-
-	/*
-	 * see if we have this uid cached
-	 */
-	ptr = uidtb[uid % UID_SZ];
-	if ((ptr != NULL) && (ptr->valid > 0) && (ptr->uid == uid)) {
-		/*
-		 * have an entry for this uid
-		 */
-		if (frc || (ptr->valid == VALID))
-			return(ptr->name);
-		return("");
-	}
-
-	/*
-	 * No entry for this uid, we will add it
-	 */
-	if (!pwopn) {
-		setpassent(1);
-		++pwopn;
-	}
-	if (ptr == NULL)
-		ptr = uidtb[uid % UID_SZ] = malloc(sizeof(UIDC));
-
-	if ((pw = getpwuid(uid)) == NULL) {
-		/*
-		 * no match for this uid in the local password file
-		 * a string that is the uid in numeric format
-		 */
-		if (ptr == NULL)
-			return("");
-		ptr->uid = uid;
-		ptr->valid = INVALID;
-		(void)snprintf(ptr->name, sizeof(ptr->name), "%lu",
-			       (unsigned long)uid);
-		if (frc == 0)
-			return("");
-	} else {
-		/*
-		 * there is an entry for this uid in the password file
-		 */
-		if (ptr == NULL)
-			return(pw->pw_name);
-		ptr->uid = uid;
-		(void)strlcpy(ptr->name, pw->pw_name, sizeof(ptr->name));
-		ptr->valid = VALID;
-	}
-	return(ptr->name);
-}
-
-/*
- * name_gid()
- *	caches the name (if any) for the gid. If frc set, we always return the
- *	the stored name (if valid or invalid match). We use a simple hash table.
- * Return
- *	Pointer to stored name (or a empty string)
- */
-
-char *
-name_gid(gid_t gid, int frc)
-{
-	struct group *gr;
-	GIDC *ptr;
-
-	if ((gidtb == NULL) && (gidtb_start() < 0))
-		return("");
-
-	/*
-	 * see if we have this gid cached
-	 */
-	ptr = gidtb[gid % GID_SZ];
-	if ((ptr != NULL) && (ptr->valid > 0) && (ptr->gid == gid)) {
-		/*
-		 * have an entry for this gid
-		 */
-		if (frc || (ptr->valid == VALID))
-			return(ptr->name);
-		return("");
-	}
-
-	/*
-	 * No entry for this gid, we will add it
-	 */
-	if (!gropn) {
-		setgroupent(1);
-		++gropn;
-	}
-	if (ptr == NULL)
-		ptr = gidtb[gid % GID_SZ] = malloc(sizeof(GIDC));
-
-	if ((gr = getgrgid(gid)) == NULL) {
-		/*
-		 * no match for this gid in the local group file, put in
-		 * a string that is the gid in numeric format
-		 */
-		if (ptr == NULL)
-			return("");
-		ptr->gid = gid;
-		ptr->valid = INVALID;
-		(void)snprintf(ptr->name, sizeof(ptr->name), "%lu",
-			       (unsigned long)gid);
-		if (frc == 0)
-			return("");
-	} else {
-		/*
-		 * there is an entry for this group in the group file
-		 */
-		if (ptr == NULL)
-			return(gr->gr_name);
-		ptr->gid = gid;
-		(void)strlcpy(ptr->name, gr->gr_name, sizeof(ptr->name));
-		ptr->valid = VALID;
-	}
-	return(ptr->name);
 }
 
 /*
@@ -378,7 +196,7 @@ gid_name(char *name, gid_t *gid)
 	 * look up in hash table, if found and valid return the uid,
 	 * if found and invalid, return a -1
 	 */
-	ptr = grptb[st_hash(name, namelen, GID_SZ)];
+	ptr = grptb[st_hash(name, namelen, GNM_SZ)];
 	if ((ptr != NULL) && (ptr->valid > 0) && !strcmp(name, ptr->name)) {
 		if (ptr->valid == INVALID)
 			return(-1);
@@ -391,7 +209,7 @@ gid_name(char *name, gid_t *gid)
 		++gropn;
 	}
 	if (ptr == NULL)
-		ptr = grptb[st_hash(name, namelen, GID_SZ)] =
+		ptr = grptb[st_hash(name, namelen, GNM_SZ)] =
 		  malloc(sizeof(GIDC));
 
 	/*

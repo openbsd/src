@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.7 2015/12/24 05:50:15 mmcc Exp $	*/
+/*	$OpenBSD: cache.h,v 1.8 2016/08/25 01:44:55 guenther Exp $	*/
 /*	$NetBSD: cache.h,v 1.3 1995/03/21 09:07:12 cgd Exp $	*/
 
 /*-
@@ -49,10 +49,8 @@
  */
 #define UNMLEN		32	/* >= user name found in any protocol */
 #define GNMLEN		32	/* >= group name found in any protocol */
-#define UID_SZ		317	/* size of user_name/uid cache */
-#define UNM_SZ		317	/* size of user_name/uid cache */
-#define GID_SZ		251	/* size of gid cache */
-#define GNM_SZ		317	/* size of group name cache */
+#define UNM_SZ		317	/* size of uid_name() cache */
+#define GNM_SZ		317	/* size of gid_name() cache */
 #define VALID		1	/* entry and name are valid */
 #define INVALID		2	/* entry valid, name NOT valid */
 

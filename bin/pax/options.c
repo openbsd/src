@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.97 2016/08/24 19:15:42 guenther Exp $	*/
+/*	$OpenBSD: options.c,v 1.98 2016/08/25 01:44:55 guenther Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -126,7 +126,7 @@ FSUB fsub[] = {
 
 /* 5: POSIX USTAR */
 	{"ustar", 10240, BLKMULT, 0, 1, BLKMULT, 0, ustar_id, ustar_strd,
-	ustar_rd, tar_endrd, ustar_stwr, ustar_wr, tar_endwr, tar_trail,
+	ustar_rd, tar_endrd, no_op, ustar_wr, tar_endwr, tar_trail,
 	tar_opt},
 
 #ifdef SMALL
