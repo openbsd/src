@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.19 2016/08/14 21:13:08 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.20 2016/08/25 05:25:21 tedu Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
 
 /*-
@@ -101,7 +101,6 @@ summary(void)
 	(void)writev(STDERR_FILENO, iov, i);
 }
 
-/* ARGSUSED */
 void
 summaryx(int notused)
 {
@@ -111,7 +110,6 @@ summaryx(int notused)
 	errno = save_errno;
 }
 
-/* ARGSUSED */
 void
 terminate(int notused)
 {
