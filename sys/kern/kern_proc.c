@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.67 2016/06/27 19:55:02 jca Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.68 2016/08/25 00:00:02 dlg Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -95,16 +95,22 @@ procinit(void)
 
 	pool_init(&proc_pool, sizeof(struct proc), 0, 0, PR_WAITOK,
 	    "procpl", NULL);
+	pool_setipl(&proc_pool, IPL_NONE);
 	pool_init(&process_pool, sizeof(struct process), 0, 0, PR_WAITOK,
 	    "processpl", NULL);
+	pool_setipl(&process_pool, IPL_NONE);
 	pool_init(&rusage_pool, sizeof(struct rusage), 0, 0, PR_WAITOK,
 	    "zombiepl", NULL);
+	pool_setipl(&rusage_pool, IPL_NONE);
 	pool_init(&ucred_pool, sizeof(struct ucred), 0, 0, PR_WAITOK,
 	    "ucredpl", NULL);
+	pool_setipl(&ucred_pool, IPL_NONE);
 	pool_init(&pgrp_pool, sizeof(struct pgrp), 0, 0, PR_WAITOK,
 	    "pgrppl", NULL);
+	pool_setipl(&pgrp_pool, IPL_NONE);
 	pool_init(&session_pool, sizeof(struct session), 0, 0, PR_WAITOK,
 	    "sessionpl", NULL);
+	pool_setipl(&session_pool, IPL_NONE);
 }
 
 struct uidinfo *
