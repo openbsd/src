@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.153 2016/08/22 10:23:42 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.154 2016/08/25 13:59:16 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -542,14 +542,9 @@ m_getuio(struct mbuf **mp, int atomic, long space, struct uio *uio)
 
 		resid = ulmin(resid, space);
 		if (resid >= MINCLSIZE) {
-			mlen = ulmin(resid, MAXMCLBYTES);
-			MCLGETI(m, M_NOWAIT, NULL, mlen);
-
-			if ((m->m_flags & M_EXT) == 0) {
-				/* should not happen */
-				m_freem(top);
-				return (ENOBUFS);
-			}
+			MCLGETI(m, M_NOWAIT, NULL, ulmin(resid, MAXMCLBYTES));
+			if ((m->m_flags & M_EXT) == 0)
+				goto nopages;
 			mlen = m->m_ext.ext_size;
 			len = ulmin(mlen, resid);
 			/*
@@ -559,6 +554,7 @@ m_getuio(struct mbuf **mp, int atomic, long space, struct uio *uio)
 			if (atomic && top == NULL && len < mlen - max_hdr)
 				m->m_data += max_hdr;
 		} else {
+nopages:
 			len = ulmin(mlen, resid);
 			/*
 			 * For datagram protocols, leave room
