@@ -31,9 +31,9 @@ our %args = (
 	if ($Config{longsize} == 8) {
 	    $packed = pack('iiiiiiii', $ss->fileno(),0,-1,-1,0,0,0,0);
 	} else {
-	    $packed = pack('iiiii', $ss->fileno(),-1,-1,0,0);
+	    $packed = pack('iiiiii', $ss->fileno(),-1,-1,0,0,0);
 	}
 	$s->setsockopt(SOL_SOCKET, SO_SPLICE, $packed)
-	    and die "splice to unconnected socket succeeded";
+	    and die "splice with negative maximum succeeded";
     },
 );
