@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.141 2016/08/22 10:33:22 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.142 2016/08/25 16:12:16 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1247,19 +1247,6 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 			    new->ndpr_plen, new->ndpr_ifp->if_xname,
 			    error, newpr));
 			goto end; /* we should just give up in this case. */
-		}
-
-		/*
-		 * XXX: from the ND point of view, we can ignore a prefix
-		 * with the on-link bit being zero.  However, we need a
-		 * prefix structure for references from autoconfigured
-		 * addresses.  Thus, we explicitly make sure that the prefix
-		 * itself expires now.
-		 */
-		if (newpr->ndpr_raf_onlink == 0) {
-			newpr->ndpr_vltime = 0;
-			newpr->ndpr_pltime = 0;
-			in6_init_prefix_ltimes(newpr);
 		}
 
 		pr = newpr;
