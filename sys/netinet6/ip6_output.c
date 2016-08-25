@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.212 2016/08/22 10:33:22 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.213 2016/08/25 12:30:16 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -128,8 +128,7 @@ int ip6_insertfraghdr(struct mbuf *, struct mbuf *, int,
 	struct ip6_frag **);
 int ip6_insert_jumboopt(struct ip6_exthdrs *, u_int32_t);
 int ip6_splithdr(struct mbuf *, struct ip6_exthdrs *);
-int ip6_getpmtu(struct route_in6 *, struct route_in6 *, struct ifnet *,
-    unsigned int, struct in6_addr *, u_long *, int *);
+int ip6_getpmtu(struct rtentry *, struct ifnet *, u_long *, int *);
 int copypktopts(struct ip6_pktopts *, struct ip6_pktopts *, int);
 static __inline u_int16_t __attribute__((__unused__))
     in6_cksum_phdr(const struct in6_addr *, const struct in6_addr *,
@@ -558,8 +557,7 @@ reroute:
 	}
 
 	/* Determine path MTU. */
-	if ((error = ip6_getpmtu(ro_pmtu, ro, ifp, ro->ro_tableid, &finaldst,
-	    &mtu, &alwaysfrag)) != 0)
+	if ((error = ip6_getpmtu(ro_pmtu->ro_rt, ifp, &mtu, &alwaysfrag)) != 0)
 		goto bad;
 
 	/*
@@ -1025,45 +1023,15 @@ ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen,
 }
 
 int
-ip6_getpmtu(struct route_in6 *ro_pmtu, struct route_in6 *ro, struct ifnet *ifp0,
-    unsigned int rtableid, struct in6_addr *dst, u_long *mtup, int *alwaysfragp)
+ip6_getpmtu(struct rtentry *rt, struct ifnet *ifp, u_long *mtup,
+    int *alwaysfragp)
 {
 	u_int32_t mtu = 0;
 	int alwaysfrag = 0;
 	int error = 0;
 
-	if (ro_pmtu != ro) {
-		/* The first hop and the final destination may differ. */
-		struct sockaddr_in6 *sa6_dst = &ro_pmtu->ro_dst;
-
-		if (!rtisvalid(ro_pmtu->ro_rt) ||
-		    (ro_pmtu->ro_tableid != rtableid) ||
-		     !IN6_ARE_ADDR_EQUAL(&sa6_dst->sin6_addr, dst)) {
-			rtfree(ro_pmtu->ro_rt);
-			ro_pmtu->ro_rt = NULL;
-		}
-		if (ro_pmtu->ro_rt == NULL) {
-			bzero(ro_pmtu, sizeof(*ro_pmtu));
-			ro_pmtu->ro_tableid = rtableid;
-			sa6_dst->sin6_family = AF_INET6;
-			sa6_dst->sin6_len = sizeof(struct sockaddr_in6);
-			sa6_dst->sin6_addr = *dst;
-
-			ro_pmtu->ro_rt = rtalloc(sin6tosa(&ro_pmtu->ro_dst),
-			    RT_RESOLVE, ro_pmtu->ro_tableid);
-		}
-	}
-	if (ro_pmtu->ro_rt) {
-		struct ifnet *ifp;
-
-		if (ifp0 == NULL) {
-			ifp = if_get(ro_pmtu->ro_rt->rt_ifidx);
-			if (ifp == NULL)
-				return (EHOSTUNREACH);
-		} else
-			ifp = ifp0;
-
-		mtu = ro_pmtu->ro_rt->rt_rmx.rmx_mtu;
+	if (rt != NULL) {
+		mtu = rt->rt_rmx.rmx_mtu;
 		if (mtu == 0)
 			mtu = ifp->if_mtu;
 		else if (mtu < IPV6_MMTU) {
@@ -1087,16 +1055,12 @@ ip6_getpmtu(struct route_in6 *ro_pmtu, struct route_in6 *ro, struct ifnet *ifp0,
 			 * field isn't locked).
 			 */
 			mtu = ifp->if_mtu;
-			if (!(ro_pmtu->ro_rt->rt_rmx.rmx_locks & RTV_MTU))
-				ro_pmtu->ro_rt->rt_rmx.rmx_mtu = mtu;
+			if (!(rt->rt_rmx.rmx_locks & RTV_MTU))
+				rt->rt_rmx.rmx_mtu = mtu;
 		}
-
-		if (ifp0 == NULL)
-			if_put(ifp);
-	} else if (ifp0) {
-		mtu = ifp0->if_mtu;
-	} else
-		error = EHOSTUNREACH; /* XXX */
+	} else {
+		mtu = ifp->if_mtu;
+	}
 
 	*mtup = mtu;
 	if (alwaysfragp)
@@ -1546,18 +1510,26 @@ do { \
 			{
 				u_long pmtu = 0;
 				struct ip6_mtuinfo mtuinfo;
-				struct route_in6 *ro = (struct route_in6 *)&inp->inp_route6;
+				struct ifnet *ifp;
+				struct rtentry *rt;
 
 				if (!(so->so_state & SS_ISCONNECTED))
 					return (ENOTCONN);
+
+				rt = in_pcbrtentry(inp);
+				if (!rtisvalid(rt))
+					return (EHOSTUNREACH);
+
+				ifp = if_get(rt->rt_ifidx);
+				if (ifp == NULL)
+					return (EHOSTUNREACH);
 				/*
 				 * XXX: we dot not consider the case of source
 				 * routing, or optional information to specify
 				 * the outgoing interface.
 				 */
-				error = ip6_getpmtu(ro, NULL, NULL,
-				    inp->inp_rtableid, &inp->inp_faddr6, &pmtu,
-				    NULL);
+				error = ip6_getpmtu(rt, ifp, &pmtu, NULL);
+				if_put(ifp);
 				if (error)
 					break;
 				if (pmtu > IPV6_MAXPACKET)
