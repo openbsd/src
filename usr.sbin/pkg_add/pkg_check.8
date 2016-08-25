@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_check.8,v 1.7 2016/08/25 14:58:43 espie Exp $
+.\"	$OpenBSD: pkg_check.8,v 1.8 2016/08/25 16:27:16 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 .\"
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm pkg_check
 .Bk -words
-.Op Fl fFIimnqvx
+.Op Fl FfIimnqvx
 .Op Fl D Ar name Ns Op = Ns Ar value
 .Ek
 .Sh DESCRIPTION
@@ -85,10 +85,10 @@ Recognized keywords include:
 .It Ar nosig
 do not check digital signatures.
 .El
-.It Fl f
-Force the removal of bogus package information.
 .It Fl F
 Check the filesystem for random objects.
+.It Fl f
+Force the removal of bogus package information.
 .It Fl I
 Force non-interactive mode.
 Default is to be interactive when run from a tty.
