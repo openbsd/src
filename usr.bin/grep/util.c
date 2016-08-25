@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.55 2016/04/04 05:49:47 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.56 2016/08/25 15:11:05 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -49,7 +49,7 @@
 
 static int	linesqueued;
 static int	procline(str_t *l, int);
-static int	grep_search(fastgrep_t *, char *, size_t, regmatch_t *pmatch);
+static int	grep_search(fastgrep_t *, char *, size_t, regmatch_t *pmatch, int);
 #ifndef SMALL
 static bool	grep_cmp(const char *, const char *, size_t);
 static void	grep_revstr(unsigned char *, int);
@@ -192,14 +192,20 @@ procline(str_t *l, int nottext)
 		offset = 0;
 redo:
 		if (fg_pattern[i].pattern) {
+			int flags = 0;
+			if (offset)
+				flags |= REG_NOTBOL;
 			r = grep_search(&fg_pattern[i], l->dat + offset,
-			    l->len - offset, &pmatch);
+			    l->len - offset, &pmatch, flags);
 			pmatch.rm_so += offset;
 			pmatch.rm_eo += offset;
 		} else {
+			int flags = eflags;
+			if (offset)
+				flags |= REG_NOTBOL;
 			pmatch.rm_so = offset;
 			pmatch.rm_eo = l->len;
-			r = regexec(&r_pattern[i], l->dat, 1, &pmatch, eflags);
+			r = regexec(&r_pattern[i], l->dat, 1, &pmatch, flags);
 		}
 		if (r == 0 && xflag) {
 			if (pmatch.rm_so != 0 || pmatch.rm_eo != l->len)
@@ -459,7 +465,8 @@ nonspecial:
 	  e > s && isword(d[s]) && isword(d[e-1]))
 
 static int
-grep_search(fastgrep_t *fg, char *data, size_t dataLen, regmatch_t *pmatch)
+grep_search(fastgrep_t *fg, char *data, size_t dataLen, regmatch_t *pmatch,
+    int flags)
 {
 #ifdef SMALL
 	return 0;
@@ -476,6 +483,8 @@ grep_search(fastgrep_t *fg, char *data, size_t dataLen, regmatch_t *pmatch)
 
 	/* Only try once at the beginning or ending of the line. */
 	if (fg->bol || fg->eol) {
+		if (fg->bol && (flags & REG_NOTBOL))
+			return 0;
 		/* Simple text comparison. */
 		/* Verify data is >= pattern length before searching on it. */
 		if (dataLen >= fg->patternLen) {
