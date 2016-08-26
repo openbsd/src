@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.48 2016/08/26 11:59:04 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.49 2016/08/26 16:02:33 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1047,9 +1047,6 @@ pmap_page_remove(struct vm_page *pg)
 		pv = npv;
 	}
 	pg->mdpage.pvh_list = NULL;
-
-	if (flush)
-		cpu_cpwait();
 }
 
 /*
@@ -1422,10 +1419,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	    L2_S_PROT(PTE_KERNEL, prot) | cache_mode;
 	*ptep = npte;
 	PTE_SYNC(ptep);
-	if (opte & L2_V7_AF) {
+	if (opte & L2_V7_AF)
 		cpu_tlb_flushD_SE(va);
-		cpu_cpwait();
-	}
 
 	if (pa & PMAP_NOCACHE) {
 		cpu_dcache_wbinv_range(va, PAGE_SIZE);
@@ -1480,7 +1475,6 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		KDASSERT(mappings <= l2b->l2b_occupancy);
 		l2b->l2b_occupancy -= mappings;
 	}
-	cpu_cpwait();
 }
 
 boolean_t
@@ -1878,7 +1872,6 @@ pmap_update(pmap_t pm)
 	/*
 	 * make sure TLB/cache operations have completed.
 	 */
-	cpu_cpwait();
 }
 
 /*
@@ -1947,7 +1940,6 @@ pmap_zero_page_generic(struct vm_page *pg)
 	    L2_S_PROT(PTE_KERNEL, PROT_WRITE) | pte_l2_s_cache_mode;
 	PTE_SYNC(cdst_pte);
 	cpu_tlb_flushD_SE(cdstp);
-	cpu_cpwait();
 	bzero_page(cdstp);
 }
 
@@ -1981,7 +1973,6 @@ pmap_copy_page_generic(struct vm_page *src_pg, struct vm_page *dst_pg)
 	PTE_SYNC(cdst_pte);
 	cpu_tlb_flushD_SE(csrcp);
 	cpu_tlb_flushD_SE(cdstp);
-	cpu_cpwait();
 	bcopy_page(csrcp, cdstp);
 }
 
@@ -2166,7 +2157,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	cpu_dcache_wbinv_all();
 	cpu_sdcache_wbinv_all();
 	cpu_tlb_flushD();
-	cpu_cpwait();
 
 	splx(s);
 
@@ -2195,7 +2185,6 @@ vector_page_setprot(int prot)
 	*ptep = (*ptep & ~L2_S_PROT_MASK) | L2_S_PROT(PTE_KERNEL, prot);
 	PTE_SYNC(ptep);
 	cpu_tlb_flushD_SE(vector_page);
-	cpu_cpwait();
 }
 
 /*
@@ -2382,7 +2371,6 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	cpu_idcache_wbinv_all();
 	cpu_sdcache_wbinv_all();
 	cpu_tlb_flushID();
-	cpu_cpwait();
 
 	/*
 	 * now we allocate the "special" VAs which are used for tmp mappings
