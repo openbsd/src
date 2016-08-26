@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.25 2014/11/23 05:47:49 guenther Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.26 2016/08/26 04:20:38 guenther Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -35,7 +35,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/stat.h>
 #include <ctype.h>
 #include <grp.h>
@@ -43,10 +42,45 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#include <time.h>
+
 #include "pax.h"
-#include "sel_subs.h"
 #include "extern.h"
+
+/*
+ * data structure for storing uid/grp selects (-U, -G non standard options)
+ */
+
+#define USR_TB_SZ	317		/* user selection table size */
+#define GRP_TB_SZ	317		/* user selection table size */
+
+typedef struct usrt {
+	uid_t uid;
+	struct usrt *fow;		/* next uid */
+} USRT;
+
+typedef struct grpt {
+	gid_t gid;
+	struct grpt *fow;		/* next gid */
+} GRPT;
+
+/*
+ * data structure for storing user supplied time ranges (-T option)
+ */
+
+#define ATOI2(ar)	((ar)[0] - '0') * 10 + ((ar)[1] - '0'); (ar) += 2;
+
+typedef struct time_rng {
+	time_t		low_time;	/* lower inclusive time limit */
+	time_t		high_time;	/* higher inclusive time limit */
+	int		flgs;		/* option flags */
+#define	HASLOW		0x01		/* has lower time limit */
+#define HASHIGH		0x02		/* has higher time limit */
+#define CMPMTME		0x04		/* compare file modification time */
+#define CMPCTME		0x08		/* compare inode change time */
+#define CMPBOTH	(CMPMTME|CMPCTME)	/* compare inode and mod time */
+	struct time_rng	*fow;		/* next pattern */
+} TIME_RNG;
 
 static int str_sec(const char *, time_t *);
 static int usr_match(ARCHD *);
