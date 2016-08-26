@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.58 2016/08/23 06:00:28 guenther Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.59 2016/08/26 04:31:35 guenther Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -35,21 +35,20 @@
  */
 
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <sys/wait.h>
-#include <signal.h>
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <errno.h>
-#include <stdlib.h>
 #include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "pax.h"
-#include "options.h"
 #include "extern.h"
 
 /*
