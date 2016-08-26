@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.85 2016/07/29 18:35:45 tedu Exp $	*/
+/*	$OpenBSD: md5.c,v 1.86 2016/08/26 05:50:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -22,6 +22,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/queue.h>
 #include <netinet/in.h>
 #include <ctype.h>
