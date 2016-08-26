@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.22 2016/08/25 01:44:55 guenther Exp $	*/
+/*	$OpenBSD: cache.c,v 1.23 2016/08/26 04:08:18 guenther Exp $	*/
 /*	$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $	*/
 
 /*-
@@ -35,17 +35,50 @@
  */
 
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/stat.h>
-#include <string.h>
-#include <stdio.h>
-#include <pwd.h>
 #include <grp.h>
-#include <unistd.h>
+#include <pwd.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "pax.h"
-#include "cache.h"
 #include "extern.h"
+
+/*
+ * Constants and data structures used to implement group and password file
+ * caches. Traditional passwd/group cache routines perform quite poorly with
+ * archives. The chances of hitting a valid lookup with an archive is quite a
+ * bit worse than with files already resident on the file system. These misses
+ * create a MAJOR performance cost. To address this problem, these routines
+ * cache both hits and misses.
+ *
+ * NOTE:  name lengths must be as large as those stored in ANY PROTOCOL and
+ * as stored in the passwd and group files. CACHE SIZES MUST BE PRIME
+ */
+#define UNMLEN		32	/* >= user name found in any protocol */
+#define GNMLEN		32	/* >= group name found in any protocol */
+#define UNM_SZ		317	/* size of uid_name() cache */
+#define GNM_SZ		317	/* size of gid_name() cache */
+#define VALID		1	/* entry and name are valid */
+#define INVALID		2	/* entry valid, name NOT valid */
+
+/*
+ * Node structures used in the user, group, uid, and gid caches.
+ */
+
+typedef struct uidc {
+	int valid;		/* is this a valid or a miss entry */
+	char name[UNMLEN];	/* uid name */
+	uid_t uid;		/* cached uid */
+} UIDC;
+
+typedef struct gidc {
+	int valid;		/* is this a valid or a miss entry */
+	char name[GNMLEN];	/* gid name */
+	gid_t gid;		/* cached gid */
+} GIDC;
+
 
 /*
  * routines that control user, group, uid and gid caches (for the archive
