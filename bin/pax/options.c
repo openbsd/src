@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.99 2016/08/26 04:33:11 guenther Exp $	*/
+/*	$OpenBSD: options.c,v 1.100 2016/08/26 04:40:27 guenther Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -527,17 +527,13 @@ pax_options(int argc, char **argv)
 			/*
 			 * non-standard limit on read faults
 			 * 0 indicates stop after first error, values
-			 * indicate a limit, "NONE" try forever
+			 * indicate a limit
 			 */
 			flg |= CEF;
-			if (strcmp("none", optarg) == 0)
-				maxflt = -1;
-			else {
-				maxflt = strtonum(optarg, 0, INT_MAX, &errstr);
-				if (errstr) {
-					paxwarn(1, "Error count value: %s", errstr);
-					pax_usage();
-				}
+			maxflt = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr) {
+				paxwarn(1, "Error count value: %s", errstr);
+				pax_usage();
 			}
 			break;
 		case 'G':
