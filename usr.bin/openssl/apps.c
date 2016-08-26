@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.37 2015/11/14 14:53:14 miod Exp $ */
+/* $OpenBSD: apps.c,v 1.38 2016/08/26 15:04:15 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -1269,8 +1269,6 @@ static IMPLEMENT_LHASH_COMP_FN(index_serial, OPENSSL_CSTRING)
 static IMPLEMENT_LHASH_HASH_FN(index_name, OPENSSL_CSTRING)
 static IMPLEMENT_LHASH_COMP_FN(index_name, OPENSSL_CSTRING)
 
-#define BUFLEN 256
-
 BIGNUM *
 load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
 {
@@ -1297,7 +1295,7 @@ load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
 				BIO_printf(bio_err, "Out of memory\n");
 		}
 	} else {
-		if (!a2i_ASN1_INTEGER(in, ai, buf, 1024)) {
+		if (!a2i_ASN1_INTEGER(in, ai, buf, sizeof buf)) {
 			BIO_printf(bio_err, "unable to load number from %s\n",
 			    serialfile);
 			goto err;
@@ -1327,26 +1325,17 @@ int
 save_serial(char *serialfile, char *suffix, BIGNUM *serial,
     ASN1_INTEGER **retai)
 {
-	char buf[1][BUFLEN];
+	char serialpath[PATH_MAX];
 	BIO *out = NULL;
 	int ret = 0, n;
 	ASN1_INTEGER *ai = NULL;
-	int j;
 
 	if (suffix == NULL)
-		j = strlen(serialfile);
+		n = strlcpy(serialpath, serialfile, sizeof serialpath);
 	else
-		j = strlen(serialfile) + strlen(suffix) + 1;
-	if (j >= BUFLEN) {
-		BIO_printf(bio_err, "file name too long\n");
-		goto err;
-	}
-	if (suffix == NULL)
-		n = strlcpy(buf[0], serialfile, BUFLEN);
-	else
-		n = snprintf(buf[0], sizeof buf[0], "%s.%s",
+		n = snprintf(serialpath, sizeof serialpath, "%s.%s",
 		    serialfile, suffix);
-	if (n == -1 || n >= sizeof(buf[0])) {
+	if (n == -1 || n >= sizeof(serialpath)) {
 		BIO_printf(bio_err, "serial too long\n");
 		goto err;
 	}
@@ -1355,7 +1344,7 @@ save_serial(char *serialfile, char *suffix, BIGNUM *serial,
 		ERR_print_errors(bio_err);
 		goto err;
 	}
-	if (BIO_write_filename(out, buf[0]) <= 0) {
+	if (BIO_write_filename(out, serialpath) <= 0) {
 		perror(serialfile);
 		goto err;
 	}
@@ -1383,37 +1372,36 @@ err:
 int
 rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 {
-	char buf[5][BUFLEN];
-	int i, j;
+	char opath[PATH_MAX], npath[PATH_MAX];
 
-	i = strlen(serialfile) + strlen(old_suffix);
-	j = strlen(serialfile) + strlen(new_suffix);
-	if (i > j)
-		j = i;
-	if (j + 1 >= BUFLEN) {
+	if (snprintf(npath, sizeof npath, "%s.%s", serialfile,
+	    new_suffix) >= sizeof npath) {
 		BIO_printf(bio_err, "file name too long\n");
 		goto err;
 	}
-	snprintf(buf[0], sizeof buf[0], "%s.%s", serialfile, new_suffix);
-	snprintf(buf[1], sizeof buf[1], "%s.%s", serialfile, old_suffix);
 
+	if (snprintf(opath, sizeof opath, "%s.%s", serialfile,
+	    old_suffix) >= sizeof opath) {
+		BIO_printf(bio_err, "file name too long\n");
+		goto err;
+	}
 
-	if (rename(serialfile, buf[1]) < 0 &&
+	if (rename(serialfile, opath) < 0 &&
 	    errno != ENOENT && errno != ENOTDIR) {
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
-		    serialfile, buf[1]);
+		    serialfile, opath);
 		perror("reason");
 		goto err;
 	}
 
 
-	if (rename(buf[0], serialfile) < 0) {
+	if (rename(npath, serialfile) < 0) {
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
-		    buf[0], serialfile);
+		    npath, serialfile);
 		perror("reason");
-		if (rename(buf[1], serialfile) < 0) {
+		if (rename(opath, serialfile) < 0) {
 			BIO_printf(bio_err, "unable to rename %s to %s\n",
-			    buf[1], serialfile);
+			    opath, serialfile);
 			perror("reason");
 		}
 		goto err;
@@ -1459,7 +1447,7 @@ load_index(char *dbfile, DB_ATTR *db_attr)
 	TXT_DB *tmpdb = NULL;
 	BIO *in = BIO_new(BIO_s_file());
 	CONF *dbattr_conf = NULL;
-	char buf[1][BUFLEN];
+	char attrpath[PATH_MAX];
 	long errorline = -1;
 
 	if (in == NULL) {
@@ -1474,13 +1462,18 @@ load_index(char *dbfile, DB_ATTR *db_attr)
 	if ((tmpdb = TXT_DB_read(in, DB_NUMBER)) == NULL)
 		goto err;
 
-	snprintf(buf[0], sizeof buf[0], "%s.attr", dbfile);
+	if (snprintf(attrpath, sizeof attrpath, "%s.attr", dbfile)
+	    >= sizeof attrpath) {
+		BIO_printf(bio_err, "attr filename too long\n");
+		goto err;
+	}
+		
 	dbattr_conf = NCONF_new(NULL);
-	if (NCONF_load(dbattr_conf, buf[0], &errorline) <= 0) {
+	if (NCONF_load(dbattr_conf, attrpath, &errorline) <= 0) {
 		if (errorline > 0) {
 			BIO_printf(bio_err,
 			    "error on line %ld of db attribute file '%s'\n",
-			    errorline, buf[0]);
+			    errorline, attrpath);
 			goto err;
 		} else {
 			NCONF_free(dbattr_conf);
@@ -1537,9 +1530,9 @@ index_index(CA_DB *db)
 }
 
 int
-save_index(const char *dbfile, const char *suffix, CA_DB *db)
+save_index(const char *file, const char *suffix, CA_DB *db)
 {
-	char buf[3][BUFLEN];
+	char attrpath[PATH_MAX], dbfile[PATH_MAX];
 	BIO *out = BIO_new(BIO_s_file());
 	int j;
 
@@ -1547,17 +1540,18 @@ save_index(const char *dbfile, const char *suffix, CA_DB *db)
 		ERR_print_errors(bio_err);
 		goto err;
 	}
-	j = strlen(dbfile) + strlen(suffix);
-	if (j + 6 >= BUFLEN) {
+	if (snprintf(attrpath, sizeof attrpath, "%s.attr.%s",
+	    file, suffix) >= sizeof attrpath) {
 		BIO_printf(bio_err, "file name too long\n");
 		goto err;
 	}
-	snprintf(buf[2], sizeof buf[2], "%s.attr", dbfile);
-	snprintf(buf[1], sizeof buf[1], "%s.attr.%s", dbfile, suffix);
-	snprintf(buf[0], sizeof buf[0], "%s.%s", dbfile, suffix);
+	if (snprintf(dbfile, sizeof dbfile, "%s.%s",
+	    file, suffix) >= sizeof dbfile) {
+		BIO_printf(bio_err, "file name too long\n");
+		goto err;
+	}
 
-
-	if (BIO_write_filename(out, buf[0]) <= 0) {
+	if (BIO_write_filename(out, dbfile) <= 0) {
 		perror(dbfile);
 		BIO_printf(bio_err, "unable to open '%s'\n", dbfile);
 		goto err;
@@ -1570,10 +1564,9 @@ save_index(const char *dbfile, const char *suffix, CA_DB *db)
 
 	out = BIO_new(BIO_s_file());
 
-
-	if (BIO_write_filename(out, buf[1]) <= 0) {
-		perror(buf[2]);
-		BIO_printf(bio_err, "unable to open '%s'\n", buf[2]);
+	if (BIO_write_filename(out, attrpath) <= 0) {
+		perror(attrpath);
+		BIO_printf(bio_err, "unable to open '%s'\n", attrpath);
 		goto err;
 	}
 	BIO_printf(out, "unique_subject = %s\n",
@@ -1589,80 +1582,88 @@ err:
 int
 rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 {
-	char buf[5][BUFLEN];
-	int i, j;
+	char attrpath[PATH_MAX], nattrpath[PATH_MAX], oattrpath[PATH_MAX];
+	char dbpath[PATH_MAX], odbpath[PATH_MAX];
 
-	i = strlen(dbfile) + strlen(old_suffix);
-	j = strlen(dbfile) + strlen(new_suffix);
-	if (i > j)
-		j = i;
-	if (j + 6 >= BUFLEN) {
+	if (snprintf(attrpath, sizeof attrpath, "%s.attr",
+	    dbfile) >= sizeof attrpath) {
 		BIO_printf(bio_err, "file name too long\n");
 		goto err;
 	}
-	snprintf(buf[4], sizeof buf[4], "%s.attr", dbfile);
-	snprintf(buf[2], sizeof buf[2], "%s.attr.%s", dbfile, new_suffix);
-	snprintf(buf[0], sizeof buf[0], "%s.%s", dbfile, new_suffix);
-	snprintf(buf[1], sizeof buf[1], "%s.%s", dbfile, old_suffix);
-	snprintf(buf[3], sizeof buf[3], "%s.attr.%s", dbfile, old_suffix);
+	if (snprintf(nattrpath, sizeof nattrpath, "%s.attr.%s",
+	    dbfile, new_suffix) >= sizeof nattrpath) {
+		BIO_printf(bio_err, "file name too long\n");
+		goto err;
+	}
+	if (snprintf(oattrpath, sizeof oattrpath, "%s.attr.%s",
+	    dbfile, old_suffix) >= sizeof oattrpath) {
+		BIO_printf(bio_err, "file name too long\n");
+		goto err;
+	}
+	if (snprintf(dbpath, sizeof dbpath, "%s.%s",
+	    dbfile, new_suffix) >= sizeof dbpath) {
+		BIO_printf(bio_err, "file name too long\n");
+		goto err;
+	}
+	if (snprintf(odbpath, sizeof odbpath, "%s.%s",
+	    dbfile, old_suffix) >= sizeof odbpath) {
+		BIO_printf(bio_err, "file name too long\n");
+		goto err;
+	}
 
-
-	if (rename(dbfile, buf[1]) < 0 && errno != ENOENT && errno != ENOTDIR) {
+	if (rename(dbfile, odbpath) < 0 && errno != ENOENT && errno != ENOTDIR) {
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
-		    dbfile, buf[1]);
+		    dbfile, odbpath);
 		perror("reason");
 		goto err;
 	}
 
-
-	if (rename(buf[0], dbfile) < 0) {
+	if (rename(dbpath, dbfile) < 0) {
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
-		    buf[0], dbfile);
+		    dbpath, dbfile);
 		perror("reason");
-		if (rename(buf[1], dbfile) < 0) {
+		if (rename(odbpath, dbfile) < 0) {
 			BIO_printf(bio_err, "unable to rename %s to %s\n",
-			    buf[1], dbfile);
-			perror("reason");
-		}
-		goto err;
-	}
-
-
-	if (rename(buf[4], buf[3]) < 0 && errno != ENOENT && errno != ENOTDIR) {
-		BIO_printf(bio_err, "unable to rename %s to %s\n",
-		    buf[4], buf[3]);
-		perror("reason");
-		if (rename(dbfile, buf[0]) < 0) {
-			BIO_printf(bio_err, "unable to rename %s to %s\n",
-			    dbfile, buf[0]);
-			perror("reason");
-		}
-		if (rename(buf[1], dbfile) < 0) {
-			BIO_printf(bio_err, "unable to rename %s to %s\n",
-			    buf[1], dbfile);
+			    odbpath, dbfile);
 			perror("reason");
 		}
 		goto err;
 	}
 
-
-	if (rename(buf[2], buf[4]) < 0) {
+	if (rename(attrpath, oattrpath) < 0 && errno != ENOENT && errno != ENOTDIR) {
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
-		    buf[2], buf[4]);
+		    attrpath, oattrpath);
 		perror("reason");
-		if (rename(buf[3], buf[4]) < 0) {
+		if (rename(dbfile, dbpath) < 0) {
 			BIO_printf(bio_err, "unable to rename %s to %s\n",
-			    buf[3], buf[4]);
+			    dbfile, dbpath);
 			perror("reason");
 		}
-		if (rename(dbfile, buf[0]) < 0) {
+		if (rename(odbpath, dbfile) < 0) {
 			BIO_printf(bio_err, "unable to rename %s to %s\n",
-			    dbfile, buf[0]);
+			    odbpath, dbfile);
 			perror("reason");
 		}
-		if (rename(buf[1], dbfile) < 0) {
+		goto err;
+	}
+
+	if (rename(nattrpath, attrpath) < 0) {
+		BIO_printf(bio_err, "unable to rename %s to %s\n",
+		    nattrpath, attrpath);
+		perror("reason");
+		if (rename(oattrpath, attrpath) < 0) {
 			BIO_printf(bio_err, "unable to rename %s to %s\n",
-			    buf[1], dbfile);
+			    oattrpath, attrpath);
+			perror("reason");
+		}
+		if (rename(dbfile, dbpath) < 0) {
+			BIO_printf(bio_err, "unable to rename %s to %s\n",
+			    dbfile, dbpath);
+			perror("reason");
+		}
+		if (rename(odbpath, dbfile) < 0) {
+			BIO_printf(bio_err, "unable to rename %s to %s\n",
+			    odbpath, dbfile);
 			perror("reason");
 		}
 		goto err;
