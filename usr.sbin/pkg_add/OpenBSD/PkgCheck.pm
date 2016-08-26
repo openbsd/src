@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.61 2016/08/25 16:27:16 jmc Exp $
+# $OpenBSD: PkgCheck.pm,v 1.62 2016/08/26 18:19:21 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -312,7 +312,7 @@ sub handle_options
 	$self->SUPER::handle_options('fFB:q',
 		'[-FfIimnqvx] [-B pkg-destdir] [-D value]');
 	$self->{force} = $self->opt('f');
-	$self->{quick} = $self->opt('q');
+	$self->{quick} = $self->opt('q') // 0;
 	$self->{filesystem} = $self->opt('F');
 	if (defined $self->opt('B')) {
 		$self->{destdir} = $self->opt('B');
