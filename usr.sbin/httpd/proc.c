@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.15 2015/12/07 16:05:56 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.16 2016/08/26 12:24:21 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -61,6 +61,12 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc)
 	unsigned int		 i, j, src, dst;
 	struct privsep_pipes	*pp;
 
+	for (src = 0; src < PROC_MAX; src++) {
+		/* Default to 1 process instance */
+		if (ps->ps_instances[src] < 1)
+			ps->ps_instances[src] = 1;
+	}
+
 	/*
 	 * Allocate pipes for all process instances (incl. parent)
 	 *
@@ -76,22 +82,22 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc)
 	 */
 	for (src = 0; src < PROC_MAX; src++) {
 		/* Allocate destination array for each process */
-		if ((ps->ps_pipes[src] = calloc(ps->ps_ninstances,
+		if ((ps->ps_pipes[src] = calloc(ps->ps_instances[src],
 		    sizeof(struct privsep_pipes))) == NULL)
 			fatal("proc_init: calloc");
 
-		for (i = 0; i < ps->ps_ninstances; i++) {
+		for (i = 0; i < ps->ps_instances[src]; i++) {
 			pp = &ps->ps_pipes[src][i];
 
 			for (dst = 0; dst < PROC_MAX; dst++) {
 				/* Allocate maximum fd integers */
 				if ((pp->pp_pipes[dst] =
-				    calloc(ps->ps_ninstances,
+				    calloc(ps->ps_instances[dst],
 				    sizeof(int))) == NULL)
 					fatal("proc_init: calloc");
 
 				/* Mark fd as unused */
-				for (j = 0; j < ps->ps_ninstances; j++)
+				for (j = 0; j < ps->ps_instances[dst]; j++)
 					pp->pp_pipes[dst][j] = -1;
 			}
 		}
@@ -106,12 +112,8 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc)
 	ps->ps_pid[PROC_PARENT] = getpid();
 	ps->ps_pp = &ps->ps_pipes[privsep_process][0];
 
-	for (i = 0; i < nproc; i++) {
-		/* Default to 1 process instance */
-		if (ps->ps_instances[procs[i].p_id] < 1)
-			ps->ps_instances[procs[i].p_id] = 1;
+	for (i = 0; i < nproc; i++)
 		ps->ps_title[procs[i].p_id] = procs[i].p_title;
-	}
 
 	proc_open(ps, NULL, procs, nproc);
 

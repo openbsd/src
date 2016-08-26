@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.109 2016/08/26 10:46:39 rzalamena Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.110 2016/08/26 12:24:21 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -240,7 +240,6 @@ struct privsep {
 	uint8_t				 ps_what[PROC_MAX];
 
 	unsigned int			 ps_instances[PROC_MAX];
-	unsigned int			 ps_ninstances;
 	unsigned int			 ps_instance;
 
 	struct control_sock		 ps_csock;
