@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.218 2016/08/14 22:56:29 guenther Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.219 2016/08/26 06:32:10 tedu Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1827,11 +1827,7 @@ statcmd(void)
 	if (type == TYPE_A || type == TYPE_E)
 		printf(", FORM: %s", formnames[form]);
 	if (type == TYPE_L)
-#if NBBY == 8
-		printf(" %d", NBBY);
-#else
-		printf(" %d", bytesize);	/* need definition! */
-#endif
+		printf(" 8");
 	printf("; STRUcture: %s; transfer MODE: %s\r\n",
 	    strunames[stru], modenames[mode]);
 	ispassive = 0;

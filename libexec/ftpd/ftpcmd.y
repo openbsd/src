@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.63 2016/08/14 22:56:29 guenther Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.64 2016/08/26 06:32:10 tedu Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -574,7 +574,7 @@ cmd
 	| SYST check_login CRLF
 		{
 			if ($2)
-			reply(215, "UNIX Type: L%d", NBBY);
+			reply(215, "UNIX Type: L8");
 		}
 
 		/*
@@ -833,7 +833,7 @@ type_code
 	| L
 		{
 			cmd_type = TYPE_L;
-			cmd_bytesz = NBBY;
+			cmd_bytesz = 8;
 		}
 	| L SP byte_size
 		{
