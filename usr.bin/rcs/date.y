@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: date.y,v 1.13 2015/06/13 20:15:21 nicm Exp $	*/
+/*	$OpenBSD: date.y,v 1.14 2016/08/26 09:02:54 guenther Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -17,6 +17,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <string.h>
+#include <time.h>
 
 #include "rcsprog.h"
 

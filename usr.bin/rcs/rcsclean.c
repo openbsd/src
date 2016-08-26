@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.55 2015/11/02 16:45:21 nicm Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.56 2016/08/26 09:02:54 guenther Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -30,6 +30,7 @@
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "rcsprog.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcstime.c,v 1.5 2014/09/30 11:01:20 otto Exp $	*/
+/*	$OpenBSD: rcstime.c,v 1.6 2016/08/26 09:02:54 guenther Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -27,6 +27,7 @@
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "rcs.h"
 

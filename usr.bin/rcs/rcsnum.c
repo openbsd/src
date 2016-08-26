@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.18 2015/11/02 16:45:21 nicm Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.19 2016/08/26 09:02:54 guenther Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -26,9 +26,10 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
+#include <time.h>
 
 #include "rcs.h"
 #include "xmalloc.h"
