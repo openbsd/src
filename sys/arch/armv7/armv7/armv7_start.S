@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_start.S,v 1.8 2016/08/18 09:28:22 kettenis Exp $	*/
+/*	$OpenBSD: armv7_start.S,v 1.9 2016/08/26 11:59:04 kettenis Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -151,7 +151,7 @@ _C_LABEL(bootstrap_start):
 	mcr	CP15_TLBIALL(r0)	/* Flush TLB */
 
 	/* Set the Domain Access register.  Very important! */
-        mov     r0, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
+	mov     r0, #DOMAIN_CLIENT	/* We only use domain 0 */
 	mcr	CP15_DACR(r0)	
 
 	/* Enable MMU */

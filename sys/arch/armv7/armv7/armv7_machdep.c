@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.37 2016/08/19 15:31:10 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.38 2016/08/26 11:59:04 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -691,15 +691,8 @@ initarm(void *arg0, void *arg1, void *arg2)
 	 * Once this is done we will be running with the REAL kernel page
 	 * tables.
 	 */
-
-	/* be a client to all domains */
-	cpu_domains(0x55555555);
-	/* Switch tables */
-
-	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 	setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
-	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
 	/*
 	 * Moved from cpu_startup() as data_abort_handler() references

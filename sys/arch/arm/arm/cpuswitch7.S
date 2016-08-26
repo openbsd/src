@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch7.S,v 1.11 2016/08/10 06:46:36 kettenis Exp $	*/
+/*	$OpenBSD: cpuswitch7.S,v 1.12 2016/08/26 11:59:04 kettenis Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -232,25 +232,6 @@ ENTRY(cpu_switchto)
 	ldr	r10, [r8, #(PCB_PAGEDIR)]	/* r10 = old L1 */
 	ldr	r11, [r9, #(PCB_PAGEDIR)]	/* r11 = new L1 */
 
-	ldr	r0, [r8, #(PCB_DACR)]		/* r0 = old DACR */
-	ldr	r1, [r9, #(PCB_DACR)]		/* r1 = new DACR */
-
-	teq	r10, r11			/* Same L1? */
-	cmpeq	r0, r1				/* Same DACR? */
-	beq	.Lcs_context_switched		/* yes! */
-
-	mov	r2, #DOMAIN_CLIENT
-	cmp	r1, r2, lsl #(PMAP_DOMAIN_KERNEL * 2) /* Sw to kernel thread? */
-	beq	.Lcs_cache_purge_skipped	/* Yup. Don't flush cache */
-
-	stmfd	sp!, {r0-r3}
-	ldr	r1, .Lcpufuncs
-	mov	lr, pc
-	ldr	pc, [r1, #CF_ICACHE_SYNC_ALL]
-	ldmfd	sp!, {r0-r3}
-
-.Lcs_cache_purge_skipped:
-	/* rem: r1 = new DACR */
 	/* rem: r6 = new proc */
 	/* rem: r9 = new PCB */
 	/* rem: r10 = old L1 */
@@ -262,8 +243,6 @@ ENTRY(cpu_switchto)
 	 * XXXSCW: Don't need to block FIQs if vectors have been relocated
 	 */
 	IRQdisableALL
-
-	mcr	CP15_DACR(r1)		/* Update DACR for new context */
 
 	cmp	r10, r11		/* Switching to the same L1? */
 	ldr	r10, .Lcpufuncs

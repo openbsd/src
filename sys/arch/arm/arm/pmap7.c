@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.47 2016/08/24 13:09:52 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.48 2016/08/26 11:59:04 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -388,7 +388,7 @@ struct pv_entry *pmap_remove_pv(struct vm_page *, pmap_t, vaddr_t);
 u_int		pmap_modify_pv(struct vm_page *, pmap_t, vaddr_t,
 		    u_int, u_int);
 
-void		pmap_alloc_l1(pmap_t, int);
+void		pmap_alloc_l1(pmap_t);
 void		pmap_free_l1(pmap_t);
 
 struct l2_bucket *pmap_get_l2_bucket(pmap_t, vaddr_t);
@@ -622,7 +622,7 @@ uint nl1;
  * This is called at pmap creation time.
  */
 void
-pmap_alloc_l1(pmap_t pm, int domain)
+pmap_alloc_l1(pmap_t pm)
 {
 	struct l1_ttable *l1;
 	struct pglist plist;
@@ -632,7 +632,7 @@ pmap_alloc_l1(pmap_t pm, int domain)
 	int error;
 
 #ifdef PMAP_DEBUG
-printf("%s: %d %d\n", __func__, domain, ++nl1);
+printf("%s: %d\n", __func__, ++nl1);
 #endif
 	/* XXX use a pool? or move to inside struct pmap? */
 	l1 = malloc(sizeof(*l1), M_VMPMAP, M_WAITOK);
@@ -666,7 +666,6 @@ printf("%s: %d %d\n", __func__, domain, ++nl1);
 	pmap_init_l1(l1, pl1pt);
 
 	pm->pm_l1 = l1;
-	pm->pm_domain = domain;
 }
 
 /*
@@ -802,7 +801,7 @@ void
 pmap_free_l2_bucket(pmap_t pm, struct l2_bucket *l2b, u_int count)
 {
 	struct l2_dtable *l2;
-	pd_entry_t *pl1pd, l1pd;
+	pd_entry_t *pl1pd;
 	pt_entry_t *ptep;
 	u_short l1idx;
 
@@ -843,15 +842,11 @@ pmap_free_l2_bucket(pmap_t pm, struct l2_bucket *l2b, u_int count)
 	pl1pd = &pm->pm_l1->l1_kva[l1idx];
 
 	/*
-	 * If the L1 slot matches the pmap's domain
-	 * number, then invalidate it.
+	 * Invalidate the L1 slot.
 	 */
-	l1pd = *pl1pd & (L1_TYPE_MASK | L1_C_DOM_MASK);
-	if (l1pd == (L1_C_DOM(pm->pm_domain) | L1_TYPE_C)) {
-		*pl1pd = L1_TYPE_INV;
-		PTE_SYNC(pl1pd);
-		pmap_tlb_flushID_SE(pm, l1idx << L1_S_SHIFT);
-	}
+	*pl1pd = L1_TYPE_INV;
+	PTE_SYNC(pl1pd);
+	pmap_tlb_flushID_SE(pm, l1idx << L1_S_SHIFT);
 
 	/*
 	 * Release the L2 descriptor table back to the pool cache.
@@ -1071,7 +1066,7 @@ pmap_create(void)
 
 	pm->pm_refs = 1;
 	pm->pm_stats.wired_count = 0;
-	pmap_alloc_l1(pm, PMAP_DOMAIN_USER_V7);
+	pmap_alloc_l1(pm);
 
 	return (pm);
 }
@@ -1270,14 +1265,12 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			/*
 			 * This mapping is likely to be accessed as
 			 * soon as we return to userland. Fix up the
-			 * L1 entry to avoid taking another
-			 * page/domain fault.
+			 * L1 entry to avoid taking another page fault.
 			 */
 			pd_entry_t *pl1pd, l1pd;
 
 			pl1pd = &pm->pm_l1->l1_kva[L1_IDX(va)];
-			l1pd = l2b->l2b_phys | L1_C_DOM(pm->pm_domain) |
-			    L1_C_PROTO;
+			l1pd = L1_C_PROTO | l2b->l2b_phys;
 			if (*pl1pd != l1pd) {
 				*pl1pd = l1pd;
 				PTE_SYNC(pl1pd);
@@ -1840,15 +1833,13 @@ pmap_activate(struct proc *p)
 	pmap_set_pcb_pagedir(pm, pcb);
 
 	if (p == curproc) {
-		u_int cur_dacr, cur_ttb;
+		u_int cur_ttb;
 
 		__asm volatile("mrc p15, 0, %0, c2, c0, 0" : "=r"(cur_ttb));
-		__asm volatile("mrc p15, 0, %0, c3, c0, 0" : "=r"(cur_dacr));
 
 		cur_ttb &= ~(L1_TABLE_SIZE - 1);
 
-		if (cur_ttb == (u_int)pcb->pcb_pagedir &&
-		    cur_dacr == pcb->pcb_dacr) {
+		if (cur_ttb == (u_int)pcb->pcb_pagedir) {
 			/*
 			 * No need to switch address spaces.
 			 */
@@ -1873,7 +1864,6 @@ pmap_activate(struct proc *p)
 			 */
 		}
 
-		cpu_domains(pcb->pcb_dacr);
 		cpu_setttb(pcb->pcb_pagedir);
 
 		enable_interrupts(PSR_I | PSR_F);
@@ -2164,8 +2154,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		/* Distribute new L1 entry to all other L1s */
 		TAILQ_FOREACH(l1, &l1_list, l1_link) {
 			pl1pd = &l1->l1_kva[L1_IDX(pmap_curmaxkvaddr)];
-			*pl1pd = l2b->l2b_phys | L1_C_DOM(PMAP_DOMAIN_KERNEL) |
-			    L1_C_PROTO;
+			*pl1pd = L1_C_PROTO | l2b->l2b_phys;
 			PTE_SYNC(pl1pd);
 		}
 	}
@@ -2218,9 +2207,6 @@ pmap_set_pcb_pagedir(pmap_t pm, struct pcb *pcb)
 {
 	KDASSERT(pm->pm_l1);
 	pcb->pcb_pagedir = pm->pm_l1->l1_physaddr;
-	pcb->pcb_dacr = (DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL * 2)) |
-	    (DOMAIN_CLIENT << (pm->pm_domain * 2));
-
 	pcb->pcb_pl1vec = NULL;
 }
 
@@ -2331,7 +2317,6 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	 * Initialise the kernel pmap object
 	 */
 	pm->pm_l1 = l1;
-	pm->pm_domain = PMAP_DOMAIN_KERNEL;
 	pm->pm_refs = 1;
 
 	/*
@@ -2625,7 +2610,7 @@ pmap_map_section(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 	}
 
 	pde[va >> L1_S_SHIFT] = L1_S_PROTO | pa | L1_S_V7_AF |
-	    L1_S_PROT(PTE_KERNEL, prot) | fl | L1_S_DOM(PMAP_DOMAIN_KERNEL);
+	    L1_S_PROT(PTE_KERNEL, prot) | fl;
 	PTE_SYNC(&pde[va >> L1_S_SHIFT]);
 }
 
@@ -2688,18 +2673,16 @@ pmap_map_entry(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 void
 pmap_link_l2pt(vaddr_t l1pt, vaddr_t va, pv_addr_t *l2pv)
 {
-	pd_entry_t *pde = (pd_entry_t *) l1pt, proto;
+	pd_entry_t *pde = (pd_entry_t *) l1pt;
 	u_int slot = va >> L1_S_SHIFT;
 
-	proto = L1_C_DOM(PMAP_DOMAIN_KERNEL) | L1_C_PROTO;
-
-	pde[slot + 0] = proto | (l2pv->pv_pa + 0x000);
+	pde[slot + 0] = L1_C_PROTO | (l2pv->pv_pa + 0x000);
 #ifdef ARM32_NEW_VM_LAYOUT
 	PTE_SYNC(&pde[slot]);
 #else
-	pde[slot + 1] = proto | (l2pv->pv_pa + 0x400);
-	pde[slot + 2] = proto | (l2pv->pv_pa + 0x800);
-	pde[slot + 3] = proto | (l2pv->pv_pa + 0xc00);
+	pde[slot + 1] = L1_C_PROTO | (l2pv->pv_pa + 0x400);
+	pde[slot + 2] = L1_C_PROTO | (l2pv->pv_pa + 0x800);
+	pde[slot + 3] = L1_C_PROTO | (l2pv->pv_pa + 0xc00);
 	PTE_SYNC_RANGE(&pde[slot + 0], 4);
 #endif
 
@@ -2762,8 +2745,7 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 			printf("S");
 #endif
 			pde[va >> L1_S_SHIFT] = L1_S_PROTO | pa |
-			    L1_S_V7_AF | L1_S_PROT(PTE_KERNEL, prot) |
-			    f1 | L1_S_DOM(PMAP_DOMAIN_KERNEL);
+			    L1_S_V7_AF | L1_S_PROT(PTE_KERNEL, prot) | f1;
 			PTE_SYNC(&pde[va >> L1_S_SHIFT]);
 			va += L1_S_SIZE;
 			pa += L1_S_SIZE;
