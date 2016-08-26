@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.98 2016/08/25 01:44:55 guenther Exp $	*/
+/*	$OpenBSD: options.c,v 1.99 2016/08/26 04:33:11 guenther Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -35,21 +35,95 @@
  */
 
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/stat.h>
-#include <sys/mtio.h>
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include <limits.h>
 #include <paths.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "pax.h"
-#include "options.h"
 #include "cpio.h"
 #include "tar.h"
 #include "extern.h"
+
+/*
+ * argv[0] names. Used for tar and cpio emulation
+ */
+
+#define NM_TAR  "tar"
+#define NM_CPIO "cpio"
+#define NM_PAX  "pax"
+
+/*
+ * Constants used to specify the legal sets of flags in pax. For each major
+ * operation mode of pax, a set of illegal flags is defined. If any one of
+ * those illegal flags are found set, we scream and exit
+ */
+
+/*
+ * flags (one for each option).
+ */
+#define	AF	0x00000001
+#define	BF	0x00000002
+#define	CF	0x00000004
+#define	DF	0x00000008
+#define	FF	0x00000010
+#define	IF	0x00000020
+#define	KF	0x00000040
+#define	LF	0x00000080
+#define	NF	0x00000100
+#define	OF	0x00000200
+#define	PF	0x00000400
+#define	RF	0x00000800
+#define	SF	0x00001000
+#define	TF	0x00002000
+#define	UF	0x00004000
+#define	VF	0x00008000
+#define	WF	0x00010000
+#define	XF	0x00020000
+#define	CBF	0x00040000	/* nonstandard extension */
+#define	CDF	0x00080000	/* nonstandard extension */
+#define	CEF	0x00100000	/* nonstandard extension */
+#define	CGF	0x00200000	/* nonstandard extension */
+#define	CHF	0x00400000	/* nonstandard extension */
+#define	CLF	0x00800000	/* nonstandard extension */
+#define	CPF	0x01000000	/* nonstandard extension */
+#define	CTF	0x02000000	/* nonstandard extension */
+#define	CUF	0x04000000	/* nonstandard extension */
+#define	CXF	0x08000000
+#define	CYF	0x10000000	/* nonstandard extension */
+#define	CZF	0x20000000	/* nonstandard extension */
+#define	C0F	0x40000000	/* nonstandard extension */
+
+/*
+ * ascii string indexed by bit position above (alter the above and you must
+ * alter this string) used to tell the user what flags caused us to complain
+ */
+#define FLGCH	"abcdfiklnoprstuvwxBDEGHLPTUXYZ0"
+
+/*
+ * legal pax operation bit patterns
+ */
+
+#define ISLIST(x)	(((x) & (RF|WF)) == 0)
+#define	ISEXTRACT(x)	(((x) & (RF|WF)) == RF)
+#define ISARCHIVE(x)	(((x) & (AF|RF|WF)) == WF)
+#define ISAPPND(x)	(((x) & (AF|RF|WF)) == (AF|WF))
+#define	ISCOPY(x)	(((x) & (RF|WF)) == (RF|WF))
+#define	ISWRITE(x)	(((x) & (RF|WF)) == WF)
+
+/*
+ * Illegal option flag subsets based on pax operation
+ */
+
+#define	BDEXTR	(AF|BF|LF|TF|WF|XF|CBF|CHF|CLF|CPF|CXF)
+#define	BDARCH	(CF|KF|LF|NF|PF|RF|CDF|CEF|CYF|CZF)
+#define	BDCOPY	(AF|BF|FF|OF|XF|CBF|CEF)
+#define	BDLIST (AF|BF|IF|KF|LF|OF|PF|RF|TF|UF|WF|XF|CBF|CDF|CHF|CLF|CPF|CXF|CYF|CZF)
+
 
 /*
  * Routines which handle command line options
@@ -456,7 +530,7 @@ pax_options(int argc, char **argv)
 			 * indicate a limit, "NONE" try forever
 			 */
 			flg |= CEF;
-			if (strcmp(NONE, optarg) == 0)
+			if (strcmp("none", optarg) == 0)
 				maxflt = -1;
 			else {
 				maxflt = strtonum(optarg, 0, INT_MAX, &errstr);
