@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.21 2016/06/07 06:12:37 deraadt Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.22 2016/08/26 08:52:19 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/event.h>
