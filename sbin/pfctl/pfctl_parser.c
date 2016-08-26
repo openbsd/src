@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.306 2015/09/03 12:46:47 mikeb Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.307 2016/08/26 06:06:58 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -44,17 +44,18 @@
 #include <net/hfsc.h>
 #include <arpa/inet.h>
 
+#include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <ifaddrs.h>
+#include <limits.h>
+#include <netdb.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <netdb.h>
-#include <stdarg.h>
-#include <errno.h>
-#include <err.h>
-#include <ifaddrs.h>
+#include <time.h>
 #include <unistd.h>
-#include <limits.h>
 
 #define SYSLOG_NAMES
 #include <syslog.h>
