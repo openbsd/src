@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subs.c,v 1.16 2014/11/23 05:28:12 guenther Exp $	*/
+/*	$OpenBSD: tty_subs.c,v 1.17 2016/08/26 04:22:13 guenther Exp $	*/
 /*	$NetBSD: tty_subs.c,v 1.5 1995/03/21 09:07:52 cgd Exp $	*/
 
 /*-
@@ -35,17 +35,15 @@
  */
 
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <stdarg.h>
 #include <stdio.h>
-#include <errno.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "pax.h"
 #include "extern.h"
-#include <stdarg.h>
 
 /*
  * routines that deal with I/O to and from the user
