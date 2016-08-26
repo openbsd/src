@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.101 2016/08/17 13:53:14 bluhm Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.102 2016/08/26 07:12:30 guenther Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
 void	uipc_setaddr(const struct unpcb *, struct mbuf *);
 
 /* list of all UNIX domain sockets, for unp_gc() */
-LIST_HEAD(unp_head, unpcb) unp_head = LIST_HEAD_INITIALIZER(&unp_head);
+LIST_HEAD(unp_head, unpcb) unp_head = LIST_HEAD_INITIALIZER(unp_head);
 
 /*
  * Stack of sets of files that were passed over a socket but were
@@ -68,7 +68,7 @@ struct	unp_deferral {
 };
 
 /* list of sets of files that were sent over sockets that are now closed */
-SLIST_HEAD(,unp_deferral) unp_deferred = SLIST_HEAD_INITIALIZER(&unp_deferred);
+SLIST_HEAD(,unp_deferral) unp_deferred = SLIST_HEAD_INITIALIZER(unp_deferred);
 
 struct task unp_gc_task = TASK_INITIALIZER(unp_gc, NULL);
 
