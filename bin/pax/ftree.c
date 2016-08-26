@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.39 2016/06/03 23:22:20 tedu Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.40 2016/08/26 04:17:48 guenther Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -35,17 +35,29 @@
  */
 
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
 #include <errno.h>
-#include <stdlib.h>
 #include <fts.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "pax.h"
-#include "ftree.h"
 #include "extern.h"
+
+/*
+ * Data structure used to store the file args to be handed to fts().
+ * It keeps track of which args generated a "selected" member.
+ */
+typedef struct ftree {
+	char		*fname;		/* file tree name */
+	int		refcnt;		/* has tree had a selected file? */
+	int		newercnt;	/* skipped due to -u/-D */
+	int		chflg;		/* change directory flag */
+	struct ftree	*fow;		/* pointer to next entry on list */
+} FTREE;
+
 
 /*
  * routines to interface with the fts library function.
