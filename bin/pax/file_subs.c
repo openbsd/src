@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.51 2016/08/23 06:00:28 guenther Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.52 2016/08/26 04:11:16 guenther Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/time.h>
 #include <sys/stat.h>
 #include <err.h>
 #include <errno.h>
@@ -45,7 +44,6 @@
 #include <string.h>
 #include <unistd.h>
 #include "pax.h"
-#include "options.h"
 #include "extern.h"
 
 static int

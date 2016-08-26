@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.29 2016/08/14 18:30:33 guenther Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.30 2016/08/26 04:11:16 guenther Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -35,7 +35,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/stat.h>
 #include <limits.h>
 #include <string.h>

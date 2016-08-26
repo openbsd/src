@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.62 2016/08/25 01:44:55 guenther Exp $	*/
+/*	$OpenBSD: tar.c,v 1.63 2016/08/26 04:11:16 guenther Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -35,7 +35,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/stat.h>
 #include <ctype.h>
 #include <errno.h>

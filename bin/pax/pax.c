@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.46 2016/08/23 06:00:28 guenther Exp $	*/
+/*	$OpenBSD: pax.c,v 1.47 2016/08/26 04:11:16 guenther Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -36,7 +36,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/time.h>
 #include <sys/resource.h>
 #include <signal.h>
 #include <unistd.h>
