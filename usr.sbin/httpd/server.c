@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.92 2016/08/22 15:02:18 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.93 2016/08/26 10:46:39 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -75,7 +75,6 @@ volatile int server_clients;
 volatile int server_inflight = 0;
 uint32_t server_cltid;
 
-static struct httpd		*env = NULL;
 int				 proc_id;
 
 static struct privsep_proc procs[] = {
@@ -87,16 +86,15 @@ pid_t
 server(struct privsep *ps, struct privsep_proc *p)
 {
 	pid_t	 pid;
-	env = ps->ps_env;
 	pid = proc_run(ps, p, procs, nitems(procs), server_init, NULL);
-	server_http(env);
+	server_http();
 	return (pid);
 }
 
 void
 server_shutdown(void)
 {
-	config_purge(env, CONFIG_ALL);
+	config_purge(httpd_env, CONFIG_ALL);
 	usleep(200);	/* XXX server needs to shutdown last */
 }
 
@@ -114,7 +112,7 @@ server_privinit(struct server *srv)
 	 * There's no need to open a new socket if a server with the
 	 * same address already exists.
 	 */
-	TAILQ_FOREACH(s, env->sc_servers, srv_entry) {
+	TAILQ_FOREACH(s, httpd_env->sc_servers, srv_entry) {
 		if (s != srv && s->srv_s != -1 &&
 		    s->srv_conf.port == srv->srv_conf.port &&
 		    sockaddr_cmp((struct sockaddr *)&s->srv_conf.ss,
@@ -271,7 +269,7 @@ server_tls_init(struct server *srv)
 void
 server_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
-	server_http(ps->ps_env);
+	server_http();
 
 	if (config_init(ps->ps_env) == -1)
 		fatal("failed to initialize configuration");
@@ -290,9 +288,9 @@ server_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 
 #if 0
 	/* Schedule statistics timer */
-	evtimer_set(&env->sc_statev, server_statistics, NULL);
-	memcpy(&tv, &env->sc_statinterval, sizeof(tv));
-	evtimer_add(&env->sc_statev, &tv);
+	evtimer_set(&ps->ps_env->sc_statev, server_statistics, NULL);
+	memcpy(&tv, &ps->ps_env->sc_statinterval, sizeof(tv));
+	evtimer_add(&ps->ps_env->sc_statev, &tv);
 #endif
 }
 
@@ -301,7 +299,7 @@ server_launch(void)
 {
 	struct server		*srv;
 
-	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
+	TAILQ_FOREACH(srv, httpd_env->sc_servers, srv_entry) {
 		log_debug("%s: configuring server %s", __func__,
 		    srv->srv_conf.name);
 
@@ -332,7 +330,7 @@ server_purge(struct server *srv)
 
 	if (srv->srv_s != -1)
 		close(srv->srv_s);
-	TAILQ_REMOVE(env->sc_servers, srv, srv_entry);
+	TAILQ_REMOVE(httpd_env->sc_servers, srv, srv_entry);
 
 	/* cleanup sessions */
 	while ((clt =
@@ -391,7 +389,7 @@ server_byaddr(struct sockaddr *addr, in_port_t port)
 {
 	struct server	*srv;
 
-	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
+	TAILQ_FOREACH(srv, httpd_env->sc_servers, srv_entry) {
 		if (port == srv->srv_conf.port &&
 		    sockaddr_cmp((struct sockaddr *)&srv->srv_conf.ss,
 		    addr, srv->srv_conf.prefixlen) == 0)
@@ -407,7 +405,7 @@ serverconfig_byid(uint32_t id)
 	struct server		*srv;
 	struct server_config	*srv_conf;
 
-	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
+	TAILQ_FOREACH(srv, httpd_env->sc_servers, srv_entry) {
 		if (srv->srv_conf.id == id)
 			return (&srv->srv_conf);
 		TAILQ_FOREACH(srv_conf, &srv->srv_hosts, entry) {
@@ -426,7 +424,7 @@ server_foreach(int (*srv_cb)(struct server *,
 	struct server		*srv;
 	struct server_config	*srv_conf;
 
-	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
+	TAILQ_FOREACH(srv, httpd_env->sc_servers, srv_entry) {
 		if ((srv_cb)(srv, &srv->srv_conf, arg) == -1)
 			return (-1);
 		TAILQ_FOREACH(srv_conf, &srv->srv_hosts, entry) {
@@ -444,7 +442,7 @@ server_match(struct server *s2, int match_name)
 	struct server	*s1;
 
 	/* Attempt to find matching server. */
-	TAILQ_FOREACH(s1, env->sc_servers, srv_entry) {
+	TAILQ_FOREACH(s1, httpd_env->sc_servers, srv_entry) {
 		if ((s1->srv_conf.flags & SRVFLAG_LOCATION) != 0)
 			continue;
 		if (match_name) {
@@ -1091,7 +1089,7 @@ server_sendlog(struct server_config *srv_conf, int cmd, const char *emsg, ...)
 	iov[1].iov_base = msg;
 	iov[1].iov_len = strlen(msg) + 1;
 
-	if (proc_composev(env->sc_ps, PROC_LOGGER, cmd, iov, 2) != 0) {
+	if (proc_composev(httpd_env->sc_ps, PROC_LOGGER, cmd, iov, 2) != 0) {
 		log_warn("%s: failed to compose imsg", __func__);
 		return;
 	}
@@ -1193,25 +1191,25 @@ server_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	switch (imsg->hdr.type) {
 	case IMSG_CFG_MEDIA:
-		config_getmedia(env, imsg);
+		config_getmedia(httpd_env, imsg);
 		break;
 	case IMSG_CFG_AUTH:
-		config_getauth(env, imsg);
+		config_getauth(httpd_env, imsg);
 		break;
 	case IMSG_CFG_SERVER:
-		config_getserver(env, imsg);
+		config_getserver(httpd_env, imsg);
 		break;
 	case IMSG_CFG_TLS:
-		config_gettls(env, imsg);
+		config_gettls(httpd_env, imsg);
 		break;
 	case IMSG_CFG_DONE:
-		config_getcfg(env, imsg);
+		config_getcfg(httpd_env, imsg);
 		break;
 	case IMSG_CTL_START:
 		server_launch();
 		break;
 	case IMSG_CTL_RESET:
-		config_getreset(env, imsg);
+		config_getreset(httpd_env, imsg);
 		break;
 	default:
 		return (-1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.16 2016/08/16 18:41:57 tedu Exp $	*/
+/*	$OpenBSD: logger.c,v 1.17 2016/08/26 10:46:39 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -43,7 +43,6 @@ void		 logger_init(struct privsep *, struct privsep_proc *p, void *);
 int		 logger_start(void);
 int		 logger_log(struct imsg *);
 
-static struct httpd		*env = NULL;
 int				 proc_id;
 static uint32_t		 last_log_id = 0;
 
@@ -55,7 +54,6 @@ static struct privsep_proc procs[] = {
 pid_t
 logger(struct privsep *ps, struct privsep_proc *p)
 {
-	env = ps->ps_env;
 	return (proc_run(ps, p, procs, nitems(procs), logger_init, NULL));
 }
 
@@ -63,7 +61,7 @@ void
 logger_shutdown(void)
 {
 	logger_close();
-	config_purge(env, CONFIG_ALL);
+	config_purge(httpd_env, CONFIG_ALL);
 }
 
 void
@@ -120,7 +118,7 @@ logger_open_file(const char *name)
 	iov[1].iov_base = log->log_name;
 	iov[1].iov_len = strlen(log->log_name) + 1;
 
-	if (proc_composev(env->sc_ps, PROC_PARENT, IMSG_LOG_OPEN,
+	if (proc_composev(httpd_env->sc_ps, PROC_PARENT, IMSG_LOG_OPEN,
 	    iov, 2) != 0) {
 		log_warn("%s: failed to compose IMSG_LOG_OPEN imsg", __func__);
 		goto err;
@@ -173,7 +171,7 @@ logger_open_priv(struct imsg *imsg)
 
 	if ((size_t)snprintf(name, sizeof(name), "/%s", p) >= sizeof(name))
 		return (-1);
-	if ((len = strlcpy(path, env->sc_logdir, sizeof(path)))
+	if ((len = strlcpy(path, httpd_env->sc_logdir, sizeof(path)))
 	    >= sizeof(path))
 		return (-1);
 
@@ -190,7 +188,7 @@ logger_open_priv(struct imsg *imsg)
 		return (-1);
 	}
 
-	proc_compose_imsg(env->sc_ps, PROC_LOGGER, -1, IMSG_LOG_OPEN, -1, fd,
+	proc_compose_imsg(httpd_env->sc_ps, PROC_LOGGER, -1, IMSG_LOG_OPEN, -1, fd,
 	    &id, sizeof(id));
 
 	DPRINTF("%s: opened log file %s, fd %d", __func__, path, fd);
@@ -285,17 +283,17 @@ logger_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	switch (imsg->hdr.type) {
 	case IMSG_CFG_SERVER:
-		config_getserver(env, imsg);
+		config_getserver(httpd_env, imsg);
 		break;
 	case IMSG_CFG_DONE:
-		config_getcfg(env, imsg);
+		config_getcfg(httpd_env, imsg);
 		break;
 	case IMSG_CTL_START:
 	case IMSG_CTL_REOPEN:
 		logger_start();
 		break;
 	case IMSG_CTL_RESET:
-		config_getreset(env, imsg);
+		config_getreset(httpd_env, imsg);
 		break;
 	case IMSG_LOG_OPEN:
 		return (logger_open_fd(imsg));

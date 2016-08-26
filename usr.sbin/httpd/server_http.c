@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.109 2016/07/27 11:02:41 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.110 2016/08/26 10:46:39 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -49,17 +49,12 @@ int		 server_http_authenticate(struct server_config *,
 char		*server_expand_http(struct client *, const char *,
 		    char *, size_t);
 
-static struct httpd	*env = NULL;
-
 static struct http_method	 http_methods[] = HTTP_METHODS;
 static struct http_error	 http_errors[] = HTTP_ERRORS;
 
 void
-server_http(struct httpd *x_env)
+server_http(void)
 {
-	if (x_env != NULL)
-		env = x_env;
-
 	DPRINTF("%s: sorting lookup tables, pid %d", __func__, getpid());
 
 	/* Sort the HTTP lookup arrays */
@@ -435,7 +430,7 @@ server_read_http(struct bufferevent *bev, void *arg)
  done:
 		if (clt->clt_toread != 0)
 			bufferevent_disable(bev, EV_READ);
-		server_response(env, clt);
+		server_response(httpd_env, clt);
 		return;
 	}
 	if (clt->clt_done) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.108 2016/08/22 15:02:18 jsing Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.109 2016/08/26 10:46:39 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -572,7 +572,7 @@ SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
 
 /* server_http.c */
 void	 server_http_init(struct server *);
-void	 server_http(struct httpd *);
+void	 server_http(void);
 int	 server_httpdesc_init(struct client *);
 void	 server_read_http(struct bufferevent *, void *);
 void	 server_abort_http(struct client *, unsigned int, const char *);
@@ -666,6 +666,8 @@ const char	*print_host(struct sockaddr_storage *, char *, size_t);
 const char	*print_time(struct timeval *, struct timeval *, char *, size_t);
 const char	*printb_flags(const uint32_t, const char *);
 void		 getmonotime(struct timeval *);
+
+extern struct httpd *httpd_env;
 
 /* log.c */
 void	log_init(int, int);
