@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.33 2016/08/26 21:14:58 patrick Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.34 2016/08/26 21:50:42 patrick Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -342,8 +342,109 @@ int
 _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
     bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
+	struct arm32_dma_range *dr;
+	bus_addr_t paddr, baddr, bmask, lastaddr = 0;
+	bus_size_t plen, sgsize, mapsize;
+	int first = 1;
+	int i, seg = 0;
 
-	panic("_bus_dmamap_load_raw: not implemented");
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
+
+	if (nsegs > map->_dm_segcnt || size > map->_dm_size)
+		return (EINVAL);
+
+	mapsize = size;
+	bmask = ~(map->_dm_boundary - 1);
+
+	/*
+	 * Assume to be coherent at first.  If one of the segments
+	 * isn't, we clear the flag for the whole map.
+	 */
+	map->_dm_flags |= ARM32_DMAMAP_COHERENT;
+
+	for (i = 0; i < nsegs && size > 0; i++) {
+		paddr = segs[i].ds_addr;
+		plen = MIN(segs[i].ds_len, size);
+
+		if (!segs[i]._ds_coherent)
+			map->_dm_flags &= ~ARM32_DMAMAP_COHERENT;
+
+		while (plen > 0) {
+			/*
+			 * Make sure we're in an allowed DMA range.
+			 */
+			if (t->_ranges != NULL) {
+				/* XXX cache last result? */
+				dr = _bus_dma_inrange(t->_ranges, t->_nranges,
+				    paddr);
+				if (dr == NULL)
+					return (EINVAL);
+
+				/*
+				 * In a valid DMA range.  Translate the physical
+				 * memory address to an address in the DMA window.
+				 */
+				paddr = (paddr - dr->dr_sysbase) + dr->dr_busbase;
+			}
+
+			/*
+			 * Compute the segment size, and adjust counts.
+			 */
+			sgsize = PAGE_SIZE - ((u_long)paddr & PGOFSET);
+			if (plen < sgsize)
+				sgsize = plen;
+
+			/*
+			 * Make sure we don't cross any boundaries.
+			 */
+			if (map->_dm_boundary > 0) {
+				baddr = (paddr + map->_dm_boundary) & bmask;
+				if (sgsize > (baddr - paddr))
+					sgsize = (baddr - paddr);
+			}
+
+			/*
+			 * Insert chunk into a segment, coalescing with
+			 * previous segment if possible.
+			 */
+			if (first) {
+				map->dm_segs[seg].ds_addr = paddr;
+				map->dm_segs[seg].ds_len = sgsize;
+				first = 0;
+			} else {
+				if (paddr == lastaddr &&
+				    (map->dm_segs[seg].ds_len + sgsize) <=
+				     map->_dm_maxsegsz &&
+				    (map->_dm_boundary == 0 ||
+				     (map->dm_segs[seg].ds_addr & bmask) ==
+				     (paddr & bmask)))
+					map->dm_segs[seg].ds_len += sgsize;
+				else {
+					if (++seg >= map->_dm_segcnt)
+						return (EINVAL);
+					map->dm_segs[seg].ds_addr = paddr;
+					map->dm_segs[seg].ds_len = sgsize;
+				}
+			}
+
+			paddr += sgsize;
+			plen -= sgsize;
+			size -= sgsize;
+
+			lastaddr = paddr;
+		}
+	}
+
+	map->dm_mapsize = mapsize;
+	map->dm_nsegs = seg + 1;
+	map->_dm_buftype = ARM32_BUFTYPE_RAW;
+	map->_dm_origbuf = NULL;
+	map->_dm_proc = NULL;
+	return (0);
 }
 
 /*
@@ -553,6 +654,29 @@ _bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	}
 }
 
+static __inline void
+_bus_dmamap_sync_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+    bus_size_t len, int ops)
+{
+	bus_dma_segment_t *ds = map->dm_segs;
+
+	while (len > 0) {
+		while (offset >= ds->ds_len) {
+			offset -= ds->ds_len;
+			ds++;
+		}
+
+		vaddr_t va = ds->_ds_vaddr + offset;
+		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + offset);
+		size_t seglen = min(len, ds->ds_len - offset);
+
+		_bus_dmamap_sync_segment(va, pa, seglen, ops);
+
+		offset += seglen;
+		len -= seglen;
+	}
+}
+
 /*
  * Common function for DMA map synchronization.  May be called
  * by bus-specific DMA map synchronization functions.
@@ -636,6 +760,10 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 	case ARM32_BUFTYPE_UIO:
 		_bus_dmamap_sync_uio(t, map, offset, len, ops);
+		break;
+
+	case ARM32_BUFTYPE_RAW:
+		_bus_dmamap_sync_raw(t, map, offset, len, ops);
 		break;
 
 	case ARM32_BUFTYPE_INVALID:
@@ -766,6 +894,9 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 #endif	/* DEBUG_DMA */
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
+			segs[curseg]._ds_coherent =
+			    !!(flags & BUS_DMA_COHERENT);
+			segs[curseg]._ds_vaddr = va;
 			pmap_kenter_cache(va, addr,
 			    PROT_READ | PROT_WRITE,
 			    !(flags & BUS_DMA_COHERENT));
