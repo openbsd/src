@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.32 2016/08/22 01:41:59 jsg Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.33 2016/08/26 21:14:58 patrick Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -454,8 +454,7 @@ _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + offset);
 		size_t seglen = min(len, ds->ds_len - offset);
 
-		if ((map->_dm_flags & ARM32_DMAMAP_COHERENT) == 0)
-			_bus_dmamap_sync_segment(va + offset, pa, seglen, ops);
+		_bus_dmamap_sync_segment(va + offset, pa, seglen, ops);
 
 		offset += seglen;
 		len -= seglen;
@@ -507,9 +506,8 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 * this ever becomes non-true (e.g. Physically Indexed
 		 * cache), this will have to be revisited.
 		 */
+		_bus_dmamap_sync_segment(va, pa, seglen, ops);
 
-		if ((map->_dm_flags & ARM32_DMAMAP_COHERENT) == 0)
-			_bus_dmamap_sync_segment(va, pa, seglen, ops);
 		voff += seglen;
 		ds_off += seglen;
 		len -= seglen;
@@ -547,8 +545,7 @@ _bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		vaddr_t va = (vaddr_t) iov->iov_base + voff;
 		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + ds_off);
 
-		if ((map->_dm_flags & ARM32_DMAMAP_COHERENT) == 0)
-			_bus_dmamap_sync_segment(va, pa, seglen, ops);
+		_bus_dmamap_sync_segment(va, pa, seglen, ops);
 
 		voff += seglen;
 		ds_off += seglen;
