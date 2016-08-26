@@ -1,6 +1,10 @@
-#	$OpenBSD: Makefile,v 1.1 2007/04/18 10:18:23 otto Exp $
+#	$OpenBSD: Makefile,v 1.2 2016/08/26 13:10:30 bluhm Exp $
 #
 # Regress tests for newfs
 
-all:
-	sh checknewfs
+REGRESS_TARGETS =	run-regress-checknewfs
+
+run-regress-checknewfs:
+	sh ${.CURDIR}/checknewfs
+
+.include <bsd.regress.mk>
