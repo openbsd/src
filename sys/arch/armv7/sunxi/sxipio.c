@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.10 2016/08/23 18:16:06 kettenis Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.11 2016/08/26 21:23:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -136,6 +136,10 @@ struct sxipio_pins sxipio_pins[] = {
 	{
 		"allwinner,sun7i-a20-pinctrl",
 		sun7i_a20_pins, nitems(sun7i_a20_pins)
+	},
+	{
+		"allwinner,sun8i-h3-pinctrl",
+		sun8i_h3_pins, nitems(sun8i_h3_pins)
 	}
 };
 
