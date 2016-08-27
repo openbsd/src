@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.35 2015/10/23 08:18:30 tedu Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.36 2016/08/27 04:07:42 guenther Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
+#include <sys/time.h>
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
