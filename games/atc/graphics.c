@@ -1,4 +1,4 @@
-/*	$OpenBSD: graphics.c,v 1.11 2015/12/31 16:50:29 mestre Exp $	*/
+/*	$OpenBSD: graphics.c,v 1.12 2016/08/27 02:02:44 guenther Exp $	*/
 /*	$NetBSD: graphics.c,v 1.3 1995/03/21 15:04:04 cgd Exp $	*/
 
 /*-
@@ -42,6 +42,7 @@
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
 
+#include <sys/time.h>
 #include <curses.h>
 #include <err.h>
 #include <stdlib.h>

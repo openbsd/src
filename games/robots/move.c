@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.12 2016/01/04 17:33:24 mestre Exp $	*/
+/*	$OpenBSD: move.c,v 1.13 2016/08/27 02:02:44 guenther Exp $	*/
 /*	$NetBSD: move.c,v 1.4 1995/04/22 10:08:58 cgd Exp $	*/
 
 /*
@@ -30,6 +30,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/time.h>
 #include <ctype.h>
 #include <poll.h>
 #include <termios.h>

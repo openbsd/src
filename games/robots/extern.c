@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.c,v 1.8 2016/01/04 17:33:24 mestre Exp $	*/
+/*	$OpenBSD: extern.c,v 1.9 2016/08/27 02:02:44 guenther Exp $	*/
 /*	$NetBSD: extern.c,v 1.3 1995/04/22 10:08:49 cgd Exp $	*/
 
 /*
@@ -30,6 +30,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/time.h>
 #include "robots.h"
 
 bool	Dead;			/* Player is now dead */
