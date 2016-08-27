@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.88 2015/10/07 17:52:38 jmc Exp $
+# $OpenBSD: PkgAdd.pm,v 1.89 2016/08/27 18:17:46 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -751,6 +751,19 @@ sub delete_old_packages
 	# Here there should be code to handle old libs
 }
 
+sub delayed_delete
+{
+	my $state = shift;
+	for my $realname (@{$state->{delayed}}) {
+		if (!unlink $realname) {
+			$state->errsay("Problem deleting #1: #2", $realname, 
+			    $!);
+			$state->log("deleting #1 failed: #2", $realname, $!);
+		}
+	}
+	delete $state->{delayed};
+}
+
 sub really_add
 {
 	my ($set, $state) = @_;
@@ -819,7 +832,9 @@ sub really_add
 			    $handle->pkgname." failed", $set, $state));
 		}
 	}
-	if (!$state->{delete_first}) {
+	if ($state->{delete_first}) {
+		delayed_delete($state);
+	} else {
 		$state->{hardkill} = 1;
 		delete_old_packages($set, $state);
 	}
