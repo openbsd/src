@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.17 2016/08/26 10:46:39 rzalamena Exp $	*/
+/*	$OpenBSD: logger.c,v 1.18 2016/08/27 11:13:16 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -43,7 +43,6 @@ void		 logger_init(struct privsep *, struct privsep_proc *p, void *);
 int		 logger_start(void);
 int		 logger_log(struct imsg *);
 
-int				 proc_id;
 static uint32_t		 last_log_id = 0;
 
 static struct privsep_proc procs[] = {
@@ -72,9 +71,6 @@ logger_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 
 	if (config_init(ps->ps_env) == -1)
 		fatal("failed to initialize configuration");
-
-	/* Set to current prefork id */
-	proc_id = p->p_instance;
 
 	/* We use a custom shutdown callback */
 	p->p_shutdown = logger_shutdown;

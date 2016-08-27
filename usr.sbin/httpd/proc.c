@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.16 2016/08/26 12:24:21 rzalamena Exp $	*/
+/*	$OpenBSD: proc.c,v 1.17 2016/08/27 11:13:16 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -247,7 +247,6 @@ proc_listen(struct privsep *ps, struct privsep_proc *procs, size_t nproc)
 			ps->ps_ievs[dst][n].events = EV_READ;
 			ps->ps_ievs[dst][n].proc = &procs[i];
 			ps->ps_ievs[dst][n].data = &ps->ps_ievs[dst][n];
-			procs[i].p_instance = n;
 
 			event_set(&(ps->ps_ievs[dst][n].ev),
 			    ps->ps_ievs[dst][n].ibuf.fd,
@@ -391,7 +390,7 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	/* Fork child handlers */
 	for (n = 1; n < ps->ps_instances[p->p_id]; n++) {
 		if (fork() == 0) {
-			ps->ps_instance = p->p_instance = n;
+			ps->ps_instance = n;
 			break;
 		}
 	}
@@ -478,7 +477,7 @@ proc_dispatch(int fd, short event, void *arg)
 #if DEBUG > 1
 		log_debug("%s: %s %d got imsg %d peerid %d from %s %d",
 		    __func__, title, ps->ps_instance + 1,
-		    imsg.hdr.type, imsg.hdr.peerid, p->p_title, p->p_instance);
+		    imsg.hdr.type, imsg.hdr.peerid, p->p_title, imsg.hdr.pid);
 #endif
 
 		/*
@@ -504,7 +503,7 @@ proc_dispatch(int fd, short event, void *arg)
 			    "from %s %d",
 			    __func__, title, ps->ps_instance + 1,
 			    imsg.hdr.type, imsg.hdr.peerid,
-			    p->p_title, p->p_instance);
+			    p->p_title, imsg.hdr.pid);
 			fatalx(__func__);
 		}
 		imsg_free(&imsg);
@@ -587,7 +586,7 @@ proc_compose_imsg(struct privsep *ps, enum privsep_procid id, int n,
 	proc_range(ps, id, &n, &m);
 	for (; n < m; n++) {
 		if (imsg_compose_event(&ps->ps_ievs[id][n],
-		    type, peerid, 0, fd, data, datalen) == -1)
+		    type, peerid, ps->ps_instance + 1, fd, data, datalen) == -1)
 			return (-1);
 	}
 
@@ -610,7 +609,7 @@ proc_composev_imsg(struct privsep *ps, enum privsep_procid id, int n,
 	proc_range(ps, id, &n, &m);
 	for (; n < m; n++)
 		if (imsg_composev_event(&ps->ps_ievs[id][n],
-		    type, peerid, 0, fd, iov, iovcnt) == -1)
+		    type, peerid, ps->ps_instance + 1, fd, iov, iovcnt) == -1)
 			return (-1);
 
 	return (0);

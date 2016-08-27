@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.93 2016/08/26 10:46:39 rzalamena Exp $	*/
+/*	$OpenBSD: server.c,v 1.94 2016/08/27 11:13:16 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -74,8 +74,6 @@ extern void	 bufferevent_read_pressure_cb(struct evbuffer *, size_t,
 volatile int server_clients;
 volatile int server_inflight = 0;
 uint32_t server_cltid;
-
-int				 proc_id;
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	server_dispatch_parent },
@@ -273,9 +271,6 @@ server_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 
 	if (config_init(ps->ps_env) == -1)
 		fatal("failed to initialize configuration");
-
-	/* Set to current prefork id */
-	proc_id = p->p_instance;
 
 	/* We use a custom shutdown callback */
 	p->p_shutdown = server_shutdown;
@@ -971,9 +966,6 @@ server_accept(int fd, short event, void *arg)
 
 	server_clients++;
 	SPLAY_INSERT(client_tree, &srv->srv_clients, clt);
-
-	/* Increment the per-relay client counter */
-	//srv->srv_stats[proc_id].last++;
 
 	/* Pre-allocate output buffer */
 	clt->clt_output = evbuffer_new();

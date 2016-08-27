@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.110 2016/08/26 12:24:21 rzalamena Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.111 2016/08/27 11:13:16 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -266,7 +266,6 @@ struct privsep_proc {
 	pid_t			(*p_init)(struct privsep *,
 				    struct privsep_proc *);
 	void			(*p_shutdown)(void);
-	unsigned int		 p_instance;
 	const char		*p_chroot;
 	struct privsep		*p_ps;
 	struct httpd		*p_env;
@@ -516,7 +515,7 @@ int	 control_init(struct privsep *, struct control_sock *);
 int	 control_listen(struct control_sock *);
 void	 control_cleanup(struct control_sock *);
 void	 control_dispatch_imsg(int, short, void *);
-void	 control_imsg_forward(struct imsg *);
+void	 control_imsg_forward(struct privsep *, struct imsg *);
 struct ctl_conn	*
 	 control_connbyfd(int);
 
