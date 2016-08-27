@@ -1,4 +1,4 @@
-/*	$OpenBSD: gamesupport.c,v 1.9 2016/01/06 14:28:09 mestre Exp $	*/
+/*	$OpenBSD: gamesupport.c,v 1.10 2016/08/27 02:00:10 guenther Exp $	*/
 /*	$NetBSD: gamesupport.c,v 1.3 1995/04/24 12:24:28 cgd Exp $	*/
 
 /*
@@ -8,6 +8,7 @@
 #include <curses.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "pathnames.h"
 #include "phantdefs.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.21 2016/06/10 15:37:09 tb Exp $	*/
+/*	$OpenBSD: scores.c,v 1.22 2016/08/27 02:00:10 guenther Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -50,6 +50,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <term.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "scores.h"

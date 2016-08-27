@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2016/01/10 13:35:09 mestre Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2016/08/27 02:00:10 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #ifdef TERMIOS
 #include <termios.h>
 #endif
+#include <time.h>
 #include <unistd.h>
 
 #include "macros.h"
