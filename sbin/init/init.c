@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.59 2016/05/10 21:54:59 bluhm Exp $	*/
+/*	$OpenBSD: init.c,v 1.60 2016/08/27 01:55:30 guenther Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -34,9 +34,10 @@
  */
 
 #include <sys/types.h>
-#include <sys/sysctl.h>
-#include <sys/wait.h>
 #include <sys/reboot.h>
+#include <sys/sysctl.h>
+#include <sys/time.h>
+#include <sys/wait.h>
 #include <machine/cpu.h>
 
 #include <db.h>
