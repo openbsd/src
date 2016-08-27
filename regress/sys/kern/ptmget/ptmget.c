@@ -1,20 +1,21 @@
-/*	$OpenBSD: ptmget.c,v 1.2 2004/12/22 00:54:39 david Exp $ */
+/*	$OpenBSD: ptmget.c,v 1.3 2016/08/27 04:34:28 guenther Exp $ */
 /*
  *	Written by Bob Beck <beck@openbsd.org> 2004 Public Domain.
  *	Basic test to ensure /dev/ptm works, and what it returns
  * 	can be used via tty(4);
  */
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <sys/tty.h>
+#include <sys/stat.h>
+
 #include <err.h>
 #include <fcntl.h>
 #include <grp.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 int
 main(int argc, char *argv[])
