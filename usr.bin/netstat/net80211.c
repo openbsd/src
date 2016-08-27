@@ -1,4 +1,4 @@
-/*	$OpenBSD: net80211.c,v 1.16 2016/06/05 17:11:42 stsp Exp $	*/
+/*	$OpenBSD: net80211.c,v 1.17 2016/08/27 04:13:43 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
