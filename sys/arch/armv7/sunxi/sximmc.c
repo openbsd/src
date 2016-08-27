@@ -1,4 +1,4 @@
-/* $OpenBSD: sximmc.c,v 1.3 2016/08/21 23:02:32 kettenis Exp $ */
+/* $OpenBSD: sximmc.c,v 1.4 2016/08/27 12:41:47 kettenis Exp $ */
 /* $NetBSD: awin_mmc.c,v 1.23 2015/11/14 10:32:40 bouyer Exp $ */
 
 /*-
@@ -80,7 +80,8 @@
 #define SXIMMC_IDIE			0x008C
 #define SXIMMC_CHDA			0x0090
 #define SXIMMC_CBDA			0x0094
-#define SXIMMC_FIFO			0x0100
+#define SXIMMC_FIFO_A10			0x0100
+#define SXIMMC_FIFO_A31			0x0200
 
 #define SXIMMC_GCTRL_ACCESS_BY_AHB	(1U << 31)
 #define SXIMMC_GCTRL_WAIT_MEM_ACCESS_DONE (1U << 30)
@@ -343,7 +344,7 @@ sximmc_attach(struct device *parent, struct device *self, void *aux)
 	struct sximmc_softc *sc = (struct sximmc_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	struct sdmmcbus_attach_args saa;
-	int width;
+	int node, width;
 
 	if (faa->fa_nreg < 1)
 		return;
@@ -402,25 +403,28 @@ sximmc_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-#if 0
-	switch (awin_chip_id()) {
-	case AWIN_CHIP_ID_A80:
-		sc->sc_fifo_reg = AWIN_A31_MMC_FIFO;
+	/*
+	 * The FIFO register is in a different location on the
+	 * Allwinner A31 and later generations.  Unfortunately the
+	 * compatible string wasn't changed, so we need to look at the
+	 * root node to pick the right register.
+	 *
+	 * XXX Should we always use DMA (like Linux does) to avoid
+	 * this issue?
+	 */
+	node = OF_finddevice("/");
+	if (OF_is_compatible(node, "allwinner,sun4i-a10") ||
+	    OF_is_compatible(node, "allwinner,sun5i-a10s") ||
+	    OF_is_compatible(node, "allwinner,sun5i-a13") ||
+	    OF_is_compatible(node, "allwinner,sun7i-a20"))
+		sc->sc_fifo_reg = SXIMMC_FIFO_A10;
+	else
+		sc->sc_fifo_reg = SXIMMC_FIFO_A31;
+
+	if (OF_is_compatible(sc->sc_node, "allwinner,sun9i-a80-mmc"))
 		sc->sc_dma_ftrglevel = SXIMMC_DMA_FTRGLEVEL_A80;
-		break;
-	case AWIN_CHIP_ID_A31:
-		sc->sc_fifo_reg = AWIN_A31_MMC_FIFO;
+	else
 		sc->sc_dma_ftrglevel = SXIMMC_DMA_FTRGLEVEL_A20;
-		break;
-	default:
-		sc->sc_fifo_reg = SXIMMC_FIFO;
-		sc->sc_dma_ftrglevel = SXIMMC_DMA_FTRGLEVEL_A20;
-		break;
-	}
-#else
-	sc->sc_fifo_reg = SXIMMC_FIFO;
-	sc->sc_dma_ftrglevel = SXIMMC_DMA_FTRGLEVEL_A20;
-#endif
 
 	if (sc->sc_use_dma) {
 		if (sximmc_idma_setup(sc) != 0) {
