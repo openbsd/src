@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.33 2016/06/21 15:21:42 deraadt Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.34 2016/08/27 22:52:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -466,7 +466,6 @@ _dl_bind(elf_object_t *object, int reloff)
 		_dl_printf("lazy binding failed!\n");
 		*(volatile int *)0 = 0;		/* XXX */
 	}
-	DL_DEB(("%s: %s\n", symn, sobj->load_name));
 
 	value = ooff + this->st_value + rela->r_addend;
 
