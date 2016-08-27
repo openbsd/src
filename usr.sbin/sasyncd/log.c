@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.6 2009/11/11 23:05:28 deraadt Exp $	*/
+/*	$OpenBSD: log.c,v 1.7 2016/08/27 04:21:08 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -30,6 +30,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/select.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>

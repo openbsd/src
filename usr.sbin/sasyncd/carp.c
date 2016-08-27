@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.14 2015/11/12 09:27:09 otto Exp $	*/
+/*	$OpenBSD: carp.c,v 1.15 2016/08/27 04:21:08 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -32,6 +32,7 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <net/if.h>
 #include <net/route.h>
