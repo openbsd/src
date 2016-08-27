@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.23 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.24 2016/08/27 23:35:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -136,11 +136,6 @@ join_pane(struct cmd *self, struct cmd_q *cmdq, int not_same_window)
 	window_lost_pane(src_w, src_wp);
 	TAILQ_REMOVE(&src_w->panes, src_wp, entry);
 
-	if (window_count_panes(src_w) == 0)
-		server_kill_window(src_w);
-	else
-		notify_window_layout_changed(src_w);
-
 	src_wp->window = dst_w;
 	TAILQ_INSERT_AFTER(&dst_w->panes, dst_wp, src_wp, entry);
 	layout_assign_pane(lc, src_wp);
@@ -157,6 +152,11 @@ join_pane(struct cmd *self, struct cmd_q *cmdq, int not_same_window)
 	} else
 		server_status_session(dst_s);
 
+	if (window_count_panes(src_w) == 0)
+		server_kill_window(src_w);
+	else
+		notify_window_layout_changed(src_w);
 	notify_window_layout_changed(dst_w);
+
 	return (CMD_RETURN_NORMAL);
 }
