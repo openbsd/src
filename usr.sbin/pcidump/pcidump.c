@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.39 2015/12/01 19:10:09 kettenis Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.40 2016/08/27 04:38:48 guenther Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -20,6 +20,8 @@
 #include <sys/ioctl.h>
 #include <sys/pciio.h>
 
+#include <stdio.h>	/* need NULL for <dev/pci/*.h> */
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcidevs_data.h>
@@ -28,7 +30,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
