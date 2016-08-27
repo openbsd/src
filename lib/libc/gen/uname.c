@@ -1,4 +1,4 @@
-/*	$OpenBSD: uname.c,v 1.10 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: uname.c,v 1.11 2016/08/27 03:55:43 guenther Exp $ */
 /*-
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
+#include <stdio.h>		/* for NULL */
 
 /* A slightly modified copy of this file exists in libexec/ld.so */
 
