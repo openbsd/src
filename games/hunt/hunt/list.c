@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.8 2016/01/07 21:37:53 mestre Exp $	*/
+/*	$OpenBSD: list.c,v 1.9 2016/08/27 02:06:40 guenther Exp $	*/
 /*
  * Copyright 2001, David Leonard. All rights reserved.
  * Redistribution and use in source and binary forms with or without
@@ -7,6 +7,7 @@
  */
 
 #include <sys/ioctl.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 
 #include <arpa/inet.h>

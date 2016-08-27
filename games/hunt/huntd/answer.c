@@ -1,4 +1,4 @@
-/*	$OpenBSD: answer.c,v 1.20 2016/03/28 11:49:45 chl Exp $	*/
+/*	$OpenBSD: answer.c,v 1.21 2016/08/27 02:06:40 guenther Exp $	*/
 /*	$NetBSD: answer.c,v 1.3 1997/10/10 16:32:50 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -30,6 +30,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/select.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>

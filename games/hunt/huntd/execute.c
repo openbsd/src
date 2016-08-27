@@ -1,4 +1,4 @@
-/*	$OpenBSD: execute.c,v 1.12 2016/01/07 21:37:53 mestre Exp $	*/
+/*	$OpenBSD: execute.c,v 1.13 2016/08/27 02:06:40 guenther Exp $	*/
 /*	$NetBSD: execute.c,v 1.2 1997/10/10 16:33:13 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -31,6 +31,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/select.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>

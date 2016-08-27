@@ -1,4 +1,4 @@
-/*	$OpenBSD: playit.c,v 1.12 2016/01/10 13:35:09 mestre Exp $	*/
+/*	$OpenBSD: playit.c,v 1.13 2016/08/27 02:06:40 guenther Exp $	*/
 /*	$NetBSD: playit.c,v 1.4 1997/10/20 00:37:15 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -31,6 +31,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/select.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
