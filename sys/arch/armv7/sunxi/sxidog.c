@@ -1,4 +1,4 @@
-/* $OpenBSD: sxidog.c,v 1.8 2016/08/05 21:45:37 kettenis Exp $ */
+/* $OpenBSD: sxidog.c,v 1.9 2016/08/27 14:13:14 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -34,34 +34,32 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
 
-/* registers */
-#define WDOG_CR			0x00
-#define WDOG_MR			0x04
+/* Allwinner A10 registers */
+#define WDOG_CTRL_REG		0x00
+#define  WDOG_KEY		(0x0a57 << 1)
+#define  WDOG_RSTART		0x01
+#define WDOG_MODE_REG		0x04
+#define  WDOG_EN		(1 << 0)
+#define  WDOG_RST_EN		(1 << 1) /* system reset */
+#define  WDOG_INTV_VALUE(x)	((x) << 3)
 
-#define WDOG_CTRL_KEY		(0x0a57 << 1)
-#define WDOG_RESTART		0x01
-/*
- * 0x00 0,5sec
- * 0x01 1sec
- * 0x02 2sec
- * 0x03 3sec
- * 0x04 4sec
- * 0x05 5sec
- * 0x06 6sec
- * 0x07 8sec
- * 0x08 10sec
- * 0x09 12sec
- * 0x0a 14sec
- * 0x0b 16sec
- */
-#define WDOG_INTV_VALUE(x)	((x) << 3)
-#define WDOG_RST_EN		(1 << 1) /* system reset */
-#define WDOG_EN			(1 << 0)
+/* Allwinner A31 registers */
+#define WDOG0_CTRL_REG		0x10
+#define  WDOG0_KEY		(0x0a57 << 1)
+#define  WDOG0_RSTART		(1 << 0)
+#define WDOG0_CFG_REG		0x14
+#define  WDOG0_RST_EN		(1 << 0)
+#define WDOG0_MODE_REG		0x18
+#define  WDOG0_EN		(1 << 0)
+#define  WDOG0_INTV_VALUE(x)	((x) << 4)
 
 struct sxidog_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	int			sc_type;
+#define SXIDOG_A10		0
+#define SXIDOG_A31		1
 };
 
 struct sxidog_softc *sxidog_sc = NULL;	/* for sxidog_reset() */
@@ -70,9 +68,6 @@ int sxidog_match(struct device *, void *, void *);
 void sxidog_attach(struct device *, struct device *, void *);
 int sxidog_activate(struct device *, int);
 int sxidog_callback(void *, int);
-#if 0
-int sxidog_intr(void *);
-#endif
 void sxidog_reset(void);
 
 struct cfattach	sxidog_ca = {
@@ -89,7 +84,8 @@ sxidog_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-wdt");
+	return (OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-wdt") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun6i-a31-wdt"));
 }
 
 void
@@ -106,14 +102,12 @@ sxidog_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("sxidog_attach: bus_space_map failed!");
 
-#ifdef DEBUG
-	printf(": ctrl %x mode %x\n", SXIREAD4(sc, WDOG_CR),
-	    SXIREAD4(sc, WDOG_MR));
-#endif
-#if 0
-	(void)intc_intr_establish_fdt(faa->fa_node, IPL_HIGH, /* XXX */
-	    sxidog_intr, sc, sc->sc_dev.dv_xname);
-#endif
+	if (OF_is_compatible(faa->fa_node, "allwinner,sun6i-a31-wdt")) {
+		SXIWRITE4(sc, WDOG0_CFG_REG, WDOG0_RST_EN);
+		sc->sc_type = SXIDOG_A31;
+	} else
+		sc->sc_type = SXIDOG_A10;
+
 	sxidog_sc = sc;
 
 #ifndef SMALL_KERNEL
@@ -141,35 +135,38 @@ int
 sxidog_callback(void *arg, int period)
 {
 	struct sxidog_softc *sc = (struct sxidog_softc *)arg;
+	int enable;
 
-	if (period > 0x0b)
-		period = 0x0b;
+	if (period > 16)
+		period = 16;
 	else if (period < 0)
 		period = 0;
-	/*
-	 * clearing bits in mode reg has no effect according
-	 * to the user manual, so just set new timeout and enable it.
-	 * XXX
-	 */
-	SXIWRITE4(sc, WDOG_MR, WDOG_EN | WDOG_RST_EN |
-	    WDOG_INTV_VALUE(period));
-	/* reset */
-	SXIWRITE4(sc, WDOG_CR, WDOG_CTRL_KEY | WDOG_RESTART);
+
+	/* Convert to register encoding. */
+	if (period > 6)
+		period = 6 + (period - 5) / 2;
+
+	switch (sc->sc_type) {
+	case SXIDOG_A10:
+		enable = (period > 0) ? WDOG_EN : 0;
+		SXIWRITE4(sc, WDOG_MODE_REG,
+		    enable | WDOG_RST_EN | WDOG_INTV_VALUE(period));
+		SXIWRITE4(sc, WDOG_CTRL_REG, WDOG_KEY | WDOG_RSTART);
+		break;
+	case SXIDOG_A31:
+		enable = (period > 0) ? WDOG0_EN : 0;
+		SXIWRITE4(sc, WDOG0_MODE_REG,
+		    enable | WDOG0_INTV_VALUE(period));
+		SXIWRITE4(sc, WDOG0_CTRL_REG, WDOG0_KEY | WDOG0_RSTART);
+		break;
+	}
+
+	/* Convert back to seconds. */
+	if (period > 6)
+		period = 6 + (period - 6) * 2;
 
 	return period;
 }
-
-#if 0
-int
-sxidog_intr(void *arg)
-{
-	struct sxidog_softc *sc = (struct sxidog_softc *)arg;
-
-	/* XXX */
-	SXIWRITE4(sc, WDOG_CR, WDOG_CTRL_KEY | WDOG_RESTART);
-	return 1;
-}
-#endif
 
 void
 sxidog_reset(void)
@@ -177,8 +174,6 @@ sxidog_reset(void)
 	if (sxidog_sc == NULL)
 		return;
 
-	SXIWRITE4(sxidog_sc, WDOG_MR, WDOG_INTV_VALUE(0x00) |
-	    WDOG_RST_EN | WDOG_EN);
-	SXIWRITE4(sxidog_sc, WDOG_CR, WDOG_CTRL_KEY | WDOG_RESTART);
-	delay(900000);
+	sxidog_callback(sxidog_sc, 1);
+	delay(1500000);
 }
