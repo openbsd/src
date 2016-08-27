@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.44 2015/09/04 23:47:09 daniel Exp $	*/
+/*	$OpenBSD: types.h,v 1.45 2016/08/27 05:14:42 guenther Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -119,7 +119,6 @@ typedef	__uint64_t	u_int64_t;
 /* quads, deprecated in favor of 64 bit int types */
 typedef	__int64_t	quad_t;
 typedef	__uint64_t	u_quad_t;
-typedef	quad_t *	qaddr_t;
 
 #if __BSD_VISIBLE
 /* VM system types */
