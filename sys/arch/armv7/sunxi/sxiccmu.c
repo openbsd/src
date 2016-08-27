@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.16 2016/08/27 11:39:59 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.17 2016/08/27 16:41:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -32,7 +32,6 @@
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
-#include <armv7/sunxi/sxiccmuvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
@@ -42,17 +41,6 @@
 #else
 #define DPRINTF(x)
 #endif
-
-#define CCMU_SDx_CLK(x)			(0x88 + (x) * 4)
-#define CCMU_SDx_CLK_GATING		(1U << 31)
-#define CCMU_SDx_CLK_SRC_GATING_OSC24M	(0 << 24)
-#define CCMU_SDx_CLK_SRC_GATING_PLL6	(1 << 24)
-#define CCMU_SDx_CLK_SRC_GATING_PLL5	(2 << 24)
-#define CCMU_SDx_CLK_SRC_GATING_MASK	(3 << 24)
-#define CCMU_SDx_CLK_FACTOR_N		(3 << 16)
-#define CCMU_SDx_CLK_FACTOR_N_SHIFT	16
-#define CCMU_SDx_CLK_FACTOR_M		(7 << 0)
-#define CCMU_SDx_CLK_FACTOR_M_SHIFT	0
 
 struct sxiccmu_ccu_bit {
 	uint16_t reg;
@@ -172,6 +160,8 @@ uint32_t sxiccmu_pll6_get_frequency(void *, uint32_t *);
 void	sxiccmu_pll6_enable(void *, uint32_t *, int);
 uint32_t sxiccmu_apb1_get_frequency(void *, uint32_t *);
 int	sxiccmu_gmac_set_frequency(void *, uint32_t *, uint32_t);
+int	sxiccmu_mmc_set_frequency(void *, uint32_t *, uint32_t);
+void	sxiccmu_mmc_enable(void *, uint32_t *, int);
 void	sxiccmu_gate_enable(void *, uint32_t *, int);
 void	sxiccmu_reset(void *, uint32_t *, int);
 
@@ -203,6 +193,11 @@ struct sxiccmu_device sxiccmu_devices[] = {
 		.compat = "allwinner,sun4i-a10-apb1-gates-clk",
 		.get_frequency = sxiccmu_gen_get_frequency,
 		.enable = sxiccmu_gate_enable
+	},
+	{
+		.compat = "allwinner,sun4i-a10-mmc-clk",
+		.set_frequency = sxiccmu_mmc_set_frequency,
+		.enable = sxiccmu_mmc_enable
 	},
 	{
 		.compat = "allwinner,sun4i-a10-usb-clk",
@@ -454,6 +449,65 @@ sxiccmu_gmac_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 	return 0;
 }
 
+#define CCU_SDx_SCLK_GATING		(1U << 31)
+#define CCU_SDx_CLK_SRC_SEL_OSC24M	(0 << 24)
+#define CCU_SDx_CLK_SRC_SEL_PLL6	(1 << 24)
+#define CCU_SDx_CLK_SRC_SEL_PLL5	(2 << 24)
+#define CCU_SDx_CLK_SRC_SEL_MASK	(3 << 24)
+#define CCU_SDx_CLK_DIV_RATIO_N_MASK	(3 << 16)
+#define CCU_SDx_CLK_DIV_RATIO_N_SHIFT	16
+#define CCU_SDx_CLK_DIV_RATIO_M_MASK	(7 << 0)
+#define CCU_SDx_CLK_DIV_RATIO_M_SHIFT	0
+
+int
+sxiccmu_mmc_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
+{
+	struct sxiccmu_clock *sc = cookie;
+	uint32_t reg, m, n;
+
+	if (cells[0] != 0)
+		return -1;
+
+	switch (freq) {
+	case 400000:
+		n = 2, m = 15;
+		break;
+	case 25000000:
+	case 26000000:
+	case 50000000:
+		/* XXX OSC24M */
+		n = 0, m = 0;
+		break;
+	default:
+		return -1;
+	}
+
+	reg = SXIREAD4(sc, 0);
+	reg &= ~CCU_SDx_CLK_SRC_SEL_MASK;
+	reg |= CCU_SDx_CLK_SRC_SEL_OSC24M;
+	reg &= ~CCU_SDx_CLK_DIV_RATIO_N_MASK;
+	reg |= n << CCU_SDx_CLK_DIV_RATIO_N_SHIFT;
+	reg &= ~CCU_SDx_CLK_DIV_RATIO_M_MASK;
+	reg |= m << CCU_SDx_CLK_DIV_RATIO_M_SHIFT;
+	SXIWRITE4(sc, 0, reg);
+
+	return 0;
+}
+
+void
+sxiccmu_mmc_enable(void *cookie, uint32_t *cells, int on)
+{
+	struct sxiccmu_clock *sc = cookie;
+
+	if (cells[0] != 0)
+		return;
+
+	if (on)
+		SXISET4(sc, 0, CCU_SDx_SCLK_GATING);
+	else
+		SXICLR4(sc, 0, CCU_SDx_SCLK_GATING);
+}
+
 void
 sxiccmu_gate_enable(void *cookie, uint32_t *cells, int on)
 {
@@ -510,8 +564,23 @@ sxiccmu_ccu_get_frequency(void *cookie, uint32_t *cells)
 int
 sxiccmu_ccu_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 {
+	struct sxiccmu_softc *sc = cookie;
+	struct sxiccmu_clock clock;
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case H3_CLK_MMC0:
+	case H3_CLK_MMC1:
+	case H3_CLK_MMC2:
+		idx = 0;
+		clock.sc_iot = sc->sc_iot;
+		bus_space_subregion(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_gates[idx].reg, 4, &clock.sc_ioh);
+		return sxiccmu_mmc_set_frequency(&clock, &idx, freq);
+	}
+
 	printf("%s: 0x%08x\n", __func__, cells[0]);
-	return 0;
+	return -1;
 }
 
 void
@@ -554,34 +623,4 @@ sxiccmu_ccu_reset(void *cookie, uint32_t *cells, int assert)
 		SXICLR4(sc, reg, (1U << bit));
 	else
 		SXISET4(sc, reg, (1U << bit));
-}
-
-
-void
-sxiccmu_set_sd_clock(int mod, int freq)
-{
-	struct sxiccmu_softc *sc = sxiccmu_cd.cd_devs[0];
-	uint32_t clk;
-	int m, n;
-
-	if (freq <= 400000) {
-		n = 2;
-		if (freq > 0)
-			m = ((24000000 / (1 << n)) / freq) - 1;
-		else
-			m = 15;
-	} else {
-		n = 0;
-		m = 0;
-	}
-	
-	clk = SXIREAD4(sc, CCMU_SDx_CLK(mod - CCMU_SDMMC0));
-	clk &= ~CCMU_SDx_CLK_SRC_GATING_MASK;
-	clk |= CCMU_SDx_CLK_SRC_GATING_OSC24M;
-	clk &= ~CCMU_SDx_CLK_FACTOR_N;
-	clk |= n << CCMU_SDx_CLK_FACTOR_N_SHIFT;
-	clk &= ~CCMU_SDx_CLK_FACTOR_M;
-	clk |= m << CCMU_SDx_CLK_FACTOR_M_SHIFT;
-	clk |= CCMU_SDx_CLK_GATING;
-	SXIWRITE4(sc, CCMU_SDx_CLK(mod - CCMU_SDMMC0), clk);
 }

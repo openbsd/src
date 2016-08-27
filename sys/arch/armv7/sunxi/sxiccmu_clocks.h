@@ -27,6 +27,10 @@
 #define H3_CLK_BUS_UART2	64
 #define H3_CLK_BUS_UART3	65
 
+#define H3_CLK_MMC0		71
+#define H3_CLK_MMC1		74
+#define H3_CLK_MMC2		77
+
 #define H3_CLK_USB_PHY0		88
 #define H3_CLK_USB_PHY1		89
 #define H3_CLK_USB_PHY2		90
@@ -48,10 +52,13 @@ struct sxiccmu_ccu_bit sun8i_h3_gates[] = {
 	[H3_CLK_BUS_UART1] = { 0x006c, 17, H3_CLK_APB2 },
 	[H3_CLK_BUS_UART2] = { 0x006c, 18, H3_CLK_APB2 },
 	[H3_CLK_BUS_UART3] = { 0x006c, 19, H3_CLK_APB2 },
-	[H3_CLK_USB_PHY0] = { 0x00cc, 8 },
-	[H3_CLK_USB_PHY1] = { 0x00cc, 9 },
-	[H3_CLK_USB_PHY2] = { 0x00cc, 10 },
-	[H3_CLK_USB_PHY3] = { 0x00cc, 11 },
+	[H3_CLK_MMC0]      = { 0x0088, 31 },
+	[H3_CLK_MMC1]      = { 0x008c, 31 },
+	[H3_CLK_MMC2]      = { 0x0090, 31 },
+	[H3_CLK_USB_PHY0]  = { 0x00cc, 8 },
+	[H3_CLK_USB_PHY1]  = { 0x00cc, 9 },
+	[H3_CLK_USB_PHY2]  = { 0x00cc, 10 },
+	[H3_CLK_USB_PHY3]  = { 0x00cc, 11 },
 };
 
 /*
@@ -62,6 +69,10 @@ struct sxiccmu_ccu_bit sun8i_h3_gates[] = {
 #define H3_RST_USB_PHY1		1
 #define H3_RST_USB_PHY2		2
 #define H3_RST_USB_PHY3		3
+
+#define H3_RST_BUS_MMC0		7
+#define H3_RST_BUS_MMC1		8
+#define H3_RST_BUS_MMC2		9
 
 #define H3_RST_BUS_EHCI0	18
 #define H3_RST_BUS_EHCI1	19
@@ -77,6 +88,9 @@ struct sxiccmu_ccu_bit sun8i_h3_resets[] = {
 	[H3_RST_USB_PHY1] =  { 0x00cc, 1 },
 	[H3_RST_USB_PHY2] =  { 0x00cc, 2 },
 	[H3_RST_USB_PHY3] =  { 0x00cc, 3 },
+	[H3_RST_BUS_MMC0] =  { 0x02c0, 8 },
+	[H3_RST_BUS_MMC1] =  { 0x02c0, 9 },
+	[H3_RST_BUS_MMC2] =  { 0x02c0, 10 },
 	[H3_RST_BUS_EHCI0] = { 0x02c0, 24 },
 	[H3_RST_BUS_EHCI1] = { 0x02c0, 25 },
 	[H3_RST_BUS_EHCI2] = { 0x02c0, 26 },

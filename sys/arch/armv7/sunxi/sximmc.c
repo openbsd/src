@@ -1,4 +1,4 @@
-/* $OpenBSD: sximmc.c,v 1.4 2016/08/27 12:41:47 kettenis Exp $ */
+/* $OpenBSD: sximmc.c,v 1.5 2016/08/27 16:41:52 kettenis Exp $ */
 /* $NetBSD: awin_mmc.c,v 1.23 2015/11/14 10:32:40 bouyer Exp $ */
 
 /*-
@@ -39,9 +39,6 @@
 #include <dev/sdmmc/sdmmcvar.h>
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmc_ioreg.h>
-
-#include <armv7/sunxi/sunxireg.h>
-#include <armv7/sunxi/sxiccmuvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
@@ -239,7 +236,6 @@ struct sximmc_softc {
 	bus_space_handle_t sc_clk_bsh;
 	bus_dma_tag_t sc_dmat;
 	int sc_node;
-	int sc_unit;
 
 	int sc_use_dma;
 
@@ -350,7 +346,6 @@ sximmc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	sc->sc_node = faa->fa_node;
-	sc->sc_unit = (faa->fa_reg[0].addr - SDMMC0_ADDR) / SDMMCx_SIZE;
 	sc->sc_bst = faa->fa_iot;
 	sc->sc_dmat = faa->fa_dmat;
 
@@ -362,7 +357,7 @@ sximmc_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_use_dma = 1;
 
-	printf(": unit %d\n", sc->sc_unit);
+	printf("\n");
 
 	pinctrl_byname(faa->fa_node, "default");
 
@@ -536,8 +531,14 @@ sximmc_set_clock(struct sximmc_softc *sc, u_int freq)
 	delay(20000);
 #endif
 
-	sxiccmu_set_sd_clock(CCMU_SDMMC0 + sc->sc_unit, freq * 1000);
-	delay(20000);
+	if (freq > 0) {
+		if (clock_set_frequency(sc->sc_node, "mmc", freq * 1000))
+			return EIO;
+		clock_enable(sc->sc_node, "mmc");
+		delay(20000);
+	} else
+		clock_disable(sc->sc_node, "mmc");
+
 	return 0;
 }
 
