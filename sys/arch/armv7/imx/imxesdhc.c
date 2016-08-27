@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.30 2016/08/13 11:08:58 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.31 2016/08/27 17:32:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -654,7 +654,7 @@ int
 imxesdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 {
 	struct imxesdhc_softc *sc = sch;
-	uint32_t vdd;
+	uint32_t vdd = 0;
 
 	ocr &= sc->ocr;
 	if (ISSET(ocr, MMC_OCR_3_2V_3_3V|MMC_OCR_3_3V_3_4V))
