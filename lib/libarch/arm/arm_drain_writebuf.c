@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm_drain_writebuf.c,v 1.3 2014/11/15 02:23:28 tedu Exp $	*/
+/*	$OpenBSD: arm_drain_writebuf.c,v 1.4 2016/08/27 07:35:19 guenther Exp $	*/
 /*	$NetBSD: arm_drain_writebuf.c,v 1.1 2002/03/30 06:24:34 thorpej Exp $	*/
 
 /*
@@ -34,8 +34,8 @@
  */
 
 #include <sys/types.h>
-
 #include <machine/sysarch.h>
+#include <stdio.h>
 
 int
 arm_drain_writebuf()
