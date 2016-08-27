@@ -1,4 +1,4 @@
-/* Adapted from usr.sbin/ntpd/parse.y 1.50 */
+/*	$OpenBSD: parse.y,v 1.4 2016/08/27 09:04:20 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
