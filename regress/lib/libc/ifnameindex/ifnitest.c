@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifnitest.c,v 1.1 2015/10/22 15:47:00 claudio Exp $ */
+/*	$OpenBSD: ifnitest.c,v 1.2 2016/08/27 04:29:25 guenther Exp $ */
 
 /* Public domain. 2015, Claudio Jeker */
 
@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <err.h>
+#include <stdio.h>
 
 int
 main(int argc, char *argv[])
