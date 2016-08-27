@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrawpartition.c,v 1.8 2014/06/30 00:26:22 deraadt Exp $	*/
+/*	$OpenBSD: getrawpartition.c,v 1.9 2016/08/27 03:54:20 guenther Exp $	*/
 /*	$NetBSD: getrawpartition.c,v 1.1 1996/05/16 07:03:33 thorpej Exp $	*/
 
 /*-
@@ -32,6 +32,7 @@
 
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#include <stdio.h>		/* for NULL */
 
 #include "util.h"
 
