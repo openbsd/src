@@ -1,4 +1,4 @@
-/* $OpenBSD: sximmc.c,v 1.5 2016/08/27 16:41:52 kettenis Exp $ */
+/* $OpenBSD: sximmc.c,v 1.6 2016/08/27 18:12:16 kettenis Exp $ */
 /* $NetBSD: awin_mmc.c,v 1.23 2015/11/14 10:32:40 bouyer Exp $ */
 
 /*-
@@ -31,6 +31,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -44,6 +45,7 @@
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 //#define SXIMMC_DEBUG
@@ -218,6 +220,9 @@ int	sximmc_bus_clock(sdmmc_chipset_handle_t, int, int);
 int	sximmc_bus_width(sdmmc_chipset_handle_t, int);
 void	sximmc_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
 
+void	sximmc_pwrseq_pre(uint32_t);
+void	sximmc_pwrseq_post(uint32_t);
+
 struct sdmmc_chip_functions sximmc_chip_functions = {
 	.host_reset = sximmc_host_reset,
 	.host_ocr = sximmc_host_ocr,
@@ -259,6 +264,9 @@ struct sximmc_softc {
 	uint32_t sc_idma_idst;
 
 	uint32_t sc_gpio[4];
+	uint32_t sc_vmmc;
+	uint32_t sc_pwrseq;
+	uint32_t sc_vdd;
 };
 
 struct cfdriver sximmc_cd = {
@@ -365,38 +373,7 @@ sximmc_attach(struct device *parent, struct device *self, void *aux)
 	clock_enable(faa->fa_node, NULL);
 	delay(5000);
 
-#if 0
-	if (awin_chip_id() == AWIN_CHIP_ID_A80) {
-		bus_space_subregion(sc->sc_bst, aio->aio_ccm_bsh,
-		    AWIN_A80_CCU_SCLK_SDMMC0_CLK_REG + (loc->loc_port * 4), 4,
-		    &sc->sc_clk_bsh);
-		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-		    AWIN_A80_CCU_SCLK_BUS_CLK_GATING0_REG,
-		    AWIN_A80_CCU_SCLK_BUS_CLK_GATING0_SD, 0);
-		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-		    AWIN_A80_CCU_SCLK_BUS_SOFT_RST0_REG,
-		    AWIN_A80_CCU_SCLK_BUS_SOFT_RST0_SD, 0);
-		awin_reg_set_clear(aio->aio_core_bst, aio->aio_core_bsh,
-		    AWIN_A80_SDMMC_COMM_OFFSET + (loc->loc_port * 4),
-		    AWIN_A80_SDMMC_COMM_SDC_RESET_SW |
-		    AWIN_A80_SDMMC_COMM_SDC_CLOCK_SW, 0);
-		delay(1000);
-	} else {
-		bus_space_subregion(sc->sc_bst, aio->aio_ccm_bsh,
-		    AWIN_SD0_CLK_REG + (loc->loc_port * 4), 4, &sc->sc_clk_bsh);
-
-		awin_pll6_enable();
-
-		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-		    AWIN_AHB_GATING0_REG,
-		    AWIN_AHB_GATING0_SDMMC0 << loc->loc_port, 0);
-		if (awin_chip_id() == AWIN_CHIP_ID_A31) {
-			awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-			    AWIN_A31_AHB_RESET0_REG,
-			    AWIN_A31_AHB_RESET0_SD0_RST << loc->loc_port, 0);
-		}
-	}
-#endif
+	reset_deassert_all(faa->fa_node);
 
 	/*
 	 * The FIFO register is in a different location on the
@@ -431,6 +408,9 @@ sximmc_attach(struct device *parent, struct device *self, void *aux)
 	OF_getpropintarray(sc->sc_node, "cd-gpios", sc->sc_gpio,
 	    sizeof(sc->sc_gpio));
 	gpio_controller_config_pin(sc->sc_gpio, GPIO_CONFIG_INPUT);
+
+	sc->sc_vmmc = OF_getpropint(sc->sc_node, "vmmc-supply", 0);
+	sc->sc_pwrseq = OF_getpropint(sc->sc_node, "mmc-pwrseq", 0);
 
 	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_BIO,
 	    sximmc_intr, sc, sc->sc_dev.dv_xname);
@@ -693,6 +673,23 @@ sximmc_card_detect(sdmmc_chipset_handle_t sch)
 int
 sximmc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 {
+	struct sximmc_softc *sc = sch;
+	uint32_t vdd = 0;
+
+	if (ISSET(ocr, MMC_OCR_3_2V_3_3V|MMC_OCR_3_3V_3_4V))
+		vdd = 3300000;
+
+	if (sc->sc_vdd == 0 && vdd > 0)
+		sximmc_pwrseq_pre(sc->sc_pwrseq);
+
+	/* enable mmc power */
+	if (sc->sc_vmmc && vdd > 0)
+		regulator_enable(sc->sc_vmmc);
+
+	if (sc->sc_vdd == 0 && vdd > 0)
+		sximmc_pwrseq_post(sc->sc_pwrseq);
+
+	sc->sc_vdd = vdd;
 	return 0;
 }
 
@@ -1089,4 +1086,69 @@ done:
 		MMC_WRITE(sc, SXIMMC_GCTRL,
 		    MMC_READ(sc, SXIMMC_GCTRL) | SXIMMC_GCTRL_FIFORESET);
 	}
+}
+
+void
+sximmc_pwrseq_pre(uint32_t phandle)
+{
+	uint32_t *gpios, *gpio;
+	int node;
+	int len;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return;
+
+	if (!OF_is_compatible(node, "mmc-pwrseq-simple"))
+		return;
+
+	pinctrl_byname(node, "default");
+
+	clock_enable(node, "ext_clock");
+
+	len = OF_getproplen(node, "reset-gpios");
+	if (len <= 0)
+		return;
+
+	gpios = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "reset-gpios", gpios, len);
+
+	gpio = gpios;
+	while (gpio && gpio < gpios + (len / sizeof(uint32_t))) {
+		gpio_controller_config_pin(gpio, GPIO_CONFIG_OUTPUT);
+		gpio_controller_set_pin(gpio, 1);
+		gpio = gpio_controller_next_pin(gpio);
+	}
+
+	free(gpios, M_TEMP, len);
+}
+
+void
+sximmc_pwrseq_post(uint32_t phandle)
+{
+	uint32_t *gpios, *gpio;
+	int node;
+	int len;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return;
+
+	if (!OF_is_compatible(node, "mmc-pwrseq-simple"))
+		return;
+
+	len = OF_getproplen(node, "reset-gpios");
+	if (len <= 0)
+		return;
+
+	gpios = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "reset-gpios", gpios, len);
+
+	gpio = gpios;
+	while (gpio && gpio < gpios + (len / sizeof(uint32_t))) {
+		gpio_controller_set_pin(gpio, 0);
+		gpio = gpio_controller_next_pin(gpio);
+	}
+
+	free(gpios, M_TEMP, len);
 }
