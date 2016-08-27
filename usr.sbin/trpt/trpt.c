@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.32 2015/11/20 15:52:57 deraadt Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.33 2016/08/27 01:50:07 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@
  */
 
 #include <sys/queue.h>
+#include <sys/time.h>
 #include <sys/socket.h>
 #define PRUREQUESTS
 #include <sys/protosw.h>

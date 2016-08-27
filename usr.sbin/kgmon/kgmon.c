@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgmon.c,v 1.23 2015/11/16 17:29:43 deraadt Exp $	*/
+/*	$OpenBSD: kgmon.c,v 1.24 2016/08/27 01:50:07 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -31,6 +31,7 @@
 
 #include <sys/file.h>
 #include <sys/sysctl.h>
+#include <sys/time.h>
 #include <sys/gmon.h>
 #include <errno.h>
 #include <err.h>
