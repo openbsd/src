@@ -1,4 +1,4 @@
-/*	$OpenBSD: arptab.c,v 1.27 2016/07/25 16:28:06 visa Exp $ */
+/*	$OpenBSD: arptab.c,v 1.28 2016/08/27 01:42:37 guenther Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -40,6 +40,7 @@
 #include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
+#include <sys/time.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
