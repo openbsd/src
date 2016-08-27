@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmap_fixed.c,v 1.2 2016/08/25 05:12:06 deraadt Exp $	*/
+/*	$OpenBSD: mmap_fixed.c,v 1.3 2016/08/27 04:35:19 guenther Exp $	*/
 
 /*
  * Public domain. 2006, Kurt Miller <kurt@intricatesoftware.com>
@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <err.h>
+#include <stdio.h>
 
 #define MEM_SIZE        1024*1024
 

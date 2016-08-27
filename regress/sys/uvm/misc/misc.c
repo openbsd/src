@@ -139,6 +139,12 @@ main(argc, argv)
 
 	(void) munmap(addr, st.st_size);
 
+	if (munlock(addr, pgsize) == 0)
+		errx(1, "munlock %s (again): should have failed but didn't",
+		    filename);
+	if (errno != ENOMEM)
+		err(1, "munlock %s (again)", filename);
+
 	/*
 	 * TEST MLOCKALL'ING AN ANONYMOUS MEMORY RANGE.
 	 */
