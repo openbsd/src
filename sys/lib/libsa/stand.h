@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.62 2015/11/16 19:33:52 miod Exp $	*/
+/*	$OpenBSD: stand.h,v 1.63 2016/08/27 04:57:30 guenther Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -163,6 +163,7 @@ ssize_t	read(int, void *, size_t);
 ssize_t	write(int, void *, size_t);
 int	stat(const char *path, struct stat *sb);
 int	fstat(int fd, struct stat *sb);
+off_t	lseek(int, off_t, int);
 int	opendir(const char *);
 int	readdir(int, char *);
 void	closedir(int);
