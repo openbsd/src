@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_clock.c,v 1.6 2016/08/23 21:30:18 kettenis Exp $	*/
+/*	$OpenBSD: ofw_clock.c,v 1.7 2016/08/27 16:50:40 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -203,7 +203,7 @@ clock_set_frequency_idx(int node, int idx, uint32_t freq)
 
 	len = OF_getproplen(node, "clocks");
 	if (len <= 0)
-		return 0;
+		return -1;
 
 	clocks = malloc(len, M_TEMP, M_WAITOK);
 	OF_getpropintarray(node, "clocks", clocks, len);
@@ -229,7 +229,7 @@ clock_set_frequency(int node, const char *name, uint32_t freq)
 
 	idx = clock_index(node, name);
 	if (idx == -1)
-		return 0;
+		return -1;
 
 	return clock_set_frequency_idx(node, idx, freq);
 }
