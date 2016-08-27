@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.62 2016/08/25 14:37:28 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.63 2016/08/27 20:43:05 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 25 2016 $
+.Dd $Mdocdate: August 27 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3089,9 +3089,6 @@ verification succeeded or failed.
 .It Fl verifyrecover
 Verify the input data and output the recovered data.
 .El
-.\"
-.\" PRIME
-.\"
 .Sh PRIME
 .Cm openssl prime
 .Op Fl bits Ar n
@@ -3136,9 +3133,6 @@ Test if number
 .Ar p
 is prime.
 .El
-.\"
-.\" RAND
-.\"
 .Sh RAND
 .nr nS 1
 .Nm "openssl rand"
@@ -3163,26 +3157,21 @@ encoding on the output.
 .It Fl hex
 Specify hexadecimal output.
 .It Fl out Ar file
-Write to
-.Ar file
-instead of standard output.
+The output file to write to,
+or standard output if not specified.
 .El
-.\"
-.\" REQ
-.\"
 .Sh REQ
 .nr nS 1
 .Nm "openssl req"
-.Bk -words
 .Op Fl asn1-kludge
 .Op Fl batch
 .Op Fl config Ar file
 .Op Fl days Ar n
 .Op Fl extensions Ar section
 .Op Fl in Ar file
-.Op Fl inform Ar DER | PEM
+.Op Fl inform Cm der | pem
 .Op Fl key Ar keyfile
-.Op Fl keyform Ar DER | PEM
+.Op Fl keyform Cm der | pem
 .Op Fl keyout Ar file
 .Op Fl md4 | md5 | sha1
 .Op Fl modulus
@@ -3194,7 +3183,7 @@ instead of standard output.
 .Op Fl nodes
 .Op Fl noout
 .Op Fl out Ar file
-.Op Fl outform Ar DER | PEM
+.Op Fl outform Cm der | pem
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
 .Op Fl pubkey
@@ -3208,7 +3197,6 @@ instead of standard output.
 .Op Fl verbose
 .Op Fl verify
 .Op Fl x509
-.Ek
 .nr nS 0
 .Pp
 The
@@ -3221,103 +3209,71 @@ for use as root CAs, for example.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl asn1-kludge
-By default, the
-.Nm req
-command outputs certificate requests containing
-no attributes in the correct PKCS#10 format.
-However certain CAs will only
-accept requests containing no attributes in an invalid form: this
-option produces this invalid format.
-.Pp
-More precisely, the
-.Em Attributes
-in a PKCS#10 certificate request are defined as a SET OF Attribute.
-They are
-.Em not
-optional, so if no attributes are present then they should be encoded as an
-empty SET OF.
-The invalid form does not include the empty
-SET OF, whereas the correct form does.
-.Pp
-It should be noted that very few CAs still require the use of this option.
+Produce requests in an invalid format for certain picky CAs.
+Very few CAs still require the use of this option.
 .It Fl batch
 Non-interactive mode.
 .It Fl config Ar file
-This allows an alternative configuration file to be specified;
-this overrides the compile time filename or any specified in
-the
-.Ev OPENSSL_CONF
-environment variable.
+Specify an alternative configuration file.
 .It Fl days Ar n
-When the
-.Fl x509
-option is being used, this specifies the number of
-days to certify the certificate for.
+Specify the number of days to certify the certificate for.
 The default is 30 days.
-.It Fl extensions Ar section , Fl reqexts Ar section
-These options specify alternative sections to include certificate
-extensions (if the
+Used with the
 .Fl x509
-option is present) or certificate request extensions.
-This allows several different sections to
-be used in the same configuration file to specify requests for
-a variety of purposes.
+option.
+.It Fl extensions Ar section , Fl reqexts Ar section
+Specify alternative sections to include certificate
+extensions (with
+.Fl x509 )
+or certificate request extensions,
+allowing several different sections to be used in the same configuration file.
 .It Fl in Ar file
-This specifies the input
-.Ar file
-to read a request from, or standard input
-if this option is not specified.
+The input file to read a request from,
+or standard input if not specified.
 A request is only read if the creation options
 .Fl new
 and
 .Fl newkey
 are not specified.
-.It Fl inform Ar DER | PEM
-This specifies the input format.
-The
-.Ar DER
-argument uses an ASN1 DER-encoded form compatible with the PKCS#10.
-The
-.Ar PEM
-form is the default format:
+.It Fl inform Cm der | pem
+The input format.
+.Cm der
+uses an ASN1 DER-encoded form compatible with the PKCS#10.
+.Cm pem
+is the default format:
 it consists of the DER format base64-encoded with additional header and
 footer lines.
 .It Fl key Ar keyfile
-This specifies the file to read the private key from.
+The file to read the private key from.
 It also accepts PKCS#8 format private keys for PEM format files.
-.It Fl keyform Ar DER | PEM
+.It Fl keyform Cm der | pem
 The format of the private key file specified in the
 .Fl key
 argument.
-.Ar PEM
-is the default.
+The default is PEM.
 .It Fl keyout Ar file
-This gives the
-.Ar file
-to write the newly created private key to.
-If this option is not specified, the filename present in the
-configuration file is used.
+The file to write the newly created private key to.
+If this option is not specified,
+the filename present in the configuration file is used.
 .It Fl md5 | sha1 | sha256
-This specifies the message digest to sign the request with.
+The message digest to sign the request with.
 This overrides the digest algorithm specified in the configuration file.
 .Pp
 Some public key algorithms may override this choice.
 For instance, DSA signatures always use SHA1.
 .It Fl modulus
-This option prints out the value of the modulus of the public key
-contained in the request.
+Print the value of the modulus of the public key contained in the request.
 .It Fl nameopt Ar option , Fl reqopt Ar option
-These options determine how the subject or issuer names are displayed.
-The
+Determine how the subject or issuer names are displayed.
 .Ar option
-argument can be a single option or multiple options separated by commas.
+can be a single option or multiple options separated by commas.
 Alternatively, these options may be used more than once to set multiple options.
 See the
 .Sx X509
 section below for details.
 .It Fl new
-This option generates a new certificate request.
-It will prompt the user for the relevant field values.
+Generate a new certificate request.
+The user is prompted for the relevant field values.
 The actual fields prompted for and their maximum and minimum sizes
 are specified in the configuration file and any requested extensions.
 .Pp
@@ -3326,88 +3282,68 @@ If the
 option is not used, it will generate a new RSA private
 key using information specified in the configuration file.
 .It Fl newhdr
-Adds the word NEW to the PEM file header and footer lines
+Add the word NEW to the PEM file header and footer lines
 on the outputed request.
-Some software
-.Pq Netscape certificate server
-and some CAs need this.
+Some software and CAs need this.
 .It Fl newkey Ar arg
-This option creates a new certificate request and a new private key.
+Create a new certificate request and a new private key.
 The argument takes one of several forms.
-.Ar rsa : Ns Ar nbits ,
-where
-.Ar nbits
-is the number of bits, generates an RSA key
+.Pp
+.No rsa : Ns Ar nbits
+generates an RSA key
 .Ar nbits
 in size.
 If
 .Ar nbits
-is omitted, i.e.\&
-.Cm -newkey rsa
-specified,
-the default key size, specified in the configuration file, is used.
+is omitted
+the default key size is used.
 .Pp
-All other algorithms support the
-.Ar alg : Ns Ar file
-form,
+.No dsa : Ns Ar file
+generates a DSA key using the parameters in
+.Ar file .
+.Pp
+.No param : Ns Ar file
+generates a key using the parameters or certificate in
+.Ar file .
+.Pp
+All other algorithms support the form
+.Ar algorithm : Ns Ar file ,
 where file may be an algorithm parameter file,
 created by the
 .Cm genpkey -genparam
 command or an X.509 certificate for a key with appropriate algorithm.
-.Pp
-.Ar param : Ns Ar file
-generates a key using the parameter file or certificate
-.Ar file ;
-the algorithm is determined by the parameters.
-.Ar algname : Ns Ar file
-use algorithm
-.Ar algname
-and parameter file
-.Ar file :
-the two algorithms must match or an error occurs.
-.Ar algname
-just uses algorithm
-.Ar algname ,
-and parameters, if necessary,
-should be specified via the
+.Ar file
+can be omitted,
+in which case any parameters can be specified via the
 .Fl pkeyopt
 option.
-.Pp
-.Ar dsa : Ns Ar file
-generates a DSA key using the parameters in the file
-.Ar file .
 .It Fl no-asn1-kludge
-Reverses the effect of
+Reverse the effect of
 .Fl asn1-kludge .
 .It Fl nodes
-If this option is specified and a private key is created, it
-will not be encrypted.
+Do not encrypt the private key.
 .It Fl noout
-This option prevents output of the encoded version of the request.
+Do not output the encoded version of the request.
 .It Fl out Ar file
-This specifies the output
-.Ar file
-to write to, or standard output by default.
-.It Fl outform Ar DER | PEM
-This specifies the output format; the options have the same meaning as the
-.Fl inform
-option.
+The output file to write to,
+or standard output if not spceified.
+.It Fl outform Cm der | pem
+The output format.
 .It Fl passin Ar arg
 The key password source.
 .It Fl passout Ar arg
 The output file password source.
 .It Fl pubkey
-Outputs the public key.
+Output the public key.
 .It Fl reqopt Ar option
 Customise the output format used with
 .Fl text .
 The
 .Ar option
 argument can be a single option or multiple options separated by commas.
-.Pp
-See the discussion of the
+See also the discussion of
 .Fl certopt
-option in the
+in the
 .Nm x509
 command.
 .It Fl set_serial Ar n
@@ -3416,219 +3352,180 @@ This may be specified as a decimal value or a hex value if preceded by
 .Sq 0x .
 It is possible to use negative serial numbers but this is not recommended.
 .It Fl subj Ar arg
-Replaces subject field of input request with specified data and outputs
-modified request.
-The arg must be formatted as
-.Em /type0=value0/type1=value1/type2=... ;
+Replaces the subject field of an input request
+with the specified data and output the modified request.
+.Ar arg
+must be formatted as /type0=value0/type1=value1/type2=...;
 characters may be escaped by
 .Sq \e
-.Pq backslash ;
+(backslash);
 no spaces are skipped.
 .It Fl subject
-Prints out the request subject (or certificate subject if
+Print the request subject (or certificate subject if
 .Fl x509
-is specified.
+is specified).
 .It Fl text
-Prints out the certificate request in text form.
+Print the certificate request in text form.
 .It Fl utf8
-This option causes field values to be interpreted as UTF8 strings;
-by default they are interpreted as ASCII.
-This means that the field values, whether prompted from a terminal or
-obtained from a configuration file, must be valid UTF8 strings.
+Interpret field values as UTF8 strings, not ASCII.
 .It Fl verbose
 Print extra details about the operations being performed.
 .It Fl verify
-Verifies the signature on the request.
+Verify the signature on the request.
 .It Fl x509
-This option outputs a self-signed certificate instead of a certificate
-request.
-This is typically used to generate a test certificate or
-a self-signed root CA.
-The extensions added to the certificate
-.Pq if any
+Output a self-signed certificate instead of a certificate request.
+This is typically used to generate a test certificate or a self-signed root CA.
+The extensions added to the certificate (if any)
 are specified in the configuration file.
 Unless specified using the
 .Fl set_serial
-option, 0 will be used for the serial number.
+option, 0 is used for the serial number.
 .El
-.Sh REQ CONFIGURATION FILE FORMAT
+.Pp
 The configuration options are specified in the
-.Em req
+.Qq req
 section of the configuration file.
 As with all configuration files, if no value is specified in the specific
-section (i.e.\&
-.Em req )
-then the initial unnamed or
-.Em default
-section is searched too.
+section then the initial unnamed or default section is searched too.
 .Pp
-The options available are described in detail below.
+The options available are as follows:
 .Bl -tag -width "XXXX"
-.It Ar attributes
-This specifies the section containing any request attributes: its format
+.It Cm attributes
+The section containing any request attributes: its format
 is the same as
-.Ar distinguished_name .
-Typically these may contain the
-.Em challengePassword
-or
-.Em unstructuredName
-types.
-They are currently ignored by
-.Nm OpenSSL Ns Li 's
+.Cm distinguished_name .
+Typically these may contain the challengePassword or unstructuredName types.
+They are currently ignored by the
+.Nm openssl
 request signing utilities, but some CAs might want them.
-.It Ar default_bits
-This specifies the default key size in bits.
-If not specified, 2048 is used.
+.It Cm default_bits
+The default key size, in bits.
+The default is 2048.
 It is used if the
 .Fl new
-option is used.
-It can be overridden by using the
+option is used and can be overridden by using the
 .Fl newkey
 option.
-.It Ar default_keyfile
-This is the default file to write a private key to.
-If not specified, the key is written to standard output.
-This can be overridden by the
+.It Cm default_keyfile
+The default file to write a private key to,
+or standard output if not specified.
+It can be overridden by the
 .Fl keyout
 option.
-.It Ar default_md
-This option specifies the digest algorithm to use.
+.It Cm default_md
+The digest algorithm to use.
 Possible values include
-.Ar md5 ,
-.Ar sha1
+.Cm md5 ,
+.Cm sha1
 and
-.Ar sha256 .
-If not present, SHA256 is used.
-This option can be overridden on the command line.
-.It Ar distinguished_name
-This specifies the section containing the distinguished name fields to
+.Cm sha256
+(the default).
+It can be overridden on the command line.
+.It Cm distinguished_name
+The section containing the distinguished name fields to
 prompt for when generating a certificate or certificate request.
-The format is described in the next section.
-.It Ar encrypt_key
-If this is set to
-.Em no
-and a private key is generated, it is
-.Em not
-encrypted.
-This is equivalent to the
+The format is described below.
+.It Cm encrypt_key
+If set to
+.Qq no
+and a private key is generated, it is not encrypted.
+It is equivalent to the
 .Fl nodes
-command line option.
+option.
 For compatibility,
-.Ar encrypt_rsa_key
+.Cm encrypt_rsa_key
 is an equivalent option.
-.It Ar input_password | output_password
-The passwords for the input private key file
-.Pq if present
-and the output private key file
-.Pq if one will be created .
+.It Cm input_password | output_password
+The passwords for the input private key file (if present)
+and the output private key file (if one will be created).
 The command line options
 .Fl passin
 and
 .Fl passout
 override the configuration file values.
-.It Ar oid_file
-This specifies a file containing additional OBJECT IDENTIFIERS.
+.It Cm oid_file
+A file containing additional OBJECT IDENTIFIERS.
 Each line of the file should consist of the numerical form of the
 object identifier, followed by whitespace, then the short name followed
 by whitespace and finally the long name.
-.It Ar oid_section
-This specifies a section in the configuration file containing extra
+.It Cm oid_section
+Specify a section in the configuration file containing extra
 object identifiers.
 Each line should consist of the short name of the
 object identifier followed by
 .Sq =
 and the numerical form.
 The short and long names are the same when this option is used.
-.It Ar prompt
-If set to the value
-.Em no ,
-this disables prompting of certificate fields
+.It Cm prompt
+If set to
+.Qq no ,
+it disables prompting of certificate fields
 and just takes values from the config file directly.
 It also changes the expected format of the
-.Em distinguished_name
+.Cm distinguished_name
 and
-.Em attributes
+.Cm attributes
 sections.
-.It Ar req_extensions
-This specifies the configuration file section containing a list of
+.It Cm req_extensions
+The configuration file section containing a list of
 extensions to add to the certificate request.
 It can be overridden by the
 .Fl reqexts
-command line switch.
-.It Ar string_mask
-This option limits the string types for encoding certain
-fields.
+option.
+.It Cm string_mask
+Limit the string types for encoding certain fields.
 The following values may be used, limiting strings to the indicated types:
 .Bl -tag -width "MASK:number"
-.It Ar utf8only
-.Em UTF8String.
+.It Cm utf8only
+UTF8String.
 This is the default, as recommended by PKIX in RFC 2459.
-.It Ar default
-.Em PrintableString , IA5String , T61String , BMPString , UTF8String .
-.It Ar pkix
-.Em PrintableString , IA5String , BMPString , UTF8String .
-This was inspired by the PKIX recommendation in RFC 2459 for certificates
-generated before 2004, but differs by also permitting
-.Em IA5String .
-.It Ar nombstr
-.Em PrintableString , IA5String , T61String , UniversalString .
-This was a workaround for some ancient software that had problems
-with the variable-sized
-.Em BMPString
-and
-.Em UTF8String
-types.
+.It Cm default
+PrintableString, IA5String, T61String, BMPString, UTF8String.
+.It Cm pkix
+PrintableString, IA5String, BMPString, UTF8String.
+Inspired by the PKIX recommendation in RFC 2459 for certificates
+generated before 2004, but differs by also permitting IA5String.
+.It Cm nombstr
+PrintableString, IA5String, T61String, UniversalString.
+A workaround for some ancient software that had problems
+with the variable-sized BMPString and UTF8String types.
 .It Cm MASK : Ns Ar number
-This is an explicit bitmask of permitted types, where
+An explicit bitmask of permitted types, where
 .Ar number
 is a C-style hex, decimal, or octal number that's a bit-wise OR of
 .Dv B_ASN1_*
 values from
 .In openssl/asn1.h .
 .El
-.It Ar utf8
-If set to the value
-.Em yes ,
-then field values are interpreted as UTF8 strings;
-by default they are interpreted as ASCII.
-This means that the field values, whether prompted from a terminal or
-obtained from a configuration file, must be valid UTF8 strings.
-.It Ar x509_extensions
-This specifies the configuration file section containing a list of
+.It Cm utf8
+If set to
+.Qq yes ,
+field values are interpreted as UTF8 strings, not ASCII.
+.It Cm x509_extensions
+The configuration file section containing a list of
 extensions to add to a certificate generated when the
 .Fl x509
 switch is used.
 It can be overridden by the
 .Fl extensions
-command line switch.
+option.
 .El
-.Sh REQ DISTINGUISHED NAME AND ATTRIBUTE SECTION FORMAT
+.Pp
 There are two separate formats for the distinguished name and attribute
 sections.
 If the
 .Fl prompt
 option is set to
-.Em no ,
-then these sections just consist of field names and values: for example,
-.Bd -unfilled -offset indent
-CN=My Name
-OU=My Organization
-emailAddress=someone@somewhere.org
-.Ed
-.Pp
-This allows external programs
-.Pq e.g. GUI based
-to generate a template file with all the field names and values
-and just pass it to
+.Qq no ,
+the sections consist of just field names and values,
+which allows external programs to generate a template file
+with all the field names and values and just pass it to
 .Nm req .
-An example of this kind of configuration file is contained in the
-.Sx REQ EXAMPLES
-section.
 .Pp
 Alternatively if the
 .Fl prompt
 option is absent or not set to
-.Em no ,
+.Qq no ,
 then the file contains field prompting information.
 It consists of lines of the form:
 .Bd -unfilled -offset indent
@@ -3640,8 +3537,8 @@ fieldName_max= 4
 .Pp
 .Qq fieldName
 is the field name being used, for example
-.Em commonName
-.Pq or CN .
+.Cm commonName
+(or CN).
 The
 .Qq prompt
 string is used to ask the user to enter the relevant details.
@@ -3653,197 +3550,72 @@ if the user just enters the
 character.
 .Pp
 The number of characters entered must be between the
-.Em fieldName_min
-and
-.Em fieldName_max
-limits:
+fieldName_min and fieldName_max limits:
 there may be additional restrictions based on the field being used
 (for example
-.Em countryName
+.Cm countryName
 can only ever be two characters long and must fit in a
-.Em PrintableString ) .
+.Cm PrintableString ) .
 .Pp
 Some fields (such as
-.Em organizationName )
+.Cm organizationName )
 can be used more than once in a DN.
 This presents a problem because configuration files will
 not recognize the same name occurring twice.
 To avoid this problem, if the
-.Em fieldName
+.Cm fieldName
 contains some characters followed by a full stop, they will be ignored.
 So, for example, a second
-.Em organizationName
+.Cm organizationName
 can be input by calling it
 .Qq 1.organizationName .
 .Pp
 The actual permitted field names are any object identifier short or
 long names.
 These are compiled into
-.Nm OpenSSL
+.Nm openssl
 and include the usual values such as
-.Em commonName , countryName , localityName , organizationName ,
-.Em organizationUnitName , stateOrProvinceName .
+.Cm commonName , countryName , localityName , organizationName ,
+.Cm organizationUnitName , stateOrProvinceName .
 Additionally,
-.Em emailAddress
+.Cm emailAddress
 is included as well as
-.Em name , surname , givenName initials
+.Cm name , surname , givenName , initials
 and
-.Em dnQualifier .
+.Cm dnQualifier .
 .Pp
 Additional object identifiers can be defined with the
-.Ar oid_file
+.Cm oid_file
 or
-.Ar oid_section
+.Cm oid_section
 options in the configuration file.
 Any additional fields will be treated as though they were a
-.Em DirectoryString .
-.Sh REQ EXAMPLES
-Examine and verify a certificate request:
+.Cm DirectoryString .
 .Pp
-.Dl $ openssl req -in req.pem -text -verify -noout
-.Pp
-Create a private key and then generate a certificate request from it:
-.Bd -literal -offset indent
-$ openssl genrsa -out key.pem 2048
-$ openssl req -new -key key.pem -out req.pem
-.Ed
-.Pp
-The same but just using req:
-.Pp
-.Dl $ openssl req -newkey rsa:2048 -keyout key.pem -out req.pem
-.Pp
-Generate a self-signed root certificate:
-.Pp
-.Dl "$ openssl req -x509 -newkey rsa:2048 -keyout key.pem -out req.pem"
-.Pp
-Example of a file pointed to by the
-.Ar oid_file
-option:
-.Bd -unfilled -offset indent
-1.2.3.4        shortName       A longer Name
-1.2.3.6        otherName       Other longer Name
-.Ed
-.Pp
-Example of a section pointed to by
-.Ar oid_section
-making use of variable expansion:
-.Bd -unfilled -offset indent
-testoid1=1.2.3.5
-testoid2=${testoid1}.6
-.Ed
-.Pp
-Sample configuration file prompting for field values:
-.Bd -literal
-\& [ req ]
-\& default_bits           = 1024
-\& default_keyfile        = privkey.pem
-\& distinguished_name     = req_distinguished_name
-\& attributes             = req_attributes
-\& x509_extensions        = v3_ca
-
-\& dirstring_type = nobmp
-
-\& [ req_distinguished_name ]
-\& countryName                    = Country Name (2 letter code)
-\& countryName_default            = AU
-\& countryName_min                = 2
-\& countryName_max                = 2
-
-\& localityName                   = Locality Name (eg, city)
-
-\& organizationalUnitName         = Organizational Unit Name (eg, section)
-
-\& commonName                     = Common Name (eg, YOUR name)
-\& commonName_max                 = 64
-
-\& emailAddress                   = Email Address
-\& emailAddress_max               = 40
-
-\& [ req_attributes ]
-\& challengePassword              = A challenge password
-\& challengePassword_min          = 4
-\& challengePassword_max          = 20
-
-\& [ v3_ca ]
-
-\& subjectKeyIdentifier=hash
-\& authorityKeyIdentifier=keyid:always,issuer:always
-\& basicConstraints = CA:true
-.Ed
-.Pp
-Sample configuration containing all field values:
-.Bd -literal
-
-\& [ req ]
-\& default_bits           = 1024
-\& default_keyfile        = keyfile.pem
-\& distinguished_name     = req_distinguished_name
-\& attributes             = req_attributes
-\& prompt                 = no
-\& output_password        = mypass
-
-\& [ req_distinguished_name ]
-\& C                      = GB
-\& ST                     = Test State or Province
-\& L                      = Test Locality
-\& O                      = Organization Name
-\& OU                     = Organizational Unit Name
-\& CN                     = Common Name
-\& emailAddress           = test@email.address
-
-\& [ req_attributes ]
-\& challengePassword              = A challenge password
-.Ed
-.Sh REQ NOTES
 The header and footer lines in the PEM format are normally:
 .Bd -unfilled -offset indent
 -----BEGIN CERTIFICATE REQUEST-----
 -----END CERTIFICATE REQUEST-----
 .Ed
 .Pp
-Some software
-.Pq some versions of Netscape certificate server
-instead needs:
+Some software instead needs:
 .Bd -unfilled -offset indent
 -----BEGIN NEW CERTIFICATE REQUEST-----
 -----END NEW CERTIFICATE REQUEST-----
 .Ed
 .Pp
-which is produced with the
-.Fl newhdr
-option but is otherwise compatible.
-Either form is accepted transparently on input.
-.Pp
-The certificate requests generated by Xenroll with MSIE have extensions added.
-It includes the
-.Em keyUsage
-extension which determines the type of key
-.Pq signature only or general purpose
-and any additional OIDs entered by the script in an
-.Em extendedKeyUsage
-extension.
-.Sh REQ DIAGNOSTICS
 The following messages are frequently asked about:
 .Bd -unfilled -offset indent
 Using configuration from /some/path/openssl.cnf
 Unable to load config info
-.Ed
-.Pp
-This is followed some time later by...
-.Bd -unfilled -offset indent
+\&...
 unable to find 'distinguished_name' in config
 problems making Certificate Request
 .Ed
 .Pp
-The first error message is the clue: it can't find the configuration
-file!
-Certain operations
-.Pq like examining a certificate request
-don't need a configuration file so its use isn't enforced.
-Generation of certificates or requests, however, do need a configuration file.
-This could be regarded as a bug.
+In this case it can't find the configuration file!
 .Pp
-Another puzzling message is this:
+Another puzzling message is:
 .Bd -unfilled -offset indent
 Attributes:
     a0:00
@@ -3851,51 +3623,16 @@ Attributes:
 .Pp
 This is displayed when no attributes are present and the request includes
 the correct empty SET OF structure
-.Pq the DER encoding of which is 0xa0 0x00 .
-If you just see:
+(the DER encoding of which is 0xa0 0x00).
+If the message is instead:
 .Pp
 .D1 Attributes:
 .Pp
 then the SET OF is missing and the encoding is technically invalid
-.Pq but it is tolerated .
-See the description of the command line option
+(but it is tolerated).
+See the description
 .Fl asn1-kludge
 for more information.
-.Sh REQ ENVIRONMENT VARIABLES
-The variable
-.Ev OPENSSL_CONF ,
-if defined, allows an alternative configuration
-file location to be specified; it will be overridden by the
-.Fl config
-command line switch if it is present.
-.Sh REQ BUGS
-.Nm OpenSSL Ns Li 's
-handling of T61Strings
-.Pq aka TeletexStrings
-is broken: it effectively treats them as ISO 8859-1
-.Pq Latin 1 ;
-Netscape and MSIE have similar behaviour.
-This can cause problems if you need characters that aren't available in
-.Em PrintableStrings
-and you don't want to or can't use
-.Em BMPStrings .
-.Pp
-As a consequence of the T61String handling, the only correct way to represent
-accented characters in
-.Nm OpenSSL
-is to use a
-.Em BMPString :
-unfortunately Netscape currently chokes on these.
-If you have to use accented characters with Netscape
-and MSIE then you currently need to use the invalid T61String form.
-.Pp
-The current prompting is not very friendly.
-It doesn't allow you to confirm what you've just entered.
-Other things, like extensions in certificate requests, are
-statically defined in the configuration file.
-Some of these, like an email address in
-.Em subjectAltName ,
-should be input by the user.
 .\"
 .\" RSA
 .\"
