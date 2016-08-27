@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.75 2016/08/17 22:15:08 tedu Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.76 2016/08/27 16:10:40 millert Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -486,6 +486,8 @@ __vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 	 * Scan the format for conversions (`%' character).
 	 */
 	for (;;) {
+		size_t len;
+
 		cp = fmt;
 		while ((n = mbrtowc(&wc, fmt, MB_CUR_MAX, &ps)) > 0) {
 			fmt += n;
@@ -886,22 +888,10 @@ fp_common:
 
 				cp = "(null)";
 			}
-			if (prec >= 0) {
-				/*
-				 * can't use strlen; can only look for the
-				 * NUL in the first `prec' characters, and
-				 * strlen() will go further.
-				 */
-				char *p = memchr(cp, 0, prec);
-
-				size = p ? (p - cp) : prec;
-			} else {
-				size_t len;
-
-				if ((len = strlen(cp)) > INT_MAX)
-					goto overflow;
-				size = (int)len;
-			}
+			len = prec >= 0 ? strnlen(cp, prec) : strlen(cp);
+			if (len > INT_MAX)
+				goto overflow;
+			size = (int)len;
 			sign = '\0';
 			break;
 		case 'U':
