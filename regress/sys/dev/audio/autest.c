@@ -1,4 +1,4 @@
-/*	$OpenBSD: autest.c,v 1.12 2007/04/25 15:27:54 jason Exp $	*/
+/*	$OpenBSD: autest.c,v 1.13 2016/08/27 04:32:44 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -29,15 +29,16 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/audioio.h>
-#include <string.h>
-#include <fcntl.h>
+#include <sys/time.h>
 #include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
+#include <string.h>
 #include <unistd.h>
-#include <errno.h>
-#include <limits.h>
 
 /* XXX ADPCM is currently pretty broken... diagnosis and fix welcome */
 #undef	USE_ADPCM
