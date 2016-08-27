@@ -1,4 +1,4 @@
-/* $OpenBSD: sunxi.c,v 1.17 2016/08/05 21:45:37 kettenis Exp $ */
+/* $OpenBSD: sunxi.c,v 1.18 2016/08/27 11:39:59 kettenis Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -87,6 +87,11 @@ struct sunxi_soc sunxi_socs[] = {
 	},
 	{
 		"allwinner,sun7i-a20",
+		sun7i_devs,
+		sxia20_init,
+	},
+	{
+		"allwinner,sun8i-h3",
 		sun7i_devs,
 		sxia20_init,
 	},
