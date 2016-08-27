@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiehci.c,v 1.8 2016/08/23 21:43:51 kettenis Exp $ */
+/*	$OpenBSD: sxiehci.c,v 1.9 2016/08/27 16:40:31 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -103,6 +103,8 @@ sxiehci_match(struct device *parent, void *match, void *aux)
 	if (OF_is_compatible(faa->fa_node, "allwinner,sun5i-a13-ehci"))
 	    return 1;
 	if (OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-ehci"))
+	    return 1;
+	if (OF_is_compatible(faa->fa_node, "allwinner,sun8i-h3-ehci"))
 	    return 1;
 
 	return 0;
