@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.49 2016/08/26 16:02:33 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.50 2016/08/27 14:22:35 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -301,6 +301,11 @@ struct l1_ttable {
  * Each L2 descriptor table represents 1MB of VA space.
  */
 #define	L1_IDX(va)		(((vaddr_t)(va)) >> L1_S_SHIFT)
+
+/*
+ * Set if the PXN bit is supported.
+ */
+pd_entry_t l1_c_pxn;
 
 /*
  * A list of all L1 tables
@@ -1267,7 +1272,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			pd_entry_t *pl1pd, l1pd;
 
 			pl1pd = &pm->pm_l1->l1_kva[L1_IDX(va)];
-			l1pd = L1_C_PROTO | l2b->l2b_phys;
+			l1pd = L1_C_PROTO | l2b->l2b_phys | l1_c_pxn;
 			if (*pl1pd != l1pd) {
 				*pl1pd = l1pd;
 				PTE_SYNC(pl1pd);
@@ -2861,7 +2866,7 @@ void		(*pmap_zero_page_func)(struct vm_page *);
 void
 pmap_pte_init_armv7(void)
 {
-	uint32_t id_mmfr3;
+	uint32_t id_mmfr0, id_mmfr3;
 
 	/*
 	 * XXX We want to use proper TEX settings eventually.
@@ -2909,6 +2914,11 @@ pmap_pte_init_armv7(void)
 
 	pmap_copy_page_func = pmap_copy_page_generic;
 	pmap_zero_page_func = pmap_zero_page_generic;
+
+	/* Check if the PXN bit is supported. */
+	__asm volatile("mrc p15, 0, %0, c0, c1, 4" : "=r"(id_mmfr0));
+	if ((id_mmfr0 & ID_MMFR0_VMSA_MASK) >= VMSA_V7_PXN)
+		l1_c_pxn = L1_C_V7_PXN;
 
 	/* Check for coherent walk. */
 	__asm volatile("mrc p15, 0, %0, c0, c1, 7" : "=r"(id_mmfr3));

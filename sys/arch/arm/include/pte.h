@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.7 2016/08/18 09:28:22 kettenis Exp $	*/
+/*	$OpenBSD: pte.h,v 1.8 2016/08/27 14:22:35 kettenis Exp $	*/
 /*	$NetBSD: pte.h,v 1.6 2003/04/18 11:08:28 scw Exp $	*/
 
 /*
@@ -159,6 +159,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L1_S_V7_AF	0x00000400	/* Access Flag */
 #define	L1_S_V7_IMP	0x00000200	/* implementation defined */
 #define	L1_S_V7_XN	0x00000010	/* eXecute Never */
+#define	L1_S_V7_PXN	0x00000001	/* Privileged eXecute Never */
 
 /* L1 Coarse Descriptor */
 #define	L1_C_IMP0	0x00000004	/* implementation defined */
@@ -170,8 +171,9 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 
 #define	L1_C_XSCALE_P	0x00000200	/* ECC enable for this section */
 
-#define	L1_C_V7_NS	0x00000008	/* Non-secure */
 #define	L1_C_V7_IMP	0x00000200	/* implementation defined */
+#define	L1_C_V7_NS	0x00000008	/* Non-secure */
+#define	L1_C_V7_PXN	0x00000004	/* Privileged eXecute Never */
 
 /* L1 Fine Descriptor */
 #define	L1_F_IMP0	0x00000004	/* implementation defined */
