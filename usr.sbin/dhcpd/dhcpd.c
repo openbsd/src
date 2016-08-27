@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.51 2016/04/27 10:16:10 mestre Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.52 2016/08/27 01:26:22 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -54,6 +54,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "dhcp.h"

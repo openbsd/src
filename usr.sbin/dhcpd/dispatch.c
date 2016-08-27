@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.36 2016/02/06 23:50:10 krw Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.37 2016/08/27 01:26:22 guenther Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -58,6 +58,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "dhcp.h"

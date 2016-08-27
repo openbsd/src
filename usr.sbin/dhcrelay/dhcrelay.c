@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.39 2016/02/07 00:49:28 krw Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.40 2016/08/27 01:26:22 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -55,6 +55,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "dhcp.h"

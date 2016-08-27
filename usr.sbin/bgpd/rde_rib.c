@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.142 2015/03/14 03:52:42 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.143 2016/08/27 01:26:22 guenther Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <siphash.h>
+#include <time.h>
 
 #include "bgpd.h"
 #include "rde.h"

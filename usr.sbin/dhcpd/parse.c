@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.20 2016/02/06 23:50:10 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.21 2016/08/27 01:26:22 guenther Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -52,6 +52,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "dhcp.h"
 #include "tree.h"

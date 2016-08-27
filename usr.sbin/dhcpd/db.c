@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.15 2016/02/06 23:50:10 krw Exp $	*/
+/*	$OpenBSD: db.c,v 1.16 2016/08/27 01:26:22 guenther Exp $	*/
 
 /*
  * Persistent database management routines for DHCPD.
@@ -51,6 +51,7 @@
 
 #include <fcntl.h>
 #include <stdio.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "dhcp.h"
