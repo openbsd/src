@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.81 2016/07/14 17:34:06 jmc Exp $
+.\"	$OpenBSD: mount.8,v 1.82 2016/08/27 19:50:36 tedu Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mount.8	8.7 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: July 14 2016 $
+.Dd $Mdocdate: August 27 2016 $
 .Dt MOUNT 8
 .Os
 .Sh NAME
@@ -197,12 +197,16 @@ special devices for architectures other than its own.
 Do not allow execution of any binaries on the mounted file system.
 This option is useful for a server that has file systems containing
 binaries for architectures other than its own.
+.It norw
+Another synonym for read-only.
 .It nosuid
 Do not allow set-user-identifier or set-group-identifier bits to take effect.
 .It rdonly
 The same as
 .Fl r ;
 mount the file system read-only (even the superuser may not write it).
+.It ro
+An alias for rdonly.
 .It softdep
 (FFS only.)
 Mount the file system using soft dependencies.
