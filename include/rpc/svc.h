@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.h,v 1.15 2015/09/14 08:16:14 guenther Exp $	*/
+/*	$OpenBSD: svc.h,v 1.16 2016/08/27 04:28:28 guenther Exp $	*/
 /*	$NetBSD: svc.h,v 1.9 1995/04/29 05:28:01 cgd Exp $	*/
 
 /*
@@ -260,6 +260,7 @@ __END_DECLS
  * Global keeper of rpc service descriptors in use
  * dynamic; must be inspected before each call to select 
  */
+#include <sys/select.h>			/* for fd_set */
 extern fd_set svc_fdset;
 #define svc_fds svc_fdset.fds_bits[0]	/* compatibility */
 extern struct pollfd *svc_pollfd;
