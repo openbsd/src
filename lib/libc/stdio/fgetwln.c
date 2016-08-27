@@ -1,4 +1,4 @@
-/*	$OpenBSD: fgetwln.c,v 1.3 2016/08/24 18:35:12 schwarze Exp $	*/
+/*	$OpenBSD: fgetwln.c,v 1.4 2016/08/27 12:08:38 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins.
@@ -69,7 +69,17 @@ fgetwln(FILE * __restrict fp, size_t *lenp)
 		if (wc == L'\n')
 			break;
 	}
-	if (len == 0 || fp->_flags & __SERR)
+
+	/*
+	 * The following test assumes that fgetwc() fails when
+	 * feof() is already set, and that fgetwc() will never
+	 * set feof() in the same call where it also sets ferror()
+	 * or returns non-WEOF.
+	 * Testing ferror() would not be better because fgetwc()
+	 * may succeed even when ferror() is already set.
+	 */
+
+	if (len == 0 || (wc == WEOF && !__sfeof(fp)))
 		goto error;
 
 	FUNLOCKFILE(fp);
