@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.c,v 1.14 2013/04/05 01:28:27 tedu Exp $	*/
+/*	$OpenBSD: globals.c,v 1.15 2016/08/27 03:34:45 guenther Exp $	*/
 /*	$NetBSD: globals.c,v 1.3 1995/03/21 15:07:32 cgd Exp $	*/
 
 /*
@@ -30,6 +30,7 @@
  * SUCH DAMAGE.
  */
 
+#include <stdio.h>		/* NULL */
 #include "extern.h"
 
 int     WEIGHT = MAXWEIGHT;
