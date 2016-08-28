@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.17 2016/08/27 16:41:52 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.18 2016/08/28 20:17:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -243,6 +243,10 @@ struct sxiccmu_device sxiccmu_devices[] = {
 	},
 	{
 		.compat = "allwinner,sun6i-a31-ahb1-reset",
+		.reset = sxiccmu_reset
+	},
+	{
+		.compat = "allwinner,sun6i-a31-clock-reset",
 		.reset = sxiccmu_reset
 	},
 	{

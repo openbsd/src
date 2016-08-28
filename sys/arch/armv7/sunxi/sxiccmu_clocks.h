@@ -22,6 +22,8 @@
 #define H3_CLK_BUS_OHCI2	39
 #define H3_CLK_BUS_OHCI3	40
 
+#define H3_CLK_BUS_PIO		54
+
 #define H3_CLK_BUS_UART0	62
 #define H3_CLK_BUS_UART1	63
 #define H3_CLK_BUS_UART2	64
@@ -48,6 +50,7 @@ struct sxiccmu_ccu_bit sun8i_h3_gates[] = {
 	[H3_CLK_BUS_OHCI1] = { 0x0060, 29 },
 	[H3_CLK_BUS_OHCI2] = { 0x0060, 30 },
 	[H3_CLK_BUS_OHCI3] = { 0x0060, 31 },
+	[H3_CLK_BUS_PIO]   = { 0x0068, 5 },
 	[H3_CLK_BUS_UART0] = { 0x006c, 16, H3_CLK_APB2 },
 	[H3_CLK_BUS_UART1] = { 0x006c, 17, H3_CLK_APB2 },
 	[H3_CLK_BUS_UART2] = { 0x006c, 18, H3_CLK_APB2 },
