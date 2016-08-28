@@ -19,7 +19,7 @@ fail=0
 tc1()
 {
 	expected=$(echo -n "$3")
-	result=$(echo -n "$1" | /usr/old/column $2)
+	result=$(echo -n "$1" | column $2)
 	if [ "X$result" != "X$expected" ]; then
 		fail=$((fail+1))
 		echo "argument: '$2'"
