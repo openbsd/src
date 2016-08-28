@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.11 2016/08/26 21:23:41 kettenis Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.12 2016/08/28 17:31:44 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -82,11 +82,10 @@ struct sxipio_softc {
 	struct intrhand		*sc_handlers[32];
 };
 
-#define	SXIPIO_CFG(port, pin)	0x00 + ((port) * 0x24) + ((pin) << 2)
-#define	SXIPIO_DAT(port)		0x10 + ((port) * 0x24)
-/* XXX add support for registers below */
-#define	SXIPIO_DRV(port, pin)	0x14 + ((port) * 0x24) + ((pin) << 2)
-#define	SXIPIO_PUL(port, pin)	0x1c + ((port) * 0x24) + ((pin) << 2)
+#define	SXIPIO_CFG(port, pin)	0x00 + ((port) * 0x24) + (((pin) >> 3) * 0x04)
+#define	SXIPIO_DAT(port)	0x10 + ((port) * 0x24)
+#define	SXIPIO_DRV(port, pin)	0x14 + ((port) * 0x24) + (((pin) >> 4) * 0x04)
+#define	SXIPIO_PUL(port, pin)	0x1c + ((port) * 0x24) + (((pin) >> 4) * 0x04)
 #define	SXIPIO_INT_CFG0(port)	0x0200 + ((port) * 0x04)
 #define	SXIPIO_INT_CTL		0x0210
 #define	SXIPIO_INT_STA		0x0214
@@ -306,7 +305,7 @@ sxipio_getcfg(int pin)
 
 	port = pin >> 5;
 	bit = pin - (port << 5);
-	reg = SXIPIO_CFG(port, bit >> 3);
+	reg = SXIPIO_CFG(port, bit);
 	off = (bit & 7) << 2;
 
 	s = splhigh();
@@ -327,7 +326,7 @@ sxipio_setcfg(int pin, int mux)
 
 	port = pin >> 5;
 	bit = pin - (port << 5);
-	reg = SXIPIO_CFG(port, bit >> 3);
+	reg = SXIPIO_CFG(port, bit);
 	off = (bit & 7) << 2;
 	cmask = 7 << off;
 	mask = mux << off;
