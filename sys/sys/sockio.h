@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.66 2016/06/15 19:39:34 gerhard Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.67 2016/08/28 07:22:11 reyk Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -121,13 +121,6 @@
 #define SIOCBRDGSTXHC    _IOW('i', 89, struct ifbrparam)/* set tx hold count */
 #define SIOCBRDGSPROTO	 _IOW('i', 90, struct ifbrparam)/* set protocol */
 #define SIOCBRDGS
-
-#define GRESADDRS        _IOW('i', 101, struct ifreq)
-#define GRESADDRD        _IOW('i', 102, struct ifreq)   
-#define GREGADDRS       _IOWR('i', 103, struct ifreq)
-#define GREGADDRD       _IOWR('i', 104, struct ifreq)
-#define GRESPROTO        _IOW('i', 105, struct ifreq)
-#define GREGPROTO       _IOWR('i', 106, struct ifreq)
 
 #define	SIOCSIFMTU	 _IOW('i', 127, struct ifreq)	/* set ifnet mtu */
 #define	SIOCGIFMTU	_IOWR('i', 126, struct ifreq)	/* get ifnet mtu */

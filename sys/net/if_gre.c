@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.78 2015/11/10 06:34:35 dlg Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.79 2016/08/28 07:22:11 reyk Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -430,7 +430,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct gre_softc *sc = ifp->if_softc;
 	int s;
 	struct sockaddr_in si;
-	struct sockaddr *sa = NULL;
 	int error = 0;
 	struct proc *prc = curproc;		/* XXX */
 
@@ -462,69 +461,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		break;
-	case GRESPROTO:
-		/* Check for superuser */
-		if ((error = suser(prc, 0)) != 0)
-			break;
-
-		sc->g_proto = ifr->ifr_flags;
-		switch (sc->g_proto) {
-		case IPPROTO_GRE:
-			ifp->if_flags |= IFF_LINK0;
-			break;
-		case IPPROTO_MOBILE:
-			ifp->if_flags &= ~IFF_LINK0;
-			break;
-		default:
-			error = EPROTONOSUPPORT;
-			break;
-		}
-		break;
-	case GREGPROTO:
-		ifr->ifr_flags = sc->g_proto;
-		break;
-	case GRESADDRS:
-	case GRESADDRD:
-		/* Check for superuser */
-		if ((error = suser(prc, 0)) != 0)
-			break;
-
-		/*
-		 * set tunnel endpoints and mark if as up
-		 */
-		sa = &ifr->ifr_addr;
-		if (cmd == GRESADDRS )
-			sc->g_src = (satosin(sa))->sin_addr;
-		if (cmd == GRESADDRD )
-			sc->g_dst = (satosin(sa))->sin_addr;
-recompute:
-		if ((sc->g_src.s_addr != INADDR_ANY) &&
-		    (sc->g_dst.s_addr != INADDR_ANY)) {
-			if (sc->route.ro_rt != NULL) {
-				rtfree(sc->route.ro_rt);
-				sc->route.ro_rt = NULL;
-			}
-			/* ip_output() will do the lookup */
-			bzero(&sc->route, sizeof(sc->route));
-			ifp->if_flags |= IFF_UP;
-		}
-		break;
-	case GREGADDRS:
-		bzero(&si, sizeof(si));
-		si.sin_family = AF_INET;
-		si.sin_len = sizeof(struct sockaddr_in);
-		si.sin_addr.s_addr = sc->g_src.s_addr;
-		sa = sintosa(&si);
-		ifr->ifr_addr = *sa;
-		break;
-	case GREGADDRD:
-		bzero(&si, sizeof(si));
-		si.sin_family = AF_INET;
-		si.sin_len = sizeof(struct sockaddr_in);
-		si.sin_addr.s_addr = sc->g_dst.s_addr;
-		sa = sintosa(&si);
-		ifr->ifr_addr = *sa;
 		break;
 	case SIOCSETKALIVE:
 		if ((error = suser(prc, 0)) != 0)
@@ -569,7 +505,18 @@ recompute:
 		}
 		sc->g_src = ((struct sockaddr_in *)&lifr->addr)->sin_addr;
 		sc->g_dst = ((struct sockaddr_in *)&lifr->dstaddr)->sin_addr;
-		goto recompute;
+ recompute:
+		if ((sc->g_src.s_addr != INADDR_ANY) &&
+		    (sc->g_dst.s_addr != INADDR_ANY)) {
+			if (sc->route.ro_rt != NULL) {
+				rtfree(sc->route.ro_rt);
+				sc->route.ro_rt = NULL;
+			}
+			/* ip_output() will do the lookup */
+			bzero(&sc->route, sizeof(sc->route));
+			ifp->if_flags |= IFF_UP;
+		}
+		break;
 	case SIOCDIFPHYADDR:
 		if ((error = suser(prc, 0)) != 0)
 			break;
