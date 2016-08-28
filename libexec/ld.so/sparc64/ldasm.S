@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.43 2016/05/07 19:05:23 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.44 2016/08/28 06:15:33 guenther Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -300,22 +300,8 @@ _ENTRY(_dl_sysctl)
 	retl
 	 sub %g0, %o0, %o0				! error: result = -errno
 
-_ENTRY(_dl_gettimeofday)
-	mov SYS_gettimeofday | SYSCALL_G2RFLAG, %g1	! calling sys_gettimeofday
-	add %o7, 8, %g2				! just return on success
-	t ST_SYSCALL				! off to wonderland
-	retl
-	 sub %g0, %o0, %o0			! error: result = -errno
-
 _ENTRY(_dl_readlink)
 	mov SYS_readlink | SYSCALL_G2RFLAG, %g1	! calling sys_readlink
-	add %o7, 8, %g2				! just return on success
-	t ST_SYSCALL				! off to wonderland
-	retl
-	 sub %g0, %o0, %o0			! error: result = -errno
-
-_ENTRY(_dl_lstat)
-	mov SYS_lstat | SYSCALL_G2RFLAG, %g1	! calling sys_lstat
 	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.21 2016/05/07 19:05:23 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.22 2016/08/28 06:15:32 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -242,23 +242,11 @@ ENTRY(_dl_getdents,0)
 	nop
 EXIT(_dl_getdents)
 
-ENTRY(_dl_gettimeofday,0)
-	SYSCALL(gettimeofday)
-	bv	r0(rp)
-	nop
-EXIT(_dl_gettimeofday)
-
 ENTRY(_dl_readlink,0)
 	SYSCALL(readlink)
 	bv	r0(rp)
 	nop
 EXIT(_dl_readlink)
-
-ENTRY(_dl_lstat,0)
-	SYSCALL(lstat)
-	bv	r0(rp)
-	nop
-EXIT(_dl_lstat)
 
 ENTRY(_dl_getcwd,0)
 	SYSCALL(__getcwd)

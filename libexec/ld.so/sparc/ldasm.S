@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.31 2016/05/07 19:05:23 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.32 2016/08/28 06:15:32 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -296,34 +296,10 @@ _dl_sysctl:
 
 	.section ".text"
 	.align 4
-	.global _dl_gettimeofday
-	.type _dl_gettimeofday,@function
-_dl_gettimeofday:
-	mov SYS_gettimeofday | SYSCALL_G2RFLAG, %g1	! calling sys_gettimeofday
-	add %o7, 8, %g2				! just return on success
-	t ST_SYSCALL				! off to wonderland
-	retl
-	 sub %g0, %o0, %o0			! error: result = -errno
-
-
-	.section ".text"
-	.align 4
 	.global _dl_readlink
 	.type _dl_readlink,@function
 _dl_readlink:
 	mov SYS_readlink | SYSCALL_G2RFLAG, %g1	! calling sys_readlink
-	add %o7, 8, %g2				! just return on success
-	t ST_SYSCALL				! off to wonderland
-	retl
-	 sub %g0, %o0, %o0			! error: result = -errno
-
-
-	.section ".text"
-	.align 4
-	.global _dl_lstat
-	.type _dl_lstat,@function
-_dl_lstat:
-	mov SYS_lstat | SYSCALL_G2RFLAG, %g1	! calling sys_lstat
 	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
