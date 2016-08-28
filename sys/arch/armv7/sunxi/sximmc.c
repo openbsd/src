@@ -1,4 +1,4 @@
-/* $OpenBSD: sximmc.c,v 1.6 2016/08/27 18:12:16 kettenis Exp $ */
+/* $OpenBSD: sximmc.c,v 1.7 2016/08/28 15:26:10 mglocker Exp $ */
 /* $NetBSD: awin_mmc.c,v 1.23 2015/11/14 10:32:40 bouyer Exp $ */
 
 /*-
@@ -1079,6 +1079,7 @@ done:
 				break;
 			delay(10);
 		}
+		sximmc_host_reset(sc);
 		sximmc_update_clock(sc);
 	}
 
