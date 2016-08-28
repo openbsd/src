@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_argv.c,v 1.64 2016/07/15 18:02:32 schwarze Exp $ */
+/*	$OpenBSD: mdoc_argv.c,v 1.65 2016/08/28 16:13:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -478,7 +478,7 @@ args(struct roff_man *mdoc, int line, int *pos,
 			 * unless there is a blank in between.
 			 */
 
-			if (p[-1] != ' ')
+			if (p > buf && p[-1] != ' ')
 				mdoc->flags |= MDOC_PHRASEQL;
 			if (p[1] != ' ')
 				mdoc->flags |= MDOC_PHRASEQN;
