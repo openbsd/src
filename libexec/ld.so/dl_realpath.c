@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_realpath.c,v 1.3 2014/10/19 03:56:28 doug Exp $ */
+/*	$OpenBSD: dl_realpath.c,v 1.4 2016/08/28 04:08:59 guenther Exp $ */
 /*
  * Copyright (c) 2003 Constantin S. Svintsoff <kostik@iclub.nsu.ru>
  *
@@ -28,10 +28,9 @@
  */
 
 #include <sys/types.h>
+#include <sys/errno.h>
 #include <limits.h>
 #include "archdep.h"
-
-#define ENOENT -2
 
 /*
  * This file was copied from libc/stdlib/realpath.c and modified for ld.so's
@@ -48,12 +47,11 @@
 char *
 _dl_realpath(const char *path, char *resolved)
 {
-	struct stat sb;
 	const char *p, *s;
 	char *q;
 	size_t left_len, resolved_len;
 	unsigned symlinks;
-	int slen, mem_allocated, ret;
+	int slen, mem_allocated;
 	char left[PATH_MAX], next_token[PATH_MAX], symlink[PATH_MAX];
 
 	if (path[0] == '\0') {
@@ -135,27 +133,33 @@ _dl_realpath(const char *path, char *resolved)
 		}
 
 		/*
-		 * Append the next path component and lstat() it. If
-		 * lstat() fails we still can return successfully if
-		 * there are no more path components left.
+		 * Append the next path component and readlink() it. If
+		 * readlink() fails we still can return successfully if
+		 * it wasn't a exists but isn't a symlink, or if there
+		 * are no more path components left.
 		 */
 		resolved_len = _dl_strlcat(resolved, next_token, PATH_MAX);
 		if (resolved_len >= PATH_MAX) {
 			goto err;
 		}
-		if ((ret = _dl_lstat(resolved, &sb)) != 0) {
-			if (ret == ENOENT && p == NULL) {
-				return (resolved);
+		slen = _dl_readlink(resolved, symlink, sizeof(symlink) - 1);
+		if (slen < 0) {
+			switch (slen) {
+			case -EINVAL:
+				/* not a symlink, continue to next component */
+				continue;
+			case -ENOENT:
+				if (p == NULL)
+					return (resolved);
+				/* FALLTHROUGH */
+			default:
+				goto err;
 			}
-			goto err;
-		}
-		if (S_ISLNK(sb.st_mode)) {
+		} else {
 			if (symlinks++ > SYMLOOP_MAX) {
 				goto err;
 			}
-			slen = _dl_readlink(resolved, symlink, sizeof(symlink) - 1);
-			if (slen < 0)
-				goto err;
+
 			symlink[slen] = '\0';
 			if (symlink[0] == '/') {
 				resolved[1] = 0;

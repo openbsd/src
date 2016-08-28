@@ -1,4 +1,4 @@
-/*	$OpenBSD: realpath.c,v 1.20 2015/10/13 20:55:37 millert Exp $ */
+/*	$OpenBSD: realpath.c,v 1.21 2016/08/28 04:08:59 guenther Exp $ */
 /*
  * Copyright (c) 2003 Constantin S. Svintsoff <kostik@iclub.nsu.ru>
  *
@@ -27,8 +27,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/stat.h>
-
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,7 +45,6 @@
 char *
 realpath(const char *path, char *resolved)
 {
-	struct stat sb;
 	char *p, *q, *s;
 	size_t left_len, resolved_len;
 	unsigned symlinks;
@@ -148,21 +145,27 @@ realpath(const char *path, char *resolved)
 			errno = ENAMETOOLONG;
 			goto err;
 		}
-		if (lstat(resolved, &sb) != 0) {
-			if (errno == ENOENT && p == NULL) {
-				errno = serrno;
-				return (resolved);
+		slen = readlink(resolved, symlink, sizeof(symlink) - 1);
+		if (slen < 0) {
+			switch (errno) {
+			case EINVAL:
+				/* not a symlink, continue to next component */
+				continue;
+			case ENOENT:
+				if (p == NULL) {
+					errno = serrno;
+					return (resolved);
+				}
+				/* FALLTHROUGH */
+			default:
+				goto err;
 			}
-			goto err;
-		}
-		if (S_ISLNK(sb.st_mode)) {
+		} else {
 			if (symlinks++ > SYMLOOP_MAX) {
 				errno = ELOOP;
 				goto err;
 			}
-			slen = readlink(resolved, symlink, sizeof(symlink) - 1);
-			if (slen < 0)
-				goto err;
+
 			symlink[slen] = '\0';
 			if (symlink[0] == '/') {
 				resolved[1] = 0;
