@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.12 2016/08/28 17:31:44 kettenis Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.13 2016/08/28 20:20:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -108,8 +108,6 @@ int	sxipio_get_pin(void *, uint32_t *);
 void	sxipio_set_pin(void *, uint32_t *, int);
 
 struct sxipio_softc	*sxipio_sc = NULL;
-bus_space_tag_t		 sxipio_iot;
-bus_space_handle_t	 sxipio_ioh;
 
 #include "sxipio_pins.h"
 
@@ -151,11 +149,10 @@ sxipio_attach(struct device *parent, struct device *self, void *args)
 
 	/* XXX check unit, bail if != 0 */
 
-	sc->sc_iot = sxipio_iot = aa->aa_iot;
-	if (bus_space_map(sxipio_iot, aa->aa_dev->mem[0].addr,
+	sc->sc_iot = aa->aa_iot;
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
 	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("sxipio_attach: bus_space_map failed!");
-	sxipio_ioh = sc->sc_ioh;
 
 	sxipio_sc = sc;
 
