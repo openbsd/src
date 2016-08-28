@@ -118,10 +118,6 @@ main(int argc, char *argv[])
 
 	init_prompt();
 
-	s = lgetenv(less_is_more ? "MORE" : "LESS");
-	if (s != NULL)
-		scan_option(estrdup(s));
-
 	if (less_is_more) {
 		/* this is specified by XPG */
 		quit_at_eof = OPT_ON;
@@ -144,6 +140,10 @@ main(int argc, char *argv[])
 		/* repaint from top of screen */
 		top_scroll = OPT_OFF;
 	}
+
+	s = lgetenv(less_is_more ? "MORE" : "LESS");
+	if (s != NULL)
+		scan_option(estrdup(s));
 
 #define	isoptstring(s)	(((s)[0] == '-' || (s)[0] == '+') && (s)[1] != '\0')
 	while (argc > 0 && (isoptstring(*argv) || isoptpending())) {
