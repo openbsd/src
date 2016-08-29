@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.76 2016/08/27 16:10:40 millert Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.77 2016/08/29 12:20:57 millert Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -489,16 +489,16 @@ __vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 		size_t len;
 
 		cp = fmt;
-		while ((n = mbrtowc(&wc, fmt, MB_CUR_MAX, &ps)) > 0) {
-			fmt += n;
+		while ((len = mbrtowc(&wc, fmt, MB_CUR_MAX, &ps)) != 0) {
+			if (len == (size_t)-1 || len == (size_t)-2) {
+				ret = -1;
+				goto error;
+			}
+			fmt += len;
 			if (wc == '%') {
 				fmt--;
 				break;
 			}
-		}
-		if (n < 0) {
-			ret = -1;
-			goto error;
 		}
 		if (fmt != cp) {
 			ptrdiff_t m = fmt - cp;
@@ -507,7 +507,7 @@ __vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 			PRINT(cp, m);
 			ret += m;
 		}
-		if (n == 0)
+		if (len == 0)
 			goto done;
 		fmt++;		/* skip over '%' */
 
@@ -1217,17 +1217,19 @@ __find_arguments(const char *fmt0, va_list ap, union arg **argtable,
 	 * Scan the format for conversions (`%' character).
 	 */
 	for (;;) {
+		size_t len;
+
 		cp = fmt;
-		while ((n = mbrtowc(&wc, fmt, MB_CUR_MAX, &ps)) > 0) {
-			fmt += n;
+		while ((len = mbrtowc(&wc, fmt, MB_CUR_MAX, &ps)) != 0) {
+			if (len == (size_t)-1 || len == (size_t)-2)
+				return (-1);
+			fmt += len;
 			if (wc == '%') {
 				fmt--;
 				break;
 			}
 		}
-		if (n < 0)
-			return (-1);
-		if (n == 0)
+		if (len == 0)
 			goto done;
 		fmt++;		/* skip over '%' */
 
