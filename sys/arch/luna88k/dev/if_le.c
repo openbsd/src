@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.8 2014/12/22 02:26:53 tedu Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.9 2016/08/29 23:14:50 aoyama Exp $	*/
 /*	$NetBSD: if_le.c,v 1.33 1996/11/20 18:56:52 gwr Exp $	*/
 
 /*-
@@ -128,7 +128,7 @@ le_attach(struct device *parent, struct device *self, void *aux)
 
         lesc->sc_r1 = (struct lereg1 *)ma->ma_addr;     /* LANCE */
 
-        sc->sc_mem = (void *)0x71000000;                /* SRAM */
+        sc->sc_mem = (void *)0x71010000;                /* SRAM */
         sc->sc_conf3 = LE_C3_BSWP;
         sc->sc_addr = (u_long)sc->sc_mem & 0xffffff;
         sc->sc_memsize = 64 * 1024;                     /* 64KB */
