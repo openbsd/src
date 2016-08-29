@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.33 2016/08/29 17:27:04 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.34 2016/08/29 17:35:25 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -290,7 +290,7 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_softc = sc;
 
 	if (sc->sc_caps & XNF_CAP_SG)
-		ifp->if_hardmtu = 9000;
+		ifp->if_hardmtu = XNF_MCLEN - ETHER_HDR_LEN;
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 	if (sc->sc_caps & XNF_CAP_CSUM4)
