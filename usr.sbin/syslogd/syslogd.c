@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.211 2016/08/17 12:18:29 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.212 2016/08/29 20:31:56 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -327,6 +327,7 @@ void	logevent(int, const char *);
 void	logerror(const char *);
 void	logerrorx(const char *);
 void	logerrorctx(const char *, struct tls *);
+void	logerrortlsconf(const char *, struct tls_config *);
 void	logerror_reason(const char *, const char *);
 void	logmsg(int, char *, char *, int);
 struct filed *find_dup(struct filed *);
@@ -564,22 +565,25 @@ main(int argc, char *argv[])
 		} else {
 			if (tls_config_set_ca_file(client_config,
 			    CAfile) == -1) {
+				logerrortlsconf("Load client TLS CA failed",
+				    client_config);
 				/* avoid reading default certs in chroot */
 				tls_config_set_ca_mem(client_config, "", 0);
-				logerror("load client TLS CA failed");
 			} else
 				logdebug("CAfile %s\n", CAfile);
 		}
 		if (ClientCertfile && ClientKeyfile) {
 			if (tls_config_set_cert_file(client_config,
 			    ClientCertfile) == -1)
-				logerror("load client TLS cert failed");
+				logerrortlsconf("Load client TLS cert failed",
+				    client_config);
 			else
 				logdebug("ClientCertfile %s\n", ClientCertfile);
 
 			if (tls_config_set_key_file(client_config,
 			    ClientKeyfile) == -1)
-				logerror("load client TLS key failed");
+				logerrortlsconf("Load client TLS key failed",
+				    client_config);
 			else
 				logdebug("ClientKeyfile %s\n", ClientKeyfile);
 		} else if (ClientCertfile || ClientKeyfile) {
@@ -587,7 +591,8 @@ main(int argc, char *argv[])
 		}
 		tls_config_set_protocols(client_config, TLS_PROTOCOLS_ALL);
 		if (tls_config_set_ciphers(client_config, "all") != 0)
-			logerror("tls set client ciphers");
+			logerrortlsconf("Set client TLS ciphers failed",
+			    client_config);
 	}
 	if (server_config && server_ctx) {
 		const char *names[2];
@@ -600,8 +605,9 @@ main(int argc, char *argv[])
 			    == -1)
 				continue;
 			if (tls_config_set_key_file(server_config, p) == -1) {
+				logerrortlsconf("Load server TLS key failed",
+				    server_config);
 				free(p);
-				logerrorx("tls_config_set_key_file");
 				continue;
 			}
 			logdebug("Keyfile %s\n", p);
@@ -609,8 +615,9 @@ main(int argc, char *argv[])
 			if (asprintf(&p, "/etc/ssl/%s.crt", names[i]) == -1)
 				continue;
 			if (tls_config_set_cert_file(server_config, p) == -1) {
+				logerrortlsconf("Load server TLS cert failed",
+				    server_config);
 				free(p);
-				logerrorx("tls_config_set_cert_file");
 				continue;
 			}
 			logdebug("Certfile %s\n", p);
@@ -620,9 +627,10 @@ main(int argc, char *argv[])
 
 		tls_config_set_protocols(server_config, TLS_PROTOCOLS_ALL);
 		if (tls_config_set_ciphers(server_config, "compat") != 0)
-			logerror("tls set server ciphers");
+			logerrortlsconf("Set server TLS ciphers failed",
+			    server_config);
 		if (tls_configure(server_ctx, server_config) != 0) {
-			logerrorx("tls_configure server");
+			logerrorctx("tls_configure server", server_ctx);
 			tls_free(server_ctx);
 			server_ctx = NULL;
 			close(fd_tls);
@@ -2061,6 +2069,12 @@ void
 logerrorctx(const char *message, struct tls *ctx)
 {
 	logerror_reason(message, ctx ? tls_error(ctx) : NULL);
+}
+
+void
+logerrortlsconf(const char *message, struct tls_config *config)
+{
+	logerror_reason(message, config ? tls_config_error(config) : NULL);
 }
 
 void
