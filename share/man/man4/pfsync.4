@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pfsync.4,v 1.34 2016/08/25 10:51:37 sthen Exp $
+.\"	$OpenBSD: pfsync.4,v 1.35 2016/08/29 10:39:59 mpi Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" Copyright (c) 2003-2004 Ryan McBride
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 25 2016 $
+.Dd $Mdocdate: August 29 2016 $
 .Dt PFSYNC 4
 .Os
 .Sh NAME
@@ -170,12 +170,14 @@ inet 192.168.254.254 255.255.255.0 NONE
 .Pp
 .Pa /etc/hostname.carp0 :
 .Bd -literal -offset indent
-inet 10.0.0.1 255.255.255.0 10.0.0.255 vhid 1 carpdev sis0 pass foo
+inet 10.0.0.1 255.255.255.0 10.0.0.255 \e
+	vhid 1 carpdev sis0 pass foo
 .Ed
 .Pp
 .Pa /etc/hostname.carp1 :
 .Bd -literal -offset indent
-inet 192.168.0.1 255.255.255.0 192.168.0.255 vhid 2 carpdev sis1 pass bar
+inet 192.168.0.1 255.255.255.0 192.168.0.255 \e
+	vhid 2 carpdev sis1 pass bar
 .Ed
 .Pp
 .Pa /etc/hostname.pfsync0 :
@@ -207,8 +209,8 @@ For example, if firewall B is the backup, its
 .Pa /etc/hostname.carp1
 would look like this:
 .Bd -literal -offset indent
-inet 192.168.0.1 255.255.255.0 192.168.0.255 vhid 2 pass bar \e
-	advskew 100
+inet 192.168.0.1 255.255.255.0 192.168.0.255 \e
+	vhid 2 pass bar advskew 100
 .Ed
 .Pp
 The following must also be added to
