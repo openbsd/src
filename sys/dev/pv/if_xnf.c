@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.32 2016/08/29 14:12:58 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.33 2016/08/29 17:27:04 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -590,7 +590,6 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 	}
 
  errout:
-	ifp->if_oerrors++;
 	return (ENOBUFS);
 }
 
