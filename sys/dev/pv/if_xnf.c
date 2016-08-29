@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.31 2016/08/03 15:08:06 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.32 2016/08/29 14:12:58 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -527,13 +527,10 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 	struct mbuf *m;
 	bus_dmamap_t dmap;
 	uint32_t oprod = *prod;
-	int i, id, flags, n = 0;
+	int i, id, flags;
 
-	n = chainlen(m_head);
-	if (n > sc->sc_tx_frags && m_defrag(m_head, M_DONTWAIT))
-		goto errout;
-	n = chainlen(m_head);
-	if (n > sc->sc_tx_frags)
+	if ((chainlen(m_head) > sc->sc_tx_frags) &&
+	    m_defrag(m_head, M_DONTWAIT))
 		goto errout;
 
 	for (m = m_head; m != NULL; m = m->m_next) {
@@ -544,7 +541,8 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 		if (sc->sc_tx_buf[i])
 			panic("%s: cons %u(%u) prod %u next %u seg %d/%d\n",
 			    ifp->if_xname, txr->txr_cons, sc->sc_tx_cons,
-			    txr->txr_prod, *prod, n, dmap->dm_nsegs - 1);
+			    txr->txr_prod, *prod, *prod - oprod,
+			    chainlen(m_head));
 
 		flags = (sc->sc_domid << 16) | BUS_DMA_WRITE | BUS_DMA_WAITOK;
 		if (bus_dmamap_load(sc->sc_dmat, dmap, m->m_data, m->m_len,
@@ -574,8 +572,8 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 	return (0);
 
  unroll:
-	for (n = oprod; n < *prod; n++) {
-		i = *prod & (XNF_TX_DESC - 1);
+	for (; *prod != oprod; (*prod)--) {
+		i = (*prod - 1) & (XNF_TX_DESC - 1);
 		dmap = sc->sc_tx_dmap[i];
 		txd = &txr->txr_desc[i];
 
@@ -583,15 +581,13 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 		memset(txd, 0, sizeof(*txd));
 		txd->txd_req.txq_id = id;
 
-		m = sc->sc_tx_buf[i];
-		sc->sc_tx_buf[i] = NULL;
-
 		bus_dmamap_sync(sc->sc_dmat, dmap, 0, 0,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, dmap);
-		m_free(m);
+
+		if (sc->sc_tx_buf[i])
+			sc->sc_tx_buf[i] = NULL;
 	}
-	*prod = oprod;
 
  errout:
 	ifp->if_oerrors++;
