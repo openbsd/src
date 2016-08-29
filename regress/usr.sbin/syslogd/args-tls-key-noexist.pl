@@ -40,7 +40,7 @@ our %args = (
 	loggrep => {
 	    qr{Keyfile } => 0,
 	    qr{Certfile } => 0,
-	    qr{syslogd: tls_config_set_key_file} => 4,
+	    qr{syslogd: Load server TLS key failed} => 4,
 	    qr{syslogd: tls_configure server} => 2,
 	},
     },

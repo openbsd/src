@@ -13,7 +13,7 @@ our %args = (
     syslogd => {
 	loghost => '@tls://localhost:$connectport',
 	loggrep => {
-	    qr/syslogd: load client TLS CA failed/ => 2,
+	    qr/syslogd: Load client TLS CA failed/ => 2,
 	    qr/Logging to FORWTLS \@tls:\/\/localhost:\d+/ => '>=4',
 	    qr/syslogd: tls_connect_socket .*: /.
 		qr/ssl verify memory setup failure/ => 2,
