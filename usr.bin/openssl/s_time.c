@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.14 2015/10/17 15:00:11 doug Exp $ */
+/* $OpenBSD: s_time.c,v 1.15 2016/08/30 11:30:14 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,11 +86,6 @@
 
 #define MYBUFSIZ 1024*8
 
-#undef min
-#undef max
-#define min(a,b) (((a) < (b)) ? (a) : (b))
-#define max(a,b) (((a) > (b)) ? (a) : (b))
-
 #define SECONDS	30
 extern int verify_depth;
 extern int verify_error;
@@ -110,7 +105,7 @@ struct {
 	char *cipher;
 	char *host;
 	char *keyfile;
-	int maxtime;
+	time_t maxtime;
 	int nbio;
 	int no_shutdown;
 	int perform;
@@ -200,7 +195,7 @@ struct option s_time_options[] = {
 		.argname = "seconds",
 		.desc = "Duration to perform timing tests for (default 30)",
 		.type = OPTION_ARG_INT,
-		.opt.value = &s_time_config.maxtime,
+		.opt.tvalue = &s_time_config.maxtime,
 	},
 	{
 		.name = "verify",
@@ -253,8 +248,8 @@ s_time_main(int argc, char **argv)
 	double totalTime = 0.0;
 	int nConn = 0;
 	SSL *scon = NULL;
-	long finishtime = 0;
-	int ret = 1, i;
+	time_t finishtime;
+	int ret = 1;
 	char buf[1024 * 8];
 	int ver;
 
@@ -329,22 +324,22 @@ s_time_main(int argc, char **argv)
 
 	if (!(s_time_config.perform & 1))
 		goto next;
-	printf("Collecting connection statistics for %d seconds\n",
-	    s_time_config.maxtime);
+	printf("Collecting connection statistics for %lld seconds\n",
+	    (long long)s_time_config.maxtime);
 
 	/* Loop and time how long it takes to make connections */
 
 	bytes_read = 0;
-	finishtime = (long) time(NULL) + s_time_config.maxtime;
+	finishtime = time(NULL) + s_time_config.maxtime;
 	tm_Time_F(START);
 	for (;;) {
-		if (finishtime < (long) time(NULL))
+		if (finishtime < time(NULL))
 			break;
 		if ((scon = doConnection(NULL)) == NULL)
 			goto end;
 
 		if (s_time_config.www_path != NULL) {
-			int retval = snprintf(buf, sizeof buf,
+			int i, retval = snprintf(buf, sizeof buf,
 			    "GET %s HTTP/1.0\r\n\r\n", s_time_config.www_path);
 			if ((size_t)retval >= sizeof buf) {
 				fprintf(stderr, "URL too long\n");
@@ -384,9 +379,12 @@ s_time_main(int argc, char **argv)
 	}
 	totalTime += tm_Time_F(STOP);	/* Add the time for this iteration */
 
-	i = (int) ((long) time(NULL) - finishtime + s_time_config.maxtime);
-	printf("\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n", nConn, totalTime, ((double) nConn / totalTime), bytes_read);
-	printf("%d connections in %ld real seconds, %ld bytes read per connection\n", nConn, (long) time(NULL) - finishtime + s_time_config.maxtime, bytes_read / nConn);
+	printf("\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n",
+	    nConn, totalTime, ((double) nConn / totalTime), bytes_read);
+	printf("%d connections in %lld real seconds, %ld bytes read per connection\n",
+	    nConn,
+	    (long long)(time(NULL) - finishtime + s_time_config.maxtime),
+	    bytes_read / nConn);
 
 	/*
 	 * Now loop and time connections using the same session id over and
@@ -424,20 +422,20 @@ next:
 	nConn = 0;
 	totalTime = 0.0;
 
-	finishtime = (long) time(NULL) + s_time_config.maxtime;
+	finishtime = time(NULL) + s_time_config.maxtime;
 
 	printf("starting\n");
 	bytes_read = 0;
 	tm_Time_F(START);
 
 	for (;;) {
-		if (finishtime < (long) time(NULL))
+		if (finishtime < time(NULL))
 			break;
 		if ((doConnection(scon)) == NULL)
 			goto end;
 
 		if (s_time_config.www_path) {
-			int retval = snprintf(buf, sizeof buf,
+			int i, retval = snprintf(buf, sizeof buf,
 			    "GET %s HTTP/1.0\r\n\r\n", s_time_config.www_path);
 			if ((size_t)retval >= sizeof buf) {
 				fprintf(stderr, "URL too long\n");
@@ -474,9 +472,11 @@ next:
 	}
 	totalTime += tm_Time_F(STOP);	/* Add the time for this iteration */
 
-
 	printf("\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n", nConn, totalTime, ((double) nConn / totalTime), bytes_read);
-	printf("%d connections in %ld real seconds, %ld bytes read per connection\n", nConn, (long) time(NULL) - finishtime + s_time_config.maxtime, bytes_read / nConn);
+	printf("%d connections in %lld real seconds, %ld bytes read per connection\n",
+	    nConn,
+	    (long long)(time(NULL) - finishtime + s_time_config.maxtime),
+	    bytes_read / nConn);
 
 	ret = 0;
 end:
