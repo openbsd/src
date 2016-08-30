@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbm_map.c,v 1.2 2016/08/22 16:05:56 schwarze Exp $ */
+/*	$OpenBSD: dbm_map.c,v 1.3 2016/08/30 21:36:54 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -133,7 +133,11 @@ void *
 dbm_get(int32_t offset)
 {
 	offset = be32toh(offset);
-	if (offset < 0 || offset >= max_offset) {
+	if (offset < 0) {
+		warnx("dbm_get: Database corrupt: offset %d", offset);
+		return NULL;
+	}
+	if (offset >= max_offset) {
 		warnx("dbm_get: Database corrupt: offset %d > %d",
 		    offset, max_offset);
 		return NULL;
