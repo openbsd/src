@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.64 2016/08/28 19:34:15 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.65 2016/08/30 07:53:59 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 28 2016 $
+.Dd $Mdocdate: August 30 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3469,36 +3469,6 @@ or
 options in the configuration file.
 Any additional fields will be treated as though they were a
 .Cm DirectoryString .
-.Pp
-The following messages are frequently asked about:
-.Bd -unfilled -offset indent
-Using configuration from /some/path/openssl.cnf
-Unable to load config info
-\&...
-unable to find 'distinguished_name' in config
-problems making Certificate Request
-.Ed
-.Pp
-In this case it can't find the configuration file!
-.Pp
-Another puzzling message is:
-.Bd -unfilled -offset indent
-Attributes:
-    a0:00
-.Ed
-.Pp
-This is displayed when no attributes are present and the request includes
-the correct empty SET OF structure
-(the DER encoding of which is 0xa0 0x00).
-If the message is instead:
-.Pp
-.D1 Attributes:
-.Pp
-then the SET OF is missing and the encoding is technically invalid
-(but it is tolerated).
-See the description
-.Fl asn1-kludge
-for more information.
 .Sh RSA
 .nr nS 1
 .Nm "openssl rsa"
@@ -3577,13 +3547,9 @@ and SGC keys.
 .It Fl text
 Print the public/private key components in plain text.
 .El
-.\"
-.\" RSAUTL
-.\"
 .Sh RSAUTL
 .nr nS 1
 .Nm "openssl rsautl"
-.Bk -words
 .Op Fl asn1parse
 .Op Fl certin
 .Op Fl decrypt
@@ -3591,13 +3557,12 @@ Print the public/private key components in plain text.
 .Op Fl hexdump
 .Op Fl in Ar file
 .Op Fl inkey Ar file
-.Op Fl keyform Ar DER | PEM
+.Op Fl keyform Cm der | pem
 .Op Fl oaep | pkcs | raw | ssl
 .Op Fl out Ar file
 .Op Fl pubin
 .Op Fl sign
 .Op Fl verify
-.Ek
 .nr nS 0
 .Pp
 The
@@ -3620,31 +3585,25 @@ Encrypt the input data using an RSA public key.
 .It Fl hexdump
 Hex dump the output data.
 .It Fl in Ar file
-This specifies the input
-.Ar file
-to read data from, or standard input
-if this option is not specified.
+The input to read from,
+or standard input if not specified.
 .It Fl inkey Ar file
-The input key file, by default it should be an RSA private key.
-.It Fl keyform Ar DER | PEM
-Private ket format.
-Default is
-.Ar PEM .
+The input key file; by default an RSA private key.
+.It Fl keyform Cm der | pem
+The private ket format.
+The default is
+.Cm pem .
 .It Fl oaep | pkcs | raw | ssl
 The padding to use:
-PKCS#1 OAEP, PKCS#1 v1.5
-.Pq the default ,
-or no padding, respectively.
+PKCS#1 OAEP, PKCS#1 v1.5 (the default), or no padding, respectively.
 For signatures, only
 .Fl pkcs
 and
 .Fl raw
 can be used.
 .It Fl out Ar file
-Specifies the output
-.Ar file
-to write to, or standard output by
-default.
+The output file to write to,
+or standard output if not specified.
 .It Fl pubin
 The input file is an RSA public key.
 .It Fl sign
@@ -3653,104 +3612,6 @@ This requires an RSA private key.
 .It Fl verify
 Verify the input data and output the recovered data.
 .El
-.Sh RSAUTL NOTES
-.Nm rsautl ,
-because it uses the RSA algorithm directly, can only be
-used to sign or verify small pieces of data.
-.Sh RSAUTL EXAMPLES
-Sign some data using a private key:
-.Pp
-.Dl "$ openssl rsautl -sign -in file -inkey key.pem -out sig"
-.Pp
-Recover the signed data:
-.Pp
-.Dl $ openssl rsautl -verify -in sig -inkey key.pem
-.Pp
-Examine the raw signed data:
-.Pp
-.Li "\ \&$ openssl rsautl -verify -in file -inkey key.pem -raw -hexdump"
-.Bd -unfilled
-\& 0000 - 00 01 ff ff ff ff ff ff-ff ff ff ff ff ff ff ff   ................
-\& 0010 - ff ff ff ff ff ff ff ff-ff ff ff ff ff ff ff ff   ................
-\& 0020 - ff ff ff ff ff ff ff ff-ff ff ff ff ff ff ff ff   ................
-\& 0030 - ff ff ff ff ff ff ff ff-ff ff ff ff ff ff ff ff   ................
-\& 0040 - ff ff ff ff ff ff ff ff-ff ff ff ff ff ff ff ff   ................
-\& 0050 - ff ff ff ff ff ff ff ff-ff ff ff ff ff ff ff ff   ................
-\& 0060 - ff ff ff ff ff ff ff ff-ff ff ff ff ff ff ff ff   ................
-\& 0070 - ff ff ff ff 00 68 65 6c-6c 6f 20 77 6f 72 6c 64   .....hello world
-.Ed
-.Pp
-The PKCS#1 block formatting is evident from this.
-If this was done using encrypt and decrypt, the block would have been of type 2
-.Pq the second byte
-and random padding data visible instead of the 0xff bytes.
-.Pp
-It is possible to analyse the signature of certificates using this
-utility in conjunction with
-.Nm asn1parse .
-Consider the self-signed example in
-.Pa certs/pca-cert.pem :
-running
-.Nm asn1parse
-as follows yields:
-.Pp
-.Li "\ \&$ openssl asn1parse -in pca-cert.pem"
-.Bd -unfilled
-\&    0:d=0  hl=4 l= 742 cons: SEQUENCE
-\&    4:d=1  hl=4 l= 591 cons:  SEQUENCE
-\&    8:d=2  hl=2 l=   3 cons:   cont [ 0 ]
-\&   10:d=3  hl=2 l=   1 prim:    INTEGER           :02
-\&   13:d=2  hl=2 l=   1 prim:   INTEGER           :00
-\&   16:d=2  hl=2 l=  13 cons:   SEQUENCE
-\&   18:d=3  hl=2 l=   9 prim:    OBJECT            :md5WithRSAEncryption
-\&   29:d=3  hl=2 l=   0 prim:    NULL
-\&   31:d=2  hl=2 l=  92 cons:   SEQUENCE
-\&   33:d=3  hl=2 l=  11 cons:    SET
-\&   35:d=4  hl=2 l=   9 cons:     SEQUENCE
-\&   37:d=5  hl=2 l=   3 prim:      OBJECT            :countryName
-\&   42:d=5  hl=2 l=   2 prim:      PRINTABLESTRING   :AU
-\&  ....
-\&  599:d=1  hl=2 l=  13 cons:  SEQUENCE
-\&  601:d=2  hl=2 l=   9 prim:   OBJECT            :md5WithRSAEncryption
-\&  612:d=2  hl=2 l=   0 prim:   NULL
-\&  614:d=1  hl=3 l= 129 prim:  BIT STRING
-.Ed
-.Pp
-The final BIT STRING contains the actual signature.
-It can be extracted with:
-.Pp
-.Dl "$ openssl asn1parse -in pca-cert.pem -out sig -noout -strparse 614"
-.Pp
-The certificate public key can be extracted with:
-.Pp
-.Dl $ openssl x509 -in test/testx509.pem -pubkey -noout \*(Gtpubkey.pem
-.Pp
-The signature can be analysed with:
-.Pp
-.Li "\ \&$ openssl rsautl -in sig -verify -asn1parse -inkey pubkey.pem -pubin"
-.Bd -unfilled
-\&    0:d=0  hl=2 l=  32 cons: SEQUENCE
-\&    2:d=1  hl=2 l=  12 cons:  SEQUENCE
-\&    4:d=2  hl=2 l=   8 prim:   OBJECT            :md5
-\&   14:d=2  hl=2 l=   0 prim:   NULL
-\&   16:d=1  hl=2 l=  16 prim:  OCTET STRING
-\&   0000 - f3 46 9e aa 1a 4a 73 c9-37 ea 93 00 48 25 08 b5  .F...Js.7...H%..
-.Ed
-.Pp
-This is the parsed version of an ASN1
-.Em DigestInfo
-structure.
-It can be seen that the digest used was MD5.
-The actual part of the certificate that was signed can be extracted with:
-.Pp
-.Dl "$ openssl asn1parse -in pca-cert.pem -out tbs -noout -strparse 4"
-.Pp
-and its digest computed with:
-.Pp
-.Dl $ openssl md5 -c tbs
-.D1 MD5(tbs)= f3:46:9e:aa:1a:4a:73:c9:37:ea:93:00:48:25:08:b5
-.Pp
-which it can be seen agrees with the recovered value above.
 .\"
 .\" S_CLIENT
 .\"
