@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.141 2016/08/30 13:58:12 millert Exp $	*/
+/*	$OpenBSD: ping.c,v 1.142 2016/08/30 14:28:31 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -1031,47 +1031,29 @@ in_cksum(u_short *addr, int len)
 void
 summary(void)
 {
-	char buf[8192], buft[8192];
+	printf("\n--- %s ping statistics ---\n", hostname);
+	printf("%lld packets transmitted, ", ntransmitted);
+	printf("%lld packets received, ", nreceived);
 
-	/* XXX - safe to use fprintf here now */
-	(void)putchar('\r');
-	(void)fflush(stdout);
-
-	snprintf(buft, sizeof buft, "--- %s ping statistics ---\n",
-	    hostname);
-	strlcat(buf, buft, sizeof buf);
-
-	snprintf(buft, sizeof buft, "%lld packets transmitted, ", ntransmitted);
-	strlcat(buf, buft, sizeof buf);
-	snprintf(buft, sizeof buft, "%lld packets received, ", nreceived);
-	strlcat(buf, buft, sizeof buf);
-
-	if (nrepeats) {
-		snprintf(buft, sizeof buft, "%lld duplicates, ", nrepeats);
-		strlcat(buf, buft, sizeof buf);
-	}
+	if (nrepeats)
+		printf("%lld duplicates, ", nrepeats);
 	if (ntransmitted) {
 		if (nreceived > ntransmitted)
-			snprintf(buft, sizeof buft,
-			    "-- somebody's duplicating packets!");
+			printf("-- somebody's duplicating packets!");
 		else
-			snprintf(buft, sizeof buft, "%.1f%% packet loss",
+			printf("%.1f%% packet loss",
 			    ((((double)ntransmitted - nreceived) * 100) /
 			    ntransmitted));
-		strlcat(buf, buft, sizeof buf);
 	}
-	strlcat(buf, "\n", sizeof buf);
+	printf("\n");
 	if (timinginfo) {
 		/* Only display average to microseconds */
 		double num = nreceived + nrepeats;
 		double avg = tsum / num;
 		double dev = sqrt(fmax(0, tsumsq / num - avg * avg));
-		snprintf(buft, sizeof(buft),
-		    "round-trip min/avg/max/std-dev = %.3f/%.3f/%.3f/%.3f ms\n",
+		printf("round-trip min/avg/max/std-dev = %.3f/%.3f/%.3f/%.3f ms\n",
 		    tmin, avg, tmax, dev);
-		strlcat(buf, buft, sizeof(buf));
 	}
-	write(STDOUT_FILENO, buf, strlen(buf));		/* XXX atomicio? */
 }
 
 /*
