@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.146 2016/03/03 18:30:48 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.147 2016/08/30 11:15:16 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -814,6 +814,7 @@ pinger(void)
 		SipHash24_Update(&ctx, &ident, sizeof(ident));
 		SipHash24_Update(&ctx,
 		    &icp->icmp6_seq, sizeof(icp->icmp6_seq));
+		SipHash24_Update(&ctx, &dst.sin6_addr, sizeof(dst.sin6_addr));
 		SipHash24_Final(&payload.mac, &ctx);
 
 		memcpy(&outpack[ICMP6ECHOLEN],
@@ -920,6 +921,8 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			SipHash24_Update(&ctx, &ident, sizeof(ident));
 			SipHash24_Update(&ctx,
 			    &icp->icmp6_seq, sizeof(icp->icmp6_seq));
+			SipHash24_Update(&ctx, &dst.sin6_addr,
+			    sizeof(dst.sin6_addr));
 			SipHash24_Final(mac, &ctx);
 
 			if (timingsafe_memcmp(mac, &payload.mac,
