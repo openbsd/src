@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.219 2016/08/26 06:32:10 tedu Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.220 2016/08/30 14:56:39 tedu Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -151,9 +151,6 @@ char	remotehost[HOST_NAME_MAX+1];
 char	dhostname[HOST_NAME_MAX+1];
 char	*guestpw;
 char	ttyline[20];
-#if 0
-char	*tty = ttyline;		/* for klogin */
-#endif
 static struct utmp utmp;	/* for utmp */
 static	login_cap_t *lc;
 static	auth_session_t *as;
@@ -566,21 +563,17 @@ main(int argc, char *argv[])
 		exit(0);
 #endif
 	}
-#ifdef IP_TOS
 	if (his_addr.su_family == AF_INET) {
 		tos = IPTOS_LOWDELAY;
 		if (setsockopt(0, IPPROTO_IP, IP_TOS, &tos,
 		    sizeof(int)) < 0)
 			syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
 	}
-#endif
 	data_source.su_port = htons(ntohs(ctrl_addr.su_port) - 1);
 
 	/* Try to handle urgent data inline */
-#ifdef SO_OOBINLINE
 	if (setsockopt(0, SOL_SOCKET, SO_OOBINLINE, &on, sizeof(on)) < 0)
 		syslog(LOG_ERR, "setsockopt: %m");
-#endif
 
 	dolog((struct sockaddr *)&his_addr);
 
@@ -1332,15 +1325,12 @@ getdatasock(char *mode)
 	}
 	sigprocmask (SIG_UNBLOCK, &allsigs, NULL);
 
-#ifdef IP_TOS
 	if (ctrl_addr.su_family == AF_INET) {
 		on = IPTOS_THROUGHPUT;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, &on,
 		    sizeof(int)) < 0)
 			syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
 	}
-#endif
-#ifdef TCP_NOPUSH
 	/*
 	 * Turn off push flag to keep sender TCP from sending short packets
 	 * at the boundaries of each write().  Should probably do a SO_SNDBUF
@@ -1350,12 +1340,9 @@ getdatasock(char *mode)
 	on = 1;
 	if (setsockopt(s, IPPROTO_TCP, TCP_NOPUSH, &on, sizeof(on)) < 0)
 		syslog(LOG_WARNING, "setsockopt (TCP_NOPUSH): %m");
-#endif
-#ifdef SO_SNDBUF
 	on = 65536;
 	if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &on, sizeof(on)) < 0)
 		syslog(LOG_WARNING, "setsockopt (SO_SNDBUF): %m");
-#endif
 
 	return (fdopen(s, mode));
 bad:
@@ -2845,10 +2832,8 @@ set_slave_signals(void)
 	sa.sa_handler = toolong;
 	(void) sigaction(SIGALRM, &sa, NULL);
 
-#ifdef F_SETOWN
 	if (fcntl(fileno(stdin), F_SETOWN, getpid()) == -1)
 		syslog(LOG_ERR, "fcntl F_SETOWN: %m");
-#endif
 }
 
 /*
