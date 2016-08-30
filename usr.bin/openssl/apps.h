@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.18 2016/08/30 11:30:14 deraadt Exp $ */
+/* $OpenBSD: apps.h,v 1.19 2016/08/30 14:34:59 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -294,6 +294,7 @@ struct option {
 		OPTION_ARG_FUNC,
 		OPTION_ARG_INT,
 		OPTION_ARG_LONG,
+		OPTION_ARG_TIME,
 		OPTION_DISCARD,
 		OPTION_FUNC,
 		OPTION_FLAG,

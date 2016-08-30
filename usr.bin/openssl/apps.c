@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.38 2016/08/26 15:04:15 deraadt Exp $ */
+/* $OpenBSD: apps.c,v 1.39 2016/08/30 14:34:59 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2270,6 +2270,16 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed,
 				return (1);
 			}
 			*opt->opt.lvalue = (long)val;
+			break;
+
+		case OPTION_ARG_TIME:
+			val = strtonum(argv[i], 0, LLONG_MAX, &errstr);
+			if (errstr != NULL) {
+				fprintf(stderr, "%s %s argument for -%s\n",
+				    errstr, opt->argname, opt->name);
+				return (1);
+			}
+			*opt->opt.tvalue = val;
 			break;
 
 		case OPTION_DISCARD:
