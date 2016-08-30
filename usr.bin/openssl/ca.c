@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.20 2015/12/24 16:54:37 mmcc Exp $ */
+/* $OpenBSD: ca.c,v 1.21 2016/08/30 11:32:28 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -280,8 +280,6 @@ ca_main(int argc, char **argv)
 	STACK_OF(CONF_VALUE) * attribs = NULL;
 	STACK_OF(X509) * cert_sk = NULL;
 	STACK_OF(OPENSSL_STRING) * sigopts = NULL;
-#define BUFLEN 256
-	char buf[3][BUFLEN];
 	char *tofree = NULL;
 	const char *errstr = NULL;
 	DB_ATTR db_attr;
@@ -1079,15 +1077,16 @@ bad:
 
 		if (sk_X509_num(cert_sk) > 0) {
 			if (!batch) {
+				char answer[10];
+
 				BIO_printf(bio_err, "\n%d out of %d certificate requests certified, commit? [y/n]", total_done, total);
 				(void) BIO_flush(bio_err);
-				buf[0][0] = '\0';
-				if (!fgets(buf[0], 10, stdin)) {
+				if (!fgets(answer, sizeof answer - 1, stdin)) {
 					BIO_printf(bio_err, "CERTIFICATION CANCELED: I/O error\n");
 					ret = 0;
 					goto err;
 				}
-				if ((buf[0][0] != 'y') && (buf[0][0] != 'Y')) {
+				if ((answer[0] != 'y') && (answer[0] != 'Y')) {
 					BIO_printf(bio_err, "CERTIFICATION CANCELED\n");
 					ret = 0;
 					goto err;
@@ -1107,6 +1106,7 @@ bad:
 			int k;
 			char *serialstr;
 			unsigned char *data;
+			char pempath[PATH_MAX];
 
 			x = sk_X509_value(cert_sk, i);
 
@@ -1117,10 +1117,10 @@ bad:
 			else
 				serialstr = strdup("00");
 			if (serialstr) {
-				k = snprintf(buf[2], sizeof(buf[2]),
+				k = snprintf(pempath, sizeof(pempath),
 				    "%s/%s.pem", outdir, serialstr);
 				free(serialstr);
-				if (k == -1 || k >= sizeof(buf[2])) {
+				if (k == -1 || k >= sizeof(pempath)) {
 					BIO_printf(bio_err,
 					    "certificate file name too long\n");
 					goto err;
@@ -1131,10 +1131,10 @@ bad:
 				goto err;
 			}
 			if (verbose)
-				BIO_printf(bio_err, "writing %s\n", buf[2]);
+				BIO_printf(bio_err, "writing %s\n", pempath);
 
-			if (BIO_write_filename(Cout, buf[2]) <= 0) {
-				perror(buf[2]);
+			if (BIO_write_filename(Cout, pempath) <= 0) {
+				perror(pempath);
 				goto err;
 			}
 			write_new_certificate(Cout, x, 0, notext);
@@ -1507,7 +1507,6 @@ do_body(X509 ** xret, EVP_PKEY * pkey, X509 * x509, const EVP_MD * dgst,
 	OPENSSL_STRING row[DB_NUMBER];
 	OPENSSL_STRING *irow = NULL;
 	OPENSSL_STRING *rrow = NULL;
-	char buf[25];
 
 	tmptm = ASN1_UTCTIME_new();
 	if (tmptm == NULL) {
@@ -1904,17 +1903,17 @@ again2:
 	BIO_printf(bio_err, "\n");
 
 	if (!batch) {
+		char answer[25];
 
 		BIO_printf(bio_err, "Sign the certificate? [y/n]:");
 		(void) BIO_flush(bio_err);
-		buf[0] = '\0';
-		if (!fgets(buf, sizeof(buf) - 1, stdin)) {
+		if (!fgets(answer, sizeof(answer) - 1, stdin)) {
 			BIO_printf(bio_err,
 			    "CERTIFICATE WILL NOT BE CERTIFIED: I/O error\n");
 			ok = 0;
 			goto err;
 		}
-		if (!((buf[0] == 'y') || (buf[0] == 'Y'))) {
+		if (!((answer[0] == 'y') || (answer[0] == 'Y'))) {
 			BIO_printf(bio_err,
 			    "CERTIFICATE WILL NOT BE CERTIFIED\n");
 			ok = 0;
