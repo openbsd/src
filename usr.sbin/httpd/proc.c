@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.18 2016/08/30 13:46:37 rzalamena Exp $	*/
+/*	$OpenBSD: proc.c,v 1.19 2016/08/30 14:31:53 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -109,7 +109,6 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc)
 	privsep_process = PROC_PARENT;
 	ps->ps_instances[PROC_PARENT] = 1;
 	ps->ps_title[PROC_PARENT] = "parent";
-	ps->ps_pid[PROC_PARENT] = getpid();
 	ps->ps_pp = &ps->ps_pipes[privsep_process][0];
 
 	for (i = 0; i < nproc; i++)
@@ -119,7 +118,7 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc)
 
 	/* Engage! */
 	for (i = 0; i < nproc; i++)
-		ps->ps_pid[procs[i].p_id] = (*procs[i].p_init)(ps, &procs[i]);
+		(*procs[i].p_init)(ps, &procs[i]);
 }
 
 void

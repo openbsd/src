@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.94 2016/08/27 11:13:16 rzalamena Exp $	*/
+/*	$OpenBSD: server.c,v 1.95 2016/08/30 14:31:53 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -80,13 +80,11 @@ static struct privsep_proc procs[] = {
 	{ "logger",	PROC_LOGGER,	server_dispatch_logger }
 };
 
-pid_t
+void
 server(struct privsep *ps, struct privsep_proc *p)
 {
-	pid_t	 pid;
-	pid = proc_run(ps, p, procs, nitems(procs), server_init, NULL);
+	proc_run(ps, p, procs, nitems(procs), server_init, NULL);
 	server_http();
-	return (pid);
 }
 
 void

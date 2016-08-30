@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.113 2016/08/30 13:37:10 rzalamena Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.114 2016/08/30 14:31:53 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -236,7 +236,6 @@ struct privsep {
 
 	struct imsgev			*ps_ievs[PROC_MAX];
 	const char			*ps_title[PROC_MAX];
-	pid_t				 ps_pid[PROC_MAX];
 	uint8_t				 ps_what[PROC_MAX];
 
 	unsigned int			 ps_instances[PROC_MAX];
@@ -263,7 +262,7 @@ struct privsep_proc {
 	enum privsep_procid	 p_id;
 	int			(*p_cb)(int, struct privsep_proc *,
 				    struct imsg *);
-	pid_t			(*p_init)(struct privsep *,
+	void			(*p_init)(struct privsep *,
 				    struct privsep_proc *);
 	void			(*p_shutdown)(void);
 	const char		*p_chroot;
@@ -529,7 +528,7 @@ int	 load_config(const char *, struct httpd *);
 int	 cmdline_symset(char *);
 
 /* server.c */
-pid_t	 server(struct privsep *, struct privsep_proc *);
+void	 server(struct privsep *, struct privsep_proc *);
 int	 server_tls_cmp(struct server *, struct server *, int);
 int	 server_tls_load_keypair(struct server *);
 int	 server_privinit(struct server *);
@@ -732,7 +731,7 @@ int	 config_setauth(struct httpd *, struct auth *);
 int	 config_getauth(struct httpd *, struct imsg *);
 
 /* logger.c */
-pid_t	 logger(struct privsep *, struct privsep_proc *);
+void	 logger(struct privsep *, struct privsep_proc *);
 int	 logger_open_priv(struct imsg *);
 
 #endif /* _HTTPD_H */

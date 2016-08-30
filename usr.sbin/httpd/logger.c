@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.18 2016/08/27 11:13:16 rzalamena Exp $	*/
+/*	$OpenBSD: logger.c,v 1.19 2016/08/30 14:31:53 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -50,10 +50,10 @@ static struct privsep_proc procs[] = {
 	{ "server",	PROC_SERVER,	logger_dispatch_server }
 };
 
-pid_t
+void
 logger(struct privsep *ps, struct privsep_proc *p)
 {
-	return (proc_run(ps, p, procs, nitems(procs), logger_init, NULL));
+	proc_run(ps, p, procs, nitems(procs), logger_init, NULL);
 }
 
 void
