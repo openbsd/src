@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.140 2016/08/30 12:10:10 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.141 2016/08/30 13:58:12 millert Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -168,11 +168,10 @@ volatile sig_atomic_t seenint;
 volatile sig_atomic_t seeninfo;
 
 void fill(char *, char *);
-void summary(int);
+void summary(void);
 int in_cksum(u_short *, int);
 void onsignal(int);
 void retransmit(void);
-void onint(int);
 int pinger(void);
 char *pr_addr(in_addr_t);
 int check_icmph(struct ip *);
@@ -543,6 +542,8 @@ main(int argc, char *argv[])
 		int		timeout;
 
 		/* signal handling */
+		if (seenint)
+			break;
 		if (seenalrm) {
 			retransmit();
 			seenalrm = 0;
@@ -554,13 +555,8 @@ main(int argc, char *argv[])
 			}
 			continue;
 		}
-		if (seenint) {
-			onint(SIGINT);
-			seenint = 0;
-			continue;
-		}
 		if (seeninfo) {
-			summary(0);
+			summary();
 			seeninfo = 0;
 			continue;
 		}
@@ -600,7 +596,7 @@ main(int argc, char *argv[])
 		if (npackets && nreceived >= npackets)
 			break;
 	}
-	summary(0);
+	summary();
 	exit(nreceived == 0);
 }
 
@@ -629,6 +625,12 @@ void
 retransmit(void)
 {
 	struct itimerval itimer;
+	static int last_time = 0;
+
+	if (last_time) {
+		seenint = 1;	/* break out of ping event loop */
+		return;
+	}
 
 	if (pinger() == 0)
 		return;
@@ -647,9 +649,10 @@ retransmit(void)
 	itimer.it_interval.tv_sec = 0;
 	itimer.it_interval.tv_usec = 0;
 	itimer.it_value.tv_usec = 0;
-
-	(void)signal(SIGALRM, onint);
 	(void)setitimer(ITIMER_REAL, &itimer, NULL);
+
+	/* When the alarm goes off we are done. */
+	last_time = 1;
 }
 
 /*
@@ -1025,34 +1028,14 @@ in_cksum(u_short *addr, int len)
 	return(answer);
 }
 
-/*
- * onint --
- *	SIGINT handler.
- */
 void
-onint(int signo)
-{
-	summary(signo);
-
-	if (signo)
-		_exit(nreceived ? 0 : 1);
-	else
-		exit(nreceived ? 0 : 1);
-}
-
-void
-summary(int insig)
+summary(void)
 {
 	char buf[8192], buft[8192];
 
-	buf[0] = '\0';
-
-	if (!insig) {
-		(void)putchar('\r');
-		(void)fflush(stdout);
-	} else
-		strlcat(buf, "\r", sizeof buf);
-
+	/* XXX - safe to use fprintf here now */
+	(void)putchar('\r');
+	(void)fflush(stdout);
 
 	snprintf(buft, sizeof buft, "--- %s ping statistics ---\n",
 	    hostname);
