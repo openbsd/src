@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucplock.c,v 1.18 2016/08/30 14:44:45 guenther Exp $	*/
+/*	$OpenBSD: uucplock.c,v 1.19 2016/08/30 14:52:09 guenther Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -153,7 +153,7 @@ const char *
 uu_lockerr(int uu_lockresult)
 {
 	static char errbuf[128];
-	char *fmt;
+	const char *err;
 
 	switch (uu_lockresult) {
 	case UU_LOCK_INUSE:
@@ -161,32 +161,32 @@ uu_lockerr(int uu_lockresult)
 	case UU_LOCK_OK:
 		return "";
 	case UU_LOCK_OPEN_ERR:
-		fmt = "open error: %s";
+		err = "open error";
 		break;
 	case UU_LOCK_READ_ERR:
-		fmt = "read error: %s";
+		err = "read error";
 		break;
 	case UU_LOCK_CREAT_ERR:
-		fmt = "creat error: %s";
+		err = "creat error";
 		break;
 	case UU_LOCK_WRITE_ERR:
-		fmt = "write error: %s";
+		err = "write error";
 		break;
 	case UU_LOCK_LINK_ERR:
-		fmt = "link error: %s";
+		err = "link error";
 		break;
 	case UU_LOCK_TRY_ERR:
-		fmt = "too many tries: %s";
+		err = "too many tries";
 		break;
 	case UU_LOCK_OWNER_ERR:
-		fmt = "not locking process: %s";
+		err = "not locking process";
 		break;
 	default:
-		fmt = "undefined error: %s";
+		err = "undefined error";
 		break;
 	}
 
-	(void)snprintf(errbuf, sizeof(errbuf), fmt, strerror(errno));
+	(void)snprintf(errbuf, sizeof(errbuf), "%s: %s", err, strerror(errno));
 	return errbuf;
 }
 
