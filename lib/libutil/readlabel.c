@@ -1,4 +1,4 @@
-/*	$OpenBSD: readlabel.c,v 1.13 2015/01/16 16:48:52 deraadt Exp $	*/
+/*	$OpenBSD: readlabel.c,v 1.14 2016/08/30 14:44:45 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -59,7 +59,7 @@ readlabelfs(char *device, int verbose)
 
 	/* Perform disk mapping if device is given as a DUID. */
 	if (isduid(device, 0)) {
-		if ((fd = open("/dev/diskmap", O_RDONLY)) != -1) {
+		if ((fd = open("/dev/diskmap", O_RDONLY|O_CLOEXEC)) != -1) {
 			bzero(&dm, sizeof(struct dk_diskmap));
 			strlcpy(rpath, device, sizeof(rpath));
 			part = rpath[strlen(rpath) - 1];
@@ -105,12 +105,12 @@ readlabelfs(char *device, int verbose)
 	}
 
 	/* If rpath doesn't exist, change that partition back. */
-	fd = open(rpath, O_RDONLY);
+	fd = open(rpath, O_RDONLY|O_CLOEXEC);
 	if (fd < 0) {
 		if (errno == ENOENT) {
 			rpath[strlen(rpath) - 1] = part;
 
-			fd = open(rpath, O_RDONLY);
+			fd = open(rpath, O_RDONLY|O_CLOEXEC);
 			if (fd < 0) {
 				if (verbose)
 					warn("%s", rpath);

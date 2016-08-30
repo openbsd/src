@@ -1,4 +1,4 @@
-/*	$OpenBSD: pty.c,v 1.19 2013/05/21 19:07:02 matthew Exp $	*/
+/*	$OpenBSD: pty.c,v 1.20 2016/08/30 14:44:45 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -54,7 +54,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 	 * Use /dev/ptm and the PTMGET ioctl to get a properly set up and
 	 * owned pty/tty pair.
 	 */
-	fd = open(PATH_PTMDEV, O_RDWR, 0);
+	fd = open(PATH_PTMDEV, O_RDWR|O_CLOEXEC);
 	if (fd == -1)
 		return (-1);
 	if ((ioctl(fd, PTMGET, &ptm) == -1)) {
