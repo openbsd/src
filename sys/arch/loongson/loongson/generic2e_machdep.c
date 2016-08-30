@@ -1,4 +1,4 @@
-/*	$OpenBSD: generic2e_machdep.c,v 1.7 2016/03/06 19:42:27 mpi Exp $	*/
+/*	$OpenBSD: generic2e_machdep.c,v 1.8 2016/08/30 12:15:28 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -518,7 +518,7 @@ via686sb_setup(pci_chipset_tag_t pc, int dev)
 
 	reg = pci_conf_read(pc, tag, VIA686_PCI_LEVEL_PNP_IRQ2);
 	reg &= ~(VIA686_PCI_IRQA_EDGE | VIA686_PCI_IRQB_EDGE |
-	    VIA686_PCI_IRQB_EDGE | VIA686_PCI_IRQD_EDGE);
+	    VIA686_PCI_IRQC_EDGE | VIA686_PCI_IRQD_EDGE);
 	reg &= ~(VIA686_IRQ_PCIA_MASK | VIA686_IRQ_PCIB_MASK |
 	    VIA686_IRQ_PCIC_MASK | VIA686_IRQ_PCID_MASK);
 	reg |= (VIA686_IRQ_PCIA << VIA686_IRQ_PCIA_SHIFT) |
