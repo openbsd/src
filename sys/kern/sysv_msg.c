@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.31 2015/10/07 14:49:04 deraadt Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.32 2016/08/30 07:40:35 dlg Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -82,6 +82,7 @@ msginit(void)
 
 	pool_init(&sysvmsgpl, sizeof(struct msg), 0, 0, PR_WAITOK, "sysvmsgpl",
 	    NULL);
+	pool_setipl(&sysvmsgpl, IPL_NONE);
 
 	TAILQ_INIT(&msg_queues);
 

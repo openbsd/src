@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.67 2015/10/07 14:49:04 deraadt Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.68 2016/08/30 07:40:35 dlg Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -525,6 +525,7 @@ shminit(void)
 
 	pool_init(&shm_pool, sizeof(struct shmid_ds) +
 	    sizeof(struct shm_handle), 0, 0, PR_WAITOK, "shmpl", NULL);
+	pool_setipl(&shm_pool, IPL_NONE);
 	shmsegs = mallocarray(shminfo.shmmni, sizeof(struct shmid_ds *),
 	    M_SHM, M_WAITOK|M_ZERO);
 	shmseqs = mallocarray(shminfo.shmmni, sizeof(unsigned short),
