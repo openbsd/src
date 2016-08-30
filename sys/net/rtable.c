@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.50 2016/07/19 10:51:44 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.51 2016/08/30 07:42:57 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -515,6 +515,10 @@ static inline uint8_t	*satoaddr(struct art_root *, struct sockaddr *);
 void	rtentry_ref(void *, void *);
 void	rtentry_unref(void *, void *);
 
+#ifndef SMALL_KERNEL
+void	rtable_mpath_insert(struct art_node *, struct rtentry *);
+#endif
+
 struct srpl_rc rt_rc = SRPL_RC_INITIALIZER(rtentry_ref, rtentry_unref, NULL);
 
 void
@@ -679,8 +683,6 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	unsigned int			 rt_flags;
 	int				 error = 0;
 
-	KERNEL_ASSERT_LOCKED();
-
 	ar = rtable_get(rtableid, dst->sa_family);
 	if (ar == NULL)
 		return (EAFNOSUPPORT);
@@ -691,6 +693,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 		return (EINVAL);
 
 	rtref(rt); /* guarantee rtfree won't do anything during insert */
+	rw_enter_write(&ar->ar_lock);
 
 #ifndef SMALL_KERNEL
 	/* Do not permit exactly the same dst/mask/gw pair. */
@@ -766,15 +769,14 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 			}
 		}
 
-		SRPL_INSERT_HEAD_LOCKED(&rt_rc, &an->an_rtlist, rt, rt_next);
-
 		/* Put newly inserted entry at the right place. */
-		rtable_mpath_reprio(rtableid, dst, mask, rt->rt_priority, rt);
+		rtable_mpath_insert(an, rt);
 #else
 		error = EEXIST;
 #endif /* SMALL_KERNEL */
 	}
 leave:
+	rw_exit_write(&ar->ar_lock);
 	rtfree(rt);
 	return (error);
 }
@@ -792,6 +794,7 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	struct rtentry			*mrt;
 	int				 npaths = 0;
 #endif /* SMALL_KERNEL */
+	int				 error = 0;
 
 	ar = rtable_get(rtableid, dst->sa_family);
 	if (ar == NULL)
@@ -800,15 +803,17 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	addr = satoaddr(ar, dst);
 	plen = rtable_satoplen(dst->sa_family, mask);
 
-	KERNEL_ASSERT_LOCKED();
-
+	rtref(rt); /* guarantee rtfree won't do anything under ar_lock */
+	rw_enter_write(&ar->ar_lock);
 	an = art_lookup(ar, addr, plen, &sr);
 	srp_leave(&sr); /* an can't go away while we have the lock */
 
 	/* Make sure we've got a perfect match. */
 	if (an == NULL || an->an_plen != plen ||
-	    memcmp(an->an_dst, dst, dst->sa_len))
-		return (ESRCH);
+	    memcmp(an->an_dst, dst, dst->sa_len)) {
+		error = ESRCH;
+		goto leave;
+	}
 
 #ifndef SMALL_KERNEL
 	/*
@@ -827,18 +832,23 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 		an->an_dst = mrt->rt_dest;
 		if (npaths == 2)
 			mrt->rt_flags &= ~RTF_MPATH;
-		return (0);
+
+		goto leave;
 	}
 #endif /* SMALL_KERNEL */
 
 	if (art_delete(ar, an, addr, plen) == NULL)
-		return (ESRCH);
+		panic("art_delete failed to find node %p", an);
 
 	KASSERT(rt->rt_refcnt >= 1);
 	SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist, rt, rtentry, rt_next);
-
 	art_put(an);
-	return (0);
+
+leave:
+	rw_exit_write(&ar->ar_lock);
+	rtfree(rt);
+
+	return (error);
 }
 
 struct rtable_walk_cookie {
@@ -905,7 +915,7 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 	struct srp_ref			 sr;
 	uint8_t				*addr;
 	int				 plen;
-	struct rtentry			*mrt, *prt = NULL;
+	int				 error = 0;
 
 	ar = rtable_get(rtableid, dst->sa_family);
 	if (ar == NULL)
@@ -914,19 +924,32 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 	addr = satoaddr(ar, dst);
 	plen = rtable_satoplen(dst->sa_family, mask);
 
-	KERNEL_ASSERT_LOCKED();
-
+	rw_enter_write(&ar->ar_lock);
 	an = art_lookup(ar, addr, plen, &sr);
 	srp_leave(&sr); /* an can't go away while we have the lock */
 
 	/* Make sure we've got a perfect match. */
 	if (an == NULL || an->an_plen != plen ||
 	    memcmp(an->an_dst, dst, dst->sa_len))
-		return (ESRCH);
+		error = ESRCH;
+	else {
+		rtref(rt); /* keep rt alive in between remove and insert */
+		SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist,
+		    rt, rtentry, rt_next);
+		rt->rt_priority = prio;
+		rtable_mpath_insert(an, rt);
+		rtfree(rt);
+	}
+	rw_exit_write(&ar->ar_lock);
 
-	rtref(rt); /* keep rt alive in between remove and add */
-	SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist, rt, rtentry, rt_next);
-	rt->rt_priority = prio;
+	return (error);
+}
+
+void
+rtable_mpath_insert(struct art_node *an, struct rtentry *rt)
+{
+	struct rtentry			*mrt, *prt = NULL;
+	uint8_t				 prio = rt->rt_priority;
 
 	if ((mrt = SRPL_FIRST_LOCKED(&an->an_rtlist)) != NULL) {
 		/*
@@ -957,9 +980,6 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 	} else {
 		SRPL_INSERT_HEAD_LOCKED(&rt_rc, &an->an_rtlist, rt, rt_next);
 	}
-	rtfree(rt);
-
-	return (0);
 }
 
 struct rtentry *

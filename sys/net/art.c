@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.22 2016/07/19 10:51:44 mpi Exp $ */
+/*	$OpenBSD: art.c,v 1.23 2016/08/30 07:42:57 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -152,6 +152,7 @@ art_alloc(unsigned int rtableid, unsigned int alen, unsigned int off)
 
 	ar->ar_off = off;
 	ar->ar_rtableid = rtableid;
+	rw_init(&ar->ar_lock, "art");
 
 	return (ar);
 }
@@ -378,7 +379,7 @@ art_insert(struct art_root *ar, struct art_node *an, uint8_t *addr, int plen)
 	struct art_node		*node;
 	int			 i, j;
 
-	KERNEL_ASSERT_LOCKED();
+	rw_assert_wrlock(&ar->ar_lock);
 	KASSERT(plen >= 0 && plen <= ar->ar_alen);
 
 	at = srp_get_locked(&ar->ar_root);
@@ -482,7 +483,7 @@ art_delete(struct art_root *ar, struct art_node *an, uint8_t *addr, int plen)
 	struct art_node		*node;
 	int			 i, j;
 
-	KERNEL_ASSERT_LOCKED();
+	rw_assert_wrlock(&ar->ar_lock);
 	KASSERT(plen >= 0 && plen <= ar->ar_alen);
 
 	at = srp_get_locked(&ar->ar_root);
@@ -613,7 +614,7 @@ art_walk(struct art_root *ar, int (*f)(struct art_node *, void *), void *arg)
 	struct art_node		*node;
 	int			 error = 0;
 
-	KERNEL_LOCK();
+	rw_enter_write(&ar->ar_lock);
 	at = srp_get_locked(&ar->ar_root);
 	if (at != NULL) {
 		art_table_ref(ar, at);
@@ -631,7 +632,7 @@ art_walk(struct art_root *ar, int (*f)(struct art_node *, void *), void *arg)
 
 		art_table_free(ar, at);
 	}
-	KERNEL_UNLOCK();
+	rw_exit_write(&ar->ar_lock);
 
 	return (error);
 }
@@ -708,9 +709,9 @@ art_walk_apply(struct art_root *ar,
 
 	if ((an != NULL) && (an != next)) {
 		/* this assumes an->an_dst is not used by f */
-		KERNEL_UNLOCK();
+		rw_exit_write(&ar->ar_lock);
 		error = (*f)(an, arg);
-		KERNEL_LOCK();
+		rw_enter_write(&ar->ar_lock);
 	}
 
 	return (error);

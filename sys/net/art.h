@@ -1,4 +1,4 @@
-/* $OpenBSD: art.h,v 1.14 2016/06/14 04:42:02 jmatthew Exp $ */
+/* $OpenBSD: art.h,v 1.15 2016/08/30 07:42:57 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -19,6 +19,8 @@
 #ifndef _NET_ART_H_
 #define _NET_ART_H_
 
+#include <sys/rwlock.h>
+
 #define ART_MAXLVL	32	/* We currently use 32 levels for IPv6. */
 
 /*
@@ -26,6 +28,7 @@
  */
 struct art_root {
 	struct srp		 ar_root;	/* First table */
+	struct rwlock		 ar_lock;	/* Serialise modifications */
 	uint8_t			 ar_bits[ART_MAXLVL];	/* Per level stride */
 	uint8_t			 ar_nlvl;	/* Number of levels */
 	uint8_t			 ar_alen;	/* Address length in bits */
