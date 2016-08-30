@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.68 2016/04/24 20:09:45 chrisz Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.69 2016/08/30 10:54:42 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -143,6 +143,8 @@ server_fcgi(struct httpd *env, struct client *clt)
 	memset(hbuf, 0, sizeof(hbuf));
 	clt->clt_fcgi_state = FCGI_READ_HEADER;
 	clt->clt_fcgi_toread = sizeof(struct fcgi_record_header);
+	clt->clt_fcgi_status = 200;
+	clt->clt_fcgi_headersdone = 0;
 
 	if (clt->clt_srvevb != NULL)
 		evbuffer_free(clt->clt_srvevb);
@@ -549,13 +551,20 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 				}
 				break;
 			case FCGI_STDOUT:
-				if (++clt->clt_chunk == 1) {
-					if (server_fcgi_header(clt,
-					    server_fcgi_getheaders(clt))
-					    == -1) {
-						server_abort_http(clt, 500,
-						    "malformed fcgi headers");
-						return;
+				++clt->clt_chunk;
+				if (!clt->clt_fcgi_headersdone) {
+					clt->clt_fcgi_headersdone = 
+					    server_fcgi_getheaders(clt);
+					if (clt->clt_fcgi_headersdone) {
+						if (server_fcgi_header(clt,
+						    clt->clt_fcgi_status)
+						    == -1) {
+							server_abort_http(clt,
+							    500,
+							    "malformed fcgi "
+							    "headers");
+							return;
+						}
 					}
 					if (!EVBUFFER_LENGTH(clt->clt_srvevb))
 						break;
@@ -751,7 +760,7 @@ server_fcgi_getheaders(struct client *clt)
 {
 	struct http_descriptor	*resp = clt->clt_descresp;
 	struct evbuffer		*evb = clt->clt_srvevb;
-	int			 code = 200;
+	int			 code;
 	char			*line, *key, *value;
 	const char		*errstr;
 
@@ -775,11 +784,12 @@ server_fcgi_getheaders(struct client *clt)
 			if (errstr != NULL || server_httperror_byid(
 			    code) == NULL)
 				code = 200;
+			clt->clt_fcgi_status = code;
 		} else {
 			(void)kv_add(&resp->http_headers, key, value);
 		}
 		free(line);
 	}
 
-	return (code);
+	return (line != NULL && *line == '\0');
 }
