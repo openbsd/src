@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbm_dump.c,v 1.1 2016/07/30 10:56:13 schwarze Exp $ */
+/*	$OpenBSD: dbm_dump.c,v 1.2 2016/08/30 22:20:03 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -109,6 +109,10 @@ dump_pages(union ptr p)
 		dump_str(&descp);
 		printf("\npage file ");
 		pchk(dbm_get(*p.i++), &filep, "file", 0);
+		if (filep == NULL) {
+			printf("# (NULL)\n");
+			continue;
+		}
 		switch(*filep++) {
 		case 1:
 			printf("src ");
@@ -188,6 +192,10 @@ dump_macro(union ptr p, int32_t im)
 static void
 dump_str(const char **cp)
 {
+	if (*cp == NULL) {
+		printf("(NULL)");
+		return;
+	}
 	if (**cp <= (char)NAME_MASK) {
 		putchar('[');
 		if (**cp & NAME_FILE)
@@ -212,6 +220,10 @@ dump_str(const char **cp)
 static void
 dump_lst(const char **cp)
 {
+	if (*cp == NULL) {
+		printf("# (NULL)\n");
+		return;
+	}
 	while (**cp != '\0') {
 		printf("# ");
 		dump_str(cp);
@@ -223,7 +235,14 @@ dump_lst(const char **cp)
 static void
 pchk(const char *want, const char **got, const char *name, int fuzz)
 {
-	if (*got > want || *got + fuzz < want)
+	if (want == NULL) {
+		warnx("%s wants (NULL), ignoring", name);
+		return;
+	}
+	if (*got == NULL)
+		warnx("%s jumps from (NULL) to 0x%x", name,
+		    be32toh(dbm_addr(want)));
+	else if (*got > want || *got + fuzz < want)
 		warnx("%s jumps from 0x%x to 0x%x", name,
 		    be32toh(dbm_addr(*got)), be32toh(dbm_addr(want)));
 	*got = want;

@@ -1,6 +1,4 @@
 
->>> empty
-
 >>> onepage
 empty(1) - no title
 
@@ -50,6 +48,14 @@ empty(1, 8) - no title
 >>> twoarch
 empty(1/amd64, i386) - no title
 
+>>> threearch
+> amd64
+man1/amd64/empty.1
+> i386
+man1/i386/empty.1
+> sgi
+man1/sgi/empty.1
+
 >>> fn
 > fn_type
 man3/fn.3
@@ -60,6 +66,7 @@ man3/fn.3
 > fo_type
 man3/fn.3
 > fo_func
+man: nothing appropriate
 > fo_arg
 man3/fn.3
 
@@ -92,3 +99,40 @@ man1/sh.1
 man1/xr.1
 > page
 man1/xr.1
+
+>>> empty
+
+>>> badname0
+
+>>> badname
+/usr/obj/regress/usr.bin/mandoc/db/run/man/man1/empty.1
+/usr/obj/regress/usr.bin/mandoc/db/run/man/man1/second.1
+/usr/obj/regress/usr.bin/mandoc/db/run/man/man1/third.1
+
+>>> badsect0
+
+>>> badsect
+/usr/obj/regress/usr.bin/mandoc/db/run/man/man1/empty.1
+/usr/obj/regress/usr.bin/mandoc/db/run/man/man1/third.1
+
+>>> badarch0
+/usr/obj/regress/usr.bin/mandoc/db/run/man/man1/amd64/empty.1
+
+>>> badarch
+/usr/obj/regress/usr.bin/mandoc/db/run/man/man1/i386/empty.1
+
+>>> baddesc0
+empty(1) - (NULL)
+
+>>> baddesc
+empty(1) - no title
+second, empty(1) - (NULL)
+third, empty(1) - no title
+
+>>> badfile0
+/usr/obj/regress/usr.bin/mandoc/db/run/man/(NULL)
+
+>>> badfile
+/usr/obj/regress/usr.bin/mandoc/db/run/man/man1/empty.1
+/usr/obj/regress/usr.bin/mandoc/db/run/man/(NULL)
+/usr/obj/regress/usr.bin/mandoc/db/run/man/man1/third.1

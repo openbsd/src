@@ -1,0 +1,36 @@
+
+>>> empty
+man: nothing appropriate
+
+>>> badname0
+man: dbm_get: Database corrupt: offset -1
+man: No entry for empty in the manual.
+
+>>> badname
+man: dbm_get: Database corrupt: offset -1
+
+>>> badsect0
+man: dbm_get: Database corrupt: offset -1
+man: No entry for empty in the manual.
+
+>>> badsect
+man: dbm_get: Database corrupt: offset -1
+
+>>> badarch0
+man: dbm_get: Database corrupt: offset -1
+
+>>> badarch
+man: dbm_get: Database corrupt: offset -1
+
+>>> baddesc0
+man: dbm_get: Database corrupt: offset -1
+man: dbm_get: Database corrupt: offset -1
+
+>>> baddesc
+man: dbm_get: Database corrupt: offset -1
+
+>>> badfile0
+man: dbm_get: Database corrupt: offset -1
+
+>>> badfile
+man: dbm_get: Database corrupt: offset -1

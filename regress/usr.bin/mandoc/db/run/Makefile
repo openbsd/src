@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2016/08/04 09:18:53 schwarze Exp $
+# $OpenBSD: Makefile,v 1.3 2016/08/30 22:20:03 schwarze Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 #
@@ -14,54 +14,62 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-OUT_TESTS =	empty onepage twopages threepages threemacros
-OUT_TESTS +=	sortpages sortpages_rev so so_rev sortnames twosect twoarch
-OUT_TESTS +=	fn in va sh xr
-BOTH_TESTS =	padipage padfpage padmpage padmacros padimacro padmmacro
-BOTH_TESTS +=	padientry padfentry padmentry padfmagic
-ERR_TESTS =	nonexistent short badimagic badversion badmacrosp badendp
-ERR_TESTS +=	badnpages badnmacros badmacrop badfmagic
-ALL_TESTS =	${OUT_TESTS} ${BOTH_TESTS} ${ERR_TESTS}
+DO_MO_TESTS =	onepage twopages threepages threemacros
+DO_MO_TESTS +=	sortpages sortpages_rev so so_rev sortnames
+DO_MO_TESTS +=	twosect twoarch threearch fn in va sh xr
+DO_MOE_TESTS =	empty
+DOE_M_TESTS =	padipage padfpage padmpage 
+DOE_M_TESTS +=	padmacros padimacro padmmacro
+DOE_M_TESTS +=	padientry padfentry padmentry padfmagic
+DOE_MOE_TESTS =	badname0 badname badsect0 badsect badarch0 badarch
+DOE_MOE_TESTS += baddesc0 baddesc badfile0 badfile
+DE_M_TESTS =	nonexistent short badimagic badversion badmacrosp badendp
+DE_M_TESTS +=	badnpages badnmacros badmacrop badfmagic
+
+DO_TESTS =	${DO_MO_TESTS} ${DO_MOE_TESTS}
+DOE_TESTS =	${DOE_M_TESTS} ${DOE_MOE_TESTS}
+DE_TESTS =	${DE_M_TESTS}
+DOB_TESTS =	${DO_TESTS} ${DOE_TESTS}
+DEB_TESTS =	${DOE_TESTS} ${DE_TESTS}
+MOB_TESTS =	${DO_MO_TESTS} ${DO_MOE_TESTS} ${DOE_MOE_TESTS}
+MEB_TESTS =	${DO_MOE_TESTS} ${DOE_MOE_TESTS}
+ALL_TESTS =	${DO_TESTS} ${DOE_TESTS} ${DE_TESTS}
 
 REGRESS_TARGETS = ${ALL_TESTS} diff.derr diff.mout diff.merr
 
 CLEANFILES =	${ALL_TESTS:C/$/.db/}
 CLEANFILES +=	${ALL_TESTS:C/$/.dout/} ${ALL_TESTS:C/$/.derr/} all.derr
-CLEANFILES +=	${OUT_TESTS:C/$/.mout/} all.mout empty.merr
+CLEANFILES +=	${MOB_TESTS:C/$/.mout/} all.mout
+CLEANFILES +=	${MEB_TESTS:C/$/.merr/} all.merr
 
 # === MAIN REGRESSION TARGETS ==========================================
 
-.for NAME in ${OUT_TESTS}
+.for NAME in ${DO_TESTS}
 ${NAME}: ${NAME}.dout ${NAME}.derr
-	test \! -s ${NAME}.derr
-	@echo diffing ${NAME}.dout
+	@test \! -s ${NAME}.derr
 	@diff -u ${.CURDIR}/../out/${NAME}.dout ${NAME}.dout
 .endfor
 
-.for NAME in ${BOTH_TESTS}
+.for NAME in ${DOE_TESTS}
 ${NAME}: ${NAME}.dout ${NAME}.derr
-	test -s ${NAME}.derr
-	@echo diffing ${NAME}.dout
+	@test -s ${NAME}.derr
 	@diff -u ${.CURDIR}/../out/${NAME}.dout ${NAME}.dout
 .endfor
 
-.for NAME in ${ERR_TESTS}
+.for NAME in ${DE_TESTS}
 ${NAME}: ${NAME}.dout ${NAME}.derr
-	test -s ${NAME}.derr
-	test \! -s ${NAME}.dout
+	@test -s ${NAME}.derr
+	@test \! -s ${NAME}.dout
 .endfor
 
 diff.derr: all.derr
-	@echo diffing all.derr
 	@diff -u ${.CURDIR}/../out/all.derr all.derr
 
 diff.mout: all.mout
-	@echo diffing all.mout
 	@diff -u ${.CURDIR}/../out/all.mout all.mout
 
-diff.merr: empty.merr
-	@echo diffing empty.merr
-	@diff -u ${.CURDIR}/../out/empty.merr empty.merr
+diff.merr: all.merr
+	@diff -u ${.CURDIR}/../out/all.merr all.merr
 
 .PHONY: ${REGRESS_TARGETS}
 
@@ -73,28 +81,25 @@ cleandir_local:
 
 # === RUNNING DBM_DUMP =================================================
 
-.for NAME in ${OUT_TESTS} ${BOTH_TESTS}
+.for NAME in ${DOB_TESTS}
 ${NAME}.dout ${NAME}.derr: dbm_dump ${NAME}.db
-	./dbm_dump ${NAME}.db > ${NAME}.dout 2> ${NAME}.derr
+	@./dbm_dump ${NAME}.db > ${NAME}.dout 2> ${NAME}.derr
 .endfor
 
-.for NAME in ${ERR_TESTS}
+.for NAME in ${DE_TESTS}
 ${NAME}.dout ${NAME}.derr: dbm_dump ${NAME}.db
-	@echo dumping ${NAME}.db
 	@if ./dbm_dump ${NAME}.db > ${NAME}.dout 2> ${NAME}.derr; \
 		then false; else true; fi
 .endfor
 
-all.derr: ${BOTH_TESTS:C/$/.derr/} ${ERR_TESTS:C/$/.derr/}
-	@echo assembling $@
-	@for f in ${BOTH_TESTS} ${ERR_TESTS}; \
+all.derr: ${DEB_TESTS:C/$/.derr/}
+	@for f in ${DEB_TESTS}; \
 		do printf "\n>>> $$f\n"; cat $$f.derr; done > $@
 
 
 # === RUNNING MAKEWHATIS AND MAN =======================================
 
 empty.db empty.mout empty.merr:
-	@echo making empty.db
 	@rm -rf man
 	@mkdir man
 	@makewhatis man
@@ -104,7 +109,6 @@ empty.db empty.mout empty.merr:
 	@rmdir man
 
 onepage.db onepage.mout: ${.CURDIR}/../man/empty.1
-	@echo making onepage.db
 	@rm -rf man
 	@mkdir -p man/man1
 	@cp ${.CURDIR}/../man/empty.1 man/man1/
@@ -231,6 +235,22 @@ twoarch.db twoarch.mout: ${.CURDIR}/../man/empty.1
 	@mv man/mandoc.db twoarch.db
 	@rm -rf man
 
+threearch.db threearch.mout: ${.CURDIR}/../man/empty.1
+	@rm -rf man
+	@mkdir -p man/man1/amd64
+	@mkdir -p man/man1/i386
+	@mkdir -p man/man1/sgi
+	@cp ${.CURDIR}/../man/empty.1 man/man1/amd64/
+	@cp ${.CURDIR}/../man/empty.1 man/man1/i386/
+	@cp ${.CURDIR}/../man/empty.1 man/man1/sgi/
+	@makewhatis man
+	@(echo "> amd64"; man -wM man -S amd64 empty | sed 's#.*/man/##'; \
+	  echo "> i386"; man -wM man -S i386 empty | sed 's#.*/man/##'; \
+	  echo "> sgi"; man -wM man -S sgi empty | sed 's#.*/man/##') \
+	  > threearch.mout
+	@mv man/mandoc.db threearch.db
+	@rm -rf man
+
 fn.db fn.mout: ${.CURDIR}/../man/fn.3
 	@rm -rf man
 	@mkdir -p man/man3
@@ -240,7 +260,7 @@ fn.db fn.mout: ${.CURDIR}/../man/fn.3
 	  echo "> fn_func"; man -kwM man Fn=fn_func | sed 's#.*/man/##'; \
 	  echo "> fn_arg";  man -kwM man Fa=fn_arg  | sed 's#.*/man/##'; \
 	  echo "> fo_type"; man -kwM man Ft=fo_type | sed 's#.*/man/##'; \
-	  echo "> fo_func"; man -kwM man Fn=fo_func | sed 's#.*/man/##'; \
+	  echo "> fo_func"; man -kwM man Fn=fo_func 2>&1 | sed 's#.*/man/##'; \
 	  echo "> fo_arg";  man -kwM man Fa=fo_arg  | sed 's#.*/man/##') \
 	  > fn.mout
 	@mv man/mandoc.db fn.db
@@ -293,79 +313,183 @@ xr.db xr.mout: ${.CURDIR}/../man/xr.1
 	@mv man/mandoc.db xr.db
 	@rm -rf man
 
-all.mout: ${OUT_TESTS:C/$/.mout/}
-	@echo assembling all.mout
-	@for f in ${OUT_TESTS}; do printf "\n>>> $$f\n"; \
-		test -e $$f.mout && cat $$f.mout || true; done > $@
+badname0.mout badname0.merr: badname0.db
+	@rm -rf man
+	@mkdir man
+	@cp badname0.db man/mandoc.db
+	@if man -wM man empty > badname0.mout 2> badname0.merr; \
+		then false; else test $$? -eq 5; fi
+	@rm -rf man
+
+badname.mout badname.merr: badname.db
+	@rm -rf man
+	@mkdir man
+	@cp badname.db man/mandoc.db
+	@man -wM man empty > badname.mout 2> badname.merr
+	@rm -rf man
+
+badsect0.mout badsect0.merr: badsect0.db
+	@rm -rf man
+	@mkdir man
+	@cp badsect0.db man/mandoc.db
+	@if man -wM man -s 1 empty > badsect0.mout 2> badsect0.merr; \
+		then false; else test $$? -eq 5; fi
+	@rm -rf man
+
+badsect.mout badsect.merr: badsect.db
+	@rm -rf man
+	@mkdir man
+	@cp badsect.db man/mandoc.db
+	@man -wM man -s 1 empty > badsect.mout 2> badsect.merr
+	@rm -rf man
+
+badarch0.mout badarch0.merr: badarch0.db
+	@rm -rf man
+	@mkdir man
+	@cp badarch0.db man/mandoc.db
+	@man -wM man -S amd64 empty > badarch0.mout 2> badarch0.merr
+	@rm -rf man
+
+badarch.mout badarch.merr: badarch.db
+	@rm -rf man
+	@mkdir man
+	@cp badarch.db man/mandoc.db
+	@man -wM man -S i386 empty > badarch.mout 2> badarch.merr
+	@rm -rf man
+
+baddesc0.mout baddesc0.merr: baddesc0.db
+	@rm -rf man
+	@mkdir man
+	@cp baddesc0.db man/mandoc.db
+	@man -kM man empty > baddesc0.mout 2> baddesc0.merr
+	@rm -rf man
+
+baddesc.mout baddesc0.merr: baddesc.db
+	@rm -rf man
+	@mkdir man
+	@cp baddesc.db man/mandoc.db
+	@man -kM man empty > baddesc.mout 2> baddesc.merr
+	@rm -rf man
+
+badfile0.mout badfile0.merr: badfile0.db
+	@rm -rf man
+	@mkdir man
+	@cp badfile0.db man/mandoc.db
+	@man -wM man empty > badfile0.mout 2> badfile0.merr
+	@rm -rf man
+
+badfile.mout badfile.merr: badfile.db
+	@rm -rf man
+	@mkdir man
+	@cp badfile.db man/mandoc.db
+	@man -wM man empty > badfile.mout 2> badfile.merr
+	@rm -rf man
+
+all.mout: ${MOB_TESTS:C/$/.mout/}
+	@for f in ${MOB_TESTS}; \
+		do printf "\n>>> $$f\n"; cat $$f.mout || true; done > $@
+
+all.merr: ${MEB_TESTS:C/$/.merr/}
+	@for f in ${MEB_TESTS}; \
+		do printf "\n>>> $$f\n"; cat $$f.merr || true; done > $@
 
 
 # === RUNNING BINEDIT ==================================================
 
 padipage.db: binedit twopages.db
-	./binedit c16rw1f < twopages.db > $@
+	@./binedit c16rw1f < twopages.db > $@
 
 padfpage.db: binedit twopages.db
-	./binedit c16rw1s20c20w0w0w0w0w0f < twopages.db > $@
+	@./binedit c16rw1s20c20w0w0w0w0w0f < twopages.db > $@
 
 padmpage.db: binedit threepages.db
-	./binedit c16rw2c20s20c20w0w0w0w0w0f < threepages.db > $@
+	@./binedit c16rw2c20s20c20w0w0w0w0w0f < threepages.db > $@
+
+badname0.db: binedit onepage.db
+	@./binedit c20rw-1f < onepage.db > $@
+
+badname.db: binedit threepages.db
+	@./binedit c40rw-1f < threepages.db > $@
+
+badsect0.db: binedit onepage.db
+	@./binedit c24rw-1f < onepage.db > $@
+
+badsect.db: binedit threepages.db
+	@./binedit c44rw-1f < threepages.db > $@
+
+badarch0.db: binedit threearch.db
+	@./binedit c28rw-1f < threearch.db > $@
+
+badarch.db: binedit threearch.db
+	@./binedit c48rw-1f < threearch.db > $@
+
+baddesc0.db: binedit onepage.db
+	@./binedit c32rw-1f < onepage.db > $@
+
+baddesc.db: binedit threepages.db
+	@./binedit c52rw-1f < threepages.db > $@
+
+badfile0.db: binedit onepage.db
+	@./binedit c36rw-1f < onepage.db > $@
+
+badfile.db: binedit threepages.db
+	@./binedit c56rw-1f < threepages.db > $@
 
 padmacros.db: binedit onepage.db
-	./binedit c16rw0f < onepage.db > $@
+	@./binedit c16rw0f < onepage.db > $@
 
 padimacro.db: binedit empty.db
-	./binedit c8rdwri4wac4s4c136rwi4ww0f < empty.db > $@
+	@./binedit c8rdwri4wac4s4c136rwi4ww0f < empty.db > $@
 
 padmmacro.db: binedit empty.db
-	./binedit c8rdwri4wac8s4c132rwi4ww0f < empty.db > $@
+	@./binedit c8rdwri4wac8s4c132rwi4ww0f < empty.db > $@
 
 padientry.db: binedit threemacros.db
-	./binedit c8rdwac4rdwarw2f < threemacros.db > $@
+	@./binedit c8rdwac4rdwarw2f < threemacros.db > $@
 
 padfentry.db: binedit threemacros.db
-	./binedit c8rdwac4rdwarw2s8c16w0w0f < threemacros.db > $@
+	@./binedit c8rdwac4rdwarw2s8c16w0w0f < threemacros.db > $@
 
 padmentry.db: binedit threemacros.db
-	./binedit c8rdwac4rdwarw2c8s8c8w0w0f < threemacros.db > $@
+	@./binedit c8rdwac4rdwarw2c8s8c8w0w0f < threemacros.db > $@
 
 padfmagic.db: binedit empty.db
-	./binedit c12rdi4waw0f < empty.db > $@
+	@./binedit c12rdi4waw0f < empty.db > $@
 
 nonexistent.db:
-	rm -rf nonexistent.db
+	@rm -rf nonexistent.db
 
 short.db:
-	echo 'sho' > $@
+	@echo 'sho' > $@
 
 badimagic.db: binedit empty.db
-	./binedit riwf < empty.db > $@
+	@./binedit riwf < empty.db > $@
 
 badversion.db: binedit empty.db
-	./binedit c4riwf < empty.db > $@
+	@./binedit c4riwf < empty.db > $@
 
 badmacrosp.db: binedit empty.db
-	./binedit c8rw1000f < empty.db > $@
+	@./binedit c8rw1000f < empty.db > $@
 
 badendp.db: binedit empty.db
-	./binedit c12riwf < empty.db > $@
+	@./binedit c12riwf < empty.db > $@
 
 badnpages.db: binedit empty.db
-	./binedit c16rw-1f < empty.db > $@
+	@./binedit c16rw-1f < empty.db > $@
 
 badnmacros.db: binedit empty.db
-	./binedit c8rdwariwf < empty.db > $@
+	@./binedit c8rdwariwf < empty.db > $@
 
 badmacrop.db: binedit empty.db
-	./binedit c8rdwac4rw1000f < empty.db > $@
+	@./binedit c8rdwac4rw1000f < empty.db > $@
 
 badfmagic.db: binedit empty.db
-	./binedit c12rdwariwf < empty.db > $@
+	@./binedit c12rdwariwf < empty.db > $@
 
 
 # === GETTING ACCESS TO THE UTILITIES ==================================
 
 binedit dbm_dump makeinodes:
-	@echo installing $@
 	@if [ -x ${.CURDIR}/../$@/obj/$@ ]; \
 		then ln -s ${.CURDIR}/../$@/obj/$@; \
 		elif [ -x ${.CURDIR}/../$@/$@ ]; \

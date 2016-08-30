@@ -45,6 +45,59 @@ dbm_dump: value0 jumps from 0xf4 to 0xfc
 >>> padfmagic
 dbm_dump: end jumps from 0x138 to 0x13c
 
+>>> badname0
+dbm_dump: dbm_get: Database corrupt: offset -1
+dbm_dump: dbm_get: Database corrupt: offset -1
+dbm_dump: name wants (NULL), ignoring
+dbm_dump: name0 wants (NULL), ignoring
+dbm_dump: sect0 jumps from (NULL) to 0x30
+
+>>> badname
+dbm_dump: dbm_get: Database corrupt: offset -1
+dbm_dump: name wants (NULL), ignoring
+
+>>> badsect0
+dbm_dump: dbm_get: Database corrupt: offset -1
+dbm_dump: dbm_get: Database corrupt: offset -1
+dbm_dump: sect wants (NULL), ignoring
+dbm_dump: sect0 wants (NULL), ignoring
+dbm_dump: desc0 jumps from (NULL) to 0x33
+
+>>> badsect
+dbm_dump: dbm_get: Database corrupt: offset -1
+dbm_dump: sect wants (NULL), ignoring
+
+>>> badarch0
+dbm_dump: dbm_get: Database corrupt: offset -1
+dbm_dump: dbm_get: Database corrupt: offset -1
+dbm_dump: arch0 jumps from 0x71 to 0x78
+
+>>> badarch
+dbm_dump: dbm_get: Database corrupt: offset -1
+dbm_dump: arch wants (NULL), ignoring
+
+>>> baddesc0
+dbm_dump: dbm_get: Database corrupt: offset -1
+dbm_dump: dbm_get: Database corrupt: offset -1
+dbm_dump: desc wants (NULL), ignoring
+dbm_dump: desc0 wants (NULL), ignoring
+dbm_dump: file0 jumps from (NULL) to 0x3c
+
+>>> baddesc
+dbm_dump: dbm_get: Database corrupt: offset -1
+dbm_dump: desc wants (NULL), ignoring
+
+>>> badfile0
+dbm_dump: dbm_get: Database corrupt: offset -1
+dbm_dump: dbm_get: Database corrupt: offset -1
+dbm_dump: file wants (NULL), ignoring
+dbm_dump: file0 wants (NULL), ignoring
+dbm_dump: macros jumps from (NULL) to 0x4c
+
+>>> badfile
+dbm_dump: dbm_get: Database corrupt: offset -1
+dbm_dump: file wants (NULL), ignoring
+
 >>> nonexistent
 dbm_dump: nonexistent.db: No such file or directory
 
