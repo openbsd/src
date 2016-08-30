@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.26 2016/08/15 07:39:46 natano Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.27 2016/08/30 16:45:54 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -24,6 +24,7 @@
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/specdev.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/sysctl.h>
 #include <sys/vnode.h>

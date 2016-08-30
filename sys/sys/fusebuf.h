@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.h,v 1.10 2016/08/13 11:42:46 natano Exp $ */
+/* $OpenBSD: fusebuf.h,v 1.11 2016/08/30 16:45:54 natano Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon
  * Copyright (c) 2013 Martin Pieuchot
@@ -62,10 +62,10 @@ struct fusebuf {
 	struct fb_hdr	fb_hdr;
 	union {
 		struct statvfs	FD_stat;	/* vfs statfs */
-		struct vattr	FD_vattr;	/* for attr vnops */
+		struct stat	FD_attr;	/* for attr vnops */
 		struct fb_io	FD_io;		/* for file io vnops */
 	} FD;
-	uint8_t *F_databuf;			/* data's */
+	uint8_t *fb_dat;			/* data's */
 };
 
 #define fb_next		fb_hdr.fh_next
@@ -76,7 +76,7 @@ struct fusebuf {
 #define fb_uuid		fb_hdr.fh_uuid
 
 #define fb_stat		FD.FD_stat
-#define fb_vattr	FD.FD_vattr
+#define fb_attr		FD.FD_attr
 #define fb_io_fd	FD.FD_io.fi_fd
 #define fb_io_ino	FD.FD_io.fi_ino
 #define fb_io_off	FD.FD_io.fi_off
@@ -84,7 +84,6 @@ struct fusebuf {
 #define fb_io_mode	FD.FD_io.fi_mode
 #define fb_io_flags	FD.FD_io.fi_flags
 #define fb_io_rdev	FD.FD_io.fi_rdev
-#define	fb_dat		F_databuf
 
 /*
  * Macros for type conversion

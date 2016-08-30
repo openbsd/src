@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.31 2016/08/21 09:23:33 natano Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.32 2016/08/30 16:45:54 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -27,6 +27,7 @@
 #include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/specdev.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>
@@ -372,6 +373,7 @@ fusefs_getattr(void *v)
 	struct proc *p = ap->a_p;
 	struct fusefs_node *ip;
 	struct fusebuf *fbuf;
+	struct stat *st;
 	int error = 0;
 
 	ip = VTOI(vp);
@@ -388,12 +390,23 @@ fusefs_getattr(void *v)
 		return (error);
 	}
 
-	memcpy(vap, &fbuf->fb_vattr, sizeof(*vap));
+	VATTR_NULL(vap);
+	st = &fbuf->fb_attr;
 
+	vap->va_type = IFTOVT(st->st_mode);
+	vap->va_mode = st->st_mode & ~S_IFMT;
+	vap->va_nlink = st->st_nlink;
+	vap->va_uid = st->st_uid;
+	vap->va_gid = st->st_gid;
 	vap->va_fsid = fmp->mp->mnt_stat.f_fsid.val[0];
-	vap->va_type = IFTOVT(vap->va_mode);
-	vap->va_bytes *= S_BLKSIZE;
-	vap->va_mode &= ~S_IFMT;
+	vap->va_fileid = st->st_ino;
+	vap->va_size = st->st_size;
+	vap->va_blocksize = st->st_blksize;
+	vap->va_atime = st->st_atim;
+	vap->va_mtime = st->st_mtim;
+	vap->va_ctime = st->st_ctim;
+	vap->va_rdev = st->st_rdev;
+	vap->va_bytes = st->st_blocks * S_BLKSIZE;
 
 	fb_delete(fbuf);
 	return (error);
@@ -437,7 +450,7 @@ fusefs_setattr(void *v)
 			error = EROFS;
 			goto out;
 		}
-		fbuf->fb_vattr.va_uid = vap->va_uid;
+		fbuf->fb_attr.st_uid = vap->va_uid;
 		io->fi_flags |= FUSE_FATTR_UID;
 	}
 
@@ -446,7 +459,7 @@ fusefs_setattr(void *v)
 			error = EROFS;
 			goto out;
 		}
-		fbuf->fb_vattr.va_gid = vap->va_gid;
+		fbuf->fb_attr.st_gid = vap->va_gid;
 		io->fi_flags |= FUSE_FATTR_GID;
 	}
 
@@ -466,7 +479,7 @@ fusefs_setattr(void *v)
 			break;
 		}
 
-		fbuf->fb_vattr.va_size = vap->va_size;
+		fbuf->fb_attr.st_size = vap->va_size;
 		io->fi_flags |= FUSE_FATTR_SIZE;
 	}
 
@@ -475,8 +488,7 @@ fusefs_setattr(void *v)
 			error = EROFS;
 			goto out;
 		}
-		fbuf->fb_vattr.va_atime.tv_sec = vap->va_atime.tv_sec;
-		fbuf->fb_vattr.va_atime.tv_nsec = vap->va_atime.tv_nsec;
+		fbuf->fb_attr.st_atim = vap->va_atime;
 		io->fi_flags |= FUSE_FATTR_ATIME;
 	}
 
@@ -485,8 +497,7 @@ fusefs_setattr(void *v)
 			error = EROFS;
 			goto out;
 		}
-		fbuf->fb_vattr.va_mtime.tv_sec = vap->va_mtime.tv_sec;
-		fbuf->fb_vattr.va_mtime.tv_nsec = vap->va_mtime.tv_nsec;
+		fbuf->fb_attr.st_mtim = vap->va_mtime;
 		io->fi_flags |= FUSE_FATTR_MTIME;
 	}
 	/* XXX should set a flag if (vap->va_vaflags & VA_UTIMES_CHANGE) */
@@ -496,16 +507,11 @@ fusefs_setattr(void *v)
 			error = EROFS;
 			goto out;
 		}
-		fbuf->fb_vattr.va_mode = vap->va_mode & ALLPERMS;
+		fbuf->fb_attr.st_mode = vap->va_mode & ALLPERMS;
 		io->fi_flags |= FUSE_FATTR_MODE;
 	}
 
 	if (!io->fi_flags) {
-		goto out;
-	}
-
-	if (io->fi_flags & FUSE_FATTR_SIZE && vp->v_type == VDIR) {
-		error = EISDIR;
 		goto out;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.14 2016/08/21 09:23:33 natano Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.15 2016/08/30 16:45:54 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -19,6 +19,7 @@
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>
@@ -109,7 +110,7 @@ fusefs_lookup(void *v)
 			goto out;
 		}
 
-		nid = fbuf->fb_vattr.va_fileid;
+		nid = fbuf->fb_attr.st_ino;
 	}
 
 	if (nameiop == DELETE && (flags & ISLASTCN)) {
@@ -139,7 +140,7 @@ fusefs_lookup(void *v)
 		if (error)
 			goto out;
 
-		tdp->v_type = IFTOVT(fbuf->fb_vattr.va_mode);
+		tdp->v_type = IFTOVT(fbuf->fb_attr.st_mode);
 		*vpp = tdp;
 		cnp->cn_flags |= SAVENAME;
 
@@ -177,7 +178,7 @@ fusefs_lookup(void *v)
 		if (error)
 			goto out;
 
-		tdp->v_type = IFTOVT(fbuf->fb_vattr.va_mode);
+		tdp->v_type = IFTOVT(fbuf->fb_attr.st_mode);
 
 		if (vdp != NULL && vdp->v_type == VDIR)
 			VTOI(tdp)->parent = dp->ufs_ino.i_number;

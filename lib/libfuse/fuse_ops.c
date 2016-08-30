@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.24 2014/02/05 20:13:58 syl Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.25 2016/08/30 16:45:54 natano Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -30,53 +30,30 @@
 					return (0);			\
 				}
 
-static void
-stat2attr(struct vattr *v, struct stat *st)
-{
-	v->va_fileid = st->st_ino;
-	v->va_bytes = st->st_blocks;
-	v->va_mode = st->st_mode;
-	v->va_nlink = st->st_nlink;
-	v->va_uid = st->st_uid;
-	v->va_gid = st->st_gid;
-	v->va_rdev = st->st_rdev;
-	v->va_size = st->st_size;
-	v->va_blocksize = st->st_blksize;
-	v->va_atime.tv_sec = st->st_atime;
-	v->va_atime.tv_nsec = st->st_atimensec;
-	v->va_mtime.tv_sec = st->st_mtime;
-	v->va_mtime.tv_nsec = st->st_mtimensec;
-	v->va_ctime.tv_sec = st->st_ctime;
-	v->va_ctime.tv_nsec = st->st_ctimensec;
-}
-
 static int
-update_vattr(struct fuse *f, struct vattr *attr, const char *realname,
+update_attr(struct fuse *f, struct stat *attr, const char *realname,
     struct fuse_vnode *vn)
 {
-	struct stat st;
 	int ret;
 
-	bzero(&st, sizeof(st));
-	ret = f->op.getattr(realname, &st);
+	memset(attr, 0, sizeof(struct stat));
+	ret = f->op.getattr(realname, attr);
 
-	if (st.st_blksize == 0)
-		st.st_blksize = 512;
-	if (st.st_blocks == 0)
-		st.st_blocks = 4;
+	if (attr->st_blksize == 0)
+		attr->st_blksize = 512;
+	if (attr->st_blocks == 0)
+		attr->st_blocks = 4;
 
-	st.st_ino = vn->ino;
+	attr->st_ino = vn->ino;
 
 	if (f->conf.set_mode)
-		st.st_mode = (st.st_mode & S_IFMT) | (0777 & ~f->conf.umask);
+		attr->st_mode = (attr->st_mode & S_IFMT) | (0777 & ~f->conf.umask);
 
 	if (f->conf.set_uid)
-		st.st_uid = f->conf.uid;
+		attr->st_uid = f->conf.uid;
 
 	if (f->conf.set_gid)
-		st.st_gid = f->conf.gid;
-
-	stat2attr(attr, &st);
+		attr->st_gid = f->conf.gid;
 
 	return (ret);
 }
@@ -107,7 +84,7 @@ ifuse_ops_getattr(struct fuse *f, struct fusebuf *fbuf)
 	DPRINTF("Opcode:\tgetattr\n");
 	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
 
-	bzero(&fbuf->fb_vattr, sizeof(fbuf->fb_vattr));
+	memset(&fbuf->fb_attr, 0, sizeof(struct stat));
 
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
 	if (vn == NULL) {
@@ -121,7 +98,7 @@ ifuse_ops_getattr(struct fuse *f, struct fusebuf *fbuf)
 		return (0);
 	}
 
-	fbuf->fb_err = update_vattr(f, &fbuf->fb_vattr, realname, vn);
+	fbuf->fb_err = update_attr(f, &fbuf->fb_attr, realname, vn);
 	free(realname);
 
 	return (0);
@@ -474,7 +451,7 @@ ifuse_ops_lookup(struct fuse *f, struct fusebuf *fbuf)
 		return (0);
 	}
 
-	fbuf->fb_err = update_vattr(f, &fbuf->fb_vattr, realname, vn);
+	fbuf->fb_err = update_attr(f, &fbuf->fb_attr, realname, vn);
 	free(fbuf->fb_dat);
 	free(realname);
 
@@ -614,9 +591,9 @@ ifuse_ops_create(struct fuse *f, struct fusebuf *fbuf)
 		fbuf->fb_err = -ENOSYS;
 
 	if (!fbuf->fb_err) {
-		fbuf->fb_err = update_vattr(f, &fbuf->fb_vattr, realname, vn);
-		fbuf->fb_ino = fbuf->fb_vattr.va_fileid;
-		fbuf->fb_io_mode = fbuf->fb_vattr.va_mode;
+		fbuf->fb_err = update_attr(f, &fbuf->fb_attr, realname, vn);
+		fbuf->fb_ino = fbuf->fb_attr.st_ino;
+		fbuf->fb_io_mode = fbuf->fb_attr.st_mode;
 	}
 	free(realname);
 
@@ -650,8 +627,8 @@ ifuse_ops_mkdir(struct fuse *f, struct fusebuf *fbuf)
 	fbuf->fb_err = f->op.mkdir(realname, mode);
 
 	if (!fbuf->fb_err) {
-		fbuf->fb_err = update_vattr(f, &fbuf->fb_vattr, realname, vn);
-		fbuf->fb_io_mode = fbuf->fb_vattr.va_mode;
+		fbuf->fb_err = update_attr(f, &fbuf->fb_attr, realname, vn);
+		fbuf->fb_io_mode = fbuf->fb_attr.st_mode;
 		fbuf->fb_ino = vn->ino;
 	}
 	free(realname);
@@ -857,7 +834,7 @@ ifuse_ops_setattr(struct fuse *f, struct fusebuf *fbuf)
 	if (io->fi_flags & FUSE_FATTR_MODE) {
 		if (f->op.chmod)
 			fbuf->fb_err = f->op.chmod(realname,
-			    fbuf->fb_vattr.va_mode);
+			    fbuf->fb_attr.st_mode);
 		else
 			fbuf->fb_err = -ENOSYS;
 	}
@@ -865,9 +842,9 @@ ifuse_ops_setattr(struct fuse *f, struct fusebuf *fbuf)
 	if (!fbuf->fb_err && (io->fi_flags & FUSE_FATTR_UID ||
 	    io->fi_flags & FUSE_FATTR_GID) ) {
 		uid = (io->fi_flags & FUSE_FATTR_UID) ?
-		    fbuf->fb_vattr.va_uid : (gid_t)-1;
+		    fbuf->fb_attr.st_uid : (gid_t)-1;
 		gid = (io->fi_flags & FUSE_FATTR_GID) ?
-		    fbuf->fb_vattr.va_gid : (uid_t)-1;
+		    fbuf->fb_attr.st_gid : (uid_t)-1;
 		if (f->op.chown)
 			fbuf->fb_err = f->op.chown(realname, uid, gid);
 		else
@@ -876,10 +853,8 @@ ifuse_ops_setattr(struct fuse *f, struct fusebuf *fbuf)
 
 	if (!fbuf->fb_err && ( io->fi_flags & FUSE_FATTR_MTIME ||
 		io->fi_flags & FUSE_FATTR_ATIME)) {
-		ts[0].tv_sec = fbuf->fb_vattr.va_atime.tv_sec;
-		ts[0].tv_nsec = fbuf->fb_vattr.va_atime.tv_nsec;
-		ts[1].tv_sec = fbuf->fb_vattr.va_mtime.tv_sec;
-		ts[1].tv_nsec = fbuf->fb_vattr.va_mtime.tv_nsec;
+		ts[0] = fbuf->fb_attr.st_atim;
+		ts[1] = fbuf->fb_attr.st_mtim;
 		tbuf.actime = ts[0].tv_sec;
 		tbuf.modtime = ts[1].tv_sec;
 
@@ -894,15 +869,15 @@ ifuse_ops_setattr(struct fuse *f, struct fusebuf *fbuf)
 	if (!fbuf->fb_err && (io->fi_flags & FUSE_FATTR_SIZE)) {
 		if (f->op.truncate)
 			fbuf->fb_err = f->op.truncate(realname,
-			    fbuf->fb_vattr.va_size);
+			    fbuf->fb_attr.st_size);
 		else
 			fbuf->fb_err = -ENOSYS;
 	}
 
-	bzero(&fbuf->fb_vattr, sizeof(fbuf->fb_vattr));
+	memset(&fbuf->fb_attr, 0, sizeof(struct stat));
 
 	if (!fbuf->fb_err)
-		fbuf->fb_err = update_vattr(f, &fbuf->fb_vattr, realname, vn);
+		fbuf->fb_err = update_attr(f, &fbuf->fb_attr, realname, vn);
 	free(realname);
 	free(fbuf->fb_dat);
 
@@ -1054,9 +1029,9 @@ ifuse_ops_mknod(struct fuse *f, struct fusebuf *fbuf)
 	fbuf->fb_err = f->op.mknod(realname, mode, dev);
 
 	if (!fbuf->fb_err) {
-		fbuf->fb_err = update_vattr(f, &fbuf->fb_vattr, realname, vn);
-		fbuf->fb_io_mode = fbuf->fb_vattr.va_mode;
-		fbuf->fb_ino = fbuf->fb_vattr.va_fileid;
+		fbuf->fb_err = update_attr(f, &fbuf->fb_attr, realname, vn);
+		fbuf->fb_io_mode = fbuf->fb_attr.st_mode;
+		fbuf->fb_ino = fbuf->fb_attr.st_ino;
 	}
 	free(realname);
 

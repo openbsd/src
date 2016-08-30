@@ -1,4 +1,4 @@
-.\" $OpenBSD: fb_setup.9,v 1.5 2016/05/16 20:12:20 jmc Exp $
+.\" $OpenBSD: fb_setup.9,v 1.6 2016/08/30 16:45:54 natano Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2016 $
+.Dd $Mdocdate: August 30 2016 $
 .Dt FB_SETUP 9
 .Os
 .Sh NAME
@@ -56,11 +56,11 @@ struct fusebuf {
 	struct fb_hdr	fb_hdr;
 	union {
 		struct statvfs	FD_stat;
-		struct vattr	FD_vattr;
+		struct stat	FD_attr;
 		struct fb_io	FD_io;
 
 	} FD;
-	uint8_t	*F_databuf;
+	uint8_t	*fb_dat;
 };
 
 #define fb_next		fb_hdr.fh_next
@@ -71,14 +71,13 @@ struct fusebuf {
 #define fb_uuid		fb_hdr.fh_uuid
 
 #define fb_stat		FD.FD_stat
-#define fb_vattr	FD.FD_vattr
+#define fb_attr		FD.FD_attr
 #define fb_io_fd	FD.FD_io.fi_fd
 #define fb_io_ino	FD.FD_io.fi_ino
 #define fb_io_off	FD.FD_io.fi_off
 #define fb_io_len	FD.FD_io.fi_len
 #define fb_io_mode	FD.FD_io.fi_mode
 #define fb_io_flags	FD.FD_io.fi_flags
-#define	fb_dat		F_databuf
 .Ed
 .Sh DESCRIPTION
 These functions provide a way to manage the kernel messaging mechanism for
@@ -206,7 +205,7 @@ The union contains the following elements:
 A struct
 .Xr statvfs 3
 filled in by the FUSE client statfs for the FUSE VFS statfs code.
-.It Fa FD_vattr
+.It Fa FD_attr
 Used by the getattr and setattr calls.
 .It Fa FD_io
 Contains all fields commonly used by FUSE client callbacks to
@@ -215,7 +214,7 @@ It is used by access, readdir, release, releasedir, read, write, create,
 mkdir, and setattr.
 .El
 .Pp
-Setattr uses a struct fb_io and a struct vattr.
+Setattr uses a struct fb_io and a struct stat.
 Settattr uses
 .Fa FD_stat
 and encapsulates a struct fb_io in

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.12 2016/08/27 01:57:27 guenther Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.13 2016/08/30 16:45:54 natano Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -19,10 +19,11 @@
 #define _FUSE_SUBR_H_
 
 #include <sys/dirent.h>
+#include <sys/event.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
-#include <sys/time.h>
-#include <sys/vnode.h>
+#include <sys/tree.h>
 #include <sys/fusebuf.h>
 #include <limits.h>
 
