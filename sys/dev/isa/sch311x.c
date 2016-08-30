@@ -1,4 +1,4 @@
-/*	$OpenBSD: sch311x.c,v 1.15 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: sch311x.c,v 1.16 2016/08/30 12:24:07 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
@@ -498,7 +498,7 @@ schsio_wdt_init(struct schsio_softc *sc)
 
 	/* Disable wdt reset by mouse and kbd */
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh_rr, SCHSIO_WDT_CFG);
-	reg &= ~(SCHSIO_WDT_CFG_MSEN | SCHSIO_WDT_CFG_MSEN);
+	reg &= ~(SCHSIO_WDT_CFG_MSEN | SCHSIO_WDT_CFG_KBDEN);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_rr, SCHSIO_WDT_CFG, reg);
 
 	wdog_register(schsio_wdt_cb, sc);
