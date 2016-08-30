@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.139 2016/03/03 18:30:48 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.140 2016/08/30 12:10:10 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ void pr_iph(struct ip *);
 #ifndef SMALL
 int map_tos(char *, int *);
 #endif	/* SMALL */
-void usage(void);
+__dead void usage(void);
 
 int
 main(int argc, char *argv[])
@@ -1445,7 +1445,7 @@ map_tos(char *key, int *val)
 }
 #endif	/* SMALL */
 
-void
+__dead void
 usage(void)
 {
 	(void)fprintf(stderr,

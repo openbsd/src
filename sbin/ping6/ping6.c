@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.147 2016/08/30 11:15:16 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.148 2016/08/30 12:10:10 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -214,7 +214,7 @@ void	 pr_ip6opt(void *);
 void	 pr_rthdr(void *);
 void	 pr_retip(struct ip6_hdr *, u_char *);
 void	 summary(int);
-void	 usage(void);
+__dead void	 usage(void);
 
 int
 main(int argc, char *argv[])
@@ -355,17 +355,11 @@ main(int argc, char *argv[])
 			break;
 		default:
 			usage();
-			/*NOTREACHED*/
 		}
 	}
 
 	argc -= optind;
 	argv += optind;
-
-	if (argc < 1) {
-		usage();
-		/*NOTREACHED*/
-	}
 
 	if (argc != 1)
 		usage();
@@ -1564,7 +1558,7 @@ fill(char *bp, char *patp)
 	}
 }
 
-void
+__dead void
 usage(void)
 {
 	(void)fprintf(stderr,
