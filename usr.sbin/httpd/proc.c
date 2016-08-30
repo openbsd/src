@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.17 2016/08/27 11:13:16 rzalamena Exp $	*/
+/*	$OpenBSD: proc.c,v 1.18 2016/08/30 13:46:37 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -125,23 +125,37 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc)
 void
 proc_kill(struct privsep *ps)
 {
+	char		*cause;
 	pid_t		 pid;
-	unsigned int	 i;
+	int		 len, status;
 
 	if (privsep_process != PROC_PARENT)
 		return;
 
-	for (i = 0; i < PROC_MAX; i++) {
-		if (ps->ps_pid[i] == 0)
-			continue;
-		killpg(ps->ps_pid[i], SIGTERM);
-	}
+	proc_close(ps);
 
 	do {
-		pid = waitpid(WAIT_ANY, NULL, 0);
-	} while (pid != -1 || (pid == -1 && errno == EINTR));
+		pid = waitpid(WAIT_ANY, &status, 0);
+		if (pid <= 0)
+			continue;
 
-	proc_close(ps);
+		if (WIFSIGNALED(status)) {
+			len = asprintf(&cause, "terminated; signal %d",
+			    WTERMSIG(status));
+		} else if (WIFEXITED(status)) {
+			if (WEXITSTATUS(status) != 0)
+				len = asprintf(&cause, "exited abnormally");
+			else
+				len = asprintf(&cause, "exited okay");
+		} else
+			len = -1;
+
+		if (len != -1) {
+			log_warnx("lost child: pid %u %s", pid, cause);
+			free(cause);
+		} else
+			log_warnx("lost child: pid %u", pid);
+	} while (pid != -1 || (pid == -1 && errno == EINTR));
 }
 
 void
