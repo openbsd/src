@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.317 2016/08/22 16:53:59 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.318 2016/08/30 23:29:39 dlg Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -189,6 +189,7 @@ route_init(void)
 {
 	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentry",
 	    NULL);
+	pool_setipl(&rtentry_pool, IPL_SOFTNET);
 
 	while (rt_hashjitter == 0)
 		rt_hashjitter = arc4random();
@@ -1514,6 +1515,7 @@ rt_timer_init(void)
 
 	pool_init(&rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmr",
 	    NULL);
+	pool_setipl(&rttimer_pool, IPL_SOFTNET);
 
 	LIST_INIT(&rttimer_queue_head);
 	timeout_set(&rt_timer_timeout, rt_timer_timer, &rt_timer_timeout);
