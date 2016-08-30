@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.149 2016/08/30 13:50:13 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.150 2016/08/30 13:58:24 millert Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -203,7 +203,6 @@ int	 get_pathmtu(struct msghdr *);
 struct in6_pktinfo *get_rcvpktinfo(struct msghdr *);
 void	 onsignal(int);
 void	 retransmit(void);
-void	 onint(int);
 int	 pinger(void);
 const char *pr_addr(struct sockaddr *, socklen_t);
 void	 pr_icmph(struct icmp6_hdr *, u_char *);
@@ -213,7 +212,7 @@ void	 pr_exthdrs(struct msghdr *);
 void	 pr_ip6opt(void *);
 void	 pr_rthdr(void *);
 void	 pr_retip(struct ip6_hdr *, u_char *);
-void	 summary(int);
+void	 summary(void);
 __dead void	 usage(void);
 
 int
@@ -634,6 +633,8 @@ main(int argc, char *argv[])
 		int		timeout;
 
 		/* signal handling */
+		if (seenint)
+			break;
 		if (seenalrm) {
 			retransmit();
 			seenalrm = 0;
@@ -645,13 +646,8 @@ main(int argc, char *argv[])
 			}
 			continue;
 		}
-		if (seenint) {
-			onint(SIGINT);
-			seenint = 0;
-			continue;
-		}
 		if (seeninfo) {
-			summary(0);
+			summary();
 			seeninfo = 0;
 			continue;
 		}
@@ -709,7 +705,7 @@ main(int argc, char *argv[])
 		if (npackets && nreceived >= npackets)
 			break;
 	}
-	summary(0);
+	summary();
 	exit(nreceived == 0);
 }
 
@@ -738,6 +734,12 @@ void
 retransmit(void)
 {
 	struct itimerval itimer;
+	static int last_time = 0;
+
+	if (last_time) {
+		seenint = 1;	/* break out of ping event loop */
+		return;
+	}
 
 	if (pinger() == 0)
 		return;
@@ -756,9 +758,10 @@ retransmit(void)
 	itimer.it_interval.tv_sec = 0;
 	itimer.it_interval.tv_usec = 0;
 	itimer.it_value.tv_usec = 0;
-
-	(void)signal(SIGALRM, onint);
 	(void)setitimer(ITIMER_REAL, &itimer, NULL);
+
+	/* When the alarm goes off we are done. */
+	last_time = 1;
 }
 
 /*
@@ -1210,31 +1213,15 @@ get_pathmtu(struct msghdr *mhdr)
 }
 
 /*
- * onint --
- *	SIGINT handler.
- */
-void
-onint(int signo)
-{
-	summary(signo);
-
-	if (signo)
-		_exit(nreceived ? 0 : 1);
-	else
-		exit(nreceived ? 0 : 1);
-}
-
-/*
  * summary --
  *	Print out statistics.
  */
 void
-summary(int signo)
+summary(void)
 {
 	char buf[8192], buft[8192];
 
-	buf[0] = '\0';
-
+	 /* XXX - safe to use fprintf here now */
 	snprintf(buft, sizeof(buft), "--- %s ping6 statistics ---\n",
 	    hostname);
 	strlcat(buf, buft, sizeof(buf));
@@ -1271,8 +1258,7 @@ summary(int signo)
 		strlcat(buf, buft, sizeof(buf));
 	}
 	write(STDOUT_FILENO, buf, strlen(buf));
-	if (signo == 0)
-		(void)fflush(stdout);
+	(void)fflush(stdout);
 }
 
 /*
