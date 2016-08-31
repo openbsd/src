@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.3 2016/08/31 22:57:36 deraadt Exp $ */
+/*	$Id: revokeproc.c,v 1.4 2016/08/31 23:41:23 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -49,7 +49,7 @@ X509expires(X509 *x)
 	ASN1_TIME	*atim;
 	struct tm	 t;
 	unsigned char	*str;
-	size_t 	 	 i = 0;
+	size_t		 i = 0;
 
 	atim = X509_get_notAfter(x);
 	str = atim->data;
@@ -60,10 +60,10 @@ X509expires(X509 *x)
 	if (atim->type == V_ASN1_UTCTIME) {
 		if (atim->length <= 2) {
 			warnx("invalid ASN1_TIME");
-			return((time_t)-1);
+			return ((time_t)-1);
 		}
-		t.tm_year = 
-			(str[0] - '0') * 10 + 
+		t.tm_year =
+			(str[0] - '0') * 10 +
 			(str[1] - '0');
 		if (t.tm_year < 70)
 			t.tm_year += 100;
@@ -71,12 +71,12 @@ X509expires(X509 *x)
 	} else if (atim->type == V_ASN1_GENERALIZEDTIME) {
 		if (atim->length <= 4) {
 			warnx("invalid ASN1_TIME");
-			return((time_t)-1);
+			return ((time_t)-1);
 		}
-		t.tm_year = 
-			(str[0] - '0') * 1000 + 
-			(str[1] - '0') * 100 + 
-			(str[2] - '0') * 10 + 
+		t.tm_year =
+			(str[0] - '0') * 1000 +
+			(str[1] - '0') * 100 +
+			(str[2] - '0') * 10 +
 			(str[3] - '0');
 		t.tm_year -= 1900;
 		i = 4;
@@ -86,7 +86,7 @@ X509expires(X509 *x)
 
 	if (atim->length <= (int)i + 10) {
 		warnx("invalid ASN1_TIME");
-		return((time_t)-1);
+		return ((time_t)-1);
 	}
 
 	t.tm_mon = ((str[i + 0] - '0') * 10 + (str[i + 1] - '0')) - 1;
@@ -94,8 +94,8 @@ X509expires(X509 *x)
 	t.tm_hour = (str[i + 4] - '0') * 10 + (str[i + 5] - '0');
 	t.tm_min  = (str[i + 6] - '0') * 10 + (str[i + 7] - '0');
 	t.tm_sec  = (str[i + 8] - '0') * 10 + (str[i + 9] - '0');
-	
-	return(mktime(&t));
+
+	return (mktime(&t));
 }
 
 int
@@ -160,7 +160,7 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 	 * If we're revoking, however, then that's an error!
 	 * Ignore if the reader isn't reading in either case.
 	 */
-	
+
 	if (NULL == f && revocate) {
 		warnx("%s/%s: no certificate found",
 			certdir, CERT_PEM);
@@ -170,15 +170,15 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 		if (writeop(fd, COMM_REVOKE_RESP, REVOKE_EXP) >= 0)
 			rc = 1;
 		goto out;
-	} 
+	}
 
 	if (NULL == (x = PEM_read_X509(f, NULL, NULL, NULL))) {
 		warnx("PEM_read_X509");
 		goto out;
-	} 
+	}
 
 	/* Read out the expiration date. */
-	
+
 	if ((time_t)-1 == (t = X509expires(x))) {
 		warnx("X509expires");
 		goto out;
@@ -190,7 +190,7 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 	 * comamnd line.
 	 */
 
-	extsz = NULL != x->cert_info->extensions ? 
+	extsz = NULL != x->cert_info->extensions ?
 		sk_X509_EXTENSION_num(x->cert_info->extensions) : 0;
 
 	/* Scan til we find the SAN NID. */
@@ -205,7 +205,7 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 			continue;
 
 		if (NULL != san) {
-			warnx("%s/%s: two SAN entries", 
+			warnx("%s/%s: two SAN entries",
 				certdir, CERT_PEM);
 			goto out;
 		}
@@ -220,7 +220,7 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 		} else if (NULL == (san = calloc(1, bio->num_write + 1))) {
 			warn("calloc");
 			goto out;
-		} 
+		}
 		ssz = BIO_read(bio, san, bio->num_write);
 		if (ssz < 0 || (unsigned)ssz != bio->num_write) {
 			warnx("BIO_read");
@@ -231,8 +231,8 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 	if (NULL == san) {
 		warnx("%s/%s: does not have a SAN entry", certdir, CERT_PEM);
 		goto out;
-	} 
-	
+	}
+
 	/* An array of buckets: the number of entries found. */
 
 	if (NULL == (found = calloc(altsz, sizeof(size_t)))) {
@@ -240,7 +240,7 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 		goto out;
 	}
 
-	/* 
+	/*
 	 * Parse the SAN line.
 	 * Make sure that all of the domains are represented only once.
 	 */
@@ -282,12 +282,12 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 	 * netproc in DER and base64-encoded format.
 	 * Then exit: we have nothing left to do.
 	 */
-	
+
 	if (revocate) {
 		dodbg("%s/%s: revocation", certdir, CERT_PEM);
 
-		/* 
-		 * First, tell netproc we're online. 
+		/*
+		 * First, tell netproc we're online.
 		 * If they're down, then just exit without warning.
 		 */
 
@@ -309,7 +309,7 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 		} else if (NULL == (der64 = base64buf_url(der, len))) {
 			warnx("base64buf_url");
 			goto out;
-		} else if (writestr(fd, COMM_CSR, der64) >= 0) 
+		} else if (writestr(fd, COMM_CSR, der64) >= 0)
 			rc = 1;
 
 		goto out;
@@ -319,11 +319,11 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 
 	if (REVOKE_EXP == rop)
 		dodbg("%s/%s: certificate renewable: %lld days left",
-			certdir, CERT_PEM, 
+			certdir, CERT_PEM,
 			(long long)(t - time(NULL)) / 24 / 60 / 60);
 	else
 		dodbg("%s/%s: certificate valid: %lld days left",
-			certdir, CERT_PEM, 
+			certdir, CERT_PEM,
 			(long long)(t - time(NULL)) / 24 / 60 / 60);
 
 	if (REVOKE_OK == rop && force) {
@@ -331,12 +331,12 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 		rop = REVOKE_EXP;
 	}
 
-	/* 
+	/*
 	 * We can re-submit it given RENEW_ALLOW time before.
 	 * If netproc is down, just exit.
 	 */
 
-	if (0 == (cc = writeop(fd, COMM_REVOKE_RESP, rop))) 
+	if (0 == (cc = writeop(fd, COMM_REVOKE_RESP, rop)))
 		rc = 1;
 	if (cc <= 0)
 		goto out;
@@ -371,5 +371,5 @@ out:
 	free(der64);
 	ERR_print_errors_fp(stderr);
 	ERR_free_strings();
-	return(rc);
+	return (rc);
 }
