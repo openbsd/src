@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.48 2016/08/15 04:28:31 guenther Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.49 2016/08/31 10:06:41 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,7 +45,7 @@
 #include <util.h>
 #include <login_cap.h>
 
-#define UNCHANGED_MSG	"Password unchanged.\n"
+#define UNCHANGED_MSG	"Password unchanged."
 
 static uid_t uid;
 extern int pwd_check(login_cap_t *, char *);
@@ -164,7 +164,7 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 		if (uid != 0 && pw->pw_passwd[0] != '\0') {
 			p = getpass("Old password:");
 			if (p == NULL || *p == '\0') {
-				(void)printf(UNCHANGED_MSG);
+				(void)printf("%s\n", UNCHANGED_MSG);
 				pw_abort();
 				exit(p == NULL ? 1 : 0);
 			}
@@ -180,7 +180,7 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 	for (buf[0] = '\0', tries = 0;;) {
 		p = getpass("New password:");
 		if (p == NULL || *p == '\0') {
-			(void)printf(UNCHANGED_MSG);
+			(void)printf("%s\n", UNCHANGED_MSG);
 			pw_abort();
 			exit(p == NULL ? 1 : 0);
 		}
@@ -211,11 +211,9 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 	return hash;
 }
 
-/* ARGSUSED */
 void
 kbintr(int signo)
 {
-	write(STDOUT_FILENO, "\n", 1);
-	write(STDOUT_FILENO, UNCHANGED_MSG, sizeof(UNCHANGED_MSG) - 1);
+	dprintf(STDOUT_FILENO, "\n%s\n", UNCHANGED_MSG);
 	_exit(0);
 }
