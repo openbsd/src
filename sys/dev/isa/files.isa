@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.120 2016/08/31 12:46:45 tedu Exp $
+#	$OpenBSD: files.isa,v 1.121 2016/08/31 15:53:06 tedu Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -256,33 +256,6 @@ file	dev/isa/gus.c			gus
 
 attach	gus at isa with gus_isa
 file	dev/isa/gus_isa.c		gus & (gus_isa | gus_isapnp)
-
-# Sound Forte RadioLink SF16-FMR FM Radio Card
-device sfr: radiobus, tc921x, pt2254a
-attach sfr at isa
-file	dev/isa/sf16fmr.c		sfr
-
-# Sound Forte RadioLink SF16-FMR2 FM Radio Card
-device sf2r: radiobus, tea5757, pt2254a
-attach sf2r at isa
-file	dev/isa/sf16fmr2.c		sf2r
-
-# Aztech/PackardBell FM Radio Card
-device az: radiobus, lm700x
-attach az at isa
-file	dev/isa/aztech.c		az
-
-# AIMS Lab Radiotrack & compatible
-device	rt: radiobus, lm700x
-file	dev/isa/radiotrack.c		rt & (rt_isa | rt_isapnp)
-
-attach	rt at isa with rt_isa
-file	dev/isa/rt_isa.c		rt_isa
-
-# AIMS Lab Radiotrack II FM Radio Card
-device	rtii: radiobus, tea5757
-attach	rtii at isa
-file	dev/isa/radiotrack2.c		rtii
 
 # PC PPI + TIMER 1 (speaker interface)
 device	pcppi {}

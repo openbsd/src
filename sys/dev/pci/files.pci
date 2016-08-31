@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.324 2016/03/17 04:02:00 jsg Exp $
+#	$OpenBSD: files.pci,v 1.325 2016/08/31 15:53:06 tedu Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -579,11 +579,6 @@ file	dev/pci/trm_pci.c		trm_pci
 device	pcscp: scsi, ncr53c9x
 attach	pcscp at pci
 file	dev/pci/pcscp.c			pcscp
-
-# Gemtek/Guillemot PCI Radio Card
-device	gtp: tea5757, radiobus
-attach	gtp at pci
-file	dev/pci/gtp.c			gtp
 
 # National Semiconductor DP83820/DP83821 based GigE
 device	nge: ether, ifnet, mii, ifmedia, mii_phy
