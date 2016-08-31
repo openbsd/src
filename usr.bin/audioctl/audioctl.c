@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.33 2016/06/21 22:35:39 jmc Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.34 2016/08/31 09:48:26 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Alexandre Ratchov <alex@caoua.org>
  *
@@ -277,5 +277,6 @@ main(int argc, char **argv)
 		print_val(f, f->waddr);
 		printf("\n");
 	}
+	close(fd);
 	return 0;	
 }
