@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.2 2016/08/31 22:20:53 florian Exp $ */
+/*	$Id: main.c,v 1.3 2016/08/31 22:57:36 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -82,7 +82,7 @@ main(int argc, char *argv[])
 			  cert_fds[2], file_fds[2], dns_fds[2],
 			  rvk_fds[2];
 	pid_t		  pids[COMP__MAX];
-	int		  c, rc, newacct, remote, revoke, force,
+	int		  c, rc, newacct, remote, revocate, force,
 			  staging, multidir, newkey, backup;
 	extern int	  verbose;
 	extern enum comp  proccomp;
@@ -90,7 +90,7 @@ main(int argc, char *argv[])
 	const char	**alts;
 
 	alts = NULL;
-	newacct = remote = revoke = verbose = force = 
+	newacct = remote = revocate = verbose = force = 
 		multidir = staging = newkey = backup = 0;
 	certdir = keyfile = acctkey = chngdir = NULL;
 	agreement = AGREEMENT;
@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 			newkey = 1;
 			break;
 		case ('r'):
-			revoke = 1;
+			revocate = 1;
 			break;
 		case ('s'):
 			staging = 1;
@@ -290,7 +290,7 @@ main(int argc, char *argv[])
 		c = netproc(key_fds[1], acct_fds[1], 
 			chng_fds[1], cert_fds[1], 
 			dns_fds[1], rvk_fds[1], 
-			newacct, revoke, staging,
+			newacct, revocate, staging,
 			(const char *const *)alts, altsz,
 			agreement);
 		free(alts);
@@ -427,7 +427,7 @@ main(int argc, char *argv[])
 	if (0 == pids[COMP_REVOKE]) {
 		proccomp = COMP_REVOKE;
 		c = revokeproc(rvk_fds[0], certdir, 
-			force, revoke,
+			force, revocate,
 			(const char *const *)alts, altsz);
 		free(alts);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);

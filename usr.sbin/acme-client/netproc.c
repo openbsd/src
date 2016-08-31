@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.1 2016/08/31 22:01:42 florian Exp $ */
+/*	$Id: netproc.c,v 1.2 2016/08/31 22:57:36 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -583,7 +583,7 @@ dofullchain(struct conn *c, const char *addr)
  */
 int
 netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
-	int newacct, int revoke, int staging, 
+	int newacct, int revocate, int staging, 
 	const char *const *alts, size_t altsz, const char *agreement)
 {
 	int		 rc;
@@ -677,7 +677,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 	 * certproc, which will in turn notify the fileproc.
 	 */
 
-	if (revoke) {
+	if (revocate) {
 		if (NULL == (cert = readstr(rfd, COMM_CSR)))
 			goto out;
 		if ( ! dorevoke(&c, paths.revokecert, cert)) 

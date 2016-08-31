@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.2 2016/08/31 22:43:02 deraadt Exp $ */
+/*	$Id: revokeproc.c,v 1.3 2016/08/31 22:57:36 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -99,7 +99,7 @@ X509expires(X509 *x)
 }
 
 int
-revokeproc(int fd, const char *certdir, int force, int revoke,
+revokeproc(int fd, const char *certdir, int force, int revocate,
 	const char *const *alts, size_t altsz)
 {
 	int		 rc, cc, i, extsz, ssz;
@@ -161,12 +161,12 @@ revokeproc(int fd, const char *certdir, int force, int revoke,
 	 * Ignore if the reader isn't reading in either case.
 	 */
 	
-	if (NULL == f && revoke) {
+	if (NULL == f && revocate) {
 		warnx("%s/%s: no certificate found",
 			certdir, CERT_PEM);
 		(void)writeop(fd, COMM_REVOKE_RESP, REVOKE_OK);
 		goto out;
-	} else if (NULL == f && ! revoke) {
+	} else if (NULL == f && ! revocate) {
 		if (writeop(fd, COMM_REVOKE_RESP, REVOKE_EXP) >= 0)
 			rc = 1;
 		goto out;
@@ -283,7 +283,7 @@ revokeproc(int fd, const char *certdir, int force, int revoke,
 	 * Then exit: we have nothing left to do.
 	 */
 	
-	if (revoke) {
+	if (revocate) {
 		dodbg("%s/%s: revocation", certdir, CERT_PEM);
 
 		/* 
