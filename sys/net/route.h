@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.142 2016/08/22 16:01:52 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.143 2016/08/31 08:13:49 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -350,7 +350,6 @@ void		 rtlabel_unref(u_int16_t);
 #define	RT_RESOLVE	1
 
 extern struct rtstat rtstat;
-extern const struct sockaddr_rtin rt_defmask4;
 
 struct mbuf;
 struct socket;
