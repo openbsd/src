@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.1 2016/08/31 22:01:42 florian Exp $ */
+/*	$Id: acctproc.c,v 1.2 2016/08/31 22:42:19 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -174,9 +174,9 @@ op_sign_rsa(char **head, char **prot, EVP_PKEY *pkey, const char *nonce)
 	*head = *prot = exp = mod = NULL;
 	rc = 0;
 
-	/* 
-	 * First, extract relevant portions of our private key. 
-	 * Then construct the public header. 
+	/*
+	 * First, extract relevant portions of our private key.
+	 * Then construct the public header.
 	 * Finally, format the header combined with the nonce.
 	 */
 
@@ -206,7 +206,7 @@ static int
 op_sign(int fd, EVP_PKEY *pkey)
 {
 	char		*nonce, *pay,
-			*pay64, *prot, *prot64, *head, 
+			*pay64, *prot, *prot64, *head,
 			*sign, *dig64, *fin;
 	int		 cc, rc;
 	unsigned int	 digsz;
@@ -223,7 +223,7 @@ op_sign(int fd, EVP_PKEY *pkey)
 
 	if (NULL == (pay = readstr(fd, COMM_PAY)))
 		goto out;
-	else if (NULL == (nonce = readstr(fd, COMM_NONCE))) 
+	else if (NULL == (nonce = readstr(fd, COMM_NONCE)))
 		goto out;
 
 	/* Base64-encode the payload. */
@@ -286,8 +286,8 @@ op_sign(int fd, EVP_PKEY *pkey)
 		goto out;
 	}
 
-	/* 
-	 * Write back in the correct JSON format. 
+	/*
+	 * Write back in the correct JSON format.
 	 * If the reader is closed, just ignore it (we'll pick it up
 	 * when we next enter the read loop).
 	 */
@@ -331,7 +331,7 @@ acctproc(int netsock, const char *acctkey, int newacct)
 	pkey = NULL;
 	rc = 0;
 
-	/* 
+	/*
 	 * First, open our private key file read-only or write-only if
 	 * we're creating from scratch.
 	 * Set our umask to be maximally restrictive.

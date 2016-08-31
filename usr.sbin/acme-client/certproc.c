@@ -1,4 +1,4 @@
-/*	$Id: certproc.c,v 1.1 2016/08/31 22:01:42 florian Exp $ */
+/*	$Id: certproc.c,v 1.2 2016/08/31 22:42:19 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -56,8 +56,8 @@ x509buf(X509 *x, size_t *sz)
 		return(NULL);
 	}
 
-	/* 
-	 * Now convert bio to string. 
+	/*
+	 * Now convert bio to string.
 	 * Make into nil-terminated, just in case.
 	 */
 
@@ -65,7 +65,7 @@ x509buf(X509 *x, size_t *sz)
 		warn("calloc");
 		BIO_free(bio);
 		return(NULL);
-	} 
+	}
 
 	ssz = BIO_read(bio, p, bio->num_write);
 	if (ssz < 0 || (unsigned)ssz != bio->num_write) {
@@ -132,8 +132,8 @@ certproc(int netsock, int filesock)
 		goto out;
 	}
 
-	/* 
-	 * Pass revocation right through to fileproc. 
+	/*
+	 * Pass revocation right through to fileproc.
 	 * If the reader is terminated, ignore it.
 	 */
 
@@ -210,7 +210,7 @@ certproc(int netsock, int filesock)
 	if (chainsz <= strlen(MARKER) ||
 	    strncmp(chain, MARKER, strlen(MARKER))) {
 		chaincp = (u_char *)chain;
-		chainx = d2i_X509(NULL, 
+		chainx = d2i_X509(NULL,
 			(const u_char **)&chaincp, chainsz);
 		if (NULL == chainx) {
 			warnx("d2i_X509");
@@ -219,7 +219,7 @@ certproc(int netsock, int filesock)
 		free(chain);
 		if (NULL == (chain = x509buf(chainx, &chainsz)))
 			goto out;
-	} 
+	}
 
 	/* Allow reader termination to just push us out. */
 
@@ -232,8 +232,8 @@ certproc(int netsock, int filesock)
 	if (cc <= 0)
 		goto out;
 
-	/* 
-	 * Next, convert the X509 to a buffer and send that. 
+	/*
+	 * Next, convert the X509 to a buffer and send that.
 	 * Reader failure doesn't change anything.
 	 */
 
@@ -258,4 +258,3 @@ out:
 	ERR_free_strings();
 	return(rc);
 }
-

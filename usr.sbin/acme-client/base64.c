@@ -1,4 +1,4 @@
-/*	$Id: base64.c,v 1.1 2016/08/31 22:01:42 florian Exp $ */
+/*	$Id: base64.c,v 1.2 2016/08/31 22:42:19 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,6 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -26,7 +27,7 @@
 
 #include "extern.h"
 
-static const char b64[] = 
+static const char b64[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	"abcdefghijklmnopqrstuvwxyz"
 	"0123456789+/";
@@ -35,7 +36,7 @@ static const char b64[] =
  * Compute the maximum buffer required for a base64 encoded string of
  * length "len".
  */
-size_t 
+size_t
 base64len(size_t len)
 {
 
@@ -46,11 +47,11 @@ base64len(size_t len)
  * Base64 computation.
  * This is heavily "assert"-d because Coverity complains.
  */
-size_t 
+size_t
 base64buf(char *enc, const char *str, size_t len)
 {
-	size_t 	i, val;
-	char 	*p;
+	size_t	 i, val;
+	char	*p;
 
 	p = enc;
 
@@ -59,12 +60,12 @@ base64buf(char *enc, const char *str, size_t len)
 		assert(val < sizeof(b64));
 		*p++ = b64[val];
 
-		val = ((str[i] & 0x3) << 4) | 
+		val = ((str[i] & 0x3) << 4) |
 			((int)(str[i + 1] & 0xF0) >> 4);
 		assert(val < sizeof(b64));
 		*p++ = b64[val];
 
-		val = ((str[i + 1] & 0xF) << 2) | 
+		val = ((str[i + 1] & 0xF) << 2) |
 			((int)(str[i + 2] & 0xC0) >> 6);
 		assert(val < sizeof(b64));
 		*p++ = b64[val];
