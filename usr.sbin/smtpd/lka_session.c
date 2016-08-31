@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.79 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.80 2016/08/31 10:18:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -274,7 +274,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 	int			r;
 	union lookup		lk;
 	char		       *tag;
-
+	
 	if (xn->depth >= EXPAND_DEPTH) {
 		log_trace(TRACE_EXPAND, "expand: lka_expand: node too deep.");
 		lks->error = LKA_PERMFAIL;
@@ -378,7 +378,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		}
 
 		/* gilles+hackers@ -> gilles@ */
-		if ((tag = strchr(xn->u.user, TAG_CHAR)) != NULL)
+		if ((tag = strchr(xn->u.user, *env->sc_subaddressing_delim)) != NULL)
 			*tag++ = '\0';
 
 		r = table_lookup(rule->r_userbase, NULL, xn->u.user, K_USERINFO, &lk);
@@ -874,7 +874,7 @@ mod_strip(char *buf, size_t len)
 	unsigned int i;
 
 	/* gilles+hackers -> gilles */
-	if ((tag = strchr(buf, TAG_CHAR)) != NULL) {
+	if ((tag = strchr(buf, *env->sc_subaddressing_delim)) != NULL) {
 		/* gilles+hackers@poolp.org -> gilles@poolp.org */
 		if ((at = strchr(tag, '@')) != NULL) {
 			for (i = 0; i <= strlen(at); ++i)

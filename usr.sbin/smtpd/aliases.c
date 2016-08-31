@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.70 2016/05/21 19:28:19 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.71 2016/08/31 10:18:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -54,7 +54,7 @@ aliases_get(struct expand *expand, const char *username)
 	xlowercase(buf, username, sizeof(buf));
 
 	/* first, check if entry has a user-part tag */
-	pbuf = strchr(buf, TAG_CHAR);
+	pbuf = strchr(buf, *env->sc_subaddressing_delim);
 	if (pbuf) {
 		ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
 		if (ret < 0)
@@ -116,7 +116,7 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 	xlowercase(domain, domain, sizeof(domain));
 
 	memset(tag, '\0', sizeof tag);
-	pbuf = strchr(user, TAG_CHAR);
+	pbuf = strchr(user, *env->sc_subaddressing_delim);
 	if (pbuf) {
 		if (!bsnprintf(tag, sizeof(tag), "%s", pbuf + 1))
 			return 0;
@@ -127,7 +127,7 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 	/* first, check if entry has a user-part tag */
 	if (tag[0]) {
 		if (!bsnprintf(buf, sizeof(buf), "%s%c%s@%s",
-			user, TAG_CHAR, tag, domain))
+			user, *env->sc_subaddressing_delim, tag, domain))
 			return 0;
 		ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
 		if (ret < 0)
@@ -147,7 +147,8 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 
 	if (tag[0]) {
 		/* Failed ? We lookup for username + user-part tag */
-		if (!bsnprintf(buf, sizeof(buf), "%s%c%s", user, TAG_CHAR, tag))
+		if (!bsnprintf(buf, sizeof(buf), "%s%c%s",
+			user, *env->sc_subaddressing_delim, tag))
 			return 0;
 		ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
 		if (ret < 0)

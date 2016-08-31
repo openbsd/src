@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_maildir.c,v 1.17 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: delivery_maildir.c,v 1.18 2016/08/31 10:18:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -55,7 +55,7 @@ mailaddr_tag(const struct mailaddr *maddr, char *dest, size_t len)
 	char		*tag;
 	char		*sanitized;
 
-	if ((tag = strchr(maddr->user, TAG_CHAR))) {
+	if ((tag = strchr(maddr->user, *env->sc_subaddressing_delim))) {
 		tag++;
 		while (*tag == '.')
 			tag++;

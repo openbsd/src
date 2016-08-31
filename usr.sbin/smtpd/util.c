@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.127 2016/05/16 17:43:18 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.128 2016/08/31 10:18:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -455,9 +455,9 @@ mailaddr_match(const struct mailaddr *maddr1, const struct mailaddr *maddr2)
 
 	if (m2.user[0]) {
 		/* if address from table has a tag, we must respect it */
-		if (strchr(m2.user, TAG_CHAR) == NULL) {
+		if (strchr(m2.user, *env->sc_subaddressing_delim) == NULL) {
 			/* otherwise, strip tag from session address if any */
-			p = strchr(m1.user, TAG_CHAR);
+			p = strchr(m1.user, *env->sc_subaddressing_delim);
 			if (p)
 				*p = '\0';
 		}
