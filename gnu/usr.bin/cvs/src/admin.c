@@ -27,6 +27,7 @@ static const char *const admin_usage[] =
     "\t-A file    Append another file's access list.\n",
     "\t-b[rev]    Set default branch (highest branch on trunk if omitted).\n",
     "\t-c string  Set comment leader.\n",
+    "\t-C rev:id  Set revision's commit id.\n",
     "\t-e[users]  Remove (comma-separated) user names from access list\n",
     "\t           (all names if omitted).\n",
     "\t-I         Run interactively.\n",
@@ -167,7 +168,7 @@ admin (argc, argv)
     optind = 0;
     only_k_option = 1;
     while ((c = getopt (argc, argv,
-			"+ib::c:a:A:e::l::u::LUn:N:m:o:s:t::IqxV:k:")) != -1)
+			"+ib::c:C:a:A:e::l::u::LUn:N:m:o:s:t::IqxV:k:")) != -1)
     {
 	if (c != 'k')
 	    only_k_option = 0;
@@ -207,6 +208,11 @@ admin (argc, argv)
 		admin_data.comment = xmalloc (strlen (optarg) + 5);
 		strcpy (admin_data.comment, "-c");
 		strcat (admin_data.comment, optarg);
+		break;
+
+	    case 'C':
+		/* Add commitid. */
+		arg_add (&admin_data, 'C', optarg);
 		break;
 
 	    case 'a':
@@ -689,7 +695,7 @@ admin_fileproc (callerdat, finfo)
     for (i = 0; i < admin_data->ac; ++i)
     {
 	char *arg;
-	char *p, *rev, *revnum, *tag, *msg;
+	char *p, *rev, *revnum, *tag, *msg, *commitid;
 	char **users;
 	int argc, u;
 	Node *n;
@@ -736,6 +742,57 @@ admin_fileproc (callerdat, finfo)
 		for (u = 0; u < argc; ++u)
 		    RCS_addaccess (rcs, users[u]);
 		free_names (&argc, users);
+		break;
+	    case 'C':
+	        p = strchr (arg, ':');
+		if (p == NULL)
+		{
+		    error (0, 0, "%s: -C option lacks commitid", rcs->path);
+		    status = 1;
+		    continue;
+		}
+		*p = '\0';
+		rev = RCS_gettag (rcs, arg + 2, 1, NULL);
+		if (rev == NULL)
+		{
+		    error (0, 0, "%s: no such revision %s", rcs->path, arg + 2);
+		    status = 1;
+		    continue;
+		}
+		*p++ = ':';
+		commitid = p;
+
+		if (*commitid == '\0')
+		{
+		    error (0, 0, "%s: -C option lacks commitid", rcs->path);
+		    free (rev);
+		    status = 1;
+		    continue;
+		}
+
+		n = findnode (rcs->versions, rev);
+		delta = (RCSVers *) n->data;
+
+		if (delta->other_delta == NULL)
+    		    delta->other_delta = getlist();
+
+		if (n = findnode (delta->other_delta, "commitid"))
+		{
+		    error (0, 0, "%s: revision %s already has commitid %s",
+		        rcs->path, rev, n->data);
+		    free (rev);
+		    status = 1;
+		    continue;
+		}
+
+		n = getnode();
+		n->type = RCSFIELD;
+		n->key = xstrdup ("commitid");
+		n->data = xstrdup(commitid);
+		addnode (delta->other_delta, n);
+
+		free (rev);
+
 		break;
 	    case 'n': /* fall through */
 	    case 'N':
