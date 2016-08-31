@@ -1226,7 +1226,6 @@
 ./usr/share/man/man4/auvia.4
 ./usr/share/man/man4/axe.4
 ./usr/share/man/man4/axen.4
-./usr/share/man/man4/az.4
 ./usr/share/man/man4/azalia.4
 ./usr/share/man/man4/bce.4
 ./usr/share/man/man4/berkwdt.4
@@ -1318,7 +1317,6 @@
 ./usr/share/man/man4/gpr.4
 ./usr/share/man/man4/gre.4
 ./usr/share/man/man4/gscsio.4
-./usr/share/man/man4/gtp.4
 ./usr/share/man/man4/hds.4
 ./usr/share/man/man4/hifn.4
 ./usr/share/man/man4/hil.4
@@ -1385,13 +1383,11 @@
 ./usr/share/man/man4/i386/pctr.4
 ./usr/share/man/man4/i386/piixpcib.4
 ./usr/share/man/man4/i386/sb.4
-./usr/share/man/man4/i386/sea.4
 ./usr/share/man/man4/i386/skgpio.4
 ./usr/share/man/man4/i386/tcpcib.4
 ./usr/share/man/man4/i386/uha.4
 ./usr/share/man/man4/i386/wds.4
 ./usr/share/man/man4/i386/wdt.4
-./usr/share/man/man4/i386/wss.4
 ./usr/share/man/man4/ichiic.4
 ./usr/share/man/man4/ichwdt.4
 ./usr/share/man/man4/icmp.4
@@ -1624,9 +1620,7 @@
 ./usr/share/man/man4/rlphy.4
 ./usr/share/man/man4/route.4
 ./usr/share/man/man4/rsu.4
-./usr/share/man/man4/rt.4
 ./usr/share/man/man4/rtfps.4
-./usr/share/man/man4/rtii.4
 ./usr/share/man/man4/rtsx.4
 ./usr/share/man/man4/rtw.4
 ./usr/share/man/man4/rtwn.4
@@ -1644,8 +1638,6 @@
 ./usr/share/man/man4/se.4
 ./usr/share/man/man4/ses.4
 ./usr/share/man/man4/sf.4
-./usr/share/man/man4/sf2r.4
-./usr/share/man/man4/sfr.4
 ./usr/share/man/man4/sgi
 ./usr/share/man/man4/sgi/dpclock.4
 ./usr/share/man/man4/sgi/dsclock.4
@@ -1975,7 +1967,6 @@
 ./usr/share/man/man4/xnf.4
 ./usr/share/man/man4/xspd.4
 ./usr/share/man/man4/yds.4
-./usr/share/man/man4/ym.4
 ./usr/share/man/man4/zaurus
 ./usr/share/man/man4/zaurus/apm.4
 ./usr/share/man/man4/zaurus/autoconf.4
