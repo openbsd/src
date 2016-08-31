@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.327 2016/08/19 09:06:24 jsg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.328 2016/08/31 13:32:27 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ void	unsetvlandev(const char *, int);
 void	mpe_status(void);
 void	mpw_status(void);
 void	vlan_status(void);
-void	setinstance(const char *, int);
+void	setrdomain(const char *, int);
 int	main(int, char *[]);
 int	prefix(void *val, int);
 void	getifgroups(void);
@@ -392,7 +392,7 @@ const struct	cmd {
 	{ "priority",	NEXTARG,	0,		setifpriority },
 	{ "rtlabel",	NEXTARG,	0,		setifrtlabel },
 	{ "-rtlabel",	-1,		0,		setifrtlabel },
-	{ "rdomain",	NEXTARG,	0,		setinstance },
+	{ "rdomain",	NEXTARG,	0,		setrdomain },
 	{ "mpls",	IFXF_MPLS,	0,		setifxflags },
 	{ "-mpls",	-IFXF_MPLS,	0,		setifxflags },
 	{ "mplslabel",	NEXTARG,	0,		setmpelabel },
@@ -5675,7 +5675,7 @@ setiflladdr(const char *addr, int param)
 
 #ifndef SMALL
 void
-setinstance(const char *id, int param)
+setrdomain(const char *id, int param)
 {
 	const char *errmsg = NULL;
 	int rdomainid;
