@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2016/08/31 10:33:15 claudio Exp $
+# $OpenBSD: Makefile,v 1.13 2016/08/31 11:00:15 claudio Exp $
 
 RDOMAIN?=	5
 
@@ -263,6 +263,61 @@ rttest${n}:
 	${RCMD} add 10.8.1/24 -gateway 192.0.2.3 -priority 4
 	${RCMD} add 10.8.1/24 -gateway 192.0.2.3 -priority 3
 	${RCMD} add 10.8.1/24 -gateway 192.0.2.3 -priority 5
+	${RCMD} show -inet 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# Can change the MTU of an mpath route that exists
+n=	22
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} add -mpath 10.8.1/24 192.0.2.3
+	${RCMD} add -mpath 10.8.1/24 192.0.2.4
+	${RCMD} change -mpath -mtu 1000 10.8.1/24 192.0.2.4
+	${RCMD} show -inet 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# Can't change the MTU of an mpath route without gateway
+n=	23
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} add -mpath 10.8.1/24 192.0.2.3
+	${RCMD} add -mpath 10.8.1/24 192.0.2.4
+	${RCMD} change -mpath -mtu 1000 10.8.1/24 && exit 1 || exit 0
+
+# Can change and lock the MTU of an mpath route that exists
+# (route can't just lock so this is mostly the same as rttest22)
+n=	24
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} add -mpath 10.8.1/24 192.0.2.3
+	${RCMD} add -mpath 10.8.1/24 192.0.2.4
+	${RCMD} change -mpath -lock -mtu 1000 10.8.1/24 192.0.2.4
+	${RCMD} show -inet 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# Can't change the MTU of an mpath route that has a wrong gateway
+n=	25
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} add -mpath 10.8.1/24 192.0.2.3
+	${RCMD} add -mpath 10.8.1/24 192.0.2.4
+	${RCMD} change -mpath -mtu 1000 10.8.1/24 192.0.2.1 && exit 1 || exit 0
+
+# Can change the MTU of an non-mpath route without gateway
+n=	26
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} add -mpath 10.8.1/24 192.0.2.3
+	${RCMD} change -mpath -mtu 1000 10.8.1/24
+	${RCMD} show -inet 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# Can change the MTU and gateway of an non-mpath route at the same time
+n=	27
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} add -mpath 10.8.1/24 192.0.2.3
+	${RCMD} change -mpath -mtu 1000 10.8.1/24 192.0.2.4
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
