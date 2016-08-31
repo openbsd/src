@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.2 2016/08/31 22:42:19 benno Exp $ */
+/*	$Id: acctproc.c,v 1.3 2016/08/31 23:52:30 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -50,11 +50,11 @@ bn2string(const BIGNUM *bn)
 	len = BN_num_bytes(bn);
 	if (NULL == (buf = malloc(len))) {
 		warn("malloc");
-		return(NULL);
+		return (NULL);
 	} else if (len != BN_bn2bin(bn, (unsigned char *)buf)) {
 		warnx("BN_bn2bin");
 		free(buf);
-		return(NULL);
+		return (NULL);
 	}
 
 	/* Convert to base64url. */
@@ -62,11 +62,11 @@ bn2string(const BIGNUM *bn)
 	if (NULL == (bbuf = base64buf_url(buf, len))) {
 		warnx("base64buf_url");
 		free(buf);
-		return(NULL);
+		return (NULL);
 	}
 
 	free(buf);
-	return(bbuf);
+	return (bbuf);
 }
 
 /*
@@ -92,7 +92,7 @@ op_thumb_rsa(EVP_PKEY *pkey)
 
 	free(exp);
 	free(mod);
-	return(json);
+	return (json);
 }
 
 /*
@@ -161,7 +161,7 @@ out:
 	free(thumb);
 	free(dig);
 	free(dig64);
-	return(rc);
+	return (rc);
 }
 
 static int
@@ -195,7 +195,7 @@ op_sign_rsa(char **head, char **prot, EVP_PKEY *pkey, const char *nonce)
 
 	free(exp);
 	free(mod);
-	return(rc);
+	return (rc);
 }
 
 /*
@@ -313,7 +313,7 @@ out:
 	free(dig);
 	free(dig64);
 	free(fin);
-	return(rc);
+	return (rc);
 }
 
 int
@@ -360,7 +360,7 @@ acctproc(int netsock, const char *acctkey, int newacct)
 	else if ( ! sandbox_after())
 		goto out;
 
-	/* 
+	/*
 	 * Seed our PRNG with data from arc4random().
 	 * Do this until we're told it's ok and use increments of 64
 	 * bytes (arbitrarily).
@@ -435,6 +435,5 @@ out:
 		EVP_PKEY_free(pkey);
 	ERR_print_errors_fp(stderr);
 	ERR_free_strings();
-	return(rc);
+	return (rc);
 }
-
