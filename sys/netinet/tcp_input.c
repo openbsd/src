@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.325 2016/07/20 09:15:28 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.326 2016/08/31 11:05:05 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4148,7 +4148,6 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 int
 syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 {
-	struct route *ro;
 	u_int8_t *optp;
 	int optlen, error;
 	u_int16_t tlen;
@@ -4163,12 +4162,10 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	switch (sc->sc_src.sa.sa_family) {
 	case AF_INET:
 		hlen = sizeof(struct ip);
-		ro = &sc->sc_route4;
 		break;
 #ifdef INET6
 	case AF_INET6:
 		hlen = sizeof(struct ip6_hdr);
-		ro = (struct route *)&sc->sc_route6;
 		break;
 #endif
 	default:
@@ -4379,14 +4376,14 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 
 	switch (sc->sc_src.sa.sa_family) {
 	case AF_INET:
-		error = ip_output(m, sc->sc_ipopts, ro,
+		error = ip_output(m, sc->sc_ipopts, &sc->sc_route4,
 		    (ip_mtudisc ? IP_MTUDISC : 0),  NULL, inp, 0);
 		break;
 #ifdef INET6
 	case AF_INET6:
 		ip6->ip6_hlim = in6_selecthlim(inp);
 
-		error = ip6_output(m, NULL /*XXX*/, (struct route_in6 *)ro, 0,
+		error = ip6_output(m, NULL /*XXX*/, &sc->sc_route6, 0,
 		    NULL, NULL);
 		break;
 #endif

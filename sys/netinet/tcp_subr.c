@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.151 2016/03/07 18:44:00 naddy Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.152 2016/08/31 11:05:05 mpi Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -296,7 +296,6 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 	int tlen;
 	int win = 0;
 	struct mbuf *m = NULL;
-	struct route *ro = NULL;
 	struct tcphdr *th;
 	struct ip *ip;
 #ifdef INET6
@@ -311,12 +310,6 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 		 * socket/tp/pcb (tp->pf is 0), we lose.
 		 */
 		af = tp->pf;
-
-		/*
-		 * The route/route6 distinction is meaningless
-		 * unless you're allocating space or passing parameters.
-		 */
-		ro = &tp->t_inpcb->inp_route;
 	} else
 		af = (((struct ip *)template)->ip_v == 6) ? AF_INET6 : AF_INET;
 
@@ -404,7 +397,8 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 		ip6->ip6_plen = tlen - sizeof(struct ip6_hdr);
 		ip6->ip6_plen = htons(ip6->ip6_plen);
 		ip6_output(m, tp ? tp->t_inpcb->inp_outputopts6 : NULL,
-		    (struct route_in6 *)ro, 0, NULL,
+		    tp ? &tp->t_inpcb->inp_route6 : NULL,
+		    0, NULL,
 		    tp ? tp->t_inpcb : NULL);
 		break;
 #endif /* INET6 */
@@ -412,8 +406,11 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 		ip->ip_len = htons(tlen);
 		ip->ip_ttl = ip_defttl;
 		ip->ip_tos = 0;
-		ip_output(m, NULL, ro, ip_mtudisc ? IP_MTUDISC : 0,
-		    NULL, tp ? tp->t_inpcb : NULL, 0);
+		ip_output(m, NULL,
+		    tp ? &tp->t_inpcb->inp_route : NULL,
+		    ip_mtudisc ? IP_MTUDISC : 0, NULL,
+		    tp ? tp->t_inpcb : NULL, 0);
+		break;
 	}
 }
 
