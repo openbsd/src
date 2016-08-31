@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.79 2016/08/28 07:22:11 reyk Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.80 2016/08/31 15:00:02 reyk Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -86,8 +86,12 @@ int	gre_clone_create(struct if_clone *, int);
 int	gre_clone_destroy(struct ifnet *);
 
 struct gre_softc_head gre_softc_list;
+struct gre_softc_head mobileip_softc_list;
+
 struct if_clone gre_cloner =
     IF_CLONE_INITIALIZER("gre", gre_clone_create, gre_clone_destroy);
+struct if_clone mobileip_cloner =
+    IF_CLONE_INITIALIZER("mobileip", gre_clone_create, gre_clone_destroy);
 
 /*
  * We can control the acceptance of GRE and MobileIP packets by
@@ -110,7 +114,9 @@ void
 greattach(int n)
 {
 	LIST_INIT(&gre_softc_list);
+	LIST_INIT(&mobileip_softc_list);
 	if_clone_attach(&gre_cloner);
+	if_clone_attach(&mobileip_cloner);
 }
 
 int
@@ -139,9 +145,15 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_ipackets = 0;
 	sc->sc_if.if_opackets = 0;
 	sc->g_dst.s_addr = sc->g_src.s_addr = INADDR_ANY;
-	sc->g_proto = IPPROTO_GRE;
-	sc->sc_if.if_flags |= IFF_LINK0;
 	sc->sc_ka_state = GRE_STATE_UKNWN;
+
+	if (strcmp("gre", ifc->ifc_name) == 0) {
+		/* GRE encapsulation */	
+		sc->g_proto = IPPROTO_GRE;
+	} else {
+		/* Mobile IP encapsulation */
+		sc->g_proto = IPPROTO_MOBILE;
+	}
 
 	timeout_set(&sc->sc_ka_hold, gre_keepalive, sc);
 	timeout_set(&sc->sc_ka_snd, gre_send_keepalive, sc);
@@ -441,10 +453,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFDSTADDR:
 		break;
 	case SIOCSIFFLAGS:
-		if ((ifr->ifr_flags & IFF_LINK0) != 0)
-			sc->g_proto = IPPROTO_GRE;
-		else
-			sc->g_proto = IPPROTO_MOBILE;
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < 576) {
