@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.383 2016/08/31 13:55:08 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.384 2016/08/31 23:16:16 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1505,9 +1505,8 @@ send_request(void)
 	interval = (int)(cur_time - client->first_sending);
 
 	/*
-	 * If we're in the INIT-REBOOT or REQUESTING state and we're
-	 * past the reboot timeout, go to INIT and see if we can
-	 * DISCOVER an address.
+	 * If we're in the INIT-REBOOT state and we've been trying longer
+	 * than reboot_timeout, go to INIT state and DISCOVER an address.
 	 *
 	 * XXX In the INIT-REBOOT state, if we don't get an ACK, it
 	 * means either that we're on a network with no DHCP server,
@@ -1517,9 +1516,7 @@ send_request(void)
 	 * reused our old address.  In the former case, we're hosed
 	 * anyway.  This is not a win-prone situation.
 	 */
-	if ((client->state == S_REBOOTING ||
-	    client->state == S_REQUESTING) &&
-	    interval > config->reboot_timeout) {
+	if (client->state == S_REBOOTING && interval > config->reboot_timeout) {
 		client->state = S_INIT;
 		cancel_timeout();
 		state_init();
