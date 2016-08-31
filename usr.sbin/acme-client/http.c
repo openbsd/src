@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.3 2016/08/31 23:00:17 benno Exp $ */
+/*	$Id: http.c,v 1.4 2016/08/31 23:08:49 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -41,28 +41,28 @@
  * A buffer for transferring HTTP/S data.
  */
 struct	httpxfer {
-	char		*hbuf; /* header transfer buffer */
-	size_t		 hbufsz; /* header buffer size */
-	int		 headok; /* header has been parsed */
-	char		*bbuf; /* body transfer buffer */
-	size_t		 bbufsz; /* body buffer size */
-	int		 bodyok; /* body has been parsed */
+	char		*hbuf;    /* header transfer buffer */
+	size_t		 hbufsz;  /* header buffer size */
+	int		 headok;  /* header has been parsed */
+	char		*bbuf;    /* body transfer buffer */
+	size_t		 bbufsz;  /* body buffer size */
+	int		 bodyok;  /* body has been parsed */
 	char		*headbuf; /* lookaside buffer for headers */
-	struct httphead	*head; /* parsed headers */
-	size_t		 headsz; /* number of headers */
+	struct httphead	*head;    /* parsed headers */
+	size_t		 headsz;  /* number of headers */
 };
 
 /*
  * An HTTP/S connection object.
  */
 struct	http {
-	int	 	   fd; /* connected socket */
-	short	 	   port; /* port number */
-	struct source	   src; /* endpoint (raw) host */
-	char		  *path; /* path to request */
-	char		  *host; /* name of endpoint host */
-	struct tls_config *cfg; /* if TLS */
-	struct tls	  *ctx; /* if TLS */
+	int		   fd;     /* connected socket */
+	short		   port;   /* port number */
+	struct source	   src;    /* endpoint (raw) host */
+	char		  *path;   /* path to request */
+	char		  *host;   /* name of endpoint host */
+	struct tls_config *cfg;    /* if TLS */
+	struct tls	  *ctx;    /* if TLS */
 	writefp		   writer; /* write function */
 	readfp		   reader; /* read function */
 };
@@ -375,7 +375,7 @@ again:
 	tls_config_insecure_noverifycert(http->cfg);
 
 	if (-1 == tls_config_set_ciphers(http->cfg, "compat")) {
-	        warn("tls_config_set_ciphers");
+		warn("tls_config_set_ciphers");
 		goto err;
 	} else if (NULL == (http->ctx = tls_client())) {
 		warn("tls_client");
@@ -612,7 +612,7 @@ http_head_parse(const struct http *http,
 	hsz = 0;
 	cp = buf;
 
-	do { 
+	do {
 		if (NULL != (ep = strstr(cp, "\r\n"))) {
 			*ep = '\0';
 			ep += 2;
@@ -651,7 +651,7 @@ http_head_parse(const struct http *http,
  * You must not free the returned pointer.
  */
 char *
-http_head_read(const struct http *http, 
+http_head_read(const struct http *http,
 	struct httpxfer *trans, size_t *sz)
 {
 	char		 buf[BUFSIZ];
@@ -775,10 +775,10 @@ http_get(const struct source *addrs, size_t addrsz,
 		http_close(x);
 		http_free(h);
 		return (NULL);
-	} 
+	}
 
 	http_disconnect(h);
-	
+
 	if (NULL == (head = http_head_parse(h, x, &headsz))) {
 		http_close(x);
 		http_free(h);
@@ -833,16 +833,17 @@ main(void)
 #if 0
 	g = http_get(addrs, addrsz, "localhost", 80, "/index.html");
 #else
-	g = http_get(addrs, addrsz, "www.google.ch", 80, "/index.html", NULL, 0);
+	g = http_get(addrs, addrsz, "www.google.ch", 80, "/index.html",
+		     NULL, 0);
 #endif
 
-	if (NULL == g) 
+	if (NULL == g)
 		errx(EXIT_FAILURE, "http_get");
 
 	httph = http_head_parse(g->http, g->xfer, &httphsz);
 	warnx("code: %d", g->code);
 
-	for (i = 0; i < httphsz; i++) 
+	for (i = 0; i < httphsz; i++)
 		warnx("head: [%s]=[%s]", httph[i].key, httph[i].val);
 
 	http_get_free(g);
