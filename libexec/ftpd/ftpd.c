@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.220 2016/08/30 14:56:39 tedu Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.221 2016/08/31 13:43:36 jca Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -526,42 +526,10 @@ main(int argc, char *argv[])
 	}
 	if (his_addr.su_family == AF_INET6 &&
 	    IN6_IS_ADDR_V4MAPPED(&his_addr.su_sin6.sin6_addr)) {
-#if 1
-		/*
-		 * IPv4 control connection arrived to AF_INET6 socket.
-		 * I hate to do this, but this is the easiest solution.
-		 */
-		union sockunion tmp_addr;
-		const int off = sizeof(struct in6_addr) - sizeof(struct in_addr);
-
-		tmp_addr = his_addr;
-		memset(&his_addr, 0, sizeof(his_addr));
-		his_addr.su_sin.sin_family = AF_INET;
-		his_addr.su_sin.sin_len = sizeof(his_addr.su_sin);
-		memcpy(&his_addr.su_sin.sin_addr,
-		    &tmp_addr.su_sin6.sin6_addr.s6_addr[off],
-		    sizeof(his_addr.su_sin.sin_addr));
-		his_addr.su_sin.sin_port = tmp_addr.su_sin6.sin6_port;
-
-		tmp_addr = ctrl_addr;
-		memset(&ctrl_addr, 0, sizeof(ctrl_addr));
-		ctrl_addr.su_sin.sin_family = AF_INET;
-		ctrl_addr.su_sin.sin_len = sizeof(ctrl_addr.su_sin);
-		memcpy(&ctrl_addr.su_sin.sin_addr,
-		    &tmp_addr.su_sin6.sin6_addr.s6_addr[off],
-		    sizeof(ctrl_addr.su_sin.sin_addr));
-		ctrl_addr.su_sin.sin_port = tmp_addr.su_sin6.sin6_port;
-#else
-		while (fgets(line, sizeof(line), fd) != NULL) {
-			line[strcspn(line, "\n")] = '\0';
-			lreply(530, "%s", line);
-		}
-		(void) fflush(stdout);
-		(void) close(fd);
-		reply(530,
-			"Connection from IPv4 mapped address is not supported.");
-		exit(0);
-#endif
+		syslog(LOG_WARNING,
+		    "Connection from IPv4 mapped address is not supported.");
+		reply(530, "System not available.");
+		exit(1);
 	}
 	if (his_addr.su_family == AF_INET) {
 		tos = IPTOS_LOWDELAY;
