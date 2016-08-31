@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.50 2016/08/27 14:22:35 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.51 2016/08/31 12:24:12 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1824,7 +1824,6 @@ pmap_activate(struct proc *p)
 {
 	pmap_t pm;
 	struct pcb *pcb;
-	int s;
 
 	pm = p->p_vmspace->vm_map.pmap;
 	pcb = &p->p_addr->u_pcb;
@@ -1845,29 +1844,9 @@ pmap_activate(struct proc *p)
 			return;
 		}
 
-		s = splhigh();
-		disable_interrupts(PSR_I | PSR_F);
-
-		/*
-		 * We MUST, I repeat, MUST fix up the L1 entry corresponding
-		 * to 'vector_page' in the incoming L1 table before switching
-		 * to it otherwise subsequent interrupts/exceptions (including
-		 * domain faults!) will jump into hyperspace.
-		 */
-		if (pcb->pcb_pl1vec) {
-			*pcb->pcb_pl1vec = pcb->pcb_l1vec;
-			/*
-			 * Don't need to PTE_SYNC() at this point since
-			 * cpu_setttb() is about to flush both the cache
-			 * and the TLB.
-			 */
-		}
-
+		__asm volatile("cpsid if");
 		cpu_setttb(pcb->pcb_pagedir);
-
-		enable_interrupts(PSR_I | PSR_F);
-
-		splx(s);
+		__asm volatile("cpsie if");
 	}
 }
 
@@ -2201,7 +2180,6 @@ pmap_set_pcb_pagedir(pmap_t pm, struct pcb *pcb)
 {
 	KDASSERT(pm->pm_l1);
 	pcb->pcb_pagedir = pm->pm_l1->l1_physaddr;
-	pcb->pcb_pl1vec = NULL;
 }
 
 /*
