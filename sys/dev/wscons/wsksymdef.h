@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.36 2014/01/26 17:48:08 miod Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.37 2016/08/31 11:05:48 jca Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -266,6 +266,7 @@
 #define	KS_dead_diaeresis 	0x0308
 #define	KS_dead_abovering 	0x030a
 #define	KS_dead_cedilla 	0x0327
+#define	KS_dead_caron	 	0x0328
 
 /*
  * Group Cyrillic
@@ -734,6 +735,7 @@
 #define KB_CF			0x1a00
 #define KB_LV			0x1b00
 #define KB_IS			0x1c00
+#define KB_EE			0x1d00
 
 #define KB_NODEAD		0x00000001 /* disable dead accents */
 #define KB_DECLK		0x00000002 /* DEC LKnnn layout */
@@ -774,7 +776,8 @@
 	{ KB_SI,	"si" }, \
 	{ KB_CF,	"cf" }, \
 	{ KB_LV,	"lv" }, \
-	{ KB_IS,	"is" }
+	{ KB_IS,	"is" }, \
+	{ KB_EE,	"ee" }
 
 #define KB_VARTAB \
 	{ KB_NODEAD,	"nodead" }, \

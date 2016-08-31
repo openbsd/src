@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdutil.c,v 1.14 2014/12/09 07:05:06 doug Exp $	*/
+/*	$OpenBSD: wskbdutil.c,v 1.15 2016/08/31 11:05:48 jca Exp $	*/
 /*	$NetBSD: wskbdutil.c,v 1.7 1999/12/21 11:59:13 drochner Exp $	*/
 
 /*-
@@ -170,7 +170,12 @@ static struct compose_tab_s {
 	{ { KS_acute,			KS_u },			KS_uacute },
 	{ { KS_asciicircum,		KS_u },			KS_ucircumflex },
 	{ { KS_grave,			KS_u },			KS_ugrave },
-	{ { KS_acute,			KS_y },			KS_yacute }
+	{ { KS_acute,			KS_y },			KS_yacute },
+	{ { KS_dead_caron,		KS_space },		KS_L2_caron },
+	{ { KS_dead_caron,		KS_S },			KS_L2_Scaron },
+	{ { KS_dead_caron,		KS_Z },			KS_L2_Zcaron },
+	{ { KS_dead_caron,		KS_s },			KS_L2_scaron },
+	{ { KS_dead_caron,		KS_z },			KS_L2_zcaron }
 };
 
 #define COMPOSE_SIZE	nitems(compose_tab)
