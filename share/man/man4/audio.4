@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.71 2016/06/18 07:59:30 ratchov Exp $
+.\"	$OpenBSD: audio.4,v 1.72 2016/08/31 07:22:43 ratchov Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 18 2016 $
+.Dd $Mdocdate: August 31 2016 $
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -127,16 +127,6 @@ The following
 commands are supported on the sample devices:
 .Pp
 .Bl -tag -width Ds -compact
-.It Dv AUDIO_RERROR Fa "int *"
-.It Dv AUDIO_PERROR Fa "int *"
-Obsolete.
-These commands fetch the count of dropped input or output samples into
-the
-.Vt int *
-argument, respectively.
-There is no information regarding when in the sample stream
-they were dropped.
-.Pp
 .It Dv AUDIO_GETDEV Fa "audio_device_t *"
 This command fetches the current hardware device information into the
 .Vt audio_device_t *
@@ -148,192 +138,6 @@ typedef struct audio_device {
         char config[MAX_AUDIO_DEV_LEN];
 } audio_device_t;
 .Ed
-.Pp
-.It Dv AUDIO_GETFD Fa "int *"
-This command returns 1 if in full-duplex mode, else 0.
-.Pp
-.It Dv AUDIO_GETENC Fa "audio_encoding_t *"
-This command is used iteratively to fetch sample encoding
-.Va name Ns s
-and
-.Va format_id Ns s
-into the input/output
-.Vt audio_encoding_t *
-argument.
-.Bd -literal
-typedef struct audio_encoding {
-	int index;      /* input: nth encoding */
-	char name[MAX_AUDIO_DEV_LEN]; /* name of encoding */
-	int encoding;   /* value for encoding parameter */
-	int precision;  /* value for precision parameter */
-	int bps;        /* value for bps parameter */
-	int msb;        /* value for msb parameter */
-} audio_encoding_t;
-.Ed
-.Pp
-To query
-all the supported encodings, start with an index field of 0 and
-continue with successive encodings (1, 2, ...) until the command returns
-an error.
-.Pp
-.It Dv AUDIO_SETFD Fa "int *"
-Does nothing, left for compatibility; argument must point to a non-zero
-integer if the device is opened in read-write mode.
-.Pp
-.It Dv AUDIO_GETPROPS Fa "int *"
-This command gets a bit set of hardware properties.
-If the hardware
-has a certain property, the corresponding bit is set, otherwise it is not.
-The properties can have the following values:
-.Pp
-.Bl -tag -width AUDIO_PROP_INDEPENDENT -compact
-.It Dv AUDIO_PROP_FULLDUPLEX
-The device admits full-duplex operation.
-.It Dv AUDIO_PROP_INDEPENDENT
-The device can set playing and recording channel counts independently.
-.El
-.Pp
-.It Dv AUDIO_GETIOFFS Fa "audio_offset_t *"
-.It Dv AUDIO_GETOOFFS Fa "audio_offset_t *"
-Obsolete.
-These commands fetch the number of bytes played or recorded.
-The information is returned in the
-.Vt audio_offset
-structure.
-.Bd -literal
-typedef struct audio_offset {
-	u_int	samples;   /* Total number of bytes transferred */
-} audio_offset_t;
-.Ed
-.Pp
-.It Dv AUDIO_GETINFO Fa "audio_info_t *"
-.It Dv AUDIO_SETINFO Fa "audio_info_t *"
-Get or set audio information as encoded in the
-.Vt audio_info
-structure.
-.Bd -literal
-typedef struct audio_info {
-	struct	audio_prinfo play;   /* info for play (output) side */
-	struct	audio_prinfo record; /* info for record (input) side */
-	u_int	hiwat;		/* blocks count in play buffer */
-	u_int	mode;		/* current device mode */
-#define AUMODE_PLAY	0x01
-#define AUMODE_RECORD	0x02
-} audio_info_t;
-.Ed
-.Pp
-When setting the current state with
-.Dv AUDIO_SETINFO ,
-the
-.Vt audio_info
-structure should first be initialized with
-.Pp
-.Dl "AUDIO_INITINFO(&info);"
-.Pp
-and then the particular values to be changed should be set.
-This allows the audio driver to only set those things that you wish
-to change and eliminates the need to query the device with
-.Dv AUDIO_GETINFO
-first.
-.Pp
-The
-.Va mode
-field is read-only and set to
-.Dv AUMODE_PLAY ,
-.Dv AUMODE_RECORD ,
-or a bitwise OR combination of the three.
-Only full-duplex audio devices support
-simultaneous record and playback.
-.Pp
-.Va hiwat
-contains the number of blocks in the kernel play buffer.
-Writes to the audio devices will queue blocks until the play buffer
-is full, at which point any more write calls will block
-until space for at least one byte is available.
-.Bd -literal
-struct audio_prinfo {
-	u_int	sample_rate;	/* sample rate in bit/s */
-	u_int	channels;	/* number of channels, usually 1 or 2 */
-	u_int	precision;	/* number of bits/sample */
-	u_int	bps;		/* number of bytes/sample */
-	u_int	msb;		/* data alignment */
-	u_int	encoding;	/* data encoding (AUDIO_ENCODING_* below) */
-	u_int	block_size;     /* size a block */
-	/* Current state of device: */
-	u_char	pause;		/* non-zero if paused, zero to resume */
-	u_char	active;		/* non-zero if I/O is currently active */
-};
-.Ed
-.Pp
-The
-.Nm
-driver requires identical playback and
-recording sample rates, sample encodings, and block durations.
-.Pp
-The
-.Va encoding
-parameter can have the following values:
-.Pp
-.Bl -tag -width AUDIO_ENCODING_SLINEAR_BE -compact
-.It Dv AUDIO_ENCODING_ULAW
-mu-law encoding, 8 bits/sample
-.It Dv AUDIO_ENCODING_ALAW
-A-law encoding, 8 bits/sample
-.It Dv AUDIO_ENCODING_SLINEAR_LE
-two's complement signed linear encoding with little endian byte order
-.It Dv AUDIO_ENCODING_SLINEAR_BE
-two's complement signed linear encoding with big endian byte order
-.It Dv AUDIO_ENCODING_ULINEAR_LE
-unsigned linear encoding with little endian byte order
-.It Dv AUDIO_ENCODING_ULINEAR_BE
-unsigned linear encoding with big endian byte order
-.El
-.Pp
-The
-.Va precision
-parameter describes the number of bits of audio data per sample.
-The
-.Va bps
-parameter describes the number of bytes of audio data per sample.
-The
-.Va msb
-parameter describes the alignment of the data in the sample.
-It is only meaningful when
-.Va precision
-/ NBBY <
-.Va bps .
-A value of 1 means the data is aligned to the most significant bit.
-.Pp
-.Va block_size
-is the block size in bytes, which determines the frequency at which
-blocking
-.Xr read 2 ,
-.Xr write 2 ,
-or
-.Xr poll 2 ,
-wake up.
-The generic
-.Nm audio
-driver layer and the hardware driver have the
-opportunity to adjust this block size to get it within
-implementation-required limits.
-Normally the
-.Va block_size
-is recalculated
-when other parameters changes.
-.Pp
-It is recommended to set
-.Va block_size
-at the same time as, or after, all other parameters have been set.
-.Pp
-.Va pause
-returns the current pause/unpause state for recording or playback.
-For
-.Dv AUDIO_SETINFO ,
-if the pause value is specified it will either pause
-or unpause the particular direction.
-In full-duplex the pause values for both directions must
-be equal.
 .Pp
 .It Dv AUDIO_SETPAR Fa "struct audio_swpar *"
 .It Dv AUDIO_GETPAR Fa "struct audio_swpar *"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.150 2016/06/21 06:38:28 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.151 2016/08/31 07:22:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -858,180 +858,6 @@ audio_setpar(struct audio_softc *sc)
 }
 
 int
-audio_setinfo(struct audio_softc *sc, struct audio_info *ai)
-{
-	struct audio_prinfo *r = &ai->record, *p = &ai->play;
-	int error;
-	int set;
-
-	/*
-	 * stop the device if requested to stop
-	 */
-	if (sc->mode != 0) {
-		if (sc->mode & AUMODE_PLAY) {
-			if (p->pause != (unsigned char)~0)
-				sc->pause = p->pause;
-		}
-		if (sc->mode & AUMODE_RECORD) {
-			if (r->pause != (unsigned char)~0)
-				sc->pause = r->pause;
-		}
-		if (sc->pause) {
-			if (sc->active)
-				audio_stop(sc);
-		}
-	}
-
-	/*
-	 * copy parameters into the softc structure
-	 */
-	set = 0;
-	if (ai->play.encoding != ~0) {
-		sc->sw_enc = ai->play.encoding;
-		set = 1;
-	}
-	if (ai->play.precision != ~0) {
-		sc->bits = ai->play.precision;
-		set = 1;
-	}
-	if (ai->play.bps != ~0) {
-		sc->bps = ai->play.bps;
-		set = 1;
-	}
-	if (ai->play.msb != ~0) {
-		sc->msb = ai->play.msb;
-		set = 1;
-	}
-	if (ai->play.sample_rate != ~0) {
-		sc->rate = ai->play.sample_rate;
-		set = 1;
-	}
-	if (ai->play.channels != ~0) {
-		sc->pchan = ai->play.channels;
-		set = 1;
-	}
-	if (ai->play.block_size != ~0) {
-		sc->round = ai->play.block_size /
-		    (sc->bps * sc->pchan);
-		set = 1;
-	}
-	if (ai->hiwat != ~0) {
-		sc->nblks = ai->hiwat;
-		set = 1;
-	}
-	if (ai->record.encoding != ~0) {
-		sc->sw_enc = ai->record.encoding;
-		set = 1;
-	}
-	if (ai->record.precision != ~0) {
-		sc->bits = ai->record.precision;
-		set = 1;
-	}
-	if (ai->record.bps != ~0) {
-		sc->bps = ai->record.bps;
-		set = 1;
-	}
-	if (ai->record.msb != ~0) {
-		sc->msb = ai->record.msb;
-		set = 1;
-	}
-	if (ai->record.sample_rate != ~0) {
-		sc->rate = ai->record.sample_rate;
-		set = 1;
-	}
-	if (ai->record.channels != ~0) {
-		sc->rchan = ai->record.channels;
-		set = 1;
-	}
-	if (ai->record.block_size != ~0) {
-		sc->round = ai->record.block_size /
-		    (sc->bps * sc->rchan);
-		set = 1;
-	}
-
-	DPRINTF("%s: setinfo: set = %d, mode = %d, pause = %d\n",
-	    DEVNAME(sc), set, sc->mode, sc->pause);
-
-	/*
-	 * if the device not opened, we're done, don't touch the hardware
-	 */
-	if (sc->mode == 0)
-		return 0;
-
-	/*
-	 * change parameters and recalculate buffer sizes
-	 */
-	if (set) {
-		if (sc->active) {
-			DPRINTF("%s: can't change params during dma\n",
-			    DEVNAME(sc));
-			return EBUSY;
-		}
-		error = audio_setpar(sc);
-		if (error)
-			return error;
-		audio_clear(sc);
-		if ((sc->mode & AUMODE_PLAY) && sc->ops->init_output) {
-			error = sc->ops->init_output(sc->arg,
-			    sc->play.data, sc->play.len);
-			if (error)
-				return error;
-		}
-		if ((sc->mode & AUMODE_RECORD) && sc->ops->init_input) {
-			error = sc->ops->init_input(sc->arg,
-			    sc->rec.data, sc->rec.len);
-			if (error)
-				return error;
-		}
-	}
-
-	/*
-	 * if unpaused, start
-	 */
-	if (!sc->pause && !sc->active) {
-		error = audio_start(sc);
-		if (error)
-			return error;
-	}
-	return 0;
-}
-
-int
-audio_getinfo(struct audio_softc *sc, struct audio_info *ai)
-{
-	ai->play.sample_rate = ai->record.sample_rate = sc->rate;
-	ai->play.encoding = ai->record.encoding = sc->sw_enc;
-	ai->play.precision = ai->record.precision = sc->bits;
-	ai->play.bps = ai->record.bps = sc->bps;
-	ai->play.msb = ai->record.msb = sc->msb;
-	ai->play.channels = sc->pchan;
-	ai->record.channels = sc->rchan;
-
-	/*
-	 * XXX: this is used only to display counters through audioctl
-	 * and the pos counters are more useful
-	 */
-	mtx_enter(&audio_lock);
-	ai->play.samples = sc->play.pos - sc->play.xrun;
-	ai->record.samples = sc->rec.pos - sc->rec.xrun;
-	mtx_leave(&audio_lock);
-
-	ai->play.pause = ai->record.pause = sc->pause;
-	ai->play.active = ai->record.active = sc->active;
-
-	ai->play.buffer_size = sc->play.datalen;
-	ai->record.buffer_size = sc->rec.datalen;
-
-	ai->play.block_size =  sc->round * sc->bps * sc->pchan;
-	ai->record.block_size = sc->round * sc->bps * sc->rchan;
-
-	ai->hiwat = sc->nblks;
-	ai->lowat = sc->nblks;
-	ai->mode = sc->mode;
-	return 0;
-}
-
-int
 audio_ioc_start(struct audio_softc *sc)
 {
 	if (!sc->pause) {
@@ -1699,9 +1525,8 @@ audio_getdev(struct audio_softc *sc, struct audio_device *adev)
 int
 audio_ioctl(struct audio_softc *sc, unsigned long cmd, void *addr)
 {
-	struct audio_offset *ao;
 	struct audio_pos *ap;
-	int error = 0, fd;
+	int error = 0;
 
 	/* block if quiesced */
 	while (sc->quiesce)
@@ -1710,28 +1535,6 @@ audio_ioctl(struct audio_softc *sc, unsigned long cmd, void *addr)
 	switch (cmd) {
 	case FIONBIO:
 		/* All handled in the upper FS layer. */
-		break;
-	case AUDIO_PERROR:
-		mtx_enter(&audio_lock);
-		*(int *)addr = sc->play.xrun / (sc->pchan * sc->bps);
-		mtx_leave(&audio_lock);
-		break;
-	case AUDIO_RERROR:
-		mtx_enter(&audio_lock);
-		*(int *)addr = sc->rec.xrun / (sc->rchan * sc->bps);
-		mtx_leave(&audio_lock);
-		break;
-	case AUDIO_GETOOFFS:
-		mtx_enter(&audio_lock);
-		ao = (struct audio_offset *)addr;
-		ao->samples = sc->play.pos;
-		mtx_leave(&audio_lock);
-		break;
-	case AUDIO_GETIOFFS:
-		mtx_enter(&audio_lock);
-		ao = (struct audio_offset *)addr;
-		ao->samples = sc->rec.pos;
-		mtx_leave(&audio_lock);
 		break;
 	case AUDIO_GETPOS:
 		mtx_enter(&audio_lock);
@@ -1755,31 +1558,8 @@ audio_ioctl(struct audio_softc *sc, unsigned long cmd, void *addr)
 	case AUDIO_GETSTATUS:
 		error = audio_ioc_getstatus(sc, (struct audio_status *)addr);
 		break;
-	case AUDIO_SETINFO:
-		error = audio_setinfo(sc, (struct audio_info *)addr);
-		break;
-	case AUDIO_GETINFO:
-		error = audio_getinfo(sc, (struct audio_info *)addr);
-		break;
 	case AUDIO_GETDEV:
 		error = audio_getdev(sc, (struct audio_device *)addr);
-		break;
-	case AUDIO_GETENC:
-		error = sc->ops->query_encoding(sc->arg,
-		    (struct audio_encoding *)addr);
-		break;
-	case AUDIO_GETFD:
-		*(int *)addr = (sc->mode & (AUMODE_PLAY | AUMODE_RECORD)) ==
-		    (AUMODE_PLAY | AUMODE_RECORD);
-		break;
-	case AUDIO_SETFD:
-		fd = *(int *)addr;
-		if ((sc->mode & (AUMODE_PLAY | AUMODE_RECORD)) !=
-		    (AUMODE_PLAY | AUMODE_RECORD) || !fd)
-			return EINVAL;
-		break;
-	case AUDIO_GETPROPS:
-		*(int *)addr = sc->ops->get_props(sc->arg);
 		break;
 	default:
 		DPRINTF("%s: unknown ioctl 0x%lx\n", DEVNAME(sc), cmd);
@@ -1959,10 +1739,6 @@ audioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		error = audio_ioctl(sc, cmd, addr);
 		break;
 	case AUDIO_DEV_AUDIOCTL:
-		if (cmd == AUDIO_SETINFO && sc->mode != 0) {
-			error = EBUSY;
-			break;
-		}
 		if (cmd == AUDIO_SETPAR && sc->mode != 0) {
 			error = EBUSY;
 			break;

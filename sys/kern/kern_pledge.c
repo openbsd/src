@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.180 2016/07/28 12:12:16 mikeb Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.181 2016/08/31 07:22:43 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1177,11 +1177,6 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 		case AUDIO_SETPAR:
 		case AUDIO_START:
 		case AUDIO_STOP:
-		case AUDIO_SETINFO:
-		case AUDIO_GETINFO:
-		case AUDIO_GETENC:
-		case AUDIO_SETFD:
-		case AUDIO_GETPROPS:
 			if (fp->f_type == DTYPE_VNODE &&
 			    vp->v_type == VCHR &&
 			    cdevsw[major(vp->v_rdev)].d_open == audioopen)

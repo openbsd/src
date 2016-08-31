@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.30 2015/06/25 06:43:46 ratchov Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.31 2016/08/31 07:22:43 ratchov Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -40,6 +40,13 @@
 
 #include <sys/mutex.h>
 
+/*
+ * get_props
+ */
+#define AUDIO_PROP_FULLDUPLEX	0x01
+#define AUDIO_PROP_MMAP		0x02
+#define AUDIO_PROP_INDEPENDENT	0x04
+
 #define AUDIO_BPS(bits)		(bits) <= 8 ? 1 : ((bits) <= 16 ? 2 : 4)
 
 /*
@@ -59,6 +66,31 @@ struct audio_params {
 	u_int	msb;				/* data alignment */
 	u_int	channels;			/* mono(1), stereo(2) */
 };
+
+/*
+ * query_encoding argument
+ */
+typedef struct audio_encoding {
+	int	index;
+#define MAX_AUDIO_DEV_LEN		16
+	char	name[MAX_AUDIO_DEV_LEN];
+#define	AUDIO_ENCODING_NONE		0 /* no encoding assigned */
+#define	AUDIO_ENCODING_ULAW		1 /* ITU G.711 mu-law */
+#define	AUDIO_ENCODING_ALAW		2 /* ITU G.711 A-law */
+#define	AUDIO_ENCODING_ADPCM		5 /* adaptive differential PCM */
+#define AUDIO_ENCODING_SLINEAR_LE	6
+#define AUDIO_ENCODING_SLINEAR_BE	7
+#define AUDIO_ENCODING_ULINEAR_LE	8
+#define AUDIO_ENCODING_ULINEAR_BE	9
+#define AUDIO_ENCODING_SLINEAR		10
+#define AUDIO_ENCODING_ULINEAR		11
+	int	encoding;
+	int	precision;
+	int	bps;
+	int	msb;
+	int	flags;
+#define AUDIO_ENCODINGFLAG_EMULATED 1 /* software emulation mode */
+} audio_encoding_t;
 
 struct audio_hw_if {
 	int	(*open)(void *, int);	/* open hardware */

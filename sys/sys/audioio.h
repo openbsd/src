@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioio.h,v 1.25 2016/06/18 07:59:30 ratchov Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.26 2016/08/31 07:22:43 ratchov Exp $	*/
 /*	$NetBSD: audioio.h,v 1.24 1998/08/13 06:28:41 mrg Exp $	*/
 
 /*
@@ -38,6 +38,9 @@
 #ifndef _SYS_AUDIOIO_H_
 #define _SYS_AUDIOIO_H_
 
+#define AUMODE_PLAY	0x01
+#define AUMODE_RECORD	0x02
+
 #define AUDIO_INITPAR(p) \
 	(void)memset((void *)(p), 0xff, sizeof(struct audio_swpar))
 
@@ -69,44 +72,6 @@ struct audio_status {
 };
 
 /*
- * Audio device
- */
-struct audio_prinfo {
-	u_int	sample_rate;	/* sample rate in bit/s */
-	u_int	channels;	/* number of channels, usually 1 or 2 */
-	u_int	precision;	/* number of bits/sample */
-	u_int	bps;		/* number of bytes/sample */
-	u_int	msb;		/* data alignment */
-	u_int	encoding;	/* data encoding (AUDIO_ENCODING_* below) */
-	u_int	ispare2[4];
-	u_int	buffer_size;	/* total size audio buffer */
-	u_int	block_size;	/* size a block */
-	/* Current state of device: */
-	u_int	samples;	/* number of samples */
-	u_int	ispare[1];
-	u_char	pause;		/* non-zero if paused, zero to resume */
-	u_char	cspare2[6];
-	u_char	active;		/* non-zero if I/O is currently active */
-};
-typedef struct audio_prinfo audio_prinfo_t;
-
-struct audio_info {
-	struct	audio_prinfo play;	/* Info for play (output) side */
-	struct	audio_prinfo record;	/* Info for record (input) side */
-	u_int	ispare[2];	/* H/W read/write block size */
-	u_int	hiwat;		/* output high water mark */
-	u_int	lowat;		/* output low water mark */
-	u_char	cspare[4];
-	u_int	mode;		/* current device mode */
-#define AUMODE_PLAY	0x01
-#define AUMODE_RECORD	0x02
-};
-typedef struct audio_info audio_info_t;
-
-#define AUDIO_INITINFO(p) \
-	(void)memset((void *)(p), 0xff, sizeof(struct audio_info))
-
-/*
  * Parameter for the AUDIO_GETDEV ioctl to determine current
  * audio devices.
  */
@@ -117,11 +82,6 @@ typedef struct audio_device {
 	char config[MAX_AUDIO_DEV_LEN];
 } audio_device_t;
 
-typedef struct audio_offset {
-	u_int	samples;	/* Total number of bytes transferred */
-	u_int	unused[2];
-} audio_offset_t;
-
 struct audio_pos {
 	unsigned int play_pos;	/* total bytes played */
 	unsigned int play_xrun;	/* bytes of silence inserted */
@@ -130,63 +90,15 @@ struct audio_pos {
 };
 
 /*
- * Supported audio encodings
- */
-/* Encoding ID's */
-#define	AUDIO_ENCODING_NONE		0 /* no encoding assigned */
-#define	AUDIO_ENCODING_ULAW		1 /* ITU G.711 mu-law */
-#define	AUDIO_ENCODING_ALAW		2 /* ITU G.711 A-law */
-#define	AUDIO_ENCODING_ADPCM		5 /* adaptive differential PCM */
-#define AUDIO_ENCODING_SLINEAR_LE	6
-#define AUDIO_ENCODING_SLINEAR_BE	7
-#define AUDIO_ENCODING_ULINEAR_LE	8
-#define AUDIO_ENCODING_ULINEAR_BE	9
-#define AUDIO_ENCODING_SLINEAR		10
-#define AUDIO_ENCODING_ULINEAR		11
-
-typedef struct audio_encoding {
-	int	index;
-	char	name[MAX_AUDIO_DEV_LEN];
-	int	encoding;
-	int	precision;
-	int	bps;
-	int	msb;
-	int	flags;
-#define AUDIO_ENCODINGFLAG_EMULATED 1 /* software emulation mode */
-} audio_encoding_t;
-
-/*
- * Balance settings.
- */
-#define	AUDIO_LEFT_BALANCE	0	/* left channel only	*/
-#define	AUDIO_MID_BALANCE	32	/* equal left/right channel */
-#define	AUDIO_RIGHT_BALANCE	64	/* right channel only	*/
-#define	AUDIO_BALANCE_SHIFT	3
-
-/*
  * Audio device operations
  */
-#define AUDIO_GETINFO	_IOR('A', 21, struct audio_info)
-#define AUDIO_SETINFO	_IOWR('A', 22, struct audio_info)
-#define AUDIO_DRAIN	_IO('A', 23)
-#define AUDIO_RERROR	_IOR('A', 26, int)
 #define AUDIO_GETDEV	_IOR('A', 27, struct audio_device)
-#define AUDIO_GETENC	_IOWR('A', 28, struct audio_encoding)
-#define AUDIO_GETFD	_IOR('A', 29, int)
-#define AUDIO_SETFD	_IOWR('A', 30, int)
-#define AUDIO_PERROR	_IOR('A', 31, int)
-#define AUDIO_GETIOFFS	_IOR('A', 32, struct audio_offset)
-#define AUDIO_GETOOFFS	_IOR('A', 33, struct audio_offset)
-#define AUDIO_GETPROPS	_IOR('A', 34, int)
 #define AUDIO_GETPOS	_IOR('A', 35, struct audio_pos)
 #define AUDIO_GETPAR	_IOR('A', 36, struct audio_swpar)
 #define AUDIO_SETPAR	_IOWR('A', 37, struct audio_swpar)
 #define AUDIO_START	_IO('A', 38)
 #define AUDIO_STOP	_IO('A', 39)
 #define AUDIO_GETSTATUS	_IOR('A', 40, struct audio_status)
-#define  AUDIO_PROP_FULLDUPLEX	0x01
-#define  AUDIO_PROP_MMAP	0x02
-#define  AUDIO_PROP_INDEPENDENT	0x04
 
 /*
  * Mixer device
