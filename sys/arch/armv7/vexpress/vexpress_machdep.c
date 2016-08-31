@@ -1,4 +1,4 @@
-/*	$OpenBSD: vexpress_machdep.c,v 1.4 2016/06/08 15:27:05 jsg Exp $	*/
+/*	$OpenBSD: vexpress_machdep.c,v 1.5 2016/08/31 14:23:37 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -30,7 +30,6 @@
 #include <arm/armv7/armv7var.h>
 #include <arm/mainbus/mainbus.h>
 #include <armv7/armv7/armv7var.h>
-#include <armv7/vexpress/pl011var.h>
 #include <armv7/armv7/armv7_machdep.h>
 
 extern void sysconf_reboot(void);
