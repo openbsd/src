@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rlog.1,v 1.24 2010/09/03 11:09:29 jmc Exp $
+.\"	$OpenBSD: rlog.1,v 1.25 2016/08/31 13:09:09 jcs Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -14,7 +14,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: August 31 2016 $
 .Dt RLOG 1
 .Os
 .Sh NAME
@@ -24,8 +24,10 @@
 .Nm
 .Op Fl bhLNRtV
 .Op Fl d Ns Ar dates
+.Op Fl E Ns Ar endsep
 .Op Fl l Ns Op Ar lockers
 .Op Fl r Ns Op Ar revs
+.Op Fl S Ns Ar revsep
 .Op Fl s Ns Ar states
 .Op Fl w Ns Op Ar logins
 .Op Fl x Ns Ar suffixes
@@ -82,6 +84,11 @@ character.
 See also the
 .Fl z
 option, below.
+.It Fl E Ns Ar endsep
+Print
+.Ar endsep
+at the end of each RCS file, instead of the default string of
+77 equal signs.
 .It Fl h
 Print the RCS header,
 describing a file's branch, lock details, symbolic names, etc.
@@ -131,6 +138,11 @@ and
 Without argument, the
 .Fl r
 option means the latest revision of the default branch.
+.It Fl S Ns Ar revsep
+Print
+.Ar revsep
+at the end of each RCS revision, instead of the default string of
+28 dash signs.
 .It Fl s Ns Ar states
 Print information about revisions whose state matches one of the
 specified

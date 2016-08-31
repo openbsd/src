@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.72 2016/08/26 09:02:54 guenther Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.73 2016/08/31 13:09:09 jcs Exp $	*/
 /*
  * Copyright (c) 2005, 2009 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -47,10 +47,7 @@ static int	rlog_select_daterev(RCSFILE *, char *);
 static void	rlog_file(const char *, RCSFILE *);
 static void	rlog_rev_print(struct rcs_delta *);
 
-#define RLOG_OPTSTRING	"d:hLl::NqRr::s:TtVw::x::z::"
-#define REVSEP		"----------------------------"
-#define REVEND \
- "============================================================================="
+#define RLOG_OPTSTRING	"d:E:hLl::NqRr::S:s:TtVw::x::z::"
 
 static int dflag, hflag, Lflag, lflag, rflag, tflag, Nflag, wflag;
 static char *llist = NULL;
@@ -58,14 +55,18 @@ static char *slist = NULL;
 static char *wlist = NULL;
 static char *revisions = NULL;
 static char *rlog_dates = NULL;
+static char *revsep = "----------------------------";
+static char *revend = "====================================================="
+    "========================";
 
 __dead void
 rlog_usage(void)
 {
 	fprintf(stderr,
-	    "usage: rlog [-bhLNRtV] [-ddates] [-l[lockers]] [-r[revs]]\n"
-	    "            [-sstates] [-w[logins]] [-xsuffixes]\n"
-	    "            [-ztz] file ...\n");
+	    "usage: rlog [-bhLNRtV] [-ddates] [-Eendsep] [-l[lockers]] "
+	    "[-r[revs]]\n"
+	    "            [-Srevsep] [-sstates] [-w[logins]] [-xsuffixes] "
+	    "[-ztz] file ...\n");
 
 	exit(1);
 }
@@ -85,6 +86,9 @@ rlog_main(int argc, char **argv)
 		case 'd':
 			dflag = 1;
 			rlog_dates = rcs_optarg;
+			break;
+		case 'E':
+			revend = rcs_optarg;
 			break;
 		case 'h':
 			hflag = 1;
@@ -110,6 +114,9 @@ rlog_main(int argc, char **argv)
 		case 'r':
 			rflag = 1;
 			revisions = rcs_optarg;
+			break;
+		case 'S':
+			revsep = rcs_optarg;
 			break;
 		case 's':
 			slist = rcs_optarg;
@@ -421,7 +428,7 @@ rlog_file(const char *fname, RCSFILE *file)
 		}
 	}
 
-	printf("%s\n", REVEND);
+	printf("%s\n", revend);
 }
 
 static void
@@ -502,7 +509,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 	    (slist != NULL || lflag == 1 || wflag == 1)) && found == 0))
 		return;
 
-	printf("%s\n", REVSEP);
+	printf("%s\n", revsep);
 
 	rcsnum_tostr(rdp->rd_num, numb, sizeof(numb));
 
