@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.382 2016/08/31 12:57:31 mpi Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.383 2016/08/31 13:55:08 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1540,9 +1540,12 @@ send_request(void)
 	}
 
 	/* Do the exponential backoff. */
-	if (!client->interval)
-		client->interval = config->initial_interval;
-	else
+	if (!client->interval) {
+		if (client->state == S_REBOOTING)
+			client->interval = config->reboot_timeout;
+		else
+			client->interval = config->initial_interval;
+	} else
 		client->interval += arc4random_uniform(2 * client->interval);
 
 	/* Don't backoff past cutoff. */
