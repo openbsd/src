@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.283 2016/08/10 14:27:16 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.284 2016/08/31 22:23:13 florian Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -79,6 +79,10 @@ etc
         ..
     ..
 
+    # ./etc/acme
+    acme			mode=0700
+    ..
+
     # ./etc/mail
     mail
     ..
@@ -108,6 +112,11 @@ etc
         private			uname=root mode=0700
         ..
         lib
+        ..
+        # ./etc/ssl/acme
+        acme
+            private		uname=root mode=0700
+            ..
         ..
     ..
 
@@ -778,6 +787,8 @@ var
         cgi-bin			type=dir uname=root gname=daemon mode=755
         ..
         htdocs			type=dir uname=root gname=daemon mode=755
+        ..
+        acme			type=dir uname=root gname=daemon mode=755
         ..
         logs			type=dir uname=root gname=daemon mode=755
         ..
