@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.46 2016/06/01 15:44:07 natano Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.47 2016/08/31 15:13:57 tom Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -606,7 +606,6 @@ ntfs_runtovrun(cn_t **rcnp, cn_t **rclp, u_long *rcntp, u_int8_t *run)
 
 	off = 0;
 	cnt = 0;
-	i = 0;
 	while (run[off]) {
 		off += (run[off] & 0xF) + ((run[off] >> 4) & 0xF) + 1;
 		cnt++;
@@ -1412,10 +1411,8 @@ ntfs_writentvattr_plain(struct ntfsmount *ntmp, struct ntnode *ip,
 
 	off = roff;
 	left = rsize;
-	ccl = 0;
-	ccn = 0;
-	cnt = 0;
-	for (; left && (cnt < vap->va_vruncnt); cnt++) {
+
+	for (cnt = 0; left && (cnt < vap->va_vruncnt); cnt++) {
 		ccn = vap->va_vruncn[cnt];
 		ccl = vap->va_vruncl[cnt];
 
