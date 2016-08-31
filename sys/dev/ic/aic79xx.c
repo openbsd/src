@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.61 2016/08/17 01:16:11 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.62 2016/08/31 12:59:59 tom Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -9093,7 +9093,6 @@ ahd_write_seeprom(struct ahd_softc *ahd, uint16_t *buf,
 	int   retval;
 
 	AHD_ASSERT_MODES(ahd, AHD_MODE_SCSI_MSK, AHD_MODE_SCSI_MSK);
-	error = ENOENT;
 
 	/* Place the chip into write-enable mode */
 	ahd_outb(ahd, SEEADR, SEEOP_EWEN_ADDR);
