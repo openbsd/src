@@ -232,7 +232,7 @@ rrset_type* domain_find_rrset(domain_type* domain, zone_type* zone, uint16_t typ
 rrset_type* domain_find_any_rrset(domain_type* domain, zone_type* zone);
 
 zone_type* domain_find_zone(namedb_type* db, domain_type* domain);
-zone_type* domain_find_parent_zone(zone_type* zone);
+zone_type* domain_find_parent_zone(namedb_type* db, zone_type* zone);
 
 domain_type* domain_find_ns_rrsets(domain_type* domain, zone_type* zone, rrset_type **ns);
 /* find DNAME rrset in domain->parent or higher and return that domain */

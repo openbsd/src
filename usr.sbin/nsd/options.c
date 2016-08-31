@@ -813,6 +813,7 @@ pattern_options_create(region_type* region)
 	p->zonestats = 0;
 	p->allow_notify = 0;
 	p->request_xfr = 0;
+	p->size_limit_xfr = 0;
 	p->notify = 0;
 	p->provide_xfr = 0;
 	p->outgoing_interface = 0;
@@ -822,6 +823,14 @@ pattern_options_create(region_type* region)
 	p->allow_axfr_fallback_is_default = 1;
 	p->implicit = 0;
 	p->xfrd_flags = 0;
+	p->max_refresh_time = 2419200;	/* 4 weeks */
+	p->max_refresh_time_is_default = 1;
+	p->min_refresh_time = 0;
+	p->min_refresh_time_is_default = 1;
+	p->max_retry_time = 1209600;	/* 2 weeks */
+	p->max_retry_time_is_default = 1;
+	p->min_retry_time = 0;
+	p->min_retry_time_is_default = 1;
 #ifdef RATELIMIT
 	p->rrl_whitelist = 0;
 #endif
@@ -944,6 +953,14 @@ copy_pat_fixed(region_type* region, pattern_options_t* orig,
 	if(p->zonestats)
 		orig->zonestats = region_strdup(region, p->zonestats);
 	else orig->zonestats = NULL;
+	orig->max_refresh_time = p->max_refresh_time;
+	orig->max_refresh_time_is_default = p->max_refresh_time_is_default;
+	orig->min_refresh_time = p->min_refresh_time;
+	orig->min_refresh_time_is_default = p->min_refresh_time_is_default;
+	orig->max_retry_time = p->max_retry_time;
+	orig->max_retry_time_is_default = p->max_retry_time_is_default;
+	orig->min_retry_time = p->min_retry_time;
+	orig->min_retry_time_is_default = p->min_retry_time_is_default;
 #ifdef RATELIMIT
 	orig->rrl_whitelist = p->rrl_whitelist;
 #endif
@@ -1017,9 +1034,22 @@ pattern_options_equal(pattern_options_t* p, pattern_options_t* q)
 	if(!acl_list_equal(p->provide_xfr, q->provide_xfr)) return 0;
 	if(!acl_list_equal(p->outgoing_interface, q->outgoing_interface))
 		return 0;
+	if(p->max_refresh_time != q->max_refresh_time) return 0;
+	if(!booleq(p->max_refresh_time_is_default,
+		q->max_refresh_time_is_default)) return 0;
+	if(p->min_refresh_time != q->min_refresh_time) return 0;
+	if(!booleq(p->min_refresh_time_is_default,
+		q->min_refresh_time_is_default)) return 0;
+	if(p->max_retry_time != q->max_retry_time) return 0;
+	if(!booleq(p->max_retry_time_is_default,
+		q->max_retry_time_is_default)) return 0;
+	if(p->min_retry_time != q->min_retry_time) return 0;
+	if(!booleq(p->min_retry_time_is_default,
+		q->min_retry_time_is_default)) return 0;
 #ifdef RATELIMIT
 	if(p->rrl_whitelist != q->rrl_whitelist) return 0;
 #endif
+	if(p->size_limit_xfr != q->size_limit_xfr) return 0;
 	return 1;
 }
 
@@ -1034,6 +1064,19 @@ static uint8_t
 unmarshal_u8(struct buffer* b)
 {
 	return buffer_read_u8(b);
+}
+
+static void
+marshal_u64(struct buffer* b, uint64_t v)
+{
+	buffer_reserve(b, 8);
+	buffer_write_u64(b, v);
+}
+
+static uint64_t
+unmarshal_u64(struct buffer* b)
+{
+	return buffer_read_u64(b);
 }
 
 #ifdef RATELIMIT
@@ -1052,6 +1095,19 @@ unmarshal_u16(struct buffer* b)
 	return buffer_read_u16(b);
 }
 #endif
+
+static void
+marshal_u32(struct buffer* b, uint32_t v)
+{
+	buffer_reserve(b, 4);
+	buffer_write_u32(b, v);
+}
+
+static uint32_t
+unmarshal_u32(struct buffer* b)
+{
+	return buffer_read_u32(b);
+}
 
 static void
 marshal_str(struct buffer* b, const char* s)
@@ -1138,11 +1194,20 @@ pattern_options_marshal(struct buffer* b, pattern_options_t* p)
 	marshal_u8(b, p->notify_retry);
 	marshal_u8(b, p->notify_retry_is_default);
 	marshal_u8(b, p->implicit);
+	marshal_u64(b, p->size_limit_xfr);
 	marshal_acl_list(b, p->allow_notify);
 	marshal_acl_list(b, p->request_xfr);
 	marshal_acl_list(b, p->notify);
 	marshal_acl_list(b, p->provide_xfr);
 	marshal_acl_list(b, p->outgoing_interface);
+	marshal_u32(b, p->max_refresh_time);
+	marshal_u8(b, p->max_refresh_time_is_default);
+	marshal_u32(b, p->min_refresh_time);
+	marshal_u8(b, p->min_refresh_time_is_default);
+	marshal_u32(b, p->max_retry_time);
+	marshal_u8(b, p->max_retry_time_is_default);
+	marshal_u32(b, p->min_retry_time);
+	marshal_u8(b, p->min_retry_time_is_default);
 }
 
 pattern_options_t*
@@ -1160,11 +1225,20 @@ pattern_options_unmarshal(region_type* r, struct buffer* b)
 	p->notify_retry = unmarshal_u8(b);
 	p->notify_retry_is_default = unmarshal_u8(b);
 	p->implicit = unmarshal_u8(b);
+	p->size_limit_xfr = unmarshal_u64(b);
 	p->allow_notify = unmarshal_acl_list(r, b);
 	p->request_xfr = unmarshal_acl_list(r, b);
 	p->notify = unmarshal_acl_list(r, b);
 	p->provide_xfr = unmarshal_acl_list(r, b);
 	p->outgoing_interface = unmarshal_acl_list(r, b);
+	p->max_refresh_time = unmarshal_u32(b);
+	p->max_refresh_time_is_default = unmarshal_u8(b);
+	p->min_refresh_time = unmarshal_u32(b);
+	p->min_refresh_time_is_default = unmarshal_u8(b);
+	p->max_retry_time = unmarshal_u32(b);
+	p->max_retry_time_is_default = unmarshal_u8(b);
+	p->min_retry_time = unmarshal_u32(b);
+	p->min_retry_time_is_default = unmarshal_u8(b);
 	return p;
 }
 
@@ -1875,6 +1949,23 @@ config_apply_pattern(const char* name)
 		a->notify_retry = pat->notify_retry;
 		a->notify_retry_is_default = 0;
 	}
+	if(!pat->max_refresh_time_is_default) {
+		a->max_refresh_time = pat->max_refresh_time;
+		a->max_refresh_time_is_default = 0;
+	}
+	if(!pat->min_refresh_time_is_default) {
+		a->min_refresh_time = pat->min_refresh_time;
+		a->min_refresh_time_is_default = 0;
+	}
+	if(!pat->max_retry_time_is_default) {
+		a->max_retry_time = pat->max_retry_time;
+		a->max_retry_time_is_default = 0;
+	}
+	if(!pat->min_retry_time_is_default) {
+		a->min_retry_time = pat->min_retry_time;
+		a->min_retry_time_is_default = 0;
+	}
+	a->size_limit_xfr = pat->size_limit_xfr;
 #ifdef RATELIMIT
 	a->rrl_whitelist |= pat->rrl_whitelist;
 #endif

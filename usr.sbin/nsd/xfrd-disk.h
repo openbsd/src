@@ -29,5 +29,7 @@ void xfrd_del_tempdir(struct nsd* nsd);
 FILE* xfrd_open_xfrfile(struct nsd* nsd, uint64_t number, char* mode);
 /* unlink temp file */
 void xfrd_unlink_xfrfile(struct nsd* nsd, uint64_t number);
+/* get temp file size */
+uint64_t xfrd_get_xfrfile_size(struct nsd* nsd, uint64_t number );
 
 #endif /* XFRD_DISK_H */

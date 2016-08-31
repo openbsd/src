@@ -147,6 +147,7 @@ xfrd_read_state(struct xfrd_state* xfrd)
 	uint32_t filetime = 0;
 	uint32_t numzones, i;
 	region_type *tempregion;
+	time_t soa_refresh;
 
 	tempregion = region_create(xalloc, free);
 	if(!tempregion)
@@ -265,10 +266,15 @@ xfrd_read_state(struct xfrd_state* xfrd)
 		 * or there is a notification,
 		 * or there is a soa && current time is past refresh point
 		 */
+		soa_refresh = ntohl(soa_disk_read.refresh);
+		if (soa_refresh > zone->zone_options->pattern->max_refresh_time)
+			soa_refresh = zone->zone_options->pattern->max_refresh_time;
+		else if (soa_refresh < zone->zone_options->pattern->min_refresh_time)
+			soa_refresh = zone->zone_options->pattern->min_refresh_time;
 		if(timeout == 0 || soa_notified_acquired_read != 0 ||
 			(soa_disk_acquired_read != 0 &&
 			(uint32_t)xfrd_time() - soa_disk_acquired_read
-				> ntohl(soa_disk_read.refresh)))
+				> soa_refresh))
 		{
 			zone->state = xfrd_zone_refreshing;
 			xfrd_set_refresh_now(zone);
@@ -563,4 +569,18 @@ xfrd_unlink_xfrfile(struct nsd* nsd, uint64_t number)
 		log_msg(LOG_WARNING, "could not unlink %s: %s", fname,
 			strerror(errno));
 	}
+}
+
+uint64_t
+xfrd_get_xfrfile_size(struct nsd* nsd, uint64_t number )
+{
+	char fname[1024];
+	struct stat tempxfr_stat;
+	tempxfrname(fname, sizeof(fname), nsd, number);
+	if( stat( fname, &tempxfr_stat ) < 0 ) {
+	    log_msg(LOG_WARNING, "could not get file size %s: %s", fname,
+		    strerror(errno));
+	    return 0;
+	}
+	return (uint64_t)tempxfr_stat.st_size;
 }

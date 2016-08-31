@@ -59,6 +59,12 @@ extern int optind;
 		return;					\
 	}
 
+#define ZONE_GET_INT(NAME, VAR, PATTERN) 		\
+	if (strcasecmp(#NAME, (VAR)) == 0) { 	\
+		printf("%d\n", (int) PATTERN->NAME); 	\
+		return; 			\
+	}
+
 #define SERV_GET_BIN(NAME, VAR) 			\
 	if (strcasecmp(#NAME, (VAR)) == 0) { 		\
 		printf("%s\n", opt->NAME?"yes":"no"); 	\
@@ -306,6 +312,11 @@ config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o,
 		ZONE_GET_STR(zonestats, o, zone->pattern);
 		ZONE_GET_OUTGOING(outgoing_interface, o, zone->pattern);
 		ZONE_GET_BIN(allow_axfr_fallback, o, zone->pattern);
+		ZONE_GET_INT(max_refresh_time, o, zone->pattern);
+		ZONE_GET_INT(min_refresh_time, o, zone->pattern);
+		ZONE_GET_INT(max_retry_time, o, zone->pattern);
+		ZONE_GET_INT(min_retry_time, o, zone->pattern);
+		ZONE_GET_INT(size_limit_xfr, o, zone->pattern);
 #ifdef RATELIMIT
 		ZONE_GET_RRL(rrl_whitelist, o, zone->pattern);
 #endif
@@ -331,6 +342,11 @@ config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o,
 		ZONE_GET_STR(zonestats, o, p);
 		ZONE_GET_OUTGOING(outgoing_interface, o, p);
 		ZONE_GET_BIN(allow_axfr_fallback, o, p);
+		ZONE_GET_INT(max_refresh_time, o, p);
+		ZONE_GET_INT(min_refresh_time, o, p);
+		ZONE_GET_INT(max_retry_time, o, p);
+		ZONE_GET_INT(min_retry_time, o, p);
+		ZONE_GET_INT(size_limit_xfr, o, p);
 #ifdef RATELIMIT
 		ZONE_GET_RRL(rrl_whitelist, o, p);
 #endif
@@ -431,6 +447,17 @@ static void print_zone_content_elems(pattern_options_t* pat)
 	if(!pat->allow_axfr_fallback_is_default)
 		printf("\tallow-axfr-fallback: %s\n",
 			pat->allow_axfr_fallback?"yes":"no");
+	if(!pat->max_refresh_time_is_default)
+		printf("\tmax-refresh-time: %d\n", pat->max_refresh_time);
+	if(!pat->min_refresh_time_is_default)
+		printf("\tmin-refresh-time: %d\n", pat->min_refresh_time);
+	if(!pat->max_retry_time_is_default)
+		printf("\tmax-retry-time: %d\n", pat->max_retry_time);
+	if(!pat->min_retry_time_is_default)
+		printf("\tmin-retry-time: %d\n", pat->min_retry_time);
+	if(pat->size_limit_xfr != 0)
+		printf("\tsize-limit-xfr: %llu\n",
+			(long long unsigned)pat->size_limit_xfr);
 }
 
 void
@@ -559,6 +586,13 @@ additional_checks(nsd_options_t* opt, const char* filename)
 			fprintf(stderr, "%s: cannot parse zone name syntax for zone %s.\n", filename, zone->name);
 			errors ++;
 		}
+#ifndef ROOT_SERVER
+		/* Is it a root zone? Are we a root server then? Idiot proof. */
+		if(dname->label_count == 1) {
+			fprintf(stderr, "%s: not configured as a root server.\n", filename);
+			errors ++;
+		}
+#endif
 		if(zone->pattern->allow_notify && !zone->pattern->request_xfr) {
 			fprintf(stderr, "%s: zone %s has allow-notify but no request-xfr"
 				" items. Where can it get a zone transfer when a notify "

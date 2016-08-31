@@ -198,6 +198,20 @@ write_uint32(void *dst, uint32_t data)
 #endif
 }
 
+static inline void
+write_uint64(void *dst, uint64_t data)
+{
+	uint8_t *p = (uint8_t *) dst;
+	p[0] = (uint8_t) ((data >> 56) & 0xff);
+	p[1] = (uint8_t) ((data >> 48) & 0xff);
+	p[2] = (uint8_t) ((data >> 40) & 0xff);
+	p[3] = (uint8_t) ((data >> 32) & 0xff);
+	p[4] = (uint8_t) ((data >> 24) & 0xff);
+	p[5] = (uint8_t) ((data >> 16) & 0xff);
+	p[6] = (uint8_t) ((data >> 8) & 0xff);
+	p[7] = (uint8_t) (data & 0xff);
+}
+
 /*
  * Copy data allowing for unaligned accesses in network byte order
  * (big endian).
@@ -222,6 +236,21 @@ read_uint32(const void *src)
 	uint8_t *p = (uint8_t *) src;
 	return (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
 #endif
+}
+
+static inline uint64_t
+read_uint64(const void *src)
+{
+	uint8_t *p = (uint8_t *) src;
+	return
+	    ((uint64_t)p[0] << 56) |
+	    ((uint64_t)p[1] << 48) |
+	    ((uint64_t)p[2] << 40) |
+	    ((uint64_t)p[3] << 32) |
+	    ((uint64_t)p[4] << 24) |
+	    ((uint64_t)p[5] << 16) |
+	    ((uint64_t)p[6] <<  8) |
+	    (uint64_t)p[7];
 }
 
 /*

@@ -533,7 +533,7 @@ domain_find_zone(namedb_type* db, domain_type* domain)
 }
 
 zone_type *
-domain_find_parent_zone(zone_type* zone)
+domain_find_parent_zone(namedb_type* db, zone_type* zone)
 {
 	rrset_type* rrset;
 
@@ -544,6 +544,10 @@ domain_find_parent_zone(zone_type* zone)
 			return rrset->zone;
 		}
 	}
+	/* the NS record in the parent zone above this zone is not present,
+	 * workaround to find that parent zone anyway */
+	if(zone->apex->parent)
+		return domain_find_zone(db, zone->apex->parent);
 	return NULL;
 }
 

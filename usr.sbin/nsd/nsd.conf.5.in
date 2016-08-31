@@ -583,6 +583,10 @@ transmitted using TCP.
 This option should be accompanied by request\-xfr. It (dis)allows NSD (as secondary) 
 to fallback to AXFR if the primary name server does not support IXFR. Default is yes.
 .TP
+.B size\-limit\-xfr:\fR <number>
+This option should be accompanied by request\-xfr. It specifies XFR temporary file size limit.  It can be used to stop very large zone retrieval, that could otherwise use up a lot of memory and disk space.
+If this option is 0, unlimited. Default value is 0.
+.TP
 .B notify:\fR <ip\-address> <key\-name | NOKEY>
 Access control list. The listed address (a secondary) is notified 
 of updates to this zone. A port number can be added using a suffix of @number,
@@ -623,6 +627,22 @@ The ip\-address is a plain IP address (IPv4 or IPv6).
 A port number can be added using a suffix of @number, for example 
 1.2.3.4@5300.
 .RE
+.TP
+.B max\-refresh\-time:\fR <seconds>
+Limit refresh time for secondary zones.  This is the timer which checks to see
+if the zone has to be refetched when it expires.  Normally the value from the
+SOA record is used, but this option restricts that value.
+.TP
+.B min\-refresh\-time:\fR <seconds>
+Limit refresh time for secondary zones.
+.TP
+.B max\-retry\-time:\fR <seconds>
+Limit retry time for secondary zones.  This is the timeout after a failed
+fetch attempt for the zone.  Normally the value from the SOA record is used,
+but this option restricts that value.
+.TP
+.B min\-retry\-time:\fR <seconds>
+Limit retry time for secondary zones.
 .TP
 .B zonestats:\fR <name>
 When compiled with \-\-enable\-zone\-stats NSD can collect statistics per zone.

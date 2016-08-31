@@ -893,7 +893,9 @@ nsec3_add_ds_proof(struct query *query, struct answer *answer,
 		/* use NSEC3 record from above the zone cut. */
 		nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
 			domain->nsec3->nsec3_ds_parent_cover);
-	} else if (!delegpt && domain->nsec3 && domain->nsec3->nsec3_is_exact) {
+	} else if (!delegpt && domain->nsec3 && domain->nsec3->nsec3_is_exact
+		&& nsec3_domain_part_of_zone(domain->nsec3->nsec3_cover,
+		query->zone)) {
 		nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
 			domain->nsec3->nsec3_cover);
 	} else {

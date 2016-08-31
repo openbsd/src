@@ -82,7 +82,10 @@ child_handle_parent_command(int fd, short event, void* arg)
 		server_close_all_sockets(data->nsd->udp, data->nsd->ifs);
 		server_close_all_sockets(data->nsd->tcp, data->nsd->ifs);
 		/* mode == NSD_QUIT_CHILD */
-		(void)write(fd, &mode, sizeof(mode));
+		if(write(fd, &mode, sizeof(mode)) == -1) {
+			VERBOSITY(3, (LOG_INFO, "quit child write: %s",
+				strerror(errno)));
+		}
 		ipc_child_quit(data->nsd);
 		break;
 	case NSD_QUIT_WITH_STATS:

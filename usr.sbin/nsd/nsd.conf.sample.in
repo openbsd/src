@@ -258,6 +258,15 @@ remote-control:
 	# set local interface for sending zone transfer requests.
 	# default is let the OS choose.
 	#outgoing-interface: 10.0.0.10
+	# limit the refresh and retry interval in seconds.
+	#max-refresh-time: 2419200
+	#min-refresh-time: 0
+	#max-retry-time: 1209600
+	#min-retry-time: 0
+
+	# limit the zone transfer size (in bytes), stops very large transfers
+	# 0 is no limits enforced.
+	# size-limit-xfr: 0
 
 	# if compiled with --enable-zone-stats, give name of stat block for
 	# this zone (or group of zones).  Output from nsd-control stats.

@@ -315,6 +315,20 @@ buffer_write_u32(buffer_type *buffer, uint32_t data)
 }
 
 static inline void
+buffer_write_u64_at(buffer_type *buffer, size_t at, uint64_t data)
+{
+	assert(buffer_available_at(buffer, at, sizeof(data)));
+	write_uint64(buffer->_data + at, data);
+}
+
+static inline void
+buffer_write_u64(buffer_type *buffer, uint64_t data)
+{
+	buffer_write_u64_at(buffer, buffer->_position, data);
+	buffer->_position += sizeof(data);
+}
+
+static inline void
 buffer_read_at(buffer_type *buffer, size_t at, void *data, size_t count)
 {
 	assert(buffer_available_at(buffer, at, count));
@@ -370,6 +384,21 @@ buffer_read_u32(buffer_type *buffer)
 {
 	uint32_t result = buffer_read_u32_at(buffer, buffer->_position);
 	buffer->_position += sizeof(uint32_t);
+	return result;
+}
+
+static inline uint64_t
+buffer_read_u64_at(buffer_type *buffer, size_t at)
+{
+	assert(buffer_available_at(buffer, at, sizeof(uint64_t)));
+	return read_uint64(buffer->_data + at);
+}
+
+static inline uint64_t
+buffer_read_u64(buffer_type *buffer)
+{
+	uint64_t result = buffer_read_u64_at(buffer, buffer->_position);
+	buffer->_position += sizeof(uint64_t);
 	return result;
 }
 

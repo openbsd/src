@@ -54,7 +54,7 @@ extern config_parser_state_t* cfg_parser;
 %token VAR_TCP_MSS VAR_OUTGOING_TCP_MSS VAR_IP_FREEBIND
 %token VAR_ZONEFILE 
 %token VAR_ZONE
-%token VAR_ALLOW_NOTIFY VAR_REQUEST_XFR VAR_NOTIFY VAR_PROVIDE_XFR 
+%token VAR_ALLOW_NOTIFY VAR_REQUEST_XFR VAR_NOTIFY VAR_PROVIDE_XFR VAR_SIZE_LIMIT_XFR 
 %token VAR_NOTIFY_RETRY VAR_OUTGOING_INTERFACE VAR_ALLOW_AXFR_FALLBACK
 %token VAR_KEY
 %token VAR_ALGORITHM VAR_SECRET
@@ -69,6 +69,8 @@ extern config_parser_state_t* cfg_parser;
 %token VAR_RRL_WHITELIST_RATELIMIT VAR_RRL_WHITELIST
 %token VAR_ZONEFILES_CHECK VAR_ZONEFILES_WRITE VAR_LOG_TIME_ASCII
 %token VAR_ROUND_ROBIN VAR_ZONESTATS VAR_REUSEPORT VAR_VERSION
+%token VAR_MAX_REFRESH_TIME VAR_MIN_REFRESH_TIME
+%token VAR_MAX_RETRY_TIME VAR_MIN_RETRY_TIME
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
@@ -598,7 +600,9 @@ content_pattern: pattern_name | zone_config_item;
 zone_config_item: zone_zonefile | zone_allow_notify | zone_request_xfr |
 	zone_notify | zone_notify_retry | zone_provide_xfr | 
 	zone_outgoing_interface | zone_allow_axfr_fallback | include_pattern |
-	zone_rrl_whitelist | zone_zonestats;
+	zone_rrl_whitelist | zone_zonestats | zone_max_refresh_time |
+	zone_min_refresh_time | zone_max_retry_time | zone_min_retry_time |
+	zone_size_limit_xfr;
 pattern_name: VAR_NAME STRING
 	{ 
 		OUTYY(("P(pattern_name:%s)\n", $2)); 
@@ -714,6 +718,14 @@ zone_request_xfr: VAR_REQUEST_XFR zone_request_xfr_data
 	{
 	}
 	;
+zone_size_limit_xfr: VAR_SIZE_LIMIT_XFR STRING
+	{ 
+		OUTYY(("P(size_limit_xfr:%s)\n", $2)); 
+		if(atoll($2) < 0)
+			yyerror("number >= 0 expected");
+		else cfg_parser->current_pattern->size_limit_xfr = atoll($2);
+	}
+	;
 zone_request_xfr_data: STRING STRING
 	{ 
 		acl_options_t* acl = parse_acl_info(cfg_parser->opt->region, $1, $2);
@@ -819,6 +831,46 @@ zone_rrl_whitelist: VAR_RRL_WHITELIST STRING
 #endif
 	}
 	;
+zone_max_refresh_time: VAR_MAX_REFRESH_TIME STRING
+{
+	OUTYY(("P(zone_max_refresh_time:%s)\n", $2));
+	if(atoi($2) == 0 && strcmp($2, "0") != 0)
+		yyerror("number expected");
+	else {
+		cfg_parser->current_pattern->max_refresh_time = atoi($2);
+		cfg_parser->current_pattern->max_refresh_time_is_default = 0;
+	}
+};
+zone_min_refresh_time: VAR_MIN_REFRESH_TIME STRING
+{
+	OUTYY(("P(zone_min_refresh_time:%s)\n", $2));
+	if(atoi($2) == 0 && strcmp($2, "0") != 0)
+		yyerror("number expected");
+	else {
+		cfg_parser->current_pattern->min_refresh_time = atoi($2);
+		cfg_parser->current_pattern->min_refresh_time_is_default = 0;
+	}
+};
+zone_max_retry_time: VAR_MAX_RETRY_TIME STRING
+{
+	OUTYY(("P(zone_max_retry_time:%s)\n", $2));
+	if(atoi($2) == 0 && strcmp($2, "0") != 0)
+		yyerror("number expected");
+	else {
+		cfg_parser->current_pattern->max_retry_time = atoi($2);
+		cfg_parser->current_pattern->max_retry_time_is_default = 0;
+	}
+};
+zone_min_retry_time: VAR_MIN_RETRY_TIME STRING
+{
+	OUTYY(("P(zone_min_retry_time:%s)\n", $2));
+	if(atoi($2) == 0 && strcmp($2, "0") != 0)
+		yyerror("number expected");
+	else {
+		cfg_parser->current_pattern->min_retry_time = atoi($2);
+		cfg_parser->current_pattern->min_retry_time_is_default = 0;
+	}
+};
 
 /* key: declaration */
 keystart: VAR_KEY
