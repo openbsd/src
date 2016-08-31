@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.518 2016/08/31 15:24:04 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.519 2016/08/31 21:49:01 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1341,7 +1341,6 @@ int cmdline_symset(char *);
 
 /* queue.c */
 int queue(void);
-void queue_flow_control(void);
 
 
 /* queue_backend.c */

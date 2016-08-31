@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.178 2016/05/28 21:21:20 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.179 2016/08/31 21:49:01 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -49,15 +49,6 @@ static void queue_sig_handler(int, short, void *);
 static void queue_log(const struct envelope *, const char *, const char *);
 static void queue_msgid_walk(int, short, void *);
 
-static size_t	flow_agent_hiwat = 10 * 1024 * 1024;
-static size_t	flow_agent_lowat =   1 * 1024 * 1024;
-static size_t	flow_scheduler_hiwat = 10 * 1024 * 1024;
-static size_t	flow_scheduler_lowat = 1 * 1024 * 1024;
-
-#define LIMIT_AGENT	0x01
-#define LIMIT_SCHEDULER	0x02
-
-static int limit = 0;
 
 static void
 queue_imsg(struct mproc *p, struct imsg *imsg)
@@ -796,50 +787,4 @@ queue_log(const struct envelope *e, const char *prefix, const char *status)
 	    rcpt,
 	    duration_to_text(time(NULL) - e->creation),
 	    status);
-}
-
-void
-queue_flow_control(void)
-{
-	size_t	bufsz;
-	int	oldlimit = limit;
-	int	set, unset;
-
-	bufsz = p_pony->bytes_queued;
-	if (bufsz <= flow_agent_lowat)
-		limit &= ~LIMIT_AGENT;
-	else if (bufsz > flow_agent_hiwat)
-		limit |= LIMIT_AGENT;
-
-	if (p_scheduler->bytes_queued <= flow_scheduler_lowat)
-		limit &= ~LIMIT_SCHEDULER;
-	else if (p_scheduler->bytes_queued > flow_scheduler_hiwat)
-		limit |= LIMIT_SCHEDULER;
-
-	set = limit & (limit ^ oldlimit);
-	unset = oldlimit & (limit ^ oldlimit);
-
-	if (set & LIMIT_SCHEDULER) {
-		log_warnx("warn: queue: Hiwat reached on scheduler buffer: "
-		    "suspending transfer, delivery and lookup input");
-		mproc_disable(p_pony);
-		mproc_disable(p_lka);
-	}
-	else if (unset & LIMIT_SCHEDULER) {
-		log_warnx("warn: queue: Down to lowat on scheduler buffer: "
-		    "resuming transfer, delivery and lookup input");
-		mproc_enable(p_pony);
-		mproc_enable(p_lka);
-	}
-
-	if (set & LIMIT_AGENT) {
-		log_warnx("warn: queue: Hiwat reached on transfer and delivery "
-		    "buffers: suspending scheduler input");
-		mproc_disable(p_scheduler);
-	}
-	else if (unset & LIMIT_AGENT) {
-		log_warnx("warn: queue: Down to lowat on transfer and delivery "
-		    "buffers: resuming scheduler input");
-		mproc_enable(p_scheduler);
-	}
 }
