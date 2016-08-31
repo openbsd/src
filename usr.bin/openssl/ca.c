@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.21 2016/08/30 11:32:28 deraadt Exp $ */
+/* $OpenBSD: ca.c,v 1.22 2016/08/31 11:42:09 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -702,34 +702,11 @@ bad:
 
 	/*****************************************************************/
 	/* lookup where to write new certificates */
-	if ((outdir == NULL) && (req)) {
-
+	if (outdir == NULL && req) {
 		if ((outdir = NCONF_get_string(conf, section,
 		    ENV_NEW_CERTS_DIR)) == NULL) {
-			BIO_printf(bio_err, "there needs to be defined a directory for new certificate to be placed in\n");
-			goto err;
-		}
-		/*
-		 * outdir is a directory spec, but access() for VMS demands a
-		 * filename.  In any case, stat(), below, will catch the
-		 * problem if outdir is not a directory spec, and the fopen()
-		 * or open() will catch an error if there is no write access.
-		 *
-		 * Presumably, this problem could also be solved by using the
-		 * DEC C routines to convert the directory syntax to Unixly,
-		 * and give that to access().  However, time's too short to
-		 * do that just now.
-		 */
-		if (access(outdir, R_OK | W_OK | X_OK) != 0) {
-			BIO_printf(bio_err,
-			    "I am unable to access the %s directory\n", outdir);
-			perror(outdir);
-			goto err;
-		}
-		if (app_isdir(outdir) <= 0) {
-			BIO_printf(bio_err,
-			    "%s need to be a directory\n", outdir);
-			perror(outdir);
+			BIO_printf(bio_err, "output directory %s not defined\n",
+			    ENV_NEW_CERTS_DIR);
 			goto err;
 		}
 	}
