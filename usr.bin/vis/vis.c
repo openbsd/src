@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.19 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: vis.c,v 1.20 2016/08/31 09:45:00 jsg Exp $	*/
 /*	$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $	*/
 
 /*-
@@ -111,9 +111,10 @@ main(int argc, char *argv[])
 
 	if (*argv)
 		while (*argv) {
-			if ((fp=fopen(*argv, "r")) != NULL)
+			if ((fp=fopen(*argv, "r")) != NULL) {
 				process(fp);
-			else
+				fclose(fp);
+			} else
 				warn("%s", *argv);
 			argv++;
 		}
