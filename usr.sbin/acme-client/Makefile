@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2016/08/31 22:11:15 florian Exp $
+#	$OpenBSD: Makefile,v 1.3 2016/08/31 22:28:23 florian Exp $
 PROG=		acme-client
 SRCS=		acctproc.c base64.c certproc.c chngproc.c dbg.c dnsproc.c
 SRCS+=		fileproc.c http.c jsmn.c json.c keyproc.c main.c netproc.c
@@ -8,7 +8,7 @@ MAN=		acme-client.1
 LDADD=		-ltls -lssl -lcrypto
 DPADD=		${LIBTLS} ${LIBSSL} ${LIBCRYPTO}
 
-CFLAGS		+= -g -W -Wall
+CFLAGS+=	-g -W -Wall
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith
