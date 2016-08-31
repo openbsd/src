@@ -1,0 +1,1186 @@
+2016-08-19 07:17  kristaps
+
+	* letskencrypt.1 (tags: VERSION_0_1_10): Merge
+	  https://github.com/kristapsdz/letskencrypt-portable/pull/6 --
+	  thanks, Bernard!
+
+2016-08-06 12:45  kristaps
+
+	* Makefile (tags: VERSION_0_1_10): Allow a fake-install prefix.
+	  From https://github.com/kristapsdz/letskencrypt/pull/16 .
+
+2016-08-06 12:38  kristaps
+
+	* letskencrypt.1: Document -a.
+
+2016-08-06 12:37  kristaps
+
+	* main.c (tags: VERSION_0_1_10): Allow overriding agreement and
+	  also update usage message.
+
+2016-08-06 12:37  kristaps
+
+	* extern.h, netproc.c (utags: VERSION_0_1_10): Adding override for
+	  agreement with -a flag.  Noted (and partially patched) in
+	  https://github.com/kristapsdz/letskencrypt/pull/15 and by
+	  ``pasta'' over e-mail -- thanks!
+
+2016-07-28 08:37  kristaps
+
+	* letskencrypt.1: Document backing up.
+
+2016-07-28 08:32  kristaps
+
+	* extern.h, fileproc.c (tags: VERSION_0_1_10), main.c: Initial
+	  backing-up of certificates.  Suggested by
+	  https://github.com/kristapsdz/letskencrypt/issues/12 and
+	  https://github.com/kristapsdz/letskencrypt/issues/9
+
+2016-07-16 05:59  kristaps
+
+	* acctproc.c (tags: VERSION_0_1_10), keyproc.c (tags:
+	  VERSION_0_1_10), main.c (utags: VERSION_0_1_9): Properly check -n
+	  and -N existence in main.c, allowing them to propogate to netproc
+	  and so on.  This reverts a prior change that was incomplete.
+
+2016-07-16 05:11  kristaps
+
+	* extern.h (tags: VERSION_0_1_9): Allow PATH_VAR_EMPTY to be
+	  overridden.  Apparently not all systems have this directory, so
+	  let them provide their own.
+
+2016-07-16 05:10  kristaps
+
+	* acctproc.c, keyproc.c, letskencrypt.1 (tags: VERSION_0_1_9),
+	  main.c: When using -N or -n, try to open the key-file first, then
+	  only create it if it doesn't exist.  This allows using -nN even
+	  after first creating the files.  From
+	  https://github.com/kristapsdz/letskencrypt/issues/8
+
+2016-07-12 23:51  kristaps
+
+	* letskencrypt.1: Fix example and reorder exit status
+	  documentation.
+
+2016-07-12 23:12  kristaps
+
+	* letskencrypt.1: Note new exit codes, change "mkdir -m" for mkdir
+	  and chmod (not all systems have the -m flag), and use the return
+	  codes in the example.
+
+2016-07-12 23:06  kristaps
+
+	* main.c: Fix usage message, fix error message to be a bit more
+	  useful (as noted in
+	  https://github.com/kristapsdz/letskencrypt-portable/issues/3 )
+	  and finally change the error code to be "2" if nothing changed on
+	  the disc, otherwise 0 on success (the certificates updated) and 1
+	  on failure.
+
+2016-07-12 23:04  kristaps
+
+	* fileproc.c (tags: VERSION_0_1_9): Return a special error code
+	  when we update certificates.
+
+2016-07-12 23:02  kristaps
+
+	* extern.h, util.c (tags: VERSION_0_1_10, VERSION_0_1_9): Add check
+	  for extended error code (i.e., exit status of 2).
+
+2016-07-12 00:11  kristaps
+
+	* util.c (tags: VERSION_0_1_8): Silence a coverity issue.  No
+	  logical change.
+
+2016-07-11 23:42  kristaps
+
+	* main.c (tags: VERSION_0_1_8): Fix access invocation.
+
+2016-07-11 23:22  kristaps
+
+	* letskencrypt.1 (tags: VERSION_0_1_8): Add manual bits for -N,
+	  domain key registration.
+
+2016-07-11 23:19  kristaps
+
+	* main.c: Turn on domain key creation.
+
+2016-07-11 23:18  kristaps
+
+	* keyproc.c (tags: VERSION_0_1_8): Note domain key, not account
+	  key.
+
+2016-07-11 23:18  kristaps
+
+	* Makefile (tags: VERSION_0_1_9, VERSION_0_1_8), keyproc.c: Adding
+	  key creation to keyproc.
+
+2016-07-11 23:08  kristaps
+
+	* Makefile, acctproc.c (tags: VERSION_0_1_8), rsa.c (tags:
+	  VERSION_0_1_10, VERSION_0_1_9, VERSION_0_1_8), rsa.h (tags:
+	  VERSION_0_1_10, VERSION_0_1_9, VERSION_0_1_8): Move rsa key
+	  creation and loading into their own file (and header) for usage
+	  (current) by acctproc and (pending) keyproc.
+
+2016-07-11 23:07  kristaps
+
+	* extern.h (tags: VERSION_0_1_8): Cosmetic fix.
+
+2016-07-11 22:40  kristaps
+
+	* extern.h, keyproc.c, main.c: Beginning of code to let the keyproc
+	  create a new RSA domain key.	This was prompted by
+	  https://github.com/kristapsdz/letskencrypt/issues/7
+
+2016-07-09 22:34  kristaps
+
+	* letskencrypt.1: Add some example usage.
+
+2016-07-02 04:24  kristaps
+
+	* http.c (tags: VERSION_0_1_10, VERSION_0_1_9, VERSION_0_1_8): On
+	  OpenBSD 5.7, tls_read and family behave strangely: account for
+	  that.
+
+2016-07-02 02:59  kristaps
+
+	* http.c: OpenBSD 5.7 needs stdint.h for uintptr_t.
+
+2016-07-02 00:19  kristaps
+
+	* main.c: Use isalnum instead of isalpha for domain name
+	  validation. Submitted by Remco and as
+	  https://github.com/kristapsdz/letskencrypt/pull/5
+
+2016-06-27 23:25  kristaps
+
+	* acctproc.c (tags: VERSION_0_1_7): Have creation of account key be
+	  properly umasked.  From a patch by Remco---thanks!
+
+2016-06-27 22:51  kristaps
+
+	* README.md (tags: VERSION_0_1_10, VERSION_0_1_9, VERSION_0_1_8,
+	  VERSION_0_1_7): Update to note NetBSD.
+
+2016-06-25 04:45  kristaps
+
+	* acctproc.c: Also move the key creation into an RSA-specific
+	  format, directly from a patch by Remco---thanks!
+
+2016-06-25 04:38  kristaps
+
+	* acctproc.c: Split out more RSA-specific functions, from a
+	  modified patch by Remco---thanks!
+
+2016-06-25 04:22  kristaps
+
+	* acctproc.c, extern.h (tags: VERSION_0_1_7), json.c (tags:
+	  VERSION_0_1_10, VERSION_0_1_9, VERSION_0_1_8, VERSION_0_1_7):
+	  Note RSA-specific functions as patched by Remco---thanks!
+
+2016-06-25 04:03  kristaps
+
+	* main.c (tags: VERSION_0_1_7): Memory leak in error path.
+
+2016-06-25 03:59  kristaps
+
+	* dnsproc.c (tags: VERSION_0_1_10, VERSION_0_1_9, VERSION_0_1_8,
+	  VERSION_0_1_7), main.c: Initialise variable and also downgrade
+	  "cached" message to trace mode.
+
+2016-06-25 00:57  kristaps
+
+	* letskencrypt.1 (tags: VERSION_0_1_7): Document multi-domain
+	  setup.
+
+2016-06-25 00:50  kristaps
+
+	* netproc.c (tags: VERSION_0_1_9, VERSION_0_1_8, VERSION_0_1_7):
+	  Don't modify the input buffer when tracing!
+
+2016-06-25 00:18  kristaps
+
+	* main.c: Introduce -m (not documented while I test it) that
+	  appends the initial domain to all paths.  This makes it easier to
+	  use in systems where one's invoking letskencrypt multiple times.
+	  Also add some simple validation of the domain names to prevent
+	  them from (1) trampling the directory structure and (2) being
+	  bogus in general.
+
+2016-06-24 23:16  kristaps
+
+	* netproc.c: Do what the documentation says regarding -v -v and
+	  dump buffers.
+
+2016-06-03 05:02  kristaps
+
+	* letskencrypt.1 (tags: VERSION_0_1_6): Be more specific about
+	  RSA-ness.
+
+2016-06-03 05:00  kristaps
+
+	* keyproc.c (tags: VERSION_0_1_7, VERSION_0_1_6): Remove dependency
+	  on RSA for the domain key.  This completely lifts the
+	  restrictions, as the certificate creation is opaque.	This is
+	  from a patch by Remco--thanks!
+
+2016-06-03 04:58  kristaps
+
+	* acctproc.c (tags: VERSION_0_1_6): Require key to be RSA (for
+	  now).  This builds on a patch submitted by Remco--thank you!
+
+2016-06-03 04:50  kristaps
+
+	* acctproc.c: Remove dependency on RSA for account key.  This is
+	  only the first step, and makes the key extraction be generic.  It
+	  will need more interoperability with the signing process to
+	  actually work.
+
+2016-06-03 03:27  kristaps
+
+	* extern.h (tags: VERSION_0_1_6): Fix typo noted by @kAworu in
+	  https://github.com/kristapsdz/letskencrypt/pull/3 -- thanks!
+
+2016-06-02 05:06  kristaps
+
+	* keyproc.c: Fix an error-path memory leak and make more specific
+	  notes as to why I'm not touching the memory (right now) of this
+	  mystery function.  This raised by @kAworu in pull/2 -- thanks!
+
+2016-06-02 04:42  kristaps
+
+	* json.c (tags: VERSION_0_1_6): Handle zero-length arrays and mark
+	  file-scoped function as static.  The former from a patch by
+	  @kAworu in pull/2 -- thanks!
+
+2016-06-02 04:38  kristaps
+
+	* json.c: Correct allocation size as noted by @kAworu in pull/2.
+
+2016-06-02 04:02  kristaps
+
+	* http.c (tags: VERSION_0_1_7, VERSION_0_1_6): Protect against
+	  zero-length read (EOF) freeing with the realloc.  Found by
+	  Remco--thanks!
+
+2016-06-01 15:54  kristaps
+
+	* acctproc.c, certproc.c (tags: VERSION_0_1_10, VERSION_0_1_9,
+	  VERSION_0_1_8, VERSION_0_1_7, VERSION_0_1_6), chngproc.c (tags:
+	  VERSION_0_1_10, VERSION_0_1_9, VERSION_0_1_8, VERSION_0_1_7,
+	  VERSION_0_1_6), dnsproc.c (tags: VERSION_0_1_6), fileproc.c
+	  (tags: VERSION_0_1_8, VERSION_0_1_7, VERSION_0_1_6), keyproc.c,
+	  main.c (tags: VERSION_0_1_6), netproc.c (tags: VERSION_0_1_6),
+	  revokeproc.c (tags: VERSION_0_1_10, VERSION_0_1_9, VERSION_0_1_8,
+	  VERSION_0_1_7, VERSION_0_1_6): Kick out a lot of old header files
+	  we don't use any more.
+
+2016-06-01 15:29  kristaps
+
+	* letskencrypt.1: Remove implementation notes.	Suggested by
+	  deraadt@ among others.
+
+2016-06-01 15:03  kristaps
+
+	* acctproc.c, certproc.c, dnsproc.c, extern.h, keyproc.c,
+	  letskencrypt.1, main.c, netproc.c, revokeproc.c: Prune out
+	  setting a user: this is no longer necessary as all procs not
+	  fully pledged need the root user for chroot.
+
+2016-06-01 15:01  kristaps
+
+	* util-pledge.c (tags: VERSION_0_1_10, VERSION_0_1_9,
+	  VERSION_0_1_8, VERSION_0_1_7, VERSION_0_1_6): Fix compilation.
+
+2016-06-01 14:56  kristaps
+
+	* acctproc.c, certproc.c, dnsproc.c, extern.h, keyproc.c, main.c,
+	  netproc.c, revokeproc.c, util-pledge.c: The user-drop now occurs
+	  only in the -portable code, so we don't want to carry around all
+	  sorts of extra information we don't use.
+
+2016-06-01 14:19  kristaps
+
+	* util-pledge.c: Re-add chroot(2) for file process and challenge
+	  process.  This is because the whitepath doesn't exist (yet) for
+	  the former, and the challenge process has unknown files in a
+	  known path.
+
+2016-06-01 14:18  kristaps
+
+	* sandbox-pledge.c (tags: VERSION_0_1_10, VERSION_0_1_9,
+	  VERSION_0_1_8, VERSION_0_1_7, VERSION_0_1_6): Remove comment
+	  about rename(2) (ack'd by deraadt@) and remove rpath from inet
+	  pledge, which was a holdover from libcurl.
+
+2016-06-01 13:33  kristaps
+
+	* main.c: Fix usage.  patch by Caspar Schutijser--thanks!
+
+2016-05-26 08:38  kristaps
+
+	* Makefile (tags: VERSION_0_1_7, VERSION_0_1_6), chroot-pledge.c,
+	  util-pledge.c: Rename chroot-pledge into util-pledge, which is
+	  more appropriate.
+
+2016-05-26 08:30  kristaps
+
+	* Makefile, chroot-pledge.c, dnsproc.c: Make the compiler happy.
+
+2016-05-26 08:25  kristaps
+
+	* chroot-pledge.c, util.c (tags: VERSION_0_1_7, VERSION_0_1_6):
+	  What's the point of dropping root privileges if root can't do
+	  anything?
+
+2016-05-26 08:19  kristaps
+
+	* Makefile, chroot-pledge.c, extern.h, main.c, util.c: "Embrace the
+	  pledge".
+
+2016-05-25 04:46  kristaps
+
+	* http.c (tags: VERSION_0_1_5): Try to close connection properly.
+
+2016-05-25 04:35  kristaps
+
+	* http.c: Figure out what tls_close does with the socket.
+
+2016-05-25 04:34  kristaps
+
+	* revokeproc.c (tags: VERSION_0_1_5): Fix scanning ahead for SAN
+	  DNS entries.
+
+2016-05-25 03:47  kristaps
+
+	* netproc.c (tags: VERSION_0_1_5): Have sreq and nreq return the
+	  HTTP error or -1, remove some debugging messages, use the new
+	  http_get members instead of calling functions.  "Clean-up."
+
+2016-05-25 03:46  kristaps
+
+	* http.c, http.h (tags: VERSION_0_1_10, VERSION_0_1_9,
+	  VERSION_0_1_8, VERSION_0_1_7, VERSION_0_1_6, VERSION_0_1_5): Make
+	  sure the connection is closed as soon as the body is read and
+	  also put the head and body buffer pointers into http_get.
+
+2016-05-25 03:43  kristaps
+
+	* dnsproc.c (tags: VERSION_0_1_5): Cache the last DNS response and
+	  return that, if the subsequent request is the same.
+
+2016-05-24 17:17  kristaps
+
+	* README.md (tags: VERSION_0_1_6, VERSION_0_1_5): Clean up the
+	  readme notes.
+
+2016-05-24 17:10  kristaps
+
+	* http.c: Change feature test.
+
+2016-05-24 14:32  kristaps
+
+	* http.c: Needed for compat glue.
+
+2016-05-24 13:32  kristaps
+
+	* http.c: For the time being, allow tls_read/write to be ifdef'd
+	  for two different versions of the API.
+
+2016-05-24 13:03  kristaps
+
+	* Makefile (tags: VERSION_0_1_5): Fix lib.
+
+2016-05-24 11:04  kristaps
+
+	* netproc.c: Don't use strdup() for bodies--they can be binary.
+
+2016-05-24 10:39  kristaps
+
+	* netproc.c: Initial [working] removal of curl from netproc.  This
+	  replaces the nreq() and sreq() functions with those using http.h.
+	  There is still a fair amount of superfluous debugging going on,
+	  and the system isn't "optimum" regarding memory at all.
+
+2016-05-24 10:38  kristaps
+
+	* http.c: Weaken TLS validation.  Is this necessary?
+
+2016-05-24 10:37  kristaps
+
+	* Makefile: Stop using curl, and instead use the home-grown http.c
+	  and -tls.
+
+2016-05-24 10:36  kristaps
+
+	* extern.h, util.c (utags: VERSION_0_1_5): Max the maximum DNS
+	  entries be globally known and also add the new dnsproc comm
+	  identifiers.
+
+2016-05-24 10:35  kristaps
+
+	* dnsproc.c: Have dnsproc transfer both the IP/IPv6 to netproc and
+	  also the family itself.  Move the maximum number of queried
+	  servers into extern.h.
+
+2016-05-24 09:42  kristaps
+
+	* http.c, http.h: Continue fleshing out http.h implementation.
+
+2016-05-24 04:48  kristaps
+
+	* http.c: Missing header for compilation.
+
+2016-05-24 04:42  kristaps
+
+	* http.c: Start to kick out libcurl with a small HTTP client
+	  originally inspired by https://github.com/snimmagadda/http.
+
+2016-05-22 12:04  kristaps
+
+	* README.md (tags: VERSION_0_1_4): Note use of MIT license in
+	  JSMN's files.
+
+2016-05-22 12:03  kristaps
+
+	* Makefile, extern.h, json.c (tags: VERSION_0_1_5), netproc.c
+	  (utags: VERSION_0_1_4): Kick out json-c in favour of jsmn (with
+	  an array->tree wrapper).
+
+2016-05-22 11:55  kristaps
+
+	* jsmn.c, jsmn.h (utags: VERSION_0_1_10, VERSION_0_1_4,
+	  VERSION_0_1_5, VERSION_0_1_6, VERSION_0_1_7, VERSION_0_1_8,
+	  VERSION_0_1_9): Put license directly into jsmn.c and jsmn.h, just
+	  to be clear about it.
+
+2016-05-22 11:54  kristaps
+
+	* jsmn.c, jsmn.h: Add JSMN: https://github.com/zserge/jsmn.
+
+2016-05-22 11:53  kristaps
+
+	* certproc.c (tags: VERSION_0_1_5), revokeproc.c (utags:
+	  VERSION_0_1_4): It's not clear whether the lengths returned by
+	  the BIO are nil-terminated (and valgrind suggests they aren't),
+	  so make sure that they are always nil-terminated.
+
+2016-05-20 13:09  kristaps
+
+	* extern.h, main.c (tags: VERSION_0_1_5, VERSION_0_1_4),
+	  revokeproc.c: When we start up, check that the domains listed on
+	  the command-line are those on the certificate, if found.  NOTE:
+	  what if there's no SAN entry at all?
+
+2016-05-20 08:35  kristaps
+
+	* Makefile: Forgotten PREFIX variable.
+
+2016-05-20 08:28  kristaps
+
+	* keyproc.c (tags: VERSION_0_1_5, VERSION_0_1_4): Fix erroneous
+	  check of realloc return value.
+
+2016-05-20 08:07  kristaps
+
+	* letskencrypt.1 (tags: VERSION_0_1_5, VERSION_0_1_4,
+	  VERSION_0_1_3): Fix typo.
+
+2016-05-20 08:07  kristaps
+
+	* acctproc.c (tags: VERSION_0_1_5, VERSION_0_1_4), certproc.c,
+	  chngproc.c (tags: VERSION_0_1_5, VERSION_0_1_4), dnsproc.c (tags:
+	  VERSION_0_1_4), fileproc.c (tags: VERSION_0_1_5, VERSION_0_1_4),
+	  keyproc.c, main.c, netproc.c, revokeproc.c (utags:
+	  VERSION_0_1_3): No need to have the dropfs, dropprivs, or sandbox
+	  functions double-report their error.
+
+2016-05-20 08:05  kristaps
+
+	* main.c: Pre-check that the files exist: no need to fork if we
+	  don't need to.  Also, the console can get spammed by multiple
+	  procs writing into stderr.
+
+2016-05-20 05:49  kristaps
+
+	* Makefile (tags: VERSION_0_1_3), README.md (tags: VERSION_0_1_3),
+	  letskencrypt.dot: Strip out dot-file and www rule: this all goes
+	  into the letskencrypt-www repo.  Strip down the README.md file to
+	  only what's necessary.
+
+2016-05-19 17:02  kristaps
+
+	* chngproc.c: Convert chngproc to ignore reader failure.
+
+2016-05-19 17:00  kristaps
+
+	* certproc.c: Convert certproc to ignore reader failure.
+
+2016-05-19 16:49  kristaps
+
+	* keyproc.c: Rename label to "out" (consistency) and allow for
+	  reader failure.
+
+2016-05-19 16:40  kristaps
+
+	* acctproc.c: Have acctproc properly handle reader termination.
+
+2016-05-19 16:33  kristaps
+
+	* revokeproc.c: Last nit: make writestr also be ok if the reader
+	  has exited.
+
+2016-05-19 16:31  kristaps
+
+	* revokeproc.c: Have revokeproc properly handle the case where the
+	  reader fails.
+
+2016-05-19 16:29  kristaps
+
+	* util.c (tags: VERSION_0_1_4, VERSION_0_1_3): Have the writer
+	  functions notify us whether the reader has exited.
+
+2016-05-19 15:56  kristaps
+
+	* acctproc.c, certproc.c, chngproc.c, dnsproc.c, keyproc.c,
+	  netproc.c, revokeproc.c: Have writeop, writestr, and writebuf all
+	  return -1 on failure, 0 on end of file (epipe), and 1 on success.
+	  This addresses all the callers.
+
+2016-05-19 09:01  kristaps
+
+	* README.md (tags: VERSION_0_0_5): We're no longer just using the
+	  staging server.  Here we go!
+
+2016-05-19 09:01  kristaps
+
+	* letskencrypt.1, main.c (utags: VERSION_0_0_5): Document the -s
+	  flag.
+
+2016-05-19 08:59  kristaps
+
+	* extern.h (tags: VERSION_0_1_3, VERSION_0_0_5), main.c, netproc.c
+	  (tags: VERSION_0_0_5): Flip on real versus staging servers.
+	  bsd.lv is now eating its dogfood.
+
+2016-05-19 08:58  kristaps
+
+	* keyproc.c (tags: VERSION_0_0_5): Fix how SAN is registered with
+	  the key.  In prior versions, we were having one SAN entry per
+	  domain.  However, apparently this is not allowed; instead we now
+	  have a single SAN extension entry with the full list.
+
+2016-05-19 07:58  kristaps
+
+	* certproc.c, fileproc.c (utags: VERSION_0_0_4, VERSION_0_0_5):
+	  Make filenames in debug messages more meaningful.
+
+2016-05-19 07:22  kristaps
+
+	* netproc.c (tags: VERSION_0_0_4): Forgot to close revokeproc
+	  channel.
+
+2016-05-19 06:10  kristaps
+
+	* README.md (tags: VERSION_0_0_4): Remove the coverity note (that's
+	  going into the -portable version).
+
+2016-05-19 06:09  kristaps
+
+	* extern.h (tags: VERSION_0_0_4), json.c (tags: VERSION_0_1_3,
+	  VERSION_0_0_5, VERSION_0_0_4), netproc.c: Significantly clean up
+	  the handling of HTTP document bodies: first, only invoke the JSON
+	  functions locally, within a doXXXX function; second, don't read
+	  into the JSON parser, but into an intermediary buffer (allowing
+	  us to dump it on error); third, move some fetch bodies from the
+	  main netproc() function into their own functions; and lastly,
+	  store the CA nonce agency as a variable (we'll use this later
+	  when using other servers).
+
+2016-05-19 05:51  kristaps
+
+	* main.c (tags: VERSION_0_0_4): Remove debugging message.
+
+2016-05-19 05:09  kristaps
+
+	* netproc.c: Push communication-related parameters into struct
+	  conn.  Makes the code a bit more readable.
+
+2016-05-19 05:08  kristaps
+
+	* main.c: No functional change: just order getopt() parameters for
+	  easier search.
+
+2016-05-18 16:03  kristaps
+
+	* letskencrypt.1 (tags: VERSION_0_0_4), main.c: Allow overriding
+	  the priv-drop user.
+
+2016-05-18 15:32  kristaps
+
+	* util.c (tags: VERSION_0_0_5, VERSION_0_0_4): Use strsignal()
+	  instead of a hack.
+
+2016-05-18 15:22  kristaps
+
+	* dbg.c (tags: VERSION_0_1_10, VERSION_0_1_9, VERSION_0_1_8,
+	  VERSION_0_1_7, VERSION_0_1_6, VERSION_0_1_5, VERSION_0_1_4,
+	  VERSION_0_1_3, VERSION_0_0_5, VERSION_0_0_4), extern.h, main.c,
+	  util.c: Remove all logging in favour of warnx et al.	Remove
+	  wrong-headed attempt at setproctitle.
+
+2016-05-18 13:01  kristaps
+
+	* acctproc.c (tags: VERSION_0_0_5, VERSION_0_0_4), certproc.c,
+	  chngproc.c (tags: VERSION_0_0_5, VERSION_0_0_4), dbg.c, extern.h,
+	  fileproc.c, json.c, keyproc.c (tags: VERSION_0_0_4), netproc.c,
+	  revokeproc.c (tags: VERSION_0_0_5, VERSION_0_0_4),
+	  sandbox-pledge.c (tags: VERSION_0_1_5, VERSION_0_1_4,
+	  VERSION_0_1_3, VERSION_0_0_5, VERSION_0_0_4), util.c: Kick out
+	  dowarn in favour of warn.
+
+2016-05-18 12:53  kristaps
+
+	* acctproc.c, certproc.c, chngproc.c, dbg.c, dnsproc.c (tags:
+	  VERSION_0_0_5, VERSION_0_0_4), extern.h, fileproc.c, keyproc.c,
+	  netproc.c, revokeproc.c, util.c:
+	  Replace dowarnx() with warnx().
+
+2016-05-18 12:35  kristaps
+
+	* main.c: Start using setproctitle().  First step in kicking out
+	  dbg.c.
+
+2016-05-18 11:44  kristaps
+
+	* util.c: Move setresuid goop into -portable.
+
+2016-05-18 07:18  kristaps
+
+	* README.md: Fix broken link.
+
+2016-05-18 07:10  kristaps
+
+	* README.md (tags: VERSION_0_0_3): Note -portable and FreeBSD.
+
+2016-05-18 06:37  kristaps
+
+	* dnsproc.c (tags: VERSION_0_0_3): FreeBSD nit.  This will be
+	  smoothed out in subsequent improvement of -portable.
+
+2016-05-18 06:36  kristaps
+
+	* README.md: Note that we now do revocation.
+
+2016-05-18 06:19  kristaps
+
+	* letskencrypt.1 (tags: VERSION_0_0_3): Update the manpage with
+	  revocation instructions.
+
+2016-05-18 05:54  kristaps
+
+	* README.md, sandbox-pledge.c (tags: VERSION_0_0_3): Require
+	  OpenBSD >= 5.9.
+
+2016-05-18 05:49  kristaps
+
+	* util.c (tags: VERSION_0_0_3): Catch buffers larger than BUFSIZ
+	  bytes.
+
+2016-05-18 05:32  kristaps
+
+	* sandbox-pledge.c: Add forgotten break statement.
+
+2016-05-18 05:30  kristaps
+
+	* Makefile (tags: VERSION_0_0_5, VERSION_0_0_4, VERSION_0_0_3):
+	  Clean up the Makefile now that we have less cruft.
+
+2016-05-18 05:25  kristaps
+
+	* Makefile, README.md, config.h, main.c (tags: VERSION_0_0_3),
+	  sandbox-pledge.c: Start stripping out compatibility, which is now
+	  in letskencrypt-portable.
+
+2016-05-18 05:00  kristaps
+
+	* Makefile, acctproc.c (tags: VERSION_0_0_3), certproc.c (tags:
+	  VERSION_0_0_3), chngproc.c (tags: VERSION_0_0_3), dnsproc.c,
+	  extern.h (tags: VERSION_0_0_3), fileproc.c (tags: VERSION_0_0_3),
+	  keyproc.c (tags: VERSION_0_0_3), netproc.c (tags: VERSION_0_0_3),
+	  revokeproc.c (tags: VERSION_0_0_3), sandbox-pledge.c: Split all
+	  sandbox operations into their own file.  This is part of the
+	  ongoing re-structure into the main and -portable branch.
+
+2016-05-18 04:31  kristaps
+
+	* Makefile, acctproc.c, base64.c (tags: VERSION_0_1_10,
+	  VERSION_0_1_9, VERSION_0_1_8, VERSION_0_1_7, VERSION_0_1_6,
+	  VERSION_0_1_5, VERSION_0_1_4, VERSION_0_1_3, VERSION_0_0_5,
+	  VERSION_0_0_4, VERSION_0_0_3), certproc.c, chngproc.c, config.h,
+	  dbg.c (tags: VERSION_0_0_3), dnsproc.c, extern.h, fileproc.c,
+	  json.c (tags: VERSION_0_0_3), keyproc.c, main.c, netproc.c,
+	  revokeproc.c, util.c: Finish the revocation function.  Also,
+	  start to lay the groundwork for a -portable and OpenBSD version
+	  of the software with a guarded config.h inclusion.
+
+2016-05-17 08:06  kristaps
+
+	* letskencrypt.1: Add note on revokeproc to manpage.
+
+2016-05-17 08:04  kristaps
+
+	* main.c: Plug still-open fd.
+
+2016-05-17 07:55  kristaps
+
+	* netproc.c: Re-add accidentally-removed check for certificate
+	  non-expiration.
+
+2016-05-17 07:52  kristaps
+
+	* README.md, extern.h, letskencrypt.1, letskencrypt.dot (tags:
+	  VERSION_0_0_5, VERSION_0_0_4, VERSION_0_0_3), main.c, netproc.c,
+	  revokeproc.c: Check for expiration date of certificate, if found.
+	  This makes it possible to simply run letskencrypt as a cronjob
+	  without worrying about overloading the ACME server.
+
+2016-05-17 07:51  kristaps
+
+	* chngproc.c: Have chngproc's magic testing phase (which isn't an
+	  official option) not have files made in the challengedir at all.
+
+2016-05-17 05:47  kristaps
+
+	* Makefile, dbg.c, revokeproc.c: Add in the initial framework for
+	  checking certificate revocation times.
+
+2016-05-17 05:46  kristaps
+
+	* netproc.c: Continue cleaning up operations (in netproc).
+
+2016-05-17 05:45  kristaps
+
+	* acctproc.c, certproc.c, chngproc.c, dnsproc.c, extern.h,
+	  fileproc.c, main.c, util.c: Continue making operations more
+	  semantically meaningful.  Continue building in revocation
+	  facility.
+
+2016-05-16 17:21  kristaps
+
+	* certproc.c, extern.h, json.c, main.c, netproc.c: Initial steps of
+	  revocation.  This is pretty straightforward.
+
+2016-05-16 15:48  kristaps
+
+	* README.md: Continue to polish the documentation.
+
+2016-05-16 15:25  kristaps
+
+	* acctproc.c, certproc.c, chngproc.c, fileproc.c: When closing out,
+	  close sockets first to cause depending processes to bail earlier.
+
+2016-05-16 15:25  kristaps
+
+	* netproc.c: Failing start-up for account or key proc doesn't error
+	  us.
+
+2016-05-16 15:24  kristaps
+
+	* letskencrypt.1: Calm down people afraid of root.
+
+2016-05-16 15:14  kristaps
+
+	* acctproc.c, certproc.c, extern.h, keyproc.c, netproc.c, util.c:
+	  Have the keyproc and acctproc notify the netproc when they've
+	  started, and have the netproc wait til they have: there's no
+	  point in talking to Let's Encrypt if these services haven't
+	  started.
+
+2016-05-16 12:07  kristaps
+
+	* Makefile, README.md, letskencrypt.1, letskencrypt.dot: Add some
+	  media for the GH site and fix a mistake in the manpage.
+
+2016-05-16 10:10  kristaps
+
+	* README.md: Update README a bit.
+
+2016-05-16 10:06  kristaps
+
+	* letskencrypt.1: Be more terse in the implementation notes.
+
+2016-05-16 09:58  kristaps
+
+	* chngproc.c, extern.h, main.c: Add a secret and undocumented
+	  feature that allows me to create files in the challenge directory
+	  on another system.  Don't use this.
+
+2016-05-16 09:57  kristaps
+
+	* dnsproc.c: Have dnsproc properly return (and not exit) like the
+	  other processes.
+
+2016-05-16 09:51  kristaps
+
+	* netproc.c: Fix CID 111099.
+
+2016-05-16 09:47  kristaps
+
+	* util.c: Fix CID 111100.
+
+2016-05-16 09:38  kristaps
+
+	* README.md, letskencrypt.1: More documentation notes on why Linux
+	  and Mac OS X are a bad idea.
+
+2016-05-16 09:24  kristaps
+
+	* letskencrypt.1: Update notes on dnsproc.
+
+2016-05-16 09:21  kristaps
+
+	* README.md: Clean up the README.
+
+2016-05-16 09:20  kristaps
+
+	* chngproc.c: Don't let the testing code make it out.
+
+2016-05-16 09:19  kristaps
+
+	* netproc.c: We don't close any fds before the out, so don't check
+	  them against -1.
+
+2016-05-16 09:19  kristaps
+
+	* netproc.c: Remove comment that no longer belongs.
+
+2016-05-16 09:18  kristaps
+
+	* acctproc.c: Account key doesn't need read permissions.
+
+2016-05-16 09:16  kristaps
+
+	* main.c: Fix an off-by-one and also fix closing the DNS file
+	  descriptor.
+
+2016-05-16 09:15  kristaps
+
+	* netproc.c: Push the DNS resolution into one function for clarity.
+	  Prune a lot of unused variables.
+
+2016-05-16 08:27  kristaps
+
+	* dnsproc.c: Add the dnsproc manager.  This was noted by deraadt@.
+	  This does nothing but looks up addresses as used by netproc.
+
+2016-05-16 04:51  kristaps
+
+	* Makefile, chngproc.c, dbg.c, extern.h, main.c, netproc.c, util.c:
+	  Initial check-in of a separate process for DNS management.
+
+2016-05-16 03:57  kristaps
+
+	* letskencrypt.1: Fix typo found by Anthony Bentley--thanks!
+
+2016-05-15 13:31  kristaps
+
+	* main.c: Fix for https://github.com/kristapsdz/letskencrypt/pull/1
+	  posted by https://github.com/pozdnychev -- thanks!
+
+2016-05-15 11:47  kristaps
+
+	* README.md, letskencrypt.1: Documentation on Linux.
+
+2016-05-15 11:44  kristaps
+
+	* fileproc.c, netproc.c: Catch __attribute__ warnings.
+
+2016-05-15 11:39  kristaps
+
+	* netproc.c: Fully demonstrate that chroot doesn't work on Linux
+	  for netproc.
+
+2016-05-15 11:38  kristaps
+
+	* chngproc.c: Linux compatibility.
+
+2016-05-15 11:37  kristaps
+
+	* util.c: Drop privs in the correct order and make sure sys_signame
+	  is not used on Linux.
+
+2016-05-15 11:00  kristaps
+
+	* chngproc.c, fileproc.c: Continue minimising the pledges.
+
+2016-05-15 10:39  kristaps
+
+	* chngproc.c: Reduce the number of pledges in chngproc.
+
+2016-05-15 10:24  kristaps
+
+	* certproc.c, chngproc.c, extern.h, fileproc.c, keyproc.c, main.c,
+	  netproc.c, util.c: Add forgotten waitpid for COMP_FILE and add
+	  some readops to make sure that netproc failing doesn't cause
+	  short reads and exits.
+
+2016-05-15 09:53  kristaps
+
+	* extern.h, json.c: Function attributes for messages.
+
+2016-05-15 08:06  kristaps
+
+	* acctproc.c, util.c: Fix a segfault.
+
+2016-05-15 07:41  kristaps
+
+	* json.c, netproc.c: Properly catch when the challenge has been
+	  verified.
+
+2016-05-15 07:35  kristaps
+
+	* README.md, letskencrypt.1: More documentation.
+
+2016-05-15 06:58  kristaps
+
+	* json.c: Add more documentation.
+
+2016-05-15 06:57  kristaps
+
+	* keyproc.c: Catch error return code.
+
+2016-05-15 06:56  kristaps
+
+	* acctproc.c: Documents key bits.
+
+2016-05-15 06:56  kristaps
+
+	* letskencrypt.1: Consistency in naming "Let's Encrypt".
+
+2016-05-15 06:48  kristaps
+
+	* acctproc.c, certproc.c, chngproc.c, extern.h, fileproc.c,
+	  keyproc.c, main.c, netproc.c, util.c: Look again at the
+	  relinquishing of privilege.  Move privilege-dropping before the
+	  pledge just for consistency.
+
+2016-05-14 21:39  kristaps
+
+	* README.md: Again, fix links.
+
+2016-05-14 21:37  kristaps
+
+	* README.md: Fix links.
+
+2016-05-14 21:31  kristaps
+
+	* README.md: Small notes.
+
+2016-05-14 21:01  kristaps
+
+	* certproc.c: De-constify.
+
+2016-05-14 21:00  kristaps
+
+	* certproc.c, extern.h, fileproc.c, letskencrypt.1, main.c, util.c:
+	  Cleanup and abstractions.
+
+2016-05-14 20:33  kristaps
+
+	* certproc.c, extern.h, fileproc.c, letskencrypt.1, main.c,
+	  netproc.c, util.c: Fully download chain and fullchain.
+
+2016-05-14 20:32  kristaps
+
+	* dbg.c: Fix stdout/stderr in debugging messages.
+
+2016-05-14 18:34  kristaps
+
+	* certproc.c, netproc.c: Minor formatting.
+
+2016-05-14 18:05  kristaps
+
+	* Makefile, certproc.c, dbg.c, extern.h, fileproc.c, main.c,
+	  util.c: Split out reading and verifying the certificate from
+	  writing to the file.
+
+2016-05-14 17:46  kristaps
+
+	* acctproc.c, certproc.c, chngproc.c, keyproc.c, main.c, netproc.c:
+	  Move proccomp setting into main.
+
+2016-05-14 16:43  kristaps
+
+	* acctproc.c, extern.h, json.c: Move more JSON into json.c.
+
+2016-05-14 16:26  kristaps
+
+	* chngproc.c, dbg.c, extern.h, json.c, netproc.c: Move all JSON
+	  things into json.c.
+
+2016-05-14 15:42  kristaps
+
+	* acctproc.c, certproc.c, extern.h, keyproc.c, main.c: Clean-ups
+	  for better readability.
+
+2016-05-14 10:39  kristaps
+
+	* Makefile: Have BSD form by the default in the Makefile.
+
+2016-05-14 10:38  kristaps
+
+	* README.md: Document compilation on Liinux.
+
+2016-05-14 10:38  kristaps
+
+	* Makefile, acctproc.c, json.c, keyproc.c, main.c, netproc.c,
+	  util.c: Compiling on Linux.
+
+2016-05-14 10:25  kristaps
+
+	* LICENSE.md (tags: VERSION_0_1_10, VERSION_0_1_9, VERSION_0_1_8,
+	  VERSION_0_1_7, VERSION_0_1_6, VERSION_0_1_5, VERSION_0_1_4,
+	  VERSION_0_1_3, VERSION_0_0_5, VERSION_0_0_4, VERSION_0_0_3),
+	  README.md: GitHub files.
+
+2016-05-14 10:14  kristaps
+
+	* letskencrypt.1 (tags: VERSION_0_0_2): Naming.
+
+2016-05-14 10:13  kristaps
+
+	* main.c, netproc.c (utags: VERSION_0_0_2): Set temporary directory
+	  permissions.
+
+2016-05-14 10:06  kristaps
+
+	* letskencrypt.1: More documentation.
+
+2016-05-14 10:03  kristaps
+
+	* acctproc.c (tags: VERSION_0_0_2), certproc.c (tags:
+	  VERSION_0_0_2), chngproc.c (tags: VERSION_0_0_2), extern.h (tags:
+	  VERSION_0_0_2), keyproc.c (tags: VERSION_0_0_2), letskencrypt.1,
+	  main.c, netproc.c: Priv dropping and more documentation.
+
+2016-05-14 09:38  kristaps
+
+	* base64.c (tags: VERSION_0_0_2), dbg.c (tags: VERSION_0_0_2),
+	  extern.h, main.c, netproc.c, util.c (tags: VERSION_0_0_2):
+	  Privilege dropping (beginning).
+
+2016-05-14 09:12  kristaps
+
+	* letskencrypt.1: More documentation.
+
+2016-05-14 07:18  kristaps
+
+	* chngproc.c, extern.h, json.c (tags: VERSION_0_0_2),
+	  letskencrypt.1, main.c, netproc.c, util.c: Fully-working cycle
+	  with SAN enabled.
+
+2016-05-13 18:16  kristaps
+
+	* Makefile (tags: VERSION_0_0_2), acctproc.c, extern.h, keyproc.c,
+	  letskencrypt.1, main.c, netproc.c: Add manpage, continue working
+	  in SAN.
+
+2016-05-13 16:48  kristaps
+
+	* certproc.c, dbg.c, extern.h, json.c, keyproc.c, main.c,
+	  netproc.c, util.c: Add initial support for SAN.
+
+2016-05-13 12:23  kristaps
+
+	* acctproc.c, certproc.c: First fully-working version.
+
+2016-05-13 11:49  kristaps
+
+	* Makefile, acctproc.c, certproc.c, chngproc.c, dbg.c, extern.h,
+	  keyproc.c, main.c, netproc.c, util.c: Add certificate process to
+	  manage certificates.	Lots of cleanup w/r/t logging and process
+	  titles.
+
+2016-05-13 11:08  kristaps
+
+	* base64.c, extern.h, keyproc.c, netproc.c, util.c: Certificate
+	  submission and download.
+
+2016-05-13 10:46  kristaps
+
+	* acctproc.c, chngproc.c, extern.h, keyproc.c, netproc.c, util.c:
+	  Fully working submission of certificate to CA.
+
+2016-05-13 09:59  kristaps
+
+	* Makefile, acctproc.c, base64.c, chngproc.c, dbg.c, extern.h,
+	  json.c, keyproc.c, main.c, netproc.c, util.c: Split out JSON
+	  handling code.
+
+2016-05-13 09:44  kristaps
+
+	* netproc.c, util.c: Clean some bugs found with scan-build.
+
+2016-05-13 09:40  kristaps
+
+	* chngproc.c, netproc.c: Full challenge-request-response cycle in
+	  place.
+
+2016-05-13 09:14  kristaps
+
+	* acctproc.c, chngproc.c, keyproc.c, main.c, netproc.c, util.c:
+	  Compiling on OpenBSD (prior to pledge).
+
+2016-05-13 09:06  kristaps
+
+	* netproc.c: Retrying for challenge.
+
+2016-05-13 08:52  kristaps
+
+	* acctproc.c, chngproc.c, extern.h, main.c, netproc.c, util.c:
+	  Cleaning up writing/reading.
+
+2016-05-13 08:20  kristaps
+
+	* Makefile, acctproc.c, chngproc.c, extern.h, keyproc.c, main.c,
+	  netproc.c, util.c: Moving on to functionality of the
+	  challenge-responds.
+
+2016-05-13 04:29  kristaps
+
+	* acctproc.c, base64.c, extern.h, main.c, netproc.c, util.c: New
+	  keys are now properly submitted.
+
+2016-05-12 18:55  kristaps
+
+	* acctproc.c, dbg.c, netproc.c: Full connection to acme, fixing
+	  syntax errors.
+
+2016-05-12 17:33  kristaps
+
+	* Makefile, acctproc.c, netproc.c: Parsing of JSON directory.
+
+2016-05-12 17:09  kristaps
+
+	* Makefile, acctproc.c, base64.c, dbg.c, extern.h, keyproc.c,
+	  main.c, netproc.c, util.c: Still being built: push signing into
+	  acctproc and have netproc properly start to handle the CA
+	  interaction.
+
+2016-05-12 08:34  kristaps
+
+	* acctproc.c, keyproc.c, netproc.c: Full creation of request
+	  thumbprint.
+
+2016-05-12 08:07  kristaps
+
+	* Makefile, acctproc.c, dbg.c, extern.h, keyproc.c, main.c,
+	  netproc.c (utags: VERSION_0): Import first.
+
+2016-05-12 08:07  kristaps
+
+	* Makefile, acctproc.c, dbg.c, extern.h, keyproc.c, main.c,
+	  netproc.c: Initial revision
+
