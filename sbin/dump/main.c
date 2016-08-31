@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.58 2016/06/07 01:29:38 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.59 2016/08/31 21:00:31 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -322,14 +322,6 @@ main(int argc, char *argv[])
 
 	if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
 		signal(SIGHUP, sig);
-	if (signal(SIGTRAP, SIG_IGN) != SIG_IGN)
-		signal(SIGTRAP, sig);
-	if (signal(SIGFPE, SIG_IGN) != SIG_IGN)
-		signal(SIGFPE, sig);
-	if (signal(SIGBUS, SIG_IGN) != SIG_IGN)
-		signal(SIGBUS, sig);
-	if (signal(SIGSEGV, SIG_IGN) != SIG_IGN)
-		signal(SIGSEGV, sig);
 	if (signal(SIGTERM, SIG_IGN) != SIG_IGN)
 		signal(SIGTERM, sig);
 	if (signal(SIGINT, interrupt) == SIG_IGN)
@@ -627,11 +619,8 @@ sig(int signo)
 {
 	switch(signo) {
 	case SIGALRM:
-	case SIGBUS:
-	case SIGFPE:
 	case SIGHUP:
 	case SIGTERM:
-	case SIGTRAP:
 		/* XXX signal race */
 		if (pipeout)
 			quit("Signal on pipe: cannot recover\n");
@@ -640,12 +629,6 @@ sig(int signo)
 		(void)fflush(stdout);
 		close_rewind();
 		exit(X_REWRITE);
-		/* NOTREACHED */
-	case SIGSEGV:
-#define SIGSEGV_MSG "SIGSEGV: ABORTING!\n"
-		write(STDERR_FILENO, SIGSEGV_MSG, strlen(SIGSEGV_MSG));
-		(void)signal(SIGSEGV, SIG_DFL);
-		(void)kill(0, SIGSEGV);
 		/* NOTREACHED */
 	}
 }
