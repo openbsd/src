@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.45 2016/08/31 15:00:02 reyk Exp $
+.\" $OpenBSD: gre.4,v 1.46 2016/08/31 18:16:54 jmc Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -58,9 +58,12 @@ Allow GRE packets in and out of the system.
 Set to 1 to allow WCCPv1-style GRE packets into the system;
 set to 2 to handle the packets as WCCPv2-style GRE, truncating
 the redirect header.
-This variable depends on
+Some magic with the packet filter configuration
+and a caching proxy like squid are needed
+to do anything useful with these packets.
+This sysctl requires
 .Va gre.allow
-being set.
+to be set.
 .It Va net.inet.mobileip.allow
 Allow Mobile IP packets in and out of the system.
 .El
@@ -71,8 +74,8 @@ This driver currently supports the following modes of operation:
 GRE datagrams (IP protocol number 47)
 are prepended by an outer datagram and a GRE header.
 The GRE header specifies the type of the encapsulated datagram
-and thus allows for tunneling other protocols than IP like
-e.g. AppleTalk.
+and thus allows for tunneling other protocols than IP,
+such as AppleTalk.
 GRE mode is the default tunnel mode on Cisco routers.
 This is also the default mode of operation of the
 .Nm
@@ -90,17 +93,28 @@ A
 or
 .Nm mobileip
 interface can be created at runtime using the
-.Ic ifconfig Ar gre Ns Ar N Ic create
+.Ic ifconfig gre Ns Ar N Ic create
 command or by setting up a
 .Xr hostname.if 5
 configuration file for
 .Xr netstart 8 .
+The MTU is set to 1476 by default to match the value used by Cisco routers.
+This may not be an optimal value,
+depending on the link between the two tunnel endpoints,
+but it can be adjusted via
+.Xr ifconfig 8 .
+.Pp
+For correct operation,
+there needs to be a route to the destination
+that is less specific than the one over the tunnel
+(there needs to be a route to the decapsulating host that
+does not run over the tunnel, as this would create a loop).
 .Pp
 Note that the IP addresses of the tunnel endpoints may be the same as the
 ones defined with
 .Xr ifconfig 8
-for the interface (as if IP is encapsulated), but need not be, as e.g. when
-encapsulating AppleTalk.
+for the interface (as if IP is encapsulated) but need not be as,
+for example, when encapsulating AppleTalk.
 .Sh EXAMPLES
 Configuration example:
 .Bd -literal
@@ -110,7 +124,8 @@ Host X ---- Host A ------------ tunnel ------------ Cisco D ---- Host E
                  +------ Host B ------ Host C ------+
 .Ed
 .Pp
-On Host A (OpenBSD):
+On Host A
+.Pq Ox :
 .Bd -literal -offset indent
 # route add default B
 # ifconfig greN create
@@ -132,7 +147,8 @@ ip route X mask tunnelX
 .Pp
 OR
 .Pp
-On Host D (OpenBSD):
+On Host D
+.Pq Ox :
 .Bd -literal -offset indent
 # route add default C
 # ifconfig greN create
@@ -174,43 +190,12 @@ If
 is enabled then it is necessary to add a pass rule specific for the keepalive
 packets.
 The rule must use
-.Em no state
+.Cm no state
 because the keepalive packet is entering the network stack multiple times.
 In most cases the following should work:
 .Bd -literal -offset indent
 pass quick on gre proto gre no state
 .Ed
-.Sh NOTES
-The MTU of
-.Nm
-interfaces is set to 1476 by default to match the value used by Cisco routers.
-This may not be an optimal value, depending on the link between the two tunnel
-endpoints.
-It can be adjusted via
-.Xr ifconfig 8 .
-.Pp
-For correct operation, the
-.Nm
-device needs a route to the destination, that is less specific than the
-one over the tunnel.
-(There needs to be a route to the decapsulating host that
-does not run over the tunnel, as this would create a loop.)
-.Pp
-In order for
-.Xr ifconfig 8
-to actually mark the interface as up, the keyword
-.Cm up
-must be given last on its command line.
-.Pp
-The kernel must be set to forward datagrams by issuing the appropriate
-option to
-.Xr sysctl 8 .
-.Pp
-The GRE interface will accept WCCPv1-style or WWCPv2-style GRE
-encapsulated packets from a Cisco router.
-Some magic with the packet filter configuration
-and a caching proxy like squid are needed to do anything useful with
-these packets.
 .Sh SEE ALSO
 .Xr inet 4 ,
 .Xr ip 4 ,
@@ -261,6 +246,6 @@ these packets.
 .Sh AUTHORS
 .An Heiko W. Rupp Aq Mt hwr@pilhuhn.de
 .Sh BUGS
-GRE RFC not yet fully implemented (no GRE options).
+The GRE RFC is not yet fully implemented (no GRE options).
 .Pp
 The redirect header for WCCPv2 GRE encapsulated packets is skipped.
