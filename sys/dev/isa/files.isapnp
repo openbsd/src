@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isapnp,v 1.34 2016/08/31 12:46:45 tedu Exp $
+#	$OpenBSD: files.isapnp,v 1.35 2016/08/31 20:01:57 bluhm Exp $
 #	$NetBSD: files.isapnp,v 1.7 1997/10/16 17:16:36 matt Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
@@ -57,7 +57,3 @@ attach	ne at isapnp with ne_isapnp: rtl80x9
 file	dev/isa/if_ne_isapnp.c		ne_isapnp
 
 attach	we at isapnp with we_isapnp
-
-attach	rt at isapnp with rt_isapnp
-file	dev/isa/rt_isapnp.c		rt_isapnp
-
