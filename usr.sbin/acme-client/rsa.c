@@ -1,4 +1,4 @@
-/*	$Id: rsa.c,v 1.1 2016/08/31 22:01:42 florian Exp $ */
+/*	$Id: rsa.c,v 1.2 2016/08/31 23:46:34 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -59,7 +59,7 @@ rsa_key_create(FILE *f, const char *fname)
 	} else if (EVP_PKEY_keygen(ctx, &pkey) <= 0) {
 		warnx("EVP_PKEY_keygen");
 		goto err;
-	} 
+	}
 
 	/* Serialise the key to the disc. */
 
@@ -74,7 +74,7 @@ err:
 out:
 	if (NULL != ctx)
 		EVP_PKEY_CTX_free(ctx);
-	return(pkey);
+	return (pkey);
 }
 
 
@@ -86,12 +86,11 @@ rsa_key_load(FILE *f, const char *fname)
 	pkey = PEM_read_PrivateKey(f, NULL, NULL, NULL);
 	if (NULL == pkey) {
 		warnx("%s: PEM_read_PrivateKey", fname);
-		return(NULL);
-	} else if (EVP_PKEY_RSA == EVP_PKEY_type(pkey->type)) 
-		return(pkey);
+		return (NULL);
+	} else if (EVP_PKEY_RSA == EVP_PKEY_type(pkey->type))
+		return (pkey);
 
 	warnx("%s: unsupported key type", fname);
 	EVP_PKEY_free(pkey);
-	return(NULL);
+	return (NULL);
 }
-
