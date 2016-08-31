@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.280 2016/06/07 08:32:13 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.281 2016/08/31 08:03:20 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -86,10 +86,6 @@
 
 #if NVLAN > 0
 #include <net/if_vlan_var.h>
-#endif
-
-#if NGIF > 0
-#include <net/if_gif.h>
 #endif
 
 #include <net/if_bridge.h>
@@ -342,11 +338,6 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 					break;
 			}
 		}
-#if NGIF > 0
-		else if (ifs->if_type == IFT_GIF) {
-			/* Nothing needed */
-		}
-#endif /* NGIF */
 #if NMPW > 0
 		else if (ifs->if_type == IFT_MPLSTUNNEL) {
 			/* Nothing needed */
@@ -1115,19 +1106,6 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 		if (mc == NULL)
 	    		goto reenqueue;
 
-#if NGIF > 0
-		if (ifp->if_type == IFT_GIF) {
-			TAILQ_FOREACH(ifl, &sc->sc_iflist, next) {
-				if (ifl->ifp->if_type != IFT_ETHER)
-					continue;
-
-				bridge_ifinput(ifl->ifp, mc);
-				break;
-			}
-			if (!ifl)
-				m_freem(mc);
-		} else
-#endif /* NGIF */
 		bridge_ifinput(ifp, mc);
 
 		bridgeintr_frame(sc, ifp, m);
@@ -1872,19 +1850,6 @@ bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 	/* Loop prevention. */
 	m->m_flags |= M_PROTO1;
 
-#if NGIF > 0
-	/* Packet needs etherip encapsulation. */
-	if (ifp->if_type == IFT_GIF) {
-
-		/* Count packets input into the gif from outside */
-		ifp->if_ipackets++;
-		ifp->if_ibytes += m->m_pkthdr.len;
-
-		error = gif_encap(ifp, &m, AF_LINK);
-		if (error)
-			return (error);
-	}
-#endif /* NGIF */
 	len = m->m_pkthdr.len;
 
 	error = if_enqueue(ifp, m);
