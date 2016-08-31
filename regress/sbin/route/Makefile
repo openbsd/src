@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2016/08/22 17:43:29 mpi Exp $
+# $OpenBSD: Makefile,v 1.12 2016/08/31 10:33:15 claudio Exp $
 
 RDOMAIN?=	5
 
@@ -40,6 +40,7 @@ netmask:
 .endfor
 .endfor
 
+# check that more specific routes work properly (rn_dupedkey behaviour)
 n=	1
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
@@ -54,6 +55,7 @@ rttest${n}:
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
+# can we add multiple pathes
 n=	2
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
@@ -62,6 +64,7 @@ rttest${n}:
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
+# but we can not readd the same multipath route twice
 n=	3
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
@@ -71,6 +74,7 @@ rttest${n}:
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
 
+# do priorities work
 n=	4
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
@@ -80,6 +84,7 @@ rttest${n}:
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
+# priority and multipath
 n=	5
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
@@ -90,6 +95,7 @@ rttest${n}:
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
+# priority but failing multipath because of same gateway
 n=	6
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
@@ -100,6 +106,7 @@ rttest${n}:
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
+# deletion of priority route in the middle
 n=	7
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
@@ -110,6 +117,7 @@ rttest${n}:
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
+# readd of same route fail even if interface is down
 n=	8
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
@@ -121,6 +129,7 @@ rttest${n}:
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
+# deletion of priority route in the middle after reprio because of iface down
 n=	9
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
@@ -132,6 +141,7 @@ rttest${n}:
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
+# addition of priority route works even if interface is down
 n=	10
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
@@ -142,6 +152,7 @@ rttest${n}:
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
+# same as 10 but different order
 n=	11
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
@@ -152,6 +163,7 @@ rttest${n}:
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
+# change non-mpath route (even though the route was marked as mpath)
 n=	12
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
