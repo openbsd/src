@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.36 2016/08/17 05:07:13 deraadt Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.37 2016/08/31 06:55:39 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1557,7 +1557,7 @@ vcpu_exit_pci(struct vm_run_params *vrp)
  * vcpu_exit_inout
  *
  * Handle all I/O exits that need to be emulated in vmd. This includes the
- * i8253 PIT and the com1 ns8250 UART.
+ * i8253 PIT, the com1 ns8250 UART, and the MC146818 RTC/NVRAM device.
  *
  * Parameters:
  *  vrp: vcpu run parameters containing guest state for this exit
@@ -1597,7 +1597,7 @@ vcpu_exit_inout(struct vm_run_params *vrp)
  *
  * Return values:
  *  0: the exit was handled successfully
- *  1: an error occurred (exit not handled)
+ *  1: an error occurred (eg, unknown exit reason passed in 'vrp')
  */
 int
 vcpu_exit(struct vm_run_params *vrp)
@@ -1723,12 +1723,12 @@ find_gpa_range(struct vm_create_params *vcp, paddr_t gpa, size_t len)
 /*
  * write_mem
  *
- * Pushes data from 'buf' into the guest VM's memory at paddr 'dst'.
+ * Copies data from 'buf' into the guest VM's memory at paddr 'dst'.
  *
  * Parameters:
- *  dst: the destination paddr_t in the guest VM to push into.
- *  buf: data to push
- *  len: size of 'buf'
+ *  dst: the destination paddr_t in the guest VM
+ *  buf: data to copy
+ *  len: number of bytes to copy
  *
  * Return values:
  *  0: success
@@ -1745,8 +1745,8 @@ write_mem(paddr_t dst, void *buf, size_t len)
 	vmr = find_gpa_range(&current_vm->vm_params, dst, len);
 	if (vmr == NULL) {
 		errno = EINVAL;
-		log_warn("writepage ioctl failed: "
-		    "invalid memory range dst = 0x%lx, len = 0x%zx", dst, len);
+		log_warn("%s: failed - invalid memory range dst = 0x%lx, "
+		    "len = 0x%zx", __func__, dst, len);
 		return (EINVAL);
 	}
 
@@ -1776,7 +1776,7 @@ write_mem(paddr_t dst, void *buf, size_t len)
  * Parameters:
  *  src: the source paddr_t in the guest VM to read from.
  *  buf: destination (local) buffer
- *  len: size of 'buf'
+ *  len: number of bytes to read
  *
  * Return values:
  *  0: success
@@ -1793,8 +1793,8 @@ read_mem(paddr_t src, void *buf, size_t len)
 	vmr = find_gpa_range(&current_vm->vm_params, src, len);
 	if (vmr == NULL) {
 		errno = EINVAL;
-		log_warn("readpage ioctl failed: "
-		    "invalid memory range src = 0x%lx, len = 0x%zx", src, len);
+		log_warn("%s: failed - invalid memory range src = 0x%lx, "
+		    "len = 0x%zx", __func__, src, len);
 		return (EINVAL);
 	}
 
@@ -1819,7 +1819,13 @@ read_mem(paddr_t src, void *buf, size_t len)
 /*
  * fd_hasdata
  *
- * Returns 1 if data can be read from an fd, or 0 otherwise.
+ * Determines if data can be read from a file descriptor.
+ *
+ * Parameters:
+ *  fd: the fd to check
+ *
+ * Return values:
+ *  1 if data can be read from an fd, or 0 otherwise.
  */
 int
 fd_hasdata(int fd)
