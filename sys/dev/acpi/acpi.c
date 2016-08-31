@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.313 2016/07/28 21:57:56 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.314 2016/08/31 15:40:42 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2110,6 +2110,13 @@ acpi_foundprw(struct aml_node *node, void *arg)
 {
 	struct acpi_softc *sc = arg;
 	struct acpi_wakeq *wq;
+	int64_t sta;
+
+	if (aml_evalinteger(sc, node->parent, "_STA", 0, NULL, &sta))
+		sta = STA_PRESENT | STA_ENABLED | STA_DEV_OK | 0x1000;
+
+	if ((sta & STA_PRESENT) == 0)
+		return 0;
 
 	wq = malloc(sizeof(struct acpi_wakeq), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (wq == NULL)
