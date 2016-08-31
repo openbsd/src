@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.119 2015/09/30 12:15:12 jung Exp $
+#	$OpenBSD: files.isa,v 1.120 2016/08/31 12:46:45 tedu Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -108,11 +108,6 @@ file	dev/isa/aic_isa.c		aic_isa
 device	aha: scsi, isa_dma
 attach	aha at isa with aha_isa
 file	dev/isa/aha.c			aha needs-flag
-
-# Seagate ST0[12] ICs
-device	sea: scsi
-attach	sea at isa
-file	dev/isa/seagate.c		sea
 
 # UltraStor UHA-[13]4f boards
 # device declaration in sys/conf/files
@@ -247,14 +242,6 @@ file	dev/isa/ad1848.c		ad1848
 # ICS2101 mixer chip support; used by other drivers
 define	ics2101
 file	dev/isa/ics2101.c		ics2101
-
-
-# Microsoft Windows Sound System
-device	wss: audio, isa_dma, ad1848
-file	dev/isa/wss.c			wss
-
-attach	wss at isa with wss_isa
-file	dev/isa/wss_isa.c		wss & (wss_isa | wss_isapnp)
 
 # ESS Technology ES1887/ES888/ES1888
 device	ess {} : audio, isa_dma, midibus

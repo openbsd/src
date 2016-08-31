@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.817 2016/06/28 04:41:37 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.818 2016/08/31 12:46:45 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -467,7 +467,6 @@ siop*	at pci?			# NCR 538XX SCSI controllers(new)
 adv*	at pci?			# AdvanSys 1200A/B and ULTRA SCSI
 adw*	at pci?			# AdvanSys ULTRA WIDE SCSI
 pcscp*	at pci?			# AMD 53c974 PCscsi-PCI SCSI
-sea0	at isa? disable iomem 0xc8000 irq 5 # Seagate ST0[12] SCSI controllers
 trm*	at pci?			# Tekram DC-3x5U SCSI Controllers
 uha0	at isa? port 0x330	# UltraStor [13]4f SCSI controllers
 uha1	at isa? disable port 0x334 # UltraStor [13]4f SCSI controllers
@@ -691,18 +690,14 @@ envy*	at pci?				# VIA Envy24 (aka ICE1712)
 sb0	at isa? port 0x220 irq 5 drq 1	# SoundBlaster
 sb*	at isapnp?
 ess*	at isapnp?			# ESS Tech ES188[78], ES888
-wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
-wss*	at isapnp?
 pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis (drq2 is record drq)
 gus*	at isapnp?
-ym*	at isapnp?
 mpu*	at isapnp?
 mpu*	at isa? port 0x300		# generic MPU, Yamaha SW60XG
 
 # MIDI support
 midi*	at sb?			# SB MPU401 port
-midi*	at ym?
 midi*	at mpu?
 midi*	at autri?
 midi*	at eap?
@@ -715,8 +710,6 @@ audio*	at sb?
 audio*	at gus?
 audio*	at pas?
 audio*	at ess?
-audio*	at wss?
-audio*	at ym?
 audio*	at eap?
 audio*	at envy?
 audio*	at eso?

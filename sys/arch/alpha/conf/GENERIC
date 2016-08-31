@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.258 2016/06/28 04:41:37 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.259 2016/08/31 12:46:45 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -331,7 +331,6 @@ ne1	at isa? port 0x300 irq 10	# NE[12]000 ethernet cards
 ne2	at isa? port 0x280 irq 9	# NE[12]000 ethernet cards
 ep*	at isa?				# 3C509 ethernet cards
 ep*	at isapnp?			# 3C509 ethernet cards
-#wss*	at isa? port 0x530 irq 9 drq 0	# Windows Sound System
 lc0	at isa? port 0x200		# DEC EtherWorks
 lc1	at isa? port 0x280		# DEC EtherWorks
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
