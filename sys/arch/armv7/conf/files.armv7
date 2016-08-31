@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.25 2016/08/21 21:38:05 kettenis Exp $
+#	$OpenBSD: files.armv7,v 1.26 2016/08/31 16:19:40 jsg Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -76,3 +76,13 @@ include "arch/armv7/broadcom/files.broadcom"
 # Console related stuff
 attach	com at fdt with com_fdt
 file	arch/armv7/dev/com_fdt.c		com_fdt
+
+# ARM PrimeCell PL011 UART
+device	pluart
+attach	pluart at fdt
+file	arch/armv7/dev/pluart.c			pluart
+
+# ARM PrimeCell PL031 Real-time clock
+device	plrtc
+attach	plrtc at fdt
+file	arch/armv7/dev/plrtc.c			plrtc

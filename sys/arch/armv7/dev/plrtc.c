@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl031.c,v 1.2 2016/08/06 00:40:54 jsg Exp $	*/
+/*	$OpenBSD: plrtc.c,v 1.1 2016/08/31 16:19:40 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Jonathan Gray <jsg@openbsd.org>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl011.c,v 1.6 2016/08/21 07:08:46 jsg Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.1 2016/08/31 16:19:40 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -40,8 +40,6 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 #include <arm/armv7/armv7var.h>
-#include <armv7/vexpress/pl011reg.h>
-#include <armv7/vexpress/pl011var.h>
 #include <armv7/armv7/armv7var.h>
 #include <armv7/armv7/armv7_machdep.h>
 
@@ -51,7 +49,82 @@
 #define DEVUNIT(x)      (minor(x) & 0x7f)
 #define DEVCUA(x)       (minor(x) & 0x80)
 
-struct pl011_softc {
+#define UART_DR			0x00		/* Data register */
+#define UART_DR_DATA(x)		((x) & 0xf)
+#define UART_DR_FE		(1 << 8)	/* Framing error */
+#define UART_DR_PE		(1 << 9)	/* Parity error */
+#define UART_DR_BE		(1 << 10)	/* Break error */
+#define UART_DR_OE		(1 << 11)	/* Overrun error */
+#define UART_RSR		0x04		/* Receive status register */
+#define UART_RSR_FE		(1 << 0)	/* Framing error */
+#define UART_RSR_PE		(1 << 1)	/* Parity error */
+#define UART_RSR_BE		(1 << 2)	/* Break error */
+#define UART_RSR_OE		(1 << 3)	/* Overrun error */
+#define UART_ECR		0x04		/* Error clear register */
+#define UART_ECR_FE		(1 << 0)	/* Framing error */
+#define UART_ECR_PE		(1 << 1)	/* Parity error */
+#define UART_ECR_BE		(1 << 2)	/* Break error */
+#define UART_ECR_OE		(1 << 3)	/* Overrun error */
+#define UART_FR			0x18		/* Flag register */
+#define UART_FR_CTS		(1 << 0)	/* Clear to send */
+#define UART_FR_DSR		(1 << 1)	/* Data set ready */
+#define UART_FR_DCD		(1 << 2)	/* Data carrier detect */
+#define UART_FR_BUSY		(1 << 3)	/* UART busy */
+#define UART_FR_RXFE		(1 << 4)	/* Receive FIFO empty */
+#define UART_FR_TXFF		(1 << 5)	/* Transmit FIFO full */
+#define UART_FR_RXFF		(1 << 6)	/* Receive FIFO full */
+#define UART_FR_TXFE		(1 << 7)	/* Transmit FIFO empty */
+#define UART_FR_RI		(1 << 8)	/* Ring indicator */
+#define UART_ILPR		0x20		/* IrDA low-power counter register */
+#define UART_ILPR_ILPDVSR	((x) & 0xf)	/* IrDA low-power divisor */
+#define UART_IBRD		0x24		/* Integer baud rate register */
+#define UART_IBRD_DIVINT	((x) & 0xff)	/* Integer baud rate divisor */
+#define UART_FBRD		0x28		/* Fractional baud rate register */
+#define UART_FBRD_DIVFRAC	((x) & 0x3f)	/* Fractional baud rate divisor */
+#define UART_LCR_H		0x2c		/* Line control register */
+#define UART_LCR_H_BRK		(1 << 0)	/* Send break */
+#define UART_LCR_H_PEN		(1 << 1)	/* Parity enable */
+#define UART_LCR_H_EPS		(1 << 2)	/* Even parity select */
+#define UART_LCR_H_STP2		(1 << 3)	/* Two stop bits select */
+#define UART_LCR_H_FEN		(1 << 4)	/* Enable FIFOs */
+#define UART_LCR_H_WLEN5	(0x0 << 5)	/* Word length: 5 bits */
+#define UART_LCR_H_WLEN6	(0x1 << 5)	/* Word length: 6 bits */
+#define UART_LCR_H_WLEN7	(0x2 << 5)	/* Word length: 7 bits */
+#define UART_LCR_H_WLEN8	(0x3 << 5)	/* Word length: 8 bits */
+#define UART_LCR_H_SPS		(1 << 7)	/* Stick parity select */
+#define UART_CR			0x30		/* Control register */
+#define UART_CR_UARTEN		(1 << 0)	/* UART enable */
+#define UART_CR_SIREN		(1 << 1)	/* SIR enable */
+#define UART_CR_SIRLP		(1 << 2)	/* IrDA SIR low power mode */
+#define UART_CR_LBE		(1 << 7)	/* Loop back enable */
+#define UART_CR_TXE		(1 << 8)	/* Transmit enable */
+#define UART_CR_RXE		(1 << 9)	/* Receive enable */
+#define UART_CR_DTR		(1 << 10)	/* Data transmit enable */
+#define UART_CR_RTS		(1 << 11)	/* Request to send */
+#define UART_CR_OUT1		(1 << 12)
+#define UART_CR_OUT2		(1 << 13)
+#define UART_CR_CTSE		(1 << 14)	/* CTS hardware flow control enable */
+#define UART_CR_RTSE		(1 << 15)	/* RTS hardware flow control enable */
+#define UART_IFLS		0x34		/* Interrupt FIFO level select register */
+#define UART_IMSC		0x38		/* Interrupt mask set/clear register */
+#define UART_IMSC_RIMIM		(1 << 0)
+#define UART_IMSC_CTSMIM	(1 << 1)
+#define UART_IMSC_DCDMIM	(1 << 2)
+#define UART_IMSC_DSRMIM	(1 << 3)
+#define UART_IMSC_RXIM		(1 << 4)
+#define UART_IMSC_TXIM		(1 << 5)
+#define UART_IMSC_RTIM		(1 << 6)
+#define UART_IMSC_FEIM		(1 << 7)
+#define UART_IMSC_PEIM		(1 << 8)
+#define UART_IMSC_BEIM		(1 << 9)
+#define UART_IMSC_OEIM		(1 << 10)
+#define UART_RIS		0x3c		/* Raw interrupt status register */
+#define UART_MIS		0x40		/* Masked interrupt status register */
+#define UART_ICR		0x44		/* Interrupt clear register */
+#define UART_DMACR		0x48		/* DMA control register */
+#define UART_SPACE		0x100
+
+struct pluart_softc {
 	struct device	sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -92,51 +165,50 @@ struct pl011_softc {
 	struct clk	*sc_clk;
 };
 
+int  pluartprobe(struct device *parent, void *self, void *aux);
+void pluartattach(struct device *parent, struct device *self, void *aux);
 
-int     pl011probe(struct device *parent, void *self, void *aux);
-void    pl011attach(struct device *parent, struct device *self, void *aux);
-
-void pl011cnprobe(struct consdev *cp);
-void pl011cnprobe(struct consdev *cp);
-void pl011cninit(struct consdev *cp);
-int pl011cnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
+void pluartcnprobe(struct consdev *cp);
+void pluartcnprobe(struct consdev *cp);
+void pluartcninit(struct consdev *cp);
+int pluartcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
     tcflag_t cflag);
-int pl011cngetc(dev_t dev);
-void pl011cnputc(dev_t dev, int c);
-void pl011cnpollc(dev_t dev, int on);
-int  pl011_param(struct tty *tp, struct termios *t);
-void pl011_start(struct tty *);
-void pl011_pwroff(struct pl011_softc *sc);
-void pl011_diag(void *arg);
-void pl011_raisedtr(void *arg);
-void pl011_softint(void *arg);
-struct pl011_softc *pl011_sc(dev_t dev);
+int pluartcngetc(dev_t dev);
+void pluartcnputc(dev_t dev, int c);
+void pluartcnpollc(dev_t dev, int on);
+int  pluart_param(struct tty *tp, struct termios *t);
+void pluart_start(struct tty *);
+void pluart_pwroff(struct pluart_softc *sc);
+void pluart_diag(void *arg);
+void pluart_raisedtr(void *arg);
+void pluart_softint(void *arg);
+struct pluart_softc *pluart_sc(dev_t dev);
 
-int pl011_intr(void *);
+int pluart_intr(void *);
 
 extern int comcnspeed;
 extern int comcnmode;
 
 /* XXX - we imitate 'com' serial ports and take over their entry points */
 /* XXX: These belong elsewhere */
-cdev_decl(pl011);
+cdev_decl(pluart);
 
 struct cfdriver pluart_cd = {
 	NULL, "pluart", DV_TTY
 };
 
 struct cfattach pluart_ca = {
-	sizeof(struct pl011_softc), pl011probe, pl011attach
+	sizeof(struct pluart_softc), pluartprobe, pluartattach
 };
 
-bus_space_tag_t	pl011consiot;
-bus_space_handle_t pl011consioh;
-bus_addr_t	pl011consaddr;
-tcflag_t	pl011conscflag = TTYDEF_CFLAG;
-int		pl011defaultrate = B38400;
+bus_space_tag_t	pluartconsiot;
+bus_space_handle_t pluartconsioh;
+bus_addr_t	pluartconsaddr;
+tcflag_t	pluartconscflag = TTYDEF_CFLAG;
+int		pluartdefaultrate = B38400;
 
 void
-pl011_init_cons(void)
+pluart_init_cons(void)
 {
 	struct fdt_reg reg;
 	void *node;
@@ -146,25 +218,25 @@ pl011_init_cons(void)
 	if (fdt_get_reg(node, 0, &reg))
 		return;
 
-	pl011cnattach(&armv7_bs_tag, reg.addr, comcnspeed, comcnmode);
+	pluartcnattach(&armv7_bs_tag, reg.addr, comcnspeed, comcnmode);
 }
 
 int
-pl011probe(struct device *parent, void *self, void *aux)
+pluartprobe(struct device *parent, void *self, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
 	return OF_is_compatible(faa->fa_node, "arm,pl011");
 }
 
-struct cdevsw pl011dev =
-	cdev_tty_init(3/*XXX NUART */ ,pl011);		/* 12: serial port */
+struct cdevsw pluartdev =
+	cdev_tty_init(3/*XXX NUART */ ,pluart);		/* 12: serial port */
 
 void
-pl011attach(struct device *parent, struct device *self, void *aux)
+pluartattach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
-	struct pl011_softc *sc = (struct pl011_softc *) self;
+	struct pluart_softc *sc = (struct pluart_softc *) self;
 	int maj;
 
 	if (faa->fa_nreg < 1) {
@@ -172,27 +244,27 @@ pl011attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_irq = arm_intr_establish_fdt(faa->fa_node, IPL_TTY, pl011_intr,
+	sc->sc_irq = arm_intr_establish_fdt(faa->fa_node, IPL_TTY, pluart_intr,
 	    sc, sc->sc_dev.dv_xname);
 
 	sc->sc_iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr, faa->fa_reg[0].size,
 	    0, &sc->sc_ioh))
-		panic("pl011attach: bus_space_map failed!");
+		panic("pluartattach: bus_space_map failed!");
 
 	if (stdout_node == faa->fa_node) {
 		/* Locate the major number. */
 		for (maj = 0; maj < nchrdev; maj++)
-			if (cdevsw[maj].d_open == pl011open)
+			if (cdevsw[maj].d_open == pluartopen)
 				break;
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 
 		printf(": console");
 	}
 
-	timeout_set(&sc->sc_diag_tmo, pl011_diag, sc);
-	timeout_set(&sc->sc_dtr_tmo, pl011_raisedtr, sc);
-	sc->sc_si = softintr_establish(IPL_TTY, pl011_softint, sc);
+	timeout_set(&sc->sc_diag_tmo, pluart_diag, sc);
+	timeout_set(&sc->sc_dtr_tmo, pluart_raisedtr, sc);
+	sc->sc_si = softintr_establish(IPL_TTY, pluart_softint, sc);
 
 	if(sc->sc_si == NULL)
 		panic("%s: can't establish soft interrupt.",
@@ -208,9 +280,9 @@ pl011attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-pl011_intr(void *arg)
+pluart_intr(void *arg)
 {
-	struct pl011_softc *sc = arg;
+	struct pluart_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp = sc->sc_tty;
@@ -261,9 +333,9 @@ pl011_intr(void *arg)
 }
 
 int
-pl011_param(struct tty *tp, struct termios *t)
+pluart_param(struct tty *tp, struct termios *t)
 {
-	struct pl011_softc *sc = pluart_cd.cd_devs[DEVUNIT(tp->t_dev)];
+	struct pluart_softc *sc = pluart_cd.cd_devs[DEVUNIT(tp->t_dev)];
 	//bus_space_tag_t iot = sc->sc_iot;
 	//bus_space_handle_t ioh = sc->sc_ioh;
 	int ospeed = t->c_ospeed;
@@ -303,10 +375,10 @@ pl011_param(struct tty *tp, struct termios *t)
 		while (ISSET(tp->t_state, TS_BUSY)) {
 			++sc->sc_halt;
 			error = ttysleep(tp, &tp->t_outq,
-			    TTOPRI | PCATCH, "pl011prm", 0);
+			    TTOPRI | PCATCH, "pluartprm", 0);
 			--sc->sc_halt;
 			if (error) {
-				pl011_start(tp);
+				pluart_start(tp);
 				return (error);
 			}
 		}
@@ -331,15 +403,15 @@ pl011_param(struct tty *tp, struct termios *t)
 	 */
 	 /* XXX */
 
-	pl011_start(tp);
+	pluart_start(tp);
 
 	return 0;
 }
 
 void
-pl011_start(struct tty *tp)
+pluart_start(struct tty *tp)
 {
-	struct pl011_softc *sc = pluart_cd.cd_devs[DEVUNIT(tp->t_dev)];
+	struct pluart_softc *sc = pluart_cd.cd_devs[DEVUNIT(tp->t_dev)];
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
@@ -376,14 +448,14 @@ out:
 }
 
 void
-pl011_pwroff(struct pl011_softc *sc)
+pluart_pwroff(struct pluart_softc *sc)
 {
 }
 
 void
-pl011_diag(void *arg)
+pluart_diag(void *arg)
 {
-	struct pl011_softc *sc = arg;
+	struct pluart_softc *sc = arg;
 	int overflows, floods;
 	int s;
 
@@ -401,18 +473,18 @@ pl011_diag(void *arg)
 }
 
 void
-pl011_raisedtr(void *arg)
+pluart_raisedtr(void *arg)
 {
-	//struct pl011_softc *sc = arg;
+	//struct pluart_softc *sc = arg;
 
 	//SET(sc->sc_ucr3, IMXUART_CR3_DSR); /* XXX */
 	//bus_space_write_4(sc->sc_iot, sc->sc_ioh, IMXUART_UCR3, sc->sc_ucr3);
 }
 
 void
-pl011_softint(void *arg)
+pluart_softint(void *arg)
 {
-	struct pl011_softc *sc = arg;
+	struct pluart_softc *sc = arg;
 	struct tty *tp;
 	u_int16_t *ibufp;
 	u_int16_t *ibufend;
@@ -475,10 +547,10 @@ pl011_softint(void *arg)
 }
 
 int
-pl011open(dev_t dev, int flag, int mode, struct proc *p)
+pluartopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = DEVUNIT(dev);
-	struct pl011_softc *sc;
+	struct pluart_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	struct tty *tp;
@@ -499,8 +571,8 @@ pl011open(dev_t dev, int flag, int mode, struct proc *p)
 
 	splx(s);
 
-	tp->t_oproc = pl011_start;
-	tp->t_param = pl011_param;
+	tp->t_oproc = pluart_start;
+	tp->t_param = pluart_param;
 	tp->t_dev = dev;
 
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
@@ -510,7 +582,7 @@ pl011open(dev_t dev, int flag, int mode, struct proc *p)
 		tp->t_oflag = TTYDEF_OFLAG;
 
 		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
-			tp->t_cflag = pl011conscflag;
+			tp->t_cflag = pluartconscflag;
 		else
 			tp->t_cflag = TTYDEF_CFLAG;
 		if (ISSET(sc->sc_swflags, COM_SW_CLOCAL))
@@ -520,12 +592,12 @@ pl011open(dev_t dev, int flag, int mode, struct proc *p)
 		if (ISSET(sc->sc_swflags, COM_SW_MDMBUF))
 			SET(tp->t_cflag, MDMBUF);
 		tp->t_lflag = TTYDEF_LFLAG;
-		tp->t_ispeed = tp->t_ospeed = pl011defaultrate;
+		tp->t_ispeed = tp->t_ospeed = pluartdefaultrate;
 
 		s = spltty();
 
 		sc->sc_initialize = 1;
-		pl011_param(tp, &tp->t_termios);
+		pluart_param(tp, &tp->t_termios);
 		ttsetwater(tp);
 		sc->sc_ibufp = sc->sc_ibuf = sc->sc_ibufs[0];
 		sc->sc_ibufhigh = sc->sc_ibuf + UART_IHIGHWATER;
@@ -548,7 +620,7 @@ pl011open(dev_t dev, int flag, int mode, struct proc *p)
 		    1 << IMXUART_FCR_RXTL_SH);
 
 		bus_space_write_4(iot, ioh, IMXUART_UBIR,
-		    (pl011defaultrate / 100) - 1);
+		    (pluartdefaultrate / 100) - 1);
 
 		/* formula: clk / (rfdiv * 1600) */
 		bus_space_write_4(iot, ioh, IMXUART_UBMR,
@@ -603,7 +675,7 @@ pl011open(dev_t dev, int flag, int mode, struct proc *p)
 					CLR(tp->t_state, TS_WOPEN);
 					if (!sc->sc_cua && !ISSET(tp->t_state,
 					    TS_ISOPEN))
-						pl011_pwroff(sc);
+						pluart_pwroff(sc);
 					splx(s);
 					return error;
 				}
@@ -615,10 +687,10 @@ pl011open(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-pl011close(dev_t dev, int flag, int mode, struct proc *p)
+pluartclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = DEVUNIT(dev);
-	struct pl011_softc *sc = pluart_cd.cd_devs[unit];
+	struct pluart_softc *sc = pluart_cd.cd_devs[unit];
 	//bus_space_tag_t iot = sc->sc_iot;
 	//bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp = sc->sc_tty;
@@ -637,7 +709,7 @@ pl011close(dev_t dev, int flag, int mode, struct proc *p)
 		timeout_add(&sc->sc_dtr_tmo, hz * 2);
 	} else {
 		/* no one else waiting; turn off the uart */
-		pl011_pwroff(sc);
+		pluart_pwroff(sc);
 	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 
@@ -649,11 +721,11 @@ pl011close(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-pl011read(dev_t dev, struct uio *uio, int flag)
+pluartread(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tty;
 
-	tty = pl011tty(dev);
+	tty = pluarttty(dev);
 	if (tty == NULL)
 		return ENODEV;
 
@@ -661,11 +733,11 @@ pl011read(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-pl011write(dev_t dev, struct uio *uio, int flag)
+pluartwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tty;
 
-	tty = pl011tty(dev);
+	tty = pluarttty(dev);
 	if (tty == NULL)
 		return ENODEV;
 
@@ -673,13 +745,13 @@ pl011write(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-pl011ioctl( dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+pluartioctl( dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	struct pl011_softc *sc;
+	struct pluart_softc *sc;
 	struct tty *tp;
 	int error;
 
-	sc = pl011_sc(dev);
+	sc = pluart_sc(dev);
 	if (sc == NULL)
 		return (ENODEV);
 
@@ -727,104 +799,104 @@ pl011ioctl( dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 int
-pl011stop(struct tty *tp, int flag)
+pluartstop(struct tty *tp, int flag)
 {
 	return 0;
 }
 
 struct tty *
-pl011tty(dev_t dev)
+pluarttty(dev_t dev)
 {
 	int unit;
-	struct pl011_softc *sc;
+	struct pluart_softc *sc;
 	unit = DEVUNIT(dev);
 	if (unit >= pluart_cd.cd_ndevs)
 		return NULL;
-	sc = (struct pl011_softc *)pluart_cd.cd_devs[unit];
+	sc = (struct pluart_softc *)pluart_cd.cd_devs[unit];
 	if (sc == NULL)
 		return NULL;
 	return sc->sc_tty;
 }
 
-struct pl011_softc *
-pl011_sc(dev_t dev)
+struct pluart_softc *
+pluart_sc(dev_t dev)
 {
 	int unit;
-	struct pl011_softc *sc;
+	struct pluart_softc *sc;
 	unit = DEVUNIT(dev);
 	if (unit >= pluart_cd.cd_ndevs)
 		return NULL;
-	sc = (struct pl011_softc *)pluart_cd.cd_devs[unit];
+	sc = (struct pluart_softc *)pluart_cd.cd_devs[unit];
 	return sc;
 }
 
 
 /* serial console */
 void
-pl011cnprobe(struct consdev *cp)
+pluartcnprobe(struct consdev *cp)
 {
 	cp->cn_dev = makedev(12 /* XXX */, 0);
 	cp->cn_pri = CN_MIDPRI;
 }
 
 void
-pl011cninit(struct consdev *cp)
+pluartcninit(struct consdev *cp)
 {
 }
 
 int
-pl011cnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, tcflag_t cflag)
+pluartcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, tcflag_t cflag)
 {
-	static struct consdev pl011cons = {
-		NULL, NULL, pl011cngetc, pl011cnputc, pl011cnpollc, NULL,
+	static struct consdev pluartcons = {
+		NULL, NULL, pluartcngetc, pluartcnputc, pluartcnpollc, NULL,
 		NODEV, CN_MIDPRI
 	};
 
-	if (bus_space_map(iot, iobase, UART_SPACE, 0, &pl011consioh))
+	if (bus_space_map(iot, iobase, UART_SPACE, 0, &pluartconsioh))
 			return ENOMEM;
 
 	/* Disable FIFO. */
-	bus_space_write_4(iot, pl011consioh, UART_LCR_H,
-	    bus_space_read_4(iot, pl011consioh, UART_LCR_H) & ~UART_LCR_H_FEN);
+	bus_space_write_4(iot, pluartconsioh, UART_LCR_H,
+	    bus_space_read_4(iot, pluartconsioh, UART_LCR_H) & ~UART_LCR_H_FEN);
 
-	cn_tab = &pl011cons;
+	cn_tab = &pluartcons;
 	cn_tab->cn_dev = makedev(12 /* XXX */, 0);
-	cdevsw[12] = pl011dev; 	/* KLUDGE */
+	cdevsw[12] = pluartdev; 	/* KLUDGE */
 
-	pl011consiot = iot;
-	pl011consaddr = iobase;
-	pl011conscflag = cflag;
+	pluartconsiot = iot;
+	pluartconsaddr = iobase;
+	pluartconscflag = cflag;
 
 	return 0;
 }
 
 int
-pl011cngetc(dev_t dev)
+pluartcngetc(dev_t dev)
 {
 	int c;
 	int s;
 	s = splhigh();
-	while((bus_space_read_4(pl011consiot, pl011consioh, UART_FR) &
+	while((bus_space_read_4(pluartconsiot, pluartconsioh, UART_FR) &
 	    UART_FR_RXFF) == 0)
 		;
-	c = bus_space_read_4(pl011consiot, pl011consioh, UART_DR);
+	c = bus_space_read_4(pluartconsiot, pluartconsioh, UART_DR);
 	splx(s);
 	return c;
 }
 
 void
-pl011cnputc(dev_t dev, int c)
+pluartcnputc(dev_t dev, int c)
 {
 	int s;
 	s = splhigh();
-	while((bus_space_read_4(pl011consiot, pl011consioh, UART_FR) &
+	while((bus_space_read_4(pluartconsiot, pluartconsioh, UART_FR) &
 	    UART_FR_TXFE) == 0)
 		;
-	bus_space_write_4(pl011consiot, pl011consioh, UART_DR, (uint8_t)c);
+	bus_space_write_4(pluartconsiot, pluartconsioh, UART_DR, (uint8_t)c);
 	splx(s);
 }
 
 void
-pl011cnpollc(dev_t dev, int on)
+pluartcnpollc(dev_t dev, int on)
 {
 }
