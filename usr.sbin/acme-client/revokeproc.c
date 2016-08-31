@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.1 2016/08/31 22:01:42 florian Exp $ */
+/*	$Id: revokeproc.c,v 1.2 2016/08/31 22:43:02 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -46,19 +46,19 @@
 static time_t
 X509expires(X509 *x)
 {
-	ASN1_TIME	*time;
+	ASN1_TIME	*atim;
 	struct tm	 t;
 	unsigned char	*str;
 	size_t 	 	 i = 0;
 
-	time = X509_get_notAfter(x);
-	str = time->data;
+	atim = X509_get_notAfter(x);
+	str = atim->data;
 	memset(&t, 0, sizeof(t));
 
 	/* Account for 2 and 4-digit time. */
 
-	if (time->type == V_ASN1_UTCTIME) {
-		if (time->length <= 2) {
+	if (atim->type == V_ASN1_UTCTIME) {
+		if (atim->length <= 2) {
 			warnx("invalid ASN1_TIME");
 			return((time_t)-1);
 		}
@@ -68,8 +68,8 @@ X509expires(X509 *x)
 		if (t.tm_year < 70)
 			t.tm_year += 100;
 		i = 2;
-	} else if (time->type == V_ASN1_GENERALIZEDTIME) {
-		if (time->length <= 4) {
+	} else if (atim->type == V_ASN1_GENERALIZEDTIME) {
+		if (atim->length <= 4) {
 			warnx("invalid ASN1_TIME");
 			return((time_t)-1);
 		}
@@ -84,7 +84,7 @@ X509expires(X509 *x)
 
 	/* Now the post-year parts. */
 
-	if (time->length <= (int)i + 10) {
+	if (atim->length <= (int)i + 10) {
 		warnx("invalid ASN1_TIME");
 		return((time_t)-1);
 	}
