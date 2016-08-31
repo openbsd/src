@@ -1,4 +1,4 @@
-/*	$Id: chngproc.c,v 1.1 2016/08/31 22:01:42 florian Exp $ */
+/*	$Id: chngproc.c,v 1.2 2016/08/31 22:49:09 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -56,14 +56,14 @@ chngproc(int netsock, const char *root, int remote)
 	else if ( ! sandbox_after())
 		goto out;
 
-	/* 
+	/*
 	 * Loop while we wait to get a thumbprint and token.
 	 * We'll get this for each SAN request.
 	 */
 
 	for (;;) {
 		op = CHNG__MAX;
-		if (0 == (lval = readop(netsock, COMM_CHNG_OP))) 
+		if (0 == (lval = readop(netsock, COMM_CHNG_OP)))
 			op = CHNG_STOP;
 		else if (CHNG_SYN == lval)
 			op = lval;
@@ -76,7 +76,7 @@ chngproc(int netsock, const char *root, int remote)
 
 		assert(CHNG_SYN == op);
 
-		/* 
+		/*
 		 * Read the thumbprint and token.
 		 * The token is the filename, so store that in a vector
 		 * of tokens that we'll later clean up.
@@ -113,17 +113,17 @@ chngproc(int netsock, const char *root, int remote)
 		if (remote) {
 			puts("RUN THIS IN THE CHALLENGE DIRECTORY");
 			puts("YOU HAVE 20 SECONDS...");
-			printf("doas sh -c \"echo %s > %s\"\n", 
+			printf("doas sh -c \"echo %s > %s\"\n",
 				fmt, fs[fsz - 1]);
 			sleep(20);
 			puts("TIME'S UP.");
-		} else { 
-			/* 
+		} else {
+			/*
 			 * Create and write to our challenge file.
 			 * Note: we use file descriptors instead of FILE
 			 * because we want to minimise our pledges.
 			 */
-			fd = open(fs[fsz - 1], 
+			fd = open(fs[fsz - 1],
 				O_WRONLY|O_EXCL|O_CREAT, 0444);
 			if (-1 == fd) {
 				warn("%s", fs[fsz - 1]);
@@ -144,8 +144,8 @@ chngproc(int netsock, const char *root, int remote)
 
 		dodbg("%s/%s: created", root, fs[fsz - 1]);
 
-		/* 
-		 * Write our acknowledgement. 
+		/*
+		 * Write our acknowledgement.
 		 * Ignore reader failure.
 		 */
 

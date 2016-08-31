@@ -1,4 +1,4 @@
-/*	$Id: dnsproc.c,v 1.1 2016/08/31 22:01:42 florian Exp $ */
+/*	$Id: dnsproc.c,v 1.2 2016/08/31 22:49:09 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -68,22 +68,22 @@ host_dns(const char *s, struct addr *vec)
 
 	error = getaddrinfo(s, NULL, &hints, &res0);
 
-	if (error == EAI_AGAIN || 
+	if (error == EAI_AGAIN ||
 		/* FIXME */
 #ifndef __FreeBSD__
-	    error == EAI_NODATA || 
+	    error == EAI_NODATA ||
 #endif
 	    error == EAI_NONAME)
 		return(0);
 
 	if (error) {
-		warnx("%s: parse error: %s", 
+		warnx("%s: parse error: %s",
 			s, gai_strerror(error));
 		return(-1);
 	}
 
-	for (vecsz = 0, res = res0; 
-	     NULL != res && vecsz < MAX_SERVERS_DNS; 
+	for (vecsz = 0, res = res0;
+	     NULL != res && vecsz < MAX_SERVERS_DNS;
 	     res = res->ai_next) {
 		if (res->ai_family != AF_INET &&
 		    res->ai_family != AF_INET6)
@@ -93,13 +93,13 @@ host_dns(const char *s, struct addr *vec)
 
 		if (AF_INET == res->ai_family) {
 			vec[vecsz].family = 4;
-			inet_ntop(AF_INET, 
-				&(((struct sockaddr_in *)sa)->sin_addr), 
+			inet_ntop(AF_INET,
+				&(((struct sockaddr_in *)sa)->sin_addr),
 				vec[vecsz].ip, INET6_ADDRSTRLEN);
 		} else {
 			vec[vecsz].family = 6;
-			inet_ntop(AF_INET6, 
-				&(((struct sockaddr_in6 *)sa)->sin6_addr), 
+			inet_ntop(AF_INET6,
+				&(((struct sockaddr_in6 *)sa)->sin6_addr),
 				vec[vecsz].ip, INET6_ADDRSTRLEN);
 		}
 
@@ -142,7 +142,7 @@ dnsproc(int nfd)
 		goto out;
 	else if ( ! dropprivs())
 		goto out;
-	else if ( ! sandbox_after()) 
+	else if ( ! sandbox_after())
 		goto out;
 
 	/*
@@ -167,7 +167,7 @@ dnsproc(int nfd)
 		if (NULL == (look = readstr(nfd, COMM_DNSQ)))
 			goto out;
 
-		/* 
+		/*
 		 * Check if we're asked to repeat the lookup.
 		 * If not, request it from host_dns().
 		 */
@@ -189,7 +189,7 @@ dnsproc(int nfd)
 			break;
 		else if (cc < 0)
 			goto out;
-		for (i = 0; i < (size_t)vsz; i++) { 
+		for (i = 0; i < (size_t)vsz; i++) {
 			if (writeop(nfd, COMM_DNSF, v[i].family) <= 0)
 				goto out;
 			if (writestr(nfd, COMM_DNSA, v[i].ip) <= 0)

@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.1 2016/08/31 22:01:42 florian Exp $ */
+/*	$Id: extern.h,v 1.2 2016/08/31 22:49:09 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -152,7 +152,7 @@ enum	comm {
  * (presumably!) local machine to an ACME connection; and a URI, to
  * which we must connect to verify the token.
  */
-struct 	chng {
+struct	chng {
 	char		*uri; /* uri on ACME server */
 	char		*token; /* token we must offer */
 	size_t		 retry; /* how many times have we tried */
@@ -182,7 +182,7 @@ int		 acctproc(int, const char *, int);
 int		 certproc(int, int);
 int		 chngproc(int, const char *, int);
 int		 dnsproc(int);
-int		 revokeproc(int, const char *, 
+int		 revokeproc(int, const char *,
 			int, int, const char *const *, size_t);
 int		 fileproc(int, int, const char *);
 int		 keyproc(int, const char *,
@@ -242,7 +242,7 @@ char		*json_fmt_protected_rsa(const char *,
 char		*json_fmt_revokecert(const char *);
 char		*json_fmt_header_rsa(const char *, const char *);
 char		*json_fmt_thumb_rsa(const char *, const char *);
-char		*json_fmt_signed(const char *, 
+char		*json_fmt_signed(const char *,
 			const char *, const char *, const char *);
 
 int		 dropprivs(void);
