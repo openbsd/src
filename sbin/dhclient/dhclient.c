@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.381 2016/08/23 09:26:02 mpi Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.382 2016/08/31 12:57:31 mpi Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -112,7 +112,6 @@ const struct in_addr inaddr_any = { INADDR_ANY };
 const struct in_addr inaddr_broadcast = { INADDR_BROADCAST };
 
 struct interface_info *ifi;
-struct client_state *client;
 struct client_config *config;
 struct imsgbuf *unpriv_ibuf;
 
@@ -231,6 +230,7 @@ get_ifa(char *cp, int n)
 void
 routehandler(void)
 {
+	struct client_state *client = ifi->client;
 	char ntoabuf[INET_ADDRSTRLEN];
 	struct in_addr a, b;
 	ssize_t n;
@@ -538,11 +538,11 @@ main(int argc, char *argv[])
 		error("config calloc");
 	TAILQ_INIT(&config->reject_list);
 
-	client = calloc(1, sizeof(struct client_state));
-	if (client == NULL)
+	ifi->client = calloc(1, sizeof(struct client_state));
+	if (ifi->client == NULL)
 		error("client calloc");
-	TAILQ_INIT(&client->leases);
-	TAILQ_INIT(&client->offered_leases);
+	TAILQ_INIT(&ifi->client->leases);
+	TAILQ_INIT(&ifi->client->offered_leases);
 
 	read_client_conf(ifi);
 
@@ -647,13 +647,13 @@ main(int argc, char *argv[])
 	}
 
 	setproctitle("%s", ifi->name);
-	time(&client->startup_time);
+	time(&ifi->client->startup_time);
 
 	if (ifi->linkstat) {
-		client->state = S_REBOOTING;
+		ifi->client->state = S_REBOOTING;
 		state_reboot();
 	} else {
-		client->state = S_PREBOOT;
+		ifi->client->state = S_PREBOOT;
 		state_preboot();
 	}
 
@@ -677,6 +677,7 @@ usage(void)
 void
 state_preboot(void)
 {
+	struct client_state *client = ifi->client;
 	static int preamble;
 	time_t cur_time;
 	int interval;
@@ -720,6 +721,7 @@ state_preboot(void)
 void
 state_reboot(void)
 {
+	struct client_state *client = ifi->client;
 	char ifname[IF_NAMESIZE];
 	struct client_lease *lp;
 	struct option_data *opt;
@@ -795,6 +797,8 @@ state_reboot(void)
 void
 state_init(void)
 {
+	struct client_state *client = ifi->client;
+
 	client->xid = arc4random();
 	make_discover(client->active);
 
@@ -813,6 +817,7 @@ state_init(void)
 void
 state_selecting(void)
 {
+	struct client_state *client = ifi->client;
 	struct client_lease *lease, *picked;
 
 	cancel_timeout();
@@ -901,6 +906,7 @@ state_selecting(void)
 void
 dhcpack(struct in_addr client_addr, struct option_data *options, char *info)
 {
+	struct client_state *client = ifi->client;
 	struct client_lease *lease;
 
 	if (client->state != S_REBOOTING &&
@@ -938,6 +944,7 @@ dhcpack(struct in_addr client_addr, struct option_data *options, char *info)
 void
 bind_lease(void)
 {
+	struct client_state *client = ifi->client;
 	struct in_addr gateway, mask;
 	struct option_data *options, *opt;
 	struct client_lease *lease, *pl;
@@ -1086,6 +1093,7 @@ newlease:
 void
 state_bound(void)
 {
+	struct client_state *client = ifi->client;
 	struct option_data *opt;
 	struct in_addr *dest;
 
@@ -1110,6 +1118,7 @@ state_bound(void)
 void
 dhcpoffer(struct in_addr client_addr, struct option_data *options, char *info)
 {
+	struct client_state *client = ifi->client;
 	struct client_lease *lease, *lp;
 	time_t stop_selecting;
 
@@ -1198,6 +1207,7 @@ addressinuse(struct in_addr address, char *ifname)
 struct client_lease *
 packet_to_lease(struct in_addr client_addr, struct option_data *options)
 {
+	struct client_state *client = ifi->client;
 	char ifname[IF_NAMESIZE];
 	struct client_lease *lease;
 	char *pretty, *buf;
@@ -1330,6 +1340,8 @@ packet_to_lease(struct in_addr client_addr, struct option_data *options)
 void
 dhcpnak(struct in_addr client_addr, struct option_data *options, char *info)
 {
+	struct client_state *client = ifi->client;
+
 	if (client->state != S_REBOOTING &&
 	    client->state != S_REQUESTING &&
 	    client->state != S_RENEWING &&
@@ -1372,6 +1384,7 @@ dhcpnak(struct in_addr client_addr, struct option_data *options, char *info)
 void
 send_discover(void)
 {
+	struct client_state *client = ifi->client;
 	time_t cur_time;
 	ssize_t rslt;
 	int interval;
@@ -1436,6 +1449,7 @@ send_discover(void)
 void
 state_panic(void)
 {
+	struct client_state *client = ifi->client;
 	char ifname[IF_NAMESIZE];
 	struct client_lease *lp;
 	time_t cur_time;
@@ -1479,6 +1493,7 @@ state_panic(void)
 void
 send_request(void)
 {
+	struct client_state *client = ifi->client;
 	struct sockaddr_in destination;
 	struct in_addr from;
 	time_t cur_time;
@@ -1591,6 +1606,7 @@ send_decline(void)
 void
 make_discover(struct client_lease *lease)
 {
+	struct client_state *client = ifi->client;
 	struct option_data options[256];
 	struct dhcp_packet *packet = &client->bootrequest_packet;
 	unsigned char discover = DHCPDISCOVER;
@@ -1627,7 +1643,7 @@ make_discover(struct client_lease *lease)
 		}
 
 	/* Set up the option buffer to fit in a minimal UDP packet. */
-	i = cons_options(options);
+	i = cons_options(ifi, options);
 	if (i == -1 || packet->options[i] != DHO_END)
 		error("options do not fit in DHCPDISCOVER packet.");
 	client->bootrequest_packet_length = DHCP_FIXED_NON_UDP+i+1;
@@ -1654,6 +1670,7 @@ make_discover(struct client_lease *lease)
 void
 make_request(struct client_lease * lease)
 {
+	struct client_state *client = ifi->client;
 	struct option_data options[256];
 	struct dhcp_packet *packet = &client->bootrequest_packet;
 	unsigned char request = DHCPREQUEST;
@@ -1698,7 +1715,7 @@ make_request(struct client_lease * lease)
 		}
 
 	/* Set up the option buffer to fit in a minimal UDP packet. */
-	i = cons_options(options);
+	i = cons_options(ifi, options);
 	if (i == -1 || packet->options[i] != DHO_END)
 		error("options do not fit in DHCPREQUEST packet.");
 	client->bootrequest_packet_length = DHCP_FIXED_NON_UDP+i+1;
@@ -1735,6 +1752,7 @@ make_request(struct client_lease * lease)
 void
 make_decline(struct client_lease *lease)
 {
+	struct client_state *client = ifi->client;
 	struct option_data options[256];
 	struct dhcp_packet *packet = &client->bootrequest_packet;
 	unsigned char decline = DHCPDECLINE;
@@ -1766,7 +1784,7 @@ make_decline(struct client_lease *lease)
 	}
 
 	/* Set up the option buffer to fit in a minimal UDP packet. */
-	i = cons_options(options);
+	i = cons_options(ifi, options);
 	if (i == -1 || packet->options[i] != DHO_END)
 		error("options do not fit in DHCPDECLINE packet.");
 	client->bootrequest_packet_length = DHCP_FIXED_NON_UDP+i+1;
@@ -1812,6 +1830,7 @@ free_client_lease(struct client_lease *lease)
 void
 rewrite_client_leases(void)
 {
+	struct client_state *client = ifi->client;
 	struct client_lease *lp;
 	char *leasestr;
 	time_t cur_time;

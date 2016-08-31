@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.98 2016/08/23 09:26:02 mpi Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.99 2016/08/31 12:57:31 mpi Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -463,6 +463,7 @@ parse_interface_declaration(FILE *cfile, struct interface_info *ifi)
 void
 parse_client_lease_statement(FILE *cfile, int is_static, struct interface_info *ifi)
 {
+	struct client_state	*client = ifi->client;
 	struct client_lease	*lease, *lp, *pl;
 	struct option_data	*opt1, *opt2;
 	int			 token;

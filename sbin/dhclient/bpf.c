@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.43 2016/08/23 09:26:02 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.44 2016/08/31 12:57:31 mpi Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -259,6 +259,7 @@ if_register_receive(struct interface_info *ifi)
 ssize_t
 send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to)
 {
+	struct client_state *client = ifi->client;
 	struct sockaddr_in dest;
 	struct ether_header eh;
 	struct ip ip;
@@ -336,6 +337,7 @@ ssize_t
 receive_packet(struct interface_info *ifi, struct sockaddr_in *from,
     struct ether_addr *hfrom)
 {
+	struct client_state *client = ifi->client;
 	int length = 0, offset = 0;
 	struct bpf_hdr hdr;
 

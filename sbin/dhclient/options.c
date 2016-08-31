@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.76 2016/08/23 09:26:02 mpi Exp $	*/
+/*	$OpenBSD: options.c,v 1.77 2016/08/31 12:57:31 mpi Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -159,8 +159,9 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
  * to see if it's DHO_END to decide if all the options were copied.
  */
 int
-cons_options(struct option_data *options)
+cons_options(struct interface_info *ifi, struct option_data *options)
 {
+	struct client_state *client = ifi->client;
 	unsigned char *buf = client->bootrequest_packet.options;
 	int buflen = 576 - DHCP_FIXED_LEN;
 	int ix, incr, length, bufix, code, lastopt = -1;
@@ -648,6 +649,7 @@ void
 do_packet(struct interface_info *ifi, unsigned int from_port,
     struct in_addr from, struct ether_addr *hfrom)
 {
+	struct client_state *client = ifi->client;
 	struct dhcp_packet *packet = &client->packet;
 	struct option_data options[256];
 	struct reject_elem *ap;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.156 2016/08/23 09:26:02 mpi Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.157 2016/08/31 12:57:31 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -145,6 +145,7 @@ struct interface_info {
 	struct ether_addr	hw_address;
 	char		 name[IFNAMSIZ];
 	char		 ssid[33];
+	struct client_state	*client;
 	int		 bfdesc; /* bpf - reading & broadcast writing*/
 	int		 ufdesc; /* udp - unicast writing */
 	unsigned char	*rbuf;
@@ -172,7 +173,6 @@ struct dhcp_timeout {
 
 /* External definitions. */
 
-extern struct client_state *client;
 extern struct client_config *config;
 extern struct imsgbuf *unpriv_ibuf;
 extern struct in_addr deleting;
@@ -181,7 +181,7 @@ extern struct in_addr active_addr;
 extern volatile sig_atomic_t quit;
 
 /* options.c */
-int cons_options(struct option_data *);
+int cons_options(struct interface_info *, struct option_data *);
 char *pretty_print_option(unsigned int, struct option_data *, int);
 int pretty_print_string(unsigned char *, size_t, unsigned char *, size_t, int);
 int pretty_print_classless_routes(unsigned char *, size_t, unsigned char *,
