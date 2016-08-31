@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.1 2016/08/31 22:01:42 florian Exp $ */
+/*	$Id: http.c,v 1.2 2016/08/31 22:42:29 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -206,7 +206,7 @@ http_read(char *buf, size_t sz, const struct http *http)
 }
 
 static int
-http_write(const void *buf, size_t sz, const struct http *http)
+http_write(const char *buf, size_t sz, const struct http *http)
 {
 	ssize_t	 ssz, xfer;
 
@@ -215,7 +215,7 @@ http_write(const void *buf, size_t sz, const struct http *http)
 		if ((ssz = http->writer(buf, sz, http)) < 0)
 			return(-1);
 		sz -= ssz;
-		buf += ssz;
+		buf += (size_t)ssz;
 	}
 	return(xfer);
 }
