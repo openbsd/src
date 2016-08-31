@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.188 2016/08/31 10:18:08 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.189 2016/08/31 15:24:04 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -178,7 +178,7 @@ typedef struct {
 %token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR SOURCE MTA PKI SCHEDULER
 %token	ARROW AUTH TLS LOCAL VIRTUAL TAG TAGGED ALIAS FILTER KEY CA DHE
 %token	AUTH_OPTIONAL TLS_REQUIRE USERBASE SENDER SENDERS MASK_SOURCE VERIFY FORWARDONLY RECIPIENT
-%token	CIPHERS RECEIVEDAUTH MASQUERADE SOCKET SUBADDRESSING_DELIM
+%token	CIPHERS RECEIVEDAUTH MASQUERADE SOCKET SUBADDRESSING_DELIM AUTHENTICATED
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.table>	table
@@ -269,6 +269,11 @@ tagged		: TAGGED negation STRING       		{
 			}
 			free($3);
 			rule->r_nottag = $2;
+		}
+		;
+
+authenticated  	: AUTHENTICATED	{
+			rule->r_wantauth = 1;
 		}
 		;
 
@@ -1377,6 +1382,7 @@ opt_decision	: sender
 		| from
 		| for
 		| tagged
+		| authenticated
 		;
 decision	: opt_decision decision
 		|
@@ -1487,6 +1493,7 @@ lookup(char *s)
 		{ "as",			AS },
 		{ "auth",		AUTH },
 		{ "auth-optional",     	AUTH_OPTIONAL },
+		{ "authenticated",     	AUTHENTICATED },
 		{ "backup",		BACKUP },
 		{ "bounce-warn",	BOUNCEWARN },
 		{ "ca",			CA },
