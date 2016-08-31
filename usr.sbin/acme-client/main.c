@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.3 2016/08/31 22:57:36 deraadt Exp $ */
+/*	$Id: main.c,v 1.4 2016/08/31 23:30:59 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -49,10 +49,10 @@ domain_valid(const char *cp)
 {
 
 	for ( ; '\0' != *cp; cp++)
-		if (!('.' == *cp || '-' == *cp || 
- 		      '_' == *cp || isalnum((int)*cp)))
-			return(0);
-	return(1);
+		if (!('.' == *cp || '-' == *cp ||
+		    '_' == *cp || isalnum((int)*cp)))
+			return (0);
+	return (1);
 }
 
 /*
@@ -70,15 +70,15 @@ doasprintf(const char *fmt, ...)
 	va_start(ap, fmt);
 	c = vasprintf(&cp, fmt, ap);
 	va_end(ap);
-	return(c < 0 ? NULL : cp);
+	return (c < 0 ? NULL : cp);
 }
 
 int
 main(int argc, char *argv[])
 {
 	const char	 *domain, *agreement;
-	char	 	 *certdir, *acctkey, *chngdir, *keyfile;
-	int		  key_fds[2], acct_fds[2], chng_fds[2], 
+	char		 *certdir, *acctkey, *chngdir, *keyfile;
+	int		  key_fds[2], acct_fds[2], chng_fds[2],
 			  cert_fds[2], file_fds[2], dns_fds[2],
 			  rvk_fds[2];
 	pid_t		  pids[COMP__MAX];
@@ -90,12 +90,12 @@ main(int argc, char *argv[])
 	const char	**alts;
 
 	alts = NULL;
-	newacct = remote = revocate = verbose = force = 
+	newacct = remote = revocate = verbose = force =
 		multidir = staging = newkey = backup = 0;
 	certdir = keyfile = acctkey = chngdir = NULL;
 	agreement = AGREEMENT;
 
-	while (-1 != (c = getopt(argc, argv, "bFmnNrstva:f:c:C:k:"))) 
+	while (-1 != (c = getopt(argc, argv, "bFmnNrstva:f:c:C:k:")))
 		switch (c) {
 		case ('a'):
 			agreement = optarg;
@@ -175,7 +175,7 @@ main(int argc, char *argv[])
 	if ( ! checkprivs())
 		errx(EXIT_FAILURE, "must be run as root");
 
-	/* 
+	/*
 	 * Now we allocate our directories and file paths IFF we haven't
 	 * specified them on the command-line.
 	 * If we're in "multidir" (-m) mode, we use our initial domain
@@ -184,16 +184,16 @@ main(int argc, char *argv[])
 	 */
 
 	if (NULL == certdir)
-		certdir = multidir ? 
+		certdir = multidir ?
 			doasprintf(SSL_DIR "/%s", domain) :
 			strdup(SSL_DIR);
 	if (NULL == keyfile)
 		keyfile = multidir ?
-			doasprintf(SSL_PRIV_DIR "/%s/" 
+			doasprintf(SSL_PRIV_DIR "/%s/"
 				PRIVKEY_FILE, domain) :
 			strdup(SSL_PRIV_DIR "/" PRIVKEY_FILE);
 	if (NULL == acctkey)
-		acctkey = multidir ? 
+		acctkey = multidir ?
 			doasprintf(ETC_DIR "/%s/"
 				PRIVKEY_FILE, domain) :
 			strdup(ETC_DIR "/" PRIVKEY_FILE);
@@ -204,8 +204,8 @@ main(int argc, char *argv[])
 	    NULL == acctkey || NULL == chngdir)
 		err(EXIT_FAILURE, "strdup");
 
-	/* 
-	 * Do some quick checks to see if our paths exist. 
+	/*
+	 * Do some quick checks to see if our paths exist.
 	 * This will be done in the children, but we might as well check
 	 * now before the fork.
 	 */
@@ -253,8 +253,8 @@ main(int argc, char *argv[])
 	for (i = 0; i < (size_t)argc; i++)
 		alts[i + 1] = argv[i];
 
-	/* 
-	 * Open channels between our components. 
+	/*
+	 * Open channels between our components.
 	 */
 
 	if (-1 == socketpair(AF_UNIX, SOCK_STREAM, 0, key_fds))
@@ -287,9 +287,9 @@ main(int argc, char *argv[])
 		close(file_fds[1]);
 		close(dns_fds[0]);
 		close(rvk_fds[0]);
-		c = netproc(key_fds[1], acct_fds[1], 
-			chng_fds[1], cert_fds[1], 
-			dns_fds[1], rvk_fds[1], 
+		c = netproc(key_fds[1], acct_fds[1],
+			chng_fds[1], cert_fds[1],
+			dns_fds[1], rvk_fds[1],
 			newacct, revocate, staging,
 			(const char *const *)alts, altsz,
 			agreement);
@@ -318,7 +318,7 @@ main(int argc, char *argv[])
 		close(chng_fds[0]);
 		close(file_fds[0]);
 		close(file_fds[1]);
-		c = keyproc(key_fds[0], keyfile, 
+		c = keyproc(key_fds[0], keyfile,
 			(const char **)alts, altsz, newkey);
 		free(alts);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
@@ -426,7 +426,7 @@ main(int argc, char *argv[])
 
 	if (0 == pids[COMP_REVOKE]) {
 		proccomp = COMP_REVOKE;
-		c = revokeproc(rvk_fds[0], certdir, 
+		c = revokeproc(rvk_fds[0], certdir,
 			force, revocate,
 			(const char *const *)alts, altsz);
 		free(alts);
@@ -465,7 +465,7 @@ main(int argc, char *argv[])
 	free(acctkey);
 	free(chngdir);
 	free(alts);
-	return(COMP__MAX != rc ? EXIT_FAILURE :
+	return (COMP__MAX != rc ? EXIT_FAILURE :
 	       (2 == c ? EXIT_SUCCESS : 2));
 usage:
 	fprintf(stderr, "usage: %s "
@@ -475,11 +475,11 @@ usage:
 		"[-c certdir] "
 		"[-f accountkey] "
 		"[-k domainkey] "
-		"domain [altnames...]\n", 
+		"domain [altnames...]\n",
 		getprogname());
 	free(certdir);
 	free(keyfile);
 	free(acctkey);
 	free(chngdir);
-	return(EXIT_FAILURE);
+	return (EXIT_FAILURE);
 }
