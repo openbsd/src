@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.42 2016/08/15 22:14:19 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.43 2016/08/31 13:33:52 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -60,6 +60,8 @@ void
 ieee80211_node2req(struct ieee80211com *ic, const struct ieee80211_node *ni,
     struct ieee80211_nodereq *nr)
 {
+	uint8_t rssi;
+
 	/* Node address and name information */
 	IEEE80211_ADDR_COPY(nr->nr_macaddr, ni->ni_macaddr);
 	IEEE80211_ADDR_COPY(nr->nr_bssid, ni->ni_bssid);
@@ -73,7 +75,19 @@ ieee80211_node2req(struct ieee80211com *ic, const struct ieee80211_node *ni,
 	bcopy(ni->ni_rates.rs_rates, nr->nr_rates, IEEE80211_RATE_MAXSIZE);
 
 	/* Node status information */
-	nr->nr_rssi = (*ic->ic_node_getrssi)(ic, ni);
+	rssi = (*ic->ic_node_getrssi)(ic, ni);
+	if (ic->ic_max_rssi) {
+		/* Driver reports RSSI relative to ic_max_rssi. */
+		nr->nr_rssi = rssi;
+	} else {
+		/*
+		 * Driver reports RSSI value in dBm.
+		 * Convert from unsigned to signed.
+		 * Some drivers report a negative value, some don't.
+		 * Reasonable range is -20dBm to -80dBm.
+		 */
+		nr->nr_rssi = (rssi < 128) ? -rssi : rssi;
+	}
 	nr->nr_max_rssi = ic->ic_max_rssi;
 	bcopy(ni->ni_tstamp, nr->nr_tstamp, sizeof(nr->nr_tstamp));
 	nr->nr_intval = ni->ni_intval;
