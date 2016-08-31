@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.4 2016/08/31 23:08:49 benno Exp $ */
+/*	$Id: http.c,v 1.5 2016/08/31 23:46:33 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,7 +22,6 @@
 #include <sys/param.h>
 #include <arpa/inet.h>
 
-#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>
@@ -89,68 +88,6 @@ dosyswrite(const void *buf, size_t sz, const struct http *http)
 	return (rc);
 }
 
-#if defined(TLS_READ_AGAIN) && defined(TLS_WRITE_AGAIN)
-/*
- * Old-style libtls calls.
- * These changed between 5.8 and 5.9.
- */
-static ssize_t
-dotlsread(char *buf, size_t sz, const struct http *http)
-{
-	size_t	out, tot = 0;
-	int	rc;
-
-	for (;;) {
-		out = 0;
-		rc = tls_read(http->ctx, buf, sz, &out);
-		if (out > 0) {
-			buf += out;
-			assert(sz >= out);
-			sz -= out;
-			tot += out;
-		}
-		if (TLS_READ_AGAIN == rc)
-			continue;
-		else if (0 == out || 0 == sz || 0 == rc)
-			break;
-		warnx("%s: tls_read: %s",
-			http->src.ip, tls_error(http->ctx));
-		return (-1);
-	}
-
-	return (tot);
-}
-
-static ssize_t
-dotlswrite(const void *buf, size_t sz, const struct http *http)
-{
-	size_t	 out, tot = 0;
-	int	 rc;
-
-	for (;;) {
-		out = 0;
-		rc = tls_write(http->ctx, buf, sz, &out);
-		if (out > 0) {
-			buf += out;
-			assert(sz >= out);
-			sz -= out;
-			tot += out;
-		}
-		if (TLS_WRITE_AGAIN == rc)
-			continue;
-		else if (0 == out || 0 == rc || 0 == rc)
-			break;
-		warnx("%s: tls_write: %s",
-			http->src.ip, tls_error(http->ctx));
-		return (-1);
-	}
-
-	return (tot);
-}
-#else
-/*
- * New-style libtls calls.
- */
 static ssize_t
 dotlsread(char *buf, size_t sz, const struct http *http)
 {
@@ -184,7 +121,6 @@ dotlswrite(const void *buf, size_t sz, const struct http *http)
 			tls_error(http->ctx));
 	return (rc);
 }
-#endif
 
 static ssize_t
 http_read(char *buf, size_t sz, const struct http *http)
