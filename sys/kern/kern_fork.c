@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.187 2016/04/25 20:18:31 tedu Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.188 2016/08/31 14:15:07 tom Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -606,10 +606,6 @@ freepid(pid_t pid)
 void
 proc_trampoline_mp(void)
 {
-	struct proc *p;
-
-	p = curproc;
-
 	SCHED_ASSERT_LOCKED();
 	__mp_unlock(&sched_lock);
 	spl0();
