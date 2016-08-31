@@ -1,14 +1,11 @@
 .Dd $Mdocdate: August 31 2016 $
-.Dt LETSKENCRYPT 1
+.Dt acme-client 1
 .Os
 .Sh NAME
-.Nm letskencrypt
+.Nm acme-client
 .Nd secure Let's Encrypt client
-.\" .Sh LIBRARY
-.\" For sections 2, 3, and 9 only.
-.\" Not used in OpenBSD.
 .Sh SYNOPSIS
-.Nm letskencrypt
+.Nm acme-client
 .Op Fl bFmnNrsv
 .Op Fl a Ar agreement
 .Op Fl C Ar challengedir
@@ -33,17 +30,17 @@ It must be run as root.
 .Xr chroot 2 . )
 .Pp
 By default, it uses
-.Pa /var/www/letsencrypt
+.Pa /var/www/acme
 for responding to challenges
 .Pq Fl C ,
-.Pa /etc/ssl/letsencrypt
+.Pa /etc/ssl/acme
 for the public certificate directory
 .Pq Fl c ,
-.Pa /etc/ssl/letsencrypt/private/privkey.pem
+.Pa /etc/ssl/acme/private/privkey.pem
 for the domain private key
 .Pq Fl k ,
 and
-.Pa /etc/letsencrypt/privkey.pem
+.Pa /etc/acme/privkey.pem
 for the account private key
 .Pq Fl f .
 All of these must exist unless you use
@@ -80,7 +77,7 @@ to all default paths except the challenge path
 Thus,
 .Ar foo.com
 as the initial domain would make the default domain private key into
-.Pa /etc/ssl/letsencrypt/private/foo.com/privkey.pem .
+.Pa /etc/ssl/acme/private/foo.com/privkey.pem .
 This is useful in setups with multiple domain sets.
 .It Fl n
 Create a new 4096-bit RSA account key if one does not already exist.
@@ -199,35 +196,26 @@ implements only the
 .Dq http-01
 challenge type, where a file is created within a directory accessible by
 a locally-run web server configured for the requested domain.
-For example, for the domain
-.Dq foo.com
-and alternate
-.Dq www.foo.com
-and the default challenge directory, an Apache configuration snippet
-might be as follows:
+The default challenge directory
+.Pa /var/www/acme
+can be served by
+.Xr httpd 8
+with this location block:
 .Bd -literal
-<VirtualHost *:80>
-  [...]
-  ServerName foo.com
-  ServerAlias www.foo.com
-  Alias /.well-known/acme-challenge /var/www/letsencrypt
-  <Directory /var/www/letsencrypt>
-    Options None
-    AllowOverride None
-    Order allow,deny
-    Allow from all
-  </Directory>
-</VirtualHost>
+	location "/.well-known/acme-challenge/*" {
+		root "/acme"
+		root strip 2
+	}
 .Ed
 .Pp
 This way, the files placed in
-.Pa /var/www/letsencrypt
+.Pa /var/www/acme
 will be properly mapped by the web server when the Let's Encrypt
 responds to a challenge.
 .Ss Certificates
 Public certificates (domain certificate, chain, and the full-chain) are
 placed by default in
-.Pa /etc/ssl/letsencrypt
+.Pa /etc/ssl/acme
 as
 .Pa cert.pem ,
 .Pa chain.pem ,
@@ -236,37 +224,16 @@ and
 respectively.
 These are all created as the root user with mode 444.
 .Pp
-An nginx configuration using these might be as follows:
-.Bd -literal
-server {
-  listen 443;
-  server_name foo.com www.foo.com;
-  [...]
-  ssl_certificate /etc/ssl/letsencrypt/fullchain.pem;
-  ssl_certificate_key /etc/ssl/letsencrypt/private/privkey.pem;
-}
-.Ed
-.Pp
 The
 .Pa cert.pem
 file, if found, is checked for its expiration: if more than 30 days from
 expiring,
 .Nm
 will not attempt to refresh the signature.
-.\" .Sh CONTEXT
-.\" For section 9 functions only.
-.\" .Sh IMPLEMENTATION NOTES
-.\" Not used in OpenBSD.
-.\" .Sh RETURN VALUES
-.\" For sections 2, 3, and 9 function return values only.
-.\" .Sh ENVIRONMENT
-.\" For sections 1, 6, 7, and 8 only.
-.\" .Sh FILES
 .Sh EXIT STATUS
 .Nm
 returns 1 on failure, 2 if the certificates didn't change (up to date),
 or 0 if certificates were changed (revoked or updated).
-.\" For sections 1, 6, and 8 only.
 .Sh EXAMPLES
 To create and submit a new key for a single domain, assuming that the
 web server has already been configured to map the challenge directory
@@ -274,44 +241,30 @@ as in the
 .Sx Challenges
 section:
 .Bd -literal
-# mkdir /var/www/letsencrypt
-# mkdir /etc/ssl/letsencrypt
-# mkdir /etc/ssl/letsencrypt/private /etc/letsencrypt
-# chmod 0700 /etc/ssl/letsencrypt/private /etc/letsencrypt
-# letskencrypt -vNn foo.com www.foo.com smtp.foo.com
+# acme-client -vNn foo.com www.foo.com smtp.foo.com
 .Ed
 .Pp
-After generating the necessary directories, the above will create all
-keys and submit them to the server.
-You'll then probably want to restart your web server to pick up the new
-certificates.
-.Pp
-You can then keep your certificates fresh with a daily
+A daily
 .Xr cron 8
-invocation running the following:
+job can renew the certificates:
 .Bd -literal
 #! /bin/sh
 
-letskencrypt foo.com www.foo.com smtp.foo.com
+acme-client foo.com www.foo.com smtp.foo.com
 
 if [ $? -eq 0 ]
 then
 	/etc/rc.d/httpd reload
 fi
 .Ed
-.Pp
-You'll need to replace the httpd-reload statement with the correct
-script to have your web server reload its certificates.
-.\" .Sh DIAGNOSTICS
-.\" For sections 1, 4, 6, 7, 8, and 9 printf/stderr messages only.
-.\" .Sh ERRORS
-.\" For sections 2, 3, 4, and 9 errno settings only.
 .Sh SEE ALSO
-.Xr openssl 1
-.\" .Sh STANDARDS
-.\" .Sh HISTORY
-.\" .Sh AUTHORS
-.\" .Sh CAVEATS
+.Xr openssl 1 ,
+.Xr httpd.conf 5
+.Sh AUTHORS
+The
+.Nm
+utility was written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .
 .Sh BUGS
 The challenge and certificate processes currently retain their (root)
 privileges.
@@ -319,5 +272,3 @@ privileges.
 For the time being,
 .Nm
 only supports RSA as an account key format.
-.\" .Sh SECURITY CONSIDERATIONS
-.\" Not used in OpenBSD.
