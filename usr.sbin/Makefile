@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.192 2016/02/03 13:37:44 reyk Exp $
+#	$OpenBSD: Makefile,v 1.193 2016/08/31 22:24:44 florian Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	ac accton acpidump adduser amd apm apmd arp \
+SUBDIR=	ac accton acme-client acpidump adduser amd apm apmd arp \
 	authpf bgpctl bgpd bind chroot config cron crunchgen dev_mkdb \
 	dhcpd dhcrelay dvmrpctl dvmrpd edquota eeprom eigrpd eigrpctl \
 	fdformat ftp-proxy gpioctl hostapd hostctl hotplugd httpd identd \
