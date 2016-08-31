@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.2 2016/08/31 22:57:36 deraadt Exp $ */
+/*	$Id: netproc.c,v 1.3 2016/08/31 23:36:16 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -103,17 +103,17 @@ url2host(const char *host, short *port, char **path)
 		*port = 443;
 		if (NULL == (url = strdup(host + 8))) {
 			warn("strdup");
-			return(NULL);
+			return (NULL);
 		}
 	} else if (0 == strncmp(host, "http://", 7)) {
 		*port = 80;
 		if (NULL == (url = strdup(host + 7))) {
 			warn("strdup");
-			return(NULL);
+			return (NULL);
 		}
 	} else {
 		warnx("%s: unknown schema", host);
-		return(NULL);
+		return (NULL);
 	}
 
 	/* Terminate path part. */
@@ -127,10 +127,10 @@ url2host(const char *host, short *port, char **path)
 	if (NULL == *path) {
 		warn("strdup");
 		free(url);
-		return(NULL);
+		return (NULL);
 	}
- 
-	return(url);
+
+	return (url);
 }
 
 /*
@@ -142,16 +142,16 @@ url2host(const char *host, short *port, char **path)
 static ssize_t
 urlresolve(int fd, const char *host, struct source *v)
 {
-	char	  	  *addr;
-	size_t	  	   i, sz;
-	long	  	   lval;
+	char		*addr;
+	size_t		 i, sz;
+	long		 lval;
 
 	if (writeop(fd, COMM_DNS, DNS_LOOKUP) <= 0)
-		return(-1);
+		return (-1);
 	else if (writestr(fd, COMM_DNSQ, host) <= 0)
-		return(-1);
+		return (-1);
 	else if ((lval = readop(fd, COMM_DNSLEN)) < 0)
-		return(-1);
+		return (-1);
 
 	sz = lval;
 	assert(sz <= MAX_SERVERS_DNS);
@@ -162,17 +162,17 @@ urlresolve(int fd, const char *host, struct source *v)
 			goto err;
 		else if (4 != lval && 6 != lval)
 			goto err;
-		else if (NULL == (addr = readstr(fd, COMM_DNSA))) 
+		else if (NULL == (addr = readstr(fd, COMM_DNSA)))
 			goto err;
 		v[i].family = lval;
 		v[i].ip = addr;
 	}
 
-	return(sz);
+	return (sz);
 err:
 	for (i = 0; i < sz; i++)
 		free(v[i].ip);
-	return(-1);
+	return (-1);
 }
 
 /*
@@ -192,12 +192,12 @@ nreq(struct conn *c, const char *addr)
 	long		 code;
 
 	if (NULL == (host = url2host(addr, &port, &path)))
-		return(-1);
+		return (-1);
 
 	if ((ssz = urlresolve(c->dfd, host, src)) < 0) {
 		free(host);
 		free(path);
-		return(-1);
+		return (-1);
 	}
 	srcsz = ssz;
 
@@ -205,7 +205,7 @@ nreq(struct conn *c, const char *addr)
 	free(host);
 	free(path);
 	if (NULL == g)
-		return(-1);
+		return (-1);
 
 	code = g->code;
 
@@ -213,14 +213,14 @@ nreq(struct conn *c, const char *addr)
 
 	free(c->buf.buf);
 	c->buf.sz = g->bodypartsz;
-	c->buf.buf = malloc(c->buf.sz);	
+	c->buf.buf = malloc(c->buf.sz);
 	memcpy(c->buf.buf, g->bodypart, c->buf.sz);
 	http_get_free(g);
 	if (NULL == c->buf.buf) {
 		warn("malloc");
-		return(-1);
+		return (-1);
 	}
-	return(code);
+	return (code);
 }
 
 /*
@@ -240,74 +240,74 @@ sreq(struct conn *c, const char *addr, const char *req)
 	long		 code;
 
 	if (NULL == (host = url2host(c->na, &port, &path)))
-		return(-1);
+		return (-1);
 
 	if ((ssz = urlresolve(c->dfd, host, src)) < 0) {
 		free(host);
 		free(path);
-		return(-1);
+		return (-1);
 	}
 
 	g = http_get(src, (size_t)ssz, host, port, path, NULL, 0);
 	free(host);
 	free(path);
 	if (NULL == g)
-		return(-1);
+		return (-1);
 
 	h = http_head_get("Replay-Nonce", g->head, g->headsz);
 	if (NULL == h) {
 		warnx("%s: no replay nonce", c->na);
 		http_get_free(g);
-		return(-1);
+		return (-1);
 	} else if (NULL == (nonce = strdup(h->val))) {
 		warn("strdup");
 		http_get_free(g);
-		return(-1);
+		return (-1);
 	}
 	http_get_free(g);
 
-	/* 
+	/*
 	 * Send the nonce and request payload to the acctproc.
 	 * This will create the proper JSON object we need.
 	 */
 
 	if (writeop(c->fd, COMM_ACCT, ACCT_SIGN) <= 0) {
 		free(nonce);
-		return(-1);
+		return (-1);
 	} else if (writestr(c->fd, COMM_PAY, req) <= 0) {
 		free(nonce);
-		return(-1);
+		return (-1);
 	} else if (writestr(c->fd, COMM_NONCE, nonce) <= 0) {
 		free(nonce);
-		return(-1);
+		return (-1);
 	}
 	free(nonce);
 
 	/* Now read back the signed payload. */
 
 	if (NULL == (reqsn = readstr(c->fd, COMM_REQ)))
-		return(-1);
+		return (-1);
 
 	/* Now send the signed payload to the CA. */
 
 	if (NULL == (host = url2host(addr, &port, &path))) {
 		free(reqsn);
-		return(-1);
+		return (-1);
 	} else if ((ssz = urlresolve(c->dfd, host, src)) < 0) {
 		free(host);
 		free(path);
 		free(reqsn);
-		return(-1);
+		return (-1);
 	}
 
-	g = http_get(src, (size_t)ssz, host, 
+	g = http_get(src, (size_t)ssz, host,
 		port, path, reqsn, strlen(reqsn));
 
 	free(host);
 	free(path);
 	free(reqsn);
 	if (NULL == g)
-		return(-1);
+		return (-1);
 
 	/* Stuff response into parse buffer. */
 
@@ -315,14 +315,14 @@ sreq(struct conn *c, const char *addr, const char *req)
 
 	free(c->buf.buf);
 	c->buf.sz = g->bodypartsz;
-	c->buf.buf = malloc(c->buf.sz);	
+	c->buf.buf = malloc(c->buf.sz);
 	memcpy(c->buf.buf, g->bodypart, c->buf.sz);
 	http_get_free(g);
 	if (NULL == c->buf.buf) {
 		warn("malloc");
-		return(-1);
+		return (-1);
 	}
-	return(code);
+	return (code);
 }
 
 /*
@@ -331,7 +331,7 @@ sreq(struct conn *c, const char *addr, const char *req)
  * Returns non-zero on success.
  */
 static int
-donewreg(struct conn *c, const char *agreement, 
+donewreg(struct conn *c, const char *agreement,
 	const struct capaths *p)
 {
 	int		 rc;
@@ -355,7 +355,7 @@ donewreg(struct conn *c, const char *agreement,
 	if (0 == rc || verbose > 1)
 		buf_dump(&c->buf);
 	free(req);
-	return(rc);
+	return (rc);
 }
 
 /*
@@ -364,7 +364,7 @@ donewreg(struct conn *c, const char *agreement,
  * On non-zero exit, fills in "chng" with the challenge.
  */
 static int
-dochngreq(struct conn *c, const char *alt, 
+dochngreq(struct conn *c, const char *alt,
 	struct chng *chng, const struct capaths *p)
 {
 	int		 rc;
@@ -384,7 +384,7 @@ dochngreq(struct conn *c, const char *alt,
 		warnx("%s: bad HTTP: %ld", p->newauthz, lc);
 	else if (NULL == (j = json_parse(c->buf.buf, c->buf.sz)))
 		warnx("%s: bad JSON object", p->newauthz);
-	else if ( ! json_parse_challenge(j, chng)) 
+	else if ( ! json_parse_challenge(j, chng))
 		warnx("%s: bad challenge", p->newauthz);
 	else
 		rc = 1;
@@ -393,7 +393,7 @@ dochngreq(struct conn *c, const char *alt,
 		buf_dump(&c->buf);
 	json_free(j);
 	free(req);
-	return(rc);
+	return (rc);
 }
 
 /*
@@ -413,7 +413,7 @@ dochngresp(struct conn *c, const struct chng *chng, const char *th)
 		warnx("json_fmt_challenge");
 	else if ((lc = sreq(c, chng->uri, req)) < 0)
 		warnx("%s: bad comm", chng->uri);
-	else if (200 != lc && 201 != lc && 202 != lc) 
+	else if (200 != lc && 201 != lc && 202 != lc)
 		warnx("%s: bad HTTP: %ld", chng->uri, lc);
 	else
 		rc = 1;
@@ -421,7 +421,7 @@ dochngresp(struct conn *c, const struct chng *chng, const char *th)
 	if (0 == rc || verbose > 1)
 		buf_dump(&c->buf);
 	free(req);
-	return(rc);
+	return (rc);
 }
 
 /*
@@ -440,25 +440,25 @@ dochngcheck(struct conn *c, struct chng *chng)
 
 	if ((lc = nreq(c, chng->uri)) < 0) {
 		warnx("%s: bad comm", chng->uri);
-		return(0);
+		return (0);
 	} else if (200 != lc && 201 != lc && 202 != lc) {
 		warnx("%s: bad HTTP: %ld", chng->uri, lc);
 		buf_dump(&c->buf);
-		return(0);
+		return (0);
 	} else if (NULL == (j = json_parse(c->buf.buf, c->buf.sz))) {
 		warnx("%s: bad JSON object", chng->uri);
 		buf_dump(&c->buf);
-		return(0);
+		return (0);
 	} else if (-1 == (cc = json_parse_response(j))) {
 		warnx("%s: bad response", chng->uri);
 		buf_dump(&c->buf);
 		json_free(j);
-		return(0);
+		return (0);
 	} else if (cc > 0)
 		chng->status = 1;
 
 	json_free(j);
-	return(1);
+	return (1);
 }
 
 static int
@@ -487,7 +487,7 @@ dorevoke(struct conn *c, const char *addr, const char *cert)
 	if (0 == rc || verbose > 1)
 		buf_dump(&c->buf);
 	free(req);
-	return(rc);
+	return (rc);
 }
 
 /*
@@ -518,7 +518,7 @@ docert(struct conn *c, const char *addr, const char *cert)
 	if (0 == rc || verbose > 1)
 		buf_dump(&c->buf);
 	free(req);
-	return(rc);
+	return (rc);
 }
 
 /*
@@ -549,7 +549,7 @@ dodirs(struct conn *c, const char *addr, struct capaths *paths)
 	if (0 == rc || verbose > 1)
 		buf_dump(&c->buf);
 	json_free(j);
-	return(rc);
+	return (rc);
 }
 
 /*
@@ -573,7 +573,7 @@ dofullchain(struct conn *c, const char *addr)
 
 	if (0 == rc || verbose > 1)
 		buf_dump(&c->buf);
-	return(rc);
+	return (rc);
 }
 
 /*
@@ -583,7 +583,7 @@ dofullchain(struct conn *c, const char *addr)
  */
 int
 netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
-	int newacct, int revocate, int staging, 
+	int newacct, int revocate, int staging,
 	const char *const *alts, size_t altsz, const char *agreement)
 {
 	int		 rc;
@@ -591,7 +591,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 	char		*cert, *thumb, *url;
 	struct conn	 c;
 	struct capaths	 paths;
-	struct chng 	*chngs;
+	struct chng	*chngs;
 	long		 lval;
 
 	rc = 0;
@@ -602,7 +602,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 
 	/* File-system, user, and sandbox jail. */
 
-	if ( ! sandbox_before()) 
+	if ( ! sandbox_before())
 		goto out;
 	else if ( ! dropfs(PATH_VAR_EMPTY))
 		goto out;
@@ -611,7 +611,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 	else if ( ! sandbox_after())
 		goto out;
 
-	/* 
+	/*
 	 * Wait until the acctproc, keyproc, and revokeproc have started
 	 * up and are ready to serve us data.
 	 * There's no point in running if these don't work.
@@ -641,7 +641,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 	} else if (REVOKE_EXP != lval && REVOKE_OK != lval) {
 		warnx("unknown operation from revokeproc");
 		goto out;
-	} 
+	}
 
 	/* If our certificate is up-to-date, return now. */
 
@@ -649,7 +649,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 		rc = 1;
 		goto out;
 	}
-	
+
 	/* Allocate main state. */
 
 	chngs = calloc(altsz, sizeof(struct chng));
@@ -680,12 +680,12 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 	if (revocate) {
 		if (NULL == (cert = readstr(rfd, COMM_CSR)))
 			goto out;
-		if ( ! dorevoke(&c, paths.revokecert, cert)) 
+		if ( ! dorevoke(&c, paths.revokecert, cert))
 			goto out;
 		else if (writeop(cfd, COMM_CSR_OP, CERT_REVOKE) > 0)
 			rc = 1;
 		goto out;
-	} 
+	}
 
 	/* If new, register with the CA server. */
 
@@ -752,7 +752,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 			goto out;
 	}
 
-	/* 
+	/*
 	 * Write our acknowledgement that the challenges are over.
 	 * The challenge process will remove all of the files.
 	 */
@@ -770,14 +770,14 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 	 * copy, and ship that into the certificate process for copying.
 	 */
 
-	if ( ! docert(&c, paths.newcert, cert)) 
+	if ( ! docert(&c, paths.newcert, cert))
 		goto out;
 	else if (writeop(cfd, COMM_CSR_OP, CERT_UPDATE) <= 0)
 		goto out;
 	else if (writebuf(cfd, COMM_CSR, c.buf.buf, c.buf.sz) <= 0)
 		goto out;
 
-	/* 
+	/*
 	 * Read back the issuer from the certproc.
 	 * Then contact the issuer to get the certificate chain.
 	 * Write this chain directly back to the certproc.
@@ -807,5 +807,5 @@ out:
 			json_free_challenge(&chngs[i]);
 	free(chngs);
 	json_free_capaths(&paths);
-	return(rc);
+	return (rc);
 }
