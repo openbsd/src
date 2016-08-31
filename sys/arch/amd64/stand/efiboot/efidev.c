@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.18 2016/05/06 03:13:52 yasuoka Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.19 2016/08/31 15:11:22 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -32,6 +32,7 @@
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
 #include <lib/libz/zlib.h>
+#include <isofs/cd9660/iso.h>
 
 #include "libsa.h"
 #include "disk.h"
@@ -61,6 +62,7 @@ int bios_bootdev;
 static EFI_STATUS
 		 efid_io(int, efi_diskinfo_t, u_int, int, void *);
 static int	 efid_diskio(int, struct diskinfo *, u_int, int, void *);
+static int	 efi_getdisklabel_cd9660(efi_diskinfo_t, struct disklabel *);
 static u_int	 findopenbsd(efi_diskinfo_t, const char **);
 static u_int	 findopenbsd_gpt(efi_diskinfo_t, const char **);
 static int	 gpt_chk_mbr(struct dos_partition *, u_int64_t);
@@ -425,8 +427,11 @@ efi_getdisklabel(efi_diskinfo_t ed, struct disklabel *label)
 		return ("Disk I/O Error");
 
 	/* Check MBR signature. */
-	if (buf[510] != 0x55 || buf[511] != 0xaa)
+	if (buf[510] != 0x55 || buf[511] != 0xaa) {
+		if (efi_getdisklabel_cd9660(ed, label) == 0)
+			return (NULL);
 		return ("invalid MBR signature");
+	}
 
 	memcpy(dosparts, buf+DOSPARTOFF, sizeof(dosparts));
 
@@ -460,6 +465,66 @@ efi_getdisklabel(efi_diskinfo_t ed, struct disklabel *label)
 
 	/* Fill in disklabel */
 	return (getdisklabel(buf, label));
+}
+
+static int
+efi_getdisklabel_cd9660(efi_diskinfo_t ed, struct disklabel *label)
+{
+	int		 off;
+	uint8_t		 buf[DEV_BSIZE];
+	EFI_STATUS	 status;
+
+	for (off = 0; off < 100; off++) {
+		status = efid_io(F_READ, ed,
+		    EFI_BLKSPERSEC(ed) * (16 + off), 1, buf);
+		if (EFI_ERROR(status))
+			return (-1);
+		if (bcmp(buf + 1, ISO_STANDARD_ID, 5) != 0 ||
+		    buf[0] == ISO_VD_END)
+			return (-1);
+		if (buf[0] == ISO_VD_PRIMARY)
+			break;
+	}
+	if (off >= 100)
+		return (-1);
+
+	/* Create an imaginary disk label */
+	label->d_secsize = 2048;
+	label->d_ntracks = 1;
+	label->d_nsectors = 100;
+	label->d_ncylinders = 1;
+	label->d_secpercyl = label->d_ntracks * label->d_nsectors;
+	if (label->d_secpercyl == 0) {
+		label->d_secpercyl = 100;
+		/* as long as it's not 0, since readdisklabel divides by it */
+	}
+
+	strncpy(label->d_typename, "ATAPI CD-ROM", sizeof(label->d_typename));
+	label->d_type = DTYPE_ATAPI;
+
+	strncpy(label->d_packname, "fictitious", sizeof(label->d_packname));
+	DL_SETDSIZE(label, 100);
+
+	label->d_bbsize = 2048;
+	label->d_sbsize = 2048;
+
+	/* 'a' partition covering the "whole" disk */
+	DL_SETPOFFSET(&label->d_partitions[0], 0);
+	DL_SETPSIZE(&label->d_partitions[0], 100);
+	label->d_partitions[0].p_fstype = FS_UNUSED;
+
+	/* The raw partition is special */
+	DL_SETPOFFSET(&label->d_partitions[RAW_PART], 0);
+	DL_SETPSIZE(&label->d_partitions[RAW_PART], 100);
+	label->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+
+	label->d_npartitions = MAXPARTITIONS;
+
+	label->d_magic = DISKMAGIC;
+	label->d_magic2 = DISKMAGIC;
+	label->d_checksum = dkcksum(label);
+
+	return (0);
 }
 
 int
