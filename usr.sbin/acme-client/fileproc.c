@@ -1,4 +1,4 @@
-/*	$Id: fileproc.c,v 1.1 2016/08/31 22:01:42 florian Exp $ */
+/*	$Id: fileproc.c,v 1.2 2016/08/31 23:00:17 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -31,13 +31,13 @@
 #include "extern.h"
 
 static int
-serialise(const char *tmp, const char *real, 
+serialise(const char *tmp, const char *real,
 	const char *v, size_t vsz,
 	const char *v2, size_t v2sz)
 {
-	int 	 fd;
+	int	 fd;
 
-	/* 
+	/*
 	 * Write into backup location, overwriting.
 	 * Then atomically (?) do the rename.
 	 */
@@ -45,24 +45,24 @@ serialise(const char *tmp, const char *real,
 	fd = open(tmp, O_WRONLY|O_CREAT|O_TRUNC, 0444);
 	if (-1 == fd) {
 		warn("%s", tmp);
-		return(0);
+		return (0);
 	} else if ((ssize_t)vsz != write(fd, v, vsz)) {
 		warnx("%s", tmp);
 		close(fd);
-		return(0);
+		return (0);
 	} else if (NULL != v2 && (ssize_t)v2sz != write(fd, v2, v2sz)) {
 		warnx("%s", tmp);
 		close(fd);
-		return(0);
+		return (0);
 	} else if (-1 == close(fd)) {
 		warn("%s", tmp);
-		return(0);
+		return (0);
 	} else if (-1 == rename(tmp, real)) {
 		warn("%s", real);
-		return(0);
+		return (0);
 	}
 
-	return(1);
+	return (1);
 }
 
 int
@@ -91,7 +91,7 @@ fileproc(int certsock, int backup, const char *certdir)
 	/* Read our operation. */
 
 	op = FILE__MAX;
-	if (0 == (lval = readop(certsock, COMM_CHAIN_OP))) 
+	if (0 == (lval = readop(certsock, COMM_CHAIN_OP)))
 		op = FILE_STOP;
 	else if (FILE_CREATE == lval || FILE_REMOVE == lval)
 		op = lval;
@@ -102,8 +102,8 @@ fileproc(int certsock, int backup, const char *certdir)
 	} else if (FILE__MAX == op) {
 		warnx("unknown operation from certproc");
 		goto out;
-	} 
-	
+	}
+
 	/*
 	 * If we're backing up, then copy all files (found) by linking
 	 * them to the file followed by the epoch in seconds.
@@ -121,7 +121,7 @@ fileproc(int certsock, int backup, const char *certdir)
 			warnx("%s/%s", certdir, CERT_PEM);
 			goto out;
 		} else
-			dodbg("%s/%s: linked to %s", 
+			dodbg("%s/%s: linked to %s",
 				certdir, CERT_PEM, file);
 
 		snprintf(file, sizeof(file),
@@ -130,7 +130,7 @@ fileproc(int certsock, int backup, const char *certdir)
 			warnx("%s/%s", certdir, CHAIN_PEM);
 			goto out;
 		} else
-			dodbg("%s/%s: linked to %s", 
+			dodbg("%s/%s: linked to %s",
 				certdir, CHAIN_PEM, file);
 
 		snprintf(file, sizeof(file),
@@ -139,12 +139,12 @@ fileproc(int certsock, int backup, const char *certdir)
 			warnx("%s/%s", certdir, FCHAIN_PEM);
 			goto out;
 		} else
-			dodbg("%s/%s: linked to %s", 
+			dodbg("%s/%s: linked to %s",
 				certdir, FCHAIN_PEM, file);
 	}
 
-	/* 
-	 * If revoking certificates, just unlink the files. 
+	/*
+	 * If revoking certificates, just unlink the files.
 	 * We return the special error code of 2 to indicate that the
 	 * certificates were removed.
 	 */
@@ -217,5 +217,5 @@ out:
 	close(certsock);
 	free(csr);
 	free(ch);
-	return(rc);
+	return (rc);
 }
