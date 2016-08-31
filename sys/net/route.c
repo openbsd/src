@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.318 2016/08/30 23:29:39 dlg Exp $	*/
+/*	$OpenBSD: route.c,v 1.319 2016/08/31 08:13:17 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -928,11 +928,12 @@ rtrequest_delete(struct rt_addrinfo *info, u_int8_t prio, struct ifnet *ifp,
 		return (ESRCH);
 	}
 
-	/* clean up any cloned children */
-	if ((rt->rt_flags & RTF_CLONING) != 0)
-		rtflushclone(tableid, rt);
-
+	/* Release next hop cache before flushing cloned entries. */
 	rt_putgwroute(rt);
+
+	/* Clean up any cloned children. */
+	if (ISSET(rt->rt_flags, RTF_CLONING))
+		rtflushclone(tableid, rt);
 
 	rtfree(rt->rt_parent);
 	rt->rt_parent = NULL;
@@ -1178,11 +1179,6 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			return (EEXIST);
 		}
 		ifp->if_rtrequest(ifp, req, rt);
-
-		if ((rt->rt_flags & RTF_CLONING) != 0) {
-			/* clean up any cloned children */
-			rtflushclone(tableid, rt);
-		}
 
 		if_group_routechange(info->rti_info[RTAX_DST],
 			info->rti_info[RTAX_NETMASK]);
