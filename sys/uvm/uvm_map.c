@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.220 2016/08/11 01:17:33 dlg Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.221 2016/08/31 13:13:58 stefan Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -5304,8 +5304,7 @@ uvm_map_setup_md(struct vm_map *map)
 
 #if 0	/* Cool stuff, not yet */
 	/* Hinted allocations. */
-	map->uaddr_any[1] = uaddr_hint_create(MAX(min, VMMAP_MIN_ADDR), max,
-	    1024 * 1024 * 1024);
+	map->uaddr_any[1] = uaddr_hint_create(min, max, 1024 * 1024 * 1024);
 
 	/* Executable code is special. */
 	map->uaddr_exe = uaddr_rnd_create(min, I386_MAX_EXE_ADDR);
@@ -5340,12 +5339,10 @@ uvm_map_setup_md(struct vm_map *map)
 	map->uaddr_any[0] =
 	    uaddr_hint_create(0x100000000ULL, max, 1024 * 1024 * 1024);
 	/* Hinted allocations below 4GB */
-	map->uaddr_any[1] =
-	    uaddr_hint_create(MAX(min, VMMAP_MIN_ADDR), 0x100000000ULL,
+	map->uaddr_any[1] = uaddr_hint_create(min, 0x100000000ULL,
 	    1024 * 1024 * 1024);
 	/* Normal allocations, always above 4GB */
-	map->uaddr_any[3] =
-	    uaddr_pivot_create(MAX(min, 0x100000000ULL), max);
+	map->uaddr_any[3] = uaddr_pivot_create(MAX(min, 0x100000000ULL), max);
 #else	/* Crappy stuff, for now */
 	map->uaddr_any[0] = uaddr_rnd_create(min, max);
 #endif
@@ -5372,8 +5369,7 @@ uvm_map_setup_md(struct vm_map *map)
 
 #if 0	/* Cool stuff, not yet */
 	/* Hinted allocations. */
-	map->uaddr_any[1] = uaddr_hint_create(MAX(min, VMMAP_MIN_ADDR), max,
-	    1024 * 1024 * 1024);
+	map->uaddr_any[1] = uaddr_hint_create(min, max, 1024 * 1024 * 1024);
 	/* Normal allocations. */
 	map->uaddr_any[3] = uaddr_pivot_create(min, max);
 #else	/* Crappy stuff, for now */
