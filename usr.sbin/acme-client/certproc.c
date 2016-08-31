@@ -1,4 +1,4 @@
-/*	$Id: certproc.c,v 1.2 2016/08/31 22:42:19 benno Exp $ */
+/*	$Id: certproc.c,v 1.3 2016/08/31 23:53:58 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -49,11 +49,11 @@ x509buf(X509 *x, size_t *sz)
 
 	if (NULL == (bio = BIO_new(BIO_s_mem()))) {
 		warnx("BIO_new");
-		return(NULL);
+		return (NULL);
 	} else if ( ! PEM_write_bio_X509(bio, x)) {
 		warnx("PEM_write_bio_X509");
 		BIO_free(bio);
-		return(NULL);
+		return (NULL);
 	}
 
 	/*
@@ -64,19 +64,19 @@ x509buf(X509 *x, size_t *sz)
 	if (NULL == (p = calloc(1, bio->num_write + 1))) {
 		warn("calloc");
 		BIO_free(bio);
-		return(NULL);
+		return (NULL);
 	}
 
 	ssz = BIO_read(bio, p, bio->num_write);
 	if (ssz < 0 || (unsigned)ssz != bio->num_write) {
 		warnx("BIO_read");
 		BIO_free(bio);
-		return(NULL);
+		return (NULL);
 	}
 
 	*sz = ssz;
 	BIO_free(bio);
-	return(p);
+	return (p);
 }
 
 int
@@ -256,5 +256,5 @@ out:
 	free(chain);
 	ERR_print_errors_fp(stderr);
 	ERR_free_strings();
-	return(rc);
+	return (rc);
 }

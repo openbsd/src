@@ -1,4 +1,4 @@
-/*	$Id: base64.c,v 1.2 2016/08/31 22:42:19 benno Exp $ */
+/*	$Id: base64.c,v 1.3 2016/08/31 23:53:58 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -40,7 +40,7 @@ size_t
 base64len(size_t len)
 {
 
-	return(((len + 2) / 3 * 4) + 1);
+	return (((len + 2) / 3 * 4) + 1);
 }
 
 /*
@@ -99,7 +99,7 @@ base64buf(char *enc, const char *str, size_t len)
 	}
 
 	*p++ = '\0';
-	return(p - enc);
+	return (p - enc);
 }
 
 /*
@@ -115,7 +115,7 @@ base64buf_url(const char *data, size_t len)
 
 	sz = base64len(len);
 	if (NULL == (buf = malloc(sz)))
-		return(NULL);
+		return (NULL);
 
 	base64buf(buf, data, len);
 
@@ -127,5 +127,5 @@ base64buf_url(const char *data, size_t len)
 		else if ('=' == buf[i])
 			buf[i] = '\0';
 
-	return(buf);
+	return (buf);
 }
