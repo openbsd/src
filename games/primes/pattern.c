@@ -1,4 +1,4 @@
-/*	$OpenBSD: pattern.c,v 1.5 2009/10/27 23:59:26 deraadt Exp $	*/
+/*	$OpenBSD: pattern.c,v 1.6 2016/08/31 04:48:43 tb Exp $	*/
 /*	$NetBSD: pattern.c,v 1.3 1995/03/23 08:35:47 cgd Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  *
  * To avoid excessive sieves for small factors, we use the table below to 
  * setup our sieve blocks.  Each element represents a odd number starting 
- * with 1.  All non-zero elements are factors of 3, 5, 7, 11 and 13.
+ * with 1.  All non-zero elements are coprime to 3, 5, 7, 11 and 13.
  */
 
 const char pattern[] = {

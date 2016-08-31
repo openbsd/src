@@ -1,4 +1,4 @@
-/*	$OpenBSD: primes.c,v 1.22 2016/03/07 12:07:56 mestre Exp $	*/
+/*	$OpenBSD: primes.c,v 1.23 2016/08/31 04:48:43 tb Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -64,9 +64,9 @@
 /*
  * Eratosthenes sieve table
  *
- * We only sieve the odd numbers.  The base of our sieve windows are always
- * odd.  If the base of table is 1, table[i] represents 2*i-1.  After the
- * sieve, table[i] == 1 if and only iff 2*i-1 is prime.
+ * We only sieve the odd numbers.  The base of our sieve windows is always odd.
+ * If the base of the table is 1, table[i] represents 2*i-1.  After the sieve,
+ * table[i] == 1 if and only if 2*i-1 is prime.
  *
  * We make TABSIZE large to reduce the overhead of inner loop setup.
  */
@@ -75,16 +75,16 @@ char table[TABSIZE];	 /* Eratosthenes sieve of odd numbers */
 /*
  * prime[i] is the (i+1)th prime.
  *
- * We are able to sieve 2^32-1 because this byte table yields all primes 
+ * We are able to sieve 2^32-1 because this byte table yields all primes
  * up to 65537 and 65537^2 > 2^32-1.
  */
 extern const ubig prime[];
 extern const ubig *pr_limit;		/* largest prime in the prime array */
 
 /*
- * To avoid excessive sieves for small factors, we use the table below to 
- * setup our sieve blocks.  Each element represents a odd number starting 
- * with 1.  All non-zero elements are factors of 3, 5, 7, 11 and 13.
+ * To avoid excessive sieves for small factors, we use the table below to
+ * setup our sieve blocks.  Each element represents an odd number starting
+ * with 1.  All non-zero elements are coprime to 3, 5, 7, 11 and 13.
  */
 extern const char pattern[];
 extern const int pattern_size;	/* length of pattern array */
