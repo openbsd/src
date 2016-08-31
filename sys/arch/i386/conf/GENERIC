@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.818 2016/08/31 12:46:45 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.819 2016/08/31 15:51:47 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -733,24 +733,9 @@ audio*	at emu?
 
 bktr0	at pci?
 
-# FM-Radio devices
-#gtp*	at pci?			# Gemtek/Guillemot Radio PCI Radio Card
-#sfr0	at isa? port 0x384	# SoundForte RadioLink SF16-FMR FM Radio Card
-#sf2r0	at isa? port 0x384	# SoundForte RadioLink SF16-FMR2 FM Radio Card
-#az0	at isa? port 0x350	# Aztech/PackardBell FM Radio Card
-#rt0	at isa? port 0x30c	# AIMS Lab Radiotrack FM Radio Card
-#rt*	at isapnp?
-#rtii0	at isa? port 0x30c	# AIMS Lab Radiotrack II FM Radio Card
-
 # FM-Radio support
 radio*	at bktr?
 radio*	at fms?
-#radio*	at gtp?
-#radio*	at sfr?
-#radio*	at sf2r?
-#radio*	at az?
-#radio*	at rt?
-#radio*	at rtii?
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
