@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.49 2016/08/31 10:06:41 tedu Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.50 2016/08/31 12:41:19 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,6 +44,7 @@
 #include <unistd.h>
 #include <util.h>
 #include <login_cap.h>
+#include <readpassphrase.h>
 
 #define UNCHANGED_MSG	"Password unchanged."
 
@@ -151,9 +152,9 @@ char *
 getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 {
 	static char hash[_PASSWORD_LEN];
+	char newpass[_PASSWORD_LEN + 1];
 	char *p, *pref;
 	int tries, pwd_tries;
-	char buf[1024];
 	sig_t saveint, savequit;
 
 	saveint = signal(SIGINT, kbintr);
@@ -162,7 +163,10 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 	if (!authenticated) {
 		(void)printf("Changing password for %s.\n", pw->pw_name);
 		if (uid != 0 && pw->pw_passwd[0] != '\0') {
-			p = getpass("Old password:");
+			char oldpass[_PASSWORD_LEN + 1];
+
+			p = readpassphrase("Old password:", oldpass,
+			    sizeof(oldpass), RPP_ECHO_OFF);
 			if (p == NULL || *p == '\0') {
 				(void)printf("%s\n", UNCHANGED_MSG);
 				pw_abort();
@@ -177,8 +181,11 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 
 	pwd_tries = pwd_gettries(lc);
 
-	for (buf[0] = '\0', tries = 0;;) {
-		p = getpass("New password:");
+	for (newpass[0] = '\0', tries = 0;;) {
+		char repeat[_PASSWORD_LEN + 1];
+
+		p = readpassphrase("New password:", newpass, sizeof(newpass),
+		    RPP_ECHO_OFF);
 		if (p == NULL || *p == '\0') {
 			(void)printf("%s\n", UNCHANGED_MSG);
 			pw_abort();
@@ -192,9 +199,9 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 		if ((tries++ < pwd_tries || pwd_tries == 0) &&
 		    pwd_check(lc, p) == 0)
 			continue;
-		strlcpy(buf, p, sizeof(buf));
-		p = getpass("Retype new password:");
-		if (p != NULL && strcmp(buf, p) == 0)
+		p = readpassphrase("Retype new password:", repeat, sizeof(repeat),
+		    RPP_ECHO_OFF);
+		if (p != NULL && strcmp(newpass, p) == 0)
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
@@ -203,7 +210,7 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 	(void)signal(SIGQUIT, savequit);
 
 	pref = login_getcapstr(lc, "localcipher", NULL, NULL);
-	if (crypt_newhash(buf, pref, hash, sizeof(hash)) != 0) {
+	if (crypt_newhash(newpass, pref, hash, sizeof(hash)) != 0) {
 		(void)printf("Couldn't generate hash.\n");
 		pw_error(NULL, 0, 0);
 	}
