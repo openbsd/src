@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.67 2016/05/11 21:52:49 deraadt Exp $
+.\"	$OpenBSD: diskless.8,v 1.68 2016/09/01 09:53:08 tedu Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 11 2016 $
+.Dd $Mdocdate: September 1 2016 $
 .Dt DISKLESS 8
 .Os
 .Sh NAME
@@ -173,7 +173,7 @@ Assign an IP address for myclient in
 .Ed
 .It
 If booting an alpha, amd64, hppa, i386, sgi,
-sparc, or sparc64 client,
+or sparc64 client,
 ensure that
 .Xr tftpd 8
 is configured to run in the directory
@@ -192,12 +192,8 @@ See the
 manual page for more information.
 .It
 If booting a newer alpha, amd64, hppa, i386, sgi,
-sparc, or sparc64 client,
-install a copy of the appropriate diskless boot loader (such as
-.Pa boot.net
-from the root directory of the
-.Ox
-sparc tree) in the
+or sparc64 client,
+install a copy of the appropriate diskless boot loader in the
 .Pa /tftpboot
 directory.
 .Pp
@@ -368,7 +364,7 @@ For all clients:
 and
 .Xr rpc.bootparamd 8 .
 .Pp
-For alpha, amd64, hppa, i386, sgi, sparc, and sparc64 clients:
+For alpha, amd64, hppa, i386, sgi, and sparc64 clients:
 .Xr tftpd 8
 .Pp
 For HP 300 and older HPPA clients:
