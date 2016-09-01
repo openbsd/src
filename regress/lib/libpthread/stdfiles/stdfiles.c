@@ -1,5 +1,4 @@
-/* $OpenBSD: stdfiles.c,v 1.3 2016/03/20 00:01:22 krw Exp $ */
-/* $snafu: stdfiles.c,v 1.3 2003/02/03 21:22:26 marc Exp $ */
+/* $OpenBSD: stdfiles.c,v 1.4 2016/09/01 10:56:45 deraadt Exp $ */
 /* PUBLIC DOMAIN Oct 2002 Marco S Hyman <marc@snafu.org> */
 
 #include <assert.h>

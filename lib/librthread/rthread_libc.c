@@ -1,5 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.15 2016/09/01 10:41:02 otto Exp $ */
-/* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.16 2016/09/01 10:56:46 deraadt Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 

@@ -1,5 +1,4 @@
-/* $OpenBSD: rthread_stack.c,v 1.14 2015/01/24 10:35:33 kettenis Exp $ */
-/* $snafu: rthread_stack.c,v 1.12 2005/01/11 02:45:28 marc Exp $ */
+/* $OpenBSD: rthread_stack.c,v 1.15 2016/09/01 10:56:46 deraadt Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
