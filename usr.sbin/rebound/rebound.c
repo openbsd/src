@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.68 2016/09/01 10:54:36 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.69 2016/09/01 10:55:21 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -114,8 +114,8 @@ logmsg(int prio, const char *msg, ...)
 
 	if (debug || !daemonized) {
 		va_start(ap, msg);
-		vfprintf(stderr, msg, ap);
-		fprintf(stderr, "\n");
+		vfprintf(stdout, msg, ap);
+		fprintf(stdout, "\n");
 		va_end(ap);
 	}
 	if (!debug) {
