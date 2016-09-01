@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.56 2016/07/04 04:05:29 guenther Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.57 2016/09/01 14:12:07 tedu Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -89,6 +89,8 @@ struct nlist dump_nl[] = {	/* Name list for dumped system. */
 	{ NULL },
 };
 
+#define VERSIONSIZE 512
+
 /* Types match kernel declarations. */
 long	dumplo;			/* where dump starts on dumpdev (in blocks) */
 off_t	dumpoff;		/* where dump starts on dumpdev (in bytes) */
@@ -105,7 +107,7 @@ kvm_t	*kd_dump;		/* kvm descriptor on block dev	*/
 time_t	now;			/* current date */
 char	panic_mesg[1024];
 int	panicstr;
-char	vers[1024];
+char	vers[VERSIONSIZE];
 
 int	clear, zcompress, force, verbose;	/* flags */
 
@@ -294,7 +296,7 @@ check_kmem(void)
 {
 	char	*cp;
 	int	panicloc;
-	char core_vers[1024];
+	char core_vers[VERSIONSIZE];
 
 	if (kvm_read(kd_dump, dump_nl[X_VERSION].n_value, core_vers,
 	    sizeof(core_vers)) != sizeof(core_vers)) {
