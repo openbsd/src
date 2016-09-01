@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.77 2016/08/18 00:44:37 jsg Exp $ */
+/*	$OpenBSD: cgi.c,v 1.78 2016/09/01 15:07:19 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@usta.de>
@@ -114,15 +114,15 @@ static	const char *const arch_names[] = {
     "amd64",       "alpha",       "armv7",
     "hppa",        "i386",        "landisk",
     "loongson",    "luna88k",     "macppc",      "mips64",
-    "octeon",      "sgi",         "socppc",      "sparc",
+    "octeon",      "sgi",         "socppc",
     "sparc64",     "zaurus",
     "amiga",       "arc",         "armish",      "arm32",
     "atari",       "aviion",      "beagle",      "cats",
     "hppa64",      "hp300",
     "ia64",        "mac68k",      "mvme68k",     "mvme88k",
     "mvmeppc",     "palm",        "pc532",       "pegasos",
-    "pmax",        "powerpc",     "solbourne",   "sun3",
-    "vax",         "wgrisc",      "x68k"
+    "pmax",        "powerpc",     "solbourne",   "sparc",
+    "sun3",        "vax",         "wgrisc",      "x68k"
 };
 static	const int arch_MAX = sizeof(arch_names) / sizeof(char *);
 
