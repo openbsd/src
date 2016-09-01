@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.23 2016/09/01 14:19:33 eric Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.24 2016/09/01 15:12:45 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -554,15 +554,11 @@ m_add_mailaddr(struct mproc *m, const struct mailaddr *maddr)
 void
 m_add_envelope(struct mproc *m, const struct envelope *evp)
 {
-#if 0
-	m_add_typed(m, M_ENVELOPE, evp, sizeof(*evp));
-#else
 	char	buf[sizeof(*evp)];
 
 	envelope_dump_buffer(evp, buf, sizeof(buf));
 	m_add_evpid(m, evp->id);
 	m_add_typed_sized(m, M_ENVELOPE, buf, strlen(buf) + 1);
-#endif
 }
 #endif
 
@@ -671,9 +667,6 @@ m_get_mailaddr(struct msg *m, struct mailaddr *maddr)
 void
 m_get_envelope(struct msg *m, struct envelope *evp)
 {
-#if 0
-	m_get_typed(m, M_ENVELOPE, evp, sizeof(*evp));
-#else
 	uint64_t	 evpid;
 	size_t		 s;
 	const void	*d;
@@ -684,7 +677,6 @@ m_get_envelope(struct msg *m, struct envelope *evp)
 	if (!envelope_load_buffer(evp, d, s - 1))
 		fatalx("failed to retrieve envelope");
 	evp->id = evpid;
-#endif
 }
 #endif
 
