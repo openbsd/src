@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.177 2016/08/22 16:12:52 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.178 2016/09/01 15:07:46 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -1018,7 +1018,7 @@ mlink_check(struct mpage *mpage, struct mlink *mlink)
 	 * architectures.
 	 * A few manuals are even shared across completely
 	 * different architectures, for example fdformat(1)
-	 * on amd64, i386, sparc, and sparc64.
+	 * on amd64, i386, and sparc64.
 	 */
 
 	if (strcasecmp(mpage->arch, mlink->arch))
