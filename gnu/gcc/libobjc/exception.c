@@ -28,9 +28,40 @@ Boston, MA 02110-1301, USA.  */
 #include "config.h"
 #include "objc/objc-api.h"
 #include "unwind.h"
+
+#ifdef __ARM_EABI_UNWINDER__
+#define NO_SIZE_OF_ENCODED_VALUE
+#endif
+
 #include "unwind-pe.h"
 
 
+#ifdef __ARM_EABI_UNWINDER__
+
+static inline void
+__OBJC_INIT_EXCEPTION_CLASS(_Unwind_Exception_Class c)
+{
+  c[0] = 'G';
+  c[1] = 'N';
+  c[2] = 'U';
+  c[3] = 'C';
+  c[4] = 'C';
+  c[5] = '+';
+  c[6] = '+';
+  c[7] = '\0';
+}
+
+#define CONTINUE_UNWINDING \
+  do								\
+    {								\
+      if (__gnu_unwind_frame(ue_header, context) != _URC_OK)	\
+	return _URC_FAILURE;					\
+      return _URC_CONTINUE_UNWIND;				\
+    }								\
+  while (0)
+
+#else /* !__ARM_EABI_UNWINDER__ */
+
 /* This is the exception class we report -- "GNUCOBJC".  */
 #define __objc_exception_class			\
   ((((((((_Unwind_Exception_Class) 'G'		\
@@ -41,6 +72,12 @@ Boston, MA 02110-1301, USA.  */
      << 8 | (_Unwind_Exception_Class) 'B')	\
     << 8 | (_Unwind_Exception_Class) 'J')	\
    << 8 | (_Unwind_Exception_Class) 'C')
+
+#define __OBJC_INIT_EXCEPTION_CLASS(c) c = __objc_exception_class
+
+#define CONTINUE_UNWINDING return _URC_CONTINUE_UNWIND
+
+#endif /* !__ARM_EABI_UNWINDER__ */
 
 /* This is the object that is passed around by the Objective C runtime
    to represent the exception in flight.  */
@@ -106,6 +143,25 @@ parse_lsda_header (struct _Unwind_Context *context, const unsigned char *p,
   return p;
 }
 
+#ifdef __ARM_EABI_UNWINDER__
+
+static Class
+get_ttype_entry (struct lsda_header_info *info, _Unwind_Word i)
+{
+  _Unwind_Ptr ptr;
+
+  ptr = (_Unwind_Ptr) (info->TType - (i * 4));
+  ptr = _Unwind_decode_target2(ptr);
+  
+  /* NULL ptr means catch-all.  */
+  if (ptr)
+    return objc_get_class ((const char *) ptr);
+  else
+    return 0;
+}
+
+#else
+
 static Class
 get_ttype_entry (struct lsda_header_info *info, _Unwind_Word i)
 {
@@ -121,6 +177,8 @@ get_ttype_entry (struct lsda_header_info *info, _Unwind_Word i)
   else
     return 0;
 }
+
+#endif
 
 /* Like unto the method of the same name on Object, but takes an id.  */
 /* ??? Does this bork the meta-type system?  Can/should we look up an
@@ -151,11 +209,17 @@ isKindOf (id value, Class target)
 #endif
 
 _Unwind_Reason_Code
+#ifdef __ARM_EABI_UNWINDER__
+PERSONALITY_FUNCTION (_Unwind_State state,
+		      struct _Unwind_Exception *ue_header,
+		      struct _Unwind_Context *context)
+#else
 PERSONALITY_FUNCTION (int version,
 		      _Unwind_Action actions,
 		      _Unwind_Exception_Class exception_class,
 		      struct _Unwind_Exception *ue_header,
 		      struct _Unwind_Context *context)
+#endif
 {
   struct ObjcException *xh = (struct ObjcException *) ue_header;
 
@@ -167,17 +231,56 @@ PERSONALITY_FUNCTION (int version,
   int handler_switch_value;
   int saw_cleanup = 0, saw_handler;
   void *return_object;
+  int foreign_exception;
+  int ip_before_insn = 0;
 
+#ifdef __ARM_EABI_UNWINDER__
+  _Unwind_Action actions;
+
+  switch (state & _US_ACTION_MASK)
+    {
+    case _US_VIRTUAL_UNWIND_FRAME:
+      actions = _UA_SEARCH_PHASE;
+      break;
+
+    case _US_UNWIND_FRAME_STARTING:
+      actions = _UA_CLEANUP_PHASE;
+      if (!(state & _US_FORCE_UNWIND)
+	  && ue_header->barrier_cache.sp == _Unwind_GetGR(context, 13))
+	actions |= _UA_HANDLER_FRAME;
+      break;
+
+    case _US_UNWIND_FRAME_RESUME:
+      CONTINUE_UNWINDING;
+      break;
+
+    default:
+      abort();
+    }
+  actions |= state & _US_FORCE_UNWIND;
+
+  foreign_exception = 0;
+
+  ip = (_Unwind_Ptr) ue_header;
+  _Unwind_SetGR(context, 12, ip);
+#else
   /* Interface version check.  */
   if (version != 1)
     return _URC_FATAL_PHASE1_ERROR;
+  foreign_exception = !(exception_class == __objc_exception_class);
+#endif
 
   /* Shortcut for phase 2 found handler for domestic exception.  */
   if (actions == (_UA_CLEANUP_PHASE | _UA_HANDLER_FRAME)
-      && exception_class == __objc_exception_class)
+      && !foreign_exception)
     {
+#ifdef __ARM_EABI_UNWINDER__
+      handler_switch_value = (int) ue_header->barrier_cache.bitpattern[1];
+      landing_pad = (_Unwind_Ptr) ue_header->barrier_cache.bitpattern[3];
+#else
       handler_switch_value = xh->handlerSwitchValue;
       landing_pad = xh->landingPad;
+#endif
       goto install_context;
     }
 
@@ -186,12 +289,18 @@ PERSONALITY_FUNCTION (int version,
 
   /* If no LSDA, then there are no handlers or cleanups.  */
   if (! language_specific_data)
-    return _URC_CONTINUE_UNWIND;
+    CONTINUE_UNWINDING;
 
   /* Parse the LSDA header.  */
   p = parse_lsda_header (context, language_specific_data, &info);
   info.ttype_base = base_of_encoded_value (info.ttype_encoding, context);
-  ip = _Unwind_GetIP (context) - 1;
+#ifdef HAVE_GETIPINFO
+  ip = _Unwind_GetIPInfo (context, &ip_before_insn);
+#else
+  ip = _Unwind_GetIP (context);
+#endif
+  if (! ip_before_insn)
+    --ip;
   landing_pad = 0;
   action_record = 0;
   handler_switch_value = 0;
@@ -288,7 +397,7 @@ PERSONALITY_FUNCTION (int version,
 	  /* During forced unwinding, we only run cleanups.  With a
 	     foreign exception class, we have no class info to match.  */
 	  else if ((actions & _UA_FORCE_UNWIND)
-		   || exception_class != __objc_exception_class)
+		   || foreign_exception)
 	    ;
 
 	  else if (ar_filter > 0)
@@ -318,18 +427,25 @@ PERSONALITY_FUNCTION (int version,
     }
 
   if (! saw_handler && ! saw_cleanup)
-    return _URC_CONTINUE_UNWIND;
+    CONTINUE_UNWINDING;
 
   if (actions & _UA_SEARCH_PHASE)
     {
       if (!saw_handler)
-	return _URC_CONTINUE_UNWIND;
+	CONTINUE_UNWINDING;
 
       /* For domestic exceptions, we cache data from phase 1 for phase 2.  */
-      if (exception_class == __objc_exception_class)
+      if (!foreign_exception)
         {
+#ifdef __ARM_EABI_UNWIDER__
+	  ue_header->barrier_cache.sp = _Unwind_GetGR(context, 13);
+	  ue_header->barrier_cache.bitpattern[1]
+	    = (_uw) handler_switch_value;
+	  ue_header->barrier_cache.bitpattern[3] = (_uw) landing_pad;
+#else
           xh->handlerSwitchValue = handler_switch_value;
           xh->landingPad = landing_pad;
+#endif
 	}
       return _URC_HANDLER_FOUND;
     }
@@ -361,7 +477,7 @@ void
 objc_exception_throw (id value)
 {
   struct ObjcException *header = calloc (1, sizeof (*header));
-  header->base.exception_class = __objc_exception_class;
+  __OBJC_INIT_EXCEPTION_CLASS(header->base.exception_class);
   header->base.exception_cleanup = __objc_exception_cleanup;
   header->value = value;
 
