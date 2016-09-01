@@ -1,4 +1,4 @@
-.\"	$Id: acme-client.1,v 1.3 2016/08/31 23:44:58 florian Exp $
+.\"	$OpenBSD: acme-client.1,v 1.4 2016/09/01 08:45:58 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,36 +14,36 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 31 2016 $
-.Dt acme-client 1
+.Dd $Mdocdate: September 1 2016 $
+.Dt ACME-CLIENT 1
 .Os
 .Sh NAME
 .Nm acme-client
 .Nd secure Let's Encrypt client
 .Sh SYNOPSIS
 .Nm acme-client
-.Op Fl bFmnNrsv
+.Op Fl bFmNnrsv
 .Op Fl a Ar agreement
 .Op Fl C Ar challengedir
 .Op Fl c Ar certdir
 .Op Fl f Ar accountkey
 .Op Fl k Ar domainkey
 .Ar domain
-.Op Ar altnames...
+.Op Ar altname ...
 .Sh DESCRIPTION
 The
 .Nm
 utility submits an X509 certificate for
 .Ar domain
 and its alternate DNS names
-.Ar altnames
+.Ar altname
 to a
-.Dq Let's Encrypt
+.Qq Let's Encrypt
 server for automated signing.
-It can also revoke previously-submitted signatures.
-It must be run as root.
-(Why?
-.Xr chroot 2 . )
+It can also revoke previously submitted signatures.
+It must be run as root
+(see
+.Xr chroot 2 ) .
 .Pp
 By default, it uses
 .Pa /var/www/acme
@@ -59,69 +59,45 @@ and
 .Pa /etc/acme/privkey.pem
 for the account private key
 .Pq Fl f .
-All of these must exist unless you use
+All of these must exist unless
 .Fl n
 and/or
-.Fl N ,
-which will generate the account and domain private keys, respectively.
-Its arguments are as follows:
+.Fl N
+are being used,
+which generates an account and domain private keys, respectively.
+.Pp
+The options are as follows:
 .Bl -tag -width Ds
+.It Fl a Ar agreement
+Use an alternative agreement URL.
+The default uses the current one, but it may be out of date.
 .It Fl b
-Back up all
-.Sx Certificates
-in the certificate directory.
-This will only back up if something will be done to them (remove or
-replace).
-The backups are called
+Back up all certificates in the certificate directory.
+This only happens if a remove or replace operation is possible.
+The backups are named
 .Pa cert-NNNNN.pem ,
 .Pa chain-NNNNN.pem ,
 and
 .Pa fullchain-NNNNN.pem ,
 where
 .Li NNNNN
-is the current UNIX epoch.
-Any given backup effort will use the same epoch time for all three
-certificates.
-If there are no certificates in place, this does nothing.
-.It Fl F
-Force updating the certificate signature even if it's too soon.
-.It Fl m
-Append
-.Ar domain
-to all default paths except the challenge path
-.Pq i.e., those that are overriden by Fl c , k , f .
-Thus,
-.Ar foo.com
-as the initial domain would make the default domain private key into
-.Pa /etc/ssl/acme/private/foo.com/privkey.pem .
-This is useful in setups with multiple domain sets.
-.It Fl n
-Create a new 4096-bit RSA account key if one does not already exist.
-.It Fl N
-Create a new 4096-bit RSA domain key if one does not already exist.
-.It Fl r
-Revoke the X509 certificate found in
-.Sx Certificates .
-.It Fl s
-Use the
-.Dq Let's Encrypt
-staging server instead of the real thing.
-.It Fl v
-Verbose operation.
-Specify twice to also trace communication and data transfers.
-.It Fl a Ar agreement
-Use an alternative agreement URL.
-The default uses the current one, but it may be out of date.
+is the current
+.Ux
+Epoch.
+Any given backup uses the same Epoch time for all three certificates.
+If there are no certificates in place, this option does nothing.
 .It Fl C Ar challengedir
-Where to register challenges.
+The directory to register challenges.
 See
 .Sx Challenges
 for details.
 .It Fl c Ar certdir
-Where to put public certificates.
+The directory to store public certificates.
 See
 .Sx Certificates
 for details.
+.It Fl F
+Force updating the certificate signature even if it's too soon.
 .It Fl f Ar accountkey
 The account private key.
 This was either made with a previous
@@ -132,22 +108,45 @@ client or with
 The private key for the domain.
 This may also be created with
 .Fl N .
+.It Fl m
+Append
+.Ar domain
+to all default paths except the challenge path
+.Pq i.e. those that are overridden by Fl c , k , f .
+Thus,
+.Ar foo.com
+as the initial domain would make the default domain private key into
+.Pa /etc/ssl/acme/private/foo.com/privkey.pem .
+This is useful in setups with multiple domain sets.
+.It Fl N
+Create a new 4096-bit RSA domain key if one does not already exist.
+.It Fl n
+Create a new 4096-bit RSA account key if one does not already exist.
+.It Fl r
+Revoke the X509 certificate found in the certificates.
+.It Fl s
+Use the
+.Dq Let's Encrypt
+staging server instead of the real thing.
+.It Fl v
+Verbose operation.
+Specify twice to also trace communication and data transfers.
 .It Ar domain
 The domain name.
-The only difference between this and the
-.Ar altnames
+The only difference between this and
+.Ar altname
 is that it's put into the certificate's
 .Li CN
-field and is use the
-.Dq main
+field and it uses the
+.Qq main
 domain when specifying
 .Fl m .
-.It Ar altnames
+.It Ar altname
 Alternative names
 .Pq Dq SAN
 for the domain name.
 The number of SAN entries is limited by
-.Dq Let's Encrypt
+.Qq Let's Encrypt
 to 100 or so.
 .El
 .Pp
@@ -159,21 +158,22 @@ In this, the
 is the ACME server for Let's Encrypt.
 .Bl -enum
 .It
-Access the CA (unauthenticated) and requests its list of resources.
+Access the CA (unauthenticated) and request its list of resources.
 .It
 Optionally create and register a new RSA account key.
 .It
 Read and process the RSA account key.
 This is used to authenticate each subsequent communication to the CA.
 .It
-For each domain name,
-.Bl -enum
+For each domain name:
+.Pp
+.Bl -enum -compact
 .It
-submit a challenge for authentication to the CA,
+submit a challenge for authentication to the CA
 .It
-create a challenge response file,
+create a challenge response file
 .It
-wait until the CA has verified the challenge.
+wait until the CA has verified the challenge
 .El
 .It
 Read and extract the domain key.
@@ -193,7 +193,7 @@ Download the certificate chain from the issuer.
 The revocation sequence is similar:
 .Bl -enum
 .It
-Request list of resources, manage RSA account key as in the case for
+Request a list of resources, and manage the RSA account key as in the case for
 signing.
 .It
 Read and extract the X509 certificate (if found).
@@ -243,7 +243,7 @@ These are all created as the root user with mode 444.
 The
 .Pa cert.pem
 file, if found, is checked for its expiration: if more than 30 days from
-expiring,
+expiry,
 .Nm
 will not attempt to refresh the signature.
 .Sh EXIT STATUS
