@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.4 2016/09/01 08:45:58 jmc Exp $
+.\"	$OpenBSD: acme-client.1,v 1.5 2016/09/01 10:15:28 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm acme-client
-.Nd secure Let's Encrypt client
+.Nd ACME client
 .Sh SYNOPSIS
 .Nm acme-client
 .Op Fl bFmNnrsv
@@ -29,18 +29,18 @@
 .Op Fl f Ar accountkey
 .Op Fl k Ar domainkey
 .Ar domain
-.Op Ar altname ...
+.Op Ar altnames
 .Sh DESCRIPTION
 The
 .Nm
-utility submits an X509 certificate for
+utility is an
+Automatic Certificate Management Environment (ACME) client.
+It submits an X509 certificate for
 .Ar domain
 and its alternate DNS names
-.Ar altname
-to a
-.Qq Let's Encrypt
-server for automated signing.
-It can also revoke previously submitted signatures.
+.Ar altnames
+to an ACME authority server for automated signing,
+and it can also revoke previously submitted signatures.
 It must be run as root
 (see
 .Xr chroot 2 ) .
@@ -100,9 +100,7 @@ for details.
 Force updating the certificate signature even if it's too soon.
 .It Fl f Ar accountkey
 The account private key.
-This was either made with a previous
-.Dq Let's Encrypt
-client or with
+This was either made with a previous client or with
 .Fl n .
 .It Fl k Ar domainkey
 The private key for the domain.
@@ -125,37 +123,30 @@ Create a new 4096-bit RSA account key if one does not already exist.
 .It Fl r
 Revoke the X509 certificate found in the certificates.
 .It Fl s
-Use the
-.Dq Let's Encrypt
-staging server instead of the real thing.
+Use a staging server instead of the real thing.
 .It Fl v
 Verbose operation.
 Specify twice to also trace communication and data transfers.
 .It Ar domain
 The domain name.
 The only difference between this and
-.Ar altname
+.Ar altnames
 is that it's put into the certificate's
 .Li CN
 field and it uses the
 .Qq main
 domain when specifying
 .Fl m .
-.It Ar altname
+.It Ar altnames
 Alternative names
 .Pq Dq SAN
 for the domain name.
-The number of SAN entries is limited by
-.Qq Let's Encrypt
-to 100 or so.
+The number of SAN entries is limited to 100 or so.
 .El
 .Pp
 The process by which
 .Nm
 obtains signed certificates is roughly as follows.
-In this, the
-.Dq CA
-is the ACME server for Let's Encrypt.
 .Bl -enum
 .It
 Access the CA (unauthenticated) and request its list of resources.
@@ -205,7 +196,7 @@ Submit a request for revocation to the CA.
 Remove the certificate, the chain, and the full-chain.
 .El
 .Ss Challenges
-Let's Encrypt uses challenges to verify that the submitter has access to
+Challenges are used to verify that the submitter has access to
 the registered domains.
 .Nm
 implements only the
@@ -226,8 +217,8 @@ with this location block:
 .Pp
 This way, the files placed in
 .Pa /var/www/acme
-will be properly mapped by the web server when the Let's Encrypt
-responds to a challenge.
+will be properly mapped by the web server during response challenges
+with the authority server.
 .Ss Certificates
 Public certificates (domain certificate, chain, and the full-chain) are
 placed by default in
@@ -276,6 +267,11 @@ fi
 .Sh SEE ALSO
 .Xr openssl 1 ,
 .Xr httpd.conf 5
+.Sh STANDARDS
+.Rs
+.%U https://tools.ietf.org/html/draft-ietf-acme-acme-03
+.%T Automatic Certificate Management Environment (ACME)
+.Re
 .Sh AUTHORS
 The
 .Nm
