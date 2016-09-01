@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.197 2016/09/01 09:22:58 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.198 2016/09/01 09:35:28 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -603,7 +603,7 @@ route_output(struct mbuf *m, ...)
 			goto flush;
 		}
 
-		rt = rtalloc(info.rti_info[RTAX_DST], 0, tableid);
+		rt = rtable_match(tableid, info.rti_info[RTAX_DST], NULL);
 		if ((error = route_arp_conflict(rt, &info))) {
 			rtfree(rt);
 			rt = NULL;
