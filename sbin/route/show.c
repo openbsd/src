@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.104 2016/07/13 08:40:46 mpi Exp $	*/
+/*	$OpenBSD: show.c,v 1.105 2016/09/01 09:41:34 bluhm Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -74,7 +74,6 @@ static const struct bits bits[] = {
 	{ RTF_GATEWAY,	'G' },
 	{ RTF_HOST,	'H' },
 	{ RTF_REJECT,	'R' },
-	{ RTF_BLACKHOLE, 'B' },
 	{ RTF_DYNAMIC,	'D' },
 	{ RTF_MODIFIED,	'M' },
 	{ RTF_DONE,	'd' }, /* Completed -- for routing messages only */
@@ -82,14 +81,17 @@ static const struct bits bits[] = {
 	{ RTF_MULTICAST,'m' },
 	{ RTF_LLINFO,	'L' },
 	{ RTF_STATIC,	'S' },
-	{ RTF_PROTO1,	'1' },
-	{ RTF_PROTO2,	'2' },
+	{ RTF_BLACKHOLE,'B' },
 	{ RTF_PROTO3,	'3' },
+	{ RTF_PROTO2,	'2' },
+	{ RTF_PROTO1,	'1' },
 	{ RTF_CLONED,	'c' },
+	{ RTF_CACHED,	'h' },
 	{ RTF_MPATH,	'P' },
 	{ RTF_MPLS,	'T' },
 	{ RTF_LOCAL,	'l' },
-	{ RTF_BROADCAST, 'b' },
+	{ RTF_BROADCAST,'b' },
+	{ RTF_CONNECTED,'n' },
 	{ 0 }
 };
 
