@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.5 2016/09/01 10:15:28 jmc Exp $
+.\"	$OpenBSD: acme-client.1,v 1.6 2016/09/01 12:17:00 florian Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -22,12 +22,13 @@
 .Nd ACME client
 .Sh SYNOPSIS
 .Nm acme-client
-.Op Fl bFmNnrsv
+.Op Fl bFmNnrv
 .Op Fl a Ar agreement
 .Op Fl C Ar challengedir
 .Op Fl c Ar certdir
 .Op Fl f Ar accountkey
 .Op Fl k Ar domainkey
+.Op Fl s Ar authority
 .Ar domain
 .Op Ar altnames
 .Sh DESCRIPTION
@@ -122,8 +123,19 @@ Create a new 4096-bit RSA domain key if one does not already exist.
 Create a new 4096-bit RSA account key if one does not already exist.
 .It Fl r
 Revoke the X509 certificate found in the certificates.
-.It Fl s
-Use a staging server instead of the real thing.
+.It Fl s Ar authority
+ACME
+.Ar authority
+to talk to.
+Currently the following authorities are available:
+.Bl -tag
+.It Cm letsencrypt
+Let's Encrypt authority
+.It Cm letsencrypt-staging
+Let's Encrypt staging authority
+.El
+The default is
+.Cm letsencrypt .
 .It Fl v
 Verbose operation.
 Specify twice to also trace communication and data transfers.

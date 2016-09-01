@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.5 2016/09/01 00:35:22 florian Exp $ */
+/*	$Id: netproc.c,v 1.6 2016/09/01 12:17:00 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -25,9 +25,6 @@
 
 #include "http.h"
 #include "extern.h"
-
-#define URL_REAL_CA "https://acme-v01.api.letsencrypt.org/directory"
-#define URL_STAGE_CA "https://acme-staging.api.letsencrypt.org/directory"
 
 #define	RETRY_DELAY 5
 #define RETRY_MAX 10
@@ -580,7 +577,7 @@ dofullchain(struct conn *c, const char *addr)
  */
 int
 netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
-	int newacct, int revocate, int staging,
+	int newacct, int revocate, int authority,
 	const char *const *alts, size_t altsz, const char *agreement)
 {
 	int		 rc;
@@ -651,7 +648,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 
 	c.dfd = dfd;
 	c.fd = afd;
-	c.na = staging ? URL_STAGE_CA : URL_REAL_CA;
+	c.na = authorities[authority].caurl;
 
 	/*
 	 * Look up the domain of the ACME server.

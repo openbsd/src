@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.8 2016/09/01 00:35:22 florian Exp $ */
+/*	$Id: main.c,v 1.9 2016/09/01 12:17:00 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -27,13 +27,21 @@
 
 #include "extern.h"
 
-#define AGREEMENT "https://letsencrypt.org" \
-		  "/documents/LE-SA-v1.1.1-August-1-2016.pdf"
 #define SSL_DIR "/etc/ssl/acme"
 #define SSL_PRIV_DIR "/etc/ssl/acme/private"
 #define ETC_DIR "/etc/acme"
 #define WWW_DIR "/var/www/acme"
 #define PRIVKEY_FILE "privkey.pem"
+
+struct authority authorities[] = {
+#define	DEFAULT_AUTHORITY 0
+	{"letsencrypt",
+	    "https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf",
+	    "https://acme-v01.api.letsencrypt.org/directory"},
+	{"letsencrypt-staging",
+	    "https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf",
+	    "https://acme-staging.api.letsencrypt.org/directory"},
+};
 
 /*
  * This isn't RFC1035 compliant, but does the bare minimum in making
@@ -80,7 +88,7 @@ main(int argc, char *argv[])
 			  rvk_fds[2];
 	pid_t		  pids[COMP__MAX];
 	int		  c, rc, newacct, remote, revocate, force,
-			  staging, multidir, newkey, backup;
+			  multidir, newkey, backup, authority;
 	extern int	  verbose;
 	extern enum comp  proccomp;
 	size_t		  i, altsz, ne;
@@ -88,11 +96,12 @@ main(int argc, char *argv[])
 
 	alts = NULL;
 	newacct = remote = revocate = verbose = force =
-		multidir = staging = newkey = backup = 0;
+		multidir = newkey = backup = 0;
+	authority = DEFAULT_AUTHORITY;
 	certdir = keyfile = acctkey = chngdir = NULL;
-	agreement = AGREEMENT;
+	agreement = NULL;
 
-	while (-1 != (c = getopt(argc, argv, "bFmnNrstva:f:c:C:k:")))
+	while (-1 != (c = getopt(argc, argv, "bFmnNrs:tva:f:c:C:k:")))
 		switch (c) {
 		case ('a'):
 			agreement = optarg;
@@ -136,7 +145,15 @@ main(int argc, char *argv[])
 			revocate = 1;
 			break;
 		case ('s'):
-			staging = 1;
+			authority = -1;
+			for (i = 0; i < nitems(authorities); i++) {
+				if (strcmp(authorities[i].name, optarg) == 0) {
+					authority = i;
+					break;
+				}
+			}
+			if (-1 == authority)
+				errx(EXIT_FAILURE, "unknown acme authority");
 			break;
 		case ('t'):
 			/*
@@ -151,6 +168,9 @@ main(int argc, char *argv[])
 		default:
 			goto usage;
 		}
+
+	if (NULL == agreement)
+		agreement = authorities[authority].agreement;
 
 	argc -= optind;
 	argv += optind;
@@ -287,7 +307,7 @@ main(int argc, char *argv[])
 		c = netproc(key_fds[1], acct_fds[1],
 		    chng_fds[1], cert_fds[1],
 		    dns_fds[1], rvk_fds[1],
-		    newacct, revocate, staging,
+		    newacct, revocate, authority,
 		    (const char *const *)alts, altsz,
 		    agreement);
 		free(alts);
