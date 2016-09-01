@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.100 2016/09/01 10:29:16 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.101 2016/09/01 13:27:04 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -85,12 +85,12 @@ read_client_conf(struct interface_info *ifi)
 
 	/* Set some defaults. */
 	config->link_timeout = 10;	/* secs before going daemon w/o link */
-	config->timeout = 60;		/* secs to wait for an OFFER */
+	config->timeout = 30;		/* secs to wait for an OFFER */
 	config->select_interval = 0;	/* secs to wait for other OFFERs */
 	config->reboot_timeout = 1;	/* secs before giving up on reboot */
-	config->retry_interval = 300;	/* secs before asking for OFFER */
-	config->backoff_cutoff = 15;	/* max secs between packet retries */
-	config->initial_interval = 3;	/* secs before 1st retry */
+	config->retry_interval = 1;	/* secs before asking for OFFER */
+	config->backoff_cutoff = 10;	/* max secs between packet retries */
+	config->initial_interval = 1;	/* secs before 1st retry */
 
 	config->bootp_policy = ACCEPT;
 	config->requested_options
