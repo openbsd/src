@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.16 2016/09/01 14:45:36 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.17 2016/09/01 15:01:45 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -177,6 +177,51 @@ struct vcpu_init_state {
 	struct vcpu_segment_info	vis_tr;
 };
 
+#define VCPU_REGS_RAX		0
+#define VCPU_REGS_RBX		1
+#define VCPU_REGS_RCX		2
+#define VCPU_REGS_RDX		3
+#define VCPU_REGS_RSI		4
+#define VCPU_REGS_RDI		5
+#define VCPU_REGS_R8		6
+#define VCPU_REGS_R9		7
+#define VCPU_REGS_R10		8
+#define VCPU_REGS_R11		9
+#define VCPU_REGS_R12		10
+#define VCPU_REGS_R13		11
+#define VCPU_REGS_R14		12
+#define VCPU_REGS_R15		13
+#define VCPU_REGS_RSP		14
+#define VCPU_REGS_RBP		15
+#define VCPU_REGS_RIP		16
+#define VCPU_REGS_RFLAGS	17
+#define VCPU_REGS_NGPRS		(VCPU_REGS_RFLAGS + 1)
+
+#define VCPU_REGS_CR0	0
+#define VCPU_REGS_CR2	1
+#define VCPU_REGS_CR3	2
+#define VCPU_REGS_CR4	3
+#define VCPU_REGS_CR8	4
+#define VCPU_REGS_NCRS	(VCPU_REGS_CR8 + 1)
+
+#define VCPU_REGS_CS		0
+#define VCPU_REGS_DS		1
+#define VCPU_REGS_ES		2
+#define VCPU_REGS_FS		3
+#define VCPU_REGS_GS		4
+#define VCPU_REGS_SS		5
+#define VCPU_REGS_LDTR		6
+#define VCPU_REGS_TR		7
+#define VCPU_REGS_NSREGS	(VCPU_REGS_TR + 1)
+
+struct vcpu_reg_state {
+	uint64_t			vrs_gprs[VCPU_REGS_NGPRS];
+	uint64_t			vrs_crs[VCPU_REGS_NCRS];
+	struct vcpu_segment_info	vrs_sregs[VCPU_REGS_NSREGS];
+	struct vcpu_segment_info	vrs_gdtr;
+	struct vcpu_segment_info	vrs_idtr;
+};
+
 struct vm_mem_range {
 	paddr_t	vmr_gpa;
 	vaddr_t vmr_va;
@@ -253,6 +298,18 @@ struct vm_intr_params {
 	uint16_t		vip_intr;
 };
 
+#define VM_RWREGS_GPRS	0x1	/* read/write GPRs */
+#define VM_RWREGS_SREGS	0x2	/* read/write segment registers */
+#define VM_RWREGS_CRS	0x4	/* read/write CRs */
+#define VM_RWREGS_ALL	(VM_RWREGS_GPRS | VM_RWREGS_SREGS | VM_RWREGS_CRS)
+
+struct vm_rwregs_params {
+	uint32_t		vrwp_vm_id;
+	uint32_t		vrwp_vcpu_id;
+	uint64_t		vrwp_mask;
+	struct vcpu_reg_state	vrwp_regs;
+};
+
 /* IOCTL definitions */
 #define VMM_IOC_CREATE _IOWR('V', 1, struct vm_create_params) /* Create VM */
 #define VMM_IOC_RUN _IOWR('V', 2, struct vm_run_params) /* Run VCPU */
@@ -260,6 +317,8 @@ struct vm_intr_params {
 #define VMM_IOC_TERM _IOW('V', 4, struct vm_terminate_params) /* Terminate VM */
 #define VMM_IOC_RESETCPU _IOW('V', 5, struct vm_resetcpu_params) /* Reset */
 #define VMM_IOC_INTR _IOW('V', 6, struct vm_intr_params) /* Intr pending */
+#define VMM_IOC_READREGS _IOWR('V', 7, struct vm_rwregs_params) /* Get registers */
+#define VMM_IOC_WRITEREGS _IOW('V', 8, struct vm_rwregs_params) /* Set registers */
 
 #ifdef _KERNEL
 

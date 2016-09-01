@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.72 2016/09/01 14:45:36 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.73 2016/09/01 15:01:45 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -112,6 +112,11 @@ int vm_terminate(struct vm_terminate_params *);
 int vm_get_info(struct vm_info_params *);
 int vm_resetcpu(struct vm_resetcpu_params *);
 int vm_intr_pending(struct vm_intr_params *);
+int vm_rwregs(struct vm_rwregs_params *, int);
+int vcpu_readregs_vmx(struct vcpu *, uint64_t, struct vcpu_reg_state *);
+int vcpu_readregs_svm(struct vcpu *, uint64_t, struct vcpu_reg_state *);
+int vcpu_writeregs_vmx(struct vcpu *, uint64_t, int, struct vcpu_reg_state *);
+int vcpu_writeregs_svm(struct vcpu *, uint64_t, struct vcpu_reg_state *);
 int vcpu_reset_regs(struct vcpu *, struct vcpu_init_state *);
 int vcpu_reset_regs_vmx(struct vcpu *, struct vcpu_init_state *);
 int vcpu_reset_regs_svm(struct vcpu *, struct vcpu_init_state *);
@@ -186,6 +191,35 @@ struct cfdriver vmm_cd = {
 
 const struct cfattach vmm_ca = {
 	sizeof(struct vmm_softc), vmm_probe, vmm_attach, NULL, NULL
+};
+
+/*
+ * Helper struct to easily get the VMCS field IDs needed in vmread/vmwrite
+ * to access the individual fields of the guest segment registers. This
+ * struct is indexed by VCPU_REGS_* id.
+ */
+const struct {
+	uint64_t selid;
+	uint64_t limitid;
+	uint64_t arid;
+	uint64_t baseid;
+} vmm_vmx_sreg_vmcs_fields[] = {
+	{ VMCS_GUEST_IA32_CS_SEL, VMCS_GUEST_IA32_CS_LIMIT,
+	  VMCS_GUEST_IA32_CS_AR, VMCS_GUEST_IA32_CS_BASE },
+	{ VMCS_GUEST_IA32_DS_SEL, VMCS_GUEST_IA32_DS_LIMIT,
+	  VMCS_GUEST_IA32_DS_AR, VMCS_GUEST_IA32_DS_BASE },
+	{ VMCS_GUEST_IA32_ES_SEL, VMCS_GUEST_IA32_ES_LIMIT,
+	  VMCS_GUEST_IA32_ES_AR, VMCS_GUEST_IA32_ES_BASE },
+	{ VMCS_GUEST_IA32_FS_SEL, VMCS_GUEST_IA32_FS_LIMIT,
+	  VMCS_GUEST_IA32_FS_AR, VMCS_GUEST_IA32_FS_BASE },
+	{ VMCS_GUEST_IA32_GS_SEL, VMCS_GUEST_IA32_GS_LIMIT,
+	  VMCS_GUEST_IA32_GS_AR, VMCS_GUEST_IA32_GS_BASE },
+	{ VMCS_GUEST_IA32_SS_SEL, VMCS_GUEST_IA32_SS_LIMIT,
+	  VMCS_GUEST_IA32_SS_AR, VMCS_GUEST_IA32_SS_BASE },
+	{ VMCS_GUEST_IA32_LDTR_SEL, VMCS_GUEST_IA32_LDTR_LIMIT,
+	  VMCS_GUEST_IA32_LDTR_AR, VMCS_GUEST_IA32_LDTR_BASE },
+	{ VMCS_GUEST_IA32_TR_SEL, VMCS_GUEST_IA32_TR_LIMIT,
+	  VMCS_GUEST_IA32_TR_AR, VMCS_GUEST_IA32_TR_BASE }
 };
 
 /* Pools for VMs and VCPUs */
@@ -356,6 +390,12 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case VMM_IOC_INTR:
 		ret = vm_intr_pending((struct vm_intr_params *)data);
+		break;
+	case VMM_IOC_READREGS:
+		ret = vm_rwregs((struct vm_rwregs_params *)data, 0);
+		break;
+	case VMM_IOC_WRITEREGS:
+		ret = vm_rwregs((struct vm_rwregs_params *)data, 1);
 		break;
 	default:
 		DPRINTF("vmmioctl: unknown ioctl code 0x%lx\n", cmd);
@@ -537,6 +577,67 @@ vm_intr_pending(struct vm_intr_params *vip)
 #endif /* MULTIPROCESSOR */
 
 	return (0);
+}
+
+/*
+ * vm_readregs
+ *
+ * IOCTL handler to read/write the current register values of a guest VCPU.
+ * The VCPU must not be running.
+ *
+ * Parameters:
+ *   vrwp: Describes the VM and VCPU to get/set the registers from. The
+ *   register values are returned here as well.
+ *   dir: 0 for reading, 1 for writing
+ *
+ * Return values:
+ *  0: if successful
+ *  ENOENT: if the VM/VCPU defined by 'vgp' cannot be found
+ *  EINVAL: if an error occured reading the registers of the guest
+ */
+int
+vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
+{
+	struct vm *vm;
+	struct vcpu *vcpu;
+	struct vcpu_reg_state *vrs = &vrwp->vrwp_regs;
+
+	/* Find the desired VM */
+	rw_enter_read(&vmm_softc->vm_lock);
+	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
+		if (vm->vm_id == vrwp->vrwp_vm_id)
+			break;
+	}
+
+	/* Not found? exit. */
+	if (vm == NULL) {
+		rw_exit_read(&vmm_softc->vm_lock);
+		return (ENOENT);
+	}
+
+	rw_enter_read(&vm->vm_vcpu_lock);
+	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
+		if (vcpu->vc_id == vrwp->vrwp_vcpu_id)
+			break;
+	}
+	rw_exit_read(&vm->vm_vcpu_lock);
+	rw_exit_read(&vmm_softc->vm_lock);
+
+	if (vcpu == NULL)
+		return (ENOENT);
+
+	if (vmm_softc->mode == VMM_MODE_VMX ||
+	    vmm_softc->mode == VMM_MODE_EPT)
+		return (dir == 0) ?
+		    vcpu_readregs_vmx(vcpu, vrwp->vrwp_mask, vrs) :
+		    vcpu_writeregs_vmx(vcpu, vrwp->vrwp_mask, 1, vrs);
+	else if (vmm_softc->mode == VMM_MODE_SVM ||
+	    vmm_softc->mode == VMM_MODE_RVI)
+		return (dir == 0) ?
+		    vcpu_readregs_svm(vcpu, vrwp->vrwp_mask, vrs) :
+		    vcpu_writeregs_svm(vcpu, vrwp->vrwp_mask, vrs);
+	else
+		panic("unknown vmm mode\n");
 }
 
 /*
@@ -1038,6 +1139,268 @@ vm_impl_deinit(struct vm *vm)
 	else
 		panic("unknown vmm mode\n");
 }
+
+/*
+ * vcpu_readregs_vmx
+ *
+ * Reads 'vcpu's registers
+ *
+ * Parameters:
+ *  vcpu: the vcpu to read register values from
+ *  regmask: the types of registers to read
+ *  vrs: output parameter where register values are stored
+ *
+ * Return values:
+ *  0: if successful
+ *  EINVAL: an error reading registers occured
+ */
+int
+vcpu_readregs_vmx(struct vcpu *vcpu, uint64_t regmask,
+    struct vcpu_reg_state *vrs)
+{
+	int i, ret = 0;
+	uint64_t sel, limit, ar, vmcs_ptr;
+	uint64_t *gprs = vrs->vrs_gprs;
+	uint64_t *crs = vrs->vrs_crs;
+	struct vcpu_segment_info *sregs = vrs->vrs_sregs;
+
+	/* Flush any old state */
+	if (!vmptrst(&vmcs_ptr)) {
+		if (vmcs_ptr != 0xFFFFFFFFFFFFFFFFULL) {
+			if (vmclear(&vmcs_ptr))
+				return (EINVAL);
+		}
+	} else
+		return (EINVAL);
+
+	/* Flush the VMCS */
+	if (vmclear(&vcpu->vc_control_pa))
+		return (EINVAL);
+
+	/*
+	 * Load the VMCS onto this PCPU so we can write registers
+	 */
+	if (vmptrld(&vcpu->vc_control_pa))
+		return (EINVAL);
+
+	if (regmask & VM_RWREGS_GPRS) {
+		gprs[VCPU_REGS_RAX] = vcpu->vc_gueststate.vg_rax;
+		gprs[VCPU_REGS_RBX] = vcpu->vc_gueststate.vg_rbx;
+		gprs[VCPU_REGS_RCX] = vcpu->vc_gueststate.vg_rcx;
+		gprs[VCPU_REGS_RDX] = vcpu->vc_gueststate.vg_rdx;
+		gprs[VCPU_REGS_RSI] = vcpu->vc_gueststate.vg_rsi;
+		gprs[VCPU_REGS_RDI] = vcpu->vc_gueststate.vg_rdi;
+		gprs[VCPU_REGS_R8] = vcpu->vc_gueststate.vg_r8;
+		gprs[VCPU_REGS_R9] = vcpu->vc_gueststate.vg_r9;
+		gprs[VCPU_REGS_R10] = vcpu->vc_gueststate.vg_r10;
+		gprs[VCPU_REGS_R11] = vcpu->vc_gueststate.vg_r11;
+		gprs[VCPU_REGS_R12] = vcpu->vc_gueststate.vg_r12;
+		gprs[VCPU_REGS_R13] = vcpu->vc_gueststate.vg_r13;
+		gprs[VCPU_REGS_R14] = vcpu->vc_gueststate.vg_r14;
+		gprs[VCPU_REGS_R15] = vcpu->vc_gueststate.vg_r15;
+		gprs[VCPU_REGS_RBP] = vcpu->vc_gueststate.vg_rbp;
+		gprs[VCPU_REGS_RIP] = vcpu->vc_gueststate.vg_rip;
+		if (vmread(VMCS_GUEST_IA32_RSP, &gprs[VCPU_REGS_RSP]))
+			goto errout;
+                if (vmread(VMCS_GUEST_IA32_RFLAGS, &gprs[VCPU_REGS_RFLAGS]))
+			goto errout;
+        }
+	if (regmask & VM_RWREGS_SREGS) {
+		for (i = 0; i < nitems(vmm_vmx_sreg_vmcs_fields); i++) {
+			if (vmread(vmm_vmx_sreg_vmcs_fields[i].selid, &sel))
+				goto errout;
+			if (vmread(vmm_vmx_sreg_vmcs_fields[i].limitid, &limit))
+				goto errout;
+			if (vmread(vmm_vmx_sreg_vmcs_fields[i].arid, &ar))
+				goto errout;
+			if (vmread(vmm_vmx_sreg_vmcs_fields[i].baseid,
+			   &sregs[i].vsi_base))
+				goto errout;
+
+			sregs[i].vsi_sel = sel;
+			sregs[i].vsi_limit = limit;
+			sregs[i].vsi_ar = ar;
+		}
+
+		if (vmread(VMCS_GUEST_IA32_GDTR_LIMIT, &limit))
+			goto errout;
+		if (vmread(VMCS_GUEST_IA32_GDTR_BASE,
+		    &vrs->vrs_gdtr.vsi_base))
+			goto errout;
+		vrs->vrs_gdtr.vsi_limit = limit;
+
+		if (vmread(VMCS_GUEST_IA32_IDTR_LIMIT, &limit))
+			goto errout;
+		if (vmread(VMCS_GUEST_IA32_IDTR_BASE,
+		    &vrs->vrs_idtr.vsi_base))
+			goto errout;
+		vrs->vrs_idtr.vsi_limit = limit;
+	}
+	if (regmask & VM_RWREGS_CRS) {
+		crs[VCPU_REGS_CR2] = vcpu->vc_gueststate.vg_cr2;
+		if (vmread(VMCS_GUEST_IA32_CR0, &crs[VCPU_REGS_CR0]))
+			goto errout;
+		if (vmread(VMCS_GUEST_IA32_CR3, &crs[VCPU_REGS_CR3]))
+			goto errout;
+		if (vmread(VMCS_GUEST_IA32_CR4, &crs[VCPU_REGS_CR4]))
+			goto errout;
+	}
+
+	goto out;
+
+errout:
+	ret = EINVAL;
+out:
+	if (vmclear(&vcpu->vc_control_pa))
+		ret = EINVAL;
+	return (ret);
+}
+
+/*
+ * vcpu_readregs_svm
+ *
+ * XXX - unimplemented
+ */
+int
+vcpu_readregs_svm(struct vcpu *vcpu, uint64_t regmask,
+    struct vcpu_reg_state *regs)
+{
+	return (0);
+}
+
+/*
+ * vcpu_writeregs_vmx
+ *
+ * Writes 'vcpu's registers
+ *
+ * Parameters:
+ *  vcpu: the vcpu that has to get its registers written to
+ *  regmask: the types of registers to write
+ *  loadvmcs: bit to indicate whether the VMCS has to be loaded first
+ *  vrs: the register values to write
+ *
+ * Return values:
+ *  0: if successful
+ *  EINVAL an error writing registers occured
+ */
+int
+vcpu_writeregs_vmx(struct vcpu *vcpu, uint64_t regmask, int loadvmcs,
+    struct vcpu_reg_state *vrs)
+{
+	int i, ret = 0;
+	uint64_t sel, limit, ar, vmcs_ptr;
+	uint64_t *gprs = vrs->vrs_gprs;
+	uint64_t *crs = vrs->vrs_crs;
+	struct vcpu_segment_info *sregs = vrs->vrs_sregs;
+
+	if (loadvmcs) {
+		/* Flush any old state */
+		if (!vmptrst(&vmcs_ptr)) {
+			if (vmcs_ptr != 0xFFFFFFFFFFFFFFFFULL) {
+				if (vmclear(&vmcs_ptr))
+					return (EINVAL);
+			}
+		} else
+			return (EINVAL);
+
+		/* Flush the VMCS */
+		if (vmclear(&vcpu->vc_control_pa))
+			return (EINVAL);
+
+		/*
+		 * Load the VMCS onto this PCPU so we can write registers
+		 */
+		if (vmptrld(&vcpu->vc_control_pa))
+			return (EINVAL);
+	}
+
+	if (regmask & VM_RWREGS_GPRS) {
+		vcpu->vc_gueststate.vg_rax = gprs[VCPU_REGS_RAX];
+		vcpu->vc_gueststate.vg_rbx = gprs[VCPU_REGS_RBX];
+		vcpu->vc_gueststate.vg_rcx = gprs[VCPU_REGS_RCX];
+		vcpu->vc_gueststate.vg_rdx = gprs[VCPU_REGS_RDX];
+		vcpu->vc_gueststate.vg_rsi = gprs[VCPU_REGS_RSI];
+		vcpu->vc_gueststate.vg_rdi = gprs[VCPU_REGS_RDI];
+		vcpu->vc_gueststate.vg_r8 = gprs[VCPU_REGS_R8];
+		vcpu->vc_gueststate.vg_r9 = gprs[VCPU_REGS_R9];
+		vcpu->vc_gueststate.vg_r10 = gprs[VCPU_REGS_R10];
+		vcpu->vc_gueststate.vg_r11 = gprs[VCPU_REGS_R11];
+		vcpu->vc_gueststate.vg_r12 = gprs[VCPU_REGS_R12];
+		vcpu->vc_gueststate.vg_r13 = gprs[VCPU_REGS_R13];
+		vcpu->vc_gueststate.vg_r14 = gprs[VCPU_REGS_R14];
+		vcpu->vc_gueststate.vg_r15 = gprs[VCPU_REGS_R15];
+		vcpu->vc_gueststate.vg_rbp = gprs[VCPU_REGS_RBP];
+		vcpu->vc_gueststate.vg_rip = gprs[VCPU_REGS_RIP];
+		if (vmwrite(VMCS_GUEST_IA32_RIP, gprs[VCPU_REGS_RIP]))
+			goto errout;
+		if (vmwrite(VMCS_GUEST_IA32_RSP, gprs[VCPU_REGS_RSP]))
+			goto errout;
+                if (vmwrite(VMCS_GUEST_IA32_RFLAGS, gprs[VCPU_REGS_RFLAGS]))
+			goto errout;
+	}
+	if (regmask & VM_RWREGS_SREGS) {
+		for (i = 0; i < nitems(vmm_vmx_sreg_vmcs_fields); i++) {
+			sel = sregs[i].vsi_sel;
+			limit = sregs[i].vsi_limit;
+			ar = sregs[i].vsi_ar;
+
+			if (vmwrite(vmm_vmx_sreg_vmcs_fields[i].selid, sel))
+				goto errout;
+			if (vmwrite(vmm_vmx_sreg_vmcs_fields[i].limitid, limit))
+				goto errout;
+			if (vmwrite(vmm_vmx_sreg_vmcs_fields[i].arid, ar))
+				goto errout;
+			if (vmwrite(vmm_vmx_sreg_vmcs_fields[i].baseid,
+			   sregs[i].vsi_base))
+				goto errout;
+		}
+
+		if (vmwrite(VMCS_GUEST_IA32_GDTR_LIMIT,
+		    vrs->vrs_gdtr.vsi_limit))
+			goto errout;
+		if (vmwrite(VMCS_GUEST_IA32_GDTR_BASE,
+		    vrs->vrs_gdtr.vsi_base))
+			goto errout;
+		if (vmwrite(VMCS_GUEST_IA32_IDTR_LIMIT,
+		    vrs->vrs_idtr.vsi_limit))
+			goto errout;
+		if (vmwrite(VMCS_GUEST_IA32_IDTR_BASE,
+		    vrs->vrs_idtr.vsi_base))
+			goto errout;
+	}
+	if (regmask & VM_RWREGS_CRS) {
+		if (vmwrite(VMCS_GUEST_IA32_CR0, crs[VCPU_REGS_CR0]))
+			goto errout;
+		if (vmwrite(VMCS_GUEST_IA32_CR3, crs[VCPU_REGS_CR3]))
+			goto errout;
+		if (vmwrite(VMCS_GUEST_IA32_CR4, crs[VCPU_REGS_CR4]))
+			goto errout;
+	}
+
+	goto out;
+
+errout:
+	ret = EINVAL;
+out:
+	if (loadvmcs) {
+		if (vmclear(&vcpu->vc_control_pa))
+			ret = EINVAL;
+	}
+	return (ret);
+}
+
+/*
+ * vcpu_writeregs_svm
+ *
+ * XXX - unimplemented
+ */
+int
+vcpu_writeregs_svm(struct vcpu *vcpu, uint64_t regmask,
+    struct vcpu_reg_state *vrs)
+{
+	return (0);
+}
+
 /*
  * vcpu_reset_regs_svm
  *
