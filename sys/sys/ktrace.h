@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.31 2016/06/18 17:39:44 guenther Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.32 2016/09/01 08:31:15 tom Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -206,7 +206,6 @@ void ktrnamei(struct proc *, char *);
 void ktrpsig(struct proc *, int, sig_t, int, int, siginfo_t *);
 void ktrsyscall(struct proc *, register_t, size_t, register_t []);
 void ktrsysret(struct proc *, register_t, int, const register_t [2]);
-void ktr_kuser(const char *, void *, size_t);
 int ktruser(struct proc *, const char *, const void *, size_t);
 void ktrexec(struct proc *, int, const char *, ssize_t);
 void ktrpledge(struct proc *, int, uint64_t, int);
