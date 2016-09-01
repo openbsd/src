@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.196 2016/08/23 13:07:26 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.197 2016/09/01 09:22:58 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -675,7 +675,7 @@ route_output(struct mbuf *m, ...)
 		rt = rtable_lookup(tableid, info.rti_info[RTAX_DST],
 		    info.rti_info[RTAX_NETMASK], info.rti_info[RTAX_GATEWAY],
 		    prio);
-#ifdef SMALL_KERNEL
+#ifndef SMALL_KERNEL
 		/*
 		 * If we got multipath routes, we require users to specify
 		 * a matching gateway, except for RTM_GET.
@@ -695,6 +695,13 @@ route_output(struct mbuf *m, ...)
 		    (rtm->rtm_type == RTM_CHANGE)) {
 			rt = rtable_lookup(tableid, info.rti_info[RTAX_DST],
 			    info.rti_info[RTAX_NETMASK], NULL, prio);
+#ifndef SMALL_KERNEL
+			/* Ensure we don't pick a multipath one. */
+			if ((rt != NULL) && ISSET(rt->rt_flags, RTF_MPATH)) {
+				rtfree(rt);
+				rt = NULL;
+			}
+#endif
 		}
 
 		if (rt == NULL) {
