@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.27 2015/12/18 16:44:03 visa Exp $
+# $OpenBSD: Makefile,v 1.28 2016/09/01 10:40:38 tedu Exp $
 
 .include <bsd.own.mk>
 
@@ -226,7 +226,7 @@ OBJ_GRPS =	STD DIV SI DI
 #
 .if ${TARGET_ARCH} == "armNOT_YET" || ${TARGET_ARCH} == "m88k" || \
     ${TARGET_ARCH} == "mips64" || ${TARGET_ARCH} == "mips64el" || \
-    ${TARGET_ARCH} == "powerpc" || ${TARGET_ARCH} == "sparc" || \
+    ${TARGET_ARCH} == "powerpc" || \
     ${TARGET_ARCH} == "sparc64"
 
 FPBIT_CFLAGS =	-DFINE_GRAINED_LIBRARIES -DFLOAT
