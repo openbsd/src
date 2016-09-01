@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.47 2016/08/15 14:14:55 jsing Exp $	*/
+/*	$OpenBSD: config.c,v 1.48 2016/09/01 16:07:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -41,14 +41,13 @@ config_init(struct httpd *env)
 	unsigned int	 what;
 
 	/* Global configuration */
-	if (privsep_process == PROC_PARENT) {
+	if (privsep_process == PROC_PARENT)
 		env->sc_prefork_server = SERVER_NUMPROC;
 
-		ps->ps_what[PROC_PARENT] = CONFIG_ALL;
-		ps->ps_what[PROC_SERVER] =
-		    CONFIG_SERVERS|CONFIG_MEDIA|CONFIG_AUTH;
-		ps->ps_what[PROC_LOGGER] = CONFIG_SERVERS;
-	}
+	ps->ps_what[PROC_PARENT] = CONFIG_ALL;
+	ps->ps_what[PROC_SERVER] =
+	    CONFIG_SERVERS|CONFIG_MEDIA|CONFIG_AUTH;
+	ps->ps_what[PROC_LOGGER] = CONFIG_SERVERS;
 
 	/* Other configuration */
 	what = ps->ps_what[privsep_process];
