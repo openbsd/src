@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.66 2016/09/01 16:14:51 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.67 2016/09/01 16:17:46 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -54,10 +54,6 @@ MBR_protective_mbr(struct mbr *mbr)
 void
 MBR_init_GPT(struct mbr *mbr)
 {
-	u_int64_t sz;
-
-	sz = DL_GETDSIZE(&dl);
-
 	memset(&mbr->part, 0, sizeof(mbr->part));
 
 	/* Use whole disk, starting after MBR.
