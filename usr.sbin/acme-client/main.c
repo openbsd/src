@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.6 2016/09/01 00:21:36 deraadt Exp $ */
+/*	$Id: main.c,v 1.7 2016/09/01 00:32:00 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -464,15 +464,10 @@ main(int argc, char *argv[])
 	return (COMP__MAX != rc ? EXIT_FAILURE :
 	    (2 == c ? EXIT_SUCCESS : 2));
 usage:
-	fprintf(stderr, "usage: %s "
-		"[-bFmnNrsv] "
-		"[-a agreement] "
-		"[-C challengedir] "
-		"[-c certdir] "
-		"[-f accountkey] "
-		"[-k domainkey] "
-		"domain [altnames...]\n",
-		getprogname());
+	fprintf(stderr,
+	    "usage: acme-client [-bFmnNrsv] [-a agreement] [-C challengedir]\n"
+	    "                   [-c certdir] [-f accountkey] [-k domainkey]\n"
+	    "                   domain [altnames...]\n");
 	free(certdir);
 	free(keyfile);
 	free(acctkey);
