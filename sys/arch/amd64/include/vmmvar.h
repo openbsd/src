@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.17 2016/09/01 15:01:45 stefan Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.18 2016/09/01 16:04:47 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -151,32 +151,6 @@ struct vcpu_segment_info {
 	uint64_t vsi_base;
 };
 
-/*
- * struct vcpu_init_state describes the set of vmd-settable registers
- * that the VM's vcpus will be set to during VM boot or reset. Certain
- * registers are always set to 0 (eg, the GP regs) and certain registers
- * have fixed values based on hardware requirements and calculated by
- * vmm (eg, CR0/CR4)
- */
-struct vcpu_init_state {
-	uint64_t			vis_rflags;
-	uint64_t			vis_rip;
-	uint64_t			vis_rsp;
-	uint64_t			vis_cr0;
-	uint64_t			vis_cr3;
-
-	struct vcpu_segment_info	vis_cs;
-	struct vcpu_segment_info	vis_ds;
-	struct vcpu_segment_info	vis_es;
-	struct vcpu_segment_info	vis_fs;
-	struct vcpu_segment_info	vis_gs;
-	struct vcpu_segment_info	vis_ss;
-	struct vcpu_segment_info	vis_gdtr;
-	struct vcpu_segment_info	vis_idtr;
-	struct vcpu_segment_info	vis_ldtr;
-	struct vcpu_segment_info	vis_tr;
-};
-
 #define VCPU_REGS_RAX		0
 #define VCPU_REGS_RBX		1
 #define VCPU_REGS_RCX		2
@@ -288,7 +262,7 @@ struct vm_resetcpu_params {
 	/* Input parameters to VMM_IOC_RESETCPU */
 	uint32_t		vrp_vm_id;
 	uint32_t		vrp_vcpu_id;
-	struct vcpu_init_state	vrp_init_state;
+	struct vcpu_reg_state	vrp_init_state;
 };
 
 struct vm_intr_params {

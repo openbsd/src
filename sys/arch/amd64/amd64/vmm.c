@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.73 2016/09/01 15:01:45 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.74 2016/09/01 16:04:47 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -117,9 +117,9 @@ int vcpu_readregs_vmx(struct vcpu *, uint64_t, struct vcpu_reg_state *);
 int vcpu_readregs_svm(struct vcpu *, uint64_t, struct vcpu_reg_state *);
 int vcpu_writeregs_vmx(struct vcpu *, uint64_t, int, struct vcpu_reg_state *);
 int vcpu_writeregs_svm(struct vcpu *, uint64_t, struct vcpu_reg_state *);
-int vcpu_reset_regs(struct vcpu *, struct vcpu_init_state *);
-int vcpu_reset_regs_vmx(struct vcpu *, struct vcpu_init_state *);
-int vcpu_reset_regs_svm(struct vcpu *, struct vcpu_init_state *);
+int vcpu_reset_regs(struct vcpu *, struct vcpu_reg_state *);
+int vcpu_reset_regs_vmx(struct vcpu *, struct vcpu_reg_state *);
+int vcpu_reset_regs_svm(struct vcpu *, struct vcpu_reg_state *);
 int vcpu_init(struct vcpu *);
 int vcpu_init_vmx(struct vcpu *);
 int vcpu_init_svm(struct vcpu *);
@@ -1407,7 +1407,7 @@ vcpu_writeregs_svm(struct vcpu *vcpu, uint64_t regmask,
  * XXX - unimplemented
  */
 int
-vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_init_state *vis)
+vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 {
 	return (0);
 }
@@ -1419,14 +1419,14 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_init_state *vis)
  *
  * Parameters:
  *  vcpu: the vcpu whose register state is to be initialized
- *  vis: the register state to set
+ *  vrs: the register state to set
  * 
  * Return values:
  *  0: registers init'ed successfully
  *  EINVAL: an error occurred setting register state
  */
 int
-vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
+vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 {
 	int ret, ug;
 	uint32_t cr0, cr4;
@@ -1745,25 +1745,9 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 	}
 
 	/*
-	 * The next portion of code sets up the VMCS for the register state
-	 * we want during VCPU start. This matches what the CPU state would
-	 * be after a bootloader transition to 'start'.
-	 */
-	if (vmwrite(VMCS_GUEST_IA32_RFLAGS, vis->vis_rflags)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	vcpu->vc_gueststate.vg_rip = vis->vis_rip;
-	if (vmwrite(VMCS_GUEST_IA32_RIP, vis->vis_rip)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	/*
 	 * Determine which bits in CR0 have to be set to a fixed
 	 * value as per Intel SDM A.7.
-	 * CR0 bits in the vis parameter must match these.
+	 * CR0 bits in the vrs parameter must match these.
 	 */
 
 	want1 = (curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed0) &
@@ -1775,17 +1759,16 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 	 * CR0_FIXED0 and CR0_FIXED1 may report the CR0_PG and CR0_PE bits as
 	 * fixed to 1 even if the CPU supports the unrestricted guest
 	 * feature. Update want1 and want0 accordingly to allow
-	 * any value for CR0_PG and CR0_PE in vis->vis_cr0 if the CPU has
-	 * the unrestricted guest capability.
+	 * any value for CR0_PG and CR0_PE in vrs->vrs_crs[VCPU_REGS_CR0] if
+	 * the CPU has the unrestricted guest capability.
 	 */
-	cr0 = vis->vis_cr0;
+	cr0 = vrs->vrs_crs[VCPU_REGS_CR0];
 
 	if (ug) {
 		want1 &= ~(CR0_PG | CR0_PE);
 		want0 &= ~(CR0_PG | CR0_PE);
 		cr0 &= ~(CR0_PG | CR0_PE);
 	}
-
 
 	/*
 	 * VMX may require some bits to be set that userland should not have
@@ -1803,20 +1786,10 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 		goto exit;
 	}
 
-	if (vmwrite(VMCS_GUEST_IA32_CR0, cr0)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
 	if (ug)
 		cr3 = 0;
 	else
-		cr3 = vis->vis_cr3;
-
-	if (vmwrite(VMCS_GUEST_IA32_CR3, cr3)) {
-		ret = EINVAL;
-		goto exit;
-	}
+		cr3 = vrs->vrs_crs[VCPU_REGS_CR3];
 
 	/*
 	 * Determine default CR4 as per Intel SDM A.8
@@ -1831,195 +1804,9 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 	if (ug == 0)
 		cr4 |= CR4_PAE;
 
-	if (vmwrite(VMCS_GUEST_IA32_CR4, cr4)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_RSP, vis->vis_rsp)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_SS_SEL, vis->vis_ss.vsi_sel)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_SS_LIMIT, vis->vis_ss.vsi_limit)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_SS_AR, vis->vis_ss.vsi_ar)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_SS_BASE, vis->vis_ss.vsi_base)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_DS_SEL, vis->vis_ds.vsi_sel)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_DS_LIMIT, vis->vis_ds.vsi_limit)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_DS_AR, vis->vis_ds.vsi_ar)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_DS_BASE, vis->vis_ds.vsi_base)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_ES_SEL, vis->vis_es.vsi_sel)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_ES_LIMIT, vis->vis_es.vsi_limit)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_ES_AR, vis->vis_es.vsi_ar)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_ES_BASE, vis->vis_es.vsi_base)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_FS_SEL, vis->vis_fs.vsi_sel)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_FS_LIMIT, vis->vis_fs.vsi_limit)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_FS_AR, vis->vis_fs.vsi_ar)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_FS_BASE, vis->vis_fs.vsi_base)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_GS_SEL, vis->vis_gs.vsi_sel)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_GS_LIMIT, vis->vis_gs.vsi_limit)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_GS_AR, vis->vis_gs.vsi_ar)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_GS_BASE, vis->vis_gs.vsi_base)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_CS_SEL, vis->vis_cs.vsi_sel)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_CS_LIMIT, vis->vis_cs.vsi_limit)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_CS_AR, vis->vis_cs.vsi_ar)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_CS_BASE, vis->vis_cs.vsi_base)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_GDTR_LIMIT, vis->vis_gdtr.vsi_limit)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_GDTR_BASE, vis->vis_gdtr.vsi_base)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_IDTR_LIMIT, vis->vis_idtr.vsi_limit)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_IDTR_BASE, vis->vis_idtr.vsi_base)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_LDTR_SEL, vis->vis_ldtr.vsi_sel)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_LDTR_LIMIT, vis->vis_ldtr.vsi_limit)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_LDTR_AR, vis->vis_ldtr.vsi_ar)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_LDTR_BASE, vis->vis_ldtr.vsi_base)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_TR_SEL, vis->vis_tr.vsi_sel)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_TR_LIMIT, vis->vis_tr.vsi_limit)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_TR_AR, vis->vis_tr.vsi_ar)) {
-		ret = EINVAL;
-		goto exit;
-	}
-
-	if (vmwrite(VMCS_GUEST_IA32_TR_BASE, vis->vis_tr.vsi_base)) {
-		ret = EINVAL;
-		goto exit;
-	}
+	vrs->vrs_crs[VCPU_REGS_CR0] = cr0;
+	vrs->vrs_crs[VCPU_REGS_CR3] = cr3;
+	vrs->vrs_crs[VCPU_REGS_CR4] = cr4;
 
 	/*
 	 * Select MSRs to be loaded on exit
@@ -2110,6 +1897,13 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 		ret = EINVAL;
 		goto exit;
 	}
+
+	/*
+	 * Set up the VMCS for the register state we want during VCPU start.
+	 * This matches what the CPU state would be after a bootloader
+	 * transition to 'start'.
+	 */
+	ret = vcpu_writeregs_vmx(vcpu, VM_RWREGS_ALL, 0, vrs);
 
 	/* XXX msr bitmap - set restrictions */
 	/* XXX CR0 shadow */
@@ -2335,7 +2129,7 @@ exit:
  *
  * Parameters:
  *  vcpu: the vcpu whose registers shall be reset
- *  vis: the desired register state
+ *  vrs: the desired register state
  *
  * Return values:
  *  0: the vcpu's registers were successfully reset
@@ -2343,16 +2137,16 @@ exit:
  *      function for various values that can be returned here)
  */
 int 
-vcpu_reset_regs(struct vcpu *vcpu, struct vcpu_init_state *vis)
+vcpu_reset_regs(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 {
 	int ret;
 
 	if (vmm_softc->mode == VMM_MODE_VMX ||
 	    vmm_softc->mode == VMM_MODE_EPT)
-		ret = vcpu_reset_regs_vmx(vcpu, vis);
+		ret = vcpu_reset_regs_vmx(vcpu, vrs);
 	else if (vmm_softc->mode == VMM_MODE_SVM ||
 		 vmm_softc->mode == VMM_MODE_RVI)
-		ret = vcpu_reset_regs_svm(vcpu, vis);
+		ret = vcpu_reset_regs_svm(vcpu, vrs);
 	else
 		panic("unknown vmm mode\n");
 

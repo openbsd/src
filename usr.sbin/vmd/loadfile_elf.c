@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.16 2016/08/17 05:07:13 deraadt Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.17 2016/09/01 16:04:47 stefan Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -231,14 +231,14 @@ push_pt(void)
  * Parameters:
  *  fd: file descriptor of a kernel file to load
  *  vcp: the VM create parameters, holding the exact memory map
- *  (out) vis: register state to set on init for this kernel
+ *  (out) vrs: register state to set on init for this kernel
  *
  * Return values:
  *  0 if successful
  *  various error codes returned from read(2) or loadelf functions
  */
 int
-loadelf_main(int fd, struct vm_create_params *vcp, struct vcpu_init_state *vis)
+loadelf_main(int fd, struct vm_create_params *vcp, struct vcpu_reg_state *vrs)
 {
 	int r;
 	uint32_t bootargsz;
@@ -267,9 +267,9 @@ loadelf_main(int fd, struct vm_create_params *vcp, struct vcpu_init_state *vis)
 	bootargsz = push_bootargs(memmap, n);
 	stacksize = push_stack(bootargsz, marks[MARK_END]);
 
-	vis->vis_rip = (uint64_t)marks[MARK_ENTRY];
-	vis->vis_rsp = (uint64_t)(STACK_PAGE + PAGE_SIZE) - stacksize;
-	vis->vis_gdtr.vsi_base = GDT_PAGE;
+	vrs->vrs_gprs[VCPU_REGS_RIP] = (uint64_t)marks[MARK_ENTRY];
+	vrs->vrs_gprs[VCPU_REGS_RSP] = (uint64_t)(STACK_PAGE + PAGE_SIZE) - stacksize;
+	vrs->vrs_gdtr.vsi_base = GDT_PAGE;
 
 	return (0);
 }

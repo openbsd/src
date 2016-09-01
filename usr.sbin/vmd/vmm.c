@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.38 2016/09/01 14:48:09 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.39 2016/09/01 16:04:47 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -67,10 +67,10 @@ int opentap(void);
 int start_vm(struct imsg *, uint32_t *);
 int terminate_vm(struct vm_terminate_params *);
 int get_info_vm(struct privsep *, struct imsg *, int);
-int run_vm(int *, int *, struct vm_create_params *, struct vcpu_init_state *);
+int run_vm(int *, int *, struct vm_create_params *, struct vcpu_reg_state *);
 void *vcpu_run_loop(void *);
 int vcpu_exit(struct vm_run_params *);
-int vcpu_reset(uint32_t, uint32_t, struct vcpu_init_state *);
+int vcpu_reset(uint32_t, uint32_t, struct vcpu_reg_state *);
 void create_memory_map(struct vm_create_params *);
 int alloc_guest_mem(struct vm_create_params *);
 int vmm_create_vm(struct vm_create_params *);
@@ -114,22 +114,22 @@ static struct privsep_proc procs[] = {
  * Note - CR3 and various bits in CR0 may be overridden by vmm(4) based on
  *        features of the CPU in use.
  */
-static const struct vcpu_init_state vcpu_init_flat32 = {
-	0x2,					/* RFLAGS */
-	0x0,					/* RIP */
-	0x0,					/* RSP */
-	CR0_CD | CR0_NW | CR0_ET | CR0_PE | CR0_PG, /* CR0 */
-	PML4_PAGE,				/* CR3 */
-	{ 0x8, 0xFFFFFFFF, 0xC09F, 0x0},	/* CS */
-	{ 0x10, 0xFFFFFFFF, 0xC093, 0x0},	/* DS */
-	{ 0x10, 0xFFFFFFFF, 0xC093, 0x0},	/* ES */
-	{ 0x10, 0xFFFFFFFF, 0xC093, 0x0},	/* FS */
-	{ 0x10, 0xFFFFFFFF, 0xC093, 0x0},	/* GS */
-	{ 0x10, 0xFFFFFFFF, 0xC093, 0x0},	/* SS */
-	{ 0x0, 0xFFFF, 0x0, 0x0},		/* GDTR */
-	{ 0x0, 0xFFFF, 0x0, 0x0},		/* IDTR */
-	{ 0x0, 0xFFFF, 0x0082, 0x0},		/* LDTR */
-	{ 0x0, 0xFFFF, 0x008B, 0x0},		/* TR */
+static const struct vcpu_reg_state vcpu_init_flat32 = {
+	.vrs_gprs[VCPU_REGS_RFLAGS] = 0x2,
+	.vrs_gprs[VCPU_REGS_RIP] = 0x0,
+	.vrs_gprs[VCPU_REGS_RSP] = 0x0,
+	.vrs_crs[VCPU_REGS_CR0] = CR0_CD | CR0_NW | CR0_ET | CR0_PE | CR0_PG,
+	.vrs_crs[VCPU_REGS_CR3] = PML4_PAGE,
+	.vrs_sregs[VCPU_REGS_CS] = { 0x8, 0xFFFFFFFF, 0xC09F, 0x0},
+	.vrs_sregs[VCPU_REGS_DS] = { 0x10, 0xFFFFFFFF, 0xC093, 0x0},
+	.vrs_sregs[VCPU_REGS_ES] = { 0x10, 0xFFFFFFFF, 0xC093, 0x0},
+	.vrs_sregs[VCPU_REGS_FS] = { 0x10, 0xFFFFFFFF, 0xC093, 0x0},
+	.vrs_sregs[VCPU_REGS_GS] = { 0x10, 0xFFFFFFFF, 0xC093, 0x0},
+	.vrs_sregs[VCPU_REGS_SS] = { 0x10, 0xFFFFFFFF, 0xC093, 0x0},
+	.vrs_gdtr = { 0x0, 0xFFFF, 0x0, 0x0},
+	.vrs_idtr = { 0x0, 0xFFFF, 0x0, 0x0},
+	.vrs_sregs[VCPU_REGS_LDTR] = { 0x0, 0xFFFF, 0x0082, 0x0},
+	.vrs_sregs[VCPU_REGS_TR] = { 0x0, 0xFFFF, 0x008B, 0x0},
 };
 
 pid_t
@@ -316,7 +316,7 @@ vmm_sighdlr(int sig, short event, void *arg)
  * Parameters
  *  vmid: VM ID to reset
  *  vcpu_id: VCPU ID to reset
- *  vis: the register state to initialize 
+ *  vrs: the register state to initialize
  *
  * Return values:
  *  0: success
@@ -324,14 +324,14 @@ vmm_sighdlr(int sig, short event, void *arg)
  *      valid)
  */
 int
-vcpu_reset(uint32_t vmid, uint32_t vcpu_id, struct vcpu_init_state *vis)
+vcpu_reset(uint32_t vmid, uint32_t vcpu_id, struct vcpu_reg_state *vrs)
 {
 	struct vm_resetcpu_params vrp;
 
 	memset(&vrp, 0, sizeof(vrp));
 	vrp.vrp_vm_id = vmid;
 	vrp.vrp_vcpu_id = vcpu_id;
-	memcpy(&vrp.vrp_init_state, vis, sizeof(struct vcpu_init_state));
+	memcpy(&vrp.vrp_init_state, vrs, sizeof(struct vcpu_reg_state));
 
 	log_debug("%s: resetting vcpu %d for vm %d", __func__, vcpu_id, vmid);
 
@@ -420,7 +420,7 @@ start_vm(struct imsg *imsg, uint32_t *id)
 	size_t			 i;
 	int			 ret = EINVAL;
 	int			 fds[2];
-	struct vcpu_init_state vis;
+	struct vcpu_reg_state vrs;
 
 	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
 		log_warn("%s: can't find vm", __func__);
@@ -521,10 +521,10 @@ start_vm(struct imsg *imsg, uint32_t *id)
 		 * Set up default "flat 32 bit" register state - RIP,
 		 * RSP, and GDT info will be set in bootloader
 	 	 */
-		memcpy(&vis, &vcpu_init_flat32, sizeof(struct vcpu_init_state));
+		memcpy(&vrs, &vcpu_init_flat32, sizeof(struct vcpu_reg_state));
 
 		/* Load kernel image */
-		ret = loadelf_main(vm->vm_kernel, vcp, &vis);
+		ret = loadelf_main(vm->vm_kernel, vcp, &vrs);
 		if (ret) {
 			errno = ret;
 			fatal("failed to load kernel - exiting");
@@ -537,7 +537,7 @@ start_vm(struct imsg *imsg, uint32_t *id)
 			fatal("failed to set nonblocking mode on console");
 
 		/* Execute the vcpu run loop(s) for this VM */
-		ret = run_vm(vm->vm_disks, vm->vm_ifs, vcp, &vis);
+		ret = run_vm(vm->vm_disks, vm->vm_ifs, vcp, &vrs);
 
 		_exit(ret != 0);
 	}
@@ -870,7 +870,7 @@ init_emulated_hw(struct vm_create_params *vcp, int *child_disks,
  *  child_taps: previously-opened child tap file descriptors
  *  vcp: vm_create_params struct containing the VM's desired creation
  *      configuration
- *  vis: VCPU register state to initialize
+ *  vrs: VCPU register state to initialize
  *
  * Return values:
  *  0: the VM exited normally
@@ -878,7 +878,7 @@ init_emulated_hw(struct vm_create_params *vcp, int *child_disks,
  */
 int
 run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
-    struct vcpu_init_state *vis)
+    struct vcpu_reg_state *vrs)
 {
 	size_t i;
 	int ret;
@@ -954,7 +954,7 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 		vrp[i]->vrp_vm_id = vcp->vcp_id;
 		vrp[i]->vrp_vcpu_id = i;
 
-		if (vcpu_reset(vcp->vcp_id, i, vis)) {
+		if (vcpu_reset(vcp->vcp_id, i, vrs)) {
 			log_warn("%s: cannot reset VCPU %zu - exiting.",
 			    __progname, i);
 			return (EIO);
