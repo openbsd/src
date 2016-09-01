@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2016/08/31 11:00:15 claudio Exp $
+# $OpenBSD: Makefile,v 1.14 2016/09/01 09:57:45 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -320,6 +320,12 @@ rttest${n}:
 	${RCMD} change -mpath -mtu 1000 10.8.1/24 192.0.2.4
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# Can't delete RTF_LOCAL route
+n=	28
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} delete 192.0.2.1 192.0.2.1 && exit 1 || exit 0
 
 REGRESS_TARGETS=netmask ${RTTEST_TARGETS}
 REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
