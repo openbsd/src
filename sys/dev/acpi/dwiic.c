@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.16 2016/04/23 10:23:44 kettenis Exp $ */
+/* $OpenBSD: dwiic.c,v 1.17 2016/09/01 09:38:25 jcs Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -101,8 +101,6 @@
 
 #define DW_IC_STATUS_ACTIVITY	0x1
 
-#define DW_IC_ERR_TX_ABRT	0x1
-
 /* hardware abort codes from the DW_IC_TX_ABRT_SOURCE register */
 #define ABRT_7B_ADDR_NOACK	0
 #define ABRT_10ADDR1_NOACK	1
@@ -156,11 +154,11 @@ struct dwiic_softc {
 	struct i2c_controller	sc_i2c_tag;
 	struct rwlock		sc_i2c_lock;
 	struct {
-		i2c_op_t     op;
-		void *       buf;
-		size_t       len;
-		int          flags;
-		volatile int error;
+		i2c_op_t	op;
+		void		*buf;
+		size_t		len;
+		int		flags;
+		volatile int	error;
 	} sc_i2c_xfer;
 };
 
@@ -178,9 +176,12 @@ void *		dwiic_i2c_intr_establish(void *, void *, int,
 const char *	dwiic_i2c_intr_string(void *, void *);
 
 int		dwiic_acpi_parse_crs(union acpi_resource *, void *);
-int		dwiic_acpi_foundhid(struct aml_node *, void *);
+int		dwiic_acpi_found_hid(struct aml_node *, void *);
+int		dwiic_acpi_found_ihidev(struct dwiic_softc *,
+		    struct aml_node *, char *, struct dwiic_crs);
 void		dwiic_acpi_get_params(struct dwiic_softc *, char *, uint16_t *,
 		    uint16_t *, uint32_t *);
+void		dwiic_acpi_power(struct dwiic_softc *, int);
 void		dwiic_bus_scan(struct device *, struct i2cbus_attach_args *,
 		    void *);
 
@@ -211,6 +212,12 @@ const char *dwiic_hids[] = {
 	"INT3433",
 	"80860F41",
 	"808622C1",
+	NULL
+};
+
+const char *ihidev_hids[] = {
+	"PNP0C50",
+	"ACPI0C50",
 	NULL
 };
 
@@ -265,6 +272,9 @@ dwiic_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	/* power up the controller */
+	dwiic_acpi_power(sc, 1);
+
 	/* fetch timing parameters */
 	sc->ss_hcnt = dwiic_read(sc, DW_IC_SS_SCL_HCNT);
 	sc->ss_lcnt = dwiic_read(sc, DW_IC_SS_SCL_LCNT);
@@ -274,13 +284,6 @@ dwiic_attach(struct device *parent, struct device *self, void *aux)
 	dwiic_acpi_get_params(sc, "SSCN", &sc->ss_hcnt, &sc->ss_lcnt, NULL);
 	dwiic_acpi_get_params(sc, "FMCN", &sc->fs_hcnt, &sc->fs_lcnt,
 	    &sc->sda_hold_time);
-
-	/* power up the controller */
-	if (!aml_searchname(sc->sc_devnode, "_PS0") ||
-	    aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PS0", 0, NULL, NULL)) {
-		printf(", failed powering on with _PS0\n");
-		return;
-	}
 
 	if (dwiic_init(sc)) {
 		printf(", failed initializing\n");
@@ -351,26 +354,15 @@ dwiic_activate(struct device *self, int act)
 
 		/* disable interrupts */
 		dwiic_write(sc, DW_IC_INTR_MASK, 0);
+		dwiic_read(sc, DW_IC_CLR_INTR);
 
 		/* power down the controller */
-		if (!aml_searchname(sc->sc_devnode, "_PS3") ||
-		    aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PS3", 0, NULL,
-		    NULL)) {
-			printf("%s: failed powering down with _PS3\n",
-			    sc->sc_dev.dv_xname);
-			return (1);
-		}
+		dwiic_acpi_power(sc, 0);
 
 		break;
 	case DVACT_WAKEUP:
 		/* power up the controller */
-		if (!aml_searchname(sc->sc_devnode, "_PS0") ||
-		    aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PS0", 0, NULL,
-		    NULL)) {
-			printf("%s: failed powering up with _PS0\n",
-			    sc->sc_dev.dv_xname);
-			return (1);
-		}
+		dwiic_acpi_power(sc, 1);
 
 		dwiic_init(sc);
 
@@ -451,11 +443,13 @@ dwiic_acpi_get_params(struct dwiic_softc *sc, char *method, uint16_t *hcnt,
 
 	if (res.type != AML_OBJTYPE_PACKAGE) {
 		printf(": %s is not a package (%d)", method, res.type);
+		aml_freevalue(&res);
 		return;
 	}
 
 	if (res.length <= 2) {
 		printf(": %s returned package of len %d", method, res.length);
+		aml_freevalue(&res);
 		return;
 	}
 
@@ -463,6 +457,7 @@ dwiic_acpi_get_params(struct dwiic_softc *sc, char *method, uint16_t *hcnt,
 	*lcnt = aml_val2int(res.v_package[1]);
 	if (sda_hold_time)
 		*sda_hold_time = aml_val2int(res.v_package[2]);
+	aml_freevalue(&res);
 }
 
 void
@@ -470,11 +465,8 @@ dwiic_bus_scan(struct device *iic, struct i2cbus_attach_args *iba, void *aux)
 {
 	struct dwiic_softc *sc = (struct dwiic_softc *)aux;
 
-	/* just to pass through to dwiic_acpi_foundhid */
 	sc->sc_iic = iic;
-
-	/* find i2c hid devices */
-	aml_find_node(sc->sc_devnode, "_HID", dwiic_acpi_foundhid, sc);
+	aml_find_node(sc->sc_devnode, "_HID", dwiic_acpi_found_hid, sc);
 }
 
 int
@@ -522,36 +514,72 @@ dwiic_i2c_intr_string(void *cookie, void *ih)
 }
 
 int
-dwiic_acpi_foundhid(struct aml_node *node, void *arg)
+dwiic_matchhids(const char *hid, const char *hids[])
+{
+	int i;
+
+	for (i = 0; hids[i]; i++)
+		if (!strcmp(hid, hids[i]))
+			return (1);
+
+	return (0);
+}
+
+int
+dwiic_acpi_found_hid(struct aml_node *node, void *arg)
 {
 	struct dwiic_softc *sc = (struct dwiic_softc *)arg;
-	struct i2c_attach_args ia;
-	struct aml_value cmd[4], res;
 	struct dwiic_crs crs;
-	char cdev[16], dev[16];
+	struct aml_value res;
 	int64_t sta;
-
-	/* 3cdff6f7-4267-4555-ad05-b30a3d8938de */
-	static uint8_t i2c_hid_guid[] = {
-		0xF7, 0xF6, 0xDF, 0x3C, 0x67, 0x42, 0x55, 0x45,
-		0xAD, 0x05, 0xB3, 0x0A, 0x3D, 0x89, 0x38, 0xDE,
-	};
+	char cdev[16], dev[16];
 
 	if (acpi_parsehid(node, arg, cdev, dev, 16) != 0)
 		return 0;
-
-	if (strcmp(cdev, ACPI_DEV_HIDI2C) != 0 &&
-	    strcmp(cdev, ACPI_DEV_HIDI2C2) != 0)
-		return 0;
-
-	DPRINTF(("%s: found HID %s at %s\n", sc->sc_dev.dv_xname, dev,
-	    aml_nodename(node)));
 
 	if (aml_evalinteger(acpi_softc, node->parent, "_STA", 0, NULL, &sta))
 		sta = STA_PRESENT | STA_ENABLED | STA_DEV_OK | 0x1000;
 
 	if ((sta & STA_PRESENT) == 0)
 		return 0;
+
+	DPRINTF(("%s: found HID %s at %s\n", sc->sc_dev.dv_xname, dev,
+	    aml_nodename(node)));
+
+	if (aml_evalname(acpi_softc, node->parent, "_CRS", 0, NULL, &res)) {
+		printf("%s: no _CRS method at %s\n", sc->sc_dev.dv_xname,
+		    aml_nodename(node->parent));
+		return (0);
+	}
+	if (res.type != AML_OBJTYPE_BUFFER || res.length < 5) {
+		printf("%s: invalid _CRS object (type %d len %d)\n",
+		    sc->sc_dev.dv_xname, res.type, res.length);
+		aml_freevalue(&res);
+		return (0);
+	}
+	memset(&crs, 0, sizeof(crs));
+	crs.devnode = sc->sc_devnode;
+	aml_parse_resource(&res, dwiic_acpi_parse_crs, &crs);
+	aml_freevalue(&res);
+
+	if (dwiic_matchhids(cdev, ihidev_hids))
+		return dwiic_acpi_found_ihidev(sc, node, dev, crs);
+
+	return 0;
+}
+
+int
+dwiic_acpi_found_ihidev(struct dwiic_softc *sc, struct aml_node *node,
+    char *dev, struct dwiic_crs crs)
+{
+	struct i2c_attach_args ia;
+	struct aml_value cmd[4], res;
+
+	/* 3cdff6f7-4267-4555-ad05-b30a3d8938de */
+	static uint8_t i2c_hid_guid[] = {
+		0xF7, 0xF6, 0xDF, 0x3C, 0x67, 0x42, 0x55, 0x45,
+		0xAD, 0x05, 0xB3, 0x0A, 0x3D, 0x89, 0x38, 0xDE,
+	};
 
 	if (!aml_searchname(node->parent, "_DSM")) {
 		printf("%s: couldn't find _DSM at %s\n", sc->sc_dev.dv_xname,
@@ -593,27 +621,10 @@ dwiic_acpi_foundhid(struct aml_node *node, void *arg)
 	ia.ia_size = 1;
 	ia.ia_name = "ihidev";
 	ia.ia_size = aml_val2int(&res); /* hid descriptor address */
+	ia.ia_addr = crs.i2c_addr;
 	ia.ia_cookie = dev;
 
 	aml_freevalue(&res);
-
-	if (aml_evalname(acpi_softc, node->parent, "_CRS", 0, NULL, &res)) {
-		printf("%s: no _CRS method at %s\n", sc->sc_dev.dv_xname,
-		    aml_nodename(node->parent));
-		return (0);
-	}
-	if (res.type != AML_OBJTYPE_BUFFER || res.length < 5) {
-		printf("%s: invalid _CRS object (type %d len %d)\n",
-		    sc->sc_dev.dv_xname, res.type, res.length);
-		aml_freevalue(&res);
-		return (0);
-	}
-	memset(&crs, 0, sizeof(crs));
-	crs.devnode = sc->sc_devnode;
-	aml_parse_resource(&res, dwiic_acpi_parse_crs, &crs);
-	aml_freevalue(&res);
-
-	ia.ia_addr = crs.i2c_addr;
 
 	if (crs.irq_int <= 0 && crs.gpio_int_node == NULL) {
 		printf("%s: couldn't find irq for %s\n", sc->sc_dev.dv_xname,
@@ -727,6 +738,28 @@ dwiic_enable(struct dwiic_softc *sc, int enable)
 
 	printf("%s: failed to %sable\n", sc->sc_dev.dv_xname,
 	    (enable ? "en" : "dis"));
+}
+
+void
+dwiic_acpi_power(struct dwiic_softc *sc, int power)
+{
+	char ps[] = "_PS0";
+
+	if (!power)
+		ps[3] = '3';
+
+	if (aml_searchname(sc->sc_devnode, ps)) {
+		if (aml_evalname(sc->sc_acpi, sc->sc_devnode, ps, 0, NULL,
+		    NULL)) {
+			printf("%s: failed powering %s with %s\n",
+			    sc->sc_dev.dv_xname, power ? "on" : "off",
+			    ps);
+			return;
+		}
+
+		DELAY(10000); /* 10 milliseconds */
+	} else
+		DPRINTF(("%s: no %s method\n", sc->sc_dev.dv_xname, ps));
 }
 
 int
@@ -956,7 +989,6 @@ dwiic_read_clear_intrbits(struct dwiic_softc *sc)
 
        return stat;
 }
-
 
 int
 dwiic_intr(void *arg)
