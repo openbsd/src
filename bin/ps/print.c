@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.67 2016/04/25 19:12:07 tedu Exp $	*/
+/*	$OpenBSD: print.c,v 1.68 2016/09/01 09:44:06 tedu Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -496,9 +496,7 @@ cputime(const struct kinfo_proc *kp, VARENT *ve)
 		psecs = 0;
 	} else {
 		/*
-		 * This counts time spent handling interrupts.  We could
-		 * fix this, but it is not 100% trivial (and interrupt
-		 * time fractions only work on the sparc anyway).	XXX
+		 * This counts time spent handling interrupts.  XXX
 		 */
 		secs = kp->p_rtime_sec;
 		psecs = kp->p_rtime_usec;
