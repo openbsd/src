@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2016/09/01 10:00:38 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2016/09/01 10:02:13 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -53,7 +53,6 @@ int	update_checksums = 0;
 int	cksumfail = 0;
 u_short	writecount;
 int	eval = 0;
-int	use_openprom = 0;
 int	print_tree = 0;
 int	verbose = 0;
 
@@ -99,8 +98,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	use_openprom = 1;
-	if (print_tree && use_openprom) {
+	if (print_tree) {
 		op_tree();
 		exit(0);
 	}
@@ -147,20 +145,14 @@ action(char *line)
 	if ((arg = strrchr(keyword, '=')) != NULL)
 		*arg++ = '\0';
 
-	if (use_openprom) {
-		/*
-		 * The whole point of the Openprom is that one
-		 * isn't required to know the keywords.  With this
-		 * in mind, we just dump the whole thing off to
-		 * the generic op_handler.
-		 */
-		if ((cp = op_handler(keyword, arg)) != NULL)
-			warnx("%s", cp);
-		return;
-	}
-
-	warnx("unknown keyword %s", keyword);
-	++eval;
+	/*
+	 * The whole point of the Openprom is that one
+	 * isn't required to know the keywords.  With this
+	 * in mind, we just dump the whole thing off to
+	 * the generic op_handler.
+	 */
+	if ((cp = op_handler(keyword, arg)) != NULL)
+		warnx("%s", cp);
 }
 
 /*
@@ -171,12 +163,10 @@ dump_prom(void)
 {
 	struct keytabent *ktent;
 
-	if (use_openprom) {
-		/*
-		 * We have a special dump routine for this.
-		 */
-		op_dump();
-	}
+	/*
+	 * We have a special dump routine for this.
+	 */
+	op_dump();
 }
 
 static void
