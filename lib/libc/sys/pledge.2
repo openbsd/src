@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.33 2016/07/03 04:36:08 semarie Exp $
+.\" $OpenBSD: pledge.2,v 1.34 2016/09/01 10:06:30 ratchov Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 3 2016 $
+.Dd $Mdocdate: September 1 2016 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -523,11 +523,10 @@ operations on
 devices:
 .Pp
 .Dv AUDIO_GETPOS ,
-.Dv AUDIO_SETINFO ,
-.Dv AUDIO_GETINFO ,
-.Dv AUDIO_GETENC ,
-.Dv AUDIO_SETFD ,
-.Dv AUDIO_GETPROPS .
+.Dv AUDIO_GETPAR ,
+.Dv AUDIO_SETPAR ,
+.Dv AUDIO_START ,
+.Dv AUDIO_STOP .
 .Pp
 See
 .Xr sio_open 3
