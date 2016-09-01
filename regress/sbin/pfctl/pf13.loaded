@@ -22,11 +22,11 @@
   [ Skip steps: i=end r=end sa=8 sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@6 block drop in on tun1000000 inet proto tcp from any to any port = 21 dup-to 192.168.1.1@tun1000001
+@6 pass in on tun1000000 inet proto tcp from any to any port = 21 flags S/SA dup-to 192.168.1.1@tun1000001
   [ Skip steps: i=end d=end r=end p=8 sa=8 da=8 sp=end dp=8 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@7 block drop in on tun1000000 inet6 proto tcp from any to any port = 21 dup-to fec0::1@tun1000001
+@7 pass in on tun1000000 inet6 proto tcp from any to any port = 21 flags S/SA dup-to fec0::1@tun1000001
   [ Skip steps: i=end d=end r=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -38,11 +38,11 @@
   [ Skip steps: i=end d=end r=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@10 block drop in on tun1000000 inet proto tcp from any to any port = 21 reply-to 192.168.1.1@tun1000001
+@10 pass in on tun1000000 inet proto tcp from any to any port = 21 flags S/SA reply-to 192.168.1.1@tun1000001
   [ Skip steps: i=end d=end r=end p=12 sa=12 da=12 sp=end dp=12 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@11 block drop in on tun1000000 inet6 proto tcp from any to any port = 21 reply-to fec0::1@tun1000001
+@11 pass in on tun1000000 inet6 proto tcp from any to any port = 21 flags S/SA reply-to fec0::1@tun1000001
   [ Skip steps: i=end d=end r=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

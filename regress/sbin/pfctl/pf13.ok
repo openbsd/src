@@ -4,12 +4,12 @@ pass in quick on enc0 inet6 all flags S/SA
 pass out quick on tun1000000 inet all flags S/SA route-to tun1000001
 pass out quick on tun1000000 inet from any to 192.168.1.1 flags S/SA route-to tun1000001
 pass out quick on tun1000000 inet6 from any to fec0::1 flags S/SA route-to tun1000001
-block drop in on tun1000000 inet proto tcp from any to any port = 21 dup-to 192.168.1.1@tun1000001
-block drop in on tun1000000 inet6 proto tcp from any to any port = 21 dup-to fec0::1@tun1000001
+pass in on tun1000000 inet proto tcp from any to any port = 21 flags S/SA dup-to 192.168.1.1@tun1000001
+pass in on tun1000000 inet6 proto tcp from any to any port = 21 flags S/SA dup-to fec0::1@tun1000001
 pass in quick on tun1000000 inet from 192.168.1.1 to 10.1.1.1 flags S/SA route-to tun1000001
 pass in quick on tun1000000 inet6 from fec0::/64 to fec1::2 flags S/SA route-to tun1000001
-block drop in on tun1000000 inet proto tcp from any to any port = 21 reply-to 192.168.1.1@tun1000001
-block drop in on tun1000000 inet6 proto tcp from any to any port = 21 reply-to fec0::1@tun1000001
+pass in on tun1000000 inet proto tcp from any to any port = 21 flags S/SA reply-to 192.168.1.1@tun1000001
+pass in on tun1000000 inet6 proto tcp from any to any port = 21 flags S/SA reply-to fec0::1@tun1000001
 pass in quick on tun1000000 inet from 192.168.1.1 to 10.1.1.1 flags S/SA reply-to tun1000001
 pass in quick on tun1000000 inet6 from fec0::/64 to fec1::2 flags S/SA reply-to tun1000001
 pass in quick on tun1000000 inet from 192.168.1.1 to 10.1.1.1 flags S/SA dup-to 192.168.1.100@tun1000001
