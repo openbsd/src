@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.22 2016/07/29 16:36:51 stefan Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.23 2016/09/01 14:48:09 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -36,8 +36,6 @@
 #define VM_TTYNAME_MAX		12
 #define MAX_TAP			256
 #define NR_BACKLOG		5
-
-/* #define VMD_DEBUG */
 
 #ifdef VMD_DEBUG
 #define dprintf(x...)   do { log_debug(x); } while(0)

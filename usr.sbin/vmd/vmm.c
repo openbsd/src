@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.37 2016/08/31 06:55:39 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.38 2016/09/01 14:48:09 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -25,20 +25,23 @@
 #include <sys/time.h>
 #include <sys/mman.h>
 
-#include <dev/ic/comreg.h>
 #include <dev/ic/i8253reg.h>
 #include <dev/isa/isareg.h>
 #include <dev/pci/pcireg.h>
 
+#include <machine/param.h>
+#include <machine/psl.h>
 #include <machine/specialreg.h>
 #include <machine/vmmvar.h>
 
 #include <errno.h>
+#include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
 #include <limits.h>
 #include <poll.h>
 #include <pthread.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,61 +49,16 @@
 #include <util.h>
 
 #include "vmd.h"
+#include "vmm.h"
 #include "loadfile.h"
 #include "pci.h"
 #include "virtio.h"
 #include "proc.h"
+#include "i8253.h"
+#include "i8259.h"
+#include "ns8250.h"
+#include "mc146818.h"
 
-#define MAX_PORTS 65536
-
-/*
- * Emulated 8250 UART
- */
-#define COM1_DATA	0x3f8
-#define COM1_IER	0x3f9
-#define COM1_IIR	0x3fa
-#define COM1_LCR	0x3fb
-#define COM1_MCR	0x3fc
-#define COM1_LSR	0x3fd
-#define COM1_MSR	0x3fe
-#define COM1_SCR	0x3ff
-
-/*
- * Emulated i8253 PIT (counter)
- */
-#define TIMER_BASE	0x40
-#define TIMER_CTRL	0x43	/* 8253 Timer #1 */
-#define NS_PER_TICK	(1000000000 / TIMER_FREQ)
-
-/* i8253 registers */
-struct i8253_counter {
-	struct timeval tv;	/* timer start time */
-	uint16_t start;		/* starting value */
-	uint16_t olatch;	/* output latch */
-	uint16_t ilatch;	/* input latch */
-	uint8_t last_r;		/* last read byte (MSB/LSB) */
-	uint8_t last_w;		/* last written byte (MSB/LSB) */
-};
-
-/* ns8250 UART registers */
-struct ns8250_regs {
-	uint8_t lcr;		/* Line Control Register */
-	uint8_t fcr;		/* FIFO Control Register */
-	uint8_t iir;		/* Interrupt ID Register */
-	uint8_t ier;		/* Interrupt Enable Register */
-	uint8_t divlo;		/* Baud rate divisor low byte */
-	uint8_t divhi;		/* Baud rate divisor high byte */
-	uint8_t msr;		/* Modem Status Register */
-	uint8_t lsr;		/* Line Status Register */
-	uint8_t mcr;		/* Modem Control Register */
-	uint8_t scr;		/* Scratch Register */
-	uint8_t data;		/* Unread input data */
-};
-
-typedef uint8_t (*io_fn_t)(struct vm_run_params *);
-
-struct i8253_counter i8253_counter[3];
-struct ns8250_regs com1_regs;
 io_fn_t ioports_map[MAX_PORTS];
 
 void vmm_sighdlr(int, short, void *);
@@ -119,19 +77,9 @@ int vmm_create_vm(struct vm_create_params *);
 void init_emulated_hw(struct vm_create_params *, int *, int *);
 void vcpu_exit_inout(struct vm_run_params *);
 uint8_t vcpu_exit_pci(struct vm_run_params *);
-uint8_t vcpu_exit_i8253(struct vm_run_params *);
-uint8_t vcpu_exit_com(struct vm_run_params *);
-void vcpu_process_com_data(union vm_exit *);
-void vcpu_process_com_lcr(union vm_exit *);
-void vcpu_process_com_lsr(union vm_exit *);
-void vcpu_process_com_ier(union vm_exit *);
-void vcpu_process_com_mcr(union vm_exit *);
-void vcpu_process_com_iir(union vm_exit *);
-void vcpu_process_com_msr(union vm_exit *);
-void vcpu_process_com_scr(union vm_exit *);
-
 int vmm_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 void vmm_run(struct privsep *, struct privsep_proc *, void *);
+int vcpu_pic_intr(uint32_t, uint32_t, uint8_t);
 
 static struct vm_mem_range *find_gpa_range(struct vm_create_params *, paddr_t,
     size_t);
@@ -142,6 +90,10 @@ struct vmd_vm *current_vm;
 extern struct vmd *env;
 
 extern char *__progname;
+
+pthread_cond_t vcpu_run_cond[VMM_MAX_VCPUS_PER_VM];
+pthread_mutex_t vcpu_run_mtx[VMM_MAX_VCPUS_PER_VM];
+uint8_t vcpu_hlt[VMM_MAX_VCPUS_PER_VM];
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	vmm_dispatch_parent  },
@@ -380,6 +332,8 @@ vcpu_reset(uint32_t vmid, uint32_t vcpu_id, struct vcpu_init_state *vis)
 	vrp.vrp_vm_id = vmid;
 	vrp.vrp_vcpu_id = vcpu_id;
 	memcpy(&vrp.vrp_init_state, vis, sizeof(struct vcpu_init_state));
+
+	log_debug("%s: resetting vcpu %d for vm %d", __func__, vcpu_id, vmid);
 
 	if (ioctl(env->vmd_fd, VMM_IOC_RESETCPU, &vrp) < 0)
 		return (errno);
@@ -663,7 +617,7 @@ get_info_vm(struct privsep *ps, struct imsg *imsg, int terminate)
 			vtp.vtp_vm_id = info[i].vir_id;
 			if ((ret = terminate_vm(&vtp)) != 0)
 				return (ret);
-			log_debug("%s: terminated id %d",
+			log_debug("%s: terminated VM %s (id %d)", __func__,
 			    info[i].vir_name, info[i].vir_id);
 			continue;
 		}
@@ -870,21 +824,27 @@ init_emulated_hw(struct vm_create_params *vcp, int *child_disks,
 	/* Reset the IO port map */
 	memset(&ioports_map, 0, sizeof(io_fn_t) * MAX_PORTS);
 	
-	/* Init the i8253 PIT's 3 counters */
-	memset(&i8253_counter, 0, sizeof(struct i8253_counter) * 3);
-	gettimeofday(&i8253_counter[0].tv, NULL);
-	gettimeofday(&i8253_counter[1].tv, NULL);
-	gettimeofday(&i8253_counter[2].tv, NULL);
-	i8253_counter[0].start = TIMER_DIV(100);
-	i8253_counter[1].start = TIMER_DIV(100);
-	i8253_counter[2].start = TIMER_DIV(100);
+	/* Init i8253 PIT */
+	i8253_init(vcp->vcp_id);
 	ioports_map[TIMER_CTRL] = vcpu_exit_i8253;
 	ioports_map[TIMER_BASE + TIMER_CNTR0] = vcpu_exit_i8253;
 	ioports_map[TIMER_BASE + TIMER_CNTR1] = vcpu_exit_i8253;
 	ioports_map[TIMER_BASE + TIMER_CNTR2] = vcpu_exit_i8253;
 
+	/* Init mc146818 RTC */
+	mc146818_init(vcp->vcp_id);
+	ioports_map[IO_RTC] = vcpu_exit_mc146818;
+	ioports_map[IO_RTC + 1] = vcpu_exit_mc146818;
+
+	/* Init master and slave PICs */
+	i8259_init();
+	ioports_map[IO_ICU1] = vcpu_exit_i8259;
+	ioports_map[IO_ICU1 + 1] = vcpu_exit_i8259;
+	ioports_map[IO_ICU2] = vcpu_exit_i8259;
+	ioports_map[IO_ICU2 + 1] = vcpu_exit_i8259;
+
 	/* Init ns8250 UART */
-	memset(&com1_regs, 0, sizeof(struct ns8250_regs));
+	ns8250_init(con_fd);
 	for (i = COM1_DATA; i <= COM1_SCR; i++)
 		ioports_map[i] = vcpu_exit_com;
 
@@ -923,8 +883,10 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 	size_t i;
 	int ret;
 	pthread_t *tid;
-	void *exit_status;
 	struct vm_run_params **vrp;
+#if 0
+	void *exit_status;
+#endif
 
 	if (vcp == NULL)
 		return (EINVAL);
@@ -950,6 +912,8 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 
 	ret = 0;
 
+	event_init();
+
 	tid = calloc(vcp->vcp_ncpus, sizeof(pthread_t));
 	vrp = calloc(vcp->vcp_ncpus, sizeof(struct vm_run_params *));
 	if (tid == NULL || vrp == NULL) {
@@ -958,7 +922,13 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 		return (ENOMEM);
 	}
 
+	log_debug("%s: initializing hardware for vm %s", __func__,
+	    vcp->vcp_name);
+
 	init_emulated_hw(vcp, child_disks, child_taps);
+
+	log_debug("%s: starting vcpu threads for vm %s", __func__,
+	    vcp->vcp_name);
 
 	/*
 	 * Create and launch one thread for each VCPU. These threads may
@@ -990,6 +960,22 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 			return (EIO);
 		}
 
+		ret = pthread_cond_init(&vcpu_run_cond[i], NULL);
+		if (ret) {
+			log_warn("%s: cannot initialize cond var (%d)",
+			    __progname, ret);
+			return (ret);
+		}
+
+		ret = pthread_mutex_init(&vcpu_run_mtx[i], NULL);
+		if (ret) {
+			log_warn("%s: cannot initialize mtx (%d)",
+			    __progname, ret);
+			return (ret);
+		}
+
+		vcpu_hlt[i] = 0;
+
 		/* Start each VCPU run thread at vcpu_run_loop */
 		ret = pthread_create(&tid[i], NULL, vcpu_run_loop, vrp[i]);
 		if (ret) {
@@ -997,6 +983,12 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 			return (ret);
 		}
 	}
+
+	log_debug("%s: waiting on events for VM %s", __func__, vcp->vcp_name);
+	ret = event_dispatch();
+
+#if 0
+	/* XXX need to handle clean exits now */
 
 	/* Wait for all the threads to exit */
 	for (i = 0; i < vcp->vcp_ncpus; i++) {
@@ -1012,6 +1004,7 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 			ret = EIO;
 		}
 	}
+#endif
 
 	return (ret);
 }
@@ -1034,14 +1027,60 @@ vcpu_run_loop(void *arg)
 {
 	struct vm_run_params *vrp = (struct vm_run_params *)arg;
 	intptr_t ret;
+	int irq;
+	uint32_t n;
 
 	vrp->vrp_continue = 0;
-	vrp->vrp_injint = -1;
+	n = vrp->vrp_vcpu_id;
 
 	for (;;) {
+		ret = pthread_mutex_lock(&vcpu_run_mtx[n]);
+
+		if (ret) {
+			log_warn("%s: can't lock vcpu run mtx (%d)",
+			    __func__, (int)ret);
+			return ((void *)ret);
+		}
+
+		/* If we are halted, wait */
+		if (vcpu_hlt[n]) {
+			ret = pthread_cond_wait(&vcpu_run_cond[n],
+			    &vcpu_run_mtx[n]);
+
+			if (ret) {
+				log_warn("%s: can't wait on cond (%d)",
+				    __func__, (int)ret);
+				pthread_mutex_unlock(&vcpu_run_mtx[n]);
+				return ((void *)ret);
+			}
+		}
+
+		/* XXX check retval for pthread_mutex_unlock */
+		pthread_mutex_unlock(&vcpu_run_mtx[n]);
+
+		if (vrp->vrp_irqready && i8259_is_pending()) {
+			irq = i8259_ack();
+			vrp->vrp_irq = irq;
+		} else
+			vrp->vrp_irq = 0xFFFF;
+
+		/* Still more pending? */
+		if (i8259_is_pending()) {
+			/* XXX can probably avoid ioctls here by providing intr in vrp */
+			if (vcpu_pic_intr(vrp->vrp_vm_id, vrp->vrp_vcpu_id, 1)) {
+				fatal("can't set INTR");
+			}
+		} else {
+			if (vcpu_pic_intr(vrp->vrp_vm_id, vrp->vrp_vcpu_id, 0)) {
+				fatal("can't clear INTR");
+			}
+		}
+
 		if (ioctl(env->vmd_fd, VMM_IOC_RUN, vrp) < 0) {
 			/* If run ioctl failed, exit */
 			ret = errno;
+			log_warn("%s: vm %d / vcpu %d run ioctl failed (%d)",
+			    __func__, vrp->vrp_vm_id, n, errno);
 			return ((void *)ret);
 		}
 
@@ -1062,456 +1101,21 @@ vcpu_run_loop(void *arg)
 	return (NULL);
 }
 
-/*
- * vcpu_exit_i8253
- *
- * Handles emulated i8253 PIT access (in/out instruction to PIT ports).
- * We don't emulate all the modes of the i8253, just the basic squarewave
- * clock.
- *
- * Parameters:
- *  vrp: vm run parameters containing exit information for the I/O
- *      instruction being performed
- *
- * Return value:
- *  Interrupt to inject to the guest VM, or 0xFF if no interrupt should
- *      be injected.
- */
-uint8_t
-vcpu_exit_i8253(struct vm_run_params *vrp)
+int
+vcpu_pic_intr(uint32_t vm_id, uint32_t vcpu_id, uint8_t intr)
 {
-	uint32_t out_data;
-	uint8_t sel, rw, data;
-	uint64_t ns, ticks;
-	struct timeval now, delta;
-	union vm_exit *vei = vrp->vrp_exit;
+	struct vm_intr_params vip;
 
-	if (vei->vei.vei_port == TIMER_CTRL) {
-		if (vei->vei.vei_dir == 0) { /* OUT instruction */
-			out_data = vei->vei.vei_data;
-			sel = out_data &
-			    (TIMER_SEL0 | TIMER_SEL1 | TIMER_SEL2);
-			sel = sel >> 6;
-			if (sel > 2) {
-				log_warnx("%s: i8253 PIT: invalid "
-				    "timer selected (%d)",
-				    __progname, sel);
-				goto ret;
-			}
+	memset(&vip, 0, sizeof(vip));
 
-			rw = vei->vei.vei_data & (TIMER_LATCH | TIMER_16BIT);
+	vip.vip_vm_id = vm_id;
+	vip.vip_vcpu_id = vcpu_id; /* XXX always 0? */
+	vip.vip_intr = intr;
 
-			if ((rw & TIMER_16BIT) == TIMER_LSB ||
-			    (rw & TIMER_16BIT) == TIMER_MSB) {
-				log_warnx("%s: i8253 PIT: invalid timer mode "
-				    "0x%x selected", __func__,
-				    (rw & TIMER_16BIT));
-			}
+	if (ioctl(env->vmd_fd, VMM_IOC_INTR, &vip) < 0)
+		return (errno);
 
-			/*
-			 * Since we don't truly emulate each tick of the PIT
-			 * clock, when the guest asks for the timer to be
-			 * latched, simulate what the counter would have been
-			 * had we performed full emulation. We do this by
-			 * calculating when the counter was reset vs how much
-			 * time has elapsed, then bias by the counter tick
-			 * rate.
-			 */
-			if (rw == TIMER_LATCH) {
-				gettimeofday(&now, NULL);
-				delta.tv_sec = now.tv_sec -
-				    i8253_counter[sel].tv.tv_sec;
-				delta.tv_usec = now.tv_usec -
-				    i8253_counter[sel].tv.tv_usec;
-				if (delta.tv_usec < 0) {
-					delta.tv_sec--;
-					delta.tv_usec += 1000000;
-				}
-				if (delta.tv_usec > 1000000) {
-					delta.tv_sec++;
-					delta.tv_usec -= 1000000;
-				}
-				ns = delta.tv_usec * 1000 +
-				    delta.tv_sec * 1000000000;
-				ticks = ns / NS_PER_TICK;
-				i8253_counter[sel].olatch =
-				    i8253_counter[sel].start -
-				    ticks % i8253_counter[sel].start;
-				goto ret;
-			}
-
-			goto ret;
-		} else {
-			log_warnx("%s: i8253 PIT: read from control "
-			    "port unsupported - returning 0", __progname);
-			vei->vei.vei_data = 0;
-		}
-	} else {
-		sel = vei->vei.vei_port - (TIMER_CNTR0 + TIMER_BASE);
-		if (vei->vei.vei_dir == 0) { /* OUT instruction */
-			if (i8253_counter[sel].last_w == 0) {
-				out_data = vei->vei.vei_data;
-				i8253_counter[sel].ilatch |= (out_data << 8);
-				i8253_counter[sel].last_w = 1;
-			} else {
-				out_data = vei->vei.vei_data;
-				i8253_counter[sel].ilatch |= out_data;
-				i8253_counter[sel].start =
-				    i8253_counter[sel].ilatch;
-				i8253_counter[sel].last_w = 0;
-			}
-		} else {
-			if (i8253_counter[sel].last_r == 0) {
-				data = i8253_counter[sel].olatch >> 8;
-				vei->vei.vei_data = data;
-				i8253_counter[sel].last_w = 1;
-			} else {
-				data = i8253_counter[sel].olatch & 0xFF;
-				vei->vei.vei_data = data;
-				i8253_counter[sel].last_w = 0;
-			}
-		}
-	}
-
-ret:
-	/* XXX don't yet support interrupts generated from the 8253 */
-	return (0xFF);
-}
-
-/*
- * vcpu_process_com_data
- *
- * Emulate in/out instructions to the com1 (ns8250) UART data register
- *
- * Parameters:
- *  vei: vm exit information from vmm(4) containing information on the in/out
- *      instruction being performed
- */
-void
-vcpu_process_com_data(union vm_exit *vei)
-{
-	/*
-	 * vei_dir == 0 : out instruction
-	 *
-	 * The guest wrote to the data register. Since we are emulating a
-	 * no-fifo chip, write the character immediately to the pty and
-	 * assert TXRDY in IIR (if the guest has requested TXRDY interrupt
-	 * reporting)
-	 */
-	if (vei->vei.vei_dir == 0) {
-		write(con_fd, &vei->vei.vei_data, 1);
-		if (com1_regs.ier & 0x2) {
-			/* Set TXRDY */
-			com1_regs.iir |= IIR_TXRDY;
-			/* Set "interrupt pending" (IIR low bit cleared) */
-			com1_regs.iir &= ~0x1;
-		}
-	} else {
-		/*
-		 * vei_dir == 1 : in instruction
-		 *
-		 * The guest read from the data register. Check to see if
-		 * there is data available (RXRDY) and if so, consume the
-		 * input data and return to the guest. Also clear the
-		 * interrupt info register regardless.
-		 */
-		if (com1_regs.lsr & LSR_RXRDY) {
-			vei->vei.vei_data = com1_regs.data;
-			com1_regs.data = 0x0;
-			com1_regs.lsr &= ~LSR_RXRDY;
-		} else {
-			/* XXX should this be com1_regs.data or 0xff? */
-			vei->vei.vei_data = com1_regs.data;
-			log_warnx("guest reading com1 when not ready");
-		}
-
-		/* Reading the data register always clears RXRDY from IIR */
-		com1_regs.iir &= ~IIR_RXRDY;
-
-		/*
-		 * Clear "interrupt pending" by setting IIR low bit to 1
-		 * if no interrupt are pending
-		 */
-		if (com1_regs.iir == 0x0)
-			com1_regs.iir = 0x1;
-	}
-}
-
-/*
- * vcpu_process_com_lcr
- *
- * Emulate in/out instructions to the com1 (ns8250) UART line control register
- *
- * Paramters:
- *  vei: vm exit information from vmm(4) containing information on the in/out
- *      instruction being performed
- */
-void
-vcpu_process_com_lcr(union vm_exit *vei)
-{
-	/*
-	 * vei_dir == 0 : out instruction
-	 *
-	 * Write content to line control register
-	 */
-	if (vei->vei.vei_dir == 0) {
-		com1_regs.lcr = (uint8_t)vei->vei.vei_data;
-	} else {
-		/*
-		 * vei_dir == 1 : in instruction
-		 *
-		 * Read line control register
-		 */
-		vei->vei.vei_data = com1_regs.lcr;
-	}
-}
-
-/*
- * vcpu_process_com_iir
- *
- * Emulate in/out instructions to the com1 (ns8250) UART interrupt information
- * register. Note that writes to this register actually are to a different
- * register, the FCR (FIFO control register) that we don't emulate but still
- * consume the data provided.
- *
- * Parameters:
- *  vei: vm exit information from vmm(4) containing information on the in/out
- *      instruction being performed
- */
-void
-vcpu_process_com_iir(union vm_exit *vei)
-{
-	/*
-	 * vei_dir == 0 : out instruction
-	 *
-	 * Write to FCR
-	 */
-	if (vei->vei.vei_dir == 0) {
-		com1_regs.fcr = vei->vei.vei_data;
-	} else {
-		/*
-		 * vei_dir == 1 : in instruction
-		 *
-		 * Read IIR. Reading the IIR resets the TXRDY bit in the IIR
-		 * after the data is read.
-		 */
-		vei->vei.vei_data = com1_regs.iir;
-		com1_regs.iir &= ~IIR_TXRDY;
-
-		/*
-		 * Clear "interrupt pending" by setting IIR low bit to 1
-		 * if no interrupts are pending
-		 */
-		if (com1_regs.iir == 0x0)
-			com1_regs.iir = 0x1;
-	}
-}
-
-/*
- * vcpu_process_com_mcr
- *
- * Emulate in/out instructions to the com1 (ns8250) UART modem control
- * register.
- *
- * Parameters:
- *  vei: vm exit information from vmm(4) containing information on the in/out
- *      instruction being performed
- */
-void
-vcpu_process_com_mcr(union vm_exit *vei)
-{
-	/*
-	 * vei_dir == 0 : out instruction
-	 *
-	 * Write to MCR
-	 */
-	if (vei->vei.vei_dir == 0) {
-		com1_regs.mcr = vei->vei.vei_data;
-	} else {
-		/*
-		 * vei_dir == 1 : in instruction
-		 *
-		 * Read from MCR
-		 */
-		vei->vei.vei_data = com1_regs.mcr;
-	}
-}
-
-/*
- * vcpu_process_com_lsr
- *
- * Emulate in/out instructions to the com1 (ns8250) UART line status register.
- *
- * Parameters:
- *  vei: vm exit information from vmm(4) containing information on the in/out
- *      instruction being performed
- */
-void
-vcpu_process_com_lsr(union vm_exit *vei)
-{
-	/*
-	 * vei_dir == 0 : out instruction
-	 *
-	 * Write to LSR. This is an illegal operation, so we just log it and
-	 * continue.
-	 */
-	if (vei->vei.vei_dir == 0) {
-		log_warnx("%s: LSR UART write 0x%x unsupported",
-		    __progname, vei->vei.vei_data);
-	} else {
-		/*
-		 * vei_dir == 1 : in instruction
-		 *
-		 * Read from LSR. We always report TXRDY and TSRE since we
-		 * can process output characters immediately (at any time).
-		 */
-		vei->vei.vei_data = com1_regs.lsr | LSR_TSRE | LSR_TXRDY;
-	}
-}
-
-/*
- * vcpu_process_com_msr
- *
- * Emulate in/out instructions to the com1 (ns8250) UART modem status register.
- *
- * Parameters:
- *  vei: vm exit information from vmm(4) containing information on the in/out
- *      instruction being performed
- */
-void
-vcpu_process_com_msr(union vm_exit *vei)
-{
-	/*
-	 * vei_dir == 0 : out instruction
-	 *
-	 * Write to MSR. This is an illegal operation, so we just log it and
-	 * continue.
-	 */
-	if (vei->vei.vei_dir == 0) {
-		log_warnx("%s: MSR UART write 0x%x unsupported",
-		    __progname, vei->vei.vei_data);
-	} else {
-		/*
-		 * vei_dir == 1 : in instruction
-		 *
-		 * Read from MSR. We always report DCD, DSR, and CTS.
-		 */
-		vei->vei.vei_data = com1_regs.lsr | MSR_DCD | MSR_DSR | MSR_CTS;
-	}
-}
-
-/*
- * vcpu_process_com_scr
- *
- * Emulate in/out instructions to the com1 (ns8250) UART scratch register. The
- * scratch register is sometimes used to distinguish an 8250 from a 16450,
- * and/or used to distinguish submodels of the 8250 (eg 8250A, 8250B). We
- * simulate an "original" 8250 by forcing the scratch register to return data
- * on read that is different from what was written.
- *
- * Parameters:
- *  vei: vm exit information from vmm(4) containing information on the in/out
- *      instruction being performed
- */
-void
-vcpu_process_com_scr(union vm_exit *vei)
-{
-	/*
-	 * vei_dir == 0 : out instruction
-	 *
-	 * Write to SCR
-	 */
-	if (vei->vei.vei_dir == 0) {
-		com1_regs.scr = vei->vei.vei_data;
-	} else {
-		/*
-		 * vei_dir == 1 : in instruction
-		 *
-		 * Read from SCR. To make sure we don't accidentally simulate
-		 * a real scratch register, we negate what was written on
-		 * subsequent readback.
-		 */
-		vei->vei.vei_data = ~com1_regs.scr;
-	}
-}
-
-/*
- * vcpu_process_com_ier
- *
- * Emulate in/out instructions to the com1 (ns8250) UART interrupt enable
- * register.
- *
- * Parameters:
- *  vei: vm exit information from vmm(4) containing information on the in/out
- *      instruction being performed
- */
-void
-vcpu_process_com_ier(union vm_exit *vei)
-{
-	/*
-	 * vei_dir == 0 : out instruction
-	 *
-	 * Write to IER
-	 */
-	if (vei->vei.vei_dir == 0) {
-		com1_regs.ier = vei->vei.vei_data;
-	} else {
-		/*
-		 * vei_dir == 1 : in instruction
-		 *
-		 * Read from IER
-		 */
-		vei->vei.vei_data = com1_regs.ier;
-	}
-}
-
-/*
- * vcpu_exit_com
- *
- * Process com1 (ns8250) UART exits. vmd handles most basic 8250
- * features with the exception of the divisor latch (eg, no baud
- * rate support)
- *
- * Parameters:
- *  vrp: vcpu run parameters containing guest state for this exit
- *
- * Return value:
- *  Interrupt to inject to the guest VM, or 0xFF if no interrupt should
- *      be injected.
- */
-uint8_t
-vcpu_exit_com(struct vm_run_params *vrp)
-{
-	union vm_exit *vei = vrp->vrp_exit;
-
-	switch (vei->vei.vei_port) {
-	case COM1_LCR:
-		vcpu_process_com_lcr(vei);
-		break;
-	case COM1_IER:
-		vcpu_process_com_ier(vei);
-		break;
-	case COM1_IIR:
-		vcpu_process_com_iir(vei);
-		break;
-	case COM1_MCR:
-		vcpu_process_com_mcr(vei);
-		break;
-	case COM1_LSR:
-		vcpu_process_com_lsr(vei);
-		break;
-	case COM1_MSR:
-		vcpu_process_com_msr(vei);
-		break;
-	case COM1_SCR:
-		vcpu_process_com_scr(vei);
-		break;
-	case COM1_DATA:
-		vcpu_process_com_data(vei);
-		break;
-	}
-
-	return (0xFF);
+	return (0);
 }
 
 /*
@@ -1574,9 +1178,7 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 			vei->vei.vei_data = 0xFFFFFFFF;
 	
 	if (intr != 0xFF)
-		vrp->vrp_injint = intr;
-	else
-		vrp->vrp_injint = -1;
+		vcpu_assert_pic_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, intr);
 }
 
 /*
@@ -1588,9 +1190,8 @@ vcpu_exit_inout(struct vm_run_params *vrp)
  * in 'vrp', and will be resent to vmm(4) on exit completion.
  *
  * Upon conclusion of handling the exit, the function determines if any
- * interrupts should be injected into the guest, and sets vrp->vrp_injint
- * to the IRQ line whose interrupt should be vectored (or -1 if no interrupt
- * is to be injected).
+ * interrupts should be injected into the guest, and asserts the proper
+ * IRQ line whose interrupt should be vectored.
  *
  * Parameters:
  *  vrp: vcpu run parameters containing guest state for this exit
@@ -1602,18 +1203,17 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 int
 vcpu_exit(struct vm_run_params *vrp)
 {
-	ssize_t sz;
-	char ch;
-
 	switch (vrp->vrp_exit_reason) {
 	case VMX_EXIT_IO:
 		vcpu_exit_inout(vrp);
 		break;
 	case VMX_EXIT_HLT:
-		/*
-		 * XXX handle halted state, no reason to run this vcpu again
-		 * until a vm interrupt is to be injected
-		 */
+		/* XXX check retvals in these fns */
+		pthread_mutex_lock(&vcpu_run_mtx[vrp->vrp_vcpu_id]);
+		vcpu_hlt[vrp->vrp_vcpu_id] = 1;
+		pthread_mutex_unlock(&vcpu_run_mtx[vrp->vrp_vcpu_id]);
+		break;
+	case VMX_EXIT_INT_WINDOW:
 		break;
 	default:
 		log_warnx("%s: unknown exit reason %d",
@@ -1621,40 +1221,15 @@ vcpu_exit(struct vm_run_params *vrp)
 		return (1);
 	}
 
-	/* XXX interrupt priority */
+	/* XXX this may not be irq 9 all the time */
+	/* XXX change this to poll on the tap interface */
 	if (vionet_process_rx())
-		vrp->vrp_injint = 9;
+		vcpu_assert_pic_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, 9);
 
-	/*
-	 * Is there a new character available on com1?
-	 * If so, consume the character, buffer it into the com1 data register
-	 * assert IRQ4, and set the line status register RXRDY bit.
-	 *
-	 * XXX - move all this com intr checking to another function
-	 */
-	sz = read(con_fd, &ch, sizeof(char));
-	if (sz == 1) {
-		com1_regs.lsr |= LSR_RXRDY;
-		com1_regs.data = ch;
-		/* XXX these ier and iir bits should be IER_x and IIR_x */
-		if (com1_regs.ier & 0x1) {
-			com1_regs.iir |= (2 << 1);
-			com1_regs.iir &= ~0x1;
-		}
-	}
+	/* XXX temporary until this is polled */
+	if (vcpu_com1_needs_intr())
+		vcpu_assert_pic_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, 4);
 
-	/*
-	 * Clear "interrupt pending" by setting IIR low bit to 1 if no
-	 * interrupts are pending
-	 */
-	/* XXX these iir magic numbers should be IIR_x */
-	if ((com1_regs.iir & ~0x1) == 0x0)
-		com1_regs.iir = 0x1;
-
-	/* If pending interrupt and nothing waiting to be injected, inject */
-	if ((com1_regs.iir & 0x1) == 0)
-		if (vrp->vrp_injint == -1)
-			vrp->vrp_injint = 0x4;
 	vrp->vrp_continue = 1;
 
 	return (0);
@@ -1814,6 +1389,33 @@ read_mem(paddr_t src, void *buf, size_t len)
 	}
 
 	return (0);
+}
+
+/*
+ * vcpu_assert_pic_irq
+ *
+ * Injects the specified IRQ on the supplied vcpu/vm
+ *
+ * Parameters:
+ *  vm_id: VM ID to inject to
+ *  vcpu_id: VCPU ID to inject to
+ *  irq: IRQ to inject
+ */
+void
+vcpu_assert_pic_irq(uint32_t vm_id, uint32_t vcpu_id, int irq)
+{
+	i8259_assert_irq(irq);
+
+	if (i8259_is_pending()) {
+		if (vcpu_pic_intr(vm_id, vcpu_id, 1)) {
+			fatalx("%s: can't assert INTR", __func__);
+		}
+
+		pthread_mutex_lock(&vcpu_run_mtx[vcpu_id]);
+		vcpu_hlt[vcpu_id] = 0;
+		pthread_cond_signal(&vcpu_run_cond[vcpu_id]);
+		pthread_mutex_unlock(&vcpu_run_mtx[vcpu_id]);
+	}
 }
 
 /*
