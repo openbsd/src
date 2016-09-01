@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.9,v 1.23 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: audio.9,v 1.24 2016/09/01 10:14:08 ratchov Exp $
 .\"	$NetBSD: audio.9,v 1.14 2000/02/11 22:56:15 kleink Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: September 1 2016 $
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -96,9 +96,6 @@ struct audio_params {
 	u_int	bps;			/* bytes/sample */
 	u_int	msb;			/* data alignment */
 	u_int	channels;		/* mono(1), stereo(2) */
-	/* Software en/decode functions, set if SW coding required by HW */
-	void	(*sw_code)(void *, u_char *, int);
-	int	factor;			/* coding space change */
 };
 .Ed
 .Pp
@@ -175,11 +172,7 @@ be lost when
 is called.
 This function returns 0 on success, otherwise an error code.
 .It Fn "int (*query_encoding)" "void *hdl" "struct audio_encoding *ae"
-This function is used when the
-.Dv AUDIO_GETENC
-.Xr ioctl 2
-is called.
-It fills
+This function fills
 .Fa ae
 and returns 0 or, if there is no encoding with the given number, returns
 .Er EINVAL .
@@ -194,40 +187,23 @@ and
 flags to indicate which mode(s) are to be set.
 .Fa usemode
 is also a combination of these flags, but indicates the current
-mode of the device (i.e., the value of
-.Va mode
-in the
-.Va audio_info
-struct).
+mode of the device (i.e., the value corresponding to the
+.Va flags
+argument to the
+.Fn open
+function).
 The
 .Fa play
 and
 .Fa rec
 structures contain the encoding parameters that will be set.
-If the hardware requires software assistance with some encoding
-(e.g., it might be lacking mu-law support), it will fill the
-.Va sw_code
-and
-.Va factor
-fields of these structures.
-See
-.Pa /usr/src/sys/dev/auconv.h
-for available software support.
-The values of the structures may also be modified if the hardware
+The values of the structures must also be modified if the hardware
 cannot be set to exactly the requested mode (e.g., if the requested
 sampling rate is not supported, but one close enough is).
-If the device does not have the
-.Dv AUDIO_PROP_INDEPENDENT
-property, the same value is passed in both
+Except the channel count, the same value is passed in both
 .Fa play
 and
-.Fa rec
-and the encoding parameters from
-.Fa play
-are copied into
-.Fa rec
-after the call to
-.Fn set_params .
+.Fa rec .
 .Pp
 The machine independent audio driver does some preliminary parameter checking;
 it verifies that the precision is compatible with the encoding,
@@ -332,10 +308,8 @@ with relevant information about the driver and returns 0 on success,
 or it returns an error code on failure.
 .It Fn "int (*setfd)" "void *hdl" "int fd"
 This function is optional.
-If supplied, it is called when the
-.Dv AUDIO_SETFD
-.Xr ioctl 2
-is used, but only if the device has
+If supplied, it is called when the device is opened in full-duplex mode,
+but only if the device has
 .Dv AUDIO_PROP_FULLDUPLEX
 set.
 This function returns 0 on success, otherwise an error code.
@@ -414,11 +388,7 @@ mapped with protection
 This function returns \-1 on failure, or a machine dependent opaque
 value on success.
 .It Fn "int (*get_props)" "void *hdl"
-This function returns the device properties, as per
-.Xr audio 4
-.Dv AUDIO_GETPROPS
-.Xr ioctl 2 ,
-i.e., a combination of
+This function returns a combination of
 .Dv AUDIO_PROP_xxx
 properties.
 .It Fn "int (*trigger_output)" "void *hdl" "void *start" "void *end" "int blksize" \
@@ -481,12 +451,6 @@ or
 The default configuration should not include emulated formats, and should
 reflect the optimal operating configuration for the underlying hardware.
 .El
-.Pp
-The
-.Fn query_devinfo
-method should define certain mixer controls for
-.Dv AUDIO_SETINFO
-to be able to change the port and gain.
 .Pp
 If the audio hardware is capable of input from more
 than one source it should define
