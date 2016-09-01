@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.63 2015/09/29 02:07:49 guenther Exp $	*/
+/*	$OpenBSD: extend.c,v 1.64 2016/09/01 21:06:09 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -655,7 +655,7 @@ evalfile(int f, int n)
 int
 load(const char *fname)
 {
-	int	 s = TRUE, line;
+	int	 s = TRUE, line, ret;
 	int	 nbytes = 0;
 	char	 excbuf[128];
 	FILE    *ffp;
@@ -664,8 +664,12 @@ load(const char *fname)
 		/* just to be careful */
 		return (FALSE);
 
-	if (ffropen(&ffp, fname, NULL) != FIOSUC)
+	ret = ffropen(&ffp, fname, NULL);
+	if (ret != FIOSUC) {
+		if (ret == FIODIR)
+			(void)ffclose(ffp, NULL);
 		return (FALSE);
+	}
 
 	line = 0;
 	while ((s = ffgetline(ffp, excbuf, sizeof(excbuf) - 1, &nbytes))
