@@ -1,4 +1,4 @@
-/*	$Id: base64.c,v 1.4 2016/09/01 00:35:21 florian Exp $ */
+/*	$Id: base64.c,v 1.5 2016/09/01 13:49:32 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -15,19 +15,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <netinet/in.h>
+#include <resolv.h>
 
-#include <sys/types.h>
-
-#include <assert.h>
-#include <stdarg.h>
 #include <stdlib.h>
 
 #include "extern.h"
-
-static const char b64[] =
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	"abcdefghijklmnopqrstuvwxyz"
-	"0123456789+/";
 
 /*
  * Compute the maximum buffer required for a base64 encoded string of
@@ -38,65 +31,6 @@ base64len(size_t len)
 {
 
 	return (((len + 2) / 3 * 4) + 1);
-}
-
-/*
- * Base64 computation.
- * This is heavily "assert"-d because Coverity complains.
- */
-size_t
-base64buf(char *enc, const char *str, size_t len)
-{
-	size_t	 i, val;
-	char	*p;
-
-	p = enc;
-
-	for (i = 0; i < len - 2; i += 3) {
-		val = (str[i] >> 2) & 0x3F;
-		assert(val < sizeof(b64));
-		*p++ = b64[val];
-
-		val = ((str[i] & 0x3) << 4) |
-			((int)(str[i + 1] & 0xF0) >> 4);
-		assert(val < sizeof(b64));
-		*p++ = b64[val];
-
-		val = ((str[i + 1] & 0xF) << 2) |
-			((int)(str[i + 2] & 0xC0) >> 6);
-		assert(val < sizeof(b64));
-		*p++ = b64[val];
-
-		val = str[i + 2] & 0x3F;
-		assert(val < sizeof(b64));
-		*p++ = b64[val];
-	}
-
-	if (i < len) {
-		val = (str[i] >> 2) & 0x3F;
-		assert(val < sizeof(b64));
-		*p++ = b64[val];
-
-		if (i == (len - 1)) {
-			val = ((str[i] & 0x3) << 4);
-			assert(val < sizeof(b64));
-			*p++ = b64[val];
-			*p++ = '=';
-		} else {
-			val = ((str[i] & 0x3) << 4) |
-				((int)(str[i + 1] & 0xF0) >> 4);
-			assert(val < sizeof(b64));
-			*p++ = b64[val];
-
-			val = ((str[i + 1] & 0xF) << 2);
-			assert(val < sizeof(b64));
-			*p++ = b64[val];
-		}
-		*p++ = '=';
-	}
-
-	*p++ = '\0';
-	return (p - enc);
 }
 
 /*
@@ -114,7 +48,7 @@ base64buf_url(const char *data, size_t len)
 	if (NULL == (buf = malloc(sz)))
 		return (NULL);
 
-	base64buf(buf, data, len);
+	b64_ntop(data, len, buf, sz);
 
 	for (i = 0; i < sz; i++)
 		if ('+' == buf[i])
