@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.21 2016/09/01 10:57:03 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.22 2016/09/01 10:59:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -216,7 +216,8 @@ proc_connect(struct privsep *ps)
 }
 
 void
-proc_listento(struct privsep *ps, int fd, enum privsep_procid dst, unsigned int n)
+proc_listento(struct privsep *ps, int fd, enum privsep_procid dst,
+    unsigned int n)
 {
 	struct privsep_pipes	*pp = ps->ps_pp;
 	struct imsgev		*iev;
