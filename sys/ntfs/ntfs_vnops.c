@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.41 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.42 2016/09/01 08:40:39 natano Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #include <sys/unistd.h> /* for pathconf(2) constants */
 
 int	ntfs_read(void *);
-int	ntfs_write(void *);
 int	ntfs_getattr(void *);
 int	ntfs_inactive(void *);
 int	ntfs_print(void *);
@@ -292,69 +291,12 @@ ntfs_strategy(void *v)
 			bzero(bp->b_data + toread, bp->b_bcount - toread);
 		}
 	} else {
-		size_t tmp;
-		u_int32_t towrite;
-
-		if (ntfs_cntob(bp->b_blkno) + bp->b_bcount >= fp->f_size) {
-			printf("ntfs_strategy: CAN'T EXTEND FILE\n");
-			bp->b_error = error = EFBIG;
-			bp->b_flags |= B_ERROR;
-		} else {
-			towrite = MIN(bp->b_bcount,
-				fp->f_size - ntfs_cntob(bp->b_blkno));
-			DPRINTF("ntfs_strategy: towrite: %u, fsize: %llu\n",
-			    towrite, fp->f_size);
-
-			error = ntfs_writeattr_plain(ntmp, ip, fp->f_attrtype,	
-				fp->f_attrname, ntfs_cntob(bp->b_blkno),towrite,
-				bp->b_data, &tmp, NULL);
-
-			if (error) {
-				printf("ntfs_strategy: ntfs_writeattr fail\n");
-				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
-			}
-		}
+		bp->b_error = error = EROFS;
+		bp->b_flags |= B_ERROR;
 	}
 	s = splbio();
 	biodone(bp);
 	splx(s);
-	return (error);
-}
-
-int
-ntfs_write(void *v)
-{
-	struct vop_write_args *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct fnode *fp = VTOF(vp);
-	struct ntnode *ip = FTONT(fp);
-	struct uio *uio = ap->a_uio;
-	struct ntfsmount *ntmp = ip->i_mp;
-	u_int64_t towrite;
-	size_t written;
-	int error;
-
-	DPRINTF("ntfs_write: ino: %u, off: %lld resid: %zu, segflg: %d\n",
-	    ip->i_number, uio->uio_offset, uio->uio_resid, uio->uio_segflg);
-	DPRINTF("ntfs_write: filesize: %llu", fp->f_size);
-
-	if (uio->uio_resid + uio->uio_offset > fp->f_size) {
-		printf("ntfs_write: CAN'T WRITE BEYOND END OF FILE\n");
-		return (EFBIG);
-	}
-
-	towrite = MIN(uio->uio_resid, fp->f_size - uio->uio_offset);
-
-	DPRINTF(", towrite: %llu\n", towrite);
-
-	error = ntfs_writeattr_plain(ntmp, ip, fp->f_attrtype,
-		fp->f_attrname, uio->uio_offset, towrite, NULL, &written, uio);
-#ifdef NTFS_DEBUG
-	if (error)
-		printf("ntfs_write: ntfs_writeattr failed: %d\n", error);
-#endif
-
 	return (error);
 }
 
@@ -372,18 +314,15 @@ ntfs_access(void *v)
 	DPRINTF("ntfs_access: %u\n", ip->i_number);
 
 	/*
-	 * Disallow write attempts on read-only file systems;
-	 * unless the file is a socket, fifo, or a block or
-	 * character device resident on the file system.
+	 * Disallow write attempts unless the file is a socket, fifo, or
+	 * a block or character device resident on the file system.
 	 */
 	if (mode & VWRITE) {
 		switch ((int)vp->v_type) {
 		case VDIR:
 		case VLNK:
 		case VREG:
-			if (vp->v_mount->mnt_flag & MNT_RDONLY)
-				return (EROFS);
-			break;
+			return (EROFS);
 		}
 	}
 
@@ -606,7 +545,6 @@ ntfs_lookup(void *v)
 		return (error);
 
 	if ((cnp->cn_flags & ISLASTCN) &&
-	    (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return (EROFS);
 
@@ -746,5 +684,4 @@ struct vops ntfs_vops = {
 	.vop_strategy	= ntfs_strategy,
 	.vop_bwrite	= vop_generic_bwrite,
 	.vop_read	= ntfs_read,
-	.vop_write	= ntfs_write,
 };

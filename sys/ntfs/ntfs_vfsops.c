@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.53 2016/08/13 20:53:17 guenther Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.54 2016/09/01 08:40:39 natano Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -122,7 +122,6 @@ ntfs_mount(struct mount *mp, const char *path, void *data,
 	struct ntfs_args args;
 	char fname[MNAMELEN];
 	char fspec[MNAMELEN];
-	mode_t amode;
 
 	ntfs_nthashinit();
 
@@ -193,9 +192,8 @@ ntfs_mount(struct mount *mp, const char *path, void *data,
 	 * requested device.
 	 */
 	if (p->p_ucred->cr_uid) {
-		amode = (mp->mnt_flag & MNT_RDONLY) ? VREAD : (VREAD | VWRITE);
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
-		err = VOP_ACCESS(devvp, amode, p->p_ucred, p);
+		err = VOP_ACCESS(devvp, VREAD, p->p_ucred, p);
 		VOP_UNLOCK(devvp, p);
 		if (err)
 			goto error_2;
@@ -282,7 +280,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp,
 	struct buf *bp;
 	struct ntfsmount *ntmp = NULL;
 	dev_t dev = devvp->v_rdev;
-	int error, ronly, ncount, i;
+	int error, ncount, i;
 	struct vnode *vp;
 
 	/*
@@ -303,8 +301,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp,
 	if (error)
 		return (error);
 
-	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
+	error = VOP_OPEN(devvp, FREAD, FSCRED, p);
 	if (error)
 		return (error);
 
@@ -464,7 +461,7 @@ out:
 
 	/* lock the device vnode before calling VOP_CLOSE() */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
-	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
+	(void)VOP_CLOSE(devvp, FREAD, NOCRED, p);
 	VOP_UNLOCK(devvp, p);
 	
 	return (error);
@@ -480,7 +477,7 @@ int
 ntfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
 	struct ntfsmount *ntmp;
-	int error, ronly = 0, flags, i;
+	int error, flags, i;
 
 	DPRINTF("ntfs_unmount: unmounting...\n");
 	ntmp = VFSTONTFS(mp);
@@ -524,8 +521,7 @@ ntfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	/* lock the device vnode before calling VOP_CLOSE() */
 	vn_lock(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, 0);
-	(void)VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
-	    NOCRED, p);
+	(void)VOP_CLOSE(ntmp->ntm_devvp, FREAD, NOCRED, p);
 	vput(ntmp->ntm_devvp);
 
 	/* free the toupper table, if this has been last mounted ntfs volume */
