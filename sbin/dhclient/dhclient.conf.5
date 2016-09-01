@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.32 2016/06/03 02:38:37 tedu Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.33 2016/09/01 13:47:24 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: June 3 2016 $
+.Dd $Mdocdate: September 1 2016 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -86,7 +86,6 @@ The
 statement determines the amount of time that must pass between the
 time that the client begins to try to determine its address and the
 time that it decides that it's not going to be able to contact a server.
-By default, this timeout is sixty seconds.
 After the timeout has passed, if there are any static leases defined in the
 configuration file, or any leases remaining in the lease database that
 have not yet expired, the client will loop through these leases
@@ -94,13 +93,20 @@ attempting to validate them, and if it finds one that appears to be
 valid, it will use that lease's address.
 If there are no valid static leases or unexpired leases in the lease database,
 the client will restart the protocol after the defined retry interval.
+.Pp
+By default,
+.Ic timeout
+is set to thirty seconds.
 .It Ic retry Ar time ;
 The
 .Ic retry
 statement determines the time that must pass after the client has
 determined that there is no DHCP server present before it tries again
 to contact a DHCP server.
-By default, this is five minutes.
+.Pp
+By default,
+.Ic retry
+is set to one second.
 .It Ic select-timeout Ar time ;
 It is possible (some might say desirable) for there to be more than
 one DHCP server serving any given network.
@@ -119,9 +125,10 @@ If no offers have been received by the time the
 .Ic select-timeout
 has expired, the client will accept the first offer that arrives.
 .Pp
-By default, the
+By default,
 .Ic select-timeout
-is zero seconds \- that is, the client will take the first offer it sees.
+is set to zero seconds.
+i.e. the client will immediately take the first offer it sees.
 .It Ic reboot Ar time ;
 When the client is restarted, it first tries to reacquire the last
 address it had.
@@ -139,7 +146,9 @@ The value of
 is also used to control how long a client will attempt unicast renewal
 requests before falling back to using broadcast requests.
 .Pp
-By default, the reboot timeout is one second.
+By default,
+.Ic reboot
+is set to one second.
 .It Ic backoff-cutoff Ar time ;
 The client uses an exponential backoff algorithm with some randomness,
 so that if many clients try to configure themselves at the same time,
@@ -148,7 +157,10 @@ The
 .Ic backoff-cutoff
 statement determines the maximum amount of time that the client is
 allowed to back off.
-It defaults to fifteen seconds.
+.Pp
+By default
+.Ic backoff-cutoff
+is set to ten seconds.
 .It Ic initial-interval Ar time ;
 The
 .Ic initial-interval
@@ -158,15 +170,21 @@ Each time a message is sent, the interval between messages is incremented by
 twice the current interval multiplied by a random number between zero and one.
 If it is greater than the backoff-cutoff amount, it is set to that
 amount.
-It defaults to three seconds.
+.Pp
+By default
+.Ic initial-interval
+is set to one second.
 .It Ic link-timeout Ar time ;
 The
 .Ic link-timeout
 statement sets the amount of time to wait for an interface link before timing
 out.
-The default value is ten seconds.
 The value zero requests that
 dhclient not wait for a link state change before timing out.
+.Pp
+By default
+.Ic link-timeout
+is set to ten seconds.
 .El
 .Sh LEASE REQUIREMENTS AND REQUESTS
 The DHCP protocol allows the client to request that the server send it
