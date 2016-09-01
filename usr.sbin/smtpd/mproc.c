@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.22 2016/09/01 10:07:20 eric Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.23 2016/09/01 14:19:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -41,7 +41,6 @@
 
 static void mproc_dispatch(int, short, void *);
 
-static ssize_t msgbuf_write2(struct msgbuf *);
 static ssize_t imsg_read_nofd(struct imsgbuf *);
 
 int
@@ -179,7 +178,7 @@ mproc_dispatch(int fd, short event, void *arg)
 	}
 
 	if (event & EV_WRITE) {
-		n = msgbuf_write2(&p->imsgbuf.w);
+		n = msgbuf_write(&p->imsgbuf.w);
 		if (n == 0 || (n == -1 && errno != EAGAIN)) {
 			/* this pipe is dead, so remove the event handler */
 			if (smtpd_process != PROC_CONTROL ||
@@ -214,74 +213,6 @@ mproc_dispatch(int fd, short event, void *arg)
 	}
 
 	mproc_event_add(p);
-}
-
-/* XXX msgbuf_write() should return n ... */
-static ssize_t
-msgbuf_write2(struct msgbuf *msgbuf)
-{
-	struct iovec	 iov[IOV_MAX];
-	struct ibuf	*buf;
-	unsigned int	 i = 0;
-	ssize_t		 n;
-	struct msghdr	 msg;
-	struct cmsghdr	*cmsg;
-	union {
-		struct cmsghdr	hdr;
-		char		buf[CMSG_SPACE(sizeof(int))];
-	} cmsgbuf;
-
-	memset(&iov, 0, sizeof(iov));
-	memset(&msg, 0, sizeof(msg));
-	TAILQ_FOREACH(buf, &msgbuf->bufs, entry) {
-		if (i >= IOV_MAX)
-			break;
-		iov[i].iov_base = buf->buf + buf->rpos;
-		iov[i].iov_len = buf->wpos - buf->rpos;
-		i++;
-		if (buf->fd != -1)
-			break;
-	}
-
-	msg.msg_iov = iov;
-	msg.msg_iovlen = i;
-
-	if (buf != NULL && buf->fd != -1) {
-		msg.msg_control = (caddr_t)&cmsgbuf.buf;
-		msg.msg_controllen = sizeof(cmsgbuf.buf);
-		cmsg = CMSG_FIRSTHDR(&msg);
-		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
-		cmsg->cmsg_level = SOL_SOCKET;
-		cmsg->cmsg_type = SCM_RIGHTS;
-		*(int *)CMSG_DATA(cmsg) = buf->fd;
-	}
-
-again:
-	if ((n = sendmsg(msgbuf->fd, &msg, 0)) == -1) {
-		if (errno == EINTR)
-			goto again;
-		if (errno == ENOBUFS)
-			errno = EAGAIN;
-		return (-1);
-	}
-
-	if (n == 0) {			/* connection closed */
-		errno = 0;
-		return (0);
-	}
-
-	/*
-	 * assumption: fd got sent if sendmsg sent anything
-	 * this works because fds are passed one at a time
-	 */
-	if (buf != NULL && buf->fd != -1) {
-		close(buf->fd);
-		buf->fd = -1;
-	}
-
-	msgbuf_drain(msgbuf, n);
-
-	return (n);
 }
 
 /* This should go into libutil */
