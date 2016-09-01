@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.38 2016/08/26 11:59:04 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.39 2016/09/01 09:05:37 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -673,7 +673,7 @@ initarm(void *arg0, void *arg1, void *arg2)
 
 	/* Map the vector page. */
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
-	    PROT_READ | PROT_WRITE | PROT_EXEC, PTE_CACHE);
+	    PROT_READ | PROT_WRITE, PTE_CACHE);
 
 	/* Map the FDT. */
 	pmap_map_chunk(l1pagetable, fdt.pv_va, fdt.pv_pa,
@@ -773,6 +773,8 @@ initarm(void *arg0, void *arg1, void *arg2)
 #endif
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
 	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
+
+	vector_page_setprot(PROT_READ | PROT_EXEC);
 
 	/*
 	 * Restore proper bus_space operation, now that pmap is initialized.
