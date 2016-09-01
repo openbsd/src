@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.284 2016/08/31 22:23:13 florian Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.285 2016/09/01 09:54:17 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -463,8 +463,6 @@ usr
                 ..
                 i386
                 ..
-                sparc
-                ..
                 sparc64
                 ..
             ..
@@ -518,8 +516,6 @@ usr
                 sgi
                 ..
                 socppc
-                ..
-                sparc
                 ..
                 sparc64
                 ..
@@ -576,8 +572,6 @@ usr
                 sgi
                 ..
                 socppc
-                ..
-                sparc
                 ..
                 sparc64
                 ..
