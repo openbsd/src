@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.7 2016/08/17 05:07:13 deraadt Exp $	*/
+/*	$OpenBSD: pci.c,v 1.8 2016/09/01 13:08:47 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -199,7 +199,7 @@ pci_handle_address_reg(struct vm_run_params *vrp)
 		/*
 		 * vei_dir == 1 : in instruction
 		 *
-		 * The guest read the address register/
+		 * The guest read the address register
 		 */
 		vei->vei.vei_data = pci.pci_addr_reg;
 	}
@@ -212,11 +212,12 @@ pci_handle_io(struct vm_run_params *vrp)
 	uint16_t reg, b_hi, b_lo;
 	pci_iobar_fn_t fn;
 	union vm_exit *vei = vrp->vrp_exit;
-	uint8_t intr;
+	uint8_t intr, dir;
 
 	k = -1;
 	l = -1;
 	reg = vei->vei.vei_port;
+	dir = vei->vei.vei_dir;
 	intr = 0xFF;
 
 	for (i = 0 ; i < pci.pci_dev_ct ; i++) {
@@ -244,6 +245,9 @@ pci_handle_io(struct vm_run_params *vrp)
 	} else {
 		log_warnx("%s: no pci i/o function for reg 0x%llx",
 		    __progname, (uint64_t)reg);
+		/* Reads from undefined ports return 0xFF */
+		if (dir == 1)
+			vei->vei.vei_data = 0xFFFFFFFF;	
 	}
 
 	if (intr != 0xFF) {
@@ -257,7 +261,7 @@ void
 pci_handle_data_reg(struct vm_run_params *vrp)
 {
 	union vm_exit *vei = vrp->vrp_exit;
-	uint8_t b, d, f, o;
+	uint8_t b, d, f, o, baridx;
 	int ret;
 	pci_cs_fn_t csfunc;
 
@@ -296,7 +300,20 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	if (vei->vei.vei_dir == 0) {
 		if ((o >= 0x10 && o <= 0x24) &&
 		    vei->vei.vei_data == 0xffffffff) {
-			vei->vei.vei_data = 0xfffff000;
+			/*
+			 * Compute BAR index:
+			 * o = 0x10 -> baridx = 1
+			 * o = 0x14 -> baridx = 2
+			 * o = 0x18 -> baridx = 3
+			 * o = 0x1c -> baridx = 4
+			 * o = 0x20 -> baridx = 5
+			 * o = 0x24 -> baridx = 6
+			 */
+			baridx = (o / 4) - 3;
+			if (pci.pci_devices[d].pd_bar_ct >= baridx)
+				vei->vei.vei_data = 0xfffff000;
+			else
+				vei->vei.vei_data = 0;
 		}
 		pci.pci_devices[d].pd_cfg_space[o / 4] = vei->vei.vei_data;
 	} else {
