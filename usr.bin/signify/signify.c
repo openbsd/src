@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.107 2016/09/01 17:30:04 espie Exp $ */
+/* $OpenBSD: signify.c,v 1.108 2016/09/01 17:35:23 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -424,9 +424,12 @@ verifymsg(struct pubkey *pubkey, uint8_t *msg, unsigned long long msglen,
 static void
 check_keytype(const char *pubkeyfile, const char *keytype)
 {
-	size_t len = strlen(pubkeyfile);
+	size_t len;
 	char *cmp;
-	int slen = asprintf(&cmp, "-%s.pub", keytype);
+	int slen;
+	
+	len = strlen(pubkeyfile);
+	slen = asprintf(&cmp, "-%s.pub", keytype);
 	if (slen < 0)
 		errx(1, "asprintf error");
 	if (len < slen)
