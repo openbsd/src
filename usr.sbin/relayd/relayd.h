@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.226 2016/09/01 10:40:38 claudio Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.227 2016/09/01 10:49:48 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -694,6 +694,15 @@ TAILQ_HEAD(relay_rules, relay_rule);
 #define TLSDHPARAMS_DEFAULT	0
 #define TLSDHPARAMS_MIN		1024
 
+struct tls_ticket {
+	/* The key, aes key and hmac key must be 16 bytes / 128bits */
+	unsigned char	tt_key_name[16];
+	unsigned char	tt_aes_key[16];
+	unsigned char	tt_hmac_key[16];
+	int		tt_backup;
+};
+#define	TLS_TICKET_REKEY_TIME	(2 * 3600)
+
 struct protocol {
 	objid_t			 id;
 	u_int32_t		 flags;
@@ -711,7 +720,7 @@ struct protocol {
 	char			 tlscakey[PATH_MAX];
 	char			*tlscapass;
 	char			 name[MAX_NAME_SIZE];
-	int			 cache;
+	int			 tickets;
 	enum prototype		 type;
 	char			*style;
 
@@ -964,7 +973,8 @@ enum imsg_type {
 	IMSG_CA_PRIVENC,
 	IMSG_CA_PRIVDEC,
 	IMSG_SESS_PUBLISH,	/* from relay to hce */
-	IMSG_SESS_UNPUBLISH
+	IMSG_SESS_UNPUBLISH,
+	IMSG_TLSTICKET_REKEY
 };
 
 enum privsep_procid {
@@ -1077,6 +1087,10 @@ struct relayd {
 
 	struct privsep		*sc_ps;
 	int			 sc_reload;
+
+	char			 sc_tls_sid[SSL_MAX_SID_CTX_LENGTH];
+	struct tls_ticket	 sc_tls_ticket;
+	struct tls_ticket	 sc_tls_ticket_bak;
 };
 
 #define	FSNMP_TRAPONLY			0x01

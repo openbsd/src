@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.207 2016/06/21 21:35:25 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.208 2016/09/01 10:49:48 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -172,13 +172,13 @@ typedef struct {
 %token	SOCKET SPLICE SSL STICKYADDR STYLE TABLE TAG TAGGED TCP TIMEOUT TLS TO
 %token	ROUTER RTLABEL TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE
 %token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDH
-%token	EDH CURVE
+%token	EDH CURVE TICKETS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table value optstring
 %type	<v.number>	http_type loglevel quick trap
 %type	<v.number>	dstmode flag forwardmode retry
-%type	<v.number>	opttls opttlsclient tlscache
+%type	<v.number>	opttls opttlsclient
 %type	<v.number>	redirect_proto relay_proto match
 %type	<v.number>	action ruleaf key_option
 %type	<v.number>	tlsdhparams tlsecdhcurve
@@ -996,7 +996,6 @@ proto		: relay_proto PROTO STRING	{
 			free($3);
 			p->id = ++last_proto_id;
 			p->type = $1;
-			p->cache = RELAY_CACHESIZE;
 			p->tcpflags = TCPFLAG_DEFAULT;
 			p->tlsflags = TLSFLAG_DEFAULT;
 			p->tcpbacklog = RELAY_BACKLOG;
@@ -1091,7 +1090,8 @@ tlsflags_l	: tlsflags comma tlsflags_l
 		| tlsflags
 		;
 
-tlsflags	: SESSION CACHE tlscache	{ proto->cache = $3; }
+tlsflags	: SESSION TICKETS { proto->tickets = 0; }
+		| NO SESSION TICKETS { proto->tickets = -1; }
 		| CIPHERS STRING		{
 			if (strlcpy(proto->tlsciphers, $2,
 			    sizeof(proto->tlsciphers)) >=
@@ -1178,16 +1178,6 @@ flag		: STRING			{
 			}
 			free($1);
 		}
-		;
-
-tlscache	: NUMBER			{
-			if ($1 < 0) {
-				yyerror("invalid tlscache value: %d", $1);
-				YYERROR;
-			}
-			$$ = $1;
-		}
-		| DISABLE			{ $$ = -2; }
 		;
 
 filterrule	: action dir quick ruleaf rulesrc ruledst {
@@ -2257,6 +2247,7 @@ lookup(char *s)
 		{ "tag",		TAG },
 		{ "tagged",		TAGGED },
 		{ "tcp",		TCP },
+		{ "tickets",		TICKETS },
 		{ "timeout",		TIMEOUT },
 		{ "tls",		TLS },
 		{ "to",			TO },

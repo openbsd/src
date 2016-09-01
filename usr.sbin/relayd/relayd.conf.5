@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.171 2016/08/18 14:12:51 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.172 2016/09/01 10:49:48 claudio Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 18 2016 $
+.Dd $Mdocdate: September 1 2016 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -965,14 +965,14 @@ TLS clients.
 .It Ic no edh
 Disable EDH support.
 This is the default.
-.It Ic session cache Ar value
-Set the maximum size of the TLS session cache.
-If the
-.Ar value
-is zero, the default size defined by the TLS library will be used.
-A positive number will set the maximum size in bytes and the keyword
-.Ic disable
-will disable the TLS session cache.
+.It Xo
+.Op Ic no
+.Ic session tickets
+.Xc
+Disable TLS session tickets; enabled by default.
+.Xr relayd 8
+supports stateless TLS session tickets (RFC 5077) to implement TLS session
+resumption.
 .It Xo
 .Op Ic no
 .Ic sslv3

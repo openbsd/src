@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.155 2016/07/29 10:09:26 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.156 2016/09/01 10:49:48 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -63,6 +63,7 @@ int		 parent_dispatch_relay(int, struct privsep_proc *,
 int		 parent_dispatch_ca(int, struct privsep_proc *,
 		    struct imsg *);
 int		 bindany(struct ctl_bindany *);
+void		 parent_tls_ticket_rekey(int, short, void *);
 
 struct relayd			*relayd_env;
 
@@ -212,6 +213,8 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&env->sc_hosts);
 	TAILQ_INIT(&env->sc_sessions);
 	env->sc_rtable = getrtable();
+	/* initialize the TLS session id to a random key for all relay procs */
+	arc4random_buf(env->sc_tls_sid, sizeof(env->sc_tls_sid));
 
 	if (parse_config(env->sc_conffile, env) == -1)
 		exit(1);
@@ -278,6 +281,8 @@ main(int argc, char *argv[])
 	if (env->sc_flags & (F_TLS|F_TLSCLIENT))
 		ssl_init(env);
 
+	/* rekey the TLS tickets before pushing the config */
+	parent_tls_ticket_rekey(0, 0, env);
 	if (parent_configure(env) == -1)
 		fatalx("configuration failed");
 
@@ -1670,4 +1675,28 @@ accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
 		DPRINTF("%s: inflight incremented, now %d",__func__, *counter);
 	}
 	return (ret);
+}
+
+void
+parent_tls_ticket_rekey(int fd, short events, void *arg)
+{
+	static struct event	 rekeyev;
+	struct relayd		*env = arg;
+	struct timeval		 tv;
+	struct tls_ticket	 key;
+
+	log_debug("relayd_tls_ticket_rekey: rekeying tickets");
+
+	arc4random_buf(key.tt_key_name, sizeof(key.tt_key_name));
+	arc4random_buf(key.tt_hmac_key, sizeof(key.tt_hmac_key));
+	arc4random_buf(key.tt_aes_key, sizeof(key.tt_aes_key));
+	key.tt_backup = 0;
+
+	proc_compose_imsg(env->sc_ps, PROC_RELAY, -1, IMSG_TLSTICKET_REKEY,
+	    -1, -1, &key, sizeof(key));
+
+	evtimer_set(&rekeyev, parent_tls_ticket_rekey, env);
+	timerclear(&tv);
+	tv.tv_sec = TLS_TICKET_REKEY_TIME;
+	evtimer_add(&rekeyev, &tv);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.27 2015/12/07 04:03:27 mmcc Exp $	*/
+/*	$OpenBSD: config.c,v 1.28 2016/09/01 10:49:48 claudio Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -94,7 +94,6 @@ config_init(struct relayd *env)
 		bzero(&env->sc_proto_default, sizeof(env->sc_proto_default));
 		env->sc_proto_default.id = EMPTY_ID;
 		env->sc_proto_default.flags = F_USED;
-		env->sc_proto_default.cache = RELAY_CACHESIZE;
 		env->sc_proto_default.tcpflags = TCPFLAG_DEFAULT;
 		env->sc_proto_default.tcpbacklog = RELAY_BACKLOG;
 		env->sc_proto_default.tlsflags = TLSFLAG_DEFAULT;
