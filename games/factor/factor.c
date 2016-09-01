@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.29 2016/08/14 18:34:48 guenther Exp $	*/
+/*	$OpenBSD: factor.c,v 1.30 2016/09/01 10:48:38 tb Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ extern const int pattern_size;
 
 static void		pr_fact(u_int64_t);	/* print factors of a value */
 static void		pr_bigfact(u_int64_t);
-static u_int32_t	usqrt(u_int64_t);
+static u_int64_t	usqrt(u_int64_t);
 static void __dead	usage(void);
 
 int
@@ -284,7 +284,7 @@ pr_bigfact(u_int64_t val)	/* Factor this value. */
 }
 
 /* Code taken from ping.c */
-static u_int32_t
+static u_int64_t
 usqrt(u_int64_t n)
 {
 	u_int64_t y, x = 1;
@@ -299,7 +299,7 @@ usqrt(u_int64_t n)
 		x /= 2;
 	} while (((y < x) && (x - y) > 1) || (y - x) > 1);
 
-	return (u_int32_t)x;
+	return x;
 }
 
 static void __dead
