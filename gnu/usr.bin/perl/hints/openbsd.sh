@@ -131,6 +131,9 @@ $define|true|[yY]*)
         	# Broken up to OpenBSD 3.6, fixed in OpenBSD 3.7
 		d_getservbyname_r=$undef ;;
 	esac
+	;;
+*)
+	libswanted=`echo $libswanted | sed 's/ pthread / /'`
 esac
 EOCBU
 
