@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.200 2016/09/01 16:53:38 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.201 2016/09/01 17:00:38 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -757,11 +757,10 @@ report:
 #ifndef SMALL_KERNEL
 		/*
 		 * If we got multipath routes, we require users to specify
-		 * a matching gateway, except for RTM_GET.
+		 * a matching gateway.
 		 */
 		if ((rt != NULL) && ISSET(rt->rt_flags, RTF_MPATH) &&
-		    (info.rti_info[RTAX_GATEWAY] == NULL) &&
-		    (rtm->rtm_type != RTM_GET)) {
+		    (info.rti_info[RTAX_GATEWAY] == NULL)) {
 		    	rtfree(rt);
 		    	rt = NULL;
 		}
@@ -793,7 +792,7 @@ report:
 		 */
 		plen = rtable_satoplen(info.rti_info[RTAX_DST]->sa_family,
 		    info.rti_info[RTAX_NETMASK]);
-		if (rtm->rtm_type != RTM_GET && rt_plen(rt) != plen ) {
+		if (rt_plen(rt) != plen ) {
 			error = ESRCH;
 			goto flush;
 		}
