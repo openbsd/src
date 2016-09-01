@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.301 2016/08/19 08:06:25 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.302 2016/09/01 09:46:42 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -676,13 +676,7 @@ cylinderalign:
 			fragsize = lp->d_secsize;
 		if (fragsize > MAXBSIZE / 8)
 			fragsize = MAXBSIZE / 8;
-#if defined (__sparc__) && !defined(__sparc64__)
-		/* can't boot from > 8k boot blocks */
-		pp->p_fragblock =
-		    DISKLABELV1_FFS_FRAGBLOCK(i == 0 ? 1024 : fragsize, 8);
-#else
 		pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(fragsize, 8);
-#endif
 		pp->p_cpg = 1;
 		if (ap->mp[0] != '/')
 			pp->p_fstype = FS_SWAP;
@@ -904,13 +898,7 @@ editor_add(struct disklabel *lp, char *p)
 			fragsize = lp->d_secsize;
 		if (fragsize > MAXBSIZE / 8)
 			fragsize = MAXBSIZE / 8;
-#if defined (__sparc__) && !defined(__sparc64__)
-		/* can't boot from > 8k boot blocks */
-		pp->p_fragblock =
-		    DISKLABELV1_FFS_FRAGBLOCK(partno == 0 ? 1024 : fragsize, 8);
-#else
 		pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(fragsize, 8);
-#endif
 		if (get_fstype(lp, partno) == 0 &&
 		    get_mp(lp, partno) == 0 &&
 		    get_fsize(lp, partno) == 0  &&
