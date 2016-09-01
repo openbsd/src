@@ -1,4 +1,4 @@
-/*	$Id: chngproc.c,v 1.2 2016/08/31 22:49:09 benno Exp $ */
+/*	$Id: chngproc.c,v 1.3 2016/09/01 00:21:36 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -47,14 +47,18 @@ chngproc(int netsock, const char *root, int remote)
 	fs = NULL;
 	fsz = 0;
 
-	/* File-system and sandbox jailing. */
-
-	if ( ! sandbox_before())
+	if (chroot(root) == -1) {
+		warn("chroot");
 		goto out;
-	else if ( ! dropfs(root))
+	}
+	if (chdir("/") == -1) {
+		warn("chdir");
 		goto out;
-	else if ( ! sandbox_after())
+	}
+	if (pledge("stdio cpath wpath", NULL) == -1) {
+		warn("pledge");
 		goto out;
+	}
 
 	/*
 	 * Loop while we wait to get a thumbprint and token.

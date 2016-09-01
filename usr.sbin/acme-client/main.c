@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.5 2016/09/01 00:03:39 benno Exp $ */
+/*	$Id: main.c,v 1.6 2016/09/01 00:21:36 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -172,7 +172,7 @@ main(int argc, char *argv[])
 	argc--;
 	argv++;
 
-	if ( ! checkprivs())
+	if ( getuid() != 0)
 		errx(EXIT_FAILURE, "must be run as root");
 
 	/*
@@ -437,14 +437,10 @@ main(int argc, char *argv[])
 
 	/* Jail: sandbox, file-system, user. */
 
-	if ( ! sandbox_before())
+	if (pledge("stdio", NULL) == -1) {
+		warn("pledge");
 		exit(EXIT_FAILURE);
-	else if ( ! dropfs(PATH_VAR_EMPTY))
-		exit(EXIT_FAILURE);
-	else if ( ! dropprivs())
-		exit(EXIT_FAILURE);
-	else if ( ! sandbox_after())
-		exit(EXIT_FAILURE);
+	}
 
 	/*
 	 * Collect our subprocesses.

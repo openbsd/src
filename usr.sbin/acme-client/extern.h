@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.2 2016/08/31 22:49:09 benno Exp $ */
+/*	$Id: extern.h,v 1.3 2016/09/01 00:21:36 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -244,13 +244,6 @@ char		*json_fmt_header_rsa(const char *, const char *);
 char		*json_fmt_thumb_rsa(const char *, const char *);
 char		*json_fmt_signed(const char *,
 			const char *, const char *, const char *);
-
-int		 dropprivs(void);
-int		 dropfs(const char *);
-int		 checkprivs(void);
-
-int		 sandbox_after(void);
-int		 sandbox_before(void);
 
 /*
  * Should we print debugging messages?

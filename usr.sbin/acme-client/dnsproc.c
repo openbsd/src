@@ -1,4 +1,4 @@
-/*	$Id: dnsproc.c,v 1.2 2016/08/31 22:49:09 benno Exp $ */
+/*	$Id: dnsproc.c,v 1.3 2016/09/01 00:21:36 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -127,23 +127,10 @@ dnsproc(int nfd)
 	look = last = NULL;
 	vsz = 0;
 
-	/*
-	 * Why don't we chroot() here?
-	 * On OpenBSD, the pledge(2) takes care of our constraining the
-	 * environment to DNS resolution only, so the chroot(2) is
-	 * unnecessary.
-	 * On Mac OS X, we can't chroot(2): we'd need to have an mdns
-	 * responder thing in each jail.
-	 * On Linux, forget it.  getaddrinfo(2) pulls on all sorts of
-	 * mystery meat.
-	 */
-
-	if ( ! sandbox_before())
+	if (pledge("stdio dns", NULL) == -1) {
+		warn("pledge");
 		goto out;
-	else if ( ! dropprivs())
-		goto out;
-	else if ( ! sandbox_after())
-		goto out;
+	}
 
 	/*
 	 * This is simple: just loop on a request operation, and each

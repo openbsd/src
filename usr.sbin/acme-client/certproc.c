@@ -1,4 +1,4 @@
-/*	$Id: certproc.c,v 1.3 2016/08/31 23:53:58 benno Exp $ */
+/*	$Id: certproc.c,v 1.4 2016/09/01 00:21:36 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -104,17 +104,12 @@ certproc(int netsock, int filesock)
 
 	/* File-system and sandbox jailing. */
 
-	if ( ! sandbox_before())
-		goto out;
-
 	ERR_load_crypto_strings();
 
-	if ( ! dropfs(PATH_VAR_EMPTY))
+	if (pledge("stdio", NULL) == -1) {
+		warn("pledge");
 		goto out;
-	else if ( ! dropprivs())
-		goto out;
-	else if ( ! sandbox_after())
-		goto out;
+	}
 
 	/* Read what the netproc wants us to do. */
 
