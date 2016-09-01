@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.428 2016/08/23 18:27:08 jcs Exp $
+#	$OpenBSD: GENERIC,v 1.429 2016/09/01 09:58:38 jcs Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -104,7 +104,7 @@ lm0	at isa? port 0x290
 it*	at isa? port 0x2e	# ITE IT8705F, IT8712F, IT8716F, IT8718F,
 it*	at isa? port 0x4e	# IT8726F and SiS SiS950 monitors and
 				# watchdog timer
-				
+
 schsio*	at isa? port 0x2e	# SMSC SCH311x Super I/O
 schsio*	at isa? port 0x4e
 schsio*	at isa? port 0x162e
@@ -222,7 +222,7 @@ ucom*	at uslcom?
 uark*	at uhub?		# Arkmicro ARK3116 serial
 ucom*	at uark?
 moscom*	at uhub?		# MosChip MCS7703 serial
-ucom*	at moscom?		
+ucom*	at moscom?
 umcs*	at uhub?		# MosChip MCS78x0 serial
 ucom*	at umcs?
 uipaq*	at uhub?		# iPAQ serial adapter
