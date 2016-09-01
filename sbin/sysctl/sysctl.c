@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.218 2016/08/27 01:55:30 guenther Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.219 2016/09/01 09:13:49 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -178,6 +178,7 @@ int	Aflag, aflag, nflag, qflag;
 #define	KMEMSTATS	0x00001000
 #define	SENSORS		0x00002000
 #define	SMALLBUF	0x00004000
+#define	HEX		0x00008000
 
 /* prototypes */
 void debuginit(void);
@@ -610,6 +611,10 @@ parse(char *string, int flags)
 		if (mib[1] == CPU_CONSDEV)
 			special |= CHRDEV;
 #endif
+#ifdef CPU_CPUFEATURE
+		if (mib[1] == CPU_CPUFEATURE)
+			special |= HEX;
+#endif
 #ifdef CPU_BLK2CHR
 		if (mib[1] == CPU_BLK2CHR) {
 			if (bufp == NULL)
@@ -913,13 +918,19 @@ parse(char *string, int flags)
 		if (newsize == 0) {
 			if (!nflag)
 				(void)printf("%s%s", string, equ);
-			(void)printf("%d\n", *(int *)buf);
+			if (special & HEX)
+				(void)printf("0x%x\n", *(int *)buf);
+			else
+				(void)printf("%d\n", *(int *)buf);
 		} else {
 			if (!qflag) {
 				if (!nflag)
 					(void)printf("%s: %d -> ", string,
 					    *(int *)buf);
-				(void)printf("%d\n", *(int *)newval);
+				if (special & HEX)
+					(void)printf("%d\n", *(int *)newval);
+				else
+					(void)printf("0x%x\n", *(int *)newval);
 			}
 		}
 		return;
