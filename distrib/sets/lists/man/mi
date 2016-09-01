@@ -420,7 +420,6 @@
 ./usr/share/man/man1/skeyinit.1
 ./usr/share/man/man1/sleep.1
 ./usr/share/man/man1/sort.1
-./usr/share/man/man1/sparc
 ./usr/share/man/man1/sparc64
 ./usr/share/man/man1/sparc64/fdformat.1
 ./usr/share/man/man1/sparc64/mksuncd.1
@@ -1388,6 +1387,7 @@
 ./usr/share/man/man4/i386/uha.4
 ./usr/share/man/man4/i386/wds.4
 ./usr/share/man/man4/i386/wdt.4
+./usr/share/man/man4/iatp.4
 ./usr/share/man/man4/ichiic.4
 ./usr/share/man/man4/ichwdt.4
 ./usr/share/man/man4/icmp.4
@@ -1686,7 +1686,6 @@
 ./usr/share/man/man4/socppc/socpcic.4
 ./usr/share/man/man4/socppc/tsec.4
 ./usr/share/man/man4/softraid.4
-./usr/share/man/man4/sparc
 ./usr/share/man/man4/sparc64
 ./usr/share/man/man4/sparc64/agten.4
 ./usr/share/man/man4/sparc64/apio.4
@@ -2383,7 +2382,6 @@
 ./usr/share/man/man8/spamd.8
 ./usr/share/man/man8/spamdb.8
 ./usr/share/man/man8/spamlogd.8
-./usr/share/man/man8/sparc
 ./usr/share/man/man8/sparc64
 ./usr/share/man/man8/sparc64/MAKEDEV.8
 ./usr/share/man/man8/sparc64/apm.8

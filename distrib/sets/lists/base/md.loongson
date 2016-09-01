@@ -804,7 +804,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ic/xlreg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ic/z8530reg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ic/z8530sc.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ic/z8536reg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ipmi.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/ipmivar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/isa
@@ -1637,6 +1636,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/if_pppoe.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/if_pppvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/if_sppp.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/net/if_switch.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/if_trunk.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/if_tun.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/if_types.ph
@@ -1645,6 +1645,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/if_vxlan.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/ifq.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/netisr.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/net/ofp.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/pfvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/pipex.ph

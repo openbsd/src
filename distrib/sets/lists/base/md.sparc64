@@ -431,7 +431,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/xlreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/z8530reg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/z8530sc.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/z8536reg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ipmi.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ipmivar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/isa
@@ -1162,6 +1161,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_pppoe.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_pppvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_sppp.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_switch.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_trunk.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_tun.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_types.ph
@@ -1170,6 +1170,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_vxlan.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/ifq.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/netisr.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/net/ofp.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/pfvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/pipex.ph

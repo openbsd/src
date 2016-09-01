@@ -377,7 +377,6 @@
 ./usr/include/dev/ic/xlreg.h
 ./usr/include/dev/ic/z8530reg.h
 ./usr/include/dev/ic/z8530sc.h
-./usr/include/dev/ic/z8536reg.h
 ./usr/include/dev/ipmi.h
 ./usr/include/dev/ipmivar.h
 ./usr/include/dev/isa
@@ -968,6 +967,7 @@
 ./usr/include/net/if_pppoe.h
 ./usr/include/net/if_pppvar.h
 ./usr/include/net/if_sppp.h
+./usr/include/net/if_switch.h
 ./usr/include/net/if_trunk.h
 ./usr/include/net/if_tun.h
 ./usr/include/net/if_types.h
@@ -976,6 +976,7 @@
 ./usr/include/net/if_vxlan.h
 ./usr/include/net/ifq.h
 ./usr/include/net/netisr.h
+./usr/include/net/ofp.h
 ./usr/include/net/pfkeyv2.h
 ./usr/include/net/pfvar.h
 ./usr/include/net/pipex.h
