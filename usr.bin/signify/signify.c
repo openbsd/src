@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.106 2016/06/08 04:16:06 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.107 2016/09/01 17:30:04 espie Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -420,9 +420,27 @@ verifymsg(struct pubkey *pubkey, uint8_t *msg, unsigned long long msglen,
 	free(dummybuf);
 }
 
+#ifndef VERIFYONLY
+static void
+check_keytype(const char *pubkeyfile, const char *keytype)
+{
+	size_t len = strlen(pubkeyfile);
+	char *cmp;
+	int slen = asprintf(&cmp, "-%s.pub", keytype);
+	if (slen < 0)
+		errx(1, "asprintf error");
+	if (len < slen)
+		errx(1, "too short");
+
+	if (strcmp(pubkeyfile + len - slen, cmp) != 0)
+		errx(1, "wrong keytype");
+	free(cmp);
+}
+#endif
+
 static void
 readpubkey(const char *pubkeyfile, struct pubkey *pubkey,
-    const char *sigcomment)
+    const char *sigcomment, const char *keytype)
 {
 	const char *safepath = "/etc/signify/";
 
@@ -433,6 +451,10 @@ readpubkey(const char *pubkeyfile, struct pubkey *pubkey,
 			if (strncmp(pubkeyfile, safepath, strlen(safepath)) != 0 ||
 			    strstr(pubkeyfile, "/../") != NULL)
 				errx(1, "untrusted path %s", pubkeyfile);
+#ifndef VERIFYONLY
+			if (keytype)
+				check_keytype(pubkeyfile, keytype);
+#endif
 		} else
 			usage("must specify pubkey");
 	}
@@ -441,7 +463,7 @@ readpubkey(const char *pubkeyfile, struct pubkey *pubkey,
 
 static void
 verifysimple(const char *pubkeyfile, const char *msgfile, const char *sigfile,
-    int quiet)
+    int quiet, const char *keytype)
 {
 	char sigcomment[COMMENTMAXLEN];
 	struct sig sig;
@@ -452,7 +474,7 @@ verifysimple(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 	msg = readmsg(msgfile, &msglen);
 
 	readb64file(sigfile, &sig, sizeof(sig), sigcomment);
-	readpubkey(pubkeyfile, &pubkey, sigcomment);
+	readpubkey(pubkeyfile, &pubkey, sigcomment, keytype);
 
 	verifymsg(&pubkey, msg, msglen, &sig, quiet);
 
@@ -461,7 +483,7 @@ verifysimple(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 
 static uint8_t *
 verifyembedded(const char *pubkeyfile, const char *sigfile,
-    int quiet, unsigned long long *msglenp)
+    int quiet, unsigned long long *msglenp, const char *keytype)
 {
 	char sigcomment[COMMENTMAXLEN];
 	struct sig sig;
@@ -472,7 +494,7 @@ verifyembedded(const char *pubkeyfile, const char *sigfile,
 	msg = readmsg(sigfile, &msglen);
 
 	siglen = parseb64file(sigfile, msg, &sig, sizeof(sig), sigcomment);
-	readpubkey(pubkeyfile, &pubkey, sigcomment);
+	readpubkey(pubkeyfile, &pubkey, sigcomment, keytype);
 
 	msglen -= siglen;
 	memmove(msg, msg + siglen, msglen);
@@ -486,20 +508,21 @@ verifyembedded(const char *pubkeyfile, const char *sigfile,
 
 static void
 verify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
-    int embedded, int quiet)
+    int embedded, int quiet, const char *keytype)
 {
 	unsigned long long msglen;
 	uint8_t *msg;
 	int fd;
 
 	if (embedded) {
-		msg = verifyembedded(pubkeyfile, sigfile, quiet, &msglen);
+		msg = verifyembedded(pubkeyfile, sigfile, quiet, &msglen,
+		    keytype);
 		fd = xopen(msgfile, O_CREAT|O_TRUNC|O_NOFOLLOW|O_WRONLY, 0666);
 		writeall(fd, msg, msglen, msgfile);
 		free(msg);
 		close(fd);
 	} else {
-		verifysimple(pubkeyfile, msgfile, sigfile, quiet);
+		verifysimple(pubkeyfile, msgfile, sigfile, quiet, keytype);
 	}
 }
 
@@ -635,7 +658,7 @@ check(const char *pubkeyfile, const char *sigfile, int quiet, int argc,
 	unsigned long long msglen;
 	uint8_t *msg;
 
-	msg = verifyembedded(pubkeyfile, sigfile, quiet, &msglen);
+	msg = verifyembedded(pubkeyfile, sigfile, quiet, &msglen, NULL);
 	verifychecksums((char *)msg, argc, argv, quiet);
 
 	free(msg);
@@ -649,6 +672,7 @@ main(int argc, char **argv)
 	    *sigfile = NULL;
 	char sigfilebuf[PATH_MAX];
 	const char *comment = "signify";
+	char *keytype = NULL;
 	int ch, rounds;
 	int embedded = 0;
 	int quiet = 0;
@@ -665,7 +689,7 @@ main(int argc, char **argv)
 
 	rounds = 42;
 
-	while ((ch = getopt(argc, argv, "CGSVc:em:np:qs:x:")) != -1) {
+	while ((ch = getopt(argc, argv, "CGSVc:em:np:qs:t:x:")) != -1) {
 		switch (ch) {
 #ifndef VERIFYONLY
 		case 'C':
@@ -709,6 +733,9 @@ main(int argc, char **argv)
 			break;
 		case 's':
 			seckeyfile = optarg;
+			break;
+		case 't':
+			keytype = optarg;
 			break;
 		case 'x':
 			sigfile = optarg;
@@ -786,7 +813,7 @@ main(int argc, char **argv)
 	case VERIFY:
 		if (!msgfile)
 			usage("must specify message");
-		verify(pubkeyfile, msgfile, sigfile, embedded, quiet);
+		verify(pubkeyfile, msgfile, sigfile, embedded, quiet, keytype);
 		break;
 	default:
 		usage(NULL);
