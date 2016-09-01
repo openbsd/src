@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.429 2016/09/01 09:58:38 jcs Exp $
+#	$OpenBSD: GENERIC,v 1.430 2016/09/01 10:04:51 jcs Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -165,6 +165,8 @@ ikbd*	at ihidev?		# i2c keyboard
 wskbd*	at ikbd? mux 1
 imt*	at ihidev?		# HID-over-i2c multitouch trackpad
 wsmouse* at imt? mux 0
+iatp* at iic?			# Atmel maXTouch i2c touchpad/touchscreen
+wsmouse* at iatp? mux 0
 
 skgpio0 at isa? port 0x680	# Soekris net6501 GPIO and LEDs
 gpio* at skgpio?

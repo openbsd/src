@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.19 2016/09/01 09:41:20 jcs Exp $ */
+/* $OpenBSD: dwiic.c,v 1.20 2016/09/01 10:04:51 jcs Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -180,6 +180,8 @@ int		dwiic_acpi_parse_crs(union acpi_resource *, void *);
 int		dwiic_acpi_found_hid(struct aml_node *, void *);
 int		dwiic_acpi_found_ihidev(struct dwiic_softc *,
 		    struct aml_node *, char *, struct dwiic_crs);
+int		dwiic_acpi_found_iatp(struct dwiic_softc *, struct aml_node *,
+		    char *, struct dwiic_crs);
 void		dwiic_acpi_get_params(struct dwiic_softc *, char *, uint16_t *,
 		    uint16_t *, uint32_t *);
 void		dwiic_acpi_power(struct dwiic_softc *, int);
@@ -219,6 +221,12 @@ const char *dwiic_hids[] = {
 const char *ihidev_hids[] = {
 	"PNP0C50",
 	"ACPI0C50",
+	NULL
+};
+
+const char *iatp_hids[] = {
+	"ATML0000",
+	"ATML0001",
 	NULL
 };
 
@@ -566,6 +574,8 @@ dwiic_acpi_found_hid(struct aml_node *node, void *arg)
 
 	if (dwiic_matchhids(cdev, ihidev_hids))
 		return dwiic_acpi_found_ihidev(sc, node, dev, crs);
+	else if (dwiic_matchhids(dev, iatp_hids))
+		return dwiic_acpi_found_iatp(sc, node, dev, crs);
 
 	return 0;
 }
@@ -631,6 +641,37 @@ dwiic_acpi_found_ihidev(struct dwiic_softc *sc, struct aml_node *node,
 	if (crs.irq_int <= 0 && crs.gpio_int_node == NULL) {
 		printf("%s: couldn't find irq for %s\n", sc->sc_dev.dv_xname,
 		    aml_nodename(node->parent));
+		return 0;
+	}
+	ia.ia_intr = &crs;
+
+	if (config_found(sc->sc_iic, &ia, dwiic_i2c_print))
+		return 0;
+
+	return 1;
+}
+
+int
+dwiic_acpi_found_iatp(struct dwiic_softc *sc, struct aml_node *node, char *dev,
+    struct dwiic_crs crs)
+{
+	struct i2c_attach_args ia;
+	struct aml_value res;
+
+	if (aml_evalname(acpi_softc, node->parent, "GPIO", 0, NULL, &res))
+		/* no gpio, assume this is the bootloader interface */
+		return (0);
+
+	memset(&ia, 0, sizeof(ia));
+	ia.ia_tag = sc->sc_iba.iba_tag;
+	ia.ia_size = 1;
+	ia.ia_name = "iatp";
+	ia.ia_addr = crs.i2c_addr;
+	ia.ia_cookie = dev;
+
+	if (crs.irq_int <= 0 && crs.gpio_int_node == NULL) {
+		printf("%s: couldn't find irq for %s\n", sc->sc_dev.dv_xname,
+		   aml_nodename(node->parent));
 		return 0;
 	}
 	ia.ia_intr = &crs;
