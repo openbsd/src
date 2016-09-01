@@ -1,4 +1,4 @@
-/*	$Id: chngproc.c,v 1.3 2016/09/01 00:21:36 deraadt Exp $ */
+/*	$Id: chngproc.c,v 1.4 2016/09/01 00:35:21 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,9 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
 
 #include <assert.h>
 #include <err.h>

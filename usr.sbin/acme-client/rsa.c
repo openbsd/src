@@ -1,4 +1,4 @@
-/*	$Id: rsa.c,v 1.2 2016/08/31 23:46:34 benno Exp $ */
+/*	$Id: rsa.c,v 1.3 2016/09/01 00:35:22 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,9 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
 
 #include <err.h>
 #include <stdlib.h>
