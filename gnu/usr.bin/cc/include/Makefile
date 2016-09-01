@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/include/Makefile,v 1.9.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.10 2014/09/10 04:40:02 jsg Exp $
+# $OpenBSD: Makefile,v 1.11 2016/09/01 11:03:09 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -23,9 +23,15 @@ mm_malloc.h: pmm_malloc.h
 	@cp ${.ALLSRC} ${.TARGET}
 CLEANFILES+=	mm_malloc.h
 
+.if ${TARGET_ARCH} == "arm"
+unwind.h: ${GCCDIR}/config/arm/unwind-arm.h
+	@rm -rf ${.TARGET}
+	@cp ${.ALLSRC} ${.TARGET}
+.else
 unwind.h: ${GCCDIR}/unwind-generic.h
 	@rm -rf ${.TARGET}
 	@cp ${.ALLSRC} ${.TARGET}
+.endif
 CLEANFILES+=	unwind.h
 
 all:	${INCS}

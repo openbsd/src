@@ -41,18 +41,20 @@ Boston, MA 02111-1307, USA.  */
 /* armv5te default cpu.  */
 #define SUBTARGET_CPU_DEFAULT TARGET_CPU_arm9e
 
-/* Default is to use APCS-32 mode.  */
+/* We default to a soft-float ABI so that binaries can run on all
+   target hardware.  */
+#undef TARGET_DEFAULT_FLOAT_ABI
+#define TARGET_DEFAULT_FLOAT_ABI ARM_FLOAT_ABI_SOFT
 
-/* Default it to use ATPCS with soft-VFP.  */
-#undef TARGET_DEFAULT
-#define TARGET_DEFAULT			\
-  (MASK_APCS_FRAME			\
-   | TARGET_ENDIAN_DEFAULT)
-
+/* We default to the "aapcs-linux" ABI so that enums are int-sized by
+   default.  */
+#undef ARM_DEFAULT_ABI
+#define ARM_DEFAULT_ABI ARM_ABI_AAPCS_LINUX
 
 #define TARGET_OS_CPP_BUILTINS()	\
   do					\
     {					\
+      builtin_define ("__GXX_MERGED_TYPEINFO_NAMES=0"); \
       OPENBSD_OS_CPP_BUILTINS_ELF();	\
     }					\
   while (0)
@@ -79,7 +81,7 @@ Boston, MA 02111-1307, USA.  */
 
 #undef SUBTARGET_EXTRA_ASM_SPEC
 #define SUBTARGET_EXTRA_ASM_SPEC	\
-  "-matpcs %{fpic|fPIC|fpie|fPIE:-k}"
+  "%{mabi=apcs-gnu|mabi=atpcs:-meabi=gnu;:-meabi=4} %{fpic|fPIC|fpie|fPIE:-k}"
 
 /* Default floating point model is soft-VFP.
    FIXME: -mhard-float currently implies FPA.  */

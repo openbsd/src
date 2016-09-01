@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libstdc++/Makefile,v 1.63.2.1 2009/08/03 08:13:06 kensmith Exp $
-# $OpenBSD: Makefile,v 1.10 2016/03/28 00:04:26 deraadt Exp $
+# $OpenBSD: Makefile,v 1.11 2016/09/01 11:03:09 patrick Exp $
 
 .include "${.CURDIR}/Makefile.common"
 
@@ -8,9 +8,6 @@ GCC_TARGET=	${MACHINE_ARCH}-unknown-openbsd${OSREV}
 LIB=		stdc++
 
 CPPFLAGS+=	-DIN_GLIBCPP_V3 -DHAVE_CONFIG_H
-.if ${MACHINE_ARCH} == "arm"
-CPPFLAGS+=	-D_GLIBCXX_SJLJ_EXCEPTIONS=1
-.endif
 CPPFLAGS+=	-I${.CURDIR} -I${SUPDIR} -I${GCCDIR} -I${SRCDIR}/include
 CPPFLAGS+=	-I${GCCLIB}/include -I${SRCDIR}/include -I${.CURDIR}/../libiberty/include -I.
 CFLAGS+=	-frandom-seed=RepeatabilityConsideredGood

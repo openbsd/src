@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/cc_tools/Makefile,v 1.88.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.13 2015/09/16 10:55:39 kettenis Exp $
+# $OpenBSD: Makefile,v 1.14 2016/09/01 11:03:09 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -51,6 +51,7 @@ TARGET_INC+=	elfos.h
 .if ${TARGET_ARCH} == "arm"
 TARGET_INC+=	arm/elf.h
 TARGET_INC+=	arm/aout.h
+TARGET_INC+=	arm/openbsd1.h
 TARGET_INC+=	arm/arm.h
 .endif
 .if ${TARGET_ARCH} == "sh"
@@ -361,8 +362,13 @@ gthr-default.h: ${GCCDIR}/gthr-posix.h
 
 GENSRCS+=	gthr-default.h
 
+.if ${TARGET_ARCH} == "arm"
+unwind.h: ${GCCDIR}/config/arm/unwind-arm.h
+	ln -sf ${.ALLSRC} ${.TARGET}
+.else
 unwind.h: ${GCCDIR}/unwind-generic.h
 	ln -sf ${.ALLSRC} ${.TARGET}
+.endif
 
 GENSRCS+=	unwind.h
 

@@ -112,7 +112,7 @@ case ${generic_target} in
   arm-*-uclinux*)			fmt=elf  em=linux ;;
   arm-*-netbsdelf*)                 	fmt=elf  em=nbsd ;;
   arm-*-netbsd*)			fmt=aout em=nbsd ;;
-  arm-*-openbsd*)			fmt=elf  em=obsd ;;
+  arm-*-openbsd*)			fmt=elf  em=armobsd ;;
   arm-*-nto*)				fmt=elf ;;
   arm-epoc-pe | thumb-epoc-pe)		fmt=coff em=epoc-pe ;;
   arm-wince-pe | arm-*-wince)		fmt=coff em=wince-pe ;;
