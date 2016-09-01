@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.99 2016/08/17 09:39:38 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.100 2016/09/01 09:47:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3169,6 +3169,7 @@ iwm_firmware_load_chunk(struct iwm_softc *sc, uint32_t dst_addr,
 	iwm_nic_unlock(sc);
 
 	/* wait 1s for this segment to load */
+	error = 0;
 	while (!sc->sc_fw_chunk_done)
 		if ((error = tsleep(&sc->sc_fw, 0, "iwmfw", hz)) != 0)
 			break;
