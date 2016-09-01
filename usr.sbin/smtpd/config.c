@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.35 2016/05/28 21:21:20 eric Exp $	*/
+/*	$OpenBSD: config.c,v 1.36 2016/09/01 10:07:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -35,8 +35,6 @@
 #include "smtpd.h"
 #include "log.h"
 #include "ssl.h"
-
-extern int profiling;
 
 void
 purge_config(uint8_t what)
@@ -146,59 +144,7 @@ config_peer(enum smtp_proc_type proc)
 	mproc_enable(p);
 }
 
-static void process_stat_event(int, short, void *);
-
 void
 config_done(void)
 {
-	static struct event	ev;
-	struct timeval		tv;
-
-	if (smtpd_process == PROC_CONTROL)
-		return;
-
-	if (!(profiling & PROFILE_BUFFERS))
-		return;
-
-	evtimer_set(&ev, process_stat_event, &ev);
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-	evtimer_add(&ev, &tv);
-}
-
-static void
-process_stat(struct mproc *p)
-{
-	char			buf[1024];
-	struct stat_value	value;
-
-	if (p == NULL)
-		return;
-
-	value.type = STAT_COUNTER;
-	(void)snprintf(buf, sizeof buf, "buffer.%s.%s",
-	    proc_name(smtpd_process),
-	    proc_name(p->proc));
-	value.u.counter = p->bytes_queued_max;
-	p->bytes_queued_max = p->bytes_queued;
-	stat_set(buf, &value);
-}
-
-static void
-process_stat_event(int fd, short ev, void *arg)
-{
-	struct event	*e = arg;
-	struct timeval	 tv;
-
-	process_stat(p_control);
-	process_stat(p_lka);
-	process_stat(p_parent);
-	process_stat(p_queue);
-	process_stat(p_scheduler);
-	process_stat(p_pony);
-	process_stat(p_ca);
-
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
-	evtimer_add(e, &tv);
 }

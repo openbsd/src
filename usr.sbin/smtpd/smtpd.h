@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.519 2016/08/31 21:49:01 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.520 2016/09/01 10:07:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -658,7 +658,6 @@ struct smtpd {
 #define PROFILE_TOSTAT	0x0001
 #define PROFILE_IMSG	0x0002
 #define PROFILE_QUEUE	0x0004
-#define PROFILE_BUFFERS	0x0008
 
 struct forward_req {
 	uint64_t			id;
@@ -1009,13 +1008,6 @@ struct mproc {
 	short		 events;
 	struct event	 ev;
 	void		*data;
-
-	off_t		 msg_in;
-	off_t		 msg_out;
-	off_t		 bytes_in;
-	off_t		 bytes_out;
-	size_t		 bytes_queued;
-	size_t		 bytes_queued_max;
 };
 
 struct msg {
