@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.c,v 1.7 2014/03/18 22:36:30 miod Exp $	*/
+/*	$OpenBSD: ptrace.c,v 1.8 2016/09/01 11:01:42 guenther Exp $	*/
 /*
  * Copyright (c) 2004, Mark Kettenis.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -38,8 +38,6 @@
 
 /*
  * This tests checks whether ptrace will correctly cope with unaligned pc.
- *
- * Platforms known to fail at the moment are: sparc.
  */
 int
 main(void)
@@ -59,8 +57,7 @@ main(void)
 		ptrace(PT_GETREGS, pid, (caddr_t)&regs, 0);
 
 		/*
-		 * Make sure amd64 is tested before i386,
-		 * and sparc64 before sparc.
+		 * Make sure amd64 is tested before i386
 		 */
 
 #if defined(__alpha__)
@@ -83,9 +80,6 @@ main(void)
 #elif defined( __sparcv9__)
 		regs.r_pc |= 0x07;
 		regs.r_npc |= 0x07;
-#elif defined(__sparc__)
-		regs.r_pc |= 0x03;
-		regs.r_npc |= 0x03;
 #elif defined( __m88k__)
 		/*
 		 * The following code is for 88100 only, but should work with
@@ -94,8 +88,6 @@ main(void)
 		regs.sxip |= 0x03;
 		regs.snip |= 0x03;
 		regs.sfip |= 0x03;
-#elif defined(__vax__)
-		regs.pc |= 0x03;
 #endif
 		ptrace(PT_SETREGS, pid, (caddr_t)&regs, 0);
 		ptrace(PT_CONTINUE, pid, (caddr_t)1, 0);
