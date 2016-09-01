@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.17 2016/09/01 09:38:25 jcs Exp $ */
+/* $OpenBSD: dwiic.c,v 1.18 2016/09/01 09:39:54 jcs Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -814,6 +814,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 
 	/* disable interrupts */
 	dwiic_write(sc, DW_IC_INTR_MASK, 0);
+	dwiic_read(sc, DW_IC_CLR_INTR);
 
 	/* enable controller */
 	dwiic_enable(sc, 1);
@@ -928,6 +929,10 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 				    (int)(len - 1 - readpos));
 				sc->sc_i2c_xfer.error = 1;
 				sc->sc_busy = 0;
+
+				/* disable controller */
+				dwiic_enable(sc, 0);
+
 				return (1);
 			}
 
@@ -953,6 +958,9 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 			    dwiic_read(sc, DW_IC_TXFLR);
 		}
 	}
+
+	/* disable controller */
+	dwiic_enable(sc, 0);
 
 	sc->sc_busy = 0;
 
