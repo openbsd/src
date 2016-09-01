@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.15 2016/06/10 16:37:16 stefan Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.16 2016/09/01 14:45:36 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -204,13 +204,14 @@ struct vm_run_params {
 	uint32_t	vrp_vm_id;
 	uint32_t	vrp_vcpu_id;
 	uint8_t		vrp_continue;		/* Continuing from an exit */
-	int16_t		vrp_injint;		/* Injected interrupt vector */
+	uint16_t	vrp_irq;		/* IRQ to inject */
 
 	/* Input/output parameter to VMM_IOC_RUN */
 	union vm_exit	*vrp_exit;		/* updated exit data */
 
 	/* Output parameter from VMM_IOC_RUN */
 	uint16_t	vrp_exit_reason;	/* exit reason */
+	uint8_t		vrp_irqready;		/* ready for IRQ on entry */
 };
 
 struct vm_info_result {
@@ -340,6 +341,7 @@ struct vmx_gueststate
 	uint64_t	vg_cr2;			/* 0x78 */
 	uint64_t	vg_rip;			/* 0x80 */
 	uint32_t	vg_exit_reason;		/* 0x88 */
+	uint64_t	vg_rflags;		/* 0x90 */
 };
 
 /*
@@ -375,6 +377,7 @@ struct vcpu {
 	union vm_exit vc_exit;
 
 	uint16_t vc_intr;
+	uint8_t vc_irqready;
 
 	/* VMX only */
 	uint64_t vc_vmx_basic;

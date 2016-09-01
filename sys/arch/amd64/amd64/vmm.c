@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.71 2016/07/23 07:25:29 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.72 2016/09/01 14:45:36 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -40,7 +40,7 @@
 
 #include <dev/isa/isareg.h>
 
-#ifdef VMM_DEBUG 
+#ifdef VMM_DEBUG
 int vmm_debug = 0;
 #define DPRINTF(x...)	do { if (vmm_debug) printf(x); } while(0)
 #else
@@ -119,8 +119,8 @@ int vcpu_init(struct vcpu *);
 int vcpu_init_vmx(struct vcpu *);
 int vcpu_init_svm(struct vcpu *);
 int vcpu_must_stop(struct vcpu *);
-int vcpu_run_vmx(struct vcpu *, uint8_t, int16_t *);
-int vcpu_run_svm(struct vcpu *, uint8_t);
+int vcpu_run_vmx(struct vcpu *, struct vm_run_params *);
+int vcpu_run_svm(struct vcpu *, struct vm_run_params *);
 void vcpu_deinit(struct vcpu *);
 void vcpu_deinit_vmx(struct vcpu *);
 void vcpu_deinit_svm(struct vcpu *);
@@ -197,10 +197,6 @@ struct vmm_softc *vmm_softc;
 /* IDT information used when populating host state area */
 extern vaddr_t idt_vaddr;
 extern struct gate_descriptor *idt;
-
-/* XXX Temporary hack for the PIT clock */
-#define CLOCK_BIAS 8192
-uint64_t vmmclk = 0;
 
 /* Constants used in "CR access exit" */
 #define CR_WRITE	0
@@ -481,7 +477,7 @@ vm_resetcpu(struct vm_resetcpu_params *vrp)
  * vm_intr_pending
  *
  * IOCTL handler routine for VMM_IOC_INTR messages, sent from vmd when an
- * interrupt is pending and needs acknowledgment.
+ * interrupt is pending and needs acknowledgment
  *
  * Parameters:
  *  vip: Describes the vm/vcpu for which the interrupt is pending
@@ -535,9 +531,9 @@ vm_intr_pending(struct vm_intr_params *vip)
 	 * simply re-enter the guest. This "fast notification" is done only
 	 * as an optimization.
 	 */
-	if (vcpu->vc_state == VCPU_STATE_RUNNING) {
+	if (vcpu->vc_state == VCPU_STATE_RUNNING &&
+	    vip->vip_intr == 1)
 		x86_send_ipi(vcpu->vc_last_pcpu, X86_IPI_NOP);
-	}
 #endif /* MULTIPROCESSOR */
 
 	return (0);
@@ -1395,15 +1391,6 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 		goto exit;
 	}
 
-	/*
-	 * XXX -
-	 * vg_rip gets special treatment here since we will rewrite
-	 * it just before vmx_enter_guest, so it needs to match.
-	 * we could just set vg_rip here and be done with (no vmwrite
-	 * here) but that would require us to have proper resume
-	 * handling (resume=1) in the exit handler, so for now we
-	 * will just end up doing an extra vmwrite here.
-	 */
 	vcpu->vc_gueststate.vg_rip = vis->vis_rip;
 	if (vmwrite(VMCS_GUEST_IA32_RIP, vis->vis_rip)) {
 		ret = EINVAL;
@@ -2574,10 +2561,10 @@ vm_run(struct vm_run_params *vrp)
 	/* Run the VCPU specified in vrp */
 	if (vcpu->vc_virt_mode == VMM_MODE_VMX ||
 	    vcpu->vc_virt_mode == VMM_MODE_EPT) {
-		ret = vcpu_run_vmx(vcpu, vrp->vrp_continue, &vrp->vrp_injint);
+		ret = vcpu_run_vmx(vcpu, vrp);
 	} else if (vcpu->vc_virt_mode == VMM_MODE_SVM ||
 		   vcpu->vc_virt_mode == VMM_MODE_RVI) {
-		ret = vcpu_run_svm(vcpu, vrp->vrp_continue);
+		ret = vcpu_run_svm(vcpu, vrp);
 	}
 
 	/*
@@ -2595,6 +2582,7 @@ vm_run(struct vm_run_params *vrp)
 	} else if (ret == EAGAIN) {
 		/* If we are exiting, populate exit data so vmd can help. */
 		vrp->vrp_exit_reason = vcpu->vc_gueststate.vg_exit_reason;
+		vrp->vrp_irqready = vcpu->vc_irqready;
 		vcpu->vc_state = VCPU_STATE_STOPPED;
 
 		if (copyout(&vcpu->vc_exit, vrp->vrp_exit,
@@ -2640,11 +2628,7 @@ vcpu_must_stop(struct vcpu *vcpu)
  *
  * Parameters:
  *  vcpu: The VCPU to run
- *  from_exit: 1 if returning directly from an exit to vmd during the
- *      previous run, or 0 if we exited last time without needing to
- *      exit to vmd.
- *  injint: Interrupt that should be injected during this run, or -1 if
- *      no interrupt should be injected.
+ *  vrp: run parameters
  *
  * Return values:
  *  0: The run loop exited and no help is needed from vmd
@@ -2652,7 +2636,7 @@ vcpu_must_stop(struct vcpu *vcpu)
  *  EINVAL: an error occured
  */
 int
-vcpu_run_vmx(struct vcpu *vcpu, uint8_t from_exit, int16_t *injint)
+vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 {
 	int ret = 0, resume, locked, exitinfo;
 	struct region_descriptor gdt;
@@ -2660,9 +2644,13 @@ vcpu_run_vmx(struct vcpu *vcpu, uint8_t from_exit, int16_t *injint)
 	uint64_t exit_reason, cr3, vmcs_ptr;
 	struct schedstate_percpu *spc;
 	struct vmx_invvpid_descriptor vid;
-	uint64_t rflags, eii;
+	uint64_t eii, procbased;
+	uint8_t from_exit;
+	uint16_t irq;
 
 	resume = 0;
+	from_exit = vrp->vrp_continue;
+	irq = vrp->vrp_irq;
 
 	while (ret == 0) {
 		if (!resume) {
@@ -2709,7 +2697,9 @@ vcpu_run_vmx(struct vcpu *vcpu, uint8_t from_exit, int16_t *injint)
 
 		/*
 		 * If we are returning from userspace (vmd) because we exited
-		 * last time, fix up any needed vcpu state first.
+		 * last time, fix up any needed vcpu state first. Which state
+		 * needs to be fixed up depends on what vmd populated in the
+		 * exit data structure.
 		 */
 		if (from_exit) {
 			from_exit = 0;
@@ -2720,6 +2710,8 @@ vcpu_run_vmx(struct vcpu *vcpu, uint8_t from_exit, int16_t *injint)
 				break;
 			case VMX_EXIT_HLT:
 				break;
+			case VMX_EXIT_INT_WINDOW:
+				break; 
 			case VMX_EXIT_TRIPLE_FAULT:
 				DPRINTF("%s: vm %d vcpu %d triple fault\n",
 				    __func__, vcpu->vc_parent->vm_id,
@@ -2753,65 +2745,76 @@ vcpu_run_vmx(struct vcpu *vcpu, uint8_t from_exit, int16_t *injint)
 			}
 		}
 
-		/*
-		 * XXX - clock hack. We don't track host clocks while not
-		 * running inside a VM, and thus we lose many clocks while
-		 * the OS is running other processes. For now, approximate
-		 * when a clock should be injected by injecting one clock
-		 * per CLOCK_BIAS exits.
-		 *
-		 * This should be changed to track host clocks to know if
-		 * a clock tick was missed, and "catch up" clock interrupt
-		 * injections later as needed.
-		 *
-		 * Note that checking injint here and not injecting the
-		 * clock interrupt if injint is set also violates interrupt
-		 * priority, until this hack is fixed.
-		 */
-		vmmclk++;
-		eii = 0xFFFFFFFFFFFFFFFFULL;
+		/* Handle vmd(8) injected interrupts */
+		/* XXX - 0x20 should be changed to PIC's vector base */
 
-		if (vmmclk % CLOCK_BIAS == 0)
-			eii = 0x20;
-
-		if (*injint != -1)
-			eii = *injint + 0x20;
-
-		if (eii != 0xFFFFFFFFFFFFFFFFULL) {
-			if (vmread(VMCS_GUEST_IA32_RFLAGS, &rflags)) {
-				printf("intr: can't read guest rflags\n");
-				rflags = 0;
+		/* Is there an interrupt pending injection? */
+		if (irq != 0xFFFF) {
+			if (!vcpu->vc_irqready) {
+				printf("vcpu_run_vmx: error - irq injected"
+				    " while not ready\n");
+				ret = EINVAL;
+				break;
 			}
 
-			if (rflags & PSL_I) {
-				eii |= (1ULL << 31);	/* Valid */
-				eii |= (0ULL << 8);	/* Hardware Interrupt */
-				if (vmwrite(VMCS_ENTRY_INTERRUPTION_INFO, eii)) {
-					printf("intr: can't vector clock "
-					    "interrupt to guest\n");
+			eii = (irq & 0xFF) + 0x20;
+			eii |= (1ULL << 31);	/* Valid */
+			eii |= (0ULL << 8);	/* Hardware Interrupt */
+			if (vmwrite(VMCS_ENTRY_INTERRUPTION_INFO, eii)) {
+				printf("vcpu_run_vmx: can't vector "
+				    "interrupt to guest\n");
+				ret = EINVAL;
+				break;
+			}
+
+			irq = 0xFFFF;
+		} else if (!vcpu->vc_intr) {
+			/*
+			 * Disable window exiting
+			 */
+			if (vmread(VMCS_PROCBASED_CTLS, &procbased)) {
+				printf("vcpu_run_vmx: can't read"
+				    "procbased ctls on exit\n");
+				ret = EINVAL;
+				break;
+			} else {
+				procbased &= ~IA32_VMX_INTERRUPT_WINDOW_EXITING;
+				if (vmwrite(VMCS_PROCBASED_CTLS, procbased)) {
+					printf("vcpu_run_vmx: can't write"
+					   " procbased ctls on exit\n");
+					ret = EINVAL;
+					break;
 				}
-				if (*injint != -1)
-					*injint = -1;
 			}
 		}
-
-		/* XXX end clock hack */
 
 		/* Invalidate old TLB mappings */
 		vid.vid_vpid = vcpu->vc_parent->vm_id;
 		vid.vid_addr = 0;
 		invvpid(IA32_VMX_INVVPID_SINGLE_CTX_GLB, &vid);
 
-		/* Start / resume the VM / VCPU */
+		/* Start / resume the VCPU */
 		KERNEL_ASSERT_LOCKED();
 		KERNEL_UNLOCK();
 		ret = vmx_enter_guest(&vcpu->vc_control_pa,
 		    &vcpu->vc_gueststate, resume);
 
 		exit_reason = VM_EXIT_NONE;
-		if (ret == 0)
+		if (ret == 0) {
+			/*
+			 * ret == 0 implies we entered the guest, and later
+			 * exited for some valid reason
+			 */
 			exitinfo = vmx_get_exit_info(
 			    &vcpu->vc_gueststate.vg_rip, &exit_reason);
+			if (vmread(VMCS_GUEST_IA32_RFLAGS,
+			    &vcpu->vc_gueststate.vg_rflags)) {
+				printf("vcpu_run_vmx: can't read guest rflags"
+				   " during exit\n");
+				ret = EINVAL;
+				break;
+                        }
+		}
 
 		if (ret || exitinfo != VMX_EXIT_INFO_COMPLETE ||
 		    exit_reason != VMX_EXIT_EXTINT) {
@@ -2861,6 +2864,32 @@ vcpu_run_vmx(struct vcpu *vcpu, uint8_t from_exit, int16_t *injint)
 			if (!locked)
 				KERNEL_LOCK();
 
+			if (vcpu->vc_gueststate.vg_rflags & PSL_I)
+				vcpu->vc_irqready = 1;
+			else
+				vcpu->vc_irqready = 0;
+
+			/*
+			 * If not ready for interrupts, but interrupts pending,
+			 * enable interrupt window exiting.
+			 */
+			if (vcpu->vc_irqready == 0 && vcpu->vc_intr) {
+				if (vmread(VMCS_PROCBASED_CTLS, &procbased)) {
+					printf("vcpu_run_vmx: can't read"
+					   " procbased ctls on intwin exit\n");
+					ret = EINVAL;
+					break;
+				}
+
+				procbased |= IA32_VMX_INTERRUPT_WINDOW_EXITING;
+				if (vmwrite(VMCS_PROCBASED_CTLS, procbased)) {
+					printf("vcpu_run_vmx: can't write"
+					   " procbased ctls on intwin exit\n");
+					ret = EINVAL;
+					break;
+				}
+			}
+
 			/* Exit to vmd if we are terminating or failed enter */
 			if (ret || vcpu_must_stop(vcpu))
 				break;
@@ -2887,17 +2916,16 @@ vcpu_run_vmx(struct vcpu *vcpu, uint8_t from_exit, int16_t *injint)
 			ret = EINVAL;
 		} else {
 			printf("vcpu_run_vmx: failed launch for unknown "
-			    "reason\n");
+			    "reason %d\n", ret);
 			ret = EINVAL;
 		}
-
 	}
 
 	/*
 	 * We are heading back to userspace (vmd), either because we need help
-	 * handling an exit, or we failed in some way to enter the guest.
-	 * Clear any current VMCS pointer as we may end up coming back on
-	 * a different CPU.
+	 * handling an exit, a guest interrupt is pending, or we failed in some
+	 * way to enter the guest. Clear any current VMCS pointer as we may end
+	 * up coming back on a different CPU.
 	 */
 	if (!vmptrst(&vmcs_ptr)) {
 		if (vmcs_ptr != 0xFFFFFFFFFFFFFFFFULL)
@@ -2935,7 +2963,6 @@ vmx_handle_intr(struct vcpu *vcpu)
 	idte=&idt[vec];
 	handler = idte->gd_looffset + ((uint64_t)idte->gd_hioffset << 16);
 	vmm_dispatch_intr(handler);
-
 }
 
 /*
@@ -2986,13 +3013,25 @@ vmx_get_exit_info(uint64_t *rip, uint64_t *exit_reason)
 int
 vmx_handle_exit(struct vcpu *vcpu)
 {
-	uint64_t exit_reason;
+	uint64_t exit_reason, rflags;
 	int update_rip, ret = 0;
 
 	update_rip = 0;
 	exit_reason = vcpu->vc_gueststate.vg_exit_reason;
+	rflags = vcpu->vc_gueststate.vg_rflags;
 
 	switch (exit_reason) {
+	case VMX_EXIT_INT_WINDOW:
+		if (!(rflags & PSL_I)) {
+			DPRINTF("vmx_handle_exit: impossible interrupt window"
+			   " exit config\n");
+			ret = EINVAL;
+			break;
+		}
+
+		ret = EAGAIN;
+		update_rip = 0;
+		break;
 	case VMX_EXIT_EPT_VIOLATION:
 		ret = vmx_handle_np_fault(vcpu);
 		break;
@@ -3258,20 +3297,15 @@ vmx_handle_inout(struct vcpu *vcpu)
 	 * XXX handle not eax target
 	 */
 	switch (vcpu->vc_exit.vei.vei_port) {
+	case IO_ICU1 ... IO_ICU1 + 1:
 	case 0x40 ... 0x43:
+	case IO_RTC ... IO_RTC + 1:
+	case IO_ICU2 ... IO_ICU2 + 1:
 	case 0x3f8 ... 0x3ff:
 	case 0xcf8:
 	case 0xcfc:
 	case VMM_PCI_IO_BAR_BASE ... VMM_PCI_IO_BAR_END:
 		ret = EAGAIN;
-		break;
-	case IO_RTC ... IO_RTC + 1:
-		/* We can directly read the RTC on behalf of the guest */
-		if (vcpu->vc_exit.vei.vei_dir == 1) {
-			vcpu->vc_gueststate.vg_rax =
-			    inb(vcpu->vc_exit.vei.vei_port);
-		}
-		ret = 0;
 		break;
 	default:
 		/* Read from unsupported ports returns FFs */
@@ -3583,7 +3617,7 @@ vmx_handle_cpuid(struct vcpu *vcpu)
  * VMM main loop used to run a VCPU.
  */
 int
-vcpu_run_svm(struct vcpu *vcpu, uint8_t from_exit)
+vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 {
 	/* XXX removed due to rot */
 	return (0);
