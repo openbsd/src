@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.18 2016/09/01 09:39:54 jcs Exp $ */
+/* $OpenBSD: dwiic.c,v 1.19 2016/09/01 09:41:20 jcs Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -135,6 +135,7 @@ struct dwiic_softc {
 
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
+	char			sc_hid[16];
 	void			*sc_ih;
 
 	struct i2cbus_attach_args sc_iba;
@@ -240,6 +241,7 @@ dwiic_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
+	memcpy(&sc->sc_hid, aa->aaa_dev, sizeof(sc->sc_hid));
 
 	printf(": %s", sc->sc_devnode->name);
 
@@ -760,6 +762,18 @@ dwiic_acpi_power(struct dwiic_softc *sc, int power)
 		DELAY(10000); /* 10 milliseconds */
 	} else
 		DPRINTF(("%s: no %s method\n", sc->sc_dev.dv_xname, ps));
+
+	if (strcmp(sc->sc_hid, "INT3432") == 0 ||
+	    strcmp(sc->sc_hid, "INT3433") == 0) {
+		/*
+		 * XXX: broadwell i2c devices may need this for initial power
+		 * up and/or after s3 resume.
+		 *
+		 * linux does this write via LPSS -> clk_register_gate ->
+		 * clk_gate_enable -> clk_gate_endisable -> clk_writel
+		 */
+		dwiic_write(sc, 0x800, 1);
+	}
 }
 
 int
