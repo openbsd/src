@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.22 2016/09/01 10:59:38 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.23 2016/09/01 14:50:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -362,11 +362,13 @@ proc_kill(struct privsep *ps)
 			if (WEXITSTATUS(status) != 0)
 				len = asprintf(&cause, "exited abnormally");
 			else
-				len = asprintf(&cause, "exited okay");
+				len = 0;
 		} else
 			len = -1;
 
-		if (len != -1) {
+		if (len == 0) {
+			/* child exited OK, don't print a warning message */
+		} else if (len != -1) {
 			log_warnx("lost child: pid %u %s", pid, cause);
 			free(cause);
 		} else
