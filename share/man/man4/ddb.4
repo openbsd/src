@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.81 2016/03/10 08:56:46 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.82 2016/09/01 12:24:56 jmc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: March 10 2016 $
+.Dd $Mdocdate: September 1 2016 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -1035,11 +1035,6 @@ Display the switch and trap frames.
 .\" .It Ic stack
 .It Ic tlb
 Display the TLB.
-.El
-.Pp
-sparc:
-.Bl -tag -width "searchframe [addr]" -compact
-.It Ic proc Ar ??
 .El
 .Pp
 sparc64:
