@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.48 2015/12/01 18:28:29 goda Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.49 2016/09/01 10:06:33 goda Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -472,6 +472,8 @@ void	bridge_timer(void *);
 u_int8_t bridge_filterrule(struct brl_head *, struct ether_header *,
     struct mbuf *);
 void	bridge_flushrule(struct bridge_iflist *);
+void    bridge_fragment(struct bridge_softc *, struct ifnet *,
+    struct ether_header *, struct mbuf *);
 
 #endif /* _KERNEL */
 #endif /* _NET_IF_BRIDGE_H_ */

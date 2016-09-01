@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.624 2016/08/13 20:35:57 kettenis Exp $
+#	$OpenBSD: files,v 1.625 2016/09/01 10:06:33 goda Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -554,6 +554,7 @@ pseudo-device mpw: ifnet, ether
 pseudo-device vether: ifnet, ether
 pseudo-device pppx: ifnet
 pseudo-device vxlan: ifnet, ether, ifmedia
+pseudo-device switch: ifnet, ether
 
 pseudo-device ksyms
 file	dev/ksyms.c			ksyms needs-flag
@@ -777,6 +778,9 @@ file net/if_bridge.c			bridge			needs-count
 file net/bridgectl.c			bridge
 file net/bridgestp.c			bridge
 file net/if_vlan.c			vlan			needs-count
+file net/if_switch.c			switch			needs-count
+file net/switchctl.c			switch
+file net/switchofp.c			switch
 file net/pipex.c			pipex
 file net/radix.c
 file net/radix_mpath.c			!small_kernel & !art
