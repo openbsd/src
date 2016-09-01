@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iatp.4,v 1.1 2016/09/01 10:04:51 jcs Exp $
+.\"	$OpenBSD: iatp.4,v 1.2 2016/09/01 10:37:50 jmc Exp $
 .\"
 .\" Copyright (c) 2016 joshua stein <jcs@openbsd.org>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm iatp
-.Nd Atmel maXTouch Touchpad and Touchscreen devices
+.Nd Atmel maXTouch touchpad and touchscreen
 .Sh SYNOPSIS
 .Cd "iatp* at iic?"
 .Cd "wsmouse* at iatp? mux 0"
@@ -32,7 +32,7 @@ Access to these devices is through the
 .Xr wscons 4
 driver.
 .Sh SEE ALSO
-.Xr iic 4
+.Xr iic 4 ,
 .Xr wsmouse 4
 .Sh HISTORY
 The
