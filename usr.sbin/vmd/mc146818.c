@@ -145,13 +145,13 @@ mc146818_init(uint32_t vm_id)
 }
 
 /*
- * reschedule_per
+ * rtc_reschedule_per
  *
  * Reschedule the periodic interrupt firing rate, based on the currently
  * selected REGB values.
  */
 static void
-reschedule_per(void)
+rtc_reschedule_per(void)
 {
 	uint16_t rate;
 	uint64_t us;
@@ -168,7 +168,7 @@ reschedule_per(void)
 }
 
 /*
- * update_rega
+ * rtc_update_rega
  *
  * Updates the RTC's REGA register
  *
@@ -176,7 +176,7 @@ reschedule_per(void)
  *  data: REGA register data
  */
 static void
-update_rega(uint32_t data)
+rtc_update_rega(uint32_t data)
 {
 	if ((data & MC_DIVIDER_MASK) != MC_BASE_32_KHz)
 		log_warnx("%s: set non-32KHz timebase not supported",
@@ -184,11 +184,11 @@ update_rega(uint32_t data)
 
 	rtc.regs[MC_REGA] = data;
 	if (rtc.regs[MC_REGB] & MC_REGB_PIE)
-		reschedule_per();
+		rtc_reschedule_per();
 }
 
 /*
- * update_regb
+ * rtc_update_regb
  *
  * Updates the RTC's REGB register
  *
@@ -196,7 +196,7 @@ update_rega(uint32_t data)
  *  data: REGB register data
  */
 static void
-update_regb(uint32_t data)
+rtc_update_regb(uint32_t data)
 {
 	if (data & MC_REGB_DSE)
 		log_warnx("%s: DSE mode not supported", __func__);
@@ -207,7 +207,7 @@ update_regb(uint32_t data)
 	rtc.regs[MC_REGB] = data;
 
 	if (data & MC_REGB_PIE)
-		reschedule_per();
+		rtc_reschedule_per();
 }
 
 /*
@@ -253,10 +253,10 @@ vcpu_exit_mc146818(struct vm_run_params *vrp)
 				rtc.regs[rtc.idx] = data;
 				break;
 			case MC_REGA:
-				update_rega(data);
+				rtc_update_rega(data);
 				break;
 			case MC_REGB:
-				update_regb(data);
+				rtc_update_regb(data);
 				break;
 			case MC_REGC:
 			case MC_REGD:
