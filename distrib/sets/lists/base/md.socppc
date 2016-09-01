@@ -731,7 +731,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/mc146818reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/mc6845.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/mc6845reg.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/wsksymvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/mfireg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/mfivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/mk48txxreg.ph
@@ -1258,6 +1257,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/wskbdraw.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/wskbdvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/wsksymdef.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/wsksymvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/wsmoused.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/wsmouseinput.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/wsmousevar.ph

@@ -23,6 +23,7 @@
 ./usr/share/info/texinfo
 ./usr/share/man/man1/Test::Harness::Beyond.1
 ./usr/share/man/man1/a2p.1
+./usr/share/man/man1/acme-client.1
 ./usr/share/man/man1/amd64
 ./usr/share/man/man1/amd64/fdformat.1
 ./usr/share/man/man1/apply.1
