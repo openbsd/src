@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.69 2016/09/01 10:55:21 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.70 2016/09/01 10:57:24 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -42,7 +42,7 @@
 
 uint16_t randomid(void);
 
-union sockthing {
+union sockun {
 	struct sockaddr a;
 	struct sockaddr_storage s;
 	struct sockaddr_in i;
@@ -92,7 +92,7 @@ struct request {
 	int s;
 	int client;
 	int tcp;
-	union sockthing from;
+	union sockun from;
 	socklen_t fromlen;
 	struct timespec ts;
 	TAILQ_ENTRY(request) fifo;
@@ -220,7 +220,7 @@ servfail(int ud, uint16_t id, struct sockaddr *fromaddr, socklen_t fromlen)
 static struct request *
 newrequest(int ud, struct sockaddr *remoteaddr)
 {
-	union sockthing from;
+	union sockun from;
 	socklen_t fromlen;
 	struct request *req;
 	uint8_t buf[65536];
@@ -455,7 +455,7 @@ fail:
 }
 
 static int
-readconfig(FILE *conf, union sockthing *remoteaddr)
+readconfig(FILE *conf, union sockun *remoteaddr)
 {
 	char buf[1024];
 	struct sockaddr_in *sin = &remoteaddr->i;
@@ -484,7 +484,7 @@ readconfig(FILE *conf, union sockthing *remoteaddr)
 static int
 launch(FILE *conf, int ud, int ld, int kq)
 {
-	union sockthing remoteaddr;
+	union sockun remoteaddr;
 	struct kevent ch[2], kev[4];
 	struct timespec ts, *timeout = NULL;
 	struct request *req;
@@ -657,7 +657,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	union sockthing bindaddr;
+	union sockun bindaddr;
 	int r, kq, ld, ud, ch;
 	int one;
 	int childdead, hupped;
