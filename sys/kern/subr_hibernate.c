@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.116 2015/05/04 02:18:05 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.117 2016/09/01 13:12:59 akfaew Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -156,7 +156,10 @@ hibernate_sort_ranges(union hibernate_info *hib_info)
 static __inline int
 hibe_cmp(struct hiballoc_entry *l, struct hiballoc_entry *r)
 {
-	return l < r ? -1 : (l > r);
+	vaddr_t vl = (vaddr_t)l;
+	vaddr_t vr = (vaddr_t)r;
+
+	return vl < vr ? -1 : (vl > vr);
 }
 
 RB_PROTOTYPE(hiballoc_addr, hiballoc_entry, hibe_entry, hibe_cmp)
