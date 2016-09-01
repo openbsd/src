@@ -613,7 +613,7 @@ vcpu_exit_i8259(struct vm_run_params *vrp)
 {
 	union vm_exit *vei = vrp->vrp_exit;
 
-	if (vei->vei.vei_dir == 0) {
+	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		i8259_io_write(vei);
 	} else {
 		vei->vei.vei_data = i8259_io_read(vei);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.8 2016/09/01 13:08:47 mlarkin Exp $	*/
+/*	$OpenBSD: pci.c,v 1.9 2016/09/01 16:40:06 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -189,15 +189,15 @@ pci_handle_address_reg(struct vm_run_params *vrp)
 	union vm_exit *vei = vrp->vrp_exit;
 
 	/*
-	 * vei_dir == 0 : out instruction
+	 * vei_dir == VEI_DIR_OUT : out instruction
 	 *
 	 * The guest wrote to the address register.
 	 */
-	if (vei->vei.vei_dir == 0) {
+	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		pci.pci_addr_reg = vei->vei.vei_data;
 	} else {
 		/*
-		 * vei_dir == 1 : in instruction
+		 * vei_dir == VEI_DIR_IN : in instruction
 		 *
 		 * The guest read the address register
 		 */
@@ -268,7 +268,7 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	/* abort if the address register is wack */
 	if (!(pci.pci_addr_reg & PCI_MODE1_ENABLE)) {
 		/* if read, return FFs */
-		if (vei->vei.vei_dir == 1)
+		if (vei->vei.vei_dir == VEI_DIR_IN)
 			vei->vei.vei_data = 0xffffffff;
 		log_warnx("invalid address register during pci read: "
 		    "0x%llx", (uint64_t)pci.pci_addr_reg);
@@ -292,12 +292,12 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	/* No config space function, fallback to default simple r/w impl. */
 
 	/*
-	 * vei_dir == 0 : out instruction
+	 * vei_dir == VEI_DIR_OUT : out instruction
 	 *
 	 * The guest wrote to the config space location denoted by the current
 	 * value in the address register.
 	 */
-	if (vei->vei.vei_dir == 0) {
+	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		if ((o >= 0x10 && o <= 0x24) &&
 		    vei->vei.vei_data == 0xffffffff) {
 			/*
@@ -318,7 +318,7 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 		pci.pci_devices[d].pd_cfg_space[o / 4] = vei->vei.vei_data;
 	} else {
 		/*
-		 * vei_dir == 1 : in instruction
+		 * vei_dir == VEI_DIR_IN : in instruction
 		 *
 		 * The guest read from the config space location determined by
 		 * the current value in the address register.

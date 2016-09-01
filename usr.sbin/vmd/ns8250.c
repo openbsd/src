@@ -49,14 +49,14 @@ void
 vcpu_process_com_data(union vm_exit *vei)
 {
 	/*
-	 * vei_dir == 0 : out instruction
+	 * vei_dir == VEI_DIR_OUT : out instruction
 	 *
 	 * The guest wrote to the data register. Since we are emulating a
 	 * no-fifo chip, write the character immediately to the pty and
 	 * assert TXRDY in IIR (if the guest has requested TXRDY interrupt
 	 * reporting)
 	 */
-	if (vei->vei.vei_dir == 0) {
+	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		write(com1_regs.fd, &vei->vei.vei_data, 1);
 		if (com1_regs.ier & 0x2) {
 			/* Set TXRDY */
@@ -66,7 +66,7 @@ vcpu_process_com_data(union vm_exit *vei)
 		}
 	} else {
 		/*
-		 * vei_dir == 1 : in instruction
+		 * vei_dir == VEI_DIR_IN : in instruction
 		 *
 		 * The guest read from the data register. Check to see if
 		 * there is data available (RXRDY) and if so, consume the
@@ -108,15 +108,15 @@ void
 vcpu_process_com_lcr(union vm_exit *vei)
 {
 	/*
-	 * vei_dir == 0 : out instruction
+	 * vei_dir == VEI_DIR_OUT : out instruction
 	 *
 	 * Write content to line control register
 	 */
-	if (vei->vei.vei_dir == 0) {
+	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		com1_regs.lcr = (uint8_t)vei->vei.vei_data;
 	} else {
 		/*
-		 * vei_dir == 1 : in instruction
+		 * vei_dir == VEI_DIR_IN : in instruction
 		 *
 		 * Read line control register
 		 */
@@ -140,15 +140,15 @@ void
 vcpu_process_com_iir(union vm_exit *vei)
 {
 	/*
-	 * vei_dir == 0 : out instruction
+	 * vei_dir == VEI_DIR_OUT : out instruction
 	 *
 	 * Write to FCR
 	 */
-	if (vei->vei.vei_dir == 0) {
+	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		com1_regs.fcr = vei->vei.vei_data;
 	} else {
 		/*
-		 * vei_dir == 1 : in instruction
+		 * vei_dir == VEI_DIR_IN : in instruction
 		 *
 		 * Read IIR. Reading the IIR resets the TXRDY bit in the IIR
 		 * after the data is read.
@@ -179,15 +179,15 @@ void
 vcpu_process_com_mcr(union vm_exit *vei)
 {
 	/*
-	 * vei_dir == 0 : out instruction
+	 * vei_dir == VEI_DIR_OUT : out instruction
 	 *
 	 * Write to MCR
 	 */
-	if (vei->vei.vei_dir == 0) {
+	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		com1_regs.mcr = vei->vei.vei_data;
 	} else {
 		/*
-		 * vei_dir == 1 : in instruction
+		 * vei_dir == VEI_DIR_IN : in instruction
 		 *
 		 * Read from MCR
 		 */
@@ -208,17 +208,17 @@ void
 vcpu_process_com_lsr(union vm_exit *vei)
 {
 	/*
-	 * vei_dir == 0 : out instruction
+	 * vei_dir == VEI_DIR_OUT : out instruction
 	 *
 	 * Write to LSR. This is an illegal operation, so we just log it and
 	 * continue.
 	 */
-	if (vei->vei.vei_dir == 0) {
+	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		log_warnx("%s: LSR UART write 0x%x unsupported",
 		    __progname, vei->vei.vei_data);
 	} else {
 		/*
-		 * vei_dir == 1 : in instruction
+		 * vei_dir == VEI_DIR_IN : in instruction
 		 *
 		 * Read from LSR. We always report TXRDY and TSRE since we
 		 * can process output characters immediately (at any time).
@@ -240,17 +240,17 @@ void
 vcpu_process_com_msr(union vm_exit *vei)
 {
 	/*
-	 * vei_dir == 0 : out instruction
+	 * vei_dir == VEI_DIR_OUT : out instruction
 	 *
 	 * Write to MSR. This is an illegal operation, so we just log it and
 	 * continue.
 	 */
-	if (vei->vei.vei_dir == 0) {
+	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		log_warnx("%s: MSR UART write 0x%x unsupported",
 		    __progname, vei->vei.vei_data);
 	} else {
 		/*
-		 * vei_dir == 1 : in instruction
+		 * vei_dir == VEI_DIR_IN : in instruction
 		 *
 		 * Read from MSR. We always report DCD, DSR, and CTS.
 		 */
@@ -275,15 +275,15 @@ void
 vcpu_process_com_scr(union vm_exit *vei)
 {
 	/*
-	 * vei_dir == 0 : out instruction
+	 * vei_dir == VEI_DIR_OUT : out instruction
 	 *
 	 * Write to SCR
 	 */
-	if (vei->vei.vei_dir == 0) {
+	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		com1_regs.scr = vei->vei.vei_data;
 	} else {
 		/*
-		 * vei_dir == 1 : in instruction
+		 * vei_dir == VEI_DIR_IN : in instruction
 		 *
 		 * Read from SCR. To make sure we don't accidentally simulate
 		 * a real scratch register, we negate what was written on
@@ -307,15 +307,15 @@ void
 vcpu_process_com_ier(union vm_exit *vei)
 {
 	/*
-	 * vei_dir == 0 : out instruction
+	 * vei_dir == VEI_DIR_OUT : out instruction
 	 *
 	 * Write to IER
 	 */
-	if (vei->vei.vei_dir == 0) {
+	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		com1_regs.ier = vei->vei.vei_data;
 	} else {
 		/*
-		 * vei_dir == 1 : in instruction
+		 * vei_dir == VEI_DIR_IN : in instruction
 		 *
 		 * Read from IER
 		 */

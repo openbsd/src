@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.39 2016/09/01 16:04:47 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.40 2016/09/01 16:40:06 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -423,14 +423,14 @@ start_vm(struct imsg *imsg, uint32_t *id)
 	struct vcpu_reg_state vrs;
 
 	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
-		log_warn("%s: can't find vm", __func__);
+		log_warnx("%s: can't find vm", __func__);
 		ret = ENOENT;
 		goto err;
 	}
 	vcp = &vm->vm_params;
 
 	if ((vm->vm_tty = imsg->fd) == -1) {
-		log_warn("%s: can't get tty", __func__);
+		log_warnx("%s: can't get tty", __func__);
 		goto err;
 	}
 
@@ -442,7 +442,7 @@ start_vm(struct imsg *imsg, uint32_t *id)
 
 	/* Start child failed? - cleanup and leave */
 	if (ret == -1) {
-		log_warn("%s: start child failed", __func__);
+		log_warnx("%s: start child failed", __func__);
 		ret = EIO;
 		goto err;
 	}
@@ -954,22 +954,22 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 		vrp[i]->vrp_vm_id = vcp->vcp_id;
 		vrp[i]->vrp_vcpu_id = i;
 
-		if (vcpu_reset(vcp->vcp_id, i, vrs)) {
-			log_warn("%s: cannot reset VCPU %zu - exiting.",
+		if (vcpu_reset(vcp->vcp_id, i, vis)) {
+			log_warnx("%s: cannot reset VCPU %zu - exiting.",
 			    __progname, i);
 			return (EIO);
 		}
 
 		ret = pthread_cond_init(&vcpu_run_cond[i], NULL);
 		if (ret) {
-			log_warn("%s: cannot initialize cond var (%d)",
+			log_warnx("%s: cannot initialize cond var (%d)",
 			    __progname, ret);
 			return (ret);
 		}
 
 		ret = pthread_mutex_init(&vcpu_run_mtx[i], NULL);
 		if (ret) {
-			log_warn("%s: cannot initialize mtx (%d)",
+			log_warnx("%s: cannot initialize mtx (%d)",
 			    __progname, ret);
 			return (ret);
 		}
@@ -993,7 +993,7 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 	/* Wait for all the threads to exit */
 	for (i = 0; i < vcp->vcp_ncpus; i++) {
 		if (pthread_join(tid[i], &exit_status)) {
-			log_warn("%s: failed to join thread %zd - "
+			log_warnx("%s: failed to join thread %zd - "
 			    "exiting", __progname, i);
 			return (EIO);
 		}
@@ -1037,7 +1037,7 @@ vcpu_run_loop(void *arg)
 		ret = pthread_mutex_lock(&vcpu_run_mtx[n]);
 
 		if (ret) {
-			log_warn("%s: can't lock vcpu run mtx (%d)",
+			log_warnx("%s: can't lock vcpu run mtx (%d)",
 			    __func__, (int)ret);
 			return ((void *)ret);
 		}
@@ -1048,7 +1048,7 @@ vcpu_run_loop(void *arg)
 			    &vcpu_run_mtx[n]);
 
 			if (ret) {
-				log_warn("%s: can't wait on cond (%d)",
+				log_warnx("%s: can't wait on cond (%d)",
 				    __func__, (int)ret);
 				pthread_mutex_unlock(&vcpu_run_mtx[n]);
 				return ((void *)ret);
@@ -1079,8 +1079,8 @@ vcpu_run_loop(void *arg)
 		if (ioctl(env->vmd_fd, VMM_IOC_RUN, vrp) < 0) {
 			/* If run ioctl failed, exit */
 			ret = errno;
-			log_warn("%s: vm %d / vcpu %d run ioctl failed (%d)",
-			    __func__, vrp->vrp_vm_id, n, errno);
+			log_warn("%s: vm %d / vcpu %d run ioctl failed",
+			    __func__, vrp->vrp_vm_id, n);
 			return ((void *)ret);
 		}
 
@@ -1174,7 +1174,7 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 
 	if (ioports_map[vei->vei.vei_port] != NULL)
 		intr = ioports_map[vei->vei.vei_port](vrp);
-	else if (vei->vei.vei_dir == 1)
+	else if (vei->vei.vei_dir == VEI_DIR_IN)
 			vei->vei.vei_data = 0xFFFFFFFF;
 	
 	if (intr != 0xFF)

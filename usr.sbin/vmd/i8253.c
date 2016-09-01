@@ -83,7 +83,7 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 	union vm_exit *vei = vrp->vrp_exit;
 
 	if (vei->vei.vei_port == TIMER_CTRL) {
-		if (vei->vei.vei_dir == 0) { /* OUT instruction */
+		if (vei->vei.vei_dir == VEI_DIR_OUT) { /* OUT instruction */
 			out_data = vei->vei.vei_data;
 			sel = out_data &
 			    (TIMER_SEL0 | TIMER_SEL1 | TIMER_SEL2);
@@ -147,7 +147,7 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 			    "selected", __func__, sel);
 		}
 
-		if (vei->vei.vei_dir == 0) { /* OUT instruction */
+		if (vei->vei.vei_dir == VEI_DIR_OUT) { /* OUT instruction */
 			if (i8253_counter[sel].last_w == 0) {
 				out_data = vei->vei.vei_data;
 				i8253_counter[sel].ilatch |= (out_data & 0xff);
