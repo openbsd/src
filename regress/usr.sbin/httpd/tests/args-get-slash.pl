@@ -11,7 +11,7 @@ our %args = (
     },
     httpd => {
 	loggrep => {
-	    qr/"GET \/" 500 0/ => 1,
+	    qr/"GET \/" 400 0/ => 1,
 	},
     },
 );
