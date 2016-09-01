@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eeprom.8,v 1.20 2013/03/11 22:39:11 jmc Exp $
+.\"	$OpenBSD: eeprom.8,v 1.21 2016/09/01 13:39:50 jmc Exp $
 .\"	$NetBSD: eeprom.8,v 1.2 1996/02/28 01:13:24 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 11 2013 $
+.Dd $Mdocdate: September 1 2016 $
 .Dt EEPROM 8
 .Os
 .Sh NAME
@@ -320,11 +320,6 @@ When
 Ethernet devices which have a unique MAC address will use it
 rather than the system default MAC address.
 This option only really affects FCode-based Ethernet devices.
-In reality,
-this means that on Sparc machines with an OpenPROM,
-only
-.Xr hme 4
-Ethernet devices respect this setting.
 On Sparc64, all on-board devices,
 as well as plug-in
 .Xr hme 4
