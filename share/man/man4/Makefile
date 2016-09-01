@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.635 2016/08/31 15:58:35 tedu Exp $
+#	$OpenBSD: Makefile,v 1.636 2016/09/01 09:37:30 tedu Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -83,7 +83,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 SUBDIR=	man4.alpha man4.amd64 man4.armv7 \
 	man4.hppa man4.i386 man4.landisk man4.loongson man4.luna88k \
 	man4.macppc man4.octeon \
-	man4.sgi man4.socppc man4.sparc man4.sparc64 man4.zaurus
+	man4.sgi man4.socppc man4.sparc64 man4.zaurus
 
 CLEANFILES+= wi.4
 
