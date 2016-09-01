@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2015/03/11 18:12:27 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2016/09/01 10:00:38 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -36,61 +36,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#if defined(__sparc__) && !defined(__sparc64__)
-#include <fcntl.h>
-#include <limits.h>
-#include <sys/sysctl.h>
-#include <machine/cpu.h>
-#include <machine/eeprom.h>
-#include <machine/param.h>
-#endif /* __sparc__ && !__sparc64__ */
 
 #include <machine/openpromio.h>
 
 #include "defs.h"
 
-#if defined(__sparc__) && !defined(__sparc64__)
-static	char *nlistf = NULL;
-
-struct	keytabent eekeytab[] = {
-#ifndef SMALL
-	{ "hwupdate",		0x10,	ee_hwupdate },
-#else
-	{ "hwupdate",		0x00,	ee_notsupp },
-#endif
-	{ "memsize",		0x14,	ee_num8 },
-	{ "memtest",		0x15,	ee_num8 },
-	{ "scrsize",		0x16,	ee_screensize },
-	{ "watchdog_reboot",	0x17,	ee_truefalse },
-	{ "default_boot",	0x18,	ee_truefalse },
-	{ "bootdev",		0x19,	ee_bootdev },
-	{ "kbdtype",		0x1e,	ee_kbdtype },
-	{ "console",		0x1f,	ee_constype },
-	{ "keyclick",		0x21,	ee_truefalse },
-	{ "diagdev",		0x22,	ee_bootdev },
-	{ "diagpath",		0x28,	ee_diagpath },
-	{ "columns",		0x50,	ee_num8 },
-	{ "rows",		0x51,	ee_num8 },
-	{ "ttya_use_baud",	0x58,	ee_truefalse },
-	{ "ttya_baud",		0x59,	ee_num16 },
-	{ "ttya_no_rtsdtr",	0x5b,	ee_truefalse },
-	{ "ttyb_use_baud",	0x60,	ee_truefalse },
-	{ "ttyb_baud",		0x61,	ee_num16 },
-	{ "ttyb_no_rtsdtr",	0x63,	ee_truefalse },
-	{ "banner",		0x68,	ee_banner },
-	{ "secure",		0,	ee_notsupp },
-	{ "bad_login",		0,	ee_notsupp },
-	{ "password",		0,	ee_notsupp },
-	{ NULL,			0,	ee_notsupp },
-};
-#endif /* __sparc__ && !__sparc64__ */
-
 static	void action(char *);
 static	void dump_prom(void);
 static	void usage(void);
-#if defined(__sparc__) && !defined(__sparc64__)
-static	int getcputype(void);
-#endif /* __sparc__ && !__sparc64__ */
 
 char	*path_eeprom = "/dev/eeprom";
 char	*path_openprom = "/dev/openprom";
@@ -139,12 +92,6 @@ main(int argc, char *argv[])
 			verbose = 1;
 			break;
 
-#if defined(__sparc__) && !defined(__sparc64__)
-		case 'N':
-			nlistf = optarg;
-			break;
-#endif /* __sparc__ && !__sparc64__ */
-
 		case '?':
 		default:
 			usage();
@@ -152,22 +99,11 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-#if defined(__sparc__) && !defined(__sparc64__)
-	if (getcputype() != CPU_SUN4)
-#endif /* __sparc__ && !__sparc64__ */
-		use_openprom = 1;
+	use_openprom = 1;
 	if (print_tree && use_openprom) {
 		op_tree();
 		exit(0);
 	}
-
-#if defined(__sparc__) && !defined(__sparc64__)
-	if (use_openprom == 0) {
-		ee_verifychecksums();
-		if (fix_checksum || cksumfail)
-			exit(cksumfail);
-	}
-#endif /* __sparc__ && !__sparc64__ */
 
 	if (do_stdin) {
 		while (fgets(line, BUFSIZE, stdin) != NULL) {
@@ -192,34 +128,8 @@ main(int argc, char *argv[])
 		}
 	}
 
-#if defined(__sparc__) && !defined(__sparc64__)
-	if (use_openprom == 0)
-		if (update_checksums) {
-			++writecount;
-			ee_updatechecksums();
-		}
-#endif /* __sparc__ && !__sparc64__ */
-
 	exit(eval + cksumfail);
 }
-
-#if defined(__sparc__) && !defined(__sparc64__)
-static int
-getcputype(void)
-{
-	int mib[2];
-	size_t len;
-	int cputype;
-
-	mib[0] = CTL_MACHDEP;
-	mib[1] = CPU_CPUTYPE;
-	len = sizeof(cputype);
-	if (sysctl(mib, 2, &cputype, &len, NULL, 0) < 0)
-		err(1, "sysctl(machdep.cputype)");
-
-	return (cputype);
-}
-#endif /* __sparc__ && !__sparc64__ */
 
 /*
  * Separate the keyword from the argument (if any), find the keyword in
@@ -248,15 +158,6 @@ action(char *line)
 			warnx("%s", cp);
 		return;
 	}
-#if defined(__sparc__) && !defined(__sparc64__)
-	  else
-		for (ktent = eekeytab; ktent->kt_keyword != NULL; ++ktent) {
-			if (strcmp(ktent->kt_keyword, keyword) == 0) {
-				(*ktent->kt_handler)(ktent, arg);
-				return; 
-			}
-		}
-#endif /* __sparc__ && !__sparc64__ */
 
 	warnx("unknown keyword %s", keyword);
 	++eval;
@@ -276,25 +177,14 @@ dump_prom(void)
 		 */
 		op_dump();
 	}
-#if defined(__sparc__) && !defined(__sparc64__)
-	  else
-		for (ktent = eekeytab; ktent->kt_keyword != NULL; ++ktent)
-			(*ktent->kt_handler)(ktent, NULL);
-#endif /* __sparc__ && !__sparc64__ */
 }
 
 static void
 usage(void)
 {
 
-#if defined(__sparc__) && !defined(__sparc64__)
-	fprintf(stderr,
-	    "usage: %s [-cipv] [-f device] [-N system] [field[=value] ...]\n",
-	    __progname);
-#else
 	fprintf(stderr,
 	    "usage: %s [-cipv] [-f device] [field[=value] ...]\n",
 	    __progname);
-#endif /* __sparc__ && !__sparc64__ */
 	exit(1);
 }
