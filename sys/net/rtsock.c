@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.199 2016/09/01 11:26:44 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.200 2016/09/01 16:53:38 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -676,6 +676,74 @@ route_output(struct mbuf *m, ...)
 			goto report;
 		break;
 	case RTM_GET:
+		if (!rtable_exists(tableid)) {
+			error = EAFNOSUPPORT;
+			goto flush;
+		}
+		rt = rtable_lookup(tableid, info.rti_info[RTAX_DST],
+		    info.rti_info[RTAX_NETMASK], info.rti_info[RTAX_GATEWAY],
+		    prio);
+		if (rt == NULL) {
+			error = ESRCH;
+			goto flush;
+		}
+
+report:
+		info.rti_info[RTAX_DST] = rt_key(rt);
+		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+		info.rti_info[RTAX_NETMASK] =
+		    rt_plen2mask(rt, &sa_mask);
+		info.rti_info[RTAX_LABEL] =
+		    rtlabel_id2sa(rt->rt_labelid, &sa_rl);
+#ifdef MPLS
+		if (rt->rt_flags & RTF_MPLS) {
+			bzero(&sa_mpls, sizeof(sa_mpls));
+			sa_mpls.smpls_family = AF_MPLS;
+			sa_mpls.smpls_len = sizeof(sa_mpls);
+			sa_mpls.smpls_label = ((struct rt_mpls *)
+			    rt->rt_llinfo)->mpls_label;
+			info.rti_info[RTAX_SRC] =
+			    (struct sockaddr *)&sa_mpls;
+			info.rti_mpls = ((struct rt_mpls *)
+			    rt->rt_llinfo)->mpls_operation;
+			rtm->rtm_mpls = info.rti_mpls;
+		}
+#endif
+		info.rti_info[RTAX_IFP] = NULL;
+		info.rti_info[RTAX_IFA] = NULL;
+		ifp = if_get(rt->rt_ifidx);
+		if (ifp != NULL && rtm->rtm_addrs & (RTA_IFP|RTA_IFA)) {
+			info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
+			info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
+			if (ifp->if_flags & IFF_POINTOPOINT)
+				info.rti_info[RTAX_BRD] =
+				    rt->rt_ifa->ifa_dstaddr;
+			else
+				info.rti_info[RTAX_BRD] = NULL;
+		}
+		if_put(ifp);
+		len = rt_msg2(rtm->rtm_type, RTM_VERSION, &info, NULL,
+		    NULL);
+		if (len > rtm->rtm_msglen) {
+			struct rt_msghdr	*new_rtm;
+			new_rtm = malloc(len, M_RTABLE, M_NOWAIT);
+			if (new_rtm == NULL) {
+				error = ENOBUFS;
+				goto flush;
+			}
+			memcpy(new_rtm, rtm, rtm->rtm_msglen);
+			free(rtm, M_RTABLE, 0);
+			rtm = new_rtm;
+		}
+		rt_msg2(rtm->rtm_type, RTM_VERSION, &info, (caddr_t)rtm,
+		    NULL);
+		rtm->rtm_flags = rt->rt_flags;
+		rtm->rtm_use = 0;
+		rtm->rtm_priority = rt->rt_priority & RTP_MASK;
+		rtm->rtm_index = rt->rt_ifidx;
+		rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
+		rtm->rtm_addrs = info.rti_addrs;
+		break;
 	case RTM_CHANGE:
 	case RTM_LOCK:
 		if (!rtable_exists(tableid)) {
@@ -731,64 +799,6 @@ route_output(struct mbuf *m, ...)
 		}
 
 		switch (rtm->rtm_type) {
-		case RTM_GET:
-report:
-			info.rti_info[RTAX_DST] = rt_key(rt);
-			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-			info.rti_info[RTAX_NETMASK] =
-			    rt_plen2mask(rt, &sa_mask);
-			info.rti_info[RTAX_LABEL] =
-			    rtlabel_id2sa(rt->rt_labelid, &sa_rl);
-#ifdef MPLS
-			if (rt->rt_flags & RTF_MPLS) {
-				bzero(&sa_mpls, sizeof(sa_mpls));
-				sa_mpls.smpls_family = AF_MPLS;
-				sa_mpls.smpls_len = sizeof(sa_mpls);
-				sa_mpls.smpls_label = ((struct rt_mpls *)
-				    rt->rt_llinfo)->mpls_label;
-				info.rti_info[RTAX_SRC] =
-				    (struct sockaddr *)&sa_mpls;
-				info.rti_mpls = ((struct rt_mpls *)
-				    rt->rt_llinfo)->mpls_operation;
-				rtm->rtm_mpls = info.rti_mpls;
-			}
-#endif
-			info.rti_info[RTAX_IFP] = NULL;
-			info.rti_info[RTAX_IFA] = NULL;
-			ifp = if_get(rt->rt_ifidx);
-			if (ifp != NULL && rtm->rtm_addrs & (RTA_IFP|RTA_IFA)) {
-				info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
-				info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
-				if (ifp->if_flags & IFF_POINTOPOINT)
-					info.rti_info[RTAX_BRD] =
-					    rt->rt_ifa->ifa_dstaddr;
-				else
-					info.rti_info[RTAX_BRD] = NULL;
-			}
-			if_put(ifp);
-			len = rt_msg2(rtm->rtm_type, RTM_VERSION, &info, NULL,
-			    NULL);
-			if (len > rtm->rtm_msglen) {
-				struct rt_msghdr	*new_rtm;
-				new_rtm = malloc(len, M_RTABLE, M_NOWAIT);
-				if (new_rtm == NULL) {
-					error = ENOBUFS;
-					goto flush;
-				}
-				memcpy(new_rtm, rtm, rtm->rtm_msglen);
-				free(rtm, M_RTABLE, 0);
-				rtm = new_rtm;
-			}
-			rt_msg2(rtm->rtm_type, RTM_VERSION, &info, (caddr_t)rtm,
-			    NULL);
-			rtm->rtm_flags = rt->rt_flags;
-			rtm->rtm_use = 0;
-			rtm->rtm_priority = rt->rt_priority & RTP_MASK;
-			rtm->rtm_index = rt->rt_ifidx;
-			rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
-			rtm->rtm_addrs = info.rti_addrs;
-			break;
-
 		case RTM_CHANGE:
 			if (info.rti_info[RTAX_GATEWAY] != NULL)
 				if (rt->rt_gateway == NULL ||
