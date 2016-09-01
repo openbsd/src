@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.16 2015/12/05 13:13:11 claudio Exp $	*/
+/*	$OpenBSD: ca.c,v 1.17 2016/09/01 10:40:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <poll.h>
 #include <imsg.h>
 
 #include <openssl/bio.h>
@@ -256,6 +257,7 @@ static int
 rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
     int padding, u_int cmd)
 {
+	struct pollfd	 pfd[1];
 	struct ctl_keyop cko;
 	int		 ret = 0;
 	objid_t		*id;
@@ -292,9 +294,21 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 	 * operation in OpenSSL's engine layer.
 	 */
 	imsg_composev(ibuf, cmd, 0, 0, -1, iov, cnt);
-	imsg_flush(ibuf);
+	if (imsg_flush(ibuf) == -1)
+		log_warn("rsae_send_imsg: imsg_flush");
 
+	pfd[0].fd = ibuf->fd;
+	pfd[0].events = POLLIN;
 	while (!done) {
+		switch (poll(pfd, 1, RELAY_TLS_PRIV_TIMEOUT)) {
+		case -1:
+			fatal("rsae_send_imsg: poll");
+		case 0:
+			log_warnx("rsae_send_imsg: poll timeout");
+			break;
+		default:
+			break;
+		}
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatalx("imsg_read");
 		if (n == 0)
