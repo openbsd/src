@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.4 2016/08/31 23:30:59 benno Exp $ */
+/*	$Id: main.c,v 1.5 2016/09/01 00:03:39 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -288,11 +288,11 @@ main(int argc, char *argv[])
 		close(dns_fds[0]);
 		close(rvk_fds[0]);
 		c = netproc(key_fds[1], acct_fds[1],
-			chng_fds[1], cert_fds[1],
-			dns_fds[1], rvk_fds[1],
-			newacct, revocate, staging,
-			(const char *const *)alts, altsz,
-			agreement);
+		    chng_fds[1], cert_fds[1],
+		    dns_fds[1], rvk_fds[1],
+		    newacct, revocate, staging,
+		    (const char *const *)alts, altsz,
+		    agreement);
 		free(alts);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
@@ -399,7 +399,7 @@ main(int argc, char *argv[])
 		 * can return 2 if the certificates were updated.
 		 */
 		exit(c > 1 ? 2 :
-		     (c ? EXIT_SUCCESS : EXIT_FAILURE));
+		    (c ? EXIT_SUCCESS : EXIT_FAILURE));
 	}
 
 	close(file_fds[1]);
@@ -452,13 +452,13 @@ main(int argc, char *argv[])
 	 */
 
 	rc = checkexit(pids[COMP_KEY], COMP_KEY) +
-	     checkexit(pids[COMP_CERT], COMP_CERT) +
-	     checkexit(pids[COMP_NET], COMP_NET) +
-	     checkexit_ext(&c, pids[COMP_FILE], COMP_FILE) +
-	     checkexit(pids[COMP_ACCOUNT], COMP_ACCOUNT) +
-	     checkexit(pids[COMP_CHALLENGE], COMP_CHALLENGE) +
-	     checkexit(pids[COMP_DNS], COMP_DNS) +
-	     checkexit(pids[COMP_REVOKE], COMP_REVOKE);
+	    checkexit(pids[COMP_CERT], COMP_CERT) +
+	    checkexit(pids[COMP_NET], COMP_NET) +
+	    checkexit_ext(&c, pids[COMP_FILE], COMP_FILE) +
+	    checkexit(pids[COMP_ACCOUNT], COMP_ACCOUNT) +
+	    checkexit(pids[COMP_CHALLENGE], COMP_CHALLENGE) +
+	    checkexit(pids[COMP_DNS], COMP_DNS) +
+	    checkexit(pids[COMP_REVOKE], COMP_REVOKE);
 
 	free(certdir);
 	free(keyfile);
@@ -466,7 +466,7 @@ main(int argc, char *argv[])
 	free(chngdir);
 	free(alts);
 	return (COMP__MAX != rc ? EXIT_FAILURE :
-	       (2 == c ? EXIT_SUCCESS : 2));
+	    (2 == c ? EXIT_SUCCESS : 2));
 usage:
 	fprintf(stderr, "usage: %s "
 		"[-bFmnNrsv] "
