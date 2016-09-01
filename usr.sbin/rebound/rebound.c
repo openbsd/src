@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.67 2016/08/21 21:23:48 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.68 2016/09/01 10:54:36 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -29,6 +29,7 @@
 #include <syslog.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 #include <string.h>
 #include <err.h>
 #include <unistd.h>
@@ -36,6 +37,8 @@
 #include <errno.h>
 #include <getopt.h>
 #include <stdarg.h>
+
+#define MINIMUM(a,b) (((a)<(b))?(a):(b))
 
 uint16_t randomid(void);
 
@@ -57,14 +60,6 @@ struct dnspacket {
 	uint16_t ancount;
 	uint16_t nscount;
 	uint16_t arcount;
-	/* ... */
-};
-
-struct dnsrr {
-	uint16_t type;
-	uint16_t class;
-	uint32_t ttl;
-	uint16_t rdatalen;
 	/* ... */
 };
 
@@ -302,6 +297,50 @@ fail:
 	return NULL;
 }
 
+static uint32_t
+minttl(struct dnspacket *resp, size_t rlen)
+{
+	uint32_t minttl = UINT_MAX, ttl, cnt, i;
+	uint16_t len;
+	char *p = (char *)resp;
+	char *end = p + rlen;
+
+	/* skip past packet header */
+	p += sizeof(struct dnspacket);
+	if (p >= end)
+		return -1;
+	if (ntohs(resp->qdcount) != 1)
+		return -1;
+	/* skip past query name, type, and class */
+	p += strnlen(p, end - p);
+	p += 2;
+	p += 2;
+	cnt = ntohs(resp->ancount);
+	for (i = 0; i < cnt; i++) {
+		if (p >= end)
+			return -1;
+		/* skip past answer name, type, and class */
+		p += strnlen(p, end - p);
+		p += 2;
+		p += 2;
+		if (p + 4 >= end)
+			return -1;
+		memcpy(&ttl, p, 4);
+		p += 4;
+		if (p + 2 >= end)
+			return -1;
+		ttl = ntohl(ttl);
+		if (ttl < minttl)
+			minttl = ttl;
+		memcpy(&len, p, 2);
+		p += 2;
+		p += ntohs(len);
+	}
+	return minttl;
+}
+
+
+
 static void
 sendreply(int ud, struct request *req)
 {
@@ -309,6 +348,7 @@ sendreply(int ud, struct request *req)
 	struct dnspacket *resp;
 	struct dnscache *ent;
 	size_t r;
+	uint32_t ttl;
 
 	resp = (struct dnspacket *)buf;
 
@@ -327,8 +367,11 @@ sendreply(int ud, struct request *req)
 		 */
 		if (RB_INSERT(cachetree, &cachetree, ent))
 			return;
+		ttl = minttl(resp, r);
+		if (ttl == -1)
+			ttl = 0;
 		ent->ts = now;
-		ent->ts.tv_sec += 10;
+		ent->ts.tv_sec += MINIMUM(ttl, 300);
 		ent->resp = malloc(r);
 		if (!ent->resp) {
 			RB_REMOVE(cachetree, &cachetree, ent);
