@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.96 2016/03/17 05:27:10 bentley Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.97 2016/09/01 09:27:06 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -169,6 +169,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	quad_t sizepb;
 	int i, j, width, origdensity, fragsperinode, minfpg, optimalfpg;
 	int lastminfpg, mincylgrps;
+	uint32_t bpg;
 	long cylno, csfrags;
 	char tmpbuf[100];	/* XXX this will break in about 2,500 years */
 
@@ -608,7 +609,10 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	pp->p_fstype = FS_BSDFFS;
 	pp->p_fragblock =
 	    DISKLABELV1_FFS_FRAGBLOCK(sblock.fs_fsize, sblock.fs_frag);
-	pp->p_cpg = sblock.fs_cpg;
+	bpg = sblock.fs_fpg / sblock.fs_frag;
+	while (bpg > USHRT_MAX)
+		bpg >>= 1;
+	pp->p_cpg = bpg;
 }
 
 /*
