@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.113 2016/05/17 23:28:03 bluhm Exp $	*/
+/*	$OpenBSD: systm.h,v 1.114 2016/09/01 12:50:53 akfaew Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -112,8 +112,7 @@ extern struct sysent {		/* system call table */
 	sy_call_t *sy_call;	/* implementing function */
 } sysent[];
 
-#define SY_MPSAFE		0x01
-#define SY_NOLOCK		0x02
+#define SY_NOLOCK		0x01
 
 #if	_BYTE_ORDER == _BIG_ENDIAN
 #define SCARG(p, k)	((p)->k.be.datum)	/* get arg from args pointer */

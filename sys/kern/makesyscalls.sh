@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$OpenBSD: makesyscalls.sh,v 1.11 2007/11/27 18:04:01 art Exp $
+#	$OpenBSD: makesyscalls.sh,v 1.12 2016/09/01 12:50:53 akfaew Exp $
 #	$NetBSD: makesyscalls.sh,v 1.26 1998/01/09 06:17:51 thorpej Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
@@ -254,10 +254,6 @@ function parseline() {
 	} else {
 		funcalias=""
 		end=NF
-	}
-	if ($f == "MPSAFE") {		# allow MP-safe syscalls
-		sycall_flags = sprintf("SY_MPSAFE | %s", sycall_flags)
-		f++
 	}
 	if ($f == "NOLOCK") {		# syscall does not need locks
 		sycall_flags = sprintf("SY_NOLOCK | %s", sycall_flags)
