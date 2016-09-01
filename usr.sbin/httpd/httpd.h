@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.116 2016/09/01 10:59:38 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.117 2016/09/01 11:13:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -287,6 +287,17 @@ enum fcgistate {
 	FCGI_READ_PADDING
 };
 
+struct fcgi_data {
+	enum fcgistate		 state;
+	int			 toread;
+	int			 padding_len;
+	int			 type;
+	int			 chunked;
+	int			 end;
+	int			 status;
+	int			 headersdone;
+};
+
 struct client {
 	uint32_t		 clt_id;
 	pid_t			 clt_pid;
@@ -318,14 +329,7 @@ struct client {
 	int			 clt_done;
 	int			 clt_chunk;
 	int			 clt_inflight;
-	enum fcgistate		 clt_fcgi_state;
-	int			 clt_fcgi_toread;
-	int			 clt_fcgi_padding_len;
-	int			 clt_fcgi_type;
-	int			 clt_fcgi_chunked;
-	int			 clt_fcgi_end;
-	int			 clt_fcgi_status;
-	int			 clt_fcgi_headersdone;
+	struct fcgi_data	 clt_fcgi;
 	char			*clt_remote_user;
 	struct evbuffer		*clt_srvevb;
 

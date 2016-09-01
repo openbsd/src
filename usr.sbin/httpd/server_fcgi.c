@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.70 2016/09/01 10:59:38 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.71 2016/09/01 11:13:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -141,10 +141,10 @@ server_fcgi(struct httpd *env, struct client *clt)
 	}
 
 	memset(hbuf, 0, sizeof(hbuf));
-	clt->clt_fcgi_state = FCGI_READ_HEADER;
-	clt->clt_fcgi_toread = sizeof(struct fcgi_record_header);
-	clt->clt_fcgi_status = 200;
-	clt->clt_fcgi_headersdone = 0;
+	clt->clt_fcgi.state = FCGI_READ_HEADER;
+	clt->clt_fcgi.toread = sizeof(struct fcgi_record_header);
+	clt->clt_fcgi.status = 200;
+	clt->clt_fcgi.headersdone = 0;
 
 	if (clt->clt_srvevb != NULL)
 		evbuffer_free(clt->clt_srvevb);
@@ -389,13 +389,13 @@ server_fcgi(struct httpd *env, struct client *clt)
 	}
 
 	if (strcmp(desc->http_version, "HTTP/1.1") == 0) {
-		clt->clt_fcgi_chunked = 1;
+		clt->clt_fcgi.chunked = 1;
 	} else {
 		/* HTTP/1.0 does not support chunked encoding */
-		clt->clt_fcgi_chunked = 0;
+		clt->clt_fcgi.chunked = 0;
 		clt->clt_persist = 0;
 	}
-	clt->clt_fcgi_end = 0;
+	clt->clt_fcgi.end = 0;
 	clt->clt_done = 0;
 
 	free(script);
@@ -501,36 +501,36 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 	char				*ptr;
 
 	do {
-		len = bufferevent_read(bev, buf, clt->clt_fcgi_toread);
+		len = bufferevent_read(bev, buf, clt->clt_fcgi.toread);
 		if (evbuffer_add(clt->clt_srvevb, buf, len) == -1) {
 			server_abort_http(clt, 500, "short write");
 			return;
 		}
-		clt->clt_fcgi_toread -= len;
+		clt->clt_fcgi.toread -= len;
 		DPRINTF("%s: len: %lu toread: %d state: %d type: %d",
-		    __func__, len, clt->clt_fcgi_toread,
-		    clt->clt_fcgi_state, clt->clt_fcgi_type);
+		    __func__, len, clt->clt_fcgi.toread,
+		    clt->clt_fcgi.state, clt->clt_fcgi.type);
 
-		if (clt->clt_fcgi_toread != 0)
+		if (clt->clt_fcgi.toread != 0)
 			return;
 
-		switch (clt->clt_fcgi_state) {
+		switch (clt->clt_fcgi.state) {
 		case FCGI_READ_HEADER:
-			clt->clt_fcgi_state = FCGI_READ_CONTENT;
+			clt->clt_fcgi.state = FCGI_READ_CONTENT;
 			h = (struct fcgi_record_header *)
 			    EVBUFFER_DATA(clt->clt_srvevb);
 			DPRINTF("%s: record header: version %d type %d id %d "
 			    "content len %d padding %d", __func__,
 			    h->version, h->type, ntohs(h->id),
 			    ntohs(h->content_len), h->padding_len);
-			clt->clt_fcgi_type = h->type;
-			clt->clt_fcgi_toread = ntohs(h->content_len);
-			clt->clt_fcgi_padding_len = h->padding_len;
+			clt->clt_fcgi.type = h->type;
+			clt->clt_fcgi.toread = ntohs(h->content_len);
+			clt->clt_fcgi.padding_len = h->padding_len;
 			evbuffer_drain(clt->clt_srvevb,
 			    EVBUFFER_LENGTH(clt->clt_srvevb));
-			if (clt->clt_fcgi_toread != 0)
+			if (clt->clt_fcgi.toread != 0)
 				break;
-			else if (clt->clt_fcgi_type == FCGI_STDOUT &&
+			else if (clt->clt_fcgi.type == FCGI_STDOUT &&
 			    !clt->clt_chunk) {
 				server_abort_http(clt, 500, "empty stdout");
 				return;
@@ -538,7 +538,7 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 
 			/* fallthrough if content_len == 0 */
 		case FCGI_READ_CONTENT:
-			switch (clt->clt_fcgi_type) {
+			switch (clt->clt_fcgi.type) {
 			case FCGI_STDERR:
 				if (EVBUFFER_LENGTH(clt->clt_srvevb) > 0 &&
 				    (ptr = get_string(
@@ -552,12 +552,12 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 				break;
 			case FCGI_STDOUT:
 				++clt->clt_chunk;
-				if (!clt->clt_fcgi_headersdone) {
-					clt->clt_fcgi_headersdone =
+				if (!clt->clt_fcgi.headersdone) {
+					clt->clt_fcgi.headersdone =
 					    server_fcgi_getheaders(clt);
-					if (clt->clt_fcgi_headersdone) {
+					if (clt->clt_fcgi.headersdone) {
 						if (server_fcgi_header(clt,
-						    clt->clt_fcgi_status)
+						    clt->clt_fcgi.status)
 						    == -1) {
 							server_abort_http(clt,
 							    500,
@@ -580,21 +580,21 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 			}
 			evbuffer_drain(clt->clt_srvevb,
 			    EVBUFFER_LENGTH(clt->clt_srvevb));
-			if (!clt->clt_fcgi_padding_len) {
-				clt->clt_fcgi_state = FCGI_READ_HEADER;
-				clt->clt_fcgi_toread =
+			if (!clt->clt_fcgi.padding_len) {
+				clt->clt_fcgi.state = FCGI_READ_HEADER;
+				clt->clt_fcgi.toread =
 				    sizeof(struct fcgi_record_header);
 			} else {
-				clt->clt_fcgi_state = FCGI_READ_PADDING;
-				clt->clt_fcgi_toread =
-				    clt->clt_fcgi_padding_len;
+				clt->clt_fcgi.state = FCGI_READ_PADDING;
+				clt->clt_fcgi.toread =
+				    clt->clt_fcgi.padding_len;
 			}
 			break;
 		case FCGI_READ_PADDING:
 			evbuffer_drain(clt->clt_srvevb,
 			    EVBUFFER_LENGTH(clt->clt_srvevb));
-			clt->clt_fcgi_state = FCGI_READ_HEADER;
-			clt->clt_fcgi_toread =
+			clt->clt_fcgi.state = FCGI_READ_HEADER;
+			clt->clt_fcgi.toread =
 			    sizeof(struct fcgi_record_header);
 			break;
 		}
@@ -627,7 +627,7 @@ server_fcgi_header(struct client *clt, unsigned int code)
 		return (-1);
 
 	/* Set chunked encoding */
-	if (clt->clt_fcgi_chunked) {
+	if (clt->clt_fcgi.chunked) {
 		/* XXX Should we keep and handle Content-Length instead? */
 		key.kv_key = "Content-Length";
 		if ((kv = kv_find(&resp->http_headers, &key)) != NULL)
@@ -736,14 +736,14 @@ server_fcgi_writechunk(struct client *clt)
 	struct evbuffer *evb = clt->clt_srvevb;
 	size_t		 len;
 
-	if (clt->clt_fcgi_type == FCGI_END_REQUEST) {
+	if (clt->clt_fcgi.type == FCGI_END_REQUEST) {
 		len = 0;
 	} else
 		len = EVBUFFER_LENGTH(evb);
 
-	if (clt->clt_fcgi_chunked) {
+	if (clt->clt_fcgi.chunked) {
 		/* If len is 0, make sure to write the end marker only once */
-		if (len == 0 && clt->clt_fcgi_end++)
+		if (len == 0 && clt->clt_fcgi.end++)
 			return (0);
 		if (server_bufferevent_printf(clt, "%zx\r\n", len) == -1 ||
 		    server_bufferevent_write_chunk(clt, evb, len) == -1 ||
@@ -784,7 +784,7 @@ server_fcgi_getheaders(struct client *clt)
 			if (errstr != NULL || server_httperror_byid(
 			    code) == NULL)
 				code = 200;
-			clt->clt_fcgi_status = code;
+			clt->clt_fcgi.status = code;
 		} else {
 			(void)kv_add(&resp->http_headers, key, value);
 		}
