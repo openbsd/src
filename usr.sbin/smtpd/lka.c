@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.193 2016/05/28 21:21:20 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.194 2016/09/01 10:54:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -440,7 +440,6 @@ lka(void)
 	config_peer(PROC_QUEUE);
 	config_peer(PROC_CONTROL);
 	config_peer(PROC_PONY);
-	config_done();
 
 	/* Ignore them until we get our config */
 	mproc_disable(p_pony);

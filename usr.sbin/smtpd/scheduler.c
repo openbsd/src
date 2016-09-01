@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.52 2016/05/28 21:21:20 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.53 2016/09/01 10:54:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -482,7 +482,6 @@ scheduler(void)
 
 	config_peer(PROC_CONTROL);
 	config_peer(PROC_QUEUE);
-	config_done();
 
 	evtimer_set(&ev, scheduler_timeout, NULL);
 	scheduler_reset_events();

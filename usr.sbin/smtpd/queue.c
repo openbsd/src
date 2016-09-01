@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.179 2016/08/31 21:49:01 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.180 2016/09/01 10:54:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -710,7 +710,6 @@ queue(void)
 	config_peer(PROC_LKA);
 	config_peer(PROC_SCHEDULER);
 	config_peer(PROC_PONY);
-	config_done();
 
 	/* setup queue loading task */
 	evtimer_set(&ev_qload, queue_timeout, &ev_qload);

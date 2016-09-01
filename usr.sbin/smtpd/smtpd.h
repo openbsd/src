@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.520 2016/09/01 10:07:20 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.521 2016/09/01 10:54:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1148,7 +1148,6 @@ int	uncompress_file(FILE *, FILE *);
 void purge_config(uint8_t);
 void config_process(enum smtp_proc_type);
 void config_peer(enum smtp_proc_type);
-void config_done(void);
 
 
 /* control.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.36 2016/09/01 10:07:20 eric Exp $	*/
+/*	$OpenBSD: config.c,v 1.37 2016/09/01 10:54:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -142,9 +142,4 @@ config_peer(enum smtp_proc_type proc)
 		fatalx("bad peer");
 
 	mproc_enable(p);
-}
-
-void
-config_done(void)
-{
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.281 2016/09/01 10:07:20 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.282 2016/09/01 10:54:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1037,7 +1037,6 @@ smtpd(void) {
 	config_peer(PROC_QUEUE);
 	config_peer(PROC_CA);
 	config_peer(PROC_PONY);
-	config_done();
 
 	evtimer_set(&config_ev, parent_send_config, NULL);
 	memset(&tv, 0, sizeof(tv));
