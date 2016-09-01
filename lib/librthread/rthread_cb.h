@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_cb.h,v 1.1 2016/05/07 19:05:22 guenther Exp $ */
+/*	$OpenBSD: rthread_cb.h,v 1.2 2016/09/01 10:41:02 otto Exp $ */
 /*
  * Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
  * All Rights Reserved.
@@ -24,8 +24,8 @@ pid_t	_thread_vfork(void);
 void	_thread_flockfile(FILE *);
 int	_thread_ftrylockfile(FILE *);
 void	_thread_funlockfile(FILE *);
-void	_thread_malloc_lock(void);
-void	_thread_malloc_unlock(void);
+void	_thread_malloc_lock(int);
+void	_thread_malloc_unlock(int);
 void	_thread_atexit_lock(void);
 void	_thread_atexit_unlock(void);
 void	_thread_atfork_lock(void);

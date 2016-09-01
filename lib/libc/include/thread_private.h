@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.27 2016/05/07 19:05:22 guenther Exp $ */
+/* $OpenBSD: thread_private.h,v 1.28 2016/09/01 10:41:02 otto Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -6,6 +6,9 @@
 #define _THREAD_PRIVATE_H_
 
 #include <stdio.h>		/* for FILE and __isthreaded */
+
+#define _MALLOC_MUTEXES 4
+void _malloc_init(int);
 
 /*
  * The callbacks needed by libc to handle the threaded case.
@@ -72,8 +75,8 @@ struct thread_callbacks {
 	void	(*tc_flockfile)(FILE *);
 	int	(*tc_ftrylockfile)(FILE *);
 	void	(*tc_funlockfile)(FILE *);
-	void	(*tc_malloc_lock)(void);
-	void	(*tc_malloc_unlock)(void);
+	void	(*tc_malloc_lock)(int);
+	void	(*tc_malloc_unlock)(int);
 	void	(*tc_atexit_lock)(void);
 	void	(*tc_atexit_unlock)(void);
 	void	(*tc_atfork_lock)(void);
@@ -137,8 +140,8 @@ extern void *__THREAD_NAME(serv_mutex);
 #define _MUTEX_LOCK(mutex)				do {} while (0)
 #define _MUTEX_UNLOCK(mutex)				do {} while (0)
 #define _MUTEX_DESTROY(mutex)				do {} while (0)
-#define _MALLOC_LOCK()					do {} while (0)
-#define _MALLOC_UNLOCK()				do {} while (0)
+#define _MALLOC_LOCK(n)					do {} while (0)
+#define _MALLOC_UNLOCK(n)				do {} while (0)
 #define _ATEXIT_LOCK()					do {} while (0)
 #define _ATEXIT_UNLOCK()				do {} while (0)
 #define _ATFORK_LOCK()					do {} while (0)
@@ -184,15 +187,15 @@ extern void *__THREAD_NAME(serv_mutex);
 /*
  * malloc lock/unlock prototypes and definitions
  */
-#define _MALLOC_LOCK()							\
+#define _MALLOC_LOCK(n)							\
 	do {								\
 		if (__isthreaded)					\
-			_thread_cb.tc_malloc_lock();			\
+			_thread_cb.tc_malloc_lock(n);			\
 	} while (0)
-#define _MALLOC_UNLOCK()						\
+#define _MALLOC_UNLOCK(n)						\
 	do {								\
 		if (__isthreaded)					\
-			_thread_cb.tc_malloc_unlock();			\
+			_thread_cb.tc_malloc_unlock(n);			\
 	} while (0)
 
 #define _ATEXIT_LOCK()							\

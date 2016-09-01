@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.14 2016/05/07 19:05:22 guenther Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.15 2016/09/01 10:41:02 otto Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -153,35 +153,50 @@ _thread_mutex_destroy(void **mutex)
 /*
  * the malloc lock
  */
-static struct pthread_mutex malloc_lock = {
-	_SPINLOCK_UNLOCKED,
-	TAILQ_HEAD_INITIALIZER(malloc_lock.lockers),
-	PTHREAD_MUTEX_DEFAULT,
-	NULL,
-	0,
-	-1
+#define MALLOC_LOCK_INITIALIZER(n) { \
+	_SPINLOCK_UNLOCKED,	\
+	TAILQ_HEAD_INITIALIZER(malloc_lock[n].lockers), \
+	PTHREAD_MUTEX_DEFAULT,	\
+	NULL,			\
+	0,			\
+	-1 }			\
+
+static struct pthread_mutex malloc_lock[_MALLOC_MUTEXES] = {
+	MALLOC_LOCK_INITIALIZER(0),
+	MALLOC_LOCK_INITIALIZER(1),
+	MALLOC_LOCK_INITIALIZER(2),
+	MALLOC_LOCK_INITIALIZER(3)
 };
-static pthread_mutex_t malloc_mutex = &malloc_lock;
+static pthread_mutex_t malloc_mutex[_MALLOC_MUTEXES] = {
+	&malloc_lock[0],
+	&malloc_lock[1],
+	&malloc_lock[2],
+	&malloc_lock[3]
+};
 
 void
-_thread_malloc_lock(void)
+_thread_malloc_lock(int i)
 {
-	pthread_mutex_lock(&malloc_mutex);
+	pthread_mutex_lock(&malloc_mutex[i]);
 }
 
 void
-_thread_malloc_unlock(void)
+_thread_malloc_unlock(int i)
 {
-	pthread_mutex_unlock(&malloc_mutex);
+	pthread_mutex_unlock(&malloc_mutex[i]);
 }
 
 void
 _thread_malloc_reinit(void)
 {
-	malloc_lock.lock = _SPINLOCK_UNLOCKED_ASSIGN;
-	TAILQ_INIT(&malloc_lock.lockers);
-	malloc_lock.owner = NULL;
-	malloc_lock.count = 0;
+	int i;
+
+	for (i = 0; i < _MALLOC_MUTEXES; i++) {
+		malloc_lock[i].lock = _SPINLOCK_UNLOCKED_ASSIGN;
+		TAILQ_INIT(&malloc_lock[i].lockers);
+		malloc_lock[i].owner = NULL;
+		malloc_lock[i].count = 0;
+	}
 }
 
 /*

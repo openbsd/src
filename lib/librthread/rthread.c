@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.91 2016/05/07 19:05:22 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.92 2016/09/01 10:41:02 otto Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -38,6 +38,7 @@
 #include <pthread.h>
 
 #include "cancel.h"		/* in libc/include */
+#include "thread_private.h"
 #include "rthread.h"
 #include "rthread_cb.h"
 
@@ -246,6 +247,8 @@ _rthread_init(void)
 	sigprocmask(SIG_UNBLOCK, &sa.sa_mask, NULL);
 
 	_threads_ready = 1;
+
+	_malloc_init(1);
 
 	_rthread_debug(1, "rthread init\n");
 }

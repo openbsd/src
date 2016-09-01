@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.17 2016/05/07 19:05:22 guenther Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.18 2016/09/01 10:41:02 otto Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -57,6 +57,7 @@ _dofork(pid_t (*sys_fork)(void))
 {
 	pthread_t me;
 	pid_t newid;
+	int i;
 
 	if (!_threads_ready)
 		return sys_fork();
@@ -76,7 +77,8 @@ _dofork(pid_t (*sys_fork)(void))
 #endif
 
 	_thread_atexit_lock();
-	_thread_malloc_lock();
+	for (i = 0; i < _MALLOC_MUTEXES; i++)
+		_thread_malloc_lock(i);
 	_thread_arc4_lock();
 
 	newid = sys_fork();
@@ -85,7 +87,8 @@ _dofork(pid_t (*sys_fork)(void))
 	if (newid == 0)
 		_thread_malloc_reinit();
 	else
-		_thread_malloc_unlock();
+		for (i = 0; i < _MALLOC_MUTEXES; i++)
+			_thread_malloc_unlock(i);
 	_thread_atexit_unlock();
 
 	if (newid == 0) {
