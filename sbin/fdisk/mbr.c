@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.65 2015/12/30 17:21:39 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.66 2016/09/01 16:14:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -60,13 +60,16 @@ MBR_init_GPT(struct mbr *mbr)
 
 	memset(&mbr->part, 0, sizeof(mbr->part));
 
-	/* Use whole disk, starting after MBR. */
+	/* Use whole disk, starting after MBR.
+	 *
+	 * Always set the partition size to UINT32_MAX (as MS does). EFI
+	 * firmware has been encountered that lies in unpredictable ways
+	 * about the size of the disk, thus making it impossible to boot
+	 * such devices.
+	 */
 	mbr->part[0].id = DOSPTYP_EFI;
 	mbr->part[0].bs = 1;
-	if (sz > UINT32_MAX)
-		mbr->part[0].ns = UINT32_MAX;
-	else
-		mbr->part[0].ns = sz - 1;
+	mbr->part[0].ns = UINT32_MAX;
 
 	/* Fix up start/length fields. */
 	PRT_fix_CHS(&mbr->part[0]);
