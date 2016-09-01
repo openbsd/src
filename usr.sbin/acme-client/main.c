@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.9 2016/09/01 12:17:00 florian Exp $ */
+/*	$Id: main.c,v 1.10 2016/09/01 13:47:54 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -482,9 +482,9 @@ main(int argc, char *argv[])
 	    (2 == c ? EXIT_SUCCESS : 2));
 usage:
 	fprintf(stderr,
-	    "usage: acme-client [-bFmnNrsv] [-a agreement] [-C challengedir]\n"
+	    "usage: acme-client [-bFmnNrv] [-a agreement] [-C challengedir]\n"
 	    "                   [-c certdir] [-f accountkey] [-k domainkey]\n"
-	    "                   domain [altnames...]\n");
+	    "                   [-s authority] domain [altnames...]\n");
 	free(certdir);
 	free(keyfile);
 	free(acctkey);
