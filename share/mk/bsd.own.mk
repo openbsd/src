@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.175 2016/07/04 18:01:44 guenther Exp $
+#	$OpenBSD: bsd.own.mk,v 1.176 2016/09/01 10:15:47 tedu Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -19,8 +19,8 @@ GCC3_ARCH=m88k
 
 # arm: needs to switch away from SJLJ exceptions
 # m88k: ?
-PIE_ARCH=alpha amd64 hppa i386 mips64 mips64el powerpc sh sparc sparc64
-STATICPIE_ARCH=alpha amd64 hppa i386 mips64 mips64el powerpc sh sparc sparc64
+PIE_ARCH=alpha amd64 hppa i386 mips64 mips64el powerpc sh sparc64
+STATICPIE_ARCH=alpha amd64 hppa i386 mips64 mips64el powerpc sh sparc64
 
 .for _arch in ${MACHINE_ARCH}
 .if !empty(GCC3_ARCH:M${_arch})
@@ -115,12 +115,12 @@ PICFLAG?=-fPIC
 PICFLAG?=-fpic
 .endif
 
-.if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
+.if ${MACHINE_ARCH} == "sparc64"
 ASPICFLAG=-KPIC
 .endif
 
 .if ${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
+    ${MACHINE_ARCH} == "sparc64"
 # big PIE
 DEFAULT_PIE_DEF=-DPIE_DEFAULT=2
 .else
