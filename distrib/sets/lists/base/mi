@@ -610,8 +610,8 @@
 ./usr/games
 ./usr/include
 ./usr/lib
-./usr/lib/libc.so.88.0
-./usr/lib/libc.so.88.0.a
+./usr/lib/libc.so.89.0
+./usr/lib/libc.so.89.0.a
 ./usr/lib/libcrypto.so.38.1
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
@@ -633,7 +633,7 @@
 ./usr/lib/libpanelw.so.6.0
 ./usr/lib/libpcap.so.8.1
 ./usr/lib/libperl.so.17.1
-./usr/lib/libpthread.so.22.0
+./usr/lib/libpthread.so.23.0
 ./usr/lib/libradius.so.1.0
 ./usr/lib/libreadline.so.4.0
 ./usr/lib/librpcsvc.so.2.0
