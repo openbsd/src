@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2014/12/22 03:51:08 kurt Exp $
+#	$OpenBSD: Makefile,v 1.22 2016/09/01 09:33:30 tedu Exp $
 
 OBJS=		crt0.o gcrt0.o
 OBJS+=		crtbegin.o crtend.o
@@ -30,8 +30,7 @@ CFLAGS+=	-fpie
 
 .ifdef NOPIC
 PICFLAG=
-.elif ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "sparc" || \
-      ${MACHINE_ARCH} == "sparc64"
+.elif ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "sparc64"
 # The objects for shared libraries need to work for all possible
 # libraries, so force big PIC where it matters.
 # Arguably m88k should do this too, but maybe there aren't any

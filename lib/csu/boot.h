@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.22 2016/08/08 22:05:26 guenther Exp $ */
+/*	$OpenBSD: boot.h,v 1.23 2016/09/01 09:33:30 tedu Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -224,7 +224,7 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	for (i = 0; i < dl_data[AUX_phnum]; i++, phdp++) {
 		switch (phdp->p_type) {
 #if defined(__alpha__) || defined(__hppa__) || defined(__powerpc__) || \
-    defined(__sparc__) || defined(__sparc64__)
+    defined(__sparc64__)
 		case PT_LOAD:
 			if ((phdp->p_flags & (PF_X | PF_W)) != (PF_X | PF_W))
 				break;
