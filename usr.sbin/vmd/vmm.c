@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.40 2016/09/01 16:40:06 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.41 2016/09/01 17:09:33 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -954,7 +954,7 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 		vrp[i]->vrp_vm_id = vcp->vcp_id;
 		vrp[i]->vrp_vcpu_id = i;
 
-		if (vcpu_reset(vcp->vcp_id, i, vis)) {
+		if (vcpu_reset(vcp->vcp_id, i, vrs)) {
 			log_warnx("%s: cannot reset VCPU %zu - exiting.",
 			    __progname, i);
 			return (EIO);
@@ -1050,13 +1050,17 @@ vcpu_run_loop(void *arg)
 			if (ret) {
 				log_warnx("%s: can't wait on cond (%d)",
 				    __func__, (int)ret);
-				pthread_mutex_unlock(&vcpu_run_mtx[n]);
+				(void)pthread_mutex_unlock(&vcpu_run_mtx[n]);
 				return ((void *)ret);
 			}
 		}
 
-		/* XXX check retval for pthread_mutex_unlock */
-		pthread_mutex_unlock(&vcpu_run_mtx[n]);
+		ret = pthread_mutex_unlock(&vcpu_run_mtx[n]);
+		if (ret) {
+			log_warnx("%s: can't unlock mutex on cond (%d)",
+			    __func__, (int)ret);
+			return ((void *)ret);
+		}
 
 		if (vrp->vrp_irqready && i8259_is_pending()) {
 			irq = i8259_ack();
@@ -1203,15 +1207,26 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 int
 vcpu_exit(struct vm_run_params *vrp)
 {
+	int ret;
+
 	switch (vrp->vrp_exit_reason) {
 	case VMX_EXIT_IO:
 		vcpu_exit_inout(vrp);
 		break;
 	case VMX_EXIT_HLT:
-		/* XXX check retvals in these fns */
-		pthread_mutex_lock(&vcpu_run_mtx[vrp->vrp_vcpu_id]);
+		ret = pthread_mutex_lock(&vcpu_run_mtx[vrp->vrp_vcpu_id]);
+		if (ret) {
+			log_warnx("%s: can't lock vcpu mutex (%d)",
+			    __func__, ret);
+			return (1);
+		}
 		vcpu_hlt[vrp->vrp_vcpu_id] = 1;
-		pthread_mutex_unlock(&vcpu_run_mtx[vrp->vrp_vcpu_id]);
+		ret = pthread_mutex_unlock(&vcpu_run_mtx[vrp->vrp_vcpu_id]);
+		if (ret) {
+			log_warnx("%s: can't unlock vcpu mutex (%d)",
+			    __func__, ret);
+			return (1);
+		}
 		break;
 	case VMX_EXIT_INT_WINDOW:
 		break;
@@ -1404,17 +1419,25 @@ read_mem(paddr_t src, void *buf, size_t len)
 void
 vcpu_assert_pic_irq(uint32_t vm_id, uint32_t vcpu_id, int irq)
 {
+	int ret;
+
 	i8259_assert_irq(irq);
 
 	if (i8259_is_pending()) {
-		if (vcpu_pic_intr(vm_id, vcpu_id, 1)) {
+		if (vcpu_pic_intr(vm_id, vcpu_id, 1))
 			fatalx("%s: can't assert INTR", __func__);
-		}
 
-		pthread_mutex_lock(&vcpu_run_mtx[vcpu_id]);
+		ret = pthread_mutex_lock(&vcpu_run_mtx[vcpu_id]);
+		if (ret)
+			fatalx("%s: can't lock vcpu mtx (%d)", __func__, ret);
+
 		vcpu_hlt[vcpu_id] = 0;
-		pthread_cond_signal(&vcpu_run_cond[vcpu_id]);
-		pthread_mutex_unlock(&vcpu_run_mtx[vcpu_id]);
+		ret = pthread_cond_signal(&vcpu_run_cond[vcpu_id]);
+		if (ret)
+			fatalx("%s: can't signal (%d)", __func__, ret);
+		ret = pthread_mutex_unlock(&vcpu_run_mtx[vcpu_id]);
+		if (ret)
+			fatalx("%s: can't unlock vcpu mtx (%d)", __func__, ret);
 	}
 }
 
