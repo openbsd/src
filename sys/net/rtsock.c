@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.198 2016/09/01 09:35:28 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.199 2016/09/01 11:26:44 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -657,6 +657,17 @@ route_output(struct mbuf *m, ...)
 			    route_cleargateway, rt);
 			goto report;
 		}
+
+		/*
+		 * Make sure that local routes are only modified by the
+		 * kernel.
+		 */
+		if ((rt != NULL) &&
+		    ISSET(rt->rt_flags, RTF_LOCAL|RTF_BROADCAST)) {
+			error = EINVAL;
+			goto report;
+		}
+
 		rtfree(rt);
 		rt = NULL;
 
