@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.9 2016/08/29 23:14:50 aoyama Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.10 2016/09/01 00:02:57 aoyama Exp $	*/
 /*	$NetBSD: if_le.c,v 1.33 1996/11/20 18:56:52 gwr Exp $	*/
 
 /*-
@@ -124,16 +124,16 @@ le_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
-        struct mainbus_attach_args *ma = aux;
+	struct mainbus_attach_args *ma = aux;
 
-        lesc->sc_r1 = (struct lereg1 *)ma->ma_addr;     /* LANCE */
+	lesc->sc_r1 = (struct lereg1 *)ma->ma_addr;	/* LANCE */
 
-        sc->sc_mem = (void *)0x71010000;                /* SRAM */
-        sc->sc_conf3 = LE_C3_BSWP;
-        sc->sc_addr = (u_long)sc->sc_mem & 0xffffff;
-        sc->sc_memsize = 64 * 1024;                     /* 64KB */
+	sc->sc_mem = (void *)0x71010000;		/* SRAM */
+	sc->sc_conf3 = LE_C3_BSWP;
+	sc->sc_addr = (u_long)sc->sc_mem & 0xffffff;
+	sc->sc_memsize = 64 * 1024;			/* 64KB */
 
-        myetheraddr(sc->sc_arpcom.ac_enaddr);
+	myetheraddr(sc->sc_arpcom.ac_enaddr);
 
 	sc->sc_copytodesc = lance_copytobuf_contig;
 	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
@@ -148,7 +148,7 @@ le_attach(struct device *parent, struct device *self, void *aux)
 
 	am7990_config(&lesc->sc_am7990);
 
-        isrlink_autovec(am7990_intr, (void *)sc, ma->ma_ilvl, ISRPRI_NET,
+	isrlink_autovec(am7990_intr, (void *)sc, ma->ma_ilvl, ISRPRI_NET,
 	    self->dv_xname);
 }
 
