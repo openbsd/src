@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.69 2016/05/31 22:34:53 jca Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.70 2016/09/01 12:47:18 akfaew Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -454,7 +454,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		/* If the address parameter is not (int *)1, set the pc. */
 		if ((int *)SCARG(uap, addr) != (int *)1)
 			if ((error = process_set_pc(t, SCARG(uap, addr))) != 0)
-				goto relebad;
+				return error;
 
 #ifdef PT_STEP
 		/*
@@ -462,7 +462,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 */
 		error = process_sstep(t, req == PT_STEP);
 		if (error)
-			goto relebad;
+			return error;
 #endif
 		goto sendsig;
 
@@ -492,7 +492,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 */
 		error = process_sstep(t, 0);
 		if (error)
-			goto relebad;
+			return error;
 #endif
 
 		/* give process back to original parent or init */
@@ -522,9 +522,6 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		}
 
 		return (0);
-
-	relebad:
-		return (error);
 
 	case  PT_KILL:
 		if (SCARG(uap, pid) < THREAD_PID_OFFSET && tr->ps_single)
