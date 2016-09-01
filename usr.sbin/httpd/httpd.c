@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.59 2016/08/30 13:46:37 rzalamena Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.60 2016/09/01 09:47:03 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -117,8 +117,13 @@ main(int argc, char *argv[])
 	struct httpd		*env;
 	struct privsep		*ps;
 	const char		*conffile = CONF_FILE;
+	struct privsep_proc	*p;
+	enum privsep_procid	 proc_id = PROC_PARENT;
+	int			 proc_instance = 0;
+	const char		*errp, *title = NULL;
+	int			 argc0 = argc;
 
-	while ((c = getopt(argc, argv, "dD:nf:v")) != -1) {
+	while ((c = getopt(argc, argv, "dD:nf:I:P:v")) != -1) {
 		switch (c) {
 		case 'd':
 			debug = 2;
@@ -138,6 +143,18 @@ main(int argc, char *argv[])
 		case 'v':
 			verbose++;
 			opts |= HTTPD_OPT_VERBOSE;
+			break;
+		case 'P':
+			title = optarg;
+			proc_id = proc_getid(procs, nitems(procs), title);
+			if (proc_id == PROC_MAX)
+				fatalx("invalid process name");
+			break;
+		case 'I':
+			proc_instance = strtonum(optarg, 0,
+			    PROC_MAX_INSTANCES, &errp);
+			if (errp)
+				fatalx("invalid process instance");
 			break;
 		default:
 			usage();
@@ -177,15 +194,11 @@ main(int argc, char *argv[])
 	log_init(debug, LOG_DAEMON);
 	log_verbose(verbose);
 
-	if (!debug && daemon(1, 0) == -1)
-		err(1, "failed to daemonize");
-
 	if (env->sc_opts & HTTPD_OPT_NOACTION)
 		ps->ps_noaction = 1;
-	else
-		log_info("startup");
 
 	ps->ps_instances[PROC_SERVER] = env->sc_prefork_server;
+	ps->ps_instance = proc_instance;
 
 	if (env->sc_chroot == NULL)
 		env->sc_chroot = ps->ps_pw->pw_dir;
@@ -198,8 +211,32 @@ main(int argc, char *argv[])
 			errx(1, "malloc failed");
 	}
 
-	proc_init(ps, procs, nitems(procs));
+	if (proc_id != PROC_PARENT) {
+		p = NULL;
+		for (proc = 0; proc < nitems(procs); proc++) {
+			if (procs[proc].p_id != proc_id)
+				continue;
+
+			p = &procs[proc];
+			break;
+		}
+		if (p == NULL || p->p_init == NULL)
+			fatalx("%s: process %d missing process initialization",
+			    __func__, proc_id);
+
+		ps->ps_title[proc_id] = title;
+		p->p_init(ps, p);
+
+		fatalx("failed to initiate child process");
+	}
+
+	proc_init(ps, procs, nitems(procs), argc0, argv);
 	log_procinit("parent");
+	if (!debug && daemon(1, 0) == -1)
+		err(1, "failed to daemonize");
+
+	if (ps->ps_noaction == 0)
+		log_info("startup");
 
 	if (pledge("stdio rpath wpath cpath inet dns ioctl sendfd",
 	    NULL) == -1)
@@ -219,7 +256,7 @@ main(int argc, char *argv[])
 	signal_add(&ps->ps_evsigpipe, NULL);
 	signal_add(&ps->ps_evsigusr1, NULL);
 
-	proc_listen(ps, procs, nitems(procs));
+	proc_connect(ps);
 
 	if (load_config(env->sc_conffile, env) == -1) {
 		proc_kill(env->sc_ps);

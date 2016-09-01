@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.114 2016/08/30 14:31:53 rzalamena Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.115 2016/09/01 09:47:03 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -198,6 +198,7 @@ enum imsg_type {
 	IMSG_CTL_OK,
 	IMSG_CTL_FAIL,
 	IMSG_CTL_VERBOSE,
+	IMSG_CTL_PROCFD,
 	IMSG_CTL_RESET,
 	IMSG_CTL_SHUTDOWN,
 	IMSG_CTL_RELOAD,
@@ -225,6 +226,11 @@ enum privsep_procid {
 
 /* Attach the control socket to the following process */
 #define PROC_CONTROL	PROC_LOGGER
+
+/* Define default parent socket number */
+#define PARENT_SOCK_FILENO	3
+
+#define PROC_MAX_INSTANCES	128
 
 struct privsep_pipes {
 	int				*pp_pipes[PROC_MAX];
@@ -268,6 +274,11 @@ struct privsep_proc {
 	const char		*p_chroot;
 	struct privsep		*p_ps;
 	struct httpd		*p_env;
+};
+
+struct privsep_fd {
+	enum privsep_procid		 pf_procid;
+	unsigned int			 pf_instance;
 };
 
 enum fcgistate {
@@ -687,11 +698,13 @@ __dead void fatalx(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 
 /* proc.c */
-void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int);
+enum privsep_procid
+	    proc_getid(struct privsep_proc *, unsigned int, const char *);
+void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int, int, char **);
 void	 proc_kill(struct privsep *);
-void	 proc_listen(struct privsep *, struct privsep_proc *, size_t);
+void	 proc_connect(struct privsep *);
 void	 proc_dispatch(int, short event, void *);
-pid_t	 proc_run(struct privsep *, struct privsep_proc *,
+void	 proc_run(struct privsep *, struct privsep_proc *,
 	    struct privsep_proc *, unsigned int,
 	    void (*)(struct privsep *, struct privsep_proc *, void *), void *);
 void	 proc_range(struct privsep *, enum privsep_procid, int *, int *);
