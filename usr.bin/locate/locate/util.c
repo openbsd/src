@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.13 2015/01/16 06:40:09 deraadt Exp $
+/*	$OpenBSD: util.c,v 1.14 2016/09/01 09:48:20 tedu Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: util.c,v 1.13 2015/01/16 06:40:09 deraadt Exp $
+ * $Id: util.c,v 1.14 2016/09/01 09:48:20 tedu Exp $
  */
 
 
@@ -220,11 +220,9 @@ tolower_word(word)
 /*
  * Read integer from mmap pointer.
  * Essential a simple  ``return *(int *)p'' but avoid sigbus
- * for integer alignment (SunOS 4.x, 5.x).
+ * for integer alignment.
  *
  * Convert network byte order to host byte order if necessary.
- * So we can read on FreeBSD/i386 (little endian) a locate database
- * which was built on SunOS/sparc (big endian).
  */
 
 int
