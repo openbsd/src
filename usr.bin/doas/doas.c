@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.60 2016/07/18 16:46:30 zhuk Exp $ */
+/* $OpenBSD: doas.c,v 1.61 2016/09/01 13:16:38 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -203,6 +203,38 @@ checkconfig(const char *confpath, int argc, char **argv,
 	}
 }
 
+static void
+authuser(const char *myname, const char *login_style)
+{
+	char *challenge = NULL, *response, rbuf[1024], cbuf[128];
+	auth_session_t *as;
+
+	if (!(as = auth_userchallenge(myname, login_style, "auth-doas",
+	    &challenge)))
+		errx(1, "Authorization failed");
+	if (!challenge) {
+		char host[HOST_NAME_MAX + 1];
+		if (gethostname(host, sizeof(host)))
+			snprintf(host, sizeof(host), "?");
+		snprintf(cbuf, sizeof(cbuf),
+		    "\rdoas (%.32s@%.32s) password: ", myname, host);
+		challenge = cbuf;
+	}
+	response = readpassphrase(challenge, rbuf, sizeof(rbuf),
+	    RPP_REQUIRE_TTY);
+	if (response == NULL && errno == ENOTTY) {
+		syslog(LOG_AUTHPRIV | LOG_NOTICE,
+		    "tty required for %s", myname);
+		errx(1, "a tty is required");
+	}
+	if (!auth_userresponse(as, response, 0)) {
+		syslog(LOG_AUTHPRIV | LOG_NOTICE,
+		    "failed auth for %s", myname);
+		errc(1, EPERM, NULL);
+	}
+	explicit_bzero(rbuf, sizeof(rbuf));
+}
+
 int
 main(int argc, char **argv)
 {
@@ -317,36 +349,10 @@ main(int argc, char **argv)
 	}
 
 	if (!(rule->options & NOPASS)) {
-		char *challenge = NULL, *response, rbuf[1024], cbuf[128];
-		auth_session_t *as;
-
 		if (nflag)
 			errx(1, "Authorization required");
 
-		if (!(as = auth_userchallenge(myname, login_style, "auth-doas",
-		    &challenge)))
-			errx(1, "Authorization failed");
-		if (!challenge) {
-			char host[HOST_NAME_MAX + 1];
-			if (gethostname(host, sizeof(host)))
-				snprintf(host, sizeof(host), "?");
-			snprintf(cbuf, sizeof(cbuf),
-			    "\rdoas (%.32s@%.32s) password: ", myname, host);
-			challenge = cbuf;
-		}
-		response = readpassphrase(challenge, rbuf, sizeof(rbuf),
-		    RPP_REQUIRE_TTY);
-		if (response == NULL && errno == ENOTTY) {
-			syslog(LOG_AUTHPRIV | LOG_NOTICE,
-			    "tty required for %s", myname);
-			errx(1, "a tty is required");
-		}
-		if (!auth_userresponse(as, response, 0)) {
-			syslog(LOG_AUTHPRIV | LOG_NOTICE,
-			    "failed auth for %s", myname);
-			errc(1, EPERM, NULL);
-		}
-		explicit_bzero(rbuf, sizeof(rbuf));
+		authuser(myname, login_style);
 	}
 
 	if (pledge("stdio rpath getpw exec id", NULL) == -1)
