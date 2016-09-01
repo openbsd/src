@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.6 2016/09/01 12:17:00 florian Exp $
+.\"	$OpenBSD: acme-client.1,v 1.7 2016/09/01 13:42:45 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -128,12 +128,14 @@ ACME
 .Ar authority
 to talk to.
 Currently the following authorities are available:
-.Bl -tag
+.Pp
+.Bl -tag -width "letsencrypt-staging" -compact
 .It Cm letsencrypt
 Let's Encrypt authority
 .It Cm letsencrypt-staging
 Let's Encrypt staging authority
 .El
+.Pp
 The default is
 .Cm letsencrypt .
 .It Fl v
