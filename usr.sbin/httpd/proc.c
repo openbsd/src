@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.20 2016/09/01 09:47:03 rzalamena Exp $	*/
+/*	$OpenBSD: proc.c,v 1.21 2016/09/01 10:57:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -223,9 +223,11 @@ proc_listento(struct privsep *ps, int fd, enum privsep_procid dst, unsigned int 
 
 	if (ps->ps_ievs[dst] == NULL) {
 #if DEBUG > 1
-		log_debug("%s: privsep_process=%d instance=%d dst=%d instance=%d not allocated",
-		    __func__, privsep_process, ps->ps_instance, dst, n);
-#endif /* DEBUG > 1 */
+		log_debug("%s: %s src %d %d to dst %d %d not connected",
+		    __func__, ps->ps_title[privsep_process],
+		    privsep_process, ps->ps_instance + 1,
+		    dst, n + 1);
+#endif
 		close(fd);
 		return;
 	}
