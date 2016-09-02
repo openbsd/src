@@ -26,8 +26,8 @@ _thread_set_callbacks(const struct thread_callbacks *cb, size_t len)
 	sigset_t allmask, omask;
 
 	if (sizeof(*cb) != len) {
-		fprintf(stderr, "library mismatch: libc expected %z but"
-		    " libpthread gave %z\n", sizeof(*cb), len);
+		fprintf(stderr, "library mismatch: libc expected %zu but"
+		    " libpthread gave %zu\n", sizeof(*cb), len);
 		fflush(stderr);
 		_exit(44);
 	}
