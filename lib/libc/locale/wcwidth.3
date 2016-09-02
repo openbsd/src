@@ -1,4 +1,4 @@
-.\" $OpenBSD: wcwidth.3,v 1.1 2011/04/03 20:21:38 stsp Exp $
+.\" $OpenBSD: wcwidth.3,v 1.2 2016/09/02 15:03:23 schwarze Exp $
 .\" Copyright (c) 2002 Tim J. Robbins
 .\" All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: April 3 2011 $
+.Dd $Mdocdate: September 2 2016 $
 .Dt WCWIDTH 3
 .Os
 .Sh NAME
@@ -45,12 +45,10 @@ The
 .Fn wcwidth
 function returns 0 if the
 .Fa wc
-argument is a null wide character (L'\e0'),
-\-1 if
+argument is the NUL wide character (L'\e0'), \-1 if
 .Fa wc
-is not printable,
-otherwise it returns the number of column positions the
-character occupies.
+is not printable, or otherwise it returns the number of column
+positions the character occupies, which may be 0, 1, or 2.
 .Sh SEE ALSO
 .Xr iswprint 3 ,
 .Xr wcswidth 3
