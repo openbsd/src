@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.84 2016/04/28 18:17:31 natano Exp 
-#	OpenBSD: MAKEDEV.common,v 1.88 2016/05/21 15:17:49 deraadt Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.85 2016/09/02 17:06:14 goda Exp 
+#	OpenBSD: MAKEDEV.common,v 1.90 2016/09/02 17:06:13 goda Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -97,6 +97,7 @@
 #	spds	Service processor domain services channel
 #	ldom*	Logical domain services channels
 #	vdsp*	Virtual disk server ports
+#	switch*	Switch driver
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -244,6 +245,10 @@ std)
 	M mdesc		c 70 1 640 kmem
 	;;
 
+switch*)
+	M switch$U c 136 $U 600
+	;;
+
 vdsp*)
 	M vdsp$U c 133 $U 600
 	;;
@@ -265,7 +270,7 @@ vscsi*)
 	;;
 
 video*)
-	M video$U  c 44 $U 600 
+	M video$U  c 44 $U 600
 	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
 	;;
 
@@ -620,16 +625,17 @@ all)
 	R vdsp10 vdsp11 vdsp12 vdsp13 vdsp14 vdsp15 ldom0 ldom1 ldom2
 	R ldom3 ldom4 ldom5 ldom6 ldom7 spds hvctl ttyV0 ttyV1 ttyV2
 	R ttyV3 ttyV4 ttyV5 ttyV6 ttyV7 cuaa cuab cuac cuad ttya ttyb
-	R ttyc ttyd drm0 drm1 drm2 drm3 bpp0 vnd0 vnd1 vnd2 vnd3 sd0
-	R sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tap0 tap1
-	R tap2 tap3 tun0 tun1 tun2 tun3 bio pty0 fd1 fd1B fd1C fd1D
-	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
-	R diskmap vscsi0 ch0 audio0 audio1 audio2 bpf fuse pppx
-	R hotplug ptm local wscons pci0 pci1 pci2 pci3 uall rmidi0
-	R rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 video0
-	R video1 uk0 random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 tty00 tty01
-	R tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b
-	R ttyh0 ttyh1 pf wd0 wd1 wd2 wd3 std st0 st1 fd
+	R ttyc ttyd switch0 switch1 switch2 switch3 drm0 drm1 drm2
+	R drm3 bpp0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6
+	R sd7 sd8 sd9 cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2
+	R tun3 bio pty0 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0
+	R fd0B fd0C fd0D fd0E fd0F fd0G fd0H diskmap vscsi0 ch0 audio0
+	R audio1 audio2 bpf fuse pppx hotplug ptm local wscons pci0
+	R pci1 pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
+	R rmidi5 rmidi6 rmidi7 video0 video1 uk0 random lpa0 lpa1 lpa2
+	R lpt0 lpt1 lpt2 tty00 tty01 tty02 tty03 tty04 tty05 tty06
+	R tty07 tty08 tty09 tty0a tty0b ttyh0 ttyh1 pf wd0 wd1 wd2 wd3
+	R std st0 st1 fd
 	;;
 
 wd*|sd*)

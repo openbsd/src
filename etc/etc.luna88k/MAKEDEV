@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.27 2016/04/25 20:38:11 tedu Exp 
-#	OpenBSD: MAKEDEV.common,v 1.86 2016/04/25 20:39:42 tedu Exp 
+#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.29 2016/09/02 17:06:13 goda Exp 
+#	OpenBSD: MAKEDEV.common,v 1.90 2016/09/02 17:06:13 goda Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -68,6 +68,7 @@
 #	tap*	Ethernet tunnel driver
 #	uk*	Unknown SCSI devices
 #	vscsi*	Virtual SCSI controller
+#	switch*	Switch driver
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -208,6 +209,10 @@ std)
 	M klog		c 6 0 600
 	;;
 
+
+switch*)
+	M switch$U c 57 $U 600
+	;;
 
 vscsi*)
 	M vscsi$U c 53 $U 600
@@ -397,11 +402,12 @@ ramdisk)
 	;;
 
 all)
-	R pcex audio0 lcd ttya vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3
-	R sd4 cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio
-	R pty0 diskmap vscsi0 ch0 bpf fuse pppx ptm local wscons uk0
-	R random tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08
-	R tty09 tty0a tty0b pf wd0 wd1 wd2 wd3 std st0 st1 fd
+	R pcex audio0 lcd ttya switch0 switch1 switch2 switch3 vnd0
+	R vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tap0 tap1
+	R tap2 tap3 tun0 tun1 tun2 tun3 bio pty0 diskmap vscsi0 ch0
+	R bpf fuse pppx ptm local wscons uk0 random tty00 tty01 tty02
+	R tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b pf wd0
+	R wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)

@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.67 2016/04/28 18:17:30 natano Exp 
-#	OpenBSD: MAKEDEV.common,v 1.88 2016/05/21 15:17:49 deraadt Exp 
+#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.68 2016/09/02 17:06:13 goda Exp 
+#	OpenBSD: MAKEDEV.common,v 1.90 2016/09/02 17:06:13 goda Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -86,6 +86,7 @@
 #	uk*	Unknown SCSI devices
 #	video*	Video V4L2 devices
 #	vscsi*	Virtual SCSI controller
+#	switch*	Switch driver
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -242,12 +243,16 @@ ttyB*|ttyc*)
 	M cua$type$U c $major $(($minor+128)) 660 dialer uucp
 	;;
 
+switch*)
+	M switch$U c 69 $U 600
+	;;
+
 vscsi*)
 	M vscsi$U c 61 $U 600
 	;;
 
 video*)
-	M video$U  c 44 $U 600 
+	M video$U  c 44 $U 600
 	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
 	;;
 
@@ -518,17 +523,18 @@ local)
 	;;
 
 all)
-	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
-	R cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3 pty0 fd1
-	R fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E
-	R fd0F fd0G fd0H diskmap vscsi0 ch0 bio audio0 audio1 audio2
-	R bpf fuse pppx hotplug ptm local wscons pci0 pci1 pci2 pci3
-	R uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
-	R tuner0 radio0 speaker video0 video1 uk0 random lpa0 lpa1
-	R lpa2 lpt0 lpt1 lpt2 tty00 tty01 tty02 tty03 tty04 tty05
-	R tty06 tty07 tty08 tty09 tty0a tty0b ttyc0 ttyc1 ttyc2 ttyc3
-	R ttyc4 ttyc5 ttyc6 ttyc7 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5
-	R pf wd0 wd1 wd2 wd3 std st0 st1 fd
+	R switch0 switch1 switch2 switch3 vnd0 vnd1 vnd2 vnd3 sd0 sd1
+	R sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tap0 tap1 tap2
+	R tap3 tun0 tun1 tun2 tun3 pty0 fd1 fd1B fd1C fd1D fd1E fd1F
+	R fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H diskmap
+	R vscsi0 ch0 bio audio0 audio1 audio2 bpf fuse pppx hotplug
+	R ptm local wscons pci0 pci1 pci2 pci3 uall rmidi0 rmidi1
+	R rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 tuner0 radio0
+	R speaker video0 video1 uk0 random lpa0 lpa1 lpa2 lpt0 lpt1
+	R lpt2 tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08
+	R tty09 tty0a tty0b ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6
+	R ttyc7 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5 pf wd0 wd1 wd2 wd3
+	R std st0 st1 fd
 	;;
 
 wd*|sd*)

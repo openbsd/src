@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.socppc/MAKEDEV.md,v 1.29 2016/04/28 18:17:31 natano Exp 
-#	OpenBSD: MAKEDEV.common,v 1.88 2016/05/21 15:17:49 deraadt Exp 
+#	OpenBSD: etc.socppc/MAKEDEV.md,v 1.30 2016/09/02 17:06:14 goda Exp 
+#	OpenBSD: MAKEDEV.common,v 1.90 2016/09/02 17:06:13 goda Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -72,6 +72,7 @@
 #	tap*	Ethernet tunnel driver
 #	video*	Video V4L2 devices
 #	vscsi*	Virtual SCSI controller
+#	switch*	Switch driver
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -213,12 +214,16 @@ std)
 	;;
 
 
+switch*)
+	M switch$U c 87 $U 600
+	;;
+
 vscsi*)
 	M vscsi$U c 78 $U 600
 	;;
 
 video*)
-	M video$U  c 44 $U 600 
+	M video$U  c 44 $U 600
 	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
 	;;
 
@@ -416,12 +421,13 @@ ramdisk)
 	;;
 
 all)
-	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
-	R cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3 pty0
-	R diskmap vscsi0 ch0 bpf fuse pppx hotplug ptm local wscons
-	R pci0 pci1 pci2 pci3 uall video0 video1 random tty00 tty01
-	R tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b
-	R pf wd0 wd1 wd2 wd3 std st0 st1 fd
+	R switch0 switch1 switch2 switch3 vnd0 vnd1 vnd2 vnd3 sd0 sd1
+	R sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tap0 tap1 tap2
+	R tap3 tun0 tun1 tun2 tun3 pty0 diskmap vscsi0 ch0 bpf fuse
+	R pppx hotplug ptm local wscons pci0 pci1 pci2 pci3 uall
+	R video0 video1 random tty00 tty01 tty02 tty03 tty04 tty05
+	R tty06 tty07 tty08 tty09 tty0a tty0b pf wd0 wd1 wd2 wd3 std
+	R st0 st1 fd
 	;;
 
 wd*|sd*)
