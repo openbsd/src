@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.302 2016/09/01 09:46:42 tedu Exp $	*/
+/*	$OpenBSD: editor.c,v 1.303 2016/09/02 10:47:17 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -145,6 +145,7 @@ int	micmp(const void *, const void *);
 int	mpequal(char **, char **);
 int	get_bsize(struct disklabel *, int);
 int	get_fsize(struct disklabel *, int);
+int	get_cpg(struct disklabel *, int);
 int	get_fstype(struct disklabel *, int);
 int	get_mp(struct disklabel *, int);
 int	get_offset(struct disklabel *, int);
@@ -990,7 +991,8 @@ editor_modify(struct disklabel *lp, char *p)
 	    get_fstype(lp, partno) == 0 &&
 	    get_mp(lp, partno) == 0 &&
 	    get_fsize(lp, partno) == 0  &&
-	    get_bsize(lp, partno) == 0)
+	    get_bsize(lp, partno) == 0 &&
+	    get_cpg(lp, partno) == 0)
 		return;
 
 	/* Bailed out at some point, so undo any changes. */
@@ -1305,7 +1307,7 @@ has_overlap(struct disklabel *lp)
 				printf("\nError, partitions %c and %c overlap:"
 				    "\n", 'a' + i, 'a' + j);
 				printf("#    %16.16s %16.16s  fstype "
-				    "[fsize bsize  cpg]\n", "size", "offset");
+				    "[fsize bsize    cpg]\n", "size", "offset");
 				display_partition(stdout, lp, i, 0);
 				display_partition(stdout, lp, j, 0);
 
@@ -1967,6 +1969,34 @@ get_size(struct disklabel *lp, int partno)
 }
 
 int
+get_cpg(struct disklabel *lp, int partno)
+{
+	u_int64_t ui;
+	struct partition *pp = &lp->d_partitions[partno];
+
+	if (!expert || pp->p_fstype != FS_BSDFFS)
+		return (0);
+
+	for (;;) {
+		ui = getuint64(lp, "cpg",
+		    "Size of partition in fs blocks.",
+		    pp->p_cpg, pp->p_cpg, 0, 0);
+		if (ui == ULLONG_MAX - 1) {
+			fputs("Command aborted\n", stderr);
+			return (1);
+		} else if (ui == ULLONG_MAX) {
+			fputs("Invalid entry\n", stderr);
+		} else if (ui > USHRT_MAX) {
+			fprintf(stderr, "Error: cpg should be smaller than "
+			    "65536\n");
+		} else
+			break;
+	}
+	pp->p_cpg = ui;
+	return (0);
+}
+
+int
 get_fsize(struct disklabel *lp, int partno)
 {
 	u_int64_t ui, fsize, frag;
@@ -2330,7 +2360,7 @@ display_edit(struct disklabel *lp, char unit, u_int64_t fr)
 	printf("; free: ");
 	psize(fr, unit, lp);
 
-	printf("\n#    %16.16s %16.16s  fstype [fsize bsize  cpg]\n",
+	printf("\n#    %16.16s %16.16s  fstype [fsize bsize   cpg]\n",
 	    "size", "offset");
 	for (i = 0; i < lp->d_npartitions; i++)
 		display_partition(stdout, lp, i, unit);

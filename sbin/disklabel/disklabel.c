@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.222 2016/06/19 13:42:56 tb Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.223 2016/09/02 10:47:17 otto Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -535,7 +535,7 @@ display_partition(FILE *f, struct disklabel *lp, int i, char unit)
 
 		switch (pp->p_fstype) {
 		case FS_BSDFFS:
-			fprintf(f, "  %5u %5u %4hu ",
+			fprintf(f, "  %5u %5u %5hu ",
 			    fsize, fsize * frag,
 			    pp->p_cpg);
 			break;
@@ -630,7 +630,7 @@ display(FILE *f, struct disklabel *lp, char unit, int all)
 	fprintf(f, "\n");
 	if (all) {
 		fprintf(f, "\n%hu partitions:\n", lp->d_npartitions);
-		fprintf(f, "#    %16.16s %16.16s  fstype [fsize bsize  cpg]\n",
+		fprintf(f, "#    %16.16s %16.16s  fstype [fsize bsize   cpg]\n",
 		    "size", "offset");
 		for (i = 0; i < lp->d_npartitions; i++)
 			display_partition(f, lp, i, unit);
