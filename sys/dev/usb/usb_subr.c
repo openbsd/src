@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.123 2016/05/23 11:31:12 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.124 2016/09/02 09:20:00 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -663,8 +663,10 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	/* Get the short descriptor. */
 	err = usbd_get_desc(dev, UDESC_CONFIG, index,
 	    USB_CONFIG_DESCRIPTOR_SIZE, &cd);
-	if (err || cd.bDescriptorType != UDESC_CONFIG)
+	if (err)
 		return (err);
+	if (cd.bDescriptorType != UDESC_CONFIG)
+		return (USBD_INVAL);
 	len = UGETW(cd.wTotalLength);
 	cdp = malloc(len, M_USB, M_NOWAIT);
 	if (cdp == NULL)
