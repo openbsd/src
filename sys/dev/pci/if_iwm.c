@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.100 2016/09/01 09:47:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.101 2016/09/02 15:45:41 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7914,7 +7914,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 				   IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY,
 				   IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY,
 				   25000);
-		if (ret < 0) {
+		if (!ret) {
 			printf("%s: Failed to wake up the nic\n", DEVNAME(sc));
 			return;
 		}
