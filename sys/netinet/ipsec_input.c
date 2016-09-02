@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.135 2015/09/10 17:52:05 claudio Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.136 2016/09/02 09:39:32 vgross Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -259,6 +259,16 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 		    sizeof(buf)), ntohl(spi), tdbp->tdb_sproto));
 		m_freem(m);
 		espstat.esps_udpinval++;
+		return EINVAL;
+	}
+
+	if (!udpencap && (tdbp->tdb_flags & TDBF_UDPENCAP)) {
+		splx(s);
+		DPRINTF(("ipsec_common_input(): attempted to use udpencap "
+		    "SA %s/%08x/%u\n", ipsp_address(&dst_address, buf,
+		    sizeof(buf)), ntohl(spi), tdbp->tdb_sproto));
+		m_freem(m);
+		espstat.esps_udpneeded++;
 		return EINVAL;
 	}
 

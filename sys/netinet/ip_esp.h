@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.42 2010/01/10 12:43:07 markus Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.43 2016/09/02 09:39:32 vgross Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -62,6 +62,7 @@ struct espstat
     u_int32_t	esps_udpencin;  /* Input ESP-in-UDP packets */
     u_int32_t	esps_udpencout; /* Output ESP-in-UDP packets */
     u_int32_t	esps_udpinval;  /* Invalid input ESP-in-UDP packets */
+    u_int32_t	esps_udpneeded; /* Trying to use a ESP-in-UDP TDB */
 };
 
 /*

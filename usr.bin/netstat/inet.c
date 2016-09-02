@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.150 2016/08/27 04:13:43 guenther Exp $	*/
+/*	$OpenBSD: inet.c,v 1.151 2016/09/02 09:39:32 vgross Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -1073,6 +1073,7 @@ esp_stats(char *name)
 	p(esps_udpencin, "\t%u input UDP encapsulated ESP packet%s\n");
 	p(esps_udpencout, "\t%u output UDP encapsulated ESP packet%s\n");
 	p(esps_udpinval, "\t%u UDP packet%s for non-encapsulating TDB received\n");
+	p(esps_udpneeded, "\t%u raw ESP packet%s for encapsulating TDB received\n");
 	p(esps_ibytes, "\t%llu input byte%s\n");
 	p(esps_obytes, "\t%llu output byte%s\n");
 
