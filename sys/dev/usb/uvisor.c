@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.50 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.51 2016/09/02 09:14:59 mpi Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -59,7 +59,6 @@ int uvisordebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-#define UVISOR_CONFIG_INDEX	0
 #define UVISOR_IFACE_INDEX	0
 
 /* From the Linux driver */
@@ -209,7 +208,7 @@ uvisor_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
 
 	DPRINTFN(20,("uvisor: vendor=0x%x, product=0x%x\n",
@@ -235,14 +234,6 @@ uvisor_attach(struct device *parent, struct device *self, void *aux)
 	struct ucom_attach_args uca;
 
 	DPRINTFN(10,("\nuvisor_attach: sc=%p\n", sc));
-
-	/* Move the device into the configured state. */
-	err = usbd_set_config_index(dev, UVISOR_CONFIG_INDEX, 1);
-	if (err) {
-		printf(": failed to set configuration, err=%s\n",
-		    usbd_errstr(err));
-		goto bad;
-	}
 
 	err = usbd_device2interface_handle(dev, UVISOR_IFACE_INDEX, &iface);
 	if (err) {

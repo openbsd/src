@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.67 2016/05/24 05:35:01 mpi Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.68 2016/09/02 09:14:59 mpi Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,6 @@ int	uplcomdebug = 0;
 #endif
 #define DPRINTF(x) DPRINTFN(0, x)
 
-#define	UPLCOM_CONFIG_INDEX	0
 #define	UPLCOM_IFACE_INDEX	0
 #define	UPLCOM_SECOND_IFACE_INDEX	1
 
@@ -195,7 +194,7 @@ uplcom_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
 
 	return (uplcom_lookup(uaa->vendor, uaa->product) != NULL ?
@@ -225,15 +224,6 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	uca.bulkin = uca.bulkout = -1;
 	sc->sc_intr_number = -1;
 	sc->sc_intr_pipe = NULL;
-
-	/* Move the device into the configured state. */
-	err = usbd_set_config_index(dev, UPLCOM_CONFIG_INDEX, 1);
-	if (err) {
-		printf("%s: failed to set configuration, err=%s\n",
-			devname, usbd_errstr(err));
-		usbd_deactivate(sc->sc_udev);
-		return;
-	}
 
 	/* get the config descriptor */
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);

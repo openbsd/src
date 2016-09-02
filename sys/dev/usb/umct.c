@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.44 2015/04/26 06:38:04 jmatthew Exp $	*/
+/*	$OpenBSD: umct.c,v 1.45 2016/09/02 09:14:59 mpi Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,6 @@ int	umctdebug = 0;
 #endif
 #define DPRINTF(x) DPRINTFN(0, x)
 
-#define	UMCT_CONFIG_INDEX	0
 #define	UMCT_IFACE_INDEX	0
 
 struct	umct_softc {
@@ -159,7 +158,7 @@ umct_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
 
 	return (usb_lookup(umct_devs, uaa->vendor, uaa->product) != NULL ?
@@ -190,15 +189,6 @@ umct_attach(struct device *parent, struct device *self, void *aux)
 	uca.bulkin = uca.bulkout = -1;
 	sc->sc_intr_number = -1;
 	sc->sc_intr_pipe = NULL;
-
-	/* Move the device into the configured state. */
-	err = usbd_set_config_index(dev, UMCT_CONFIG_INDEX, 1);
-	if (err) {
-		printf("\n%s: failed to set configuration, err=%s\n",
-			devname, usbd_errstr(err));
-		usbd_deactivate(sc->sc_udev);
-		return;
-	}
 
 	/* get the config descriptor */
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);

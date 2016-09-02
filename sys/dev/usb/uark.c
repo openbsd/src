@@ -1,4 +1,4 @@
-/*	$OpenBSD: uark.c,v 1.23 2016/01/07 12:53:37 mpi Exp $	*/
+/*	$OpenBSD: uark.c,v 1.24 2016/09/02 09:14:59 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -38,7 +38,6 @@ int	uarkebug = 0;
 #define DPRINTF(x) DPRINTFN(0, x)
 
 #define UARKBUFSZ		256
-#define UARK_CONFIG_INDEX	0
 #define UARK_IFACE_NO		0
 
 #define UARK_SET_DATA_BITS(x)	(x - 5)
@@ -105,7 +104,7 @@ uark_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL)
 		return UMATCH_NONE;
 
 	return (usb_lookup(uark_devs, uaa->vendor, uaa->product) != NULL) ?
@@ -125,13 +124,6 @@ uark_attach(struct device *parent, struct device *self, void *aux)
 
 	bzero(&uca, sizeof(uca));
 	sc->sc_udev = uaa->device;
-
-	if (usbd_set_config_index(sc->sc_udev, UARK_CONFIG_INDEX, 1) != 0) {
-		printf("%s: could not set configuration no\n",
-		    sc->sc_dev.dv_xname);
-		usbd_deactivate(sc->sc_udev);
-		return;
-	}
 
 	/* get the first interface handle */
 	error = usbd_device2interface_handle(sc->sc_udev, UARK_IFACE_NO,

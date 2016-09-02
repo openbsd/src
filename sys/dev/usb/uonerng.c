@@ -1,4 +1,4 @@
-/*	$OpenBSD: uonerng.c,v 1.1 2016/01/08 09:36:59 mpi Exp $ */
+/*	$OpenBSD: uonerng.c,v 1.2 2016/09/02 09:14:59 mpi Exp $ */
 /*
  * Copyright (C) 2015 Devin Reade <gdr@gno.org>
  * Copyright (C) 2015 Sean Levy <attila@stalphonsos.com>
@@ -97,7 +97,6 @@
 #define ONERNG_RF			"cmd7\n"
 
 
-#define ONERNG_CONFIG_INDEX	0
 #define ONERNG_IFACE_CTRL_INDEX	0
 #define ONERNG_IFACE_DATA_INDEX	1
 
@@ -150,7 +149,7 @@ uonerng_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL)
 		return UMATCH_NONE;
 
 	if (uaa->vendor != USB_VENDOR_OPENMOKO2 ||
@@ -178,13 +177,6 @@ uonerng_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_first_run = 1;
 
 	usb_init_task(&sc->sc_task, uonerng_task, sc, USB_TASK_TYPE_GENERIC);
-
-	err = usbd_set_config_index(sc->sc_udev, ONERNG_CONFIG_INDEX, 1);
-	if (err) {
-		printf("%s: failed to set configuration, err=%s\n",
-		    DEVNAME(sc), usbd_errstr(err));
-		goto fail;
-	}
 
 	/* locate the control interface number and the data interface */
 	err = usbd_device2interface_handle(sc->sc_udev,

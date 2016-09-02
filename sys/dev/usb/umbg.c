@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.23 2014/07/12 20:26:33 mpi Exp $ */
+/*	$OpenBSD: umbg.c,v 1.24 2016/09/02 09:14:59 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -154,7 +154,7 @@ umbg_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL)
 		return UMATCH_NONE;
 
 	return uaa->vendor == USB_VENDOR_MEINBERG &&
@@ -195,12 +195,6 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 	usb_init_task(&sc->sc_task, umbg_task, sc, USB_TASK_TYPE_GENERIC);
 	timeout_set(&sc->sc_to, umbg_intr, sc);
 	timeout_set(&sc->sc_it_to, umbg_it_intr, sc);
-
-	if ((err = usbd_set_config_index(dev, 0, 1))) {
-		printf("%s: failed to set configuration, err=%s\n",
-		    sc->sc_dev.dv_xname, usbd_errstr(err));
-		goto fishy;
-	}
 
 	if ((err = usbd_device2interface_handle(dev, 0, &iface))) {
 		printf("%s: failed to get interface, err=%s\n",

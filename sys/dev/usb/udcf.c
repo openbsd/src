@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.60 2015/06/07 20:11:52 claudio Exp $ */
+/*	$OpenBSD: udcf.c,v 1.61 2016/09/02 09:14:59 mpi Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -147,7 +147,7 @@ udcf_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg		*uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL)
 		return UMATCH_NONE;
 
 	return (usb_lookup(udcf_devs, uaa->vendor, uaa->product) != NULL ?
@@ -205,12 +205,6 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 	sensordev_install(&sc->sc_sensordev);
 
 	sc->sc_udev = dev;
-	if ((err = usbd_set_config_index(dev, 0, 1))) {
-		DPRINTF(("%s: failed to set configuration, err=%s\n",
-		    sc->sc_dev.dv_xname, usbd_errstr(err)));
-		goto fishy;
-	}
-
 	if ((err = usbd_device2interface_handle(dev, 0, &iface))) {
 		DPRINTF(("%s: failed to get interface, err=%s\n",
 		    sc->sc_dev.dv_xname, usbd_errstr(err)));

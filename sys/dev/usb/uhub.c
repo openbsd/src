@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.88 2015/11/29 16:30:48 kettenis Exp $ */
+/*	$OpenBSD: uhub.c,v 1.89 2016/09/02 09:14:59 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -102,11 +102,14 @@ uhub_match(struct device *parent, void *match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	usb_device_descriptor_t *dd = usbd_get_device_descriptor(uaa->device);
 
+	if (uaa->iface == NULL)
+		return (UMATCH_NONE);
+
 	/*
 	 * The subclass for hubs seems to be 0 for some and 1 for others,
 	 * so we just ignore the subclass.
 	 */
-	if (uaa->iface == NULL && dd->bDeviceClass == UDCLASS_HUB)
+	if (dd->bDeviceClass == UDCLASS_HUB)
 		return (UMATCH_DEVCLASS_DEVSUBCLASS);
 	return (UMATCH_NONE);
 }
@@ -133,13 +136,6 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	sc->sc_hub = dev;
-
-	err = usbd_set_config_index(dev, 0, 1);
-	if (err) {
-		DPRINTF("%s: configuration failed, error=%s\n",
-			 sc->sc_dev.dv_xname, usbd_errstr(err));
-		return;
-	}
 
 	if (dev->depth > USB_HUB_MAX_DEPTH) {
 		printf("%s: hub depth (%d) exceeded, hub ignored\n",

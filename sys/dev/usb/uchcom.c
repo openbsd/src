@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.24 2015/04/14 07:57:33 mpi Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.25 2016/09/02 09:14:59 mpi Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -56,7 +56,6 @@ int	uchcomdebug = 0;
 #define DPRINTF(x) DPRINTFN(0, x)
 
 #define	UCHCOM_IFACE_INDEX	0
-#define	UCHCOM_CONFIG_INDEX	0
 
 #define UCHCOM_REV_CH340	0x0250
 #define UCHCOM_INPUT_BUF_SIZE	8
@@ -165,7 +164,6 @@ int		uchcom_open(void *, int);
 void		uchcom_close(void *, int);
 void		uchcom_intr(struct usbd_xfer *, void *, usbd_status);
 
-int		uchcom_set_config(struct uchcom_softc *);
 int		uchcom_find_ifaces(struct uchcom_softc *,
 		    struct usbd_interface **);
 int		uchcom_find_endpoints(struct uchcom_softc *,
@@ -237,7 +235,7 @@ uchcom_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL)
 		return UMATCH_NONE;
 
 	return (usb_lookup(uchcom_devs, uaa->vendor, uaa->product) != NULL ?
@@ -258,9 +256,6 @@ uchcom_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_lsr = sc->sc_msr = 0;
 
 	DPRINTF(("\n\nuchcom attach: sc=%p\n", sc));
-
-	if (uchcom_set_config(sc))
-		goto failed;
 
 	switch (uaa->release) {
 	case UCHCOM_REV_CH340:
@@ -318,21 +313,6 @@ uchcom_detach(struct device *self, int flags)
 	}
 
 	return rv;
-}
-
-int
-uchcom_set_config(struct uchcom_softc *sc)
-{
-	usbd_status err;
-
-	err = usbd_set_config_index(sc->sc_udev, UCHCOM_CONFIG_INDEX, 1);
-	if (err) {
-		printf("%s: failed to set configuration: %s\n",
-		       sc->sc_dev.dv_xname, usbd_errstr(err));
-		return -1;
-	}
-
-	return 0;
 }
 
 int

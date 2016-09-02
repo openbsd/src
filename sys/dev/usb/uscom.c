@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscom.c,v 1.4 2016/01/07 12:53:37 mpi Exp $	*/
+/*	$OpenBSD: uscom.c,v 1.5 2016/09/02 09:14:59 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -31,7 +31,6 @@
 #include <dev/usb/ucomvar.h>
 
 #define USCOMBUFSZ		256
-#define USCOM_CONFIG_INDEX		0
 #define USCOM_IFACE_NO		0
 
 struct uscom_softc {
@@ -73,7 +72,7 @@ uscom_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL)
 		return UMATCH_NONE;
 
 	return (usb_lookup(uscom_devs, uaa->vendor, uaa->product) != NULL) ?
@@ -93,13 +92,6 @@ uscom_attach(struct device *parent, struct device *self, void *aux)
 
 	bzero(&uca, sizeof(uca));
 	sc->sc_udev = uaa->device;
-
-	if (usbd_set_config_index(sc->sc_udev, USCOM_CONFIG_INDEX, 1) != 0) {
-		printf("%s: could not set configuration no\n",
-		    sc->sc_dev.dv_xname);
-		usbd_deactivate(sc->sc_udev);
-		return;
-	}
 
 	/* get the first interface handle */
 	error = usbd_device2interface_handle(sc->sc_udev, USCOM_IFACE_NO,

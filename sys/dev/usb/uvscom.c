@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.33 2015/03/14 03:38:50 jsg Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.34 2016/09/02 09:14:59 mpi Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -65,7 +65,6 @@ static int	uvscomdebug = 1;
 #endif
 #define DPRINTF(x) DPRINTFN(0, x)
 
-#define	UVSCOM_CONFIG_INDEX	0
 #define	UVSCOM_IFACE_INDEX	0
 
 #define UVSCOM_INTR_INTERVAL	100	/* mS */
@@ -219,7 +218,7 @@ uvscom_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
 
 	return (usb_lookup(uvscom_devs, uaa->vendor, uaa->product) != NULL ?
@@ -248,15 +247,6 @@ uvscom_attach(struct device *parent, struct device *self, void *aux)
 	uca.bulkin = uca.bulkout = -1;
 	sc->sc_intr_number = -1;
 	sc->sc_intr_pipe = NULL;
-
-	/* Move the device into the configured state. */
-	err = usbd_set_config_index(dev, UVSCOM_CONFIG_INDEX, 1);
-	if (err) {
-		printf("%s: failed to set configuration, err=%s\n",
-			devname, usbd_errstr(err));
-		usbd_deactivate(sc->sc_udev);
-		return;
-	}
 
 	/* get the config descriptor */
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);
