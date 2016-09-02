@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.60 2016/09/02 17:08:02 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.61 2016/09/02 17:16:24 renato Exp $ */
 
 /*
  * Copyright (c) 2014, 2015 Renato Westphal <renato@openbsd.org>
@@ -123,6 +123,7 @@ send_labelmessage(struct nbr *nbr, uint16_t type, struct mapping_head *mh)
 			    me->map.st.msg_id, me->map.st.msg_type);
 		if (err) {
 			ibuf_free(buf);
+			mapping_list_clr(mh);
 			return;
 		}
 
