@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.108 2016/08/31 12:57:31 mpi Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.109 2016/09/02 15:44:26 mpi Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -123,15 +123,17 @@ dispatch(struct interface_info *ifi)
 	int count, to_msec;
 	struct pollfd fds[3];
 	time_t cur_time, howlong;
-	void (*func)(void);
+	void (*func)(void *);
+	void *arg;
 
 	while (quit == 0) {
 		if (timeout.func) {
 			time(&cur_time);
 			if (timeout.when <= cur_time) {
 				func = timeout.func;
+				arg = timeout.arg;
 				cancel_timeout();
-				(*(func))();
+				(*(func))(arg);
 				continue;
 			}
 			/*
@@ -176,7 +178,7 @@ dispatch(struct interface_info *ifi)
 		if ((fds[0].revents & (POLLIN | POLLHUP)))
 			packethandler(ifi);
 		if ((fds[1].revents & (POLLIN | POLLHUP)))
-			routehandler();
+			routehandler(ifi);
 		if (fds[2].revents & POLLOUT)
 			flush_unpriv_ibuf("dispatch");
 		if ((fds[2].revents & (POLLIN | POLLHUP))) {
@@ -320,17 +322,19 @@ inactive:
 }
 
 void
-set_timeout(time_t when, void (*where)(void))
+set_timeout(time_t when, void (*where)(void *), void *arg)
 {
 	timeout.when = when;
 	timeout.func = where;
+	timeout.arg = arg;
 }
 
 void
-set_timeout_interval(time_t secs, void (*where)(void))
+set_timeout_interval(time_t secs, void (*where)(void *), void *arg)
 {
 	timeout.when = time(NULL) + secs;
 	timeout.func = where;
+	timeout.arg = arg;
 }
 
 void
@@ -338,6 +342,7 @@ cancel_timeout(void)
 {
 	timeout.when = 0;
 	timeout.func = NULL;
+	timeout.arg = NULL;
 }
 
 int

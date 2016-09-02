@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.41 2016/08/23 09:26:02 mpi Exp $ */
+/*	$OpenBSD: privsep.c,v 1.42 2016/09/02 15:44:26 mpi Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -100,7 +100,7 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 			break;
 
 		case IMSG_WRITE_RESOLV_CONF:
-			priv_write_resolv_conf(&imsg);
+			priv_write_resolv_conf(ifi, &imsg);
 			break;
 		case IMSG_WRITE_OPTION_DB:
 			priv_write_option_db(&imsg);

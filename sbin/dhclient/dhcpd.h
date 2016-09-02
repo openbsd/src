@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.157 2016/08/31 12:57:31 mpi Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.158 2016/09/02 15:44:26 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -165,7 +165,8 @@ struct interface_info {
 
 struct dhcp_timeout {
 	time_t	 when;
-	void	 (*func)(void);
+	void	 (*func)(void *);
+	void	*arg;
 };
 
 #define	_PATH_DHCLIENT_CONF	"/etc/dhclient.conf"
@@ -229,8 +230,8 @@ ssize_t receive_packet(struct interface_info *, struct sockaddr_in *,
 
 /* dispatch.c */
 void dispatch(struct interface_info *);
-void set_timeout(time_t, void (*)(void));
-void set_timeout_interval(time_t, void (*)(void));
+void set_timeout(time_t, void (*)(void *), void *);
+void set_timeout_interval(time_t, void (*)(void *), void *);
 void cancel_timeout(void);
 void interface_link_forceup(char *);
 int interface_status(struct interface_info *);
@@ -246,13 +247,16 @@ extern char *path_dhclient_db;
 extern int log_perror;
 extern int routefd;
 
-void dhcpoffer(struct in_addr, struct option_data *, char *);
-void dhcpack(struct in_addr, struct option_data *, char *);
-void dhcpnak(struct in_addr, struct option_data *, char *);
+void dhcpoffer(struct interface_info *, struct in_addr, struct option_data *,
+    char *);
+void dhcpack(struct interface_info *, struct in_addr, struct option_data *,
+    char *);
+void dhcpnak(struct interface_info *, struct in_addr, struct option_data *,
+    char *);
 
 void free_client_lease(struct client_lease *);
 
-void routehandler(void);
+void routehandler(struct interface_info *);
 
 /* packet.c */
 void assemble_eh_header(struct interface_info *, struct ether_header *);

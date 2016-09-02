@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.31 2016/08/23 09:26:02 mpi Exp $ */
+/*	$OpenBSD: privsep.h,v 1.32 2016/09/02 15:44:26 mpi Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -67,6 +67,6 @@ void	priv_add_route(struct interface_info *, struct imsg_add_route *);
 void	priv_cleanup(struct interface_info *, struct imsg_hup *);
 void	priv_set_interface_mtu(struct interface_info *,
 	    struct imsg_set_interface_mtu *);
-void	priv_write_resolv_conf(struct imsg *);
+void	priv_write_resolv_conf(struct interface_info *, struct imsg *);
 void	priv_write_option_db(struct imsg *);
 void	priv_write_file(char *, int, mode_t, u_int8_t *, size_t);

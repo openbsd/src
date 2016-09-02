@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.77 2016/08/31 12:57:31 mpi Exp $	*/
+/*	$OpenBSD: options.c,v 1.78 2016/09/02 15:44:26 mpi Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -653,7 +653,8 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 	struct dhcp_packet *packet = &client->packet;
 	struct option_data options[256];
 	struct reject_elem *ap;
-	void (*handler)(struct in_addr, struct option_data *, char *);
+	void (*handler)(struct interface_info *, struct in_addr,
+	    struct option_data *, char *);
 	char *type, *info;
 	int i, rslt, options_valid = 1;
 
@@ -752,7 +753,7 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 		error("no memory for info string");
 
 	if (handler)
-		(*handler)(from, options, info);
+		(*handler)(ifi, from, options, info);
 
 	free(info);
 
