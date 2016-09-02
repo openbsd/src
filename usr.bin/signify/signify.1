@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.34 2016/05/11 18:07:28 deraadt Exp $
+.\" $OpenBSD: signify.1,v 1.35 2016/09/02 17:27:31 espie Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -14,7 +14,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: May 11 2016 $
+.Dd $Mdocdate: September 2 2016 $
 .Dt SIGNIFY 1
 .Os
 .Sh NAME
@@ -35,15 +35,16 @@
 .Fl s Ar seckey
 .Nm signify
 .Fl S
-.Op Fl e
+.Op Fl ez
 .Op Fl x Ar sigfile
 .Fl s Ar seckey
 .Fl m Ar message
 .Nm signify
 .Fl V
-.Op Fl eq
+.Op Fl eqz
+.Op Fl p Ar pubkey
+.Op Fl t Ar keytype
 .Op Fl x Ar sigfile
-.Fl p Ar pubkey
 .Fl m Ar message
 .Sh DESCRIPTION
 The
@@ -104,10 +105,21 @@ Secret (private) key produced by
 and used by
 .Fl S
 to sign a message.
+.It Fl t Ar keytype
+When deducing the correct key to check a signature, make sure
+the actual key matches
+.Pa /etc/signify/<somekey>-keytype.pub .
 .It Fl x Ar sigfile
 The signature file to create or verify.
 The default is
 .Ar message Ns .sig .
+.It Fl z
+Sign and verify
+.Xr gzip 1
+archives, where the signing data
+is embedded in the
+.Xr gzip 1
+header.
 .El
 .Pp
 The key and signature files created by
@@ -155,14 +167,26 @@ Verify a bsd.rd before an upgrade:
 .Bd -literal -offset indent -compact
 $ signify -C -p /etc/signify/openbsd-61-base.pub -x SHA256.sig bsd.rd
 .Ed
+.Pp
+Sign a gzip archive:
+.Bd -literal -offset indent -compact
+$ signify -Sz -s key-arc.sec -m in.tgz -x out.tgz
+.Ed
+.Pp
+Verify a gzip pipeline:
+.Bd -literal -offset indent -compact
+$ ftp url | signify -Vz -t arc|tar ztf -
+.Ed
 .Sh SEE ALSO
 .Xr fw_update 1 ,
 .Xr pkg_add 1 ,
-.Xr sha256 1
+.Xr sha256 1 ,
+.Xr gzip 1
 .Sh HISTORY
 The
 .Nm
 command first appeared in
 .Ox 5.5 .
 .Sh AUTHORS
-.An Ted Unangst Aq Mt tedu@openbsd.org
+.An Ted Unangst Aq Mt tedu@openbsd.org ,
+.An Marc Espie Aq Mt espie@openbsd.org

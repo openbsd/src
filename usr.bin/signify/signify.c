@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.111 2016/09/02 16:10:56 espie Exp $ */
+/* $OpenBSD: signify.c,v 1.112 2016/09/02 17:27:31 espie Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -82,7 +82,7 @@ usage(const char *error)
 	    "\t%1$s -G [-n] [-c comment] -p pubkey -s seckey\n"
 	    "\t%1$s -S [-ez] [-x sigfile] -s seckey -m message\n"
 #endif
-	    "\t%1$s -V [-ezq] [-x sigfile] -p pubkey -m message\n",
+	    "\t%1$s -V [-eqz] [-p pubkey] [-t keytype] [-x sigfile] -m message\n",
 	    getprogname());
 	exit(1);
 }
