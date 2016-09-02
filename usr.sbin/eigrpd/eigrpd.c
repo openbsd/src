@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.19 2016/09/02 16:29:54 renato Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.20 2016/09/02 16:44:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -37,30 +37,31 @@
 #include "rde.h"
 #include "log.h"
 
-void		main_sig_handler(int, short, void *);
-__dead void	usage(void);
-__dead void	eigrpd_shutdown(void);
-pid_t		start_child(enum eigrpd_process, char *, int, int, int, char *);
+static void		 main_sig_handler(int, short, void *);
+static __dead void	 usage(void);
+static __dead void	 eigrpd_shutdown(void);
+static pid_t		 start_child(enum eigrpd_process, char *, int, int, int,
+			    char *);
+static void		 main_dispatch_eigrpe(int, short, void *);
+static void		 main_dispatch_rde(int, short, void *);
+static int		 main_imsg_send_ipc_sockets(struct imsgbuf *,
+			    struct imsgbuf *);
+static int		 main_imsg_send_config(struct eigrpd_conf *);
+static int		 eigrp_reload(void);
+static int		 eigrp_sendboth(enum imsg_type, void *, uint16_t);
+static void		 merge_instances(struct eigrpd_conf *, struct eigrp *,
+			    struct eigrp *);
 
-void	main_dispatch_eigrpe(int, short, void *);
-void	main_dispatch_rde(int, short, void *);
-int	main_imsg_send_ipc_sockets(struct imsgbuf *, struct imsgbuf *);
+struct eigrpd_conf	*eigrpd_conf;
 
-int	main_imsg_send_config(struct eigrpd_conf *);
-int	eigrp_reload(void);
-int	eigrp_sendboth(enum imsg_type, void *, uint16_t);
-void	merge_instances(struct eigrpd_conf *, struct eigrp *, struct eigrp *);
-
-struct eigrpd_conf	*eigrpd_conf = NULL;
-struct imsgev		*iev_eigrpe;
-struct imsgev		*iev_rde;
-char			*conffile;
-
-pid_t			 eigrpe_pid = 0;
-pid_t			 rde_pid = 0;
+static char		*conffile;
+static struct imsgev	*iev_eigrpe;
+static struct imsgev	*iev_rde;
+static pid_t		 eigrpe_pid;
+static pid_t		 rde_pid;
 
 /* ARGSUSED */
-void
+static void
 main_sig_handler(int sig, short event, void *arg)
 {
 	/* signal handler rules don't apply, libevent decouples for us */
@@ -81,7 +82,7 @@ main_sig_handler(int sig, short event, void *arg)
 	}
 }
 
-__dead void
+static __dead void
 usage(void)
 {
 	extern char *__progname;
@@ -276,7 +277,7 @@ main(int argc, char *argv[])
 	return (0);
 }
 
-__dead void
+static __dead void
 eigrpd_shutdown(void)
 {
 	pid_t		 pid;
@@ -310,7 +311,7 @@ eigrpd_shutdown(void)
 	exit(0);
 }
 
-pid_t
+static pid_t
 start_child(enum eigrpd_process p, char *argv0, int fd, int debug, int verbose,
     char *sockname)
 {
@@ -358,7 +359,7 @@ start_child(enum eigrpd_process p, char *argv0, int fd, int debug, int verbose,
 
 /* imsg handling */
 /* ARGSUSED */
-void
+static void
 main_dispatch_eigrpe(int fd, short event, void *bula)
 {
 	struct imsgev		*iev = bula;
@@ -435,7 +436,7 @@ main_dispatch_eigrpe(int fd, short event, void *bula)
 }
 
 /* ARGSUSED */
-void
+static void
 main_dispatch_rde(int fd, short event, void *bula)
 {
 	struct imsgev	*iev = bula;
@@ -538,7 +539,7 @@ imsg_compose_event(struct imsgev *iev, uint16_t type, uint32_t peerid,
 	return (ret);
 }
 
-int
+static int
 main_imsg_send_ipc_sockets(struct imsgbuf *eigrpe_buf, struct imsgbuf *rde_buf)
 {
 	int pipe_eigrpe2rde[2];
@@ -557,12 +558,6 @@ main_imsg_send_ipc_sockets(struct imsgbuf *eigrpe_buf, struct imsgbuf *rde_buf)
 	return (0);
 }
 
-uint32_t
-eigrp_router_id(struct eigrpd_conf *xconf)
-{
-	return (xconf->rtr_id.s_addr);
-}
-
 struct eigrp *
 eigrp_find(struct eigrpd_conf *xconf, int af, uint16_t as)
 {
@@ -575,7 +570,7 @@ eigrp_find(struct eigrpd_conf *xconf, int af, uint16_t as)
 	return (NULL);
 }
 
-int
+static int
 main_imsg_send_config(struct eigrpd_conf *xconf)
 {
 	struct eigrp		*eigrp;
@@ -606,7 +601,7 @@ main_imsg_send_config(struct eigrpd_conf *xconf)
 	return (0);
 }
 
-int
+static int
 eigrp_reload(void)
 {
 	struct eigrpd_conf	*xconf;
@@ -622,7 +617,7 @@ eigrp_reload(void)
 	return (0);
 }
 
-int
+static int
 eigrp_sendboth(enum imsg_type type, void *buf, uint16_t len)
 {
 	if (main_imsg_compose_eigrpe(type, 0, buf, len) == -1)
@@ -713,7 +708,7 @@ merge_config(struct eigrpd_conf *conf, struct eigrpd_conf *xconf)
 	free(xconf);
 }
 
-void
+static void
 merge_instances(struct eigrpd_conf *xconf, struct eigrp *eigrp, struct eigrp *xe)
 {
 	/* TODO */

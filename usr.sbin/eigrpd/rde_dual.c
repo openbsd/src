@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.27 2016/09/02 16:29:55 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.28 2016/09/02 16:44:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -26,22 +26,49 @@
 #include "rde.h"
 #include "log.h"
 
-void	reply_active_timer(int, short, void *);
-void	reply_active_start_timer(struct reply_node *);
-void	reply_active_stop_timer(struct reply_node *);
-void	reply_sia_timer(int, short, void *);
-void	reply_sia_start_timer(struct reply_node *);
-void	reply_sia_stop_timer(struct reply_node *);
+static int		 dual_fsm(struct rt_node *, enum dual_event);
+static __inline int	 rt_compare(struct rt_node *, struct rt_node *);
+static struct rt_node	*rt_find(struct eigrp *, struct rinfo *);
+static struct rt_node	*rt_new(struct eigrp *, struct rinfo *);
+static struct eigrp_route *route_find(struct rde_nbr *, struct rt_node *);
+static struct eigrp_route *route_new(struct rt_node *, struct rde_nbr *,
+			    struct rinfo *);
+static void		 route_del(struct rt_node *, struct eigrp_route *);
+static uint32_t		 safe_sum_uint32(uint32_t, uint32_t);
+static uint32_t		 safe_mul_uint32(uint32_t, uint32_t);
+static uint32_t		 route_composite_metric(uint8_t *, uint32_t, uint32_t,
+			    uint8_t, uint8_t);
+static void		 route_update_metrics(struct eigrp *,
+			    struct eigrp_route *, struct rinfo *);
+static void		 reply_outstanding_add(struct rt_node *,
+			    struct rde_nbr *);
+static struct reply_node *reply_outstanding_find(struct rt_node *,
+			    struct rde_nbr *);
+static void		 reply_outstanding_remove(struct reply_node *);
+static void		 reply_active_timer(int, short, void *);
+static void		 reply_active_start_timer(struct reply_node *);
+static void		 reply_active_stop_timer(struct reply_node *);
+static void		 reply_sia_timer(int, short, void *);
+static void		 reply_sia_start_timer(struct reply_node *);
+static void		 reply_sia_stop_timer(struct reply_node *);
+static void		 rinfo_fill_infinite(struct rt_node *, enum route_type,
+			    struct rinfo *);
+static void		 rt_update_fib(struct rt_node *);
+static void		 rt_set_successor(struct rt_node *,
+			    struct eigrp_route *);
+static struct eigrp_route *rt_get_successor_fc(struct rt_node *);
+static void		 rde_send_update(struct eigrp_iface *, struct rinfo *);
+static void		 rde_send_update_all(struct rt_node *, struct rinfo *);
+static void		 rde_send_query(struct eigrp_iface *, struct rinfo *,
+			    int);
+static void		 rde_send_siaquery(struct rde_nbr *, struct rinfo *);
+static void		 rde_send_query_all(struct eigrp *, struct rt_node *,
+			    int);
+static void		 rde_send_reply(struct rde_nbr *, struct rinfo *, int);
+static void		 rde_last_reply(struct rt_node *);
+static __inline int	 rde_nbr_compare(struct rde_nbr *, struct rde_nbr *);
 
-extern struct eigrpd_conf	*rdeconf;
-
-static int rt_compare(struct rt_node *, struct rt_node *);
-RB_PROTOTYPE(rt_tree, rt_node, entry, rt_compare)
 RB_GENERATE(rt_tree, rt_node, entry, rt_compare)
-
-static __inline int rde_nbr_compare(struct rde_nbr *, struct rde_nbr *);
-RB_HEAD(rde_nbr_head, rde_nbr);
-RB_PROTOTYPE(rde_nbr_head, rde_nbr, entry, rde_nbr_compare)
 RB_GENERATE(rde_nbr_head, rde_nbr, entry, rde_nbr_compare)
 
 struct rde_nbr_head rde_nbrs = RB_INITIALIZER(&rde_nbrs);
@@ -50,7 +77,7 @@ struct rde_nbr_head rde_nbrs = RB_INITIALIZER(&rde_nbrs);
  * NOTE: events that don't cause a state transition aren't triggered to avoid
  * too much verbosity and are here mostly for illustration purposes.
  */
-struct {
+static struct {
 	int		state;
 	enum dual_event	event;
 	int		new_state;
@@ -83,7 +110,7 @@ struct {
     {-1,			0,		0},
 };
 
-const char * const dual_event_names[] = {
+static const char * const dual_event_names[] = {
 	"DUAL_EVT_1",
 	"DUAL_EVT_2",
 	"DUAL_EVT_3",
@@ -102,7 +129,7 @@ const char * const dual_event_names[] = {
 	"DUAL_EVT_16"
 };
 
-int
+static int
 dual_fsm(struct rt_node *rn, enum dual_event event)
 {
 	int		old_state;
@@ -142,7 +169,7 @@ dual_fsm(struct rt_node *rn, enum dual_event event)
 	return (0);
 }
 
-static int
+static __inline int
 rt_compare(struct rt_node *a, struct rt_node *b)
 {
 	int		 addrcmp;
@@ -159,7 +186,7 @@ rt_compare(struct rt_node *a, struct rt_node *b)
 	return (0);
 }
 
-struct rt_node *
+static struct rt_node *
 rt_find(struct eigrp *eigrp, struct rinfo *ri)
 {
 	struct rt_node	 rn;
@@ -171,7 +198,7 @@ rt_find(struct eigrp *eigrp, struct rinfo *ri)
 	return (RB_FIND(rt_tree, &eigrp->topology, &rn));
 }
 
-struct rt_node *
+static struct rt_node *
 rt_new(struct eigrp *eigrp, struct rinfo *ri)
 {
 	struct rt_node	*rn;
@@ -214,7 +241,7 @@ rt_del(struct rt_node *rn)
 	free(rn);
 }
 
-struct eigrp_route *
+static struct eigrp_route *
 route_find(struct rde_nbr *nbr, struct rt_node *rn)
 {
 	struct eigrp_route	*route;
@@ -226,7 +253,7 @@ route_find(struct rde_nbr *nbr, struct rt_node *rn)
 	return (NULL);
 }
 
-struct eigrp_route *
+static struct eigrp_route *
 route_new(struct rt_node *rn, struct rde_nbr *nbr, struct rinfo *ri)
 {
 	struct eigrp		*eigrp = rn->eigrp;
@@ -260,7 +287,7 @@ route_new(struct rt_node *rn, struct rde_nbr *nbr, struct rinfo *ri)
 	return (route);
 }
 
-void
+static void
 route_del(struct rt_node *rn, struct eigrp_route *route)
 {
 	struct eigrp		*eigrp = rn->eigrp;
@@ -275,7 +302,7 @@ route_del(struct rt_node *rn, struct eigrp_route *route)
 	free(route);
 }
 
-uint32_t
+static uint32_t
 safe_sum_uint32(uint32_t a, uint32_t b)
 {
 	uint64_t	total;
@@ -288,7 +315,7 @@ safe_sum_uint32(uint32_t a, uint32_t b)
 	return ((uint32_t) total);
 }
 
-uint32_t
+static uint32_t
 safe_mul_uint32(uint32_t a, uint32_t b)
 {
 	uint64_t	total;
@@ -333,7 +360,7 @@ eigrp_real_bandwidth(uint32_t bandwidth)
 	return ((EIGRP_SCALING_FACTOR * (uint32_t)10000000) / bandwidth);
 }
 
-uint32_t
+static uint32_t
 route_composite_metric(uint8_t *kvalues, uint32_t delay, uint32_t bandwidth,
     uint8_t load, uint8_t reliability)
 {
@@ -368,7 +395,7 @@ route_composite_metric(uint8_t *kvalues, uint32_t delay, uint32_t bandwidth,
 	return ((uint32_t) distance);
 }
 
-void
+static void
 route_update_metrics(struct eigrp *eigrp, struct eigrp_route *route,
     struct rinfo *ri)
 {
@@ -411,7 +438,7 @@ route_update_metrics(struct eigrp *eigrp, struct eigrp_route *route,
 	    bandwidth, DEFAULT_LOAD, DEFAULT_RELIABILITY);
 }
 
-void
+static void
 reply_outstanding_add(struct rt_node *rn, struct rde_nbr *nbr)
 {
 	struct reply_node	*reply;
@@ -434,7 +461,7 @@ reply_outstanding_add(struct rt_node *rn, struct rde_nbr *nbr)
 	}
 }
 
-struct reply_node *
+static struct reply_node *
 reply_outstanding_find(struct rt_node *rn, struct rde_nbr *nbr)
 {
 	struct reply_node	*reply;
@@ -446,7 +473,7 @@ reply_outstanding_find(struct rt_node *rn, struct rde_nbr *nbr)
 	return (NULL);
 }
 
-void
+static void
 reply_outstanding_remove(struct reply_node *reply)
 {
 	reply_active_stop_timer(reply);
@@ -457,7 +484,7 @@ reply_outstanding_remove(struct reply_node *reply)
 }
 
 /* ARGSUSED */
-void
+static void
 reply_active_timer(int fd, short event, void *arg)
 {
 	struct reply_node	*reply = arg;
@@ -469,7 +496,7 @@ reply_active_timer(int fd, short event, void *arg)
 	rde_nbr_del(reply->nbr, 1);
 }
 
-void
+static void
 reply_active_start_timer(struct reply_node *reply)
 {
 	struct eigrp		*eigrp = reply->nbr->eigrp;
@@ -481,7 +508,7 @@ reply_active_start_timer(struct reply_node *reply)
 		fatal("reply_active_start_timer");
 }
 
-void
+static void
 reply_active_stop_timer(struct reply_node *reply)
 {
 	if (evtimer_pending(&reply->ev_active_timeout, NULL) &&
@@ -490,7 +517,7 @@ reply_active_stop_timer(struct reply_node *reply)
 }
 
 /* ARGSUSED */
-void
+static void
 reply_sia_timer(int fd, short event, void *arg)
 {
 	struct reply_node	*reply = arg;
@@ -530,7 +557,7 @@ reply_sia_timer(int fd, short event, void *arg)
 	rde_send_siaquery(nbr, &ri);
 }
 
-void
+static void
 reply_sia_start_timer(struct reply_node *reply)
 {
 	struct eigrp		*eigrp = reply->nbr->eigrp;
@@ -547,7 +574,7 @@ reply_sia_start_timer(struct reply_node *reply)
 		fatal("reply_sia_start_timer");
 }
 
-void
+static void
 reply_sia_stop_timer(struct reply_node *reply)
 {
 	if (evtimer_pending(&reply->ev_sia_timeout, NULL) &&
@@ -573,7 +600,7 @@ rinfo_fill_successor(struct rt_node *rn, struct rinfo *ri)
 		ri->emetric = rn->successor.emetric;
 }
 
-void
+static void
 rinfo_fill_infinite(struct rt_node *rn, enum route_type type, struct rinfo *ri)
 {
 	memset(ri, 0, sizeof(*ri));
@@ -584,7 +611,7 @@ rinfo_fill_infinite(struct rt_node *rn, enum route_type type, struct rinfo *ri)
 	ri->metric.delay = EIGRP_INFINITE_METRIC;
 }
 
-void
+static void
 rt_update_fib(struct rt_node *rn)
 {
 	struct eigrp		*eigrp = rn->eigrp;
@@ -638,7 +665,7 @@ uninstall:
 	}
 }
 
-void
+static void
 rt_set_successor(struct rt_node *rn, struct eigrp_route *successor)
 {
 	struct eigrp		*eigrp = rn->eigrp;
@@ -671,7 +698,7 @@ rt_set_successor(struct rt_node *rn, struct eigrp_route *successor)
 	}
 }
 
-struct eigrp_route *
+static struct eigrp_route *
 rt_get_successor_fc(struct rt_node *rn)
 {
 	struct eigrp_route	*route, *successor = NULL;
@@ -731,7 +758,7 @@ rde_summary_check(struct eigrp_iface *ei, union eigrpd_addr *prefix,
 	return (NULL);
 }
 
-void
+static void
 rde_send_update(struct eigrp_iface *ei, struct rinfo *ri)
 {
 	if (ri->metric.hop_count >= ei->eigrp->maximum_hops ||
@@ -744,7 +771,7 @@ rde_send_update(struct eigrp_iface *ei, struct rinfo *ri)
 	    NULL, 0);
 }
 
-void
+static void
 rde_send_update_all(struct rt_node *rn, struct rinfo *ri)
 {
 	struct eigrp		*eigrp = rn->eigrp;
@@ -759,7 +786,7 @@ rde_send_update_all(struct rt_node *rn, struct rinfo *ri)
 	}
 }
 
-void
+static void
 rde_send_query(struct eigrp_iface *ei, struct rinfo *ri, int push)
 {
 	rde_imsg_compose_eigrpe(IMSG_SEND_MQUERY, ei->ifaceid, 0,
@@ -769,7 +796,7 @@ rde_send_query(struct eigrp_iface *ei, struct rinfo *ri, int push)
 		    0, NULL, 0);
 }
 
-void
+static void
 rde_send_siaquery(struct rde_nbr *nbr, struct rinfo *ri)
 {
 	rde_imsg_compose_eigrpe(IMSG_SEND_QUERY, nbr->peerid, 0,
@@ -778,7 +805,7 @@ rde_send_siaquery(struct rde_nbr *nbr, struct rinfo *ri)
 	    NULL, 0);
 }
 
-void
+static void
 rde_send_query_all(struct eigrp *eigrp, struct rt_node *rn, int push)
 {
 	struct eigrp_iface	*ei;
@@ -821,7 +848,7 @@ rde_flush_queries(void)
 			    ei->ifaceid, 0, NULL, 0);
 }
 
-void
+static void
 rde_send_reply(struct rde_nbr *nbr, struct rinfo *ri, int siareply)
 {
 	int	 type;
@@ -1015,7 +1042,7 @@ rde_check_query(struct rde_nbr *nbr, struct rinfo *ri, int siaquery)
 	}
 }
 
-void
+static void
 rde_last_reply(struct rt_node *rn)
 {
 	struct eigrp		*eigrp = rn->eigrp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.17 2016/09/02 16:36:33 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.18 2016/09/02 16:44:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -32,11 +32,16 @@
 #include "eigrpe.h"
 #include "log.h"
 
-extern struct eigrpd_conf	*econf;
-
-int		 eigrp_hdr_sanity_check(int, union eigrpd_addr *,
+static int	 send_packet_v4(struct iface *, struct nbr *, struct ibuf *);
+static int	 send_packet_v6(struct iface *, struct nbr *, struct ibuf *);
+static int	 recv_packet_nbr(struct nbr *, struct eigrp_hdr *,
+		    struct seq_addr_head *, struct tlv_mcast_seq *);
+static void	 recv_packet_eigrp(int, union eigrpd_addr *,
+		    union eigrpd_addr *, struct iface *, struct eigrp_hdr *,
+		    char *, uint16_t);
+static int	 eigrp_hdr_sanity_check(int, union eigrpd_addr *,
 		    struct eigrp_hdr *, uint16_t, const struct iface *);
-struct iface	*find_iface(unsigned int, int, union eigrpd_addr *);
+static struct iface *find_iface(unsigned int, int, union eigrpd_addr *);
 
 int
 gen_eigrp_hdr(struct ibuf *buf, uint16_t opcode, uint8_t flags,
@@ -600,7 +605,7 @@ recv_packet(int fd, short event, void *bula)
 	recv_packet_eigrp(af, &src, &dest, iface, eigrp_hdr, buf, len);
 }
 
-int
+static int
 eigrp_hdr_sanity_check(int af, union eigrpd_addr *addr,
     struct eigrp_hdr *eigrp_hdr, uint16_t len, const struct iface *iface)
 {
@@ -647,7 +652,7 @@ eigrp_hdr_sanity_check(int af, union eigrpd_addr *addr,
 	return (0);
 }
 
-struct iface *
+static struct iface *
 find_iface(unsigned int ifindex, int af, union eigrpd_addr *src)
 {
 	struct iface	*iface;

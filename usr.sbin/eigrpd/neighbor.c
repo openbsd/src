@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.9 2016/09/02 16:39:44 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.10 2016/09/02 16:44:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -26,13 +26,16 @@
 #include "rde.h"
 #include "log.h"
 
-static __inline int nbr_compare(struct nbr *, struct nbr *);
-static __inline int nbr_pid_compare(struct nbr *, struct nbr *);
+static __inline int	 nbr_compare(struct nbr *, struct nbr *);
+static __inline int	 nbr_pid_compare(struct nbr *, struct nbr *);
+static void		 nbr_update_peerid(struct nbr *);
+static void		 nbr_timeout(int, short, void *);
+static void		 nbr_stop_timeout(struct nbr *);
 
-RB_PROTOTYPE(nbr_addr_head, nbr, addr_tree, nbr_compare)
 RB_GENERATE(nbr_addr_head, nbr, addr_tree, nbr_compare)
-RB_PROTOTYPE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
 RB_GENERATE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
+
+struct nbr_pid_head nbrs_by_pid = RB_INITIALIZER(&nbrs_by_pid);
 
 static __inline int
 nbr_compare(struct nbr *a, struct nbr *b)
@@ -50,10 +53,6 @@ nbr_pid_compare(struct nbr *a, struct nbr *b)
 {
 	return (a->peerid - b->peerid);
 }
-
-struct nbr_pid_head nbrs_by_pid = RB_INITIALIZER(&nbrs_by_pid);
-
-extern struct eigrpd_conf	*econf;
 
 struct nbr *
 nbr_new(struct eigrp_iface *ei, union eigrpd_addr *addr, uint16_t holdtime,
@@ -145,7 +144,7 @@ nbr_del(struct nbr *nbr)
 	free(nbr);
 }
 
-void
+static void
 nbr_update_peerid(struct nbr *nbr)
 {
 	static uint32_t	 peercnt = NBR_CNTSTART;
@@ -234,7 +233,7 @@ nbr_clear_ctl(struct ctl_nbr *nctl)
 /* timers */
 
 /* ARGSUSED */
-void
+static void
 nbr_timeout(int fd, short event, void *arg)
 {
 	struct nbr	*nbr = arg;
@@ -257,7 +256,7 @@ nbr_start_timeout(struct nbr *nbr)
 		fatal("nbr_start_timeout");
 }
 
-void
+static void
 nbr_stop_timeout(struct nbr *nbr)
 {
 	if (evtimer_pending(&nbr->ev_hello_timeout, NULL) &&

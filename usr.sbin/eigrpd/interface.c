@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.22 2016/09/02 16:39:44 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.23 2016/09/02 16:44:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -32,11 +32,24 @@
 #include "eigrpe.h"
 #include "log.h"
 
-extern struct eigrpd_conf        *econf;
+static __inline int	 iface_id_compare(struct eigrp_iface *,
+			    struct eigrp_iface *);
+static struct iface	*if_new(struct eigrpd_conf *, struct kif *);
+static void		 if_del(struct iface *);
+static struct if_addr	*if_addr_lookup(struct if_addr_head *, struct kaddr *);
+static void		 eigrp_if_start(struct eigrp_iface *);
+static void		 eigrp_if_reset(struct eigrp_iface *);
+static void		 eigrp_if_hello_timer(int, short, void *);
+static void		 eigrp_if_start_hello_timer(struct eigrp_iface *);
+static void		 eigrp_if_stop_hello_timer(struct eigrp_iface *);
+static int		 if_join_ipv4_group(struct iface *, struct in_addr *);
+static int		 if_leave_ipv4_group(struct iface *, struct in_addr *);
+static int		 if_join_ipv6_group(struct iface *, struct in6_addr *);
+static int		 if_leave_ipv6_group(struct iface *, struct in6_addr *);
 
-void		 eigrp_if_hello_timer(int, short, void *);
-void		 eigrp_if_start_hello_timer(struct eigrp_iface *);
-void		 eigrp_if_stop_hello_timer(struct eigrp_iface *);
+RB_GENERATE(iface_id_head, eigrp_iface, id_tree, iface_id_compare)
+
+struct iface_id_head ifaces_by_id = RB_INITIALIZER(&ifaces_by_id);
 
 static __inline int
 iface_id_compare(struct eigrp_iface *a, struct eigrp_iface *b)
@@ -44,13 +57,7 @@ iface_id_compare(struct eigrp_iface *a, struct eigrp_iface *b)
 	return (a->ifaceid - b->ifaceid);
 }
 
-RB_HEAD(iface_id_head, eigrp_iface);
-RB_PROTOTYPE(iface_id_head, eigrp_iface, id_tree, iface_id_compare)
-RB_GENERATE(iface_id_head, eigrp_iface, id_tree, iface_id_compare)
-
-struct iface_id_head ifaces_by_id = RB_INITIALIZER(&ifaces_by_id);
-
-struct iface *
+static struct iface *
 if_new(struct eigrpd_conf *xconf, struct kif *kif)
 {
 	struct iface		*iface;
@@ -85,7 +92,7 @@ if_new(struct eigrpd_conf *xconf, struct kif *kif)
 	return (iface);
 }
 
-void
+static void
 if_del(struct iface *iface)
 {
 	struct if_addr		*if_addr;
@@ -193,7 +200,7 @@ if_addr_del(struct iface *iface, struct kaddr *ka)
 		if_update(iface, AF_INET);
 }
 
-struct if_addr *
+static struct if_addr *
 if_addr_lookup(struct if_addr_head *addr_list, struct kaddr *ka)
 {
 	struct if_addr	*if_addr;
@@ -368,7 +375,7 @@ eigrp_if_lookup_id(uint32_t ifaceid)
 	return (RB_FIND(iface_id_head, &ifaces_by_id, &e));
 }
 
-void
+static void
 eigrp_if_start(struct eigrp_iface *ei)
 {
 	struct eigrp		*eigrp = ei->eigrp;
@@ -414,7 +421,7 @@ eigrp_if_start(struct eigrp_iface *ei)
 	eigrp_if_start_hello_timer(ei);
 }
 
-void
+static void
 eigrp_if_reset(struct eigrp_iface *ei)
 {
 	struct eigrp		*eigrp = ei->eigrp;
@@ -448,7 +455,7 @@ eigrp_if_reset(struct eigrp_iface *ei)
 
 /* timers */
 /* ARGSUSED */
-void
+static void
 eigrp_if_hello_timer(int fd, short event, void *arg)
 {
 	struct eigrp_iface	*ei = arg;
@@ -463,7 +470,7 @@ eigrp_if_hello_timer(int fd, short event, void *arg)
 		fatal("eigrp_if_hello_timer");
 }
 
-void
+static void
 eigrp_if_start_hello_timer(struct eigrp_iface *ei)
 {
 	struct timeval		 tv;
@@ -474,7 +481,7 @@ eigrp_if_start_hello_timer(struct eigrp_iface *ei)
 		fatal("eigrp_if_start_hello_timer");
 }
 
-void
+static void
 eigrp_if_stop_hello_timer(struct eigrp_iface *ei)
 {
 	if (evtimer_pending(&ei->hello_timer, NULL) &&
@@ -558,7 +565,7 @@ if_set_sockbuf(int fd)
 		log_warnx("%s: sendbuf size only %d", __func__, bsize);
 }
 
-int
+static int
 if_join_ipv4_group(struct iface *iface, struct in_addr *addr)
 {
 	struct ip_mreq		 mreq;
@@ -583,7 +590,7 @@ if_join_ipv4_group(struct iface *iface, struct in_addr *addr)
 	return (0);
 }
 
-int
+static int
 if_leave_ipv4_group(struct iface *iface, struct in_addr *addr)
 {
 	struct ip_mreq		 mreq;
@@ -676,7 +683,7 @@ if_set_ipv4_hdrincl(int fd)
 	return (0);
 }
 
-int
+static int
 if_join_ipv6_group(struct iface *iface, struct in6_addr *addr)
 {
 	struct ipv6_mreq	 mreq;
@@ -701,7 +708,7 @@ if_join_ipv6_group(struct iface *iface, struct in6_addr *addr)
 	return (0);
 }
 
-int
+static int
 if_leave_ipv6_group(struct iface *iface, struct in6_addr *addr)
 {
 	struct ipv6_mreq	 mreq;

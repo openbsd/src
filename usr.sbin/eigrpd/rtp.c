@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtp.c,v 1.6 2016/09/02 16:29:55 renato Exp $ */
+/*	$OpenBSD: rtp.c,v 1.7 2016/09/02 16:44:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -26,11 +26,18 @@
 #include "eigrpe.h"
 #include "log.h"
 
-void		 rtp_retrans_timer(int, short, void *);
-void		 rtp_retrans_start_timer(struct packet *);
-void		 rtp_retrans_stop_timer(struct packet *);
+static struct pbuf	*rtp_buf_new(struct ibuf *);
+static struct pbuf	*rtp_buf_hold(struct pbuf *);
+static void		 rtp_buf_release(struct pbuf *);
+static struct packet	*rtp_packet_new(struct nbr *, uint32_t, struct pbuf *);
+static void		 rtp_send_packet(struct packet *);
+static void		 rtp_enqueue_packet(struct packet *);
+static void		 rtp_send_mcast(struct eigrp_iface *, struct ibuf *);
+static void		 rtp_retrans_timer(int, short, void *);
+static void		 rtp_retrans_start_timer(struct packet *);
+static void		 rtp_retrans_stop_timer(struct packet *);
 
-struct pbuf *
+static struct pbuf *
 rtp_buf_new(struct ibuf *buf)
 {
 	struct pbuf	*pbuf;
@@ -42,14 +49,14 @@ rtp_buf_new(struct ibuf *buf)
 	return (pbuf);
 }
 
-struct pbuf *
+static struct pbuf *
 rtp_buf_hold(struct pbuf *pbuf)
 {
 	pbuf->refcnt++;
 	return (pbuf);
 }
 
-void
+static void
 rtp_buf_release(struct pbuf *pbuf)
 {
 	if (--pbuf->refcnt == 0) {
@@ -58,7 +65,7 @@ rtp_buf_release(struct pbuf *pbuf)
 	}
 }
 
-struct packet *
+static struct packet *
 rtp_packet_new(struct nbr *nbr, uint32_t seq_num, struct pbuf *pbuf)
 {
 	struct packet		*pkt;
@@ -106,14 +113,14 @@ rtp_process_ack(struct nbr *nbr, uint32_t ack_num)
 	}
 }
 
-void
+static void
 rtp_send_packet(struct packet *pkt)
 {
 	rtp_retrans_start_timer(pkt);
 	send_packet(pkt->nbr->ei, pkt->nbr, 0, pkt->pbuf->buf);
 }
 
-void
+static void
 rtp_enqueue_packet(struct packet *pkt)
 {
 	/* only send packet if transmission queue is empty */
@@ -147,7 +154,7 @@ rtp_send_ucast(struct nbr *nbr, struct ibuf *buf)
 	rtp_seq_inc(eigrp);
 }
 
-void
+static void
 rtp_send_mcast(struct eigrp_iface *ei, struct ibuf *buf)
 {
 	struct eigrp		*eigrp = ei->eigrp;
@@ -242,7 +249,7 @@ rtp_send_ack(struct nbr *nbr)
 /* timers */
 
 /* ARGSUSED */
-void
+static void
 rtp_retrans_timer(int fd, short event, void *arg)
 {
 	struct packet		*pkt = arg;
@@ -260,7 +267,7 @@ rtp_retrans_timer(int fd, short event, void *arg)
 	rtp_send_packet(pkt);
 }
 
-void
+static void
 rtp_retrans_start_timer(struct packet *pkt)
 {
 	struct timeval		 tv;
@@ -271,7 +278,7 @@ rtp_retrans_start_timer(struct packet *pkt)
 		fatal("rtp_retrans_start_timer");
 }
 
-void
+static void
 rtp_retrans_stop_timer(struct packet *pkt)
 {
 	if (evtimer_pending(&pkt->ev_timeout, NULL) &&

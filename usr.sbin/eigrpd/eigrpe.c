@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.31 2016/09/02 16:39:44 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.32 2016/09/02 16:44:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -37,23 +37,20 @@
 #include "log.h"
 #include "control.h"
 
-void		 eigrpe_sig_handler(int, short, void *);
-__dead void	 eigrpe_shutdown(void);
+static void		 eigrpe_sig_handler(int, short, void *);
+static __dead void	 eigrpe_shutdown(void);
+static void		 eigrpe_dispatch_main(int, short, void *);
+static void		 eigrpe_dispatch_rde(int, short, void *);
+
+struct eigrpd_conf	*econf;
 
 static struct event	 ev4;
 static struct event	 ev6;
-struct eigrpd_conf	*econf;
-struct imsgev		*iev_main;
-struct imsgev		*iev_rde;
-
-extern struct iface_id_head ifaces_by_id;
-RB_PROTOTYPE(iface_id_head, eigrp_iface, id_tree, iface_id_compare)
-
-extern struct nbr_addr_head nbrs_by_addr;
-RB_PROTOTYPE(nbr_addr_head, nbr, addr_tree, nbr_compare)
+static struct imsgev	*iev_main;
+static struct imsgev	*iev_rde;
 
 /* ARGSUSED */
-void
+static void
 eigrpe_sig_handler(int sig, short event, void *bula)
 {
 	switch (sig) {
@@ -180,7 +177,7 @@ eigrpe(int debug, int verbose, char *sockname)
 	return (0);
 }
 
-__dead void
+static __dead void
 eigrpe_shutdown(void)
 {
 	/* close pipes */
@@ -224,7 +221,7 @@ eigrpe_imsg_compose_rde(int type, uint32_t peerid, pid_t pid,
 }
 
 /* ARGSUSED */
-void
+static void
 eigrpe_dispatch_main(int fd, short event, void *bula)
 {
 	static struct eigrpd_conf *nconf;
@@ -399,7 +396,7 @@ eigrpe_dispatch_main(int fd, short event, void *bula)
 }
 
 /* ARGSUSED */
-void
+static void
 eigrpe_dispatch_rde(int fd, short event, void *bula)
 {
 	struct imsgev		*iev = bula;

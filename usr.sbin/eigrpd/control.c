@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.5 2016/09/02 16:29:54 renato Exp $ */
+/*	$OpenBSD: control.c,v 1.6 2016/09/02 16:44:33 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,9 +32,11 @@
 
 #define	CONTROL_BACKLOG	5
 
-struct ctl_conn	*control_connbyfd(int);
-struct ctl_conn	*control_connbypid(pid_t);
-void		 control_close(int);
+static void		 control_accept(int, short, void *);
+static struct ctl_conn	*control_connbyfd(int);
+static struct ctl_conn	*control_connbypid(pid_t);
+static void		 control_close(int);
+static void		 control_dispatch_imsg(int, short, void *);
 
 int
 control_init(char *path)
@@ -109,7 +111,7 @@ control_cleanup(char *path)
 }
 
 /* ARGSUSED */
-void
+static void
 control_accept(int listenfd, short event, void *bula)
 {
 	int			 connfd;
@@ -155,7 +157,7 @@ control_accept(int listenfd, short event, void *bula)
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
 }
 
-struct ctl_conn *
+static struct ctl_conn *
 control_connbyfd(int fd)
 {
 	struct ctl_conn	*c;
@@ -167,7 +169,7 @@ control_connbyfd(int fd)
 	return (c);
 }
 
-struct ctl_conn *
+static struct ctl_conn *
 control_connbypid(pid_t pid)
 {
 	struct ctl_conn	*c;
@@ -179,7 +181,7 @@ control_connbypid(pid_t pid)
 	return (c);
 }
 
-void
+static void
 control_close(int fd)
 {
 	struct ctl_conn	*c;
@@ -205,7 +207,7 @@ control_close(int fd)
 }
 
 /* ARGSUSED */
-void
+static void
 control_dispatch_imsg(int fd, short event, void *bula)
 {
 	struct ctl_conn	*c;

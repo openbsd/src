@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.5 2016/09/02 16:29:55 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.6 2016/09/02 16:44:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -24,15 +24,15 @@
 #include "eigrpd.h"
 #include "log.h"
 
-void	print_mainconf(struct eigrpd_conf *);
-const char *print_no(uint16_t);
-void	print_redist_metric(struct redist_metric *);
-void	print_redistribute(struct eigrp *);
-void	print_iface(struct eigrp_iface *);
-void	print_as(struct eigrp *);
-void	print_af(struct eigrpd_conf *, int);
+static void		 print_mainconf(struct eigrpd_conf *);
+static const char	*print_no(uint16_t);
+static void		 print_redist_metric(struct redist_metric *);
+static void		 print_redistribute(struct eigrp *);
+static void		 print_iface(struct eigrp_iface *);
+static void		 print_as(struct eigrp *);
+static void		 print_af(struct eigrpd_conf *, int);
 
-void
+static void
 print_mainconf(struct eigrpd_conf *conf)
 {
 	printf("router-id %s\n", inet_ntoa(conf->rtr_id));
@@ -48,7 +48,7 @@ print_mainconf(struct eigrpd_conf *conf)
 	printf("fib-priority-summary %u\n", conf->fib_priority_summary);
 }
 
-const char *
+static const char *
 print_no(uint16_t type)
 {
 	if (type & REDIST_NO)
@@ -57,14 +57,14 @@ print_no(uint16_t type)
 		return ("");
 }
 
-void
+static void
 print_redist_metric(struct redist_metric *metric)
 {
 	printf(" %u %u %u %u %u", metric->bandwidth, metric->delay,
 	    metric->reliability, metric->load, metric->mtu);
 }
 
-void
+static void
 print_redistribute(struct eigrp *eigrp)
 {
 	struct redistribute	*r;
@@ -108,7 +108,7 @@ print_redistribute(struct eigrp *eigrp)
 	}
 }
 
-void
+static void
 print_iface(struct eigrp_iface *ei)
 {
 	struct summary_addr	*summary;
@@ -127,7 +127,7 @@ print_iface(struct eigrp_iface *ei)
 	printf("\t\t}\n");
 }
 
-void
+static void
 print_as(struct eigrp *eigrp)
 {
 	struct eigrp_iface	*ei;
@@ -147,7 +147,7 @@ print_as(struct eigrp *eigrp)
 	printf("\t}\n");
 }
 
-void
+static void
 print_af(struct eigrpd_conf *conf, int af)
 {
 	struct eigrp	*eigrp;

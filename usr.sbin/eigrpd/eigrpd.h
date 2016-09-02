@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.19 2016/09/02 16:36:33 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.20 2016/09/02 16:44:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -119,6 +119,17 @@ enum imsg_type {
 	IMSG_RECONF_END
 };
 
+/* forward declarations */
+struct eigrp_iface;
+RB_HEAD(iface_id_head, eigrp_iface);
+struct nbr;
+RB_HEAD(nbr_addr_head, nbr);
+RB_HEAD(nbr_pid_head, nbr);
+struct rde_nbr;
+RB_HEAD(rde_nbr_head, rde_nbr);
+struct rt_node;
+RB_HEAD(rt_tree, rt_node);
+
 union eigrpd_addr {
 	struct in_addr	v4;
 	struct in6_addr	v6;
@@ -215,6 +226,7 @@ struct eigrp_iface {
 	struct rinfo_head	 query_list;	/* multicast queries */
 	TAILQ_HEAD(, summary_addr) summary_list;
 };
+RB_PROTOTYPE(iface_id_head, eigrp_iface, id_tree, iface_id_compare)
 
 #define INADDRSZ	4
 #define IN6ADDRSZ	16
@@ -225,12 +237,6 @@ struct seq_addr_entry {
 	union eigrpd_addr	 addr;
 };
 TAILQ_HEAD(seq_addr_head, seq_addr_entry);
-
-struct nbr;
-RB_HEAD(nbr_addr_head, nbr);
-RB_HEAD(nbr_pid_head, nbr);
-struct rt_node;
-RB_HEAD(rt_tree, rt_node);
 
 #define	REDIST_STATIC		0x01
 #define	REDIST_RIP		0x02
@@ -438,6 +444,9 @@ struct ctl_stats {
 #define min(x,y) ((x) <= (y) ? (x) : (y))
 #define max(x,y) ((x) > (y) ? (x) : (y))
 
+extern struct eigrpd_conf	*eigrpd_conf;
+extern struct iface_id_head	 ifaces_by_id;
+
 /* parse.y */
 struct eigrpd_conf	*parse_config(char *);
 int			 cmdline_symset(char *);
@@ -447,20 +456,17 @@ uint16_t	 in_cksum(void *, size_t);
 
 /* kroute.c */
 int		 kif_init(void);
-void		 kif_redistribute(void);
 int		 kr_init(int, unsigned int);
+void		 kif_redistribute(void);
 int		 kr_change(struct kroute *);
 int		 kr_delete(struct kroute *);
-void		 kif_clear(void);
 void		 kr_shutdown(void);
 void		 kr_fib_couple(void);
 void		 kr_fib_decouple(void);
-void		 kr_fib_reload(void);
-void		 kr_dispatch_msg(int, short, void *);
 void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *, pid_t);
 struct kif	*kif_findname(char *);
-void		 kr_reload(void);
+void		 kif_clear(void);
 
 /* util.c */
 uint8_t		 mask2prefixlen(in_addr_t);
@@ -486,14 +492,13 @@ void		 sa2addr(struct sockaddr *, int *, union eigrpd_addr *);
 /* eigrpd.c */
 int		 main_imsg_compose_eigrpe(int, pid_t, void *, uint16_t);
 int		 main_imsg_compose_rde(int, pid_t, void *, uint16_t);
-void		 merge_config(struct eigrpd_conf *, struct eigrpd_conf *);
-struct eigrpd_conf *config_new_empty(void);
-void		 config_clear(struct eigrpd_conf *);
 void		 imsg_event_add(struct imsgev *);
 int		 imsg_compose_event(struct imsgev *, uint16_t, uint32_t,
 		    pid_t, int, void *, uint16_t);
-uint32_t	 eigrp_router_id(struct eigrpd_conf *);
 struct eigrp	*eigrp_find(struct eigrpd_conf *, int, uint16_t);
+void		 merge_config(struct eigrpd_conf *, struct eigrpd_conf *);
+struct eigrpd_conf *config_new_empty(void);
+void		 config_clear(struct eigrpd_conf *);
 
 /* printconf.c */
 void		 print_config(struct eigrpd_conf *);

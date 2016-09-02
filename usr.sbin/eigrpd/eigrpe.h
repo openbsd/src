@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.h,v 1.13 2016/09/02 16:36:33 renato Exp $ */
+/*	$OpenBSD: eigrpe.h,v 1.14 2016/09/02 16:44:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -52,6 +52,9 @@ struct nbr {
 	time_t			 uptime;
 	uint16_t		 hello_holdtime;
 	uint8_t			 flags;
+#define F_EIGRP_NBR_SELF		0x01
+#define F_EIGRP_NBR_PENDING		0x02
+#define F_EIGRP_NBR_CR_MODE		0x04
 
 	struct rinfo_head	 update_list;	/* unicast updates */
 	struct rinfo_head	 query_list;	/* unicast queries  */
@@ -62,17 +65,16 @@ struct nbr {
 	uint32_t		 next_mcast_seq;
 	TAILQ_HEAD(, packet)	 retrans_list;
 };
-#define F_EIGRP_NBR_SELF		0x01
-#define F_EIGRP_NBR_PENDING		0x02
-#define F_EIGRP_NBR_CR_MODE		0x04
+RB_PROTOTYPE(nbr_addr_head, nbr, addr_tree, nbr_compare)
+RB_PROTOTYPE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
 
 #define PREFIX_SIZE4(x)	(((x - 1) / 8) + 1)
 #define PREFIX_SIZE6(x)	((x == 128) ? 16 : ((x / 8) + 1))
 
+extern struct eigrpd_conf        *econf;
+
 /* eigrpe.c */
 pid_t		 eigrpe(int, int, char *);
-void		 eigrpe_dispatch_main(int, short, void *);
-void		 eigrpe_dispatch_rde(int, short, void *);
 int		 eigrpe_imsg_compose_parent(int, pid_t, void *, uint16_t);
 int		 eigrpe_imsg_compose_rde(int, uint32_t, pid_t, void *,
 		    uint16_t);
@@ -88,13 +90,10 @@ void		 eigrpe_nbr_ctl(struct ctl_conn *);
 void		 eigrpe_stats_ctl(struct ctl_conn *);
 
 /* interface.c */
-struct iface		*if_new(struct eigrpd_conf *, struct kif *);
-void			 if_del(struct iface *);
 struct iface		*if_lookup(struct eigrpd_conf *, unsigned int);
 void			 if_init(struct eigrpd_conf *, struct iface *);
 void			 if_addr_new(struct iface *, struct kaddr *);
 void			 if_addr_del(struct iface *, struct kaddr *);
-struct if_addr		*if_addr_lookup(struct if_addr_head *, struct kaddr *);
 in_addr_t		 if_primary_addr(struct iface *);
 uint8_t			 if_primary_addr_prefixlen(struct iface *);
 void			 if_update(struct iface *, int);
@@ -103,19 +102,13 @@ struct eigrp_iface	*eigrp_if_new(struct eigrpd_conf *, struct eigrp *,
 void			 eigrp_if_del(struct eigrp_iface *);
 struct eigrp_iface	*eigrp_if_lookup(struct iface *, int, uint16_t);
 struct eigrp_iface	*eigrp_if_lookup_id(uint32_t);
-void			 eigrp_if_start(struct eigrp_iface *);
-void			 eigrp_if_reset(struct eigrp_iface *);
 struct ctl_iface	*if_to_ctl(struct eigrp_iface *);
 void			 if_set_sockbuf(int);
-int			 if_join_ipv4_group(struct iface *, struct in_addr *);
-int			 if_leave_ipv4_group(struct iface *, struct in_addr *);
 int			 if_set_ipv4_mcast_ttl(int, uint8_t);
 int			 if_set_ipv4_mcast(struct iface *);
 int			 if_set_ipv4_mcast_loop(int);
 int			 if_set_ipv4_recvif(int, int);
 int			 if_set_ipv4_hdrincl(int);
-int			 if_join_ipv6_group(struct iface *, struct in6_addr *);
-int			 if_leave_ipv6_group(struct iface *, struct in6_addr *);
 int			 if_set_ipv6_mcast(struct iface *);
 int			 if_set_ipv6_mcast_loop(int);
 int			 if_set_ipv6_pktinfo(int, int);
@@ -126,26 +119,16 @@ struct nbr	*nbr_new(struct eigrp_iface *, union eigrpd_addr *,
 		    uint16_t, int);
 void		 nbr_init(struct nbr *);
 void		 nbr_del(struct nbr *);
-void		 nbr_update_peerid(struct nbr *);
 struct nbr	*nbr_find(struct eigrp_iface *, union eigrpd_addr *);
 struct nbr	*nbr_find_peerid(uint32_t);
 struct ctl_nbr	*nbr_to_ctl(struct nbr *);
 void		 nbr_clear_ctl(struct ctl_nbr *);
-void		 nbr_timeout(int, short, void *);
 void		 nbr_start_timeout(struct nbr *);
-void		 nbr_stop_timeout(struct nbr *);
 
 /* rtp.c */
-struct pbuf	*rtp_buf_new(struct ibuf *);
-struct pbuf	*rtp_buf_hold(struct pbuf *);
-void		 rtp_buf_release(struct pbuf *);
-struct packet	*rtp_packet_new(struct nbr *, uint32_t, struct pbuf *);
 void		 rtp_packet_del(struct packet *);
 void		 rtp_process_ack(struct nbr *, uint32_t);
-void		 rtp_send_packet(struct packet *);
-void		 rtp_enqueue_packet(struct packet *);
 void		 rtp_send_ucast(struct nbr *, struct ibuf *);
-void		 rtp_send_mcast(struct eigrp_iface *, struct ibuf *);
 void		 rtp_send(struct eigrp_iface *, struct nbr *, struct ibuf *);
 void		 rtp_send_ack(struct nbr *);
 void		 rtp_ack_timer(int, short, void *);
