@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.4 2016/07/09 09:06:22 stefan Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.5 2016/09/02 17:08:28 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -103,12 +103,17 @@ struct vioblk_dev {
 };
 
 struct vionet_dev {
+	pthread_mutex_t mutex;
+	struct event event;
+
 	struct virtio_io_cfg cfg;
 
 	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
 
 	int fd, rx_added;
 	int rx_pending;
+	uint32_t vm_id;
+	int irq;
 	uint8_t mac[6];
 };
 

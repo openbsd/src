@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.17 2016/08/17 05:07:13 deraadt Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.18 2016/09/02 17:08:28 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -25,6 +25,7 @@
 #include <dev/pci/vioblkreg.h>
 
 #include <errno.h>
+#include <event.h>
 #include <poll.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -33,6 +34,7 @@
 
 #include "pci.h"
 #include "vmd.h"
+#include "vmm.h"
 #include "virtio.h"
 #include "loadfile.h"
 
@@ -689,6 +691,7 @@ virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 	struct vionet_dev *dev = (struct vionet_dev *)cookie;
 
 	*intr = 0xFF;
+	mutex_lock(&dev->mutex);
 
 	if (dir == 0) {
 		switch (reg) {
@@ -757,9 +760,14 @@ virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		}
 	}
+
+	mutex_unlock(&dev->mutex);
 	return (0);
 }
 
+/*
+ * Must be called with dev->mutex acquired.
+ */
 void
 vionet_update_qa(struct vionet_dev *dev)
 {
@@ -770,6 +778,9 @@ vionet_update_qa(struct vionet_dev *dev)
 	dev->vq[dev->cfg.queue_select].qa = dev->cfg.queue_address;
 }
 
+/*
+ * Must be called with dev->mutex acquired.
+ */
 void
 vionet_update_qs(struct vionet_dev *dev)
 {
@@ -782,6 +793,9 @@ vionet_update_qs(struct vionet_dev *dev)
 	dev->cfg.queue_size = dev->vq[dev->cfg.queue_select].qs;
 }
 
+/*
+ * Must be called with dev->mutex acquired.
+ */
 int
 vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 {
@@ -879,6 +893,8 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
  *
  * Enqueue data that was received on a tap file descriptor
  * to the vionet device queue.
+ *
+ * Must be called with dev->mutex acquired.
  */
 static int
 vionet_rx(struct vionet_dev *dev)
@@ -912,6 +928,47 @@ vionet_rx(struct vionet_dev *dev)
 	return (num_enq);
 }
 
+/*
+ * vionet_rx_event
+ *
+ * Called from the event handling thread when new data can be
+ * received on the tap fd of a vionet device.
+ */
+static void
+vionet_rx_event(int fd, short kind, void *arg)
+{
+	struct vionet_dev *dev = arg;
+
+	mutex_lock(&dev->mutex);
+
+	/*
+	 * We already have other data pending to be received. The data that
+	 * has become available now will be enqueued to the vionet_dev
+	 * later.
+	 */
+	if (dev->rx_pending) {
+		mutex_unlock(&dev->mutex);
+		return;
+	}
+
+	if (vionet_rx(dev) > 0) {
+		/* XXX: vcpu_id */
+		vcpu_assert_pic_irq(dev->vm_id, 0, dev->irq);
+	}
+
+	mutex_unlock(&dev->mutex);
+}
+
+/*
+ * vionet_process_rx
+ *
+ * Processes any remaining pending receivable data for a vionet device.
+ * Called on VCPU exit. Although we poll on the tap file descriptor of
+ * a vionet_dev in a separate thread, this function still needs to be
+ * called on VCPU exit: it can happen that not all data fits into the
+ * receive queue of the vionet_dev immediately. So any outstanding data
+ * is handled here.
+ */
 int
 vionet_process_rx(void)
 {
@@ -919,11 +976,15 @@ vionet_process_rx(void)
 
 	num_enq = 0;
 	for (i = 0 ; i < nr_vionet; i++) {
-		if (!vionet[i].rx_added)
+		mutex_lock(&vionet[i].mutex);
+		if (!vionet[i].rx_added) {
+			mutex_unlock(&vionet[i].mutex);
 			continue;
+		}
 
-		if (vionet[i].rx_pending || fd_hasdata(vionet[i].fd))
+		if (vionet[i].rx_pending)
 			num_enq += vionet_rx(&vionet[i]);
+		mutex_unlock(&vionet[i].mutex);
 	}
 
 	/*
@@ -933,6 +994,9 @@ vionet_process_rx(void)
 	return (num_enq);
 }
 
+/*
+ * Must be called with dev->mutex acquired.
+ */
 void
 vionet_notify_rx(struct vionet_dev *dev)
 {
@@ -967,8 +1031,9 @@ vionet_notify_rx(struct vionet_dev *dev)
 	free(vr);
 }
 
-
 /*
+ * Must be called with dev->mutex acquired.
+ *
  * XXX cant trust ring data from VM, be extra cautious.
  * XXX advertise link status to guest
  */
@@ -1129,6 +1194,7 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 {
 	uint8_t id;
 	uint8_t i;
+	int ret;
 	off_t sz;
 
 	/* Virtio entropy device */
@@ -1225,6 +1291,14 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 				return;
 			}
 
+			ret = pthread_mutex_init(&vionet[i].mutex, NULL);
+			if (ret) {
+				errno = ret;
+				log_warn("%s: could not initialize mutex "
+				    "for vionet device", __progname);
+				return;
+			}
+
 			vionet[i].vq[0].qs = VIONET_QUEUE_SIZE;
 			vionet[i].vq[0].vq_availoffset =
 			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE;
@@ -1239,7 +1313,19 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE
 			    + sizeof(uint16_t) * (2 + VIONET_QUEUE_SIZE));
 			vionet[i].vq[1].last_avail = 0;
+			vionet[i].vq[1].notified_avail = 0;
 			vionet[i].fd = child_taps[i];
+			vionet[i].rx_pending = 0;
+			vionet[i].vm_id = vcp->vcp_id;
+			vionet[i].irq = 9; /* XXX */
+
+			event_set(&vionet[i].event, vionet[i].fd,
+			    EV_READ | EV_PERSIST, vionet_rx_event, &vionet[i]);
+			if (event_add(&vionet[i].event, NULL)) {
+				log_warn("could not initialize vionet event "
+				    "handler");
+				return;
+			}
 
 #if 0
 			/* User defined MAC */
