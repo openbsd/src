@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2016/07/22 09:28:59 reyk Exp $
+# $OpenBSD: Makefile,v 1.3 2016/09/02 21:30:34 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-Net-Pcap		Perl interface for libpcap
@@ -17,6 +17,7 @@ PERL_REQUIRE !=	perl -Mstrict -Mwarnings -e ' \
 regress:
 	@echo "${PERL_REQUIRE}"
 	@echo install these perl packages for additional tests
+	@echo SKIPPED
 .endif
 
 # Automatically generate regress targets from test cases in directory.

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2013/08/06 19:11:53 miod Exp $
+# $OpenBSD: Makefile,v 1.9 2016/09/02 21:30:33 bluhm Exp $
 
 .include <bsd.own.mk>
 
@@ -22,6 +22,7 @@ do-gcc:
 	    echo "Error: DejaGnu is required to run this test."; \
 	    echo "  You can install the package from the ftp site or compile it"; \
 	    echo "  from the ports tree (${PORTSDIR}/devel/dejagnu)."; \
+	    echo SKIPPED; \
 	    exit 1; \
 	fi
 	@cd ${TESTDIR} && ${MAKE} -f Makefile.bsd-wrapper && \

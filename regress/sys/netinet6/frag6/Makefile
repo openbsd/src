@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2015/04/15 21:29:15 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.12 2016/09/02 21:30:34 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -13,6 +13,7 @@ PYTHON_IMPORT != python2.7 -c 'from scapy.all import *' 2>&1 || true
 regress:
 	@echo '${PYTHON_IMPORT}'
 	@echo install python and the scapy module for additional tests
+	@echo SKIPPED
 .endif
 
 # This test needs a manual setup of two machines
@@ -42,6 +43,7 @@ regress:
 	@echo this tests needs a remote machine to operate on
 	@echo SRC_IF SRC_MAC DST_MAC SRC_OUT6 DST_IN6 are empty
 	@echo fill out these variables for additional tests
+	@echo SKIPPED
 .endif
 
 depend: addr.py

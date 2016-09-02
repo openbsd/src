@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.1 2014/10/31 14:10:55 jsing Exp $
+#	$OpenBSD: Makefile,v 1.2 2016/09/02 21:30:34 bluhm Exp $
 
 GO_VERSION != sh -c "(go version) 2>/dev/null || true"
 
 .if empty(GO_VERSION)
 regress:
-	@echo golang is required for this regress... skipping
+	@echo package go is required for this regress
+	@echo SKIPPED
 .endif
 
 REGRESS_TARGETS=regress-gotls
