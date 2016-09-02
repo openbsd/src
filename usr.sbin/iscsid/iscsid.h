@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.15 2016/08/16 18:41:57 tedu Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.16 2016/09/02 16:22:31 benno Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -390,3 +390,7 @@ void	vscsi_data(unsigned long, int, void *, size_t);
 void	vscsi_status(int, int, void *, size_t);
 void	vscsi_event(unsigned long, u_int, u_int);
 struct vscsi_stats *vscsi_stats(void);
+
+/* logmsg.c */
+void	log_hexdump(void *, size_t);
+void	log_pdu(struct pdu *, int);
