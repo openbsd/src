@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.28 2016/09/01 10:49:48 claudio Exp $	*/
+/*	$OpenBSD: config.c,v 1.29 2016/09/02 13:09:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -44,14 +44,14 @@ config_init(struct relayd *env)
 		env->sc_interval.tv_usec = 0;
 		env->sc_prefork_relay = RELAY_NUMPROC;
 		env->sc_statinterval.tv_sec = RELAY_STATINTERVAL;
-
-		ps->ps_what[PROC_PARENT] = CONFIG_ALL;
-		ps->ps_what[PROC_PFE] = CONFIG_ALL & ~CONFIG_PROTOS;
-		ps->ps_what[PROC_HCE] = CONFIG_TABLES;
-		ps->ps_what[PROC_CA] = CONFIG_RELAYS;
-		ps->ps_what[PROC_RELAY] = CONFIG_RELAYS|
-		    CONFIG_TABLES|CONFIG_PROTOS|CONFIG_CA_ENGINE;
 	}
+
+	ps->ps_what[PROC_PARENT] = CONFIG_ALL;
+	ps->ps_what[PROC_PFE] = CONFIG_ALL & ~CONFIG_PROTOS;
+	ps->ps_what[PROC_HCE] = CONFIG_TABLES;
+	ps->ps_what[PROC_CA] = CONFIG_RELAYS;
+	ps->ps_what[PROC_RELAY] = CONFIG_RELAYS|
+	    CONFIG_TABLES|CONFIG_PROTOS|CONFIG_CA_ENGINE;
 
 	/* Other configuration */
 	what = ps->ps_what[privsep_process];
