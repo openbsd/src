@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.27 2016/09/02 14:45:51 reyk Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.28 2016/09/02 16:14:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -146,7 +146,7 @@ snmp_setsock(struct relayd *env, enum privsep_procid id)
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	if (strlcpy(sun.sun_path, env->sc_snmp_path,
+	if (strlcpy(sun.sun_path, env->sc_conf.snmp_path,
 	    sizeof(sun.sun_path)) >= sizeof(sun.sun_path))
 		fatalx("invalid socket path");
 
@@ -521,7 +521,7 @@ snmp_agentx_process(struct agentx_handle *h, struct agentx_pdu *pdu, void *arg)
 			if (snmp_agentx_open_response(h, pdu) == -1)
 				break;
 			/* Open AgentX socket; register MIB if not trap-only */
-			if (!(env->sc_snmp_flags & FSNMP_TRAPONLY))
+			if (!(env->sc_conf.flags & F_SNMP_TRAPONLY))
 				if (snmp_register(env) == -1) {
 					log_warn("failed to register MIB");
 					break;

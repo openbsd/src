@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.230 2016/09/02 14:45:51 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.231 2016/09/02 16:14:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -384,13 +384,15 @@ union hashkey {
 #define F_SCRIPT		0x02000000
 #define F_TLSINSPECT		0x04000000
 #define F_HASHKEY		0x08000000
+#define	F_SNMP_TRAPONLY		0x10000000
 
 #define F_BITS								\
 	"\10\01DISABLE\02BACKUP\03USED\04DOWN\05ADD\06DEL\07CHANGED"	\
 	"\10STICKY-ADDRESS\11CHECK_DONE\12ACTIVE_RULESET\13CHECK_SENT"	\
 	"\14TLS\15NAT_LOOKUP\16DEMOTE\17LOOKUP_PATH\20DEMOTED\21UDP"	\
 	"\22RETURN\23TRAP\24NEEDPF\25PORT\26TLS_CLIENT\27NEEDRT"	\
-	"\30MATCH\31DIVERT\32SCRIPT\33TLS_INSPECT\34HASHKEY"
+	"\30MATCH\31DIVERT\32SCRIPT\33TLS_INSPECT\34HASHKEY"		\
+	"\35SNMP_TRAPONLY"
 
 enum forwardmode {
 	FWD_NORMAL		= 0,
@@ -1031,6 +1033,7 @@ struct privsep_proc {
 
 struct relayd_config {
 	char			 tls_sid[SSL_MAX_SID_CTX_LENGTH];
+	char			 snmp_path[PATH_MAX];
 	struct timeval		 interval;
 	struct timeval		 timeout;
 	struct timeval		 statinterval;
@@ -1070,8 +1073,6 @@ struct relayd {
 	struct event		 sc_statev;
 
 	int			 sc_snmp;
-	const char		*sc_snmp_path;
-	int			 sc_snmp_flags;
 	struct event		 sc_snmpto;
 	struct event		 sc_snmpev;
 
@@ -1088,8 +1089,6 @@ struct relayd {
 	struct tls_ticket	 sc_tls_ticket;
 	struct tls_ticket	 sc_tls_ticket_bak;
 };
-
-#define	FSNMP_TRAPONLY			0x01
 
 #define RELAYD_OPT_VERBOSE		0x01
 #define RELAYD_OPT_NOACTION		0x04

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.86 2016/09/02 14:45:51 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.87 2016/09/02 16:14:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -61,8 +61,6 @@ pfe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
 	if (config_init(ps->ps_env) == -1)
 		fatal("failed to initialize configuration");
-
-	snmp_init(env, PROC_PARENT);
 
 	if (pledge("stdio recvfd unix pf", NULL) == -1)
 		fatal("pledge");
@@ -207,6 +205,7 @@ pfe_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		config_getcfg(env, imsg);
 		init_filter(env, imsg->fd);
 		init_tables(env);
+		snmp_init(env, PROC_PARENT);
 		break;
 	case IMSG_CTL_START:
 		pfe_setup_events();

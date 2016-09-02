@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.209 2016/09/02 14:45:51 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.210 2016/09/02 16:14:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -376,26 +376,18 @@ sendbuf		: NOTHING		{
 		;
 
 main		: INTERVAL NUMBER	{
-			if (loadcfg)
-				break;
 			if ((conf->sc_conf.interval.tv_sec = $2) < 0) {
 				yyerror("invalid interval: %d", $2);
 				YYERROR;
 			}
 		}
 		| LOG loglevel		{
-			if (loadcfg)
-				break;
 			conf->sc_conf.opts |= $2;
 		}
 		| TIMEOUT timeout	{
-			if (loadcfg)
-				break;
 			bcopy(&$2, &conf->sc_conf.timeout, sizeof(struct timeval));
 		}
 		| PREFORK NUMBER	{
-			if (loadcfg)
-				break;
 			if ($2 <= 0 || $2 > RELAY_MAXPROC) {
 				yyerror("invalid number of preforked "
 				    "relays: %d", $2);
@@ -404,17 +396,22 @@ main		: INTERVAL NUMBER	{
 			conf->sc_conf.prefork_relay = $2;
 		}
 		| SNMP trap optstring	{
-			if (loadcfg)
-				break;
 			conf->sc_conf.flags |= F_SNMP;
 			if ($2)
-				conf->sc_snmp_flags |= FSNMP_TRAPONLY;
-			if ($3)
-				conf->sc_snmp_path = $3;
-			else
-				conf->sc_snmp_path = strdup(AGENTX_SOCKET);
-			if (conf->sc_snmp_path == NULL)
-				fatal("out of memory");
+				conf->sc_conf.flags |= F_SNMP_TRAPONLY;
+			if ($3) {
+				if (strlcpy(conf->sc_conf.snmp_path,
+				    $3, sizeof(conf->sc_conf.snmp_path)) >=
+				    sizeof(conf->sc_conf.snmp_path)) {
+					yyerror("snmp path truncated");
+					free($3);
+					YYERROR;
+				}
+				free($3);
+			} else
+				(void)strlcpy(conf->sc_conf.snmp_path,
+				    AGENTX_SOCKET,
+				    sizeof(conf->sc_conf.snmp_path));
 		}
 		;
 
