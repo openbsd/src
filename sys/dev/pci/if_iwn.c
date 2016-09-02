@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.170 2016/08/17 09:43:27 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.171 2016/09/02 17:10:48 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -463,15 +463,15 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_txbfcaps = 0;
 	ic->ic_aselcaps = 0;
 	ic->ic_ampdu_params = (IEEE80211_AMPDU_PARAM_SS_4 | 0x3 /* 64k */);
-#ifdef notyet
 	if (sc->sc_flags & IWN_FLAG_HAS_11N) {
 		/* Set HT capabilities. */
-		ic->ic_htcaps =
+		ic->ic_htcaps = IEEE80211_HTCAP_SGI20;
+#ifdef notyet
+		ic->ic_htcaps |=
 #if IWN_RBUF_SIZE == 8192
 		    IEEE80211_HTCAP_AMSDU7935 |
 #endif
 		    IEEE80211_HTCAP_CBW20_40 |
-		    IEEE80211_HTCAP_SGI20 |
 		    IEEE80211_HTCAP_SGI40;
 		if (sc->hw_type != IWN_HW_REV_TYPE_4965)
 			ic->ic_htcaps |= IEEE80211_HTCAP_GF;
@@ -479,8 +479,8 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 			ic->ic_htcaps |= IEEE80211_HTCAP_SMPS_DYN;
 		else
 			ic->ic_htcaps |= IEEE80211_HTCAP_SMPS_DIS;
-	}
 #endif	/* notyet */
+	}
 
 	/* Set supported legacy rates. */
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
@@ -3007,8 +3007,11 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		tx->plcp = rinfo->plcp;
 
 	if ((ni->ni_flags & IEEE80211_NODE_HT) &&
-	    tx->id != sc->broadcast_id)
+	    tx->id != sc->broadcast_id) {
 		tx->rflags = rinfo->ht_flags;
+		if (ni->ni_htcaps & IEEE80211_HTCAP_SGI20)
+			tx->rflags |= IWN_RFLAG_SGI;
+	}
 	else
 		tx->rflags = rinfo->flags;
 	if (tx->id == sc->broadcast_id) {
@@ -3416,6 +3419,9 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 			rinfo = &iwn_rates[iwn_mcs2ridx[txrate]];
 			linkq.retry[i].plcp = rinfo->ht_plcp;
 			linkq.retry[i].rflags = rinfo->ht_flags;
+
+			if (ni->ni_htcaps & IEEE80211_HTCAP_SGI20)
+				linkq.retry[i].rflags |= IWN_RFLAG_SGI;
 
 			/* XXX set correct ant mask for MIMO rates here */
 			linkq.retry[i].rflags |= IWN_RFLAG_ANT(txant);
