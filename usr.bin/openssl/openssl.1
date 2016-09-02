@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.66 2016/09/01 08:26:44 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.67 2016/09/02 18:43:52 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: September 1 2016 $
+.Dd $Mdocdate: September 2 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3837,13 +3837,9 @@ If this option is not specified then the host specified with
 .Fl connect
 will be used.
 .El
-.\"
-.\" S_SERVER
-.\"
 .Sh S_SERVER
 .nr nS 1
 .Nm "openssl s_server"
-.Bk -words
 .Op Fl accept Ar port
 .Op Fl bugs
 .Op Fl CAfile Ar file
@@ -3883,7 +3879,6 @@ will be used.
 .Op Fl verify Ar depth
 .Op Fl WWW
 .Op Fl www
-.Ek
 .nr nS 0
 .Pp
 The
@@ -3891,18 +3886,42 @@ The
 command implements a generic SSL/TLS server which listens
 for connections on a given port using SSL/TLS.
 .Pp
+If a connection request is established with a client and neither the
+.Fl www
+nor the
+.Fl WWW
+option has been used, then any data received
+from the client is displayed and any key presses are sent to the client.
+Certain single letter commands perform special operations:
+.Pp
+.Bl -tag -width "XXXX" -compact
+.It Ic P
+Send plain text, which should cause the client to disconnect.
+.It Ic Q
+End the current SSL connection and exit.
+.It Ic q
+End the current SSL connection, but still accept new connections.
+.It Ic R
+Renegotiate the SSL session and request a client certificate.
+.It Ic r
+Renegotiate the SSL session.
+.It Ic S
+Print out some session cache status information.
+.El
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl accept Ar port
-The TCP
+Listen on TCP
 .Ar port
-to listen on for connections.
-If not specified, 4433 is used.
+for connections.
+The default is port 4433.
 .It Fl bugs
-There are several known bugs in SSL and TLS implementations.
-Adding this option enables various workarounds.
+Enable various workarounds for buggy implementations.
 .It Fl CAfile Ar file
-A file containing trusted certificates to use during client authentication
+A
+.Ar file
+containing trusted certificates to use during client authentication
 and to use when attempting to build the server certificate chain.
 The list is also used in the list of acceptable client CAs passed to the
 client when a certificate is requested.
@@ -3917,35 +3936,33 @@ see
 for more information.
 These are also used when building the server certificate chain.
 .It Fl cert Ar file
-The certificate to use; most server's cipher suites require the use of a
-certificate and some require a certificate with a certain public key type:
-for example the DSS cipher suites require a certificate containing a DSS
-.Pq DSA
-key.
+The certificate to use: most server's cipher suites require the use of a
+certificate and some require a certificate with a certain public key type.
+For example, the DSS cipher suites require a certificate containing a DSS
+(DSA) key.
 If not specified, the file
 .Pa server.pem
 will be used.
 .It Fl cipher Ar cipherlist
+Modify the cipher list used by the server.
 This allows the cipher list used by the server to be modified.
 When the client sends a list of supported ciphers, the first client cipher
 also included in the server list is used.
 Because the client specifies the preference order, the order of the server
 cipherlist is irrelevant.
 See the
-.Sx CIPHERS
-section for more information.
+.Nm ciphers
+command for more information.
 .It Fl context Ar id
-Sets the SSL context ID.
+Set the SSL context ID.
 It can be given any string value.
-If this option is not present, a default value will be used.
 .It Fl crl_check , crl_check_all
 Check the peer certificate has not been revoked by its CA.
 The CRLs are appended to the certificate file.
-With the
 .Fl crl_check_all
-option, all CRLs of all CAs in the chain are checked.
+checks all CRLs of all CAs in the chain.
 .It Fl crlf
-This option translates a line feed from the terminal into CR+LF.
+Translate a line feed from the terminal into CR+LF.
 .It Fl dcert Ar file , Fl dkey Ar file
 Specify an additional certificate and private key; these behave in the
 same manner as the
@@ -3953,18 +3970,12 @@ same manner as the
 and
 .Fl key
 options except there is no default if they are not specified
-.Pq no additional certificate or key is used .
-As noted above some cipher suites require a certificate containing a key of
-a certain type.
-Some cipher suites need a certificate carrying an RSA key
-and some a DSS
-.Pq DSA
-key.
+(no additional certificate or key is used).
 By using RSA and DSS certificates and keys,
 a server can support clients which only support RSA or DSS cipher suites
 by using an appropriate certificate.
 .It Fl debug
-Print extensive debugging information including a hex dump of all traffic.
+Print extensive debugging information, including a hex dump of all traffic.
 .It Fl dhparam Ar file
 The DH parameter file to use.
 The ephemeral DH cipher suites generate keys
@@ -3975,13 +3986,11 @@ If this fails, a static set of parameters hard coded into the
 .Nm s_server
 program will be used.
 .It Fl hack
-This option enables a further workaround for some early Netscape
-SSL code
-.Pq \&? .
+Enables a further workaround for some early Netscape SSL code.
 .It Fl HTTP
-Emulates a simple web server.
-Pages will be resolved relative to the current directory;
-for example if the URL
+Emulate a simple web server.
+Pages are resolved relative to the current directory.
+For example if the URL
 .Pa https://myhost/page.html
 is requested, the file
 .Pa ./page.html
@@ -3993,33 +4002,29 @@ must end with CRLF).
 Generate SSL/TLS session IDs prefixed by
 .Ar arg .
 This is mostly useful for testing any SSL/TLS code
-.Pq e.g. proxies
+(e.g. proxies)
 that wish to deal with multiple servers, when each of which might be
 generating a unique range of session IDs
-.Pq e.g. with a certain prefix .
+(e.g. with a certain prefix).
 .It Fl key Ar keyfile
 The private key to use.
 If not specified, the certificate file will be used.
 .It Fl msg
 Show all protocol messages with hex dump.
 .It Fl nbio
-Turns on non-blocking I/O.
+Turn on non-blocking I/O.
 .It Fl nbio_test
-Tests non-blocking I/O.
+Test non-blocking I/O.
 .It Fl no_dhe
-If this option is set, no DH parameters will be loaded, effectively
-disabling the ephemeral DH cipher suites.
+Disable ephemeral DH cipher suites.
 .It Fl no_tls1 | no_tls1_1 | no_tls1_2
-By default, the initial handshake uses a method which should be compatible
-with clients supporting any version of TLS.
-These options disable the use of TLS1.0, 1.1, and 1.2, respectively.
+Disable the use of TLS1.0, 1.1, and 1.2, respectively.
 .It Fl no_tmp_rsa
-Certain export cipher suites sometimes use a temporary RSA key; this option
-disables temporary RSA key generation.
+Disable temporary RSA key generation.
 .It Fl nocert
-If this option is set, no certificate is used.
+Do not use a certificate.
 This restricts the cipher suites available to the anonymous ones
-.Pq currently just anonymous DH .
+(currently just anonymous DH).
 .It Fl psk Ar key
 Use the PSK key
 .Ar key
@@ -4035,100 +4040,33 @@ Inhibit printing of session and certificate information.
 .It Fl serverpref
 Use server's cipher preferences.
 .It Fl state
-Prints out the SSL session states.
+Print the SSL session states.
 .It Fl tls1 | tls1_1 | tls1_2
 Permit only TLS1.0, 1.1, or 1.2, respectively.
 .It Fl WWW
-Emulates a simple web server.
-Pages will be resolved relative to the current directory;
-for example if the URL
+Emulate a simple web server.
+Pages are resolved relative to the current directory.
+For example if the URL
 .Pa https://myhost/page.html
 is requested, the file
 .Pa ./page.html
 will be loaded.
 .It Fl www
-Sends a status message back to the client when it connects.
-This includes lots of information about the ciphers used and various
-session parameters.
+Send a status message to the client when it connects,
+including information about the ciphers used and various session parameters.
 The output is in HTML format so this option will normally be used with a
 web browser.
 .It Fl Verify Ar depth , Fl verify Ar depth
-The verify
-.Ar depth
-to use.
-This specifies the maximum length of the client certificate chain
-and makes the server request a certificate from the client.
-With the
-.Fl Verify
-option, the client must supply a certificate or an error occurs.
-With the
-.Fl verify
-option, a certificate is requested but the client does not have to send one.
+Request a certificate chain from the client,
+with a maximum length of
+.Ar depth .
+With
+.Fl Verify ,
+the client must supply a certificate or an error occurs;
+with
+.Fl verify ,
+a certificate is requested but the client does not have to send one.
 .El
-.Sh S_SERVER CONNECTED COMMANDS
-If a connection request is established with an SSL client and neither the
-.Fl www
-nor the
-.Fl WWW
-option has been used, then normally any data received
-from the client is displayed and any key presses will be sent to the client.
-.Pp
-Certain single letter commands are also recognized which perform special
-operations: these are listed below.
-.Bl -tag -width "XXXX"
-.It Ar P
-Send some plain text down the underlying TCP connection: this should
-cause the client to disconnect due to a protocol violation.
-.It Ar Q
-End the current SSL connection and exit.
-.It Ar q
-End the current SSL connection, but still accept new connections.
-.It Ar R
-Renegotiate the SSL session and request a client certificate.
-.It Ar r
-Renegotiate the SSL session.
-.It Ar S
-Print out some session cache status information.
-.El
-.Sh S_SERVER NOTES
-.Nm s_server
-can be used to debug SSL clients.
-To accept connections from a web browser the command:
-.Pp
-.Dl $ openssl s_server -accept 443 -www
-.Pp
-can be used, for example.
-.Pp
-Most web browsers
-.Pq in particular Netscape and MSIE
-only support RSA cipher suites, so they cannot connect to servers
-which don't use a certificate carrying an RSA key or a version of
-.Nm OpenSSL
-with RSA disabled.
-.Pp
-Although specifying an empty list of CAs when requesting a client certificate
-is strictly speaking a protocol violation, some SSL
-clients interpret this to mean any CA is acceptable.
-This is useful for debugging purposes.
-.Pp
-The session parameters can printed out using the
-.Nm sess_id
-program.
-.Sh S_SERVER BUGS
-Because this program has a lot of options and also because some of
-the techniques used are rather old, the C source of
-.Nm s_server
-is rather hard to read and not a model of how things should be done.
-A typical SSL server program would be much simpler.
-.Pp
-The output of common ciphers is wrong: it just gives the list of ciphers that
-.Nm OpenSSL
-recognizes and the client supports.
-.Pp
-There should be a way for the
-.Nm s_server
-program to print out details of any
-unknown cipher suites a client says it supports.
 .\"
 .\" S_TIME
 .\"
