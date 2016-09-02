@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2016/09/02 16:03:28 mikeb Exp $
+#	$OpenBSD: Makefile,v 1.5 2016/09/02 16:04:53 mikeb Exp $
 #	$EOM: Makefile,v 1.8 1999/07/17 20:44:13 niklas Exp $
 
 #
@@ -29,7 +29,7 @@
 # This code was written under funding by Ericsson Radio Systems.
 #
 
-SUBDIR=	crypto dh group hmac prf util
+SUBDIR=	crypto dh hmac prf util
 
 # exchange and x509 are meant to be run manually
 
