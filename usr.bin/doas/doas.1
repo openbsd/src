@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.1,v 1.17 2016/09/02 18:12:30 tedu Exp $
+.\" $OpenBSD: doas.1,v 1.18 2016/09/02 20:38:05 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -68,7 +68,9 @@ will be printed on standard output, depending on command
 matching results.
 No command is executed.
 .It Fl L
-Clear any persisted authorizations from previous invocations.
+Clear any persisted authorizations from previous invocations,
+then immediately exit.
+No command is executed.
 .It Fl n
 Non interactive mode, fail if
 .Nm
