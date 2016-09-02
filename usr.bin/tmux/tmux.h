@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.641 2016/08/03 09:07:02 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.642 2016/09/02 20:57:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -691,6 +691,7 @@ struct grid {
 	u_int			 sx;
 	u_int			 sy;
 
+	u_int			 hscrolled;
 	u_int			 hsize;
 	u_int			 hlimit;
 

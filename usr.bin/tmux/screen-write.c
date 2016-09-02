@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.92 2016/07/15 00:49:08 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.93 2016/09/02 20:57:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1016,7 +1016,7 @@ screen_write_clearhistory(struct screen_write_ctx *ctx)
 	struct grid	*gd = s->grid;
 
 	grid_move_lines(gd, 0, gd->hsize, gd->sy);
-	gd->hsize = 0;
+	gd->hscrolled = gd->hsize = 0;
 }
 
 /* Write cell data. */
