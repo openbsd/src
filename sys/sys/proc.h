@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.224 2016/06/27 19:55:02 jca Exp $	*/
+/*	$OpenBSD: proc.h,v 1.225 2016/09/02 18:11:28 tedu Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -64,7 +64,12 @@ struct	session {
 	struct	vnode *s_ttyvp;		/* Vnode of controlling terminal. */
 	struct	tty *s_ttyp;		/* Controlling terminal. */
 	char	s_login[LOGIN_NAME_MAX];	/* Setlogin() name. */
+	pid_t	s_verauthppid;
+	uid_t	s_verauthuid;
+	struct timeout s_verauthto;
 };
+
+void zapverauth(/* struct session */ void *);
 
 /*
  * One structure allocated per process group.
@@ -422,8 +427,10 @@ struct uidinfo *uid_find(uid_t);
 #define SESS_LEADER(pr)	((pr)->ps_session->s_leader == (pr))
 #define	SESSHOLD(s)	((s)->s_count++)
 #define	SESSRELE(s) do {						\
-	if (--(s)->s_count == 0)					\
+	if (--(s)->s_count == 0) {					\
+		timeout_del(&(s)->s_verauthto);			\
 		pool_put(&session_pool, (s));				\
+	}								\
 } while (/* CONSTCOND */ 0)
 
 /*

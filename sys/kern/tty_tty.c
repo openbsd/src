@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tty.c,v 1.18 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: tty_tty.c,v 1.19 2016/09/02 18:11:28 tedu Exp $	*/
 /*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
@@ -97,6 +97,8 @@ int
 cttyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct vnode *ttyvp = cttyvp(p);
+	struct session *sess;
+	int error, secs;
 
 	if (ttyvp == NULL)
 		return (EIO);
@@ -108,6 +110,30 @@ cttyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			return (0);
 		} else
 			return (EINVAL);
+	}
+	switch (cmd) {
+	case TIOCSETVERAUTH:
+		if ((error = suser(p, 0)))
+			return error;
+		secs = *(int *)addr;
+		if (secs < 1 || secs > 3600)
+			return EINVAL;
+		sess = p->p_p->ps_pgrp->pg_session;
+		sess->s_verauthuid = p->p_ucred->cr_ruid;
+		sess->s_verauthppid = p->p_p->ps_pptr->ps_pid;
+		timeout_add_sec(&sess->s_verauthto, secs);
+		return 0;
+	case TIOCCLRVERAUTH:
+		sess = p->p_p->ps_pgrp->pg_session;
+		timeout_del(&sess->s_verauthto);
+		zapverauth(sess);
+		return 0;
+	case TIOCCHKVERAUTH:
+		sess = p->p_p->ps_pgrp->pg_session;
+		if (sess->s_verauthuid == p->p_ucred->cr_ruid &&
+		    sess->s_verauthppid == p->p_p->ps_pptr->ps_pid)
+			return 0;
+		return EPERM;
 	}
 	return (VOP_IOCTL(ttyvp, cmd, addr, flag, NOCRED, p));
 }

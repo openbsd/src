@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttycom.h,v 1.13 2013/12/16 18:46:39 millert Exp $	*/
+/*	$OpenBSD: ttycom.h,v 1.14 2016/09/02 18:11:28 tedu Exp $	*/
 /*	$NetBSD: ttycom.h,v 1.4 1996/05/19 17:17:53 jonathan Exp $	*/
 
 /*-
@@ -83,6 +83,9 @@ struct tstamps {
 #define	TIOCSETAF	_IOW('t', 22, struct termios) /* drn out, fls in, set */
 #define	TIOCGETD	_IOR('t', 26, int)	/* get line discipline */
 #define	TIOCSETD	_IOW('t', 27, int)	/* set line discipline */
+#define	TIOCSETVERAUTH	_IOW('t', 28, int)	/* set verified auth */
+#define	TIOCCLRVERAUTH	 _IO('t', 29)		/* clear verified auth */
+#define	TIOCCHKVERAUTH	 _IO('t', 30)		/* check verified auth */
 						/* 127-124 compat */
 #define	TIOCSBRK	 _IO('t', 123)		/* set break bit */
 #define	TIOCCBRK	 _IO('t', 122)		/* clear break bit */

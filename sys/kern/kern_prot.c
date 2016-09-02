@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.65 2016/03/30 07:49:11 guenther Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.66 2016/09/02 18:11:28 tedu Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -225,6 +225,7 @@ sys_setsid(struct proc *p, void *v, register_t *retval)
 	pid_t pid = pr->ps_pid;
 
 	newsess = pool_get(&session_pool, PR_WAITOK);
+	timeout_set(&newsess->s_verauthto, zapverauth, newsess);
 	newpgrp = pool_get(&pgrp_pool, PR_WAITOK);
 
 	if (pr->ps_pgid == pid || pgfind(pid)) {
