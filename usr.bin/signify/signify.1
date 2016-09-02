@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.35 2016/09/02 17:27:31 espie Exp $
+.\" $OpenBSD: signify.1,v 1.36 2016/09/02 17:57:43 espie Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -179,14 +179,16 @@ $ ftp url | signify -Vz -t arc|tar ztf -
 .Ed
 .Sh SEE ALSO
 .Xr fw_update 1 ,
+.Xr gzip 1 ,
 .Xr pkg_add 1 ,
-.Xr sha256 1 ,
-.Xr gzip 1
+.Xr sha256 1
 .Sh HISTORY
 The
 .Nm
 command first appeared in
 .Ox 5.5 .
 .Sh AUTHORS
-.An Ted Unangst Aq Mt tedu@openbsd.org ,
+.An -nosplit
+.An Ted Unangst Aq Mt tedu@openbsd.org
+and
 .An Marc Espie Aq Mt espie@openbsd.org
