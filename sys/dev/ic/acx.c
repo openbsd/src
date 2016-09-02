@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.118 2016/04/13 10:49:26 mpi Exp $ */
+/*	$OpenBSD: acx.c,v 1.119 2016/09/02 09:04:56 tom Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -2196,8 +2196,6 @@ acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
 
 	if (txbuf->tb_mbuf != NULL)
 		panic("free TX buf has mbuf installed");
-
-	error = 0;
 
 	if (m->m_pkthdr.len > MCLBYTES) {
 		printf("%s: mbuf too big\n", ifp->if_xname);
