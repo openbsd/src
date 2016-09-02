@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.101 2016/09/02 15:45:41 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.102 2016/09/02 15:47:01 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -758,7 +758,7 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 			}
 			capa = (struct iwm_ucode_capa *)tlv_data;
 			idx = le32toh(capa->api_index);
-			if (idx > howmany(IWM_NUM_UCODE_TLV_CAPA, 32)) {
+			if (idx >= howmany(IWM_NUM_UCODE_TLV_CAPA, 32)) {
 				DPRINTF(("%s: unsupported API index %d\n",
 				    DEVNAME(sc), idx));
 				goto parse_out;
