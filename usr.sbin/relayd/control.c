@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.52 2015/12/05 13:13:11 claudio Exp $	*/
+/*	$OpenBSD: control.c,v 1.53 2016/09/02 12:12:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -224,6 +224,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	int			 n;
 	int			 verbose;
 	struct relayd		*env = cs->cs_env;
+	struct privsep		*ps = env->sc_ps;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
 		log_warn("%s: fd %d not found", __func__, fd);
@@ -275,12 +276,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			memcpy(&id, imsg.data, sizeof(id));
 			if (disable_rdr(c, &id))
 				imsg_compose_event(&c->iev, IMSG_CTL_FAIL,
-				    0, 0, -1, NULL, 0);
+				    0, ps->ps_instance + 1, -1, NULL, 0);
 			else {
 				memcpy(imsg.data, &id, sizeof(id));
-				control_imsg_forward(&imsg);
+				control_imsg_forward(ps, &imsg);
 				imsg_compose_event(&c->iev, IMSG_CTL_OK,
-				    0, 0, -1, NULL, 0);
+				    0, ps->ps_instance + 1, -1, NULL, 0);
 			}
 			break;
 		case IMSG_CTL_RDR_ENABLE:
@@ -289,12 +290,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			memcpy(&id, imsg.data, sizeof(id));
 			if (enable_rdr(c, &id))
 				imsg_compose_event(&c->iev, IMSG_CTL_FAIL,
-				    0, 0, -1, NULL, 0);
+				    0, ps->ps_instance + 1, -1, NULL, 0);
 			else {
 				memcpy(imsg.data, &id, sizeof(id));
-				control_imsg_forward(&imsg);
+				control_imsg_forward(ps, &imsg);
 				imsg_compose_event(&c->iev, IMSG_CTL_OK,
-				    0, 0, -1, NULL, 0);
+				    0, ps->ps_instance + 1, -1, NULL, 0);
 			}
 			break;
 		case IMSG_CTL_TABLE_DISABLE:
@@ -303,12 +304,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			memcpy(&id, imsg.data, sizeof(id));
 			if (disable_table(c, &id))
 				imsg_compose_event(&c->iev, IMSG_CTL_FAIL,
-				    0, 0, -1, NULL, 0);
+				    0, ps->ps_instance + 1, -1, NULL, 0);
 			else {
 				memcpy(imsg.data, &id, sizeof(id));
-				control_imsg_forward(&imsg);
+				control_imsg_forward(ps, &imsg);
 				imsg_compose_event(&c->iev, IMSG_CTL_OK,
-				    0, 0, -1, NULL, 0);
+				    0, ps->ps_instance + 1, -1, NULL, 0);
 			}
 			break;
 		case IMSG_CTL_TABLE_ENABLE:
@@ -317,12 +318,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			memcpy(&id, imsg.data, sizeof(id));
 			if (enable_table(c, &id))
 				imsg_compose_event(&c->iev, IMSG_CTL_FAIL,
-				    0, 0, -1, NULL, 0);
+				    0, ps->ps_instance + 1, -1, NULL, 0);
 			else {
 				memcpy(imsg.data, &id, sizeof(id));
-				control_imsg_forward(&imsg);
+				control_imsg_forward(ps, &imsg);
 				imsg_compose_event(&c->iev, IMSG_CTL_OK,
-				    0, 0, -1, NULL, 0);
+				    0, ps->ps_instance + 1, -1, NULL, 0);
 			}
 			break;
 		case IMSG_CTL_HOST_DISABLE:
@@ -331,12 +332,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			memcpy(&id, imsg.data, sizeof(id));
 			if (disable_host(c, &id, NULL))
 				imsg_compose_event(&c->iev, IMSG_CTL_FAIL,
-				    0, 0, -1, NULL, 0);
+				    0, ps->ps_instance + 1, -1, NULL, 0);
 			else {
 				memcpy(imsg.data, &id, sizeof(id));
-				control_imsg_forward(&imsg);
+				control_imsg_forward(ps, &imsg);
 				imsg_compose_event(&c->iev, IMSG_CTL_OK,
-				    0, 0, -1, NULL, 0);
+				    0, ps->ps_instance + 1, -1, NULL, 0);
 			}
 			break;
 		case IMSG_CTL_HOST_ENABLE:
@@ -345,12 +346,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			memcpy(&id, imsg.data, sizeof(id));
 			if (enable_host(c, &id, NULL))
 				imsg_compose_event(&c->iev, IMSG_CTL_FAIL,
-				    0, 0, -1, NULL, 0);
+				    0, ps->ps_instance + 1, -1, NULL, 0);
 			else {
 				memcpy(imsg.data, &id, sizeof(id));
-				control_imsg_forward(&imsg);
+				control_imsg_forward(ps, &imsg);
 				imsg_compose_event(&c->iev, IMSG_CTL_OK,
-				    0, 0, -1, NULL, 0);
+				    0, ps->ps_instance + 1, -1, NULL, 0);
 			}
 			break;
 		case IMSG_CTL_SHUTDOWN:
@@ -360,7 +361,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		case IMSG_CTL_POLL:
 			proc_compose(env->sc_ps, PROC_HCE, IMSG_CTL_POLL, NULL, 0);
 			imsg_compose_event(&c->iev, IMSG_CTL_OK,
-			    0, 0, -1, NULL, 0);
+			    0, ps->ps_instance + 1, -1, NULL, 0);
 			break;
 		case IMSG_CTL_NOTIFY:
 			if (c->flags & CTL_CONN_NOTIFY) {
@@ -368,7 +369,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				    "client requested notify more than once",
 				    __func__);
 				imsg_compose_event(&c->iev, IMSG_CTL_FAIL,
-				    0, 0, -1, NULL, 0);
+				    0, ps->ps_instance + 1, -1, NULL, 0);
 				break;
 			}
 			c->flags |= CTL_CONN_NOTIFY;
@@ -383,7 +384,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			proc_forward_imsg(env->sc_ps, &imsg, PROC_RELAY, -1);
 
 			memcpy(imsg.data, &verbose, sizeof(verbose));
-			control_imsg_forward(&imsg);
+			control_imsg_forward(ps, &imsg);
 			log_verbose(verbose);
 			break;
 		default:
@@ -398,13 +399,13 @@ control_dispatch_imsg(int fd, short event, void *arg)
 }
 
 void
-control_imsg_forward(struct imsg *imsg)
+control_imsg_forward(struct privsep *ps, struct imsg *imsg)
 {
 	struct ctl_conn *c;
 
 	TAILQ_FOREACH(c, &ctl_conns, entry)
 		if (c->flags & CTL_CONN_NOTIFY)
 			imsg_compose_event(&c->iev, imsg->hdr.type,
-			    0, imsg->hdr.pid, -1, imsg->data,
+			    0, ps->ps_instance + 1, -1, imsg->data,
 			    imsg->hdr.len - IMSG_HEADER_SIZE);
 }

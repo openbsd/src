@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.157 2016/09/02 11:51:50 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.158 2016/09/02 12:12:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -199,7 +199,6 @@ main(int argc, char *argv[])
 
 	ps->ps_instances[PROC_RELAY] = env->sc_prefork_relay;
 	ps->ps_instances[PROC_CA] = env->sc_prefork_relay;
-	ps->ps_ninstances = env->sc_prefork_relay;
 
 	proc_init(ps, procs, nitems(procs));
 	log_procinit("parent");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.228 2016/09/02 11:51:50 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.229 2016/09/02 12:12:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1003,7 +1003,6 @@ struct privsep {
 	u_int8_t			 ps_what[PROC_MAX];
 
 	u_int				 ps_instances[PROC_MAX];
-	u_int				 ps_ninstances;
 	u_int				 ps_instance;
 
 	struct control_sock		 ps_csock;
@@ -1030,7 +1029,6 @@ struct privsep_proc {
 	void			(*p_init)(struct privsep *,
 				    struct privsep_proc *);
 	void			(*p_shutdown)(void);
-	u_int			 p_instance;
 	const char		*p_chroot;
 	struct privsep		*p_ps;
 	struct relayd		*p_env;
@@ -1105,7 +1103,7 @@ int	 control_init(struct privsep *, struct control_sock *);
 int	 control_listen(struct control_sock *);
 void	 control_cleanup(struct control_sock *);
 void	 control_dispatch_imsg(int, short, void *);
-void	 control_imsg_forward(struct imsg *);
+void	 control_imsg_forward(struct privsep *ps, struct imsg *);
 struct ctl_conn	*
 	 control_connbyfd(int);
 

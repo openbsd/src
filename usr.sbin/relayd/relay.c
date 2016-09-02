@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.208 2016/09/02 11:51:49 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.209 2016/09/02 12:12:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -324,9 +324,6 @@ relay_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 
 	if (config_init(ps->ps_env) == -1)
 		fatal("failed to initialize configuration");
-
-	/* Set to current prefork id */
-	proc_id = p->p_instance;
 
 	/* We use a custom shutdown callback */
 	p->p_shutdown = relay_shutdown;

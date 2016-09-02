@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.84 2016/09/02 11:51:49 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.85 2016/09/02 12:12:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -103,7 +103,7 @@ pfe_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct table		*table;
 	struct ctl_status	 st;
 
-	control_imsg_forward(imsg);
+	control_imsg_forward(p->p_ps, imsg);
 
 	switch (imsg->hdr.type) {
 	case IMSG_HOST_STATUS:
@@ -687,7 +687,7 @@ pfe_sync(void)
 			imsg.hdr.len = sizeof(id) + IMSG_HEADER_SIZE;
 			imsg.data = &id;
 			sync_table(env, rdr, active);
-			control_imsg_forward(&imsg);
+			control_imsg_forward(env->sc_ps, &imsg);
 		}
 
 		if (rdr->conf.flags & F_DOWN) {
@@ -700,7 +700,7 @@ pfe_sync(void)
 				imsg.hdr.len = sizeof(id) + IMSG_HEADER_SIZE;
 				imsg.data = &id;
 				sync_ruleset(env, rdr, 0);
-				control_imsg_forward(&imsg);
+				control_imsg_forward(env->sc_ps, &imsg);
 			}
 		} else if (!(rdr->conf.flags & F_ACTIVE_RULESET)) {
 			log_debug("%s: enabling ruleset", __func__);
@@ -710,7 +710,7 @@ pfe_sync(void)
 			imsg.hdr.len = sizeof(id) + IMSG_HEADER_SIZE;
 			imsg.data = &id;
 			sync_ruleset(env, rdr, 1);
-			control_imsg_forward(&imsg);
+			control_imsg_forward(env->sc_ps, &imsg);
 		}
 	}
 
