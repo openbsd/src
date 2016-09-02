@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.19 2016/08/15 12:59:53 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.20 2016/09/02 15:45:17 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -264,17 +264,9 @@ struct iwm_tx_ring {
 /* Linux driver optionally uses 8k buffer */
 #define IWM_RBUF_SIZE		4096
 
-struct iwm_softc;
-struct iwm_rbuf {
-	struct iwm_softc	*sc;
-	void			*vaddr;
-	bus_addr_t		paddr;
-};
-
 struct iwm_rx_data {
 	struct mbuf	*m;
 	bus_dmamap_t	map;
-	int		wantresp;
 };
 
 struct iwm_rx_ring {
