@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.109 2016/09/02 14:50:39 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.110 2016/09/02 15:08:48 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -343,51 +343,17 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds,
 }
 
 static uint8_t *
-createsig(struct enckey *enckey, const char *msgfile, uint8_t *msg,
-    unsigned long long msglen, const char *sigcomment)
-{
-	uint8_t xorkey[sizeof(enckey->seckey)];
-	struct sig sig;
-	char *sighdr;
-	uint8_t digest[SHA512_DIGEST_LENGTH];
-	int i, rounds;
-	SHA2_CTX ctx;
-
-	if (memcmp(enckey->kdfalg, KDFALG, 2) != 0)
-		errx(1, "unsupported KDF");
-	rounds = ntohl(enckey->kdfrounds);
-	kdf(enckey->salt, sizeof(enckey->salt), rounds, strcmp(msgfile, "-") != 0,
-	    0, xorkey, sizeof(xorkey));
-	for (i = 0; i < sizeof(enckey->seckey); i++)
-		enckey->seckey[i] ^= xorkey[i];
-	explicit_bzero(xorkey, sizeof(xorkey));
-	SHA512Init(&ctx);
-	SHA512Update(&ctx, enckey->seckey, sizeof(enckey->seckey));
-	SHA512Final(digest, &ctx);
-	if (memcmp(enckey->checksum, digest, sizeof(enckey->checksum)) != 0)
-		errx(1, "incorrect passphrase");
-	explicit_bzero(digest, sizeof(digest));
-
-	signmsg(enckey->seckey, msg, msglen, sig.sig);
-	memcpy(sig.keynum, enckey->keynum, KEYNUMLEN);
-	explicit_bzero(enckey, sizeof(*enckey));
-
-	memcpy(sig.pkalg, PKALG, 2);
-
-	sighdr = createheader(sigcomment, &sig, sizeof(sig));
-	return sighdr;
-}
-
-static void
-sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
-    int embedded)
+createsig(const char *seckeyfile, const char *msgfile, uint8_t *msg,
+    unsigned long long msglen)
 {
 	struct enckey enckey;
-	uint8_t *msg;
+	uint8_t xorkey[sizeof(enckey.seckey)];
+	struct sig sig;
 	char *sighdr;
 	char *secname;
-	int fd, nr;
-	unsigned long long msglen;
+	uint8_t digest[SHA512_DIGEST_LENGTH];
+	int i, nr, rounds;
+	SHA2_CTX ctx;
 	char comment[COMMENTMAXLEN], sigcomment[COMMENTMAXLEN];
 
 	readb64file(seckeyfile, &enckey, sizeof(enckey), comment);
@@ -403,9 +369,43 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 			errx(1, "comment too long");
 	}
 
+	if (memcmp(enckey.kdfalg, KDFALG, 2) != 0)
+		errx(1, "unsupported KDF");
+	rounds = ntohl(enckey.kdfrounds);
+	kdf(enckey.salt, sizeof(enckey.salt), rounds, strcmp(msgfile, "-") != 0,
+	    0, xorkey, sizeof(xorkey));
+	for (i = 0; i < sizeof(enckey.seckey); i++)
+		enckey.seckey[i] ^= xorkey[i];
+	explicit_bzero(xorkey, sizeof(xorkey));
+	SHA512Init(&ctx);
+	SHA512Update(&ctx, enckey.seckey, sizeof(enckey.seckey));
+	SHA512Final(digest, &ctx);
+	if (memcmp(enckey.checksum, digest, sizeof(enckey.checksum)) != 0)
+		errx(1, "incorrect passphrase");
+	explicit_bzero(digest, sizeof(digest));
+
+	signmsg(enckey.seckey, msg, msglen, sig.sig);
+	memcpy(sig.keynum, enckey.keynum, KEYNUMLEN);
+	explicit_bzero(&enckey, sizeof(enckey));
+
+	memcpy(sig.pkalg, PKALG, 2);
+
+	sighdr = createheader(sigcomment, &sig, sizeof(sig));
+	return sighdr;
+}
+
+static void
+sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
+    int embedded)
+{
+	uint8_t *msg;
+	char *sighdr;
+	int fd;
+	unsigned long long msglen;
+
 	msg = readmsg(msgfile, &msglen);
 
-	sighdr = createsig(&enckey, msgfile, msg, msglen, sigcomment);
+	sighdr = createsig(seckeyfile, msgfile, msg, msglen);
 
 	fd = xopen(sigfile, O_CREAT|O_TRUNC|O_NOFOLLOW|O_WRONLY, 0666);
 	writeall(fd, sighdr, strlen(sighdr), sigfile);
