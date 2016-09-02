@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.27 2016/09/02 15:35:34 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.28 2016/09/02 15:38:08 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -40,7 +40,7 @@
 #include "rde.h"
 
 void		 rde_sig_handler(int sig, short, void *);
-void		 rde_shutdown(void);
+__dead void	 rde_shutdown(void);
 void		 rde_dispatch_imsg(int, short, void *);
 
 int		 rde_select_ds_ifs(struct mfc *, struct iface *);
@@ -147,14 +147,19 @@ rde(struct dvmrpd_conf *xconf, int pipe_parent2rde[2], int pipe_dvmrpe2rde[2],
 
 	rde_shutdown();
 	/* NOTREACHED */
-
 	return (0);
 }
 
-void
+__dead void
 rde_shutdown(void)
 {
 	struct iface	*iface;
+
+	/* close pipes */
+	msgbuf_clear(&iev_dvmrpe->ibuf.w);
+	close(iev_dvmrpe->ibuf.fd);
+	msgbuf_clear(&iev_main->ibuf.w);
+	close(iev_main->ibuf.fd);
 
 	rt_clear();
 	mfc_clear();
@@ -163,9 +168,7 @@ rde_shutdown(void)
 		if_del(iface);
 	}
 
-	msgbuf_clear(&iev_dvmrpe->ibuf.w);
 	free(iev_dvmrpe);
-	msgbuf_clear(&iev_main->ibuf.w);
 	free(iev_main);
 	free(rdeconf);
 

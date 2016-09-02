@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.c,v 1.17 2016/09/02 15:35:34 renato Exp $ */
+/*	$OpenBSD: dvmrpe.c,v 1.18 2016/09/02 15:38:08 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -42,8 +42,8 @@
 #include "control.h"
 #include "log.h"
 
-void	 dvmrpe_sig_handler(int, short, void *);
-void	 dvmrpe_shutdown(void);
+void		 dvmrpe_sig_handler(int, short, void *);
+__dead void	 dvmrpe_shutdown(void);
 
 volatile sig_atomic_t	 dvmrpe_quit = 0;
 struct dvmrpd_conf	*deconf = NULL;
@@ -190,10 +190,18 @@ dvmrpe(struct dvmrpd_conf *xconf, int pipe_parent2dvmrpe[2],
 	return (0);
 }
 
-void
+__dead void
 dvmrpe_shutdown(void)
 {
 	struct iface	*iface;
+
+	/* close pipes */
+	msgbuf_write(&iev_rde->ibuf.w);
+	msgbuf_clear(&iev_rde->ibuf.w);
+	close(iev_rde->ibuf.fd);
+	msgbuf_write(&iev_main->ibuf.w);
+	msgbuf_clear(&iev_main->ibuf.w);
+	close(iev_main->ibuf.fd);
 
 	/* stop all interfaces and delete them */
 	LIST_FOREACH(iface, &deconf->iface_list, entry) {
@@ -205,11 +213,7 @@ dvmrpe_shutdown(void)
 	}
 
 	/* clean up */
-	msgbuf_write(&iev_rde->ibuf.w);
-	msgbuf_clear(&iev_rde->ibuf.w);
 	free(iev_rde);
-	msgbuf_write(&iev_main->ibuf.w);
-	msgbuf_clear(&iev_main->ibuf.w);
 	free(iev_main);
 	free(pkt_ptr);
 
