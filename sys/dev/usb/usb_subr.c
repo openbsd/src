@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.124 2016/09/02 09:20:00 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.125 2016/09/02 09:23:56 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -781,11 +781,8 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	dev->config = cdp->bConfigurationValue;
 	for (ifcidx = 0; ifcidx < nifc; ifcidx++) {
 		err = usbd_fill_iface_data(dev, ifcidx, 0);
-		if (err) {
-			while (--ifcidx >= 0)
-				usbd_free_iface_data(dev, ifcidx);
-			goto bad;
-		}
+		if (err)
+			return (err);
 	}
 
 	return (USBD_NORMAL_COMPLETION);
