@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.294 2016/06/06 15:59:10 benno Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.295 2016/09/02 14:00:29 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,6 +32,8 @@
 #include <stdarg.h>
 
 #include <imsg.h>
+
+#include "log.h"
 
 #define	BGP_VERSION			4
 #define	BGP_PORT			179
@@ -1078,5 +1080,135 @@ sa_family_t	 aid2af(u_int8_t);
 int		 af2aid(sa_family_t, u_int8_t, u_int8_t *);
 struct sockaddr	*addr2sa(struct bgpd_addr *, u_int16_t);
 void		 sa2addr(struct sockaddr *, struct bgpd_addr *);
+
+static const char * const log_procnames[] = {
+	"parent",
+	"SE",
+	"RDE"
+};
+
+/* logmsg.c and needed by bgpctl */
+static const char * const statenames[] = {
+	"None",
+	"Idle",
+	"Connect",
+	"Active",
+	"OpenSent",
+	"OpenConfirm",
+	"Established"
+};
+
+static const char * const msgtypenames[] = {
+	"NONE",
+	"OPEN",
+	"UPDATE",
+	"NOTIFICATION",
+	"KEEPALIVE",
+	"RREFRESH"
+};
+
+static const char * const eventnames[] = {
+	"None",
+	"Start",
+	"Stop",
+	"Connection opened",
+	"Connection closed",
+	"Connection open failed",
+	"Fatal error",
+	"ConnectRetryTimer expired",
+	"HoldTimer expired",
+	"KeepaliveTimer expired",
+	"OPEN message received",
+	"KEEPALIVE message received",
+	"UPDATE message received",
+	"NOTIFICATION received"
+};
+
+static const char * const errnames[] = {
+	"none",
+	"Header error",
+	"error in OPEN message",
+	"error in UPDATE message",
+	"HoldTimer expired",
+	"Finite State Machine error",
+	"Cease"
+};
+
+static const char * const suberr_header_names[] = {
+	"none",
+	"synchronization error",
+	"wrong length",
+	"unknown message type"
+};
+
+static const char * const suberr_open_names[] = {
+	"none",
+	"version mismatch",
+	"AS unacceptable",
+	"BGPID invalid",
+	"optional parameter error",
+	"authentication error",
+	"unacceptable holdtime",
+	"unsupported capability",
+	"group membership conflict",	/* draft-ietf-idr-bgp-multisession-07 */
+	"group membership required"	/* draft-ietf-idr-bgp-multisession-07 */
+};
+
+static const char * const suberr_fsm_names[] = {
+	"unspecified error",
+	"received unexpected message in OpenSent",
+	"received unexpected message in OpenConfirm",
+	"received unexpected message in Established"
+};
+
+static const char * const suberr_update_names[] = {
+	"none",
+	"attribute list error",
+	"unknown well-known attribute",
+	"well-known attribute missing",
+	"attribute flags error",
+	"attribute length wrong",
+	"origin unacceptable",
+	"loop detected",
+	"nexthop unacceptable",
+	"optional attribute error",
+	"network unacceptable",
+	"AS-Path unacceptable"
+};
+
+static const char * const suberr_cease_names[] = {
+	"none",
+	"max-prefix exceeded",
+	"administratively down",
+	"peer unconfigured",
+	"administrative reset",
+	"connection rejected",
+	"other config change",
+	"collision",
+	"resource exhaustion"
+};
+
+static const char * const ctl_res_strerror[] = {
+	"no error",
+	"no such neighbor",
+	"permission denied",
+	"neighbor does not have this capability",
+	"config file has errors, reload failed",
+	"previous reload still running",
+	"out of memory",
+	"not a cloned peer",
+	"peer still active, down peer first"
+};
+
+static const char * const timernames[] = {
+	"None",
+	"ConnectRetryTimer",
+	"KeepaliveTimer",
+	"HoldTimer",
+	"IdleHoldTimer",
+	"IdleHoldResetTimer",
+	"CarpUndemoteTimer",
+	""
+};
 
 #endif /* __BGPD_H__ */

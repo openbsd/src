@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.348 2016/08/08 21:44:00 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.349 2016/09/02 14:00:29 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -168,6 +168,9 @@ rde_main(int debug, int verbose)
 	int			 timeout;
 	u_int8_t		 aid;
 
+	bgpd_process = PROC_RDE;
+	log_procname = log_procnames[bgpd_process];
+
 	log_init(debug);
 	log_verbose(verbose);
 
@@ -180,7 +183,6 @@ rde_main(int debug, int verbose)
 		fatal("chdir(\"/\")");
 
 	setproctitle("route decision engine");
-	bgpd_process = PROC_RDE;
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.185 2016/06/20 20:12:52 benno Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.186 2016/09/02 14:00:29 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -117,6 +117,7 @@ main(int argc, char *argv[])
 
 	conffile = CONFFILE;
 	bgpd_process = PROC_MAIN;
+	log_procname = log_procnames[bgpd_process];
 
 	log_init(1);		/* log to stderr until daemonized */
 	log_verbose(1);

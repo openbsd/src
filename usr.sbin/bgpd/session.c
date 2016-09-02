@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.352 2016/08/08 21:44:00 renato Exp $ */
+/*	$OpenBSD: session.c,v 1.353 2016/09/02 14:00:29 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -202,6 +202,9 @@ session_main(int debug, int verbose)
 	void			*newp;
 	short			 events;
 
+	bgpd_process = PROC_SE;
+	log_procname = log_procnames[bgpd_process];
+
 	log_init(debug);
 	log_verbose(verbose);
 
@@ -214,7 +217,6 @@ session_main(int debug, int verbose)
 		fatal("chdir(\"/\")");
 
 	setproctitle("session engine");
-	bgpd_process = PROC_SE;
 	pfkeysock = pfkey_init(&sysdep);
 
 	if (setgroups(1, &pw->pw_gid) ||
