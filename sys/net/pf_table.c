@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.116 2015/11/03 22:10:33 sashan Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.117 2016/09/02 10:19:49 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -217,15 +217,20 @@ pfr_initialize(void)
 
 	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
 	    "pfrktable", NULL);
+	pool_setipl(&pfr_ktable_pl, IPL_SOFTNET);
 	pool_init(&pfr_kentry_pl[PFRKE_PLAIN], sizeof(struct pfr_kentry),
 	    0, 0, 0, "pfrke_plain", NULL);
+	pool_setipl(&pfr_kentry_pl[PFRKE_PLAIN], IPL_SOFTNET);
 	pool_init(&pfr_kentry_pl[PFRKE_ROUTE], sizeof(struct pfr_kentry_route),
 	    0, 0, 0, "pfrke_route", NULL);
+	pool_setipl(&pfr_kentry_pl[PFRKE_ROUTE], IPL_SOFTNET);
 	pool_init(&pfr_kentry_pl[PFRKE_COST], sizeof(struct pfr_kentry_cost),
 	    0, 0, 0, "pfrke_cost", NULL);
+	pool_setipl(&pfr_kentry_pl[PFRKE_COST], IPL_SOFTNET);
 
 	pool_init(&pfr_kcounters_pl, sizeof(struct pfr_kcounters),
 	    0, 0, 0, "pfrkcounters", NULL);
+	pool_setipl(&pfr_kcounters_pl, IPL_SOFTNET);
 
 	pfr_sin.sin_len = sizeof(pfr_sin);
 	pfr_sin.sin_family = AF_INET;

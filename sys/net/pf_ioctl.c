@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.297 2015/12/03 13:30:18 claudio Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.298 2016/09/02 10:19:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -143,20 +143,28 @@ pfattach(int num)
 
 	pool_init(&pf_rule_pl, sizeof(struct pf_rule), 0, 0, 0, "pfrule",
 	    NULL);
+	pool_setipl(&pf_rule_pl, IPL_SOFTNET);
 	pool_init(&pf_src_tree_pl, sizeof(struct pf_src_node), 0, 0, 0,
 	    "pfsrctr", NULL);
+	pool_setipl(&pf_src_tree_pl, IPL_SOFTNET);
 	pool_init(&pf_sn_item_pl, sizeof(struct pf_sn_item), 0, 0, 0,
 	    "pfsnitem", NULL);
+	pool_setipl(&pf_sn_item_pl, IPL_SOFTNET);
 	pool_init(&pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstate",
 	    NULL);
+	pool_setipl(&pf_state_pl, IPL_SOFTNET);
 	pool_init(&pf_state_key_pl, sizeof(struct pf_state_key), 0, 0, 0,
 	    "pfstkey", NULL);
+	pool_setipl(&pf_state_key_pl, IPL_SOFTNET);
 	pool_init(&pf_state_item_pl, sizeof(struct pf_state_item), 0, 0, 0,
 	    "pfstitem", NULL);
+	pool_setipl(&pf_state_item_pl, IPL_SOFTNET);
 	pool_init(&pf_rule_item_pl, sizeof(struct pf_rule_item), 0, 0, 0,
 	    "pfruleitem", NULL);
+	pool_setipl(&pf_rule_item_pl, IPL_SOFTNET);
 	pool_init(&pf_queue_pl, sizeof(struct pf_queuespec), 0, 0, 0, 
 	    "pfqueue", NULL);
+	pool_setipl(&pf_queue_pl, IPL_SOFTNET);
 	hfsc_initialize();
 	pfr_initialize();
 	pfi_initialize();
