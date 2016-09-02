@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.69 2016/09/02 17:03:24 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.70 2016/09/02 17:10:34 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -65,7 +65,7 @@ ldpe_sig_handler(int sig, short event, void *bula)
 }
 
 /* label distribution protocol engine */
-pid_t
+void
 ldpe(int debug, int verbose)
 {
 	struct passwd		*pw;
@@ -153,8 +153,6 @@ ldpe(int debug, int verbose)
 	event_dispatch();
 
 	ldpe_shutdown();
-	/* NOTREACHED */
-	return (0);
 }
 
 static __dead void

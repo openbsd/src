@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.43 2016/07/01 23:36:38 renato Exp $ */
+/*	$OpenBSD: lde.h,v 1.44 2016/09/02 17:10:34 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -124,7 +124,7 @@ extern struct nbr_tree	 lde_nbrs;
 extern struct event	 gc_timer;
 
 /* lde.c */
-pid_t		 lde(int, int);
+void		 lde(int, int);
 int		 lde_imsg_compose_ldpe(int, uint32_t, pid_t, void *, uint16_t);
 uint32_t	 lde_assign_label(void);
 void		 lde_send_change_klabel(struct fec_node *, struct fec_nh *);

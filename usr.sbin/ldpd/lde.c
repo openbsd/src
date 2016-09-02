@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.66 2016/09/02 17:05:23 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.67 2016/09/02 17:10:34 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -84,7 +84,7 @@ lde_sig_handler(int sig, short event, void *arg)
 }
 
 /* label decision engine */
-pid_t
+void
 lde(int debug, int verbose)
 {
 	struct event		 ev_sigint, ev_sigterm;
@@ -145,9 +145,6 @@ lde(int debug, int verbose)
 	event_dispatch();
 
 	lde_shutdown();
-	/* NOTREACHED */
-
-	return (0);
 }
 
 static __dead void
