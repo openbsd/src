@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.3 2016/09/02 21:48:03 tedu Exp $ */
+/* $OpenBSD: zsig.c,v 1.4 2016/09/02 21:52:12 tedu Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -61,10 +61,9 @@ readgz_header(struct gzheader *h, int fd)
 	size_t len = 0;
 	int state = 0;
 	ssize_t n;
-	uint8_t *buf = xmalloc(sz);
+	uint8_t *buf;
 
-	if (!buf)
-		exit(1);
+	buf = xmalloc(sz);
 
 	while (1) {
 		if (len == sz) {
@@ -89,7 +88,7 @@ readgz_header(struct gzheader *h, int fd)
 			if (len < 10)
 				continue;
 			h->flg = buf[3];
-			h->mtime = buf[4] | (buf[5] << 8U) | (buf[6] << 16U) | 
+			h->mtime = buf[4] | (buf[5] << 8U) | (buf[6] << 16U) |
 			    (buf[7] << 24U);
 			h->xflg = buf[8];
 			h->os = buf[9];
@@ -128,14 +127,17 @@ readgz_header(struct gzheader *h, int fd)
 	}
 }
 
-static void 
+static void
 copy_blocks(int fdout, int fdin, const char *sha, const char *endsha,
-	size_t bufsize, uint8_t *bufend)
+    size_t bufsize, uint8_t *bufend)
 {
-	uint8_t *buffer = xmalloc(bufsize);
-
-	uint8_t *residual = (uint8_t *)endsha+1;
+	uint8_t *buffer;
+	uint8_t *residual;
 	uint8_t output[SHA256_DIGEST_STRING_LENGTH];
+
+	buffer = xmalloc(bufsize);
+	residual = (uint8_t *)endsha + 1;
+
 	while (1) {
 		/* get the next block */
 		size_t n = 0;
@@ -152,7 +154,7 @@ copy_blocks(int fdout, int fdin, const char *sha, const char *endsha,
 				residual += len;
 				n = len;
 			}
-	    	}
+		}
 		/* if we're not done yet, try to obtain more until EOF */
 		while (n != bufsize) {
 			ssize_t more = read(fdin, buffer+n, bufsize-n);
@@ -173,7 +175,7 @@ copy_blocks(int fdout, int fdin, const char *sha, const char *endsha,
 		writeall(fdout, buffer, n, "stdout");
 		if (n != bufsize)
 			break;
-    	}
+	}
 	free(buffer);
 }
 
@@ -186,6 +188,7 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 	char *p;
 	uint8_t *bufend;
 	int fdin, fdout;
+
 	/* by default, verification will love pipes */
 	if (!sigfile)
 		sigfile = "-";
@@ -199,7 +202,7 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 		errx(1, "%s is an unsigned archive", sigfile);
 	fake[8] = h.xflg;
 
-	p = verifyzdata(h.comment, h.endcomment-h.comment, sigfile, 
+	p = verifyzdata(h.comment, h.endcomment-h.comment, sigfile,
 	    pubkeyfile, keytype);
 
 	bufsize = MYBUFSIZE;
@@ -241,7 +244,7 @@ zsign(const char *seckeyfile, const char *msgfile, const char *sigfile)
 	if (lseek(fdin, h.headerlength, SEEK_SET) == -1)
 		err(1, "seek in %s", msgfile);
 
-	space = (sb.st_size / MYBUFSIZE) * SHA256_DIGEST_STRING_LENGTH + 
+	space = (sb.st_size / MYBUFSIZE) * SHA256_DIGEST_STRING_LENGTH +
 		80; /* long enough for blocksize=.... */
 
 	msg = xmalloc(space);
@@ -289,5 +292,4 @@ zsign(const char *seckeyfile, const char *msgfile, const char *sigfile)
 	free(buffer);
 	close(fdout);
 }
-	
 #endif
