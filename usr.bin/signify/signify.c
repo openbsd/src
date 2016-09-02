@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.113 2016/09/02 21:12:03 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.114 2016/09/02 21:18:50 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -804,33 +804,10 @@ main(int argc, char **argv)
 	if (setvbuf(stdout, NULL, _IOLBF, 0) != 0)
 		err(1, "setvbuf");
 
-	switch (verb) {
-	case GENERATE:
-	case SIGN:
-		/* keep it all */
-		break;
-	case CHECK:
-		if (pledge("stdio rpath", NULL) == -1)
-			err(1, "pledge");
-		break;
-	case VERIFY:
-		if ((embedded || gzip)
-		    && (!msgfile || strcmp(msgfile, "-") != 0)) {
-			if (pledge("stdio rpath wpath cpath", NULL) == -1)
-				err(1, "pledge");
-		} else {
-			if (pledge("stdio rpath", NULL) == -1)
-				err(1, "pledge");
-		}
-		break;
-	default:
-		if (pledge("stdio", NULL) == -1)
-			err(1, "pledge");
-		break;
-	}
-
 #ifndef VERIFYONLY
 	if (verb == CHECK) {
+		if (pledge("stdio rpath", NULL) == -1)
+			err(1, "pledge");
 		if (!sigfile)
 			usage("must specify sigfile");
 		check(pubkeyfile, sigfile, quiet, argc, argv);
@@ -854,11 +831,13 @@ main(int argc, char **argv)
 	switch (verb) {
 #ifndef VERIFYONLY
 	case GENERATE:
+		/* no pledge */
 		if (!pubkeyfile || !seckeyfile)
 			usage("must specify pubkey and seckey");
 		generate(pubkeyfile, seckeyfile, rounds, comment);
 		break;
 	case SIGN:
+		/* no pledge */
 		if (gzip)
 			zsign(seckeyfile, msgfile, sigfile);
 		else {
@@ -869,6 +848,14 @@ main(int argc, char **argv)
 		break;
 #endif
 	case VERIFY:
+		if ((embedded || gzip)
+		    && (!msgfile || strcmp(msgfile, "-") != 0)) {
+			if (pledge("stdio rpath wpath cpath", NULL) == -1)
+				err(1, "pledge");
+		} else {
+			if (pledge("stdio rpath", NULL) == -1)
+				err(1, "pledge");
+		}
 		if (gzip)
 			zverify(pubkeyfile, msgfile, sigfile, keytype);
 		else {
@@ -879,6 +866,8 @@ main(int argc, char **argv)
 		}
 		break;
 	default:
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
 		usage(NULL);
 		break;
 	}
