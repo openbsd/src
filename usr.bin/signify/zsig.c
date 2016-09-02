@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.2 2016/09/02 16:12:09 espie Exp $ */
+/* $OpenBSD: zsig.c,v 1.3 2016/09/02 21:48:03 tedu Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -71,14 +71,14 @@ readgz_header(struct gzheader *h, int fd)
 			sz *= 2;
 			buf = realloc(buf, sz);
 			if (!buf)
-				exit(1);
+				err(1, "realloc");
 		}
 		n = read(fd, buf+len, sz-len);
 		if (n == -1)
-			exit(1);
+			err(1, "read");
 		/* incomplete info */
 		if (n == 0)
-			exit(1);
+			errx(1, "gzheader truncated");
 		len += n;
 		h->comment = NULL;
 		h->name = NULL;
@@ -95,10 +95,10 @@ readgz_header(struct gzheader *h, int fd)
 			h->os = buf[9];
 			/* magic gzip header */
 			if (buf[0] != 0x1f || buf[1] != 0x8b || buf[2] != 8)
-				exit(1);
+				err(1, "invalud magic in gzheader");
 			/* XXX special code that only caters to our needs */
 			if (h->flg & ~ (FCOMMENT_FLAG | FNAME_FLAG))
-				exit(1);
+				err(1, "invalid flags in gzheader");
 			pos = 10;
 			state++;
 			/*FALLTHRU*/
@@ -157,7 +157,7 @@ copy_blocks(int fdout, int fdin, const char *sha, const char *endsha,
 		while (n != bufsize) {
 			ssize_t more = read(fdin, buffer+n, bufsize-n);
 			if (more == -1)
-				exit(1);
+				err(1, "read");
 			n += more;
 			if (more == 0)
 				break;
