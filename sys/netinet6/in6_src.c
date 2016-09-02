@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.79 2016/08/04 20:46:24 vgross Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.80 2016/09/02 13:53:44 vgross Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -302,13 +302,13 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 
 	/*
 	 * Use a cached route if it exists and is valid, else try to allocate
-	 * a new one.  Note that we should check the address family of the
-	 * cached destination, in case of sharing the cache with IPv4.
+	 * a new one.
 	 */
 	if (ro) {
+		if (rtisvalid(ro->ro_rt))
+			KASSERT(sin6tosa(&ro->ro_dst)->sa_family == AF_INET6);
 		if (!rtisvalid(ro->ro_rt) ||
-		     sin6tosa(&ro->ro_dst)->sa_family != AF_INET6 ||
-		     !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst)) {
+		    !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst)) {
 			rtfree(ro->ro_rt);
 			ro->ro_rt = NULL;
 		}
