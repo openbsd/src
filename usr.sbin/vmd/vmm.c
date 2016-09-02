@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.41 2016/09/01 17:09:33 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.42 2016/09/02 16:23:40 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -68,6 +68,7 @@ int start_vm(struct imsg *, uint32_t *);
 int terminate_vm(struct vm_terminate_params *);
 int get_info_vm(struct privsep *, struct imsg *, int);
 int run_vm(int *, int *, struct vm_create_params *, struct vcpu_reg_state *);
+void *event_thread(void *);
 void *vcpu_run_loop(void *);
 int vcpu_exit(struct vm_run_params *);
 int vcpu_reset(uint32_t, uint32_t, struct vcpu_reg_state *);
@@ -91,9 +92,13 @@ extern struct vmd *env;
 
 extern char *__progname;
 
+pthread_mutex_t threadmutex;
+pthread_cond_t threadcond;
+
 pthread_cond_t vcpu_run_cond[VMM_MAX_VCPUS_PER_VM];
 pthread_mutex_t vcpu_run_mtx[VMM_MAX_VCPUS_PER_VM];
 uint8_t vcpu_hlt[VMM_MAX_VCPUS_PER_VM];
+uint8_t vcpu_done[VMM_MAX_VCPUS_PER_VM];
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	vmm_dispatch_parent  },
@@ -880,13 +885,12 @@ int
 run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
     struct vcpu_reg_state *vrs)
 {
+	uint8_t evdone = 0;
 	size_t i;
 	int ret;
-	pthread_t *tid;
+	pthread_t *tid, evtid;
 	struct vm_run_params **vrp;
-#if 0
 	void *exit_status;
-#endif
 
 	if (vcp == NULL)
 		return (EINVAL);
@@ -910,8 +914,6 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 	    vcp->vcp_nmemranges > VMM_MAX_MEM_RANGES)
 		return (EINVAL);
 
-	ret = 0;
-
 	event_init();
 
 	tid = calloc(vcp->vcp_ncpus, sizeof(pthread_t));
@@ -926,6 +928,21 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 	    vcp->vcp_name);
 
 	init_emulated_hw(vcp, child_disks, child_taps);
+
+	ret = pthread_mutex_init(&threadmutex, NULL);
+	if (ret) {
+		log_warn("%s: could not initialize thread state mutex",
+		    __func__);
+		return (ret);
+	}
+	ret = pthread_cond_init(&threadcond, NULL);
+	if (ret) {
+		log_warn("%s: could not initialize thread state "
+		    "condition variable", __func__);
+		return (ret);
+	}
+
+	mutex_lock(&threadmutex);
 
 	log_debug("%s: starting vcpu threads for vm %s", __func__,
 	    vcp->vcp_name);
@@ -980,34 +997,93 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 		ret = pthread_create(&tid[i], NULL, vcpu_run_loop, vrp[i]);
 		if (ret) {
 			/* caller will _exit after this return */
+			ret = errno;
+			log_warn("%s: could not create vcpu thread %zu",
+			    __func__, i);
 			return (ret);
 		}
 	}
 
 	log_debug("%s: waiting on events for VM %s", __func__, vcp->vcp_name);
-	ret = event_dispatch();
+	ret = pthread_create(&evtid, NULL, event_thread, &evdone);
+	if (ret) {
+		errno = ret;
+		log_warn("%s: could not create event thread", __func__);
+		return (ret);
+	}
 
-#if 0
-	/* XXX need to handle clean exits now */
+	for (;;) {
+		ret = pthread_cond_wait(&threadcond, &threadmutex);
+		if (ret) {
+			log_warn("%s: waiting on thread state condition "
+			    "variable failed", __func__);
+			return (ret);
+		}
 
-	/* Wait for all the threads to exit */
-	for (i = 0; i < vcp->vcp_ncpus; i++) {
-		if (pthread_join(tid[i], &exit_status)) {
-			log_warnx("%s: failed to join thread %zd - "
-			    "exiting", __progname, i);
+		/*
+		 * Did a VCPU thread exit with an error? => return the first one
+		 */
+		for (i = 0; i < vcp->vcp_ncpus; i++) {
+			if (vcpu_done[i] == 0)
+				continue;
+
+			if (pthread_join(tid[i], &exit_status)) {
+				log_warn("%s: failed to join thread %zd - "
+				    "exiting", __progname, i);
+				return (EIO);
+			}
+
+			if (exit_status != NULL) {
+				log_warnx("%s: vm %d vcpu run thread %zd "
+				    "exited abnormally", __progname,
+				    vcp->vcp_id, i);
+				return (EIO);
+			}
+		}
+
+		/* Did the event thread exit? => return with an error */
+		if (evdone) {
+			if (pthread_join(evtid, &exit_status)) {
+				log_warn("%s: failed to join event thread - "
+				    "exiting", __progname);
+				return (EIO);
+			}
+
+			log_warnx("%s: vm %d event thread exited "
+			    "unexpectedly", __progname, vcp->vcp_id);
 			return (EIO);
 		}
 
-		if (exit_status != NULL) {
-			log_warnx("%s: vm %d vcpu run thread %zd exited "
-			    "abnormally", __progname, vcp->vcp_id, i);
-			ret = EIO;
+		/* Did all VCPU threads exit successfully? => return 0 */
+		for (i = 0; i < vcp->vcp_ncpus; i++) {
+			if (vcpu_done[i] == 0)
+				break;
 		}
-	}
-#endif
+		if (i == vcp->vcp_ncpus)
+			return (0);
 
-	return (ret);
+		/* Some more threads to wait for, start over */
+
+	}
+
+	return (0);
 }
+
+void *
+event_thread(void *arg)
+{
+	uint8_t *donep = arg;
+	intptr_t ret;
+
+	ret = event_dispatch();
+
+	mutex_lock(&threadmutex);
+	*donep = 1;
+	pthread_cond_signal(&threadcond);
+	mutex_unlock(&threadmutex);
+
+	return (void *)ret;
+ }
 
 /*
  * vcpu_run_loop
@@ -1026,7 +1102,7 @@ void *
 vcpu_run_loop(void *arg)
 {
 	struct vm_run_params *vrp = (struct vm_run_params *)arg;
-	intptr_t ret;
+	intptr_t ret = 0;
 	int irq;
 	uint32_t n;
 
@@ -1051,7 +1127,7 @@ vcpu_run_loop(void *arg)
 				log_warnx("%s: can't wait on cond (%d)",
 				    __func__, (int)ret);
 				(void)pthread_mutex_unlock(&vcpu_run_mtx[n]);
-				return ((void *)ret);
+				break;
 			}
 		}
 
@@ -1059,7 +1135,7 @@ vcpu_run_loop(void *arg)
 		if (ret) {
 			log_warnx("%s: can't unlock mutex on cond (%d)",
 			    __func__, (int)ret);
-			return ((void *)ret);
+			break;
 		}
 
 		if (vrp->vrp_irqready && i8259_is_pending()) {
@@ -1085,24 +1161,33 @@ vcpu_run_loop(void *arg)
 			ret = errno;
 			log_warn("%s: vm %d / vcpu %d run ioctl failed",
 			    __func__, vrp->vrp_vm_id, n);
-			return ((void *)ret);
+			break;
 		}
 
 		/* If the VM is terminating, exit normally */
-		if (vrp->vrp_exit_reason == VM_EXIT_TERMINATED)
-			return (NULL);
+		if (vrp->vrp_exit_reason == VM_EXIT_TERMINATED) {
+			ret = (intptr_t)NULL;
+			break;
+		}
 
 		if (vrp->vrp_exit_reason != VM_EXIT_NONE) {
 			/*
 			 * vmm(4) needs help handling an exit, handle in
 			 * vcpu_exit.
 			 */
-			if (vcpu_exit(vrp))
-				return ((void *)EIO);
+			if (vcpu_exit(vrp)) {
+				ret = EIO;
+				break;
+			}
 		}
 	}
 
-	return (NULL);
+	mutex_lock(&threadmutex);
+	vcpu_done[n] = 1;
+	pthread_cond_signal(&threadcond);
+	mutex_unlock(&threadmutex);
+
+	return ((void *)ret);
 }
 
 int
@@ -1466,4 +1551,40 @@ fd_hasdata(int fd)
 	else if (nready == 1 && pfd[0].revents & POLLIN)
 		hasdata = 1;
 	return (hasdata);
+}
+
+/*
+ * mutex_lock
+ *
+ * Wrapper function for pthread_mutex_lock that does error checking and that
+ * exits on failure
+ */
+void
+mutex_lock(pthread_mutex_t *m)
+{
+	int ret;
+
+	ret = pthread_mutex_lock(m);
+	if (ret) {
+		errno = ret;
+		fatal("could not acquire mutex");
+	}
+}
+
+/*
+ * mutex_unlock
+ *
+ * Wrapper function for pthread_mutex_unlock that does error checking and that
+ * exits on failure
+ */
+void
+mutex_unlock(pthread_mutex_t *m)
+{
+	int ret;
+
+	ret = pthread_mutex_unlock(m);
+	if (ret) {
+		errno = ret;
+		fatal("could not release mutex");
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.23 2016/09/01 14:48:09 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.24 2016/09/02 16:23:40 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -22,6 +22,7 @@
 #include <machine/vmmvar.h>
 
 #include <limits.h>
+#include <pthread.h>
 
 #include "proc.h"
 
@@ -120,6 +121,8 @@ int	 write_mem(paddr_t, void *buf, size_t);
 int	 read_mem(paddr_t, void *buf, size_t);
 int	 opentap(void);
 int	 fd_hasdata(int);
+void	 mutex_lock(pthread_mutex_t *);
+void	 mutex_unlock(pthread_mutex_t *);
 
 /* control.c */
 int	 config_init(struct vmd *);
