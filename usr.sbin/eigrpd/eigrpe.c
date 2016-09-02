@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.27 2016/09/02 16:29:55 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.28 2016/09/02 16:32:19 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -130,6 +130,9 @@ eigrpe(int debug, int verbose, char *sockname)
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
+	if (pledge("stdio cpath inet mcast recvfd", NULL) == -1)
+		fatal("pledge");
+
 	event_init();
 
 	/* setup signal handler */
@@ -164,9 +167,6 @@ eigrpe(int debug, int verbose, char *sockname)
 
 	if ((pkt_ptr = calloc(1, READ_BUF_SIZE)) == NULL)
 		fatal("eigrpe");
-
-	if (pledge("stdio cpath inet mcast recvfd", NULL) == -1)
-		fatal("pledge");
 
 	event_dispatch();
 
