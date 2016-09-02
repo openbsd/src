@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.210 2016/09/02 14:31:47 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.211 2016/09/02 14:45:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -335,7 +335,7 @@ relay_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 
 	/* Schedule statistics timer */
 	evtimer_set(&env->sc_statev, relay_statistics, ps);
-	bcopy(&env->sc_statinterval, &tv, sizeof(tv));
+	bcopy(&env->sc_conf.statinterval, &tv, sizeof(tv));
 	evtimer_add(&env->sc_statev, &tv);
 }
 
@@ -379,12 +379,14 @@ relay_statistics(int fd, short events, void *arg)
 		cur->tick++;
 		cur->avg = (cur->last + cur->avg) / 2;
 		cur->last_hour += cur->last;
-		if ((cur->tick % (3600 / env->sc_statinterval.tv_sec)) == 0) {
+		if ((cur->tick %
+		    (3600 / env->sc_conf.statinterval.tv_sec)) == 0) {
 			cur->avg_hour = (cur->last_hour + cur->avg_hour) / 2;
 			resethour++;
 		}
 		cur->last_day += cur->last;
-		if ((cur->tick % (86400 / env->sc_statinterval.tv_sec)) == 0) {
+		if ((cur->tick %
+		    (86400 / env->sc_conf.statinterval.tv_sec)) == 0) {
 			cur->avg_day = (cur->last_day + cur->avg_day) / 2;
 			resethour++;
 		}
@@ -413,7 +415,7 @@ relay_statistics(int fd, short events, void *arg)
 
 	/* Schedule statistics timer */
 	evtimer_set(&env->sc_statev, relay_statistics, ps);
-	bcopy(&env->sc_statinterval, &tv, sizeof(tv));
+	bcopy(&env->sc_conf.statinterval, &tv, sizeof(tv));
 	evtimer_add(&env->sc_statev, &tv);
 }
 
@@ -1663,7 +1665,7 @@ relay_close(struct rsession *con, const char *msg)
 	if (con->se_out.bev != NULL)
 		bufferevent_disable(con->se_out.bev, EV_READ|EV_WRITE);
 
-	if ((env->sc_opts & RELAYD_OPT_LOGUPDATE) && msg != NULL) {
+	if ((env->sc_conf.opts & RELAYD_OPT_LOGUPDATE) && msg != NULL) {
 		bzero(&ibuf, sizeof(ibuf));
 		bzero(&obuf, sizeof(obuf));
 		(void)print_host(&con->se_in.ss, ibuf, sizeof(ibuf));
@@ -2162,8 +2164,8 @@ relay_tls_ctx_create(struct relay *rlay)
 	 * Set session ID context to a random value. It needs to be the
 	 * same accross all relay processes or session caching will fail.
 	 */
-	if (!SSL_CTX_set_session_id_context(ctx, env->sc_tls_sid,
-	    sizeof(env->sc_tls_sid)))
+	if (!SSL_CTX_set_session_id_context(ctx, env->sc_conf.tls_sid,
+	    sizeof(env->sc_conf.tls_sid)))
 		goto err;
 
 	/* The text versions of the keys/certs are not needed anymore */

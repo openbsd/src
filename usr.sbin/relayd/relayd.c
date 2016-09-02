@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.158 2016/09/02 12:12:51 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.159 2016/09/02 14:45:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -164,18 +164,18 @@ main(int argc, char *argv[])
 	ps->ps_env = env;
 	TAILQ_INIT(&ps->ps_rcsocks);
 	env->sc_conffile = conffile;
-	env->sc_opts = opts;
+	env->sc_conf.opts = opts;
 	TAILQ_INIT(&env->sc_hosts);
 	TAILQ_INIT(&env->sc_sessions);
 	env->sc_rtable = getrtable();
 	/* initialize the TLS session id to a random key for all relay procs */
-	arc4random_buf(env->sc_tls_sid, sizeof(env->sc_tls_sid));
+	arc4random_buf(env->sc_conf.tls_sid, sizeof(env->sc_conf.tls_sid));
 
 	if (parse_config(env->sc_conffile, env) == -1)
 		exit(1);
 
 	if (debug)
-		env->sc_opts |= RELAYD_OPT_LOGUPDATE;
+		env->sc_conf.opts |= RELAYD_OPT_LOGUPDATE;
 
 	if (geteuid())
 		errx(1, "need root privileges");
@@ -192,13 +192,13 @@ main(int argc, char *argv[])
 	if (!debug && daemon(1, 0) == -1)
 		err(1, "failed to daemonize");
 
-	if (env->sc_opts & RELAYD_OPT_NOACTION)
+	if (env->sc_conf.opts & RELAYD_OPT_NOACTION)
 		ps->ps_noaction = 1;
 	else
 		log_info("startup");
 
-	ps->ps_instances[PROC_RELAY] = env->sc_prefork_relay;
-	ps->ps_instances[PROC_CA] = env->sc_prefork_relay;
+	ps->ps_instances[PROC_RELAY] = env->sc_conf.prefork_relay;
+	ps->ps_instances[PROC_CA] = env->sc_conf.prefork_relay;
 
 	proc_init(ps, procs, nitems(procs));
 	log_procinit("parent");
@@ -224,13 +224,13 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (env->sc_opts & RELAYD_OPT_NOACTION) {
+	if (env->sc_conf.opts & RELAYD_OPT_NOACTION) {
 		fprintf(stderr, "configuration OK\n");
 		proc_kill(env->sc_ps);
 		exit(0);
 	}
 
-	if (env->sc_flags & (F_TLS|F_TLSCLIENT))
+	if (env->sc_conf.flags & (F_TLS|F_TLSCLIENT))
 		ssl_init(env);
 
 	/* rekey the TLS tickets before pushing the config */
@@ -257,7 +257,6 @@ parent_configure(struct relayd *env)
 	struct protocol		*proto;
 	struct relay		*rlay;
 	int			 id;
-	struct ctl_flags	 cf;
 	int			 s, ret = -1;
 
 	TAILQ_FOREACH(tb, env->sc_tables, entry)
@@ -282,15 +281,13 @@ parent_configure(struct relayd *env)
 	}
 
 	/* HCE, PFE, CA and the relays need to reload their config. */
-	env->sc_reload = 2 + (2 * env->sc_prefork_relay);
+	env->sc_reload = 2 + (2 * env->sc_conf.prefork_relay);
 
 	for (id = 0; id < PROC_MAX; id++) {
 		if (id == privsep_process)
 			continue;
-		cf.cf_opts = env->sc_opts;
-		cf.cf_flags = env->sc_flags;
 
-		if ((env->sc_flags & F_NEEDPF) && id == PROC_PFE) {
+		if ((env->sc_conf.flags & F_NEEDPF) && id == PROC_PFE) {
 			/* Send pf socket to the pf engine */
 			if ((s = open(PF_SOCKET, O_RDWR)) == -1) {
 				log_debug("%s: cannot open pf socket",
@@ -301,7 +298,7 @@ parent_configure(struct relayd *env)
 			s = -1;
 
 		proc_compose_imsg(env->sc_ps, id, -1, IMSG_CFG_DONE, -1,
-		    s, &cf, sizeof(cf));
+		    s, &env->sc_conf, sizeof(env->sc_conf));
 	}
 
 	ret = 0;
@@ -466,7 +463,7 @@ parent_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_BINDANY:
 		IMSG_SIZE_CHECK(imsg, &bnd);
 		bcopy(imsg->data, &bnd, sizeof(bnd));
-		if (bnd.bnd_proc > env->sc_prefork_relay)
+		if (bnd.bnd_proc > env->sc_conf.prefork_relay)
 			fatalx("pfe_dispatch_relay: "
 			    "invalid relay proc");
 		switch (bnd.bnd_proto) {

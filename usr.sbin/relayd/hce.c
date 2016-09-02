@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.73 2016/09/02 11:51:49 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.74 2016/09/02 14:45:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -87,7 +87,7 @@ hce_setup_events(void)
 		evtimer_add(&env->sc_ev, &tv);
 	}
 
-	if (env->sc_flags & F_TLS) {
+	if (env->sc_conf.flags & F_TLS) {
 		TAILQ_FOREACH(table, env->sc_tables, entry) {
 			if (!(table->conf.flags & F_TLS) ||
 			    table->ssl_ctx != NULL)
@@ -185,7 +185,7 @@ hce_launch_checks(int fd, short event, void *arg)
 	}
 	check_icmp(env, &tv);
 
-	bcopy(&env->sc_interval, &tv, sizeof(tv));
+	bcopy(&env->sc_conf.interval, &tv, sizeof(tv));
 	evtimer_add(&env->sc_ev, &tv);
 }
 
@@ -209,7 +209,7 @@ hce_notify_done(struct host *host, enum host_error he)
 		fatalx("hce_notify_done: invalid table id");
 
 	if (hostnst->flags & F_DISABLE) {
-		if (env->sc_opts & RELAYD_OPT_LOGUPDATE) {
+		if (env->sc_conf.opts & RELAYD_OPT_LOGUPDATE) {
 			log_info("host %s, check %s%s (ignoring result, "
 			    "host disabled)",
 			    host->conf.name, table_check(table->conf.check),
@@ -257,7 +257,7 @@ hce_notify_done(struct host *host, enum host_error he)
 	else
 		duration = 0;
 
-	if (env->sc_opts & logopt) {
+	if (env->sc_conf.opts & logopt) {
 		if (host->code > 0)
 		    asprintf(&codemsg, ",%d", host->code);
 		log_info("host %s, check %s%s (%lums,%s%s), state %s -> %s, "

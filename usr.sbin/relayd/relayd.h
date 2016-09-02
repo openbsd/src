@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.229 2016/09/02 12:12:51 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.230 2016/09/02 14:45:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -109,11 +109,6 @@ struct shuffle {
 };
 
 typedef u_int32_t objid_t;
-
-struct ctl_flags {
-	u_int8_t	 cf_opts;
-	u_int32_t	 cf_flags;
-};
 
 struct ctl_status {
 	objid_t		 id;
@@ -1034,9 +1029,18 @@ struct privsep_proc {
 	struct relayd		*p_env;
 };
 
+struct relayd_config {
+	char			 tls_sid[SSL_MAX_SID_CTX_LENGTH];
+	struct timeval		 interval;
+	struct timeval		 timeout;
+	struct timeval		 statinterval;
+	u_int16_t		 prefork_relay;
+	u_int16_t		 opts;
+	u_int32_t		 flags;
+};
+
 struct relayd {
-	u_int8_t		 sc_opts;
-	u_int32_t		 sc_flags;
+	struct relayd_config	 sc_conf;
 	const char		*sc_conffile;
 	struct pfdata		*sc_pf;
 	int			 sc_rtsock;
@@ -1047,8 +1051,6 @@ struct relayd {
 	int			 sc_relaycount;
 	int			 sc_routercount;
 	int			 sc_routecount;
-	struct timeval		 sc_interval;
-	struct timeval		 sc_timeout;
 	struct table		 sc_empty_table;
 	struct protocol		 sc_proto_default;
 	struct event		 sc_ev;
@@ -1061,13 +1063,11 @@ struct relayd {
 	struct netroutelist	*sc_routes;
 	struct ca_pkeylist	*sc_pkeys;
 	struct sessionlist	 sc_sessions;
-	u_int16_t		 sc_prefork_relay;
 	char			 sc_demote_group[IFNAMSIZ];
 	u_int16_t		 sc_id;
 	int			 sc_rtable;
 
 	struct event		 sc_statev;
-	struct timeval		 sc_statinterval;
 
 	int			 sc_snmp;
 	const char		*sc_snmp_path;
@@ -1085,7 +1085,6 @@ struct relayd {
 	struct privsep		*sc_ps;
 	int			 sc_reload;
 
-	char			 sc_tls_sid[SSL_MAX_SID_CTX_LENGTH];
 	struct tls_ticket	 sc_tls_ticket;
 	struct tls_ticket	 sc_tls_ticket_bak;
 };

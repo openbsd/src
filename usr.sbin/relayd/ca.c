@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.20 2016/09/02 14:31:47 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.21 2016/09/02 14:45:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -180,7 +180,7 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CA_PRIVDEC:
 		IMSG_SIZE_CHECK(imsg, (&cko));
 		bcopy(imsg->data, &cko, sizeof(cko));
-		if (cko.cko_proc > env->sc_prefork_relay)
+		if (cko.cko_proc > env->sc_conf.prefork_relay)
 			fatalx("ca_dispatch_relay: "
 			    "invalid relay proc");
 		if (IMSG_DATA_SIZE(imsg) != (sizeof(cko) + cko.cko_flen))

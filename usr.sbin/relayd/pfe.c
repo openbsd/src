@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.85 2016/09/02 12:12:51 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.86 2016/09/02 14:45:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -85,7 +85,7 @@ pfe_setup_events(void)
 	/* Schedule statistics timer */
 	if (!event_initialized(&env->sc_statev)) {
 		evtimer_set(&env->sc_statev, pfe_statistics, NULL);
-		bcopy(&env->sc_statinterval, &tv, sizeof(tv));
+		bcopy(&env->sc_conf.statinterval, &tv, sizeof(tv));
 		evtimer_add(&env->sc_statev, &tv);
 	}
 }
@@ -240,7 +240,7 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_NATLOOK:
 		IMSG_SIZE_CHECK(imsg, &cnl);
 		bcopy(imsg->data, &cnl, sizeof(cnl));
-		if (cnl.proc > env->sc_prefork_relay)
+		if (cnl.proc > env->sc_conf.prefork_relay)
 			fatalx("pfe_dispatch_relay: "
 			    "invalid relay proc");
 		if (natlook(env, &cnl) != 0)
@@ -251,14 +251,14 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_STATISTICS:
 		IMSG_SIZE_CHECK(imsg, &crs);
 		bcopy(imsg->data, &crs, sizeof(crs));
-		if (crs.proc > env->sc_prefork_relay)
+		if (crs.proc > env->sc_conf.prefork_relay)
 			fatalx("pfe_dispatch_relay: "
 			    "invalid relay proc");
 		if ((rlay = relay_find(env, crs.id)) == NULL)
 			fatalx("pfe_dispatch_relay: invalid relay id");
 		bcopy(&crs, &rlay->rl_stats[crs.proc], sizeof(crs));
 		rlay->rl_stats[crs.proc].interval =
-		    env->sc_statinterval.tv_sec;
+		    env->sc_conf.statinterval.tv_sec;
 		break;
 	case IMSG_CTL_SESSION:
 		IMSG_SIZE_CHECK(imsg, &con);
@@ -369,7 +369,7 @@ relays:
 	if (env->sc_relays == NULL)
 		goto routers;
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
-		rlay->rl_stats[env->sc_prefork_relay].id = EMPTY_ID;
+		rlay->rl_stats[env->sc_conf.prefork_relay].id = EMPTY_ID;
 		imsg_compose_event(&c->iev, IMSG_CTL_RELAY, 0, 0, -1,
 		    rlay, sizeof(*rlay));
 		imsg_compose_event(&c->iev, IMSG_CTL_RELAY_STATS, 0, 0, -1,
@@ -416,7 +416,7 @@ show_sessions(struct ctl_conn *c)
 {
 	int			 proc, cid;
 
-	for (proc = 0; proc < env->sc_prefork_relay; proc++) {
+	for (proc = 0; proc < env->sc_conf.prefork_relay; proc++) {
 		cid = c->iev.ibuf.fd;
 
 		/*
@@ -782,12 +782,14 @@ pfe_statistics(int fd, short events, void *arg)
 		cur->tick++;
 		cur->avg = (cur->last + cur->avg) / 2;
 		cur->last_hour += cur->last;
-		if ((cur->tick % (3600 / env->sc_statinterval.tv_sec)) == 0) {
+		if ((cur->tick %
+		    (3600 / env->sc_conf.statinterval.tv_sec)) == 0) {
 			cur->avg_hour = (cur->last_hour + cur->avg_hour) / 2;
 			resethour++;
 		}
 		cur->last_day += cur->last;
-		if ((cur->tick % (86400 / env->sc_statinterval.tv_sec)) == 0) {
+		if ((cur->tick %
+		    (86400 / env->sc_conf.statinterval.tv_sec)) == 0) {
 			cur->avg_day = (cur->last_day + cur->avg_day) / 2;
 			resethour++;
 		}
@@ -796,11 +798,11 @@ pfe_statistics(int fd, short events, void *arg)
 		if (resetday)
 			cur->last_day = 0;
 
-		rdr->stats.interval = env->sc_statinterval.tv_sec;
+		rdr->stats.interval = env->sc_conf.statinterval.tv_sec;
 	}
 
 	/* Schedule statistics timer */
 	evtimer_set(&env->sc_statev, pfe_statistics, NULL);
-	bcopy(&env->sc_statinterval, &tv, sizeof(tv));
+	bcopy(&env->sc_conf.statinterval, &tv, sizeof(tv));
 	evtimer_add(&env->sc_statev, &tv);
 }

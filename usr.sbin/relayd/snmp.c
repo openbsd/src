@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.26 2015/12/05 10:59:03 blambert Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.27 2016/09/02 14:45:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -127,7 +127,7 @@ snmp_init(struct relayd *env, enum privsep_procid id)
 		env->sc_snmp = -1;
 	}
 
-	if ((env->sc_flags & F_SNMP) == 0)
+	if ((env->sc_conf.flags & F_SNMP) == 0)
 		return;
 
 	snmp_procid = id;
@@ -1221,7 +1221,7 @@ snmp_relay(struct relayd *env, struct snmp_oid *oid, struct agentx_pdu *resp,
 	u_int		 instanceidx, objectidx;
 	u_int32_t	 status, value = 0;
 	u_int64_t	 value64 = 0;
-	int		 i;
+	int		 i, nrelay = env->sc_conf.prefork_relay;
 
 	instanceidx = oid->o_id[OIDIDX_relaydInfo + 2];
 	objectidx = oid->o_id[OIDIDX_relaydInfo + 1];
@@ -1260,7 +1260,7 @@ snmp_relay(struct relayd *env, struct snmp_oid *oid, struct agentx_pdu *resp,
 			return (-1);
 		break;
 	case 4:		/* count */
-		for (i = 0; i < env->sc_prefork_relay; i++)
+		for (i = 0; i < nrelay; i++)
 			value64 += rly->rl_stats[i].cnt;
 		if (snmp_agentx_varbind(resp, oid,
 		    AGENTX_COUNTER64, &value64,
@@ -1268,7 +1268,7 @@ snmp_relay(struct relayd *env, struct snmp_oid *oid, struct agentx_pdu *resp,
 			return (-1);
 		break;
 	case 5:		/* average */
-		for (i = 0; i < env->sc_prefork_relay; i++)
+		for (i = 0; i < nrelay; i++)
 			value += rly->rl_stats[i].avg;
 		if (snmp_agentx_varbind(resp, oid,
 		    AGENTX_INTEGER, &value,
@@ -1276,7 +1276,7 @@ snmp_relay(struct relayd *env, struct snmp_oid *oid, struct agentx_pdu *resp,
 			return (-1);
 		break;
 	case 6:		/* last */
-		for (i = 0; i < env->sc_prefork_relay; i++)
+		for (i = 0; i < nrelay; i++)
 			value += rly->rl_stats[i].last;
 		if (snmp_agentx_varbind(resp, oid,
 		    AGENTX_INTEGER, &value,
@@ -1284,7 +1284,7 @@ snmp_relay(struct relayd *env, struct snmp_oid *oid, struct agentx_pdu *resp,
 			return (-1);
 		break;
 	case 7:		/* average hour */
-		for (i = 0; i < env->sc_prefork_relay; i++)
+		for (i = 0; i < nrelay; i++)
 			value += rly->rl_stats[i].avg_hour;
 		if (snmp_agentx_varbind(resp, oid,
 		    AGENTX_INTEGER, &value,
@@ -1292,7 +1292,7 @@ snmp_relay(struct relayd *env, struct snmp_oid *oid, struct agentx_pdu *resp,
 			return (-1);
 		break;
 	case 8:		/* last hour */
-		for (i = 0; i < env->sc_prefork_relay; i++)
+		for (i = 0; i < nrelay; i++)
 			value += rly->rl_stats[i].last_hour;
 		if (snmp_agentx_varbind(resp, oid,
 		    AGENTX_INTEGER, &value,
@@ -1300,7 +1300,7 @@ snmp_relay(struct relayd *env, struct snmp_oid *oid, struct agentx_pdu *resp,
 			return (-1);
 		break;
 	case 9:		/* average day */
-		for (i = 0; i < env->sc_prefork_relay; i++)
+		for (i = 0; i < nrelay; i++)
 			value += rly->rl_stats[i].avg_day;
 		if (snmp_agentx_varbind(resp, oid,
 		    AGENTX_INTEGER, &value,
@@ -1308,7 +1308,7 @@ snmp_relay(struct relayd *env, struct snmp_oid *oid, struct agentx_pdu *resp,
 			return (-1);
 		break;
 	case 10:	/* last day */
-		for (i = 0; i < env->sc_prefork_relay; i++)
+		for (i = 0; i < nrelay; i++)
 			value += rly->rl_stats[i].last_day;
 		if (snmp_agentx_varbind(resp, oid,
 		    AGENTX_INTEGER, &value,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.59 2015/11/29 01:20:33 benno Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.60 2016/09/02 14:45:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -57,7 +57,7 @@ init_filter(struct relayd *env, int s)
 {
 	struct pf_status	status;
 
-	if (!(env->sc_flags & F_NEEDPF))
+	if (!(env->sc_conf.flags & F_NEEDPF))
 		return;
 
 	if (s == -1)
@@ -83,7 +83,7 @@ init_tables(struct relayd *env)
 	struct pfr_table	*tables;
 	struct pfioc_table	 io;
 
-	if (!(env->sc_flags & F_NEEDPF))
+	if (!(env->sc_conf.flags & F_NEEDPF))
 		return;
 
 	if ((tables = calloc(env->sc_rdrcount, sizeof(*tables))) == NULL)
@@ -140,7 +140,7 @@ kill_tables(struct relayd *env)
 	struct rdr		*rdr;
 	int			 cnt = 0;
 
-	if (!(env->sc_flags & F_NEEDPF))
+	if (!(env->sc_conf.flags & F_NEEDPF))
 		return;
 
 	TAILQ_FOREACH(rdr, env->sc_rdrs, entry) {
@@ -172,7 +172,7 @@ sync_table(struct relayd *env, struct rdr *rdr, struct table *table)
 	struct sockaddr_in6	*sain6;
 	struct host		*host;
 
-	if (!(env->sc_flags & F_NEEDPF))
+	if (!(env->sc_conf.flags & F_NEEDPF))
 		return;
 
 	if (table == NULL)
@@ -237,7 +237,7 @@ sync_table(struct relayd *env, struct rdr *rdr, struct table *table)
 		cnt = kill_srcnodes(env, table);
 	free(addlist);
 
-	if (env->sc_opts & RELAYD_OPT_LOGUPDATE)
+	if (env->sc_conf.opts & RELAYD_OPT_LOGUPDATE)
 		log_info("table %s: %d added, %d deleted, "
 		    "%d changed, %d killed", io.pfrio_table.pfrt_name,
 		    io.pfrio_nadd, io.pfrio_ndel, io.pfrio_nchange, cnt);
@@ -301,7 +301,7 @@ flush_table(struct relayd *env, struct rdr *rdr)
 {
 	struct pfioc_table	io;
 
-	if (!(env->sc_flags & F_NEEDPF))
+	if (!(env->sc_conf.flags & F_NEEDPF))
 		return;
 
 	memset(&io, 0, sizeof(io));
@@ -370,7 +370,7 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 	char			 anchor[PF_ANCHOR_NAME_SIZE];
 	struct table		*t = rdr->table;
 
-	if ((env->sc_flags & F_NEEDPF) == 0)
+	if ((env->sc_conf.flags & F_NEEDPF) == 0)
 		return;
 
 	bzero(anchor, sizeof(anchor));
@@ -532,7 +532,7 @@ flush_rulesets(struct relayd *env)
 	struct rdr	*rdr;
 	char		 anchor[PF_ANCHOR_NAME_SIZE];
 
-	if (!(env->sc_flags & F_NEEDPF))
+	if (!(env->sc_conf.flags & F_NEEDPF))
 		return;
 
 	kill_tables(env);
@@ -570,7 +570,7 @@ natlook(struct relayd *env, struct ctl_natlook *cnl)
 	struct sockaddr_in6	*in6, *out6;
 	char			 ibuf[BUFSIZ], obuf[BUFSIZ];
 
-	if (!(env->sc_flags & F_NEEDPF))
+	if (!(env->sc_conf.flags & F_NEEDPF))
 		return (0);
 
 	bzero(&pnl, sizeof(pnl));

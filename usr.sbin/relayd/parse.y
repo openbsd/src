@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.208 2016/09/01 10:49:48 claudio Exp $	*/
+/*	$OpenBSD: parse.y,v 1.209 2016/09/02 14:45:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -378,7 +378,7 @@ sendbuf		: NOTHING		{
 main		: INTERVAL NUMBER	{
 			if (loadcfg)
 				break;
-			if ((conf->sc_interval.tv_sec = $2) < 0) {
+			if ((conf->sc_conf.interval.tv_sec = $2) < 0) {
 				yyerror("invalid interval: %d", $2);
 				YYERROR;
 			}
@@ -386,12 +386,12 @@ main		: INTERVAL NUMBER	{
 		| LOG loglevel		{
 			if (loadcfg)
 				break;
-			conf->sc_opts |= $2;
+			conf->sc_conf.opts |= $2;
 		}
 		| TIMEOUT timeout	{
 			if (loadcfg)
 				break;
-			bcopy(&$2, &conf->sc_timeout, sizeof(struct timeval));
+			bcopy(&$2, &conf->sc_conf.timeout, sizeof(struct timeval));
 		}
 		| PREFORK NUMBER	{
 			if (loadcfg)
@@ -401,12 +401,12 @@ main		: INTERVAL NUMBER	{
 				    "relays: %d", $2);
 				YYERROR;
 			}
-			conf->sc_prefork_relay = $2;
+			conf->sc_conf.prefork_relay = $2;
 		}
 		| SNMP trap optstring	{
 			if (loadcfg)
 				break;
-			conf->sc_flags |= F_SNMP;
+			conf->sc_conf.flags |= F_SNMP;
 			if ($2)
 				conf->sc_snmp_flags |= FSNMP_TRAPONLY;
 			if ($3)
@@ -428,7 +428,7 @@ loglevel	: UPDATES		{ $$ = RELAYD_OPT_LOGUPDATE; }
 rdr		: REDIRECT STRING	{
 			struct rdr *srv;
 
-			conf->sc_flags |= F_NEEDPF;
+			conf->sc_conf.flags |= F_NEEDPF;
 
 			if (!loadcfg) {
 				free($2);
@@ -581,7 +581,7 @@ rdroptsl	: forwardmode TO tablespec interface	{
 		| DISABLE		{ rdr->conf.flags |= F_DISABLE; }
 		| STICKYADDR		{ rdr->conf.flags |= F_STICKY; }
 		| match PFTAG STRING {
-			conf->sc_flags |= F_NEEDPF;
+			conf->sc_conf.flags |= F_NEEDPF;
 			if (strlcpy(rdr->conf.tag, $3,
 			    sizeof(rdr->conf.tag)) >=
 			    sizeof(rdr->conf.tag)) {
@@ -654,7 +654,7 @@ tabledef	: TABLE table		{
 			free($2);
 
 			tb->conf.id = 0; /* will be set later */
-			bcopy(&conf->sc_timeout, &tb->conf.timeout,
+			bcopy(&conf->sc_conf.timeout, &tb->conf.timeout,
 			    sizeof(struct timeval));
 			TAILQ_INIT(&tb->hosts);
 			table = tb;
@@ -750,14 +750,14 @@ tableopts	: CHECK tablecheck
 			}
 		}
 		| INTERVAL NUMBER	{
-			if ($2 < conf->sc_interval.tv_sec ||
-			    $2 % conf->sc_interval.tv_sec) {
+			if ($2 < conf->sc_conf.interval.tv_sec ||
+			    $2 % conf->sc_conf.interval.tv_sec) {
 				yyerror("table interval must be "
 				    "divisible by global interval");
 				YYERROR;
 			}
 			table->conf.skip_cnt =
-			    ($2 / conf->sc_interval.tv_sec) - 1;
+			    ($2 / conf->sc_conf.interval.tv_sec) - 1;
 		}
 		| MODE dstmode hashkey	{
 			switch ($2) {
@@ -857,12 +857,12 @@ tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 		| TCP			{ table->conf.check = CHECK_TCP; }
 		| ssltls		{
 			table->conf.check = CHECK_TCP;
-			conf->sc_flags |= F_TLS;
+			conf->sc_conf.flags |= F_TLS;
 			table->conf.flags |= F_TLS;
 		}
 		| http_type STRING hostname CODE NUMBER {
 			if ($1) {
-				conf->sc_flags |= F_TLS;
+				conf->sc_conf.flags |= F_TLS;
 				table->conf.flags |= F_TLS;
 			}
 			table->conf.check = CHECK_HTTP_CODE;
@@ -883,7 +883,7 @@ tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 		}
 		| http_type STRING hostname digest {
 			if ($1) {
-				conf->sc_flags |= F_TLS;
+				conf->sc_conf.flags |= F_TLS;
 				table->conf.flags |= F_TLS;
 			}
 			table->conf.check = CHECK_HTTP_DIGEST;
@@ -908,7 +908,7 @@ tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 		| SEND sendbuf EXPECT STRING opttls {
 			table->conf.check = CHECK_SEND_EXPECT;
 			if ($5) {
-				conf->sc_flags |= F_TLS;
+				conf->sc_conf.flags |= F_TLS;
 				table->conf.flags |= F_TLS;
 			}
 			if (strlcpy(table->conf.exbuf, $4,
@@ -930,7 +930,7 @@ tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 				free($2);
 				YYERROR;
 			}
-			conf->sc_flags |= F_SCRIPT;
+			conf->sc_conf.flags |= F_SCRIPT;
 			free($2);
 		}
 		;
@@ -1700,7 +1700,7 @@ relayoptsl	: LISTEN ON STRING port opttls {
 			r->rl_conf.port = h->port.val[0];
 			if ($5) {
 				r->rl_conf.flags |= F_TLS;
-				conf->sc_flags |= F_TLS;
+				conf->sc_conf.flags |= F_TLS;
 			}
 			tableport = h->port.val[0];
 			host_free(&al);
@@ -1713,7 +1713,7 @@ relayoptsl	: LISTEN ON STRING port opttls {
 			}
 			if ($2) {
 				rlay->rl_conf.flags |= F_TLSCLIENT;
-				conf->sc_flags |= F_TLSCLIENT;
+				conf->sc_conf.flags |= F_TLSCLIENT;
 			}
 		}
 		| SESSION TIMEOUT NUMBER		{
@@ -1777,12 +1777,12 @@ forwardspec	: STRING port retry	{
 			host_free(&al);
 		}
 		| NAT LOOKUP retry	{
-			conf->sc_flags |= F_NEEDPF;
+			conf->sc_conf.flags |= F_NEEDPF;
 			rlay->rl_conf.flags |= F_NATLOOK;
 			rlay->rl_conf.dstretry = $3;
 		}
 		| DESTINATION retry		{
-			conf->sc_flags |= F_NEEDPF;
+			conf->sc_conf.flags |= F_NEEDPF;
 			rlay->rl_conf.flags |= F_DIVERT;
 			rlay->rl_conf.dstretry = $2;
 		}
@@ -1831,7 +1831,7 @@ router		: ROUTER STRING		{
 				YYACCEPT;
 			}
 
-			conf->sc_flags |= F_NEEDRT;
+			conf->sc_conf.flags |= F_NEEDRT;
 			TAILQ_FOREACH(rt, conf->sc_rts, rt_entry)
 				if (!strcmp(rt->rt_conf.name, $2))
 					break;
@@ -2630,7 +2630,7 @@ load_config(const char *filename, struct relayd *x_conf)
 	struct relay_table	*rlt;
 
 	conf = x_conf;
-	conf->sc_flags = 0;
+	conf->sc_conf.flags = 0;
 
 	loadcfg = 1;
 	errors = 0;
@@ -2659,7 +2659,7 @@ load_config(const char *filename, struct relayd *x_conf)
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
 		next = TAILQ_NEXT(sym, entry);
-		if ((conf->sc_opts & RELAYD_OPT_VERBOSE) && !sym->used)
+		if ((conf->sc_conf.opts & RELAYD_OPT_VERBOSE) && !sym->used)
 			fprintf(stderr, "warning: macro '%s' not "
 			    "used\n", sym->nam);
 		if (!sym->persist) {
@@ -2687,7 +2687,7 @@ load_config(const char *filename, struct relayd *x_conf)
 		free(rlay);
 	}
 
-	if (timercmp(&conf->sc_timeout, &conf->sc_interval, >=)) {
+	if (timercmp(&conf->sc_conf.timeout, &conf->sc_conf.interval, >=)) {
 		log_warnx("global timeout exceeds interval");
 		errors++;
 	}
@@ -2731,7 +2731,8 @@ load_config(const char *filename, struct relayd *x_conf)
 			log_warnx("unused table: %s", table->conf.name);
 			errors++;
 		}
-		if (timercmp(&table->conf.timeout, &conf->sc_interval, >=)) {
+		if (timercmp(&table->conf.timeout,
+		    &conf->sc_conf.interval, >=)) {
 			log_warnx("table timeout exceeds interval: %s",
 			    table->conf.name);
 			errors++;
