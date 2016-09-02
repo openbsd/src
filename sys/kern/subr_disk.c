@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.227 2016/05/21 14:22:31 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.228 2016/09/02 09:44:27 tom Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -628,7 +628,7 @@ gpt_chk_hdr(struct gpt_header *gh, struct disklabel *lp)
 	uint64_t ghpartlba;
 	uint64_t ghlbaend, ghlbastart;
 	uint32_t orig_gh_csum;
-	uint32_t ghsize, ghpartsize, ghpartspersec, ghpartnum;
+	uint32_t ghsize, ghpartsize, ghpartspersec;
 
 	if (letoh64(gh->gh_sig) != GPTSIGNATURE)
 		return (EINVAL);
@@ -639,7 +639,6 @@ gpt_chk_hdr(struct gpt_header *gh, struct disklabel *lp)
 	ghsize = letoh32(gh->gh_size);
 	ghpartsize = letoh32(gh->gh_part_size);
 	ghpartspersec = lp->d_secsize / ghpartsize;
-	ghpartnum = letoh32(gh->gh_part_num);
 	ghpartlba = letoh64(gh->gh_part_lba);
 	ghlbaend = letoh64(gh->gh_lba_end);
 	ghlbastart = letoh64(gh->gh_lba_start);
