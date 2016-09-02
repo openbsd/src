@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.14 2015/05/25 03:07:49 deraadt Exp $	*/
+/*	$OpenBSD: tree.h,v 1.15 2016/09/02 11:17:14 dlg Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -744,5 +744,227 @@ name##_RB_MINMAX(struct name *head, int val)				\
 	for ((x) = RB_MAX(name, head);					\
 	    ((x) != NULL) && ((y) = name##_RB_PREV(x), 1);		\
 	     (x) = (y))
+
+#if 0 && defined(_KERNEL)
+
+/*
+ * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include <sys/param.h> /* for NULL */
+
+struct rb_type {
+	int		(*t_compare)(const void *, const void *);
+	void		(*t_augment)(void *);
+	size_t		  t_offset;	/* offset of rb_entry in type */
+};
+
+struct rb_entry {
+	struct rb_entry	 *rbe_parent;
+	struct rb_entry	 *rbe_left;
+	struct rb_entry	 *rbe_right;
+	unsigned int	  rbe_color;
+};
+
+struct rb_tree {
+	struct rb_entry	*rbt_root;
+};
+
+static inline void
+_rb_init(struct rb_tree *rbt)
+{
+	rbt->rbt_root = NULL;
+}
+
+static inline int
+_rb_empty(struct rb_tree *rbt)
+{
+	return (rbt->rbt_root == NULL);
+}
+
+void	*_rb_insert(const struct rb_type *, struct rb_tree *, void *);
+void	*_rb_remove(const struct rb_type *, struct rb_tree *, void *);
+void	*_rb_find(const struct rb_type *, struct rb_tree *, const void *);
+void	*_rb_nfind(const struct rb_type *, struct rb_tree *, const void *);
+void	*_rb_root(const struct rb_type *, struct rb_tree *);
+void	*_rb_min(const struct rb_type *, struct rb_tree *);
+void	*_rb_max(const struct rb_type *, struct rb_tree *);
+void	*_rb_next(const struct rb_type *, void *);
+void	*_rb_prev(const struct rb_type *, void *);
+void	*_rb_left(const struct rb_type *, void *);
+void	*_rb_right(const struct rb_type *, void *);
+void	*_rb_parent(const struct rb_type *, void *);
+void	*_rb_color(const struct rb_type *, void *);
+
+#define RBT_HEAD(_name, _type)						\
+struct _name {								\
+	struct rb_tree rbh_root;					\
+}
+
+#define RBT_INITIALIZER(_head)	{ { NULL } }
+
+#define RBT_ENTRY(_type)	struct rb_entry
+
+#define RBT_PROTOTYPE(_name, _type, _field, _cmp)			\
+extern const struct rb_type *const _name##_RBT_TYPE;			\
+									\
+static inline void							\
+_name##_RBT_INIT(struct _name *head)					\
+{									\
+	_rb_init(&head->rbh_root);					\
+}									\
+									\
+static inline struct _type *						\
+_name##_RBT_INSERT(struct _name *head, struct _type *elm)		\
+{									\
+	return _rb_insert(_name##_RBT_TYPE, &head->rbh_root, elm);	\
+}									\
+									\
+static inline struct _type *						\
+_name##_RBT_REMOVE(struct _name *head, struct _type *elm)		\
+{									\
+	return _rb_remove(_name##_RBT_TYPE, &head->rbh_root, elm);	\
+}									\
+									\
+static inline struct _type *						\
+_name##_RBT_FIND(struct _name *head, const struct _type *key)		\
+{									\
+	return _rb_find(_name##_RBT_TYPE, &head->rbh_root, key);	\
+}									\
+									\
+static inline struct _type *						\
+_name##_RBT_NFIND(struct _name *head, const struct _type *key)		\
+{									\
+	return _rb_nfind(_name##_RBT_TYPE, &head->rbh_root, key);	\
+}									\
+									\
+static inline struct _type *						\
+_name##_RBT_ROOT(struct _name *head)					\
+{									\
+	return _rb_root(_name##_RBT_TYPE, &head->rbh_root);		\
+}									\
+									\
+static inline int							\
+_name##_RBT_EMPTY(struct _name *head)					\
+{									\
+	return _rb_empty(&head->rbh_root);				\
+}									\
+									\
+static inline struct _type *						\
+_name##_RBT_MIN(struct _name *head)					\
+{									\
+	return _rb_min(_name##_RBT_TYPE, &head->rbh_root);		\
+}									\
+									\
+static inline struct _type *						\
+_name##_RBT_MAX(struct _name *head)					\
+{									\
+	return _rb_max(_name##_RBT_TYPE, &head->rbh_root);		\
+}									\
+									\
+static inline struct _type *						\
+_name##_RBT_NEXT(struct _type *elm)					\
+{									\
+	return _rb_next(_name##_RBT_TYPE, elm);				\
+}									\
+									\
+static inline struct _type *						\
+_name##_RBT_PREV(struct _type *elm)					\
+{									\
+	return _rb_prev(_name##_RBT_TYPE, elm);				\
+}									\
+									\
+static inline struct _type *						\
+_name##_RBT_LEFT(struct _type *elm)					\
+{									\
+	return _rb_left(_name##_RBT_TYPE, elm);				\
+}									\
+									\
+static inline struct _type *						\
+_name##_RBT_RIGHT(struct _type *elm)					\
+{									\
+	return _rb_right(_name##_RBT_TYPE, elm);			\
+}									\
+									\
+static inline struct _type *						\
+_name##_RBT_PARENT(struct _type *elm)					\
+{									\
+	return _rb_parent(_name##_RBT_TYPE, elm);			\
+}
+
+#define RBT_GENERATE_INTERNAL(_name, _type, _field, _cmp, _aug)		\
+static int								\
+_name##_RBT_COMPARE(const void *lptr, const void *rptr)			\
+{									\
+	const struct _type *l = lptr, *r = rptr;			\
+	return _cmp(l, r);						\
+}									\
+static const struct rb_type _name##_RBT_INFO = {			\
+	_name##_RBT_COMPARE,						\
+	_aug,								\
+	offsetof(struct _type, _field),					\
+};									\
+const struct rb_type *const _name##_RBT_TYPE = &_name##_RBT_INFO
+
+#define RBT_GENERATE_AUGMENT(_name, _type, _field, _cmp, _aug)		\
+static void								\
+_name##_RBT_AUGMENT(void *ptr)						\
+{									\
+	struct _type *p = ptr;						\
+	return _aug(p);							\
+}									\
+RBT_GENERATE_INTERNAL(_name, _type, _field, _cmp, _name##_RBT_AUGMENT)
+
+#define RBT_GENERATE(_name, _type, _field, _cmp)			\
+    RBT_GENERATE_INTERNAL(_name, _type, _field, _cmp, NULL)
+
+#define RBT_INIT(_name, _head)		_name##_RBT_INIT(_head)
+#define RBT_INSERT(_name, _head, _elm)	_name##_RBT_INSERT(_head, _elm)
+#define RBT_REMOVE(_name, _head, _elm)	_name##_RBT_REMOVE(_head, _elm)
+#define RBT_FIND(_name, _head, _key)	_name##_RBT_FIND(_head, _key)
+#define RBT_NFIND(_name, _head, _key)	_name##_RBT_NFIND(_head, _key)
+#define RBT_ROOT(_name, _head)		_name##_RBT_ROOT(_head)
+#define RBT_EMPTY(_name, _head)		_name##_RBT_EMPTY(_head)
+#define RBT_MIN(_name, _head)		_name##_RBT_MIN(_head)
+#define RBT_MAX(_name, _head)		_name##_RBT_MAX(_head)
+#define RBT_NEXT(_name, _elm)		_name##_RBT_NEXT(_elm)
+#define RBT_PREV(_name, _elm)		_name##_RBT_PREV(_elm)
+#define RBT_LEFT(_name, _elm)		_name##_RBT_LEFT(_elm)
+#define RBT_RIGHT(_name, _elm)		_name##_RBT_RIGHT(_elm)
+#define RBT_PARENT(_name, _elm)		_name##_RBT_PARENT(_elm)
+
+#define RBT_FOREACH(_e, _name, _head)					\
+	for ((_e) = RBT_MIN(_name, (_head));				\
+	     (_e) != NULL;						\
+	     (_e) = RBT_NEXT(_name, (_e)))
+
+#define RBT_FOREACH_SAFE(_e, _name, _head, _n)				\
+	for ((_e) = RBT_MIN(_name, (_head));				\
+	     (_e) != NULL && ((_n) = RBT_NEXT(_name, (_e)), 1);	\
+	     (_e) = (_n))
+
+#define RBT_FOREACH_REVERSE(_e, _name, _head)				\
+	for ((_e) = RBT_MAX(_name, (_head));				\
+	     (_e) != NULL;						\
+	     (_e) = RBT_PREV(_name, (_e)))
+
+#define RBT_FOREACH_REVERSE_SAFE(_e, _name, _head, _n)			\
+	for ((_e) = RBT_MAX(_name, (_head));				\
+	     (_e) != NULL && ((_n) = RBT_PREV(_name, (_e)), 1);	\
+	     (_e) = (_n))
+
+#endif /* _KERNEL */
 
 #endif	/* _SYS_TREE_H_ */
