@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.60 2016/09/01 09:47:03 rzalamena Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.61 2016/09/02 11:25:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -117,7 +117,6 @@ main(int argc, char *argv[])
 	struct httpd		*env;
 	struct privsep		*ps;
 	const char		*conffile = CONF_FILE;
-	struct privsep_proc	*p;
 	enum privsep_procid	 proc_id = PROC_PARENT;
 	int			 proc_instance = 0;
 	const char		*errp, *title = NULL;
@@ -199,6 +198,8 @@ main(int argc, char *argv[])
 
 	ps->ps_instances[PROC_SERVER] = env->sc_prefork_server;
 	ps->ps_instance = proc_instance;
+	if (title != NULL)
+		ps->ps_title[proc_id] = title;
 
 	if (env->sc_chroot == NULL)
 		env->sc_chroot = ps->ps_pw->pw_dir;
@@ -211,26 +212,9 @@ main(int argc, char *argv[])
 			errx(1, "malloc failed");
 	}
 
-	if (proc_id != PROC_PARENT) {
-		p = NULL;
-		for (proc = 0; proc < nitems(procs); proc++) {
-			if (procs[proc].p_id != proc_id)
-				continue;
+	/* only the parent returns */
+	proc_init(ps, procs, nitems(procs), argc0, argv, proc_id);
 
-			p = &procs[proc];
-			break;
-		}
-		if (p == NULL || p->p_init == NULL)
-			fatalx("%s: process %d missing process initialization",
-			    __func__, proc_id);
-
-		ps->ps_title[proc_id] = title;
-		p->p_init(ps, p);
-
-		fatalx("failed to initiate child process");
-	}
-
-	proc_init(ps, procs, nitems(procs), argc0, argv);
 	log_procinit("parent");
 	if (!debug && daemon(1, 0) == -1)
 		err(1, "failed to daemonize");

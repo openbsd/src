@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.23 2016/09/01 14:50:05 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.24 2016/09/02 11:25:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -40,7 +40,7 @@ void	 proc_connectpeer(struct privsep *, enum privsep_procid, int,
 	    struct privsep_pipes *);
 void	 proc_setup(struct privsep *, struct privsep_proc *, unsigned int);
 void	 proc_open(struct privsep *, int, int);
-void	 proc_listento(struct privsep *, int, enum privsep_procid,
+void	 proc_accept(struct privsep *, int, enum privsep_procid,
 	    unsigned int);
 void	 proc_close(struct privsep *);
 int	 proc_ispeer(struct privsep_proc *, unsigned int, enum privsep_procid);
@@ -216,7 +216,45 @@ proc_connect(struct privsep *ps)
 }
 
 void
-proc_listento(struct privsep *ps, int fd, enum privsep_procid dst,
+proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
+    int argc, char **argv, enum privsep_procid proc_id)
+{
+	struct privsep_proc	*p = NULL;
+	unsigned int		 proc;
+	unsigned int		 src, dst;
+
+	if (proc_id == PROC_PARENT) {
+		privsep_process = PROC_PARENT;
+		proc_setup(ps, procs, nproc);
+
+		/* Open socketpair()s for everyone. */
+		for (src = 0; src < PROC_MAX; src++)
+			for (dst = 0; dst < PROC_MAX; dst++)
+				proc_open(ps, src, dst);
+
+		/* Engage! */
+		proc_exec(ps, procs, nproc, argc, argv);
+		return;
+	}
+
+	/* Initialize a child */
+	for (proc = 0; proc < nproc; proc++) {
+		if (procs[proc].p_id != proc_id)
+			continue;
+		p = &procs[proc];
+		break;
+	}
+	if (p == NULL || p->p_init == NULL)
+		fatalx("%s: process %d missing process initialization",
+		    __func__, proc_id);
+
+	p->p_init(ps, p);
+
+	fatalx("failed to initiate child process");
+}
+
+void
+proc_accept(struct privsep *ps, int fd, enum privsep_procid dst,
     unsigned int n)
 {
 	struct privsep_pipes	*pp = ps->ps_pp;
@@ -318,24 +356,6 @@ proc_setup(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc)
 	}
 
 	ps->ps_pp = &ps->ps_pipes[privsep_process][ps->ps_instance];
-}
-
-void
-proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
-    int argc, char **argv)
-{
-	unsigned int		 src, dst;
-
-	privsep_process = PROC_PARENT;
-	proc_setup(ps, procs, nproc);
-
-	/* Open socketpair()s for everyone. */
-	for (src = 0; src < PROC_MAX; src++)
-		for (dst = 0; dst < PROC_MAX; dst++)
-			proc_open(ps, src, dst);
-
-	/* Engage! */
-	proc_exec(ps, procs, nproc, argc, argv);
 }
 
 void
@@ -536,7 +556,7 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	signal_add(&ps->ps_evsigusr1, NULL);
 
 	proc_setup(ps, procs, nproc);
-	proc_listento(ps, PARENT_SOCK_FILENO, PROC_PARENT, 0);
+	proc_accept(ps, PARENT_SOCK_FILENO, PROC_PARENT, 0);
 	if (p->p_id == PROC_CONTROL && ps->ps_instance == 0) {
 		TAILQ_INIT(&ctl_conns);
 		if (control_listen(&ps->ps_csock) == -1)
@@ -624,7 +644,7 @@ proc_dispatch(int fd, short event, void *arg)
 		case IMSG_CTL_PROCFD:
 			IMSG_SIZE_CHECK(&imsg, &pf);
 			memcpy(&pf, imsg.data, sizeof(pf));
-			proc_listento(ps, imsg.fd, pf.pf_procid,
+			proc_accept(ps, imsg.fd, pf.pf_procid,
 			    pf.pf_instance);
 			break;
 		default:
