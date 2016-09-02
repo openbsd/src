@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.101 2016/06/06 15:56:22 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.102 2016/09/02 14:02:48 benno Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -126,6 +126,7 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 
 	setproctitle("route decision engine");
 	ospfd_process = PROC_RDE_ENGINE;
+	log_procname = log_procnames[ospfd_process];
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||

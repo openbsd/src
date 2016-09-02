@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.4 2010/05/26 16:44:32 nicm Exp $
+#	$OpenBSD: Makefile,v 1.5 2016/09/02 14:02:48 benno Exp $
 
 .PATH:		${.CURDIR}/../ospfd
 
 PROG=	ospfctl
-SRCS=	log.c ospfctl.c parser.c
+SRCS=	logmsg.c ospfctl.c parser.c
 CFLAGS+= -Wall
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual

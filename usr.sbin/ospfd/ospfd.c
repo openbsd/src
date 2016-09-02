@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.89 2016/02/02 17:51:11 sthen Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.90 2016/09/02 14:02:48 benno Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -135,6 +135,7 @@ main(int argc, char *argv[])
 
 	conffile = CONF_FILE;
 	ospfd_process = PROC_MAIN;
+	log_procname = log_procnames[ospfd_process];
 	sockname = OSPFD_SOCKET;
 
 	log_init(1);	/* log to stderr until daemonized */
