@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.17 2016/07/30 16:37:54 kettenis Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.18 2016/09/02 16:45:12 stefan Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1170,10 +1170,10 @@ uaddr_pivot_newpivot(struct vm_map *map, struct uaddr_pivot_state *uaddr,
 		arc4_arg = found_maxaddr - found_minaddr;
 		if (arc4_arg > 0xffffffff) {
 			*addr_out = found_minaddr +
-			    (arc4random() & (align - 1));
+			    (arc4random() & ~(align - 1));
 		} else {
 			*addr_out = found_minaddr +
-			    (arc4random_uniform(arc4_arg) & (align - 1));
+			    (arc4random_uniform(arc4_arg) & ~(align - 1));
 		}
 	}
 	/* Address was found in this entry. */
