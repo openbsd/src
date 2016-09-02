@@ -39,12 +39,21 @@ struct ns8250_regs {
 	uint8_t mcr;	/* Modem Control Register */
 	uint8_t scr;	/* Scratch Register */
 	uint8_t data;	/* Unread input data */
-	int fd;		/* com port fd */
 };
 
-void ns8250_init(int);
+/* ns8250 UART device state */
+struct ns8250_dev {
+	pthread_mutex_t mutex;
+	struct ns8250_regs regs;
+	struct event event;
+	int fd;
+	int irq;
+	int rcv_pending;
+};
+
+void ns8250_init(int, uint32_t);
 uint8_t vcpu_exit_com(struct vm_run_params *);
-void vcpu_process_com_data(union vm_exit *);
+uint8_t vcpu_process_com_data(union vm_exit *, uint32_t, uint32_t);
 void vcpu_process_com_lcr(union vm_exit *);
 void vcpu_process_com_lsr(union vm_exit *);
 void vcpu_process_com_ier(union vm_exit *);
@@ -52,6 +61,3 @@ void vcpu_process_com_mcr(union vm_exit *);
 void vcpu_process_com_iir(union vm_exit *);
 void vcpu_process_com_msr(union vm_exit *);
 void vcpu_process_com_scr(union vm_exit *);
-
-/* XXX temporary until this is polled */
-int vcpu_com1_needs_intr(void);

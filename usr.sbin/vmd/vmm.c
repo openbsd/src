@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.42 2016/09/02 16:23:40 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.43 2016/09/02 17:10:08 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -849,7 +849,7 @@ init_emulated_hw(struct vm_create_params *vcp, int *child_disks,
 	ioports_map[IO_ICU2 + 1] = vcpu_exit_i8259;
 
 	/* Init ns8250 UART */
-	ns8250_init(con_fd);
+	ns8250_init(con_fd, vcp->vcp_id);
 	for (i = COM1_DATA; i <= COM1_SCR; i++)
 		ioports_map[i] = vcpu_exit_com;
 
@@ -1322,13 +1322,8 @@ vcpu_exit(struct vm_run_params *vrp)
 	}
 
 	/* XXX this may not be irq 9 all the time */
-	/* XXX change this to poll on the tap interface */
 	if (vionet_process_rx())
 		vcpu_assert_pic_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, 9);
-
-	/* XXX temporary until this is polled */
-	if (vcpu_com1_needs_intr())
-		vcpu_assert_pic_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, 4);
 
 	vrp->vrp_continue = 1;
 
