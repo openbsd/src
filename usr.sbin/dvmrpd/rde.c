@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.26 2016/09/02 15:33:27 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.27 2016/09/02 15:35:34 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -209,8 +209,10 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
+		if (n == 0)	/* connection closed */
+			shut = 1;
 	}
 
 	for (;;) {
