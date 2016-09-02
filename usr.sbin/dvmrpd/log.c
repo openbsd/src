@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.4 2014/11/03 16:55:59 bluhm Exp $ */
+/*	$OpenBSD: log.c,v 1.5 2016/09/02 16:20:34 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -22,20 +22,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <time.h>
 #include <unistd.h>
 
+#include "log.h"
 #include "igmp.h"
 #include "dvmrpd.h"
-#include "log.h"
 
-static const char * const procnames[] = {
-	"parent",
-	"dvmrpe",
-	"rde"
-};
-
-int	debug;
-int	verbose;
+int		 debug;
+int		 verbose;
+const char	*log_procname;
 
 void
 log_init(int n_debug)
@@ -145,15 +141,15 @@ void
 fatal(const char *emsg)
 {
 	if (emsg == NULL)
-		logit(LOG_CRIT, "fatal in %s: %s", procnames[dvmrpd_process],
+		logit(LOG_CRIT, "fatal in %s: %s", log_procname,
 		    strerror(errno));
 	else
 		if (errno)
 			logit(LOG_CRIT, "fatal in %s: %s: %s",
-			    procnames[dvmrpd_process], emsg, strerror(errno));
+			    log_procname, emsg, strerror(errno));
 		else
 			logit(LOG_CRIT, "fatal in %s: %s",
-			    procnames[dvmrpd_process], emsg);
+			    log_procname, emsg);
 
 	if (dvmrpd_process == PROC_MAIN)
 		exit(1);
@@ -166,65 +162,4 @@ fatalx(const char *emsg)
 {
 	errno = 0;
 	fatal(emsg);
-}
-
-/* names */
-const char *
-nbr_state_name(int state)
-{
-	switch (state) {
-	case NBR_STA_DOWN:
-		return ("DOWN");
-	case NBR_STA_1_WAY:
-		return ("1-WAY");
-	case NBR_STA_2_WAY:
-		return ("2-WAY");
-	default:
-		return ("UNKNOWN");
-	}
-}
-
-const char *
-if_state_name(int state)
-{
-	switch (state) {
-	case IF_STA_DOWN:
-		return ("DOWN");
-	case IF_STA_QUERIER:
-		return ("QUERIER");
-	case IF_STA_NONQUERIER:
-		return ("NONQUERIER");
-	default:
-		return ("UNKNOWN");
-	}
-}
-
-const char *
-group_state_name(int state)
-{
-	switch (state) {
-	case GRP_STA_NO_MEMB_PRSNT:
-		return ("NO MEMBER");
-	case GRP_STA_MEMB_PRSNT:
-		return ("MEMBER");
-	case GRP_STA_V1_MEMB_PRSNT:
-		return ("V1 MEMBER");
-	case GRP_STA_CHECK_MEMB:
-		return ("CHECKING");
-	default:
-		return ("UNKNOWN");
-	}
-}
-
-const char *
-if_type_name(enum iface_type type)
-{
-	switch (type) {
-	case IF_TYPE_POINTOPOINT:
-		return ("POINTOPOINT");
-	case IF_TYPE_BROADCAST:
-		return ("BROADCAST");
-	}
-	/* NOTREACHED */
-	return ("UNKNOWN");
 }

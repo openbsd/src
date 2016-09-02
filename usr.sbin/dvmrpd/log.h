@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.3 2014/11/03 16:55:59 bluhm Exp $ */
+/*	$OpenBSD: log.h,v 1.4 2016/09/02 16:20:34 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,10 +16,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _LOG_H_
-#define	_LOG_H_
+#ifndef LOG_H
+#define LOG_H
 
 #include <stdarg.h>
+#include <sys/cdefs.h>
+
+extern const char	*log_procname;
 
 void	 log_init(int);
 void	 log_verbose(int);
@@ -32,4 +35,4 @@ void	 log_debug(const char *, ...);
 void	 fatal(const char *) __dead;
 void	 fatalx(const char *) __dead;
 
-#endif /* _LOG_H_ */
+#endif /* LOG_H */
