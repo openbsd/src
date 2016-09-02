@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.103 2016/09/02 15:47:32 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.104 2016/09/02 17:10:25 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6082,7 +6082,7 @@ iwm_setrates(struct iwm_node *in)
 	struct iwm_softc *sc = IC2IFP(ic)->if_softc;
 	struct iwm_lq_cmd *lq = &in->in_lq;
 	struct ieee80211_rateset *rs = &ni->ni_rates;
-	int i, ridx, ridx_min, j, tab = 0;
+	int i, ridx, ridx_min, j, sgi_ok, tab = 0;
 	struct iwm_host_cmd cmd = {
 		.id = IWM_LQ_CMD,
 		.len = { sizeof(in->in_lq), },
@@ -6092,9 +6092,12 @@ iwm_setrates(struct iwm_node *in)
 	memset(lq, 0, sizeof(*lq));
 	lq->sta_id = IWM_STATION_ID;
 
-	/* For HT, always enable RTS/CTS to avoid excessive retries. */
-	if (ni->ni_flags & IEEE80211_NODE_HT)
+	/* For HT, enable RTS/CTS, and SGI (if supported). */
+	if (ni->ni_flags & IEEE80211_NODE_HT) {
 		lq->flags |= IWM_LQ_FLAG_USE_RTS_MSK;
+		sgi_ok = (ni->ni_htcaps & IEEE80211_HTCAP_SGI20);
+	} else
+		sgi_ok = 0;
 
 	/*
 	 * Fill the LQ rate selection table with legacy and/or HT rates
@@ -6120,6 +6123,8 @@ iwm_setrates(struct iwm_node *in)
 				if (ridx == iwm_mcs2ridx[i]) {
 					tab = iwm_rates[ridx].ht_plcp;
 					tab |= IWM_RATE_MCS_HT_MSK;
+					if (sgi_ok)
+						tab |= IWM_RATE_MCS_SGI_MSK;
 					break;
 				}
 			}
@@ -8000,8 +8005,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
 	    IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
 
-	/* No optional HT features supported for now, */
-	ic->ic_htcaps = 0;
+	ic->ic_htcaps = IEEE80211_HTCAP_SGI20;
 	ic->ic_htxcaps = 0;
 	ic->ic_txbfcaps = 0;
 	ic->ic_aselcaps = 0;
