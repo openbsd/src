@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.35 2016/08/16 16:49:24 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.36 2016/09/02 14:23:09 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -36,44 +36,40 @@
  * Author:  John Kunze, Office of Comp. Affairs, UCB
  */
 
-#include <err.h>
-#include <stdbool.h>
 #include <ctype.h>
+#include <err.h>
 #include <limits.h>
 #include <math.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#define	REPS_DEF	100
-#define	BEGIN_DEF	1
-#define	ENDER_DEF	100
-#define	STEP_DEF	1
-
-#define	STEP		1
-#define	ENDER		2
-#define	BEGIN		4
-#define	REPS		8
+#define	REPS	1
+#define	BEGIN	2
+#define	ENDER	4
+#define	STEP	8
 
 #define	is_default(s)	(strcmp((s), "-") == 0)
 
-static double	begin = BEGIN_DEF;
-static double	ender = ENDER_DEF;
-static double	step = STEP_DEF;
-static long	reps = REPS_DEF;
-static bool	randomize;
-static bool	infinity;
-static bool	boring;
+static long	reps	= 100;
+static double	begin	= 1;
+static double	ender	= 100;
+static double	step	= 1;
+
+static char	format[BUFSIZ];
+static char	sepstring[BUFSIZ] = "\n";
 static int	prec = -1;
+static bool	boring;
+static bool	chardata;
+static bool	finalnl = true;
+static bool	infinity;
 static bool	intdata;
 static bool	longdata;
-static bool	chardata;
 static bool	nosign;
-static bool	finalnl = true;
-static char	sepstring[BUFSIZ] = "\n";
-static char	format[BUFSIZ];
+static bool	randomize;
 
 static void	getformat(void);
 static int	getprec(char *);
@@ -94,10 +90,13 @@ main(int argc, char *argv[])
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	while ((ch = getopt(argc, argv, "rb:w:cs:np:")) != -1)
+	while ((ch = getopt(argc, argv, "b:cnp:rs:w:")) != -1) {
 		switch (ch) {
-		case 'r':
-			randomize = true;
+		case 'b':
+			boring = true;
+			if (strlcpy(format, optarg, sizeof(format)) >=
+			    sizeof(format))
+				errx(1, "-b word too long");
 			break;
 		case 'c':
 			chardata = true;
@@ -105,31 +104,29 @@ main(int argc, char *argv[])
 		case 'n':
 			finalnl = false;
 			break;
-		case 'b':
-			boring = true;
-			if (strlcpy(format, optarg, sizeof(format)) >=
-			    sizeof(format))
-				errx(1, "-b word too long");
-			break;
-		case 'w':
-			if (strlcpy(format, optarg, sizeof(format)) >=
-			    sizeof(format))
-				errx(1, "-w word too long");
-			break;
-		case 's':
-			if (strlcpy(sepstring, optarg, sizeof(sepstring)) >=
-			    sizeof(sepstring))
-				errx(1, "-s string too long");
-			break;
 		case 'p':
 			prec = strtonum(optarg, 0, INT_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "bad precision value, %s: %s", errstr,
 					optarg);
 			break;
+		case 'r':
+			randomize = true;
+			break;
+		case 's':
+			if (strlcpy(sepstring, optarg, sizeof(sepstring)) >=
+			    sizeof(sepstring))
+				errx(1, "-s string too long");
+			break;
+		case 'w':
+			if (strlcpy(format, optarg, sizeof(format)) >=
+			    sizeof(format))
+				errx(1, "-w word too long");
+			break;
 		default:
 			usage();
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
@@ -302,7 +299,7 @@ main(int argc, char *argv[])
 	if (finalnl)
 		putchar('\n');
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -314,28 +311,28 @@ putdata(double x, bool last)
 		if (x <= (double)ULONG_MAX && x >= 0.0)
 			printf(format, (unsigned long)x);
 		else
-			return (1);
+			return 1;
 	} else if (longdata) {
 		if (x <= (double)LONG_MAX && x >= (double)LONG_MIN)
 			printf(format, (long)x);
 		else
-			return (1);
+			return 1;
 	} else if (chardata || (intdata && !nosign)) {
 		if (x <= (double)INT_MAX && x >= (double)INT_MIN)
 			printf(format, (int)x);
 		else
-			return (1);
+			return 1;
 	} else if (intdata) {
 		if (x <= (double)UINT_MAX && x >= 0.0)
 			printf(format, (unsigned int)x);
 		else
-			return (1);
+			return 1;
 	} else
 		printf(format, x);
 	if (!last)
 		fputs(sepstring, stdout);
 
-	return (0);
+	return 0;
 }
 
 static void __dead
@@ -351,8 +348,8 @@ static int
 getprec(char *s)
 {
 	if ((s = strchr(s, '.')) == NULL)
-		return (0);
-	return (strspn(s + 1, "0123456789"));
+		return 0;
+	return strspn(s + 1, "0123456789");
 }
 
 static void
@@ -448,7 +445,6 @@ getformat(void)
 fmt_broken:
 			*++p = '\0';
 			errx(1, "illegal or unsupported format '%s'", p2);
-			/* NOTREACHED */
 		}
 		while (*++p != '\0')
 			if (*p == '%' && *(p+1) != '\0' && *(p+1) != '%')
