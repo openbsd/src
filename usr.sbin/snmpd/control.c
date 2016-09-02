@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.38 2016/01/25 08:24:30 jsg Exp $	*/
+/*	$OpenBSD: control.c,v 1.39 2016/09/02 13:28:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -688,14 +688,11 @@ imsg_read_nofd(struct imsgbuf *ibuf)
 	buf = ibuf->r.buf + ibuf->r.wpos;
 	len = sizeof(ibuf->r.buf) - ibuf->r.wpos;
 
- again:
-	if ((n = recv(ibuf->fd, buf, len, 0)) == -1) {
-		if (errno != EINTR && errno != EAGAIN)
-			goto fail;
-		goto again;
+	while ((n = recv(ibuf->fd, buf, len, 0)) == -1) {
+		if (errno != EINTR)
+			return (n);
 	}
 
         ibuf->r.wpos += n;
- fail:
         return (n);
 }
