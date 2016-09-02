@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.42 2015/12/07 04:03:27 mmcc Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.43 2016/09/02 14:31:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -39,7 +39,6 @@
 
 extern volatile sig_atomic_t relay_sessions;
 extern objid_t relay_conid;
-extern int proc_id;
 extern int debug;
 
 static struct relayd *env = NULL;
@@ -196,6 +195,7 @@ relay_udp_response(int fd, short sig, void *arg)
 void
 relay_udp_server(int fd, short sig, void *arg)
 {
+	struct privsep *ps = env->sc_ps;
 	struct relay *rlay = arg;
 	struct protocol *proto = rlay->rl_proto;
 	struct rsession *con = NULL;
@@ -261,7 +261,7 @@ relay_udp_server(int fd, short sig, void *arg)
 	relay_session_publish(con);
 
 	/* Increment the per-relay session counter */
-	rlay->rl_stats[proc_id].last++;
+	rlay->rl_stats[ps->ps_instance].last++;
 
 	/* Pre-allocate output buffer */
 	con->se_out.output = evbuffer_new();
@@ -297,7 +297,7 @@ relay_udp_server(int fd, short sig, void *arg)
 		bzero(cnl, sizeof(*cnl));
 		cnl->in = -1;
 		cnl->id = con->se_id;
-		cnl->proc = proc_id;
+		cnl->proc = ps->ps_instance;
 		cnl->proto = IPPROTO_UDP;
 		bcopy(&con->se_in.ss, &cnl->src, sizeof(cnl->src));
 		bcopy(&rlay->rl_conf.ss, &cnl->dst, sizeof(cnl->dst));

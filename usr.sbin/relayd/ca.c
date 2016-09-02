@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.19 2016/09/02 12:12:51 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.20 2016/09/02 14:31:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -56,7 +56,6 @@ int	 rsae_verify(int dtype, const u_char *m, u_int, const u_char *,
 int	 rsae_keygen(RSA *, int, BIGNUM *, BN_GENCB *);
 
 static struct relayd *env = NULL;
-extern int		 proc_id;
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ca_dispatch_parent },
@@ -256,6 +255,7 @@ static int
 rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
     int padding, u_int cmd)
 {
+	struct privsep	*ps = env->sc_ps;
 	struct pollfd	 pfd[1];
 	struct ctl_keyop cko;
 	int		 ret = 0;
@@ -270,7 +270,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 	if ((id = RSA_get_ex_data(rsa, 0)) == NULL)
 		return (0);
 
-	iev = proc_iev(env->sc_ps, PROC_CA, proc_id);
+	iev = proc_iev(ps, PROC_CA, ps->ps_instance);
 	ibuf = &iev->ibuf;
 
 	/*
@@ -278,7 +278,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 	 */
 
 	cko.cko_id = *id;
-	cko.cko_proc = proc_id;
+	cko.cko_proc = ps->ps_instance;
 	cko.cko_flen = flen;
 	cko.cko_tlen = RSA_size(rsa);
 	cko.cko_padding = padding;

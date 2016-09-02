@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.209 2016/09/02 12:12:51 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.210 2016/09/02 14:31:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -99,7 +99,6 @@ volatile int relay_inflight = 0;
 objid_t relay_conid;
 
 static struct relayd		*env = NULL;
-int				 proc_id;
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	relay_dispatch_parent },
@@ -335,7 +334,7 @@ relay_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 		fatal("pledge");
 
 	/* Schedule statistics timer */
-	evtimer_set(&env->sc_statev, relay_statistics, NULL);
+	evtimer_set(&env->sc_statev, relay_statistics, ps);
 	bcopy(&env->sc_statinterval, &tv, sizeof(tv));
 	evtimer_add(&env->sc_statev, &tv);
 }
@@ -356,6 +355,7 @@ relay_session_unpublish(struct rsession *s)
 void
 relay_statistics(int fd, short events, void *arg)
 {
+	struct privsep		*ps = arg;
 	struct relay		*rlay;
 	struct ctl_stats	 crs, *cur;
 	struct timeval		 tv, tv_now;
@@ -374,7 +374,7 @@ relay_statistics(int fd, short events, void *arg)
 		bzero(&crs, sizeof(crs));
 		resethour = resetday = 0;
 
-		cur = &rlay->rl_stats[proc_id];
+		cur = &rlay->rl_stats[ps->ps_instance];
 		cur->cnt += cur->last;
 		cur->tick++;
 		cur->avg = (cur->last + cur->avg) / 2;
@@ -397,7 +397,7 @@ relay_statistics(int fd, short events, void *arg)
 			cur->last_day = 0;
 
 		crs.id = rlay->rl_conf.id;
-		crs.proc = proc_id;
+		crs.proc = ps->ps_instance;
 		proc_compose(env->sc_ps, PROC_PFE, IMSG_STATISTICS,
 		    &crs, sizeof(crs));
 
@@ -412,7 +412,7 @@ relay_statistics(int fd, short events, void *arg)
 	}
 
 	/* Schedule statistics timer */
-	evtimer_set(&env->sc_statev, relay_statistics, NULL);
+	evtimer_set(&env->sc_statev, relay_statistics, ps);
 	bcopy(&env->sc_statinterval, &tv, sizeof(tv));
 	evtimer_add(&env->sc_statev, &tv);
 }
@@ -1026,6 +1026,7 @@ relay_error(struct bufferevent *bev, short error, void *arg)
 void
 relay_accept(int fd, short event, void *arg)
 {
+	struct privsep		*ps = env->sc_ps;
 	struct relay		*rlay = arg;
 	struct rsession		*con = NULL;
 	struct ctl_natlook	*cnl = NULL;
@@ -1111,7 +1112,7 @@ relay_accept(int fd, short event, void *arg)
 	relay_session_publish(con);
 
 	/* Increment the per-relay session counter */
-	rlay->rl_stats[proc_id].last++;
+	rlay->rl_stats[ps->ps_instance].last++;
 
 	/* Pre-allocate output buffer */
 	con->se_out.output = evbuffer_new();
@@ -1144,7 +1145,7 @@ relay_accept(int fd, short event, void *arg)
 		bzero(cnl, sizeof(*cnl));
 		cnl->in = -1;
 		cnl->id = con->se_id;
-		cnl->proc = proc_id;
+		cnl->proc = ps->ps_instance;
 		cnl->proto = IPPROTO_TCP;
 
 		bcopy(&con->se_in.ss, &cnl->src, sizeof(cnl->src));
@@ -1402,13 +1403,14 @@ relay_session(struct rsession *con)
 void
 relay_bindanyreq(struct rsession *con, in_port_t port, int proto)
 {
+	struct privsep		*ps = env->sc_ps;
 	struct relay		*rlay = con->se_relay;
 	struct ctl_bindany	 bnd;
 	struct timeval		 tv;
 
 	bzero(&bnd, sizeof(bnd));
 	bnd.bnd_id = con->se_id;
-	bnd.bnd_proc = proc_id;
+	bnd.bnd_proc = ps->ps_instance;
 	bnd.bnd_port = port;
 	bnd.bnd_proto = proto;
 	bcopy(&con->se_in.ss, &bnd.bnd_ss, sizeof(bnd.bnd_ss));
@@ -1817,7 +1819,7 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 			fatalx("relay_dispatch_pfe: invalid table id");
 
 		DPRINTF("%s: [%d] state %d for "
-		    "host %u %s", __func__, proc_id, st.up,
+		    "host %u %s", __func__, ps->ps_instance, st.up,
 		    host->conf.id, host->conf.name);
 
 		if ((st.up == HOST_UNKNOWN && host->up == HOST_DOWN) ||
