@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.45 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: tty.4,v 1.46 2016/09/02 21:00:28 tedu Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tty.4	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: September 2 2016 $
 .Dt TTY 4
 .Os
 .Sh NAME
@@ -320,6 +320,23 @@ system call which will place the process into its own session - which
 has the effect of disassociating it from the controlling terminal.
 This is the new and preferred method for programs to lose their controlling
 terminal.
+.It Dv TIOCSETVERAUTH Fa int secs
+Indicate that the current user has successfully authenticated to this session.
+Future authentication checks may then be bypassed by performing a
+.Dv TIOCCHKVERAUTH
+check.
+The verified authentication status will expire after
+.Fa secs
+seconds.
+Only root may perform this operation.
+.It Dv TIOCCLRVERAUTH Fa void
+Clear any verified auth status associated with this session.
+.It Dv TIOCCHKVERAUTH Fa void
+Check the verified auth status of this session.
+The calling process must have the same real user ID and
+parent process as the process which called
+.Dv TIOCSETVERAUTH .
+A zero return indicates success.
 .It Dv TIOCSTOP Fa void
 Stop output on the terminal (like typing ^S at the keyboard).
 .It Dv TIOCSTART Fa void
