@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.43 2016/09/02 17:06:59 tedu Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.44 2016/09/02 18:06:43 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -125,7 +125,7 @@ main(int argc, char **argv)
 
 	if (((argc - optind) < 1)) {
 		char line[BUFSIZ];
-		char string[_PASSWORD_LEN + 1];
+		char string[1024];
 
 		if (prompt) {
 			if (readpassphrase("Enter string: ", string,
