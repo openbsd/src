@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.110 2016/09/02 15:08:48 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.111 2016/09/02 16:10:56 espie Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -34,6 +34,7 @@
 #include <sha2.h>
 
 #include "crypto_api.h"
+#include "signify.h"
 
 #define SIGBYTES crypto_sign_ed25519_BYTES
 #define SECRETBYTES crypto_sign_ed25519_SECRETKEYBYTES
@@ -79,14 +80,14 @@ usage(const char *error)
 #ifndef VERIFYONLY
 	    "\t%1$s -C [-q] -p pubkey -x sigfile [file ...]\n"
 	    "\t%1$s -G [-n] [-c comment] -p pubkey -s seckey\n"
-	    "\t%1$s -S [-e] [-x sigfile] -s seckey -m message\n"
+	    "\t%1$s -S [-ez] [-x sigfile] -s seckey -m message\n"
 #endif
-	    "\t%1$s -V [-eq] [-x sigfile] -p pubkey -m message\n",
+	    "\t%1$s -V [-ezq] [-x sigfile] -p pubkey -m message\n",
 	    getprogname());
 	exit(1);
 }
 
-static int
+int
 xopen(const char *fname, int oflags, mode_t mode)
 {
 	struct stat sb;
@@ -110,7 +111,7 @@ xopen(const char *fname, int oflags, mode_t mode)
 	return fd;
 }
 
-static void *
+void *
 xmalloc(size_t len)
 {
 	void *p;
@@ -205,7 +206,7 @@ readmsg(const char *filename, unsigned long long *msglenp)
 	return msg;
 }
 
-static void
+void
 writeall(int fd, const void *buf, size_t buflen, const char *filename)
 {
 	ssize_t x;
@@ -342,7 +343,7 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds,
 	    sizeof(pubkey), O_EXCL, 0666);
 }
 
-static uint8_t *
+uint8_t *
 createsig(const char *seckeyfile, const char *msgfile, uint8_t *msg,
     unsigned long long msglen)
 {
@@ -688,6 +689,26 @@ check(const char *pubkeyfile, const char *sigfile, int quiet, int argc,
 
 	free(msg);
 }
+
+void *
+verifyzdata(uint8_t *zdata, unsigned long long zdatalen, 
+    const char *filename, const char *pubkeyfile, const char *keytype)
+{
+	struct sig sig;
+	char sigcomment[COMMENTMAXLEN];
+	unsigned long long siglen;
+	struct pubkey pubkey;
+
+	if (zdatalen < sizeof(sig))
+		errx(1, "signature too short in %s", filename);
+	siglen = parseb64file(filename, zdata, &sig, sizeof(sig), 
+	    sigcomment);
+	readpubkey(pubkeyfile, &pubkey, sigcomment, keytype);
+	zdata += siglen;
+	zdatalen -= siglen;
+	verifymsg(&pubkey, zdata, zdatalen, &sig, 1);
+	return zdata;
+}
 #endif
 
 int
@@ -701,6 +722,7 @@ main(int argc, char **argv)
 	int ch, rounds;
 	int embedded = 0;
 	int quiet = 0;
+	int gzip = 0;
 	enum {
 		NONE,
 		CHECK,
@@ -714,7 +736,7 @@ main(int argc, char **argv)
 
 	rounds = 42;
 
-	while ((ch = getopt(argc, argv, "CGSVc:em:np:qs:t:x:")) != -1) {
+	while ((ch = getopt(argc, argv, "CGSVzc:em:np:qs:t:x:")) != -1) {
 		switch (ch) {
 #ifndef VERIFYONLY
 		case 'C':
@@ -731,6 +753,9 @@ main(int argc, char **argv)
 			if (verb)
 				usage(NULL);
 			verb = SIGN;
+			break;
+		case 'z':
+			gzip = 1;
 			break;
 #endif
 		case 'V':
@@ -786,7 +811,8 @@ main(int argc, char **argv)
 			err(1, "pledge");
 		break;
 	case VERIFY:
-		if (embedded && (!msgfile || strcmp(msgfile, "-") != 0)) {
+		if ((embedded || gzip)
+		    && (!msgfile || strcmp(msgfile, "-") != 0)) {
 			if (pledge("stdio rpath wpath cpath", NULL) == -1)
 				err(1, "pledge");
 		} else {
@@ -830,15 +856,24 @@ main(int argc, char **argv)
 		generate(pubkeyfile, seckeyfile, rounds, comment);
 		break;
 	case SIGN:
-		if (!msgfile || !seckeyfile)
-			usage("must specify message and seckey");
-		sign(seckeyfile, msgfile, sigfile, embedded);
+		if (gzip)
+			zsign(seckeyfile, msgfile, sigfile);
+		else {
+			if (!msgfile || !seckeyfile)
+				usage("must specify message and seckey");
+			sign(seckeyfile, msgfile, sigfile, embedded);
+		}
 		break;
 #endif
 	case VERIFY:
-		if (!msgfile)
-			usage("must specify message");
-		verify(pubkeyfile, msgfile, sigfile, embedded, quiet, keytype);
+		if (gzip)
+			zverify(pubkeyfile, msgfile, sigfile, keytype);
+		else {
+			if (!msgfile)
+				usage("must specify message");
+			verify(pubkeyfile, msgfile, sigfile, embedded, 
+			    quiet, keytype);
+		}
 		break;
 	default:
 		usage(NULL);
