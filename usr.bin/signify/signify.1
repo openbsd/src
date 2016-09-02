@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.37 2016/09/02 18:35:43 jmc Exp $
+.\" $OpenBSD: signify.1,v 1.38 2016/09/02 21:04:26 tedu Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -175,7 +175,7 @@ $ signify -Sz -s key-arc.sec -m in.tgz -x out.tgz
 .Pp
 Verify a gzip pipeline:
 .Bd -literal -offset indent -compact
-$ ftp url | signify -Vz -t arc|tar ztf -
+$ ftp url | signify -Vz -t arc | tar ztf -
 .Ed
 .Sh SEE ALSO
 .Xr fw_update 1 ,
