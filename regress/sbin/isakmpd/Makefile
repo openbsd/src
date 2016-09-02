@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2005/04/08 17:11:11 cloder Exp $
+#	$OpenBSD: Makefile,v 1.2 2016/09/02 14:46:42 mikeb Exp $
 #	$EOM: Makefile,v 1.8 1999/07/17 20:44:13 niklas Exp $
 
 #
@@ -29,7 +29,7 @@
 # This code was written under funding by Ericsson Radio Systems.
 #
 
-SUBDIR=	b2n crypto dh ec2n group hmac prf rsakeygen util
+SUBDIR=	b2n crypto dh ec2n group hmac prf util
 
 # exchange and x509 are meant to be run manually
 
