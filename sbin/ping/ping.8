@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.52 2014/03/24 11:11:49 mpi Exp $
+.\"	$OpenBSD: ping.8,v 1.53 2016/09/02 21:46:18 florian Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: March 24 2014 $
+.Dd $Mdocdate: September 2 2016 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm ping
 .Bk -words
-.Op Fl DdEefLnqRv
+.Op Fl DdEefHLnqRv
 .Op Fl c Ar count
 .Op Fl I Ar ifaddr
 .Op Fl i Ar wait
@@ -116,6 +116,8 @@ Only the superuser may use this option.
 .Bf -emphasis
 This can be very hard on a network and should be used with caution.
 .Ef
+.It Fl H
+Try reverse lookups for addresses.
 .It Fl I Ar ifaddr
 Specify the interface address to transmit from
 on machines with multiple interfaces.
@@ -144,7 +146,7 @@ mode of behavior.
 Only root may set a preload value.
 .It Fl n
 Numeric output only.
-No attempt will be made to look up symbolic names for host addresses.
+No attempt will be made to look up symbolic names from addresses in the reply.
 .It Fl p Ar pattern
 You may specify up to 16
 .Dq pad
