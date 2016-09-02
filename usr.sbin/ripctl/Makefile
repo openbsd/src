@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 2010/05/26 16:44:32 nicm Exp $
+#	$OpenBSD: Makefile,v 1.3 2016/09/02 14:07:52 benno Exp $
 
 .PATH:		${.CURDIR}/../ripd
 
 PROG=	ripctl
-SRCS=	log.c ripctl.c parser.c
+SRCS=	logmsg.c ripctl.c parser.c
 CFLAGS+= -Wall
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+= -Wmissing-declarations

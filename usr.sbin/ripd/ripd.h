@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.23 2016/08/02 16:05:32 jca Exp $ */
+/*	$OpenBSD: ripd.h,v 1.24 2016/09/02 14:07:52 benno Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -17,8 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _RIPD_H_
-#define _RIPD_H_
+#ifndef RIPD_H
+#define RIPD_H
 
 #include <sys/queue.h>
 #include <sys/socket.h>
@@ -94,6 +94,12 @@ enum imsg_type {
 	IMSG_SEND_REQUEST,
 	IMSG_SEND_TRIGGERED_UPDATE,
 	IMSG_DEMOTE
+};
+
+static const char * const log_procnames[] = {
+	"parent",
+	"ripe",
+	"rde"
 };
 
 struct imsgev {
@@ -348,10 +354,11 @@ int		 carp_demote_set(char *, int);
 /* printconf.c */
 void		 print_config(struct ripd_conf *);
 
-/* log.c */
-const char	*if_state_name(int);
-const char	*if_auth_name(enum auth_type);
+/* logmsg.c */
 const char	*nbr_state_name(int);
+const char	*if_type_name(enum iface_type);
+const char	*if_auth_name(enum auth_type);
+const char	*if_state_name(int);
 
 /* interface.c */
 struct iface	*if_find_index(u_short);
@@ -361,4 +368,4 @@ u_int16_t	 rtlabel_name2id(const char *);
 const char	*rtlabel_id2name(u_int16_t);
 void		 rtlabel_unref(u_int16_t);
 
-#endif /* _RIPD_H_ */
+#endif /* RIPD_H */

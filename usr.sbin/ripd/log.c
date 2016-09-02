@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.5 2014/11/03 20:15:31 bluhm Exp $ */
+/*	$OpenBSD: log.c,v 1.6 2016/09/02 14:07:52 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -22,19 +22,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <time.h>
 #include <unistd.h>
 
-#include "ripd.h"
 #include "log.h"
+#include "ripd.h"
 
-static const char * const procnames[] = {
-	"parent",
-	"ripe",
-	"rde"
-};
-
-int	debug;
-int	verbose;
+int		 debug;
+int		 verbose;
+const char	*log_procname;
 
 void
 log_init(int n_debug)
@@ -144,15 +140,15 @@ void
 fatal(const char *emsg)
 {
 	if (emsg == NULL)
-		logit(LOG_CRIT, "fatal in %s: %s", procnames[ripd_process],
+		logit(LOG_CRIT, "fatal in %s: %s", log_procname,
 		    strerror(errno));
 	else
 		if (errno)
 			logit(LOG_CRIT, "fatal in %s: %s: %s",
-			    procnames[ripd_process], emsg, strerror(errno));
+			    log_procname, emsg, strerror(errno));
 		else
 			logit(LOG_CRIT, "fatal in %s: %s",
-			    procnames[ripd_process], emsg);
+			    log_procname, emsg);
 
 	if (ripd_process == PROC_MAIN)
 		exit(1);
@@ -165,65 +161,4 @@ fatalx(const char *emsg)
 {
 	errno = 0;
 	fatal(emsg);
-}
-
-/* names */
-const char *
-nbr_state_name(int state)
-{
-	switch (state) {
-	case NBR_STA_DOWN:
-		return ("DOWN");
-	case NBR_STA_REQ_RCVD:
-		return ("REQUEST RCVD");
-	case NBR_STA_ACTIVE:
-		return ("ACTIVE");
-	default:
-		return ("UNKNOWN");
-	}
-}
-
-const char *
-if_type_name(enum iface_type type)
-{
-	switch (type) {
-	case IF_TYPE_POINTOPOINT:
-		return ("POINTOPOINT");
-	case IF_TYPE_BROADCAST:
-		return ("BROADCAST");
-	case IF_TYPE_NBMA:
-		return ("NBMA");
-	case IF_TYPE_POINTOMULTIPOINT:
-		return ("POINTOMULTIPOINT");
-	}
-	/* NOTREACHED */
-	return ("UNKNOWN");
-}
-
-const char *
-if_auth_name(enum auth_type type)
-{
-	switch (type) {
-	case AUTH_NONE:
-		return ("none");
-	case AUTH_SIMPLE:
-		return ("simple");
-	case AUTH_CRYPT:
-		return ("crypt");
-	}
-	/* NOTREACHED */
-	return ("unknown");
-}
-
-const char *
-if_state_name(int state)
-{
-	switch (state) {
-	case IF_STA_DOWN:
-		return ("DOWN");
-	case IF_STA_ACTIVE:
-		return ("ACTIVE");
-	default:
-		return ("UNKNOWN");
-	}
 }
