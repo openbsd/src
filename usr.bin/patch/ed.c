@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.c,v 1.2 2016/02/22 19:31:38 tobias Exp $ */
+/*	$OpenBSD: ed.c,v 1.3 2016/09/02 21:39:51 tobias Exp $ */
 
 /*
  * Copyright (c) 2015 Tobias Stoeckmann <tobias@openbsd.org>
@@ -103,7 +103,8 @@ do_ed_script(void)
 					cline = nline;
 					line_count--;
 				}
-				fsm = (fsm == FSM_C) ? FSM_I : FSM_CMD;
+				cline = get_line(first_addr - 1);
+				fsm = (fsm == FSM_C) ? FSM_A : FSM_CMD;
 				break;
 			case FSM_S:
 				cline->subst++;
