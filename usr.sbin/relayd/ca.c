@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.17 2016/09/01 10:40:38 claudio Exp $	*/
+/*	$OpenBSD: ca.c,v 1.18 2016/09/02 11:51:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -63,12 +63,12 @@ static struct privsep_proc procs[] = {
 	{ "relay",	PROC_RELAY,	ca_dispatch_relay },
 };
 
-pid_t
+void
 ca(struct privsep *ps, struct privsep_proc *p)
 {
 	env = ps->ps_env;
 
-	return (proc_run(ps, p, procs, nitems(procs), ca_init, NULL));
+	proc_run(ps, p, procs, nitems(procs), ca_init, NULL);
 }
 
 void

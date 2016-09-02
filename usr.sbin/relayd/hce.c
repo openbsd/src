@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.72 2016/01/11 21:31:42 benno Exp $	*/
+/*	$OpenBSD: hce.c,v 1.73 2016/09/02 11:51:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -48,7 +48,7 @@ static struct privsep_proc procs[] = {
 	{ "relay",	PROC_RELAY,	hce_dispatch_relay },
 };
 
-pid_t
+void
 hce(struct privsep *ps, struct privsep_proc *p)
 {
 	env = ps->ps_env;
@@ -56,7 +56,7 @@ hce(struct privsep *ps, struct privsep_proc *p)
 	/* this is needed for icmp tests */
 	icmp_init(env);
 
-	return (proc_run(ps, p, procs, nitems(procs), hce_init, NULL));
+	proc_run(ps, p, procs, nitems(procs), hce_init, NULL);
 }
 
 void

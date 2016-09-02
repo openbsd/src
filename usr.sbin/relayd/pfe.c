@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.83 2015/12/03 16:12:16 benno Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.84 2016/09/02 11:51:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -48,12 +48,12 @@ static struct privsep_proc procs[] = {
 	{ "hce",	PROC_HCE,	pfe_dispatch_hce }
 };
 
-pid_t
+void
 pfe(struct privsep *ps, struct privsep_proc *p)
 {
 	env = ps->ps_env;
 
-	return (proc_run(ps, p, procs, nitems(procs), pfe_init, NULL));
+	proc_run(ps, p, procs, nitems(procs), pfe_init, NULL);
 }
 
 void

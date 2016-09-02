@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.27 2015/12/07 16:05:56 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.28 2016/09/02 11:51:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -103,7 +103,6 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc)
 	privsep_process = PROC_PARENT;
 	ps->ps_instances[PROC_PARENT] = 1;
 	ps->ps_title[PROC_PARENT] = "parent";
-	ps->ps_pid[PROC_PARENT] = getpid();
 	ps->ps_pp = &ps->ps_pipes[privsep_process][0];
 
 	for (i = 0; i < nproc; i++) {
@@ -117,29 +116,45 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc)
 
 	/* Engage! */
 	for (i = 0; i < nproc; i++)
-		ps->ps_pid[procs[i].p_id] = (*procs[i].p_init)(ps, &procs[i]);
+		(*procs[i].p_init)(ps, &procs[i]);
 }
 
 void
 proc_kill(struct privsep *ps)
 {
+	char		*cause;
 	pid_t		 pid;
-	unsigned int	 i;
+	int		 len, status;
 
 	if (privsep_process != PROC_PARENT)
 		return;
 
-	for (i = 0; i < PROC_MAX; i++) {
-		if (ps->ps_pid[i] == 0)
-			continue;
-		killpg(ps->ps_pid[i], SIGTERM);
-	}
+	proc_close(ps);
 
 	do {
-		pid = waitpid(WAIT_ANY, NULL, 0);
-	} while (pid != -1 || (pid == -1 && errno == EINTR));
+		pid = waitpid(WAIT_ANY, &status, 0);
+		if (pid <= 0)
+			continue;
 
-	proc_close(ps);
+		if (WIFSIGNALED(status)) {
+			len = asprintf(&cause, "terminated; signal %d",
+			    WTERMSIG(status));
+		} else if (WIFEXITED(status)) {
+			if (WEXITSTATUS(status) != 0)
+				len = asprintf(&cause, "exited abnormally");
+			else
+				len = 0;
+		} else
+			len = -1;
+
+		if (len == 0) {
+			/* child exited OK, don't print a warning message */
+		} else if (len != -1) {
+			log_warnx("lost child: pid %u %s", pid, cause);
+			free(cause);
+		} else
+			log_warnx("lost child: pid %u", pid);
+	} while (pid != -1 || (pid == -1 && errno == EINTR));
 }
 
 void
@@ -326,7 +341,7 @@ proc_sig_handler(int sig, short event, void *arg)
 	}
 }
 
-pid_t
+void
 proc_run(struct privsep *ps, struct privsep_proc *p,
     struct privsep_proc *procs, unsigned int nproc,
     void (*run)(struct privsep *, struct privsep_proc *, void *), void *arg)
@@ -338,7 +353,7 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	unsigned int		 n;
 
 	if (ps->ps_noaction)
-		return (0);
+		return;
 
 	proc_open(ps, p, procs, nproc);
 
@@ -353,7 +368,7 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 		setpgid(0, 0);
 		break;
 	default:
-		return (pid);
+		return;
 	}
 
 	pw = ps->ps_pw;
@@ -432,8 +447,6 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	event_dispatch();
 
 	proc_shutdown(p);
-
-	return (0);
 }
 
 void

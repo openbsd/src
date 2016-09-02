@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.227 2016/09/01 10:49:48 claudio Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.228 2016/09/02 11:51:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1000,7 +1000,6 @@ struct privsep {
 
 	struct imsgev			*ps_ievs[PROC_MAX];
 	const char			*ps_title[PROC_MAX];
-	pid_t				 ps_pid[PROC_MAX];
 	u_int8_t			 ps_what[PROC_MAX];
 
 	u_int				 ps_instances[PROC_MAX];
@@ -1028,7 +1027,7 @@ struct privsep_proc {
 	enum privsep_procid	 p_id;
 	int			(*p_cb)(int, struct privsep_proc *,
 				    struct imsg *);
-	pid_t			(*p_init)(struct privsep *,
+	void			(*p_init)(struct privsep *,
 				    struct privsep_proc *);
 	void			(*p_shutdown)(void);
 	u_int			 p_instance;
@@ -1128,7 +1127,7 @@ const char *printb_flags(const u_int32_t, const char *);
 void	 getmonotime(struct timeval *);
 
 /* pfe.c */
-pid_t	 pfe(struct privsep *, struct privsep_proc *);
+void	 pfe(struct privsep *, struct privsep_proc *);
 void	 show(struct ctl_conn *);
 void	 show_sessions(struct ctl_conn *);
 int	 enable_rdr(struct ctl_conn *, struct ctl_id *);
@@ -1155,11 +1154,11 @@ void	 sync_routes(struct relayd *, struct router *);
 int	 pfe_route(struct relayd *, struct ctl_netroute *);
 
 /* hce.c */
-pid_t	 hce(struct privsep *, struct privsep_proc *);
+void	 hce(struct privsep *, struct privsep_proc *);
 void	 hce_notify_done(struct host *, enum host_error);
 
 /* relay.c */
-pid_t	 relay(struct privsep *, struct privsep_proc *);
+void	 relay(struct privsep *, struct privsep_proc *);
 int	 relay_privinit(struct relay *);
 void	 relay_notify_done(struct host *, const char *);
 int	 relay_session_cmp(struct rsession *, struct rsession *);
@@ -1252,7 +1251,7 @@ int	 ssl_ctx_fake_private_key(SSL_CTX *, const void *, size_t,
 	    char *, off_t, X509 **, EVP_PKEY **);
 
 /* ca.c */
-pid_t	 ca(struct privsep *, struct privsep_proc *);
+void	 ca(struct privsep *, struct privsep_proc *);
 void	 ca_engine_init(struct relayd *);
 
 /* relayd.c */
@@ -1372,7 +1371,7 @@ void	 proc_init(struct privsep *, struct privsep_proc *, u_int);
 void	 proc_kill(struct privsep *);
 void	 proc_listen(struct privsep *, struct privsep_proc *, size_t);
 void	 proc_dispatch(int, short event, void *);
-pid_t	 proc_run(struct privsep *, struct privsep_proc *,
+void	 proc_run(struct privsep *, struct privsep_proc *,
 	    struct privsep_proc *, u_int,
 	    void (*)(struct privsep *, struct privsep_proc *, void *), void *);
 void	 proc_range(struct privsep *, enum privsep_procid, int *, int *);
