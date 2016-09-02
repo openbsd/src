@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.155 2016/04/25 20:09:14 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.156 2016/09/02 17:06:12 goda Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -177,6 +177,7 @@ cdev_decl(pci);
 #include "fuse.h"
 #include "pvbus.h"
 #include "ipmi.h"
+#include "switch.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -289,6 +290,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tun_init(NTUN,tap),	/* 94: Ethernet network tunnel */
 	cdev_pvbus_init(NPVBUS,pvbus),	/* 95: pvbus(4) control interface */
 	cdev_ipmi_init(NIPMI,ipmi),	/* 96: ipmi */
+	cdev_switch_init(NSWITCH,switch), /* 97: switch(4) control interface */
 };
 int	nchrdev = nitems(cdevsw);
 

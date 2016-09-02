@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.141 2016/04/26 07:08:20 deraadt Exp $	*/
+/*	$OpenBSD: conf.h,v 1.142 2016/09/02 17:06:13 goda Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -268,6 +268,13 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, \
+	0, 0, dev_init(c,n,kqfilter) }
+
+/* open, close, read, write, ioctl, poll, kqfilter -- XXX should be generic device */
+#define cdev_switch_init(c,n) {						\
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read),	\
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev,		\
 	0, 0, dev_init(c,n,kqfilter) }
 
 /* open, close, ioctl, poll, kqfilter -- XXX should be generic device */
@@ -576,6 +583,7 @@ cdev_decl(pf);
 
 cdev_decl(tun);
 cdev_decl(tap);
+cdev_decl(switch);
 cdev_decl(pppx);
 
 cdev_decl(random);

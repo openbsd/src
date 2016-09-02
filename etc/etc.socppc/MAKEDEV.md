@@ -1,6 +1,6 @@
 define(MACHINE,socppc)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.29 2016/04/28 18:17:31 natano Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.30 2016/09/02 17:06:14 goda Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -75,6 +75,7 @@ dnl _DEV(tuner, 75)
 dnl _DEV(uk, 41)
 _DEV(vi, 44)
 _DEV(vscsi, 78)
+_DEV(switch, 87)
 dnl
 divert(__mddivert)dnl
 dnl
@@ -95,6 +96,7 @@ target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl
 target(all, sd, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
+target(all, switch, 0, 1, 2, 3)dnl
 dnl target(all, gpio, 0, 1, 2)dnl
 dnl target(all, bio)dnl
 target(ramd, diskmap)dnl

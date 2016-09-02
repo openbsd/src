@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.21 2016/04/25 20:09:14 tedu Exp $ */
+/*	$OpenBSD: conf.c,v 1.22 2016/09/02 17:06:12 goda Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -125,6 +125,7 @@ cdev_decl(pci);
 #include "vscsi.h"
 #include "pppx.h"
 #include "fuse.h"
+#include "switch.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -207,6 +208,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 72: was USB scanners */
 	cdev_fuse_init(NFUSE,fuse),	/* 73: fuse */
 	cdev_tun_init(NTUN,tap),	/* 74: Ethernet network tunnel */
+	cdev_switch_init(NSWITCH,switch), /* 75: switch(4) control interface */
 };
 
 int	nchrdev = nitems(cdevsw);
