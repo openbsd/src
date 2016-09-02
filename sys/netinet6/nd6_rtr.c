@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.142 2016/08/25 16:12:16 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.143 2016/09/02 09:31:25 florian Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -306,7 +306,7 @@ nd6_rs_output_timo(void *ignored_arg)
 				nd6_rs_output(ifp, ia6);
 		}
 	}
-	timeout_add_sec(&nd6_rs_output_timer, nd6_rs_output_timeout);
+	nd6_rs_output_set_timo(nd6_rs_output_timeout);
 }
 
 void
