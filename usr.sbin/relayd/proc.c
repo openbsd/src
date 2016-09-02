@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.29 2016/09/02 12:12:51 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.30 2016/09/02 12:14:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -61,11 +61,10 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc)
 	unsigned int		 i, j, src, dst;
 	struct privsep_pipes	*pp;
 
-	for (src = 0; src < PROC_MAX; src++) {
+	for (src = 0; src < PROC_MAX; src++)
 		/* Default to 1 process instance */
 		if (ps->ps_instances[src] < 1)
 			ps->ps_instances[src] = 1;
-	}
 
 	/*
 	 * Allocate pipes for all process instances (incl. parent)
