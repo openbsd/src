@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.75 2016/07/28 21:57:56 kettenis Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.76 2016/09/02 13:59:51 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -368,7 +368,7 @@ acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 	int state, method, flags;
 
 #if defined(ACPI_DEBUG) && !defined(SMALL_KERNEL)
-	aml_showvalue(val, 0);
+	aml_showvalue(val);
 #endif
 	if (val->type != AML_OBJTYPE_PACKAGE || val->length != 4)
 		return;
@@ -468,7 +468,7 @@ void
 acpicpu_add_cdeppkg(struct aml_value *val, void *arg)
 {
 #if 1 || defined(ACPI_DEBUG) && !defined(SMALL_KERNEL)
-	aml_showvalue(val, 0);
+	aml_showvalue(val);
 #endif
 	if (val->type != AML_OBJTYPE_PACKAGE || val->length < 6 ||
 	    val->length != val->v_package[0]->v_integer) {

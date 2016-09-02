@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.223 2016/05/08 11:08:01 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.224 2016/09/02 13:59:51 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -289,14 +289,14 @@ _aml_die(const char *fn, int line, const char *fmt, ...)
 			sp = aml_getstack(root, AMLOP_ARG0+idx);
 			if (sp && sp->type) {
 				printf("  arg%d: ", idx);
-				aml_showvalue(sp, 0);
+				aml_showvalue(sp);
 			}
 		}
 		for (idx = 0; idx < AML_MAX_LOCAL; idx++) {
 			sp = aml_getstack(root, AMLOP_LOCAL0+idx);
 			if (sp && sp->type) {
 				printf("  local%d: ", idx);
-				aml_showvalue(sp, 0);
+				aml_showvalue(sp);
 			}
 		}
 	}
@@ -786,7 +786,7 @@ aml_unlockfield(struct aml_scope *scope, struct aml_value *field)
 
 #ifndef SMALL_KERNEL
 void
-aml_showvalue(struct aml_value *val, int lvl)
+aml_showvalue(struct aml_value *val)
 {
 	int idx;
 
@@ -809,7 +809,7 @@ aml_showvalue(struct aml_value *val, int lvl)
 	case AML_OBJTYPE_PACKAGE:
 		printf(" package: %.2x\n", val->length);
 		for (idx = 0; idx < val->length; idx++)
-			aml_showvalue(val->v_package[idx], lvl);
+			aml_showvalue(val->v_package[idx]);
 		break;
 	case AML_OBJTYPE_BUFFER:
 		printf(" buffer: %.2x {", val->length);
@@ -862,7 +862,7 @@ aml_showvalue(struct aml_value *val, int lvl)
 	case AML_OBJTYPE_OBJREF:
 		printf(" objref: %p index:%x opcode:%s\n", val->v_objref.ref,
 		    val->v_objref.index, aml_mnem(val->v_objref.type, 0));
-		aml_showvalue(val->v_objref.ref, lvl);
+		aml_showvalue(val->v_objref.ref);
 		break;
 	default:
 		printf(" !!type: %x\n", val->type);
@@ -1855,14 +1855,14 @@ aml_showstack(struct aml_scope *scope)
 		sp = aml_getstack(scope, AMLOP_ARG0+idx);
 		if (sp && sp->type) {
 			dnprintf(10," Arg%d: ", idx);
-			aml_showvalue(sp, 10);
+			aml_showvalue(sp);
 		}
 	}
 	for (idx=0; scope->locals && idx<8; idx++) {
 		sp = aml_getstack(scope, AMLOP_LOCAL0+idx);
 		if (sp && sp->type) {
 			dnprintf(10," Local%d: ", idx);
-			aml_showvalue(sp, 10);
+			aml_showvalue(sp);
 		}
 	}
 }
@@ -2070,7 +2070,7 @@ aml_convert(struct aml_value *a, int ctype, int clen)
 	}
 	if (c == NULL) {
 #ifndef SMALL_KERNEL
-		aml_showvalue(a, 0);
+		aml_showvalue(a);
 #endif
 		aml_die("Could not convert %x to %x\n", a->type, ctype);
 	}
@@ -3174,7 +3174,7 @@ aml_eval(struct aml_scope *scope, struct aml_value *my_ret, int ret_type,
 		dnprintf(10,"\n--==Finished evaluating method: %s %c\n",
 		    aml_nodename(tmp->node), ret_type);
 #ifdef ACPI_DEBUG
-		aml_showvalue(my_ret, 0);
+		aml_showvalue(my_ret);
 		aml_showstack(ms);
 #endif
 		aml_popscope(ms);
@@ -3189,7 +3189,7 @@ aml_eval(struct aml_scope *scope, struct aml_value *my_ret, int ret_type,
 	}
 	if (ret_type == 'i' && my_ret && my_ret->type != AML_OBJTYPE_INTEGER) {
 #ifndef SMALL_KERNEL
-		aml_showvalue(my_ret, 8-100);
+		aml_showvalue(my_ret);
 #endif
 		aml_die("Not Integer");
 	}
@@ -3725,7 +3725,7 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 		idx = opargs[1]->v_integer;
 		if (idx >= opargs[0]->length || idx < 0) {
 #ifndef SMALL_KERNEL
-			aml_showvalue(opargs[0], 0);
+			aml_showvalue(opargs[0]);
 #endif
 			aml_die("Index out of bounds %d/%d\n", idx,
 			    opargs[0]->length);
