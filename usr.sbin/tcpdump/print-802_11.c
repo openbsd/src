@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.32 2016/02/21 16:09:47 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.33 2016/09/02 17:11:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -101,7 +101,9 @@ void	 ieee80211_print_essid(u_int8_t *, u_int);
 void	 ieee80211_print_country(u_int8_t *, u_int);
 void	 ieee80211_print_htcaps(u_int8_t *, u_int);
 void	 ieee80211_print_htop(u_int8_t *, u_int);
-int	 ieee80211_elements(struct ieee80211_frame *, u_int);
+int	 ieee80211_print_beacon(struct ieee80211_frame *, u_int);
+int	 ieee80211_print_assocreq(struct ieee80211_frame *, u_int);
+int	 ieee80211_print_elements(uint8_t *);
 int	 ieee80211_frame(struct ieee80211_frame *, u_int);
 int	 ieee80211_print(struct ieee80211_frame *, u_int);
 u_int	 ieee80211_any2ieee(u_int, u_int);
@@ -589,37 +591,74 @@ ieee80211_print_htop(u_int8_t *data, u_int len)
 }
 
 int
-ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
+ieee80211_print_beacon(struct ieee80211_frame *wh, u_int len)
 {
-	u_int8_t *buf, *frm;
-	u_int64_t tstamp;
-	u_int16_t bintval, capinfo;
-	int i;
+	uint64_t tstamp;
+	uint16_t bintval, capinfo;
+	uint8_t *frm;
 
-	buf = (u_int8_t *)wh;
+	if (len < sizeof(tstamp) + sizeof(bintval) + sizeof(capinfo))
+		return 1; /* truncated */
+
 	frm = (u_int8_t *)&wh[1];
 
-	TCHECK2(*frm, 8);
 	bcopy(frm, &tstamp, sizeof(u_int64_t));
 	frm += 8;
-
 	if (vflag > 1)
 		printf(", timestamp %llu", letoh64(tstamp));
 
-	TCHECK2(*frm, 2);
 	bcopy(frm, &bintval, sizeof(u_int16_t));
 	frm += 2;
-
 	if (vflag > 1)
 		printf(", interval %u", letoh16(bintval));
 
-	TCHECK2(*frm, 2);
 	bcopy(frm, &capinfo, sizeof(u_int16_t));
 	frm += 2;
-
 	if (vflag)
-		printb(", caps", letoh16(capinfo),
-		    IEEE80211_CAPINFO_BITS);
+		printb(", caps", letoh16(capinfo), IEEE80211_CAPINFO_BITS);
+
+	return ieee80211_print_elements(frm);
+}
+
+int
+ieee80211_print_assocreq(struct ieee80211_frame *wh, u_int len)
+{
+	uint8_t subtype;
+	uint16_t capinfo, lintval;
+	uint8_t *frm;
+
+	subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+
+	if (len < sizeof(capinfo) + sizeof(lintval) +
+	    (subtype == IEEE80211_FC0_SUBTYPE_REASSOC_REQ ?
+	    IEEE80211_ADDR_LEN : 0))
+		return 1; /* truncated */
+
+	frm = (u_int8_t *)&wh[1];
+
+	bcopy(frm, &capinfo, sizeof(u_int16_t));
+	frm += 2;
+	if (vflag)
+		printb(", caps", letoh16(capinfo), IEEE80211_CAPINFO_BITS);
+
+	bcopy(frm, &lintval, sizeof(u_int16_t));
+	frm += 2;
+	if (vflag > 1)
+		printf(", listen interval %u", letoh16(lintval));
+
+	if (subtype == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) {
+		if (vflag)
+			printf(", AP %s", etheraddr_string(frm));
+		frm += IEEE80211_ADDR_LEN;
+	}
+
+	return ieee80211_print_elements(frm);
+}
+
+int
+ieee80211_print_elements(uint8_t *frm)
+{
+	int i;
 
 	while (TTEST2(*frm, 2)) {
 		u_int len = frm[1];
@@ -628,7 +667,7 @@ ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
 		if (!TTEST2(*data, len))
 			break;
 
-#define ELEM_CHECK(l)	if (len != l) break
+#define ELEM_CHECK(l)	if (len != l) goto trunc
 
 		switch (*frm) {
 		case IEEE80211_ELEMID_SSID:
@@ -789,7 +828,12 @@ ieee80211_frame(struct ieee80211_frame *wh, u_int len)
 		switch (subtype) {
 		case IEEE80211_FC0_SUBTYPE_BEACON:
 		case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
-			if (ieee80211_elements(wh, len) != 0)
+			if (ieee80211_print_beacon(wh, len) != 0)
+				goto trunc;
+			break;
+		case IEEE80211_FC0_SUBTYPE_ASSOC_REQ:
+		case IEEE80211_FC0_SUBTYPE_REASSOC_REQ:
+			if (ieee80211_print_assocreq(wh, len) != 0)
 				goto trunc;
 			break;
 		case IEEE80211_FC0_SUBTYPE_AUTH:
