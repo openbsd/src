@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.33 2016/09/02 16:46:29 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.34 2016/09/02 17:59:58 benno Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -126,6 +126,7 @@ eigrpe(int debug, int verbose, char *sockname)
 
 	setproctitle("eigrp engine");
 	eigrpd_process = PROC_EIGRP_ENGINE;
+	log_procname = log_procnames[eigrpd_process];
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||

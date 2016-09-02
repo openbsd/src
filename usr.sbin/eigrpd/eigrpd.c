@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.20 2016/09/02 16:44:33 renato Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.21 2016/09/02 17:59:58 benno Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -111,6 +111,7 @@ main(int argc, char *argv[])
 
 	conffile = CONF_FILE;
 	eigrpd_process = PROC_MAIN;
+	log_procname = log_procnames[eigrpd_process];
 	sockname = EIGRPD_SOCKET;
 
 	log_init(1);	/* log to stderr until daemonized */

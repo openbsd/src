@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.4 2016/09/02 16:44:33 renato Exp $ */
+/*	$OpenBSD: log.h,v 1.5 2016/09/02 17:59:58 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,39 +16,31 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _LOG_H_
-#define	_LOG_H_
+#ifndef LOG_H
+#define LOG_H
 
 #include <stdarg.h>
+#include <sys/cdefs.h>
 
-void		 log_init(int);
-void		 log_verbose(int);
-void		 logit(int, const char *, ...)
-		    __attribute__((__format__ (printf, 2, 3)));
-void		 vlog(int, const char *, va_list)
-		    __attribute__((__format__ (printf, 2, 0)));
-void		 log_warn(const char *, ...)
-		    __attribute__((__format__ (printf, 1, 2)));
-void		 log_warnx(const char *, ...)
-		    __attribute__((__format__ (printf, 1, 2)));
-void		 log_info(const char *, ...)
-		    __attribute__((__format__ (printf, 1, 2)));
-void		 log_debug(const char *, ...)
-		    __attribute__((__format__ (printf, 1, 2)));
-void		 fatal(const char *) __dead
-		    __attribute__((__format__ (printf, 1, 0)));
-void		 fatalx(const char *) __dead
-		    __attribute__((__format__ (printf, 1, 0)));
-const char	*log_in6addr(const struct in6_addr *);
-const char	*log_in6addr_scope(const struct in6_addr *, unsigned int);
-const char	*log_sockaddr(void *);
-const char	*log_addr(int, union eigrpd_addr *);
-const char	*log_prefix(struct rt_node *);
-const char	*log_route_origin(int, struct rde_nbr *);
-const char	*opcode_name(uint8_t);
-const char	*af_name(int);
-const char	*if_type_name(enum iface_type);
-const char	*dual_state_name(int);
-const char	*ext_proto_name(int);
+extern const char	*log_procname;
 
-#endif /* _LOG_H_ */
+void	 log_init(int);
+void	 log_verbose(int);
+void	 logit(int, const char *, ...)
+		__attribute__((__format__ (printf, 2, 3)));
+void	 vlog(int, const char *, va_list)
+		__attribute__((__format__ (printf, 2, 0)));
+void	 log_warn(const char *, ...)
+		__attribute__((__format__ (printf, 1, 2)));
+void	 log_warnx(const char *, ...)
+		__attribute__((__format__ (printf, 1, 2)));
+void	 log_info(const char *, ...)
+		__attribute__((__format__ (printf, 1, 2)));
+void	 log_debug(const char *, ...)
+		__attribute__((__format__ (printf, 1, 2)));
+void	 fatal(const char *) __dead
+		__attribute__((__format__ (printf, 1, 0)));
+void	 fatalx(const char *) __dead
+		__attribute__((__format__ (printf, 1, 0)));
+
+#endif /* LOG_H */
