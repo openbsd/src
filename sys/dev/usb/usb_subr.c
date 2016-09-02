@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.126 2016/09/02 10:57:48 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.127 2016/09/02 11:14:17 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -522,7 +522,7 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 
 	if (nendpt != 0) {
 		ifc->endpoints = mallocarray(nendpt,
-		    sizeof(struct usbd_endpoint), M_USB, M_NOWAIT);
+		    sizeof(struct usbd_endpoint), M_USB, M_NOWAIT | M_ZERO);
 		if (ifc->endpoints == NULL)
 			return (USBD_NOMEM);
 	}
