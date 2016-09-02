@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.18 2016/08/08 16:48:53 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.19 2016/09/02 16:23:50 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -34,7 +34,7 @@
 #include "rde.h"
 
 void		 rde_sig_handler(int sig, short, void *);
-void		 rde_shutdown(void);
+__dead void	 rde_shutdown(void);
 void		 rde_dispatch_imsg(int, short, void *);
 void		 rde_dispatch_parent(int, short, void *);
 
@@ -131,14 +131,18 @@ rde(int debug, int verbose)
 	return (0);
 }
 
-void
+__dead void
 rde_shutdown(void)
 {
+	/* close pipes */
+	msgbuf_clear(&iev_eigrpe->ibuf.w);
+	close(iev_eigrpe->ibuf.fd);
+	msgbuf_clear(&iev_main->ibuf.w);
+	close(iev_main->ibuf.fd);
+
 	config_clear(rdeconf);
 
-	msgbuf_clear(&iev_eigrpe->ibuf.w);
 	free(iev_eigrpe);
-	msgbuf_clear(&iev_main->ibuf.w);
 	free(iev_main);
 
 	log_info("route decision engine exiting");

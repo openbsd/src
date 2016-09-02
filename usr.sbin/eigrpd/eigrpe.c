@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.25 2016/08/08 16:48:53 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.26 2016/09/02 16:23:50 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -36,7 +36,7 @@
 #include "log.h"
 
 void		 eigrpe_sig_handler(int, short, void *);
-void		 eigrpe_shutdown(void);
+__dead void	 eigrpe_shutdown(void);
 
 static struct event	 ev4;
 static struct event	 ev6;
@@ -173,11 +173,18 @@ eigrpe(int debug, int verbose, char *sockname)
 	return (0);
 }
 
-void
+__dead void
 eigrpe_shutdown(void)
 {
-	control_cleanup(global.csock);
+	/* close pipes */
+	msgbuf_write(&iev_rde->ibuf.w);
+	msgbuf_clear(&iev_rde->ibuf.w);
+	close(iev_rde->ibuf.fd);
+	msgbuf_write(&iev_main->ibuf.w);
+	msgbuf_clear(&iev_main->ibuf.w);
+	close(iev_main->ibuf.fd);
 
+	control_cleanup(global.csock);
 	config_clear(econf);
 
 	event_del(&ev4);
@@ -186,11 +193,7 @@ eigrpe_shutdown(void)
 	close(global.eigrp_socket_v6);
 
 	/* clean up */
-	msgbuf_write(&iev_rde->ibuf.w);
-	msgbuf_clear(&iev_rde->ibuf.w);
 	free(iev_rde);
-	msgbuf_write(&iev_main->ibuf.w);
-	msgbuf_clear(&iev_main->ibuf.w);
 	free(iev_main);
 	free(pkt_ptr);
 

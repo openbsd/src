@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.17 2016/08/08 21:38:42 renato Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.18 2016/09/02 16:23:50 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -69,6 +69,7 @@ main_sig_handler(int sig, short event, void *arg)
 	case SIGTERM:
 	case SIGINT:
 		eigrpd_shutdown();
+		/* NOTREACHED */
 	case SIGHUP:
 		if (eigrp_reload() == -1)
 			log_warnx("configuration reload failed");
@@ -272,6 +273,8 @@ main(int argc, char *argv[])
 	event_dispatch();
 
 	eigrpd_shutdown();
+	/* NOTREACHED */
+	return (0);
 }
 
 __dead void
@@ -280,16 +283,16 @@ eigrpd_shutdown(void)
 	pid_t		 pid;
 	int		 status;
 
+	/* close pipes */
 	msgbuf_clear(&iev_eigrpe->ibuf.w);
-	free(iev_eigrpe);
-	iev_eigrpe = NULL;
+	close(iev_eigrpe->ibuf.fd);
 	msgbuf_clear(&iev_rde->ibuf.w);
-	free(iev_rde);
-	iev_rde = NULL;
+	close(iev_rde->ibuf.fd);
 
-	config_clear(eigrpd_conf);
 	kr_shutdown();
+	config_clear(eigrpd_conf);
 
+	log_debug("waiting for children to terminate");
 	do {
 		pid = wait(&status);
 		if (pid == -1) {
@@ -300,6 +303,9 @@ eigrpd_shutdown(void)
 			    (pid == rde_pid) ? "route decision engine" :
 			    "eigrp engine", WTERMSIG(status));
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
+
+	free(iev_eigrpe);
+	free(iev_rde);
 
 	log_info("terminating");
 	exit(0);
