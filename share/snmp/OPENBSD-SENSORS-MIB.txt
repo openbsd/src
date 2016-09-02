@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-SENSORS-MIB.txt,v 1.5 2012/09/20 20:51:51 reyk Exp $
+-- $OpenBSD: OPENBSD-SENSORS-MIB.txt,v 1.6 2016/09/02 12:17:33 tb Exp $
 --
 -- Copyright (c) 2006-2007 Joel Knight <knight.joel@gmail.com>
 -- 
@@ -31,7 +31,7 @@ sensorsMIBObjects MODULE-IDENTITY
 	CONTACT-INFO
 	    "Editor:    Reyk Floeter
 	    EMail:      reyk@openbsd.org
-	    WWW:        http://www.openbsd.org/
+	    WWW:        https://www.openbsd.org/
 
 	    Editor:     Joel Knight
 	    EMail:      knight.joel@gmail.com

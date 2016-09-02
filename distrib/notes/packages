@@ -1,4 +1,4 @@
-dnl	$OpenBSD: packages,v 1.48 2016/02/01 12:08:59 sthen Exp $
+dnl	$OpenBSD: packages,v 1.49 2016/09/02 12:17:32 tb Exp $
 As complete as your OpenBSD system is, you may want to add any of several
 excellent third party software applications.  There are several ways to do
 this.  You can:
@@ -58,7 +58,7 @@ Installing applications from the ftp.OpenBSD.org package collection:
 	You may want to peruse this to see what packages are available.  The
 	packages are also on the OpenBSD mirror sites.  See
 
-		http://www.OpenBSD.org/ftp.html
+		https://www.OpenBSD.org/ftp.html
 
 	for a list of current mirror sites.
 
@@ -101,7 +101,7 @@ Installing applications from the CD-ROM ports collection:
 
 Installing applications from the OpenBSD ports collection:
 
-	See http://www.OpenBSD.org/faq/ports/ports.html for current
+	See https://www.openbsd.org/faq/faq15.html#Ports for current
 	instructions on obtaining and installing OpenBSD ports.
 
 	You should also refer to the ports(7) manual page.
@@ -117,5 +117,5 @@ Installing other applications:
 	If you can't find an existing port, try to make your own and
 	feed it back to OpenBSD.  That's how our ports collection grows.
 	Some details can be found in the OpenBSD Porter's Handbook at
-	http://www.openbsd.org/faq/ports/
+	https://www.openbsd.org/faq/ports/
 	with more help coming from the mailing list, <ports@OpenBSD.org>.

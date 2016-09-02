@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.50 2016/01/01 15:58:28 rpe Exp $
+dnl	$OpenBSD: INSTALL,v 1.51 2016/09/02 12:17:32 tb Exp $
 include(INCLUDE/../m4.common)dnl
 includeit(features)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
@@ -43,7 +43,7 @@ the US.  Because of this, take care NOT to get the distribution from
 a mirror server in the US if you are outside of Canada and the US.)
 
 A comprehensive list of the improvements brought by the OSREV release
-is available on the web at http://www.OpenBSD.org/OSrev.html.
+is available on the web at https://www.OpenBSD.org/OSrev.html.
 dnl
 dnl MACHINE/whatis
 dnl A few descriptive words about the port to MACHINE (i.e. what kind
@@ -56,7 +56,7 @@ includeit(whatis)dnl
 Sources of OpenBSD:
 -------------------
 
-Please refer to http://www.openbsd.org/ftp.html for all the ways you may
+Please refer to https://www.openbsd.org/ftp.html for all the ways you may
 acquire OpenBSD.
 
 
@@ -126,9 +126,9 @@ A few methods are provided.  If you have an OpenBSD CD-ROM, the source
 code is provided.  Otherwise, you can get the pieces over the Internet
 using anonymous CVS, CVSync, FTP or HTTP.  For more information, see
 
-	http://www.OpenBSD.org/anoncvs.html
-	http://www.OpenBSD.org/cvsync.html
-	http://www.OpenBSD.org/ftp.html
+	https://www.OpenBSD.org/anoncvs.html
+	https://www.OpenBSD.org/cvsync.html
+	https://www.OpenBSD.org/ftp.html
 
 
 Using online OpenBSD documentation:
@@ -190,7 +190,7 @@ reply with instructions.
 More information about the various OpenBSD mailing list and proper
 netiquette is available at
 
-	http://www.OpenBSD.org/mail.html
+	https://www.OpenBSD.org/mail.html
 
 To report bugs, use the 'sendbug' command shipped with OpenBSD,
 and fill in as much information about the problem as you can.  Good
@@ -213,4 +213,4 @@ to those who want it.
 
 For more information about reporting bugs, see
 
-	http://www.OpenBSD.org/report.html
+	https://www.OpenBSD.org/report.html

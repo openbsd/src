@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-BASE-MIB.txt,v 1.6 2014/11/19 10:24:39 blambert Exp $
+-- $OpenBSD: OPENBSD-BASE-MIB.txt,v 1.7 2016/09/02 12:17:33 tb Exp $
 --
 -- Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
 -- Copyright (c) 2004-2007 Joel Knight <knight.joel@gmail.com>
@@ -29,7 +29,7 @@ openBSD MODULE-IDENTITY
 	CONTACT-INFO 
 	    "Editor:    Reyk Floeter
 	    EMail:      reyk@openbsd.org
-	    WWW:        http://www.openbsd.org/
+	    WWW:        https://www.openbsd.org/
 
 	    Editor:     Joel Knight
 	    EMail:      knight.joel@gmail.com

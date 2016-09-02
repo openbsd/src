@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.4 2010/03/16 17:23:09 miod Exp $
+dnl	$OpenBSD: prep,v 1.5 2016/09/02 12:17:32 tb Exp $
 The default configuration of the MACHINE systems comes with a Linux
 installation on the disk (either an IDE hard drive, or a CompactFlash
 card). At the moment, there is no known way to log in this installation
@@ -31,5 +31,5 @@ dnl are swapped between the CF and HD models.
 In addition to the disk preparation, you will need to connect a serial
 port connector to the machine. Please refer to the OpenBSD/MACHINE
 page at
-	http://www.OpenBSD.org/MACHINE.html
+	https://www.OpenBSD.org/MACHINE.html
 for more information.

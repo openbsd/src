@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-MEM-MIB.txt,v 1.2 2012/02/09 16:50:18 sthen Exp $
+-- $OpenBSD: OPENBSD-MEM-MIB.txt,v 1.3 2016/09/02 12:17:33 tb Exp $
 --
 -- Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
 --
@@ -34,7 +34,7 @@ memMIBObjects MODULE-IDENTITY
 	CONTACT-INFO
 	    "Editor:     Reyk Floeter
 	    EMail:      reyk@openbsd.org
-	    WWW:        http://www.openbsd.org/"
+	    WWW:        https://www.openbsd.org/"
 	DESCRIPTION
 	    "The MIB module exporting OpenBSD memory statistics."
 	REVISION "201202090000Z"

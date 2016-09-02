@@ -54,9 +54,9 @@ for this purpose; the first is run before the system has gone into secure
 mode; the second is run afterwards (if in doubt, add your tools to rc.local).
 
 Please refer to our web pages for any other questions you might have.
-	http://www.OpenBSD.org
+	https://www.OpenBSD.org
 Please pay special attention to the Frequently Asked Questions section at
-	http://www.OpenBSD.org/faq/
+	https://www.OpenBSD.org/faq/
 
 OpenBSD is free software.  You can do with it as you like, subject to very few
 conditions (described at www.OpenBSD.org/policy.html).  But free software isn't

@@ -1,11 +1,11 @@
-$OpenBSD: README,v 1.19 2003/02/22 06:57:07 kjell Exp $
+$OpenBSD: README,v 1.20 2016/09/02 12:17:32 tb Exp $
 $EOM: README,v 1.28 1999/10/10 22:53:24 angelos Exp $
 
 This is isakmpd, a BSD-licensed ISAKMP/Oakley (a.k.a. IKE)
 implementation.  It's written by Niklas Hallqvist and Niels Provos,
 funded by Ericsson Radio Systems AB.  Isakmpd's home is in the
 OpenBSD main source tree under src/sbin/isakmpd.  Look at
-http://www.openbsd.org/ for details on how to get OpenBSD source.
+https://www.openbsd.org/ for details on how to get OpenBSD source.
 
 Isakmpd is being developed under OpenBSD, with OpenBSD as its primary
 target, however, it is ported to Linux with FreeS/WAN IPsec.  The
