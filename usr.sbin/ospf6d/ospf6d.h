@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.29 2015/09/27 17:31:50 stsp Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.30 2016/09/02 14:06:35 benno Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -59,6 +59,12 @@
 #define	F_REJECT		0x0080
 #define	F_BLACKHOLE		0x0100
 #define	F_REDISTRIBUTED		0x0200
+
+static const char * const log_procnames[] = {
+	"parent",
+	"ospfe",
+	"rde"
+};
 
 struct imsgev {
 	struct imsgbuf		 ibuf;
@@ -549,7 +555,11 @@ void		inet6applymask(struct in6_addr *, const struct in6_addr *, int);
 
 int		fetchifs(u_short);
 
-/* log.h */
+/* logmsg.h */
+const char	*log_in6addr(const struct in6_addr *);
+const char	*log_in6addr_scope(const struct in6_addr *, unsigned int);
+const char	*log_rtr_id(u_int32_t);
+const char	*log_sockaddr(void *);
 const char	*nbr_state_name(int);
 const char	*if_state_name(int);
 const char	*if_type_name(enum iface_type);
