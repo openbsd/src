@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.20 2016/09/02 16:29:55 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.21 2016/09/02 16:34:20 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -376,8 +376,6 @@ eigrp_if_start(struct eigrp_iface *ei)
 	struct timeval		 now;
 	struct if_addr		*if_addr;
 	union eigrpd_addr	 addr;
-	struct in_addr		 addr4;
-	struct in6_addr		 addr6 = AllEIGRPRouters_v6;
 
 	log_debug("%s: %s as %u family %s", __func__, ei->iface->name,
 	    eigrp->as, af_name(eigrp->af));
@@ -402,12 +400,11 @@ eigrp_if_start(struct eigrp_iface *ei)
 
 	switch (eigrp->af) {
 	case AF_INET:
-		addr4.s_addr = AllEIGRPRouters_v4;
-		if (if_join_ipv4_group(ei->iface, &addr4))
+		if (if_join_ipv4_group(ei->iface, &global.mcast_addr_v4))
 			return;
 		break;
 	case AF_INET6:
-		if (if_join_ipv6_group(ei->iface, &addr6))
+		if (if_join_ipv6_group(ei->iface, &global.mcast_addr_v6))
 			return;
 		break;
 	default:
@@ -422,8 +419,6 @@ void
 eigrp_if_reset(struct eigrp_iface *ei)
 {
 	struct eigrp		*eigrp = ei->eigrp;
-	struct in_addr		 addr4;
-	struct in6_addr		 addr6 = AllEIGRPRouters_v6;
 	struct nbr		*nbr;
 
 	log_debug("%s: %s as %u family %s", __func__, ei->iface->name,
@@ -440,11 +435,10 @@ eigrp_if_reset(struct eigrp_iface *ei)
 	/* try to cleanup */
 	switch (eigrp->af) {
 	case AF_INET:
-		addr4.s_addr = AllEIGRPRouters_v4;
-		if_leave_ipv4_group(ei->iface, &addr4);
+		if_leave_ipv4_group(ei->iface, &global.mcast_addr_v4);
 		break;
 	case AF_INET6:
-		if_leave_ipv6_group(ei->iface, &addr6);
+		if_leave_ipv6_group(ei->iface, &global.mcast_addr_v6);
 		break;
 	default:
 		fatalx("eigrp_if_reset: unknown af");

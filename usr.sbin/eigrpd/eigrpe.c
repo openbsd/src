@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.28 2016/09/02 16:32:19 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.29 2016/09/02 16:34:20 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -82,6 +82,11 @@ eigrpe(int debug, int verbose, char *sockname)
 	global.csock = sockname;
 	if (control_init(global.csock) == -1)
 		fatalx("control socket setup failed");
+
+	if (inet_pton(AF_INET, AllEIGRPRouters_v4, &global.mcast_addr_v4) != 1)
+		fatal("inet_pton");
+	if (inet_pton(AF_INET6, AllEIGRPRouters_v6, &global.mcast_addr_v6) != 1)
+		fatal("inet_pton");
 
 	/* create the raw ipv4 socket */
 	if ((global.eigrp_socket_v4 = socket(AF_INET,

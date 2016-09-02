@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.17 2016/09/02 16:29:55 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.18 2016/09/02 16:34:20 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -325,6 +325,8 @@ struct eigrpd_global {
 	time_t			 uptime;
 	int			 eigrp_socket_v4;
 	int			 eigrp_socket_v6;
+	struct in_addr		 mcast_addr_v4;
+	struct in6_addr		 mcast_addr_v6;
 	char			*csock;
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.15 2016/09/02 16:29:55 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.16 2016/09/02 16:34:20 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -73,7 +73,7 @@ send_packet_v4(struct iface *iface, struct nbr *nbr, struct ibuf *buf)
 	if (nbr)
 		dst.sin_addr = nbr->addr.v4;
 	else
-		dst.sin_addr.s_addr = AllEIGRPRouters_v4;
+		dst.sin_addr = global.mcast_addr_v4;
 
 	/* setup IP hdr */
 	memset(&ip_hdr, 0, sizeof(ip_hdr));
@@ -121,7 +121,6 @@ static int
 send_packet_v6(struct iface *iface, struct nbr *nbr, struct ibuf *buf)
 {
 	struct sockaddr_in6	 sa6;
-	struct in6_addr		 maddr = AllEIGRPRouters_v6;
 
 	/* setup sockaddr */
 	memset(&sa6, 0, sizeof(sa6));
@@ -131,7 +130,7 @@ send_packet_v6(struct iface *iface, struct nbr *nbr, struct ibuf *buf)
 		sa6.sin6_addr = nbr->addr.v6;
 		addscope(&sa6, iface->ifindex);
 	} else
-		sa6.sin6_addr = maddr;
+		sa6.sin6_addr = global.mcast_addr_v6;
 
 	/* set outgoing interface for multicast traffic */
 	if (IN6_IS_ADDR_MULTICAST(&sa6.sin6_addr))
@@ -532,7 +531,7 @@ recv_packet_v4(int fd, short event, void *bula)
 	 * Packet needs to be sent to AllEIGRPRouters_v4 or to one
 	 * of the interface addresses.
 	 */
-	if (ip_hdr.ip_dst.s_addr != AllEIGRPRouters_v4) {
+	if (ip_hdr.ip_dst.s_addr != global.mcast_addr_v4.s_addr) {
 		struct if_addr	*if_addr;
 		int		 found = 0;
 
@@ -577,7 +576,6 @@ recv_packet_v6(int fd, short event, void *bula)
 	uint16_t		 len;
 	unsigned int		 ifindex = 0;
 	union eigrpd_addr	 src, dest;
-	struct in6_addr		 maddr = AllEIGRPRouters_v6;
 
 	if (event != EV_READ)
 		return;
@@ -627,7 +625,7 @@ recv_packet_v6(int fd, short event, void *bula)
 	 * Packet needs to be sent to AllEIGRPRouters_v6 or to the
 	 * link local address of the interface.
 	 */
-	if (!IN6_ARE_ADDR_EQUAL(&dest.v6, &maddr) &&
+	if (!IN6_ARE_ADDR_EQUAL(&dest.v6, &global.mcast_addr_v6) &&
 	    !IN6_ARE_ADDR_EQUAL(&dest.v6, &iface->linklocal)) {
 		log_debug("%s: packet sent to wrong address %s, interface %s",
 		    __func__, log_in6addr(&dest.v6), iface->name);
