@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.114 2016/09/02 21:18:50 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.115 2016/09/02 21:31:22 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -838,9 +838,9 @@ main(int argc, char **argv)
 		break;
 	case SIGN:
 		/* no pledge */
-		if (gzip)
+		if (gzip) {
 			zsign(seckeyfile, msgfile, sigfile);
-		else {
+		} else {
 			if (!msgfile || !seckeyfile)
 				usage("must specify message and seckey");
 			sign(seckeyfile, msgfile, sigfile, embedded);
@@ -848,17 +848,18 @@ main(int argc, char **argv)
 		break;
 #endif
 	case VERIFY:
-		if ((embedded || gzip)
-		    && (!msgfile || strcmp(msgfile, "-") != 0)) {
+		if ((embedded || gzip) &&
+		    (msgfile && strcmp(msgfile, "-") != 0)) {
+			/* will need to create output file */
 			if (pledge("stdio rpath wpath cpath", NULL) == -1)
 				err(1, "pledge");
 		} else {
 			if (pledge("stdio rpath", NULL) == -1)
 				err(1, "pledge");
 		}
-		if (gzip)
+		if (gzip) {
 			zverify(pubkeyfile, msgfile, sigfile, keytype);
-		else {
+		} else {
 			if (!msgfile)
 				usage("must specify message");
 			verify(pubkeyfile, msgfile, sigfile, embedded, 
