@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 2016/08/27 01:26:22 guenther Exp $	*/
+/*	$OpenBSD: log.c,v 1.3 2016/09/02 16:21:33 benno Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -11,9 +11,9 @@
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF MIND, USE, DATA OR PROFITS, WHETHER
- * IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
- * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <errno.h>
@@ -21,21 +21,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <syslog.h>
+#include <time.h>
 
-void	log_init(int);
-void	log_warn(const char *, ...);
-void	log_warnx(const char *, ...);
-void	log_info(const char *, ...);
-void	log_debug(const char *, ...);
-__dead void fatal(const char *);
-__dead void fatalx(const char *);
+void		 log_init(int);
+void		 log_warn(const char *, ...);
+void		 log_warnx(const char *, ...);
+void		 log_info(const char *, ...);
+void		 log_debug(const char *, ...);
+__dead void	 fatal(const char *);
+__dead void	 fatalx(const char *);
+void		 vlog(int, const char *, va_list);
+void		 logit(int, const char *, ...);
 
 int	 debug;
-
-void	 vlog(int, const char *, va_list);
-void	 logit(int, const char *, ...);
 
 void
 log_init(int n_debug)
@@ -78,7 +77,6 @@ vlog(int pri, const char *fmt, va_list ap)
 	} else
 		vsyslog(pri, fmt, ap);
 }
-
 
 void
 log_warn(const char *emsg, ...)
