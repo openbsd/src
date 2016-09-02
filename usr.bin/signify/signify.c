@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.112 2016/09/02 17:27:31 espie Exp $ */
+/* $OpenBSD: signify.c,v 1.113 2016/09/02 21:12:03 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -797,6 +797,9 @@ main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (embedded && gzip)
+		errx(1, "can't combine -e and -z options");
 
 	if (setvbuf(stdout, NULL, _IOLBF, 0) != 0)
 		err(1, "setvbuf");
