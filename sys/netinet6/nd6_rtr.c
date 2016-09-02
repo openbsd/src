@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.143 2016/09/02 09:31:25 florian Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.144 2016/09/02 11:51:07 florian Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -75,6 +75,7 @@ int rt6_deleteroute(struct rtentry *, void *, unsigned int);
 void nd6_addr_add(void *);
 
 void nd6_rs_output_timo(void *);
+u_int32_t nd6_rs_next_pltime_timo(struct ifnet *);
 void nd6_rs_output_set_timo(int);
 void nd6_rs_output(struct ifnet *, struct in6_ifaddr *);
 void nd6_rs_dev_state(void *);
@@ -283,30 +284,64 @@ nd6_rs_output_set_timo(int timeout)
 	timeout_add_sec(&nd6_rs_output_timer, nd6_rs_output_timeout);
 }
 
+u_int32_t
+nd6_rs_next_pltime_timo(struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+	struct in6_ifaddr *ia6;
+	u_int32_t pltime_expires = ND6_INFINITE_LIFETIME;
+
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+
+		ia6 = ifatoia6(ifa);
+		if (ia6->ia6_lifetime.ia6t_pltime == ND6_INFINITE_LIFETIME ||
+		    IFA6_IS_DEPRECATED(ia6) || IFA6_IS_INVALID(ia6))
+			continue;
+
+		pltime_expires = MIN(pltime_expires,
+		    ia6->ia6_lifetime.ia6t_pltime);
+	}
+
+	return pltime_expires;
+}
+
 void
 nd6_rs_output_timo(void *ignored_arg)
 {
 	struct ifnet *ifp;
 	struct in6_ifaddr *ia6;
+	u_int32_t pltime_expire = ND6_INFINITE_LIFETIME, t;
+	int timeout = ND6_RS_OUTPUT_INTERVAL;
 
 	if (nd6_rs_timeout_count == 0)
 		return;
 
 	if (nd6_rs_output_timeout < ND6_RS_OUTPUT_INTERVAL)
 		/* exponential backoff if running quick timeouts */
-		nd6_rs_output_timeout *= 2;
-	if (nd6_rs_output_timeout > ND6_RS_OUTPUT_INTERVAL)
-		nd6_rs_output_timeout = ND6_RS_OUTPUT_INTERVAL;
+		timeout = nd6_rs_output_timeout * 2;
 
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ISSET(ifp->if_flags, IFF_RUNNING) &&
 		    ISSET(ifp->if_xflags, IFXF_AUTOCONF6)) {
-			ia6 = in6ifa_ifpforlinklocal(ifp, IN6_IFF_TENTATIVE);
-			if (ia6 != NULL)
-				nd6_rs_output(ifp, ia6);
+			t = nd6_rs_next_pltime_timo(ifp);
+			if (t == ND6_INFINITE_LIFETIME || t <
+			    ND6_RS_OUTPUT_INTERVAL) {
+				timeout = ND6_RS_OUTPUT_QUICK_INTERVAL;
+				ia6 = in6ifa_ifpforlinklocal(ifp,
+				    IN6_IFF_TENTATIVE);
+				if (ia6 != NULL)
+					nd6_rs_output(ifp, ia6);
+			}
+
+			pltime_expire = MIN(pltime_expire, t);
 		}
 	}
-	nd6_rs_output_set_timo(nd6_rs_output_timeout);
+	if (pltime_expire != ND6_INFINITE_LIFETIME)
+		timeout = MAX(timeout, pltime_expire / 2);
+
+	nd6_rs_output_set_timo(timeout);
 }
 
 void
