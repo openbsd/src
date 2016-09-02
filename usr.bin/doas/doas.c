@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.62 2016/09/01 17:30:52 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.63 2016/09/02 18:12:30 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -17,6 +17,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 
 #include <limits.h>
 #include <login_cap.h>
@@ -31,13 +32,14 @@
 #include <grp.h>
 #include <syslog.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #include "doas.h"
 
 static void __dead
 usage(void)
 {
-	fprintf(stderr, "usage: doas [-ns] [-a style] [-C config] [-u user]"
+	fprintf(stderr, "usage: doas [-Lns] [-a style] [-C config] [-u user]"
 	    " command [args]\n");
 	exit(1);
 }
@@ -204,10 +206,18 @@ checkconfig(const char *confpath, int argc, char **argv,
 }
 
 static void
-authuser(char *myname, char *login_style)
+authuser(char *myname, char *login_style, int persist)
 {
 	char *challenge = NULL, *response, rbuf[1024], cbuf[128];
 	auth_session_t *as;
+	int fd = -1;
+
+	if (persist)
+		fd = open("/dev/tty", O_RDWR);
+	if (fd != -1) {
+		if (ioctl(fd, TIOCCHKVERAUTH) == 0)
+			goto good;
+	}
 
 	if (!(as = auth_userchallenge(myname, login_style, "auth-doas",
 	    &challenge)))
@@ -233,6 +243,12 @@ authuser(char *myname, char *login_style)
 		errc(1, EPERM, NULL);
 	}
 	explicit_bzero(rbuf, sizeof(rbuf));
+good:
+	if (fd != -1) {
+		int secs = 10 * 60;
+		ioctl(fd, TIOCSETVERAUTH, &secs);
+		close(fd);
+	}
 }
 
 int
@@ -262,14 +278,11 @@ main(int argc, char **argv)
 
 	setprogname("doas");
 
-	if (pledge("stdio rpath getpw tty recvfd proc exec id", NULL) == -1)
-		err(1, "pledge");
-
 	closefrom(STDERR_FILENO + 1);
 
 	uid = getuid();
 
-	while ((ch = getopt(argc, argv, "a:C:nsu:")) != -1) {
+	while ((ch = getopt(argc, argv, "a:C:Lnsu:")) != -1) {
 		switch (ch) {
 		case 'a':
 			login_style = optarg;
@@ -277,6 +290,11 @@ main(int argc, char **argv)
 		case 'C':
 			confpath = optarg;
 			break;
+		case 'L':
+			i = open("/dev/tty", O_RDWR);
+			if (i != -1)
+				ioctl(i, TIOCCLRVERAUTH);
+			exit(i != -1);
 		case 'u':
 			if (parseuid(optarg, &target) != 0)
 				errx(1, "unknown user");
@@ -352,7 +370,7 @@ main(int argc, char **argv)
 		if (nflag)
 			errx(1, "Authorization required");
 
-		authuser(myname, login_style);
+		authuser(myname, login_style, rule->options & PERSIST);
 	}
 
 	if (pledge("stdio rpath getpw exec id", NULL) == -1)

@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.19 2016/06/27 15:41:17 tedu Exp $ */
+/* $OpenBSD: parse.y,v 1.20 2016/09/02 18:12:30 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -57,7 +57,7 @@ int yyparse(void);
 %}
 
 %token TPERMIT TDENY TAS TCMD TARGS
-%token TNOPASS TKEEPENV TSETENV
+%token TNOPASS TPERSIST TKEEPENV TSETENV
 %token TSTRING
 
 %%
@@ -118,6 +118,9 @@ options:	/* none */ {
 		} ;
 option:		TNOPASS {
 			$$.options = NOPASS;
+			$$.envlist = NULL;
+		} | TPERSIST {
+			$$.options = PERSIST;
 			$$.envlist = NULL;
 		} | TKEEPENV {
 			$$.options = KEEPENV;
@@ -208,6 +211,7 @@ struct keyword {
 	{ "cmd", TCMD },
 	{ "args", TARGS },
 	{ "nopass", TNOPASS },
+	{ "persist", TPERSIST },
 	{ "keepenv", TKEEPENV },
 	{ "setenv", TSETENV },
 };

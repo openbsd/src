@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.29 2016/06/27 17:36:33 jmc Exp $
+.\" $OpenBSD: doas.conf.5,v 1.30 2016/09/02 18:12:30 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: June 27 2016 $
+.Dd $Mdocdate: September 2 2016 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -47,6 +47,9 @@ Options are:
 .Bl -tag -width keepenv
 .It Ic nopass
 The user is not required to enter a password.
+.It Ic persist
+After the user successfully authenticates, do not ask for a password
+again for some time.
 .It Ic keepenv
 The user's environment is maintained.
 The default is to reset the environment, except for the variables
