@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.24 2016/09/01 15:12:45 eric Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.25 2016/09/02 13:41:10 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -226,16 +226,13 @@ imsg_read_nofd(struct imsgbuf *ibuf)
 	buf = ibuf->r.buf + ibuf->r.wpos;
 	len = sizeof(ibuf->r.buf) - ibuf->r.wpos;
 
-    again:
-	if ((n = recv(ibuf->fd, buf, len, 0)) == -1) {
-		if (errno != EINTR && errno != EAGAIN)
-			goto fail;
-		goto again;
+	while ((n = recv(ibuf->fd, buf, len, 0)) == -1) {
+		if (errno != EINTR)
+			return (n);
 	}
 
-        ibuf->r.wpos += n;
-fail:
-        return (n);
+	ibuf->r.wpos += n;
+	return (n);
 }
 
 void
