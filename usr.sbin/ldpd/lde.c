@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.65 2016/09/02 17:03:24 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.66 2016/09/02 17:05:23 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -50,6 +50,8 @@ static struct lde_nbr	*lde_nbr_new(uint32_t, struct lde_nbr *);
 static void		 lde_nbr_del(struct lde_nbr *);
 static struct lde_nbr	*lde_nbr_find(uint32_t);
 static void		 lde_nbr_clear(void);
+static void		 lde_nbr_addr_update(struct lde_nbr *,
+			    struct lde_addr *, int);
 static void		 lde_map_free(void *);
 static int		 lde_address_add(struct lde_nbr *, struct lde_addr *);
 static int		 lde_address_del(struct lde_nbr *, struct lde_addr *);
@@ -1077,6 +1079,47 @@ lde_nbr_clear(void)
 		lde_nbr_del(ln);
 }
 
+static void
+lde_nbr_addr_update(struct lde_nbr *ln, struct lde_addr *lde_addr, int removed)
+{
+	struct fec		*fec;
+	struct fec_node		*fn;
+	struct fec_nh		*fnh;
+	struct lde_map		*me;
+
+	RB_FOREACH(fec, fec_tree, &ln->recv_map) {
+		fn = (struct fec_node *)fec_find(&ft, fec);
+		switch (fec->type) {
+		case FEC_TYPE_IPV4:
+			if (lde_addr->af != AF_INET)
+				continue;
+			break;
+		case FEC_TYPE_IPV6:
+			if (lde_addr->af != AF_INET6)
+				continue;
+			break;
+		default:
+			continue;
+		}
+
+		LIST_FOREACH(fnh, &fn->nexthops, entry) {
+			if (ldp_addrcmp(fnh->af, &fnh->nexthop,
+			    &lde_addr->addr))
+				continue;
+
+			if (removed) {
+				lde_send_delete_klabel(fn, fnh);
+				fnh->remote_label = NO_LABEL;
+			} else {
+				me = (struct lde_map *)fec;
+				fnh->remote_label = me->map.label;
+				lde_send_change_klabel(fn, fnh);
+			}
+			break;
+		}
+	}
+}
+
 struct lde_map *
 lde_map_add(struct lde_nbr *ln, struct fec_node *fn, int sent)
 {
@@ -1248,6 +1291,9 @@ lde_address_add(struct lde_nbr *ln, struct lde_addr *lde_addr)
 	new->addr = lde_addr->addr;
 	TAILQ_INSERT_TAIL(&ln->addr_list, new, entry);
 
+	/* reevaluate the previously received mappings from this neighbor */
+	lde_nbr_addr_update(ln, lde_addr, 0);
+
 	return (0);
 }
 
@@ -1257,6 +1303,9 @@ lde_address_del(struct lde_nbr *ln, struct lde_addr *lde_addr)
 	lde_addr = lde_address_find(ln, lde_addr->af, &lde_addr->addr);
 	if (lde_addr == NULL)
 		return (-1);
+
+	/* reevaluate the previously received mappings from this neighbor */
+	lde_nbr_addr_update(ln, lde_addr, 1);
 
 	TAILQ_REMOVE(&ln->addr_list, lde_addr, entry);
 	free(lde_addr);
