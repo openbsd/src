@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.151 2016/08/30 14:28:31 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.152 2016/09/02 14:14:39 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1212,10 +1212,6 @@ get_pathmtu(struct msghdr *mhdr)
 	return(0);
 }
 
-/*
- * summary --
- *	Print out statistics.
- */
 void
 summary(void)
 {
@@ -1224,12 +1220,12 @@ summary(void)
 	printf("%lld packets received, ", nreceived);
 
 	if (nrepeats)
-		printf("+%lld duplicates, ", nrepeats);
+		printf("%lld duplicates, ", nrepeats);
 	if (ntransmitted) {
 		if (nreceived > ntransmitted)
 			printf("-- somebody's duplicating packets!");
 		else
-			printf("%.1lf%% packet loss",
+			printf("%.1f%% packet loss",
 			    ((((double)ntransmitted - nreceived) * 100) /
 			    ntransmitted));
 	}
