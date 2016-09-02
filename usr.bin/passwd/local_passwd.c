@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.50 2016/08/31 12:41:19 tedu Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.51 2016/09/02 10:32:38 gsoares Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -174,8 +174,10 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 			}
 			if (crypt_checkpass(p, pw->pw_passwd) != 0) {
 				errno = EACCES;
+				explicit_bzero(oldpass, sizeof(oldpass));
 				pw_error(NULL, 1, 1);
 			}
+			explicit_bzero(oldpass, sizeof(oldpass));
 		}
 	}
 
@@ -204,6 +206,7 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 		if (p != NULL && strcmp(newpass, p) == 0)
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
+		explicit_bzero(newpass, sizeof(newpass));
 	}
 
 	(void)signal(SIGINT, saveint);
@@ -212,8 +215,10 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 	pref = login_getcapstr(lc, "localcipher", NULL, NULL);
 	if (crypt_newhash(newpass, pref, hash, sizeof(hash)) != 0) {
 		(void)printf("Couldn't generate hash.\n");
+		explicit_bzero(newpass, sizeof(newpass));
 		pw_error(NULL, 0, 0);
 	}
+	explicit_bzero(newpass, sizeof(newpass));
 	free(pref);
 	return hash;
 }
