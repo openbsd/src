@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.64 2016/08/08 21:42:13 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.65 2016/09/02 17:03:24 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -40,7 +40,7 @@
 #include "lde.h"
 
 static void		 lde_sig_handler(int sig, short, void *);
-static void		 lde_shutdown(void);
+static __dead void	 lde_shutdown(void);
 static int		 lde_imsg_compose_parent(int, pid_t, void *, uint16_t);
 static void		 lde_dispatch_imsg(int, short, void *);
 static void		 lde_dispatch_parent(int, short, void *);
@@ -148,18 +148,22 @@ lde(int debug, int verbose)
 	return (0);
 }
 
-static void
+static __dead void
 lde_shutdown(void)
 {
+	/* close pipes */
+	msgbuf_clear(&iev_ldpe->ibuf.w);
+	close(iev_ldpe->ibuf.fd);
+	msgbuf_clear(&iev_main->ibuf.w);
+	close(iev_main->ibuf.fd);
+
 	lde_gc_stop_timer();
 	lde_nbr_clear();
 	fec_tree_clear();
 
 	config_clear(ldeconf);
 
-	msgbuf_clear(&iev_ldpe->ibuf.w);
 	free(iev_ldpe);
-	msgbuf_clear(&iev_main->ibuf.w);
 	free(iev_main);
 
 	log_info("label decision engine exiting");
