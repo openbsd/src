@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.9 2015/07/18 06:50:24 rzalamena Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.10 2016/09/02 10:01:36 goda Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -56,10 +56,11 @@ void bridge_list(char *);
 void bridge_cfg(const char *);
 void bridge_badrule(int, char **, int);
 void bridge_showrule(struct ifbrlreq *);
+int is_switch(char *);
 
 #define	IFBAFBITS	"\020\1STATIC"
 #define	IFBIFBITS	\
-"\020\1LEARNING\2DISCOVER\3BLOCKNONIP\4STP\5EDGE\6AUTOEDGE\7PTP\10AUTOPTP\11SPAN"
+"\020\1LEARNING\2DISCOVER\3BLOCKNONIP\4STP\5EDGE\6AUTOEDGE\7PTP\10AUTOPTP\11SPAN\15LOCAL"
 
 #define	PV2ID(pv, epri, eaddr)	do {					\
 	epri	 = pv >> 48;						\
@@ -189,6 +190,24 @@ unsetautoptp(const char *val, int d)
 	bridge_ifclrflag(val, IFBIF_BSTP_AUTOPTP);
 }
 
+void
+addlocal(const char *ifsname, int d)
+{
+	struct ifbreq breq;
+
+	if (strncmp(ifsname, "vether", (sizeof("vether") - 1)) != 0)
+		errx(1, "only vether can be local interface");
+
+	/* Add local */
+	strlcpy(breq.ifbr_name, name, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
+	if (ioctl(s, SIOCBRDGADDL, (caddr_t)&breq) < 0) {
+		if (errno == EEXIST)
+			errx(1, "%s: local port exists already");
+		else
+			err(1, "%s: ioctl SIOCBRDGADDL %s", name, ifsname);
+	}
+}
 
 void
 bridge_ifsetflag(const char *ifsname, u_int32_t flag)
@@ -702,7 +721,7 @@ bridge_status(void)
 	struct ifreq ifr;
 	struct ifbrparam bp1, bp2;
 
-	if (!is_bridge(name))
+	if (!is_bridge(name) || is_switch(name))
 		return;
 
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
@@ -966,6 +985,101 @@ bridge_badrule(int argc, char *argv[], int ln)
 	for (i = 0; i < argc; i++)
 		fprintf(stderr, "%s ", argv[i]);
 	fprintf(stderr, "\n");
+}
+
+int
+is_switch(char *swname)
+{
+	struct ifbrparam bp;
+
+	strlcpy(bp.ifbrp_name, swname, sizeof(bp.ifbrp_name));
+	if (ioctl(s, SIOCSWGDPID, (caddr_t)&bp) < 0)
+		return (0);
+
+	return (1);
+}
+
+void
+switch_cfg(char *delim)
+{
+	struct ifbrparam bp;
+
+	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
+	if (ioctl(s, SIOCSWGDPID, (caddr_t)&bp) < 0)
+		err(1, "%s", name);
+
+	printf("%sdatapath-id 0x%016llx\n", delim, bp.ifbrp_datapath);
+
+	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
+	if (ioctl(s, SIOCSWGFLOWMAX, (caddr_t)&bp) < 0)
+		err(1, "%s", name);
+
+	printf("%smax flows per table %d\n", delim, bp.ifbrp_maxflow);
+
+	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
+	if (ioctl(s, SIOCSWGMAXGROUP, (caddr_t)&bp) < 0)
+		err(1, "%s", name);
+
+	printf("%smax groups %d\n", delim, bp.ifbrp_maxgroup);
+}
+
+void
+switch_status(void)
+{
+	struct ifreq ifr;
+	struct ifbrparam bp1, bp2;
+
+	if (!is_switch(name))
+		return;
+
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0)
+		return;
+
+	switch_cfg("\t");
+
+	bridge_list("\t");
+
+	if (aflag && !ifaliases)
+		return;
+}
+
+void
+switch_datapathid(const char *arg, int d)
+{
+	struct ifbrparam bp;
+	uint64_t newdpid;
+	char *endptr;
+
+	errno = 0;
+	newdpid = strtoll(arg, &endptr, 0);
+	if (arg[0] == '\0' || endptr[0] != '\0' || errno == ERANGE)
+		errx(1, "invalid arg for datapath-id: %s", arg);
+
+	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
+	bp.ifbrp_datapath = newdpid;
+	if (ioctl(s, SIOCSWSDPID, (caddr_t)&bp) < 0)
+		err(1, "%s", name);
+}
+
+void
+switch_portno(const char *ifname, const char *val)
+{
+	struct ifbreq breq;
+	uint32_t newportidx;
+	char *endptr;
+
+	strlcpy(breq.ifbr_name, name, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_ifsname, ifname, sizeof(breq.ifbr_ifsname));
+
+	errno = 0;
+	newportidx = strtol(val, &endptr, 0);
+	if (val[0] == '\0' || endptr[0] != '\0' || errno == ERANGE)
+		errx(1, "invalid arg for portidx: %s", val);
+
+	breq.ifbr_portno = newportidx;
+	if (ioctl(s, SIOCSWSPORTNO, (caddr_t)&breq) < 0)
+		err(1, "%s", name);
 }
 
 #endif

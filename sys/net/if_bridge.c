@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.282 2016/09/01 10:06:33 goda Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.283 2016/09/02 10:01:36 goda Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -117,11 +117,7 @@ void	bridge_span(struct bridge_softc *, struct mbuf *);
 void	bridge_stop(struct bridge_softc *);
 void	bridge_init(struct bridge_softc *);
 int	bridge_bifconf(struct bridge_softc *, struct ifbifconf *);
-
 int bridge_blocknonip(struct ether_header *, struct mbuf *);
-struct mbuf *bridge_ip(struct bridge_softc *, int, struct ifnet *,
-    struct ether_header *, struct mbuf *m);
-int	bridge_ifenqueue(struct bridge_softc *, struct ifnet *, struct mbuf *);
 void	bridge_ifinput(struct ifnet *, struct mbuf *);
 int	bridge_dummy_output(struct ifnet *, struct mbuf *, struct sockaddr *,
     struct rtentry *);

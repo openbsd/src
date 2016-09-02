@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.1 2016/09/01 10:06:33 goda Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.2 2016/09/02 10:01:36 goda Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1024,9 +1024,53 @@ swofp_assign_portno(struct switch_softc *sc, uint32_t req)
 int
 swofp_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 {
+	struct switch_softc	*sc = ifp->if_softc;
+	struct swofp_ofs	*swofs = sc->sc_ofs;
+	struct ifbrparam	*bparam = (struct ifbrparam *)data;
+	struct ifbreq		*breq = (struct ifbreq *)data;
+	struct switch_port	*swpo;
+	struct ifnet		*ifs;
 	int			 error = 0;
 
 	switch (cmd) {
+	case SIOCSWGDPID:
+		memcpy(&bparam->ifbrp_datapath, &swofs->swofs_datapath_id,
+		    sizeof(uint64_t));
+		break;
+	case SIOCSWSDPID:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
+		memcpy(&swofs->swofs_datapath_id, &bparam->ifbrp_datapath,
+		    sizeof(uint64_t));
+		break;
+	case SIOCSWGFLOWMAX:
+		bparam->ifbrp_maxflow = swofs->swofs_flow_max_entry;
+		break;
+	case SIOCSWGMAXGROUP:
+		bparam->ifbrp_maxgroup = swofs->swofs_group_table_num;
+		break;
+	case SIOCSWSPORTNO:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
+
+		if (breq->ifbr_portno >= OFP_PORT_MAX)
+			return (EINVAL);
+
+		if ((ifs = ifunit(breq->ifbr_ifsname)) == NULL)
+			return (ENOENT);
+
+		if (ifs->if_switchport == NULL)
+			return (ENOENT);
+
+		TAILQ_FOREACH(swpo, &sc->sc_swpo_list, swpo_list_next) {
+			if (swpo->swpo_port_no == breq->ifbr_portno)
+				return (EEXIST);
+		}
+
+		swpo = (struct switch_port *)ifs->if_switchport;
+		swpo->swpo_port_no = breq->ifbr_portno;
+
+		break;
 	default:
 		error = ENOTTY;
 		break;
@@ -3161,7 +3205,13 @@ swofp_action_output(struct switch_softc *sc, struct mbuf *m,
 		/* no support yet */
 		break;
 	case OFP_PORT_LOCAL:
-		/* no support yet */
+		TAILQ_FOREACH(swpo, &sc->sc_swpo_list, swpo_list_next) {
+			if (swpo->swpo_flags & IFBIF_LOCAL) {
+				TAILQ_INSERT_HEAD(&swpld->swpld_fwdp_q, swpo,
+				    swpo_fwdp_next);
+				break;
+			}
+		}
 		break;
 	default:
 		TAILQ_FOREACH(swpo, &sc->sc_swpo_list, swpo_list_next) {
@@ -5558,7 +5608,10 @@ swofp_mp_recv_port_stats(struct switch_softc *sc, struct mbuf *m)
 		if (ifs == NULL)
 			continue;
 
-		postat.pt_port_no = htonl(swpo->swpo_port_no);
+		if (swpo->swpo_flags & IFBIF_LOCAL)
+			postat.pt_port_no = htonl(OFP_PORT_LOCAL);
+		else
+			postat.pt_port_no = htonl(swpo->swpo_port_no);
 		postat.pt_rx_packets = htobe64(ifs->if_ipackets);
 		postat.pt_tx_packets = htobe64(ifs->if_opackets);
 		postat.pt_rx_bytes = htobe64(ifs->if_obytes);
@@ -5888,7 +5941,10 @@ swofp_mp_recv_port_desc(struct switch_softc *sc, struct mbuf *m)
 		if (ifs == NULL)
 			continue;
 
-		swp.swp_number = htonl(swpo->swpo_port_no);
+		if (swpo->swpo_flags & IFBIF_LOCAL)
+			swp.swp_number = htonl(OFP_PORT_LOCAL);
+		else
+			swp.swp_number = htonl(swpo->swpo_port_no);
 
 		memcpy(swp.swp_macaddr,
 		    ((struct arpcom *)ifs)->ac_enaddr, ETHER_ADDR_LEN);

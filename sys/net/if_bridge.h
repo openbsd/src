@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.49 2016/09/01 10:06:33 goda Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.50 2016/09/02 10:01:36 goda Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -45,7 +45,7 @@ struct ifbreq {
 	char		ifbr_name[IFNAMSIZ];	/* bridge ifs name */
 	char		ifbr_ifsname[IFNAMSIZ];	/* member ifs name */
 	u_int32_t	ifbr_ifsflags;		/* member ifs flags */
-	u_int8_t	ifbr_portno;		/* member port number */
+	u_int32_t	ifbr_portno;		/* member port number */
 
 	u_int8_t	ifbr_state;		/* member stp state */
 	u_int8_t	ifbr_priority;		/* member stp priority */
@@ -71,7 +71,8 @@ struct ifbreq {
 #define IFBIF_BSTP_PTP		0x0040  /* member stp ptp */
 #define IFBIF_BSTP_AUTOPTP	0x0080	/* member stp autoptp enabled */
 #define	IFBIF_SPAN		0x0100	/* ifs is a span port (ro) */
-#define	IFBIF_RO_MASK		0xff00	/* read only bits */
+#define	IFBIF_LOCAL		0x1000	/* local port in switch(4) */
+#define	IFBIF_RO_MASK		0x0f00	/* read only bits */
 
 /* SIOCBRDGFLUSH */
 #define	IFBF_FLUSHDYN	0x0	/* flush dynamic addresses only */
@@ -152,6 +153,8 @@ struct ifbrparam {
 		u_int8_t	ifbrpu_maxage;		/* max age (sec) */
 		u_int8_t	ifbrpu_proto;		/* bridge protocol */
 		u_int8_t	ifbrpu_txhc;		/* bpdu tx holdcount */
+		u_int64_t	ifbrpu_datapath;	/* datapath-id */
+		u_int32_t	ifbrpu_maxgroup;	/* group size */
 	} ifbrp_ifbrpu;
 };
 #define	ifbrp_csize	ifbrp_ifbrpu.ifbrpu_csize
@@ -162,6 +165,9 @@ struct ifbrparam {
 #define	ifbrp_hellotime	ifbrp_ifbrpu.ifbrpu_hellotime
 #define	ifbrp_fwddelay	ifbrp_ifbrpu.ifbrpu_fwddelay
 #define	ifbrp_maxage	ifbrp_ifbrpu.ifbrpu_maxage
+#define	ifbrp_datapath	ifbrp_ifbrpu.ifbrpu_datapath
+#define	ifbrp_maxflow	ifbrp_ifbrpu.ifbrpu_csize
+#define	ifbrp_maxgroup	ifbrp_ifbrpu.ifbrpu_maxgroup
 
 /* Protocol versions */
 #define	BSTP_PROTO_ID		0x00
@@ -472,8 +478,12 @@ void	bridge_timer(void *);
 u_int8_t bridge_filterrule(struct brl_head *, struct ether_header *,
     struct mbuf *);
 void	bridge_flushrule(struct bridge_iflist *);
-void    bridge_fragment(struct bridge_softc *, struct ifnet *,
+
+struct mbuf *bridge_ip(struct bridge_softc *, int, struct ifnet *,
     struct ether_header *, struct mbuf *);
+void	bridge_fragment(struct bridge_softc *, struct ifnet *,
+    struct ether_header *, struct mbuf *);
+int	bridge_ifenqueue(struct bridge_softc *, struct ifnet *, struct mbuf *);
 
 #endif /* _KERNEL */
 #endif /* _NET_IF_BRIDGE_H_ */

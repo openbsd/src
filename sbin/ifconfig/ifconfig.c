@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.328 2016/08/31 13:32:27 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.329 2016/09/02 10:01:36 goda Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -516,6 +516,9 @@ const struct	cmd {
 	{ "-roaming",	0,		0,		umb_roaming },
 	{ "patch",	NEXTARG,	0,		setpair },
 	{ "-patch",	1,		0,		unsetpair },
+	{ "datapathid",	NEXTARG,	0,		switch_datapathid },
+	{ "portno",	NEXTARG2,	0,		NULL, switch_portno },
+	{ "addlocal",	NEXTARG,	0,		addlocal },
 #else /* SMALL */
 	{ "powersave",	NEXTARG0,	0,		setignore },
 	{ "priority",	NEXTARG,	0,		setignore },
@@ -3130,6 +3133,7 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	phys_status(0);
 #ifndef SMALL
 	bridge_status();
+	switch_status();
 #endif
 }
 

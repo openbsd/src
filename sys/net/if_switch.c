@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.1 2016/09/01 10:06:33 goda Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.2 2016/09/02 10:01:36 goda Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -121,6 +121,9 @@ struct mbuf
 	*switch_flow_classifier_ether(struct mbuf *, int *,
 	    struct switch_flow_classify *);
 struct mbuf
+	*switch_flow_classifier_tunnel(struct mbuf *, int *,
+	    struct switch_flow_classify *);
+struct mbuf
 	*switch_flow_classifier(struct mbuf *, uint32_t,
 	    struct switch_flow_classify *);
 void	 switch_flow_classifier_dump(struct switch_softc *,
@@ -212,6 +215,8 @@ switch_clone_destroy(struct ifnet *ifp)
 
 	TAILQ_FOREACH_SAFE(swpo, &sc->sc_swpo_list, swpo_list_next, tp) {
 		if ((ifs = if_get(swpo->swpo_ifindex)) != NULL) {
+			if (swpo->swpo_flags & IFBIF_LOCAL)
+				switch_port_unset_local(sc, swpo);
 			ifs->if_switchport = NULL;
 			ifpromisc(ifs, 0);
 			if_ih_remove(ifs, switch_input, NULL);
@@ -307,6 +312,99 @@ discard:
 }
 
 int
+switch_port_set_local(struct switch_softc *sc, struct switch_port *swpo)
+{
+	struct switch_port	*tswpo;
+	struct ifreq		 ifreq;
+	struct ifnet		*ifs;
+	int			error = 0, re_up = 0;
+
+	/*
+	 * Only one local interface can exist per switch device.
+	 */
+	TAILQ_FOREACH(tswpo, &sc->sc_swpo_list, swpo_list_next) {
+		if (tswpo->swpo_flags & IFBIF_LOCAL)
+			return (EEXIST);
+	}
+
+	ifs = if_get(swpo->swpo_ifindex);
+	if (ifs == NULL)
+		return (ENOENT);
+
+	if (ifs->if_flags & IFF_UP) {
+		re_up = 1;
+		memset(&ifreq, 0, sizeof(ifreq));
+		strlcpy(ifreq.ifr_name, ifs->if_xname, IFNAMSIZ);
+		ifs->if_flags &= ~IFF_UP;
+		ifreq.ifr_flags = ifs->if_flags;
+		error = (*ifs->if_ioctl)(ifs, SIOCSIFFLAGS, (caddr_t)&ifreq);
+		if (error)
+			goto error;
+	}
+
+	swpo->swpo_flags |= IFBIF_LOCAL;
+	swpo->swpo_port_no = OFP_PORT_LOCAL;
+	swpo->swop_bk_start = ifs->if_start;
+	ifs->if_start = switch_port_ifb_start;
+
+	if (re_up) {
+		memset(&ifreq, 0, sizeof(ifreq));
+		strlcpy(ifreq.ifr_name, ifs->if_xname, IFNAMSIZ);
+		ifs->if_flags &= IFF_UP;
+		ifreq.ifr_flags = ifs->if_flags;
+		error = (*ifs->if_ioctl)(ifs, SIOCSIFFLAGS, (caddr_t)&ifreq);
+		if (error)
+			goto error;
+	}
+
+ error:
+	if_put(ifs);
+	return (error);
+}
+
+int
+switch_port_unset_local(struct switch_softc *sc, struct switch_port *swpo)
+{
+	struct ifreq	ifreq;
+	struct ifnet	*ifs;
+	int		error = 0, re_up = 0;
+
+	ifs = if_get(swpo->swpo_ifindex);
+	if (ifs == NULL)
+		return (ENOENT);
+
+	if (ifs->if_flags & IFF_UP) {
+		re_up = 1;
+		memset(&ifreq, 0, sizeof(ifreq));
+		strlcpy(ifreq.ifr_name, ifs->if_xname, IFNAMSIZ);
+		ifs->if_flags &= ~IFF_UP;
+		ifreq.ifr_flags = ifs->if_flags;
+		error = (*ifs->if_ioctl)(ifs, SIOCSIFFLAGS, (caddr_t)&ifreq);
+		if (error)
+			goto error;
+	}
+
+	swpo->swpo_flags &= ~IFBIF_LOCAL;
+	swpo->swpo_port_no = swofp_assign_portno(sc, ifs->if_index);
+	ifs->if_start = swpo->swop_bk_start;
+	swpo->swop_bk_start = NULL;
+
+	if (re_up) {
+		memset(&ifreq, 0, sizeof(ifreq));
+		strlcpy(ifreq.ifr_name, ifs->if_xname, IFNAMSIZ);
+		ifs->if_flags &= IFF_UP;
+		ifreq.ifr_flags = ifs->if_flags;
+		error = (*ifs->if_ioctl)(ifs, SIOCSIFFLAGS, (caddr_t)&ifreq);
+		if (error)
+			goto error;
+	}
+
+ error:
+	if_put(ifs);
+	return (error);
+}
+
+int
 switch_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 {
 	struct ifbaconf		*baconf = (struct ifbaconf *)data;
@@ -334,6 +432,24 @@ switch_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		break;
 	case SIOCBRDGIFS:
 		error = switch_port_list(sc, (struct ifbifconf *)data);
+		break;
+	case SIOCBRDGADDL:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
+		error = switch_port_add(sc, (struct ifbreq *)data);
+		if (error && error != EEXIST)
+			break;
+		ifs = ifunit(breq->ifbr_ifsname);
+		if (ifs == NULL) {
+			error = ENOENT;
+			break;
+		}
+		swpo = (struct switch_port *)ifs->if_switchport;
+		if (swpo == NULL || swpo->swpo_switch != sc) {
+			error = ESRCH;
+			break;
+		}
+		error = switch_port_set_local(sc, swpo);
 		break;
 	case SIOCBRDGGIFFLGS:
 		ifs = ifunit(breq->ifbr_ifsname);
@@ -380,6 +496,13 @@ switch_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		brop->ifbop_desg_bridge = bs->bs_root_pv.pv_dbridge_id;
 		brop->ifbop_last_tc_time.tv_sec = bs->bs_last_tc_time.tv_sec;
 		brop->ifbop_last_tc_time.tv_usec = bs->bs_last_tc_time.tv_usec;
+		break;
+	case SIOCSWGDPID:
+	case SIOCSWSDPID:
+	case SIOCSWGFLOWMAX:
+	case SIOCSWGMAXGROUP:
+	case SIOCSWSPORTNO:
+		error = swofp_ioctl(ifp, cmd, data);
 		break;
 	default:
 		error = ENOTTY;
@@ -521,6 +644,8 @@ switch_port_del(struct switch_softc *sc, struct ifbreq *req)
 	}
 
 	if (swpo) {
+		if (swpo->swpo_flags & IFBIF_LOCAL)
+			switch_port_unset_local(sc, swpo);
 		ifs->if_switchport = NULL;
 		ifpromisc(ifs, 0);
 		if_ih_remove(ifs, switch_input, NULL);
@@ -661,11 +786,17 @@ switch_port_egress(struct switch_softc *sc, struct switch_fwdp_queue *fwdp_q,
 			len += ETHER_VLAN_ENCAP_LEN;
 #endif
 
-		if (((len - ETHER_HDR_LEN) > dst_if->if_mtu))
+		/*
+		 * Only if egress port has local port capabilities, it doesn't
+		 * need fragment because a frame sends up local network stack.
+		 */
+		if (!(swpo->swpo_flags & IFBIF_LOCAL) &&
+		    ((len - ETHER_HDR_LEN) > dst_if->if_mtu))
 			bridge_fragment((struct bridge_softc *)sc,
 			    dst_if, &eh, mc);
 		else
-			switch_ifenqueue(sc, dst_if, mc, 0);
+			switch_ifenqueue(sc, dst_if, mc,
+			    (swpo->swpo_flags & IFBIF_LOCAL));
  out:
 
 		if_put(dst_if);

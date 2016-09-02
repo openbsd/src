@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.67 2016/08/28 07:22:11 reyk Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.68 2016/09/02 10:01:36 goda Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -102,6 +102,7 @@
 #define	SIOCBRDGGTO	_IOWR('i', 70, struct ifbrparam)/* cache timeout */
 #define	SIOCBRDGDADDR	 _IOW('i', 71, struct ifbareq)	/* delete addr */
 #define	SIOCBRDGFLUSH	 _IOW('i', 72, struct ifbreq)	/* flush addr cache */
+#define	SIOCBRDGADDL	 _IOW('i', 73, struct ifbreq)	/* add local port */
 
 #define SIOCBRDGARL	 _IOW('i', 77, struct ifbrlreq)	/* add bridge rule */
 #define SIOCBRDGFRL	 _IOW('i', 78, struct ifbrlreq)	/* flush brdg rules */
@@ -121,6 +122,16 @@
 #define SIOCBRDGSTXHC    _IOW('i', 89, struct ifbrparam)/* set tx hold count */
 #define SIOCBRDGSPROTO	 _IOW('i', 90, struct ifbrparam)/* set protocol */
 #define SIOCBRDGS
+
+/* Following ioctls for switch(4) has compatibility to bridge(4) */
+#define	SIOCSWSFLOWMAX	SIOCBRDGSCACHE		/* set max flow per table */
+#define	SIOCSWGFLOWMAX	SIOCBRDGGCACHE		/* get max flow per table */
+
+#define	SIOCSWGDPID	_IOWR('i', 91, struct ifbrparam)/* set datapath id */
+#define	SIOCSWSDPID	 _IOW('i', 91, struct ifbrparam)/* get datapath id */
+#define	SIOCSWGMAXGROUP	_IOWR('i', 92, struct ifbrparam)/* get max groups */
+#define	SIOCSWSMAXGROUP	 _IOW('i', 92, struct ifbrparam)/* set max groups */
+#define	SIOCSWSPORTNO	_IOWR('i', 93, struct ifbreq)	/* set port number */
 
 #define	SIOCSIFMTU	 _IOW('i', 127, struct ifreq)	/* set ifnet mtu */
 #define	SIOCGIFMTU	_IOWR('i', 126, struct ifreq)	/* get ifnet mtu */
