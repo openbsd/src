@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.h,v 1.12 2016/09/02 16:29:55 renato Exp $ */
+/*	$OpenBSD: eigrpe.h,v 1.13 2016/09/02 16:36:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -157,8 +157,7 @@ int	 gen_eigrp_hdr(struct ibuf *, uint16_t, uint8_t, uint32_t,
 	    uint16_t);
 int	 send_packet(struct eigrp_iface *, struct nbr *, uint32_t,
 	    struct ibuf *);
-void	 recv_packet_v4(int, short, void *);
-void	 recv_packet_v6(int, short, void *);
+void	 recv_packet(int, short, void *);
 
 /* tlv.c */
 int			 gen_parameter_tlv(struct ibuf *, struct eigrp_iface *,

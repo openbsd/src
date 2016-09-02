@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.8 2016/09/02 16:29:55 renato Exp $ */
+/*	$OpenBSD: util.c,v 1.9 2016/09/02 16:36:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -304,5 +304,26 @@ clearscope(struct in6_addr *in6)
 	if (IN6_IS_SCOPE_EMBED(in6)) {
 		in6->s6_addr[2] = 0;
 		in6->s6_addr[3] = 0;
+	}
+}
+
+void
+sa2addr(struct sockaddr *sa, int *af, union eigrpd_addr *addr)
+{
+	struct sockaddr_in		*sa_in = (struct sockaddr_in *)sa;
+	struct sockaddr_in6		*sa_in6 = (struct sockaddr_in6 *)sa;
+
+	memset(addr, 0, sizeof(*addr));
+	switch (sa->sa_family) {
+	case AF_INET:
+		*af = AF_INET;
+		addr->v4 = sa_in->sin_addr;
+		break;
+	case AF_INET6:
+		*af = AF_INET6;
+		addr->v6 = sa_in6->sin6_addr;
+		break;
+	default:
+		fatalx("sa2addr: unknown af");
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.29 2016/09/02 16:34:20 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.30 2016/09/02 16:36:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -159,11 +159,11 @@ eigrpe(int debug, int verbose, char *sockname)
 	event_add(&iev_main->ev, NULL);
 
 	event_set(&ev4, global.eigrp_socket_v4, EV_READ|EV_PERSIST,
-	    recv_packet_v4, econf);
+	    recv_packet, econf);
 	event_add(&ev4, NULL);
 
 	event_set(&ev6, global.eigrp_socket_v6, EV_READ|EV_PERSIST,
-	    recv_packet_v6, econf);
+	    recv_packet, econf);
 	event_add(&ev6, NULL);
 
 	/* listen on eigrpd control socket */

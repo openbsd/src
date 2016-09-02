@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.18 2016/09/02 16:34:20 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.19 2016/09/02 16:36:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -436,6 +436,7 @@ struct ctl_stats {
 };
 
 #define min(x,y) ((x) <= (y) ? (x) : (y))
+#define max(x,y) ((x) > (y) ? (x) : (y))
 
 /* parse.y */
 struct eigrpd_conf	*parse_config(char *);
@@ -480,6 +481,7 @@ void		 embedscope(struct sockaddr_in6 *);
 void		 recoverscope(struct sockaddr_in6 *);
 void		 addscope(struct sockaddr_in6 *, uint32_t);
 void		 clearscope(struct in6_addr *);
+void		 sa2addr(struct sockaddr *, int *, union eigrpd_addr *);
 
 /* eigrpd.c */
 int		 main_imsg_compose_eigrpe(int, pid_t, void *, uint16_t);
