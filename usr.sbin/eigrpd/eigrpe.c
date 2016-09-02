@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.32 2016/09/02 16:44:33 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.33 2016/09/02 16:46:29 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -64,7 +64,7 @@ eigrpe_sig_handler(int sig, short event, void *bula)
 }
 
 /* eigrp engine */
-pid_t
+void
 eigrpe(int debug, int verbose, char *sockname)
 {
 	struct passwd		*pw;
@@ -173,8 +173,6 @@ eigrpe(int debug, int verbose, char *sockname)
 	event_dispatch();
 
 	eigrpe_shutdown();
-	/* NOTREACHED */
-	return (0);
 }
 
 static __dead void

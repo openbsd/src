@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.h,v 1.14 2016/09/02 16:44:33 renato Exp $ */
+/*	$OpenBSD: eigrpe.h,v 1.15 2016/09/02 16:46:29 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -74,7 +74,7 @@ RB_PROTOTYPE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
 extern struct eigrpd_conf        *econf;
 
 /* eigrpe.c */
-pid_t		 eigrpe(int, int, char *);
+void		 eigrpe(int, int, char *);
 int		 eigrpe_imsg_compose_parent(int, pid_t, void *, uint16_t);
 int		 eigrpe_imsg_compose_rde(int, uint32_t, pid_t, void *,
 		    uint16_t);

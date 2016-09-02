@@ -1,4 +1,4 @@
-/*	$OpenBSD: query.c,v 1.4 2016/09/02 16:44:33 renato Exp $ */
+/*	$OpenBSD: query.c,v 1.5 2016/09/02 16:46:29 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -43,7 +43,6 @@ send_query(struct eigrp_iface *ei, struct nbr *nbr,
 	if (rinfo_list == NULL || TAILQ_EMPTY(rinfo_list))
 		return;
 
-	/* don't exceed the interface's mtu */
 	do {
 		if ((buf = ibuf_dynamic(PKG_DEF_SIZE,
 		    IP_MAXPACKET - sizeof(struct ip))) == NULL)
@@ -72,6 +71,7 @@ send_query(struct eigrp_iface *ei, struct nbr *nbr,
 
 		while ((re = TAILQ_FIRST(rinfo_list)) != NULL) {
 			route_len = len_route_tlv(&re->rinfo);
+			/* don't exceed the MTU to avoid IP fragmentation */
 			if (size + route_len > ei->iface->mtu) {
 				rtp_send(ei, nbr, buf);
 				break;

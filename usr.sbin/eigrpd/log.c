@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.5 2016/09/02 16:29:55 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.6 2016/09/02 16:46:29 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -311,9 +311,9 @@ if_type_name(enum iface_type type)
 		return ("POINTOPOINT");
 	case IF_TYPE_BROADCAST:
 		return ("BROADCAST");
+	default:
+		return ("UNKNOWN");
 	}
-	/* NOTREACHED */
-	return ("UNKNOWN");
 }
 
 const char *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.22 2016/09/02 16:44:33 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.23 2016/09/02 16:46:29 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -69,7 +69,7 @@ rde_sig_handler(int sig, short event, void *arg)
 }
 
 /* route decision engine */
-pid_t
+void
 rde(int debug, int verbose)
 {
 	struct event		 ev_sigint, ev_sigterm;
@@ -126,9 +126,6 @@ rde(int debug, int verbose)
 	event_dispatch();
 
 	rde_shutdown();
-	/* NOTREACHED */
-
-	return (0);
 }
 
 static __dead void

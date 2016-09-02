@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.11 2016/09/02 16:44:33 renato Exp $ */
+/*	$OpenBSD: rde.h,v 1.12 2016/09/02 16:46:29 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -126,7 +126,7 @@ extern struct eigrpd_conf	*rdeconf;
 extern struct rde_nbr_head	 rde_nbrs;
 
 /* rde.c */
-pid_t		 rde(int, int);
+void		 rde(int, int);
 int		 rde_imsg_compose_parent(int, pid_t, void *, uint16_t);
 int		 rde_imsg_compose_eigrpe(int, uint32_t, pid_t, void *,
 		    uint16_t);
