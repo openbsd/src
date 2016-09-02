@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.152 2016/09/02 14:14:39 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.153 2016/09/02 14:22:29 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -180,6 +180,7 @@ struct timeval interval = {1, 0}; /* interval between packets */
 
 /* timing */
 int timing;			/* flag to do timing */
+int timinginfo;
 unsigned int maxwait = MAXWAIT_DEFAULT;	/* max seconds to wait for response */
 double tmin = 999999999.0;	/* minimum round trip time */
 double tmax = 0.0;		/* maximum round trip time */
@@ -901,7 +902,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			return;			/* 'Twas not our ECHO */
 		seq = ntohs(icp->icmp6_seq);
 		++nreceived;
-		if (timing) {
+		if (cc >= 8 + sizeof(struct payload)) {
 			SIPHASH_CTX ctx;
 			u_int8_t mac[SIPHASH_DIGEST_LENGTH];
 
@@ -927,6 +928,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 				(void)printf("signature mismatch!\n");
 				return;
 			}
+			timinginfo=1;
 
 			tp.tv_sec = betoh64(tv64->tv64_sec) -
 			    tv64_offset.tv64_sec;
@@ -1230,7 +1232,7 @@ summary(void)
 			    ntransmitted));
 	}
 	printf("\n");
-	if (nreceived && timing) {
+	if (timinginfo) {
 		/* Only display average to microseconds */
 		double num = nreceived + nrepeats;
 		double avg = tsum / num;
