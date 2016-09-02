@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.81 2016/08/13 20:53:17 guenther Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.82 2016/09/02 10:16:03 tom Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -204,7 +204,6 @@ cd9660_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return (error);
 	}
-	imp = VFSTOISOFS(mp);
 
 	bzero(mp->mnt_stat.f_mntonname, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntonname, path, MNAMELEN);
