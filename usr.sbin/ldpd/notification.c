@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.40 2016/07/16 19:20:16 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.41 2016/09/02 17:08:02 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -64,6 +64,11 @@ send_notification_full(struct tcp_conn *tcp, struct notify_msg *nm)
 		return;
 	}
 
+	if (tcp->nbr)
+		log_debug("msg-out: notification: lsr-id %s, status %s%s",
+		    inet_ntoa(tcp->nbr->id), status_code_name(nm->status_code),
+		    (nm->status_code & STATUS_FATAL) ? " (fatal)" : "");
+
 	evbuf_enqueue(&tcp->wbuf, buf);
 }
 
@@ -86,9 +91,6 @@ void
 send_notification_nbr(struct nbr *nbr, uint32_t status_code, uint32_t msg_id,
     uint16_t msg_type)
 {
-	log_debug("%s: lsr-id %s, status %s", __func__, inet_ntoa(nbr->id),
-	     status_code_name(status_code));
-
 	send_notification(status_code, nbr->tcp, msg_id, msg_type);
 	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
 }
@@ -197,14 +199,9 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 		}
 	}
 
-	if (st.status_code & htonl(STATUS_FATAL))
-		log_warnx("received notification from lsr-id %s: %s",
-		    inet_ntoa(nbr->id),
-		    status_code_name(ntohl(st.status_code)));
-	else
-		log_debug("received non-fatal notification from lsr-id "
-		    "%s: %s", inet_ntoa(nbr->id),
-		    status_code_name(ntohl(st.status_code)));
+	log_warnx("msg-in: notification: lsr-id %s, status %s%s",
+	    inet_ntoa(nbr->id), status_code_name(ntohl(st.status_code)),
+	    (st.status_code & htonl(STATUS_FATAL)) ? " (fatal)" : "");
 
 	if (st.status_code & htonl(STATUS_FATAL)) {
 		if (nbr->state == NBR_STA_OPENSENT)

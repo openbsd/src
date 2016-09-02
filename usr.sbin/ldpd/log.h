@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.14 2016/07/18 21:10:37 benno Exp $ */
+/*	$OpenBSD: log.h,v 1.15 2016/09/02 17:08:02 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -55,6 +55,7 @@ const char	*socket_name(int);
 const char	*nbr_state_name(int);
 const char	*if_state_name(int);
 const char	*if_type_name(enum iface_type);
+const char	*msg_name(uint16_t);
 const char	*status_code_name(uint32_t);
 const char	*pw_type_name(uint16_t);
 void		 log_rtmsg(unsigned char);

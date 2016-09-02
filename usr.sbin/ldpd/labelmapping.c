@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.59 2016/08/08 16:45:51 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.60 2016/09/02 17:08:02 renato Exp $ */
 
 /*
  * Copyright (c) 2014, 2015 Renato Westphal <renato@openbsd.org>
@@ -125,6 +125,10 @@ send_labelmessage(struct nbr *nbr, uint16_t type, struct mapping_head *mh)
 			ibuf_free(buf);
 			return;
 		}
+
+		log_debug("msg-out: %s: lsr-id %s, fec %s, label %s",
+		    msg_name(type), inet_ntoa(nbr->id), log_map(&me->map),
+		    log_label(me->map.label));
 
 		TAILQ_REMOVE(mh, me, entry);
 		free(me);
@@ -394,31 +398,24 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 		if (me->map.flags & F_MAP_REQ_ID)
 			me->map.requestid = reqid;
 
+		log_debug("msg-in: label mapping: lsr-id %s, fec %s, label %s",
+		    inet_ntoa(nbr->id), log_map(&me->map),
+		    log_label(me->map.label));
+
 		switch (type) {
 		case MSG_TYPE_LABELMAPPING:
-			log_debug("label mapping from lsr-id %s, FEC %s, "
-			    "label %s", inet_ntoa(nbr->id),
-			    log_map(&me->map), log_label(me->map.label));
 			imsg_type = IMSG_LABEL_MAPPING;
 			break;
 		case MSG_TYPE_LABELREQUEST:
-			log_debug("label request from lsr-id %s, FEC %s",
-			    inet_ntoa(nbr->id), log_map(&me->map));
 			imsg_type = IMSG_LABEL_REQUEST;
 			break;
 		case MSG_TYPE_LABELWITHDRAW:
-			log_debug("label withdraw from lsr-id %s, FEC %s",
-			    inet_ntoa(nbr->id), log_map(&me->map));
 			imsg_type = IMSG_LABEL_WITHDRAW;
 			break;
 		case MSG_TYPE_LABELRELEASE:
-			log_debug("label release from lsr-id %s, FEC %s",
-			    inet_ntoa(nbr->id), log_map(&me->map));
 			imsg_type = IMSG_LABEL_RELEASE;
 			break;
 		case MSG_TYPE_LABELABORTREQ:
-			log_debug("label abort from lsr-id %s, FEC %s",
-			    inet_ntoa(nbr->id), log_map(&me->map));
 			imsg_type = IMSG_LABEL_ABORT;
 			break;
 		default:
