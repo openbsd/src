@@ -10,12 +10,6 @@ esp transport from 3ffe::2 to 3ffe::10 spi 0x2eadbeef auth hmac-sha1 enc 3des-cb
 esp transport from 3ffe::10 to 3ffe::2 spi 0xbeef2ead auth hmac-sha1 enc 3des-cbc \
 	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
 	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-esp transport from 3ffe::3 to 3ffe::10 spi 0x3eadbeef auth hmac-sha1 enc des-cbc \
-	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
-	enckey 0xeeeeeeeeeeeeeeee
-esp transport from 3ffe::10 to 3ffe::3 spi 0xbeef3ead auth hmac-sha1 enc des-cbc \
-	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
-	enckey 0xeeeeeeeeeeeeeeee
 esp transport from 3ffe::4 to 3ffe::10 spi 0x4eadbeef auth hmac-sha1 enc aes \
 	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
 	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee

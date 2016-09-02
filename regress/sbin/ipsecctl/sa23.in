@@ -6,11 +6,6 @@ esp transport from 3ffe::2 to 3ffe::10 spi 0x2eadbeef:0xbeef2ead \
 	auth hmac-sha1 \
 	authkey file "DIR/ak160:DIR/ak160" \
 	enckey file "DIR/ek192:DIR/ek192"
-esp transport from 3ffe::3 to 3ffe::10 spi 0x3eadbeef:0xbeef3ead \
-	enc des-cbc \
-	auth hmac-sha1 \
-	authkey file "DIR/ak160:DIR/ak160" \
-	enckey file "DIR/ek64:DIR/ek64"
 esp transport from 3ffe::4 to 3ffe::10 spi 0x4eadbeef:0xbeef4ead \
 	enc aes \
 	auth hmac-sha1 \
