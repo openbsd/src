@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.1 2016/09/02 16:10:56 espie Exp $ */
+/* $OpenBSD: zsig.c,v 1.2 2016/09/02 16:12:09 espie Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -231,7 +231,6 @@ zsign(const char *seckeyfile, const char *msgfile, const char *sigfile)
 	char *p;
 	uint8_t *buffer;
 	uint8_t *sighdr;
-	uint8_t fake[10] = { 0x1f, 0x8b, 8, 0, 0, 0, 0, 0, 0, 3 };
 
 	fdin = xopen(msgfile, O_RDONLY, 0);
 	if (fstat(fdin, &sb) == -1 || !S_ISREG(sb.st_mode))
