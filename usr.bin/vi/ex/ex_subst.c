@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.28 2016/05/27 09:18:12 martijn Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.29 2016/09/02 15:38:42 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -346,7 +346,7 @@ s(SCR *sp, EXCMD *cmdp, char *s, regex_t *re, u_int flags)
 	size_t blen, cnt, last, lbclen, lblen, len, llen;
 	size_t offset, saved_offset, scno;
 	int lflag, nflag, pflag, rflag;
-	int didsub, do_eol_match, eflags, empty_ok, eval;
+	int didsub, do_eol_match, eflags, nempty, eval;
 	int linechanged, matched, quit, rval;
 	unsigned long ul;
 	char *bp, *lb;
@@ -515,8 +515,8 @@ noargs:	if (F_ISSET(sp, SC_VI) && sp->c_suffix && (lflag || nflag || pflag)) {
 		/* Reset the build buffer offset. */
 		lbclen = 0;
 
-		/* Reset empty match flag. */
-		empty_ok = 1;
+		/* Reset empty match test variable. */
+		nempty = -1;
 
 		/*
 		 * We don't want to have to do a setline if the line didn't
@@ -532,18 +532,12 @@ noargs:	if (F_ISSET(sp, SC_VI) && sp->c_suffix && (lflag || nflag || pflag)) {
 		/* It's not nul terminated, but we pretend it is. */
 		eflags = REG_STARTEND;
 
-		/*
-		 * The search area is from s + offset to the EOL.
-		 *
-		 * Generally, match[0].rm_so is the offset of the start
-		 * of the match from the start of the search, and offset
-		 * is the offset of the start of the last search.
-		 */
-nextmatch:	match[0].rm_so = 0;
-		match[0].rm_eo = len;
+		/* The search area is from s + offset to the EOL.  */
+nextmatch:	match[0].rm_so = offset;
+		match[0].rm_eo = llen;
 
 		/* Get the next match. */
-		eval = regexec(re, (char *)s + offset, 10, match, eflags);
+		eval = regexec(re, (char *)s, 10, match, eflags);
 
 		/*
 		 * There wasn't a match or if there was an error, deal with
@@ -575,14 +569,13 @@ nextmatch:	match[0].rm_so = 0;
 		 * incorrectly using " *" to replace groups of spaces with one
 		 * space.
 		 *
-		 * The way we do this is that if we just had a successful match,
-		 * the starting offset does not skip characters, and the match
-		 * is empty, ignore the match and move forward.  If there's no
-		 * more characters in the string, we were attempting to match
-		 * after the last character, so quit.
+		 * If the match is empty and at the same place as the end of the
+		 * previous match, ignore the match and move forward.  If
+		 * there's no more characters in the string, we were
+		 * attempting to match after the last character, so quit.
 		 */
-		if (!empty_ok && match[0].rm_so == 0 && match[0].rm_eo == 0) {
-			empty_ok = 1;
+		if (match[0].rm_so == nempty && match[0].rm_eo == nempty) {
+			nempty = -1;
 			if (len == 0)
 				goto endmatch;
 			BUILD(sp, s + offset, 1)
@@ -599,8 +592,8 @@ nextmatch:	match[0].rm_so = 0;
 			 * the end of line.
 			 */
 			from.lno = to.lno = lno;
-			from.cno = match[0].rm_so + offset;
-			to.cno = match[0].rm_eo + offset;
+			from.cno = match[0].rm_so;
+			to.cno = match[0].rm_eo;
 			/*
 			 * Both ex and vi have to correct for a change before
 			 * the first character in the line.
@@ -656,7 +649,7 @@ nextmatch:	match[0].rm_so = 0;
 			default:
 			case CH_NO:
 				didsub = 0;
-				BUILD(sp, s +offset, match[0].rm_eo);
+				BUILD(sp, s + offset, match[0].rm_eo - offset);
 				goto skip;
 			case CH_QUIT:
 				/* Set the quit/interrupted flags. */
@@ -679,22 +672,22 @@ lquit:				quit = 1;
 		sp->cno = match[0].rm_so;
 
 		/* Copy the bytes before the match into the build buffer. */
-		BUILD(sp, s + offset, match[0].rm_so);
+		BUILD(sp, s + offset, match[0].rm_so - offset);
 
 		/* Substitute the matching bytes. */
 		didsub = 1;
-		if (re_sub(sp, s + offset, &lb, &lbclen, &lblen, match))
+		if (re_sub(sp, s, &lb, &lbclen, &lblen, match))
 			goto err;
 
 		/* Set the change flag so we know this line was modified. */
 		linechanged = 1;
 
 		/* Move past the matched bytes. */
-skip:		offset += match[0].rm_eo;
-		len -= match[0].rm_eo;
+skip:		offset = match[0].rm_eo;
+		len = llen - match[0].rm_eo;
 
 		/* A match cannot be followed by an empty pattern. */
-		empty_ok = 0;
+		nempty = match[0].rm_eo;
 
 		/*
 		 * If doing a global change with confirmation, we have to
