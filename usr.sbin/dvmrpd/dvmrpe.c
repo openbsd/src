@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.c,v 1.15 2015/12/05 13:11:00 claudio Exp $ */
+/*	$OpenBSD: dvmrpe.c,v 1.16 2016/09/02 15:33:27 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -240,13 +240,13 @@ dvmrpe_dispatch_main(int fd, short event, void *bula)
 	struct kif	*kif;
 	struct iface	*iface;
 	ssize_t		 n;
-	int		 link_ok;
+	int		 shut = 0, link_ok;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
-			fatalx("pipe closed");
+			shut = 1;
 	}
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
@@ -292,7 +292,13 @@ dvmrpe_dispatch_main(int fd, short event, void *bula)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(iev);
+	if (!shut)
+		imsg_event_add(iev);
+	else {
+		/* this pipe is dead, so remove the event handler */
+		event_del(&iev->ev);
+		event_loopexit(NULL);
+	}
 }
 
 void
@@ -306,12 +312,13 @@ dvmrpe_dispatch_rde(int fd, short event, void *bula)
 	struct iface		*iface;
 	struct route_report	*rr;
 	ssize_t			 n;
+	int			 shut = 0;
 
 	 if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
-			fatalx("pipe closed");
+			shut = 1;
 	}
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
@@ -438,7 +445,13 @@ dvmrpe_dispatch_rde(int fd, short event, void *bula)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(iev);
+	if (!shut)
+		imsg_event_add(iev);
+	else {
+		/* this pipe is dead, so remove the event handler */
+		event_del(&iev->ev);
+		event_loopexit(NULL);
+	}
 }
 
 void
