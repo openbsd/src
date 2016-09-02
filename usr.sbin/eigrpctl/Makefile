@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.1 2015/10/02 04:31:52 renato Exp $
+#	$OpenBSD: Makefile,v 1.2 2016/09/02 18:00:07 benno Exp $
 
 .PATH:		${.CURDIR}/../eigrpd
 
 PROG=	eigrpctl
-SRCS=	util.c log.c eigrpctl.c parser.c
+SRCS=	util.c log.c logmsg.c eigrpctl.c parser.c
 CFLAGS+= -Wall
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
