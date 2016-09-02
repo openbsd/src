@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.115 2016/09/02 21:31:22 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.116 2016/09/02 21:45:37 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -189,7 +189,7 @@ readmsg(const char *filename, unsigned long long *msglenp)
 				errx(1, "msg too large in %s", filename);
 			space = msglen;
 			if (!(msg = realloc(msg, msglen + space + 1)))
-				errx(1, "realloc");
+				err(1, "realloc");
 		}
 		if ((x = read(fd, msg + msglen, space)) == -1)
 			err(1, "read from %s", filename);
@@ -454,7 +454,7 @@ check_keytype(const char *pubkeyfile, const char *keytype)
 	len = strlen(pubkeyfile);
 	slen = asprintf(&cmp, "-%s.pub", keytype);
 	if (slen < 0)
-		errx(1, "asprintf error");
+		err(1, "asprintf error");
 	if (len < slen)
 		errx(1, "too short");
 
