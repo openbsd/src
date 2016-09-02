@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.4 2016/01/15 12:36:41 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.5 2016/09/02 16:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -16,13 +16,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <string.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+
 #include <arpa/inet.h>
+#include <string.h>
 
 #include "eigrpd.h"
-#include "eigrp.h"
-#include "log.h"
 #include "eigrpe.h"
+#include "log.h"
 
 /* hello packet handling */
 

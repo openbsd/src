@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.h,v 1.11 2016/06/05 03:36:41 renato Exp $ */
+/*	$OpenBSD: eigrpe.h,v 1.12 2016/09/02 16:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -20,10 +20,10 @@
 #ifndef _EIGRPE_H_
 #define _EIGRPE_H_
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
+#include <sys/queue.h>
+#include <sys/tree.h>
+
+#include <event.h>
 
 TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.9 2016/06/05 03:36:41 renato Exp $ */
+/*	$OpenBSD: rde.h,v 1.10 2016/09/02 16:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -19,12 +19,10 @@
 #ifndef _RDE_H_
 #define _RDE_H_
 
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/tree.h>
 #include <sys/queue.h>
+#include <sys/tree.h>
+
 #include <event.h>
-#include <limits.h>
 
 /* just the info RDE needs */
 struct rde_nbr {

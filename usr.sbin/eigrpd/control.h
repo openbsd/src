@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.h,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: control.h,v 1.2 2016/09/02 16:29:54 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -20,7 +20,7 @@
 #define	_CONTROL_H_
 
 #include <sys/queue.h>
-#include <sys/time.h>
+
 #include <event.h>
 
 struct {

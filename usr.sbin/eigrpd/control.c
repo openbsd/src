@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.4 2016/01/15 12:36:41 renato Exp $ */
+/*	$OpenBSD: control.c,v 1.5 2016/09/02 16:29:54 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -19,17 +19,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/un.h>
+
 #include <errno.h>
-#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "eigrpd.h"
-#include "eigrp.h"
 #include "eigrpe.h"
-#include "log.h"
 #include "control.h"
+#include "log.h"
 
 #define	CONTROL_BACKLOG	5
 

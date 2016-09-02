@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.19 2016/06/05 17:07:41 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.20 2016/09/02 16:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -18,18 +18,19 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <arpa/inet.h>
+
 #include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "eigrpd.h"
-#include "eigrp.h"
-#include "log.h"
 #include "eigrpe.h"
+#include "log.h"
 
 extern struct eigrpd_conf        *econf;
 

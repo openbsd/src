@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.7 2016/02/21 18:56:49 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.8 2016/09/02 16:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -16,13 +16,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+#include <sys/types.h>
+
 #include <string.h>
+#include <stdlib.h>
 
 #include "eigrpd.h"
-#include "eigrp.h"
 #include "eigrpe.h"
 #include "rde.h"
 #include "log.h"

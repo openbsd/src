@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.4 2016/08/08 16:48:53 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.5 2016/09/02 16:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,15 +16,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+
+#include <arpa/inet.h>
 #include <errno.h>
+#include <netdb.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 
 #include "eigrpd.h"
 #include "rde.h"

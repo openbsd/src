@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.26 2016/04/15 13:15:33 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.27 2016/09/02 16:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -16,15 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+
 #include <stdlib.h>
 #include <string.h>
-#include <arpa/inet.h>
 
-#include "eigrp.h"
 #include "eigrpd.h"
 #include "eigrpe.h"
-#include "log.h"
 #include "rde.h"
+#include "log.h"
 
 void	reply_active_timer(int, short, void *);
 void	reply_active_start_timer(struct reply_node *);

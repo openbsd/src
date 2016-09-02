@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2016/06/21 21:35:24 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.17 2016/09/02 16:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -26,20 +26,17 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <netinet/in.h>
+#include <net/route.h>
+
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <err.h>
-#include <errno.h>
-#include <unistd.h>
 #include <ifaddrs.h>
 #include <limits.h>
-#include <stdarg.h>
 #include <stdio.h>
-#include <string.h>
 #include <syslog.h>
+#include <unistd.h>
 
-#include "eigrp.h"
 #include "eigrpd.h"
 #include "eigrpe.h"
 #include "log.h"

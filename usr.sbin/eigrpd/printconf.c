@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.4 2015/10/27 03:23:30 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.5 2016/09/02 16:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -16,12 +16,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <arpa/inet.h>
+#include <sys/types.h>
 
-#include "eigrp.h"
+#include <arpa/inet.h>
+#include <stdio.h>
+
 #include "eigrpd.h"
-#include "eigrpe.h"
 #include "log.h"
 
 void	print_mainconf(struct eigrpd_conf *);

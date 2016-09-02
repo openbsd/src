@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.3 2016/01/15 12:32:34 renato Exp $ */
+/*	$OpenBSD: update.c,v 1.4 2016/09/02 16:29:55 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -16,14 +16,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdlib.h>
+#include <sys/types.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
 #include <netinet/ip6.h>
 
+#include <stdlib.h>
+
 #include "eigrpd.h"
-#include "eigrp.h"
-#include "log.h"
 #include "eigrpe.h"
+#include "log.h"
 
 extern struct eigrpd_conf	*econf;
 
