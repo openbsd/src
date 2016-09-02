@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.80 2015/12/10 21:00:51 naddy Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.81 2016/09/02 09:12:49 tom Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -489,8 +489,6 @@ swcr_authenc(struct cryptop *crp)
 	struct swcr_data *sw, *swa, *swe = NULL;
 	struct auth_hash *axf = NULL;
 	struct enc_xform *exf = NULL;
-	struct mbuf *m = NULL;
-	struct uio *uio = NULL;
 	caddr_t buf = (caddr_t)crp->crp_buf;
 	uint32_t *blkp;
 	int aadlen, blksz, i, ivlen, outtype, len, iskip, oskip;
@@ -535,10 +533,8 @@ swcr_authenc(struct cryptop *crp)
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		outtype = CRYPTO_BUF_MBUF;
-		m = (struct mbuf *)buf;
 	} else {
 		outtype = CRYPTO_BUF_IOV;
-		uio = (struct uio *)buf;
 	}
 
 	/* Initialize the IV */
