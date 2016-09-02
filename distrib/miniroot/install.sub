@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.906 2016/08/23 16:49:48 krw Exp $
+#	$OpenBSD: install.sub,v 1.907 2016/09/02 21:42:28 halex Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1867,16 +1867,35 @@ set_timezone() {
 	done
 }
 
+# Scan supplied disks and print the first one having a 4.2BSD 'a' partition.
+# If none is found, prints nothing and returns nonzero.
+find_root() {
+	local _d
+
+	for _d; do
+		makedev $_d
+		disklabel "$_d" | grep -q '^  a: .*4\.2BSD ' &&
+			echo $_d && return
+		rm -f /dev/{r,}$_d?
+	done
+	return 1
+}
+
 # Get global root information. ie. ROOTDISK, ROOTDEV and SWAPDEV.
 get_rootinfo() {
+	local _auto
+	[[ $MODE == upgrade ]] && _auto=auto
 	while :; do
 		echo "Available disks are: $(get_dkdevs | sed 's/^$/none/')."
 		_ask "Which disk is the root disk? ('?' for details)" \
-			$(get_dkdevs | sed 's/ .*//') || continue
+			$_auto $(get_dkdevs) || continue
 		case $resp in
-		"?")	diskinfo $(get_dkdevs)
-			;;
+		"?")	diskinfo $(get_dkdevs);;
 		'')	;;
+		"$_auto")
+			resp=$(find_root $(get_dkdevs)) && break
+			echo "no disk found"
+			;;
 		*)	isin "$resp" $(get_dkdevs) && break
 			echo "no such disk"
 			;;
