@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2016/09/02 16:29:55 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.18 2016/09/02 16:39:44 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -79,11 +79,11 @@ uint32_t	 get_rtr_id(void);
 int		 get_prefix(const char *, union eigrpd_addr *, uint8_t *);
 
 static struct eigrpd_conf	*conf;
-static int			 errors = 0;
+static int			 errors;
 
-int			 af = AF_UNSPEC;
-struct eigrp		*eigrp = NULL;
-struct eigrp_iface	*ei = NULL;
+int			 af;
+struct eigrp		*eigrp;
+struct eigrp_iface	*ei;
 
 struct config_defaults {
 	uint8_t		kvalues[6];
