@@ -1,4 +1,4 @@
-/*	$OpenBSD: setrunelocale.c,v 1.13 2015/08/23 10:14:40 semarie Exp $ */
+/*	$OpenBSD: setrunelocale.c,v 1.14 2016/09/02 15:00:14 schwarze Exp $ */
 /*	$NetBSD: setrunelocale.c,v 1.14 2003/08/07 16:43:07 agc Exp $	*/
 
 /*-
@@ -88,65 +88,37 @@
  * SUCH DAMAGE.
  */
 
-#include <assert.h>
 #include <errno.h>
 #include <limits.h>
-#include <locale.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stddef.h>
 #include <string.h>
-#include <unistd.h>
+#include <wchar.h>
 
 #include "citrus_ctype.h"
 #include "rune.h"
 #include "rune_local.h"
 
-struct localetable {
-	char path[PATH_MAX];
-	_RuneLocale *runelocale;
-	struct localetable *next;
-};
-static struct localetable *localetable_head;
+static _RuneLocale *_Utf8RuneLocale;
 
-_RuneLocale *
-_findrunelocale(const char *path)
-{
-	struct localetable *lt;
-
-	/* ones which we have seen already */
-	for (lt = localetable_head; lt; lt = lt->next)
-		if (strcmp(path, lt->path) == 0)
-			return lt->runelocale;
-
-	return NULL;
-}
 
 int
 _newrunelocale(const char *path)
 {
-	struct localetable *lt;
 	FILE *fp;
 	_RuneLocale *rl;
 
-	if (strlen(path) + 1 > sizeof(lt->path))
-		return EINVAL;
-
-	rl = _findrunelocale(path);
-	if (rl)
+	if (_Utf8RuneLocale != NULL)
 		return 0;
 
 	if ((fp = fopen(path, "re")) == NULL)
 		return ENOENT;
 
-	if ((rl = _Read_RuneMagi(fp)) != NULL)
-		goto found;
-
-	fclose(fp);
-	return EFTYPE;
-
-found:
+	if ((rl = _Read_RuneMagi(fp)) == NULL) {
+		fclose(fp);
+		return EFTYPE;
+	}
 	fclose(fp);
 
 	rl->rl_citrus_ctype = NULL;
@@ -155,17 +127,7 @@ found:
 		_NukeRune(rl);
 		return EINVAL;
 	}
-
-	/* register it */
-	lt = malloc(sizeof(struct localetable));
-	if (lt == NULL) {
-		_NukeRune(rl);
-		return ENOMEM;
-	}
-	strlcpy(lt->path, path, sizeof(lt->path));
-	lt->runelocale = rl;
-	lt->next = localetable_head;
-	localetable_head = lt;
+	_Utf8RuneLocale = rl;
 
 	return 0;
 }
@@ -174,12 +136,11 @@ int
 _xpg4_setrunelocale(const char *locname)
 {
 	char path[PATH_MAX];
-	_RuneLocale *rl;
 	int error, len;
 	const char *dot, *encoding;
 
 	if (!strcmp(locname, "C") || !strcmp(locname, "POSIX")) {
-		rl = &_DefaultRuneLocale;
+		_CurrentRuneLocale = &_DefaultRuneLocale;
 		goto found;
 	}
 
@@ -187,7 +148,7 @@ _xpg4_setrunelocale(const char *locname)
 	dot = strrchr(locname, '.');
 	if (dot == NULL) {
 		/* No encoding specified. Fall back to ASCII. */
-		rl = &_DefaultRuneLocale;
+		_CurrentRuneLocale = &_DefaultRuneLocale;
 		goto found;
 	}
 
@@ -196,20 +157,19 @@ _xpg4_setrunelocale(const char *locname)
 		return ENOTSUP;
 
 	len = snprintf(path, sizeof(path),
-	    "%s/%s/LC_CTYPE", _PATH_LOCALE, encoding);
+	    "%s/UTF-8/LC_CTYPE", _PATH_LOCALE);
 	if (len < 0 || len >= sizeof(path))
 		return ENAMETOOLONG;
 
 	error = _newrunelocale(path);
 	if (error)
 		return error;
-	rl = _findrunelocale(path);
-	if (!rl)
+	if (_Utf8RuneLocale == NULL)
 		return ENOENT;
+	_CurrentRuneLocale = _Utf8RuneLocale;
 
 found:
-	_CurrentRuneLocale = rl;
-	__mb_cur_max = rl->rl_citrus_ctype->cc_mb_cur_max;
+	__mb_cur_max = _CurrentRuneLocale->rl_citrus_ctype->cc_mb_cur_max;
 
 	return 0;
 }
