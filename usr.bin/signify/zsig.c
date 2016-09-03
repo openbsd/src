@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.4 2016/09/02 21:52:12 tedu Exp $ */
+/* $OpenBSD: zsig.c,v 1.5 2016/09/03 11:22:09 espie Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -36,6 +36,7 @@ struct gzheader {
 	uint8_t *comment;
 	uint8_t *endcomment;
 	unsigned long long headerlength;
+	uint8_t *buffer;
 };
 
 #define FTEXT_FLAG 1
@@ -44,6 +45,7 @@ struct gzheader {
 #define FNAME_FLAG 8
 #define FCOMMENT_FLAG 16
 
+#define GZHEADERLENGTH 10
 #define MYBUFSIZE 65536LU
 
 
@@ -85,7 +87,7 @@ readgz_header(struct gzheader *h, int fd)
 		switch(state) {
 		case 0: /* check header proper */
 			/* need ten bytes */
-			if (len < 10)
+			if (len < GZHEADERLENGTH)
 				continue;
 			h->flg = buf[3];
 			h->mtime = buf[4] | (buf[5] << 8U) | (buf[6] << 16U) |
@@ -98,7 +100,7 @@ readgz_header(struct gzheader *h, int fd)
 			/* XXX special code that only caters to our needs */
 			if (h->flg & ~ (FCOMMENT_FLAG | FNAME_FLAG))
 				err(1, "invalid flags in gzheader");
-			pos = 10;
+			pos = GZHEADERLENGTH;
 			state++;
 			/*FALLTHRU*/
 		case 1:
@@ -106,7 +108,6 @@ readgz_header(struct gzheader *h, int fd)
 				p = memchr(buf+pos, 0, len - pos);
 				if (!p)
 					continue;
-				h->name = buf + pos;
 				pos = (p - buf) + 1;
 			}
 			state++;
@@ -120,7 +121,10 @@ readgz_header(struct gzheader *h, int fd)
 				h->endcomment = p;
 				pos = (p - buf) + 1;
 			}
+			if (h->flg & FNAME_FLAG)
+				h->name = buf + GZHEADERLENGTH;
 			h->headerlength = pos;
+			h->buffer = buf;
 			return buf + len;
 		}
 
@@ -218,6 +222,7 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 	 */
 	writeall(fdout, fake, sizeof fake, msgfile);
 	copy_blocks(fdout, fdin, p, h.endcomment, bufsize, bufend);
+	free(h.buffer);
 	close(fdout);
 	close(fdin);
 }
@@ -240,11 +245,13 @@ zsign(const char *seckeyfile, const char *msgfile, const char *sigfile)
 		errx(1, "Sorry can only sign regular files");
 
 	readgz_header(&h, fdin);
+	/* we don't care about the header, actually */
+	free(h.buffer);
 
 	if (lseek(fdin, h.headerlength, SEEK_SET) == -1)
 		err(1, "seek in %s", msgfile);
 
-	space = (sb.st_size / MYBUFSIZE) * SHA256_DIGEST_STRING_LENGTH +
+	space = (sb.st_size / MYBUFSIZE+1) * SHA256_DIGEST_STRING_LENGTH +
 		80; /* long enough for blocksize=.... */
 
 	msg = xmalloc(space);
