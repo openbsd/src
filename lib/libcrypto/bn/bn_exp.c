@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.23 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.24 2016/09/03 14:37:52 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -589,13 +589,14 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	bn_check_top(p);
 	bn_check_top(m);
 
-	top = m->top;
-
-	if (!(m->d[0] & 1)) {
+	if (!BN_is_odd(m)) {
 		BNerr(BN_F_BN_MOD_EXP_MONT_CONSTTIME,
 		    BN_R_CALLED_WITH_EVEN_MODULUS);
 		return (0);
 	}
+
+	top = m->top;
+
 	bits = BN_num_bits(p);
 	if (bits == 0) {
 		ret = BN_one(rr);
