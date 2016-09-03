@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.92 2016/09/03 11:41:10 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.93 2016/09/03 12:29:30 tedu Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,9 +61,11 @@ const struct compressor {
 	const char *decomp_opts;
 	const char *cat_opts;
 	void *(*ropen)(int, char *, int);
-	void *(*wopen)(int, char *, int, u_int32_t);
 	int (*read)(void *, char *, int);
+#ifndef SMALL
+	void *(*wopen)(int, char *, int, u_int32_t);
 	int (*write)(void *, const char *, int);
+#endif
 	int (*close)(void *, struct z_info *, const char *, struct stat *);
 } c_table[] = {
 #define M_DEFLATE (&c_table[0])
@@ -75,9 +77,11 @@ const struct compressor {
 		"cfhLlNno:qrtVv",
 		"fhqr",
 		gz_ropen,
-		gz_wopen,
 		gz_read,
+#ifndef SMALL
+		gz_wopen,
 		gz_write,
+#endif
 		gz_close
 	},
 #define M_COMPRESS (&c_table[1])
@@ -90,8 +94,8 @@ const struct compressor {
 		"cfhlNno:qrtv",
 		"fghqr",
 		z_ropen,
-		z_wopen,
 		zread,
+		z_wopen,
 		zwrite,
 		z_close
 	},
@@ -108,8 +112,8 @@ const struct compressor null_method = {
 	"cfhlNno:qrtv",
 	"fghqr",
 	null_ropen,
-	null_wopen,
 	null_read,
+	null_wopen,
 	null_write,
 	null_close
 };

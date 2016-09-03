@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.33 2016/09/03 11:41:10 tedu Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.34 2016/09/03 12:29:30 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -96,67 +96,9 @@ struct gz_stream {
 
 static const u_char gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
 
-static int put_int32(gz_stream *, u_int32_t);
 static u_int32_t get_int32(gz_stream *);
 static int get_header(gz_stream *, char *, int);
-static int put_header(gz_stream *, char *, u_int32_t, int);
 static int get_byte(gz_stream *);
-
-void *
-gz_wopen(int fd, char *name, int bits, u_int32_t mtime)
-{
-	gz_stream *s;
-
-	if (fd < 0)
-		return NULL;
-
-	if (bits < 0 || bits > Z_BEST_COMPRESSION) {
-		errno = EINVAL;
-		return NULL;
-	}
-	if ((s = calloc(1, sizeof(gz_stream))) == NULL)
-		return NULL;
-
-	s->z_stream.zalloc = (alloc_func)0;
-	s->z_stream.zfree = (free_func)0;
-	s->z_stream.opaque = (voidpf)0;
-	s->z_stream.next_in = Z_NULL;
-	s->z_stream.next_out = Z_NULL;
-	s->z_stream.avail_in = s->z_stream.avail_out = 0;
-	s->z_fd = 0;
-	s->z_eof = 0;
-	s->z_time = 0;
-	s->z_hlen = 0;
-	s->z_total_in = 0;
-	s->z_total_out = 0;
-	s->z_crc = crc32(0L, Z_NULL, 0);
-	s->z_mode = 'w';
-
-#ifndef SMALL
-	/* windowBits is passed < 0 to suppress zlib header */
-	if (deflateInit2(&(s->z_stream), bits, Z_DEFLATED,
-			 -MAX_WBITS, DEF_MEM_LEVEL, 0) != Z_OK) {
-		free (s);
-		return NULL;
-	}
-	s->z_stream.next_out = s->z_buf;
-#else
-	free(s);
-	return (NULL);
-#endif
-	s->z_stream.avail_out = Z_BUFSIZE;
-
-	errno = 0;
-	s->z_fd = fd;
-
-	/* write the .gz header */
-	if (put_header(s, name, mtime, bits) != 0) {
-		gz_close(s, NULL, NULL, NULL);
-		s = NULL;
-	}
-
-	return s;
-}
 
 void *
 gz_ropen(int fd, char *name, int gotmagic)
@@ -201,110 +143,6 @@ gz_ropen(int fd, char *name, int gotmagic)
 	}
 
 	return s;
-}
-
-int
-gz_close(void *cookie, struct z_info *info, const char *name, struct stat *sb)
-{
-	gz_stream *s = (gz_stream*)cookie;
-	int err = 0;
-
-	if (s == NULL)
-		return -1;
-
-#ifndef SMALL
-	if (s->z_mode == 'w' && (err = gz_flush (s, Z_FINISH)) == Z_OK) {
-		if ((err = put_int32 (s, s->z_crc)) == Z_OK) {
-			s->z_hlen += sizeof(int32_t);
-			if ((err = put_int32 (s, s->z_stream.total_in)) == Z_OK)
-				s->z_hlen += sizeof(int32_t);
-		}
-	}
-#endif
-	if (!err && s->z_stream.state != NULL) {
-		if (s->z_mode == 'w')
-#ifndef SMALL
-			err = deflateEnd(&s->z_stream);
-#else
-			err = -1;
-#endif
-		else if (s->z_mode == 'r')
-			err = inflateEnd(&s->z_stream);
-	}
-
-	if (info != NULL) {
-		info->mtime = s->z_time;
-		info->crc = s->z_crc;
-		info->hlen = s->z_hlen;
-		if (s->z_mode == 'r') {
-			info->total_in = s->z_total_in;
-			info->total_out = s->z_total_out;
-		} else {
-			info->total_in = s->z_stream.total_in;
-			info->total_out = s->z_stream.total_out;
-		}
-
-	}
-
-	setfile(name, s->z_fd, sb);
-	if (!err)
-		err = close(s->z_fd);
-	else
-		(void)close(s->z_fd);
-
-	free(s);
-
-	return err;
-}
-
-#ifndef SMALL
-int
-gz_flush(void *cookie, int flush)
-{
-	gz_stream *s = (gz_stream*)cookie;
-	size_t len;
-	int done = 0;
-	int err;
-
-	if (s == NULL || s->z_mode != 'w') {
-		errno = EBADF;
-		return Z_ERRNO;
-	}
-
-	s->z_stream.avail_in = 0; /* should be zero already anyway */
-
-	for (;;) {
-		len = Z_BUFSIZE - s->z_stream.avail_out;
-
-		if (len != 0) {
-			if (write(s->z_fd, s->z_buf, len) != len)
-				return Z_ERRNO;
-			s->z_stream.next_out = s->z_buf;
-			s->z_stream.avail_out = Z_BUFSIZE;
-		}
-		if (done)
-			break;
-		if ((err = deflate(&(s->z_stream), flush)) != Z_OK &&
-		    err != Z_STREAM_END)
-			return err;
-
-		/* deflate has finished flushing only when it hasn't
-		 * used up all the available space in the output buffer
-		 */
-		done = (s->z_stream.avail_out != 0 || err == Z_STREAM_END);
-	}
-	return 0;
-}
-#endif
-
-static int
-put_int32(gz_stream *s, u_int32_t x)
-{
-	u_int32_t y = htole32(x);
-
-	if (write(s->z_fd, &y, sizeof(y)) != sizeof(y))
-		return Z_ERRNO;
-	return 0;
 }
 
 static int
@@ -418,36 +256,6 @@ get_header(gz_stream *s, char *name, int gotmagic)
 	return 0;
 }
 
-static int
-put_header(gz_stream *s, char *name, u_int32_t mtime, int bits)
-{
-	struct iovec iov[2];
-	u_char buf[10];
-
-	buf[0] = gz_magic[0];
-	buf[1] = gz_magic[1];
-	buf[2] = Z_DEFLATED;
-	buf[3] = name ? ORIG_NAME : 0;
-	buf[4] = mtime & 0xff;
-	buf[5] = (mtime >> 8) & 0xff;
-	buf[6] = (mtime >> 16) & 0xff;
-	buf[7] = (mtime >> 24) & 0xff;
-	buf[8] = bits == 1 ? 4 : bits == 9 ? 2 : 0;	/* xflags */
-	buf[9] = OS_CODE;
-	iov[0].iov_base = buf;
-	iov[0].iov_len = sizeof(buf);
-	s->z_hlen = sizeof(buf);
-
-	if (name != NULL) {
-		iov[1].iov_base = name;
-		iov[1].iov_len = strlen(name) + 1;
-		s->z_hlen += iov[1].iov_len;
-	}
-	if (writev(s->z_fd, iov, name ? 2 : 1) == -1)
-		return (-1);
-	return (0);
-}
-
 int
 gz_read(void *cookie, char *buf, int len)
 {
@@ -522,10 +330,100 @@ bad:
 	return (-1);
 }
 
+#ifndef SMALL
+static int
+put_int32(gz_stream *s, u_int32_t x)
+{
+	u_int32_t y = htole32(x);
+
+	if (write(s->z_fd, &y, sizeof(y)) != sizeof(y))
+		return Z_ERRNO;
+	return 0;
+}
+
+static int
+put_header(gz_stream *s, char *name, u_int32_t mtime, int bits)
+{
+	struct iovec iov[2];
+	u_char buf[10];
+
+	buf[0] = gz_magic[0];
+	buf[1] = gz_magic[1];
+	buf[2] = Z_DEFLATED;
+	buf[3] = name ? ORIG_NAME : 0;
+	buf[4] = mtime & 0xff;
+	buf[5] = (mtime >> 8) & 0xff;
+	buf[6] = (mtime >> 16) & 0xff;
+	buf[7] = (mtime >> 24) & 0xff;
+	buf[8] = bits == 1 ? 4 : bits == 9 ? 2 : 0;	/* xflags */
+	buf[9] = OS_CODE;
+	iov[0].iov_base = buf;
+	iov[0].iov_len = sizeof(buf);
+	s->z_hlen = sizeof(buf);
+
+	if (name != NULL) {
+		iov[1].iov_base = name;
+		iov[1].iov_len = strlen(name) + 1;
+		s->z_hlen += iov[1].iov_len;
+	}
+	if (writev(s->z_fd, iov, name ? 2 : 1) == -1)
+		return (-1);
+	return (0);
+}
+
+void *
+gz_wopen(int fd, char *name, int bits, u_int32_t mtime)
+{
+	gz_stream *s;
+
+	if (fd < 0)
+		return NULL;
+
+	if (bits < 0 || bits > Z_BEST_COMPRESSION) {
+		errno = EINVAL;
+		return NULL;
+	}
+	if ((s = calloc(1, sizeof(gz_stream))) == NULL)
+		return NULL;
+
+	s->z_stream.zalloc = (alloc_func)0;
+	s->z_stream.zfree = (free_func)0;
+	s->z_stream.opaque = (voidpf)0;
+	s->z_stream.next_in = Z_NULL;
+	s->z_stream.next_out = Z_NULL;
+	s->z_stream.avail_in = s->z_stream.avail_out = 0;
+	s->z_fd = 0;
+	s->z_eof = 0;
+	s->z_time = 0;
+	s->z_hlen = 0;
+	s->z_total_in = 0;
+	s->z_total_out = 0;
+	s->z_crc = crc32(0L, Z_NULL, 0);
+	s->z_mode = 'w';
+
+	/* windowBits is passed < 0 to suppress zlib header */
+	if (deflateInit2(&(s->z_stream), bits, Z_DEFLATED,
+			 -MAX_WBITS, DEF_MEM_LEVEL, 0) != Z_OK) {
+		free (s);
+		return NULL;
+	}
+	s->z_stream.next_out = s->z_buf;
+	s->z_stream.avail_out = Z_BUFSIZE;
+
+	errno = 0;
+	s->z_fd = fd;
+
+	/* write the .gz header */
+	if (put_header(s, name, mtime, bits) != 0) {
+		gz_close(s, NULL, NULL, NULL);
+		s = NULL;
+	}
+
+	return s;
+}
 int
 gz_write(void *cookie, const char *buf, int len)
 {
-#ifndef SMALL
 	gz_stream *s = (gz_stream*)cookie;
 
 	s->z_stream.next_in = (char *)buf;
@@ -544,5 +442,98 @@ gz_write(void *cookie, const char *buf, int len)
 	s->z_crc = crc32(s->z_crc, buf, len);
 
 	return (int)(len - s->z_stream.avail_in);
-#endif
 }
+
+int
+gz_flush(void *cookie, int flush)
+{
+	gz_stream *s = (gz_stream*)cookie;
+	size_t len;
+	int done = 0;
+	int err;
+
+	if (s == NULL || s->z_mode != 'w') {
+		errno = EBADF;
+		return Z_ERRNO;
+	}
+
+	s->z_stream.avail_in = 0; /* should be zero already anyway */
+
+	for (;;) {
+		len = Z_BUFSIZE - s->z_stream.avail_out;
+
+		if (len != 0) {
+			if (write(s->z_fd, s->z_buf, len) != len)
+				return Z_ERRNO;
+			s->z_stream.next_out = s->z_buf;
+			s->z_stream.avail_out = Z_BUFSIZE;
+		}
+		if (done)
+			break;
+		if ((err = deflate(&(s->z_stream), flush)) != Z_OK &&
+		    err != Z_STREAM_END)
+			return err;
+
+		/* deflate has finished flushing only when it hasn't
+		 * used up all the available space in the output buffer
+		 */
+		done = (s->z_stream.avail_out != 0 || err == Z_STREAM_END);
+	}
+	return 0;
+}
+#endif
+
+int
+gz_close(void *cookie, struct z_info *info, const char *name, struct stat *sb)
+{
+	gz_stream *s = (gz_stream*)cookie;
+	int err = 0;
+
+	if (s == NULL)
+		return -1;
+
+#ifndef SMALL
+	if (s->z_mode == 'w' && (err = gz_flush (s, Z_FINISH)) == Z_OK) {
+		if ((err = put_int32 (s, s->z_crc)) == Z_OK) {
+			s->z_hlen += sizeof(int32_t);
+			if ((err = put_int32 (s, s->z_stream.total_in)) == Z_OK)
+				s->z_hlen += sizeof(int32_t);
+		}
+	}
+#endif
+	if (!err && s->z_stream.state != NULL) {
+		if (s->z_mode == 'w')
+#ifndef SMALL
+			err = deflateEnd(&s->z_stream);
+#else
+			err = -1;
+#endif
+		else if (s->z_mode == 'r')
+			err = inflateEnd(&s->z_stream);
+	}
+
+	if (info != NULL) {
+		info->mtime = s->z_time;
+		info->crc = s->z_crc;
+		info->hlen = s->z_hlen;
+		if (s->z_mode == 'r') {
+			info->total_in = s->z_total_in;
+			info->total_out = s->z_total_out;
+		} else {
+			info->total_in = s->z_stream.total_in;
+			info->total_out = s->z_stream.total_out;
+		}
+
+	}
+
+	setfile(name, s->z_fd, sb);
+	if (!err)
+		err = close(s->z_fd);
+	else
+		(void)close(s->z_fd);
+
+	free(s);
+
+	return err;
+}
+
