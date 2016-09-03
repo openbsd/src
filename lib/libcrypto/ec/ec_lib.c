@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.21 2016/09/03 12:00:24 beck Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.22 2016/09/03 12:10:40 beck Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -233,7 +233,6 @@ EC_GROUP *
 EC_GROUP_dup(const EC_GROUP * a)
 {
 	EC_GROUP *t = NULL;
-	int ok = 0;
 
 	if ((a != NULL) && ((t = EC_GROUP_new(a->meth)) != NULL) &&
 	    (!EC_GROUP_copy(t, a))) {
