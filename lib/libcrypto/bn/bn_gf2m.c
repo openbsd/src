@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gf2m.c,v 1.21 2016/03/12 21:44:11 bcook Exp $ */
+/* $OpenBSD: bn_gf2m.c,v 1.22 2016/09/03 14:37:00 bcook Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -443,8 +443,7 @@ BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[])
 			d0 = p[k] % BN_BITS2;
 			d1 = BN_BITS2 - d0;
 			z[n] ^= (zz << d0);
-			tmp_ulong = zz >> d1;
-			if (d0 && tmp_ulong)
+			if (d0 && (tmp_ulong = zz >> d1))
 				z[n + 1] ^= tmp_ulong;
 		}
 
