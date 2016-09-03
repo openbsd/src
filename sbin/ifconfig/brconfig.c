@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.10 2016/09/02 10:01:36 goda Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.11 2016/09/03 17:13:48 chl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -203,7 +203,7 @@ addlocal(const char *ifsname, int d)
 	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
 	if (ioctl(s, SIOCBRDGADDL, (caddr_t)&breq) < 0) {
 		if (errno == EEXIST)
-			errx(1, "%s: local port exists already");
+			errx(1, "%s: local port exists already", name);
 		else
 			err(1, "%s: ioctl SIOCBRDGADDL %s", name, ifsname);
 	}
@@ -1027,7 +1027,6 @@ void
 switch_status(void)
 {
 	struct ifreq ifr;
-	struct ifbrparam bp1, bp2;
 
 	if (!is_switch(name))
 		return;
