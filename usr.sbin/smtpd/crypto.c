@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.5 2015/12/28 22:08:30 jung Exp $	 */
+/* $OpenBSD: crypto.c,v 1.6 2016/09/03 14:42:08 gilles Exp $	 */
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@openbsd.org>
@@ -42,7 +42,6 @@ size_t	crypto_encrypt_buffer(const char *, size_t, char *, size_t);
 size_t	crypto_decrypt_buffer(const char *, size_t, char *, size_t);
 
 static struct crypto_ctx {
-	const EVP_CIPHER       *cipher;
 	unsigned char  		key[KEY_SIZE];
 } cp;
 
@@ -53,7 +52,6 @@ crypto_setup(const char *key, size_t len)
 		return 0;
 
 	memset(&cp, 0, sizeof cp);
-	cp.cipher = EVP_aes_256_gcm();
 
 	/* openssl rand -hex 16 */
 	memcpy(cp.key, key, sizeof cp.key);
@@ -92,7 +90,7 @@ crypto_encrypt_file(FILE * in, FILE * out)
 		return 0;
 
 	EVP_CIPHER_CTX_init(&ctx);
-	EVP_EncryptInit(&ctx, cp.cipher, cp.key, iv);
+	EVP_EncryptInit_ex(&ctx, EVP_aes_256_gcm(), NULL, cp.key, iv);
 
 	/* encrypt until end of file */
 	while ((r = fread(ibuf, 1, CRYPTO_BUFFER_SIZE, in)) != 0) {
@@ -105,7 +103,7 @@ crypto_encrypt_file(FILE * in, FILE * out)
 		goto end;
 
 	/* finalize and write last chunk if any */
-	if (!EVP_EncryptFinal(&ctx, obuf, &len))
+	if (!EVP_EncryptFinal_ex(&ctx, obuf, &len))
 		goto end;
 	if (len && (w = fwrite(obuf, len, 1, out)) != 1)
 		goto end;
@@ -172,7 +170,7 @@ crypto_decrypt_file(FILE * in, FILE * out)
 
 
 	EVP_CIPHER_CTX_init(&ctx);
-	EVP_DecryptInit(&ctx, cp.cipher, cp.key, iv);
+	EVP_DecryptInit_ex(&ctx, EVP_aes_256_gcm(), NULL, cp.key, iv);
 
 	/* set expected tag */
 	EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_TAG, sizeof tag, tag);
@@ -195,7 +193,7 @@ crypto_decrypt_file(FILE * in, FILE * out)
 		goto end;
 
 	/* finalize, write last chunk if any and perform authentication check */
-	if (!EVP_DecryptFinal(&ctx, obuf, &len))
+	if (!EVP_DecryptFinal_ex(&ctx, obuf, &len))
 		goto end;
 	if (len && (w = fwrite(obuf, len, 1, out)) != 1)
 		goto end;
@@ -240,7 +238,7 @@ crypto_encrypt_buffer(const char *in, size_t inlen, char *out, size_t outlen)
 	len += sizeof iv;
 
 	EVP_CIPHER_CTX_init(&ctx);
-	EVP_EncryptInit(&ctx, cp.cipher, cp.key, iv);
+	EVP_EncryptInit_ex(&ctx, EVP_aes_256_gcm(), NULL, cp.key, iv);
 
 	/* encrypt buffer */
 	if (!EVP_EncryptUpdate(&ctx, out + len, &olen, in, inlen))
@@ -248,7 +246,7 @@ crypto_encrypt_buffer(const char *in, size_t inlen, char *out, size_t outlen)
 	len += olen;
 
 	/* finalize and write last chunk if any */
-	if (!EVP_EncryptFinal(&ctx, out + len, &olen))
+	if (!EVP_EncryptFinal_ex(&ctx, out + len, &olen))
 		goto end;
 	len += olen;
 
@@ -293,7 +291,7 @@ crypto_decrypt_buffer(const char *in, size_t inlen, char *out, size_t outlen)
 	in += sizeof iv;
 
 	EVP_CIPHER_CTX_init(&ctx);
-	EVP_DecryptInit(&ctx, cp.cipher, cp.key, iv);
+	EVP_DecryptInit_ex(&ctx, EVP_aes_256_gcm(), NULL, cp.key, iv);
 
 	/* set expected tag */
 	EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_TAG, sizeof tag, tag);
@@ -304,7 +302,7 @@ crypto_decrypt_buffer(const char *in, size_t inlen, char *out, size_t outlen)
 	len += olen;
 
 	/* finalize, write last chunk if any and perform authentication check */
-	if (!EVP_DecryptFinal(&ctx, out + len, &olen))
+	if (!EVP_DecryptFinal_ex(&ctx, out + len, &olen))
 		goto end;
 	ret = len + olen;
 
