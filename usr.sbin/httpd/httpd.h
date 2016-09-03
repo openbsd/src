@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.118 2016/09/02 11:25:14 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.119 2016/09/03 14:44:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -65,7 +65,6 @@
 #define SERVER_TIMEOUT		600
 #define SERVER_CACHESIZE	-1	/* use default size */
 #define SERVER_NUMPROC		3
-#define SERVER_MAXPROC		32
 #define SERVER_MAXHEADERLENGTH	8192
 #define SERVER_MAXREQUESTS	100	/* max requests per connection */
 #define SERVER_MAXREQUESTBODY	1048576	/* 1M */
@@ -85,6 +84,9 @@
 #define CONFIG_ALL		0xff
 
 #define FCGI_CONTENT_SIZE	65535
+
+#define PROC_PARENT_SOCK_FILENO	3
+#define PROC_MAX_INSTANCES	32
 
 enum httpchunk {
 	TOREAD_UNLIMITED		= -1,
@@ -226,11 +228,6 @@ enum privsep_procid {
 
 /* Attach the control socket to the following process */
 #define PROC_CONTROL	PROC_LOGGER
-
-/* Define default parent socket number */
-#define PARENT_SOCK_FILENO	3
-
-#define PROC_MAX_INSTANCES	128
 
 struct privsep_pipes {
 	int				*pp_pipes[PROC_MAX];

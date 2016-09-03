@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.31 2016/09/03 14:09:04 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.32 2016/09/03 14:44:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -131,7 +131,7 @@ proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 				break;
 			case 0:
 				/* Prepare parent socket. */
-				dup2(fd, PARENT_SOCK_FILENO);
+				dup2(fd, PROC_PARENT_SOCK_FILENO);
 
 				execvp(argv[0], nargv);
 				fatal("%s: execvp", __func__);
@@ -556,7 +556,7 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	signal_add(&ps->ps_evsigusr1, NULL);
 
 	proc_setup(ps, procs, nproc);
-	proc_accept(ps, PARENT_SOCK_FILENO, PROC_PARENT, 0);
+	proc_accept(ps, PROC_PARENT_SOCK_FILENO, PROC_PARENT, 0);
 	if (p->p_id == PROC_CONTROL && ps->ps_instance == 0) {
 		TAILQ_INIT(&ctl_conns);
 		if (control_listen(&ps->ps_csock) == -1)

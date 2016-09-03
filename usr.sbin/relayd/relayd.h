@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.232 2016/09/03 14:09:04 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.233 2016/09/03 14:44:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -69,7 +69,6 @@
 #define RELAY_TIMEOUT		600
 #define RELAY_CACHESIZE		-1	/* use default size */
 #define RELAY_NUMPROC		3
-#define RELAY_MAXPROC		32
 #define RELAY_MAXHOSTS		32
 #define RELAY_MAXHEADERLENGTH	8192
 #define RELAY_STATINTERVAL	60
@@ -94,6 +93,9 @@
 #define ICMP_RCVBUF_SIZE	262144
 
 #define SNMP_RECONNECT_TIMEOUT	{ 3, 0 }	/* sec, usec */
+
+#define PROC_PARENT_SOCK_FILENO	3
+#define PROC_MAX_INSTANCES	32
 
 #if DEBUG > 1
 #define DPRINTF		log_debug
@@ -805,7 +807,7 @@ struct relay {
 	char			*rl_tls_cakey;
 	EVP_PKEY		*rl_tls_capkey;
 
-	struct ctl_stats	 rl_stats[RELAY_MAXPROC + 1];
+	struct ctl_stats	 rl_stats[PROC_MAX_INSTANCES + 1];
 
 	struct session_tree	 rl_sessions;
 };
@@ -987,11 +989,6 @@ enum privsep_procid {
 
 /* Attach the control socket to the following process */
 #define PROC_CONTROL	PROC_PFE
-
-/* Define default parent socket number */
-#define PARENT_SOCK_FILENO	3
-
-#define PROC_MAX_INSTANCES	128
 
 struct privsep_pipes {
 	int				*pp_pipes[PROC_MAX];
