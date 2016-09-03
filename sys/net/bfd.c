@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.2 2016/09/03 15:05:25 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.3 2016/09/03 15:06:11 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -279,7 +279,7 @@ bfdinit(void)
 	pool_init(&bfd_pool, sizeof(struct bfd_softc), 0, 0, 0,
 	    "bfd_softc", NULL);
 	pool_setipl(&bfd_pool, IPL_SOFTNET);
-	pool_init(&bfd_pool_peer, sizeof(struct bfd_softc), 0, 0, 0,
+	pool_init(&bfd_pool_peer, sizeof(struct bfd_state), 0, 0, 0,
 	    "bfd_softc_peer", NULL);
 	pool_setipl(&bfd_pool_peer, IPL_SOFTNET);
 
