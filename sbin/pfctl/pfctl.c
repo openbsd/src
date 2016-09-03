@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.335 2016/09/03 17:11:40 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.336 2016/09/03 17:56:07 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -701,10 +701,6 @@ pfctl_print_rule_counters(struct pf_rule *rule, int opts)
 
 		printf("  [ queue: qname=%s qid=%u pqname=%s pqid=%u ]\n",
 		    rule->qname, rule->qid, rule->pqname, rule->pqid);
-
-		if (rule->rule_flag & PFRULE_EXPIRED)
-			printf("  [ Expired: %lld secs ago ]\n",
-			    (long long)(time(NULL) - rule->exptime));
 	}
 	if (opts & PF_OPT_VERBOSE) {
 		printf("  [ Evaluations: %-8llu  Packets: %-8llu  "
@@ -852,13 +848,7 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 				INDENT(depth, !(opts & PF_OPT_VERBOSE));
 				printf("}\n");
 			} else {
-				/*
-				 * Do not print newline, when we have not
-				 * printed expired rule.
-				 */
-				if (!(pr.rule.rule_flag & PFRULE_EXPIRED) ||
-				    (opts & (PF_OPT_VERBOSE2|PF_OPT_DEBUG)))
-					printf("\n");
+				printf("\n");
 				pfctl_print_rule_counters(&pr.rule, opts);
 			}
 			break;
@@ -1086,7 +1076,7 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r, const char *anchor_call)
 		    sizeof(rule->anchor->path)) >= sizeof(rule->anchor->path))
                         errx(1, "pfctl_add_rule: strlcpy");
 		if ((p = strrchr(anchor_call, '/')) != NULL) {
-			if (!strlen(p))
+			if (strlen(p) == 1)
 				err(1, "pfctl_add_rule: bad anchor name %s",
 				    anchor_call);
 		} else
@@ -1352,7 +1342,7 @@ pfctl_load_ruleset(struct pfctl *pf, char *path, struct pf_ruleset *rs,
 	if (path[0])
 		snprintf(&path[len], PATH_MAX - len, "/%s", pf->anchor->name);
 	else
-		snprintf(&path[len], PATH_MAX - len, "%s", pf->anchor->name);
+		snprintf(&path[len], PATH_MAX - len, "%s", pf->anchor->path);
 
 	if (depth) {
 		if (TAILQ_FIRST(rs->rules.active.ptr) != NULL) {
@@ -1457,6 +1447,7 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 	struct pfr_table	 trs;
 	char			*path = NULL;
 	int			 osize;
+	char			*p;
 
 	bzero(&pf, sizeof(pf));
 	RB_INIT(&pf_anchors);
@@ -1493,7 +1484,15 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 	if (strlcpy(pf.anchor->path, anchorname,
 	    sizeof(pf.anchor->path)) >= sizeof(pf.anchor->path))
 		errx(1, "pfctl_add_rule: strlcpy");
-	if (strlcpy(pf.anchor->name, anchorname,
+
+	if ((p = strrchr(anchorname, '/')) != NULL) {
+		if (strlen(p) == 1)
+			err(1, "pfctl_add_rule: bad anchor name %s",
+			    anchorname);
+	} else
+		p = anchorname;
+
+	if (strlcpy(pf.anchor->name, p,
 	    sizeof(pf.anchor->name)) >= sizeof(pf.anchor->name))
 		errx(1, "pfctl_add_rule: strlcpy");
 
