@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.104 2016/09/02 17:10:25 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.105 2016/09/03 10:33:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -280,8 +280,8 @@ int	iwm_nic_tx_init(struct iwm_softc *);
 int	iwm_nic_init(struct iwm_softc *);
 int	iwm_enable_txq(struct iwm_softc *, int, int, int);
 int	iwm_post_alive(struct iwm_softc *);
-struct iwm_phy_db_entry *iwm_phy_db_get_section(struct iwm_softc *,
-					enum iwm_phy_db_section_type, uint16_t);
+struct iwm_phy_db_entry *iwm_phy_db_get_section(struct iwm_softc *, uint16_t,
+				uint16_t);
 int	iwm_phy_db_set_section(struct iwm_softc *,
 				struct iwm_calib_res_notif_phy_db *);
 int	iwm_is_valid_channel(uint16_t);
@@ -292,7 +292,7 @@ int	iwm_phy_db_get_section_data(struct iwm_softc *, uint32_t, uint8_t **,
 					uint16_t *, uint16_t);
 int	iwm_send_phy_db_cmd(struct iwm_softc *, uint16_t, uint16_t, void *);
 int	iwm_phy_db_send_all_channel_groups(struct iwm_softc *,
-		enum iwm_phy_db_section_type, uint8_t);
+		uint16_t, uint8_t);
 int	iwm_send_phy_db_data(struct iwm_softc *);
 void	iwm_mvm_te_v2_to_v1(const struct iwm_time_event_cmd_v2 *,
 				struct iwm_time_event_cmd_v1 *);
@@ -449,7 +449,7 @@ int	iwm_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void	iwm_endscan_cb(void *);
 void	iwm_mvm_fill_sf_command(struct iwm_softc *, struct iwm_sf_cfg_cmd *,
 	    struct ieee80211_node *);
-int	iwm_mvm_sf_config(struct iwm_softc *, enum iwm_sf_state);
+int	iwm_mvm_sf_config(struct iwm_softc *, int);
 int	iwm_send_bt_init_conf(struct iwm_softc *);
 int	iwm_send_update_mcc_cmd(struct iwm_softc *, const char *);
 void	iwm_mvm_tt_tx_backoff(struct iwm_softc *, uint32_t);
@@ -568,7 +568,7 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	struct iwm_fw_info *fw = &sc->sc_fw;
 	struct iwm_tlv_ucode_header *uhdr;
 	struct iwm_ucode_tlv tlv;
-	enum iwm_ucode_tlv_type tlv_type;
+	uint32_t tlv_type;
 	uint8_t *data;
 	int error;
 	size_t len;
@@ -641,7 +641,7 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 			goto parse_out;
 		}
 
-		switch ((int)tlv_type) {
+		switch (tlv_type) {
 		case IWM_UCODE_TLV_PROBE_MAX_LEN:
 			if (tlv_len < sizeof(uint32_t)) {
 				error = EINVAL;
@@ -2001,8 +2001,7 @@ iwm_post_alive(struct iwm_softc *sc)
  * type and channel group id.
  */
 struct iwm_phy_db_entry *
-iwm_phy_db_get_section(struct iwm_softc *sc,
-	enum iwm_phy_db_section_type type, uint16_t chg_id)
+iwm_phy_db_get_section(struct iwm_softc *sc, uint16_t type, uint16_t chg_id)
 {
 	struct iwm_phy_db *phy_db = &sc->sc_phy_db;
 
@@ -2032,7 +2031,7 @@ int
 iwm_phy_db_set_section(struct iwm_softc *sc,
 	struct iwm_calib_res_notif_phy_db *phy_db_notif)
 {
-	enum iwm_phy_db_section_type type = le16toh(phy_db_notif->type);
+	uint16_t type = le16toh(phy_db_notif->type);
 	uint16_t size  = le16toh(phy_db_notif->length);
 	struct iwm_phy_db_entry *entry;
 	uint16_t chg_id = 0;
@@ -2181,7 +2180,7 @@ iwm_send_phy_db_cmd(struct iwm_softc *sc, uint16_t type,
 
 int
 iwm_phy_db_send_all_channel_groups(struct iwm_softc *sc,
-	enum iwm_phy_db_section_type type, uint8_t max_ch_groups)
+	uint16_t type, uint8_t max_ch_groups)
 {
 	uint16_t i;
 	int err;
@@ -6456,7 +6455,7 @@ iwm_mvm_fill_sf_command(struct iwm_softc *sc, struct iwm_sf_cfg_cmd *sf_cmd,
 }
 
 int
-iwm_mvm_sf_config(struct iwm_softc *sc, enum iwm_sf_state new_state)
+iwm_mvm_sf_config(struct iwm_softc *sc, int new_state)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_sf_cfg_cmd sf_cmd = {
