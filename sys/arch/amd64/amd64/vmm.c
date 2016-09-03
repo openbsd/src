@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.75 2016/09/03 11:35:19 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.76 2016/09/03 14:01:17 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3566,23 +3566,43 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 		*rbx &= (vcpu->vc_id & 0xFF) << 24;
 		/*
 		 * clone host capabilities minus:
-		 *  speedstep (CPUIDECX_EST)
-		 *  vmx (CPUIDECX_VMX)
-		 *  xsave (CPUIDECX_XSAVE)
-		 *  thermal (CPUIDECX_TM2, CPUID_ACPI, CPUID_TM)
-		 *  XXX - timestamp (CPUID_TSC)
+		 *  debug store (CPUIDECX_DTES64, CPUIDECX_DSCPL, CPUID_DS)
 		 *  monitor/mwait (CPUIDECX_MWAIT)
+		 *  vmx (CPUIDECX_VMX)
+		 *  smx (CPUIDECX_SMX)
+		 *  speedstep (CPUIDECX_EST)
+		 *  thermal (CPUIDECX_TM2, CPUID_ACPI, CPUID_TM)
+		 *  context id (CPUIDECX_CNXTID)
+		 *  silicon debug (CPUIDECX_SDBG)
+		 *  xTPR (CPUIDECX_XTPR)
+		 *  perf/debug (CPUIDECX_PDCM)
+		 *  pcid (CPUIDECX_PCID)
+		 *  direct cache access (CPUIDECX_DCA)
+		 *  x2APIC (CPUIDECX_X2APIC)
+		 *  apic deadline (CPUIDECX_DEADLINE)
 		 *  performance monitoring (CPUIDECX_PDCM)
+		 *  timestamp (CPUID_TSC)
+		 *  apic (CPUID_APIC)
+		 *  psn (CPUID_PSN)
+		 *  self snoop (CPUID_SS)
 		 *  hyperthreading (CPUID_HTT)
+		 *  pending break enabled (CPUID_PBE)
 		 * plus:
 		 *  hypervisor (CPUIDECX_HV)
 		 */
 		*rcx = (cpu_ecxfeature | CPUIDECX_HV) &
 		    ~(CPUIDECX_EST | CPUIDECX_TM2 |
 		    CPUIDECX_MWAIT | CPUIDECX_PDCM |
-		    CPUIDECX_VMX | CPUIDECX_XSAVE);
+		    CPUIDECX_VMX | CPUIDECX_DTES64 |
+		    CPUIDECX_DSCPL | CPUIDECX_SMX |
+		    CPUIDECX_CNXTID | CPUIDECX_SDBG |
+		    CPUIDECX_XTPR | CPUIDECX_PDCM |
+		    CPUIDECX_PCID | CPUIDECX_DCA |
+		    CPUIDECX_X2APIC | CPUIDECX_DEADLINE);
 		*rdx = curcpu()->ci_feature_flags &
-		    ~(CPUID_ACPI | CPUID_TM | CPUID_TSC | CPUID_HTT);
+		    ~(CPUID_ACPI | CPUID_TM | CPUID_TSC |
+		      CPUID_HTT | CPUID_DS | CPUID_APIC |
+		      CPUID_PSN | CPUID_SS | CPUID_PBE);
 		break;
 	case 0x02:	/* Cache and TLB information */
 		DPRINTF("vmx_handle_cpuid: function 0x02 (cache/TLB) not"
@@ -3613,16 +3633,29 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 		*rdx = 0;
 		break;
 	case 0x06:	/* Thermal / Power management */
-		/* Only ARAT is exposed in function 0x06 */
-		*rax = TPM_ARAT;
+		*rax = 0;
 		*rbx = 0;
 		*rcx = 0;
 		*rdx = 0;
 		break;
 	case 0x07:	/* SEFF */
 		if (*rcx == 0) {
+			/*
+			 * SEFF flags - copy from host minus:
+			 *  SGX (SEFF0EBX_SGX)
+			 *  HLE (SEFF0EBX_HLE)
+			 *  INVPCID (SEFF0EBX_INVPCID)
+			 *  RTM (SEFF0EBX_RTM)
+			 *  PQM (SEFF0EBX_PQM)
+			 *  MPX (SEFF0EBX_MPX)
+			 *  PCOMMIT (SEFF0EBX_PCOMMIT)
+			 *  PT (SEFF0EBX_PT)
+			 */
 			*rax = 0;	/* Highest subleaf supported */
-			*rbx = curcpu()->ci_feature_sefflags_ebx;
+			*rbx = curcpu()->ci_feature_sefflags_ebx &
+			    ~(SEFF0EBX_SGX | SEFF0EBX_HLE | SEFF0EBX_INVPCID |
+			      SEFF0EBX_RTM | SEFF0EBX_PQM | SEFF0EBX_MPX |
+			      SEFF0EBX_PCOMMIT | SEFF0EBX_PT);
 			*rcx = curcpu()->ci_feature_sefflags_ecx;
 			*rdx = 0;
 		} else {
@@ -3746,7 +3779,7 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 		*rax = 0;	/* Reserved */
 		*rbx = 0;	/* Reserved */
 		*rcx = 0;	/* Reserved */
-		*rdx = cpu_apmi_edx;
+		*rdx = 0;	/* unsupported ITSC */
 		break;
 	case 0x80000008:	/* Phys bits info and topology (AMD) */
 		DPRINTF("vmx_handle_cpuid: function 0x80000008 (phys bits info)"
