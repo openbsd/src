@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.61 2016/09/02 15:11:11 florian Exp $
+.\"	$OpenBSD: ping6.8,v 1.62 2016/09/03 09:18:52 akfaew Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 2 2016 $
+.Dd $Mdocdate: September 3 2016 $
 .Dt PING6 8
 .Os
 .Sh NAME
@@ -187,10 +187,6 @@ data bytes when combined
 with the 8 bytes of
 ICMP
 header data.
-.Pp
-This option is ignored if any of the flags
-.Op Fl tWw
-are specified.
 .It Fl V Ar rtable
 Set the routing table to be used for outgoing packets.
 .It Fl v
