@@ -773,8 +773,6 @@
 ./usr/include/dev/usb/usbdi.h
 ./usr/include/dev/usb/usbdi_util.h
 ./usr/include/dev/usb/usbdivar.h
-./usr/include/dev/usb/usbf.h
-./usr/include/dev/usb/usbfvar.h
 ./usr/include/dev/usb/usbhid.h
 ./usr/include/dev/usb/uslhcomreg.h
 ./usr/include/dev/usb/utvfu.h

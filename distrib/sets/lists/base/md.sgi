@@ -1229,8 +1229,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/usbdi.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/usbdi_util.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/usbdivar.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/usbf.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/usbfvar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/usbhid.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/uslhcomreg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/utvfu.ph

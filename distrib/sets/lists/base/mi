@@ -54,6 +54,7 @@
 ./etc/examples/chio.conf
 ./etc/examples/dhclient.conf
 ./etc/examples/dhcpd.conf
+./etc/examples/doas.conf
 ./etc/examples/dvmrpd.conf
 ./etc/examples/eigrpd.conf
 ./etc/examples/exports

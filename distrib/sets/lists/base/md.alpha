@@ -1281,8 +1281,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/usbdi.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/usbdi_util.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/usbdivar.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/usbf.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/usbfvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/usbhid.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/uslhcomreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/utvfu.ph
