@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.437 2016/09/03 14:34:13 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.438 2016/09/03 17:11:40 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -571,6 +571,10 @@ struct pf_rule {
 		struct pf_addr		addr;
 		u_int16_t		port;
 	}			divert, divert_packet;
+
+	SLIST_ENTRY(pf_rule)	 gcle;
+	struct pf_ruleset	*ruleset;
+	time_t			 exptime;
 };
 
 /* rule flags */
@@ -589,6 +593,7 @@ struct pf_rule {
 #define PFRULE_PFLOW		0x00040000
 #define PFRULE_ONCE		0x00100000	/* one shot rule */
 #define PFRULE_AFTO		0x00200000	/* af-to rule */
+#define	PFRULE_EXPIRED		0x00400000	/* one shot rule hit by pkt */
 
 #define PFSTATE_HIWAT		10000	/* default state table size */
 #define PFSTATE_ADAPT_START	6000	/* default adaptive timeout start */
@@ -1666,6 +1671,7 @@ extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
 extern void			 pf_purge_thread(void *);
 extern void			 pf_purge_expired_src_nodes(int);
 extern void			 pf_purge_expired_states(u_int32_t);
+extern void			 pf_purge_expired_rules(int);
 extern void			 pf_remove_state(struct pf_state *);
 extern void			 pf_remove_divert_state(struct pf_state_key *);
 extern void			 pf_free_state(struct pf_state *);
@@ -1695,9 +1701,7 @@ extern void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
 				    sa_family_t);
 void				 pf_rm_rule(struct pf_rulequeue *,
 				    struct pf_rule *);
-void				 pf_purge_rule(struct pf_ruleset *,
-				    struct pf_rule *, struct pf_ruleset *,
-				    struct pf_rule *);
+void				 pf_purge_rule(struct pf_rule *);
 struct pf_divert		*pf_find_divert(struct mbuf *);
 int				 pf_setup_pdesc(struct pf_pdesc *, void *,
 				    sa_family_t, int, struct pfi_kif *,

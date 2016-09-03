@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.982 2016/08/20 08:34:30 procter Exp $ */
+/*	$OpenBSD: pf.c,v 1.983 2016/09/03 17:11:40 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -310,6 +310,9 @@ RB_GENERATE(pf_src_tree, pf_src_node, entry, pf_src_compare);
 RB_GENERATE(pf_state_tree, pf_state_key, entry, pf_state_compare_key);
 RB_GENERATE(pf_state_tree_id, pf_state,
     entry_id, pf_state_compare_id);
+
+SLIST_HEAD(pf_rule_gcl, pf_rule)	pf_rule_gcl =
+	SLIST_HEAD_INITIALIZER(pf_rule_gcl);
 
 __inline int
 pf_addr_compare(struct pf_addr *a, struct pf_addr *b, sa_family_t af)
@@ -1174,6 +1177,29 @@ pf_state_export(struct pfsync_state *sp, struct pf_state *st)
 /* END state table stuff */
 
 void
+pf_purge_expired_rules(int locked)
+{
+	struct pf_rule	*r;
+
+	if (SLIST_EMPTY(&pf_rule_gcl))
+		return;
+
+	if (!locked)
+		rw_enter_write(&pf_consistency_lock);
+	else
+		rw_assert_wrlock(&pf_consistency_lock);
+
+	while ((r = SLIST_FIRST(&pf_rule_gcl)) != NULL) {
+		SLIST_REMOVE(&pf_rule_gcl, r, pf_rule, gcle);
+		KASSERT(r->rule_flag & PFRULE_EXPIRED);
+		pf_purge_rule(r);
+	}
+
+	if (!locked)
+		rw_exit_write(&pf_consistency_lock);
+}
+
+void
 pf_purge_thread(void *v)
 {
 	int nloops = 0, s;
@@ -1191,6 +1217,7 @@ pf_purge_thread(void *v)
 		if (++nloops >= pf_default_rule.timeout[PFTM_INTERVAL]) {
 			pf_purge_expired_fragments();
 			pf_purge_expired_src_nodes(0);
+			pf_purge_expired_rules(0);
 			nloops = 0;
 		}
 
@@ -3491,6 +3518,10 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	ruleset = &pf_main_ruleset;
 	r = TAILQ_FIRST(pf_main_ruleset.rules.active.ptr);
 	while (r != NULL) {
+		if (r->rule_flag & PFRULE_EXPIRED) {
+			r = TAILQ_NEXT(r, entries);
+			goto nextrule;
+		}
 		r->evaluations++;
 		PF_TEST_ATTRIB((pfi_kif_match(r->kif, pd->kif) == r->ifnot),
 			r->skip[PF_SKIP_IFP].ptr);
@@ -3796,8 +3827,17 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	}
 #endif	/* NPFSYNC > 0 */
 
-	if (r->rule_flag & PFRULE_ONCE)
-		pf_purge_rule(ruleset, r, aruleset, a);
+	if (r->rule_flag & PFRULE_ONCE) {
+		if ((a != NULL) && TAILQ_EMPTY(a->ruleset->rules.active.ptr)) {
+			a->rule_flag |= PFRULE_EXPIRED;
+			a->exptime = time_second;
+			SLIST_INSERT_HEAD(&pf_rule_gcl, a, gcle);
+		}
+
+		r->rule_flag |= PFRULE_EXPIRED;
+		r->exptime = time_second;
+		SLIST_INSERT_HEAD(&pf_rule_gcl, r, gcle);
+	}
 
 	return (action);
 

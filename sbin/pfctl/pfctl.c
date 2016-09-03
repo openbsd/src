@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.334 2016/01/14 12:05:51 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.335 2016/09/03 17:11:40 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -701,6 +701,10 @@ pfctl_print_rule_counters(struct pf_rule *rule, int opts)
 
 		printf("  [ queue: qname=%s qid=%u pqname=%s pqid=%u ]\n",
 		    rule->qname, rule->qid, rule->pqname, rule->pqid);
+
+		if (rule->rule_flag & PFRULE_EXPIRED)
+			printf("  [ Expired: %lld secs ago ]\n",
+			    (long long)(time(NULL) - rule->exptime));
 	}
 	if (opts & PF_OPT_VERBOSE) {
 		printf("  [ Evaluations: %-8llu  Packets: %-8llu  "
@@ -848,7 +852,13 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 				INDENT(depth, !(opts & PF_OPT_VERBOSE));
 				printf("}\n");
 			} else {
-				printf("\n");
+				/*
+				 * Do not print newline, when we have not
+				 * printed expired rule.
+				 */
+				if (!(pr.rule.rule_flag & PFRULE_EXPIRED) ||
+				    (opts & (PF_OPT_VERBOSE2|PF_OPT_DEBUG)))
+					printf("\n");
 				pfctl_print_rule_counters(&pr.rule, opts);
 			}
 			break;
