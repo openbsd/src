@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.221 2016/08/31 13:43:36 jca Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.222 2016/09/03 14:53:20 jca Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -531,11 +531,18 @@ main(int argc, char *argv[])
 		reply(530, "System not available.");
 		exit(1);
 	}
-	if (his_addr.su_family == AF_INET) {
-		tos = IPTOS_LOWDELAY;
+	tos = IPTOS_LOWDELAY;
+	switch (his_addr.su_family) {
+	case AF_INET:
 		if (setsockopt(0, IPPROTO_IP, IP_TOS, &tos,
 		    sizeof(int)) < 0)
 			syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
+		break;
+	case AF_INET6:
+		if (setsockopt(0, IPPROTO_IPV6, IPV6_TCLASS, &tos,
+		    sizeof(int)) < 0)
+			syslog(LOG_WARNING, "setsockopt (IPV6_TCLASS): %m");
+		break;
 	}
 	data_source.su_port = htons(ntohs(ctrl_addr.su_port) - 1);
 
@@ -1269,7 +1276,7 @@ done:
 static FILE *
 getdatasock(char *mode)
 {
-	int on = 1, s, t, tries;
+	int on = 1, s, t, tos, tries;
 
 	if (data >= 0)
 		return (fdopen(data, mode));
@@ -1293,11 +1300,18 @@ getdatasock(char *mode)
 	}
 	sigprocmask (SIG_UNBLOCK, &allsigs, NULL);
 
-	if (ctrl_addr.su_family == AF_INET) {
-		on = IPTOS_THROUGHPUT;
-		if (setsockopt(s, IPPROTO_IP, IP_TOS, &on,
+	tos = IPTOS_THROUGHPUT;
+	switch (ctrl_addr.su_family) {
+	case AF_INET:
+		if (setsockopt(s, IPPROTO_IP, IP_TOS, &tos,
 		    sizeof(int)) < 0)
 			syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
+		break;
+	case AF_INET6:
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_TCLASS, &tos,
+		    sizeof(int)) < 0)
+			syslog(LOG_WARNING, "setsockopt (IPV6_TCLASS): %m");
+		break;
 	}
 	/*
 	 * Turn off push flag to keep sender TCP from sending short packets
