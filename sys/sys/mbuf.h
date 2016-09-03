@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.216 2016/07/19 08:13:45 mpi Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.217 2016/09/03 13:42:28 reyk Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -490,7 +490,7 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
  * length for an existing packet tag type or when adding a new one that
  * has payload larger than the value below.
  */
-#define PACKET_TAG_MAXSIZE		52
+#define PACKET_TAG_MAXSIZE		60
 
 /* Detect mbufs looping in the kernel when spliced too often. */
 #define M_MAXLOOP	128
