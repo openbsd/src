@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.24 2016/09/03 14:37:52 bcook Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.25 2016/09/03 17:21:38 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -265,9 +265,13 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	}
 
 	bits = BN_num_bits(p);
-
 	if (bits == 0) {
-		ret = BN_one(r);
+		/* x**0 mod 1 is still zero. */
+		if (BN_is_one(m)) {
+			ret = 1;
+			BN_zero(r);
+		} else
+			ret = BN_one(r);
 		return ret;
 	}
 
@@ -401,9 +405,15 @@ BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 		BNerr(BN_F_BN_MOD_EXP_MONT, BN_R_CALLED_WITH_EVEN_MODULUS);
 		return (0);
 	}
+
 	bits = BN_num_bits(p);
 	if (bits == 0) {
-		ret = BN_one(rr);
+		/* x**0 mod 1 is still zero. */
+		if (BN_is_one(m)) {
+			ret = 1;
+			BN_zero(rr);
+		} else
+			ret = BN_one(rr);
 		return ret;
 	}
 
@@ -599,7 +609,12 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
 	bits = BN_num_bits(p);
 	if (bits == 0) {
-		ret = BN_one(rr);
+		/* x**0 mod 1 is still zero. */
+		if (BN_is_one(m)) {
+			ret = 1;
+			BN_zero(rr);
+		} else
+			ret = BN_one(rr);
 		return ret;
 	}
 
@@ -878,7 +893,12 @@ BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p, const BIGNUM *m,
 
 	bits = BN_num_bits(p);
 	if (bits == 0) {
-		ret = BN_one(rr);
+		/* x**0 mod 1 is still zero. */
+		if (BN_is_one(m)) {
+			ret = 1;
+			BN_zero(rr);
+		} else
+			ret = BN_one(rr);
 		return ret;
 	}
 	if (a == 0) {
@@ -986,7 +1006,7 @@ int
 BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
     BN_CTX *ctx)
 {
-	int i, j,bits, ret = 0, wstart, wend, window, wvalue;
+	int i, j, bits, ret = 0, wstart, wend, window, wvalue;
 	int start = 1;
 	BIGNUM *d;
 	/* Table of variables obtained from 'ctx' */
@@ -1000,9 +1020,13 @@ BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	}
 
 	bits = BN_num_bits(p);
-
 	if (bits == 0) {
-		ret = BN_one(r);
+		/* x**0 mod 1 is still zero. */
+		if (BN_is_one(m)) {
+			ret = 1;
+			BN_zero(r);
+		} else
+			ret = BN_one(r);
 		return ret;
 	}
 
