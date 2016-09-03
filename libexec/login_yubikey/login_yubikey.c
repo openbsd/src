@@ -1,4 +1,4 @@
-/* $OpenBSD: login_yubikey.c,v 1.15 2016/08/16 04:44:38 tedu Exp $ */
+/* $OpenBSD: login_yubikey.c,v 1.16 2016/09/03 11:01:44 gsoares Exp $ */
 
 /*
  * Copyright (c) 2010 Daniel Hartmeier <daniel@benzedrine.cx>
@@ -37,6 +37,7 @@
 #include <ctype.h>
 #include <login_cap.h>
 #include <pwd.h>
+#include <readpassphrase.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,6 +67,7 @@ main(int argc, char *argv[])
 	int ch, ret, mode = MODE_LOGIN, count;
 	FILE *f = NULL;
 	char *username, *password = NULL;
+	char pbuf[1024];
 	char response[1024];
 
 	setpriority(PRIO_PROCESS, 0, 0);
@@ -123,8 +125,9 @@ main(int argc, char *argv[])
 
 	switch (mode) {
 	case MODE_LOGIN:
-		if ((password = getpass("Password:")) == NULL) {
-			syslog(LOG_ERR, "user %s: getpass: %m",
+		if ((password = readpassphrase("Password:", pbuf, sizeof(pbuf),
+			    RPP_ECHO_OFF)) == NULL) {
+			syslog(LOG_ERR, "user %s: readpassphrase: %m",
 			    username);
 			exit(EXIT_FAILURE);
 		}
