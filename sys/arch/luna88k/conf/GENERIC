@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.20 2015/03/04 14:03:11 aoyama Exp $
+#	$OpenBSD: GENERIC,v 1.21 2016/09/03 16:18:21 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -85,7 +85,6 @@ pseudo-device	wsmux 2
 #xe*		at pcmcia?		# Xircom ethernet
 #wi*		at pcmcia?		# WaveLAN IEEE 802.11DS
 #an*		at pcmcia?		# Aironet IEEE 802.11DS
-#cnw*		at pcmcia?		# Xircom Netwave
 
 # IDE/ATAPI (with PCMCIA)
 #wd*		at wdc?	flags 0x0000

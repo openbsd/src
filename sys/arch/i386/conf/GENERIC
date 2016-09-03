@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.819 2016/08/31 15:51:47 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.820 2016/09/03 16:18:21 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -614,7 +614,6 @@ wi*	at pcmcia?			# WaveLAN IEEE 802.11DS
 an*	at pci?				# Aironet IEEE 802.11DS
 an*	at isapnp?			# Aironet IEEE 802.11DS
 an*	at pcmcia?			# Aironet IEEE 802.11DS
-#cnw*	at pcmcia?			# Xircom Netwave
 ipw*	at pci?				# Intel PRO/Wireless 2100
 iwi*	at pci?				# Intel PRO/Wireless 2200BG/2915ABG
 wpi*	at pci?				# Intel PRO/Wireless 3945ABG
