@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_rwlock.c,v 1.6 2016/04/02 19:56:53 guenther Exp $ */
+/*	$OpenBSD: rthread_rwlock.c,v 1.7 2016/09/03 16:44:20 akfaew Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -117,8 +117,8 @@ _rthread_rwlock_rdlock(pthread_rwlock_t *lockp, const struct timespec *abstime,
 		error = EDEADLK;
 	else {
 		do {
-			if (__thrsleep(lock, CLOCK_REALTIME | _USING_TICKETS,
-			    abstime, &lock->lock.ticket, NULL) == EWOULDBLOCK)
+			if (__thrsleep(lock, CLOCK_REALTIME, abstime,
+			    &lock->lock.ticket, NULL) == EWOULDBLOCK)
 				return (ETIMEDOUT);
 			_spinlock(&lock->lock);
 		} while (lock->owner != NULL || !TAILQ_EMPTY(&lock->writers));
@@ -180,8 +180,7 @@ _rthread_rwlock_wrlock(pthread_rwlock_t *lockp, const struct timespec *abstime,
 		/* gotta block */
 		TAILQ_INSERT_TAIL(&lock->writers, thread, waiting);
 		do {
-			do_wait = __thrsleep(thread, CLOCK_REALTIME |
-			    _USING_TICKETS, abstime,
+			do_wait = __thrsleep(thread, CLOCK_REALTIME, abstime,
 			    &lock->lock.ticket, NULL) != EWOULDBLOCK;
 			_spinlock(&lock->lock);
 		} while (lock->owner != thread && do_wait);

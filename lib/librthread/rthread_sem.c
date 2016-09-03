@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.23 2016/05/07 19:05:22 guenther Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.24 2016/09/03 16:44:20 akfaew Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -71,9 +71,8 @@ _sem_wait(sem_t sem, int tryonly, const struct timespec *abstime,
 	} else {
 		sem->waitcount++;
 		do {
-			r = __thrsleep(ident, CLOCK_REALTIME |
-			    _USING_TICKETS, abstime, &sem->lock.ticket,
-			    delayed_cancel);
+			r = __thrsleep(ident, CLOCK_REALTIME, abstime,
+			    &sem->lock.ticket, delayed_cancel);
 			_spinlock(&sem->lock);
 			/* ignore interruptions other than cancelation */
 			if (r == EINTR && (delayed_cancel == NULL ||

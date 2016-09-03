@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_file.c,v 1.8 2016/05/07 19:05:22 guenther Exp $	*/
+/*	$OpenBSD: rthread_file.c,v 1.9 2016/09/03 16:44:20 akfaew Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -205,8 +205,7 @@ _thread_flockfile(FILE * fp)
 		 */
 		TAILQ_INSERT_TAIL(&p->lockers,self,waiting);
 		while (p->owner != self) {
-			__thrsleep(self, 0 | _USING_TICKETS, NULL,
-			    &hash_lock.ticket, NULL);
+			__thrsleep(self, 0, NULL, &hash_lock.ticket, NULL);
 			_spinlock(&hash_lock);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.92 2016/09/01 10:41:02 otto Exp $ */
+/*	$OpenBSD: rthread.c,v 1.93 2016/09/03 16:44:20 akfaew Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -658,8 +658,7 @@ _rthread_dl_lock(int what)
 		} else if (owner != self) {
 			TAILQ_INSERT_TAIL(&lockers, self, waiting);
 			while (owner != self) {
-				__thrsleep(self, 0 | _USING_TICKETS, NULL,
-				    &lock.ticket, NULL);
+				__thrsleep(self, 0, NULL, &lock.ticket, NULL);
 				_spinlock(&lock);
 			}
 		}
