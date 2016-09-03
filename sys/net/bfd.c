@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.3 2016/09/03 15:06:11 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.4 2016/09/03 15:07:22 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -298,20 +298,15 @@ void
 bfddestroy(void)
 {
 	struct bfd_softc	*sc;
-	int			 s;
 
 	/* send suicide packets immediately */
 	while ((sc = TAILQ_FIRST(&bfd_queue))) {
 		bfd_rtfree(sc->sc_rt);
 	}
 
-	s = splsoftnet();
-
 	taskq_destroy(bfdtq);
 	pool_destroy(&bfd_pool);
 	pool_destroy(&bfd_pool_peer);
-
-	splx(s);
 }
 
 /*
@@ -460,15 +455,13 @@ bfd_sender(struct bfd_softc *sc, u_int port)
 	struct sockaddr		*sa;
 	struct sockaddr_in6	*sin6;
 	struct sockaddr_in	*sin;
-	int		 error, s, *ip;
+	int		 error, *ip;
 
 	/* sa_family and sa_len must be equal */
 	if (src->sa_family != dst->sa_family || src->sa_len != dst->sa_len)
 		return (NULL);
 
-	s = splsoftnet();
 	error = socreate(dst->sa_family, &so, SOCK_DGRAM, 0);
-	splx(s);
 
 	if (error)
 		return (NULL);
@@ -512,9 +505,7 @@ bfd_sender(struct bfd_softc *sc, u_int port)
 		break;
 	}
 
-	s = splsoftnet();
 	error = sobind(so, m, p);
-	splx(s);
 	if (error) {
 		printf("%s: sobind error %d\n",
 		    __func__, error);
@@ -535,10 +526,7 @@ bfd_sender(struct bfd_softc *sc, u_int port)
 		break;
 	}
 
-	s = splsoftnet();
 	error = soconnect(so, m);
-	splx(s);
-
 	if (error && error != ECONNREFUSED) {
 		printf("%s: soconnect error %d\n",
 		    __func__, error);
