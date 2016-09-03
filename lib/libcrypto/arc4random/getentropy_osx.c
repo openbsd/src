@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_osx.c,v 1.10 2016/08/07 03:27:21 tb Exp $	*/
+/*	$OpenBSD: getentropy_osx.c,v 1.11 2016/09/03 15:24:09 bcook Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -20,6 +20,7 @@
  * http://man.openbsd.org/getentropy.2
  */
 
+#include <TargetConditionals.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -45,14 +46,18 @@
 #include <mach/mach_time.h>
 #include <mach/mach_host.h>
 #include <mach/host_info.h>
+#if TARGET_OS_OSX
 #include <sys/socketvar.h>
 #include <sys/vmmeter.h>
+#endif
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#if TARGET_OS_OSX
 #include <netinet/udp.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp_var.h>
 #include <netinet/udp_var.h>
+#endif
 #include <CommonCrypto/CommonDigest.h>
 #define SHA512_Update(a, b, c)	(CC_SHA512_Update((a), (b), (c)))
 #define SHA512_Init(xxx) (CC_SHA512_Init((xxx)))
@@ -207,9 +212,11 @@ nodevrandom:
 	return (-1);
 }
 
+#if TARGET_OS_OSX
 static int tcpmib[] = { CTL_NET, AF_INET, IPPROTO_TCP, TCPCTL_STATS };
 static int udpmib[] = { CTL_NET, AF_INET, IPPROTO_UDP, UDPCTL_STATS };
 static int ipmib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
+#endif
 static int kmib[] = { CTL_KERN, KERN_USRSTACK };
 static int hwmib[] = { CTL_HW, HW_USERMEM };
 
@@ -229,9 +236,11 @@ getentropy_fallback(void *buf, size_t len)
 	pid_t pid;
 	size_t i, ii, m;
 	char *p;
+#if TARGET_OS_OSX
 	struct tcpstat tcpstat;
 	struct udpstat udpstat;
 	struct ipstat ipstat;
+#endif
 	u_int64_t mach_time;
 	unsigned int idata;
 	void *addr;
@@ -266,6 +275,7 @@ getentropy_fallback(void *buf, size_t len)
 			HX(sysctl(hwmib, sizeof(hwmib) / sizeof(hwmib[0]),
 			    &idata, &ii, NULL, 0) == -1, idata);
 
+#if TARGET_OS_OSX
 			ii = sizeof(tcpstat);
 			HX(sysctl(tcpmib, sizeof(tcpmib) / sizeof(tcpmib[0]),
 			    &tcpstat, &ii, NULL, 0) == -1, tcpstat);
@@ -277,6 +287,7 @@ getentropy_fallback(void *buf, size_t len)
 			ii = sizeof(ipstat);
 			HX(sysctl(ipmib, sizeof(ipmib) / sizeof(ipmib[0]),
 			    &ipstat, &ii, NULL, 0) == -1, ipstat);
+#endif
 
 			HX((pid = getpid()) == -1, pid);
 			HX((pid = getsid(pid)) == -1, pid);
