@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.145 2016/09/03 21:48:51 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.146 2016/09/03 21:49:55 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -191,7 +191,6 @@ main(int argc, char *argv[])
 	struct addrinfo hints, *res;
 	struct itimerval itimer;
 	struct sockaddr_in  from, from4;
-	struct sockaddr_in *to;
 	int64_t preload;
 	int ch, i, optval = 1, packlen, maxsize, df = 0, tos = 0;
 	int error;
@@ -353,23 +352,22 @@ main(int argc, char *argv[])
 	target = *argv;
 
 	memset(&dst, 0, sizeof(dst));
-	to = &dst;
-	to->sin_len = sizeof(struct sockaddr_in);
-	to->sin_family = AF_INET;
-	if (inet_aton(target, &to->sin_addr) != 0)
+	dst.sin_len = sizeof(struct sockaddr_in);
+	dst.sin_family = AF_INET;
+	if (inet_aton(target, &dst.sin_addr) != 0)
 		hostname = target;
 	else {
 		hp = gethostbyname(target);
 		if (!hp)
 			errx(1, "unknown host: %s", target);
-		to->sin_family = hp->h_addrtype;
-		memcpy(&to->sin_addr, hp->h_addr, (size_t)hp->h_length);
+		dst.sin_family = hp->h_addrtype;
+		memcpy(&dst.sin_addr, hp->h_addr, (size_t)hp->h_length);
 		(void)strlcpy(hnamebuf, hp->h_name, sizeof(hnamebuf));
 		hostname = hnamebuf;
 	}
 
 	if (source) {
-		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr)))
+		if (IN_MULTICAST(ntohl(dst.sin_addr.s_addr)))
 			moptions |= MULTICAST_IF;
 		else {
 			memset(&from4, 0, sizeof(from4));
@@ -418,7 +416,7 @@ main(int argc, char *argv[])
 	ident = getpid() & 0xFFFF;
 
 	if (options & F_TTL) {
-		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr)))
+		if (IN_MULTICAST(ntohl(dst.sin_addr.s_addr)))
 			moptions |= MULTICAST_TTL;
 		else
 			options |= F_HDRINCL;
@@ -443,12 +441,12 @@ main(int argc, char *argv[])
 			ip->ip_src = from4.sin_addr;
 		else
 			ip->ip_src.s_addr = INADDR_ANY;
-		ip->ip_dst = to->sin_addr;
+		ip->ip_dst = dst.sin_addr;
 	}
 
 	/* record route option */
 	if (options & F_RROUTE) {
-		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr)))
+		if (IN_MULTICAST(ntohl(dst.sin_addr.s_addr)))
 			errx(1, "record route not valid to multicast destinations");
 		memset(rspace, 0, sizeof(rspace));
 		rspace[IPOPT_OPTVAL] = IPOPT_RR;
@@ -500,9 +498,9 @@ main(int argc, char *argv[])
 		warnx("Could only allocate a receive buffer of %d bytes (default %d)",
 		    bufspace, IP_MAXPACKET);
 
-	if (to->sin_family == AF_INET)
+	if (dst.sin_family == AF_INET)
 		(void)printf("PING %s (%s): %d data bytes\n", hostname,
-		    pr_addr((struct sockaddr *)to, sizeof(*to)),
+		    pr_addr((struct sockaddr *)&dst, sizeof(dst)),
 		    datalen);
 	else
 		(void)printf("PING %s: %d data bytes\n", hostname, datalen);
