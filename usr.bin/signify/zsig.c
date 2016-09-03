@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.8 2016/09/03 17:04:13 tedu Exp $ */
+/* $OpenBSD: zsig.c,v 1.9 2016/09/03 20:52:53 espie Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -217,6 +217,7 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 
 	while (BEGINS_WITH(p, "algorithm=SHA512/256") ||
 	    BEGINS_WITH(p, "date=") ||
+	    BEGINS_WITH(p, "key=") ||
 	    sscanf(p, "blocksize=%zu\n", &bufsize) > 0) {
 		while (*(p++) != '\n')
 			continue;
@@ -273,9 +274,10 @@ zsign(const char *seckeyfile, const char *msgfile, const char *sigfile)
 	strftime(date, sizeof date, "%Y-%m-%dT%H:%M:%SZ", gmtime(&clock));
 	snprintf(msg, space, 
 	    "date=%s\n"
+	    "key=%s\n"
 	    "algorithm=SHA512/256\n"
 	    "blocksize=%zu\n\n",
-	    date, bufsize);
+	    date, seckeyfile, bufsize);
 	p = strchr(msg, 0);
 
 	while (1) {
