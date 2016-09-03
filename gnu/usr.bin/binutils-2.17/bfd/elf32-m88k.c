@@ -2122,7 +2122,7 @@ elf_m88k_plt_sym_val (bfd_vma i, const asection *plt,
 #define elf_backend_can_gc_sections	1
 #define elf_backend_can_refcount	1
 #define elf_backend_want_got_plt	1
-#define elf_backend_plt_readonly	1
+#define elf_backend_plt_readonly	0
 #define elf_backend_want_plt_sym	0
 #define elf_backend_got_header_size	12
 #define elf_backend_rela_normal		1
