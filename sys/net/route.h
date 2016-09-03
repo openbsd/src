@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.144 2016/08/31 21:32:06 bluhm Exp $	*/
+/*	$OpenBSD: route.h,v 1.145 2016/09/03 14:20:26 phessler Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -149,6 +149,7 @@ struct rtentry {
 #define RTF_LOCAL	0x200000	/* route to a local address */
 #define RTF_BROADCAST	0x400000	/* route associated to a bcast addr. */
 #define RTF_CONNECTED	0x800000	/* interface route */
+#define RTF_BFD		0x1000000	/* Link state controlled by BFD */
 
 /* mask of RTF flags that are allowed to be modified by RTM_CHANGE */
 #define RTF_FMASK	\
@@ -233,6 +234,7 @@ struct rt_msghdr {
 #define RTM_IFANNOUNCE	0xf	/* iface arrival/departure */
 #define RTM_DESYNC	0x10	/* route socket buffer overflow */
 #define RTM_INVALIDATE	0x11	/* Invalidate cache of L2 route */
+#define RTM_BFD		0x12	/* bidirectional forwarding detection */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */

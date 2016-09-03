@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.625 2016/09/01 10:06:33 goda Exp $
+#	$OpenBSD: files,v 1.626 2016/09/03 14:20:26 phessler Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -800,6 +800,7 @@ file net/if_vether.c			vether			needs-count
 file net/if_pair.c			pair			needs-count
 file net/if_pppx.c			pppx			needs-count
 file net/if_vxlan.c			vxlan			needs-count
+file net/bfd.c				bfd
 file net80211/ieee80211.c		wlan
 file net80211/ieee80211_amrr.c		wlan
 file net80211/ieee80211_crypto.c	wlan

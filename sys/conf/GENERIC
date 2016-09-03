@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.231 2016/09/01 10:06:32 goda Exp $
+#	$OpenBSD: GENERIC,v 1.232 2016/09/03 14:20:25 phessler Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -60,6 +60,7 @@ option		PIPEX		# Ppp IP EXtension, for npppd
 option		MROUTING	# Multicast router
 #option		PIM		# Protocol Independent Multicast
 option		MPLS		# Multi-Protocol Label Switching
+#option		BFD		# Bi-directional Forwarding Detection
 
 #mpath0		at root		# SCSI Multipathing
 #scsibus*	at mpath?

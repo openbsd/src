@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.321 2016/09/01 15:40:38 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.322 2016/09/03 14:20:26 phessler Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -139,6 +139,10 @@
 #include <net/if_enc.h>
 #endif
 
+#if BFD
+#include <net/bfd.h>
+#endif
+
 #define ROUNDUP(a) (a>0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
 /* Give some jitter to hash, to avoid synchronization between routers. */
@@ -196,6 +200,9 @@ route_init(void)
 
 	if (rtable_add(0) != 0)
 		panic("route_init rtable_add");
+#if BFD
+	bfdinit();
+#endif
 }
 
 /*
@@ -907,6 +914,11 @@ rtrequest_delete(struct rt_addrinfo *info, u_int8_t prio, struct ifnet *ifp,
 		rtfree(rt);
 		return (ESRCH);
 	}
+
+#if BFD
+	if (ISSET(rt->rt_flags, RTF_BFD))
+		(void)bfd_rtfree(rt);
+#endif	/* BFD */
 #endif
 
 	error = rtable_delete(tableid, info->rti_info[RTAX_DST],
@@ -1166,6 +1178,11 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			pool_put(&rtentry_pool, rt);
 			return (EEXIST);
 		}
+#if BFD
+		if (ISSET(rt->rt_flags, RTF_BFD)) {
+			error = bfd_rtalloc(rt, NULL);
+		}
+#endif
 		ifp->if_rtrequest(ifp, req, rt);
 
 		if_group_routechange(info->rti_info[RTAX_DST],
