@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.96 2016/08/02 16:00:10 jcs Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.97 2016/09/03 17:46:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -54,7 +54,7 @@ Xreinit(char *args, struct mbr *mbr)
 	else if (strlen(args) > 0) {
 		printf("Unrecognized modifier '%s'\n", args);
 		return (CMD_CONT);
-	} else if (MBR_protective_mbr(&initial_mbr) == 0)
+	} else if (MBR_protective_mbr(mbr) == 0)
 		dogpt = 1;
 	else
 		dogpt = 0;
