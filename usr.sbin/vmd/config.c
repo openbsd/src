@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.10 2016/07/29 16:36:51 stefan Exp $	*/
+/*	$OpenBSD: config.c,v 1.11 2016/09/03 10:20:06 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -110,6 +110,8 @@ config_getvm(struct privsep *ps, struct vm_create_params *vcp,
 	struct vmd_vm		*vm = NULL;
 	unsigned int		 i;
 	int			 fd, ttys_fd;
+	int			 kernfd = -1, *diskfds = NULL, *tapfds = NULL;
+	int			 saved_errno = 0;
 
 	errno = 0;
 
@@ -156,62 +158,107 @@ config_getvm(struct privsep *ps, struct vm_create_params *vcp,
 		}
 		vm->vm_kernel = kernel_fd;
 	} else {
+		diskfds = reallocarray(NULL, vcp->vcp_ndisks, sizeof(*diskfds));
+		if (diskfds == NULL) {
+			saved_errno = errno;
+			log_warn("%s: cannot allocate disk fds", __func__);
+			goto fail;
+		}
+		for (i = 0; i < vcp->vcp_ndisks; i++)
+			diskfds[i] = -1;
+
+		tapfds = reallocarray(NULL, vcp->vcp_nnics, sizeof(*tapfds));
+		if (tapfds == NULL) {
+			saved_errno = errno;
+			log_warn("%s: cannot allocate tap fds", __func__);
+			goto fail;
+		}
+		for (i = 0; i < vcp->vcp_nnics; i++)
+			tapfds[i] = -1;
+
 		vm->vm_peerid = peerid;
 
 		/* Open kernel for child */
-		if ((fd = open(vcp->vcp_kernel, O_RDONLY)) == -1) {
+		if ((kernfd = open(vcp->vcp_kernel, O_RDONLY)) == -1) {
+			saved_errno = errno;
 			log_warn("%s: can't open kernel %s", __func__,
 			    vcp->vcp_kernel);
 			goto fail;
 		}
 
-		proc_compose_imsg(ps, PROC_VMM, -1,
-		    IMSG_VMDOP_START_VM_REQUEST, vm->vm_vmid, fd,
-		    vcp, sizeof(*vcp));
-
 		/* Open disk images for child */
 		for (i = 0 ; i < vcp->vcp_ndisks; i++) {
-			if ((fd = open(vcp->vcp_disks[i], O_RDWR)) == -1) {
+			if ((diskfds[i] =
+			    open(vcp->vcp_disks[i], O_RDWR)) == -1) {
+				saved_errno = errno;
 				log_warn("%s: can't open %s", __func__,
 				    vcp->vcp_disks[i]);
 				goto fail;
 			}
-			proc_compose_imsg(ps, PROC_VMM, -1,
-			    IMSG_VMDOP_START_VM_DISK, vm->vm_vmid, fd,
-			    &i, sizeof(i));
 		}
 
 		/* Open disk network interfaces */
 		for (i = 0 ; i < vcp->vcp_nnics; i++) {
-			if ((fd = opentap()) == -1) {
+			if ((tapfds[i] = opentap()) == -1) {
+				saved_errno = errno;
 				log_warn("%s: can't open tap", __func__);
 				goto fail;
 			}
-			proc_compose_imsg(ps, PROC_VMM, -1,
-			    IMSG_VMDOP_START_VM_IF, vm->vm_vmid, fd,
-			    &i, sizeof(i));
 		}
 
 		/* Open TTY */
 		if (openpty(&fd, &ttys_fd,
 		    vm->vm_ttyname, NULL, NULL) == -1) {
+			saved_errno = errno;
 			log_warn("%s: can't open tty", __func__);
 			goto fail;
 		}
 		close(ttys_fd);
+
+		/* Send VM information */
+		proc_compose_imsg(ps, PROC_VMM, -1,
+		    IMSG_VMDOP_START_VM_REQUEST, vm->vm_vmid, kernfd,
+		    vcp, sizeof(*vcp));
+		for (i = 0; i < vcp->vcp_ndisks; i++) {
+			proc_compose_imsg(ps, PROC_VMM, -1,
+			    IMSG_VMDOP_START_VM_DISK, vm->vm_vmid, diskfds[i],
+			    &i, sizeof(i));
+		}
+		for (i = 0; i < vcp->vcp_nnics; i++) {
+			proc_compose_imsg(ps, PROC_VMM, -1,
+			    IMSG_VMDOP_START_VM_IF, vm->vm_vmid, tapfds[i],
+			    &i, sizeof(i));
+		}
 
 		proc_compose_imsg(ps, PROC_VMM, -1,
 		    IMSG_VMDOP_START_VM_END, vm->vm_vmid, fd,
 		    vcp, sizeof(*vcp));
 	}
 
+	free(diskfds);
+	free(tapfds);
+
 	env->vmd_nvm++;
 	return (0);
 
  fail:
+	if (kernfd != -1)
+		close(kernfd);
+	if (diskfds != NULL) {
+		for (i = 0; i < vcp->vcp_ndisks; i++)
+			close(diskfds[i]);
+		free(diskfds);
+	}
+	if (tapfds != NULL) {
+		for (i = 0; i < vcp->vcp_nnics; i++)
+			close(tapfds[i]);
+		free(tapfds);
+	}
+
+	vm_remove(vm);
+	errno = saved_errno;
 	if (errno == 0)
 		errno = EINVAL;
-	vm_remove(vm);
 	return (-1);
 }
 
