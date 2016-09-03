@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.152 2016/08/31 11:05:05 mpi Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.153 2016/09/03 14:34:13 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ u_int32_t	tcp_now = 1;
 #define	TCB_INITIAL_HASH_SIZE	128
 #endif
 
-int tcp_reass_limit = NMBCLUSTERS / 2; /* hardlimit for tcpqe_pool */
+int tcp_reass_limit = NMBCLUSTERS / 8; /* hardlimit for tcpqe_pool */
 #ifdef TCP_SACK
 int tcp_sackhole_limit = 32*1024; /* hardlimit for sackhl_pool */
 #endif
