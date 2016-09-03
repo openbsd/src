@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.162 2016/08/13 13:09:10 jsing Exp $ */
+/* $OpenBSD: netcat.c,v 1.163 2016/09/03 17:35:34 bcook Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -825,7 +825,7 @@ int
 remote_connect(const char *host, const char *port, struct addrinfo hints)
 {
 	struct addrinfo *res, *res0;
-	int s, error, on = 1, save_errno;
+	int s = -1, error, on = 1, save_errno;
 
 	if ((error = getaddrinfo(host, port, &hints, &res0)))
 		errx(1, "getaddrinfo: %s", gai_strerror(error));
@@ -911,7 +911,7 @@ int
 local_listen(char *host, char *port, struct addrinfo hints)
 {
 	struct addrinfo *res, *res0;
-	int s, ret, x = 1, save_errno;
+	int s = -1, ret, x = 1, save_errno;
 	int error;
 
 	/* Allow nodename to be null. */
