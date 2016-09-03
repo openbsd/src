@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.77 2016/08/20 15:10:18 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.78 2016/09/03 16:57:29 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -844,7 +844,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 #endif
 
 	/*
-	 * log if the adveritsed prefix has link-local scope(sanity check?)
+	 * log if the advertised prefix has link-local scope(sanity check?)
 	 */
 	if (IN6_IS_ADDR_LINKLOCAL(&pinfo->nd_opt_pi_prefix))
 		log_info("link-local prefix %s/%d is advertised "
@@ -895,7 +895,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 			inconsistent++;
 		}
 	} else if (preferred_time != pp->preflifetime)
-		log_info("prefeerred lifetime for %s/%d"
+		log_info("preferred lifetime for %s/%d"
 		    " inconsistent on %s:"
 		    " %lld from %s, %d from us",
 		    inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
