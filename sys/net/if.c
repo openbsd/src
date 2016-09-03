@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.438 2016/09/01 10:06:33 goda Exp $	*/
+/*	$OpenBSD: if.c,v 1.439 2016/09/03 09:55:44 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -224,8 +224,6 @@ int	ifq_congestion;
 int		 netisr;
 struct taskq	*softnettq;
 
-struct mbuf_queue if_input_queue = MBUF_QUEUE_INITIALIZER(8192, IPL_NET);
-struct task if_input_task = TASK_INITIALIZER(if_input_process, &if_input_queue);
 struct task if_input_task_locked = TASK_INITIALIZER(if_netisr, NULL);
 
 /*
@@ -420,6 +418,10 @@ if_attachsetup(struct ifnet *ifp)
 	if_idxmap_insert(ifp);
 	KASSERT(if_get(0) == NULL);
 
+	mq_init(&ifp->if_inputqueue, 8192, IPL_NET);
+	task_set(ifp->if_inputtask, if_input_process,
+	    (void *)(unsigned long)ifp->if_index);
+
 	/* Announce the interface. */
 	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
 }
@@ -536,6 +538,8 @@ if_attach_common(struct ifnet *ifp)
 	    M_TEMP, M_WAITOK|M_ZERO);
 	ifp->if_linkstatetask = malloc(sizeof(*ifp->if_linkstatetask),
 	    M_TEMP, M_WAITOK|M_ZERO);
+	ifp->if_inputtask = malloc(sizeof(*ifp->if_inputtask),
+	    M_TEMP, M_WAITOK|M_ZERO);
 	ifp->if_llprio = IFQ_DEFPRIO;
 
 	SRPL_INIT(&ifp->if_inputs);
@@ -633,8 +637,8 @@ if_input(struct ifnet *ifp, struct mbuf_list *ml)
 	}
 #endif
 
-	mq_enlist(&if_input_queue, ml);
-	task_add(softnettq, &if_input_task);
+	mq_enlist(&ifp->if_inputqueue, ml);
+	task_add(softnettq, ifp->if_inputtask);
 }
 
 int
@@ -777,9 +781,9 @@ if_ih_remove(struct ifnet *ifp, int (*input)(struct ifnet *, struct mbuf *,
 }
 
 void
-if_input_process(void *xmq)
+if_input_process(void *xifidx)
 {
-	struct mbuf_queue *mq = xmq;
+	unsigned int ifidx = (unsigned long)xifidx;
 	struct mbuf_list ml;
 	struct mbuf *m;
 	struct ifnet *ifp;
@@ -787,20 +791,18 @@ if_input_process(void *xmq)
 	struct srp_ref sr;
 	int s;
 
-	mq_delist(mq, &ml);
-	if (ml_empty(&ml))
+	ifp = if_get(ifidx);
+	if (ifp == NULL)
 		return;
+
+	mq_delist(&ifp->if_inputqueue, &ml);
+	if (ml_empty(&ml))
+		goto out;
 
 	add_net_randomness(ml_len(&ml));
 
 	s = splnet();
 	while ((m = ml_dequeue(&ml)) != NULL) {
-		ifp = if_get(m->m_pkthdr.ph_ifidx);
-		if (ifp == NULL) {
-			m_freem(m);
-			continue;
-		}
-
 		/*
 		 * Pass this mbuf to all input handlers of its
 		 * interface until it is consumed.
@@ -813,10 +815,11 @@ if_input_process(void *xmq)
 
 		if (ifih == NULL)
 			m_freem(m);
-
-		if_put(ifp);
 	}
 	splx(s);
+
+out:
+	if_put(ifp);
 }
 
 void
@@ -925,6 +928,10 @@ if_detach(struct ifnet *ifp)
 	ifp->if_ioctl = if_detached_ioctl;
 	ifp->if_watchdog = NULL;
 
+	/* Remove the input task */
+	task_del(systq, ifp->if_inputtask);
+	mq_purge(&ifp->if_inputqueue);
+
 	/* Remove the watchdog timeout & task */
 	timeout_del(ifp->if_slowtimo);
 	task_del(systq, ifp->if_watchdogtask);
@@ -979,6 +986,7 @@ if_detach(struct ifnet *ifp)
 	free(ifp->if_slowtimo, M_TEMP, sizeof(*ifp->if_slowtimo));
 	free(ifp->if_watchdogtask, M_TEMP, sizeof(*ifp->if_watchdogtask));
 	free(ifp->if_linkstatetask, M_TEMP, sizeof(*ifp->if_linkstatetask));
+	free(ifp->if_inputtask, M_TEMP, sizeof(*ifp->if_inputtask));
 
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])

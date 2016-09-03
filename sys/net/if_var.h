@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.73 2016/09/01 10:06:33 goda Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.74 2016/09/03 09:55:44 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -138,6 +138,8 @@ struct ifnet {				/* and the entries */
 	struct	task *if_linkstatetask; /* task to do route updates */
 
 	/* procedure handles */
+	struct mbuf_queue if_inputqueue;
+	struct task *if_inputtask;	/* input task */
 	SRPL_HEAD(, ifih) if_inputs;	/* input routines (dequeue) */
 
 					/* output routine (enqueue) */
