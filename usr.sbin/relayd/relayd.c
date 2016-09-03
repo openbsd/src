@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.159 2016/09/02 14:45:51 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.160 2016/09/03 14:09:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -121,8 +121,12 @@ main(int argc, char *argv[])
 	struct relayd		*env;
 	struct privsep		*ps;
 	const char		*conffile = CONF_FILE;
+	enum privsep_procid	 proc_id = PROC_PARENT;
+	int			 proc_instance = 0;
+	const char		*errp, *title = NULL;
+	int			 argc0 = argc;
 
-	while ((c = getopt(argc, argv, "dD:nf:v")) != -1) {
+	while ((c = getopt(argc, argv, "dD:nI:P:f:v")) != -1) {
 		switch (c) {
 		case 'd':
 			debug = 2;
@@ -142,6 +146,18 @@ main(int argc, char *argv[])
 		case 'v':
 			verbose++;
 			opts |= RELAYD_OPT_VERBOSE;
+			break;
+		case 'P':
+			title = optarg;
+			proc_id = proc_getid(procs, nitems(procs), title);
+			if (proc_id == PROC_MAX)
+				fatalx("invalid process name");
+			break;
+		case 'I':
+			proc_instance = strtonum(optarg, 0,
+			    PROC_MAX_INSTANCES, &errp);
+			if (errp)
+				fatalx("invalid process instance");
 			break;
 		default:
 			usage();
@@ -189,19 +205,29 @@ main(int argc, char *argv[])
 	log_init(debug, LOG_DAEMON);
 	log_verbose(verbose);
 
-	if (!debug && daemon(1, 0) == -1)
-		err(1, "failed to daemonize");
-
 	if (env->sc_conf.opts & RELAYD_OPT_NOACTION)
 		ps->ps_noaction = 1;
-	else
-		log_info("startup");
 
 	ps->ps_instances[PROC_RELAY] = env->sc_conf.prefork_relay;
 	ps->ps_instances[PROC_CA] = env->sc_conf.prefork_relay;
+	ps->ps_instance = proc_instance;
+	if (title != NULL)
+		ps->ps_title[proc_id] = title;
 
-	proc_init(ps, procs, nitems(procs));
+	if (proc_id == PROC_PARENT) {
+		/* XXX the parent opens too many fds in proc_open() */
+		socket_rlimit(-1);
+	}
+
+	/* only the parent returns */
+	proc_init(ps, procs, nitems(procs), argc0, argv, proc_id);
+
 	log_procinit("parent");
+	if (!debug && daemon(1, 0) == -1)
+		err(1, "failed to daemonize");
+
+	if (ps->ps_noaction == 0)
+		log_info("startup");
 
 	event_init();
 
@@ -217,7 +243,7 @@ main(int argc, char *argv[])
 	signal_add(&ps->ps_evsigpipe, NULL);
 	signal_add(&ps->ps_evsigusr1, NULL);
 
-	proc_listen(ps, procs, nitems(procs));
+	proc_connect(ps);
 
 	if (load_config(env->sc_conffile, env) == -1) {
 		proc_kill(env->sc_ps);

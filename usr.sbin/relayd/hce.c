@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.74 2016/09/02 14:45:51 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.75 2016/09/03 14:09:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -70,7 +70,7 @@ hce_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 	/* Allow maximum available sockets for TCP checks */
 	socket_rlimit(-1);
 
-	if (pledge("stdio inet", NULL) == -1)
+	if (pledge("stdio recvfd inet", NULL) == -1)
 		fatal("hce: pledge");
 }
 

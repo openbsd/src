@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.21 2016/09/02 14:45:51 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.22 2016/09/03 14:09:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -73,7 +73,7 @@ ca(struct privsep *ps, struct privsep_proc *p)
 void
 ca_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
-	if (pledge("stdio", NULL) == -1)
+	if (pledge("stdio recvfd", NULL) == -1)
 		fatal("pledge");
 
 	if (config_init(ps->ps_env) == -1)
