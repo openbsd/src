@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.103 2016/08/04 20:46:24 vgross Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.104 2016/09/03 14:18:42 phessler Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -229,7 +229,9 @@ struct inpcbtable {
 	587, 749, 750, 751, 871, 2049, \
 	6000, 6001, 6002, 6003, 6004, 6005, 6006, 6007, 6008, 6009, 6010, \
 	0 }
-#define	DEFBADDYNAMICPORTS_UDP	{ 623, 664, 749, 750, 751, 2049, 0 }
+#define	DEFBADDYNAMICPORTS_UDP	{ 623, 664, 749, 750, 751, 2049, \
+	3784, 3785, 7784, /* BFD/S-BFD ports */ \
+	 0 }
 
 #define DEFROOTONLYPORTS_TCP { \
 	2049, \
