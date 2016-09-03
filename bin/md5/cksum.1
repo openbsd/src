@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.38 2014/03/20 22:06:21 tedu Exp $
+.\"	$OpenBSD: cksum.1,v 1.39 2016/09/03 17:01:01 tedu Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)cksum.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: March 20 2014 $
+.Dd $Mdocdate: September 3 2016 $
 .Dt CKSUM 1
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@ The options are as follows:
 .It Fl a Ar algorithms
 Use the specified algorithm(s) instead of the default (cksum).
 Supported algorithms include cksum, md5, rmd160, sha1,
-sha224, sha256, sha384, and sha512.
+sha224, sha256, sha384, sha512/256, and sha512.
 Multiple algorithms may be specified, separated by a comma or whitespace.
 Additionally, multiple
 .Fl a
