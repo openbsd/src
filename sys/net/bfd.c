@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.1 2016/09/03 14:14:20 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.2 2016/09/03 15:05:25 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -283,8 +283,7 @@ bfdinit(void)
 	    "bfd_softc_peer", NULL);
 	pool_setipl(&bfd_pool_peer, IPL_SOFTNET);
 
-	/* XXX - requires biglock because of sobind */
-	bfdtq = taskq_create("bfd", 1, IPL_SOFTNET, 0 /* | TASKQ_MPSAFE */);
+	bfdtq = taskq_create("bfd", 1, IPL_SOFTNET, 0);
 	if (bfdtq == NULL)
 		panic("unable to create BFD taskq");
 
