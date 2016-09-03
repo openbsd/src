@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.4 2016/09/03 15:07:22 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.5 2016/09/03 15:49:00 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -337,12 +337,6 @@ void
 bfd_start_task(void *arg)
 {
 	struct bfd_softc	*sc = (struct bfd_softc *)arg;
-//struct rtentry		*rt = sc->sc_rt;
-//struct ifnet		*ifp;
-
-//ifp = if_get(rt->rt_ifidx);
-//printf("%s: if %s dest: ", __func__, ifp->if_xname);
-//db_print_sa(rt->rt_ifa->ifa_addr);
 
 	/* start listeners */
 	sc->sc_so = bfd_listener(sc, BFD_UDP_PORT_CONTROL);
@@ -368,15 +362,7 @@ void
 bfd_send_task(void *arg)
 {
 	struct bfd_softc	*sc = (struct bfd_softc *)arg;
-//struct rtentry		*rt = sc->sc_rt;
-//struct ifnet		*ifp;
 
-//ifp = if_get(rt->rt_ifidx);
-//printf("%s: if %s dest: ", __func__, ifp->if_xname);
-
-//bfd_debug(sc);
-//	bfd_send_control(sc);
-printf("%s: timeout_tx: %u\n", __func__, sc->mintx);
 	if (!timeout_pending(&sc->sc_timo_tx))
 		timeout_add_usec(&sc->sc_timo_tx, sc->mintx);
 
@@ -604,14 +590,10 @@ void
 bfd_timeout_rx(void *v)
 {
 	struct bfd_softc *sc = v;
-//	struct rtentry	*rt = sc->sc_rt;
 
 
-bfd_debug(sc);
-
-	if (((sc->sc_peer->SessionState > BFD_STATE_DOWN) &&
-	    (++sc->error >= sc->sc_peer->DetectMult)) /* ||
-		(!ISSET(rt->rt_gwroute->rt_flags, RTF_UP)) */) {
+	if ((sc->sc_peer->SessionState > BFD_STATE_DOWN) &&
+	    (++sc->error >= sc->sc_peer->DetectMult)) {
 		sc->sc_peer->LocalDiag = BFD_DIAG_EXPIRED;
 printf("%s: failed, sc->error %u\n", __func__, sc->error);
 		bfd_reset(sc);
@@ -619,9 +601,7 @@ printf("%s: failed, sc->error %u\n", __func__, sc->error);
 
 		return;
 	}
-printf("%s: error #%u\n", __func__, sc->error);
 
-printf("%s: timeout_rx: %u\n", __func__, sc->minrx);
 	timeout_add_usec(&sc->sc_timo_rx, sc->minrx);
 
 }
@@ -632,9 +612,6 @@ printf("%s: timeout_rx: %u\n", __func__, sc->minrx);
 void
 bfd_senddown(struct bfd_softc *sc)
 {
-printf("%s", __func__);
-//bfd_debug(sc);
-
 	/* If we are down, return early */
 	if (sc->state < BFD_STATE_INIT);
 		return;
@@ -642,7 +619,6 @@ printf("%s", __func__);
 	sc->sc_peer->SessionState = BFD_STATE_ADMINDOWN;
 	if (sc->sc_peer->LocalDiag == 0)
 		sc->sc_peer->LocalDiag = BFD_DIAG_ADMIN_DOWN;
-printf("%s: sc->sc_peer->LocalDiag %u", __func__, sc->sc_peer->LocalDiag);
 
 	bfd_send_control(sc);
 
@@ -678,10 +654,6 @@ printf("%s: error=%u\n", __func__, sc->error);
 	sc->sc_peer->RequiredMinRxInterval = BFD_SECOND; /* rfc5880 6.8.18 */
 	sc->sc_peer->RemoteMinRxInterval = 1;
 	sc->sc_peer->DetectMult = 3; /* XXX - MUST be nonzero */
-//	sc->sc_peer->LocalDiscr = arc4random();	/* XXX - MUST be globally unique */
-//	sc->sc_peer->RcvAuthSeq = arc4random();
-
-//	sc->ttl = MAXTTL;
 
 	sc->mintx = sc->sc_peer->DesiredMinTxInterval;
 	sc->minrx = sc->sc_peer->RemoteMinRxInterval;
@@ -782,7 +754,6 @@ printf("%s: RemoteMinRxInterval is massive: %u\n", __func__,
 	sc->mintx = max(sc->sc_peer->RemoteMinRxInterval,
 	    sc->sc_peer->DesiredMinTxInterval);
 
-//printf("%s1 \n", __func__);
 	if (sc->sc_peer->RemoteSessionState == BFD_STATE_ADMINDOWN) {
 		if (sc->sc_peer->SessionState != BFD_STATE_DOWN) {
 			sc->sc_peer->LocalDiag = BFD_DIAG_NEIGHBOR_SIGDOWN;
@@ -790,8 +761,6 @@ printf("%s: RemoteMinRxInterval is massive: %u\n", __func__,
 		}
 		goto discard;
 	}
-
-//printf("%s2 \n", __func__);
 
 	/* According the to pseudo-code RFC 5880 page 34 */
 	if (sc->sc_peer->SessionState == BFD_STATE_DOWN) {
@@ -814,7 +783,6 @@ printf("%s: set BFD_STATE_UP\n", __func__);
 			sc->sc_peer->LocalDiag = 0;
 			bfd_set_state(sc, BFD_STATE_UP);
 		} else {
-//printf("%s2b \n", __func__);
 			goto discard;
 		}
 	} else {
@@ -825,7 +793,6 @@ printf("%s: set BFD_STATE_DOWN\n", __func__);
 			goto discard;
 		}
 	}
-//printf("%s3 \n", __func__);
 
 	if (sc->sc_peer->SessionState == BFD_STATE_UP) {
 		sc->sc_peer->LocalDiag = 0;
@@ -947,12 +914,6 @@ bfd_debug(struct bfd_softc *sc)
 	struct rtentry	*rt = sc->sc_rt;
 
 	ifp = if_get(rt->rt_ifidx);
-
-//	printf("%s if: %s AF: %x ",
-//	    __func__, ifp->if_xname,
-//	    rt->rt_gateway->sa_family);
-//printf("gw: "); db_print_sa(rt->rt_gateway);
-//	printf("\n");
 
 	printf("session state: %u ", sc->state);
 	printf("mode: %u ", sc->mode);
