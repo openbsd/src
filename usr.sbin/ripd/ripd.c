@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.29 2016/09/02 14:07:52 benno Exp $ */
+/*	$OpenBSD: ripd.c,v 1.30 2016/09/03 10:28:08 renato Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -48,9 +48,8 @@
 #include "rde.h"
 
 __dead void		 usage(void);
-int			 check_child(pid_t, const char *);
 void			 main_sig_handler(int, short, void *);
-void			 ripd_shutdown(void);
+__dead void		 ripd_shutdown(void);
 void			 main_dispatch_ripe(int, short, void *);
 void			 main_dispatch_rde(int, short, void *);
 
@@ -80,29 +79,12 @@ usage(void)
 void
 main_sig_handler(int sig, short event, void *arg)
 {
-	/*
-	 * signal handler rules don't apply, libevent decouples for us
-	 */
-
-	int	die = 0;
-
+	/* signal handler rules don't apply, libevent decouples for us */
 	switch (sig) {
 	case SIGTERM:
 	case SIGINT:
-		die = 1;
-		/* FALLTHROUGH */
-	case SIGCHLD:
-		if (check_child(ripe_pid, "rip engine")) {
-			ripe_pid = 0;
-			die = 1;
-		}
-		if (check_child(rde_pid, "route decision engine")) {
-			rde_pid = 0;
-			die = 1;
-		}
-		if (die)
-			ripd_shutdown();
-		break;
+		ripd_shutdown();
+		/* NOTREACHED */
 	case SIGHUP:
 		/* reconfigure */
 		/* ... */
@@ -116,7 +98,7 @@ main_sig_handler(int sig, short event, void *arg)
 int
 main(int argc, char *argv[])
 {
-	struct event	 ev_sigint, ev_sigterm, ev_sigchld, ev_sighup;
+	struct event	 ev_sigint, ev_sigterm, ev_sighup;
 	int		 mib[4];
 	int		 debug = 0;
 	int		 ipforwarding;
@@ -234,11 +216,9 @@ main(int argc, char *argv[])
 	/* setup signal handler */
 	signal_set(&ev_sigint, SIGINT, main_sig_handler, NULL);
 	signal_set(&ev_sigterm, SIGTERM, main_sig_handler, NULL);
-	signal_set(&ev_sigchld, SIGCHLD, main_sig_handler, NULL);
 	signal_set(&ev_sighup, SIGHUP, main_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
-	signal_add(&ev_sigchld, NULL);
 	signal_add(&ev_sighup, NULL);
 	signal(SIGPIPE, SIG_IGN);
 
@@ -278,17 +258,18 @@ main(int argc, char *argv[])
 	return (0);
 }
 
-void
+__dead void
 ripd_shutdown(void)
 {
 	struct iface	*i;
 	pid_t		 pid;
+	int		 status;
 
-	if (ripe_pid)
-		kill(ripe_pid, SIGTERM);
-
-	if (rde_pid)
-		kill(rde_pid, SIGTERM);
+	/* close pipes */
+	msgbuf_clear(&iev_ripe->ibuf.w);
+	close(iev_ripe->ibuf.fd);
+	msgbuf_clear(&iev_rde->ibuf.w);
+	close(iev_rde->ibuf.fd);
 
 	while ((i = LIST_FIRST(&conf->iface_list)) != NULL) {
 		LIST_REMOVE(i, entry);
@@ -298,40 +279,24 @@ ripd_shutdown(void)
 	control_cleanup(conf->csock);
 	kr_shutdown();
 
+	log_debug("waiting for children to terminate");
 	do {
-		if ((pid = wait(NULL)) == -1 &&
-		    errno != EINTR && errno != ECHILD)
-			fatal("wait");
+		pid = wait(&status);
+		if (pid == -1) {
+			if (errno != EINTR && errno != ECHILD)
+				fatal("wait");
+		} else if (WIFSIGNALED(status))
+			log_warnx("%s terminated; signal %d",
+			    (pid == rde_pid) ? "route decision engine" :
+			    "rip engine", WTERMSIG(status));
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
-	msgbuf_clear(&iev_ripe->ibuf.w);
 	free(iev_ripe);
-	msgbuf_clear(&iev_rde->ibuf.w);
 	free(iev_rde);
 	free(conf);
 
 	log_info("terminating");
 	exit(0);
-}
-
-int
-check_child(pid_t pid, const char *pname)
-{
-	int	status;
-
-	if (waitpid(pid, &status, WNOHANG) > 0) {
-		if (WIFEXITED(status)) {
-			log_warnx("lost child: %s exited", pname);
-			return (1);
-		}
-		if (WIFSIGNALED(status)) {
-			log_warnx("lost child: %s terminated; signal %d",
-			    pname, WTERMSIG(status));
-			return (1);
-		}
-	}
-
-	return (0);
 }
 
 /* imsg handling */

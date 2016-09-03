@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.20 2016/09/02 14:07:52 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.21 2016/09/03 10:28:08 renato Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -45,7 +45,7 @@ struct imsgev		*iev_ripe;
 struct imsgev		*iev_main;
 
 void	rde_sig_handler(int, short, void *);
-void	rde_shutdown(void);
+__dead void rde_shutdown(void);
 void	rde_dispatch_imsg(int, short, void *);
 void	rde_dispatch_parent(int, short, void *);
 int	rde_imsg_compose_ripe(int, u_int32_t, pid_t, void *, u_int16_t);
@@ -159,14 +159,17 @@ rde(struct ripd_conf *xconf, int pipe_parent2rde[2], int pipe_ripe2rde[2],
 	return (0);
 }
 
-void
+__dead void
 rde_shutdown(void)
 {
-	rt_clear();
-
+	/* close pipes */
 	msgbuf_clear(&iev_ripe->ibuf.w);
-	free(iev_ripe);
+	close(iev_ripe->ibuf.fd);
 	msgbuf_clear(&iev_main->ibuf.w);
+	close(iev_main->ibuf.fd);
+
+	rt_clear();
+	free(iev_ripe);
 	free(iev_main);
 	free(rdeconf);
 

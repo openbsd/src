@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.21 2016/09/02 14:07:52 benno Exp $ */
+/*	$OpenBSD: ripe.c,v 1.22 2016/09/03 10:28:08 renato Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -43,7 +43,7 @@
 #include "control.h"
 
 void		 ripe_sig_handler(int, short, void *);
-void		 ripe_shutdown(void);
+__dead void	 ripe_shutdown(void);
 
 struct ripd_conf	*oeconf = NULL;
 struct imsgev		*iev_main;
@@ -450,10 +450,18 @@ ripe_dispatch_rde(int fd, short event, void *bula)
 	}
 }
 
-void
+__dead void
 ripe_shutdown(void)
 {
 	struct iface	*iface;
+
+	/* close pipes */
+	msgbuf_write(&iev_rde->ibuf.w);
+	msgbuf_clear(&iev_rde->ibuf.w);
+	close(iev_rde->ibuf.fd);
+	msgbuf_write(&iev_main->ibuf.w);
+	msgbuf_clear(&iev_main->ibuf.w);
+	close(iev_main->ibuf.fd);
 
 	LIST_FOREACH(iface, &oeconf->iface_list, entry) {
 		if (if_fsm(iface, IF_EVT_DOWN)) {
@@ -469,11 +477,7 @@ ripe_shutdown(void)
 	close(oeconf->rip_socket);
 
 	/* clean up */
-	msgbuf_write(&iev_rde->ibuf.w);
-	msgbuf_clear(&iev_rde->ibuf.w);
 	free(iev_rde);
-	msgbuf_write(&iev_main->ibuf.w);
-	msgbuf_clear(&iev_main->ibuf.w);
 	free(iev_main);
 	free(oeconf);
 	free(pkt_ptr);
