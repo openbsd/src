@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.12 2016/09/03 20:35:07 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.13 2016/09/03 21:01:42 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/stdint.h>
 #include <sys/systm.h>
 
 #include <net/if.h>
@@ -753,14 +754,17 @@ printf("%s: peer your discr 0x%x != local 0x%x\n",
 	sc->error = 0;
 	sc->sc_peer->RemoteMinRxInterval = ntohl(peer->bfd_required_min_rx_interval);
 
+	/* Local change to the algorithm, we don't accept below 10ms */
 	if (sc->sc_peer->RemoteMinRxInterval < BFD_MINIMUM)
-		sc->sc_peer->RemoteMinRxInterval = BFD_MINIMUM;
+		goto discard;
 
-	if (sc->sc_peer->RemoteMinRxInterval > 30 * BFD_SECOND) {
-printf("%s: RemoteMinRxInterval is massive: %u\n", __func__,
-    sc->sc_peer->RemoteMinRxInterval);
-		sc->sc_peer->RemoteMinRxInterval = BFD_SECOND;
-	}
+	/*
+	 * Local change to the algorithm, we can't use larger than signed
+	 * 32bits for a timeout.
+	 * That is Too Long(tm) anyways.
+	 */
+	if (sc->sc_peer->RemoteMinRxInterval > INT32_MAX)
+		goto discard;
 
 	sc->minrx = sc->sc_peer->RequiredMinRxInterval;
 	/* rfc5880 6.8.7 */
