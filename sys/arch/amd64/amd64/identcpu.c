@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.73 2016/06/22 07:22:00 mlarkin Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.74 2016/09/03 12:12:43 mlarkin Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -123,6 +123,7 @@ const struct {
 	{ CPUIDECX_TM2,		"TM2" },
 	{ CPUIDECX_SSSE3,	"SSSE3" },
 	{ CPUIDECX_CNXTID,	"CNXT-ID" },
+	{ CPUIDECX_SDBG,	"SDBG" },
 	{ CPUIDECX_FMA3,	"FMA3" },
 	{ CPUIDECX_CX16,	"CX16" },
 	{ CPUIDECX_XTPR,	"xTPR" },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.55 2016/06/22 07:22:00 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.56 2016/09/03 12:12:43 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -141,6 +141,7 @@
 #define	CPUIDECX_TM2	0x00000100	/* thermal monitor 2 */
 #define	CPUIDECX_SSSE3	0x00000200	/* Supplemental Streaming SIMD Ext. 3 */
 #define	CPUIDECX_CNXTID	0x00000400	/* Context ID */
+#define CPUIDECX_SDBG	0x00000800	/* Silicon debug capability */
 #define	CPUIDECX_FMA3	0x00001000	/* Fused Multiply Add */
 #define	CPUIDECX_CX16	0x00002000	/* has CMPXCHG16B instruction */
 #define	CPUIDECX_XTPR	0x00004000	/* xTPR Update Control */
