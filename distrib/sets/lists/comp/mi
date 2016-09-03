@@ -134,7 +134,6 @@
 ./usr/include/dev/i2c/i2c_io.h
 ./usr/include/dev/i2c/i2cvar.h
 ./usr/include/dev/i2c/ihidev.h
-./usr/include/dev/i2c/wm8750reg.h
 ./usr/include/dev/ic
 ./usr/include/dev/ic/aac_tables.h
 ./usr/include/dev/ic/aacreg.h
@@ -944,6 +943,7 @@
 ./usr/include/ndbm.h
 ./usr/include/net
 ./usr/include/net/art.h
+./usr/include/net/bfd.h
 ./usr/include/net/bpf.h
 ./usr/include/net/bpfdesc.h
 ./usr/include/net/ethertypes.h

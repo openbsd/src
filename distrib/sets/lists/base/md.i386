@@ -597,7 +597,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/i2c/i2c_io.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/i2c/i2cvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/i2c/ihidev.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/i2c/wm8750reg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/aac_tables.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/aacreg.ph
@@ -1628,6 +1627,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/art.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/net/bfd.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/bpf.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/bpfdesc.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/ethertypes.ph

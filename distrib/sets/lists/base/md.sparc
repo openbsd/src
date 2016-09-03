@@ -130,7 +130,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/i2c/i2c_io.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/i2c/i2cvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/i2c/ihidev.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/i2c/wm8750reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/aac_tables.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/aacreg.ph
@@ -1080,6 +1079,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/art.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/net/bfd.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/bpf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/bpfdesc.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/ethertypes.ph

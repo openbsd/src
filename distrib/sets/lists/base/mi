@@ -7252,6 +7252,7 @@
 ./var/spool/uucppublic
 ./var/sysmerge
 ./var/sysmerge/etc.tgz
+./var/syspatch
 ./var/tmp
 ./var/unbound
 ./var/unbound/db
