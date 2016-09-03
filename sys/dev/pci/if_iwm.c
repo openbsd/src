@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.112 2016/09/03 16:20:07 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.113 2016/09/03 17:09:23 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -667,8 +667,8 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 			sc->sc_capaflags = le32toh(*(uint32_t *)tlv_data);
 			break;
 		case IWM_UCODE_TLV_CSCHEME:
-			if ((err = iwm_store_cscheme(sc,
-			    tlv_data, tlv_len)) != 0)
+			err = iwm_store_cscheme(sc, tlv_data, tlv_len);
+			if (err != 0)
 				goto parse_out;
 			break;
 		case IWM_UCODE_TLV_NUM_OF_CPU: {
@@ -685,18 +685,21 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 			break;
 		}
 		case IWM_UCODE_TLV_SEC_RT:
-			if ((err = iwm_firmware_store_section(sc,
-			    IWM_UCODE_TYPE_REGULAR, tlv_data, tlv_len)) != 0)
+			err = iwm_firmware_store_section(sc,
+			    IWM_UCODE_TYPE_REGULAR, tlv_data, tlv_len);
+			if (err != 0)
 				goto parse_out;
 			break;
 		case IWM_UCODE_TLV_SEC_INIT:
-			if ((err = iwm_firmware_store_section(sc,
-			    IWM_UCODE_TYPE_INIT, tlv_data, tlv_len)) != 0)
+			err = iwm_firmware_store_section(sc,
+			    IWM_UCODE_TYPE_INIT, tlv_data, tlv_len);
+			if (err != 0)
 				goto parse_out;
 			break;
 		case IWM_UCODE_TLV_SEC_WOWLAN:
-			if ((err = iwm_firmware_store_section(sc,
-			    IWM_UCODE_TYPE_WOW, tlv_data, tlv_len)) != 0)
+			err = iwm_firmware_store_section(sc,
+			    IWM_UCODE_TYPE_WOW, tlv_data, tlv_len);
+			if (err != 0)
 				goto parse_out;
 			break;
 		case IWM_UCODE_TLV_DEF_CALIB:
@@ -704,7 +707,8 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 				err = EINVAL;
 				goto parse_out;
 			}
-			if ((err = iwm_set_default_calib(sc, tlv_data)) != 0)
+			err = iwm_set_default_calib(sc, tlv_data);
+			if (err != 0)
 				goto parse_out;
 			break;
 		case IWM_UCODE_TLV_PHY_SKU:
@@ -757,9 +761,10 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 			break;
 
 		case IWM_UCODE_TLV_SEC_RT_USNIFFER:
-			if ((err = iwm_firmware_store_section(sc,
+			err = iwm_firmware_store_section(sc,
 			    IWM_UCODE_TYPE_REGULAR_USNIFFER, tlv_data,
-			    tlv_len)) != 0)
+			    tlv_len);
+			if (err != 0)
 				goto parse_out;
 			break;
 
@@ -1064,9 +1069,9 @@ iwm_alloc_rx_ring(struct iwm_softc *sc, struct iwm_rx_ring *ring)
 			goto fail;
 		}
 
-		if ((err = iwm_rx_addbuf(sc, IWM_RBUF_SIZE, i)) != 0) {
+		err = iwm_rx_addbuf(sc, IWM_RBUF_SIZE, i);
+		if (err)
 			goto fail;
-		}
 	}
 	return 0;
 
@@ -1522,14 +1527,16 @@ iwm_start_hw(struct iwm_softc *sc)
 {
 	int err;
 
-	if ((err = iwm_prepare_card_hw(sc)) != 0)
+	err = iwm_prepare_card_hw(sc);
+	if (err != 0)
 		return err;
 
 	/* Reset the entire device */
 	IWM_WRITE(sc, IWM_CSR_RESET, IWM_CSR_RESET_REG_FLAG_SW_RESET);
 	DELAY(10);
 
-	if ((err = iwm_apm_init(sc)) != 0)
+	err = iwm_apm_init(sc);
+	if (err != 0)
 		return err;
 
 	iwm_enable_rfkill_int(sc);
@@ -1741,13 +1748,15 @@ iwm_nic_init(struct iwm_softc *sc)
 
 	iwm_mvm_nic_config(sc);
 
-	if ((err = iwm_nic_rx_init(sc)) != 0)
+	err = iwm_nic_rx_init(sc);
+	if (err != 0)
 		return err;
 
 	/*
 	 * Ditto for TX, from iwn
 	 */
-	if ((err = iwm_nic_tx_init(sc)) != 0)
+	err = iwm_nic_tx_init(sc);
+	if (err != 0)
 		return err;
 
 	IWM_SETBITS(sc, IWM_CSR_MAC_SHADOW_REG_CTRL, 0x800fffff);
@@ -2981,9 +2990,11 @@ iwm_firmware_load_chunk(struct iwm_softc *sc, uint32_t dst_addr,
 
 	/* wait 1s for this segment to load */
 	err = 0;
-	while (!sc->sc_fw_chunk_done)
-		if ((err = tsleep(&sc->sc_fw, 0, "iwmfw", hz)) != 0)
+	while (!sc->sc_fw_chunk_done) {
+		err = tsleep(&sc->sc_fw, 0, "iwmfw", hz);
+		if (err != 0)
 			break;
+	}
 
 	if (!sc->sc_fw_chunk_done)
 		printf("%s: fw chunk addr 0x%x len %d failed to load\n",
@@ -3162,7 +3173,8 @@ iwm_start_fw(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 
 	IWM_WRITE(sc, IWM_CSR_INT, ~0);
 
-	if ((err = iwm_nic_init(sc)) != 0) {
+	err = iwm_nic_init(sc);
+	if (err != 0) {
 		printf("%s: unable to init nic\n", DEVNAME(sc));
 		return err;
 	}
@@ -3220,7 +3232,8 @@ iwm_mvm_load_ucode_wait_alive(struct iwm_softc *sc,
 	enum iwm_ucode_type old_type = sc->sc_uc_current;
 	int err;
 
-	if ((err = iwm_read_firmware(sc, ucode_type)) != 0)
+	err = iwm_read_firmware(sc, ucode_type);
+	if (err != 0)
 		return err;
 
 	sc->sc_uc_current = ucode_type;
@@ -3250,14 +3263,15 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 	}
 
 	sc->sc_init_complete = 0;
-	if ((err = iwm_mvm_load_ucode_wait_alive(sc,
-	    IWM_UCODE_TYPE_INIT)) != 0) {
+	err = iwm_mvm_load_ucode_wait_alive(sc, IWM_UCODE_TYPE_INIT);
+	if (err != 0) {
 		printf("%s: failed to load init firmware\n", DEVNAME(sc));
 		return err;
 	}
 
 	if (justnvm) {
-		if ((err = iwm_nvm_init(sc)) != 0) {
+		err = iwm_nvm_init(sc);
+		if (err != 0) {
 			printf("%s: failed to read nvm\n", DEVNAME(sc));
 			return err;
 		}
@@ -3295,10 +3309,11 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 	 * Nothing to do but wait for the init complete notification
 	 * from the firmware
 	 */
-	while (!sc->sc_init_complete)
-		if ((err = tsleep(&sc->sc_init_complete,
-		    0, "iwminit", 2*hz)) != 0)
+	while (!sc->sc_init_complete) {
+		err = tsleep(&sc->sc_init_complete, 0, "iwminit", 2*hz);
+		if (err != 0)
 			break;
+	}
 
 	return err;
 }
@@ -3337,8 +3352,9 @@ iwm_rx_addbuf(struct iwm_softc *sc, int size, int idx)
 	}
 
 	m->m_len = m->m_pkthdr.len = m->m_ext.ext_size;
-	if ((err = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT)) != 0) {
+	err = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	if (err != 0) {
 		/* XXX */
 		if (fatal)
 			panic("iwm: could not load RX mbuf");
@@ -3994,7 +4010,8 @@ iwm_mvm_send_cmd_status(struct iwm_softc *sc,
 	KASSERT((cmd->flags & IWM_CMD_WANT_SKB) == 0);
 	cmd->flags |= IWM_CMD_WANT_SKB;
 
-	if ((err = iwm_send_cmd(sc, cmd)) != 0)
+	err = iwm_send_cmd(sc, cmd);
+	if (err != 0)
 		return err;
 	pkt = cmd->resp_pkt;
 
@@ -5621,7 +5638,8 @@ iwm_assoc(struct iwm_softc *sc)
 
 	in->in_assoc = 1;
 
-	if ((err = iwm_mvm_mac_ctxt_changed(sc, in)) != 0) {
+	err = iwm_mvm_mac_ctxt_changed(sc, in);
+	if (err != 0) {
 		printf("%s: failed to update MAC\n", DEVNAME(sc));
 		return err;
 	}
@@ -6230,15 +6248,18 @@ iwm_init_hw(struct iwm_softc *sc)
 	struct iwm_node *in = (struct iwm_node *)ic->ic_bss;
 	int err, i, ac;
 
-	if ((err = iwm_preinit(sc)) != 0)
+	err = iwm_preinit(sc);
+	if (err != 0)
 		return err;
 
-	if ((err = iwm_start_hw(sc)) != 0) {
+	err = iwm_start_hw(sc);
+	if (err != 0) {
 		printf("%s: could not initialize hardware\n", DEVNAME(sc));
 		return err;
 	}
 
-	if ((err = iwm_run_init_mvm_ucode(sc, 0)) != 0)
+	err = iwm_run_init_mvm_ucode(sc, 0);
+	if (err != 0)
 		return err;
 
 	/*
@@ -6246,7 +6267,8 @@ iwm_init_hw(struct iwm_softc *sc)
 	 * image just loaded
 	 */
 	iwm_stop_device(sc);
-	if ((err = iwm_start_hw(sc)) != 0) {
+	err = iwm_start_hw(sc);
+	if (err != 0) {
 		printf("%s: could not initialize hardware\n", DEVNAME(sc));
 		return err;
 	}
@@ -6258,33 +6280,38 @@ iwm_init_hw(struct iwm_softc *sc)
 		goto err;
 	}
 
-	if ((err = iwm_send_bt_init_conf(sc)) != 0) {
+	err = iwm_send_bt_init_conf(sc);
+	if (err != 0) {
 		printf("%s: could not init bt coex (error %d)\n",
 		    DEVNAME(sc), err);
 		goto err;
 	}
 
-	if ((err = iwm_send_tx_ant_cfg(sc, iwm_fw_valid_tx_ant(sc))) != 0) {
+	err = iwm_send_tx_ant_cfg(sc, iwm_fw_valid_tx_ant(sc));
+	if (err != 0) {
 		printf("%s: could not init tx ant config (error %d)\n",
 		    DEVNAME(sc), err);
 		goto err;
 	}
 
 	/* Send phy db control command and then phy db calibration*/
-	if ((err = iwm_send_phy_db_data(sc)) != 0) {
+	err = iwm_send_phy_db_data(sc);
+	if (err != 0) {
 		printf("%s: could not init phy db (error %d)\n",
 		    DEVNAME(sc), err);
 		goto err;
 	}
 
-	if ((err = iwm_send_phy_cfg_cmd(sc)) != 0) {
+	err = iwm_send_phy_cfg_cmd(sc);
+	if (err != 0) {
 		printf("%s: could not send phy config (error %d)\n",
 		    DEVNAME(sc), err);
 		goto err;
 	}
 
 	/* Add auxiliary station for scanning */
-	if ((err = iwm_mvm_add_aux_sta(sc)) != 0) {
+	err = iwm_mvm_add_aux_sta(sc);
+	if (err != 0) {
 		printf("%s: could not add aux station (error %d)\n",
 		    DEVNAME(sc), err);
 		goto err;
@@ -6296,8 +6323,9 @@ iwm_init_hw(struct iwm_softc *sc)
 		 * going to be overwritten in the other flows.
 		 * For now use the first channel we have.
 		 */
-		if ((err = iwm_mvm_phy_ctxt_add(sc,
-		    &sc->sc_phyctxt[i], &ic->ic_channels[1], 1, 1)) != 0) {
+		err = iwm_mvm_phy_ctxt_add(sc,
+		    &sc->sc_phyctxt[i], &ic->ic_channels[1], 1, 1);
+		if (err != 0) {
 			printf("%s: could not add phy context %d (error %d)\n",
 			    DEVNAME(sc), i, err);
 			goto err;
@@ -6316,7 +6344,8 @@ iwm_init_hw(struct iwm_softc *sc)
 	}
 
 	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_LAR_SUPPORT)) {
-		if ((err = iwm_send_update_mcc_cmd(sc, "ZZ")) != 0) {
+		err = iwm_send_update_mcc_cmd(sc, "ZZ");
+		if (err != 0) {
 			printf("%s: could not send mcc command (error %d)\n",
 			    DEVNAME(sc), err);
 			goto err;
@@ -6324,7 +6353,8 @@ iwm_init_hw(struct iwm_softc *sc)
 	}
 
 	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_UMAC_SCAN)) {
-		if ((err = iwm_mvm_config_umac_scan(sc)) != 0) {
+		err = iwm_mvm_config_umac_scan(sc);
+		if (err != 0) {
 			printf("%s: could not configure scan (error %d)\n",
 			    DEVNAME(sc), err);
 			goto err;
@@ -6343,13 +6373,15 @@ iwm_init_hw(struct iwm_softc *sc)
 	}
 
 	/* Add the MAC context. */
-	if ((err = iwm_mvm_mac_ctxt_add(sc, in)) != 0) {
+	err = iwm_mvm_mac_ctxt_add(sc, in);
+	if (err != 0) {
 		printf("%s: could not add MAC context (error %d)\n",
 		    DEVNAME(sc), err);
 		goto err;
  	}
 
-	if ((err = iwm_mvm_disable_beacon_filter(sc)) != 0) {
+	err = iwm_mvm_disable_beacon_filter(sc);
+	if (err != 0) {
 		printf("%s: could not disable beacon filter (error %d)\n",
 		    DEVNAME(sc), err);
 		goto err;
@@ -6404,7 +6436,8 @@ iwm_init(struct ifnet *ifp)
 	sc->sc_generation++;
 	sc->sc_flags &= ~IWM_FLAG_STOPPED;
 
-	if ((err = iwm_init_hw(sc)) != 0) {
+	err = iwm_init_hw(sc);
+	if (err != 0) {
 		iwm_stop(ifp, 1);
 		return err;
 	}
@@ -6576,7 +6609,8 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING)) {
-				if ((err = iwm_init(ifp)) != 0)
+				err = iwm_init(ifp);
+				if (err != 0)
 					ifp->if_flags &= ~IFF_UP;
 			}
 		} else {
@@ -7336,7 +7370,8 @@ iwm_preinit(struct iwm_softc *sc)
 	int err;
 	static int attached;
 
-	if ((err = iwm_prepare_card_hw(sc)) != 0) {
+	err = iwm_prepare_card_hw(sc);
+	if (err != 0) {
 		printf("%s: could not initialize hardware\n", DEVNAME(sc));
 		return err;
 	}
@@ -7348,7 +7383,8 @@ iwm_preinit(struct iwm_softc *sc)
 		return 0;
 	}
 
-	if ((err = iwm_start_hw(sc)) != 0) {
+	err = iwm_start_hw(sc);
+	if (err != 0) {
 		printf("%s: could not initialize hardware\n", DEVNAME(sc));
 		return err;
 	}
@@ -7608,8 +7644,8 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Allocate TX rings */
 	for (txq_i = 0; txq_i < nitems(sc->txq); txq_i++) {
-		if ((err = iwm_alloc_tx_ring(sc,
-		    &sc->txq[txq_i], txq_i)) != 0) {
+		err = iwm_alloc_tx_ring(sc, &sc->txq[txq_i], txq_i);
+		if (err != 0) {
 			printf("%s: could not allocate TX ring %d\n",
 			    DEVNAME(sc), txq_i);
 			goto fail4;
@@ -7617,7 +7653,8 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Allocate RX ring. */
-	if ((err = iwm_alloc_rx_ring(sc, &sc->rxq)) != 0) {
+	err = iwm_alloc_rx_ring(sc, &sc->rxq);
+	if (err != 0) {
 		printf("%s: could not allocate RX ring\n", DEVNAME(sc));
 		goto fail4;
 	}
