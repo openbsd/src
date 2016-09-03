@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile.inc,v 1.23 2016/03/30 06:38:41 jmc Exp $
+#	$OpenBSD: Makefile.inc,v 1.24 2016/09/03 16:25:03 tedu Exp $
 
 # hash functions
 .PATH: ${LIBCSRCDIR}/hash
 
-HELPER=	md5hl.c rmd160hl.c sha1hl.c sha224hl.c sha256hl.c sha384hl.c sha512hl.c
+HELPER=	md5hl.c rmd160hl.c sha1hl.c sha224hl.c sha256hl.c sha384hl.c sha512hl.c sha512_256hl.c
 SRCS+=	md5.c rmd160.c sha1.c sha2.c ${HELPER} siphash.c
 MAN+=	md5.3 rmd160.3 sha1.3 sha2.3 SipHash24.3
 
@@ -38,4 +38,9 @@ sha512hl.c:	helper.c
 	    -e 's/HASH/SHA512/g' \
 	    -e 's/SHA[0-9][0-9][0-9]_CTX/SHA2_CTX/g' $> > $@
 
-beforedepend: md5hl.c rmd160hl.c sha1hl.c sha256hl.c sha384hl.c sha512hl.c
+sha512_256hl.c:	helper.c
+	sed -e 's/hashinc/sha2.h/g' \
+	    -e 's/HASH/SHA512_256/g' \
+	    -e 's/SHA512_256_CTX/SHA2_CTX/g' $> > $@
+
+beforedepend: md5hl.c rmd160hl.c sha1hl.c sha256hl.c sha384hl.c sha512hl.c sha512_256hl.c
