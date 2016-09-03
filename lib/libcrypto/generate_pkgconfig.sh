@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: generate_pkgconfig.sh,v 1.1 2014/04/11 22:51:53 miod Exp $
+# $OpenBSD: generate_pkgconfig.sh,v 1.2 2016/09/03 12:42:46 beck Exp $
 #
 # Copyright (c) 2010,2011 Jasper Lievisse Adriaanse <jasper@openbsd.org>
 #
@@ -52,7 +52,7 @@ fi
 
 version_re="s/^#define[[:blank:]]+SHLIB_VERSION_NUMBER[[:blank:]]+\"(.*)\".*/\1/p"
 #version_file=${curdir}/src/crypto/opensslv.h
-version_file=${curdir}/../libssl/src/crypto/opensslv.h
+version_file=${curdir}/opensslv.h
 lib_version=$(sed -nE ${version_re} ${version_file})
 
 # Put -I${includedir} into Cflags so configure script tests like
