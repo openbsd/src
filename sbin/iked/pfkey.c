@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.51 2016/03/07 19:33:26 mmcc Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.52 2016/09/03 09:20:07 vgross Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -173,6 +173,7 @@ int
 pfkey_flow(int sd, uint8_t satype, uint8_t action, struct iked_flow *flow)
 {
 	struct sadb_msg		 smsg;
+	struct iked_addr	*flow_src, *flow_dst;
 	struct sadb_address	 sa_src, sa_dst, sa_local, sa_peer, sa_smask,
 				 sa_dmask;
 	struct sadb_protocol	 sa_flowtype, sa_protocol;
@@ -183,56 +184,75 @@ pfkey_flow(int sd, uint8_t satype, uint8_t action, struct iked_flow *flow)
 
 	sa_srcid = sa_dstid = NULL;
 
+	flow_src = &flow->flow_src;
+	flow_dst = &flow->flow_dst;
+
+	if (flow->flow_prenat.addr_af == flow_src->addr_af) {
+		switch (flow->flow_type) {
+		case SADB_X_FLOW_TYPE_USE:
+			flow_dst = &flow->flow_prenat;
+			break;
+		case SADB_X_FLOW_TYPE_REQUIRE:
+			flow_src = &flow->flow_prenat;
+			break;
+		case 0:
+			if (flow->flow_dir == IPSP_DIRECTION_IN)
+				flow_dst = &flow->flow_prenat;
+			else
+				flow_src = &flow->flow_prenat;
+		}
+	}
+
 	bzero(&ssrc, sizeof(ssrc));
 	bzero(&smask, sizeof(smask));
-	memcpy(&ssrc, &flow->flow_src.addr, sizeof(ssrc));
-	memcpy(&smask, &flow->flow_src.addr, sizeof(smask));
-	socket_af((struct sockaddr *)&ssrc, flow->flow_src.addr_port);
-	socket_af((struct sockaddr *)&smask, flow->flow_src.addr_port ?
+	memcpy(&ssrc, &flow_src->addr, sizeof(ssrc));
+	memcpy(&smask, &flow_src->addr, sizeof(smask));
+	socket_af((struct sockaddr *)&ssrc, flow_src->addr_port);
+	socket_af((struct sockaddr *)&smask, flow_src->addr_port ?
 	    0xffff : 0);
 
-	switch (flow->flow_src.addr_af) {
+	switch (flow_src->addr_af) {
 	case AF_INET:
 		((struct sockaddr_in *)&smask)->sin_addr.s_addr =
-		    prefixlen2mask(flow->flow_src.addr_net ?
-		    flow->flow_src.addr_mask : 32);
+		    prefixlen2mask(flow_src->addr_net ?
+		    flow_src->addr_mask : 32);
 		break;
 	case AF_INET6:
-		prefixlen2mask6(flow->flow_src.addr_net ?
-		    flow->flow_src.addr_mask : 128,
+		prefixlen2mask6(flow_src->addr_net ?
+		    flow_src->addr_mask : 128,
 		    (uint32_t *)((struct sockaddr_in6 *)
 		    &smask)->sin6_addr.s6_addr);
 		break;
 	default:
 		log_warnx("%s: unsupported address family %d",
-		    __func__, flow->flow_src.addr_af);
+		    __func__, flow_src->addr_af);
 		return (-1);
 	}
 	smask.ss_len = ssrc.ss_len;
 
 	bzero(&sdst, sizeof(sdst));
 	bzero(&dmask, sizeof(dmask));
-	memcpy(&sdst, &flow->flow_dst.addr, sizeof(sdst));
-	memcpy(&dmask, &flow->flow_dst.addr, sizeof(dmask));
-	socket_af((struct sockaddr *)&sdst, flow->flow_dst.addr_port);
-	socket_af((struct sockaddr *)&dmask, flow->flow_dst.addr_port ?
+	memcpy(&sdst, &flow_dst->addr, sizeof(sdst));
+	memcpy(&dmask, &flow_dst->addr, sizeof(dmask));
+	socket_af((struct sockaddr *)&sdst, flow_dst->addr_port);
+	socket_af((struct sockaddr *)&dmask, flow_dst->addr_port ?
 	    0xffff : 0);
 
-	switch (flow->flow_dst.addr_af) {
+	switch (flow_dst->addr_af) {
 	case AF_INET:
 		((struct sockaddr_in *)&dmask)->sin_addr.s_addr =
-		    prefixlen2mask(flow->flow_dst.addr_net ?
-		    flow->flow_dst.addr_mask : 32);
+		    prefixlen2mask(flow_dst->addr_net ?
+		    flow_dst->addr_mask : 32);
 		break;
 	case AF_INET6:
-		prefixlen2mask6(flow->flow_dst.addr_net ?
-		    flow->flow_dst.addr_mask : 128,
+		prefixlen2mask6(flow_dst->addr_net ?
+		    flow_dst->addr_mask : 128,
 		    (uint32_t *)((struct sockaddr_in6 *)
 		    &dmask)->sin6_addr.s6_addr);
 		break;
 	default:
 		log_warnx("%s: unsupported address family %d",
-		    __func__, flow->flow_dst.addr_af);
+		    __func__, flow_dst->addr_af);
 		return (-1);
 	}
 	dmask.ss_len = sdst.ss_len;

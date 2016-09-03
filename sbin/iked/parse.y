@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.57 2016/08/06 07:08:59 pascal Exp $	*/
+/*	$OpenBSD: parse.y,v 1.58 2016/09/03 09:20:07 vgross Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -2418,7 +2418,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 {
 	char			 idstr[IKED_ID_SIZE];
 	unsigned int		 idtype = IKEV2_ID_NONE;
-	struct ipsec_addr_wrap	*ipa, *ipb;
+	struct ipsec_addr_wrap	*ipa, *ipb, *ippn;
 	struct iked_policy	 pol;
 	struct iked_proposal	 prop[2];
 	unsigned int		 j;
@@ -2639,6 +2639,17 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 		flows[j].flow_dst.addr_mask = ipb->mask;
 		flows[j].flow_dst.addr_net = ipb->netaddress;
 		flows[j].flow_dst.addr_port = hosts->dport;
+
+		ippn = ipa->srcnat;
+		if (ippn) {
+			memcpy(&flows[j].flow_prenat.addr, &ippn->address,
+			    sizeof(ippn->address));
+			flows[j].flow_prenat.addr_af = ippn->af;
+			flows[j].flow_prenat.addr_mask = ippn->mask;
+			flows[j].flow_prenat.addr_net = ippn->netaddress;
+		} else {
+			flows[j].flow_prenat.addr_af = 0;
+		}
 
 		flows[j].flow_ipproto = ipproto;
 
