@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.34 2015/11/02 20:13:45 miod Exp $ */
+/*      $OpenBSD: param.h,v 1.35 2016/09/03 14:25:27 bluhm Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,7 +62,7 @@
 #define	USPACE_ALIGN	(2 * PAGE_SIZE)	/* align to an even TLB boundary */
 #endif
 
-#define	NMBCLUSTERS	4096		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	(8 * 1024)		/* max cluster allocation */
 
 #ifndef MSGBUFSIZE
 #if PAGE_SHIFT > 12

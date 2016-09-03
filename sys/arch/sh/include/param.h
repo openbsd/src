@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.11 2013/03/26 05:04:10 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.12 2016/09/03 14:25:27 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -80,7 +80,7 @@
 
 #ifdef _KERNEL
 
-#define	NMBCLUSTERS	4096			/* map size, max cluster allocation */
+#define	NMBCLUSTERS	(4 * 1024)		/* max cluster allocation */
 
 #ifndef MSGBUFSIZE
 #define	MSGBUFSIZE	PAGE_SIZE		/* default message buffer size */
