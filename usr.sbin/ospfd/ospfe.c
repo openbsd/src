@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.95 2016/09/02 14:02:48 benno Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.96 2016/09/03 10:22:57 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -43,7 +43,7 @@
 #include "log.h"
 
 void		 ospfe_sig_handler(int, short, void *);
-void		 ospfe_shutdown(void);
+__dead void	 ospfe_shutdown(void);
 void		 orig_rtr_lsa_all(struct area *);
 struct iface	*find_vlink(struct abr_rtr *);
 
@@ -212,11 +212,19 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	return (0);
 }
 
-void
+__dead void
 ospfe_shutdown(void)
 {
 	struct area	*area;
 	struct iface	*iface;
+
+	/* close pipes */
+	msgbuf_write(&iev_rde->ibuf.w);
+	msgbuf_clear(&iev_rde->ibuf.w);
+	close(iev_rde->ibuf.fd);
+	msgbuf_write(&iev_main->ibuf.w);
+	msgbuf_clear(&iev_main->ibuf.w);
+	close(iev_main->ibuf.fd);
 
 	/* stop all interfaces and remove all areas */
 	while ((area = LIST_FIRST(&oeconf->area_list)) != NULL) {
@@ -234,11 +242,7 @@ ospfe_shutdown(void)
 	close(oeconf->ospf_socket);
 
 	/* clean up */
-	msgbuf_write(&iev_rde->ibuf.w);
-	msgbuf_clear(&iev_rde->ibuf.w);
 	free(iev_rde);
-	msgbuf_write(&iev_main->ibuf.w);
-	msgbuf_clear(&iev_main->ibuf.w);
 	free(iev_main);
 	free(oeconf);
 	free(pkt_ptr);
