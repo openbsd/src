@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.153 2016/09/02 14:22:29 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.154 2016/09/03 21:47:57 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -364,7 +364,7 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-	target = argv[argc - 1];
+	target = *argv;
 
 	/* getaddrinfo */
 	memset(&hints, 0, sizeof(struct addrinfo));
