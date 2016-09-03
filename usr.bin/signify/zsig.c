@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.5 2016/09/03 11:22:09 espie Exp $ */
+/* $OpenBSD: zsig.c,v 1.6 2016/09/03 12:12:21 espie Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -24,6 +24,7 @@
 #include <sha2.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <fcntl.h>
 #include "signify.h"
 
@@ -49,7 +50,7 @@ struct gzheader {
 #define MYBUFSIZE 65536LU
 
 
-static uint8_t fake[10] = { 0x1f, 0x8b, 8, 0, 0, 0, 0, 0, 0, 3 };
+static uint8_t fake[10] = { 0x1f, 0x8b, 8, FCOMMENT_FLAG, 0, 0, 0, 0, 0, 3 };
 
 /* XXX no static there, confuses the hell out of gcc which displays
  * non-existent warnings.
@@ -137,7 +138,7 @@ copy_blocks(int fdout, int fdin, const char *sha, const char *endsha,
 {
 	uint8_t *buffer;
 	uint8_t *residual;
-	uint8_t output[SHA256_DIGEST_STRING_LENGTH];
+	uint8_t output[SHA512_DIGEST_STRING_LENGTH];
 
 	buffer = xmalloc(bufsize);
 	residual = (uint8_t *)endsha + 1;
@@ -168,7 +169,7 @@ copy_blocks(int fdout, int fdin, const char *sha, const char *endsha,
 			if (more == 0)
 				break;
 		}
-		SHA256Data(buffer, n, output);
+		SHA512Data(buffer, n, output);
 		if (endsha - sha < SHA256_DIGEST_STRING_LENGTH-1)
 			errx(4, "signature truncated");
 		if (memcmp(output, sha, SHA256_DIGEST_STRING_LENGTH-1) != 0)
@@ -189,7 +190,7 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 {
 	struct gzheader h;
 	size_t bufsize;
-	char *p;
+	char *p, *meta;
 	uint8_t *bufend;
 	int fdin, fdout;
 
@@ -211,16 +212,26 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 
 	bufsize = MYBUFSIZE;
 
-	/* allow for arbitrary blocksize */
-	if (sscanf(p, "blocksize=%zu\n", &bufsize)) {
+	meta = p;
+#define BEGINS_WITH(x, y) memcmp((x), (y), sizeof(y)-1) == 0
+
+	while (BEGINS_WITH(p, "algorithm=SHA512/256") ||
+	    BEGINS_WITH(p, "date=") ||
+	    sscanf(p, "blocksize=%zu\n", &bufsize) > 0) {
 		while (*(p++) != '\n')
 			continue;
 	}
+
+	if (*p != '\n')
+		errx(1, "invalid signature");
+	*(p++) = 0;
+
 	fdout = xopen(msgfile, O_CREAT|O_TRUNC|O_NOFOLLOW|O_WRONLY, 0666);
 	/* we don't actually copy the header, but put in a fake one with about
 	 * zero useful information.
 	 */
 	writeall(fdout, fake, sizeof fake, msgfile);
+	writeall(fdout, meta, p - meta, msgfile);
 	copy_blocks(fdout, fdin, p, h.endcomment, bufsize, bufend);
 	free(h.buffer);
 	close(fdout);
@@ -239,6 +250,8 @@ zsign(const char *seckeyfile, const char *msgfile, const char *sigfile)
 	char *p;
 	uint8_t *buffer;
 	uint8_t *sighdr;
+	char date[80];
+	time_t clock;
 
 	fdin = xopen(msgfile, O_RDONLY, 0);
 	if (fstat(fdin, &sb) == -1 || !S_ISREG(sb.st_mode))
@@ -251,12 +264,18 @@ zsign(const char *seckeyfile, const char *msgfile, const char *sigfile)
 	if (lseek(fdin, h.headerlength, SEEK_SET) == -1)
 		err(1, "seek in %s", msgfile);
 
-	space = (sb.st_size / MYBUFSIZE+1) * SHA256_DIGEST_STRING_LENGTH +
-		80; /* long enough for blocksize=.... */
+	space = (sb.st_size / MYBUFSIZE+2) * SHA256_DIGEST_STRING_LENGTH +
+		1024; /* long enough for extra header information */
 
 	msg = xmalloc(space);
 	buffer = xmalloc(bufsize);
-	snprintf(msg, space, "blocksize=%zu\n", bufsize);
+	time(&clock);
+	strftime(date, sizeof date, "%Y-%m-%dT%H:%M:%SZ", gmtime(&clock));
+	snprintf(msg, space, 
+	    "date=%s\n"
+	    "algorithm=SHA512/256\n"
+	    "blocksize=%zu\n\n",
+	    date, bufsize);
 	p = strchr(msg, 0);
 
 	while (1) {
@@ -265,7 +284,7 @@ zsign(const char *seckeyfile, const char *msgfile, const char *sigfile)
 			err(1, "read from %s", msgfile);
 		if (n == 0)
 			break;
-		SHA256Data(buffer, n, p);
+		SHA512Data(buffer, n, p);
 		p += SHA256_DIGEST_STRING_LENGTH;
 		p[-1] = '\n';
 		if (msg + space < p)
@@ -275,7 +294,6 @@ zsign(const char *seckeyfile, const char *msgfile, const char *sigfile)
 
 	fdout = xopen(sigfile, O_CREAT|O_TRUNC|O_NOFOLLOW|O_WRONLY, 0666);
 	sighdr = createsig(seckeyfile, msgfile, msg, p-msg);
-	fake[3] = FCOMMENT_FLAG;
 	fake[8] = h.xflg;
 
 	writeall(fdout, fake, sizeof fake, sigfile);
