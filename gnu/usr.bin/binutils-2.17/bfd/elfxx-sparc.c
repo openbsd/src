@@ -1009,7 +1009,7 @@ sparc_elf_tls_transition (struct bfd_link_info *info, bfd *abfd,
       && ! _bfd_sparc_elf_tdata (abfd)->has_tlsgd)
     r_type = R_SPARC_REV32;
 
-  if (info->shared)
+  if (info->shared && !info->executable)
     return r_type;
 
   switch (r_type)
@@ -1134,13 +1134,13 @@ _bfd_sparc_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 
 	case R_SPARC_TLS_LE_HIX22:
 	case R_SPARC_TLS_LE_LOX10:
-	  if (info->shared)
+	  if (info->shared && !info->executable)
 	    goto r_sparc_plt32;
 	  break;
 
 	case R_SPARC_TLS_IE_HI22:
 	case R_SPARC_TLS_IE_LO10:
-	  if (info->shared)
+	  if (info->shared && !info->executable)
 	    info->flags |= DF_STATIC_TLS;
 	  /* Fall through */
 
@@ -1237,7 +1237,7 @@ _bfd_sparc_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 
 	case R_SPARC_TLS_GD_CALL:
 	case R_SPARC_TLS_LDM_CALL:
-	  if (info->shared)
+	  if (info->shared && !info->executable)
 	    {
 	      /* These are basically R_SPARC_TLS_WPLT30 relocs against
 		 __tls_get_addr.  */
@@ -1949,9 +1949,9 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
     }
 
   /* If R_SPARC_TLS_IE_{HI22,LO10} symbol is now local to the binary,
-     make it a R_SPARC_TLS_LE_{HI22,LO10} requiring no TLS entry.  */
+     make it a R_SPARC_TLS_LE_{HI22,LO10} requiring no GOT entry.  */
   if (h->got.refcount > 0
-      && !info->shared
+      && (!info->shared || info->executable)
       && h->dynindx == -1
       && _bfd_sparc_elf_hash_entry(h)->tls_type == GOT_TLS_IE)
     h->got.offset = (bfd_vma) -1;

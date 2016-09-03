@@ -694,7 +694,7 @@ elf64_x86_64_elf_object_p (bfd *abfd)
 static int
 elf64_x86_64_tls_transition (struct bfd_link_info *info, int r_type, int is_local)
 {
-  if (info->shared)
+  if (info->shared && !info->executable)
     return r_type;
 
   switch (r_type)
@@ -772,7 +772,7 @@ elf64_x86_64_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 	  goto create_got;
 
 	case R_X86_64_TPOFF32:
-	  if (info->shared)
+	  if (info->shared && !info->executable)
 	    {
 	      (*_bfd_error_handler)
 		(_("%B: relocation %s against `%s' can not be used when making a shared object; recompile with -fPIC"),
@@ -785,7 +785,7 @@ elf64_x86_64_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 	  break;
 
 	case R_X86_64_GOTTPOFF:
-	  if (info->shared)
+	  if (info->shared && !info->executable)
 	    info->flags |= DF_STATIC_TLS;
 	  /* Fall through */
 
@@ -1516,7 +1516,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
   /* If R_X86_64_GOTTPOFF symbol is now local to the binary,
      make it a R_X86_64_TPOFF32 requiring no GOT entry.  */
   if (h->got.refcount > 0
-      && !info->shared
+      && (!info->shared || info->executable)
       && h->dynindx == -1
       && elf64_x86_64_hash_entry (h)->tls_type == GOT_TLS_IE)
     h->got.offset = (bfd_vma) -1;
@@ -2978,14 +2978,15 @@ elf64_x86_64_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  break;
 
 	case R_X86_64_DTPOFF32:
-	  if (info->shared || (input_section->flags & SEC_CODE) == 0)
+	  if ((info->shared && !info->executable)
+	      || (input_section->flags & SEC_CODE) == 0)
 	    relocation -= dtpoff_base (info);
 	  else
 	    relocation = tpoff (info, relocation);
 	  break;
 
 	case R_X86_64_TPOFF32:
-	  BFD_ASSERT (! info->shared);
+	  BFD_ASSERT (! info->shared || info->executable);
 	  relocation = tpoff (info, relocation);
 	  break;
 
