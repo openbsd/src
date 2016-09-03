@@ -10912,6 +10912,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "DSL3510 Thunderbolt",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_SFP_SF_QP,
+	    "82599 QSFP+",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_SFP_SF2,
 	    "82599",
 	},
@@ -10920,12 +10924,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82599EN",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_LM,
-	    "I218-LM",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_QSFP_SF_QP,
+	    "82599 QSFP+",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_V,
 	    "I218-V",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_LM,
+	    "I218-LM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X540T1,
+	    "X540T",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550T,
+	    "X550",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DSL5520,
@@ -11010,6 +11026,30 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V2,
 	    "I219-V2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_KX4,
+	    "X550EM Backplane",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_KR,
+	    "X550EM Backplane",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_SFP,
+	    "X550EM SFP+",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_10G_T,
+	    "X550EM 10GbaseT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_1G_T,
+	    "X550EM 1GbaseT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550T1,
+	    "X550",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE5G_H_PCIE_X16,
