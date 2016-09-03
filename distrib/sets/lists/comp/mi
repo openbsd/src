@@ -630,7 +630,6 @@
 ./usr/include/dev/pcmcia
 ./usr/include/dev/pcmcia/cfxgareg.h
 ./usr/include/dev/pcmcia/gprio.h
-./usr/include/dev/pcmcia/if_cnwreg.h
 ./usr/include/dev/pcmcia/if_maloreg.h
 ./usr/include/dev/pcmcia/if_malovar.h
 ./usr/include/dev/pcmcia/if_xereg.h
