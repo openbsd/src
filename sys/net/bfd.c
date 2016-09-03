@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.5 2016/09/03 15:49:00 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.6 2016/09/03 16:45:27 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -383,8 +383,8 @@ bfd_listener(struct bfd_softc *sc, u_int port)
 	struct sockaddr_in	*sin;
 	struct sockaddr_in6	*sin6;
 	struct socket		*so;
-	struct mbuf		*m;
-	int error;
+	struct mbuf		*m, *mopt;
+	int			*ip, error;
 
 	/* sa_family and sa_len must be equal */
 	if (src->sa_family != dst->sa_family || src->sa_len != dst->sa_len)
@@ -396,6 +396,18 @@ bfd_listener(struct bfd_softc *sc, u_int port)
 		    __func__, error);
 		return (NULL);
 	}
+
+	MGET(mopt, M_WAIT, MT_SOOPTS);
+	mopt->m_len = sizeof(int);
+	ip = mtod(mopt, int *);
+	*ip = MAXTTL;
+	error = sosetopt(so, IPPROTO_IP, IP_MINTTL, mopt);
+	if (error) {
+		printf("%s: sosetopt error %d\n",
+		    __func__, error);
+		goto close;
+	}
+
 	MGET(m, M_WAIT, MT_SONAME);
 	m->m_len = src->sa_len;
 	sa = mtod(m, struct sockaddr *);
@@ -424,6 +436,12 @@ bfd_listener(struct bfd_softc *sc, u_int port)
 	so->so_upcall = bfd_upcall;
 
 	return (so);
+
+ close:
+	m_free(m);
+	soclose(so);
+
+	return (NULL);
 }
 
 /*
@@ -466,7 +484,7 @@ bfd_sender(struct bfd_softc *sc, u_int port)
 	MGET(mopt, M_WAIT, MT_SOOPTS);
 	mopt->m_len = sizeof(int);
 	ip = mtod(mopt, int *);
-	*ip = 255;	/* XXX - use a #define */
+	*ip = MAXTTL;
 	error = sosetopt(so, IPPROTO_IP, IP_TTL, mopt);
 	if (error) {
 		printf("%s: sosetopt error %d\n",
@@ -528,7 +546,6 @@ bfd_sender(struct bfd_softc *sc, u_int port)
 	soclose(so);
 
 	return (NULL);
-
 }
 
 /*
@@ -542,6 +559,7 @@ bfd_upcall(struct socket *so, caddr_t arg, int waitflag)
 	struct uio uio;
 	int flags, error;
 
+printf("%s: packet\n", __func__);
 	uio.uio_procp = NULL;
 	do {
 		uio.uio_resid = 1000000000;
@@ -677,12 +695,6 @@ bfd_input(struct bfd_softc *sc, struct mbuf *m)
 	if (mp == NULL)
 		return;
 	peer = (struct bfd_header *)(mp->m_data + offp);
-
-#if 0
-	/* XXX check TTL security */
-	if (peer->ttl != MAXTTL)
-		goto discard;
-#endif
 
 	/* We only support BFD Version 1 */
 	if (( ver = BFD_VER(peer->bfd_ver_diag)) != 1)
