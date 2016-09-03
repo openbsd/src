@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.38 2015/12/25 17:10:05 tedu Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.39 2016/09/03 11:31:17 nayden Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -420,10 +420,8 @@ kq_dealloc(struct event_base *base, void *arg)
 
 	evsignal_dealloc(base);
 
-	if (kqop->changes)
-		free(kqop->changes);
-	if (kqop->events)
-		free(kqop->events);
+	free(kqop->changes);
+	free(kqop->events);
 	if (kqop->kq >= 0 && kqop->pid == getpid())
 		close(kqop->kq);
 

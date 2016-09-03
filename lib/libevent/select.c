@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.c,v 1.24 2014/10/30 13:43:28 bluhm Exp $	*/
+/*	$OpenBSD: select.c,v 1.25 2016/09/03 11:31:17 nayden Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -326,18 +326,12 @@ select_dealloc(struct event_base *base, void *arg)
 	struct selectop *sop = arg;
 
 	evsignal_dealloc(base);
-	if (sop->event_readset_in)
-		free(sop->event_readset_in);
-	if (sop->event_writeset_in)
-		free(sop->event_writeset_in);
-	if (sop->event_readset_out)
-		free(sop->event_readset_out);
-	if (sop->event_writeset_out)
-		free(sop->event_writeset_out);
-	if (sop->event_r_by_fd)
-		free(sop->event_r_by_fd);
-	if (sop->event_w_by_fd)
-		free(sop->event_w_by_fd);
+	free(sop->event_readset_in);
+	free(sop->event_writeset_in);
+	free(sop->event_readset_out);
+	free(sop->event_writeset_out);
+	free(sop->event_r_by_fd);
+	free(sop->event_w_by_fd);
 
 	memset(sop, 0, sizeof(struct selectop));
 	free(sop);

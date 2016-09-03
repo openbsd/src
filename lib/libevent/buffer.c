@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.29 2015/02/05 12:59:57 millert Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.30 2016/09/03 11:31:17 nayden Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -56,8 +56,7 @@ evbuffer_new(void)
 void
 evbuffer_free(struct evbuffer *buffer)
 {
-	if (buffer->orig_buffer != NULL)
-		free(buffer->orig_buffer);
+	free(buffer->orig_buffer);
 	free(buffer);
 }
 

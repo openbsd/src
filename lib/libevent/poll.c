@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.c,v 1.21 2014/10/30 16:45:37 bluhm Exp $	*/
+/*	$OpenBSD: poll.c,v 1.22 2016/09/03 11:31:17 nayden Exp $	*/
 
 /*
  * Copyright 2000-2003 Niels Provos <provos@citi.umich.edu>
@@ -359,14 +359,10 @@ poll_dealloc(struct event_base *base, void *arg)
 	struct pollop *pop = arg;
 
 	evsignal_dealloc(base);
-	if (pop->event_set)
-		free(pop->event_set);
-	if (pop->event_r_back)
-		free(pop->event_r_back);
-	if (pop->event_w_back)
-		free(pop->event_w_back);
-	if (pop->idxplus1_by_fd)
-		free(pop->idxplus1_by_fd);
+	free(pop->event_set);
+	free(pop->event_r_back);
+	free(pop->event_w_back);
+	free(pop->idxplus1_by_fd);
 
 	memset(pop, 0, sizeof(struct pollop));
 	free(pop);
