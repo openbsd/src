@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.63 2016/09/03 16:05:54 akfaew Exp $
+.\"	$OpenBSD: ping6.8,v 1.64 2016/09/03 16:22:26 akfaew Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -181,8 +181,8 @@ when finished.
 .\"is a neighbor.
 .It Fl s Ar packetsize
 Specifies the number of data bytes to be sent.
-The default is 56,
-which translates into 64 ICMP data bytes
+The default is 24,
+which translates into 32 ICMP data bytes
 when combined with the 8 bytes of ICMP header data.
 The maximum packet size is 65527.
 .It Fl V Ar rtable
