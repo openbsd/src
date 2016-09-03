@@ -95,6 +95,10 @@ edns_parse_record(edns_record_type *edns, buffer_type *packet)
 	}
 
 	if (opt_rdlen > 0) {
+		if(!buffer_available(packet, opt_rdlen))
+			return 0;
+		if(opt_rdlen < 4)
+			return 0;
 		/* there is more to come, read opt code
 		 * should be NSID - there are no others */
 		opt_nsid = buffer_read_u16(packet);
