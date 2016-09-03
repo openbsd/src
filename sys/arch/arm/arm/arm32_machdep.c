@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.49 2016/08/08 19:27:12 kettenis Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.50 2016/09/03 15:07:06 guenther Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -108,11 +108,6 @@ int allowaperture = 1;
 #else
 int allowaperture = 0;
 #endif
-#endif
-
-#if defined(__zaurus__)
-int lid_suspend = 1;
-extern int xscale_maxspeed;
 #endif
 
 struct consdev *cn_tab;
@@ -352,24 +347,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #if NAPM > 0
 	case CPU_APMWARN:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_apmwarn));
-#endif
-#if defined(__zaurus__)
-	case CPU_LIDSUSPEND:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &lid_suspend));
-	case CPU_MAXSPEED:
-	{
-		extern void pxa2x0_maxspeed(int *);
-		int err = EINVAL;
-
-		if (!newp && newlen == 0)
-			return (sysctl_int(oldp, oldlenp, 0, 0,
-			    &xscale_maxspeed));
-		err = (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &xscale_maxspeed));
-		pxa2x0_maxspeed(&xscale_maxspeed);
-		return err;
-	}
 #endif
 
 	default:
