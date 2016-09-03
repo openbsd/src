@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_lchpass.c,v 1.19 2016/08/01 17:04:18 jca Exp $	*/
+/*	$OpenBSD: login_lchpass.c,v 1.20 2016/09/03 10:48:15 gsoares Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -51,6 +51,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <login_cap.h>
+#include <readpassphrase.h>
 
 #define BACK_CHANNEL	3
 
@@ -61,7 +62,8 @@ main(int argc, char *argv[])
 {
 	struct iovec iov[2];
 	struct passwd *pwd;
-	char *username = NULL, *hash = NULL, *p;
+	char *username = NULL, *hash = NULL;
+	char oldpass[1024];
 	struct rlimit rl;
 	int c;
 
@@ -122,14 +124,15 @@ main(int argc, char *argv[])
 	(void)setpriority(PRIO_PROCESS, 0, -4);
 
 	(void)printf("Changing local password for %s.\n", username);
-	if ((p = getpass("Old Password:")) == NULL)
+	if ((readpassphrase("Old Password:", oldpass, sizeof(oldpass),
+		    RPP_ECHO_OFF)) == NULL)
 		exit(1);
 
-	if (crypt_checkpass(p, hash) != 0) {
-		explicit_bzero(p, strlen(p));
+	if (crypt_checkpass(oldpass, hash) != 0) {
+		explicit_bzero(oldpass, strlen(oldpass));
 		exit(1);
 	}
-	explicit_bzero(p, strlen(p));
+	explicit_bzero(oldpass, strlen(oldpass));
 
 	/*
 	 * We rely on local_passwd() to block signals during the
