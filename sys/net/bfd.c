@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.8 2016/09/03 16:56:13 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.9 2016/09/03 19:17:49 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -827,6 +827,13 @@ bfd_set_state(struct bfd_softc *sc, int state)
 	int		 new_state;
 
 	ifp = if_get(rt->rt_ifidx);
+	if (ifp == NULL) {
+		printf("%s: cannot find interface index %u\n",
+		    __func__, rt->rt_ifidx);
+		sc->error++;
+		bfd_reset(sc);
+		return;
+	}
 	sc->sc_peer->SessionState = state;
 
 	if (!rtisvalid(rt))
@@ -852,6 +859,8 @@ bfd_set_state(struct bfd_softc *sc, int state)
 
 printf("%s: BFD set linkstate %u (oldstate: %u)\n", ifp->if_xname, new_state, state);
 	rt_sendmsg(rt, new_state, ifp->if_rdomain);
+
+	if_put(ifp);
 
 	return;
 }
@@ -924,6 +933,12 @@ bfd_debug(struct bfd_softc *sc)
 
 	ifp = if_get(rt->rt_ifidx);
 
+	if (ifp == NULL) {
+	printf("%s: cannot find interface index %u\n",
+	    __func__, rt->rt_ifidx);
+		return;
+	}
+
 	printf("session state: %u ", sc->state);
 	printf("mode: %u ", sc->mode);
 	printf("error: %u ", sc->error);
@@ -944,5 +959,7 @@ bfd_debug(struct bfd_softc *sc)
 	printf("remote diag: %u ", sc->sc_peer->RemoteDiag);
 	printf("remote min rx: %u ", sc->sc_peer->RemoteMinRxInterval);
 	printf("\n");
+
+	if_put(ifp);
 }
 #endif /* DDB */
