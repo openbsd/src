@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.6 2016/09/03 12:12:21 espie Exp $ */
+/* $OpenBSD: zsig.c,v 1.7 2016/09/03 12:59:33 espie Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -138,7 +138,7 @@ copy_blocks(int fdout, int fdin, const char *sha, const char *endsha,
 {
 	uint8_t *buffer;
 	uint8_t *residual;
-	uint8_t output[SHA512_DIGEST_STRING_LENGTH];
+	uint8_t output[SHA384_DIGEST_STRING_LENGTH];
 
 	buffer = xmalloc(bufsize);
 	residual = (uint8_t *)endsha + 1;
@@ -169,14 +169,14 @@ copy_blocks(int fdout, int fdin, const char *sha, const char *endsha,
 			if (more == 0)
 				break;
 		}
-		SHA512Data(buffer, n, output);
-		if (endsha - sha < SHA256_DIGEST_STRING_LENGTH-1)
+		SHA384Data(buffer, n, output);
+		if (endsha - sha < SHA384_DIGEST_STRING_LENGTH-1)
 			errx(4, "signature truncated");
-		if (memcmp(output, sha, SHA256_DIGEST_STRING_LENGTH-1) != 0)
+		if (memcmp(output, sha, SHA384_DIGEST_STRING_LENGTH-1) != 0)
 			errx(4, "signature mismatch");
-		if (sha[SHA256_DIGEST_STRING_LENGTH-1] != '\n')
+		if (sha[SHA384_DIGEST_STRING_LENGTH-1] != '\n')
 			errx(4, "signature mismatch");
-		sha += SHA256_DIGEST_STRING_LENGTH;
+		sha += SHA384_DIGEST_STRING_LENGTH;
 		writeall(fdout, buffer, n, "stdout");
 		if (n != bufsize)
 			break;
@@ -215,7 +215,7 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 	meta = p;
 #define BEGINS_WITH(x, y) memcmp((x), (y), sizeof(y)-1) == 0
 
-	while (BEGINS_WITH(p, "algorithm=SHA512/256") ||
+	while (BEGINS_WITH(p, "algorithm=SHA384") ||
 	    BEGINS_WITH(p, "date=") ||
 	    sscanf(p, "blocksize=%zu\n", &bufsize) > 0) {
 		while (*(p++) != '\n')
@@ -264,7 +264,7 @@ zsign(const char *seckeyfile, const char *msgfile, const char *sigfile)
 	if (lseek(fdin, h.headerlength, SEEK_SET) == -1)
 		err(1, "seek in %s", msgfile);
 
-	space = (sb.st_size / MYBUFSIZE+2) * SHA256_DIGEST_STRING_LENGTH +
+	space = (sb.st_size / MYBUFSIZE+1) * SHA384_DIGEST_STRING_LENGTH +
 		1024; /* long enough for extra header information */
 
 	msg = xmalloc(space);
@@ -273,7 +273,7 @@ zsign(const char *seckeyfile, const char *msgfile, const char *sigfile)
 	strftime(date, sizeof date, "%Y-%m-%dT%H:%M:%SZ", gmtime(&clock));
 	snprintf(msg, space, 
 	    "date=%s\n"
-	    "algorithm=SHA512/256\n"
+	    "algorithm=SHA384\n"
 	    "blocksize=%zu\n\n",
 	    date, bufsize);
 	p = strchr(msg, 0);
@@ -284,8 +284,8 @@ zsign(const char *seckeyfile, const char *msgfile, const char *sigfile)
 			err(1, "read from %s", msgfile);
 		if (n == 0)
 			break;
-		SHA512Data(buffer, n, p);
-		p += SHA256_DIGEST_STRING_LENGTH;
+		SHA384Data(buffer, n, p);
+		p += SHA384_DIGEST_STRING_LENGTH;
 		p[-1] = '\n';
 		if (msg + space < p)
 			errx(1, "file too long %s", msgfile);
