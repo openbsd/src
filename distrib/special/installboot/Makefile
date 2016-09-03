@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2016/09/01 10:08:29 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2016/09/03 13:37:40 guenther Exp $
 
 .PATH: ${.CURDIR}/../../../usr.sbin/installboot
 
@@ -69,10 +69,6 @@ SRCS += stubs.c
 CFLAGS += -DSOFTRAID
 SRCS += sparc64_installboot.c
 SRCS += sparc64_softraid.c
-.endif
-
-.if ${MACHINE} == "zaurus"
-SRCS += stubs.c
 .endif
 
 .if !empty(CFLAGS:M-DBOOTSTRAP)

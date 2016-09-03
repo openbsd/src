@@ -1,4 +1,0 @@
-dnl	$OpenBSD: whatis,v 1.4 2006/04/04 00:26:33 uwe Exp $
-
-OpenBSD/MACHINE runs on the Sharp Zaurus SL-C3000, SL-C3100 and
-SL-C3200 PDA.

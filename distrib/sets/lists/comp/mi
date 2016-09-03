@@ -1602,6 +1602,9 @@
 ./usr/share/man/man2/amd64
 ./usr/share/man/man2/amd64/amd64_get_fsbase.2
 ./usr/share/man/man2/amd64/amd64_iopl.2
+./usr/share/man/man2/armv7
+./usr/share/man/man2/armv7/arm_drain_writebuf.2
+./usr/share/man/man2/armv7/arm_sync_icache.2
 ./usr/share/man/man2/bind.2
 ./usr/share/man/man2/brk.2
 ./usr/share/man/man2/chdir.2
@@ -1734,9 +1737,6 @@
 ./usr/share/man/man2/vfork.2
 ./usr/share/man/man2/wait.2
 ./usr/share/man/man2/write.2
-./usr/share/man/man2/zaurus
-./usr/share/man/man2/zaurus/arm_drain_writebuf.2
-./usr/share/man/man2/zaurus/arm_sync_icache.2
 ./usr/share/man/man3/ASN1_OBJECT_new.3
 ./usr/share/man/man3/ASN1_STRING_length.3
 ./usr/share/man/man3/ASN1_STRING_new.3

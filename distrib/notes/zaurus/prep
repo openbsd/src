@@ -1,6 +1,0 @@
-dnl	$OpenBSD: prep,v 1.3 2008/08/06 18:23:56 miod Exp $
-No specific preparation is required before installing OpenBSD/MACHINE.
-
-However, the installation process will require the data partition to
-be shrunk and recreated; before installing OpenBSD/MACHINE, you should
-make sure any important data on this partition is backed up.

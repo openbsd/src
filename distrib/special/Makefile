@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.40 2016/08/16 04:55:33 tedu Exp $
+#	$OpenBSD: Makefile,v 1.41 2016/09/03 13:37:40 guenther Exp $
 
 SUBDIR=	libstubs \
 	arch bioctl cat chmod chroot cp date dd df dhclient disklabel dmesg \
@@ -7,7 +7,7 @@ SUBDIR=	libstubs \
 	mkdir mknod mkuboot more mount mount_cd9660 mount_ext2fs \
 	mount_ffs mount_msdos mount_nfs mount_udf mt mv newfs newfs_ext2fs \
 	newfs_msdos pax pdisk ping ping6 pwd_mkdb reboot restore rm route sed \
-	signify sleep stty sync sysctl umount ztsscale
+	signify sleep stty sync sysctl umount
 
 install:
 

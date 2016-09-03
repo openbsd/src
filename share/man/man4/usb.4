@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.180 2016/06/28 06:31:30 jmc Exp $
+.\"	$OpenBSD: usb.4,v 1.181 2016/09/03 13:37:41 guenther Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 28 2016 $
+.Dd $Mdocdate: September 3 2016 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -38,8 +38,6 @@
 .Sh SYNOPSIS
 .Cd "# octeon specific"
 .Cd "dwctwo0 at iobus? irq 56"
-.Cd "# zaurus specific"
-.Cd "ohci0   at pxaip?"
 .Cd "# all architectures"
 .Cd "ehci*   at cardbus?"
 .Cd "ohci*   at cardbus?"

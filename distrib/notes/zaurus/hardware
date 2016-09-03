@@ -1,7 +1,0 @@
-dnl	$OpenBSD: hardware,v 1.34 2014/02/27 18:48:15 deraadt Exp $
-dnl When more than one model is supported, turn this into a list...
-The following Sharp Zaurus models are supported by OpenBSD:
-
-	SL-C3000
-	SL-C3100
-	SL-C3200

@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.285 2016/09/01 09:54:17 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.286 2016/09/03 13:37:41 guenther Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -473,9 +473,9 @@ usr
                 ..
                 amd64
                 ..
-                i386
+                armv7
                 ..
-                zaurus
+                i386
                 ..
             ..
 
@@ -519,8 +519,6 @@ usr
                 ..
                 sparc64
                 ..
-                zaurus
-                ..
             ..
 
             # ./usr/share/man/man5
@@ -536,8 +534,6 @@ usr
                 macppc
                 ..
                 socppc
-                ..
-                zaurus
                 ..
             ..
 
@@ -574,8 +570,6 @@ usr
                 socppc
                 ..
                 sparc64
-                ..
-                zaurus
                 ..
             ..
 

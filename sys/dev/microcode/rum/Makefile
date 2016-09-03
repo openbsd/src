@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2016/08/10 14:27:17 deraadt Exp $
+# $OpenBSD: Makefile,v 1.16 2016/09/03 13:37:45 guenther Exp $
 
 NOPROG=
 NOMAN=
@@ -11,7 +11,7 @@ CC=${HOSTCC}
     ${MACHINE} == "hppa" || ${MACHINE} == "i386" || \
     ${MACHINE} == "landisk" || ${MACHINE} == "loongson" || \
     ${MACHINE} == "octeon" || ${MACHINE} == "sgi" || \
-    ${MACHINE} == "sparc64" || ${MACHINE} == "zaurus")
+    ${MACHINE} == "sparc64")
 
 FIRM=	rum-rt2573 run-rt2870 run-rt3071
 

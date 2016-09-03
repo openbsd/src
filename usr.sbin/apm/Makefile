@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.16 2016/09/01 09:59:40 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2016/09/03 13:37:46 guenther Exp $
 
 
 .if (${MACHINE} == "amd64") || (${MACHINE} == "i386") || \
     (${MACHINE} == "loongson") || (${MACHINE} == "macppc") || \
-    (${MACHINE} == "sparc64") || (${MACHINE} == "zaurus")
+    (${MACHINE} == "sparc64")
 
 SRCS=	apm.c apmsubr.c
 
@@ -18,6 +18,6 @@ NOPROG=yes
 .endif
 
 MAN=	apm.8
-MANSUBDIR=amd64 i386 loongson macppc sparc64 zaurus
+MANSUBDIR=amd64 i386 loongson macppc sparc64
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.637 2016/09/01 10:04:51 jcs Exp $
+#	$OpenBSD: Makefile,v 1.638 2016/09/03 13:37:41 guenther Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -67,7 +67,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	ukphy.4 ulpt.4 umass.4 umb.4 umbg.4 umcs.4 umct.4 umidi.4 umodem.4 \
 	ums.4 umsm.4 unix.4 uonerng.4 uow.4 uoaklux.4 uoakrh.4 uoakv.4 upd.4 \
 	upgt.4 upl.4 uplcom.4 ural.4 ure.4 url.4 urlphy.4 \
-	urndis.4 urtw.4 urtwn.4 usb.4  usbf.4 uscom.4 uslcom.4 usps.4 \
+	urndis.4 urtw.4 urtwn.4 usb.4 uscom.4 uslcom.4 usps.4 \
 	uthum.4 uticom.4 utpms.4 utwitch.4 utrh.4 uts.4 utvfu.4 uvideo.4 \
 	uvisor.4 uvscom.4 \
 	vether.4 vga.4 vgafb.4 vge.4 \
@@ -83,7 +83,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 SUBDIR=	man4.alpha man4.amd64 man4.armv7 \
 	man4.hppa man4.i386 man4.landisk man4.loongson man4.luna88k \
 	man4.macppc man4.octeon \
-	man4.sgi man4.socppc man4.sparc64 man4.zaurus
+	man4.sgi man4.socppc man4.sparc64
 
 CLEANFILES+= wi.4
 

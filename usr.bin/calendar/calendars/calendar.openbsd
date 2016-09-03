@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.37 2016/03/11 20:20:26 jmc Exp $
+ * $OpenBSD: calendar.openbsd,v 1.38 2016/09/03 13:37:45 guenther Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -80,6 +80,8 @@ Aug 16	IPX network stack added to OpenBSD, from FreeBSD, 1996
 Aug 17	c2k1-2: Sparc64 hackathon, Washington D.C., 12 developers, 2001
 Aug 17	OpenBSD/sparc64 port is added, from NetBSD, 2001
 Aug 28	k2k6: IPSec hackathon, Schloss Kransberg, Germany, 14 developers, 2006
+Sep 01	Support for the sparc (32bit) architecture removed, 2016
+Sep 03	Support for the zaurus architecture removed, 2016
 Sep 16	s2k11: General hackathon, Ljubljana, Slovenia, 25 developers, 2011
 Sep 17	n2k12: Network hackathon, Starnberg, Germany, 23 developers, 2012
 Sep 19	j2k10: Mini-hackathon, Sakae Mura, Nagano, Japan, 19 developers, 2010
