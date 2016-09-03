@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.107 2016/09/03 12:24:21 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.108 2016/09/03 13:35:07 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -244,10 +244,6 @@ void	iwm_clear_bits_prph(struct iwm_softc *, uint32_t, uint32_t);
 int	iwm_dma_contig_alloc(bus_dma_tag_t, struct iwm_dma_info *,
 				bus_size_t, bus_size_t);
 void	iwm_dma_contig_free(struct iwm_dma_info *);
-int	iwm_alloc_fwmem(struct iwm_softc *);
-int	iwm_alloc_sched(struct iwm_softc *);
-int	iwm_alloc_kw(struct iwm_softc *);
-int	iwm_alloc_ict(struct iwm_softc *);
 int	iwm_alloc_rx_ring(struct iwm_softc *, struct iwm_rx_ring *);
 void	iwm_disable_rx_dma(struct iwm_softc *);
 void	iwm_reset_rx_ring(struct iwm_softc *, struct iwm_rx_ring *);
@@ -1038,42 +1034,6 @@ iwm_dma_contig_free(struct iwm_dma_info *dma)
 	}
 }
 
-/* fwmem is used to load firmware onto the card */
-int
-iwm_alloc_fwmem(struct iwm_softc *sc)
-{
-	/* Must be aligned on a 16-byte boundary. */
-	return iwm_dma_contig_alloc(sc->sc_dmat, &sc->fw_dma,
-	    sc->sc_fwdmasegsz, 16);
-}
-
-/* tx scheduler rings.  not used? */
-int
-iwm_alloc_sched(struct iwm_softc *sc)
-{
-	int rv;
-
-	/* TX scheduler rings must be aligned on a 1KB boundary. */
-	rv = iwm_dma_contig_alloc(sc->sc_dmat, &sc->sched_dma,
-	    nitems(sc->txq) * sizeof(struct iwm_agn_scd_bc_tbl), 1024);
-	return rv;
-}
-
-/* keep-warm page is used internally by the card.  see iwl-fh.h for more info */
-int
-iwm_alloc_kw(struct iwm_softc *sc)
-{
-	return iwm_dma_contig_alloc(sc->sc_dmat, &sc->kw_dma, 4096, 4096);
-}
-
-/* interrupt cause table */
-int
-iwm_alloc_ict(struct iwm_softc *sc)
-{
-	return iwm_dma_contig_alloc(sc->sc_dmat, &sc->ict_dma,
-	    IWM_ICT_SIZE, 1<<IWM_ICT_PADDR_SHIFT);
-}
-
 int
 iwm_alloc_rx_ring(struct iwm_softc *sc, struct iwm_rx_ring *ring)
 {
@@ -1367,11 +1327,11 @@ iwm_ict_reset(struct iwm_softc *sc)
 {
 	iwm_disable_interrupts(sc);
 
-	/* Reset ICT table. */
+	/* Reset ICT. */
 	memset(sc->ict_dma.vaddr, 0, IWM_ICT_SIZE);
 	sc->ict_cur = 0;
 
-	/* Set physical address of ICT table (4KB aligned). */
+	/* Set physical address of ICT (4KB aligned). */
 	IWM_WRITE(sc, IWM_CSR_DRAM_INT_TBL_REG,
 	    IWM_CSR_DRAM_INT_TBL_ENABLE
 	    | IWM_CSR_DRAM_INIT_TBL_WRAP_CHECK
@@ -1603,8 +1563,6 @@ iwm_stop_device(struct iwm_softc *sc)
 
 	/* tell the device to stop sending interrupts */
 	iwm_disable_interrupts(sc);
-
-	/* device going down, Stop using ICT table */
 	sc->sc_flags &= ~IWM_FLAG_USE_ICT;
 
 	/* stop tx and rx.  tx and rx bits, as usual, are from if_iwn */
@@ -7904,27 +7862,39 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	/* Allocate DMA memory for firmware transfers. */
-	if ((error = iwm_alloc_fwmem(sc)) != 0) {
+	/* 
+	 * Allocate DMA memory for firmware transfers.
+	 * Must be aligned on a 16-byte boundary.
+	 */
+	error = iwm_dma_contig_alloc(sc->sc_dmat, &sc->fw_dma,
+	    sc->sc_fwdmasegsz, 16);
+	if (error != 0) {
 		printf("%s: could not allocate memory for firmware\n",
 		    DEVNAME(sc));
 		return;
 	}
 
-	/* Allocate "Keep Warm" page. */
-	if ((error = iwm_alloc_kw(sc)) != 0) {
+	/* Allocate "Keep Warm" page, used internally by the card. */
+	error = iwm_dma_contig_alloc(sc->sc_dmat, &sc->kw_dma, 4096, 4096);
+	if (error != 0) {
 		printf("%s: could not allocate keep warm page\n", DEVNAME(sc));
 		goto fail1;
 	}
 
-	/* We use ICT interrupts */
-	if ((error = iwm_alloc_ict(sc)) != 0) {
+	/* Allocate interrupt cause table (ICT).*/
+	error = iwm_dma_contig_alloc(sc->sc_dmat, &sc->ict_dma,
+	    IWM_ICT_SIZE, 1<<IWM_ICT_PADDR_SHIFT);
+	if (error != 0) {
 		printf("%s: could not allocate ICT table\n", DEVNAME(sc));
 		goto fail2;
 	}
 
 	/* Allocate TX scheduler "rings". */
-	if ((error = iwm_alloc_sched(sc)) != 0) {
+
+	/* TX scheduler rings must be aligned on a 1KB boundary. */
+	error = iwm_dma_contig_alloc(sc->sc_dmat, &sc->sched_dma,
+	    nitems(sc->txq) * sizeof(struct iwm_agn_scd_bc_tbl), 1024);
+	if (error != 0) {
 		printf("%s: could not allocate TX scheduler rings\n",
 		    DEVNAME(sc));
 		goto fail3;
