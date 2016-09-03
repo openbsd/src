@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.221 2016/08/31 13:13:58 stefan Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.222 2016/09/03 18:43:34 stefan Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1017,8 +1017,7 @@ uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 		 * Note: we enforce the alignment restriction,
 		 * but ignore pmap_prefer.
 		 */
-	} else if ((maxprot & PROT_EXEC) != 0 &&
-	    map->uaddr_exe != NULL) {
+	} else if ((prot & PROT_EXEC) != 0 && map->uaddr_exe != NULL) {
 		/* Run selection algorithm for executables. */
 		error = uvm_addr_invoke(map, map->uaddr_exe, &first, &last,
 		    addr, sz, pmap_align, pmap_offset, prot, hint);
@@ -1248,8 +1247,7 @@ uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 		 * Note: we enforce the alignment restriction,
 		 * but ignore pmap_prefer.
 		 */
-	} else if ((maxprot & PROT_EXEC) != 0 &&
-	    map->uaddr_exe != NULL) {
+	} else if ((prot & PROT_EXEC) != 0 && map->uaddr_exe != NULL) {
 		/* Run selection algorithm for executables. */
 		error = uvm_addr_invoke(map, map->uaddr_exe, &first, &last,
 		    addr, sz, pmap_align, pmap_offset, prot, hint);
