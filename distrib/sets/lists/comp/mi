@@ -2689,7 +2689,6 @@
 ./usr/share/man/man9/getdevvp.9
 ./usr/share/man/man9/getnewvnode.9
 ./usr/share/man/man9/hardclock.9
-./usr/share/man/man9/hash.9
 ./usr/share/man/man9/hashinit.9
 ./usr/share/man/man9/hook_establish.9
 ./usr/share/man/man9/hz.9
