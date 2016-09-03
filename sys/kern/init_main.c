@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.255 2016/09/03 13:16:50 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.256 2016/09/03 14:46:56 naddy Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -541,6 +541,8 @@ main(void *framep)
 #if !(defined(__m88k__) && defined(MULTIPROCESSOR))	/* XXX */
 	pool_gc_pages(NULL);
 #endif
+
+	start_periodic_resettodr();
 
         /*
          * proc0: nothing to do, back to sleep

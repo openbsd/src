@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.114 2015/09/28 18:36:36 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.115 2016/09/03 14:46:56 naddy Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -248,6 +248,7 @@ apm_suspend(int state)
 #if NWSDISPLAY > 0
 	wsdisplay_suspend();
 #endif /* NWSDISPLAY > 0 */
+	stop_periodic_resettodr();
 	config_suspend_all(DVACT_QUIESCE);
 	bufq_quiesce();
 
@@ -284,6 +285,7 @@ apm_suspend(int state)
 	bufq_restart();
 
 	config_suspend_all(DVACT_WAKEUP);
+	start_periodic_resettodr();
 
 #if NWSDISPLAY > 0
 	wsdisplay_resume();

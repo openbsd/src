@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.314 2016/08/31 15:40:42 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.315 2016/09/03 14:46:56 naddy Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2383,6 +2383,8 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 	rw_enter_write(&sc->sc_lck);
 #endif /* NWSDISPLAY > 0 */
 
+	stop_periodic_resettodr();
+
 #ifdef HIBERNATE
 	if (state == ACPI_STATE_S4) {
 		uvmpd_hibernate();
@@ -2482,6 +2484,8 @@ fail_alloc:
 		hibernate_resume_bufcache();
 	}
 #endif /* HIBERNATE */
+
+	start_periodic_resettodr();
 
 #if NWSDISPLAY > 0
 	rw_exit_write(&sc->sc_lck);
