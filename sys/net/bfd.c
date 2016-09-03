@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.11 2016/09/03 20:02:49 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.12 2016/09/03 20:35:07 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -751,7 +751,7 @@ printf("%s: peer your discr 0x%x != local 0x%x\n",
 
 	sc->sc_peer->RemoteSessionState = state;
 	sc->error = 0;
-	sc->sc_peer->RemoteMinRxInterval = peer->bfd_required_min_rx_interval;
+	sc->sc_peer->RemoteMinRxInterval = ntohl(peer->bfd_required_min_rx_interval);
 
 	if (sc->sc_peer->RemoteMinRxInterval < BFD_MINIMUM)
 		sc->sc_peer->RemoteMinRxInterval = BFD_MINIMUM;
