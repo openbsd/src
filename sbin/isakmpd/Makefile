@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.84 2014/01/22 03:09:31 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.85 2016/09/03 23:14:56 deraadt Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -56,11 +56,6 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
 
 # Include symbolic debugging info
 #DEBUG=		-g
-
-# If you have ElectricFence available, you can spot abuses of the heap.
-# (/usr/ports/devel/ElectricFence)
-#LDADD+=		-L/usr/local/lib -lefence
-#DPADD+=		/usr/local/lib/libefence.a
 
 # Enable for DNSSEC use
 #CFLAGS+=	USE_DNSSEC
