@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.67 2016/09/02 14:06:35 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.68 2016/09/03 10:25:36 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -42,7 +42,7 @@
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 void		 rde_sig_handler(int sig, short, void *);
-void		 rde_shutdown(void);
+__dead void	 rde_shutdown(void);
 void		 rde_dispatch_imsg(int, short, void *);
 void		 rde_dispatch_parent(int, short, void *);
 void		 rde_dump_area(struct area *, int, pid_t);
@@ -207,10 +207,16 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 	return (0);
 }
 
-void
+__dead void
 rde_shutdown(void)
 {
 	struct area	*a;
+
+	/* close pipes */
+	msgbuf_clear(&iev_ospfe->ibuf.w);
+	close(iev_ospfe->ibuf.fd);
+	msgbuf_clear(&iev_main->ibuf.w);
+	close(iev_main->ibuf.fd);
 
 	stop_spf_timer(rdeconf);
 	cand_list_clr();
@@ -222,9 +228,7 @@ rde_shutdown(void)
 	}
 	rde_nbr_free();
 
-	msgbuf_clear(&iev_ospfe->ibuf.w);
 	free(iev_ospfe);
-	msgbuf_clear(&iev_main->ibuf.w);
 	free(iev_main);
 	free(rdeconf);
 
