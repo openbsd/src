@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2016/09/01 09:33:30 tedu Exp $
+#	$OpenBSD: Makefile,v 1.23 2016/09/03 10:47:24 jsg Exp $
 
 OBJS=		crt0.o gcrt0.o
 OBJS+=		crtbegin.o crtend.o
@@ -13,11 +13,6 @@ CFLAGS+=	-I${.CURDIR}/../../libexec/ld.so/${MACHINE_CPU}
 # XXX "use -fno-omit-frame-pointer; the reason is almost crazy; pr#287"
 .if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
 CFLAGS+=	-fno-omit-frame-pointer
-.endif
-
-# XXX arm doesn't do pie yet???
-.if ${MACHINE_ARCH} == "arm"
-CFLAGS+=	-fpie
 .endif
 
 # Override powerpc default of -fPIE
