@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.10 2016/09/03 19:55:42 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.11 2016/09/03 20:02:49 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -385,7 +385,7 @@ bfd_listener(struct bfd_softc *sc, u_int port)
 	struct sockaddr_in	*sin;
 	struct sockaddr_in6	*sin6;
 	struct socket		*so;
-	struct mbuf		*m, *mopt;
+	struct mbuf		*m = NULL, *mopt = NULL;
 	int			*ip, error;
 
 	/* sa_family and sa_len must be equal */
@@ -454,7 +454,7 @@ bfd_sender(struct bfd_softc *sc, u_int port)
 	struct socket 		*so;
 	struct rtentry		*rt = sc->sc_rt;
 	struct proc		*p = curproc;
-	struct mbuf		*m, *mopt;
+	struct mbuf		*m = NULL, *mopt = NULL;
 	struct sockaddr		*src = rt->rt_ifa->ifa_addr;
 	struct sockaddr		*dst = rt->rt_gateway;
 	struct sockaddr		*sa;
@@ -735,8 +735,10 @@ printf("%s: peer your discr 0x%x != local 0x%x\n",
 			goto discard;
 		auth = (struct bfd_auth_header *)(mp0->m_data + offp);
 #if 0
-		if (bfd_process_auth(sc, auth) != 0)
+		if (bfd_process_auth(sc, auth) != 0) {
+			m_free(mp0);
 			goto discard;
+		}
 #endif
 	}
 
