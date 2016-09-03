@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.6 2016/09/03 16:45:27 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.7 2016/09/03 16:47:26 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -427,10 +427,9 @@ bfd_listener(struct bfd_softc *sc, u_int port)
 
 	error = sobind(so, m, p);
 	if (error) {
-		soclose(so);
 		printf("%s: sobind error %d\n",
 		    __func__, error);
-		return (NULL);
+		goto close;
 	}
 	so->so_upcallarg = (caddr_t)sc;
 	so->so_upcall = bfd_upcall;
