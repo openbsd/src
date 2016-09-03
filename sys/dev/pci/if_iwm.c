@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.114 2016/09/03 17:29:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.115 2016/09/03 18:04:03 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -427,7 +427,6 @@ int	iwm_mvm_mac_ctxt_changed(struct iwm_softc *, struct iwm_node *);
 int	iwm_mvm_update_quotas(struct iwm_softc *, struct iwm_node *);
 int	iwm_auth(struct iwm_softc *);
 int	iwm_assoc(struct iwm_softc *);
-int	iwm_release(struct iwm_softc *, struct iwm_node *);
 struct ieee80211_node *iwm_node_alloc(struct ieee80211com *);
 void	iwm_calib_timeout(void *);
 void	iwm_setrates(struct iwm_node *);
@@ -5647,64 +5646,6 @@ iwm_assoc(struct iwm_softc *sc)
 	return 0;
 }
 
-int
-iwm_release(struct iwm_softc *sc, struct iwm_node *in)
-{
-	/*
-	 * Ok, so *technically* the proper set of calls for going
-	 * from RUN back to SCAN is:
-	 *
-	 * iwm_mvm_power_mac_disable(sc, in);
-	 * iwm_mvm_mac_ctxt_changed(sc, in);
-	 * iwm_mvm_rm_sta(sc, in);
-	 * iwm_mvm_update_quotas(sc, NULL);
-	 * iwm_mvm_mac_ctxt_changed(sc, in);
-	 * iwm_mvm_binding_remove_vif(sc, in);
-	 * iwm_mvm_mac_ctxt_remove(sc, in);
-	 *
-	 * However, that freezes the device not matter which permutations
-	 * and modifications are attempted.  Obviously, this driver is missing
-	 * something since it works in the Linux driver, but figuring out what
-	 * is missing is a little more complicated.  Now, since we're going
-	 * back to nothing anyway, we'll just do a complete device reset.
-	 * Up your's, device!
-	 */
-	/* iwm_mvm_flush_tx_path(sc, 0xf, 1); */
-	iwm_stop_device(sc);
-	iwm_init_hw(sc);
-	if (in)
-		in->in_assoc = 0;
-	return 0;
-
-#if 0
-	int err;
-
-	iwm_mvm_power_mac_disable(sc, in);
-
-	if ((err = iwm_mvm_mac_ctxt_changed(sc, in)) != 0) {
-		printf("%s: mac ctxt change fail 1 %d\n", DEVNAME(sc), err);
-		return err;
-	}
-
-	if ((err = iwm_mvm_rm_sta(sc, in)) != 0) {
-		printf("%s: sta remove fail %d\n", DEVNAME(sc), err);
-		return err;
-	}
-	err = iwm_mvm_rm_sta(sc, in);
-	in->in_assoc = 0;
-	iwm_mvm_update_quotas(sc, NULL);
-	if ((err = iwm_mvm_mac_ctxt_changed(sc, in)) != 0) {
-		printf("%s: mac ctxt change fail 2 %d\n", DEVNAME(sc), err);
-		return err;
-	}
-	iwm_mvm_binding_remove_vif(sc, in);
-
-	iwm_mvm_mac_ctxt_remove(sc, in);
-
-	return err;
-#endif
-}
-
 struct ieee80211_node *
 iwm_node_alloc(struct ieee80211com *ic)
 {
@@ -5904,21 +5845,19 @@ iwm_newstate_task(void *psc)
 		iwm_mvm_disable_beacon_filter(sc);
 
 	/* Reset the device if moving out of AUTH, ASSOC, or RUN. */
+	/* XXX Is there a way to switch states without a full reset? */
 	if (ostate > IEEE80211_S_SCAN && nstate < ostate) {
-		if (((in = (void *)ic->ic_bss) != NULL))
+		in = (struct iwm_node *)ic->ic_bss;
+		if (in)
 			in->in_assoc = 0;
-		iwm_release(sc, NULL);
 
-		/*
-		 * It's impossible to directly go RUN->SCAN. If we iwm_release()
-		 * above then the card will be completely reinitialized,
-		 * so the driver must do everything necessary to bring the card
-		 * from INIT to SCAN.
-		 *
-		 * Additionally, upon receiving deauth frame from AP,
-		 * OpenBSD 802.11 stack puts the driver in IEEE80211_S_AUTH
-		 * state. This will also fail with this driver, so bring the FSM
-		 * from IEEE80211_S_RUN to IEEE80211_S_SCAN in this case as well.
+		iwm_stop_device(sc);
+		iwm_init_hw(sc);
+
+		/* 
+		 * Upon receiving a deauth frame from AP the net80211 stack
+		 * puts the driver into AUTH state. This will fail with this
+		 * driver so bring the FSM from RUN to SCAN in this case.
 		 */
 		if (nstate == IEEE80211_S_SCAN ||
 		    nstate == IEEE80211_S_AUTH ||
