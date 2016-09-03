@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.908 2016/09/03 11:29:17 rpe Exp $
+#	$OpenBSD: install.sub,v 1.909 2016/09/03 11:40:32 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -385,7 +385,7 @@ disklabel_autolayout() {
 		ask "URL to autopartitioning template for disklabel?" none
 		[[ $resp == none ]] && break
 		echo "Fetching $resp"
-		if ftp -Vo $_dl "$resp" && [[ -s $_dl ]]; then
+		if unpriv ftp -Vo - "$resp" >$_dl && [[ -s $_dl ]]; then
 			disklabel -T $_dl -F $_f -w -A $_disk && return
 			echo "Autopartitioning failed"
 			exit 1
@@ -551,7 +551,7 @@ get_responsefile() {
 		for _rf in {$_mac-,${_hn:+$_hn-,}}$_mode; do
 			_url="http://$AI_SERVER/$_path$_rf.conf?path=$HTTP_SETDIR"
 			echo "Fetching $_url"
-			if ftp -Vo "/ai.$_mode.conf" "$_url" 2>/dev/null; then
+			if unpriv ftp -Vo - "$_url" >"/ai.$_mode.conf" 2>/dev/null; then
 				AI_MODE=$_mode
 				ifconfig $_if delete down 2>/dev/null
 				return 0
@@ -580,7 +580,7 @@ get_responsefile() {
 
 	echo "Fetching $_rf"
 	[[ -f $_rf ]] && _rf="file://$_rf"
-	ftp -Vo "/ai.$_mode.conf" "$_rf" 2>/dev/null && AI_MODE=$_mode
+	unpriv ftp -Vo - "$_rf" >"/ai.$_mode.conf" 2>/dev/null && AI_MODE=$_mode
 	ifconfig $_if delete down 2>/dev/null
 	[[ -n $AI_MODE ]]
 }
@@ -1405,11 +1405,11 @@ install_files() {
 		[[ $_src == file://* ]] && _srclocal=true _t='Verifying '
 
 		# Fetch signature file.
-		! ftp -D "$_t" -Vmo "$_cfile.sig" "$_src/SHA256.sig" &&
+		! unpriv ftp -D "$_t" -Vmo - "$_src/SHA256.sig" >"$_cfile.sig" &&
 			_issue="Cannot fetch SHA256.sig" && break
 
 		# Verify signature file with public keys.
-		! signify -Vep /etc/signify/openbsd-${VERSION}-base.pub \
+		! unpriv -f "$_cfile" signify -Vep /etc/signify/openbsd-${VERSION}-base.pub \
 			-x "$_cfile.sig" -m "$_cfile" &&
 			_issue="Signature check of SHA256.sig failed" && break
 
@@ -1420,9 +1420,9 @@ install_files() {
 			# Create a flag file in case ftp failed. Sets from net
 			# are written to prefetch area, the output of local sets
 			# is discarded.
-			( ftp -D "$_t" -Vmo - "$_src/$_f" || >"$_tmpsrc/fail" ) |
-			( $_srclocal && sha256 >$_tmpsrc/h ||
-				sha256 -ph "$_tmpsrc/h" >"$_tmpsrc/$_f" )
+			( unpriv ftp -D "$_t" -Vmo - "$_src/$_f" || >"$_tmpsrc/fail" ) |
+			( $_srclocal && unpriv2 sha256 >"$_tmpsrc/h" ||
+				unpriv2 -f "$_tmpsrc/h" sha256 -ph "$_tmpsrc/h" >"$_tmpsrc/$_f" )
 
 			# Handle failed transfer.
 			if [[ -f $_tmpsrc/fail ]]; then
@@ -1460,14 +1460,14 @@ install_files() {
 		_fsrc="$_src/$_f"
 		[[ -f $_tmpsrc/$_f ]] && _fsrc="file://$_tmpsrc/$_f"
 		case $_fsrc in
-		*.tgz)	ftp -D Installing -Vmo - "$_fsrc" | tar -zxphf - -C /mnt
+		*.tgz)	unpriv ftp -D Installing -Vmo - "$_fsrc" | tar -zxphf - -C /mnt
 			if [[ $_f == ?(x)base*.tgz && $MODE == install ]]; then
 				ftp -D Extracting -Vmo - \
 				file:///mnt/var/sysmerge/${_f%%base*}etc.tgz |
 				tar -zxphf - -C /mnt
 			fi
 			;;
-		*)	ftp -D Installing -Vmo "/mnt/$_f" "$_fsrc"
+		*)	unpriv ftp -D Installing -Vmo - "$_fsrc" >"/mnt/$_f"
 			;;
 		esac
 		if (($?)); then
@@ -1552,7 +1552,7 @@ install_http() {
 	# Get list of files from the server.
 	# Assumes index file is "index.txt" for http (or proxy).
 	# We can't use index.html since the format is server-dependent.
-	_file_list=$(ftp -Vo - "$_url_base/index.txt" | sed 's/^.* //;s///')
+	_file_list=$(unpriv ftp -Vo - "$_url_base/index.txt" | sed 's/^.* //;s///')
 
 	install_files "$_url_base" "$_file_list"
 
@@ -2120,7 +2120,7 @@ startcgiinfo() {
 	(
 		# ftp.openbsd.org == 129.128.5.191 and will remain at
 		# that address for the foreseeable future.
-		ftp -Vao - "http://129.128.5.191/cgi-bin/ftplist.cgi?path=$HTTP_SETDIR" \
+		unpriv2 ftp -Vao - "http://129.128.5.191/cgi-bin/ftplist.cgi?path=$HTTP_SETDIR" \
 			2>/dev/null >$CGI_INFO
 
 		# Remember finish time for adjusting the received timestamp.
@@ -2599,7 +2599,7 @@ do_install(){
 		_i=$_i${TZ:+TZ=$TZ&}
 		_i=$_i${INSTALL_METHOD:+method=$INSTALL_METHOD}
 		_i=${_i%&}
-		[[ -n $_i ]] && ftp -Vao - \
+		[[ -n $_i ]] && unpriv2 ftp -Vao - \
 			"http://129.128.5.191/cgi-bin/ftpinstall.cgi?$_i" >/dev/null 2>&1 &
 	fi
 
