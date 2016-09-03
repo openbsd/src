@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.222 2016/09/03 14:53:20 jca Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.223 2016/09/03 15:00:48 jca Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1276,7 +1276,7 @@ done:
 static FILE *
 getdatasock(char *mode)
 {
-	int on = 1, s, t, tos, tries;
+	int opt, s, t, tries;
 
 	if (data >= 0)
 		return (fdopen(data, mode));
@@ -1284,8 +1284,9 @@ getdatasock(char *mode)
 	s = monitor_socket(ctrl_addr.su_family);
 	if (s < 0)
 		goto bad;
+	opt = 1;
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
-	    &on, sizeof(on)) < 0)
+	    &opt, sizeof(opt)) < 0)
 		goto bad;
 	/* anchor socket to avoid multi-homing problems */
 	data_source = ctrl_addr;
@@ -1300,16 +1301,16 @@ getdatasock(char *mode)
 	}
 	sigprocmask (SIG_UNBLOCK, &allsigs, NULL);
 
-	tos = IPTOS_THROUGHPUT;
+	opt = IPTOS_THROUGHPUT;
 	switch (ctrl_addr.su_family) {
 	case AF_INET:
-		if (setsockopt(s, IPPROTO_IP, IP_TOS, &tos,
-		    sizeof(int)) < 0)
+		if (setsockopt(s, IPPROTO_IP, IP_TOS, &opt,
+		    sizeof(opt)) < 0)
 			syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
 		break;
 	case AF_INET6:
-		if (setsockopt(s, IPPROTO_IPV6, IPV6_TCLASS, &tos,
-		    sizeof(int)) < 0)
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_TCLASS, &opt,
+		    sizeof(opt)) < 0)
 			syslog(LOG_WARNING, "setsockopt (IPV6_TCLASS): %m");
 		break;
 	}
@@ -1319,11 +1320,11 @@ getdatasock(char *mode)
 	 * to set the send buffer size as well, but that may not be desirable
 	 * in heavy-load situations.
 	 */
-	on = 1;
-	if (setsockopt(s, IPPROTO_TCP, TCP_NOPUSH, &on, sizeof(on)) < 0)
+	opt = 1;
+	if (setsockopt(s, IPPROTO_TCP, TCP_NOPUSH, &opt, sizeof(opt)) < 0)
 		syslog(LOG_WARNING, "setsockopt (TCP_NOPUSH): %m");
-	on = 65536;
-	if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &on, sizeof(on)) < 0)
+	opt = 65536;
+	if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) < 0)
 		syslog(LOG_WARNING, "setsockopt (SO_SNDBUF): %m");
 
 	return (fdopen(s, mode));
