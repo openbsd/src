@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.106 2016/09/03 11:42:12 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.107 2016/09/03 12:24:21 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -245,13 +245,9 @@ int	iwm_dma_contig_alloc(bus_dma_tag_t, struct iwm_dma_info *,
 				bus_size_t, bus_size_t);
 void	iwm_dma_contig_free(struct iwm_dma_info *);
 int	iwm_alloc_fwmem(struct iwm_softc *);
-void	iwm_free_fwmem(struct iwm_softc *);
 int	iwm_alloc_sched(struct iwm_softc *);
-void	iwm_free_sched(struct iwm_softc *);
 int	iwm_alloc_kw(struct iwm_softc *);
-void	iwm_free_kw(struct iwm_softc *);
 int	iwm_alloc_ict(struct iwm_softc *);
-void	iwm_free_ict(struct iwm_softc *);
 int	iwm_alloc_rx_ring(struct iwm_softc *, struct iwm_rx_ring *);
 void	iwm_disable_rx_dma(struct iwm_softc *);
 void	iwm_reset_rx_ring(struct iwm_softc *, struct iwm_rx_ring *);
@@ -1051,12 +1047,6 @@ iwm_alloc_fwmem(struct iwm_softc *sc)
 	    sc->sc_fwdmasegsz, 16);
 }
 
-void
-iwm_free_fwmem(struct iwm_softc *sc)
-{
-	iwm_dma_contig_free(&sc->fw_dma);
-}
-
 /* tx scheduler rings.  not used? */
 int
 iwm_alloc_sched(struct iwm_softc *sc)
@@ -1069,23 +1059,11 @@ iwm_alloc_sched(struct iwm_softc *sc)
 	return rv;
 }
 
-void
-iwm_free_sched(struct iwm_softc *sc)
-{
-	iwm_dma_contig_free(&sc->sched_dma);
-}
-
 /* keep-warm page is used internally by the card.  see iwl-fh.h for more info */
 int
 iwm_alloc_kw(struct iwm_softc *sc)
 {
 	return iwm_dma_contig_alloc(sc->sc_dmat, &sc->kw_dma, 4096, 4096);
-}
-
-void
-iwm_free_kw(struct iwm_softc *sc)
-{
-	iwm_dma_contig_free(&sc->kw_dma);
 }
 
 /* interrupt cause table */
@@ -1094,12 +1072,6 @@ iwm_alloc_ict(struct iwm_softc *sc)
 {
 	return iwm_dma_contig_alloc(sc->sc_dmat, &sc->ict_dma,
 	    IWM_ICT_SIZE, 1<<IWM_ICT_PADDR_SHIFT);
-}
-
-void
-iwm_free_ict(struct iwm_softc *sc)
-{
-	iwm_dma_contig_free(&sc->ict_dma);
 }
 
 int
@@ -8066,11 +8038,12 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 fail4:	while (--txq_i >= 0)
 		iwm_free_tx_ring(sc, &sc->txq[txq_i]);
 	iwm_free_rx_ring(sc, &sc->rxq);
-	iwm_free_sched(sc);
+	iwm_dma_contig_free(&sc->sched_dma);
 fail3:	if (sc->ict_dma.vaddr != NULL)
-		iwm_free_ict(sc);
-fail2:	iwm_free_kw(sc);
-fail1:	iwm_free_fwmem(sc);
+		iwm_dma_contig_free(&sc->ict_dma);
+	
+fail2:	iwm_dma_contig_free(&sc->kw_dma);
+fail1:	iwm_dma_contig_free(&sc->fw_dma);
 	return;
 }
 
