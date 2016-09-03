@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.109 2016/09/03 15:05:03 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.110 2016/09/03 15:08:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -265,7 +265,6 @@ void	iwm_apm_stop(struct iwm_softc *);
 int	iwm_allow_mcast(struct iwm_softc *);
 int	iwm_start_hw(struct iwm_softc *);
 void	iwm_stop_device(struct iwm_softc *);
-void	iwm_set_pwr(struct iwm_softc *);
 void	iwm_mvm_nic_config(struct iwm_softc *);
 int	iwm_nic_rx_init(struct iwm_softc *);
 int	iwm_nic_tx_init(struct iwm_softc *);
@@ -1624,13 +1623,6 @@ iwm_stop_device(struct iwm_softc *sc)
 }
 
 void
-iwm_set_pwr(struct iwm_softc *sc)
-{
-	iwm_set_bits_mask_prph(sc, IWM_APMG_PS_CTRL_REG,
-	    IWM_APMG_PS_CTRL_VAL_PWR_SRC_VMAIN, ~IWM_APMG_PS_CTRL_MSK_PWR_SRC);
-}
-
-void
 iwm_mvm_nic_config(struct iwm_softc *sc)
 {
 	uint8_t radio_cfg_type, radio_cfg_step, radio_cfg_dash;
@@ -1764,7 +1756,9 @@ iwm_nic_init(struct iwm_softc *sc)
 
 	iwm_apm_init(sc);
 	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000)
-		iwm_set_pwr(sc);
+		iwm_set_bits_mask_prph(sc, IWM_APMG_PS_CTRL_REG,
+		    IWM_APMG_PS_CTRL_VAL_PWR_SRC_VMAIN,
+		    ~IWM_APMG_PS_CTRL_MSK_PWR_SRC);
 
 	iwm_mvm_nic_config(sc);
 
