@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.74 2016/09/01 16:04:47 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.75 2016/09/03 11:35:19 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2802,12 +2802,55 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	struct schedstate_percpu *spc;
 	struct vmx_invvpid_descriptor vid;
 	uint64_t eii, procbased;
-	uint8_t from_exit;
 	uint16_t irq;
 
 	resume = 0;
-	from_exit = vrp->vrp_continue;
 	irq = vrp->vrp_irq;
+
+	/*
+	 * If we are returning from userspace (vmd) because we exited
+	 * last time, fix up any needed vcpu state first. Which state
+	 * needs to be fixed up depends on what vmd populated in the
+	 * exit data structure.
+	 */
+	if (vrp->vrp_continue) {
+		switch (vcpu->vc_gueststate.vg_exit_reason) {
+		case VMX_EXIT_IO:
+			vcpu->vc_gueststate.vg_rax =
+			    vcpu->vc_exit.vei.vei_data;
+			break;
+		case VMX_EXIT_HLT:
+			break;
+		case VMX_EXIT_INT_WINDOW:
+			break; 
+#ifdef VMM_DEBUG
+		case VMX_EXIT_TRIPLE_FAULT:
+			DPRINTF("%s: vm %d vcpu %d triple fault\n",
+			    __func__, vcpu->vc_parent->vm_id,
+			    vcpu->vc_id);
+			vmx_vcpu_dump_regs(vcpu);
+			dump_vcpu(vcpu);
+			break;
+		case VMX_EXIT_ENTRY_FAILED_GUEST_STATE:
+			DPRINTF("%s: vm %d vcpu %d failed entry "
+			    "due to invalid guest state\n",
+			    __func__, vcpu->vc_parent->vm_id,
+			    vcpu->vc_id);
+			vmx_vcpu_dump_regs(vcpu);
+			dump_vcpu(vcpu);
+			return EINVAL;
+		default:
+			DPRINTF("%s: unimplemented exit type %d (%s)\n",
+			    __func__,
+			    vcpu->vc_gueststate.vg_exit_reason,
+			    vmx_exit_reason_decode(
+				vcpu->vc_gueststate.vg_exit_reason));
+			vmx_vcpu_dump_regs(vcpu);
+			dump_vcpu(vcpu);
+			break;
+#endif /* VMM_DEBUG */
+		}
+	}
 
 	while (ret == 0) {
 		if (!resume) {
@@ -2848,56 +2891,6 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			cr3 = rcr3();
 			if (vmwrite(VMCS_HOST_IA32_CR3, cr3)) {
 				ret = EINVAL;
-				break;
-			}
-		}
-
-		/*
-		 * If we are returning from userspace (vmd) because we exited
-		 * last time, fix up any needed vcpu state first. Which state
-		 * needs to be fixed up depends on what vmd populated in the
-		 * exit data structure.
-		 */
-		if (from_exit) {
-			from_exit = 0;
-			switch (vcpu->vc_gueststate.vg_exit_reason) {
-			case VMX_EXIT_IO:
-				vcpu->vc_gueststate.vg_rax =
-				    vcpu->vc_exit.vei.vei_data;
-				break;
-			case VMX_EXIT_HLT:
-				break;
-			case VMX_EXIT_INT_WINDOW:
-				break; 
-			case VMX_EXIT_TRIPLE_FAULT:
-				DPRINTF("%s: vm %d vcpu %d triple fault\n",
-				    __func__, vcpu->vc_parent->vm_id,
-				    vcpu->vc_id);
-#ifdef VMM_DEBUG
-				vmx_vcpu_dump_regs(vcpu);
-				dump_vcpu(vcpu);
-#endif /* VMM_DEBUG */
-				break;
-			case VMX_EXIT_ENTRY_FAILED_GUEST_STATE:
-				DPRINTF("%s: vm %d vcpu %d failed entry "
-				    "due to invalid guest state\n",
-				    __func__, vcpu->vc_parent->vm_id,
-				    vcpu->vc_id);
-#ifdef VMM_DEBUG
-				vmx_vcpu_dump_regs(vcpu);
-				dump_vcpu(vcpu);
-#endif /* VMM_DEBUG */
-				return EINVAL;
-			default:
-				printf("%s: unimplemented exit type %d (%s)\n",
-				    __func__,
-				    vcpu->vc_gueststate.vg_exit_reason,
-				    vmx_exit_reason_decode(
-					vcpu->vc_gueststate.vg_exit_reason));
-#ifdef VMM_DEBUG
-				vmx_vcpu_dump_regs(vcpu);
-				dump_vcpu(vcpu);
-#endif /* VMM_DEBUG */
 				break;
 			}
 		}
@@ -3047,9 +3040,17 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 				}
 			}
 
-			/* Exit to vmd if we are terminating or failed enter */
+			/*
+			 * Exit to vmd if we are terminating, failed to enter,
+			 * or need help (device I/O)
+			 */
 			if (ret || vcpu_must_stop(vcpu))
 				break;
+
+			if (vcpu->vc_intr && vcpu->vc_irqready) {
+				ret = EAGAIN;
+				break;
+			}
 
 			/* Check if we should yield - don't hog the cpu */
 			spc = &ci->ci_schedstate;
