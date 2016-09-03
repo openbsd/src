@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.43 2016/09/02 17:10:08 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.44 2016/09/03 11:38:08 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1315,10 +1315,12 @@ vcpu_exit(struct vm_run_params *vrp)
 		break;
 	case VMX_EXIT_INT_WINDOW:
 		break;
-	default:
-		log_warnx("%s: unknown exit reason %d",
-		    __progname, vrp->vrp_exit_reason);
+	case VMX_EXIT_TRIPLE_FAULT:
+		log_warnx("%s: triple fault", __progname);
 		return (1);
+	default:
+		log_debug("%s: unknown exit reason %d",
+		    __progname, vrp->vrp_exit_reason);
 	}
 
 	/* XXX this may not be irq 9 all the time */
