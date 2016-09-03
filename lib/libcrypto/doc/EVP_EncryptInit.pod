@@ -23,7 +23,7 @@ EVP_des_ede3_cfb, EVP_desx_cbc, EVP_rc4, EVP_rc4_40, EVP_idea_cbc,
 EVP_idea_ecb, EVP_idea_cfb, EVP_idea_ofb, EVP_idea_cbc, EVP_rc2_cbc,
 EVP_rc2_ecb, EVP_rc2_cfb, EVP_rc2_ofb, EVP_rc2_40_cbc, EVP_rc2_64_cbc,
 EVP_bf_cbc, EVP_bf_ecb, EVP_bf_cfb, EVP_bf_ofb, EVP_cast5_cbc,
-EVP_cast5_ecb, EVP_cast5_cfb, EVP_cast5_ofb, 
+EVP_cast5_ecb, EVP_cast5_cfb, EVP_cast5_ofb,
 EVP_aes_128_gcm, EVP_aes_192_gcm, EVP_aes_256_gcm, EVP_aes_128_ccm,
 EVP_aes_192_ccm, EVP_aes_256_ccm, EVP_rc5_32_12_16_cbc,
 EVP_rc5_32_12_16_cfb, EVP_rc5_32_12_16_ecb, EVP_rc5_32_12_16_ofb
@@ -168,9 +168,13 @@ initialized and they always use the default cipher implementation.
 
 EVP_EncryptFinal(), EVP_DecryptFinal() and EVP_CipherFinal() are
 identical to EVP_EncryptFinal_ex(), EVP_DecryptFinal_ex() and
-EVP_CipherFinal_ex(). In previous releases they also used to clean up
-the B<ctx>, but this is no longer done and EVP_CIPHER_CTX_clean()
-must be called to free any context resources.
+EVP_CipherFinal_ex(). In previous releases of OpenSSL they also used to clean
+up the B<ctx>, but this is no longer done and EVP_CIPHER_CTX_clean()
+must be called to free any context resources. As of LibreSSL 2.4,
+EVP_EncryptFinal() and EVP_DecryptFinal() will always clean up, and
+EVP_CipherFinal() also cleans up as of LibreSSL 2.5. The use of
+EVP_EncryptFinal(), EVP_DecryptFinal() and EVP_CipherFinal() is not
+recommended.
 
 EVP_get_cipherbyname(), EVP_get_cipherbynid() and EVP_get_cipherbyobj()
 return an EVP_CIPHER structure when passed a cipher name, a NID or an
