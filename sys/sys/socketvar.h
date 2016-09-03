@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.62 2016/08/25 14:13:19 bluhm Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.63 2016/09/03 14:53:17 bluhm Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -116,7 +116,7 @@ struct socket {
 		short	sb_flags;	/* flags, see below */
 		u_short	sb_timeo;	/* timeout for read/write */
 	} so_rcv, so_snd;
-#define	SB_MAX		(256*1024)	/* default for max chars in sockbuf */
+#define	SB_MAX		(2*1024*1024)	/* default for max chars in sockbuf */
 #define	SB_WAIT		0x04		/* someone is waiting for data/space */
 #define	SB_SEL		0x08		/* someone is selecting */
 #define	SB_ASYNC	0x10		/* ASYNC I/O, need signals */
