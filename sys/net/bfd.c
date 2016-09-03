@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.14 2016/09/03 22:24:43 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.15 2016/09/03 22:51:15 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -751,21 +751,29 @@ printf("%s: peer your discr 0x%x != local 0x%x\n",
 		goto discard;
 
 	sc->sc_peer->RemoteSessionState = state;
-	sc->sc_peer->RemoteMinRxInterval = ntohl(peer->bfd_required_min_rx_interval);
 
+	sc->sc_peer->RemoteMinRxInterval =
+	    ntohl(peer->bfd_required_min_rx_interval);
 	/* Local change to the algorithm, we don't accept below 10ms */
-	if (sc->sc_peer->RemoteMinRxInterval < BFD_MINIMUM)
+	if (sc->sc_peer->RequiredMinRxInterval < BFD_MINIMUM)
 		goto discard;
-
 	/*
 	 * Local change to the algorithm, we can't use larger than signed
 	 * 32bits for a timeout.
 	 * That is Too Long(tm) anyways.
 	 */
-	if (sc->sc_peer->RemoteMinRxInterval > INT32_MAX)
+	if (sc->sc_peer->RequiredMinRxInterval > INT32_MAX)
 		goto discard;
-
 	sc->minrx = sc->sc_peer->RequiredMinRxInterval;
+
+	sc->sc_peer->DesiredMinTxInterval =
+	    htonl(peer->bfd_desired_min_tx_interval);
+	if (sc->sc_peer->SessionState != BFD_STATE_UP)
+		sc->sc_peer->DesiredMinTxInterval = BFD_SECOND;
+
+	sc->sc_peer->RequiredMinRxInterval =
+	    ntohl(peer->bfd_required_min_rx_interval);
+
 	/* rfc5880 6.8.7 */
 	sc->mintx = max(sc->sc_peer->RemoteMinRxInterval,
 	    sc->sc_peer->DesiredMinTxInterval);
