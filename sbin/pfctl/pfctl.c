@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.336 2016/09/03 17:56:07 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.337 2016/09/03 21:30:49 jca Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1077,7 +1077,7 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r, const char *anchor_call)
                         errx(1, "pfctl_add_rule: strlcpy");
 		if ((p = strrchr(anchor_call, '/')) != NULL) {
 			if (strlen(p) == 1)
-				err(1, "pfctl_add_rule: bad anchor name %s",
+				errx(1, "pfctl_add_rule: bad anchor name %s",
 				    anchor_call);
 		} else
 			p = (char *)anchor_call;
@@ -1487,7 +1487,7 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 
 	if ((p = strrchr(anchorname, '/')) != NULL) {
 		if (strlen(p) == 1)
-			err(1, "pfctl_add_rule: bad anchor name %s",
+			errx(1, "pfctl_add_rule: bad anchor name %s",
 			    anchorname);
 	} else
 		p = anchorname;
