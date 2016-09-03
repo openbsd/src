@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.h,v 1.12 2011/09/22 10:41:04 deraadt Exp $	*/
+/*	$OpenBSD: compress.h,v 1.13 2016/09/03 11:41:10 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -58,26 +58,23 @@ enum program_mode {
 
 extern char null_magic[];
 
-extern void *z_open(int, const char *, char *, int, u_int32_t, int);
+extern void *z_ropen(int, char *, int);
+extern void *z_wopen(int, char *, int, u_int32_t);
 extern FILE *zopen(const char *, const char *,int);
 extern int zread(void *, char *, int);
 extern int zwrite(void *, const char *, int);
 extern int z_close(void *, struct z_info *, const char *, struct stat *);
 
 
-extern void *gz_open(int, const char *, char *, int, u_int32_t, int);
+extern void *gz_ropen(int, char *, int);
+extern void *gz_wopen(int, char *, int, u_int32_t);
 extern int gz_read(void *, char *, int);
 extern int gz_write(void *, const char *, int);
 extern int gz_close(void *, struct z_info *, const char *, struct stat *);
 extern int gz_flush(void *, int);
 
-extern void *lzh_open(int, const char *, char *, int, u_int32_t, int);
-extern int lzh_read(void *, char *, int);
-extern int lzh_write(void *, const char *, int);
-extern int lzh_close(void *, struct z_info *);
-extern int lzh_flush(void *, int);
-
-extern void *null_open(int, const char *, char *, int, u_int32_t, int);
+extern void *null_ropen(int, char *, int);
+extern void *null_wopen(int, char *, int, u_int32_t);
 extern int null_read(void *, char *, int);
 extern int null_write(void *, const char *, int);
 extern int null_close(void *, struct z_info *, const char *, struct stat *);

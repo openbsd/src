@@ -1,4 +1,4 @@
-/*	$OpenBSD: zopen.c,v 1.20 2015/02/01 11:50:23 tobias Exp $	*/
+/*	$OpenBSD: zopen.c,v 1.21 2016/09/03 11:41:10 tedu Exp $	*/
 /*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
 
 /*-
@@ -735,36 +735,12 @@ cl_hash(struct s_zstate *zs, count_int cl_hsize)
 		*--htab_p = m1;
 }
 
-FILE *
-zopen(const char *name, const char *mode, int bits)
-{
-	FILE *fp;
-	int fd;
-	void *cookie;
-	if ((fd = open(name, (*mode=='r'? O_RDONLY:O_WRONLY|O_CREAT),
-	    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) == -1)
-		return NULL;
-	if ((cookie = z_open(fd, mode, NULL, bits, 0, 0)) == NULL) {
-		close(fd);
-		return NULL;
-	}
-	if ((fp = funopen(cookie, (*mode == 'r'?zread:NULL),
-	    (*mode == 'w'?zwrite:NULL), NULL, zclose)) == NULL) {
-		close(fd);
-		free(cookie);
-		return NULL;
-	}
-	return fp;
-}
-
 void *
-z_open(int fd, const char *mode, char *name, int bits,
-    u_int32_t mtime, int gotmagic)
+z_wopen(int fd, char *name, int bits, u_int32_t mtime)
 {
 	struct s_zstate *zs;
 
-	if ((mode[0] != 'r' && mode[0] != 'w') || mode[1] != '\0' ||
-	    bits < 0 || bits > BITS) {
+	if (bits < 0 || bits > BITS) {
 		errno = EINVAL;
 		return (NULL);
 	}
@@ -784,10 +760,40 @@ z_open(int fd, const char *mode, char *name, int bits,
 	zs->zs_checkpoint = CHECK_GAP;
 	zs->zs_in_count = 0;		/* Length of input. */
 	zs->zs_out_count = 0;		/* # of codes output (for debugging).*/
+	zs->zs_state = S_START;
+	zs->zs_offset = 0;
+	zs->zs_size = 0;
+	zs->zs_mode = 'w';
+	zs->zs_bp = zs->zs_ebp = zs->zs_buf;
+
+	zs->zs_fd = fd;
+	return zs;
+}
+
+void *
+z_ropen(int fd, char *name, int gotmagic)
+{
+	struct s_zstate *zs;
+
+	if ((zs = calloc(1, sizeof(struct s_zstate))) == NULL)
+		return (NULL);
+
+	/* User settable max # bits/code. */
+	zs->zs_maxbits = BITS;
+	/* Should NEVER generate this code. */
+	zs->zs_maxmaxcode = 1 << zs->zs_maxbits;
+	zs->zs_hsize = HSIZE;		/* For dynamic table sizing. */
+	zs->zs_free_ent = 0;		/* First unused entry. */
+	zs->zs_block_compress = BLOCK_MASK;
+	zs->zs_clear_flg = 0;
+	zs->zs_ratio = 0;
+	zs->zs_checkpoint = CHECK_GAP;
+	zs->zs_in_count = 0;		/* Length of input. */
+	zs->zs_out_count = 0;		/* # of codes output (for debugging).*/
 	zs->zs_state = gotmagic ? S_MAGIC : S_START;
 	zs->zs_offset = 0;
 	zs->zs_size = 0;
-	zs->zs_mode = mode[0];
+	zs->zs_mode = 'r';
 	zs->zs_bp = zs->zs_ebp = zs->zs_buf;
 
 	zs->zs_fd = fd;

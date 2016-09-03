@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.32 2016/08/17 12:02:38 millert Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.33 2016/09/03 11:41:10 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -103,16 +103,14 @@ static int put_header(gz_stream *, char *, u_int32_t, int);
 static int get_byte(gz_stream *);
 
 void *
-gz_open(int fd, const char *mode, char *name, int bits,
-    u_int32_t mtime, int gotmagic)
+gz_wopen(int fd, char *name, int bits, u_int32_t mtime)
 {
 	gz_stream *s;
 
-	if (fd < 0 || !mode)
+	if (fd < 0)
 		return NULL;
 
-	if ((mode[0] != 'r' && mode[0] != 'w') || mode[1] != '\0' ||
-	    bits < 0 || bits > Z_BEST_COMPRESSION) {
+	if (bits < 0 || bits > Z_BEST_COMPRESSION) {
 		errno = EINVAL;
 		return NULL;
 	}
@@ -132,45 +130,74 @@ gz_open(int fd, const char *mode, char *name, int bits,
 	s->z_total_in = 0;
 	s->z_total_out = 0;
 	s->z_crc = crc32(0L, Z_NULL, 0);
-	s->z_mode = mode[0];
+	s->z_mode = 'w';
 
-	if (s->z_mode == 'w') {
 #ifndef SMALL
-		/* windowBits is passed < 0 to suppress zlib header */
-		if (deflateInit2(&(s->z_stream), bits, Z_DEFLATED,
-				 -MAX_WBITS, DEF_MEM_LEVEL, 0) != Z_OK) {
-			free (s);
-			return NULL;
-		}
-		s->z_stream.next_out = s->z_buf;
-#else
-		free(s);
-		return (NULL);
-#endif
-	} else {
-		if (inflateInit2(&(s->z_stream), -MAX_WBITS) != Z_OK) {
-			free (s);
-			return NULL;
-		}
-		s->z_stream.next_in = s->z_buf;
+	/* windowBits is passed < 0 to suppress zlib header */
+	if (deflateInit2(&(s->z_stream), bits, Z_DEFLATED,
+			 -MAX_WBITS, DEF_MEM_LEVEL, 0) != Z_OK) {
+		free (s);
+		return NULL;
 	}
+	s->z_stream.next_out = s->z_buf;
+#else
+	free(s);
+	return (NULL);
+#endif
 	s->z_stream.avail_out = Z_BUFSIZE;
 
 	errno = 0;
 	s->z_fd = fd;
 
-	if (s->z_mode == 'w') {
-		/* write the .gz header */
-		if (put_header(s, name, mtime, bits) != 0) {
-			gz_close(s, NULL, NULL, NULL);
-			s = NULL;
-		}
-	} else {
-		/* read the .gz header */
-		if (get_header(s, name, gotmagic) != 0) {
-			gz_close(s, NULL, NULL, NULL);
-			s = NULL;
-		}
+	/* write the .gz header */
+	if (put_header(s, name, mtime, bits) != 0) {
+		gz_close(s, NULL, NULL, NULL);
+		s = NULL;
+	}
+
+	return s;
+}
+
+void *
+gz_ropen(int fd, char *name, int gotmagic)
+{
+	gz_stream *s;
+
+	if (fd < 0)
+		return NULL;
+
+	if ((s = calloc(1, sizeof(gz_stream))) == NULL)
+		return NULL;
+
+	s->z_stream.zalloc = (alloc_func)0;
+	s->z_stream.zfree = (free_func)0;
+	s->z_stream.opaque = (voidpf)0;
+	s->z_stream.next_in = Z_NULL;
+	s->z_stream.next_out = Z_NULL;
+	s->z_stream.avail_in = s->z_stream.avail_out = 0;
+	s->z_fd = 0;
+	s->z_eof = 0;
+	s->z_time = 0;
+	s->z_hlen = 0;
+	s->z_total_in = 0;
+	s->z_total_out = 0;
+	s->z_crc = crc32(0L, Z_NULL, 0);
+	s->z_mode = 'r';
+
+	if (inflateInit2(&(s->z_stream), -MAX_WBITS) != Z_OK) {
+		free (s);
+		return NULL;
+	}
+	s->z_stream.next_in = s->z_buf;
+	s->z_stream.avail_out = Z_BUFSIZE;
+
+	errno = 0;
+	s->z_fd = fd;
+
+	/* read the .gz header */
+	if (get_header(s, name, gotmagic) != 0) {
+		gz_close(s, NULL, NULL, NULL);
+		s = NULL;
 	}
 
 	return s;
