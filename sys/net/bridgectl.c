@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.2 2015/12/02 08:04:12 mpi Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.3 2016/09/03 13:46:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -175,13 +175,13 @@ bridge_rtupdate(struct bridge_softc *sc, struct ether_addr *ea,
     struct ifnet *ifp, int setflags, u_int8_t flags, struct mbuf *m)
 {
 	struct bridge_rtnode *p, *q;
-	struct sockaddr *sa = NULL;
+	struct bridge_tunneltag	*brtag = NULL;
 	u_int32_t h;
 	int dir;
 
 	if (m != NULL) {
 		/* Check if the mbuf was tagged with a tunnel endpoint addr */
-		sa = bridge_tunnel(m);
+		brtag = bridge_tunnel(m);
 	}
 
 	h = bridge_hash(sc, ea);
@@ -196,7 +196,7 @@ bridge_rtupdate(struct bridge_softc *sc, struct ether_addr *ea,
 		bcopy(ea, &p->brt_addr, sizeof(p->brt_addr));
 		p->brt_if = ifp;
 		p->brt_age = 1;
-		bridge_copyaddr(sa, (struct sockaddr *)&p->brt_tunnel);
+		bridge_copytag(brtag, &p->brt_tunnel);
 
 		if (setflags)
 			p->brt_flags = flags;
@@ -223,8 +223,7 @@ bridge_rtupdate(struct bridge_softc *sc, struct ether_addr *ea,
 			if (q->brt_if == ifp)
 				q->brt_age = 1;
 			ifp = q->brt_if;
-			bridge_copyaddr(sa,
-			     (struct sockaddr *)&q->brt_tunnel);
+			bridge_copytag(brtag, &q->brt_tunnel);
 
 			goto want;
 		}
@@ -239,8 +238,7 @@ bridge_rtupdate(struct bridge_softc *sc, struct ether_addr *ea,
 			bcopy(ea, &p->brt_addr, sizeof(p->brt_addr));
 			p->brt_if = ifp;
 			p->brt_age = 1;
-			bridge_copyaddr(sa,
-			    (struct sockaddr *)&p->brt_tunnel);
+			bridge_copytag(brtag, &p->brt_tunnel);
 
 			if (setflags)
 				p->brt_flags = flags;
@@ -262,8 +260,7 @@ bridge_rtupdate(struct bridge_softc *sc, struct ether_addr *ea,
 			bcopy(ea, &p->brt_addr, sizeof(p->brt_addr));
 			p->brt_if = ifp;
 			p->brt_age = 1;
-			bridge_copyaddr(sa,
-			    (struct sockaddr *)&p->brt_tunnel);
+			bridge_copytag(brtag, &p->brt_tunnel);
 
 			if (setflags)
 				p->brt_flags = flags;
@@ -490,7 +487,7 @@ bridge_rtfind(struct bridge_softc *sc, struct ifbaconf *baconf)
 				    sizeof(bareq.ifba_ifsname));
 				bcopy(&n->brt_addr, &bareq.ifba_dst,
 				    sizeof(bareq.ifba_dst));
-				bridge_copyaddr(&n->brt_tunnel.sa,
+				bridge_copyaddr(&n->brt_tunnel.brtag_src.sa,
 				    (struct sockaddr *)&bareq.ifba_dstsa);
 				bareq.ifba_age = n->brt_age;
 				bareq.ifba_flags = n->brt_flags;

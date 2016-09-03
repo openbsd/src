@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vxlan.4,v 1.4 2015/10/02 15:26:55 sobrado Exp $
+.\"	$OpenBSD: vxlan.4,v 1.5 2016/09/03 13:46:57 reyk Exp $
 .\"
 .\" Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 2 2015 $
+.Dd $Mdocdate: September 3 2016 $
 .Dt VXLAN 4
 .Os
 .Sh NAME
@@ -61,7 +61,21 @@ is configured for multicast mode and added to a
 .Xr bridge 4 ,
 all broadcast and multicast traffic is sent to the multicast group,
 but directed traffic is sent to unicast IP addresses of individual tunnel
-endpoints, as they are learned by the bridge.
+endpoints as they are learned by the bridge.
+.It Ic multipoint mode
+When
+.Nm
+is configured with
+.Ic vnetid any
+and added to a
+.Xr bridge 4 ,
+all return traffic is sent to the known tunnel endpoints
+as they are learned by the bridge.
+In this mode,
+.Nm
+does not use a specific virtual network identifier but learns the ones
+of the individual tunnel endpoints.
+It is used to dynamically bridge many virtual networks together.
 .El
 .Pp
 The configuration can be done at runtime or by setting up a

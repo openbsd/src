@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.283 2016/09/02 10:01:36 goda Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.284 2016/09/03 13:46:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -715,6 +715,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	struct bridge_rtnode *dst_p = NULL;
 	struct ether_addr *dst;
 	struct bridge_softc *sc;
+	struct bridge_tunneltag *brtag;
 	int error;
 
 	/* ifp must be a member interface of the bridge. */ 
@@ -811,9 +812,15 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	}
 
 sendunicast:
-	if (dst_p != NULL && dst_p->brt_tunnel.sa.sa_family != AF_UNSPEC &&
-	    (sa = bridge_tunneltag(m, dst_p->brt_tunnel.sa.sa_family)) != NULL)
-		memcpy(sa, &dst_p->brt_tunnel.sa, dst_p->brt_tunnel.sa.sa_len);
+	if ((dst_p != NULL) &&
+	    (dst_p->brt_tunnel.brtag_dst.sa.sa_family != AF_UNSPEC) &&
+	    ((brtag = bridge_tunneltag(m)) != NULL)) {
+		memcpy(&brtag->brtag_src, &dst_p->brt_tunnel.brtag_src.sa,
+		    dst_p->brt_tunnel.brtag_src.sa.sa_len);
+		memcpy(&brtag->brtag_dst, &dst_p->brt_tunnel.brtag_dst.sa,
+		    dst_p->brt_tunnel.brtag_dst.sa.sa_len);
+		brtag->brtag_id = dst_p->brt_tunnel.brtag_id;
+	}
 
 	bridge_span(sc, m);
 	if ((dst_if->if_flags & IFF_RUNNING) == 0) {
@@ -1942,7 +1949,7 @@ bridge_send_icmp_err(struct bridge_softc *sc, struct ifnet *ifp,
 	m_freem(n);
 }
 
-struct sockaddr *
+struct bridge_tunneltag *
 bridge_tunnel(struct mbuf *m)
 {
 	struct m_tag    *mtag;
@@ -1950,41 +1957,24 @@ bridge_tunnel(struct mbuf *m)
 	if ((mtag = m_tag_find(m, PACKET_TAG_TUNNEL, NULL)) == NULL)
 		return (NULL);
 
-	return ((struct sockaddr *)(mtag + 1));
+	return ((struct bridge_tunneltag *)(mtag + 1));
 }
 
-struct sockaddr *
-bridge_tunneltag(struct mbuf *m, int af)
+struct bridge_tunneltag *
+bridge_tunneltag(struct mbuf *m)
 {
-	struct m_tag    *mtag;
-	size_t		 len;
-	struct sockaddr	*sa;
+	struct m_tag    	*mtag;
 
-	if ((mtag = m_tag_find(m, PACKET_TAG_TUNNEL, NULL)) != NULL) {
-		sa = (struct sockaddr *)(mtag + 1);
-		if (sa->sa_family != af) {
-			m_tag_delete(m, mtag);
-			mtag = NULL;
-		}
-	}
-	if (mtag == NULL) {
-		if (af == AF_INET)
-			len = sizeof(struct sockaddr_in);
-		else if (af == AF_INET6)
-			len = sizeof(struct sockaddr_in6);
-		else
-			return (NULL);
-		mtag = m_tag_get(PACKET_TAG_TUNNEL, len, M_NOWAIT);
+	if ((mtag = m_tag_find(m, PACKET_TAG_TUNNEL, NULL)) == NULL) {
+		mtag = m_tag_get(PACKET_TAG_TUNNEL,
+		    sizeof(struct bridge_tunneltag), M_NOWAIT);
 		if (mtag == NULL)
 			return (NULL);
-		bzero(mtag + 1, len);
-		sa = (struct sockaddr *)(mtag + 1);
-		sa->sa_family = af;
-		sa->sa_len = len;
+		bzero(mtag + 1, sizeof(struct bridge_tunneltag));
 		m_tag_prepend(m, mtag);
 	}
 
-	return ((struct sockaddr *)(mtag + 1));
+	return ((struct bridge_tunneltag *)(mtag + 1));
 }
 
 void
@@ -2000,6 +1990,20 @@ bridge_copyaddr(struct sockaddr *src, struct sockaddr *dst)
 {
 	if (src != NULL && src->sa_family != AF_UNSPEC)
 		memcpy(dst, src, src->sa_len);
-	else
+	else {
 		dst->sa_family = AF_UNSPEC;
+		dst->sa_len = 0;
+	}
+}
+
+void
+bridge_copytag(struct bridge_tunneltag *src, struct bridge_tunneltag *dst)
+{
+	if (src == NULL) {
+		memset(dst, 0, sizeof(*dst));
+	} else {
+		bridge_copyaddr(&src->brtag_src.sa, &dst->brtag_src.sa);
+		bridge_copyaddr(&src->brtag_dst.sa, &dst->brtag_dst.sa);
+		dst->brtag_id = src->brtag_id;
+	}
 }

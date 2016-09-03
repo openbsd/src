@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.42 2016/08/07 14:26:26 reyk Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.43 2016/09/03 13:46:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -70,7 +70,7 @@ struct vxlan_softc {
 	struct sockaddr_storage	 sc_dst;
 	in_port_t		 sc_dstport;
 	u_int			 sc_rdomain;
-	int			 sc_vnetid;
+	int64_t			 sc_vnetid;
 	u_int8_t		 sc_ttl;
 
 	LIST_ENTRY(vxlan_softc)	 sc_entry;
@@ -103,14 +103,18 @@ u_long	 vxlan_tagmask;
 
 #define VXLAN_TAGHASHSIZE		 32
 #define VXLAN_TAGHASH(tag)		 ((unsigned int)tag & vxlan_tagmask)
-LIST_HEAD(vxlan_taghash, vxlan_softc)	*vxlan_tagh;
+LIST_HEAD(vxlan_taghash, vxlan_softc)	*vxlan_tagh, vxlan_any;
 
 void
 vxlanattach(int count)
 {
+	/* Regular vxlan interfaces with a VNI */
 	if ((vxlan_tagh = hashinit(VXLAN_TAGHASHSIZE, M_DEVBUF, M_NOWAIT,
 	    &vxlan_tagmask)) == NULL)
 		panic("vxlanattach: hashinit");
+
+	/* multipoint-to-multipoint interfaces that accept any VNI */
+	LIST_INIT(&vxlan_any);
 
 	if_clone_attach(&vxlan_cloner);
 }
@@ -316,6 +320,7 @@ vxlan_config(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	int			 reset = 0, error, af;
 	socklen_t		 slen;
 	in_port_t		 port;
+	struct vxlan_taghash	*tagh;
 
 	if (src != NULL && dst != NULL) {
 		if ((af = src->sa_family) != dst->sa_family)
@@ -354,9 +359,17 @@ vxlan_config(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		memcpy(&sc->sc_dst, dst, dst->sa_len);
 	}
 
+	if (sc->sc_vnetid == VXLAN_VNI_ANY) {
+		/*
+		 * If the interface accepts any VNI, put it into a separate
+		 * list that is not part of the main hash.
+		 */
+		tagh = &vxlan_any;
+	} else
+		tagh = &vxlan_tagh[VXLAN_TAGHASH(sc->sc_vnetid)];
+
 	LIST_REMOVE(sc, sc_entry);
-	LIST_INSERT_HEAD(&vxlan_tagh[VXLAN_TAGHASH(sc->sc_vnetid)],
-	    sc, sc_entry);
+	LIST_INSERT_HEAD(tagh, sc, sc_entry);
 
 	return (0);
 }
@@ -454,10 +467,16 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSVNETID:
-		if (ifr->ifr_vnetid > VXLAN_VNI_MAX) {
+		if (sc->sc_vnetid == ifr->ifr_vnetid)
+			break;
+
+		if ((ifr->ifr_vnetid != VXLAN_VNI_ANY) &&
+		    (ifr->ifr_vnetid > VXLAN_VNI_MAX ||
+		     ifr->ifr_vnetid < VXLAN_VNI_MIN)) {
 			error = EINVAL;
 			break;
 		}
+
 		s = splnet();
 		sc->sc_vnetid = (int)ifr->ifr_vnetid;
 		(void)vxlan_config(ifp, NULL, NULL);
@@ -465,11 +484,14 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCGVNETID:
-		if (sc->sc_vnetid == VXLAN_VNI_UNSET) {
+		if ((sc->sc_vnetid != VXLAN_VNI_ANY) &&
+		    (sc->sc_vnetid > VXLAN_VNI_MAX ||
+		     sc->sc_vnetid < VXLAN_VNI_MIN)) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
-		ifr->ifr_vnetid = (uint32_t)sc->sc_vnetid;
+
+		ifr->ifr_vnetid = sc->sc_vnetid;
 		break;
 
 	case SIOCDVNETID:
@@ -496,7 +518,6 @@ vxlan_media_change(struct ifnet *ifp)
 void
 vxlan_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
-	imr->ifm_active = IFM_ETHER | IFM_AUTO;
 	imr->ifm_status = IFM_AVALID | IFM_ACTIVE;
 }
 
@@ -547,7 +568,7 @@ vxlan_sockaddr_port(struct sockaddr *sa)
 
 int
 vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
-    struct sockaddr *srcsa)
+    struct sockaddr *srcsa, struct sockaddr *dstsa)
 {
 	struct mbuf_list	 ml = MBUF_LIST_INITIALIZER();
 	struct vxlan_softc	*sc = NULL, *sc_cand = NULL;
@@ -557,7 +578,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 	int			 skip;
 	struct ether_header	*eh;
 #if NBRIDGE > 0
-	struct sockaddr		*sa;
+	struct bridge_tunneltag	*brtag;
 #endif
 
 	/* XXX Should verify the UDP port first before copying the packet */
@@ -579,6 +600,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 		vni = VXLAN_VNI_UNSET;
 	}
 
+	/* First search for a vxlan(4) interface with the packet's VNI */
 	LIST_FOREACH(sc, &vxlan_tagh[VXLAN_TAGHASH(vni)], sc_entry) {
 		if ((uh->uh_dport == sc->sc_dstport) &&
 		    vni == sc->sc_vnetid &&
@@ -587,6 +609,21 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 			if (vxlan_sockaddr_cmp(srcsa,
 			    (struct sockaddr *)&sc->sc_dst) == 0)
 				goto found;
+		}
+	}
+
+	/*
+	 * Now loop through all the vxlan(4) interfaces that are configured
+	 * to accept any VNI and operating in multipoint-to-multipoint mode
+	 * that is used in combination with bridge(4) or switch(4).
+	 * If a vxlan(4) interface has been found for the packet's VNI, this
+	 * code is not reached as the other interface is more specific.
+	 */
+	LIST_FOREACH(sc, &vxlan_any, sc_entry) {
+		if ((uh->uh_dport == sc->sc_dstport) &&
+		    (sc->sc_rdomain == rtable_l2(m->m_pkthdr.ph_rtableid))) {
+			sc_cand = sc;
+			goto found;
 		}
 	}
 
@@ -606,11 +643,14 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 		return (EINVAL);
 
 #if NBRIDGE > 0
-	/* Store the peer IP address for the bridge */
-	if (ifp->if_bridgeport != NULL &&
+	/* Store the tunnel src/dst IP and vni for the bridge or switch */
+	if ((ifp->if_bridgeport != NULL || ifp->if_switchport != NULL) &&
 	    srcsa->sa_family != AF_UNSPEC &&
-	    (sa = bridge_tunneltag(m, srcsa->sa_family)) != NULL)
-		memcpy(sa, srcsa, sa->sa_len);
+	    ((brtag = bridge_tunneltag(m)) != NULL)) {
+		memcpy(&brtag->brtag_src.sa, srcsa, srcsa->sa_len);
+		memcpy(&brtag->brtag_dst.sa, dstsa, dstsa->sa_len);
+		brtag->brtag_id = vni;
+	}
 #endif
 
 	m->m_flags &= ~(M_MCAST|M_BCAST);
@@ -712,9 +752,10 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 	struct vxlanudphdr	*vu;
 	struct sockaddr		*src, *dst;
 #if NBRIDGE > 0
-	struct sockaddr		*brtag;
+	struct bridge_tunneltag	*brtag;
 #endif
 	int			 error, af;
+	uint32_t		 tag;
 
 	/* VXLAN header */
 	M_PREPEND(m, sizeof(*vu), M_DONTWAIT);
@@ -732,10 +773,18 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 	vu->vu_u.uh_dport = sc->sc_dstport;
 	vu->vu_u.uh_ulen = htons(m->m_pkthdr.len);
 	vu->vu_u.uh_sum = 0;
+	tag = sc->sc_vnetid;
 
 #if NBRIDGE > 0
 	if ((brtag = bridge_tunnel(m)) != NULL) {
-		dst = brtag;
+		dst = &brtag->brtag_dst.sa;
+
+		/* If accepting any VNI, source ip address is from brtag */
+		if (sc->sc_vnetid == VXLAN_VNI_ANY) {
+			src = &brtag->brtag_src.sa;
+			tag = (uint32_t)brtag->brtag_id;
+			af = src->sa_family;
+		}
 
 		if (dst->sa_family != af) {
 			ifp->if_oerrors++;
@@ -750,12 +799,21 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 		 */
 		if (ifp->if_flags & IFF_LINK0)
 			vu->vu_u.uh_dport = vxlan_sockaddr_port(dst);
-	}
+	} else
 #endif
+	if (sc->sc_vnetid == VXLAN_VNI_ANY) {
+		/*
+		 * If accepting any VNI, build the vxlan header only by
+		 * bridge_tunneltag or drop packet if the tag does not exist.
+		 */
+		ifp->if_oerrors++;
+		m_freem(m);
+		return (ENETUNREACH);
+	}
 
 	if (sc->sc_vnetid != VXLAN_VNI_UNSET) {
 		vu->vu_v.vxlan_flags = htonl(VXLAN_FLAGS_VNI);
-		vu->vu_v.vxlan_id = htonl(sc->sc_vnetid << VXLAN_VNI_S);
+		vu->vu_v.vxlan_id = htonl(tag << VXLAN_VNI_S);
 	} else {
 		vu->vu_v.vxlan_flags = htonl(0);
 		vu->vu_v.vxlan_id = htonl(0);

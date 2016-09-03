@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.50 2016/09/02 10:01:36 goda Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.51 2016/09/03 13:46:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -406,15 +406,24 @@ struct bridge_iflist {
 	    ((struct bridge_iflist *)_bp2)->bridge_sc)
 
 /*
+ * Bridge tunnel tagging
+ */
+struct bridge_tunneltag {
+	union pfsockaddr_union		brtag_src;
+	union pfsockaddr_union		brtag_dst;
+	u_int32_t			brtag_id;
+};
+
+/*
  * Bridge route node
  */
 struct bridge_rtnode {
 	LIST_ENTRY(bridge_rtnode)	brt_next;	/* next in list */
-	struct				ifnet *brt_if;	/* destination ifs */
+	struct ifnet			*brt_if;	/* destination ifs */
 	u_int8_t			brt_flags;	/* address flags */
 	u_int8_t			brt_age;	/* age counter */
-	struct				ether_addr brt_addr;	/* dst addr */
-	union pfsockaddr_union		brt_tunnel;	/* tunnel endpoint */
+	struct ether_addr		brt_addr;	/* dst addr */
+	struct bridge_tunneltag		brt_tunnel;	/* tunnel endpoint */
 };
 
 #ifndef BRIDGE_RTABLE_SIZE
@@ -447,10 +456,11 @@ int	bridge_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 void	bridge_update(struct ifnet *, struct ether_addr *, int);
 void	bridge_rtdelete(struct bridge_softc *, struct ifnet *, int);
 void	bridge_rtagenode(struct ifnet *, int);
-struct sockaddr *bridge_tunnel(struct mbuf *);
-struct sockaddr *bridge_tunneltag(struct mbuf *, int);
+struct bridge_tunneltag *bridge_tunnel(struct mbuf *);
+struct bridge_tunneltag *bridge_tunneltag(struct mbuf *);
 void	bridge_tunneluntag(struct mbuf *);
 void	bridge_copyaddr(struct sockaddr *, struct sockaddr *);
+void	bridge_copytag(struct bridge_tunneltag *, struct bridge_tunneltag *);
 
 struct bstp_state *bstp_create(struct ifnet *);
 void	bstp_destroy(struct bstp_state *);

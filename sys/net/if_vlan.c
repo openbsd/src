@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.165 2016/05/18 03:46:03 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.166 2016/09/03 13:46:57 reyk Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -648,14 +648,15 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSVNETID:
-		tag = ifr->ifr_vnetid;
-		if (tag == ifv->ifv_tag)
-			break;
-
-		if (tag < EVL_VLID_MIN || tag > EVL_VLID_MAX) {
+		if (ifr->ifr_vnetid < EVL_VLID_MIN ||
+		    ifr->ifr_vnetid > EVL_VLID_MAX) {
 			error = EINVAL;
 			break;
 		}
+
+		tag = ifr->ifr_vnetid;
+		if (tag == ifv->ifv_tag)
+			break;
 
 		error = vlan_set_vnetid(ifv, tag);
 		break;
@@ -664,7 +665,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ifv->ifv_tag == EVL_VLID_NULL)
 			error = EADDRNOTAVAIL;
 		else
-			ifr->ifr_vnetid = (uint32_t)ifv->ifv_tag;
+			ifr->ifr_vnetid = (int64_t)ifv->ifv_tag;
 		break;
 
 	case SIOCDVNETID:

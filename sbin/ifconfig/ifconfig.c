@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.329 2016/09/02 10:01:36 goda Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.330 2016/09/03 13:46:57 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -99,6 +99,7 @@
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -3622,13 +3623,18 @@ void
 setvnetid(const char *id, int param)
 {
 	const char *errmsg = NULL;
-	uint32_t vnetid;
-
-	vnetid = strtonum(id, 0, UINT_MAX, &errmsg);
-	if (errmsg)
-		errx(1, "vnetid %s: %s", id, errmsg);
+	int64_t vnetid;
 
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+
+	if (strcasecmp("any", id) == 0)
+		vnetid = -1;
+	else {
+		vnetid = strtonum(id, 0, INT64_MAX, &errmsg);
+		if (errmsg)
+			errx(1, "vnetid %s: %s", id, errmsg);
+	}
+
 	ifr.ifr_vnetid = vnetid;
 	if (ioctl(s, SIOCSVNETID, (caddr_t)&ifr) < 0)
 		warn("SIOCSVNETID");
@@ -3658,7 +3664,12 @@ getvnetid(void)
 		return;
 	}
 
-	printf("\tvnetid: %u\n", ifr.ifr_vnetid);
+	if (ifr.ifr_vnetid < 0) {
+		printf("\tvnetid: any\n");
+		return;
+	}
+
+	printf("\tvnetid: %lld\n", ifr.ifr_vnetid);
 }
 
 void

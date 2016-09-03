@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.h,v 1.10 2016/08/07 13:49:12 reyk Exp $	*/
+/*	$OpenBSD: if_vxlan.h,v 1.11 2016/09/03 13:46:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -34,7 +34,9 @@ struct vxlan_header {
 } __packed;
 
 #define VXLAN_VNI_MAX		0x00ffffff	/* 24bit vnetid */
-#define VXLAN_VNI_UNSET		0xffffffff	/* -1 */
+#define VXLAN_VNI_MIN		0x00000000	/* 24bit vnetid */
+#define VXLAN_VNI_UNSET		0x01ffffff	/* used internally */
+#define VXLAN_VNI_ANY		-1ULL		/* -1 accept any vnetid */
 
 struct vxlanudphdr {
 	struct udphdr		vu_u;
@@ -45,7 +47,7 @@ struct vxlanudphdr {
 extern int vxlan_enable;
 
 int		 vxlan_lookup(struct mbuf *, struct udphdr *, int,
-		    struct sockaddr *);
+		    struct sockaddr *, struct sockaddr *);
 struct sockaddr *vxlan_tag_find(struct mbuf *);
 struct sockaddr	*vxlan_tag_get(struct mbuf *, int);
 void		 vxlan_tag_delete(struct mbuf *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.177 2016/06/10 20:33:29 vgross Exp $	*/
+/*	$OpenBSD: if.h,v 1.178 2016/09/03 13:46:57 reyk Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -360,7 +360,7 @@ struct	ifreq {
 		struct	sockaddr	ifru_broadaddr;
 		short			ifru_flags;
 		int			ifru_metric;
-		uint32_t		ifru_vnetid;
+		int64_t			ifru_vnetid;
 		uint64_t		ifru_media;
 		caddr_t			ifru_data;
 		unsigned int		ifru_index;

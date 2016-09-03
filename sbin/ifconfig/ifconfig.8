@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.270 2016/06/15 19:39:33 gerhard Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.271 2016/09/03 13:46:57 reyk Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: June 15 2016 $
+.Dd $Mdocdate: September 3 2016 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1603,6 +1603,11 @@ to identify packets with a virtual network.
 The accepted size of the number depends on the individual tunnel protocol;
 it is a 24-bit number for
 .Xr vxlan 4 .
+If supported by the tunnel protocol,
+the value can also be set to
+.Ar any
+to accept packets with arbitrary network identifiers (eg. for
+multipoint-to-multipoint modes).
 .It Cm -vnetid
 Clear the virtual network identifier.
 .El
