@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.77 2016/07/01 23:29:55 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.78 2016/09/03 16:07:08 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -185,9 +185,9 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		nbr_start_ktimer(nbr);
 		nbr_start_ktimeout(nbr);
 		if (nbr->v4_enabled)
-			send_address(nbr, AF_INET, NULL, 0);
+			send_address_all(nbr, AF_INET);
 		if (nbr->v6_enabled)
-			send_address(nbr, AF_INET6, NULL, 0);
+			send_address_all(nbr, AF_INET6);
 		nbr_send_labelmappings(nbr);
 		break;
 	case NBR_ACT_CONNECT_SETUP:
