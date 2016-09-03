@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.286 2016/09/03 13:37:41 guenther Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.287 2016/09/03 15:17:08 ajacoutot Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -713,6 +713,10 @@ var
 
     # ./var/sysmerge
     sysmerge			uname=root gname=wheel mode=0700
+    ..
+
+    # ./var/syspatch
+    syspatch			uname=root gname=wheel mode=0755
     ..
 
     # ./var/spool
