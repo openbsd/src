@@ -124,14 +124,6 @@ com_rcv(struct ns8250_dev *com, uint32_t vm_id, uint32_t vcpu_id)
 		}
 	}
 
-	/*
-	 * Clear "interrupt pending" by setting IIR low bit to 1 if no
-	 * interrupts are pending
-	 */
-	/* XXX these iir magic numbers should be IIR_x */
-	if ((com->regs.iir & ~0x1) == 0x0)
-		com->regs.iir = 0x1;
-
 	com->rcv_pending = fd_hasdata(com->fd);
 }
 
