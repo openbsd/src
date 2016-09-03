@@ -1,0 +1,36 @@
+CHECK: BINGO
+Done1000000: Done 1000000 runs in
+
+RUN: LLVMFuzzer-SimpleTest 2>&1 | FileCheck %s
+RUN: not LLVMFuzzer-NullDerefTest -test_single_input=%S/hi.txt 2>&1 | FileCheck %s --check-prefix=SingleInput
+SingleInput-NOT: Test unit written to ./crash-
+
+RUN: LLVMFuzzer-SimpleCmpTest -max_total_time=1 2>&1 | FileCheck %s --check-prefix=MaxTotalTime
+MaxTotalTime: Done {{.*}} runs in {{.}} second(s)
+
+RUN: not LLVMFuzzer-NullDerefTest 2>&1 | FileCheck %s --check-prefix=NullDerefTest
+NullDerefTest: Test unit written to ./crash-
+RUN: not LLVMFuzzer-NullDerefTest  -artifact_prefix=ZZZ 2>&1 | FileCheck %s --check-prefix=NullDerefTestPrefix
+NullDerefTestPrefix: Test unit written to ZZZcrash-
+RUN: not LLVMFuzzer-NullDerefTest  -artifact_prefix=ZZZ -exact_artifact_path=FOOBAR 2>&1 | FileCheck %s --check-prefix=NullDerefTestExactPath
+NullDerefTestExactPath: Test unit written to FOOBAR
+
+#not LLVMFuzzer-FullCoverageSetTest -timeout=15 -seed=1 -mutate_depth=2 -use_full_coverage_set=1 2>&1 | FileCheck %s
+
+RUN: not LLVMFuzzer-CounterTest -use_counters=1 -max_len=6 -seed=1 -timeout=15 2>&1 | FileCheck %s
+
+RUN: not LLVMFuzzer-CallerCalleeTest                     -cross_over=0 -max_len=6 -seed=1 -timeout=15 2>&1 | FileCheck %s
+# This one is flaky, may actually find the goal even w/o use_indir_calls.
+# LLVMFuzzer-CallerCalleeTest  -use_indir_calls=0 -cross_over=0 -max_len=6 -seed=1 -runs=1000000 2>&1 | FileCheck %s  --check-prefix=Done1000000
+
+
+RUN: not LLVMFuzzer-UserSuppliedFuzzerTest -seed=1 -timeout=15 2>&1 | FileCheck %s
+
+RUN: not LLVMFuzzer-UninstrumentedTest-Uninstrumented 2>&1 | FileCheck %s --check-prefix=UNINSTRUMENTED
+UNINSTRUMENTED: ERROR: __sanitizer_set_death_callback is not defined. Exiting.
+
+RUN: LLVMFuzzer-SimpleTest -print_new_cov_pcs=1 2>&1 | FileCheck %s --check-prefix=PCS
+PCS:{{^0x[a-f0-9]+}}
+PCS:NEW
+PCS:BINGO
+
