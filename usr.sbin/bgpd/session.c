@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.353 2016/09/02 14:00:29 benno Exp $ */
+/*	$OpenBSD: session.c,v 1.354 2016/09/03 16:22:17 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -552,6 +552,23 @@ session_main(int debug, int verbose)
 			control_dispatch_msg(&pfd[j], &ctl_cnt);
 	}
 
+	/* close pipes */
+	if (ibuf_rde) {
+		msgbuf_write(&ibuf_rde->w);
+		msgbuf_clear(&ibuf_rde->w);
+		close(ibuf_rde->fd);
+		free(ibuf_rde);
+	}
+	if (ibuf_rde_ctl) {
+		msgbuf_clear(&ibuf_rde_ctl->w);
+		close(ibuf_rde_ctl->fd);
+		free(ibuf_rde_ctl);
+	}
+	msgbuf_write(&ibuf_main->w);
+	msgbuf_clear(&ibuf_main->w);
+	close(ibuf_main->fd);
+	free(ibuf_main);
+
 	while ((p = peers) != NULL) {
 		peers = p->next;
 		session_stop(p, ERR_CEASE_ADMIN_DOWN);
@@ -574,12 +591,6 @@ session_main(int debug, int verbose)
 	free(mrt_l);
 	free(pfd);
 
-	msgbuf_write(&ibuf_rde->w);
-	msgbuf_clear(&ibuf_rde->w);
-	free(ibuf_rde);
-	msgbuf_write(&ibuf_main->w);
-	msgbuf_clear(&ibuf_main->w);
-	free(ibuf_main);
 
 	control_shutdown(csock);
 	control_shutdown(rcsock);

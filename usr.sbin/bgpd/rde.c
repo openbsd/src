@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.349 2016/09/02 14:00:29 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.350 2016/09/03 16:22:17 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -308,6 +308,21 @@ rde_main(int debug, int verbose)
 			rib_dump_runner();
 	}
 
+	/* close pipes */
+	if (ibuf_se) {
+		msgbuf_clear(&ibuf_se->w);
+		close(ibuf_se->fd);
+		free(ibuf_se);
+	}
+	if (ibuf_se_ctl) {
+		msgbuf_clear(&ibuf_se_ctl->w);
+		close(ibuf_se_ctl->fd);
+		free(ibuf_se_ctl);
+	}
+	msgbuf_clear(&ibuf_main->w);
+	close(ibuf_main->fd);
+	free(ibuf_main);
+
 	/* do not clean up on shutdown on production, it takes ages. */
 	if (debug)
 		rde_shutdown();
@@ -320,15 +335,6 @@ rde_main(int debug, int verbose)
 		free(mctx);
 	}
 
-	if (ibuf_se)
-		msgbuf_clear(&ibuf_se->w);
-	free(ibuf_se);
-	if (ibuf_se_ctl)
-		msgbuf_clear(&ibuf_se_ctl->w);
-	free(ibuf_se_ctl);
-
-	msgbuf_clear(&ibuf_main->w);
-	free(ibuf_main);
 
 	log_info("route decision engine exiting");
 	exit(0);

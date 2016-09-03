@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.186 2016/09/02 14:00:29 benno Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.187 2016/09/03 16:22:17 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -40,7 +40,6 @@ void		sighdlr(int);
 __dead void	usage(void);
 int		main(int, char *[]);
 pid_t		start_child(enum bgpd_process, char *, int, int, int);
-int		check_child(pid_t, const char *);
 int		send_filterset(struct imsgbuf *, struct filter_set_head *);
 int		reconfigure(char *, struct bgpd_config *, struct peer **);
 int		dispatch_imsg(struct imsgbuf *, int, struct bgpd_config *);
@@ -51,7 +50,6 @@ int			 rfd = -1;
 int			 cflags;
 volatile sig_atomic_t	 mrtdump;
 volatile sig_atomic_t	 quit;
-volatile sig_atomic_t	 sigchld;
 volatile sig_atomic_t	 reconfig;
 pid_t			 reconfpid;
 int			 reconfpending;
@@ -68,9 +66,6 @@ sighdlr(int sig)
 	case SIGTERM:
 	case SIGINT:
 		quit = 1;
-		break;
-	case SIGCHLD:
-		sigchld = 1;
 		break;
 	case SIGHUP:
 		reconfig = 1;
@@ -111,7 +106,7 @@ main(int argc, char *argv[])
 	char			*saved_argv0;
 	int			 debug = 0;
 	int			 rflag = 0, sflag = 0;
-	int			 ch, timeout;
+	int			 ch, timeout, status;
 	int			 pipe_m2s[2];
 	int			 pipe_m2r[2];
 
@@ -217,7 +212,6 @@ main(int argc, char *argv[])
 
 	signal(SIGTERM, sighdlr);
 	signal(SIGINT, sighdlr);
-	signal(SIGCHLD, sighdlr);
 	signal(SIGHUP, sighdlr);
 	signal(SIGALRM, sighdlr);
 	signal(SIGUSR1, sighdlr);
@@ -237,7 +231,6 @@ main(int argc, char *argv[])
 	 * cpath, unlink control socket
 	 * fattr, chmod on control socket
 	 * wpath, needed if we are doing mrt dumps
-	 * proc, for kill() when shutting down
 	 *
 	 * pledge placed here because kr_init() does a setsockopt on the
 	 * routing socket thats not allowed at all.
@@ -247,8 +240,8 @@ main(int argc, char *argv[])
 	 * disabled because we do ioctls on /dev/pf and SIOCSIFGATTR
 	 * this needs some redesign of bgpd to be fixed.
 	 */
-	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd "
-	    "proc", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
+	    NULL) == -1)
 		fatal("pledge");
 #endif
 
@@ -331,31 +324,23 @@ main(int argc, char *argv[])
 			}
 		}
 
-		if (sigchld) {
-			sigchld = 0;
-			if (check_child(io_pid, "session engine")) {
-				quit = 1;
-				io_pid = 0;
-			}
-			if (check_child(rde_pid, "route decision engine")) {
-				quit = 1;
-				rde_pid = 0;
-			}
-		}
-
 		if (mrtdump) {
 			mrtdump = 0;
 			mrt_handler(conf->mrt);
 		}
 	}
 
-	signal(SIGCHLD, SIG_IGN);
-
-	if (io_pid)
-		kill(io_pid, SIGTERM);
-
-	if (rde_pid)
-		kill(rde_pid, SIGTERM);
+	/* close pipes */
+	if (ibuf_se) {
+		msgbuf_clear(&ibuf_se->w);
+		close(ibuf_se->fd);
+		free(ibuf_se);
+	}
+	if (ibuf_rde) {
+		msgbuf_clear(&ibuf_rde->w);
+		close(ibuf_rde->fd);
+		free(ibuf_rde);
+	}
 
 	while ((p = peer_l) != NULL) {
 		peer_l = p->next;
@@ -370,20 +355,22 @@ main(int argc, char *argv[])
 
 	free_config(conf);
 
+	log_debug("waiting for children to terminate");
 	do {
-		if ((pid = wait(NULL)) == -1 &&
-		    errno != EINTR && errno != ECHILD)
-			fatal("wait");
+		pid = wait(&status);
+		if (pid == -1) {
+			if (errno != EINTR && errno != ECHILD)
+				fatal("wait");
+		} else if (WIFSIGNALED(status))
+			log_warnx("%s terminated; signal %d",
+			    (pid == rde_pid) ? "route decision engine" :
+			    "session engine", WTERMSIG(status));
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
-	msgbuf_clear(&ibuf_se->w);
-	free(ibuf_se);
-	msgbuf_clear(&ibuf_rde->w);
-	free(ibuf_rde);
 	free(rcname);
 	free(cname);
 
-	log_info("Terminating");
+	log_info("terminating");
 	return (0);
 }
 
@@ -426,26 +413,6 @@ start_child(enum bgpd_process p, char *argv0, int fd, int debug, int verbose)
 
 	execvp(argv0, argv);
 	fatal("execvp");
-}
-
-int
-check_child(pid_t pid, const char *pname)
-{
-	int	status;
-
-	if (waitpid(pid, &status, WNOHANG) > 0) {
-		if (WIFEXITED(status)) {
-			log_warnx("Lost child: %s exited", pname);
-			return (1);
-		}
-		if (WIFSIGNALED(status)) {
-			log_warnx("Lost child: %s terminated; signal %d",
-			    pname, WTERMSIG(status));
-			return (1);
-		}
-	}
-
-	return (0);
 }
 
 int
