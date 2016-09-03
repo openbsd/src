@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2006/06/16 23:49:00 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.20 2016/09/03 13:05:08 tedu Exp $
 
 PROG=	savecore
 
@@ -7,6 +7,5 @@ CFLAGS+=-DSAVECORE
 LDADD=	-lkvm
 DPADD=	${LIBKVM}
 MAN=	savecore.8
-.PATH:	${.CURDIR}/../../usr.bin/compress
 
 .include <bsd.prog.mk>
