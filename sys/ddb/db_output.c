@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.c,v 1.29 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.30 2016/09/03 21:43:46 jasper Exp $	*/
 /*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /*
@@ -228,7 +228,7 @@ db_format(char *buf, size_t bufsize, long val, int format, int alt, int width)
 void
 db_stack_dump(void)
 {
-	static int intrace;
+	static volatile int intrace;
 
 	if (intrace) {
 		printf("Faulted in traceback, aborting...\n");
