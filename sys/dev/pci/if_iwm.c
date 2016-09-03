@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.105 2016/09/03 10:33:15 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.106 2016/09/03 11:42:12 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -405,8 +405,6 @@ int	iwm_mvm_power_mac_update_mode(struct iwm_softc *, struct iwm_node *);
 int	iwm_mvm_power_update_device(struct iwm_softc *);
 int	iwm_mvm_enable_beacon_filter(struct iwm_softc *, struct iwm_node *);
 int	iwm_mvm_disable_beacon_filter(struct iwm_softc *);
-int	iwm_mvm_send_add_sta_cmd_status(struct iwm_softc *,
-					struct iwm_mvm_add_sta_cmd_v7 *, int *);
 int	iwm_mvm_sta_send_to_fw(struct iwm_softc *, struct iwm_node *, int);
 int	iwm_mvm_add_sta(struct iwm_softc *, struct iwm_node *);
 int	iwm_mvm_update_sta(struct iwm_softc *, struct iwm_node *);
@@ -2756,7 +2754,8 @@ iwm_mvm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni,
 	    IWM_STA_MODIFY_REMOVE_BA_TID;
 
 	status = IWM_ADD_STA_SUCCESS;
-	ret = iwm_mvm_send_add_sta_cmd_status(sc, &cmd, &status);
+	ret = iwm_mvm_send_cmd_pdu_status(sc, IWM_ADD_STA,
+	    sizeof(cmd), &cmd, &status);
 	if (ret)
 		return;
 
@@ -4887,14 +4886,6 @@ iwm_mvm_disable_beacon_filter(struct iwm_softc *sc)
 	return ret;
 }
 
-int
-iwm_mvm_send_add_sta_cmd_status(struct iwm_softc *sc,
-	struct iwm_mvm_add_sta_cmd_v7 *cmd, int *status)
-{
-	return iwm_mvm_send_cmd_pdu_status(sc, IWM_ADD_STA, sizeof(*cmd),
-	    cmd, status);
-}
-
 /* send station add/update command to firmware */
 int
 iwm_mvm_sta_send_to_fw(struct iwm_softc *sc, struct iwm_node *in, int update)
@@ -4954,7 +4945,8 @@ iwm_mvm_sta_send_to_fw(struct iwm_softc *sc, struct iwm_node *in, int update)
 	}
 
 	status = IWM_ADD_STA_SUCCESS;
-	ret = iwm_mvm_send_add_sta_cmd_status(sc, &add_sta_cmd, &status);
+	ret = iwm_mvm_send_cmd_pdu_status(sc, IWM_ADD_STA, sizeof(add_sta_cmd),
+	    &add_sta_cmd, &status);
 	if (ret)
 		return ret;
 
@@ -5000,7 +4992,8 @@ iwm_mvm_add_int_sta_common(struct iwm_softc *sc, struct iwm_int_sta *sta,
 	if (addr)
 		memcpy(cmd.addr, addr, ETHER_ADDR_LEN);
 
-	ret = iwm_mvm_send_add_sta_cmd_status(sc, &cmd, &status);
+	ret = iwm_mvm_send_cmd_pdu_status(sc, IWM_ADD_STA,
+	    sizeof(cmd), &cmd, &status);
 	if (ret)
 		return ret;
 
