@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.13 2016/09/03 21:01:42 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.14 2016/09/03 22:24:43 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -751,7 +751,6 @@ printf("%s: peer your discr 0x%x != local 0x%x\n",
 		goto discard;
 
 	sc->sc_peer->RemoteSessionState = state;
-	sc->error = 0;
 	sc->sc_peer->RemoteMinRxInterval = ntohl(peer->bfd_required_min_rx_interval);
 
 	/* Local change to the algorithm, we don't accept below 10ms */
@@ -817,6 +816,7 @@ printf("%s: set BFD_STATE_DOWN\n", __func__);
 		sc->sc_peer->RemoteDemandMode = (flags & BFD_FLAG_D);
 	}
 
+	sc->error = 0;
 
  discard:
 	m_free(m);
