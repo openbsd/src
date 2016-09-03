@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.183 2016/09/01 09:05:52 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.184 2016/09/03 11:40:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -616,28 +616,33 @@ _rs_clearseed(const void *p, size_t s)
 {
 	struct kmem_dyn_mode kd_avoidalias;
 	vaddr_t va = trunc_page((vaddr_t)p);
-	vaddr_t rwa;
-	paddr_t pa1, pa2;
+	vsize_t off = (vaddr_t)p - va;
+	vaddr_t rwva;
+	paddr_t pa[3];
+	int i;
 
-	pmap_extract(pmap_kernel(), va, &pa1);
-	pmap_extract(pmap_kernel(), va + PAGE_SIZE, &pa2);
+	KASSERT(s <= (nitems(pa) - 1) * PAGE_SIZE);
+
+	for (i = 0; i < nitems(pa); i++, va += PAGE_SIZE)
+		pmap_extract(pmap_kernel(), va, &pa[i]);
 
 	memset(&kd_avoidalias, 0, sizeof kd_avoidalias);
-	kd_avoidalias.kd_prefer = pa1;
+	kd_avoidalias.kd_prefer = pa[0];
 	kd_avoidalias.kd_waitok = 1;
-	rwa = (vaddr_t)km_alloc(2 * PAGE_SIZE, &kv_any, &kp_none,
+	rwva = (vaddr_t)km_alloc(nitems(pa) * PAGE_SIZE, &kv_any, &kp_none,
 	    &kd_avoidalias);
-	if (!rwa)
+	if (!rwva)
 		panic("_rs_clearseed");
 
-	pmap_kenter_pa(rwa, pa1, PROT_READ | PROT_WRITE);
-	pmap_kenter_pa(rwa + PAGE_SIZE, pa2, PROT_READ | PROT_WRITE);
+	va = rwva;
+	for (i = 0; i < nitems(pa); i++, va += PAGE_SIZE)
+		pmap_kenter_pa(va, pa[i], PROT_READ | PROT_WRITE);
 	pmap_update(pmap_kernel());
 
-	explicit_bzero(rwa + ((char *)p - va), s);
+	explicit_bzero((void *)(rwva + off), s);
 
-	pmap_kremove(rwa, 2 * PAGE_SIZE);
-	km_free((void *)rwa, 2 * PAGE_SIZE, &kv_any, &kp_none);
+	pmap_kremove(rwva, nitems(pa) * PAGE_SIZE);
+	km_free((void *)rwva, nitems(pa) * PAGE_SIZE, &kv_any, &kp_none);
 }
 
 static inline void
