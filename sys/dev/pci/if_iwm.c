@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.108 2016/09/03 13:35:07 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.109 2016/09/03 15:05:03 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1171,7 +1171,7 @@ iwm_alloc_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring, int qid)
 	size = IWM_TX_RING_COUNT * sizeof(struct iwm_device_cmd);
 	error = iwm_dma_contig_alloc(sc->sc_dmat, &ring->cmd_dma, size, 4);
 	if (error != 0) {
-		printf("%s: could not allocate TX cmd DMA memory\n", DEVNAME(sc));
+		printf("%s: could not allocate cmd DMA memory\n", DEVNAME(sc));
 		goto fail;
 	}
 	ring->cmd = ring->cmd_dma.vaddr;
@@ -1196,7 +1196,8 @@ iwm_alloc_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring, int qid)
 		    IWM_NUM_OF_TBS - 2, mapsize, 0, BUS_DMA_NOWAIT,
 		    &data->map);
 		if (error != 0) {
-			printf("%s: could not create TX buf DMA map\n", DEVNAME(sc));
+			printf("%s: could not create TX buf DMA map\n",
+			    DEVNAME(sc));
 			goto fail;
 		}
 	}
@@ -1566,7 +1567,6 @@ iwm_stop_device(struct iwm_softc *sc)
 	sc->sc_flags &= ~IWM_FLAG_USE_ICT;
 
 	/* stop tx and rx.  tx and rx bits, as usual, are from if_iwn */
-
 	iwm_write_prph(sc, IWM_SCD_TXFACT, 0);
 
 	/* Stop all DMA channels. */
@@ -1810,14 +1810,17 @@ iwm_enable_txq(struct iwm_softc *sc, int sta_id, int qid, int fifo)
 
 		iwm_write_prph(sc, IWM_SCD_QUEUE_RDPTR(qid), 0);
 
-		iwm_write_mem32(sc, sc->sched_base + IWM_SCD_CONTEXT_QUEUE_OFFSET(qid), 0);
+		iwm_write_mem32(sc,
+		    sc->sched_base + IWM_SCD_CONTEXT_QUEUE_OFFSET(qid), 0);
+
 		/* Set scheduler window size and frame limit. */
 		iwm_write_mem32(sc,
 		    sc->sched_base + IWM_SCD_CONTEXT_QUEUE_OFFSET(qid) +
 		    sizeof(uint32_t),
 		    ((IWM_FRAME_LIMIT << IWM_SCD_QUEUE_CTX_REG2_WIN_SIZE_POS) &
 		    IWM_SCD_QUEUE_CTX_REG2_WIN_SIZE_MSK) |
-		    ((IWM_FRAME_LIMIT << IWM_SCD_QUEUE_CTX_REG2_FRAME_LIMIT_POS) &
+		    ((IWM_FRAME_LIMIT
+		        << IWM_SCD_QUEUE_CTX_REG2_FRAME_LIMIT_POS) &
 		    IWM_SCD_QUEUE_CTX_REG2_FRAME_LIMIT_MSK));
 
 		iwm_write_prph(sc, IWM_SCD_QUEUE_STATUS_BITS(qid),
@@ -3536,7 +3539,8 @@ iwm_mvm_calc_rssi(struct iwm_softc *sc, struct iwm_rx_phy_info *phy_info)
  * values by -256dBm: practically 0 power and a non-feasible 8 bit value.
  */
 int
-iwm_mvm_get_signal_strength(struct iwm_softc *sc, struct iwm_rx_phy_info *phy_info)
+iwm_mvm_get_signal_strength(struct iwm_softc *sc,
+	struct iwm_rx_phy_info *phy_info)
 {
 	int energy_a, energy_b, energy_c, max_energy;
 	uint32_t val;
@@ -3623,7 +3627,8 @@ iwm_mvm_rx_rx_mpdu(struct iwm_softc *sc,
 	rx_res = (struct iwm_rx_mpdu_res_start *)pkt->data;
 	wh = (struct ieee80211_frame *)(pkt->data + sizeof(*rx_res));
 	len = le16toh(rx_res->byte_count);
-	rx_pkt_status = le32toh(*(uint32_t *)(pkt->data + sizeof(*rx_res) + len));
+	rx_pkt_status = le32toh(*(uint32_t *)(pkt->data +
+	    sizeof(*rx_res) + len));
 
 	m = data->m;
 	m->m_data = pkt->data + sizeof(*rx_res);
@@ -7574,14 +7579,16 @@ iwm_intr(void *arg)
 		isperiodic = 1;
 	}
 
-	if ((r1 & (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX)) || isperiodic) {
+	if ((r1 & (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX)) ||
+	    isperiodic) {
 		handled |= (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX);
 		IWM_WRITE(sc, IWM_CSR_FH_INT_STATUS, IWM_CSR_FH_INT_RX_MASK);
 
 		iwm_notif_intr(sc);
 
 		/* enable periodic interrupt, see above */
-		if (r1 & (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX) && !isperiodic)
+		if (r1 & (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX) &&
+		    !isperiodic)
 			IWM_WRITE_1(sc, IWM_CSR_INT_PERIODIC_REG,
 			    IWM_CSR_INT_PERIODIC_ENA);
 	}
