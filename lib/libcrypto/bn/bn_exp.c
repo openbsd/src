@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.25 2016/09/03 17:21:38 bcook Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.26 2016/09/03 17:26:29 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,6 +115,7 @@
 #include <openssl/err.h>
 
 #include "bn_lcl.h"
+#include "constant_time_locl.h"
 
 /* maximum precomputation table size for *variable* sliding windows */
 #define TABLE_SIZE	32
@@ -541,14 +542,17 @@ err:
 
 static int
 MOD_EXP_CTIME_COPY_TO_PREBUF(const BIGNUM *b, int top, unsigned char *buf,
-    int idx, int width)
+    int idx, int window)
 {
-	size_t i, j;
+	int i, j;
+	int width = 1 << window;
+	BN_ULONG *table = (BN_ULONG *)buf;
 
 	if (top > b->top)
 		top = b->top; /* this works because 'buf' is explicitly zeroed */
-	for (i = 0, j = idx; i < top * sizeof b->d[0]; i++, j += width) {
-		buf[j] = ((unsigned char*)b->d)[i];
+
+	for (i = 0, j = idx; i < top; i++, j += width) {
+		table[j] = b->d[i];
 	}
 
 	return 1;
@@ -556,17 +560,52 @@ MOD_EXP_CTIME_COPY_TO_PREBUF(const BIGNUM *b, int top, unsigned char *buf,
 
 static int
 MOD_EXP_CTIME_COPY_FROM_PREBUF(BIGNUM *b, int top, unsigned char *buf, int idx,
-    int width)
+    int window)
 {
-	size_t i, j;
+	int i, j;
+	int width = 1 << window;
+	volatile BN_ULONG *table = (volatile BN_ULONG *)buf;
 
 	if (bn_wexpand(b, top) == NULL)
 		return 0;
 
-	for (i = 0, j = idx; i < top * sizeof b->d[0]; i++, j += width) {
-		((unsigned char*)b->d)[i] = buf[j];
-	}
+	if (window <= 3) {
+		for (i = 0; i < top; i++, table += width) {
+		    BN_ULONG acc = 0;
 
+		    for (j = 0; j < width; j++) {
+			acc |= table[j] &
+			       ((BN_ULONG)0 - (constant_time_eq_int(j,idx)&1));
+		    }
+
+		    b->d[i] = acc;
+		}
+	} else {
+		int xstride = 1 << (window - 2);
+		BN_ULONG y0, y1, y2, y3;
+
+		i = idx >> (window - 2);        /* equivalent of idx / xstride */
+		idx &= xstride - 1;             /* equivalent of idx % xstride */
+
+		y0 = (BN_ULONG)0 - (constant_time_eq_int(i,0)&1);
+		y1 = (BN_ULONG)0 - (constant_time_eq_int(i,1)&1);
+		y2 = (BN_ULONG)0 - (constant_time_eq_int(i,2)&1);
+		y3 = (BN_ULONG)0 - (constant_time_eq_int(i,3)&1);
+
+		for (i = 0; i < top; i++, table += width) {
+		    BN_ULONG acc = 0;
+
+		    for (j = 0; j < xstride; j++) {
+			acc |= ( (table[j + 0 * xstride] & y0) |
+				 (table[j + 1 * xstride] & y1) |
+				 (table[j + 2 * xstride] & y2) |
+				 (table[j + 3 * xstride] & y3) )
+			       & ((BN_ULONG)0 - (constant_time_eq_int(j,idx)&1));
+		    }
+
+		    b->d[i] = acc;
+		}
+	}
 	b->top = top;
 	bn_correct_top(b);
 	return 1;
@@ -772,10 +811,10 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 #endif
 	{
 		if (!MOD_EXP_CTIME_COPY_TO_PREBUF(&tmp, top, powerbuf, 0,
-		    numPowers))
+		    window))
 			goto err;
 		if (!MOD_EXP_CTIME_COPY_TO_PREBUF(&am,  top, powerbuf, 1,
-		    numPowers))
+		    window))
 			goto err;
 
 		/* If the window size is greater than 1, then calculate
@@ -787,7 +826,7 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 			if (!BN_mod_mul_montgomery(&tmp, &am, &am, mont, ctx))
 				goto err;
 			if (!MOD_EXP_CTIME_COPY_TO_PREBUF(&tmp, top, powerbuf,
-			    2, numPowers))
+			    2, window))
 				goto err;
 			for (i = 3; i < numPowers; i++) {
 				/* Calculate a^i = a^(i-1) * a */
@@ -795,7 +834,7 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 				    mont, ctx))
 					goto err;
 				if (!MOD_EXP_CTIME_COPY_TO_PREBUF(&tmp, top,
-				    powerbuf, i, numPowers))
+				    powerbuf, i, window))
 					goto err;
 			}
 		}
@@ -804,7 +843,7 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		for (wvalue = 0, i = bits % window; i >= 0; i--, bits--)
 			wvalue = (wvalue << 1) + BN_is_bit_set(p, bits);
 		if (!MOD_EXP_CTIME_COPY_FROM_PREBUF(&tmp, top, powerbuf,
-		    wvalue, numPowers))
+		    wvalue, window))
 			goto err;
 
 		/* Scan the exponent one window at a time starting from the most
@@ -823,7 +862,7 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
 			/* Fetch the appropriate pre-computed value from the pre-buf */
 			if (!MOD_EXP_CTIME_COPY_FROM_PREBUF(&am, top, powerbuf,
-			    wvalue, numPowers))
+			    wvalue, window))
 				goto err;
 
 			/* Multiply the result into the intermediate result */
