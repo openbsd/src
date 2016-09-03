@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.144 2016/09/02 21:46:18 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.145 2016/09/03 21:48:51 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ int moptions;
 int mx_dup_ck = MAX_DUP_CHK;
 char rcvd_tbl[MAX_DUP_CHK / 8];
 
-struct sockaddr_in whereto;	/* who to ping */
+struct sockaddr_in dst;	/* who to ping */
 unsigned int datalen = DEFDATALEN;
 int s;				/* socket file descriptor */
 u_char outpackhdr[IP_MAXPACKET]; /* Max packet size = 65535 */
@@ -352,8 +352,8 @@ main(int argc, char *argv[])
 
 	target = *argv;
 
-	memset(&whereto, 0, sizeof(whereto));
-	to = &whereto;
+	memset(&dst, 0, sizeof(dst));
+	to = &dst;
 	to->sin_len = sizeof(struct sockaddr_in);
 	to->sin_family = AF_INET;
 	if (inet_aton(target, &to->sin_addr) != 0)
@@ -702,8 +702,8 @@ pinger(void)
 		SipHash24_Update(&ctx, tv64, sizeof(*tv64));
 		SipHash24_Update(&ctx, &ident, sizeof(ident));
 		SipHash24_Update(&ctx, &icp->icmp_seq, sizeof(icp->icmp_seq));
-		SipHash24_Update(&ctx, &whereto.sin_addr,
-		    sizeof(whereto.sin_addr));
+		SipHash24_Update(&ctx, &dst.sin_addr,
+		    sizeof(dst.sin_addr));
 		SipHash24_Final(&payload.mac, &ctx);
 
 		memcpy(&outpack[8], &payload, sizeof(payload));
@@ -723,8 +723,8 @@ pinger(void)
 		ip->ip_sum = in_cksum((u_short *)outpackhdr, cc);
 	}
 
-	i = sendto(s, packet, cc, 0, (struct sockaddr *)&whereto,
-	    sizeof(whereto));
+	i = sendto(s, packet, cc, 0, (struct sockaddr *)&dst,
+	    sizeof(dst));
 
 	if (i < 0 || i != cc)  {
 		if (i < 0)
@@ -810,8 +810,8 @@ pr_pack(char *buf, int cc, struct msghdr *mhdr)
 			SipHash24_Update(&ctx, &ident, sizeof(ident));
 			SipHash24_Update(&ctx, &icp->icmp_seq,
 			    sizeof(icp->icmp_seq));
-			SipHash24_Update(&ctx, &whereto.sin_addr,
-			    sizeof(whereto.sin_addr));
+			SipHash24_Update(&ctx, &dst.sin_addr,
+			    sizeof(dst.sin_addr));
 			SipHash24_Final(mac, &ctx);
 
 			if (timingsafe_memcmp(mac, &payload.mac,
