@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.521 2016/09/01 10:54:25 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.522 2016/09/03 16:06:26 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -161,7 +161,7 @@ union lookup {
  * Bump IMSG_VERSION whenever a change is made to enum imsg_type.
  * This will ensure that we can never use a wrong version of smtpctl with smtpd.
  */
-#define	IMSG_VERSION		14
+#define	IMSG_VERSION		15
 
 enum imsg_type {
 	IMSG_NONE,

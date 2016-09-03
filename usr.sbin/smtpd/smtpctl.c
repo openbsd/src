@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.149 2016/04/29 08:55:08 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.150 2016/09/03 16:06:26 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -220,45 +220,51 @@ srv_read(void *dst, size_t sz)
 static void
 srv_get_int(int *i)
 {
-	uint8_t type;
-
-	srv_read(&type, 1);
 	srv_read(i, sizeof(*i));
 }
 
 static void
 srv_get_time(time_t *t)
 {
-	uint8_t type;
-
-	srv_read(&type, 1);
 	srv_read(t, sizeof(*t));
 }
 
 static void
 srv_get_evpid(uint64_t *evpid)
 {
-	uint8_t type;
-
-	srv_read(&type, 1);
 	srv_read(evpid, sizeof(*evpid));
+}
+
+static void
+srv_get_string(const char **s)
+{
+	const char *end;
+	size_t len;
+
+	if (rlen == 0)
+		errx(1, "message too short");
+
+	end = memchr(rdata, 0, rlen);
+	if (end == NULL)
+		errx(1, "unterminated string");
+
+	len = end + 1 - rdata;
+
+	*s = rdata;
+	rlen -= len;
+	rdata += len;
 }
 
 static void
 srv_get_envelope(struct envelope *evp)
 {
 	uint64_t	 evpid;
-	uint8_t		 type;
-	size_t		 s;
-	const void	*d;
+	const char	*str;
 
 	srv_get_evpid(&evpid);
-	srv_read(&type, sizeof(type));
-	srv_read(&s, sizeof(s));
-	d = rdata;
-	srv_read(NULL, s);
+	srv_get_string(&str);
 
-	envelope_load_buffer(evp, d, s - 1);
+	envelope_load_buffer(evp, str, strlen(str));
 	evp->id = evpid;
 }
 

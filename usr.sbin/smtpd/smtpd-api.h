@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.30 2016/06/29 06:46:06 eric Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.31 2016/09/03 16:06:26 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -20,7 +20,7 @@
 #ifndef	_SMTPD_API_H_
 #define	_SMTPD_API_H_
 
-#define	FILTER_API_VERSION	 51
+#define	FILTER_API_VERSION	 52
 
 struct mailaddr {
 	char	user[SMTPD_MAXLOCALPARTSIZE];
@@ -96,7 +96,7 @@ struct filter_connect {
 	const char		*hostname;
 };
 
-#define PROC_QUEUE_API_VERSION	1
+#define PROC_QUEUE_API_VERSION	2
 
 enum {
 	PROC_QUEUE_OK,
@@ -116,7 +116,7 @@ enum {
 	PROC_QUEUE_ENVELOPE_WALK,
 };
 
-#define PROC_SCHEDULER_API_VERSION	1
+#define PROC_SCHEDULER_API_VERSION	2
 
 struct scheduler_info;
 
@@ -184,7 +184,7 @@ struct scheduler_info {
 #define SCHED_MDA		0x10
 #define SCHED_MTA		0x20
 
-#define PROC_TABLE_API_VERSION	1
+#define PROC_TABLE_API_VERSION	2
 
 struct table_open_params {
 	uint32_t	version;
