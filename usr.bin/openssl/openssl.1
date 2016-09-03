@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.67 2016/09/02 18:43:52 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.68 2016/09/03 13:26:55 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: September 2 2016 $
+.Dd $Mdocdate: September 3 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -4067,19 +4067,15 @@ with
 .Fl verify ,
 a certificate is requested but the client does not have to send one.
 .El
-.\"
-.\" S_TIME
-.\"
 .Sh S_TIME
 .nr nS 1
 .Nm "openssl s_time"
-.Bk -words
 .Op Fl bugs
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar directory
 .Op Fl cert Ar file
 .Op Fl cipher Ar cipherlist
-.Op Fl connect Ar host : Ns Ar port
+.Op Fl connect Ar host Ns Op : Ns Ar port
 .Op Fl key Ar keyfile
 .Op Fl nbio
 .Op Fl new
@@ -4088,11 +4084,10 @@ a certificate is requested but the client does not have to send one.
 .Op Fl time Ar seconds
 .Op Fl verify Ar depth
 .Op Fl www Ar page
-.Ek
 .nr nS 0
 .Pp
 The
-.Nm s_client
+.Nm s_time
 command implements a generic SSL/TLS client which connects to a
 remote host using SSL/TLS.
 It can request a page from the server and includes
@@ -4105,10 +4100,11 @@ and calculates the average time spent for one connection.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl bugs
-There are several known bugs in SSL and TLS implementations.
-Adding this option enables various workarounds.
+Enable various workarounds for buggy implementations.
 .It Fl CAfile Ar file
-A file containing trusted certificates to use during server authentication
+A
+.Ar file
+containing trusted certificates to use during server authentication
 and to use when attempting to build the client certificate chain.
 .It Fl CApath Ar directory
 The directory to use for server certificate verification.
@@ -4121,24 +4117,22 @@ These are also used when building the client certificate chain.
 .It Fl cert Ar file
 The certificate to use, if one is requested by the server.
 The default is not to use a certificate.
-The file is in PEM format.
 .It Fl cipher Ar cipherlist
-This allows the cipher list sent by the client to be modified.
+Modify the cipher list sent by the client.
 Although the server determines which cipher suite is used,
 it should take the first supported cipher in the list sent by the client.
 See the
 .Nm ciphers
 command for more information.
-.It Fl connect Ar host : Ns Ar port
-This specifies the host and optional port to connect to.
+.It Fl connect Ar host Ns Op : Ns Ar port
+The host and port to connect to.
 .It Fl key Ar keyfile
 The private key to use.
 If not specified, the certificate file will be used.
-The file is in PEM format.
 .It Fl nbio
-Turns on non-blocking I/O.
+Turn on non-blocking I/O.
 .It Fl new
-Performs the timing test using a new session ID for each connection.
+Perform the timing test using a new session ID for each connection.
 If neither
 .Fl new
 nor
@@ -4147,11 +4141,10 @@ are specified,
 they are both on by default and executed in sequence.
 .It Fl no_shutdown
 Shut down the connection without sending a
-.Dq close notify
+.Qq close notify
 shutdown alert to the server.
 .It Fl reuse
-Performs the timing test using the same session ID;
-this can be used as a test that session caching is working.
+Perform the timing test using the same session ID for each connection.
 If neither
 .Fl new
 nor
@@ -4159,26 +4152,21 @@ nor
 are specified,
 they are both on by default and executed in sequence.
 .It Fl time Ar seconds
-Specifies how long
-.Pq in seconds
+Limit
 .Nm s_time
-should establish connections and
-optionally transfer payload data from a server.
+benchmarks to the number of
+.Ar seconds .
 The default is 30 seconds.
-Server and client performance and the link speed
-determine how many connections
-.Nm s_time
-can establish.
 .It Fl verify Ar depth
-The verify depth to use.
-This specifies the maximum length of the server certificate chain
-and turns on server certificate verification.
+Turn on server certificate verification,
+with a maximum length of
+.Ar depth .
 Currently the verify operation continues after errors, so all the problems
 with a certificate chain can be seen.
 As a side effect,
 the connection will never fail due to a server certificate verify failure.
 .It Fl www Ar page
-This specifies the page to GET from the server.
+The page to GET from the server.
 A value of
 .Sq /
 gets the index.htm[l] page.
@@ -4187,63 +4175,6 @@ If this parameter is not specified,
 will only perform the handshake to establish SSL connections
 but not transfer any payload data.
 .El
-.Sh S_TIME NOTES
-.Nm s_client
-can be used to measure the performance of an SSL connection.
-To connect to an SSL HTTP server and get the default page the command
-.Bd -literal -offset indent
-$ openssl s_time -connect servername:443 -www / -CApath yourdir \e
-	-CAfile yourfile.pem -cipher commoncipher
-.Ed
-.Pp
-would typically be used
-.Pq HTTPS uses port 443 .
-.Dq commoncipher
-is a cipher to which both client and server can agree;
-see the
-.Nm ciphers
-command for details.
-.Pp
-If the handshake fails, there are several possible causes:
-if it is nothing obvious like no client certificate, the
-.Fl bugs
-option can be tried in case it is a buggy server.
-.Pp
-A frequent problem when attempting to get client certificates working
-is that a web client complains it has no certificates or gives an empty
-list to choose from.
-This is normally because the server is not sending
-the clients certificate authority in its
-.Qq acceptable CA list
-when it requests a certificate.
-By using
-.Nm s_client ,
-the CA list can be viewed and checked.
-However some servers only request client authentication
-after a specific URL is requested.
-To obtain the list in this case, it is necessary to use the
-.Fl prexit
-option of
-.Nm s_client
-and send an HTTP request for an appropriate page.
-.Pp
-If a certificate is specified on the command line using the
-.Fl cert
-option,
-it will not be used unless the server specifically requests
-a client certificate.
-Therefore merely including a client certificate
-on the command line is no guarantee that the certificate works.
-.Sh S_TIME BUGS
-Because this program does not have all the options of the
-.Nm s_client
-program to turn protocols on and off,
-you may not be able to measure the performance
-of all protocols with all servers.
-.Pp
-The
-.Fl verify
-option should really exit if the server verification fails.
 .\"
 .\" SESS_ID
 .\"
