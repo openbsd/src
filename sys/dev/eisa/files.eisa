@@ -1,4 +1,4 @@
-#	$OpenBSD: files.eisa,v 1.11 2013/10/28 12:33:32 mpi Exp $
+#	$OpenBSD: files.eisa,v 1.12 2016/09/03 21:37:29 tedu Exp $
 #	$NetBSD: files.eisa,v 1.12 1996/09/01 00:10:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent EISA code.
@@ -8,11 +8,6 @@
 device	eisa {[slot = -1]}
 attach	eisa at eisabus
 file	dev/eisa/eisa.c			eisa	needs-flag
-
-# Adaptec AHA-174x EISA SCSI Host Adapter family
-device	ahb: scsi
-attach	ahb at eisa
-file	dev/eisa/aha1742.c		ahb
 
 # Adaptec AHA-274X and aic7770 motherboard SCSI controllers
 # device declaration in sys/conf/files

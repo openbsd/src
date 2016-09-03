@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.820 2016/09/03 16:18:21 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.821 2016/09/03 21:37:29 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -428,10 +428,6 @@ bha1	at isa? disable port 0x334	# BusLogic [57]4X SCSI controllers
 bha2	at isa? disable
 bha*	at pci?
 #bha*	at eisa?		# XXX eisa still runs in isa-compat
-aha0	at isa? port 0x330	# Adaptec 154[02] SCSI controllers
-aha1	at isa? port 0x334	# Adaptec 154[02] SCSI controllers
-aha*	at isapnp?
-ahb*	at eisa?		# Adaptec 174[024] SCSI controllers
 #ahc0	at isa?			# Adaptec 284x SCSI controllers
 ahc*	at eisa?		# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci?			# Adaptec 2940/3940/78?? SCSI controllers

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.121 2016/08/31 15:53:06 tedu Exp $
+#	$OpenBSD: files.isa,v 1.122 2016/09/03 21:37:29 tedu Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -103,11 +103,6 @@ file	dev/isa/bha_isa.c		bha_isa
 # Adaptec AIC-6[32]60 ICs
 attach	aic at isa with aic_isa: isa_dma
 file	dev/isa/aic_isa.c		aic_isa
-
-# Adaptec AHA-154x family
-device	aha: scsi, isa_dma
-attach	aha at isa with aha_isa
-file	dev/isa/aha.c			aha needs-flag
 
 # UltraStor UHA-[13]4f boards
 # device declaration in sys/conf/files
