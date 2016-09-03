@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.155 2016/08/25 14:13:19 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.156 2016/09/03 11:13:36 yasuoka Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -488,6 +488,8 @@ restart:
 			} else {
 				error = m_getuio(&top, atomic,
 				    space, uio);
+				if (error)
+					goto release;
 				space -= top->m_pkthdr.len;
 				resid = uio->uio_resid;
 				if (flags & MSG_EOR)
