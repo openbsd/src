@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.56 2016/09/03 12:12:43 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.57 2016/09/03 13:35:03 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@
 #define	CPUID_DE	0x00000004	/* has debugging extension */
 #define	CPUID_PSE	0x00000008	/* has 4MB page size extension */
 #define	CPUID_TSC	0x00000010	/* has time stamp counter */
-#define	CPUID_MSR	0x00000020	/* has mode specific registers */
+#define	CPUID_MSR	0x00000020	/* has model specific registers */
 #define	CPUID_PAE	0x00000040	/* has phys address extension */
 #define	CPUID_MCE	0x00000080	/* has machine check exception */
 #define	CPUID_CX8	0x00000100	/* has CMPXCHG8B instruction */
