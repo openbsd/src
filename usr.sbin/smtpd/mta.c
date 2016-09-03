@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.201 2016/05/22 16:31:21 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.202 2016/09/03 22:59:06 giovanni Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1610,8 +1610,8 @@ mta_log(const struct mta_envelope *evp, const char *prefix, const char *source,
     const char *relay, const char *status)
 {
 	log_info("%016"PRIx64" mta event=delivery evpid=%016"PRIx64" "
-	    "from=<%s> to=<%s> rcpt=<%s> source=%s "
-	    "relay=%s delay=%s result=%s stat=%s",
+	    "from=<%s> to=<%s> rcpt=<%s> source=\"%s\" "
+	    "relay=\"%s\" delay=%s result=\"%s\" stat=\"%s\"",
 	    evp->session,
 	    evp->id,
 	    evp->task->sender,

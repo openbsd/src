@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.285 2016/07/29 08:53:07 giovanni Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.286 2016/09/03 22:59:06 giovanni Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -903,9 +903,10 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		    s->tx->msgid);
 
 		TAILQ_FOREACH(rcpt, &s->tx->rcpts, entry) {
-			log_info("%016"PRIx64" smtp event=message msgid=%08x "
-			    "from=<%s%s%s> to=<%s%s%s> size=%zu ndest=%zu proto=%s",
+			log_info("%016"PRIx64" smtp event=message address=%s host=%s "
+			    "msgid=%08x from=<%s%s%s> to=<%s%s%s> size=%zu ndest=%zu proto=%s",
 			    s->id,
+			    ss_to_text(&s->ss), s->hostname,
 			    s->tx->msgid,
 			    s->tx->evp.sender.user,
 			    s->tx->evp.sender.user[0] == '\0' ? "" : "@",
@@ -969,8 +970,9 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		s = tree_xpop(&wait_ssl_init, resp_ca_cert->reqid);
 
 		if (resp_ca_cert->status == CA_FAIL) {
-			log_info("%016"PRIx64" smtp event=closed reason=ca-failure",
-			    s->id);
+			log_info("%016"PRIx64" smtp event=closed address=%s host=%s "
+			    "reason=ca-failure",
+			    s->id, ss_to_text(&s->ss), s->hostname);
 			smtp_free(s, "CA failure");
 			return;
 		}
@@ -996,8 +998,8 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			s->flags |= SF_VERIFIED;
 		else if (s->listener->flags & F_TLS_VERIFY) {
 			log_info("%016"PRIx64" smtp "
-			    "event=closed reason=cert-check-failed",
-			    s->id);
+			    "event=closed address=%s host=%s reason=cert-check-failed",
+			    s->id, ss_to_text(&s->ss), s->hostname);
 			smtp_free(s, "SSL certificate check failed");
 			return;
 		}
@@ -1034,8 +1036,8 @@ smtp_filter_response(uint64_t id, int query, int status, uint32_t code,
 	case QUERY_CONNECT:
 		if (status != FILTER_OK) {
 			log_info("%016"PRIx64" smtp "
-			    "event=closed reason=filter-reject",
-			    s->id);
+			    "event=closed address=%s host=%s reason=filter-reject",
+			    s->id, ss_to_text(&s->ss), s->hostname);
 			smtp_free(s, "rejected by filter");
 			return;
 		}
@@ -1255,8 +1257,8 @@ smtp_io(struct io *io, int evt)
 	switch (evt) {
 
 	case IO_TLSREADY:
-		log_info("%016"PRIx64" smtp event=starttls ciphers=\"%s\"",
-		    s->id, ssl_to_text(s->io.ssl));
+		log_info("%016"PRIx64" smtp event=starttls address=%s host=%s ciphers=\"%s\"",
+		    s->id, ss_to_text(&s->ss), s->hostname, ssl_to_text(s->io.ssl));
 
 		s->flags |= SF_SECURE;
 		s->phase = PHASE_INIT;
@@ -1268,8 +1270,8 @@ smtp_io(struct io *io, int evt)
 
 		if (s->listener->flags & F_TLS_VERIFY) {
 			log_info("%016"PRIx64" smtp "
-			    "event=closed reason=no-client-cert",
-			    s->id);
+			    "event=closed address=%s host=%s reason=no-client-cert",
+			    s->id, ss_to_text(&s->ss), s->hostname);
 			smtp_free(s, "client did not present certificate");
 			return;
 		}
@@ -1280,8 +1282,8 @@ smtp_io(struct io *io, int evt)
 		x = SSL_get_peer_certificate(s->io.ssl);
 		if (x) {
 			log_info("%016"PRIx64" smtp "
-			    "event=client-cert-check result=\"%s\"",
-			    s->id,
+			    "event=client-cert-check address=%s host=%s result=\"%s\"",
+			    s->id, ss_to_text(&s->ss), s->hostname,
 			    (s->flags & SF_VERIFIED) ? "success" : "failure");
 			X509_free(x);
 		}
@@ -1357,8 +1359,9 @@ smtp_io(struct io *io, int evt)
 
 	case IO_LOWAT:
 		if (s->state == STATE_QUIT) {
-			log_info("%016"PRIx64" smtp event=closed reason=quit",
-			    s->id);
+			log_info("%016"PRIx64" smtp event=closed address=%s host=%s "
+			    "reason=quit",
+			    s->id, ss_to_text(&s->ss), s->hostname);
 			smtp_free(s, "done");
 			break;
 		}
@@ -1387,20 +1390,23 @@ smtp_io(struct io *io, int evt)
 		break;
 
 	case IO_TIMEOUT:
-		log_info("%016"PRIx64" smtp event=closed reason=timeout",
-		    s->id);
+		log_info("%016"PRIx64" smtp event=closed address=%s host=%s "
+		    "reason=timeout",
+		    s->id, ss_to_text(&s->ss), s->hostname);
 		smtp_free(s, "timeout");
 		break;
 
 	case IO_DISCONNECTED:
-		log_info("%016"PRIx64" smtp event=closed reason=disconnect",
-		    s->id);
+		log_info("%016"PRIx64" smtp event=closed address=%s host=%s "
+		    "reason=disconnect",
+		    s->id, ss_to_text(&s->ss), s->hostname);
 		smtp_free(s, "disconnected");
 		break;
 
 	case IO_ERROR:
-		log_info("%016"PRIx64" smtp event=closed reason=\"io-error: %s\"",
-		    s->id, io->error);
+		log_info("%016"PRIx64" smtp event=closed address=%s host=%s "
+		    "reason=\"io-error: %s\"",
+		    s->id, ss_to_text(&s->ss), s->hostname, io->error);
 		smtp_free(s, "IO error");
 		break;
 
@@ -2224,26 +2230,33 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 	case '4':
 		if (s->flags & SF_BADINPUT) {
 			log_info("%016"PRIx64" smtp "
-			    "event=bad-input result=\"%.*s\"",
-			    s->id, n, buf);
+			    "event=bad-input address=%s host=%s result=\"%.*s\"",
+			    s->id, ss_to_text(&s->ss), s->hostname, n, buf);
 		}
 		else if (s->state == STATE_AUTH_INIT) {
-			log_info("smtp-in: Failed command on session %016"PRIx64
-			    ": \"AUTH PLAIN (...)\" => %.*s", s->id, n, buf);
+			log_info("%016"PRIx64" smtp "
+			    "event=failed-command address=%s host=%s "
+			    "command=\"AUTH PLAIN (...)\" result=\"%.*s\"",
+			    s->id, ss_to_text(&s->ss), s->hostname, n, buf);
 		}
 		else if (s->state == STATE_AUTH_USERNAME) {
-			log_info("smtp-in: Failed command on session %016"PRIx64
-			    ": \"AUTH LOGIN (username)\" => %.*s", s->id, n, buf);
+			log_info("%016"PRIx64" smtp "
+			    "event=failed-command address=%s host=%s "
+			    "command=\"AUTH LOGIN (username)\" result=\"%.*s\"",
+			    s->id, ss_to_text(&s->ss), s->hostname, n, buf);
 		}
 		else if (s->state == STATE_AUTH_PASSWORD) {
-			log_info("smtp-in: Failed command on session %016"PRIx64
-			    ": \"AUTH LOGIN (password)\" => %.*s", s->id, n, buf);
+			log_info("%016"PRIx64" smtp "
+			    "event=failed-command address=%s host=%s "
+			    "command=\"AUTH LOGIN (password)\" result=\"%.*s\"",
+			    s->id, ss_to_text(&s->ss), s->hostname, n, buf);
 		}
 		else {
 			strnvis(tmp, s->cmd, sizeof tmp, VIS_SAFE | VIS_CSTYLE);
 			log_info("%016"PRIx64" smtp "
-			    "event=failed-command command=\"%s\" result=\"%.*s\"",
-			    s->id, tmp, n, buf);
+			    "event=failed-command address=%s host=%s command=\"%s\" "
+			    "result=\"%.*s\"",
+			    s->id, ss_to_text(&s->ss), s->hostname, tmp, n, buf);
 		}
 		break;
 	}
