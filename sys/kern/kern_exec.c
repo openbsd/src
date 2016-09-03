@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.182 2016/06/11 21:00:11 kettenis Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.183 2016/09/03 14:28:24 jca Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -700,6 +700,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	if (pack.ep_flags & EXEC_WXNEEDED)
 		p->p_p->ps_flags |= PS_WXNEEDED;
+	else
+		p->p_p->ps_flags &= ~PS_WXNEEDED;
 
 	/*
 	 * Call exec hook. Emulation code may NOT store reference to anything
