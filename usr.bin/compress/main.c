@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.93 2016/09/03 12:29:30 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.94 2016/09/03 13:26:50 tedu Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -548,7 +548,7 @@ docompress(const char *in, char *out, const struct compressor *method,
 	}
 
 	while ((nr = read(ifd, buf, sizeof(buf))) > 0)
-		if ((method->write)(cookie, buf, nr) != nr) {
+		if (method->write(cookie, buf, nr) != nr) {
 			if (verbose >= 0)
 				warn("%s", out);
 			error = FAILURE;
@@ -561,7 +561,7 @@ docompress(const char *in, char *out, const struct compressor *method,
 		error = FAILURE;
 	}
 
-	if ((method->close)(cookie, &info, out, sb)) {
+	if (method->close(cookie, &info, out, sb)) {
 		if (!error && verbose >= 0)
 			warn("%s", out);
 		error = FAILURE;
@@ -693,12 +693,12 @@ dodecompress(const char *in, char *out, struct stat *sb)
 		if (ofd < 0) {
 			if (verbose >= 0)
 				warn("%s", in);
-			(method->close)(cookie, NULL, NULL, NULL);
+			method->close(cookie, NULL, NULL, NULL);
 			return (FAILURE);
 		}
 	}
 
-	while ((nr = (method->read)(cookie, buf, sizeof(buf))) > 0) {
+	while ((nr = method->read(cookie, buf, sizeof(buf))) > 0) {
 		if (ofd != -1 && write(ofd, buf, nr) != nr) {
 			if (verbose >= 0)
 				warn("%s", out);
@@ -714,7 +714,7 @@ dodecompress(const char *in, char *out, struct stat *sb)
 		error = errno == EINVAL ? WARNING : FAILURE;
 	}
 
-	if ((method->close)(cookie, &info, NULL, NULL)) {
+	if (method->close(cookie, &info, NULL, NULL)) {
 		if (!error && verbose >= 0)
 			warnx("%s", in);
 		error = FAILURE;
