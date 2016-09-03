@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.907 2016/09/02 21:42:28 halex Exp $
+#	$OpenBSD: install.sub,v 1.908 2016/09/03 11:29:17 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1273,6 +1273,51 @@ __EOT
 	COLUMNS=$_col
 
 	resp=$_selected
+}
+
+# Run a command ($2+) as unprivileged user ($1).
+# Take extra care that after "cmd" no "user" processes exist.
+#
+# Optionally:
+#	- create "file" and chown it to "user"
+#	- after "cmd", chown "file" back to root
+#
+# Usage: do_as user [-f file] cmd
+do_as() {
+	(( $# >= 2 )) || return
+
+	local _file _rc _user=$1
+	shift
+
+	if [[ $1 == -f ]]; then
+		_file=$2
+		shift 2
+	fi
+
+	if [[ -n $_file ]]; then
+		>$_file
+		chown "$_user" "$_file"
+	fi
+
+	doas -u "$_user" "$@"
+	_rc=$?
+
+	while doas -u "$_user" kill -9 -1 2>/dev/null; do
+		echo "Processes still running for user $_user after: $@"
+		sleep 1 
+	done
+
+	[[ -n $_file ]] && chown root "$_file"
+
+	return $_rc
+}
+
+unpriv() {
+	do_as _sndio "$@"
+}
+
+unpriv2() {
+	do_as _file "$@"
 }
 
 # Install a user-selected subset of the files in $2 from the source
