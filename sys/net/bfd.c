@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.9 2016/09/03 19:17:49 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.10 2016/09/03 19:55:42 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -363,8 +363,10 @@ bfd_send_task(void *arg)
 {
 	struct bfd_softc	*sc = (struct bfd_softc *)arg;
 
+	/* add 70%-90% jitter to our transmits, rfc 5880 6.8.7 */
 	if (!timeout_pending(&sc->sc_timo_tx))
-		timeout_add_usec(&sc->sc_timo_tx, sc->mintx);
+		timeout_add_usec(&sc->sc_timo_tx,
+		    sc->mintx * (arc4random_uniform(20) + 70) / 100);
 
 	return;
 }
@@ -592,10 +594,10 @@ bfd_timeout_tx(void *v)
 		}
 	}
 
-	/* XXX - we're getting lucky with timing, need a better mechanism */
-printf("%s: timeout_tx: %u\n", __func__, sc->mintx);
+	/* add 70%-90% jitter to our transmits, rfc 5880 6.8.7 */
 	if (!timeout_pending(&sc->sc_timo_tx))
-		timeout_add_usec(&sc->sc_timo_tx, sc->mintx);
+		timeout_add_usec(&sc->sc_timo_tx,
+		    sc->mintx * (arc4random_uniform(20) + 70) / 100);
 }
 
 /*
