@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.24 2016/09/02 11:25:14 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.25 2016/09/03 10:02:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -566,10 +566,8 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 				fatalx(__func__);
 	}
 
-#ifdef DEBUG
-	log_debug("%s: %s %d/%d, pid %d", __func__, p->p_title,
+	DPRINTF("%s: %s %d/%d, pid %d", __func__, p->p_title,
 	    ps->ps_instance + 1, ps->ps_instances[p->p_id], getpid());
-#endif
 
 	if (run != NULL)
 		run(ps, p, arg);
