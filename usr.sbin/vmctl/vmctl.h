@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.7 2015/12/11 10:16:53 reyk Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.8 2016/09/03 20:49:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,9 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <sys/queue.h>
-#include <imsg.h>
 
 #ifndef VMCTL_PARSER_H
 #define VMCTL_PARSER_H
