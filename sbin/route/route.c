@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.188 2016/09/01 10:41:09 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.189 2016/09/03 14:23:14 phessler Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -606,6 +606,9 @@ newroute(int argc, char **argv)
 				if (!--argc)
 					usage(1+*argv);
 				prio = getpriority(*++argv);
+				break;
+			case K_BFD:
+				flags |= RTF_BFD;
 				break;
 			default:
 				usage(1+*argv);
@@ -1232,6 +1235,7 @@ char *msgtypes[] = {
 	"RTM_IFINFO: iface status change",
 	"RTM_IFANNOUNCE: iface arrival/departure",
 	"RTM_DESYNC: route socket overflow",
+	"RTM_BFD: bidirectional forwarding detection",
 };
 
 char metricnames[] =
@@ -1322,6 +1326,9 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 			break;
 		}
 		printf("\n");
+		break;
+	case RTM_BFD:
+		printf("bfd\n");	/* XXX - expand*/
 		break;
 	default:
 		printf(", priority %d, table %u, ifidx %u, ",
