@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.133 2016/07/06 15:53:01 tedu Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.134 2016/09/03 15:06:06 akfaew Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 #endif
 
 int	thrsleep(struct proc *, struct sys___thrsleep_args *);
-int	thrsleep_unlock(void *, int);
+int	thrsleep_unlock(void *);
 
 /*
  * We're only looking at 7 bits of the address; everything is
@@ -454,26 +454,15 @@ sys_sched_yield(struct proc *p, void *v, register_t *retval)
 }
 
 int
-thrsleep_unlock(void *lock, int lockflags)
+thrsleep_unlock(void *lock)
 {
 	static _atomic_lock_t unlocked = _ATOMIC_LOCK_UNLOCKED;
 	_atomic_lock_t *atomiclock = lock;
-	uint32_t *ticket = lock;
-	uint32_t ticketvalue;
-	int error;
 
 	if (!lock)
-		return (0);
+		return 0;
 
-	if (lockflags) {
-		if ((error = copyin(ticket, &ticketvalue, sizeof(ticketvalue))))
-			return (error);
-		ticketvalue++;
-		error = copyout(&ticketvalue, ticket, sizeof(ticketvalue));
-	} else {
-		error = copyout(&unlocked, atomiclock, sizeof(unlocked));
-	}
-	return (error);
+	return copyout(&unlocked, atomiclock, sizeof(unlocked));
 }
 
 static int globalsleepaddr;
@@ -493,8 +482,7 @@ thrsleep(struct proc *p, struct sys___thrsleep_args *v)
 	void *lock = SCARG(uap, lock);
 	uint64_t to_ticks = 0;
 	int abort, error;
-	clockid_t clock_id = SCARG(uap, clock_id) & 0x7;
-	int lockflags = SCARG(uap, clock_id) & 0x8;
+	clockid_t clock_id = SCARG(uap, clock_id);
 
 	if (ident == 0)
 		return (EINVAL);
@@ -510,7 +498,7 @@ thrsleep(struct proc *p, struct sys___thrsleep_args *v)
 
 		if (timespeccmp(tsp, &now, <)) {
 			/* already passed: still do the unlock */
-			if ((error = thrsleep_unlock(lock, lockflags)))
+			if ((error = thrsleep_unlock(lock)))
 				return (error);
 			return (EWOULDBLOCK);
 		}
@@ -524,9 +512,8 @@ thrsleep(struct proc *p, struct sys___thrsleep_args *v)
 
 	p->p_thrslpid = ident;
 
-	if ((error = thrsleep_unlock(lock, lockflags))) {
+	if ((error = thrsleep_unlock(lock)))
 		goto out;
-	}
 
 	if (SCARG(uap, abort) != NULL) {
 		if ((error = copyin(SCARG(uap, abort), &abort,
