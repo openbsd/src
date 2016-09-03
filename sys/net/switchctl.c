@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.1 2016/09/01 10:06:33 goda Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.2 2016/09/03 18:33:55 goda Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -126,8 +126,11 @@ switchread(dev_t dev, struct uio *uio, int ioflag)
 	u_int			 len;
 	struct mbuf		*m0, *m;
 
-	s = splnet();
 	sc = switch_dev2sc(dev);
+	if (sc == NULL)
+		return (ENXIO);
+
+	s = splnet();
 	while ((m0 = mq_dequeue(&sc->sc_swdev->swdev_outq)) == NULL) {
 		if (ISSET(ioflag, IO_NDELAY)) {
 			splx(s);
@@ -135,9 +138,13 @@ switchread(dev_t dev, struct uio *uio, int ioflag)
 		}
 		sc->sc_swdev->swdev_waiting = 1;
 		error = tsleep(sc, (PZERO + 1)|PCATCH, "switchread", 0);
-		if (error != 0) {
-			splx(s);
-			return (error);
+		if (error != 0)
+			goto failed;
+		/* sc might be deleted while sleeping */
+		sc = switch_dev2sc(dev);
+		if (sc == NULL) {
+			error = ENXIO;
+			goto failed;
 		}
 	}
 	splx(s);
@@ -150,6 +157,9 @@ switchread(dev_t dev, struct uio *uio, int ioflag)
 	}
 	m_freem(m0);
 
+	return (error);
+failed:
+	splx(s);
 	return (error);
 }
 
@@ -183,8 +193,10 @@ switchwrite(dev_t dev, struct uio *uio, int ioflag)
 	}
 	m->m_pkthdr.len = m->m_len = len;
 
-	s = splnet();
 	sc = switch_dev2sc(dev);
+	if (sc == NULL)
+		return (ENXIO);
+	s = splnet();
 	error = sc->sc_swdev->swdev_input(sc, m);
 	splx(s);
 
@@ -195,7 +207,6 @@ int
 switchioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 {
 	int			 error;
-	/* struct switch_softc	*sc = switch_dev2sc(dev); */
 
 	switch (cmd) {
 	case FIONBIO:
@@ -217,7 +228,7 @@ switchclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	rw_enter_write(&switch_ifs_lk);
 	sc = switch_lookup(minor(dev));
-	if (sc->sc_swdev != NULL) {
+	if (sc != NULL && sc->sc_swdev != NULL) {
 		mq_purge(&sc->sc_swdev->swdev_outq);
 		free(sc->sc_swdev, M_DEVBUF, sizeof(struct switch_dev));
 		sc->sc_swdev = NULL;
@@ -256,6 +267,9 @@ switchpoll(dev_t dev, int events, struct proc *p)
 	int			 revents = 0;
 	struct switch_softc	*sc = switch_dev2sc(dev);
 
+	if (sc == NULL)
+		return (ENXIO);
+
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (!mq_empty(&sc->sc_swdev->swdev_outq))
 				revents |= events & (POLLIN | POLLRDNORM);
@@ -276,6 +290,9 @@ switchkqfilter(dev_t dev, struct knote *kn)
 	struct switch_softc	*sc = switch_dev2sc(dev);
 	struct mutex		*mtx;
 	struct klist		*klist;
+
+	if (sc == NULL)
+		return (ENXIO);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
