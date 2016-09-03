@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.18 2016/09/02 17:08:28 stefan Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.19 2016/09/03 11:35:24 nayden Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -355,8 +355,7 @@ vioblk_do_write(struct vioblk_dev *dev, off_t sector, char *buf, ssize_t sz)
 }
 
 /*
- * XXX this function needs a cleanup block, lots of free(blah); return (0)
- *     in various cases, ds should be set to VIRTIO_BLK_S_IOERR, if we can
+ * XXX in various cases, ds should be set to VIRTIO_BLK_S_IOERR, if we can
  * XXX cant trust ring data from VM, be extra cautious.
  */
 int
@@ -392,8 +391,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 	if (read_mem(q_gpa, vr, vr_sz)) {
 		log_warnx("error reading gpa 0x%llx", q_gpa);
-		free(vr);
-		return (0);
+		goto out;
 	}
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
@@ -408,8 +406,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 	if ((avail->idx & VIOBLK_QUEUE_MASK) == idx) {
 		log_warnx("vioblk queue notify - nothing to do?");
-		free(vr);
-		return (0);
+		goto out;
 	}
 
 	cmd_desc_idx = avail->ring[idx] & VIOBLK_QUEUE_MASK;
@@ -418,16 +415,14 @@ vioblk_notifyq(struct vioblk_dev *dev)
 	if ((cmd_desc->flags & VRING_DESC_F_NEXT) == 0) {
 		log_warnx("unchained vioblk cmd descriptor received "
 		    "(idx %d)", cmd_desc_idx);
-		free(vr);
-		return (0);
+		goto out;
 	}
 
 	/* Read command from descriptor ring */
 	if (read_mem(cmd_desc->addr, &cmd, cmd_desc->len)) {
 		log_warnx("vioblk: command read_mem error @ 0x%llx",
 		    cmd_desc->addr);
-		free(vr);
-		return (0);
+		goto out;
 	}
 
 	switch (cmd.type) {
@@ -439,8 +434,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
 			log_warnx("unchained vioblk data descriptor "
 			    "received (idx %d)", cmd_desc_idx);
-			free(vr);
-			return (0);
+			goto out;
 		}
 
 		secbias = 0;
@@ -455,8 +449,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			if (secdata == NULL) {
 				log_warnx("vioblk: block read error, "
 				    "sector %lld", cmd.sector);
-				free(vr);
-				return (0);
+				goto out;
 			}
 
 			if (write_mem(secdata_desc->addr, secdata,
@@ -465,9 +458,8 @@ vioblk_notifyq(struct vioblk_dev *dev)
 				    "data to gpa @ 0x%llx",
 				    secdata_desc->addr);
 				dump_descriptor_chain(desc, cmd_desc_idx);
-				free(vr);
 				free(secdata);
-				return (0);
+				goto out;
 			}
 
 			free(secdata);
@@ -486,8 +478,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			log_warnx("can't write device status data @ "
 			    "0x%llx", ds_desc->addr);
 			dump_descriptor_chain(desc, cmd_desc_idx);
-			free(vr);
-			return (0);
+			goto out;
 		}
 
 
@@ -511,16 +502,14 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
 			log_warnx("wr vioblk: unchained vioblk data "
 			    "descriptor received (idx %d)", cmd_desc_idx);
-			free(vr);
-			return (0);
+			goto out;
 		}
 
 		secdata = malloc(MAXPHYS);
 		if (secdata == NULL) {
 			log_warn("wr vioblk: malloc error, len %d",
 			    secdata_desc->len);
-			free(vr);
-			return (0);
+			goto out;
 		}
 
 		secbias = 0;
@@ -531,17 +520,15 @@ vioblk_notifyq(struct vioblk_dev *dev)
 				    "sector data @ 0x%llx",
 				    secdata_desc->addr);
 				dump_descriptor_chain(desc, cmd_desc_idx);
-				free(vr);
 				free(secdata);
-				return (0);
+				goto out;
 			}
 
 			if (vioblk_do_write(dev, cmd.sector + secbias,
 			    secdata, (ssize_t)secdata_desc->len)) {
 				log_warnx("wr vioblk: disk write error");
-				free(vr);
 				free(secdata);
-				return (0);
+				goto out;
 			}
 
 			secbias += secdata_desc->len / VIRTIO_BLK_SECTOR_SIZE;
@@ -561,8 +548,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			log_warnx("wr vioblk: can't write device status "
 			    "data @ 0x%llx", ds_desc->addr);
 			dump_descriptor_chain(desc, cmd_desc_idx);
-			free(vr);
-			return (0);
+			goto out;
 		}
 
 		ret = 1;
@@ -586,8 +572,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			log_warnx("fl vioblk: can't write device status "
 			    "data @ 0x%llx", ds_desc->addr);
 			dump_descriptor_chain(desc, cmd_desc_idx);
-			free(vr);
-			return (0);
+			goto out;
 		}
 
 		ret = 1;
@@ -603,9 +588,8 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		}
 		break;
 	}
-
+out:
 	free(vr);
-
 	return (ret);
 }
 
@@ -824,8 +808,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 
 	if (read_mem(q_gpa, vr, vr_sz)) {
 		log_warnx("rx enq: error reading gpa 0x%llx", q_gpa);
-		free(vr);
-		return (0);
+		goto out;
 	}
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
@@ -839,8 +822,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 
 	if ((dev->vq[0].notified_avail & VIONET_QUEUE_MASK) == idx) {
 		log_warnx("vionet queue notify - no space, dropping packet");
-		free(vr);
-		return (0);
+		goto out;
 	}
 
 	hdr_desc_idx = avail->ring[idx] & VIONET_QUEUE_MASK;
@@ -853,16 +835,14 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	if ((pkt_desc->flags & VRING_DESC_F_WRITE) == 0) {
 		log_warnx("unexpected readable rx descriptor %d",
 		    pkt_desc_idx);
-		free(vr);
-		return (0);
+		goto out;
 	}
 
 	/* Write packet to descriptor ring */
 	if (write_mem(pkt_desc->addr, pkt, sz)) {
 		log_warnx("vionet: rx enq packet write_mem error @ "
 		    "0x%llx", pkt_desc->addr);
-		free(vr);
-		return (0);
+		goto out;
 	}
 
 	ret = 1;
@@ -882,9 +862,8 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 		if (write_mem(q_gpa + off, &used->idx, sizeof used->idx))
 			log_warnx("vionet: error writing vio ring");
 	}
-
+out:
 	free(vr);
-
 	return (ret);
 }
 
