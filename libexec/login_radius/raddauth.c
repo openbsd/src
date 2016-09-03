@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.28 2015/10/05 17:31:17 millert Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.29 2016/09/03 11:04:23 gsoares Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -85,6 +85,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <md5.h>
+#include <readpassphrase.h>
 #include "login_radius.h"
 
 
@@ -148,6 +149,7 @@ raddauth(char *username, char *class, char *style, char *challenge,
 	static char _pwstate[1024];
 	u_char req_id;
 	char *userstyle, *passwd, *pwstate, *rad_service;
+	char pbuf[AUTH_PASS_LEN+1];
 	int auth_port;
 	char vector[AUTH_VECTOR_LEN+1], *p, *v;
 	int i;
@@ -191,7 +193,8 @@ raddauth(char *username, char *class, char *style, char *challenge,
 			v = p+1;
 		}
 		if (passwd == NULL)
-			passwd = getpass("Password:");
+			passwd = readpassphrase("Password:", pbuf, sizeof(pbuf),
+			    RPP_ECHO_OFF);
 	} else
 		passwd = password;
 	if (passwd == NULL)
@@ -316,7 +319,8 @@ retry:
 				return (0);
 			}
 			req_id++;
-			if ((passwd = getpass("")) == NULL)
+			if ((passwd = readpassphrase("", pbuf, sizeof(pbuf),
+				    RPP_ECHO_OFF)) == NULL)
 				passwd = "";
 			break;
 
