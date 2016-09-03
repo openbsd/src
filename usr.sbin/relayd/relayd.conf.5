@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.172 2016/09/01 10:49:48 claudio Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.173 2016/09/03 18:28:45 jmc Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 1 2016 $
+.Dd $Mdocdate: September 3 2016 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -503,6 +503,23 @@ it defaults to
 .Cm tcp .
 The rule can be optionally restricted to a given interface name.
 .It Xo
+.Op Ic match
+.Ic pftag Ar name
+.Xc
+Automatically tag packets passing through the
+.Xr pf 4
+rdr-to rule with the name supplied.
+This allows simpler filter rules.
+The optional
+.Ic match
+keyword will change the default rule action from
+.Ql pass in quick
+to
+.Ql match in
+to allow further evaluation in the pf ruleset using the
+.Cm tagged Ar name
+rule option.
+.It Xo
 .Ic route to
 .Pf < Ar table Ns >
 .Op Ic port Ar number
@@ -530,23 +547,6 @@ for an rdr-to rule in
 .Xr pf.conf 5 .
 It will ensure that multiple connections from the same source are
 mapped to the same redirection address.
-.It Xo
-.Op Ic match
-.Ic pftag Ar name
-.Xc
-Automatically tag packets passing through the
-.Xr pf 4
-rdr-to rule with the name supplied.
-This allows simpler filter rules.
-The optional
-.Ic match
-keyword will change the default rule action from
-.Ql pass in quick
-to
-.Ql match in
-to allow further evaluation in the pf ruleset using the
-.Cm tagged Ar name
-rule option.
 .El
 .Sh RELAYS
 Relays will forward traffic between a client and a target server.
@@ -597,13 +597,6 @@ option in the protocol section.
 .Pp
 The following options may be specified for forward directives:
 .Bl -tag -width Ds
-.It Ic retry Ar number
-The optional host
-.Ic retry
-option will be used as a tolerance for failed
-host connections; the connection will be retried for
-.Ar number
-more times.
 .It Ic inet
 If the requested destination is an IPv6 address,
 .Xr relayd 8
@@ -622,6 +615,13 @@ to the 4 octets of the original IPv4 destination.
 For example, if the original IPv4 destination address is 10.1.1.1 and
 the specified address prefix is 2001:db8:7395:ffff::, the session is
 relayed to the IPv6 address 2001:db8:7395:ffff::a01:101.
+.It Ic retry Ar number
+The optional host
+.Ic retry
+option will be used as a tolerance for failed
+host connections; the connection will be retried for
+.Ar number
+more times.
 .El
 .It Xo
 .Ic forward to
@@ -855,28 +855,23 @@ Generalized TTL Security Mechanism (GTSM)
 according to RFC 5082.
 .It Ic ip ttl Ar number
 Change the default time-to-live value in the IP headers.
-.It Xo
-.Op Ic no
-.Ic nodelay
-.Xc
+.It Ic nodelay
 Enable the TCP NODELAY option for this connection.
 This is recommended to avoid delays in the relayed data stream,
 e.g. for SSH connections.
-.It Xo
-.Op Ic no
-.Ic sack
-.Xc
+The default is
+.Ic no nodelay .
+.It Ic nosplice
+Disable socket splicing for zero-copy data transfer.
+The default is to enable socket splicing.
+.It Ic sack
 Use selective acknowledgements for this connection.
+The default is
+.Ic no sack .
 .It Ic socket buffer Ar number
 Set the socket-level buffer size for input and output for this
 connection.
 This will affect the TCP window size.
-.It Xo
-.Op Ic no
-.Ic splice
-.Xc
-Use socket splicing for zero-copy data transfer.
-This option is enabled by default.
 .El
 .It Ic tls Ar option
 Set the TLS options and session settings.
@@ -932,14 +927,6 @@ will be used (strong crypto cipher suites without anonymous DH).
 See the CIPHERS section of
 .Xr openssl 1
 for information about SSL/TLS cipher suites and preference lists.
-.It Oo Ic no Oc Ic cipher-server-preference
-Prefer the server's cipher list over the client's preferences when
-choosing a cipher for the connection;
-enabled by default.
-.It Oo Ic no Oc Ic client-renegotiation
-Allow client-initiated renegotiation;
-enabled by default.
-Disable to mitigate a potential DoS risk.
 .It Ic ecdh Op Ic curve Ar name
 Set a named curve to use when generating EC keys for ECDHE-based
 cipher suites with Perfect Forward Secrecy (PFS).
@@ -948,9 +935,9 @@ If the curve
 is not specified, the default curve
 .Cm prime256v1
 will be used.
-ECDHE is enabled by default.
-.It Ic no ecdh
-Disable ECDHE support.
+ECDHE is enabled by default,
+but can be disabled using
+.Ic no ecdh .
 .It Ic edh Op Ic params Ar maximum
 Enable EDH-based cipher suites with Perfect Forward Secrecy (PFS) for
 older clients that do not support ECDHE.
@@ -962,51 +949,46 @@ Other possible values are numbers between 1024 and 8192, including
 1024, 1536, 2048, 4096, or 8192.
 Values higher than 1024 bits can cause incompatibilities with older
 TLS clients.
-.It Ic no edh
-Disable EDH support.
-This is the default.
-.It Xo
-.Op Ic no
-.Ic session tickets
-.Xc
-Disable TLS session tickets; enabled by default.
+The default is
+.Ic no edh .
+.It Ic no cipher-server-preference
+Prefer the client's cipher list over the server's preferences when
+choosing a cipher for the connection.
+The default is to prefer the server's cipher list.
+.It Ic no client-renegotiation
+Disallow client-initiated renegotiation,
+to mitigate a potential DoS risk.
+The default is to allow client-initiated renegotiation.
+.It Ic no session tickets
+Disable TLS session tickets.
 .Xr relayd 8
 supports stateless TLS session tickets (RFC 5077) to implement TLS session
 resumption.
-.It Xo
-.Op Ic no
-.Ic sslv3
-.Xc
-Enable the SSLv3 protocol;
-disabled by default.
-.It Xo
-.Op Ic no
-.Ic tlsv1
-.Xc
+The default is to enable session tickets.
+.It Ic no tlsv1.2
+Disable the TLSv1.2 protocol.
+The default is to enable TLSv1.2.
+.It Ic sslv3
+Enable the SSLv3 protocol.
+The default is
+.Ic no sslv3 .
+.It Ic tlsv1
 Enable all TLSv1 protocols.
 This is an alias that includes
 .Ic tlsv1.0 ,
 .Ic tlsv1.1 ,
 and
 .Ic tlsv1.2 .
-.It Xo
-.Op Ic no
-.Ic tlsv1.0
-.Xc
-Enable the TLSv1.0 protocol;
-disabled by default.
-.It Xo
-.Op Ic no
-.Ic tlsv1.1
-.Xc
-Enable the TLSv1.1 protocol;
-disabled by default.
-.It Xo
-.Op Ic no
-.Ic tlsv1.2
-.Xc
-Disable the TLSv1.2 protocol;
-enabled by default.
+The default is
+.Ic no tlsv1 .
+.It Ic tlsv1.0
+Enable the TLSv1.0 protocol.
+The default is
+.Ic no tlsv1.0 .
+.It Ic tlsv1.1
+Enable the TLSv1.1 protocol.
+The default is
+.Ic no tlsv1.1 .
 .El
 .El
 .Sh FILTER RULES
@@ -1077,8 +1059,14 @@ evaluation is skipped.
 .It Ic inet No or Ic inet6
 Only match connections with the specified address family,
 either of type IPv4 or IPv6.
-.\" XXX .It Ic from
-.\" XXX .It Ic to
+.It Ic forward to Pf < Ar table Ns >
+Forward the request to a server in the specified table.
+With this option, requests can be passed to specific backend servers.
+A corresponding
+.Ic forward to
+declaration in the
+.Sx RELAYS
+section is required.
 .It Ic label Ar string
 The label will be printed as part of the error message if the
 .Ic return error
@@ -1106,14 +1094,6 @@ the tag will be replaced if the connection is already tagged.
 .It Ic tagged Ar string
 Match the connection if it is already tagged with a given tag by a
 previous rule.
-.It Ic forward to Pf < Ar table Ns >
-Forward the request to a server in the specified table.
-With this option, requests can be passed to specific backend servers.
-A corresponding
-.Ic forward to
-declaration in the
-.Sx RELAYS
-section is required.
 .El
 .Pp
 The following parameters are available when using the
@@ -1610,7 +1590,7 @@ and
 .An Reyk Floeter Aq Mt reyk@openbsd.org .
 .Sh CAVEATS
 .Xr relayd 8
-Verification of TLS server certificates is based on a static CA bundle
+verification of TLS server certificates is based on a static CA bundle
 and
 .Xr relayd 8
 currently does not support CRLs (Certificate Revocation Lists).
