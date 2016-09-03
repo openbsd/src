@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.439 2016/09/03 09:55:44 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.440 2016/09/03 10:05:19 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -942,7 +942,6 @@ if_detach(struct ifnet *ifp)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
-	rt_if_remove(ifp);
 	rti_delete(ifp);
 #if NETHER > 0 && defined(NFSCLIENT)
 	if (ifp->if_index == revarp_ifidx)
@@ -955,6 +954,7 @@ if_detach(struct ifnet *ifp)
 #ifdef INET6
 	in6_ifdetach(ifp);
 #endif
+	rt_if_remove(ifp);
 #if NPF > 0
 	pfi_detach_ifnet(ifp);
 #endif
@@ -1943,15 +1943,15 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			 */
 			if (up)
 				if_down(ifp);
-			rt_if_remove(ifp);
 			rti_delete(ifp);
 #ifdef MROUTING
 			vif_delete(ifp);
 #endif
+			in_ifdetach(ifp);
 #ifdef INET6
 			in6_ifdetach(ifp);
 #endif
-			in_ifdetach(ifp);
+			rt_if_remove(ifp);
 			splx(s);
 		}
 
