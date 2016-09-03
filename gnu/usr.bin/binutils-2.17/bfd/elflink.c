@@ -1566,17 +1566,6 @@ nondefault:
   return TRUE;
 }
 
-
-static inline int
-obsd_is_required_sym(const char *name)
-{
-  return (name[0] == '_' && name[1] == '_' &&
-      (strcmp(name+2, "got_start") == 0 ||
-       strcmp(name+2, "got_end") == 0 ||
-       strcmp(name+2, "plt_start") == 0 ||
-       strcmp(name+2, "plt_end") == 0));
-}
-
 /* This routine is used to export all defined symbols into the dynamic
    symbol table.  It is called via elf_link_hash_traverse.  */
 
@@ -1599,10 +1588,6 @@ _bfd_elf_export_symbol (struct elf_link_hash_entry *h, void *data)
       struct bfd_elf_version_tree *t;
       struct bfd_elf_version_expr *d;
 
-      /* kludge around the lack of relro support by always putting
-         __{got,plt}_{start,end} in the dynamic symbol table */
-      if (eif->verdefs && obsd_is_required_sym(h->root.root.string))
-        goto doit;
       for (t = eif->verdefs; t != NULL; t = t->next)
 	{
 	  if (t->globals.list != NULL)
@@ -1865,10 +1850,6 @@ _bfd_elf_link_assign_sym_version (struct elf_link_hash_entry *h, void *data)
       if (hidden)
 	h->hidden = 1;
     }
-
-  /* don't apply a version to the symbols we require */
-  if (obsd_is_required_sym(h->root.root.string)) 
-    return TRUE;
 
   /* If we don't have a version for this symbol, see if we can find
      something.  */
