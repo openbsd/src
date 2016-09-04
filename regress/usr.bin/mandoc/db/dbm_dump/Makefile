@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2016/09/01 17:42:08 schwarze Exp $
+# $OpenBSD: Makefile,v 1.3 2016/09/04 11:51:38 bluhm Exp $
 
 PROG =		dbm_dump
 CPPFLAGS +=	-I${BSDSRCDIR}/usr.bin/mandoc
@@ -11,6 +11,8 @@ regress: dbm_dump
 dbm_dump: ${MOBJS}
 
 ${MOBJS}:
+	@cd ${BSDSRCDIR}/usr.bin/mandoc && make depend
+	@cd ${BSDSRCDIR}/usr.bin/mandoc && make ${MOBJS}
 	@cp ${BSDOBJDIR}/usr.bin/mandoc/$@ . || \
 		cp ${BSDSRCDIR}/usr.bin/mandoc/$@ .
 
