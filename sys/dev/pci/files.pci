@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.325 2016/08/31 15:53:06 tedu Exp $
+#	$OpenBSD: files.pci,v 1.326 2016/09/04 10:35:39 tedu Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -65,10 +65,6 @@ attach	adw at pci with adw_pci
 file	dev/pci/adw_pci.c		adw_pci
 file	dev/ic/adwlib.c			adw_pci
 file	dev/microcode/adw/adwmcode.c	adw_pci
-
-# BusLogic BT-9xx PCI family
-attach	bha at pci with bha_pci
-file	dev/pci/bha_pci.c		bha_pci
 
 # 3ware 5x000/6x000 RAID controllers
 attach	twe at pci with twe_pci

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.eisa,v 1.12 2016/09/03 21:37:29 tedu Exp $
+#	$OpenBSD: files.eisa,v 1.13 2016/09/04 10:35:39 tedu Exp $
 #	$NetBSD: files.eisa,v 1.12 1996/09/01 00:10:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent EISA code.
@@ -13,11 +13,6 @@ file	dev/eisa/eisa.c			eisa	needs-flag
 # device declaration in sys/conf/files
 attach	ahc at eisa with ahc_eisa
 file	dev/eisa/ahc_eisa.c		ahc_eisa
-
-# BusLogic BT-7xx EISA family
-# device declaration in sys/conf/files
-attach	bha at eisa with bha_eisa
-file	dev/eisa/bha_eisa.c		bha_eisa
 
 # DPT EATA SCSI controllers
 # device declaration in sys/conf/files
