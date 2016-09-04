@@ -195,8 +195,6 @@
 ./usr/include/dev/ic/atxxreg.h
 ./usr/include/dev/ic/ax88190reg.h
 ./usr/include/dev/ic/ax88190var.h
-./usr/include/dev/ic/bhareg.h
-./usr/include/dev/ic/bhavar.h
 ./usr/include/dev/ic/bt458reg.h
 ./usr/include/dev/ic/bt463reg.h
 ./usr/include/dev/ic/bt463var.h

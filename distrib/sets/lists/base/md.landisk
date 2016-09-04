@@ -617,8 +617,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ic/atxxreg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ic/ax88190reg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ic/ax88190var.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/dev/ic/bhareg.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/dev/ic/bhavar.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ic/bt458reg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ic/bt463reg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ic/bt463var.ph
