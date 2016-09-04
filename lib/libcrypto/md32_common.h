@@ -1,4 +1,4 @@
-/* $OpenBSD: md32_common.h,v 1.20 2014/11/09 19:08:24 miod Exp $ */
+/* $OpenBSD: md32_common.h,v 1.21 2016/09/04 14:31:29 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -168,10 +168,6 @@ static inline uint32_t ROTATE(uint32_t a, uint32_t n)
 				   *((unsigned int *)(c))=r; (c)+=4;	})
 # endif
 #endif
-#if defined(__s390__) || defined(__s390x__)
-# define HOST_c2l(c,l) ((l)=*((const unsigned int *)(c)), (c)+=4)
-# define HOST_l2c(l,c) (*((unsigned int *)(c))=(l), (c)+=4)
-#endif
 
 #ifndef HOST_c2l
 #define HOST_c2l(c,l) do {l =(((unsigned long)(*((c)++)))<<24);	\
@@ -190,16 +186,6 @@ static inline uint32_t ROTATE(uint32_t a, uint32_t n)
 
 #elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
 
-#if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
-# if defined(__s390x__)
-#  define HOST_c2l(c,l)	({ asm ("lrv	%0,%1"			\
-				   :"=d"(l) :"m"(*(const unsigned int *)(c)));\
-				   (c)+=4; 				})
-#  define HOST_l2c(l,c)	({ asm ("strv	%1,%0"			\
-				   :"=m"(*(unsigned int *)(c)) :"d"(l));\
-				   (c)+=4; 				})
-# endif
-#endif
 #if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
 #  define HOST_c2l(c,l)	((l)=*((const unsigned int *)(c)), (c)+=4)
 #  define HOST_l2c(l,c)	(*((unsigned int *)(c))=(l), (c)+=4)

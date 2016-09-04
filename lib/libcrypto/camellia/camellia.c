@@ -1,4 +1,4 @@
-/* $OpenBSD: camellia.c,v 1.10 2014/11/19 11:37:52 bcook Exp $ */
+/* $OpenBSD: camellia.c,v 1.11 2016/09/04 14:31:29 jsing Exp $ */
 /* ====================================================================
  * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) . 
  * ALL RIGHTS RESERVED.
@@ -101,11 +101,6 @@
         defined(__powerpc) || defined(__ppc__) || defined(__powerpc64__)
 #   define LeftRotate(x,s)  ({u32 ret; asm ("rlwinm %0,%1,%2,0,31":"=r"(ret):"r"(x),"I"(s)); ret; })
 #   define RightRotate(x,s) LeftRotate(x,(32-s))
-#  elif defined(__s390x__)
-#   define LeftRotate(x,s)  ({u32 ret; asm ("rll %0,%1,%2":"=r"(ret):"r"(x),"I"(s)); ret; })
-#   define RightRotate(x,s) LeftRotate(x,(32-s))
-#   define GETU32(p)   (*(u32 *)(p))
-#   define PUTU32(p,v) (*(u32 *)(p)=(v))
 #  endif
 # endif
 #endif
