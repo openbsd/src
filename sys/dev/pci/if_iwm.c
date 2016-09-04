@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.124 2016/09/04 17:01:59 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.125 2016/09/04 18:49:21 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -114,6 +114,7 @@
 #include <sys/mbuf.h>
 #include <sys/mutex.h>
 #include <sys/proc.h>
+#include <sys/rwlock.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
@@ -6204,19 +6205,16 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr;
 	int s, err = 0;
 
-	s = splnet();
 
 	/*
 	 * Prevent processes from entering this function while another
 	 * process is tsleep'ing in it.
 	 */
-	while ((sc->sc_flags & IWM_FLAG_BUSY) && err == 0)
-		err = tsleep(&sc->sc_flags, PCATCH, "iwmioc", 0);
-	if (err) {
-		splx(s);
+	err = rw_enter(&sc->ioctl_rwl, RW_WRITE | RW_INTR);
+	if (err)
 		return err;
-	}
-	sc->sc_flags |= IWM_FLAG_BUSY;
+
+	s = splnet();
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -6258,9 +6256,9 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 	}
 
-	sc->sc_flags &= ~IWM_FLAG_BUSY;
-	wakeup(&sc->sc_flags);
 	splx(s);
+	rw_exit(&sc->ioctl_rwl);
+
 	return err;
 }
 
@@ -7041,6 +7039,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	task_set(&sc->sc_eswk, iwm_endscan_cb, sc);
+	rw_init(&sc->ioctl_rwl, "iwmioctl");
 
 	err = pci_get_capability(sc->sc_pct, sc->sc_pcitag,
 	    PCI_CAP_PCIEXPRESS, &sc->sc_cap_off, NULL);
@@ -7359,18 +7358,15 @@ iwm_init_task(void *arg1)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
+	rw_enter_write(&sc->ioctl_rwl);
 	s = splnet();
-	while (sc->sc_flags & IWM_FLAG_BUSY)
-		tsleep(&sc->sc_flags, 0, "iwmpwr", 0);
-	sc->sc_flags |= IWM_FLAG_BUSY;
 
 	iwm_stop(ifp, 0);
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP)
 		iwm_init(ifp);
 
-	sc->sc_flags &= ~IWM_FLAG_BUSY;
-	wakeup(&sc->sc_flags);
 	splx(s);
+	rw_exit(&sc->ioctl_rwl);
 }
 
 void

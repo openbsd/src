@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.20 2016/09/02 15:45:17 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.21 2016/09/04 18:49:21 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -283,8 +283,7 @@ struct iwm_rx_ring {
 #define IWM_FLAG_HW_INITED	0x02
 #define IWM_FLAG_STOPPED	0x04
 #define IWM_FLAG_RFKILL		0x08
-#define IWM_FLAG_BUSY		0x10
-#define IWM_FLAG_SCANNING	0x20
+#define IWM_FLAG_SCANNING	0x10
 
 struct iwm_ucode_status {
 	uint32_t uc_error_event_table;
@@ -439,6 +438,8 @@ struct iwm_softc {
 	 * don't have the luxury of waiting for quiescense.
 	 */
 	int sc_generation;
+
+	struct rwlock ioctl_rwl;
 
 	int sc_cap_off; /* PCIe caps */
 
