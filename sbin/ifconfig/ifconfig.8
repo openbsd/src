@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.271 2016/09/03 13:46:57 reyk Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.272 2016/09/04 17:36:11 yasuoka Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: September 3 2016 $
+.Dd $Mdocdate: September 4 2016 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -187,6 +187,7 @@ At least the following devices can be created on demand:
 .Xr ppp 4 ,
 .Xr pppoe 4 ,
 .Xr svlan 4 ,
+.Xr switch 4 ,
 .Xr tap 4 ,
 .Xr trunk 4 ,
 .Xr tun 4 ,
@@ -1508,6 +1509,53 @@ The protocol name can be either
 or
 .Ql none .
 In the latter case, authentication will be turned off.
+.El
+.\" SWITCH
+.Sh SWITCH
+The following options are available for a
+.Xr switch 4
+interface:
+.Bl -tag -width Ds
+.It Cm add Ar interface
+Add
+.Ar interface
+as a member of the switch.
+The interface is put into promiscuous mode so
+that it can receive every packet sent on the
+network.
+An interface can be a member of at most one bridge.
+.It Cm addlocal Ar interface
+Add
+.Ar interface
+as a local port of the switch.
+Local port is a special port connected with the local system's network stack.
+Only
+.Xr vether 4
+can be use for the
+.Ar interface .
+Only one interface can be added as a local port.
+.It Cm datapath Ar datapath_id
+Configure the datapath id in OpenFlow protocol of the switch.
+The default value is generated randomly.
+.It Cm del Ar interface
+Remove
+.Ar interface
+from the switch.
+Promiscuous mode is turned off for the interface when it is removed
+from the switch.
+.It Cm flowmax Ar flowmax
+Set the maximum number of flows in OpenFlow protocol per table.
+The default value is 10000.
+.It Cm maxgroup Ar maxgroup
+Set the maximum number of groups in OpenFlow protocol.
+The default value is 1000.
+.It Cm portno Ar interface Ar port_no
+Set the port_no in OpenFlow protocol for the port named
+.Ar interface .
+The default value is the interface index of the
+.Ar interface .
+.It Cm up
+Start the switch processing packets.
 .El
 .\" TRUNK
 .Sh TRUNK
