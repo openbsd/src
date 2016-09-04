@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.30 2015/11/23 19:28:34 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.31 2016/09/04 10:26:02 vgross Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -284,6 +284,58 @@ sockaddr_cmp(struct sockaddr *a, struct sockaddr *b, int prefixlen)
 	}
 
 	return (0);
+}
+
+ssize_t
+sendtofrom(int s, void *buf, size_t len, int flags, struct sockaddr *to,
+    socklen_t tolen, struct sockaddr *from, socklen_t fromlen)
+{
+	struct iovec		 iov;
+	struct msghdr		 msg;
+	struct cmsghdr		*cmsg;
+	struct in6_pktinfo	*pkt6;
+	struct sockaddr_in	*in;
+	struct sockaddr_in6	*in6;
+	union {
+		struct cmsghdr	hdr;
+		char		inbuf[CMSG_SPACE(sizeof(struct in_addr))];
+		char		in6buf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
+	} cmsgbuf;
+
+	bzero(&msg, sizeof(msg));
+	bzero(&cmsgbuf, sizeof(cmsgbuf));
+
+	iov.iov_base = buf;
+	iov.iov_len = len;
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_name = to;
+	msg.msg_namelen = tolen;
+	msg.msg_control = &cmsgbuf;
+	msg.msg_controllen = sizeof(cmsgbuf);
+
+	cmsg = CMSG_FIRSTHDR(&msg);
+	switch (to->sa_family) {
+	case AF_INET:
+		msg.msg_controllen = sizeof(cmsgbuf.inbuf);
+		cmsg->cmsg_len = CMSG_LEN(sizeof(struct in_addr));
+		cmsg->cmsg_level = IPPROTO_IP;
+		cmsg->cmsg_type = IP_SENDSRCADDR;
+		in = (struct sockaddr_in *)from;
+		memcpy(CMSG_DATA(cmsg), &in->sin_addr, sizeof(struct in_addr));
+		break;
+	case AF_INET6:
+		msg.msg_controllen = sizeof(cmsgbuf.in6buf);
+		cmsg->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
+		cmsg->cmsg_level = IPPROTO_IPV6;
+		cmsg->cmsg_type = IPV6_PKTINFO;
+		in6 = (struct sockaddr_in6 *)from;
+		pkt6 = (struct in6_pktinfo *)CMSG_DATA(cmsg);
+		pkt6->ipi6_addr = in6->sin6_addr;
+		break;
+	}
+
+	return sendmsg(s, &msg, flags);
 }
 
 ssize_t

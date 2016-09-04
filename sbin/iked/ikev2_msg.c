@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.45 2015/10/19 11:25:35 reyk Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.46 2016/09/04 10:26:02 vgross Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -319,9 +319,10 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 		msg->msg_offset += sizeof(natt);
 	}
 
-	if ((sendto(msg->msg_fd, ibuf_data(buf), ibuf_size(buf), 0,
-	    (struct sockaddr *)&msg->msg_peer, msg->msg_peerlen)) == -1) {
-		log_warn("%s: sendto", __func__);
+	if (sendtofrom(msg->msg_fd, ibuf_data(buf), ibuf_size(buf), 0,
+	    (struct sockaddr *)&msg->msg_peer, msg->msg_peerlen,
+	    (struct sockaddr *)&msg->msg_local, msg->msg_locallen) == -1) {
+		log_warn("%s: sendtofrom", __func__);
 		return (-1);
 	}
 
@@ -969,10 +970,11 @@ int
 ikev2_msg_retransmit_response(struct iked *env, struct iked_sa *sa,
     struct iked_message *msg)
 {
-	if ((sendto(msg->msg_fd, ibuf_data(msg->msg_data),
-	    ibuf_size(msg->msg_data), 0, (struct sockaddr *)&msg->msg_peer,
-	    msg->msg_peerlen)) == -1) {
-		log_warn("%s: sendto", __func__);
+	if (sendtofrom(msg->msg_fd, ibuf_data(msg->msg_data),
+	    ibuf_size(msg->msg_data), 0,
+	    (struct sockaddr *)&msg->msg_peer, msg->msg_peerlen,
+	    (struct sockaddr *)&msg->msg_local, msg->msg_locallen) == -1) {
+		log_warn("%s: sendtofrom", __func__);
 		return (-1);
 	}
 
@@ -996,11 +998,12 @@ ikev2_msg_retransmit_timeout(struct iked *env, void *arg)
 	struct iked_sa		*sa = msg->msg_sa;
 
 	if (msg->msg_tries < IKED_RETRANSMIT_TRIES) {
-		if ((sendto(msg->msg_fd, ibuf_data(msg->msg_data),
+		if (sendtofrom(msg->msg_fd, ibuf_data(msg->msg_data),
 		    ibuf_size(msg->msg_data), 0,
-		    (struct sockaddr *)&msg->msg_peer,
-		    msg->msg_peerlen)) == -1) {
-			log_warn("%s: sendto", __func__);
+		    (struct sockaddr *)&msg->msg_peer, msg->msg_peerlen,
+		    (struct sockaddr *)&msg->msg_local,
+		    msg->msg_locallen) == -1) {
+			log_warn("%s: sendtofrom", __func__);
 			sa_free(env, sa);
 			return;
 		}
