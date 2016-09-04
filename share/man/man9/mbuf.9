@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.101 2016/09/04 02:07:48 lteo Exp $
+.\"     $OpenBSD: mbuf.9,v 1.102 2016/09/04 02:26:44 lteo Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -169,6 +169,7 @@ struct pkthdr {
 	u_int16_t		 ether_vtag;
 	u_int			 ph_rtableid;
 	u_int			 ph_ifidx;
+	u_int8_t		 ph_loopcnt;
 	struct pkthdr_pf	 pf;
 };
 
