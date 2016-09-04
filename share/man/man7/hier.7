@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.152 2016/04/25 19:24:42 tedu Exp $
+.\"	$OpenBSD: hier.7,v 1.153 2016/09/04 10:45:11 ajacoutot Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: April 25 2016 $
+.Dd $Mdocdate: September 4 2016 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -593,6 +593,9 @@ Commonly ~uucp; public uucp temporary directory.
 Checksum files and reference sets
 for
 .Xr sysmerge 8 .
+.It syspatch/
+.Xr syspatch 8
+rollback tarballs and patch files.
 .It tmp -> ../tmp
 A symbolic link to the system
 .Pa /tmp
