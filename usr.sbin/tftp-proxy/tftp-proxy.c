@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.18 2016/02/24 16:34:47 deraadt Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.19 2016/09/04 14:41:16 florian Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -98,11 +98,18 @@ void	unprivproc_timeout(int, short, void *);
 char	ntop_buf[NTOP_BUFS][INET6_ADDRSTRLEN];
 
 struct loggers {
-	void (*err)(int, const char *, ...);
-	void (*errx)(int, const char *, ...);
-	void (*warn)(const char *, ...);
-	void (*warnx)(const char *, ...);
-	void (*info)(const char *, ...);
+	__dead void (*err)(int, const char *, ...)
+	    __attribute__((__format__ (printf, 2, 3)));
+	__dead void (*errx)(int, const char *, ...)
+	    __attribute__((__format__ (printf, 2, 3)));
+	void (*warn)(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+	void (*warnx)(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+	void (*info)(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+	void (*debug)(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
 };
 
 const struct loggers conslogger = {
@@ -110,15 +117,24 @@ const struct loggers conslogger = {
 	errx,
 	warn,
 	warnx,
-	warnx
+	warnx, /* info */
+	warnx /* debug */
 };
 
-void	syslog_err(int, const char *, ...);
-void	syslog_errx(int, const char *, ...);
-void	syslog_warn(const char *, ...);
-void	syslog_warnx(const char *, ...);
-void	syslog_info(const char *, ...);
-void	syslog_vstrerror(int, int, const char *, va_list);
+__dead void	syslog_err(int, const char *, ...)
+		    __attribute__((__format__ (printf, 2, 3)));
+__dead void	syslog_errx(int, const char *, ...)
+		    __attribute__((__format__ (printf, 2, 3)));
+void		syslog_warn(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
+void		syslog_warnx(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
+void		syslog_info(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
+void		syslog_debug(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
+void		syslog_vstrerror(int, int, const char *, va_list)
+		    __attribute__((__format__ (printf, 3, 0)));
 
 const struct loggers syslogger = {
 	syslog_err,
@@ -126,6 +142,7 @@ const struct loggers syslogger = {
 	syslog_warn,
 	syslog_warnx,
 	syslog_info,
+	syslog_debug
 };
 
 const struct loggers *logger = &conslogger;
@@ -135,6 +152,7 @@ const struct loggers *logger = &conslogger;
 #define lwarn(_f...) logger->warn(_f)
 #define lwarnx(_f...) logger->warnx(_f)
 #define linfo(_f...) logger->info(_f)
+#define ldebug(_f...) logger->debug(_f)
 
 __dead void
 usage(void)
@@ -1010,3 +1028,15 @@ syslog_info(const char *fmt, ...)
 	va_end(ap);
 }
 
+void
+syslog_debug(const char *fmt, ...)
+{
+	va_list ap;
+
+	if (!debug)
+		return;
+
+	va_start(ap, fmt);
+	vsyslog(LOG_DEBUG, fmt, ap);
+	va_end(ap);
+}
