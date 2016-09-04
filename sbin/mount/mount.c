@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.66 2016/06/26 19:53:40 tedu Exp $	*/
+/*	$OpenBSD: mount.c,v 1.67 2016/09/04 19:45:27 akfaew Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -685,19 +685,16 @@ maketypelist(char *fslist)
 char *
 catopt(char *s0, const char *s1)
 {
-	size_t i;
 	char *cp;
 
 	if (s0 && *s0) {
-		i = strlen(s0) + strlen(s1) + 1 + 1;
-		if ((cp = malloc(i)) == NULL)
+		if (asprintf(&cp, "%s,%s", s0, s1) == -1)
 			err(1, NULL);
-		(void)snprintf(cp, i, "%s,%s", s0, s1);
 	} else
 		cp = strdup(s1);
 
 	free(s0);
-	return (cp);
+	return cp;
 }
 
 void
