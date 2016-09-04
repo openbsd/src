@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.191 2016/08/22 10:33:22 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.192 2016/09/04 10:32:01 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -895,11 +895,10 @@ void
 in6_unlink_ifa(struct in6_ifaddr *ia6, struct ifnet *ifp)
 {
 	struct ifaddr *ifa = &ia6->ia_ifa;
+	extern int ifatrash;
 	int plen;
 
 	splsoftassert(IPL_SOFTNET);
-
-	ifa_del(ifp, ifa);
 
 	TAILQ_REMOVE(&in6_ifaddr, ia6, ia_list);
 
@@ -918,10 +917,11 @@ in6_unlink_ifa(struct in6_ifaddr *ia6, struct ifnet *ifp)
 		ia6->ia6_ndpr = NULL;
 	}
 
-	/*
-	 * release another refcnt for the link from in6_ifaddr.
-	 * Note that we should decrement the refcnt at least once for all *BSD.
-	 */
+	rt_ifa_purge(ifa);
+	ifa_del(ifp, ifa);
+
+	ifatrash++;
+	ia6->ia_ifp = NULL;
 	ifafree(&ia6->ia_ifa);
 }
 

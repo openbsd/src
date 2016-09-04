@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.323 2016/09/04 09:39:01 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.324 2016/09/04 10:32:01 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -152,6 +152,7 @@ extern unsigned int	rtmap_limit;
 
 struct rtstat		rtstat;
 int			rttrash;	/* routes not in table but not freed */
+int			ifatrash;	/* ifas not in ifp list but not free */
 
 struct pool		rtentry_pool;	/* pool for rtentry structures */
 struct pool		rttimer_pool;	/* pool for rttimer structures */
@@ -159,10 +160,9 @@ struct pool		rttimer_pool;	/* pool for rttimer structures */
 void	rt_timer_init(void);
 int	rt_setgwroute(struct rtentry *, u_int);
 void	rt_putgwroute(struct rtentry *);
-int	rt_fixgwroute(struct rtentry *, void *, unsigned int);
 int	rtflushclone1(struct rtentry *, void *, u_int);
 void	rtflushclone(unsigned int, struct rtentry *);
-int	rt_if_remove_rtdelete(struct rtentry *, void *, u_int);
+int	rt_ifa_purge_walker(struct rtentry *, void *, unsigned int);
 struct rtentry *rt_match(struct sockaddr *, uint32_t *, int, unsigned int);
 struct sockaddr *rt_plentosa(sa_family_t, int, struct sockaddr_in6 *);
 
@@ -215,10 +215,6 @@ rtisvalid(struct rtentry *rt)
 		return (0);
 
 	if (!ISSET(rt->rt_flags, RTF_UP))
-		return (0);
-
-	/* Routes attached to stale ifas should be freed. */
-	if (rt->rt_ifa == NULL || rt->rt_ifa->ifa_ifp == NULL)
 		return (0);
 
 	if (ISSET(rt->rt_flags, RTF_GATEWAY)) {
@@ -453,41 +449,6 @@ rt_putgwroute(struct rtentry *rt)
 	rt->rt_gwroute = NULL;
 }
 
-/*
- * Refresh cached entries of RTF_GATEWAY routes for a given interface.
- *
- * This clever logic is necessary to try to fix routes linked to stale
- * ifas.
- */
-int
-rt_fixgwroute(struct rtentry *rt, void *arg, unsigned int id)
-{
-	struct ifnet *ifp = arg;
-
-	KERNEL_ASSERT_LOCKED();
-
-	if (rt->rt_ifidx != ifp->if_index || !ISSET(rt->rt_flags, RTF_GATEWAY))
-		return (0);
-
-	/*
-	 * If the gateway route is not stale, its associated cached
-	 * is also not stale.
-	 */
-	if (rt->rt_ifa->ifa_ifp != NULL)
-		return (0);
-
-	/* If we can fix the cached next hop entry, we can fix the ifa. */
-	if (rt_setgate(rt, rt->rt_gateway, ifp->if_rdomain) == 0) {
-		struct ifaddr *ifa = rt->rt_gwroute->rt_ifa;
-
-		ifafree(rt->rt_ifa);
-		ifa->ifa_refcnt++;
-		rt->rt_ifa = ifa;
-	}
-
-	return (0);
-}
-
 void
 rtref(struct rtentry *rt)
 {
@@ -558,9 +519,10 @@ ifafree(struct ifaddr *ifa)
 {
 	if (ifa == NULL)
 		panic("ifafree");
-	if (ifa->ifa_refcnt == 0)
+	if (ifa->ifa_refcnt == 0) {
+		ifatrash--;
 		free(ifa, M_IFADDR, 0);
-	else
+	} else
 		ifa->ifa_refcnt--;
 }
 
@@ -735,7 +697,7 @@ rtflushclone1(struct rtentry *rt, void *arg, u_int id)
 	/*
 	 * This happens when an interface with a RTF_CLONING route is
 	 * being detached.  In this case it's safe to bail because all
-	 * the routes are being purged by rt_if_remove().
+	 * the routes are being purged by rt_ifa_purge().
 	 */
 	if (ifp == NULL)
 	        return 0;
@@ -993,22 +955,8 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			return (EINVAL);
 		if ((rt->rt_flags & RTF_CLONING) == 0)
 			return (EINVAL);
-		if (rt->rt_ifa->ifa_ifp) {
-			info->rti_ifa = rt->rt_ifa;
-		} else {
-			/*
-			 * The address of the cloning route is not longer
-			 * configured on an interface, but its descriptor
-			 * is still there because of reference counting.
-			 *
-			 * Try to find a similar active address and use
-			 * it for the cloned route.  The cloning route
-			 * will get the new address and interface later.
-			 */
-			info->rti_ifa = NULL;
-			info->rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
-		}
-
+		KASSERT(rt->rt_ifa->ifa_ifp != NULL);
+		info->rti_ifa = rt->rt_ifa;
 		info->rti_flags = rt->rt_flags | (RTF_CLONED|RTF_HOST);
 		info->rti_flags &= ~(RTF_CLONING|RTF_CONNECTED|RTF_STATIC);
 		info->rti_info[RTAX_GATEWAY] = sdltosa(&sa_dl);
@@ -1100,29 +1048,6 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		rt->rt_ifa = ifa;
 		rt->rt_ifidx = ifp->if_index;
 		if (rt->rt_flags & RTF_CLONED) {
-			/*
-			 * If the ifa of the cloning route was stale, a
-			 * successful lookup for an ifa with the same address
-			 * has been made.  Use this ifa also for the cloning
-			 * route.
-			 */
-			if ((*ret_nrt)->rt_ifa->ifa_ifp == NULL) {
-				struct ifnet *ifp0;
-
-				printf("%s RTM_RESOLVE: wrong ifa (%p) was (%p)"
-				    "\n", __func__, ifa, (*ret_nrt)->rt_ifa);
-
-				ifp0 = if_get((*ret_nrt)->rt_ifidx);
-				KASSERT(ifp0 != NULL);
-				ifp0->if_rtrequest(ifp0, RTM_DELETE, *ret_nrt);
-				ifafree((*ret_nrt)->rt_ifa);
-				if_put(ifp0);
-
-				ifa->ifa_refcnt++;
-				(*ret_nrt)->rt_ifa = ifa;
-				(*ret_nrt)->rt_ifidx = ifp->if_index;
-				ifp->if_rtrequest(ifp, RTM_ADD, *ret_nrt);
-			}
 			/*
 			 * Copy both metrics and a back pointer to the cloned
 			 * route's parent.
@@ -1297,8 +1222,6 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 
 	error = rtrequest(RTM_ADD, &info, prio, &rt, rtableid);
 	if (error == 0) {
-		unsigned int i;
-
 		/*
 		 * A local route is created for every address configured
 		 * on an interface, so use this information to notify
@@ -1308,18 +1231,6 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 			rt_sendaddrmsg(rt, RTM_NEWADDR, ifa);
 		rt_sendmsg(rt, RTM_ADD, rtableid);
 		rtfree(rt);
-
-		/*
-		 * Userland inserted routes stay in the table even
-		 * if their corresponding ``ifa'' is no longer valid.
-		 *
-		 * Try to fix the stale RTF_GATEWAY entries in case
-		 * their gateway match the newly inserted route.
-		 */
-		for (i = 0; i <= RT_TABLEID_MAX; i++) {
-			rtable_walk(i, ifa->ifa_addr->sa_family,
-			    rt_fixgwroute, ifp);
-		}
 	}
 	return (error);
 }
@@ -1473,6 +1384,46 @@ rt_ifa_dellocal(struct ifaddr *ifa)
 	rtfree(rt);
 
 	return (error);
+}
+
+/*
+ * Remove all addresses attached to ``ifa''.
+ */
+void
+rt_ifa_purge(struct ifaddr *ifa)
+{
+	struct ifnet		*ifp = ifa->ifa_ifp;
+	unsigned int		 rtableid;
+	int			 i;
+
+	KASSERT(ifp != NULL);
+
+	for (rtableid = 0; rtableid < rtmap_limit; rtableid++) {
+		/* skip rtables that are not in the rdomain of the ifp */
+		if (rtable_l2(rtableid) != ifp->if_rdomain)
+			continue;
+		for (i = 1; i <= AF_MAX; i++) {
+			rtable_walk(rtableid, i, rt_ifa_purge_walker, ifa);
+		}
+	}
+}
+
+int
+rt_ifa_purge_walker(struct rtentry *rt, void *vifa, unsigned int rtableid)
+{
+	struct ifaddr		*ifa = vifa;
+	struct ifnet		*ifp = ifa->ifa_ifp;
+	int			 error;
+
+	if (rt->rt_ifa != ifa)
+		return (0);
+
+	if ((error = rtdeletemsg(rt, ifp, rtableid))) {
+		return (error);
+	}
+
+	return (EAGAIN);
+
 }
 
 /*
@@ -1756,38 +1707,6 @@ rtlabel_unref(u_int16_t id)
 			break;
 		}
 	}
-}
-
-void
-rt_if_remove(struct ifnet *ifp)
-{
-	int			 i;
-	u_int			 tid;
-
-	for (tid = 0; tid < rtmap_limit; tid++) {
-		/* skip rtables that are not in the rdomain of the ifp */
-		if (rtable_l2(tid) != ifp->if_rdomain)
-			continue;
-		for (i = 1; i <= AF_MAX; i++) {
-			rtable_walk(tid, i, rt_if_remove_rtdelete, ifp);
-		}
-	}
-}
-
-int
-rt_if_remove_rtdelete(struct rtentry *rt, void *vifp, u_int id)
-{
-	struct ifnet	*ifp = vifp;
-	int		 error;
-
-	if (rt->rt_ifidx != ifp->if_index)
-		return (0);
-
-	if ((error = rtdeletemsg(rt, ifp, id)))
-		return (error);
-
-	return (EAGAIN);
-
 }
 
 #ifndef SMALL_KERNEL

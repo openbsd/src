@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.128 2016/06/13 10:34:40 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.129 2016/09/04 10:32:01 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -699,12 +699,14 @@ in_purgeaddr(struct ifaddr *ifa)
 {
 	struct ifnet *ifp = ifa->ifa_ifp;
 	struct in_ifaddr *ia = ifatoia(ifa);
+	extern int ifatrash;
 
 	splsoftassert(IPL_SOFTNET);
 
 	in_ifscrub(ifp, ia);
 
 	rt_ifa_dellocal(&ia->ia_ifa);
+	rt_ifa_purge(&ia->ia_ifa);
 	ifa_del(ifp, &ia->ia_ifa);
 
 	if (ia->ia_allhosts != NULL) {
@@ -712,6 +714,7 @@ in_purgeaddr(struct ifaddr *ifa)
 		ia->ia_allhosts = NULL;
 	}
 
+	ifatrash++;
 	ia->ia_ifp = NULL;
 	ifafree(&ia->ia_ifa);
 }

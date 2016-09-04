@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.440 2016/09/03 10:05:19 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.441 2016/09/04 10:32:01 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -954,7 +954,6 @@ if_detach(struct ifnet *ifp)
 #ifdef INET6
 	in6_ifdetach(ifp);
 #endif
-	rt_if_remove(ifp);
 #if NPF > 0
 	pfi_detach_ifnet(ifp);
 #endif
@@ -1951,7 +1950,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 #ifdef INET6
 			in6_ifdetach(ifp);
 #endif
-			rt_if_remove(ifp);
 			splx(s);
 		}
 
