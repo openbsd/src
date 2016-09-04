@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.120 2016/09/04 11:07:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.121 2016/09/04 15:45:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5990,13 +5990,6 @@ iwm_send_update_mcc_cmd(struct iwm_softc *sc, const char *alpha2)
 		.data = { &mcc_cmd },
 	};
 	int err;
-#ifdef IWM_DEBUG
-	struct iwm_rx_packet *pkt;
-	struct iwm_mcc_update_resp_v1 *mcc_resp_v1 = NULL;
-	struct iwm_mcc_update_resp *mcc_resp;
-	int n_channels;
-	uint16_t mcc;
-#endif
 	int resp_v2 = isset(sc->sc_enabled_capa,
 	    IWM_UCODE_TLV_CAPA_LAR_SUPPORT_V2);
 
@@ -6017,27 +6010,6 @@ iwm_send_update_mcc_cmd(struct iwm_softc *sc, const char *alpha2)
 	if (err)
 		return err;
 
-#ifdef IWM_DEBUG
-	pkt = hcmd.resp_pkt;
-
-	/* Extract MCC response */
-	if (resp_v2) {
-		mcc_resp = (void *)pkt->data;
-		mcc = mcc_resp->mcc;
-		n_channels =  le32toh(mcc_resp->n_channels);
-	} else {
-		mcc_resp_v1 = (void *)pkt->data;
-		mcc = mcc_resp_v1->mcc;
-		n_channels =  le32toh(mcc_resp_v1->n_channels);
-	}
-
-	/* W/A for a FW/NVM issue - returns 0x00 for the world domain */
-	if (mcc == 0)
-		mcc = 0x3030;  /* "00" - world */
-
-	DPRINTF(("%s: regulatory domain '%c%c' (%d channels available)\n",
-	    DEVNAME(sc), mcc >> 8, mcc & 0xff, n_channels));
-#endif
 	iwm_free_resp(sc, &hcmd);
 
 	return 0;
@@ -6161,7 +6133,7 @@ iwm_init_hw(struct iwm_softc *sc)
 	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_LAR_SUPPORT)) {
 		err = iwm_send_update_mcc_cmd(sc, "ZZ");
 		if (err) {
-			printf("%s: could not send mcc command (error %d)\n",
+			printf("%s: could not init LAR (error %d)\n",
 			    DEVNAME(sc), err);
 			goto err;
 		}
