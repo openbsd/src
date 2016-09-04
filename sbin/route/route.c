@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.189 2016/09/03 14:23:14 phessler Exp $	*/
+/*	$OpenBSD: route.c,v 1.190 2016/09/04 09:41:03 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -609,6 +609,11 @@ newroute(int argc, char **argv)
 				break;
 			case K_BFD:
 				flags |= RTF_BFD;
+				fmask |= RTF_BFD;
+				break;
+			case K_NOBFD:
+				flags &= ~RTF_BFD;
+				fmask |= RTF_BFD;
 				break;
 			default:
 				usage(1+*argv);
@@ -1244,7 +1249,7 @@ char routeflags[] =
 "\1UP\2GATEWAY\3HOST\4REJECT\5DYNAMIC\6MODIFIED\7DONE\010XMASK_PRESENT"
 "\011CLONING\012MULTICAST\013LLINFO\014STATIC\015BLACKHOLE\016PROTO3\017PROTO2"
 "\020PROTO1\021CLONED\022CACHED\023MPATH\025MPLS\026LOCAL\027BROADCAST"
-"\030CONNECTED";
+"\030CONNECTED\031BFD";
 char ifnetflags[] =
 "\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5PTP\6NOTRAILERS\7RUNNING\010NOARP\011PPROMISC"
 "\012ALLMULTI\013OACTIVE\014SIMPLEX\015LINK0\016LINK1\017LINK2\020MULTICAST";
@@ -1336,6 +1341,8 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		printf("pid: %ld, seq %d, errno %d\nflags:",
 		    (long)rtm->rtm_pid, rtm->rtm_seq, rtm->rtm_errno);
 		bprintf(stdout, rtm->rtm_flags, routeflags);
+		printf("\nfmask:");
+		bprintf(stdout, rtm->rtm_fmask, routeflags);
 		if (verbose) {
 #define lock(f)	((rtm->rtm_rmx.rmx_locks & __CONCAT(RTV_,f)) ? 'L' : ' ')
 			relative_expire = rtm->rtm_rmx.rmx_expire ?
