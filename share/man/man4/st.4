@@ -1,4 +1,4 @@
-.\"	$OpenBSD: st.4,v 1.19 2014/06/28 06:18:26 matthew Exp $
+.\"	$OpenBSD: st.4,v 1.20 2016/09/04 14:42:58 naddy Exp $
 .\"	$NetBSD: st.4,v 1.2 1996/10/20 23:15:24 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 28 2014 $
+.Dd $Mdocdate: September 4 2016 $
 .Dt ST 4
 .Os
 .Sh NAME
@@ -41,16 +41,6 @@ The
 driver provides support for
 .Tn SCSI
 tape drives.
-The device can have both a
-.Em raw
-interface and a
-.Em block
-interface; however, only the raw interface is usually used (or recommended).
-The raw interface devices will have an
-.Sq r
-in their names
-e.g.\&
-.Pa /dev/rst0 .
 .Pp
 .Tn SCSI
 devices have a relatively high level interface and talk to the system via a
