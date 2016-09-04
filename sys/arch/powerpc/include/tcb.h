@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.4 2016/05/07 19:05:21 guenther Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.5 2016/09/04 08:42:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -34,42 +34,9 @@
 /* powerpc offsets the TCB pointer 0x7000 bytes after the data */
 #define TCB_OFFSET	0x7000
 
-#if 0	/* XXX perhaps use the gcc global register extension? */
-struct thread_control_block;
-__register__ struct thread_control_block *__tcb __asm__ ("%r2");
+register void *__tcb __asm__ ("%r2");
 #define TCB_GET()		(__tcb)
-#define TCB_GET_MEMBER(member)	((void *)(__tcb->member))
 #define TCB_SET(tcb)		((__tcb) = (tcb))
 
-#else
-
-#include <stddef.h>		/* for offsetof */
-
-/* Get a pointer to the TCB itself */
-static inline void *
-__powerpc_get_tcb(void)
-{
-	void *val;
-	__asm__ ("mr %0, %%r2" : "=r" (val));
-	return val;
-}
-#define TCB_GET()	__powerpc_get_tcb()
-
-/* Get the value of a specific member in the TCB */
-static inline void *
-__powerpc_read_tcb(int offset)
-{
-	void *val;
-	__asm__ ("lwzx %0, %%r2, %1" : "=r" (val) : "r" (offset));
-	return val;
-}
-#define TCB_GET_MEMBER(member) \
-	__powerpc_read_tcb(offsetof(struct thread_control_block, member))
-
-#define TCB_SET(tcb)	__asm volatile("mr %%r2, %0" : : "r" (tcb))
-
-#endif /* 0 */
-
 #endif /* _KERNEL */
-
 #endif /* _MACHINE_TCB_H_ */
