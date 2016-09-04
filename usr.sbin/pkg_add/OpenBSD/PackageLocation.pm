@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.47 2016/09/04 12:51:44 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.48 2016/09/04 14:01:31 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -125,21 +125,6 @@ sub store_end_of_stream
 	    *$sym->{Info}{TrailerLength};
 }
 
-sub signing_info
-{
-	my $self = shift;
-	my $result = "";
-	if ($self->{is_signed}) {
-		for my $line (split /\n/, $self->{fh}->getHeaderInfo->{Comment}) {
-			if ($line =~ m/^key=.*\/(.*)\.sec$/) {
-				$result .= "\@signer $1\n";
-			} elsif ($line =~ m/^date=(.*)$/) {
-				$result .= "\@digital-signature signify2:$1:external\n";
-			}
-		}
-	}
-	return $result;
-}
 
 sub find_contents
 {
@@ -149,7 +134,7 @@ sub find_contents
 		if ($e->isFile && is_info_name($e->{name})) {
 			if ($e->{name} eq CONTENTS ) {
 				my $v = 
-				    $self->signing_info.$e->contents($extra);
+				    $self->{extra_content}.$e->contents($extra);
 				$self->store_end_of_stream;
 				return $v;
 			}

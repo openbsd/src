@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.127 2016/09/04 12:51:44 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.128 2016/09/04 14:01:31 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -265,6 +265,54 @@ sub grabPlist
 sub parse_problems
 {
 	my ($self, $filename, $hint, $object) = @_;
+	CORE::open(my $fh, '<', $filename) or return;
+
+	my $baseurl = $self->url;
+	my $url = $baseurl;
+	if (defined $object) {
+		$url = $object->url;
+	}
+	my $notyet = 1;
+	while(<$fh>) {
+		next if m/^(?:200|220|221|226|229|230|227|250|331|500|150)[\s\-]/o;
+		next if m/^EPSV command not understood/o;
+		next if m/^Trying [\da-f\.\:]+\.\.\./o;
+		next if m/^Requesting \Q$baseurl\E/;
+		next if m/^Remote system type is\s+/o;
+		next if m/^Connected to\s+/o;
+		next if m/^remote\:\s+/o;
+		next if m/^Using binary mode to transfer files/o;
+		next if m/^Retrieving\s+/o;
+		next if m/^Success?fully retrieved file/o;
+		next if m/^\d+\s+bytes\s+received\s+in/o;
+		next if m/^ftp: connect to address.*: No route to host/o;
+
+		if (defined $hint && $hint == 0) {
+			next if m/^ftp: -: short write/o;
+			next if m/^ftp: local: -: Broken pipe/o;
+			next if m/^ftp: Writing -: Broken pipe/o;
+			next if m/^421\s+/o;
+		}
+		s/.*unsigned archive.*/unsigned package/;
+		if ($notyet) {
+			$self->{state}->errsay("Error from #1", $url);
+			$notyet = 0;
+		}
+		if (m/^421\s+/o ||
+		    m/^ftp: connect: Connection timed out/o ||
+		    m/^ftp: Can't connect or login to host/o) {
+			$self->{lasterror} = 421;
+		}
+		# http error
+		if (m/^ftp: Error retrieving file: 404/o) {
+		    	$self->{lasterror} = 404;
+		}
+		if (m/^550\s+/o) {
+			$self->{lasterror} = 550;
+		}
+		$self->{state}->errprint("#1", $_);
+	}
+	CORE::close($fh);
 	OpenBSD::Temp->reclaim($filename);
 	unlink $filename;
 }
@@ -311,17 +359,28 @@ sub uncompress
 	my $object = shift;
 	require IO::Uncompress::Gunzip;
 	my $fh = IO::Uncompress::Gunzip->new(@_, MultiStream => 1);
-	if (!$fh->getHeaderInfo) {
-		print STDERR "Bad signed package ", 
-		    $self->url($object->{name}), "\n";
+	my $result = "";
+	if ($object->{is_signed}) {
+		my $h = $fh->getHeaderInfo;
+		if ($h) {
+			for my $line (split /\n/, $h->{Comment}) {
+				if ($line =~ m/^key=.*\/(.*)\.sec$/) {
+					$result .= "\@signer $1\n";
+				} elsif ($line =~ m/^date=(.*)$/) {
+					$result .= "\@digital-signature signify2:$1:external\n";
+				}
+			}
+		}
 	}
+	$object->{extra_content} = $result;
 	return $fh;
 }
 
 sub signify_pipe
 {
 	my $self = shift;
-	CORE::open STDERR, ">", "/dev/null";
+	my $object = shift;
+	CORE::open STDERR, ">>", $object->{errors};
 	exec {OpenBSD::Paths->signify}
 	    ("signify",
 	    "-zV",
@@ -334,7 +393,8 @@ sub check_signed
 	my ($self, $object) = @_;
 	# XXX not yet
 	return 0;
-	if ($self->{state}->defines('unsigned')) {
+	if ($self->{state}->defines('unsigned') ||
+	    $self->{state}->defines('oldsign')) {
 		return 0;
 	} else {
 		$object->{is_signed} = 1;
@@ -404,13 +464,14 @@ sub open_pipe
 	}
 	my $name = $self->relative_url($object->{name});
 	if ($self->check_signed($object)) {
+		$self->make_error_file($object);
 		my $pid = open(my $fh, "-|");
 		$self->did_it_fork($pid);
 		if ($pid) {
 			$object->{pid} = $pid;
 			return $self->uncompress($object, $fh);
 		} else {
-			$self->signify_pipe( "-x", $name);
+			$self->signify_pipe($object, "-x", $name);
 		}
 	} else {
 		return $self->uncompress($object, $name);
@@ -477,13 +538,14 @@ sub open_pipe
 {
 	my ($self, $object) = @_;
 	if ($self->check_signed($object)) {
+		$self->make_error_file($object);
 		my $pid = open(my $fh, "-|");
 		$self->did_it_fork($pid);
 		if ($pid) {
 			$object->{pid} = $pid;
 			return $self->uncompress_signed($object, $fh);
 		} else {
-			$self->signify_pipe;
+			$self->signify_pipe($object);
 		}
     	} else {
 		return $self->uncompress($object, \*STDIN);
@@ -577,16 +639,22 @@ sub pkg_copy
 	close($in);
 }
 
-sub open_pipe
+sub make_error_file
 {
-	require OpenBSD::Temp;
-
 	my ($self, $object) = @_;
 	$object->{errors} = OpenBSD::Temp->file;
 	if (!defined $object->{errors}) {
 		$self->{state}->fatal("#1 not writable",
 		    $OpenBSD::Temp::tempbase);
 	}
+}
+
+sub open_pipe
+{
+	require OpenBSD::Temp;
+
+	my ($self, $object) = @_;
+	$self->make_error_file($object);
 	my $d = $ENV{'PKG_CACHE'};
 	if (defined $d) {
 		$object->{cache_dir} = $d;
@@ -606,7 +674,7 @@ sub open_pipe
 		$object->{pid2} = $pid2;
 		close($wrfh);
 	} else {
-		open STDERR, '>', $object->{errors};
+		open STDERR, '>>', $object->{errors};
 		open(STDOUT, '>&', $wrfh);
 		close($rdfh);
 		close($wrfh);
@@ -635,7 +703,7 @@ sub open_pipe
 			open(STDIN, '<&', $rdfh) or
 			    $self->{state}->fatal("Bad dup: #1", $!);
 			close($rdfh);
-			$self->signify_pipe;
+			$self->signify_pipe($object);
 		}
 
 		return $self->uncompress($object, $fh);
@@ -731,7 +799,7 @@ sub open_read_ftp
 		$self->{pipe_pid} = $child_pid;
 		return $fh;
 	} else {
-		open STDERR, '>', $errors if defined $errors;
+		open STDERR, '>>', $errors if defined $errors;
 
 		$self->drop_privileges_and_setup_env;
 		exec($cmd) 
@@ -812,59 +880,6 @@ sub grabPlist
 	return $self->try_until_success($pkgname,
 	    sub {
 	    	return $self->SUPER::grabPlist($pkgname, @extra); });
-}
-
-sub parse_problems
-{
-	my ($self, $filename, $hint, $object) = @_;
-	CORE::open(my $fh, '<', $filename) or return;
-
-	my $baseurl = $self->url;
-	my $url = $baseurl;
-	if (defined $object) {
-		$url = $object->url;
-	}
-	my $notyet = 1;
-	while(<$fh>) {
-		next if m/^(?:200|220|221|226|229|230|227|250|331|500|150)[\s\-]/o;
-		next if m/^EPSV command not understood/o;
-		next if m/^Trying [\da-f\.\:]+\.\.\./o;
-		next if m/^Requesting \Q$baseurl\E/;
-		next if m/^Remote system type is\s+/o;
-		next if m/^Connected to\s+/o;
-		next if m/^remote\:\s+/o;
-		next if m/^Using binary mode to transfer files/o;
-		next if m/^Retrieving\s+/o;
-		next if m/^Success?fully retrieved file/o;
-		next if m/^\d+\s+bytes\s+received\s+in/o;
-		next if m/^ftp: connect to address.*: No route to host/o;
-
-		if (defined $hint && $hint == 0) {
-			next if m/^ftp: -: short write/o;
-			next if m/^ftp: local: -: Broken pipe/o;
-			next if m/^ftp: Writing -: Broken pipe/o;
-			next if m/^421\s+/o;
-		}
-		if ($notyet) {
-			$self->{state}->errsay("Error from #1", $url);
-			$notyet = 0;
-		}
-		if (m/^421\s+/o ||
-		    m/^ftp: connect: Connection timed out/o ||
-		    m/^ftp: Can't connect or login to host/o) {
-			$self->{lasterror} = 421;
-		}
-		# http error
-		if (m/^ftp: Error retrieving file: 404/o) {
-		    	$self->{lasterror} = 404;
-		}
-		if (m/^550\s+/o) {
-			$self->{lasterror} = 550;
-		}
-		$self->{state}->errprint("#1", $_);
-	}
-	CORE::close($fh);
-	$self->SUPER::parse_problems($filename, $hint, $object);
 }
 
 sub list
