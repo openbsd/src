@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_bio_cb.c,v 1.2 2016/09/04 12:54:33 jsing Exp $ */
+/* $OpenBSD: tls_bio_cb.c,v 1.3 2016/09/04 13:17:08 jsing Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
@@ -15,14 +15,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <fcntl.h>
-
-#include "tls.h"
-#include "tls_internal.h"
 
 #include <openssl/bio.h>
+
+#include <tls.h>
+#include "tls_internal.h"
 
 static int write_cb(BIO *b, const char *buf, int num);
 static int read_cb(BIO *b, char *buf, int size);
