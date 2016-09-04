@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.115 2016/09/03 18:04:03 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.116 2016/09/04 10:14:35 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -289,8 +289,6 @@ void	iwm_mvm_te_v2_to_v1(const struct iwm_time_event_cmd_v2 *,
 				struct iwm_time_event_cmd_v1 *);
 int	iwm_mvm_send_time_event_cmd(struct iwm_softc *,
 					const struct iwm_time_event_cmd_v2 *);
-int	iwm_mvm_time_event_send_add(struct iwm_softc *, struct iwm_node *,
-					void *, struct iwm_time_event_cmd_v2 *);
 void	iwm_mvm_protect_session(struct iwm_softc *, struct iwm_node *,
 				uint32_t, uint32_t);
 int	iwm_nvm_read_chunk(struct iwm_softc *, uint16_t, uint16_t, uint16_t,
@@ -2208,13 +2206,6 @@ iwm_mvm_send_time_event_cmd(struct iwm_softc *sc,
 	    sizeof(cmd_v1), &cmd_v1);
 }
 
-int
-iwm_mvm_time_event_send_add(struct iwm_softc *sc, struct iwm_node *in,
-	void *te_data, struct iwm_time_event_cmd_v2 *te_cmd)
-{
-	return iwm_mvm_send_time_event_cmd(sc, te_cmd);
-}
-
 void
 iwm_mvm_protect_session(struct iwm_softc *sc, struct iwm_node *in,
 	uint32_t duration, uint32_t max_delay)
@@ -2241,7 +2232,7 @@ iwm_mvm_protect_session(struct iwm_softc *sc, struct iwm_node *in,
 	        IWM_TE_V2_NOTIF_HOST_EVENT_END |
 		IWM_T2_V2_START_IMMEDIATELY);
 
-	iwm_mvm_time_event_send_add(sc, in, /*te_data*/NULL, &time_cmd);
+	iwm_mvm_send_time_event_cmd(sc, &time_cmd);
 }
 
 /*
