@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.119 2016/09/04 10:54:17 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.120 2016/09/04 11:07:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -834,7 +834,7 @@ iwm_write_prph(struct iwm_softc *sc, uint32_t addr, uint32_t val)
 int
 iwm_read_mem(struct iwm_softc *sc, uint32_t addr, void *buf, int dwords)
 {
-	int offs, ret = 0;
+	int offs, err = 0;
 	uint32_t *vals = buf;
 
 	if (iwm_nic_lock(sc)) {
@@ -843,9 +843,9 @@ iwm_read_mem(struct iwm_softc *sc, uint32_t addr, void *buf, int dwords)
 			vals[offs] = IWM_READ(sc, IWM_HBUS_TARG_MEM_RDAT);
 		iwm_nic_unlock(sc);
 	} else {
-		ret = EBUSY;
+		err = EBUSY;
 	}
-	return ret;
+	return err;
 }
 
 int
@@ -2270,41 +2270,41 @@ iwm_nvm_read_chunk(struct iwm_softc *sc, uint16_t section,
 		.flags = (IWM_CMD_WANT_SKB | IWM_CMD_SEND_IN_RFKILL),
 		.data = { &nvm_access_cmd, },
 	};
-	int ret, offset_read;
+	int err, offset_read;
 	size_t bytes_read;
 	uint8_t *resp_data;
 
 	cmd.len[0] = sizeof(struct iwm_nvm_access_cmd);
 
-	ret = iwm_send_cmd(sc, &cmd);
-	if (ret)
-		return ret;
+	err = iwm_send_cmd(sc, &cmd);
+	if (err)
+		return err;
 
 	pkt = cmd.resp_pkt;
 	if (pkt->hdr.flags & IWM_CMD_FAILED_MSK) {
-		ret = EIO;
+		err = EIO;
 		goto exit;
 	}
 
 	/* Extract NVM response */
 	nvm_resp = (void *)pkt->data;
 
-	ret = le16toh(nvm_resp->status);
+	err = le16toh(nvm_resp->status);
 	bytes_read = le16toh(nvm_resp->length);
 	offset_read = le16toh(nvm_resp->offset);
 	resp_data = nvm_resp->data;
-	if (ret) {
-		ret = EINVAL;
+	if (err) {
+		err = EINVAL;
 		goto exit;
 	}
 
 	if (offset_read != offset) {
-		ret = EINVAL;
+		err = EINVAL;
 		goto exit;
 	}
 
 	if (bytes_read > length) {
-		ret = EINVAL;
+		err = EINVAL;
 		goto exit;
 	}
 
@@ -2313,7 +2313,7 @@ iwm_nvm_read_chunk(struct iwm_softc *sc, uint16_t section,
 
  exit:
 	iwm_free_resp(sc, &cmd);
-	return ret;
+	return err;
 }
 
 /*
@@ -2548,7 +2548,7 @@ iwm_mvm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni,
 {
 	struct iwm_mvm_add_sta_cmd_v7 cmd;
 	struct iwm_node *in = (void *)ni;
-	int ret, s;
+	int err, s;
 	uint32_t status;
 
 	if (start && sc->sc_rx_ba_sessions >= IWM_MAX_RX_BA_SESSIONS)
@@ -2571,9 +2571,9 @@ iwm_mvm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni,
 	    IWM_STA_MODIFY_REMOVE_BA_TID;
 
 	status = IWM_ADD_STA_SUCCESS;
-	ret = iwm_mvm_send_cmd_pdu_status(sc, IWM_ADD_STA,
+	err = iwm_mvm_send_cmd_pdu_status(sc, IWM_ADD_STA,
 	    sizeof(cmd), &cmd, &status);
-	if (ret)
+	if (err)
 		return;
 
 	switch (status) {
@@ -2587,10 +2587,10 @@ iwm_mvm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni,
 		splx(s);
 		break;
 	case IWM_ADD_STA_IMMEDIATE_BA_FAILURE:
-		ret = EIO;
+		err = EIO;
 		break;
 	default:
-		ret = EIO;
+		err = EIO;
 		break;
 	}
 }
@@ -3647,7 +3647,7 @@ iwm_mvm_binding_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action)
 {
 	struct iwm_binding_cmd cmd;
 	struct iwm_mvm_phy_ctxt *phyctxt = in->in_phyctxt;
-	int i, ret;
+	int i, err;
 	uint32_t status;
 
 	memset(&cmd, 0, sizeof(cmd));
@@ -3662,15 +3662,15 @@ iwm_mvm_binding_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action)
 		cmd.macs[i] = htole32(IWM_FW_CTXT_INVALID);
 
 	status = 0;
-	ret = iwm_mvm_send_cmd_pdu_status(sc, IWM_BINDING_CONTEXT_CMD,
+	err = iwm_mvm_send_cmd_pdu_status(sc, IWM_BINDING_CONTEXT_CMD,
 	    sizeof(cmd), &cmd, &status);
-	if (ret)
-		return ret;
+	if (err)
+		return err;
 
 	if (status)
-		ret = EIO;
+		err = EIO;
 
-	return ret;
+	return err;
 }
 
 /*
@@ -4346,14 +4346,14 @@ iwm_mvm_flush_tx_path(struct iwm_softc *sc, int tfd_msk, int sync)
 		.queues_ctl = htole32(tfd_msk),
 		.flush_ctl = htole16(IWM_DUMP_TX_FIFO_FLUSH),
 	};
-	int ret;
+	int err;
 
-	ret = iwm_mvm_send_cmd_pdu(sc, IWM_TXPATH_FLUSH,
+	err = iwm_mvm_send_cmd_pdu(sc, IWM_TXPATH_FLUSH,
 	    sync ? 0 : IWM_CMD_ASYNC,
 	    sizeof(flush_cmd), &flush_cmd);
-	if (ret)
-                printf("%s: Flushing tx queue failed: %d\n", DEVNAME(sc), ret);
-	return ret;
+	if (err)
+                printf("%s: Flushing tx queue failed: %d\n", DEVNAME(sc), err);
+	return err;
 }
 #endif
 
@@ -4467,7 +4467,7 @@ iwm_mvm_power_build_cmd(struct iwm_softc *sc, struct iwm_node *in,
 int
 iwm_mvm_power_mac_update_mode(struct iwm_softc *sc, struct iwm_node *in)
 {
-	int ret;
+	int err;
 	int ba_enable;
 	struct iwm_mac_power_cmd cmd;
 
@@ -4475,9 +4475,10 @@ iwm_mvm_power_mac_update_mode(struct iwm_softc *sc, struct iwm_node *in)
 
 	iwm_mvm_power_build_cmd(sc, in, &cmd);
 
-	if ((ret = iwm_mvm_send_cmd_pdu(sc, IWM_MAC_PM_POWER_TABLE,
-	    0, sizeof(cmd), &cmd)) != 0)
-		return ret;
+	err = iwm_mvm_send_cmd_pdu(sc, IWM_MAC_PM_POWER_TABLE, 0,
+	    sizeof(cmd), &cmd);
+	if (err != 0)
+		return err;
 
 	ba_enable = !!(cmd.flags &
 	    htole16(IWM_POWER_FLAGS_POWER_MANAGEMENT_ENA_MSK));
@@ -4507,32 +4508,32 @@ iwm_mvm_enable_beacon_filter(struct iwm_softc *sc, struct iwm_node *in)
 		IWM_BF_CMD_CONFIG_DEFAULTS,
 		.bf_enable_beacon_filter = htole32(1),
 	};
-	int ret;
+	int err;
 
 	iwm_mvm_beacon_filter_set_cqm_params(sc, in, &cmd);
-	ret = iwm_mvm_beacon_filter_send_cmd(sc, &cmd);
+	err = iwm_mvm_beacon_filter_send_cmd(sc, &cmd);
 
-	if (ret == 0)
+	if (err == 0)
 		sc->sc_bf.bf_enabled = 1;
 
-	return ret;
+	return err;
 }
 
 int
 iwm_mvm_disable_beacon_filter(struct iwm_softc *sc)
 {
 	struct iwm_beacon_filter_cmd cmd;
-	int ret;
+	int err;
 
 	memset(&cmd, 0, sizeof(cmd));
 	if ((sc->sc_capaflags & IWM_UCODE_TLV_FLAGS_BF_UPDATED) == 0)
 		return 0;
 
-	ret = iwm_mvm_beacon_filter_send_cmd(sc, &cmd);
-	if (ret == 0)
+	err = iwm_mvm_beacon_filter_send_cmd(sc, &cmd);
+	if (err == 0)
 		sc->sc_bf.bf_enabled = 0;
 
-	return ret;
+	return err;
 }
 
 /* send station add/update command to firmware */
@@ -4540,7 +4541,7 @@ int
 iwm_mvm_sta_send_to_fw(struct iwm_softc *sc, struct iwm_node *in, int update)
 {
 	struct iwm_mvm_add_sta_cmd_v7 add_sta_cmd;
-	int ret;
+	int err;
 	uint32_t status;
 	struct ieee80211com *ic = &sc->sc_ic;
 
@@ -4594,20 +4595,20 @@ iwm_mvm_sta_send_to_fw(struct iwm_softc *sc, struct iwm_node *in, int update)
 	}
 
 	status = IWM_ADD_STA_SUCCESS;
-	ret = iwm_mvm_send_cmd_pdu_status(sc, IWM_ADD_STA, sizeof(add_sta_cmd),
+	err = iwm_mvm_send_cmd_pdu_status(sc, IWM_ADD_STA, sizeof(add_sta_cmd),
 	    &add_sta_cmd, &status);
-	if (ret)
-		return ret;
+	if (err)
+		return err;
 
 	switch (status) {
 	case IWM_ADD_STA_SUCCESS:
 		break;
 	default:
-		ret = EIO;
+		err = EIO;
 		break;
 	}
 
-	return ret;
+	return err;
 }
 
 int
@@ -4627,7 +4628,7 @@ iwm_mvm_add_int_sta_common(struct iwm_softc *sc, struct iwm_int_sta *sta,
 	const uint8_t *addr, uint16_t mac_id, uint16_t color)
 {
 	struct iwm_mvm_add_sta_cmd_v7 cmd;
-	int ret;
+	int err;
 	uint32_t status;
 
 	memset(&cmd, 0, sizeof(cmd));
@@ -4640,39 +4641,39 @@ iwm_mvm_add_int_sta_common(struct iwm_softc *sc, struct iwm_int_sta *sta,
 	if (addr)
 		memcpy(cmd.addr, addr, ETHER_ADDR_LEN);
 
-	ret = iwm_mvm_send_cmd_pdu_status(sc, IWM_ADD_STA,
+	err = iwm_mvm_send_cmd_pdu_status(sc, IWM_ADD_STA,
 	    sizeof(cmd), &cmd, &status);
-	if (ret)
-		return ret;
+	if (err)
+		return err;
 
 	switch (status) {
 	case IWM_ADD_STA_SUCCESS:
 		return 0;
 	default:
-		ret = EIO;
+		err = EIO;
 		break;
 	}
-	return ret;
+	return err;
 }
 
 int
 iwm_mvm_add_aux_sta(struct iwm_softc *sc)
 {
-	int ret;
+	int err;
 
 	sc->sc_aux_sta.sta_id = IWM_AUX_STA_ID;
 	sc->sc_aux_sta.tfd_queue_msk = (1 << IWM_MVM_AUX_QUEUE);
 
-	ret = iwm_enable_txq(sc, 0, IWM_MVM_AUX_QUEUE, IWM_MVM_TX_FIFO_MCAST);
-	if (ret)
-		return ret;
+	err = iwm_enable_txq(sc, 0, IWM_MVM_AUX_QUEUE, IWM_MVM_TX_FIFO_MCAST);
+	if (err)
+		return err;
 
-	ret = iwm_mvm_add_int_sta_common(sc,
+	err = iwm_mvm_add_int_sta_common(sc,
 	    &sc->sc_aux_sta, NULL, IWM_MAC_INDEX_AUX, 0);
 
-	if (ret)
+	if (err)
 		memset(&sc->sc_aux_sta, 0, sizeof(sc->sc_aux_sta));
-	return ret;
+	return err;
 }
 
 #define IWM_PLCP_QUIET_THRESH 1
@@ -4927,7 +4928,7 @@ iwm_mvm_lmac_scan(struct iwm_softc *sc)
 	};
 	struct iwm_scan_req_lmac *req;
 	size_t req_len;
-	int ret;
+	int err;
 
 	req_len = sizeof(struct iwm_scan_req_lmac) +
 	    (sizeof(struct iwm_scan_channel_cfg_lmac) *
@@ -4998,13 +4999,13 @@ iwm_mvm_lmac_scan(struct iwm_softc *sc)
 	    (struct iwm_scan_channel_cfg_lmac *)req->data,
 	    ic->ic_des_esslen != 0);
 
-	ret = iwm_mvm_fill_probe_req(sc,
+	err = iwm_mvm_fill_probe_req(sc,
 			    (struct iwm_scan_probe_req *)(req->data +
 			    (sizeof(struct iwm_scan_channel_cfg_lmac) *
 			    sc->sc_capa_n_scan_channels)));
-	if (ret) {
+	if (err) {
 		free(req, M_DEVBUF, req_len);
-		return ret;
+		return err;
 	}
 
 	/* Specify the scan plan: We'll do one iteration. */
@@ -5015,9 +5016,9 @@ iwm_mvm_lmac_scan(struct iwm_softc *sc)
 	req->channel_opt[0].non_ebs_ratio = 1;
 	req->channel_opt[1].non_ebs_ratio = 1;
 
-	ret = iwm_send_cmd(sc, &hcmd);
+	err = iwm_send_cmd(sc, &hcmd);
 	free(req, M_DEVBUF, req_len);
-	return ret;
+	return err;
 }
 
 int
@@ -5025,7 +5026,7 @@ iwm_mvm_config_umac_scan(struct iwm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_scan_config *scan_config;
-	int ret, nchan;
+	int err, nchan;
 	size_t cmd_size;
 	struct ieee80211_channel *c;
 	struct iwm_host_cmd hcmd = {
@@ -5090,9 +5091,9 @@ iwm_mvm_config_umac_scan(struct iwm_softc *sc)
 	hcmd.data[0] = scan_config;
 	hcmd.len[0] = cmd_size;
 
-	ret = iwm_send_cmd(sc, &hcmd);
+	err = iwm_send_cmd(sc, &hcmd);
 	free(scan_config, M_DEVBUF, cmd_size);
-	return ret;
+	return err;
 }
 
 int
@@ -5108,7 +5109,7 @@ iwm_mvm_umac_scan(struct iwm_softc *sc)
 	struct iwm_scan_req_umac *req;
 	struct iwm_scan_req_umac_tail *tail;
 	size_t req_len;
-	int ret;
+	int err;
 
 	req_len = sizeof(struct iwm_scan_req_umac) +
 	    (sizeof(struct iwm_scan_channel_cfg_umac) *
@@ -5162,19 +5163,19 @@ iwm_mvm_umac_scan(struct iwm_softc *sc)
 		req->general_flags |=
 		    htole32(IWM_UMAC_SCAN_GEN_FLAGS_RRM_ENABLED);
 
-	ret = iwm_mvm_fill_probe_req(sc, &tail->preq);
-	if (ret) {
+	err = iwm_mvm_fill_probe_req(sc, &tail->preq);
+	if (err) {
 		free(req, M_DEVBUF, req_len);
-		return ret;
+		return err;
 	}
 
 	/* Specify the scan plan: We'll do one iteration. */
 	tail->schedule[0].interval = 0;
 	tail->schedule[0].iter_count = 1;
 
-	ret = iwm_send_cmd(sc, &hcmd);
+	err = iwm_send_cmd(sc, &hcmd);
 	free(req, M_DEVBUF, req_len);
-	return ret;
+	return err;
 }
 
 void
@@ -5945,7 +5946,7 @@ iwm_mvm_sf_config(struct iwm_softc *sc, int new_state)
 	struct iwm_sf_cfg_cmd sf_cmd = {
 		.state = htole32(IWM_SF_FULL_ON),
 	};
-	int ret = 0;
+	int err = 0;
 
 	if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000)
 		sf_cmd.state |= htole32(IWM_SF_CFG_DUMMY_NOTIF_OFF);
@@ -5962,9 +5963,9 @@ iwm_mvm_sf_config(struct iwm_softc *sc, int new_state)
 		return EINVAL;
 	}
 
-	ret = iwm_mvm_send_cmd_pdu(sc, IWM_REPLY_SF_CFG_CMD, IWM_CMD_ASYNC,
+	err = iwm_mvm_send_cmd_pdu(sc, IWM_REPLY_SF_CFG_CMD, IWM_CMD_ASYNC,
 				   sizeof(sf_cmd), &sf_cmd);
-	return ret;
+	return err;
 }
 
 int
@@ -5988,7 +5989,7 @@ iwm_send_update_mcc_cmd(struct iwm_softc *sc, const char *alpha2)
 		.flags = IWM_CMD_WANT_SKB,
 		.data = { &mcc_cmd },
 	};
-	int ret;
+	int err;
 #ifdef IWM_DEBUG
 	struct iwm_rx_packet *pkt;
 	struct iwm_mcc_update_resp_v1 *mcc_resp_v1 = NULL;
@@ -6012,9 +6013,9 @@ iwm_send_update_mcc_cmd(struct iwm_softc *sc, const char *alpha2)
 	else
 		hcmd.len[0] = sizeof(struct iwm_mcc_update_cmd_v1);
 
-	ret = iwm_send_cmd(sc, &hcmd);
-	if (ret)
-		return ret;
+	err = iwm_send_cmd(sc, &hcmd);
+	if (err)
+		return err;
 
 #ifdef IWM_DEBUG
 	pkt = hcmd.resp_pkt;
@@ -7382,7 +7383,6 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000) {
-		int ret;
 		uint32_t hw_step;
 
 		/*
@@ -7393,11 +7393,11 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 			    IWM_CSR_GP_CNTRL_REG_FLAG_INIT_DONE);
 		DELAY(2);
 
-		ret = iwm_poll_bit(sc, IWM_CSR_GP_CNTRL,
+		err = iwm_poll_bit(sc, IWM_CSR_GP_CNTRL,
 				   IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY,
 				   IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY,
 				   25000);
-		if (!ret) {
+		if (!err) {
 			printf("%s: Failed to wake up the nic\n", DEVNAME(sc));
 			return;
 		}
