@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.68 2016/02/23 02:34:09 krw Exp $
+#	$OpenBSD: install.md,v 1.69 2016/09/04 09:52:03 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ md_prep_HFS() {
 }
 
 md_prep_disklabel() {
-	local _disk=$1 _f=/tmp/fstab.$1
+	local _disk=$1 _f=/tmp/i/fstab.$1
 
 	PARTTABLE=
 	while [[ -z $PARTTABLE ]]; do

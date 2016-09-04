@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.22 2016/02/08 17:28:09 krw Exp $
+#       $OpenBSD: install.md,v 1.23 2016/09/04 09:52:03 rpe Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -42,7 +42,7 @@ md_installboot() {
 }
 
 md_prep_disklabel() {
-	local _disk=$1 _f=/tmp/fstab.$1
+	local _disk=$1 _f=/tmp/i/fstab.$1
 
 	disklabel_autolayout $_disk $_f || return
 	[[ -s $_f ]] && return

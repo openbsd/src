@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.39 2016/01/01 00:47:51 rpe Exp $
+#	$OpenBSD: install.md,v 1.40 2016/09/04 09:52:03 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ md_installboot() {
 
 md_prep_disklabel()
 {
-	local _disk=$1 _f=/tmp/fstab.$1
+	local _disk=$1 _f=/tmp/i/fstab.$1
 
 	echo "\nChecking SGI Volume Header:"
 	/usr/mdec/sgivol -q $_disk >/dev/null 2>/dev/null
@@ -119,7 +119,7 @@ boot loader will not be able to locate and load the kernel.
 Do not change any parameters except the partition layout and the label name.
 
 __EOT
-	disklabel -c -F /tmp/fstab.$_disk -E $_disk
+	disklabel -c -F /tmp/i/fstab.$_disk -E $_disk
 }
 
 md_congrats() {
