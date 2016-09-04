@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-process.c,v 1.10 2016/07/14 05:55:08 guenther Exp $	*/
+/*	$OpenBSD: kqueue-process.c,v 1.11 2016/09/04 18:08:04 bluhm Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
@@ -67,7 +67,7 @@ do_process(void)
 	    warn("can't register events on kqueue"));
 
 	/* negative case */
-	EV_SET(&ke, pid + (1ULL << 32), EVFILT_PROC, EV_ADD|EV_ENABLE|EV_CLEAR,
+	EV_SET(&ke, pid + (1ULL << 30), EVFILT_PROC, EV_ADD|EV_ENABLE|EV_CLEAR,
 	    NOTE_EXIT|NOTE_FORK|NOTE_EXEC|NOTE_TRACK, 0, NULL);
 	ASS(kevent(kq, &ke, 1, NULL, 0, NULL) != 0,
 	    warnx("can register bogus pid on kqueue"));
