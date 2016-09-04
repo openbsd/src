@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.4 2016/09/04 16:47:41 goda Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.5 2016/09/04 17:11:09 goda Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -268,7 +268,7 @@ switch_process(struct ifnet *ifp, struct mbuf *m)
 {
 	struct switch_softc		*sc = NULL;
 	struct switch_port		*swpo;
-	struct switch_flow_classify	 swfcl;
+	struct switch_flow_classify	 swfcl = { 0 };
 
 	swpo = (struct switch_port *)ifp->if_switchport;
 	if (swpo == NULL)
