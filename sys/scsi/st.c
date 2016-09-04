@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.131 2016/03/12 15:16:04 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.132 2016/09/04 10:51:24 naddy Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -369,16 +369,13 @@ int
 stdetach(struct device *self, int flags)
 {
 	struct st_softc *st = (struct st_softc *)self;
-	int bmaj, cmaj, mn;
+	int cmaj, mn;
 
 	bufq_drain(&st->sc_bufq);
 
 	/* Locate the lowest minor number to be detached. */
 	mn = STMINOR(self->dv_unit, 0);
 
-	for (bmaj = 0; bmaj < nblkdev; bmaj++)
-		if (bdevsw[bmaj].d_open == stopen)
-			vdevgone(bmaj, mn, mn + MAXSTMODES - 1, VBLK);
 	for (cmaj = 0; cmaj < nchrdev; cmaj++)
 		if (cdevsw[cmaj].d_open == stopen)
 			vdevgone(cmaj, mn, mn + MAXSTMODES - 1, VCHR);
@@ -2176,12 +2173,4 @@ st_touch_tape(struct st_softc *st)
 done:
 	dma_free(buf, maxblksize);
 	return (error);
-}
-
-int
-stdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
-{
-
-	/* Not implemented. */
-	return ENXIO;
 }

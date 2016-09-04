@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.142 2016/09/02 17:06:13 goda Exp $	*/
+/*	$OpenBSD: conf.h,v 1.143 2016/09/04 10:51:24 naddy Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -55,9 +55,8 @@ struct knote;
 /*
  * Types for d_type
  */
-#define	D_TAPE	1
-#define	D_DISK	2
-#define	D_TTY	3
+#define	D_DISK	1
+#define	D_TTY	2
 
 /*
  * Flags for d_flags
@@ -115,11 +114,6 @@ extern struct bdevsw bdevsw[];
 	dev_init(c,n,open), dev_init(c,n,close), \
 	dev_init(c,n,strategy), dev_init(c,n,ioctl), \
 	dev_init(c,n,dump), dev_size_init(c,n), D_DISK }
-
-#define	bdev_tape_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), \
-	dev_init(c,n,strategy), dev_init(c,n,ioctl), \
-	dev_init(c,n,dump), 0, D_TAPE }
 
 #define	bdev_swap_init(c,n) { \
 	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
@@ -186,7 +180,7 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev, \
-	D_TAPE, 0, seltrue_kqfilter }
+	0, 0, seltrue_kqfilter }
 
 /* open, close, read, write, ioctl, stop, tty */
 #define	cdev_tty_init(c,n) { \
@@ -563,7 +557,6 @@ cdev_decl(sd);
 
 cdev_decl(ses);
 
-bdev_decl(st);
 cdev_decl(st);
 
 bdev_decl(cd);

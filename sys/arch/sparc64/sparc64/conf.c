@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.78 2016/09/02 17:06:13 goda Exp $	*/
+/*	$OpenBSD: conf.c,v 1.79 2016/09/04 10:51:24 naddy Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -130,7 +130,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
 	bdev_notdef(),			/* 9: was: concatenated disk driver */
 	bdev_notdef(),			/* 10: SMD disk -- not this arch */
-	bdev_tape_init(NST,st),		/* 11: SCSI tape */
+	bdev_notdef(),			/* 11: was: SCSI tape */
 	bdev_disk_init(NWD,wd),		/* 12: IDE disk */
 	bdev_notdef(),			/* 13 */
 	bdev_notdef(),			/* 14 */
@@ -354,7 +354,7 @@ int chrtoblktbl[] = {
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
 	/* 17 */	7,
-	/* 18 */	11,
+	/* 18 */	NODEV,
 	/* 19 */	NODEV,
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
