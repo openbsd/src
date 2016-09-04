@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.29 2015/12/05 10:11:53 tedu Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.30 2016/09/04 09:22:29 mpi Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -41,11 +41,14 @@
 #include <sys/syscallargs.h>
 
 
-#ifdef GPROF
+#if defined(GPROF) || defined(DDBPROF)
 #include <sys/malloc.h>
 #include <sys/gmon.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
 
 /*
  * Flag to prevent CPUs from executing the mcount() monitor function
@@ -56,7 +59,7 @@ int gmoninit = 0;
 extern char etext[];
 
 void
-kmstartup(void)
+prof_init(void)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
@@ -67,6 +70,10 @@ kmstartup(void)
 	char *cp;
 	int size;
 
+#if !defined(GPROF) && defined(DDBPROF)
+	db_prof_init();
+#endif
+
 	/*
 	 * Round lowpc and highpc to multiples of the density we're using
 	 * so the rest of the scaling (here and in gprof) stays in ints.
@@ -74,8 +81,10 @@ kmstartup(void)
 	lowpc = ROUNDDOWN(KERNBASE, HISTFRACTION * sizeof(HISTCOUNTER));
 	highpc = ROUNDUP((u_long)etext, HISTFRACTION * sizeof(HISTCOUNTER));
 	textsize = highpc - lowpc;
+#ifdef GPROF
 	printf("Profiling kernel, textsize=%ld [%lx..%lx]\n",
 	    textsize, lowpc, highpc);
+#endif
 	kcountsize = textsize / HISTFRACTION;
 	fromssize = textsize / HASHFRACTION;
 	tolimit = textsize * ARCDENSITY / 100;
@@ -116,6 +125,41 @@ kmstartup(void)
 	}
 }
 
+int
+prof_state_toggle(struct gmonparam *gp, int oldstate)
+{
+	int error = 0;
+
+	if (gp->state == oldstate)
+		return (0);
+
+	switch (gp->state) {
+	case GMON_PROF_ON:
+#if !defined(GPROF)
+		/*
+		 * If this is not a profiling kernel, we need to patch
+		 * all symbols that can be instrummented.
+		 */
+		error = db_prof_enable();
+#endif
+		if (error == 0)
+			startprofclock(&process0);
+		break;
+	default:
+		error = EINVAL;
+		gp->state = GMON_PROF_OFF;
+		/* FALLTHROUGH */
+	case GMON_PROF_OFF:
+		stopprofclock(&process0);
+#if !defined(GPROF)
+		db_prof_disable();
+#endif
+		break;
+	}
+
+	return (error);
+}
+
 /*
  * Return kernel profiling information.
  */
@@ -126,7 +170,7 @@ sysctl_doprof(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	struct gmonparam *gp = NULL;
-	int error, cpuid, op;
+	int error, cpuid, op, state;
 
 	/* all sysctl names at this level are name and field */
 	if (namelen != 2)
@@ -150,14 +194,11 @@ sysctl_doprof(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	switch (op) {
 	case GPROF_STATE:
+		state = gp->state;
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &gp->state);
 		if (error)
 			return (error);
-		if (gp->state == GMON_PROF_OFF)
-			stopprofclock(&process0);
-		else
-			startprofclock(&process0);
-		return (0);
+		return (prof_state_toggle(gp, state));
 	case GPROF_COUNT:
 		return (sysctl_struct(oldp, oldlenp, newp, newlen,
 		    gp->kcount, gp->kcountsize));
@@ -174,7 +215,7 @@ sysctl_doprof(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	}
 	/* NOTREACHED */
 }
-#endif /* GPROF */
+#endif /* GPROF || DDBPROF */
 
 /*
  * Profiling system call.

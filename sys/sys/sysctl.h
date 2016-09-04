@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.163 2016/05/27 19:45:04 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.164 2016/09/04 09:22:29 mpi Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -938,7 +938,7 @@ int sysctl_dumpentry(struct rtentry *, void *, unsigned int);
 int sysctl_rtable(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_clockrate(char *, size_t *, void *);
 int sysctl_vnode(char *, size_t *, struct proc *);
-#ifdef GPROF
+#if defined(GPROF) || defined(DDBPROF)
 int sysctl_doprof(int *, u_int, void *, size_t *, void *, size_t);
 #endif
 int sysctl_dopool(int *, u_int, char *, size_t *);

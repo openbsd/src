@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.82 2016/07/16 06:04:29 mlarkin Exp $	*/
+/*	$OpenBSD: locore.S,v 1.83 2016/09/04 09:22:28 mpi Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -1153,12 +1153,55 @@ NENTRY(intr_fast_exit)
 	movq	TF_RCX(%rsp),%rcx
 	movq	TF_R11(%rsp),%r11
 	movq	TF_RAX(%rsp),%rax
+
+#if !defined(GPROF) && defined(DDBPROF)
+	/*
+	 * If we are returning from a probe trap we need to fix the
+	 * stack layout and emulate the patched instruction.
+	 *
+	 * The code below does that by trashing %rax, so it MUST be
+	 * restored afterward.
+	 */
+	cmpl	$INTR_FAKE_TRAP, TF_ERR(%rsp)
+	je	.Lprobe_fixup
+#endif /* !defined(GPROF) && defined(DDBPROF) */
+
 	addq	$TF_RIP,%rsp
 
 	.globl	_C_LABEL(doreti_iret)
 _C_LABEL(doreti_iret):
 	iretq
 
+
+#if !defined(GPROF) && defined(DDBPROF)
+.Lprobe_fixup:
+	/* Reserve enough room to emulate "pushq %rbp". */
+	subq	$16, %rsp
+
+	/* Shift hardware-saved registers. */
+	movq	(TF_RIP + 16)(%rsp), %rax
+	movq	%rax, TF_RIP(%rsp)
+	movq	(TF_CS + 16)(%rsp), %rax
+	movq	%rax, TF_CS(%rsp)
+	movq	(TF_RFLAGS + 16)(%rsp), %rax
+	movq	%rax, TF_RFLAGS(%rsp)
+	movq	(TF_RSP + 16)(%rsp), %rax
+	movq	%rax, TF_RSP(%rsp)
+	movq	(TF_SS + 16)(%rsp), %rax
+	movq	%rax, TF_SS(%rsp)
+
+	/* Pull 8 bytes off the stack and store the content of the register. */
+	movq	TF_RSP(%rsp), %rax
+	subq	$8, %rax
+	movq	%rax, TF_RSP(%rsp)
+	movq	%rbp, (%rax)
+
+	/* Write back overwritten %rax */
+	movq	(TF_RAX + 16)(%rsp),%rax
+
+	addq	$TF_RIP,%rsp
+	iretq
+#endif /* !defined(GPROF) && defined(DDBPROF) */
 
 ENTRY(pagezero)
 	movq    $-PAGE_SIZE,%rdx

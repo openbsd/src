@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.9 2015/07/17 15:37:58 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.10 2016/09/04 09:22:28 mpi Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -70,6 +70,7 @@
 	swapgs								; \
 	movw	%ax,%gs
 
+#define	INTR_FAKE_TRAP	0xbadabada
 
 #define CHECK_ASTPENDING(reg)	movq	CPUVAR(CURPROC),reg		; \
 				cmpq	$0, reg				; \

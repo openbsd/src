@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.90 2016/03/24 05:40:56 dlg Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.91 2016/09/04 09:22:29 mpi Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@
 #include <sys/timetc.h>
 
 
-#ifdef GPROF
+#if defined(GPROF) || defined(DDBPROF)
 #include <sys/gmon.h>
 #endif
 
@@ -317,7 +317,7 @@ stopprofclock(struct process *pr)
 void
 statclock(struct clockframe *frame)
 {
-#ifdef GPROF
+#if defined(GPROF) || defined(DDBPROF)
 	struct gmonparam *g;
 	u_long i;
 #endif
@@ -356,7 +356,7 @@ statclock(struct clockframe *frame)
 		else
 			spc->spc_cp_time[CP_USER]++;
 	} else {
-#ifdef GPROF
+#if defined(GPROF) || defined(DDBPROF)
 		/*
 		 * Kernel statistics are just like addupc_intr, only easier.
 		 */

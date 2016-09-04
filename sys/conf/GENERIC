@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.232 2016/09/03 14:20:25 phessler Exp $
+#	$OpenBSD: GENERIC,v 1.233 2016/09/04 09:22:28 mpi Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -6,6 +6,7 @@
 #option		INSECURE	# default to secure
 
 option		DDB		# in-kernel debugger
+#option		DDBPROF		# ddb(4) based profiling
 #option		DDB_SAFE_CONSOLE # allow break into ddb during boot
 #makeoptions	DEBUG="-g"	# compile full symbol table
 #makeoptions	PROF="-pg"	# build profiled kernel

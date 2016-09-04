@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_usrreq.c,v 1.17 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: db_usrreq.c,v 1.18 2016/09/04 09:22:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
@@ -35,6 +35,7 @@
 #include <ddb/db_var.h>
 
 int	db_log = 1;
+int	db_profile;			/* Allow dynamic profiling */
 
 int
 ddb_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
@@ -101,6 +102,23 @@ ddb_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 				return (ENODEV);
 		}
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
+#if defined(DDBPROF)
+	case DBCTL_PROFILE:
+		if (securelevel > 0)
+			return (sysctl_int_lower(oldp, oldlenp, newp, newlen,
+			    &db_profile));
+		else {
+			ctlval = db_profile;
+			if ((error = sysctl_int(oldp, oldlenp, newp, newlen,
+			    &ctlval)) || newp == NULL)
+				return (error);
+			if (ctlval != 1 && ctlval != 0)
+				return (EINVAL);
+			db_profile = ctlval;
+			return (0);
+		}
+		break;
+#endif /* DDBPROF */
 	default:
 		return (EOPNOTSUPP);
 	}
