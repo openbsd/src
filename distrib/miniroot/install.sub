@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.911 2016/09/04 10:15:04 halex Exp $
+#	$OpenBSD: install.sub,v 1.912 2016/09/04 12:36:33 halex Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2726,15 +2726,8 @@ do_install(){
 }
 
 do_upgrade(){
-	# Have the user confirm that $ROOTDEV is the root filesystem.
+	# Get $ROOTDISK and $ROOTDEV
 	get_rootinfo
-	while :; do
-		ask "Root filesystem?" $ROOTDEV
-		resp=${resp##*/}
-		[[ -b /dev/$resp ]] && break
-		echo "$resp is not a block device."
-	done
-	ROOTDEV=$resp
 
 	echo -n "Checking root filesystem (fsck -fp /dev/$ROOTDEV)..."
 	fsck -fp /dev/$ROOTDEV >/dev/null 2>&1 || { echo "FAILED."; exit; }
