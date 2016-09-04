@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.117 2016/09/04 10:21:14 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.118 2016/09/04 10:40:59 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -355,12 +355,8 @@ void	iwm_mvm_phy_ctxt_cmd_hdr(struct iwm_softc *, struct iwm_mvm_phy_ctxt *,
 void	iwm_mvm_phy_ctxt_cmd_data(struct iwm_softc *,
 		struct iwm_phy_context_cmd *, struct ieee80211_channel *,
 		uint8_t, uint8_t);
-int	iwm_mvm_phy_ctxt_apply(struct iwm_softc *, struct iwm_mvm_phy_ctxt *,
+int	iwm_mvm_phy_ctxt_cmd(struct iwm_softc *, struct iwm_mvm_phy_ctxt *,
 				uint8_t, uint8_t, uint32_t, uint32_t);
-int	iwm_mvm_phy_ctxt_add(struct iwm_softc *, struct iwm_mvm_phy_ctxt *,
-				struct ieee80211_channel *, uint8_t, uint8_t);
-int	iwm_mvm_phy_ctxt_changed(struct iwm_softc *, struct iwm_mvm_phy_ctxt *,
-				struct ieee80211_channel *, uint8_t, uint8_t);
 int	iwm_send_cmd(struct iwm_softc *, struct iwm_host_cmd *);
 int	iwm_mvm_send_cmd_pdu(struct iwm_softc *, uint8_t, uint32_t, uint16_t,
 				const void *);
@@ -3728,14 +3724,8 @@ iwm_mvm_phy_ctxt_cmd_data(struct iwm_softc *sc,
 	cmd->txchain_info = htole32(iwm_fw_valid_tx_ant(sc));
 }
 
-/*
- * Send a command
- * only if something in the configuration changed: in case that this is the
- * first time that the phy configuration is applied or in case that the phy
- * configuration changed from the previous apply.
- */
 int
-iwm_mvm_phy_ctxt_apply(struct iwm_softc *sc,
+iwm_mvm_phy_ctxt_cmd(struct iwm_softc *sc,
 	struct iwm_mvm_phy_ctxt *ctxt,
 	uint8_t chains_static, uint8_t chains_dynamic,
 	uint32_t action, uint32_t apply_time)
@@ -3751,34 +3741,6 @@ iwm_mvm_phy_ctxt_apply(struct iwm_softc *sc,
 
 	return iwm_mvm_send_cmd_pdu(sc, IWM_PHY_CONTEXT_CMD, 0,
 	    sizeof(struct iwm_phy_context_cmd), &cmd);
-}
-
-/*
- * Send a command to add a PHY context based on the current HW configuration.
- */
-int
-iwm_mvm_phy_ctxt_add(struct iwm_softc *sc, struct iwm_mvm_phy_ctxt *ctxt,
-	struct ieee80211_channel *chan,
-	uint8_t chains_static, uint8_t chains_dynamic)
-{
-	ctxt->channel = chan;
-	return iwm_mvm_phy_ctxt_apply(sc, ctxt,
-	    chains_static, chains_dynamic, IWM_FW_CTXT_ACTION_ADD, 0);
-}
-
-/*
- * Send a command to modify the PHY context based on the current HW
- * configuration. Note that the function does not check that the configuration
- * changed.
- */
-int
-iwm_mvm_phy_ctxt_changed(struct iwm_softc *sc,
-	struct iwm_mvm_phy_ctxt *ctxt, struct ieee80211_channel *chan,
-	uint8_t chains_static, uint8_t chains_dynamic)
-{
-	ctxt->channel = chan;
-	return iwm_mvm_phy_ctxt_apply(sc, ctxt,
-	    chains_static, chains_dynamic, IWM_FW_CTXT_ACTION_MODIFY, 0);
 }
 
 /*
@@ -5569,8 +5531,9 @@ iwm_auth(struct iwm_softc *sc)
 	if (err)
 		return err;
 
-	err = iwm_mvm_phy_ctxt_changed(sc, &sc->sc_phyctxt[0],
-	    in->in_ni.ni_chan, 1, 1);
+	sc->sc_phyctxt[0].channel = in->in_ni.ni_chan;
+	err = iwm_mvm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0], 1, 1,
+	    IWM_FW_CTXT_ACTION_MODIFY, 0);
 	if (err)
 		return err;
 	in->in_phyctxt = &sc->sc_phyctxt[0];
@@ -6239,8 +6202,9 @@ iwm_init_hw(struct iwm_softc *sc)
 		 * going to be overwritten in the other flows.
 		 * For now use the first channel we have.
 		 */
-		err = iwm_mvm_phy_ctxt_add(sc,
-		    &sc->sc_phyctxt[i], &ic->ic_channels[1], 1, 1);
+		sc->sc_phyctxt[i].channel = &ic->ic_channels[1];
+		err = iwm_mvm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[i], 1, 1,
+		    IWM_FW_CTXT_ACTION_ADD, 0);
 		if (err) {
 			printf("%s: could not add phy context %d (error %d)\n",
 			    DEVNAME(sc), i, err);
