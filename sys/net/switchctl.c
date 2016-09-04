@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.2 2016/09/03 18:33:55 goda Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.3 2016/09/04 08:26:48 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -133,8 +133,8 @@ switchread(dev_t dev, struct uio *uio, int ioflag)
 	s = splnet();
 	while ((m0 = mq_dequeue(&sc->sc_swdev->swdev_outq)) == NULL) {
 		if (ISSET(ioflag, IO_NDELAY)) {
-			splx(s);
-			return (EWOULDBLOCK);
+			error = EWOULDBLOCK;
+			goto failed;
 		}
 		sc->sc_swdev->swdev_waiting = 1;
 		error = tsleep(sc, (PZERO + 1)|PCATCH, "switchread", 0);
