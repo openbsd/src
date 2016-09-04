@@ -1,4 +1,3 @@
-/*	$OpenBSD: malloc.c,v 1.10 2016/09/03 12:24:10 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -423,7 +422,6 @@ omalloc_grow(struct dir_info *d)
 	if (p == MAP_FAILED)
 		return 1;
 
-	_dl_memset(p, 0, newsize);
 	for (i = 0; i < d->regions_total; i++) {
 		void *q = d->r[i].p;
 		if (q != NULL) {
@@ -858,7 +856,7 @@ malloc_recurse(void)
 void *
 _dl_malloc(size_t size)
 {
-	void *r;
+	void *r = NULL;
 
 	_dl_thread_kern_stop();
 	if (g_pool == NULL)
@@ -866,15 +864,13 @@ _dl_malloc(size_t size)
 	g_pool->func = "malloc():";
 	if (g_pool->active++) {
 		malloc_recurse();
-		goto fail;
+		goto ret;
 	}
 	r = omalloc(size, 0);
 	g_pool->active--;
+ret:
 	_dl_thread_kern_go();
 	return r;
-fail:
-	_dl_thread_kern_go();
-	return NULL;
 }
 
 static void
@@ -957,11 +953,11 @@ _dl_free(void *ptr)
 	g_pool->func = "free():";
 	if (g_pool->active++) {
 		malloc_recurse();
-		goto fail;
+		goto ret;
 	}
 	ofree(ptr);
 	g_pool->active--;
-fail:
+ret:
 	_dl_thread_kern_go();
 }
 
@@ -975,7 +971,7 @@ fail:
 void *
 _dl_calloc(size_t nmemb, size_t size)
 {
-	void *r;
+	void *r = NULL;
 
 	_dl_thread_kern_stop();
 	if (g_pool == NULL)
@@ -983,23 +979,20 @@ _dl_calloc(size_t nmemb, size_t size)
 	g_pool->func = "calloc():";
 	if ((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) &&
 	    nmemb > 0 && SIZE_MAX / nmemb < size) {
-		goto fail;
+		goto ret;
 	}
 
 	if (g_pool->active++) {
 		malloc_recurse();
-		goto fail;
+		goto ret;
 	}
 
 	size *= nmemb;
 	r = omalloc(size, 1);
-
 	g_pool->active--;
+ret:
 	_dl_thread_kern_go();
 	return r;
-fail:
-	_dl_thread_kern_go();
-	return NULL;
 }
 
 
@@ -1031,7 +1024,7 @@ orealloc(void *p, size_t newsz)
 void *
 _dl_realloc(void *ptr, size_t size)
 {
-	void *r;
+	void *r = NULL;
 
 	_dl_thread_kern_stop();
 	if (g_pool == NULL)
@@ -1039,14 +1032,12 @@ _dl_realloc(void *ptr, size_t size)
 	g_pool->func = "realloc():";
 	if (g_pool->active++) {
 		malloc_recurse();
-		goto fail;
+		goto ret;
 	}
 	r = orealloc(ptr, size);
 	g_pool->active--;
+ret:
 	_dl_thread_kern_go();
 	return r;
-fail:
-	_dl_thread_kern_go();
-	return NULL;
 }
 
