@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_x509.c,v 1.6 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: pem_x509.c,v 1.7 2016/09/04 15:53:03 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -64,4 +64,31 @@
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
 
-IMPLEMENT_PEM_rw(X509, X509, PEM_STRING_X509, X509)
+
+X509 *
+PEM_read_bio_X509(BIO *bp, X509 **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read_bio((d2i_of_void *)d2i_X509, PEM_STRING_X509, bp,
+	    (void **)x, cb, u);
+}
+
+X509 *
+PEM_read_X509(FILE *fp, X509 **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read((d2i_of_void *)d2i_X509, PEM_STRING_X509, fp,
+	    (void **)x, cb, u);
+}
+
+int
+PEM_write_bio_X509(BIO *bp, X509 *x)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_X509, PEM_STRING_X509, bp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
+
+int
+PEM_write_X509(FILE *fp, X509 *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_X509, PEM_STRING_X509, fp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}

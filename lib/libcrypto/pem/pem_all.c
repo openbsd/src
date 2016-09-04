@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_all.c,v 1.15 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: pem_all.c,v 1.16 2016/09/04 15:53:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,16 +140,136 @@ static DSA *pkey_get_dsa(EVP_PKEY *key, DSA **dsa);
 static EC_KEY *pkey_get_eckey(EVP_PKEY *key, EC_KEY **eckey);
 #endif
 
-IMPLEMENT_PEM_rw(X509_REQ, X509_REQ, PEM_STRING_X509_REQ, X509_REQ)
 
-IMPLEMENT_PEM_write(X509_REQ_NEW, X509_REQ, PEM_STRING_X509_REQ_OLD, X509_REQ)
+X509_REQ *
+PEM_read_bio_X509_REQ(BIO *bp, X509_REQ **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read_bio((d2i_of_void *)d2i_X509_REQ, PEM_STRING_X509_REQ, bp,
+	    (void **)x, cb, u);
+}
 
-IMPLEMENT_PEM_rw(X509_CRL, X509_CRL, PEM_STRING_X509_CRL, X509_CRL)
+X509_REQ *
+PEM_read_X509_REQ(FILE *fp, X509_REQ **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read((d2i_of_void *)d2i_X509_REQ, PEM_STRING_X509_REQ, fp,
+	    (void **)x, cb, u);
+}
 
-IMPLEMENT_PEM_rw(PKCS7, PKCS7, PEM_STRING_PKCS7, PKCS7)
+int
+PEM_write_bio_X509_REQ(BIO *bp, X509_REQ *x)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_X509_REQ, PEM_STRING_X509_REQ, bp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
 
-IMPLEMENT_PEM_rw(NETSCAPE_CERT_SEQUENCE, NETSCAPE_CERT_SEQUENCE,
-    PEM_STRING_X509, NETSCAPE_CERT_SEQUENCE)
+int
+PEM_write_X509_REQ(FILE *fp, X509_REQ *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_X509_REQ, PEM_STRING_X509_REQ, fp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
+
+
+int
+PEM_write_bio_X509_REQ_NEW(BIO *bp, X509_REQ *x)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_X509_REQ, PEM_STRING_X509_REQ_OLD, bp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
+
+int
+PEM_write_X509_REQ_NEW(FILE *fp, X509_REQ *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_X509_REQ, PEM_STRING_X509_REQ_OLD, fp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
+
+
+X509_CRL *
+PEM_read_bio_X509_CRL(BIO *bp, X509_CRL **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read_bio((d2i_of_void *)d2i_X509_CRL, PEM_STRING_X509_CRL, bp,
+	    (void **)x, cb, u);
+}
+
+X509_CRL *
+PEM_read_X509_CRL(FILE *fp, X509_CRL **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read((d2i_of_void *)d2i_X509_CRL, PEM_STRING_X509_CRL, fp,
+	    (void **)x, cb, u);
+}
+
+int
+PEM_write_bio_X509_CRL(BIO *bp, X509_CRL *x)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_X509_CRL, PEM_STRING_X509_CRL, bp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
+
+int
+PEM_write_X509_CRL(FILE *fp, X509_CRL *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_X509_CRL, PEM_STRING_X509_CRL, fp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
+
+
+PKCS7 *
+PEM_read_bio_PKCS7(BIO *bp, PKCS7 **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read_bio((d2i_of_void *)d2i_PKCS7, PEM_STRING_PKCS7, bp,
+	    (void **)x, cb, u);
+}
+
+PKCS7 *
+PEM_read_PKCS7(FILE *fp, PKCS7 **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read((d2i_of_void *)d2i_PKCS7, PEM_STRING_PKCS7, fp,
+	    (void **)x, cb, u);
+}
+
+int
+PEM_write_bio_PKCS7(BIO *bp, PKCS7 *x)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_PKCS7, PEM_STRING_PKCS7, bp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
+
+int
+PEM_write_PKCS7(FILE *fp, PKCS7 *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_PKCS7, PEM_STRING_PKCS7, fp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
+
+
+NETSCAPE_CERT_SEQUENCE *
+PEM_read_bio_NETSCAPE_CERT_SEQUENCE(BIO *bp, NETSCAPE_CERT_SEQUENCE **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read_bio((d2i_of_void *)d2i_NETSCAPE_CERT_SEQUENCE, PEM_STRING_X509, bp,
+	    (void **)x, cb, u);
+}
+
+NETSCAPE_CERT_SEQUENCE *
+PEM_read_NETSCAPE_CERT_SEQUENCE(FILE *fp, NETSCAPE_CERT_SEQUENCE **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read((d2i_of_void *)d2i_NETSCAPE_CERT_SEQUENCE, PEM_STRING_X509, fp,
+	    (void **)x, cb, u);
+}
+
+int
+PEM_write_bio_NETSCAPE_CERT_SEQUENCE(BIO *bp, NETSCAPE_CERT_SEQUENCE *x)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_NETSCAPE_CERT_SEQUENCE, PEM_STRING_X509, bp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
+
+int
+PEM_write_NETSCAPE_CERT_SEQUENCE(FILE *fp, NETSCAPE_CERT_SEQUENCE *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_NETSCAPE_CERT_SEQUENCE, PEM_STRING_X509, fp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
 
 
 #ifndef OPENSSL_NO_RSA
@@ -200,10 +320,80 @@ PEM_read_RSAPrivateKey(FILE *fp, RSA **rsa, pem_password_cb *cb, void *u)
 }
 
 
-IMPLEMENT_PEM_write_cb_const(RSAPrivateKey, RSA, PEM_STRING_RSA, RSAPrivateKey)
 
-IMPLEMENT_PEM_rw_const(RSAPublicKey, RSA, PEM_STRING_RSA_PUBLIC, RSAPublicKey)
-IMPLEMENT_PEM_rw(RSA_PUBKEY, RSA, PEM_STRING_PUBLIC, RSA_PUBKEY)
+int
+PEM_write_bio_RSAPrivateKey(BIO *bp, RSA *x,
+    const EVP_CIPHER *enc, unsigned char *kstr, int klen, pem_password_cb *cb,
+    void *u)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_RSAPrivateKey, PEM_STRING_RSA, bp,
+	    x, enc, kstr, klen, cb, u);
+}
+
+int
+PEM_write_RSAPrivateKey(FILE *fp, RSA *x, const EVP_CIPHER *enc,
+    unsigned char *kstr, int klen, pem_password_cb *cb, void *u)
+{
+        return PEM_ASN1_write((i2d_of_void *)i2d_RSAPrivateKey, PEM_STRING_RSA, fp,
+	    x, enc, kstr, klen, cb, u);
+}
+
+
+RSA *
+PEM_read_bio_RSAPublicKey(BIO *bp, RSA **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read_bio((d2i_of_void *)d2i_RSAPublicKey, PEM_STRING_RSA_PUBLIC, bp,
+	    (void **)x, cb, u);
+}
+
+RSA *
+PEM_read_RSAPublicKey(FILE *fp, RSA **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read((d2i_of_void *)d2i_RSAPublicKey, PEM_STRING_RSA_PUBLIC, fp,
+	    (void **)x, cb, u);
+}
+
+int
+PEM_write_bio_RSAPublicKey(BIO *bp, const RSA *x)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_RSAPublicKey, PEM_STRING_RSA_PUBLIC, bp,
+	    (void *)x, NULL, NULL, 0, NULL, NULL);
+}
+
+int
+PEM_write_RSAPublicKey(FILE *fp, const RSA *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_RSAPublicKey, PEM_STRING_RSA_PUBLIC, fp,
+	    (void *)x, NULL, NULL, 0, NULL, NULL);
+}
+
+RSA *
+PEM_read_bio_RSA_PUBKEY(BIO *bp, RSA **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read_bio((d2i_of_void *)d2i_RSA_PUBKEY, PEM_STRING_PUBLIC, bp,
+	    (void **)x, cb, u);
+}
+
+RSA *
+PEM_read_RSA_PUBKEY(FILE *fp, RSA **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read((d2i_of_void *)d2i_RSA_PUBKEY, PEM_STRING_PUBLIC, fp,
+	    (void **)x, cb, u);
+}
+
+int
+PEM_write_bio_RSA_PUBKEY(BIO *bp, RSA *x)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_RSA_PUBKEY, PEM_STRING_PUBLIC, bp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
+
+int
+PEM_write_RSA_PUBKEY(FILE *fp, RSA *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_RSA_PUBKEY, PEM_STRING_PUBLIC, fp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
 
 #endif
 
@@ -236,9 +426,52 @@ PEM_read_bio_DSAPrivateKey(BIO *bp, DSA **dsa, pem_password_cb *cb, void *u)
 	return pkey_get_dsa(pktmp, dsa);	/* will free pktmp */
 }
 
-IMPLEMENT_PEM_write_cb_const(DSAPrivateKey, DSA, PEM_STRING_DSA, DSAPrivateKey)
 
-IMPLEMENT_PEM_rw(DSA_PUBKEY, DSA, PEM_STRING_PUBLIC, DSA_PUBKEY)
+int
+PEM_write_bio_DSAPrivateKey(BIO *bp, DSA *x,
+    const EVP_CIPHER *enc, unsigned char *kstr, int klen, pem_password_cb *cb,
+    void *u)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_DSAPrivateKey, PEM_STRING_DSA, bp,
+	    x, enc, kstr, klen, cb, u);
+}
+
+int
+PEM_write_DSAPrivateKey(FILE *fp, DSA *x, const EVP_CIPHER *enc,
+    unsigned char *kstr, int klen, pem_password_cb *cb, void *u)
+{
+        return PEM_ASN1_write((i2d_of_void *)i2d_DSAPrivateKey, PEM_STRING_DSA, fp,
+	    x, enc, kstr, klen, cb, u);
+}
+
+
+DSA *
+PEM_read_bio_DSA_PUBKEY(BIO *bp, DSA **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read_bio((d2i_of_void *)d2i_DSA_PUBKEY, PEM_STRING_PUBLIC, bp,
+	    (void **)x, cb, u);
+}
+
+DSA *
+PEM_read_DSA_PUBKEY(FILE *fp, DSA **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read((d2i_of_void *)d2i_DSA_PUBKEY, PEM_STRING_PUBLIC, fp,
+	    (void **)x, cb, u);
+}
+
+int
+PEM_write_bio_DSA_PUBKEY(BIO *bp, DSA *x)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_DSA_PUBKEY, PEM_STRING_PUBLIC, bp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
+
+int
+PEM_write_DSA_PUBKEY(FILE *fp, DSA *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_DSA_PUBKEY, PEM_STRING_PUBLIC, fp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
 
 
 DSA *
@@ -251,7 +484,34 @@ PEM_read_DSAPrivateKey(FILE *fp, DSA **dsa, pem_password_cb *cb, void *u)
 }
 
 
-IMPLEMENT_PEM_rw_const(DSAparams, DSA, PEM_STRING_DSAPARAMS, DSAparams)
+
+DSA *
+PEM_read_bio_DSAparams(BIO *bp, DSA **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read_bio((d2i_of_void *)d2i_DSAparams, PEM_STRING_DSAPARAMS, bp,
+	    (void **)x, cb, u);
+}
+
+DSA *
+PEM_read_DSAparams(FILE *fp, DSA **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read((d2i_of_void *)d2i_DSAparams, PEM_STRING_DSAPARAMS, fp,
+	    (void **)x, cb, u);
+}
+
+int
+PEM_write_bio_DSAparams(BIO *bp, const DSA *x)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_DSAparams, PEM_STRING_DSAPARAMS, bp,
+	    (void *)x, NULL, NULL, 0, NULL, NULL);
+}
+
+int
+PEM_write_DSAparams(FILE *fp, const DSA *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_DSAparams, PEM_STRING_DSAPARAMS, fp,
+	    (void *)x, NULL, NULL, 0, NULL, NULL);
+}
 
 #endif
 
@@ -283,13 +543,81 @@ PEM_read_bio_ECPrivateKey(BIO *bp, EC_KEY **key, pem_password_cb *cb, void *u)
 	return pkey_get_eckey(pktmp, key);	/* will free pktmp */
 }
 
-IMPLEMENT_PEM_rw_const(ECPKParameters, EC_GROUP, PEM_STRING_ECPARAMETERS,
-    ECPKParameters)
 
-IMPLEMENT_PEM_write_cb(ECPrivateKey, EC_KEY, PEM_STRING_ECPRIVATEKEY,
-    ECPrivateKey)
+EC_GROUP *
+PEM_read_bio_ECPKParameters(BIO *bp, EC_GROUP **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read_bio((d2i_of_void *)d2i_ECPKParameters, PEM_STRING_ECPARAMETERS, bp,
+	    (void **)x, cb, u);
+}
 
-IMPLEMENT_PEM_rw(EC_PUBKEY, EC_KEY, PEM_STRING_PUBLIC, EC_PUBKEY)
+EC_GROUP *
+PEM_read_ECPKParameters(FILE *fp, EC_GROUP **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read((d2i_of_void *)d2i_ECPKParameters, PEM_STRING_ECPARAMETERS, fp,
+	    (void **)x, cb, u);
+}
+
+int
+PEM_write_bio_ECPKParameters(BIO *bp, const EC_GROUP *x)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_ECPKParameters, PEM_STRING_ECPARAMETERS, bp,
+	    (void *)x, NULL, NULL, 0, NULL, NULL);
+}
+
+int
+PEM_write_ECPKParameters(FILE *fp, const EC_GROUP *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_ECPKParameters, PEM_STRING_ECPARAMETERS, fp,
+	    (void *)x, NULL, NULL, 0, NULL, NULL);
+}
+
+
+int
+PEM_write_bio_ECPrivateKey(BIO *bp, EC_KEY *x,
+    const EVP_CIPHER *enc, unsigned char *kstr, int klen, pem_password_cb *cb,
+    void *u)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_ECPrivateKey, PEM_STRING_ECPRIVATEKEY, bp,
+	    x, enc, kstr, klen, cb, u);
+}
+
+int
+PEM_write_ECPrivateKey(FILE *fp, EC_KEY *x, const EVP_CIPHER *enc,
+    unsigned char *kstr, int klen, pem_password_cb *cb, void *u)
+{
+        return PEM_ASN1_write((i2d_of_void *)i2d_ECPrivateKey, PEM_STRING_ECPRIVATEKEY, fp,
+	    x, enc, kstr, klen, cb, u);
+}
+
+
+EC_KEY *
+PEM_read_bio_EC_PUBKEY(BIO *bp, EC_KEY **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read_bio((d2i_of_void *)d2i_EC_PUBKEY, PEM_STRING_PUBLIC, bp,
+	    (void **)x, cb, u);
+}
+
+EC_KEY *
+PEM_read_EC_PUBKEY(FILE *fp, EC_KEY **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read((d2i_of_void *)d2i_EC_PUBKEY, PEM_STRING_PUBLIC, fp,
+	    (void **)x, cb, u);
+}
+
+int
+PEM_write_bio_EC_PUBKEY(BIO *bp, EC_KEY *x)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_EC_PUBKEY, PEM_STRING_PUBLIC, bp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
+
+int
+PEM_write_EC_PUBKEY(FILE *fp, EC_KEY *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_EC_PUBKEY, PEM_STRING_PUBLIC, fp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
 
 
 EC_KEY *
@@ -306,8 +634,62 @@ PEM_read_ECPrivateKey(FILE *fp, EC_KEY **eckey, pem_password_cb *cb, void *u)
 
 #ifndef OPENSSL_NO_DH
 
-IMPLEMENT_PEM_rw_const(DHparams, DH, PEM_STRING_DHPARAMS, DHparams)
+
+DH *
+PEM_read_bio_DHparams(BIO *bp, DH **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read_bio((d2i_of_void *)d2i_DHparams, PEM_STRING_DHPARAMS, bp,
+	    (void **)x, cb, u);
+}
+
+DH *
+PEM_read_DHparams(FILE *fp, DH **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read((d2i_of_void *)d2i_DHparams, PEM_STRING_DHPARAMS, fp,
+	    (void **)x, cb, u);
+}
+
+int
+PEM_write_bio_DHparams(BIO *bp, const DH *x)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_DHparams, PEM_STRING_DHPARAMS, bp,
+	    (void *)x, NULL, NULL, 0, NULL, NULL);
+}
+
+int
+PEM_write_DHparams(FILE *fp, const DH *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_DHparams, PEM_STRING_DHPARAMS, fp,
+	    (void *)x, NULL, NULL, 0, NULL, NULL);
+}
 
 #endif
 
-IMPLEMENT_PEM_rw(PUBKEY, EVP_PKEY, PEM_STRING_PUBLIC, PUBKEY)
+
+EVP_PKEY *
+PEM_read_bio_PUBKEY(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read_bio((d2i_of_void *)d2i_PUBKEY, PEM_STRING_PUBLIC, bp,
+	    (void **)x, cb, u);
+}
+
+EVP_PKEY *
+PEM_read_PUBKEY(FILE *fp, EVP_PKEY **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read((d2i_of_void *)d2i_PUBKEY, PEM_STRING_PUBLIC, fp,
+	    (void **)x, cb, u);
+}
+
+int
+PEM_write_bio_PUBKEY(BIO *bp, EVP_PKEY *x)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_PUBKEY, PEM_STRING_PUBLIC, bp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
+
+int
+PEM_write_PUBKEY(FILE *fp, EVP_PKEY *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_PUBKEY, PEM_STRING_PUBLIC, fp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
