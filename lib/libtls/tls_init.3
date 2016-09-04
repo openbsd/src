@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.67 2016/08/22 14:55:59 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.68 2016/09/04 12:03:24 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 22 2016 $
+.Dd $Mdocdate: September 4 2016 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -307,45 +307,38 @@ then it is removed from the list of available protocols, rather than being
 added to it.
 .Pp
 The following functions modify a configuration by setting parameters (the
-configuration options may only apply to clients, to servers or to both):
+configuration options apply to both clients and servers, unless noted
+otherwise):
 .Bl -bullet -offset four
 .It
 .Fn tls_config_add_keypair_file
 adds an additional public certificate and private key from the specified files,
-used as an alternative certificate for Server Name Indication.
-.Em (Server)
+used as an alternative certificate for Server Name Indication (server only).
 .It
 .Fn tls_config_set_keypair_mem
 adds an additional public certificate and private key from memory,
-used as an alternative certificate for Server Name Indication.
-.Em (Server)
+used as an alternative certificate for Server Name Indication (server only).
 .It
 .Fn tls_config_set_alpn
 sets the ALPN protocols that are supported.
 The alpn string is a comma separated list of protocols, in order of preference.
-.Em (Client and Server)
 .It
 .Fn tls_config_set_ca_file
 sets the filename used to load a file
 containing the root certificates.
-.Em (Client and Server)
 .It
 .Fn tls_config_set_ca_path
 sets the path (directory) which should be searched for root
 certificates.
-.Em (Client and Server)
 .It
 .Fn tls_config_set_ca_mem
 sets the root certificates directly from memory.
-.Em (Client and Server)
 .It
 .Fn tls_config_set_cert_file
 sets file from which the public certificate will be read.
-.Em (Client and server)
 .It
 .Fn tls_config_set_cert_mem
 sets the public certificate directly from memory.
-.Em (Client and server)
 .It
 .Fn tls_config_set_ciphers
 sets the list of ciphers that may be used.
@@ -363,24 +356,18 @@ Alternatively, libssl cipher strings can be specified.
 See the CIPHERS section of
 .Xr openssl 1
 for further information.
-.Pp
-.Em (Client and server)
 .It
 .Fn tls_config_set_key_file
 sets the file from which the private key will be read.
-.Em (Client and server)
 .It
 .Fn tls_config_set_key_mem
 directly sets the private key from memory.
-.Em (Client and server)
 .It
 .Fn tls_config_set_keypair_file
 sets the files from which the public certificate and private key will be read.
-.Em (Client and server)
 .It
 .Fn tls_config_set_keypair_mem
 directly sets the public certificate and private key from memory.
-.Em (Client and server)
 .It
 .Fn tls_config_set_protocols
 sets which versions of the protocol may be used.
@@ -399,56 +386,48 @@ Additionally, the values
 (all supported protocols) and
 .Dv TLS_PROTOCOLS_DEFAULT
 (TLSv1.2 only) may be used.
-.Em (Client and server)
 .It
 .Fn tls_config_prefer_ciphers_client
-prefers ciphers in the client's cipher list when selecting a cipher suite.
+prefers ciphers in the client's cipher list when selecting a cipher suite
+(server only).
 This is considered to be less secure than preferring the server's list.
-.Em (Server)
 .It
 .Fn tls_config_prefer_ciphers_server
-prefers ciphers in the server's cipher list when selecting a cipher suite.
+prefers ciphers in the server's cipher list when selecting a cipher suite
+(server only).
 This is considered to be more secure than preferring the client's list and is
 the default.
-.Em (Server)
 .It
 .Fn tls_config_clear_keys
 clears any secret keys from memory.
-.Em (Server)
 .It
 .Fn tls_config_insecure_noverifycert
 disables certificate verification.
 Be extremely careful when using this option.
-.Em (Client and server)
 .It
 .Fn tls_config_insecure_noverifyname
-disables server name verification.
+disables server name verification (client only).
 Be careful when using this option.
-.Em (Client)
 .It
 .Fn tls_config_insecure_noverifytime
 disables validity checking of certificates.
 Be careful when using this option.
-.Em (Client and server)
 .It
 .Fn tls_config_verify
 reenables server name and certificate verification.
-.Em (Client)
 .It
 .Fn tls_config_verify_client
 enables client certificate verification, requiring the client to send
-a certificate.
-.Em (Server)
+a certificate (server only).
 .It
 .Fn tls_config_verify_client_optional
 enables client certificate verification, without requiring the client
-to send a certificate.
-.Em (Server)
+to send a certificate (server only).
 .El
 .Pp
 The following functions return information about a TLS connection and will only
-succeed after the handshake is complete (the connection information may only
-apply to clients, to servers or to both):
+succeed after the handshake is complete (the connection information applies
+to both clients and servers, unless noted otherwise):
 .Bl -bullet -offset four
 .It
 .Fn tls_conn_alpn_selected
@@ -456,19 +435,16 @@ returns a string that specifies the ALPN protocol selected for use with the peer
 connected to
 .Ar ctx .
 If no protocol was selected then NULL is returned.
-.Em (Server and Client)
 .It
 .Fn tls_conn_cipher
 returns a string corresponding to the cipher suite negotiated with the peer
 connected to
 .Ar ctx .
-.Em (Server and client)
 .It
 .Fn tls_conn_servername
 returns a string corresponding to the servername that the client connected to
 .Ar ctx
-requested by sending a TLS Server Name Indication extension.
-.Em (Server)
+requested by sending a TLS Server Name Indication extension (server only).
 .It
 .Fn tls_conn_version
 returns a string corresponding to a TLS version negotiated with the peer
@@ -479,7 +455,6 @@ connected to
 checks if the peer of
 .Ar ctx
 has provided a certificate.
-.Em (Server and client)
 .It
 .Fn tls_peer_cert_contains_name
 checks if the peer of a TLS
@@ -487,19 +462,16 @@ checks if the peer of a TLS
 has provided a certificate that contains a
 SAN or CN that matches
 .Ar name .
-.Em (Server and client)
 .It
 .Fn tls_peer_cert_subject
 returns a string
 corresponding to the subject of the peer certificate from
 .Ar ctx .
-.Em (Server and client)
 .It
 .Fn tls_peer_cert_issuer
 returns a string
 corresponding to the issuer of the peer certificate from
 .Ar ctx .
-.Em (Server and client)
 .It
 .Fn tls_peer_cert_hash
 returns a string
@@ -520,13 +492,11 @@ printf "SHA256:${h}\\n"
 returns the time corresponding to the start of the validity period of
 the peer certificate from
 .Ar ctx .
-.Em (Server and client)
 .It
 .Fn tls_peer_cert_notafter
 returns the time corresponding to the end of the validity period of
 the peer certificate from
 .Ar ctx .
-.Em (Server and client)
 .El
 .Pp
 The following are TLS related utility functions:
@@ -541,7 +511,6 @@ or
 A private key will be decrypted if the optional
 .Ar password
 argument is specified.
-.Em (Client and server)
 .El
 .Pp
 The following functions create, prepare, and free a connection context:
