@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.157 2015/11/19 17:44:01 deraadt Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.158 2016/09/04 16:39:50 tb Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -187,7 +187,7 @@ main(int argc, char **argv)
 	struct stat st;
 	char fpath[PATH_MAX];
 
-	if (pledge("stdio rpath wpath cpath fattr proc exec", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr getpw proc exec", NULL) == -1)
 		err(1, "pledge");
 
 	tzset();
