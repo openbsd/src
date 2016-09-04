@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.44 2016/09/02 18:06:43 tedu Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.45 2016/09/04 15:36:13 tb Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -45,11 +45,12 @@
 
 extern char *__progname;
 
-void	usage(void);
+static void __dead	usage(void);
+static void		print_passwd(char *, int, char *);
 
 #define DO_BLF		0
 
-void
+static void __dead
 usage(void)
 {
 
@@ -170,5 +171,5 @@ main(int argc, char **argv)
 		explicit_bzero(string, strlen(string));
 		free(string);
 	}
-	exit(0);
+	return 0;
 }
