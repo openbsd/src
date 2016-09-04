@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.326 2016/08/15 11:35:25 dlg Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.327 2016/09/04 17:18:56 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -214,6 +214,10 @@ reroute:
 			ifp = if_get(lo0ifidx);
 		else
 			ifp = if_get(ro->ro_rt->rt_ifidx);
+		if (ifp == NULL) {
+			error = EHOSTUNREACH;
+			goto bad;
+		}
 		if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
 			mtu = ifp->if_mtu;
 
