@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusersd.c,v 1.18 2016/04/25 15:43:34 deraadt Exp $	*/
+/*	$OpenBSD: rusersd.c,v 1.19 2016/09/04 15:03:13 jca Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -85,11 +85,9 @@ main(int argc, char *argv[])
 	}
 	chdir("/");
 
-	if (pw) {
-		setgroups(1, &pw->pw_gid);
-		setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid);
-		setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid);
-	}
+	setgroups(1, &pw->pw_gid);
+	setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid);
+	setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid);
 
 	/*
 	 * See if inetd started us
