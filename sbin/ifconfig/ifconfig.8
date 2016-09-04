@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.272 2016/09/04 17:36:11 yasuoka Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.273 2016/09/04 19:14:19 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -515,6 +515,8 @@ interface groups
 .It
 .Xr sppp 4
 (PPP Link Control Protocol)
+.It
+.Xr switch 4
 .It
 .Xr trunk 4
 .It
@@ -1535,7 +1537,7 @@ can be use for the
 .Ar interface .
 Only one interface can be added as a local port.
 .It Cm datapath Ar datapath_id
-Configure the datapath id in OpenFlow protocol of the switch.
+Configure the datapath ID for the switch.
 The default value is generated randomly.
 .It Cm del Ar interface
 Remove
@@ -1544,13 +1546,13 @@ from the switch.
 Promiscuous mode is turned off for the interface when it is removed
 from the switch.
 .It Cm flowmax Ar flowmax
-Set the maximum number of flows in OpenFlow protocol per table.
+Set the maximum number of flows per table.
 The default value is 10000.
 .It Cm maxgroup Ar maxgroup
-Set the maximum number of groups in OpenFlow protocol.
+Set the maximum number of groups.
 The default value is 1000.
 .It Cm portno Ar interface Ar port_no
-Set the port_no in OpenFlow protocol for the port named
+Set the port_no for the port named
 .Ar interface .
 The default value is the interface index of the
 .Ar interface .
@@ -1654,7 +1656,7 @@ it is a 24-bit number for
 If supported by the tunnel protocol,
 the value can also be set to
 .Ar any
-to accept packets with arbitrary network identifiers (eg. for
+to accept packets with arbitrary network identifiers (for example for
 multipoint-to-multipoint modes).
 .It Cm -vnetid
 Clear the virtual network identifier.
