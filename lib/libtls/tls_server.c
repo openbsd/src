@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.25 2016/08/22 14:51:37 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.26 2016/09/04 12:26:43 bcook Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -279,14 +279,8 @@ tls_configure_server(struct tls *ctx)
 	return (-1);
 }
 
-int
-tls_accept_socket(struct tls *ctx, struct tls **cctx, int socket)
-{
-	return (tls_accept_fds(ctx, cctx, socket, socket));
-}
-
-int
-tls_accept_fds(struct tls *ctx, struct tls **cctx, int fd_read, int fd_write)
+static struct tls *
+accept_common(struct tls *ctx)
 {
 	struct tls *conn_ctx = NULL;
 
@@ -304,10 +298,34 @@ tls_accept_fds(struct tls *ctx, struct tls **cctx, int fd_read, int fd_write)
 		tls_set_errorx(ctx, "ssl failure");
 		goto err;
 	}
+
 	if (SSL_set_app_data(conn_ctx->ssl_conn, conn_ctx) != 1) {
 		tls_set_errorx(ctx, "ssl application data failure");
 		goto err;
 	}
+
+	return conn_ctx;
+
+ err:
+	tls_free(conn_ctx);
+
+	return (NULL);
+}
+
+int
+tls_accept_socket(struct tls *ctx, struct tls **cctx, int socket)
+{
+	return (tls_accept_fds(ctx, cctx, socket, socket));
+}
+
+int
+tls_accept_fds(struct tls *ctx, struct tls **cctx, int fd_read, int fd_write)
+{
+	struct tls *conn_ctx;
+
+	if ((conn_ctx = accept_common(ctx)) == NULL)
+		goto err;
+
 	if (SSL_set_rfd(conn_ctx->ssl_conn, fd_read) != 1 ||
 	    SSL_set_wfd(conn_ctx->ssl_conn, fd_write) != 1) {
 		tls_set_errorx(ctx, "ssl file descriptor failure");
@@ -317,10 +335,32 @@ tls_accept_fds(struct tls *ctx, struct tls **cctx, int fd_read, int fd_write)
 	*cctx = conn_ctx;
 
 	return (0);
-
  err:
 	tls_free(conn_ctx);
+	*cctx = NULL;
 
+	return (-1);
+}
+
+int
+tls_accept_cbs(struct tls *ctx, struct tls **cctx,
+    tls_read_cb read_cb, tls_write_cb write_cb, void *cb_arg)
+{
+	struct tls *conn_ctx;
+
+	if ((conn_ctx = accept_common(ctx)) == NULL)
+		goto err;
+
+	if (tls_set_cbs(ctx, read_cb, write_cb, cb_arg) != 0) {
+		tls_set_errorx(ctx, "callback registration failure");
+		goto err;
+	}
+
+	*cctx = conn_ctx;
+
+	return (0);
+ err:
+	tls_free(conn_ctx);
 	*cctx = NULL;
 
 	return (-1);

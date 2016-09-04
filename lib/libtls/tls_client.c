@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.34 2016/08/15 14:04:23 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.35 2016/09/04 12:26:43 bcook Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -158,26 +158,14 @@ tls_connect_servername(struct tls *ctx, const char *host, const char *port,
 	return (rv);
 }
 
-int
-tls_connect_socket(struct tls *ctx, int s, const char *servername)
-{
-	return tls_connect_fds(ctx, s, s, servername);
-}
-
-int
-tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
-    const char *servername)
+static int
+connect_common(struct tls *ctx, const char *servername)
 {
 	union tls_addr addrbuf;
 	int rv = -1;
 
 	if ((ctx->flags & TLS_CLIENT) == 0) {
 		tls_set_errorx(ctx, "not a client context");
-		goto err;
-	}
-
-	if (fd_read < 0 || fd_write < 0) {
-		tls_set_errorx(ctx, "invalid file descriptors");
 		goto err;
 	}
 
@@ -195,6 +183,7 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 
 	if (tls_configure_ssl(ctx, ctx->ssl_ctx) != 0)
 		goto err;
+
 	if (tls_configure_ssl_keypair(ctx, ctx->ssl_ctx,
 	    ctx->config->keypair, 0) != 0)
 		goto err;
@@ -205,6 +194,7 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 			goto err;
 		}
 	}
+
 	if (ctx->config->verify_cert &&
 	    (tls_configure_ssl_verify(ctx, ctx->ssl_ctx,
 	     SSL_VERIFY_PEER) == -1))
@@ -214,13 +204,9 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 		tls_set_errorx(ctx, "ssl connection failure");
 		goto err;
 	}
+
 	if (SSL_set_app_data(ctx->ssl_conn, ctx) != 1) {
 		tls_set_errorx(ctx, "ssl application data failure");
-		goto err;
-	}
-	if (SSL_set_rfd(ctx->ssl_conn, fd_read) != 1 ||
-	    SSL_set_wfd(ctx->ssl_conn, fd_write) != 1) {
-		tls_set_errorx(ctx, "ssl file descriptor failure");
 		goto err;
 	}
 
@@ -235,6 +221,56 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 			tls_set_errorx(ctx, "server name indication failure");
 			goto err;
 		}
+	}
+	rv = 0;
+
+ err:
+	return (rv);
+}
+
+int
+tls_connect_socket(struct tls *ctx, int s, const char *servername)
+{
+	return tls_connect_fds(ctx, s, s, servername);
+}
+
+int
+tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
+    const char *servername)
+{
+	int rv = -1;
+
+	if (fd_read < 0 || fd_write < 0) {
+		tls_set_errorx(ctx, "invalid file descriptors");
+		goto err;
+	}
+
+	if (connect_common(ctx, servername) != 0)
+		goto err;
+
+	if (SSL_set_rfd(ctx->ssl_conn, fd_read) != 1 ||
+	    SSL_set_wfd(ctx->ssl_conn, fd_write) != 1) {
+		tls_set_errorx(ctx, "ssl file descriptor failure");
+		goto err;
+	}
+
+	rv = 0;
+ err:
+	return (rv);
+}
+
+int
+tls_connect_cbs(struct tls *ctx, tls_read_cb read_cb,
+    tls_write_cb write_cb, void *cb_arg, const char *servername)
+{
+	int rv = -1;
+
+	if (connect_common(ctx, servername) != 0)
+		goto err;
+
+	if (tls_set_cbs(ctx, read_cb, write_cb, cb_arg) != 0) {
+		tls_set_errorx(ctx, "callback registration failure");
+		goto err;
 	}
 
 	rv = 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.42 2016/08/22 17:12:35 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.43 2016/09/04 12:26:43 bcook Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -117,6 +117,10 @@ struct tls {
 	X509 *ssl_peer_cert;
 
 	struct tls_conninfo *conninfo;
+
+	tls_read_cb read_cb;
+	tls_write_cb write_cb;
+	void *cb_arg;
 };
 
 struct tls_sni_ctx *tls_sni_ctx_new(void);
@@ -139,6 +143,9 @@ int tls_handshake_server(struct tls *ctx);
 int tls_config_load_file(struct tls_error *error, const char *filetype,
     const char *filename, char **buf, size_t *len);
 int tls_host_port(const char *hostport, char **host, char **port);
+
+int tls_set_cbs(struct tls *ctx,
+    tls_read_cb read_cb, tls_write_cb write_cb, void *cb_arg);
 
 int tls_error_set(struct tls_error *error, const char *fmt, ...)
     __attribute__((__format__ (printf, 2, 3)))

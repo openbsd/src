@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.48 2016/08/22 17:12:35 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.49 2016/09/04 12:26:43 bcook Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -424,6 +424,10 @@ tls_reset(struct tls *ctx)
 		tls_sni_ctx_free(sni);
 	}
 	ctx->sni_ctx = NULL;
+
+	ctx->read_cb = NULL;
+	ctx->write_cb = NULL;
+	ctx->cb_arg = NULL;
 }
 
 int
