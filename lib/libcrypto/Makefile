@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2016/09/04 09:54:25 natano Exp $
+# $OpenBSD: Makefile,v 1.4 2016/09/04 17:59:26 jsing Exp $
 
 LIB=	crypto
 
@@ -84,11 +84,6 @@ SRCS+= chacha.c
 
 # cmac/
 SRCS+= cmac.c cm_ameth.c cm_pmeth.c
-
-# cms/
-#SRCS+= cms_lib.c cms_asn1.c cms_att.c cms_io.c cms_smime.c cms_err.c
-#SRCS+= cms_sd.c cms_dd.c cms_cd.c cms_env.c cms_enc.c cms_ess.c
-#SRCS+= cms_pwri.c
 
 # comp/
 SRCS+= comp_lib.c comp_err.c c_rle.c c_zlib.c
@@ -270,7 +265,6 @@ SRCS+= pcy_cache.c pcy_node.c pcy_data.c pcy_map.c pcy_tree.c pcy_lib.c
 	${LCRYPTO_SRC}/cast \
 	${LCRYPTO_SRC}/chacha \
 	${LCRYPTO_SRC}/cmac \
-	${LCRYPTO_SRC}/cms \
 	${LCRYPTO_SRC}/comp \
 	${LCRYPTO_SRC}/conf \
 	${LCRYPTO_SRC}/des \
@@ -326,7 +320,6 @@ HDRS=\
 	${LCRYPTO_SRC}/cast/cast.h \
 	${LCRYPTO_SRC}/chacha/chacha.h \
 	${LCRYPTO_SRC}/cmac/cmac.h \
-	${LCRYPTO_SRC}/cms/cms.h \
 	${LCRYPTO_SRC}/comp/comp.h \
 	${LCRYPTO_SRC}/conf/conf.h \
 	${LCRYPTO_SRC}/conf/conf_api.h \
