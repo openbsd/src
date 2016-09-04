@@ -1,4 +1,4 @@
-/* $OpenBSD: clock.c,v 1.10 2014/09/27 19:50:10 aoyama Exp $ */
+/* $OpenBSD: clock.c,v 1.11 2016/09/04 00:56:08 aoyama Exp $ */
 /* $NetBSD: clock.c,v 1.2 2000/01/11 10:29:35 nisimura Exp $ */
 
 /*
@@ -64,10 +64,8 @@ struct evcount *clockevc;
 int clockinitted, todrvalid;
 
 void
-clockattach(dev, fns, evc)
-	struct device *dev;
-	const struct clockfns *fns;
-	struct evcount *evc;
+clockattach(struct device *dev, const struct clockfns *fns,
+	struct evcount *evc)
 {
 	/*
 	 * Just bookkeeping.
@@ -127,8 +125,7 @@ cpu_initclocks()
  * but that would be a drag.
  */
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 	/* nothing we can do */
 }
@@ -139,8 +136,7 @@ setstatclockrate(newhz)
  * and the time of year clock (if any) provides the rest.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	struct clock_ymdhms dt;
 	struct timespec ts;
