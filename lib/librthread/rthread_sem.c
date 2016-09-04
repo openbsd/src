@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.24 2016/09/03 16:44:20 akfaew Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.25 2016/09/04 10:13:35 akfaew Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -72,7 +72,7 @@ _sem_wait(sem_t sem, int tryonly, const struct timespec *abstime,
 		sem->waitcount++;
 		do {
 			r = __thrsleep(ident, CLOCK_REALTIME, abstime,
-			    &sem->lock.ticket, delayed_cancel);
+			    &sem->lock, delayed_cancel);
 			_spinlock(&sem->lock);
 			/* ignore interruptions other than cancelation */
 			if (r == EINTR && (delayed_cancel == NULL ||
@@ -160,7 +160,7 @@ sem_init(sem_t *semp, int pshared, unsigned int value)
 		errno = ENOSPC;
 		return (-1);
 	}
-	sem->lock = _SPINLOCK_UNLOCKED_ASSIGN;
+	sem->lock = _SPINLOCK_UNLOCKED;
 	sem->value = value;
 	*semp = sem;
 
@@ -395,7 +395,7 @@ sem_open(const char *name, int oflag, ...)
 		return (SEM_FAILED);
 	}
 	if (created) {
-		sem->lock = _SPINLOCK_UNLOCKED_ASSIGN;
+		sem->lock = _SPINLOCK_UNLOCKED;
 		sem->value = value;
 		sem->shared = 1;
 	}

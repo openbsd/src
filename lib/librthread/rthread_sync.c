@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.43 2016/09/03 16:44:20 akfaew Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.44 2016/09/04 10:13:35 akfaew Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -20,7 +20,6 @@
  * Mutexes and conditions - synchronization functions.
  */
 
-
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,7 +31,7 @@
 #include "rthread.h"
 #include "cancel.h"		/* in libc/include */
 
-static struct _spinlock static_init_lock = _SPINLOCK_UNLOCKED;
+static _atomic_lock_t static_init_lock = _SPINLOCK_UNLOCKED;
 
 /*
  * mutexen
@@ -45,7 +44,7 @@ pthread_mutex_init(pthread_mutex_t *mutexp, const pthread_mutexattr_t *attr)
 	mutex = calloc(1, sizeof(*mutex));
 	if (!mutex)
 		return (errno);
-	mutex->lock = _SPINLOCK_UNLOCKED_ASSIGN;
+	mutex->lock = _SPINLOCK_UNLOCKED;
 	TAILQ_INIT(&mutex->lockers);
 	if (attr == NULL) {
 		mutex->type = PTHREAD_MUTEX_DEFAULT;
@@ -131,7 +130,7 @@ _rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait,
 
 			/* self-deadlock, possibly until timeout */
 			while (__thrsleep(self, CLOCK_REALTIME, abstime,
-			    &mutex->lock.ticket, NULL) != EWOULDBLOCK)
+			    &mutex->lock, NULL) != EWOULDBLOCK)
 				_spinlock(&mutex->lock);
 			return (ETIMEDOUT);
 		}
@@ -148,7 +147,7 @@ _rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait,
 		TAILQ_INSERT_TAIL(&mutex->lockers, self, waiting);
 		while (mutex->owner != self) {
 			ret = __thrsleep(self, CLOCK_REALTIME, abstime,
-			    &mutex->lock.ticket, NULL);
+			    &mutex->lock, NULL);
 			_spinlock(&mutex->lock);
 			assert(mutex->owner != NULL);
 			if (ret == EWOULDBLOCK) {
@@ -250,7 +249,7 @@ pthread_cond_init(pthread_cond_t *condp, const pthread_condattr_t *attr)
 	cond = calloc(1, sizeof(*cond));
 	if (!cond)
 		return (errno);
-	cond->lock = _SPINLOCK_UNLOCKED_ASSIGN;
+	cond->lock = _SPINLOCK_UNLOCKED;
 	TAILQ_INIT(&cond->waiters);
 	if (attr == NULL)
 		cond->clock = CLOCK_REALTIME;
@@ -360,7 +359,7 @@ pthread_cond_timedwait(pthread_cond_t *condp, pthread_mutex_t *mutexp,
 	/* wait until we're the owner of the mutex again */
 	while (mutex->owner != self) {
 		error = __thrsleep(self, cond->clock, abstime,
-		    &mutex->lock.ticket, &self->delayed_cancel);
+		    &mutex->lock, &self->delayed_cancel);
 
 		/*
 		 * If abstime == NULL, then we're definitely waiting
@@ -509,7 +508,7 @@ pthread_cond_wait(pthread_cond_t *condp, pthread_mutex_t *mutexp)
 
 	/* wait until we're the owner of the mutex again */
 	while (mutex->owner != self) {
-		error = __thrsleep(self, 0, NULL, &mutex->lock.ticket,
+		error = __thrsleep(self, 0, NULL, &mutex->lock,
 		    &self->delayed_cancel);
 
 		/*

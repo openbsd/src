@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.59 2016/09/03 16:44:20 akfaew Exp $ */
+/*	$OpenBSD: rthread.h,v 1.60 2016/09/04 10:13:35 akfaew Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -20,7 +20,7 @@
  * Since only the thread library cares about their size or arrangement,
  * it should be possible to switch libraries without relinking.
  *
- * Do not reorder struct _spinlock and sem_t variables in the structs.
+ * Do not reorder _atomic_lock_t and sem_t variables in the structs.
  * This is due to alignment requirements of certain arches like hppa.
  * The current requirement is 16 bytes.
  *
@@ -37,17 +37,7 @@
 #define RTHREAD_STACK_SIZE_DEF (256 * 1024)
 #endif
 
-/*
- * tickets don't work yet? (or seem much slower, with lots of system time)
- * until then, keep the struct around to avoid excessive changes going
- * back and forth.
- */
-struct _spinlock {
-	_atomic_lock_t ticket;
-};
-
-#define	_SPINLOCK_UNLOCKED { _ATOMIC_LOCK_UNLOCKED }
-extern struct _spinlock _SPINLOCK_UNLOCKED_ASSIGN;
+#define	_SPINLOCK_UNLOCKED _ATOMIC_LOCK_UNLOCKED
 
 struct stack {
 	SLIST_ENTRY(stack)	link;	/* link for free default stacks */
@@ -59,7 +49,7 @@ struct stack {
 };
 
 struct __sem {
-	struct _spinlock lock;
+	_atomic_lock_t lock;
 	volatile int waitcount;
 	volatile int value;
 	int shared;
@@ -68,7 +58,7 @@ struct __sem {
 TAILQ_HEAD(pthread_queue, pthread);
 
 struct pthread_mutex {
-	struct _spinlock lock;
+	_atomic_lock_t lock;
 	struct pthread_queue lockers;
 	int type;
 	pthread_t owner;
@@ -83,7 +73,7 @@ struct pthread_mutex_attr {
 };
 
 struct pthread_cond {
-	struct _spinlock lock;
+	_atomic_lock_t lock;
 	struct pthread_queue waiters;
 	struct pthread_mutex *mutex;
 	clockid_t clock;
@@ -94,7 +84,7 @@ struct pthread_cond_attr {
 };
 
 struct pthread_rwlock {
-	struct _spinlock lock;
+	_atomic_lock_t lock;
 	pthread_t owner;
 	struct pthread_queue writers;
 	int readers;
@@ -149,7 +139,7 @@ struct pthread_barrierattr {
 };
 
 struct pthread_spinlock {
-	struct _spinlock lock;
+	_atomic_lock_t lock;
 	pthread_t owner;
 };
 
@@ -157,7 +147,7 @@ struct tib;
 struct pthread {
 	struct __sem donesem;
 	unsigned int flags;
-	struct _spinlock flags_lock;
+	_atomic_lock_t flags_lock;
 	struct tib *tib;
 	void *retval;
 	void *(*fn)(void *);
@@ -191,9 +181,9 @@ struct pthread {
 	(((size) + (_thread_pagesize - 1)) & ~(_thread_pagesize - 1))
 
 __BEGIN_HIDDEN_DECLS
-void	_spinlock(volatile struct _spinlock *);
-int	_spinlocktry(volatile struct _spinlock *);
-void	_spinunlock(volatile struct _spinlock *);
+void	_spinlock(volatile _atomic_lock_t *);
+int	_spinlocktry(volatile _atomic_lock_t *);
+void	_spinunlock(volatile _atomic_lock_t *);
 int	_sem_wait(sem_t, int, const struct timespec *, int *);
 int	_sem_post(sem_t);
 
@@ -212,7 +202,7 @@ void	_thread_malloc_reinit(void);
 extern int _threads_ready;
 extern size_t _thread_pagesize;
 extern LIST_HEAD(listhead, pthread) _thread_list;
-extern struct _spinlock _thread_lock;
+extern _atomic_lock_t _thread_lock;
 extern struct pthread_attr _rthread_attr_default;
 __END_HIDDEN_DECLS
 

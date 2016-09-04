@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.16 2016/09/01 10:56:46 deraadt Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.17 2016/09/04 10:13:35 akfaew Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -191,7 +191,7 @@ _thread_malloc_reinit(void)
 	int i;
 
 	for (i = 0; i < _MALLOC_MUTEXES; i++) {
-		malloc_lock[i].lock = _SPINLOCK_UNLOCKED_ASSIGN;
+		malloc_lock[i].lock = _SPINLOCK_UNLOCKED;
 		TAILQ_INIT(&malloc_lock[i].lockers);
 		malloc_lock[i].owner = NULL;
 		malloc_lock[i].count = 0;
@@ -201,7 +201,7 @@ _thread_malloc_reinit(void)
 /*
  * atexit lock
  */
-static struct _spinlock atexit_lock = _SPINLOCK_UNLOCKED;
+static _atomic_lock_t atexit_lock = _SPINLOCK_UNLOCKED;
 
 void
 _thread_atexit_lock(void)
@@ -218,7 +218,7 @@ _thread_atexit_unlock(void)
 /*
  * atfork lock
  */
-static struct _spinlock atfork_lock = _SPINLOCK_UNLOCKED;
+static _atomic_lock_t atfork_lock = _SPINLOCK_UNLOCKED;
 
 void
 _thread_atfork_lock(void)
@@ -235,7 +235,7 @@ _thread_atfork_unlock(void)
 /*
  * arc4random lock
  */
-static struct _spinlock arc4_lock = _SPINLOCK_UNLOCKED;
+static _atomic_lock_t arc4_lock = _SPINLOCK_UNLOCKED;
 
 void
 _thread_arc4_lock(void)
@@ -248,4 +248,3 @@ _thread_arc4_unlock(void)
 {
 	_spinunlock(&arc4_lock);
 }
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.93 2016/09/03 16:44:20 akfaew Exp $ */
+/*	$OpenBSD: rthread.c,v 1.94 2016/09/04 10:13:35 akfaew Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -63,15 +63,13 @@ REDIRECT_SYSCALL(thrkill);
 
 static int concurrency_level;	/* not used */
 
-struct _spinlock _SPINLOCK_UNLOCKED_ASSIGN = _SPINLOCK_UNLOCKED;
-
 int _threads_ready;
 size_t _thread_pagesize;
 struct listhead _thread_list = LIST_HEAD_INITIALIZER(_thread_list);
-struct _spinlock _thread_lock = _SPINLOCK_UNLOCKED;
+_atomic_lock_t _thread_lock = _SPINLOCK_UNLOCKED;
 static struct pthread_queue _thread_gc_list
     = TAILQ_HEAD_INITIALIZER(_thread_gc_list);
-static struct _spinlock _thread_gc_lock = _SPINLOCK_UNLOCKED;
+static _atomic_lock_t _thread_gc_lock = _SPINLOCK_UNLOCKED;
 static struct pthread _initial_thread;
 
 struct pthread_attr _rthread_attr_default = {
@@ -89,22 +87,22 @@ struct pthread_attr _rthread_attr_default = {
  * internal support functions
  */
 void
-_spinlock(volatile struct _spinlock *lock)
+_spinlock(volatile _atomic_lock_t *lock)
 {
-	while (_atomic_lock(&lock->ticket))
+	while (_atomic_lock(lock))
 		sched_yield();
 }
 
 int
-_spinlocktry(volatile struct _spinlock *lock)
+_spinlocktry(volatile _atomic_lock_t *lock)
 {
-	return 0 == _atomic_lock(&lock->ticket);
+	return 0 == _atomic_lock(lock);
 }
 
 void
-_spinunlock(volatile struct _spinlock *lock)
+_spinunlock(volatile _atomic_lock_t *lock)
 {
-	lock->ticket = _ATOMIC_LOCK_UNLOCKED;
+	*lock = _ATOMIC_LOCK_UNLOCKED;
 }
 
 static void
@@ -187,9 +185,9 @@ _rthread_init(void)
 	tib->tib_thread = thread;
 	thread->tib = tib;
 
-	thread->donesem.lock = _SPINLOCK_UNLOCKED_ASSIGN;
+	thread->donesem.lock = _SPINLOCK_UNLOCKED;
 	tib->tib_thread_flags = TIB_THREAD_INITIAL_STACK;
-	thread->flags_lock = _SPINLOCK_UNLOCKED_ASSIGN;
+	thread->flags_lock = _SPINLOCK_UNLOCKED;
 	strlcpy(thread->name, "Main process", sizeof(thread->name));
 	LIST_INSERT_HEAD(&_thread_list, thread, threads);
 	_rthread_debug_init();
@@ -432,8 +430,8 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	thread = tib->tib_thread;
 	memset(thread, 0, sizeof(*thread));
 	thread->tib = tib;
-	thread->donesem.lock = _SPINLOCK_UNLOCKED_ASSIGN;
-	thread->flags_lock = _SPINLOCK_UNLOCKED_ASSIGN;
+	thread->donesem.lock = _SPINLOCK_UNLOCKED;
+	thread->flags_lock = _SPINLOCK_UNLOCKED;
 	thread->fn = start_routine;
 	thread->arg = arg;
 	tib->tib_tid = -1;
@@ -643,7 +641,7 @@ _thread_dump_info(void)
 void
 _rthread_dl_lock(int what)
 {
-	static struct _spinlock lock = _SPINLOCK_UNLOCKED;
+	static _atomic_lock_t lock = _SPINLOCK_UNLOCKED;
 	static pthread_t owner = NULL;
 	static struct pthread_queue lockers = TAILQ_HEAD_INITIALIZER(lockers);
 	static int count = 0;
@@ -658,7 +656,7 @@ _rthread_dl_lock(int what)
 		} else if (owner != self) {
 			TAILQ_INSERT_TAIL(&lockers, self, waiting);
 			while (owner != self) {
-				__thrsleep(self, 0, NULL, &lock.ticket, NULL);
+				__thrsleep(self, 0, NULL, &lock, NULL);
 				_spinlock(&lock);
 			}
 		}
@@ -679,7 +677,7 @@ _rthread_dl_lock(int what)
 		}
 	} else {
 		/* reinit: used in child after fork to clear the queue */
-		lock = _SPINLOCK_UNLOCKED_ASSIGN;
+		lock = _SPINLOCK_UNLOCKED;
 		if (--count == 0)
 			owner = NULL;
 		TAILQ_INIT(&lockers);

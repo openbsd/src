@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.18 2016/09/01 10:41:02 otto Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.19 2016/09/04 10:13:35 akfaew Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -100,13 +100,13 @@ _dofork(pid_t (*sys_fork)(void))
 #endif
 		/* update this thread's structure */
 		tib->tib_tid = getthrid();
-		me->donesem.lock = _SPINLOCK_UNLOCKED_ASSIGN;
-		me->flags_lock = _SPINLOCK_UNLOCKED_ASSIGN;
+		me->donesem.lock = _SPINLOCK_UNLOCKED;
+		me->flags_lock = _SPINLOCK_UNLOCKED;
 
 		/* reinit the thread list */
 		LIST_INIT(&_thread_list);
 		LIST_INSERT_HEAD(&_thread_list, me, threads);
-		_thread_lock = _SPINLOCK_UNLOCKED_ASSIGN;
+		_thread_lock = _SPINLOCK_UNLOCKED;
 
 		/* single threaded now */
 		__isthreaded = 0;

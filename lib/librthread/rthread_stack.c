@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_stack.c,v 1.15 2016/09/01 10:56:46 deraadt Exp $ */
+/* $OpenBSD: rthread_stack.c,v 1.16 2016/09/04 10:13:35 akfaew Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -18,7 +18,7 @@
  * attributes for possible reuse.
  */
 static SLIST_HEAD(, stack) def_stacks = SLIST_HEAD_INITIALIZER(head);
-static struct _spinlock def_stacks_lock = _SPINLOCK_UNLOCKED;
+static _atomic_lock_t def_stacks_lock = _SPINLOCK_UNLOCKED;
 
 struct stack *
 _rthread_alloc_stack(pthread_t thread)
@@ -134,4 +134,3 @@ _rthread_free_stack(struct stack *stack)
 		free(stack);
 	}
 }
-

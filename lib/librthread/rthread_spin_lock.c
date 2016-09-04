@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_spin_lock.c,v 1.3 2013/06/01 20:47:40 tedu Exp $	*/
+/*	$OpenBSD: rthread_spin_lock.c,v 1.4 2016/09/04 10:13:35 akfaew Exp $	*/
 /*
  * Copyright (c) 2012 Paul Irofti <pirofti@openbsd.org>
  *
@@ -37,7 +37,7 @@ pthread_spin_init(pthread_spinlock_t *lock, int pshared)
 	if (l == NULL)
 		return (ENOMEM);
 
-	l->lock = _SPINLOCK_UNLOCKED_ASSIGN;
+	l->lock = _SPINLOCK_UNLOCKED;
 	*lock = l;
 	return (0);
 }
