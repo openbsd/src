@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.60 2016/08/27 01:55:30 guenther Exp $	*/
+/*	$OpenBSD: init.c,v 1.61 2016/09/04 12:30:01 nicm Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -37,13 +37,14 @@
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
+#include <sys/tree.h>
 #include <sys/wait.h>
 #include <machine/cpu.h>
 
-#include <db.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -156,7 +157,13 @@ typedef struct init_session {
 	char	**se_window_argv;	/* pre-parsed argument array */
 	struct	init_session *se_prev;
 	struct	init_session *se_next;
+	RB_ENTRY(init_session) se_entry;
 } session_t;
+
+static int cmp_sessions(session_t *, session_t *);
+RB_HEAD(session_tree, init_session) session_tree = RB_INITIALIZER(session_tree);
+RB_PROTOTYPE(session_tree, init_session, se_entry, cmp_sessions);
+RB_GENERATE(session_tree, init_session, se_entry, cmp_sessions);
 
 void free_session(session_t *);
 session_t *new_session(session_t *, int, struct ttyent *);
@@ -181,11 +188,9 @@ void setprocresources(char *);
 
 void clear_session_logs(session_t *);
 
-int start_session_db(void);
 void add_session(session_t *);
 void del_session(session_t *);
 session_t *find_session(pid_t);
-DB *session_db;
 
 /*
  * The mother of all processes.
@@ -767,19 +772,15 @@ f_runcom(void)
 }
 
 /*
- * Open the session database.
- *
- * NB: We could pass in the size here; is it necessary?
+ * Compare session keys.
  */
-int
-start_session_db(void)
+static int
+cmp_sessions(session_t *sp1, session_t *sp2)
 {
-	if (session_db && (*session_db->close)(session_db))
-		emergency("session database close: %s", strerror(errno));
-	if ((session_db = dbopen(NULL, O_RDWR, 0, DB_HASH, NULL)) == 0) {
-		emergency("session database open: %s", strerror(errno));
+	if (sp1->se_process < sp2->se_process)
+		return (-1);
+	if (sp1->se_process > sp2->se_process)
 		return (1);
-	}
 	return (0);
 }
 
@@ -789,15 +790,7 @@ start_session_db(void)
 void
 add_session(session_t *sp)
 {
-	DBT key;
-	DBT data;
-
-	key.data = &sp->se_process;
-	key.size = sizeof sp->se_process;
-	data.data = &sp;
-	data.size = sizeof sp;
-
-	if ((*session_db->put)(session_db, &key, &data, 0))
+	if (RB_INSERT(session_tree, &session_tree, sp) != NULL)
 		emergency("insert %d: %s", sp->se_process, strerror(errno));
 }
 
@@ -807,13 +800,7 @@ add_session(session_t *sp)
 void
 del_session(session_t *sp)
 {
-	DBT key;
-
-	key.data = &sp->se_process;
-	key.size = sizeof sp->se_process;
-
-	if ((*session_db->del)(session_db, &key, 0))
-		emergency("delete %d: %s", sp->se_process, strerror(errno));
+	RB_REMOVE(session_tree, &session_tree, sp);
 }
 
 /*
@@ -822,16 +809,10 @@ del_session(session_t *sp)
 session_t *
 find_session(pid_t pid)
 {
-	DBT key;
-	DBT data;
-	session_t *ret;
+	struct init_session s;
 
-	key.data = &pid;
-	key.size = sizeof pid;
-	if ((*session_db->get)(session_db, &key, &data, 0) != 0)
-		return (0);
-	memcpy(&ret, data.data, sizeof(ret));
-	return (ret);
+	s.se_process = pid;
+	return (RB_FIND(session_tree, &session_tree, &s));
 }
 
 /*
@@ -973,8 +954,6 @@ f_read_ttys(void)
 		free_session(sp);
 	}
 	sessions = NULL;
-	if (start_session_db())
-		return single_user;
 
 	/*
 	 * Allocate a session entry for each active port.
