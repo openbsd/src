@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.79 2016/09/04 10:51:24 naddy Exp $	*/
+/*	$OpenBSD: conf.c,v 1.80 2016/09/04 11:59:50 naddy Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -353,16 +353,16 @@ int chrtoblktbl[] = {
 	/* 14 */	NODEV,
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
-	/* 17 */	7,
+	/* 17 */	7,		/* sd */
 	/* 18 */	NODEV,
 	/* 19 */	NODEV,
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
-	/* 23 */	9,
+	/* 23 */	NODEV,
 	/* 24 */	NODEV,
 	/* 25 */	NODEV,
-	/* 26 */	12,
+	/* 26 */	12,		/* wd */
 	/* 27 */	NODEV,
 	/* 28 */	NODEV,
 	/* 29 */	NODEV,
@@ -390,14 +390,14 @@ int chrtoblktbl[] = {
 	/* 51 */	NODEV,
 	/* 52 */	NODEV,
 	/* 53 */	NODEV,
-	/* 54 */	16,
+	/* 54 */	16,		/* fd */
 	/* 55 */	NODEV,
 	/* 56 */	NODEV,
 	/* 57 */	NODEV,
-	/* 58 */	18,
+	/* 58 */	18,		/* cd */
 	/* 59 */	NODEV,
 	/* 60 */	NODEV,
-	/* 61 */	5,
+	/* 61 */	5,		/* rd */
 	/* 62 */	NODEV,
 	/* 63 */	NODEV,
 	/* 64 */	NODEV,
@@ -446,6 +446,6 @@ int chrtoblktbl[] = {
 	/*107 */	NODEV,
 	/*108 */	NODEV,
 	/*109 */	NODEV,
-	/*110 */	8,
+	/*110 */	8,		/* vnd */
 };
 int nchrtoblktbl = nitems(chrtoblktbl);
