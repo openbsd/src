@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.3 2016/09/04 08:26:48 yasuoka Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.4 2016/09/04 15:46:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -25,8 +25,10 @@
 #include <sys/ioctl.h>
 #include <sys/selinfo.h>
 #include <sys/rwlock.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
+#include <net/rtable.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -85,7 +87,8 @@ switchopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	if ((sc = switch_dev2sc(dev)) == NULL) {
 		snprintf(name, sizeof(name), "switch%d", minor(dev));
-		if ((rv = if_clone_create(name)) != 0)
+		if ((rv = if_clone_create(name,
+		    rtable_l2(p->p_p->ps_rtableid))) != 0)
 			return (rv);
 		if ((sc = switch_dev2sc(dev)) == NULL)
 			return (ENXIO);

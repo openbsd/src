@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.74 2016/09/03 09:55:44 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.75 2016/09/04 15:46:39 reyk Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -313,7 +313,7 @@ int	if_isconnected(const struct ifnet *, unsigned int);
 void	if_clone_attach(struct if_clone *);
 void	if_clone_detach(struct if_clone *);
 
-int	if_clone_create(const char *);
+int	if_clone_create(const char *, int);
 int	if_clone_destroy(const char *);
 
 struct if_clone *

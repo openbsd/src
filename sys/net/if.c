@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.442 2016/09/04 15:10:59 reyk Exp $	*/
+/*	$OpenBSD: if.c,v 1.443 2016/09/04 15:46:39 reyk Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1034,7 +1034,7 @@ if_isconnected(const struct ifnet *ifp0, unsigned int ifidx)
  * Create a clone network interface.
  */
 int
-if_clone_create(const char *name)
+if_clone_create(const char *name, int rdomain)
 {
 	struct if_clone *ifc;
 	struct ifnet *ifp;
@@ -1047,9 +1047,13 @@ if_clone_create(const char *name)
 	if (ifunit(name) != NULL)
 		return (EEXIST);
 
-	if ((ret = (*ifc->ifc_create)(ifc, unit)) == 0 &&
-	    (ifp = ifunit(name)) != NULL)
-		if_addgroup(ifp, ifc->ifc_name);
+	if ((ret = (*ifc->ifc_create)(ifc, unit)) != 0 ||
+	    (ifp = ifunit(name)) == NULL)
+		return (ret);
+
+	if_addgroup(ifp, ifc->ifc_name);
+	if (rdomain != 0)
+		if_setrdomain(ifp, rdomain);
 
 	return (ret);
 }
@@ -1697,7 +1701,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		if ((error = suser(p, 0)) != 0)
 			return (error);
 		return ((cmd == SIOCIFCREATE) ?
-		    if_clone_create(ifr->ifr_name) :
+		    if_clone_create(ifr->ifr_name, 0) :
 		    if_clone_destroy(ifr->ifr_name));
 	case SIOCIFGCLONERS:
 		return (if_clone_list((struct if_clonereq *)data));
