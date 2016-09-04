@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.3,v 1.43 2016/03/10 08:41:12 jmc Exp $
+.\"	$OpenBSD: sha1.3,v 1.44 2016/09/04 09:24:38 tedu Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -17,7 +17,7 @@
 .\" See http://csrc.nist.gov/publications/fips/fips180-1/fip180-1.txt
 .\" for the detailed standard
 .\"
-.Dd $Mdocdate: March 10 2016 $
+.Dd $Mdocdate: September 4 2016 $
 .Dt SHA1INIT 3
 .Os
 .Sh NAME
@@ -234,10 +234,3 @@ and
 .Fn SHA1Data
 helper functions are derived from code written by
 .An Poul-Henning Kamp .
-.Sh CAVEATS
-This implementation of SHA-1 has not been validated by NIST
-and as such is not in official compliance with the standard.
-.Pp
-If a message digest is to be copied to a multi-byte type (ie:
-an array of five 32-bit integers) it will be necessary to
-perform byte swapping on little endian machines such as the i386 and alpha.
