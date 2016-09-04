@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.179 2016/04/27 12:46:23 naddy Exp $
+.\"	$OpenBSD: ksh.1,v 1.180 2016/09/04 17:21:44 nicm Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: April 27 2016 $
+.Dd $Mdocdate: September 4 2016 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -4705,6 +4705,25 @@ is appended.
 If there is no command or file name with the current partial word
 as its prefix, a bell character is output (usually causing a beep to be
 sounded).
+.Pp
+Custom completions may be configured by creating an array named
+.Ql complete_command ,
+optionally suffixed with an argument number to complete only for a single
+argument.
+So defining an array named
+.Ql complete_kill
+provides possible completions for any argument to the
+.Xr kill 1
+command, but
+.Ql complete_kill_1
+only completes the first argument.
+For example, the following command makes
+.Nm
+offer a selection of signal names for the first argument to
+.Xr kill 1 :
+.Pp
+.Dl set -A complete_kill_1 -- -9 -HUP -INFO -KILL -TERM
+.Pp
 .It complete-command: ^X^[
 Automatically completes as much as is unique of the command name having the
 partial word up to the cursor as its prefix, as in the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.54 2016/08/16 15:32:07 tb Exp $	*/
+/*	$OpenBSD: edit.c,v 1.55 2016/09/04 17:21:44 nicm Exp $	*/
 
 /*
  * Command line editing - common code
@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <libgen.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -578,13 +579,85 @@ x_locate_word(const char *buf, int buflen, int pos, int *startp,
 	return end - start;
 }
 
+static int
+x_try_array(const char *buf, int buflen, const char *want, int wantlen,
+    int *nwords, char ***words)
+{
+	const char *cmd, *cp, *last;
+	int cmdlen, n;
+	char *name, *s;
+	size_t slen;
+	struct tbl *v, *vp;
+
+	*nwords = 0;
+	*words = NULL;
+
+	/* Walk back to find start of command. */
+	if (want == buf)
+		return 0;
+	for (cmd = want; cmd > buf; cmd--) {
+		if (strchr(";|&()`", cmd[-1]) != NULL)
+			break;
+	}
+	while (cmd < want && isspace((u_char)*cmd))
+		cmd++;
+	cmdlen = 0;
+	while (cmd + cmdlen < want && !isspace((u_char)cmd[cmdlen]))
+		cmdlen++;
+
+	/* Take a stab at argument count from here. */
+	n = 1;
+	for (cp = cmd + cmdlen + 1; cp < want; cp++) {
+		if (!isspace((u_char)cp[-1]) && isspace((u_char)*cp))
+			n++;
+	}
+
+	/* Try to find the array. */
+	if (asprintf(&name, "complete_%.*s_%d", cmdlen, cmd, n) < 0)
+		internal_errorf(1, "unable to allocate memory");
+	v = global(name);
+	free(name);
+	if (~v->flag & (ISSET|ARRAY)) {
+		if (asprintf(&name, "complete_%.*s", cmdlen, cmd) < 0)
+			internal_errorf(1, "unable to allocate memory");
+		v = global(name);
+		free(name);
+		if (~v->flag & (ISSET|ARRAY))
+			return 0;
+	}
+
+	/* Walk the array and build words list. */
+	for (vp = v; vp; vp = vp->u.array) {
+		if (~vp->flag & ISSET)
+			continue;
+
+		s = str_val(vp);
+		slen = strlen(s);
+
+		if (slen < wantlen)
+			continue;
+		if (slen > wantlen)
+			slen = wantlen;
+		if (slen != 0 && strncmp(s, want, slen) != 0)
+			continue;
+
+		*words = areallocarray(*words, (*nwords) + 2, sizeof **words,
+		    ATEMP);
+		(*words)[(*nwords)++] = str_save(s, ATEMP);
+	}
+	if (*nwords != 0)
+		(*words)[*nwords] = NULL;
+
+	return *nwords != 0;
+}
+
 int
 x_cf_glob(int flags, const char *buf, int buflen, int pos, int *startp,
     int *endp, char ***wordsp, int *is_commandp)
 {
 	int len;
 	int nwords;
-	char **words;
+	char **words = NULL;
 	int is_command;
 
 	len = x_locate_word(buf, buflen, pos, startp, &is_command);
@@ -597,8 +670,10 @@ x_cf_glob(int flags, const char *buf, int buflen, int pos, int *startp,
 	if (len == 0 && is_command)
 		return 0;
 
-	nwords = (is_command ? x_command_glob : x_file_glob)(flags,
-	    buf + *startp, len, &words);
+	if (is_command)
+		nwords = x_command_glob(flags, buf + *startp, len, &words);
+	else if (!x_try_array(buf, buflen, buf + *startp, len, &nwords, &words))
+		nwords = x_file_glob(flags, buf + *startp, len, &words);
 	if (nwords == 0) {
 		*wordsp = NULL;
 		return 0;
