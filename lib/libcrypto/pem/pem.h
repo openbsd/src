@@ -1,4 +1,4 @@
-/* $OpenBSD: pem.h,v 1.16 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: pem.h,v 1.17 2016/09/04 16:22:54 jsing Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -201,11 +201,11 @@ typedef struct pem_ctx_st {
 	unsigned char *data;
 } PEM_CTX;
 
+#ifndef LIBRESSL_INTERNAL
 /* These macros make the PEM_read/PEM_write functions easier to maintain and
  * write. Now they are all implemented with either:
  * IMPLEMENT_PEM_rw(...) or IMPLEMENT_PEM_rw_cb(...)
  */
-
 
 #define IMPLEMENT_PEM_read_fp(name, type, str, asn1) \
 type *PEM_read_##name(FILE *fp, type **x, pem_password_cb *cb, void *u)\
@@ -305,6 +305,8 @@ int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 #define IMPLEMENT_PEM_rw_cb(name, type, str, asn1) \
 	IMPLEMENT_PEM_read(name, type, str, asn1) \
 	IMPLEMENT_PEM_write_cb(name, type, str, asn1)
+
+#endif
 
 /* These are the same except they are for the declarations */
 
