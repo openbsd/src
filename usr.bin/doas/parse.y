@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.20 2016/09/02 18:12:30 tedu Exp $ */
+/* $OpenBSD: parse.y,v 1.21 2016/09/04 15:11:13 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -108,6 +108,10 @@ options:	/* none */ {
 		} | options option {
 			$$.options = $1.options | $2.options;
 			$$.envlist = $1.envlist;
+			if (($$.options & (NOPASS|PERSIST)) == (NOPASS|PERSIST)) {
+				yyerror("can't combine nopass and persist");
+				YYERROR;
+			}
 			if ($2.envlist) {
 				if ($$.envlist) {
 					yyerror("can't have two setenv sections");
