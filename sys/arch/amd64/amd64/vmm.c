@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.76 2016/09/03 14:01:17 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.77 2016/09/04 08:49:18 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -141,6 +141,8 @@ int vcpu_vmx_compute_ctrl(uint64_t, uint16_t, uint32_t, uint32_t, uint32_t *);
 int vmx_get_exit_info(uint64_t *, uint64_t *);
 int vmx_handle_exit(struct vcpu *);
 int vmx_handle_cpuid(struct vcpu *);
+int vmx_handle_rdmsr(struct vcpu *);
+int vmx_handle_wrmsr(struct vcpu *);
 int vmx_handle_cr(struct vcpu *);
 int vmx_handle_inout(struct vcpu *);
 int vmx_handle_hlt(struct vcpu *);
@@ -156,6 +158,9 @@ int vmx_handle_np_fault(struct vcpu *);
 const char *vcpu_state_decode(u_int);
 const char *vmx_exit_reason_decode(uint32_t);
 const char *vmx_instruction_error_decode(uint32_t);
+void vmx_setmsrbr(struct vcpu *, uint32_t);
+void vmx_setmsrbw(struct vcpu *, uint32_t);
+void vmx_setmsrbrw(struct vcpu *, uint32_t);
 
 #ifdef VMM_DEBUG
 void dump_vcpu(struct vcpu *);
@@ -1413,6 +1418,86 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 }
 
 /*
+ * vmx_setmsrbr
+ *
+ * Allow read access to the specified msr on the supplied vcpu.
+ *
+ * Parameters:
+ *  vcpu: the VCPU to allow access
+ *  msr: the MSR number to allow access to
+ */
+void
+vmx_setmsrbr(struct vcpu *vcpu, uint32_t msr)
+{
+	uint8_t *msrs;
+	uint16_t idx;
+
+	msrs = (uint8_t *)vcpu->vc_msr_bitmap_va;
+
+	/*
+	 * MSR Read bitmap layout:
+	 * "Low" MSRs (0x0 - 0x1fff) @ 0x0
+	 * "High" MSRs (0xc0000000 - 0xc0001fff) @ 0x400
+	 */
+	if (msr <= 0x1fff) {
+		idx = MSRIDX(msr);
+		msrs[idx] &= ~(MSRBIT(msr));
+	} else if (msr >= 0xc0000000 && msr <= 0xc0001fff) {
+		idx = MSRIDX(msr - 0xc0000000) + 0x400;
+		msrs[idx] &= ~(MSRBIT(msr - 0xc0000000));
+	} else
+		printf("%s: invalid msr 0x%x\n", __func__, msr);
+}
+
+/*
+ * vmx_setmsrbw
+ *
+ * Allow write access to the specified msr on the supplied vcpu
+ *
+ * Parameters:
+ *  vcpu: the VCPU to allow access
+ *  msr: the MSR number to allow access to
+ */
+void
+vmx_setmsrbw(struct vcpu *vcpu, uint32_t msr)
+{
+	uint8_t *msrs;
+	uint16_t idx;
+
+	msrs = (uint8_t *)vcpu->vc_msr_bitmap_va;
+
+	/*
+	 * MSR Write bitmap layout:
+	 * "Low" MSRs (0x0 - 0x1fff) @ 0x800
+	 * "High" MSRs (0xc0000000 - 0xc0001fff) @ 0xc00
+	 */
+	if (msr <= 0x1fff) {
+		idx = MSRIDX(msr) + 0x800;
+		msrs[idx] &= ~(MSRBIT(msr));
+	} else if (msr >= 0xc0000000 && msr <= 0xc0001fff) {
+		idx = MSRIDX(msr - 0xc0000000) + 0xc00;
+		msrs[idx] &= ~(MSRBIT(msr - 0xc0000000));
+	} else
+		printf("%s: invalid msr 0x%x\n", __func__, msr);
+}
+
+/*
+ * vmx_setmsrbrw
+ *
+ * Allow read/write access to the specified msr on the supplied vcpu
+ *
+ * Parameters:
+ *  vcpu: the VCPU to allow access
+ *  msr: the MSR number to allow access to
+ */
+void
+vmx_setmsrbrw(struct vcpu *vcpu, uint32_t msr)
+{
+	vmx_setmsrbr(vcpu, msr);
+	vmx_setmsrbw(vcpu, msr);
+}
+
+/*
  * vcpu_reset_regs_vmx
  *
  * Initializes 'vcpu's registers to supplied state
@@ -1690,6 +1775,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 		want1 = 0;
 	else
 		want1 = IA32_VMX_IA32E_MODE_GUEST;
+
 	want0 = IA32_VMX_ENTRY_TO_SMM |
 	    IA32_VMX_DEACTIVATE_DUAL_MONITOR_TREATMENT |
 	    IA32_VMX_LOAD_DEBUG_CONTROLS |
@@ -1905,7 +1991,28 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 */
 	ret = vcpu_writeregs_vmx(vcpu, VM_RWREGS_ALL, 0, vrs);
 
-	/* XXX msr bitmap - set restrictions */
+	/*
+	 * Set up the MSR bitmap
+	 */
+	memset((uint8_t *)vcpu->vc_msr_bitmap_va, 0xFF, PAGE_SIZE);
+	vmx_setmsrbrw(vcpu, MSR_IA32_FEATURE_CONTROL);
+	vmx_setmsrbrw(vcpu, MSR_MTRRcap);
+	vmx_setmsrbrw(vcpu, MSR_SYSENTER_CS);
+	vmx_setmsrbrw(vcpu, MSR_SYSENTER_ESP);
+	vmx_setmsrbrw(vcpu, MSR_SYSENTER_EIP);
+	vmx_setmsrbrw(vcpu, MSR_MTRRvarBase);
+	vmx_setmsrbrw(vcpu, MSR_CR_PAT);
+	vmx_setmsrbrw(vcpu, MSR_MTRRdefType);
+	vmx_setmsrbrw(vcpu, MSR_EFER);
+	vmx_setmsrbrw(vcpu, MSR_STAR);
+	vmx_setmsrbrw(vcpu, MSR_LSTAR);
+	vmx_setmsrbrw(vcpu, MSR_CSTAR);
+	vmx_setmsrbrw(vcpu, MSR_SFMASK);
+	vmx_setmsrbrw(vcpu, MSR_FSBASE);
+	vmx_setmsrbrw(vcpu, MSR_GSBASE);
+	vmx_setmsrbrw(vcpu, MSR_KERNELGSBASE);
+	
+
 	/* XXX CR0 shadow */
 	/* XXX CR4 shadow */
 
@@ -1932,7 +2039,6 @@ vcpu_init_vmx(struct vcpu *vcpu)
 {
 	struct vmcs *vmcs;
 	uint32_t cr0, cr4;
-	paddr_t control_pa;
 	int ret;
 
 	ret = 0;
@@ -1945,15 +2051,13 @@ vcpu_init_vmx(struct vcpu *vcpu)
 		return (ENOMEM);
 
 	/* Compute VMCS PA */
-	if (!pmap_extract(pmap_kernel(), vcpu->vc_control_va, &control_pa)) {
+	if (!pmap_extract(pmap_kernel(), vcpu->vc_control_va,
+	    (paddr_t *)&vcpu->vc_control_pa)) {
 		ret = ENOMEM;
 		goto exit;
 	}
 
-	vcpu->vc_control_pa = (uint64_t)control_pa;
-
 	/* Allocate MSR bitmap VA */
-	/* XXX dont need this if no msr bitmap support */
 	vcpu->vc_msr_bitmap_va = (vaddr_t)km_alloc(PAGE_SIZE, &kv_page, &kp_zero,
 	    &kd_waitok);
 
@@ -1963,15 +2067,13 @@ vcpu_init_vmx(struct vcpu *vcpu)
 	}
 
 	/* Compute MSR bitmap PA */
-	if (!pmap_extract(pmap_kernel(), vcpu->vc_msr_bitmap_va, &control_pa)) {
+	if (!pmap_extract(pmap_kernel(), vcpu->vc_msr_bitmap_va,
+	    (paddr_t *)&vcpu->vc_msr_bitmap_pa)) {
 		ret = ENOMEM;
 		goto exit;
 	}
 
-	vcpu->vc_msr_bitmap_pa = (uint64_t)control_pa;
-
 	/* Allocate MSR exit load area VA */
-	/* XXX may not need this with MSR bitmaps */
 	vcpu->vc_vmx_msr_exit_load_va = (vaddr_t)km_alloc(PAGE_SIZE, &kv_page,
 	   &kp_zero, &kd_waitok);
 
@@ -1988,7 +2090,6 @@ vcpu_init_vmx(struct vcpu *vcpu)
 	}
 
 	/* Allocate MSR exit save area VA */
-	/* XXX may not need this with MSR bitmaps */
 	vcpu->vc_vmx_msr_exit_save_va = (vaddr_t)km_alloc(PAGE_SIZE, &kv_page,
 	   &kp_zero, &kd_waitok);
 
@@ -2005,7 +2106,6 @@ vcpu_init_vmx(struct vcpu *vcpu)
 	}
 
 	/* Allocate MSR entry load area VA */
-	/* XXX may not need this with MSR bitmaps */
 	vcpu->vc_vmx_msr_entry_load_va = (vaddr_t)km_alloc(PAGE_SIZE, &kv_page,
 	   &kp_zero, &kd_waitok);
 
@@ -3213,6 +3313,14 @@ vmx_handle_exit(struct vcpu *vcpu)
 		ret = vmx_handle_hlt(vcpu);
 		update_rip = 1;
 		break;
+	case VMX_EXIT_RDMSR:
+		ret = vmx_handle_rdmsr(vcpu);
+		update_rip = 1;
+		break;
+	case VMX_EXIT_WRMSR:
+		ret = vmx_handle_wrmsr(vcpu);
+		update_rip = 1;
+		break;
 	case VMX_EXIT_TRIPLE_FAULT:
 #ifdef VMM_DEBUG
 		DPRINTF("vmx_handle_exit: vm %d vcpu %d triple fault\n",
@@ -3529,6 +3637,93 @@ vmx_handle_cr(struct vcpu *vcpu)
 }
 
 /*
+ * vmx_handle_rdmsr
+ *
+ * Handler for rdmsr instructions. Bitmap MSRs are allowed implicit access
+ * and won't end up here. This handler is primarily intended to catch otherwise
+ * unknown MSR access for possible later inclusion in the bitmap list. For
+ * each MSR access that ends up here, we log the access.
+ *
+ * Parameters:
+ *  vcpu: vcpu structure containing instruction info causing the exit
+ *
+ * Return value:
+ *  0: The operation was successful
+ *  1: An error occurred
+ */
+int
+vmx_handle_rdmsr(struct vcpu *vcpu)
+{
+	uint64_t insn_length;
+	uint64_t *rax, *rcx, *rdx, msr;
+
+	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
+		printf("%s: can't obtain instruction length\n", __func__);
+		return (EINVAL);
+	}
+
+	/* All RDMSR instructions are 0x0F 0x32 */
+	KASSERT(insn_length == 2);
+
+	rax = &vcpu->vc_gueststate.vg_rax;
+	rcx = &vcpu->vc_gueststate.vg_rcx;
+	rdx = &vcpu->vc_gueststate.vg_rdx;
+
+	msr = rdmsr(*rcx);
+	*rax = msr & 0xFFFFFFFFULL;
+	*rdx = msr >> 32;
+
+	/* XXX log the access for now, to be able to identify unknown MSRs */
+	printf("%s: rdmsr exit, msr=0x%llx, data returned to "
+	    "guest=0x%llx:0x%llx\n", __func__, *rcx, *rdx, *rax);
+
+	vcpu->vc_gueststate.vg_rip += insn_length;
+
+	return (0);
+}
+
+/*
+ * vmx_handle_wrmsr
+ *
+ * Handler for wrmsr instructions. This handler logs the access, and discards
+ * the written data. Any valid wrmsr will not end up here (it will be
+ * whitelisted in the MSR bitmap).
+ *
+ * Parameters:
+ *  vcpu: vcpu structure containing instruction info causing the exit
+ *
+ * Return value:
+ *  0: The operation was successful
+ *  1: An error occurred
+ */
+int
+vmx_handle_wrmsr(struct vcpu *vcpu)
+{
+	uint64_t insn_length;
+	uint64_t *rax, *rcx, *rdx;
+
+	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
+		printf("%s: can't obtain instruction length\n", __func__);
+		return (EINVAL);
+	}
+
+	/* All WRMSR instructions are 0x0F 0x30 */
+	KASSERT(insn_length == 2);
+
+	rax = &vcpu->vc_gueststate.vg_rax;
+	rcx = &vcpu->vc_gueststate.vg_rcx;
+	rdx = &vcpu->vc_gueststate.vg_rdx;
+
+	/* XXX log the access for now, to be able to identify unknown MSRs */
+	printf("%s: wrmsr exit, msr=0x%llx, discarding data written from "
+	    "guest=0x%llx:0x%llx\n", __func__, *rcx, *rdx, *rax);
+
+	vcpu->vc_gueststate.vg_rip += insn_length;
+
+	return (0);
+}
+
+/*
  * vmx_handle_cpuid
  *
  * Exit handler for CPUID instruction
@@ -3587,6 +3782,7 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 		 *  self snoop (CPUID_SS)
 		 *  hyperthreading (CPUID_HTT)
 		 *  pending break enabled (CPUID_PBE)
+		 *  MTRR (CPUID_MTRR)
 		 * plus:
 		 *  hypervisor (CPUIDECX_HV)
 		 */
@@ -3602,7 +3798,8 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 		*rdx = curcpu()->ci_feature_flags &
 		    ~(CPUID_ACPI | CPUID_TM | CPUID_TSC |
 		      CPUID_HTT | CPUID_DS | CPUID_APIC |
-		      CPUID_PSN | CPUID_SS | CPUID_PBE);
+		      CPUID_PSN | CPUID_SS | CPUID_PBE |
+		      CPUID_MTRR);
 		break;
 	case 0x02:	/* Cache and TLB information */
 		DPRINTF("vmx_handle_cpuid: function 0x02 (cache/TLB) not"
