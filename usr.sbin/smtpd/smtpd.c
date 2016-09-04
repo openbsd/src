@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.282 2016/09/01 10:54:25 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.283 2016/09/04 09:33:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -256,10 +256,6 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 			m_get_int(&m, &v);
 			m_end(&m);
 			profiling = v;
-			return;
-
-		case IMSG_CTL_SHUTDOWN:
-			parent_shutdown(0);
 			return;
 		}
 	}
@@ -1752,7 +1748,6 @@ imsg_to_str(int type)
 	CASE(IMSG_CTL_REMOVE);
 	CASE(IMSG_CTL_SCHEDULE);
 	CASE(IMSG_CTL_SHOW_STATUS);
-	CASE(IMSG_CTL_SHUTDOWN);
 	CASE(IMSG_CTL_TRACE_DISABLE);
 	CASE(IMSG_CTL_TRACE_ENABLE);
 	CASE(IMSG_CTL_UPDATE_TABLE);

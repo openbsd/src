@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.114 2016/09/01 10:54:25 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.115 2016/09/04 09:33:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -485,7 +485,7 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SMTP_SESSION:
-		if (env->sc_flags & (SMTPD_SMTP_PAUSED | SMTPD_EXITING)) {
+		if (env->sc_flags & SMTPD_SMTP_PAUSED) {
 			m_compose(p, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
 			return;
 		}
@@ -511,22 +511,6 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 			kvp->val = val;
 		}
 		m_compose(p, IMSG_CTL_GET_STATS, 0, 0, -1, kvp, sizeof *kvp);
-		return;
-
-	case IMSG_CTL_SHUTDOWN:
-		/* NEEDS_FIX */
-		log_debug("debug: received shutdown request");
-
-		if (c->euid)
-			goto badcred;
-
-		if (env->sc_flags & SMTPD_EXITING) {
-			m_compose(p, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
-			return;
-		}
-		env->sc_flags |= SMTPD_EXITING;
-		m_compose(p, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
-		m_compose(p_parent, IMSG_CTL_SHUTDOWN, 0, 0, -1, NULL, 0);
 		return;
 
 	case IMSG_CTL_VERBOSE:

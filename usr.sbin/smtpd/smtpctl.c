@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.150 2016/09/03 16:06:26 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.151 2016/09/04 09:33:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -864,13 +864,6 @@ do_show_status(int argc, struct parameter *argv)
 }
 
 static int
-do_stop(int argc, struct parameter *argv)
-{
-	srv_send(IMSG_CTL_SHUTDOWN, NULL, 0);
-	return srv_check_result(1);
-}
-
-static int
 do_trace(int argc, struct parameter *argv)
 {
 	int	v;
@@ -1080,7 +1073,6 @@ main(int argc, char **argv)
 	cmd_install("show routes",		do_show_routes);
 	cmd_install("show stats",		do_show_stats);
 	cmd_install("show status",		do_show_status);
-	cmd_install("stop",			do_stop);
 	cmd_install("trace <str>",		do_trace);
 	cmd_install("uncorrupt <msgid>",	do_uncorrupt);
 	cmd_install("unprofile <str>",		do_unprofile);
