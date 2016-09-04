@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.33 2016/09/04 12:20:06 bcook Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.34 2016/09/04 12:35:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,7 +60,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <sys/cdefs.h>
+#include <sys/types.h>
 
 #include <openssl/opensslconf.h>
 
