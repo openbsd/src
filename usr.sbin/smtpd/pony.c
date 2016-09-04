@@ -1,4 +1,4 @@
-/*	$OpenBSD: pony.c,v 1.14 2016/09/01 10:54:25 eric Exp $	*/
+/*	$OpenBSD: pony.c,v 1.15 2016/09/04 16:10:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -209,9 +209,8 @@ pony(void)
 	if (pledge("stdio inet unix recvfd sendfd", NULL) == -1)
 		err(1, "pledge");
 
-	if (event_dispatch() < 0)
-		fatal("event_dispatch");
-	pony_shutdown();
+	event_dispatch();
+	fatalx("exited event loop");
 
 	return (0);
 }

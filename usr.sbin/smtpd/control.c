@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.115 2016/09/04 09:33:49 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.116 2016/09/04 16:10:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -296,9 +296,8 @@ control(void)
 	if (pledge("stdio unix recvfd sendfd", NULL) == -1)
 		err(1, "pledge");
 
-	if (event_dispatch() < 0)
-		fatal("event_dispatch");
-	control_shutdown();
+	event_dispatch();
+	fatalx("exited event loop");
 
 	return (0);
 }

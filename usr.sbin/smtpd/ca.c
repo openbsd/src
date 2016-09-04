@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.23 2016/09/01 10:54:25 eric Exp $	*/
+/*	$OpenBSD: ca.c,v 1.24 2016/09/04 16:10:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -127,9 +127,8 @@ ca(void)
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	if (event_dispatch() < 0)
-		fatal("event_dispatch");
-	ca_shutdown();
+	event_dispatch();
+	fatalx("exited event loop");
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.53 2016/09/01 10:54:25 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.54 2016/09/04 16:10:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -489,9 +489,8 @@ scheduler(void)
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	if (event_dispatch() < 0)
-		fatal("event_dispatch");
-	scheduler_shutdown();
+	event_dispatch();
+	fatalx("exited event loop");
 
 	return (0);
 }
