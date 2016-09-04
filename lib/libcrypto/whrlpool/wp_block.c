@@ -1,4 +1,4 @@
-/* $OpenBSD: wp_block.c,v 1.11 2016/09/04 13:39:48 jsing Exp $ */
+/* $OpenBSD: wp_block.c,v 1.12 2016/09/04 14:06:46 jsing Exp $ */
 /**
  * The Whirlpool hashing function.
  *
@@ -73,14 +73,6 @@ typedef unsigned long long	u64;
 #  if defined(__x86_64) || defined(__x86_64__)
 #      define ROTATE(a,n)	({ u64 ret; asm ("rolq %1,%0"	\
 				   : "=r"(ret) : "J"(n),"0"(a) : "cc"); ret; })
-#  elif defined(__ia64) || defined(__ia64__)
-#    if BYTE_ORDER == LITTLE_ENDIAN
-#      define ROTATE(a,n)	({ u64 ret; asm ("shrp %0=%1,%1,%2"	\
-				   : "=r"(ret) : "r"(a),"M"(64-(n))); ret; })
-#    else
-#      define ROTATE(a,n)	({ u64 ret; asm ("shrp %0=%1,%1,%2"	\
-				   : "=r"(ret) : "r"(a),"M"(n)); ret; })
-#    endif
 #  endif
 #endif
 
