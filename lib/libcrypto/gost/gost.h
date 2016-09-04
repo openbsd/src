@@ -1,4 +1,4 @@
-/* $OpenBSD: gost.h,v 1.2 2014/11/09 19:24:30 miod Exp $ */
+/* $OpenBSD: gost.h,v 1.3 2016/09/04 17:02:31 jsing Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -89,7 +89,11 @@ typedef struct {
 	ASN1_OBJECT *enc_param_set;
 } GOST_CIPHER_PARAMS;
 
-DECLARE_ASN1_FUNCTIONS(GOST_CIPHER_PARAMS)
+GOST_CIPHER_PARAMS *GOST_CIPHER_PARAMS_new(void);
+void GOST_CIPHER_PARAMS_free(GOST_CIPHER_PARAMS *a);
+GOST_CIPHER_PARAMS *d2i_GOST_CIPHER_PARAMS(GOST_CIPHER_PARAMS **a, const unsigned char **in, long len);
+int i2d_GOST_CIPHER_PARAMS(GOST_CIPHER_PARAMS *a, unsigned char **out);
+extern const ASN1_ITEM GOST_CIPHER_PARAMS_it;
 
 #define GOST2814789IMIT_LENGTH 4
 #define GOST2814789IMIT_CBLOCK 8
