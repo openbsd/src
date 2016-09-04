@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.123 2016/09/04 16:52:43 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.124 2016/09/04 17:01:59 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -2309,58 +2309,49 @@ iwm_fw_valid_rx_ant(struct iwm_softc *sc)
 	return rx_ant;
 }
 
-/* NVM offsets (in words) definitions */
-enum iwm_nvm_offsets {
-	/* NVM HW-Section offset (in words) definitions */
-	IWM_HW_ADDR = 0x15,
+/* 7k family NVM HW-Section offset (in words) definitions */
+#define IWM_HW_ADDR	0x15
+/* 7k family NVM SW-Section offset (in words) definitions */
+#define IWM_NVM_SW_SECTION	0x1C0
+#define IWM_NVM_VERSION		0
+#define IWM_RADIO_CFG		1
+#define IWM_SKU			2
+#define IWM_N_HW_ADDRS		3
+#define IWM_NVM_CHANNELS	0x1E0 - IWM_NVM_SW_SECTION
+/* 7k family NVM calibration section offset (in words) definitions */
+#define IWM_NVM_CALIB_SECTION	0x2B8
+#define IWM_XTAL_CALIB		(0x316 - IWM_NVM_CALIB_SECTION)
 
-	/* NVM SW-Section offset (in words) definitions */
-	IWM_NVM_SW_SECTION = 0x1C0,
-	IWM_NVM_VERSION = 0,
-	IWM_RADIO_CFG = 1,
-	IWM_SKU = 2,
-	IWM_N_HW_ADDRS = 3,
-	IWM_NVM_CHANNELS = 0x1E0 - IWM_NVM_SW_SECTION,
+/* 8k family NVM HW-Section offset (in words) definitions */
+#define IWM_HW_ADDR0_WFPM_8000		0x12
+#define IWM_HW_ADDR1_WFPM_8000		0x16
+#define IWM_HW_ADDR0_PCIE_8000		0x8A
+#define IWM_HW_ADDR1_PCIE_8000		0x8E
+#define IWM_MAC_ADDRESS_OVERRIDE_8000	1
 
-	/* NVM calibration section offset (in words) definitions */
-	IWM_NVM_CALIB_SECTION = 0x2B8,
-	IWM_XTAL_CALIB = 0x316 - IWM_NVM_CALIB_SECTION
-};
+/* 8k family NVM SW-Section offset (in words) definitions */
+#define IWM_NVM_SW_SECTION_8000	0x1C0
+#define IWM_NVM_VERSION_8000	0
+#define IWM_RADIO_CFG_8000	0
+#define IWM_SKU_8000		2
+#define IWM_N_HW_ADDRS_8000	3
 
-enum iwm_8000_nvm_offsets {
-	/* NVM HW-Section offset (in words) definitions */
-	IWM_HW_ADDR0_WFPM_8000 = 0x12,
-	IWM_HW_ADDR1_WFPM_8000 = 0x16,
-	IWM_HW_ADDR0_PCIE_8000 = 0x8A,
-	IWM_HW_ADDR1_PCIE_8000 = 0x8E,
-	IWM_MAC_ADDRESS_OVERRIDE_8000 = 1,
+/* 8k family NVM REGULATORY -Section offset (in words) definitions */
+#define IWM_NVM_CHANNELS_8000		0
+#define IWM_NVM_LAR_OFFSET_8000_OLD	0x4C7
+#define IWM_NVM_LAR_OFFSET_8000		0x507
+#define IWM_NVM_LAR_ENABLED_8000	0x7
 
-	/* NVM SW-Section offset (in words) definitions */
-	IWM_NVM_SW_SECTION_8000 = 0x1C0,
-	IWM_NVM_VERSION_8000 = 0,
-	IWM_RADIO_CFG_8000 = 0,
-	IWM_SKU_8000 = 2,
-	IWM_N_HW_ADDRS_8000 = 3,
-
-	/* NVM REGULATORY -Section offset (in words) definitions */
-	IWM_NVM_CHANNELS_8000 = 0,
-	IWM_NVM_LAR_OFFSET_8000_OLD = 0x4C7,
-	IWM_NVM_LAR_OFFSET_8000 = 0x507,
-	IWM_NVM_LAR_ENABLED_8000 = 0x7,
-
-	/* NVM calibration section offset (in words) definitions */
-	IWM_NVM_CALIB_SECTION_8000 = 0x2B8,
-	IWM_XTAL_CALIB_8000 = 0x316 - IWM_NVM_CALIB_SECTION_8000
-};
+/* 8k family NVM calibration section offset (in words) definitions */
+#define IWM_NVM_CALIB_SECTION_8000	0x2B8
+#define IWM_XTAL_CALIB_8000		(0x316 - IWM_NVM_CALIB_SECTION_8000)
 
 /* SKU Capabilities (actual values from NVM definition) */
-enum nvm_sku_bits {
-	IWM_NVM_SKU_CAP_BAND_24GHZ	= (1 << 0),
-	IWM_NVM_SKU_CAP_BAND_52GHZ	= (1 << 1),
-	IWM_NVM_SKU_CAP_11N_ENABLE	= (1 << 2),
-	IWM_NVM_SKU_CAP_11AC_ENABLE	= (1 << 3),
-	IWM_NVM_SKU_CAP_MIMO_DISABLE	= (1 << 5),
-};
+#define IWM_NVM_SKU_CAP_BAND_24GHZ	(1 << 0)
+#define IWM_NVM_SKU_CAP_BAND_52GHZ	(1 << 1)
+#define IWM_NVM_SKU_CAP_11N_ENABLE	(1 << 2)
+#define IWM_NVM_SKU_CAP_11AC_ENABLE	(1 << 3)
+#define IWM_NVM_SKU_CAP_MIMO_DISABLE	(1 << 5)
 
 /* radio config bits (actual values from NVM definition) */
 #define IWM_NVM_RF_CFG_DASH_MSK(x)   (x & 0x3)         /* bits 0-1   */
@@ -2379,8 +2370,8 @@ enum nvm_sku_bits {
 
 #define DEFAULT_MAX_TX_POWER 16
 
-/**
- * enum iwm_nvm_channel_flags - channel flags in NVM
+/*
+ * channel flags in NVM
  * @IWM_NVM_CHANNEL_VALID: channel is usable for this SKU/geo
  * @IWM_NVM_CHANNEL_IBSS: usable as an IBSS channel
  * @IWM_NVM_CHANNEL_ACTIVE: active scanning allowed
@@ -2391,17 +2382,15 @@ enum nvm_sku_bits {
  * @IWM_NVM_CHANNEL_80MHZ: 80 MHz channel okay (?)
  * @IWM_NVM_CHANNEL_160MHZ: 160 MHz channel okay (?)
  */
-enum iwm_nvm_channel_flags {
-	IWM_NVM_CHANNEL_VALID = (1 << 0),
-	IWM_NVM_CHANNEL_IBSS = (1 << 1),
-	IWM_NVM_CHANNEL_ACTIVE = (1 << 3),
-	IWM_NVM_CHANNEL_RADAR = (1 << 4),
-	IWM_NVM_CHANNEL_DFS = (1 << 7),
-	IWM_NVM_CHANNEL_WIDE = (1 << 8),
-	IWM_NVM_CHANNEL_40MHZ = (1 << 9),
-	IWM_NVM_CHANNEL_80MHZ = (1 << 10),
-	IWM_NVM_CHANNEL_160MHZ = (1 << 11),
-};
+#define IWM_NVM_CHANNEL_VALID	(1 << 0)
+#define IWM_NVM_CHANNEL_IBSS	(1 << 1)
+#define IWM_NVM_CHANNEL_ACTIVE	(1 << 3)
+#define IWM_NVM_CHANNEL_RADAR	(1 << 4)
+#define IWM_NVM_CHANNEL_DFS	(1 << 7)
+#define IWM_NVM_CHANNEL_WIDE	(1 << 8)
+#define IWM_NVM_CHANNEL_40MHZ	(1 << 9)
+#define IWM_NVM_CHANNEL_80MHZ	(1 << 10)
+#define IWM_NVM_CHANNEL_160MHZ	(1 << 11)
 
 void
 iwm_init_channel_map(struct iwm_softc *sc, const uint16_t * const nvm_ch_flags,
