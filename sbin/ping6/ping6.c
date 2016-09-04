@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.154 2016/09/03 21:47:57 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.155 2016/09/04 10:44:28 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ __dead void	 usage(void);
 int
 main(int argc, char *argv[])
 {
-	struct addrinfo *res0;
+	struct addrinfo *res;
 	struct itimerval itimer;
 	struct sockaddr_in6 from, from6;
 	struct addrinfo hints;
@@ -227,7 +227,7 @@ main(int argc, char *argv[])
 	int ch, i, maxsize, packlen, optval, error;
 	socklen_t maxsizelen;
 	u_char *datap, *packet;
-	char *e, *target;
+	char *e, *target, hbuf[NI_MAXHOST];
 	char *source = NULL;
 	const char *errstr;
 	struct cmsghdr *scmsg = NULL;
@@ -364,32 +364,54 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-	target = *argv;
+	memset(&dst, 0, sizeof(dst));
 
-	/* getaddrinfo */
-	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_flags = AI_CANONNAME;
-	hints.ai_family = AF_INET6;
-	hints.ai_socktype = SOCK_RAW;
-	hints.ai_protocol = IPPROTO_ICMPV6;
-
-	error = getaddrinfo(target, NULL, &hints, &res0);
-	if (error)
-		errx(1, "host %s: %s", target, gai_strerror(error));
-	if (res0->ai_canonname) {
-		if ((hostname = strdup(res0->ai_canonname)) == NULL)
-			errx(1, "out of memory");
+#if 0
+	if (inet_aton(*argv, &dst.sin_addr) != 0) {
+		hostname = *argv;
+		if ((target = strdup(inet_ntoa(dst.sin_addr))) == NULL)
+			errx(1, "malloc");
 	} else
-		hostname = target;
-	if (res0->ai_next && (options & F_VERBOSE))
-		warnx("host resolves to multiple addresses");
-	if (res0->ai_family != AF_INET6 || res0->ai_addrlen != sizeof(dst))
-		errx(1, "getaddrinfo failed");
-	memcpy(&dst, res0->ai_addr, sizeof(dst));
+#endif
+		target = *argv;
 
-	freeaddrinfo(res0);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_INET6;
+	hints.ai_socktype = SOCK_RAW;
+	hints.ai_protocol = 0;
+	hints.ai_flags = AI_CANONNAME;
+	if ((error = getaddrinfo(target, NULL, &hints, &res)))
+		errx(1, "%s", gai_strerror(error));
 
-	/* set the source address if specified. */
+	switch (res->ai_family) {
+	case AF_INET6:
+		if (res->ai_addrlen != sizeof(dst))
+		    errx(1, "size of sockaddr mismatch");
+		break;
+	case AF_INET:
+	default:
+		errx(1, "unsupported AF: %d", res->ai_family);
+		break;
+	}
+
+	memcpy(&dst, res->ai_addr, res->ai_addrlen);
+
+	if (!hostname) {
+		hostname = res->ai_canonname ? strdup(res->ai_canonname) :
+		    target;
+		if (!hostname)
+			errx(1, "malloc");
+	}
+
+	if (res->ai_next) {
+		if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf,
+		    sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
+			strlcpy(hbuf, "?", sizeof(hbuf));
+		warnx("Warning: %s has multiple "
+		    "addresses; using %s", hostname, hbuf);
+	}
+	freeaddrinfo(res);
+
 	if (source) {
 		memset(&hints, 0, sizeof(struct addrinfo));
 		hints.ai_flags = AI_NUMERICHOST; /* allow hostname? */
@@ -397,16 +419,16 @@ main(int argc, char *argv[])
 		hints.ai_socktype = SOCK_RAW;
 		hints.ai_protocol = IPPROTO_ICMPV6;
 
-		error = getaddrinfo(source, NULL, &hints, &res0);
+		error = getaddrinfo(source, NULL, &hints, &res);
 		if (error)
 			errx(1, "invalid source address: %s", 
 			     gai_strerror(error));
 
-		if (res0->ai_family != AF_INET6 || res0->ai_addrlen !=
+		if (res->ai_family != AF_INET6 || res->ai_addrlen !=
 		    sizeof(from6))
 			errx(1, "invalid source address");
-		memcpy(&from6, res0->ai_addr, sizeof(from6));
-		freeaddrinfo(res0);
+		memcpy(&from6, res->ai_addr, sizeof(from6));
+		freeaddrinfo(res);
 		if (bind(s, (struct sockaddr *)&from6, sizeof(from6)) != 0)
 			err(1, "bind");
 	}
