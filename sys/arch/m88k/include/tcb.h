@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.3 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.4 2016/09/04 08:49:35 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -24,7 +24,7 @@
  * and register %r26 contains the address of the thread's errno.
  * It is the responsibility of the kernel to set %r27 to the proper value
  * when creating the thread, while initialization of %r26 is done in
- * userland within libpthread on a needed basis.
+ * userland within libc on an as-needed basis.
  */
 
 #ifdef _KERNEL
@@ -48,15 +48,11 @@
 
 #if defined(__GNUC__) && __GNUC__ > 4
 
-struct thread_control_block;
-__register__ struct thread_control_block *__tcb __asm__ ("%r27");
+register void *__tcb __asm__ ("%r27");
 #define	TCB_GET()	(__tcb)
 #define	TCB_SET(tcb)	((__tcb) = (tcb))
-#define	TCB_GET_MEMBER(member)	((void *)(__tcb->member))
 
 #else /* __GNUC__ > 4 */
-
-#include <stddef.h>		/* for offsetof */
 
 /* Get a pointer to the TCB itself */
 static inline void *
@@ -67,24 +63,10 @@ __m88k_get_tcb(void)
 	return val;
 }
 
-/* Get the value of a specific member in the TCB */
-static inline void *
-__m88k_read_tcb(size_t offset)
-{
-	void	*val;
-	/* XXX the `offset' constraint ought to be "I" but this causes a warning */
-	__asm__ ("ld %0,%%r27,%1" : "=r" (val) : "r" (offset));
-	return val;
-}
-
 #define TCB_GET()	__m88k_get_tcb()
 #define TCB_SET(tcb)	__asm volatile("or %%r27,%0,%r0" : : "r" (tcb))
-
-#define TCB_GET_MEMBER(member)	\
-	__m88k_read_tcb(offsetof(struct thread_control_block, member))
 
 #endif /* __GNUC__ > 4 */
 
 #endif /* _KERNEL */
-
 #endif /* _MACHINE_TCB_H_ */

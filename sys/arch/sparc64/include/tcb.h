@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.4 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.5 2016/09/04 08:49:35 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -37,15 +37,12 @@
 #define TLS_VARIANT	2
 
 #if 0	/* XXX perhaps use the gcc global register extension? */
-struct thread_control_block;
-__register__ struct thread_control_block *__tcb __asm__ ("%g7");
+register void *__tcb __asm__ ("%g7");
 #define TCB_GET()		(__tcb)
 #define TCB_GET_MEMBER(member)	((void *)(__tcb->member))
 #define TCB_SET(tcb)		((__tcb) = (tcb))
 
 #else
-
-#include <stddef.h>		/* for offsetof */
 
 /* Get a pointer to the TCB itself */
 static inline void *
@@ -65,13 +62,10 @@ __sparc64_read_tcb(int offset)
 	__asm__ ("ldx [%%g7 + %1], %0" : "=r" (val) : "r" (offset));
 	return val;
 }
-#define TCB_GET_MEMBER(member)	\
-	__sparc64_read_tcb(offsetof(struct thread_control_block, member))
 
 #define TCB_SET(tcb)	__asm volatile("mov %0, %%g7" : : "r" (tcb))
 
 #endif /* 0 */
 
 #endif /* _KERNEL */
-
 #endif /* _MACHINE_TCB_H_ */
