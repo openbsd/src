@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.122 2016/09/04 16:46:54 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.123 2016/09/04 16:52:43 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -2186,10 +2186,6 @@ const int nvm_to_read[] = {
 
 #define IWM_NVM_WRITE_OPCODE 1
 #define IWM_NVM_READ_OPCODE 0
-
-/* load nvm chunk response */
-#define IWM_READ_NVM_CHUNK_SUCCEED		0
-#define IWM_READ_NVM_CHUNK_INVALID_ADDRESS	1
 
 int
 iwm_nvm_read_chunk(struct iwm_softc *sc, uint16_t section,
