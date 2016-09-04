@@ -1,4 +1,4 @@
-/* $OpenBSD: sxidog.c,v 1.9 2016/08/27 14:13:14 kettenis Exp $ */
+/* $OpenBSD: sxidog.c,v 1.10 2016/09/04 11:56:59 mglocker Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -148,9 +148,9 @@ sxidog_callback(void *arg, int period)
 
 	switch (sc->sc_type) {
 	case SXIDOG_A10:
-		enable = (period > 0) ? WDOG_EN : 0;
+		enable = (period > 0) ? WDOG_RST_EN : 0;
 		SXIWRITE4(sc, WDOG_MODE_REG,
-		    enable | WDOG_RST_EN | WDOG_INTV_VALUE(period));
+		    enable | WDOG_EN | WDOG_INTV_VALUE(period));
 		SXIWRITE4(sc, WDOG_CTRL_REG, WDOG_KEY | WDOG_RSTART);
 		break;
 	case SXIDOG_A31:
