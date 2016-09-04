@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.2 2016/09/02 10:01:36 goda Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.3 2016/09/04 16:47:41 goda Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -113,15 +113,17 @@ struct swofp_action_set {
 	struct ofp_action_header	*swas_action;
 };
 
+/* Same as total number of OFP_ACTION_ */
+#define SWOFP_ACTION_SET_MAX		18
 struct swofp_pipline_desc {
 	uint32_t			 swpld_table_id;
 	uint64_t			 swpld_cookie;
 	uint64_t			 swpld_metadata;
 	struct switch_flow_classify	*swpld_swfcl;
-	struct switch_flow_classify	*swpld_pre_swfcl;
+	struct switch_flow_classify	 swpld_pre_swfcl;
 	struct switch_fwdp_queue	 swpld_fwdp_q;
-	struct swofp_action_set		*swpld_action_set;
-	struct ofp_action_header	*swpld_set_fields; /* using for free */
+	struct swofp_action_set		 swpld_action_set[SWOFP_ACTION_SET_MAX];
+	struct ofp_action_header	*swpld_set_fields[OFP_XM_T_MAX];
 };
 
 struct swofp_ofs {
@@ -918,11 +920,20 @@ struct ofp_action_handler ofp_action_handlers[] = {
 };
 
 extern struct pool swfcl_pool;
+struct pool swpld_pool;
 
 int swofp_flow_id = 0;
 
+void
+swofp_attach(void)
+{
+	pool_init(&swpld_pool, sizeof(struct swofp_pipline_desc), 0, 0, 0,
+	    "swpld", NULL);
+}
+
+
 int
-swofp_attach(struct switch_softc *sc)
+swofp_create(struct switch_softc *sc)
 {
 	struct swofp_ofs	*swofs;
 	int			 error;
@@ -964,7 +975,7 @@ swofp_attach(struct switch_softc *sc)
 }
 
 void
-swofp_detach(struct switch_softc *sc)
+swofp_destroy(struct switch_softc *sc)
 {
 	struct swofp_ofs	*swofs = sc->sc_ofs;
 
@@ -1167,30 +1178,17 @@ swofp_pipline_desc_create(struct switch_flow_classify *swfcl)
 	struct swofp_pipline_desc	*swpld = NULL;
 	struct swofp_action_set		*swas = NULL;
 	struct ofp_action_header	*set_fields = NULL;
-	struct switch_flow_classify	*pre_swfcl = NULL;
 	int				 i;
 
-	swpld = malloc(sizeof(*swpld), M_DEVBUF, M_NOWAIT|M_ZERO);
+	swpld = pool_get(&swpld_pool, PR_NOWAIT|PR_ZERO);
 	if (swpld == NULL)
-		goto failed;
+		return (NULL);
 
-	swas = malloc((sizeof(*swas) * nitems(ofp_action_handlers)),
-	    M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (swas == NULL)
-		goto failed;
-
-	set_fields = malloc((sizeof(set_fields) * OFP_XM_T_MAX),
-	    M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (set_fields == NULL)
-		goto failed;
-
-	pre_swfcl = malloc(sizeof(*pre_swfcl), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (pre_swfcl == NULL)
-		goto failed;
 	/*
 	 * ofp_action_handlers is sorted by applying action-set order,
 	 * so it can be used for initializer for action-set.
 	 */
+	swas = swpld->swpld_action_set;
 	for (i = 0; i < nitems(ofp_action_handlers); i++) {
 		swas[i].swas_type = ofp_action_handlers[i].action_type;
 		if (swas[i].swas_type == OFP_ACTION_SET_FIELD)
@@ -1199,36 +1197,16 @@ swofp_pipline_desc_create(struct switch_flow_classify *swfcl)
 			swas[i].swas_action = NULL;
 	}
 
-	swpld->swpld_action_set = swas;
 	swpld->swpld_swfcl = swfcl;
-	swpld->swpld_pre_swfcl = pre_swfcl;
-	swpld->swpld_set_fields = set_fields;
 
 	return (swpld);
-
- failed:
-	free(set_fields, M_DEVBUF, (sizeof(set_fields) * OFP_XM_T_MAX));
-	free(swas, M_DEVBUF, (sizeof(*swas) * nitems(ofp_action_handlers)));
-	free(swpld, M_DEVBUF, sizeof(*swpld));
-
-	return (NULL);
 }
 
 void
 swofp_pipline_desc_destroy(struct swofp_pipline_desc *swpld)
 {
-	switch_swfcl_free(swpld->swpld_pre_swfcl);
-
-	free(swpld->swpld_pre_swfcl, M_DEVBUF,
-	    sizeof(*swpld->swpld_pre_swfcl));
-
-	free(swpld->swpld_set_fields, M_DEVBUF,
-	    (sizeof(struct ofp_action_header) * OFP_XM_T_MAX));
-
-	free(swpld->swpld_action_set, M_DEVBUF,
-	    (sizeof(struct swofp_action_set) * nitems(ofp_action_handlers)));
-
-	free(swpld, M_DEVBUF, sizeof(*swpld));
+	switch_swfcl_free(&swpld->swpld_pre_swfcl);
+	pool_put(&swpld_pool, swpld);
 }
 
 
@@ -3768,7 +3746,7 @@ struct mbuf *
 swofp_apply_set_field(struct mbuf *m, struct swofp_pipline_desc *swpld)
 {
 	return swofp_apply_set_field_ether(m, 0,
-	    swpld->swpld_pre_swfcl, swpld->swpld_swfcl);
+	    &swpld->swpld_pre_swfcl, swpld->swpld_swfcl);
 }
 
 struct mbuf *
@@ -3789,7 +3767,7 @@ swofp_action_set_field(struct switch_softc *sc, struct mbuf *m,
 		goto failed;
 
 	swfcl = swpld->swpld_swfcl;
-	pre_swfcl = swpld->swpld_pre_swfcl;
+	pre_swfcl = &swpld->swpld_pre_swfcl;
 
 	if (oxm->oxm_class == htons(OFP_OXM_C_NXM_1)) {
 		switch (OFP_OXM_GET_FIELD(oxm)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.h,v 1.1 2016/09/01 10:06:33 goda Exp $	*/
+/*	$OpenBSD: if_switch.h,v 1.2 2016/09/04 16:47:41 goda Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -220,9 +220,10 @@ void	 switch_swfcl_free(struct switch_flow_classify *);
 void	 switch_dev_destroy(struct switch_softc *);
 
 /* in switchofp.c */
-int	 swofp_attach(struct switch_softc *);
+void	 swofp_attach(void);
+int	 swofp_create(struct switch_softc *);
 int	 swofp_init(struct switch_softc *);
-void	 swofp_detach(struct switch_softc *);
+void	 swofp_destroy(struct switch_softc *);
 int	 swofp_ioctl(struct ifnet *, unsigned long, caddr_t);
 uint32_t
 	 swofp_assign_portno(struct switch_softc *, uint32_t);

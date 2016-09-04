@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.3 2016/09/03 13:46:57 reyk Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.4 2016/09/04 16:47:41 goda Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -144,6 +144,7 @@ switchattach(int n)
 {
 	pool_init(&swfcl_pool, sizeof(union switch_field), 0, 0, 0,
 	    "swfcl", NULL);
+	swofp_attach();
 	LIST_INIT(&switch_list);
 	if_clone_attach(&switch_cloner);
 	DPRINTF("switch attached\n");
@@ -190,7 +191,7 @@ switch_clone_create(struct if_clone *ifc, int unit)
 		return (ENOMEM);
 	}
 
-	swofp_attach(sc);
+	swofp_create(sc);
 
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
@@ -229,7 +230,7 @@ switch_clone_destroy(struct ifnet *ifp)
 	}
 	LIST_REMOVE(sc, sc_switch_next);
 	bstp_destroy(sc->sc_stp);
-	swofp_detach(sc);
+	swofp_destroy(sc);
 	switch_dev_destroy(sc);
 	if_deactivate(ifp);
 	if_detach(ifp);
