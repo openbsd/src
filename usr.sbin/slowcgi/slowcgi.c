@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.49 2016/08/16 08:23:18 reyk Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.50 2016/09/04 14:40:34 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -196,12 +196,18 @@ void		dump_fcgi_end_request_body(const char *,
 void		cleanup_request(struct request *);
 
 struct loggers {
-	__dead void (*err)(int, const char *, ...);
-	__dead void (*errx)(int, const char *, ...);
-	void (*warn)(const char *, ...);
-	void (*warnx)(const char *, ...);
-	void (*info)(const char *, ...);
-	void (*debug)(const char *, ...);
+	__dead void (*err)(int, const char *, ...)
+	    __attribute__((__format__ (printf, 2, 3)));
+	__dead void (*errx)(int, const char *, ...)
+	    __attribute__((__format__ (printf, 2, 3)));
+	void (*warn)(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+	void (*warnx)(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+	void (*info)(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+	void (*debug)(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
 };
 
 const struct loggers conslogger = {
@@ -213,13 +219,20 @@ const struct loggers conslogger = {
 	warnx /* debug */
 };
 
-__dead void	syslog_err(int, const char *, ...);
-__dead void	syslog_errx(int, const char *, ...);
-void		syslog_warn(const char *, ...);
-void		syslog_warnx(const char *, ...);
-void		syslog_info(const char *, ...);
-void		syslog_debug(const char *, ...);
-void		syslog_vstrerror(int, int, const char *, va_list);
+__dead void	syslog_err(int, const char *, ...)
+		    __attribute__((__format__ (printf, 2, 3)));
+__dead void	syslog_errx(int, const char *, ...)
+		    __attribute__((__format__ (printf, 2, 3)));
+void		syslog_warn(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
+void		syslog_warnx(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
+void		syslog_info(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
+void		syslog_debug(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
+void		syslog_vstrerror(int, int, const char *, va_list)
+		    __attribute__((__format__ (printf, 3, 0)));
 
 const struct loggers syslogger = {
 	syslog_err,
@@ -678,7 +691,7 @@ parse_begin_request(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 	}
 
 	if (n != sizeof(struct fcgi_begin_request_body)) {
-		lwarnx("wrong size %d != %d", n,
+		lwarnx("wrong size %d != %lu", n,
 		    sizeof(struct fcgi_begin_request_body));
 		return;
 	}
