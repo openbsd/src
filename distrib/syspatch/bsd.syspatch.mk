@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.syspatch.mk,v 1.1 2016/09/03 21:43:25 robert Exp $
+#	$OpenBSD: bsd.syspatch.mk,v 1.2 2016/09/04 16:40:34 robert Exp $
 #
 # Copyright (c) 2016 Robert Nagy <robert@openbsd.org>
 #
@@ -54,6 +54,7 @@ SUBDIR?=
 _PATCH_COOKIE=	${ERRATA}/.patch_done
 _BUILD_COOKIE=	${ERRATA}/.build_done
 _FAKE_COOKIE=	${ERRATA}/.fake_done
+_INSTALL_COOKIE=${ERRATA}/.install_done
 
 .if ${BUILD:L:Msrc}
 SRCDIR=		${BSDSRCDIR}
@@ -63,7 +64,7 @@ MTREE_FILES+=	/etc/mtree/BSD.x11.dist
 .endif
 
 .MAIN: all
-all: ${SYSPATCH}
+all: ${_BUILD_COOKIE}
 
 .if !target(clean)
 clean:
@@ -72,15 +73,15 @@ clean:
 
 cleandir: clean
 
-${_FAKE_COOKIE}:
-	@${INSTALL} -d -m 755 ${SYSPATCH_DIR}
+${_FAKE_COOKIE}: ${_BUILD_COOKIE}
 .for _m in ${MTREE_FILES}
-	@${MTREE} ${MTREE_ARGS} -f ${_m} >/dev/null
+	@${SUDO} ${MTREE} ${MTREE_ARGS} -f ${_m} >/dev/null
 .endfor
 	@touch $@
 
-${ERRATA}/${ERRATA}.patch: ${_FAKE_COOKIE}
-	@echo ">> Fetch ${MIRROR}/${.TARGET:T}.sig"; \
+${ERRATA}/${ERRATA}.patch:
+	@${INSTALL} -d -m 755 ${SYSPATCH_DIR} && \
+	echo ">> Fetch ${MIRROR}/${.TARGET:T}.sig"; \
 	if ${FETCH} -o ${SYSPATCH_DIR}/${.TARGET:T}.sig \
 		${MIRROR}/${.TARGET:T}.sig; then \
 		if ${SIGNIFY} -Vep ${SIGNIFY_KEY} -x \
@@ -95,6 +96,36 @@ ${_PATCH_COOKIE}: ${ERRATA}/${ERRATA}.patch
 		exit 1; };
 	@touch $@
 
+${_INSTALL_COOKIE}: ${_FAKE_COOKIE}
+.if ${BUILD:L:Msrc} || ${BUILD:L:Mxenocara}
+.  if defined(SUBDIR) && !empty(SUBDIR)
+.    for _s in ${SUBDIR}
+	@if [ -f ${_s}/Makefile.bsd-wrapper ]; then \
+		_mk_spec_="-f Makefile.bsd-wrapper"; \
+	fi; \
+	cd ${_s} && ${SUDO} ${MAKE} $${_mk_spec_} \
+		DESTDIR=${.OBJDIR}/${FAKE} install
+.    endfor
+.  endif
+.elif ${BUILD:L:Mkernel}
+.  for _kern in GENERIC GENERIC.MP
+	@if [ ${_kern} = "GENERIC" ]; then \
+		${SUDO} \
+		cp -p ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/${_kern}/bsd \
+		${.OBJDIR}/${FAKE}/bsd || \
+		{ echo "***>   failed to install ${_kern}"; \
+		exit 1; }; \
+	elif [ ${_kern} = "GENERIC.MP" ]; then \
+		${SUDO} \
+		cp -p ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/${_kern}/bsd \
+		${.OBJDIR}/${FAKE}/bsd.mp || \
+		{ echo "***>   failed to install ${_kern}"; \
+		exit 1; }; \
+	fi; exit 0
+.  endfor
+.endif
+	@touch $@
+
 ${_BUILD_COOKIE}: ${_PATCH_COOKIE}
 .if ${BUILD:L:Msrc} || ${BUILD:L:Mxenocara}
 .  if defined(SUBDIR) && !empty(SUBDIR)
@@ -104,8 +135,7 @@ ${_BUILD_COOKIE}: ${_PATCH_COOKIE}
 	fi; \
 	for _t in obj depend all; do \
 		cd ${_s} && ${MAKE} $${_mk_spec_} $${_t}; \
-	done; \
-	cd ${_s} && ${MAKE} $${_mk_spec_} DESTDIR=${.OBJDIR}/${FAKE} install
+	done;
 .    endfor
 .  endif
 .elif ${BUILD:L:Mkernel}
@@ -117,32 +147,24 @@ ${_BUILD_COOKIE}: ${_PATCH_COOKIE}
 			fi; exit 1; \
 		fi; exit 1; \
 	fi; exit 1
-	@if [ ${_kern} = "GENERIC" ]; then \
-		cp -p ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/${_kern}/bsd \
-			${.OBJDIR}/${FAKE}/bsd || \
-			{ echo "***>   failed to install ${_kern}"; \
-			exit 1; }; \
-	elif [ ${_kern} = "GENERIC.MP" ]; then \
-		cp -p ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/${_kern}/bsd \
-			${.OBJDIR}/${FAKE}/bsd.mp || \
-			{ echo "***>   failed to install ${_kern}"; \
-			exit 1; }; \
-	fi; exit 0
 .  endfor
 .endif
 	@touch $@
 
+syspatch: ${SYSPATCH}
+
 ${SYSPATCH}: ${ERRATA}/.plist
 .for _m in ${MTREE_FILES}
-	@${MTREE} ${MTREE_ARGS} -f ${_m} >/dev/null
+	@${SUDO} ${MTREE} ${MTREE_ARGS} -f ${_m} >/dev/null
+	@${SUDO} chown -R root:wheel ${SYSPATCH_DIR}
 .endfor
 	@tar -Pczf ${.TARGET} -C ${FAKE} -I ${ERRATA}/.plist || \
 		{ echo "***>   unable to create ${.TARGET}"; \
 		exit 1; };
 	@echo ">> Created ${SYSPATCH}"; \
 
-${ERRATA}/.fplist: ${_BUILD_COOKIE}
-	@find ${FAKE} \! -type d > ${.OBJDIR}/${ERRATA}/.fplist || \
+${ERRATA}/.fplist: ${_INSTALL_COOKIE}
+	@${SUDO} find ${FAKE} \! -type d > ${.OBJDIR}/${ERRATA}/.fplist || \
 		{ echo "***>   unable to create list of files"; \
 		exit 1; };
 
