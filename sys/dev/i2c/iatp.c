@@ -1,4 +1,4 @@
-/* $OpenBSD: iatp.c,v 1.1 2016/09/01 10:04:51 jcs Exp $ */
+/* $OpenBSD: iatp.c,v 1.2 2016/09/04 10:45:29 jsg Exp $ */
 /*
  * Atmel maXTouch i2c touchscreen/touchpad driver
  * Copyright (c) 2016 joshua stein <jcs@openbsd.org>
@@ -690,7 +690,7 @@ iatp_write_reg(struct iatp_softc *sc, uint16_t reg, size_t len, void *val)
 
 	iic_release_bus(sc->sc_tag, 0);
 
-	free(cmd, M_DEVBUF, sizeof(len + 2));
+	free(cmd, M_DEVBUF, len + 2);
 
 	return ret;
 }
