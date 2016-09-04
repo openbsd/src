@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7.h,v 1.14 2014/07/02 12:40:41 jsing Exp $ */
+/* $OpenBSD: pkcs7.h,v 1.15 2016/09/04 17:20:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -259,7 +259,11 @@ DECLARE_PKCS12_STACK_OF(PKCS7)
 #define SMIME_BINARY	PKCS7_BINARY
 #define SMIME_NOATTR	PKCS7_NOATTR
 
-DECLARE_ASN1_FUNCTIONS(PKCS7_ISSUER_AND_SERIAL)
+PKCS7_ISSUER_AND_SERIAL *PKCS7_ISSUER_AND_SERIAL_new(void);
+void PKCS7_ISSUER_AND_SERIAL_free(PKCS7_ISSUER_AND_SERIAL *a);
+PKCS7_ISSUER_AND_SERIAL *d2i_PKCS7_ISSUER_AND_SERIAL(PKCS7_ISSUER_AND_SERIAL **a, const unsigned char **in, long len);
+int i2d_PKCS7_ISSUER_AND_SERIAL(PKCS7_ISSUER_AND_SERIAL *a, unsigned char **out);
+extern const ASN1_ITEM PKCS7_ISSUER_AND_SERIAL_it;
 
 int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,
     const EVP_MD *type, unsigned char *md, unsigned int *len);
@@ -271,15 +275,51 @@ int i2d_PKCS7_bio(BIO *bp, PKCS7 *p7);
 int i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *in, int flags);
 int PEM_write_bio_PKCS7_stream(BIO *out, PKCS7 *p7, BIO *in, int flags);
 
-DECLARE_ASN1_FUNCTIONS(PKCS7_SIGNER_INFO)
-DECLARE_ASN1_FUNCTIONS(PKCS7_RECIP_INFO)
-DECLARE_ASN1_FUNCTIONS(PKCS7_SIGNED)
-DECLARE_ASN1_FUNCTIONS(PKCS7_ENC_CONTENT)
-DECLARE_ASN1_FUNCTIONS(PKCS7_ENVELOPE)
-DECLARE_ASN1_FUNCTIONS(PKCS7_SIGN_ENVELOPE)
-DECLARE_ASN1_FUNCTIONS(PKCS7_DIGEST)
-DECLARE_ASN1_FUNCTIONS(PKCS7_ENCRYPT)
-DECLARE_ASN1_FUNCTIONS(PKCS7)
+PKCS7_SIGNER_INFO *PKCS7_SIGNER_INFO_new(void);
+void PKCS7_SIGNER_INFO_free(PKCS7_SIGNER_INFO *a);
+PKCS7_SIGNER_INFO *d2i_PKCS7_SIGNER_INFO(PKCS7_SIGNER_INFO **a, const unsigned char **in, long len);
+int i2d_PKCS7_SIGNER_INFO(PKCS7_SIGNER_INFO *a, unsigned char **out);
+extern const ASN1_ITEM PKCS7_SIGNER_INFO_it;
+PKCS7_RECIP_INFO *PKCS7_RECIP_INFO_new(void);
+void PKCS7_RECIP_INFO_free(PKCS7_RECIP_INFO *a);
+PKCS7_RECIP_INFO *d2i_PKCS7_RECIP_INFO(PKCS7_RECIP_INFO **a, const unsigned char **in, long len);
+int i2d_PKCS7_RECIP_INFO(PKCS7_RECIP_INFO *a, unsigned char **out);
+extern const ASN1_ITEM PKCS7_RECIP_INFO_it;
+PKCS7_SIGNED *PKCS7_SIGNED_new(void);
+void PKCS7_SIGNED_free(PKCS7_SIGNED *a);
+PKCS7_SIGNED *d2i_PKCS7_SIGNED(PKCS7_SIGNED **a, const unsigned char **in, long len);
+int i2d_PKCS7_SIGNED(PKCS7_SIGNED *a, unsigned char **out);
+extern const ASN1_ITEM PKCS7_SIGNED_it;
+PKCS7_ENC_CONTENT *PKCS7_ENC_CONTENT_new(void);
+void PKCS7_ENC_CONTENT_free(PKCS7_ENC_CONTENT *a);
+PKCS7_ENC_CONTENT *d2i_PKCS7_ENC_CONTENT(PKCS7_ENC_CONTENT **a, const unsigned char **in, long len);
+int i2d_PKCS7_ENC_CONTENT(PKCS7_ENC_CONTENT *a, unsigned char **out);
+extern const ASN1_ITEM PKCS7_ENC_CONTENT_it;
+PKCS7_ENVELOPE *PKCS7_ENVELOPE_new(void);
+void PKCS7_ENVELOPE_free(PKCS7_ENVELOPE *a);
+PKCS7_ENVELOPE *d2i_PKCS7_ENVELOPE(PKCS7_ENVELOPE **a, const unsigned char **in, long len);
+int i2d_PKCS7_ENVELOPE(PKCS7_ENVELOPE *a, unsigned char **out);
+extern const ASN1_ITEM PKCS7_ENVELOPE_it;
+PKCS7_SIGN_ENVELOPE *PKCS7_SIGN_ENVELOPE_new(void);
+void PKCS7_SIGN_ENVELOPE_free(PKCS7_SIGN_ENVELOPE *a);
+PKCS7_SIGN_ENVELOPE *d2i_PKCS7_SIGN_ENVELOPE(PKCS7_SIGN_ENVELOPE **a, const unsigned char **in, long len);
+int i2d_PKCS7_SIGN_ENVELOPE(PKCS7_SIGN_ENVELOPE *a, unsigned char **out);
+extern const ASN1_ITEM PKCS7_SIGN_ENVELOPE_it;
+PKCS7_DIGEST *PKCS7_DIGEST_new(void);
+void PKCS7_DIGEST_free(PKCS7_DIGEST *a);
+PKCS7_DIGEST *d2i_PKCS7_DIGEST(PKCS7_DIGEST **a, const unsigned char **in, long len);
+int i2d_PKCS7_DIGEST(PKCS7_DIGEST *a, unsigned char **out);
+extern const ASN1_ITEM PKCS7_DIGEST_it;
+PKCS7_ENCRYPT *PKCS7_ENCRYPT_new(void);
+void PKCS7_ENCRYPT_free(PKCS7_ENCRYPT *a);
+PKCS7_ENCRYPT *d2i_PKCS7_ENCRYPT(PKCS7_ENCRYPT **a, const unsigned char **in, long len);
+int i2d_PKCS7_ENCRYPT(PKCS7_ENCRYPT *a, unsigned char **out);
+extern const ASN1_ITEM PKCS7_ENCRYPT_it;
+PKCS7 *PKCS7_new(void);
+void PKCS7_free(PKCS7 *a);
+PKCS7 *d2i_PKCS7(PKCS7 **a, const unsigned char **in, long len);
+int i2d_PKCS7(PKCS7 *a, unsigned char **out);
+extern const ASN1_ITEM PKCS7_it;
 
 DECLARE_ASN1_ITEM(PKCS7_ATTR_SIGN)
 DECLARE_ASN1_ITEM(PKCS7_ATTR_VERIFY)
