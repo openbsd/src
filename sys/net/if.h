@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.178 2016/09/03 13:46:57 reyk Exp $	*/
+/*	$OpenBSD: if.h,v 1.179 2016/09/04 15:10:59 reyk Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -485,6 +485,7 @@ void	if_congestion(void);
 int	if_congested(void);
 __dead void	unhandled_af(int);
 int	if_setlladdr(struct ifnet *, const uint8_t *);
+int	if_setrdomain(struct ifnet *, int);
 
 #endif /* _KERNEL */
 

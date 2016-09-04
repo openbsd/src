@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.441 2016/09/04 10:32:01 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.442 2016/09/04 15:10:59 reyk Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1606,6 +1606,65 @@ if_setlladdr(struct ifnet *ifp, const uint8_t *lladdr)
 	return (0);
 }
 
+int
+if_setrdomain(struct ifnet *ifp, int rdomain)
+{
+	struct ifreq ifr;
+	int s, error;
+
+	if (rdomain < 0 || rdomain > RT_TABLEID_MAX)
+		return (EINVAL);
+
+	/* make sure that the routing table exists */
+	if (!rtable_exists(rdomain)) {
+		s = splsoftnet();
+		if ((error = rtable_add(rdomain)) == 0)
+			rtable_l2set(rdomain, rdomain);
+		splx(s);
+		if (error)
+			return (error);
+	}
+
+	/* make sure that the routing table is a real rdomain */
+	if (rdomain != rtable_l2(rdomain))
+		return (EINVAL);
+
+	/* remove all routing entries when switching domains */
+	/* XXX this is a bit ugly */
+	if (rdomain != ifp->if_rdomain) {
+		s = splnet();
+		/*
+		 * We are tearing down the world.
+		 * Take down the IF so:
+		 * 1. everything that cares gets a message
+		 * 2. the automagic IPv6 bits are recreated
+		 */
+		if (ifp->if_flags & IFF_UP)
+			if_down(ifp);
+		rti_delete(ifp);
+#ifdef MROUTING
+		vif_delete(ifp);
+#endif
+		in_ifdetach(ifp);
+#ifdef INET6
+		in6_ifdetach(ifp);
+#endif
+		splx(s);
+	}
+
+	/* Let devices like enc(4) or mpe(4) know about the change */
+	ifr.ifr_rdomainid = rdomain;
+	if ((error = (*ifp->if_ioctl)(ifp, SIOCSIFRDOMAIN,
+	    (caddr_t)&ifr)) != ENOTTY)
+		return (error);
+	error = 0;
+
+	/* Add interface to the specified rdomain */
+	ifp->if_rdomain = rdomain;
+
+	return (0);
+}
+
 /*
  * Interface ioctls.
  */
@@ -1910,56 +1969,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSIFRDOMAIN:
 		if ((error = suser(p, 0)) != 0)
 			return (error);
-		if (ifr->ifr_rdomainid < 0 ||
-		    ifr->ifr_rdomainid > RT_TABLEID_MAX)
-			return (EINVAL);
-
-		/* make sure that the routing table exists */
-		if (!rtable_exists(ifr->ifr_rdomainid)) {
-			s = splsoftnet();
-			if ((error = rtable_add(ifr->ifr_rdomainid)) == 0)
-				rtable_l2set(ifr->ifr_rdomainid, ifr->ifr_rdomainid);
-			splx(s);
-			if (error)
-				return (error);
-		}
-
-		/* make sure that the routing table is a real rdomain */
-		if (ifr->ifr_rdomainid != rtable_l2(ifr->ifr_rdomainid))
-			return (EINVAL);
-
-		/* remove all routing entries when switching domains */
-		/* XXX hell this is ugly */
-		if (ifr->ifr_rdomainid != ifp->if_rdomain) {
-			s = splnet();
-			if (ifp->if_flags & IFF_UP)
-				up = 1;
-			/*
-			 * We are tearing down the world.
-			 * Take down the IF so:
-			 * 1. everything that cares gets a message
-			 * 2. the automagic IPv6 bits are recreated
-			 */
-			if (up)
-				if_down(ifp);
-			rti_delete(ifp);
-#ifdef MROUTING
-			vif_delete(ifp);
-#endif
-			in_ifdetach(ifp);
-#ifdef INET6
-			in6_ifdetach(ifp);
-#endif
-			splx(s);
-		}
-
-		/* Let devices like enc(4) or mpe(4) know about the change */
-		if ((error = (*ifp->if_ioctl)(ifp, cmd, data)) != ENOTTY)
+		if ((error = if_setrdomain(ifp, ifr->ifr_rdomainid)) != 0)
 			return (error);
-		error = 0;
-
-		/* Add interface to the specified rdomain */
-		ifp->if_rdomain = ifr->ifr_rdomainid;
 		break;
 
 	case SIOCAIFGROUP:
