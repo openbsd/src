@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.21 2016/06/05 15:12:56 jsg Exp $
+#	$OpenBSD: list,v 1.22 2016/09/04 09:54:22 rpe Exp $
 
 SRCDIRS distrib/special
 
@@ -100,9 +100,9 @@ SPECIAL	pwd_mkdb -p -d etc master.passwd; rm etc/master.passwd
 COPY	${DESTDIR}/etc/signify/openbsd-${REV}-base.pub	etc/signify/openbsd-${REV}-base.pub
 COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
 COPY	${CURDIR}/../../miniroot/services	etc/services
-SYMLINK	/tmp/fstab.shadow			etc/fstab
-SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
-SYMLINK	/tmp/hosts				etc/hosts
+SYMLINK	/tmp/i/fstab.shadow			etc/fstab
+SYMLINK	/tmp/i/resolv.conf.shadow		etc/resolv.conf
+SYMLINK	/tmp/i/hosts				etc/hosts
 TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
 
 # and the installation tools

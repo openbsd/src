@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.41 2016/09/03 10:57:11 rpe Exp $
+#	$OpenBSD: list,v 1.42 2016/09/04 09:54:22 rpe Exp $
 
 SRCDIRS distrib/special
 
@@ -74,9 +74,9 @@ COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
 COPY	${CURDIR}/../../miniroot/services	etc/services
 TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
 
-SYMLINK	/tmp/fstab.shadow			etc/fstab
-SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
-SYMLINK	/tmp/hosts				etc/hosts
+SYMLINK	/tmp/i/fstab.shadow			etc/fstab
+SYMLINK	/tmp/i/resolv.conf.shadow		etc/resolv.conf
+SYMLINK	/tmp/i/hosts				etc/hosts
 
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
