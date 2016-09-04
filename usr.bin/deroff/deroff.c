@@ -1,4 +1,4 @@
-/*	$OpenBSD: deroff.c,v 1.14 2016/03/16 15:41:10 krw Exp $	*/
+/*	$OpenBSD: deroff.c,v 1.15 2016/09/04 15:29:21 tb Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -342,7 +342,7 @@ main(int ac, char **av)
 	files[0] = infile;
 	filesp = &files[0];
 
-	for (i = 'a'; i <= 'z' ; ++i)
+	for (i = 'a'; i <= 'z'; ++i)
 		chars[i] = LETTER;
 	for (i = 'A'; i <= 'Z'; ++i)
 		chars[i] = LETTER;
@@ -951,7 +951,7 @@ meputmac(char *cp, int constant)
 					np++;
 					continue;
 				} else {
-					*np = ' '; 	/* bye bye " */
+					*np = ' ';	/* bye bye " */
 					goto endarg;
 				}
 
