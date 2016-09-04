@@ -1,4 +1,4 @@
-/* $OpenBSD: icdb.c,v 1.7 2016/09/04 14:51:39 nicm Exp $ */
+/* $OpenBSD: icdb.c,v 1.8 2016/09/04 16:56:02 nicm Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -14,14 +14,16 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <errno.h>
 #include <fcntl.h>
+#include <icdb.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <icdb.h>
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -120,10 +122,10 @@ icdb_new(uint32_t version, uint32_t nentries, uint32_t entrysize,
 	struct icdbinfo *info;
 	int i;
 
-	if (entrysize == 0 || entrysize > 1048576)
+	if (entrysize == 0 || entrysize > 1048576 || nkeys > 8) {
+		errno = EINVAL;
 		return NULL;
-	if (nkeys > 8)
-		return NULL;
+	}
 
 	if (!(db = calloc(1, sizeof(*db))))
 		return NULL;
@@ -156,7 +158,7 @@ icdb_open(const char *name, int flags, uint32_t version)
 	struct stat sb;
 	uint8_t *ptr = MAP_FAILED;
 	uint32_t baseoff, indexsize, idxmask, idxlen;
-	int fd, i;
+	int fd, i, saved_errno;
 
 	if ((fd = open(name, flags | O_CLOEXEC)) == -1)
 		return NULL;
@@ -169,10 +171,10 @@ icdb_open(const char *name, int flags, uint32_t version)
 	if (ptr == MAP_FAILED)
 		goto fail;
 	info = (struct icdbinfo *)ptr;
-	if (info->magic != magic)
+	if (info->magic != magic || info->version != version) {
+		errno = ENOENT;
 		goto fail;
-	if (info->version != version)
-		goto fail;
+	}
 
 	if (!(db = calloc(1, sizeof(*db))))
 		goto fail;
@@ -191,11 +193,13 @@ icdb_open(const char *name, int flags, uint32_t version)
 	return db;
 
 fail:
+	saved_errno = errno;
 	if (ptr != MAP_FAILED)
 		munmap(ptr, sb.st_size);
 	if (fd != -1)
 		close(fd);
 	free(db);
+	errno = saved_errno;
 	return NULL;
 }
 DEF_WEAK(icdb_open);
@@ -211,14 +215,15 @@ icdb_get(struct icdb *db, void *entry, uint32_t idx)
 DEF_WEAK(icdb_get);
 
 int
-icdb_lookup(struct icdb *db, int keynum, const void *key, void *entry, uint32_t *idxp)
+icdb_lookup(struct icdb *db, int keynum, const void *key, void *entry,
+    uint32_t *idxp)
 {
 	struct icdbinfo *info = db->info;
 	uint32_t offset;
 	uint64_t hash;
 	uint32_t indexsize, idxmask, idxlen;
 	uint32_t *idxdata;
-	
+
 	indexsize = info->indexsize;
 	idxmask = indexsize - 1;
 	idxlen = indexsize * sizeof(uint32_t);
@@ -227,8 +232,10 @@ icdb_lookup(struct icdb *db, int keynum, const void *key, void *entry, uint32_t 
 
 	hash = SipHash24(&info->siphashkey, key, info->keysize[keynum]);
 	while ((offset = idxdata[hash & idxmask]) != -1) {
-		if (icdb_get(db, entry, offset) != 0)
+		if (icdb_get(db, entry, offset) != 0) {
+			errno = ENOENT;
 			return -1;
+		}
 		if (memcmp((uint8_t *)entry + info->keyoffset[keynum], key,
 		    info->keysize[keynum]) == 0) {
 			if (idxp)
@@ -262,16 +269,17 @@ icdb_update(struct icdb *db, const void *entry, int offset)
 	uint32_t entrysize = info->entrysize;
 	uint32_t baseoff;
 	uint32_t indexsize, idxmask, idxlen;
-	
+
 	indexsize = info->indexsize;
 	idxmask = indexsize - 1;
 	idxlen = indexsize * sizeof(uint32_t);
 	baseoff = sizeof(*info) + idxlen * info->nkeys;
 
-	memcpy((uint8_t *)db->entries + offset * entrysize,
-	    entry, entrysize);
-	if (db->fd != -1)
-		msync(db->entries + offset * entrysize, entrysize, MS_SYNC);
+	memcpy((uint8_t *)db->entries + offset * entrysize, entry, entrysize);
+	if (db->fd != -1) {
+		msync((uint8_t *)db->entries + offset * entrysize, entrysize,
+		    MS_SYNC);
+	}
 	return 0;
 }
 DEF_WEAK(icdb_update);
@@ -304,7 +312,7 @@ icdb_rehash(struct icdb *db)
 	uint32_t entrysize = info->entrysize;
 	uint32_t indexsize, idxmask, idxlen;
 	int i, j;
-	
+
 	indexsize = info->indexsize = roundup(info->nentries);
 	idxmask = indexsize - 1;
 	idxlen = sizeof(uint32_t) * indexsize;
@@ -341,10 +349,10 @@ icdb_save(struct icdb *db, int fd)
 	uint32_t entrysize = info->entrysize;
 	uint32_t indexsize, idxlen;
 	int i;
-	
+
 	if (icdb_rehash(db) != 0)
 		return -1;
-	
+
 	indexsize = info->indexsize;
 	idxlen = sizeof(uint32_t) * indexsize;
 
