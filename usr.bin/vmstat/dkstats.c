@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.38 2015/12/24 03:25:08 mmcc Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.39 2016/09/04 14:21:05 tb Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -235,32 +235,32 @@ dkreadstats(void)
 					last.dk_time[i] = last.dk_time[j];
 				}
 
-				cur.dk_select = realloc(cur.dk_select,
-				    dk_ndrive * sizeof(*cur.dk_select));
-				cur.dk_rxfer = realloc(cur.dk_rxfer,
-				    dk_ndrive * sizeof(*cur.dk_rxfer));
-				cur.dk_wxfer = realloc(cur.dk_wxfer,
-				    dk_ndrive * sizeof(*cur.dk_wxfer));
-				cur.dk_seek = realloc(cur.dk_seek,
-				    dk_ndrive * sizeof(*cur.dk_seek));
-				cur.dk_rbytes = realloc(cur.dk_rbytes,
-				    dk_ndrive * sizeof(*cur.dk_rbytes));
-				cur.dk_wbytes = realloc(cur.dk_wbytes,
-				    dk_ndrive * sizeof(*cur.dk_wbytes));
-				cur.dk_time = realloc(cur.dk_time,
-				    dk_ndrive * sizeof(*cur.dk_time));
-				last.dk_rxfer = realloc(last.dk_rxfer,
-				    dk_ndrive * sizeof(*last.dk_rxfer));
-				last.dk_wxfer = realloc(last.dk_wxfer,
-				    dk_ndrive * sizeof(*last.dk_wxfer));
-				last.dk_seek = realloc(last.dk_seek,
-				    dk_ndrive * sizeof(*last.dk_seek));
-				last.dk_rbytes = realloc(last.dk_rbytes,
-				    dk_ndrive * sizeof(*last.dk_rbytes));
-				last.dk_wbytes = realloc(last.dk_wbytes,
-				    dk_ndrive * sizeof(*last.dk_wbytes));
-				last.dk_time = realloc(last.dk_time,
-				    dk_ndrive * sizeof(*last.dk_time));
+				cur.dk_select = reallocarray(cur.dk_select,
+				    dk_ndrive, sizeof(*cur.dk_select));
+				cur.dk_rxfer = reallocarray(cur.dk_rxfer,
+				    dk_ndrive, sizeof(*cur.dk_rxfer));
+				cur.dk_wxfer = reallocarray(cur.dk_wxfer,
+				    dk_ndrive, sizeof(*cur.dk_wxfer));
+				cur.dk_seek = reallocarray(cur.dk_seek,
+				    dk_ndrive, sizeof(*cur.dk_seek));
+				cur.dk_rbytes = reallocarray(cur.dk_rbytes,
+				    dk_ndrive, sizeof(*cur.dk_rbytes));
+				cur.dk_wbytes = reallocarray(cur.dk_wbytes,
+				    dk_ndrive, sizeof(*cur.dk_wbytes));
+				cur.dk_time = reallocarray(cur.dk_time,
+				    dk_ndrive, sizeof(*cur.dk_time));
+				last.dk_rxfer = reallocarray(last.dk_rxfer,
+				    dk_ndrive, sizeof(*last.dk_rxfer));
+				last.dk_wxfer = reallocarray(last.dk_wxfer,
+				    dk_ndrive, sizeof(*last.dk_wxfer));
+				last.dk_seek = reallocarray(last.dk_seek,
+				    dk_ndrive, sizeof(*last.dk_seek));
+				last.dk_rbytes = reallocarray(last.dk_rbytes,
+				    dk_ndrive, sizeof(*last.dk_rbytes));
+				last.dk_wbytes = reallocarray(last.dk_wbytes,
+				    dk_ndrive, sizeof(*last.dk_wbytes));
+				last.dk_time = reallocarray(last.dk_time,
+				    dk_ndrive, sizeof(*last.dk_time));
 
 				if (!cur.dk_select || !cur.dk_rxfer ||
 				    !cur.dk_wxfer || !cur.dk_seek ||
@@ -271,32 +271,32 @@ dkreadstats(void)
 				    !last.dk_time)
 					errx(1, "Memory allocation failure.");
 			} else {
-				cur.dk_select = realloc(cur.dk_select,
-				    dk_ndrive * sizeof(*cur.dk_select));
-				cur.dk_rxfer = realloc(cur.dk_rxfer,
-				    dk_ndrive * sizeof(*cur.dk_rxfer));
-				cur.dk_wxfer = realloc(cur.dk_wxfer,
-				    dk_ndrive * sizeof(*cur.dk_wxfer));
-				cur.dk_seek = realloc(cur.dk_seek,
-				    dk_ndrive * sizeof(*cur.dk_seek));
-				cur.dk_rbytes = realloc(cur.dk_rbytes,
-				    dk_ndrive * sizeof(*cur.dk_rbytes));
-				cur.dk_wbytes = realloc(cur.dk_wbytes,
-				    dk_ndrive * sizeof(*cur.dk_wbytes));
-				cur.dk_time = realloc(cur.dk_time,
-				    dk_ndrive * sizeof(*cur.dk_time));
-				last.dk_rxfer = realloc(last.dk_rxfer,
-				    dk_ndrive * sizeof(*last.dk_rxfer));
-				last.dk_wxfer = realloc(last.dk_wxfer,
-				    dk_ndrive * sizeof(*last.dk_wxfer));
-				last.dk_seek = realloc(last.dk_seek,
-				    dk_ndrive * sizeof(*last.dk_seek));
-				last.dk_rbytes = realloc(last.dk_rbytes,
-				    dk_ndrive * sizeof(*last.dk_rbytes));
-				last.dk_wbytes = realloc(last.dk_wbytes,
-				    dk_ndrive * sizeof(*last.dk_wbytes));
-				last.dk_time = realloc(last.dk_time,
-				    dk_ndrive * sizeof(*last.dk_time));
+				cur.dk_select = reallocarray(cur.dk_select,
+				    dk_ndrive, sizeof(*cur.dk_select));
+				cur.dk_rxfer = reallocarray(cur.dk_rxfer,
+				    dk_ndrive, sizeof(*cur.dk_rxfer));
+				cur.dk_wxfer = reallocarray(cur.dk_wxfer,
+				    dk_ndrive, sizeof(*cur.dk_wxfer));
+				cur.dk_seek = reallocarray(cur.dk_seek,
+				    dk_ndrive, sizeof(*cur.dk_seek));
+				cur.dk_rbytes = reallocarray(cur.dk_rbytes,
+				    dk_ndrive, sizeof(*cur.dk_rbytes));
+				cur.dk_wbytes = reallocarray(cur.dk_wbytes,
+				    dk_ndrive, sizeof(*cur.dk_wbytes));
+				cur.dk_time = reallocarray(cur.dk_time,
+				    dk_ndrive, sizeof(*cur.dk_time));
+				last.dk_rxfer = reallocarray(last.dk_rxfer,
+				    dk_ndrive, sizeof(*last.dk_rxfer));
+				last.dk_wxfer = reallocarray(last.dk_wxfer,
+				    dk_ndrive, sizeof(*last.dk_wxfer));
+				last.dk_seek = reallocarray(last.dk_seek,
+				    dk_ndrive, sizeof(*last.dk_seek));
+				last.dk_rbytes = reallocarray(last.dk_rbytes,
+				    dk_ndrive, sizeof(*last.dk_rbytes));
+				last.dk_wbytes = reallocarray(last.dk_wbytes,
+				    dk_ndrive, sizeof(*last.dk_wbytes));
+				last.dk_time = reallocarray(last.dk_time,
+				    dk_ndrive, sizeof(*last.dk_time));
 
 				if (!cur.dk_select || !cur.dk_rxfer ||
 				    !cur.dk_wxfer || !cur.dk_seek ||
