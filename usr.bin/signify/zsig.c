@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.9 2016/09/03 20:52:53 espie Exp $ */
+/* $OpenBSD: zsig.c,v 1.10 2016/09/04 17:00:22 espie Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -204,7 +204,7 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 
 	bufend = readgz_header(&h, fdin);
 	if (!(h.flg & FCOMMENT_FLAG))
-		errx(1, "%s is an unsigned archive", sigfile);
+		errx(1, "unsigned gzip archive");
 	fake[8] = h.xflg;
 
 	p = verifyzdata(h.comment, h.endcomment-h.comment, sigfile,
