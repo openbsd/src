@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.20 2016/09/03 12:42:42 beck Exp $
+# $OpenBSD: Makefile,v 1.21 2016/09/04 09:54:25 natano Exp $
 
 SUBDIR= man
 PC_FILES=openssl.pc libssl.pc
@@ -48,10 +48,12 @@ includes:
 
 .include <bsd.lib.mk>
 
-beforeinstall:
+${PC_FILES}: ${.CURDIR}/../libcrypto/opensslv.h
+	/bin/sh ${.CURDIR}/generate_pkgconfig.sh -c ${.CURDIR} -o ${.OBJDIR}
+
+beforeinstall: ${PC_FILES}
 	nm -o lib${LIB}.a | egrep -w 'printf|fprintf' && \
 	    (echo please fix stdio usage in this library; false) || true
-	/bin/sh ${.CURDIR}/generate_pkgconfig.sh -c ${.CURDIR} -o ${.OBJDIR}
 .for p in ${PC_FILES}
 	${INSTALL} ${INSTALL_COPY} -o root -g ${SHAREGRP} \
 	    -m ${SHAREMODE} ${.OBJDIR}/$p ${DESTDIR}/usr/lib/pkgconfig/

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2016/03/30 06:38:42 jmc Exp $
+#	$OpenBSD: Makefile,v 1.9 2016/09/04 09:54:25 natano Exp $
 
 LIB=	fuse
 MAN=	fuse_main.3
@@ -29,8 +29,10 @@ includes:
 	        eval "$$j"; \
 	done
 
-beforeinstall:
+${PC_FILES}: fuse_private.h
 	/bin/sh ${.CURDIR}/generate_pkgconfig.sh -c ${.CURDIR} -o ${.OBJDIR}
+
+beforeinstall: ${PC_FILES}
 	${INSTALL} ${INSTALL_COPY} -o root -g ${SHAREGRP} \
 	    -m ${SHAREMODE} ${.OBJDIR}/${PC_FILES} ${DESTDIR}/usr/lib/pkgconfig/
 
