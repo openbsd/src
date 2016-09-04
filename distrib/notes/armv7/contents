@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.10 2015/12/30 23:48:59 rpe Exp $
+dnl	$OpenBSD: contents,v 1.11 2016/09/04 10:06:11 jsg Exp $
 TopPart
 
 	miniroot-am335x-{:--:}OSrev.fs
@@ -11,7 +11,7 @@ TopPart
 
 	miniroot-cubie-{:--:}OSrev.fs
 			A miniroot filesystem to be used for
-			installation; Cubieboard1 version.
+			installation; Cubieboard2 version.
 
 	miniroot-cubox-{:--:}OSrev.fs
 			A miniroot filesystem to be used for

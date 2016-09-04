@@ -1,7 +1,7 @@
 BOARD=	cubie
 PLATFORM=SUNXI
-UBOOT=	Cubieboard
+UBOOT=	Cubieboard2
 DTBS=\
-	sun4i-a10-cubieboard.dtb
+	sun7i-a20-cubieboard2.dtb
 
 .include "${.CURDIR}/../Makefile.inc"
