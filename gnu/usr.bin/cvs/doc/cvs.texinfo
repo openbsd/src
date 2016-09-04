@@ -2588,7 +2588,7 @@ might be possible to modify @sc{cvs} to prevent that,
 but no one has done so as of this writing.
 @c OpenBSD uses chroot() and copies the repository to
 @c provide anonymous read-only access (for details see
-@c http://www.openbsd.org/anoncvs.shar).  While this
+@c https://www.openbsd.org/anoncvs.shar).  While this
 @c closes the most obvious holes, I'm not sure it
 @c closes enough holes to recommend it (plus it is
 @c *very* easy to accidentally screw up a setup of this
