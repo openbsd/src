@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.h,v 1.13 2014/07/08 09:27:21 jsing Exp $ */
+/* $OpenBSD: pkcs12.h,v 1.14 2016/09/04 17:19:33 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -234,10 +234,26 @@ unsigned char *OPENSSL_asc2uni(const char *asc, int asclen,
     unsigned char **uni, int *unilen);
 char *OPENSSL_uni2asc(unsigned char *uni, int unilen);
 
-DECLARE_ASN1_FUNCTIONS(PKCS12)
-DECLARE_ASN1_FUNCTIONS(PKCS12_MAC_DATA)
-DECLARE_ASN1_FUNCTIONS(PKCS12_SAFEBAG)
-DECLARE_ASN1_FUNCTIONS(PKCS12_BAGS)
+PKCS12 *PKCS12_new(void);
+void PKCS12_free(PKCS12 *a);
+PKCS12 *d2i_PKCS12(PKCS12 **a, const unsigned char **in, long len);
+int i2d_PKCS12(PKCS12 *a, unsigned char **out);
+extern const ASN1_ITEM PKCS12_it;
+PKCS12_MAC_DATA *PKCS12_MAC_DATA_new(void);
+void PKCS12_MAC_DATA_free(PKCS12_MAC_DATA *a);
+PKCS12_MAC_DATA *d2i_PKCS12_MAC_DATA(PKCS12_MAC_DATA **a, const unsigned char **in, long len);
+int i2d_PKCS12_MAC_DATA(PKCS12_MAC_DATA *a, unsigned char **out);
+extern const ASN1_ITEM PKCS12_MAC_DATA_it;
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_new(void);
+void PKCS12_SAFEBAG_free(PKCS12_SAFEBAG *a);
+PKCS12_SAFEBAG *d2i_PKCS12_SAFEBAG(PKCS12_SAFEBAG **a, const unsigned char **in, long len);
+int i2d_PKCS12_SAFEBAG(PKCS12_SAFEBAG *a, unsigned char **out);
+extern const ASN1_ITEM PKCS12_SAFEBAG_it;
+PKCS12_BAGS *PKCS12_BAGS_new(void);
+void PKCS12_BAGS_free(PKCS12_BAGS *a);
+PKCS12_BAGS *d2i_PKCS12_BAGS(PKCS12_BAGS **a, const unsigned char **in, long len);
+int i2d_PKCS12_BAGS(PKCS12_BAGS *a, unsigned char **out);
+extern const ASN1_ITEM PKCS12_BAGS_it;
 
 DECLARE_ASN1_ITEM(PKCS12_SAFEBAGS)
 DECLARE_ASN1_ITEM(PKCS12_AUTHSAFES)
