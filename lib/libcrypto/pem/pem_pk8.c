@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_pk8.c,v 1.11 2016/09/04 15:53:03 jsing Exp $ */
+/* $OpenBSD: pem_pk8.c,v 1.12 2016/09/04 16:10:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -250,19 +250,24 @@ d2i_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY **x, pem_password_cb *cb, void *u)
 	return ret;
 }
 
+X509_SIG *
+PEM_read_PKCS8(FILE *fp, X509_SIG **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read((d2i_of_void *)d2i_X509_SIG, PEM_STRING_PKCS8, fp,
+	    (void **)x, cb, u);
+}
 
+int
+PEM_write_PKCS8(FILE *fp, X509_SIG *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_X509_SIG, PEM_STRING_PKCS8, fp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
 
 X509_SIG *
 PEM_read_bio_PKCS8(BIO *bp, X509_SIG **x, pem_password_cb *cb, void *u)
 {
 	return PEM_ASN1_read_bio((d2i_of_void *)d2i_X509_SIG, PEM_STRING_PKCS8, bp,
-	    (void **)x, cb, u);
-}
-
-X509_SIG *
-PEM_read_PKCS8(FILE *fp, X509_SIG **x, pem_password_cb *cb, void *u)
-{
-	return PEM_ASN1_read((d2i_of_void *)d2i_X509_SIG, PEM_STRING_PKCS8, fp,
 	    (void **)x, cb, u);
 }
 
@@ -273,10 +278,17 @@ PEM_write_bio_PKCS8(BIO *bp, X509_SIG *x)
 	    x, NULL, NULL, 0, NULL, NULL);
 }
 
-int
-PEM_write_PKCS8(FILE *fp, X509_SIG *x)
+PKCS8_PRIV_KEY_INFO *
+PEM_read_PKCS8_PRIV_KEY_INFO(FILE *fp, PKCS8_PRIV_KEY_INFO **x, pem_password_cb *cb, void *u)
 {
-	return PEM_ASN1_write((i2d_of_void *)i2d_X509_SIG, PEM_STRING_PKCS8, fp,
+	return PEM_ASN1_read((d2i_of_void *)d2i_PKCS8_PRIV_KEY_INFO, PEM_STRING_PKCS8INF, fp,
+	    (void **)x, cb, u);
+}
+
+int
+PEM_write_PKCS8_PRIV_KEY_INFO(FILE *fp, PKCS8_PRIV_KEY_INFO *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_PKCS8_PRIV_KEY_INFO, PEM_STRING_PKCS8INF, fp,
 	    x, NULL, NULL, 0, NULL, NULL);
 }
 
@@ -287,23 +299,9 @@ PEM_read_bio_PKCS8_PRIV_KEY_INFO(BIO *bp, PKCS8_PRIV_KEY_INFO **x, pem_password_
 	    (void **)x, cb, u);
 }
 
-PKCS8_PRIV_KEY_INFO *
-PEM_read_PKCS8_PRIV_KEY_INFO(FILE *fp, PKCS8_PRIV_KEY_INFO **x, pem_password_cb *cb, void *u)
-{
-	return PEM_ASN1_read((d2i_of_void *)d2i_PKCS8_PRIV_KEY_INFO, PEM_STRING_PKCS8INF, fp,
-	    (void **)x, cb, u);
-}
-
 int
 PEM_write_bio_PKCS8_PRIV_KEY_INFO(BIO *bp, PKCS8_PRIV_KEY_INFO *x)
 {
 	return PEM_ASN1_write_bio((i2d_of_void *)i2d_PKCS8_PRIV_KEY_INFO, PEM_STRING_PKCS8INF, bp,
-	    x, NULL, NULL, 0, NULL, NULL);
-}
-
-int
-PEM_write_PKCS8_PRIV_KEY_INFO(FILE *fp, PKCS8_PRIV_KEY_INFO *x)
-{
-	return PEM_ASN1_write((i2d_of_void *)i2d_PKCS8_PRIV_KEY_INFO, PEM_STRING_PKCS8INF, fp,
 	    x, NULL, NULL, 0, NULL, NULL);
 }

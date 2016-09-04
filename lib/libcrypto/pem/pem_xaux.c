@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_xaux.c,v 1.8 2016/09/04 15:53:03 jsing Exp $ */
+/* $OpenBSD: pem_xaux.c,v 1.9 2016/09/04 16:10:38 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -66,16 +66,23 @@
 
 
 X509 *
-PEM_read_bio_X509_AUX(BIO *bp, X509 **x, pem_password_cb *cb, void *u)
-{
-	return PEM_ASN1_read_bio((d2i_of_void *)d2i_X509_AUX, PEM_STRING_X509_TRUSTED, bp,
-	    (void **)x, cb, u);
-}
-
-X509 *
 PEM_read_X509_AUX(FILE *fp, X509 **x, pem_password_cb *cb, void *u)
 {
 	return PEM_ASN1_read((d2i_of_void *)d2i_X509_AUX, PEM_STRING_X509_TRUSTED, fp,
+	    (void **)x, cb, u);
+}
+
+int
+PEM_write_X509_AUX(FILE *fp, X509 *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_X509_AUX, PEM_STRING_X509_TRUSTED, fp,
+	    x, NULL, NULL, 0, NULL, NULL);
+}
+
+X509 *
+PEM_read_bio_X509_AUX(BIO *bp, X509 **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read_bio((d2i_of_void *)d2i_X509_AUX, PEM_STRING_X509_TRUSTED, bp,
 	    (void **)x, cb, u);
 }
 
@@ -86,10 +93,17 @@ PEM_write_bio_X509_AUX(BIO *bp, X509 *x)
 	    x, NULL, NULL, 0, NULL, NULL);
 }
 
-int
-PEM_write_X509_AUX(FILE *fp, X509 *x)
+X509_CERT_PAIR *
+PEM_read_X509_CERT_PAIR(FILE *fp, X509_CERT_PAIR **x, pem_password_cb *cb, void *u)
 {
-	return PEM_ASN1_write((i2d_of_void *)i2d_X509_AUX, PEM_STRING_X509_TRUSTED, fp,
+	return PEM_ASN1_read((d2i_of_void *)d2i_X509_CERT_PAIR, PEM_STRING_X509_PAIR, fp,
+	    (void **)x, cb, u);
+}
+
+int
+PEM_write_X509_CERT_PAIR(FILE *fp, X509_CERT_PAIR *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_X509_CERT_PAIR, PEM_STRING_X509_PAIR, fp,
 	    x, NULL, NULL, 0, NULL, NULL);
 }
 
@@ -100,23 +114,9 @@ PEM_read_bio_X509_CERT_PAIR(BIO *bp, X509_CERT_PAIR **x, pem_password_cb *cb, vo
 	    (void **)x, cb, u);
 }
 
-X509_CERT_PAIR *
-PEM_read_X509_CERT_PAIR(FILE *fp, X509_CERT_PAIR **x, pem_password_cb *cb, void *u)
-{
-	return PEM_ASN1_read((d2i_of_void *)d2i_X509_CERT_PAIR, PEM_STRING_X509_PAIR, fp,
-	    (void **)x, cb, u);
-}
-
 int
 PEM_write_bio_X509_CERT_PAIR(BIO *bp, X509_CERT_PAIR *x)
 {
 	return PEM_ASN1_write_bio((i2d_of_void *)i2d_X509_CERT_PAIR, PEM_STRING_X509_PAIR, bp,
-	    x, NULL, NULL, 0, NULL, NULL);
-}
-
-int
-PEM_write_X509_CERT_PAIR(FILE *fp, X509_CERT_PAIR *x)
-{
-	return PEM_ASN1_write((i2d_of_void *)i2d_X509_CERT_PAIR, PEM_STRING_X509_PAIR, fp,
 	    x, NULL, NULL, 0, NULL, NULL);
 }
