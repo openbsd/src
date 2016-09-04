@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.126 2016/09/04 12:08:49 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.127 2016/09/04 12:51:44 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -308,11 +308,17 @@ sub did_it_fork
 sub uncompress
 {
 	my $self = shift;
+	my $object = shift;
 	require IO::Uncompress::Gunzip;
-	return IO::Uncompress::Gunzip->new(@_, MultiStream => 1);
+	my $fh = IO::Uncompress::Gunzip->new(@_, MultiStream => 1);
+	if (!$fh->getHeaderInfo) {
+		print STDERR "Bad signed package ", 
+		    $self->url($object->{name}), "\n";
+	}
+	return $fh;
 }
 
-sub checksigpipe
+sub signify_pipe
 {
 	my $self = shift;
 	CORE::open STDERR, ">", "/dev/null";
@@ -323,12 +329,17 @@ sub checksigpipe
     	exit(1);
 }
 
-sub checksigned
+sub check_signed
 {
-	my $self = shift;
+	my ($self, $object) = @_;
 	# XXX not yet
 	return 0;
-#	return !$self->{state}->defines('unsigned');
+	if ($self->{state}->defines('unsigned')) {
+		return 0;
+	} else {
+		$object->{is_signed} = 1;
+		return 1;
+	}
 }
 
 package OpenBSD::PackageRepository::Local;
@@ -391,18 +402,18 @@ sub open_pipe
 	if (defined $ENV{'PKG_CACHE'}) {
 		$self->may_copy($object, $ENV{'PKG_CACHE'});
 	}
-	if ($self->checksigned) {
+	my $name = $self->relative_url($object->{name});
+	if ($self->check_signed($object)) {
 		my $pid = open(my $fh, "-|");
 		$self->did_it_fork($pid);
 		if ($pid) {
 			$object->{pid} = $pid;
-			return $self->uncompress($fh);
+			return $self->uncompress($object, $fh);
 		} else {
-			$self->checksigpipe( "-x", 
-				$self->relative_url($object->{name}));
+			$self->signify_pipe( "-x", $name);
 		}
 	} else {
-		return $self->uncompress($self->relative_url($object->{name}));
+		return $self->uncompress($object, $name);
 	}
 }
 
@@ -465,17 +476,17 @@ sub new
 sub open_pipe
 {
 	my ($self, $object) = @_;
-	if ($self->checksigned) {
+	if ($self->check_signed($object)) {
 		my $pid = open(my $fh, "-|");
 		$self->did_it_fork($pid);
 		if ($pid) {
 			$object->{pid} = $pid;
-			return $fh;
+			return $self->uncompress_signed($object, $fh);
 		} else {
-			$self->checksigpipe;
+			$self->signify_pipe;
 		}
     	} else {
-		return $self->uncompress(\*STDIN);
+		return $self->uncompress($object, \*STDIN);
 	}
 }
 
@@ -614,7 +625,7 @@ sub open_pipe
 		exit(0);
 	}
 
-	if ($self->checksigned) {
+	if ($self->check_signed($object)) {
 		my $pid = open(my $fh, "-|");
 		$self->did_it_fork($pid);
 		if ($pid) {
@@ -624,12 +635,12 @@ sub open_pipe
 			open(STDIN, '<&', $rdfh) or
 			    $self->{state}->fatal("Bad dup: #1", $!);
 			close($rdfh);
-			$self->checksigpipe;
+			$self->signify_pipe;
 		}
 
-		return $self->uncompress($fh);
+		return $self->uncompress($object, $fh);
 	} else {
-		return $self->uncompress($rdfh);
+		return $self->uncompress($object, $rdfh);
 	}
 }
 

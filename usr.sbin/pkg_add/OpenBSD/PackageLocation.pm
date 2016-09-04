@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.46 2016/09/04 12:08:49 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.47 2016/09/04 12:51:44 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -128,13 +128,9 @@ sub store_end_of_stream
 sub signing_info
 {
 	my $self = shift;
-	my $comment;
 	my $result = "";
-	eval {
-		$comment = $self->{fh}->getHeaderInfo->{Comment};
-	};
-	if (defined $comment) {
-		for my $line (split /\n/, $comment) {
+	if ($self->{is_signed}) {
+		for my $line (split /\n/, $self->{fh}->getHeaderInfo->{Comment}) {
 			if ($line =~ m/^key=.*\/(.*)\.sec$/) {
 				$result .= "\@signer $1\n";
 			} elsif ($line =~ m/^date=(.*)$/) {
@@ -152,9 +148,8 @@ sub find_contents
 	while (my $e = $self->next) {
 		if ($e->isFile && is_info_name($e->{name})) {
 			if ($e->{name} eq CONTENTS ) {
-				# XXX not yet
-				#my $v = $self->signing_info.$e->contents($extra);
-				my $v = $e->contents($extra);
+				my $v = 
+				    $self->signing_info.$e->contents($extra);
 				$self->store_end_of_stream;
 				return $v;
 			}
