@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.258 2016/06/28 04:41:37 jmatthew Exp $g
+#	$OpenBSD: GENERIC,v 1.259 2016/09/04 10:22:06 tedu Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -58,7 +58,6 @@ vgafb0		at pci?		# PCI VGA graphics
 #ne*		at pci?		# NE2000-compatible Ethernet
 #adv*		at pci?		# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*		at pci?		# Adaptec 294x, aic78x0 SCSI
-#bha*		at pci?		# BusLogic 9xx SCSI
 #ami*		at pci?
 pcscp*		at pci?		# AMD Am53c974 PCscsi-PCI SCSI
 qlw*		at pci?		# QLogic ISP SCSI

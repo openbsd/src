@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.230 2016/09/03 21:37:29 tedu Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.231 2016/09/04 10:22:06 tedu Exp $
 
 machine		i386
 maxusers	4
@@ -127,8 +127,6 @@ com2		at isa? port 0x3e8 irq 5
 com*		at pcmcia?			# PCMCIA modem cards
 com*		at isapnp?
 
-bha0		at isa? port 0x330	# BusLogic [57]4X SCSI controllers
-bha*		at pci?
 ahc*		at eisa?		# Adaptec 274x, aic7770 SCSI controllers
 ahc*		at pci?			# Adaptec 2940/3940/78?? SCSI controllers
 jmb*		at pci?			# JMicron JMB36x controllers

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.172 2016/09/03 21:37:29 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.173 2016/09/04 10:22:06 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -243,9 +243,6 @@ pms*	at gsckbc?		# PS/2 mouse
 #ahc*	at eisa?		# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
 mpi*	at pci?			# LSI Logic Fusion MPT Message Passing Interface
-#option	BHADEBUG
-#bha*	at eisa?
-#bha*	at pci?
 qlw*	at pci?			# QLogic ISP SCSI
 qla*	at pci?			# QLogic ISP 2[123]xx FibreChannel
 qle*	at pci?			# QLogic ISP 2[45]xx FibreChannel

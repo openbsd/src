@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.431 2016/09/03 16:18:21 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.432 2016/09/04 10:22:05 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -368,7 +368,6 @@ lpt*	at puc?
 efifb0		at mainbus?		# EFI Framebuffer
 wsdisplay0	at efifb? console 1
 
-#bha*	at pci?				# BusLogic [57]4X SCSI controllers
 ahc*	at pci?				# Adaptec 2940 SCSI controllers
 jmb*	at pci?				# JMicron JMB36x controllers
 ahci*	at jmb? flags 0x0000		# flags 0x0001 to force SATA 1 (1.5Gb/s)
