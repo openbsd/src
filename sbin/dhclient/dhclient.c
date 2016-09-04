@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.386 2016/09/02 15:44:25 mpi Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.387 2016/09/04 11:21:24 jca Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -99,7 +99,7 @@ char path_option_db[PATH_MAX];
 
 int log_perror = 1;
 int nullfd = -1;
-int no_daemon;
+int daemonize = 1;
 int unknown_ok = 1;
 int routefd = -1;
 
@@ -457,7 +457,8 @@ main(int argc, char *argv[])
 		case 'd':
 			if (log_perror == 0)
 				usage();
-			no_daemon = log_perror = 1;
+			daemonize = 0;
+			log_perror = 1;
 			break;
 		case 'i':
 			ignore_list = optarg;
@@ -479,9 +480,10 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'q':
-			if (no_daemon == 1)
+			if (daemonize == 0)
 				usage();
-			no_daemon = log_perror = 0;
+			daemonize = 1;
+			log_perror = 0;
 			break;
 		case 'u':
 			unknown_ok = 0;
@@ -641,11 +643,11 @@ main(int argc, char *argv[])
 
 	endpwent();
 
-	if (no_daemon) {
-		if (pledge("stdio inet dns route", NULL) == -1)
+	if (daemonize) {
+		if (pledge("stdio inet dns route proc", NULL) == -1)
 			error("pledge");
 	} else {
-		if (pledge("stdio inet dns route proc", NULL) == -1)
+		if (pledge("stdio inet dns route", NULL) == -1)
 			error("pledge");
 	}
 
@@ -2047,7 +2049,7 @@ go_daemon(void)
 {
 	static int state = 0;
 
-	if (no_daemon || state)
+	if (!daemonize || state)
 		return;
 
 	state = 1;
