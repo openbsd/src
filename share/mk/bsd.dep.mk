@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.dep.mk,v 1.11 2012/10/15 11:14:38 espie Exp $
+#	$OpenBSD: bsd.dep.mk,v 1.12 2016/09/04 00:34:29 patrick Exp $
 #	$NetBSD: bsd.dep.mk,v 1.12 1995/09/27 01:15:09 christos Exp $
 
 # some of the rules involve .h sources, so remove them from mkdep line
@@ -20,8 +20,9 @@ realdepend: _SUBDIRUSE
 	  echo mkdep -a ${MKDEP} ${CFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
 	  mkdep -a ${MKDEP} ${CFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
 	fi
-	@files="${.ALLSRC:M*.cc} ${.ALLSRC:M*.C} ${.ALLSRC:M*.cxx}"; \
-	if [ "$$files" != "  " ]; then \
+	@files="${.ALLSRC:M*.cc} ${.ALLSRC:M*.C} ${.ALLSRC:M*.cpp}"; \
+	files="$$files ${.ALLSRC:M*.cxx}"; \
+	if [ "$$files" != "   " ]; then \
 	  echo mkdep -a ${MKDEP} ${CXXFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
 	  mkdep -a ${MKDEP} ${CXXFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
 	fi
