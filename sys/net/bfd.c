@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.16 2016/09/04 09:39:01 claudio Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.17 2016/09/04 11:34:56 claudio Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -217,7 +217,7 @@ bfd_rtalloc(struct rtentry *rt)
 		goto fail;
 
 	sc->sc_rt = rt;
-//	rtref(sc->sc_rt);	/* we depend on this route not going away */
+	rtref(sc->sc_rt);	/* we depend on this route not going away */
 
 	bfd_reset(sc);
 	sc->sc_peer->LocalDiscr = arc4random();	/* XXX - MUST be globally unique */
@@ -266,9 +266,12 @@ bfd_rtfree(struct rtentry *rt)
 
 	if (sc->sc_so)
 		soclose(sc->sc_so);
-	sc->sc_so = NULL;
+	if (sc->sc_soecho)
+		soclose(sc->sc_soecho);
+	if (sc->sc_sosend)
+		soclose(sc->sc_sosend);
 
-//	rtfree(sc->sc_rt);
+	rtfree(sc->sc_rt);
 
 	pool_put(&bfd_pool_peer, sc->sc_peer);
 	pool_put(&bfd_pool, sc);
