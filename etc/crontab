@@ -1,4 +1,4 @@
-#	$OpenBSD: crontab,v 1.21 2014/09/15 22:28:58 matthieu Exp $
+#	$OpenBSD: crontab,v 1.22 2016/09/04 09:37:26 tb Exp $
 #
 # /var/cron/tabs/root - root's crontab
 #
@@ -17,4 +17,4 @@ HOME=/var/log
 30	1	*	*	*	/bin/sh /etc/daily
 30	3	*	*	6	/bin/sh /etc/weekly
 30	5	1	*	*	/bin/sh /etc/monthly
-#0	*	*	*	*	sleep $((RANDOM \% 1800)) && /usr/libexec/spamd-setup
+#0	*	*	*	*	sleep $((RANDOM \% 2048)) && /usr/libexec/spamd-setup
