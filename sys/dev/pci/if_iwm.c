@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.118 2016/09/04 10:40:59 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.119 2016/09/04 10:54:17 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -408,14 +408,9 @@ int	iwm_mvm_umac_scan(struct iwm_softc *);
 void	iwm_mvm_ack_rates(struct iwm_softc *, struct iwm_node *, int *, int *);
 void	iwm_mvm_mac_ctxt_cmd_common(struct iwm_softc *, struct iwm_node *,
 					struct iwm_mac_ctx_cmd *, uint32_t);
-int	iwm_mvm_mac_ctxt_send_cmd(struct iwm_softc *, struct iwm_mac_ctx_cmd *);
 void	iwm_mvm_mac_ctxt_cmd_fill_sta(struct iwm_softc *, struct iwm_node *,
 					struct iwm_mac_data_sta *, int);
-int	iwm_mvm_mac_ctxt_cmd_station(struct iwm_softc *, struct iwm_node *,
-					uint32_t);
-int	iwm_mvm_mac_ctx_send(struct iwm_softc *, struct iwm_node *, uint32_t);
-int	iwm_mvm_mac_ctxt_add(struct iwm_softc *, struct iwm_node *);
-int	iwm_mvm_mac_ctxt_changed(struct iwm_softc *, struct iwm_node *);
+int	iwm_mvm_mac_ctxt_cmd(struct iwm_softc *, struct iwm_node *, uint32_t);
 int	iwm_mvm_update_quotas(struct iwm_softc *, struct iwm_node *);
 int	iwm_auth(struct iwm_softc *);
 int	iwm_assoc(struct iwm_softc *);
@@ -2609,7 +2604,7 @@ iwm_htprot_task(void *arg)
 	int err;
 
 	/* This call updates HT protection based on in->in_ni.ni_htop1. */
-	err = iwm_mvm_mac_ctxt_changed(sc, in);
+	err = iwm_mvm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY);
 	if (err)
 		printf("%s: could not change HT protection: error %d\n",
 		    DEVNAME(sc), err);
@@ -5334,13 +5329,6 @@ iwm_mvm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 	cmd->filter_flags = htole32(IWM_MAC_FILTER_ACCEPT_GRP);
 }
 
-int
-iwm_mvm_mac_ctxt_send_cmd(struct iwm_softc *sc, struct iwm_mac_ctx_cmd *cmd)
-{
-	return iwm_mvm_send_cmd_pdu(sc, IWM_MAC_CONTEXT_CMD, 0,
-				       sizeof(*cmd), cmd);
-}
-
 /*
  * Fill the specific data for mac context of type station or p2p client
  */
@@ -5364,8 +5352,7 @@ iwm_mvm_mac_ctxt_cmd_fill_sta(struct iwm_softc *sc, struct iwm_node *in,
 }
 
 int
-iwm_mvm_mac_ctxt_cmd_station(struct iwm_softc *sc, struct iwm_node *in,
-	uint32_t action)
+iwm_mvm_mac_ctxt_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action)
 {
 	struct iwm_mac_ctx_cmd cmd;
 
@@ -5374,7 +5361,7 @@ iwm_mvm_mac_ctxt_cmd_station(struct iwm_softc *sc, struct iwm_node *in,
 	/* Fill the common data for all mac context types */
 	iwm_mvm_mac_ctxt_cmd_common(sc, in, &cmd, action);
 
-	/* Allow beacons to pass through as long as we are not associated,or we
+	/* Allow beacons to pass through as long as we are not associated or we
 	 * do not have dtim period information */
 	if (!in->in_assoc || !sc->sc_ic.ic_dtim_period)
 		cmd.filter_flags |= htole32(IWM_MAC_FILTER_IN_BEACON);
@@ -5385,62 +5372,9 @@ iwm_mvm_mac_ctxt_cmd_station(struct iwm_softc *sc, struct iwm_node *in,
 	iwm_mvm_mac_ctxt_cmd_fill_sta(sc, in,
 	    &cmd.sta, action == IWM_FW_CTXT_ACTION_ADD);
 
-	return iwm_mvm_mac_ctxt_send_cmd(sc, &cmd);
+	return iwm_mvm_send_cmd_pdu(sc, IWM_MAC_CONTEXT_CMD, 0, sizeof(cmd),
+	    &cmd);
 }
-
-int
-iwm_mvm_mac_ctx_send(struct iwm_softc *sc, struct iwm_node *in, uint32_t action)
-{
-	return iwm_mvm_mac_ctxt_cmd_station(sc, in, action);
-}
-
-int
-iwm_mvm_mac_ctxt_add(struct iwm_softc *sc, struct iwm_node *in)
-{
-	int ret;
-
-	ret = iwm_mvm_mac_ctx_send(sc, in, IWM_FW_CTXT_ACTION_ADD);
-	if (ret)
-		return ret;
-
-	return 0;
-}
-
-int
-iwm_mvm_mac_ctxt_changed(struct iwm_softc *sc, struct iwm_node *in)
-{
-	return iwm_mvm_mac_ctx_send(sc, in, IWM_FW_CTXT_ACTION_MODIFY);
-}
-
-#if 0
-int
-iwm_mvm_mac_ctxt_remove(struct iwm_softc *sc, struct iwm_node *in)
-{
-	struct iwm_mac_ctx_cmd cmd;
-	int ret;
-
-	if (!in->in_uploaded) {
-		print("%s: attempt to remove !uploaded node %p", DEVNAME(sc), in);
-		return EIO;
-	}
-
-	memset(&cmd, 0, sizeof(cmd));
-
-	cmd.id_and_color = htole32(IWM_FW_CMD_ID_AND_COLOR(in->in_id,
-	    in->in_color));
-	cmd.action = htole32(IWM_FW_CTXT_ACTION_REMOVE);
-
-	ret = iwm_mvm_send_cmd_pdu(sc,
-	    IWM_MAC_CONTEXT_CMD, 0, sizeof(cmd), &cmd);
-	if (ret) {
-		printf("%s: Failed to remove MAC context: %d\n", DEVNAME(sc), ret);
-		return ret;
-	}
-	in->in_uploaded = 0;
-
-	return 0;
-}
-#endif
 
 int
 iwm_mvm_update_quotas(struct iwm_softc *sc, struct iwm_node *in)
@@ -5546,7 +5480,7 @@ iwm_auth(struct iwm_softc *sc)
 	if (err)
 		return err;
 
-	err = iwm_mvm_mac_ctxt_changed(sc, in);
+	err = iwm_mvm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY);
 	if (err) {
 		printf("%s: failed to update MAC\n", DEVNAME(sc));
 		return err;
@@ -5577,7 +5511,7 @@ iwm_assoc(struct iwm_softc *sc)
 
 	in->in_assoc = 1;
 
-	err = iwm_mvm_mac_ctxt_changed(sc, in);
+	err = iwm_mvm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY);
 	if (err) {
 		printf("%s: failed to update MAC\n", DEVNAME(sc));
 		return err;
@@ -6253,7 +6187,7 @@ iwm_init_hw(struct iwm_softc *sc)
 	}
 
 	/* Add the MAC context. */
-	err = iwm_mvm_mac_ctxt_add(sc, in);
+	err = iwm_mvm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_ADD);
 	if (err) {
 		printf("%s: could not add MAC context (error %d)\n",
 		    DEVNAME(sc), err);
