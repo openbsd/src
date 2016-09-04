@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_ntop.c,v 1.3 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: inet_ntop.c,v 1.4 2016/09/04 17:05:24 claudio Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -57,6 +57,35 @@ inet_ntop(int af, const void *src, char *dst, socklen_t size)
 		return (NULL);
 	}
 	/* NOTREACHED */
+}
+
+const char *
+sockaddr_ntop(struct sockaddr *sa, char *dst, size_t size)
+{
+	u_int8_t l;
+	size_t n;
+
+	if (sa->sa_len < 2)
+		return "bad sa";
+	switch (sa->sa_family) {
+	case AF_INET:
+		return inet_ntop4((u_char *)&satosin(sa)->sin_addr, dst, size);
+#ifdef INET6
+	case AF_INET6:
+		return inet_ntop6((u_char *)&satosin6(sa)->sin6_addr, dst, size);
+#endif
+	default:
+		n = snprintf(dst, size, "%d ", sa->sa_family);
+		for (l = 0; l < sa->sa_len - offsetof(struct sockaddr, sa_data); l++) {
+			int r = snprintf(dst + n, size - n, "%02x", sa->sa_data[l]);
+			if (r == -1)
+				return "bad sa";
+			n += r;
+			if (n > size)
+				n = size;
+		}
+		return (dst);
+	}
 }
 
 /* const char *

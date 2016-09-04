@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.118 2016/08/16 22:21:17 vgross Exp $	*/
+/*	$OpenBSD: in.h,v 1.119 2016/09/04 17:05:24 claudio Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -798,6 +798,10 @@ extern	   struct niqueue ipintrq;	/* ip packet input queue */
 extern	   struct in_addr zeroin_addr;
 
 struct mbuf;
+struct sockaddr;
+struct sockaddr_in;
+struct ifaddr;
+struct in_ifaddr;
 
 int	   in_broadcast(struct in_addr, u_int);
 int	   in_canforward(struct in_addr);
@@ -813,14 +817,10 @@ int	   inet_nat64(int, const void *, void *, const void *, u_int8_t);
 int	   inet_nat46(int, const void *, void *, const void *, u_int8_t);
 
 const char *inet_ntop(int, const void *, char *, socklen_t);
+const char *sockaddr_ntop(struct sockaddr *, char *, size_t);
 
 #define	in_hosteq(s,t)	((s).s_addr == (t).s_addr)
 #define	in_nullhost(x)	((x).s_addr == INADDR_ANY)
-
-struct sockaddr;
-struct sockaddr_in;
-struct ifaddr;
-struct in_ifaddr;
 
 /*
  * Convert between address family specific and general structs.
