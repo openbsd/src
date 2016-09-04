@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.18 2016/09/04 13:24:27 claudio Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.19 2016/09/04 17:12:00 claudio Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -187,7 +187,6 @@ void	 bfd_reset(struct bfd_softc *);
 
 #ifdef DDB
 void	 bfd_debug(struct bfd_softc *);
-extern void db_print_sa(struct sockaddr *);	/* XXX - sys/net/route.c */
 #endif
 
 
@@ -264,10 +263,15 @@ bfd_rtfree(struct rtentry *rt)
 	if (rtisvalid(sc->sc_rt))
 		bfd_senddown(sc);
 
-	if (sc->sc_so)
+	if (sc->sc_so) {
+		/* remove upcall before calling soclose or it will be called */
+		sc->sc_so->so_upcall = NULL;
 		soclose(sc->sc_so);
-	if (sc->sc_soecho)
+	}
+	if (sc->sc_soecho) {
+		sc->sc_soecho->so_upcall = NULL;
 		soclose(sc->sc_soecho);
+	}
 	if (sc->sc_sosend)
 		soclose(sc->sc_sosend);
 
@@ -369,13 +373,22 @@ void
 bfd_send_task(void *arg)
 {
 	struct bfd_softc	*sc = (struct bfd_softc *)arg;
+	struct rtentry		*rt = sc->sc_rt;
 
-	/* add 70%-90% jitter to our transmits, rfc 5880 6.8.7 */
-	if (!timeout_pending(&sc->sc_timo_tx))
-		timeout_add_usec(&sc->sc_timo_tx,
-		    sc->mintx * (arc4random_uniform(20) + 70) / 100);
+	if (ISSET(rt->rt_flags, RTF_UP)) {
+		bfd_send_control(sc);
+	} else {
+		sc->error++;
+		sc->sc_peer->LocalDiag = BFD_DIAG_ADMIN_DOWN;
+		if (sc->sc_peer->SessionState > BFD_STATE_DOWN) {
+			bfd_reset(sc);
+			bfd_set_state(sc, BFD_STATE_DOWN);
+		}
+	}
 
-	return;
+	/* re-add 70%-90% jitter to our transmits, rfc 5880 6.8.7 */
+	timeout_add_usec(&sc->sc_timo_tx,
+	    sc->mintx * (arc4random_uniform(20) + 70) / 100);
 }
 
 /*
@@ -387,7 +400,7 @@ bfd_listener(struct bfd_softc *sc, u_int port)
 	struct proc		*p = curproc;
 	struct rtentry		*rt = sc->sc_rt;
 	struct sockaddr		*src = rt->rt_ifa->ifa_addr;
-	struct sockaddr		*dst = rt->rt_gateway;
+	struct sockaddr		*dst = rt_key(rt);
 	struct sockaddr		*sa;
 	struct sockaddr_in	*sin;
 	struct sockaddr_in6	*sin6;
@@ -463,7 +476,7 @@ bfd_sender(struct bfd_softc *sc, u_int port)
 	struct proc		*p = curproc;
 	struct mbuf		*m = NULL, *mopt = NULL;
 	struct sockaddr		*src = rt->rt_ifa->ifa_addr;
-	struct sockaddr		*dst = rt->rt_gateway;
+	struct sockaddr		*dst = rt_key(rt);
 	struct sockaddr		*sa;
 	struct sockaddr_in6	*sin6;
 	struct sockaddr_in	*sin;
@@ -587,24 +600,8 @@ bfd_upcall(struct socket *so, caddr_t arg, int waitflag)
 void
 bfd_timeout_tx(void *v)
 {
-	struct bfd_softc	*sc = v;
-	struct rtentry		*rt = sc->sc_rt;
-
-	if (ISSET(rt->rt_gwroute->rt_flags, RTF_UP)) {
-		bfd_send_control(sc);
-	} else {
-		sc->error++;
-		sc->sc_peer->LocalDiag = BFD_DIAG_ADMIN_DOWN;
-		if (sc->sc_peer->SessionState > BFD_STATE_DOWN) {
-			bfd_reset(sc);
-			bfd_set_state(sc, BFD_STATE_DOWN);
-		}
-	}
-
-	/* add 70%-90% jitter to our transmits, rfc 5880 6.8.7 */
-	if (!timeout_pending(&sc->sc_timo_tx))
-		timeout_add_usec(&sc->sc_timo_tx,
-		    sc->mintx * (arc4random_uniform(20) + 70) / 100);
+	struct bfd_softc *sc = v;
+	task_add(bfdtq, &sc->sc_bfd_send_task);	
 }
 
 /*
@@ -627,7 +624,6 @@ printf("%s: failed, sc->error %u\n", __func__, sc->error);
 	}
 
 	timeout_add_usec(&sc->sc_timo_rx, sc->minrx);
-
 }
 
 /*
@@ -835,7 +831,7 @@ printf("%s: set BFD_STATE_DOWN\n", __func__);
  discard:
 	m_free(m);
 
-	task_add(bfdtq, &sc->sc_bfd_send_task);	
+	//XXX task_add(bfdtq, &sc->sc_bfd_send_task);	
 	timeout_add_usec(&sc->sc_timo_rx, sc->minrx);
 
 	return;
@@ -892,31 +888,30 @@ bfd_send_control(void *x)
 {
 	struct bfd_softc	*sc = x;
 	struct mbuf		*m;
-	struct bfd_header	bfd;
+	struct bfd_header	*bfd;
 	int error;
 
 	MGETHDR(m, M_WAIT, MT_DATA);
 	MCLGET(m, M_WAIT);
 
-	m->m_len = m->m_pkthdr.len = sizeof(bfd);
+	m->m_len = m->m_pkthdr.len = sizeof(*bfd);
+	bfd = mtod(m, struct bfd_header *);
 
-	memset(&bfd, 0xff, sizeof(bfd));	/* canary */
+	memset(bfd, 0xff, sizeof(*bfd));	/* canary */
 
-	bfd.bfd_ver_diag = ((BFD_VERSION << 5) | (sc->sc_peer->LocalDiag));
-	bfd.bfd_sta_flags = (sc->sc_peer->SessionState << 6);
-	bfd.bfd_detect_multi = sc->sc_peer->DetectMult;
-	bfd.bfd_length = BFD_HDRLEN;
-	bfd.bfd_my_discriminator = htonl(sc->sc_peer->LocalDiscr);
-	bfd.bfd_your_discriminator = htonl(sc->sc_peer->RemoteDiscr);
+	bfd->bfd_ver_diag = ((BFD_VERSION << 5) | (sc->sc_peer->LocalDiag));
+	bfd->bfd_sta_flags = (sc->sc_peer->SessionState << 6);
+	bfd->bfd_detect_multi = sc->sc_peer->DetectMult;
+	bfd->bfd_length = BFD_HDRLEN;
+	bfd->bfd_my_discriminator = htonl(sc->sc_peer->LocalDiscr);
+	bfd->bfd_your_discriminator = htonl(sc->sc_peer->RemoteDiscr);
 
-	bfd.bfd_desired_min_tx_interval =
+	bfd->bfd_desired_min_tx_interval =
 	    htonl(sc->sc_peer->DesiredMinTxInterval);
-	bfd.bfd_required_min_rx_interval =
+	bfd->bfd_required_min_rx_interval =
 	    htonl(sc->sc_peer->RequiredMinRxInterval);
-	bfd.bfd_required_min_echo_interval =
+	bfd->bfd_required_min_echo_interval =
 	    htonl(sc->sc_peer->RemoteMinRxInterval);
-
-	m_copyback(m, 0, BFD_HDRLEN, &bfd, M_NOWAIT);
 
 	error = bfd_send(sc, m);
 
@@ -932,8 +927,8 @@ bfd_send(struct bfd_softc *sc, struct mbuf *m)
 {
 	struct rtentry *rt = sc->sc_rt;
 
-	if (!ISSET(rt->rt_gwroute->rt_flags, RTF_UP)) {
-		m_free(m);
+	if (!ISSET(rt->rt_flags, RTF_UP)) {
+		m_freem(m);
 		return (EHOSTDOWN);
 	}
 
@@ -943,24 +938,18 @@ bfd_send(struct bfd_softc *sc, struct mbuf *m)
 
 
 #ifdef DDB
-
 /*
  * Print debug information about this bfd instance
  */
 void
 bfd_debug(struct bfd_softc *sc)
 {
-	struct ifnet	*ifp;
 	struct rtentry	*rt = sc->sc_rt;
+	char buf[64];
 
-	ifp = if_get(rt->rt_ifidx);
-
-	if (ifp == NULL) {
-	printf("%s: cannot find interface index %u\n",
-	    __func__, rt->rt_ifidx);
-		return;
-	}
-
+	printf("dest: %s\n", sockaddr_ntop(rt_key(rt), buf, sizeof(buf)));
+	printf("src: %s\n", sockaddr_ntop(rt->rt_ifa->ifa_addr, buf,
+	    sizeof(buf)));
 	printf("session state: %u ", sc->state);
 	printf("mode: %u ", sc->mode);
 	printf("error: %u ", sc->error);
@@ -981,7 +970,5 @@ bfd_debug(struct bfd_softc *sc)
 	printf("remote diag: %u ", sc->sc_peer->RemoteDiag);
 	printf("remote min rx: %u ", sc->sc_peer->RemoteMinRxInterval);
 	printf("\n");
-
-	if_put(ifp);
 }
 #endif /* DDB */
