@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.40 2016/08/27 01:26:22 guenther Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.41 2016/09/04 10:43:52 jca Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -91,11 +91,13 @@ struct server_list {
 int
 main(int argc, char *argv[])
 {
-	int			 ch, no_daemon = 0, opt, rdomain;
+	int			 ch, daemonize, opt, rdomain;
 	extern char		*__progname;
 	struct server_list	*sp = NULL;
 	struct passwd		*pw;
 	struct sockaddr_in	 laddr;
+
+	daemonize = 1;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
@@ -104,7 +106,7 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "adi:o")) != -1) {
 		switch (ch) {
 		case 'd':
-			no_daemon = 1;
+			daemonize = 0;
 			break;
 		case 'i':
 			if (interfaces != NULL)
@@ -156,7 +158,7 @@ main(int argc, char *argv[])
 		argv++;
 	}
 
-	if (!no_daemon)
+	if (daemonize)
 		log_perror = 0;
 
 	if (interfaces == NULL)
@@ -228,7 +230,7 @@ main(int argc, char *argv[])
 
 	time(&cur_time);
 	bootp_packet_handler = relay;
-	if (!no_daemon)
+	if (daemonize)
 		daemon(0, 0);
 
 	if ((pw = getpwnam("_dhcp")) == NULL)
