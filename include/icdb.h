@@ -1,4 +1,4 @@
-/* $OpenBSD: icdb.h,v 1.3 2016/09/04 11:53:23 nicm Exp $ */
+/* $OpenBSD: icdb.h,v 1.4 2016/09/04 14:51:39 nicm Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -25,7 +25,7 @@ __BEGIN_DECLS
 struct icdb;
 
 struct icdb *icdb_new(uint32_t version, uint32_t nentries, uint32_t entrysize,
-    uint32_t nkeys, uint32_t *keysizes, uint32_t *keyoffsets);
+    uint32_t nkeys, const uint32_t *keysizes, const uint32_t *keyoffsets);
 
 struct icdb *icdb_open(const char *name, int flags, uint32_t version);
 int icdb_get(struct icdb *db, void *entry, uint32_t idx);
