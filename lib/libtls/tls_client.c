@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.35 2016/09/04 12:26:43 bcook Exp $ */
+/* $OpenBSD: tls_client.c,v 1.36 2016/09/04 13:20:56 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -159,7 +159,7 @@ tls_connect_servername(struct tls *ctx, const char *host, const char *port,
 }
 
 static int
-connect_common(struct tls *ctx, const char *servername)
+tls_connect_common(struct tls *ctx, const char *servername)
 {
 	union tls_addr addrbuf;
 	int rv = -1;
@@ -245,7 +245,7 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 		goto err;
 	}
 
-	if (connect_common(ctx, servername) != 0)
+	if (tls_connect_common(ctx, servername) != 0)
 		goto err;
 
 	if (SSL_set_rfd(ctx->ssl_conn, fd_read) != 1 ||
@@ -265,7 +265,7 @@ tls_connect_cbs(struct tls *ctx, tls_read_cb read_cb,
 {
 	int rv = -1;
 
-	if (connect_common(ctx, servername) != 0)
+	if (tls_connect_common(ctx, servername) != 0)
 		goto err;
 
 	if (tls_set_cbs(ctx, read_cb, write_cb, cb_arg) != 0) {

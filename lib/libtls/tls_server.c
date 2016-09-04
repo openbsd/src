@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.26 2016/09/04 12:26:43 bcook Exp $ */
+/* $OpenBSD: tls_server.c,v 1.27 2016/09/04 13:20:56 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -280,7 +280,7 @@ tls_configure_server(struct tls *ctx)
 }
 
 static struct tls *
-accept_common(struct tls *ctx)
+tls_accept_common(struct tls *ctx)
 {
 	struct tls *conn_ctx = NULL;
 
@@ -323,7 +323,7 @@ tls_accept_fds(struct tls *ctx, struct tls **cctx, int fd_read, int fd_write)
 {
 	struct tls *conn_ctx;
 
-	if ((conn_ctx = accept_common(ctx)) == NULL)
+	if ((conn_ctx = tls_accept_common(ctx)) == NULL)
 		goto err;
 
 	if (SSL_set_rfd(conn_ctx->ssl_conn, fd_read) != 1 ||
@@ -348,7 +348,7 @@ tls_accept_cbs(struct tls *ctx, struct tls **cctx,
 {
 	struct tls *conn_ctx;
 
-	if ((conn_ctx = accept_common(ctx)) == NULL)
+	if ((conn_ctx = tls_accept_common(ctx)) == NULL)
 		goto err;
 
 	if (tls_set_cbs(ctx, read_cb, write_cb, cb_arg) != 0) {
