@@ -611,8 +611,8 @@
 ./usr/games
 ./usr/include
 ./usr/lib
-./usr/lib/libc.so.89.0
-./usr/lib/libc.so.89.0.a
+./usr/lib/libc.so.89.1
+./usr/lib/libc.so.89.1.a
 ./usr/lib/libcrypto.so.38.1
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
@@ -645,7 +645,7 @@
 ./usr/lib/libstdc++.so.57.0
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
-./usr/lib/libtls.so.11.3
+./usr/lib/libtls.so.11.4
 ./usr/lib/libusbhid.so.7.0
 ./usr/lib/libutil.so.12.1
 ./usr/lib/libz.so.5.0
