@@ -1,4 +1,4 @@
-/*	$OpenBSD: prftest.c,v 1.1 2005/04/08 17:12:50 cloder Exp $	*/
+/*	$OpenBSD: prftest.c,v 1.2 2016/09/04 17:47:37 mikeb Exp $	*/
 /*	$EOM: prftest.c,v 1.2 1998/10/07 16:40:50 niklas Exp $	*/
 
 /*
@@ -96,14 +96,14 @@ test_prf (char *test, enum hashes hash, char *key, int klen,
   prf->Update (prf->prfctx, data, dlen);
   prf->Final (digest, prf->prfctx);
 
-  prf_free (prf);
-
   for (i = 0; i < prf->blocksize; i++)
     {
       output[2 * i] = nibble2c ((digest[i] >> 4) & 0xf);
       output[2 * i + 1] = nibble2c (digest[i] & 0xf);
     }
   output[2 * i] = 0;
+
+  prf_free (prf);
 
   if (strcmp (output, cmp) == 0)
     {
