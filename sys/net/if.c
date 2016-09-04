@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.443 2016/09/04 15:46:39 reyk Exp $	*/
+/*	$OpenBSD: if.c,v 1.444 2016/09/04 17:14:58 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -400,6 +400,8 @@ if_map_dtor(void *null, void *m)
 void
 if_attachsetup(struct ifnet *ifp)
 {
+	unsigned long ifidx;
+
 	TAILQ_INIT(&ifp->if_groups);
 
 	if_addgroup(ifp, IFG_ALL);
@@ -409,18 +411,18 @@ if_attachsetup(struct ifnet *ifp)
 	pfi_attach_ifnet(ifp);
 #endif
 
-	task_set(ifp->if_watchdogtask, if_watchdog_task, ifp);
 	timeout_set(ifp->if_slowtimo, if_slowtimo, ifp);
 	if_slowtimo(ifp);
-
-	task_set(ifp->if_linkstatetask, if_linkstate, ifp);
 
 	if_idxmap_insert(ifp);
 	KASSERT(if_get(0) == NULL);
 
+	ifidx = ifp->if_index;
+
 	mq_init(&ifp->if_inputqueue, 8192, IPL_NET);
-	task_set(ifp->if_inputtask, if_input_process,
-	    (void *)(unsigned long)ifp->if_index);
+	task_set(ifp->if_inputtask, if_input_process, (void *)ifidx);
+	task_set(ifp->if_watchdogtask, if_watchdog_task, (void *)ifidx);
+	task_set(ifp->if_linkstatetask, if_linkstate, (void *)ifidx);
 
 	/* Announce the interface. */
 	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
@@ -1486,10 +1488,15 @@ if_up(struct ifnet *ifp)
  * a link-state transition.
  */
 void
-if_linkstate(void *xifp)
+if_linkstate(void *xifidx)
 {
-	struct ifnet *ifp = xifp;
+	unsigned int ifidx = (unsigned long)xifidx;
+	struct ifnet *ifp;
 	int s;
+
+	ifp = if_get(ifidx);
+	if (ifp == NULL)
+		return;
 
 	s = splsoftnet();
 	rt_ifmsg(ifp);
@@ -1498,6 +1505,8 @@ if_linkstate(void *xifp)
 #endif
 	dohooks(ifp->if_linkstatehooks, 0);
 	splx(s);
+
+	if_put(ifp);
 }
 
 /*
@@ -1529,15 +1538,22 @@ if_slowtimo(void *arg)
 }
 
 void
-if_watchdog_task(void *arg)
+if_watchdog_task(void *xifidx)
 {
-	struct ifnet *ifp = arg;
+	unsigned int ifidx = (unsigned long)xifidx;
+	struct ifnet *ifp;
 	int s;
+
+	ifp = if_get(ifidx);
+	if (ifp == NULL)
+		return;
 
 	s = splnet();
 	if (ifp->if_watchdog)
 		(*ifp->if_watchdog)(ifp);
 	splx(s);
+
+	if_put(ifp);
 }
 
 /*
