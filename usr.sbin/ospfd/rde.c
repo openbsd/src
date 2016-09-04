@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.103 2016/09/03 10:22:57 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.104 2016/09/04 10:10:23 krw Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -844,7 +844,6 @@ rde_send_summary(pid_t pid)
 	RB_FOREACH(v, lsa_tree, &asext_tree) {
 		sumctl.num_ext_lsa++;
 		sumctl.ext_lsa_cksum += ntohs(v->lsa->hdr.ls_chksum);
-		
 	}
 
 	gettimeofday(&now, NULL);
@@ -1132,7 +1131,7 @@ RB_HEAD(asext_tree, asext_node)		ast;
 RB_PROTOTYPE(asext_tree, asext_node, entry, asext_compare)
 RB_GENERATE(asext_tree, asext_node, entry, asext_compare)
 
-static __inline int             
+static __inline int
 asext_compare(struct asext_node *a, struct asext_node *b)
 {
 	if (ntohl(a->r.prefix.s_addr) < ntohl(b->r.prefix.s_addr))
