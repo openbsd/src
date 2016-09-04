@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.17 2016/09/04 11:34:56 claudio Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.18 2016/09/04 13:24:27 claudio Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -201,13 +201,13 @@ bfd_rtalloc(struct rtentry *rt)
 {
 	struct bfd_softc	*sc;
 
-	/* make sure we don't already have this setup */
-	TAILQ_FOREACH(sc, &bfd_queue, bfd_next) {
-		if (sc->sc_rt == rt)
-			return (EADDRINUSE);
-	}
+	/* at the moment it is not allowed to run BFD on indirect routes */
+	if (ISSET(rt->rt_flags, RTF_GATEWAY) || !ISSET(rt->rt_flags, RTF_HOST))
+		return (EINVAL);
 
-	/* XXX - do we need to force RTM_RESOLVE? */
+	/* make sure we don't already have this setup */
+	if (bfd_lookup(rt) != NULL)
+		return (EADDRINUSE);
 
 	/* Do our necessary memory allocations upfront */
 	if ((sc = pool_get(&bfd_pool, PR_WAITOK | PR_ZERO)) == NULL)
