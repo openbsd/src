@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.32 2016/04/08 17:09:18 rpe Exp $
+#	$OpenBSD: dot.profile,v 1.33 2016/09/04 09:56:46 rpe Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -64,15 +64,18 @@ if [[ -z $DONEPROFILE ]]; then
 Welcome to the $OBSD installation program.
 __EOT
 
+	# Create working directories with proper permissions in /tmp.
+	mkdir -m u=rwx,go= -p /tmp/{ai,i}
+
 	# Did we netboot?  If so, then start the automatic installation
 	# after a timeout, but only the very first time around.
 	timeout=false
 	timer_pid=
-	if [[ ! -f /tmp/noai ]] && { ifconfig netboot >/dev/null 2>&1 ||
+	if [[ ! -f /tmp/ai/noai ]] && { ifconfig netboot >/dev/null 2>&1 ||
 		[[ -f /auto_install.conf ]] ||
 		[[ -f /auto_upgrade.conf ]]; }; then
 		echo "Starting non-interactive mode in 5 seconds..."
-		>/tmp/noai
+		>/tmp/ai/noai
 
 		trap 'kill $timeout_pid 2>/dev/null' EXIT
 		trap 'exit 1' INT

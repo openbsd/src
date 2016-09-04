@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.909 2016/09/03 11:40:32 rpe Exp $
+#	$OpenBSD: install.sub,v 1.910 2016/09/04 09:56:46 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -166,13 +166,13 @@ quote() (
 
 # Show a list (passed via ordered arguments) in column output using ls.
 showcols() {
-	local _l _cdir=/tmp/cdir _clist
+	local _l _cdir=/tmp/i/cdir _clist
 
 	mkdir -p $_cdir
 	rm -rf -- $_cdir/*
 	while read _l; do
 		[[ -n $_l ]] || continue
-		mkdir -p /tmp/cdir/"$_l"
+		mkdir -p /tmp/i/cdir/"$_l"
 		_clist[${#_clist[*]}]="$_l"
 	done
 	(cd $_cdir; ls -Cdf "${_clist[@]}")
@@ -377,7 +377,7 @@ disk_has() {
 # $2 = /path/to/fstab
 #
 disklabel_autolayout() {
-	local _disk=$1 _f=$2 _dl=/disklabel.auto _op
+	local _disk=$1 _f=$2 _dl=/tmp/i/disklabel.auto _op
 
 	[[ $_disk != $ROOTDISK ]] && return
 
@@ -411,19 +411,19 @@ disklabel_autolayout() {
 }
 
 configure_disk() {
-	local _disk=$1 _fstab=/tmp/fstab.$1
+	local _disk=$1 _fstab=/tmp/i/fstab.$1
 
 	makedev $_disk || return
 
 	# Deal with disklabels, including editing the root disklabel
 	# and labeling additional disks. This is machine-dependent since
 	# some platforms may not be able to provide this functionality.
-	# /tmp/fstab.$_disk is created here with 'disklabel -F'.
-	rm -f /tmp/*.$_disk
+	# /tmp/i/fstab.$_disk is created here with 'disklabel -F'.
+	rm -f /tmp/i/*.$_disk
 	md_prep_disklabel $_disk || return
 
 	# Make sure there is a '/ mount point.
-	if ! grep -qs ' / ffs ' /tmp/fstab.$ROOTDISK; then
+	if ! grep -qs ' / ffs ' /tmp/i/fstab.$ROOTDISK; then
 		echo "'/' must be configured!"
 		return 1
 	fi
@@ -433,11 +433,11 @@ configure_disk() {
 		while read _pp _mp _rest; do
 			if [[ $_mp == none ]]; then
 				# Multiple swap partitions are ok.
-				echo "$_pp $_mp $_rest" >>/tmp/fstab
+				echo "$_pp $_mp $_rest" >>/tmp/i/fstab
 				continue
 			fi
 			# Non-swap mountpoints must be in only one file.
-			if [[ $_fstab != $(grep -l " $_mp " /tmp/fstab.*) ]]; then
+			if [[ $_fstab != $(grep -l " $_mp " /tmp/i/fstab.*) ]]; then
 				_rest=$_disk
 				_disk=
 				break
@@ -448,9 +448,9 @@ configure_disk() {
 			# Duplicate mountpoint.
 			# Allow disklabel(8) to read back mountpoint info
 			# if it is immediately run against the same disk.
-			cat /tmp/fstab.$_rest >/etc/fstab
-			rm /tmp/fstab.$_rest
-			set -- $(grep -h " $_mp " /tmp/fstab.*[0-9])
+			cat /tmp/i/fstab.$_rest >/etc/fstab
+			rm /tmp/i/fstab.$_rest
+			set -- $(grep -h " $_mp " /tmp/i/fstab.*[0-9])
 			echo "$_pp and $1 can't both be mounted at $_mp."
 			return 1
 		fi
@@ -478,12 +478,12 @@ configure_disk() {
 
 # Acquire lock.
 lock() {
-	while ! mkdir /tmp/lock 2>/dev/null && sleep .1; do done
+	while ! mkdir /tmp/i/lock 2>/dev/null && sleep .1; do done
 }
 
 # Release lock.
 unlock() {
-	rm -d /tmp/lock 2>/dev/null
+	rm -d /tmp/i/lock 2>/dev/null
 }
 
 # Add trap to kill the listener process.
@@ -501,7 +501,7 @@ retrap() {
 # response file for an unattended install/upgrade.
 log_answers() {
 	if [[ -n $1 && -n $2 ]]; then
-		print -r -- "${1%%'?'*} = $2" >>/tmp/$MODE.resp
+		print -r -- "${1%%'?'*} = $2" >>/tmp/i/$MODE.resp
 	fi
 }
 
@@ -512,7 +512,7 @@ get_responsefile() {
 
 	[[ -f /auto_upgrade.conf ]] && _rf=/auto_upgrade.conf _mode=upgrade
 	[[ -f /auto_install.conf ]] && _rf=/auto_install.conf _mode=install
-	[[ -f $_rf ]] && cp $_rf /ai.$_mode.conf && AI_MODE=$_mode && return
+	[[ -f $_rf ]] && cp $_rf /tmp/ai/ai.$_mode.conf && AI_MODE=$_mode && return
 
 	# Select a network interface for initial dhcp request.
 	# Ask if multiple were found and system was not netbooted.
@@ -551,7 +551,7 @@ get_responsefile() {
 		for _rf in {$_mac-,${_hn:+$_hn-,}}$_mode; do
 			_url="http://$AI_SERVER/$_path$_rf.conf?path=$HTTP_SETDIR"
 			echo "Fetching $_url"
-			if unpriv ftp -Vo - "$_url" >"/ai.$_mode.conf" 2>/dev/null; then
+			if unpriv ftp -Vo - "$_url" >"/tmp/ai/ai.$_mode.conf" 2>/dev/null; then
 				AI_MODE=$_mode
 				ifconfig $_if delete down 2>/dev/null
 				return 0
@@ -580,7 +580,7 @@ get_responsefile() {
 
 	echo "Fetching $_rf"
 	[[ -f $_rf ]] && _rf="file://$_rf"
-	unpriv ftp -Vo - "$_rf" >"/ai.$_mode.conf" 2>/dev/null && AI_MODE=$_mode
+	unpriv ftp -Vo - "$_rf" >"/tmp/ai/ai.$_mode.conf" 2>/dev/null && AI_MODE=$_mode
 	ifconfig $_if delete down 2>/dev/null
 	[[ -n $AI_MODE ]]
 }
@@ -605,8 +605,8 @@ _autorespond() {
 
 	[[ -f $RESPFILE ]] || return
 
-	# Find a suitable response in /ai.conf and remove it if found.
-	mv /ai.conf /ai.conf.tmp
+	# Find a suitable response in /tmp/ai/ai.conf and remove it if found.
+	mv /tmp/ai/ai.conf /tmp/ai/ai.conf.tmp
 	while IFS=' 	' read -r _l; do
 		[[ $_l == [!#=]*=?* ]] || continue
 		_key=${_l%%*([[:blank:]])=*}
@@ -614,7 +614,7 @@ _autorespond() {
 		[[ $_q == @(|*[[:blank:]])"$_key"@([[:blank:]?]*|) ]] &&
 			resp=$_val && cat && return
 		print -r " $_l"
-	done </ai.conf.tmp >/ai.conf
+	done </tmp/ai/ai.conf.tmp >/tmp/ai/ai.conf
 	[[ -n $_def ]] && resp=$_def && return
 	echo "\nQuestion has no answer in response file."
 	exit 1
@@ -633,13 +633,13 @@ _autorespond() {
 _ask() {
 	local _q=$1 _def=$2 _int _redo=0 _pid
 
-	lock; dmesg >/tmp/update; unlock
+	lock; dmesg >/tmp/i/update; unlock
 	echo -n "${_q:+$_q }${_def:+[$_def] }"
 	_autorespond "$_q" "$_def" && echo "$resp" && return
 	trap "_int=1" INT
 	trap "_redo=1" TERM
 	read resp
-	lock; rm /tmp/update; unlock
+	lock; rm /tmp/i/update; unlock
 	if ((_redo)); then
 		stty raw
 		stty -raw
@@ -822,8 +822,8 @@ __EOT
 	# Move configuration files to where they will be copied to the
 	# installed system. Overwrites configuration information from
 	# last successful dhcp attempt.
-	mv /etc/dhclient.conf /tmp/dhclient.conf
-	mv /etc/resolv.conf.tail /tmp/resolv.conf.tail
+	mv /etc/dhclient.conf /tmp/i/dhclient.conf
+	mv /etc/resolv.conf.tail /tmp/i/resolv.conf.tail
 }
 
 # Obtain and output the inet information related to interface $1.
@@ -857,9 +857,9 @@ addhostent() {
 
 	[[ $_addr == *:* ]] && _delim=":"
 	sed -i "/^[0-9a-fA-F]*[$_delim].*[ 	]$_name\$/d" \
-		/tmp/hosts 2>/dev/null
+		/tmp/i/hosts 2>/dev/null
 
-	echo "$_addr $_name" >>/tmp/hosts
+	echo "$_addr $_name" >>/tmp/i/hosts
 }
 
 # Configure IPv4 interface.
@@ -945,7 +945,7 @@ v6_defroute() {
 	fi
 
 	route -n add -inet6 -host default "$_resp" &&
-		echo "$_resp" >>/tmp/mygate
+		echo "$_resp" >>/tmp/i/mygate
 }
 
 # Configure IPv6 interface.
@@ -1076,7 +1076,7 @@ configure_ifs() {
 	ifconfig lo0 inet 127.0.0.1/8
 
 	# In case of restart, delete previous default gateway config.
-	rm -f /tmp/mygate
+	rm -f /tmp/i/mygate
 
 	while :; do
 		# Create new vlan if possible.
@@ -1088,7 +1088,7 @@ configure_ifs() {
 		[[ $resp == done ]] && break
 
 		_if=$resp
-		_hn=/tmp/hostname.$_if
+		_hn=/tmp/i/hostname.$_if
 		rm -f $_hn
 
 		# If the offered vlan is chosen, ask the relevant
@@ -1132,9 +1132,9 @@ configure_ifs() {
 
 			# hostname.$_vd must say something, anything, to
 			# make sure it is up.
-			grep -qs "^up" /tmp/hostname.$_vd ||
-				echo "up" >>/tmp/hostname.$_vd
-			chmod 640 /tmp/hostname.$_vd
+			grep -qs "^up" /tmp/i/hostname.$_vd ||
+				echo "up" >>/tmp/i/hostname.$_vd
+			chmod 640 /tmp/i/hostname.$_vd
 			ifconfig $_vd up
 
 			# Make sure a hostname.$_if is created with this info.
@@ -1164,7 +1164,7 @@ configure_ifs() {
 			: ${_first:=$_if}
 		fi
 
-		NIFS=$(ls -1 /tmp/hostname.* 2>/dev/null | grep -c ^)
+		NIFS=$(ls -1 /tmp/i/hostname.* 2>/dev/null | grep -c ^)
 		_p=done
 	done
 }
@@ -1182,13 +1182,13 @@ v4_defroute() {
 	[[ -n $1 ]] && _dr=$1
 
 	# Don't ask if a default route exits and is handled by dhclient.
-	[[ -n $_dr && $2 == DHCLIENT && -f /tmp/dhclient.conf ]] && return
+	[[ -n $_dr && $2 == DHCLIENT && -f /tmp/i/dhclient.conf ]] && return
 
 	while :; do
 		ask_until "Default IPv4 route? (IPv4 address or none)" "$_dr"
 		[[ $resp == none ]] && break
 		route delete -inet default >/dev/null 2>&1
-		route -n add -inet -host default "$resp" && { echo "$resp" >>/tmp/mygate; break; }
+		route -n add -inet -host default "$resp" && { echo "$resp" >>/tmp/i/mygate; break; }
 		# Put the old default route back. The new one did not work.
 		route -n add -inet -host default $_dr >/dev/null 2>&1
 	done
@@ -1635,7 +1635,7 @@ install_nfs() {
 # Mount filesystem containing the set files on device $1, optionally ask the
 # user for the device name.
 mount_mnt2() {
-	local _dev=$1 _opts _file=/tmp/parts.$1 _parts
+	local _dev=$1 _opts _file=/tmp/i/parts.$1 _parts
 
 	disklabel $_dev 2>/dev/null |
 		sed -En '/swap|unused/d;/^  [a-p]: /p' >$_file
@@ -1684,7 +1684,7 @@ set_term() {
 			case $resp in
 			[lL\?]) echo "Available layouts: $_layouts";;
 			default) return;;
-			*)	kbd $resp && { echo $resp >/tmp/kbdtype; return; };;
+			*)	kbd $resp && { echo $resp >/tmp/i/kbdtype; return; };;
 			esac
 		done
 	fi
@@ -1698,19 +1698,19 @@ donetconfig() {
 	v4_defroute
 
 	# As dhclient will populate /etc/resolv.conf, a symbolic link to
-	# /tmp/resolv.conf.shadow, mv any such file to /tmp/resolv.conf
+	# /tmp/i/resolv.conf.shadow, mv any such file to /tmp/i/resolv.conf
 	# so it will eventually be copied to /mnt/etc/resolv.conf and will
 	# not in the meantime remove the user's ability to choose to use it
 	# or not, during the rest of the install.
-	if [[ -f /tmp/resolv.conf.shadow ]]; then
-		mv /tmp/resolv.conf.shadow /tmp/resolv.conf
+	if [[ -f /tmp/i/resolv.conf.shadow ]]; then
+		mv /tmp/i/resolv.conf.shadow /tmp/i/resolv.conf
 		# Get/store nameserver address(es) as a blank separated list
 		# and the default fully qualified domain name from *first*
 		# domain given on *last* search or domain statement.
 		while read -r -- _f1 _f2 _f3; do
 			[[ $_f1 == nameserver ]] && _ns="${_ns:+$_ns }$_f2"
 			[[ $_f1 == @(domain|search) ]] && _dn=$_f2
-		done </tmp/resolv.conf
+		done </tmp/i/resolv.conf
 	fi
 
 	# Get & apply fqdn to hostname. Don't ask if there's only one configured
@@ -1724,7 +1724,7 @@ donetconfig() {
 	fi
 	hostname "$(hostname -s).$resp"
 
-	# Get & add nameservers to /tmp/resolv.conf. Don't ask if there's only
+	# Get & add nameservers to /tmp/i/resolv.conf. Don't ask if there's only
 	# one configured interface and if it's managed by dhclient and if the
 	# nameserver is configured via dhclient too.
 	resp="${_ns:=none}"
@@ -1736,11 +1736,11 @@ donetconfig() {
 
 	# Construct appropriate resolv.conf.
 	if [[ $resp != none ]]; then
-		echo "lookup file bind" >/tmp/resolv.conf
+		echo "lookup file bind" >/tmp/i/resolv.conf
 		for _ns in $resp; do
-			echo "nameserver $_ns" >>/tmp/resolv.conf
+			echo "nameserver $_ns" >>/tmp/i/resolv.conf
 		done
-		cp /tmp/resolv.conf /tmp/resolv.conf.shadow
+		cp /tmp/i/resolv.conf /tmp/i/resolv.conf.shadow
 	fi
 }
 
@@ -2135,7 +2135,7 @@ startcgiinfo() {
 	(sleep 12; kill -INT -$CGIPID >/dev/null 2>&1) &
 }
 
-# Create a skeletal but useful /etc/fstab from /tmp/fstab by stripping all
+# Create a skeletal but useful /etc/fstab from /tmp/i/fstab by stripping all
 # comment lines and dropping all filesystems which
 #
 # 1) can't be mounted (no mount_* command is found),
@@ -2181,7 +2181,7 @@ munge_fstab() {
 		# 2) remove a trailing '/' from the mount point (e.g. root).
 		echo $_dev /mnt${_mp%/} $_fstype $_opt $_rest
 
-	done </tmp/fstab >/etc/fstab
+	done </tmp/i/fstab >/etc/fstab
 
 	# If no /etc/fstab was created, we have nowhere to $MODE to.
 	if [[ ! -s /etc/fstab ]]; then
@@ -2322,10 +2322,10 @@ apply() {
 		echo "xdm_flags=" >>/mnt/etc/rc.conf.local
 
 	if [[ $defcons == y ]]; then
-		cp /mnt/etc/ttys /tmp/ttys
+		cp /mnt/etc/ttys /tmp/i/ttys
 		sed	-e "/^$CTTY/s/std.9600/std.${CSPEED}/" \
 			-e "/^$CTTY/s/unknown/vt220	/" \
-			-e "/$CTTY/s/off.*/on secure/" /tmp/ttys >/mnt/etc/ttys
+			-e "/$CTTY/s/off.*/on secure/" /tmp/i/ttys >/mnt/etc/ttys
 		[[ -n $CPROM ]] &&
 			echo "stty $CPROM $CSPEED\nset tty $CPROM" >>/mnt/etc/boot.conf
 	fi
@@ -2381,9 +2381,9 @@ finish_up() {
 
 	# Create or update pkg.conf with the new package path, if any.
 	if [[ -n $PACKAGE_PATH ]]; then
-		grep -v '^[ 	]*installpath[ 	]*=' /mnt/etc/pkg.conf 2>/dev/null >/tmp/pkgconf
-		print -r -- "installpath = $PACKAGE_PATH" >>/tmp/pkgconf
-		cp /tmp/pkgconf /mnt/etc/pkg.conf
+		grep -v '^[ 	]*installpath[ 	]*=' /mnt/etc/pkg.conf 2>/dev/null >/tmp/i/pkgconf
+		print -r -- "installpath = $PACKAGE_PATH" >>/tmp/i/pkgconf
+		cp /tmp/i/pkgconf /mnt/etc/pkg.conf
 	fi
 
 	echo -n "Making all device nodes..."
@@ -2419,7 +2419,7 @@ finish_up() {
 	echo "/usr/sbin/fw_update -v" >>/mnt/etc/rc.firsttime
 
 	# Email installer questions and their answers to root on next boot.
-	prep_root_mail /tmp/$MODE.resp "$(hostname) $MODE response file"
+	prep_root_mail /tmp/i/$MODE.resp "$(hostname) $MODE response file"
 
 	store_random
 
@@ -2435,7 +2435,7 @@ using the 'mail' command.
 __EOT
 
 	md_congrats
-	$AUTO && >/ai.done
+	$AUTO && >/tmp/ai/ai.done
 }
 
 do_install(){
@@ -2488,14 +2488,14 @@ do_install(){
 	FSENT=
 
 	# Remove traces of previous install attempt.
-	rm -f /tmp/fstab*
+	rm -f /tmp/i/fstab*
 
 	# Configure the disk(s).
 	while :; do
 		# Always do ROOTDISK first, and repeat until it is configured.
 		if ! isin "$ROOTDISK" $DISKS_DONE; then
 			resp=$ROOTDISK
-			rm -f /tmp/fstab
+			rm -f /tmp/i/fstab
 		else
 			# Force the user to think and type in a disk name by
 			# making 'done' the default choice.
@@ -2550,7 +2550,7 @@ do_install(){
 		*)	echo -n ",nosuid"	;;
 		esac
 		echo " 1 2"
-	done >>/tmp/fstab
+	done >>/tmp/i/fstab
 
 	# Create a skeletal /etc/fstab which is usable for the installation process.
 	munge_fstab
@@ -2567,7 +2567,7 @@ do_install(){
 	# Set 'wxallowed' mount option for the filesystem /usr/local resides on.
 	_mp=$(df /mnt/usr/local | sed '$!d')
 	_mp=${_mp##*/mnt}
-	sed -i "s#\(${_mp:-/} ffs rw\)#\1,wxallowed#" /tmp/fstab
+	sed -i "s#\(${_mp:-/} ffs rw\)#\1,wxallowed#" /tmp/i/fstab
 
 	# If we did not succeed at setting TZ yet, we try again
 	# using the timezone names extracted from the base set.
@@ -2605,8 +2605,8 @@ do_install(){
 
 	# Ensure an enabled console has the correct speed in /etc/ttys.
 	sed "/^console.*on.*secure.*$/s/std\.[0-9]*/std.$(stty speed </dev/console)/" \
-		/mnt/etc/ttys >/tmp/ttys
-	mv /tmp/ttys /mnt/etc/ttys
+		/mnt/etc/ttys >/tmp/i/ttys
+	mv /tmp/i/ttys /mnt/etc/ttys
 
 	echo -n "Saving configuration files..."
 
@@ -2615,8 +2615,8 @@ do_install(){
 		[[ -f $_f ]] && mv $_f /mnt/var/db/.
 	done)
 
-	# Move configuration files from /tmp to /mnt/etc.
-	hostname >/tmp/myname
+	# Move configuration files from /tmp/i/ to /mnt/etc.
+	hostname >/tmp/i/myname
 
 	# Append entries to installed hosts file, changing '1.2.3.4 hostname'
 	# to '1.2.3.4 hostname.$FQDN hostname'. Leave untouched lines containing
@@ -2628,7 +2628,7 @@ do_install(){
 	echo "::1\t\tlocalhost" >>/mnt/etc/hosts
 
 	# Note we may have no hosts file if no interfaces were configured.
-	if [[ -f /tmp/hosts ]]; then
+	if [[ -f /tmp/i/hosts ]]; then
 		_dn=$(get_fqdn)
 		while read _addr _hn _aliases; do
 			if [[ -n $_aliases || $_hn != ${_hn%%.*} || -z $_dn ]]; then
@@ -2636,18 +2636,18 @@ do_install(){
 			else
 				echo "$_addr\t$_hn.$_dn $_hn"
 			fi
-		done </tmp/hosts >>/mnt/etc/hosts
-		rm /tmp/hosts
+		done </tmp/i/hosts >>/mnt/etc/hosts
+		rm /tmp/i/hosts
 	fi
 
 	# Append dhclient.conf to installed dhclient.conf.
 	_f=dhclient.conf
-	[[ -f /tmp/$_f ]] && { cat /tmp/$_f >>/mnt/etc/$_f; rm /tmp/$_f; }
+	[[ -f /tmp/i/$_f ]] && { cat /tmp/i/$_f >>/mnt/etc/$_f; rm /tmp/i/$_f; }
 
-	# Possible files to copy from /tmp: fstab hostname.* kbdtype mygate
+	# Possible files to copy from /tmp/i/: fstab hostname.* kbdtype mygate
 	#     myname ttys boot.conf resolv.conf sysctl.conf resolv.conf.tail
 	# Save only non-empty (-s) regular (-f) files.
-	(cd /tmp; for _f in fstab hostname* kbdtype my* ttys *.conf *.tail; do
+	(cd /tmp/i; for _f in fstab hostname* kbdtype my* ttys *.conf *.tail; do
 		[[ -f $_f && -s $_f ]] && mv $_f /mnt/etc/.
 	done)
 
@@ -2719,9 +2719,9 @@ do_upgrade(){
 	# The fstab, hosts and myname files are required.
 	for _f in /mnt/etc/{fstab,hosts,myname}; do
 		[[ -f $_f ]] || { echo "No $_f!"; exit; }
-		cp $_f /tmp/${_f##*/}
+		cp $_f /tmp/i/${_f##*/}
 	done
-	hostname $(stripcom /tmp/myname)
+	hostname $(stripcom /tmp/i/myname)
 	THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
 
 	# Configure the network.
@@ -2784,7 +2784,6 @@ if [[ -z $MODE ]]; then
 	esac
 fi
 
-
 # Include machine-dependent functions and definitions.
 #
 # The following functions must be provided:
@@ -2804,20 +2803,20 @@ fi
 . install.md
 
 # Make sure lock is initially released.
-rm -df /tmp/lock
+rm -df /tmp/i/lock
 
 # The dmesg listener will check for the existence of this file and sends a
 # signal to the child process if the dmesg output differs from the contents
 # of that file.
-rm -f /tmp/update
+rm -f /tmp/i/update
 
 if ! $AUTO; then
 	# Start listener process looking for dmesg changes.
 	(
 		while :; do
 			lock
-			if [[ -e /tmp/update && "$(dmesg)" != "$(</tmp/update)" ]]; then
-				dmesg >/tmp/update
+			if [[ -e /tmp/i/update && "$(dmesg)" != "$(</tmp/i/update)" ]]; then
+				dmesg >/tmp/i/update
 				kill -TERM 2>/dev/null $$ || exit 1
 			fi
 			unlock
@@ -2838,16 +2837,16 @@ ROOTDEV=
 PACKAGE_PATH=
 
 SETDIR="$VNAME/$ARCH"
-CGI_INFO=/tmp/cgiinfo
+CGI_INFO=/tmp/i/cgiinfo
 CGI_TZ=
 CGI_TIME=
 CGI_METHOD=
 INSTALL_URL=
 INSTALL_METHOD=
 HTTP_DIR=
-HTTP_SEC=/tmp/httpsec
-HTTP_LIST=/tmp/httplist
-WLANLIST=/tmp/wlanlist
+HTTP_SEC=/tmp/i/httpsec
+HTTP_LIST=/tmp/i/httplist
+WLANLIST=/tmp/i/wlanlist
 
 # Do not limit ourselves during installs or upgrades.
 for _opt in d f l m n p s; do
@@ -2919,26 +2918,26 @@ elif [[ -z $RESPFILE ]]; then
 		echo "No response file found; non-interactive mode aborted."
 		exit 1
 	fi
-	rm -f /ai.done
+	rm -f /tmp/ai/ai.done
 	echo "Performing non-interactive $AI_MODE..."
-	/$AI_MODE -af /ai.$AI_MODE.conf 2>&1 </dev/null | sed 's/^.*//;w/ai.log'
-	if [[ -f /ai.done ]]; then
-		# Email ai.log to root on next boot.
-		prep_root_mail /ai.log "$(hostname) $AI_MODE log"
+	/$AI_MODE -af /tmp/ai/ai.$AI_MODE.conf 2>&1 </dev/null | sed 's/^.*//;w/tmp/ai/ai.log'
+	if [[ -f /tmp/ai/ai.done ]]; then
+		# Email /tmp/ai/ai.log to root on next boot.
+		prep_root_mail /tmp/ai/ai.log "$(hostname) $AI_MODE log"
 		exec reboot
 	else
-		echo "failed; check /ai.log"
+		echo "failed; check /tmp/ai/ai.log"
 		exit 1
 	fi
 else
-	cp $RESPFILE /ai.conf || exit
+	cp $RESPFILE /tmp/ai/ai.conf || exit
 fi
 
 # Configure the terminal and keyboard.
 set_term
 
 # In case of restart, delete previously logged answers.
-rm -f /tmp/$MODE.resp
+rm -f /tmp/i/$MODE.resp
 
 case $MODE in
 install)	do_install;;
