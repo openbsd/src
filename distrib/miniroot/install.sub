@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.910 2016/09/04 09:56:46 rpe Exp $
+#	$OpenBSD: install.sub,v 1.911 2016/09/04 10:15:04 halex Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1912,39 +1912,67 @@ set_timezone() {
 	done
 }
 
-# Scan supplied disks and print the first one having a 4.2BSD 'a' partition.
-# If none is found, prints nothing and returns nonzero.
+# Determine if the supplied disk is a potential root disk, by:
+# - Check the disklabel if there is an 'a' partition of type 4.2BSD
+# - Mount the partition (read-only) and look for typical root filesystem layout
+is_rootdisk() {
+	local _d=$1 _rc=1
+
+	(
+		makedev $_d
+		if disklabel $_d | grep -q '^  a: .*4\.2BSD ' &&
+			mount -t ffs -r /dev/${_d}a /mnt; then
+			ls -d /mnt/{bin,dev,etc,home,mnt,root,sbin,tmp,usr,var}
+			_rc=$?
+			umount -f /mnt
+		fi
+		rm -f /dev/{r,}$_d?
+		return $_rc
+	) >/dev/null 2>&1
+}
+
+# From the supplied list of devices, determine a single device suitable
+# for $MODE.
+# On success, prints the device name and returns 0
+# On failure, prints an error message and returns 1
 find_root() {
 	local _d
 
 	for _d; do
-		makedev $_d
-		disklabel "$_d" | grep -q '^  a: .*4\.2BSD ' &&
-			echo $_d && return
-		rm -f /dev/{r,}$_d?
-	done
-	return 1
+		[[ $MODE == upgrade ]] && ! is_rootdisk $_d && continue
+		echo $_d
+	done |
+	(
+		! read first && echo "No root disk found" && exit 1
+
+		! read second && echo $first && exit
+
+		echo "Multiple potential root devices found:" \
+			$(echo $first $second; cat)"."
+		echo "Please specify one."
+		exit 1
+	)
 }
 
 # Get global root information. ie. ROOTDISK, ROOTDEV and SWAPDEV.
 get_rootinfo() {
-	local _auto
-	[[ $MODE == upgrade ]] && _auto=auto
 	while :; do
 		echo "Available disks are: $(get_dkdevs | sed 's/^$/none/')."
 		_ask "Which disk is the root disk? ('?' for details)" \
-			$_auto $(get_dkdevs) || continue
+			auto || continue
 		case $resp in
 		"?")	diskinfo $(get_dkdevs);;
 		'')	;;
-		"$_auto")
-			resp=$(find_root $(get_dkdevs)) && break
-			echo "no disk found"
+		auto)	echo "Scanning disks"
+			resp=$(find_root $(get_dkdevs)) &&
+				echo "Using $resp as root disk" && break
+			echo "$resp"
 			;;
 		*)	isin "$resp" $(get_dkdevs) && break
 			echo "no such disk"
 			;;
 		esac
+		$AUTO && exit 1
 	done
 	makedev $resp || exit
 
