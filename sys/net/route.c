@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.322 2016/09/03 14:20:26 phessler Exp $	*/
+/*	$OpenBSD: route.c,v 1.323 2016/09/04 09:39:01 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -139,7 +139,7 @@
 #include <net/if_enc.h>
 #endif
 
-#if BFD
+#ifdef BFD
 #include <net/bfd.h>
 #endif
 
@@ -200,7 +200,7 @@ route_init(void)
 
 	if (rtable_add(0) != 0)
 		panic("route_init rtable_add");
-#if BFD
+#ifdef BFD
 	bfdinit();
 #endif
 }
@@ -914,11 +914,11 @@ rtrequest_delete(struct rt_addrinfo *info, u_int8_t prio, struct ifnet *ifp,
 		rtfree(rt);
 		return (ESRCH);
 	}
+#endif
 
-#if BFD
+#ifdef BFD
 	if (ISSET(rt->rt_flags, RTF_BFD))
-		(void)bfd_rtfree(rt);
-#endif	/* BFD */
+		bfd_rtfree(rt);
 #endif
 
 	error = rtable_delete(tableid, info->rti_info[RTAX_DST],
@@ -1169,6 +1169,11 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			}
 			rtfree(crt);
 		}
+#ifdef BFD
+		if (error == 0 && ISSET(rt->rt_flags, RTF_BFD))
+			error = bfd_rtalloc(rt);
+			/* XXX this code will return EEXIST at the moment */
+#endif
 		if (error != 0) {
 			ifafree(ifa);
 			rtfree(rt->rt_parent);
@@ -1178,11 +1183,6 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			pool_put(&rtentry_pool, rt);
 			return (EEXIST);
 		}
-#if BFD
-		if (ISSET(rt->rt_flags, RTF_BFD)) {
-			error = bfd_rtalloc(rt, NULL);
-		}
-#endif
 		ifp->if_rtrequest(ifp, req, rt);
 
 		if_group_routechange(info->rti_info[RTAX_DST],

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.15 2016/09/03 22:51:15 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.16 2016/09/04 09:39:01 claudio Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -197,7 +197,7 @@ TAILQ_HEAD(bfd_queue, bfd_softc)  bfd_queue;
  * allocate a new bfd session
  */
 int
-bfd_rtalloc(struct rtentry *rt, struct bfd_flags *flags)
+bfd_rtalloc(struct rtentry *rt)
 {
 	struct bfd_softc	*sc;
 
@@ -211,9 +211,10 @@ bfd_rtalloc(struct rtentry *rt, struct bfd_flags *flags)
 
 	/* Do our necessary memory allocations upfront */
 	if ((sc = pool_get(&bfd_pool, PR_WAITOK | PR_ZERO)) == NULL)
-		goto nomem;
-	if ((sc->sc_peer = pool_get(&bfd_pool_peer, PR_WAITOK | PR_ZERO)) == NULL)
-		goto nomem2;
+		goto fail;
+	if ((sc->sc_peer = pool_get(&bfd_pool_peer, PR_WAITOK | PR_ZERO)) ==
+	    NULL)
+		goto fail;
 
 	sc->sc_rt = rt;
 //	rtref(sc->sc_rt);	/* we depend on this route not going away */
@@ -226,30 +227,31 @@ bfd_rtalloc(struct rtentry *rt, struct bfd_flags *flags)
 	if (!timeout_initialized(&sc->sc_timo_tx))
 		timeout_set(&sc->sc_timo_tx, bfd_timeout_tx, sc);
 
-	TAILQ_INSERT_TAIL(&bfd_queue, sc, bfd_next);
-
 	task_set(&sc->sc_bfd_task, bfd_start_task, sc);
 	task_add(bfdtq, &sc->sc_bfd_task);
 
+	TAILQ_INSERT_TAIL(&bfd_queue, sc, bfd_next);
+
 	return (0);
 
-	pool_put(&bfd_pool_peer, sc);
- nomem2:
-	pool_put(&bfd_pool, sc);
- nomem:
+fail:
+	if (sc->sc_peer)
+		pool_put(&bfd_pool_peer, sc->sc_peer);
+	if (sc)
+		pool_put(&bfd_pool, sc);
 	return (ENOMEM);
 }
 
 /*
  * remove and free a bfd session
  */
-int
+void
 bfd_rtfree(struct rtentry *rt)
 {
 	struct bfd_softc *sc;
 
 	if ((sc = bfd_lookup(rt)) == NULL)
-		return (ENOENT);
+		return;
 
 	timeout_del(&sc->sc_timo_rx);
 	timeout_del(&sc->sc_timo_tx);
@@ -262,13 +264,14 @@ bfd_rtfree(struct rtentry *rt)
 	if (rtisvalid(sc->sc_rt))
 		bfd_senddown(sc);
 
-	soclose(sc->sc_so);
-//	sc->sc_so->so_upcall = NULL;
+	if (sc->sc_so)
+		soclose(sc->sc_so);
 	sc->sc_so = NULL;
+
+//	rtfree(sc->sc_rt);
+
 	pool_put(&bfd_pool_peer, sc->sc_peer);
 	pool_put(&bfd_pool, sc);
-
-	return (0);
 }
 
 /*

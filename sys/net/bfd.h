@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.h,v 1.1 2016/09/03 14:14:20 phessler Exp $	*/
+/*	$OpenBSD: bfd.h,v 1.2 2016/09/04 09:39:01 claudio Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -63,8 +63,8 @@ struct bfd_flags {
 	int		 version;
 };
 
-int		 bfd_rtalloc(struct rtentry *, struct bfd_flags *);
-int		 bfd_rtfree(struct rtentry *);
+int		 bfd_rtalloc(struct rtentry *);
+void		 bfd_rtfree(struct rtentry *);
 void		 bfdinit(void);
 void		 bfddestroy(void);
 

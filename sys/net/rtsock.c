@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.201 2016/09/01 17:00:38 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.202 2016/09/04 09:39:01 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -81,6 +81,9 @@
 
 #ifdef MPLS
 #include <netmpls/mpls.h>
+#endif
+#ifdef BFD
+#include <net/bfd.h>
 #endif
 
 #include <sys/stdarg.h>
@@ -536,7 +539,6 @@ route_output(struct mbuf *m, ...)
 		error = EACCES;
 		goto fail;
 	}
-
 	tableid = rtm->rtm_tableid;
 	if (!rtable_exists(tableid)) {
 		if (rtm->rtm_type == RTM_ADD) {
@@ -880,6 +882,17 @@ change:
 				}
 			}
 #endif
+
+#ifdef BFD
+			if (ISSET(rtm->rtm_flags, RTF_BFD)) {
+				if ((error = bfd_rtalloc(rt)))
+					goto flush;
+			} else if (!ISSET(rtm->rtm_flags, RTF_BFD) &&
+			    ISSET(rtm->rtm_fmask, RTF_BFD)) {
+				bfd_rtfree(rt);
+			}
+#endif
+
 			/* Hack to allow some flags to be toggled */
 			if (rtm->rtm_fmask)
 				rt->rt_flags =
