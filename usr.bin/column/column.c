@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.24 2016/08/31 20:43:57 martijn Exp $	*/
+/*	$OpenBSD: column.c,v 1.25 2016/09/04 20:33:36 martijn Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -36,10 +36,13 @@
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wchar.h>
+#include <wctype.h>
 
 void  c_columnate(void);
 void *ereallocarray(void *, size_t, size_t);
@@ -60,7 +63,7 @@ int entries;			/* number of records */
 int eval;			/* exit value */
 int *maxwidths;			/* longest record per column */
 struct field **table;		/* one array of pointers per line */
-char *separator = "\t ";	/* field separator for table option */
+wchar_t *separator = L"\t ";	/* field separator for table option */
 
 int
 main(int argc, char *argv[])
@@ -70,6 +73,8 @@ main(int argc, char *argv[])
 	int ch, tflag, xflag;
 	char *p;
 	const char *errstr;
+
+	setlocale(LC_CTYPE, "");
 
 	termwidth = 0;
 	if ((p = getenv("COLUMNS")) != NULL)
@@ -92,7 +97,12 @@ main(int argc, char *argv[])
 				errx(1, "%s: %s", errstr, optarg);
 			break;
 		case 's':
-			separator = optarg;
+			if ((separator = reallocarray(NULL, strlen(optarg) + 1,
+			    sizeof(*separator))) == NULL)
+				err(1, NULL);
+			if (mbstowcs(separator, optarg, strlen(optarg) + 1) ==
+			    (size_t) -1)
+				err(1, "sep");
 			break;
 		case 't':
 			tflag = 1;
@@ -106,7 +116,7 @@ main(int argc, char *argv[])
 	}
 
 	if (!tflag)
-		separator = "";
+		separator = L"";
 	argv += optind;
 
 	if (*argv == NULL) {
@@ -222,10 +232,12 @@ input(FILE *fp)
 	static int maxentry = 0;
 	static int maxcols = 0;
 	static struct field *cols = NULL;
-	int col, width;
+	int col, width, twidth;
 	size_t blen;
 	ssize_t llen;
 	char *p, *s, *buf = NULL;
+	wchar_t wc;
+	int wlen;
 
 	while ((llen = getline(&buf, &blen, fp)) > -1) {
 		if (buf[llen - 1] == '\n')
@@ -236,16 +248,18 @@ input(FILE *fp)
 
 			/* Skip lines containing nothing but whitespace. */
 
-			for (s = p; s != '\0'; s++)
-				if (!isspace((unsigned char)*s))
+			for (s = p; (wlen = mbtowc(&wc, s, MB_CUR_MAX)) > 0;
+			     s += wlen)
+				if (!iswspace(wc))
 					break;
 			if (*s == '\0')
 				break;
 
 			/* Skip leading, multiple, and trailing separators. */
 
-			while (*p != '\0' && strchr(separator, *p) != NULL)
-				p++;
+			while ((wlen = mbtowc(&wc, p, MB_CUR_MAX)) > 0 &&
+			    wcschr(separator, wc) != NULL)
+				p += wlen;
 			if (*p == '\0')
 				break;
 
@@ -256,11 +270,21 @@ input(FILE *fp)
 
 			s = p;
 			width = 0;
-			while (*p != '\0' && strchr(separator, *p) == NULL) {
-				if (*p++ == '\t')
-					INCR_NEXTTAB(width);
-				else
+			while (*p != '\0') {
+				if ((wlen = mbtowc(&wc, p, MB_CUR_MAX)) == -1) {
 					width++;
+					p++;
+					continue;
+				}
+				if (wcschr(separator, wc) != NULL)
+					break;
+				if (*p == '\t')
+					INCR_NEXTTAB(width);
+				else  {
+					width += (twidth = wcwidth(wc)) == -1 ?
+					    1 : twidth;
+				}
+				p += wlen;
 			}
 
 			if (col + 1 >= maxcols) {
@@ -284,8 +308,10 @@ input(FILE *fp)
 			cols[col].width = width;
 			if (maxwidths[col] < width)
 				maxwidths[col] = width;
-			if (*p != '\0')
-				*p++ = '\0';
+			if (*p != '\0') {
+				*p = '\0';
+				p += wlen;
+			}
 			if ((cols[col].content = strdup(s)) == NULL)
 				err(1, NULL);
 		}
