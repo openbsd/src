@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.29 2013/11/04 05:45:04 miod Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.30 2016/09/04 18:20:34 tedu Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -36,14 +36,14 @@
  * to black on white to match the firmware console.
  */
 #ifndef WS_DEFAULT_FG
-#if defined(__sparc__) || defined(__sparc64__)
+#if defined(__sparc64__)
 #define WS_DEFAULT_FG WSCOL_BLACK
 #else
 #define WS_DEFAULT_FG WSCOL_WHITE
 #endif
 #endif
 #ifndef WS_DEFAULT_BG
-#if defined(__sparc__) || defined(__sparc64__)
+#if defined(__sparc64__)
 #define WS_DEFAULT_BG WSCOL_WHITE
 #else
 #define WS_DEFAULT_BG WSCOL_BLACK

@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.26 2015/02/05 12:04:58 miod Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.27 2016/09/04 18:20:34 tedu Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -330,7 +330,7 @@ zstty_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-#if defined(__sparc__) || defined(__sparc64__)
+#if defined(__sparc64__)
 	if (strcmp(args->type, "keyboard") == 0 ||
 	    strcmp(args->type, "mouse") == 0)
 		printf(": %s", args->type);

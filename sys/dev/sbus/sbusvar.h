@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbusvar.h,v 1.13 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: sbusvar.h,v 1.14 2016/09/04 18:20:34 tedu Exp $	*/
 /*	$NetBSD: sbusvar.h,v 1.11 2000/11/01 06:18:45 eeh Exp $ */
 
 /*-
@@ -128,13 +128,7 @@ struct sbus_softc {
 #define SBUS_BURST_32	0x20
 #define SBUS_BURST_64	0x40
 
-/* We use #defined(SUN4*) here while the ports are in flux */
-#if defined(__sparc__) && !defined(__sparc64__)
-#include <sparc/dev/sbusvar.h>
-#define	INTLEV(x)	(x)
-#elif defined(__sparc64__)
 #include <sparc64/dev/sbusvar.h>
 #include <sparc64/dev/iommureg.h>
-#endif
 
 #endif /* _SBUS_VAR_H */
