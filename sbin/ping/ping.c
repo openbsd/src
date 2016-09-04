@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.147 2016/09/03 21:50:52 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.148 2016/09/04 09:36:37 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -187,7 +187,6 @@ __dead void usage(void);
 int
 main(int argc, char *argv[])
 {
-	struct hostent *hp;
 	struct addrinfo hints, *res;
 	struct itimerval itimer;
 	struct sockaddr_in  from, from4;
@@ -195,7 +194,7 @@ main(int argc, char *argv[])
 	int ch, i, optval = 1, packlen, maxsize, df = 0, tos = 0;
 	int error;
 	u_char *datap, *packet, ttl = MAXTTL, loop = 1;
-	char *e, *target, hnamebuf[HOST_NAME_MAX+1], *source = NULL;
+	char *e, *target, hbuf[NI_MAXHOST], *source = NULL;
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
 	socklen_t maxsizelen;
 	const char *errstr;
@@ -349,22 +348,51 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-	target = *argv;
-
 	memset(&dst, 0, sizeof(dst));
-	dst.sin_len = sizeof(struct sockaddr_in);
-	dst.sin_family = AF_INET;
-	if (inet_aton(target, &dst.sin_addr) != 0)
-		hostname = target;
-	else {
-		hp = gethostbyname(target);
-		if (!hp)
-			errx(1, "unknown host: %s", target);
-		dst.sin_family = hp->h_addrtype;
-		memcpy(&dst.sin_addr, hp->h_addr, (size_t)hp->h_length);
-		(void)strlcpy(hnamebuf, hp->h_name, sizeof(hnamebuf));
-		hostname = hnamebuf;
+
+	if (inet_aton(*argv, &dst.sin_addr) != 0) {
+		hostname = *argv;
+		if ((target = strdup(inet_ntoa(dst.sin_addr))) == NULL)
+			errx(1, "malloc");
+	} else
+		target = *argv;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_INET;
+	hints.ai_socktype = SOCK_RAW;
+	hints.ai_protocol = 0;
+	hints.ai_flags = AI_CANONNAME;
+	if ((error = getaddrinfo(target, NULL, &hints, &res)))
+		errx(1, "%s", gai_strerror(error));
+
+	switch (res->ai_family) {
+	case AF_INET:
+		if (res->ai_addrlen != sizeof(dst))
+		    errx(1, "size of sockaddr mismatch");
+		break;
+	case AF_INET6:
+	default:
+		errx(1, "unsupported AF: %d", res->ai_family);
+		break;
 	}
+
+	memcpy(&dst, res->ai_addr, res->ai_addrlen);
+
+	if (!hostname) {
+		hostname = res->ai_canonname ? strdup(res->ai_canonname) :
+		    target;
+		if (!hostname)
+			errx(1, "malloc");
+	}
+
+	if (res->ai_next) {
+		if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf,
+		    sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
+			strlcpy(hbuf, "?", sizeof(hbuf));
+		warnx("Warning: %s has multiple "
+		    "addresses; using %s", hostname, hbuf);
+	}
+	freeaddrinfo(res);
 
 	if (source) {
 		if (IN_MULTICAST(ntohl(dst.sin_addr.s_addr)))
