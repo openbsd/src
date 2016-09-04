@@ -1,4 +1,4 @@
-/*	$OpenBSD: nice.c,v 1.15 2015/10/19 18:53:35 deraadt Exp $	*/
+/*	$OpenBSD: nice.c,v 1.16 2016/09/04 15:41:23 tb Exp $	*/
 /*	$NetBSD: nice.c,v 1.9 1995/08/31 23:30:58 jtc Exp $	*/
 
 /*
@@ -41,8 +41,7 @@
 
 #define	DEFNICE	10
 
-int	main(int, char **);
-static void usage(void);
+static void __dead usage(void);
 
 int
 main(int argc, char *argv[])
@@ -98,7 +97,7 @@ main(int argc, char *argv[])
 	err((errno == ENOENT) ? 127 : 126, "%s", argv[0]);
 }
 
-static void
+static void __dead
 usage(void)
 {
 	extern char *__progname;
