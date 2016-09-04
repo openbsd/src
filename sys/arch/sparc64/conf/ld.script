@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.9 2016/09/03 23:11:01 deraadt Exp $	*/
+/*	$OpenBSD: ld.script,v 1.10 2016/09/04 08:33:50 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Mark Kettenis <kettenis@openbsd.org>
@@ -25,7 +25,7 @@ PHDRS
 	text PT_LOAD;
 	data PT_LOAD;
 	openbsd_randomize PT_OPENBSD_RANDOMIZE;
-	openbsd_bootdata  0x65a41be6; /* PT_OPENBSD_BOOTDATA */
+	openbsd_bootdata  PT_OPENBSD_BOOTDATA;
 }
 
 SECTIONS
