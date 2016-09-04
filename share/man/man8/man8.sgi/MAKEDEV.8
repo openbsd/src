@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.60 2016/04/28 18:17:32 natano Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.61 2016/09/04 15:39:53 naddy Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.sgi/MAKEDEV.md,v 1.45 2016/04/25 20:38:11 tedu Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.86 2016/04/25 20:39:42 tedu Exp 
+.\"	OpenBSD: etc.sgi/MAKEDEV.md,v 1.48 2016/09/04 15:38:59 naddy Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.91 2016/09/04 15:38:59 naddy Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.8 2016/03/12 17:59:27 espie Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2016 $
+.Dd $Mdocdate: September 4 2016 $
 .Dt MAKEDEV 8 sgi
 .Os
 .Sh NAME
@@ -222,6 +222,9 @@ Video V4L2 devices, see
 .It Ar vscsi*
 Virtual SCSI controller, see
 .Xr vscsi 4 .
+.It Ar switch*
+Switch driver, see
+.Xr switch 4 .
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact

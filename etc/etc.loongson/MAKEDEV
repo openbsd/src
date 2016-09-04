@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.loongson/MAKEDEV.md,v 1.25 2016/09/02 17:06:13 goda Exp 
-#	OpenBSD: MAKEDEV.common,v 1.90 2016/09/02 17:06:13 goda Exp 
+#	OpenBSD: etc.loongson/MAKEDEV.md,v 1.26 2016/09/04 15:38:59 naddy Exp 
+#	OpenBSD: MAKEDEV.common,v 1.91 2016/09/04 15:38:59 naddy Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -416,7 +416,6 @@ st*)
 	n=$(($U*16))
 	for pre in " " n e en
 	do
-		M ${pre}st$U	b 10 $n 660 operator
 		M ${pre}rst$U	c 10 $n 660 operator
 		n=$(($n+1))
 	done
