@@ -511,7 +511,6 @@ st*)
 	n=$(($U*16))
 	for pre in " " n e en
 	do
-		M ${pre}st$U	b 5 $n 660 operator
 		M ${pre}rst$U	c 14 $n 660 operator
 		n=$(($n+1))
 	done

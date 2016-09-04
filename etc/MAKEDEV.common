@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.90 2016/09/02 17:06:13 goda Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.91 2016/09/04 15:38:59 naddy Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -188,16 +188,13 @@ _mkdev(uall, uall, {-dnl
 show_target({-usb-})dnl
 -})dnl
 __devtitle(tap, Tapes)dnl
-__devitem(tz, tz*, {-DEC TK50 cartridge tape drives-})dnl
 __devitem(st, {-st*-}, SCSI tape drives)dnl
 _mkdev(st, st*, {-n=Mult($U, 16)
 	for pre in " " n e en
 	do
-		M ${pre}st$U	b major_st_b $n 660 operator
 		M ${pre}rst$U	c major_st_c $n 660 operator
 		n=Add($n, 1)
 	done-})dnl
-__devitem(mt, mt*, (Magnetic) 9-track reel tape drives)dnl
 __devtitle(dis, Disks)dnl
 __devitem(sd, {-sd*-}, {-SCSI disks{-,-} including flopticals-})dnl
 __devitem(cd, {-cd*-}, ATAPI and SCSI CD-ROM drives)dnl

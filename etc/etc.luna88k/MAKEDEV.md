@@ -1,6 +1,6 @@
 define(MACHINE,luna88k)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.29 2016/09/02 17:06:13 goda Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.30 2016/09/04 15:38:59 naddy Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -78,7 +78,7 @@ _DEV(vnd, 19, 8)
 _DEV(wd, 28, 9)
 _TITLE(tap)
 _DEV(ch, 44)
-_DEV(st, 20, 5)
+_DEV(st, 20)
 _TITLE(term)
 _DEV(sio, 12)
 _DEV(com, 27)
