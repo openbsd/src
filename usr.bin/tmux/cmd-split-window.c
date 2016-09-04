@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.69 2016/06/06 07:24:31 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.70 2016/09/04 17:37:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -39,8 +39,8 @@ const struct cmd_entry cmd_split_window_entry = {
 	.name = "split-window",
 	.alias = "splitw",
 
-	.args = { "bc:dF:l:hp:Pt:v", 0, -1 },
-	.usage = "[-bdhvP] [-c start-directory] [-F format] "
+	.args = { "bc:dfF:l:hp:Pt:v", 0, -1 },
+	.usage = "[-bdfhvP] [-c start-directory] [-F format] "
 		 "[-p percentage|-l size] " CMD_TARGET_PANE_USAGE " [command]",
 
 	.tflag = CMD_PANE,
@@ -131,7 +131,8 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	if (*shell == '\0' || areshell(shell))
 		shell = _PATH_BSHELL;
 
-	lc = layout_split_pane(wp, type, size, args_has(args, 'b'));
+	lc = layout_split_pane(wp, type, size, args_has(args, 'b'),
+	    args_has(args, 'f'));
 	if (lc == NULL) {
 		cause = xstrdup("pane too small");
 		goto error;

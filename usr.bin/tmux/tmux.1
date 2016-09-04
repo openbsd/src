@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.493 2016/08/22 20:07:58 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.494 2016/09/04 17:37:06 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 22 2016 $
+.Dd $Mdocdate: September 4 2016 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2011,6 +2011,13 @@ The
 .Fl b
 option causes the new pane to be created to the left of or above
 .Ar target-pane .
+The
+.Fl f
+option creates a new pane spanning the full window height (with
+.Fl h )
+or full window width (with
+.Fl v ) ,
+instead of splitting the active pane.
 All other options have the same meaning as for the
 .Ic new-window
 command.
