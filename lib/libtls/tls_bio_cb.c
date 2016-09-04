@@ -1,4 +1,4 @@
-/* $ID$ */
+/* $OpenBSD: tls_bio_cb.c,v 1.2 2016/09/04 12:54:33 jsing Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
