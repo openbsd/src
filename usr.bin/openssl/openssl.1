@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.68 2016/09/03 13:26:55 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.69 2016/09/04 19:38:51 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: September 3 2016 $
+.Dd $Mdocdate: September 4 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -4175,32 +4175,25 @@ If this parameter is not specified,
 will only perform the handshake to establish SSL connections
 but not transfer any payload data.
 .El
-.\"
-.\" SESS_ID
-.\"
 .Sh SESS_ID
 .nr nS 1
 .Nm "openssl sess_id"
-.Bk -words
 .Op Fl cert
 .Op Fl context Ar ID
 .Op Fl in Ar file
-.Op Fl inform Ar DER | PEM
+.Op Fl inform Cm der | pem
 .Op Fl noout
 .Op Fl out Ar file
-.Op Fl outform Ar DER | PEM
+.Op Fl outform Cm der | pem
 .Op Fl text
-.Ek
 .nr nS 0
 .Pp
 The
 .Nm sess_id
 program processes the encoded version of the SSL session structure and
 optionally prints out SSL session details
-.Pq for example the SSL session master key
+(for example the SSL session master key)
 in human readable format.
-Since this is a diagnostic tool that needs some knowledge of the SSL
-protocol to use properly, most users will not need to use it.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -4211,89 +4204,58 @@ if the
 .Fl text
 option is also present, then it will be printed out in text form.
 .It Fl context Ar ID
-This option can set the session ID so the output session information uses the
-supplied
+Set the session
 .Ar ID .
-The
-.Ar ID
-can be any string of characters.
-This option won't normally be used.
+The ID can be any string of characters.
 .It Fl in Ar file
-This specifies the input
-.Ar file
-to read session information from, or standard input by default.
-.It Fl inform Ar DER | PEM
-This specifies the input format.
-The
-.Ar DER
-argument uses an ASN1 DER-encoded
-format containing session details.
+The input file to read from,
+or standard input if not specified.
+.It Fl inform Cm der | pem
+The input format.
+.Cm der
+uses an ASN1 DER-encoded format containing session details.
 The precise format can vary from one version to the next.
-The
-.Ar PEM
-form is the default format: it consists of the DER
+.Cm pem
+is the default format: it consists of the DER
 format base64-encoded with additional header and footer lines.
 .It Fl noout
-This option prevents output of the encoded version of the session.
+Do not output the encoded version of the session.
 .It Fl out Ar file
-This specifies the output
-.Ar file
-to write session information to, or standard
-output if this option is not specified.
-.It Fl outform Ar DER | PEM
-This specifies the output format; the options have the same meaning as the
-.Fl inform
-option.
+The output file to write to,
+or standard output if not specified.
+.It Fl outform Cm der | pem
+The output format.
 .It Fl text
-Prints out the various public or private key components in
-plain text in addition to the encoded version.
+Print the various public or private key components in plain text,
+in addition to the encoded version.
 .El
-.Sh SESS_ID OUTPUT
-Typical output:
-.Bd -literal
-SSL-Session:
-    Protocol  : TLSv1
-    Cipher    : 0016
-    Session-ID: 871E62626C554CE95488823752CBD5F3673A3EF3DCE9C67BD916C809914B40ED
-    Session-ID-ctx: 01000000
-    Master-Key: A7CEFC571974BE02CAC305269DC59F76EA9F0B180CB6642697A68251F2D2BB57E51DBBB4C7885573192AE9AEE220FACD
-    Key-Arg   : None
-    Start Time: 948459261
-    Timeout   : 300 (sec)
-    Verify return code 0 (ok)
-.Ed
 .Pp
-These are described below in more detail.
+The output of
+.Nm sess_id
+is composed as follows:
 .Pp
-.Bl -tag -width "Verify return code " -compact
-.It Ar Protocol
-This is the protocol in use.
-.It Ar Cipher
-The cipher used is the actual raw SSL or TLS cipher code;
-see the SSL or TLS specifications for more information.
-.It Ar Session-ID
-The SSL session ID in hex format.
-.It Ar Session-ID-ctx
-The session ID context in hex format.
-.It Ar Master-Key
-This is the SSL session master key.
-.It Ar Key-Arg
+.Bl -tag -width "Verify return code " -offset 3n -compact
+.It Protocol
+The protocol in use.
+.It Cipher
+The actual raw SSL or TLS cipher code.
+.It Session-ID
+The SSL session ID, in hex format.
+.It Session-ID-ctx
+The session ID context, in hex format.
+.It Master-Key
+The SSL session master key.
+.It Key-Arg
 The key argument; this is only used in SSL v2.
-.It Ar Start Time
-This is the session start time, represented as an integer in standard
+.It Start Time
+The session start time.
 .Ux
 format.
-.It Ar Timeout
-The timeout in seconds.
-.It Ar Verify return code
-This is the return code when an SSL client certificate is verified.
+.It Timeout
+The timeout, in seconds.
+.It Verify return code
+The return code when a certificate is verified.
 .El
-.Sh SESS_ID NOTES
-The PEM-encoded session format uses the header and footer lines:
-.Bd -unfilled -offset indent
------BEGIN SSL SESSION PARAMETERS-----
------END SSL SESSION PARAMETERS-----
-.Ed
 .Pp
 Since the SSL session output contains the master key, it is possible to read
 the contents of an encrypted session using this information.
@@ -4303,8 +4265,6 @@ should be taken if the information is being output by a
 application.
 This is, however, strongly discouraged and should only be used for
 debugging purposes.
-.Sh SESS_ID BUGS
-The cipher and start time should be printed out in human readable form.
 .\"
 .\" SMIME
 .\"
