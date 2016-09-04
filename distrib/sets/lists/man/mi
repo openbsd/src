@@ -1118,8 +1118,6 @@
 ./usr/share/man/man4/adv.4
 ./usr/share/man/man4/age.4
 ./usr/share/man/man4/agp.4
-./usr/share/man/man4/aha.4
-./usr/share/man/man4/ahb.4
 ./usr/share/man/man4/ahc.4
 ./usr/share/man/man4/ahci.4
 ./usr/share/man/man4/ahd.4

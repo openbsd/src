@@ -905,7 +905,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ipmivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/ad1848var.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/ahareg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/cs4231var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/elink.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/essreg.ph

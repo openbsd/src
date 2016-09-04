@@ -380,7 +380,6 @@
 ./usr/include/dev/ipmivar.h
 ./usr/include/dev/isa
 ./usr/include/dev/isa/ad1848var.h
-./usr/include/dev/isa/ahareg.h
 ./usr/include/dev/isa/cs4231var.h
 ./usr/include/dev/isa/elink.h
 ./usr/include/dev/isa/essreg.h

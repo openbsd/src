@@ -434,7 +434,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ipmivar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/isa
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/isa/ad1848var.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/isa/ahareg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/isa/cs4231var.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/isa/elink.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/isa/essreg.ph
