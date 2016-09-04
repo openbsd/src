@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha2.3,v 1.25 2016/09/04 09:24:38 tedu Exp $
+.\"	$OpenBSD: sha2.3,v 1.26 2016/09/04 09:28:12 tedu Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -59,7 +59,16 @@
 .Nm SHA512End ,
 .Nm SHA512File ,
 .Nm SHA512FileChunk ,
-.Nm SHA512Data
+.Nm SHA512Data ,
+.Nm SHA512_256Init ,
+.Nm SHA512_256Update ,
+.Nm SHA512_256Pad ,
+.Nm SHA512_256Final ,
+.Nm SHA512_256Transform ,
+.Nm SHA512_256End ,
+.Nm SHA512_256File ,
+.Nm SHA512_256FileChunk ,
+.Nm SHA512_256Data
 .Nd calculate the NIST Secure Hash Standard (version 2)
 .Sh SYNOPSIS
 .In sys/types.h
@@ -136,6 +145,24 @@
 .Fn SHA512FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
 .Ft "char *"
 .Fn SHA512Data "const u_int8_t *data" "size_t len" "char *buf"
+.Ft void
+.Fn SHA512_256Init "SHA2_CTX *context"
+.Ft void
+.Fn SHA512_256Update "SHA2_CTX *context" "const u_int8_t *data" "size_t len"
+.Ft void
+.Fn SHA512_256Pad "SHA2_CTX *context"
+.Ft void
+.Fn SHA512_256Final "u_int8_t digest[SHA512_256_DIGEST_LENGTH]" "SHA2_CTX *context"
+.Ft void
+.Fn SHA512_256Transform "u_int64_t state[8]" "const u_int8_t buffer[SHA512_256_BLOCK_LENGTH]"
+.Ft "char *"
+.Fn SHA512_256End "SHA2_CTX *context" "char *buf"
+.Ft "char *"
+.Fn SHA512_256File "const char *filename" "char *buf"
+.Ft "char *"
+.Fn SHA512_256FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
+.Ft "char *"
+.Fn SHA512_256Data "const u_int8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
 The SHA2 functions implement the NIST Secure Hash Standard,
 FIPS PUB 180-2.
@@ -152,6 +179,7 @@ The SHA2 functions are considered to be more secure than the
 .Xr sha1 3
 functions with which they share a similar interface.
 The 224, 256, 384, and 512-bit versions of SHA2 share the same interface.
+SHA512/256, a truncated version of SHA512, is also supported.
 For brevity, only the 256-bit variants are described below.
 .Pp
 The
@@ -252,8 +280,9 @@ parameter should either be a string large enough to hold the resulting digest
 .Dv SHA224_DIGEST_STRING_LENGTH ,
 .Dv SHA256_DIGEST_STRING_LENGTH ,
 .Dv SHA384_DIGEST_STRING_LENGTH ,
-or
 .Dv SHA512_DIGEST_STRING_LENGTH ,
+or
+.Dv SHA512_256_DIGEST_STRING_LENGTH ,
 depending on the function being used)
 or a
 .Dv NULL
