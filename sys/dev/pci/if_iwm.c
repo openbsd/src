@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.116 2016/09/04 10:14:35 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.117 2016/09/04 10:21:14 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -350,8 +350,6 @@ void	iwm_mvm_rx_tx_cmd_single(struct iwm_softc *, struct iwm_rx_packet *,
 void	iwm_mvm_rx_tx_cmd(struct iwm_softc *, struct iwm_rx_packet *,
 			struct iwm_rx_data *);
 int	iwm_mvm_binding_cmd(struct iwm_softc *, struct iwm_node *, uint32_t);
-int	iwm_mvm_binding_update(struct iwm_softc *, struct iwm_node *);
-int	iwm_mvm_binding_add_vif(struct iwm_softc *, struct iwm_node *);
 void	iwm_mvm_phy_ctxt_cmd_hdr(struct iwm_softc *, struct iwm_mvm_phy_ctxt *,
 			struct iwm_phy_context_cmd *, uint32_t, uint32_t);
 void	iwm_mvm_phy_ctxt_cmd_data(struct iwm_softc *,
@@ -3684,18 +3682,6 @@ iwm_mvm_binding_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action)
 	return ret;
 }
 
-int
-iwm_mvm_binding_update(struct iwm_softc *sc, struct iwm_node *in)
-{
-	return iwm_mvm_binding_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY);
-}
-
-int
-iwm_mvm_binding_add_vif(struct iwm_softc *sc, struct iwm_node *in)
-{
-	return iwm_mvm_binding_cmd(sc, in, IWM_FW_CTXT_ACTION_ADD);
-}
-
 /*
  * Construct the generic fields of the PHY context command
  */
@@ -5589,7 +5575,7 @@ iwm_auth(struct iwm_softc *sc)
 		return err;
 	in->in_phyctxt = &sc->sc_phyctxt[0];
 
-	err = iwm_mvm_binding_add_vif(sc, in);
+	err = iwm_mvm_binding_cmd(sc, in, IWM_FW_CTXT_ACTION_ADD);
 	if (err)
 		return err;
 
