@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2015/09/11 14:30:23 bcook Exp $
+#	$OpenBSD: Makefile,v 1.7 2016/09/04 18:05:34 beck Exp $
 
 PROG=	openssl
 LDADD=	-lssl -lcrypto
@@ -17,7 +17,7 @@ CFLAGS+= -Wunused
 
 CFLAGS+= -DLIBRESSL_INTERNAL
 
-SRCS=	apps.c apps_posix.c asn1pars.c ca.c certhash.c ciphers.c cms.c crl.c \
+SRCS=	apps.c apps_posix.c asn1pars.c ca.c certhash.c ciphers.c crl.c \
 	crl2p7.c dgst.c dh.c dhparam.c dsa.c dsaparam.c ec.c ecparam.c enc.c \
 	errstr.c gendh.c gendsa.c genpkey.c genrsa.c nseq.c ocsp.c \
 	openssl.c passwd.c pkcs12.c pkcs7.c pkcs8.c pkey.c pkeyparam.c \
