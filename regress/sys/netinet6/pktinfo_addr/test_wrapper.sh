@@ -1,4 +1,4 @@
-# $Id: test_wrapper.sh,v 1.1 2016/09/03 15:36:33 vgross Exp $
+# $Id: test_wrapper.sh,v 1.2 2016/09/04 15:24:50 vgross Exp $
 
 TESTIFACE="vether2323"
 TESTNET=$(jot -r -s ':' -w %x 2 0 65535)
@@ -45,8 +45,8 @@ ${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b ${BASEADDR} -m ${FIRSTADDR} -e 48
 ${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b :: -e 0
 ${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b :: -o ${ADDR_3} -e 0
 ${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b :: -m ${ADDR_3} -e 0
-${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b :: -o ${FIRSTADDR} -e 48
-${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b :: -m ${FIRSTADDR} -e 48
+${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b :: -o ${FIRSTADDR} -e 0
+${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b :: -m ${FIRSTADDR} -e 0
 ${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b ${BASEADDR} -o :: -e 0
 ${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b ${BASEADDR} -m :: -e 0
 ${PROG} -d ${DESTADDR} -f ${FIRSTADDR} -b ${BASEADDR} -o ${ADDR_3} -m ${ADDR_4} -e 0
