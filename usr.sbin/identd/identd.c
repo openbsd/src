@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.33 2015/10/24 15:31:00 jca Exp $ */
+/*	$OpenBSD: identd.c,v 1.34 2016/09/04 14:39:32 florian Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -132,12 +132,18 @@ const char *getport(struct sockaddr_storage *);
 const char *gentoken(void);
 
 struct loggers {
-	void (*err)(int, const char *, ...);
-	void (*errx)(int, const char *, ...);
-	void (*warn)(const char *, ...);
-	void (*warnx)(const char *, ...);
-	void (*notice)(const char *, ...);
-	void (*debug)(const char *, ...);
+	__dead void (*err)(int, const char *, ...)
+	    __attribute__((__format__ (printf, 2, 3)));
+	__dead void (*errx)(int, const char *, ...)
+	    __attribute__((__format__ (printf, 2, 3)));
+	void (*warn)(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+	void (*warnx)(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+	void (*notice)(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+	void (*debug)(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
 };
 
 const struct loggers conslogger = {
@@ -149,13 +155,20 @@ const struct loggers conslogger = {
 	warnx /* debug */
 };
 
-void	syslog_err(int, const char *, ...);
-void	syslog_errx(int, const char *, ...);
-void	syslog_warn(const char *, ...);
-void	syslog_warnx(const char *, ...);
-void	syslog_notice(const char *, ...);
-void	syslog_debug(const char *, ...);
-void	syslog_vstrerror(int, int, const char *, va_list);
+__dead void	syslog_err(int, const char *, ...)
+		    __attribute__((__format__ (printf, 2, 3)));
+__dead void	syslog_errx(int, const char *, ...)
+		    __attribute__((__format__ (printf, 2, 3)));
+void		syslog_warn(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
+void		syslog_warnx(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
+void		syslog_notice(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
+void		syslog_debug(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
+void		syslog_vstrerror(int, int, const char *, va_list)
+		    __attribute__((__format__ (printf, 3, 0)));
 
 const struct loggers syslogger = {
 	syslog_err,
