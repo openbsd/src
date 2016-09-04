@@ -1,4 +1,4 @@
-/* $OpenBSD: wp_block.c,v 1.10 2016/03/15 20:50:22 krw Exp $ */
+/* $OpenBSD: wp_block.c,v 1.11 2016/09/04 13:39:48 jsing Exp $ */
 /**
  * The Whirlpool hashing function.
  *
@@ -65,8 +65,6 @@ typedef unsigned long long	u64;
 					} while (0)
 #  endif
 #elif defined(__arm__)
-#  define SMALL_REGISTER_BANK
-#elif defined(__vax__)
 #  define SMALL_REGISTER_BANK
 #endif
 
