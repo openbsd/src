@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.60 2016/09/05 07:38:32 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.61 2016/09/05 09:04:31 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -121,7 +121,7 @@ struct pool {
 
 	int		pr_ipl;
 
-	RBT_HEAD(phtree, pool_item_header)
+	RB_HEAD(phtree, pool_item_header)
 			pr_phtree;
 
 	u_int		pr_align;

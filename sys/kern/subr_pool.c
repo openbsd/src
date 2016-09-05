@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.195 2016/09/05 07:38:32 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.196 2016/09/05 09:04:31 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@ struct pool_item_header {
 	TAILQ_ENTRY(pool_item_header)
 				ph_pagelist;	/* pool page list */
 	XSIMPLEQ_HEAD(,pool_item) ph_itemlist;	/* chunk list for this page */
-	RBT_ENTRY(pool_item_header)
+	RB_ENTRY(pool_item_header)
 				ph_node;	/* Off-page page headers */
 	int			ph_nmissing;	/* # of chunks in use */
 	caddr_t			ph_page;	/* this page's address */
@@ -165,11 +165,8 @@ struct task pool_gc_task = TASK_INITIALIZER(pool_gc_pages, NULL);
 int pool_wait_free = 1;
 int pool_wait_gc = 8;
 
-RBT_PROTOTYPE(phtree, pool_item_header, ph_node, phtree_compare);
-
 static inline int
-phtree_compare(const struct pool_item_header *a,
-    const struct pool_item_header *b)
+phtree_compare(struct pool_item_header *a, struct pool_item_header *b)
 {
 	vaddr_t va = (vaddr_t)a->ph_page;
 	vaddr_t vb = (vaddr_t)b->ph_page;
@@ -183,7 +180,8 @@ phtree_compare(const struct pool_item_header *a,
 	return (0);
 }
 
-RBT_GENERATE(phtree, pool_item_header, ph_node, phtree_compare);
+RB_PROTOTYPE(phtree, pool_item_header, ph_node, phtree_compare);
+RB_GENERATE(phtree, pool_item_header, ph_node, phtree_compare);
 
 /*
  * Return the pool page header based on page address.
@@ -202,7 +200,7 @@ pr_find_pagehead(struct pool *pp, void *v)
 	}
 
 	key.ph_page = v;
-	ph = RBT_NFIND(phtree, &pp->pr_phtree, &key);
+	ph = RB_NFIND(phtree, &pp->pr_phtree, &key);
 	if (ph == NULL)
 		panic("%s: %s: page header missing", __func__, pp->pr_wchan);
 
@@ -294,7 +292,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_hardlimit_ratecap.tv_usec = 0;
 	pp->pr_hardlimit_warning_last.tv_sec = 0;
 	pp->pr_hardlimit_warning_last.tv_usec = 0;
-	RBT_INIT(phtree, &pp->pr_phtree);
+	RB_INIT(&pp->pr_phtree);
 
 	/*
 	 * Use the space between the chunks and the page header
@@ -849,7 +847,7 @@ pool_p_insert(struct pool *pp, struct pool_item_header *ph)
 
 	TAILQ_INSERT_TAIL(&pp->pr_emptypages, ph, ph_pagelist);
 	if (!POOL_INPGHDR(pp))
-		RBT_INSERT(phtree, &pp->pr_phtree, ph);
+		RB_INSERT(phtree, &pp->pr_phtree, ph);
 
 	pp->pr_nitems += pp->pr_itemsperpage;
 	pp->pr_nidle++;
@@ -870,7 +868,7 @@ pool_p_remove(struct pool *pp, struct pool_item_header *ph)
 	pp->pr_nitems -= pp->pr_itemsperpage;
 
 	if (!POOL_INPGHDR(pp))
-		RBT_REMOVE(phtree, &pp->pr_phtree, ph);
+		RB_REMOVE(phtree, &pp->pr_phtree, ph);
 	TAILQ_REMOVE(&pp->pr_emptypages, ph, ph_pagelist);
 
 	pool_update_curpage(pp);
