@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.34 2016/09/01 10:06:30 ratchov Exp $
+.\" $OpenBSD: pledge.2,v 1.35 2016/09/05 11:17:24 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 1 2016 $
+.Dd $Mdocdate: September 5 2016 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -126,7 +126,7 @@ once.
 .Pp
 The
 .Ar promises
-is specified as a string, with space separate keywords:
+is specified as a string, with space separated keywords:
 .Bl -tag -width "tmppath" -offset indent
 .It Va "stdio"
 The following system calls are permitted to allow most basic functions
