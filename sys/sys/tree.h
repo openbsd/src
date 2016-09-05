@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.15 2016/09/02 11:17:14 dlg Exp $	*/
+/*	$OpenBSD: tree.h,v 1.16 2016/09/05 07:24:34 dlg Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -745,7 +745,7 @@ name##_RB_MINMAX(struct name *head, int val)				\
 	    ((x) != NULL) && ((y) = name##_RB_PREV(x), 1);		\
 	     (x) = (y))
 
-#if 0 && defined(_KERNEL)
+#ifdef _KERNEL
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
