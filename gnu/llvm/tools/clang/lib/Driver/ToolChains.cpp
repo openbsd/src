@@ -2986,6 +2986,58 @@ Tool *OpenBSD::buildAssembler() const {
 
 Tool *OpenBSD::buildLinker() const { return new tools::openbsd::Linker(*this); }
 
+ToolChain::CXXStdlibType OpenBSD::GetCXXStdlibType(const ArgList &Args) const {
+  if (Arg *A = Args.getLastArg(options::OPT_stdlib_EQ)) {
+    StringRef Value = A->getValue();
+    if (Value == "libstdc++")
+      return ToolChain::CST_Libstdcxx;
+    if (Value == "libc++")
+      return ToolChain::CST_Libcxx;
+
+    getDriver().Diag(diag::err_drv_invalid_stdlib_name) << A->getAsString(Args);
+  }
+  return ToolChain::CST_Libcxx;
+}
+
+void OpenBSD::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
+                                          ArgStringList &CC1Args) const {
+  if (DriverArgs.hasArg(options::OPT_nostdlibinc) ||
+      DriverArgs.hasArg(options::OPT_nostdincxx))
+    return;
+
+  switch (GetCXXStdlibType(DriverArgs)) {
+  case ToolChain::CST_Libcxx:
+    addSystemInclude(DriverArgs, CC1Args,
+                     getDriver().SysRoot + "/usr/include/c++/v1");
+    break;
+  case ToolChain::CST_Libstdcxx:
+    std::string Triple = getTriple().str();
+    if (Triple.substr(0, 6) == "x86_64")
+      Triple.replace(0, 6, "amd64");
+    addSystemInclude(DriverArgs, CC1Args,
+                     getDriver().SysRoot + "/usr/include/g++");
+    addSystemInclude(DriverArgs, CC1Args,
+                     getDriver().SysRoot + "/usr/include/g++/" + Triple);
+    addSystemInclude(DriverArgs, CC1Args,
+                     getDriver().SysRoot + "/usr/include/g++/backward");
+    break;
+  }
+}
+
+void OpenBSD::AddCXXStdlibLibArgs(const ArgList &Args,
+                                 ArgStringList &CmdArgs) const {
+ switch (GetCXXStdlibType(Args)) {
+  case ToolChain::CST_Libcxx:
+    CmdArgs.push_back("-lc++");
+    CmdArgs.push_back("-lc++abi");
+    CmdArgs.push_back("-lpthread");
+    break;
+  case ToolChain::CST_Libstdcxx:
+    CmdArgs.push_back("-lstdc++");
+    break;
+  }
+}
+
 /// Bitrig - Bitrig tool chain which can call as(1) and ld(1) directly.
 
 Bitrig::Bitrig(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
