@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipwvar.h,v 1.26 2016/09/05 08:17:29 tedu Exp $	*/
+/*	$OpenBSD: if_ipwvar.h,v 1.27 2016/09/05 09:59:20 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -82,7 +82,9 @@ struct ipw_softc {
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
 
-	struct rwlock			sc_rwlock;
+	uint32_t			sc_flags;
+#define IPW_FLAG_FW_INITED	(1 << 0)
+#define IPW_FLAG_BUSY		(1 << 1)
 
 	bus_space_tag_t			sc_st;
 	bus_space_handle_t		sc_sh;
