@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.32 2016/09/05 11:29:55 mglocker Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.33 2016/09/05 12:24:24 mglocker Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -328,7 +328,7 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 	 * Reset the host controller and enable interrupts.
 	 */
 	if (imxesdhc_host_reset(sc))
-		goto err;
+		return;
 
 	/* Determine host capabilities. */
 	caps = HREAD4(sc, SDHC_HOST_CTRL_CAP);
@@ -445,13 +445,8 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sdmmc = config_found(&sc->sc_dev, &saa, NULL);
 	if (sc->sdmmc == NULL) {
 		error = 0;
-		goto err;
+		return;
 	}
-	
-	return;
-
-err:
-	return;
 }
 
 void
