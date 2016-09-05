@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.134 2016/08/17 11:08:08 stsp Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.135 2016/09/05 08:18:40 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -27,6 +27,7 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
+#include <sys/rwlock.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -323,6 +324,7 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	wpi_radiotap_attach(sc);
 #endif
 	timeout_set(&sc->calib_to, wpi_calib_timeout, sc);
+	rw_init(&sc->sc_rwlock, "wpilock");
 	task_set(&sc->init_task, wpi_init_task, sc);
 	return;
 
@@ -421,17 +423,14 @@ wpi_init_task(void *arg1)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
+	rw_enter_write(&sc->sc_rwlock);
 	s = splnet();
-	while (sc->sc_flags & WPI_FLAG_BUSY)
-		tsleep(&sc->sc_flags, 0, "wpipwr", 0);
-	sc->sc_flags |= WPI_FLAG_BUSY;
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP)
 		wpi_init(ifp);
 
-	sc->sc_flags &= ~WPI_FLAG_BUSY;
-	wakeup(&sc->sc_flags);
 	splx(s);
+	rw_exit_write(&sc->sc_rwlock);
 }
 
 int
@@ -1968,18 +1967,10 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr;
 	int s, error = 0;
 
-	s = splnet();
-	/*
-	 * Prevent processes from entering this function while another
-	 * process is tsleep'ing in it.
-	 */
-	while ((sc->sc_flags & WPI_FLAG_BUSY) && error == 0)
-		error = tsleep(&sc->sc_flags, PCATCH, "wpiioc", 0);
-	if (error != 0) {
-		splx(s);
+	error = rw_enter(&sc->sc_rwlock, RW_WRITE | RW_INTR);
+	if (error)
 		return error;
-	}
-	sc->sc_flags |= WPI_FLAG_BUSY;
+	s = splnet();
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -2034,9 +2025,8 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 	}
 
-	sc->sc_flags &= ~WPI_FLAG_BUSY;
-	wakeup(&sc->sc_flags);
 	splx(s);
+	rw_exit_write(&sc->sc_rwlock);
 	return error;
 }
 
