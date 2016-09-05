@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.23 2016/09/05 15:12:30 claudio Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.24 2016/09/05 16:07:01 claudio Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -177,34 +177,8 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		raw_detach(rp);
 		break;
 
-#ifdef notdef
-	/*
-	 * If a socket isn't bound to a single address,
-	 * the raw input routine will hand it anything
-	 * within that protocol family (assuming there's
-	 * nothing else around it should go to). 
-	 */
-	case PRU_CONNECT:
-		if (rp->rcb_faddr) {
-			error = EISCONN;
-			break;
-		}
-		nam = m_copym(nam, 0, M_COPYALL, M_WAIT);
-		rp->rcb_faddr = mtod(nam, struct sockaddr *);
-		soisconnected(so);
-		break;
-
-	case PRU_BIND:
-		if (rp->rcb_laddr) {
-			error = EINVAL;			/* XXX */
-			break;
-		}
-		error = raw_bind(so, nam);
-		break;
-#else
 	case PRU_CONNECT:
 	case PRU_BIND:
-#endif
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
 		break;

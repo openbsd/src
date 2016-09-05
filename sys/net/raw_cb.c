@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_cb.c,v 1.9 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: raw_cb.c,v 1.10 2016/09/05 16:07:01 claudio Exp $	*/
 /*	$NetBSD: raw_cb.c,v 1.9 1996/02/13 22:00:39 christos Exp $	*/
 
 /*
@@ -95,11 +95,6 @@ raw_detach(struct rawcb *rp)
 	so->so_pcb = 0;
 	sofree(so);
 	LIST_REMOVE(rp, rcb_list);
-#ifdef notdef
-	if (rp->rcb_laddr)
-		m_freem(dtom(rp->rcb_laddr));
-	rp->rcb_laddr = 0;
-#endif
 	free((caddr_t)(rp), M_PCB, 0);
 }
 
@@ -110,27 +105,6 @@ void
 raw_disconnect(struct rawcb *rp)
 {
 
-#ifdef notdef
-	if (rp->rcb_faddr)
-		m_freem(dtom(rp->rcb_faddr));
-	rp->rcb_faddr = 0;
-#endif
 	if (rp->rcb_socket->so_state & SS_NOFDREF)
 		raw_detach(rp);
 }
-
-#ifdef notdef
-int
-raw_bind(struct socket *so, struct mbuf *nam)
-{
-	struct sockaddr *addr = mtod(nam, struct sockaddr *);
-	struct rawcb *rp;
-
-	if (ifnet == 0)
-		return (EADDRNOTAVAIL);
-	rp = sotorawcb(so);
-	nam = m_copym(nam, 0, M_COPYALL, M_WAITOK);
-	rp->rcb_laddr = mtod(nam, struct sockaddr *);
-	return (0);
-}
-#endif
