@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.1 2016/09/05 11:04:45 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.2 2016/09/05 11:26:18 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -57,8 +57,6 @@ apply_patches()
 	local _patch _patches="$@"
 	[[ -n ${_patches} ]] || return 0 # nothing to do
 
-	install -d -m 0755 /var/syspatch/${_REL}
-
 	for _patch in ${_patches}; do
 		fetch_and_verify "${_patch}" || return
 		install_patch "${_patch}" || return
@@ -86,15 +84,15 @@ create_rollback()
 		if [[ ${_type} == bsd ]]; then
 			# XXX bsd.mp created twice in the tarball
 			if ${_BSDMP}; then
-				tar -czf /var/syspatch/${_REL}/rollback-${_patch}.tgz \
+				tar -czf ${_SYSPATCH_DIR}/${_REL}/rollback-${_patch}.tgz \
 					-s '/^bsd$/bsd.mp/' -s '/^bsd.sp$/bsd/' \
 					${_files} bsd.sp 2>/dev/null || return # no /bsd.mp
 			else
-				tar -czf /var/syspatch/${_REL}/rollback-${_patch}.tgz \
+				tar -czf ${_SYSPATCH_DIR}/${_REL}/rollback-${_patch}.tgz \
 					${_files} || return
 			fi
 		else
-			tar -czf /var/syspatch/${_REL}/rollback-${_patch}.tgz \
+			tar -czf ${_SYSPATCH_DIR}/${_REL}/rollback-${_patch}.tgz \
 				${_files} || return
 		fi
 	)
@@ -190,7 +188,7 @@ ls_avail()
 ls_installed()
 {
 	local _p
-	cd /var/syspatch/${_REL} && set -- *
+	cd ${_SYSPATCH_DIR}/${_REL} && set -- * || return 0 # no _REL dir = no patch
 	for _p; do
 		 [[ ${_p} = rollback-syspatch-${_RELINT}-*.tgz ]] && \
 			_p=${_p#rollback-} && echo ${_p%.tgz}
@@ -216,7 +214,7 @@ rollback_patch()
 	local _explodir _file _files _patch=$1 _type
 	[[ -n ${_patch} ]]
 
-	_type=$(tar -tzf /var/syspatch/${_REL}/rollback-${_patch}.tgz bsd \
+	_type=$(tar -tzf ${_SYSPATCH_DIR}/${_REL}/rollback-${_patch}.tgz bsd \
 		2>/dev/null || echo userland)
 
 	# make sure the syspatch is installed and is the latest version
@@ -225,7 +223,7 @@ rollback_patch()
 	_explodir=${_TMP}/rollback-${_patch}
 	mkdir -p ${_explodir}
 
-	_files="$(tar xvzphf /var/syspatch/${_REL}/rollback-${_patch}.tgz -C ${_explodir})"
+	_files="$(tar xvzphf ${_SYSPATCH_DIR}/${_REL}/rollback-${_patch}.tgz -C ${_explodir})"
 	for _file in ${_files}; do
 		if [[ ${_type} == bsd ]]; then
 			install_kernel ${_explodir}/${_file} || return
@@ -234,8 +232,8 @@ rollback_patch()
 		fi
 	done
 
-	rm /var/syspatch/${_REL}/rollback-${_patch}.tgz \
-		/var/syspatch/${_REL}/${_patch#syspatch-${_RELINT}-}.patch.sig
+	rm ${_SYSPATCH_DIR}/${_REL}/rollback-${_patch}.tgz \
+		${_SYSPATCH_DIR}/${_REL}/${_patch#syspatch-${_RELINT}-}.patch.sig
 }
 
 # we do not run on current
@@ -252,6 +250,7 @@ set -A _KERNV -- $(sysctl -n kern.version | \
 [[ -n ${PATCH_PATH} ]]
 [[ -d ${PATCH_PATH} ]] && PATCH_PATH="file://$(readlink -f ${PATCH_PATH})"
 
+readonly _SYSPATCH_DIR="/var/syspatch"
 _FETCH="/usr/bin/ftp -MV -k ${FTP_KEEPALIVE-0}"
 _REL=${_KERNV[0]}
 _RELINT=${_REL%\.*}${_REL#*\.}
