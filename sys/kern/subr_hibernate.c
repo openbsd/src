@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.117 2016/09/01 13:12:59 akfaew Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.118 2016/09/05 22:27:23 beck Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1035,6 +1035,37 @@ hibernate_preserve_entropy(union hibernate_info *hib)
 	km_free(entropy, PAGE_SIZE, &kv_any, &kp_none);
 }
 
+#ifndef NO_PROPOLICE
+vaddr_t
+hibernate_unprotect_ssp(void)
+{
+	struct kmem_dyn_mode kd_avoidalias;
+	vaddr_t va = trunc_page((vaddr_t)&__guard_local);
+	paddr_t pa;
+
+	pmap_extract(pmap_kernel(), va, &pa);
+
+	memset(&kd_avoidalias, 0, sizeof kd_avoidalias);
+	kd_avoidalias.kd_prefer = pa;
+	kd_avoidalias.kd_waitok = 1;
+	va = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any, &kp_none, &kd_avoidalias);
+	if (!va)
+		panic("hibernate_unprotect_ssp");
+
+	pmap_kenter_pa(va, pa, PROT_READ | PROT_WRITE);
+	pmap_update(pmap_kernel());
+
+	return va;
+}
+
+void
+hibernate_reprotect_ssp(vaddr_t va)
+{
+	pmap_kremove(va, PAGE_SIZE);
+	km_free((void *)va, PAGE_SIZE, &kv_any, &kp_none);
+}
+#endif /* NO_PROPOLICE */
+
 /*
  * Reads the signature block from swap, checks against the current machine's
  * information. If the information matches, perform a resume by reading the
@@ -1047,6 +1078,11 @@ hibernate_resume(void)
 {
 	union hibernate_info hib;
 	int s;
+#ifndef NO_PROPOLICE
+	vsize_t off = (vaddr_t)&__guard_local -
+	    trunc_page((vaddr_t)&__guard_local);
+	vaddr_t guard_va;
+#endif
 
 	/* Get current running machine's hibernate info */
 	memset(&hib, 0, sizeof(hib));
@@ -1111,6 +1147,10 @@ hibernate_resume(void)
 	if (config_suspend_all(DVACT_QUIESCE) != 0)
 		goto fail;
 
+#ifndef NO_PROPOLICE
+	guard_va = hibernate_unprotect_ssp();
+#endif /* NO_PROPOLICE */
+
 	(void) splhigh();
 	hibernate_disable_intr_machdep();
 	cold = 1;
@@ -1119,6 +1159,9 @@ hibernate_resume(void)
 	if (config_suspend_all(DVACT_SUSPEND) != 0) {
 		cold = 0;
 		hibernate_enable_intr_machdep();
+#ifndef NO_PROPOLICE
+		hibernate_reprotect_ssp(guard_va);
+#endif /* ! NO_PROPOLICE */
 		goto fail;
 	}
 
@@ -1132,7 +1175,8 @@ hibernate_resume(void)
 
 #ifndef NO_PROPOLICE
 	/* Start using suspended kernel's propolice guard */
-	__guard_local = disk_hib.guard;
+	*(long *)(guard_va + off) = disk_hib.guard;
+	hibernate_reprotect_ssp(guard_va);
 #endif /* ! NO_PROPOLICE */
 
 	/* Unpack and resume */
