@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.4 2016/09/05 11:32:28 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.5 2016/09/05 12:05:13 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -70,7 +70,7 @@ apply_patches()
 
 create_rollback()
 {
-	local _patch=$1 _type
+	local _file _patch=$1 _rbfiles _type
 	[[ -n ${_patch} ]]
 	shift
 	local _files="${@}"
@@ -78,8 +78,10 @@ create_rollback()
 
 	_type=$(tar -tzf ${_TMP}/${_patch}.tgz bsd 2>/dev/null || echo userland)
 
-	_files="$(echo ${_files} \
-		| sed "s|var/syspatch/${_REL}/${_patch#syspatch-60-}.patch.sig||g")"
+	for _file in ${_files}; do
+		[[ -f /${_file} ]] || continue
+		_rbfiles="${_rbfiles} ${_file}"
+	done
 
 	(cd / && \
 		if [[ ${_type} == bsd ]]; then
@@ -87,14 +89,14 @@ create_rollback()
 			if ${_BSDMP}; then
 				tar -czf ${_PDIR}/${_REL}/rollback-${_patch}.tgz \
 					-s '/^bsd$/bsd.mp/' -s '/^bsd.sp$/bsd/' \
-					${_files} bsd.sp 2>/dev/null || return # no /bsd.mp
+					${_rbfiles} bsd.sp 2>/dev/null || return # no /bsd.mp
 			else
 				tar -czf ${_PDIR}/${_REL}/rollback-${_patch}.tgz \
-					${_files} || return
+					${_rbfiles} || return
 			fi
 		else
 			tar -czf ${_PDIR}/${_REL}/rollback-${_patch}.tgz \
-				${_files} || return
+				${_rbfiles} || return
 		fi
 	)
 }
