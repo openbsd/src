@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.115 2016/04/13 10:34:32 mpi Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.116 2016/09/05 08:17:29 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -28,6 +28,7 @@
 #include <sys/task.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
+#include <sys/rwlock.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -203,6 +204,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %s", intrstr);
 
+	rw_init(&sc->sc_rwlock, "ipwlock");
 	task_set(&sc->sc_scantask, ipw_scan, sc);
 	task_set(&sc->sc_authandassoctask, ipw_auth_and_assoc, sc);
 
@@ -318,17 +320,14 @@ ipw_wakeup(struct ipw_softc *sc)
 	data &= ~0x0000ff00;
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
 
+	rw_enter_write(&sc->sc_rwlock);
 	s = splnet();
-	while (sc->sc_flags & IPW_FLAG_BUSY)
-		tsleep(&sc->sc_flags, PZERO, "ipwpwr", 0);
-	sc->sc_flags |= IPW_FLAG_BUSY;
 
 	if (ifp->if_flags & IFF_UP)
 		ipw_init(ifp);
 
-	sc->sc_flags &= ~IPW_FLAG_BUSY;
-	wakeup(&sc->sc_flags);
 	splx(s);
+	rw_exit_write(&sc->sc_rwlock);
 }
 
 int
@@ -1359,18 +1358,10 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr;
 	int s, error = 0;
 
-	s = splnet();
-	/*
-	 * Prevent processes from entering this function while another
-	 * process is tsleep'ing in it.
-	 */
-	while ((sc->sc_flags & IPW_FLAG_BUSY) && error == 0)
-		error = tsleep(&sc->sc_flags, PCATCH, "ipwioc", 0);
-	if (error != 0) {
-		splx(s);
+	error = rw_enter(&sc->sc_rwlock, RW_ENTER | RW_INTR);
+	if (error)
 		return error;
-	}
-	sc->sc_flags |= IPW_FLAG_BUSY;
+	s = splnet();
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -1419,9 +1410,8 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = 0;
 	}
 
-	sc->sc_flags &= ~IPW_FLAG_BUSY;
-	wakeup(&sc->sc_flags);
 	splx(s);
+	rw_exit_write(&sc->sc_rwlock);
 	return error;
 }
 
@@ -1483,8 +1473,6 @@ ipw_stop_master(struct ipw_softc *sc)
 
 	tmp = CSR_READ_4(sc, IPW_CSR_RST);
 	CSR_WRITE_4(sc, IPW_CSR_RST, tmp | IPW_RST_PRINCETON_RESET);
-
-	sc->sc_flags &= ~IPW_FLAG_FW_INITED;
 }
 
 int
@@ -2004,7 +1992,6 @@ ipw_init(struct ifnet *ifp)
 		printf("%s: could not load firmware\n", sc->sc_dev.dv_xname);
 		goto fail2;
 	}
-	sc->sc_flags |= IPW_FLAG_FW_INITED;
 	free(fw.data, M_DEVBUF, fw.size);
 	fw.data = NULL;
 
