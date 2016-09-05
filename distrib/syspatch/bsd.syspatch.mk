@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.syspatch.mk,v 1.2 2016/09/04 16:40:34 robert Exp $
+#	$OpenBSD: bsd.syspatch.mk,v 1.3 2016/09/05 11:55:06 robert Exp $
 #
 # Copyright (c) 2016 Robert Nagy <robert@openbsd.org>
 #
@@ -18,27 +18,19 @@
 
 ERRATA?=
 
-# both the X.Y and XY formats are required
-OSREV!=		uname -r
-_OSREV=		${OSREV:S/.//g}
-
 # binaries used by this makefile
 FETCH=		/usr/bin/ftp -Vm
-SIGNIFY=	/usr/bin/signify
-PATCH=		/usr/bin/patch
-MAKE=		/usr/bin/make
-MTREE=		/usr/sbin/mtree
 
 # make sure to only use the original OpenBSD mirror
 MIRROR=		http://ftp.openbsd.org/pub/OpenBSD/patches/${OSREV}/common
 
 # the final name of the syspatch tarball
-SYSPATCH=	syspatch-${_OSREV}-${ERRATA}.tgz
+SYSPATCH=	syspatch-${OSrev}-${ERRATA}.tgz
 
 # arguments used by different tools
 MTREE_FILES=	/etc/mtree/4.4BSD.dist
 MTREE_ARGS=	-qdep ${FAKE} -U
-SIGNIFY_KEY=	/etc/signify/openbsd-${_OSREV}-base.pub
+SIGNIFY_KEY=	/etc/signify/openbsd-${OSrev}-base.pub
 PATCH_STRIP?=	-p0
 PATCH_ARGS=	-d ${SRCDIR} -z .orig --forward --quiet -E ${PATCH_STRIP}
 
@@ -75,7 +67,7 @@ cleandir: clean
 
 ${_FAKE_COOKIE}: ${_BUILD_COOKIE}
 .for _m in ${MTREE_FILES}
-	@${SUDO} ${MTREE} ${MTREE_ARGS} -f ${_m} >/dev/null
+	@${SUDO} /usr/sbin/mtree ${MTREE_ARGS} -f ${_m} >/dev/null
 .endfor
 	@touch $@
 
@@ -84,14 +76,14 @@ ${ERRATA}/${ERRATA}.patch:
 	echo ">> Fetch ${MIRROR}/${.TARGET:T}.sig"; \
 	if ${FETCH} -o ${SYSPATCH_DIR}/${.TARGET:T}.sig \
 		${MIRROR}/${.TARGET:T}.sig; then \
-		if ${SIGNIFY} -Vep ${SIGNIFY_KEY} -x \
+		if /usr/bin/signify -Vep ${SIGNIFY_KEY} -x \
 			${SYSPATCH_DIR}/${.TARGET:T}.sig -m ${.TARGET}; then \
 				exit 0; \
 		fi; \
 	fi; exit 1
 
 ${_PATCH_COOKIE}: ${ERRATA}/${ERRATA}.patch
-	@${PATCH} ${PATCH_ARGS} < ${ERRATA}/${ERRATA}.patch || \
+	@/usr/bin/patch ${PATCH_ARGS} < ${ERRATA}/${ERRATA}.patch || \
 		{ echo "***>   ${ERRATA}.patch did not apply cleanly"; \
 		exit 1; };
 	@touch $@
@@ -103,7 +95,7 @@ ${_INSTALL_COOKIE}: ${_FAKE_COOKIE}
 	@if [ -f ${_s}/Makefile.bsd-wrapper ]; then \
 		_mk_spec_="-f Makefile.bsd-wrapper"; \
 	fi; \
-	cd ${_s} && ${SUDO} ${MAKE} $${_mk_spec_} \
+	cd ${_s} && ${SUDO} /usr/bin/make $${_mk_spec_} \
 		DESTDIR=${.OBJDIR}/${FAKE} install
 .    endfor
 .  endif
@@ -134,7 +126,7 @@ ${_BUILD_COOKIE}: ${_PATCH_COOKIE}
 		_mk_spec_="-f Makefile.bsd-wrapper"; \
 	fi; \
 	for _t in obj depend all; do \
-		cd ${_s} && ${MAKE} $${_mk_spec_} $${_t}; \
+		cd ${_s} && /usr/bin/make $${_mk_spec_} $${_t}; \
 	done;
 .    endfor
 .  endif
@@ -155,7 +147,7 @@ syspatch: ${SYSPATCH}
 
 ${SYSPATCH}: ${ERRATA}/.plist
 .for _m in ${MTREE_FILES}
-	@${SUDO} ${MTREE} ${MTREE_ARGS} -f ${_m} >/dev/null
+	@${SUDO} /usr/sbin/mtree ${MTREE_ARGS} -f ${_m} >/dev/null
 	@${SUDO} chown -R root:wheel ${SYSPATCH_DIR}
 .endfor
 	@tar -Pczf ${.TARGET} -C ${FAKE} -I ${ERRATA}/.plist || \
