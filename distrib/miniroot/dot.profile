@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.33 2016/09/04 09:56:46 rpe Exp $
+#	$OpenBSD: dot.profile,v 1.34 2016/09/05 09:15:05 rpe Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -65,7 +65,7 @@ Welcome to the $OBSD installation program.
 __EOT
 
 	# Create working directories with proper permissions in /tmp.
-	mkdir -m u=rwx,go= -p /tmp/{ai,i}
+	mkdir -m u=rwx,go=rx -p /tmp/{ai,i}
 
 	# Did we netboot?  If so, then start the automatic installation
 	# after a timeout, but only the very first time around.
