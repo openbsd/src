@@ -103,6 +103,9 @@ bool EHHeaderParser<A>::findFDE(A &addressSpace, pint_t pc, pint_t ehHdrStart,
   EHHeaderParser<A>::EHHeaderInfo hdrInfo;
   EHHeaderParser<A>::decodeEHHdr(addressSpace, ehHdrStart, ehHdrEnd, hdrInfo);
 
+  if (hdrInfo.fde_count == 0)
+    return false;
+
   size_t tableEntrySize = getTableEntrySize(hdrInfo.table_enc);
   pint_t tableEntry;
 
@@ -136,6 +139,10 @@ bool EHHeaderParser<A>::findFDE(A &addressSpace, pint_t pc, pint_t ehHdrStart,
 
 template <typename A>
 size_t EHHeaderParser<A>::getTableEntrySize(uint8_t tableEnc) {
+  if (tableEnc == DW_EH_PE_omit) {
+    return 0;
+  }
+
   switch (tableEnc & 0x0f) {
   case DW_EH_PE_sdata2:
   case DW_EH_PE_udata2:
@@ -149,8 +156,6 @@ size_t EHHeaderParser<A>::getTableEntrySize(uint8_t tableEnc) {
   case DW_EH_PE_sleb128:
   case DW_EH_PE_uleb128:
     _LIBUNWIND_ABORT("Can't binary search on variable length encoded data.");
-  case DW_EH_PE_omit:
-    return 0;
   default:
     _LIBUNWIND_ABORT("Unknown DWARF encoding for search table.");
   }

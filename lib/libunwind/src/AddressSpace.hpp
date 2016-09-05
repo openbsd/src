@@ -221,6 +221,10 @@ LocalAddressSpace::getEncodedP(pint_t &addr, pint_t end, uint8_t encoding,
   const uint8_t *p = (uint8_t *)addr;
   pint_t result;
 
+  if (encoding == DW_EH_PE_omit) {
+    return (pint_t)NULL;
+  }
+
   // first get value
   switch (encoding & 0x0F) {
   case DW_EH_PE_ptr:
