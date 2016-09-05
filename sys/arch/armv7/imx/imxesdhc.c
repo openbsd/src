@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.31 2016/08/27 17:32:35 kettenis Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.32 2016/09/05 11:29:55 mglocker Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -193,7 +193,6 @@ struct imxesdhc_softc {
 	int maxblklen;			/* maximum block length */
 	int flags;			/* flags for this host */
 	uint32_t ocr;			/* OCR value from capabilities */
-//	u_int8_t regs[14];		/* host controller state */
 	uint32_t intr_status;		/* soft interrupt status */
 	uint32_t intr_error_status;	/*  */
 
@@ -203,9 +202,6 @@ struct imxesdhc_softc {
 };
 
 /* Host controller functions called by the attachment driver. */
-int	imxesdhc_host_found(struct imxesdhc_softc *, bus_space_tag_t,
-	    bus_space_handle_t, bus_size_t, int);
-void	imxesdhc_shutdown(void *);
 int	imxesdhc_intr(void *);
 
 void	imxesdhc_clock_enable(uint32_t);
@@ -544,18 +540,6 @@ imxesdhc_pwrseq_post(uint32_t phandle)
 	}
 
 	free(gpios, M_TEMP, len);
-}
-
-/*
- * Shutdown hook established by or called from attachment driver.
- */
-void
-imxesdhc_shutdown(void *arg)
-{
-	struct imxesdhc_softc *sc = arg;
-
-	/* XXX chip locks up if we don't disable it before reboot. */
-	(void)imxesdhc_host_reset(sc);
 }
 
 /*
