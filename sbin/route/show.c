@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.106 2016/09/03 14:23:14 phessler Exp $	*/
+/*	$OpenBSD: show.c,v 1.107 2016/09/05 14:23:38 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -297,8 +297,7 @@ p_rtentry(struct rt_msghdr *rtm)
 	printf("  %2d %-5.16s", rtm->rtm_priority,
 	    if_indextoname(rtm->rtm_index, ifbuf));
 	if (verbose && rti_info[RTAX_LABEL])
-		printf(" %s", ((struct sockaddr_rtlabel *)
-		    rti_info[RTAX_LABEL])->sr_label);
+		printf(" %s", routename(rti_info[RTAX_LABEL]));
 	putchar('\n');
 }
 
@@ -467,11 +466,11 @@ routename(struct sockaddr *sa)
 		return (label_print(sa));
 	case AF_UNSPEC:
 		if (sa->sa_len == sizeof(struct sockaddr_rtlabel)) {
-			static char name[RTLABEL_LEN];
+			static char name[RTLABEL_LEN + 2];
 			struct sockaddr_rtlabel *sr;
 
 			sr = (struct sockaddr_rtlabel *)sa;
-			(void)strlcpy(name, sr->sr_label, sizeof(name));
+			snprintf(name, sizeof(name), "\"%s\"", sr->sr_label);
 			return (name);
 		}
 		/* FALLTHROUGH */
