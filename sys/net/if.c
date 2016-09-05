@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.444 2016/09/04 17:14:58 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.445 2016/09/05 13:09:32 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ int	if_getgroupmembers(caddr_t);
 int	if_getgroupattribs(caddr_t);
 int	if_setgroupattribs(caddr_t);
 
-void	if_linkstate(void *);
+void	if_linkstate_task(void *);
 
 int	if_clone_list(struct if_clonereq *);
 struct if_clone	*if_clone_lookup(const char *, int *);
@@ -422,7 +422,7 @@ if_attachsetup(struct ifnet *ifp)
 	mq_init(&ifp->if_inputqueue, 8192, IPL_NET);
 	task_set(ifp->if_inputtask, if_input_process, (void *)ifidx);
 	task_set(ifp->if_watchdogtask, if_watchdog_task, (void *)ifidx);
-	task_set(ifp->if_linkstatetask, if_linkstate, (void *)ifidx);
+	task_set(ifp->if_linkstatetask, if_linkstate_task, (void *)ifidx);
 
 	/* Announce the interface. */
 	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
@@ -1448,6 +1448,7 @@ if_downall(void)
 void
 if_down(struct ifnet *ifp)
 {
+	unsigned long ifidx = ifp->if_index;
 	struct ifaddr *ifa;
 
 	splsoftassert(IPL_SOFTNET);
@@ -1459,7 +1460,7 @@ if_down(struct ifnet *ifp)
 	}
 	IFQ_PURGE(&ifp->if_snd);
 
-	if_linkstate(ifp);
+	if_linkstate_task((void *)ifidx);
 }
 
 /*
@@ -1469,6 +1470,7 @@ if_down(struct ifnet *ifp)
 void
 if_up(struct ifnet *ifp)
 {
+	unsigned long ifidx = ifp->if_index;
 	splsoftassert(IPL_SOFTNET);
 
 	ifp->if_flags |= IFF_UP;
@@ -1480,7 +1482,7 @@ if_up(struct ifnet *ifp)
 		in6_ifattach(ifp);
 #endif
 
-	if_linkstate(ifp);
+	if_linkstate_task((void *)ifidx);
 }
 
 /*
@@ -1488,7 +1490,7 @@ if_up(struct ifnet *ifp)
  * a link-state transition.
  */
 void
-if_linkstate(void *xifidx)
+if_linkstate_task(void *xifidx)
 {
 	unsigned int ifidx = (unsigned long)xifidx;
 	struct ifnet *ifp;
