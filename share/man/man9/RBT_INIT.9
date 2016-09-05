@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RBT_INIT.9,v 1.1 2016/09/05 07:22:29 dlg Exp $
+.\"	$OpenBSD: RBT_INIT.9,v 1.2 2016/09/05 09:19:04 jmc Exp $
 .\"
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" * All rights reserved.
@@ -128,7 +128,7 @@
 .Fa "struct NAME *rbt"
 .Fa "NEXTVARNAME"
 .Fc
-.Fo RBT_FOREACH_REVERSE SAFE
+.Fo RBT_FOREACH_REVERSE_SAFE
 .Fa "VARNAME"
 .Fa "NAME"
 .Fa "struct NAME *rbt"
@@ -194,13 +194,13 @@ specifies which field in the
 structure is used to connect elements to
 .Fa NAME
 red-black trees.
-Elements in the red-black tree are ordered according to the result of comparing 
+Elements in the red-black tree are ordered according to the result of comparing
 them with the
 .Fa compare
 function.
 If the first argument to
 .Fa compare
-is to be ordered lower the second,
+is to be ordered lower than the second,
 the function returns a value smaller than zero.
 If the first argument is to be ordered higher than the second,
 the function returns a value greater than zero.
@@ -228,7 +228,7 @@ of type
 to an empty state.
 .Pp
 .Fn RBT_INITIALIZER
-can be used to initialise a declaraion of the red-black tree
+can be used to initialise a declaration of the red-black tree
 .Fa self
 of type
 .Fa NAME
@@ -268,7 +268,7 @@ of type
 .Fa NAME .
 .Pp
 .Fn RBT_NFIND
-performs a binary search for first node that is greater than or equal to
+performs a binary search for the first node that is greater than or equal to
 .Fa key
 in the red-black tree
 .Fa rbt
@@ -405,7 +405,7 @@ can be called during autoconf, from process context, or from interrupt
 context.
 .Pp
 It is up to the caller to provide appropriate locking around calls to
-these functions to prevent concurrent access to the relevent data structures.
+these functions to prevent concurrent access to the relevant data structures.
 .Sh RETURN VALUES
 .Fn RBT_INSERT
 will return
@@ -424,7 +424,7 @@ if no such element could be found.
 .Pp
 .Fn RBT_NFIND
 will return a reference to the nearest element that compares as equal or
-greater to 
+greater to
 .Fa key ,
 or
 .Dv NULL
@@ -471,21 +471,21 @@ or
 if it is the lowest element in the tree.
 .Pp
 .Fn RBT_LEFT
-returns a reference to left child element of 
+returns a reference to the left child element of
 .Fa elm ,
 or
 .Dv NULL
 if it is a leaf in the tree.
 .Pp
 .Fn RBT_RIGHT
-returns a reference to right child element of 
+returns a reference to the right child element of
 .Fa elm ,
 or
 .Dv NULL
 if it is a leaf in the tree.
 .Pp
 .Fn RBT_PARENT
-returns a reference to parent element of 
+returns a reference to the parent element of
 .Fa elm ,
 or
 .Dv NULL
