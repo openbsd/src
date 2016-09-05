@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.30 2016/01/05 18:41:15 stsp Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.31 2016/09/05 08:18:18 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -190,13 +190,13 @@ struct iwn_softc {
 
 	bus_dma_tag_t		sc_dmat;
 
+	struct rwlock		sc_rwlock;
 	u_int			sc_flags;
 #define IWN_FLAG_HAS_5GHZ	(1 << 0)
 #define IWN_FLAG_HAS_OTPROM	(1 << 1)
 #define IWN_FLAG_CALIB_DONE	(1 << 2)
 #define IWN_FLAG_USE_ICT	(1 << 3)
 #define IWN_FLAG_INTERNAL_PA	(1 << 4)
-#define IWN_FLAG_BUSY		(1 << 5)
 #define IWN_FLAG_HAS_11N	(1 << 6)
 #define IWN_FLAG_ENH_SENS	(1 << 7)
 #define IWN_FLAG_ADV_BT_COEX	(1 << 8)

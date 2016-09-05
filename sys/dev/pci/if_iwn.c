@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.171 2016/09/02 17:10:48 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.172 2016/09/05 08:18:18 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -27,6 +27,7 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
+#include <sys/rwlock.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -537,6 +538,7 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	iwn_radiotap_attach(sc);
 #endif
 	timeout_set(&sc->calib_to, iwn_calib_timeout, sc);
+	rw_init(&sc->sc_rwlock, "iwnlock");
 	task_set(&sc->init_task, iwn_init_task, sc);
 	return;
 
@@ -776,17 +778,14 @@ iwn_init_task(void *arg1)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
+	rw_enter_write(&sc->sc_rwlock);
 	s = splnet();
-	while (sc->sc_flags & IWN_FLAG_BUSY)
-		tsleep(&sc->sc_flags, 0, "iwnpwr", 0);
-	sc->sc_flags |= IWN_FLAG_BUSY;
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP)
 		iwn_init(ifp);
 
-	sc->sc_flags &= ~IWN_FLAG_BUSY;
-	wakeup(&sc->sc_flags);
 	splx(s);
+	rw_exit_write(&sc->sc_rwlock);
 }
 
 int
@@ -3212,18 +3211,10 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr;
 	int s, error = 0;
 
-	s = splnet();
-	/*
-	 * Prevent processes from entering this function while another
-	 * process is tsleep'ing in it.
-	 */
-	while ((sc->sc_flags & IWN_FLAG_BUSY) && error == 0)
-		error = tsleep(&sc->sc_flags, PCATCH, "iwnioc", 0);
-	if (error != 0) {
-		splx(s);
+	error = rw_enter(&sc->sc_rwlock, RW_WRITE | RW_INTR);
+	if (error)
 		return error;
-	}
-	sc->sc_flags |= IWN_FLAG_BUSY;
+	s = splnet();
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -3279,9 +3270,8 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 	}
 
-	sc->sc_flags &= ~IWN_FLAG_BUSY;
-	wakeup(&sc->sc_flags);
 	splx(s);
+	rw_exit_write(&sc->sc_rwlock);
 	return error;
 }
 
