@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.34 2016/09/05 09:15:05 rpe Exp $
+#	$OpenBSD: dot.profile,v 1.35 2016/09/05 10:19:46 rpe Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -36,14 +36,14 @@ export VNAME=$(sysctl -n kern.osrelease)
 export VERSION="${VNAME%.*}${VNAME#*.}"
 export ARCH=$(sysctl -n hw.machine)
 export OBSD="OpenBSD/$ARCH $VNAME"
-
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
+
 umask 022
+
 # emacs-style command line editing.
 set -o emacs
 
-# Extract rootdisk from last 'root on ...' line. e.g.
-#	root on wd0a swap on wd0b dump on wd0b
+# Extract rootdisk from last 'root on ...' dmesg line.
 rootdisk=$(dmesg | sed -E '/^root on ([^ ]+) .*$/h;$!d;g;s//\1/')
 
 if [[ -z $DONEPROFILE ]]; then
@@ -58,7 +58,6 @@ if [[ -z $DONEPROFILE ]]; then
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
 	stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T
 
-	# Installing or upgrading?
 	cat <<__EOT
 
 Welcome to the $OBSD installation program.
@@ -67,13 +66,14 @@ __EOT
 	# Create working directories with proper permissions in /tmp.
 	mkdir -m u=rwx,go=rx -p /tmp/{ai,i}
 
-	# Did we netboot?  If so, then start the automatic installation
-	# after a timeout, but only the very first time around.
+	# Start the automatic installation if netbooted or if a response file
+	# is found in / after a timeout, but only the very first time around.
 	timeout=false
 	timer_pid=
 	if [[ ! -f /tmp/ai/noai ]] && { ifconfig netboot >/dev/null 2>&1 ||
 		[[ -f /auto_install.conf ]] ||
 		[[ -f /auto_upgrade.conf ]]; }; then
+
 		echo "Starting non-interactive mode in 5 seconds..."
 		>/tmp/ai/noai
 
@@ -97,7 +97,7 @@ __EOT
 		echo -n '(I)nstall, (U)pgrade, (A)utoinstall or (S)hell? '
 		read REPLY
 
-		# If the timeout has expired, begin the installation.
+		# Begin the automatic installation if the timeout has expired.
 		if $timeout; then
 			timeout=false
 			echo
