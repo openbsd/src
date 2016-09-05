@@ -1,4 +1,4 @@
-/* $OpenBSD: runtest.c,v 1.3 2015/12/22 13:23:24 vgross Exp $ */
+/* $OpenBSD: runtest.c,v 1.4 2016/09/05 10:15:24 vgross Exp $ */
 /*
  * Copyright (c) 2015 Vincent Gross <vincent.gross@kilob.yt>
  *
@@ -344,7 +344,8 @@ int
 main(int argc, char *argv[])
 {
 	int error, rc;
-	struct addrinfo hints, *local, *any, *mifa;
+	char *baddr_s, *bport_s, *bmifa_s;
+	struct addrinfo hints, *baddr, *any, *mifa;
 	struct ifaddrs *ifap, *curifa;
 	struct ip_mreq local_imr, any_imr;
 	struct ipv6_mreq local_i6mr, any_i6mr;
@@ -357,91 +358,94 @@ main(int argc, char *argv[])
 	    AI_PASSIVE;
 	hints.ai_socktype = SOCK_DGRAM;
 
-	if (strcmp(argv[1],"unicast") == 0) {
-		if ((error = getaddrinfo(argv[3], argv[2], &hints, &local)))
-			errx(2, "getaddrinfo(%s,%s): %s", argv[3], argv[2],
-			    gai_strerror(error));
-		local->ai_canonname = argv[3];
+	baddr_s = argv[1];
+	bport_s = argv[2];
 
-		hints.ai_family = local->ai_family;
-		if ((error = getaddrinfo(NULL, argv[2], &hints, &any)))
-			errx(2, "getaddrinfo(NULL,%s): %s", argv[2],
-			    gai_strerror(error));
-		any->ai_canonname = "ANY";
+	if ((error = getaddrinfo(baddr_s, bport_s, &hints, &baddr)))
+		errx(2, "getaddrinfo(%s,%s): %s", baddr_s, bport_s,
+		    gai_strerror(error));
+	baddr->ai_canonname = baddr_s;
 
-		return unicast_testsuite(local, any);
-	}
+	hints.ai_family = baddr->ai_family;
+	if ((error = getaddrinfo(NULL, bport_s, &hints, &any)))
+		errx(2, "getaddrinfo(NULL,%s): %s", bport_s,
+		    gai_strerror(error));
+	any->ai_canonname = "*";
 
-
-	if (strcmp(argv[1], "mcast") == 0) {
-		if ((error = getaddrinfo(argv[3], argv[2], &hints, &local)))
-			errx(2, "getaddrinfo(%s,%s): %s", argv[3], argv[2],
-			    gai_strerror(error));
-		local->ai_canonname = argv[3];
-
-		hints.ai_family = local->ai_family;
-		if ((error = getaddrinfo(NULL, argv[2], &hints, &any)))
-			errx(2, "getaddrinfo(NULL,%s): %s", argv[2],
-			    gai_strerror(error));
-		any->ai_canonname = "ANY";
-
-		hints.ai_flags = AI_ADDRCONFIG | AI_NUMERICHOST;
-		if ((error = getaddrinfo(argv[4], NULL, &hints, &mifa)))
-			errx(2, "getaddrinfo(%s,NULL): %s", argv[4],
-			    gai_strerror(error));
-
-
-		switch (hints.ai_family) {
-		case AF_INET:
-			sin = (struct sockaddr_in *)(mifa->ai_addr);
-			local_imr.imr_interface = sin->sin_addr;
-			sin = (struct sockaddr_in *)(local->ai_addr);
-			local_imr.imr_multiaddr = sin->sin_addr;
-
-			/* no 'any' mcast group in ipv4 */
-			return mcast_reuse_testsuite(local, &local_imr);
-
-		case AF_INET6:
-			if (getifaddrs(&ifap))
-				err(2, "getifaddrs()");
-			curifa = ifap;
-			while (curifa) {
-				if (memcmp(curifa->ifa_addr,
-				    mifa->ai_addr,
-				    mifa->ai_addrlen) == 0)
-					break;
-				curifa = curifa->ifa_next;
-			}
-			if (curifa == NULL)
-				errx(2, "no interface configured with %s", argv[4]);
-			local_i6mr.ipv6mr_interface =
-			    if_nametoindex(curifa->ifa_name);
-			if (local_i6mr.ipv6mr_interface == 0)
-				errx(2, "unable to get \"%s\" index",
-				    curifa->ifa_name);
-			freeifaddrs(ifap);
-
-			sin6 = (struct sockaddr_in6 *)(local->ai_addr);
-			local_i6mr.ipv6mr_multiaddr = sin6->sin6_addr;
-
-			any_i6mr.ipv6mr_interface = local_i6mr.ipv6mr_interface;
-			sin6 = (struct sockaddr_in6 *)(any->ai_addr);
-			any_i6mr.ipv6mr_multiaddr = sin6->sin6_addr;
-
-			rc = 0;
-			rc |= mcast_reuse_testsuite(local, &local_i6mr);
-			if (geteuid() == 0)
-				rc |= mcast6_testsuite(local, &local_i6mr, any, &any_i6mr);
-			else
-				warnx("skipping mcast6_testsuite() due to insufficient privs, please run again as root");
-			return (rc);
-
-		default:
-			errx(2, "no multicast test suite for af %d", hints.ai_family);
+	switch (baddr->ai_family) {
+	case AF_INET:
+		sin = (struct sockaddr_in *)baddr->ai_addr;
+		if (!IN_MULTICAST( ntohl(sin->sin_addr.s_addr) )) {
+			puts("executing unicast testsuite");
+			return unicast_testsuite(baddr, any);
 		}
+		bmifa_s = argv[3];
+		hints.ai_flags = AI_ADDRCONFIG | AI_NUMERICHOST;
 
+		if ((error = getaddrinfo(bmifa_s, NULL, &hints, &mifa)))
+			errx(2, "getaddrinfo(%s,NULL): %s", bmifa_s,
+			    gai_strerror(error));
+
+		local_imr.imr_interface =
+		    ((struct sockaddr_in *)mifa->ai_addr)->sin_addr;
+		local_imr.imr_multiaddr =
+		    ((struct sockaddr_in *)baddr->ai_addr)->sin_addr;
+
+		puts("executing ipv4 multicast testsuite");
+
+		/* no 'any' mcast group in ipv4 */
+		return mcast_reuse_testsuite(baddr, &local_imr);
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6 *)baddr->ai_addr;
+		if (!IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
+			puts("executing unicast testsuite");
+			return unicast_testsuite(baddr, any);
+		}
+		bmifa_s = argv[3];
+		hints.ai_flags = AI_ADDRCONFIG | AI_NUMERICHOST;
+
+		if ((error = getaddrinfo(bmifa_s, NULL, &hints, &mifa)))
+			errx(2, "getaddrinfo(%s,NULL): %s", bmifa_s,
+			    gai_strerror(error));
+
+		if (getifaddrs(&ifap))
+			err(2, "getifaddrs()");
+		curifa = ifap;
+		while (curifa) {
+			if (memcmp(curifa->ifa_addr,
+			    mifa->ai_addr,
+			    mifa->ai_addrlen) == 0)
+				break;
+			curifa = curifa->ifa_next;
+		}
+		if (curifa == NULL)
+			errx(2, "no interface configured with %s", argv[4]);
+		local_i6mr.ipv6mr_interface =
+		    if_nametoindex(curifa->ifa_name);
+		if (local_i6mr.ipv6mr_interface == 0)
+			errx(2, "unable to get \"%s\" index",
+			    curifa->ifa_name);
+		freeifaddrs(ifap);
+
+		local_i6mr.ipv6mr_multiaddr =
+		    ((struct sockaddr_in6 *)baddr->ai_addr)->sin6_addr;
+
+		any_i6mr.ipv6mr_interface = local_i6mr.ipv6mr_interface;
+		any_i6mr.ipv6mr_multiaddr =
+		    ((struct sockaddr_in6 *)any->ai_addr)->sin6_addr;
+
+		puts("executing ipv6 multicast testsuite");
+
+		rc = 0;
+		rc |= mcast_reuse_testsuite(baddr, &local_i6mr);
+		if (geteuid() == 0)
+			rc |= mcast6_testsuite(baddr, &local_i6mr, any, &any_i6mr);
+		else
+			warnx("skipping mcast6_testsuite() due to insufficient privs, please run again as root");
+		return (rc);
+	default:
+		errx(2,"unknown AF");
 	}
-
 
 	return (2);
 }
