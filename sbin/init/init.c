@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.61 2016/09/04 12:30:01 nicm Exp $	*/
+/*	$OpenBSD: init.c,v 1.62 2016/09/05 10:20:40 gsoares Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -58,6 +58,7 @@
 
 #ifdef SECURE
 #include <pwd.h>
+#include <readpassphrase.h>
 #endif
 
 #ifdef LOGIN_CAP
@@ -528,6 +529,7 @@ f_single_user(void)
 	static const char banner[] =
 		"Enter root password, or ^D to go multi-user\n";
 	char *clear;
+	char pbuf[1024];
 #endif
 
 	/* Init shell and name */
@@ -559,7 +561,7 @@ f_single_user(void)
 			write(STDERR_FILENO, banner, sizeof banner - 1);
 			for (;;) {
 				int ok = 0;
-				clear = getpass("Password:");
+				clear = readpassphrase("Password:", pbuf, sizeof(pbuf), RPP_ECHO_OFF);
 				if (clear == NULL || *clear == '\0')
 					_exit(0);
 				if (crypt_checkpass(clear, pp->pw_passwd) == 0)
