@@ -1,7 +1,7 @@
 #ifndef _NB_RUNETYPE_H_
 #define _NB_RUNETYPE_H_
 
-/* $OpenBSD: runetype.h,v 1.7 2012/12/05 23:20:00 deraadt Exp $ */
+/* $OpenBSD: runetype.h,v 1.8 2016/09/05 09:47:03 schwarze Exp $ */
 /*	$NetBSD: runetype.h,v 1.18 2003/08/07 16:43:04 agc Exp $	*/
 /*-
  * Copyright (c) 1993
@@ -199,7 +199,6 @@ typedef struct {
 	 * the following portion is generated on the fly
 	 */
 	char				*rl_codeset;
-	struct _citrus_ctype_rec	*rl_citrus_ctype;
 	_WCTransEntry			rl_wctrans[_WCTRANS_NINDEXES];
 	_WCTypeEntry			rl_wctype[_WCTYPE_NINDEXES];
 

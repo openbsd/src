@@ -1,4 +1,4 @@
-/*	$OpenBSD: multibyte_citrus.c,v 1.6 2015/09/12 16:23:14 guenther Exp $ */
+/*	$OpenBSD: multibyte_citrus.c,v 1.7 2016/09/05 09:47:03 schwarze Exp $ */
 /*	$NetBSD: multibyte_amd1.c,v 1.7 2009/01/11 02:46:28 christos Exp $ */
 
 /*-
@@ -28,28 +28,18 @@
  */
 
 #include <sys/types.h>
-#include <errno.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <wchar.h>
 
 #include "citrus_ctype.h"
-#include "rune.h"
-#include "multibyte.h"
 
 int
 mbsinit(const mbstate_t *ps)
 {
-	struct _citrus_ctype_rec *cc;
-	_RuneLocale *rl;
-
-	if (ps == NULL)
+	if (ps == NULL || __mb_cur_max == 1)
 		return 1;
-
-	rl = _ps_to_runelocale(ps);
-	if (rl == NULL)
-		rl = _CurrentRuneLocale;
-	cc = rl->rl_citrus_ctype;
-	return (*cc->cc_ops->co_mbsinit)(ps);
+	return _citrus_utf8_ctype_mbsinit(ps);
 }
 DEF_STRONG(mbsinit);
 
@@ -57,12 +47,12 @@ size_t
 mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 {
 	static mbstate_t mbs;
-	struct _citrus_ctype_rec *cc;
 
 	if (ps == NULL)
 		ps = &mbs;
-	cc = _CurrentRuneLocale->rl_citrus_ctype;
-	return (*cc->cc_ops->co_mbrtowc)(pwc, s, n, _ps_to_private(ps));
+	if (__mb_cur_max == 1)
+		return _citrus_none_ctype_mbrtowc(pwc, s, n);
+	return _citrus_utf8_ctype_mbrtowc(pwc, s, n, ps);
 }
 DEF_STRONG(mbrtowc);
 
@@ -82,13 +72,12 @@ mbsnrtowcs(wchar_t *dst, const char **src, size_t nmc, size_t len,
     mbstate_t *ps)
 {
 	static mbstate_t mbs;
-	struct _citrus_ctype_rec *cc;
 
 	if (ps == NULL)
 		ps = &mbs;
-	cc = _CurrentRuneLocale->rl_citrus_ctype;
-	return (*cc->cc_ops->co_mbsnrtowcs)(dst, src, nmc, len,
-	    _ps_to_private(ps));
+	if (__mb_cur_max == 1)
+		return _citrus_none_ctype_mbsnrtowcs(dst, src, nmc, len);
+	return _citrus_utf8_ctype_mbsnrtowcs(dst, src, nmc, len, ps);
 }
 DEF_WEAK(mbsnrtowcs);
 
@@ -96,12 +85,12 @@ size_t
 wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 {
 	static mbstate_t mbs;
-	struct _citrus_ctype_rec *cc;
 
 	if (ps == NULL)
 		ps = &mbs;
-	cc = _CurrentRuneLocale->rl_citrus_ctype;
-	return (*cc->cc_ops->co_wcrtomb)(s, wc, _ps_to_private(ps));
+	if (__mb_cur_max == 1)
+		return _citrus_none_ctype_wcrtomb(s, wc);
+	return _citrus_utf8_ctype_wcrtomb(s, wc, ps);
 }
 DEF_STRONG(wcrtomb);
 
@@ -121,12 +110,11 @@ wcsnrtombs(char *dst, const wchar_t **src, size_t nwc, size_t len,
     mbstate_t *ps)
 {
 	static mbstate_t mbs;
-	struct _citrus_ctype_rec *cc;
 
 	if (ps == NULL)
 		ps = &mbs;
-	cc = _CurrentRuneLocale->rl_citrus_ctype;
-	return (*cc->cc_ops->co_wcsnrtombs)(dst, src, nwc, len,
-	    _ps_to_private(ps));
+	if (__mb_cur_max == 1)
+		return _citrus_none_ctype_wcsnrtombs(dst, src, nwc, len);
+	return _citrus_utf8_ctype_wcsnrtombs(dst, src, nwc, len, ps);
 }
 DEF_WEAK(wcsnrtombs);

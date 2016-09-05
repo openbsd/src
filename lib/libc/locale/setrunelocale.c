@@ -1,4 +1,4 @@
-/*	$OpenBSD: setrunelocale.c,v 1.14 2016/09/02 15:00:14 schwarze Exp $ */
+/*	$OpenBSD: setrunelocale.c,v 1.15 2016/09/05 09:47:03 schwarze Exp $ */
 /*	$NetBSD: setrunelocale.c,v 1.14 2003/08/07 16:43:07 agc Exp $	*/
 
 /*-
@@ -107,7 +107,6 @@ int
 _newrunelocale(const char *path)
 {
 	FILE *fp;
-	_RuneLocale *rl;
 
 	if (_Utf8RuneLocale != NULL)
 		return 0;
@@ -115,20 +114,11 @@ _newrunelocale(const char *path)
 	if ((fp = fopen(path, "re")) == NULL)
 		return ENOENT;
 
-	if ((rl = _Read_RuneMagi(fp)) == NULL) {
+	if ((_Utf8RuneLocale = _Read_RuneMagi(fp)) == NULL) {
 		fclose(fp);
 		return EFTYPE;
 	}
 	fclose(fp);
-
-	rl->rl_citrus_ctype = NULL;
-
-	if (_citrus_ctype_open(&rl->rl_citrus_ctype, rl->rl_encoding)) {
-		_NukeRune(rl);
-		return EINVAL;
-	}
-	_Utf8RuneLocale = rl;
-
 	return 0;
 }
 
@@ -141,7 +131,8 @@ _xpg4_setrunelocale(const char *locname)
 
 	if (!strcmp(locname, "C") || !strcmp(locname, "POSIX")) {
 		_CurrentRuneLocale = &_DefaultRuneLocale;
-		goto found;
+		__mb_cur_max = 1;
+		return 0;
 	}
 
 	/* Assumes "language[_territory][.codeset]" locale name. */
@@ -149,7 +140,8 @@ _xpg4_setrunelocale(const char *locname)
 	if (dot == NULL) {
 		/* No encoding specified. Fall back to ASCII. */
 		_CurrentRuneLocale = &_DefaultRuneLocale;
-		goto found;
+		__mb_cur_max = 1;
+		return 0;
 	}
 
 	encoding = dot + 1;
@@ -167,9 +159,6 @@ _xpg4_setrunelocale(const char *locname)
 	if (_Utf8RuneLocale == NULL)
 		return ENOENT;
 	_CurrentRuneLocale = _Utf8RuneLocale;
-
-found:
-	__mb_cur_max = _CurrentRuneLocale->rl_citrus_ctype->cc_mb_cur_max;
-
+	__mb_cur_max = _CITRUS_UTF8_MB_CUR_MAX;
 	return 0;
 }

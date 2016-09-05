@@ -42,7 +42,6 @@
 #include "rune.h"
 #include "rune_local.h"
 #include "citrus_ctype.h"
-#include "citrus_none.h"
 
 _RuneLocale _DefaultRuneLocale = {
     _RUNE_MAGIC_1,
@@ -249,7 +248,6 @@ _RuneLocale _DefaultRuneLocale = {
     { 0, NULL },
     NULL, 0,
     "US-ASCII",
-   &_citrus_ctype_none,
     {
 	    { NULL, NULL, NULL },
 	    { NULL, NULL, NULL },

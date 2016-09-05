@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_utf8.c,v 1.15 2015/11/01 03:45:28 guenther Exp $ */
+/*	$OpenBSD: citrus_utf8.c,v 1.16 2016/09/05 09:47:03 schwarze Exp $ */
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins
@@ -38,11 +38,8 @@
 #include <wchar.h>
 
 #include "citrus_ctype.h"
-#include "citrus_utf8.h"
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
-
-_CITRUS_CTYPE_DEF_OPS(utf8);
 
 struct _utf8_state {
 	wchar_t	ch;
@@ -52,14 +49,13 @@ struct _utf8_state {
 
 size_t
 _citrus_utf8_ctype_mbrtowc(wchar_t * __restrict pwc,
-			   const char * __restrict s, size_t n,
-			   void * __restrict pspriv)
+    const char * __restrict s, size_t n, mbstate_t * __restrict ps)
 {
 	struct _utf8_state *us;
 	int ch, i, mask, want;
 	wchar_t lbound, wch;
 
-	us = (struct _utf8_state *)pspriv;
+	us = (struct _utf8_state *)ps;
 
 	if (us->want < 0 || us->want > _CITRUS_UTF8_MB_CUR_MAX) {
 		errno = EINVAL;
@@ -182,22 +178,20 @@ _citrus_utf8_ctype_mbrtowc(wchar_t * __restrict pwc,
 }
 
 int
-_citrus_utf8_ctype_mbsinit(const void * __restrict pspriv)
+_citrus_utf8_ctype_mbsinit(const mbstate_t * __restrict ps)
 {
-	return (pspriv == NULL ||
-	    ((const struct _utf8_state *)pspriv)->want == 0);
+	return (((const struct _utf8_state *)ps)->want == 0);
 }
 
 size_t
 _citrus_utf8_ctype_mbsnrtowcs(wchar_t * __restrict dst,
-			      const char ** __restrict src,
-			      size_t nmc, size_t len,
-			      void * __restrict pspriv)
+    const char ** __restrict src, size_t nmc, size_t len,
+    mbstate_t * __restrict ps)
 {
 	struct _utf8_state *us;
 	size_t i, o, r;
 
-	us = (struct _utf8_state *)pspriv;
+	us = (struct _utf8_state *)ps;
 
 	if (dst == NULL) {
 		/*
@@ -269,14 +263,14 @@ _citrus_utf8_ctype_mbsnrtowcs(wchar_t * __restrict dst,
 }
 
 size_t
-_citrus_utf8_ctype_wcrtomb(char * __restrict s,
-			   wchar_t wc, void * __restrict pspriv)
+_citrus_utf8_ctype_wcrtomb(char * __restrict s, wchar_t wc,
+    mbstate_t * __restrict ps)
 {
 	struct _utf8_state *us;
 	unsigned char lead;
 	int i, len;
 
-	us = (struct _utf8_state *)pspriv;
+	us = (struct _utf8_state *)ps;
 
 	if (us->want != 0) {
 		errno = EINVAL;
@@ -331,15 +325,14 @@ _citrus_utf8_ctype_wcrtomb(char * __restrict s,
 
 size_t
 _citrus_utf8_ctype_wcsnrtombs(char * __restrict dst,
-			      const wchar_t ** __restrict src,
-			      size_t nwc, size_t len,
-			      void * __restrict pspriv)
+    const wchar_t ** __restrict src, size_t nwc, size_t len,
+    mbstate_t * __restrict ps)
 {
 	struct _utf8_state *us;
 	char buf[_CITRUS_UTF8_MB_CUR_MAX];
 	size_t i, o, r;
 
-	us = (struct _utf8_state *)pspriv;
+	us = (struct _utf8_state *)ps;
 
 	if (us->want != 0) {
 		errno = EINVAL;

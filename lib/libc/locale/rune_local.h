@@ -1,4 +1,4 @@
-/* 	$OpenBSD: rune_local.h,v 1.4 2015/09/13 11:38:08 guenther Exp $ */
+/* 	$OpenBSD: rune_local.h,v 1.5 2016/09/05 09:47:03 schwarze Exp $ */
 /*	$NetBSD: rune_local.h,v 1.7 2003/03/02 22:18:15 tshiozak Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@ __BEGIN_HIDDEN_DECLS
 
 /* rune.c */
 extern _RuneLocale *_Read_RuneMagi(FILE *fp);
-extern void _NukeRune(_RuneLocale *);
 
 /* setrunelocale.c */
 extern int _xpg4_setrunelocale(const char *);
