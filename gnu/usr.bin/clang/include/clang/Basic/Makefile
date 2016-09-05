@@ -1,0 +1,50 @@
+# $OpenBSD: Makefile,v 1.1 2016/09/05 10:56:48 pascal Exp $
+
+.include <bsd.own.mk>
+
+TBLGEN= ${.OBJDIR}/../../../clang-tblgen/clang-tblgen
+CLANG_INC=${.CURDIR}/../../../../../llvm/tools/clang/include
+
+GEN= AttrList.inc DiagnosticASTKinds.inc DiagnosticAnalysisKinds.inc
+GEN+=DiagnosticCommentKinds.inc DiagnosticCommonKinds.inc
+GEN+=DiagnosticDriverKinds.inc DiagnosticFrontendKinds.inc DiagnosticGroups.inc
+GEN+=DiagnosticIndexName.inc DiagnosticLexKinds.inc DiagnosticParseKinds.inc
+GEN+=DiagnosticSemaKinds.inc DiagnosticSerializationKinds.inc arm_neon.inc
+GEN+=AttrHasAttributeImpl.inc
+
+all: ${GEN}
+
+install:
+	# Nothing here so far ...
+
+depend:
+	# Nothing here so far ...
+
+clean:
+	rm -f ${GEN}
+
+AttrList.inc: ${CLANG_INC}/clang/Basic/Attr.td
+	${TBLGEN} -I${CLANG_INC} -gen-clang-attr-list -o ${.TARGET} ${.ALLSRC}
+
+.for _comp in AST Analysis Comment Common Driver Frontend Lex Parse Sema Serialization
+Diagnostic${_comp}Kinds.inc: ${CLANG_INC}/clang/Basic/Diagnostic.td
+	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-clang-diags-defs \
+		-clang-component=${_comp} -o ${.TARGET} ${.ALLSRC}
+.endfor
+
+DiagnosticGroups.inc: ${CLANG_INC}/clang/Basic/Diagnostic.td
+	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-clang-diag-groups \
+		-o ${.TARGET} ${.ALLSRC}
+
+DiagnosticIndexName.inc: ${CLANG_INC}/clang/Basic/Diagnostic.td
+	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-clang-diags-index-name \
+		-o ${.TARGET} ${.ALLSRC}
+
+AttrHasAttributeImpl.inc: ${CLANG_INC}/clang/Basic/Attr.td
+	${TBLGEN} -I${CLANG_INC} \
+		-gen-clang-attr-has-attribute-impl -o ${.TARGET} ${.ALLSRC}
+
+arm_neon.inc: ${CLANG_INC}/clang/Basic/arm_neon.td
+	${TBLGEN} -gen-arm-neon-sema -o ${.TARGET} ${.ALLSRC}
+
+.include <bsd.obj.mk>
