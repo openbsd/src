@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.16 2016/09/05 07:24:34 dlg Exp $	*/
+/*	$OpenBSD: tree.h,v 1.17 2016/09/05 23:43:13 dlg Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -745,7 +745,6 @@ name##_RB_MINMAX(struct name *head, int val)				\
 	    ((x) != NULL) && ((y) = name##_RB_PREV(x), 1);		\
 	     (x) = (y))
 
-#ifdef _KERNEL
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -763,12 +762,14 @@ name##_RB_MINMAX(struct name *head, int val)				\
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h> /* for NULL */
-
 struct rb_type {
 	int		(*t_compare)(const void *, const void *);
 	void		(*t_augment)(void *);
 	size_t		  t_offset;	/* offset of rb_entry in type */
+};
+
+struct rb_tree {
+	struct rb_entry	*rbt_root;
 };
 
 struct rb_entry {
@@ -778,9 +779,15 @@ struct rb_entry {
 	unsigned int	  rbe_color;
 };
 
-struct rb_tree {
-	struct rb_entry	*rbt_root;
-};
+#define RBT_HEAD(_name, _type)						\
+struct _name {								\
+	struct rb_tree rbh_root;					\
+}
+
+#define RBT_ENTRY(_type)	struct rb_entry
+
+#ifdef _KERNEL
+#include <sys/param.h> /* for NULL */
 
 static inline void
 _rb_init(struct rb_tree *rbt)
@@ -808,14 +815,7 @@ void	*_rb_right(const struct rb_type *, void *);
 void	*_rb_parent(const struct rb_type *, void *);
 void	*_rb_color(const struct rb_type *, void *);
 
-#define RBT_HEAD(_name, _type)						\
-struct _name {								\
-	struct rb_tree rbh_root;					\
-}
-
 #define RBT_INITIALIZER(_head)	{ { NULL } }
-
-#define RBT_ENTRY(_type)	struct rb_entry
 
 #define RBT_PROTOTYPE(_name, _type, _field, _cmp)			\
 extern const struct rb_type *const _name##_RBT_TYPE;			\
