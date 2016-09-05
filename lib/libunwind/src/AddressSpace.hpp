@@ -62,7 +62,7 @@ extern EHTEntry __exidx_end;
 #endif // _LIBUNWIND_ARM_EHABI
 
 #if defined(__CloudABI__) || defined(__FreeBSD__) || defined(__linux__) ||	\
-    defined(__NetBSD__)
+    defined(__NetBSD__) || defined(__OpenBSD__)
 #if _LIBUNWIND_SUPPORT_DWARF_UNWIND && _LIBUNWIND_SUPPORT_DWARF_INDEX
 #include <link.h>
 // Macro for machine-independent access to the ELF program headers. This

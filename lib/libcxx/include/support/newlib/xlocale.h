@@ -10,7 +10,7 @@
 #ifndef _LIBCPP_SUPPORT_NEWLIB_XLOCALE_H
 #define _LIBCPP_SUPPORT_NEWLIB_XLOCALE_H
 
-#if defined(_NEWLIB_VERSION)
+#if defined(_NEWLIB_VERSION) || defined(__OpenBSD__)
 
 #include <cstdlib>
 #include <clocale>

@@ -155,7 +155,7 @@ using ::tmpnam;
 
 #ifndef _LIBCPP_HAS_NO_STDIN
 using ::getchar;
-#if _LIBCPP_STD_VER <= 11
+#if _LIBCPP_STD_VER <= 11 && !defined(__OpenBSD__)
 using ::gets;
 #endif
 using ::scanf;

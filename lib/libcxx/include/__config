@@ -134,6 +134,17 @@
 # define _LIBCPP_HAS_QUICK_EXIT
 #endif  // __NetBSD__
 
+#ifdef __OpenBSD__
+# include <sys/_endian.h>
+#  if _BYTE_ORDER == _LITTLE_ENDIAN
+#   define _LIBCPP_LITTLE_ENDIAN 1
+#   define _LIBCPP_BIG_ENDIAN    0
+# else  // _BYTE_ORDER == _LITTLE_ENDIAN
+#   define _LIBCPP_LITTLE_ENDIAN 0
+#   define _LIBCPP_BIG_ENDIAN    1
+# endif  // _BYTE_ORDER == _LITTLE_ENDIAN
+#endif  // __OpenBSD__
+
 #ifdef _WIN32
 #  define _LIBCPP_LITTLE_ENDIAN 1
 #  define _LIBCPP_BIG_ENDIAN    0
@@ -829,7 +840,8 @@ extern "C" void __sanitizer_annotate_contiguous_container(
     defined(__linux__) || \
     defined(__APPLE__) || \
     defined(__CloudABI__) || \
-    defined(__sun__)
+    defined(__sun__) || \
+    defined(__OpenBSD__)
 #  define _LIBCPP_HAS_THREAD_API_PTHREAD
 # else
 #  error "No thread API"
@@ -861,7 +873,8 @@ extern "C" void __sanitizer_annotate_contiguous_container(
 #define _LIBCPP_HAS_NO_STDOUT
 #endif
 
-#if defined(__ANDROID__) || defined(__CloudABI__) || defined(_LIBCPP_HAS_MUSL_LIBC)
+#if defined(__ANDROID__) || defined(__CloudABI__) || defined(_LIBCPP_HAS_MUSL_LIBC) \
+    || defined(__OpenBSD__)
 #define _LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE
 #endif
 
