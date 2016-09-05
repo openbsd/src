@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.77 2016/09/04 08:49:18 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.78 2016/09/05 07:50:04 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3165,16 +3165,28 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		} else if (ret == VMX_FAIL_LAUNCH_INVALID_VMCS) {
 			printf("vcpu_run_vmx: failed launch with invalid "
 			    "vmcs\n");
+#ifdef VMM_DEBUG
+			vmx_vcpu_dump_regs(vcpu);
+			dump_vcpu(vcpu);
+#endif /* VMM_DEBUG */
 			ret = EINVAL;
 		} else if (ret == VMX_FAIL_LAUNCH_VALID_VMCS) {
 			exit_reason = vcpu->vc_gueststate.vg_exit_reason;
 			printf("vcpu_run_vmx: failed launch with valid "
 			    "vmcs, code=%lld (%s)\n", exit_reason,
 			    vmx_instruction_error_decode(exit_reason));
+#ifdef VMM_DEBUG
+			vmx_vcpu_dump_regs(vcpu);
+			dump_vcpu(vcpu);
+#endif /* VMM_DEBUG */
 			ret = EINVAL;
 		} else {
 			printf("vcpu_run_vmx: failed launch for unknown "
 			    "reason %d\n", ret);
+#ifdef VMM_DEBUG
+			vmx_vcpu_dump_regs(vcpu);
+			dump_vcpu(vcpu);
+#endif /* VMM_DEBUG */
 			ret = EINVAL;
 		}
 	}
