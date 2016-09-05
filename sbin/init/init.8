@@ -1,4 +1,4 @@
-.\"	$OpenBSD: init.8,v 1.47 2011/09/04 18:20:48 jmc Exp $
+.\"	$OpenBSD: init.8,v 1.48 2016/09/05 12:58:17 jmc Exp $
 .\"	$NetBSD: init.8,v 1.6 1995/03/18 14:56:31 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)init.8	8.6 (Berkeley) 5/26/95
 .\"
-.Dd $Mdocdate: September 4 2011 $
+.Dd $Mdocdate: September 5 2016 $
 .Dt INIT 8
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ file as explained in the
 .Xr rc 8
 manual.
 .It Fl s
-Boot directly into single user mode.
+Boot directly into single-user mode.
 .El
 .Pp
 Single-user mode is also entered if the boot scripts fail.
@@ -265,7 +265,7 @@ When starting a window system or
 the login class
 .Dq default
 is used.
-No resource changes are made when entering single user mode.
+No resource changes are made when entering single-user mode.
 .Sh FILES
 .Bl -tag -width /etc/rc.securelevel -compact
 .It Pa /dev/console
