@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.52 2016/08/23 12:37:11 dlg Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.53 2016/09/05 07:41:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -139,12 +139,10 @@ struct pppx_if_key {
 	int			pxik_protocol;
 };
 
-int				pppx_if_cmp(struct pppx_if *, struct pppx_if *);
-
 struct pppx_if {
 	struct pppx_if_key	pxi_key; /* must be first in the struct */
 
-	RB_ENTRY(pppx_if)	pxi_entry;
+	RBT_ENTRY(pppx_if)	pxi_entry;
 	LIST_ENTRY(pppx_if)	pxi_list;
 
 	int			pxi_unit;
@@ -154,9 +152,15 @@ struct pppx_if {
 	struct pipex_iface_context	pxi_ifcontext;
 };
 
+static inline int
+pppx_if_cmp(const struct pppx_if *a, const struct pppx_if *b)
+{
+	return memcmp(&a->pxi_key, &b->pxi_key, sizeof(a->pxi_key));
+}
+
 struct rwlock			pppx_ifs_lk = RWLOCK_INITIALIZER("pppxifs");
-RB_HEAD(pppx_ifs, pppx_if)	pppx_ifs = RB_INITIALIZER(&pppx_ifs);
-RB_PROTOTYPE(pppx_ifs, pppx_if, pxi_entry, pppx_if_cmp);
+RBT_HEAD(pppx_ifs, pppx_if)	pppx_ifs = RBT_INITIALIZER(&pppx_ifs);
+RBT_PROTOTYPE(pppx_ifs, pppx_if, pxi_entry, pppx_if_cmp);
 
 int		pppx_if_next_unit(void);
 struct pppx_if *pppx_if_find(struct pppx_dev *, int, int);
@@ -608,12 +612,6 @@ pppxclose(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-pppx_if_cmp(struct pppx_if *a, struct pppx_if *b)
-{
-	return memcmp(&a->pxi_key, &b->pxi_key, sizeof(a->pxi_key));
-}
-
-int
 pppx_if_next_unit(void)
 {
 	struct pppx_if *pxi;
@@ -624,7 +622,7 @@ pppx_if_next_unit(void)
 	/* this is safe without splnet since we're not modifying it */
 	do {
 		int found = 0;
-		RB_FOREACH(pxi, pppx_ifs, &pppx_ifs) {
+		RBT_FOREACH(pxi, pppx_ifs, &pppx_ifs) {
 			if (pxi->pxi_unit == unit) {
 				found = 1;
 				break;
@@ -649,7 +647,7 @@ pppx_if_find(struct pppx_dev *pxd, int session_id, int protocol)
 	s->pxi_key.pxik_protocol = protocol;
 
 	rw_enter_read(&pppx_ifs_lk);
-	p = RB_FIND(pppx_ifs, &pppx_ifs, s);
+	p = RBT_FIND(pppx_ifs, &pppx_ifs, s);
 	rw_exit_read(&pppx_ifs_lk);
 
 	free(s, M_DEVBUF, 0);
@@ -830,7 +828,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	pxi->pxi_dev = pxd;
 
 	/* this is safe without splnet since we're not modifying it */
-	if (RB_FIND(pppx_ifs, &pppx_ifs, pxi) != NULL) {
+	if (RBT_FIND(pppx_ifs, &pppx_ifs, pxi) != NULL) {
 		pool_put(pppx_if_pl, pxi);
 		error = EADDRINUSE;
 		goto out;
@@ -876,7 +874,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 #endif
 	SET(ifp->if_flags, IFF_RUNNING);
 
-	if (RB_INSERT(pppx_ifs, &pppx_ifs, pxi) != NULL)
+	if (RBT_INSERT(pppx_ifs, &pppx_ifs, pxi) != NULL)
 		panic("pppx_ifs modified while lock was held");
 	LIST_INSERT_HEAD(&pxd->pxd_pxis, pxi, pxi_list);
 
@@ -984,7 +982,7 @@ pppx_if_destroy(struct pppx_dev *pxd, struct pppx_if *pxi)
 	if_detach(ifp);
 
 	rw_enter_write(&pppx_ifs_lk);
-	if (RB_REMOVE(pppx_ifs, &pppx_ifs, pxi) == NULL)
+	if (RBT_REMOVE(pppx_ifs, &pppx_ifs, pxi) == NULL)
 		panic("pppx_ifs modified while lock was held");
 	LIST_REMOVE(pxi, pxi_list);
 	rw_exit_write(&pppx_ifs_lk);
@@ -1128,4 +1126,4 @@ pppx_if_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	return (error);
 }
 
-RB_GENERATE(pppx_ifs, pppx_if, pxi_entry, pppx_if_cmp);
+RBT_GENERATE(pppx_ifs, pppx_if, pxi_entry, pppx_if_cmp);
