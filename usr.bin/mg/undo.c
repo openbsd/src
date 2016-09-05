@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.57 2015/12/11 20:21:23 mmcc Exp $ */
+/* $OpenBSD: undo.c,v 1.58 2016/09/05 08:10:58 lum Exp $ */
 /*
  * This file is in the public domain
  */
@@ -269,6 +269,8 @@ undo_add_insert(struct line *lp, int offset, int size)
 
 	if (!undo_enable_flag)
 		return (TRUE);
+
+	memset(&reg, 0, sizeof(reg));
 	reg.r_linep = lp;
 	reg.r_offset = offset;
 	reg.r_size = size;
@@ -315,6 +317,7 @@ undo_add_delete(struct line *lp, int offset, int size, int isreg)
 	if (!undo_enable_flag)
 		return (TRUE);
 
+	memset(&reg, 0, sizeof(reg));
 	reg.r_linep = lp;
 	reg.r_offset = offset;
 	reg.r_size = size;
