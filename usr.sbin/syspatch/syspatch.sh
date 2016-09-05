@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.2 2016/09/05 11:26:18 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.3 2016/09/05 11:29:34 robert Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -62,9 +62,10 @@ apply_patches()
 		install_patch "${_patch}" || return
 	done
 
-	# XXX needed? -- non-fatal
-	mtree -qdef /etc/mtree/4.4BSD.dist -p / -U >/dev/null || true
-	mtree -qdef /etc/mtree/BSD.x11.dist -p / -U >/dev/null || true
+	# non-fatal -- the syspatch tarball should have correct permissions
+	for _m in 4.4BSD BSD.x11; do
+		mtree -qdef /etc/mtree/${_m}.dist -p / -U >/dev/null || true
+	done
 }
 
 create_rollback()
