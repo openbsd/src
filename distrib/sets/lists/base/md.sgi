@@ -1746,7 +1746,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/openssl/cast.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/openssl/chacha.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/openssl/cmac.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/openssl/cms.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/openssl/comp.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/openssl/conf.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/openssl/conf_api.ph

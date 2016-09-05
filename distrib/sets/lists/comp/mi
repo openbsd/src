@@ -1100,7 +1100,6 @@
 ./usr/include/openssl/cast.h
 ./usr/include/openssl/chacha.h
 ./usr/include/openssl/cmac.h
-./usr/include/openssl/cms.h
 ./usr/include/openssl/comp.h
 ./usr/include/openssl/conf.h
 ./usr/include/openssl/conf_api.h
@@ -2644,6 +2643,7 @@
 ./usr/share/man/man3/x509.3
 ./usr/share/man/man3/xdr.3
 ./usr/share/man/man3/ypclnt.3
+./usr/share/man/man9/RBT_INIT.9
 ./usr/share/man/man9/SipHash24.9
 ./usr/share/man/man9/VOP_LOOKUP.9
 ./usr/share/man/man9/aml_evalnode.9
@@ -2790,7 +2790,6 @@
 ./usr/share/man/man9/vwaitforio.9
 ./usr/share/man/man9/vwakeup.9
 ./usr/share/man/man9/wdog_register.9
-./usr/share/misc/getopt
 ./usr/share/misc/gprof.callg
 ./usr/share/misc/gprof.flat
 ./usr/share/misc/operator

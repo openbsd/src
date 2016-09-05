@@ -1750,7 +1750,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/cast.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/chacha.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/cmac.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/cms.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/comp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/conf.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/conf_api.ph
