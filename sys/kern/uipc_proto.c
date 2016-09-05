@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_proto.c,v 1.8 2015/07/18 15:00:01 guenther Exp $	*/
+/*	$OpenBSD: uipc_proto.c,v 1.9 2016/09/05 15:12:29 claudio Exp $	*/
 /*	$NetBSD: uipc_proto.c,v 1.8 1996/02/13 21:10:47 christos Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@ struct protosw unixsw[] = {
   0,		0,		0,		0,
 },
 { 0,		0,		0,		0,
-  raw_input,	0,		raw_ctlinput,	0,
+  raw_input,	0,		0,		0,
   raw_usrreq,
   raw_init,	0,		0,		0,
 }

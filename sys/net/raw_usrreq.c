@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.22 2015/12/05 10:07:55 tedu Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.23 2016/09/05 15:12:30 claudio Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -129,16 +129,6 @@ raw_input(struct mbuf *m0, ...)
 		}
 	} else
 		m_freem(m);
-}
-
-void *
-raw_ctlinput(int cmd, struct sockaddr *arg, u_int rdomain, void *d)
-{
-
-	if (cmd < 0 || cmd >= PRC_NCMDS)
-		return NULL;
-	return NULL;
-	/* INCOMPLETE */
 }
 
 int

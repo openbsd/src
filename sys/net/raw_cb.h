@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_cb.h,v 1.9 2013/10/24 18:50:16 deraadt Exp $	*/
+/*	$OpenBSD: raw_cb.h,v 1.10 2016/09/05 15:12:30 claudio Exp $	*/
 /*	$NetBSD: raw_cb.h,v 1.9 1996/02/13 22:00:41 christos Exp $	*/
 
 /*
@@ -59,7 +59,6 @@ extern LIST_HEAD(rawcbhead, rawcb) rawcb;		/* head of list */
 
 #define	sotorawcb(so)		((struct rawcb *)(so)->so_pcb)
 int	 raw_attach(struct socket *, int);
-void	 *raw_ctlinput(int, struct sockaddr *, u_int, void *);
 void	 raw_detach(struct rawcb *);
 void	 raw_disconnect(struct rawcb *);
 void	 raw_init(void);

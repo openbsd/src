@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.202 2016/09/04 09:39:01 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.203 2016/09/05 15:12:30 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1591,7 +1591,7 @@ extern	struct domain routedomain;		/* or at least forward */
 
 struct protosw routesw[] = {
 { SOCK_RAW,	&routedomain,	0,		PR_ATOMIC|PR_ADDR|PR_WANTRCVD,
-  route_input,	route_output,	raw_ctlinput,	route_ctloutput,
+  route_input,	route_output,	0,		route_ctloutput,
   route_usrreq,
   raw_init,	0,		0,		0,
   sysctl_rtable,
