@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn_stubs.c,v 1.13 2015/11/01 03:00:01 guenther Exp $	*/
+/*	$OpenBSD: dlfcn_stubs.c,v 1.14 2016/09/06 18:49:34 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -26,7 +26,11 @@
  *
  */
 
+#include <sys/types.h>
 #include <stddef.h>
+#include <link.h>
+
+#include "init.h"
 
 /*
  *	All functions here are just stubs that will be overridden
@@ -45,7 +49,6 @@ char 	*dlerror(void) __attribute__((weak));
 struct dl_info;
 int	dladdr(const void *addr, struct dl_info *info) __attribute__((weak));
 
-struct dl_phdr_info;
 int	 dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),	    void *date) __attribute__((weak));
 
 #include <stdio.h>
@@ -87,6 +90,11 @@ int
 dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),
 	void *data)
 {
+#ifndef PIC
+	if (_static_phdr_info.dlpi_phdr != NULL)
+		return callback(&_static_phdr_info, sizeof(_static_phdr_info),
+		    data);
+#endif /* !PIC */
 	return -1;
 }
 
@@ -96,3 +104,30 @@ dladdr(const void *addr, struct dl_info *info)
 	printf("Wrong dl symbols!\n");
 	return -1;
 }
+
+/* Thread Local Storage argument structure */
+typedef struct {
+	unsigned long int ti_module;
+	unsigned long int ti_offset;
+} tls_index;
+
+void	*__tls_get_addr(tls_index *) __attribute__((weak));
+#ifdef __i386
+void	*___tls_get_addr(tls_index *) __attribute__((weak, __regparm__(1)));
+#endif
+
+#if defined(__amd64) || defined(__i386) || defined(__sparc64)
+void *
+__tls_get_addr(tls_index *ti)
+{
+	return NULL;
+}
+
+#ifdef __i386
+__attribute__((__regparm__(1))) void *
+___tls_get_addr(tls_index *ti)
+{
+	return NULL;
+}
+#endif /* __i386 */
+#endif /* arch with TLS support enabled */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.4 2016/05/07 19:05:22 guenther Exp $ */
+/*	$OpenBSD: init.c,v 1.5 2016/09/06 18:49:34 guenther Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -19,7 +19,6 @@
 #define _DYN_LOADER
 
 #include <sys/types.h>
-#include <sys/exec_elf.h>
 #include <sys/syscall.h>
 
 #ifndef PIC
@@ -28,9 +27,12 @@
 
 #include <tib.h>
 #include <limits.h>		/* NAME_MAX */
+#include <link.h>
 #include <stdlib.h>		/* atexit */
 #include <string.h>
 #include <unistd.h>
+
+#include "init.h"
 
 /* XXX should be in an include file shared with csu */
 char	***_csu_finish(char **_argv, char **_envp, void (*_cleanup)(void));
@@ -47,6 +49,8 @@ char	*__progname __attribute__((weak)) = NULL;
 
 
 #ifndef PIC
+struct dl_phdr_info	_static_phdr_info = { .dlpi_name = "a.out" };
+
 static inline void early_static_init(char **_argv, char **_envp);
 static inline void setup_static_tib(Elf_Phdr *_phdr, int _phnum);
 #endif /* PIC */
@@ -79,11 +83,16 @@ _csu_finish(char **argv, char **envp, void (*cleanup)(void))
 			_pagesize = aux->au_v;
 			break;
 #ifndef PIC
+		case AUX_base:
+			_static_phdr_info.dlpi_addr = aux->au_v;
+			break;
 		case AUX_phdr:
 			phdr = (void *)aux->au_v;
+			_static_phdr_info.dlpi_phdr = phdr;
 			break;
 		case AUX_phnum:
 			phnum = aux->au_v;
+			_static_phdr_info.dlpi_phnum = phnum;
 			break;
 #endif /* !PIC */
 		}
