@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tty.c,v 1.19 2016/09/02 18:11:28 tedu Exp $	*/
+/*	$OpenBSD: tty_tty.c,v 1.20 2016/09/06 08:13:23 tedu Exp $	*/
 /*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
@@ -129,6 +129,13 @@ cttyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		zapverauth(sess);
 		return 0;
 	case TIOCCHKVERAUTH:
+		/*
+		 * It's not clear when or what these checks are for.
+		 * How can we reach this code with a differnt ruid?
+		 * The ppid check is also more porous than desired.
+		 * Nevertheless, the checks reflect the original intention;
+		 * namely, that it be the same user using the same shell.
+		 */
 		sess = p->p_p->ps_pgrp->pg_session;
 		if (sess->s_verauthuid == p->p_ucred->cr_ruid &&
 		    sess->s_verauthppid == p->p_p->ps_pptr->ps_pid)
