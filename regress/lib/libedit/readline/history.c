@@ -20,10 +20,9 @@
 #include <string.h>
 
 #ifdef READLINE
-#include <stdio.h>
 #include <readline/history.h>
 #else
-#include <editline/readline.h>
+#include <readline/readline.h>
 #endif
 
 
