@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.153 2016/09/03 14:34:13 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.154 2016/09/06 00:04:15 dlg Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -142,11 +142,14 @@ tcp_init(void)
 {
 	tcp_iss = 1;		/* wrong */
 	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcb", NULL);
+	pool_setipl(&tcpcb_pool, IPL_SOFTNET);
 	pool_init(&tcpqe_pool, sizeof(struct tcpqent), 0, 0, 0, "tcpqe", NULL);
+	pool_setipl(&tcpcb_pool, IPL_SOFTNET);
 	pool_sethardlimit(&tcpqe_pool, tcp_reass_limit, NULL, 0);
 #ifdef TCP_SACK
 	pool_init(&sackhl_pool, sizeof(struct sackhole), 0, 0, 0, "sackhl",
 	    NULL);
+	pool_setipl(&sackhl_pool, IPL_SOFTNET);
 	pool_sethardlimit(&sackhl_pool, tcp_sackhole_limit, NULL, 0);
 #endif /* TCP_SACK */
 	in_pcbinit(&tcbtable, TCB_INITIAL_HASH_SIZE);

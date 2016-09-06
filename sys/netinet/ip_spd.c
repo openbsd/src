@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.88 2015/10/07 10:50:35 mpi Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.89 2016/09/06 00:04:15 dlg Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -670,6 +670,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		ipsec_acquire_pool_initialized = 1;
 		pool_init(&ipsec_acquire_pool, sizeof(struct ipsec_acquire),
 		    0, 0, 0, "ipsec acquire", NULL);
+		pool_setipl(&ipsec_acquire_pool, IPL_SOFTNET);
 	}
 
 	ipa = pool_get(&ipsec_acquire_pool, PR_NOWAIT|PR_ZERO);
