@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.17 2016/09/05 23:43:13 dlg Exp $	*/
+/*	$OpenBSD: tree.h,v 1.18 2016/09/06 06:56:30 dlg Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -765,7 +765,7 @@ name##_RB_MINMAX(struct name *head, int val)				\
 struct rb_type {
 	int		(*t_compare)(const void *, const void *);
 	void		(*t_augment)(void *);
-	size_t		  t_offset;	/* offset of rb_entry in type */
+	unsigned int	  t_offset;	/* offset of rb_entry in type */
 };
 
 struct rb_tree {
