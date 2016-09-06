@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.7 2016/09/01 13:42:45 jmc Exp $
+.\"	$OpenBSD: acme-client.1,v 1.8 2016/09/06 06:21:45 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 1 2016 $
+.Dd $Mdocdate: September 6 2016 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -222,11 +222,11 @@ The default challenge directory
 can be served by
 .Xr httpd 8
 with this location block:
-.Bd -literal
-	location "/.well-known/acme-challenge/*" {
-		root "/acme"
-		root strip 2
-	}
+.Bd -literal -offset indent
+location "/.well-known/acme-challenge/*" {
+	root "/acme"
+	root strip 2
+}
 .Ed
 .Pp
 This way, the files placed in
@@ -261,14 +261,13 @@ web server has already been configured to map the challenge directory
 as in the
 .Sx Challenges
 section:
-.Bd -literal
-# acme-client -vNn foo.com www.foo.com smtp.foo.com
-.Ed
+.Pp
+.Dl # acme-client -vNn foo.com www.foo.com smtp.foo.com
 .Pp
 A daily
 .Xr cron 8
 job can renew the certificates:
-.Bd -literal
+.Bd -literal -offset indent
 #! /bin/sh
 
 acme-client foo.com www.foo.com smtp.foo.com
