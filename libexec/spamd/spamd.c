@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.143 2016/07/13 16:35:47 jsing Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.144 2016/09/06 11:06:40 henning Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -765,8 +765,8 @@ closecon(struct con *cp)
 	if (cp->cctx) {
 		tls_close(cp->cctx);
 		tls_free(cp->cctx);
-	} else
-		close(cp->pfd->fd);
+	}
+	close(cp->pfd->fd);
 	cp->pfd->fd = -1;
 
 	slowdowntill = 0;
