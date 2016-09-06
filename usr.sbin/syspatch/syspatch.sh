@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.7 2016/09/06 14:32:06 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.8 2016/09/06 14:33:42 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -131,18 +131,15 @@ install_file()
 
 install_kernel()
 {
-	local _backup=false _bsd=/bsd _kern=$1
+	local _bsd=/bsd _kern=$1
 	[[ -n ${_kern} ]]
 
 	# we only save the original release kernel once
-	[[ -f /bsd.rollback${_RELINT} ]] || _backup=true
+	[[ -f /bsd.rollback${_RELINT} ]] || \
+		install -FSp /bsd /bsd.rollback${_RELINT}
 
 	if ${_BSDMP}; then
 		[[ ${_kern##*/} == bsd ]] && _bsd=/bsd.sp
-	fi
-
-	if ${_backup}; then
-		install -FSp /bsd /bsd.rollback${_RELINT} || return
 	fi
 
 	if [[ -n ${_bsd} ]]; then
