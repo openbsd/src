@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.438 2016/08/18 12:29:53 sthen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.439 2016/09/06 10:32:51 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 18 2016 $
+.Dd $Mdocdate: September 6 2016 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2260,8 +2260,6 @@ User settings.
 Path to
 .Xr pkg_create 1
 command, with possible options.
-Signing options should be set separately in
-.Ev SIGNING_PARAMETERS .
 .It Ev PKG_CREATE_NO_CHECKS
 Porters switch.
 Set to
@@ -2637,11 +2635,6 @@ Porters of software using libtool should make sure
 .Ev MAKE_FLAGS
 get propagated to the libtool invocations.
 This should be enough in most cases.
-.It Ev SIGNING_PARAMETERS
-User settings.
-Set to
-.Xr pkg_create 1
-options for signing packages directly during their creation.
 .It Ev SKIPDIR
 See
 .Xr ports 7 .
@@ -4031,6 +4024,9 @@ instead.
 Old pipeline for creating packing-lists at the ports level.
 Necessary functionality has been integrated directly into
 .Xr pkg_create 1 .
+.It Ev SIGNING_PARAMETERS
+Old user settings.
+There is no longer any benefit to signing packages during creation.
 .It Ev SCRIPTDIR
 Old location for scripts related to the current port.
 There is no reason for the semantic distinction, use
