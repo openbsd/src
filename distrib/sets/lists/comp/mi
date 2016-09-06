@@ -1746,7 +1746,6 @@
 ./usr/share/man/man3/BIO_f_ssl.3
 ./usr/share/man/man3/BIO_find_type.3
 ./usr/share/man/man3/BIO_new.3
-./usr/share/man/man3/BIO_new_CMS.3
 ./usr/share/man/man3/BIO_push.3
 ./usr/share/man/man3/BIO_read.3
 ./usr/share/man/man3/BIO_s_accept.3
