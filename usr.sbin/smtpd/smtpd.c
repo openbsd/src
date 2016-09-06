@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.284 2016/09/04 16:10:31 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.285 2016/09/06 16:34:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -810,10 +810,11 @@ start_child(int save_argc, char **save_argv, char *rexec)
 		return p;
 	}
 
-	close(sp[1]);
-
 	if (dup2(sp[0], 3) == -1)
 		fatal("%s: dup2", rexec);
+
+	if (closefrom(4) == -1)
+		fatal("%s: closefrom", rexec);
 
 	for (argc = 0; argc < save_argc; argc++)
 		argv[argc] = save_argv[argc];
