@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.6 2016/09/06 13:55:40 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.7 2016/09/06 14:32:06 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -70,13 +70,11 @@ apply_patches()
 
 create_rollback()
 {
-	local _file _patch=$1 _rbfiles _type
+	local _file _patch=$1 _rbfiles
 	[[ -n ${_patch} ]]
 	shift
 	local _files="${@}"
 	[[ -n ${_files} ]]
-
-	_type=$(tar -tzf ${_TMP}/${_patch}.tgz bsd 2>/dev/null || echo userland)
 
 	for _file in ${_files}; do
 		[[ -f /${_file} ]] || continue
@@ -84,16 +82,13 @@ create_rollback()
 	done
 
 	(cd / && \
-		if [[ ${_type} == bsd ]]; then
+		if ${_BSDMP} && \
+			tar -tzf ${_TMP}/${_patch}.tgz bsd >/dev/null 2>&1; then
+			# GENERIC.MP: substitute bsd.mp->bsd and bsd.sp->bsd
 			# XXX bsd.mp created twice in the tarball
-			if ${_BSDMP}; then
-				tar -czf ${_PDIR}/${_REL}/rollback-${_patch}.tgz \
-					-s '/^bsd$/bsd.mp/' -s '/^bsd.sp$/bsd/' \
-					${_rbfiles} bsd.sp 2>/dev/null || return # no /bsd.mp
-			else
-				tar -czf ${_PDIR}/${_REL}/rollback-${_patch}.tgz \
-					${_rbfiles} || return
-			fi
+			tar -czf ${_PDIR}/${_REL}/rollback-${_patch}.tgz \
+				-s '/^bsd$/bsd.mp/' -s '/^bsd.sp$/bsd/' \
+				${_rbfiles} bsd.sp 2>/dev/null || return # no /bsd.mp
 		else
 			tar -czf ${_PDIR}/${_REL}/rollback-${_patch}.tgz \
 				${_rbfiles} || return
@@ -167,7 +162,6 @@ install_patch()
 	create_rollback ${_patch} "${_files}"
 
 	for _file in ${_files}; do
-		# can't rely on _type, we need to install 001_foo.patch.sig
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
 			if ! install_kernel ${_explodir}/${_file}; then
 				rollback_patch ${_patch}
@@ -214,11 +208,8 @@ ls_missing()
 
 rollback_patch()
 {
-	local _explodir _file _files _patch=$1 _type
+	local _explodir _file _files _patch=$1
 	[[ -n ${_patch} ]]
-
-	_type=$(tar -tzf ${_PDIR}/${_REL}/rollback-${_patch}.tgz bsd \
-		2>/dev/null || echo userland)
 
 	# make sure the syspatch is installed and is the latest version
 	echo ${_patch} | grep -qw -- "$(ls_installed | syspatch_sort)"
@@ -228,7 +219,7 @@ rollback_patch()
 
 	_files="$(tar xvzphf ${_PDIR}/${_REL}/rollback-${_patch}.tgz -C ${_explodir})"
 	for _file in ${_files}; do
-		if [[ ${_type} == bsd ]]; then
+		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
 			install_kernel ${_explodir}/${_file} || return
 		else
 			install_file ${_explodir}/${_file} /${_file} || return
