@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.2 2015/09/19 04:02:21 guenther Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.3 2016/09/06 19:56:36 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -18,14 +18,25 @@
 #ifndef _LIBC_CTYPE_H_
 #define _LIBC_CTYPE_H_
 
-#include_next <ctype.h>
-
-#if 0
-extern PROTO_NORMAL(_ctype_);
-extern PROTO_NORMAL(_tolower_tab_);
-extern PROTO_NORMAL(_toupper_tab_);
-#endif
-
+/* sigh: predeclare and rename the functions which we'll declare inline */
+__only_inline int	isalnum(int _c);
+__only_inline int	isalpha(int _c);
+__only_inline int	iscntrl(int _c);
+__only_inline int	isdigit(int _c);
+__only_inline int	isgraph(int _c);
+__only_inline int	islower(int _c);
+__only_inline int	isprint(int _c);
+__only_inline int	ispunct(int _c);
+__only_inline int	isspace(int _c);
+__only_inline int	isupper(int _c);
+__only_inline int	isxdigit(int _c);
+__only_inline int	tolower(int _c);
+__only_inline int	toupper(int _c);
+__only_inline int	isblank(int _c);
+__only_inline int	isascii(int _c);
+__only_inline int	toascii(int _c);
+__only_inline int	_tolower(int _c);
+__only_inline int	_toupper(int _c);
 PROTO_NORMAL(isalnum);
 PROTO_NORMAL(isalpha);
 PROTO_NORMAL(iscntrl);
@@ -44,5 +55,13 @@ PROTO_NORMAL(isascii);
 PROTO_DEPRECATED(toascii);
 PROTO_STD_DEPRECATED(_tolower);
 PROTO_STD_DEPRECATED(_toupper);
+
+#include_next <ctype.h>
+
+#if 0
+extern PROTO_NORMAL(_ctype_);
+extern PROTO_NORMAL(_tolower_tab_);
+extern PROTO_NORMAL(_toupper_tab_);
+#endif
 
 #endif /* !_LIBC_CTYPE_H_ */

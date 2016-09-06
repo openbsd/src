@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.12 2016/05/09 23:55:52 guenther Exp $	*/
+/*	$OpenBSD: signal.h,v 1.13 2016/09/06 19:56:36 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -17,6 +17,23 @@
 
 #ifndef _LIBC_SIGNAL_H
 #define _LIBC_SIGNAL_H
+
+/* Rename __errno() before it's used in the inline functions in <signal.h> */
+#include <errno.h>
+
+/* sigh: predeclare and rename the functions which we'll declare inline */
+#include <sys/signal.h>
+
+__only_inline int	sigaddset(sigset_t *__set, int __signo);
+__only_inline int	sigdelset(sigset_t *__set, int __signo);
+__only_inline int	sigemptyset(sigset_t *__set);
+__only_inline int	sigfillset(sigset_t *__set);
+__only_inline int	sigismember(const sigset_t *__set, int __signo);
+PROTO_NORMAL(sigaddset);
+PROTO_NORMAL(sigdelset);
+PROTO_NORMAL(sigemptyset);
+PROTO_NORMAL(sigfillset);
+PROTO_NORMAL(sigismember);
 
 #include_next <signal.h>
 
@@ -39,14 +56,9 @@ PROTO_DEPRECATED(psignal);
 PROTO_DEPRECATED(pthread_sigmask);
 PROTO_NORMAL(raise);
 PROTO_WRAP(sigaction);
-PROTO_NORMAL(sigaddset);
 PROTO_NORMAL(sigaltstack);
 PROTO_NORMAL(sigblock);
-PROTO_NORMAL(sigdelset);
-PROTO_NORMAL(sigemptyset);
-PROTO_NORMAL(sigfillset);
 PROTO_DEPRECATED(siginterrupt);
-PROTO_NORMAL(sigismember);
 PROTO_STD_DEPRECATED(signal);
 PROTO_DEPRECATED(sigpause);
 PROTO_NORMAL(sigpending);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.1 2015/10/27 05:54:49 guenther Exp $	*/
+/*	$OpenBSD: float.h,v 1.2 2016/09/06 19:56:36 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -20,6 +20,11 @@
 
 #include_next <float.h>
 
+/*
+ * clang overrides our <float.h>, but libc still need to define __flt_rounds()
+ * to support building with gcc
+ */
+int	__flt_rounds(void);
 PROTO_NORMAL(__flt_rounds);
 
 #endif	/* _LIBC_FLOAT_H_ */
