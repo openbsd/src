@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.121 2016/06/21 10:40:37 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.122 2016/09/06 10:41:51 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -104,7 +104,7 @@ sub handle_options
 	$state->SUPER::handle_options('p:f:d:M:U:A:B:P:W:qQ',
 	    '[-nQqvx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
-	    '[-s signing-parameter] [-U undisplayfile] [-W wantedlib]',
+	    '[-U undisplayfile] [-W wantedlib]',
 	    '[-d desc -D COMMENT=value -f packinglist -p prefix]',
 	    'pkg-name');
 

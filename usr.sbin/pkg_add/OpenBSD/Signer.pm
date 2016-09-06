@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: Signer.pm,v 1.6 2015/01/04 14:10:20 espie Exp $
+# $OpenBSD: Signer.pm,v 1.7 2016/09/06 10:41:51 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -109,20 +109,6 @@ sub compute_signature
 # specific parameter handling plus element creation
 package OpenBSD::CreateSign::State;
 our @ISA = qw(OpenBSD::AddCreateDelete::State);
-
-sub handle_options
-{
-	my ($state, $opt_string, @usage) = @_;
-	$state->{opt}{s} = 
-	    sub { 
-	    	push(@{$state->{signature_params}}, shift);
-	    };
-	$state->{no_exports} = 1;
-	$state->SUPER::handle_options($opt_string.'s:', @usage);
-	if (defined $state->{signature_params}) {
-		$state->{signer} = OpenBSD::Signer->factory($state);
-	}
-}
 
 sub create_archive
 {
