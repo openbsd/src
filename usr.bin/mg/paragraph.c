@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.44 2016/04/14 17:05:32 lum Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.45 2016/09/06 16:25:47 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -108,13 +108,13 @@ do_gotoeop(int f, int n, int *i)
 			curwp->w_dotp = lforw(curwp->w_dotp);
 			curwp->w_dotline++;
 
-			/* do not continue after end of buffer */
-			if (lforw(curwp->w_dotp) == curbp->b_headp) {
-				gotoeol(FFRAND, 1);
-				curwp->w_rflag |= WFMOVE;
-				return (FALSE);
-			}
 		}
+	}
+	/* do not continue after end of buffer */
+	if (lforw(curwp->w_dotp) == curbp->b_headp) {
+		gotoeol(FFRAND, 1);
+		curwp->w_rflag |= WFMOVE;
+		return (FALSE);
 	}
 
 	/* force screen update */
