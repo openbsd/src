@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.19 2016/05/07 19:05:21 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.20 2016/09/06 18:33:35 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,7 +60,7 @@
 	movl	%eax,%fs:(TCB_OFFSET_ERRNO);				\
 	movq	$-1, %rax
 #define HANDLE_ERRNO							\
-	jnc,pt	99f;							\
+	jnc	99f;							\
 	SET_ERRNO;							\
 	99:
 
@@ -84,7 +84,7 @@
 
 /* return, handling errno for failed calls */
 #define _RSYSCALL_RET							\
-	jc,pn	99f;							\
+	jc	99f;							\
 	ret;								\
 	99: SET_ERRNO;							\
 	ret
