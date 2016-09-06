@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.19 2016/08/14 08:23:52 visa Exp $	*/
+/*	$OpenBSD: pte.h,v 1.20 2016/09/06 13:41:29 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,8 +66,14 @@ typedef u_int32_t pt_entry_t;
 
 #ifdef MIPS_PTE64
 #define	PTE_BITS	64
+#define	PTE_LOAD	ld
+#define	PTE_LOG		3
+#define	PTE_OFFS	8
 #else
 #define	PTE_BITS	32
+#define	PTE_LOAD	lwu
+#define	PTE_LOG		2
+#define	PTE_OFFS	4
 #endif
 
 #ifdef CPU_MIPS64R2

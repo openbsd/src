@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception_tfp.S,v 1.4 2015/09/20 11:52:33 miod Exp $	*/
+/*	$OpenBSD: exception_tfp.S,v 1.5 2016/09/06 13:41:29 visa Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -61,9 +61,6 @@
 
 #ifdef MIPS_PTE64
 #error "R8000 doesn't need 64-bit PTE"
-#else
-#define	PTE_LOG		2
-#define	PTE_LOAD	lwu
 #endif
 
 #define	TLBW	.align 4; .word 0x43000002

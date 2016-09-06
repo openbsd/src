@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.56 2016/08/16 13:03:58 visa Exp $ */
+/*	$OpenBSD: context.S,v 1.57 2016/09/06 13:41:29 visa Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -40,16 +40,6 @@
 #endif
 
 #include "assym.h"
-
-#ifdef MIPS_PTE64
-#define	PTE_LOG		3
-#define	PTE_LOAD	ld
-#define	PTE_OFFS	8
-#else
-#define	PTE_LOG		2
-#define	PTE_LOAD	lw
-#define	PTE_OFFS	4
-#endif
 
 	.set	mips3
 	.set	noreorder		# Noreorder is default style!
