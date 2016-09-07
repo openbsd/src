@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.287 2016/09/03 15:17:08 ajacoutot Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.288 2016/09/07 10:58:25 schwarze Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -78,12 +78,8 @@ etc
         certs			mode=0700
         ..
     ..
-
-    # ./etc/acme
     acme			mode=0700
     ..
-
-    # ./etc/mail
     mail
     ..
     mtree
@@ -94,14 +90,10 @@ etc
     ..
     rc.d
     ..
-
-    # ./etc/skel
     skel
         .ssh			uname=root mode=0700
         ..
     ..
-
-    # ./etc/signify
     signify
     ..
     ssh
@@ -113,13 +105,11 @@ etc
         ..
         lib
         ..
-        # ./etc/ssl/acme
         acme
             private		uname=root mode=0700
             ..
         ..
     ..
-
 ..
 
 # ./home
@@ -145,8 +135,6 @@ usr
     include			gname=bin uname=root mode=0755
         arpa			gname=bin uname=root mode=0755
         ..
-
-        # ./usr/include/g++
         g++			gname=bin uname=root mode=0755
             std			gname=bin uname=root mode=0755
             ..
@@ -207,6 +195,8 @@ usr
         ..
         libexec
         ..
+
+        # ./usr/local/man
         man
             cat1
             ..
@@ -234,6 +224,8 @@ usr
             ..
             catn
             ..
+
+            # ./usr/local/man/ja_JP.EUC
             ja_JP.EUC
                 cat1
                 ..
@@ -282,6 +274,8 @@ usr
                 mann
                 ..
             ..
+
+            # ./usr/local/man/man1
             man1
             ..
             man2
@@ -309,8 +303,12 @@ usr
             mann
             ..
         ..
+
+        # ./usr/local/sbin
         sbin
         ..
+
+        # ./usr/local/share
         share
             dict
             ..
@@ -322,6 +320,8 @@ usr
             ..
             misc
             ..
+
+            # ./usr/local/share/nls
             nls
                 C
                 ..
@@ -396,6 +396,8 @@ usr
                 uk_UA.KOI8-U
                 ..
             ..
+
+            # ./usr/local/share/pkgconfig
             pkgconfig
             ..
             skel
@@ -451,8 +453,6 @@ usr
         # ./usr/share/info
         info
         ..
-
-        # ./usr/share/locale
         locale
         ..
 
@@ -583,14 +583,10 @@ usr
         ..
         mk
         ..
-
-        # ./usr/share/snmp
         snmp
             mibs
             ..
         ..
-
-        # ./usr/share/tabset
         tabset
         ..
 
@@ -611,10 +607,6 @@ usr
         ..
    ..
 
-   # ./usr/src
-   #src				gname=wsrc mode=0775
-   #..
-
    # ./usr/xobj
    xobj				gname=wsrc mode=0775
    ..
@@ -626,12 +618,8 @@ var
     ..
     authpf			uname=root gname=authpf mode=0770
     ..
-
-    # ./var/empty
     empty			mode=0755
     ..
-
-    # ./var/backups
     backups			mode=0700
     ..
     yp				mode=755
@@ -665,8 +653,6 @@ var
             save		uname=root gname=games mode=0770
             ..
         ..
-
-        # ./var/games/save
         save			uname=root gname=games mode=0775
         ..
         phantasia		uname=root gname=games mode=0775
@@ -678,8 +664,6 @@ var
         rdist
         ..
     ..
-
-    # ./var/mail
     mail
     ..
 
@@ -689,8 +673,6 @@ var
         ..
         etc			uname=root gname=_nsd mode=0750
         ..
-
-        # ./var/nsd/run
         run			uname=root gname=_nsd mode=0775
             xfr			uname=root gname=_nsd mode=0770
             ..
@@ -710,19 +692,13 @@ var
     ..
     run
     ..
-
-    # ./var/sysmerge
     sysmerge			uname=root gname=wheel mode=0700
     ..
-
-    # ./var/syspatch
     syspatch			uname=root gname=wheel mode=0755
     ..
 
     # ./var/spool
     spool
-
-        # ./var/spool/ftp
         ftp			mode=0555
             bin			mode=0511
             ..
@@ -730,8 +706,6 @@ var
             ..
             hidden		mode=0111
             ..
-            #pub		mode=0555
-            #..
         ..
 
         # ./var/spool/lock
@@ -741,6 +715,7 @@ var
             lpd			gname=daemon mode=0775
 	    ..
         ..
+
         # ./var/spool/smtpd
         smtpd			type=dir uname=root gname=wheel mode=0711
             corrupt		type=dir uname=_smtpq gname=wheel mode=0700
@@ -756,8 +731,8 @@ var
             temporary		type=dir uname=_smtpq gname=wheel mode=0700
             ..
         ..
-        #sockets		mode=777
-        #..
+
+        # ./var/spool/uucp
         uucp			uname=uucp gname=daemon
         ..
         uucppublic		uname=uucp gname=daemon mode=0755
