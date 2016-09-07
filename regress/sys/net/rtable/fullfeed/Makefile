@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2015/11/04 09:45:52 mpi Exp $
+#	$OpenBSD: Makefile,v 1.2 2016/09/07 20:53:34 vgross Exp $
 
 PROG=	fullfeed
 SRCS=	main.c util.c rtable.c
@@ -15,7 +15,7 @@ REGRESS_TARGETS+=	inet inet6
 CLEANFILES+=		*.sorted
 
 ${REGRESS_TARGETS}: ${PROG} ${.TARGET}-fullfeed.sorted
-	${PROG} ${.TARGET} ${TOPDIR}/${.TARGET}-fullfeed.txt | \
+	${.OBJDIR}/${PROG} ${.TARGET} ${TOPDIR}/${.TARGET}-fullfeed.txt | \
 		sort | diff -u ${.TARGET}-fullfeed.sorted /dev/stdin
 
 .include <bsd.regress.mk>

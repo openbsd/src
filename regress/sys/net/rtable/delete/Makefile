@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2015/11/04 09:45:52 mpi Exp $
+#	$OpenBSD: Makefile,v 1.2 2016/09/07 20:53:34 vgross Exp $
 
 PROG= 	delete
 SRCS= 	main.c util.c rtable.c
@@ -6,6 +6,6 @@ SRCS= 	main.c util.c rtable.c
 REGRESS_TARGETS+=	fullfeed
 
 ${REGRESS_TARGETS}: ${PROG}
-	${PROG} ${TOPDIR}/inet6-${.TARGET}.txt
+	${.OBJDIR}/${PROG} ${TOPDIR}/inet6-${.TARGET}.txt
 
 .include <bsd.regress.mk>
