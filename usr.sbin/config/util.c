@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.16 2016/09/07 18:29:52 akfaew Exp $	*/
+/*	$OpenBSD: util.c,v 1.17 2016/09/07 18:36:52 akfaew Exp $	*/
 /*	$NetBSD: util.c,v 1.5 1996/08/31 20:58:29 mycroft Exp $	*/
 
 /*
@@ -99,10 +99,10 @@ char *
 sourcepath(const char *file)
 {
 	char *cp;
-	int len = strlen(srcdir) + 1 + strlen(file) + 1;
 
-	cp = emalloc(len);
-	(void)snprintf(cp, len, "%s/%s", srcdir, file);
+	if (asprintf(&cp, "%s/%s", srcdir, file) == -1)
+		err(1, NULL);
+
 	return cp;
 }
 
