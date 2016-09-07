@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_utf8.c,v 1.17 2016/09/07 17:06:23 schwarze Exp $ */
+/*	$OpenBSD: citrus_utf8.c,v 1.18 2016/09/07 17:15:06 schwarze Exp $ */
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins
@@ -33,8 +33,6 @@
 #include <wchar.h>
 
 #include "citrus_ctype.h"
-
-#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 struct _utf8_state {
 	wchar_t	ch;
@@ -124,7 +122,7 @@ _citrus_utf8_ctype_mbrtowc(wchar_t * __restrict pwc,
 		wch = (unsigned char)*s++ & mask;
 	else
 		wch = us->ch;
-	for (i = (us->want == 0) ? 1 : 0; i < MINIMUM(want, n); i++) {
+	for (i = (us->want == 0) ? 1 : 0; i < want && (size_t)i < n; i++) {
 		if ((*s & 0xc0) != 0x80) {
 			/*
 			 * Malformed input; bad byte in the middle
@@ -204,7 +202,7 @@ _citrus_utf8_ctype_mbsnrtowcs(wchar_t * __restrict dst,
 				r = 1;
 			} else {
 				r = _citrus_utf8_ctype_mbrtowc(NULL, *src + i,
-				    nmc - i, us);
+				    nmc - i, ps);
 				if (r == (size_t)-1)
 					return r;
 				if (r == (size_t)-2)
@@ -237,7 +235,7 @@ _citrus_utf8_ctype_mbsnrtowcs(wchar_t * __restrict dst,
 			r = 1;
 		} else {
 			r = _citrus_utf8_ctype_mbrtowc(dst + o, *src + i,
-			    nmc - i, us);
+			    nmc - i, ps);
 			if (r == (size_t)-1) {
 				*src += i;
 				return r;
@@ -340,7 +338,7 @@ _citrus_utf8_ctype_wcsnrtombs(char * __restrict dst,
 					return o;
 				r = 1;
 			} else {
-				r = _citrus_utf8_ctype_wcrtomb(buf, wc, us);
+				r = _citrus_utf8_ctype_wcrtomb(buf, wc, ps);
 				if (r == (size_t)-1)
 					return r;
 			}
@@ -360,14 +358,14 @@ _citrus_utf8_ctype_wcsnrtombs(char * __restrict dst,
 			r = 1;
 		} else if (len - o >= _CITRUS_UTF8_MB_CUR_MAX) {
 			/* Enough space to translate in-place. */
-			r = _citrus_utf8_ctype_wcrtomb(dst + o, wc, us);
+			r = _citrus_utf8_ctype_wcrtomb(dst + o, wc, ps);
 			if (r == (size_t)-1) {
 				*src += i;
 				return r;
 			}
 		} else {
 			/* May not be enough space; use temp buffer. */
-			r = _citrus_utf8_ctype_wcrtomb(buf, wc, us);
+			r = _citrus_utf8_ctype_wcrtomb(buf, wc, ps);
 			if (r == (size_t)-1) {
 				*src += i;
 				return r;
