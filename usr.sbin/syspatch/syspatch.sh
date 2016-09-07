@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.10 2016/09/07 15:41:23 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.11 2016/09/07 16:01:48 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -39,13 +39,14 @@ syspatch_trap()
 
 apply_patches()
 {
+	needs_root
 	# XXX cleanup mismatch/old rollback patches and sig (installer should as well)
 	local _m _patch _patches="$@"
 	[[ -n ${_patches} ]] || return 0 # nothing to do
 
 	for _patch in ${_patches}; do
-		fetch_and_verify "${_patch}"
-		install_patch "${_patch}"
+		fetch_and_verify "${_patch}" && \
+			install_patch "${_patch}" || return
 	done
 
 	# non-fatal: the syspatch tarball should have correct permissions
@@ -190,6 +191,7 @@ ls_missing()
 
 rollback_patch()
 {
+	needs_root
 	local _explodir _file _files _patch
 
 	_patch="$(ls_installed | sort -V | tail -1)"
@@ -235,7 +237,7 @@ while getopts clr arg; do
 	case ${arg} in
 		c) ls_missing;;
 		l) ls_installed;;
-		r) needs_root && rollback_patch;;
+		r) rollback_patch;;
 		*) usage;;
 	esac
 done
@@ -243,7 +245,7 @@ shift $(( OPTIND -1 ))
 [[ $# -ne 0 ]] && usage
 
 if [[ ${OPTIND} == 1 ]]; then
-	needs_root && apply_patches $(ls_missing)
+	apply_patches $(ls_missing)
 fi
 
 rm -rf ${_TMP}
