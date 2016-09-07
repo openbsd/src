@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_none.c,v 1.7 2016/09/05 09:47:03 schwarze Exp $ */
+/*	$OpenBSD: citrus_none.c,v 1.8 2016/09/07 17:06:23 schwarze Exp $ */
 /*	$NetBSD: citrus_none.c,v 1.18 2008/06/14 16:01:07 tnozaki Exp $	*/
 
 /*-
@@ -30,14 +30,13 @@
 #include <sys/types.h>
 
 #include <errno.h>
-#include <limits.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
 #include <wchar.h>
 
 #include "citrus_ctype.h"
+
+static inline char	 wrapv(unsigned char);
+
 
 /*
  * Convert an unsigned char value into a char value without relying on
@@ -47,9 +46,9 @@ static inline char
 wrapv(unsigned char ch)
 {
 	if (ch >= 0x80)
-		return ((int)ch - 0x100);
+		return (int)ch - 0x100;
 	else
-		return (ch);
+		return ch;
 }
 
 size_t
@@ -59,10 +58,10 @@ _citrus_none_ctype_mbrtowc(wchar_t * __restrict pwc,
 	if (s == NULL)
 		return 0;
 	if (n == 0)
-		return (size_t)-2;
-	if (pwc)
+		return -2;
+	if (pwc != NULL)
 		*pwc = (wchar_t)(unsigned char)*s;
-	return (*s != '\0');
+	return *s != '\0';
 }
 
 size_t
@@ -77,26 +76,26 @@ _citrus_none_ctype_mbsnrtowcs(wchar_t * __restrict dst,
 	for (i = 0; i < nmc && i < len; i++)
 		if ((dst[i] = (wchar_t)(unsigned char)(*src)[i]) == L'\0') {
 			*src = NULL;
-			return (i);
+			return i;
 		}
 
 	*src += i;
-	return (i);
+	return i;
 }
 
 size_t
 _citrus_none_ctype_wcrtomb(char * __restrict s, wchar_t wc)
 {
 	if (s == NULL)
-		return (1);
+		return 1;
 
 	if (wc < 0 || wc > 0xff) {
 		errno = EILSEQ;
-		return (-1);
+		return -1;
 	}
 
 	*s = wrapv(wc);
-	return (1);
+	return 1;
 }
 
 size_t
@@ -110,12 +109,12 @@ _citrus_none_ctype_wcsnrtombs(char * __restrict dst,
 			wchar_t wc = (*src)[i];
 			if (wc < 0 || wc > 0xff) {
 				errno = EILSEQ;
-				return (-1);
+				return -1;
 			}
 			if (wc == L'\0')
-				return (i);
+				return i;
 		}
-		return (i);
+		return i;
 	}
 
 	for (i = 0; i < nwc && i < len; i++) {
@@ -123,14 +122,14 @@ _citrus_none_ctype_wcsnrtombs(char * __restrict dst,
 		if (wc < 0 || wc > 0xff) {
 			*src += i;
 			errno = EILSEQ;
-			return (-1);
+			return -1;
 		}
 		dst[i] = wrapv(wc);
 		if (wc == L'\0') {
 			*src = NULL;
-			return (i);
+			return i;
 		}
 	}
 	*src += i;
-	return (i);
+	return i;
 }
