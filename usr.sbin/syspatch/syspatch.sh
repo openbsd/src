@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.8 2016/09/06 14:33:42 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.9 2016/09/07 15:19:33 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -16,33 +16,19 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-trap "syspatch_trap" 2 3 9 13 15 ERR
-
 set -e
+
+trap "syspatch_trap" 2 3 9 13 15 ERR
 
 usage()
 {
-	echo "usage: ${0##*/} [-c | -l | -r patchname ]" >&2 && return 1
+	echo "usage: ${0##*/} [-c | -l | -r]" >&2 && return 1
 }
 
 needs_root()
 {
 	[[ $(id -u) -eq 0 ]] || \
 		(echo "${0##*/}: need root privileges"; return 1)
-}
-
-syspatch_sort()
-{
-	local _p _patch _patches=$(</dev/stdin)
-	[[ -n ${_patches} ]] || return 0 # nothing to do
-
-	for _patch in ${_patches}; do
-		echo ${_patch##*_}
-	done | sort -u | while read _p; do
-		echo "${_patches}" | \
-			grep -E "syspatch-${_RELINT}-[0-9]{3}_${_p}" | \
-			sort -V | tail -1
-	done
 }
 
 syspatch_trap()
@@ -58,8 +44,8 @@ apply_patches()
 	[[ -n ${_patches} ]] || return 0 # nothing to do
 
 	for _patch in ${_patches}; do
-		fetch_and_verify "${_patch}" || return
-		install_patch "${_patch}" || return
+		fetch_and_verify "${_patch}"
+		install_patch "${_patch}"
 	done
 
 	# non-fatal: the syspatch tarball should have correct permissions
@@ -88,10 +74,10 @@ create_rollback()
 			# XXX bsd.mp created twice in the tarball
 			tar -czf ${_PDIR}/${_REL}/rollback-${_patch}.tgz \
 				-s '/^bsd$/bsd.mp/' -s '/^bsd.sp$/bsd/' \
-				${_rbfiles} bsd.sp 2>/dev/null || return # no /bsd.mp
+				${_rbfiles} bsd.sp 2>/dev/null # no /bsd.mp
 		else
 			tar -czf ${_PDIR}/${_REL}/rollback-${_patch}.tgz \
-				${_rbfiles} || return
+				${_rbfiles}
 		fi
 	)
 }
@@ -143,7 +129,7 @@ install_kernel()
 	fi
 
 	if [[ -n ${_bsd} ]]; then
-		install -FS ${_kern} ${_bsd} || return
+		install -FS ${_kern} ${_bsd}
 	fi
 }
 
@@ -161,12 +147,12 @@ install_patch()
 	for _file in ${_files}; do
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
 			if ! install_kernel ${_explodir}/${_file}; then
-				rollback_patch ${_patch}
+				rollback_patch
 				return 1
 			fi
 		else
 			if ! install_file ${_explodir}/${_file} /${_file}; then
-				rollback_patch ${_patch}
+				rollback_patch
 				return 1
 			fi
 		fi
@@ -205,11 +191,10 @@ ls_missing()
 
 rollback_patch()
 {
-	local _explodir _file _files _patch=$1
-	[[ -n ${_patch} ]]
+	local _explodir _file _files _patch
 
-	# make sure the syspatch is installed and is the latest version
-	echo ${_patch} | grep -qw -- "$(ls_installed | syspatch_sort)"
+	_patch="$(ls_installed | sort -V | tail -1)"
+	[[ -n ${_patch} ]]
 
 	_explodir=${_TMP}/rollback-${_patch}
 	mkdir -p ${_explodir}
@@ -217,9 +202,9 @@ rollback_patch()
 	_files="$(tar xvzphf ${_PDIR}/${_REL}/rollback-${_patch}.tgz -C ${_explodir})"
 	for _file in ${_files}; do
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
-			install_kernel ${_explodir}/${_file} || return
+			install_kernel ${_explodir}/${_file}
 		else
-			install_file ${_explodir}/${_file} /${_file} || return
+			install_file ${_explodir}/${_file} /${_file}
 		fi
 	done
 
@@ -232,10 +217,8 @@ set -A _KERNV -- $(sysctl -n kern.version | \
 	sed 's/^OpenBSD \([0-9]\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
 [[ -z ${_KERNV[1]} ]] || [[ ${_KERNV[1]} == "-stable" ]]
 
-# check unallowed args (-ab, -a foo -b, -a -b)
-[[ -z $@ || \
-	$@ == @(|-[[:alnum:]]@(|+([[:blank:]])[!-]*([![:blank:]])))*([[:blank:]]) ]] || \
-	usage
+# check args
+[[ $@ == @(|-[[:alpha:]]) ]] || usage
 
 # XXX to be discussed
 [[ -n ${PATCH_PATH} ]]
@@ -249,11 +232,11 @@ readonly _REL=${_KERNV[0]}
 readonly _RELINT=${_REL%\.*}${_REL#*\.}
 readonly _TMP=$(mktemp -d -p /tmp syspatch.XXXXXXXXXX)
 
-while getopts clr: arg; do
+while getopts clr arg; do
 	case ${arg} in
 		c) ls_missing;;
 		l) ls_installed;;
-		r) needs_root && rollback_patch "${OPTARG}";;
+		r) needs_root && rollback_patch;;
 		*) usage;;
 	esac
 done
