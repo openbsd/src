@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.78 2016/09/05 07:50:04 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.79 2016/09/07 15:30:45 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4215,7 +4215,7 @@ dump_vcpu(struct vcpu *vcpu)
 		printf("    entry ctls: 0x%llx\n",
 		    vcpu->vc_vmx_entry_ctls);
 		printf("    true entry ctls: 0x%llx\n",
-		    vcpu->vc_vmx_true_procbased_ctls);
+		    vcpu->vc_vmx_true_entry_ctls);
 		CTRL_DUMP(vcpu, ENTRY, LOAD_DEBUG_CONTROLS);
 		CTRL_DUMP(vcpu, ENTRY, IA32E_MODE_GUEST);
 		CTRL_DUMP(vcpu, ENTRY, ENTRY_TO_SMM);
