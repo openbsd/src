@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.325 2016/09/04 15:45:42 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.326 2016/09/07 09:19:38 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -382,7 +382,6 @@ rt_setgwroute(struct rtentry *rt, u_int rtableid)
 	KERNEL_ASSERT_LOCKED();
 
 	KASSERT(ISSET(rt->rt_flags, RTF_GATEWAY));
-	KASSERT(rt->rt_gwroute == NULL);
 
 	/* If we cannot find a valid next hop bail. */
 	nhrt = rt_match(rt->rt_gateway, NULL, RT_RESOLVE, rtable_l2(rtableid));
@@ -403,6 +402,10 @@ rt_setgwroute(struct rtentry *rt, u_int rtableid)
 		rtfree(nhrt);
 		return (ELOOP);
 	}
+
+	/* Next hop is valid so remove possible old cache. */
+	rt_putgwroute(rt);
+	KASSERT(rt->rt_gwroute == NULL);
 
 	/*
 	 * If the MTU of next hop is 0, this will reset the MTU of the
@@ -1139,10 +1142,8 @@ rt_setgate(struct rtentry *rt, struct sockaddr *gate, u_int rtableid)
 	}
 	memmove(rt->rt_gateway, gate, glen);
 
-	if (ISSET(rt->rt_flags, RTF_GATEWAY)) {
-		rt_putgwroute(rt);
+	if (ISSET(rt->rt_flags, RTF_GATEWAY))
 		return (rt_setgwroute(rt, rtableid));
-	}
 
 	return (0);
 }
