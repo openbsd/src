@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.20 2016/09/07 09:21:33 mpi Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.21 2016/09/07 09:23:07 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -209,11 +209,8 @@ bfd_rtalloc(struct rtentry *rt)
 		return (EADDRINUSE);
 
 	/* Do our necessary memory allocations upfront */
-	if ((sc = pool_get(&bfd_pool, PR_WAITOK | PR_ZERO)) == NULL)
-		goto fail;
-	if ((sc->sc_peer = pool_get(&bfd_pool_peer, PR_WAITOK | PR_ZERO)) ==
-	    NULL)
-		goto fail;
+	sc = pool_get(&bfd_pool, PR_WAITOK | PR_ZERO);
+	sc->sc_peer = pool_get(&bfd_pool_peer, PR_WAITOK | PR_ZERO);
 
 	sc->sc_rt = rt;
 	rtref(sc->sc_rt);	/* we depend on this route not going away */
@@ -232,13 +229,6 @@ bfd_rtalloc(struct rtentry *rt)
 	TAILQ_INSERT_TAIL(&bfd_queue, sc, bfd_next);
 
 	return (0);
-
-fail:
-	if (sc->sc_peer)
-		pool_put(&bfd_pool_peer, sc->sc_peer);
-	if (sc)
-		pool_put(&bfd_pool, sc);
-	return (ENOMEM);
 }
 
 /*
