@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.101 2016/08/31 12:22:28 lum Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.102 2016/09/07 11:42:01 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -713,12 +713,17 @@ popbuf(struct buffer *bp, int flags)
 
 		while (wp != NULL && wp == curwp)
 			wp = wp->w_wndp;
-	} else
-		for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
+	} else {
+		for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
 			if (wp->w_bufp == bp) {
 				wp->w_rflag |= WFFULL | WFFRAME;
 				return (wp);
 			}
+		}
+	}
+	if (!wp)
+		return (NULL);
+
 	if (showbuffer(bp, wp, WFFULL) != TRUE)
 		return (NULL);
 	return (wp);
