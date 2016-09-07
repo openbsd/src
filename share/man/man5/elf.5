@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.28 2016/09/07 05:12:02 guenther Exp $
+.\"	$OpenBSD: elf.5,v 1.29 2016/09/07 05:54:10 guenther Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -468,7 +468,11 @@ order, sorted on the
 .Sy p_vaddr
 member.
 .It Dv PT_DYNAMIC
-The array element specifies dynamic linking information.
+The array element specifies the location and size of the dynamic section,
+both in the file and in the memory image of the program.
+This segment type may not occur more than once in a file and may
+only occur if the dynamic section is part of the memory image of
+the program.
 .It Dv PT_INTERP
 The array element specifies the location and size of a null-terminated
 path name to invoke as an interpreter.
@@ -483,15 +487,14 @@ This segment type is reserved but has unspecified semantics.
 Programs that
 contain an array element of this type do not conform to the ABI.
 .It Dv PT_PHDR
-The array element, if present, specifies the location and size of the program
+The array element specifies the location and size of the program
 header table itself, both in the file and in the memory image of the program.
-This segment type may not occur more than once in a file.
-Moreover, it may
-only occur if the program header table is part of the memory image of the
-program.
+This segment type may not occur more than once in a file and may
+only occur if the program header table is part of the memory image
+of the program.
 If it is present, it must precede any loadable segment entry.
 .It Dv PT_TLS
-The array element, if present, specifies the location and size of the
+The array element specifies the location and size of the
 thread-local storage for this file.
 Each thread in a process loading this file will have the segment's
 memory size
@@ -501,6 +504,35 @@ allocated for it, where the bytes up to the segment's file size
 will be initialized with the data in this segment and the remaining
 .Dq extra
 bytes will be set to zero.
+This segment type may not occur more than once in a file and may
+only occur if the thread-local storage is part of the memory image
+of the program.
+.It Dv PT_GNU_EH_FRAME
+The array element specifies the location and size of the GNU exception
+frame header, both in the file and in the memory image of the program.
+This segment type may not occur more than once in a file and may
+only occur if the GNU exception frame header is part of the memory
+image of the program.
+.It Dv PT_GNU_RELRO
+The array element specifies the location and size of a part of the
+memory image of the program that should be made read-only once all
+immediate relocation processing for the file has been performed.
+This segment type may not occur more than once in a file.
+.It Dv PT_OPENBSD_RANDOMIZE
+The array element specifies the location and size of a part of the
+memory image of the program that must be filled with random data
+before any code in the object is executed.
+This segment type may occur more than once in a file, but a limit
+on the total number of bytes in the segments for an object of no
+less than 65536 bytes may be imposed.
+.It Dv PT_OPENBSD_WXNEEDED
+The array element specifies that a process executing this file may
+need to be able to map or protect memory regions as simultaneously
+executable and writable.
+If system is unable or unwilling to permit that for this executable
+then it may fail immediately.
+This segment type is meaningful only for executable files and is
+ignored in other objects.
 .It Dv PT_LOOS
 This value up to and including
 .Dv PT_HIOS
