@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.79 2016/09/07 15:30:45 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.80 2016/09/07 15:35:13 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2898,7 +2898,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	int ret = 0, resume, locked, exitinfo;
 	struct region_descriptor gdt;
 	struct cpu_info *ci;
-	uint64_t exit_reason, cr3, vmcs_ptr;
+	uint64_t exit_reason, cr3, vmcs_ptr, insn_error;
 	struct schedstate_percpu *spc;
 	struct vmx_invvpid_descriptor vid;
 	uint64_t eii, procbased;
@@ -3175,6 +3175,12 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			printf("vcpu_run_vmx: failed launch with valid "
 			    "vmcs, code=%lld (%s)\n", exit_reason,
 			    vmx_instruction_error_decode(exit_reason));
+			if (vmread(VMCS_INSTRUCTION_ERROR, &insn_error)) {
+				printf("vcpu_run_vmx: can't read"
+				    " insn error field\n");
+			} else
+				printf("vcpu_run_vmx: insn error code = "
+				    "%lld\n", insn_error);
 #ifdef VMM_DEBUG
 			vmx_vcpu_dump_regs(vcpu);
 			dump_vcpu(vcpu);
