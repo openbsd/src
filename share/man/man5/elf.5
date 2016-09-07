@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.29 2016/09/07 05:54:10 guenther Exp $
+.\"	$OpenBSD: elf.5,v 1.30 2016/09/07 07:13:05 guenther Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -522,6 +522,11 @@ This segment type may not occur more than once in a file.
 The array element specifies the location and size of a part of the
 memory image of the program that must be filled with random data
 before any code in the object is executed.
+The memory region specified by a segment of this type may overlap
+the region specified by a
+.Dv PT_GNU_RELRO
+segment, in which case the intersection will be randomized before
+being marked read-only.
 This segment type may occur more than once in a file, but a limit
 on the total number of bytes in the segments for an object of no
 less than 65536 bytes may be imposed.
