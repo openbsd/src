@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.115 2016/08/31 08:47:11 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.116 2016/09/07 13:12:42 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -58,6 +58,10 @@ EOF
 
 _rc_rm_runfile() {
 	rm -f ${_RC_RUNFILE}
+}
+
+_rc_check_name() {
+	[[ $1 == +([_[:alpha:]])+(|[_[:alnum:]]) ]]
 }
 
 _rc_do() {
@@ -238,6 +242,9 @@ rc_cmd() {
 	esac
 }
 
+_name=$(basename $0)
+_rc_check_name "${_name}" || _rc_err "invalid rc.d script name: ${_name}"
+
 [ -n "${daemon}" ] || _rc_err "$0: daemon is not set"
 
 unset _RC_DEBUG _RC_FORCE
@@ -250,7 +257,6 @@ while getopts "df" c; do
 done
 shift $((OPTIND-1))
 
-_name=$(basename $0)
 _RC_RUNDIR=/var/run/rc.d
 _RC_RUNFILE=${_RC_RUNDIR}/${_name}
 
