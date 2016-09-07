@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.62 2016/09/04 11:52:55 kettenis Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.63 2016/09/07 20:12:42 jasper Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -63,7 +63,7 @@ typedef __uint32_t	Elf64_Half;
 typedef __uint16_t	Elf64_Quarter;
 
 /*
- * e_ident[] identification indexes 
+ * e_ident[] identification indexes
  * See http://www.sco.com/developers/gabi/latest/ch4.eheader.html
  */
 #define EI_MAG0		0		/* file ID */
@@ -74,7 +74,7 @@ typedef __uint16_t	Elf64_Quarter;
 #define EI_DATA		5		/* data encoding */
 #define EI_VERSION	6		/* ELF header version */
 #define EI_OSABI	7		/* OS/ABI ID */
-#define EI_ABIVERSION	8		/* ABI version */ 
+#define EI_ABIVERSION	8		/* ABI version */
 #define EI_PAD		9		/* start of pad bytes */
 #define EI_NIDENT	16		/* Size of e_ident[] */
 
@@ -136,7 +136,7 @@ typedef struct elfhdr {
 	Elf32_Half	e_phnum;	/* number of program header entries */
 	Elf32_Half	e_shentsize;	/* section header entry size */
 	Elf32_Half	e_shnum;	/* number of section header entries */
-	Elf32_Half	e_shstrndx;	/* section header table's "section 
+	Elf32_Half	e_shstrndx;	/* section header table's "section
 					   header string table" entry offset */
 } Elf32_Ehdr;
 
@@ -177,7 +177,7 @@ typedef struct {
 #define EM_486		6		/* Intel 80486 - unused? */
 #define EM_860		7		/* Intel 80860 */
 #define EM_MIPS		8		/* MIPS R3000 Big-Endian only */
-/* 
+/*
  * Don't know if EM_MIPS_RS4_BE,
  * EM_SPARC64, EM_PARISC,
  * or EM_PPC are ABI compliant
@@ -379,7 +379,7 @@ typedef struct {
 /*
  * The 64-bit MIPS ELF ABI uses a slightly different relocation format
  * than the regular ELF ABI: the r_info field is split into several
- * pieces (see gnu/usr.bin/binutils/include/elf/mips.h for details).
+ * pieces (see gnu/usr.bin/binutils-2.17/include/elf/mips.h for details).
  */
 #undef	ELF64_R_SYM
 #undef	ELF64_R_TYPE
