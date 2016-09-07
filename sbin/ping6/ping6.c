@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.156 2016/09/07 17:55:14 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.157 2016/09/07 17:56:00 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -735,7 +735,6 @@ main(int argc, char *argv[])
 void
 onsignal(int sig)
 {
-
 	switch (sig) {
 	case SIGALRM:
 		seenalrm++;

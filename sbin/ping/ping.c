@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.151 2016/09/07 17:55:14 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.152 2016/09/07 17:56:00 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -624,7 +624,6 @@ main(int argc, char *argv[])
 	summary();
 	exit(nreceived == 0);
 }
-
 
 void
 onsignal(int sig)
