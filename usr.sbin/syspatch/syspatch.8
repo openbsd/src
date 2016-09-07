@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syspatch.8,v 1.3 2016/09/07 15:19:33 ajacoutot Exp $
+.\"	$OpenBSD: syspatch.8,v 1.4 2016/09/07 16:17:12 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -19,12 +19,25 @@
 .Os
 .Sh NAME
 .Nm syspatch
-.Nd manage binary patches
+.Nd manage base system binary patches
 .Sh SYNOPSIS
 .Nm syspatch
 .Op Fl c | l | r
 .Sh DESCRIPTION
-notyet
+.Nm
+is a utility to fetch, verify, install and rollback
+.Ox
+binary patches.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
+List available patches.
+.It Fl l
+List installed patches.
+.It Fl r
+Remove the most recently installed patch.
+.El
 .Sh SEE ALSO
 .Xr signify 1 ,
 .Xr release 8
