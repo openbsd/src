@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.19 2016/09/04 17:12:00 claudio Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.20 2016/09/07 09:21:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -69,23 +69,23 @@
 
 /* BFD on-wire format */
 struct bfd_header {
-	u_int8_t	bfd_ver_diag;
-	u_int8_t	bfd_sta_flags;
+	uint8_t	bfd_ver_diag;
+	uint8_t	bfd_sta_flags;
 
-	u_int8_t	bfd_detect_multi;		/* detection time multiplier */
-	u_int8_t	bfd_length;			/* in bytes */
-	u_int32_t	bfd_my_discriminator;		/* From this system */
-	u_int32_t	bfd_your_discriminator;		/* Received */
-	u_int32_t	bfd_desired_min_tx_interval;	/* in microseconds */
-	u_int32_t	bfd_required_min_rx_interval;	/* in microseconds */
-	u_int32_t	bfd_required_min_echo_interval;	/* in microseconds */
+	uint8_t	bfd_detect_multi;		/* detection time multiplier */
+	uint8_t	bfd_length;			/* in bytes */
+	uint32_t	bfd_my_discriminator;		/* From this system */
+	uint32_t	bfd_your_discriminator;		/* Received */
+	uint32_t	bfd_desired_min_tx_interval;	/* in microseconds */
+	uint32_t	bfd_required_min_rx_interval;	/* in microseconds */
+	uint32_t	bfd_required_min_echo_interval;	/* in microseconds */
 } __packed;
 
 /* optional authentication on-wire format */
 struct bfd_auth_header {
-	u_int8_t	bfd_auth_type;
-	u_int8_t	bfd_auth_len;
-	u_int16_t	bfd_auth_data;
+	uint8_t	bfd_auth_type;
+	uint8_t	bfd_auth_len;
+	uint16_t	bfd_auth_data;
 } __packed;
 
 #define BFD_VERSION		1	/* RFC 5880 Page 6 */
@@ -146,30 +146,30 @@ struct bfd_auth_header {
 /* These spellings and capitalizations match RFC 5880 6.8.1*/
 /* Do not change */
 struct bfd_state {
-	u_int32_t	SessionState;
-	u_int32_t	RemoteSessionState;
-	u_int32_t	LocalDiscr;	/* Unique identifier */
-	u_int32_t	RemoteDiscr;	/* Unique identifier */
-	u_int32_t	LocalDiag;
-	u_int32_t	RemoteDiag;
-	u_int32_t	DesiredMinTxInterval;
-	u_int32_t	RequiredMinRxInterval;
-	u_int32_t	RemoteMinRxInterval;
-	u_int32_t	DemandMode;
-	u_int32_t	RemoteDemandMode;
-	u_int32_t	DetectMult;	/* Detection Time Multiplier*/
-	u_int32_t	AuthType;
-	u_int32_t	RcvAuthSeq;
-	u_int32_t	XmitAuthSeq;
-	u_int32_t	AuthSeqKnown;
+	uint32_t	SessionState;
+	uint32_t	RemoteSessionState;
+	uint32_t	LocalDiscr;	/* Unique identifier */
+	uint32_t	RemoteDiscr;	/* Unique identifier */
+	uint32_t	LocalDiag;
+	uint32_t	RemoteDiag;
+	uint32_t	DesiredMinTxInterval;
+	uint32_t	RequiredMinRxInterval;
+	uint32_t	RemoteMinRxInterval;
+	uint32_t	DemandMode;
+	uint32_t	RemoteDemandMode;
+	uint32_t	DetectMult;	/* Detection Time Multiplier*/
+	uint32_t	AuthType;
+	uint32_t	RcvAuthSeq;
+	uint32_t	XmitAuthSeq;
+	uint32_t	AuthSeqKnown;
 };
 
 struct pool	 bfd_pool, bfd_pool_peer;
 struct taskq	*bfdtq;
 
 struct bfd_softc *bfd_lookup(struct rtentry *);
-struct socket	*bfd_listener(struct bfd_softc *, u_int);
-struct socket	*bfd_sender(struct bfd_softc *, u_int);
+struct socket	*bfd_listener(struct bfd_softc *, unsigned int);
+struct socket	*bfd_sender(struct bfd_softc *, unsigned int);
 void		 bfd_input(struct bfd_softc *, struct mbuf *);
 void		 bfd_set_state(struct bfd_softc *, int);
 
@@ -395,7 +395,7 @@ bfd_send_task(void *arg)
  * Setup a bfd listener socket
  */
 struct socket *
-bfd_listener(struct bfd_softc *sc, u_int port)
+bfd_listener(struct bfd_softc *sc, unsigned int port)
 {
 	struct proc		*p = curproc;
 	struct rtentry		*rt = sc->sc_rt;
@@ -469,7 +469,7 @@ bfd_listener(struct bfd_softc *sc, u_int port)
  * Setup the bfd sending process
  */
 struct socket *
-bfd_sender(struct bfd_softc *sc, u_int port)
+bfd_sender(struct bfd_softc *sc, unsigned int port)
 {
 	struct socket 		*so;
 	struct rtentry		*rt = sc->sc_rt;
@@ -689,7 +689,7 @@ bfd_input(struct bfd_softc *sc, struct mbuf *m)
 	struct bfd_header	*peer;
 	struct bfd_auth_header	*auth;
 	struct mbuf		*mp, *mp0;
-	u_int			 ver, diag, state, flags;
+	unsigned int		 ver, diag, state, flags;
 	int			 offp;
 
 	mp = m_pulldown(m, 0, sizeof(*peer), &offp);

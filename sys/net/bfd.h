@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.h,v 1.2 2016/09/04 09:39:01 claudio Exp $	*/
+/*	$OpenBSD: bfd.h,v 1.3 2016/09/07 09:21:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -27,15 +27,15 @@
 /* Public Interface */
 
 struct bfd_msghdr {
-	u_short rtm_msglen;     /* to skip over non-understood messages */ 
-	u_char  rtm_version;    /* future binary compatibility */
-	u_char  rtm_type;       /* message type */
-	u_short rtm_hdrlen;     /* sizeof(rt_msghdr) to skip over the header */
+	unsigned short rtm_msglen;     /* to skip over non-understood msgs */
+	unsigned char  rtm_version;    /* future binary compatibility */
+	unsigned char  rtm_type;       /* message type */
+	unsigned short rtm_hdrlen;     /* to skip over the header */
 
-	u_int16_t	mode;		/* */
-	u_int32_t	minimum;	/* minimum time (us) to send */
-	u_int32_t	rx;		/* minimum window (us) to receive */
-	u_int16_t	multiplier;	/* Retry backoff multiplier */
+	uint16_t	mode;		/* */
+	uint32_t	minimum;	/* minimum time (us) to send */
+	uint32_t	rx;		/* minimum window (us) to receive */
+	uint16_t	multiplier;	/* Retry backoff multiplier */
 
 };
 
