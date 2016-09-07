@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.27 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: elf.5,v 1.28 2016/09/07 05:12:02 guenther Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man5/elf.5,v 1.21 2001/10/01 16:09:23 ru Exp $
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: September 7 2016 $
 .Dt ELF 5
 .Os
 .Sh NAME
@@ -147,7 +147,7 @@ typedef struct {
 The fields have the following meanings:
 .Bl -tag -width "e_phentsize" -offset indent
 .It Dv e_ident
-This array of bytes specifies to interpret the file,
+This array of bytes specifies how to interpret the file,
 independent of the processor or the file's remaining contents.
 Within this array everything is named by macros, which start with
 the prefix
