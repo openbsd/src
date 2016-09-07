@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.9 2016/09/07 15:19:33 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.10 2016/09/07 15:41:23 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -68,13 +68,12 @@ create_rollback()
 	done
 
 	(cd / && \
+		# GENERIC.MP: substitute bsd.mp->bsd and bsd.sp->bsd
 		if ${_BSDMP} && \
 			tar -tzf ${_TMP}/${_patch}.tgz bsd >/dev/null 2>&1; then
-			# GENERIC.MP: substitute bsd.mp->bsd and bsd.sp->bsd
-			# XXX bsd.mp created twice in the tarball
 			tar -czf ${_PDIR}/${_REL}/rollback-${_patch}.tgz \
-				-s '/^bsd$/bsd.mp/' -s '/^bsd.sp$/bsd/' \
-				${_rbfiles} bsd.sp 2>/dev/null # no /bsd.mp
+				-s '/^bsd.mp$//' -s '/^bsd$/bsd.mp/' \
+				-s '/^bsd.sp$/bsd/' bsd.sp ${_rbfiles}
 		else
 			tar -czf ${_PDIR}/${_REL}/rollback-${_patch}.tgz \
 				${_rbfiles}
