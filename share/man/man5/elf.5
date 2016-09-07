@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.31 2016/09/07 07:14:50 guenther Exp $
+.\"	$OpenBSD: elf.5,v 1.32 2016/09/07 18:42:01 jmc Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -534,7 +534,7 @@ less than 65536 bytes may be imposed.
 The array element specifies that a process executing this file may
 need to be able to map or protect memory regions as simultaneously
 executable and writable.
-If system is unable or unwilling to permit that for this executable
+If the system is unable or unwilling to permit that for this executable
 then it may fail immediately.
 This segment type is meaningful only for executable files and is
 ignored in other objects.
