@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.5 2016/09/07 19:47:52 millert Exp $	*/
+/*	$OpenBSD: look.c,v 1.6 2016/09/07 19:55:01 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -163,7 +163,7 @@ compare(u_char *s1, u_char *s2, u_char *back)
 		if (*s2 == '\n' || s2 == back)
 			ch = '\0';
 		else if (isupper(*s2))
-			ch = _tolower(*s2);
+			ch = tolower(*s2);
 		else
 			ch = *s2;
 		if (*s1 != ch)
