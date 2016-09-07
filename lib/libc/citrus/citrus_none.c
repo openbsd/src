@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_none.c,v 1.8 2016/09/07 17:06:23 schwarze Exp $ */
+/*	$OpenBSD: citrus_none.c,v 1.9 2016/09/07 17:10:43 schwarze Exp $ */
 /*	$NetBSD: citrus_none.c,v 1.18 2008/06/14 16:01:07 tnozaki Exp $	*/
 
 /*-
@@ -35,14 +35,14 @@
 
 #include "citrus_ctype.h"
 
-static inline char	 wrapv(unsigned char);
+static char	 wrapv(unsigned char);
 
 
 /*
  * Convert an unsigned char value into a char value without relying on
  * signed overflow behavior.
  */
-static inline char
+static char
 wrapv(unsigned char ch)
 {
 	if (ch >= 0x80)
