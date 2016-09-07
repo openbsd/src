@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.4 2009/10/27 23:59:43 deraadt Exp $	*/
+/*	$OpenBSD: look.c,v 1.5 2016/09/07 19:47:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -52,7 +52,7 @@ look(u_char *string, u_char *front, u_char *back)
 	/* Convert string to lower case before searching. */
 	for (s = string; *s; s++) {
 		if (isupper(*s))
-			*s = _tolower(*s);
+			*s = tolower(*s);
 	}
 
 	front = binary_search(string, front, back);
