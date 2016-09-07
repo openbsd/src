@@ -341,11 +341,9 @@ static bool CreatePrologue(Function *F, Module *M, ReturnInst *RI,
     StackGuardVar =
         ConstantExpr::getIntToPtr(OffsetVal, PointerType::get(PtrTy,
                                                               AddressSpace));
-  } else if (TT.isOSOpenBSD()) {
+  } else if (TT.isOSOpenBSD())
     StackGuardVar = M->getOrInsertGlobal("__guard_local", PtrTy);
-    cast<GlobalValue>(StackGuardVar)
-        ->setVisibility(GlobalValue::HiddenVisibility);
-  } else {
+  else {
     SupportsSelectionDAGSP = true;
     StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", PtrTy);
   }
