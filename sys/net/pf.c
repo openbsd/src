@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.983 2016/09/03 17:11:40 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.984 2016/09/07 09:36:49 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5643,7 +5643,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 #ifdef INET6
 	struct sockaddr_in6	*dst6;
 #endif	/* INET6 */
-	struct rtentry		*rt, *rt0 = NULL;
+	struct rtentry		*rt = NULL;
 
 	check_mpath = 0;
 	memset(&ss, 0, sizeof(ss));
@@ -5678,8 +5678,8 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 	if (kif != NULL && kif->pfik_ifp->if_type == IFT_ENC)
 		goto out;
 
-	rt0 = rtalloc((struct sockaddr *)&ss, 0, rtableid);
-	if (rt0 != NULL) {
+	rt = rtalloc((struct sockaddr *)&ss, 0, rtableid);
+	if (rt != NULL) {
 		/* No interface given, this is a no-route check */
 		if (kif == NULL)
 			goto out;
@@ -5691,7 +5691,6 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 
 		/* Perform uRPF check if passed input interface */
 		ret = 0;
-		rt = rt0;
 		do {
 			if (rt->rt_ifidx == kif->pfik_ifp->if_index) {
 				ret = 1;
@@ -5707,16 +5706,12 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 #endif /* NCARP */
 			}
 
-#ifndef SMALL_KERNEL
-			rt = rtable_mpath_next(rt);
-#else
-			rt = NULL;
-#endif /* SMALL_KERNEL */
+			rt = rtable_iterate(rt);
 		} while (check_mpath == 1 && rt != NULL && ret == 0);
 	} else
 		ret = 0;
 out:
-	rtfree(rt0);
+	rtfree(rt);
 	return (ret);
 }
 

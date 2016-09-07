@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.222 2016/09/06 00:04:15 dlg Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.223 2016/09/07 09:36:49 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -731,20 +731,15 @@ arplookup(struct in_addr *inp, int create, int proxy, u_int tableid)
 	}
 
 	if (proxy && !ISSET(rt->rt_flags, RTF_ANNOUNCE)) {
-		struct rtentry *mrt = NULL;
-#if defined(ART) && !defined(SMALL_KERNEL)
-		mrt = rt;
+#ifdef ART
 		KERNEL_LOCK();
-		while ((mrt = rtable_mpath_next(mrt)) != NULL) {
-			if (ISSET(mrt->rt_flags, RTF_ANNOUNCE)) {
-				rtref(mrt);
+		while ((rt = rtable_iterate(rt)) != NULL) {
+			if (ISSET(rt->rt_flags, RTF_ANNOUNCE)) {
 				break;
 			}
 		}
 		KERNEL_UNLOCK();
-#endif /* ART && !SMALL_KERNEL */
-		rtfree(rt);
-		return (mrt);
+#endif /* ART */
 	}
 
 	return (rt);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.445 2016/09/05 13:09:32 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.446 2016/09/07 09:36:49 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2447,7 +2447,7 @@ if_group_egress_build(void)
 #ifdef INET6
 	struct sockaddr_in6	 sa_in6;
 #endif
-	struct rtentry		*rt0, *rt;
+	struct rtentry		*rt;
 
 	TAILQ_FOREACH(ifg, &ifg_head, ifg_next)
 		if (!strcmp(ifg->ifg_group, IFG_EGRESS))
@@ -2460,44 +2460,32 @@ if_group_egress_build(void)
 	bzero(&sa_in, sizeof(sa_in));
 	sa_in.sin_len = sizeof(sa_in);
 	sa_in.sin_family = AF_INET;
-	rt0 = rtable_lookup(0, sintosa(&sa_in), sintosa(&sa_in), NULL, RTP_ANY);
-	if (rt0 != NULL) {
-		rt = rt0;
+	rt = rtable_lookup(0, sintosa(&sa_in), sintosa(&sa_in), NULL, RTP_ANY);
+	if (rt != NULL) {
 		do {
 			ifp = if_get(rt->rt_ifidx);
 			if (ifp != NULL) {
 				if_addgroup(ifp, IFG_EGRESS);
 				if_put(ifp);
 			}
-#ifndef SMALL_KERNEL
-			rt = rtable_mpath_next(rt);
-#else
-			rt = NULL;
-#endif
+			rt = rtable_iterate(rt);
 		} while (rt != NULL);
 	}
-	rtfree(rt0);
 
 #ifdef INET6
 	bcopy(&sa6_any, &sa_in6, sizeof(sa_in6));
-	rt0 = rtable_lookup(0, sin6tosa(&sa_in6), sin6tosa(&sa_in6), NULL,
+	rt = rtable_lookup(0, sin6tosa(&sa_in6), sin6tosa(&sa_in6), NULL,
 	    RTP_ANY);
-	if (rt0 != NULL) {
-		rt = rt0;
+	if (rt != NULL) {
 		do {
 			ifp = if_get(rt->rt_ifidx);
 			if (ifp != NULL) {
 				if_addgroup(ifp, IFG_EGRESS);
 				if_put(ifp);
 			}
-#ifndef SMALL_KERNEL
-			rt = rtable_mpath_next(rt);
-#else
-			rt = NULL;
-#endif
+			rt = rtable_iterate(rt);
 		} while (rt != NULL);
 	}
-	rtfree(rt0);
 #endif /* INET6 */
 
 	return (0);

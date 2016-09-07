@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.51 2016/08/30 07:42:57 jmatthew Exp $ */
+/*	$OpenBSD: rtable.c,v 1.52 2016/09/07 09:36:49 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -374,7 +374,9 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 
 		KASSERT(hash <= 0xffff);
 
-		while ((mrt = rtable_mpath_next(mrt)) != NULL)
+		rtref(rt);
+
+		while ((mrt = rtable_iterate(mrt)) != NULL)
 			npaths++;
 
 		threshold = (0xffff / npaths) + 1;
@@ -382,13 +384,12 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 		mrt = rt;
 		while (hash > threshold && mrt != NULL) {
 			/* stay within the multipath routes */
-			mrt = rtable_mpath_next(mrt);
+			mrt = rtable_iterate(mrt);
 			hash -= threshold;
 		}
 
 		/* if gw selection fails, use the first match (default) */
 		if (mrt != NULL) {
-			rtref(mrt);
 			rtfree(rt);
 			rt = mrt;
 		}
@@ -473,6 +474,25 @@ rtable_walk(unsigned int rtableid, sa_family_t af,
 	return (error);
 }
 
+struct rtentry *
+rtable_iterate(struct rtentry *rt0)
+{
+#ifndef SMALL_KERNEL
+	struct radix_node *rn = (struct radix_node *)rt0;
+	struct rtentry *rt;
+
+	rt = (struct rtentry *)rn_mpath_next(rn, RMP_MODE_ACTIVE);
+	if (rt != NULL)
+		rtref(rt);
+	rtfree(rt0);
+
+	return (rt);
+#else
+	rtfree(rt0);
+	return (NULL);
+#endif /* SMALL_KERNEL */
+}
+
 #ifndef SMALL_KERNEL
 int
 rtable_mpath_capable(unsigned int rtableid, sa_family_t af)
@@ -497,14 +517,6 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 	rn_mpath_reprio(rn, prio);
 
 	return (0);
-}
-
-struct rtentry *
-rtable_mpath_next(struct rtentry *rt)
-{
-	struct radix_node *rn = (struct radix_node *)rt;
-
-	return ((struct rtentry *)rn_mpath_next(rn, RMP_MODE_ACTIVE));
 }
 #endif /* SMALL_KERNEL */
 
@@ -899,6 +911,26 @@ rtable_walk(unsigned int rtableid, sa_family_t af,
 	return (error);
 }
 
+struct rtentry *
+rtable_iterate(struct rtentry *rt0)
+{
+#ifndef SMALL_KERNEL
+	struct rtentry *rt;
+
+	KERNEL_ASSERT_LOCKED();
+
+	rt = SRPL_NEXT_LOCKED(rt0, rt_next);
+	if (rt != NULL)
+		rtref(rt);
+	rtfree(rt0);
+
+	return (rt);
+#else
+	rtfree(rt0);
+	return (NULL);
+#endif /* SMALL_KERNEL */
+}
+
 #ifndef SMALL_KERNEL
 int
 rtable_mpath_capable(unsigned int rtableid, sa_family_t af)
@@ -980,13 +1012,6 @@ rtable_mpath_insert(struct art_node *an, struct rtentry *rt)
 	} else {
 		SRPL_INSERT_HEAD_LOCKED(&rt_rc, &an->an_rtlist, rt, rt_next);
 	}
-}
-
-struct rtentry *
-rtable_mpath_next(struct rtentry *rt)
-{
-	KERNEL_ASSERT_LOCKED();
-	return (SRPL_NEXT_LOCKED(rt, rt_next));
 }
 #endif /* SMALL_KERNEL */
 
