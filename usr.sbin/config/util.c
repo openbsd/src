@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.15 2014/05/29 16:38:23 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.16 2016/09/07 18:29:52 akfaew Exp $	*/
 /*	$NetBSD: util.c,v 1.5 1996/08/31 20:58:29 mycroft Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,7 +52,6 @@
 
 #include "config.h"
 
-static void nomem(void);
 static void vxerror(const char *, int, const char *, va_list);
 
 /*
@@ -63,8 +63,8 @@ emalloc(size_t size)
 	void *p;
 
 	if ((p = calloc(1, size)) == NULL)
-		nomem();
-	return (p);
+		err(1, NULL);
+	return p;
 }
 
 /*
@@ -75,8 +75,8 @@ ereallocarray(void *p, size_t sz1, size_t sz2)
 {
 
 	if ((p = reallocarray(p, sz1, sz2)) == NULL)
-		nomem();
-	return (p);
+		err(1, NULL);
+	return p;
 }
 
 /*
@@ -88,16 +88,8 @@ ecalloc(size_t sz1, size_t sz2)
 	void *p;
 
 	if ((p = calloc(sz1, sz2)) == NULL)
-		nomem();
-	return (p);
-}
-
-static void
-nomem(void)
-{
-
-	(void)fprintf(stderr, "config: out of memory\n");
-	exit(1);
+		err(1, NULL);
+	return p;
 }
 
 /*
@@ -111,7 +103,7 @@ sourcepath(const char *file)
 
 	cp = emalloc(len);
 	(void)snprintf(cp, len, "%s/%s", srcdir, file);
-	return (cp);
+	return cp;
 }
 
 static struct nvlist *nvhead;
@@ -135,7 +127,7 @@ newnv(const char *name, const char *str, void *ptr, int i, struct nvlist *next)
 		nv->nv_ptr = ptr;
 	}
 	nv->nv_int = i;
-	return (nv);
+	return nv;
 }
 
 /*
