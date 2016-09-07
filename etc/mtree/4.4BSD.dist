@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.288 2016/09/07 10:58:25 schwarze Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.289 2016/09/07 18:31:00 jmc Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -523,21 +523,7 @@ usr
 
             # ./usr/share/man/man5
             man5
-                amd64
-                ..
-                hppa
-                ..
-                i386
-                ..
-                landisk
-                ..
-                macppc
-                ..
-                socppc
-                ..
             ..
-
-            # ./usr/share/man/man6
             man6
             ..
             man7
