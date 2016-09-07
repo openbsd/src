@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.149 2016/09/07 17:52:56 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.150 2016/09/07 17:53:53 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -523,9 +523,6 @@ main(int argc, char *argv[])
 		warnx("Could only allocate a receive buffer of %d bytes (default %d)",
 		    bufspace, IP_MAXPACKET);
 
-	(void)printf("PING %s (%s): %d data bytes\n", hostname,
-	    pr_addr((struct sockaddr *)&dst, sizeof(dst)), datalen);
-
 	if (options & F_HOSTNAME) {
 		if (pledge("stdio inet dns", NULL) == -1)
 			err(1, "pledge");
@@ -536,6 +533,9 @@ main(int argc, char *argv[])
 
 	arc4random_buf(&tv64_offset, sizeof(tv64_offset));
 	arc4random_buf(&mac_key, sizeof(mac_key));
+
+	printf("PING %s (%s): %d data bytes\n", hostname,
+	    pr_addr((struct sockaddr *)&dst, sizeof(dst)), datalen);
 
 	while (preload--)		/* fire off them quickies */
 		pinger();
