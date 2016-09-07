@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.54 2016/09/01 08:40:39 natano Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.55 2016/09/07 17:30:12 natano Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -185,18 +185,6 @@ ntfs_mount(struct mount *mp, const char *path, void *data,
 	if (major(devvp->v_rdev) >= nblkdev) {
 		err = ENXIO;
 		goto error_2;
-	}
-
-	/*
-	 * If we are not root, make sure we have permission to access the
-	 * requested device.
-	 */
-	if (p->p_ucred->cr_uid) {
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
-		err = VOP_ACCESS(devvp, VREAD, p->p_ucred, p);
-		VOP_UNLOCK(devvp, p);
-		if (err)
-			goto error_2;
 	}
 
 	if (mp->mnt_flag & MNT_UPDATE) {

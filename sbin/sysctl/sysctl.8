@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.204 2016/07/27 20:51:46 tedu Exp $
+.\"	$OpenBSD: sysctl.8,v 1.205 2016/09/07 17:30:12 natano Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: July 27 2016 $
+.Dd $Mdocdate: September 7 2016 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -139,7 +139,6 @@ and a few require a kernel compiled with non-standard
 .It kern.osversion Ta string Ta no
 .It kern.somaxconn Ta integer Ta yes
 .It kern.sominconn Ta integer Ta yes
-.It kern.usermount Ta integer Ta yes
 .It kern.nosuidcoredump Ta integer Ta yes
 .It kern.fsync Ta integer Ta no
 .It kern.sysvmsg Ta integer Ta no

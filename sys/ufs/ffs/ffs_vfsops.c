@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.162 2016/08/13 21:28:09 guenther Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.163 2016/09/07 17:30:13 natano Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -213,7 +213,6 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	char fspec[MNAMELEN];
 	int error = 0, flags;
 	int ronly;
-	mode_t accessmode;
 
 	error = copyin(data, &args, sizeof(struct ufs_args));
 	if (error)
@@ -305,19 +304,6 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 			goto error_1;
 
 		if (ronly && (mp->mnt_flag & MNT_WANTRDWR)) {
-			/*
-			 * If upgrade to read-write by non-root, then verify
-			 * that user has necessary permissions on the device.
-			 */
-			if (suser(p, 0)) {
-				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
-				error = VOP_ACCESS(devvp, VREAD | VWRITE,
-						   p->p_ucred, p);
-				VOP_UNLOCK(devvp, p);
-				if (error)
-					goto error_1;
-			}
-
 			if (fs->fs_clean == 0) {
 #if 0
 				/*
@@ -394,21 +380,6 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	if (major(devvp->v_rdev) >= nblkdev) {
 		error = ENXIO;
 		goto error_2;
-	}
-
-	/*
-	 * If mount by non-root, then verify that user has necessary
-	 * permissions on the device.
-	 */
-	if (suser(p, 0)) {
-		accessmode = VREAD;
-		if ((mp->mnt_flag & MNT_RDONLY) == 0)
-			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
-		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
-		VOP_UNLOCK(devvp, p);
-		if (error)
-			goto error_2;
 	}
 
 	if (mp->mnt_flag & MNT_UPDATE) {

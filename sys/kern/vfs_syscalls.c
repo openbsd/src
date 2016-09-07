@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.263 2016/07/14 15:39:40 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.264 2016/09/07 17:30:12 natano Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -110,7 +110,6 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 	int error, mntflag = 0;
 	char fstypename[MFSNAMELEN];
 	char fspath[MNAMELEN];
-	struct vattr va;
 	struct nameidata nd;
 	struct vfsconf *vfsp;
 	int flags = SCARG(uap, flags);
@@ -150,59 +149,12 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 			return (EOPNOTSUPP);	/* Needs translation */
 		}
 
-		/*
-		 * Only root, or the user that did the original mount is
-		 * permitted to update it.
-		 */
-		if (mp->mnt_stat.f_owner != p->p_ucred->cr_uid &&
-		    (error = suser(p, 0))) {
-			vput(vp);
-			return (error);
-		}
-		/*
-		 * Do not allow NFS export by non-root users. Silently
-		 * enforce MNT_NOSUID and MNT_NODEV for non-root users, and
-		 * inherit MNT_NOEXEC from the mount point.
-		 */
-		if (suser(p, 0) != 0) {
-			if (flags & MNT_EXPORTED) {
-				vput(vp);
-				return (EPERM);
-			}
-			flags |= MNT_NOSUID | MNT_NODEV;
-			if (mntflag & MNT_NOEXEC)
-				flags |= MNT_NOEXEC;
-		}
 		if ((error = vfs_busy(mp, VB_READ|VB_NOWAIT)) != 0) {
 			vput(vp);
 			return (error);
 		}
 		mp->mnt_flag |= flags & (MNT_RELOAD | MNT_UPDATE);
 		goto update;
-	}
-	/*
-	 * If the user is not root, ensure that they own the directory
-	 * onto which we are attempting to mount.
-	 */
-	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)) ||
-	    (va.va_uid != p->p_ucred->cr_uid &&
-	    (error = suser(p, 0)))) {
-		vput(vp);
-		return (error);
-	}
-	/*
-	 * Do not allow NFS export by non-root users. Silently
-	 * enforce MNT_NOSUID and MNT_NODEV for non-root users, and inherit
-	 * MNT_NOEXEC from the mount point.
-	 */
-	if (suser(p, 0) != 0) {
-		if (flags & MNT_EXPORTED) {
-			vput(vp);
-			return (EPERM);
-		}
-		flags |= MNT_NOSUID | MNT_NODEV;
-		if (vp->v_mount->mnt_flag & MNT_NOEXEC)
-			flags |= MNT_NOEXEC;
 	}
 	if ((error = vinvalbuf(vp, V_SAVE, p->p_ucred, p, 0, 0)) != 0) {
 		vput(vp);
@@ -374,22 +326,15 @@ sys_unmount(struct proc *p, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
+	if ((error = suser(p, 0)) != 0)
+		return (error);
+
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
 	mp = vp->v_mount;
-
-	/*
-	 * Only root, or the user that did the original mount is
-	 * permitted to unmount this filesystem.
-	 */
-	if ((mp->mnt_stat.f_owner != p->p_ucred->cr_uid) &&
-	    (error = suser(p, 0))) {
-		vput(vp);
-		return (error);
-	}
 
 	/*
 	 * Don't allow unmounting the root file system.

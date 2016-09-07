@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.79 2016/08/13 20:53:17 guenther Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.80 2016/09/07 17:30:12 natano Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -106,7 +106,6 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 	char fname[MNAMELEN];
 	char fspec[MNAMELEN];
 	int error, flags;
-	mode_t accessmode;
 
 	error = copyin(data, &args, sizeof(struct msdosfs_args));
 	if (error)
@@ -138,22 +137,9 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 		if (error)
 			return (error);
 		if ((pmp->pm_flags & MSDOSFSMNT_RONLY) &&
-		    (mp->mnt_flag & MNT_WANTRDWR)) {
-			/*
-			 * If upgrade to read-write by non-root, then verify
-			 * that user has necessary permissions on the device.
-			 */
-			if (suser(p, 0) != 0) {
-				devvp = pmp->pm_devvp;
-				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
-				error = VOP_ACCESS(devvp, VREAD | VWRITE,
-						   p->p_ucred, p);
-				VOP_UNLOCK(devvp, p);
-				if (error)
-					return (error);
-			}
+		    (mp->mnt_flag & MNT_WANTRDWR))
 			pmp->pm_flags &= ~MSDOSFSMNT_RONLY;
-		}
+
 		if (args.fspec == NULL) {
 #ifdef	__notyet__		/* doesn't work correctly with current mountd	XXX */
 			if (args.flags & MSDOSFSMNT_MNTOPT) {
@@ -195,21 +181,6 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 	if (major(devvp->v_rdev) >= nblkdev) {
 		error = ENXIO;
 		goto error_devvp;
-	}
-
-	/*
-	 * If mount by non-root, then verify that user has necessary
-	 * permissions on the device.
-	 */
-	if (suser(p, 0) != 0) {
-		accessmode = VREAD;
-		if ((mp->mnt_flag & MNT_RDONLY) == 0)
-			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
-		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
-		VOP_UNLOCK(devvp, p);
-		if (error)
-			goto error_devvp;
 	}
 
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)

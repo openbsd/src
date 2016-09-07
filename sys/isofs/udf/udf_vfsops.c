@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.54 2016/08/25 00:06:44 dlg Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.55 2016/09/07 17:30:12 natano Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -168,17 +168,6 @@ udf_mount(struct mount *mp, const char *path, void *data,
 	if (major(devvp->v_rdev) >= nblkdev) {
 		vrele(devvp);
 		return (ENXIO);
-	}
-
-	/* Check the access rights on the mount device */
-	if (p->p_ucred->cr_uid) {
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
-		error = VOP_ACCESS(devvp, VREAD, p->p_ucred, p);
-		VOP_UNLOCK(devvp, p);
-		if (error) {
-			vrele(devvp);
-			return (error);
-		}
 	}
 
 	if ((error = udf_mountfs(devvp, mp, args.lastblock, p))) {

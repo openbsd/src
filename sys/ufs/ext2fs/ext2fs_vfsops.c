@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.95 2016/08/13 21:28:09 guenther Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.96 2016/09/07 17:30:12 natano Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -170,7 +170,6 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 	char fname[MNAMELEN];
 	char fspec[MNAMELEN];
 	int error, flags;
-	mode_t accessmode;
 
 	error = copyin(data, &args, sizeof(struct ufs_args));
 	if (error)
@@ -204,19 +203,6 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 				return (error);
 		}
 		if (fs->e2fs_ronly && (mp->mnt_flag & MNT_WANTRDWR)) {
-			/*
-			 * If upgrade to read-write by non-root, then verify
-			 * that user has necessary permissions on the device.
-			 */
-			if (suser(p, 0) != 0) {
-				devvp = ump->um_devvp;
-				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
-				error = VOP_ACCESS(devvp, VREAD | VWRITE,
-				    p->p_ucred, p);
-				VOP_UNLOCK(devvp, p);
-				if (error)
-					return (error);
-			}
 			fs->e2fs_ronly = 0;
 			if (fs->e2fs.e2fs_state == E2FS_ISCLEAN)
 				fs->e2fs.e2fs_state = 0;
@@ -255,20 +241,6 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 	if (major(devvp->v_rdev) >= nblkdev) {
 		error = ENXIO;
 		goto error_devvp;
-	}
-	/*
-	 * If mount by non-root, then verify that user has necessary
-	 * permissions on the device.
-	 */
-	if (suser(p, 0) != 0) {
-		accessmode = VREAD;
-		if ((mp->mnt_flag & MNT_RDONLY) == 0)
-			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
-		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
-		VOP_UNLOCK(devvp, p);
-		if (error)
-			goto error_devvp;
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
 		error = ext2fs_mountfs(devvp, mp, p);

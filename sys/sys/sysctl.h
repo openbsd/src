@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.164 2016/09/04 09:22:29 mpi Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.165 2016/09/07 17:30:12 natano Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ struct ctlname {
 #define	KERN_OSVERSION		27	/* string: kernel build version */
 #define	KERN_SOMAXCONN		28	/* int: listen queue maximum */
 #define	KERN_SOMINCONN		29	/* int: half-open controllable param */
-#define	KERN_USERMOUNT		30	/* int: users may mount filesystems */
+/* was KERN_USERMOUNT		30	*/
 /* was KERN_RND	31			*/
 #define	KERN_NOSUIDCOREDUMP	32	/* int: no setuid coredumps ever */ 
 #define	KERN_FSYNC		33	/* int: file synchronization support */
@@ -217,7 +217,7 @@ struct ctlname {
 	{ "osversion", CTLTYPE_STRING }, \
 	{ "somaxconn", CTLTYPE_INT }, \
 	{ "sominconn", CTLTYPE_INT }, \
-	{ "usermount", CTLTYPE_INT }, \
+	{ "gap", 0 }, \
 	{ "random", CTLTYPE_STRUCT }, \
 	{ "nosuidcoredump", CTLTYPE_INT }, \
 	{ "fsync", CTLTYPE_INT }, \
