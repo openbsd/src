@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_subr.c,v 1.10 2016/05/24 19:24:46 okan Exp $ */
+/* $OpenBSD: fuse_subr.c,v 1.11 2016/09/07 17:53:35 natano Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -24,7 +24,7 @@
 #include "debug.h"
 
 struct fuse_vnode *
-alloc_vn(struct fuse *f, const char *path, ino_t ino, ino_t parent)
+alloc_vn(struct fuse *f, const char *path, ino_t ino, ino_t pino)
 {
 	struct fuse_vnode *vn;
 
@@ -34,11 +34,24 @@ alloc_vn(struct fuse *f, const char *path, ino_t ino, ino_t parent)
 	}
 
 	vn->ino = ino;
-	vn->parent = parent;
+	vn->ref = 1;
 	if (strlcpy(vn->path, path, sizeof(vn->path)) >= sizeof(vn->path)) {
 		DPRINTF("%s: strlcpy name too long\n", __func__);
 		free(vn);
 		return (NULL);
+	}
+
+	if (pino == (ino_t)0)
+		vn->parent = NULL;
+	else {
+		if ((vn->parent = tree_get(&f->vnode_tree, pino)) == NULL) {
+			DPRINTF("%s: parent vnode %llu not in the vnode tree\n",
+			    __func__, pino);
+			free(vn);
+			errno = ENOENT;
+			return (NULL);
+		}
+		ref_vn(vn->parent);
 	}
 
 	if (ino == (ino_t)-1) {
@@ -49,6 +62,24 @@ alloc_vn(struct fuse *f, const char *path, ino_t ino, ino_t parent)
 	return (vn);
 }
 
+void
+ref_vn(struct fuse_vnode *vn)
+{
+	vn->ref++;
+}
+
+void
+unref_vn(struct fuse *f, struct fuse_vnode *vn)
+{
+	if (--vn->ref == 0) {
+		tree_pop(&f->vnode_tree, vn->ino);
+		remove_vnode_from_name_tree(f, vn);
+		if (vn->parent != NULL)
+			unref_vn(f, vn->parent);
+		free(vn);
+	}
+}
+
 int
 set_vn(struct fuse *f, struct fuse_vnode *v)
 {
@@ -56,7 +87,8 @@ set_vn(struct fuse *f, struct fuse_vnode *v)
 	struct fuse_vnode *vn;
 
 	DPRINTF("%s: create or update vnode %llu@%llu = %s\n", __func__,
-	    (unsigned long long)v->ino, (unsigned long long)v->parent,
+	    (unsigned long long)v->ino,
+	    v->parent ? (unsigned long long)v->parent->ino : 0,
 	    v->path);
 
 	if (tree_set(&f->vnode_tree, v->ino, v) == NULL)
@@ -119,7 +151,7 @@ remove_vnode_from_name_tree(struct fuse *f, struct fuse_vnode *vn)
 }
 
 struct fuse_vnode *
-get_vn_by_name_and_parent(struct fuse *f, uint8_t *xpath, ino_t parent)
+get_vn_by_name_and_parent(struct fuse *f, uint8_t *xpath, ino_t pino)
 {
 	struct fuse_vn_head *vn_head;
 	struct fuse_vnode *v = NULL;
@@ -131,7 +163,7 @@ get_vn_by_name_and_parent(struct fuse *f, uint8_t *xpath, ino_t parent)
 		goto fail;
 
 	SIMPLEQ_FOREACH(v, vn_head, node)
-		if (v->parent == parent)
+		if (v->parent && v->parent->ino == pino)
 			return (v);
 
 fail:
@@ -157,7 +189,7 @@ build_realname(struct fuse *f, ino_t ino)
 		return (NULL);
 	}
 
-	while (vn->parent != 0) {
+	while (vn->parent != NULL) {
 		if (firstshot++)
 			ret = asprintf(&tmp, "/%s%s", vn->path, name);
 		else
@@ -171,10 +203,7 @@ build_realname(struct fuse *f, ino_t ino)
 		free(name);
 		name = tmp;
 		tmp = NULL;
-		vn = tree_get(&f->vnode_tree, vn->parent);
-
-		if (!vn)
-			return (NULL);
+		vn = vn->parent;
 	}
 
 	if (ino == (ino_t)0)

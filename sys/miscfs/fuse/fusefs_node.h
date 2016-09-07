@@ -1,4 +1,4 @@
-/* $OpenBSD: fusefs_node.h,v 1.3 2016/08/12 20:18:44 natano Exp $ */
+/* $OpenBSD: fusefs_node.h,v 1.4 2016/09/07 17:53:35 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -37,9 +37,6 @@ struct fusefs_filehandle {
 
 struct fusefs_node {
 	struct inode ufs_ino;
-
-	/* fd of fuse session and parent ino_t*/
-	uint64_t parent;
 
 	/** I/O **/
 	struct     fusefs_filehandle fufh[FUFH_MAXTYPE];

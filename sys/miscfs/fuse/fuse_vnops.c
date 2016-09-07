@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.32 2016/08/30 16:45:54 natano Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.33 2016/09/07 17:53:35 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -660,7 +660,6 @@ fusefs_symlink(void *v)
 	}
 
 	tdp->v_type = VLNK;
-	VTOI(tdp)->parent = dp->ufs_ino.i_number;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 
 	*vpp = tdp;
@@ -832,16 +831,12 @@ fusefs_reclaim(void *v)
 			    (vp->v_type == VDIR), ap->a_p);
 		}
 	}
-	/*
-	 * Purge old data structures associated with the inode.
-	 */
-	ip->parent = 0;
 
 	/*
 	 * if the fuse connection is opened
 	 * ask libfuse to free the vnodes
 	 */
-	if (fmp->sess_init) {
+	if (fmp->sess_init && ip->ufs_ino.i_number != FUSE_ROOTINO) {
 		fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_RECLAIM, ap->a_p);
 		if (fb_queue(fmp->dev, fbuf))
 			printf("fusefs: libfuse vnode reclaim failed\n");
@@ -925,8 +920,6 @@ fusefs_create(void *v)
 	}
 
 	tdp->v_type = IFTOVT(fbuf->fb_io_mode);
-	if (dvp != NULL && dvp->v_type == VDIR)
-		VTOI(tdp)->parent = ip->ufs_ino.i_number;
 
 	*vpp = tdp;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
@@ -989,8 +982,6 @@ fusefs_mknod(void *v)
 	}
 
 	tdp->v_type = IFTOVT(fbuf->fb_io_mode);
-	if (dvp != NULL && dvp->v_type == VDIR)
-		VTOI(tdp)->parent = ip->ufs_ino.i_number;
 
 	*vpp = tdp;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
@@ -1314,8 +1305,6 @@ fusefs_mkdir(void *v)
 	}
 
 	tdp->v_type = IFTOVT(fbuf->fb_io_mode);
-	if (dvp != NULL && dvp->v_type == VDIR)
-		VTOI(tdp)->parent = ip->ufs_ino.i_number;
 
 	*vpp = tdp;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE | NOTE_LINK);

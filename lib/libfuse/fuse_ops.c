@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.25 2016/08/30 16:45:54 natano Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.26 2016/09/07 17:53:35 natano Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -432,15 +432,28 @@ ifuse_ops_lookup(struct fuse *f, struct fusebuf *fbuf)
 	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
 	DPRINTF("For file %s\n", fbuf->fb_dat);
 
-	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
-	if (vn == NULL) {
-		vn = alloc_vn(f, (const char *)fbuf->fb_dat, -1, fbuf->fb_ino);
-		if (vn == NULL) {
-			fbuf->fb_err = -errno;
-			free(fbuf->fb_dat);
+	if (strcmp((const char *)fbuf->fb_dat, "..") == 0) {
+		vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
+		if (vn == NULL || vn->parent == NULL) {
+			fbuf->fb_err = -ENOENT;
 			return (0);
 		}
-		set_vn(f, vn); /*XXX*/
+		vn = vn->parent;
+		if (vn->ino != FUSE_ROOT_INO)
+			ref_vn(vn);
+	} else {
+		vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
+		if (vn == NULL) {
+			vn = alloc_vn(f, (const char *)fbuf->fb_dat, -1,
+			    fbuf->fb_ino);
+			if (vn == NULL) {
+				fbuf->fb_err = -errno;
+				free(fbuf->fb_dat);
+				return (0);
+			}
+			set_vn(f, vn); /*XXX*/
+		} else if (vn->ino != FUSE_ROOT_INO)
+			ref_vn(vn);
 	}
 
 	DPRINTF("new ino %llu\n", (unsigned long long)vn->ino);
@@ -991,11 +1004,9 @@ ifuse_ops_reclaim(struct fuse *f, struct fusebuf *fbuf)
 {
 	struct fuse_vnode *vn;
 
-	vn = tree_pop(&f->vnode_tree, fbuf->fb_ino);
-	if (vn) {
-		remove_vnode_from_name_tree(f, vn);
-		free(vn);
-	}
+	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
+	if (vn != NULL)
+		unref_vn(f, vn);
 
 	return (0);
 }

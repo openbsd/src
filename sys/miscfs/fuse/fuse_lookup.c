@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.15 2016/08/30 16:45:54 natano Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.16 2016/09/07 17:53:35 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -39,16 +39,17 @@ fusefs_lookup(void *v)
 	struct fusefs_mnt *fmp;	/* file system that directory is in */
 	int lockparent;		/* 1 => lockparent flag is set */
 	struct vnode *tdp;	/* returned by VOP_VGET */
-	struct fusebuf *fbuf = NULL;
+	struct fusebuf *fbuf;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
 	struct proc *p = cnp->cn_proc;
 	struct ucred *cred = cnp->cn_cred;
+	uint64_t nid;
+	enum vtype nvtype;
 	int flags;
 	int nameiop = cnp->cn_nameiop;
 	int wantparent;
 	int error = 0;
-	uint64_t nid;
 
 	flags = cnp->cn_flags;
 	*vpp = NULL;
@@ -65,12 +66,7 @@ fusefs_lookup(void *v)
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return (EROFS);
 
-	if (flags & ISDOTDOT) {
-		/* got ".." */
-		nid = dp->parent;
-		if (nid == 0)
-			return (ENOENT);
-	} else if (cnp->cn_namelen == 1 && *(cnp->cn_nameptr) == '.') {
+	if (cnp->cn_namelen == 1 && *(cnp->cn_nameptr) == '.') {
 		nid = dp->ufs_ino.i_number;
 	} else {
 		if (!fmp->sess_init)
@@ -85,11 +81,13 @@ fusefs_lookup(void *v)
 
 		error = fb_queue(fmp->dev, fbuf);
 
-		/* tsleep return */
-		if (error == EWOULDBLOCK)
-			goto out;
-
 		if (error) {
+			fb_delete(fbuf);
+
+			/* tsleep return */
+			if (error == EWOULDBLOCK)
+				return (error);
+
 			if ((nameiop == CREATE || nameiop == RENAME) &&
 			    (flags & ISLASTCN)) {
 				if (vdp->v_mount->mnt_flag & MNT_RDONLY)
@@ -102,15 +100,15 @@ fusefs_lookup(void *v)
 					cnp->cn_flags |= PDIRUNLOCK;
 				}
 
-				error = EJUSTRETURN;
-				goto out;
+				return (EJUSTRETURN);
 			}
 
-			error = ENOENT;
-			goto out;
+			return (ENOENT);
 		}
 
 		nid = fbuf->fb_attr.st_ino;
+		nvtype = IFTOVT(fbuf->fb_attr.st_mode);
+		fb_delete(fbuf);
 	}
 
 	if (nameiop == DELETE && (flags & ISLASTCN)) {
@@ -119,7 +117,7 @@ fusefs_lookup(void *v)
 		 */
 		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc);
 		if (error)
-			goto out;
+			goto reclaim;
 
 		cnp->cn_flags |= SAVENAME;
 	}
@@ -129,22 +127,20 @@ fusefs_lookup(void *v)
 		 * Write access to directory required to delete files.
 		 */
 		if ((error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc)) != 0)
-			goto out;
+			goto reclaim;
 
-		if (nid == VTOI(vdp)->ufs_ino.i_number) {
-			error = EISDIR;
-			goto out;
-		}
+		if (nid == dp->ufs_ino.i_number)
+			return (EISDIR);
 
 		error = VFS_VGET(fmp->mp, nid, &tdp);
 		if (error)
-			goto out;
+			goto reclaim;
 
-		tdp->v_type = IFTOVT(fbuf->fb_attr.st_mode);
+		tdp->v_type = nvtype;
 		*vpp = tdp;
 		cnp->cn_flags |= SAVENAME;
 
-		goto out;
+		return (0);
 	}
 
 	if (flags & ISDOTDOT) {
@@ -157,8 +153,10 @@ fusefs_lookup(void *v)
 			if (vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 
-			return (error);
+			goto reclaim;
 		}
+
+		tdp->v_type = nvtype;
 
 		if (lockparent && (flags & ISLASTCN)) {
 			if ((error = vn_lock(vdp, LK_EXCLUSIVE, p))) {
@@ -176,12 +174,9 @@ fusefs_lookup(void *v)
 	} else {
 		error = VFS_VGET(fmp->mp, nid, &tdp);
 		if (error)
-			goto out;
+			goto reclaim;
 
-		tdp->v_type = IFTOVT(fbuf->fb_attr.st_mode);
-
-		if (vdp != NULL && vdp->v_type == VDIR)
-			VTOI(tdp)->parent = dp->ufs_ino.i_number;
+		tdp->v_type = nvtype;
 
 		if (!lockparent || !(flags & ISLASTCN)) {
 			VOP_UNLOCK(vdp, p);
@@ -191,7 +186,14 @@ fusefs_lookup(void *v)
 		*vpp = tdp;
 	}
 
-out:
-	fb_delete(fbuf);
+	return (error);
+
+reclaim:
+	if (nid != dp->ufs_ino.i_number && nid != FUSE_ROOTINO) {
+		fbuf = fb_setup(0, nid, FBT_RECLAIM, p);
+		if (fb_queue(fmp->dev, fbuf))
+			printf("fusefs: libfuse vnode reclaim failed\n");
+		fb_delete(fbuf);
+	}
 	return (error);
 }
