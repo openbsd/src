@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.157 2016/09/07 17:56:00 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.158 2016/09/08 13:59:33 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -132,17 +132,23 @@ struct payload {
 #define	CLR(bit)	(A(bit) &= (~B(bit)))
 #define	TST(bit)	(A(bit) & B(bit))
 
+/* various options */
+int options;
 #define	F_FLOOD		0x0001
 #define	F_INTERVAL	0x0002
+#define	F_HOSTNAME	0x0004
 #define	F_PINGFILLED	0x0008
 #define	F_QUIET		0x0010
+/*			0x0020 */
 #define	F_SO_DEBUG	0x0040
+/*			0x0080 */
 #define	F_VERBOSE	0x0100
-/*			0x4000 */
-#define F_HOSTNAME	0x10000
-#define F_AUD_RECV	0x200000
-#define F_AUD_MISS	0x400000
-u_int options;
+/*			0x0200 */
+/*			0x0400 */
+/*			0x0800 */
+/*			0x1000 */
+#define	F_AUD_RECV	0x2000
+#define	F_AUD_MISS	0x4000
 
 /* multicast options */
 int moptions;

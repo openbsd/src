@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.153 2016/09/08 13:58:15 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.154 2016/09/08 13:59:33 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ int options;
 /*			0x0200 */
 #define	F_HDRINCL	0x0400
 #define	F_TTL		0x0800
+/*			0x1000 */
 #define	F_AUD_RECV	0x2000
 #define	F_AUD_MISS	0x4000
 
