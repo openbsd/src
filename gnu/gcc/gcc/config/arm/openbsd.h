@@ -203,34 +203,12 @@ do									\
   }									\
 while (0)
 
-/* Provide a STARTFILE_SPEC appropriate for OpenBSD ELF.  Here we
-   provide support for the special GCC option -static.  On ELF
-   targets, we also add the crtbegin.o file, which provides part
-   of the support for getting C++ file-scope static objects
-   constructed before entering "main".  */
-
-#define OPENBSD_STARTFILE_SPEC	\
-  "%{!shared:			\
-     %{pg:gcrt0%O%s}		\
-     %{!pg:			\
-       %{p:gcrt0%O%s}		\
-       %{!p:crt0%O%s}}}		\
-   %:if-exists(crti%O%s)	\
-   %{static:%:if-exists-else(crtbeginT%O%s crtbegin%O%s)} \
-   %{!static: \
-     %{!shared:crtbegin%O%s} %{shared:crtbeginS%O%s}}"
-
+/* As an elf system, we need crtbegin/crtend stuff.  */
 #undef STARTFILE_SPEC
-#define STARTFILE_SPEC OPENBSD_STARTFILE_SPEC
-
-/* Provide an ENDFILE_SPEC appropriate for OpenBSD ELF.  Here we
-add crtend.o, which provides part of the support for getting
-C++ file-scope static objects deconstructed after exiting "main".  */
-
-#define OPENBSD_ENDFILE_SPEC     \
-  "%{!shared:crtend%O%s} %{shared:crtendS%O%s} \
-   %:if-exists(crtn%O%s)"
-
+#define STARTFILE_SPEC "\
+	%{!shared: %{pg:gcrt0%O%s} %{!pg:%{p:gcrt0%O%s} \
+	%{!p:%{!static:crt0%O%s} %{static:%{nopie:crt0%O%s} \
+	%{!nopie:rcrt0%O%s}}}} \
+        crtbegin%O%s} %{shared:crtbeginS%O%s}"
 #undef ENDFILE_SPEC
-#define ENDFILE_SPEC OPENBSD_ENDFILE_SPEC
-
+#define ENDFILE_SPEC "%{!shared:crtend%O%s} %{shared:crtendS%O%s}"
