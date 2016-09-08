@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.74 2016/09/08 05:18:20 ratchov Exp $
+.\"	$OpenBSD: audio.4,v 1.75 2016/09/08 20:42:58 ratchov Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,16 +51,13 @@ underlying audio hardware drivers.
 The audio layer provides full-duplex operation if the
 underlying hardware configuration supports it.
 .Pp
-There are four device files available for audio operation:
+There are three device files available for audio operation:
 .Pa /dev/audio ,
-.Pa /dev/sound ,
 .Pa /dev/audioctl ,
 and
 .Pa /dev/mixer .
 .Pa /dev/audio
-and
-.Pa /dev/sound
-are used for recording or playback of digital samples.
+is used for recording or playback of digital samples.
 .Pa /dev/mixer
 is used to manipulate volume, recording source, or other audio mixer
 functions.
@@ -68,10 +65,10 @@ functions.
 accepts the same
 .Xr ioctl 2
 operations as
-.Pa /dev/sound ,
+.Pa /dev/audio ,
 but no other operations.
 In contrast to
-.Pa /dev/sound ,
+.Pa /dev/audio ,
 which has the exclusive open property,
 .Pa /dev/audioctl
 can be opened at any time and can be used to read the
@@ -80,18 +77,11 @@ device variables while it is in use.
 .Sh SAMPLING DEVICES
 When
 .Pa /dev/audio
-or
-.Pa /dev/sound
 is opened, it attempts to maintain the previous audio sample format and
 record/playback mode.
 In addition, if it is opened read-only
 (write-only) the device is set to half-duplex record (play) mode with
 recording (playing) unpaused.
-In all respects
-.Pa /dev/audio
-and
-.Pa /dev/sound
-are identical.
 .Pp
 Only one process may hold open a sampling device at a given time
 (although file descriptors may be shared between processes once the
@@ -514,7 +504,6 @@ string values.
 .Bl -tag -width /dev/audioctl -compact
 .It Pa /dev/audio
 .It Pa /dev/audioctl
-.It Pa /dev/sound
 .It Pa /dev/mixer
 .El
 .Sh SEE ALSO
