@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.69 2016/09/04 19:38:51 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.70 2016/09/08 18:24:08 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: September 4 2016 $
+.Dd $Mdocdate: September 8 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -4265,13 +4265,9 @@ should be taken if the information is being output by a
 application.
 This is, however, strongly discouraged and should only be used for
 debugging purposes.
-.\"
-.\" SMIME
-.\"
 .Sh SMIME
 .nr nS 1
 .Nm "openssl smime"
-.Bk -words
 .Oo
 .Fl aes128 | aes192 | aes256 | des |
 .Fl des3 | rc2-40 | rc2-64 | rc2-128
@@ -4291,10 +4287,10 @@ debugging purposes.
 .Op Fl ignore_critical
 .Op Fl in Ar file
 .Op Fl indef
-.Op Fl inform Ar DER | PEM | SMIME
+.Op Fl inform Cm der | pem | smime
 .Op Fl inkey Ar file
 .Op Fl issuer_checks
-.Op Fl keyform Ar PEM
+.Op Fl keyform Cm pem
 .Op Fl md Ar digest
 .Op Fl noattr
 .Op Fl nocerts
@@ -4305,7 +4301,7 @@ debugging purposes.
 .Op Fl nosigs
 .Op Fl noverify
 .Op Fl out Ar file
-.Op Fl outform Ar DER | PEM | SMIME
+.Op Fl outform Cm der | pem | smime
 .Op Fl passin Ar arg
 .Op Fl pk7out
 .Op Fl policy_check
@@ -4320,48 +4316,51 @@ debugging purposes.
 .Op Fl verify
 .Op Fl x509_strict
 .Op Ar cert.pem ...
-.Ek
 .nr nS 0
 .Pp
 The
 .Nm smime
-command handles
-.Em S/MIME
-mail.
-It can encrypt, decrypt, sign, and verify
-.Em S/MIME
-messages.
+command handles S/MIME mail.
+It can encrypt, decrypt, sign, and verify S/MIME messages.
 .Pp
-There are six operation options that set the type of operation to be performed.
-The meaning of the other options varies according to the operation type.
+The MIME message must be sent without any blank lines between the
+headers and the output.
+Some mail programs will automatically add a blank line.
+Piping the mail directly to an MTA is one way to
+achieve the correct format.
 .Pp
-The six operation options are as follows:
+The supplied message to be signed or encrypted must include the necessary
+MIME headers or many S/MIME clients won't display it properly (if at all).
+Use the
+.Fl text
+option to automatically add plain text headers.
+.Pp
+A
+.Qq signed and encrypted
+message is one where a signed message is then encrypted.
+This can be produced by encrypting an already signed message.
+.Pp
+There are a number of operations that can be performed, as follows:
 .Bl -tag -width "XXXX"
 .It Fl decrypt
 Decrypt mail using the supplied certificate and private key.
-Expects an encrypted mail message in
-.Em MIME
-format for the input file.
+The input file is an encrypted mail message in MIME format.
 The decrypted mail is written to the output file.
 .It Fl encrypt
 Encrypt mail for the given recipient certificates.
-Input file is the message to be encrypted.
-The output file is the encrypted mail in
-.Em MIME
-format.
+The input is the message to be encrypted.
+The output file is the encrypted mail, in MIME format.
 .It Fl pk7out
-Takes an input message and writes out a PEM-encoded PKCS#7 structure.
+Take an input message and write out a PEM-encoded PKCS#7 structure.
 .It Fl resign
 Resign a message: take an existing message and one or more new signers.
 .It Fl sign
 Sign mail using the supplied certificate and private key.
-Input file is the message to be signed.
-The signed message in
-.Em MIME
-format is written to the output file.
+The input file is the message to be signed.
+The signed message, in MIME format, is written to the output file.
 .It Fl verify
 Verify signed mail.
-Expects a signed mail message on input and outputs the signed data.
+The input is a signed mail message and the output is the signed data.
 Both clear text and opaque signing is supported.
 .El
 .Pp
@@ -4372,11 +4371,7 @@ The remaining options are as follows:
 .Fl des3 | rc2-40 | rc2-64 | rc2-128
 .Xc
 The encryption algorithm to use.
-128-, 192-, or 256-bit AES,
-DES
-.Pq 56 bits ,
-triple DES
-.Pq 168 bits ,
+128-, 192-, or 256-bit AES, DES (56 bits), triple DES (168 bits),
 or 40-, 64-, or 128-bit RC2, respectively;
 if not specified, 40-bit RC2 is
 used.
@@ -4385,14 +4380,10 @@ Only used with
 .It Fl binary
 Normally, the input message is converted to
 .Qq canonical
-format which is effectively using CR and LF as end of line \-
-as required by the
-.Em S/MIME
-specification.
+format which uses CR/LF as end of line,
+as required by the S/MIME specification.
 When this option is present no translation occurs.
-This is useful when handling binary data which may not be in
-.Em MIME
-format.
+This is useful when handling binary data which may not be in MIME format.
 .It Fl CAfile Ar file
 A
 .Ar file
@@ -4427,20 +4418,17 @@ The certificates should be in PEM format.
 .Xc
 Set various certificate chain validation options.
 See the
-.Nm VERIFY
+.Nm verify
 command for details.
 .It Fl content Ar file
-This specifies a file containing the detached content.
+A file containing the detached content.
 This is only useful with the
 .Fl verify
-command.
-This is only usable if the PKCS#7 structure is using the detached
+option,
+and only usable if the PKCS#7 structure is using the detached
 signature form where the content is not included.
-This option will override any content if the input format is
-.Em S/MIME
-and it uses the multipart/signed
-.Em MIME
-content type.
+This option will override any content if the input format is S/MIME
+and it uses the multipart/signed MIME content type.
 .It Xo
 .Fl from Ar addr ,
 .Fl subject Ar s ,
@@ -4449,15 +4437,11 @@ content type.
 The relevant mail headers.
 These are included outside the signed
 portion of a message so they may be included manually.
-When signing, many
-.Em S/MIME
+When signing, many S/MIME
 mail clients check that the signer's certificate email
 address matches the From: address.
 .It Fl in Ar file
-The input message to be encrypted or signed or the
-.Em MIME
-message to
-be decrypted or verified.
+The input file to read from.
 .It Fl indef
 Enable streaming I/O for encoding operations.
 This permits single pass processing of data without
@@ -4466,27 +4450,11 @@ potentially supporting very large files.
 Streaming is automatically set for S/MIME signing with detached
 data if the output format is SMIME;
 it is currently off by default for all other operations.
-.It Fl inform Ar DER | PEM | SMIME
-This specifies the input format for the PKCS#7 structure.
-The default is
-.Em SMIME ,
-which reads an
-.Em S/MIME
-format message.
-.Ar PEM
-and
-.Ar DER
-format change this to expect PEM and DER format PKCS#7 structures
-instead.
-This currently only affects the input format of the PKCS#7
-structure; if no PKCS#7 structure is being input (for example with
-.Fl encrypt
-or
-.Fl sign ) ,
-this option has no effect.
+.It Fl inform Cm der | pem | smime
+The input format.
 .It Fl inkey Ar file
-The private key to use when signing or decrypting.
-This must match the corresponding certificate.
+The private key to use when signing or decrypting,
+which must match the corresponding certificate.
 If this option is not specified, the private key must be included
 in the certificate file specified with
 the
@@ -4496,19 +4464,16 @@ or
 file.
 When signing,
 this option can be used multiple times to specify successive keys.
-.It Fl keyform Ar PEM
+.It Fl keyform Cm pem
 Input private key format.
 .It Fl md Ar digest
 The digest algorithm to use when signing or resigning.
 If not present then the default digest algorithm for the signing key is used
 (usually SHA1).
 .It Fl noattr
-Normally, when a message is signed a set of attributes are included which
-include the signing time and supported symmetric algorithms.
-With this option they are not included.
+Do not include attributes.
 .It Fl nocerts
-When signing a message, the signer's certificate is normally included;
-with this option it is excluded.
+Do not include the signer's certificate.
 This will reduce the size of the signed message but the verifier must
 have a copy of the signer's certificate available locally (passed using the
 .Fl certfile
@@ -4519,44 +4484,29 @@ don't use the certificates in the signed message as untrusted CAs.
 .It Fl nodetach
 When signing a message use opaque signing: this form is more resistant
 to translation by mail relays but it cannot be read by mail agents that
-do not support
-.Em S/MIME .
-Without this option cleartext signing with the
-.Em MIME
-type multipart/signed is used.
+do not support S/MIME.
+Without this option cleartext signing with the MIME type
+multipart/signed is used.
 .It Fl noindef
-Disable streaming I/O where it would produce an encoding of indefinite length.
-This option currently has no effect.
-In future streaming will be enabled by default on all relevant operations
-and this option will disable it.
+Disable streaming I/O where it would produce an encoding of indefinite length
+(currently has no effect).
 .It Fl nointern
-When verifying a message, normally certificates
-.Pq if any
-included in the message are searched for the signing certificate.
-With this option, only the certificates specified in the
-.Fl certfile
-option are used.
-The supplied certificates can still be used as untrusted CAs however.
+Only use certificates specified in the
+.Fl certfile .
+The supplied certificates can still be used as untrusted CAs.
 .It Fl nosigs
-Don't try to verify the signatures on the message.
+Do not try to verify the signatures on the message.
 .It Fl noverify
 Do not verify the signer's certificate of a signed message.
 .It Fl out Ar file
-The message text that has been decrypted or verified, or the output
-.Em MIME
-format message that has been signed or verified.
-.It Fl outform Ar DER | PEM | SMIME
-This specifies the output format for the PKCS#7 structure.
-The default is
-.Em SMIME ,
-which writes an
-.Em S/MIME
-format message.
-.Ar PEM
+The output file to write to.
+.It Fl outform Cm der | pem | smime
+The output format.
+The default is smime, which writes an S/MIME format message.
+.Cm pem
 and
-.Ar DER
-format change this to write PEM and DER format PKCS#7 structures
-instead.
+.Cm der
+change this to write PEM and DER format PKCS#7 structures instead.
 This currently only affects the output format of the PKCS#7
 structure; if no PKCS#7 structure is being output (for example with
 .Fl verify
@@ -4578,244 +4528,31 @@ written to this file if the verification was successful.
 The same as
 .Fl indef .
 .It Fl text
-This option adds plain text
-.Pq text/plain
-.Em MIME
+Add plain text (text/plain) MIME
 headers to the supplied message if encrypting or signing.
 If decrypting or verifying, it strips off text headers:
-if the decrypted or verified message is not of
-.Em MIME
-type text/plain then an error occurs.
+if the decrypted or verified message is not of MIME type text/plain
+then an error occurs.
 .El
-.Sh SMIME NOTES
-The
-.Em MIME
-message must be sent without any blank lines between the
-headers and the output.
-Some mail programs will automatically add a blank line.
-Piping the mail directly to an MTA is one way to
-achieve the correct format.
 .Pp
-The supplied message to be signed or encrypted must include the
-necessary
-.Em MIME
-headers or many
-.Em S/MIME
-clients won't display it properly
-.Pq if at all .
-You can use the
-.Fl text
-option to automatically add plain text headers.
+The exit codes for
+.Nm smime
+are as follows:
 .Pp
-A
-.Qq signed and encrypted
-message is one where a signed message is then encrypted.
-This can be produced by encrypting an already signed message:
-see the
-.Sx SMIME EXAMPLES
-section.
-.Pp
-This version of the program only allows one signer per message, but it
-will verify multiple signers on received messages.
-Some
-.Em S/MIME
-clients choke if a message contains multiple signers.
-It is possible to sign messages
-.Qq in parallel
-by signing an already signed message.
-.Pp
-The options
-.Fl encrypt
-and
-.Fl decrypt
-reflect common usage in
-.Em S/MIME
-clients.
-Strictly speaking these process PKCS#7 enveloped data: PKCS#7
-encrypted data is used for other purposes.
-.Pp
-The
-.Fl resign
-option uses an existing message digest when adding a new signer.
-This means that attributes must be present in at least one existing
-signer using the same message digest or this operation will fail.
-.Pp
-The
-.Fl stream
-and
-.Fl indef
-options enable experimental streaming I/O support.
-As a result the encoding is BER using indefinite length constructed encoding
-and no longer DER.
-Streaming is supported for the
-.Fl encrypt
-and
-.Fl sign
-operations if the content is not detached.
-.Pp
-Streaming is always used for the
-.Fl sign
-operation with detached data
-but since the content is no longer part of the PKCS#7 structure
-the encoding remains DER.
-.Sh SMIME EXIT CODES
-.Bl -tag -width "XXXX"
-.It Ar 0
+.Bl -tag -width "XXXX"  -offset 3n -compact
+.It 0
 The operation was completely successful.
-.It Ar 1
+.It 1
 An error occurred parsing the command options.
-.It Ar 2
+.It 2
 One of the input files could not be read.
-.It Ar 3
-An error occurred creating the PKCS#7 file or when reading the
-.Em MIME
-message.
-.It Ar 4
+.It 3
+An error occurred creating the file or when reading the message.
+.It 4
 An error occurred decrypting or verifying the message.
-.It Ar 5
-The message was verified correctly, but an error occurred writing out
-the signer's certificates.
+.It 5
+An error occurred writing certificates.
 .El
-.Sh SMIME EXAMPLES
-Create a cleartext signed message:
-.Bd -literal -offset indent
-$ openssl smime -sign -in message.txt -text -out mail.msg \e
-	-signer mycert.pem
-.Ed
-.Pp
-Create an opaque signed message:
-.Bd -literal -offset indent
-$ openssl smime -sign -in message.txt -text -out mail.msg \e
-	-nodetach -signer mycert.pem
-.Ed
-.Pp
-Create a signed message, include some additional certificates and
-read the private key from another file:
-.Bd -literal -offset indent
-$ openssl smime -sign -in in.txt -text -out mail.msg \e
-	-signer mycert.pem -inkey mykey.pem -certfile mycerts.pem
-.Ed
-.Pp
-Create a signed message with two signers:
-.Bd -literal -offset indent
-openssl smime -sign -in message.txt -text -out mail.msg \e
-	-signer mycert.pem -signer othercert.pem
-.Ed
-.Pp
-Send a signed message under
-.Ux
-directly to
-.Xr sendmail 8 ,
-including headers:
-.Bd -literal -offset indent
-$ openssl smime -sign -in in.txt -text -signer mycert.pem \e
-	-from steve@openssl.org -to someone@somewhere \e
-	-subject "Signed message" | sendmail someone@somewhere
-.Ed
-.Pp
-Verify a message and extract the signer's certificate if successful:
-.Bd -literal -offset indent
-$ openssl smime -verify -in mail.msg -signer user.pem \e
-	-out signedtext.txt
-.Ed
-.Pp
-Send encrypted mail using triple DES:
-.Bd -literal -offset indent
-$ openssl smime -encrypt -in in.txt -from steve@openssl.org \e
-	-to someone@somewhere -subject "Encrypted message" \e
-	-des3 -out mail.msg user.pem
-.Ed
-.Pp
-Sign and encrypt mail:
-.Bd -literal -offset indent
-$ openssl smime -sign -in ml.txt -signer my.pem -text | \e
-	openssl smime -encrypt -out mail.msg \e
-	-from steve@openssl.org -to someone@somewhere \e
-	-subject "Signed and Encrypted message" -des3 user.pem
-.Ed
-.Pp
-.Sy Note :
-The encryption command does not include the
-.Fl text
-option because the message being encrypted already has
-.Em MIME
-headers.
-.Pp
-Decrypt mail:
-.Bd -literal -offset indent
-$ openssl smime -decrypt -in mail.msg -recip mycert.pem \e
-	-inkey key.pem"
-.Ed
-.Pp
-The output from Netscape form signing is a PKCS#7 structure with the
-detached signature format.
-You can use this program to verify the signature by line wrapping the
-base64-encoded structure and surrounding it with:
-.Bd -unfilled -offset indent
------BEGIN PKCS7-----
------END PKCS7-----
-.Ed
-.Pp
-and using the command:
-.Bd -literal -offset indent
-$ openssl smime -verify -inform PEM -in signature.pem \e
-	-content content.txt
-.Ed
-.Pp
-Alternatively, you can base64 decode the signature and use:
-.Bd -literal -offset indent
-$ openssl smime -verify -inform DER -in signature.der \e
-	-content content.txt
-.Ed
-.Pp
-Create an encrypted message using 128-bit AES:
-.Bd -literal -offset indent
-openssl smime -encrypt -in plain.txt -aes128 \e
-	-out mail.msg cert.pem
-.Ed
-.Pp
-Add a signer to an existing message:
-.Bd -literal -offset indent
-openssl smime -resign -in mail.msg -signer newsign.pem \e
-	-out mail2.msg
-.Ed
-.Sh SMIME BUGS
-The
-.Em MIME
-parser isn't very clever: it seems to handle most messages that I've thrown
-at it, but it may choke on others.
-.Pp
-The code currently will only write out the signer's certificate to a file:
-if the signer has a separate encryption certificate this must be manually
-extracted.
-There should be some heuristic that determines the correct encryption
-certificate.
-.Pp
-Ideally, a database should be maintained of a certificate for each email
-address.
-.Pp
-The code doesn't currently take note of the permitted symmetric encryption
-algorithms as supplied in the
-.Em SMIMECapabilities
-signed attribute.
-This means the user has to manually include the correct encryption algorithm.
-It should store the list of permitted ciphers in a database and only use those.
-.Pp
-No revocation checking is done on the signer's certificate.
-.Pp
-The current code can only handle
-.Em S/MIME
-v2 messages; the more complex
-.Em S/MIME
-v3 structures may cause parsing errors.
-.Sh SMIME HISTORY
-The use of multiple
-.Fl signer
-options and the
-.Fl resign
-command were first added in
-.Nm OpenSSL
-1.0.0.
 .\"
 .\" SPEED
 .\"
@@ -7029,6 +6766,8 @@ Insecure legacy format.
 .It Cm pem
 Privacy Enhanced Mail (PEM)
 is base64-encoded.
+.It Cm smime
+An SMIME format message.
 .It Cm txt
 Plain ASCII text.
 .El
