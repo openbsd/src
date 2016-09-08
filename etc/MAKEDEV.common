@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.91 2016/09/04 15:38:59 naddy Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.92 2016/09/08 20:39:28 ratchov Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -418,13 +418,11 @@ _mkdev(acpi, acpi*, {-M acpi	c major_acpi_c 0 644-})dnl
 __devitem(pctr, pctr*, PC Performance Tuning Register access device)dnl
 _mkdev(pctr, pctr, {-M pctr c major_pctr_c 0 644-})dnl
 __devitem(au, audio*, Audio devices,audio)dnl
-_mkdev(au, audio*, {-M sound$U	c major_au_c $U
+_mkdev(au, audio*, {-M audio$U	c major_au_c $U
 	M mixer$U	c major_au_c Add($U, 16)
-	M audio$U	c major_au_c Add($U, 128)
 	M audioctl$U	c major_au_c Add($U, 192)
 	MKlist[${#MKlist[*]}]=";[ -e audio ] || ln -s audio$U audio"
 	MKlist[${#MKlist[*]}]=";[ -e mixer ] || ln -s mixer$U mixer"
-	MKlist[${#MKlist[*]}]=";[ -e sound ] || ln -s sound$U sound"
 	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"-})dnl
 __devitem(vi, video*, Video V4L2 devices,video)dnl
 _mkdev(vi, video*, {-M video$U  c major_vi_c $U 600
