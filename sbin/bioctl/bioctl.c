@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.131 2016/05/13 19:06:52 tedu Exp $       */
+/* $OpenBSD: bioctl.c,v 1.132 2016/09/08 17:51:02 jsing Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -1108,7 +1108,7 @@ bio_changepass(char *dev)
 	bio_kdf_derive(&kdfinfo1, &kdfhint, "Old passphrase: ", 0);
 
 	/* New passphrase. */
-	bio_kdf_derive(&kdfinfo2, &kdfhint, "New passphrase: ", 1);
+	bio_kdf_generate(&kdfinfo2);
 
 	kdfpair.kdfinfo1 = &kdfinfo1;
 	kdfpair.kdfsize1 = sizeof(kdfinfo1);
