@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.55 2015/12/30 09:07:00 tedu Exp $	*/
+/*	$OpenBSD: var.c,v 1.56 2016/09/08 15:47:16 millert Exp $	*/
 
 #include <sys/stat.h>
 
@@ -661,6 +661,7 @@ typeset(const char *var, int set, int clr, int field, int base)
 		 */
 		for (t = vpbase; t; t = t->u.array) {
 			int fake_assign;
+			int error_ok = KSH_RETURN_ERROR;
 			char *s = NULL;
 			char *free_me = NULL;
 
@@ -683,6 +684,10 @@ typeset(const char *var, int set, int clr, int field, int base)
 				t->type = 0;
 				t->flag &= ~ALLOC;
 			}
+			if (!(t->flag & RDONLY) && (set & RDONLY)) {
+				/* allow var to be initialized read-only */
+				error_ok |= 0x4;
+			}
 			t->flag = (t->flag | set) & ~clr;
 			/* Don't change base if assignment is to be done,
 			 * in case assignment fails.
@@ -692,7 +697,7 @@ typeset(const char *var, int set, int clr, int field, int base)
 			if (set & (LJUST|RJUST|ZEROFIL))
 				t->u2.field = field;
 			if (fake_assign) {
-				if (!setstr(t, s, KSH_RETURN_ERROR)) {
+				if (!setstr(t, s, error_ok)) {
 					/* Somewhat arbitrary action here:
 					 * zap contents of variable, but keep
 					 * the flag settings.
