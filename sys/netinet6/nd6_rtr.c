@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.144 2016/09/02 11:51:07 florian Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.145 2016/09/08 09:02:42 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1972,9 +1972,11 @@ in6_ifadd(struct nd_prefix *pr, int privacy)
 
 	ifra.ifra_flags |= IN6_IFF_AUTOCONF|IN6_IFF_TENTATIVE;
 
-	/* allocate ifaddr structure, link into chain, etc. */
+	/* If this address already exists, update it. */
+	ia6 = in6ifa_ifpwithaddr(ifp, &ifra.ifra_addr.sin6_addr);
+
 	s = splsoftnet();
-	error = in6_update_ifa(ifp, &ifra, NULL);
+	error = in6_update_ifa(ifp, &ifra, ia6);
 	splx(s);
 
 	if (error != 0) {
