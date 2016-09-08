@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/05 10:56:48 pascal Exp $
+# $OpenBSD: Makefile,v 1.2 2016/09/08 18:05:30 pascal Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ install:
 depend:
 	# Nothing here so far ...
 
-clean:
+clean cleandir:
 	rm -f ${HDRS}
 
 X86GenRegisterInfo.inc: ${LLVM_SRCS}/lib/Target/X86/X86.td
