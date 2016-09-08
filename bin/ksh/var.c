@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.56 2016/09/08 15:47:16 millert Exp $	*/
+/*	$OpenBSD: var.c,v 1.57 2016/09/08 15:50:50 millert Exp $	*/
 
 #include <sys/stat.h>
 
@@ -356,8 +356,8 @@ int
 setstr(struct tbl *vq, const char *s, int error_ok)
 {
 	const char *fs = NULL;
-	int no_ro_check = error_ok & 0x4;
-	error_ok &= ~0x4;
+	int no_ro_check = error_ok & KSH_IGNORE_RDONLY;
+	error_ok &= ~KSH_IGNORE_RDONLY;
 	if ((vq->flag & RDONLY) && !no_ro_check) {
 		warningf(true, "%s: is read only", vq->name);
 		if (!error_ok)
@@ -686,7 +686,7 @@ typeset(const char *var, int set, int clr, int field, int base)
 			}
 			if (!(t->flag & RDONLY) && (set & RDONLY)) {
 				/* allow var to be initialized read-only */
-				error_ok |= 0x4;
+				error_ok |= KSH_IGNORE_RDONLY;
 			}
 			t->flag = (t->flag | set) & ~clr;
 			/* Don't change base if assignment is to be done,
@@ -722,13 +722,13 @@ typeset(const char *var, int set, int clr, int field, int base)
 	if (val != NULL) {
 		if (vp->flag&INTEGER) {
 			/* do not zero base before assignment */
-			setstr(vp, val, KSH_UNWIND_ERROR | 0x4);
+			setstr(vp, val, KSH_UNWIND_ERROR | KSH_IGNORE_RDONLY);
 			/* Done after assignment to override default */
 			if (base > 0)
 				vp->type = base;
 		} else
 			/* setstr can't fail (readonly check already done) */
-			setstr(vp, val, KSH_RETURN_ERROR | 0x4);
+			setstr(vp, val, KSH_RETURN_ERROR | KSH_IGNORE_RDONLY);
 	}
 
 	/* only x[0] is ever exported, so use vpbase */
