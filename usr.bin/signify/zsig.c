@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.10 2016/09/04 17:00:22 espie Exp $ */
+/* $OpenBSD: zsig.c,v 1.11 2016/09/08 16:04:01 espie Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -150,15 +150,9 @@ copy_blocks(int fdout, int fdin, const char *sha, const char *endsha,
 		if (residual != bufend) {
 			/* how much can we copy */
 			size_t len = bufend - residual;
-			if (len >= bufsize) {
-				memcpy(buffer, residual, bufsize);
-				n = bufsize;
-				residual += bufsize;
-			} else {
-				memcpy(buffer, residual, len);
-				residual += len;
-				n = len;
-			}
+			n = len >= bufsize ? bufsize : len;
+			memcpy(buffer, residual, n);
+			residual += n;
 		}
 		/* if we're not done yet, try to obtain more until EOF */
 		while (n != bufsize) {
