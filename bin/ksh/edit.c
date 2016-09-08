@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.56 2016/09/07 04:42:31 dcoppa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.57 2016/09/08 12:12:40 nicm Exp $	*/
 
 /*
  * Command line editing - common code
@@ -584,9 +584,8 @@ x_try_array(const char *buf, int buflen, const char *want, int wantlen,
     int *nwords, char ***words)
 {
 	const char *cmd, *cp;
-	int cmdlen, n;
+	int cmdlen, n, i, slen;
 	char *name, *s;
-	size_t slen;
 	struct tbl *v, *vp;
 
 	*nwords = 0;
@@ -604,6 +603,10 @@ x_try_array(const char *buf, int buflen, const char *want, int wantlen,
 	cmdlen = 0;
 	while (cmd + cmdlen < want && !isspace((u_char)cmd[cmdlen]))
 		cmdlen++;
+	for (i = 0; i < cmdlen; i++) {
+		if (!isalnum((u_char)cmd[i]) && cmd[i] != '_')
+			return 0;
+	}
 
 	/* Take a stab at argument count from here. */
 	n = 1;
