@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.181 2016/09/04 16:10:31 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.182 2016/09/08 12:06:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -45,7 +45,6 @@ static void queue_imsg(struct mproc *, struct imsg *);
 static void queue_timeout(int, short, void *);
 static void queue_bounce(struct envelope *, struct delivery_bounce *);
 static void queue_shutdown(void);
-static void queue_sig_handler(int, short, void *);
 static void queue_log(const struct envelope *, const char *, const char *);
 static void queue_msgid_walk(int, short, void *);
 
@@ -65,6 +64,9 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 	time_t			 nexttry;
 	size_t			 n_evp;
 	int			 fd, mta_ext, ret, v, flags, code;
+
+	if (imsg == NULL)
+		queue_shutdown();
 
 	memset(&bounce, 0, sizeof(struct delivery_bounce));
 	if (p->proc == PROC_PONY) {
@@ -636,22 +638,9 @@ queue_bounce(struct envelope *e, struct delivery_bounce *d)
 }
 
 static void
-queue_sig_handler(int sig, short event, void *p)
-{
-	switch (sig) {
-	case SIGINT:
-	case SIGTERM:
-		queue_shutdown();
-		break;
-	default:
-		fatalx("queue_sig_handler: unexpected signal");
-	}
-}
-
-static void
 queue_shutdown(void)
 {
-	log_info("info: queue handler exiting");
+	log_debug("debug: queue agent exiting");
 	queue_close();
 	_exit(0);
 }
@@ -662,8 +651,6 @@ queue(void)
 	struct passwd	*pw;
 	struct timeval	 tv;
 	struct event	 ev_qload;
-	struct event	 ev_sigint;
-	struct event	 ev_sigterm;
 
 	purge_config(PURGE_EVERYTHING);
 
@@ -698,10 +685,8 @@ queue(void)
 	imsg_callback = queue_imsg;
 	event_init();
 
-	signal_set(&ev_sigint, SIGINT, queue_sig_handler, NULL);
-	signal_set(&ev_sigterm, SIGTERM, queue_sig_handler, NULL);
-	signal_add(&ev_sigint, NULL);
-	signal_add(&ev_sigterm, NULL);
+	signal(SIGINT, SIG_IGN);
+	signal(SIGTERM, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 

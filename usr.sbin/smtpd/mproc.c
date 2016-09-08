@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.26 2016/09/03 16:06:26 eric Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.27 2016/09/08 12:06:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -88,6 +88,8 @@ mproc_init(struct mproc *p, int fd)
 void
 mproc_clear(struct mproc *p)
 {
+	log_debug("debug: clearing p=%s, fd=%d, pid=%d", p->name, p->imsgbuf.fd, p->pid);
+
 	event_del(&p->ev);
 	close(p->imsgbuf.fd);
 	imsg_clear(&p->imsgbuf);
@@ -166,10 +168,8 @@ mproc_dispatch(int fd, short event, void *arg)
 			/* NOTREACHED */
 		case 0:
 			/* this pipe is dead, so remove the event handler */
-			if (smtpd_process != PROC_CONTROL ||
-			    p->proc != PROC_CLIENT)
-				log_warnx("warn: %s -> %s: pipe closed",
-				    proc_name(smtpd_process),  p->name);
+			log_debug("debug: %s -> %s: pipe closed",
+			    proc_name(smtpd_process),  p->name);
 			p->handler(p, NULL);
 			return;
 		default:
@@ -181,10 +181,8 @@ mproc_dispatch(int fd, short event, void *arg)
 		n = msgbuf_write(&p->imsgbuf.w);
 		if (n == 0 || (n == -1 && errno != EAGAIN)) {
 			/* this pipe is dead, so remove the event handler */
-			if (smtpd_process != PROC_CONTROL ||
-			    p->proc != PROC_CLIENT)
-				log_warnx("warn: %s -> %s: pipe closed",
-				    proc_name(smtpd_process),  p->name);
+			log_debug("debug: %s -> %s: pipe closed",
+			    proc_name(smtpd_process),  p->name);
 			p->handler(p, NULL);
 			return;
 		}

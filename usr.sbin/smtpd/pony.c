@@ -1,4 +1,4 @@
-/*	$OpenBSD: pony.c,v 1.15 2016/09/04 16:10:31 eric Exp $	*/
+/*	$OpenBSD: pony.c,v 1.16 2016/09/08 12:06:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -46,13 +46,15 @@ void mta_imsg(struct mproc *, struct imsg *);
 void smtp_imsg(struct mproc *, struct imsg *);
 
 static void pony_shutdown(void);
-static void pony_sig_handler(int, short, void *);
 
 void
 pony_imsg(struct mproc *p, struct imsg *imsg)
 {
 	struct msg	m;
 	int		v;
+
+	if (imsg == NULL)
+		pony_shutdown();
 
 	switch (imsg->hdr.type) {
 	case IMSG_CONF_START:
@@ -132,22 +134,9 @@ pony_imsg(struct mproc *p, struct imsg *imsg)
 }
 
 static void
-pony_sig_handler(int sig, short event, void *p)
-{
-	switch (sig) {
-	case SIGINT:
-	case SIGTERM:
-		pony_shutdown();
-		break;
-	default:
-		fatalx("pony_sig_handler: unexpected signal");
-	}
-}
-
-static void
 pony_shutdown(void)
 {
-	log_info("info: pony agent exiting");
+	log_debug("debug: pony agent exiting");
 	_exit(0);
 }
 
@@ -155,8 +144,6 @@ int
 pony(void)
 {
 	struct passwd	*pw;
-	struct event	 ev_sigint;
-	struct event	 ev_sigterm;
 
 	mda_postfork();
 	mta_postfork();
@@ -191,10 +178,8 @@ pony(void)
 	mta_postprivdrop();
 	smtp_postprivdrop();
 
-	signal_set(&ev_sigint, SIGINT, pony_sig_handler, NULL);
-	signal_set(&ev_sigterm, SIGTERM, pony_sig_handler, NULL);
-	signal_add(&ev_sigint, NULL);
-	signal_add(&ev_sigterm, NULL);
+	signal(SIGINT, SIG_IGN);
+	signal(SIGTERM, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
