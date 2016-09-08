@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.73 2016/09/01 10:08:23 ratchov Exp $
+.\"	$OpenBSD: audio.4,v 1.74 2016/09/08 05:18:20 ratchov Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 1 2016 $
+.Dd $Mdocdate: September 8 2016 $
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -74,9 +74,9 @@ In contrast to
 .Pa /dev/sound ,
 which has the exclusive open property,
 .Pa /dev/audioctl
-can be opened at any time and can be used to manipulate the
+can be opened at any time and can be used to read the
 .Nm audio
-device while it is in use.
+device variables while it is in use.
 .Sh SAMPLING DEVICES
 When
 .Pa /dev/audio
