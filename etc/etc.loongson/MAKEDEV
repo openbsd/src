@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.loongson/MAKEDEV.md,v 1.26 2016/09/04 15:38:59 naddy Exp 
-#	OpenBSD: MAKEDEV.common,v 1.91 2016/09/04 15:38:59 naddy Exp 
+#	OpenBSD: MAKEDEV.common,v 1.92 2016/09/08 20:39:28 ratchov Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -292,13 +292,11 @@ bio)
 	;;
 
 audio*)
-	M sound$U	c 44 $U
+	M audio$U	c 44 $U
 	M mixer$U	c 44 $(($U+16))
-	M audio$U	c 44 $(($U+128))
 	M audioctl$U	c 44 $(($U+192))
 	MKlist[${#MKlist[*]}]=";[ -e audio ] || ln -s audio$U audio"
 	MKlist[${#MKlist[*]}]=";[ -e mixer ] || ln -s mixer$U mixer"
-	MKlist[${#MKlist[*]}]=";[ -e sound ] || ln -s sound$U sound"
 	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
