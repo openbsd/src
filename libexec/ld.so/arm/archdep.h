@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.7 2016/05/18 20:40:20 deraadt Exp $ */
+/*	$OpenBSD: archdep.h,v 1.8 2016/09/08 18:56:58 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -60,6 +60,10 @@ RELOC_DYN(Elf_Rel *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 {
 	if (ELF_R_TYPE(r->r_info) == R_ARM_RELATIVE) {
 		*p += v;
+	} else if (ELF_R_TYPE(r->r_info) == R_ARM_GLOB_DAT) {
+		*p += v + s->st_value;
+	} else if (ELF_R_TYPE(r->r_info) == R_ARM_ABS32) {
+		*p += v + s->st_value;
 	} else {
 		/* XXX - printf might not work here, but we give it a shot. */
 		_dl_printf("Unknown bootstrap relocation.\n");

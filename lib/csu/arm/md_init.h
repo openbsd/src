@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.7 2016/03/24 05:27:19 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.8 2016/09/08 18:56:58 kettenis Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -87,21 +87,66 @@
 	"__start:				\n" \
 	"	mov	r3, r0	/* cleanup */	\n" \
 	"/* Get argc/argv/envp from stack */	\n" \
-	"	ldr	r0, [sp, #0x0000]	\n" \
-	"	add	r1, sp, #0x0004		\n" \
+	"	ldr	r0, [sp, #0]		\n" \
+	"	add	r1, sp, #4		\n" \
 	"	add	r2, r1, r0, lsl #2	\n" \
-	"	add	r2, r2, #0x0004		\n" \
+	"	add	r2, r2, #4		\n" \
 	"					\n" \
 	"/*					\n" \
 	" * Ensure the stack is properly	\n" \
 	" * aligned before calling C code.	\n" \
 	" */					\n" \
-	/* #if 1 */				\
 	"	bic	sp, sp, #7" /*__STRING(STACKALIGNBYTES)*/ "	\n" \
-	/* #endif */				\
-	"	sub	sp, sp, #8		\n" \
-	"	str	r5, [sp, #4]		\n" \
-	"	str	r4, [sp, #0]		\n" \
-	"					\n" \
 	"	b	___start		\n" \
+	".previous");
+
+#define	MD_RCRT0_START				\
+	char **environ, *__progname;		\
+	__asm(					\
+	".text					\n" \
+	"	.align	0			\n" \
+	"	.globl	_start			\n" \
+	"	.globl	__start			\n" \
+	"_start:				\n" \
+	"__start:				\n" \
+	"	mov	fp, sp			\n" \
+	"	mov	r0, fp			\n" \
+	"					\n" \
+	"	sub	sp, sp, #4+4+(16*4)	\n" \
+	"	add	r1, sp, #4		\n" \
+	"					\n" \
+	"	ldr	r8, .L_GOT		\n" \
+	"1:	add	r8, pc, r8		\n" \
+	"	ldr	r2, .L__DYNAMIC		\n" \
+	"	add	r2, r2, r8		\n" \
+	"					\n" \
+	"	bl	_dl_boot_bind		\n" \
+	"					\n" \
+	"	mov	sp, fp			\n" \
+	"	mov	fp, #0			\n" \
+	"					\n" \
+	"	mov	r3, #0	/* cleanup */	\n" \
+	"/* Get argc/argv/envp from stack */	\n" \
+	"	ldr	r0, [sp, #0]		\n" \
+	"	add	r1, sp, #4		\n" \
+	"	add	r2, r1, r0, lsl #2	\n" \
+	"	add	r2, r2, #4		\n" \
+	"					\n" \
+	"/*					\n" \
+	" * Ensure the stack is properly	\n" \
+	" * aligned before calling C code.	\n" \
+	" */					\n" \
+	"	bic	sp, sp, #7" /*__STRING(STACKALIGNBYTES)*/ "	\n" \
+	"	b	___start		\n" \
+	"					\n" \
+	".L_GOT:				\n" \
+	"	.long	_GLOBAL_OFFSET_TABLE_-(1b+8)	\n" \
+	".L__DYNAMIC:				\n" \
+	"	.long	_DYNAMIC(GOTOFF)	\n" \
+	"					\n" \
+	"_dl_exit:				\n" \
+	"	mov	r12, #1			\n" \
+	"	swi	#0			\n" \
+	"_dl_printf:				\n" \
+	"	mov	pc, lr			\n" \
 	".previous");
