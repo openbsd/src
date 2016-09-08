@@ -1769,6 +1769,7 @@
 ./usr/share/man/man4/sti.4
 ./usr/share/man/man4/stp.4
 ./usr/share/man/man4/sv.4
+./usr/share/man/man4/switch.4
 ./usr/share/man/man4/sym.4
 ./usr/share/man/man4/tap.4
 ./usr/share/man/man4/tcic.4
@@ -1915,7 +1916,6 @@
 ./usr/share/man/man5
 ./usr/share/man/man5/acct.5
 ./usr/share/man/man5/aliases.5
-./usr/share/man/man5/amd64
 ./usr/share/man/man5/ar.5
 ./usr/share/man/man5/bgpd.conf.5
 ./usr/share/man/man5/bootparams.5
@@ -1954,9 +1954,7 @@
 ./usr/share/man/man5/hostapd.conf.5
 ./usr/share/man/man5/hostname.if.5
 ./usr/share/man/man5/hosts.5
-./usr/share/man/man5/hppa
 ./usr/share/man/man5/httpd.conf.5
-./usr/share/man/man5/i386
 ./usr/share/man/man5/ifstated.conf.5
 ./usr/share/man/man5/iked.conf.5
 ./usr/share/man/man5/info.5
@@ -1966,11 +1964,9 @@
 ./usr/share/man/man5/isakmpd.policy.5
 ./usr/share/man/man5/iscsi.conf.5
 ./usr/share/man/man5/keynote.5
-./usr/share/man/man5/landisk
 ./usr/share/man/man5/ldapd.conf.5
 ./usr/share/man/man5/ldpd.conf.5
 ./usr/share/man/man5/login.conf.5
-./usr/share/man/man5/macppc
 ./usr/share/man/man5/magic.5
 ./usr/share/man/man5/mailer.conf.5
 ./usr/share/man/man5/malloc.conf.5
@@ -2015,7 +2011,6 @@
 ./usr/share/man/man5/skey.5
 ./usr/share/man/man5/smtpd.conf.5
 ./usr/share/man/man5/snmpd.conf.5
-./usr/share/man/man5/socppc
 ./usr/share/man/man5/spamd.conf.5
 ./usr/share/man/man5/ssh_config.5
 ./usr/share/man/man5/sshd_config.5
