@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.130 2016/05/31 15:11:26 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.131 2016/09/08 17:39:08 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -565,6 +565,17 @@ sr_crypto_change_maskkey(struct sr_discipline *sd,
 		sr_error(sd->sd_sc, "incorrect key or passphrase");
 		rv = EPERM;
 		goto out;
+	}
+
+	/* Copy new KDF hint to metadata, if supplied. */
+	if (kdfinfo2->flags & SR_CRYPTOKDF_HINT) {
+		if (kdfinfo2->genkdf.len >
+		    sizeof(sd->mds.mdd_crypto.scr_meta->scm_kdfhint))
+			goto out;
+		explicit_bzero(sd->mds.mdd_crypto.scr_meta->scm_kdfhint,
+		    sizeof(sd->mds.mdd_crypto.scr_meta->scm_kdfhint));
+		memcpy(sd->mds.mdd_crypto.scr_meta->scm_kdfhint,
+		    &kdfinfo2->genkdf, kdfinfo2->genkdf.len);
 	}
 
 	/* Mask the disk keys. */
