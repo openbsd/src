@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.47 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.48 2016/09/08 16:44:46 tedu Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -91,7 +91,6 @@ struct vops mfs_vops = {
  * validate before actual IO. Record our process identifier
  * so we can tell when we are doing I/O to ourself.
  */
-/* ARGSUSED */
 int
 mfs_open(void *v)
 {
@@ -100,7 +99,6 @@ mfs_open(void *v)
 
 	if (ap->a_vp->v_type != VBLK) {
 		panic("mfs_open not VBLK");
-		/* NOTREACHED */
 	}
 #endif
 	return (0);
@@ -109,13 +107,9 @@ mfs_open(void *v)
 /*
  * Ioctl operation.
  */
-/* ARGSUSED */
 int
 mfs_ioctl(void *v)
 {
-#if 0
-	struct vop_ioctl_args *ap = v;
-#endif
 
 	return (ENOTTY);
 }
@@ -147,8 +141,6 @@ mfs_strategy(void *v)
 
 /*
  * Memory file system I/O.
- *
- * Trivial on the HP since buffer has already been mapped into KVA space.
  */
 void
 mfs_doio(struct mfsnode *mfsp, struct buf *bp)
@@ -177,7 +169,6 @@ mfs_doio(struct mfsnode *mfsp, struct buf *bp)
 /*
  * Memory filesystem close routine
  */
-/* ARGSUSED */
 int
 mfs_close(void *v)
 {
@@ -224,7 +215,6 @@ mfs_close(void *v)
 /*
  * Memory filesystem inactive routine
  */
-/* ARGSUSED */
 int
 mfs_inactive(void *v)
 {
@@ -274,5 +264,4 @@ int
 mfs_badop(void *v)
 {
 	panic("mfs_badop called");
-	/* NOTREACHED */
 }
