@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.133 2016/09/08 18:41:04 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.134 2016/09/08 19:08:14 jsing Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -87,7 +87,7 @@ int			devh = -1;
 int			human;
 int			verbose;
 u_int32_t		cflags = 0;
-int			rflag = 8192;
+int			rflag = 0;
 char			*password;
 
 void			*bio_cookie;
@@ -965,7 +965,7 @@ bio_kdf_generate(struct sr_crypto_kdfinfo *kdfinfo)
 
 	kdfinfo->pbkdf2.len = sizeof(kdfinfo->pbkdf2);
 	kdfinfo->pbkdf2.type = SR_CRYPTOKDFT_PBKDF2;
-	kdfinfo->pbkdf2.rounds = rflag;
+	kdfinfo->pbkdf2.rounds = rflag ? rflag : 8192;
 
 	kdfinfo->flags = SR_CRYPTOKDF_KEY | SR_CRYPTOKDF_HINT;
 	kdfinfo->len = sizeof(*kdfinfo);
@@ -1104,6 +1104,10 @@ bio_changepass(char *dev)
 
 	/* Current passphrase. */
 	bio_kdf_derive(&kdfinfo1, &kdfhint, "Old passphrase: ", 0);
+
+	/* Keep the previous number of rounds, unless specified. */
+	if (!rflag)
+		rflag = kdfhint.rounds;
 
 	/* New passphrase. */
 	bio_kdf_generate(&kdfinfo2);
