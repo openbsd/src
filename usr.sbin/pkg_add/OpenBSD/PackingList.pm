@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.139 2016/09/04 12:08:49 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.140 2016/09/08 09:51:15 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -549,7 +549,7 @@ sub check_signature
 	} elsif ($sig->{key} eq 'signify') {
 		require OpenBSD::signify;
 		return OpenBSD::signify::check_signature($plist, $state);
-	} elsif ($sig->{key} eq 'signify2') {
+	} elsif ($sig->{key} eq 'signify2' && $state->defines('newsign')) {
 		return 1;
 	} else {
 		$state->log("Error: unknown signature style $sig->{key}");
