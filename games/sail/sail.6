@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sail.6,v 1.22 2014/11/30 02:41:43 schwarze Exp $
+.\"	$OpenBSD: sail.6,v 1.23 2016/09/09 15:32:28 tb Exp $
 .\"	$NetBSD: sail.6,v 1.4 1995/04/22 10:37:24 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sail.6	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: November 30 2014 $
+.Dd $Mdocdate: September 9 2016 $
 .Dt SAIL 6
 .Os
 .Sh NAME
@@ -42,6 +42,13 @@
 .Op Fl s Op Fl l
 .Op Ar number
 .Sh DESCRIPTION
+.Bf -symbolic
+.Nm
+is currently unusable because it relies on
+.Xr setegid 2
+to allow multiple users read and write access to the same files.
+.Ef
+.Pp
 .Nm
 is a computer version of Avalon Hill's game of fighting sail
 originally developed by S. Craig Taylor.

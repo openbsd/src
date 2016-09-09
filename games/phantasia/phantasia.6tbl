@@ -1,7 +1,7 @@
-.\"	$OpenBSD: phantasia.6tbl,v 1.9 2014/02/12 13:09:08 schwarze Exp $
+.\"	$OpenBSD: phantasia.6tbl,v 1.10 2016/09/09 15:32:28 tb Exp $
 .\"	$NetBSD: phantasia.6,v 1.9 2002/09/26 18:32:03 wiz Exp $
 .\"
-.Dd $Mdocdate: February 12 2014 $
+.Dd $Mdocdate: September 9 2016 $
 .Dt PHANTASIA 6
 .Os
 .Sh NAME
@@ -11,6 +11,13 @@
 .Nm
 .Op Fl abHmpSsx
 .Sh DESCRIPTION
+.Bf -symbolic
+.Nm
+is currently unusable because it relies on
+.Xr setgid 2
+to allow multiple users read and write access to the same files.
+.Ef
+.Pp
 .Nm
 is a role-playing game that allows players to roll up characters of
 various types to fight monsters and other players.
