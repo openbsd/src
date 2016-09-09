@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.62 2016/09/01 10:34:40 otto Exp $	*/
+/*	$OpenBSD: setup.c,v 1.63 2016/09/09 15:37:15 tb Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const int sbtry[] = SBLOCKSEARCH;
 static const int altsbtry[] = { 32, 64, 128, 144, 160, 192, 256 };
 
 int
-setup(char *dev)
+setup(char *dev, int isfsdb)
 {
 	long cg, size, asked, i, j;
 	size_t bmapsize;
@@ -102,7 +102,7 @@ setup(char *dev)
 		strlcpy(rdevname, realdev, sizeof(rdevname));
 		setcdevname(rdevname, dev, preen);
 
-		if (!hotroot())
+		if (isfsdb || !hotroot())
 			if (pledge("stdio rpath wpath getpw tty disklabel",
 			    NULL) == -1)
 				err(1, "pledge");
@@ -145,15 +145,13 @@ setup(char *dev)
 	else
 		secsize = DEV_BSIZE;
 
-	if (!hotroot()) {
+	if (isfsdb) {
+		if (pledge("stdio rpath getpw tty", NULL) == -1)
+			err(1, "pledge");
+	} else if (!hotroot()) {
 #ifndef SMALL
-		if (strcmp("fsdb", getprogname()) == 0) {
-			if (pledge("stdio rpath getpw tty", NULL) == -1)
-				err(1, "pledge");
-		} else {
-			if (pledge("stdio getpw", NULL) == -1)
-				err(1, "pledge");
-		}
+		if (pledge("stdio getpw", NULL) == -1)
+			err(1, "pledge");
 #else
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");

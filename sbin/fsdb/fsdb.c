@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.30 2016/06/07 01:29:38 tedu Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.31 2016/09/09 15:37:14 tb Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 	}
 	if (fsys == NULL)
 		usage();
-	if (!setup(fsys))
+	if (!setup(fsys, 1))
 		errx(1, "cannot set up file system `%s'", fsys);
 	printf("Editing file system `%s'\nLast Mounted on %s\n", fsys,
 	    sblock.fs_fsmnt);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.13 2014/09/06 04:05:40 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.14 2016/09/09 15:37:15 tb Exp $	*/
 /*	$NetBSD: extern.h,v 1.6 1996/09/27 22:45:12 christos Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ void	pinode(ino_t);
 void	propagate(ino_t);
 int	reply(char *);
 void	setinodebuf(ino_t);
-int	setup(char *);
+int	setup(char *, int);
 union dinode * getnextinode(ino_t);
 void	catch(int);
 void	catchquit(int);
