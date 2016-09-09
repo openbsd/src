@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.35 2016/09/05 10:19:46 rpe Exp $
+#	$OpenBSD: dot.profile,v 1.36 2016/09/09 14:52:28 rpe Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -109,19 +109,10 @@ __EOT
 		fi
 
 		case $REPLY in
-		[aA]*)	/autoinstall && break
-			;;
-		[iI]*)	/install && break
-			;;
-		[uU]*)	/upgrade && break
-			;;
-		[sS]*)	break
-			;;
-		!)	echo "Type 'exit' to return to install."
-			ksh
-			;;
-		!*)	eval "${REPLY#?}"
-			;;
+		[aA]*)	/autoinstall && break;;
+		[iI]*)	/install && break;;
+		[uU]*)	/upgrade && break;;
+		[sS]*)	break;;
 		esac
 	done
 fi
