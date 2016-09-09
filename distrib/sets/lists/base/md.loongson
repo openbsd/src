@@ -1930,6 +1930,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/_endian.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/_null.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/_time.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/acct.ph

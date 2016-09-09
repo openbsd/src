@@ -1943,6 +1943,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/_endian.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/_null.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/_time.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/acct.ph

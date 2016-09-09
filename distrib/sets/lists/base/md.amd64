@@ -1943,6 +1943,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/_endian.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/sys/_null.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/_time.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/acct.ph

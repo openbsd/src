@@ -1927,6 +1927,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/_endian.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/sys/_null.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/_time.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/acct.ph

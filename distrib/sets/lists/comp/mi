@@ -1274,6 +1274,7 @@
 ./usr/include/struct.h
 ./usr/include/sys
 ./usr/include/sys/_endian.h
+./usr/include/sys/_null.h
 ./usr/include/sys/_time.h
 ./usr/include/sys/_types.h
 ./usr/include/sys/acct.h

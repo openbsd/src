@@ -1821,6 +1821,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/_endian.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/_null.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/_time.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/acct.ph

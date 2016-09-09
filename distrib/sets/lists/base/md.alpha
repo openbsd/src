@@ -1909,6 +1909,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/_endian.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/sys/_null.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/_time.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/acct.ph
