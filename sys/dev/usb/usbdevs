@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.666 2016/06/01 09:48:20 mglocker Exp $
+$OpenBSD: usbdevs,v 1.667 2016/09/09 18:28:11 tedu Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1092,7 +1092,7 @@ product ATI2 205		0xa001	USB Cable 205
 /* Atmel Comp. products */
 product ATMEL STK541		0x2109	STK541 Zigbee
 product ATMEL UHB124		0x3301	UHB124 hub
-product ATMEL WN210		0x3301	W-Buddie WN210
+product ATMEL WN210		0x4102	W-Buddie WN210
 product ATMEL DWL900AP		0x5601	DWL-900AP Wireless access point
 product ATMEL AT91_CDC_ACM	0x6119	AT91 CDC ACM
 product ATMEL AT76C503I1	0x7603	AT76C503 (Intersil 3861 Radio)
