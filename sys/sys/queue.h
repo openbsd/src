@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.43 2015/12/28 19:38:40 millert Exp $	*/
+/*	$OpenBSD: queue.h,v 1.44 2016/09/09 20:31:46 millert Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -34,6 +34,8 @@
 
 #ifndef	_SYS_QUEUE_H_
 #define	_SYS_QUEUE_H_
+
+#include <sys/_null.h>
 
 /*
  * This file defines five types of data structures: singly-linked lists,
