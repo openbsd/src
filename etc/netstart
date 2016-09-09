@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.169 2016/07/19 08:03:01 mpi Exp $
+#	$OpenBSD: netstart,v 1.170 2016/09/09 19:48:16 jasper Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -166,6 +166,12 @@ ifv6autoconf() {
 		ifconfig $_if inet6 autoconf
 	done
 }
+
+# Make sure the invoking user has the right privileges.
+if (($(id -u) != 0)); then
+	echo "${0##*/}: need root privileges"
+	exit 1
+fi
 
 # Get network related vars from rc.conf using the parsing routine from rc.subr.
 FUNCS_ONLY=1 . /etc/rc.d/rc.subr
