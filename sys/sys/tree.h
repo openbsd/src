@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.19 2016/09/09 02:00:14 dlg Exp $	*/
+/*	$OpenBSD: tree.h,v 1.20 2016/09/09 04:50:54 dlg Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -762,6 +762,8 @@ name##_RB_MINMAX(struct name *head, int val)				\
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#if 0
+
 struct rb_type {
 	int		(*t_compare)(const void *, const void *);
 	void		(*t_augment)(void *);
@@ -966,5 +968,7 @@ RBT_GENERATE_INTERNAL(_name, _type, _field, _cmp, _name##_RBT_AUGMENT)
 	     (_e) = (_n))
 
 #endif /* _LOCORE */
+
+#endif /* 0 */
 
 #endif	/* _SYS_TREE_H_ */
