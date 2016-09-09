@@ -1,4 +1,4 @@
-/*	$OpenBSD: locale.h,v 1.9 2014/07/14 07:22:07 pelikan Exp $	*/
+/*	$OpenBSD: locale.h,v 1.10 2016/09/09 18:12:37 millert Exp $	*/
 /*	$NetBSD: locale.h,v 1.6 1994/10/26 00:56:02 cgd Exp $	*/
 
 /*
@@ -35,6 +35,8 @@
 #ifndef _LOCALE_H_
 #define _LOCALE_H_
 
+#include <sys/_null.h>
+
 struct lconv {
 	char	*decimal_point;
 	char	*thousands_sep;
@@ -61,16 +63,6 @@ struct lconv {
 	char	int_p_sign_posn;
 	char	int_n_sign_posn;
 };
-
-#ifndef NULL
-#ifdef 	__GNUG__
-#define NULL	__null
-#elif defined(__cplusplus)
-#define	NULL	0L
-#else
-#define	NULL	((void *)0)
-#endif
-#endif
 
 #define	LC_ALL		0
 #define	LC_COLLATE	1

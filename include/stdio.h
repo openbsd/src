@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.52 2016/03/16 04:56:08 deraadt Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.53 2016/09/09 18:12:37 millert Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -39,6 +39,7 @@
 #define	_STDIO_H_
 
 #include <sys/cdefs.h>
+#include <sys/_null.h>
 #include <sys/_types.h>
 
 #if __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE
@@ -53,16 +54,6 @@ typedef	__size_t	size_t;
 #ifndef	_OFF_T_DEFINED_
 #define	_OFF_T_DEFINED_
 typedef	__off_t	off_t;
-#endif
-
-#ifndef NULL
-#ifdef 	__GNUG__
-#define	NULL	__null
-#elif defined(__cplusplus)
-#define	NULL	0L
-#else
-#define	NULL	((void *)0)
-#endif
 #endif
 
 #define	_FSTDIO			/* Define for new stdio with functions. */

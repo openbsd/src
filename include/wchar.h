@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.29 2015/04/04 18:05:05 guenther Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.30 2016/09/09 18:12:37 millert Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -60,17 +60,8 @@
 #define _WCHAR_H_
 
 #include <sys/cdefs.h>
+#include <sys/_null.h>
 #include <sys/_types.h>
-
-#ifndef	NULL
-#ifdef	__GNUG__
-#define	NULL	__null
-#elif defined(__cplusplus)
-#define	NULL	0L
-#else
-#define	NULL	((void *)0)
-#endif
-#endif
 
 #include <stdio.h> /* for FILE* */
 

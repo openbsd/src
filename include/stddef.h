@@ -1,4 +1,4 @@
-/*	$OpenBSD: stddef.h,v 1.12 2011/07/03 18:51:01 jsg Exp $	*/
+/*	$OpenBSD: stddef.h,v 1.13 2016/09/09 18:12:37 millert Exp $	*/
 /*	$NetBSD: stddef.h,v 1.4 1994/10/26 00:56:26 cgd Exp $	*/
 
 /*-
@@ -36,6 +36,7 @@
 #define _STDDEF_H_
 
 #include <sys/cdefs.h>
+#include <sys/_null.h>
 #include <sys/_types.h>
 
 #ifndef _PTRDIFF_T_DEFINED_
@@ -62,16 +63,6 @@ typedef	__wint_t	wint_t;
 #ifndef	_MBSTATE_T_DEFINED_
 #define	_MBSTATE_T_DEFINED_
 typedef	__mbstate_t	mbstate_t;
-#endif
-
-#ifndef	NULL
-#ifdef 	__GNUG__
-#define NULL	__null
-#elif defined(__cplusplus)
-#define	NULL	0L
-#else
-#define	NULL	((void *)0)
-#endif
 #endif
 
 #if __GNUC_PREREQ__(4, 0)

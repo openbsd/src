@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.28 2015/04/07 01:47:04 millert Exp $	*/
+/*	$OpenBSD: time.h,v 1.29 2016/09/09 18:12:37 millert Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -42,17 +42,8 @@
 #define	_TIME_H_
 
 #include <sys/cdefs.h>
+#include <sys/_null.h>
 #include <sys/_types.h>
-
-#ifndef	NULL
-#ifdef 	__GNUG__
-#define	NULL	__null
-#elif defined(__cplusplus)
-#define	NULL	0L
-#else
-#define	NULL	((void *)0)
-#endif
-#endif
 
 #ifndef	_CLOCK_T_DEFINED_
 #define	_CLOCK_T_DEFINED_

@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.30 2015/11/20 23:40:32 millert Exp $	*/
+/*	$OpenBSD: string.h,v 1.31 2016/09/09 18:12:37 millert Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -36,6 +36,7 @@
 #define	_STRING_H_
 
 #include <sys/cdefs.h>
+#include <sys/_null.h>
 #include <machine/_types.h>
 
 /*
@@ -49,16 +50,6 @@
 #ifndef	_SIZE_T_DEFINED_
 #define	_SIZE_T_DEFINED_
 typedef	__size_t	size_t;
-#endif
-
-#ifndef	NULL
-#ifdef 	__GNUG__
-#define	NULL	__null
-#elif defined(__cplusplus)
-#define	NULL	0L
-#else
-#define	NULL	((void *)0)
-#endif
 #endif
 
 __BEGIN_DECLS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.65 2015/07/14 19:05:11 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.66 2016/09/09 18:12:37 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -36,6 +36,7 @@
 #define _STDLIB_H_
 
 #include <sys/cdefs.h>
+#include <sys/_null.h>
 #include <machine/_types.h>
 #if __BSD_VISIBLE	/* for quad_t, etc. (XXX - use protected types) */
 #include <sys/types.h>
@@ -74,17 +75,6 @@ typedef struct {
 	quad_t quot;		/* quotient */
 	quad_t rem;		/* remainder */
 } qdiv_t;
-#endif
-
-
-#ifndef	NULL
-#ifdef 	__GNUG__
-#define NULL	__null
-#elif defined(__cplusplus)
-#define	NULL	0L
-#else
-#define	NULL	((void *)0)
-#endif
 #endif
 
 #define	EXIT_FAILURE	1

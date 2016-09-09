@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.122 2016/05/11 18:01:33 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.123 2016/09/09 18:12:37 millert Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -44,13 +44,7 @@
 #define OpenBSD	201609		/* OpenBSD version (year & month). */
 #define OpenBSD6_0 1		/* OpenBSD 6.0 */
 
-#ifndef NULL
-#ifdef 	__GNUG__
-#define	NULL	__null
-#else
-#define	NULL	((void *)0)
-#endif
-#endif
+#include <sys/_null.h>
 
 #ifndef _LOCORE
 #include <sys/types.h>
