@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.34 2016/09/04 12:35:23 bcook Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.35 2016/09/09 00:03:22 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -273,7 +273,6 @@ EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 		ret = EVP_EncryptFinal_ex(ctx, out, outl);
 	else
 		ret = EVP_DecryptFinal_ex(ctx, out, outl);
-	(void) EVP_CIPHER_CTX_cleanup(ctx);
 	return ret;
 }
 
@@ -382,7 +381,6 @@ EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	int ret;
 
 	ret = EVP_EncryptFinal_ex(ctx, out, outl);
-	(void) EVP_CIPHER_CTX_cleanup(ctx);
 	return ret;
 }
 
@@ -499,7 +497,6 @@ EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	int ret;
 
 	ret = EVP_DecryptFinal_ex(ctx, out, outl);
-	(void) EVP_CIPHER_CTX_cleanup(ctx);
 	return ret;
 }
 
