@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.156 2016/09/10 07:39:49 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.157 2016/09/10 07:40:58 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -193,13 +193,13 @@ main(int argc, char *argv[])
 	struct addrinfo hints, *res;
 	struct itimerval itimer;
 	struct sockaddr_in  from, from4;
+	socklen_t maxsizelen;
 	int64_t preload;
 	int ch, i, optval = 1, packlen, maxsize, df = 0, tos = 0;
 	int error;
 	u_char *datap, *packet, ttl = MAXTTL, loop = 1;
 	char *e, *target, hbuf[NI_MAXHOST], *source = NULL;
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
-	socklen_t maxsizelen;
 	const char *errstr;
 	double intval;
 	uid_t uid;
