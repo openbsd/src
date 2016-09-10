@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.25 2016/09/10 09:44:49 rpe Exp $
+#	$OpenBSD: ksh.kshrc,v 1.26 2016/09/10 12:50:20 rpe Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh
@@ -53,7 +53,7 @@ case "$-" in
 	tty=`basename $tty`
 	TTY=${TTY:-$tty}
 	# $console is the system console device
-	console=$(sysctl machdep.console_device)
+	console=$(sysctl kern.consdev)
 	console=${console#*=}
 
 	set -o emacs
