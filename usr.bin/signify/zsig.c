@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.11 2016/09/08 16:04:01 espie Exp $ */
+/* $OpenBSD: zsig.c,v 1.12 2016/09/10 12:23:16 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -266,7 +266,7 @@ zsign(const char *seckeyfile, const char *msgfile, const char *sigfile)
 	buffer = xmalloc(bufsize);
 	time(&clock);
 	strftime(date, sizeof date, "%Y-%m-%dT%H:%M:%SZ", gmtime(&clock));
-	snprintf(msg, space, 
+	snprintf(msg, space,
 	    "date=%s\n"
 	    "key=%s\n"
 	    "algorithm=SHA512/256\n"

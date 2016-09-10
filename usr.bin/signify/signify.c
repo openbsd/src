@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.117 2016/09/03 12:21:38 espie Exp $ */
+/* $OpenBSD: signify.c,v 1.118 2016/09/10 12:23:16 deraadt Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -450,7 +450,7 @@ check_keytype(const char *pubkeyfile, const char *keytype)
 	size_t len;
 	char *cmp;
 	int slen;
-	
+
 	len = strlen(pubkeyfile);
 	slen = asprintf(&cmp, "-%s.pub", keytype);
 	if (slen < 0)
@@ -560,7 +560,7 @@ struct checksum {
 	char algo[32];
 };
 
-static void * 
+static void *
 ecalloc(size_t s1, size_t s2, void *data)
 {
 	void *p;
@@ -691,7 +691,7 @@ check(const char *pubkeyfile, const char *sigfile, int quiet, int argc,
 }
 
 void *
-verifyzdata(uint8_t *zdata, unsigned long long zdatalen, 
+verifyzdata(uint8_t *zdata, unsigned long long zdatalen,
     const char *filename, const char *pubkeyfile, const char *keytype)
 {
 	struct sig sig;
@@ -701,7 +701,7 @@ verifyzdata(uint8_t *zdata, unsigned long long zdatalen,
 
 	if (zdatalen < sizeof(sig))
 		errx(1, "signature too short in %s", filename);
-	siglen = parseb64file(filename, zdata, &sig, sizeof(sig), 
+	siglen = parseb64file(filename, zdata, &sig, sizeof(sig),
 	    sigcomment);
 	readpubkey(pubkeyfile, &pubkey, sigcomment, keytype);
 	zdata += siglen;
@@ -864,7 +864,7 @@ main(int argc, char **argv)
 		} else {
 			if (!msgfile)
 				usage("must specify message");
-			verify(pubkeyfile, msgfile, sigfile, embedded, 
+			verify(pubkeyfile, msgfile, sigfile, embedded,
 			    quiet, keytype);
 		}
 		break;
