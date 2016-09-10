@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.89 2016/09/10 18:02:15 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.90 2016/09/10 18:31:15 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1186,27 +1186,6 @@ out:
  * `in' registers within the syscall trap code (because of the automatic
  * `save' effect of each trap).  They are, however, the %o registers of the
  * thing that made the system call, and are named that way here.
- *
- * 32-bit system calls on a 64-bit system are a problem.  Each system call
- * argument is stored in the smaller of the argument's true size or a
- * `register_t'.  Now on a 64-bit machine all normal types can be stored in a
- * `register_t'.  (The only exceptions would be 128-bit `quad's or 128-bit
- * extended precision floating point values, which we don't support.)  For
- * 32-bit syscalls, 64-bit integers like `off_t's, double precision floating
- * point values, and several other types cannot fit in a 32-bit `register_t'.
- * These will require reading in two `register_t' values for one argument.
- *
- * In order to calculate the true size of the arguments and therefore whether
- * any argument needs to be split into two slots, the system call args
- * structure needs to be built with the appropriately sized register_t.
- * Otherwise the emul needs to do some magic to split oversized arguments.
- *
- * We can handle most this stuff for normal syscalls by using either a 32-bit
- * or 64-bit array of `register_t' arguments.  Unfortunately ktrace always
- * expects arguments to be `register_t's, so it loses badly.  What's worse,
- * ktrace may need to do size translations to massage the argument array
- * appropriately according to the emulation that is doing the ktrace.
- *  
  */
 void
 syscall(tf, code, pc)
@@ -1248,10 +1227,10 @@ syscall(tf, code, pc)
 	 * of the user's stack frame (see <machine/frame.h>).
 	 *
 	 * Check for ``special'' codes that alter this, namely syscall and
-	 * __syscall.  The latter takes a quad syscall number, so that other
-	 * arguments are at their natural alignments.  Adjust the number
-	 * of ``easy'' arguments as appropriate; we will copy the hard
-	 * ones later as needed.
+	 * __syscall.  These both pass a syscall number in the first argument
+	 * register, so the other arguments are just shifted down, possibly
+	 * pushing one off the end into the extension area.  This happens
+	 * with mmap() and mquery() used via __syscall().
 	 */
 	ap = &tf->tf_out[0];
 	nap = 6;
