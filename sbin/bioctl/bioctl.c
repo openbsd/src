@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.134 2016/09/08 19:08:14 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.135 2016/09/10 16:53:22 jsing Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -64,9 +64,9 @@ const char 		*str2patrol(const char *, struct timing *);
 void			bio_status(struct bio_status *);
 int			bio_parse_devlist(char *, dev_t *);
 void			bio_kdf_derive(struct sr_crypto_kdfinfo *,
-			    struct sr_crypto_kdf_pbkdf2 *, char *, int);
+			    struct sr_crypto_pbkdf *, char *, int);
 void			bio_kdf_generate(struct sr_crypto_kdfinfo *);
-void			derive_key_pkcs(u_int32_t, int, u_int8_t *, size_t,
+void			derive_key(u_int32_t, int, u_int8_t *, size_t,
 			    u_int8_t *, size_t, char *, int);
 
 void			bio_inq(char *);
@@ -821,7 +821,7 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 {
 	struct bioc_createraid	create;
 	struct sr_crypto_kdfinfo kdfinfo;
-	struct sr_crypto_kdf_pbkdf2 kdfhint;
+	struct sr_crypto_pbkdf	kdfhint;
 	struct stat		sb;
 	int			rv, no_dev, fd;
 	dev_t			*dt;
@@ -937,7 +937,7 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 }
 
 void
-bio_kdf_derive(struct sr_crypto_kdfinfo *kdfinfo, struct sr_crypto_kdf_pbkdf2
+bio_kdf_derive(struct sr_crypto_kdfinfo *kdfinfo, struct sr_crypto_pbkdf
     *kdfhint, char* prompt, int verify)
 {
 	if (!kdfinfo)
@@ -945,13 +945,13 @@ bio_kdf_derive(struct sr_crypto_kdfinfo *kdfinfo, struct sr_crypto_kdf_pbkdf2
 	if (!kdfhint)
 		errx(1, "invalid KDF hint");
 
-	if (kdfhint->len != sizeof(*kdfhint))
+	if (kdfhint->generic.len != sizeof(*kdfhint))
 		errx(1, "KDF hint has invalid size");
 
 	kdfinfo->flags = SR_CRYPTOKDF_KEY;
 	kdfinfo->len = sizeof(*kdfinfo);
 
-	derive_key_pkcs(kdfhint->type, kdfhint->rounds,
+	derive_key(kdfhint->generic.type, kdfhint->rounds,
 	    kdfinfo->maskkey, sizeof(kdfinfo->maskkey),
 	    kdfhint->salt, sizeof(kdfhint->salt),
 	    prompt, verify);
@@ -963,19 +963,19 @@ bio_kdf_generate(struct sr_crypto_kdfinfo *kdfinfo)
 	if (!kdfinfo)
 		errx(1, "invalid KDF info");
 
-	kdfinfo->pbkdf2.len = sizeof(kdfinfo->pbkdf2);
-	kdfinfo->pbkdf2.type = SR_CRYPTOKDFT_PBKDF2;
-	kdfinfo->pbkdf2.rounds = rflag ? rflag : 8192;
+	kdfinfo->pbkdf.generic.len = sizeof(kdfinfo->pbkdf);
+	kdfinfo->pbkdf.generic.type = SR_CRYPTOKDFT_PCKS5_PBKDF2;
+	kdfinfo->pbkdf.rounds = rflag ? rflag : 8192;
 
 	kdfinfo->flags = SR_CRYPTOKDF_KEY | SR_CRYPTOKDF_HINT;
 	kdfinfo->len = sizeof(*kdfinfo);
 
 	/* generate salt */
-	arc4random_buf(kdfinfo->pbkdf2.salt, sizeof(kdfinfo->pbkdf2.salt));
+	arc4random_buf(kdfinfo->pbkdf.salt, sizeof(kdfinfo->pbkdf.salt));
 
-	derive_key_pkcs(kdfinfo->pbkdf2.type, kdfinfo->pbkdf2.rounds,
+	derive_key(kdfinfo->pbkdf.generic.type, kdfinfo->pbkdf.rounds,
 	    kdfinfo->maskkey, sizeof(kdfinfo->maskkey),
-	    kdfinfo->pbkdf2.salt, sizeof(kdfinfo->pbkdf2.salt),
+	    kdfinfo->pbkdf.salt, sizeof(kdfinfo->pbkdf.salt),
 	    "New passphrase: ", 1);
 }
 
@@ -1083,7 +1083,7 @@ bio_changepass(char *dev)
 	struct bioc_discipline bd;
 	struct sr_crypto_kdfpair kdfpair;
 	struct sr_crypto_kdfinfo kdfinfo1, kdfinfo2;
-	struct sr_crypto_kdf_pbkdf2 kdfhint;
+	struct sr_crypto_pbkdf kdfhint;
 	int rv;
 
 	memset(&bd, 0, sizeof(bd));
@@ -1262,7 +1262,7 @@ bio_patrol(char *arg)
 }
 
 void
-derive_key_pkcs(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
+derive_key(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
     u_int8_t *salt, size_t saltsz, char *prompt, int verify)
 {
 	FILE		*f;
@@ -1275,7 +1275,7 @@ derive_key_pkcs(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
 	if (!salt)
 		errx(1, "Invalid salt");
 
-	if (type != SR_CRYPTOKDFT_PBKDF2)
+	if (type != SR_CRYPTOKDFT_PCKS5_PBKDF2)
 		errx(1, "unknown KDF type %d", type);
 	if (rounds < 1000)
 		errx(1, "number of KDF rounds is too small: %d", rounds);
