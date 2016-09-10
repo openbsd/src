@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.90 2016/09/10 18:31:15 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.91 2016/09/10 19:33:38 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -309,7 +309,7 @@ const char *trap_type[] = {
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
-static __inline void share_fpu(struct proc *, struct trapframe64 *);
+static inline void share_fpu(struct proc *, struct trapframe64 *);
 
 void trap(struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate);
 void data_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc, 
@@ -330,9 +330,8 @@ void syscall(struct trapframe64 *, register_t code, register_t pc);
  *
  * Oh, and don't touch the FPU bit if we're returning to the kernel.
  */
-static __inline void share_fpu(p, tf)
-	struct proc *p;
-	struct trapframe64 *tf;
+static inline void
+share_fpu(struct proc *p, struct trapframe64 *tf)
 {
 	if (!(tf->tf_tstate & TSTATE_PRIV) &&
 	    (tf->tf_tstate & TSTATE_PEF) && fpproc != p)
@@ -344,11 +343,7 @@ static __inline void share_fpu(p, tf)
  * (MMU-related traps go through mem_access_fault, below.)
  */
 void
-trap(tf, type, pc, tstate)
-	struct trapframe64 *tf;
-	unsigned type;
-	vaddr_t pc;
-	long tstate;
+trap(struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate)
 {
 	struct proc *p;
 	struct pcb *pcb;
@@ -746,8 +741,7 @@ rwindow_save(struct proc *p)
  * the registers into the new process after the exec.
  */
 void
-pmap_unuse_final(p)
-	struct proc *p;
+pmap_unuse_final(struct proc *p)
 {
 
 	write_user_windows();
@@ -759,13 +753,8 @@ pmap_unuse_final(p)
  * of them could be recoverable through uvm_fault.
  */
 void
-data_access_fault(tf, type, pc, addr, sfva, sfsr)
-	struct trapframe64 *tf;
-	unsigned type;
-	vaddr_t pc;
-	vaddr_t addr;
-	vaddr_t sfva;
-	u_long sfsr;
+data_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
+    vaddr_t addr, vaddr_t sfva, u_long sfsr)
 {
 	u_int64_t tstate;
 	struct proc *p;
@@ -907,13 +896,8 @@ kfault:
  * special PEEK/POKE code sequence.
  */
 void
-data_access_error(tf, type, afva, afsr, sfva, sfsr)
-	struct trapframe64 *tf;
-	unsigned type;
-	vaddr_t sfva;
-	u_long sfsr;
-	vaddr_t afva;
-	u_long afsr;
+data_access_error(struct trapframe64 *tf, unsigned type, vaddr_t afva,
+    u_long afsr, vaddr_t sfva, u_long sfsr)
 {
 	u_long pc;
 	u_int64_t tstate;
@@ -989,11 +973,8 @@ out:
  * of them could be recoverable through uvm_fault.
  */
 void
-text_access_fault(tf, type, pc, sfsr)
-	unsigned type;
-	vaddr_t pc;
-	struct trapframe64 *tf;
-	u_long sfsr;
+text_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
+    u_long sfsr)
 {
 	u_int64_t tstate;
 	struct proc *p;
@@ -1076,13 +1057,8 @@ text_access_fault(tf, type, pc, sfsr)
  * special PEEK/POKE code sequence.
  */
 void
-text_access_error(tf, type, pc, sfsr, afva, afsr)
-	struct trapframe64 *tf;
-	unsigned type;
-	vaddr_t pc;
-	u_long sfsr;
-	vaddr_t afva;
-	u_long afsr;
+text_access_error(struct trapframe64 *tf, unsigned type, vaddr_t pc,
+    u_long sfsr, vaddr_t afva, u_long afsr)
 {
 	int64_t tstate;
 	struct proc *p;
@@ -1188,10 +1164,7 @@ out:
  * thing that made the system call, and are named that way here.
  */
 void
-syscall(tf, code, pc)
-	register_t code;
-	struct trapframe64 *tf;
-	register_t pc;
+syscall(struct trapframe64 *tf, register_t code, register_t pc)
 {
 	int i, nsys, nap;
 	int64_t *ap;
