@@ -1,4 +1,4 @@
-/* $OpenBSD: sximmc.c,v 1.7 2016/08/28 15:26:10 mglocker Exp $ */
+/* $OpenBSD: sximmc.c,v 1.8 2016/09/10 16:00:18 mglocker Exp $ */
 /* $NetBSD: awin_mmc.c,v 1.23 2015/11/14 10:32:40 bouyer Exp $ */
 
 /*-
@@ -419,9 +419,9 @@ sximmc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sximmc_host_reset(sc);
 	sximmc_bus_width(sc, 1);
 	sximmc_set_clock(sc, 400);
+	sximmc_host_reset(sc);
 
 	memset(&saa, 0, sizeof(saa));
 	saa.saa_busname = "sdmmc";
@@ -600,10 +600,6 @@ sximmc_host_reset(sdmmc_chipset_handle_t sch)
 	struct sximmc_softc *sc = sch;
 	int retry = 1000;
 
-#ifdef SXIMMC_DEBUG
-	printf("%s: host reset\n", sc->sc_dev.dv_xname);
-#endif
-
 #if 0
 	if (awin_chip_id() == AWIN_CHIP_ID_A80) {
 		if (sc->sc_mmc_port == 2 || sc->sc_mmc_port == 3) {
@@ -622,6 +618,12 @@ sximmc_host_reset(sdmmc_chipset_handle_t sch)
 			break;
 		delay(100);
 	}
+#ifdef SXIMMC_DEBUG
+	if (retry == 0)
+		printf("%s: host reset failed\n", sc->sc_dev.dv_xname);
+	else
+		printf("%s: host reset succeeded\n", sc->sc_dev.dv_xname);
+#endif
 
 	MMC_WRITE(sc, SXIMMC_TIMEOUT, 0xffffffff);
 
