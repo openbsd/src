@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.136 2016/09/10 17:06:11 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.137 2016/09/10 17:08:44 jsing Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -1275,9 +1275,11 @@ derive_key(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
 	if (!salt)
 		errx(1, "Invalid salt");
 
-	if (type != SR_CRYPTOKDFT_PKCS5_PBKDF2)
+	if (type != SR_CRYPTOKDFT_PKCS5_PBKDF2 &&
+	    type != SR_CRYPTOKDFT_BCRYPT_PBKDF)
 		errx(1, "unknown KDF type %d", type);
-	if (rounds < 1000)
+
+	if (rounds < (type == SR_CRYPTOKDFT_PKCS5_PBKDF2 ? 1000 : 4))
 		errx(1, "number of KDF rounds is too small: %d", rounds);
 
 	/* get passphrase */
@@ -1325,9 +1327,17 @@ derive_key(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
 	}
 
 	/* derive key from passphrase */
-	if (pkcs5_pbkdf2(passphrase, strlen(passphrase), salt, saltsz,
-	    key, keysz, rounds) != 0)
-		errx(1, "pbkdf2 failed");
+	if (type == SR_CRYPTOKDFT_PKCS5_PBKDF2) {
+		if (pkcs5_pbkdf2(passphrase, strlen(passphrase), salt, saltsz,
+		    key, keysz, rounds) != 0)
+			errx(1, "pkcs5_pbkdf2 failed");
+	} else if (type == SR_CRYPTOKDFT_BCRYPT_PBKDF) {
+		if (bcrypt_pbkdf(passphrase, strlen(passphrase), salt, saltsz,
+		    key, keysz, rounds) != 0)
+			errx(1, "bcrypt_pbkdf failed");
+	} else {
+		errx(1, "unknown KDF type %d", type);
+	}
 
 	/* forget passphrase */
 	explicit_bzero(passphrase, sizeof(passphrase));
