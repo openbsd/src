@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.80 2016/09/07 15:35:13 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.81 2016/09/10 17:15:44 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -40,8 +40,10 @@
 
 #include <dev/isa/isareg.h>
 
+#define VMM_DEBUG
+
 #ifdef VMM_DEBUG
-int vmm_debug = 0;
+int vmm_debug = 1;
 #define DPRINTF(x...)	do { if (vmm_debug) printf(x); } while(0)
 #else
 #define DPRINTF(x...)
@@ -4195,6 +4197,10 @@ dump_vcpu(struct vcpu *vcpu)
 		CTRL_DUMP(vcpu, PROCBASED, MOV_DR_EXITING);
 		CTRL_DUMP(vcpu, PROCBASED, UNCONDITIONAL_IO_EXITING);
 		CTRL_DUMP(vcpu, PROCBASED, USE_IO_BITMAPS);
+		CTRL_DUMP(vcpu, PROCBASED, MONITOR_TRAP_FLAG);
+		CTRL_DUMP(vcpu, PROCBASED, USE_MSR_BITMAPS);
+		CTRL_DUMP(vcpu, PROCBASED, MONITOR_EXITING);
+		CTRL_DUMP(vcpu, PROCBASED, PAUSE_EXITING);
 		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED_CTLS,
 		    IA32_VMX_ACTIVATE_SECONDARY_CONTROLS, 1)) {
 			printf("    procbased2 ctls: 0x%llx\n",
@@ -4216,7 +4222,13 @@ dump_vcpu(struct vcpu *vcpu)
 			CTRL_DUMP(vcpu, PROCBASED2, ENABLE_INVPCID);
 			CTRL_DUMP(vcpu, PROCBASED2, ENABLE_VM_FUNCTIONS);
 			CTRL_DUMP(vcpu, PROCBASED2, VMCS_SHADOWING);
+			CTRL_DUMP(vcpu, PROCBASED2, ENABLE_ENCLS_EXITING);
+			CTRL_DUMP(vcpu, PROCBASED2, RDSEED_EXITING);
+			CTRL_DUMP(vcpu, PROCBASED2, ENABLE_PML);
 			CTRL_DUMP(vcpu, PROCBASED2, EPT_VIOLATION_VE);
+			CTRL_DUMP(vcpu, PROCBASED2, CONCEAL_VMX_FROM_PT);
+			CTRL_DUMP(vcpu, PROCBASED2, ENABLE_XSAVES_XRSTORS);
+			CTRL_DUMP(vcpu, PROCBASED2, ENABLE_TSC_SCALING);
 		}
 		printf("    entry ctls: 0x%llx\n",
 		    vcpu->vc_vmx_entry_ctls);
@@ -4229,6 +4241,8 @@ dump_vcpu(struct vcpu *vcpu)
 		CTRL_DUMP(vcpu, ENTRY, LOAD_IA32_PERF_GLOBAL_CTRL_ON_ENTRY);
 		CTRL_DUMP(vcpu, ENTRY, LOAD_IA32_PAT_ON_ENTRY);
 		CTRL_DUMP(vcpu, ENTRY, LOAD_IA32_EFER_ON_ENTRY);
+		CTRL_DUMP(vcpu, ENTRY, LOAD_IA32_BNDCFGS_ON_ENTRY);
+		CTRL_DUMP(vcpu, ENTRY, CONCEAL_VM_ENTRIES_FROM_PT);
 		printf("    exit ctls: 0x%llx\n",
 		    vcpu->vc_vmx_exit_ctls);
 		printf("    true exit ctls: 0x%llx\n",
@@ -4242,6 +4256,8 @@ dump_vcpu(struct vcpu *vcpu)
 		CTRL_DUMP(vcpu, EXIT, SAVE_IA32_EFER_ON_EXIT);
 		CTRL_DUMP(vcpu, EXIT, LOAD_IA32_EFER_ON_EXIT);
 		CTRL_DUMP(vcpu, EXIT, SAVE_VMX_PREEMPTION_TIMER);
+		CTRL_DUMP(vcpu, EXIT, CLEAR_IA32_BNDCFGS_ON_EXIT);
+		CTRL_DUMP(vcpu, EXIT, CONCEAL_VM_EXITS_FROM_PT);
 	}
 }
 
