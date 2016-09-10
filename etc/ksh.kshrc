@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.23 2016/09/10 08:00:12 rpe Exp $
+#	$OpenBSD: ksh.kshrc,v 1.24 2016/09/10 08:42:06 rpe Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh
@@ -100,7 +100,6 @@ case "$-" in
 
 		function wssh    { \ssh "$@";    _ignore eval 'istripe; stripe'; }
 		function wtelnet { \telnet "$@"; _ignore eval 'istripe; stripe'; }
-		function wrlogin { \rlogin "$@"; _ignore eval 'istripe; stripe'; }
 		function wsu     { \su "$@";     _ignore eval 'istripe; stripe'; }
 
 		alias su=wsu
@@ -108,7 +107,6 @@ case "$-" in
 		alias ftp=wftp
 		alias ssh=wssh
 		alias telnet=wtelnet
-		alias rlogin=wrlogin
 		eval stripe
 		eval istripe
 		PS1=$PROMPT
