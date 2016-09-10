@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiomuxc.c,v 1.6 2016/08/06 17:18:38 kettenis Exp $ */
+/* $OpenBSD: imxiomuxc.c,v 1.7 2016/09/10 18:33:01 jsg Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -139,7 +139,7 @@ imxiomuxc_attach(struct device *parent, struct device *self, void *args)
 	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("imxiomuxc_attach: bus_space_map failed!");
 
-	node = OF_finddevice("/dev/soc/iomuxc@020e0000");
+	node = OF_finddevice("/soc/aips-bus@02000000/iomuxc@020e0000");
 	if (node != -1)
 		pinctrl_register(node, imxiomuxc_pinctrl, sc);
 
