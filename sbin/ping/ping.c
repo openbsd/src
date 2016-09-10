@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.154 2016/09/08 13:59:33 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.155 2016/09/10 07:31:43 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -169,22 +169,23 @@ volatile sig_atomic_t seenalrm;
 volatile sig_atomic_t seenint;
 volatile sig_atomic_t seeninfo;
 
-void fill(char *, char *);
-void summary(void);
-int in_cksum(u_short *, int);
-void onsignal(int);
-void retransmit(void);
-int pinger(void);
-const char *pr_addr(struct sockaddr *, socklen_t);
-int check_icmph(struct ip *);
-void pr_icmph(struct icmp *);
-void pr_pack(char *, int, struct msghdr *);
-void pr_retip(struct ip *);
-void pr_iph(struct ip *);
+void			 fill(char *, char *);
+void			 summary(void);
+void			 onsignal(int);
+void			 retransmit(void);
+int			 pinger(void);
+const char		*pr_addr(struct sockaddr *, socklen_t);
+void			 pr_pack(char *, int, struct msghdr *);
+__dead void		 usage(void);
+
+int			 in_cksum(u_short *, int);
+int			 check_icmph(struct ip *);
+void			 pr_icmph(struct icmp *);
+void			 pr_retip(struct ip *);
+void			 pr_iph(struct ip *);
 #ifndef SMALL
-int map_tos(char *, int *);
+int			 map_tos(char *, int *);
 #endif	/* SMALL */
-__dead void usage(void);
 
 int
 main(int argc, char *argv[])

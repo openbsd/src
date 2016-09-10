@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.158 2016/09/08 13:59:33 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.159 2016/09/10 07:31:43 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -192,7 +192,8 @@ double tmin = 999999999.0;	/* minimum round trip time */
 double tmax = 0.0;		/* maximum round trip time */
 double tsum = 0.0;		/* sum of all times, for doing average */
 double tsumsq = 0.0;		/* sum of all times squared, for std. dev. */
-struct tv64 tv64_offset;	/* random offset for time values */
+
+struct tv64 tv64_offset;
 SIPHASH_KEY mac_key;
 
 /* for ancillary data(advanced API) */
@@ -203,24 +204,24 @@ volatile sig_atomic_t seenalrm;
 volatile sig_atomic_t seenint;
 volatile sig_atomic_t seeninfo;
 
-int	 main(int, char *[]);
-void	 fill(char *, char *);
-int	 get_hoplim(struct msghdr *);
-int	 get_pathmtu(struct msghdr *);
-struct in6_pktinfo *get_rcvpktinfo(struct msghdr *);
-void	 onsignal(int);
-void	 retransmit(void);
-int	 pinger(void);
-const char *pr_addr(struct sockaddr *, socklen_t);
-void	 pr_icmph(struct icmp6_hdr *, u_char *);
-void	 pr_iph(struct ip6_hdr *);
-void	 pr_pack(u_char *, int, struct msghdr *);
-void	 pr_exthdrs(struct msghdr *);
-void	 pr_ip6opt(void *);
-void	 pr_rthdr(void *);
-void	 pr_retip(struct ip6_hdr *, u_char *);
-void	 summary(void);
-__dead void	 usage(void);
+void			 fill(char *, char *);
+void			 summary(void);
+void			 onsignal(int);
+void			 retransmit(void);
+int			 pinger(void);
+const char		*pr_addr(struct sockaddr *, socklen_t);
+void			 pr_pack(u_char *, int, struct msghdr *);
+__dead void		 usage(void);
+
+int			 get_hoplim(struct msghdr *);
+int			 get_pathmtu(struct msghdr *);
+struct in6_pktinfo	*get_rcvpktinfo(struct msghdr *);
+void			 pr_icmph(struct icmp6_hdr *, u_char *);
+void			 pr_iph(struct ip6_hdr *);
+void			 pr_exthdrs(struct msghdr *);
+void			 pr_ip6opt(void *);
+void			 pr_rthdr(void *);
+void			 pr_retip(struct ip6_hdr *, u_char *);
 
 int
 main(int argc, char *argv[])
