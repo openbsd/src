@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.162 2016/09/10 07:43:03 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.163 2016/09/10 07:43:49 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -234,11 +234,11 @@ main(int argc, char *argv[])
 	socklen_t maxsizelen;
 	int64_t preload;
 	int ch, i, optval = 1, packlen, maxsize, error;
-	u_char *datap, *packet;
+	u_char *datap, *packet, loop = 1;
 	char *e, *target, hbuf[NI_MAXHOST], *source = NULL;
 	const char *errstr;
 	double intval;
-	int mflag = 0, loop = 1;
+	int mflag = 0;
 	uid_t uid;
 	u_int rtableid = 0;
 
