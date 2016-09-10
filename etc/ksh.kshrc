@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.22 2016/09/09 16:25:37 rpe Exp $
+#	$OpenBSD: ksh.kshrc,v 1.23 2016/09/10 08:00:12 rpe Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh
@@ -131,22 +131,22 @@ esac
 
 # is $1 missing from $2 (or PATH) ?
 function no_path {
-  eval _v="\$${2:-PATH}"
-  case :$_v: in
-  *:$1:*) return 1;;		# no we have it
-  esac
-  return 0
+	eval _v="\$${2:-PATH}"
+	case :$_v: in
+	*:$1:*) return 1;;		# no we have it
+	esac
+	return 0
 }
 # if $1 exists and is not in path, append it
 function add_path {
-  [[ -d ${1:-.} ]] && no_path $* && eval ${2:-PATH}="\$${2:-PATH}:$1"
+	[[ -d ${1:-.} ]] && no_path $* && eval ${2:-PATH}="\$${2:-PATH}:$1"
 }
 # if $1 exists and is not in path, prepend it
 function pre_path {
-  [[ -d ${1:-.} ]] && no_path $* && eval ${2:-PATH}="$1:\$${2:-PATH}"
+	[[ -d ${1:-.} ]] && no_path $* && eval ${2:-PATH}="$1:\$${2:-PATH}"
 }
 # if $1 is in path, remove it
 function del_path {
-  no_path $* || eval ${2:-PATH}=`eval echo :'$'${2:-PATH}: |
-    sed -e "s;:$1:;:;g" -e "s;^:;;" -e "s;:\$;;"`
+	no_path $* || eval ${2:-PATH}=`eval echo :'$'${2:-PATH}: |
+		sed -e "s;:$1:;:;g" -e "s;^:;;" -e "s;:\$;;"`
 }
