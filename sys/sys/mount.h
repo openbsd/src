@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.126 2016/05/27 19:45:04 deraadt Exp $	*/
+/*	$OpenBSD: mount.h,v 1.127 2016/09/10 16:53:30 natano Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -368,6 +368,7 @@ struct mount {
 #define	MNT_NOEXEC	0x00000004	/* can't exec from filesystem */
 #define	MNT_NOSUID	0x00000008	/* don't honor setuid bits on fs */
 #define	MNT_NODEV	0x00000010	/* don't interpret special files */
+#define	MNT_NOPERM	0x00000020	/* don't enforce permission checks */
 #define	MNT_ASYNC	0x00000040	/* file system written asynchronously */
 #define	MNT_WXALLOWED	0x00000800	/* filesystem allows W|X mappings */
 
@@ -397,9 +398,9 @@ struct mount {
 #define	MNT_VISFLAGMASK	0x0400ffff
 
 #define	MNT_BITS \
-    "\010\001RDONLY\002SYNCHRONOUS\003NOEXEC\004NOSUID\005NODEV" \
+    "\010\001RDONLY\002SYNCHRONOUS\003NOEXEC\004NOSUID\005NODEV\006NOPERM" \
     "\007ASYNC\010EXRDONLY\011EXPORTED\012DEFEXPORTED\013EXPORTANON" \
-    "\014EXKERB\015LOCAL\016QUOTA\017ROOTFS"
+    "\014WXALLOWED\015LOCAL\016QUOTA\017ROOTFS\020NOATIME"
 
 /*
  * filesystem control flags.

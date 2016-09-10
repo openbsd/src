@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ffs.c,v 1.23 2016/05/27 19:45:04 deraadt Exp $	*/
+/*	$OpenBSD: mount_ffs.c,v 1.24 2016/09/10 16:53:30 natano Exp $	*/
 /*	$NetBSD: mount_ffs.c,v 1.3 1996/04/13 01:31:19 jtc Exp $	*/
 
 /*-
@@ -48,6 +48,7 @@ void	ffs_usage(void);
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_WXALLOWED,
+	MOPT_NOPERM,
 	MOPT_ASYNC,
 	MOPT_SYNC,
 	MOPT_UPDATE,
@@ -91,6 +92,9 @@ main(int argc, char *argv[])
 		args.export_info.ex_flags = MNT_EXRDONLY;
 	else
 		args.export_info.ex_flags = 0;
+
+	if (mntflags & MNT_NOPERM)
+		mntflags |= MNT_NODEV | MNT_NOEXEC;
 
 	if (mount(MOUNT_FFS, fs_name, mntflags, &args) < 0) {
 		switch (errno) {

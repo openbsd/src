@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.264 2016/09/07 17:30:12 natano Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.265 2016/09/10 16:53:30 natano Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -156,6 +156,15 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 		mp->mnt_flag |= flags & (MNT_RELOAD | MNT_UPDATE);
 		goto update;
 	}
+	/*
+	 * Do not allow disabling of permission checks unless exec and access to
+	 * device files is disabled too.
+	 */
+	if ((flags & MNT_NOPERM) &&
+	    (flags & (MNT_NODEV | MNT_NOEXEC)) != (MNT_NODEV | MNT_NOEXEC)) {
+		vput(vp);
+		return (EPERM);
+	}
 	if ((error = vinvalbuf(vp, V_SAVE, p->p_ucred, p, 0, 0)) != 0) {
 		vput(vp);
 		return (error);
@@ -205,10 +214,10 @@ update:
 		mp->mnt_flag |= MNT_WANTRDWR;
 	mp->mnt_flag &=~ (MNT_NOSUID | MNT_NOEXEC | MNT_WXALLOWED | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_ASYNC | MNT_SOFTDEP | MNT_NOATIME |
-	    MNT_FORCE);
+	    MNT_NOPERM | MNT_FORCE);
 	mp->mnt_flag |= flags & (MNT_NOSUID | MNT_NOEXEC | MNT_WXALLOWED |
 	    MNT_NODEV | MNT_SYNCHRONOUS | MNT_ASYNC | MNT_SOFTDEP |
-	    MNT_NOATIME | MNT_FORCE);
+	    MNT_NOATIME | MNT_NOPERM | MNT_FORCE);
 	/*
 	 * Mount the filesystem.
 	 */
@@ -1166,12 +1175,6 @@ domknodat(struct proc *p, int fd, const char *path, mode_t mode, dev_t dev)
 	int error;
 	struct nameidata nd;
 
-	if (!S_ISFIFO(mode) || dev != 0) {
-		if ((error = suser(p, 0)) != 0)
-			return (error);
-		if (p->p_fd->fd_rdir)
-			return (EINVAL);
-	}
 	if (dev == VNOVAL)
 		return (EINVAL);
 	NDINITAT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, fd, path, p);
@@ -1179,6 +1182,15 @@ domknodat(struct proc *p, int fd, const char *path, mode_t mode, dev_t dev)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
+	if (!S_ISFIFO(mode) || dev != 0) {
+		if ((nd.ni_dvp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
+		    (error = suser(p, 0)) != 0)
+			goto out;
+		if (p->p_fd->fd_rdir) {
+			error = EINVAL;
+			goto out;
+		}
+	}
 	if (vp != NULL)
 		error = EEXIST;
 	else {
@@ -1214,6 +1226,7 @@ domknodat(struct proc *p, int fd, const char *path, mode_t mode, dev_t dev)
 			break;
 		}
 	}
+out:
 	if (!error) {
 		error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	} else {
@@ -2048,6 +2061,7 @@ dofchownat(struct proc *p, int fd, const char *path, uid_t uid, gid_t gid,
 		if ((error = pledge_chown(p, uid, gid)))
 			goto out;
 		if ((uid != -1 || gid != -1) &&
+		    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
 		    (suser(p, 0) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
@@ -2099,6 +2113,7 @@ sys_lchown(struct proc *p, void *v, register_t *retval)
 		if ((error = pledge_chown(p, uid, gid)))
 			goto out;
 		if ((uid != -1 || gid != -1) &&
+		    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
 		    (suser(p, 0) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
@@ -2148,6 +2163,7 @@ sys_fchown(struct proc *p, void *v, register_t *retval)
 		if ((error = pledge_chown(p, uid, gid)))
 			goto out;
 		if ((uid != -1 || gid != -1) &&
+		    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
 		    (suser(p, 0) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)

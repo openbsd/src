@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.130 2016/08/10 08:04:57 natano Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.131 2016/09/10 16:53:30 natano Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -274,6 +274,9 @@ ufs_access(void *v)
 	if ((mode & VWRITE) && (DIP(ip, flags) & IMMUTABLE))
 		return (EPERM);
 
+	if (vp->v_mount->mnt_flag & MNT_NOPERM)
+		return (0);
+
 	return (vaccess(vp->v_type, DIP(ip, mode), DIP(ip, uid), DIP(ip, gid),
 	    mode, ap->a_cred));
 }
@@ -349,6 +352,7 @@ ufs_setattr(void *v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (cred->cr_uid != DIP(ip, uid) &&
+		    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
 		    (error = suser_ucred(cred)))
 			return (error);
 		if (cred->cr_uid == 0) {
@@ -408,6 +412,7 @@ ufs_setattr(void *v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (cred->cr_uid != DIP(ip, uid) &&
+		    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
 		    (error = suser_ucred(cred)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
 		    (error = VOP_ACCESS(vp, VWRITE, cred, p))))
@@ -455,9 +460,11 @@ ufs_chmod(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
 	int error;
 
 	if (cred->cr_uid != DIP(ip, uid) &&
+	    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
 	    (error = suser_ucred(cred)))
 		return (error);
-	if (cred->cr_uid) {
+	if (cred->cr_uid &&
+	    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
 			return (EFTYPE);
 		if (!groupmember(DIP(ip, gid), cred) && (mode & ISGID))
@@ -497,6 +504,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
 	 */
 	if ((cred->cr_uid != DIP(ip, uid) || uid != DIP(ip, uid) ||
 	    (gid != DIP(ip, gid) && !groupmember(gid, cred))) &&
+	    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
 	    (error = suser_ucred(cred)))
 		return (error);
 	ogid = DIP(ip, gid);
@@ -537,9 +545,11 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
 
 	if (ouid != uid || ogid != gid)
 		ip->i_flag |= IN_CHANGE;
-	if (ouid != uid && cred->cr_uid != 0)
+	if (ouid != uid && cred->cr_uid != 0 &&
+	    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0)
 		DIP_AND(ip, mode, ~ISUID);
-	if (ogid != gid && cred->cr_uid != 0)
+	if (ogid != gid && cred->cr_uid != 0 &&
+	    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0)
 		DIP_AND(ip, mode, ~ISGID);
 	return (0);
 
@@ -965,7 +975,8 @@ abortit:
 		 */
 		if ((DIP(dp, mode) & S_ISTXT) && tcnp->cn_cred->cr_uid != 0 &&
 		    tcnp->cn_cred->cr_uid != DIP(dp, uid) &&
-		    DIP(xp, uid )!= tcnp->cn_cred->cr_uid) {
+		    DIP(xp, uid )!= tcnp->cn_cred->cr_uid &&
+		    (tdvp->v_mount->mnt_flag & MNT_NOPERM) == 0) {
 			error = EPERM;
 			goto bad;
 		}
@@ -1852,6 +1863,7 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		softdep_change_linkcnt(ip, 0);
 	if ((DIP(ip, mode) & ISGID) &&
 		!groupmember(DIP(ip, gid), cnp->cn_cred) &&
+	    (dvp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
 	    suser_ucred(cnp->cn_cred))
 		DIP_AND(ip, mode, ~ISGID);
 

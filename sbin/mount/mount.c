@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.67 2016/09/04 19:45:27 akfaew Exp $	*/
+/*	$OpenBSD: mount.c,v 1.68 2016/09/10 16:53:30 natano Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -88,6 +88,7 @@ static struct opt {
 	{ MNT_NODEV,		0,	"nodev",		"nodev" },
 	{ MNT_NOEXEC,		0,	"noexec",		"noexec" },
 	{ MNT_NOSUID,		0,	"nosuid",		"nosuid" },
+	{ MNT_NOPERM,		0,	"noperm",		"noperm" },
 	{ MNT_WXALLOWED,	0,	"wxallowed",		"wxallowed" },
 	{ MNT_QUOTA,		0,	"with quotas",		"" },
 	{ MNT_RDONLY,		0,	"read-only",		"ro" },
