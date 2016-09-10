@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.10 2015/02/09 09:21:30 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.11 2016/09/10 17:59:53 guenther Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -56,12 +56,8 @@ void db_print_window(u_int64_t);
 #define ULOAD(x)	probeget((paddr_t)(u_long)&(x), ASI_AIUS, sizeof(x))	
 
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	char            *modif;
-	int		(*pr)(const char *, ...);
+db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modif, int (*pr)(const char *, ...))
 {
 	vaddr_t		frame;
 	boolean_t	kernel_only = TRUE;
@@ -95,28 +91,26 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		}
 	}
 
+	if ((frame & 1) == 0) {
+		db_printf("WARNING: corrupt frame at %lx\n", frame);
+		return;
+	}
+
 	while (count--) {
 		int		i;
 		db_expr_t	offset;
 		char		*name;
 		db_addr_t	pc;
 		struct frame64	*f64;
-		struct frame32  *f32;
 
 		/*
 		 * Switch to frame that contains arguments
 		 */
-		if (frame & 1) {
-			f64 = (struct frame64 *)(frame + BIAS);
-			pc = (db_addr_t)KLOAD(f64->fr_pc);
-		
-			frame = KLOAD(f64->fr_fp);
-		} else {
-			f32 = (struct frame32 *)(frame);
-			pc = (db_addr_t)KLOAD(f32->fr_pc);
-		
-			frame = (long)KLOAD(f32->fr_fp);
-		}
+
+		f64 = (struct frame64 *)(frame + BIAS);
+		pc = (db_addr_t)KLOAD(f64->fr_pc);
+	
+		frame = KLOAD(f64->fr_fp);
 
 		if (kernel_only) {
 			if (pc < KERNBASE || pc >= KERNEND)
@@ -137,22 +131,20 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			name = "?";
 		
 		(*pr)("%s(", name);
+
+		if ((frame & 1) == 0) {
+			db_printf(")\nWARNING: corrupt frame at %lx\n", frame);
+			break;
+		}
 		
 		/*
 		 * Print %i0..%i5; hope these still reflect the
 		 * actual arguments somewhat...
 		 */
-		if (frame & 1) {
-			f64 = (struct frame64 *)(frame + BIAS);
-			for (i = 0; i < 5; i++)
-				(*pr)("%lx, ", (long)KLOAD(f64->fr_arg[i]));
-			(*pr)("%lx) at ", (long)KLOAD(f64->fr_arg[i]));
-		} else {
-			f32 = (struct frame32 *)(frame);
-			for (i = 0; i < 5; i++)
-				(*pr)("%x, ", (u_int)KLOAD(f32->fr_arg[i]));
-			(*pr)("%x) at ", (u_int)KLOAD(f32->fr_arg[i]));
-		}
+		f64 = (struct frame64 *)(frame + BIAS);
+		for (i = 0; i < 5; i++)
+			(*pr)("%lx, ", (long)KLOAD(f64->fr_arg[i]));
+		(*pr)("%lx) at ", (long)KLOAD(f64->fr_arg[i]));
 		db_printsym(pc, DB_STGY_PROC, pr);
 		(*pr)("\n");
 	}
@@ -160,11 +152,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 
 
 void
-db_dump_window(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_dump_window(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	int i;
 	u_int64_t frame = DDB_TF->tf_out[6];
@@ -174,10 +162,15 @@ db_dump_window(addr, have_addr, count, modif)
 		addr = 0;
 
 	/* Traverse window stack */
-	for (i=0; i<addr && frame; i++) {
-		if (frame & 1) 
-			frame = (u_int64_t)((struct frame64 *)(u_long)(frame + BIAS))->fr_fp;
-		else frame = (u_int64_t)((struct frame32 *)(u_long)frame)->fr_fp;
+	for (i = 0; i < addr && frame; i++) {
+		if ((frame & 1) == 0)
+			break;
+		frame = ((struct frame64 *)(frame + BIAS))->fr_fp;
+	}
+
+	if ((frame & 1) == 0) {
+		db_printf("WARNING: corrupt frame at %llx\n", frame);
+		return;
 	}
 
 	db_printf("Window %lx ", addr);
@@ -185,96 +178,67 @@ db_dump_window(addr, have_addr, count, modif)
 }
 
 void 
-db_print_window(frame)
-u_int64_t frame;
+db_print_window(u_int64_t frame)
 {
-	if (frame & 1) {
-		struct frame64* f = (struct frame64*)(u_long)(frame + BIAS);
+	struct frame64 *f = (struct frame64 *)(frame + BIAS);
 
-		db_printf("frame64 %p locals, ins:\n", f);		
-		if (INKERNEL(f)) {
-			db_printf("%llx %llx %llx %llx ",
-				  (unsigned long long)f->fr_local[0],
-				  (unsigned long long)f->fr_local[1],
-				  (unsigned long long)f->fr_local[2],
-				  (unsigned long long)f->fr_local[3]);
-			db_printf("%llx %llx %llx %llx\n",
-				  (unsigned long long)f->fr_local[4],
-				  (unsigned long long)f->fr_local[5],
-				  (unsigned long long)f->fr_local[6],
-				  (unsigned long long)f->fr_local[7]);
-			db_printf("%llx %llx %llx %llx ",
-				  (unsigned long long)f->fr_arg[0],	
-				  (unsigned long long)f->fr_arg[1],
-				  (unsigned long long)f->fr_arg[2],
-				  (unsigned long long)f->fr_arg[3]);
-			db_printf("%llx %llx %llx=sp %llx=pc:",
-				  (unsigned long long)f->fr_arg[4],	
-				  (unsigned long long)f->fr_arg[5],
-				  (unsigned long long)f->fr_fp,
-				  (unsigned long long)f->fr_pc);
-			/* Sometimes this don't work.  Dunno why. */
-			db_printsym(f->fr_pc, DB_STGY_PROC, db_printf);
-			db_printf("\n");
-		} else {
-			struct frame64 fr;
-
-			if (copyin(f, &fr, sizeof(fr))) return;
-			f = &fr;
-			db_printf("%llx %llx %llx %llx ",
-				  (unsigned long long)f->fr_local[0], (unsigned long long)f->fr_local[1], (unsigned long long)f->fr_local[2], (unsigned long long)f->fr_local[3]);
-			db_printf("%llx %llx %llx %llx\n",
-				  (unsigned long long)f->fr_local[4], (unsigned long long)f->fr_local[5], (unsigned long long)f->fr_local[6], (unsigned long long)f->fr_local[7]);
-			db_printf("%llx %llx %llx %llx ",
-				  (unsigned long long)f->fr_arg[0],
-				  (unsigned long long)f->fr_arg[1],
-				  (unsigned long long)f->fr_arg[2],
-				  (unsigned long long)f->fr_arg[3]);
-			db_printf("%llx %llx %llx=sp %llx=pc",
-				  (unsigned long long)f->fr_arg[4],
-				  (unsigned long long)f->fr_arg[5],
-				  (unsigned long long)f->fr_fp,
-				  (unsigned long long)f->fr_pc);
-			db_printf("\n");	 
-		}
+	db_printf("frame64 %p locals, ins:\n", f);		
+	if (INKERNEL(f)) {
+		db_printf("%llx %llx %llx %llx ",
+			  (unsigned long long)f->fr_local[0],
+			  (unsigned long long)f->fr_local[1],
+			  (unsigned long long)f->fr_local[2],
+			  (unsigned long long)f->fr_local[3]);
+		db_printf("%llx %llx %llx %llx\n",
+			  (unsigned long long)f->fr_local[4],
+			  (unsigned long long)f->fr_local[5],
+			  (unsigned long long)f->fr_local[6],
+			  (unsigned long long)f->fr_local[7]);
+		db_printf("%llx %llx %llx %llx ",
+			  (unsigned long long)f->fr_arg[0],	
+			  (unsigned long long)f->fr_arg[1],
+			  (unsigned long long)f->fr_arg[2],
+			  (unsigned long long)f->fr_arg[3]);
+		db_printf("%llx %llx %llx=sp %llx=pc:",
+			  (unsigned long long)f->fr_arg[4],	
+			  (unsigned long long)f->fr_arg[5],
+			  (unsigned long long)f->fr_fp,
+			  (unsigned long long)f->fr_pc);
+		/* Sometimes this don't work.  Dunno why. */
+		db_printsym(f->fr_pc, DB_STGY_PROC, db_printf);
+		db_printf("\n");
 	} else {
-		struct frame32* f = (struct frame32*)(u_long)frame;
+		struct frame64 fr;
 
-		db_printf("frame %p locals, ins:\n", f);
-		if (INKERNEL(f)) {
-			db_printf("%8x %8x %8x %8x %8x %8x %8x %8x\n",
-				  f->fr_local[0], f->fr_local[1], f->fr_local[2], f->fr_local[3],
-				  f->fr_local[4], f->fr_local[5], f->fr_local[6], f->fr_local[7]);
-			db_printf("%8x %8x %8x %8x %8x %8x %8x=sp %8x=pc:",
-				  f->fr_arg[0], f->fr_arg[1], f->fr_arg[2], f->fr_arg[3],
-				  f->fr_arg[4], f->fr_arg[5], f->fr_fp, f->fr_pc);
-			db_printsym(f->fr_pc, DB_STGY_PROC, db_printf);
-			db_printf("\n");
-		} else {
-			struct frame32 fr;
-
-			if (copyin(f, &fr, sizeof(fr))) return;
-			f = &fr;
-			db_printf("%8x %8x %8x %8x %8x %8x %8x %8x\n",
-				  f->fr_local[0], f->fr_local[1], 
-				  f->fr_local[2], f->fr_local[3],
-				  f->fr_local[4], f->fr_local[5], 
-				  f->fr_local[6], f->fr_local[7]);
-			db_printf("%8x %8x %8x %8x %8x %8x %8x=sp %8x=pc\n",
-				  f->fr_arg[0], f->fr_arg[1], 
-				  f->fr_arg[2], f->fr_arg[3],
-				  f->fr_arg[4], f->fr_arg[5], 
-				  f->fr_fp, f->fr_pc);
-		}
+		if (copyin(f, &fr, sizeof(fr)))
+			return;
+		f = &fr;
+		db_printf("%llx %llx %llx %llx ",
+			  (unsigned long long)f->fr_local[0],
+			  (unsigned long long)f->fr_local[1],
+			  (unsigned long long)f->fr_local[2],
+			  (unsigned long long)f->fr_local[3]);
+		db_printf("%llx %llx %llx %llx\n",
+			  (unsigned long long)f->fr_local[4],
+			  (unsigned long long)f->fr_local[5],
+			  (unsigned long long)f->fr_local[6],
+			  (unsigned long long)f->fr_local[7]);
+		db_printf("%llx %llx %llx %llx ",
+			  (unsigned long long)f->fr_arg[0],
+			  (unsigned long long)f->fr_arg[1],
+			  (unsigned long long)f->fr_arg[2],
+			  (unsigned long long)f->fr_arg[3]);
+		db_printf("%llx %llx %llx=sp %llx=pc",
+			  (unsigned long long)f->fr_arg[4],
+			  (unsigned long long)f->fr_arg[5],
+			  (unsigned long long)f->fr_fp,
+			  (unsigned long long)f->fr_pc);
+		db_printf("\n");	 
 	}
 }
 
 void
-db_dump_stack(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_dump_stack(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	int		i;
 	u_int64_t	frame, oldframe;
@@ -295,46 +259,35 @@ db_dump_stack(addr, have_addr, count, modif)
 
 	/* Traverse window stack */
 	oldframe = 0;
-	for (i=0; i<count && frame; i++) {
+	for (i = 0; i < count && frame; i++) {
 		if (oldframe == frame) {
-			db_printf("WARNING: stack loop at %llx\n",
-			    (unsigned long long) frame);
+			db_printf("WARNING: stack loop at %llx\n", frame);
 			break;
 		}
 		oldframe = frame;
-		if (frame & 1) {
-			frame += BIAS;
-			if (!INKERNEL(((struct frame64 *)(u_long)(frame)))
-			    && kernel_only) break;
-			db_printf("Window %x ", i);
-			db_print_window(frame - BIAS);
-			if (!INKERNEL(((struct frame64 *)(u_long)(frame))))
-				copyin(((caddr_t)&((struct frame64 *)(u_long)frame)->fr_fp), &frame, sizeof(frame));
-			else
-				frame = ((struct frame64 *)(u_long)frame)->fr_fp;
-		} else {
-			u_int32_t tmp;
-			if (!INKERNEL(((struct frame32 *)(u_long)frame))
-			    && kernel_only) break;
-			db_printf("Window %x ", i);
-			db_print_window(frame);
-			if (!INKERNEL(((struct frame32 *)(u_long)frame))) {
-				copyin(&((struct frame32 *)(u_long)frame)->fr_fp, &tmp, sizeof(tmp));
-				frame = (u_int64_t)tmp;
-			} else
-				frame = (u_int64_t)((struct frame32 *)(u_long)frame)->fr_fp;
+
+		if ((frame & 1) == 0) {
+			db_printf("WARNING: corrupt stack at %llx\n", frame);
+			break;
 		}
+
+		frame += BIAS;
+		if (!INKERNEL(((struct frame64 *)frame))
+		    && kernel_only) break;
+		db_printf("Window %x ", i);
+		db_print_window(frame - BIAS);
+		if (!INKERNEL(((struct frame64 *)frame))) {
+			copyin(&((struct frame64 *)frame)->fr_fp, &frame,
+			    sizeof(frame));
+		} else
+			frame = ((struct frame64 *)frame)->fr_fp;
 	}
 
 }
 
 
 void
-db_dump_trap(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_dump_trap(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	struct trapframe64 *tf;
 
@@ -403,21 +356,21 @@ db_dump_trap(addr, have_addr, count, modif)
 	if (tf == curproc->p_md.md_tf) {
 		struct rwindow32 *kstack = (struct rwindow32 *)(((caddr_t)tf)+CCFSZ);
 		db_printf("ins (from stack):\n%016llx %016llx %016llx %016llx\n",
-			  (int64_t)kstack->rw_local[0], (int64_t)kstack->rw_local[1],
-			  (int64_t)kstack->rw_local[2], (int64_t)kstack->rw_local[3]);
+			  (int64_t)kstack->rw_local[0],
+			  (int64_t)kstack->rw_local[1],
+			  (int64_t)kstack->rw_local[2],
+			  (int64_t)kstack->rw_local[3]);
 		db_printf("%016llx %016llx %016llx %016llx\n",
-			  (int64_t)kstack->rw_local[4], (int64_t)kstack->rw_local[5],
-			  (int64_t)kstack->rw_local[6], (int64_t)kstack->rw_local[7]);
+			  (int64_t)kstack->rw_local[4],
+			  (int64_t)kstack->rw_local[5],
+			  (int64_t)kstack->rw_local[6],
+			  (int64_t)kstack->rw_local[7]);
 	}
 #endif
 }
 
 void
-db_dump_fpstate(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_dump_fpstate(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	struct fpstate64 *fpstate;
 
@@ -505,11 +458,7 @@ db_dump_fpstate(addr, have_addr, count, modif)
 }
 
 void
-db_dump_ts(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_dump_ts(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	struct trapstate	*ts;
 	int			i, tl;
@@ -517,7 +466,7 @@ db_dump_ts(addr, have_addr, count, modif)
 	/* Use our last trapframe? */
 	ts = &ddb_regs.ddb_ts[0];
 	tl = ddb_regs.ddb_tl;
-	for (i=0; i<tl; i++) {
+	for (i = 0; i < tl; i++) {
 		printf("%d tt=%lx tstate=%lx tpc=%p tnpc=%p\n",
 		       i+1, (long)ts[i].tt, (u_long)ts[i].tstate,
 		       (void *)(u_long)ts[i].tpc, (void *)(u_long)ts[i].tnpc);
