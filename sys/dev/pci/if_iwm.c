@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.129 2016/09/10 09:32:33 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.130 2016/09/10 09:40:24 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -2169,7 +2169,7 @@ iwm_protect_session(struct iwm_softc *sc, struct iwm_node *in,
  */
 
 /* list of NVM sections we are allowed/need to read */
-const int nvm_to_read[] = {
+const int iwm_nvm_to_read[] = {
 	IWM_NVM_SECTION_TYPE_HW,
 	IWM_NVM_SECTION_TYPE_SW,
 	IWM_NVM_SECTION_TYPE_REGULATORY,
@@ -2701,8 +2701,8 @@ iwm_nvm_init(struct iwm_softc *sc)
 	if (buf == NULL)
 		return ENOMEM;
 
-	for (i = 0; i < nitems(nvm_to_read); i++) {
-		section = nvm_to_read[i];
+	for (i = 0; i < nitems(iwm_nvm_to_read); i++) {
+		section = iwm_nvm_to_read[i];
 		KASSERT(section <= nitems(nvm_sections));
 
 		err = iwm_nvm_read_section(sc, section, buf, &len, bufsz);
