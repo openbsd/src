@@ -1,4 +1,4 @@
-/*	$OpenBSD: pbkdf2.c,v 1.3 2016/09/10 15:55:56 jsing Exp $	*/
+/*	$OpenBSD: pkcs5_pbkdf2.c,v 1.1 2016/09/10 16:38:16 jsing Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -20,28 +20,26 @@
 
 #include <lib/libsa/stand.h>
 
-#include "pbkdf2.h"
+#include "pkcs5_pbkdf2.h"
 #include "hmac_sha1.h"
-
-#define	MINIMUM(a,b) (((a) < (b)) ? (a) : (b))
 
 /*
  * Password-Based Key Derivation Function 2 (PKCS #5 v2.0).
  * Code based on IEEE Std 802.11-2007, Annex H.4.2.
  */
 int
-pkcs5_pbkdf2(const char *pass, size_t pass_len, const uint8_t *salt,
-    size_t salt_len, uint8_t *key, size_t key_len, unsigned int rounds)
+pkcs5_pbkdf2(const char *pass, size_t pass_len, const char *salt,
+    size_t salt_len, u_int8_t *key, size_t key_len, u_int rounds)
 {
-	uint8_t *asalt, obuf[SHA1_DIGEST_LENGTH];
-	uint8_t d1[SHA1_DIGEST_LENGTH], d2[SHA1_DIGEST_LENGTH];
-	unsigned int i, j;
-	unsigned int count;
+	u_int8_t *asalt, obuf[SHA1_DIGEST_LENGTH];
+	u_int8_t d1[SHA1_DIGEST_LENGTH], d2[SHA1_DIGEST_LENGTH];
+	u_int i, j;
+	u_int count;
 	size_t r;
 
 	if (rounds < 1 || key_len == 0)
 		return -1;
-	if (salt_len == 0 || salt_len > SIZE_MAX - 4)
+	if (salt_len == 0 || salt_len > SIZE_MAX - 1)
 		return -1;
 	if ((asalt = alloc(salt_len + 4)) == NULL)
 		return -1;
@@ -63,7 +61,7 @@ pkcs5_pbkdf2(const char *pass, size_t pass_len, const uint8_t *salt,
 				obuf[j] ^= d1[j];
 		}
 
-		r = MINIMUM(key_len, SHA1_DIGEST_LENGTH);
+		r = MIN(key_len, SHA1_DIGEST_LENGTH);
 		memcpy(key, obuf, r);
 		key += r;
 		key_len -= r;

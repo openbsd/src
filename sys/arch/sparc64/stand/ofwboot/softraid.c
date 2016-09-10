@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.4 2015/10/28 13:33:42 jsing Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.5 2016/09/10 16:38:16 jsing Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -27,7 +27,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/aes_xts.h>
 #include <lib/libsa/hmac_sha1.h>
-#include <lib/libsa/pbkdf2.h>
+#include <lib/libsa/pkcs5_pbkdf2.h>
 #include <lib/libsa/rijndael.h>
 
 #include "disk.h"

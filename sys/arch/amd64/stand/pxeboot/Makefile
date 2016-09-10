@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2016/07/30 03:25:48 guenther Exp $
+#	$OpenBSD: Makefile,v 1.27 2016/09/10 16:38:16 jsing Exp $
 
 MAN=	pxeboot.8
 
@@ -31,7 +31,7 @@ SRCS+=	alloc.c exit.c getchar.c getfile.c getln.c globals.c putchar.c \
 	strcmp.c strlen.c strncmp.c memcmp.c memcpy.c memset.c printf.c \
 	snprintf.c strerror.c strncpy.c strtol.c strtoll.c ctime.c strlcpy.c \
 	strlcat.c
-SRCS+=	aes_xts.c explicit_bzero.c hmac_sha1.c pbkdf2.c rijndael.c sha1.c
+SRCS+=	aes_xts.c explicit_bzero.c hmac_sha1.c pkcs5_pbkdf2.c rijndael.c sha1.c
 
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c lseek.c \
 	read.c stat.c write.c cread.c readdir.c cons.c loadfile.c \

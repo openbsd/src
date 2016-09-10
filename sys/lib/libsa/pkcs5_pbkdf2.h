@@ -1,4 +1,4 @@
-/*	$OpenBSD: pbkdf2.h,v 1.2 2016/09/10 15:55:56 jsing Exp $	*/
+/*	$OpenBSD: pkcs5_pbkdf2.h,v 1.1 2016/09/10 16:38:16 jsing Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -20,5 +20,5 @@
  * Password-Based Key Derivation Function 2 (PKCS #5 v2.0).
  * Code based on IEEE Std 802.11-2007, Annex H.4.2.
  */
-int pkcs5_pbkdf2(const char *, size_t, const uint8_t *, size_t,
-    uint8_t *, size_t, unsigned int);
+int pkcs5_pbkdf2(const char *, size_t, const char *, size_t,
+    u_int8_t *, size_t, u_int);

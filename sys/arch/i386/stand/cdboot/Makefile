@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2016/07/30 03:25:48 guenther Exp $
+#	$OpenBSD: Makefile,v 1.26 2016/09/10 16:38:16 jsing Exp $
 
 MAN=	cdboot.8
 
@@ -34,7 +34,7 @@ SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
 	lseek.c open.c read.c readdir.c stat.c
 SRCS+=	elf32.c elf64.c loadfile.c
 SRCS+=	cd9660.c ufs.c
-SRCS+=	aes_xts.c explicit_bzero.c hmac_sha1.c pbkdf2.c rijndael.c sha1.c
+SRCS+=	aes_xts.c explicit_bzero.c hmac_sha1.c pkcs5_pbkdf2.c rijndael.c sha1.c
 
 .PATH:	${S}/lib/libkern/arch/i386
 SRCS+=	moddi3.c divdi3.c qdivrem.c
