@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.155 2016/09/10 07:31:43 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.156 2016/09/10 07:39:49 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ void			 onsignal(int);
 void			 retransmit(void);
 int			 pinger(void);
 const char		*pr_addr(struct sockaddr *, socklen_t);
-void			 pr_pack(char *, int, struct msghdr *);
+void			 pr_pack(u_char *, int, struct msghdr *);
 __dead void		 usage(void);
 
 int			 in_cksum(u_short *, int);
@@ -771,7 +771,7 @@ pinger(void)
  * program to be run without having intermingled output (or statistics!).
  */
 void
-pr_pack(char *buf, int cc, struct msghdr *mhdr)
+pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 {
 	struct sockaddr_in *from, s_in;
 	socklen_t fromlen;
@@ -921,7 +921,7 @@ pr_pack(char *buf, int cc, struct msghdr *mhdr)
 	}
 
 	/* Display any IP options */
-	cp = (u_char *)buf + sizeof(struct ip);
+	cp = buf + sizeof(struct ip);
 
 	for (; hlen > (int)sizeof(struct ip); --hlen, ++cp)
 		switch (*cp) {
@@ -971,7 +971,7 @@ pr_pack(char *buf, int cc, struct msghdr *mhdr)
 			if (i <= 0)
 				continue;
 			if (i == old_rrlen &&
-			    cp == (u_char *)buf + sizeof(struct ip) + 2 &&
+			    cp == buf + sizeof(struct ip) + 2 &&
 			    !memcmp(cp, old_rr, i) &&
 			    !(options & F_FLOOD)) {
 				(void)printf("\t(same route)");
