@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.915 2016/09/10 17:18:30 rpe Exp $
+#	$OpenBSD: install.sub,v 1.916 2016/09/10 22:34:17 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -79,9 +79,9 @@ waitcgiinfo() {
 
 	while IFS='=' read -r -- _key _val; do
 		case $_key=$_val in
-		method=+([a-z]))	CGI_METHOD=$_val;;
-		TIME=+([0-9]))		CGI_TIME=$_val;;
-		TZ=+([-_/+[:alnum:]]))	CGI_TZ=$_val;;
+		method=+([a-z])*([0-9]))	CGI_METHOD=$_val;;
+		TIME=+([0-9]))			CGI_TIME=$_val;;
+		TZ=+([-_/+[:alnum:]]))		CGI_TZ=$_val;;
 		esac
 	done <$CGI_INFO
 }
@@ -2283,7 +2283,7 @@ feed_random() {
 # selects from that location. Repeat as many times as the user needs to get all
 # desired sets.
 install_sets() {
-	local _cddevs=$(get_cddevs) _d=$CGI_METHOD _locs="disk http" _src
+	local _cddevs=$(get_cddevs) _d=$CGI_METHOD _im _locs="disk http" _src
 
 	echo
 
@@ -2310,7 +2310,8 @@ install_sets() {
 		[cC]*)	if [[ -n $_cddevs ]]; then
 				set -- $_cddevs
 				[[ $resp == [cC]?([dD]) ]] && resp=$1
-				install_cdrom $resp && INSTALL_METHOD=$resp
+				_im=$resp
+				install_cdrom $resp && INSTALL_METHOD=$_im
 			fi
 			;;
 		[dD]*)	install_disk && INSTALL_METHOD=disk
