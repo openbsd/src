@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.21 2016/09/07 09:23:07 mpi Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.22 2016/09/10 05:39:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -623,7 +623,7 @@ void
 bfd_senddown(struct bfd_softc *sc)
 {
 	/* If we are down, return early */
-	if (sc->state < BFD_STATE_INIT);
+	if (sc->state < BFD_STATE_INIT)
 		return;
 
 	sc->sc_peer->SessionState = BFD_STATE_ADMINDOWN;
