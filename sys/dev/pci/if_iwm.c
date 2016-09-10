@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.127 2016/09/10 09:12:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.128 2016/09/10 09:13:09 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5529,7 +5529,7 @@ iwm_newstate_task(void *psc)
 			return;
 		break;
 
-	case IEEE80211_S_RUN: {
+	case IEEE80211_S_RUN:
 		in = (struct iwm_node *)ic->ic_bss;
 		iwm_mvm_power_mac_update_mode(sc, in);
 #ifdef notyet
@@ -5551,7 +5551,7 @@ iwm_newstate_task(void *psc)
 
 		timeout_add_msec(&sc->sc_calib_to, 500);
 		iwm_mvm_led_enable(sc);
-		break; }
+		break;
 
 	default:
 		break;
@@ -6531,22 +6531,23 @@ iwm_notif_intr(struct iwm_softc *sc)
 
 			sc->sc_uc.uc_intr = 1;
 			wakeup(&sc->sc_uc);
-			break; }
+			break;
+		}
 
 		case IWM_CALIB_RES_NOTIF_PHY_DB: {
 			struct iwm_calib_res_notif_phy_db *phy_db_notif;
 			SYNC_RESP_STRUCT(phy_db_notif, pkt);
-
 			iwm_phy_db_set_section(sc, phy_db_notif);
-
-			break; }
+			break;
+		}
 
 		case IWM_STATISTICS_NOTIFICATION: {
 			struct iwm_notif_statistics *stats;
 			SYNC_RESP_STRUCT(stats, pkt);
 			memcpy(&sc->sc_stats, stats, sizeof(sc->sc_stats));
 			sc->sc_noise = iwm_get_noise(&stats->rx.general);
-			break; }
+			break;
+		}
 
 		case IWM_NVM_ACCESS_CMD:
 		case IWM_MCC_UPDATE_CMD:
@@ -6611,20 +6612,19 @@ iwm_notif_intr(struct iwm_softc *sc)
 		case IWM_SCAN_OFFLOAD_COMPLETE: {
 			struct iwm_periodic_scan_complete *notif;
 			SYNC_RESP_STRUCT(notif, pkt);
-
-			break; }
+			break;
+		}
 
 		case IWM_SCAN_ITERATION_COMPLETE: {
 			struct iwm_lmac_scan_complete_notif *notif;
 			SYNC_RESP_STRUCT(notif, pkt);
-
 			task_add(sc->sc_eswq, &sc->sc_eswk);
-			break; }
+			break;
+		}
 
 		case IWM_SCAN_COMPLETE_UMAC: {
 			struct iwm_umac_scan_complete *notif;
 			SYNC_RESP_STRUCT(notif, pkt);
-
 			task_add(sc->sc_eswq, &sc->sc_eswk);
 			break;
 		}
@@ -6640,17 +6640,17 @@ iwm_notif_intr(struct iwm_softc *sc)
 		case IWM_REPLY_ERROR: {
 			struct iwm_error_resp *resp;
 			SYNC_RESP_STRUCT(resp, pkt);
-
 			printf("%s: firmware error 0x%x, cmd 0x%x\n",
 				DEVNAME(sc), le32toh(resp->error_type),
 				resp->cmd_id);
-			break; }
+			break;
+		}
 
 		case IWM_TIME_EVENT_NOTIFICATION: {
 			struct iwm_time_event_notif *notif;
 			SYNC_RESP_STRUCT(notif, pkt);
-
-			break; }
+			break;
+		}
 
 		case IWM_MCAST_FILTER_CMD:
 			break;
