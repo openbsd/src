@@ -1541,7 +1541,8 @@ cat >>e${EMULATION_NAME}.c <<EOF
 
 static bfd_boolean
 gld${EMULATION_NAME}_open_dynamic_archive
-  (const char *arch, search_dirs_type *search, lang_input_statement_type *entry)
+  (const char *arch __unused, search_dirs_type *search,
+  lang_input_statement_type *entry)
 {
   const char *filename;
   char *string;
@@ -1558,8 +1559,6 @@ case ${target} in
   string = gld${EMULATION_NAME}_search_dir(search->name, filename, -1, -1);
   if (string == NULL)
     return FALSE;
-
-  arch = arch; /* gcc -Werror */
 EOF
    ;;
   *)
