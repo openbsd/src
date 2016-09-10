@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.21 2016/09/09 19:42:30 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.22 2016/09/10 06:36:26 jasper Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		if (trace_proc) {
 			struct proc *p = pfind((pid_t)addr);
 			if (p == NULL) {
-				(*pr) ("%s: process not found\n", __func__);
+				(*pr) ("not found\n");
 				return;
 			}
 			frame = (struct callframe *)p->p_addr->u_pcb.pcb_rbp;
