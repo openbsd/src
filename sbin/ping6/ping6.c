@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.159 2016/09/10 07:31:43 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.160 2016/09/10 07:41:36 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -226,16 +226,14 @@ void			 pr_retip(struct ip6_hdr *, u_char *);
 int
 main(int argc, char *argv[])
 {
-	struct addrinfo *res;
+	struct addrinfo hints, *res;
 	struct itimerval itimer;
 	struct sockaddr_in6 from, from6;
-	struct addrinfo hints;
+	socklen_t maxsizelen;
 	int64_t preload;
 	int ch, i, maxsize, packlen, optval, error;
-	socklen_t maxsizelen;
 	u_char *datap, *packet;
-	char *e, *target, hbuf[NI_MAXHOST];
-	char *source = NULL;
+	char *e, *target, hbuf[NI_MAXHOST], *source = NULL;
 	const char *errstr;
 	struct cmsghdr *scmsg = NULL;
 	struct in6_pktinfo *pktinfo = NULL;
