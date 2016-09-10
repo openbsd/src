@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.912 2016/09/04 12:36:33 halex Exp $
+#	$OpenBSD: install.sub,v 1.913 2016/09/10 08:10:19 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1182,7 +1182,7 @@ v4_defroute() {
 	[[ -n $1 ]] && _dr=$1
 
 	# Don't ask if a default route exits and is handled by dhclient.
-	[[ -n $_dr && $2 == DHCLIENT && -f /tmp/i/dhclient.conf ]] && return
+	[[ -n $_dr && $2 == \"DHCLIENT && -f /tmp/i/dhclient.conf ]] && return
 
 	while :; do
 		ask_until "Default IPv4 route? (IPv4 address or none)" "$_dr"
