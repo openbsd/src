@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.914 2016/09/10 15:14:52 rpe Exp $
+#	$OpenBSD: install.sub,v 1.915 2016/09/10 17:18:30 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1488,7 +1488,6 @@ install_files() {
 install_http() {
 	local _file_list _prompt _mirror _url_base
 
-	waitcgiinfo
 	# N.B.: 'http_proxy' is an environment variable used by ftp(1). DON'T
 	# change the name or case!
 	ask "HTTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" \
@@ -2763,6 +2762,9 @@ do_upgrade(){
 
 	# Feed the random pool some entropy before we read from it.
 	feed_random
+
+	# Ensure that previous installer choices (e.g. method) are available.
+	waitcgiinfo
 
 	# Ask the user for locations, and install whatever sets the user selected.
 	install_sets
