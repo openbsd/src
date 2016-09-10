@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.18 2016/08/28 20:17:10 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.19 2016/09/10 23:09:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -368,11 +368,11 @@ sxiccmu_pll6_get_frequency(void *cookie, uint32_t *cells)
 	case 0:	
 		return (freq * n * k) / m / 6;		/* pll6_sata */
 	case 1:	
-		return (freq * n * k) / m / 2;		/* pll6_other */
+		return (freq * n * k) / 2;		/* pll6_other */
 	case 2:	
-		return (freq * n * k) / m;		/* pll6 */
+		return (freq * n * k);			/* pll6 */
 	case 3:
-		return (freq * n * k) / m / 4;		/* pll6_div_4 */
+		return (freq * n * k) / 4;		/* pll6_div_4 */
 	}
 
 	return 0;
@@ -468,6 +468,8 @@ sxiccmu_mmc_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 {
 	struct sxiccmu_clock *sc = cookie;
 	uint32_t reg, m, n;
+	uint32_t clk_src;
+	uint32_t parent_freq;
 
 	if (cells[0] != 0)
 		return -1;
@@ -475,12 +477,19 @@ sxiccmu_mmc_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 	switch (freq) {
 	case 400000:
 		n = 2, m = 15;
+		clk_src = CCU_SDx_CLK_SRC_SEL_OSC24M;
 		break;
 	case 25000000:
 	case 26000000:
 	case 50000000:
-		/* XXX OSC24M */
+	case 52000000:
 		n = 0, m = 0;
+		clk_src = CCU_SDx_CLK_SRC_SEL_PLL6;
+		parent_freq = clock_get_frequency_idx(sc->sc_node, 1);
+		while ((parent_freq / (1 << n) / 16) > freq)
+			n++;
+		while ((parent_freq / (1 << n) / (m + 1)) > freq)
+			m++;
 		break;
 	default:
 		return -1;
@@ -488,7 +497,7 @@ sxiccmu_mmc_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 
 	reg = SXIREAD4(sc, 0);
 	reg &= ~CCU_SDx_CLK_SRC_SEL_MASK;
-	reg |= CCU_SDx_CLK_SRC_SEL_OSC24M;
+	reg |= clk_src;
 	reg &= ~CCU_SDx_CLK_DIV_RATIO_N_MASK;
 	reg |= n << CCU_SDx_CLK_DIV_RATIO_N_SHIFT;
 	reg &= ~CCU_SDx_CLK_DIV_RATIO_M_MASK;
