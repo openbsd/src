@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.135 2016/09/10 16:53:22 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.136 2016/09/10 17:06:11 jsing Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -964,7 +964,7 @@ bio_kdf_generate(struct sr_crypto_kdfinfo *kdfinfo)
 		errx(1, "invalid KDF info");
 
 	kdfinfo->pbkdf.generic.len = sizeof(kdfinfo->pbkdf);
-	kdfinfo->pbkdf.generic.type = SR_CRYPTOKDFT_PCKS5_PBKDF2;
+	kdfinfo->pbkdf.generic.type = SR_CRYPTOKDFT_PKCS5_PBKDF2;
 	kdfinfo->pbkdf.rounds = rflag ? rflag : 8192;
 
 	kdfinfo->flags = SR_CRYPTOKDF_KEY | SR_CRYPTOKDF_HINT;
@@ -1275,7 +1275,7 @@ derive_key(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
 	if (!salt)
 		errx(1, "Invalid salt");
 
-	if (type != SR_CRYPTOKDFT_PCKS5_PBKDF2)
+	if (type != SR_CRYPTOKDFT_PKCS5_PBKDF2)
 		errx(1, "unknown KDF type %d", type);
 	if (rounds < 1000)
 		errx(1, "number of KDF rounds is too small: %d", rounds);
