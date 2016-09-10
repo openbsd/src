@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.12 2016/09/10 16:07:33 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.13 2016/09/10 16:19:14 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -18,23 +18,21 @@
 
 set -e
 
-trap "syspatch_trap" 2 3 9 13 15 ERR
+trap "rm -rf ${_TMP}; exit 1" 2 3 9 13 15 ERR
+
+sp_err()
+{
+	echo "${@}" 1>&2 && return 1
+}
 
 usage()
 {
-	echo "usage: ${0##*/} [-c | -l | -r]" >&2 && return 1
+	sp_err "usage: ${0##*/} [-c | -l | -r]"
 }
 
 needs_root()
 {
-	[[ $(id -u) -ne 0 ]] && echo "${0##*/}: need root privileges" && \
-		return 1
-}
-
-syspatch_trap()
-{
-	rm -rf ${_TMP}
-	exit 1
+	[[ $(id -u) -ne 0 ]] && sp_err "${0##*/}: need root privileges"
 }
 
 apply_patches()
