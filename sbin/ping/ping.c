@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.159 2016/09/10 07:46:20 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.160 2016/09/10 07:47:00 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ main(int argc, char *argv[])
 	preload = 0;
 	datap = &outpack[8 + sizeof(struct payload)];
 	while ((ch = getopt(argc, argv,
-	    "DEI:LRS:c:defHi:l:np:qs:T:t:V:vw:")) != -1)
+	    "DEI:LRS:c:defHi:l:np:qs:T:t:V:vw:")) != -1) {
 		switch(ch) {
 		case 'c':
 			npackets = strtonum(optarg, 0, INT64_MAX, &errstr);
@@ -346,6 +346,8 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
+	}
+
 	argc -= optind;
 	argv += optind;
 
