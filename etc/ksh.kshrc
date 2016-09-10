@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.24 2016/09/10 08:42:06 rpe Exp $
+#	$OpenBSD: ksh.kshrc,v 1.25 2016/09/10 09:44:49 rpe Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh
@@ -33,9 +33,8 @@
 case "$-" in
 *i*)	# we are interactive
 	# we may have su'ed so reset these
-	USER=`whoami 2>/dev/null`
-	USER=${USER:-`id | sed 's/^[^(]*(\([^)]*\)).*/\1/'`}
-	UID=`id -u`
+	USER=$(id -un)
+	UID=$(id -u)
 	case $UID in
 	0) PS1S='# ';;
 	esac
