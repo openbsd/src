@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.161 2016/09/10 07:42:20 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.162 2016/09/10 07:43:03 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -229,14 +229,14 @@ main(int argc, char *argv[])
 	struct addrinfo hints, *res;
 	struct itimerval itimer;
 	struct sockaddr_in6 from, from6;
+	struct cmsghdr *scmsg = NULL;
+	struct in6_pktinfo *pktinfo = NULL;
 	socklen_t maxsizelen;
 	int64_t preload;
 	int ch, i, optval = 1, packlen, maxsize, error;
 	u_char *datap, *packet;
 	char *e, *target, hbuf[NI_MAXHOST], *source = NULL;
 	const char *errstr;
-	struct cmsghdr *scmsg = NULL;
-	struct in6_pktinfo *pktinfo = NULL;
 	double intval;
 	int mflag = 0, loop = 1;
 	uid_t uid;
