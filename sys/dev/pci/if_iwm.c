@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.126 2016/09/10 07:38:24 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.127 2016/09/10 09:12:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -388,9 +388,7 @@ int	iwm_mvm_power_mac_update_mode(struct iwm_softc *, struct iwm_node *);
 int	iwm_mvm_power_update_device(struct iwm_softc *);
 int	iwm_mvm_enable_beacon_filter(struct iwm_softc *, struct iwm_node *);
 int	iwm_mvm_disable_beacon_filter(struct iwm_softc *);
-int	iwm_mvm_sta_send_to_fw(struct iwm_softc *, struct iwm_node *, int);
-int	iwm_mvm_add_sta(struct iwm_softc *, struct iwm_node *);
-int	iwm_mvm_update_sta(struct iwm_softc *, struct iwm_node *);
+int	iwm_mvm_add_sta_cmd(struct iwm_softc *, struct iwm_node *, int);
 int	iwm_mvm_add_int_sta_common(struct iwm_softc *, struct iwm_int_sta *,
 				const uint8_t *, uint16_t, uint16_t);
 int	iwm_mvm_add_aux_sta(struct iwm_softc *);
@@ -4318,7 +4316,7 @@ iwm_mvm_disable_beacon_filter(struct iwm_softc *sc)
 }
 
 int
-iwm_mvm_sta_send_to_fw(struct iwm_softc *sc, struct iwm_node *in, int update)
+iwm_mvm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 {
 	struct iwm_mvm_add_sta_cmd_v7 add_sta_cmd;
 	int err;
@@ -4389,18 +4387,6 @@ iwm_mvm_sta_send_to_fw(struct iwm_softc *sc, struct iwm_node *in, int update)
 	}
 
 	return err;
-}
-
-int
-iwm_mvm_add_sta(struct iwm_softc *sc, struct iwm_node *in)
-{
-	return iwm_mvm_sta_send_to_fw(sc, in, 0);
-}
-
-int
-iwm_mvm_update_sta(struct iwm_softc *sc, struct iwm_node *in)
-{
-	return iwm_mvm_sta_send_to_fw(sc, in, 1);
 }
 
 int
@@ -5244,7 +5230,7 @@ iwm_auth(struct iwm_softc *sc)
 	if (err)
 		return err;
 
-	err = iwm_mvm_add_sta(sc, in);
+	err = iwm_mvm_add_sta_cmd(sc, in, 0);
 	if (err)
 		return err;
 
@@ -5273,7 +5259,7 @@ iwm_assoc(struct iwm_softc *sc)
 	struct iwm_node *in = (void *)ic->ic_bss;
 	int err;
 
-	err = iwm_mvm_update_sta(sc, in);
+	err = iwm_mvm_add_sta_cmd(sc, in, 1);
 	if (err)
 		return err;
 
