@@ -25,10 +25,7 @@ END {
 
         my $mesg = $ldap->search(base => $base, scope => "sub", filter => "(objectClass=inetOrgPerson)");
         $mesg->code && die $mesg->error;
-        # empty the ldap hash
         say $mesg->count." ldap entries";
         for (my $i=0 ; $i < $mesg->count ; $i++) {
-                # store entry by mail
-                say Dumper($mesg->entry($i));
-                        #$log->debug("adding entry without mail for ".$entry->dn. " with modifyTimestamp = ".$entry->get_value('modifyTimestamp'));
+                say $mesg->entry($i)->dn();
         }
