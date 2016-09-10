@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.160 2016/09/10 07:41:36 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.161 2016/09/10 07:42:20 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -231,7 +231,7 @@ main(int argc, char *argv[])
 	struct sockaddr_in6 from, from6;
 	socklen_t maxsizelen;
 	int64_t preload;
-	int ch, i, maxsize, packlen, optval, error;
+	int ch, i, optval = 1, packlen, maxsize, error;
 	u_char *datap, *packet;
 	char *e, *target, hbuf[NI_MAXHOST], *source = NULL;
 	const char *errstr;
