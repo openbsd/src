@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.88 2016/02/27 13:08:07 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.89 2016/09/10 18:02:15 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1222,6 +1222,9 @@ syscall(tf, code, pc)
 	register_t args[8];
 	register_t rval[2];
 
+	if ((tf->tf_out[6] & 1) == 0)
+		sigexit(p, SIGILL);
+
 	uvmexp.syscalls++;
 	p = curproc;
 #ifdef DIAGNOSTIC
@@ -1255,29 +1258,15 @@ syscall(tf, code, pc)
 
 	switch (code) {
 	case SYS_syscall:
+	case SYS___syscall:
 		code = *ap++;
 		nap--;
-		break;
-	case SYS___syscall:
-		if (code < nsys && callp[code].sy_call !=
-		    callp[p->p_p->ps_emul->e_nosys].sy_call)
-			break; /* valid system call */
-		if (tf->tf_out[6] & 1L) {
-			/* longs *are* quadwords */
-			code = ap[0];
-			ap += 1;
-			nap -= 1;			
-		} else {
-			code = ap[_QUAD_LOWWORD];
-			ap += 2;
-			nap -= 2;
-		}
 		break;
 	}
 
 	if (code < 0 || code >= nsys)
 		callp += p->p_p->ps_emul->e_nosys;
-	else if (tf->tf_out[6] & 1L) {
+	else {
 		register_t *argp;
 
 		callp += code;
@@ -1286,7 +1275,7 @@ syscall(tf, code, pc)
 			if (i > 8)
 				panic("syscall nargs");
 			/* Read the whole block in */
-			if ((error = copyin((caddr_t)(u_long)tf->tf_out[6]
+			if ((error = copyin((caddr_t)tf->tf_out[6]
 			    + BIAS + offsetof(struct frame64, fr_argx),
 			    &args[nap], (i - nap) * sizeof(register_t))))
 				goto bad;
@@ -1298,9 +1287,6 @@ syscall(tf, code, pc)
 		 */
 		for (argp = args; i--;) 
 			*argp++ = *ap++;
-	} else {
-		error = EFAULT;
-		goto bad;
 	}
 
 	rval[0] = 0;
