@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.158 2016/09/10 07:42:20 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.159 2016/09/10 07:46:20 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -197,7 +197,8 @@ main(int argc, char *argv[])
 	int64_t preload;
 	int ch, i, optval = 1, packlen, maxsize, error;
 	int df = 0, tos = 0;
-	u_char *datap, *packet, ttl = MAXTTL, loop = 1;
+	u_char *datap, *packet, loop = 1;
+	u_char ttl = MAXTTL;
 	char *e, *target, hbuf[NI_MAXHOST], *source = NULL;
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
 	const char *errstr;
