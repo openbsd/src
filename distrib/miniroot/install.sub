@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.913 2016/09/10 08:10:19 rpe Exp $
+#	$OpenBSD: install.sub,v 1.914 2016/09/10 15:14:52 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1481,7 +1481,7 @@ install_files() {
 		fi
 		[[ -d $_tmpsrc ]] && rm -f "$_tmpsrc/$_f"
 	done
-	[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
+	[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc" || true
 }
 
 # Get several parameters from the user, and xfer files from the http server.
