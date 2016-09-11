@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.56 2016/05/10 23:48:07 dlg Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.57 2016/09/11 13:57:57 deraadt Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -150,8 +150,7 @@ struct bpf_hdr {
  * XXX fail-safe: on new machines, we just use the 'safe' sizeof.
  */
 #ifdef _KERNEL
-#if defined(__arm__) || defined(__i386__) || defined(__m68k__) || \
-    defined(__mips__) || defined(__ns32k__) || defined(__sparc__) || \
+#if defined(__arm__) || defined(__i386__) || defined(__mips__) || \
     defined(__sparc64__)
 #define SIZEOF_BPF_HDR 18
 #else
