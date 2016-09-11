@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2016/09/11 15:54:11 jsing Exp $
+#	$OpenBSD: Makefile,v 1.23 2016/09/11 17:53:26 jsing Exp $
 #	$NetBSD: Makefile,v 1.2 2001/03/04 14:50:05 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -31,8 +31,8 @@ SRCS+=		strlcpy.c strcmp.c strlcat.c strlen.c
 
 .if ${SOFTRAID:L} == "yes"
 .PATH:		${S}/lib/libsa
-SRCS+=		aes_xts.c explicit_bzero.c hmac_sha1.c sha1.c pkcs5_pbkdf2.c \
-		rijndael.c
+SRCS+=		aes_xts.c explicit_bzero.c hmac_sha1.c pkcs5_pbkdf2.c \
+		rijndael.c sha1.c softraid.c
 .endif
 
 CWARNFLAGS+=	-Wno-main
