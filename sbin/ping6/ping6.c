@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.187 2016/09/11 19:53:33 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.188 2016/09/11 19:55:10 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ struct payload {
 #define	DEFDATALEN	(64 - 8)		/* default data length */
 #define	IP6LEN		40
 #define	ECHOLEN	8	/* icmp echo header len excluding time */
-#define	ICMP6ECHOTMLEN sizeof(struct payload)
+#define	ECHOTMLEN sizeof(struct payload)
 #define	EXTRA		256	/* for AH and various other headers. weird. */
 #define	MAXPAYLOAD	IPV6_MAXPACKET - IP6LEN - ECHOLEN
 #define	MAXWAIT_DEFAULT	10			/* secs to wait for response */
@@ -248,7 +248,7 @@ main(int argc, char *argv[])
 		err(1, "setresuid");
 
 	preload = 0;
-	datap = &outpack[ECHOLEN + ICMP6ECHOTMLEN];
+	datap = &outpack[ECHOLEN + ECHOTMLEN];
 	while ((ch = getopt(argc, argv,
 	    "c:dEefHh:I:i:Ll:mNnp:qS:s:V:vw:")) != -1) {
 		switch (ch) {
@@ -1049,8 +1049,8 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			if (dupflag)
 				(void)printf(" (DUP!)");
 			/* check the data */
-			cp = buf + ECHOLEN + ICMP6ECHOTMLEN;
-			dp = outpack + ECHOLEN + ICMP6ECHOTMLEN;
+			cp = buf + ECHOLEN + ECHOTMLEN;
+			dp = outpack + ECHOLEN + ECHOTMLEN;
 			if (cc != ECHOLEN + datalen) {
 				int delta = cc - (datalen + ECHOLEN);
 
