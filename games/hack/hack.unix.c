@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.unix.c,v 1.19 2016/03/15 19:56:20 mestre Exp $	*/
+/*	$OpenBSD: hack.unix.c,v 1.20 2016/09/11 14:21:17 tb Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -80,6 +80,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "hack.h"

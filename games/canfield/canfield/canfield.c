@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.26 2016/01/10 13:35:09 mestre Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.27 2016/09/11 14:21:17 tb Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #define	decksize	52

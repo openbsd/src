@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2016/03/07 13:48:25 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2016/09/11 14:21:17 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -47,6 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "extern.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.27 2016/03/16 15:00:35 mestre Exp $	*/
+/*	$OpenBSD: snake.c,v 1.28 2016/09/11 14:21:18 tb Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
 
 #ifdef	DEBUG

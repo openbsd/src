@@ -1,4 +1,4 @@
-/*	$OpenBSD: execute.c,v 1.13 2016/01/08 18:20:33 mestre Exp $	*/
+/*	$OpenBSD: execute.c,v 1.14 2016/09/11 14:21:18 tb Exp $	*/
 /*	$NetBSD: execute.c,v 1.3 1995/03/23 08:34:38 cgd Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "monop.ext"
 

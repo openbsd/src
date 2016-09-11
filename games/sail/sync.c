@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.14 2016/01/08 20:26:33 mestre Exp $	*/
+/*	$OpenBSD: sync.c,v 1.15 2016/09/11 14:21:18 tb Exp $	*/
 /*	$NetBSD: sync.c,v 1.9 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "extern.h"

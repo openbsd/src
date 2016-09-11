@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.22 2016/03/16 15:00:35 mestre Exp $	*/
+/*	$OpenBSD: log.c,v 1.23 2016/09/11 14:21:17 tb Exp $	*/
 /*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
 
 /*-
@@ -50,6 +50,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "extern.h"
