@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.166 2016/09/11 18:01:24 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.167 2016/09/11 18:03:12 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -181,7 +181,6 @@ void			 pr_pack(u_char *, int, struct msghdr *);
 __dead void		 usage(void);
 
 int			 in_cksum(u_short *, int);
-int			 check_icmph(struct ip *);
 void			 pr_icmph(struct icmp *);
 void			 pr_retip(struct ip *);
 void			 pr_iph(struct ip *);
@@ -789,11 +788,11 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 	u_char *cp, *dp;
 	static int old_rrlen;
 	static char old_rr[MAX_IPOPTLEN];
-	struct ip *ip, *ip2;
+	struct ip *ip;
 	struct timespec ts, tp;
 	char *pkttime;
 	double triptime = 0;
-	int hlen, hlen2, dupflag;
+	int hlen, dupflag;
 	struct payload payload;
 
 	s_in.sin_len = sizeof(s_in);
@@ -916,10 +915,6 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 	} else {
 		/* We've got something other than an ECHOREPLY */
 		if (!(options & F_VERBOSE))
-			return;
-		ip2 = (struct ip *)(buf + hlen + sizeof (struct icmp));
-		hlen2 = ip2->ip_hl << 2;
-		if (cc >= hlen2 + 8 && check_icmph(ip2) != 1)
 			return;
 		(void)printf("%d bytes from %s: ", cc,
 		    pr_addr((struct sockaddr*)from, fromlen));
@@ -1367,37 +1362,6 @@ fill(char *bp, char *patp)
 			(void)printf("%02x", bp[jj] & 0xFF);
 		(void)printf("\n");
 	}
-}
-
-/*
- * when we get types of ICMP message with parts of the orig. datagram
- * we want to try to assure ourselves that it is from this instance
- * of ping, and not say, a refused finger connection or something
- */
-int
-check_icmph(struct ip *iph)
-{
-	struct icmp *icmph;
-
-	/* only allow IP version 4 */
-	if (iph->ip_v != 4)
-		return 0;
-
-	/* Only allow ICMP */
-	if (iph->ip_p != IPPROTO_ICMP)
-		return 0;
-
-	icmph = (struct icmp *) (iph + (4 * iph->ip_hl));
-
-	/* make sure it is in response to an ECHO request */
-	if (icmph->icmp_type != 8)
-		return 0;
-
-	/* ok, make sure it has the right id on it */
-	if (icmph->icmp_hun.ih_idseq.icd_id != ident)
-		return 0;
-
-	return 1;
 }
 
 #ifndef SMALL
