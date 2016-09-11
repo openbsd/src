@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.176 2016/09/11 18:21:09 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.177 2016/09/11 18:25:29 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1073,8 +1073,6 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 				(void)printf(" time=%.3f ms", triptime);
 			if (dupflag)
 				(void)printf("(DUP!)");
-			if (options & F_AUD_RECV)
-				(void)fputc('\a', stderr);
 			/* check the data */
 			cp = buf + ICMP6ECHOLEN + ICMP6ECHOTMLEN;
 			dp = outpack + ICMP6ECHOLEN + ICMP6ECHOTMLEN;
@@ -1105,6 +1103,8 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 		if (options & F_VERBOSE)
 			pr_exthdrs(mhdr);
 		(void)fflush(stdout);
+		if (options & F_AUD_RECV)
+			(void)fputc('\a', stderr);
 	}
 }
 
