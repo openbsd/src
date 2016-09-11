@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.182 2016/09/11 19:47:12 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.183 2016/09/11 19:48:12 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1061,7 +1061,9 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			}
 			for (i = 8; cp < end; ++i, ++cp, ++dp) {
 				if (*cp != *dp) {
-					(void)printf("\nwrong data byte #%d should be 0x%x but was 0x%x", i, *dp, *cp);
+					(void)printf("\nwrong data byte #%d "
+					    "should be 0x%x but was 0x%x",
+					    i, *dp, *cp);
 					break;
 				}
 			}
