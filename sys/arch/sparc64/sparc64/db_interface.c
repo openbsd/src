@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.43 2016/08/23 03:28:01 guenther Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.44 2016/09/11 03:14:04 guenther Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -327,7 +327,7 @@ db_ktrap(type, tf)
 	db_active--;
 	splx(s);
 
-	if (fpproc) {	
+	if (fpproc) {
 		*fpproc->p_md.md_fpstate = ddb_regs.ddb_fpstate;
 		loadfpstate(fpproc->p_md.md_fpstate);
 	}
@@ -675,7 +675,7 @@ db_dump_dtlb(addr, have_addr, count, modif)
 		int64_t* p = (int64_t*)addr;
 		static int64_t buf[128];
 		extern void dump_dtlb(int64_t *);
-	
+
 	if (CHEETAHP) {
 		db_printf("DTLB %ld\n", addr);
 		switch(addr)
@@ -782,7 +782,7 @@ struct pmap* pm;
 	long i, j, k, n;
 	paddr_t *pdir, *ptbl;
 	/* Almost the same as pmap_collect() */
-	
+
 	n = 0;
 	for (i=0; i<STSZ; i++) {
 		if((pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i], ASI_PHYS_CACHED))) {
@@ -829,10 +829,10 @@ db_pmap_kernel(addr, have_addr, count, modif)
 	}
 	if (have_addr) {
 		/* lookup an entry for this VA */
-		
+
 		if ((data = pseg_get(&kernel_pmap_, (vaddr_t)addr))) {
 			db_printf("pmap_kernel(%p)->pm_segs[%lx][%lx][%lx]=>%llx\n",
-				  (void *)addr, (u_long)va_to_seg(addr), 
+				  (void *)addr, (u_long)va_to_seg(addr),
 				  (u_long)va_to_dir(addr), (u_long)va_to_pte(addr),
 				  (unsigned long long)data);
 		} else {
@@ -935,7 +935,7 @@ db_dump_dtsb(addr, have_addr, count, modif)
 
 	db_printf("TSB:\n");
 	for (i=0; i<TSBENTS; i++) {
-		db_printf("%4d:%4d:%08x %08x:%08x ", i, 
+		db_printf("%4d:%4d:%08x %08x:%08x ", i,
 			  (int)((tsb_dmmu[i].tag&TSB_TAG_G)?-1:TSB_TAG_CTX(tsb_dmmu[i].tag)),
 			  (int)((i<<13)|TSB_TAG_VA(tsb_dmmu[i].tag)),
 			  (int)(tsb_dmmu[i].data>>32), (int)tsb_dmmu[i].data);
@@ -976,7 +976,7 @@ db_proc_cmd(addr, have_addr, count, modif)
 	struct proc *p;
 
 	p = curproc;
-	if (have_addr) 
+	if (have_addr)
 		p = (struct proc*) addr;
 	if (p == NULL) {
 		db_printf("no current process\n");
@@ -984,16 +984,16 @@ db_proc_cmd(addr, have_addr, count, modif)
 	}
 	db_printf("process %p:", p);
 	db_printf("pid:%d vmspace:%p pmap:%p ctx:%x wchan:%p pri:%d upri:%d\n",
-	    p->p_pid, p->p_vmspace, p->p_vmspace->vm_map.pmap, 
+	    p->p_pid, p->p_vmspace, p->p_vmspace->vm_map.pmap,
 	    p->p_vmspace->vm_map.pmap->pm_ctx,
 	    p->p_wchan, p->p_priority, p->p_usrpri);
 	db_printf("maxsaddr:%p ssiz:%dpg or %llxB\n",
-	    p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize, 
+	    p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize,
 	    (unsigned long long)ptoa(p->p_vmspace->vm_ssize));
 	db_printf("profile timer: %lld sec %ld usec\n",
 	    (long long)p->p_p->ps_timer[ITIMER_PROF].it_value.tv_sec,
 	    p->p_p->ps_timer[ITIMER_PROF].it_value.tv_usec);
-	db_printf("pcb: %p tf: %p fpstate: %p\n", &p->p_addr->u_pcb, 
+	db_printf("pcb: %p tf: %p fpstate: %p\n", &p->p_addr->u_pcb,
 	    p->p_md.md_tf, p->p_md.md_fpstate);
 	return;
 }
@@ -1034,16 +1034,16 @@ db_dump_pcb(addr, have_addr, count, modif)
 	int i;
 
 	pcb = curpcb;
-	if (have_addr) 
+	if (have_addr)
 		pcb = (struct pcb*) addr;
 
 	db_printf("pcb@%p sp:%p pc:%p cwp:%d pil:%d nsaved:%x onfault:%p\nlastcall:%s\nfull windows:\n",
 		  pcb, (void *)(long)pcb->pcb_sp, (void *)(long)pcb->pcb_pc, pcb->pcb_cwp,
 		  pcb->pcb_pil, pcb->pcb_nsaved, (void *)pcb->pcb_onfault,
 		  (pcb->lastcall)?pcb->lastcall:"Null");
-	
+
 	for (i=0; i<pcb->pcb_nsaved; i++) {
-		db_printf("win %d: at %llx local, in\n", i, 
+		db_printf("win %d: at %llx local, in\n", i,
 			  (unsigned long long)pcb->pcb_rwsp[i]);
 		db_printf("%16llx %16llx %16llx %16llx\n",
 			  (unsigned long long)pcb->pcb_rw[i].rw_local[0],
@@ -1082,7 +1082,7 @@ db_setpcb(addr, have_addr, count, modif)
 		db_printf("What PID do you want to map in?\n");
 		return;
 	}
-    
+
 	LIST_FOREACH(p, &allproc, p_list) {
 		if (p->p_stat && p->p_pid == addr) {
 			curproc = p;
@@ -1103,9 +1103,9 @@ db_print_trace_entry(te, i)
 	struct traptrace *te;
 	int i;
 {
-	db_printf("%d:%d p:%d tt:%d:%llx:%llx %llx:%llx ", i, 
-		  (int)te->tl, (int)te->pid, 
-		  (int)te->tt, (unsigned long long)te->tstate, 
+	db_printf("%d:%d p:%d tt:%d:%llx:%llx %llx:%llx ", i,
+		  (int)te->tl, (int)te->pid,
+		  (int)te->tt, (unsigned long long)te->tstate,
 		  (unsigned long long)te->tfault, (unsigned long long)te->tsp,
 		  (unsigned long long)te->tpc);
 	db_printsym((u_long)te->tpc, DB_STGY_PROC, db_printf);
@@ -1171,7 +1171,7 @@ db_traptrace(addr, have_addr, count, modif)
 	}
 }
 
-/* 
+/*
  * Use physical or virtual watchpoint registers -- ugh
  */
 void
@@ -1200,7 +1200,7 @@ db_watch(addr, have_addr, count, modif)
 	if (have_addr) {
 		/* turn on the watchpoint */
 		int64_t tmp = ldxa(0, ASI_MCCR);
-		
+
 		if (phys) {
 			tmp &= ~(WATCH_PM|WATCH_PR|WATCH_PW);
 			stxa(PHYSICAL_WATCHPOINT, ASI_DMMU, addr);

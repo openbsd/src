@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.91 2016/09/10 19:33:38 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.92 2016/09/11 03:14:04 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -88,11 +88,11 @@
 int trapstats = 0;
 int protfix = 0;
 int udmiss = 0;	/* Number of normal/nucleus data/text miss/protection faults */
-int udhit = 0;	
+int udhit = 0;
 int udprot = 0;
 int utmiss = 0;
 int kdmiss = 0;
-int kdhit = 0;	
+int kdhit = 0;
 int kdprot = 0;
 int ktmiss = 0;
 int iveccnt = 0; /* number if normal/nucleus interrupt/interrupt vector faults */
@@ -312,13 +312,13 @@ const char *trap_type[] = {
 static inline void share_fpu(struct proc *, struct trapframe64 *);
 
 void trap(struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate);
-void data_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc, 
+void data_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 	vaddr_t va, vaddr_t sfva, u_long sfsr);
-void data_access_error(struct trapframe64 *tf, unsigned type, 
+void data_access_error(struct trapframe64 *tf, unsigned type,
 	vaddr_t afva, u_long afsr, vaddr_t sfva, u_long sfsr);
-void text_access_fault(struct trapframe64 *tf, unsigned type, 
+void text_access_fault(struct trapframe64 *tf, unsigned type,
 	vaddr_t pc, u_long sfsr);
-void text_access_error(struct trapframe64 *tf, unsigned type, 
+void text_access_error(struct trapframe64 *tf, unsigned type,
 	vaddr_t pc, u_long sfsr, vaddr_t afva, u_long afsr);
 void syscall(struct trapframe64 *, register_t code, register_t pc);
 
@@ -606,7 +606,7 @@ dopanic:
 		isfsr = ldxa(SFSR, ASI_IMMU);
 	}
 #endif
-		/* 
+		/*
 		 * If we're busy doing copyin/copyout continue
 		 */
 		if (p->p_addr->u_pcb.pcb_onfault) {
@@ -614,7 +614,7 @@ dopanic:
 			tf->tf_npc = tf->tf_pc + 4;
 			break;
 		}
-		
+
 		/* XXX sv.sival_ptr should be the fault address! */
 		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);	/* XXX code? */
@@ -774,7 +774,7 @@ data_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 	/* Find the faulting va to give to uvm_fault */
 	va = trunc_page(addr);
 
-	/* 
+	/*
 	 * Now munch on protections.
 	 *
 	 * If it was a FAST_DATA_ACCESS_MMU_MISS we have no idea what the
@@ -1237,7 +1237,7 @@ syscall(struct trapframe64 *tf, register_t code, register_t pc)
 		 * It should be faster to do <= 6 longword copies than
 		 * to call bcopy
 		 */
-		for (argp = args; i--;) 
+		for (argp = args; i--;)
 			*argp++ = *ap++;
 	}
 

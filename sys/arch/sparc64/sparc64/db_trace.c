@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.11 2016/09/10 17:59:53 guenther Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.12 2016/09/11 03:14:04 guenther Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -52,8 +52,8 @@ void db_print_window(u_int64_t);
 #define INKERNEL(va)	1	/* Everything's in the kernel now. 8^) */
 #endif
 
-#define	KLOAD(x)	probeget((paddr_t)(u_long)&(x), ASI_PRIMARY, sizeof(x))	
-#define ULOAD(x)	probeget((paddr_t)(u_long)&(x), ASI_AIUS, sizeof(x))	
+#define	KLOAD(x)	probeget((paddr_t)(u_long)&(x), ASI_PRIMARY, sizeof(x))
+#define ULOAD(x)	probeget((paddr_t)(u_long)&(x), ASI_AIUS, sizeof(x))
 
 void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
@@ -82,7 +82,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			if (p == NULL) {
 				(*pr)("not found\n");
 				return;
-			}	
+			}
 			u = p->p_addr;
 			frame = (vaddr_t)u->u_pcb.pcb_sp;
 			(*pr)("at %p\n", frame);
@@ -109,7 +109,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 
 		f64 = (struct frame64 *)(frame + BIAS);
 		pc = (db_addr_t)KLOAD(f64->fr_pc);
-	
+
 		frame = KLOAD(f64->fr_fp);
 
 		if (kernel_only) {
@@ -125,18 +125,18 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		if (!INKERNEL(frame))
 			break;
 #endif
-		
+
 		db_find_sym_and_offset(pc, &name, &offset);
 		if (name == NULL)
 			name = "?";
-		
+
 		(*pr)("%s(", name);
 
 		if ((frame & 1) == 0) {
 			db_printf(")\nWARNING: corrupt frame at %lx\n", frame);
 			break;
 		}
-		
+
 		/*
 		 * Print %i0..%i5; hope these still reflect the
 		 * actual arguments somewhat...
@@ -177,12 +177,12 @@ db_dump_window(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	db_print_window(frame);
 }
 
-void 
+void
 db_print_window(u_int64_t frame)
 {
 	struct frame64 *f = (struct frame64 *)(frame + BIAS);
 
-	db_printf("frame64 %p locals, ins:\n", f);		
+	db_printf("frame64 %p locals, ins:\n", f);
 	if (INKERNEL(f)) {
 		db_printf("%llx %llx %llx %llx ",
 			  (unsigned long long)f->fr_local[0],
@@ -195,12 +195,12 @@ db_print_window(u_int64_t frame)
 			  (unsigned long long)f->fr_local[6],
 			  (unsigned long long)f->fr_local[7]);
 		db_printf("%llx %llx %llx %llx ",
-			  (unsigned long long)f->fr_arg[0],	
+			  (unsigned long long)f->fr_arg[0],
 			  (unsigned long long)f->fr_arg[1],
 			  (unsigned long long)f->fr_arg[2],
 			  (unsigned long long)f->fr_arg[3]);
 		db_printf("%llx %llx %llx=sp %llx=pc:",
-			  (unsigned long long)f->fr_arg[4],	
+			  (unsigned long long)f->fr_arg[4],
 			  (unsigned long long)f->fr_arg[5],
 			  (unsigned long long)f->fr_fp,
 			  (unsigned long long)f->fr_pc);
@@ -233,7 +233,7 @@ db_print_window(u_int64_t frame)
 			  (unsigned long long)f->fr_arg[5],
 			  (unsigned long long)f->fr_fp,
 			  (unsigned long long)f->fr_pc);
-		db_printf("\n");	 
+		db_printf("\n");
 	}
 }
 
@@ -308,7 +308,7 @@ db_dump_trap(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		  tf, (unsigned long long)tf->tf_tstate,
 		  (unsigned long long)tf->tf_pc,
 		  (unsigned long long)tf->tf_npc);
-	db_printf("y: %x\tpil: %d\toldpil: %d\tfault: %llx\tkstack: %llx\ttt: %x\nGlobals:\n", 
+	db_printf("y: %x\tpil: %d\toldpil: %d\tfault: %llx\tkstack: %llx\ttt: %x\nGlobals:\n",
 		  (int)tf->tf_y, (int)tf->tf_pil, (int)tf->tf_oldpil,
 		  (unsigned long long)tf->tf_fault,
 		  (unsigned long long)tf->tf_kstack, (int)tf->tf_tt);
