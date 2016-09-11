@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.172 2016/09/11 18:02:06 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.173 2016/09/11 18:16:12 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -801,7 +801,6 @@ retransmit(void)
  * of the data portion are used to hold a UNIX "timeval" struct in VAX
  * byte-order, to compute the round-trip time.
  */
-
 int
 pinger(void)
 {
