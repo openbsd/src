@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.42 2014/07/11 23:23:28 jsg Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.43 2016/09/11 14:17:04 natano Exp $
 
 INFODIR=	infodir=/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -34,13 +34,17 @@ config: .FORCE
 .endif
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	${XCFLAGS} \
-	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}" \
+	INSTALL_SCRIPT="${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}" \
+	INSTALL_DATA="${INSTALL} ${INSTALL_COPY} -o ${DOCOWN} -g ${DOCGRP}  -m ${NONBINMODE}" \
 		/bin/sh ${.CURDIR}/configure --infodir=/usr/share/info --prefix=/usr --disable-nls ${CF}
 
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	${XCFLAGS} \
-	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP}  -m ${BINMODE}" \
+	INSTALL_SCRIPT="${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}" \
+	INSTALL_DATA="${INSTALL} ${INSTALL_COPY} -o ${DOCOWN} -g ${DOCGRP} -m ${NONBINMODE}" \
 		/bin/sh ${.CURDIR}/configure --infodir=/usr/share/info --prefix=/usr --disable-nls ${CF}
 
 BEFOREMAN=config.status
