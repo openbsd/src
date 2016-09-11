@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.21 2016/08/22 19:38:42 kettenis Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.22 2016/09/11 21:44:30 kettenis Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -100,6 +100,9 @@
 #define SXIE_INTR_ENABLE		0x010f
 #define SXIE_INTR_DISABLE	0x0000
 #define SXIE_INTR_CLEAR		0x0000
+
+#define SXIE_TX_FIFO0		0x0001
+#define SXIE_TX_FIFO1		0x0002
 
 #define	SXIE_RX_ENABLE		0x0004
 #define	SXIE_TX_ENABLE		0x0003
@@ -436,16 +439,13 @@ sxie_intr(void *arg)
 			sxie_recv(sc);
 	}
 
-	pending &= 3;
-
-	if (pending) {
+	if (pending & (SXIE_TX_FIFO0 | SXIE_TX_FIFO1)) {
 		ifq_clr_oactive(&ifp->if_snd);
-		sc->txf_inuse--;
-		ifp->if_opackets++;
-		if (pending == 3) { /* 2 packets got sent */
-			sc->txf_inuse--;
+		if (pending & SXIE_TX_FIFO0)
 			ifp->if_opackets++;
-		}
+		if (pending & SXIE_TX_FIFO1)
+			ifp->if_opackets++;
+		sc->txf_inuse &= ~pending;
 		if (sc->txf_inuse == 0)
 			ifp->if_timer = 0;
 		else
@@ -473,7 +473,7 @@ sxie_start(struct ifnet *ifp)
 	uint32_t fifo;
 	uint32_t txbuf[SXIE_MAX_PKT_SIZE / sizeof(uint32_t)]; /* XXX !!! */
 
-	if (sc->txf_inuse > 1)
+	if (sc->txf_inuse == (SXIE_TX_FIFO0 | SXIE_TX_FIFO1))
 		ifq_set_oactive(&ifp->if_snd);
 
 	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
@@ -494,7 +494,7 @@ trynext:
 		return;
 	}
 
-	if (sc->txf_inuse > 1) {
+	if (sc->txf_inuse == (SXIE_TX_FIFO0 | SXIE_TX_FIFO1)) {
 		ifq_deq_rollback(&ifp->if_snd, m);
 		printf("sxie_start: tx fifos in use.\n");
 		ifq_set_oactive(&ifp->if_snd);
@@ -502,10 +502,14 @@ trynext:
 	}
 
 	/* select fifo */
-	fifo = sc->txf_inuse;
+	if (sc->txf_inuse & SXIE_TX_FIFO0) {
+		sc->txf_inuse |= SXIE_TX_FIFO1;
+		fifo = 1;
+	} else {
+		sc->txf_inuse |= SXIE_TX_FIFO0;
+		fifo = 0;
+	}
 	SXIWRITE4(sc, SXIE_TXINS, fifo);
-
-	sc->txf_inuse++;
 
 	/* set packet length */
 	SXIWRITE4(sc, SXIE_TXPKTLEN0 + (fifo * 4), m->m_pkthdr.len);
