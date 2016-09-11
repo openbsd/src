@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.181 2016/09/11 19:46:10 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.182 2016/09/11 19:47:12 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -994,11 +994,6 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			SIPHASH_CTX ctx;
 			struct tv64 *tv64;
 			u_int8_t mac[SIPHASH_DIGEST_LENGTH];
-
-			if (cc - sizeof(*cp) < sizeof(payload)) {
-				(void)printf("signature missing!\n");
-				return;
-			}
 
 			memcpy(&payload, icp + 1, sizeof(payload));
 			tv64 = &payload.tv64;
