@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.171 2016/09/11 18:21:09 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.172 2016/09/11 18:24:44 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -180,6 +180,7 @@ const char		*pr_addr(struct sockaddr *, socklen_t);
 void			 pr_pack(u_char *, int, struct msghdr *);
 __dead void		 usage(void);
 
+void			 pr_ipopt(int, u_char *);
 int			 in_cksum(u_short *, int);
 void			 pr_icmph(struct icmp *);
 void			 pr_retip(struct ip *);
@@ -857,24 +858,17 @@ pinger(void)
 void
 pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 {
-	struct sockaddr_in s_in;
 	struct sockaddr *from;
 	socklen_t fromlen;
 	struct icmp *icp;
-	in_addr_t l;
-	u_int i, j;
+	u_int i;
 	u_char *cp, *dp;
-	static int old_rrlen;
-	static char old_rr[MAX_IPOPTLEN];
 	struct ip *ip;
 	struct timespec ts, tp;
 	char *pkttime;
 	double triptime = 0;
 	int hlen, dupflag;
 	struct payload payload;
-
-	s_in.sin_len = sizeof(s_in);
-	s_in.sin_family = AF_INET;
 
 	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
 		err(1, "clock_gettime(CLOCK_MONOTONIC)");
@@ -999,9 +993,33 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 	}
 
 	/* Display any IP options */
+	if (hlen > sizeof(struct ip))
+		pr_ipopt(hlen, buf);
+
+	if (!(options & F_FLOOD)) {
+		(void)putchar('\n');
+		(void)fflush(stdout);
+		if (options & F_AUD_RECV)
+			write(STDERR_FILENO, "\a", 1);
+	}
+}
+
+void
+pr_ipopt(int hlen, u_char *buf)
+{
+	static int old_rrlen;
+	static char old_rr[MAX_IPOPTLEN];
+	struct sockaddr_in s_in;
+	in_addr_t l;
+	u_int i, j;
+	u_char *cp;
+
 	cp = buf + sizeof(struct ip);
 
-	for (; hlen > (int)sizeof(struct ip); --hlen, ++cp)
+	s_in.sin_len = sizeof(s_in);
+	s_in.sin_family = AF_INET;
+
+	for (; hlen > sizeof(struct ip); --hlen, ++cp) {
 		switch (*cp) {
 		case IPOPT_EOL:
 			hlen = 0;
@@ -1100,11 +1118,6 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			cp = cp + (cp[IPOPT_OLEN] - 1);
 			break;
 		}
-	if (!(options & F_FLOOD)) {
-		(void)putchar('\n');
-		(void)fflush(stdout);
-		if (options & F_AUD_RECV)
-			write(STDERR_FILENO, "\a", 1);
 	}
 }
 
