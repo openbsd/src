@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.188 2016/09/11 19:55:10 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.189 2016/09/11 19:58:36 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -117,10 +117,10 @@ struct payload {
 	u_int8_t	mac[SIPHASH_DIGEST_LENGTH];
 };
 
-#define	DEFDATALEN	(64 - 8)		/* default data length */
+#define	ECHOLEN		8	/* icmp echo header len excluding time */
+#define	ECHOTMLEN	sizeof(struct payload)
+#define	DEFDATALEN	(64 - ECHOLEN)		/* default data length */
 #define	IP6LEN		40
-#define	ECHOLEN	8	/* icmp echo header len excluding time */
-#define	ECHOTMLEN sizeof(struct payload)
 #define	EXTRA		256	/* for AH and various other headers. weird. */
 #define	MAXPAYLOAD	IPV6_MAXPACKET - IP6LEN - ECHOLEN
 #define	MAXWAIT_DEFAULT	10			/* secs to wait for response */
