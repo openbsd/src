@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.173 2016/09/11 18:27:44 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.174 2016/09/11 18:28:31 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -858,17 +858,18 @@ pinger(void)
 void
 pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 {
+	struct ip *ip;
+	struct icmp *icp;
+	struct timespec ts, tp;
+	struct payload payload;
 	struct sockaddr *from;
 	socklen_t fromlen;
-	struct icmp *icp;
-	u_int i;
-	u_char *cp, *dp;
-	struct ip *ip;
-	struct timespec ts, tp;
-	char *pkttime;
 	double triptime = 0;
-	int hlen, dupflag;
-	struct payload payload;
+	int i, dupflag;
+	int hlen;
+	u_int16_t seq;
+	u_char *cp, *dp;
+	char* pkttime;
 
 	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
 		err(1, "clock_gettime(CLOCK_MONOTONIC)");
@@ -899,20 +900,21 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 	if (icp->icmp_type == ICMP_ECHOREPLY) {
 		if (icp->icmp_id != ident)
 			return;			/* 'Twas not our ECHO */
+		seq = icp->icmp_seq;
 		++nreceived;
 		if (cc >= 8 + sizeof(struct payload)) {
 			SIPHASH_CTX ctx;
-			struct tv64 *tv64 = &payload.tv64;
+			struct tv64 *tv64;
 			u_int8_t mac[SIPHASH_DIGEST_LENGTH];
 
 			pkttime = (char *)icp->icmp_data;
 			memcpy(&payload, pkttime, sizeof(payload));
+			tv64 = &payload.tv64;
 
 			SipHash24_Init(&ctx, &mac_key);
 			SipHash24_Update(&ctx, tv64, sizeof(*tv64));
 			SipHash24_Update(&ctx, &ident, sizeof(ident));
-			SipHash24_Update(&ctx, &icp->icmp_seq,
-			    sizeof(icp->icmp_seq));
+			SipHash24_Update(&ctx, &seq, sizeof(seq));
 			SipHash24_Final(mac, &ctx);
 
 			if (timingsafe_memcmp(mac, &payload.mac,
@@ -938,12 +940,12 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 				tmax = triptime;
 		}
 
-		if (TST(ntohs(icp->icmp_seq) % mx_dup_ck)) {
+		if (TST(ntohs(seq) % mx_dup_ck)) {
 			++nrepeats;
 			--nreceived;
 			dupflag = 1;
 		} else {
-			SET(ntohs(icp->icmp_seq) % mx_dup_ck);
+			SET(ntohs(seq) % mx_dup_ck);
 			dupflag = 0;
 		}
 
@@ -954,8 +956,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			(void)write(STDOUT_FILENO, &BSPACE, 1);
 		else {
 			(void)printf("%d bytes from %s: icmp_seq=%u", cc,
-			    pr_addr(from, fromlen),
-			    ntohs(icp->icmp_seq));
+			    pr_addr(from, fromlen), ntohs(seq));
 			(void)printf(" ttl=%d", ip->ip_ttl);
 			if (cc >= 8 + sizeof(struct payload))
 				(void)printf(" time=%.3f ms", triptime);

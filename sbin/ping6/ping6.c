@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.177 2016/09/11 18:25:29 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.178 2016/09/11 18:28:31 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -950,19 +950,17 @@ pinger(void)
 void
 pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 {
-	struct icmp6_hdr *icp;
-	int i;
-	int hoplim;
-	struct sockaddr *from;
-	socklen_t fromlen;
-	u_char *cp = NULL, *dp, *end = buf + cc;
 	struct in6_pktinfo *pktinfo = NULL;
+	struct icmp6_hdr *icp;
 	struct timespec ts, tp;
 	struct payload payload;
-	struct tv64 *tv64;
+	struct sockaddr *from;
+	socklen_t fromlen;
 	double triptime = 0;
-	int dupflag;
+	int i, dupflag;
+	int hoplim;
 	u_int16_t seq;
+	u_char *cp = NULL, *dp, *end = buf + cc;
 
 	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
 		err(1, "clock_gettime(CLOCK_MONOTONIC)");
@@ -996,10 +994,11 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 	if (icp->icmp6_type == ICMP6_ECHO_REPLY) {
 		if (ntohs(icp->icmp6_id) != ident)
 			return;			/* 'Twas not our ECHO */
-		seq = ntohs(icp->icmp6_seq);
+		seq = icp->icmp6_seq;
 		++nreceived;
 		if (cc >= 8 + sizeof(struct payload)) {
 			SIPHASH_CTX ctx;
+			struct tv64 *tv64;
 			u_int8_t mac[SIPHASH_DIGEST_LENGTH];
 
 			if (cc - sizeof(*cp) < sizeof(payload)) {
@@ -1013,8 +1012,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			SipHash24_Init(&ctx, &mac_key);
 			SipHash24_Update(&ctx, tv64, sizeof(*tv64));
 			SipHash24_Update(&ctx, &ident, sizeof(ident));
-			SipHash24_Update(&ctx,
-			    &icp->icmp6_seq, sizeof(icp->icmp6_seq));
+			SipHash24_Update(&ctx, &seq, sizeof(seq));
 			SipHash24_Final(mac, &ctx);
 
 			if (timingsafe_memcmp(mac, &payload.mac,
@@ -1028,6 +1026,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			    tv64_offset.tv64_sec;
 			tp.tv_nsec = betoh64(tv64->tv64_nsec) -
 			    tv64_offset.tv64_nsec;
+
 			timespecsub(&ts, &tp, &ts);
 			triptime = ((double)ts.tv_sec) * 1000.0 +
 			    ((double)ts.tv_nsec) / 1000000.0;
@@ -1039,12 +1038,12 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 				tmax = triptime;
 		}
 
-		if (TST(seq % mx_dup_ck)) {
+		if (TST(ntohs(seq) % mx_dup_ck)) {
 			++nrepeats;
 			--nreceived;
 			dupflag = 1;
 		} else {
-			SET(seq % mx_dup_ck);
+			SET(ntohs(seq) % mx_dup_ck);
 			dupflag = 0;
 		}
 
@@ -1055,7 +1054,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			(void)write(STDOUT_FILENO, &BSPACE, 1);
 		else {
 			(void)printf("%d bytes from %s, icmp_seq=%u", cc,
-			    pr_addr(from, fromlen), seq);
+			    pr_addr(from, fromlen), ntohs(seq));
 			(void)printf(" hlim=%d", hoplim);
 			if ((options & F_VERBOSE) != 0) {
 				struct sockaddr_in6 dstsa;
