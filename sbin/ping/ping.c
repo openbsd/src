@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.161 2016/09/11 11:18:11 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.162 2016/09/11 11:19:27 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -694,19 +694,22 @@ pinger(void)
 {
 	struct icmp *icp;
 	int cc, i;
+	u_int16_t seq;
 	u_char *packet = outpack;
 
 	if (npackets && ntransmitted >= npackets)
 		return(-1);	/* no more transmission */
 
+	seq = htons(ntransmitted++);
+
 	icp = (struct icmp *)outpack;
 	icp->icmp_type = ICMP_ECHO;
 	icp->icmp_code = 0;
 	icp->icmp_cksum = 0;
-	icp->icmp_seq = htons(ntransmitted);
+	icp->icmp_seq = seq;
 	icp->icmp_id = ident;			/* ID */
 
-	CLR(ntohs(icp->icmp_seq) % mx_dup_ck);
+	CLR(ntohs(seq) % mx_dup_ck);
 
 	if (timing) {
 		SIPHASH_CTX ctx;
@@ -724,7 +727,7 @@ pinger(void)
 		SipHash24_Init(&ctx, &mac_key);
 		SipHash24_Update(&ctx, tv64, sizeof(*tv64));
 		SipHash24_Update(&ctx, &ident, sizeof(ident));
-		SipHash24_Update(&ctx, &icp->icmp_seq, sizeof(icp->icmp_seq));
+		SipHash24_Update(&ctx, &seq, sizeof(seq));
 		SipHash24_Update(&ctx, &dst.sin_addr,
 		    sizeof(dst.sin_addr));
 		SipHash24_Final(&payload.mac, &ctx);
@@ -758,7 +761,6 @@ pinger(void)
 	if (!(options & F_QUIET) && options & F_FLOOD)
 		(void)write(STDOUT_FILENO, &DOT, 1);
 
-	ntransmitted++;
 	return (0);
 }
 

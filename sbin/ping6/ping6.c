@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.165 2016/09/11 11:17:15 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.166 2016/09/11 11:19:27 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -802,7 +802,7 @@ pinger(void)
 {
 	struct icmp6_hdr *icp;
 	int i, cc;
-	int seq;
+	u_int16_t seq;
 
 	if (npackets && ntransmitted >= npackets)
 		return(-1);	/* no more transmission */
@@ -810,13 +810,13 @@ pinger(void)
 	icp = (struct icmp6_hdr *)outpack;
 	memset(icp, 0, sizeof(*icp));
 	icp->icmp6_cksum = 0;
-	seq = ntransmitted++;
-	CLR(seq % mx_dup_ck);
+	seq = htons(ntransmitted++);
+	CLR(ntohs(seq) % mx_dup_ck);
 
 	icp->icmp6_type = ICMP6_ECHO_REQUEST;
 	icp->icmp6_code = 0;
 	icp->icmp6_id = htons(ident);
-	icp->icmp6_seq = ntohs(seq);
+	icp->icmp6_seq = seq;
 	if (timing) {
 		SIPHASH_CTX ctx;
 		struct timespec ts;
@@ -833,8 +833,7 @@ pinger(void)
 		SipHash24_Init(&ctx, &mac_key);
 		SipHash24_Update(&ctx, tv64, sizeof(*tv64));
 		SipHash24_Update(&ctx, &ident, sizeof(ident));
-		SipHash24_Update(&ctx,
-		    &icp->icmp6_seq, sizeof(icp->icmp6_seq));
+		SipHash24_Update(&ctx, &seq, sizeof(seq));
 		SipHash24_Update(&ctx, &dst.sin6_addr, sizeof(dst.sin6_addr));
 		SipHash24_Final(&payload.mac, &ctx);
 
