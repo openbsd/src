@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.165 2016/09/11 17:58:21 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.166 2016/09/11 18:01:24 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -542,6 +542,12 @@ main(int argc, char *argv[])
 	printf("PING %s (%s): %d data bytes\n", hostname,
 	    pr_addr((struct sockaddr *)&dst, sizeof(dst)), datalen);
 
+	smsghdr.msg_name = &dst;
+	smsghdr.msg_namelen = sizeof(dst);
+	smsgiov.iov_base = (caddr_t)outpack;
+	smsghdr.msg_iov = &smsgiov;
+	smsghdr.msg_iovlen = 1;
+
 	while (preload--)		/* Fire off them quickies. */
 		pinger();
 
@@ -698,7 +704,6 @@ pinger(void)
 	struct icmp *icp;
 	int cc, i;
 	u_int16_t seq;
-	u_char *packet = outpack;
 
 	if (npackets && ntransmitted >= npackets)
 		return(-1);	/* no more transmission */
@@ -744,19 +749,14 @@ pinger(void)
 	if (options & F_HDRINCL) {
 		struct ip *ip = (struct ip *)outpackhdr;
 
-		packet = (u_char *)ip;
+		smsgiov.iov_base = (caddr_t)outpackhdr;
 		cc += sizeof(struct ip);
 		ip->ip_len = htons(cc);
 		ip->ip_sum = in_cksum((u_short *)outpackhdr, cc);
-	}
+	} else
+		smsgiov.iov_base = (caddr_t)outpack;
 
-
-	smsghdr.msg_name = &dst;
-	smsghdr.msg_namelen = sizeof(dst);
-	smsgiov.iov_base = (caddr_t)packet;
 	smsgiov.iov_len = cc;
-	smsghdr.msg_iov = &smsgiov;
-	smsghdr.msg_iovlen = 1;
 
 	i = sendmsg(s, &smsghdr, 0);
 

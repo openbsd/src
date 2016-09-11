@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.170 2016/09/11 17:59:12 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.171 2016/09/11 18:01:24 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -630,6 +630,12 @@ main(int argc, char *argv[])
 	printf("%s): %d data bytes\n", pr_addr((struct sockaddr *)&dst,
 	    sizeof(dst)), datalen);
 
+	smsghdr.msg_name = &dst;
+	smsghdr.msg_namelen = sizeof(dst);
+	smsgiov.iov_base = (caddr_t)outpack;
+	smsghdr.msg_iov = &smsgiov;
+	smsghdr.msg_iovlen = 1;
+
 	while (preload--)		/* Fire off them quickies. */
 		pinger();
 
@@ -842,12 +848,7 @@ pinger(void)
 	}
 	cc = ICMP6ECHOLEN + datalen;
 
-	smsghdr.msg_name = &dst;
-	smsghdr.msg_namelen = sizeof(dst);
-	smsgiov.iov_base = (caddr_t)outpack;
 	smsgiov.iov_len = cc;
-	smsghdr.msg_iov = &smsgiov;
-	smsghdr.msg_iovlen = 1;
 
 	i = sendmsg(s, &smsghdr, 0);
 
