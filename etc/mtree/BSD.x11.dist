@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.42 2016/03/20 09:33:56 jsg Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.43 2016/09/11 14:05:04 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -14,6 +14,8 @@
             ..
             xinit
             ..
+	    xsm
+	    ..
         ..
         fonts
             conf.avail
@@ -177,6 +179,8 @@
                         ..
                         armscii-8
                         ..
+			cs_CZ.UTF-8
+			..
                         el_GR.UTF-8
                         ..
                         en_US.UTF-8
@@ -340,6 +344,8 @@
                         types
                         ..
                     ..
+		    xorg.conf.d
+		    ..
                 ..
                 aclocal
                 ..
