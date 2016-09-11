@@ -244,8 +244,8 @@ std)
 	;;
 
 ttyc*)
-	M ttyc$U c 38 $U 660 dialer uucp
-	M cuac$U c 38 $(($U+128)) 660 dialer uucp
+	M ttyc$U c 38 $U 660 dialer root
+	M cuac$U c 38 $(($U+128)) 660 dialer root
 	;;
 
 switch*)
@@ -427,8 +427,8 @@ uall)
 ttyU[0-9a-zA-Z])
 	U=${i#ttyU*}
 	o=$(alph2d $U)
-	M ttyU$U c 66 $o 660 dialer uucp
-	M cuaU$U c 66 $(($o+128)) 660 dialer uucp
+	M ttyU$U c 66 $o 660 dialer root
+	M cuaU$U c 66 $(($o+128)) 660 dialer root
 	;;
 
 lpt*|lpa*)
@@ -506,8 +506,8 @@ ptm)
 tty[0-7][0-9a-f])
 	U=${i#tty*}
 	o=$(h2d $U)
-	M tty$U c 8 $o 660 dialer uucp
-	M cua$U c 8 $(($o+128)) 660 dialer uucp
+	M tty$U c 8 $o 660 dialer root
+	M cua$U c 8 $(($o+128)) 660 dialer root
 	;;
 
 st*)

@@ -344,8 +344,8 @@ uall)
 ttyU[0-9a-zA-Z])
 	U=${i#ttyU*}
 	o=$(alph2d $U)
-	M ttyU$U c 68 $o 660 dialer uucp
-	M cuaU$U c 68 $(($o+128)) 660 dialer uucp
+	M ttyU$U c 68 $o 660 dialer root
+	M cuaU$U c 68 $(($o+128)) 660 dialer root
 	;;
 
 wsmux|wsmouse|wskbd)
@@ -413,7 +413,7 @@ ptm)
 	;;
 
 ttya)
-	M ttya c 11 0 660 dialer uucp
+	M ttya c 11 0 660 dialer root
 	;;
 
 st*)

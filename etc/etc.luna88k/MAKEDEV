@@ -355,13 +355,13 @@ ptm)
 tty[0-7][0-9a-f])
 	U=${i#tty*}
 	o=$(h2d $U)
-	M tty$U c 27 $o 660 dialer uucp
-	M cua$U c 27 $(($o+128)) 660 dialer uucp
+	M tty$U c 27 $o 660 dialer root
+	M cua$U c 27 $(($o+128)) 660 dialer root
 	;;
 
 ttya)
-		M ttya c 12 0 660 dialer uucp
-	M cuaa c 12 128 660 dialer uucp 
+		M ttya c 12 0 660 dialer root
+	M cuaa c 12 128 660 dialer root 
 	;;
 
 st*)

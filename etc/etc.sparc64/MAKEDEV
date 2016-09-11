@@ -390,8 +390,8 @@ uall)
 ttyU[0-9a-zA-Z])
 	U=${i#ttyU*}
 	o=$(alph2d $U)
-	M ttyU$U c 95 $o 660 dialer uucp
-	M cuaU$U c 95 $(($o+128)) 660 dialer uucp
+	M ttyU$U c 95 $o 660 dialer root
+	M cuaU$U c 95 $(($o+128)) 660 dialer root
 	;;
 
 lpt*|lpa*)
@@ -487,7 +487,7 @@ ttyV[0-9a-zA-Z])
 	;;
 
 ttyh*)
-	M ttyh$U c 77 $U 660 dialer uucp
+	M ttyh$U c 77 $U 660 dialer root
 	;;
 
 tty[a-z])
@@ -499,14 +499,14 @@ tty[a-z])
 	d) n=3 ;;
 	*) echo unknown tty device $i ;;
 	esac
-	M tty$u c 12 $n 660 dialer uucp
+	M tty$u c 12 $n 660 dialer root
 	;;
 
 tty[0-7][0-9a-f])
 	U=${i#tty*}
 	o=$(h2d $U)
-	M tty$U c 36 $o 660 dialer uucp
-	M cua$U c 36 $(($o+128)) 660 dialer uucp
+	M tty$U c 36 $o 660 dialer root
+	M cua$U c 36 $(($o+128)) 660 dialer root
 	;;
 
 spif*)
@@ -521,7 +521,7 @@ spif*)
 	while [ $n -lt 8 ]
 	do
 		name=${nam}`hex $n`
-		M tty$name c 108 $(($offset+$n)) 660 dialer uucp
+		M tty$name c 108 $(($offset+$n)) 660 dialer root
 		n=$(($n+1))
 	done
 	M bpp${nam}0 c 109 $(($offset+0)) 600
@@ -539,7 +539,7 @@ magma*)
 	while [ $n -lt 16 ]
 	do
 		name=${nam}`hex $n`
-		M tty$name c 71 $(($offset+$n)) 660 dialer uucp
+		M tty$name c 71 $(($offset+$n)) 660 dialer root
 		n=$(($n+1))
 	done
 	M bpp${nam}0 c 72 $(($offset+0)) 600
@@ -555,7 +555,7 @@ cua[a-z])
 	d) n=3 ;;
 	*) echo unknown cua device $i ;;
 	esac
-	M cua$u c 12 $(($n+128)) 660 dialer uucp
+	M cua$u c 12 $(($n+128)) 660 dialer root
 	;;
 
 st*)

@@ -330,8 +330,8 @@ uall)
 ttyU[0-9a-zA-Z])
 	U=${i#ttyU*}
 	o=$(alph2d $U)
-	M ttyU$U c 66 $o 660 dialer uucp
-	M cuaU$U c 66 $(($o+128)) 660 dialer uucp
+	M ttyU$U c 66 $o 660 dialer root
+	M cuaU$U c 66 $(($o+128)) 660 dialer root
 	;;
 
 wsmouse[0-9]*)
@@ -409,15 +409,15 @@ tty[a-b])
 	b) n=1 ;;
 	*) echo unknown tty device $i ;;
 	esac
-	M tty$u c 19 $n 660 dialer uucp
-	M cua$u c 19 $(($n+128)) 660 dialer uucp
+	M tty$u c 19 $n 660 dialer root
+	M cua$u c 19 $(($n+128)) 660 dialer root
 	;;
 
 tty[0-7][0-9a-f])
 	U=${i#tty*}
 	o=$(h2d $U)
-	M tty$U c 17 $o 660 dialer uucp
-	M cua$U c 17 $(($o+128)) 660 dialer uucp
+	M tty$U c 17 $o 660 dialer root
+	M cua$U c 17 $(($o+128)) 660 dialer root
 	;;
 
 st*)

@@ -239,8 +239,8 @@ ttyB*|ttyc*)
 	ttyB*)	type=B major=15 minor=$(($U*2));;
 	ttyc*)	type=c major=38 minor=$U;;
 	esac
-	M tty$type$U c $major $minor 660 dialer uucp
-	M cua$type$U c $major $(($minor+128)) 660 dialer uucp
+	M tty$type$U c $major $minor 660 dialer root
+	M cua$type$U c $major $(($minor+128)) 660 dialer root
 	;;
 
 switch*)
@@ -377,8 +377,8 @@ uall)
 ttyU[0-9a-zA-Z])
 	U=${i#ttyU*}
 	o=$(alph2d $U)
-	M ttyU$U c 49 $o 660 dialer uucp
-	M cuaU$U c 49 $(($o+128)) 660 dialer uucp
+	M ttyU$U c 49 $o 660 dialer root
+	M cuaU$U c 49 $(($o+128)) 660 dialer root
 	;;
 
 lpt*|lpa*)
@@ -456,8 +456,8 @@ ptm)
 tty[0-7][0-9a-f])
 	U=${i#tty*}
 	o=$(h2d $U)
-	M tty$U c 26 $o 660 dialer uucp
-	M cua$U c 26 $(($o+128)) 660 dialer uucp
+	M tty$U c 26 $o 660 dialer root
+	M cua$U c 26 $(($o+128)) 660 dialer root
 	;;
 
 st*)
