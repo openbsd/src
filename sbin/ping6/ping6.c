@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.167 2016/09/11 17:50:56 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.168 2016/09/11 17:53:16 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -801,22 +801,24 @@ int
 pinger(void)
 {
 	struct icmp6_hdr *icp;
-	int i, cc;
+	int cc, i;
 	u_int16_t seq;
 
 	if (npackets && ntransmitted >= npackets)
 		return(-1);	/* no more transmission */
 
+	seq = htons(ntransmitted++);
+
 	icp = (struct icmp6_hdr *)outpack;
 	memset(icp, 0, sizeof(*icp));
 	icp->icmp6_cksum = 0;
-	seq = htons(ntransmitted++);
-	CLR(ntohs(seq) % mx_dup_ck);
-
 	icp->icmp6_type = ICMP6_ECHO_REQUEST;
 	icp->icmp6_code = 0;
 	icp->icmp6_id = htons(ident);
 	icp->icmp6_seq = seq;
+
+	CLR(ntohs(seq) % mx_dup_ck);
+
 	if (timing) {
 		SIPHASH_CTX ctx;
 		struct timespec ts;
