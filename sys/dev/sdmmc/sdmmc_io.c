@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.26 2016/05/12 15:26:42 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.27 2016/09/11 10:22:16 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -112,9 +112,6 @@ sdmmc_io_enable(struct sdmmc_softc *sc)
 		    DEVNAME(sc));
 		return 1;
 	}
-
-	/* Reset I/O functions (again). */
-	sdmmc_io_reset(sc);
 
 	/* Send the new OCR value until all cards are ready. */
 	if (sdmmc_io_send_op_cond(sc, host_ocr, NULL) != 0) {
@@ -550,10 +547,13 @@ sdmmc_io_xchg(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 void
 sdmmc_io_reset(struct sdmmc_softc *sc)
 {
-#if 0 /* XXX command fails */
-	(void)sdmmc_io_write(sc, NULL, SD_IO_REG_CCCR_CTL, CCCR_CTL_RES);
-	sdmmc_delay(100000);
-#endif
+	u_int8_t data = CCCR_CTL_RES;
+
+	rw_assert_wrlock(&sc->sc_lock);
+
+	if (sdmmc_io_rw_direct(sc, NULL, SD_IO_CCCR_CTL, (u_char *)&data,
+	    SD_ARG_CMD52_WRITE) == 0)
+		sdmmc_delay(100000);
 }
 
 /*
