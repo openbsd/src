@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.431 2016/09/11 06:51:17 natano Exp $
+#	$OpenBSD: Makefile,v 1.432 2016/09/11 19:44:32 natano Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -94,6 +94,8 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o root -g crontab -m 600 crontab ${DESTDIR}/var/cron/tabs/root
 	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	pwd_mkdb -p -d ${DESTDIR}/etc /etc/master.passwd
+	chown root:wheel ${DESTDIR}/etc/passwd ${DESTDIR}/etc/pwd.db
+	chown root:_shadow ${DESTDIR}/etc/spwd.db
 	${INSTALL} -c -o root -g wheel -m 600 pf.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g _nsd -m 640 nsd.conf ${DESTDIR}/var/nsd/etc
 	${INSTALL} -c -o root -g wheel -m 644 unbound.conf ${DESTDIR}/var/unbound/etc
@@ -210,6 +212,7 @@ distribution-etc-root-var: distrib-dirs
 	cd ${DESTDIR}/var; ln -fs ../tmp
 	chown -h root:wheel ${DESTDIR}/var/tmp
 	touch ${DESTDIR}/var/sysmerge/etcsum
+	chown root:wheel ${DESTDIR}/var/sysmerge/etcsum
 	cd ${DESTDIR}/ && \
 		sort ${.CURDIR}/../distrib/sets/lists/etc/{mi,md.${MACHINE}} | \
 		xargs sha256 -h ${DESTDIR}/var/sysmerge/etcsum || true
