@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.430 2016/09/03 13:37:40 guenther Exp $
+#	$OpenBSD: Makefile,v 1.431 2016/09/11 06:51:17 natano Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -154,7 +154,9 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 644 *.pub \
 		    ${DESTDIR}/etc/signify
 	ln -fs ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
+	chown -h root:wheel ${DESTDIR}/etc/localtime
 	ln -fs /usr/sbin/rmt ${DESTDIR}/etc/rmt
+	chown -h root:wheel ${DESTDIR}/etc/rmt
 	${INSTALL} -c -o root -g wheel -m 644 minfree \
 	    ${DESTDIR}/var/crash
 	${INSTALL} -c -o ${BINOWN} -g operator -m 664 /dev/null \
@@ -206,6 +208,7 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 ${RCDAEMONS} \
 		    ${DESTDIR}/etc/rc.d
 	cd ${DESTDIR}/var; ln -fs ../tmp
+	chown -h root:wheel ${DESTDIR}/var/tmp
 	touch ${DESTDIR}/var/sysmerge/etcsum
 	cd ${DESTDIR}/ && \
 		sort ${.CURDIR}/../distrib/sets/lists/etc/{mi,md.${MACHINE}} | \
@@ -213,6 +216,7 @@ distribution-etc-root-var: distrib-dirs
 	cd ${DESTDIR}/ && \
 		sort ${.CURDIR}/../distrib/sets/lists/etc/{mi,md.${MACHINE}} | \
 		pax -w -d | gzip -9 > ${DESTDIR}/var/sysmerge/etc.tgz
+	chown root:wheel ${DESTDIR}/var/sysmerge/etc.tgz
 
 distribution:
 	exec ${SUDO} ${MAKE} distribution-etc-root-var
@@ -227,6 +231,7 @@ distrib-dirs:
 		${INSTALL} -d -o root -g wsrc -m 775 ${DESTDIR}/usr/src; \
 	fi
 	cd ${DESTDIR}/; ln -fhs usr/src/sys sys
+	chown -h root:wheel ${DESTDIR}/sys
 
 .ifndef RELEASEDIR
 release:
