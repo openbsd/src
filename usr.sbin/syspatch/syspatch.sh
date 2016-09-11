@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.13 2016/09/10 16:19:14 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.14 2016/09/11 11:50:34 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -38,13 +38,12 @@ needs_root()
 apply_patches()
 {
 	needs_root
-	# XXX cleanup mismatch/old rollback patches and sig (installer should as well)
+	# XXX cleanup old rollback patches and sig (installer should as well)
 	local _m _patch _patches="$(ls_missing)"
 	[[ -n ${_patches} ]] || return 0 # nothing to do
 
 	for _patch in ${_patches}; do
-		fetch_and_verify "${_patch}" && \
-			install_patch "${_patch}" || return
+		fetch_and_verify "${_patch}" && install_patch "${_patch}"
 	done
 
 	# non-fatal: the syspatch tarball should have correct permissions
@@ -61,14 +60,16 @@ create_rollback()
 	local _files="${@}"
 	[[ -n ${_files} ]]
 
+	[[ -d ${_PDIR}/${_REL} ]] || install -d ${_PDIR}/${_REL}
+
 	for _file in ${_files}; do
 		[[ -f /${_file} ]] || continue
 		_rbfiles="${_rbfiles} ${_file}"
 	done
 
-	(cd / && \
+	(cd / &&
 		# GENERIC.MP: substitute bsd.mp->bsd and bsd.sp->bsd
-		if ${_BSDMP} && \
+		if ${_BSDMP} &&
 			tar -tzf ${_TMP}/${_patch}.tgz bsd >/dev/null 2>&1; then
 			tar -czf ${_PDIR}/${_REL}/rollback-${_patch}.tgz \
 				-s '/^bsd.mp$//' -s '/^bsd$/bsd.mp/' \
@@ -94,7 +95,8 @@ fetch_and_verify()
 		_p=${_p}.tgz
 		 ${_FETCH} -mD "Get/Verify" -o "${_TMP}/${_p}" \
 			"${PATCH_PATH}/${_p}"
-		(cd ${_TMP} && /usr/bin/signify -qC -p ${_key} -x SHA256.sig ${_p})
+		(cd ${_TMP} &&
+			/usr/bin/signify -qC -p ${_key} -x SHA256.sig ${_p})
 	done
 }
 
@@ -106,11 +108,9 @@ install_file()
 	[[ -f ${_src} && -f ${_dst} ]]
 
 	local _fmode _fown _fgrp
-	eval $(stat -f "_fmode=%OMp%OLp _fown=%Su _fgrp=%Sg" \
-		${_src})
+	eval $(stat -f "_fmode=%OMp%OLp _fown=%Su _fgrp=%Sg" ${_src})
 
-	install -DFS -m ${_fmode} -o ${_fown} -g ${_fgrp} \
-		${_src} ${_dst}
+	install -DFS -m ${_fmode} -o ${_fown} -g ${_fgrp} ${_src} ${_dst}
 }
 
 install_kernel()
@@ -119,7 +119,7 @@ install_kernel()
 	[[ -n ${_kern} ]]
 
 	# we only save the original release kernel once
-	[[ -f /bsd.rollback${_RELINT} ]] || \
+	[[ -f /bsd.rollback${_RELINT} ]] ||
 		install -FSp /bsd /bsd.rollback${_RELINT}
 
 	if ${_BSDMP}; then
@@ -145,13 +145,11 @@ install_patch()
 	for _file in ${_files}; do
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
 			if ! install_kernel ${_explodir}/${_file}; then
-				rollback_patch
-				return 1
+				rollback_patch; return 1
 			fi
 		else
 			if ! install_file ${_explodir}/${_file} /${_file}; then
-				rollback_patch
-				return 1
+				rollback_patch; return 1
 			fi
 		fi
 	done
@@ -159,7 +157,8 @@ install_patch()
 
 ls_avail()
 {
-	${_FETCH} -o - "${PATCH_PATH}/index.txt" | sed 's/^.* //;s/^M//;s/.tgz$//' | \
+	${_FETCH} -o - "${PATCH_PATH}/index.txt" |
+		sed 's/^.* //;s/^M//;s/.tgz$//' |
 		grep "^syspatch-${_RELINT}-.*$" | sort -V
 }
 
@@ -169,7 +168,7 @@ ls_installed()
 	# no _REL dir = no installed patch
 	cd ${_PDIR}/${_REL} 2>/dev/null && set -- * || return 0
 	for _p; do
-		 [[ ${_p} = rollback-syspatch-${_RELINT}-*.tgz ]] && \
+		 [[ ${_p} = rollback-syspatch-${_RELINT}-*.tgz ]] &&
 			_p=${_p#rollback-} && echo ${_p%.tgz}
 	done | sort -V
 }
@@ -199,7 +198,9 @@ rollback_patch()
 	_explodir=${_TMP}/rollback-${_patch}
 	mkdir -p ${_explodir}
 
-	_files="$(tar xvzphf ${_PDIR}/${_REL}/rollback-${_patch}.tgz -C ${_explodir})"
+	_files="$(tar xvzphf ${_PDIR}/${_REL}/rollback-${_patch}.tgz -C \
+		${_explodir})"
+
 	for _file in ${_files}; do
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
 			install_kernel ${_explodir}/${_file}
@@ -213,7 +214,7 @@ rollback_patch()
 }
 
 # we do not run on current
-set -A _KERNV -- $(sysctl -n kern.version | \
+set -A _KERNV -- $(sysctl -n kern.version |
 	sed 's/^OpenBSD \([0-9]\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
 [[ -z ${_KERNV[1]} ]] || [[ ${_KERNV[1]} == "-stable" ]]
 
@@ -243,8 +244,6 @@ done
 shift $(( OPTIND -1 ))
 [[ $# -ne 0 ]] && usage
 
-if [[ ${OPTIND} == 1 ]]; then
-	apply_patches
-fi
+[[ ${OPTIND} != 1 ]] || apply_patches
 
 rm -rf ${_TMP}
