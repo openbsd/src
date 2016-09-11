@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.916 2016/09/10 22:34:17 rpe Exp $
+#	$OpenBSD: install.sub,v 1.917 2016/09/11 03:16:52 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1304,7 +1304,7 @@ do_as() {
 
 	while doas -u "$_user" kill -9 -1 2>/dev/null; do
 		echo "Processes still running for user $_user after: $@"
-		sleep 1 
+		sleep 1
 	done
 
 	[[ -n $_file ]] && chown root "$_file"
