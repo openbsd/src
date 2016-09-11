@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2016/09/10 16:38:16 jsing Exp $
+#	$OpenBSD: Makefile,v 1.27 2016/09/11 15:54:11 jsing Exp $
 
 MAN=	cdboot.8
 
@@ -21,7 +21,7 @@ SRCS+=	debug_i386.S gidt.S random_i386.S
 SRCS+=	cmd_i386.c dev_i386.c exec_i386.c gateA20.c machdep.c
 SRCS+=	apmprobe.c bioscons.c biosdev.c debug.c diskprobe.c memprobe.c \
 	pciprobe.c ps2probe.c time.c
-SRCS+=	softraid.c
+SRCS+=	softraid_i386.c
 
 .PATH:	${S}/stand/boot
 SRCS+=	bootarg.c cmd.c vars.c

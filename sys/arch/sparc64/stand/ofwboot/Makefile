@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2016/09/10 16:38:16 jsing Exp $
+#	$OpenBSD: Makefile,v 1.22 2016/09/11 15:54:11 jsing Exp $
 #	$NetBSD: Makefile,v 1.2 2001/03/04 14:50:05 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -23,7 +23,7 @@ SOFTRAID?=	no
 SRCS=		srt0.s Locore.c alloc.c boot.c elf64_exec.c net.c netif_of.c \
 		ofdev.c vers.c
 .if ${SOFTRAID:L} == "yes"
-SRCS+=		diskprobe.c softraid.c
+SRCS+=		diskprobe.c softraid_sparc64.c
 .endif
 
 .PATH:		${S}/lib/libkern/arch/sparc64 ${S}/lib/libkern

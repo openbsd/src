@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.common,v 1.7 2016/09/10 16:38:16 jsing Exp $
+#	$OpenBSD: Makefile.common,v 1.8 2016/09/11 15:54:11 jsing Exp $
 
 S=		${.CURDIR}/../../../../..
 SADIR=		${.CURDIR}/../..
@@ -53,7 +53,7 @@ SRCS+=	loadfile.c elf64.c elf32.c memprobe.c cmd_i386.c dev_i386.c exec_i386.c
 SRCS+=	machdep.c diskprobe.c
 
 .if ${SOFTRAID:L} == "yes"
-SRCS+=	softraid.c
+SRCS+=	softraid_amd64.c
 .endif
 
 PROG.so=	${PROG:S/.EFI/.so/}

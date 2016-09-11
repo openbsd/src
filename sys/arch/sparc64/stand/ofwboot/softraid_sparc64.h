@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.h,v 1.1 2014/11/26 19:50:03 stsp Exp $	*/
+/*	$OpenBSD: softraid_sparc64.h,v 1.1 2016/09/11 15:54:12 jsing Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>

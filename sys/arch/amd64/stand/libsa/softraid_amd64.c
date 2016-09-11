@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.18 2016/09/10 16:53:22 jsing Exp $	*/
+/*	$OpenBSD: softraid_amd64.c,v 1.1 2016/09/11 15:54:11 jsing Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -28,10 +28,11 @@
 #include <lib/libsa/hmac_sha1.h>
 #include <lib/libsa/pkcs5_pbkdf2.h>
 #include <lib/libsa/rijndael.h>
+#include <lib/libz/zlib.h>
 
 #include "libsa.h"
 #include "disk.h"
-#include "softraid.h"
+#include "softraid_amd64.h"
 
 /* List of softraid volumes. */
 struct sr_boot_volume_head sr_volumes;
@@ -44,6 +45,9 @@ struct sr_boot_keydisk {
 };
 SLIST_HEAD(sr_boot_keydisk_head, sr_boot_keydisk);
 struct sr_boot_keydisk_head sr_keydisks;
+
+static int gpt_chk_mbr(struct dos_partition *, u_int64_t);
+static uint64_t findopenbsd_gpt(struct sr_boot_volume *, const char **);
 
 void
 srprobe_meta_opt_load(struct sr_metadata *sm, struct sr_meta_opt_head *som)
@@ -394,11 +398,143 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 		return ENOTSUP;
 }
 
+/*
+ * Returns 0 if the MBR with the provided partition array is a GPT protective
+ * MBR, and returns 1 otherwise. A GPT protective MBR would have one and only
+ * one MBR partition, an EFI partition that either covers the whole disk or as
+ * much of it as is possible with a 32bit size field.
+ *
+ * Taken from kern/subr_disk.c.
+ *
+ * NOTE: MS always uses a size of UINT32_MAX for the EFI partition!**
+ */
+static int
+gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
+{
+	struct dos_partition *dp2;
+	int efi, found, i;
+	u_int32_t psize;
+
+	found = efi = 0;
+	for (dp2=dp, i=0; i < NDOSPART; i++, dp2++) {
+		if (dp2->dp_typ == DOSPTYP_UNUSED)
+			continue;
+		found++;
+		if (dp2->dp_typ != DOSPTYP_EFI)
+			continue;
+		psize = letoh32(dp2->dp_size);
+		if (psize == (dsize - 1) ||
+		    psize == UINT32_MAX) {
+			if (letoh32(dp2->dp_start) == 1)
+				efi++;
+		}
+	}
+	if (found == 1 && efi == 1)
+		return (0);
+
+	return (1);
+}
+
+static uint64_t
+findopenbsd_gpt(struct sr_boot_volume *bv, const char **err)
+{
+	struct			 gpt_header gh;
+	int			 i, part, found;
+	uint64_t		 lba;
+	uint32_t		 orig_csum, new_csum;
+	uint32_t		 ghsize, ghpartsize, ghpartnum, ghpartspersec;
+	uint32_t		 gpsectors;
+	const char		 openbsd_uuid_code[] = GPT_UUID_OPENBSD;
+	struct gpt_partition	 gp;
+	static struct uuid	*openbsd_uuid = NULL, openbsd_uuid_space;
+	static u_char		 buf[DEV_BSIZE];
+
+	/* Prepare OpenBSD UUID */
+	if (openbsd_uuid == NULL) {
+		/* XXX: should be replaced by uuid_dec_be() */
+		memcpy(&openbsd_uuid_space, openbsd_uuid_code,
+		    sizeof(openbsd_uuid_space));
+		openbsd_uuid_space.time_low =
+		    betoh32(openbsd_uuid_space.time_low);
+		openbsd_uuid_space.time_mid =
+		    betoh16(openbsd_uuid_space.time_mid);
+		openbsd_uuid_space.time_hi_and_version =
+		    betoh16(openbsd_uuid_space.time_hi_and_version);
+
+		openbsd_uuid = &openbsd_uuid_space;
+	}
+
+	/* LBA1: GPT Header */
+	lba = 1;
+	sr_strategy(bv, F_READ, lba, DEV_BSIZE, buf, NULL);
+	memcpy(&gh, buf, sizeof(gh));
+
+	/* Check signature */
+	if (letoh64(gh.gh_sig) != GPTSIGNATURE) {
+		*err = "bad GPT signature\n";
+		return (-1);
+	}
+
+	if (letoh32(gh.gh_rev) != GPTREVISION) {
+		*err = "bad GPT revision\n";
+		return (-1);
+	}
+
+	ghsize = letoh32(gh.gh_size);
+	if (ghsize < GPTMINHDRSIZE || ghsize > sizeof(struct gpt_header)) {
+		*err = "bad GPT header size\n";
+		return (-1);
+	}
+
+	/* Check checksum */
+	orig_csum = gh.gh_csum;
+	gh.gh_csum = 0;
+	new_csum = crc32(0, (unsigned char *)&gh, ghsize);
+	gh.gh_csum = orig_csum;
+	if (letoh32(orig_csum) != new_csum) {
+		*err = "bad GPT header checksum\n";
+		return (-1);
+	}
+
+	lba = letoh64(gh.gh_part_lba);
+	ghpartsize = letoh32(gh.gh_part_size);
+	ghpartspersec = DEV_BSIZE / ghpartsize;
+	ghpartnum = letoh32(gh.gh_part_num);
+	gpsectors = (ghpartnum + ghpartspersec - 1) / ghpartspersec;
+	new_csum = crc32(0L, Z_NULL, 0);
+	found = 0;
+	for (i = 0; i < gpsectors; i++, lba++) {
+		sr_strategy(bv, F_READ, lba, DEV_BSIZE, buf, NULL);
+		for (part = 0; part < ghpartspersec; part++) {
+			if (ghpartnum == 0)
+				break;
+			new_csum = crc32(new_csum, buf + part * sizeof(gp),
+			    sizeof(gp));
+			ghpartnum--;
+			if (found)
+				continue;
+			memcpy(&gp, buf + part * sizeof(gp), sizeof(gp));
+			if (memcmp(&gp.gp_type, openbsd_uuid,
+			    sizeof(struct uuid)) == 0)
+				found = 1;
+		}
+	}
+	if (new_csum != letoh32(gh.gh_part_csum)) {
+		*err = "bad GPT entries checksum\n";
+		return (-1);
+	}
+	if (found)
+		return (letoh64(gp.gp_lba_start));
+
+	return (-1);
+}
+
 const char *
 sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 {
 	struct dos_partition *dp;
 	struct dos_mbr mbr;
+	const char *err = NULL;
 	u_int start = 0;
 	char buf[DEV_BSIZE];
 	int i;
@@ -406,7 +542,14 @@ sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 	/* Check for MBR to determine partition offset. */
 	bzero(&mbr, sizeof(mbr));
 	sr_strategy(bv, F_READ, DOSBBSECTOR, sizeof(mbr), &mbr, NULL);
-	if (mbr.dmbr_sign == DOSMBR_SIGNATURE) {
+	if (gpt_chk_mbr(mbr.dmbr_parts, bv->sbv_size) == 0) {
+		start = findopenbsd_gpt(bv, &err);
+		if (start == (u_int)-1) {
+			if (err != NULL)
+				return (err);
+			return "no OpenBSD partition\n";
+		}
+	} else if (mbr.dmbr_sign == DOSMBR_SIGNATURE) {
 
 		/* Search for OpenBSD partition */
 		for (i = 0; i < NDOSPART; i++) {

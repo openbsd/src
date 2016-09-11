@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf64_exec.c,v 1.7 2014/11/26 20:30:41 stsp Exp $	*/
+/*	$OpenBSD: elf64_exec.c,v 1.8 2016/09/11 15:54:11 jsing Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
 #include <dev/softraidvar.h>
 
 #include "disk.h"
-#include "softraid.h"
+#include "softraid_sparc64.h"
 #endif
 
 #include "openfirm.h"

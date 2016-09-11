@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.41 2015/09/18 13:30:56 miod Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.42 2016/09/11 15:54:11 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -38,7 +38,7 @@
 #ifdef SOFTRAID
 #include <dev/biovar.h>
 #include <dev/softraidvar.h>
-#include "softraid.h"
+#include "softraid_i386.h"
 #endif
 
 extern int debug;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.19 2016/08/31 15:11:22 yasuoka Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.20 2016/09/11 15:54:11 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -39,7 +39,7 @@
 
 #ifdef SOFTRAID
 #include <dev/softraidvar.h>
-#include "softraid.h"
+#include "softraid_amd64.h"
 #endif
 
 #include <efi.h>

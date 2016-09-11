@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.25 2016/03/07 13:21:51 naddy Exp $	*/
+/*	$OpenBSD: boot.c,v 1.26 2016/09/11 15:54:11 jsing Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -63,7 +63,7 @@
 #include <dev/softraidvar.h>
 
 #include "disk.h"
-#include "softraid.h"
+#include "softraid_sparc64.h"
 #endif
 
 #include "ofdev.h"
