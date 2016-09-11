@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.168 2016/09/11 18:04:07 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.169 2016/09/11 18:18:25 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -648,6 +648,36 @@ onsignal(int sig)
 	case SIGINFO:
 		seeninfo++;
 		break;
+	}
+}
+
+void
+fill(char *bp, char *patp)
+{
+	int ii, jj, kk;
+	int pat[16];
+	char *cp;
+
+	for (cp = patp; *cp; cp++)
+		if (!isxdigit((unsigned char)*cp))
+			errx(1, "patterns must be specified as hex digits");
+	ii = sscanf(patp,
+	    "%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x",
+	    &pat[0], &pat[1], &pat[2], &pat[3], &pat[4], &pat[5], &pat[6],
+	    &pat[7], &pat[8], &pat[9], &pat[10], &pat[11], &pat[12],
+	    &pat[13], &pat[14], &pat[15]);
+
+	if (ii > 0)
+		for (kk = 0;
+		    kk <= MAXPAYLOAD - (8 + sizeof(struct payload) + ii);
+		    kk += ii)
+			for (jj = 0; jj < ii; ++jj)
+				bp[jj + kk] = pat[jj];
+	if (!(options & F_QUIET)) {
+		(void)printf("PATTERN: 0x");
+		for (jj = 0; jj < ii; ++jj)
+			(void)printf("%02x", bp[jj] & 0xFF);
+		(void)printf("\n");
 	}
 }
 
@@ -1332,36 +1362,6 @@ pr_retip(struct ip *ip)
 	else if (ip->ip_p == 17)
 		(void)printf("UDP: from port %u, to port %u (decimal)\n",
 		    (*cp * 256 + *(cp + 1)), (*(cp + 2) * 256 + *(cp + 3)));
-}
-
-void
-fill(char *bp, char *patp)
-{
-	int ii, jj, kk;
-	int pat[16];
-	char *cp;
-
-	for (cp = patp; *cp; cp++)
-		if (!isxdigit((unsigned char)*cp))
-			errx(1, "patterns must be specified as hex digits");
-	ii = sscanf(patp,
-	    "%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x",
-	    &pat[0], &pat[1], &pat[2], &pat[3], &pat[4], &pat[5], &pat[6],
-	    &pat[7], &pat[8], &pat[9], &pat[10], &pat[11], &pat[12],
-	    &pat[13], &pat[14], &pat[15]);
-
-	if (ii > 0)
-		for (kk = 0;
-		    kk <= MAXPAYLOAD - (8 + sizeof(struct payload) + ii);
-		    kk += ii)
-			for (jj = 0; jj < ii; ++jj)
-				bp[jj + kk] = pat[jj];
-	if (!(options & F_QUIET)) {
-		(void)printf("PATTERN: 0x");
-		for (jj = 0; jj < ii; ++jj)
-			(void)printf("%02x", bp[jj] & 0xFF);
-		(void)printf("\n");
-	}
 }
 
 #ifndef SMALL
