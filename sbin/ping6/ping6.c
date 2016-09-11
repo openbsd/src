@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.171 2016/09/11 18:01:24 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.172 2016/09/11 18:02:06 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -843,8 +843,7 @@ pinger(void)
 		SipHash24_Update(&ctx, &seq, sizeof(seq));
 		SipHash24_Final(&payload.mac, &ctx);
 
-		memcpy(&outpack[ICMP6ECHOLEN],
-		    &payload, sizeof(payload));
+		memcpy(&outpack[ICMP6ECHOLEN], &payload, sizeof(payload));
 	}
 	cc = ICMP6ECHOLEN + datalen;
 
