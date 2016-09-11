@@ -1,5 +1,3 @@
-ftp-data	20/tcp
-ftp		21/tcp
 domain		53/tcp		nameserver
 domain		53/udp		nameserver
 www		80/tcp		http
