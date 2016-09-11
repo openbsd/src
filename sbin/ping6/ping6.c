@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.168 2016/09/11 17:53:16 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.169 2016/09/11 17:56:12 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -855,13 +855,12 @@ pinger(void)
 	if (i < 0 || i != cc)  {
 		if (i < 0)
 			warn("sendmsg");
-		(void)printf("ping6: wrote %s %d chars, ret=%d\n",
-		    hostname, cc, i);
+		printf("ping6: wrote %s %d chars, ret=%d\n", hostname, cc, i);
 	}
 	if (!(options & F_QUIET) && options & F_FLOOD)
 		(void)write(STDOUT_FILENO, &DOT, 1);
 
-	return(0);
+	return (0);
 }
 
 #define MINIMUM(a,b) (((a)<(b))?(a):(b))
