@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.164 2016/09/11 11:16:07 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.165 2016/09/11 11:17:15 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -724,12 +724,9 @@ main(int argc, char *argv[])
 				}
 			}
 			continue;
-		} else {
-			/*
-			 * an ICMPv6 message (probably an echoreply) arrived.
-			 */
+		} else
 			pr_pack(packet, cc, &m);
-		}
+
 		if (npackets && nreceived >= npackets)
 			break;
 	}
