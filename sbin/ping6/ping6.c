@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.178 2016/09/11 18:28:31 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.179 2016/09/11 18:29:10 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1053,7 +1053,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 		if (options & F_FLOOD)
 			(void)write(STDOUT_FILENO, &BSPACE, 1);
 		else {
-			(void)printf("%d bytes from %s, icmp_seq=%u", cc,
+			(void)printf("%d bytes from %s: icmp_seq=%u", cc,
 			    pr_addr(from, fromlen), ntohs(seq));
 			(void)printf(" hlim=%d", hoplim);
 			if ((options & F_VERBOSE) != 0) {
@@ -1071,7 +1071,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			if (timing)
 				(void)printf(" time=%.3f ms", triptime);
 			if (dupflag)
-				(void)printf("(DUP!)");
+				(void)printf(" (DUP!)");
 			/* check the data */
 			cp = buf + ICMP6ECHOLEN + ICMP6ECHOTMLEN;
 			dp = outpack + ICMP6ECHOLEN + ICMP6ECHOTMLEN;
