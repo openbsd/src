@@ -1,7 +1,7 @@
 define(COMM,`#')dnl
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -221,7 +221,7 @@ echo -n ${MKlist[*]}
 echo -n ${whlist[*]}
 echo ${oplist[*]}
 } | if [ "$eo" = "echo" ]; then
-        cat
+	cat
 else
 	sh
 fi
