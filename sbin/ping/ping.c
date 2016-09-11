@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.167 2016/09/11 18:03:12 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.168 2016/09/11 18:04:07 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -780,7 +780,8 @@ pinger(void)
 void
 pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 {
-	struct sockaddr_in *from, s_in;
+	struct sockaddr_in s_in;
+	struct sockaddr *from;
 	socklen_t fromlen;
 	struct icmp *icp;
 	in_addr_t l;
@@ -808,7 +809,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			warnx("invalid peername");
 		return;
 	}
-	from = (struct sockaddr_in *)mhdr->msg_name;
+	from = (struct sockaddr *)mhdr->msg_name;
 	fromlen = mhdr->msg_namelen;
 
 	/* Check the IP header */
@@ -817,7 +818,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 	if (cc < hlen + ICMP_MINLEN) {
 		if (options & F_VERBOSE)
 			warnx("packet too short (%d bytes) from %s", cc,
-			    pr_addr((struct sockaddr*)from, fromlen));
+			    pr_addr(from, fromlen));
 		return;
 	}
 
@@ -882,7 +883,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			(void)write(STDOUT_FILENO, &BSPACE, 1);
 		else {
 			(void)printf("%d bytes from %s: icmp_seq=%u", cc,
-			    pr_addr((struct sockaddr*)from, fromlen),
+			    pr_addr(from, fromlen),
 			    ntohs(icp->icmp_seq));
 			(void)printf(" ttl=%d", ip->ip_ttl);
 			if (cc >= 8 + sizeof(struct payload))
@@ -916,8 +917,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 		/* We've got something other than an ECHOREPLY */
 		if (!(options & F_VERBOSE))
 			return;
-		(void)printf("%d bytes from %s: ", cc,
-		    pr_addr((struct sockaddr*)from, fromlen));
+		(void)printf("%d bytes from %s: ", cc, pr_addr(from, fromlen));
 		pr_icmph(icp);
 	}
 
