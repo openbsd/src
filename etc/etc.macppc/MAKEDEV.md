@@ -1,6 +1,6 @@
 define(MACHINE,macppc)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.69 2016/09/04 15:38:59 naddy Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.70 2016/09/11 19:59:53 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -26,14 +26,14 @@ _mkdev(s64_tzs, {-tty[a-z]-}, {-u=${i#tty*}
 	b) n=1 ;;
 	*) echo unknown tty device $i ;;
 	esac
-	M tty$u c major_s64_tzs_c $n 660 dialer uucp-})dnl
+	M tty$u c major_s64_tzs_c $n 660 dialer root-})dnl
 _mkdev(s64_czs, cua[a-z], {-u=${i#cua*}
 	case $u in
 	a) n=0 ;;
 	b) n=1 ;;
 	*) echo unknown cua device $i ;;
 	esac
-	M cua$u c major_s64_czs_c Add($n, 128) 660 dialer uucp-})dnl
+	M cua$u c major_s64_czs_c Add($n, 128) 660 dialer root-})dnl
 __devitem(apm, apm, Power management device)dnl
 _TITLE(make)
 _DEV(all)

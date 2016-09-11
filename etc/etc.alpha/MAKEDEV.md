@@ -1,6 +1,6 @@
 define(MACHINE,alpha)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.69 2016/09/04 15:38:59 naddy Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.70 2016/09/11 19:59:53 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -99,8 +99,8 @@ ttyB*|ttyc*)
 	ttyB*)	type=B major=15 minor=Mult($U, 2);;
 	ttyc*)	type=c major=38 minor=$U;;
 	esac
-	M tty$type$U c $major $minor 660 dialer uucp
-	M cua$type$U c $major Add($minor, 128) 660 dialer uucp
+	M tty$type$U c $major $minor 660 dialer root
+	M cua$type$U c $major Add($minor, 128) 660 dialer root
 	;;
 dnl
 dnl *** alpha specific targets

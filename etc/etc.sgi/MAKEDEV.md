@@ -1,6 +1,6 @@
 define(MACHINE,sgi)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.48 2016/09/04 15:38:59 naddy Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.49 2016/09/11 19:59:54 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -33,8 +33,8 @@ _mkdev(zs, {-tty[a-b]-}, {-u=${i#tty*}
 	b) n=1 ;;
 	*) echo unknown tty device $i ;;
 	esac
-	M tty$u c major_zs_c $n 660 dialer uucp
-	M cua$u c major_zs_c Add($n, 128) 660 dialer uucp-})dnl
+	M tty$u c major_zs_c $n 660 dialer root
+	M cua$u c major_zs_c Add($n, 128) 660 dialer root-})dnl
 _TITLE(make)
 _DEV(all)
 _DEV(ramd)

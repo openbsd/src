@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.93 2016/09/11 03:06:31 deraadt Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.94 2016/09/11 19:59:51 deraadt Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -362,8 +362,8 @@ _mcdev({-ulpt-}, ulpt*, {-ulpt-}, {-major_ulpt_c-}, 660)dnl
 __devitem(ttyU, ttyU*, USB serial ports,ucom)dnl
 _mkdev({-ttyU-}, {-ttyU[0-9a-zA-Z]-}, {-U=${i#ttyU*}
 	o=$(alph2d $U)
-	M ttyU$U c major_ttyU_c $o 660 dialer uucp
-	M cuaU$U c major_ttyU_c Add($o, 128) 660 dialer uucp-})dnl
+	M ttyU$U c major_ttyU_c $o 660 dialer root
+	M cuaU$U c major_ttyU_c Add($o, 128) 660 dialer root-})dnl
 __devitem(ugen, ugen*, Generic USB devices)dnl
 _mkdev(ugen, ugen*, {-n=Mult($U, 16)
 	for j in 0{0,1,2,3,4,5,6,7,8,9} 1{0,1,2,3,4,5}
@@ -378,11 +378,11 @@ __devitem(apci, apci*, HP400 4 port serial mux interface)dnl
 __devitem({-com-}, {-tty[0-7][0-9a-f]-}, NS16x50 serial ports)dnl
 _mkdev(com, {-tty[0-7][0-9a-f]-}, {-U=${i#tty*}
 	o=$(h2d $U)
-	M tty$U c major_com_c $o 660 dialer uucp
-	M cua$U c major_com_c Add($o, 128) 660 dialer uucp-})dnl
+	M tty$U c major_com_c $o 660 dialer root
+	M cua$U c major_com_c Add($o, 128) 660 dialer root-})dnl
 __devitem(ttyc, ttyc*, Cyclades serial ports,cy)dnl
 __devitem(ttyVI, ttyVI*, Virtio serial ports,viocon)dnl
-_mkdev(ttyVI, ttyVI*, {-M ttyVI$U c major_ttyVI_c $U 660 dialer uucp-})dnl
+_mkdev(ttyVI, ttyVI*, {-M ttyVI$U c major_ttyVI_c $U 660 dialer root-})dnl
 __devitem(tzs, tty[a-z]*, Zilog 8530 Serial Port,zs)dnl
 _mkdev(tzs, {-tty[a-z]-}, {-u=${i#tty*}
 	case $u in
@@ -392,9 +392,9 @@ _mkdev(tzs, {-tty[a-z]-}, {-u=${i#tty*}
 	d) n=5 ;;
 	*) echo unknown tty device $i ;;
 	esac
-	M tty$u c major_tzs_c $n 660 dialer uucp-})dnl
+	M tty$u c major_tzs_c $n 660 dialer root-})dnl
 __devitem(tth, ttyh*, Sab82532 serial devices,sab)dnl
-_mkdev(tth, ttyh*, {-M ttyh$U c major_tth_c $U 660 dialer uucp-})dnl
+_mkdev(tth, ttyh*, {-M ttyh$U c major_tth_c $U 660 dialer root-})dnl
 __devitem(czs, cua[a-z]*, Zilog 8530 Serial Port,zs)dnl
 _mkdev(czs, cua[a-z], {-u=${i#cua*}
 	case $u in
@@ -404,7 +404,7 @@ _mkdev(czs, cua[a-z], {-u=${i#cua*}
 	d) n=5 ;;
 	*) echo unknown cua device $i ;;
 	esac
-	M cua$u c major_czs_c Add($n, 128) 660 dialer uucp-})dnl
+	M cua$u c major_czs_c Add($n, 128) 660 dialer root-})dnl
 __devitem(tty0, tty00, Standard serial port,com)dnl
 __devitem(mac_tty0, tty00, Standard serial port,zsc)dnl
 __devitem(ttyz, tty[a-d], On-board zs serial ports,zs)dnl
@@ -477,7 +477,7 @@ _mkdev(mag, magma*, {-case $U in
 	while [ $n -lt 16 ]
 	do
 		name=${nam}`hex $n`
-		M tty$name c major_mag_c Add($offset, $n) 660 dialer uucp
+		M tty$name c major_mag_c Add($offset, $n) 660 dialer root
 		n=Add($n, 1)
 	done
 	M bpp${nam}0 c major_bppmag_c Add($offset, 0) 600
@@ -493,7 +493,7 @@ _mkdev(spif, spif*, {-case $U in
 	while [ $n -lt 8 ]
 	do
 		name=${nam}`hex $n`
-		M tty$name c major_spif_c Add($offset, $n) 660 dialer uucp
+		M tty$name c major_spif_c Add($offset, $n) 660 dialer root
 		n=Add($n, 1)
 	done
 	M bpp${nam}0 c major_bppsp_c Add($offset, 0) 600-})dnl

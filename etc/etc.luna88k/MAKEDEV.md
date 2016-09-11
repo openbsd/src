@@ -1,6 +1,6 @@
 define(MACHINE,luna88k)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.30 2016/09/04 15:38:59 naddy Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.31 2016/09/11 19:59:53 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -25,8 +25,8 @@ _mkdev(lcd, {-lcd-},
 {-	M lcd c major_lcd_c 0 644 -})dnl
 __devitem(sio, ttya, On-board serial console port)dnl
 _mkdev(sio, {-ttya-},
-{-	M ttya c major_sio_c 0 660 dialer uucp
-	M cuaa c major_sio_c 128 660 dialer uucp -})dnl
+{-	M ttya c major_sio_c 0 660 dialer root
+	M cuaa c major_sio_c 128 660 dialer root -})dnl
 __devitem(pcex, pcex*, PC-9801 extension board slot, pcexmem)dnl
 _mkdev(pcex, {-pcex-},
 {-	M pcexmem c major_pcex_c 0 660

@@ -1,6 +1,6 @@
 define(MACHINE,sparc64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.86 2016/09/04 15:38:59 naddy Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.87 2016/09/11 19:59:54 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -29,7 +29,7 @@ _mkdev(s64_tzs, {-tty[a-z]-}, {-u=${i#tty*}
 	d) n=3 ;;
 	*) echo unknown tty device $i ;;
 	esac
-	M tty$u c major_s64_tzs_c $n 660 dialer uucp-})dnl
+	M tty$u c major_s64_tzs_c $n 660 dialer root-})dnl
 _mkdev(s64_czs, cua[a-z], {-u=${i#cua*}
 	case $u in
 	a) n=0 ;;
@@ -38,7 +38,7 @@ _mkdev(s64_czs, cua[a-z], {-u=${i#cua*}
 	d) n=3 ;;
 	*) echo unknown cua device $i ;;
 	esac
-	M cua$u c major_s64_czs_c Add($n, 128) 660 dialer uucp-})dnl
+	M cua$u c major_s64_czs_c Add($n, 128) 660 dialer root-})dnl
 __devitem(vcc, ttyV*, Virtual console concentrator, vcctty)dnl
 _mkdev(vcc, ttyV[0-9a-zA-Z], {-U=${i#ttyV*}
 	o=$(alph2d $U)

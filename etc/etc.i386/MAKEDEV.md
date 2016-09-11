@@ -1,6 +1,6 @@
 define(MACHINE,i386)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.82 2016/09/04 15:38:59 naddy Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.83 2016/09/11 19:59:53 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -109,8 +109,8 @@ _std(1, 2, 50, 7)
 	;;
 
 ttyc*)
-	M ttyc$U c 38 $U 660 dialer uucp
-	M cuac$U c 38 Add($U, 128) 660 dialer uucp
+	M ttyc$U c 38 $U 660 dialer root
+	M cuac$U c 38 Add($U, 128) 660 dialer root
 	;;
 dnl
 dnl i386 specific targets
