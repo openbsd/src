@@ -1,4 +1,4 @@
-/*	$OpenBSD: getword.c,v 1.10 2015/12/31 15:20:36 mestre Exp $	*/
+/*	$OpenBSD: getword.c,v 1.11 2016/09/11 09:32:47 tb Exp $	*/
 /*	$NetBSD: getword.c,v 1.4 1995/03/23 08:32:45 cgd Exp $	*/
 
 /*
@@ -79,8 +79,8 @@ cont:		;
 	if (badwords >= MAXBADWORDS) {
 		mvcur(0, COLS - 1, LINES - 1, 0);
 		endwin();
-		errx(1, "file %s appears to be incorrectly formatted\n(Need one lower-case word per line)",
-			Dict_name);
+		errx(1, "file %s appears to be incorrectly formatted\n"
+		    "(Need one lower-case word per line)", Dict_name);
 	}
 	gp = Known;
 	wp = Word;
