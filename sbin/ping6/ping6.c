@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.183 2016/09/11 19:48:12 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.184 2016/09/11 19:49:20 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -117,13 +117,12 @@ struct payload {
 	u_int8_t	mac[SIPHASH_DIGEST_LENGTH];
 };
 
-#define MAXPACKETLEN	131072
 #define	IP6LEN		40
-#define ICMP6ECHOLEN	8	/* icmp echo header len excluding time */
-#define ICMP6ECHOTMLEN sizeof(struct payload)
+#define	ICMP6ECHOLEN	8	/* icmp echo header len excluding time */
+#define	ICMP6ECHOTMLEN sizeof(struct payload)
 #define	EXTRA		256	/* for AH and various other headers. weird. */
 #define	DEFDATALEN	ICMP6ECHOTMLEN
-#define MAXPAYLOAD	MAXPACKETLEN - IP6LEN - ICMP6ECHOLEN
+#define	MAXPAYLOAD	IPV6_MAXPACKET - IP6LEN - ICMP6ECHOLEN
 #define	MAXWAIT_DEFAULT	10	/* secs to wait for response */
 
 #define	A(bit)		rcvd_tbl[(bit)>>3]	/* identify byte in array */
@@ -169,7 +168,7 @@ struct sockaddr_in6 dst;	/* who to ping6 */
 
 int datalen = DEFDATALEN;
 int s;				/* socket file descriptor */
-u_char outpack[MAXPACKETLEN];
+u_char outpack[IPV6_MAXPACKET];
 char BSPACE = '\b';		/* characters written for flood */
 char DOT = '.';
 char *hostname;
