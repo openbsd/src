@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2001/09/06 18:52:55 mickey Exp $
+#	$OpenBSD: Makefile,v 1.8 2016/09/11 07:06:29 natano Exp $
 
 PROG=	chmod
 CFLAGS+=-DSUPPORT_DOT
@@ -8,11 +8,13 @@ LINKS=	${BINDIR}/chmod ${BINDIR}/chgrp \
 
 # XXX compatibility
 afterinstall:
-	(cd ${DESTDIR}/usr/sbin; \
-	    ln -sf ../../sbin/chown .; \
-	    ln -sf ../../bin/chgrp .)
-	(cd ${DESTDIR}/usr/bin; \
-	    ln -sf ../../bin/chmod chflags)
+	(cd ${DESTDIR}/usr/sbin && \
+	    ln -sf ../../sbin/chown . && \
+	    ln -sf ../../bin/chgrp . && \
+	    chown -h ${BINOWN}:${BINGRP} chown chgrp)
+	(cd ${DESTDIR}/usr/bin && \
+	    ln -sf ../../bin/chmod chflags && \
+	    chown -h ${BINOWN}:${BINGRP} chflags)
 
 
 .include <bsd.prog.mk>
