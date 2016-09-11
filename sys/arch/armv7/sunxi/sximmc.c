@@ -1,4 +1,4 @@
-/* $OpenBSD: sximmc.c,v 1.9 2016/09/10 23:29:37 kettenis Exp $ */
+/* $OpenBSD: sximmc.c,v 1.10 2016/09/11 10:46:26 kettenis Exp $ */
 /* $NetBSD: awin_mmc.c,v 1.23 2015/11/14 10:32:40 bouyer Exp $ */
 
 /*-
@@ -451,64 +451,6 @@ sximmc_attach(struct device *parent, struct device *self, void *aux)
 int
 sximmc_set_clock(struct sximmc_softc *sc, u_int freq)
 {
-#if 0
-	uint32_t odly, sdly, clksrc, n, m, clk;
-	u_int osc24m_freq = AWIN_REF_FREQ / 1000;
-	u_int pll_freq;
-
-	if (awin_chip_id() == AWIN_CHIP_ID_A80) {
-		pll_freq = awin_periph0_get_rate() / 1000;
-	} else {
-		pll_freq = awin_pll6_get_rate() / 1000;
-	}
-
-#ifdef SXIMMC_DEBUG
-	printf("%s: freq = %d, pll_freq = %d\n", sc->sc_dev.dv_xname,
-	    freq, pll_freq);
-#endif
-
-	if (freq <= 400) {
-		odly = 0;
-		sdly = 0;
-		clksrc = AWIN_SD_CLK_SRC_SEL_OSC24M;
-		n = 2;
-		if (freq > 0)
-			m = ((osc24m_freq / (1 << n)) / freq) - 1;
-		else
-			m = 15;
-	} else if (freq <= 25000) {
-		odly = 0;
-		sdly = 5;
-		clksrc = AWIN_SD_CLK_SRC_SEL_PLL6;
-		n = awin_chip_id() == AWIN_CHIP_ID_A80 ? 2 : 0;
-		m = ((pll_freq / freq) / (1 << n)) - 1;
-	} else if (freq <= 50000) {
-		odly = awin_chip_id() == AWIN_CHIP_ID_A80 ? 5 : 3;
-		sdly = awin_chip_id() == AWIN_CHIP_ID_A80 ? 4 : 5;
-		clksrc = AWIN_SD_CLK_SRC_SEL_PLL6;
-		n = awin_chip_id() == AWIN_CHIP_ID_A80 ? 2 : 0;
-		m = ((pll_freq / freq) / (1 << n)) - 1;
-	} else {
-		/* UHS speeds not implemented yet */
-		return EIO;
-	}
-
-	clk = bus_space_read_4(sc->sc_bst, sc->sc_clk_bsh, 0);
-	clk &= ~AWIN_SD_CLK_SRC_SEL;
-	clk |= __SHIFTIN(clksrc, AWIN_SD_CLK_SRC_SEL);
-	clk &= ~AWIN_SD_CLK_DIV_RATIO_N;
-	clk |= __SHIFTIN(n, AWIN_SD_CLK_DIV_RATIO_N);
-	clk &= ~AWIN_SD_CLK_DIV_RATIO_M;
-	clk |= __SHIFTIN(m, AWIN_SD_CLK_DIV_RATIO_M);
-	clk &= ~AWIN_SD_CLK_OUTPUT_PHASE_CTR;
-	clk |= __SHIFTIN(odly, AWIN_SD_CLK_OUTPUT_PHASE_CTR);
-	clk &= ~AWIN_SD_CLK_PHASE_CTR;
-	clk |= __SHIFTIN(sdly, AWIN_SD_CLK_PHASE_CTR);
-	clk |= AWIN_PLL_CFG_ENABLE;
-	bus_space_write_4(sc->sc_bst, sc->sc_clk_bsh, 0, clk);
-	delay(20000);
-#endif
-
 	if (freq > 0) {
 		if (clock_set_frequency(sc->sc_node, "mmc", freq * 1000))
 			return EIO;
