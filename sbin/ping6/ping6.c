@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.163 2016/09/10 07:43:49 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.164 2016/09/11 11:16:07 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -879,7 +879,6 @@ pinger(void)
 void
 pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 {
-#define safeputc(c)	printf((isprint((c)) ? "%c" : "\\%03o"), c)
 	struct icmp6_hdr *icp;
 	int i;
 	int hoplim;
@@ -1038,7 +1037,6 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			pr_exthdrs(mhdr);
 		(void)fflush(stdout);
 	}
-#undef safeputc
 }
 
 void
