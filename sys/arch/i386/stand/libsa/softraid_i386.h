@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_i386.h,v 1.1 2016/09/11 15:54:11 jsing Exp $	*/
+/*	$OpenBSD: softraid_i386.h,v 1.2 2016/09/11 16:02:04 jsing Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _SOFTRAID_H_
-#define _SOFTRAID_H_
+#ifndef _SOFTRAID_I386_H_
+#define _SOFTRAID_I386_H_
 
 void	srprobe(void);
 
@@ -31,4 +31,4 @@ void	sr_clear_keys(void);
 /* List of softraid volumes. */
 extern struct sr_boot_volume_head sr_volumes;
 
-#endif /* _SOFTRAID_H */
+#endif /* _SOFTRAID_I386_H */
