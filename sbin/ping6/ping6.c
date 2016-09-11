@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.169 2016/09/11 17:56:12 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.170 2016/09/11 17:59:12 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -196,7 +196,6 @@ double tsumsq = 0.0;		/* sum of all times squared, for std. dev. */
 struct tv64 tv64_offset;
 SIPHASH_KEY mac_key;
 
-/* for ancillary data(advanced API) */
 struct msghdr smsghdr;
 struct iovec smsgiov;
 
