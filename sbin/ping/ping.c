@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.160 2016/09/10 07:47:00 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.161 2016/09/11 11:18:11 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -123,7 +123,6 @@ int options;
 int moptions;
 #define	MULTICAST_NOLOOP	0x001
 #define	MULTICAST_TTL		0x002
-#define	MULTICAST_IF		0x004
 
 /*
  * MAX_DUP_CHK is the number of bits in received table, i.e. the maximum
@@ -401,24 +400,25 @@ main(int argc, char *argv[])
 	freeaddrinfo(res);
 
 	if (source) {
-		if (IN_MULTICAST(ntohl(dst.sin_addr.s_addr)))
-			moptions |= MULTICAST_IF;
-		else {
-			memset(&from4, 0, sizeof(from4));
-			from4.sin_family = AF_INET;
-			if (inet_aton(source, &from4.sin_addr) == 0) {
-				memset(&hints, 0, sizeof(hints));
-				hints.ai_family = AF_INET;
-				hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
-				if ((error = getaddrinfo(source, NULL, &hints,
-				    &res)))
-					errx(1, "%s: %s", source,
-					    gai_strerror(error));
-				if (res->ai_addrlen != sizeof(from4))
-					errx(1, "size of sockaddr mismatch");
-				memcpy(&from4, res->ai_addr, res->ai_addrlen);
-				freeaddrinfo(res);
-			}
+		memset(&from4, 0, sizeof(from4));
+		from4.sin_family = AF_INET;
+		if (inet_aton(source, &from4.sin_addr) == 0) {
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = AF_INET;
+			hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+			if ((error = getaddrinfo(source, NULL, &hints, &res)))
+				errx(1, "%s: %s", source, gai_strerror(error));
+			if (res->ai_addrlen != sizeof(from4))
+				errx(1, "size of sockaddr mismatch");
+			memcpy(&from4, res->ai_addr, res->ai_addrlen);
+			freeaddrinfo(res);
+		}
+
+		if (IN_MULTICAST(ntohl(dst.sin_addr.s_addr))) {
+			if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF,
+			    &from4.sin_addr, sizeof(from4.sin_addr)) < 0)
+				err(1, "setsockopt IP_MULTICAST_IF");
+		} else {
 			if (bind(s, (struct sockaddr *)&from4, sizeof(from4))
 			    < 0)
 				err(1, "bind");
@@ -498,10 +498,6 @@ main(int argc, char *argv[])
 	    setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, &ttl,
 	    sizeof(ttl)) < 0)
 		err(1, "setsockopt IP_MULTICAST_TTL");
-	if ((moptions & MULTICAST_IF) &&
-	    setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF, &from4.sin_addr,
-	    sizeof(from4.sin_addr)) < 0)
-		err(1, "setsockopt IP_MULTICAST_IF");
 
 	/*
 	 * When trying to send large packets, you must increase the
