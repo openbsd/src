@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.169 2016/09/11 18:18:25 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.170 2016/09/11 18:19:32 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -681,6 +681,34 @@ fill(char *bp, char *patp)
 	}
 }
 
+void
+summary(void)
+{
+	printf("\n--- %s ping statistics ---\n", hostname);
+	printf("%lld packets transmitted, ", ntransmitted);
+	printf("%lld packets received, ", nreceived);
+
+	if (nrepeats)
+		printf("%lld duplicates, ", nrepeats);
+	if (ntransmitted) {
+		if (nreceived > ntransmitted)
+			printf("-- somebody's duplicating packets!");
+		else
+			printf("%.1f%% packet loss",
+			    ((((double)ntransmitted - nreceived) * 100) /
+			    ntransmitted));
+	}
+	printf("\n");
+	if (timinginfo) {
+		/* Only display average to microseconds */
+		double num = nreceived + nrepeats;
+		double avg = tsum / num;
+		double dev = sqrt(fmax(0, tsumsq / num - avg * avg));
+		printf("round-trip min/avg/max/std-dev = %.3f/%.3f/%.3f/%.3f ms\n",
+		    tmin, avg, tmax, dev);
+	}
+}
+
 /*
  * retransmit --
  *	This routine transmits another ping.
@@ -1094,34 +1122,6 @@ in_cksum(u_short *addr, int len)
 	sum += (sum >> 16);			/* add carry */
 	answer = ~sum;				/* truncate to 16 bits */
 	return(answer);
-}
-
-void
-summary(void)
-{
-	printf("\n--- %s ping statistics ---\n", hostname);
-	printf("%lld packets transmitted, ", ntransmitted);
-	printf("%lld packets received, ", nreceived);
-
-	if (nrepeats)
-		printf("%lld duplicates, ", nrepeats);
-	if (ntransmitted) {
-		if (nreceived > ntransmitted)
-			printf("-- somebody's duplicating packets!");
-		else
-			printf("%.1f%% packet loss",
-			    ((((double)ntransmitted - nreceived) * 100) /
-			    ntransmitted));
-	}
-	printf("\n");
-	if (timinginfo) {
-		/* Only display average to microseconds */
-		double num = nreceived + nrepeats;
-		double avg = tsum / num;
-		double dev = sqrt(fmax(0, tsumsq / num - avg * avg));
-		printf("round-trip min/avg/max/std-dev = %.3f/%.3f/%.3f/%.3f ms\n",
-		    tmin, avg, tmax, dev);
-	}
 }
 
 /*

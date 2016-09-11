@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.174 2016/09/11 18:18:25 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.175 2016/09/11 18:19:32 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -785,6 +785,34 @@ fill(char *bp, char *patp)
 	}
 }
 
+void
+summary(void)
+{
+	printf("\n--- %s ping6 statistics ---\n", hostname);
+	printf("%lld packets transmitted, ", ntransmitted);
+	printf("%lld packets received, ", nreceived);
+
+	if (nrepeats)
+		printf("%lld duplicates, ", nrepeats);
+	if (ntransmitted) {
+		if (nreceived > ntransmitted)
+			printf("-- somebody's duplicating packets!");
+		else
+			printf("%.1f%% packet loss",
+			    ((((double)ntransmitted - nreceived) * 100) /
+			    ntransmitted));
+	}
+	printf("\n");
+	if (timinginfo) {
+		/* Only display average to microseconds */
+		double num = nreceived + nrepeats;
+		double avg = tsum / num;
+		double dev = sqrt(fmax(0, tsumsq / num - avg * avg));
+		printf("round-trip min/avg/max/std-dev = %.3f/%.3f/%.3f/%.3f ms\n",
+		    tmin, avg, tmax, dev);
+	}
+}
+
 /*
  * retransmit --
  *	This routine transmits another ping6.
@@ -1258,34 +1286,6 @@ get_pathmtu(struct msghdr *mhdr)
 		}
 	}
 	return(0);
-}
-
-void
-summary(void)
-{
-	printf("\n--- %s ping6 statistics ---\n", hostname);
-	printf("%lld packets transmitted, ", ntransmitted);
-	printf("%lld packets received, ", nreceived);
-
-	if (nrepeats)
-		printf("%lld duplicates, ", nrepeats);
-	if (ntransmitted) {
-		if (nreceived > ntransmitted)
-			printf("-- somebody's duplicating packets!");
-		else
-			printf("%.1f%% packet loss",
-			    ((((double)ntransmitted - nreceived) * 100) /
-			    ntransmitted));
-	}
-	printf("\n");
-	if (timinginfo) {
-		/* Only display average to microseconds */
-		double num = nreceived + nrepeats;
-		double avg = tsum / num;
-		double dev = sqrt(fmax(0, tsumsq / num - avg * avg));
-		printf("round-trip min/avg/max/std-dev = %.3f/%.3f/%.3f/%.3f ms\n",
-		    tmin, avg, tmax, dev);
-	}
 }
 
 /*
