@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.179 2016/09/11 18:29:10 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.180 2016/09/11 19:44:43 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1068,7 +1068,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 				    pr_addr((struct sockaddr *)&dstsa,
 				    sizeof(dstsa)));
 			}
-			if (timing)
+			if (timinginfo)
 				(void)printf(" time=%.3f ms", triptime);
 			if (dupflag)
 				(void)printf(" (DUP!)");

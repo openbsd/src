@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.174 2016/09/11 18:28:31 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.175 2016/09/11 19:44:43 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -958,7 +958,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			(void)printf("%d bytes from %s: icmp_seq=%u", cc,
 			    pr_addr(from, fromlen), ntohs(seq));
 			(void)printf(" ttl=%d", ip->ip_ttl);
-			if (cc >= 8 + sizeof(struct payload))
+			if (timinginfo)
 				(void)printf(" time=%.3f ms", triptime);
 			if (dupflag)
 				(void)printf(" (DUP!)");
