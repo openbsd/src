@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2015/09/12 02:08:34 jturner Exp $
+# $OpenBSD: Makefile,v 1.16 2016/09/11 14:53:00 natano Exp $
 
 .include <bsd.own.mk>
 
@@ -104,7 +104,8 @@ beforeinstall:
 includes:
 	@for i in ${FILES}; do \
 	    cmp -s ${.CURDIR}/src/$$i ${DESTDIR}/usr/include/$$i || \
-		${INSTALL} ${INSTALL_COPY} -m 444 ${.CURDIR}/src/$$i ${DESTDIR}/usr/include/$$i; \
+		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
+		${.CURDIR}/src/$$i ${DESTDIR}/usr/include/$$i; \
 	done
 
 .PHONY: header
