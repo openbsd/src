@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.28 2016/09/11 15:54:11 jsing Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.29 2016/09/11 17:51:21 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -42,6 +42,7 @@
 
 #ifdef SOFTRAID
 #include <dev/softraidvar.h>
+#include <lib/libsa/softraid.h>
 #include "softraid_amd64.h"
 #endif
 
