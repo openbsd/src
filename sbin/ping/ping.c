@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.175 2016/09/11 19:44:43 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.176 2016/09/11 19:59:25 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -88,10 +88,12 @@ struct payload {
 	u_int8_t	mac[SIPHASH_DIGEST_LENGTH];
 };
 
-#define	DEFDATALEN	(64 - 8)		/* default data length */
+#define	ECHOLEN		8	/* icmp echo header len excluding time */
+#define	ECHOTMLEN	sizeof(struct payload)
+#define	DEFDATALEN	(64 - ECHOLEN)		/* default data length */
 #define	MAXIPLEN	60
 #define	MAXICMPLEN	76
-#define	MAXPAYLOAD	(IP_MAXPACKET - MAXIPLEN - 8) /* max ICMP payload size */
+#define	MAXPAYLOAD	(IP_MAXPACKET - MAXIPLEN - ECHOLEN)
 #define	MAXWAIT_DEFAULT	10			/* secs to wait for response */
 #define	NROUTES		9			/* number of record route slots */
 
