@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.164 2016/09/11 17:55:05 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.165 2016/09/11 17:58:21 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -163,6 +163,9 @@ int bufspace = IP_MAXPACKET;
 
 struct tv64 tv64_offset;
 SIPHASH_KEY mac_key;
+
+struct msghdr smsghdr;
+struct iovec smsgiov;
 
 volatile sig_atomic_t seenalrm;
 volatile sig_atomic_t seenint;
@@ -747,12 +750,19 @@ pinger(void)
 		ip->ip_sum = in_cksum((u_short *)outpackhdr, cc);
 	}
 
-	i = sendto(s, packet, cc, 0, (struct sockaddr *)&dst,
-	    sizeof(dst));
+
+	smsghdr.msg_name = &dst;
+	smsghdr.msg_namelen = sizeof(dst);
+	smsgiov.iov_base = (caddr_t)packet;
+	smsgiov.iov_len = cc;
+	smsghdr.msg_iov = &smsgiov;
+	smsghdr.msg_iovlen = 1;
+
+	i = sendmsg(s, &smsghdr, 0);
 
 	if (i < 0 || i != cc)  {
 		if (i < 0)
-			warn("sendto");
+			warn("sendmsg");
 		printf("ping: wrote %s %d chars, ret=%d\n", hostname, cc, i);
 	}
 	if (!(options & F_QUIET) && options & F_FLOOD)
