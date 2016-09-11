@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2016/09/04 17:59:26 jsing Exp $
+# $OpenBSD: Makefile,v 1.5 2016/09/11 14:31:02 natano Exp $
 
 LIB=	crypto
 
@@ -424,11 +424,11 @@ all beforedepend: ${GENERATED}
 
 
 distribution:
-	${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
 	   ${.CURDIR}/openssl.cnf ${DESTDIR}/etc/ssl/openssl.cnf && \
-	${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
 	   ${.CURDIR}/cert.pem ${DESTDIR}/etc/ssl/cert.pem && \
-	${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
 	   ${.CURDIR}/x509v3.cnf ${DESTDIR}/etc/ssl/x509v3.cnf
 
 ${PC_FILES}: opensslv.h

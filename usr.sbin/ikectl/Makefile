@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2016/03/01 13:54:39 gsoares Exp $
+# $OpenBSD: Makefile,v 1.7 2016/09/11 14:31:02 natano Exp $
 
 .PATH:		${.CURDIR}/../../sbin/iked
 
@@ -16,7 +16,7 @@ CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare
 
 distribution:
-	${INSTALL} -C -g wheel -m 0644 ${.CURDIR}/ikeca.cnf \
+	${INSTALL} -C -o root -g wheel -m 0644 ${.CURDIR}/ikeca.cnf \
 	    ${DESTDIR}/etc/ssl/ikeca.cnf
 
 .include <bsd.prog.mk>
