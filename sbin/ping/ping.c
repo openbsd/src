@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.170 2016/09/11 18:19:32 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.171 2016/09/11 18:21:09 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -710,6 +710,25 @@ summary(void)
 }
 
 /*
+ * pr_addr --
+ *	Return address in numeric form or a host name
+ */
+const char *
+pr_addr(struct sockaddr *addr, socklen_t addrlen)
+{
+	static char buf[NI_MAXHOST];
+	int flag = 0;
+
+	if ((options & F_HOSTNAME) == 0)
+		flag |= NI_NUMERICHOST;
+
+	if (getnameinfo(addr, addrlen, buf, sizeof(buf), NULL, 0, flag) == 0)
+		return (buf);
+	else
+		return "?";
+}
+
+/*
  * retransmit --
  *	This routine transmits another ping.
  */
@@ -1321,25 +1340,6 @@ pr_iph(struct ip *ip)
 		(void)printf("%02x", *cp++);
 	}
 	(void)putchar('\n');
-}
-
-/*
- * pr_addr --
- *	Return address in numeric form or a host name
- */
-const char *
-pr_addr(struct sockaddr *addr, socklen_t addrlen)
-{
-	static char buf[NI_MAXHOST];
-	int flag = 0;
-
-	if ((options & F_HOSTNAME) == 0)
-		flag |= NI_NUMERICHOST;
-
-	if (getnameinfo(addr, addrlen, buf, sizeof(buf), NULL, 0, flag) == 0)
-		return (buf);
-	else
-		return "?";
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.175 2016/09/11 18:19:32 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.176 2016/09/11 18:21:09 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -814,6 +814,25 @@ summary(void)
 }
 
 /*
+ * pr_addr --
+ *	Return address in numeric form or a host name
+ */
+const char *
+pr_addr(struct sockaddr *addr, socklen_t addrlen)
+{
+	static char buf[NI_MAXHOST];
+	int flag = 0;
+
+	if ((options & F_HOSTNAME) == 0)
+		flag |= NI_NUMERICHOST;
+
+	if (getnameinfo(addr, addrlen, buf, sizeof(buf), NULL, 0, flag) == 0)
+		return (buf);
+	else
+		return "?";
+}
+
+/*
  * retransmit --
  *	This routine transmits another ping6.
  */
@@ -1436,26 +1455,6 @@ pr_iph(struct ip6_hdr *ip6)
 	if (!inet_ntop(AF_INET6, &ip6->ip6_dst, ntop_buf, sizeof(ntop_buf)))
 		strncpy(ntop_buf, "?", sizeof(ntop_buf));
 	printf("%s\n", ntop_buf);
-}
-
-/*
- * pr_addr --
- *	Return an ascii host address as a dotted quad and optionally with
- * a hostname.
- */
-const char *
-pr_addr(struct sockaddr *addr, socklen_t addrlen)
-{
-	static char buf[NI_MAXHOST];
-	int flag = 0;
-
-	if ((options & F_HOSTNAME) == 0)
-		flag |= NI_NUMERICHOST;
-
-	if (getnameinfo(addr, addrlen, buf, sizeof(buf), NULL, 0, flag) == 0)
-		return (buf);
-	else
-		return "?";
 }
 
 /*
