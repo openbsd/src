@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.14 2016/09/11 11:50:34 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.15 2016/09/11 13:10:59 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -225,13 +225,14 @@ set -A _KERNV -- $(sysctl -n kern.version |
 [[ -n ${PATCH_PATH} ]]
 [[ -d ${PATCH_PATH} ]] && PATCH_PATH="file://$(readlink -f ${PATCH_PATH})"
 
+# XXX hw.ncpufound ?
 [[ $(sysctl -n hw.ncpu) -gt 1 ]] && _BSDMP=true || _BSDMP=false
-readonly _BSDMP
-readonly _FETCH="/usr/bin/ftp -MV -k ${FTP_KEEPALIVE-0}"
-readonly _PDIR="/var/syspatch"
-readonly _REL=${_KERNV[0]}
-readonly _RELINT=${_REL%\.*}${_REL#*\.}
-readonly _TMP=$(mktemp -d -p /tmp syspatch.XXXXXXXXXX)
+_FETCH="/usr/bin/ftp -MV -k ${FTP_KEEPALIVE-0}"
+_PDIR="/var/syspatch"
+_REL=${_KERNV[0]}
+_RELINT=${_REL%\.*}${_REL#*\.}
+_TMP=$(mktemp -d -p /tmp syspatch.XXXXXXXXXX)
+readonly _BSDMP _FETCH _PDIR _REL _RELINT_TMP
 
 while getopts clr arg; do
 	case ${arg} in
