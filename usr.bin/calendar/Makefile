@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2015/10/23 10:33:52 tedu Exp $
+#	$OpenBSD: Makefile,v 1.11 2016/09/11 06:40:57 natano Exp $
 
 PROG=	calendar
 SRCS=   calendar.c io.c day.c pesach.c ostern.c paskha.c
@@ -8,11 +8,10 @@ beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    ${.CURDIR}/calendars/calendar.* ${DESTDIR}/usr/share/calendar
 .for lang in ${INTER}
-	@test -d ${DESTDIR}/usr/share/calendar/${lang} || \
-		mkdir ${DESTDIR}/usr/share/calendar/${lang}
+	${INSTALL} -d -o root -g wheel ${DESTDIR}/usr/share/calendar/${lang}
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
     		${.CURDIR}/calendars/${lang}/calendar.* \
-		${DESTDIR}/usr/share/calendar/${lang}; 
+		${DESTDIR}/usr/share/calendar/${lang}
 .endfor
 
 .include <bsd.prog.mk>
