@@ -4,8 +4,8 @@
 # generated from:
 #
 #	OpenBSD: etc.armv7/MAKEDEV.md,v 1.14 2016/09/04 15:38:59 naddy Exp 
-#	OpenBSD: MAKEDEV.common,v 1.92 2016/09/08 20:39:28 ratchov Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.82 2016/03/12 17:58:59 espie Exp 
+#	OpenBSD: MAKEDEV.common,v 1.93 2016/09/11 03:06:31 deraadt Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
@@ -270,7 +270,7 @@ rmidi*)
 	;;
 
 radio*)
-	M radio$U     c 97 $U
+	M radio$U	c 97 $U
 	MKlist[${#MKlist[*]}]=";[ -e radio ] || ln -s radio$U radio"
 	;;
 
@@ -503,7 +503,7 @@ echo -n ${MKlist[*]}
 echo -n ${whlist[*]}
 echo ${oplist[*]}
 } | if [ "$eo" = "echo" ]; then
-        cat
+	cat
 else
 	sh
 fi
