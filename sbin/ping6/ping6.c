@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.186 2016/09/11 19:52:47 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.187 2016/09/11 19:53:33 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -119,10 +119,10 @@ struct payload {
 
 #define	DEFDATALEN	(64 - 8)		/* default data length */
 #define	IP6LEN		40
-#define	ICMP6ECHOLEN	8	/* icmp echo header len excluding time */
+#define	ECHOLEN	8	/* icmp echo header len excluding time */
 #define	ICMP6ECHOTMLEN sizeof(struct payload)
 #define	EXTRA		256	/* for AH and various other headers. weird. */
-#define	MAXPAYLOAD	IPV6_MAXPACKET - IP6LEN - ICMP6ECHOLEN
+#define	MAXPAYLOAD	IPV6_MAXPACKET - IP6LEN - ECHOLEN
 #define	MAXWAIT_DEFAULT	10			/* secs to wait for response */
 
 #define	A(bit)		rcvd_tbl[(bit)>>3]	/* identify byte in array */
@@ -248,7 +248,7 @@ main(int argc, char *argv[])
 		err(1, "setresuid");
 
 	preload = 0;
-	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
+	datap = &outpack[ECHOLEN + ICMP6ECHOTMLEN];
 	while ((ch = getopt(argc, argv,
 	    "c:dEefHh:I:i:Ll:mNnp:qS:s:V:vw:")) != -1) {
 		switch (ch) {
@@ -468,9 +468,9 @@ main(int argc, char *argv[])
 		timing = 0;
 	/* in F_VERBOSE case, we may get non-echoreply packets*/
 	if (options & F_VERBOSE && datalen < 2048)
-		packlen = 2048 + IP6LEN + ICMP6ECHOLEN + EXTRA; /* XXX 2048? */
+		packlen = 2048 + IP6LEN + ECHOLEN + EXTRA; /* XXX 2048? */
 	else
-		packlen = datalen + IP6LEN + ICMP6ECHOLEN + EXTRA;
+		packlen = datalen + IP6LEN + ECHOLEN + EXTRA;
 
 	if (!(packet = malloc(packlen)))
 		err(1, "Unable to allocate packet");
@@ -493,7 +493,7 @@ main(int argc, char *argv[])
 		err(1, "setsockopt");
 
 	if (!(options & F_PINGFILLED))
-		for (i = ICMP6ECHOLEN; i < packlen; ++i)
+		for (i = ECHOLEN; i < packlen; ++i)
 			*datap++ = i;
 
 	ident = getpid() & 0xFFFF;
@@ -917,9 +917,9 @@ pinger(void)
 		SipHash24_Update(&ctx, &seq, sizeof(seq));
 		SipHash24_Final(&payload.mac, &ctx);
 
-		memcpy(&outpack[ICMP6ECHOLEN], &payload, sizeof(payload));
+		memcpy(&outpack[ECHOLEN], &payload, sizeof(payload));
 	}
-	cc = ICMP6ECHOLEN + datalen;
+	cc = ECHOLEN + datalen;
 
 	smsgiov.iov_len = cc;
 
@@ -1049,14 +1049,14 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			if (dupflag)
 				(void)printf(" (DUP!)");
 			/* check the data */
-			cp = buf + ICMP6ECHOLEN + ICMP6ECHOTMLEN;
-			dp = outpack + ICMP6ECHOLEN + ICMP6ECHOTMLEN;
-			if (cc != ICMP6ECHOLEN + datalen) {
-				int delta = cc - (datalen + ICMP6ECHOLEN);
+			cp = buf + ECHOLEN + ICMP6ECHOTMLEN;
+			dp = outpack + ECHOLEN + ICMP6ECHOTMLEN;
+			if (cc != ECHOLEN + datalen) {
+				int delta = cc - (datalen + ECHOLEN);
 
 				(void)printf(" (%d bytes %s)",
 				    abs(delta), delta > 0 ? "extra" : "short");
-				end = buf + MINIMUM(cc, ICMP6ECHOLEN + datalen);
+				end = buf + MINIMUM(cc, ECHOLEN + datalen);
 			}
 			for (i = 8; cp < end; ++i, ++cp, ++dp) {
 				if (*cp != *dp) {
