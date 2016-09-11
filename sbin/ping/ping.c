@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.163 2016/09/11 17:50:56 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.164 2016/09/11 17:55:05 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -752,9 +752,8 @@ pinger(void)
 
 	if (i < 0 || i != cc)  {
 		if (i < 0)
-			perror("ping: sendto");
-		dprintf(STDOUT_FILENO, "ping: wrote %s %d chars, ret=%d\n",
-		    hostname, cc, i);
+			warn("sendto");
+		printf("ping: wrote %s %d chars, ret=%d\n", hostname, cc, i);
 	}
 	if (!(options & F_QUIET) && options & F_FLOOD)
 		(void)write(STDOUT_FILENO, &DOT, 1);
