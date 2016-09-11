@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.180 2016/09/11 19:44:43 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.181 2016/09/11 19:46:10 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -214,7 +214,6 @@ __dead void		 usage(void);
 
 int			 get_hoplim(struct msghdr *);
 int			 get_pathmtu(struct msghdr *);
-struct in6_pktinfo	*get_rcvpktinfo(struct msghdr *);
 void			 pr_icmph(struct icmp6_hdr *, u_char *);
 void			 pr_iph(struct ip6_hdr *);
 void			 pr_exthdrs(struct msghdr *);
@@ -950,7 +949,6 @@ pinger(void)
 void
 pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 {
-	struct in6_pktinfo *pktinfo = NULL;
 	struct icmp6_hdr *icp;
 	struct timespec ts, tp;
 	struct payload payload;
@@ -984,10 +982,6 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 
 	if ((hoplim = get_hoplim(mhdr)) == -1) {
 		warnx("failed to get receiving hop limit");
-		return;
-	}
-	if ((pktinfo = get_rcvpktinfo(mhdr)) == NULL) {
-		warnx("failed to get receiving packet information");
 		return;
 	}
 
@@ -1056,18 +1050,6 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			(void)printf("%d bytes from %s: icmp_seq=%u", cc,
 			    pr_addr(from, fromlen), ntohs(seq));
 			(void)printf(" hlim=%d", hoplim);
-			if ((options & F_VERBOSE) != 0) {
-				struct sockaddr_in6 dstsa;
-
-				memset(&dstsa, 0, sizeof(dstsa));
-				dstsa.sin6_family = AF_INET6;
-				dstsa.sin6_len = sizeof(dstsa);
-				dstsa.sin6_scope_id = pktinfo->ipi6_ifindex;
-				dstsa.sin6_addr = pktinfo->ipi6_addr;
-				(void)printf(" dst=%s",
-				    pr_addr((struct sockaddr *)&dstsa,
-				    sizeof(dstsa)));
-			}
 			if (timinginfo)
 				(void)printf(" time=%.3f ms", triptime);
 			if (dupflag)
@@ -1232,25 +1214,6 @@ get_hoplim(struct msghdr *mhdr)
 	}
 
 	return(-1);
-}
-
-struct in6_pktinfo *
-get_rcvpktinfo(struct msghdr *mhdr)
-{
-	struct cmsghdr *cm;
-
-	for (cm = (struct cmsghdr *)CMSG_FIRSTHDR(mhdr); cm;
-	     cm = (struct cmsghdr *)CMSG_NXTHDR(mhdr, cm)) {
-		if (cm->cmsg_len == 0)
-			return(NULL);
-
-		if (cm->cmsg_level == IPPROTO_IPV6 &&
-		    cm->cmsg_type == IPV6_PKTINFO &&
-		    cm->cmsg_len == CMSG_LEN(sizeof(struct in6_pktinfo)))
-			return((struct in6_pktinfo *)CMSG_DATA(cm));
-	}
-
-	return(NULL);
 }
 
 int
