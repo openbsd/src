@@ -1,5 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.190 2016/09/12 06:01:58 florian Exp $	*/
-/*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.191 2016/09/12 15:47:58 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,8 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/*	BSDI	ping.c,v 2.3 1996/01/21 17:56:50 jch Exp	*/
 
 /*
  * Copyright (c) 1989, 1993
