@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.37 2016/09/12 17:32:00 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.38 2016/09/12 18:55:18 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -511,16 +511,16 @@ static inline int
 xnf_fragcount(struct mbuf *m_head)
 {
 	struct mbuf *m;
-	vaddr_t va;
+	vaddr_t va, va0;
 	int n = 0;
 
 	for (m = m_head; m != NULL; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
 		     /* start of the buffer */
-		for (va = mtod(m, vaddr_t);
+		for (va0 = va = mtod(m, vaddr_t);
 		     /* does the buffer end on this page? */
-		     va + (PAGE_SIZE - (va & PAGE_MASK)) < va + m->m_len;
+		     va + (PAGE_SIZE - (va & PAGE_MASK)) < va0 + m->m_len;
 		     /* move on to the next page */
 		     va += PAGE_SIZE - (va & PAGE_MASK))
 			n++;
