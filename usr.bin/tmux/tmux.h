@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.643 2016/09/04 17:37:06 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.644 2016/09/12 15:40:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -566,6 +566,7 @@ struct mode_key_data {
 /* Binding between a key and a command. */
 struct mode_key_binding {
 	key_code			 key;
+	u_int				 repeat;
 
 	int				 mode;
 	enum mode_key_cmd		 cmd;
@@ -1633,7 +1634,7 @@ const struct mode_key_table *mode_key_findtable(const char *);
 void	mode_key_init_trees(void);
 void	mode_key_init(struct mode_key_data *, struct mode_key_tree *);
 enum mode_key_cmd mode_key_lookup(struct mode_key_data *, key_code,
-	    const char **);
+	    const char **, u_int *);
 
 /* notify.c */
 void	notify_enable(void);
