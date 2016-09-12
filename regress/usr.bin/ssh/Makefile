@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.88 2016/06/03 04:10:41 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.89 2016/09/12 02:25:46 dtucker Exp $
 
 .ifndef SKIP_UNIT
 SUBDIR=		unittests
@@ -32,6 +32,7 @@ LTESTS= 	connect \
 		keyscan \
 		keygen-change \
 		keygen-convert \
+		keygen-moduli \
 		key-options \
 		scp \
 		sftp \
