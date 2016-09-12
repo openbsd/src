@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_sqrtl.c,v 1.1 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: e_sqrtl.c,v 1.2 2016/09/12 04:28:41 guenther Exp $	*/
 /*-
  * Copyright (c) 2007 Steven G. Kargl
  * All rights reserved.
@@ -26,9 +26,9 @@
  */
 
 #include <sys/types.h>
-#include <machine/ieee.h>
+#include <machine/ieee.h>	/* for struct ieee_ext */
+#include <fenv.h>
 #include <float.h>
-#include <ieeefp.h>
 #include <math.h>
 
 #ifdef EXT_IMPLICIT_NBIT
@@ -204,27 +204,28 @@ sqrtl(long double x)
 	u.e = xn + lo;			/* Combine everything. */
 	u.bits.ext_exp += (k >> 1) - 1;
 
-	fpsetsticky(fpgetsticky() & ~FP_X_IMP);
-	r = fpsetround(FP_RZ);		/* Set to round-toward-zero. */
+	feclearexcept(FE_INEXACT);
+	r = fegetround();
+	fesetround(FE_TOWARDZERO);	/* Set to round-toward-zero. */
 	xn = x / u.e;			/* Chopped quotient (inexact?). */
 
-	if (!(fpgetsticky() & FP_X_IMP)) { /* Quotient is exact. */
+	if (!fetestexcept(FE_INEXACT)) { /* Quotient is exact. */
 		if (xn == u.e) {
-			fpsetround(r);
+			fesetround(r);
 			return (u.e);
 		}
 		/* Round correctly for inputs like x = y**2 - ulp. */
 		xn = dec(xn);		/* xn = xn - ulp. */
 	}
 
-	if (r == FP_RN) {
+	if (r == FE_TONEAREST) {
 		xn = inc(xn);		/* xn = xn + ulp. */
-	} else if (r == FP_RP) {
+	} else if (r == FE_UPWARD) {
 		u.e = inc(u.e);		/* u.e = u.e + ulp. */
 		xn = inc(xn);		/* xn  = xn + ulp. */
 	}
 	u.e = u.e + xn;			/* Chopped sum. */
-	fpsetround(r);			/* Restore env and raise inexact */
+	fesetround(r);			/* Restore env and raise inexact */
 	u.bits.ext_exp--;
 	return (u.e);
 }
