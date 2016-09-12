@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.189 2016/08/31 15:24:04 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.190 2016/09/12 07:33:00 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -138,15 +138,14 @@ static struct listen_opts {
 	uint32_t       	options;
 } listen_opts;
 
-static struct listener	*create_sock_listener(struct listen_opts *);
-static void		 create_if_listener(struct listenerlist *,  struct listen_opts *);
-static void		 config_listener(struct listener *,  struct listen_opts *);
+static void	create_sock_listener(struct listen_opts *);
+static void	create_if_listener(struct listen_opts *);
+static void	config_listener(struct listener *, struct listen_opts *);
+static int	host_v4(struct listen_opts *);
+static int	host_v6(struct listen_opts *);
+static int	host_dns(struct listen_opts *);
+static int	interface(struct listen_opts *);
 
-struct listener	*host_v4(const char *, in_port_t);
-struct listener	*host_v6(const char *, in_port_t);
-int		 host_dns(struct listenerlist *, struct listen_opts *);
-int		 host(struct listenerlist *, struct listen_opts *);
-int		 interface(struct listenerlist *, struct listen_opts *);
 void		 set_local(const char *);
 void		 set_localaddrs(struct table *);
 int		 delaytonum(char *);
@@ -695,13 +694,13 @@ socket_listener	: SOCKET sock_listen {
 				yyerror("socket listener already configured");
 				YYERROR;
 			}
-			conf->sc_sock_listener = create_sock_listener(&listen_opts);
+			create_sock_listener(&listen_opts);
 		}
 		;
 
 if_listener	: STRING if_listen {
 			listen_opts.ifx = $1;
-			create_if_listener(conf->sc_listeners, &listen_opts);
+			create_if_listener(&listen_opts);
 		}
 		;
 
@@ -2005,7 +2004,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	/* If the socket listener was not configured, create a default one. */
 	if (!conf->sc_sock_listener) {
 		memset(&listen_opts, 0, sizeof listen_opts);
-		conf->sc_sock_listener = create_sock_listener(&listen_opts);
+		create_sock_listener(&listen_opts);
 	}
 
 	/* Free macros and check which have not been used. */
@@ -2109,7 +2108,7 @@ symget(const char *nam)
 	return (NULL);
 }
 
-static struct listener *
+static void
 create_sock_listener(struct listen_opts *lo)
 {
 	struct listener *l = xcalloc(1, sizeof(*l), "create_sock_listener");
@@ -2118,13 +2117,12 @@ create_sock_listener(struct listen_opts *lo)
 	l->ss.ss_family = AF_LOCAL;
 	l->ss.ss_len = sizeof(struct sockaddr *);
 	l->local = 1;
+	conf->sc_sock_listener = l;
 	config_listener(l, lo);
-
-	return (l);
 }
 
 static void
-create_if_listener(struct listenerlist *ll,  struct listen_opts *lo)
+create_if_listener(struct listen_opts *lo)
 {
 	uint16_t	flags;
 
@@ -2142,17 +2140,11 @@ create_if_listener(struct listenerlist *ll,  struct listen_opts *lo)
 	if (lo->port) {
 		lo->flags = lo->ssl|lo->auth|flags;
 		lo->port = htons(lo->port);
-		if (!interface(ll, lo))
-			if (host(ll, lo) <= 0)
-				errx(1, "invalid virtual ip or interface: %s", lo->ifx);
 	}
 	else {
 		if (lo->ssl & F_SMTPS) {
 			lo->port = htons(465);
 			lo->flags = F_SMTPS|lo->auth|flags;
-			if (!interface(ll, lo))
-				if (host(ll, lo) <= 0)
-					errx(1, "invalid virtual ip or interface: %s", lo->ifx);
 		}
 
 		if (!lo->ssl || (lo->ssl & F_STARTTLS)) {
@@ -2160,11 +2152,19 @@ create_if_listener(struct listenerlist *ll,  struct listen_opts *lo)
 			lo->flags = lo->auth|flags;
 			if (lo->ssl & F_STARTTLS)
 				lo->flags |= F_STARTTLS;
-			if (!interface(ll, lo))
-				if (host(ll, lo) <= 0)
-					errx(1, "invalid virtual ip or interface: %s", lo->ifx);
 		}
 	}
+
+	if (interface(lo))
+		return;
+	if (host_v4(lo))
+		return;
+	if (host_v6(lo))
+		return;
+	if (host_dns(lo))
+		return;
+
+	errx(1, "invalid virtual ip or interface: %s", lo->ifx);
 }
 
 static void
@@ -2224,58 +2224,69 @@ config_listener(struct listener *h,  struct listen_opts *lo)
 
 	if (lo->ssl & F_TLS_VERIFY)
 		h->flags |= F_TLS_VERIFY;
+
+	if (h != conf->sc_sock_listener)
+		TAILQ_INSERT_TAIL(conf->sc_listeners, h, entry);
 }
 
-struct listener *
-host_v4(const char *s, in_port_t port)
+static int
+host_v4(struct listen_opts *lo)
 {
 	struct in_addr		 ina;
 	struct sockaddr_in	*sain;
 	struct listener		*h;
 
+	if (lo->family != AF_UNSPEC && lo->family != AF_INET)
+		return (0);
+
 	memset(&ina, 0, sizeof(ina));
-	if (inet_pton(AF_INET, s, &ina) != 1)
-		return (NULL);
+	if (inet_pton(AF_INET, lo->ifx, &ina) != 1)
+		return (0);
 
 	h = xcalloc(1, sizeof(*h), "host_v4");
 	sain = (struct sockaddr_in *)&h->ss;
 	sain->sin_len = sizeof(struct sockaddr_in);
 	sain->sin_family = AF_INET;
 	sain->sin_addr.s_addr = ina.s_addr;
-	sain->sin_port = port;
+	sain->sin_port = lo->port;
 
 	if (sain->sin_addr.s_addr == htonl(INADDR_LOOPBACK))
 		h->local = 1;
+	config_listener(h,  lo);
 
-	return (h);
+	return (1);
 }
 
-struct listener *
-host_v6(const char *s, in_port_t port)
+static int
+host_v6(struct listen_opts *lo)
 {
 	struct in6_addr		 ina6;
 	struct sockaddr_in6	*sin6;
 	struct listener		*h;
 
+	if (lo->family != AF_UNSPEC && lo->family != AF_INET6)
+		return (0);
+
 	memset(&ina6, 0, sizeof(ina6));
-	if (inet_pton(AF_INET6, s, &ina6) != 1)
-		return (NULL);
+	if (inet_pton(AF_INET6, lo->ifx, &ina6) != 1)
+		return (0);
 
 	h = xcalloc(1, sizeof(*h), "host_v6");
 	sin6 = (struct sockaddr_in6 *)&h->ss;
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
 	sin6->sin6_family = AF_INET6;
-	sin6->sin6_port = port;
+	sin6->sin6_port = lo->port;
 	memcpy(&sin6->sin6_addr, &ina6, sizeof(ina6));
 
 	if (IN6_IS_ADDR_LOOPBACK(&sin6->sin6_addr))
 		h->local = 1;
+	config_listener(h,  lo);
 
-	return (h);
+	return (1);
 }
 
-int
-host_dns(struct listenerlist *al, struct listen_opts *lo)
+static int
+host_dns(struct listen_opts *lo)
 {
 	struct addrinfo		 hints, *res0, *res;
 	int			 error, cnt = 0;
@@ -2284,7 +2295,7 @@ host_dns(struct listenerlist *al, struct listen_opts *lo)
 	struct listener		*h;
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = PF_UNSPEC;
+	hints.ai_family = lo->family;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_ADDRCONFIG;
 	error = getaddrinfo(lo->ifx, NULL, &hints, &res0);
@@ -2323,7 +2334,6 @@ host_dns(struct listenerlist *al, struct listen_opts *lo)
 
 		config_listener(h, lo);
 
-		TAILQ_INSERT_HEAD(al, h, entry);
 		cnt++;
 	}
 
@@ -2331,28 +2341,8 @@ host_dns(struct listenerlist *al, struct listen_opts *lo)
 	return (cnt);
 }
 
-int
-host(struct listenerlist *al, struct listen_opts *lo)
-{
-	struct listener *h;
-
-	h = host_v4(lo->ifx, lo->port);
-
-	/* IPv6 address? */
-	if (h == NULL)
-		h = host_v6(lo->ifx, lo->port);
-
-	if (h != NULL) {
-		config_listener(h, lo);
-		TAILQ_INSERT_HEAD(al, h, entry);
-		return (1);
-	}
-
-	return (host_dns(al, lo));
-}
-
-int
-interface(struct listenerlist *al, struct listen_opts *lo)
+static int
+interface(struct listen_opts *lo)
 {
 	struct ifaddrs *ifap, *p;
 	struct sockaddr_in	*sain;
@@ -2400,7 +2390,6 @@ interface(struct listenerlist *al, struct listen_opts *lo)
 
 		config_listener(h, lo);
 		ret = 1;
-		TAILQ_INSERT_HEAD(al, h, entry);
 	}
 
 	freeifaddrs(ifap);
