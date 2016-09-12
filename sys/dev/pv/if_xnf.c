@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.36 2016/09/12 17:17:12 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.37 2016/09/12 17:32:00 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -266,6 +266,9 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	if (sc->sc_caps & XNF_CAP_SG)
+		ifp->if_hardmtu = XNF_MCLEN - ETHER_HDR_LEN;
+
 	if (xnf_rx_ring_create(sc)) {
 		xen_intr_disestablish(sc->sc_xih);
 		return;
@@ -288,9 +291,6 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = xnf_start;
 	ifp->if_watchdog = xnf_watchdog;
 	ifp->if_softc = sc;
-
-	if (sc->sc_caps & XNF_CAP_SG)
-		ifp->if_hardmtu = XNF_MCLEN - ETHER_HDR_LEN;
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 	if (sc->sc_caps & XNF_CAP_CSUM4)
@@ -508,13 +508,24 @@ xnf_start(struct ifnet *ifp)
 }
 
 static inline int
-chainlen(struct mbuf *m_head)
+xnf_fragcount(struct mbuf *m_head)
 {
 	struct mbuf *m;
+	vaddr_t va;
 	int n = 0;
 
-	for (m = m_head; m != NULL && m->m_len > 0; m = m->m_next)
+	for (m = m_head; m != NULL; m = m->m_next) {
+		if (m->m_len == 0)
+			continue;
+		     /* start of the buffer */
+		for (va = mtod(m, vaddr_t);
+		     /* does the buffer end on this page? */
+		     va + (PAGE_SIZE - (va & PAGE_MASK)) < va + m->m_len;
+		     /* move on to the next page */
+		     va += PAGE_SIZE - (va & PAGE_MASK))
+			n++;
 		n++;
+	}
 	return (n);
 }
 
@@ -527,9 +538,9 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 	struct mbuf *m;
 	bus_dmamap_t dmap;
 	uint32_t oprod = *prod;
-	int i, id, flags;
+	int i, id, flags, n;
 
-	if ((chainlen(m_head) > sc->sc_tx_frags) &&
+	if ((xnf_fragcount(m_head) > sc->sc_tx_frags) &&
 	    m_defrag(m_head, M_DONTWAIT))
 		goto errout;
 
@@ -537,17 +548,20 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 		i = *prod & (XNF_TX_DESC - 1);
 		dmap = sc->sc_tx_dmap[i];
 		txd = &txr->txr_desc[i];
-
 		if (sc->sc_tx_buf[i])
 			panic("%s: cons %u(%u) prod %u next %u seg %d/%d\n",
 			    ifp->if_xname, txr->txr_cons, sc->sc_tx_cons,
 			    txr->txr_prod, *prod, *prod - oprod,
-			    chainlen(m_head));
+			    xnf_fragcount(m_head));
 
 		flags = (sc->sc_domid << 16) | BUS_DMA_WRITE | BUS_DMA_WAITOK;
 		if (bus_dmamap_load(sc->sc_dmat, dmap, m->m_data, m->m_len,
-		    NULL, flags))
+		    NULL, flags)) {
+			DPRINTF("%s: failed to load %d bytes @%lu\n",
+			    sc->sc_dev.dv_xname, m->m_len,
+			    mtod(m, vaddr_t) & PAGE_MASK);
 			goto unroll;
+		}
 
 		if (m == m_head) {
 			if (m->m_pkthdr.csum_flags &
@@ -555,16 +569,29 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 				txd->txd_req.txq_flags = XNF_TXF_CSUM_BLANK |
 				    XNF_TXF_CSUM_VALID;
 			txd->txd_req.txq_size = m->m_pkthdr.len;
-		} else
-			txd->txd_req.txq_size = dmap->dm_segs[0].ds_len;
+		}
+		for (n = 0; n < dmap->dm_nsegs; n++) {
+			i = *prod & (XNF_TX_DESC - 1);
+			txd = &txr->txr_desc[i];
+			if (sc->sc_tx_buf[i])
+				panic("%s: cons %u(%u) prod %u next %u "
+				    "seg %d/%d\n", ifp->if_xname,
+				    txr->txr_cons, sc->sc_tx_cons,
+				    txr->txr_prod, *prod, *prod - oprod,
+				    xnf_fragcount(m_head));
 
-		if (m->m_next != NULL)
+			/* Don't overwrite lenght of the very first one */
+			if (!(m == m_head && n == 0))
+				txd->txd_req.txq_size = dmap->dm_segs[n].ds_len;
+			/* The chunk flag will be removed from the last one */
 			txd->txd_req.txq_flags |= XNF_TXF_CHUNK;
-
-		txd->txd_req.txq_ref = dmap->dm_segs[0].ds_addr;
-		txd->txd_req.txq_offset = mtod(m, vaddr_t) & PAGE_MASK;
-		(*prod)++;
+			txd->txd_req.txq_ref = dmap->dm_segs[n].ds_addr;
+			txd->txd_req.txq_offset = dmap->dm_segs[n].ds_offset;
+			(*prod)++;
+		}
 	}
+	/* Clear the chunk flag from the last segment */
+	txd->txd_req.txq_flags &= ~XNF_TXF_CHUNK;
 	sc->sc_tx_buf[i] = m_head;
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
 	    BUS_DMASYNC_PREWRITE);
@@ -903,7 +930,9 @@ xnf_rx_ring_destroy(struct xnf_softc *sc)
 int
 xnf_tx_ring_create(struct xnf_softc *sc)
 {
-	int i, flags, rsegs;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	int i, flags, nsegs, rsegs;
+	bus_size_t segsz;
 
 	sc->sc_tx_frags = sc->sc_caps & XNF_CAP_SG ? XNF_TX_FRAG : 1;
 
@@ -940,8 +969,15 @@ xnf_tx_ring_create(struct xnf_softc *sc)
 
 	sc->sc_tx_ring->txr_prod_event = sc->sc_tx_ring->txr_cons_event = 1;
 
+	if (sc->sc_caps & XNF_CAP_SG) {
+		nsegs = roundup(ifp->if_hardmtu, XNF_MCLEN) / XNF_MCLEN + 1;
+		segsz = nsegs * XNF_MCLEN;
+	} else {
+		nsegs = 1;
+		segsz = XNF_MCLEN;
+	}
 	for (i = 0; i < XNF_TX_DESC; i++) {
-		if (bus_dmamap_create(sc->sc_dmat, XNF_MCLEN, 1, XNF_MCLEN,
+		if (bus_dmamap_create(sc->sc_dmat, segsz, nsegs, XNF_MCLEN,
 		    PAGE_SIZE, BUS_DMA_WAITOK, &sc->sc_tx_dmap[i])) {
 			printf("%s: failed to create a memory map for the"
 			    " tx slot %d\n", sc->sc_dev.dv_xname, i);
