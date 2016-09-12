@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.148 2016/08/22 10:40:36 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.149 2016/09/12 16:24:37 krw Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1145,62 +1145,6 @@ filt_bpfread(struct knote *kn, long hint)
 	if (d->bd_immediate)
 		kn->kn_data += d->bd_slen;
 	return (kn->kn_data > 0);
-}
-
-/*
- * Incoming linkage from device drivers.  Process the packet pkt, of length
- * pktlen, which is stored in a contiguous buffer.  The packet is parsed
- * by each process' filter, and if accepted, stashed into the corresponding
- * buffer.
- */
-int
-bpf_tap(caddr_t arg, u_char *pkt, u_int pktlen, u_int direction)
-{
-	struct bpf_if *bp = (struct bpf_if *)arg;
-	struct srp_ref sr;
-	struct bpf_d *d;
-	size_t slen;
-	struct timeval tv;
-	int drop = 0, gottime = 0;
-	int s;
-
-	if (bp == NULL)
-		return (0);
-
-	SRPL_FOREACH(d, &sr, &bp->bif_dlist, bd_next) {
-		atomic_inc_long(&d->bd_rcount);
-
-		if ((direction & d->bd_dirfilt) != 0)
-			slen = 0;
-		else {
-			struct srp_ref sr;
-			struct bpf_program *bf;
-			struct bpf_insn *fcode = NULL;
-
-			bf = srp_enter(&sr, &d->bd_rfilter);
-			if (bf != NULL)
-				fcode = bf->bf_insns;
-			slen = bpf_filter(fcode, pkt, pktlen, pktlen);
-			srp_leave(&sr);
-		}
-
-		if (slen > 0) {
-			if (!gottime++)
-				microtime(&tv);
-
-			KERNEL_LOCK();
-			s = splnet();
-			bpf_catchpacket(d, pkt, pktlen, slen, bcopy, &tv);
-			splx(s);
-			KERNEL_UNLOCK();
-
-			if (d->bd_fildrop)
-				drop = 1;
-		}
-	}
-	SRPL_LEAVE(&sr);
-
-	return (drop);
 }
 
 /*

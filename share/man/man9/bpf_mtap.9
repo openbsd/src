@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf_mtap.9,v 1.8 2016/05/10 23:51:50 dlg Exp $
+.\"	$OpenBSD: bpf_mtap.9,v 1.9 2016/09/12 16:24:37 krw Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,14 +14,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 10 2016 $
+.Dd $Mdocdate: September 12 2016 $
 .Dt BPF_MTAP 9
 .Os
 .Sh NAME
 .Nm bpf_filter ,
 .Nm bpf_mfilter ,
 .Nm bpf_validate ,
-.Nm bpf_tap ,
 .Nm bpf_mtap ,
 .Nm bpf_mtap_hdr ,
 .Nm bpf_mtap_af ,
@@ -44,8 +43,6 @@
 .Fc
 .Ft int
 .Fn bpf_validate "struct bpf_insn *pc" "int len"
-.Ft int
-.Fn bpf_tap "caddr_t bpf" "u_char *pkt" "u_int pktlen" "u_int direction"
 .Ft int
 .Fn bpf_mtap "caddr_t bpf" "const struct mbuf *m" "u_int direction"
 .Ft int
@@ -167,7 +164,6 @@ and
 can be called from process context, or from an interrupt context.
 .Pp
 .Fn bpf_mtap ,
-.Fn bpf_tap ,
 .Fn bpf_mtap ,
 .Fn bpf_mtap_hdr ,
 .Fn bpf_mtap_af ,
@@ -190,7 +186,6 @@ program.
 returns a non-zero value if the BPF program is valid,
 otherwise 0.
 .Pp
-.Fn bpf_tap ,
 .Fn bpf_mtap ,
 .Fn bpf_mtap_hdr ,
 .Fn bpf_mtap_af ,
