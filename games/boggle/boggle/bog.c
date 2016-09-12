@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.32 2016/09/12 14:38:58 otto Exp $	*/
+/*	$OpenBSD: bog.c,v 1.33 2016/09/12 20:11:10 tb Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -142,18 +142,16 @@ main(int argc, char *argv[])
 		argv += 1;
 	}
 
-	if (argc > 0) {
-		if (islower((unsigned char)argv[0][0])) {
-			if (strlen(argv[0]) != ncubes) {
-				usage();
-			} else {
-				/* This board is assumed to be valid... */
-				bspec = argv[0];
-			}
-		} else {
-		  	usage();
-		}
-	}
+	if (argc == 1) {
+		if (strlen(argv[0]) != ncubes)
+			usage();
+		for (p = argv[0]; *p != '\0'; p++)
+			if (!islower((unsigned char)*p))
+				errx(1, "only lower case letters are allowed "
+				    "in boardspec");
+		bspec = argv[0];
+	} else if (argc != 0)
+		usage();
 
 	if (batch && bspec == NULL)
 		errx(1, "must give both -b and a board setup");
