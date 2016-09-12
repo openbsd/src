@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.667 2016/09/09 18:28:11 tedu Exp $
+$OpenBSD: usbdevs,v 1.668 2016/09/12 07:55:33 mpi Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -4397,6 +4397,7 @@ product WACOM GRAPHIRE		0x0010	Graphire
 product WACOM GRAPHIRE3_4X5	0x0013	Graphire3 4x5
 product WACOM GRAPHIRE4_4X5	0x0015	Graphire4 Classic A6
 product WACOM INTUOSA5		0x0021	Intuos A5
+product WACOM INTUOS_DRAW	0x033b	Intuos Draw (CTL-490)
 
 /* WAGO Kontakttechnik products */
 product WAGO SERVICECABLE	0x07a6	Service Cable 750-923
