@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.177 2016/09/12 06:01:58 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.178 2016/09/12 06:02:43 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ int mx_dup_ck = MAX_DUP_CHK;
 char rcvd_tbl[MAX_DUP_CHK / 8];
 
 struct sockaddr_in dst;	/* who to ping */
-unsigned int datalen = DEFDATALEN;
+int datalen = DEFDATALEN;
 int s;				/* socket file descriptor */
 u_char outpackhdr[IP_MAXPACKET]; /* Max packet size = 65535 */
 u_char *outpack = outpackhdr+sizeof(struct ip);
