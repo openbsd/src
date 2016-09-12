@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.30 2016/04/02 10:26:58 dlg Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.31 2016/09/12 14:05:40 krw Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ _bpf_filter(const struct bpf_insn *pc, const struct bpf_ops *ops,
 			return 0;
 #else
 			abort();
-#endif			
+#endif
 		case BPF_RET|BPF_K:
 			return (u_int)pc->k;
 
@@ -240,7 +240,7 @@ _bpf_filter(const struct bpf_insn *pc, const struct bpf_ops *ops,
 		case BPF_LD|BPF_MEM:
 			A = mem[pc->k];
 			continue;
-			
+
 		case BPF_LDX|BPF_MEM:
 			X = mem[pc->k];
 			continue;
@@ -292,25 +292,25 @@ _bpf_filter(const struct bpf_insn *pc, const struct bpf_ops *ops,
 		case BPF_ALU|BPF_ADD|BPF_X:
 			A += X;
 			continue;
-			
+
 		case BPF_ALU|BPF_SUB|BPF_X:
 			A -= X;
 			continue;
-			
+
 		case BPF_ALU|BPF_MUL|BPF_X:
 			A *= X;
 			continue;
-			
+
 		case BPF_ALU|BPF_DIV|BPF_X:
 			if (X == 0)
 				return 0;
 			A /= X;
 			continue;
-			
+
 		case BPF_ALU|BPF_AND|BPF_X:
 			A &= X;
 			continue;
-			
+
 		case BPF_ALU|BPF_OR|BPF_X:
 			A |= X;
 			continue;
@@ -326,23 +326,23 @@ _bpf_filter(const struct bpf_insn *pc, const struct bpf_ops *ops,
 		case BPF_ALU|BPF_ADD|BPF_K:
 			A += pc->k;
 			continue;
-			
+
 		case BPF_ALU|BPF_SUB|BPF_K:
 			A -= pc->k;
 			continue;
-			
+
 		case BPF_ALU|BPF_MUL|BPF_K:
 			A *= pc->k;
 			continue;
-			
+
 		case BPF_ALU|BPF_DIV|BPF_K:
 			A /= pc->k;
 			continue;
-			
+
 		case BPF_ALU|BPF_AND|BPF_K:
 			A &= pc->k;
 			continue;
-			
+
 		case BPF_ALU|BPF_OR|BPF_K:
 			A |= pc->k;
 			continue;
@@ -375,7 +375,7 @@ _bpf_filter(const struct bpf_insn *pc, const struct bpf_ops *ops,
  * Return true if the 'fcode' is a valid filter program.
  * The constraints are that each jump be forward and to a valid
  * code and memory operations use valid addresses.  The code
- * must terminate with either an accept or reject. 
+ * must terminate with either an accept or reject.
  *
  * The kernel needs to be able to verify an application's filter code.
  * Otherwise, a bogus program could easily crash the system.
@@ -449,7 +449,7 @@ bpf_validate(struct bpf_insn *f, int len)
 			break;
 		case BPF_JMP:
 			/*
-			 * Check that jumps are forward, and within 
+			 * Check that jumps are forward, and within
 			 * the code block.
 			 */
 			from = i + 1;
