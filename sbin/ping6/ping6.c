@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.189 2016/09/11 19:58:36 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.190 2016/09/12 06:01:58 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -771,7 +771,7 @@ fill(char *bp, char *patp)
 
 	if (ii > 0)
 		for (kk = 0;
-		    kk <= MAXPAYLOAD - (8 + sizeof(struct payload) + ii);
+		    kk <= MAXPAYLOAD - (ECHOLEN + ECHOTMLEN + ii);
 		    kk += ii)
 			for (jj = 0; jj < ii; ++jj)
 				bp[jj + kk] = pat[jj];
@@ -989,7 +989,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			return;			/* 'Twas not our ECHO */
 		seq = icp->icmp6_seq;
 		++nreceived;
-		if (cc >= 8 + sizeof(struct payload)) {
+		if (cc >= ECHOLEN + ECHOTMLEN) {
 			SIPHASH_CTX ctx;
 			struct tv64 *tv64;
 			u_int8_t mac[SIPHASH_DIGEST_LENGTH];
@@ -1058,7 +1058,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 				    abs(delta), delta > 0 ? "extra" : "short");
 				end = buf + MINIMUM(cc, ECHOLEN + datalen);
 			}
-			for (i = 8; cp < end; ++i, ++cp, ++dp) {
+			for (i = ECHOLEN; cp < end; ++i, ++cp, ++dp) {
 				if (*cp != *dp) {
 					(void)printf("\nwrong data byte #%d "
 					    "should be 0x%x but was 0x%x",

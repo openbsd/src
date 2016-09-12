@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.176 2016/09/11 19:59:25 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.177 2016/09/12 06:01:58 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ main(int argc, char *argv[])
 		err(1, "setresuid");
 
 	preload = 0;
-	datap = &outpack[8 + sizeof(struct payload)];
+	datap = &outpack[ECHOLEN + ECHOTMLEN];
 	while ((ch = getopt(argc, argv,
 	    "DEI:LRS:c:defHi:l:np:qs:T:t:V:vw:")) != -1) {
 		switch(ch) {
@@ -672,7 +672,7 @@ fill(char *bp, char *patp)
 
 	if (ii > 0)
 		for (kk = 0;
-		    kk <= MAXPAYLOAD - (8 + sizeof(struct payload) + ii);
+		    kk <= MAXPAYLOAD - (ECHOLEN + ECHOTMLEN + ii);
 		    kk += ii)
 			for (jj = 0; jj < ii; ++jj)
 				bp[jj + kk] = pat[jj];
@@ -817,10 +817,10 @@ pinger(void)
 		SipHash24_Update(&ctx, &seq, sizeof(seq));
 		SipHash24_Final(&payload.mac, &ctx);
 
-		memcpy(&outpack[8], &payload, sizeof(payload));
+		memcpy(&outpack[ECHOLEN], &payload, sizeof(payload));
 	}
 
-	cc = datalen + 8;			/* skips ICMP portion */
+	cc = datalen + ECHOLEN;			/* skips ICMP portion */
 
 	/* compute ICMP checksum here */
 	icp->icmp_cksum = in_cksum((u_short *)icp, cc);
@@ -904,7 +904,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			return;			/* 'Twas not our ECHO */
 		seq = icp->icmp_seq;
 		++nreceived;
-		if (cc >= 8 + sizeof(struct payload)) {
+		if (cc >= ECHOLEN + ECHOTMLEN) {
 			SIPHASH_CTX ctx;
 			struct tv64 *tv64;
 			u_int8_t mac[SIPHASH_DIGEST_LENGTH];
@@ -965,19 +965,19 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			if (dupflag)
 				(void)printf(" (DUP!)");
 			/* check the data */
-			if (cc - 8 < datalen)
+			if (cc - ECHOLEN < datalen)
 				(void)printf(" (TRUNC!)");
 			cp = (u_char *)&icp->icmp_data[sizeof(struct payload)];
-			dp = &outpack[8 + sizeof(struct payload)];
-			for (i = 8 + sizeof(struct payload);
+			dp = &outpack[ECHOLEN + ECHOTMLEN];
+			for (i = ECHOLEN + ECHOTMLEN;
 			    i < cc && i < datalen;
 			    ++i, ++cp, ++dp) {
 				if (*cp != *dp) {
 					(void)printf("\nwrong data byte #%d "
 					    "should be 0x%x but was 0x%x",
-					    i - 8, *dp, *cp);
+					    i - ECHOLEN, *dp, *cp);
 					cp = (u_char *)&icp->icmp_data[0];
-					for (i = 8; i < cc && i < datalen;
+					for (i = ECHOLEN; i < cc && i < datalen;
 					     ++i, ++cp) {
 						if ((i % 32) == 8)
 							(void)printf("\n\t");
