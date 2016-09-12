@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.35 2016/09/12 17:15:53 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.36 2016/09/12 17:17:12 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -563,9 +563,9 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 
 		txd->txd_req.txq_ref = dmap->dm_segs[0].ds_addr;
 		txd->txd_req.txq_offset = mtod(m, vaddr_t) & PAGE_MASK;
-		sc->sc_tx_buf[i] = m;
 		(*prod)++;
 	}
+	sc->sc_tx_buf[i] = m_head;
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
 	    BUS_DMASYNC_PREWRITE);
 
@@ -622,7 +622,6 @@ xnf_txeof(struct xnf_softc *sc)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct xnf_tx_ring *txr = sc->sc_tx_ring;
 	union xnf_tx_desc *txd;
-	struct mbuf *m;
 	bus_dmamap_t dmap;
 	uint32_t cons;
 	int i, id;
@@ -639,14 +638,14 @@ xnf_txeof(struct xnf_softc *sc)
 		memset(txd, 0, sizeof(*txd));
 		txd->txd_req.txq_id = id;
 
-		m = sc->sc_tx_buf[i];
-		KASSERT(m != NULL);
-		sc->sc_tx_buf[i] = NULL;
-
 		bus_dmamap_sync(sc->sc_dmat, dmap, 0, 0,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, dmap);
-		m_free(m);
+
+		if (sc->sc_tx_buf[i] != NULL) {
+			m_freem(sc->sc_tx_buf[i]);
+			sc->sc_tx_buf[i] = NULL;
+		}
 	}
 
 	sc->sc_tx_cons = cons;
