@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.131 2016/09/10 10:00:41 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.132 2016/09/12 10:18:26 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -387,8 +387,6 @@ int	iwm_power_update_device(struct iwm_softc *);
 int	iwm_enable_beacon_filter(struct iwm_softc *, struct iwm_node *);
 int	iwm_disable_beacon_filter(struct iwm_softc *);
 int	iwm_add_sta_cmd(struct iwm_softc *, struct iwm_node *, int);
-int	iwm_add_int_sta_common(struct iwm_softc *, struct iwm_int_sta *,
-	    const uint8_t *, uint16_t, uint16_t);
 int	iwm_add_aux_sta(struct iwm_softc *);
 uint16_t iwm_scan_rx_chain(struct iwm_softc *);
 uint32_t iwm_scan_max_out_time(struct iwm_softc *, uint32_t, int);
@@ -2406,26 +2404,18 @@ iwm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 	    IWM_STA_MODIFY_REMOVE_BA_TID;
 
 	status = IWM_ADD_STA_SUCCESS;
-	err = iwm_send_cmd_pdu_status(sc, IWM_ADD_STA,
-	    sizeof(cmd), &cmd, &status);
+	err = iwm_send_cmd_pdu_status(sc, IWM_ADD_STA, sizeof(cmd), &cmd,
+	    &status);
 	if (err)
 		return;
 
-	switch (status) {
-	case IWM_ADD_STA_SUCCESS:
+	if (status == IWM_ADD_STA_SUCCESS) {
 		s = splnet();
 		if (start)
 			sc->sc_rx_ba_sessions++;
 		else if (sc->sc_rx_ba_sessions > 0)
 			sc->sc_rx_ba_sessions--;
 		splx(s);
-		break;
-	case IWM_ADD_STA_IMMEDIATE_BA_FAILURE:
-		err = EIO;
-		break;
-	default:
-		err = EIO;
-		break;
 	}
 }
 
@@ -3471,10 +3461,7 @@ iwm_binding_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action)
 	status = 0;
 	err = iwm_send_cmd_pdu_status(sc, IWM_BINDING_CONTEXT_CMD,
 	    sizeof(cmd), &cmd, &status);
-	if (err)
-		return err;
-
-	if (status)
+	if (err == 0 && status != 0)
 		err = EIO;
 
 	return err;
@@ -3998,7 +3985,7 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
 	    type != IEEE80211_FC0_TYPE_DATA)
-		tx->sta_id = sc->sc_aux_sta.sta_id;
+		tx->sta_id = IWM_AUX_STA_ID;
 	else
 		tx->sta_id = IWM_STATION_ID;
 
@@ -4370,70 +4357,36 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 	status = IWM_ADD_STA_SUCCESS;
 	err = iwm_send_cmd_pdu_status(sc, IWM_ADD_STA, sizeof(add_sta_cmd),
 	    &add_sta_cmd, &status);
-	if (err)
-		return err;
-
-	switch (status) {
-	case IWM_ADD_STA_SUCCESS:
-		break;
-	default:
+	if (err == 0 && status != IWM_ADD_STA_SUCCESS)
 		err = EIO;
-		break;
-	}
 
-	return err;
-}
-
-int
-iwm_add_int_sta_common(struct iwm_softc *sc, struct iwm_int_sta *sta,
-    const uint8_t *addr, uint16_t mac_id, uint16_t color)
-{
-	struct iwm_add_sta_cmd_v7 cmd;
-	int err;
-	uint32_t status;
-
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.sta_id = sta->sta_id;
-	cmd.mac_id_n_color = htole32(IWM_FW_CMD_ID_AND_COLOR(mac_id, color));
-
-	cmd.tfd_queue_msk = htole32(sta->tfd_queue_msk);
-	cmd.tid_disable_tx = htole16(0xffff);
-
-	if (addr)
-		memcpy(cmd.addr, addr, ETHER_ADDR_LEN);
-
-	err = iwm_send_cmd_pdu_status(sc, IWM_ADD_STA,
-	    sizeof(cmd), &cmd, &status);
-	if (err)
-		return err;
-
-	switch (status) {
-	case IWM_ADD_STA_SUCCESS:
-		return 0;
-	default:
-		err = EIO;
-		break;
-	}
 	return err;
 }
 
 int
 iwm_add_aux_sta(struct iwm_softc *sc)
 {
+	struct iwm_add_sta_cmd_v7 cmd;
 	int err;
-
-	sc->sc_aux_sta.sta_id = IWM_AUX_STA_ID;
-	sc->sc_aux_sta.tfd_queue_msk = (1 << IWM_AUX_QUEUE);
+	uint32_t status;
 
 	err = iwm_enable_txq(sc, 0, IWM_AUX_QUEUE, IWM_TX_FIFO_MCAST);
 	if (err)
 		return err;
 
-	err = iwm_add_int_sta_common(sc,
-	    &sc->sc_aux_sta, NULL, IWM_MAC_INDEX_AUX, 0);
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.sta_id = IWM_AUX_STA_ID;
+	cmd.mac_id_n_color =
+	    htole32(IWM_FW_CMD_ID_AND_COLOR(IWM_MAC_INDEX_AUX, 0));
+	cmd.tfd_queue_msk = htole32(1 << IWM_AUX_QUEUE);
+	cmd.tid_disable_tx = htole16(0xffff);
 
-	if (err)
-		memset(&sc->sc_aux_sta, 0, sizeof(sc->sc_aux_sta));
+	status = IWM_ADD_STA_SUCCESS;
+	err = iwm_send_cmd_pdu_status(sc, IWM_ADD_STA, sizeof(cmd), &cmd,
+	    &status);
+	if (err == 0 && status != IWM_ADD_STA_SUCCESS)
+		err = EIO;
+
 	return err;
 }
 
@@ -4738,14 +4691,14 @@ iwm_lmac_scan(struct iwm_softc *sc)
 	    IWM_TX_CMD_FLG_BT_DIS);
 	req->tx_cmd[0].rate_n_flags =
 	    iwm_scan_rate_n_flags(sc, IEEE80211_CHAN_2GHZ, 1/*XXX*/);
-	req->tx_cmd[0].sta_id = sc->sc_aux_sta.sta_id;
+	req->tx_cmd[0].sta_id = IWM_AUX_STA_ID;
 
 	/* Tx flags 5 GHz. */
 	req->tx_cmd[1].tx_flags = htole32(IWM_TX_CMD_FLG_SEQ_CTL |
 	    IWM_TX_CMD_FLG_BT_DIS);
 	req->tx_cmd[1].rate_n_flags =
 	    iwm_scan_rate_n_flags(sc, IEEE80211_CHAN_5GHZ, 1/*XXX*/);
-	req->tx_cmd[1].sta_id = sc->sc_aux_sta.sta_id;
+	req->tx_cmd[1].sta_id = IWM_AUX_STA_ID;
 
 	/* Check if we're doing an active directed scan. */
 	if (ic->ic_des_esslen != 0) {
@@ -4822,7 +4775,7 @@ iwm_config_umac_scan(struct iwm_softc *sc)
 
 	IEEE80211_ADDR_COPY(scan_config->mac_addr, sc->sc_ic.ic_myaddr);
 
-	scan_config->bcast_sta_id = sc->sc_aux_sta.sta_id;
+	scan_config->bcast_sta_id = IWM_AUX_STA_ID;
 	scan_config->channel_flags = IWM_CHANNEL_FLAG_EBS |
 	    IWM_CHANNEL_FLAG_ACCURATE_EBS | IWM_CHANNEL_FLAG_EBS_ADD |
 	    IWM_CHANNEL_FLAG_PRE_SCAN_PASSIVE2ACTIVE;

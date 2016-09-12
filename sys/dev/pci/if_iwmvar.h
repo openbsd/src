@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.22 2016/09/10 09:32:33 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.23 2016/09/12 10:18:26 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -331,11 +331,6 @@ struct iwm_phy_db {
 	struct iwm_phy_db_entry	calib_ch_group_txp[IWM_NUM_TXP_CH_GROUPS];
 };
 
-struct iwm_int_sta {
-	uint32_t sta_id;
-	uint32_t tfd_queue_msk;
-};
-
 struct iwm_phy_ctxt {
 	uint16_t id;
 	uint16_t color;
@@ -472,8 +467,6 @@ struct iwm_softc {
 
 	struct iwm_rx_phy_info sc_last_phy_info;
 	int sc_ampdu_ref;
-
-	struct iwm_int_sta sc_aux_sta;
 
 	/* phy contexts.  we only use the first one */
 	struct iwm_phy_ctxt sc_phyctxt[IWM_NUM_PHY_CTX];
