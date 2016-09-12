@@ -1,4 +1,4 @@
-/*	$OpenBSD: b_tgamma.c,v 1.9 2016/09/12 04:39:47 guenther Exp $	*/
+/*	$OpenBSD: b_tgamma.c,v 1.10 2016/09/12 19:47:02 guenther Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -143,6 +143,8 @@ tgamma(double x)
 	 } else
 		return (neg_gam(x));
 }
+DEF_STD(tgamma);
+LDBL_MAYBE_UNUSED_CLONE(tgamma);
 
 /*
  * We simply call tgamma() rather than bloating the math library
@@ -332,7 +334,3 @@ neg_gam(double x)
 	if (sgn < 0) y = -y;
 	return (M_PI / (y*z));
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(tgammal, tgamma);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */

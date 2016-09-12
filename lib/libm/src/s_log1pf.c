@@ -94,3 +94,4 @@ log1pf(float x)
 	if(k==0) return f-(hfsq-s*(hfsq+R)); else
 		 return k*ln2_hi-((hfsq-(s*(hfsq+R)+(k*ln2_lo+c)))-f);
 }
+DEF_STD(log1pf);

@@ -130,7 +130,5 @@ log(double x)
 		     return dk*ln2_hi-((s*(f-R)-dk*ln2_lo)-f);
 	}
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(logl, log);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(log);
+LDBL_MAYBE_CLONE(log);

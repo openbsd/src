@@ -120,3 +120,4 @@ expm1f(float x)
 	}
 	return y;
 }
+DEF_STD(expm1f);

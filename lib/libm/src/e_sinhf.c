@@ -54,3 +54,4 @@ sinhf(float x)
     /* |x| > overflowthresold, sinh(x) overflow */
 	return x*shuge;
 }
+DEF_STD(sinhf);

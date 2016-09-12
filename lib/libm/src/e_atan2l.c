@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_atan2l.c,v 1.1 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: e_atan2l.c,v 1.2 2016/09/12 19:47:02 guenther Exp $	*/
 /* @(#)e_atan2.c 1.3 95/01/18 */
 /* FreeBSD: head/lib/msun/src/e_atan2.c 176451 2008-02-22 02:30:36Z das */
 /*
@@ -161,3 +161,4 @@ atan2l(long double y, long double x)
 	    	    return  (z-pi_lo)-pi;/* atan(-,-) */
 	}
 }
+DEF_STD(atan2l);

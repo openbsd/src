@@ -58,7 +58,5 @@ trunc(double x)
 	INSERT_WORDS(x,i0,i1);
 	return x;
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(truncl, trunc);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(trunc);
+LDBL_MAYBE_UNUSED_CLONE(trunc);

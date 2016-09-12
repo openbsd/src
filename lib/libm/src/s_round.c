@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_round.c,v 1.6 2013/07/03 04:46:36 espie Exp $	*/
+/*	$OpenBSD: s_round.c,v 1.7 2016/09/12 19:47:02 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2003, Steven G. Kargl
@@ -51,7 +51,5 @@ round(double x)
 		return (-t);
 	}
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(roundl, round);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(round);
+LDBL_MAYBE_CLONE(round);

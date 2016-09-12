@@ -166,3 +166,4 @@ fixup:
 	*quo = (sxy ? -q : q);
 	return x;
 }
+DEF_STD(remquol);

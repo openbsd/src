@@ -58,3 +58,4 @@ rintf(float x)
 	w = TWO23[sx]+x;
 	return w-TWO23[sx];
 }
+DEF_STD(rintf);

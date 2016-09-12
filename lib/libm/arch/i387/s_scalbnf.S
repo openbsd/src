@@ -1,10 +1,10 @@
-/*	$OpenBSD: s_scalbnf.S,v 1.4 2009/04/21 23:02:23 martynas Exp $ */
+/*	$OpenBSD: s_scalbnf.S,v 1.5 2016/09/12 19:47:02 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 
 .global ldexpf
 	ldexpf = scalbnf
@@ -15,3 +15,4 @@ ENTRY(scalbnf)
 	fscale
 	fstp	%st(1)		/* bug fix for fp stack overflow */
 	ret
+END_STD(scalbnf)

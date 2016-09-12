@@ -155,7 +155,5 @@ exp(double x)	/* default IEEE double exp */
 	    return y*twom1000;
 	}
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(expl, exp);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(exp);
+LDBL_MAYBE_CLONE(exp);

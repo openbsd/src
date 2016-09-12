@@ -22,6 +22,7 @@ scalbf(float x, int fn)
 {
 	return scalbnf(x,fn);
 }
+DEF_NONSTD(scalbf);
 
 #else
 
@@ -38,4 +39,5 @@ scalbf(float x, float fn)
 	if (-fn > (float)65000.0) return scalbnf(x,-65000);
 	return scalbnf(x,(int)fn);
 }
+DEF_NONSTD(scalbf);
 #endif

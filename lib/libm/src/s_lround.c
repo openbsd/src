@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_lround.c,v 1.7 2013/07/03 04:46:36 espie Exp $	*/
+/*	$OpenBSD: s_lround.c,v 1.8 2016/09/12 19:47:02 guenther Exp $	*/
 /* $NetBSD: lround.c,v 1.2 2004/10/13 15:18:32 drochner Exp $ */
 
 /*-
@@ -87,7 +87,5 @@ LROUNDNAME(double x)
 
 	return (s ? -res : res);
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(lroundl, lround);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(LROUNDNAME);
+LDBL_MAYBE_UNUSED_CLONE(LROUNDNAME);

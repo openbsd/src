@@ -437,3 +437,4 @@ powl(long double x, long double y)
     }
   return s * z;
 }
+DEF_STD(powl);

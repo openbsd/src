@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_log.c,v 1.9 2016/09/12 04:39:47 guenther Exp $	*/
+/*	$OpenBSD: n_log.c,v 1.10 2016/09/12 19:47:02 guenther Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -429,6 +429,7 @@ log(double x)
 	u2 += logF_tail[N]*m;
 	return (u1 + u2);
 }
+DEF_STD(log);
 
 /*
  * Extra precision variant, returning struct {double a, b;};

@@ -58,3 +58,4 @@ remainderf(float x, float p)
 	SET_FLOAT_WORD(x,hx^sx);
 	return x;
 }
+DEF_STD(remainderf);

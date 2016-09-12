@@ -102,3 +102,4 @@ sinhl(long double x)
   /* |x| > overflowthreshold, sinhl(x) overflow */
   return x * shuge;
 }
+DEF_STD(sinhl);

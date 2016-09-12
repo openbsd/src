@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_private.h,v 1.17 2014/06/02 19:31:17 kettenis Exp $	*/
+/*	$OpenBSD: math_private.h,v 1.18 2016/09/12 19:47:02 guenther Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -359,6 +359,7 @@ do {								\
 #endif /* FLT_EVAL_METHOD == 0 || __GNUC__ == 0 */
 #endif /* FLT_EVAL_METHOD */
 
+__BEGIN_HIDDEN_DECLS
 /* fdlibm kernel function */
 extern int    __ieee754_rem_pio2(double,double*);
 extern double __kernel_sin(double,double,int);
@@ -382,6 +383,7 @@ long double __kernel_tanl(long double, long double, int);
  * Common routine to process the arguments to nan(), nanf(), and nanl().
  */
 void _scan_nan(uint32_t *__words, int __num_words, const char *__s);
+__END_HIDDEN_DECLS
 
 /*
  * TRUNC() is a macro that sets the trailing 27 bits in the mantissa
@@ -409,9 +411,11 @@ struct Double {
 /*
  * Functions internal to the math package, yet not static.
  */
+__BEGIN_HIDDEN_DECLS
 double __exp__D(double, double);
 struct Double __log__D(double);
 long double __p1evll(long double, void *, int);
 long double __polevll(long double, void *, int);
+__END_HIDDEN_DECLS
 
 #endif /* _MATH_PRIVATE_H_ */

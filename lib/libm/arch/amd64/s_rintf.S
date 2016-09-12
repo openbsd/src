@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_rintf.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
+/*	$OpenBSD: s_rintf.S,v 1.3 2016/09/12 19:47:01 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -14,3 +14,4 @@ ENTRY(rintf)
 	frndint
 	XMM_FLOAT_EPILOGUE
 	ret
+END_STD(rintf)

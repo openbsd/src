@@ -11,3 +11,4 @@ remainderf(float x, float p)
 
 	return (x);
 }
+DEF_STD(remainderf);

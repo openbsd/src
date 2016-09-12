@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_log1pl.c,v 1.1 2011/07/06 00:02:42 martynas Exp $	*/
+/*	$OpenBSD: s_log1pl.c,v 1.2 2016/09/12 19:47:02 guenther Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -245,3 +245,4 @@ log1pl(long double xm1)
   z = z + e * C1;
   return (z);
 }
+DEF_STD(log1pl);

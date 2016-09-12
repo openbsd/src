@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_clogf.c,v 1.2 2010/07/18 18:42:26 guenther Exp $	*/
+/*	$OpenBSD: s_clogf.c,v 1.3 2016/09/12 19:47:02 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -70,3 +70,4 @@ clogf(float complex z)
 	w = p + rr * I;
 	return (w);
 }
+DEF_STD(clogf);

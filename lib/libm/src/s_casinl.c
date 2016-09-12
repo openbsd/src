@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_casinl.c,v 1.4 2015/12/18 12:17:44 shadchin Exp $	*/
+/*	$OpenBSD: s_casinl.c,v 1.5 2016/09/12 19:47:02 guenther Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -130,3 +130,4 @@ casinl(long double complex z)
 	w = zz * (-1.0L * I);
 	return (w);
 }
+DEF_STD(casinl);

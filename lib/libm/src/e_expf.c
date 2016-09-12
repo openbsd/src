@@ -90,3 +90,4 @@ expf(float x)	/* default IEEE double exp */
 	    return y*twom100;
 	}
 }
+DEF_STD(expf);

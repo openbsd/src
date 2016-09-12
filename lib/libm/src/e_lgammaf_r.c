@@ -230,3 +230,4 @@ lgammaf_r(float x, int *signgamp)
 	if(hx<0) r = nadj - r;
 	return r;
 }
+DEF_NONSTD(lgammaf_r);

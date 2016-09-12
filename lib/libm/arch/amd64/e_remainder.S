@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_remainder.S,v 1.3 2008/09/07 20:36:08 martynas Exp $ */
+/*	$OpenBSD: e_remainder.S,v 1.4 2016/09/12 19:47:01 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -19,3 +19,4 @@ ENTRY(remainder)
 	fstp	%st(1)
 	XMM_DOUBLE_EPILOGUE
 	ret
+END_STD(remainder)

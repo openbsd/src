@@ -324,6 +324,7 @@ erfl(long double x)
   else
     return r / x - one;
 }
+DEF_STD(erfl);
 
 long double
 erfcl(long double x)
@@ -428,3 +429,4 @@ erfcl(long double x)
 	return two - tiny;
     }
 }
+DEF_STD(erfcl);

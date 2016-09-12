@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_cacos.c,v 1.6 2013/07/03 04:46:36 espie Exp $	*/
+/*	$OpenBSD: s_cacos.c,v 1.7 2016/09/12 19:47:02 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -59,7 +59,5 @@ cacos(double complex z)
 	w = (M_PI_2 - creal (w)) - cimag (w) * I;
 	return (w);
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(cacosl, cacos);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(cacos);
+LDBL_MAYBE_UNUSED_CLONE(cacos);

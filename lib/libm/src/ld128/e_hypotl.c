@@ -120,3 +120,4 @@ hypotl(long double x, long double y)
 	    return t1*w;
 	} else return w;
 }
+DEF_STD(hypotl);

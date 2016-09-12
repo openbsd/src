@@ -124,6 +124,7 @@ j0(double x)
 	    return((one+u)*(one-u)+z*(r/s));
 	}
 }
+DEF_NONSTD(j0);
 
 static const double
 u00  = -7.38042951086872317523e-02, /* 0xBFB2E4D6, 0x99CBD01F */
@@ -190,6 +191,7 @@ y0(double x)
 	v = one+z*(v01+z*(v02+z*(v03+z*v04)));
 	return(u/v + tpi*(j0(x)*log(x)));
 }
+DEF_NONSTD(y0);
 
 /* The asymptotic expansions of pzero is
  *	1 - 9/128 s^2 + 11025/98304 s^4 - ...,	where s = 1/x.

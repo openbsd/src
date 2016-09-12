@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_erf.c,v 1.8 2016/09/12 04:39:47 guenther Exp $	*/
+/*	$OpenBSD: n_erf.c,v 1.9 2016/09/12 19:47:02 guenther Exp $	*/
 /*	$NetBSD: n_erf.c,v 1.1 1995/10/10 23:36:43 ragge Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
@@ -308,6 +308,7 @@ erf(double x)
 	else
 		return (z-one);
 }
+DEF_STD(erf);
 
 double
 erfc(double x)
@@ -384,3 +385,4 @@ erfc(double x)
 	else
 		return two-r;
 }
+DEF_STD(erfc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_asinl.c,v 1.1 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: e_asinl.c,v 1.2 2016/09/12 19:47:02 guenther Exp $	*/
 /* @(#)e_asin.c 1.3 95/01/18 */
 /* FreeBSD: head/lib/msun/src/e_asin.c 176451 2008-02-22 02:30:36Z das */
 /*
@@ -98,3 +98,4 @@ asinl(long double x)
 	}    
 	if(expsign>0) return t; else return -t;    
 }
+DEF_STD(asinl);

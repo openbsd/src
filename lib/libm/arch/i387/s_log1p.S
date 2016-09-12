@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_log1p.S,v 1.4 2009/04/08 23:31:34 martynas Exp $ */
+/*	$OpenBSD: s_log1p.S,v 1.5 2016/09/12 19:47:02 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -9,7 +9,7 @@
  * Still public domain.
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 
 /*
  * The log1p() function is provided to compute an accurate value of
@@ -66,3 +66,4 @@ use_fyl2xp1:
 	fldl	4(%esp)
 	fyl2xp1
 	ret
+END_STD(log1p)

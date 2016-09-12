@@ -25,6 +25,7 @@ scalb(double x, int fn)
 {
 	return scalbn(x, fn);
 }
+DEF_NONSTD(scalb);
 
 #else
 
@@ -41,4 +42,5 @@ scalb(double x, double fn)
 	if (-fn > 65000.0) return scalbn(x,-65000);
 	return scalbn(x,(int)fn);
 }
+DEF_NONSTD(scalb);
 #endif

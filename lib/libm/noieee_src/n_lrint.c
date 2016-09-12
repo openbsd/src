@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_lrint.c,v 1.1 2013/08/07 12:45:59 espie Exp $ */
+/*	$OpenBSD: n_lrint.c,v 1.2 2016/09/12 19:47:02 guenther Exp $ */
 /*
  * Copyright (c) 2013 Marc Espie.
  *
@@ -31,26 +31,27 @@ lrint(double x)
 {
 	return (long)rint(x);
 }
-
-__strong_alias(lrintl, lrint);
+DEF_STD(lrint);
+LDBL_UNUSED_CLONE(lrint);
 
 long
 lrintf(float x)
 {
 	return (long)rintf(x);
 }
+DEF_STD(lrintf);
 
 long long
 llrint(double x)
 {
 	return (long long)rint(x);
 }
-
-__strong_alias(llrintl, llrint);
+DEF_STD(llrint);
+LDBL_UNUSED_CLONE(llrint);
 
 long long
 llrintf(float x)
 {
 	return (long long)rintf(x);
 }
-
+DEF_STD(llrintf);

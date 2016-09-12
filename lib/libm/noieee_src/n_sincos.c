@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_sincos.c,v 1.15 2016/09/12 04:39:47 guenther Exp $	*/
+/*	$OpenBSD: n_sincos.c,v 1.16 2016/09/12 19:47:02 guenther Exp $	*/
 /*	$NetBSD: n_sincos.c,v 1.1 1995/10/10 23:37:04 ragge Exp $	*/
 /*
  * Copyright (c) 1987, 1993
@@ -38,6 +38,7 @@ sinf(float x)
 {
 	return (float)sin((double) x);
 }
+DEF_STD(sinf);
 
 double
 sin(double x)
@@ -67,8 +68,8 @@ sin(double x)
 	}
 	return x+x*sin__S(x*x);
 }
-
-__strong_alias(sinl, sin);
+DEF_STD(sin);
+LDBL_CLONE(sin);
 
 float
 cosf(float x)
@@ -105,5 +106,5 @@ cos(double x)
 	a = (z >= thresh ? half-((z-half)-c) : one-(z-c));
 	return copysign(a,s);
 }
-
-__strong_alias(cosl, cos);
+END_STD(cos);
+LDBL_CLONE(cos);

@@ -1,10 +1,10 @@
-/*	$OpenBSD: s_cos.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
+/*	$OpenBSD: s_cos.S,v 1.3 2016/09/12 19:47:02 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 
 ENTRY(cos)
 	fldl	4(%esp)
@@ -23,3 +23,4 @@ ENTRY(cos)
 	fstp	%st(1)
 	fcos
 	ret
+END_STD(cos)

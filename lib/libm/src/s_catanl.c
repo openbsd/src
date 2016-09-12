@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_catanl.c,v 1.3 2011/07/20 21:02:51 martynas Exp $	*/
+/*	$OpenBSD: s_catanl.c,v 1.4 2016/09/12 19:47:02 guenther Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -125,3 +125,4 @@ ovrf:
 	w = LDBL_MAX + LDBL_MAX * I;
 	return (w);
 }
+DEF_STD(catanl);

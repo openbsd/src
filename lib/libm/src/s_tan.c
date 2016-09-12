@@ -68,7 +68,5 @@ tan(double x)
 							-1 -- n odd */
 	}
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(tanl, tan);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(tan);
+LDBL_MAYBE_UNUSED_CLONE(tan);

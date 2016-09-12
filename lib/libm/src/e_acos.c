@@ -99,7 +99,5 @@ acos(double x)
 	    return 2.0*(df+w);
 	}
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(acosl, acos);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(acos);
+LDBL_MAYBE_UNUSED_CLONE(acos);

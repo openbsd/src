@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_exp.S,v 1.8 2008/09/07 20:36:08 martynas Exp $	*/
+/*	$OpenBSD: e_exp.S,v 1.9 2016/09/12 19:47:02 guenther Exp $	*/
 /*	$NetBSD: e_exp.S,v 1.12 2002/02/27 16:32:46 christos Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 
 /* e^x = 2^(x * log2(e)) */
 ENTRY(exp)
@@ -95,3 +95,4 @@ x_Inf_or_NaN:
 x_not_minus_Inf:
 	fldl	4(%esp)
 	ret
+END_STD(exp)

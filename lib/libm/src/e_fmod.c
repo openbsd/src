@@ -128,7 +128,5 @@ fmod(double x, double y)
 	}
 	return x;		/* exact output */
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(fmodl, fmod);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(fmod);
+LDBL_MAYBE_UNUSED_CLONE(fmod);

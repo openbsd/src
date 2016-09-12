@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_llround.c,v 1.5 2013/07/03 04:46:36 espie Exp $	*/
+/*	$OpenBSD: s_llround.c,v 1.6 2016/09/12 19:47:02 guenther Exp $	*/
 /* $NetBSD: llround.c,v 1.2 2004/10/13 15:18:32 drochner Exp $ */
 
 /*
@@ -12,7 +12,3 @@
 #define RESTYPE_MAX LLONG_MAX
 
 #include "s_lround.c"
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(llroundl, llround);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */

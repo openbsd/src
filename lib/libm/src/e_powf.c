@@ -242,3 +242,4 @@ powf(float x, float y)
 	else SET_FLOAT_WORD(z,j);
 	return s*z;
 }
+DEF_STD(powf);

@@ -78,3 +78,4 @@ asinf(float x)
 	}    
 	if(hx>0) return t; else return -t;    
 }
+DEF_STD(asinf);

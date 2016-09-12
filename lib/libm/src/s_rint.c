@@ -75,7 +75,5 @@ rint(double x)
 	w = TWO52[sx]+x;
 	return w-TWO52[sx];
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(rintl, rint);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(rint);
+LDBL_MAYBE_CLONE(rint);

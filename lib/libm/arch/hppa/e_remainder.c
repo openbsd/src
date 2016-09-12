@@ -11,5 +11,5 @@ remainder(double x, double p)
 
 	return (x);
 }
-
-__strong_alias(remainderl, remainder);
+DEF_STD(remainder);
+LDBL_UNUSED_CLONE(remainder);

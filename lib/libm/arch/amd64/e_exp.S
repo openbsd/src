@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_exp.S,v 1.5 2008/09/07 20:36:08 martynas Exp $	*/
+/*	$OpenBSD: e_exp.S,v 1.6 2016/09/12 19:47:01 guenther Exp $	*/
 /*	$NetBSD: e_exp.S,v 1.12 2002/02/27 16:32:46 christos Exp $	*/
 
 /*
@@ -99,3 +99,4 @@ x_Inf_or_NaN:
 x_not_minus_Inf:
 	movsd	ARG_DOUBLE_ONE,%xmm0
 	ret
+END_STD(exp)

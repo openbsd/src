@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_casin.c,v 1.7 2015/12/18 12:17:44 shadchin Exp $	*/
+/*	$OpenBSD: s_casin.c,v 1.8 2016/09/12 19:47:02 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -130,7 +130,5 @@ casin(double complex z)
 	w = zz * (-1.0 * I);
 	return (w);
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(casinl, casin);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(casin);
+LDBL_MAYBE_CLONE(casin);

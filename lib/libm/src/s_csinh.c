@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_csinh.c,v 1.6 2013/07/03 04:46:36 espie Exp $	*/
+/*	$OpenBSD: s_csinh.c,v 1.7 2016/09/12 19:47:02 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -56,7 +56,5 @@ csinh(double complex z)
 	w = sinh (x) * cos (y)  +  (cosh (x) * sin (y)) * I;
 	return (w);
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(csinhl, csinh);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(csinh);
+LDBL_MAYBE_UNUSED_CLONE(csinh);

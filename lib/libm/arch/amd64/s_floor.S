@@ -1,10 +1,11 @@
-/*	$OpenBSD: s_floor.S,v 1.3 2009/04/08 22:30:41 martynas Exp $ */
+/*	$OpenBSD: s_floor.S,v 1.4 2016/09/12 19:47:01 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
+#include "abi.h"
 
 ENTRY(floor)
 	movsd	%xmm0, -8(%rsp)
@@ -20,3 +21,4 @@ ENTRY(floor)
 	fstpl	-8(%rsp)
 	movsd	-8(%rsp),%xmm0
 	ret
+END_STD(floor)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_cacosh.c,v 1.7 2015/07/16 13:29:11 martynas Exp $	*/
+/*	$OpenBSD: s_cacosh.c,v 1.8 2016/09/12 19:47:02 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -54,7 +54,5 @@ cacosh(double complex z)
 	w = clog(z + csqrt(z + 1) * csqrt(z - 1));
 	return (w);
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(cacoshl, cacosh);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(cacosh);
+LDBL_MAYBE_UNUSED_CLONE(cacosh);

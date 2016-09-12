@@ -48,6 +48,7 @@ scalbnf(float x, int n)
 	SET_FLOAT_WORD(x,(ix&0x807fffff)|(k<<23));
         return x*twom25;
 }
+DEF_STD(scalbnf);
 
 float
 ldexpf(float x, int n)

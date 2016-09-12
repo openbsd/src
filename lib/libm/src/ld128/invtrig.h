@@ -1,4 +1,4 @@
-/*	$OpenBSD: invtrig.h,v 1.1 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: invtrig.h,v 1.2 2016/09/12 19:47:02 guenther Exp $	*/
 /*-
  * Copyright (c) 2008 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -76,11 +76,13 @@
 #define	pio2_lo	atanlo[3]
 #define	pio4_hi	atanhi[1]
 
+__BEGIN_HIDDEN_DECLS
 /* Constants shared by the long double inverse trig functions. */
 extern const long double pS0, pS1, pS2, pS3, pS4, pS5, pS6, pS7, pS8, pS9;
 extern const long double qS1, qS2, qS3, qS4, qS5, qS6, qS7, qS8, qS9;
 extern const long double atanhi[], atanlo[], aT[];
 extern const long double pi_lo;
+__END_HIDDEN_DECLS
 
 static inline long double
 P(long double x)

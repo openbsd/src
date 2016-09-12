@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_roundl.c,v 1.2 2012/12/05 23:20:04 deraadt Exp $	*/
+/*	$OpenBSD: s_roundl.c,v 1.3 2016/09/12 19:47:02 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2003, Steven G. Kargl
@@ -48,3 +48,4 @@ roundl(long double x)
 		return (-t);
 	}
 }
+DEF_STD(roundl);

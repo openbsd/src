@@ -69,3 +69,4 @@ floorl(long double x)
 	SET_LDOUBLE_WORDS64(x,i0,i1);
 	return x;
 }
+DEF_STD(floorl);

@@ -294,3 +294,4 @@ lgamma_r(double x, int *signgamp)
 	if(hx<0) r = nadj - r;
 	return r;
 }
+DEF_NONSTD(lgamma_r);

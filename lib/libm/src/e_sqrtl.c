@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_sqrtl.c,v 1.2 2016/09/12 04:28:41 guenther Exp $	*/
+/*	$OpenBSD: e_sqrtl.c,v 1.3 2016/09/12 19:47:02 guenther Exp $	*/
 /*-
  * Copyright (c) 2007 Steven G. Kargl
  * All rights reserved.
@@ -229,3 +229,4 @@ sqrtl(long double x)
 	u.bits.ext_exp--;
 	return (u.e);
 }
+DEF_STD(sqrtl);

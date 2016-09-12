@@ -183,6 +183,8 @@ sqrt(double x)
 	INSERT_WORDS(z,ix0,ix1);
 	return z;
 }
+DEF_STD(sqrt);
+LDBL_MAYBE_CLONE(sqrt);
 
 /*
 Other methods  (use floating-point arithmetic)
@@ -440,7 +442,3 @@ B.  sqrt(x) by Reciproot Iteration
     (4)	Special cases (see (4) of Section A).	
  
  */
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(sqrtl, sqrt);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */

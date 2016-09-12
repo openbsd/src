@@ -119,6 +119,7 @@ j1(double x)
 	r *= x;
 	return(x*0.5+r/s);
 }
+DEF_NONSTD(j1);
 
 static const double U0[5] = {
  -1.96057090646238940668e-01, /* 0xBFC91866, 0x143CBC8A */
@@ -183,6 +184,7 @@ y1(double x)
         v = one+z*(V0[0]+z*(V0[1]+z*(V0[2]+z*(V0[3]+z*V0[4]))));
         return(x*(u/v) + tpi*(j1(x)*log(x)-one/x));
 }
+DEF_NONSTD(y1);
 
 /* For x >= 8, the asymptotic expansions of pone is
  *	1 + 15/128 s^2 - 4725/2^15 s^4 - ...,	where s = 1/x.

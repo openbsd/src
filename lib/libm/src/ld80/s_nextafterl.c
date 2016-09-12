@@ -87,5 +87,5 @@ nextafterl(long double x, long double y)
 	SET_LDOUBLE_WORDS(x,esx,hx,lx);
 	return x;
 }
-
-__strong_alias(nexttowardl, nextafterl);
+DEF_STD(nextafterl);
+MAKE_UNUSED_CLONE(nexttowardl, nextafterl);

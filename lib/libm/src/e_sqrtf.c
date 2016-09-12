@@ -83,3 +83,4 @@ sqrtf(float x)
 	SET_FLOAT_WORD(z,ix);
 	return z;
 }
+DEF_STD(sqrtf);

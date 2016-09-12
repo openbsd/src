@@ -115,7 +115,5 @@ atan(double x)
 	    return (hx<0)? -z:z;
 	}
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(atanl, atan);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(atan);
+LDBL_MAYBE_CLONE(atan);

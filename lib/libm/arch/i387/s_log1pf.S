@@ -1,10 +1,10 @@
-/*	$OpenBSD: s_log1pf.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
+/*	$OpenBSD: s_log1pf.S,v 1.3 2016/09/12 19:47:02 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 
 /*
  * Since the fyl2xp1 instruction has such a limited range:
@@ -19,3 +19,4 @@ ENTRY(log1pf)
 	faddp
 	fyl2x
 	ret
+END_STD(log1pf)

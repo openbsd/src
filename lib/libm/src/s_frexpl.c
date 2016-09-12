@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_frexpl.c,v 1.1 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: s_frexpl.c,v 1.2 2016/09/12 19:47:02 guenther Exp $	*/
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -68,3 +68,4 @@ frexpl(long double x, int *ex)
 
 	return x;
 }
+DEF_STD(frexpl);

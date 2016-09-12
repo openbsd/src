@@ -77,3 +77,4 @@ hypotf(float x, float y)
 	    return t1*w;
 	} else return w;
 }
+DEF_STD(hypotf);

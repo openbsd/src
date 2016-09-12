@@ -217,7 +217,5 @@ expm1(double x)
 	}
 	return y;
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(expm1l, expm1);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(expm1);
+LDBL_MAYBE_CLONE(expm1);

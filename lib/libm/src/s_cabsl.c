@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_cabsl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_cabsl.c,v 1.2 2016/09/12 19:47:02 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -24,3 +24,4 @@ cabsl(long double complex z)
 {
 	return hypotl(__real__ z, __imag__ z);
 }
+DEF_STD(cabsl);

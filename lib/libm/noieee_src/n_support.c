@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.c,v 1.24 2016/09/12 04:39:47 guenther Exp $	*/
+/*	$OpenBSD: n_support.c,v 1.25 2016/09/12 19:47:02 guenther Exp $	*/
 /*	$NetBSD: n_support.c,v 1.1 1995/10/10 23:37:06 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -115,8 +115,8 @@ scalbn(double x, int N)
             }
         return(x);
 }
-
-__strong_alias(scalbnl, scalbn);
+DEF_STD(scalbn);
+LDBL_CLONE(scalbn);
 
 double
 copysign(double x, double y)
@@ -131,8 +131,8 @@ copysign(double x, double y)
         *px = ( *px & msign ) | ( *py & ~msign );
         return(x);
 }
-
-__strong_alias(copysignl, copysign);
+DEF_STD(copysign);
+LDBL_CLONE(copysign);
 
 double
 logb(double x)
@@ -156,8 +156,8 @@ logb(double x)
             {*px &= msign; return(x);}
 #endif	/* defined(__vax__) */
 }
-
-__strong_alias(logbl, logb);
+DEF_STD(logb);
+LDBL_UNUSED_CLONE(logb);
 
 double
 remainder(double x, double p)
@@ -230,6 +230,7 @@ remainder(double x, double p)
 
             }
 }
+DEF_STD(remainder);
 
 /* The drem() function is a deprecated alias for remainder(). */
 
@@ -244,6 +245,7 @@ sqrtf(float x)
 {
 	return (float)sqrt((double) x);
 }
+DEF_STD(sqrtf);
 
 double
 sqrt(double x)
@@ -313,8 +315,8 @@ sqrt(double x)
 
 end:        return(scalbn(q,n));
 }
-
-__strong_alias(sqrtl, sqrt);
+DEF_STD(sqrt);
+LDBL_CLONE(sqrt);
 
 #if 0
 /* REMAINDER(X,Y)
@@ -406,6 +408,7 @@ loop:
 
 	return(x);
 }
+DEF_STD(remainder);
 #endif
 
 #if 0

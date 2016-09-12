@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_atanl.c,v 1.1 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: s_atanl.c,v 1.2 2016/09/12 19:47:02 guenther Exp $	*/
 /* @(#)s_atan.c 5.1 93/09/24 */
 /* FreeBSD: head/lib/msun/src/s_atan.c 176451 2008-02-22 02:30:36Z das */
 /*
@@ -99,3 +99,4 @@ atanl(long double x)
 	    return (expsign<0)? -z:z;
 	}
 }
+DEF_STD(atanl);

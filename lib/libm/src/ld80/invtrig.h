@@ -1,4 +1,4 @@
-/*	$OpenBSD: invtrig.h,v 1.1 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: invtrig.h,v 1.2 2016/09/12 19:47:03 guenther Exp $	*/
 /*-
  * Copyright (c) 2008 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -78,10 +78,12 @@ typedef struct longdouble {
 typedef long double LONGDOUBLE;
 #endif
 
+__BEGIN_HIDDEN_DECLS
 extern const LONGDOUBLE pS0, pS1, pS2, pS3, pS4, pS5, pS6;
 extern const LONGDOUBLE qS1, qS2, qS3, qS4, qS5;
 extern const LONGDOUBLE atanhi[], atanlo[], aT[];
 extern const LONGDOUBLE pi_lo;
+__END_HIDDEN_DECLS
 
 #ifndef STRUCT_DECLS
 

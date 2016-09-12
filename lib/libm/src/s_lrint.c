@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_lrint.c,v 1.10 2013/07/03 04:46:36 espie Exp $	*/
+/*	$OpenBSD: s_lrint.c,v 1.11 2016/09/12 19:47:02 guenther Exp $	*/
 /* $NetBSD: lrint.c,v 1.3 2004/10/13 15:18:32 drochner Exp $ */
 
 /*-
@@ -97,7 +97,5 @@ LRINTNAME(double x)
 
 	return (s ? -res : res);
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(lrintl, lrint);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(LRINTNAME);
+LDBL_MAYBE_CLONE(LRINTNAME);

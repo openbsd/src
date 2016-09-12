@@ -81,7 +81,5 @@ cosh(double x)
     /* |x| > overflowthresold, cosh(x) overflow */
 	return huge*huge;
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(coshl, cosh);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(cosh);
+LDBL_MAYBE_CLONE(cosh);

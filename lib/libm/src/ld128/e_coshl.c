@@ -103,3 +103,4 @@ coshl(long double x)
   /* |x| > overflowthresold, cosh(x) overflow */
   return huge * huge;
 }
+DEF_STD(coshl);

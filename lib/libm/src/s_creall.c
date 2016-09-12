@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_creall.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_creall.c,v 1.2 2016/09/12 19:47:02 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -24,3 +24,4 @@ creall(long double complex z)
 {
 	return __real__ z;
 }
+DEF_STD(creall);

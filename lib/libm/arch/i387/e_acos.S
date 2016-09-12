@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_acos.S,v 1.3 2008/09/07 20:36:08 martynas Exp $ */
+/*	$OpenBSD: e_acos.S,v 1.4 2016/09/12 19:47:02 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -17,3 +17,4 @@ ENTRY(acos)
 	fxch	%st(1)
 	fpatan
 	ret
+END(acos)

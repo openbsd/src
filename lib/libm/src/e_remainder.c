@@ -68,7 +68,5 @@ remainder(double x, double p)
 	SET_HIGH_WORD(x,hx^sx);
 	return x;
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(remainderl, remainder);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(remainder);
+LDBL_MAYBE_UNUSED_CLONE(remainder);

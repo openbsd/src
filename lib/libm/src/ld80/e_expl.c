@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_expl.c,v 1.3 2013/11/12 20:35:19 martynas Exp $	*/
+/*	$OpenBSD: e_expl.c,v 1.4 2016/09/12 19:47:02 guenther Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -129,3 +129,4 @@ x = 1.0L + ldexpl( x, 1 );
 x = ldexpl( x, n );
 return(x);
 }
+DEF_STD(expl);

@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.113 2016/09/01 10:08:03 tedu Exp $
+#  $OpenBSD: Makefile,v 1.114 2016/09/12 19:47:01 guenther Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -140,6 +140,11 @@ CPPFLAGS+=	-I${.CURDIR}/src -I${.CURDIR}/src/ld128
 SRCS+=		${LONG_SRCS}
 .endif
 
+CPPFLAGS+=-I${.CURDIR}/hidden -include namespace.h \
+	-Werror-implicit-function-declaration
+
+VERSION_SCRIPT=	${.CURDIR}/Symbols.map
+
 # Substitute common sources with any arch specific sources 
 .for i in ${ARCH_SRCS}
     SRCS:=${SRCS:S/${i:S/.S/.c/}/$i/}
@@ -158,3 +163,5 @@ MAN+=	cacos.3 cacosh.3 carg.3 casin.3 casinh.3 catan.3 catanh.3 \
 	creal.3 csin.3 csinh.3 csqrt.3 ctan.3 ctanh.3
 
 .include <bsd.lib.mk>
+
+${OBJS} ${GOBJS} ${POBJS} ${SOBJS} ${DOBJS}: ${.CURDIR}/hidden/namespace.h

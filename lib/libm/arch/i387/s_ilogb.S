@@ -1,10 +1,10 @@
-/*	$OpenBSD: s_ilogb.S,v 1.5 2005/08/02 11:17:31 espie Exp $ */
+/*	$OpenBSD: s_ilogb.S,v 1.6 2016/09/12 19:47:02 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 
 ENTRY(ilogb)
 	pushl	%ebp
@@ -20,3 +20,4 @@ ENTRY(ilogb)
 
 	leave
 	ret
+END_STD(ilogb)

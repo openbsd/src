@@ -28,3 +28,4 @@ fabsf(float x)
 	SET_FLOAT_WORD(x,ix&0x7fffffff);
         return x;
 }
+DEF_STD(fabsf);

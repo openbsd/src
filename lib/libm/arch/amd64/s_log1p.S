@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_log1p.S,v 1.3 2009/04/08 23:31:34 martynas Exp $ */
+/*	$OpenBSD: s_log1p.S,v 1.4 2016/09/12 19:47:01 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -73,3 +73,4 @@ use_fyl2xp1:
 	fyl2xp1
 	XMM_DOUBLE_EPILOGUE
 	ret
+END_STD(log1p)

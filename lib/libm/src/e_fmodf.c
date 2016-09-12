@@ -99,3 +99,4 @@ fmodf(float x, float y)
 	}
 	return x;		/* exact output */
 }
+DEF_STD(fmodf);

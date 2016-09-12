@@ -120,7 +120,5 @@ hypot(double x, double y)
 	    return t1*w;
 	} else return w;
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(hypotl, hypot);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(hypot);
+LDBL_MAYBE_CLONE(hypot);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_ceilf.S,v 1.4 2009/04/08 22:30:41 martynas Exp $ */
+/*	$OpenBSD: s_ceilf.S,v 1.5 2016/09/12 19:47:01 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -20,3 +20,4 @@ ENTRY(ceilf)
 	fstps	-4(%rsp)
 	movss	-4(%rsp),%xmm0
 	ret
+END(ceilf)

@@ -423,3 +423,4 @@ lgammal(long double x)
     r = nadj - r;
   return r;
 }
+DEF_STD(lgammal);

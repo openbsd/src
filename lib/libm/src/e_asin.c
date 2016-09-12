@@ -107,7 +107,5 @@ asin(double x)
 	}    
 	if(hx>0) return t; else return -t;    
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(asinl, asin);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(asin);
+LDBL_MAYBE_CLONE(asin);

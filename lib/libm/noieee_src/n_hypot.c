@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_hypot.c,v 1.5 2016/09/12 04:39:47 guenther Exp $	*/
+/*	$OpenBSD: n_hypot.c,v 1.6 2016/09/12 19:47:02 guenther Exp $	*/
 /*	$NetBSD: n_cabs.c,v 1.1 1995/10/10 23:36:39 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -147,8 +147,8 @@ hypot(double x, double y)
 		return (y);
 	else return(copysign(y,one));	/* y is INF */
 }
-
-__strong_alias(hypotl, hypot);
+DEF_STD(hypot);
+LDBL_CLONE(hypot);
 
 /* A faster but less accurate version of cabs(x,y) */
 #if 0

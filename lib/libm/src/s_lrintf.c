@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_lrintf.c,v 1.5 2011/04/20 21:32:59 martynas Exp $	*/
+/*	$OpenBSD: s_lrintf.c,v 1.6 2016/09/12 19:47:02 guenther Exp $	*/
 /* $NetBSD: lrintf.c,v 1.3 2004/10/13 15:18:32 drochner Exp $ */
 
 /*-
@@ -90,3 +90,4 @@ LRINTNAME(float x)
 
 	return (s ? -res : res);
 }
+DEF_STD(LRINTNAME);

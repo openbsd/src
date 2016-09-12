@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_asincos.c,v 1.14 2013/03/28 18:09:38 martynas Exp $	*/
+/*	$OpenBSD: n_asincos.c,v 1.15 2016/09/12 19:47:02 guenther Exp $	*/
 /*	$NetBSD: n_asincos.c,v 1.1 1995/10/10 23:36:34 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -100,8 +100,8 @@ asin(double x)
 	    { t=one-s; s=t+t; return(atan2(x,sqrt(s-t*t))); }
 
 }
-
-__strong_alias(asinl, asin);
+DEF_STD(asin);
+LDBL_CLONE(asin);
 
 /* ACOS(X)
  * RETURNS ARC COS OF X
@@ -169,5 +169,5 @@ acos(double x)
 	    t=atan2(one,0.0);	/* t = PI/2 */
 	return(t+t);
 }
-
-__strong_alias(acosl, acos);
+DEF_STD(acos);
+LDBL_UNUSED_CLONE(acos);

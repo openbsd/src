@@ -32,3 +32,4 @@ ENTRY(lrint)
 	fistpl	(%esp)
 	popl	%eax
 	ret
+END(lrint)

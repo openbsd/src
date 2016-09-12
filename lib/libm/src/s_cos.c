@@ -74,7 +74,5 @@ cos(double x)
 	    }
 	}
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(cosl, cos);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(cos);
+LDBL_MAYBE_CLONE(cos);

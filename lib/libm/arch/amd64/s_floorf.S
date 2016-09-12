@@ -1,10 +1,11 @@
-/*	$OpenBSD: s_floorf.S,v 1.4 2009/04/08 22:30:41 martynas Exp $ */
+/*	$OpenBSD: s_floorf.S,v 1.5 2016/09/12 19:47:01 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
+#include "abi.h"
 
 ENTRY(floorf)
 	movss	%xmm0, -4(%rsp)
@@ -20,3 +21,4 @@ ENTRY(floorf)
 	fstps	-4(%rsp)
 	movss	-4(%rsp),%xmm0
 	ret
+END_STD(floorf)

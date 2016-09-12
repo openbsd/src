@@ -24,7 +24,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 	
 ENTRY(llrintf)
 	flds	4(%esp)
@@ -33,3 +33,4 @@ ENTRY(llrintf)
 	popl	%eax
 	popl	%edx
 	ret
+END_STD(llrintf)

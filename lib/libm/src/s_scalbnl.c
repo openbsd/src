@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_scalbnl.c,v 1.3 2013/11/12 18:28:02 martynas Exp $	*/
+/*	$OpenBSD: s_scalbnl.c,v 1.4 2016/09/12 19:47:02 guenther Exp $	*/
 /* @(#)s_scalbn.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -74,9 +74,11 @@ scalbnl (long double x, int n)
 	u.bits.ext_exp = k;
         return u.e*0x1p-128;
 }
+DEF_STD(scalbnl);
 
 long double
 ldexpl(long double x, int n)
 {
 	return scalbnl(x, n);
 }
+DEF_STD(ldexpl);

@@ -30,7 +30,5 @@ copysign(double x, double y)
 	SET_HIGH_WORD(x,(hx&0x7fffffff)|(hy&0x80000000));
         return x;
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(copysignl, copysign);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(copysign);
+LDBL_MAYBE_CLONE(copysign);

@@ -77,7 +77,5 @@ cbrt(double x)
 	SET_HIGH_WORD(t,high|sign);
 	return(t);
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(cbrtl, cbrt);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(cbrt);
+LDBL_MAYBE_UNUSED_CLONE(cbrt);

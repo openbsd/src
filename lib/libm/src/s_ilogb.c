@@ -43,7 +43,5 @@ ilogb(double x)
 	else if (hx<0x7ff00000) return (hx>>20)-1023;
 	else return 0x7fffffff;
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(ilogbl, ilogb);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(ilogb);
+LDBL_MAYBE_CLONE(ilogb);

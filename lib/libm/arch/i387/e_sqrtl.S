@@ -1,12 +1,13 @@
-/*	$OpenBSD: e_sqrtl.S,v 1.1 2009/11/05 20:14:32 kettenis Exp $ */
+/*	$OpenBSD: e_sqrtl.S,v 1.2 2016/09/12 19:47:02 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 
 ENTRY(sqrtl)
 	fldt	4(%esp)
 	fsqrt
 	ret
+END_STD(sqrtl)

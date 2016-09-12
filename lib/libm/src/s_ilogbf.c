@@ -33,3 +33,4 @@ ilogbf(float x)
 	else if (hx<0x7f800000) return (hx>>23)-127;
 	else return 0x7fffffff;
 }
+DEF_STD(ilogbf);

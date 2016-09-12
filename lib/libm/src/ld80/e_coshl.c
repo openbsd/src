@@ -80,3 +80,4 @@ coshl(long double x)
     /* |x| >= log(2*maxdouble), cosh(x) overflow */
 	return huge*huge;
 }
+DEF_STD(coshl);

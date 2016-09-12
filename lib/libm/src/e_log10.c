@@ -82,7 +82,5 @@ log10(double x)
 	z  = y*log10_2lo + ivln10*log(x);
 	return  z+y*log10_2hi;
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(log10l, log10);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(log10);
+LDBL_MAYBE_UNUSED_CLONE(log10);

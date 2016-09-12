@@ -149,7 +149,5 @@ fixup:
 	*quo = (sxy ? -q : q);
 	return x;
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(remquol, remquo);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(remquo);
+LDBL_MAYBE_CLONE(remquo);

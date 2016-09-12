@@ -43,3 +43,4 @@ sinf(float x)
 	    }
 	}
 }
+DEF_STD(sinf);

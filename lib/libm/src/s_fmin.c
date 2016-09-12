@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fmin.c,v 1.10 2013/11/12 18:28:02 martynas Exp $	*/
+/*	$OpenBSD: s_fmin.c,v 1.11 2016/09/12 19:47:02 guenther Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -47,7 +47,5 @@ fmin(double x, double y)
 
 	return (x < y ? x : y);
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(fminl, fmin);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(fmin);
+LDBL_MAYBE_UNUSED_CLONE(fmin);

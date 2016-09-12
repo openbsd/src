@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.5 2014/04/18 15:09:52 guenther Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.6 2016/09/12 19:47:02 guenther Exp $	*/
 /*	$NetBSD: fenv.c,v 1.1 2011/01/31 00:19:33 christos Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@ feclearexcept(int excepts)
 
 	return 0;
 }
+DEF_STD(feclearexcept);
 
 /*
  * The fegetexceptflag() function stores an implementation-defined
@@ -104,6 +105,7 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 
 	return 0;
 }
+DEF_STD(fesetexceptflag);
 
 /*
  * The feraiseexcept() function raises the supported floating-point exceptions
@@ -148,6 +150,7 @@ feraiseexcept(int excepts)
 
 	return 0;
 }
+DEF_STD(feraiseexcept);
 
 /*
  * The fetestexcept() function determines which of a specified subset of the
@@ -166,6 +169,7 @@ fetestexcept(int excepts)
 
 	return r & excepts;
 }
+DEF_STD(fetestexcept);
 
 /*
  * The fegetround() function gets the current rounding direction.
@@ -180,6 +184,7 @@ fegetround(void)
 
 	return (r >> _ROUND_SHIFT) & _ROUND_MASK;
 }
+DEF_STD(fegetround);
 
 /*
  * The fesetround() function establishes the rounding direction represented by
@@ -205,6 +210,7 @@ fesetround(int round)
 
 	return 0;
 }
+DEF_STD(fesetround);
 
 /*
  * The fegetenv() function attempts to store the current floating-point
@@ -218,6 +224,7 @@ fegetenv(fenv_t *envp)
 
 	return 0;
 }
+DEF_STD(fegetenv);
 
 
 /*
@@ -242,6 +249,7 @@ feholdexcept(fenv_t *envp)
 
 	return 0;
 }
+DEF_STD(feholdexcept);
 
 /*
  * The fesetenv() function attempts to establish the floating-point environment
@@ -259,6 +267,7 @@ fesetenv(const fenv_t *envp)
 
 	return 0;
 }
+DEF_STD(fesetenv);
 
 
 /*
@@ -284,6 +293,7 @@ feupdateenv(const fenv_t *envp)
 
 	return 0;
 }
+DEF_STD(feupdateenv);
 
 /*
  * The following functions are extentions to the standard

@@ -57,7 +57,5 @@ acosh(double x)
 	    return log1p(t+sqrt(2.0*t+t*t));
 	}
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(acoshl, acosh);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(acosh);
+LDBL_MAYBE_UNUSED_CLONE(acosh);

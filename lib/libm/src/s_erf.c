@@ -235,6 +235,8 @@ erf(double x)
 	r  =  exp(-z*z-0.5625)*exp((z-x)*(z+x)+R/S);
 	if(hx>=0) return one-r/x; else return  r/x-one;
 }
+DEF_STD(erf);
+LDBL_MAYBE_CLONE(erf);
 
 double
 erfc(double x) 
@@ -296,8 +298,5 @@ erfc(double x)
 	    if(hx>0) return tiny*tiny; else return two-tiny;
 	}
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(erfl, erf);
-__strong_alias(erfcl, erf);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(erfc);
+LDBL_MAYBE_CLONE(erfc);

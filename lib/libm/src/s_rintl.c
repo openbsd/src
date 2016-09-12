@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_rintl.c,v 1.1 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: s_rintl.c,v 1.2 2016/09/12 19:47:02 guenther Exp $	*/
 /*-
  * Copyright (c) 2008 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -89,3 +89,4 @@ rintl(long double x)
 
 	return (x);
 }
+DEF_NONSTD(rintl);

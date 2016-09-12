@@ -74,7 +74,5 @@ sinh(double x)
     /* |x| > overflowthresold, sinh(x) overflow */
 	return x*shuge;
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(sinhl, sinh);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(sinh);
+LDBL_MAYBE_CLONE(sinh);

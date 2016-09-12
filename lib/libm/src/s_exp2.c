@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_exp2.c,v 1.8 2015/08/20 19:24:58 naddy Exp $	*/
+/*	$OpenBSD: s_exp2.c,v 1.9 2016/09/12 19:47:02 guenther Exp $	*/
 /*-
  * Copyright (c) 2005 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -388,7 +388,5 @@ exp2(double x)
 		return (r * twopkp1000 * twom1000);
 	}
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(exp2l, exp2);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(exp2);
+LDBL_MAYBE_UNUSED_CLONE(exp2);

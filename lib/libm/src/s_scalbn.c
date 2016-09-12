@@ -25,7 +25,5 @@ scalbn (double x, int n)
 {
 	return ldexp(x, n);
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(scalbnl, scalbn);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(scalbn);
+LDBL_MAYBE_CLONE(scalbn);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_csin.c,v 1.6 2013/07/03 04:46:36 espie Exp $	*/
+/*	$OpenBSD: s_csin.c,v 1.7 2016/09/12 19:47:02 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -85,7 +85,5 @@ csin(double complex z)
 	w = sin (creal(z)) * ch + (cos (creal(z)) * sh) * I;
 	return (w);
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(csinl, csin);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(csin);
+LDBL_MAYBE_UNUSED_CLONE(csin);

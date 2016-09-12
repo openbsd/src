@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_scalbnf.S,v 1.4 2009/04/25 11:03:35 martynas Exp $ */
+/*	$OpenBSD: s_scalbnf.S,v 1.5 2016/09/12 19:47:01 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -21,4 +21,4 @@ ENTRY(scalbnf)
 	fstps	-8(%rsp)
 	movss	-8(%rsp),%xmm0
 	ret
-
+END_STD(scalbnf)

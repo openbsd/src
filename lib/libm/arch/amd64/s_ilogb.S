@@ -1,10 +1,11 @@
-/*	$OpenBSD: s_ilogb.S,v 1.3 2009/04/08 22:30:41 martynas Exp $ */
+/*	$OpenBSD: s_ilogb.S,v 1.4 2016/09/12 19:47:01 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
+#include "abi.h"
 
 ENTRY(ilogb)
 	movsd	%xmm0,-8(%rsp)
@@ -14,3 +15,4 @@ ENTRY(ilogb)
 	fistpl	-8(%rsp)
 	movl	-8(%rsp),%eax
 	ret
+END_STD(ilogb)

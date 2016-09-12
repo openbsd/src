@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_log10.S,v 1.3 2008/09/07 20:36:08 martynas Exp $ */
+/*	$OpenBSD: e_log10.S,v 1.4 2016/09/12 19:47:01 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -15,3 +15,4 @@ ENTRY(log10)
 	fyl2x
 	XMM_DOUBLE_EPILOGUE
 	ret
+END(log10)

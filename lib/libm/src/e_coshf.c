@@ -58,3 +58,4 @@ coshf(float x)
     /* |x| > overflowthresold, cosh(x) overflow */
 	return huge*huge;
 }
+DEF_STD(coshf);

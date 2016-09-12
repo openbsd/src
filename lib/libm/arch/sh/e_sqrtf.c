@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_sqrtf.c,v 1.2 2014/04/18 15:09:52 guenther Exp $	*/
+/*	$OpenBSD: e_sqrtf.c,v 1.3 2016/09/12 19:47:02 guenther Exp $	*/
 
 /*
  * Written by Martynas Venckus.  Public domain
@@ -27,4 +27,4 @@ sqrtf(float f)
 
 	return (f);
 }
-
+DEF_STD(sqrtf);

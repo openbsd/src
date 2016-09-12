@@ -71,9 +71,10 @@ nextafter(double x, double y)
 	INSERT_WORDS(x,hx,lx);
 	return x;
 }
+DEF_STD(nextafter);
+LDBL_MAYBE_CLONE(nextafter);
 
 #if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(nextafterl, nextafter);
-__strong_alias(nexttoward, nextafter);
-__strong_alias(nexttowardl, nextafter);
+MAKE_UNUSED_CLONE(nexttoward, nextafter);
+MAKE_UNUSED_CLONE(nexttowardl, nextafter);
 #endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */

@@ -29,3 +29,4 @@ logbf(float x)
 	else
 		return (float) (ix-127); 
 }
+DEF_STD(logbf);

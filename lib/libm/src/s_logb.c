@@ -32,3 +32,4 @@ logb(double x)
 	else
 		return (double) (ix-1023); 
 }
+DEF_STD(logb);

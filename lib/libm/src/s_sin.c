@@ -74,7 +74,5 @@ sin(double x)
 	    }
 	}
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(sinl, sin);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(sin);
+LDBL_MAYBE_CLONE(sin);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_ceil.c,v 1.9 2015/01/20 04:41:01 krw Exp $	*/
+/*	$OpenBSD: s_ceil.c,v 1.10 2016/09/12 19:47:01 guenther Exp $	*/
 /*
  * Written by Michael Shalayeff. Public Domain
  */
@@ -22,5 +22,5 @@ ceil(double x)
 	__asm__ volatile("fldds 0(%0), %%fr0" :: "r" (&ofpsr) : "memory");
 	return (x);
 }
-
-__strong_alias(ceill, ceil);
+DEF_STD(ceil);
+LDBL_UNUSED_CLONE(ceil);

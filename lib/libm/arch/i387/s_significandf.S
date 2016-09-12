@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_significandf.S,v 1.3 2005/08/02 11:17:31 espie Exp $ */
+/*	$OpenBSD: s_significandf.S,v 1.4 2016/09/12 19:47:02 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -11,3 +11,4 @@ ENTRY(significandf)
 	fxtract
 	fstp	%st(1)
 	ret
+END(significandf)

@@ -43,3 +43,4 @@ cosf(float x)
 	    }
 	}
 }
+DEF_STD(cosf);

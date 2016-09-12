@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_logl.c,v 1.3 2013/11/12 20:35:19 martynas Exp $	*/
+/*	$OpenBSD: e_logl.c,v 1.4 2016/09/12 19:47:03 guenther Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -188,3 +188,4 @@ z = z + x;
 z = z + e * C1; /* This sum has an error of 1/2 lsb. */
 return( z );
 }
+DEF_STD(logl);

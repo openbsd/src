@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_lrint.S,v 1.1 2009/04/10 11:30:33 martynas Exp $	*/
+/*	$OpenBSD: s_lrint.S,v 1.2 2016/09/12 19:47:01 guenther Exp $	*/
 
 /*
  * Written by Martynas Venckus.  Public domain
@@ -9,4 +9,4 @@
 ENTRY(lrint)
 	cvtsd2si %xmm0, %rax
 	ret
-
+END(lrint)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_rint.c,v 1.11 2015/01/20 04:41:01 krw Exp $	*/
+/*	$OpenBSD: s_rint.c,v 1.12 2016/09/12 19:47:01 guenther Exp $	*/
 /*
  * Written by Michael Shalayeff. Public Domain
  */
@@ -13,5 +13,5 @@ rint(double x)
 
 	return (x);
 }
-
-__strong_alias(rintl, rint);
+DEF_STD(rint);
+LDBL_CLONE(rint);

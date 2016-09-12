@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_atan2.c,v 1.19 2016/09/12 04:39:47 guenther Exp $	*/
+/*	$OpenBSD: n_atan2.c,v 1.20 2016/09/12 19:47:02 guenther Exp $	*/
 /*	$NetBSD: n_atan2.c,v 1.1 1995/10/10 23:36:37 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -243,5 +243,5 @@ begin:
 
 	return(copysign((signx>zero)?z:PI-z,signy));
 }
-
-__strong_alias(atan2l, atan2);
+DEF_STD(atan2);
+LDBL_CLONE(atan2);

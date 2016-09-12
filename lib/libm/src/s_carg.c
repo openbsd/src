@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_carg.c,v 1.6 2013/07/03 04:46:36 espie Exp $	*/
+/*	$OpenBSD: s_carg.c,v 1.7 2016/09/12 19:47:02 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -24,7 +24,5 @@ carg(double complex z)
 {
 	return atan2 (__imag__ z, __real__ z);
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(cargl, carg);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(carg);
+LDBL_MAYBE_CLONE(carg);

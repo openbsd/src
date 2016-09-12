@@ -300,7 +300,5 @@ pow(double x, double y)
 	else SET_HIGH_WORD(z,j);
 	return s*z;
 }
-
-#if	LDBL_MANT_DIG == DBL_MANT_DIG
-__strong_alias(powl, pow);
-#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
+DEF_STD(pow);
+LDBL_MAYBE_CLONE(pow);
