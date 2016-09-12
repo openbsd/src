@@ -1509,6 +1509,7 @@
 ./usr/share/man/man4/mainbus.4
 ./usr/share/man/man4/malo.4
 ./usr/share/man/man4/maxds.4
+./usr/share/man/man4/maxrtc.4
 ./usr/share/man/man4/maxtmp.4
 ./usr/share/man/man4/mbg.4
 ./usr/share/man/man4/mfi.4
