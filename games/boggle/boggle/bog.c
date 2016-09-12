@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.31 2016/08/27 02:00:10 guenther Exp $	*/
+/*	$OpenBSD: bog.c,v 1.32 2016/09/12 14:38:58 otto Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -126,6 +126,8 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
+
+	ncubes = grid * grid;
 
 	/* process final arguments */
 	if (argc > 0) {
@@ -674,7 +676,6 @@ init(void)
 {
 	int i;
 
-	ncubes = grid * grid;
 	if (minlength == -1)
 		minlength = grid - 1;
 	init_adjacencies();
