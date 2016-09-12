@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.22 2016/09/10 05:39:38 jsg Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.23 2016/09/12 15:24:51 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -98,9 +98,6 @@ struct bfd_auth_header {
 #define BFD_AUTH_MD5_LEN	24	/* RFC 5880 Page 11 */
 #define BFD_AUTH_SHA1_LEN	28	/* RFC 5880 Page 12 */
 
-#define BFD_MODE_ACTIVE		1
-#define BFD_MODE_PASSIVE	2
-
 /* Diagnostic Code (RFC 5880 Page 8) */
 #define BFD_DIAG_NONE			0
 #define BFD_DIAG_EXPIRED		1
@@ -164,10 +161,9 @@ struct bfd_state {
 	uint32_t	AuthSeqKnown;
 };
 
-struct pool	 bfd_pool, bfd_pool_peer;
+struct pool	 bfd_pool, bfd_pool_peer, bfd_pool_time;
 struct taskq	*bfdtq;
 
-struct bfd_softc *bfd_lookup(struct rtentry *);
 struct socket	*bfd_listener(struct bfd_softc *, unsigned int);
 struct socket	*bfd_sender(struct bfd_softc *, unsigned int);
 void		 bfd_input(struct bfd_softc *, struct mbuf *);
@@ -184,6 +180,7 @@ void	 bfd_timeout_tx(void *);
 void	 bfd_upcall(struct socket *, caddr_t, int);
 void	 bfd_senddown(struct bfd_softc *);
 void	 bfd_reset(struct bfd_softc *);
+void	 bfd_set_uptime(struct bfd_softc *);
 
 #ifdef DDB
 void	 bfd_debug(struct bfd_softc *);
@@ -211,10 +208,12 @@ bfd_rtalloc(struct rtentry *rt)
 	/* Do our necessary memory allocations upfront */
 	sc = pool_get(&bfd_pool, PR_WAITOK | PR_ZERO);
 	sc->sc_peer = pool_get(&bfd_pool_peer, PR_WAITOK | PR_ZERO);
+	sc->sc_time = pool_get(&bfd_pool_time, PR_WAITOK | PR_ZERO);
 
 	sc->sc_rt = rt;
 	rtref(sc->sc_rt);	/* we depend on this route not going away */
 
+	microtime(sc->sc_time);
 	bfd_reset(sc);
 	sc->sc_peer->LocalDiscr = arc4random();	/* XXX - MUST be globally unique */
 
@@ -267,6 +266,7 @@ bfd_rtfree(struct rtentry *rt)
 
 	rtfree(sc->sc_rt);
 
+	pool_put(&bfd_pool_time, sc->sc_time);
 	pool_put(&bfd_pool_peer, sc->sc_peer);
 	pool_put(&bfd_pool, sc);
 }
@@ -283,6 +283,9 @@ bfdinit(void)
 	pool_init(&bfd_pool_peer, sizeof(struct bfd_state), 0, 0, 0,
 	    "bfd_softc_peer", NULL);
 	pool_setipl(&bfd_pool_peer, IPL_SOFTNET);
+	pool_init(&bfd_pool_time, sizeof(struct timeval), 0, 0, 0,
+	    "bfd_softc_time", NULL);
+	pool_setipl(&bfd_pool_time, IPL_SOFTNET);
 
 	bfdtq = taskq_create("bfd", 1, IPL_SOFTNET, 0);
 	if (bfdtq == NULL)
@@ -306,15 +309,10 @@ bfddestroy(void)
 	}
 
 	taskq_destroy(bfdtq);
-	pool_destroy(&bfd_pool);
+	pool_destroy(&bfd_pool_time);
 	pool_destroy(&bfd_pool_peer);
+	pool_destroy(&bfd_pool);
 }
-
-/*
- * End of public interfaces.
- *
- * Everything below this line should not be used outside of this file.
- */
 
 /*
  * Return the matching bfd
@@ -330,6 +328,12 @@ bfd_lookup(struct rtentry *rt)
 	}
 	return (NULL);
 }
+
+/*
+ * End of public interfaces.
+ *
+ * Everything below this line should not be used outside of this file.
+ */
 
 /*
  * Task to listen and kick off the bfd process
@@ -654,7 +658,7 @@ printf("%s: error=%u\n", __func__, sc->error);
 	sc->sc_peer->AuthSeqKnown = 0;
 	sc->sc_peer->LocalDiag = 0;
 
-	sc->mode = BFD_MODE_ACTIVE;
+	sc->mode = BFD_MODE_ASYNC;
 	sc->state = BFD_STATE_DOWN;
 
 	/* Set RFC mandated values */
@@ -668,6 +672,8 @@ printf("%s: error=%u\n", __func__, sc->error);
 	sc->mintx = sc->sc_peer->DesiredMinTxInterval;
 	sc->minrx = sc->sc_peer->RemoteMinRxInterval;
 	sc->multiplier = sc->sc_peer->DetectMult;
+
+	bfd_set_uptime(sc);
 printf("%s: localdiscr: 0x%x\n", __func__, sc->sc_peer->LocalDiscr);
 
 	return;
@@ -774,6 +780,7 @@ printf("%s: peer your discr 0x%x != local 0x%x\n",
 		if (sc->sc_peer->SessionState != BFD_STATE_DOWN) {
 			sc->sc_peer->LocalDiag = BFD_DIAG_NEIGHBOR_SIGDOWN;
 			sc->sc_peer->SessionState = BFD_STATE_DOWN;
+			bfd_set_state(sc, BFD_STATE_DOWN);
 		}
 		goto discard;
 	}
@@ -842,7 +849,10 @@ bfd_set_state(struct bfd_softc *sc, int state)
 		bfd_reset(sc);
 		return;
 	}
-	sc->sc_peer->SessionState = state;
+
+	bfd_set_uptime(sc);
+
+	sc->state = sc->sc_peer->SessionState = state;
 
 	if (!rtisvalid(rt))
 		sc->sc_peer->SessionState = BFD_STATE_ADMINDOWN;
@@ -871,6 +881,17 @@ printf("%s: BFD set linkstate %u (oldstate: %u)\n", ifp->if_xname, new_state, st
 	if_put(ifp);
 
 	return;
+}
+
+void
+bfd_set_uptime(struct bfd_softc *sc)
+{
+	struct timeval tv;
+
+	microtime(&tv);
+	sc->lastuptime = tv.tv_sec - sc->sc_time->tv_sec;
+	sc->laststate = sc->state;
+	memcpy(sc->sc_time, &tv, sizeof(tv));
 }
 
 void
@@ -925,8 +946,6 @@ bfd_send(struct bfd_softc *sc, struct mbuf *m)
 	return (sosend(sc->sc_sosend, NULL, NULL, m, NULL, MSG_DONTWAIT));
 }
 
-
-
 #ifdef DDB
 /*
  * Print debug information about this bfd instance
@@ -935,11 +954,14 @@ void
 bfd_debug(struct bfd_softc *sc)
 {
 	struct rtentry	*rt = sc->sc_rt;
+	struct timeval	 tv;
 	char buf[64];
 
-	printf("dest: %s\n", sockaddr_ntop(rt_key(rt), buf, sizeof(buf)));
-	printf("src: %s\n", sockaddr_ntop(rt->rt_ifa->ifa_addr, buf,
+	printf("dest: %s ", sockaddr_ntop(rt_key(rt), buf, sizeof(buf)));
+	printf("src: %s ", sockaddr_ntop(rt->rt_ifa->ifa_addr, buf,
 	    sizeof(buf)));
+	printf("\n");
+	printf("\t");
 	printf("session state: %u ", sc->state);
 	printf("mode: %u ", sc->mode);
 	printf("error: %u ", sc->error);
@@ -948,7 +970,7 @@ bfd_debug(struct bfd_softc *sc)
 	printf("multiplier: %u ", sc->multiplier);
 	printf("\n");
 	printf("\t");
-	printf("session state: %u ", sc->sc_peer->SessionState);
+	printf("local session state: %u ", sc->sc_peer->SessionState);
 	printf("local diag: %u ", sc->sc_peer->LocalDiag);
 	printf("\n");
 	printf("\t");
@@ -959,6 +981,14 @@ bfd_debug(struct bfd_softc *sc)
 	printf("remote session state: %u ", sc->sc_peer->RemoteSessionState);
 	printf("remote diag: %u ", sc->sc_peer->RemoteDiag);
 	printf("remote min rx: %u ", sc->sc_peer->RemoteMinRxInterval);
+	printf("\n");
+	printf("\t");
+	printf("last state: %u ", sc->laststate);
+	getmicrotime(&tv);
+	printf("uptime %llds ", tv.tv_sec - sc->sc_time->tv_sec);
+	printf("time started %lld.%06ld ", sc->sc_time->tv_sec,
+	    sc->sc_time->tv_usec);
+	printf("last uptime %llds ", sc->lastuptime);
 	printf("\n");
 }
 #endif /* DDB */
