@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.34 2016/08/29 17:35:25 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.35 2016/09/12 17:15:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -513,7 +513,7 @@ chainlen(struct mbuf *m_head)
 	struct mbuf *m;
 	int n = 0;
 
-	for (m = m_head; m != NULL; m = m->m_next)
+	for (m = m_head; m != NULL && m->m_len > 0; m = m->m_next)
 		n++;
 	return (n);
 }
@@ -533,7 +533,7 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 	    m_defrag(m_head, M_DONTWAIT))
 		goto errout;
 
-	for (m = m_head; m != NULL; m = m->m_next) {
+	for (m = m_head; m != NULL && m->m_len > 0; m = m->m_next) {
 		i = *prod & (XNF_TX_DESC - 1);
 		dmap = sc->sc_tx_dmap[i];
 		txd = &txr->txr_desc[i];
