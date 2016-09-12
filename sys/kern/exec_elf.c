@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.126 2016/06/11 21:04:08 kettenis Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.127 2016/09/12 00:35:54 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -603,9 +603,10 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	 * *interp with a changed path (/emul/xxx/<path>), and also
 	 * set the ep_emul field in the exec package structure.
 	 */
-	error = ENOEXEC;
-	if (eh->e_ident[EI_OSABI] != ELFOSABI_OPENBSD &&
-	    ELFNAME(os_pt_note)(p, epp, epp->ep_hdr, "OpenBSD", 8, 4) != 0) {
+	if (eh->e_ident[EI_OSABI] != ELFOSABI_OPENBSD && (error =
+	    ELFNAME(os_pt_note)(p, epp, epp->ep_hdr, "OpenBSD", 8, 4)) != 0) {
+		if (error == EACCES)
+			goto bad;
 		for (i = 0; ELFNAME(probes)[i].func != NULL && error; i++)
 			error = (*ELFNAME(probes)[i].func)(p, epp, interp, &pos);
 		if (error)
@@ -899,7 +900,7 @@ ELFNAME(os_pt_note)(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
 				log(LOG_NOTICE,
 				    "%s(%d): W^X binary outside wxallowed mountpoint\n",
 				    error ? "" : pathbuf, p->p_pid);
-				error = ENOEXEC;
+				error = EACCES;
 				goto out1;
 			}
 			epp->ep_flags |= EXEC_WXNEEDED;
