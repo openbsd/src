@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.9 2016/05/23 00:12:58 guenther Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.10 2016/09/12 19:36:26 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -126,7 +126,6 @@ PROTO_DEPRECATED(rresvport);
 PROTO_NORMAL(rresvport_af);
 PROTO_DEPRECATED(ruserok);
 PROTO_DEPRECATED(sbrk);
-PROTO_CANCEL(select);
 PROTO_DEPRECATED(setdomainname);
 PROTO_NORMAL(setegid);
 PROTO_NORMAL(seteuid);
