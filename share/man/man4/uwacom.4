@@ -1,4 +1,4 @@
-.\" $OpenBSD: uwacom.4,v 1.1 2016/09/12 08:12:06 mpi Exp $
+.\" $OpenBSD: uwacom.4,v 1.2 2016/09/12 10:39:06 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Frank Groeneveld <frank@frankgroeneveld.nl>
 .\"
@@ -32,14 +32,15 @@ Access to these devices is through the
 framework.
 .Pp
 Absolute positioning of the mouse cursor can be done by hovering the pen above
-the tablet. Touching the tablet with the pen tip will emulate mouse button 0,
+the tablet.
+Touching the tablet with the pen tip will emulate mouse button 0,
 while the two pen buttons will emulate button 1 and button 2.
 .Pp
 The
 .Nm
 driver supports the following Wacom tablets:
 .Bl -column "Intuos Draw" "Model Number" -offset 6n
-.It Em Name Ta Model Number
+.It Em Name Ta Em Model Number
 .It Li Intuos Draw Ta CTL-490
 .El
 .Sh SEE ALSO
