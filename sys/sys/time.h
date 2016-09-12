@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.35 2013/10/25 04:42:48 guenther Exp $	*/
+/*	$OpenBSD: time.h,v 1.36 2016/09/12 19:41:20 guenther Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -35,8 +35,10 @@
 #ifndef _SYS_TIME_H_
 #define _SYS_TIME_H_
 
-#include <sys/types.h>
+#include <sys/select.h>
 
+#ifndef _TIMEVAL_DECLARED
+#define _TIMEVAL_DECLARED
 /*
  * Structure returned by gettimeofday(2) system call,
  * and used in other calls.
@@ -45,6 +47,7 @@ struct timeval {
 	time_t		tv_sec;		/* seconds */
 	suseconds_t	tv_usec;	/* and microseconds */
 };
+#endif
 
 #ifndef _TIMESPEC_DECLARED
 #define _TIMESPEC_DECLARED
@@ -327,10 +330,6 @@ void clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
 
 #else /* !_KERNEL */
 #include <time.h>
-
-#if __XPG_VISIBLE >= 420 && __XPG_VISIBLE < 600
-#include <sys/select.h>	/* must be after type declarations */
-#endif
 
 #if __BSD_VISIBLE || __XPG_VISIBLE
 __BEGIN_DECLS

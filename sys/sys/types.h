@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.45 2016/08/27 05:14:42 guenther Exp $	*/
+/*	$OpenBSD: types.h,v 1.46 2016/09/12 19:41:20 guenther Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -223,10 +223,6 @@ __END_DECLS
 #define	major(x)	((int32_t)(((u_int32_t)(x) >> 8) & 0xff))
 #define	minor(x)	((int32_t)((x) & 0xff) | (((x) & 0xffff0000) >> 8))
 #define	makedev(x,y)	((dev_t)((((x) & 0xff) << 8) | ((y) & 0xff) | (((y) & 0xffff00) << 8)))
-#endif
-
-#if __BSD_VISIBLE
-#include <sys/select.h>	/* must be after type declarations */
 #endif
 
 #if defined(__STDC__) && defined(_KERNEL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.90 2015/10/23 10:22:30 claudio Exp $	*/
+/*	$OpenBSD: socket.h,v 1.91 2016/09/12 19:41:20 guenther Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -125,6 +125,15 @@ struct	linger {
 };
 
 #if __BSD_VISIBLE
+
+#ifndef _TIMEVAL_DECLARED
+#define _TIMEVAL_DECLARED
+struct timeval {
+	time_t		tv_sec;		/* seconds */
+	suseconds_t	tv_usec;	/* and microseconds */
+};
+#endif
+
 /*
  * Structure used for manipulating splice option.
  */

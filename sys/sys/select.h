@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.h,v 1.16 2016/03/07 18:33:10 jca Exp $	*/
+/*	$OpenBSD: select.h,v 1.17 2016/09/12 19:41:20 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,18 +34,23 @@
 #ifndef _SYS_SELECT_H_
 #define	_SYS_SELECT_H_
 
-#include <sys/time.h>		/* for types and struct timeval */
+#include <sys/types.h>
 
-/*
- * Currently, <sys/time.h> includes <sys/types.h> before defining timeval and
- * timespec, and <sys/types.h> in turn includes <sys/select.h>.  So even though
- * we include <sys/time.h> above, the compiler might not see the timeval and
- * timespec definitions until after this header's contents have been processed.
- *
- * As a workaround, we forward declare timeval and timespec as structs here.
- */
-struct timeval;
-struct timespec;
+#ifndef _TIMEVAL_DECLARED
+#define _TIMEVAL_DECLARED
+struct timeval {
+	time_t		tv_sec;		/* seconds */
+	suseconds_t	tv_usec;	/* and microseconds */
+};
+#endif
+
+#ifndef _TIMESPEC_DECLARED
+#define _TIMESPEC_DECLARED
+struct timespec {
+	time_t	tv_sec;		/* seconds */
+	long	tv_nsec;	/* and nanoseconds */
+};
+#endif
 
 /*
  * Select uses bit masks of file descriptors in longs.  These macros
