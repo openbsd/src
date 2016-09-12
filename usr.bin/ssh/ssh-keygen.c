@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.291 2016/09/12 03:25:20 dtucker Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.292 2016/09/12 03:29:16 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -2436,10 +2436,10 @@ main(int argc, char **argv)
 			break;
 		case 'J':
 			lines_to_process = strtoul(optarg, NULL, 10);
-                        break;
+			break;
 		case 'j':
 			start_lineno = strtoul(optarg, NULL, 10);
-                        break;
+			break;
 		case 'K':
 			if (strlen(optarg) >= PATH_MAX)
 				fatal("Checkpoint filename too long");
