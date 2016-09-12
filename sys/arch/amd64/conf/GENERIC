@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.432 2016/09/04 10:22:05 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.433 2016/09/12 08:28:44 mpi Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -248,6 +248,8 @@ ums*	at uhidev?		# USB mouse
 wsmouse* at ums? mux 0
 uts*	at uhub?		# USB touchscreen
 wsmouse* at uts? mux 0
+uwacom*	at uhidev?		# USB Wacom tablet
+wsmouse* at uwacom? mux 0
 ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd? mux 1
 ucycom*	at uhidev?			# Cypress serial
