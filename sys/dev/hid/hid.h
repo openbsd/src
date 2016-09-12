@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.h,v 1.4 2016/01/20 01:26:00 jcs Exp $ */
+/*	$OpenBSD: hid.h,v 1.5 2016/09/12 09:10:05 mpi Exp $ */
 /*	$NetBSD: hid.h,v 1.8 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.h,v 1.7 1999/11/17 22:33:40 n_hibma Exp $ */
 
@@ -127,6 +127,7 @@ int	hid_is_collection(const void *, int, uint8_t, int32_t);
 #define HUP_MICROSOFT		0xff00
 /* XXX compat */
 #define HUP_APPLE		0x00ff
+#define HUP_WACOM		0xff00
 
 /* Usages, Power Device */
 #define HUP_INAME		0x0001
