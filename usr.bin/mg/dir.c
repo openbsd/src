@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.28 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: dir.c,v 1.29 2016/09/12 18:32:54 millert Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -27,11 +27,9 @@ void
 dirinit(void)
 {
 	mgcwd[0] = '\0';
-	if (getcwd(mgcwd, sizeof(mgcwd)) == NULL) {
+	if (getcwd(mgcwd, sizeof(mgcwd)) == NULL)
 		ewprintf("Can't get current directory!");
-		chdir("/");
-	}
-	if (!(mgcwd[0] == '/' && mgcwd [1] == '\0'))
+	if (mgcwd[0] != '\0' && !(mgcwd[0] == '/' && mgcwd[1] == '\0'))
 		(void)strlcat(mgcwd, "/", sizeof(mgcwd));
 }
 
@@ -56,11 +54,15 @@ changedir(int f, int n)
 		ewprintf("Can't change dir to %s", bufc);
 		return (FALSE);
 	}
-	if ((bufp = getcwd(mgcwd, sizeof(mgcwd))) == NULL)
-		panic("Can't get current directory!");
+	if ((bufp = getcwd(mgcwd, sizeof(mgcwd))) == NULL) {
+		if (bufc[0] == '/')
+			(void)strlcpy(mgcwd, bufc, sizeof(mgcwd));
+		else
+			(void)strlcat(mgcwd, bufc, sizeof(mgcwd));
+	}
 	if (mgcwd[strlen(mgcwd) - 1] != '/')
 		(void)strlcat(mgcwd, "/", sizeof(mgcwd));
-	ewprintf("Current directory is now %s", bufp);
+	ewprintf("Current directory is now %s", mgcwd);
 	return (TRUE);
 }
 
