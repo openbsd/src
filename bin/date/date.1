@@ -1,4 +1,4 @@
-.\"	$OpenBSD: date.1,v 1.66 2015/09/25 16:02:54 schwarze Exp $
+.\"	$OpenBSD: date.1,v 1.67 2016/09/12 17:28:47 jca Exp $
 .\"	$NetBSD: date.1,v 1.12 1996/03/12 04:32:37 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)date.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: September 25 2015 $
+.Dd $Mdocdate: September 12 2016 $
 .Dt DATE 1
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@ The options are as follows:
 Use the
 .Xr adjtime 2
 call to gradually skew the local time to the
-remote time rather than just hopping.
+desired time rather than just hopping.
 .It Fl d Ar dst
 Set the system's value for Daylight Saving Time.
 If
