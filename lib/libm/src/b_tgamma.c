@@ -1,4 +1,4 @@
-/*	$OpenBSD: b_tgamma.c,v 1.8 2013/07/03 04:46:36 espie Exp $	*/
+/*	$OpenBSD: b_tgamma.c,v 1.9 2016/09/12 04:39:47 guenther Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -138,7 +138,7 @@ tgamma(double x)
 		if (x != 0.0)
 			u.a = one - tiny;	/* raise inexact */
 		return (one/x);
-	} else if (!finite(x)) {
+	} else if (!isfinite(x)) {
 		return (x - x);			/* x = NaN, -Inf */
 	 } else
 		return (neg_gam(x));

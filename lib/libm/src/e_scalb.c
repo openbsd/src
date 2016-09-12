@@ -32,7 +32,7 @@ double
 scalb(double x, double fn)
 {
 	if (isnan(x)||isnan(fn)) return x*fn;
-	if (!finite(fn)) {
+	if (!isfinite(fn)) {
 	    if(fn>0.0) return x*fn;
 	    else       return x/(-fn);
 	}

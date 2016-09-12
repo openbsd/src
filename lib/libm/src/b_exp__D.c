@@ -1,4 +1,4 @@
-/*	$OpenBSD: b_exp__D.c,v 1.5 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: b_exp__D.c,v 1.6 2016/09/12 04:39:47 guenther Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
  * Required system supported functions:
  *	scalb(x,n)
  *	copysign(x,y)
- *	finite(x)
+ *	isfinite(x)
  *
  * Method:
  *	1. Argument Reduction: given the input x, find r and integer k such
@@ -110,7 +110,7 @@ __exp__D(double x, double c)
 
 		else
 		     /* exp(-big#) underflows to zero */
-		     if(finite(x))  return(scalb(1.0,-5000));
+		     if(isfinite(x))  return(scalb(1.0,-5000));
 
 		     /* exp(-INF) is zero */
 		     else return(0.0);
@@ -119,5 +119,5 @@ __exp__D(double x, double c)
 
 	else
 	/* exp(INF) is INF, exp(+big#) overflows to INF */
-	    return( finite(x) ?  scalb(1.0,5000)  : x);
+	    return( isfinite(x) ?  scalb(1.0,5000)  : x);
 }

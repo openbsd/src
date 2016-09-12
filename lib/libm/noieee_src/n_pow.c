@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_pow.c,v 1.12 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: n_pow.c,v 1.13 2016/09/12 04:39:47 guenther Exp $	*/
 /*	$NetBSD: n_pow.c,v 1.1 1995/10/10 23:37:02 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -39,7 +39,7 @@
  *      scalbn(x,n)
  *      logb(x)
  *	copysign(x,y)
- *	finite(x)
+ *	isfinite(x)
  *	remainder(x,y)
  *
  * Required kernel functions:
@@ -127,7 +127,7 @@ pow(double x, double y)
 		return (x);		/* if x is NaN or y=1 */
 	else if (isnan(y))		/* if y is NaN */
 		return (y);
-	else if (!finite(y))		/* if y is INF */
+	else if (!isfinite(y))		/* if y is INF */
 		if ((t=fabs(x))==one)	/* +-1 ** +-INF is NaN */
 			return (y - y);
 		else if (t>one)
@@ -175,7 +175,7 @@ pow_P(double x, double y)
 			return (infnan(ERANGE));
 	if (x == one)
 		return (one);
-	if (!finite(x))
+	if (!isfinite(x))
 		if (y < zero)
 			return (zero);
 		else if (_IEEE)

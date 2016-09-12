@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_atan2.c,v 1.18 2013/07/15 04:08:26 espie Exp $	*/
+/*	$OpenBSD: n_atan2.c,v 1.19 2016/09/12 04:39:47 guenther Exp $	*/
 /*	$NetBSD: n_atan2.c,v 1.1 1995/10/10 23:36:37 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -151,7 +151,7 @@ atan2(double y, double x)
 	signx = copysign(one,x) ;
 
     /* if x is 1.0, goto begin */
-	if(x==1) { y=copysign(y,one); t=y; if(finite(t)) goto begin;}
+	if(x==1) { y=copysign(y,one); t=y; if(isfinite(t)) goto begin;}
 
     /* when y = 0 */
 	if(y==zero) return((signx==one)?y:copysign(PI,signy));
@@ -160,14 +160,14 @@ atan2(double y, double x)
 	if(x==zero) return(copysign(PIo2,signy));
 
     /* when x is INF */
-	if(!finite(x))
-	    if(!finite(y))
+	if(!isfinite(x))
+	    if(!isfinite(y))
 		return(copysign((signx==one)?PIo4:3*PIo4,signy));
 	    else
 		return(copysign((signx==one)?zero:PI,signy));
 
     /* when y is INF */
-	if(!finite(y)) return(copysign(PIo2,signy));
+	if(!isfinite(y)) return(copysign(PIo2,signy));
 
     /* compute y/x */
 	x=copysign(x,one);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_log1p.c,v 1.11 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: n_log1p.c,v 1.12 2016/09/12 04:39:47 guenther Exp $	*/
 /*	$NetBSD: n_log1p.c,v 1.1 1995/10/10 23:37:00 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -39,7 +39,7 @@
  *	scalbn(x,n)
  *	copysign(x,y)
  *	logb(x)
- *	finite(x)
+ *	isfinite(x)
  *
  * Required kernel function:
  *	log__L(z)
@@ -107,7 +107,7 @@ log1p(double x)
 	if (isnan(x))
 		return (x);
 
-	if(finite(x)) {
+	if(isfinite(x)) {
 	   if( x > negone ) {
 
 	   /* argument reduction */
@@ -143,7 +143,7 @@ log1p(double x)
 #endif	/* defined(__vax__) */
 	    }
 	}
-    /* end of if (finite(x)) */
+    /* end of if (isfinite(x)) */
 
     /* log(-INF) is NaN */
 	else if(x<0)

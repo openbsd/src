@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_tan.c,v 1.14 2013/07/15 04:08:26 espie Exp $	*/
+/*	$OpenBSD: n_tan.c,v 1.15 2016/09/12 04:39:47 guenther Exp $	*/
 /*	$NetBSD: n_tan.c,v 1.1 1995/10/10 23:37:07 ragge Exp $	*/
 /*
  * Copyright (c) 1987, 1993
@@ -45,7 +45,7 @@ tan(double x)
 	double a,z,ss,cc,c;
 	int k;
 
-	if(!finite(x))		/* tan(NaN) and tan(INF) must be NaN */
+	if(!isfinite(x))	/* tan(NaN) and tan(INF) must be NaN */
 		return x-x;
 	x = remainder(x,PI);	/* reduce x into [-PI/2, PI/2] */
 	a = copysign(x,one);	/* ... = abs(x) */

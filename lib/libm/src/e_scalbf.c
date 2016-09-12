@@ -28,8 +28,8 @@ scalbf(float x, int fn)
 float
 scalbf(float x, float fn)
 {
-	if (isnanf(x)||isnanf(fn)) return x*fn;
-	if (!finitef(fn)) {
+	if (isnan(x)||isnan(fn)) return x*fn;
+	if (!isfinite(fn)) {
 	    if(fn>(float)0.0) return x*fn;
 	    else       return x/(-fn);
 	}

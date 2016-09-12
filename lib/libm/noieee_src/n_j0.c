@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_j0.c,v 1.7 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: n_j0.c,v 1.8 2016/09/12 04:39:47 guenther Exp $	*/
 /*	$NetBSD: n_j0.c,v 1.1 1995/10/10 23:36:52 ragge Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
@@ -138,7 +138,7 @@ j0(double x)
 {
 	double z, s,c,ss,cc,r,u,v;
 
-	if (!finite(x))
+	if (!isfinite(x))
 		if (_IEEE) return one/(x*x);
 		else return (0);
 	x = fabs(x);
@@ -200,7 +200,7 @@ y0(double x)
 {
 	double z, s, c, ss, cc, u, v;
     /* Y0(NaN) is NaN, y0(-inf) is Nan, y0(inf) is 0  */
-	if (!finite(x))
+	if (!isfinite(x))
 		if (_IEEE)
 			return (one/(x+x*x));
 		else

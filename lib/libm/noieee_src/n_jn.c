@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_jn.c,v 1.7 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: n_jn.c,v 1.8 2016/09/12 04:39:47 guenther Exp $	*/
 /*	$NetBSD: n_jn.c,v 1.1 1995/10/10 23:36:54 ragge Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
@@ -122,7 +122,7 @@ jn(int n, double x)
 	if (n==1) return(j1(x));
 	sgn = (n&1)&(x < zero);		/* even n -- 0, odd n -- sign(x) */
 	x = fabs(x);
-	if (x == 0 || !finite (x)) 	/* if x is 0 or inf */
+	if (x == 0 || !isfinite (x)) 	/* if x is 0 or inf */
 	    b = zero;
 	else if ((double) n <= x) {
 			/* Safe to use J(n+1,x)=2n/x *J(n,x)-J(n-1,x) */
@@ -261,7 +261,7 @@ yn(int n, double x)
 		else if (x < 0)     return (infnan(EDOM));
 		else if (_IEEE)     return -one/zero;
 		else		    return(infnan(-ERANGE));
-	else if (!finite(x)) return(0);
+	else if (!isfinite(x)) return(0);
 	sign = 1;
 	if (n<0){
 		n = -n;
@@ -294,13 +294,13 @@ yn(int n, double x)
 	    a = y0(x);
 	    b = y1(x);
 	/* quit if b is -inf */
-	    for (i = 1; i < n && !finite(b); i++){
+	    for (i = 1; i < n && !isfinite(b); i++){
 		temp = b;
 		b = ((double)(i+i)/x)*b - a;
 		a = temp;
 	    }
 	}
-	if (!_IEEE && !finite(b))
+	if (!_IEEE && !isfinite(b))
 		return (infnan(-sign * ERANGE));
 	return ((sign > 0) ? b : -b);
 }

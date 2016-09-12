@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_expm1.c,v 1.12 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: n_expm1.c,v 1.13 2016/09/12 04:39:47 guenther Exp $	*/
 /*	$NetBSD: n_expm1.c,v 1.1 1995/10/10 23:36:46 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
  * Required system supported functions:
  *	scalbn(x,n)
  *	copysign(x,y)
- *	finite(x)
+ *	isfinite(x)
  *
  * Kernel function:
  *	exp__E(x,c)
@@ -135,7 +135,7 @@ expm1(double x)
 
 		else
 		     /* expm1(-big#) rounded to -1 (inexact) */
-		     if(finite(x))
+		     if(isfinite(x))
 			return(tiny-one);
 
 		     /* expm1(-INF) is -1 */
@@ -145,5 +145,5 @@ expm1(double x)
 
 	else
 	/*  expm1(INF) is INF, expm1(+big#) overflows to INF */
-	    return( finite(x) ?  scalbn(one,5000) : x);
+	    return( isfinite(x) ?  scalbn(one,5000) : x);
 }

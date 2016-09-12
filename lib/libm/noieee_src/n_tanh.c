@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_tanh.c,v 1.9 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: n_tanh.c,v 1.10 2016/09/12 04:39:47 guenther Exp $	*/
 /*	$NetBSD: n_tanh.c,v 1.1 1995/10/10 23:37:08 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -39,7 +39,7 @@
  *
  * Required system supported functions :
  *	copysign(x,y)
- *	finite(x)
+ *	isfinite(x)
  *
  * Required kernel function:
  *	expm1(x)	...exp(x)-1
@@ -88,7 +88,7 @@ tanh(double x)
 		t = big + x;
 		return(copysign(x,sign) - (t-(big+x)));
 	    }
-	else if(finite(x))
+	else if(isfinite(x))
 	    return (sign+1.0E-37); /* raise the INEXACT flag */
 	else
 	    return(sign);	/* x is +- INF */

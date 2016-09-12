@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_erf.c,v 1.7 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: n_erf.c,v 1.8 2016/09/12 04:39:47 guenther Exp $	*/
 /*	$NetBSD: n_erf.c,v 1.1 1995/10/10 23:36:43 ragge Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
@@ -255,7 +255,7 @@ double
 erf(double x)
 {
 	double R, S, P, Q, ax, s, y, z, r;
-	if(!finite(x)) {		/* erf(nan)=nan */
+	if(!isfinite(x)) {		/* erf(nan)=nan */
 	    if (isnan(x))
 		return(x);
 	    return (x > 0 ? one : -one); /* erf(+/-inf)= +/-1 */
@@ -313,7 +313,7 @@ double
 erfc(double x)
 {
 	double R, S, P, Q, s, ax, y, z, r;
-	if (!finite(x)) {
+	if (!isfinite(x)) {
 		if (isnan(x))		/* erfc(NaN) = NaN */
 			return(x);
 		else if (x > 0)		/* erfc(+-inf)=0,2 */

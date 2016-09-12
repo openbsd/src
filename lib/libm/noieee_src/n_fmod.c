@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_fmod.c,v 1.7 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: n_fmod.c,v 1.8 2016/09/12 04:39:47 guenther Exp $	*/
 /*	$NetBSD: n_fmod.c,v 1.1 1995/10/10 23:36:49 ragge Exp $	*/
 /*
  * Copyright (c) 1989, 1993
@@ -65,7 +65,7 @@ fmod(double x, double y)
 	int ir,iy;
 	double r,w;
 
-	if (y == (double)0 || isnan(y) || !finite(x))
+	if (y == (double)0 || isnan(y) || !isfinite(x))
 	    return (x*y)/(x*y);
 
 	r = fabs(x);
