@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolv.h,v 1.20 2015/09/25 23:32:51 guenther Exp $	*/
+/*	$OpenBSD: resolv.h,v 1.21 2016/09/12 19:35:31 guenther Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@ struct __res_state {
 		u_int32_t	mask;
 	} sort_list[MAXRESOLVSORT];
 	char    lookups[MAXDNSLUS];
-	struct timespec	restimespec;
+	struct { time_t __res_sec; long __res_nsec; } restimespec;
 	time_t	reschktime;
 };
 
