@@ -1,4 +1,4 @@
-/* $OpenBSD: serverloop.c,v 1.185 2016/08/13 17:47:41 markus Exp $ */
+/* $OpenBSD: serverloop.c,v 1.186 2016/09/12 01:22:38 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +35,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -206,7 +205,7 @@ wait_until_can_do_something(int connection_in, int connection_out,
 
 	/* XXX need proper deadline system for rekey/client alive */
 	if (minwait_secs != 0)
-		max_time_ms = MIN(max_time_ms, (u_int)minwait_secs * 1000);
+		max_time_ms = MINIMUM(max_time_ms, (u_int)minwait_secs * 1000);
 
 	/*
 	 * if using client_alive, set the max timeout accordingly,
@@ -365,8 +364,8 @@ server_loop2(Authctxt *authctxt)
 
 	notify_setup();
 
-	max_fd = MAX(connection_in, connection_out);
-	max_fd = MAX(max_fd, notify_pipe[0]);
+	max_fd = MAXIMUM(connection_in, connection_out);
+	max_fd = MAXIMUM(max_fd, notify_pipe[0]);
 
 	server_init_dispatch();
 

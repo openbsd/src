@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-agent.c,v 1.213 2016/05/02 08:49:03 djm Exp $ */
+/* $OpenBSD: ssh-agent.c,v 1.214 2016/09/12 01:22:38 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,7 +34,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -526,7 +525,7 @@ reaper(void)
 				tab->nentries--;
 			} else
 				deadline = (deadline == 0) ? id->death :
-				    MIN(deadline, id->death);
+				    MINIMUM(deadline, id->death);
 		}
 	}
 	if (deadline == 0 || deadline <= now)
@@ -978,7 +977,7 @@ prepare_select(fd_set **fdrp, fd_set **fdwp, int *fdl, u_int *nallocp,
 		switch (sockets[i].type) {
 		case AUTH_SOCKET:
 		case AUTH_CONNECTION:
-			n = MAX(n, sockets[i].fd);
+			n = MAXIMUM(n, sockets[i].fd);
 			break;
 		case AUTH_UNUSED:
 			break;
@@ -1017,7 +1016,7 @@ prepare_select(fd_set **fdrp, fd_set **fdwp, int *fdl, u_int *nallocp,
 	deadline = reaper();
 	if (parent_alive_interval != 0)
 		deadline = (deadline == 0) ? parent_alive_interval :
-		    MIN(deadline, parent_alive_interval);
+		    MINIMUM(deadline, parent_alive_interval);
 	if (deadline == 0) {
 		*tvpp = NULL;
 	} else {
