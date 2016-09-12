@@ -1860,6 +1860,7 @@
 ./usr/share/man/man4/uvideo.4
 ./usr/share/man/man4/uvisor.4
 ./usr/share/man/man4/uvscom.4
+./usr/share/man/man4/uwacom.4
 ./usr/share/man/man4/vether.4
 ./usr/share/man/man4/vga.4
 ./usr/share/man/man4/vgafb.4
