@@ -2562,7 +2562,6 @@
 ./usr/share/man/man4/loongson
 ./usr/share/man/man4/luna88k
 ./usr/share/man/man4/macppc
-./usr/share/man/man4/maxrtc.4
 ./usr/share/man/man4/octeon
 ./usr/share/man/man4/sgi
 ./usr/share/man/man4/socppc
