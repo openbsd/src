@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.23 2016/09/12 15:24:51 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.24 2016/09/13 07:56:05 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -182,10 +182,7 @@ void	 bfd_senddown(struct bfd_softc *);
 void	 bfd_reset(struct bfd_softc *);
 void	 bfd_set_uptime(struct bfd_softc *);
 
-#ifdef DDB
 void	 bfd_debug(struct bfd_softc *);
-#endif
-
 
 TAILQ_HEAD(bfd_queue, bfd_softc)  bfd_queue;
 
@@ -946,7 +943,6 @@ bfd_send(struct bfd_softc *sc, struct mbuf *m)
 	return (sosend(sc->sc_sosend, NULL, NULL, m, NULL, MSG_DONTWAIT));
 }
 
-#ifdef DDB
 /*
  * Print debug information about this bfd instance
  */
@@ -991,4 +987,3 @@ bfd_debug(struct bfd_softc *sc)
 	printf("last uptime %llds ", sc->lastuptime);
 	printf("\n");
 }
-#endif /* DDB */
