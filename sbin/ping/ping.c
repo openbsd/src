@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.181 2016/09/13 07:14:24 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.182 2016/09/13 07:15:03 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -161,7 +161,6 @@ int moptions;
 int mx_dup_ck = MAX_DUP_CHK;
 char rcvd_tbl[MAX_DUP_CHK / 8];
 
-struct sockaddr_in dst;	/* who to ping */
 int datalen = DEFDATALEN;
 int s;				/* socket file descriptor */
 u_char outpackhdr[IP_MAXPACKET]; /* Max packet size = 65535 */
@@ -221,7 +220,7 @@ main(int argc, char *argv[])
 {
 	struct addrinfo hints, *res;
 	struct itimerval itimer;
-	struct sockaddr_in  from, from4;
+	struct sockaddr_in  from, from4, dst;
 	socklen_t maxsizelen;
 	int64_t preload;
 	int ch, i, optval = 1, packlen, maxsize, error;
