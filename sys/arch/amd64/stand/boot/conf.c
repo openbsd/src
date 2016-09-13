@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.35 2016/05/28 15:53:39 sthen Exp $	*/
+/*	$OpenBSD: conf.c,v 1.36 2016/09/13 18:27:48 jasper Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -41,7 +41,7 @@
 #include <biosdev.h>
 #include <dev/cons.h>
 
-const char version[] = "3.31";
+const char version[] = "3.32";
 int	debug = 1;
 
 

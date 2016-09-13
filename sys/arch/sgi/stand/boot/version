@@ -1,4 +1,4 @@
-/*	$OpenBSD: version,v 1.7 2015/09/23 21:22:27 miod Exp $	*/
+/*	$OpenBSD: version,v 1.8 2016/09/13 18:27:49 jasper Exp $	*/
 /* Public domain. Come on, this can hardly be considered as code. */
 
 #if 0
@@ -31,6 +31,9 @@ No version strings up to 2012
 1.6
 	/etc/random.seed support
 
+1.7
+	Loadfile support for .SUNW_ctf section
+
 #endif
 
-static const char version[] = "1.6";
+static const char version[] = "1.7";
