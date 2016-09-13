@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.207 2016/08/25 14:57:35 dcoppa Exp $
+.\"	$OpenBSD: port-modules.5,v 1.208 2016/09/13 19:45:35 naddy Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 25 2016 $
+.Dd $Mdocdate: September 13 2016 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ Some of these modules correspond to basic mechanisms which are not
 always needed, such as GNU autoconf, or perl5.
 .Pp
 Other modules correspond to shortcuts for using some other ports as
-dependencies without needing to hardcode too much, such as libiconv or
+dependencies without needing to hardcode too much, such as
 the qt ports.
 .Sh THE MODULES LOOK-UP MECHANISM
 The variable
@@ -378,7 +378,6 @@ performs lazy evaluation.
 The following modules are available.
 .Bl -tag -width do-configure
 .It apache-module
-.It converters/libiconv
 .It cpan
 For perl ports coming from CPAN.
 Wrapper around the normal perl module that fetches the file from
