@@ -1,4 +1,4 @@
-/*	$Id: base64.c,v 1.5 2016/09/01 13:49:32 tb Exp $ */
+/*	$Id: base64.c,v 1.6 2016/09/13 20:09:54 tedu Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -51,12 +51,17 @@ base64buf_url(const char *data, size_t len)
 	b64_ntop(data, len, buf, sz);
 
 	for (i = 0; i < sz; i++)
-		if ('+' == buf[i])
+		switch (buf[i]) {
+		case '+':
 			buf[i] = '-';
-		else if ('/' == buf[i])
+			break;
+		case '/':
 			buf[i] = '_';
-		else if ('=' == buf[i])
+			break;
+		case '=':
 			buf[i] = '\0';
+			break;
+		}
 
 	return (buf);
 }
