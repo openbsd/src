@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.5 2016/09/01 00:35:21 florian Exp $ */
+/*	$Id: acctproc.c,v 1.6 2016/09/13 16:01:37 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -320,7 +320,6 @@ acctproc(int netsock, const char *acctkey, int newacct)
 	EVP_PKEY	*pkey;
 	long		 lval;
 	enum acctop	 op;
-	unsigned char	 rbuf[64];
 	int		 rc, cc;
 	mode_t		 prev;
 
@@ -350,17 +349,6 @@ acctproc(int netsock, const char *acctkey, int newacct)
 	if (pledge("stdio", NULL) == -1) {
 		warn("pledge");
 		goto out;
-	}
-
-	/*
-	 * Seed our PRNG with data from arc4random().
-	 * Do this until we're told it's ok and use increments of 64
-	 * bytes (arbitrarily).
-	 */
-
-	while (0 == RAND_status()) {
-		arc4random_buf(rbuf, sizeof(rbuf));
-		RAND_seed(rbuf, sizeof(rbuf));
 	}
 
 	if (newacct) {
