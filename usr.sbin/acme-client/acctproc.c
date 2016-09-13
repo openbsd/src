@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.6 2016/09/13 16:01:37 deraadt Exp $ */
+/*	$Id: acctproc.c,v 1.7 2016/09/13 16:04:51 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -391,12 +391,12 @@ acctproc(int netsock, const char *acctkey, int newacct)
 			break;
 
 		switch (op) {
-		case (ACCT_SIGN):
+		case ACCT_SIGN:
 			if (op_sign(netsock, pkey))
 				break;
 			warnx("op_sign");
 			goto out;
-		case (ACCT_THUMBPRINT):
+		case ACCT_THUMBPRINT:
 			if (op_thumbprint(netsock, pkey))
 				break;
 			warnx("op_thumbprint");

@@ -1,4 +1,4 @@
-/*	$Id: json.c,v 1.3 2016/09/01 00:35:22 florian Exp $ */
+/*	$Id: json.c,v 1.4 2016/09/13 16:04:51 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -84,9 +84,9 @@ build(struct parse *parse, struct jsmnn **np,
 	n->type = t->type;
 
 	switch (t->type) {
-	case (JSMN_STRING):
+	case JSMN_STRING:
 		/* FALLTHROUGH */
-	case (JSMN_PRIMITIVE):
+	case JSMN_PRIMITIVE:
 		n->fields = 1;
 		n->d.str = strndup
 			(js + t->start,
@@ -94,7 +94,7 @@ build(struct parse *parse, struct jsmnn **np,
 		if (NULL == n->d.str)
 			break;
 		return (1);
-	case (JSMN_OBJECT):
+	case JSMN_OBJECT:
 		n->fields = t->size;
 		n->d.obj = calloc(n->fields,
 			sizeof(struct jsmnp));
@@ -117,7 +117,7 @@ build(struct parse *parse, struct jsmnn **np,
 		if (i < (size_t)t->size)
 			break;
 		return (j + 1);
-	case (JSMN_ARRAY):
+	case JSMN_ARRAY:
 		n->fields = t->size;
 		n->d.array = calloc(n->fields,
 			sizeof(struct jsmnn *));

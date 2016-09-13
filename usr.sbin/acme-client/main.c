@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.10 2016/09/01 13:47:54 florian Exp $ */
+/*	$Id: main.c,v 1.11 2016/09/13 16:04:51 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -103,48 +103,48 @@ main(int argc, char *argv[])
 
 	while (-1 != (c = getopt(argc, argv, "bFmnNrs:tva:f:c:C:k:")))
 		switch (c) {
-		case ('a'):
+		case 'a':
 			agreement = optarg;
 			break;
-		case ('b'):
+		case 'b':
 			backup = 1;
 			break;
-		case ('c'):
+		case 'c':
 			free(certdir);
 			if (NULL == (certdir = strdup(optarg)))
 				err(EXIT_FAILURE, "strdup");
 			break;
-		case ('C'):
+		case 'C':
 			free(chngdir);
 			if (NULL == (chngdir = strdup(optarg)))
 				err(EXIT_FAILURE, "strdup");
 			break;
-		case ('f'):
+		case 'f':
 			free(acctkey);
 			if (NULL == (acctkey = strdup(optarg)))
 				err(EXIT_FAILURE, "strdup");
 			break;
-		case ('F'):
+		case 'F':
 			force = 1;
 			break;
-		case ('k'):
+		case 'k':
 			free(keyfile);
 			if (NULL == (keyfile = strdup(optarg)))
 				err(EXIT_FAILURE, "strdup");
 			break;
-		case ('m'):
+		case 'm':
 			multidir = 1;
 			break;
-		case ('n'):
+		case 'n':
 			newacct = 1;
 			break;
-		case ('N'):
+		case 'N':
 			newkey = 1;
 			break;
-		case ('r'):
+		case 'r':
 			revocate = 1;
 			break;
-		case ('s'):
+		case 's':
 			authority = -1;
 			for (i = 0; i < nitems(authorities); i++) {
 				if (strcmp(authorities[i].name, optarg) == 0) {
@@ -155,14 +155,14 @@ main(int argc, char *argv[])
 			if (-1 == authority)
 				errx(EXIT_FAILURE, "unknown acme authority");
 			break;
-		case ('t'):
+		case 't':
 			/*
 			 / Undocumented feature.
 			 * Don't use it.
 			 */
 			remote = 1;
 			break;
-		case ('v'):
+		case 'v':
 			verbose = verbose ? 2 : 1;
 			break;
 		default:
