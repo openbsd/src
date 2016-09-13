@@ -20,7 +20,6 @@ _spamd:*:62:62::0:0:Spam Daemon:/var/empty:/sbin/nologin
 uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/var/spool/uucppublic:/sbin/nologin
 www:*:67:67::0:0:HTTP Server:/var/www:/sbin/nologin
 _isakmpd:*:68:68::0:0:isakmpd privsep:/var/empty:/sbin/nologin
-proxy:*:71:71::0:0:Old proxy daemon (remove in 6.0):/nonexistent:/sbin/nologin
 _syslogd:*:73:73::0:0:Syslog Daemon:/var/empty:/sbin/nologin
 _pflogd:*:74:74::0:0:pflogd privsep:/var/empty:/sbin/nologin
 _bgpd:*:75:75::0:0:BGP Daemon:/var/empty:/sbin/nologin

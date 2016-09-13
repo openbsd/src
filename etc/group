@@ -36,7 +36,6 @@ crontab:*:66:
 www:*:67:
 _isakmpd:*:68:
 network:*:69:
-proxy:*:71:
 authpf:*:72:
 _syslogd:*:73:
 _pflogd:*:74:
