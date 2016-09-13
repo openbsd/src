@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.917 2016/09/11 03:16:52 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.918 2016/09/13 21:25:29 halex Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1930,45 +1930,24 @@ is_rootdisk() {
 	) >/dev/null 2>&1
 }
 
-# From the supplied list of devices, determine a single device suitable
-# for $MODE.
-# On success, prints the device name and returns 0
-# On failure, prints an error message and returns 1
-find_root() {
-	local _d
-
-	for _d; do
-		[[ $MODE == upgrade ]] && ! is_rootdisk $_d && continue
-		echo $_d
-	done |
-	(
-		! read first && echo "No root disk found" && exit 1
-
-		! read second && echo $first && exit
-
-		echo "Multiple potential root devices found:" \
-			$(echo $first $second; cat)"."
-		echo "Please specify one."
-		exit 1
-	)
-}
-
 # Get global root information. ie. ROOTDISK, ROOTDEV and SWAPDEV.
 get_rootinfo() {
+	local _default=$(get_dkdevs)
 	while :; do
 		echo "Available disks are: $(get_dkdevs | sed 's/^$/none/')."
 		_ask "Which disk is the root disk? ('?' for details)" \
-			auto || continue
+			$_default || continue
 		case $resp in
 		"?")	diskinfo $(get_dkdevs);;
 		'')	;;
-		auto)	echo "Scanning disks"
-			resp=$(find_root $(get_dkdevs)) &&
-				echo "Using $resp as root disk" && break
-			echo "$resp"
-			;;
-		*)	isin "$resp" $(get_dkdevs) && break
-			echo "no such disk"
+		*)	if isin "$resp" $(get_dkdevs); then
+				[[ $MODE == install ]] && break
+				is_rootdisk "$resp" && break
+				echo "$resp is not a valid root disk."
+				_default="$(rmel "$resp" $_default) $resp"
+			else
+				echo "no such disk"
+			fi
 			;;
 		esac
 		$AUTO && exit 1
