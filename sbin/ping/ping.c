@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.180 2016/09/13 07:11:56 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.181 2016/09/13 07:14:24 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -187,7 +187,6 @@ double tmin = 999999999.0;	/* minimum round trip time */
 double tmax = 0.0;		/* maximum round trip time */
 double tsum = 0.0;		/* sum of all times, for doing average */
 double tsumsq = 0.0;		/* sum of all times squared, for std. dev. */
-int bufspace = IP_MAXPACKET;
 
 struct tv64 tv64_offset;
 SIPHASH_KEY mac_key;
@@ -226,7 +225,7 @@ main(int argc, char *argv[])
 	socklen_t maxsizelen;
 	int64_t preload;
 	int ch, i, optval = 1, packlen, maxsize, error;
-	int df = 0, tos = 0;
+	int df = 0, tos = 0, bufspace = IP_MAXPACKET;
 	u_char *datap, *packet, loop = 1;
 	u_char ttl = MAXTTL;
 	char *e, *target, hbuf[NI_MAXHOST], *source = NULL;
