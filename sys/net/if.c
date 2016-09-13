@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.447 2016/09/08 09:13:10 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.448 2016/09/13 08:15:01 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -142,6 +142,7 @@ int	if_getgroupmembers(caddr_t);
 int	if_getgroupattribs(caddr_t);
 int	if_setgroupattribs(caddr_t);
 
+void	if_linkstate(struct ifnet *);
 void	if_linkstate_task(void *);
 
 int	if_clone_list(struct if_clonereq *);
@@ -1448,7 +1449,6 @@ if_downall(void)
 void
 if_down(struct ifnet *ifp)
 {
-	unsigned long ifidx = ifp->if_index;
 	struct ifaddr *ifa;
 
 	splsoftassert(IPL_SOFTNET);
@@ -1460,7 +1460,7 @@ if_down(struct ifnet *ifp)
 	}
 	IFQ_PURGE(&ifp->if_snd);
 
-	if_linkstate_task((void *)ifidx);
+	if_linkstate(ifp);
 }
 
 /*
@@ -1470,7 +1470,6 @@ if_down(struct ifnet *ifp)
 void
 if_up(struct ifnet *ifp)
 {
-	unsigned long ifidx = ifp->if_index;
 	splsoftassert(IPL_SOFTNET);
 
 	ifp->if_flags |= IFF_UP;
@@ -1482,7 +1481,7 @@ if_up(struct ifnet *ifp)
 		in6_ifattach(ifp);
 #endif
 
-	if_linkstate_task((void *)ifidx);
+	if_linkstate(ifp);
 }
 
 /*
@@ -1501,14 +1500,22 @@ if_linkstate_task(void *xifidx)
 		return;
 
 	s = splsoftnet();
+	if_linkstate(ifp);
+	splx(s);
+
+	if_put(ifp);
+}
+
+void
+if_linkstate(struct ifnet *ifp)
+{
+	splsoftassert(IPL_SOFTNET);
+
 	rt_ifmsg(ifp);
 #ifndef SMALL_KERNEL
 	rt_if_track(ifp);
 #endif
 	dohooks(ifp->if_linkstatehooks, 0);
-	splx(s);
-
-	if_put(ifp);
 }
 
 /*
