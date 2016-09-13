@@ -1,4 +1,3 @@
-./usr/share/doc/mg
 ./usr/share/doc/mg/tutorial
 ./usr/share/info/amdref.info
 ./usr/share/info/annotate.info
@@ -24,7 +23,6 @@
 ./usr/share/man/man1/Test::Harness::Beyond.1
 ./usr/share/man/man1/a2p.1
 ./usr/share/man/man1/acme-client.1
-./usr/share/man/man1/amd64
 ./usr/share/man/man1/amd64/fdformat.1
 ./usr/share/man/man1/apply.1
 ./usr/share/man/man1/apropos.1
@@ -122,7 +120,6 @@
 ./usr/share/man/man1/host.1
 ./usr/share/man/man1/hostname.1
 ./usr/share/man/man1/htpasswd.1
-./usr/share/man/man1/i386
 ./usr/share/man/man1/i386/fdformat.1
 ./usr/share/man/man1/id.1
 ./usr/share/man/man1/ident.1
@@ -420,7 +417,6 @@
 ./usr/share/man/man1/skeyinit.1
 ./usr/share/man/man1/sleep.1
 ./usr/share/man/man1/sort.1
-./usr/share/man/man1/sparc64
 ./usr/share/man/man1/sparc64/fdformat.1
 ./usr/share/man/man1/sparc64/mksuncd.1
 ./usr/share/man/man1/spell.1
@@ -1077,7 +1073,6 @@
 ./usr/share/man/man3p/warnings.3p
 ./usr/share/man/man3p/warnings::register.3p
 ./usr/share/man/man3p/writemain.3p
-./usr/share/man/man4
 ./usr/share/man/man4/aac.4
 ./usr/share/man/man4/ac97.4
 ./usr/share/man/man4/acphy.4
@@ -1127,7 +1122,6 @@
 ./usr/share/man/man4/alc.4
 ./usr/share/man/man4/ale.4
 ./usr/share/man/man4/alipm.4
-./usr/share/man/man4/alpha
 ./usr/share/man/man4/alpha/apecs.4
 ./usr/share/man/man4/alpha/asc.4
 ./usr/share/man/man4/alpha/autoconf.4
@@ -1146,7 +1140,6 @@
 ./usr/share/man/man4/alpha/tsc.4
 ./usr/share/man/man4/alpha/tsciic.4
 ./usr/share/man/man4/amas.4
-./usr/share/man/man4/amd64
 ./usr/share/man/man4/amd64/amdpcib.4
 ./usr/share/man/man4/amd64/apm.4
 ./usr/share/man/man4/amd64/autoconf.4
@@ -1173,7 +1166,6 @@
 ./usr/share/man/man4/aps.4
 ./usr/share/man/man4/arc.4
 ./usr/share/man/man4/arcofi.4
-./usr/share/man/man4/armv7
 ./usr/share/man/man4/armv7/cpsw.4
 ./usr/share/man/man4/armv7/dmtimer.4
 ./usr/share/man/man4/armv7/edma.4
@@ -1319,7 +1311,6 @@
 ./usr/share/man/man4/hilms.4
 ./usr/share/man/man4/hme.4
 ./usr/share/man/man4/hotplug.4
-./usr/share/man/man4/hppa
 ./usr/share/man/man4/hppa/asp.4
 ./usr/share/man/man4/hppa/astro.4
 ./usr/share/man/man4/hppa/cpu.4
@@ -1344,7 +1335,6 @@
 ./usr/share/man/man4/hppa/uturn.4
 ./usr/share/man/man4/hppa/wax.4
 ./usr/share/man/man4/hsq.4
-./usr/share/man/man4/i386
 ./usr/share/man/man4/i386/amdmsr.4
 ./usr/share/man/man4/i386/amdpcib.4
 ./usr/share/man/man4/i386/apm.4
@@ -1425,7 +1415,6 @@
 ./usr/share/man/man4/km.4
 ./usr/share/man/man4/ksyms.4
 ./usr/share/man/man4/kue.4
-./usr/share/man/man4/landisk
 ./usr/share/man/man4/landisk/intro.4
 ./usr/share/man/man4/landisk/mem.4
 ./usr/share/man/man4/landisk/obio.4
@@ -1440,7 +1429,6 @@
 ./usr/share/man/man4/lmn.4
 ./usr/share/man/man4/lmtemp.4
 ./usr/share/man/man4/lo.4
-./usr/share/man/man4/loongson
 ./usr/share/man/man4/loongson/apm.4
 ./usr/share/man/man4/loongson/autoconf.4
 ./usr/share/man/man4/loongson/bonito.4
@@ -1456,7 +1444,6 @@
 ./usr/share/man/man4/loongson/voyager.4
 ./usr/share/man/man4/loongson/ykbec.4
 ./usr/share/man/man4/lpt.4
-./usr/share/man/man4/luna88k
 ./usr/share/man/man4/luna88k/autoconf.4
 ./usr/share/man/man4/luna88k/cbus.4
 ./usr/share/man/man4/luna88k/intro.4
@@ -1468,7 +1455,6 @@
 ./usr/share/man/man4/luna88k/spc.4
 ./usr/share/man/man4/luphy.4
 ./usr/share/man/man4/lxtphy.4
-./usr/share/man/man4/macppc
 ./usr/share/man/man4/macppc/abtn.4
 ./usr/share/man/man4/macppc/adb.4
 ./usr/share/man/man4/macppc/aoa.4
@@ -1548,7 +1534,6 @@
 ./usr/share/man/man4/nvme.4
 ./usr/share/man/man4/nvt.4
 ./usr/share/man/man4/oce.4
-./usr/share/man/man4/octeon
 ./usr/share/man/man4/octeon/amdcf.4
 ./usr/share/man/man4/octeon/cnmac.4
 ./usr/share/man/man4/octeon/octrng.4
@@ -1634,7 +1619,6 @@
 ./usr/share/man/man4/se.4
 ./usr/share/man/man4/ses.4
 ./usr/share/man/man4/sf.4
-./usr/share/man/man4/sgi
 ./usr/share/man/man4/sgi/dpclock.4
 ./usr/share/man/man4/sgi/dsclock.4
 ./usr/share/man/man4/sgi/dsrtc.4
@@ -1672,7 +1656,6 @@
 ./usr/share/man/man4/sli.4
 ./usr/share/man/man4/sm.4
 ./usr/share/man/man4/smsc.4
-./usr/share/man/man4/socppc
 ./usr/share/man/man4/socppc/autoconf.4
 ./usr/share/man/man4/socppc/intro.4
 ./usr/share/man/man4/socppc/ipic.4
@@ -1682,7 +1665,6 @@
 ./usr/share/man/man4/socppc/socpcic.4
 ./usr/share/man/man4/socppc/tsec.4
 ./usr/share/man/man4/softraid.4
-./usr/share/man/man4/sparc64
 ./usr/share/man/man4/sparc64/agten.4
 ./usr/share/man/man4/sparc64/apio.4
 ./usr/share/man/man4/sparc64/asio.4
@@ -1915,7 +1897,6 @@
 ./usr/share/man/man4/yds.4
 ./usr/share/man/man4/zero.4
 ./usr/share/man/man4/zyd.4
-./usr/share/man/man5
 ./usr/share/man/man5/acct.5
 ./usr/share/man/man5/aliases.5
 ./usr/share/man/man5/ar.5
@@ -2033,7 +2014,6 @@
 ./usr/share/man/man5/wsconsctl.conf.5
 ./usr/share/man/man5/ypldap.conf.5
 ./usr/share/man/man5/ypserv.acl.5
-./usr/share/man/man6
 ./usr/share/man/man7/ascii.7
 ./usr/share/man/man7/editline.7
 ./usr/share/man/man7/environ.7
@@ -2066,14 +2046,12 @@
 ./usr/share/man/man8/ac.8
 ./usr/share/man/man8/accton.8
 ./usr/share/man/man8/acpidump.8
-./usr/share/man/man8/alpha
 ./usr/share/man/man8/alpha/MAKEDEV.8
 ./usr/share/man/man8/alpha/boot_alpha.8
 ./usr/share/man/man8/alpha/installboot.8
 ./usr/share/man/man8/alpha/setnetbootinfo.8
 ./usr/share/man/man8/alpha/wsmoused.8
 ./usr/share/man/man8/amd.8
-./usr/share/man/man8/amd64
 ./usr/share/man/man8/amd64/MAKEDEV.8
 ./usr/share/man/man8/amd64/apm.8
 ./usr/share/man/man8/amd64/apmd.8
@@ -2087,7 +2065,6 @@
 ./usr/share/man/man8/amd64/pxeboot.8
 ./usr/share/man/man8/amd64/wsmoused.8
 ./usr/share/man/man8/amq.8
-./usr/share/man/man8/armv7
 ./usr/share/man/man8/armv7/MAKEDEV.8
 ./usr/share/man/man8/armv7/eeprom.8
 ./usr/share/man/man8/armv7/gpioctl.8
@@ -2147,13 +2124,11 @@
 ./usr/share/man/man8/growfs.8
 ./usr/share/man/man8/hostapd.8
 ./usr/share/man/man8/hotplugd.8
-./usr/share/man/man8/hppa
 ./usr/share/man/man8/hppa/MAKEDEV.8
 ./usr/share/man/man8/hppa/boot.8
 ./usr/share/man/man8/hppa/boot_hppa.8
 ./usr/share/man/man8/hppa/mkboot.8
 ./usr/share/man/man8/httpd.8
-./usr/share/man/man8/i386
 ./usr/share/man/man8/i386/MAKEDEV.8
 ./usr/share/man/man8/i386/apm.8
 ./usr/share/man/man8/i386/apmd.8
@@ -2183,7 +2158,6 @@
 ./usr/share/man/man8/kbd.8
 ./usr/share/man/man8/kgmon.8
 ./usr/share/man/man8/kvm_mkdb.8
-./usr/share/man/man8/landisk
 ./usr/share/man/man8/landisk/MAKEDEV.8
 ./usr/share/man/man8/landisk/boot.8
 ./usr/share/man/man8/landisk/mbr.8
@@ -2203,16 +2177,13 @@
 ./usr/share/man/man8/login_skey.8
 ./usr/share/man/man8/login_token.8
 ./usr/share/man/man8/login_yubikey.8
-./usr/share/man/man8/loongson
 ./usr/share/man/man8/loongson/MAKEDEV.8
 ./usr/share/man/man8/loongson/apm.8
 ./usr/share/man/man8/loongson/apmd.8
 ./usr/share/man/man8/lpc.8
 ./usr/share/man/man8/lpd.8
-./usr/share/man/man8/luna88k
 ./usr/share/man/man8/luna88k/MAKEDEV.8
 ./usr/share/man/man8/luna88k/boot_luna88k.8
-./usr/share/man/man8/macppc
 ./usr/share/man/man8/macppc/MAKEDEV.8
 ./usr/share/man/man8/macppc/apm.8
 ./usr/share/man/man8/macppc/apmd.8
@@ -2267,7 +2238,6 @@
 ./usr/share/man/man8/nsd.8
 ./usr/share/man/man8/ntpctl.8
 ./usr/share/man/man8/ntpd.8
-./usr/share/man/man8/octeon
 ./usr/share/man/man8/octeon/MAKEDEV.8
 ./usr/share/man/man8/octeon/eeprom.8
 ./usr/share/man/man8/ospf6ctl.8
@@ -2332,7 +2302,6 @@
 ./usr/share/man/man8/sendmail.8
 ./usr/share/man/man8/sensorsd.8
 ./usr/share/man/man8/sftp-server.8
-./usr/share/man/man8/sgi
 ./usr/share/man/man8/sgi/MAKEDEV.8
 ./usr/share/man/man8/sgi/sgivol.8
 ./usr/share/man/man8/showmount.8
@@ -2344,7 +2313,6 @@
 ./usr/share/man/man8/sndiod.8
 ./usr/share/man/man8/snmpctl.8
 ./usr/share/man/man8/snmpd.8
-./usr/share/man/man8/socppc
 ./usr/share/man/man8/socppc/MAKEDEV.8
 ./usr/share/man/man8/socppc/boot.8
 ./usr/share/man/man8/socppc/mkboot.8
@@ -2352,7 +2320,6 @@
 ./usr/share/man/man8/spamd.8
 ./usr/share/man/man8/spamdb.8
 ./usr/share/man/man8/spamlogd.8
-./usr/share/man/man8/sparc64
 ./usr/share/man/man8/sparc64/MAKEDEV.8
 ./usr/share/man/man8/sparc64/apm.8
 ./usr/share/man/man8/sparc64/apmd.8

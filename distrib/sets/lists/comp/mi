@@ -1591,12 +1591,9 @@
 ./usr/share/man/man2/acct.2
 ./usr/share/man/man2/adjfreq.2
 ./usr/share/man/man2/adjtime.2
-./usr/share/man/man2/alpha
 ./usr/share/man/man2/alpha/inb.2
-./usr/share/man/man2/amd64
 ./usr/share/man/man2/amd64/amd64_get_fsbase.2
 ./usr/share/man/man2/amd64/amd64_iopl.2
-./usr/share/man/man2/armv7
 ./usr/share/man/man2/armv7/arm_drain_writebuf.2
 ./usr/share/man/man2/armv7/arm_sync_icache.2
 ./usr/share/man/man2/bind.2
@@ -1639,7 +1636,6 @@
 ./usr/share/man/man2/getthrid.2
 ./usr/share/man/man2/gettimeofday.2
 ./usr/share/man/man2/getuid.2
-./usr/share/man/man2/i386
 ./usr/share/man/man2/i386/i386_get_fsbase.2
 ./usr/share/man/man2/i386/i386_get_gsbase.2
 ./usr/share/man/man2/i386/i386_iopl.2
@@ -2317,7 +2313,6 @@
 ./usr/share/man/man3/login.3
 ./usr/share/man/man3/login_cap.3
 ./usr/share/man/man3/login_fbtab.3
-./usr/share/man/man3/loongson
 ./usr/share/man/man3/loongson/cacheflush.3
 ./usr/share/man/man3/loongson/get_fpc_csr.3
 ./usr/share/man/man3/lrint.3
@@ -2508,7 +2503,6 @@
 ./usr/share/man/man3/setmode.3
 ./usr/share/man/man3/setproctitle.3
 ./usr/share/man/man3/setvbuf.3
-./usr/share/man/man3/sgi
 ./usr/share/man/man3/sgi/cacheflush.3
 ./usr/share/man/man3/sgi/get_fpc_csr.3
 ./usr/share/man/man3/sha1.3
