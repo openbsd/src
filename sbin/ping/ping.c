@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.183 2016/09/13 07:16:49 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.184 2016/09/13 07:17:40 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -178,8 +178,8 @@ int64_t nmissedmax = 1;		/* max value of ntransmitted - nreceived - 1 */
 struct timeval interval = {1, 0}; /* interval between packets */
 
 /* timing */
-int timing;			/* flag to do timing */
-int timinginfo;
+int timing = 0;			/* flag to do timing */
+int timinginfo = 0;
 unsigned int maxwait = MAXWAIT_DEFAULT;	/* max seconds to wait for response */
 double tmin = 999999999.0;	/* minimum round trip time */
 double tmax = 0.0;		/* maximum round trip time */
@@ -457,7 +457,7 @@ main(int argc, char *argv[])
 		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, &optval,
 		    sizeof(optval));
 
-	if (options & F_FLOOD && options & F_INTERVAL)
+	if ((options & F_FLOOD) && (options & F_INTERVAL))
 		errx(1, "-f and -i options are incompatible");
 
 	if ((options & F_FLOOD) && (options & (F_AUD_RECV | F_AUD_MISS)))

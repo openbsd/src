@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.195 2016/09/13 07:16:49 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.196 2016/09/13 07:17:40 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -178,8 +178,8 @@ int64_t nmissedmax = 1;		/* max value of ntransmitted - nreceived - 1 */
 struct timeval interval = {1, 0}; /* interval between packets */
 
 /* timing */
-int timing;			/* flag to do timing */
-int timinginfo;
+int timing = 0;			/* flag to do timing */
+int timinginfo = 0;
 unsigned int maxwait = MAXWAIT_DEFAULT;	/* max seconds to wait for response */
 double tmin = 999999999.0;	/* minimum round trip time */
 double tmax = 0.0;		/* maximum round trip time */
@@ -429,6 +429,19 @@ main(int argc, char *argv[])
 			err(1, "bind");
 	}
 
+	if (options & F_SO_DEBUG)
+		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, &optval,
+		    sizeof(optval));
+
+	if ((options & F_FLOOD) && (options & F_INTERVAL))
+		errx(1, "-f and -i options are incompatible");
+
+	if ((options & F_FLOOD) && (options & (F_AUD_RECV | F_AUD_MISS)))
+		warnx("No audible output for flood pings");
+
+	if (datalen >= sizeof(struct payload))	/* can we time transfer */
+		timing = 1;
+
 	/*
 	 * let the kernel pass extension headers of incoming packets,
 	 * for privileged socket options
@@ -444,22 +457,11 @@ main(int argc, char *argv[])
 			err(1, "setsockopt(IPV6_RECVDSTOPTS)");
 	}
 
-	if ((options & F_FLOOD) && (options & F_INTERVAL))
-		errx(1, "-f and -i incompatible options");
-
-	if ((options & F_FLOOD) && (options & (F_AUD_RECV | F_AUD_MISS)))
-		warnx("No audible output for flood pings");
-
 	if ((moptions & MULTICAST_NOLOOP) &&
 	    setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &loop,
 	    sizeof(loop)) < 0)
 		err(1, "setsockopt IP6_MULTICAST_LOOP");
 
-	if (datalen >= sizeof(struct payload)) {
-		/* we can time transfer */
-		timing = 1;
-	} else
-		timing = 0;
 	/* in F_VERBOSE case, we may get non-echoreply packets*/
 	if (options & F_VERBOSE && datalen < 2048)
 		packlen = 2048 + IP6LEN + ECHOLEN + EXTRA; /* XXX 2048? */
@@ -494,9 +496,6 @@ main(int argc, char *argv[])
 
 	optval = 1;
 
-	if (options & F_SO_DEBUG)
-		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, &optval,
-		    (socklen_t)sizeof(optval));
 	optval = IPV6_DEFHLIM;
 	if (IN6_IS_ADDR_MULTICAST(&dst.sin6_addr))
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
