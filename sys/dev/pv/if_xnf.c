@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.38 2016/09/12 18:55:18 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.39 2016/09/13 10:16:22 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -267,7 +267,7 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (sc->sc_caps & XNF_CAP_SG)
-		ifp->if_hardmtu = XNF_MCLEN - ETHER_HDR_LEN;
+		ifp->if_hardmtu = 9000;
 
 	if (xnf_rx_ring_create(sc)) {
 		xen_intr_disestablish(sc->sc_xih);
