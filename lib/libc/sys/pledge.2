@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.35 2016/09/05 11:17:24 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.36 2016/09/13 17:02:12 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 5 2016 $
+.Dd $Mdocdate: September 13 2016 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -380,11 +380,11 @@ operations.
 .It Va "sendfd"
 Allows sending of file descriptors using
 .Xr sendmsg 2 .
-File descriptors referering to directories may not be passed.
+File descriptors referring to directories may not be passed.
 .It Va "recvfd"
 Allows receiving of file descriptors using
 .Xr recvmsg 2 .
-File descriptors referering to directories may not be passed.
+File descriptors referring to directories may not be passed.
 .It Va "ioctl"
 Allows a subset of
 .Xr ioctl 2
