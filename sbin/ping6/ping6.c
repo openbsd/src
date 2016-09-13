@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.191 2016/09/12 15:47:58 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.192 2016/09/13 07:11:56 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1041,7 +1041,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			(void)printf("%d bytes from %s: icmp_seq=%u", cc,
 			    pr_addr(from, fromlen), ntohs(seq));
 			(void)printf(" hlim=%d", hoplim);
-			if (timinginfo)
+			if (cc >= ECHOLEN + ECHOTMLEN)
 				(void)printf(" time=%.3f ms", triptime);
 			if (dupflag)
 				(void)printf(" (DUP!)");
