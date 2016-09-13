@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.18 2015/10/09 01:37:08 deraadt Exp $	*/
+/*	$OpenBSD: look.c,v 1.19 2016/09/13 15:27:47 millert Exp $	*/
 /*	$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $	*/
 
 /*-
@@ -57,20 +57,9 @@
 
 #include "pathnames.h"
 
-/*
- * FOLD and DICT convert characters to a normal form for comparison,
- * according to the user specified flags.
- * 
- * DICT expects integers because it uses a non-character value to
- * indicate a character which should not participate in comparisons.
- */
 #define	EQUAL		0
 #define	GREATER		1
 #define	LESS		(-1)
-#define NO_COMPARE	(-2)
-
-#define	FOLD(c)	(isascii(c) && isupper(c) ? tolower(c) : (c))
-#define	DICT(c)	(isascii(c) && isalnum(c) ? (c) : NO_COMPARE)
 
 int dflag, fflag;
 
@@ -147,10 +136,8 @@ look(char *string, char *front, char *back)
 	/* Reformat string to avoid doing it multiple times later. */
 	for (readp = writep = string; ch = *readp++;) {
 		if (fflag)
-			ch = FOLD((unsigned char)ch);
-		if (dflag)
-			ch = DICT((unsigned char)ch);
-		if (ch != NO_COMPARE)
+			ch = tolower((unsigned char)ch);
+		if (!dflag || isalnum((unsigned char)ch))
 			*(writep++) = ch;
 	}
 	*writep = '\0';
@@ -294,11 +281,8 @@ compare(char *s1, char *s2, char *back)
 	for (; *s1 && s2 < back && *s2 != '\n'; ++s1, ++s2) {
 		ch = *s2;
 		if (fflag)
-			ch = FOLD((unsigned char)ch);
-		if (dflag)
-			ch = DICT((unsigned char)ch);
-
-		if (ch == NO_COMPARE) {
+			ch = tolower((unsigned char)ch);
+		if (dflag && !isalnum((unsigned char)ch)) {
 			++s2;		/* Ignore character in comparison. */
 			continue;
 		}
