@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.46 2016/08/18 06:01:10 dlg Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.47 2016/09/13 19:56:55 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -540,7 +540,7 @@ ipcomp_output_cb(struct cryptop *crp)
 	struct tdb_crypto *tc;
 	struct tdb *tdb;
 	struct mbuf *m, *mo;
-	int error, s, skip, rlen;
+	int error, s, skip, rlen, roff;
 	u_int16_t cpi;
 	struct ip *ip;
 #ifdef INET6
@@ -605,7 +605,7 @@ ipcomp_output_cb(struct cryptop *crp)
 	}
 
 	/* Inject IPCOMP header */
-	mo = m_inject(m, skip, IPCOMP_HLENGTH, M_DONTWAIT);
+	mo = m_makespace(m, skip, IPCOMP_HLENGTH, &roff);
 	if (mo == NULL) {
 		DPRINTF(("ipcomp_output_cb(): failed to inject IPCOMP header "
 		    "for IPCA %s/%08x\n", ipsp_address(&tdb->tdb_dst, buf,
@@ -616,7 +616,7 @@ ipcomp_output_cb(struct cryptop *crp)
 	}
 
 	/* Initialize the IPCOMP header */
-	ipcomp = mtod(mo, struct ipcomp *);
+	ipcomp = (struct ipcomp *)(mtod(mo, caddr_t) + roff);
 	memset(ipcomp, 0, sizeof(struct ipcomp));
 	cpi = (u_int16_t) ntohl(tdb->tdb_spi);
 	ipcomp->ipcomp_cpi = htons(cpi);

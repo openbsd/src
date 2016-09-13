@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.217 2016/09/03 13:42:28 reyk Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.218 2016/09/13 19:56:55 markus Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -436,7 +436,7 @@ struct	mbuf *m_prepend(struct mbuf *, int, int);
 struct	mbuf *m_pulldown(struct mbuf *, int, int, int *);
 struct	mbuf *m_pullup(struct mbuf *, int);
 struct	mbuf *m_split(struct mbuf *, int, int);
-struct  mbuf *m_inject(struct mbuf *, int, int, int);
+struct	mbuf *m_makespace(struct mbuf *, int, int, int *);
 struct  mbuf *m_getptr(struct mbuf *, int, int *);
 int	m_leadingspace(struct mbuf *);
 int	m_trailingspace(struct mbuf *);

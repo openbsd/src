@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.102 2016/09/04 02:26:44 lteo Exp $
+.\"     $OpenBSD: mbuf.9,v 1.103 2016/09/13 19:56:55 markus Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 4 2016 $
+.Dd $Mdocdate: September 13 2016 $
 .Dt MGET 9
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .Nm m_pulldown ,
 .Nm m_pullup ,
 .Nm m_split ,
-.Nm m_inject ,
+.Nm m_makespace ,
 .Nm m_getptr ,
 .Nm m_adj ,
 .Nm m_copyback ,
@@ -95,7 +95,7 @@
 .Ft struct mbuf *
 .Fn m_split "struct mbuf *m0" "int len0" "int wait"
 .Ft struct mbuf *
-.Fn m_inject "struct mbuf *m0" "int len0" "int siz" "int wait"
+.Fn m_makespace "struct mbuf *m0" "int skip" "int hlen" "int *off"
 .Ft struct mbuf *
 .Fn m_getptr "struct mbuf *m" "int loc" "int *off"
 .Ft void
@@ -568,18 +568,18 @@ Split an mbuf chain in two pieces, returning a pointer to
 the tail (which is made of the previous mbuf chain except the first
 .Fa len0
 bytes).
-.It Fn m_inject "struct mbuf *m0" "int len0" "int siz" "int wait"
-Inject a new mbuf chain of length
-.Fa siz
-into the mbuf chain pointed to by
-.Fa m0
-at position
-.Fa len0 .
-If there is enough space for an object of size
-.Fa siz
-in the appropriate location, no memory will be allocated.
-On failure, the function returns NULL (the mbuf is left untouched) and
-on success, a pointer to the first injected mbuf is returned.
+.It Fn m_makespace "struct mbuf *m0" "int skip" "int hlen" "int *off"
+Make space for a continuous memory region of length
+.Fa hlen
+at
+.Fa skip
+bytes into the mbuf chain.
+On success, the mbuf of the continuous memory is returned
+together with an offset
+.Fa off
+into the mbuf.
+On failure, NULL is returned and the mbuf chain may have been modified.
+The caller is assumed to always free the chain.
 .It Fn m_getptr "struct mbuf *m" "int loc" "int *off"
 Returns a pointer to the mbuf containing the data located at
 .Fa loc

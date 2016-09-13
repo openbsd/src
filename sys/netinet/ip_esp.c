@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.139 2016/08/18 06:01:10 dlg Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.140 2016/09/13 19:56:55 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -775,7 +775,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 {
 	struct enc_xform *espx = (struct enc_xform *) tdb->tdb_encalgxform;
 	struct auth_hash *esph = (struct auth_hash *) tdb->tdb_authalgxform;
-	int ilen, hlen, rlen, padding, blks, alen;
+	int ilen, hlen, rlen, padding, blks, alen, roff;
 	u_int32_t replay;
 	struct mbuf *mi, *mo = (struct mbuf *) NULL;
 	struct tdb_crypto *tc;
@@ -907,7 +907,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	}
 
 	/* Inject ESP header. */
-	mo = m_inject(m, skip, hlen, M_DONTWAIT);
+	mo = m_makespace(m, skip, hlen, &roff);
 	if (mo == NULL) {
 		DPRINTF(("esp_output(): failed to inject ESP header for "
 		    "SA %s/%08x\n", ipsp_address(&tdb->tdb_dst, buf,
@@ -918,10 +918,11 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	}
 
 	/* Initialize ESP header. */
-	bcopy((caddr_t) &tdb->tdb_spi, mtod(mo, caddr_t), sizeof(u_int32_t));
+	bcopy((caddr_t) &tdb->tdb_spi, mtod(mo, caddr_t) + roff,
+	    sizeof(u_int32_t));
 	tdb->tdb_rpl++;
 	replay = htonl((u_int32_t)tdb->tdb_rpl);
-	bcopy((caddr_t) &replay, mtod(mo, caddr_t) + sizeof(u_int32_t),
+	bcopy((caddr_t) &replay, mtod(mo, caddr_t) + roff + sizeof(u_int32_t),
 	    sizeof(u_int32_t));
 
 #if NPFSYNC > 0
@@ -932,15 +933,15 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	 * Add padding -- better to do it ourselves than use the crypto engine,
 	 * although if/when we support compression, we'd have to do that.
 	 */
-	mo = m_inject(m, m->m_pkthdr.len, padding + alen, M_DONTWAIT);
+	mo = m_makespace(m, m->m_pkthdr.len, padding + alen, &roff);
 	if (mo == NULL) {
-		DPRINTF(("esp_output(): m_inject failed for SA %s/%08x\n",
+		DPRINTF(("esp_output(): m_makespace() failed for SA %s/%08x\n",
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi)));
 		m_freem(m);
 		return ENOBUFS;
 	}
-	pad = mtod(mo, u_char *);
+	pad = mtod(mo, caddr_t) + roff;
 
 	/* Apply self-describing padding */
 	for (ilen = 0; ilen < padding - 2; ilen++)

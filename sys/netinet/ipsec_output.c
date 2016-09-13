@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.62 2016/02/28 16:16:10 mikeb Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.63 2016/09/13 19:56:55 markus Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -362,13 +362,12 @@ int
 ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 {
 	struct ip *ip;
-
 #ifdef INET6
 	struct ip6_hdr *ip6;
 #endif /* INET6 */
-
 	struct tdb_ident *tdbi;
 	struct m_tag *mtag;
+	int roff;
 
 	tdb->tdb_last_used = time_second;
 
@@ -398,12 +397,12 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 			return ENXIO;
 		}
 
-		mi = m_inject(m, iphlen, sizeof(struct udphdr), M_DONTWAIT);
+		mi = m_makespace(m, iphlen, sizeof(struct udphdr), &roff);
 		if (mi == NULL) {
 			m_freem(m);
 			return ENOMEM;
 		}
-		uh = mtod(mi, struct udphdr *);
+		uh = (struct udphdr *)(mtod(mi, caddr_t) + roff);
 		uh->uh_sport = uh->uh_dport = htons(udpencap_port);
 		if (tdb->tdb_udpencap_port)
 			uh->uh_dport = tdb->tdb_udpencap_port;

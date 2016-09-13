@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.121 2016/08/18 06:01:10 dlg Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.122 2016/09/13 19:56:55 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -932,7 +932,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	struct mbuf *mi;
 	struct cryptop *crp;
 	u_int16_t iplen;
-	int len, rplen;
+	int len, rplen, roff;
 	u_int8_t prot;
 	struct ah *ah;
 #if NBPFILTER > 0
@@ -1057,7 +1057,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	}
 
 	/* Inject AH header. */
-	mi = m_inject(m, skip, rplen + ahx->authsize, M_DONTWAIT);
+	mi = m_makespace(m, skip, rplen + ahx->authsize, &roff);
 	if (mi == NULL) {
 		DPRINTF(("ah_output(): failed to inject AH header for SA "
 		    "%s/%08x\n", ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
@@ -1069,10 +1069,10 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	}
 
 	/*
-	 * The AH header is guaranteed by m_inject() to be in
-	 * contiguous memory, at the beginning of the returned mbuf.
+	 * The AH header is guaranteed by m_makespace() to be in
+	 * contiguous memory, at 'roff' of the returned mbuf.
 	 */
-	ah = mtod(mi, struct ah *);
+	ah = (struct ah *)(mtod(mi, caddr_t) + roff);
 
 	/* Initialize the AH header. */
 	m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &ah->ah_nh);

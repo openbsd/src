@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.227 2016/09/03 14:17:37 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.228 2016/09/13 19:56:55 markus Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -967,67 +967,6 @@ m_getptr(struct mbuf *m, int loc, int *off)
 }
 
 /*
- * Inject a new mbuf chain of length siz in mbuf chain m0 at
- * position len0. Returns a pointer to the first injected mbuf, or
- * NULL on failure (m0 is left undisturbed). Note that if there is
- * enough space for an object of size siz in the appropriate position,
- * no memory will be allocated. Also, there will be no data movement in
- * the first len0 bytes (pointers to that will remain valid).
- *
- * XXX It is assumed that siz is less than the size of an mbuf at the moment.
- */
-struct mbuf *
-m_inject(struct mbuf *m0, int len0, int siz, int wait)
-{
-	struct mbuf *m, *n, *n2 = NULL, *n3;
-	unsigned len = len0, remain;
-
-	if ((siz >= MHLEN) || (len0 <= 0))
-		return (NULL);
-	for (m = m0; m && len > m->m_len; m = m->m_next)
-		len -= m->m_len;
-	if (m == NULL)
-		return (NULL);
-	remain = m->m_len - len;
-	if (remain == 0) {
-		if ((m->m_next) && (M_LEADINGSPACE(m->m_next) >= siz)) {
-			m->m_next->m_len += siz;
-			if (m0->m_flags & M_PKTHDR)
-				m0->m_pkthdr.len += siz;
-			m->m_next->m_data -= siz;
-			return m->m_next;
-		}
-	} else {
-		n2 = m_copym2(m, len, remain, wait);
-		if (n2 == NULL)
-			return (NULL);
-	}
-
-	MGET(n, wait, MT_DATA);
-	if (n == NULL) {
-		if (n2)
-			m_freem(n2);
-		return (NULL);
-	}
-
-	n->m_len = siz;
-	if (m0->m_flags & M_PKTHDR)
-		m0->m_pkthdr.len += siz;
-	m->m_len -= remain; /* Trim */
-	if (n2)	{
-		for (n3 = n; n3->m_next != NULL; n3 = n3->m_next)
-			;
-		n3->m_next = n2;
-	} else
-		n3 = n;
-	for (; n3->m_next != NULL; n3 = n3->m_next)
-		;
-	n3->m_next = m->m_next;
-	m->m_next = n;
-	return n;
-}
-
-/*
  * Partition an mbuf chain in two pieces, returning the tail --
  * all but the first len0 bytes.  In case of failure, it returns NULL and
  * attempts to restore the chain to its original state.
@@ -1092,6 +1031,121 @@ extpacket:
 	m->m_next = NULL;
 	return (n);
 }
+
+/*
+ * Make space for a new header of length hlen at skip bytes
+ * into the packet.  When doing this we allocate new mbufs only
+ * when absolutely necessary.  The mbuf where the new header
+ * is to go is returned together with an offset into the mbuf.
+ * If NULL is returned then the mbuf chain may have been modified;
+ * the caller is assumed to always free the chain.
+ */
+struct mbuf *
+m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
+{
+	struct mbuf *m;
+	unsigned remain;
+
+	KASSERT(m0 != NULL);
+	KASSERT(hlen < MHLEN);
+
+	for (m = m0; m && skip > m->m_len; m = m->m_next)
+		skip -= m->m_len;
+	if (m == NULL)
+		return (NULL);
+	/*
+	 * At this point skip is the offset into the mbuf m
+	 * where the new header should be placed.  Figure out
+	 * if there's space to insert the new header.  If so,
+	 * and copying the remainder makese sense then do so.
+	 * Otherwise insert a new mbuf in the chain, splitting
+	 * the contents of m as needed.
+	 */
+	remain = m->m_len - skip;		/* data to move */
+	if (skip < remain && hlen <= M_LEADINGSPACE(m)) {
+		if (skip)
+			memmove(m->m_data-hlen, m->m_data, skip);
+		m->m_data -= hlen;
+		m->m_len += hlen;
+		(*off) = skip;
+	} else if (hlen > M_TRAILINGSPACE(m)) {
+		struct mbuf *n0, *n, **np;
+		int todo, len, done, alloc;
+
+		n0 = NULL;
+		np = &n0;
+		alloc = 0;
+		done = 0;
+		todo = remain;
+		while (todo > 0) {
+			MGET(n, M_DONTWAIT, m->m_type);
+			len = MHLEN;
+			if (n && todo > MHLEN) {
+				MCLGET(n, M_DONTWAIT);
+				len = MCLBYTES;
+				if ((n->m_flags & M_EXT) == 0) {
+					m_free(n);
+					n = NULL;
+				}
+			}
+			if (n == NULL) {
+				m_freem(n0);
+				return NULL;
+			}
+			*np = n;
+			np = &n->m_next;
+			alloc++;
+			len = min(todo, len);
+			memcpy(n->m_data, mtod(m, char *) + skip + done, len);
+			n->m_len = len;
+			done += len;
+			todo -= len;
+		}
+
+		if (hlen <= M_TRAILINGSPACE(m) + remain) {
+			m->m_len = skip + hlen;
+			*off = skip;
+			if (n0 != NULL) {
+				*np = m->m_next;
+				m->m_next = n0;
+			}
+		}
+		else {
+			n = m_get(M_DONTWAIT, m->m_type);
+			if (n == NULL) {
+				m_freem(n0);
+				return NULL;
+			}
+			alloc++;
+
+			if ((n->m_next = n0) == NULL)
+				np = &n->m_next;
+			n0 = n;
+
+			*np = m->m_next;
+			m->m_next = n0;
+
+			n->m_len = hlen;
+			m->m_len = skip;
+
+			m = n;			/* header is at front ... */
+			*off = 0;		/* ... of new mbuf */
+		}
+	} else {
+		/*
+		 * Copy the remainder to the back of the mbuf
+		 * so there's space to write the new header.
+		 */
+		if (remain > 0)
+			memmove(mtod(m, caddr_t) + skip + hlen,
+			      mtod(m, caddr_t) + skip, remain);
+		m->m_len += hlen;
+		*off = skip;
+	}
+	m0->m_pkthdr.len += hlen;		/* adjust packet length */
+	return m;
+}
+
 
 /*
  * Routine to copy from device local memory into mbufs.
