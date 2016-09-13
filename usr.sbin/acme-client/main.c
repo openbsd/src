@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.11 2016/09/13 16:04:51 deraadt Exp $ */
+/*	$Id: main.c,v 1.12 2016/09/13 16:49:28 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -81,25 +81,19 @@ doasprintf(const char *fmt, ...)
 int
 main(int argc, char *argv[])
 {
-	const char	 *domain, *agreement;
-	char		 *certdir, *acctkey, *chngdir, *keyfile;
-	int		  key_fds[2], acct_fds[2], chng_fds[2],
-			  cert_fds[2], file_fds[2], dns_fds[2],
-			  rvk_fds[2];
+	const char	 *domain, *agreement = NULL, **alts = NULL;
+	char		 *certdir = NULL, *acctkey = NULL, *chngdir = NULL;
+	char		 *keyfile = NULL;
+	int		  key_fds[2], acct_fds[2], chng_fds[2], cert_fds[2];
+	int		  file_fds[2], dns_fds[2], rvk_fds[2];
+	int		  newacct = 0, remote = 0, backup = 0;
+	int		  force = 0, multidir = 0, newkey = 0;
+	int		  c, rc, revocate = 0;
+	int		  authority = DEFAULT_AUTHORITY;
 	pid_t		  pids[COMP__MAX];
-	int		  c, rc, newacct, remote, revocate, force,
-			  multidir, newkey, backup, authority;
 	extern int	  verbose;
 	extern enum comp  proccomp;
 	size_t		  i, altsz, ne;
-	const char	**alts;
-
-	alts = NULL;
-	newacct = remote = revocate = verbose = force =
-		multidir = newkey = backup = 0;
-	authority = DEFAULT_AUTHORITY;
-	certdir = keyfile = acctkey = chngdir = NULL;
-	agreement = NULL;
 
 	while (-1 != (c = getopt(argc, argv, "bFmnNrs:tva:f:c:C:k:")))
 		switch (c) {

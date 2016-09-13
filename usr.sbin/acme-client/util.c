@@ -1,4 +1,4 @@
-/*	$Id: util.c,v 1.3 2016/09/01 00:35:22 florian Exp $ */
+/*	$Id: util.c,v 1.4 2016/09/13 16:49:28 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -122,9 +122,7 @@ readbuf(int fd, enum comm comm, size_t *sz)
 {
 	ssize_t		 ssz;
 	size_t		 rsz, lsz;
-	char		*p;
-
-	p = NULL;
+	char		*p = NULL;
 
 	if ((ssz = read(fd, sz, sizeof(size_t))) < 0) {
 		warn("read: %s length", comms[comm]);
@@ -202,10 +200,8 @@ int
 writebuf(int fd, enum comm comm, const void *v, size_t sz)
 {
 	ssize_t	 ssz;
-	int	 er, rc;
+	int	 er, rc = -1;
 	void	(*sigfp)(int);
-
-	rc = -1;
 
 	/*
 	 * First, try to write the length.

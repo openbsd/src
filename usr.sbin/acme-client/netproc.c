@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.6 2016/09/01 12:17:00 florian Exp $ */
+/*	$Id: netproc.c,v 1.7 2016/09/13 16:49:28 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -328,11 +328,10 @@ static int
 donewreg(struct conn *c, const char *agreement,
 	const struct capaths *p)
 {
-	int		 rc;
+	int		 rc = 0;
 	char		*req;
 	long		 lc;
 
-	rc = 0;
 	dodbg("%s: new-reg", p->newreg);
 
 	if (NULL == (req = json_fmt_newreg(agreement)))
@@ -361,13 +360,11 @@ static int
 dochngreq(struct conn *c, const char *alt,
 	struct chng *chng, const struct capaths *p)
 {
-	int		 rc;
+	int		 rc = 0;
 	char		*req;
 	long		 lc;
-	struct jsmnn	*j;
+	struct jsmnn	*j = NULL;
 
-	j = NULL;
-	rc = 0;
 	dodbg("%s: req-auth: %s", p->newauthz, alt);
 
 	if (NULL == (req = json_fmt_newauthz(alt)))
@@ -396,11 +393,10 @@ dochngreq(struct conn *c, const char *alt,
 static int
 dochngresp(struct conn *c, const struct chng *chng, const char *th)
 {
-	int	 rc;
+	int	 rc = 0;
 	long	 lc;
 	char	*req;
 
-	rc = 0;
 	dodbg("%s: challenge", chng->uri);
 
 	if (NULL == (req = json_fmt_challenge(chng->token, th)))
@@ -459,11 +455,9 @@ static int
 dorevoke(struct conn *c, const char *addr, const char *cert)
 {
 	char		*req;
-	int		 rc;
-	long		 lc;
+	int		 rc = 0;
+	long		 lc = 0;
 
-	lc = 0;
-	rc = 0;
 	dodbg("%s: revocation", addr);
 
 	if (NULL == (req = json_fmt_revokecert(cert)))
@@ -492,10 +486,9 @@ static int
 docert(struct conn *c, const char *addr, const char *cert)
 {
 	char	*req;
-	int	 rc;
+	int	 rc = 0;
 	long	 lc;
 
-	rc = 0;
 	dodbg("%s: certificate", addr);
 
 	if (NULL == (req = json_fmt_newcert(cert)))
@@ -521,12 +514,10 @@ docert(struct conn *c, const char *addr, const char *cert)
 static int
 dodirs(struct conn *c, const char *addr, struct capaths *paths)
 {
-	struct jsmnn	*j;
+	struct jsmnn	*j = NULL;
 	long		 lc;
-	int		 rc;
+	int		 rc = 0;
 
-	j = NULL;
-	rc = 0;
 	dodbg("%s: directories", addr);
 
 	if ((lc = nreq(c, addr)) < 0)
@@ -552,10 +543,9 @@ dodirs(struct conn *c, const char *addr, struct capaths *paths)
 static int
 dofullchain(struct conn *c, const char *addr)
 {
-	int	 rc;
+	int	 rc = 0;
 	long	 lc;
 
-	rc = 0;
 	dodbg("%s: full chain", addr);
 
 	if ((lc = nreq(c, addr)) < 0)
@@ -577,22 +567,19 @@ dofullchain(struct conn *c, const char *addr)
  */
 int
 netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
-	int newacct, int revocate, int authority,
-	const char *const *alts, size_t altsz, const char *agreement)
+    int newacct, int revocate, int authority,
+    const char *const *alts, size_t altsz, const char *agreement)
 {
-	int		 rc;
+	int		 rc = 0;
 	size_t		 i;
-	char		*cert, *thumb, *url;
+	char		*cert = NULL, *thumb = NULL, *url = NULL;
 	struct conn	 c;
 	struct capaths	 paths;
-	struct chng	*chngs;
+	struct chng	*chngs = NULL;
 	long		 lval;
 
-	rc = 0;
 	memset(&paths, 0, sizeof(struct capaths));
 	memset(&c, 0, sizeof(struct conn));
-	url = cert = thumb = NULL;
-	chngs = NULL;
 
 	if (pledge("stdio inet", NULL) == -1) {
 		warn("pledge");

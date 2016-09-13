@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.7 2016/09/13 16:04:51 deraadt Exp $ */
+/*	$Id: acctproc.c,v 1.8 2016/09/13 16:49:28 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -73,10 +73,8 @@ bn2string(const BIGNUM *bn)
 static char *
 op_thumb_rsa(EVP_PKEY *pkey)
 {
-	char	*exp, *mod, *json;
+	char	*exp = NULL, *mod = NULL, *json = NULL;
 	RSA	*r;
-
-	exp = mod = json = NULL;
 
 	if (NULL == (r = EVP_PKEY_get1_RSA(pkey)))
 		warnx("EVP_PKEY_get1_RSA");
@@ -98,17 +96,11 @@ op_thumb_rsa(EVP_PKEY *pkey)
 static int
 op_thumbprint(int fd, EVP_PKEY *pkey)
 {
-	char		*thumb, *dig64;
-	int		 rc;
+	char		*thumb = NULL, *dig64 = NULL;
+	EVP_MD_CTX	*ctx = NULL;
+	unsigned char	*dig = NULL;
 	unsigned int	 digsz;
-	unsigned char	*dig;
-
-	EVP_MD_CTX	*ctx;
-
-	rc = 0;
-	thumb = dig64 = NULL;
-	dig = NULL;
-	ctx = NULL;
+	int		 rc = 0;
 
 	/* Construct the thumbprint input itself. */
 
@@ -164,12 +156,12 @@ out:
 static int
 op_sign_rsa(char **head, char **prot, EVP_PKEY *pkey, const char *nonce)
 {
+	char	*exp = NULL, *mod = NULL;
+	int	rc = 0;
 	RSA	*r;
-	char	*exp, *mod;
-	int	rc;
 
-	*head = *prot = exp = mod = NULL;
-	rc = 0;
+	*head = NULL;
+	*prot = NULL;
 
 	/*
 	 * First, extract relevant portions of our private key.
@@ -202,19 +194,13 @@ op_sign_rsa(char **head, char **prot, EVP_PKEY *pkey, const char *nonce)
 static int
 op_sign(int fd, EVP_PKEY *pkey)
 {
-	char		*nonce, *pay,
-			*pay64, *prot, *prot64, *head,
-			*sign, *dig64, *fin;
-	int		 cc, rc;
+	char		*nonce = NULL, *pay = NULL, *pay64 = NULL;
+	char		*prot = NULL, *prot64 = NULL, *head = NULL;
+	char		*sign = NULL, *dig64 = NULL, *fin = NULL;
+	unsigned char	*dig = NULL;
+	EVP_MD_CTX	*ctx = NULL;
+	int		 cc, rc = 0;
 	unsigned int	 digsz;
-	unsigned char	*dig;
-	EVP_MD_CTX	*ctx;
-
-	rc = 0;
-	pay = nonce = head = fin =
-		sign = prot = prot64 = pay64 = dig64 = NULL;
-	dig = NULL;
-	ctx = NULL;
 
 	/* Read our payload and nonce from the requestor. */
 
@@ -316,16 +302,12 @@ out:
 int
 acctproc(int netsock, const char *acctkey, int newacct)
 {
-	FILE		*f;
-	EVP_PKEY	*pkey;
+	FILE		*f = NULL;
+	EVP_PKEY	*pkey = NULL;
 	long		 lval;
 	enum acctop	 op;
-	int		 rc, cc;
+	int		 rc = 0, cc;
 	mode_t		 prev;
-
-	f = NULL;
-	pkey = NULL;
-	rc = 0;
 
 	/*
 	 * First, open our private key file read-only or write-only if

@@ -1,4 +1,4 @@
-/*	$Id: keyproc.c,v 1.5 2016/09/13 16:01:37 deraadt Exp $ */
+/*	$Id: keyproc.c,v 1.6 2016/09/13 16:49:28 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -77,23 +77,17 @@ int
 keyproc(int netsock, const char *keyfile,
 	const char **alts, size_t altsz, int newkey)
 {
-	char		*der64, *der, *dercp, *sans, *san;
+	char		*der64 = NULL, *der = NULL, *dercp;
+	char		*sans = NULL, *san = NULL;
 	FILE		*f;
 	size_t		 i, sansz;
 	void		*pp;
-	EVP_PKEY	*pkey;
-	X509_REQ	*x;
-	X509_NAME	*name;
-	int		 len, rc, cc, nid;
+	EVP_PKEY	*pkey = NULL;
+	X509_REQ	*x = NULL;
+	X509_NAME	*name = NULL;
+	int		 len, rc = 0, cc, nid;
 	mode_t		 prev;
-	STACK_OF(X509_EXTENSION) *exts;
-
-	x = NULL;
-	pkey = NULL;
-	name = NULL;
-	der = der64 = sans = san = NULL;
-	rc = 0;
-	exts = NULL;
+	STACK_OF(X509_EXTENSION) *exts = NULL;
 
 	/*
 	 * First, open our private key file read-only or write-only if

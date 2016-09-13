@@ -1,4 +1,4 @@
-/*	$Id: fileproc.c,v 1.4 2016/09/01 00:35:21 florian Exp $ */
+/*	$Id: fileproc.c,v 1.5 2016/09/13 16:49:28 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,8 +29,7 @@
 
 static int
 serialise(const char *tmp, const char *real,
-	const char *v, size_t vsz,
-	const char *v2, size_t v2sz)
+    const char *v, size_t vsz, const char *v2, size_t v2sz)
 {
 	int	 fd;
 
@@ -65,16 +64,13 @@ serialise(const char *tmp, const char *real,
 int
 fileproc(int certsock, int backup, const char *certdir)
 {
-	char		*csr, *ch;
+	char		*csr = NULL, *ch = NULL;
+	char		 file[PATH_MAX];
 	size_t		 chsz, csz;
-	int		 rc;
+	int		 rc = 0;
 	long		 lval;
 	enum fileop	 op;
 	time_t		 t;
-	char		 file[PATH_MAX];
-
-	csr = ch = NULL;
-	rc = 0;
 
 	/* File-system and sandbox jailing. */
 

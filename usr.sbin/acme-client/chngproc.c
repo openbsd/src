@@ -1,4 +1,4 @@
-/*	$Id: chngproc.c,v 1.5 2016/09/13 16:00:26 deraadt Exp $ */
+/*	$Id: chngproc.c,v 1.6 2016/09/13 16:49:28 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,20 +29,12 @@
 int
 chngproc(int netsock, const char *root, int remote)
 {
-	int		  rc;
+	char		 *tok = NULL, *th = NULL, *fmt = NULL, **fs = NULL;
+	size_t		  i, fsz = 0;
+	int		  rc = 0, fd = -1, cc;
 	long		  lval;
 	enum chngop	  op;
-	char		 *tok, *th, *fmt;
-	char		**fs;
-	size_t		  i, fsz;
 	void		 *pp;
-	int		  fd, cc;
-
-	rc = 0;
-	th = tok = fmt = NULL;
-	fd = -1;
-	fs = NULL;
-	fsz = 0;
 
 	if (chroot(root) == -1) {
 		warn("chroot");

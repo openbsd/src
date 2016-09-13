@@ -1,4 +1,4 @@
-/*	$Id: dnsproc.c,v 1.4 2016/09/01 00:35:21 florian Exp $ */
+/*	$Id: dnsproc.c,v 1.5 2016/09/13 16:49:28 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -112,17 +112,13 @@ host_dns(const char *s, struct addr *vec)
 int
 dnsproc(int nfd)
 {
-	int		 rc, cc;
-	char		*look, *last;
+	char		*look = NULL, *last = NULL;
 	struct addr	 v[MAX_SERVERS_DNS];
+	int		 rc = 0, cc;
 	long		 lval;
+	ssize_t		 vsz = 0;
 	size_t		 i;
-	ssize_t		 vsz;
 	enum dnsop	 op;
-
-	rc = 0;
-	look = last = NULL;
-	vsz = 0;
 
 	if (pledge("stdio dns", NULL) == -1) {
 		warn("pledge");

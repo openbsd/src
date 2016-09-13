@@ -1,4 +1,4 @@
-/*	$Id: rsa.c,v 1.3 2016/09/01 00:35:22 florian Exp $ */
+/*	$Id: rsa.c,v 1.4 2016/09/13 16:49:28 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -36,11 +36,8 @@
 EVP_PKEY *
 rsa_key_create(FILE *f, const char *fname)
 {
-	EVP_PKEY_CTX	*ctx;
-	EVP_PKEY	*pkey;
-
-	ctx = NULL;
-	pkey = NULL;
+	EVP_PKEY_CTX	*ctx = NULL;
+	EVP_PKEY	*pkey = NULL;
 
 	/* First, create the context and the key. */
 
