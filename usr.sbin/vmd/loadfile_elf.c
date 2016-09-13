@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.17 2016/09/01 16:04:47 stefan Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.18 2016/09/13 19:07:47 jasper Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -778,7 +778,8 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
 		for (first = 1, i = 0; i < elf->e_shnum; i++) {
 			if (shp[i].sh_type == SHT_SYMTAB ||
 			    shp[i].sh_type == SHT_STRTAB ||
-			    !strcmp(shstr + shp[i].sh_name, ".debug_line")) {
+			    !strcmp(shstr + shp[i].sh_name, ".debug_line") ||
+			    !strcmp(shstr + shp[i].sh_name, ".SUNW_ctf")) {
 				if (havesyms && (flags & LOAD_SYM)) {
 					if (lseek(fd, (off_t)shp[i].sh_offset,
 					    SEEK_SET) == -1) {
