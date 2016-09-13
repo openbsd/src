@@ -1,4 +1,4 @@
-/*	$Id: chngproc.c,v 1.4 2016/09/01 00:35:21 florian Exp $ */
+/*	$Id: chngproc.c,v 1.5 2016/09/13 16:00:26 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -90,7 +90,7 @@ chngproc(int netsock, const char *root, int remote)
 
 		/* Vector appending... */
 
-		pp = realloc(fs, (fsz + 1) * sizeof(char *));
+		pp = reallocarray(fs, (fsz + 1), sizeof(char *));
 		if (NULL == pp) {
 			warn("realloc");
 			goto out;
