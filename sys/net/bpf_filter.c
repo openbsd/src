@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.31 2016/09/12 14:05:40 krw Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.32 2016/09/13 12:09:53 krw Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -148,14 +148,14 @@ _bpf_filter(const struct bpf_insn *pc, const struct bpf_ops *ops,
 	int32_t mem[BPF_MEMWORDS];
 	int err;
 
-	bzero(mem, sizeof(mem));
-
 	if (pc == NULL) {
 		/*
 		 * No filter means accept all.
 		 */
 		return (u_int)-1;
 	}
+
+	memset(mem, 0, sizeof(mem));
 
 	--pc;
 	while (1) {
