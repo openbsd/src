@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.327 2016/09/08 09:11:43 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.328 2016/09/13 08:11:39 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1098,11 +1098,6 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			}
 			rtfree(crt);
 		}
-#ifdef BFD
-		if (error == 0 && ISSET(rt->rt_flags, RTF_BFD))
-			error = bfd_rtalloc(rt);
-			/* XXX this code will return EEXIST at the moment */
-#endif
 		if (error != 0) {
 			ifafree(ifa);
 			rtfree(rt->rt_parent);
