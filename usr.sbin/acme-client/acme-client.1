@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.8 2016/09/06 06:21:45 jmc Exp $
+.\"	$OpenBSD: acme-client.1,v 1.9 2016/09/13 03:10:05 deraadt Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 6 2016 $
+.Dd $Mdocdate: September 13 2016 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -42,9 +42,7 @@ and its alternate DNS names
 .Ar altnames
 to an ACME authority server for automated signing,
 and it can also revoke previously submitted signatures.
-It must be run as root
-(see
-.Xr chroot 2 ) .
+It must be run as root.
 .Pp
 By default, it uses
 .Pa /var/www/acme
