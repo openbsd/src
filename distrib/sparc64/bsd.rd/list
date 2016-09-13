@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.59 2016/09/04 09:54:22 rpe Exp $
+#	$OpenBSD: list,v 1.60 2016/09/13 22:27:51 rpe Exp $
 
 SRCDIRS distrib/special
 
@@ -65,7 +65,7 @@ SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
 # various files that we need in /etc for the install
-COPY	${DESTDIR}/etc/group			etc/group
+COPY	${CURDIR}/../../miniroot/group		etc/group
 COPY	${CURDIR}/../../miniroot/master.passwd	etc/master.passwd
 SPECIAL	pwd_mkdb -p -d etc master.passwd; rm etc/master.passwd
 COPY	${DESTDIR}/etc/signify/openbsd-${REV}-base.pub	etc/signify/openbsd-${REV}-base.pub

@@ -1,0 +1,13 @@
+wheel:*:0:root
+daemon:*:1:daemon
+kmem:*:2:root
+sys:*:3:root
+tty:*:4:root
+operator:*:5:root
+bin:*:7:
+_shadow:*:65:
+_dhcp:*:77:
+_sndio:*:99:
+_file:*:104:
+dialer:*:117:
+nobody:*:32767:
