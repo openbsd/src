@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.85 2016/04/13 11:41:15 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.86 2016/09/13 07:48:45 mpi Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -62,8 +62,7 @@
 #include <net/bpf.h>
 #endif
 
-#include "bridge.h"
-#if NBRIDGE > 0 || defined(MPLS)
+#ifdef MPLS
 #include <netinet/ip_ether.h>
 #endif
 
@@ -681,10 +680,6 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 	case AF_INET6:
 		break;
 #endif
-#if NBRIDGE > 0
-	case AF_LINK:
-		break;
-#endif
 #if MPLS
 	case AF_MPLS:
 		break;
@@ -700,11 +695,6 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 
 	/* encapsulate into IPv4 packet */
 	*m0 = NULL;
-#if NBRIDGE > 0
-	if (family == AF_LINK)
-		error = etherip_output(m, &tdb, m0, IPPROTO_ETHERIP);
-	else
-#endif /* NBRIDGE */
 #ifdef MPLS
 	if (family == AF_MPLS)
 		error = etherip_output(m, &tdb, m0, IPPROTO_MPLS);
@@ -819,10 +809,6 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 	case AF_INET6:
 		break;
 #endif
-#if NBRIDGE > 0
-	case AF_LINK:
-		break;
-#endif
 #ifdef MPLS
 	case AF_MPLS:
 		break;
@@ -838,11 +824,6 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 
 	/* encapsulate into IPv6 packet */
 	*m0 = NULL;
-#if NBRIDGE > 0
-	if (family == AF_LINK)
-		error = etherip_output(m, &tdb, m0, IPPROTO_ETHERIP);
-	else
-#endif /* NBRIDGE */
 #if MPLS
 	if (family == AF_MPLS)
 		error = etherip_output(m, &tdb, m0, IPPROTO_MPLS);
