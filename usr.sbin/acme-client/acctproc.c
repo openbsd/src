@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.8 2016/09/13 16:49:28 deraadt Exp $ */
+/*	$Id: acctproc.c,v 1.9 2016/09/13 17:13:37 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -127,13 +127,13 @@ op_thumbprint(int fd, EVP_PKEY *pkey)
 	} else if (NULL == (ctx = EVP_MD_CTX_create())) {
 		warnx("EVP_MD_CTX_create");
 		goto out;
-	} else if ( ! EVP_DigestInit_ex(ctx, EVP_sha256(), NULL)) {
+	} else if (!EVP_DigestInit_ex(ctx, EVP_sha256(), NULL)) {
 		warnx("EVP_SignInit_ex");
 		goto out;
-	} else if ( ! EVP_DigestUpdate(ctx, thumb, strlen(thumb))) {
+	} else if (!EVP_DigestUpdate(ctx, thumb, strlen(thumb))) {
 		warnx("EVP_SignUpdate");
 		goto out;
-	} else if ( ! EVP_DigestFinal_ex(ctx, dig, &digsz)) {
+	} else if (!EVP_DigestFinal_ex(ctx, dig, &digsz)) {
 		warnx("EVP_SignFinal");
 		goto out;
 	} else if (NULL == (dig64 = base64buf_url((char *)dig, digsz))) {
@@ -218,7 +218,7 @@ op_sign(int fd, EVP_PKEY *pkey)
 
 	switch (EVP_PKEY_type(pkey->type)) {
 	case EVP_PKEY_RSA:
-		if ( ! op_sign_rsa(&head, &prot, pkey, nonce))
+		if (!op_sign_rsa(&head, &prot, pkey, nonce))
 			goto out;
 		break;
 	default:
@@ -255,13 +255,13 @@ op_sign(int fd, EVP_PKEY *pkey)
 	if (NULL == (ctx = EVP_MD_CTX_create())) {
 		warnx("EVP_MD_CTX_create");
 		goto out;
-	} else if ( ! EVP_SignInit_ex(ctx, EVP_sha256(), NULL)) {
+	} else if (!EVP_SignInit_ex(ctx, EVP_sha256(), NULL)) {
 		warnx("EVP_SignInit_ex");
 		goto out;
-	} else if ( ! EVP_SignUpdate(ctx, sign, strlen(sign))) {
+	} else if (!EVP_SignUpdate(ctx, sign, strlen(sign))) {
 		warnx("EVP_SignUpdate");
 		goto out;
-	} else if ( ! EVP_SignFinal(ctx, dig, &digsz, pkey)) {
+	} else if (!EVP_SignFinal(ctx, dig, &digsz, pkey)) {
 		warnx("EVP_SignFinal");
 		goto out;
 	} else if (NULL == (dig64 = base64buf_url((char *)dig, digsz))) {

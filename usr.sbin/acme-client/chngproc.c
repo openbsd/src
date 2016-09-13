@@ -1,4 +1,4 @@
-/*	$Id: chngproc.c,v 1.6 2016/09/13 16:49:28 deraadt Exp $ */
+/*	$Id: chngproc.c,v 1.7 2016/09/13 17:13:37 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -107,7 +107,7 @@ chngproc(int netsock, const char *root, int remote)
 			puts("RUN THIS IN THE CHALLENGE DIRECTORY");
 			puts("YOU HAVE 20 SECONDS...");
 			printf("doas sh -c \"echo %s > %s\"\n",
-				fmt, fs[fsz - 1]);
+			    fmt, fs[fsz - 1]);
 			sleep(20);
 			puts("TIME'S UP.");
 		} else {
@@ -116,8 +116,7 @@ chngproc(int netsock, const char *root, int remote)
 			 * Note: we use file descriptors instead of FILE
 			 * because we want to minimise our pledges.
 			 */
-			fd = open(fs[fsz - 1],
-				O_WRONLY|O_EXCL|O_CREAT, 0444);
+			fd = open(fs[fsz - 1], O_WRONLY|O_EXCL|O_CREAT, 0444);
 			if (-1 == fd) {
 				warn("%s", fs[fsz - 1]);
 				goto out;

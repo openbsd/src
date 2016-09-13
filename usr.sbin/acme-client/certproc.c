@@ -1,4 +1,4 @@
-/*	$Id: certproc.c,v 1.6 2016/09/13 16:49:28 deraadt Exp $ */
+/*	$Id: certproc.c,v 1.7 2016/09/13 17:13:37 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -47,7 +47,7 @@ x509buf(X509 *x, size_t *sz)
 	if (NULL == (bio = BIO_new(BIO_s_mem()))) {
 		warnx("BIO_new");
 		return (NULL);
-	} else if ( ! PEM_write_bio_X509(bio, x)) {
+	} else if (!PEM_write_bio_X509(bio, x)) {
 		warnx("PEM_write_bio_X509");
 		BIO_free(bio);
 		return (NULL);
@@ -195,8 +195,7 @@ certproc(int netsock, int filesock)
 	if (chainsz <= strlen(MARKER) ||
 	    strncmp(chain, MARKER, strlen(MARKER))) {
 		chaincp = (u_char *)chain;
-		chainx = d2i_X509(NULL,
-			(const u_char **)&chaincp, chainsz);
+		chainx = d2i_X509(NULL, (const u_char **)&chaincp, chainsz);
 		if (NULL == chainx) {
 			warnx("d2i_X509");
 			goto out;

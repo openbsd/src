@@ -1,4 +1,4 @@
-/*	$Id: json.c,v 1.4 2016/09/13 16:04:51 deraadt Exp $ */
+/*	$Id: json.c,v 1.5 2016/09/13 17:13:37 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -69,7 +69,7 @@ struct	parse {
  */
 static ssize_t
 build(struct parse *parse, struct jsmnn **np,
-	jsmntok_t *t, const char *js, size_t sz)
+    jsmntok_t *t, const char *js, size_t sz)
 {
 	size_t		 i, j;
 	struct jsmnn	*n;
@@ -350,8 +350,7 @@ json_parse_challenge(struct jsmnn *n, struct chng *p)
 			continue;
 		p->uri = json_getstr(obj, "uri");
 		p->token = json_getstr(obj, "token");
-		return (NULL != p->uri &&
-		       NULL != p->token);
+		return (NULL != p->uri && NULL != p->token);
 	}
 
 	return (0);
@@ -373,10 +372,8 @@ json_parse_capaths(struct jsmnn *n, struct capaths *p)
 	p->newreg = json_getstr(n, "new-reg");
 	p->revokecert = json_getstr(n, "revoke-cert");
 
-	return (NULL != p->newauthz &&
-	       NULL != p->newcert &&
-	       NULL != p->newreg &&
-	       NULL != p->revokecert);
+	return (NULL != p->newauthz && NULL != p->newcert &&
+	    NULL != p->newreg && NULL != p->revokecert);
 }
 
 /*
@@ -447,9 +444,10 @@ json_fmt_newreg(const char *license)
 	char	*p;
 
 	c = asprintf(&p, "{"
-		"\"resource\": \"new-reg\", "
-		"\"agreement\": \"%s\""
-		"}", license);
+	    "\"resource\": \"new-reg\", "
+	    "\"agreement\": \"%s\""
+	    "}",
+	    license);
 	if (-1 == c) {
 		warn("asprintf");
 		p = NULL;
@@ -467,10 +465,11 @@ json_fmt_newauthz(const char *domain)
 	char	*p;
 
 	c = asprintf(&p, "{"
-		"\"resource\": \"new-authz\", "
-		"\"identifier\": "
-		"{\"type\": \"dns\", \"value\": \"%s\"}"
-		"}", domain);
+	    "\"resource\": \"new-authz\", "
+	    "\"identifier\": "
+	    "{\"type\": \"dns\", \"value\": \"%s\"}"
+	    "}",
+	    domain);
 	if (-1 == c) {
 		warn("asprintf");
 		p = NULL;
@@ -488,9 +487,10 @@ json_fmt_challenge(const char *token, const char *thumb)
 	char	*p;
 
 	c = asprintf(&p, "{"
-		"\"resource\": \"challenge\", "
-		"\"keyAuthorization\": \"%s.%s\""
-		"}", token, thumb);
+	    "\"resource\": \"challenge\", "
+	    "\"keyAuthorization\": \"%s.%s\""
+	    "}",
+	    token, thumb);
 	if (-1 == c) {
 		warn("asprintf");
 		p = NULL;
@@ -508,9 +508,10 @@ json_fmt_revokecert(const char *cert)
 	char	*p;
 
 	c = asprintf(&p, "{"
-		"\"resource\": \"revoke-cert\", "
-		"\"certificate\": \"%s\""
-		"}", cert);
+	    "\"resource\": \"revoke-cert\", "
+	    "\"certificate\": \"%s\""
+	    "}",
+	    cert);
 	if (-1 == c) {
 		warn("asprintf");
 		p = NULL;
@@ -528,9 +529,10 @@ json_fmt_newcert(const char *cert)
 	char	*p;
 
 	c = asprintf(&p, "{"
-		"\"resource\": \"new-cert\", "
-		"\"csr\": \"%s\""
-		"}", cert);
+	    "\"resource\": \"new-cert\", "
+	    "\"csr\": \"%s\""
+	    "}",
+	    cert);
 	if (-1 == c) {
 		warn("asprintf");
 		p = NULL;
@@ -548,10 +550,11 @@ json_fmt_header_rsa(const char *exp, const char *mod)
 	char	*p;
 
 	c = asprintf(&p, "{"
-		"\"alg\": \"RS256\", "
-		"\"jwk\": "
-		"{\"e\": \"%s\", \"kty\": \"RSA\", \"n\": \"%s\"}"
-		"}", exp, mod);
+	    "\"alg\": \"RS256\", "
+	    "\"jwk\": "
+	    "{\"e\": \"%s\", \"kty\": \"RSA\", \"n\": \"%s\"}"
+	    "}",
+	    exp, mod);
 	if (-1 == c) {
 		warn("asprintf");
 		p = NULL;
@@ -569,11 +572,12 @@ json_fmt_protected_rsa(const char *exp, const char *mod, const char *nce)
 	char	*p;
 
 	c = asprintf(&p, "{"
-		"\"alg\": \"RS256\", "
-		"\"jwk\": "
-		"{\"e\": \"%s\", \"kty\": \"RSA\", \"n\": \"%s\"}, "
-		"\"nonce\": \"%s\""
-		"}", exp, mod, nce);
+	    "\"alg\": \"RS256\", "
+	    "\"jwk\": "
+	    "{\"e\": \"%s\", \"kty\": \"RSA\", \"n\": \"%s\"}, "
+	    "\"nonce\": \"%s\""
+	    "}",
+	    exp, mod, nce);
 	if (-1 == c) {
 		warn("asprintf");
 		p = NULL;
@@ -586,17 +590,18 @@ json_fmt_protected_rsa(const char *exp, const char *mod, const char *nce)
  */
 char *
 json_fmt_signed(const char *header, const char *protected,
-	const char *payload, const char *digest)
+    const char *payload, const char *digest)
 {
 	int	 c;
 	char	*p;
 
 	c = asprintf(&p, "{"
-		"\"header\": %s, "
-		"\"protected\": \"%s\", "
-		"\"payload\": \"%s\", "
-		"\"signature\": \"%s\""
-		"}", header, protected, payload, digest);
+	    "\"header\": %s, "
+	    "\"protected\": \"%s\", "
+	    "\"payload\": \"%s\", "
+	    "\"signature\": \"%s\""
+	    "}",
+	    header, protected, payload, digest);
 	if (-1 == c) {
 		warn("asprintf");
 		p = NULL;
@@ -618,9 +623,8 @@ json_fmt_thumb_rsa(const char *exp, const char *mod)
 
 	/*NOTE: WHITESPACE IS IMPORTANT. */
 
-	c = asprintf(&p,
-		"{\"e\":\"%s\",\"kty\":\"RSA\",\"n\":\"%s\"}",
-		exp, mod);
+	c = asprintf(&p, "{\"e\":\"%s\",\"kty\":\"RSA\",\"n\":\"%s\"}",
+	    exp, mod);
 	if (-1 == c) {
 		warn("asprintf");
 		p = NULL;

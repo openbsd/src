@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.7 2016/09/01 00:35:21 florian Exp $ */
+/*	$Id: http.c,v 1.8 2016/09/13 17:13:37 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -95,9 +95,8 @@ dotlsread(char *buf, size_t sz, const struct http *http)
 	} while (TLS_WANT_POLLIN == rc || TLS_WANT_POLLOUT == rc);
 
 	if (rc < 0)
-		warnx("%s: tls_read: %s",
-			http->src.ip,
-			tls_error(http->ctx));
+		warnx("%s: tls_read: %s", http->src.ip,
+		    tls_error(http->ctx));
 	return (rc);
 }
 
@@ -111,9 +110,8 @@ dotlswrite(const void *buf, size_t sz, const struct http *http)
 	} while (TLS_WANT_POLLIN == rc || TLS_WANT_POLLOUT == rc);
 
 	if (rc < 0)
-		warnx("%s: tls_write: %s",
-			http->src.ip,
-			tls_error(http->ctx));
+		warnx("%s: tls_write: %s", http->src.ip,
+		    tls_error(http->ctx));
 	return (rc);
 }
 
@@ -164,9 +162,8 @@ http_disconnect(struct http *http)
 	if (NULL != http->ctx) {
 		/* TLS connection. */
 		if (-1 == tls_close(http->ctx))
-			warnx("%s: tls_close: %s",
-				http->src.ip,
-				tls_error(http->ctx));
+			warnx("%s: tls_close: %s", http->src.ip,
+			    tls_error(http->ctx));
 		if (NULL != http->ctx)
 			tls_free(http->ctx);
 #if ! defined(TLS_READ_AGAIN) && ! defined(TLS_WRITE_AGAIN)
@@ -200,7 +197,7 @@ http_free(struct http *http)
 
 struct http *
 http_alloc(const struct source *addrs, size_t addrsz,
-	const char *host, short port, const char *path)
+    const char *host, short port, const char *path)
 {
 	struct sockaddr_storage ss;
 	int		 family, fd, c;
@@ -223,14 +220,14 @@ again:
 		((struct sockaddr_in *)&ss)->sin_family = AF_INET;
 		((struct sockaddr_in *)&ss)->sin_port = htons(port);
 		c = inet_pton(AF_INET, addrs[cur].ip,
-			&((struct sockaddr_in *)&ss)->sin_addr);
+		    &((struct sockaddr_in *)&ss)->sin_addr);
 		len = sizeof(struct sockaddr_in);
 	} else if (6 == addrs[cur].family) {
 		family = PF_INET6;
 		((struct sockaddr_in6 *)&ss)->sin6_family = AF_INET6;
 		((struct sockaddr_in6 *)&ss)->sin6_port = htons(port);
 		c = inet_pton(AF_INET6, addrs[cur].ip,
-			&((struct sockaddr_in6 *)&ss)->sin6_addr);
+		    &((struct sockaddr_in6 *)&ss)->sin6_addr);
 		len = sizeof(struct sockaddr_in6);
 	} else {
 		warnx("%s: unknown family", addrs[cur].ip);
@@ -271,9 +268,7 @@ again:
 	http->src.ip = strdup(addrs[cur].ip);
 	http->host = strdup(host);
 	http->path = strdup(path);
-	if (NULL == http->src.ip ||
-	    NULL == http->host ||
-	    NULL == http->path) {
+	if (NULL == http->src.ip || NULL == http->host || NULL == http->path) {
 		warn("strdup");
 		goto err;
 	}
@@ -317,11 +312,9 @@ again:
 		goto err;
 	}
 
-	if (0 != tls_connect_socket
-	     (http->ctx, http->fd, http->host)) {
-		warnx("%s: tls_connect_socket: %s, %s",
-			http->src.ip, http->host,
-			tls_error(http->ctx));
+	if (0 != tls_connect_socket(http->ctx, http->fd, http->host)) {
+		warnx("%s: tls_connect_socket: %s, %s", http->src.ip,
+		    http->host, tls_error(http->ctx));
 		goto err;
 	}
 
@@ -340,22 +333,22 @@ http_open(const struct http *http, const void *p, size_t psz)
 
 	if (NULL == p) {
 		c = asprintf(&req,
-			"GET %s HTTP/1.0\r\n"
-			"Host: %s\r\n"
-			"\r\n",
-			http->path, http->host);
+		    "GET %s HTTP/1.0\r\n"
+		    "Host: %s\r\n"
+		    "\r\n",
+		    http->path, http->host);
 	} else {
 		c = asprintf(&req,
-			"POST %s HTTP/1.0\r\n"
-			"Host: %s\r\n"
-			"Content-Length: %zu\r\n"
-			"\r\n",
-			http->path, http->host, psz);
+		    "POST %s HTTP/1.0\r\n"
+		    "Host: %s\r\n"
+		    "Content-Length: %zu\r\n"
+		    "\r\n",
+		    http->path, http->host, psz);
 	}
 	if (-1 == c) {
 		warn("asprintf");
 		return (NULL);
-	} else if ( ! http_write(req, c, http)) {
+	} else if (!http_write(req, c, http)) {
 		free(req);
 		return (NULL);
 	} else if (NULL != p && ! http_write(p, psz, http)) {
@@ -392,8 +385,7 @@ http_close(struct httpxfer *x)
  * You must not free the returned pointer.
  */
 char *
-http_body_read(const struct http *http,
-	struct httpxfer *trans, size_t *sz)
+http_body_read(const struct http *http, struct httpxfer *trans, size_t *sz)
 {
 	char		 buf[BUFSIZ];
 	ssize_t		 ssz;
@@ -453,8 +445,7 @@ http_head_get(const char *v, struct httphead *h, size_t hsz)
  * This will return -1 on failure, otherwise the code.
  */
 int
-http_head_status(const struct http *http,
-	struct httphead *h, size_t sz)
+http_head_status(const struct http *http, struct httphead *h, size_t sz)
 {
 	int		 rc;
 	unsigned int	 code;
@@ -470,8 +461,7 @@ http_head_status(const struct http *http,
 		warn("sscanf");
 		return (-1);
 	} else if (1 != rc) {
-		warnx("%s: cannot convert status header",
-			http->src.ip);
+		warnx("%s: cannot convert status header", http->src.ip);
 		return (-1);
 	}
 	return (code);
@@ -490,8 +480,7 @@ http_head_status(const struct http *http,
  * internally, this returns NULL.
  */
 struct httphead *
-http_head_parse(const struct http *http,
-	struct httpxfer *trans, size_t *sz)
+http_head_parse(const struct http *http, struct httpxfer *trans, size_t *sz)
 {
 	size_t		 hsz, szp;
 	struct httphead	*h;
@@ -556,8 +545,7 @@ http_head_parse(const struct http *http,
 
 		/* Skip bad headers. */
 		if (NULL == (ccp = strchr(cp, ':'))) {
-			warnx("%s: header without separator",
-				http->src.ip);
+			warnx("%s: header without separator", http->src.ip);
 			continue;
 		}
 
@@ -582,8 +570,7 @@ http_head_parse(const struct http *http,
  * You must not free the returned pointer.
  */
 char *
-http_head_read(const struct http *http,
-	struct httpxfer *trans, size_t *sz)
+http_head_read(const struct http *http, struct httpxfer *trans, size_t *sz)
 {
 	char		 buf[BUFSIZ];
 	ssize_t		 ssz;
@@ -679,9 +666,8 @@ http_get_free(struct httpget *g)
 }
 
 struct httpget *
-http_get(const struct source *addrs, size_t addrsz,
-	const char *domain, short port, const char *path,
-	const void *post, size_t postsz)
+http_get(const struct source *addrs, size_t addrsz, const char *domain,
+    short port, const char *path, const void *post, size_t postsz)
 {
 	struct http	*h;
 	struct httpxfer	*x;
@@ -765,7 +751,7 @@ main(void)
 	g = http_get(addrs, addrsz, "localhost", 80, "/index.html");
 #else
 	g = http_get(addrs, addrsz, "www.google.ch", 80, "/index.html",
-		     NULL, 0);
+	    NULL, 0);
 #endif
 
 	if (NULL == g)

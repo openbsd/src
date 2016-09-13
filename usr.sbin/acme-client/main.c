@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.12 2016/09/13 16:49:28 deraadt Exp $ */
+/*	$Id: main.c,v 1.13 2016/09/13 17:13:37 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -53,7 +53,7 @@ static int
 domain_valid(const char *cp)
 {
 
-	for ( ; '\0' != *cp; cp++)
+	for (; '\0' != *cp; cp++)
 		if (!('.' == *cp || '-' == *cp ||
 		    '_' == *cp || isalnum((int)*cp)))
 			return (0);
@@ -183,7 +183,7 @@ main(int argc, char *argv[])
 	argc--;
 	argv++;
 
-	if ( getuid() != 0)
+	if (getuid() != 0)
 		errx(EXIT_FAILURE, "must be run as root");
 
 	/*
@@ -228,12 +228,11 @@ main(int argc, char *argv[])
 		ne++;
 	}
 
-	if ( ! newkey && -1 == access(keyfile, R_OK)) {
+	if (!newkey && -1 == access(keyfile, R_OK)) {
 		warnx("%s: -k file must exist", keyfile);
 		ne++;
 	} else if (newkey && -1 != access(keyfile, R_OK)) {
-		dodbg("%s: domain key exists "
-			"(not creating)", keyfile);
+		dodbg("%s: domain key exists (not creating)", keyfile);
 		newkey = 0;
 	}
 
@@ -242,12 +241,11 @@ main(int argc, char *argv[])
 		ne++;
 	}
 
-	if ( ! newacct && -1 == access(acctkey, R_OK)) {
+	if (!newacct && -1 == access(acctkey, R_OK)) {
 		warnx("%s: -f file must exist", acctkey);
 		ne++;
 	} else if (newacct && -1 != access(acctkey, R_OK)) {
-		dodbg("%s: account key exists "
-			"(not creating)", acctkey);
+		dodbg("%s: account key exists (not creating)", acctkey);
 		newacct = 0;
 	}
 
@@ -330,7 +328,7 @@ main(int argc, char *argv[])
 		close(file_fds[0]);
 		close(file_fds[1]);
 		c = keyproc(key_fds[0], keyfile,
-			(const char **)alts, altsz, newkey);
+		    (const char **)alts, altsz, newkey);
 		free(alts);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
@@ -409,8 +407,7 @@ main(int argc, char *argv[])
 		 * This is different from the other processes in that it
 		 * can return 2 if the certificates were updated.
 		 */
-		exit(c > 1 ? 2 :
-		    (c ? EXIT_SUCCESS : EXIT_FAILURE));
+		exit(c > 1 ? 2 : (c ? EXIT_SUCCESS : EXIT_FAILURE));
 	}
 
 	close(file_fds[1]);
@@ -437,9 +434,8 @@ main(int argc, char *argv[])
 
 	if (0 == pids[COMP_REVOKE]) {
 		proccomp = COMP_REVOKE;
-		c = revokeproc(rvk_fds[0], certdir,
-			force, revocate,
-			(const char *const *)alts, altsz);
+		c = revokeproc(rvk_fds[0], certdir, force, revocate,
+		    (const char *const *)alts, altsz);
 		free(alts);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}

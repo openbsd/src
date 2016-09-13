@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.7 2016/09/13 16:49:28 deraadt Exp $ */
+/*	$Id: revokeproc.c,v 1.8 2016/09/13 17:13:37 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -59,9 +59,7 @@ X509expires(X509 *x)
 			warnx("invalid ASN1_TIME");
 			return ((time_t)-1);
 		}
-		t.tm_year =
-			(str[0] - '0') * 10 +
-			(str[1] - '0');
+		t.tm_year = (str[0] - '0') * 10 + (str[1] - '0');
 		if (t.tm_year < 70)
 			t.tm_year += 100;
 		i = 2;
@@ -70,11 +68,8 @@ X509expires(X509 *x)
 			warnx("invalid ASN1_TIME");
 			return ((time_t)-1);
 		}
-		t.tm_year =
-			(str[0] - '0') * 1000 +
-			(str[1] - '0') * 100 +
-			(str[2] - '0') * 10 +
-			(str[3] - '0');
+		t.tm_year = (str[0] - '0') * 1000 + (str[1] - '0') * 100 +
+		    (str[2] - '0') * 10 + (str[3] - '0');
 		t.tm_year -= 1900;
 		i = 4;
 	}
@@ -97,7 +92,7 @@ X509expires(X509 *x)
 
 int
 revokeproc(int fd, const char *certdir, int force, int revocate,
-	const char *const *alts, size_t altsz)
+    const char *const *alts, size_t altsz)
 {
 	char		*path = NULL, *der = NULL, *dercp, *der64 = NULL;
 	char		*san = NULL, *str, *tok;
@@ -145,8 +140,7 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 	 */
 
 	if (NULL == f && revocate) {
-		warnx("%s/%s: no certificate found",
-			certdir, CERT_PEM);
+		warnx("%s/%s: no certificate found", certdir, CERT_PEM);
 		(void)writeop(fd, COMM_REVOKE_RESP, REVOKE_OK);
 		goto out;
 	} else if (NULL == f && ! revocate) {
@@ -179,8 +173,7 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 	/* Scan til we find the SAN NID. */
 
 	for (i = 0; i < extsz; i++) {
-		ex = sk_X509_EXTENSION_value
-			(x->cert_info->extensions, i);
+		ex = sk_X509_EXTENSION_value(x->cert_info->extensions, i);
 		assert(NULL != ex);
 		obj = X509_EXTENSION_get_object(ex);
 		assert(NULL != obj);
@@ -188,8 +181,7 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 			continue;
 
 		if (NULL != san) {
-			warnx("%s/%s: two SAN entries",
-				certdir, CERT_PEM);
+			warnx("%s/%s: two SAN entries", certdir, CERT_PEM);
 			goto out;
 		}
 
@@ -197,7 +189,7 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 		if (NULL == bio) {
 			warnx("BIO_new");
 			goto out;
-		} else if ( ! X509V3_EXT_print(bio, ex, 0, 0)) {
+		} else if (!X509V3_EXT_print(bio, ex, 0, 0)) {
 			warnx("X509V3_EXT_print");
 			goto out;
 		} else if (NULL == (san = calloc(1, bio->num_write + 1))) {
@@ -242,12 +234,12 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 				break;
 		if (j == altsz) {
 			warnx("%s/%s: unknown SAN entry: %s",
-				certdir, CERT_PEM, tok);
+			    certdir, CERT_PEM, tok);
 			goto out;
 		}
 		if (found[j]++) {
 			warnx("%s/%s: duplicate SAN entry: %s",
-				certdir, CERT_PEM, tok);
+			    certdir, CERT_PEM, tok);
 			goto out;
 		}
 	}
@@ -256,7 +248,7 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 		if (found[j])
 			continue;
 		warnx("%s/%s: domain not listed: %s",
-			certdir, CERT_PEM, alts[j]);
+		    certdir, CERT_PEM, alts[j]);
 		goto out;
 	}
 
@@ -302,12 +294,12 @@ revokeproc(int fd, const char *certdir, int force, int revocate,
 
 	if (REVOKE_EXP == rop)
 		dodbg("%s/%s: certificate renewable: %lld days left",
-			certdir, CERT_PEM,
-			(long long)(t - time(NULL)) / 24 / 60 / 60);
+		    certdir, CERT_PEM,
+		    (long long)(t - time(NULL)) / 24 / 60 / 60);
 	else
 		dodbg("%s/%s: certificate valid: %lld days left",
-			certdir, CERT_PEM,
-			(long long)(t - time(NULL)) / 24 / 60 / 60);
+		    certdir, CERT_PEM,
+		    (long long)(t - time(NULL)) / 24 / 60 / 60);
 
 	if (REVOKE_OK == rop && force) {
 		warnx("%s/%s: forcing renewal", certdir, CERT_PEM);

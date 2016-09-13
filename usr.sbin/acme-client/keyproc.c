@@ -1,4 +1,4 @@
-/*	$Id: keyproc.c,v 1.6 2016/09/13 16:49:28 deraadt Exp $ */
+/*	$Id: keyproc.c,v 1.7 2016/09/13 17:13:37 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -75,7 +75,7 @@ add_ext(STACK_OF(X509_EXTENSION) *sk, int nid, const char *value)
  */
 int
 keyproc(int netsock, const char *keyfile,
-	const char **alts, size_t altsz, int newkey)
+    const char **alts, size_t altsz, int newkey)
 {
 	char		*der64 = NULL, *der = NULL, *dercp;
 	char		*sans = NULL, *san = NULL;
@@ -134,7 +134,7 @@ keyproc(int netsock, const char *keyfile,
 	if (NULL == (x = X509_REQ_new())) {
 		warnx("X509_new");
 		goto out;
-	} else if ( ! X509_REQ_set_pubkey(x, pkey)) {
+	} else if (!X509_REQ_set_pubkey(x, pkey)) {
 		warnx("X509_set_pubkey");
 		goto out;
 	}
@@ -144,11 +144,11 @@ keyproc(int netsock, const char *keyfile,
 	if (NULL == (name = X509_NAME_new())) {
 		warnx("X509_NAME_new");
 		goto out;
-	} else if ( ! X509_NAME_add_entry_by_txt(name, "CN",
+	} else if (!X509_NAME_add_entry_by_txt(name, "CN",
 		MBSTRING_ASC, (u_char *)alts[0], -1, -1, 0)) {
 		warnx("X509_NAME_add_entry_by_txt: CN=%s", alts[0]);
 		goto out;
-	} else if ( ! X509_REQ_set_subject_name(x, name)) {
+	} else if (!X509_REQ_set_subject_name(x, name)) {
 		warnx("X509_req_set_issuer_name");
 		goto out;
 	}
@@ -182,7 +182,7 @@ keyproc(int netsock, const char *keyfile,
 
 		for (i = 1; i < altsz; i++) {
 			cc = asprintf(&san, "%sDNS:%s",
-				i > 1 ? "," : "", alts[i]);
+			    i > 1 ? "," : "", alts[i]);
 			if (-1 == cc) {
 				warn("asprintf");
 				goto out;
@@ -199,20 +199,19 @@ keyproc(int netsock, const char *keyfile,
 			san = NULL;
 		}
 
-		if ( ! add_ext(exts, nid, sans)) {
+		if (!add_ext(exts, nid, sans)) {
 			warnx("add_ext");
 			goto out;
-		} else if ( ! X509_REQ_add_extensions(x, exts)) {
+		} else if (!X509_REQ_add_extensions(x, exts)) {
 			warnx("X509_REQ_add_extensions");
 			goto out;
 		}
-		sk_X509_EXTENSION_pop_free
-			(exts, X509_EXTENSION_free);
+		sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
 	}
 
 	/* Sign the X509 request using SHA256. */
 
-	if ( ! X509_REQ_sign(x, pkey, EVP_sha256())) {
+	if (!X509_REQ_sign(x, pkey, EVP_sha256())) {
 		warnx("X509_sign");
 		goto out;
 	}
