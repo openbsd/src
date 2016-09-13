@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.71 2016/09/04 16:37:18 jmc Exp $
+.\" $OpenBSD: tls_init.3,v 1.72 2016/09/13 13:40:58 tedu Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 4 2016 $
+.Dd $Mdocdate: September 13 2016 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -189,13 +189,13 @@
 .Ft "int"
 .Fn tls_connect_socket "struct tls *ctx" "int s" "const char *servername"
 .Ft "int"
-.Fn tls_connect_cbs "struct tls *ctx" "ssize_t (*tls_read_cb)(void *ctx, void *buf, size_t buflen, void *cb_arg)" "ssize_t (*tls_write_cb)(void *ctx, const void *buf, size_t buflen, void *cb_arg)" "void *cb_arg" "const char *servername"
+.Fn tls_connect_cbs "struct tls *ctx" "ssize_t (*tls_read_cb)(struct tls *ctx, void *buf, size_t buflen, void *cb_arg)" "ssize_t (*tls_write_cb)(struct tls *ctx, const void *buf, size_t buflen, void *cb_arg)" "void *cb_arg" "const char *servername"
 .Ft "int"
 .Fn tls_accept_fds "struct tls *tls" "struct tls **cctx" "int fd_read" "int fd_write"
 .Ft "int"
 .Fn tls_accept_socket "struct tls *tls" "struct tls **cctx" "int socket"
 .Ft "int"
-.Fn tls_accept_cbs "struct tls *ctx" "struct tls **cctx" "ssize_t (*tls_read_cb)(void *ctx, void *buf, size_t buflen, void *cb_arg)" "ssize_t (*tls_write_cb)(void *ctx, const void *buf, size_t buflen, void *cb_arg)" "void *cb_arg"
+.Fn tls_accept_cbs "struct tls *ctx" "struct tls **cctx" "ssize_t (*tls_read_cb)(struct *ctx, void *buf, size_t buflen, void *cb_arg)" "ssize_t (*tls_write_cb)(struct tls *ctx, const void *buf, size_t buflen, void *cb_arg)" "void *cb_arg"
 .Ft "int"
 .Fn tls_handshake "struct tls *ctx"
 .Ft "ssize_t"
