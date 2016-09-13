@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.182 2016/09/13 07:15:03 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.183 2016/09/13 07:16:49 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -162,7 +162,6 @@ int mx_dup_ck = MAX_DUP_CHK;
 char rcvd_tbl[MAX_DUP_CHK / 8];
 
 int datalen = DEFDATALEN;
-int s;				/* socket file descriptor */
 u_char outpackhdr[IP_MAXPACKET]; /* Max packet size = 65535 */
 u_char *outpack = outpackhdr+sizeof(struct ip);
 char BSPACE = '\b';		/* characters written for flood */
@@ -200,8 +199,8 @@ volatile sig_atomic_t seeninfo;
 void			 fill(char *, char *);
 void			 summary(void);
 void			 onsignal(int);
-void			 retransmit(void);
-int			 pinger(void);
+void			 retransmit(int);
+int			 pinger(int);
 const char		*pr_addr(struct sockaddr *, socklen_t);
 void			 pr_pack(u_char *, int, struct msghdr *);
 __dead void		 usage(void);
@@ -223,7 +222,7 @@ main(int argc, char *argv[])
 	struct sockaddr_in  from, from4, dst;
 	socklen_t maxsizelen;
 	int64_t preload;
-	int ch, i, optval = 1, packlen, maxsize, error;
+	int ch, i, optval = 1, packlen, maxsize, error, s;
 	int df = 0, tos = 0, bufspace = IP_MAXPACKET;
 	u_char *datap, *packet, loop = 1;
 	u_char ttl = MAXTTL;
@@ -575,7 +574,7 @@ main(int argc, char *argv[])
 	smsghdr.msg_iovlen = 1;
 
 	while (preload--)		/* Fire off them quickies. */
-		pinger();
+		pinger(s);
 
 	(void)signal(SIGINT, onsignal);
 	(void)signal(SIGINFO, onsignal);
@@ -586,7 +585,7 @@ main(int argc, char *argv[])
 		itimer.it_value = interval;
 		(void)setitimer(ITIMER_REAL, &itimer, NULL);
 		if (ntransmitted == 0)
-			retransmit();
+			retransmit(s);
 	}
 
 	seenalrm = seenint = 0;
@@ -607,7 +606,7 @@ main(int argc, char *argv[])
 		if (seenint)
 			break;
 		if (seenalrm) {
-			retransmit();
+			retransmit(s);
 			seenalrm = 0;
 			if (ntransmitted - nreceived - 1 > nmissedmax) {
 				nmissedmax = ntransmitted - nreceived - 1;
@@ -624,7 +623,7 @@ main(int argc, char *argv[])
 		}
 
 		if (options & F_FLOOD) {
-			(void)pinger();
+			(void)pinger(s);
 			timeout = 10;
 		} else
 			timeout = INFTIM;
@@ -760,7 +759,7 @@ pr_addr(struct sockaddr *addr, socklen_t addrlen)
  *	This routine transmits another ping.
  */
 void
-retransmit(void)
+retransmit(int s)
 {
 	struct itimerval itimer;
 	static int last_time = 0;
@@ -770,7 +769,7 @@ retransmit(void)
 		return;
 	}
 
-	if (pinger() == 0)
+	if (pinger(s) == 0)
 		return;
 
 	/*
@@ -802,7 +801,7 @@ retransmit(void)
  * byte-order, to compute the round-trip time.
  */
 int
-pinger(void)
+pinger(int s)
 {
 	struct icmp *icp;
 	int cc, i;
