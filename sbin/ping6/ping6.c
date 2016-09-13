@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.193 2016/09/13 07:13:07 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.194 2016/09/13 07:15:56 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -161,8 +161,6 @@ int moptions;
 int mx_dup_ck = MAX_DUP_CHK;
 char rcvd_tbl[MAX_DUP_CHK / 8];
 
-struct sockaddr_in6 dst;	/* who to ping6 */
-
 int datalen = DEFDATALEN;
 int s;				/* socket file descriptor */
 u_char outpack[IPV6_MAXPACKET];
@@ -209,7 +207,7 @@ void			 pr_pack(u_char *, int, struct msghdr *);
 __dead void		 usage(void);
 
 int			 get_hoplim(struct msghdr *);
-int			 get_pathmtu(struct msghdr *);
+int			 get_pathmtu(struct msghdr *, struct sockaddr_in6 *);
 void			 pr_icmph6(struct icmp6_hdr *, u_char *);
 void			 pr_iph6(struct ip6_hdr *);
 void			 pr_exthdrs(struct msghdr *);
@@ -222,7 +220,7 @@ main(int argc, char *argv[])
 {
 	struct addrinfo hints, *res;
 	struct itimerval itimer;
-	struct sockaddr_in6 from, from6;
+	struct sockaddr_in6 from, from6, dst;
 	struct cmsghdr *scmsg = NULL;
 	struct in6_pktinfo *pktinfo = NULL;
 	socklen_t maxsizelen;
@@ -717,7 +715,7 @@ main(int argc, char *argv[])
 			 * exceptions (currently the only possibility is
 			 * a path MTU notification.)
 			 */
-			if ((mtu = get_pathmtu(&m)) > 0) {
+			if ((mtu = get_pathmtu(&m, &dst)) > 0) {
 				if ((options & F_VERBOSE) != 0) {
 					printf("new path MTU (%d) is "
 					    "notified\n", mtu);
@@ -1210,7 +1208,7 @@ get_hoplim(struct msghdr *mhdr)
 }
 
 int
-get_pathmtu(struct msghdr *mhdr)
+get_pathmtu(struct msghdr *mhdr, struct sockaddr_in6 *dst)
 {
 	struct cmsghdr *cm;
 	struct ip6_mtuinfo *mtuctl = NULL;
@@ -1234,11 +1232,11 @@ get_pathmtu(struct msghdr *mhdr)
 			 * in which case the scope ID value is 0.
 			 */
 			if (!IN6_ARE_ADDR_EQUAL(&mtuctl->ip6m_addr.sin6_addr,
-						&dst.sin6_addr) ||
+						&dst->sin6_addr) ||
 			    (mtuctl->ip6m_addr.sin6_scope_id &&
-			     dst.sin6_scope_id &&
+			     dst->sin6_scope_id &&
 			     mtuctl->ip6m_addr.sin6_scope_id !=
-			     dst.sin6_scope_id)) {
+			     dst->sin6_scope_id)) {
 				if ((options & F_VERBOSE) != 0) {
 					printf("path MTU for %s is notified. "
 					       "(ignored)\n",
