@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tsleep.9,v 1.10 2015/09/14 15:14:55 schwarze Exp $
+.\"	$OpenBSD: tsleep.9,v 1.11 2016/09/13 08:32:44 mpi Exp $
 .\"	$NetBSD: sleep.9,v 1.11 1999/03/24 06:15:12 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,12 +28,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: September 13 2016 $
 .Dt TSLEEP 9
 .Os
 .Sh NAME
 .Nm tsleep ,
 .Nm msleep ,
+.Nm rwsleep ,
 .Nm wakeup ,
 .Nm wakeup_n ,
 .Nm wakeup_one
@@ -45,6 +46,8 @@
 .Fn tsleep "void *ident" "int priority" "const char *wmesg" "int timo"
 .Ft int
 .Fn msleep "void *ident" "struct mutex *mtx" "int priority" "const char *wmesg" "int timo"
+.Ft int
+.Fn rwsleep "void *ident" "struct rwlock *wl" "int priority" "const char *wmesg" "int timo"
 .Ft void
 .Fn wakeup "void *ident"
 .Ft void
@@ -53,9 +56,10 @@
 .Fn wakeup_one "void *ident"
 .Sh DESCRIPTION
 These functions implement voluntary context switching.
-.Fn tsleep
-and
+.Fn tsleep ,
 .Fn msleep
+and
+.Fn rwsleep
 are used throughout the kernel whenever processing in the current context
 cannot continue for any of the following reasons:
 .Bl -bullet -offset indent
@@ -146,6 +150,22 @@ argument.
 .El
 .Pp
 The
+.Fn rwsleep
+function behaves just like
+.Fn tsleep ,
+but takes an additional argument:
+.Bl -tag -width priority
+.It Fa wl
+A write lock that will be unlocked when the process is safely
+on the sleep queue.
+The write lock will be relocked at the end of rwsleep unless the
+.Dv PNORELOCK
+flag is set in the
+.Fa priority
+argument.
+.El
+.Pp
+The
 .Fn wakeup
 function will mark all processes which are currently sleeping on the identifier
 .Fa ident
@@ -173,9 +193,10 @@ except that only
 .Fa count
 or one process, respectively, is marked runnable.
 .Sh RETURN VALUES
-.Fn tsleep
-and
+.Fn tsleep ,
 .Fn msleep
+and
+.Fn rwsleep
 return 0 if they return as a result of a
 .Fn wakeup .
 If they return as a result of a signal, the return value is

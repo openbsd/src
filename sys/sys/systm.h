@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.116 2016/09/04 09:22:29 mpi Exp $	*/
+/*	$OpenBSD: systm.h,v 1.117 2016/09/13 08:32:44 mpi Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -246,11 +246,13 @@ int	sleep_finish_signal(struct sleep_state *);
 void	sleep_queue_init(void);
 
 struct mutex;
+struct rwlock;
 void    wakeup_n(const volatile void *, int);
 void    wakeup(const volatile void *);
 #define wakeup_one(c) wakeup_n((c), 1)
 int	tsleep(const volatile void *, int, const char *, int);
 int	msleep(const volatile void *, struct mutex *, int,  const char*, int);
+int	rwsleep(const volatile void *, struct rwlock *, int, const char *, int);
 void	yield(void);
 
 void	wdog_register(int (*)(void *, int), void *);
