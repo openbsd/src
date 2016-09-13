@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.192 2016/09/13 07:11:56 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.193 2016/09/13 07:13:07 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -210,12 +210,12 @@ __dead void		 usage(void);
 
 int			 get_hoplim(struct msghdr *);
 int			 get_pathmtu(struct msghdr *);
-void			 pr_icmph(struct icmp6_hdr *, u_char *);
-void			 pr_iph(struct ip6_hdr *);
+void			 pr_icmph6(struct icmp6_hdr *, u_char *);
+void			 pr_iph6(struct ip6_hdr *);
 void			 pr_exthdrs(struct msghdr *);
 void			 pr_ip6opt(void *);
 void			 pr_rthdr(void *);
-void			 pr_retip(struct ip6_hdr *, u_char *);
+void			 pr_retip6(struct ip6_hdr *, u_char *);
 
 int
 main(int argc, char *argv[])
@@ -1069,7 +1069,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 		if (!(options & F_VERBOSE))
 			return;
 		(void)printf("%d bytes from %s: ", cc, pr_addr(from, fromlen));
-		pr_icmph(icp, end);
+		pr_icmph6(icp, end);
 	}
 
 	if (!(options & F_FLOOD)) {
@@ -1263,11 +1263,11 @@ get_pathmtu(struct msghdr *mhdr)
 }
 
 /*
- * pr_icmph --
+ * pr_icmph6 --
  *	Print a descriptive string about an ICMP header.
  */
 void
-pr_icmph(struct icmp6_hdr *icp, u_char *end)
+pr_icmph6(struct icmp6_hdr *icp, u_char *end)
 {
 	char ntop_buf[INET6_ADDRSTRLEN];
 	struct nd_redirect *red;
@@ -1297,12 +1297,12 @@ pr_icmph(struct icmp6_hdr *icp, u_char *end)
 			break;
 		}
 		/* Print returned IP header information */
-		pr_retip((struct ip6_hdr *)(icp + 1), end);
+		pr_retip6((struct ip6_hdr *)(icp + 1), end);
 		break;
 	case ICMP6_PACKET_TOO_BIG:
 		(void)printf("Packet too big mtu = %d\n",
 		    (int)ntohl(icp->icmp6_mtu));
-		pr_retip((struct ip6_hdr *)(icp + 1), end);
+		pr_retip6((struct ip6_hdr *)(icp + 1), end);
 		break;
 	case ICMP6_TIME_EXCEEDED:
 		switch (icp->icmp6_code) {
@@ -1317,7 +1317,7 @@ pr_icmph(struct icmp6_hdr *icp, u_char *end)
 			    icp->icmp6_code);
 			break;
 		}
-		pr_retip((struct ip6_hdr *)(icp + 1), end);
+		pr_retip6((struct ip6_hdr *)(icp + 1), end);
 		break;
 	case ICMP6_PARAM_PROB:
 		(void)printf("Parameter problem: ");
@@ -1337,7 +1337,7 @@ pr_icmph(struct icmp6_hdr *icp, u_char *end)
 		}
 		(void)printf("pointer = 0x%02x\n",
 		    (u_int32_t)ntohl(icp->icmp6_pptr));
-		pr_retip((struct ip6_hdr *)(icp + 1), end);
+		pr_retip6((struct ip6_hdr *)(icp + 1), end);
 		break;
 	case ICMP6_ECHO_REQUEST:
 		(void)printf("Echo Request");
@@ -1386,11 +1386,11 @@ pr_icmph(struct icmp6_hdr *icp, u_char *end)
 }
 
 /*
- * pr_iph --
+ * pr_iph6 --
  *	Print an IP6 header.
  */
 void
-pr_iph(struct ip6_hdr *ip6)
+pr_iph6(struct ip6_hdr *ip6)
 {
 	u_int32_t flow = ip6->ip6_flow & IPV6_FLOWLABEL_MASK;
 	u_int8_t tc;
@@ -1413,11 +1413,11 @@ pr_iph(struct ip6_hdr *ip6)
 }
 
 /*
- * pr_retip --
+ * pr_retip6 --
  *	Dump some info on a returned (via ICMPv6) IPv6 packet.
  */
 void
-pr_retip(struct ip6_hdr *ip6, u_char *end)
+pr_retip6(struct ip6_hdr *ip6, u_char *end)
 {
 	u_char *cp = (u_char *)ip6, nh;
 	int hlen;
@@ -1426,7 +1426,7 @@ pr_retip(struct ip6_hdr *ip6, u_char *end)
 		printf("IP6");
 		goto trunc;
 	}
-	pr_iph(ip6);
+	pr_iph6(ip6);
 	hlen = sizeof(*ip6);
 
 	nh = ip6->ip6_nxt;
