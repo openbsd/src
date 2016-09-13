@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.552 2016/05/14 08:21:40 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.553 2016/09/13 19:15:50 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 14 2016 $
+.Dd $Mdocdate: September 13 2016 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -230,7 +230,7 @@ and
 apply to incoming and outgoing packets;
 if neither are specified,
 the rule will match packets in both directions.
-.It Cm log Op Cm all | matches | to Ar interface | Cm user
+.It Cm log Pq Cm all | matches | to Ar interface | Cm user
 In addition to any action specified,
 log the packet.
 Only the packet that establishes the state is logged,
@@ -253,8 +253,8 @@ The keywords
 .Cm all , matches , to ,
 and
 .Cm user
-are all optional,
-and can be combined using commas.
+are optional and can be combined using commas,
+but must be enclosed in parentheses if given.
 .Pp
 Use
 .Cm all
