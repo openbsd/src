@@ -706,14 +706,14 @@ struct rndis_tcp_tso_info {
 	};
 };
 
-#define RNDIS_VLAN_PPI_SIZE	(sizeof(rndis_pkt_info) +	\
-	sizeof(ndis_8021q_info))
+#define RNDIS_VLAN_PPI_SIZE	(sizeof(struct rndis_pkt_info) +	\
+	sizeof(struct ndis_8021q_info))
 
-#define RNDIS_CSUM_PPI_SIZE	(sizeof(rndis_pkt_info) +	\
-	sizeof(rndis_tcp_ip_csum_info))
+#define RNDIS_CSUM_PPI_SIZE	(sizeof(struct rndis_pkt_info) +	\
+	sizeof(struct rndis_tcp_ip_csum_info))
 
-#define RNDIS_TSO_PPI_SIZE	(sizeof(rndis_pkt_info) +	\
-	sizeof(rndis_tcp_tso_info))
+#define RNDIS_TSO_PPI_SIZE	(sizeof(struct rndis_pkt_info) +	\
+	sizeof(struct rndis_tcp_tso_info))
 
 /*
  * Format of Information buffer passed in a SetRequest for the OID
