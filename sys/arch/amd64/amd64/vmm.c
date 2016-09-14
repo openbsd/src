@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.82 2016/09/10 23:39:42 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.83 2016/09/14 18:23:06 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2926,6 +2926,8 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		case VMX_EXIT_INT_WINDOW:
 			break;
 		case VMX_EXIT_EXTINT:
+			break;
+		case VMX_EXIT_EPT_VIOLATION:
 			break;
 #ifdef VMM_DEBUG
 		case VMX_EXIT_TRIPLE_FAULT:
