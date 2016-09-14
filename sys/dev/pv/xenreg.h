@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenreg.h,v 1.9 2016/08/03 14:55:57 mikeb Exp $	*/
+/*	$OpenBSD: xenreg.h,v 1.10 2016/09/14 17:48:28 mikeb Exp $	*/
 
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,8 +22,8 @@
  * Copyright (c) 2004,2005,2006,2007, Keir Fraser <keir@xensource.com>
  */
 
-#ifndef _XENREG_H_
-#define _XENREG_H_
+#ifndef _DEV_PV_XENREG_H_
+#define _DEV_PV_XENREG_H_
 
 /*
  * Hypercall interface defines
@@ -781,4 +781,4 @@ struct xen_feature_info {
 #define XENVER_commandline	9
 typedef char xen_commandline_t[1024];
 
-#endif /* _XENREG_H_ */
+#endif /* _DEV_PV_XENREG_H_ */

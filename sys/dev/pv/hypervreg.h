@@ -26,8 +26,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HYPERVREG_H_
-#define _HYPERVREG_H_
+#ifndef _DEV_PV_HYPERVREG_H_
+#define _DEV_PV_HYPERVREG_H_
 
 struct hv_guid {
 	 unsigned char			data[16];
@@ -648,4 +648,4 @@ struct hv_heartbeat_msg {
 #define HV_NPFNBODY	((VMBUS_MSG_DSIZE_MAX -	\
 	  sizeof(struct vmbus_chanmsg_gpadl_subconn)) / sizeof(uint64_t))
 
-#endif	/* _HYPERVREG_H_ */
+#endif	/* _DEV_PV_HYPERVREG_H_ */

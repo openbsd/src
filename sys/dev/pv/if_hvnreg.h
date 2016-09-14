@@ -24,8 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _IF_HVNREG_H_
-#define _IF_HVNREG_H_
+#ifndef _DEV_PV_IF_HVNREG_H_
+#define _DEV_PV_IF_HVNREG_H_
 
 #define HVN_NVS_PROTO_VERSION_1		0x00002
 #define HVN_NVS_PROTO_VERSION_2		0x30002
@@ -198,4 +198,4 @@ struct hvn_nvs_rndis_ack {
 	uint8_t		nvs_rsvd[24];
 } __packed;
 
-#endif	/* _IF_HVNREG_H_ */
+#endif	/* _DEV_PV_IF_HVNREG_H_ */

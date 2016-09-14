@@ -14,8 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _HYPERVVAR_H_
-#define _HYPERVVAR_H_
+#ifndef _DEV_PV_HYPERVVAR_H_
+#define _DEV_PV_HYPERVVAR_H_
 
 #define HYPERV_DEBUG
 
@@ -194,4 +194,4 @@ int	hv_channel_send_sgl(struct hv_channel *, struct vmbus_gpa *,
 int	hv_channel_recv(struct hv_channel *, void *, uint32_t, uint32_t *,
 	    uint64_t *, int);
 
-#endif	/* _HYPERVVAR_H_ */
+#endif	/* _DEV_PV_HYPERVVAR_H_ */

@@ -26,8 +26,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _RNDISREG_H_
-#define _RNDISREG_H_
+#ifndef _DEV_PV_RNDISREG_H_
+#define _DEV_PV_RNDISREG_H_
 
 /*
  * NDIS protocol version numbers
@@ -971,4 +971,4 @@ struct rndis {
 #define NDIS_PACKET_TYPE_FUNCTIONAL		0x00000400
 #define NDIS_PACKET_TYPE_MAC_FRAME		0x00000800
 
-#endif	/* _RNDISREG_H_ */
+#endif	/* _DEV_PV_RNDISREG_H_ */

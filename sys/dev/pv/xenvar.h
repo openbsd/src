@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.37 2016/09/12 17:22:45 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.38 2016/09/14 17:48:28 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _XENVAR_H_
-#define _XENVAR_H_
+#ifndef _DEV_PV_XENVAR_H_
+#define _DEV_PV_XENVAR_H_
 
 /* #define XEN_DEBUG */
 
@@ -179,4 +179,4 @@ int	xs_getprop(struct xen_softc *, const char *, const char *, char *, int);
 int	xs_setprop(struct xen_softc *, const char *, const char *, char *, int);
 int	xs_kvop(void *, int, char *, char *, size_t);
 
-#endif	/* _XENVAR_H_ */
+#endif	/* _DEV_PV_XENVAR_H_ */
