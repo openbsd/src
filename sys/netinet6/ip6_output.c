@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.214 2016/09/14 15:26:05 jca Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.215 2016/09/14 16:59:28 jca Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -117,7 +117,6 @@ struct ip6_exthdrs {
 };
 
 int ip6_pcbopt(int, u_char *, int, struct ip6_pktopts **, int, int);
-int ip6_pcbopts(struct ip6_pktopts **, struct mbuf *, struct socket *);
 int ip6_getpcbopt(struct ip6_pktopts *, int, struct mbuf **);
 int ip6_setpktopt(int, u_char *, int, struct ip6_pktopts *, int, int, int);
 int ip6_setmoptions(int, struct ip6_moptions **, struct mbuf *);
@@ -1698,48 +1697,6 @@ ip6_raw_ctloutput(int op, struct socket *so, int level, int optname,
 		(void)m_free(m);
 
 	return (error);
-}
-
-/*
- * Set up IP6 options in pcb for insertion in output packets.
- * Store in mbuf with pointer in pcbopt, adding pseudo-option
- * with destination address if source routed.
- */
-int
-ip6_pcbopts(struct ip6_pktopts **pktopt, struct mbuf *m, struct socket *so)
-{
-	struct ip6_pktopts *opt = *pktopt;
-	int error = 0;
-	struct proc *p = curproc;	/* XXX */
-	int priv = 0;
-
-	/* turn off any old options. */
-	if (opt)
-		ip6_clearpktopts(opt, -1);
-	else
-		opt = malloc(sizeof(*opt), M_IP6OPT, M_WAITOK);
-	*pktopt = 0;
-
-	if (!m || m->m_len == 0) {
-		/*
-		 * Only turning off any previous options, regardless of
-		 * whether the opt is just created or given.
-		 */
-		free(opt, M_IP6OPT, sizeof(*opt));
-		return (0);
-	}
-
-	/*  set options specified by user. */
-	if (p && !suser(p, 0))
-		priv = 1;
-	if ((error = ip6_setpktopts(m, opt, NULL, priv,
-	    so->so_proto->pr_protocol)) != 0) {
-		ip6_clearpktopts(opt, -1);	/* XXX discard all options */
-		free(opt, M_IP6OPT, sizeof(*opt));
-		return (error);
-	}
-	*pktopt = opt;
-	return (0);
 }
 
 /*
