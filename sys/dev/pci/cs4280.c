@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.48 2015/12/11 16:07:01 mpi Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.49 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -195,10 +195,8 @@ int	cs4280_init2(struct cs4280_softc *, int);
 int	cs4280_open(void *, int);
 void	cs4280_close(void *);
 
-int	cs4280_query_encoding(void *, struct audio_encoding *);
 int	cs4280_set_params(void *, int, int, struct audio_params *, struct audio_params *);
 int	cs4280_round_blocksize(void *, int);
-void	cs4280_get_default_params(void *, int, struct audio_params *);
 
 int	cs4280_halt_output(void *);
 int	cs4280_halt_input(void *);
@@ -211,7 +209,6 @@ int	cs4280_query_devinfo(void *addr, mixer_devinfo_t *dip);
 void   *cs4280_malloc(void *, int, size_t, int, int);
 void	cs4280_free(void *, void *, int);
 size_t	cs4280_round_buffersize(void *, int, size_t);
-paddr_t	cs4280_mappage(void *, void *, off_t, int);
 int	cs4280_get_props(void *);
 int	cs4280_trigger_output(void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *);
@@ -242,8 +239,6 @@ int	cs4280_midi_output(void *, int);
 struct audio_hw_if cs4280_hw_if = {
 	cs4280_open,
 	cs4280_close,
-	NULL,
-	cs4280_query_encoding,
 	cs4280_set_params,
 	cs4280_round_blocksize,
 	NULL,
@@ -262,11 +257,9 @@ struct audio_hw_if cs4280_hw_if = {
 	cs4280_malloc,
 	cs4280_free,
 	cs4280_round_buffersize,
-	0, /* cs4280_mappage, */
 	cs4280_get_props,
 	cs4280_trigger_output,
-	cs4280_trigger_input,
-	cs4280_get_default_params
+	cs4280_trigger_input
 };
 
 #if NMIDI > 0
@@ -1014,25 +1007,6 @@ cs4280_close(void *addr)
 }
 
 int
-cs4280_query_encoding(void *addr, struct audio_encoding *fp)
-{
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	default:
-		return (EINVAL);
-	}
-	fp->bps = AUDIO_BPS(fp->precision);
-	fp->msb = 1;
-
-	return (0);
-}
-
-int
 cs4280_set_params(void *addr, int setmode, int usemode,
     struct audio_params *play, struct audio_params *rec)
 {
@@ -1106,12 +1080,6 @@ cs4280_round_buffersize(void *addr, int direction, size_t size)
 	return (size);
 }
 
-void
-cs4280_get_default_params(void *addr, int mode, struct audio_params *params)
-{
-	ac97_get_default_params(params);
-}
-
 int
 cs4280_get_props(void *hdl)
 {
@@ -1132,25 +1100,6 @@ cs4280_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 
 	return (sc->codec_if->vtbl->mixer_get_port(sc->codec_if, cp));
 }
-
-paddr_t
-cs4280_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	struct cs4280_softc *sc = addr;
-	struct cs4280_dma *p;
-
-	if (off < 0)
-		return (-1);
-	for (p = sc->sc_dmas; p && BUFADDR(p) != mem; p = p->next)
-		;
-	if (!p) {
-		DPRINTF(("cs4280_mappage: bad buffer address\n"));
-		return (-1);
-	}
-	return (bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs, 
-				off, prot, BUS_DMA_WAITOK));
-}
-
 
 int
 cs4280_query_devinfo(void *addr, mixer_devinfo_t *dip)

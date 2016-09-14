@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.29 2015/05/11 06:46:22 ratchov Exp $	*/
+/*	$OpenBSD: esa.c,v 1.30 2016/09/14 06:12:19 ratchov Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -105,10 +105,8 @@ int		esa_activate(struct device *, int);
 /* audio(9) functions */
 int		esa_open(void *, int);
 void		esa_close(void *);
-int		esa_query_encoding(void *, struct audio_encoding *);
 int		esa_set_params(void *, int, int, struct audio_params *,
 			       struct audio_params *);
-void		esa_get_default_params(void *, int, struct audio_params *);
 int		esa_round_blocksize(void *, int);
 int		esa_commit_settings(void *);
 int		esa_halt_output(void *);
@@ -132,7 +130,6 @@ int		esa_intr(void *);
 int		esa_allocmem(struct esa_softc *, size_t, size_t,
 			     struct esa_dma *);
 int		esa_freemem(struct esa_softc *, struct esa_dma *);
-paddr_t		esa_mappage(void *addr, void *mem, off_t off, int prot);
 
 /* Supporting subroutines */
 u_int16_t	esa_read_assp(struct esa_softc *, u_int16_t, u_int16_t);
@@ -162,18 +159,9 @@ void		esa_remove_list(struct esa_voice *, struct esa_list *, int);
 int		esa_suspend(struct esa_softc *);
 int		esa_resume(struct esa_softc *);
 
-static audio_encoding_t esa_encoding[] = {
-	{ 0, AudioEulinear, AUDIO_ENCODING_ULINEAR, 8, 1, 1, 0 },
-	{ 1, AudioEslinear_le, AUDIO_ENCODING_SLINEAR_LE, 16, 2, 1, 0 }
-};
-
-#define ESA_NENCODINGS 8
-
 struct audio_hw_if esa_hw_if = {
 	esa_open,
 	esa_close,
-	NULL,			/* drain */
-	esa_query_encoding,
 	esa_set_params,
 	esa_round_blocksize,
 	esa_commit_settings,
@@ -192,11 +180,9 @@ struct audio_hw_if esa_hw_if = {
 	esa_malloc,
 	esa_free,
 	esa_round_buffersize,
-	esa_mappage,
 	esa_get_props,
 	esa_trigger_output,
-	esa_trigger_input,
-	esa_get_default_params
+	esa_trigger_input
 };
 
 struct cfdriver esa_cd = {
@@ -224,23 +210,6 @@ esa_close(void *hdl)
 {
 
 	return;
-}
-
-int
-esa_query_encoding(void *hdl, struct audio_encoding *ae)
-{
-
-	if (ae->index < 0 || ae->index >= ESA_NENCODINGS)
-		return (EINVAL);
-	*ae = esa_encoding[ae->index];
-
-	return (0);
-}
-
-void
-esa_get_default_params(void *addr, int mode, struct audio_params *params)
-{
-	ac97_get_default_params(params);
 }
 
 int
@@ -1652,21 +1621,4 @@ esa_get_pointer(struct esa_softc *sc, struct esa_channel *ch)
 
 	addr = lo | ((u_int32_t)hi << 16);
 	return (addr - ch->start);
-}
-
-paddr_t
-esa_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	struct esa_voice *vc = addr;
-	struct esa_softc *sc = (struct esa_softc *)vc->parent;
-	struct esa_dma *p;
-
-	if (off < 0)
-		return (-1);
-	for (p = vc->dma; p && KERNADDR(p) != mem; p = p->next)
-		;
-	if (!p)
-		return (-1);
-	return (bus_dmamem_mmap(sc->sc_dmat, p->segs, p->nsegs,
-				off, prot, BUS_DMA_WAITOK));
 }

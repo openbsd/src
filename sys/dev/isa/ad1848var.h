@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848var.h,v 1.14 2011/06/29 17:48:22 tedu Exp $	*/
+/*	$OpenBSD: ad1848var.h,v 1.15 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: ad1848var.h,v 1.22 1998/01/19 22:18:26 augustss Exp $	*/
 
 /*
@@ -182,7 +182,6 @@ void	ad1848_close(void *);
     
 void	ad1848_forceintr(struct ad1848_softc *);
 
-int	ad1848_query_encoding(void *, struct audio_encoding *);
 int	ad1848_set_params(void *, int, int, struct audio_params *, struct audio_params *);
 
 int	ad1848_round_blocksize(void *, int);
@@ -214,7 +213,6 @@ void     ad1848_mute_channel(struct ad1848_softc *, int device, int mute);
 void   *ad1848_malloc(void *, int, size_t, int, int);
 void	ad1848_free(void *, void *, int);
 size_t	ad1848_round(void *, int, size_t);
-paddr_t	ad1848_mappage(void *, void *, off_t, int);
 
 int	ad1848_get_props(void *);
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.9,v 1.24 2016/09/01 10:14:08 ratchov Exp $
+.\"	$OpenBSD: audio.9,v 1.25 2016/09/14 06:12:19 ratchov Exp $
 .\"	$NetBSD: audio.9,v 1.14 2000/02/11 22:56:15 kleink Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 1 2016 $
+.Dd $Mdocdate: September 14 2016 $
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -45,9 +45,6 @@ structure.
 struct audio_hw_if {
 	int	(*open)(void *, int);
 	void	(*close)(void *);
-	int	(*drain)(void *);
-
-	int	(*query_encoding)(void *, struct audio_encoding *);
 	int	(*set_params)(void *, int, int,
 		    struct audio_params *, struct audio_params *);
 	int	(*round_blocksize)(void *, int);
@@ -78,15 +75,12 @@ struct audio_hw_if {
 	void	*(*allocm)(void *, int, size_t, int, int);
 	void	(*freem)(void *, void *, int);
 	size_t	(*round_buffersize)(void *, int, size_t);
-	paddr_t	(*mappage)(void *, void *, off_t, int);
-
 	int 	(*get_props)(void *);
 
 	int	(*trigger_output)(void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *);
 	int	(*trigger_input)(void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *);
-	void	(*get_default_params)(void *, int, struct audio_params *);
 };
 
 struct audio_params {
@@ -160,22 +154,6 @@ is matched by a call to
 This function returns 0 on success, otherwise an error code.
 .It Fn "void (*close)" "void *hdl"
 This function is called when the audio device is closed.
-.It Fn "int (*drain)" "void *hdl"
-This function is optional.
-If supplied, it is called before the device is closed or when the
-.Dv AUDIO_DRAIN
-.Xr ioctl 2
-is called.
-It makes sure that no samples remain to be played that could
-be lost when
-.Fn close
-is called.
-This function returns 0 on success, otherwise an error code.
-.It Fn "int (*query_encoding)" "void *hdl" "struct audio_encoding *ae"
-This function fills
-.Fa ae
-and returns 0 or, if there is no encoding with the given number, returns
-.Er EINVAL .
 .It Fn "int (*set_params)" "void *hdl" "int setmode" "int usemode" \
 "struct audio_params *play" "struct audio_params *rec"
 This function is called to set the audio encoding mode.
@@ -375,18 +353,6 @@ Note that the buffer size is always a multiple of the block size, so
 and
 .Fn round_buffersize
 must be consistent.
-.It Fn "paddr_t (*mappage)" "void *hdl" "void *addr" "off_t offs" "int prot"
-This function is optional.
-If supplied, it is called for
-.Xr mmap 2 .
-It returns the map value for the page at offset
-.Fa offs
-from address
-.Fa addr
-mapped with protection
-.Fa prot .
-This function returns \-1 on failure, or a machine dependent opaque
-value on success.
 .It Fn "int (*get_props)" "void *hdl"
 This function returns a combination of
 .Dv AUDIO_PROP_xxx
@@ -435,21 +401,6 @@ will be called with the argument
 Once started, the transfer may be stopped using
 .Fn halt_input .
 This function returns 0 on success, otherwise an error code.
-.It Fn "void (*get_default_params)" "void *hdl" "int direction" \
-"struct audio_params *param"
-This function is optional.
-If supplied, it is called to retrieve the default configuration
-for the given
-.Fa direction ,
-parameterized in
-.Fa param .
-.Fa direction
-is
-.Dv AUMODE_PLAY
-or
-.Dv AUMODE_RECORD .
-The default configuration should not include emulated formats, and should
-reflect the optimal operating configuration for the underlying hardware.
 .El
 .Pp
 If the audio hardware is capable of input from more
@@ -497,7 +448,6 @@ and be of class
 .Dv AudioCoutputs .
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr mmap 2 ,
 .Xr open 2 ,
 .Xr sio_open 3 ,
 .Xr audio 4 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.34 2015/08/04 14:53:08 stsp Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.35 2016/09/14 06:12:19 ratchov Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -150,7 +150,6 @@ int cs4281_match(struct device *, void *, void *);
 void cs4281_attach(struct device *, struct device *, void *);
 int cs4281_activate(struct device *, int);
 int cs4281_intr(void *);
-int cs4281_query_encoding(void *, struct audio_encoding *);
 int cs4281_set_params(void *, int, int, struct audio_params *,
 				     struct audio_params *);
 int cs4281_halt_output(void *);
@@ -180,7 +179,6 @@ int cs4281_query_devinfo(void *, mixer_devinfo_t *);
 void *cs4281_malloc(void *, int, size_t, int, int);
 size_t cs4281_round_buffersize(void *, int, size_t);
 void cs4281_free(void *, void *, int);
-paddr_t cs4281_mappage(void *, void *, off_t, int);
 
 int cs4281_allocmem(struct cs4281_softc *, size_t, int, int,
 				     struct cs4281_dma *);
@@ -200,8 +198,6 @@ int cs4281_debug = 5;
 struct audio_hw_if cs4281_hw_if = {
 	cs4281_open,
 	cs4281_close,
-	NULL,
-	cs4281_query_encoding,
 	cs4281_set_params,
 	cs4281_round_blocksize,
 	NULL,
@@ -220,11 +216,9 @@ struct audio_hw_if cs4281_hw_if = {
 	cs4281_malloc,
 	cs4281_free,
 	cs4281_round_buffersize,
-	NULL, /* cs4281_mappage, */
 	cs4281_get_props,
 	cs4281_trigger_output,
-	cs4281_trigger_input,
-	NULL
+	cs4281_trigger_input
 };
 
 #if NMIDI > 0
@@ -408,57 +402,6 @@ cs4281_intr(p)
 	DPRINTF(("\n"));
 	mtx_leave(&audio_lock);
 	return (1);
-}
-
-int
-cs4281_query_encoding(addr, fp)
-	void *addr;
-	struct audio_encoding *fp;
-{
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 3:
-		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 4:
-		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 5:
-		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	default:
-		return EINVAL;
-	}
-	fp->bps = AUDIO_BPS(fp->precision);
-	fp->msb = 1;
-
-	return (0);
 }
 
 int
@@ -1300,29 +1243,6 @@ cs4281_round_buffersize(void *addr, int direction, size_t size)
 {
 	return (DMA_SIZE);
 }
-
-paddr_t
-cs4281_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	struct cs4281_softc *sc;
-	struct cs4281_dma *p;
-	
-	sc = addr;
-	if (off < 0)
-		return -1;
-
-	for (p = sc->sc_dmas; p && KERNADDR(p) != mem; p = p->next)
-		;
-
-	if (!p) {
-		DPRINTF(("cs4281_mappage: bad buffer address\n"));
-		return (-1);
-	}
-
-	return (bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs, off, prot,
-	    BUS_DMA_WAITOK));
-}
-
 
 int
 cs4281_get_props(void *addr)

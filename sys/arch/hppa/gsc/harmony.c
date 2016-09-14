@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.31 2015/09/08 07:14:04 deraadt Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.32 2016/09/14 06:12:19 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -56,7 +56,6 @@
 
 int     harmony_open(void *, int);
 void    harmony_close(void *);
-int     harmony_query_encoding(void *, struct audio_encoding *);
 int     harmony_set_params(void *, int, int, struct audio_params *,
     struct audio_params *);
 int     harmony_round_blocksize(void *, int);
@@ -79,8 +78,6 @@ int     harmony_trigger_input(void *, void *, void *, int,
 struct audio_hw_if harmony_sa_hw_if = {
 	harmony_open,
 	harmony_close,
-	NULL,
-	harmony_query_encoding,
 	harmony_set_params,
 	harmony_round_blocksize,
 	harmony_commit_settings,
@@ -99,11 +96,9 @@ struct audio_hw_if harmony_sa_hw_if = {
 	harmony_allocm,
 	harmony_freem,
 	harmony_round_buffersize,
-	NULL,
 	harmony_get_props,
 	harmony_trigger_output,
-	harmony_trigger_input,
-	NULL
+	harmony_trigger_input
 };
 
 int harmony_match(struct device *, void *, void *);
@@ -399,48 +394,6 @@ harmony_close(void *vsc)
 	harmony_halt_output(sc);
 	harmony_intr_disable(sc);
 	sc->sc_open = 0;
-}
-
-int
-harmony_query_encoding(void *vsc, struct audio_encoding *fp)
-{
-	struct harmony_softc *sc = vsc;
-	int err = 0;
-
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 3:
-		if (sc->sc_hasulinear8) {
-			strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-			fp->encoding = AUDIO_ENCODING_ULINEAR;
-			fp->precision = 8;
-			fp->flags = 0;
-			break;
-		}
-		/*FALLTHROUGH*/
-	default:
-		err = EINVAL;
-	}
-	fp->bps = AUDIO_BPS(fp->precision);
-	fp->msb = 1;
-	return (err);
 }
 
 int

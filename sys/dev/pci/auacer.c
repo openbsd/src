@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.18 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.19 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -153,7 +153,6 @@ struct cfattach auacer_ca = {
 
 int	auacer_open(void *, int);
 void	auacer_close(void *);
-int	auacer_query_encoding(void *, struct audio_encoding *);
 int	auacer_set_params(void *, int, int, struct audio_params *,
 	    struct audio_params *);
 int	auacer_round_blocksize(void *, int);
@@ -166,13 +165,11 @@ int	auacer_query_devinfo(void *, mixer_devinfo_t *);
 void	*auacer_allocm(void *, int, size_t, int, int);
 void	auacer_freem(void *, void *, int);
 size_t	auacer_round_buffersize(void *, int, size_t);
-paddr_t	auacer_mappage(void *, void *, off_t, int);
 int	auacer_get_props(void *);
 int	auacer_trigger_output(void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *);
 int	auacer_trigger_input(void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *);
-void	auacer_get_default_params(void *, int, struct audio_params *);  
 
 int	auacer_alloc_cdata(struct auacer_softc *);
 
@@ -188,8 +185,6 @@ static	void auacer_reset(struct auacer_softc *sc);
 struct audio_hw_if auacer_hw_if = {
 	auacer_open,
 	auacer_close,
-	NULL,			/* drain */
-	auacer_query_encoding,
 	auacer_set_params,
 	auacer_round_blocksize,
 	NULL,			/* commit_setting */
@@ -208,11 +203,9 @@ struct audio_hw_if auacer_hw_if = {
 	auacer_allocm,
 	auacer_freem,
 	auacer_round_buffersize,
-	auacer_mappage,
 	auacer_get_props,
 	auacer_trigger_output,
-	auacer_trigger_input,
-	auacer_get_default_params
+	auacer_trigger_input
 };
 
 int	auacer_attach_codec(void *, struct ac97_codec_if *);
@@ -432,33 +425,6 @@ void
 auacer_close(void *v)
 {
 	DPRINTF(ALI_DEBUG_API, ("auacer_close\n"));
-}
-
-void
-auacer_get_default_params(void *addr, int mode, struct audio_params *params)  
-{
-        ac97_get_default_params(params);
-}
-
-int
-auacer_query_encoding(void *v, struct audio_encoding *aep)
-{
-	DPRINTF(ALI_DEBUG_API, ("auacer_query_encoding\n"));
-
-	switch (aep->index) {
-	case 0:
-		strlcpy(aep->name, AudioEslinear_le, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		aep->precision = 16;
-		aep->flags = 0;
-		break;
-	default:
-		return (EINVAL);
-	}
-	aep->bps = AUDIO_BPS(aep->precision);
-	aep->msb = 1;
-
-	return (0);
 }
 
 int
@@ -690,23 +656,6 @@ auacer_round_buffersize(void *v, int direction, size_t size)
 		size = ALI_DMALIST_MAX * ALI_DMASEG_MAX;
 
 	return size;
-}
-
-paddr_t
-auacer_mappage(void *v, void *mem, off_t off, int prot)
-{
-	struct auacer_softc *sc = v;
-	struct auacer_dma *p;
-
-	if (off < 0)
-		return (-1);
-
-	for (p = sc->sc_dmas; p && KERNADDR(p) != mem; p = p->next)
-		;
-	if (!p)
-		return (-1);
-	return (bus_dmamem_mmap(sc->dmat, p->segs, p->nsegs,
-	    off, prot, BUS_DMA_WAITOK));
 }
 
 int

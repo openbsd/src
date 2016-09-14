@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.51 2015/05/11 06:46:22 ratchov Exp $ */
+/*      $OpenBSD: eap.c,v 1.52 2016/09/14 06:12:19 ratchov Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -159,7 +159,6 @@ struct cfattach eap_ca = {
 
 int	eap_open(void *, int);
 void	eap_close(void *);
-int	eap_query_encoding(void *, struct audio_encoding *);
 int	eap_set_params(void *, int, int, struct audio_params *, struct audio_params *);
 int	eap_round_blocksize(void *, int);
 int	eap_trigger_output(void *, void *, void *, int, void (*)(void *),
@@ -168,7 +167,6 @@ int	eap_trigger_input(void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *);
 int	eap_halt_output(void *);
 int	eap_halt_input(void *);
-void	eap_get_default_params(void *, int, struct audio_params *);
 int	eap_resume(struct eap_softc *);
 void    eap1370_write_codec(struct eap_softc *, int, int);
 int	eap_getdev(void *, struct audio_device *);
@@ -179,7 +177,6 @@ int	eap1371_mixer_get_port(void *, mixer_ctrl_t *);
 int	eap1370_query_devinfo(void *, mixer_devinfo_t *);
 void   *eap_malloc(void *, int, size_t, int, int);
 void	eap_free(void *, void *, int);
-paddr_t	eap_mappage(void *, void *, off_t, int);
 int	eap_get_props(void *);
 void	eap1370_set_mixer(struct eap_softc *sc, int a, int d);
 u_int32_t eap1371_src_wait(struct eap_softc *sc);
@@ -201,8 +198,6 @@ int	eap_midi_output(void *, int);
 struct audio_hw_if eap1370_hw_if = {
 	eap_open,
 	eap_close,
-	NULL,
-	eap_query_encoding,
 	eap_set_params,
 	eap_round_blocksize,
 	NULL,
@@ -221,18 +216,14 @@ struct audio_hw_if eap1370_hw_if = {
 	eap_malloc,
 	eap_free,
 	NULL,
-	eap_mappage,
 	eap_get_props,
 	eap_trigger_output,
-	eap_trigger_input,
-	eap_get_default_params
+	eap_trigger_input
 };
 
 struct audio_hw_if eap1371_hw_if = {
 	eap_open,
 	eap_close,
-	NULL,
-	eap_query_encoding,
 	eap_set_params,
 	eap_round_blocksize,
 	NULL,
@@ -251,11 +242,9 @@ struct audio_hw_if eap1371_hw_if = {
 	eap_malloc,
 	eap_free,
 	NULL,
-	eap_mappage,
 	eap_get_props,
 	eap_trigger_output,
-	eap_trigger_input,
-	eap_get_default_params
+	eap_trigger_input
 };
 
 #if NMIDI > 0
@@ -860,37 +849,6 @@ eap_close(void *addr)
 
 	sc->sc_pintr = 0;
 	sc->sc_rintr = 0;
-}
-
-int
-eap_query_encoding(void *addr, struct audio_encoding *fp)
-{
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	default:
-		return (EINVAL);
-	}
-	fp->bps = AUDIO_BPS(fp->precision);
-	fp->msb = 1;
-
-	return (0);
-}
-
-void
-eap_get_default_params(void *addr, int mode, struct audio_params *params)
-{
-	ac97_get_default_params(params);
 }
 
 int
@@ -1574,22 +1532,6 @@ eap_free(void *addr, void *ptr, int pool)
 			return;
 		}
 	}
-}
-
-paddr_t
-eap_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	struct eap_softc *sc = addr;
-	struct eap_dma *p;
-
-	if (off < 0)
-		return (-1);
-	for (p = sc->sc_dmas; p && KERNADDR(p) != mem; p = p->next)
-		;
-	if (!p)
-		return (-1);
-	return (bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
-	    off, prot, BUS_DMA_WAITOK));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.33 2016/08/30 11:20:09 ratchov Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.34 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -51,15 +51,6 @@
 #else
 # define DPRINTF(x)
 #endif
-
-struct audio_params i2s_audio_default = {
-	44100,		/* sample_rate */
-	AUDIO_ENCODING_SLINEAR_BE, /* encoding */
-	16,		/* precision */
-	2,		/* bps */
-	1,		/* msb */
-	2		/* channels */
-};
 
 void	i2s_mute(u_int, int);
 int	i2s_cint(void *);
@@ -230,30 +221,6 @@ i2s_close(h)
 }
 
 int
-i2s_query_encoding(h, ae)
-	void *h;
-	struct audio_encoding *ae;
-{
-	int err = 0;
-
-	switch (ae->index) {
-	case 0:
-		strlcpy(ae->name, AudioEslinear_be, sizeof(ae->name));
-		ae->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		ae->precision = 16;
-		ae->flags = 0;
-		break;
-	default:
-		err = EINVAL;
-		break;
-	}
-	ae->bps = AUDIO_BPS(ae->precision);
-	ae->msb = 1;
-	return (err);
-}
-
-
-int
 i2s_set_params(h, setmode, usemode, play, rec)
 	void *h;
 	int setmode, usemode;
@@ -306,12 +273,6 @@ i2s_set_params(h, setmode, usemode, play, rec)
 
 	p->sample_rate = sc->sc_rate;
 	return 0;
-}
-
-void
-i2s_get_default_params(struct audio_params *params)
-{
-	*params = i2s_audio_default;
 }
 
 int
@@ -631,18 +592,6 @@ i2s_round_buffersize(h, dir, size)
 	if (size > 65536)
 		size = 65536;
 	return size;
-}
-
-paddr_t
-i2s_mappage(h, mem, off, prot)
-	void *h;
-	void *mem;
-	off_t off;
-	int prot;
-{
-	if (off < 0)
-		return -1;
-	return -1;	/* XXX */
 }
 
 int

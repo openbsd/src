@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.52 2015/12/11 16:07:02 mpi Exp $	*/
+/*	$OpenBSD: yds.c,v 1.53 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -152,10 +152,8 @@ struct cfdriver yds_cd = {
 
 int	yds_open(void *, int);
 void	yds_close(void *);
-int	yds_query_encoding(void *, struct audio_encoding *);
 int	yds_set_params(void *, int, int,
 	    struct audio_params *, struct audio_params *);
-void	yds_get_default_params(void *, int, struct audio_params *);
 int	yds_round_blocksize(void *, int);
 int	yds_trigger_output(void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *);
@@ -169,7 +167,6 @@ int	yds_mixer_get_port(void *, mixer_ctrl_t *);
 void   *yds_malloc(void *, int, size_t, int, int);
 void	yds_free(void *, void *, int);
 size_t	yds_round_buffersize(void *, int, size_t);
-paddr_t	yds_mappage(void *, void *, off_t, int);
 int	yds_get_props(void *);
 int	yds_query_devinfo(void *addr, mixer_devinfo_t *dip);
 
@@ -206,8 +203,6 @@ static void yds_dump_play_slot(struct yds_softc *, int);
 static struct audio_hw_if yds_hw_if = {
 	yds_open,
 	yds_close,
-	NULL,
-	yds_query_encoding,
 	yds_set_params,
 	yds_round_blocksize,
 	NULL,
@@ -226,11 +221,9 @@ static struct audio_hw_if yds_hw_if = {
 	yds_malloc,
 	yds_free,
 	yds_round_buffersize,
-	yds_mappage,
 	yds_get_props,
 	yds_trigger_output,
-	yds_trigger_input,
-	yds_get_default_params
+	yds_trigger_input
 };
 
 struct audio_device yds_device = {
@@ -1094,37 +1087,6 @@ yds_close(void *addr)
 }
 
 int
-yds_query_encoding(void *addr, struct audio_encoding *fp)
-{
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	default:
-		return (EINVAL);
-	}
-	fp->bps = AUDIO_BPS(fp->precision);
-	fp->msb = 1;
-
-	return (0);
-}
-
-void
-yds_get_default_params(void *addr, int mode, struct audio_params *params)
-{
-	ac97_get_default_params(params);
-}
-
-int
 yds_set_params(void *addr, int setmode, int usemode,
     struct audio_params *play, struct audio_params *rec)
 {
@@ -1620,21 +1582,6 @@ yds_round_buffersize(void *addr, int direction, size_t size)
 	if (size < 1024 * 3)
 		size = 1024 * 3;
 	return (size);
-}
-
-paddr_t
-yds_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	struct yds_softc *sc = addr;
-	struct yds_dma *p;
-
-	if (off < 0)
-		return (-1);
-	p = yds_find_dma(sc, mem);
-	if (!p)
-		return (-1);
-	return (bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs, 
-				off, prot, BUS_DMA_WAITOK));
 }
 
 int

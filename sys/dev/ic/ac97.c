@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.81 2015/08/28 00:03:53 deraadt Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.82 2016/09/14 06:12:19 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -606,12 +606,6 @@ int	ac97debug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-void
-ac97_get_default_params(struct audio_params *params)
-{
-	*params = ac97_audio_default;
-}
 
 int
 ac97_read(struct ac97_softc *as, u_int8_t reg, u_int16_t *val)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aoa.c,v 1.7 2016/07/02 16:28:50 mglocker Exp $	*/
+/*	$OpenBSD: aoa.c,v 1.8 2016/09/14 06:12:19 ratchov Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -57,7 +57,6 @@ int aoa_match(struct device *, void *, void *);
 void aoa_attach(struct device *, struct device *, void *);
 void aoa_defer(struct device *);
 void aoa_set_volume(struct aoa_softc *, int, int);
-void aoa_get_default_params(void *, int, struct audio_params *);
 
 struct cfattach aoa_ca = {
 	sizeof(struct aoa_softc), aoa_match, aoa_attach
@@ -70,8 +69,6 @@ struct cfdriver aoa_cd = {
 struct audio_hw_if aoa_hw_if = {
 	i2s_open,
 	i2s_close,
-	NULL,
-	i2s_query_encoding,
 	i2s_set_params,
 	i2s_round_blocksize,
 	NULL,
@@ -90,11 +87,9 @@ struct audio_hw_if aoa_hw_if = {
 	i2s_allocm,
 	NULL,
 	i2s_round_buffersize,
-	i2s_mappage,
 	i2s_get_props,
 	i2s_trigger_output,
-	i2s_trigger_input,
-	aoa_get_default_params
+	i2s_trigger_input
 };
 
 struct audio_device aoa_device = {
@@ -161,10 +156,4 @@ void
 aoa_set_volume(struct aoa_softc *sc, int left, int right)
 {
 	/* This device doesn't provide volume control. */
-}
-
-void
-aoa_get_default_params(void *addr, int mode, struct audio_params *params)
-{
-	i2s_get_default_params(params);
 }

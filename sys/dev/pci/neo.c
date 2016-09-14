@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.30 2015/05/11 06:46:22 ratchov Exp $       */
+/*      $OpenBSD: neo.c,v 1.31 2016/09/14 06:12:19 ratchov Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -180,9 +180,7 @@ int	neo_intr(void *);
 
 int	neo_open(void *, int);
 void	neo_close(void *);
-int	neo_query_encoding(void *, struct audio_encoding *);
 int	neo_set_params(void *, int, int, struct audio_params *, struct audio_params *);
-void	neo_get_default_params(void *, int, struct audio_params *);
 int	neo_round_blocksize(void *, int);
 int	neo_trigger_output(void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *);
@@ -249,8 +247,6 @@ static int samplerates[9] = {
 struct audio_hw_if neo_hw_if = {
 	neo_open,
 	neo_close,
-	NULL,
-	neo_query_encoding,
 	neo_set_params,
 #if 1
 	neo_round_blocksize,
@@ -273,11 +269,9 @@ struct audio_hw_if neo_hw_if = {
 	neo_malloc,
 	neo_free,
 	neo_round_buffersize,
-	0,				/* neo_mappage, */
 	neo_get_props,
 	neo_trigger_output,
-	neo_trigger_input,
-	neo_get_default_params
+	neo_trigger_input
 
 };
 
@@ -746,37 +740,6 @@ neo_close(void *addr)
 
 	sc->pintr = 0;
 	sc->rintr = 0;
-}
-
-int
-neo_query_encoding(void *addr, struct audio_encoding *fp)
-{
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	default:
-		return (EINVAL);
-	}
-	fp->bps = AUDIO_BPS(fp->precision);
-	fp->msb = 1;
-
-	return (0);
-}
-
-void
-neo_get_default_params(void *addr, int mode, struct audio_params *params)
-{
-	ac97_get_default_params(params);
 }
 
 /* Todo: don't commit settings to card until we've verified all parameters */

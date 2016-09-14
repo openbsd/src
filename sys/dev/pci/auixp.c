@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.36 2015/12/11 16:07:01 mpi Exp $ */
+/* $OpenBSD: auixp.c,v 1.37 2016/09/14 06:12:19 ratchov Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -110,7 +110,6 @@ struct cfattach auixp_ca = {
 
 int	auixp_open(void *v, int flags);
 void	auixp_close(void *v);
-int	auixp_query_encoding(void *, struct audio_encoding *);
 int	auixp_set_params(void *, int, int, struct audio_params *,
     struct audio_params *);
 int	auixp_commit_settings(void *);
@@ -133,8 +132,6 @@ int	auixp_intr(void *);
 int	auixp_allocmem(struct auixp_softc *, size_t, size_t,
     struct auixp_dma *);
 int	auixp_freemem(struct auixp_softc *, struct auixp_dma *);
-paddr_t	auixp_mappage(void *, void *, off_t, int);
-void	auixp_get_default_params(void *, int, struct audio_params *);
 
 /* Supporting subroutines */
 int	auixp_init(struct auixp_softc *);
@@ -170,8 +167,6 @@ void	auixp_update_busbusy(struct auixp_softc *);
 struct audio_hw_if auixp_hw_if = {
 	auixp_open,
 	auixp_close,
-	NULL,			/* drain */
-	auixp_query_encoding,
 	auixp_set_params,
 	auixp_round_blocksize,
 	auixp_commit_settings,
@@ -190,11 +185,9 @@ struct audio_hw_if auixp_hw_if = {
 	auixp_malloc,
 	auixp_free,
 	auixp_round_buffersize,
-	auixp_mappage,
 	auixp_get_props,
 	auixp_trigger_output,
-	auixp_trigger_input,
-	auixp_get_default_params
+	auixp_trigger_input
 };
 
 int
@@ -208,32 +201,6 @@ void
 auixp_close(void *v)
 {
 }
-
-void
-auixp_get_default_params(void *v, int mode, struct audio_params *params)
-{
-	ac97_get_default_params(params);
-}
-
-int
-auixp_query_encoding(void *hdl, struct audio_encoding *aep)
-{
-	switch (aep->index) {
-	case 0:
-		strlcpy(aep->name, AudioEslinear_le, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		aep->precision = 16;
-		aep->flags = 0;
-		break;
-	default:
-		return (EINVAL);
-	}
-	aep->bps = AUDIO_BPS(aep->precision);
-	aep->msb = 1;
-
-	return (0);
-}
-
 
 /* commit setting and program ATI IXP chip */
 int
@@ -975,36 +942,6 @@ auixp_freemem(struct auixp_softc *sc, struct auixp_dma *p)
 	bus_dmamem_free(sc->sc_dmat, p->segs, p->nsegs);
 
 	return 0;
-}
-
-
-/* memory map dma memory */
-paddr_t
-auixp_mappage(void *hdl, void *mem, off_t off, int prot)
-{
-	struct auixp_codec *co;
-	struct auixp_softc *sc;
-	struct auixp_dma *p;
-
-	co = (struct auixp_codec *) hdl;
-	sc  = co->sc;
-	/* for sanity */
-	if (off < 0)
-		return -1;
-
-	/* look up allocated DMA area */
-	SLIST_FOREACH(p, &sc->sc_dma_list, dma_chain) {
-		if (KERNADDR(p) == mem)
-			break;
-	}
-
-	/* have we found it ? */
-	if (!p)
-		return -1;
-
-	/* return mmap'd region */
-	return bus_dmamem_mmap(sc->sc_dmat, p->segs, p->nsegs,
-	    off, prot, BUS_DMA_WAITOK);
 }
 
 int

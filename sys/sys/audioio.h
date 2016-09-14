@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioio.h,v 1.26 2016/08/31 07:22:43 ratchov Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.27 2016/09/14 06:12:20 ratchov Exp $	*/
 /*	$NetBSD: audioio.h,v 1.24 1998/08/13 06:28:41 mrg Exp $	*/
 
 /*
@@ -221,22 +221,6 @@ typedef struct mixer_ctrl {
 #define AudioNdepth	"depth"
 #define AudioNlfe	"lfe"
 #define AudioNextamp	"extamp"
-
-#define AudioEmulaw		"mulaw"
-#define AudioEalaw		"alaw"
-#define AudioEadpcm 		"adpcm"
-#define AudioEslinear		"slinear"
-#define AudioEslinear_le	"slinear_le"
-#define AudioEslinear_be	"slinear_be"
-#define AudioEulinear		"ulinear"
-#define AudioEulinear_le	"ulinear_le"
-#define AudioEulinear_be	"ulinear_be"
-#define AudioEmpeg_l1_stream	"mpeg_l1_stream"
-#define AudioEmpeg_l1_packets	"mpeg_l1_packets"
-#define AudioEmpeg_l1_system	"mpeg_l1_system"
-#define AudioEmpeg_l2_stream	"mpeg_l2_stream"
-#define AudioEmpeg_l2_packets	"mpeg_l2_packets"
-#define AudioEmpeg_l2_system	"mpeg_l2_system"
 
 #define AudioCinputs	"inputs"
 #define AudioCoutputs	"outputs"

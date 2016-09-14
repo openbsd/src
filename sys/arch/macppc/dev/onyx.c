@@ -1,4 +1,4 @@
-/*	$OpenBSD: onyx.c,v 1.10 2009/10/26 20:17:27 deraadt Exp $	*/
+/*	$OpenBSD: onyx.c,v 1.11 2016/09/14 06:12:19 ratchov Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -72,7 +72,6 @@ int onyx_match(struct device *, void *, void *);
 void onyx_attach(struct device *, struct device *, void *);
 void onyx_defer(struct device *);
 void onyx_set_volume(struct onyx_softc *, int, int);
-void onyx_get_default_params(void *, int, struct audio_params *);
 
 struct cfattach onyx_ca = {
 	sizeof(struct onyx_softc), onyx_match, onyx_attach
@@ -85,8 +84,6 @@ struct cfdriver onyx_cd = {
 struct audio_hw_if onyx_hw_if = {
 	i2s_open,
 	i2s_close,
-	NULL,
-	i2s_query_encoding,
 	i2s_set_params,
 	i2s_round_blocksize,
 	NULL,
@@ -105,11 +102,9 @@ struct audio_hw_if onyx_hw_if = {
 	i2s_allocm,
 	NULL,
 	i2s_round_buffersize,
-	i2s_mappage,
 	i2s_get_props,
 	i2s_trigger_output,
-	i2s_trigger_input,
-	onyx_get_default_params
+	i2s_trigger_input
 };
 
 struct audio_device onyx_device = {
@@ -206,10 +201,4 @@ onyx_set_volume(struct onyx_softc *sc, int left, int right)
 	data = 128 + (right >> 1);
 	kiic_write(sc->sc_i2c, PCM3052_I2C_ADDR,
 	    PCM3052_REG_RIGHT_VOLUME, &data, 1);
-}
-
-void
-onyx_get_default_params(void *addr, int mode, struct audio_params *params)
-{
-	i2s_get_default_params(params);
 }

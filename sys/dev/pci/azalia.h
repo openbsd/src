@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.64 2015/08/24 04:50:40 jsg Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.65 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -674,8 +674,6 @@ typedef struct codec_t {
 
 	struct audio_format *formats;
 	int nformats;
-	struct audio_encoding *encs;
-	int nencs;
 
 	struct io_pin *ipins;
 	int nipins;

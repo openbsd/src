@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.40 2016/05/13 19:51:39 ratchov Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.41 2016/09/14 06:12:19 ratchov Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -467,10 +467,8 @@ int	maestro_intr(void *);
 
 int	maestro_open(void *, int);
 void	maestro_close(void *);
-int	maestro_query_encoding(void *, struct audio_encoding *);
 int	maestro_set_params(void *, int, int, struct audio_params *, 
 			    struct audio_params *);
-void	maestro_get_default_params(void *, int, struct audio_params *);
 int	maestro_round_blocksize(void *, int);
 int	maestro_halt_output(void *);
 int	maestro_halt_input(void *);
@@ -480,7 +478,6 @@ int	maestro_get_port(void *, mixer_ctrl_t *);
 int	maestro_query_devinfo(void *, mixer_devinfo_t *);
 void	*maestro_malloc(void *, int, size_t, int, int);
 void	maestro_free(void *, void *, int);
-paddr_t	maestro_mappage(void *, void *, off_t, int);
 int	maestro_get_props(void *);
 int	maestro_trigger_output(void *, void *, void *, int, void (*)(void *),
 				void *, struct audio_params *);
@@ -535,8 +532,6 @@ struct cfattach maestro_ca = {
 struct audio_hw_if maestro_hw_if = {
 	maestro_open,
 	maestro_close,
-	NULL,
-	maestro_query_encoding,
 	maestro_set_params,
 	maestro_round_blocksize,
 	NULL,
@@ -555,11 +550,9 @@ struct audio_hw_if maestro_hw_if = {
 	maestro_malloc,
 	maestro_free,
 	NULL,
-	maestro_mappage,
 	maestro_get_props,
 	maestro_trigger_output,
-	maestro_trigger_input,
-	maestro_get_default_params
+	maestro_trigger_input
 };
 
 struct audio_device maestro_audev = {
@@ -862,17 +855,6 @@ maestro_free(void *self, void *ptr, int pool)
 	salloc_free(sc->dmapool, ptr);
 }
 
-paddr_t
-maestro_mappage(void *self, void *mem, off_t off, int prot)
-{
-	struct maestro_softc *sc = (struct maestro_softc *)self;
-
-	if (off < 0)
-		return -1;
-	return bus_dmamem_mmap(sc->dmat, &sc->dmaseg, 1,
-		off, prot, BUS_DMA_WAITOK);
-}
-
 int
 maestro_get_props(void *self)
 {
@@ -936,27 +918,6 @@ maestro_query_devinfo(void *self, mixer_devinfo_t *cp)
 		return rc;
 	} else
 		return (ENXIO);
-}
-
-struct audio_encoding maestro_tab[] = { 
-	{0, AudioEslinear_le, AUDIO_ENCODING_SLINEAR_LE, 16, 2, 1, 0},
-	{1, AudioEslinear, AUDIO_ENCODING_SLINEAR, 8, 1, 1, 0},
-	{2, AudioEulinear, AUDIO_ENCODING_ULINEAR, 8, 1, 1, 0}
-};
-
-int
-maestro_query_encoding(void *hdl, struct audio_encoding *fp)
-{
-	if (fp->index < 0 || fp->index >= lengthof(maestro_tab))
-		return (EINVAL);
-	*fp = maestro_tab[fp->index];
-	return (0);
-}
-
-void
-maestro_get_default_params(void *addr, int mode, struct audio_params *params)
-{
-	ac97_get_default_params(params);
 }
 
 #define UNUSED __attribute__((unused))

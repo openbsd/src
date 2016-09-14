@@ -1,4 +1,4 @@
-/*	$OpenBSD: nec86hwvar.h,v 1.1 2014/12/28 13:03:18 aoyama Exp $	*/
+/*	$OpenBSD: nec86hwvar.h,v 1.2 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NecBSD: nec86hwvar.h,v 1.10 1998/03/14 07:04:55 kmatsuda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -143,7 +143,6 @@ void	nec86hw_close(void *);
 
 int	nec86hw_set_params(void *, int, int, struct audio_params *,
 	    struct audio_params *);
-int	nec86hw_query_encoding(void *, struct audio_encoding *);
 
 int	nec86hw_round_blocksize(void *, int);
 

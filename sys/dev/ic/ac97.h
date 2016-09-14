@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.h,v 1.25 2010/12/22 09:54:27 jakemsr Exp $	*/
+/*	$OpenBSD: ac97.h,v 1.26 2016/09/14 06:12:19 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -88,7 +88,6 @@ struct ac97_codec_if {
 int ac97_attach(struct ac97_host_if *);
 int ac97_resume(struct ac97_host_if *, struct ac97_codec_if *);
 int ac97_set_rate(struct ac97_codec_if *, int, u_long *);
-void ac97_get_default_params(struct audio_params *);
 
 #define	AC97_REG_RESET			0x00
 #define	AC97_CAPS_MICIN			0x0001

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.44 2015/06/25 06:43:46 ratchov Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.45 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -907,44 +907,6 @@ ad1848_mixer_set_port(struct ad1848_softc *ac, struct ad1848_devmap *map,
 }
 
 int
-ad1848_query_encoding(void *addr, struct audio_encoding *fp)
-{
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 3:
-		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	default:
-		return EINVAL;
-		/*NOTREACHED*/
-	}
-	fp->bps = AUDIO_BPS(fp->precision);
-	fp->msb = 1;
-
-	return (0);
-}
-
-int
 ad1848_set_params(void *addr, int setmode, int usemode, struct audio_params *p,
     struct audio_params *r)
 {
@@ -1495,12 +1457,6 @@ ad1848_round(void *addr, int direction, size_t size)
 	if (size > MAX_ISADMA)
 		size = MAX_ISADMA;
 	return size;
-}
-
-paddr_t
-ad1848_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	return isa_mappage(mem, off, prot);
 }
 
 int

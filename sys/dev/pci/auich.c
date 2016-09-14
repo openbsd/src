@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.104 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: auich.c,v 1.105 2016/09/14 06:12:19 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -292,7 +292,6 @@ static const struct auich_devtype {
 
 int auich_open(void *, int);
 void auich_close(void *);
-int auich_query_encoding(void *, struct audio_encoding *);
 int auich_set_params(void *, int, int, struct audio_params *,
     struct audio_params *);
 int auich_round_blocksize(void *, int);
@@ -306,7 +305,6 @@ int auich_query_devinfo(void *, mixer_devinfo_t *);
 void *auich_allocm(void *, int, size_t, int, int);
 void auich_freem(void *, void *, int);
 size_t auich_round_buffersize(void *, int, size_t);
-paddr_t auich_mappage(void *, void *, off_t, int);
 int auich_get_props(void *);
 void auich_trigger_pipe(struct auich_softc *, int, struct auich_ring *);
 void auich_intr_pipe(struct auich_softc *, int, struct auich_ring *);
@@ -317,15 +315,12 @@ int auich_trigger_input(void *, void *, void *, int, void (*)(void *),
 int auich_alloc_cdata(struct auich_softc *);
 int auich_allocmem(struct auich_softc *, size_t, size_t, struct auich_dma *);
 int auich_freemem(struct auich_softc *, struct auich_dma *);
-void auich_get_default_params(void *, int, struct audio_params *);
 
 int auich_resume(struct auich_softc *);
 
 struct audio_hw_if auich_hw_if = {
 	auich_open,
 	auich_close,
-	NULL,			/* drain */
-	auich_query_encoding,
 	auich_set_params,
 	auich_round_blocksize,
 	NULL,			/* commit_setting */
@@ -344,11 +339,9 @@ struct audio_hw_if auich_hw_if = {
 	auich_allocm,
 	auich_freem,
 	auich_round_buffersize,
-	auich_mappage,
 	auich_get_props,
 	auich_trigger_output,
-	auich_trigger_input,
-	auich_get_default_params
+	auich_trigger_input
 };
 
 int  auich_attach_codec(void *, struct ac97_codec_if *);
@@ -675,29 +668,6 @@ auich_close(void *v)
 	sc->codec_if->vtbl->unlock(sc->codec_if);
 }
 
-void
-auich_get_default_params(void *addr, int mode, struct audio_params *params)
-{
-	ac97_get_default_params(params);
-}
-
-int
-auich_query_encoding(void *v, struct audio_encoding *aep)
-{
-	switch (aep->index) {
-	case 0:
-		strlcpy(aep->name, AudioEslinear_le, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		aep->precision = 16;
-		aep->flags = 0;
-		aep->bps = 2;
-		aep->msb = 1;
-		return (0);
-	default:
-		return (EINVAL);
-	}
-}
-
 int
 auich_set_params(void *v, int setmode, int usemode,
     struct audio_params *play, struct audio_params *rec)
@@ -975,27 +945,6 @@ auich_round_buffersize(void *v, int direction, size_t size)
 		size = AUICH_DMALIST_MAX * AUICH_DMASEG_MAX;
 
 	return size;
-}
-
-paddr_t
-auich_mappage(void *v, void *mem, off_t off, int prot)
-{
-	struct auich_softc *sc = v;
-	struct auich_dma *p;
-
-	if (off < 0)
-		return -1;
-
-	p = NULL;
-	if (sc->sc_pdma != NULL && sc->sc_pdma->addr == mem)
-		p = sc->sc_pdma;
-	else if (sc->sc_rdma != NULL && sc->sc_rdma->addr == mem)
-		p = sc->sc_rdma;
-	else
-		return -1;
-
-	return bus_dmamem_mmap(sc->dmat, p->segs, p->nsegs,
-	    off, prot, BUS_DMA_WAITOK);
 }
 
 int

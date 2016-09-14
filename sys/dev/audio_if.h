@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.31 2016/08/31 07:22:43 ratchov Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.32 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -54,12 +54,20 @@
  */
 
 struct audio_device;
-struct audio_encoding;
 struct mixer_devinfo;
 struct mixer_ctrl;
 
 struct audio_params {
 	u_long	sample_rate;			/* sample rate */
+#define	AUDIO_ENCODING_NONE		0 /* no encoding assigned */
+#define	AUDIO_ENCODING_ULAW		1 /* ITU G.711 mu-law */
+#define	AUDIO_ENCODING_ALAW		2 /* ITU G.711 A-law */
+#define AUDIO_ENCODING_SLINEAR_LE	6
+#define AUDIO_ENCODING_SLINEAR_BE	7
+#define AUDIO_ENCODING_ULINEAR_LE	8
+#define AUDIO_ENCODING_ULINEAR_BE	9
+#define AUDIO_ENCODING_SLINEAR		10
+#define AUDIO_ENCODING_ULINEAR		11
 	u_int	encoding;			/* mu-law, linear, etc */
 	u_int	precision;			/* bits/sample */
 	u_int	bps;				/* bytes/sample */
@@ -67,39 +75,9 @@ struct audio_params {
 	u_int	channels;			/* mono(1), stereo(2) */
 };
 
-/*
- * query_encoding argument
- */
-typedef struct audio_encoding {
-	int	index;
-#define MAX_AUDIO_DEV_LEN		16
-	char	name[MAX_AUDIO_DEV_LEN];
-#define	AUDIO_ENCODING_NONE		0 /* no encoding assigned */
-#define	AUDIO_ENCODING_ULAW		1 /* ITU G.711 mu-law */
-#define	AUDIO_ENCODING_ALAW		2 /* ITU G.711 A-law */
-#define	AUDIO_ENCODING_ADPCM		5 /* adaptive differential PCM */
-#define AUDIO_ENCODING_SLINEAR_LE	6
-#define AUDIO_ENCODING_SLINEAR_BE	7
-#define AUDIO_ENCODING_ULINEAR_LE	8
-#define AUDIO_ENCODING_ULINEAR_BE	9
-#define AUDIO_ENCODING_SLINEAR		10
-#define AUDIO_ENCODING_ULINEAR		11
-	int	encoding;
-	int	precision;
-	int	bps;
-	int	msb;
-	int	flags;
-#define AUDIO_ENCODINGFLAG_EMULATED 1 /* software emulation mode */
-} audio_encoding_t;
-
 struct audio_hw_if {
 	int	(*open)(void *, int);	/* open hardware */
 	void	(*close)(void *);		/* close hardware */
-	int	(*drain)(void *);		/* Optional: drain buffers */
-
-	/* Encoding. */
-	/* XXX should we have separate in/out? */
-	int	(*query_encoding)(void *, struct audio_encoding *);
 
 	/* Set the audio encoding parameters (record and play).
 	 * Return 0 on success, or an error code if the
@@ -150,7 +128,6 @@ struct audio_hw_if {
 	void	*(*allocm)(void *, int, size_t, int, int);
 	void	(*freem)(void *, void *, int);
 	size_t	(*round_buffersize)(void *, int, size_t);
-	paddr_t	(*mappage)(void *, void *, off_t, int);
 
 	int	(*get_props)(void *); /* device properties */
 
@@ -158,7 +135,6 @@ struct audio_hw_if {
 		    void (*)(void *), void *, struct audio_params *);
 	int	(*trigger_input)(void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *);
-	void	(*get_default_params)(void *, int, struct audio_params *);
 };
 
 struct audio_attach_args {

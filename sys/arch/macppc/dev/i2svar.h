@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2svar.h,v 1.8 2011/06/07 16:29:51 mpi Exp $	*/
+/*	$OpenBSD: i2svar.h,v 1.9 2016/09/14 06:12:19 ratchov Exp $	*/
 
 /*-
  * Copyright (c) 2001,2003 Tsubai Masanari.  All rights reserved.
@@ -96,9 +96,7 @@ void i2s_attach(struct device *, struct i2s_softc *, struct confargs *);
 int i2s_intr(void *);
 int i2s_open(void *, int);
 void i2s_close(void *);
-int i2s_query_encoding(void *, struct audio_encoding *);
 int i2s_set_params(void *, int, int, struct audio_params *, struct audio_params *);
-void i2s_get_default_params(struct audio_params *);
 int i2s_round_blocksize(void *, int);
 int i2s_halt_output(void *);
 int i2s_halt_input(void *);
@@ -106,7 +104,6 @@ int i2s_set_port(void *, mixer_ctrl_t *);
 int i2s_get_port(void *, mixer_ctrl_t *);
 int i2s_query_devinfo(void *, mixer_devinfo_t *);
 size_t i2s_round_buffersize(void *, int, size_t);
-paddr_t i2s_mappage(void *, void *, off_t, int);
 int i2s_get_props(void *);
 int i2s_trigger_output(void *, void *, void *, int, void (*)(void *),
     void *, struct audio_params *);

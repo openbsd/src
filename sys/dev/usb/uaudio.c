@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.113 2015/11/27 10:59:32 mpi Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.114 2016/09/14 06:12:20 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -245,8 +245,6 @@ struct uaudio_softc {
 #define UA_NOFRAC	 0x20		/* don't do sample rate adjustment */
 #define HAS_24		 0x40
 	int		 sc_mode;	/* play/record capability */
-	struct audio_encoding *sc_encs;
-	int		 sc_nencs;
 	struct mixerctl *sc_ctls;	/* mixer controls */
 	int		 sc_nctls;	/* # of mixer controls */
 	int		 sc_quirks;
@@ -296,8 +294,6 @@ usbd_status uaudio_process_as
 	 const usb_interface_descriptor_t *);
 
 void	uaudio_add_alt(struct uaudio_softc *, const struct as_info *);
-
-void	uaudio_create_encodings(struct uaudio_softc *);
 
 const usb_interface_descriptor_t *uaudio_find_iface
 	(const char *, int, int *, int, int);
@@ -374,7 +370,6 @@ void	uaudio_chan_rintr
 int	uaudio_open(void *, int);
 void	uaudio_close(void *);
 int	uaudio_drain(void *);
-int	uaudio_query_encoding(void *, struct audio_encoding *);
 void	uaudio_get_minmax_rates
 	(int, const struct as_info *, const struct audio_params *,
 	 int, int, int, u_long *, u_long *);
@@ -396,13 +391,10 @@ int	uaudio_mixer_set_port(void *, mixer_ctrl_t *);
 int	uaudio_mixer_get_port(void *, mixer_ctrl_t *);
 int	uaudio_query_devinfo(void *, mixer_devinfo_t *);
 int	uaudio_get_props(void *);
-void	uaudio_get_default_params(void *, int, struct audio_params *);
 
 struct audio_hw_if uaudio_hw_if = {
 	uaudio_open,
 	uaudio_close,
-	uaudio_drain,
-	uaudio_query_encoding,
 	uaudio_set_params,
 	uaudio_round_blocksize,
 	NULL,
@@ -421,11 +413,9 @@ struct audio_hw_if uaudio_hw_if = {
 	NULL,
 	NULL,
 	NULL,
-	NULL,
 	uaudio_get_props,
 	uaudio_trigger_output,
-	uaudio_trigger_input,
-	uaudio_get_default_params
+	uaudio_trigger_input
 };
 
 struct audio_device uaudio_device = {
@@ -571,8 +561,6 @@ uaudio_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(", %d mixer controls\n", sc->sc_nctls);
 
-	uaudio_create_encodings(sc);
-
 	DPRINTF(("uaudio_attach: doing audio_attach_mi\n"));
 	audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
 }
@@ -597,25 +585,6 @@ uaudio_detach(struct device *self, int flags)
 	rv = config_detach_children(self, flags);
 
 	return (rv);
-}
-
-int
-uaudio_query_encoding(void *addr, struct audio_encoding *fp)
-{
-	struct uaudio_softc *sc = addr;
-
-	if (usbd_is_dying(sc->sc_udev))
-		return (EIO);
-
-	if (sc->sc_nalts == 0 || sc->sc_altflags == 0)
-		return (ENXIO);
-
-	if (fp->index < 0 || fp->index >= sc->sc_nencs)
-		return (EINVAL);
-
-	*fp = sc->sc_encs[fp->index];
-
-	return (0);
 }
 
 const usb_interface_descriptor_t *
@@ -1544,83 +1513,6 @@ uaudio_add_alt(struct uaudio_softc *sc, const struct as_info *ai)
 	sc->sc_alts[sc->sc_nalts++] = *ai;
 }
 
-void
-uaudio_create_encodings(struct uaudio_softc *sc)
-{
-	int enc, encs[16], nencs, i, j;
-
-	nencs = 0;
-	for (i = 0; i < sc->sc_nalts && nencs < 16; i++) {
-		enc = (sc->sc_alts[i].asf1desc->bSubFrameSize << 16) |
-		    (sc->sc_alts[i].asf1desc->bBitResolution << 8) |
-		    sc->sc_alts[i].encoding;
-		for (j = 0; j < nencs; j++) {
-			if (encs[j] == enc)
-				break;
-		}
-		if (j < nencs)
-			continue;
-		encs[j] = enc;
-		nencs++;
-	}
-
-	sc->sc_nencs = 0;
-	sc->sc_encs = mallocarray(nencs, sizeof(struct audio_encoding),
-	    M_USBDEV, M_NOWAIT);
-	if (sc->sc_encs == NULL) {
-		printf("%s: no memory\n", __func__);
-		return;
-	}
-	sc->sc_nencs = nencs;
-
-	for (i = 0; i < sc->sc_nencs; i++) {
-		sc->sc_encs[i].index = i;
-		sc->sc_encs[i].encoding = encs[i] & 0xff;
-		sc->sc_encs[i].precision = (encs[i] >> 8) & 0xff;
-		sc->sc_encs[i].bps = (encs[i] >> 16) & 0xff;
-		sc->sc_encs[i].msb = 1;
-		sc->sc_encs[i].flags = 0;
-		switch (sc->sc_encs[i].encoding) {
-		case AUDIO_ENCODING_SLINEAR_LE:
-			strlcpy(sc->sc_encs[i].name,
-			    sc->sc_encs[i].precision == 8 ?
-			    AudioEslinear : AudioEslinear_le,
-			    sizeof(sc->sc_encs[i].name));
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (sc->sc_encs[i].precision != 8) {
-				DPRINTF(("%s: invalid precision for ulinear: %d\n",
-				    __func__, sc->sc_encs[i].precision));
-				continue;
-			}
-			strlcpy(sc->sc_encs[i].name, AudioEulinear,
-			    sizeof(sc->sc_encs[i].name));
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (sc->sc_encs[i].precision != 8) {
-				DPRINTF(("%s: invalid precision for alaw: %d\n",
-				    __func__, sc->sc_encs[i].precision));
-				continue;
-			}
-			strlcpy(sc->sc_encs[i].name, AudioEalaw,
-			    sizeof(sc->sc_encs[i].name));
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (sc->sc_encs[i].precision != 8) {
-				DPRINTF(("%s: invalid precision for ulaw: %d\n",
-				    __func__, sc->sc_encs[i].precision));
-				continue;
-			}
-			strlcpy(sc->sc_encs[i].name, AudioEmulaw,
-			    sizeof(sc->sc_encs[i].name));
-			break;
-		default:
-			DPRINTF(("%s: unknown format\n", __func__));
-			break;
-		}
-	}
-}
-
 usbd_status
 uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 		  int size, const usb_interface_descriptor_t *id)
@@ -2341,48 +2233,6 @@ uaudio_get_props(void *addr)
 		props |= AUDIO_PROP_FULLDUPLEX;
 
 	return props;
-}
-
-void
-uaudio_get_default_params(void *addr, int mode, struct audio_params *p)
-{
-	struct uaudio_softc *sc = addr;
-	int flags, alt;
-
-	/* try aucat(1) defaults: 44100 Hz stereo s16le */
-	p->sample_rate = 44100;
-	p->encoding = AUDIO_ENCODING_SLINEAR_LE;
-	p->precision = 16;
-	p->bps = 2;
-	p->msb = 1;
-	p->channels = 2;
-
-	/* If the device doesn't support the current mode, there's no
-	 * need to find better parameters.
-	 */
-	if (!(sc->sc_mode & mode))
-		return;
-
-	flags = sc->sc_altflags;
-	if (flags & HAS_16)
-		;
-	else if (flags & HAS_24)
-		p->precision = 24;
-	else {
-		p->precision = 8;
-		if (flags & HAS_8)
-			;
-		else if (flags & HAS_8U)
-			p->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		else if (flags & HAS_MULAW)
-			p->encoding = AUDIO_ENCODING_ULAW;
-		else if (flags & HAS_ALAW)
-			p->encoding = AUDIO_ENCODING_ALAW;
-	}
-
-	alt = uaudio_match_alt(sc, p, mode);
-	if (alt != -1)
-		p->bps = sc->sc_alts[alt].asf1desc->bSubFrameSize;
 }
 
 int

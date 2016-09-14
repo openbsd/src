@@ -1,4 +1,4 @@
-/*	$OpenBSD: tumbler.c,v 1.7 2009/10/26 20:17:27 deraadt Exp $	*/
+/*	$OpenBSD: tumbler.c,v 1.8 2016/09/14 06:12:19 ratchov Exp $	*/
 
 /*-
  * Copyright (c) 2001,2003 Tsubai Masanari.  All rights reserved.
@@ -65,7 +65,6 @@ void tumbler_defer(struct device *);
 void tumbler_set_volume(struct tumbler_softc *, int, int);
 void tumbler_set_bass(struct tumbler_softc *, int);
 void tumbler_set_treble(struct tumbler_softc *, int);
-void tumbler_get_default_params(void *, int, struct audio_params *);
 
 int tas3001_write(struct tumbler_softc *, u_int, const void *);
 int tas3001_init(struct tumbler_softc *);
@@ -80,8 +79,6 @@ struct cfdriver tumbler_cd = {
 struct audio_hw_if tumbler_hw_if = {
 	i2s_open,
 	i2s_close,
-	NULL,
-	i2s_query_encoding,
 	i2s_set_params,
 	i2s_round_blocksize,
 	NULL,
@@ -100,11 +97,9 @@ struct audio_hw_if tumbler_hw_if = {
 	i2s_allocm,		/* allocm */
 	NULL,
 	i2s_round_buffersize,
-	i2s_mappage,
 	i2s_get_props,
 	i2s_trigger_output,
-	i2s_trigger_input,
-	tumbler_get_default_params
+	i2s_trigger_input
 };
 
 struct audio_device tumbler_device = {
@@ -493,10 +488,4 @@ tumbler_getdev(void *h, struct audio_device *retp)
 {
 	*retp = tumbler_device;
 	return (0);
-}
-
-void
-tumbler_get_default_params(void *addr, int mode, struct audio_params *params)
-{
-	i2s_get_default_params(params);
 }

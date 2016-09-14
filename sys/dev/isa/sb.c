@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.27 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: sb.c,v 1.28 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -104,8 +104,6 @@ int	sb_getdev(void *, struct audio_device *);
 struct audio_hw_if sb_hw_if = {
 	sbdsp_open,
 	sbdsp_close,
-	0,
-	sbdsp_query_encoding,
 	sbdsp_set_params,
 	sbdsp_round_blocksize,
 	0,
@@ -124,11 +122,9 @@ struct audio_hw_if sb_hw_if = {
 	sb_malloc,
 	sb_free,
 	sb_round,
-        sb_mappage,
 	sbdsp_get_props,
 	sbdsp_trigger_output,
-	sbdsp_trigger_input,
-	NULL
+	sbdsp_trigger_input
 };
 
 #ifdef AUDIO_DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.40 2015/06/18 20:02:57 naddy Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.41 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -129,11 +129,9 @@ struct cmpci_dmanode * cmpci_find_dmamem(struct cmpci_softc *,
  */
 int cmpci_open(void *, int);
 void cmpci_close(void *);
-int cmpci_query_encoding(void *, struct audio_encoding *);
 int cmpci_set_params(void *, int, int,
 				 struct audio_params *,
 				 struct audio_params *);
-void cmpci_get_default_params(void *, int, struct audio_params*);
 int cmpci_round_blocksize(void *, int);
 int cmpci_halt_output(void *);
 int cmpci_halt_input(void *);
@@ -144,7 +142,6 @@ int cmpci_query_devinfo(void *, mixer_devinfo_t *);
 void *cmpci_malloc(void *, int, size_t, int, int);
 void cmpci_free(void *, void *, int);
 size_t cmpci_round_buffersize(void *, int, size_t);
-paddr_t cmpci_mappage(void *, void *, off_t, int);
 int cmpci_get_props(void *);
 int cmpci_trigger_output(void *, void *, void *, int,
 				     void (*)(void *), void *,
@@ -156,8 +153,6 @@ int cmpci_trigger_input(void *, void *, void *, int,
 struct audio_hw_if cmpci_hw_if = {
 	cmpci_open,		/* open */
 	cmpci_close,		/* close */
-	NULL,			/* drain */
-	cmpci_query_encoding,	/* query_encoding */
 	cmpci_set_params,	/* set_params */
 	cmpci_round_blocksize,	/* round_blocksize */
 	NULL,			/* commit_settings */
@@ -176,11 +171,9 @@ struct audio_hw_if cmpci_hw_if = {
 	cmpci_malloc,		/* malloc */
 	cmpci_free,		/* free */
 	cmpci_round_buffersize,/* round_buffersize */
-	cmpci_mappage,		/* mappage */
 	cmpci_get_props,	/* get_props */
 	cmpci_trigger_output,	/* trigger_output */
-	cmpci_trigger_input,	/* trigger_input */
-	cmpci_get_default_params
+	cmpci_trigger_input	/* trigger_input */
 };
 
 /*
@@ -639,42 +632,6 @@ cmpci_open(void *handle, int flags)
 void
 cmpci_close(void *handle)
 {
-}
-
-int
-cmpci_query_encoding(void *handle, struct audio_encoding *fp)
-{
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	default:
-		return EINVAL;
-	}
-	fp->bps = AUDIO_BPS(fp->precision);
-	fp->msb = 1;
-
-	return 0;
-}
-
-void
-cmpci_get_default_params(void *addr, int mode, struct audio_params *params)
-{
-	params->sample_rate = 48000;
-	params->encoding = AUDIO_ENCODING_SLINEAR_LE;
-	params->precision = 16;
-	params->bps = 2;
-	params->msb = 1;
-	params->channels = 2;
 }
 
 int
@@ -1845,19 +1802,6 @@ cmpci_round_buffersize(void *handle, int direction, size_t bufsize)
 		bufsize = 0x10000;
 
 	return bufsize;
-}
-
-paddr_t
-cmpci_mappage(void *handle, void *addr, off_t offset, int prot)
-{
-	struct cmpci_softc *sc = handle;
-	struct cmpci_dmanode *p;
-
-	if (offset < 0 || NULL == (p = cmpci_find_dmamem(sc, addr)))
-		return -1;
-
-	return bus_dmamem_mmap(p->cd_tag, p->cd_segs,
-		   nitems(p->cd_segs), offset, prot, BUS_DMA_WAITOK);
 }
 
 /* ARGSUSED */

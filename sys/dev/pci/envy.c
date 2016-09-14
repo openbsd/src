@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.66 2015/08/30 08:52:26 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.67 2016/09/14 06:12:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -98,7 +98,6 @@ int envy_open(void *, int);
 void envy_close(void *);
 void *envy_allocm(void *, int, size_t, int, int);
 void envy_freem(void *, void *, int);
-int envy_query_encoding(void *, struct audio_encoding *);
 int envy_set_params(void *, int, int, struct audio_params *,
     struct audio_params *);
 int envy_round_blocksize(void *, int);
@@ -180,8 +179,6 @@ struct cfdriver envy_cd = {
 struct audio_hw_if envy_hw_if = {
 	envy_open,		/* open */
 	envy_close,		/* close */
-	NULL,			/* drain */
-	envy_query_encoding,	/* query_encoding */
 	envy_set_params,	/* set_params */
 	envy_round_blocksize,	/* round_blocksize */
 	NULL,			/* commit_settings */
@@ -200,11 +197,9 @@ struct audio_hw_if envy_hw_if = {
 	envy_allocm,		/* malloc */
 	envy_freem,		/* free */
 	envy_round_buffersize,	/* round_buffersize */
-	NULL,			/* mappage */
 	envy_get_props,		/* get_props */
 	envy_trigger_output,	/* trigger_output */
-	envy_trigger_input,	/* trigger_input */
-	NULL
+	envy_trigger_input	/* trigger_input */
 };
 
 #if NMIDI > 0
@@ -1833,21 +1828,6 @@ envy_freem(void *self, void *addr, int type)
 	uvm_km_free(kernel_map, (vaddr_t)&buf->addr, buf->size);
 	buf->addr = NULL;
 	DPRINTF("%s: freed buffer (mode=%d)\n", DEVNAME(sc), dir);
-}
-
-int
-envy_query_encoding(void *self, struct audio_encoding *enc)
-{
-	if (enc->index == 0) {
-		strlcpy(enc->name, AudioEslinear_le, sizeof(enc->name));
-		enc->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		enc->precision = 24;
-		enc->bps = 4;
-		enc->msb = 1;
-		enc->flags = 0;
-		return 0;
-	}
-	return EINVAL;
 }
 
 int

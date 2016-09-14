@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7930var.h,v 1.3 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: am7930var.h,v 1.4 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: am7930var.h,v 1.10 2005/01/15 15:19:52 kent Exp $	*/
 
 /*
@@ -103,12 +103,10 @@ void	am7930_init(struct am7930_softc *, int);
  */
 
 struct audio_device;
-struct audio_encoding;
 struct audio_params;
 
 int	am7930_open(void *, int);
 void	am7930_close(void *);
-int	am7930_query_encoding(void *, struct audio_encoding *);
 int	am7930_set_params(void *, int, int, struct audio_params *,
 	    struct audio_params *);
 int	am7930_commit_settings(void *);

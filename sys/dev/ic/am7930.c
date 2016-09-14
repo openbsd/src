@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7930.c,v 1.6 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: am7930.c,v 1.7 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: am7930.c,v 1.44 2001/11/13 13:14:34 lukem Exp $	*/
 
 /*
@@ -231,27 +231,6 @@ am7930_set_params(void *addr, int setmode, int usemode,
 		p->sample_rate = 8000;
 	}
 
-	return 0;
-}
-
-int
-am7930_query_encoding(void *addr, struct audio_encoding *fp)
-{
-	struct am7930_softc *sc = addr;
-
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = sc->sc_glue->precision;
-		fp->bps = AUDIO_BPS(fp->precision);
-		fp->msb = 0;
-		fp->flags = 0;
-		break;
-	default:
-		return EINVAL;
-		/*NOTREACHED*/
-	}
 	return 0;
 }
 

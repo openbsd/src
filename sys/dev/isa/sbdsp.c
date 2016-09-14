@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.36 2015/06/25 06:43:46 ratchov Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.37 2016/09/14 06:12:19 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -442,86 +442,6 @@ sbdsp_mix_read(sc, mixerport)
 /*
  * Various routines to interface to higher level audio driver
  */
-
-int
-sbdsp_query_encoding(addr, fp)
-	void *addr;
-	struct audio_encoding *fp;
-{
-	struct sbdsp_softc *sc = addr;
-	int emul, found = 0;
-
-	emul = ISSB16CLASS(sc) ? 0 : AUDIO_ENCODINGFLAG_EMULATED;
-
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		found = 1;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		found = 1;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		found = 1;
-		break;
-	case 3:
-		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = emul;
-		found = 1;
-		break;
-        }
-	if (found) {
-		fp->bps = 1;
-		fp->msb = 1;
-		return 0;
-	} else if (!ISSB16CLASS(sc) && sc->sc_model != SB_JAZZ)
-		return EINVAL;
-
-        switch(fp->index) {
-        case 4:
-		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 5:
-		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = emul;
-		break;
-	case 6:
-		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	default:
-		return EINVAL;
-	}
-	fp->bps = 2;
-	fp->msb = 1;
-	return 0;
-}
 
 int
 sbdsp_set_params(addr, setmode, usemode, play, rec)
@@ -2260,16 +2180,6 @@ sb_round(addr, direction, size)
 	if (size > MAX_ISADMA)
 		size = MAX_ISADMA;
 	return size;
-}
-
-paddr_t
-sb_mappage(addr, mem, off, prot)
-	void *addr;
-        void *mem;
-        off_t off;
-	int prot;
-{
-	return isa_mappage(mem, off, prot);
 }
 
 int

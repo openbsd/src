@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.43 2015/06/25 20:05:11 ratchov Exp $	*/
+/*	$OpenBSD: gus.c,v 1.44 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -263,10 +263,6 @@ static const unsigned short gus_log_volumes[512] = {
 struct audio_hw_if gus_hw_if = {
 	gusopen,
 	gusclose,
-	NULL,				/* drain */
-
-	gus_query_encoding,
-
 	gus_set_params,
 
 	gus_round_blocksize,
@@ -290,10 +286,8 @@ struct audio_hw_if gus_hw_if = {
 	gus_malloc,
 	gus_free,
 	gus_round,
-	gus_mappage,
 	gus_get_props,
 
-	NULL,
 	NULL,
 	NULL
 };
@@ -301,10 +295,6 @@ struct audio_hw_if gus_hw_if = {
 static struct audio_hw_if gusmax_hw_if = {
 	gusmaxopen,
 	gusmax_close,
-	NULL,				/* drain */
-
-	gus_query_encoding, /* query encoding */
-
 	gusmax_set_params,
 
 	gusmax_round_blocksize,
@@ -329,10 +319,8 @@ static struct audio_hw_if gusmax_hw_if = {
 	ad1848_malloc,
 	ad1848_free,
 	ad1848_round,
-	ad1848_mappage,
 	gusmax_get_props,
 
-	NULL,
 	NULL,
 	NULL
 };
@@ -3115,44 +3103,6 @@ mute:
 	return 0;
 }
 
-int
-gus_query_encoding(void *addr, struct audio_encoding *fp)
-{
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 3:
-		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	default:
-		return(EINVAL);
-		/*NOTREACHED*/
-	}
-	fp->bps = AUDIO_BPS(fp->precision);
-	fp->msb = 1;
-
-	return (0);
-}
-
 void *
 gus_malloc(void *addr, int direction, size_t size, int pool, int flags)
 {
@@ -3179,12 +3129,6 @@ gus_round(void *addr, int direction, size_t size)
 	if (size > MAX_ISADMA)
 		size = MAX_ISADMA;
 	return size;
-}
-
-paddr_t
-gus_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	return isa_mappage(mem, off, prot);
 }
 
 /*

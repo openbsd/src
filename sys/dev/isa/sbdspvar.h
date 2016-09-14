@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdspvar.h,v 1.17 2013/11/29 03:39:00 brad Exp $	*/
+/*	$OpenBSD: sbdspvar.h,v 1.18 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: sbdspvar.h,v 1.37 1998/08/10 00:20:39 mycroft Exp $	*/
 
 /*
@@ -204,7 +204,6 @@ int	sbdsp_set_out_gain_real(void *, u_int, u_char);
 int	sbdsp_get_out_gain(void *);
 int	sbdsp_set_monitor_gain(void *, u_int);
 int	sbdsp_get_monitor_gain(void *);
-int	sbdsp_query_encoding(void *, struct audio_encoding *);
 int	sbdsp_set_params(void *, int, int, struct audio_params *, struct audio_params *);
 int	sbdsp_round_blocksize(void *, int);
 int	sbdsp_get_avail_in_ports(void *);
@@ -243,7 +242,6 @@ int	sbdsp_mixer_query_devinfo(void *, mixer_devinfo_t *);
 void	*sb_malloc(void *, int, size_t, int, int);
 void	sb_free(void *, void *, int);
 size_t sb_round(void *, int, size_t);
-paddr_t	sb_mappage(void *, void *, off_t, int);
 
 int	sbdsp_get_props(void *);
 

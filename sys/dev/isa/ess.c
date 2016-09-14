@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.22 2015/06/25 06:43:46 ratchov Exp $	*/
+/*	$OpenBSD: ess.c,v 1.23 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -119,9 +119,6 @@ int	ess_open(void *, int);
 void	ess_1788_close(void *);
 void	ess_1888_close(void *);
 int	ess_getdev(void *, struct audio_device *);
-int	ess_drain(void *);
-
-int	ess_query_encoding(void *, struct audio_encoding *);
 
 int	ess_set_params(void *, int, int, struct audio_params *,
 	    struct audio_params *);
@@ -151,7 +148,6 @@ int	ess_get_port(void *, mixer_ctrl_t *);
 void   *ess_malloc(void *, int, size_t, int, int);
 void	ess_free(void *, void *, int);
 size_t	ess_round_buffersize(void *, int, size_t);
-paddr_t	ess_mappage(void *, void *, off_t, int);
 
 
 int	ess_query_devinfo(void *, mixer_devinfo_t *);
@@ -213,8 +209,6 @@ struct audio_device ess_device = {
 struct audio_hw_if ess_1788_hw_if = {
 	ess_open,
 	ess_1788_close,
-	ess_drain,
-	ess_query_encoding,
 	ess_set_params,
 	ess_round_blocksize,
 	NULL,
@@ -233,18 +227,14 @@ struct audio_hw_if ess_1788_hw_if = {
 	ess_malloc,
 	ess_free,
 	ess_round_buffersize,
-	ess_mappage,
 	ess_1788_get_props,
 	ess_audio1_trigger_output,
-	ess_audio1_trigger_input,
-	NULL
+	ess_audio1_trigger_input
 };
 
 struct audio_hw_if ess_1888_hw_if = {
 	ess_open,
 	ess_1888_close,
-	ess_drain,
-	ess_query_encoding,
 	ess_set_params,
 	ess_round_blocksize,
 	NULL,
@@ -263,11 +253,9 @@ struct audio_hw_if ess_1888_hw_if = {
 	ess_malloc,
 	ess_free,
 	ess_round_buffersize,
-	ess_mappage,
 	ess_1888_get_props,
 	ess_audio2_trigger_output,
-	ess_audio1_trigger_input,
-	NULL
+	ess_audio1_trigger_input
 };
 
 #ifdef AUDIO_DEBUG
@@ -1074,17 +1062,6 @@ ess_1888_close(void *addr)
 	DPRINTF(("ess_1888_close: closed\n"));
 }
 
-/*
- * Wait for FIFO to drain, and analog section to settle.
- * XXX should check FIFO empty bit.
- */
-int
-ess_drain(void *addr)
-{
-	tsleep(addr, PWAIT | PCATCH, "essdr", hz/20); /* XXX */
-	return (0);
-}
-
 /* XXX should use reference count */
 int
 ess_speaker_ctl(void *addr, int newstate)
@@ -1106,45 +1083,6 @@ int
 ess_getdev(void *addr, struct audio_device *retp)
 {
 	*retp = ess_device;
-	return (0);
-}
-
-int
-ess_query_encoding(void *addr, struct audio_encoding *fp)
-{
-	/*struct ess_softc *sc = addr;*/
-
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 3:
-		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	default:
-		return EINVAL;
-	}
-	fp->bps = AUDIO_BPS(fp->precision);
-	fp->msb = 1;
-
 	return (0);
 }
 
@@ -2154,12 +2092,6 @@ ess_round_buffersize(void *addr, int direction, size_t size)
 	if (size > MAX_ISADMA)
 		size = MAX_ISADMA;
 	return (size);
-}
-
-paddr_t
-ess_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	return (isa_mappage(mem, off, prot));
 }
 
 int

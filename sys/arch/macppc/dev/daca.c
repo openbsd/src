@@ -1,4 +1,4 @@
-/*	$OpenBSD: daca.c,v 1.8 2010/02/26 21:53:43 jasper Exp $	*/
+/*	$OpenBSD: daca.c,v 1.9 2016/09/14 06:12:19 ratchov Exp $	*/
 
 /*-
  * Copyright (c) 2002,2003 Tsubai Masanari.  All rights reserved.
@@ -63,7 +63,6 @@ void daca_attach(struct device *, struct device *, void *);
 void daca_defer(struct device *);
 void daca_init(struct daca_softc *);
 void daca_set_volume(struct daca_softc *, int, int);
-void daca_get_default_params(void *, int, struct audio_params *);
 
 struct cfattach daca_ca = {
 	sizeof(struct daca_softc), daca_match, daca_attach
@@ -76,8 +75,6 @@ struct cfdriver daca_cd = {
 struct audio_hw_if daca_hw_if = {
 	i2s_open,
 	i2s_close,
-	NULL,
-	i2s_query_encoding,
 	i2s_set_params,
 	i2s_round_blocksize,
 	NULL,
@@ -96,11 +93,9 @@ struct audio_hw_if daca_hw_if = {
 	i2s_allocm,		/* allocm */
 	NULL,
 	i2s_round_buffersize,
-	i2s_mappage,
 	i2s_get_props,
 	i2s_trigger_output,
-	i2s_trigger_input,
-	daca_get_default_params
+	i2s_trigger_input
 };
 
 struct audio_device daca_device = {
@@ -198,10 +193,4 @@ daca_set_volume(struct daca_softc *sc, int left, int right)
 	right >>= 2;
 	data = left << 8 | right;
 	kiic_write(sc->sc_i2c, DEQaddr, DEQ_AVOL, &data, 2);
-}
-
-void
-daca_get_default_params(void *addr, int mode, struct audio_params *params)
-{
-	i2s_get_default_params(params);
 }

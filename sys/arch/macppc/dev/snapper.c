@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.35 2009/10/26 20:17:27 deraadt Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.36 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -67,7 +67,6 @@ void snapper_set_volume(struct snapper_softc *, int, int);
 void snapper_set_bass(struct snapper_softc *, int);
 void snapper_set_treble(struct snapper_softc *, int);
 void snapper_set_input(struct snapper_softc *, int);
-void snapper_get_default_params(void *, int, struct audio_params *);
 
 int tas3004_write(struct snapper_softc *, u_int, const void *);
 int tas3004_init(struct snapper_softc *);
@@ -82,8 +81,6 @@ struct cfdriver snapper_cd = {
 struct audio_hw_if snapper_hw_if = {
 	i2s_open,
 	i2s_close,
-	NULL,
-	i2s_query_encoding,
 	i2s_set_params,
 	i2s_round_blocksize,
 	NULL,
@@ -102,11 +99,9 @@ struct audio_hw_if snapper_hw_if = {
 	i2s_allocm,		/* allocm */
 	NULL,
 	i2s_round_buffersize,
-	i2s_mappage,
 	i2s_get_props,
 	i2s_trigger_output,
-	i2s_trigger_input,
-	snapper_get_default_params
+	i2s_trigger_input
 };
 
 struct audio_device snapper_device = {
@@ -739,10 +734,4 @@ snapper_getdev(void *h, struct audio_device *retp)
 {
 	*retp = snapper_device;
 	return (0);
-}
-
-void
-snapper_get_default_params(void *addr, int mode, struct audio_params *params)
-{
-	i2s_get_default_params(params);
 }

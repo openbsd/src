@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.49 2015/08/11 21:10:59 ratchov Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.50 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -158,11 +158,9 @@ void emuxki_write_micro(struct emuxki_softc *sc, u_int32_t pc, u_int32_t data);
 int	emuxki_open(void *, int);
 void	emuxki_close(void *);
 
-int	emuxki_query_encoding(void *, struct audio_encoding *);
 int	emuxki_set_params(void *, int, int,
 				      struct audio_params *,
 				      struct audio_params *);
-void	emuxki_get_default_params(void *, int, struct audio_params *);
 
 int	emuxki_round_blocksize(void *, int);
 size_t	emuxki_round_buffersize(void *, int, size_t);
@@ -182,7 +180,6 @@ int	emuxki_query_devinfo(void *, mixer_devinfo_t *);
 void   *emuxki_allocm(void *, int, size_t, int, int);
 void	emuxki_freem(void *, void *, int);
 
-paddr_t	emuxki_mappage(void *, void *, off_t, int);
 int	emuxki_get_props(void *);
 
 /* Interrupt handler */
@@ -219,8 +216,6 @@ struct cfattach emu_ca = {
 struct audio_hw_if emuxki_hw_if = {
 	emuxki_open,
 	emuxki_close,
-	NULL,			/* drain */
-	emuxki_query_encoding,
 	emuxki_set_params,
 	emuxki_round_blocksize,
 	NULL,			/* commit settings */
@@ -239,11 +234,9 @@ struct audio_hw_if emuxki_hw_if = {
 	emuxki_allocm,
 	emuxki_freem,
 	emuxki_round_buffersize,
-	emuxki_mappage,
 	emuxki_get_props,
 	emuxki_trigger_output,
-	emuxki_trigger_input,
-	emuxki_get_default_params
+	emuxki_trigger_input
 };
 
 #if 0
@@ -2078,37 +2071,6 @@ emuxki_close(void *addr)
 }
 
 int
-emuxki_query_encoding(void *addr, struct audio_encoding *fp)
-{
-#ifdef EMUXKI_DEBUG
-	struct emuxki_softc *sc = addr;
-
-	printf("%s: emuxki_query_encoding called\n", sc->sc_dev.dv_xname);
-#endif
-
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	default:
-		return (EINVAL);
-	}
-	fp->bps = AUDIO_BPS(fp->precision);
-	fp->msb = 1;
-
-	return (0);
-}
-
-int
 emuxki_set_vparms(struct emuxki_voice *voice, struct audio_params *p)
 {
 	u_int8_t	b16, mode;
@@ -2176,12 +2138,6 @@ emuxki_set_params(void *addr, int setmode, int usemode,
 	}
 
 	return (0);
-}
-
-void
-emuxki_get_default_params(void *addr, int mode, struct audio_params *params)
-{
-	ac97_get_default_params(params);
 }
 
 int
@@ -2332,24 +2288,6 @@ emuxki_round_buffersize(void *addr, int direction, size_t bsize)
 	}
 
 	return (bsize);
-}
-
-paddr_t
-emuxki_mappage(void *addr, void *ptr, off_t off, int prot)
-{
-	struct emuxki_softc *sc = addr;
-	struct emuxki_mem *mem;
-
-	LIST_FOREACH(mem, &sc->mem, next) {
-		if (KERNADDR(mem->dmamem) == ptr) {
-			struct dmamem *dm = mem->dmamem;
-
-			return bus_dmamem_mmap(dm->dmat, dm->segs, dm->nsegs,
-			       off, prot, BUS_DMA_WAITOK);
-		}
-	}
-
-	return (-1);
 }
 
 int

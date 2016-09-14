@@ -1,4 +1,4 @@
-/*	$OpenBSD: bba.c,v 1.5 2015/05/11 06:46:22 ratchov Exp $	*/
+/*	$OpenBSD: bba.c,v 1.6 2016/09/14 06:12:20 ratchov Exp $	*/
 /* $NetBSD: bba.c,v 1.38 2011/06/04 01:27:57 tsutsui Exp $ */
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -148,7 +148,6 @@ void	*bba_allocm(void *, int, size_t, int, int);
 void	bba_freem(void *, void *, int);
 size_t	bba_round_buffersize(void *, int, size_t);
 int	bba_get_props(void *);
-paddr_t	bba_mappage(void *, void *, off_t, int);
 int	bba_trigger_output(void *, void *, void *, int,
 	    void (*)(void *), void *, struct audio_params *);
 int	bba_trigger_input(void *, void *, void *, int,
@@ -157,8 +156,6 @@ int	bba_trigger_input(void *, void *, void *, int,
 struct audio_hw_if bba_hw_if = {
 	am7930_open,
 	am7930_close,
-	NULL,
-	am7930_query_encoding,
 	am7930_set_params,
 	bba_round_blocksize,		/* md */
 	am7930_commit_settings,
@@ -177,11 +174,9 @@ struct audio_hw_if bba_hw_if = {
 	bba_allocm,			/* md */
 	bba_freem,			/* md */
 	bba_round_buffersize,		/* md */
-	bba_mappage,
 	bba_get_props,
 	bba_trigger_output,		/* md */
-	bba_trigger_input,		/* md */
-	NULL
+	bba_trigger_input		/* md */
 };
 
 static struct audio_device bba_device = {
@@ -605,29 +600,6 @@ int
 bba_get_props(void *v)
 {
 	return AUDIO_PROP_MMAP | am7930_get_props(v);
-}
-
-paddr_t
-bba_mappage(void *v, void *mem, off_t offset, int prot)
-{
-	struct bba_softc *sc = v;
-	struct bba_mem **mp;
-	bus_dma_segment_t seg;
-
-	if (offset < 0)
-		return -1;
-
-	for (mp = &sc->sc_mem_head; *mp && (*mp)->kva != mem;
-	    mp = &(*mp)->next)
-		continue;
-	if (*mp == NULL)
-		return -1;
-
-	seg.ds_addr = (*mp)->addr;
-	seg.ds_len = (*mp)->size;
-
-	return bus_dmamem_mmap(sc->sc_dmat, &seg, 1, offset,
-	    prot, BUS_DMA_WAITOK);
 }
 
 int

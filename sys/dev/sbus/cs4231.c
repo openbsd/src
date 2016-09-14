@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.35 2015/05/11 06:52:35 ratchov Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.36 2016/09/14 06:12:20 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -134,7 +134,6 @@ u_int8_t	cs4231_read(struct cs4231_softc *, u_int8_t);
 /* Audio interface */
 int	cs4231_open(void *, int);
 void	cs4231_close(void *);
-int	cs4231_query_encoding(void *, struct audio_encoding *);
 int	cs4231_set_params(void *, int, int, struct audio_params *,
     struct audio_params *);
 int	cs4231_round_blocksize(void *, int);
@@ -156,8 +155,6 @@ int	cs4231_trigger_input(void *, void *, void *, int,
 struct audio_hw_if cs4231_sa_hw_if = {
 	cs4231_open,
 	cs4231_close,
-	0,
-	cs4231_query_encoding,
 	cs4231_set_params,
 	cs4231_round_blocksize,
 	cs4231_commit_settings,
@@ -176,11 +173,9 @@ struct audio_hw_if cs4231_sa_hw_if = {
 	cs4231_alloc,
 	cs4231_free,
 	0,
-	0,
 	cs4231_get_props,
 	cs4231_trigger_output,
-	cs4231_trigger_input,
-	0
+	cs4231_trigger_input
 };
 
 struct cfattach audiocs_ca = {
@@ -481,69 +476,6 @@ cs4231_close(void *vsc)
 	cs4231_write(sc, SP_PIN_CONTROL,
 	    cs4231_read(sc, SP_PIN_CONTROL) & (~INTERRUPT_ENABLE));
 	sc->sc_open = 0;
-}
-
-int
-cs4231_query_encoding(void *vsc, struct audio_encoding *fp)
-{
-	int err = 0;
-
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 3:
-		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 4:
-		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 5:
-		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	default:
-		err = EINVAL;
-	}
-	fp->bps = AUDIO_BPS(fp->precision);
-	fp->msb = 1;
-
-	return (err);
 }
 
 int

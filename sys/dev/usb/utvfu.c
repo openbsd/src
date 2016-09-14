@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.7 2016/06/17 07:59:16 mglocker Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.8 2016/09/14 06:12:20 ratchov Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -772,7 +772,6 @@ void		utvfu_as_bulk_thread(void *);
 
 int		utvfu_audio_open(void *, int);
 void		utvfu_audio_close(void *);
-int		utvfu_audio_query_encoding(void *, struct audio_encoding *);
 int		utvfu_audio_set_params(void *, int, int,
 		    struct audio_params *, struct audio_params *);
 int		utvfu_audio_halt_out(void *);
@@ -786,8 +785,6 @@ int		utvfu_audio_trigger_output(void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *);
 int		utvfu_audio_trigger_input(void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *);
-void		utvfu_audio_get_default_params(void *, int,
-		    struct audio_params *);
 
 struct cfdriver utvfu_cd = {
 	NULL, "utvfu", DV_DULL
@@ -840,8 +837,6 @@ struct audio_device utvfu_audio_device = {
 struct audio_hw_if utvfu_au_hw_if = {
 	utvfu_audio_open,		/* open hardware */
 	utvfu_audio_close,		/* close hardware */
-	NULL,				/* Optional: drain buffers */
-	utvfu_audio_query_encoding,
 	utvfu_audio_set_params,
 	NULL,
 	NULL,
@@ -860,11 +855,9 @@ struct audio_hw_if utvfu_au_hw_if = {
 	NULL,
 	NULL,
 	NULL,
-	NULL,
 	utvfu_audio_get_props,
 	utvfu_audio_trigger_output,
-	utvfu_audio_trigger_input,
-	utvfu_audio_get_default_params
+	utvfu_audio_trigger_input
 };
 
 int
@@ -1884,29 +1877,6 @@ utvfu_audio_close(void *v)
 }
 
 int
-utvfu_audio_query_encoding(void *v, struct audio_encoding *p)
-{
-	struct utvfu_softc *sc = v;
-
-	if (usbd_is_dying(sc->sc_udev))
-		return (EIO);
-
-	DPRINTF(1, "%s %s\n", DEVNAME(sc), __func__);
-
-	if (p->index != 0)
-		return (EINVAL);
-
-	strlcpy(p->name, AudioEslinear_le, sizeof(p->name));
-	p->encoding = AUDIO_ENCODING_SLINEAR_LE;
-	p->precision = 16;
-	p->bps = 2;
-	p->msb = 1;
-	p->flags = 0;
-
-	return (0);
-}
-
-int
 utvfu_audio_set_params(void *v, int setmode, int usemode,
     struct audio_params *play, struct audio_params *rec)
 {
@@ -2032,22 +2002,6 @@ int
 utvfu_audio_get_props(void *v)
 {
 	return (0);
-}
-
-void
-utvfu_audio_get_default_params(void *v, int mode, struct audio_params *p)
-{
-	if (mode != AUMODE_RECORD)
-		return;
-
-	DPRINTF(1, "%s %s\n", DEVNAME((struct utvfu_softc *)v), __func__);
-
-	p->sample_rate = 48000;
-	p->encoding = AUDIO_ENCODING_SLINEAR_LE;
-	p->precision = 16;
-	p->bps = 2;
-	p->msb = 1;
-	p->channels = 2;
 }
 
 int

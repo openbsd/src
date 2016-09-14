@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.32 2015/05/11 06:46:22 ratchov Exp $ */
+/*      $OpenBSD: sv.c,v 1.33 2016/09/14 06:12:19 ratchov Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -137,7 +137,6 @@ int	sv_freemem(struct sv_softc *, struct sv_dma *);
 
 int	sv_open(void *, int);
 void	sv_close(void *);
-int	sv_query_encoding(void *, struct audio_encoding *);
 int	sv_set_params(void *, int, int, struct audio_params *, struct audio_params *);
 int	sv_round_blocksize(void *, int);
 int	sv_dma_init_output(void *, void *, int);
@@ -152,7 +151,6 @@ int	sv_mixer_get_port(void *, mixer_ctrl_t *);
 int	sv_query_devinfo(void *, mixer_devinfo_t *);
 void   *sv_malloc(void *, int, size_t, int, int);
 void	sv_free(void *, void *, int);
-paddr_t	sv_mappage(void *, void *, off_t, int);
 int	sv_get_props(void *);
 
 void    sv_dumpregs(struct sv_softc *sc);
@@ -160,8 +158,6 @@ void    sv_dumpregs(struct sv_softc *sc);
 struct audio_hw_if sv_hw_if = {
 	sv_open,
 	sv_close,
-	NULL,
-	sv_query_encoding,
 	sv_set_params,
 	sv_round_blocksize,
 	NULL,
@@ -180,9 +176,7 @@ struct audio_hw_if sv_hw_if = {
 	sv_malloc,
 	sv_free,
 	NULL,
-	sv_mappage,
 	sv_get_props,
-	NULL,
 	NULL,
 	NULL
 };
@@ -573,31 +567,6 @@ sv_close(void *addr)
 
         sc->sc_pintr = 0;
         sc->sc_rintr = 0;
-}
-
-int
-sv_query_encoding(void *addr, struct audio_encoding *fp)
-{
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-        case 1:
-		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	default:
-		return (EINVAL);
-	}
-	fp->bps = AUDIO_BPS(fp->precision);
-	fp->msb = 1;
-
-	return (0);
 }
 
 int
@@ -1355,20 +1324,6 @@ sv_free(void *addr, void *ptr, int pool)
                         return;
                 }
         }
-}
-
-paddr_t
-sv_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	struct sv_softc *sc = addr;
-        struct sv_dma *p;
-
-        for (p = sc->sc_dmas; p && KERNADDR(p) != mem; p = p->next)
-		;
-	if (!p)
-		return (-1);
-	return (bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs, 
-				off, prot, BUS_DMA_WAITOK));
 }
 
 int

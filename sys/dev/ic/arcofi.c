@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.13 2015/06/26 04:25:18 miod Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.14 2016/09/14 06:12:19 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -203,7 +203,6 @@ int	arcofi_halt_input(void *);
 int	arcofi_halt_output(void *);
 int	arcofi_open(void *, int);
 int	arcofi_query_devinfo(void *, mixer_devinfo_t *);
-int	arcofi_query_encoding(void *, struct audio_encoding *);
 int	arcofi_round_blocksize(void *, int);
 int	arcofi_set_params(void *, int, int, struct audio_params *,
 	    struct audio_params *);
@@ -214,7 +213,6 @@ int	arcofi_start_output(void *, void *, int, void (*)(void *), void *);
 /* const */ struct audio_hw_if arcofi_hw_if = {
 	.open = arcofi_open,
 	.close = arcofi_close,
-	.query_encoding = arcofi_query_encoding,
 	.set_params = arcofi_set_params,
 	.round_blocksize = arcofi_round_blocksize,
 	.commit_settings = arcofi_commit_settings,
@@ -317,46 +315,6 @@ arcofi_drain(void *v)
 		}
 	}
 	mtx_leave(&audio_lock);
-	return 0;
-}
-
-int
-arcofi_query_encoding(void *v, struct audio_encoding *ae)
-{
-	switch (ae->index) {
-	/*
-	 * 8-bit encodings: u-Law and A-Law are native
-	 */
-	case 0:
-		strlcpy(ae->name, AudioEmulaw, sizeof ae->name);
-		ae->precision = 8;
-		ae->encoding = AUDIO_ENCODING_ULAW;
-		ae->flags = 0;
-		break;
-	case 1:
-		strlcpy(ae->name, AudioEalaw, sizeof ae->name);
-		ae->precision = 8;
-		ae->encoding = AUDIO_ENCODING_ALAW;
-		ae->flags = 0;
-		break;
-
-	/*
-	 * 16-bit encodings: slinear big-endian is native
-	 */
-	case 2:
-		strlcpy(ae->name, AudioEslinear_be, sizeof ae->name);
-		ae->precision = 16;
-		ae->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		ae->flags = 0;
-		break;
-
-	default:
-		return EINVAL;
-	}
-
-	ae->bps = AUDIO_BPS(ae->precision);
-	ae->msb = 1;
-
 	return 0;
 }
 

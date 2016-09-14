@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.41 2016/01/14 00:07:32 jsg Exp $	*/
+/*	$OpenBSD: eso.c,v 1.42 2016/09/14 06:12:19 ratchov Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -105,10 +105,8 @@ int eso_intr(void *);
 /* MI audio layer interface */
 int	eso_open(void *, int);
 void	eso_close(void *);
-int	eso_query_encoding(void *, struct audio_encoding *);
 int	eso_set_params(void *, int, int, struct audio_params *,
 		    struct audio_params *);
-void	eso_get_default_params(void *, int, struct audio_params *);
 int	eso_round_blocksize(void *, int);
 int	eso_halt_output(void *);
 int	eso_halt_input(void *);
@@ -119,7 +117,6 @@ int	eso_query_devinfo(void *, mixer_devinfo_t *);
 void *	eso_allocm(void *, int, size_t, int, int);
 void	eso_freem(void *, void *, int);
 size_t	eso_round_buffersize(void *, int, size_t);
-paddr_t	eso_mappage(void *, void *, off_t, int);
 int	eso_get_props(void *);
 int	eso_trigger_output(void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *);
@@ -130,8 +127,6 @@ void	eso_setup(struct eso_softc *, int, int);
 struct audio_hw_if eso_hw_if = {
 	eso_open,
 	eso_close,
-	NULL,			/* drain */
-	eso_query_encoding,
 	eso_set_params,
 	eso_round_blocksize,
 	NULL,			/* commit_settings */
@@ -150,11 +145,9 @@ struct audio_hw_if eso_hw_if = {
 	eso_allocm,
 	eso_freem,
 	eso_round_buffersize,
-	eso_mappage,
 	eso_get_props,
 	eso_trigger_output,
-	eso_trigger_input,
-	eso_get_default_params
+	eso_trigger_input
 };
 
 const char * const eso_rev2model[] = {
@@ -656,54 +649,6 @@ eso_open(void *hdl, int flags)
 void
 eso_close(void *hdl)
 {
-}
-
-int
-eso_query_encoding(void *hdl, struct audio_encoding *fp)
-{
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 3:
-		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	default:
-		return (EINVAL);
-	}
-	fp->bps = AUDIO_BPS(fp->precision);
-	fp->msb = 1;
-
-	return (0);
-}
-
-void
-eso_get_default_params(void *addr, int mode, struct audio_params *params)
-{
-	params->sample_rate = 48000;
-	params->encoding = AUDIO_ENCODING_ULINEAR_LE;
-	params->precision = 16;
-	params->bps = 2;
-	params->msb = 1;
-	params->channels = 2;
 }
 
 int
@@ -1640,24 +1585,6 @@ eso_round_buffersize(void *hdl, int direction, size_t bufsize)
 		bufsize = maxsize;
 
 	return (bufsize);
-}
-
-paddr_t
-eso_mappage(void *hdl, void *addr, off_t offs, int prot)
-{
-	struct eso_softc *sc = hdl;
-	struct eso_dma *ed;
-
-	if (offs < 0)
-		return (-1);
-	for (ed = sc->sc_dmas; ed != NULL && KVADDR(ed) != addr;
-	     ed = ed->ed_next)
-		;
-	if (ed == NULL)
-		return (-1);
-
-	return (bus_dmamem_mmap(ed->ed_dmat, ed->ed_segs, ed->ed_nsegs,
-	    offs, prot, BUS_DMA_WAITOK));
 }
 
 /* ARGSUSED */
