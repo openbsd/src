@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_bio_cb.c,v 1.4 2016/09/14 11:26:56 bcook Exp $ */
+/* $OpenBSD: tls_bio_cb.c,v 1.5 2016/09/14 11:30:41 bcook Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
@@ -154,6 +154,7 @@ ctrl_cb(BIO *b, int cmd, long num, void *ptr)
 		b->shutdown = (int)num;
 		break;
 	case BIO_CTRL_DUP:
+	case BIO_CTRL_FLUSH:
 		break;
 	case BIO_CTRL_INFO:
 	case BIO_CTRL_GET:
