@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.213 2016/08/25 12:30:16 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.214 2016/09/14 15:26:05 jca Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -119,8 +119,7 @@ struct ip6_exthdrs {
 int ip6_pcbopt(int, u_char *, int, struct ip6_pktopts **, int, int);
 int ip6_pcbopts(struct ip6_pktopts **, struct mbuf *, struct socket *);
 int ip6_getpcbopt(struct ip6_pktopts *, int, struct mbuf **);
-int ip6_setpktopt(int, u_char *, int, struct ip6_pktopts *, int, int,
-	int, int);
+int ip6_setpktopt(int, u_char *, int, struct ip6_pktopts *, int, int, int);
 int ip6_setmoptions(int, struct ip6_moptions **, struct mbuf *);
 int ip6_getmoptions(int, struct ip6_moptions *, struct mbuf **);
 int ip6_copyexthdr(struct mbuf **, caddr_t, int);
@@ -1770,7 +1769,7 @@ ip6_pcbopt(int optname, u_char *buf, int len, struct ip6_pktopts **pktopt,
 	}
 	opt = *pktopt;
 
-	return (ip6_setpktopt(optname, buf, len, opt, priv, 1, 0, uproto));
+	return (ip6_setpktopt(optname, buf, len, opt, priv, 1, uproto));
 }
 
 int
@@ -2352,7 +2351,7 @@ ip6_setpktopts(struct mbuf *control, struct ip6_pktopts *opt,
 			return (EINVAL);
 		if (cm->cmsg_level == IPPROTO_IPV6) {
 			error = ip6_setpktopt(cm->cmsg_type, CMSG_DATA(cm),
-			    cm->cmsg_len - CMSG_LEN(0), opt, priv, 0, 1, uproto);
+			    cm->cmsg_len - CMSG_LEN(0), opt, priv, 0, uproto);
 			if (error)
 				return (error);
 		}
@@ -2367,39 +2366,12 @@ ip6_setpktopts(struct mbuf *control, struct ip6_pktopts *opt,
 /*
  * Set a particular packet option, as a sticky option or an ancillary data
  * item.  "len" can be 0 only when it's a sticky option.
- * We have 4 cases of combination of "sticky" and "cmsg":
- * "sticky=0, cmsg=0": impossible
- * "sticky=0, cmsg=1": RFC2292 or RFC3542 ancillary data
- * "sticky=1, cmsg=0": RFC3542 socket option
- * "sticky=1, cmsg=1": RFC2292 socket option
  */
 int
 ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
-    int priv, int sticky, int cmsg, int uproto)
+    int priv, int sticky, int uproto)
 {
 	int minmtupolicy;
-
-	if (!sticky && !cmsg) {
-#ifdef DIAGNOSTIC
-		printf("ip6_setpktopt: impossible case\n");
-#endif
-		return (EINVAL);
-	}
-
-	if (sticky && cmsg) {
-		switch (optname) {
-		case IPV6_PKTINFO:
-		case IPV6_HOPLIMIT:
-		case IPV6_HOPOPTS:
-		case IPV6_DSTOPTS:
-		case IPV6_RTHDRDSTOPTS:
-		case IPV6_RTHDR:
-		case IPV6_USE_MIN_MTU:
-		case IPV6_DONTFRAG:
-		case IPV6_TCLASS:
-			return (ENOPROTOOPT);
-		}
-	}
 
 	switch (optname) {
 	case IPV6_PKTINFO:
