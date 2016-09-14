@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.c,v 1.6 2016/07/21 07:58:44 reyk Exp $	*/
+/*	$OpenBSD: ofp.c,v 1.7 2016/09/14 13:46:51 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -54,12 +54,11 @@ static struct privsep_proc procs[] = {
 static TAILQ_HEAD(, switch_connection) conn_head =
     TAILQ_HEAD_INITIALIZER(conn_head);
 
-pid_t
+void
 ofp(struct privsep *ps, struct privsep_proc *p)
 {
 	struct switchd		*sc = ps->ps_env;
 	struct switch_server	*srv = &sc->sc_server;
-	pid_t			 pid;
 
 	if ((sc->sc_tap = switchd_tap()) == -1)
 		fatal("tap");
@@ -70,11 +69,7 @@ ofp(struct privsep *ps, struct privsep_proc *p)
 	    &srv->srv_addr)) == -1)
 		fatal("listen");
 
-	pid = proc_run(ps, p, procs, nitems(procs), ofp_run, NULL);
-	close(srv->srv_fd);
-	close(sc->sc_tap);
-
-	return (pid);
+	proc_run(ps, p, procs, nitems(procs), ofp_run, NULL);
 }
 
 void

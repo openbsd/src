@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.3 2016/08/08 16:49:17 rzalamena Exp $	*/
+/*	$OpenBSD: control.c,v 1.4 2016/09/14 13:46:51 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2010-2016 Reyk Floeter <reyk@openbsd.org>
@@ -58,10 +58,10 @@ static struct privsep_proc procs[] = {
 	{ "ofcconn",	PROC_OFCCONN,	NULL }
 };
 
-pid_t
+void
 control(struct privsep *ps, struct privsep_proc *p)
 {
-	return (proc_run(ps, p, procs, nitems(procs), control_run, NULL));
+	proc_run(ps, p, procs, nitems(procs), control_run, NULL);
 }
 
 void
@@ -72,8 +72,9 @@ control_run(struct privsep *ps, struct privsep_proc *p, void *arg)
  	 * stdio - for malloc and basic I/O including events.
 	 * cpath - for managing the control socket.
 	 * unix - for the control socket.
+	 * recvfd - for the proc fd exchange.
 	 */
-	if (pledge("stdio cpath unix", NULL) == -1)
+	if (pledge("stdio cpath unix recvfd", NULL) == -1)
 		fatal("pledge");
 }
 

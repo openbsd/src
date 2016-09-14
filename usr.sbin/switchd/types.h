@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.2 2016/07/19 18:14:08 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.3 2016/09/14 13:46:51 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -55,6 +55,7 @@ struct constmap {
 enum imsg_type {
 	IMSG_NONE	= 0,
 	IMSG_CTL_VERBOSE,
+	IMSG_CTL_PROCFD,
 	IMSG_CTL_NOTIFY,
 	IMSG_CTL_OK,
 	IMSG_CTL_FAIL,

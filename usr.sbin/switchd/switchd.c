@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.c,v 1.7 2016/08/08 16:52:15 rzalamena Exp $	*/
+/*	$OpenBSD: switchd.c,v 1.8 2016/09/14 13:46:51 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -80,10 +80,13 @@ main(int argc, char *argv[])
 	unsigned int		 cache = SWITCHD_CACHE_MAX;
 	unsigned int		 timeout = SWITCHD_CACHE_TIMEOUT;
 	const char		*conffile = SWITCHD_CONFIG;
+	const char		*errp, *title = NULL;
+	enum privsep_procid	 proc_id = PROC_PARENT;
+	int			 argc0 = argc, proc_instance = 0;
 
 	log_init(1, LOG_DAEMON);
 
-	while ((c = getopt(argc, argv, "c:dD:f:hnt:v")) != -1) {
+	while ((c = getopt(argc, argv, "c:dD:f:hI:nP:t:v")) != -1) {
 		switch (c) {
 		case 'c':
 			cache = strtonum(optarg, 1, UINT32_MAX, &errstr);
@@ -103,8 +106,20 @@ main(int argc, char *argv[])
 		case 'f':
 			conffile = optarg;
 			break;
+		case 'I':
+			proc_instance = strtonum(optarg, 0,
+			    PROC_MAX_INSTANCES, &errp);
+			if (errp)
+				fatalx("invalid process instance");
+			break;
 		case 'n':
 			opts |= SWITCHD_OPT_NOACTION;
+			break;
+		case 'P':
+			title = optarg;
+			proc_id = proc_getid(procs, nitems(procs), title);
+			if (proc_id == PROC_MAX)
+				fatalx("invalid process name");
 			break;
 		case 't':
 			timeout = strtonum(optarg, 0, UINT32_MAX, &errstr);
@@ -160,6 +175,12 @@ main(int argc, char *argv[])
 
 	/* Configure the control socket */
 	ps->ps_csock.cs_name = SWITCHD_SOCKET;
+	ps->ps_instance = proc_instance;
+	if (title)
+		ps->ps_title[proc_id] = title;
+
+	/* Only the parent returns. */
+	proc_init(ps, procs, nitems(procs), argc0, argv, proc_id);
 
 	log_init(debug, LOG_DAEMON);
 	log_verbose(verbose);
@@ -167,8 +188,6 @@ main(int argc, char *argv[])
 	if (!debug && daemon(0, 0) == -1)
 		fatal("failed to daemonize");
 
-	ps->ps_ninstances = 1;
-	proc_init(ps, procs, nitems(procs));
 	log_procinit("parent");
 
 	/*
@@ -199,7 +218,7 @@ main(int argc, char *argv[])
 	signal_add(&ps->ps_evsigpipe, NULL);
 	signal_add(&ps->ps_evsigusr1, NULL);
 
-	proc_listen(ps, procs, nitems(procs));
+	proc_connect(ps);
 
 	if (parent_configure(sc) == -1)
 		fatalx("configuration failed");

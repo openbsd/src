@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.1 2016/07/19 16:54:26 reyk Exp $	*/
+/*	$OpenBSD: proc.h,v 1.2 2016/09/14 13:46:51 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -53,7 +53,6 @@ struct privsep {
 	struct control_socks		 ps_rcsocks;
 
 	unsigned int			 ps_instances[PROC_MAX];
-	unsigned int			 ps_ninstances;
 	unsigned int			 ps_instance;
 
 	/* Event and signal handlers */
@@ -72,13 +71,18 @@ struct privsep_proc {
 	enum privsep_procid	 p_id;
 	int			(*p_cb)(int, struct privsep_proc *,
 				    struct imsg *);
-	pid_t			(*p_init)(struct privsep *,
+	void			(*p_init)(struct privsep *,
 				    struct privsep_proc *);
 	const char		*p_chroot;
 	struct privsep		*p_ps;
 	void			*p_env;
 	void			(*p_shutdown)(void);
 	unsigned int		 p_instance;
+};
+
+struct privsep_fd {
+	enum privsep_procid		 pf_procid;
+	unsigned int			 pf_instance;
 };
 
 struct imsgev {
@@ -103,6 +107,15 @@ struct imsgev {
 	} while (0 /* CONSTCOND */)
 #endif
 
+#if DEBUG
+#define DPRINTF		log_debug
+#else
+#define DPRINTF(x...)	do {} while(0)
+#endif
+
+#define PROC_PARENT_SOCK_FILENO 3
+#define PROC_MAX_INSTANCES      32
+
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)		 entry;
 	uint8_t				 flags;
@@ -114,11 +127,12 @@ TAILQ_HEAD(ctl_connlist, ctl_conn);
 extern  struct ctl_connlist ctl_conns;
 
 /* proc.c */
-void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int);
+void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int,
+	    int, char **, enum privsep_procid);
 void	 proc_kill(struct privsep *);
-void	 proc_listen(struct privsep *, struct privsep_proc *, size_t);
+void	 proc_connect(struct privsep *ps);
 void	 proc_dispatch(int, short event, void *);
-pid_t	 proc_run(struct privsep *, struct privsep_proc *,
+void	 proc_run(struct privsep *, struct privsep_proc *,
 	    struct privsep_proc *, unsigned int,
 	    void (*)(struct privsep *, struct privsep_proc *, void *), void *);
 void	 imsg_event_add(struct imsgev *);
@@ -140,6 +154,8 @@ struct imsgbuf *
 	 proc_ibuf(struct privsep *, enum privsep_procid, int);
 struct imsgev *
 	 proc_iev(struct privsep *, enum privsep_procid, int);
+enum privsep_procid
+	 proc_getid(struct privsep_proc *, unsigned int, const char *);
 
 /* control.c */
 int	 control_init(struct privsep *, struct control_sock *);
@@ -147,7 +163,7 @@ int	 control_listen(struct control_sock *);
 void	 control_cleanup(struct control_sock *);
 struct ctl_conn
 	*control_connbyfd(int);
-pid_t	 control(struct privsep *, struct privsep_proc *);
+void	 control(struct privsep *, struct privsep_proc *);
 
 /* log.c */
 void	log_init(int, int);
