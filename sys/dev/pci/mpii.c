@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.104 2016/08/17 01:02:31 krw Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.105 2016/09/14 01:14:54 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -163,6 +163,7 @@ struct mpii_softc {
 
 	int			sc_flags;
 #define MPII_F_RAID		(1<<1)
+#define MPII_F_SAS3		(1<<2)
 
 	struct scsibus_softc	*sc_scsibus;
 
@@ -306,6 +307,7 @@ void		mpii_wait_done(struct mpii_ccb *);
 void		mpii_init_queues(struct mpii_softc *);
 
 int		mpii_load_xs(struct mpii_ccb *);
+int		mpii_load_xs_sas3(struct mpii_ccb *);
 
 u_int32_t	mpii_read(struct mpii_softc *, bus_size_t);
 void		mpii_write(struct mpii_softc *, bus_size_t, u_int32_t);
@@ -420,7 +422,13 @@ static const struct pci_matchid mpii_devices[] = {
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2208_6 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2308_1 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2308_2 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2308_3 }
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2308_3 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3004 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3008 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3108_1 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3108_2 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3108_3 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3108_4 }
 };
 
 int
@@ -726,6 +734,63 @@ mpii_intr(void *arg)
 	}
 
 	return (1);
+}
+
+int
+mpii_load_xs_sas3(struct mpii_ccb *ccb)
+{
+	struct mpii_softc	*sc = ccb->ccb_sc;
+	struct scsi_xfer	*xs = ccb->ccb_cookie;
+	struct mpii_msg_scsi_io	*io = ccb->ccb_cmd;
+	struct mpii_ieee_sge	*csge, *nsge, *sge;
+	bus_dmamap_t		dmap = ccb->ccb_dmamap;
+	int			i, error;
+
+	/* Request frame structure is described in the mpii_iocfacts */
+	nsge = (struct mpii_ieee_sge *)(io + 1);
+	csge = nsge + sc->sc_chain_sge;
+
+	/* zero length transfer still requires an SGE */
+	if (xs->datalen == 0) {
+		nsge->sg_flags = MPII_IEEE_SGE_END_OF_LIST;
+		return (0);
+	}
+
+	error = bus_dmamap_load(sc->sc_dmat, dmap, xs->data, xs->datalen, NULL,
+	    (xs->flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+	if (error) {
+		printf("%s: error %d loading dmamap\n", DEVNAME(sc), error);
+		return (1);
+	}
+
+	for (i = 0; i < dmap->dm_nsegs; i++, nsge++) {
+		if (nsge == csge) {
+			nsge++;
+			/* offset to the chain sge from the beginning */
+			io->chain_offset = ((caddr_t)csge - (caddr_t)io) / 4;
+			csge->sg_flags = MPII_IEEE_SGE_CHAIN_ELEMENT |
+			    MPII_IEEE_SGE_ADDR_SYSTEM;
+			/* address of the next sge */
+			csge->sg_addr = htole64(ccb->ccb_cmd_dva +
+			    ((caddr_t)nsge - (caddr_t)io));
+			csge->sg_len = htole32((dmap->dm_nsegs - i) *
+			    sizeof(*sge));
+		}
+
+		sge = nsge;
+		sge->sg_flags = MPII_IEEE_SGE_ADDR_SYSTEM;
+		sge->sg_len = htole32(dmap->dm_segs[i].ds_len);
+		sge->sg_addr = htole64(dmap->dm_segs[i].ds_addr);
+	}
+
+	/* terminate list */
+	sge->sg_flags |= MPII_IEEE_SGE_END_OF_LIST;
+
+	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
+	    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
+	    BUS_DMASYNC_PREWRITE);
+
+	return (0);
 }
 
 int
@@ -1126,6 +1191,7 @@ mpii_iocfacts(struct mpii_softc *sc)
 	struct mpii_msg_iocfacts_request	ifq;
 	struct mpii_msg_iocfacts_reply		ifp;
 	int					irs;
+	int					sge_size;
 	u_int					qdepth;
 
 	DNPRINTF(MPII_D_MISC, "%s: mpii_iocfacts\n", DEVNAME(sc));
@@ -1159,6 +1225,10 @@ mpii_iocfacts(struct mpii_softc *sc)
 
 	sc->sc_max_cmds = MIN(lemtoh16(&ifp.request_credit),
 	    MPII_REQUEST_CREDIT);
+
+	/* SAS3 controllers have different sgl layouts */
+	if (ifp.msg_version_maj == 2 && ifp.msg_version_min == 5)
+		SET(sc->sc_flags, MPII_F_SAS3);
 
 	/*
 	 * The host driver must ensure that there is at least one
@@ -1227,9 +1297,15 @@ mpii_iocfacts(struct mpii_softc *sc)
 		sc->sc_request_size += 16 - (sc->sc_request_size % 16);
 	}
 
+	if (ISSET(sc->sc_flags, MPII_F_SAS3)) {
+		sge_size = sizeof(struct mpii_ieee_sge);
+	} else {
+		sge_size = sizeof(struct mpii_sge);
+	}
+
 	/* offset to the chain sge */
 	sc->sc_chain_sge = (irs - sizeof(struct mpii_msg_scsi_io)) /
-	    sizeof(struct mpii_sge) - 1;
+	    sge_size - 1;
 
 	/*
 	 * A number of simple scatter-gather elements we can fit into the
@@ -1237,7 +1313,7 @@ mpii_iocfacts(struct mpii_softc *sc)
 	 */
 	sc->sc_max_sgl = (sc->sc_request_size -
  	    sizeof(struct mpii_msg_scsi_io) - sizeof(struct scsi_sense_data)) /
-	    sizeof(struct mpii_sge) - 1;
+	    sge_size - 1;
 
 	return (0);
 }
@@ -2704,11 +2780,12 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	struct mpii_ccb		*ccb = xs->io;
 	struct mpii_msg_scsi_io	*io;
 	struct mpii_device	*dev;
+	int			 ret;
 
 	DNPRINTF(MPII_D_CMD, "%s: mpii_scsi_cmd\n", DEVNAME(sc));
 
 	if (xs->cmdlen > MPII_CDB_LEN) {
-		DNPRINTF(MPII_D_CMD, "%s: CBD too big %d\n",
+		DNPRINTF(MPII_D_CMD, "%s: CDB too big %d\n",
 		    DEVNAME(sc), xs->cmdlen);
 		memset(&xs->sense, 0, sizeof(xs->sense));
 		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
@@ -2766,7 +2843,12 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	htolem32(&io->sense_buffer_low_address, ccb->ccb_cmd_dva +
 	    sc->sc_request_size - sizeof(struct scsi_sense_data));
 
-	if (mpii_load_xs(ccb) != 0) {
+	if (ISSET(sc->sc_flags, MPII_F_SAS3))
+		ret = mpii_load_xs_sas3(ccb);
+	else
+		ret = mpii_load_xs(ccb);
+
+	if (ret != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
 		goto done;
 	}

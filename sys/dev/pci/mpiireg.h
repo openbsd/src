@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpiireg.h,v 1.9 2014/03/27 12:19:55 dlg Exp $	*/
+/*	$OpenBSD: mpiireg.h,v 1.10 2016/09/14 01:14:54 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -127,6 +127,26 @@ struct mpii_sge {
 	u_int32_t		sg_addr_lo;
 	u_int32_t		sg_addr_hi;
 } __packed __aligned(4);
+
+/*
+ * SAS3 (IEEE) Scatter Gather Lists
+ */
+
+#define MPII_IEEE_SGE_ADDR_MASK		(0x03)
+#define MPII_IEEE_SGE_ADDR_SYSTEM	(0x00)
+#define MPII_IEEE_SGE_ADDR_IOCDDR	(0x01)
+#define MPII_IEEE_SGE_ADDR_IOCPLB	(0x02)
+#define MPII_IEEE_SGE_ADDR_IOCPLBNTA	(0x03)
+#define MPII_IEEE_SGE_END_OF_LIST	(0x40)
+#define MPII_IEEE_SGE_CHAIN_ELEMENT	(0x80)
+
+struct mpii_ieee_sge {
+	u_int64_t		sg_addr;
+	u_int32_t		sg_len;
+	u_int16_t		_reserved;
+	u_int8_t		sg_next_chain_offset;
+	u_int8_t		sg_flags;
+} __packed __aligned(8);
 
 struct mpii_fw_tce {
 	u_int8_t		reserved1;
