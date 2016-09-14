@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.130 2016/09/14 12:30:52 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.131 2016/09/14 12:35:40 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -383,8 +383,9 @@ sub signify_pipe
 	exec {OpenBSD::Paths->signify}
 	    ("signify",
 	    "-zV",
-	    @_);
-    	exit(1);
+	    @_)
+	or $self->{state}->fatal("Can't run #1: #2",
+	    OpenBSD::Paths->signify, $!);
 }
 
 sub check_signed
@@ -793,7 +794,7 @@ sub grab_object
 	    @extra,
 	    "-o",
 	    "-", $self->url($object->{name})
-	or $self->{state}->fatal("Can't run ".OpenBSD::Paths->ftp.": #1", $!);
+	or $self->{state}->fatal("Can't run #1: #2", OpenBSD::Paths->ftp, $!);
 }
 
 sub open_read_ftp
@@ -808,7 +809,7 @@ sub open_read_ftp
 
 		$self->drop_privileges_and_setup_env;
 		exec($cmd) 
-		or $self->{state}->fatal("Can't run $cmd: #1", $!);
+		or $self->{state}->fatal("Can't run #1: #2", $cmd, $!);
 	}
 }
 
