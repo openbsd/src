@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.129 2016/09/06 12:41:23 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.130 2016/09/14 12:30:52 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -95,7 +95,6 @@ sub ftp() { 'OpenBSD::PackageRepository::FTP' }
 sub http() { 'OpenBSD::PackageRepository::HTTP' }
 sub https() { 'OpenBSD::PackageRepository::HTTPS' }
 sub scp() { 'OpenBSD::PackageRepository::SCP' }
-sub source() { 'OpenBSD::PackageRepository::Source' }
 sub file() { 'OpenBSD::PackageRepository::Local' }
 sub installed() { 'OpenBSD::PackageRepository::Installed' }
 sub pipe() { 'OpenBSD::PackageRepository::Local::Pipe' }
