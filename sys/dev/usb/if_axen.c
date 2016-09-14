@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.22 2016/04/13 11:03:37 mpi Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.23 2016/09/14 12:41:09 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -499,6 +499,10 @@ axen_ax88179_init(struct axen_softc *sc)
 	}
 	axen_cmd(sc, AXEN_CMD_MAC_SET_RXSR, 5, AXEN_RX_BULKIN_QCTRL, &qctrl);
 
+	/* Set MAC address. */
+	axen_cmd(sc, AXEN_CMD_MAC_WRITE_ETHER, ETHER_ADDR_LEN,
+	    AXEN_CMD_MAC_NODE_ID, &sc->arpcom.ac_enaddr);
+
 	/*
 	 * set buffer high/low watermark to pause/resume.
 	 * write 2byte will set high/log simultaneous with AXEN_PAUSE_HIGH.
@@ -662,10 +666,9 @@ axen_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	/* use MAC command */
 	axen_lock_mii(sc);
-	axen_cmd(sc, AXEN_CMD_MAC_READ_ETHER, 6, AXEN_CMD_MAC_NODE_ID, &eaddr);
+	axen_cmd(sc, AXEN_CMD_MAC_READ_ETHER, ETHER_ADDR_LEN,
+	    AXEN_CMD_MAC_NODE_ID, &eaddr);
 	axen_unlock_mii(sc);
-
-	axen_ax88179_init(sc);
 
 	/*
 	 * An ASIX chip was detected. Inform the world.
@@ -678,6 +681,8 @@ axen_attach(struct device *parent, struct device *self, void *aux)
 	printf(", address %s\n", ether_sprintf(eaddr));
 
 	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
+
+	axen_ax88179_init(sc);
 
 	/* Initialize interface info. */
 	ifp = &sc->arpcom.ac_if;
