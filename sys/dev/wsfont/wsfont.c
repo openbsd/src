@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.43 2016/09/04 18:20:34 tedu Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.44 2016/09/14 03:25:51 jcs Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -450,13 +450,21 @@ wsfont_add(struct wsdisplay_font *font, int copy)
 {
 	static int cookiegen = 666;
 	struct font *ent;
-	int s;
+	int s, fontc = 0;
 
 	s = splhigh();
 
 	/* Don't allow exact duplicates */
 	if (wsfont_find(font->name, font->fontwidth, font->fontheight,
 	    font->stride) >= 0) {
+		splx(s);
+		return (-1);
+	}
+
+	TAILQ_FOREACH(ent, &fontlist, chain)
+		fontc++;
+
+	if (fontc >= WSDISPLAY_MAXFONTCOUNT) {
 		splx(s);
 		return (-1);
 	}
