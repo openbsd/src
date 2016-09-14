@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2016/09/14 16:04:36 millert Exp $
+#	$OpenBSD: Makefile,v 1.2 2016/09/14 16:11:54 tb Exp $
 
 FILES?!=	ls ${.CURDIR}/*.out
 
@@ -12,7 +12,7 @@ REGRESS_TARGETS+=${f:C|.*/||}
 .for f in ${FILES}
 ${f:C|.*/||}:
 	@echo ${*}
-	@${CALENDAR} -f ${IN} -t ${f:C|.*/||:C/\..*//} | diff ${OUT} -
+	@${CALENDAR} -f ${IN} -t ${f:C|.*/||:C/\..*//} | diff -u ${OUT} -
 .endfor
 
 .PHONY:	${REGRESS_TARGETS}
