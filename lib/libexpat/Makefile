@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2016/09/04 09:54:25 natano Exp $
+#	$OpenBSD: Makefile,v 1.11 2016/09/14 06:26:02 natano Exp $
 
 .PATH: ${.CURDIR}/lib
 
@@ -17,10 +17,11 @@ includes:
 	  ${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) \
 	  ${.CURDIR}/lib/expat_external.h ${DESTDIR}/usr/include/expat_external.h
 
+all: ${PC_FILES}
 ${PC_FILES}: lib/expat.h
 	/bin/sh ${.CURDIR}/generate_pkgconfig.sh -c ${.CURDIR} -o ${.OBJDIR}
 
-beforeinstall: ${PC_FILES}
+beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o root -g ${SHAREGRP} \
 	    -m ${SHAREMODE} ${.OBJDIR}/${PC_FILES} ${DESTDIR}/usr/lib/pkgconfig/
 
