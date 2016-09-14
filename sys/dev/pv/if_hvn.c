@@ -139,6 +139,7 @@ struct hvn_softc {
 	struct mutex			 sc_nvslck;
 
 	/* RNDIS protocol */
+	int				 sc_ndisver;
 	uint32_t			 sc_rndisrid;
 	struct rndis_queue		 sc_cntl_sq; /* submission queue */
 	struct mutex			 sc_cntl_sqlck;
@@ -289,8 +290,10 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 		goto detach;
 	}
 
-	DPRINTF("%s", sc->sc_dev.dv_xname);
-	printf(": channel %u, address %s\n", sc->sc_chan->ch_id,
+	DPRINTF("%s:", sc->sc_dev.dv_xname);
+	printf(" channel %u: NVS %u.%u NDIS %u.%u, address %s\n",
+	    sc->sc_chan->ch_id, sc->sc_proto >> 16, sc->sc_proto & 0xffff,
+	    sc->sc_ndisver >> 16 , sc->sc_ndisver & 0xffff,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	ether_ifattach(ifp);
@@ -853,9 +856,7 @@ hvn_nvs_attach(struct hvn_softc *sc)
 	if (hvn_nvs_cmd(sc, &ncmd, sizeof(ncmd), tid, 100))
 		return (-1);
 
-	DPRINTF("%s: NVSP %u.%u, NDIS %u.%u\n", sc->sc_dev.dv_xname,
-	    sc->sc_proto >> 16, sc->sc_proto & 0xffff,
-	    ndisver >> 16, ndisver & 0xffff);
+	sc->sc_ndisver = ndisver;
 
 	return (0);
 }
@@ -1139,8 +1140,6 @@ hvn_rndis_attach(struct hvn_softc *sc)
 		hvn_free_cmd(sc, rc);
 		goto errout;
 	}
-	DPRINTF("%s: RNDIS %u.%u\n", sc->sc_dev.dv_xname,
-	    cmp->major_version, cmp->minor_version);
 
 	hvn_free_cmd(sc, rc);
 
