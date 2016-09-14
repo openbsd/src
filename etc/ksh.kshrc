@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.26 2016/09/10 12:50:20 rpe Exp $
+#	$OpenBSD: ksh.kshrc,v 1.27 2016/09/14 18:34:51 rpe Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh
@@ -74,11 +74,9 @@ case "$-" in
 	xterm*)
 		ILS='\033]1;'; ILE='\007'
 		WLS='\033]2;'; WLE='\007'
-		parent="`ps -ax 2>/dev/null | grep $PPID | grep -v grep`"
-		case "$parent" in
-		*telnet*)
-		export TERM=xterms;;
-		esac
+		if ps -p $PPID -o command | grep -q telnet; then
+			export TERM=xterms
+		fi
 		;;
 	*)	;;
 	esac
