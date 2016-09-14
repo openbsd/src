@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.9 2016/09/13 03:10:05 deraadt Exp $
+.\"	$OpenBSD: acme-client.1,v 1.10 2016/09/14 14:29:35 tj Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 13 2016 $
+.Dd $Mdocdate: September 14 2016 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -36,40 +36,11 @@ The
 .Nm
 utility is an
 Automatic Certificate Management Environment (ACME) client.
-It submits an X509 certificate for
-.Ar domain
-and its alternate DNS names
-.Ar altnames
-to an ACME authority server for automated signing,
-and it can also revoke previously submitted signatures.
-It must be run as root.
-.Pp
-By default, it uses
-.Pa /var/www/acme
-for responding to challenges
-.Pq Fl C ,
-.Pa /etc/ssl/acme
-for the public certificate directory
-.Pq Fl c ,
-.Pa /etc/ssl/acme/private/privkey.pem
-for the domain private key
-.Pq Fl k ,
-and
-.Pa /etc/acme/privkey.pem
-for the account private key
-.Pq Fl f .
-All of these must exist unless
-.Fl n
-and/or
-.Fl N
-are being used,
-which generates an account and domain private keys, respectively.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl a Ar agreement
-Use an alternative agreement URL.
-The default uses the current one, but it may be out of date.
+Use an alternative user agreement URL.
 .It Fl b
 Back up all certificates in the certificate directory.
 This only happens if a remove or replace operation is possible.
@@ -87,14 +58,8 @@ Any given backup uses the same Epoch time for all three certificates.
 If there are no certificates in place, this option does nothing.
 .It Fl C Ar challengedir
 The directory to register challenges.
-See
-.Sx Challenges
-for details.
 .It Fl c Ar certdir
 The directory to store public certificates.
-See
-.Sx Certificates
-for details.
 .It Fl F
 Force updating the certificate signature even if it's too soon.
 .It Fl f Ar accountkey
@@ -116,9 +81,9 @@ as the initial domain would make the default domain private key into
 .Pa /etc/ssl/acme/private/foo.com/privkey.pem .
 This is useful in setups with multiple domain sets.
 .It Fl N
-Create a new 4096-bit RSA domain key if one does not already exist.
+Create a new RSA domain key if one does not already exist.
 .It Fl n
-Create a new 4096-bit RSA account key if one does not already exist.
+Create a new RSA account key if one does not already exist.
 .It Fl r
 Revoke the X509 certificate found in the certificates.
 .It Fl s Ar authority
@@ -155,66 +120,14 @@ Alternative names
 for the domain name.
 The number of SAN entries is limited to 100 or so.
 .El
-.Pp
-The process by which
-.Nm
-obtains signed certificates is roughly as follows.
-.Bl -enum
-.It
-Access the CA (unauthenticated) and request its list of resources.
-.It
-Optionally create and register a new RSA account key.
-.It
-Read and process the RSA account key.
-This is used to authenticate each subsequent communication to the CA.
-.It
-For each domain name:
-.Pp
-.Bl -enum -compact
-.It
-submit a challenge for authentication to the CA
-.It
-create a challenge response file
-.It
-wait until the CA has verified the challenge
-.El
-.It
-Read and extract the domain key.
-.It
-Create an X509 request from the doman key for the domain and its
-alternative names.
-.It
-Submit a request for signature to the CA.
-.It
-Download the signed X509 certificate.
-.It
-Extract the CA issuer from the X509 certificate.
-.It
-Download the certificate chain from the issuer.
-.El
-.Pp
-The revocation sequence is similar:
-.Bl -enum
-.It
-Request a list of resources, and manage the RSA account key as in the case for
-signing.
-.It
-Read and extract the X509 certificate (if found).
-.It
-Create an X509 revocation request.
-.It
-Submit a request for revocation to the CA.
-.It
-Remove the certificate, the chain, and the full-chain.
-.El
 .Ss Challenges
 Challenges are used to verify that the submitter has access to
 the registered domains.
 .Nm
-implements only the
+only implements the
 .Dq http-01
 challenge type, where a file is created within a directory accessible by
-a locally-run web server configured for the requested domain.
+a locally-run web server.
 The default challenge directory
 .Pa /var/www/acme
 can be served by
@@ -241,7 +154,6 @@ as
 and
 .Pa fullchain.pem ,
 respectively.
-These are all created as the root user with mode 444.
 .Pp
 The
 .Pa cert.pem
@@ -249,6 +161,17 @@ file, if found, is checked for its expiration: if more than 30 days from
 expiry,
 .Nm
 will not attempt to refresh the signature.
+.Sh FILES
+.Bl -tag -width "/etc/ssl/acme/private/privkey.pem" -compact
+.It Pa /etc/acme/privkey.pem
+Default accountkey.
+.It Pa /etc/ssl/acme
+Default certdir.
+.It Pa /etc/ssl/acme/private/privkey.pem
+Default domainkey.
+.It Pa /var/www/acme
+Default challengedir.
+.El
 .Sh EXIT STATUS
 .Nm
 returns 1 on failure, 2 if the certificates didn't change (up to date),
