@@ -136,9 +136,6 @@ struct hvn_softc {
 	uint32_t			 sc_rx_hndl;
 
 	/* Tx ring */
-	void				*sc_tx_ring;
-	int				 sc_tx_size;
-	uint32_t			 sc_tx_hndl;
 };
 
 int	hvn_match(struct device *, void *, void *);
@@ -519,79 +516,12 @@ hvn_rx_ring_destroy(struct hvn_softc *sc)
 int
 hvn_tx_ring_create(struct hvn_softc *sc)
 {
-	struct hvn_nvs_chim_conn cmd;
-	struct hvn_nvs_chim_conn_resp *rsp;
-	uint64_t tid;
-
-	sc->sc_tx_size = 15 * 1024 * 1024;	/* 15MB */
-	sc->sc_tx_ring = km_alloc(sc->sc_tx_size, &kv_any, &kp_zero,
-	    cold ? &kd_nowait : &kd_waitok);
-	if (sc->sc_tx_ring == NULL) {
-		DPRINTF("%s: failed to allocate Tx ring buffer\n",
-		    sc->sc_dev.dv_xname);
-		return (-1);
-	}
-	if (hv_handle_alloc(sc->sc_chan, sc->sc_tx_ring, sc->sc_tx_size,
-	    &sc->sc_tx_hndl)) {
-		DPRINTF("%s: failed to obtain a PA handle\n",
-		    sc->sc_dev.dv_xname);
-		goto errout;
-	}
-
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.nvs_type = HVN_NVS_TYPE_CHIM_CONN;
-	cmd.nvs_gpadl = sc->sc_tx_hndl;
-	cmd.nvs_sig = HVN_NVS_CHIM_SIG;
-
-	tid = atomic_inc_int_nv(&sc->sc_nvstid);
-	if (hvn_nvs_cmd(sc, &cmd, sizeof(cmd), tid, 100))
-		goto errout;
-
-	rsp = (struct hvn_nvs_chim_conn_resp *)&sc->sc_nvsrsp;
-	if (rsp->nvs_status != HVN_NVS_STATUS_OK) {
-		DPRINTF("%s: failed to set up the Tx ring\n",
-		    sc->sc_dev.dv_xname);
-		goto errout;
-	}
 	return (0);
-
- errout:
-	if (sc->sc_tx_hndl) {
-		hv_handle_free(sc->sc_chan, sc->sc_tx_hndl);
-		sc->sc_tx_hndl = 0;
-	}
-	if (sc->sc_tx_ring) {
-		km_free(sc->sc_tx_ring, sc->sc_tx_size, &kv_any, &kp_zero);
-		sc->sc_tx_ring = NULL;
-	}
-	return (-1);
 }
 
 int
 hvn_tx_ring_destroy(struct hvn_softc *sc)
 {
-	struct hvn_nvs_chim_disconn cmd;
-	uint64_t tid;
-
-	if (sc->sc_tx_ring == NULL)
-		return (0);
-
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.nvs_type = HVN_NVS_TYPE_CHIM_DISCONN;
-	cmd.nvs_sig = HVN_NVS_CHIM_SIG;
-
-	tid = atomic_inc_int_nv(&sc->sc_nvstid);
-	if (hvn_nvs_cmd(sc, &cmd, sizeof(cmd), tid, 0))
-		return (-1);
-
-	delay(100);
-
-	hv_handle_free(sc->sc_chan, sc->sc_tx_hndl);
-
-	sc->sc_tx_hndl = 0;
-
-	km_free(sc->sc_tx_ring, sc->sc_tx_size, &kv_any, &kp_zero);
-	sc->sc_tx_ring = NULL;
 	return (0);
 }
 
