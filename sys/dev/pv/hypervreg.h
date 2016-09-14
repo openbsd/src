@@ -264,19 +264,6 @@ struct vmbus_chanpkt_hdr {
 	((const void *)((const uint8_t *)(pkt) +	\
 	    VMBUS_CHANPKT_GETLEN((pkt)->cph_hlen)))
 
-struct vmbus_rxbuf_desc {
-	uint32_t	rb_len;
-	uint32_t	rb_ofs;
-} __packed;
-
-struct vmbus_chanpkt_rxbuf {
-	struct vmbus_chanpkt_hdr cp_hdr;
-	uint16_t	cp_rxbuf_id;
-	uint16_t	cp_rsvd;
-	uint32_t	cp_rxbuf_cnt;
-	struct vmbus_rxbuf_desc cp_rxbuf[0];
-} __packed;
-
 /*
  * ============================================================================
  * vmbus_reg.h
