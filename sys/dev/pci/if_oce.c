@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.96 2016/08/24 10:38:34 dlg Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.97 2016/09/14 19:04:54 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -3451,13 +3451,13 @@ oce_new_cq(struct oce_softc *sc, struct oce_cq *cq)
 int
 oce_init_stats(struct oce_softc *sc)
 {
-	union {
+	union cmd {
 		struct mbx_get_nic_stats_v0	_be2;
 		struct mbx_get_nic_stats	_be3;
 		struct mbx_get_pport_stats	_xe201;
-	} cmd;
+	};
 
-	sc->sc_statcmd = malloc(sizeof(cmd), M_DEVBUF, M_ZERO | M_NOWAIT);
+	sc->sc_statcmd = malloc(sizeof(union cmd), M_DEVBUF, M_ZERO | M_NOWAIT);
 	if (sc->sc_statcmd == NULL) {
 		printf("%s: failed to allocate statistics command block\n",
 		    sc->sc_dev.dv_xname);
