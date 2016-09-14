@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.89 2016/08/27 18:17:46 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.90 2016/09/14 14:14:22 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -705,7 +705,7 @@ sub check_digital_signature
 			}
 		} else {
 			$state->{packages_without_sig}{$pkgname} = 1;
-			return if $state->defines('unsigned');
+			return if $state->{signature_style} eq 'unsigned';
 			my $okay = 0;
 			my $url;
 			if (defined $handle->location) {
@@ -1181,7 +1181,7 @@ sub finish_display
 
 	# and display delayed thingies.
 	my $warn = 1;
-	if ($state->defines("unsigned")) {
+	if ($state->{signature_style} eq 'unsigned') {
 		$warn = 0;
 	}
 	if ($state->{packages_with_sig}) {

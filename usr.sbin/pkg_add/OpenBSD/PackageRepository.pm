@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.133 2016/09/14 13:42:19 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.134 2016/09/14 14:14:22 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -388,20 +388,11 @@ sub signify_pipe
 sub check_signed
 {
 	my ($self, $object) = @_;
-	# XXX switch not flipped
-	if ($self->{state}->defines('newsign')) {
+	if ($self->{state}{signature_style} eq 'new') {
 		$object->{is_signed} = 1;
 		return 1;
 	} else {
 		return 0;
-	}
-
-	if ($self->{state}->defines('unsigned') ||
-	    $self->{state}->defines('oldsign')) {
-		return 0;
-	} else {
-		$object->{is_signed} = 1;
-		return 1;
 	}
 }
 
