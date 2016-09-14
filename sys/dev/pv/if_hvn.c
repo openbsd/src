@@ -83,12 +83,15 @@
 #define HVN_RNDIS_CTLREQS		4
 #define HVN_RNDIS_CMPBUFSZ		512
 
+#define HVN_RNDIS_MSG_LEN		\
+	(sizeof(struct rndis) + RNDIS_VLAN_PPI_SIZE + RNDIS_CSUM_PPI_SIZE)
+
 struct rndis_cmd {
 	uint32_t			 rc_id;
 	struct hvn_nvs_rndis		 rc_msg;
 	struct rndis			*rc_req;
 	bus_dmamap_t			 rc_dmap;
-	uint64_t			 rc_pfn;
+	uint64_t			 rc_gpa;
 	struct rndis			 rc_cmp;
 	uint32_t			 rc_cmplen;
 	uint8_t				 rc_cmpbuf[HVN_RNDIS_CMPBUFSZ];
@@ -101,6 +104,21 @@ TAILQ_HEAD(rndis_queue, rndis_cmd);
  * Tx ring
  */
 #define HVN_TX_DESC			128
+#define HVN_TX_FRAGS			31
+#define HVN_TX_FRAG_SIZE		PAGE_SIZE
+#define HVN_TX_PKT_SIZE			16384
+
+struct hvn_tx_desc {
+	uint32_t			 txd_id;
+	int				 txd_ready;
+	struct vmbus_gpa		 txd_sgl[HVN_TX_FRAGS + 1];
+	int				 txd_nsge;
+	struct mbuf			*txd_buf;
+	bus_dmamap_t			 txd_dmap;
+	struct vmbus_gpa		 txd_gpa;
+	struct hvn_nvs_rndis		 txd_cmd;
+	struct rndis			*txd_req;
+};
 
 struct hvn_softc {
 	struct device			 sc_dev;
@@ -136,6 +154,12 @@ struct hvn_softc {
 	uint32_t			 sc_rx_hndl;
 
 	/* Tx ring */
+	uint32_t			 sc_tx_next;
+	uint32_t			 sc_tx_avail;
+	struct hvn_tx_desc		 sc_tx_desc[HVN_TX_DESC];
+	bus_dmamap_t			 sc_tx_rmap;
+	void				*sc_tx_msgs;
+	bus_dma_segment_t		 sc_tx_mseg;
 };
 
 int	hvn_match(struct device *, void *, void *);
@@ -147,12 +171,14 @@ int	hvn_iff(struct hvn_softc *);
 void	hvn_init(struct hvn_softc *);
 void	hvn_stop(struct hvn_softc *);
 void	hvn_start(struct ifnet *);
+int	hvn_encap(struct hvn_softc *, struct mbuf *, struct hvn_tx_desc **);
+void	hvn_decap(struct hvn_softc *, struct hvn_tx_desc *);
 void	hvn_txeof(struct hvn_softc *, uint64_t);
 void	hvn_rxeof(struct hvn_softc *, void *);
 int	hvn_rx_ring_create(struct hvn_softc *);
 int	hvn_rx_ring_destroy(struct hvn_softc *);
 int	hvn_tx_ring_create(struct hvn_softc *);
-int	hvn_tx_ring_destroy(struct hvn_softc *);
+void	hvn_tx_ring_destroy(struct hvn_softc *);
 int	hvn_get_lladdr(struct hvn_softc *);
 int	hvn_set_lladdr(struct hvn_softc *);
 void	hvn_get_link_status(struct hvn_softc *);
@@ -172,6 +198,7 @@ void	hvn_rndis_filter(struct hvn_softc *sc, uint64_t, void *);
 void	hvn_rndis_input(struct hvn_softc *, caddr_t, uint32_t,
 	    struct mbuf_list *);
 void	hvn_rndis_complete(struct hvn_softc *, caddr_t, uint32_t);
+int	hvn_rndis_output(struct hvn_softc *, struct hvn_tx_desc *);
 void	hvn_rndis_status(struct hvn_softc *, caddr_t, uint32_t);
 int	hvn_rndis_query(struct hvn_softc *, uint32_t, void *, size_t *);
 int	hvn_rndis_set(struct hvn_softc *, uint32_t, void *, size_t);
@@ -234,8 +261,10 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = hvn_start;
 	ifp->if_softc = sc;
 
+#ifdef notyet
 	ifp->if_capabilities = IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
 	    IFCAP_CSUM_UDPv4;
+#endif
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
@@ -394,34 +423,145 @@ hvn_stop(struct hvn_softc *sc)
 void
 hvn_start(struct ifnet *ifp)
 {
+	struct hvn_softc *sc = ifp->if_softc;
+	struct hvn_tx_desc *txd;
 	struct mbuf *m;
 
 	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	for (;;) {
-		m = ifq_deq_begin(&ifp->if_snd);
+		if (!sc->sc_tx_avail) {
+			/* transient */
+			ifq_set_oactive(&ifp->if_snd);
+			break;
+		}
+
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
-		ifq_deq_commit(&ifp->if_snd, m);
+		if (hvn_encap(sc, m, &txd)) {
+			/* the chain is too large */
+			ifp->if_oerrors++;
+			m_freem(m);
+			continue;
+		}
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
-		m_freem(m);
-		ifp->if_oerrors++;
+		if (hvn_rndis_output(sc, txd)) {
+			hvn_decap(sc, txd);
+			m_freem(m);
+		}
+
+		sc->sc_tx_next++;
+		sc->sc_tx_next %= HVN_TX_DESC;
+
+		atomic_dec_int(&sc->sc_tx_avail);
+
+		ifp->if_opackets++;
 	}
+}
+
+int
+hvn_encap(struct hvn_softc *sc, struct mbuf *m, struct hvn_tx_desc **txd0)
+{
+	struct hvn_tx_desc *txd;
+	struct rndis_pkt *pkt;
+	bus_dma_segment_t *seg;
+	size_t rlen;
+	int i;
+
+	/* XXX use queues? */
+	txd = &sc->sc_tx_desc[sc->sc_tx_next];
+	while (!txd->txd_ready) {
+		sc->sc_tx_next++;
+		sc->sc_tx_next %= HVN_TX_DESC;
+		txd = &sc->sc_tx_desc[sc->sc_tx_next];
+	}
+
+	memset(txd->txd_req, 0, HVN_RNDIS_MSG_LEN);
+	txd->txd_req->msg_type = RNDIS_PACKET_MSG;
+
+	pkt = (struct rndis_pkt *)&txd->txd_req->msg;
+	pkt->data_offset = sizeof(struct rndis_pkt);
+	pkt->data_length = m->m_pkthdr.len;
+	pkt->pkt_info_offset = sizeof(struct rndis_pkt);
+	rlen = RNDIS_MESSAGE_SIZE(*pkt);
+
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, txd->txd_dmap, m, BUS_DMA_READ |
+	    BUS_DMA_NOWAIT)) {
+		DPRINTF("%s: failed to load mbuf\n", sc->sc_dev.dv_xname);
+		return (-1);
+	}
+	txd->txd_buf = m;
+
+	/* Per-packet info adjusts rlen */
+
+	/* Final length value for the RNDIS header and data */
+	txd->txd_req->msg_len = pkt->data_length + rlen;
+
+	/* Attach an RNDIS message into the first slot */
+	txd->txd_sgl[0].gpa_page = txd->txd_gpa.gpa_page;
+	txd->txd_sgl[0].gpa_ofs = txd->txd_gpa.gpa_ofs;
+	txd->txd_sgl[0].gpa_len = rlen;
+	txd->txd_nsge = txd->txd_dmap->dm_nsegs + 1;
+
+	for (i = 0; i < txd->txd_dmap->dm_nsegs; i++) {
+		seg = &txd->txd_dmap->dm_segs[i];
+		txd->txd_sgl[1 + i].gpa_page = atop(seg->ds_addr);
+		txd->txd_sgl[1 + i].gpa_ofs = seg->ds_addr & PAGE_MASK;
+		txd->txd_sgl[1 + i].gpa_len = seg->ds_len;
+	}
+
+	*txd0 = txd;
+	return (0);
+}
+
+void
+hvn_decap(struct hvn_softc *sc, struct hvn_tx_desc *txd)
+{
+	bus_dmamap_sync(sc->sc_dmat, txd->txd_dmap, 0, 0,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(sc->sc_dmat, txd->txd_dmap);
+	txd->txd_buf = NULL;
+	txd->txd_nsge = 0;
 }
 
 void
 hvn_txeof(struct hvn_softc *sc, uint64_t tid)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct hvn_tx_desc *txd;
+	struct mbuf *m;
+	uint32_t id = tid >> 32;
 
-	printf("%s: tx tid %llu\n", ifp->if_xname, tid);
+	if ((tid & 0xffffffff) != 0)
+		return;
+	if (id > HVN_TX_DESC)
+		panic("tx packet index too large: %u", id);
+
+	txd = &sc->sc_tx_desc[id];
+
+	if ((m = txd->txd_buf) == NULL)
+		panic("%s: no mbuf @%u\n", sc->sc_dev.dv_xname, id);
+	txd->txd_buf = NULL;
+
+	bus_dmamap_sync(sc->sc_dmat, txd->txd_dmap, 0, 0,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(sc->sc_dmat, txd->txd_dmap);
+	m_freem(m);
+
+	txd->txd_ready = 1;
+
+	atomic_inc_int(&sc->sc_tx_avail);
+
+	if (ifq_is_oactive(&ifp->if_snd))
+		ifq_restart(&ifp->if_snd);
 }
 
 int
@@ -516,13 +656,103 @@ hvn_rx_ring_destroy(struct hvn_softc *sc)
 int
 hvn_tx_ring_create(struct hvn_softc *sc)
 {
+	struct hvn_tx_desc *txd;
+	bus_dma_segment_t *seg;
+	size_t msgsize;
+	int i, rsegs;
+	paddr_t pa;
+
+	msgsize = roundup(HVN_RNDIS_MSG_LEN, 128);
+
+	/* Allocate memory to store RNDIS messages */
+	if (bus_dmamem_alloc(sc->sc_dmat, msgsize * HVN_TX_DESC, PAGE_SIZE, 0,
+	    &sc->sc_tx_mseg, 1, &rsegs, BUS_DMA_ZERO | BUS_DMA_WAITOK)) {
+		DPRINTF("%s: failed to allocate memory for RDNIS messages\n",
+		    sc->sc_dev.dv_xname);
+		goto errout;
+	}
+	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_tx_mseg, 1, msgsize *
+	    HVN_TX_DESC, (caddr_t *)&sc->sc_tx_msgs, BUS_DMA_WAITOK)) {
+		DPRINTF("%s: failed to establish mapping for RDNIS messages\n",
+		    sc->sc_dev.dv_xname);
+		goto errout;
+	}
+	if (bus_dmamap_create(sc->sc_dmat, msgsize * HVN_TX_DESC, 1,
+	    msgsize * HVN_TX_DESC, 0, BUS_DMA_WAITOK, &sc->sc_tx_rmap)) {
+		DPRINTF("%s: failed to create map for RDNIS messages\n",
+		    sc->sc_dev.dv_xname);
+		goto errout;
+	}
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_tx_rmap, sc->sc_tx_msgs,
+	    msgsize * HVN_TX_DESC, NULL, BUS_DMA_WAITOK)) {
+		DPRINTF("%s: failed to create map for RDNIS messages\n",
+		    sc->sc_dev.dv_xname);
+		goto errout;
+	}
+
+	for (i = 0; i < HVN_TX_DESC; i++) {
+		txd = &sc->sc_tx_desc[i];
+		if (bus_dmamap_create(sc->sc_dmat, HVN_TX_PKT_SIZE,
+		    HVN_TX_FRAGS, HVN_TX_FRAG_SIZE, 0, BUS_DMA_WAITOK,
+		    &txd->txd_dmap)) {
+			DPRINTF("%s: failed to create map for TX descriptors\n",
+			    sc->sc_dev.dv_xname);
+			goto errout;
+		}
+		seg = &sc->sc_tx_rmap->dm_segs[0];
+		pa = seg->ds_addr + (msgsize * i);
+		txd->txd_gpa.gpa_page = atop(pa);
+		txd->txd_gpa.gpa_ofs = pa & PAGE_MASK;
+		txd->txd_gpa.gpa_len = msgsize;
+		txd->txd_req = (struct rndis *)((caddr_t)sc->sc_tx_msgs +
+		    (msgsize * i));
+		txd->txd_id = i;
+		txd->txd_ready = 1;
+	}
+	sc->sc_tx_avail = HVN_TX_DESC;
+
 	return (0);
+
+ errout:
+	hvn_tx_ring_destroy(sc);
+	return (-1);
 }
 
-int
+void
 hvn_tx_ring_destroy(struct hvn_softc *sc)
 {
-	return (0);
+	struct hvn_tx_desc *txd;
+	int i;
+
+	for (i = 0; i < HVN_TX_DESC; i++) {
+		txd = &sc->sc_tx_desc[i];
+		if (txd->txd_dmap == NULL)
+			continue;
+		bus_dmamap_sync(sc->sc_dmat, txd->txd_dmap, 0, 0,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, txd->txd_dmap);
+		bus_dmamap_destroy(sc->sc_dmat, txd->txd_dmap);
+		txd->txd_dmap = NULL;
+		if (txd->txd_buf == NULL)
+			continue;
+		m_free(txd->txd_buf);
+		txd->txd_buf = NULL;
+	}
+	if (sc->sc_tx_rmap) {
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_tx_rmap);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_tx_rmap);
+	}
+	if (sc->sc_tx_msgs) {
+		size_t msgsize = roundup(HVN_RNDIS_MSG_LEN, 128);
+
+		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_tx_msgs,
+		    msgsize * HVN_TX_DESC);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_tx_mseg, 1);
+	}
+	sc->sc_tx_rmap = NULL;
+	sc->sc_tx_msgs = NULL;
 }
 
 int
@@ -873,7 +1103,7 @@ hvn_rndis_attach(struct hvn_softc *sc)
 			bus_dmamap_destroy(sc->sc_dmat, rc->rc_dmap);
 			goto errout;
 		}
-		rc->rc_pfn = atop(rc->rc_dmap->dm_segs[0].ds_addr);
+		rc->rc_gpa = atop(rc->rc_dmap->dm_segs[0].ds_addr);
 		mtx_init(&rc->rc_mtx, IPL_NET);
 		TAILQ_INSERT_TAIL(&sc->sc_cntl_fq, rc, rc_entry);
 	}
@@ -943,7 +1173,7 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 	msg->nvs_rndis_mtype = HVN_NVS_RNDIS_MTYPE_CTRL;
 	msg->nvs_chim_idx = HVN_NVS_CHIM_IDX_INVALID;
 
-	sgl[0].gpa_page = rc->rc_pfn;
+	sgl[0].gpa_page = rc->rc_gpa;
 	sgl[0].gpa_len = rc->rc_req->msg_len;
 	sgl[0].gpa_ofs = 0;
 
@@ -951,7 +1181,7 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 
 	do {
 		rv = hv_channel_send_sgl(sc->sc_chan, sgl, 1, &rc->rc_msg,
-		    sizeof(struct hvn_nvs_rndis), rc->rc_id);
+		    sizeof(*msg), rc->rc_id);
 		if (rv == EAGAIN)
 			tsleep(rc, PRIBIO, "hvnsendbuf", timo / 10);
 		else if (rv) {
@@ -1166,6 +1396,27 @@ hvn_rndis_complete(struct hvn_softc *sc, caddr_t buf, uint32_t len)
 	} else
 		DPRINTF("%s: failed to complete RNDIS request id %u\n",
 		    sc->sc_dev.dv_xname, id);
+}
+
+int
+hvn_rndis_output(struct hvn_softc *sc, struct hvn_tx_desc *txd)
+{
+	struct hvn_nvs_rndis *cmd = &txd->txd_cmd;
+	int rv;
+
+	cmd->nvs_type = HVN_NVS_TYPE_RNDIS;
+	cmd->nvs_rndis_mtype = HVN_NVS_RNDIS_MTYPE_DATA;
+	cmd->nvs_chim_idx = HVN_NVS_CHIM_IDX_INVALID;
+
+	rv = hv_channel_send_sgl(sc->sc_chan, txd->txd_sgl, txd->txd_nsge,
+	    &txd->txd_cmd, sizeof(*cmd), (uint64_t)txd->txd_id << 32);
+	if (rv) {
+		DPRINTF("%s: RNDIS data send error %d\n",
+		    sc->sc_dev.dv_xname, rv);
+		return (rv);
+	}
+
+	return (0);
 }
 
 void
