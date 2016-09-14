@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.132 2016/09/14 12:48:58 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.133 2016/09/14 13:42:19 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -408,6 +408,11 @@ sub check_signed
 package OpenBSD::PackageRepository::Local;
 our @ISA=qw(OpenBSD::PackageRepository);
 use OpenBSD::Error;
+
+sub is_local_file
+{
+	return 1;
+}
 
 sub urlscheme
 {

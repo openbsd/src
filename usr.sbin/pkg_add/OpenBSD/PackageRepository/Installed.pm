@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.35 2016/09/05 10:36:21 espie Exp $
+# $OpenBSD: Installed.pm,v 1.36 2016/09/14 13:42:19 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -27,6 +27,11 @@ use warnings;
 package OpenBSD::PackageRepositoryBase;
 
 my ($version, $current);
+
+sub is_local_file
+{
+	return 0;
+}
 
 sub expand_locations
 {
