@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.78 2016/02/16 09:08:51 jmc Exp $
+ * $OpenBSD: calendar.history,v 1.79 2016/09/14 14:10:18 jmc Exp $
  */
 
 #ifndef _calendar_history_
@@ -348,8 +348,8 @@
 09/13	British defeat the French at Plains of Abraham near Quebec City, 1759
 09/13	Building of Hadrian's Wall begun, 122
 09/13	Chiang Kai-Shek becomes president of China, 1943
-09/14	The Selective Service Act establishes the first peacetime draft, 1940
-09/15	The Nazi's adopt a new national flag with the swastika, 1935
+09/14	The Selective Service Act establishes the first US peacetime draft, 1940
+09/15	The Nazis adopt a new national flag with the swastika, 1935
 09/16	General Motors is founded, 1908
 09/17	Joshua A. Norton proclaims himself 'Emperor Norton I', 1859
 09/17	Battle of Antietam, 1862
