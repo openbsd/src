@@ -7447,7 +7447,7 @@ ppc_elf_finish_dynamic_sections (bfd *output_bfd,
 #endif
 
 #define elf_backend_plt_not_loaded	1
-#define elf_backend_can_gc_sections	1
+#define elf_backend_can_gc_sections	0
 #define elf_backend_can_refcount	1
 #define elf_backend_rela_normal		1
 
