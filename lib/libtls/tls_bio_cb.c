@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_bio_cb.c,v 1.3 2016/09/04 13:17:08 jsing Exp $ */
+/* $OpenBSD: tls_bio_cb.c,v 1.4 2016/09/14 11:26:56 bcook Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
@@ -169,14 +169,32 @@ static int
 tls_bio_write_cb(BIO *h, const char *buf, int num, void *cb_arg)
 {
 	struct tls *ctx = cb_arg;
-	return (ctx->write_cb)(ctx, buf, num, ctx->cb_arg);
+	BIO_clear_retry_flags(h);
+	int rv = (ctx->write_cb)(ctx, buf, num, ctx->cb_arg);
+	if (rv == TLS_WANT_POLLIN) {
+		BIO_set_retry_read(h);
+		rv = -1;
+	} else if (rv == TLS_WANT_POLLOUT) {
+		BIO_set_retry_write(h);
+		rv = -1;
+	}
+	return (rv);
 }
 
 static int
 tls_bio_read_cb(BIO *h, char *buf, int size, void *cb_arg)
 {
 	struct tls *ctx = cb_arg;
-	return (ctx->read_cb)(ctx, buf, size, ctx->cb_arg);
+	BIO_clear_retry_flags(h);
+	int rv = (ctx->read_cb)(ctx, buf, size, ctx->cb_arg);
+	if (rv == TLS_WANT_POLLIN) {
+		BIO_set_retry_read(h);
+		rv = -1;
+	} else if (rv == TLS_WANT_POLLOUT) {
+		BIO_set_retry_write(h);
+		rv = -1;
+	}
+	return (rv);
 }
 
 static BIO *
