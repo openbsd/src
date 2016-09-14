@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.30 2016/07/13 16:35:47 jsing Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.31 2016/09/14 09:26:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -320,7 +320,12 @@ priv_constraint_child(struct constraint *cstr, struct ntp_addr_msg *am,
 	if (pledge("stdio inet", NULL) == -1)
 		fatal("pledge");
 
-	/* Get name and set process title */
+	/*
+	 * Get the IP address as name and set the process title accordingly.
+	 * This only converts an address into a string and does not trigger
+	 * any DNS operation, so it is safe to be called without the dns
+	 * pledge.
+	 */
 	if (getnameinfo((struct sockaddr *)&cstr->addr->ss,
 	    SA_LEN((struct sockaddr *)&cstr->addr->ss),
 	    addr, sizeof(addr), NULL, 0,
@@ -339,6 +344,12 @@ priv_constraint_child(struct constraint *cstr, struct ntp_addr_msg *am,
 		close(pipes[1]);
 	(void)closefrom(CONSTRAINT_PASSFD + 1);
 
+	/*
+	 * Set the close-on-exec flag to prevent leaking the communication
+	 * channel to any exec'ed child.  In theory this could never happen,
+	 * constraints don't exec children and pledge() prevents it,
+	 * but we keep it as a safety belt; especially for portability.
+	 */
 	if (fcntl(CONSTRAINT_PASSFD, F_SETFD, FD_CLOEXEC) == -1)
 		fatal("%s fcntl F_SETFD", __func__);
 
@@ -864,6 +875,12 @@ httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
 	if (tls_configure(httpsdate->tls_ctx, httpsdate->tls_config) == -1)
 		goto fail;
 
+	/*
+	 * libtls expects an address string, which can also be a DNS name,
+	 * but we pass a pre-resolved IP address string in tls_addr so it
+	 * does not trigger any DNS operation and is safe to be called
+	 * without the dns pledge.
+	 */
 	if (tls_connect_servername(httpsdate->tls_ctx, httpsdate->tls_addr,
 	    httpsdate->tls_port, httpsdate->tls_hostname) == -1) {
 		log_debug("tls connect failed: %s (%s): %s",
