@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.108 2016/09/03 11:52:06 reyk Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.109 2016/09/14 13:20:16 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 	struct pollfd		*pfd = NULL;
 	pid_t			 chld_pid = 0, pid;
 	const char		*conffile;
-	int			 fd_ctl, ch, nfds, i, j;
+	int			 ch, nfds, i, j;
 	int			 pipe_chld[2];
 	extern char		*__progname;
 	u_int			 pfd_elms = 0, new_cnt;
@@ -122,6 +122,9 @@ main(int argc, char *argv[])
 	uid_t			pw_uid;
 	gid_t			pw_gid;
 	void			*newp;
+	int			argc0 = argc;
+	char			**argv0 = argv;
+	char			*pname = NULL;
 
 	if (strcmp(__progname, "ntpctl") == 0) {
 		ctl_main(argc, argv);
@@ -132,7 +135,7 @@ main(int argc, char *argv[])
 
 	memset(&lconf, 0, sizeof(lconf));
 
-	while ((ch = getopt(argc, argv, "df:nsSv")) != -1) {
+	while ((ch = getopt(argc, argv, "df:nP:sSv")) != -1) {
 		switch (ch) {
 		case 'd':
 			lconf.debug = 2;
@@ -143,6 +146,9 @@ main(int argc, char *argv[])
 		case 'n':
 			lconf.debug = 2;
 			lconf.noaction = 1;
+			break;
+		case 'P':
+			pname = optarg;
 			break;
 		case 's':
 			lconf.settime = 1;
@@ -181,6 +187,22 @@ main(int argc, char *argv[])
 	if ((pw = getpwnam(NTPD_USER)) == NULL)
 		errx(1, "unknown user %s", NTPD_USER);
 
+	if (pname != NULL) {
+		/* Remove our proc arguments, so child doesn't need to. */
+		if (sanitize_argv(&argc0, &argv0) == -1)
+			fatalx("sanitize_argv");
+
+		if (strcmp(NTP_PROC_NAME, pname) == 0)
+			ntp_main(&lconf, pw, argc0, argv0);
+		else if (strcmp(NTPDNS_PROC_NAME, pname) == 0)
+			ntp_dns(&lconf, pw);
+		else
+			fatalx("%s: invalid process name '%s'", __func__,
+			    pname);
+
+		fatalx("%s: process '%s' failed", __func__, pname);
+	}
+
 	pw_dir = strdup(pw->pw_dir);
 	pw_uid = pw->pw_uid;
 	pw_gid = pw->pw_gid;
@@ -198,17 +220,14 @@ main(int argc, char *argv[])
 	} else
 		timeout = SETTIME_TIMEOUT * 1000;
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_chld) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, PF_UNSPEC,
+	    pipe_chld) == -1)
 		fatal("socketpair");
 
-	if ((fd_ctl = control_init(CTLSOCKET)) == -1)
-		fatalx("control socket init failed");
-	if (control_listen(fd_ctl) == -1)
-		fatalx("control socket listen failed");
-
 	signal(SIGCHLD, sighdlr);
+
 	/* fork child process */
-	chld_pid = ntp_main(pipe_chld, fd_ctl, &lconf, pw);
+	chld_pid = start_child(NTP_PROC_NAME, pipe_chld[1], argc0, argv0);
 
 	log_procinit("[priv]");
 	readfreq();
@@ -217,7 +236,6 @@ main(int argc, char *argv[])
 	signal(SIGINT, sighdlr);
 	signal(SIGHUP, sighdlr);
 
-	close(pipe_chld[1]);
 	constraint_purge();
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)

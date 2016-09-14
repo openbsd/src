@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.17 2016/09/03 11:52:06 reyk Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.18 2016/09/14 13:20:16 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -49,22 +49,11 @@ sighdlr_dns(int sig)
 	}
 }
 
-pid_t
-ntp_dns(int pipe_ntp[2], struct ntpd_conf *nconf, struct passwd *pw)
+void
+ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 {
-	pid_t			 pid;
 	struct pollfd		 pfd[1];
 	int			 nfds, nullfd;
-
-	switch (pid = fork()) {
-	case -1:
-		fatal("cannot fork");
-		break;
-	case 0:
-		break;
-	default:
-		return (pid);
-	}
 
 	if (setpriority(PRIO_PROCESS, 0, 0) == -1)
 		log_warn("could not set priority");
@@ -89,8 +78,6 @@ ntp_dns(int pipe_ntp[2], struct ntpd_conf *nconf, struct passwd *pw)
 
 	setproctitle("dns engine");
 
-	close(pipe_ntp[0]);
-
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
@@ -102,7 +89,7 @@ ntp_dns(int pipe_ntp[2], struct ntpd_conf *nconf, struct passwd *pw)
 
 	if ((ibuf_dns = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsg_init(ibuf_dns, pipe_ntp[1]);
+	imsg_init(ibuf_dns, PARENT_SOCK_FILENO);
 
 	if (pledge("stdio dns", NULL) == -1)
 		err(1, "pledge");
@@ -135,7 +122,7 @@ ntp_dns(int pipe_ntp[2], struct ntpd_conf *nconf, struct passwd *pw)
 
 	msgbuf_clear(&ibuf_dns->w);
 	free(ibuf_dns);
-	_exit(0);
+	exit(0);
 }
 
 int

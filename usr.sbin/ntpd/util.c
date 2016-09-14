@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.21 2016/09/14 08:24:08 reyk Exp $ */
+/*	$OpenBSD: util.c,v 1.22 2016/09/14 13:20:16 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -18,7 +18,9 @@
 
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "ntpd.h"
 
@@ -150,4 +152,81 @@ log_sockaddr(struct sockaddr *sa)
 		return ("(unknown)");
 	else
 		return (buf);
+}
+
+pid_t
+start_child(char *pname, int cfd, int argc, char **argv)
+{
+	char		**nargv;
+	int		  nargc, i;
+	pid_t		  pid;
+
+	/* Prepare the child process new argv. */
+	nargv = calloc(argc + 3, sizeof(char *));
+	if (nargv == NULL)
+		fatal("%s: calloc", __func__);
+
+	/* Copy the program name first. */
+	nargc = 0;
+	nargv[nargc++] = argv[0];
+
+	/* Set the process name and copy the original args. */
+	nargv[nargc++] = "-P";
+	nargv[nargc++] = pname;
+	for (i = 1; i < argc; i++)
+		nargv[nargc++] = argv[i];
+
+	nargv[nargc] = 0;
+
+	switch (pid = fork()) {
+	case -1:
+		fatal("%s: fork", __func__);
+		break;
+	case 0:
+		/* Prepare the parent socket and execute. */
+		dup2(cfd, PARENT_SOCK_FILENO);
+
+		execvp(argv[0], nargv);
+		fatal("%s: execvp", __func__);
+		break;
+
+	default:
+		/* Close child's socket end. */
+		close(cfd);
+		break;
+	}
+
+	free(nargv);
+	return (pid);
+}
+
+int
+sanitize_argv(int *argc, char ***argv)
+{
+	char		**nargv;
+	int		  nargc;
+	int		  i;
+
+	/*
+	 * We need at least three arguments:
+	 * Example: '/usr/sbin/ntpd' '-P' 'foobar'.
+	 */
+	if (*argc < 3)
+		return (-1);
+
+	*argc -= 2;
+
+	/* Allocate new arguments vector and copy pointers. */
+	nargv = calloc((*argc) + 1, sizeof(char *));
+	if (nargv == NULL)
+		return (-1);
+
+	nargc = 0;
+	nargv[nargc++] = (*argv)[0];
+	for (i = 1; i < *argc; i++)
+		nargv[nargc++] = (*argv)[i + 2];
+
+	nargv[nargc] = NULL;
+	*argv = nargv;
+	return (0);
 }

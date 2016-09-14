@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.142 2016/09/03 11:52:06 reyk Exp $ */
+/*	$OpenBSD: ntp.c,v 1.143 2016/09/14 13:20:16 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -66,17 +66,16 @@ ntp_sighdlr(int sig)
 	}
 }
 
-pid_t
-ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
-    struct passwd *pw)
+void
+ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 {
 	int			 a, b, nfds, i, j, idx_peers, timeout;
 	int			 nullfd, pipe_dns[2], idx_clients;
 	int			 ctls;
+	int			 fd_ctl;
 	u_int			 pfd_elms = 0, idx2peer_elms = 0;
 	u_int			 listener_cnt, new_cnt, sent_cnt, trial_cnt;
 	u_int			 ctl_cnt;
-	pid_t			 pid;
 	struct pollfd		*pfd = NULL;
 	struct servent		*se;
 	struct listen_addr	*la;
@@ -90,15 +89,11 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 	time_t			 nextaction, last_sensor_scan = 0, now;
 	void			*newp;
 
-	switch (pid = fork()) {
-	case -1:
-		fatal("cannot fork");
-		break;
-	case 0:
-		break;
-	default:
-		return (pid);
-	}
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, PF_UNSPEC,
+	    pipe_dns) == -1)
+		fatal("socketpair");
+
+	start_child(NTPDNS_PROC_NAME, pipe_dns[1], argc, argv);
 
 	/* in this case the parent didn't init logging and didn't daemonize */
 	if (nconf->settime && !nconf->debug) {
@@ -111,14 +106,13 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 	if ((se = getservbyname("ntp", "udp")) == NULL)
 		fatal("getservbyname");
 
+	/* Start control socket. */
+	if ((fd_ctl = control_init(CTLSOCKET)) == -1)
+		fatalx("control socket init failed");
+	if (control_listen(fd_ctl) == -1)
+		fatalx("control socket listen failed");
 	if ((nullfd = open("/dev/null", O_RDWR, 0)) == -1)
 		fatal(NULL);
-
-	close(pipe_prnt[0]);
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_dns) == -1)
-		fatal("socketpair");
-	ntp_dns(pipe_dns, nconf, pw);
-	close(pipe_dns[1]);
 
 	if (stat(pw->pw_dir, &stb) == -1) {
 		fatal("privsep dir %s could not be opened", pw->pw_dir);
@@ -163,7 +157,7 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 
 	if ((ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsg_init(ibuf_main, pipe_prnt[1]);
+	imsg_init(ibuf_main, PARENT_SOCK_FILENO);
 	if ((ibuf_dns = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
 	imsg_init(ibuf_dns, pipe_dns[0]);
@@ -422,7 +416,7 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 	free(ibuf_dns);
 
 	log_info("ntp engine exiting");
-	_exit(0);
+	exit(0);
 }
 
 int

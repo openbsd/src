@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.131 2016/09/03 11:52:06 reyk Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.132 2016/09/14 13:20:16 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,6 +81,11 @@
 #define	CONSTRAINT_MAXHEADERLENGTH	8192
 #define CONSTRAINT_PASSFD		(STDERR_FILENO + 1)
 #define CONSTRAINT_CA			"/etc/ssl/cert.pem"
+
+#define PARENT_SOCK_FILENO		3
+
+#define NTP_PROC_NAME			"ntp_main"
+#define NTPDNS_PROC_NAME		"ntp_dns"
 
 enum client_state {
 	STATE_NONE,
@@ -302,7 +307,7 @@ enum ctl_actions {
 /* prototypes */
 
 /* ntp.c */
-pid_t	 ntp_main(int[2], int, struct ntpd_conf *, struct passwd *);
+void	 ntp_main(struct ntpd_conf *, struct passwd *, int, char **);
 int	 priv_adjtime(void);
 void	 priv_settime(double);
 void	 priv_dns(int, char *, u_int32_t);
@@ -372,6 +377,8 @@ double			 sfp_to_d(struct s_fixedpt);
 struct s_fixedpt	 d_to_sfp(double);
 char			*print_rtable(int);
 const char		*log_sockaddr(struct sockaddr *);
+pid_t			 start_child(char *, int, int, char **);
+int			 sanitize_argv(int *, char ***);
 
 /* sensors.c */
 void			sensor_init(void);
@@ -379,7 +386,7 @@ int			sensor_scan(void);
 void			sensor_query(struct ntp_sensor *);
 
 /* ntp_dns.c */
-pid_t	ntp_dns(int[2], struct ntpd_conf *, struct passwd *);
+void			ntp_dns(struct ntpd_conf *, struct passwd *);
 
 /* control.c */
 int			 control_init(char *);
