@@ -1,0 +1,26 @@
+Dec 30*	Saturday-1: Last (-1) Saturday
+Dec 30*	Sat-1: Last (-1) Saturday
+Dec 30*	Saturday+5: Fifth Saturday
+Dec 30*	Sat+5: Fifth Saturday
+Dec 30*	Saturday+5: Fifth Saturday in December
+Dec 30*	Sat+5: Fifth Saturday in December
+Dec 30*	Fifth: Fifth Saturday in December
+Dec 30*	30 of every month
+Dec 30 	12/30: December 30
+Dec 30 	Dec. 30: December 30
+Dec 30 	30 December: December 30
+	December: continued
+Dec 30*	Saturday: Every Saturday
+Dec 31*	Sunday-1: Last (-1) Sunday
+Dec 31*	Sun-1: Last (-1) Sunday
+Dec 31*	Sunday+5: Fifth Sunday
+Dec 31*	Sun+5: Fifth Sunday
+Dec 31*	Sunday+5: Fifth Sunday in December
+Dec 31*	Sun+5: Fifth Sunday in December
+Dec 31*	Fifth: Fifth Sunday in December
+Dec 31*	31 of every month
+Dec 31 	12/31: December 31
+Dec 31 	Dec. 31: December 31
+Dec 31 	31 December: December 31
+	December: continued
+Dec 31*	Sunday: Every Sunday

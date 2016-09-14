@@ -1,0 +1,60 @@
+Dec 01*	Friday+1: First Friday
+Dec 01*	Fri+1: First Friday
+Dec 01*	Friday+1: First Friday in December
+Dec 01*	Fri+1: First Friday in December
+Dec 01*	First: First Friday in December
+Dec 01*	Friday+5: Fifth Friday in November
+Dec 01*	Fri+5: Fifth Friday in November
+Dec 01*	Fifth: Fifth Friday in November
+Dec 01*	1 of every month
+Dec 01 	12/1: December 1
+Dec 01 	Dec. 1: December 1
+Dec 01 	1 December: December 1
+	December: continued
+Dec 01*	*: Beginning of every month
+Dec 01*	Friday: Every Friday
+Dec 01 	December: Every December 1st
+Dec 02*	Saturday+1: First Saturday
+Dec 02*	Sat+1: First Saturday
+Dec 02*	Saturday+1: First Saturday in December
+Dec 02*	Sat+1: First Saturday in December
+Dec 02*	First: First Saturday in December
+Dec 02*	Saturday+5: Fifth Saturday in November
+Dec 02*	Sat+5: Fifth Saturday in November
+Dec 02*	Fifth: Fifth Saturday in November
+Dec 02*	2 of every month
+Dec 02 	12/2: December 2
+Dec 02 	Dec. 2: December 2
+Dec 02 	2 December: December 2
+	December: continued
+Dec 02*	Saturday: Every Saturday
+Dec 03*	Sunday+1: First Sunday
+Dec 03*	Sun+1: First Sunday
+Dec 03*	Sunday+1: First Sunday in December
+Dec 03*	Sun+1: First Sunday in December
+Dec 03*	First: First Sunday in December
+Dec 03*	Sunday+5: Fifth Sunday in November
+Dec 03*	Sun+5: Fifth Sunday in November
+Dec 03*	Fifth: Fifth Sunday in November
+Dec 03*	3 of every month
+Dec 03 	12/3: December 3
+Dec 03 	Dec. 3: December 3
+Dec 03 	3 December: December 3
+	December: continued
+Dec 03*	Sunday: Every Sunday
+Dec 04*	Monday+1: First Monday
+Dec 04*	Mon+1: First Monday
+Dec 04*	Monday+1: First Monday in December
+Dec 04*	Mon+1: First Monday in December
+Dec 04*	First: First Monday in December
+Dec 04*	Monday-4: Last (-4) Monday
+Dec 04*	Mon-4: Last (-4) Monday
+Dec 04*	Monday+5: Fifth Monday in November
+Dec 04*	Mon+5: Fifth Monday in November
+Dec 04*	Fifth: Fifth Monday in November
+Dec 04*	4 of every month
+Dec 04 	12/4: December 4
+Dec 04 	Dec. 4: December 4
+Dec 04 	4 December: December 4
+	December: continued
+Dec 04*	Monday: Every Monday

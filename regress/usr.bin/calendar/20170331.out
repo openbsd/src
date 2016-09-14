@@ -1,0 +1,59 @@
+Mar 31*	Friday-1: Last (-1) Friday
+Mar 31*	Fri-1: Last (-1) Friday
+Mar 31*	Friday+5: Fifth Friday
+Mar 31*	Fri+5: Fifth Friday
+Mar 31*	Friday+5: Fifth Friday in March
+Mar 31*	Fri+5: Fifth Friday in March
+Mar 31*	Fifth: Fifth Friday in March
+Mar 31*	31 of every month
+Mar 31 	3/31: March 31
+Mar 31 	Mar. 31: March 31
+Mar 31 	31 March: March 31
+	March: continued
+Mar 31*	Friday: Every Friday
+Apr 01*	Saturday+1: First Saturday
+Apr 01*	Sat+1: First Saturday
+Apr 01*	Saturday+1: First Saturday in April
+Apr 01*	Sat+1: First Saturday in April
+Apr 01*	First: First Saturday in April
+Apr 01*	Saturday+5: Fifth Saturday in March
+Apr 01*	Sat+5: Fifth Saturday in March
+Apr 01*	Fifth: Fifth Saturday in March
+Apr 01*	1 of every month
+Apr 01 	4/1: April 1
+Apr 01 	Apr. 1: April 1
+Apr 01 	1 April: April 1
+	April: continued
+Apr 01*	*: Beginning of every month
+Apr 01*	Saturday: Every Saturday
+Apr 01 	April: Every April 1st
+Apr 02*	Sunday+1: First Sunday
+Apr 02*	Sun+1: First Sunday
+Apr 02*	Sunday+1: First Sunday in April
+Apr 02*	Sun+1: First Sunday in April
+Apr 02*	First: First Sunday in April
+Apr 02*	Sunday+5: Fifth Sunday in March
+Apr 02*	Sun+5: Fifth Sunday in March
+Apr 02*	Fifth: Fifth Sunday in March
+Apr 02*	2 of every month
+Apr 02 	4/2: April 2
+Apr 02 	Apr. 2: April 2
+Apr 02 	2 April: April 2
+	April: continued
+Apr 02*	Sunday: Every Sunday
+Apr 03*	Monday+1: First Monday
+Apr 03*	Mon+1: First Monday
+Apr 03*	Monday+1: First Monday in April
+Apr 03*	Mon+1: First Monday in April
+Apr 03*	First: First Monday in April
+Apr 03*	Monday-4: Last (-4) Monday
+Apr 03*	Mon-4: Last (-4) Monday
+Apr 03*	Monday+5: Fifth Monday in March
+Apr 03*	Mon+5: Fifth Monday in March
+Apr 03*	Fifth: Fifth Monday in March
+Apr 03*	3 of every month
+Apr 03 	4/3: April 3
+Apr 03 	Apr. 3: April 3
+Apr 03 	3 April: April 3
+	April: continued
+Apr 03*	Monday: Every Monday

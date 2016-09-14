@@ -1,0 +1,53 @@
+Sep 30*	Friday-1: Last (-1) Friday
+Sep 30*	Fri-1: Last (-1) Friday
+Sep 30*	Friday+5: Fifth Friday
+Sep 30*	Fri+5: Fifth Friday
+Sep 30*	Friday+5: Fifth Friday in September
+Sep 30*	Fri+5: Fifth Friday in September
+Sep 30*	Fifth: Fifth Friday in September
+Sep 30*	30 of every month
+Sep 30*	Friday: Every Friday
+Oct 01*	Saturday+1: First Saturday
+Oct 01*	Sat+1: First Saturday
+Oct 01*	Saturday+1: First Saturday in October
+Oct 01*	Sat+1: First Saturday in October
+Oct 01*	First: First Saturday in October
+Oct 01*	Saturday+5: Fifth Saturday in September
+Oct 01*	Sat+5: Fifth Saturday in September
+Oct 01*	Fifth: Fifth Saturday in September
+Oct 01*	1 of every month
+Oct 01 	10/1: October 1
+Oct 01 	Oct. 1: October 1
+Oct 01 	1 October: October 1
+	October: continued
+Oct 01*	*: Beginning of every month
+Oct 01*	Saturday: Every Saturday
+Oct 01 	October: Every October 1st
+Oct 02*	Sunday+1: First Sunday
+Oct 02*	Sun+1: First Sunday
+Oct 02*	Sunday+1: First Sunday in October
+Oct 02*	Sun+1: First Sunday in October
+Oct 02*	First: First Sunday in October
+Oct 02*	Sunday+5: Fifth Sunday in September
+Oct 02*	Sun+5: Fifth Sunday in September
+Oct 02*	Fifth: Fifth Sunday in September
+Oct 02*	2 of every month
+Oct 02 	10/2: October 2
+Oct 02 	Oct. 2: October 2
+Oct 02 	2 October: October 2
+	October: continued
+Oct 02*	Sunday: Every Sunday
+Oct 03*	Monday+1: First Monday
+Oct 03*	Mon+1: First Monday
+Oct 03*	Monday+1: First Monday in October
+Oct 03*	Mon+1: First Monday in October
+Oct 03*	First: First Monday in October
+Oct 03*	Monday+5: Fifth Monday in September
+Oct 03*	Mon+5: Fifth Monday in September
+Oct 03*	Fifth: Fifth Monday in September
+Oct 03*	3 of every month
+Oct 03 	10/3: October 3
+Oct 03 	Oct. 3: October 3
+Oct 03 	3 October: October 3
+	October: continued
+Oct 03*	Monday: Every Monday

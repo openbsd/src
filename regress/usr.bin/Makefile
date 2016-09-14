@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.36 2016/07/30 13:57:21 tb Exp $
+#	$OpenBSD: Makefile,v 1.37 2016/09/14 16:04:34 millert Exp $
 #	$NetBSD: Makefile,v 1.1 1997/12/30 23:27:11 cgd Exp $
 
-SUBDIR+= basename bc dc diff diff3 dirname doas file fmt fold grep gzip
+SUBDIR+= basename bc calendar dc diff diff3 dirname doas file fmt fold grep gzip
 SUBDIR+= jot m4 mandoc openssl rev sdiff sed signify sort tsort
 SUBDIR+= xargs
 

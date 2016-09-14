@@ -1,0 +1,55 @@
+Jan 29*	Friday-1: Last (-1) Friday
+Jan 29*	Fri-1: Last (-1) Friday
+Jan 29*	Friday+5: Fifth Friday
+Jan 29*	Fri+5: Fifth Friday
+Jan 29*	Friday+5: Fifth Friday in January
+Jan 29*	Fri+5: Fifth Friday in January
+Jan 29*	Fifth: Fifth Friday in January
+Jan 29*	29 of every month
+Jan 29 	1/29: January 29
+Jan 29 	Jan. 29: January 29
+Jan 29 	29 January: January 29
+	January: continued
+Jan 29*	Friday: Every Friday
+Jan 30*	Saturday-1: Last (-1) Saturday
+Jan 30*	Sat-1: Last (-1) Saturday
+Jan 30*	Saturday+5: Fifth Saturday
+Jan 30*	Sat+5: Fifth Saturday
+Jan 30*	Saturday+5: Fifth Saturday in January
+Jan 30*	Sat+5: Fifth Saturday in January
+Jan 30*	Fifth: Fifth Saturday in January
+Jan 30*	30 of every month
+Jan 30 	1/30: January 30
+Jan 30 	Jan. 30: January 30
+Jan 30 	30 January: January 30
+	January: continued
+Jan 30*	Saturday: Every Saturday
+Jan 31*	Sunday-1: Last (-1) Sunday
+Jan 31*	Sun-1: Last (-1) Sunday
+Jan 31*	Sunday+5: Fifth Sunday
+Jan 31*	Sun+5: Fifth Sunday
+Jan 31*	Sunday+5: Fifth Sunday in January
+Jan 31*	Sun+5: Fifth Sunday in January
+Jan 31*	Fifth: Fifth Sunday in January
+Jan 31*	31 of every month
+Jan 31 	1/31: January 31
+Jan 31 	Jan. 31: January 31
+Jan 31 	31 January: January 31
+	January: continued
+Jan 31*	Sunday: Every Sunday
+Feb 01*	Monday+1: First Monday
+Feb 01*	Mon+1: First Monday
+Feb 01*	Monday+1: First Monday in February
+Feb 01*	Mon+1: First Monday in February
+Feb 01*	First: First Monday in February
+Feb 01*	Monday+5: Fifth Monday in January
+Feb 01*	Mon+5: Fifth Monday in January
+Feb 01*	Fifth: Fifth Monday in January
+Feb 01*	1 of every month
+Feb 01 	2/1: February 1
+Feb 01 	Feb. 1: February 1
+Feb 01 	1 February: February 1
+	February: continued
+Feb 01*	*: Beginning of every month
+Feb 01*	Monday: Every Monday
+Feb 01 	February: Every February 1st

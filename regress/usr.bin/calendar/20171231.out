@@ -1,0 +1,29 @@
+Dec 31*	Sunday-1: Last (-1) Sunday
+Dec 31*	Sun-1: Last (-1) Sunday
+Dec 31*	Sunday+5: Fifth Sunday
+Dec 31*	Sun+5: Fifth Sunday
+Dec 31*	Sunday+5: Fifth Sunday in December
+Dec 31*	Sun+5: Fifth Sunday in December
+Dec 31*	Fifth: Fifth Sunday in December
+Dec 31*	31 of every month
+Dec 31 	12/31: December 31
+Dec 31 	Dec. 31: December 31
+Dec 31 	31 December: December 31
+	December: continued
+Dec 31*	Sunday: Every Sunday
+Jan 01*	Monday+1: First Monday
+Jan 01*	Mon+1: First Monday
+Jan 01*	Monday+1: First Monday in January
+Jan 01*	Mon+1: First Monday in January
+Jan 01*	First: First Monday in January
+Jan 01*	Monday+5: Fifth Monday in December
+Jan 01*	Mon+5: Fifth Monday in December
+Jan 01*	Fifth: Fifth Monday in December
+Jan 01*	1 of every month
+Jan 01 	1/1: January 1
+Jan 01 	Jan. 1: January 1
+Jan 01 	1 January: January 1
+	January: continued
+Jan 01*	*: Beginning of every month
+Jan 01*	Monday: Every Monday
+Jan 01 	January: Every January 1st
