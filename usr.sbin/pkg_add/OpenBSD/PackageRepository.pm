@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.131 2016/09/14 12:35:40 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.132 2016/09/14 12:48:58 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -97,7 +97,6 @@ sub https() { 'OpenBSD::PackageRepository::HTTPS' }
 sub scp() { 'OpenBSD::PackageRepository::SCP' }
 sub file() { 'OpenBSD::PackageRepository::Local' }
 sub installed() { 'OpenBSD::PackageRepository::Installed' }
-sub pipe() { 'OpenBSD::PackageRepository::Local::Pipe' }
 
 sub parse
 {
@@ -123,8 +122,6 @@ sub parse
 		return $class->file->parse_fullurl($r, $state);
 	} elsif ($u =~ m/^inst\:$/io) {
 		return $class->installed->parse_fullurl($r, $state);
-	} elsif ($u =~ m/^pipe\:$/io) {
-		return $class->pipe->parse_fullurl($r, $state);
 	} else {
 		if ($$r =~ m/^([a-z0-9][a-z0-9.]+\.[a-z0-9.]+)(\:|$)/ 
 		    && !-d $1) {
@@ -514,48 +511,6 @@ sub list
 	}
 	close($dir);
 	return $l;
-}
-
-package OpenBSD::PackageRepository::Local::Pipe;
-our @ISA=qw(OpenBSD::PackageRepository::Local);
-
-sub urlscheme
-{
-	return 'pipe';
-}
-
-sub relative_url
-{
-	return '';
-}
-
-sub may_exist
-{
-	return 1;
-}
-
-sub new
-{
-	my ($class, $state) = @_;
-	return bless { state => $state}, $class;
-}
-
-sub open_pipe
-{
-	my ($self, $object) = @_;
-	if ($self->check_signed($object)) {
-		$self->make_error_file($object);
-		my $pid = open(my $fh, "-|");
-		$self->did_it_fork($pid);
-		if ($pid) {
-			$object->{pid} = $pid;
-			return $self->uncompress_signed($object, $fh);
-		} else {
-			$self->signify_pipe($object);
-		}
-    	} else {
-		return $self->uncompress($object, \*STDIN);
-	}
 }
 
 package OpenBSD::PackageRepository::Distant;
