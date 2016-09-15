@@ -1,4 +1,4 @@
-/* $OpenBSD: env.c,v 1.4 2016/07/10 03:24:31 tedu Exp $ */
+/* $OpenBSD: env.c,v 1.5 2016/09/15 00:58:23 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Ted Unangst <tedu@openbsd.org>
  *
@@ -194,7 +194,7 @@ prepenv(struct rule *rule)
 		NULL
 	};
 	struct env *env;
-	
+
 	env = createenv(rule);
 
 	/* if we started with blank, fill some defaults then apply rules */
