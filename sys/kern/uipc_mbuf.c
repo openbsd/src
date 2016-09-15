@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.228 2016/09/13 19:56:55 markus Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.229 2016/09/15 00:00:40 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -574,16 +574,6 @@ struct mbuf *
 m_copym(struct mbuf *m, int off, int len, int wait)
 {
 	return m_copym0(m, off, len, wait, 0);	/* shallow copy on M_EXT */
-}
-
-/*
- * m_copym2() is like m_copym(), except it COPIES cluster mbufs, instead
- * of merely bumping the reference count.
- */
-struct mbuf *
-m_copym2(struct mbuf *m, int off, int len, int wait)
-{
-	return m_copym0(m, off, len, wait, 1);	/* deep copy */
 }
 
 struct mbuf *
