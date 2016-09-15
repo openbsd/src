@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hvn.4,v 1.1 2016/09/15 15:58:46 mikeb Exp $
+.\"	$OpenBSD: hvn.4,v 1.2 2016/09/15 17:18:35 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Mike Belopuhov
 .\"
@@ -33,8 +33,8 @@ NetVSC emulates an RNDIS 1.0 compliant device on top of a custom NVS
 protocol operating over the VMBus channel ring.
 .Sh SEE ALSO
 .Xr autoconf 4 ,
-.Xr intro 4 ,
-.Xr hyperv 4
+.Xr hyperv 4 ,
+.Xr intro 4
 .Sh HISTORY
 The
 .Nm
@@ -45,9 +45,7 @@ The
 .Nm
 driver was written by
 .An Mike Belopuhov Aq Mt mikeb@openbsd.org
-based on the
-.Xr hn 4
-driver in
+based on the hn driver in
 .Fx
-by Microsoft BSD Integration Services Team
+by the Microsoft BSD Integration Services Team
 .Aq Mt bsdic@microsoft.com .
