@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSign.pm,v 1.9 2016/09/06 10:41:51 espie Exp $
+# $OpenBSD: PkgSign.pm,v 1.10 2016/09/15 13:14:03 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -44,7 +44,7 @@ sub handle_options
 		    },
 	};
 	$state->SUPER::handle_options('Cij:o:S:s:',
-	    '[-Cv] [-D name[=value]] -s x509|signify [-s cert] -s priv',
+	    '[-Cv] [-D name[=value]] -s x509|signify|signify2 [-s cert] -s priv',
 	    '[-o dir] [-S source] [pkg-name...]');
 	if (defined $state->{signature_params}) {
 		$state->{signer} = OpenBSD::Signer->factory($state);
@@ -91,51 +91,15 @@ sub sign_existing_package
 {
 	my ($self, $state, $pkg) = @_;
 	my $output = $state->{output_dir};
-	my $dir = $pkg->info;
-	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
-	my $dest = $output.'/'.$plist->pkgname.".tgz";
-	# In incremental mode, don't bother signing known packages
+	my $dest = $output.'/'.$pkg->name.".tgz";
 	if ($state->opt('i')) {
 		if (-f $dest) {
-			$pkg->wipe_info;
 			return;
 	    	}
 	}
-	$plist->set_infodir($dir);
-	$state->add_signature($plist);
-	$plist->save;
 	my (undef, $tmp) = OpenBSD::Temp::permanent_file($output, "pkg");
-	my $wrarc = $state->create_archive($tmp, ".");
+	$state->{signer}->sign($pkg, $state, $tmp);
 
-	my $fh;
-	my $url = $pkg->url;
-	my $buffer;
-
-	if (defined $pkg->{length} and 
-	    $url =~ s/^file:// and open($fh, "<", $url) and
-	    $fh->seek($pkg->{length}, 0) and $fh->read($buffer, 2)
-	    and $buffer eq "\x1f\x8b" and $fh->seek($pkg->{length}, 0)) {
-	    	#$state->say("FAST #1", $plist->pkgname);
-		$wrarc->destdir($pkg->info);
-		my $e = $wrarc->prepare('+CONTENTS');
-		$e->write;
-		close($wrarc->{fh});
-		delete $wrarc->{fh};
-
-		open(my $fh2, ">>", $tmp) or 
-		    $state->fatal("Can't append to #1", $tmp);
-		require File::Copy;
-		File::Copy::copy($fh, $fh2) or 
-		    $state->fatal("Error in copy #1", $!);
-		close($fh2);
-	} else {
-	    	#$state->say("SLOW #1", $plist->pkgname);
-		$plist->copy_over($state, $wrarc, $pkg);
-		$wrarc->close;
-	}
-	close($fh) if defined $fh;
-
-	$pkg->wipe_info;
 	chmod((0666 & ~umask), $tmp);
 	rename($tmp, $dest) or
 	    $state->fatal("Can't create final signed package: #1", $!);
@@ -144,7 +108,7 @@ sub sign_existing_package
 		    chdir($output);
 		    open(STDOUT, '>>', 'SHA256');
 		    },
-		    OpenBSD::Paths->sha256, '-b', $plist->pkgname.".tgz");
+		    OpenBSD::Paths->sha256, '-b', $pkg->name.".tgz");
     	}
 }
 

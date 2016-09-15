@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: Signer.pm,v 1.7 2016/09/06 10:41:51 espie Exp $
+# $OpenBSD: Signer.pm,v 1.8 2016/09/15 13:14:03 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -23,10 +23,12 @@ use warnings;
 
 # the factory that chooses what method to use to sign things
 package OpenBSD::Signer;
+use OpenBSD::PackageInfo;
 
 my $h = {
 	x509 => 'OpenBSD::Signer::X509',
 	signify => 'OpenBSD::Signer::SIGNIFY',
+	signify2 => 'OpenBSD::Signer::SIGNIFY2',
 };
 
 sub factory
@@ -42,7 +44,51 @@ sub factory
 	}
 }
 
+sub sign
+{
+	my ($signer, $pkg, $state, $tmp) = @_;
+
+	my $dir = $pkg->info;
+	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
+	# In incremental mode, don't bother signing known packages
+	$plist->set_infodir($dir);
+	$state->add_signature($plist);
+	$plist->save;
+	my $wrarc = $state->create_archive($tmp, ".");
+
+	my $fh;
+	my $url = $pkg->url;
+	my $buffer;
+
+	if (defined $pkg->{length} and 
+	    $url =~ s/^file:// and open($fh, "<", $url) and
+	    $fh->seek($pkg->{length}, 0) and $fh->read($buffer, 2)
+	    and $buffer eq "\x1f\x8b" and $fh->seek($pkg->{length}, 0)) {
+	    	#$state->say("FAST #1", $plist->pkgname);
+		$wrarc->destdir($pkg->info);
+		my $e = $wrarc->prepare('+CONTENTS');
+		$e->write;
+		close($wrarc->{fh});
+		delete $wrarc->{fh};
+
+		open(my $fh2, ">>", $tmp) or 
+		    $state->fatal("Can't append to #1", $tmp);
+		require File::Copy;
+		File::Copy::copy($fh, $fh2) or 
+		    $state->fatal("Error in copy #1", $!);
+		close($fh2);
+	} else {
+	    	#$state->say("SLOW #1", $plist->pkgname);
+		$plist->copy_over($state, $wrarc, $pkg);
+		$wrarc->close;
+	}
+	close($fh) if defined $fh;
+
+	$pkg->wipe_info;
+}
+
 package OpenBSD::Signer::X509;
+our @ISA = qw(OpenBSD::Signer);
 sub new
 {
 	my ($class, $state, @p) = @_;
@@ -67,6 +113,7 @@ sub compute_signature
 }
 
 package OpenBSD::Signer::SIGNIFY;
+our @ISA = qw(OpenBSD::Signer);
 sub new
 {
 	my ($class, $state, @p) = @_;
@@ -104,6 +151,27 @@ sub compute_signature
 
 	return OpenBSD::signify::compute_signature($plist, $state, 
 	    $self->{privkey}, $self->{pubkey});
+}
+
+package OpenBSD::Signer::SIGNIFY2;
+our @ISA = qw(OpenBSD::Signer);
+sub new
+{
+	my ($class, $state, @p) = @_;
+	if (@p != 2 || !-f $p[1]) {
+		$state->usage("$p[0] signature wants -s privkey");
+	}
+	my $o = bless {privkey => $p[1]}, $class;
+	return $o;
+}
+
+sub sign
+{
+	my ($signer, $pkg, $state, $tmp) = @_;
+	my $privkey = $signer->{privkey};
+ 	my $url = $pkg->url;
+	$url =~ s/^file://;
+	$state->system(OpenBSD::Paths->signify, '-zS', '-s', $privkey, '-m', $url, '-x', $tmp);
 }
 
 # specific parameter handling plus element creation
