@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.11 2016/08/20 19:53:31 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.12 2016/09/15 22:00:55 jsg Exp $
 
 MAN=	cpsw.4 dmtimer.4 edma.4 fec.4 gptimer.4 \
 	imx.4 imxesdhc.4 imxiic.4 imxtemp.4 \
 	intc.4 intro.4 \
-	omap.4 omdog.4 omgpio.4 ommmc.4 \
+	omap.4 omdog.4 omgpio.4 ommmc.4 omwugen.4 \
 	plrtc.4 pluart.4 prcm.4 sitaracm.4 \
 	sunxi.4 sxiccmu.4 sxidog.4 sxie.4 sxiintc.4 \
 	sximmc.4 sxipio.4 sxitimer.4 \
