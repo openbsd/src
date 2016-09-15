@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.22 2016/09/15 01:05:15 dlg Exp $	*/
+/*	$OpenBSD: tree.h,v 1.23 2016/09/15 05:21:09 dlg Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -775,10 +775,10 @@ struct rb_tree {
 };
 
 struct rb_entry {
-	struct rb_entry	 *rbe_parent;
-	struct rb_entry	 *rbe_left;
-	struct rb_entry	 *rbe_right;
-	unsigned int	  rbe_color;
+	struct rb_entry	 *rbt_parent;
+	struct rb_entry	 *rbt_left;
+	struct rb_entry	 *rbt_right;
+	unsigned int	  rbt_color;
 };
 
 #define RBT_HEAD(_name, _type)						\
