@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.h,v 1.4 2016/09/12 15:24:51 phessler Exp $	*/
+/*	$OpenBSD: bfd.h,v 1.5 2016/09/15 12:34:48 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -77,6 +77,7 @@ struct bfd_msghdr {
 	uint32_t	remotediag;
 };
 
+#ifdef _KERNEL
 struct bfd_softc {
 	TAILQ_ENTRY(bfd_softc)	 bfd_next;
 	struct socket		*sc_so;
@@ -98,6 +99,7 @@ struct bfd_softc {
 	int			 mintx;
 	int			 multiplier;
 };
+#endif /* _KERNEL */
 
 struct bfd_flags {
 	int		 version;
