@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.c,v 1.8 2016/09/14 13:46:51 rzalamena Exp $	*/
+/*	$OpenBSD: switchd.c,v 1.9 2016/09/15 15:52:22 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,6 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
-#include <sys/wait.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -199,21 +198,19 @@ main(int argc, char *argv[])
 	 * dns - for resolving host in the configuration files.
 	 * sendfd - send sockets to child processes on reload.
 	 */
-	if (pledge("stdio rpath wpath inet dns proc sendfd", NULL) == -1)
+	if (pledge("stdio rpath wpath inet dns sendfd", NULL) == -1)
 		fatal("pledge");
 
 	event_init();
 
 	signal_set(&ps->ps_evsigint, SIGINT, parent_sig_handler, ps);
 	signal_set(&ps->ps_evsigterm, SIGTERM, parent_sig_handler, ps);
-	signal_set(&ps->ps_evsigchld, SIGCHLD, parent_sig_handler, ps);
 	signal_set(&ps->ps_evsighup, SIGHUP, parent_sig_handler, ps);
 	signal_set(&ps->ps_evsigpipe, SIGPIPE, parent_sig_handler, ps);
 	signal_set(&ps->ps_evsigusr1, SIGUSR1, parent_sig_handler, ps);
 
 	signal_add(&ps->ps_evsigint, NULL);
 	signal_add(&ps->ps_evsigterm, NULL);
-	signal_add(&ps->ps_evsigchld, NULL);
 	signal_add(&ps->ps_evsighup, NULL);
 	signal_add(&ps->ps_evsigpipe, NULL);
 	signal_add(&ps->ps_evsigusr1, NULL);
@@ -303,9 +300,6 @@ void
 parent_sig_handler(int sig, short event, void *arg)
 {
 	struct privsep	*ps = arg;
-	int		 die = 0, status, fail, id;
-	pid_t		 pid;
-	char		*cause;
 
 	switch (sig) {
 	case SIGHUP:
@@ -325,43 +319,7 @@ parent_sig_handler(int sig, short event, void *arg)
 		break;
 	case SIGTERM:
 	case SIGINT:
-		die = 1;
-		/* FALLTHROUGH */
-	case SIGCHLD:
-		do {
-			pid = waitpid(-1, &status, WNOHANG);
-			if (pid <= 0)
-				continue;
-
-			fail = 0;
-			if (WIFSIGNALED(status)) {
-				fail = 1;
-				asprintf(&cause, "terminated; signal %d",
-				    WTERMSIG(status));
-			} else if (WIFEXITED(status)) {
-				if (WEXITSTATUS(status) != 0) {
-					fail = 1;
-					asprintf(&cause, "exited abnormally");
-				} else
-					asprintf(&cause, "exited okay");
-			} else
-				fatalx("unexpected cause of SIGCHLD");
-
-			die = 1;
-
-			for (id = 0; id < PROC_MAX; id++)
-				if (pid == ps->ps_pid[id]) {
-					if (fail)
-						log_warnx("lost child: %s %s",
-						    ps->ps_title[id], cause);
-					break;
-				}
-
-			free(cause);
-		} while (pid > 0 || (pid == -1 && errno == EINTR));
-
-		if (die)
-			parent_shutdown(ps->ps_env);
+		parent_shutdown(ps->ps_env);
 		break;
 	default:
 		fatalx("unexpected signal");
