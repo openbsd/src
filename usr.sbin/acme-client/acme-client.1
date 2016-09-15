@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.10 2016/09/14 14:29:35 tj Exp $
+.\"	$OpenBSD: acme-client.1,v 1.11 2016/09/15 20:44:24 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2016 $
+.Dd $Mdocdate: September 15 2016 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -120,7 +120,20 @@ Alternative names
 for the domain name.
 The number of SAN entries is limited to 100 or so.
 .El
-.Ss Challenges
+.Pp
+Public certificates are by default placed in
+.Pa /etc/ssl/acme
+as
+.Pa cert.pem Pq the domain certificate ,
+.Pa chain.pem ,
+and
+.Pa fullchain.pem ,
+respectively.
+.Pa cert.pem
+is checked for its expiration: if more than 30 days from expiry,
+.Nm
+does not attempt to refresh the signature.
+.Pp
 Challenges are used to verify that the submitter has access to
 the registered domains.
 .Nm
@@ -132,35 +145,14 @@ The default challenge directory
 .Pa /var/www/acme
 can be served by
 .Xr httpd 8
-with this location block:
+with this location block,
+which will properly map response challenges:
 .Bd -literal -offset indent
 location "/.well-known/acme-challenge/*" {
 	root "/acme"
 	root strip 2
 }
 .Ed
-.Pp
-This way, the files placed in
-.Pa /var/www/acme
-will be properly mapped by the web server during response challenges
-with the authority server.
-.Ss Certificates
-Public certificates (domain certificate, chain, and the full-chain) are
-placed by default in
-.Pa /etc/ssl/acme
-as
-.Pa cert.pem ,
-.Pa chain.pem ,
-and
-.Pa fullchain.pem ,
-respectively.
-.Pp
-The
-.Pa cert.pem
-file, if found, is checked for its expiration: if more than 30 days from
-expiry,
-.Nm
-will not attempt to refresh the signature.
 .Sh FILES
 .Bl -tag -width "/etc/ssl/acme/private/privkey.pem" -compact
 .It Pa /etc/acme/privkey.pem
