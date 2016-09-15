@@ -1,0 +1,49 @@
+.\"	$OpenBSD: hyperv.4,v 1.1 2016/09/15 15:22:19 mikeb Exp $
+.\"
+.\" Copyright (c) 2016 Mike Belopuhov
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: September 15 2016 $
+.Dt HYPERV 4
+.Os
+.Sh NAME
+.Nm hyperv
+.Nd Hyper-V guest nexus device
+.Sh SYNOPSIS
+.Cd "hyperv0 at pvbus?"
+.Sh DESCRIPTION
+.Nm
+driver performs Synthetic Interrupt Controller initialization, sets up
+hypercalls and provides access to VMBus services required by paravirtualized
+devices such as disk and network interfaces.
+.Sh SEE ALSO
+.Xr autoconf 4 ,
+.Xr intro 4 ,
+.Xr pvbus 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 6.1 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Mike Belopuhov Aq Mt mikeb@openbsd.org
+based on the
+.Xr hv_vmbus 4
+driver in
+.Fx
+by Microsoft BSD Integration Services Team
+.Aq Mt bsdic@microsoft.com .
