@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.53 2016/09/15 02:00:16 dlg Exp $
+.\"	$OpenBSD: pool.9,v 1.54 2016/09/15 06:11:14 jmc Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -291,7 +291,6 @@ code to be reentered.
 .Fn pool_init ,
 .Fn pool_destroy ,
 .Fn pool_prime ,
-.Fn pool_setipl ,
 .Fn pool_sethiwat ,
 .Fn pool_setlowat ,
 and
@@ -305,7 +304,7 @@ can be called during autoconf or from process context.
 If the pool has been initialised with an interrupt safe pool allocator
 they can also be called from interrupt context at or below the
 interrupt level specified by a call to
-.Fn pool_setipl .
+.Fn pool_init .
 .Sh RETURN VALUES
 .Fn pool_get
 will return a pointer to an item allocated from the pool.

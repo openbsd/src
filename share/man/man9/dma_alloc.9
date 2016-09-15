@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dma_alloc.9,v 1.6 2013/06/04 19:27:05 schwarze Exp $
+.\"	$OpenBSD: dma_alloc.9,v 1.7 2016/09/15 06:11:14 jmc Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 2011 Theo de Raadt
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: September 15 2016 $
 .Dt DMA_ALLOC 9
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ using other DMA-safe allocators.
 Interrupt protection is set to
 .Va IPL_VM
 using
-.Xr pool_setipl 9 .
+.Xr pool_init 9 .
 .Pp
 The
 .Ar flags
