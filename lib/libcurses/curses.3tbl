@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: curses.3tbl,v 1.25 2015/12/03 11:29:55 nicm Exp $
+.\" $OpenBSD: curses.3tbl,v 1.26 2016/09/15 17:34:15 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curses.3tbl,v 1.25 2015/12/03 11:29:55 nicm Exp $
+.\" $Id: curses.3tbl,v 1.26 2016/09/15 17:34:15 jmc Exp $
 .hy 0
 .TH ncurses 3 ""
 .ds n 5
@@ -288,17 +288,6 @@ l l .
 =
 COLOR_PAIR/\fBcurs_color\fR(3)
 PAIR_NUMBER/\fBcurs_attr\fR(3)
-_nc_free_and_exit/\fBcurs_memleaks\fR(3)*
-_nc_freeall/\fBcurs_memleaks\fR(3)*
-_nc_tracebits/\fBcurs_trace\fR(3)*
-_traceattr/\fBcurs_trace\fR(3)*
-_traceattr2/\fBcurs_trace\fR(3)*
-_tracechar/\fBcurs_trace\fR(3)*
-_tracechtype/\fBcurs_trace\fR(3)*
-_tracechtype2/\fBcurs_trace\fR(3)*
-_tracedump/\fBcurs_trace\fR(3)*
-_tracef/\fBcurs_trace\fR(3)*
-_tracemouse/\fBcurs_trace\fR(3)*
 add_wch/\fBcurs_add_wch\fR(3)
 add_wchnstr/\fBcurs_add_wchstr\fR(3)
 add_wchstr/\fBcurs_add_wchstr\fR(3)
@@ -618,7 +607,6 @@ touchwin/\fBcurs_touch\fR(3)
 tparm/\fBterminfo\fR(3)
 tputs/\fBtermcap\fR(3)
 tputs/\fBterminfo\fR(3)
-trace/\fBcurs_trace\fR(3)*
 typeahead/\fBcurs_inopts\fR(3)
 unctrl/\fBcurs_util\fR(3)
 unget_wch/\fBcurs_get_wch\fR(3)
