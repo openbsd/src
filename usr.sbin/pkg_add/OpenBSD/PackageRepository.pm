@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.134 2016/09/14 14:14:22 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.135 2016/09/15 12:53:08 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -30,6 +30,17 @@ our @ISA=(qw(OpenBSD::PackageRepositoryBase));
 use OpenBSD::PackageLocation;
 use OpenBSD::Paths;
 use OpenBSD::Error;
+use OpenBSD::Temp;
+
+sub make_error_file
+{
+	my ($self, $object) = @_;
+	$object->{errors} = OpenBSD::Temp->file;
+	if (!defined $object->{errors}) {
+		$self->{state}->fatal("#1 not writable",
+		    $OpenBSD::Temp::tempbase);
+	}
+}
 
 sub baseurl
 {
@@ -161,7 +172,6 @@ sub wipe_info
 
 	my $dir = $pkg->{dir};
 	if (defined $dir) {
-		require OpenBSD::Temp;
 		OpenBSD::Error->rmtree($dir);
 		OpenBSD::Temp->reclaim($dir);
 		delete $pkg->{dir};
@@ -289,7 +299,7 @@ sub parse_problems
 			next if m/^ftp: Writing -: Broken pipe/o;
 			next if m/^421\s+/o;
 		}
-		s/.*unsigned archive.*/unsigned package/;
+		s/.*unsigned .*archive.*/unsigned package/;
 		if ($notyet) {
 			$self->{state}->errsay("Error from #1", $url);
 			$notyet = 0;
@@ -541,7 +551,6 @@ sub pkg_copy
 {
 	my ($self, $in, $object) = @_;
 
-	require OpenBSD::Temp;
 	my $name = $object->{name};
 	my $dir = $object->{cache_dir};
 
@@ -596,20 +605,8 @@ sub pkg_copy
 	close($in);
 }
 
-sub make_error_file
-{
-	my ($self, $object) = @_;
-	$object->{errors} = OpenBSD::Temp->file;
-	if (!defined $object->{errors}) {
-		$self->{state}->fatal("#1 not writable",
-		    $OpenBSD::Temp::tempbase);
-	}
-}
-
 sub open_pipe
 {
-	require OpenBSD::Temp;
-
 	my ($self, $object) = @_;
 	$self->make_error_file($object);
 	my $d = $ENV{'PKG_CACHE'};

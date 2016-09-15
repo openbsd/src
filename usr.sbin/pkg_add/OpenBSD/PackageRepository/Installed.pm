@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.36 2016/09/14 13:42:19 espie Exp $
+# $OpenBSD: Installed.pm,v 1.37 2016/09/15 12:53:08 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -90,10 +90,6 @@ sub strip_urlscheme
 	    	}
 	}
 	return 0;
-}
-
-sub make_error_file
-{
 }
 
 sub match_locations
@@ -201,6 +197,10 @@ sub relative_url
 }
 
 sub close
+{
+}
+
+sub make_error_file
 {
 }
 
