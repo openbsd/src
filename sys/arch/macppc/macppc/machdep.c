@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.176 2016/05/21 00:56:43 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.177 2016/09/15 02:00:17 dlg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -324,8 +324,8 @@ initppc(startkernel, endkernel, args)
 	ofwconprobe();
 	consinit();
 
-        pool_init(&ppc_vecpl, sizeof(struct vreg), 16, 0, 0, "ppcvec", NULL);
-	pool_setipl(&ppc_vecpl, IPL_NONE);
+        pool_init(&ppc_vecpl, sizeof(struct vreg), 16, IPL_NONE, 0, "ppcvec",
+	    NULL);
 
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.169 2016/06/07 06:23:19 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.170 2016/09/15 02:00:17 dlg Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -631,12 +631,10 @@ pmap_init(void)
 {
 	DPRINTF(PDB_FOLLOW|PDB_INIT, ("pmap_init()\n"));
 
-	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0,
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, IPL_NONE, 0,
 	    "pmappl", NULL);
-	pool_setipl(&pmap_pmap_pool, IPL_NONE);
-	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pmappv",
-	    NULL);
-	pool_setipl(&pmap_pv_pool, IPL_VM);
+	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, IPL_VM, 0,
+	    "pmappv", NULL);
 	pool_setlowat(&pmap_pv_pool, pmap_pvlowat);
 	pool_sethiwat(&pmap_pv_pool, pmap_pvlowat * 32);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.47 2016/06/17 10:48:25 dlg Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.48 2016/09/15 02:00:18 dlg Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -48,9 +48,8 @@ struct pool uvm_anon_pool;
 void
 uvm_anon_init(void)
 {
-	pool_init(&uvm_anon_pool, sizeof(struct vm_anon), 0, 0,
+	pool_init(&uvm_anon_pool, sizeof(struct vm_anon), 0, IPL_NONE,
 	    PR_WAITOK, "anonpl", NULL);
-	pool_setipl(&uvm_anon_pool, IPL_NONE);
 	pool_sethiwat(&uvm_anon_pool, uvmexp.free / 16);
 }
 

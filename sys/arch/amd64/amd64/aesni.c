@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.38 2016/04/18 21:15:18 kettenis Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.39 2016/09/15 02:00:16 dlg Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -164,9 +164,8 @@ aesni_setup(void)
 		return;
 	}
 
-	pool_init(&aesnipl, sizeof(struct aesni_session), 16, 0, 0,
+	pool_init(&aesnipl, sizeof(struct aesni_session), 16, IPL_VM, 0,
 	    "aesni", NULL);
-	pool_setipl(&aesnipl, IPL_VM);
 	pool_setlowat(&aesnipl, 2);
 
 	mtx_init(&aesni_sc->sc_mtx, IPL_VM);

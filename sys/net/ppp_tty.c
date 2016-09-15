@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.43 2016/01/25 18:47:00 stefan Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.44 2016/09/15 02:00:18 dlg Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -173,8 +173,8 @@ pppopen(dev_t dev, struct tty *tp, struct proc *p)
     if (ppp_pkts.pr_size == 0) {
 	extern struct kmem_pa_mode kp_dma_contig;
 
-	pool_init(&ppp_pkts, sizeof(struct ppp_pkt), 0, 0, 0, "ppppkts", NULL);
-	pool_setipl(&ppp_pkts, IPL_TTY); /* IPL_SOFTTTY */
+	pool_init(&ppp_pkts, sizeof(struct ppp_pkt), 0,
+	  IPL_TTY, 0, "ppppkts", NULL); /* IPL_SOFTTTY */
 	pool_set_constraints(&ppp_pkts, &kp_dma_contig);
     }
     rw_exit_write(&ppp_pkt_init);

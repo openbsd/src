@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.280 2016/09/06 00:04:15 dlg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.281 2016/09/15 02:00:18 dlg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -166,10 +166,10 @@ ip_init(void)
 	const u_int16_t defrootonlyports_tcp[] = DEFROOTONLYPORTS_TCP;
 	const u_int16_t defrootonlyports_udp[] = DEFROOTONLYPORTS_UDP;
 
-	pool_init(&ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqe",  NULL);
-	pool_setipl(&ipqent_pool, IPL_SOFTNET);
-	pool_init(&ipq_pool, sizeof(struct ipq), 0, 0, 0, "ipq", NULL);
-	pool_setipl(&ipq_pool, IPL_SOFTNET);
+	pool_init(&ipqent_pool, sizeof(struct ipqent), 0,
+	    IPL_SOFTNET, 0, "ipqe",  NULL);
+	pool_init(&ipq_pool, sizeof(struct ipq), 0,
+	    IPL_SOFTNET, 0, "ipq", NULL);
 
 	pr = pffindproto(PF_INET, IPPROTO_RAW, SOCK_RAW);
 	if (pr == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.56 2016/04/13 11:34:00 mpi Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.57 2016/09/15 02:00:17 dlg Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -304,8 +304,7 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Each interface gets its own pool.
 	 */
-	pool_init(&sc->sc_pool, 2048, 0, 0, 0, sc->sc_dv.dv_xname, NULL);
-	pool_setipl(&sc->sc_pool, IPL_NET);
+	pool_init(&sc->sc_pool, 2048, 0, IPL_NET, 0, sc->sc_dv.dv_xname, NULL);
 
 	ifp = &sc->sc_ac.ac_if;
 	ifp->if_softc = sc;

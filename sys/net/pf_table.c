@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.117 2016/09/02 10:19:49 dlg Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.118 2016/09/15 02:00:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -215,22 +215,16 @@ pfr_initialize(void)
 {
 	rn_init(sizeof(struct sockaddr_in6));
 
-	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
-	    "pfrktable", NULL);
-	pool_setipl(&pfr_ktable_pl, IPL_SOFTNET);
+	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable),
+	    0, IPL_SOFTNET, 0, "pfrktable", NULL);
 	pool_init(&pfr_kentry_pl[PFRKE_PLAIN], sizeof(struct pfr_kentry),
-	    0, 0, 0, "pfrke_plain", NULL);
-	pool_setipl(&pfr_kentry_pl[PFRKE_PLAIN], IPL_SOFTNET);
+	    0, IPL_SOFTNET, 0, "pfrke_plain", NULL);
 	pool_init(&pfr_kentry_pl[PFRKE_ROUTE], sizeof(struct pfr_kentry_route),
-	    0, 0, 0, "pfrke_route", NULL);
-	pool_setipl(&pfr_kentry_pl[PFRKE_ROUTE], IPL_SOFTNET);
+	    0, IPL_SOFTNET, 0, "pfrke_route", NULL);
 	pool_init(&pfr_kentry_pl[PFRKE_COST], sizeof(struct pfr_kentry_cost),
-	    0, 0, 0, "pfrke_cost", NULL);
-	pool_setipl(&pfr_kentry_pl[PFRKE_COST], IPL_SOFTNET);
-
+	    0, IPL_SOFTNET, 0, "pfrke_cost", NULL);
 	pool_init(&pfr_kcounters_pl, sizeof(struct pfr_kcounters),
-	    0, 0, 0, "pfrkcounters", NULL);
-	pool_setipl(&pfr_kcounters_pl, IPL_SOFTNET);
+	    0, IPL_SOFTNET, 0, "pfrkcounters", NULL);
 
 	pfr_sin.sin_len = sizeof(pfr_sin);
 	pfr_sin.sin_family = AF_INET;

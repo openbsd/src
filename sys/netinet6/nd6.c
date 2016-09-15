@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.191 2016/09/06 00:04:15 dlg Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.192 2016/09/15 02:00:18 dlg Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -116,8 +116,8 @@ nd6_init(void)
 	}
 
 	TAILQ_INIT(&nd6_list);
-	pool_init(&nd6_pool, sizeof(struct llinfo_nd6), 0, 0, 0, "nd6", NULL);
-	pool_setipl(&nd6_pool, IPL_SOFTNET);
+	pool_init(&nd6_pool, sizeof(struct llinfo_nd6), 0,
+	    IPL_SOFTNET, 0, "nd6", NULL);
 
 	/* initialization of the default router list */
 	TAILQ_INIT(&nd_defrouter);

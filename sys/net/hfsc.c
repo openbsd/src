@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.32 2015/11/21 01:08:49 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.33 2016/09/15 02:00:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -315,12 +315,10 @@ hfsc_grow_class_tbl(struct hfsc_if *hif, u_int howmany)
 void
 hfsc_initialize(void)
 {
-	pool_init(&hfsc_class_pl, sizeof(struct hfsc_class), 0, 0, PR_WAITOK,
-	    "hfscclass", NULL);
-	pool_setipl(&hfsc_class_pl, IPL_NONE);
-	pool_init(&hfsc_internal_sc_pl, sizeof(struct hfsc_internal_sc), 0, 0,
-	    PR_WAITOK, "hfscintsc", NULL);
-	pool_setipl(&hfsc_internal_sc_pl, IPL_NONE);
+	pool_init(&hfsc_class_pl, sizeof(struct hfsc_class), 0,
+	    IPL_NONE, PR_WAITOK, "hfscclass", NULL);
+	pool_init(&hfsc_internal_sc_pl, sizeof(struct hfsc_internal_sc), 0,
+	    IPL_NONE, PR_WAITOK, "hfscintsc", NULL);
 }
 
 struct hfsc_if *

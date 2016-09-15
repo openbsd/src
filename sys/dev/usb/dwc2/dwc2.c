@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.36 2015/12/23 12:38:40 visa Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.37 2016/09/15 02:00:18 dlg Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -1563,15 +1563,12 @@ dwc2_init(struct dwc2_softc *sc)
 	    USB_MEM_RESERVE);
 #endif
 
-	pool_init(&sc->sc_xferpool, sizeof(struct dwc2_xfer), 0, 0, 0,
+	pool_init(&sc->sc_xferpool, sizeof(struct dwc2_xfer), 0, IPL_USB, 0,
 	    "dwc2xfer", NULL);
-	pool_setipl(&sc->sc_xferpool, IPL_USB);
-	pool_init(&sc->sc_qhpool, sizeof(struct dwc2_qh), 0, 0, 0,
+	pool_init(&sc->sc_qhpool, sizeof(struct dwc2_qh), 0, IPL_USB, 0,
 	    "dwc2qh", NULL);
-	pool_setipl(&sc->sc_qhpool, IPL_USB);
-	pool_init(&sc->sc_qtdpool, sizeof(struct dwc2_qtd), 0, 0, 0,
+	pool_init(&sc->sc_qtdpool, sizeof(struct dwc2_qtd), 0, IPL_USB, 0,
 	    "dwc2qtd", NULL);
-	pool_setipl(&sc->sc_qtdpool, IPL_USB);
 
 	sc->sc_hsotg = malloc(sizeof(struct dwc2_hsotg), M_DEVBUF,
 	    M_ZERO | M_WAITOK);

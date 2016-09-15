@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.37 2016/06/19 10:21:56 dlg Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.38 2016/09/15 02:00:18 dlg Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -1047,9 +1047,8 @@ ufsdirhash_recycle(int wanted)
 void
 ufsdirhash_init(void)
 {
-	pool_init(&ufsdirhash_pool, DH_NBLKOFF * sizeof(doff_t), 0, 0,
+	pool_init(&ufsdirhash_pool, DH_NBLKOFF * sizeof(doff_t), 0, IPL_NONE,
 	    PR_WAITOK, "dirhash", NULL);
-	pool_setipl(&ufsdirhash_pool, IPL_NONE);
 	mtx_init(&ufsdirhash_mtx, IPL_NONE);
 	arc4random_buf(&ufsdirhash_key, sizeof(ufsdirhash_key));
 	TAILQ_INIT(&ufsdirhash_list);

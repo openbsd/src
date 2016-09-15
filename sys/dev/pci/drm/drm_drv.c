@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.148 2016/08/24 09:31:56 dlg Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.149 2016/09/15 02:00:17 dlg Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -436,9 +436,8 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	if (dev->driver->driver_features & DRIVER_GEM) {
 		KASSERT(dev->driver->gem_size >= sizeof(struct drm_gem_object));
 		/* XXX unique name */
-		pool_init(&dev->objpl, dev->driver->gem_size, 0, 0, 0,
+		pool_init(&dev->objpl, dev->driver->gem_size, 0, IPL_NONE, 0,
 		    "drmobjpl", NULL);
-		pool_setipl(&dev->objpl, IPL_NONE);
 	}
 
 	if (dev->driver->driver_features & DRIVER_GEM) {

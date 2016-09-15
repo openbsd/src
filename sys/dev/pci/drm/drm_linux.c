@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.11 2016/04/07 20:30:59 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.12 2016/09/15 02:00:17 dlg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -240,9 +240,8 @@ idr_init(struct idr *idr)
 	static int initialized;
 
 	if (!initialized) {
-		pool_init(&idr_pool, sizeof(struct idr_entry), 0, 0, 0,
+		pool_init(&idr_pool, sizeof(struct idr_entry), 0, IPL_TTY, 0,
 		    "idrpl", NULL);
-		pool_setipl(&idr_pool, IPL_TTY);
 		initialized = 1;
 	}
 	SPLAY_INIT(&idr->tree);

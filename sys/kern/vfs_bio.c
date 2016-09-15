@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.176 2016/09/04 10:51:24 naddy Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.177 2016/09/15 02:00:16 dlg Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -193,8 +193,7 @@ bufinit(void)
 	 */
 	bufkvm &= ~(MAXPHYS - 1);
 
-	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", NULL);
-	pool_setipl(&bufpool, IPL_BIO);
+	pool_init(&bufpool, sizeof(struct buf), 0, IPL_BIO, 0, "bufpl", NULL);
 
 	bufcache_init();
 

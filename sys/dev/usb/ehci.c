@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.192 2016/08/18 11:59:58 jsg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.193 2016/09/15 02:00:17 dlg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -338,9 +338,8 @@ ehci_init(struct ehci_softc *sc)
 			    sc->sc_bus.bdev.dv_xname);
 			return (ENOMEM);
 		}
-		pool_init(ehcixfer, sizeof(struct ehci_xfer), 0, 0, 0,
-		    "ehcixfer", NULL);
-		pool_setipl(ehcixfer, IPL_SOFTUSB);
+		pool_init(ehcixfer, sizeof(struct ehci_xfer), 0, IPL_SOFTUSB,
+		    0, "ehcixfer", NULL);
 	}
 
 	/* frame list size at default, read back what we got and use that */

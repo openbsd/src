@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.146 2015/12/02 09:43:03 yasuoka Exp $ */
+/*	$OpenBSD: ohci.c,v 1.147 2016/09/15 02:00:17 dlg Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -724,9 +724,8 @@ ohci_init(struct ohci_softc *sc)
 			    sc->sc_bus.bdev.dv_xname);
 			return (ENOMEM);
 		}
-		pool_init(ohcixfer, sizeof(struct ohci_xfer), 0, 0, 0,
-		    "ohcixfer", NULL);
-		pool_setipl(ohcixfer, IPL_SOFTUSB);
+		pool_init(ohcixfer, sizeof(struct ohci_xfer), 0, IPL_SOFTUSB,
+		    0, "ohcixfer", NULL);
 	}
 
 	/* XXX determine alignment by R/W */

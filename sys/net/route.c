@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.328 2016/09/13 08:11:39 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.329 2016/09/15 02:00:18 dlg Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -191,9 +191,8 @@ TAILQ_HEAD(rt_labels, rt_label)	rt_labels = TAILQ_HEAD_INITIALIZER(rt_labels);
 void
 route_init(void)
 {
-	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentry",
-	    NULL);
-	pool_setipl(&rtentry_pool, IPL_SOFTNET);
+	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, IPL_SOFTNET, 0,
+	    "rtentry", NULL);
 
 	while (rt_hashjitter == 0)
 		rt_hashjitter = arc4random();
@@ -1462,9 +1461,8 @@ rt_timer_init(void)
 	if (rt_init_done)
 		panic("rt_timer_init: already initialized");
 
-	pool_init(&rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmr",
-	    NULL);
-	pool_setipl(&rttimer_pool, IPL_SOFTNET);
+	pool_init(&rttimer_pool, sizeof(struct rttimer), 0, IPL_SOFTNET, 0,
+	    "rttmr", NULL);
 
 	LIST_INIT(&rttimer_queue_head);
 	timeout_set(&rt_timer_timeout, rt_timer_timer, &rt_timer_timeout);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.51 2016/08/31 12:24:12 jsg Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.52 2016/09/15 02:00:17 dlg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -2396,30 +2396,14 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	/*
 	 * Initialize the pmap pool.
 	 */
-	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0,
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, IPL_NONE, 0,
 	    "pmappl", &pool_allocator_single);
-	pool_setipl(&pmap_pmap_pool, IPL_NONE);
-
-	/*
-	 * Initialize the pv pool.
-	 */
-	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvepl",
-	    &pmap_bootstrap_pv_allocator);
-	pool_setipl(&pmap_pv_pool, IPL_VM);
-
-	/*
-	 * Initialize the L2 dtable pool.
-	 */
-	pool_init(&pmap_l2dtable_pool, sizeof(struct l2_dtable), 0, 0, 0,
+	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, IPL_VM, 0,
+	    "pvepl", &pmap_bootstrap_pv_allocator);
+	pool_init(&pmap_l2dtable_pool, sizeof(struct l2_dtable), 0, IPL_VM, 0,
 	    "l2dtblpl", NULL);
-	pool_setipl(&pmap_l2dtable_pool, IPL_VM);
-
-	/*
-	 * Initialise the L2 descriptor table pool.
-	 */
-	pool_init(&pmap_l2ptp_pool, L2_TABLE_SIZE_REAL, L2_TABLE_SIZE_REAL, 0,
-	    0, "l2ptppl", &pool_allocator_single);
-	pool_setipl(&pmap_l2ptp_pool, IPL_VM);
+	pool_init(&pmap_l2ptp_pool, L2_TABLE_SIZE_REAL, L2_TABLE_SIZE_REAL,
+	    IPL_VM, 0, "l2ptppl", &pool_allocator_single);
 
 	cpu_dcache_wbinv_all();
 	cpu_sdcache_wbinv_all();

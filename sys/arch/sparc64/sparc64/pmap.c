@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.97 2016/06/07 06:23:19 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.98 2016/09/15 02:00:17 dlg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1378,11 +1378,10 @@ pmap_init(void)
 		panic("pmap_init: CLSIZE!=1");
 
 	/* Setup a pool for additional pvlist structures */
-	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", NULL);
-	pool_setipl(&pv_pool, IPL_VM);
-	pool_init(&pmap_pool, sizeof(struct pmap), 0, 0, 0,
+	pool_init(&pv_pool, sizeof(struct pv_entry), 0, IPL_VM, 0,
+	    "pv_entry", NULL);
+	pool_init(&pmap_pool, sizeof(struct pmap), 0, IPL_NONE, 0,
 	    "pmappl", NULL);
-	pool_setipl(&pmap_pool, IPL_NONE);
 }
 
 /* Start of non-cachable physical memory on UltraSPARC-III. */

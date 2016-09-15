@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.23 2016/08/30 07:42:57 jmatthew Exp $ */
+/*	$OpenBSD: art.c,v 1.24 2016/09/15 02:00:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -102,19 +102,14 @@ struct task		 art_node_gc_task = TASK_INITIALIZER(art_gc, NULL);
 void
 art_init(void)
 {
-	pool_init(&an_pool, sizeof(struct art_node), 0, 0, 0, "art_node", NULL);
-	pool_setipl(&an_pool, IPL_SOFTNET);
-
-	pool_init(&at_pool, sizeof(struct art_table), 0, 0, 0, "art_table",
-	    NULL);
-	pool_setipl(&at_pool, IPL_SOFTNET);
-
-	pool_init(&at_heap_4_pool, AT_HEAPSIZE(4), 0, 0, 0, "art_heap4", NULL);
-	pool_setipl(&at_heap_4_pool, IPL_SOFTNET);
-
-	pool_init(&at_heap_8_pool, AT_HEAPSIZE(8), 0, 0, 0, "art_heap8",
-	    &pool_allocator_single);
-	pool_setipl(&at_heap_8_pool, IPL_SOFTNET);
+	pool_init(&an_pool, sizeof(struct art_node), 0, IPL_SOFTNET, 0,
+	    "art_node", NULL);
+	pool_init(&at_pool, sizeof(struct art_table), 0, IPL_SOFTNET, 0,
+	    "art_table", NULL);
+	pool_init(&at_heap_4_pool, AT_HEAPSIZE(4), 0, IPL_SOFTNET, 0,
+	    "art_heap4", NULL);
+	pool_init(&at_heap_8_pool, AT_HEAPSIZE(8), 0, IPL_SOFTNET, 0,
+	    "art_heap8", &pool_allocator_single);
 }
 
 /*

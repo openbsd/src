@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.97 2016/09/14 19:04:54 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.98 2016/09/15 02:00:17 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -586,9 +586,8 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 			printf(": unable to allocate descriptor pool\n");
 			goto fail_2;
 		}
-		pool_init(oce_pkt_pool, sizeof(struct oce_pkt), 0, 0, 0,
-		    "ocepkts", NULL);
-		pool_setipl(oce_pkt_pool, IPL_NET);
+		pool_init(oce_pkt_pool, sizeof(struct oce_pkt), 0, IPL_NET,
+		    0, "ocepkts", NULL);
 	}
 
 	/* We allocate a single interrupt resource */

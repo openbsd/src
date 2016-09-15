@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.52 2016/04/21 04:09:28 mlarkin Exp $
+.\"	$OpenBSD: pool.9,v 1.53 2016/09/15 02:00:16 dlg Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 21 2016 $
+.Dd $Mdocdate: September 15 2016 $
 .Dt POOL_INIT 9
 .Os
 .Sh NAME
@@ -37,7 +37,6 @@
 .Nm pool_get ,
 .Nm pool_put ,
 .Nm pool_prime ,
-.Nm pool_setipl ,
 .Nm pool_sethiwat ,
 .Nm pool_setlowat ,
 .Nm pool_sethardlimit
@@ -50,7 +49,7 @@
 .Fa "struct pool *pool"
 .Fa "size_t size"
 .Fa "u_int align"
-.Fa "u_int align_offset"
+.Fa "int ipl"
 .Fa "int flags"
 .Fa "const char *wmesg"
 .Fa "struct pool_allocator *palloc"
@@ -65,8 +64,6 @@
 .Fn pool_put "struct pool *pp" "void *item"
 .Ft int
 .Fn pool_prime "struct pool *pp" "int nitems"
-.Ft void
-.Fn pool_setipl "struct pool *pp" "int ipl"
 .Ft void
 .Fn pool_sethiwat "struct pool *pp" "int n"
 .Ft void
@@ -112,10 +109,12 @@ Specifies the memory address alignment of the items returned by
 This argument must be a power of two.
 If zero,
 the alignment defaults to an architecture-specific natural alignment.
-.It Fa align_offset
-The offset within an item to which the
-.Fa align
-parameter applies.
+.It Fa ipl
+The interrupt protection level used to protect the pool's internals,
+and at what level the pool can be safely used.
+See
+.Xr spl 9
+for a list of the IPLs.
 .It Fa flags
 Specifies various flags set on the pool at creation time.
 .It Fa wmesg
@@ -265,22 +264,6 @@ accommodate the minimum number of items specified by this function.
 Unlike
 .Fn pool_prime ,
 this function does not allocate the necessary memory up-front.
-.El
-.Ss SETTING THE PROTECTION LEVEL
-The
-.Fn pool_setipl
-function is used to specify the interrupt protection level at which the pool
-can be safely used.
-.Pp
-.Fn pool_setipl
-.Bl -tag -offset indent -width "flags"
-.It Fa pp
-The handle identifying the pool resource instance.
-.It Fa ipl
-The interrupt protection level used to protect the pool's internals.
-See
-.Xr spl 9
-for a list of the IPLs.
 .El
 .Ss SETTING HARD LIMITS
 The function

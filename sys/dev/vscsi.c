@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.39 2015/08/27 18:54:02 deraadt Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.40 2016/09/15 02:00:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -269,9 +269,8 @@ vscsiopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (rv);
 	}
 
-	pool_init(&sc->sc_ccb_pool, sizeof(struct vscsi_ccb), 0, 0, 0,
+	pool_init(&sc->sc_ccb_pool, sizeof(struct vscsi_ccb), 0, IPL_BIO, 0,
 	    "vscsiccb", NULL);
-	pool_setipl(&sc->sc_ccb_pool, IPL_BIO);
 
 	/* we need to guarantee some ccbs will be available for the iopool */
 	rv = pool_prime(&sc->sc_ccb_pool, 8);

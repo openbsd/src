@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.7 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.8 2016/09/15 02:00:17 dlg Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -229,9 +229,8 @@ wd33c93_init(struct wd33c93_softc *sc)
 
 	if (!wd33c93_pool_initialized) {
 		/* All instances share the same pool */
-		pool_init(&wd33c93_pool, sizeof(struct wd33c93_acb), 0, 0, 0,
-		    "wd33c93_acb", NULL);
-		pool_setipl(&wd33c93_pool, IPL_BIO);
+		pool_init(&wd33c93_pool, sizeof(struct wd33c93_acb), 0,
+		    IPL_BIO, 0, "wd33c93_acb", NULL);
 		scsi_iopool_init(&wd33c93_iopool, NULL,
 		    wd33c93_io_get, wd33c93_io_put);
 		++wd33c93_pool_initialized;

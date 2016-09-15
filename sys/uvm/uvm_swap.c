@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.139 2015/11/01 19:03:33 semarie Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.140 2016/09/15 02:00:18 dlg Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -279,12 +279,10 @@ uvm_swap_init(void)
 		panic("uvm_swap_init: extent_create failed");
 
 	/* allocate pools for structures used for swapping to files. */
-	pool_init(&vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0, "swp vnx",
-	    NULL);
-	pool_setipl(&vndxfer_pool, IPL_BIO);
-	pool_init(&vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd",
-	    NULL);
-	pool_setipl(&vndbuf_pool, IPL_BIO);
+	pool_init(&vndxfer_pool, sizeof(struct vndxfer), 0, IPL_BIO, 0,
+	    "swp vnx", NULL);
+	pool_init(&vndbuf_pool, sizeof(struct vndbuf), 0, IPL_BIO, 0,
+	    "swp vnd", NULL);
 
 	/* Setup the initial swap partition */
 	swapmount();

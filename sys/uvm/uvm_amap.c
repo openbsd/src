@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.76 2016/07/27 14:48:56 tedu Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.77 2016/09/15 02:00:18 dlg Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -235,9 +235,8 @@ amap_init(void)
 	size_t size;
 
 	/* Initialize the vm_amap pool. */
-	pool_init(&uvm_amap_pool, sizeof(struct vm_amap), 0, 0, PR_WAITOK,
-	    "amappl", NULL);
-	pool_setipl(&uvm_amap_pool, IPL_NONE);
+	pool_init(&uvm_amap_pool, sizeof(struct vm_amap),
+	    0, IPL_NONE, PR_WAITOK, "amappl", NULL);
 	pool_sethiwat(&uvm_amap_pool, 4096);
 
 	/* initialize small amap pools */
@@ -246,16 +245,13 @@ amap_init(void)
 		    sizeof(amap_small_pool_names[0]), "amappl%d", i + 1);
 		size = offsetof(struct vm_amap, am_small.ac_anon) +
 		    (i + 1) * sizeof(struct vm_anon *);
-		pool_init(&uvm_small_amap_pool[i], size, 0, 0, 0,
-		    amap_small_pool_names[i], NULL);
-		pool_setipl(&uvm_small_amap_pool[i], IPL_NONE);
+		pool_init(&uvm_small_amap_pool[i], size, 0,
+		    IPL_NONE, 0, amap_small_pool_names[i], NULL);
 	}
 
-	pool_init(&uvm_amap_chunk_pool,
-	    sizeof(struct vm_amap_chunk) +
-	    UVM_AMAP_CHUNK * sizeof(struct vm_anon *), 0, 0, 0,
-	    "amapchunkpl", NULL);
-	pool_setipl(&uvm_amap_chunk_pool, IPL_NONE);
+	pool_init(&uvm_amap_chunk_pool, sizeof(struct vm_amap_chunk) +
+	    UVM_AMAP_CHUNK * sizeof(struct vm_anon *),
+	    0, IPL_NONE, 0, "amapchunkpl", NULL);
 	pool_sethiwat(&uvm_amap_chunk_pool, 4096);
 }
 

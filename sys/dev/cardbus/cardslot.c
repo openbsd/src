@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardslot.c,v 1.20 2016/08/24 09:31:56 dlg Exp $	*/
+/*	$OpenBSD: cardslot.c,v 1.21 2016/09/15 02:00:17 dlg Exp $	*/
 /*	$NetBSD: cardslot.c,v 1.9 2000/03/22 09:35:06 haya Exp $	*/
 
 /*
@@ -103,8 +103,7 @@ cardslotattach(struct device *parent, struct device *self, void *aux)
 
 	if (cardsloteventpool.pr_size == 0) {
 		pool_init(&cardsloteventpool, sizeof(struct cardslot_event),
-		    0, 0, 0, "cardslot", NULL);
-		pool_setipl(&cardsloteventpool, IPL_BIO);
+		    0, IPL_BIO, 0, "cardslot", NULL);
 	}
 
 	sc->sc_slot = sc->sc_dev.dv_unit;

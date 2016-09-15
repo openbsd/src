@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.53 2016/08/30 23:29:39 dlg Exp $	*/
+/*	$OpenBSD: radix.c,v 1.54 2016/09/15 02:00:18 dlg Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -1223,9 +1223,8 @@ rn_init(unsigned int keylen)
 	char *cp, *cplim;
 
 	if (max_keylen == 0) {
-		pool_init(&rtmask_pool, sizeof(struct radix_mask), 0, 0, 0,
-		    "rtmask", NULL);
-		pool_setipl(&rtmask_pool, IPL_SOFTNET);
+		pool_init(&rtmask_pool, sizeof(struct radix_mask), 0,
+		    IPL_SOFTNET, 0, "rtmask", NULL);
 	}
 
 	if (keylen <= max_keylen)

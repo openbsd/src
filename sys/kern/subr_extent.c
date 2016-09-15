@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.57 2015/08/28 00:03:53 deraadt Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.58 2016/09/15 02:00:16 dlg Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -66,7 +66,6 @@ struct pool {
 };
 
 #define	pool_init(a, b, c, d, e, f, g)	do { (a)->pr_size = (b); } while (0)
-#define	pool_setipl(pp, ipl)		/* nothing */
 #define pool_get(pp, flags)		malloc((pp)->pr_size, 0, 0)
 #define	pool_put(pp, rp)		free((rp), 0, 0)
 
@@ -137,9 +136,8 @@ extent_pool_init(void)
 	static int inited;
 
 	if (!inited) {
-		pool_init(&ex_region_pl, sizeof(struct extent_region), 0, 0, 0,
-		    "extentpl", NULL);
-		pool_setipl(&ex_region_pl, IPL_VM);
+		pool_init(&ex_region_pl, sizeof(struct extent_region), 0,
+		    IPL_VM, 0, "extentpl", NULL);
 		inited = 1;
 	}
 }

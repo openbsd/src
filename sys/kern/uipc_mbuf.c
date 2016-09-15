@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.230 2016/09/15 00:52:08 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.231 2016/09/15 02:00:16 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -150,21 +150,18 @@ mbinit(void)
 		panic("mbinit: the largest cluster size != MAXMCLBYTES");
 #endif
 
-	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbufpl", NULL);
-	pool_setipl(&mbpool, IPL_NET);
+	pool_init(&mbpool, MSIZE, 0, IPL_NET, 0, "mbufpl", NULL);
 	pool_set_constraints(&mbpool, &kp_dma_contig);
 	pool_setlowat(&mbpool, mblowat);
 
-	pool_init(&mtagpool, PACKET_TAG_MAXSIZE + sizeof(struct m_tag),
-	    0, 0, 0, "mtagpl", NULL);
-	pool_setipl(&mtagpool, IPL_NET);
+	pool_init(&mtagpool, PACKET_TAG_MAXSIZE + sizeof(struct m_tag), 0,
+	    IPL_NET, 0, "mtagpl", NULL);
 
 	for (i = 0; i < nitems(mclsizes); i++) {
 		snprintf(mclnames[i], sizeof(mclnames[0]), "mcl%dk",
 		    mclsizes[i] >> 10);
-		pool_init(&mclpools[i], mclsizes[i], 0, 0, 0,
+		pool_init(&mclpools[i], mclsizes[i], 0, IPL_NET, 0,
 		    mclnames[i], NULL);
-		pool_setipl(&mclpools[i], IPL_NET);
 		pool_set_constraints(&mclpools[i], &kp_dma_contig);
 		pool_setlowat(&mclpools[i], mcllowat);
 	}

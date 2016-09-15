@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.95 2016/05/23 15:22:44 tedu Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.96 2016/09/15 02:00:17 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -302,9 +302,8 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 			    DEVNAME(sc));
 			goto unmap;
 		}
-		pool_init(myx_mcl_pool, MYX_RXBIG_SIZE, MYX_BOUNDARY, 0,
+		pool_init(myx_mcl_pool, MYX_RXBIG_SIZE, MYX_BOUNDARY, IPL_NET,
 		    0, "myxmcl", NULL);
-		pool_setipl(myx_mcl_pool, IPL_NET);
 		pool_set_constraints(myx_mcl_pool, &kp_dma_contig);
 	}
 

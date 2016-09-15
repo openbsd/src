@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.83 2016/09/14 18:23:06 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.84 2016/09/15 02:00:16 dlg Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -334,12 +334,10 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 		sc->mode = VMM_MODE_UNKNOWN;
 	}
 
-	pool_init(&vm_pool, sizeof(struct vm), 0, 0, PR_WAITOK, "vmpool",
-	    NULL);
-	pool_setipl(&vm_pool, IPL_NONE);
-	pool_init(&vcpu_pool, sizeof(struct vcpu), 0, 0, PR_WAITOK, "vcpupl",
-	    NULL);
-	pool_setipl(&vcpu_pool, IPL_NONE);
+	pool_init(&vm_pool, sizeof(struct vm), 0, IPL_NONE, PR_WAITOK,
+	    "vmpool", NULL);
+	pool_init(&vcpu_pool, sizeof(struct vcpu), 0, IPL_NONE, PR_WAITOK,
+	    "vcpupl", NULL);
 
 	vmm_softc = sc;
 }

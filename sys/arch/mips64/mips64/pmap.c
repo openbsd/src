@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.91 2016/08/14 08:23:52 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.92 2016/09/15 02:00:17 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -356,13 +356,12 @@ pmap_bootstrap(void)
 	Sysmap = (pt_entry_t *)
 	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
 
-	pool_init(&pmap_pmap_pool, PMAP_SIZEOF(ncpusfound), 0, 0, 0,"pmappl", NULL);
-	pool_setipl(&pmap_pmap_pool, IPL_NONE);
-	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0,"pvpl", NULL);
-	pool_setipl(&pmap_pv_pool, IPL_VM);
-	pool_init(&pmap_pg_pool, PMAP_L2SIZE, PMAP_L2SIZE, 0, 0, "pmappgpl",
-	    &pmap_pg_allocator);
-	pool_setipl(&pmap_pg_pool, IPL_VM);
+	pool_init(&pmap_pmap_pool, PMAP_SIZEOF(ncpusfound), 0, IPL_NONE, 0,
+	    "pmappl", NULL);
+	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, IPL_VM, 0,
+	    "pvpl", NULL);
+	pool_init(&pmap_pg_pool, PMAP_L2SIZE, PMAP_L2SIZE, IPL_VM, 0,
+	    "pmappgpl", &pmap_pg_allocator);
 
 	pmap_kernel()->pm_count = 1;
 

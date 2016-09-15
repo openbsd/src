@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_srp.c,v 1.10 2016/06/01 03:34:32 dlg Exp $ */
+/*	$OpenBSD: kern_srp.c,v 1.11 2016/09/15 02:00:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -106,11 +106,8 @@ struct pool srp_gc_ctx_pool;
 void
 srp_startup(void)
 {
-	pool_init(&srp_gc_ctx_pool, sizeof(struct srp_gc_ctx), 0, 0,
-	    PR_WAITOK, "srpgc", NULL);
-
-	/* items are allocated in a process, but freed from a timeout */
-	pool_setipl(&srp_gc_ctx_pool, IPL_SOFTCLOCK);
+	pool_init(&srp_gc_ctx_pool, sizeof(struct srp_gc_ctx), 0,
+	    IPL_SOFTCLOCK, PR_WAITOK, "srpgc", NULL);
 }
 
 int

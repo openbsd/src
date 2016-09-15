@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.96 2016/09/07 17:30:12 natano Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.97 2016/09/15 02:00:18 dlg Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -93,12 +93,10 @@ extern u_long ext2gennumber;
 int
 ext2fs_init(struct vfsconf *vfsp)
 {
-	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0, 0, PR_WAITOK,
-	    "ext2inopl", NULL);
-	pool_setipl(&ext2fs_inode_pool, IPL_NONE);
-	pool_init(&ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0,
-	    PR_WAITOK, "ext2dinopl", NULL);
-	pool_setipl(&ext2fs_dinode_pool, IPL_NONE);
+	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0,
+	    IPL_NONE, PR_WAITOK, "ext2inopl", NULL);
+	pool_init(&ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0,
+	    IPL_NONE, PR_WAITOK, "ext2dinopl", NULL);
 
 	return (ufs_init(vfsp));
 }

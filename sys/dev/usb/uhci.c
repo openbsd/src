@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.138 2015/06/26 11:17:34 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.139 2016/09/15 02:00:17 dlg Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -370,9 +370,8 @@ uhci_init(struct uhci_softc *sc)
 			    sc->sc_bus.bdev.dv_xname);
 			return (ENOMEM);
 		}
-		pool_init(uhcixfer, sizeof(struct uhci_xfer), 0, 0, 0,
-		    "uhcixfer", NULL);
-		pool_setipl(uhcixfer, IPL_SOFTUSB);
+		pool_init(uhcixfer, sizeof(struct uhci_xfer), 0, IPL_SOFTUSB,
+		    0, "uhcixfer", NULL);
 	}
 
 	/* Restore saved SOF. */

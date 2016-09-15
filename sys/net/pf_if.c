@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.83 2016/09/02 10:19:49 dlg Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.84 2016/09/15 02:00:18 dlg Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -88,9 +88,8 @@ pfi_initialize(void)
 	if (pfi_all != NULL)	/* already initialized */
 		return;
 
-	pool_init(&pfi_addr_pl, sizeof(struct pfi_dynaddr), 0, 0, 0,
+	pool_init(&pfi_addr_pl, sizeof(struct pfi_dynaddr), 0, IPL_SOFTNET, 0,
 	    "pfiaddrpl", NULL);
-	pool_setipl(&pfi_addr_pl, IPL_SOFTNET);
 	pfi_buffer_max = 64;
 	pfi_buffer = mallocarray(pfi_buffer_max, sizeof(*pfi_buffer),
 	    PFI_MTYPE, M_WAITOK);

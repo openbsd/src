@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.222 2016/09/03 18:43:34 stefan Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.223 2016/09/15 02:00:18 dlg Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2797,15 +2797,12 @@ uvm_map_init(void)
 	}
 
 	/* initialize the map-related pools. */
-	pool_init(&uvm_vmspace_pool, sizeof(struct vmspace),
-	    0, 0, PR_WAITOK, "vmsppl", NULL);
-	pool_setipl(&uvm_vmspace_pool, IPL_NONE);
-	pool_init(&uvm_map_entry_pool, sizeof(struct vm_map_entry),
-	    0, 0, PR_WAITOK, "vmmpepl", NULL);
-	pool_setipl(&uvm_map_entry_pool, IPL_VM);
-	pool_init(&uvm_map_entry_kmem_pool, sizeof(struct vm_map_entry),
-	    0, 0, 0, "vmmpekpl", NULL);
-	pool_setipl(&uvm_map_entry_kmem_pool, IPL_NONE);
+	pool_init(&uvm_vmspace_pool, sizeof(struct vmspace), 0,
+	    IPL_NONE, PR_WAITOK, "vmsppl", NULL);
+	pool_init(&uvm_map_entry_pool, sizeof(struct vm_map_entry), 0,
+	    IPL_VM, PR_WAITOK, "vmmpepl", NULL);
+	pool_init(&uvm_map_entry_kmem_pool, sizeof(struct vm_map_entry), 0,
+	    IPL_NONE, 0, "vmmpekpl", NULL);
 	pool_sethiwat(&uvm_map_entry_pool, 8192);
 
 	uvm_addr_init();

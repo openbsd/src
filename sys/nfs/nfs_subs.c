@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.132 2016/08/30 07:12:49 dlg Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.133 2016/09/15 02:00:18 dlg Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -897,9 +897,8 @@ nfs_init(void)
 	nfsrv_initcache();		/* Init the server request cache */
 #endif /* NFSSERVER */
 
-	pool_init(&nfsreqpl, sizeof(struct nfsreq), 0, 0, PR_WAITOK,
+	pool_init(&nfsreqpl, sizeof(struct nfsreq), 0, IPL_NONE, PR_WAITOK,
 	    "nfsreqpl", NULL);
-	pool_setipl(&nfsreqpl, IPL_NONE);
 }
 
 #ifdef NFSCLIENT
@@ -910,9 +909,8 @@ nfs_vfs_init(struct vfsconf *vfsp)
 
 	TAILQ_INIT(&nfs_bufq);
 
-	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, PR_WAITOK,
-	    "nfsnodepl", NULL);
-	pool_setipl(&nfs_node_pool, IPL_NONE);
+	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, IPL_NONE,
+		  PR_WAITOK, "nfsnodepl", NULL);
 
 	return (0);
 }
