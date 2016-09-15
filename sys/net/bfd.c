@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.25 2016/09/15 07:47:00 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.26 2016/09/15 08:39:44 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -274,12 +274,12 @@ bfd_rtfree(struct rtentry *rt)
 void
 bfdinit(void)
 {
-	pool_init(&bfd_pool, sizeof(struct bfd_softc), 0, IPL_SOFTNET, 0,
-	    "bfd_softc", NULL);
-	pool_init(&bfd_pool_peer, sizeof(struct bfd_state), 0, IPL_SOFTNET, 0,
-	    "bfd_softc_peer", NULL);
-	pool_init(&bfd_pool_time, sizeof(struct timeval), 0, IPL_SOFTNET, 0,
-	    "bfd_softc_time", NULL);
+	pool_init(&bfd_pool, sizeof(struct bfd_softc), 0,
+	    IPL_SOFTNET, 0, "bfd_softc", NULL);
+	pool_init(&bfd_pool_peer, sizeof(struct bfd_state), 0,
+	    IPL_SOFTNET, 0, "bfd_softc_peer", NULL);
+	pool_init(&bfd_pool_time, sizeof(struct timeval), 0,
+	    IPL_SOFTNET, 0, "bfd_softc_time", NULL);
 
 	bfdtq = taskq_create("bfd", 1, IPL_SOFTNET, 0);
 	if (bfdtq == NULL)
@@ -668,7 +668,7 @@ printf("%s: error=%u\n", __func__, sc->error);
 	sc->multiplier = sc->sc_peer->DetectMult;
 
 	bfd_set_uptime(sc);
-printf("%s: localdiscr: 0x%x\n", __func__, sc->sc_peer->LocalDiscr);
+printf("%s: localdiscr: %u\n", __func__, sc->sc_peer->LocalDiscr);
 
 	return;
 }
@@ -711,7 +711,7 @@ bfd_input(struct bfd_softc *sc, struct mbuf *m)
 	if ((ntohl(peer->bfd_your_discriminator) != 0) &&
 	    (ntohl(peer->bfd_your_discriminator) != sc->sc_peer->LocalDiscr)) {
 		sc->error++;
-printf("%s: peer your discr 0x%x != local 0x%x\n",
+printf("%s: peer your discr %u != local %u\n",
     __func__, ntohl(peer->bfd_your_discriminator), sc->sc_peer->LocalDiscr);
 		sc->sc_peer->LocalDiag = BFD_DIAG_EXPIRED;
 		bfd_senddown(sc);
@@ -967,8 +967,8 @@ bfd_debug(struct bfd_softc *sc)
 	printf("local diag: %u ", sc->sc_peer->LocalDiag);
 	printf("\n");
 	printf("\t");
-	printf("remote discriminator: 0x%x ", sc->sc_peer->RemoteDiscr);
-	printf("local discriminator: 0x%x ", sc->sc_peer->LocalDiscr);
+	printf("remote discriminator: %u ", sc->sc_peer->RemoteDiscr);
+	printf("local discriminator: %u ", sc->sc_peer->LocalDiscr);
 	printf("\n");
 	printf("\t");
 	printf("remote session state: %u ", sc->sc_peer->RemoteSessionState);
