@@ -1,4 +1,4 @@
-/*	$OpenBSD */
+/*	$OpenBSD: subr_tree.c,v 1.3 2016/09/15 05:31:24 dlg Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
