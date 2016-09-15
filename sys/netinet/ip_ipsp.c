@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.214 2015/05/23 12:38:53 markus Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.215 2016/09/15 03:37:09 dlg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -98,12 +98,14 @@ struct ipsec_ids_tree ipsec_ids_tree;
 struct ipsec_ids_flows ipsec_ids_flows;
 
 void ipsp_ids_timeout(void *);
-static int ipsp_ids_cmp(struct ipsec_ids *, struct ipsec_ids *);
-static int ipsp_ids_flow_cmp(struct ipsec_ids *, struct ipsec_ids *);
-RB_PROTOTYPE(ipsec_ids_tree, ipsec_ids, id_node_flow, ipsp_ids_cmp);
-RB_PROTOTYPE(ipsec_ids_flows, ipsec_ids, id_node_id, ipsp_ids_flow_cmp);
-RB_GENERATE(ipsec_ids_tree, ipsec_ids, id_node_flow, ipsp_ids_cmp);
-RB_GENERATE(ipsec_ids_flows, ipsec_ids, id_node_id, ipsp_ids_flow_cmp);
+static inline int ipsp_ids_cmp(const struct ipsec_ids *,
+    const struct ipsec_ids *);
+static inline int ipsp_ids_flow_cmp(const struct ipsec_ids *,
+    const struct ipsec_ids *);
+RBT_PROTOTYPE(ipsec_ids_tree, ipsec_ids, id_node_flow, ipsp_ids_cmp);
+RBT_PROTOTYPE(ipsec_ids_flows, ipsec_ids, id_node_id, ipsp_ids_flow_cmp);
+RBT_GENERATE(ipsec_ids_tree, ipsec_ids, id_node_flow, ipsp_ids_cmp);
+RBT_GENERATE(ipsec_ids_flows, ipsec_ids, id_node_id, ipsp_ids_flow_cmp);
 
 /*
  * This is the proper place to define the various encapsulation transforms.
@@ -905,7 +907,7 @@ ipsp_ids_insert(struct ipsec_ids *ids)
 	struct ipsec_ids *found;
 	u_int32_t start_flow;
 
-	found = RB_INSERT(ipsec_ids_tree, &ipsec_ids_tree, ids);
+	found = RBT_INSERT(ipsec_ids_tree, &ipsec_ids_tree, ids);
 	if (found) {
 		/* if refcount was zero, then timeout is running */
 		if (found->id_refcount++ == 0)
@@ -917,7 +919,7 @@ ipsp_ids_insert(struct ipsec_ids *ids)
 	ids->id_flow = start_flow = ipsec_ids_next_flow;
 	if (++ipsec_ids_next_flow == 0)
 		ipsec_ids_next_flow = 1;
-	while (RB_INSERT(ipsec_ids_flows, &ipsec_ids_flows, ids) != NULL) {
+	while (RBT_INSERT(ipsec_ids_flows, &ipsec_ids_flows, ids) != NULL) {
 		ids->id_flow = ipsec_ids_next_flow;
 		if (++ipsec_ids_next_flow == 0)
 			ipsec_ids_next_flow = 1;
@@ -939,7 +941,7 @@ ipsp_ids_lookup(u_int32_t ipsecflowinfo)
 	struct ipsec_ids	key;
 
 	key.id_flow = ipsecflowinfo;
-	return RB_FIND(ipsec_ids_flows, &ipsec_ids_flows, &key);
+	return RBT_FIND(ipsec_ids_flows, &ipsec_ids_flows, &key);
 }
 
 /* free ids only from delayed timeout */
@@ -952,8 +954,8 @@ ipsp_ids_timeout(void *arg)
 	DPRINTF(("%s: ids %p count %d\n", __func__, ids, ids->id_refcount));
 	KASSERT(ids->id_refcount == 0);
 	s = splsoftnet();
-	RB_REMOVE(ipsec_ids_tree, &ipsec_ids_tree, ids);
-	RB_REMOVE(ipsec_ids_flows, &ipsec_ids_flows, ids);
+	RBT_REMOVE(ipsec_ids_tree, &ipsec_ids_tree, ids);
+	RBT_REMOVE(ipsec_ids_flows, &ipsec_ids_flows, ids);
 	free(ids->id_local, M_CREDENTIALS, 0);
 	free(ids->id_remote, M_CREDENTIALS, 0);
 	free(ids, M_CREDENTIALS, 0);
@@ -988,8 +990,8 @@ ipsp_id_cmp(struct ipsec_id *a, struct ipsec_id *b)
 	return memcmp(a + 1, b + 1, a->len);
 }
 
-static int
-ipsp_ids_cmp(struct ipsec_ids *a, struct ipsec_ids *b)
+static inline int
+ipsp_ids_cmp(const struct ipsec_ids *a, const struct ipsec_ids *b)
 {
 	int ret;
 
@@ -999,8 +1001,8 @@ ipsp_ids_cmp(struct ipsec_ids *a, struct ipsec_ids *b)
 	return ipsp_id_cmp(a->id_local, b->id_local);
 }
 
-static int
-ipsp_ids_flow_cmp(struct ipsec_ids *a, struct ipsec_ids *b)
+static inline int
+ipsp_ids_flow_cmp(const struct ipsec_ids *a, const struct ipsec_ids *b)
 {
 	if (a->id_flow > b->id_flow)
 		return 1;

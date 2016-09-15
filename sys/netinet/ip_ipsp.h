@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.173 2015/12/03 13:12:20 tedu Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.174 2016/09/15 03:37:09 dlg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -166,16 +166,16 @@ struct ipsec_id {
 };
 
 struct ipsec_ids {
-	RB_ENTRY(ipsec_ids)	id_node_id;
-	RB_ENTRY(ipsec_ids)	id_node_flow;
+	RBT_ENTRY(ipsec_ids)	id_node_id;
+	RBT_ENTRY(ipsec_ids)	id_node_flow;
 	struct ipsec_id		*id_local;
 	struct ipsec_id		*id_remote;
 	u_int32_t		id_flow;
 	int			id_refcount;
 	struct timeout		id_timeout;
 };
-RB_HEAD(ipsec_ids_flows, ipsec_ids);
-RB_HEAD(ipsec_ids_tree, ipsec_ids);
+RBT_HEAD(ipsec_ids_flows, ipsec_ids);
+RBT_HEAD(ipsec_ids_tree, ipsec_ids);
 
 struct ipsec_acquire {
 	union sockaddr_union		ipa_addr;
