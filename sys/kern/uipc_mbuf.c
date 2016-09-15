@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.229 2016/09/15 00:00:40 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.230 2016/09/15 00:52:08 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -126,7 +126,6 @@ int max_hdr;			/* largest link+protocol header */
 struct	mutex m_extref_mtx = MUTEX_INITIALIZER(IPL_NET);
 
 void	m_extfree(struct mbuf *);
-struct mbuf *m_copym0(struct mbuf *, int, int, int, int);
 void	nmbclust_update(void);
 void	m_zero(struct mbuf *);
 
@@ -571,13 +570,7 @@ m_prepend(struct mbuf *m, int len, int how)
  * The wait parameter is a choice of M_WAIT/M_DONTWAIT from caller.
  */
 struct mbuf *
-m_copym(struct mbuf *m, int off, int len, int wait)
-{
-	return m_copym0(m, off, len, wait, 0);	/* shallow copy on M_EXT */
-}
-
-struct mbuf *
-m_copym0(struct mbuf *m0, int off, int len, int wait, int deep)
+m_copym(struct mbuf *m0, int off, int len, int wait)
 {
 	struct mbuf *m, *n, **np;
 	struct mbuf *top;
@@ -610,23 +603,9 @@ m_copym0(struct mbuf *m0, int off, int len, int wait, int deep)
 		}
 		n->m_len = min(len, m->m_len - off);
 		if (m->m_flags & M_EXT) {
-			if (!deep) {
-				n->m_data = m->m_data + off;
-				n->m_ext = m->m_ext;
-				MCLADDREFERENCE(m, n);
-			} else {
-				/*
-				 * we are unsure about the way m was allocated.
-				 * copy into multiple MCLBYTES cluster mbufs.
-				 */
-				MCLGET(n, wait);
-				n->m_len = 0;
-				n->m_len = M_TRAILINGSPACE(n);
-				n->m_len = min(n->m_len, len);
-				n->m_len = min(n->m_len, m->m_len - off);
-				memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + off,
-				    n->m_len);
-			}
+			n->m_data = m->m_data + off;
+			n->m_ext = m->m_ext;
+			MCLADDREFERENCE(m, n);
 		} else
 			memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + off,
 			    n->m_len);
