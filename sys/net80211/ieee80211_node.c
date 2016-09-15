@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.104 2016/08/17 09:42:03 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.105 2016/09/15 03:32:48 dlg Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -92,9 +92,9 @@ ieee80211_inact_timeout(void *arg)
 	int s;
 
 	s = splnet();
-	for (ni = RB_MIN(ieee80211_tree, &ic->ic_tree);
+	for (ni = RBT_MIN(ieee80211_tree, &ic->ic_tree);
 	    ni != NULL; ni = next_ni) {
-		next_ni = RB_NEXT(ieee80211_tree, &ic->ic_tree, ni);
+		next_ni = RBT_NEXT(ieee80211_tree, ni);
 		if (ni->ni_refcnt > 0)
 			continue;
 		if (ni->ni_inact < IEEE80211_INACT_MAX)
@@ -123,7 +123,7 @@ ieee80211_node_attach(struct ifnet *ifp)
 	int size;
 #endif
 
-	RB_INIT(&ic->ic_tree);
+	RBT_INIT(ieee80211_tree, &ic->ic_tree);
 	ic->ic_node_alloc = ieee80211_node_alloc;
 	ic->ic_node_free = ieee80211_node_free;
 	ic->ic_node_copy = ieee80211_node_copy;
@@ -538,7 +538,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 	if (ic->ic_scan_count)
 		ic->ic_flags &= ~IEEE80211_F_ASCAN;
 
-	ni = RB_MIN(ieee80211_tree, &ic->ic_tree);
+	ni = RBT_MIN(ieee80211_tree, &ic->ic_tree);
 
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
@@ -554,7 +554,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 		 * channel from the active set.
 		 */
 		memset(occupied, 0, sizeof(occupied));
-		RB_FOREACH(ni, ieee80211_tree, &ic->ic_tree)
+		RBT_FOREACH(ni, ieee80211_tree, &ic->ic_tree)
 			setbit(occupied, ieee80211_chan2ieee(ic, ni->ni_chan));
 		for (i = 0; i < IEEE80211_CHAN_MAX; i++)
 			if (isset(ic->ic_chan_active, i) && isclr(occupied, i))
@@ -611,7 +611,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 	selbs = NULL;
 
 	for (; ni != NULL; ni = nextbs) {
-		nextbs = RB_NEXT(ieee80211_tree, &ic->ic_tree, ni);
+		nextbs = RBT_NEXT(ieee80211_tree, ni);
 		if (ni->ni_fails) {
 			/*
 			 * The configuration of the access points may change
@@ -807,7 +807,7 @@ ieee80211_setup_node(struct ieee80211com *ic,
 	timeout_set(&ni->ni_sa_query_to, ieee80211_sa_query_timeout, ni);
 #endif
 	s = splnet();
-	RB_INSERT(ieee80211_tree, &ic->ic_tree, ni);
+	RBT_INSERT(ieee80211_tree, &ic->ic_tree, ni);
 	ic->ic_nnodes++;
 	splx(s);
 }
@@ -845,14 +845,14 @@ ieee80211_find_node(struct ieee80211com *ic, const u_int8_t *macaddr)
 	struct ieee80211_node *ni;
 	int cmp;
 
-	/* similar to RB_FIND except we compare keys, not nodes */
-	ni = RB_ROOT(&ic->ic_tree);
+	/* similar to RBT_FIND except we compare keys, not nodes */
+	ni = RBT_ROOT(ieee80211_tree, &ic->ic_tree);
 	while (ni != NULL) {
 		cmp = memcmp(macaddr, ni->ni_macaddr, IEEE80211_ADDR_LEN);
 		if (cmp < 0)
-			ni = RB_LEFT(ni, ni_node);
+			ni = RBT_LEFT(ieee80211_tree, ni);
 		else if (cmp > 0)
-			ni = RB_RIGHT(ni, ni_node);
+			ni = RBT_RIGHT(ieee80211_tree, ni);
 		else
 			break;
 	}
@@ -1112,7 +1112,7 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 #endif
 	ieee80211_ba_del(ni);
-	RB_REMOVE(ieee80211_tree, &ic->ic_tree, ni);
+	RBT_REMOVE(ieee80211_tree, &ic->ic_tree, ni);
 	ic->ic_nnodes--;
 #ifndef IEEE80211_STA_ONLY
 	if (mq_purge(&ni->ni_savedq) > 0) {
@@ -1147,7 +1147,7 @@ ieee80211_free_allnodes(struct ieee80211com *ic)
 
 	DPRINTF(("freeing all nodes\n"));
 	s = splnet();
-	while ((ni = RB_MIN(ieee80211_tree, &ic->ic_tree)) != NULL)
+	while ((ni = RBT_MIN(ieee80211_tree, &ic->ic_tree)) != NULL)
 		ieee80211_free_node(ic, ni);
 	splx(s);
 
@@ -1162,9 +1162,9 @@ ieee80211_clean_cached(struct ieee80211com *ic)
 	int s;
 
 	s = splnet();
-	for (ni = RB_MIN(ieee80211_tree, &ic->ic_tree);
+	for (ni = RBT_MIN(ieee80211_tree, &ic->ic_tree);
 	    ni != NULL; ni = next_ni) {
-		next_ni = RB_NEXT(ieee80211_tree, &ic->ic_tree, ni);
+		next_ni = RBT_NEXT(ieee80211_tree, ni);
 		if (ni->ni_state == IEEE80211_STA_CACHE)
 			ieee80211_free_node(ic, ni);
 	}
@@ -1195,9 +1195,9 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 #endif
 
 	s = splnet();
-	for (ni = RB_MIN(ieee80211_tree, &ic->ic_tree);
+	for (ni = RBT_MIN(ieee80211_tree, &ic->ic_tree);
 	    ni != NULL; ni = next_ni) {
-		next_ni = RB_NEXT(ieee80211_tree, &ic->ic_tree, ni);
+		next_ni = RBT_NEXT(ieee80211_tree, ni);
 		if (!cache_timeout && ic->ic_nnodes < ic->ic_max_nnodes)
 			break;
 		if (ni->ni_scangen == gen)	/* previously handled */
@@ -1282,7 +1282,7 @@ ieee80211_iterate_nodes(struct ieee80211com *ic, ieee80211_iter_func *f,
 	int s;
 
 	s = splnet();
-	RB_FOREACH(ni, ieee80211_tree, &ic->ic_tree)
+	RBT_FOREACH(ni, ieee80211_tree, &ic->ic_tree)
 		(*f)(arg, ni);
 	splx(s);
 }
@@ -1877,4 +1877,4 @@ ieee80211_node_cmp(const struct ieee80211_node *b1,
 /*
  * Generate red-black tree function logic
  */
-RB_GENERATE(ieee80211_tree, ieee80211_node, ni_node, ieee80211_node_cmp);
+RBT_GENERATE(ieee80211_tree, ieee80211_node, ni_node, ieee80211_node_cmp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.43 2016/08/31 13:33:52 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.44 2016/09/15 03:32:48 dlg Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -754,7 +754,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCG80211ALLNODES:
 		na = (struct ieee80211_nodereq_all *)data;
 		na->na_nodes = i = 0;
-		ni = RB_MIN(ieee80211_tree, &ic->ic_tree);
+		ni = RBT_MIN(ieee80211_tree, &ic->ic_tree);
 		while (ni && na->na_size >=
 		    i + sizeof(struct ieee80211_nodereq)) {
 			ieee80211_node2req(ic, ni, &nrbuf);
@@ -764,7 +764,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				break;
 			i += sizeof(struct ieee80211_nodereq);
 			na->na_nodes++;
-			ni = RB_NEXT(ieee80211_tree, &ic->ic_tree, ni);
+			ni = RBT_NEXT(ieee80211_tree, ni);
 		}
 		break;
 	case SIOCG80211FLAGS:

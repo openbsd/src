@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.60 2016/04/28 08:18:10 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.61 2016/09/15 03:32:48 dlg Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -162,7 +162,7 @@ struct ieee80211_rx_ba {
  * the ieee80211com structure.
  */
 struct ieee80211_node {
-	RB_ENTRY(ieee80211_node)	ni_node;
+	RBT_ENTRY(ieee80211_node)	ni_node;
 
 	struct ieee80211com	*ni_ic;		/* back-pointer */
 
@@ -284,7 +284,7 @@ struct ieee80211_node {
 #define IEEE80211_NODE_SA_QUERY_FAILED	0x1000	/* last SA Query failed */
 };
 
-RB_HEAD(ieee80211_tree, ieee80211_node);
+RBT_HEAD(ieee80211_tree, ieee80211_node);
 
 static __inline void
 ieee80211_node_incref(struct ieee80211_node *ni)
@@ -379,6 +379,6 @@ extern	void ieee80211_set_tim(struct ieee80211com *, int, int);
 
 extern	int ieee80211_node_cmp(const struct ieee80211_node *,
 		const struct ieee80211_node *);
-RB_PROTOTYPE(ieee80211_tree, ieee80211_node, ni_node, ieee80211_node_cmp);
+RBT_PROTOTYPE(ieee80211_tree, ieee80211_node, ni_node, ieee80211_node_cmp);
 
 #endif /* _NET80211_IEEE80211_NODE_H_ */
