@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.24 2016/09/13 07:56:05 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.25 2016/09/15 07:47:00 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -274,15 +274,12 @@ bfd_rtfree(struct rtentry *rt)
 void
 bfdinit(void)
 {
-	pool_init(&bfd_pool, sizeof(struct bfd_softc), 0, 0, 0,
+	pool_init(&bfd_pool, sizeof(struct bfd_softc), 0, IPL_SOFTNET, 0,
 	    "bfd_softc", NULL);
-	pool_setipl(&bfd_pool, IPL_SOFTNET);
-	pool_init(&bfd_pool_peer, sizeof(struct bfd_state), 0, 0, 0,
+	pool_init(&bfd_pool_peer, sizeof(struct bfd_state), 0, IPL_SOFTNET, 0,
 	    "bfd_softc_peer", NULL);
-	pool_setipl(&bfd_pool_peer, IPL_SOFTNET);
-	pool_init(&bfd_pool_time, sizeof(struct timeval), 0, 0, 0,
+	pool_init(&bfd_pool_time, sizeof(struct timeval), 0, IPL_SOFTNET, 0,
 	    "bfd_softc_time", NULL);
-	pool_setipl(&bfd_pool_time, IPL_SOFTNET);
 
 	bfdtq = taskq_create("bfd", 1, IPL_SOFTNET, 0);
 	if (bfdtq == NULL)
