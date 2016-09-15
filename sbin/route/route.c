@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.190 2016/09/04 09:41:03 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.191 2016/09/15 12:51:20 phessler Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1240,6 +1240,7 @@ char *msgtypes[] = {
 	"RTM_IFINFO: iface status change",
 	"RTM_IFANNOUNCE: iface arrival/departure",
 	"RTM_DESYNC: route socket overflow",
+	"RTM_INVALIDATE: invalidate cache of L2 route",
 	"RTM_BFD: bidirectional forwarding detection",
 };
 
