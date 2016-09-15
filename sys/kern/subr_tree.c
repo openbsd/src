@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_tree.c,v 1.3 2016/09/15 05:31:24 dlg Exp $ */
+/*	$OpenBSD: subr_tree.c,v 1.4 2016/09/15 06:07:22 dlg Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -592,3 +592,21 @@ _rb_parent(const struct rb_type *t, void *node)
 	return (rbe == NULL ? NULL : rb_e2n(t, rbe));
 }
 
+void
+_rb_poison(const struct rb_type *t, void *node, unsigned long poison)
+{
+	struct rb_entry *rbe = rb_n2e(t, node);
+
+	RBE_PARENT(rbe) = RBE_LEFT(rbe) = RBE_RIGHT(rbe) =
+	    (struct rb_entry *)poison;
+}
+
+int
+_rb_check(const struct rb_type *t, void *node, unsigned long poison)
+{
+	struct rb_entry *rbe = rb_n2e(t, node);
+
+	return ((unsigned long)RBE_PARENT(rbe) == poison &&
+	    (unsigned long)RBE_LEFT(rbe) == poison &&
+	    (unsigned long)RBE_RIGHT(rbe) == poison);
+}

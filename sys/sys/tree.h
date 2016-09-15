@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.23 2016/09/15 05:21:09 dlg Exp $	*/
+/*	$OpenBSD: tree.h,v 1.24 2016/09/15 06:07:22 dlg Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -815,6 +815,8 @@ void	*_rb_left(const struct rb_type *, void *);
 void	*_rb_right(const struct rb_type *, void *);
 void	*_rb_parent(const struct rb_type *, void *);
 void	*_rb_color(const struct rb_type *, void *);
+void	 _rb_poison(const struct rb_type *, void *, unsigned long);
+int	 _rb_check(const struct rb_type *, void *, unsigned long);
 
 #define RBT_INITIALIZER(_head)	{ { NULL } }
 
@@ -903,6 +905,18 @@ static inline struct _type *						\
 _name##_RBT_PARENT(struct _type *elm)					\
 {									\
 	return _rb_parent(_name##_RBT_TYPE, elm);			\
+}									\
+									\
+static inline void							\
+_name##_RBT_POISON(struct _type *elm, unsigned long poison)		\
+{									\
+	return _rb_poison(_name##_RBT_TYPE, elm, poison);		\
+}									\
+									\
+static inline int							\
+_name##_RBT_CHECK(struct _type *elm, unsigned long poison)		\
+{									\
+	return _rb_check(_name##_RBT_TYPE, elm, poison);		\
 }
 
 #define RBT_GENERATE_INTERNAL(_name, _type, _field, _cmp, _aug)		\
@@ -945,6 +959,8 @@ RBT_GENERATE_INTERNAL(_name, _type, _field, _cmp, _name##_RBT_AUGMENT)
 #define RBT_LEFT(_name, _elm)		_name##_RBT_LEFT(_elm)
 #define RBT_RIGHT(_name, _elm)		_name##_RBT_RIGHT(_elm)
 #define RBT_PARENT(_name, _elm)		_name##_RBT_PARENT(_elm)
+#define RBT_POISON(_name, _elm, _p)	_name##_RBT_POISON(_elm, _p)
+#define RBT_CHECK(_name, _elm, _p)	_name##_RBT_CHECK(_elm, _p)
 
 #define RBT_FOREACH(_e, _name, _head)					\
 	for ((_e) = RBT_MIN(_name, (_head));				\
