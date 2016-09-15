@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.71 2016/09/12 13:34:12 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.72 2016/09/15 17:49:03 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: September 12 2016 $
+.Dd $Mdocdate: September 15 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -355,7 +355,7 @@ and all certificates will be certified automatically.
 .It Fl cert Ar file
 The CA certificate file.
 .It Fl config Ar file
-Specifies the configuration file to use.
+Specify an alternative configuration file.
 .It Fl days Ar arg
 The number of days to certify the certificate for.
 .It Fl enddate Ar date
@@ -3263,9 +3263,6 @@ option, 0 is used for the serial number.
 The configuration options are specified in the
 .Qq req
 section of the configuration file.
-As with all configuration files, if no value is specified in the specific
-section then the initial unnamed or default section is searched too.
-.Pp
 The options available are as follows:
 .Bl -tag -width "XXXX"
 .It Cm attributes
@@ -3378,7 +3375,7 @@ values from
 .It Cm utf8
 If set to
 .Qq yes ,
-field values are interpreted as UTF8 strings, not ASCII.
+field values are interpreted as UTF8 strings.
 .It Cm x509_extensions
 The configuration file section containing a list of
 extensions to add to a certificate generated when the
@@ -3386,7 +3383,7 @@ extensions to add to a certificate generated when the
 switch is used.
 It can be overridden by the
 .Fl extensions
-option.
+command line switch.
 .El
 .Pp
 There are two separate formats for the distinguished name and attribute
@@ -3395,17 +3392,12 @@ If the
 .Fl prompt
 option is set to
 .Qq no ,
-the sections consist of just field names and values,
-which allows external programs to generate a template file
-with all the field names and values and just pass it to
-.Nm req .
-.Pp
-Alternatively if the
+then these sections just consist of field names and values.
+If the
 .Fl prompt
 option is absent or not set to
 .Qq no ,
-then the file contains field prompting information.
-It consists of lines of the form:
+then the file contains field prompting information of the form:
 .Bd -unfilled -offset indent
 fieldName="prompt"
 fieldName_default="default field value"
@@ -4193,7 +4185,7 @@ The
 program processes the encoded version of the SSL session structure and
 optionally prints out SSL session details
 (for example the SSL session master key)
-in human readable format.
+in human-readable format.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -4588,13 +4580,9 @@ Run
 .Ar number
 benchmarks in parallel.
 .El
-.\"
-.\" TS
-.\"
 .Sh TS
 .nr nS 1
 .Nm "openssl ts"
-.Bk -words
 .Fl query
 .Op Fl md4 | md5 | ripemd160 | sha1
 .Op Fl cert
@@ -4606,12 +4594,10 @@ benchmarks in parallel.
 .Op Fl out Ar request.tsq
 .Op Fl policy Ar object_id
 .Op Fl text
-.Ek
 .nr nS 0
 .Pp
 .nr nS 1
 .Nm "openssl ts"
-.Bk -words
 .Fl reply
 .Op Fl chain Ar certs_file.pem
 .Op Fl config Ar configfile
@@ -4626,12 +4612,10 @@ benchmarks in parallel.
 .Op Fl text
 .Op Fl token_in
 .Op Fl token_out
-.Ek
 .nr nS 0
 .Pp
 .nr nS 1
 .Nm "openssl ts"
-.Bk -words
 .Fl verify
 .Op Fl CAfile Ar trusted_certs.pem
 .Op Fl CApath Ar trusted_cert_path
@@ -4641,7 +4625,6 @@ benchmarks in parallel.
 .Op Fl queryfile Ar request.tsq
 .Op Fl token_in
 .Op Fl untrusted Ar cert_file.pem
-.Ek
 .nr nS 0
 .Pp
 The
@@ -4649,7 +4632,7 @@ The
 command is a basic Time Stamping Authority (TSA) client and server
 application as specified in RFC 3161 (Time-Stamp Protocol, TSP).
 A TSA can be part of a PKI deployment and its role is to provide long
-term proof of the existence of a certain datum before a particular time.
+term proof of the existence of specific data.
 Here is a brief description of the protocol:
 .Bl -enum
 .It
@@ -4688,35 +4671,23 @@ switch can be used for creating and printing a time stamp
 request with the following options:
 .Bl -tag -width Ds
 .It Fl cert
-The TSA is expected to include its signing certificate in the
-response.
+Expect the TSA to include its signing certificate in the response.
 .It Fl config Ar configfile
-The configuration file to use.
-This option overrides the
-.Ev OPENSSL_CONF
-environment variable.
-Only the OID section of the config file is used with the
-.Fl query
-command.
+Specify an alternative configuration file.
+Only the OID section is used.
 .It Fl data Ar file_to_hash
 The data file for which the time stamp request needs to be created.
-stdin is the default if neither the
-.Fl data
-nor the
-.Fl digest
-option is specified.
+The default is standard input.
 .It Fl digest Ar digest_bytes
-It is possible to specify the message imprint explicitly without the data
-file.
+Specify the message imprint explicitly without the data file.
 The imprint must be specified in a hexadecimal format,
 two characters per byte,
-the bytes optionally separated by colons (e.g. 1A:F6:01:... or 1AF601...).
+the bytes optionally separated by colons.
 The number of bytes must match the message digest algorithm in use.
 .It Fl in Ar request.tsq
-This option specifies a previously created time stamp request in DER
+A previously created time stamp request in DER
 format that will be printed into the output file.
-Useful when you need to examine the content of a request in human-readable
-format.
+Useful for examining the content of a request in human-readable format.
 .It Fl md4|md5|ripemd160|sha|sha1
 The message digest to apply to the data file.
 It supports all the message digest algorithms that are supported by the
@@ -4724,23 +4695,20 @@ It supports all the message digest algorithms that are supported by the
 command.
 The default is SHA-1.
 .It Fl no_nonce
-No nonce is specified in the request if this option is given.
-Otherwise a 64-bit long pseudo-random none is
-included in the request.
-It is recommended to use nonce to protect against replay-attacks.
+Specify no nonce in the request.
+The default, to include a 64-bit long pseudo-random nonce,
+is recommended to protect against replay attacks.
 .It Fl out Ar request.tsq
-Name of the output file to which the request will be written.
-The default is stdout.
+The output file to write to,
+or standard output if not specified.
 .It Fl policy Ar object_id
 The policy that the client expects the TSA to use for creating the
 time stamp token.
-Either the dotted OID notation or OID names defined
+Either dotted OID notation or OID names defined
 in the config file can be used.
-If no policy is requested the TSA will
-use its own default policy.
+If no policy is requested the TSA uses its own default policy.
 .It Fl text
-If this option is specified the output is in human-readable text format
-instead of DER.
+Output in human-readable text format instead of DER.
 .El
 .Pp
 A time stamp response (TimeStampResp) consists of a response status
@@ -4757,7 +4725,7 @@ is not specified the output is always a time stamp response (TimeStampResp),
 otherwise it is a time stamp token (ContentInfo).
 .Bl -tag -width Ds
 .It Fl chain Ar certs_file.pem
-The collection of certificates, in PEM format,
+The collection of PEM certificates
 that will be included in the response
 in addition to the signer certificate if the
 .Fl cert
@@ -4768,24 +4736,18 @@ The
 .Fl reply
 command does not build a certificate chain automatically.
 .It Fl config Ar configfile
-The configuration file to use.
-This option overrides the
-.Ev OPENSSL_CONF
-environment variable.
-See
-.Sx TS CONFIGURATION FILE OPTIONS
-for configurable variables.
+Specify an alternative configuration file.
 .It Fl in Ar response.tsr
-Specifies a previously created time stamp response or time stamp token, if
+Specify a previously created time stamp response (or time stamp token, if
 .Fl token_in
-is also specified,
+is also specified)
 in DER format that will be written to the output file.
 This option does not require a request;
 it is useful, for example,
-when you need to examine the content of a response or token
-or you want to extract the time stamp token from a response.
+to examine the content of a response or token
+or to extract the time stamp token from a response.
 If the input is a token and the output is a time stamp response a default
-.Dq granted
+.Qq granted
 status info is added to the token.
 .It Fl inkey Ar private.pem
 The signer private key of the TSA in PEM format.
@@ -4802,22 +4764,16 @@ The default is stdout.
 .It Fl passin Ar arg
 The key password source.
 .It Fl policy Ar object_id
-The default policy to use for the response unless the client
-explicitly requires a particular TSA policy.
-The OID can be specified either in dotted notation or with its name.
-Overrides the
-.Cm default_policy
-config file option.
+The default policy to use for the response.
+Either dotted OID notation or OID names defined
+in the config file can be used.
+If no policy is requested the TSA uses its own default policy.
 .It Fl queryfile Ar request.tsq
-The name of the file containing a DER-encoded time stamp request.
+The file containing a DER-encoded time stamp request.
 .It Fl section Ar tsa_section
-The name of the config file section containing the settings for the
-response generation.
-If not specified the default TSA section is used; see
-.Sx TS CONFIGURATION FILE OPTIONS
-for details.
+The config file section containing the settings for response generation.
 .It Fl signer Ar tsa_cert.pem
-The signer certificate of the TSA in PEM format.
+The PEM signer certificate of the TSA.
 The TSA signing certificate must have exactly one extended key usage
 assigned to it: timeStamping.
 The extended key usage must also be critical,
@@ -4826,16 +4782,13 @@ Overrides the
 .Cm signer_cert
 variable of the config file.
 .It Fl text
-If this option is specified the output is human-readable text format
-instead of DER.
+Output in human-readable text format instead of DER.
 .It Fl token_in
-This flag can be used together with the
-.Fl in
-option and indicates that the input is a DER-encoded time stamp token
-(ContentInfo) instead of a time stamp response (TimeStampResp).
+The input is a DER-encoded time stamp token (ContentInfo)
+instead of a time stamp response (TimeStampResp).
 .It Fl token_out
-The output is a time stamp token (ContentInfo) instead of time stamp
-response (TimeStampResp).
+The output is a time stamp token (ContentInfo)
+instead of a time stamp response (TimeStampResp).
 .El
 .Pp
 The
@@ -4847,18 +4800,16 @@ The
 command does not use the configuration file.
 .Bl -tag -width Ds
 .It Fl CAfile Ar trusted_certs.pem
-The name of the file containing a set of trusted self-signed CA
-certificates in PEM format.
-See the similar option of
+The file containing a set of trusted self-signed PEM CA certificates.
+See
 .Nm verify
 for additional details.
 Either this option or
 .Fl CApath
 must be specified.
 .It Fl CApath Ar trusted_cert_path
-The name of the directory containing the trused CA certificates of the
-client.
-See the similar option of
+The directory containing the trused CA certificates of the client.
+See
 .Nm verify
 for additional details.
 Either this option or
@@ -4894,42 +4845,24 @@ and
 .Fl digest
 options must not be specified with this one.
 .It Fl token_in
-This flag can be used together with the
-.Fl in
-option and indicates that the input is a DER-encoded time stamp token
-(ContentInfo) instead of a time stamp response (TimeStampResp).
+The input is a DER-encoded time stamp token (ContentInfo)
+instead of a time stamp response (TimeStampResp).
 .It Fl untrusted Ar cert_file.pem
-Set of additional untrusted certificates in PEM format which may be
-needed when building the certificate chain for the TSA's signing
-certificate.
+Additional untrusted PEM certificates which may be needed
+when building the certificate chain for the TSA's signing certificate.
 This file must contain the TSA signing certificate and
 all intermediate CA certificates unless the response includes them.
 .El
-.Sh TS CONFIGURATION FILE OPTIONS
-The
-.Fl query
-and
-.Fl reply
-options make use of a configuration file defined by the
-.Ev OPENSSL_CONF
-environment variable.
-The
-.Fl query
-option uses only the symbolic OID names section
-and it can work without it.
-However, the
-.Fl reply
-option needs the config file for its operation.
 .Pp
-When there is a command line switch equivalent of a variable the
-switch always overrides the settings in the config file.
+Options specified on the command line always override
+the settings in the config file:
 .Bl -tag -width Ds
 .It Cm tsa Ar section , Cm default_tsa
 This is the main section and it specifies the name of another section
 that contains all the options for the
 .Fl reply
 option.
-This default section can be overridden with the
+This section can be overridden with the
 .Fl section
 command line switch.
 .It Cm oid_file
@@ -4941,11 +4874,11 @@ See
 .Nm ca
 for a description.
 .It Cm serial
-The name of the file containing the hexadecimal serial number of the
+The file containing the hexadecimal serial number of the
 last time stamp response created.
 This number is incremented by 1 for each response.
-If the file does not exist at the time of response
-generation a new file is created with serial number 1.
+If the file does not exist at the time of response generation
+a new file is created with serial number 1.
 This parameter is mandatory.
 .It Cm signer_cert
 TSA signing certificate, in PEM format.
@@ -4953,7 +4886,7 @@ The same as the
 .Fl signer
 command line option.
 .It Cm certs
-A file containing a set of PEM-encoded certificates that need to be
+A set of PEM-encoded certificates that need to be
 included in the response.
 The same as the
 .Fl chain
@@ -4982,10 +4915,10 @@ For example, secs:1, millisecs:500, microsecs:100.
 If any of the components is missing,
 zero is assumed for that field.
 .It Cm clock_precision_digits
-Specifies the maximum number of digits, which represent the fraction of
-seconds, that need to be included in the time field.
+The maximum number of digits, which represent the fraction of seconds,
+that need to be included in the time field.
 The trailing zeroes must be removed from the time,
-so there might actually be fewer digits,
+so there might actually be fewer digits
 or no fraction of seconds at all.
 The maximum value is 6;
 the default is 0.
@@ -5013,159 +4946,6 @@ If this variable is set to no,
 only the signing certificate identifier is included.
 The default is no.
 .El
-.Sh TS ENVIRONMENT VARIABLES
-.Ev OPENSSL_CONF
-contains the path of the configuration file and can be
-overridden by the
-.Fl config
-command line option.
-.Sh TS EXAMPLES
-All the examples below presume that
-.Ev OPENSSL_CONF
-is set to a proper configuration file,
-e.g. the example configuration file
-.Pa openssl/apps/openssl.cnf
-will do.
-.Pp
-To create a time stamp request for design1.txt with SHA-1
-without nonce and policy and no certificate is required in the response:
-.Bd -literal -offset indent
-$ openssl ts -query -data design1.txt -no_nonce \e
-	-out design1.tsq
-.Ed
-.Pp
-To create a similar time stamp request but specifying the message imprint
-explicitly:
-.Bd -literal -offset indent
-$ openssl ts -query \e
-	-digest b7e5d3f93198b38379852f2c04e78d73abdd0f4b \e
-	-no_nonce -out design1.tsq
-.Ed
-.Pp
-To print the content of the previous request in human readable format:
-.Bd -literal -offset indent
-$ openssl ts -query -in design1.tsq -text
-.Ed
-.Pp
-To create a time stamp request which includes the MD5 digest
-of design2.txt, requests the signer certificate and nonce,
-specifies a policy ID
-(assuming the tsa_policy1 name is defined in the
-OID section of the config file):
-.Bd -literal -offset indent
-$ openssl ts -query -data design2.txt -md5 \e
-	-policy tsa_policy1 -cert -out design2.tsq
-.Ed
-.Pp
-Before generating a response,
-a signing certificate must be created for the TSA that contains the
-.Cm timeStamping
-critical extended key usage extension
-without any other key usage extensions.
-You can add the
-.Dq extendedKeyUsage = critical,timeStamping
-line to the user certificate section
-of the config file to generate a proper certificate.
-See the
-.Nm req ,
-.Nm ca ,
-and
-.Nm x509
-commands for instructions.
-The examples below assume that cacert.pem contains the certificate of the CA,
-tsacert.pem is the signing certificate issued by cacert.pem and
-tsakey.pem is the private key of the TSA.
-.Pp
-To create a time stamp response for a request:
-.Bd -literal -offset indent
-$ openssl ts -reply -queryfile design1.tsq -inkey tsakey.pem \e
-	-signer tsacert.pem -out design1.tsr
-.Ed
-.Pp
-If you want to use the settings in the config file you could just write:
-.Bd -literal -offset indent
-$ openssl ts -reply -queryfile design1.tsq -out design1.tsr
-.Ed
-.Pp
-To print a time stamp reply to stdout in human readable format:
-.Bd -literal -offset indent
-$ openssl ts -reply -in design1.tsr -text
-.Ed
-.Pp
-To create a time stamp token instead of time stamp response:
-.Bd -literal -offset indent
-$ openssl ts -reply -queryfile design1.tsq \e
-	-out design1_token.der -token_out
-.Ed
-.Pp
-To print a time stamp token to stdout in human readable format:
-.Bd -literal -offset indent
-$ openssl ts -reply -in design1_token.der -token_in \e
-	-text -token_out
-.Ed
-.Pp
-To extract the time stamp token from a response:
-.Bd -literal -offset indent
-$ openssl ts -reply -in design1.tsr -out design1_token.der \e
-	-token_out
-.Ed
-.Pp
-To add
-.Dq granted
-status info to a time stamp token thereby creating a valid response:
-.Bd -literal -offset indent
-$ openssl ts -reply -in design1_token.der \e
-	-token_in -out design1.tsr
-.Ed
-.Pp
-To verify a time stamp reply against a request:
-.Bd -literal -offset indent
-$ openssl ts -verify -queryfile design1.tsq -in design1.tsr \e
-	-CAfile cacert.pem -untrusted tsacert.pem
-.Ed
-.Pp
-To verify a time stamp reply that includes the certificate chain:
-.Bd -literal -offset indent
-$ openssl ts -verify -queryfile design2.tsq -in design2.tsr \e
-	-CAfile cacert.pem
-.Ed
-.Pp
-To verify a time stamp token against the original data file:
-.Bd -literal -offset indent
-$ openssl ts -verify -data design2.txt -in design2.tsr \e
-	-CAfile cacert.pem
-.Ed
-.Pp
-To verify a time stamp token against a message imprint:
-.Bd -literal -offset indent
-$ openssl ts -verify \e
-	-digest b7e5d3f93198b38379852f2c04e78d73abdd0f4b \e
-	-in design2.tsr -CAfile cacert.pem
-.Ed
-.Sh TS BUGS
-No support for time stamps over SMTP, though it is quite easy
-to implement an automatic email-based TSA with
-.Xr procmail
-and
-.Xr perl 1 .
-Pure TCP/IP is not supported.
-.Pp
-The file containing the last serial number of the TSA is not
-locked when being read or written.
-This is a problem if more than one instance of
-.Nm OpenSSL
-is trying to create a time stamp
-response at the same time.
-.Pp
-Look for the FIXME word in the source files.
-.Pp
-The source code should really be reviewed by somebody else, too.
-.Pp
-More testing is needed.
-.Sh TS AUTHORS
-.An Zoltan Glozik Aq Mt zglozik@opentsa.org ,
-OpenTSA project
-.Pq Lk http://www.opentsa.org .
 .\"
 .\" SPKAC
 .\"
