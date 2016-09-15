@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.41 2016/09/04 10:43:52 jca Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.42 2016/09/15 16:16:03 jca Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -48,6 +48,7 @@
 #include <net/if.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
@@ -62,6 +63,7 @@
 #include "dhcpd.h"
 
 void	 usage(void);
+int	 rdaemon(int);
 void	 relay(struct interface_info *, struct dhcp_packet *, int,
 	    unsigned int, struct iaddr, struct hardware *);
 char	*print_hw_addr(int, int, unsigned char *);
@@ -91,7 +93,7 @@ struct server_list {
 int
 main(int argc, char *argv[])
 {
-	int			 ch, daemonize, opt, rdomain;
+	int			 ch, devnull = -1, daemonize, opt, rdomain;
 	extern char		*__progname;
 	struct server_list	*sp = NULL;
 	struct passwd		*pw;
@@ -158,8 +160,11 @@ main(int argc, char *argv[])
 		argv++;
 	}
 
-	if (daemonize)
-		log_perror = 0;
+	if (daemonize) {
+		devnull = open(_PATH_DEVNULL, O_RDWR, 0);
+		if (devnull == -1)
+			error("open(%s): %m", _PATH_DEVNULL);
+	}
 
 	if (interfaces == NULL)
 		error("no interface given");
@@ -230,8 +235,6 @@ main(int argc, char *argv[])
 
 	time(&cur_time);
 	bootp_packet_handler = relay;
-	if (daemonize)
-		daemon(0, 0);
 
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		error("user \"_dhcp\" not found");
@@ -243,6 +246,12 @@ main(int argc, char *argv[])
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		error("can't drop privileges: %m");
+
+	if (daemonize) {
+		if (rdaemon(devnull) == -1)
+			error("rdaemon: %m");
+		log_perror = 0;
+	}
 
 	dispatch();
 	/* not reached */
@@ -354,6 +363,31 @@ usage(void)
 	fprintf(stderr, "usage: %s [-do] -i interface server1 [... serverN]\n",
 	    __progname);
 	exit(1);
+}
+
+int
+rdaemon(int devnull)
+{
+
+	switch (fork()) {
+	case -1:
+		return (-1);
+	case 0:
+		break;
+	default:
+		_exit(0);
+	}
+
+	if (setsid() == -1)
+		return (-1);
+
+	(void)dup2(devnull, STDIN_FILENO);
+	(void)dup2(devnull, STDOUT_FILENO);
+	(void)dup2(devnull, STDERR_FILENO);
+	if (devnull > 2)
+		(void)close(devnull);
+
+	return (0);
 }
 
 char *

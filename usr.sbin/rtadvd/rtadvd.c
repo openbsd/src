@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.78 2016/09/03 16:57:29 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.79 2016/09/15 16:16:03 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -55,6 +55,8 @@
 #include <string.h>
 #include <pwd.h>
 #include <signal.h>
+#include <fcntl.h>
+#include <paths.h>
 
 #include "rtadvd.h"
 #include "advcap.h"
@@ -139,6 +141,7 @@ static int nd6_options(struct nd_opt_hdr *, int,
 static void free_ndopts(union nd_opts *);
 static void ra_output(struct rainfo *);
 static struct rainfo *if_indextorainfo(int);
+static int rdaemon(int);
 
 static void dump_cb(int, short, void *);
 static void die_cb(int, short, void *);
@@ -151,6 +154,7 @@ main(int argc, char *argv[])
 {
 	struct passwd *pw;
 	int ch;
+	int devnull = -1;
 	struct event ev_sock;
 	struct event ev_rtsock;
 	struct event ev_sigterm;
@@ -182,6 +186,12 @@ main(int argc, char *argv[])
 	if (argc == 0)
 		usage();
 
+	if (!dflag) {
+		devnull = open(_PATH_DEVNULL, O_RDWR, 0);
+		if (devnull == -1)
+			fatal("open(\"" _PATH_DEVNULL "\")");
+	}
+
 	SLIST_INIT(&ralist);
 
 	/* get iflist block from kernel */
@@ -195,12 +205,6 @@ main(int argc, char *argv[])
 
 	if (inet_pton(AF_INET6, ALLNODES, &sin6_allnodes.sin6_addr) != 1)
 		fatal("inet_pton failed");
-
-	if (conffile != NULL)
-		log_init(dflag);
-
-	if (!dflag)
-		daemon(1, 0);
 
 	sock_open();
 
@@ -217,6 +221,14 @@ main(int argc, char *argv[])
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("cannot drop privileges");
+
+	if (!dflag) {
+		if (rdaemon(devnull) == -1)
+			fatal("rdaemon");
+	}
+
+	if (conffile != NULL)
+		log_init(dflag);
 
 	if (pledge("stdio inet route", NULL) == -1)
 		err(1, "pledge");
@@ -1296,4 +1308,29 @@ ra_timer_update(struct rainfo *rai)
 
 	log_debug("RA timer on %s set to %lld.%lds", rai->ifname,
 	    (long long)tm->tv_sec, tm->tv_usec);
+}
+
+int
+rdaemon(int devnull)
+{
+
+	switch (fork()) {
+	case -1:
+		return (-1);
+	case 0:
+		break;
+	default:
+		_exit(0);
+	}
+
+	if (setsid() == -1)
+		return (-1);
+
+	(void)dup2(devnull, STDIN_FILENO);
+	(void)dup2(devnull, STDOUT_FILENO);
+	(void)dup2(devnull, STDERR_FILENO);
+	if (devnull > 2)
+		(void)close(devnull);
+
+	return (0);
 }

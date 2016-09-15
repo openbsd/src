@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.34 2016/02/12 08:12:48 ajacoutot Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.35 2016/09/15 16:16:03 jca Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -32,6 +32,7 @@
 #include <event.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <paths.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -101,6 +102,7 @@ void	logmsg(int, const char *, ...);
 u_int16_t parse_port(int);
 u_int16_t pick_proxy_port(void);
 void	proxy_reply(int, struct sockaddr *, u_int16_t);
+int	rdaemon(int);
 void	server_error(struct bufferevent *, short, void *);
 int	server_parse(struct session *s);
 int	allow_data_connection(struct session *s);
@@ -610,7 +612,7 @@ main(int argc, char *argv[])
 	struct rlimit rlp;
 	struct addrinfo hints, *res;
 	struct event ev_sighup, ev_sigint, ev_sigterm;
-	int ch, error, listenfd, on;
+	int ch, devnull, error, listenfd, on;
 	const char *errstr;
 
 	/* Defaults. */
@@ -770,18 +772,22 @@ main(int argc, char *argv[])
 	init_filter(qname, tagname, verbose);
 
 	if (daemonize) {
-		if (daemon(0, 0) == -1)
+		devnull = open(_PATH_DEVNULL, O_RDWR, 0);
+		if (devnull == -1)
+			err(1, "open(%s)", _PATH_DEVNULL);
+	}
+
+	if (!drop_privs())
+		err(1, "cannot drop privileges");
+
+	if (daemonize) {
+		if (rdaemon(devnull) == -1)
 			err(1, "cannot daemonize");
 		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 	}
 
 	/* Use logmsg for output from here on. */
 
-	if (!drop_privs()) {
-		logmsg(LOG_ERR, "cannot drop privileges: %s", strerror(errno));
-		exit(1);
-	}
-	
 	event_init();
 
 	/* Setup signal handler. */
@@ -1131,4 +1137,29 @@ usage(void)
 	    " [-p port] [-q queue] [-R address] [-T tag]\n"
             "                 [-t timeout]\n", __progname);
 	exit(1);
+}
+
+int
+rdaemon(int devnull)
+{
+
+	switch (fork()) {
+	case -1:
+		return (-1);
+	case 0:
+		break;
+	default:
+		_exit(0);
+	}
+
+	if (setsid() == -1)
+		return (-1);
+
+	(void)dup2(devnull, STDIN_FILENO);
+	(void)dup2(devnull, STDOUT_FILENO);
+	(void)dup2(devnull, STDERR_FILENO);
+	if (devnull > 2)
+		(void)close(devnull);
+
+	return (0);
 }
