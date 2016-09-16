@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.76 2016/09/02 13:59:51 pirofti Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.77 2016/09/16 20:16:06 guenther Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -93,6 +93,10 @@ void	acpicpu_setperf_ppc_change(struct acpicpu_pss *, int);
 
 #define ACPI_MAX_C2_LATENCY	100
 #define ACPI_MAX_C3_LATENCY	1000
+
+#define CSD_COORD_SW_ALL	0xFC
+#define CSD_COORD_SW_ANY	0xFD
+#define CSD_COORD_HW_ALL	0xFE
 
 /* Make sure throttling bits are valid,a=addr,o=offset,w=width */
 #define valid_throttle(o,w,a)	(a && w && (o+w)<=31 && (o>4 || (o+w)<=4))
@@ -467,21 +471,36 @@ acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 void
 acpicpu_add_cdeppkg(struct aml_value *val, void *arg)
 {
-#if 1 || defined(ACPI_DEBUG) && !defined(SMALL_KERNEL)
-	aml_showvalue(val);
-#endif
+	int64_t	num_proc, coord_type, domain, cindex;
+
+	/*
+	 * errors: unexpected object type, bad length, mismatched length,
+	 * and bad CSD revision 
+	 */
 	if (val->type != AML_OBJTYPE_PACKAGE || val->length < 6 ||
-	    val->length != val->v_package[0]->v_integer) {
+	    val->length != val->v_package[0]->v_integer ||
+	    val->v_package[1]->v_integer != 0) {
+#if 1 || defined(ACPI_DEBUG) && !defined(SMALL_KERNEL)
+		aml_showvalue(val);
+#endif
 		printf("bogus CSD\n");
 		return;
 	}
 
-	printf("\nCSD r=%lld d=%lld c=%llx n=%lld i=%lli\n",
-	    val->v_package[1]->v_integer,
-	    val->v_package[2]->v_integer,
-	    val->v_package[3]->v_integer,
-	    val->v_package[4]->v_integer,
-	    val->v_package[5]->v_integer);
+	/* coordinating 'among' one CPU is trivial, ignore */
+	num_proc = val->v_package[4]->v_integer;
+	if (num_proc == 1)
+		return;
+
+	/* we practically assume the hardware will coordinate, so ignore */
+	coord_type = val->v_package[3]->v_integer;
+	if (coord_type == CSD_COORD_HW_ALL)
+		return;
+
+	domain = val->v_package[2]->v_integer;
+	cindex = val->v_package[5]->v_integer;
+	printf("\nCSD c=%#llx d=%lld n=%lld i=%lli\n",
+	    coord_type, domain, num_proc, cindex);
 }
 
 int
