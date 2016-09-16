@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.177 2016/09/15 02:00:16 dlg Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.178 2016/09/16 02:54:51 dlg Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -247,8 +247,7 @@ bufadjust(int newbufpages)
 	    (bcstats.numbufpages > targetpages)) {
 		bufcache_take(bp);
 		if (bp->b_vp) {
-			RB_REMOVE(buf_rb_bufs,
-			    &bp->b_vp->v_bufs_tree, bp);
+			RBT_REMOVE(buf_rb_bufs, &bp->b_vp->v_bufs_tree, bp);
 			brelvp(bp);
 		}
 		buf_put(bp);
@@ -758,8 +757,7 @@ brelse(struct buf *bp)
 		}
 
 		if (bp->b_vp) {
-			RB_REMOVE(buf_rb_bufs, &bp->b_vp->v_bufs_tree,
-			    bp);
+			RBT_REMOVE(buf_rb_bufs, &bp->b_vp->v_bufs_tree, bp);
 			brelvp(bp);
 		}
 		bp->b_vp = NULL;
@@ -826,7 +824,7 @@ incore(struct vnode *vp, daddr_t blkno)
 
 	/* Search buf lookup tree */
 	b.b_lblkno = blkno;
-	bp = RB_FIND(buf_rb_bufs, &vp->v_bufs_tree, &b);
+	bp = RBT_FIND(buf_rb_bufs, &vp->v_bufs_tree, &b);
 	if (bp != NULL && ISSET(bp->b_flags, B_INVAL))
 		bp = NULL;
 
@@ -862,7 +860,7 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 start:
 	s = splbio();
 	b.b_lblkno = blkno;
-	bp = RB_FIND(buf_rb_bufs, &vp->v_bufs_tree, &b);
+	bp = RBT_FIND(buf_rb_bufs, &vp->v_bufs_tree, &b);
 	if (bp != NULL) {
 		if (ISSET(bp->b_flags, B_BUSY)) {
 			SET(bp->b_flags, B_WANTED);
@@ -945,7 +943,7 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 		    (bp = bufcache_getanycleanbuf())) {
 			bufcache_take(bp);
 			if (bp->b_vp) {
-				RB_REMOVE(buf_rb_bufs,
+				RBT_REMOVE(buf_rb_bufs,
 				    &bp->b_vp->v_bufs_tree, bp);
 				brelvp(bp);
 			}
@@ -1006,7 +1004,7 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 
 		bp->b_blkno = bp->b_lblkno = blkno;
 		bgetvp(vp, bp);
-		if (RB_INSERT(buf_rb_bufs, &vp->v_bufs_tree, bp))
+		if (RBT_INSERT(buf_rb_bufs, &vp->v_bufs_tree, bp))
 			panic("buf_get: dup lblk vp %p bp %p", vp, bp);
 	} else {
 		bp->b_vnbufs.le_next = NOLIST;
@@ -1505,8 +1503,7 @@ hibernate_suspend_bufcache(void)
 	while ((bp = bufcache_getcleanbuf_range(DMA_CACHE, NUM_CACHES - 1, 1))) {
 		bufcache_take(bp);
 		if (bp->b_vp) {
-			RB_REMOVE(buf_rb_bufs,
-			    &bp->b_vp->v_bufs_tree, bp);
+			RBT_REMOVE(buf_rb_bufs, &bp->b_vp->v_bufs_tree, bp);
 			brelvp(bp);
 		}
 		buf_put(bp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.103 2016/05/23 09:31:28 natano Exp $	*/
+/*	$OpenBSD: buf.h,v 1.104 2016/09/16 02:54:51 dlg Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -47,9 +47,6 @@
 
 struct buf;
 struct vnode;
-
-struct buf_rb_bufs;
-RB_PROTOTYPE(buf_rb_bufs, buf, b_rbbufs, rb_buf_compare);
 
 LIST_HEAD(bufhead, buf);
 
@@ -140,7 +137,7 @@ extern struct bio_ops {
 
 /* The buffer header describes an I/O operation in the kernel. */
 struct buf {
-	RB_ENTRY(buf) b_rbbufs;		/* vnode "hash" tree */
+	RBT_ENTRY(buf) b_rbbufs;	/* vnode "hash" tree */
 	LIST_ENTRY(buf) b_list;		/* All allocated buffers. */
 	LIST_ENTRY(buf) b_vnbufs;	/* Buffer's associated vnode. */
 	TAILQ_ENTRY(buf) b_freelist;	/* Free list position if not active. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.251 2016/09/15 02:00:16 dlg Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.252 2016/09/16 02:54:51 dlg Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -122,11 +122,11 @@ void printlockedvnodes(void);
 struct pool vnode_pool;
 struct pool uvm_vnode_pool;
 
-static int rb_buf_compare(struct buf *b1, struct buf *b2);
-RB_GENERATE(buf_rb_bufs, buf, b_rbbufs, rb_buf_compare);
+static inline int rb_buf_compare(const struct buf *b1, const struct buf *b2);
+RBT_GENERATE(buf_rb_bufs, buf, b_rbbufs, rb_buf_compare);
 
-static int
-rb_buf_compare(struct buf *b1, struct buf *b2)
+static inline int
+rb_buf_compare(const struct buf *b1, const struct buf *b2)
 {
 	if (b1->b_lblkno < b2->b_lblkno)
 		return(-1);
@@ -375,7 +375,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, struct vops *vops,
 		vp = pool_get(&vnode_pool, PR_WAITOK | PR_ZERO);
 		vp->v_uvm = pool_get(&uvm_vnode_pool, PR_WAITOK | PR_ZERO);
 		vp->v_uvm->u_vnode = vp;
-		RB_INIT(&vp->v_bufs_tree);
+		RBT_INIT(buf_rb_bufs, &vp->v_bufs_tree);
 		RB_INIT(&vp->v_nc_tree);
 		TAILQ_INIT(&vp->v_cache_dst);
 		numvnodes++;
