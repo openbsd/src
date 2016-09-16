@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.h,v 1.5 2015/03/30 21:05:17 miod Exp $	*/
+/*	$OpenBSD: uvm_addr.h,v 1.6 2016/09/16 01:51:40 dlg Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -108,8 +108,8 @@ void			 uvm_addr_print(struct uvm_addr_state *, const char *,
 /*
  * Kernel bootstrap allocator.
  */
-RB_HEAD(uaddr_free_rbtree, vm_map_entry);
-RB_PROTOTYPE(uaddr_free_rbtree, vm_map_entry, dfree.rbtree,
+RBT_HEAD(uaddr_free_rbtree, vm_map_entry);
+RBT_PROTOTYPE(uaddr_free_rbtree, vm_map_entry, dfree.rbtree,
     uvm_mapent_fspace_cmp);
 
 extern struct uvm_addr_state uaddr_kbootstrap;
