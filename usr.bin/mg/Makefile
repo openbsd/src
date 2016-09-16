@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.32 2016/09/11 15:03:33 natano Exp $
+# $OpenBSD: Makefile,v 1.33 2016/09/16 17:17:40 tedu Exp $
 
 PROG=	mg
 
@@ -21,7 +21,7 @@ SRCS=	autoexec.c basic.c bell.c buffer.c cinfo.c dir.c display.c \
 #
 # More or less standalone extensions.
 #
-SRCS+=	cmode.c cscope.c dired.c grep.c tags.c theo.c
+SRCS+=	cmode.c cscope.c dired.c grep.c tags.c
 
 afterinstall:
 	${INSTALL} -d -o root -g wheel ${DESTDIR}${DOCDIR}/mg
