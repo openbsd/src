@@ -232,8 +232,6 @@ if ($Is_VMS) {  # Hang in there until File::Spec hits the big time
    $installbin		|| die "No installbin directory in config.sh\n";
 -d $installbin	        || mkpath($installbin);
 -d $installbin		|| $opts{notify} || die "$installbin is not a directory\n";
--w $installbin		|| $opts{notify} || die "$installbin is not writable by you\n"
-	unless $installbin =~ m#^/afs/# || $opts{notify};
 
 if (!$Is_NetWare) {
 if (!$Is_VMS) {
