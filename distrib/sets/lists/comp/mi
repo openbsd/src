@@ -2756,6 +2756,7 @@
 ./usr/share/man/man9/tsleep.9
 ./usr/share/man/man9/tvtohz.9
 ./usr/share/man/man9/uiomove.9
+./usr/share/man/man9/usb_add_task.9
 ./usr/share/man/man9/usbd_close_pipe.9
 ./usr/share/man/man9/usbd_open_pipe.9
 ./usr/share/man/man9/usbd_ref_wait.9
