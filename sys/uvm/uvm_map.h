@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.58 2016/09/16 01:51:40 dlg Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.59 2016/09/16 03:39:25 dlg Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -202,8 +202,10 @@ struct vm_map_entry {
 
 TAILQ_HEAD(uvm_map_deadq, vm_map_entry);	/* dead entry queue */
 RBT_HEAD(uvm_map_addr, vm_map_entry);
+#ifdef _KERNEL
 RBT_PROTOTYPE(uvm_map_addr, vm_map_entry, daddrs.addr_entry,
     uvm_mapentry_addrcmp);
+#endif
 
 /*
  *	A Map is a rbtree of map entries, kept sorted by address.
