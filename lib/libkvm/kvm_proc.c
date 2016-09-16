@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.56 2016/05/26 13:37:26 stefan Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.57 2016/09/16 04:03:27 dlg Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -166,6 +166,7 @@ _kvm_ureadm(kvm_t *kd, const struct kinfo_proc *p, u_long va, u_long *cnt)
 	struct vm_anon *anonp, anon;
 	struct vm_map_entry vme;
 	struct vm_page pg;
+	unsigned long rboff;
 
 	if (kd->swapspc == 0) {
 		kd->swapspc = _kvm_malloc(kd, kd->nbpg);
@@ -173,23 +174,26 @@ _kvm_ureadm(kvm_t *kd, const struct kinfo_proc *p, u_long va, u_long *cnt)
 			return (NULL);
 	}
 
+	rboff = (unsigned long)&vme.daddrs.addr_entry - (unsigned long)&vme;
+
 	/*
 	 * Look through the address map for the memory object
 	 * that corresponds to the given virtual address.
 	 */
 	if (KREAD(kd, (u_long)p->p_vmspace, &vm))
 		return (NULL);
-	addr = (u_long)RB_ROOT(&vm.vm_map.addr);
+	addr = (u_long)&vm.vm_map.addr.rbh_root.rbt_root;
 	while (1) {
 		if (addr == 0)
 			return (NULL);
+		addr -= rboff;
 		if (KREAD(kd, addr, &vme))
 			return (NULL);
 
 		if (va < vme.start)
-			addr = (u_long)RB_LEFT(&vme, daddrs.addr_entry);
+			addr = (u_long)vme.daddrs.addr_entry.rbt_left;
 		else if (va >= vme.end + vme.guard + vme.fspace)
-			addr = (u_long)RB_RIGHT(&vme, daddrs.addr_entry);
+			addr = (u_long)vme.daddrs.addr_entry.rbt_right;
 		else if (va >= vme.end)
 			return (NULL);
 		else
