@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.52 2016/09/16 02:47:09 dlg Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.53 2016/09/16 02:52:24 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -357,7 +357,7 @@ uvm_pmr_remove_size(struct uvm_pmemrange *pmr, struct vm_page *pg)
 #endif
 		TAILQ_REMOVE(&pmr->single[memtype], pg, pageq);
 	} else {
-		KDASSERT(RB_FIND(uvm_pmr_size, &pmr->size[memtype],
+		KDASSERT(RBT_FIND(uvm_pmr_size, &pmr->size[memtype],
 		    pg + 1) == pg + 1);
 		RBT_REMOVE(uvm_pmr_size, &pmr->size[memtype], pg + 1);
 	}
@@ -397,10 +397,10 @@ uvm_pmr_insert_addr(struct uvm_pmemrange *pmr, struct vm_page *pg, int no_join)
 		TAILQ_FOREACH(i, &pmr->single[mt], pageq)
 			KDASSERT(i != pg);
 		if (pg->fpgsz > 1) {
-			KDASSERT(RB_FIND(uvm_pmr_size, &pmr->size[mt],
+			KDASSERT(RBT_FIND(uvm_pmr_size, &pmr->size[mt],
 			    pg + 1) == NULL);
 		}
-		KDASSERT(RB_FIND(uvm_pmr_addr, &pmr->addr, pg) == NULL);
+		KDASSERT(RBT_FIND(uvm_pmr_addr, &pmr->addr, pg) == NULL);
 	}
 #endif
 
@@ -450,10 +450,10 @@ uvm_pmr_insert_size(struct uvm_pmemrange *pmr, struct vm_page *pg)
 		TAILQ_FOREACH(i, &pmr->single[mti], pageq)
 			KDASSERT(i != pg);
 		if (pg->fpgsz > 1) {
-			KDASSERT(RB_FIND(uvm_pmr_size, &pmr->size[mti],
+			KDASSERT(RBT_FIND(uvm_pmr_size, &pmr->size[mti],
 			    pg + 1) == NULL);
 		}
-		KDASSERT(RB_FIND(uvm_pmr_addr, &pmr->addr, pg) == pg);
+		KDASSERT(RBT_FIND(uvm_pmr_addr, &pmr->addr, pg) == pg);
 	}
 	for (i = pg; i < pg + pg->fpgsz; i++)
 		KASSERT(uvm_pmr_pg_to_memtype(i) == memtype);
@@ -1224,7 +1224,7 @@ uvm_pmr_assertvalid(struct uvm_pmemrange *pmr)
 		return;
 
 	/* Validate address tree. */
-	RB_FOREACH(i, uvm_pmr_addr, &pmr->addr) {
+	RBT_FOREACH(i, uvm_pmr_addr, &pmr->addr) {
 		/* Validate the range. */
 		KASSERT(i->fpgsz > 0);
 		KASSERT(atop(VM_PAGE_TO_PHYS(i)) >= pmr->low);
@@ -1263,7 +1263,7 @@ uvm_pmr_assertvalid(struct uvm_pmemrange *pmr)
 		}
 
 		/* Check that it shouldn't be joined with its predecessor. */
-		prev = RB_PREV(uvm_pmr_addr, &pmr->addr, i);
+		prev = RBT_PREV(uvm_pmr_addr, i);
 		if (prev != NULL) {
 			KASSERT(uvm_pmr_pg_to_memtype(i) !=
 			    uvm_pmr_pg_to_memtype(prev) ||
@@ -1281,7 +1281,7 @@ uvm_pmr_assertvalid(struct uvm_pmemrange *pmr)
 			}
 			KASSERT(xref == i);
 		} else {
-			KASSERT(RB_FIND(uvm_pmr_size,
+			KASSERT(RBT_FIND(uvm_pmr_size,
 			    &pmr->size[uvm_pmr_pg_to_memtype(i)], i + 1) ==
 			    i + 1);
 		}
@@ -1297,7 +1297,7 @@ uvm_pmr_assertvalid(struct uvm_pmemrange *pmr)
 			}
 
 			/* Assert i is in the addr tree as well. */
-			KASSERT(RB_FIND(uvm_pmr_addr, &pmr->addr, i) == i);
+			KASSERT(RBT_FIND(uvm_pmr_addr, &pmr->addr, i) == i);
 
 			/* Assert i is of the correct memory type. */
 			KASSERT(uvm_pmr_pg_to_memtype(i) == mti);
@@ -1306,7 +1306,7 @@ uvm_pmr_assertvalid(struct uvm_pmemrange *pmr)
 
 	/* Validate nsegs statistic. */
 	lcv = 0;
-	RB_FOREACH(i, uvm_pmr_addr, &pmr->addr)
+	RBT_FOREACH(i, uvm_pmr_addr, &pmr->addr)
 		lcv++;
 	KASSERT(pmr->nsegs == lcv);
 }
