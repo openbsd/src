@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_tree.c,v 1.4 2016/09/15 06:07:22 dlg Exp $ */
+/*	$OpenBSD: subr_tree.c,v 1.5 2016/09/16 01:05:34 dlg Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -460,7 +460,7 @@ _rb_find(const struct rb_type *t, struct rb_tree *rbt, const void *key)
 	return (NULL);
 }
 
-/* Finds the first node greater than or equal to the search key */      \
+/* Finds the first node greater than or equal to the search key */
 void *
 _rb_nfind(const struct rb_type *t, struct rb_tree *rbt, const void *key)
 {
