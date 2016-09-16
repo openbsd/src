@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.32 2016/04/29 14:40:36 beck Exp $	*/
+/*	$OpenBSD: namei.h,v 1.33 2016/09/16 03:21:16 dlg Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -38,10 +38,6 @@
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/uio.h>
-
-struct namecache;
-struct namecache_rb_cache;
-RB_PROTOTYPE(namecache_rb_cache, namecache, n_rbcache, namecache_compare);
 
 /*
  * Encapsulation of namei parameters.
@@ -176,7 +172,7 @@ void ndinitat(struct nameidata *ndp, u_long op, u_long flags,
 struct	namecache {
 	TAILQ_ENTRY(namecache) nc_lru;	/* Regular Entry LRU chain */
 	TAILQ_ENTRY(namecache) nc_neg;	/* Negative Entry LRU chain */
-	RB_ENTRY(namecache) n_rbcache;  /* Namecache rb tree from vnode */
+	RBT_ENTRY(namecache) n_rbcache;	/* Namecache rb tree from vnode */
 	TAILQ_ENTRY(namecache) nc_me;	/* ncp's referring to me */
 	struct	vnode *nc_dvp;		/* vnode of parent of name */
 	u_long	nc_dvpid;		/* capability number of nc_dvp */
@@ -187,10 +183,13 @@ struct	namecache {
 };
 
 #ifdef _KERNEL
+struct	namecache_rb_cache;
+
 int	namei(struct nameidata *ndp);
 int	vfs_lookup(struct nameidata *ndp);
 int	vfs_relookup(struct vnode *dvp, struct vnode **vpp,
 		      struct componentname *cnp);
+void cache_tree_init(struct namecache_rb_cache *);
 void cache_purge(struct vnode *);
 int cache_lookup(struct vnode *, struct vnode **, struct componentname *);
 void cache_enter(struct vnode *, struct vnode *, struct componentname *);

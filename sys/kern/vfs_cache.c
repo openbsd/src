@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.51 2016/09/15 02:00:16 dlg Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.52 2016/09/16 03:21:16 dlg Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -73,8 +73,8 @@ struct pool nch_pool;
 void cache_zap(struct namecache *);
 u_long nextvnodeid;
 
-static int
-namecache_compare(struct namecache *n1, struct namecache *n2)
+static inline int
+namecache_compare(const struct namecache *n1, const struct namecache *n2)
 {
 	if (n1->nc_nlen == n2->nc_nlen)
 		return (memcmp(n1->nc_name, n2->nc_name, n1->nc_nlen));
@@ -82,7 +82,14 @@ namecache_compare(struct namecache *n1, struct namecache *n2)
 		return (n1->nc_nlen - n2->nc_nlen);
 }
 
-RB_GENERATE(namecache_rb_cache, namecache, n_rbcache, namecache_compare);
+RBT_PROTOTYPE(namecache_rb_cache, namecache, n_rbcache, namecache_compare);
+RBT_GENERATE(namecache_rb_cache, namecache, n_rbcache, namecache_compare);
+
+void
+cache_tree_init(struct namecache_rb_cache *tree)
+{
+	RBT_INIT(namecache_rb_cache, tree);
+}
 
 /*
  * blow away a namecache entry
@@ -100,8 +107,8 @@ cache_zap(struct namecache *ncp)
 		numneg--;
 	}
 	if (ncp->nc_dvp) {
-		RB_REMOVE(namecache_rb_cache, &ncp->nc_dvp->v_nc_tree, ncp);
-		if (RB_EMPTY(&ncp->nc_dvp->v_nc_tree))
+		RBT_REMOVE(namecache_rb_cache, &ncp->nc_dvp->v_nc_tree, ncp);
+		if (RBT_EMPTY(namecache_rb_cache, &ncp->nc_dvp->v_nc_tree))
 			dvp = ncp->nc_dvp;
 	}
 	if (ncp->nc_vp && (ncp->nc_vpid == ncp->nc_vp->v_id)) {
@@ -157,7 +164,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp,
 	/* lookup in directory vnode's redblack tree */
 	n.nc_nlen = cnp->cn_namelen;
 	memcpy(n.nc_name, cnp->cn_nameptr, n.nc_nlen);
-	ncp = RB_FIND(namecache_rb_cache, &dvp->v_nc_tree, &n);
+	ncp = RBT_FIND(namecache_rb_cache, &dvp->v_nc_tree, &n);
 
 	if (ncp == NULL) {
 		nchstats.ncs_miss++;
@@ -368,10 +375,10 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	ncp->nc_dvpid = dvp->v_id;
 	ncp->nc_nlen = cnp->cn_namelen;
 	memcpy(ncp->nc_name, cnp->cn_nameptr, ncp->nc_nlen);
-	if (RB_EMPTY(&dvp->v_nc_tree)) {
+	if (RBT_EMPTY(namecache_rb_cache, &dvp->v_nc_tree)) {
 		vhold(dvp);
 	}
-	if ((lncp = RB_INSERT(namecache_rb_cache, &dvp->v_nc_tree, ncp))
+	if ((lncp = RBT_INSERT(namecache_rb_cache, &dvp->v_nc_tree, ncp))
 	    != NULL) {
 		/* someone has raced us and added a different entry
 		 * for the same vnode (different ncp) - we don't need
@@ -435,7 +442,7 @@ cache_purge(struct vnode *vp)
 
 	while ((ncp = TAILQ_FIRST(&vp->v_cache_dst)))
 		cache_zap(ncp);
-	while ((ncp = RB_ROOT(&vp->v_nc_tree)))
+	while ((ncp = RBT_ROOT(namecache_rb_cache, &vp->v_nc_tree)))
 		cache_zap(ncp);
 
 	/* XXX this blows goats */
