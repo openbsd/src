@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.16 2016/09/16 02:17:57 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.17 2016/09/16 02:20:08 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -65,6 +65,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 {
 	int	i;
 	int	numrela;
+	int	relrela;
 	int	fails = 0;
 	struct load_list *llist;
 	Elf32_Addr loff;
@@ -74,6 +75,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	loff = object->obj_base;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf32_Rela);
+	relrela = rel == DT_RELA ? object->relacount : 0;
+
 	relas = (Elf32_Rela *)(object->Dyn.info[rel]);
 
 #ifdef DL_PRINTF_DEBUG
@@ -83,6 +86,11 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	if (relas == NULL)
 		return(0);
+
+	if (relrela > numrela) {
+		_dl_printf("relacount > numrel: %d > %d\n", relrela, numrela);
+		_dl_exit(20);
+	}
 
 	/*
 	 * Change protection of all write protected segments in the object
@@ -99,7 +107,14 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		}
 	}
 
-	for (i = 0; i < numrela; i++, relas++) {
+	/* tight loop for leading RELATIVE relocs */
+	for (i = 0; i < relrela; i++, relas++) {
+		Elf32_Addr *r_addr;
+
+		r_addr = (Elf32_Addr *)(relas->r_offset + loff);
+		*r_addr = relas->r_addend + loff;
+	}
+	for (; i < numrela; i++, relas++) {
 		Elf32_Addr *r_addr = (Elf32_Addr *)(relas->r_offset + loff);
 		Elf32_Addr ooff, addend, newval;
 		const Elf32_Sym *sym, *this;
