@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.223 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.224 2016/09/16 01:09:53 dlg Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -160,8 +160,8 @@ void			 uvm_map_addr_augment(struct vm_map_entry*);
 
 static __inline void	 uvm_mapent_copy(struct vm_map_entry*,
 			    struct vm_map_entry*);
-static int		 uvm_mapentry_addrcmp(struct vm_map_entry*,
-			    struct vm_map_entry*);
+static inline int	 uvm_mapentry_addrcmp(const struct vm_map_entry*,
+			    const struct vm_map_entry*);
 void			 uvm_mapent_free_insert(struct vm_map*,
 			    struct uvm_addr_state*, struct vm_map_entry*);
 void			 uvm_mapent_free_remove(struct vm_map*,
@@ -271,9 +271,9 @@ void			 vmspace_validate(struct vm_map*);
 
 
 #ifdef DEADBEEF0
-#define UVMMAP_DEADBEEF		((void*)DEADBEEF0)
+#define UVMMAP_DEADBEEF		((unsigned long)DEADBEEF0)
 #else
-#define UVMMAP_DEADBEEF		((void*)0xdeadd0d0)
+#define UVMMAP_DEADBEEF		((unsigned long)0xdeadd0d0)
 #endif
 
 #ifdef DEBUG
@@ -335,8 +335,9 @@ vaddr_t uvm_maxkaddr;
  * (sorted by address) within a free-memory tree.
  */
 
-static __inline int
-uvm_mapentry_addrcmp(struct vm_map_entry *e1, struct vm_map_entry *e2)
+static inline int
+uvm_mapentry_addrcmp(const struct vm_map_entry *e1,
+    const struct vm_map_entry *e2)
 {
 	return e1->start < e2->start ? -1 : e1->start > e2->start;
 }
@@ -433,16 +434,14 @@ uvm_mapent_addr_insert(struct vm_map *map, struct vm_map_entry *entry)
 {
 	struct vm_map_entry *res;
 
-	if (RB_LEFT(entry, daddrs.addr_entry) != UVMMAP_DEADBEEF ||
-	    RB_RIGHT(entry, daddrs.addr_entry) != UVMMAP_DEADBEEF ||
-	    RB_PARENT(entry, daddrs.addr_entry) != UVMMAP_DEADBEEF)
+	if (!RBT_CHECK(uvm_map_addr, entry, UVMMAP_DEADBEEF))
 		panic("uvm_mapent_addr_insert: entry still in addr list");
 	KDASSERT(entry->start <= entry->end);
 	KDASSERT((entry->start & (vaddr_t)PAGE_MASK) == 0 &&
 	    (entry->end & (vaddr_t)PAGE_MASK) == 0);
 
 	UVM_MAP_REQ_WRITE(map);
-	res = RB_INSERT(uvm_map_addr, &map->addr, entry);
+	res = RBT_INSERT(uvm_map_addr, &map->addr, entry);
 	if (res != NULL) {
 		panic("uvm_mapent_addr_insert: map %p entry %p "
 		    "(0x%lx-0x%lx G=0x%lx F=0x%lx) insert collision "
@@ -462,11 +461,10 @@ uvm_mapent_addr_remove(struct vm_map *map, struct vm_map_entry *entry)
 	struct vm_map_entry *res;
 
 	UVM_MAP_REQ_WRITE(map);
-	res = RB_REMOVE(uvm_map_addr, &map->addr, entry);
+	res = RBT_REMOVE(uvm_map_addr, &map->addr, entry);
 	if (res != entry)
 		panic("uvm_mapent_addr_remove");
-	RB_LEFT(entry, daddrs.addr_entry) = RB_RIGHT(entry, daddrs.addr_entry) =
-	    RB_PARENT(entry, daddrs.addr_entry) = UVMMAP_DEADBEEF;
+	RBT_POISON(uvm_map_addr, entry, UVMMAP_DEADBEEF);
 }
 
 /*
@@ -521,12 +519,12 @@ uvm_map_entrybyaddr(struct uvm_map_addr *atree, vaddr_t addr)
 {
 	struct vm_map_entry *iter;
 
-	iter = RB_ROOT(atree);
+	iter = RBT_ROOT(uvm_map_addr, atree);
 	while (iter != NULL) {
 		if (iter->start > addr)
-			iter = RB_LEFT(iter, daddrs.addr_entry);
+			iter = RBT_LEFT(uvm_map_addr, iter);
 		else if (VMMAP_FREE_END(iter) <= addr)
-			iter = RB_RIGHT(iter, daddrs.addr_entry);
+			iter = RBT_RIGHT(uvm_map_addr, iter);
 		else
 			return iter;
 	}
@@ -820,9 +818,9 @@ uvm_map_isavail(struct vm_map *map, struct uvm_addr_state *uaddr,
 	 * considered unavailable unless called by those allocators.
 	 */
 	i = *start_ptr;
-	i_end = RB_NEXT(uvm_map_addr, atree, *end_ptr);
+	i_end = RBT_NEXT(uvm_map_addr, *end_ptr);
 	for (; i != i_end;
-	    i = RB_NEXT(uvm_map_addr, atree, i)) {
+	    i = RBT_NEXT(uvm_map_addr, i)) {
 		if (i->start != i->end && i->end > addr)
 			return 0;
 
@@ -886,9 +884,9 @@ uvm_map_addr_augment_get(struct vm_map_entry *entry)
 	struct vm_map_entry	*left, *right;
 
 	augment = entry->fspace;
-	if ((left = RB_LEFT(entry, daddrs.addr_entry)) != NULL)
+	if ((left = RBT_LEFT(uvm_map_addr, entry)) != NULL)
 		augment = MAX(augment, left->fspace_augment);
-	if ((right = RB_RIGHT(entry, daddrs.addr_entry)) != NULL)
+	if ((right = RBT_RIGHT(uvm_map_addr, entry)) != NULL)
 		augment = MAX(augment, right->fspace_augment);
 	return augment;
 }
@@ -914,7 +912,7 @@ uvm_map_addr_augment(struct vm_map_entry *entry)
 		if (entry->fspace_augment == augment)
 			return;
 		entry->fspace_augment = augment;
-		entry = RB_PARENT(entry, daddrs.addr_entry);
+		entry = RBT_PARENT(uvm_map_addr, entry);
 	}
 }
 
@@ -1487,7 +1485,7 @@ uvm_mapent_tryjoin(struct vm_map *map, struct vm_map_entry *entry,
 	struct vm_map_entry *merged;
 
 	/* Merge with previous entry. */
-	other = RB_PREV(uvm_map_addr, &map->addr, entry);
+	other = RBT_PREV(uvm_map_addr, entry);
 	if (other && uvm_mapent_isjoinable(map, other, entry)) {
 		merged = uvm_mapent_merge(map, other, entry, dead);
 		if (merged)
@@ -1501,7 +1499,7 @@ uvm_mapent_tryjoin(struct vm_map *map, struct vm_map_entry *entry,
 	 * probably contains sensible info, only perform forward merging
 	 * in the absence of an amap.
 	 */
-	other = RB_NEXT(uvm_map_addr, &map->addr, entry);
+	other = RBT_NEXT(uvm_map_addr, entry);
 	if (other && entry->aref.ar_amap == NULL &&
 	    other->aref.ar_amap == NULL &&
 	    uvm_mapent_isjoinable(map, entry, other)) {
@@ -1625,7 +1623,7 @@ uvm_map_mkentry(struct vm_map *map, struct vm_map_entry *first,
 	 * We are iterating using last in reverse order.
 	 */
 	for (; first != last; last = prev) {
-		prev = RB_PREV(uvm_map_addr, &map->addr, last);
+		prev = RBT_PREV(uvm_map_addr, last);
 
 		KDASSERT(last->start == last->end);
 		free = uvm_map_uaddr_e(map, last);
@@ -1702,9 +1700,7 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 	}
 
 	if (me != NULL) {
-		RB_LEFT(me, daddrs.addr_entry) =
-		    RB_RIGHT(me, daddrs.addr_entry) =
-		    RB_PARENT(me, daddrs.addr_entry) = UVMMAP_DEADBEEF;
+		RBT_POISON(uvm_map_addr, me, UVMMAP_DEADBEEF);
 	}
 
 out:
@@ -1830,7 +1826,7 @@ uvm_mapent_mkfree(struct vm_map *map, struct vm_map_entry *entry,
 
 	if (prev == NULL ||
 	    VMMAP_FREE_END(prev) != entry->start)
-		prev = RB_PREV(uvm_map_addr, &map->addr, entry);
+		prev = RBT_PREV(uvm_map_addr, entry);
 
 	/* Entry is describing only free memory and has nothing to drain into. */
 	if (prev == NULL && entry->start == entry->end && markfree) {
@@ -1957,7 +1953,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 	entry = uvm_map_entrybyaddr(&map->addr, start);
 	KDASSERT(entry != NULL && entry->start <= start);
 	if (entry->end <= start && markfree)
-		entry = RB_NEXT(uvm_map_addr, &map->addr, entry);
+		entry = RBT_NEXT(uvm_map_addr, entry);
 	else
 		UVM_MAP_CLIP_START(map, entry, start);
 
@@ -1971,7 +1967,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 		if (entry->end > end || !markfree)
 			UVM_MAP_CLIP_END(map, entry, end);
 		KDASSERT(entry->start >= start && entry->end <= end);
-		next = RB_NEXT(uvm_map_addr, &map->addr, entry);
+		next = RBT_NEXT(uvm_map_addr, entry);
 
 		/* Don't remove holes unless asked to do so. */
 		if (UVM_ET_ISHOLE(entry)) {
@@ -2004,7 +2000,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 	if (markfree) {
 		for (entry = uvm_map_entrybyaddr(&map->addr, start);
 		    entry != NULL && entry->start < end;
-		    entry = RB_NEXT(uvm_map_addr, &map->addr, entry)) {
+		    entry = RBT_NEXT(uvm_map_addr, entry)) {
 			KDASSERT(entry->end <= start ||
 			    entry->start == entry->end ||
 			    UVM_ET_ISHOLE(entry));
@@ -2029,7 +2025,7 @@ uvm_map_pageable_pgon(struct vm_map *map, struct vm_map_entry *first,
 	struct vm_map_entry *iter;
 
 	for (iter = first; iter != end;
-	    iter = RB_NEXT(uvm_map_addr, &map->addr, iter)) {
+	    iter = RBT_NEXT(uvm_map_addr, iter)) {
 		KDASSERT(iter->start >= start_addr && iter->end <= end_addr);
 		if (!VM_MAPENT_ISWIRED(iter) || UVM_ET_ISHOLE(iter))
 			continue;
@@ -2074,7 +2070,7 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 	 *    status of the entries we modify here cannot change.
 	 */
 	for (iter = first; iter != end;
-	    iter = RB_NEXT(uvm_map_addr, &map->addr, iter)) {
+	    iter = RBT_NEXT(uvm_map_addr, iter)) {
 		KDASSERT(iter->start >= start_addr && iter->end <= end_addr);
 		if (UVM_ET_ISHOLE(iter) || iter->start == iter->end ||
 		    iter->protection == PROT_NONE)
@@ -2107,7 +2103,7 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 
 	error = 0;
 	for (iter = first; error == 0 && iter != end;
-	    iter = RB_NEXT(uvm_map_addr, &map->addr, iter)) {
+	    iter = RBT_NEXT(uvm_map_addr, iter)) {
 		if (UVM_ET_ISHOLE(iter) || iter->start == iter->end ||
 		    iter->protection == PROT_NONE)
 			continue;
@@ -2134,7 +2130,7 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 		 * Use it as iterator to unmap successful mappings.
 		 */
 		for (; first != iter;
-		    first = RB_NEXT(uvm_map_addr, &map->addr, first)) {
+		    first = RBT_NEXT(uvm_map_addr, first)) {
 			if (UVM_ET_ISHOLE(first) ||
 			    first->start == first->end ||
 			    first->protection == PROT_NONE)
@@ -2149,7 +2145,7 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 
 		/* decrease counter in the rest of the entries */
 		for (; iter != end;
-		    iter = RB_NEXT(uvm_map_addr, &map->addr, iter)) {
+		    iter = RBT_NEXT(uvm_map_addr, iter)) {
 			if (UVM_ET_ISHOLE(iter) || iter->start == iter->end ||
 			    iter->protection == PROT_NONE)
 				continue;
@@ -2227,7 +2223,7 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 	/* Check that the range has no holes. */
 	for (last = first; last != NULL && last->start < end;
-	    last = RB_NEXT(uvm_map_addr, &map->addr, last)) {
+	    last = RBT_NEXT(uvm_map_addr, last)) {
 		if (UVM_ET_ISHOLE(last) ||
 		    (last->end < end && VMMAP_FREE_END(last) != last->end)) {
 			/*
@@ -2246,14 +2242,14 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 	 * Note that last may be NULL.
 	 */
 	if (last == NULL) {
-		last = RB_MAX(uvm_map_addr, &map->addr);
+		last = RBT_MAX(uvm_map_addr, &map->addr);
 		if (last->end < end) {
 			error = EINVAL;
 			goto out;
 		}
 	} else {
 		KASSERT(last != first);
-		last = RB_PREV(uvm_map_addr, &map->addr, last);
+		last = RBT_PREV(uvm_map_addr, last);
 	}
 
 	/* Wire/unwire pages here. */
@@ -2271,7 +2267,7 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 		 */
 		if (VM_MAPENT_ISWIRED(last)) {
 			UVM_MAP_CLIP_END(map, last, end);
-			tmp = RB_NEXT(uvm_map_addr, &map->addr, last);
+			tmp = RBT_NEXT(uvm_map_addr, last);
 		} else
 			tmp = last;
 
@@ -2296,7 +2292,7 @@ out:
 		 */
 		if (!VM_MAPENT_ISWIRED(last)) {
 			UVM_MAP_CLIP_END(map, last, end);
-			tmp = RB_NEXT(uvm_map_addr, &map->addr, last);
+			tmp = RBT_NEXT(uvm_map_addr, last);
 		} else
 			tmp = last;
 
@@ -2322,7 +2318,7 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 	vm_map_lock(map);
 
 	if (flags == 0) {
-		uvm_map_pageable_pgon(map, RB_MIN(uvm_map_addr, &map->addr),
+		uvm_map_pageable_pgon(map, RBT_MIN(uvm_map_addr, &map->addr),
 		    NULL, map->min_offset, map->max_offset);
 
 		vm_map_modflags(map, 0, VM_MAP_WIREFUTURE);
@@ -2342,7 +2338,7 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 	 * If the number exceeds the limit, abort.
 	 */
 	size = 0;
-	RB_FOREACH(iter, uvm_map_addr, &map->addr) {
+	RBT_FOREACH(iter, uvm_map_addr, &map->addr) {
 		if (VM_MAPENT_ISWIRED(iter) || UVM_ET_ISHOLE(iter))
 			continue;
 
@@ -2366,7 +2362,7 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 	/*
 	 * uvm_map_pageable_wire will release lcok
 	 */
-	return uvm_map_pageable_wire(map, RB_MIN(uvm_map_addr, &map->addr),
+	return uvm_map_pageable_wire(map, RBT_MIN(uvm_map_addr, &map->addr),
 	    NULL, map->min_offset, map->max_offset, 0);
 }
 
@@ -2397,7 +2393,7 @@ uvm_map_setup(struct vm_map *map, vaddr_t min, vaddr_t max, int flags)
 			max -= PAGE_SIZE;
 	}
 
-	RB_INIT(&map->addr);
+	RBT_INIT(uvm_map_addr, &map->addr);
 	map->uaddr_exe = NULL;
 	for (i = 0; i < nitems(map->uaddr_any); ++i)
 		map->uaddr_any[i] = NULL;
@@ -2481,14 +2477,14 @@ uvm_map_teardown(struct vm_map *map)
 	 * The vm_map is broken down in linear time.
 	 */
 	TAILQ_INIT(&dead_entries);
-	if ((entry = RB_ROOT(&map->addr)) != NULL)
+	if ((entry = RBT_ROOT(uvm_map_addr, &map->addr)) != NULL)
 		DEAD_ENTRY_PUSH(&dead_entries, entry);
 	while (entry != NULL) {
 		sched_pause();
 		uvm_unmap_kill_entry(map, entry);
-		if ((tmp = RB_LEFT(entry, daddrs.addr_entry)) != NULL)
+		if ((tmp = RBT_LEFT(uvm_map_addr, entry)) != NULL)
 			DEAD_ENTRY_PUSH(&dead_entries, tmp);
-		if ((tmp = RB_RIGHT(entry, daddrs.addr_entry)) != NULL)
+		if ((tmp = RBT_RIGHT(uvm_map_addr, entry)) != NULL)
 			DEAD_ENTRY_PUSH(&dead_entries, tmp);
 		/* Update wave-front. */
 		entry = TAILQ_NEXT(entry, dfree.deadq);
@@ -2496,7 +2492,7 @@ uvm_map_teardown(struct vm_map *map)
 
 #ifdef VMMAP_DEBUG
 	numt = numq = 0;
-	RB_FOREACH(entry, uvm_map_addr, &map->addr)
+	RBT_FOREACH(entry, uvm_map_addr, &map->addr)
 		numt++;
 	TAILQ_FOREACH(entry, &dead_entries, dfree.deadq)
 		numq++;
@@ -2518,7 +2514,7 @@ uvm_map_teardown(struct vm_map *map)
 void
 uvm_map_setup_entries(struct vm_map *map)
 {
-	KDASSERT(RB_EMPTY(&map->addr));
+	KDASSERT(RBT_EMPTY(uvm_map_addr, &map->addr));
 
 	uvm_map_fix_space(map, NULL, map->min_offset, map->max_offset, 0);
 }
@@ -2546,8 +2542,8 @@ uvm_map_splitentry(struct vm_map *map, struct vm_map_entry *orig,
 	KASSERT(orig->start < split && VMMAP_FREE_END(orig) > split);
 
 #ifdef VMMAP_DEBUG
-	KDASSERT(RB_FIND(uvm_map_addr, &map->addr, orig) == orig);
-	KDASSERT(RB_FIND(uvm_map_addr, &map->addr, next) != next);
+	KDASSERT(RBT_FIND(uvm_map_addr, &map->addr, orig) == orig);
+	KDASSERT(RBT_FIND(uvm_map_addr, &map->addr, next) != next);
 #endif /* VMMAP_DEBUG */
 
 	/*
@@ -2648,7 +2644,7 @@ uvm_tree_sanity(struct vm_map *map, char *file, int line)
 	struct uvm_addr_state	*free;
 
 	addr = vm_map_min(map);
-	RB_FOREACH(iter, uvm_map_addr, &map->addr) {
+	RBT_FOREACH(iter, uvm_map_addr, &map->addr) {
 		/*
 		 * Valid start, end.
 		 * Catch overflow for end+fspace.
@@ -2703,7 +2699,7 @@ uvm_tree_size_chk(struct vm_map *map, char *file, int line)
 	vsize_t size;
 
 	size = 0;
-	RB_FOREACH(iter, uvm_map_addr, &map->addr) {
+	RBT_FOREACH(iter, uvm_map_addr, &map->addr) {
 		if (!UVM_ET_ISHOLE(iter))
 			size += iter->end - iter->start;
 	}
@@ -2735,7 +2731,7 @@ vmspace_validate(struct vm_map *map)
 	stack_end = MAX((vaddr_t)vm->vm_maxsaddr, (vaddr_t)vm->vm_minsaddr);
 
 	stack = heap = 0;
-	RB_FOREACH(iter, uvm_map_addr, &map->addr) {
+	RBT_FOREACH(iter, uvm_map_addr, &map->addr) {
 		imin = imax = iter->start;
 
 		if (UVM_ET_ISHOLE(iter) || iter->object.uvm_obj != NULL)
@@ -2854,7 +2850,7 @@ uvm_map_printit(struct vm_map *map, boolean_t full,
 
 	if (!full)
 		goto print_uaddr;
-	RB_FOREACH(entry, uvm_map_addr, &map->addr) {
+	RBT_FOREACH(entry, uvm_map_addr, &map->addr) {
 		(*pr)(" - %p: 0x%lx->0x%lx: obj=%p/0x%llx, amap=%p/%d\n",
 		    entry, entry->start, entry->end, entry->object.uvm_obj,
 		    (long long)entry->offset, entry->aref.ar_amap,
@@ -3056,11 +3052,11 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 	first = uvm_map_entrybyaddr(&map->addr, start);
 	KDASSERT(first != NULL);
 	if (first->end < start)
-		first = RB_NEXT(uvm_map_addr, &map->addr, first);
+		first = RBT_NEXT(uvm_map_addr, first);
 
 	/* First, check for protection violations. */
 	for (iter = first; iter != NULL && iter->start < end;
-	    iter = RB_NEXT(uvm_map_addr, &map->addr, iter)) {
+	    iter = RBT_NEXT(uvm_map_addr, iter)) {
 		/* Treat memory holes as free space. */
 		if (iter->start == iter->end || UVM_ET_ISHOLE(iter))
 			continue;
@@ -3080,7 +3076,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 	/* Fix protections.  */
 	for (iter = first; iter != NULL && iter->start < end;
-	    iter = RB_NEXT(uvm_map_addr, &map->addr, iter)) {
+	    iter = RBT_NEXT(uvm_map_addr, iter)) {
 		/* Treat memory holes as free space. */
 		if (iter->start == iter->end || UVM_ET_ISHOLE(iter))
 			continue;
@@ -3291,7 +3287,7 @@ uvmspace_exec(struct proc *p, vaddr_t start, vaddr_t end)
 		uvm_unmap_remove(map, map->min_offset, map->max_offset,
 		    &dead_entries, TRUE, FALSE);
 
-		KDASSERT(RB_EMPTY(&map->addr));
+		KDASSERT(RBT_EMPTY(uvm_map_addr, &map->addr));
 
 		/* Nuke statistics and boundaries. */
 		memset(&ovm->vm_startcopy, 0,
@@ -3403,7 +3399,7 @@ uvm_share(struct vm_map *dstmap, vaddr_t dstaddr, vm_prot_t prot,
 	unmap_end = dstaddr;
 	for (; src_entry != NULL;
 	    psrc_entry = src_entry,
-	    src_entry = RB_NEXT(uvm_map_addr, &srcmap->addr, src_entry)) {
+	    src_entry = RBT_NEXT(uvm_map_addr, src_entry)) {
 		/* hole in address space, bail out */
 		if (psrc_entry != NULL && psrc_entry->end != src_entry->start)
 			break;
@@ -3769,7 +3765,7 @@ uvmspace_fork(struct process *pr)
 
 	/* go entry-by-entry */
 	TAILQ_INIT(&dead);
-	RB_FOREACH(old_entry, uvm_map_addr, &old_map->addr) {
+	RBT_FOREACH(old_entry, uvm_map_addr, &old_map->addr) {
 		if (old_entry->start == old_entry->end)
 			continue;
 
@@ -3948,7 +3944,7 @@ uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
 	 */
 	for (entry = uvm_map_entrybyaddr(&map->addr, start);
 	    entry != NULL && entry->start < end;
-	    entry = RB_NEXT(uvm_map_addr, &map->addr, entry)) {
+	    entry = RBT_NEXT(uvm_map_addr, entry)) {
 		/* Fail if a hole is found. */
 		if (UVM_ET_ISHOLE(entry) ||
 		    (entry->end < end && entry->end != VMMAP_FREE_END(entry)))
@@ -4002,7 +3998,7 @@ uvm_map_deallocate(vm_map_t map)
 	uvm_unmap_remove(map, map->min_offset, map->max_offset, &dead,
 	    TRUE, FALSE);
 	pmap_destroy(map->pmap);
-	KASSERT(RB_EMPTY(&map->addr));
+	KASSERT(RBT_EMPTY(uvm_map_addr, &map->addr));
 	free(map, M_VMMAP, sizeof *map);
 
 	uvm_unmap_detach(&dead, 0);
@@ -4044,12 +4040,12 @@ uvm_map_inherit(struct vm_map *map, vaddr_t start, vaddr_t end,
 	if (entry->end > start)
 		UVM_MAP_CLIP_START(map, entry, start);
 	else
-		entry = RB_NEXT(uvm_map_addr, &map->addr, entry);
+		entry = RBT_NEXT(uvm_map_addr, entry);
 
 	while (entry != NULL && entry->start < end) {
 		UVM_MAP_CLIP_END(map, entry, end);
 		entry->inheritance = new_inheritance;
-		entry = RB_NEXT(uvm_map_addr, &map->addr, entry);
+		entry = RBT_NEXT(uvm_map_addr, entry);
 	}
 
 	vm_map_unlock(map);
@@ -4088,7 +4084,7 @@ uvm_map_advice(struct vm_map *map, vaddr_t start, vaddr_t end, int new_advice)
 	if (entry != NULL && entry->end > start)
 		UVM_MAP_CLIP_START(map, entry, start);
 	else if (entry!= NULL)
-		entry = RB_NEXT(uvm_map_addr, &map->addr, entry);
+		entry = RBT_NEXT(uvm_map_addr, entry);
 
 	/*
 	 * XXXJRT: disallow holes?
@@ -4096,7 +4092,7 @@ uvm_map_advice(struct vm_map *map, vaddr_t start, vaddr_t end, int new_advice)
 	while (entry != NULL && entry->start < end) {
 		UVM_MAP_CLIP_END(map, entry, end);
 		entry->advice = new_advice;
-		entry = RB_NEXT(uvm_map_addr, &map->addr, entry);
+		entry = RBT_NEXT(uvm_map_addr, entry);
 	}
 
 	vm_map_unlock(map);
@@ -4153,7 +4149,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 	/* Check that the range is contiguous. */
 	for (entry = first; entry != NULL && entry->end < end;
-	    entry = RB_NEXT(uvm_map_addr, &map->addr, entry)) {
+	    entry = RBT_NEXT(uvm_map_addr, entry)) {
 		if (VMMAP_FREE_END(entry) != entry->end ||
 		    UVM_ET_ISHOLE(entry)) {
 			error = EINVAL;
@@ -4173,7 +4169,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	 * Also, perform clipping of last if not UVM_EXTRACT_QREF.
 	 */
 	for (entry = first; entry != NULL && entry->start < end;
-	    entry = RB_NEXT(uvm_map_addr, &map->addr, entry)) {
+	    entry = RBT_NEXT(uvm_map_addr, entry)) {
 		if (UVM_ET_ISNEEDSCOPY(entry))
 			amap_copy(srcmap, entry, M_NOWAIT, TRUE, start, end);
 		if (UVM_ET_ISNEEDSCOPY(entry)) {
@@ -4202,7 +4198,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	 */
 	/* step 1: start looping through map entries, performing extraction. */
 	for (entry = first; entry != NULL && entry->start < end;
-	    entry = RB_NEXT(uvm_map_addr, &map->addr, entry)) {
+	    entry = RBT_NEXT(uvm_map_addr, entry)) {
 		KDASSERT(!UVM_ET_ISNEEDSCOPY(entry));
 		if (UVM_ET_ISHOLE(entry))
 			continue;
@@ -4298,7 +4294,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 
 	/* Make a first pass to check for holes. */
 	for (entry = first; entry != NULL && entry->start < end;
-	    entry = RB_NEXT(uvm_map_addr, &map->addr, entry)) {
+	    entry = RBT_NEXT(uvm_map_addr, entry)) {
 		if (UVM_ET_ISSUBMAP(entry)) {
 			vm_map_unlock_read(map);
 			return EINVAL;
@@ -4314,7 +4310,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 
 	error = 0;
 	for (entry = first; entry != NULL && entry->start < end;
-	    entry = RB_NEXT(uvm_map_addr, &map->addr, entry)) {
+	    entry = RBT_NEXT(uvm_map_addr, entry)) {
 		amap = entry->aref.ar_amap;	/* top layer */
 		if (UVM_ET_ISOBJ(entry))
 			uobj = entry->object.uvm_obj;
@@ -4685,7 +4681,7 @@ uvm_map_kmem_grow(struct vm_map *map, struct uvm_map_deadq *dead,
 	end = MAX(uvm_maxkaddr, map->min_offset);
 	entry = uvm_map_entrybyaddr(&map->addr, end);
 	while (entry && entry->fspace < alloc_sz)
-		entry = RB_NEXT(uvm_map_addr, &map->addr, entry);
+		entry = RBT_NEXT(uvm_map_addr, entry);
 	if (entry) {
 		end = MAX(VMMAP_FREE_START(entry), end);
 		end += MIN(sz, map->max_offset - end);
@@ -4713,9 +4709,9 @@ uvm_map_freelist_update_clear(struct vm_map *map, struct uvm_map_deadq *dead)
 	struct vm_map_entry *entry, *prev, *next;
 
 	prev = NULL;
-	for (entry = RB_MIN(uvm_map_addr, &map->addr); entry != NULL;
+	for (entry = RBT_MIN(uvm_map_addr, &map->addr); entry != NULL;
 	    entry = next) {
-		next = RB_NEXT(uvm_map_addr, &map->addr, entry);
+		next = RBT_NEXT(uvm_map_addr, entry);
 
 		free = uvm_map_uaddr_e(map, entry);
 		uvm_mapent_free_remove(map, free, entry);
@@ -4738,7 +4734,7 @@ uvm_map_freelist_update_refill(struct vm_map *map, int flags)
 	struct vm_map_entry *entry;
 	vaddr_t min, max;
 
-	RB_FOREACH(entry, uvm_map_addr, &map->addr) {
+	RBT_FOREACH(entry, uvm_map_addr, &map->addr) {
 		min = VMMAP_FREE_START(entry);
 		max = VMMAP_FREE_END(entry);
 		entry->fspace = 0;
@@ -4976,15 +4972,15 @@ uvm_map_mquery(struct vm_map *map, vaddr_t *addr_p, vsize_t sz, voff_t offset,
 		if (addr >= map->max_offset)
 			goto out;
 		else
-			entry = RB_MIN(uvm_map_addr, &map->addr);
+			entry = RBT_MIN(uvm_map_addr, &map->addr);
 	} else if (VMMAP_FREE_START(entry) <= addr) {
 		/* [3] Bumped into used memory. */
-		entry = RB_NEXT(uvm_map_addr, &map->addr, entry);
+		entry = RBT_NEXT(uvm_map_addr, entry);
 	}
 
 	/* Test if the next entry is sufficient for the allocation. */
 	for (; entry != NULL;
-	    entry = RB_NEXT(uvm_map_addr, &map->addr, entry)) {
+	    entry = RBT_NEXT(uvm_map_addr, entry)) {
 		if (entry->fspace == 0)
 			continue;
 		addr = VMMAP_FREE_START(entry);
@@ -5237,7 +5233,7 @@ uvm_map_fill_vmmap(struct vm_map *map, struct kinfo_vmentry *kve,
 	start = (vaddr_t)kve[0].kve_start;
 
 	vm_map_lock(map);
-	RB_FOREACH(entry, uvm_map_addr, &map->addr) {
+	RBT_FOREACH(entry, uvm_map_addr, &map->addr) {
 		if (cnt == maxcnt) {
 			error = ENOMEM;
 			break;
@@ -5270,11 +5266,8 @@ uvm_map_fill_vmmap(struct vm_map *map, struct kinfo_vmentry *kve,
 #endif
 
 
-#undef RB_AUGMENT
-#define RB_AUGMENT(x)	uvm_map_addr_augment((x))
-RB_GENERATE(uvm_map_addr, vm_map_entry, daddrs.addr_entry,
-    uvm_mapentry_addrcmp);
-#undef RB_AUGMENT
+RBT_GENERATE_AUGMENT(uvm_map_addr, vm_map_entry, daddrs.addr_entry,
+    uvm_mapentry_addrcmp, uvm_map_addr_augment);
 
 
 /*

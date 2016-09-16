@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.59 2016/08/12 22:46:02 kettenis Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.60 2016/09/16 01:09:53 dlg Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ uvm_coredump_walkmap(struct proc *p, void *iocookie,
 	vaddr_t top;
 	int error;
 
-	RB_FOREACH(entry, uvm_map_addr, &map->addr) {
+	RBT_FOREACH(entry, uvm_map_addr, &map->addr) {
 		state.cookie = cookie;
 		state.prot = entry->protection;
 		state.flags = 0;

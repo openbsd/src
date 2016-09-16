@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.191 2016/09/15 02:00:17 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.192 2016/09/16 01:09:54 dlg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -601,7 +601,7 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
 	vaddr_t pm_cs, gdt_cs;
 
 	vm_map_lock(map);
-	RB_FOREACH_REVERSE(ent, uvm_map_addr, &map->addr) {
+	RBT_FOREACH_REVERSE(ent, uvm_map_addr, &map->addr) {
 		if (ent->protection & PROT_EXEC)
 			break;
 	}

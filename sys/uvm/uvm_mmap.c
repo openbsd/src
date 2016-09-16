@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.139 2016/08/18 19:59:16 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.140 2016/09/16 01:09:53 dlg Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -234,12 +234,12 @@ sys_mincore(struct proc *p, void *v, register_t *retval)
 
 	for (/* nothing */;
 	     entry != NULL && entry->start < end;
-	     entry = RB_NEXT(uvm_map_addr, &map->addr, entry)) {
+	     entry = RBT_NEXT(uvm_map_addr, entry)) {
 		KASSERT(!UVM_ET_ISSUBMAP(entry));
 		KASSERT(start >= entry->start);
 
 		/* Make sure there are no holes. */
-		next = RB_NEXT(uvm_map_addr, &map->addr, entry);
+		next = RBT_NEXT(uvm_map_addr, entry);
 		if (entry->end < end &&
 		     (next == NULL ||
 		      next->start > entry->end)) {

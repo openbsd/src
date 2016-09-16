@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.19 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.20 2016/09/16 01:09:53 dlg Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -382,8 +382,8 @@ uvm_addr_linsearch(struct vm_map *map, struct uvm_addr_state *uaddr,
 	for (entry = uvm_map_entrybyaddr(&map->addr,
 	    hint - (direction == -1 ? 1 : 0)); entry != NULL;
 	    entry = (direction == 1 ?
-	    RB_NEXT(uvm_map_addr, &map->addr, entry) :
-	    RB_PREV(uvm_map_addr, &map->addr, entry))) {
+	    RBT_NEXT(uvm_map_addr, entry) :
+	    RBT_PREV(uvm_map_addr, entry))) {
 		if (VMMAP_FREE_START(entry) > high ||
 		    VMMAP_FREE_END(entry) < low) {
 			break;
@@ -621,7 +621,7 @@ uaddr_rnd_select(struct vm_map *map, struct uvm_addr_state *uaddr,
 	/* Walk up the tree, until there is at least sufficient space. */
 	while (entry != NULL &&
 	    entry->fspace_augment < before_gap + after_gap + sz)
-		entry = RB_PARENT(entry, daddrs.addr_entry);
+		entry = RBT_PARENT(uvm_map_addr, entry);
 
 	while (entry != NULL) {
 		/* Test if this fits. */
@@ -640,19 +640,19 @@ uaddr_rnd_select(struct vm_map *map, struct uvm_addr_state *uaddr,
 		}
 
 		/* RB_NEXT, but skip subtrees that cannot possible fit. */
-		next = RB_RIGHT(entry, daddrs.addr_entry);
+		next = RBT_RIGHT(uvm_map_addr, entry);
 		if (next != NULL &&
 		    next->fspace_augment >= before_gap + after_gap + sz) {
 			entry = next;
-			while ((next = RB_LEFT(entry, daddrs.addr_entry)) !=
+			while ((next = RBT_LEFT(uvm_map_addr, entry)) !=
 			    NULL)
 				entry = next;
 		} else {
 do_parent:
-			next = RB_PARENT(entry, daddrs.addr_entry);
+			next = RBT_PARENT(uvm_map_addr, entry);
 			if (next == NULL)
 				entry = NULL;
-			else if (RB_LEFT(next, daddrs.addr_entry) == entry)
+			else if (RBT_LEFT(uvm_map_addr, next) == entry)
 				entry = next;
 			else {
 				entry = next;
@@ -871,7 +871,7 @@ uaddr_kbootstrap_select(struct vm_map *map, struct uvm_addr_state *uaddr,
 {
 	vaddr_t tmp;
 
-	RB_FOREACH(*entry_out, uvm_map_addr, &map->addr) {
+	RBT_FOREACH(*entry_out, uvm_map_addr, &map->addr) {
 		if (VMMAP_FREE_END(*entry_out) <= uvm_maxkaddr &&
 		    uvm_addr_fitspace(addr_out, &tmp,
 		    VMMAP_FREE_START(*entry_out), VMMAP_FREE_END(*entry_out),
