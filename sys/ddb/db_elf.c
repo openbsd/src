@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.22 2016/04/20 08:02:59 mpi Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.23 2016/09/16 19:13:17 jasper Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -39,29 +39,16 @@
 
 #include <machine/db_machdep.h>
 
+#include <ddb/db_elf.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 
 #include <sys/exec_elf.h>
 
-
-typedef struct {
-	const char	*name;		/* symtab name */
-	char		*start;		/* symtab location */
-	char		*end;
-	char		*private;	/* optional machdep pointer */
-} db_symtab_t;
-
 db_symtab_t db_symtab;
 
 Elf_Sym		*db_elf_sym_lookup(char *);
-static char	*db_elf_find_strtab(db_symtab_t *);
 static char	*db_elf_find_linetab(db_symtab_t *, size_t *);
-
-#define	STAB_TO_SYMSTART(stab)	((Elf_Sym *)((stab)->start))
-#define	STAB_TO_SYMEND(stab)	((Elf_Sym *)((stab)->end))
-#define	STAB_TO_EHDR(stab)	((Elf_Ehdr *)((stab)->private))
-#define	STAB_TO_SHDR(stab, e)	((Elf_Shdr *)((stab)->private + (e)->e_shoff))
 
 /*
  * Find the symbol table and strings; tell ddb about them.
@@ -201,7 +188,7 @@ db_elf_sym_init(int symsize, void *symtab, void *esymtab, const char *name)
  * Internal helper function - return a pointer to the string table
  * for the current symbol table.
  */
-static char *
+char *
 db_elf_find_strtab(db_symtab_t *stab)
 {
 	Elf_Ehdr *elf = STAB_TO_EHDR(stab);

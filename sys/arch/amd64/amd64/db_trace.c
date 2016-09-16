@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.22 2016/09/10 06:36:26 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.23 2016/09/16 19:13:16 jasper Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -36,6 +36,9 @@
 #include <machine/frame.h>
 #include <machine/trap.h>
 
+#ifdef DDBCTF
+#include <ddb/db_extern.h>
+#endif
 #include <ddb/db_sym.h>
 #include <ddb/db_access.h>
 #include <ddb/db_variables.h>
@@ -79,20 +82,26 @@ struct db_variable * db_eregs = db_regs + nitems(db_regs);
 #define	INTERRUPT	3
 #define	AST		4
 
-int db_numargs(struct callframe *);
+int db_numargs(struct callframe *, const char *);
 void db_nextframe(struct callframe **, db_addr_t *, long *, int,
     int (*) (const char *, ...));
 
 /*
+ * Lookup the function signature in the CTF section, or just
+ * return 0 like before when unable to do so. In case of no CTF:
  * Figure out how many arguments were passed into the frame at "fp".
  * We can probably figure out how many arguments where passed above
  * the first 6 (which are in registers), but since we can't
  * reliably determine the values currently, just return 0.
  */
 int
-db_numargs(struct callframe *fp)
+db_numargs(struct callframe *fp, const char *sym)
 {
+#ifdef DDBCTF
+	return db_ctf_func_numargs(sym);
+#else
 	return 0;
+#endif /* DDBCTF */
 }
 
 /*
@@ -230,7 +239,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		} else {
 		normal:
 			is_trap = NONE;
-			narg = db_numargs(frame);
+			narg = db_numargs(frame, name);
 		}
 
 		(*pr)("%s(", name);
