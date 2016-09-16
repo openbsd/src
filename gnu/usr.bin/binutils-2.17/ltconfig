@@ -2331,7 +2331,7 @@ LN_S=$LN_S
 NM=$NM
 
 # A symbol stripping program
-STRIP=$STRIP
+STRIP=/usr/bin/strip
 
 # Used to examine libraries when file_magic_cmd begins "file"
 MAGIC_CMD=$MAGIC_CMD
