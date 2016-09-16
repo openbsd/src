@@ -1,6 +1,0 @@
-# $OpenBSD: list.local,v 1.4 2014/01/20 05:09:47 jsing Exp $
-
-LINK	instbin					sbin/fsck_msdos
-LINK	instbin					sbin/mount_msdos
-
-#TZ
