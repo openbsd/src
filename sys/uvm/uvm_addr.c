@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.21 2016/09/16 01:51:40 dlg Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.22 2016/09/16 02:50:54 dlg Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -640,7 +640,7 @@ uaddr_rnd_select(struct vm_map *map, struct uvm_addr_state *uaddr,
 			return 0;
 		}
 
-		/* RB_NEXT, but skip subtrees that cannot possible fit. */
+		/* RBT_NEXT, but skip subtrees that cannot possible fit. */
 		next = RBT_RIGHT(uvm_map_addr, entry);
 		if (next != NULL &&
 		    next->fspace_augment >= before_gap + after_gap + sz) {
