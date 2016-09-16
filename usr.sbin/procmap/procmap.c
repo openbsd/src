@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.62 2016/05/26 17:23:50 stefan Exp $ */
+/*	$OpenBSD: procmap.c,v 1.63 2016/09/16 04:45:35 dlg Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -29,6 +29,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#define _KERNEL
+#include <sys/tree.h>
+#undef _KERNEL
 
 #include <sys/param.h>	/* MAXCOMLEN */
 #include <sys/types.h>
@@ -193,15 +197,16 @@ void print_sum(struct sum *, struct sum *);
 /*
  * uvm_map address tree implementation.
  */
-static int no_impl(void *, void *);
+static int no_impl(const void *, const void *);
 static int
-no_impl(void *p, void *q)
+no_impl(const void *p, const void *q)
 {
 	errx(1, "uvm_map address comparison not implemented");
 	return 0;
 }
 
-RB_GENERATE(uvm_map_addr, vm_map_entry, daddrs.addr_entry, no_impl);
+RBT_PROTOTYPE(uvm_map_addr, vm_map_entry, daddrs.addr_entry, no_impl);
+RBT_GENERATE(uvm_map_addr, vm_map_entry, daddrs.addr_entry, no_impl);
 
 int
 main(int argc, char *argv[])
@@ -500,11 +505,18 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc, struct sum *sum)
 		    (int)sizeof(int)  * 2, "Inode");
 
 	/* these are the "sub entries" */
-	RB_ROOT(&D(vm_map, vm_map)->addr) =
-	    load_vm_map_entries(kd, RB_ROOT(&D(vm_map, vm_map)->addr), NULL);
-	RB_FOREACH(vm_map_entry, uvm_map_addr, &D(vm_map, vm_map)->addr)
+	vm_map_entry = load_vm_map_entries(kd,
+	    RBT_ROOT(uvm_map_addr, &D(vm_map, vm_map)->addr), NULL);
+	if (vm_map_entry != NULL) {
+		/* RBTs point at rb_entries inside nodes */
+		D(vm_map, vm_map)->addr.rbh_root.rbt_root =
+		    &vm_map_entry->daddrs.addr_entry;
+	} else
+		RBT_INIT(uvm_map_addr, &D(vm_map, vm_map)->addr);
+
+	RBT_FOREACH(vm_map_entry, uvm_map_addr, &D(vm_map, vm_map)->addr)
 		total += dump_vm_map_entry(kd, vmspace, vm_map_entry, sum);
-	unload_vm_map_entries(RB_ROOT(&D(vm_map, vm_map)->addr));
+	unload_vm_map_entries(RBT_ROOT(uvm_map_addr, &D(vm_map, vm_map)->addr));
 
 	if (print_solaris)
 		printf("%-*s %8luK\n",
@@ -548,7 +560,7 @@ load_vm_map_entries(kvm_t *kd, struct vm_map_entry *kptr,
     struct vm_map_entry *parent)
 {
 	static struct kbit map_ent;
-	struct vm_map_entry *result;
+	struct vm_map_entry *result, *ld;
 
 	if (kptr == NULL)
 		return NULL;
@@ -565,11 +577,14 @@ load_vm_map_entries(kvm_t *kd, struct vm_map_entry *kptr,
 	/*
 	 * Recurse to download rest of the tree.
 	 */
-	RB_LEFT(result, daddrs.addr_entry) = load_vm_map_entries(kd,
-	    RB_LEFT(result, daddrs.addr_entry), result);
-	RB_RIGHT(result, daddrs.addr_entry) = load_vm_map_entries(kd,
-	    RB_RIGHT(result, daddrs.addr_entry), result);
-	RB_PARENT(result, daddrs.addr_entry) = parent;
+
+	/* RBTs point at rb_entries inside nodes */
+	ld = load_vm_map_entries(kd, RBT_LEFT(uvm_map_addr, result), result);
+	result->daddrs.addr_entry.rbt_left = &ld->daddrs.addr_entry;
+	ld = load_vm_map_entries(kd, RBT_RIGHT(uvm_map_addr, result), result);
+	result->daddrs.addr_entry.rbt_right = &ld->daddrs.addr_entry;
+	result->daddrs.addr_entry.rbt_parent = &parent->daddrs.addr_entry;
+
 	return result;
 }
 
@@ -582,8 +597,8 @@ unload_vm_map_entries(struct vm_map_entry *ent)
 	if (ent == NULL)
 		return;
 
-	unload_vm_map_entries(RB_LEFT(ent, daddrs.addr_entry));
-	unload_vm_map_entries(RB_RIGHT(ent, daddrs.addr_entry));
+	unload_vm_map_entries(RBT_LEFT(uvm_map_addr, ent));
+	unload_vm_map_entries(RBT_RIGHT(uvm_map_addr, ent));
 	free(ent);
 }
 
